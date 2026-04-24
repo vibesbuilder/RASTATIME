@@ -1,12 +1,32 @@
 RASTATIME — readme.txt
 =======================
 
-Version: 0.2.3
+Version: 0.2.4
 Date: 2026-04-24
 
 Summary
 -------
-T3.3 complete: Worker run script at infra/scripts/dev/run-worker.ps1.
+T3.4 complete: docs/dev/WINDOWS_DEV_STATUS.md created.
+6 blockers documented (PostgreSQL, gunicorn, psycopg v3, Liquidsoap,
+Celery, libVLC). Quick-start guide for new contributors included.
+Milestone M3 (Windows dev bootstrap) complete.
+
+Changelog
+---------
+0.2.4 (2026-04-24)
+    - Task T3.4 complete: WINDOWS_DEV_STATUS.md.
+    - docs/dev/WINDOWS_DEV_STATUS.md: honest dev status document.
+        Section 1: environment — what is installed and working.
+        Section 2: what works (interface layer, dev scripts, API, worker).
+        Section 3: what is stubbed or disabled (Liquidsoap, Celery,
+                   gunicorn, analyzer, LibreTime playout).
+        Section 4: 6 known blockers (B1-B6) with workarounds + resolution.
+        Section 5: next steps table (T3.5 through T17.1).
+        Section 6: quick-start guide for new contributors.
+    - Milestone M3 (Windows dev bootstrap) complete.
+
+0.2.3 (2026-04-24)
+    T3.3 complete: Worker run script at infra/scripts/dev/run-worker.ps1.
 Dev stub logs "idle" immediately on start (V verified). 75/75 unit tests green.
 
 Changelog
