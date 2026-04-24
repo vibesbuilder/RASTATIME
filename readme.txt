@@ -1,18 +1,28 @@
 RASTATIME — readme.txt
 =======================
 
-Version: 0.1.3
+Version: 0.1.4
 Date: 2026-04-24
 
 Summary
 -------
-T0.4 complete: docs/architecture/BASELINE_MODULES.md created.
-Tabular inventory of all LibreTime 4.5.0 modules with per-module
-disposition (Keep / Keep+Refactor / Replace / Reference only) and
-blocking concerns. Includes new-module list for RASTATIME additions.
+T1.1 complete: docs/architecture/LINUX_INVENTORY.md created.
+Full scan of backend/ and frontend/ for Linux-specific coupling.
+Every hit classified by category and disposition. Priority order
+for remediation included.
 
 Changelog
 ---------
+0.1.4 (2026-04-24)
+    - Task T1.1 complete: docs/architecture/LINUX_INVENTORY.md created.
+    - Scanned backend/ and frontend/ for 10 pattern categories.
+    - 327 Liquidsoap hits (32 files), 569 Celery hits (18 files),
+      16 systemctl hits (2 files), 20 Linux path hits (8 files),
+      11 ALSA/PortAudio hits (3 files), 6 chmod/chown hits (4 files).
+    - nginx: 0 hits in application code (clear).
+    - multiprocessing in pipeline.py: false alarm (docstring only).
+    - Priority remediation order documented (§11).
+
 0.1.3 (2026-04-24)
     - Task T0.4 complete: docs/architecture/BASELINE_MODULES.md created.
     - Inventoried 6 Python packages, 1 PHP frontend, 3 infra reference areas.
