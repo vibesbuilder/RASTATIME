@@ -1,17 +1,32 @@
 RASTATIME — readme.txt
 =======================
 
-Version: 0.1.9
+Version: 0.2.0
 Date: 2026-04-24
 
 Summary
 -------
-T2.4 complete: JobRunner ABC defined in backend/rastatime_worker/interface.py.
-Includes JobStatus, JobInfo, JobResult, JobNotFoundError, JobNameNotRegisteredError.
-20 new tests pass. All 57 unit tests green. No behaviour change.
+T2.5 complete: ServiceHealth ABC defined in infra/service_health/interface.py.
+Includes HealthStatus, ComponentHealth, SystemHealth (with JSON shape spec and
+from_components() aggregation), and ServiceHealth ABC (check_health, is_alive,
+is_ready). 18 new tests pass. All 75 unit tests green. No behaviour change.
 
 Changelog
 ---------
+0.2.0 (2026-04-24)
+    - Task T2.5 complete: ServiceHealth ABC (infra/service_health/).
+    - HealthStatus: HEALTHY, DEGRADED, UNHEALTHY.
+    - ComponentHealth: per-component report + to_dict() (ISO-8601 UTC timestamp).
+    - SystemHealth: aggregate report + from_components() (worst-case rollup)
+      + to_dict(); JSON shape spec embedded in class docstring.
+    - ServiceHealth ABC — 3 abstract methods:
+        check_health() -> ComponentHealth
+        is_alive()     -> bool  (liveness probe)
+        is_ready()     -> bool  (readiness probe)
+    - tests/unit/service_health/test_service_health_interface.py: 18 tests.
+    - Total unit tests: 75/75 green.
+    - Milestone M2 (Runtime interfaces) complete.
+
 0.1.9 (2026-04-24)
     - Task T2.4 complete: JobRunner ABC (backend/rastatime_worker/).
     - JobStatus: PENDING, RUNNING, COMPLETED, FAILED, CANCELLED, RETRYING.
