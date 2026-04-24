@@ -2,13 +2,17 @@
 Development settings for RASTATIME.
 
 Does NOT require a config file (LIBRETIME_CONFIG_FILEPATH).
-Uses PostgreSQL with defaults that match LibreTime's out-of-the-box values;
-override any field via RASTATIME_DB_* environment variables.
+
+Database strategy:
+  Default: SQLite (no server needed, starts immediately).
+  PostgreSQL: set RASTATIME_USE_POSTGRES=true plus optional RASTATIME_DB_*
+              overrides (host/port/name/user/password).
 
 Never use this settings module in production.
 """
 
 from os import getenv
+from pathlib import Path
 
 from ._internal import (
     API_VERSION,
@@ -38,17 +42,31 @@ LOGGING = setup_logger(None)
 # CORS — allow everything in dev
 CORS_ALLOW_ALL_ORIGINS = True
 
-# Database — PostgreSQL with LibreTime defaults; override via env vars
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "HOST": getenv("RASTATIME_DB_HOST", "localhost"),
-        "PORT": getenv("RASTATIME_DB_PORT", "5432"),
-        "NAME": getenv("RASTATIME_DB_NAME", "libretime"),
-        "USER": getenv("RASTATIME_DB_USER", "libretime"),
-        "PASSWORD": getenv("RASTATIME_DB_PASSWORD", "libretime"),
+# Database
+# SQLite is the default so the dev server starts without any external service.
+# Set RASTATIME_USE_POSTGRES=true to switch to PostgreSQL instead.
+_USE_POSTGRES = getenv("RASTATIME_USE_POSTGRES", "false").lower() == "true"
+
+if _USE_POSTGRES:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "HOST": getenv("RASTATIME_DB_HOST", "localhost"),
+            "PORT": getenv("RASTATIME_DB_PORT", "5432"),
+            "NAME": getenv("RASTATIME_DB_NAME", "libretime"),
+            "USER": getenv("RASTATIME_DB_USER", "libretime"),
+            "PASSWORD": getenv("RASTATIME_DB_PASSWORD", "libretime"),
+        }
     }
-}
+else:
+    # SQLite: file lives at backend/api/rastatime-dev.sqlite3 (git-ignored)
+    _DEV_DB = Path(__file__).resolve().parent.parent.parent / "rastatime-dev.sqlite3"
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": str(_DEV_DB),
+        }
+    }
 
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"

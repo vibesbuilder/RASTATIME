@@ -37,3 +37,6 @@ Desktop.ini
 
 # Logs
 *.log
+
+# Dev database (SQLite, created by dev settings)
+rastatime-dev.sqlite3
