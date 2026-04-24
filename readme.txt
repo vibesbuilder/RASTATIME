@@ -32,6 +32,11 @@ Changelog
     - backend/api/libretime_api/__init__.py — handle PackageNotFoundError so
       VERSION falls back to "dev" when package metadata is absent.
     - Verification: manual (dev server responds to /health after deps installed).
+    - backend/shared/setup.py: pydantic constraint relaxed from <2.8 to >=2.9
+      so pre-built wheels are available for Python 3.13 (no Rust/MSVC needed).
+    - backend/api/libretime_api/settings/dev.py: switched default DB to SQLite
+      so runserver starts without PostgreSQL; set RASTATIME_USE_POSTGRES=true
+      to revert to PostgreSQL.
 
 0.2.1 (2026-04-24)
     - Task T3.1 complete: PowerShell bootstrap checker.
