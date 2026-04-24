@@ -15,6 +15,22 @@ All mutations to ``_state``, ``_queue``, and ``_current_index`` are protected
 by a single ``threading.RLock``.  VLC media-player calls (``set_media``,
 ``play``, ``pause``, ``stop``) and callback dispatch happen *outside* the lock.
 
+Inter-track gap (known limitation)
+-----------------------------------
+A brief silence of typically 50–200 ms occurs between consecutive queue items.
+The gap is caused by three sequential steps that happen after VLC fires
+``MediaPlayerEndReached``:
+
+1. A new Python daemon thread is spawned (~1–5 ms).
+2. ``media_new()`` + ``set_media()`` load the next URI into the player (~5–50 ms).
+3. VLC opens and buffers the new file before the first audio sample plays
+   (~20–150 ms for local WAV/MP3; larger for network streams).
+
+Planned improvement (post-T5.3): use ``libvlc_media_list_player`` or pre-load
+the next media object during playback of the current item.  For the current
+phase this gap is acceptable for scheduled-show boundaries where millisecond
+precision is not required.
+
 Requirements
 ------------
 * VLC >= 3.0 installed (64-bit, matching Python bitness).
@@ -294,7 +310,17 @@ class VlcPlayoutEngine(PlayoutEngine):
     # ------------------------------------------------------------------
 
     def _advance_track(self) -> None:
-        """Load and play the next queue item, or stop if the queue is done."""
+        """
+        Load and play the next queue item, or stop if the queue is done.
+
+        Called in a fresh daemon thread spawned by ``_on_vlc_end``.  VLC
+        media-player operations are performed *outside* the lock to avoid
+        re-entrant locking and potential deadlocks.
+
+        Inter-track gap: the time between this function being called and the
+        first audio sample of the next item is typically 50–200 ms on local
+        files (see module docstring for details).
+        """
         prev_item: Optional[QueueItem]
         next_item: Optional[QueueItem]
         next_uri: Optional[str] = None

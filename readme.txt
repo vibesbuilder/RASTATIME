@@ -1,14 +1,36 @@
 RASTATIME — readme.txt
 =======================
 
-Version: 0.3.0
+Version: 0.3.1
 Date: 2026-04-25
 
 Summary
 -------
-T5.2 complete: VlcPlayoutEngine — first real libVLC-backed playout.
-Plays local files via URI; full transport + queue + callback contract.
-18 new tests (real WAV playback, --aout=dummy). Total: 155/155.
+T5.3 complete: queue playback verified and gap-handling documented.
+3-item queue V criterion passes; 7 new queue-specific tests added.
+Total: 162/162.
+
+Changelog
+---------
+0.3.1 (2026-04-25)
+    - Task T5.3 complete: queue playback.
+    - playout/engine_vlc/_engine.py: documentation update.
+        Module docstring: "Inter-track gap" section documents the
+        50-200 ms silence between items (thread spawn + media_new +
+        VLC buffer startup); notes planned gapless improvement via
+        libvlc_media_list_player.
+        _advance_track() docstring: explains the gap and why VLC
+        operations are done outside the lock.
+    - tests/unit/playout/engine_vlc/test_queue_playback.py: 7 tests.
+        V criterion: test_three_item_queue_plays_in_order — 3-item
+        queue plays in order; asserts 4 TrackChangedEvents with correct
+        previous/current item references, STOPPED state and None
+        current_item after queue exhaustion.
+        Additional: event timestamps (UTC-aware), multiple listeners
+        receive all events, append during playback, clear_queue discards
+        pending items, load_queue during playback stops and replaces,
+        inter-track gap < 2 s bound.
+    - 162/162 unit tests green.
 
 Changelog
 ---------
