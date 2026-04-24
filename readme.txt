@@ -1,18 +1,26 @@
 RASTATIME — readme.txt
 =======================
 
-Version: 0.1.2
+Version: 0.1.3
 Date: 2026-04-24
 
 Summary
 -------
-T0.3 complete: docs/architecture/RATIONALE.md created. Explains
-why RASTATIME is a functional fork (not a literal Linux port),
-documents six root causes of incompatibility, and summarizes
-what is preserved vs. replaced.
+T0.4 complete: docs/architecture/BASELINE_MODULES.md created.
+Tabular inventory of all LibreTime 4.5.0 modules with per-module
+disposition (Keep / Keep+Refactor / Replace / Reference only) and
+blocking concerns. Includes new-module list for RASTATIME additions.
 
 Changelog
 ---------
+0.1.3 (2026-04-24)
+    - Task T0.4 complete: docs/architecture/BASELINE_MODULES.md created.
+    - Inventoried 6 Python packages, 1 PHP frontend, 3 infra reference areas.
+    - Per-module: disposition + blocking concerns + key Linux assumptions.
+    - Section 6: 13 new modules required for RASTATIME (not in LibreTime).
+    - Key finding: backend/playout/liquidsoap/ is full replace; worker is
+      full replace; analyzer/_liquidsoap.py needs targeted replacement.
+
 0.1.2 (2026-04-24)
     - Task T0.3 complete: docs/architecture/RATIONALE.md created.
     - Documents six incompatibility root causes: Liquidsoap, systemd,
