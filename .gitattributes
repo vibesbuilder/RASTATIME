@@ -1,0 +1,20 @@
+# Normalize line endings: store LF in repo, checkout as-is on each platform
+* text=auto eol=lf
+
+# Force binary files to not be mangled
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.mp3 binary
+*.ogg binary
+*.wav binary
+*.flac binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary
+*.pdf binary
+*.zip binary
+*.tar.gz binary
