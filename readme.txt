@@ -1,14 +1,38 @@
 RASTATIME — readme.txt
 =======================
 
-Version: 0.2.7
+Version: 0.2.8
 Date: 2026-04-24
 
 Summary
 -------
-T4.2 complete: engine-selection config flag added.
-RASTATIME_PLAYOUT_ENGINE=mock|libvlc; factory create_playout_engine().
-12 new unit tests (all green). Total: 105/105.
+T4.3 complete: PlayoutScheduler wires show schedule to PlayoutEngine.
+Timer-based start/stop dispatch; cancel/cancel_all; reschedule support.
+12 new unit tests (all green). Total: 117/117. Phase 3 complete.
+
+Changelog
+---------
+0.2.8 (2026-04-24)
+    - Task T4.3 complete: PlayoutScheduler.
+    - playout/scheduler/_scheduler.py: PlayoutScheduler + ScheduledShow.
+        ScheduledShow: show_id, start_at (UTC), end_at (UTC), items;
+          naive datetimes normalised to UTC in __post_init__.
+        PlayoutScheduler: wraps any PlayoutEngine; uses threading.Timer
+          pairs (start + stop) per show; _pending dict protected by Lock.
+        schedule(show): fires load_queue+start at start_at, stop at
+          end_at; past shows ignored; same show_id replaces previous job.
+        cancel(show_id) -> bool: cancels one pending show.
+        cancel_all() -> int: cancels all pending shows.
+        pending_show_ids(): snapshot of pending show ids.
+        Engine calls made outside the lock; exceptions caught per-call.
+    - playout/scheduler/__init__.py: re-exports PlayoutScheduler, ScheduledShow.
+    - tests/unit/playout/test_scheduler.py: 12 tests.
+        V criterion: test_show_starts_and_stops asserts STOPPED->PLAYING
+        ->STOPPED transitions on a short scheduled show.
+        Additional: queue content, past shows, ongoing shows, cancel,
+        cancel_all, reschedule, pending_show_ids, ScheduledShow helpers.
+    - 117/117 unit tests green.
+    - Phase 3 (Playout Abstraction) complete.
 
 Changelog
 ---------
