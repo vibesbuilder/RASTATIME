@@ -1,18 +1,25 @@
 RASTATIME — readme.txt
 =======================
 
-Version: 0.1.1
+Version: 0.1.2
 Date: 2026-04-24
 
 Summary
 -------
-T0.2 complete: ADR-001 through ADR-005 created under
-docs/architecture/decisions/. Covers Windows-first target, libVLC
-as main playout engine, Icecast as auxiliary only, English-first
-system language, and NSSM as phase 1 service strategy.
+T0.3 complete: docs/architecture/RATIONALE.md created. Explains
+why RASTATIME is a functional fork (not a literal Linux port),
+documents six root causes of incompatibility, and summarizes
+what is preserved vs. replaced.
 
 Changelog
 ---------
+0.1.2 (2026-04-24)
+    - Task T0.3 complete: docs/architecture/RATIONALE.md created.
+    - Documents six incompatibility root causes: Liquidsoap, systemd,
+      Celery prefork, Gunicorn, Linux paths, ALSA/PortAudio.
+    - Clarifies functional fork vs. literal port distinction.
+    - Summarizes what is preserved and what is replaced.
+
 0.1.1 (2026-04-24)
     - Task T0.2 complete: 5 Architecture Decision Records created.
     - ADR-001: Windows 11 as primary runtime target.
