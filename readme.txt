@@ -1,18 +1,27 @@
 RASTATIME — readme.txt
 =======================
 
-Version: 0.1.5
+Version: 0.1.6
 Date: 2026-04-24
 
 Summary
 -------
-T1.2 complete: LINUX_INVENTORY.md updated with primary category
-classification (runtime-binding / domain / deployment / audio /
-legacy-ui) and consolidated summary table at top of file.
-~55 unique files with Linux coupling identified and labelled.
+T2.1 complete: PlayoutEngine ABC defined in playout/engine_interface/.
+Includes PlayoutState, QueueItem, TrackChangedEvent, PlayoutError types.
+10 unit tests pass. No behaviour change — interface only.
 
 Changelog
 ---------
+0.1.6 (2026-04-24)
+    - Task T2.1 complete: PlayoutEngine ABC (playout/engine_interface/).
+    - PlayoutEngine: 13 abstract methods (transport, queue, state, callbacks,
+      device selection).
+    - Supporting types: PlayoutState (4 values), QueueItem, TrackChangedEvent,
+      PlayoutError.
+    - conftest.py at repo root for pytest sys.path setup.
+    - tests/unit/playout/test_engine_interface.py: 10 tests, all passing.
+    - No behaviour change — interface only, no implementation.
+
 0.1.5 (2026-04-24)
     - Task T1.2 complete: LINUX_INVENTORY.md classified by primary category.
     - Added "Classification Summary by Primary Category" table at top.
