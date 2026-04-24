@@ -1,14 +1,43 @@
 RASTATIME — readme.txt
 =======================
 
-Version: 0.2.8
-Date: 2026-04-24
+Version: 0.2.9
+Date: 2026-04-25
 
 Summary
 -------
-T4.3 complete: PlayoutScheduler wires show schedule to PlayoutEngine.
-Timer-based start/stop dispatch; cancel/cancel_all; reschedule support.
-12 new unit tests (all green). Total: 117/117. Phase 3 complete.
+T5.1 complete: python-vlc dependency added; libVLC runtime probe implemented.
+Probe detects DLL path, bitness, version; CLI report; 19 new tests.
+Total: 136/136. Phase 4 started.
+
+Changelog
+---------
+0.2.9 (2026-04-25)
+    - Task T5.1 complete: python-vlc dependency + libVLC runtime probe.
+    - requirements.txt (repo root): python-vlc>=3.0.12, pytest>=7.0.
+    - playout/engine_vlc/__init__.py: package scaffold (T5.2 fills it).
+    - playout/engine_vlc/probe.py: ProbeResult dataclass + probe() function.
+        _find_dll(): searches known Windows paths + HKLM registry key.
+        _dll_bits(): reads PE header to determine 32/64 bitness of DLL.
+        _python_bits(): struct.calcsize("P")*8.
+        probe(): imports vlc, locates DLL, checks bitness match, calls
+          vlc.libvlc_get_version() and vlc.Instance(); all errors captured
+          in ProbeResult.errors; never raises.
+        ProbeResult.raise_if_unavailable(): raises RuntimeError with message.
+        ProbeResult.summary(): single-line status string.
+        __main__ block: CLI report; exit 0=OK / 1=unavailable.
+    - tests/unit/playout/engine_vlc/test_probe.py: 19 tests.
+        VLC-installed path: available=True, version strings, DLL path,
+          bitness match, summary, raise_if_unavailable no-op.
+        Mocked paths: no python-vlc -> available=False; bitness mismatch
+          detected; invalid/missing DLL -> _dll_bits returns None.
+    - Verified on this machine: libvlc 3.0.23 Vetinari, 64-bit, probe OK.
+    - 136/136 unit tests green.
+
+0.2.8 (2026-04-24)
+    - Task T4.3 complete: PlayoutScheduler.
+    - Timer-based start/stop dispatch; cancel/cancel_all; reschedule support.
+    - 12 new tests, 117/117 green. Phase 3 (Playout Abstraction) complete.
 
 Changelog
 ---------

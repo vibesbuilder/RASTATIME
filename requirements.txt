@@ -1,0 +1,11 @@
+# RASTATIME top-level runtime dependencies
+# Install with: pip install -r requirements.txt
+#
+# python-vlc: ctypes bindings for libVLC (requires VLC >= 3.0 installed separately).
+# Supported VLC versions: 3.0.x Vetinari (tested: 3.0.23).
+# Bitness must match Python: use 64-bit VLC with 64-bit Python.
+# Windows download: https://www.videolan.org/vlc/download-windows.html
+python-vlc>=3.0.12
+
+# Test runner
+pytest>=7.0
