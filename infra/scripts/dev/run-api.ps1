@@ -126,4 +126,5 @@ if (-not (Test-Path $ManagePy)) {
     exit 1
 }
 
-& $Python $ManagePy runserver "${BindHost}:${Port}"
+$bindAddr = $BindHost + ':' + $Port
+& $Python $ManagePy runserver $bindAddr
