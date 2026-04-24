@@ -1,18 +1,38 @@
 RASTATIME — readme.txt
 =======================
 
-Version: 0.2.1
+Version: 0.2.2
 Date: 2026-04-24
 
 Summary
 -------
-T3.1 complete: PowerShell bootstrap checker at infra/scripts/dev/bootstrap.ps1.
-Checks Python 3.11+, PostgreSQL, VLC/libVLC (required) and RabbitMQ (optional).
-Prints color-coded [PASS]/[FAIL]/[SKIP] per dependency with remediation hints.
-Exits 0 if all required deps found, 1 otherwise. No new unit tests (manual V).
+T3.2 complete: API dev-server run script at infra/scripts/dev/run-api.ps1.
+Adds Django dev settings (no config file required), a /health endpoint
+(DB-independent), and the PowerShell launcher. libretime_api/__init__.py
+patched to handle missing package metadata gracefully. No new unit tests (manual V).
 
 Changelog
 ---------
+0.2.2 (2026-04-24)
+    - Task T3.2 complete: API run script.
+    - infra/scripts/dev/run-api.ps1 (#Requires -Version 5.1).
+        Parameters: -BindHost (default 127.0.0.1), -Port (default 8000).
+        Auto-detects .venv; falls back to PATH python.
+        Sets PYTHONPATH to backend/api + backend/shared (no editable install needed).
+        Sets DJANGO_SETTINGS_MODULE=libretime_api.settings.dev.
+        Prints health URL + Swagger URL before starting.
+    - backend/api/libretime_api/settings/dev.py (new).
+        No config file (LIBRETIME_CONFIG_FILEPATH) required.
+        PostgreSQL defaults match LibreTime; override via RASTATIME_DB_* env vars.
+        CORS allow-all; email to console; DEBUG=True.
+    - backend/api/libretime_api/health.py (new).
+        GET /health — returns {"status":"ok","service":"rastatime-api","version":"..."}.
+        No database access; responds even before migrations run.
+    - backend/api/libretime_api/urls.py — added path("health", ...).
+    - backend/api/libretime_api/__init__.py — handle PackageNotFoundError so
+      VERSION falls back to "dev" when package metadata is absent.
+    - Verification: manual (dev server responds to /health after deps installed).
+
 0.2.1 (2026-04-24)
     - Task T3.1 complete: PowerShell bootstrap checker.
     - infra/scripts/dev/bootstrap.ps1 (#Requires -Version 5.1).
