@@ -1,18 +1,37 @@
 RASTATIME — readme.txt
 =======================
 
-Version: 0.2.2
+Version: 0.2.3
 Date: 2026-04-24
 
 Summary
 -------
-T3.2 complete: API dev-server run script at infra/scripts/dev/run-api.ps1.
-Adds Django dev settings (no config file required), a /health endpoint
-(DB-independent), and the PowerShell launcher. libretime_api/__init__.py
-patched to handle missing package metadata gracefully. No new unit tests (manual V).
+T3.3 complete: Worker run script at infra/scripts/dev/run-worker.ps1.
+Dev stub logs "idle" immediately on start (V verified). 75/75 unit tests green.
 
 Changelog
 ---------
+0.2.3 (2026-04-24)
+    - Task T3.3 complete: worker run script.
+    - infra/scripts/dev/run-worker.ps1 (#Requires -Version 5.1, UTF-8 BOM).
+        Parameter: -IdleInterval (default 5s).
+        Auto-detects .venv; sets PYTHONPATH to backend/ + backend/shared/.
+        Starts python -m rastatime_worker.
+    - backend/rastatime_worker/__main__.py: dev stub entry point.
+        Logs "idle" immediately on start (satisfies V: within 2s).
+        Heartbeat loop every IdleInterval seconds.
+        Graceful shutdown on SIGINT/SIGTERM.
+        Imports JobRunner interface at startup to verify import is clean.
+    - Verified: worker logs "idle" at t=0s, t=1s, t=2s (with --idle-interval 1).
+
+0.2.2 (2026-04-24)
+    T3.2 complete: API dev-server run script at infra/scripts/dev/run-api.ps1.
+    Adds Django dev settings (no config file required), a /health endpoint
+    (DB-independent), and the PowerShell launcher. libretime_api/__init__.py
+    patched to handle missing package metadata gracefully. No new unit tests (manual V).
+
+Changelog (continued)
+---------------------
 0.2.2 (2026-04-24)
     - Task T3.2 complete: API run script.
     - infra/scripts/dev/run-api.ps1 (#Requires -Version 5.1).
