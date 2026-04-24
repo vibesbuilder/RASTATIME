@@ -6,39 +6,52 @@
 **Purpose:** Every Linux-specific assumption that must be removed or abstracted before
 RASTATIME runs on Windows 11.
 
-**Categories:**
-- **runtime-binding** — directly invokes a Linux-only component at runtime
-- **audio** — Linux-specific audio backend assumption
-- **linux-path** — hardcoded Linux filesystem path
-- **posix-perm** — POSIX file permission call (chmod/chown)
-- **posix-signal** — UNIX signal usage
-- **deployment** — install/service lifecycle assumption
-- **legacy-ui** — PHP frontend reference to Linux components
-- **domain** — business logic that references a replaced component but contains no direct Linux syscall
+**Primary categories (T1.2 standard):**
+- **runtime-binding** — directly invokes or configures a Linux-only component at runtime  
+  *(includes linux-path, posix-perm, posix-signal, gunicorn, liquidsoap calls, celery calls)*
+- **audio** — Linux-specific audio backend (ALSA / PortAudio)
+- **deployment** — service lifecycle, shell scripts, systemctl health checks
+- **legacy-ui** — PHP frontend UI layer that surfaces Linux component status
+- **domain** — business logic referencing a replaced component; no direct Linux syscall
 
 **Dispositions:**
 - **Replace** — file/block must be replaced entirely
 - **Refactor** — isolate and remove the Linux assumption; keep surrounding logic
 - **Delete** — dead code or no-longer-applicable check
-- **Review** — works on Windows but behavior differs; needs verification
+- **Review** — works on Windows but behaviour differs; needs verification
 
 ---
 
-## Summary Statistics
+## Classification Summary by Primary Category (T1.2)
 
-| Category | Files affected | Approx. line hits |
+| Primary category | Files | Key affected modules |
 |---|---|---|
-| Liquidsoap (runtime-binding + domain) | 32 | ~327 |
-| Celery (runtime-binding + legacy-ui) | 18 | ~569 |
-| systemctl / systemd (legacy-ui + deployment) | 2 | 16 |
-| Linux paths (linux-path) | 8 | 20 |
-| ALSA / PortAudio (audio) | 3 | 11 |
-| Gunicorn (runtime-binding) | 3 | 3 |
-| chmod / chown (posix-perm) | 4 | 6 |
-| POSIX signals (posix-signal) | 2 | 4 |
-| Shell scripts (deployment) | 4 | — |
-| **nginx** | **0** | **0** — no hits in application code |
-| **multiprocessing** | **0 (false alarm)** | docstring only; code uses `queue.Queue` |
+| **runtime-binding** | ~28 | `playout/liquidsoap/*`, `playout/player/liquidsoap.py`, `playout/player/queue.py`, `playout/config.py`, `playout/main.py`, `analyzer/_liquidsoap.py`, `shared/_models.py` (HarborInput), `worker/tasks.py`, `worker/config.py`, `worker/main.py`, `api/gunicorn.py`, `api/requirements.txt`, `shared/config/_base.py`, `api/manage.py`, `playout/player/file.py`, `analyzer/message_listener.py`, `playout/message_handler.py` |
+| **domain** | ~28 | `playout/player/schedule.py`, `player/fetch.py`, `player/push.py`, `player/events.py`, `playout/notify/main.py`, `analyzer/analyze_playability.py`, `api/core/models/worker.py`, `api/legacy/migrations/0038-39`, `frontend/CeleryTasks*.php`, `frontend/TaskManager.php`, `frontend/PodcastManager.php`, `frontend/ThirdPartyService.php`, `frontend/PodcastEpisodeService.php`, `frontend/StreamSetting.php`, `frontend/Preference.php`, `frontend/HistoryService.php`, `frontend/ApiController.php` |
+| **deployment** | ~8 | `frontend/check.php`, `frontend/configs/config-check.php`, `analyzer/tools/ftp-upload-hook.sh`, `analyzer/tools/test-hook-script.sh`, `analyzer/tests/fixtures/generate.sh`, `frontend/tests/runtests.sh`, `analyzer/packages.ini`, `playout/install/logrotate/*.conf` |
+| **audio** | 3 | `shared/config/_models.py` (ALSA/PortAudio enums + model classes), `shared/tests/config/models_test.py`, `playout/tests/liquidsoap/fixtures/__init__.py` |
+| **legacy-ui** | ~5 | `frontend/models/Systemstatus.php`, `frontend/models/StoredFile.php`, `frontend/modules/rest/controllers/ShowImageController.php`, `frontend/services/CeleryServiceFactory.php`, `frontend/services/ThirdPartyCeleryService.php` |
+
+**Total unique files with Linux coupling: ~55**  
+**Confirmed clear (no action): nginx (0 hits), multiprocessing (docstring false alarm), SIGHUP (0 hits)**
+
+---
+
+## Summary Statistics by Pattern
+
+| Pattern | Primary category | Files affected | Approx. line hits |
+|---|---|---|---|
+| Liquidsoap | runtime-binding + domain | 32 | ~327 |
+| Celery | runtime-binding + domain + legacy-ui | 18 | ~569 |
+| systemctl / systemd | deployment + legacy-ui | 2 | 16 |
+| Linux paths (`/etc/`, `/var/`, `/srv/`, `/usr/`) | runtime-binding | 8 | 20 |
+| ALSA / PortAudio | audio | 3 | 11 |
+| Gunicorn | runtime-binding | 3 | 3 |
+| chmod / chown | runtime-binding | 4 | 6 |
+| POSIX signals | runtime-binding | 2 | 4 |
+| Shell scripts | deployment | 4 | — |
+| nginx | — | **0** | **0** — clear |
+| multiprocessing | — | **0** | false alarm (docstring only) |
 
 ---
 

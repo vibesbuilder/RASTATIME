@@ -1,18 +1,26 @@
 RASTATIME — readme.txt
 =======================
 
-Version: 0.1.4
+Version: 0.1.5
 Date: 2026-04-24
 
 Summary
 -------
-T1.1 complete: docs/architecture/LINUX_INVENTORY.md created.
-Full scan of backend/ and frontend/ for Linux-specific coupling.
-Every hit classified by category and disposition. Priority order
-for remediation included.
+T1.2 complete: LINUX_INVENTORY.md updated with primary category
+classification (runtime-binding / domain / deployment / audio /
+legacy-ui) and consolidated summary table at top of file.
+~55 unique files with Linux coupling identified and labelled.
 
 Changelog
 ---------
+0.1.5 (2026-04-24)
+    - Task T1.2 complete: LINUX_INVENTORY.md classified by primary category.
+    - Added "Classification Summary by Primary Category" table at top.
+    - Five T1.2 categories: runtime-binding (~28 files), domain (~28),
+      deployment (~8), audio (3), legacy-ui (~5). Total: ~55 files.
+    - Confirmed clear: nginx (0), multiprocessing (false alarm), SIGHUP (0).
+    - Pattern-based summary table updated with primary category column.
+
 0.1.4 (2026-04-24)
     - Task T1.1 complete: docs/architecture/LINUX_INVENTORY.md created.
     - Scanned backend/ and frontend/ for 10 pattern categories.
