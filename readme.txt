@@ -1,17 +1,34 @@
 RASTATIME — readme.txt
 =======================
 
-Version: 0.1.8
+Version: 0.1.9
 Date: 2026-04-24
 
 Summary
 -------
-T2.3 complete: AudioDeviceManager ABC defined in audio/soundcard/interface.py.
-Includes AudioDevice, AudioDeviceKind, DeviceUnavailableError.
-13 new tests pass. All 37 unit tests green. No behaviour change.
+T2.4 complete: JobRunner ABC defined in backend/rastatime_worker/interface.py.
+Includes JobStatus, JobInfo, JobResult, JobNotFoundError, JobNameNotRegisteredError.
+20 new tests pass. All 57 unit tests green. No behaviour change.
 
 Changelog
 ---------
+0.1.9 (2026-04-24)
+    - Task T2.4 complete: JobRunner ABC (backend/rastatime_worker/).
+    - JobStatus: PENDING, RUNNING, COMPLETED, FAILED, CANCELLED, RETRYING.
+    - JobInfo: runtime metadata for one submitted job instance.
+    - JobResult: outcome of a completed or failed job instance.
+    - JobNotFoundError, JobNameNotRegisteredError: typed exceptions.
+    - JobRunner ABC — 11 abstract methods:
+        Registration:  register, registered_jobs
+        One-shot:      submit
+        Recurring:     schedule, unschedule, list_schedules
+        Status:        status, result
+        Cancellation:  cancel
+        Lifecycle:     start, stop
+    - Handler-by-name pattern avoids Celery/multiprocessing pickling issues.
+    - tests/unit/worker/test_job_runner_interface.py: 20 tests, all passing.
+    - Total unit tests: 57/57 green.
+
 0.1.8 (2026-04-24)
     - Task T2.3 complete: AudioDeviceManager ABC (audio/soundcard/).
     - AudioDevice: stable_id, name, kind, channels, driver, is_default,
