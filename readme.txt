@@ -1,17 +1,28 @@
 RASTATIME — readme.txt
 =======================
 
-Version: 0.1.6
+Version: 0.1.7
 Date: 2026-04-24
 
 Summary
 -------
-T2.1 complete: PlayoutEngine ABC defined in playout/engine_interface/.
-Includes PlayoutState, QueueItem, TrackChangedEvent, PlayoutError types.
-10 unit tests pass. No behaviour change — interface only.
+T2.2 complete: StreamEgressManager and StreamIngressManager ABCs defined
+in streams/egress/ and streams/ingress/. Shared types in streams/_types.py.
+14 new tests pass. All 24 unit tests green. No behaviour change.
 
 Changelog
 ---------
+0.1.7 (2026-04-24)
+    - Task T2.2 complete: stream ingress/egress interfaces defined.
+    - streams/_types.py: StreamProtocol (ICECAST, SHOUTCAST),
+      StreamState (IDLE, CONNECTING, ACTIVE, DISCONNECTED, ERROR).
+    - streams/egress/interface.py: StreamEgressManager ABC (9 abstract
+      methods), StreamOutput, OutputStatus, OutputStateChangedEvent.
+    - streams/ingress/interface.py: StreamIngressManager ABC (8 abstract
+      methods), StreamSource, SourceStatus, SourceStateChangedEvent.
+    - tests/unit/streams/test_stream_interfaces.py: 14 tests, all passing.
+    - Total unit tests: 24/24 green.
+
 0.1.6 (2026-04-24)
     - Task T2.1 complete: PlayoutEngine ABC (playout/engine_interface/).
     - PlayoutEngine: 13 abstract methods (transport, queue, state, callbacks,
