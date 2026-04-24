@@ -1,14 +1,42 @@
 RASTATIME — readme.txt
 =======================
 
-Version: 0.3.2
+Version: 0.3.3
 Date: 2026-04-25
 
 Summary
 -------
-T5.4 complete: pause/stop/resume transport controls hardened.
-set_pause(True/False) replaces toggle; state-machine diagram added.
-14 new tests (full cycle, freeze, idempotency). Total: 176/176.
+T6.1 complete: scheduler actions mapped to PlayoutEngine.
+StartMode.HARD/SOFT; schedule_next(); two back-to-back VLC shows pass.
+9 new tests (mock + VLC). Total: 185/185. Milestone M6 started.
+
+Changelog
+---------
+0.3.3 (2026-04-25)
+    - Task T6.1 complete: scheduler actions mapped to engine.
+    - playout/scheduler/_scheduler.py: major extension.
+        StartMode(str, Enum): HARD (stop+load+start) and SOFT (splice
+          after current track, or fall back to HARD if stopped).
+        ScheduledShow: new start_mode field (default HARD).
+        PlayoutScheduler._on_start(): dispatches to _hard_start() or
+          _soft_start() based on show.start_mode.
+        _hard_start(): engine.load_queue(items) + engine.start().
+        _soft_start(): if STOPPED falls back to hard; if PLAYING calls
+          engine.clear_queue() + engine.append() for each item so new
+          items play after the current track without interruption.
+        schedule_next(show): immediately appends items via engine.append()
+          and arms a SOFT-mode timer for near-gapless hand-off.
+    - playout/scheduler/__init__.py: exports StartMode.
+    - tests/unit/playout/test_scheduler_engine.py: 9 tests.
+        Mock: StartMode enum values, default start_mode, HARD from
+          playing/stopped, SOFT from stopped (fallback), SOFT splices
+          after current track (4 events in order), schedule_next.
+        VLC (V criterion): test_two_hard_shows_back_to_back_vlc —
+          schedules two 0.5 s shows back-to-back against VlcPlayoutEngine;
+          asserts both items played and both stopped (4 events total).
+        VLC: test_soft_show_splices_after_current_track_vlc — B splices
+          after A without interruption.
+    - 185/185 unit tests green.
 
 Changelog
 ---------

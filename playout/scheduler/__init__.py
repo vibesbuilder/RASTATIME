@@ -1,3 +1,3 @@
-from ._scheduler import PlayoutScheduler, ScheduledShow
+from ._scheduler import PlayoutScheduler, ScheduledShow, StartMode
 
-__all__ = ["PlayoutScheduler", "ScheduledShow"]
+__all__ = ["PlayoutScheduler", "ScheduledShow", "StartMode"]
