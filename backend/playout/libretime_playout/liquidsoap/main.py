@@ -4,15 +4,36 @@ from pathlib import Path
 from typing import Optional
 
 import click
-from libretime_api_client.v2 import ApiClient
+
+# RASTATIME: libretime_api_client is not installed on Windows.
+# Guard the import so this module can be safely imported without it.
+try:
+    from libretime_api_client.v2 import ApiClient
+    _API_CLIENT_AVAILABLE = True
+except ImportError:
+    ApiClient = None  # type: ignore[assignment, misc]
+    _API_CLIENT_AVAILABLE = False
+
 from libretime_shared.cli import cli_config_options, cli_logging_options
 from libretime_shared.config import DEFAULT_ENV_PREFIX
 from libretime_shared.logging import setup_logger
 
-from ..config import Config
-from .entrypoint import generate_entrypoint
-from .models import Info, StreamPreferences
-from .version import get_liquidsoap_version
+# RASTATIME: jinja2 and other playout deps are not installed on Windows.
+# Guard all local liquidsoap sub-imports for safe import on Windows.
+try:
+    from ..config import Config
+    from .entrypoint import generate_entrypoint
+    from .models import Info, StreamPreferences
+    from .version import get_liquidsoap_version
+    _PLAYOUT_DEPS_AVAILABLE = True
+except (ImportError, Exception) as _playout_e:
+    Config = generate_entrypoint = Info = StreamPreferences = get_liquidsoap_version = None  # type: ignore[assignment, misc]
+    _PLAYOUT_DEPS_AVAILABLE = False
+    import logging as _log
+    _log.getLogger(__name__).warning(
+        "libretime_playout.liquidsoap.main: deps unavailable (%s). "
+        "Playout is disabled (RASTATIME Windows mode).", _playout_e
+    )
 
 logger = logging.getLogger(__name__)
 

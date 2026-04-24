@@ -1,12 +1,38 @@
 RASTATIME — readme.txt
 =======================
 
-Version: 0.2.4
+Version: 0.2.5
 Date: 2026-04-24
 
 Summary
 -------
-T3.4 complete: docs/dev/WINDOWS_DEV_STATUS.md created.
+T3.5 complete: import guards added to Celery/Liquidsoap/mutagen modules.
+All 4 problematic modules now import safely on Windows (flag=False).
+Django dev server unaffected. 75/75 unit tests green. Phase 2 complete.
+
+Changelog
+---------
+0.2.5 (2026-04-24)
+    - Task T3.5 complete: stub unsupported runtime modules.
+    - backend/worker/libretime_worker/config.py: guard kombu import and
+      config loading; exposes RASTATIME_WORKER_AVAILABLE flag.
+    - backend/worker/libretime_worker/tasks.py: guard celery/mutagen/
+      libretime_api_client imports; stub decorators (worker.task, signals)
+      so module parses cleanly; exposes RASTATIME_TASKS_AVAILABLE flag.
+    - backend/playout/libretime_playout/liquidsoap/main.py: guard
+      libretime_api_client.v2 and jinja2-dependent sub-imports;
+      exposes _PLAYOUT_DEPS_AVAILABLE flag.
+    - backend/analyzer/libretime_analyzer/pipeline/analyze_metadata.py:
+      guard mutagen import; skip EasyID3.RegisterKey when unavailable;
+      exposes _MUTAGEN_AVAILABLE flag.
+    - backend/api/libretime_api/settings/dev.py: added
+      RASTATIME_WINDOWS_MODE = True feature flag.
+    - Verified: all 4 modules import without error; Django setup OK.
+    - 75/75 unit tests green.
+    - Phase 2 (Windows dev bootstrap) fully complete.
+
+0.2.4 (2026-04-24)
+    T3.4 complete: docs/dev/WINDOWS_DEV_STATUS.md created.
 6 blockers documented (PostgreSQL, gunicorn, psycopg v3, Liquidsoap,
 Celery, libVLC). Quick-start guide for new contributors included.
 Milestone M3 (Windows dev bootstrap) complete.

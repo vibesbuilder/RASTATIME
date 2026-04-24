@@ -32,6 +32,11 @@ from ._internal import (
 
 DEBUG = True
 
+# RASTATIME feature flags
+# Set to True on Windows to disable Linux-only runtime code paths.
+# Checked by any module that wraps Liquidsoap, Celery, or gunicorn.
+RASTATIME_WINDOWS_MODE = True
+
 # Fixed dev-only secret — never use in production
 SECRET_KEY = "rastatime-dev-insecure-secret-key-change-before-any-real-use"  # noqa: S105
 

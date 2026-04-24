@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 from email.message import EmailMessage
 from pathlib import Path
@@ -6,25 +7,82 @@ from tempfile import NamedTemporaryFile
 from typing import Any, Dict, Optional
 from urllib.parse import urlsplit
 
-import mutagen
-import requests
-from celery import Celery, signals
-from celery.schedules import crontab
-from celery.utils.log import get_task_logger
-from libretime_api_client.v1 import ApiClient as LegacyClient
-from mutagen import MutagenError
-from requests import RequestException, Response
+# RASTATIME: celery, mutagen, and libretime_api_client are not available on
+# Windows. Attempt imports and fall back to harmless stubs so this module
+# can be safely imported anywhere. Check RASTATIME_TASKS_AVAILABLE before
+# dispatching real tasks.
+try:
+    import mutagen
+    import requests
+    from celery import Celery, signals
+    from celery.schedules import crontab
+    from celery.utils.log import get_task_logger
+    from libretime_api_client.v1 import ApiClient as LegacyClient
+    from mutagen import MutagenError
+    from requests import RequestException, Response
 
-from . import PACKAGE, VERSION
-from .config import config
+    from . import PACKAGE, VERSION
+    from .config import config, RASTATIME_WORKER_AVAILABLE
 
-worker = Celery()
-logger = get_task_logger(__name__)
+    if not RASTATIME_WORKER_AVAILABLE:
+        raise ImportError("worker config unavailable")
 
-legacy_client = LegacyClient(
-    base_url=config.general.public_url,
-    api_key=config.general.api_key,
-)
+    worker = Celery()
+    logger = get_task_logger(__name__)
+    legacy_client = LegacyClient(
+        base_url=config.general.public_url,
+        api_key=config.general.api_key,
+    )
+    RASTATIME_TASKS_AVAILABLE = True
+
+except (ImportError, Exception) as _rastatime_e:
+    RASTATIME_TASKS_AVAILABLE = False
+
+    # Stub objects so the decorator-heavy code below parses without error.
+    class _NoopTask:
+        def __call__(self, *a, **kw):
+            raise RuntimeError("Celery tasks unavailable (RASTATIME Windows mode)")
+
+    class _NoopWorker:
+        class conf:
+            beat_schedule: dict = {}
+
+        def task(self, *args, **kwargs):
+            def decorator(fn):
+                return _NoopTask()
+            if args and callable(args[0]):
+                return _NoopTask()
+            return decorator
+
+    class _NoopSignals:
+        class worker_init:
+            @staticmethod
+            def connect(fn=None, **_kw):
+                return fn or (lambda f: f)
+
+    worker = _NoopWorker()  # type: ignore[assignment]
+    signals = _NoopSignals()  # type: ignore[assignment]
+    crontab = lambda *a, **kw: None  # type: ignore[assignment]  # noqa: E731
+    legacy_client = None  # type: ignore[assignment]
+    config = None  # type: ignore[assignment]
+    MutagenError = Exception  # type: ignore[assignment, misc]
+    RequestException = Exception  # type: ignore[assignment]
+    Response = object  # type: ignore[assignment, misc]
+    PACKAGE = VERSION = "unavailable"
+    mutagen = None  # type: ignore[assignment]
+    requests = None  # type: ignore[assignment]
+
+    logger = logging.getLogger(__name__)
+    logger.warning(
+        "libretime_worker.tasks: disabled (%s). "
+        "All Celery tasks unavailable (RASTATIME Windows mode).",
+        _rastatime_e,
+    )
+
+    def get_task_logger(name):  # type: ignore[misc]
+        return logging.getLogger(name)
+
+
 
 
 @signals.worker_init.connect

@@ -3,9 +3,18 @@ from datetime import timedelta
 from pathlib import Path
 from typing import Any, Dict
 
-import mutagen
+# RASTATIME: mutagen is not installed on Windows by default.
+# Guard the import so this module can be safely imported without it.
+try:
+    import mutagen
+    from mutagen.easyid3 import EasyID3
+    _MUTAGEN_AVAILABLE = True
+except ImportError:
+    mutagen = None  # type: ignore[assignment]
+    EasyID3 = None  # type: ignore[assignment, misc]
+    _MUTAGEN_AVAILABLE = False
+
 from libretime_shared.files import compute_md5
-from mutagen.easyid3 import EasyID3
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +29,8 @@ def comment_get(id3, _):
     return flatten(comments)
 
 
-EasyID3.RegisterKey("comment", comment_get)
+if _MUTAGEN_AVAILABLE:
+    EasyID3.RegisterKey("comment", comment_get)
 
 
 def analyze_metadata(filepath_: str, metadata: Dict[str, Any]):
