@@ -1,14 +1,41 @@
 RASTATIME — readme.txt
 =======================
 
-Version: 0.3.1
+Version: 0.3.2
 Date: 2026-04-25
 
 Summary
 -------
-T5.3 complete: queue playback verified and gap-handling documented.
-3-item queue V criterion passes; 7 new queue-specific tests added.
-Total: 162/162.
+T5.4 complete: pause/stop/resume transport controls hardened.
+set_pause(True/False) replaces toggle; state-machine diagram added.
+14 new tests (full cycle, freeze, idempotency). Total: 176/176.
+
+Changelog
+---------
+0.3.2 (2026-04-25)
+    - Task T5.4 complete: transport controls.
+    - playout/engine_vlc/_engine.py:
+        VlcPlayoutEngine class docstring: state-machine diagram with
+          all valid transitions and idempotent-call rules.
+        pause(): now uses set_pause(True) instead of the toggle pause()
+          — explicit, non-toggling, safe to call from any thread.
+        resume(): now uses set_pause(False) — symmetric with pause().
+        Both methods document their idempotency contract.
+    - tests/unit/playout/engine_vlc/test_transport_controls.py: 14 tests.
+        V criterion: test_full_state_machine_cycle — exercises
+          STOPPED->PLAYING->PAUSED->PLAYING->STOPPED with event
+          assertion at each boundary.
+        pause(): freeze test (remaining unchanged while paused),
+          idempotent from PAUSED, no-op from STOPPED.
+        resume(): continues from paused position (remaining decreases
+          after resume), no-op from PLAYING, no-op from STOPPED.
+        stop(): from PAUSED->STOPPED with callback; from STOPPED is
+          no-op; double stop() idempotent.
+        Restart: start() after stop() restarts from item 0.
+        remaining_duration: None when stopped, None after stop from
+          pause, decreases while playing.
+    - 176/176 unit tests green.
+    - Milestone M5 (libVLC basic playback) complete.
 
 Changelog
 ---------

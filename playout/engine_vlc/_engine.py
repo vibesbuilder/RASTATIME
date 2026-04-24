@@ -64,6 +64,24 @@ class VlcPlayoutEngine(PlayoutEngine):
     """
     libVLC-backed playout engine.
 
+    State machine
+    -------------
+    Valid transitions::
+
+        STOPPED ──start()──► PLAYING ──pause()──► PAUSED
+           ▲                    │                    │
+           │                    │ stop()        resume()
+           │                    ▼                    │
+           └──────────────── STOPPED ◄───────────────┘
+                               ▲
+                ERROR ──stop()─┘   (start() from ERROR restarts from item 0)
+
+    Idempotent calls (no state change, no error):
+        start()  while PLAYING or PAUSED
+        pause()  while PAUSED, STOPPED, or ERROR
+        resume() while PLAYING, STOPPED, or ERROR
+        stop()   while STOPPED
+
     Parameters
     ----------
     vlc_args:
@@ -146,22 +164,33 @@ class VlcPlayoutEngine(PlayoutEngine):
             self._fire_track_change(prev, None)
 
     def pause(self) -> None:
-        """Pause at the current position."""
+        """
+        Pause at the current position.
+
+        Idempotent: calling pause() while already PAUSED is a no-op.
+        Calling pause() while STOPPED or in ERROR state is a no-op.
+        """
         with self._lock:
             if self._state != PlayoutState.PLAYING:
                 return
             self._state = PlayoutState.PAUSED
 
-        self._player.pause()  # VLC: pause() toggles; we call once to pause
+        # set_pause(True) is explicit and non-toggling (safer than pause())
+        self._player.set_pause(True)
 
     def resume(self) -> None:
-        """Resume from the paused position."""
+        """
+        Resume playback from the paused position.
+
+        Idempotent: calling resume() while already PLAYING is a no-op.
+        Calling resume() while STOPPED or in ERROR state is a no-op.
+        """
         with self._lock:
             if self._state != PlayoutState.PAUSED:
                 return
             self._state = PlayoutState.PLAYING
 
-        self._player.pause()  # VLC: pause() toggles again to resume
+        self._player.set_pause(False)
 
     # ------------------------------------------------------------------
     # Queue management
