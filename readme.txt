@@ -1,17 +1,31 @@
 RASTATIME — readme.txt
 =======================
 
-Version: 0.1.7
+Version: 0.1.8
 Date: 2026-04-24
 
 Summary
 -------
-T2.2 complete: StreamEgressManager and StreamIngressManager ABCs defined
-in streams/egress/ and streams/ingress/. Shared types in streams/_types.py.
-14 new tests pass. All 24 unit tests green. No behaviour change.
+T2.3 complete: AudioDeviceManager ABC defined in audio/soundcard/interface.py.
+Includes AudioDevice, AudioDeviceKind, DeviceUnavailableError.
+13 new tests pass. All 37 unit tests green. No behaviour change.
 
 Changelog
 ---------
+0.1.8 (2026-04-24)
+    - Task T2.3 complete: AudioDeviceManager ABC (audio/soundcard/).
+    - AudioDevice: stable_id, name, kind, channels, driver, is_default,
+      is_available, raw_id, metadata.
+    - AudioDeviceKind: OUTPUT | INPUT.
+    - DeviceUnavailableError: typed exception carrying device_id.
+    - AudioDeviceManager ABC — 9 abstract methods:
+        Enumeration:  list_outputs, list_inputs,
+                      get_default_output, get_default_input
+        ID resolution: resolve_stable_id, lookup_by_stable_id
+        Selection:    open_output, open_input, close_output, close_input
+    - tests/unit/audio/test_audio_device_manager.py: 13 tests, all passing.
+    - Total unit tests: 37/37 green.
+
 0.1.7 (2026-04-24)
     - Task T2.2 complete: stream ingress/egress interfaces defined.
     - streams/_types.py: StreamProtocol (ICECAST, SHOUTCAST),
