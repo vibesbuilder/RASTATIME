@@ -1,4 +1,4 @@
-#Requires -Version 5.1
+﻿#Requires -Version 5.1
 <#
 .SYNOPSIS
     Start the RASTATIME API in development mode.
@@ -38,7 +38,7 @@
         RASTATIME_DB_HOST, RASTATIME_DB_PORT, RASTATIME_DB_NAME,
         RASTATIME_DB_USER, RASTATIME_DB_PASSWORD
 
-    EXECUTION POLICY — see bootstrap.ps1 .NOTES for unblock options.
+    EXECUTION POLICY  - see bootstrap.ps1 .NOTES for unblock options.
 #>
 
 [CmdletBinding()]
@@ -78,7 +78,7 @@ if (Test-Path $VenvPython) {
 }
 
 # ---------------------------------------------------------------------------
-# PYTHONPATH — make libretime_api and libretime_shared importable without
+# PYTHONPATH  - make libretime_api and libretime_shared importable without
 # requiring an editable install.  An editable install is preferred because
 # it also registers package metadata (importlib.metadata.version); without
 # it VERSION falls back to "dev".
@@ -103,7 +103,7 @@ $SwaggerUrl = "http://${BindHost}:${Port}/api/v2/schema/swagger-ui"
 
 Write-Host ""
 Write-Host "======================================================" -ForegroundColor Cyan
-Write-Host "  RASTATIME API — development server                  " -ForegroundColor Cyan
+Write-Host "  RASTATIME API  - development server                  " -ForegroundColor Cyan
 Write-Host "======================================================" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "  Settings  : libretime_api.settings.dev" -ForegroundColor Gray

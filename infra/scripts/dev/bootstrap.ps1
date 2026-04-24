@@ -1,4 +1,4 @@
-#Requires -Version 5.1
+﻿#Requires -Version 5.1
 <#
 .SYNOPSIS
     RASTATIME development environment bootstrap checker.
@@ -18,7 +18,7 @@
     Run once after cloning, and again after any major system change.
 
 .EXAMPLE
-    # Standard run (may need policy unblock first — see NOTES)
+    # Standard run (may need policy unblock first  - see NOTES)
     powershell -ExecutionPolicy Bypass -File infra\scripts\dev\bootstrap.ps1
 
 .NOTES
@@ -37,8 +37,8 @@
             .\infra\scripts\dev\bootstrap.ps1
 
     Exit codes:
-        0 — all required dependencies found
-        1 — one or more required dependencies missing
+        0  - all required dependencies found
+        1  - one or more required dependencies missing
 #>
 
 [CmdletBinding()]
@@ -59,7 +59,7 @@ $MIN_PYTHON_MINOR = 11
 function Write-Banner {
     Write-Host ""
     Write-Host "======================================================" -ForegroundColor Cyan
-    Write-Host "  RASTATIME — Development Environment Bootstrap Check " -ForegroundColor Cyan
+    Write-Host "  RASTATIME  - Development Environment Bootstrap Check " -ForegroundColor Cyan
     Write-Host "======================================================" -ForegroundColor Cyan
     Write-Host ""
 }
@@ -123,7 +123,7 @@ function Test-Python {
             Write-Pass "Python $MIN_PYTHON_MAJOR.$MIN_PYTHON_MINOR+" "$vstr at $($cmd.Source)"
             return $true
         }
-        Write-Fail "Python $MIN_PYTHON_MAJOR.$MIN_PYTHON_MINOR+" "found $vstr — too old"
+        Write-Fail "Python $MIN_PYTHON_MAJOR.$MIN_PYTHON_MINOR+" "found $vstr  - too old"
         Write-Info "Upgrade from https://www.python.org/downloads/."
         return $false
     }
@@ -141,7 +141,7 @@ function Test-PostgreSQL {
       3. a default install directory under Program Files.
     #>
 
-    # 1 — psql on PATH
+    # 1  - psql on PATH
     $psql = Get-Command psql -ErrorAction SilentlyContinue
     if ($psql) {
         $rawVer = & $psql.Source --version 2>&1
@@ -149,22 +149,22 @@ function Test-PostgreSQL {
         return $true
     }
 
-    # 2 — pg_isready on PATH (lighter check, no auth needed)
+    # 2  - pg_isready on PATH (lighter check, no auth needed)
     $pgReady = Get-Command pg_isready -ErrorAction SilentlyContinue
     if ($pgReady) {
         Write-Pass "PostgreSQL (pg_isready on PATH)" $pgReady.Source
         return $true
     }
 
-    # 3 — Windows service
+    # 3  - Windows service
     $svc = Get-Service -Name 'postgresql*' -ErrorAction SilentlyContinue
     if ($svc) {
         $first = $svc | Select-Object -First 1
-        Write-Pass "PostgreSQL (Windows service)" "$($first.Name) — status: $($first.Status)"
+        Write-Pass "PostgreSQL (Windows service)" "$($first.Name)  - status: $($first.Status)"
         return $true
     }
 
-    # 4 — Default install directory
+    # 4  - Default install directory
     $pgBase = Join-Path $env:ProgramFiles 'PostgreSQL'
     if (Test-Path $pgBase) {
         $latest = Get-ChildItem $pgBase -Directory | Sort-Object Name -Descending | Select-Object -First 1
@@ -190,42 +190,42 @@ function Test-VLC {
     libvlc.dll in the same directory confirms the SDK is present.
     #>
 
-    # 1 — vlc on PATH
+    # 1  - vlc on PATH
     $vlcCmd = Get-Command vlc -ErrorAction SilentlyContinue
     if ($vlcCmd) {
         $vlcDir = Split-Path $vlcCmd.Source
         $hasSdk = Test-Path (Join-Path $vlcDir 'libvlc.dll')
         $sdkNote = if ($hasSdk) { 'libvlc.dll present' } else { 'libvlc.dll NOT found' }
         if ($hasSdk) {
-            Write-Pass "VLC on PATH" "$($vlcCmd.Source) — $sdkNote"
+            Write-Pass "VLC on PATH" "$($vlcCmd.Source)  - $sdkNote"
         } else {
-            Write-Fail "VLC on PATH" "$($vlcCmd.Source) — $sdkNote (python-vlc will not work)"
+            Write-Fail "VLC on PATH" "$($vlcCmd.Source)  - $sdkNote (python-vlc will not work)"
             Write-Info "Reinstall VLC (64-bit) from https://www.videolan.org/vlc/download-windows.html"
         }
         return $hasSdk
     }
 
-    # 2 — Default install path
+    # 2  - Default install path
     $defaultPath = Join-Path $env:ProgramFiles 'VideoLAN\VLC\vlc.exe'
     if (Test-Path $defaultPath) {
         $vlcDir = Split-Path $defaultPath
         $hasSdk = Test-Path (Join-Path $vlcDir 'libvlc.dll')
         $sdkNote = if ($hasSdk) { 'libvlc.dll present' } else { 'libvlc.dll NOT found' }
-        Write-Pass "VLC (Program Files)" "$defaultPath — $sdkNote"
+        Write-Pass "VLC (Program Files)" "$defaultPath  - $sdkNote"
         if (-not $hasSdk) {
             Write-Info "Reinstall VLC to ensure libvlc.dll is included."
         }
         return $hasSdk
     }
 
-    # 3 — Registry
+    # 3  - Registry
     $regPath = 'HKLM:\SOFTWARE\VideoLAN\VLC'
     if (Test-Path $regPath) {
         $installDir = (Get-ItemProperty $regPath -ErrorAction SilentlyContinue).InstallDir
         if ($installDir -and (Test-Path $installDir)) {
             $hasSdk = Test-Path (Join-Path $installDir 'libvlc.dll')
             $sdkNote = if ($hasSdk) { 'libvlc.dll present' } else { 'libvlc.dll NOT found' }
-            Write-Pass "VLC (registry)" "$installDir — $sdkNote"
+            Write-Pass "VLC (registry)" "$installDir  - $sdkNote"
             return $hasSdk
         }
     }
@@ -239,7 +239,7 @@ function Test-VLC {
 
 function Test-RabbitMQ {
     <#
-    Optional check — returns $true if found, but never fails the bootstrap.
+    Optional check  - returns $true if found, but never fails the bootstrap.
     Detects via Windows service 'RabbitMQ' or rabbitmq-server on PATH.
     #>
 
@@ -255,7 +255,7 @@ function Test-RabbitMQ {
         return $true
     }
 
-    Write-Skip "RabbitMQ [optional]" "not found — worker will run without broker"
+    Write-Skip "RabbitMQ [optional]" "not found  - worker will run without broker"
     return $false
 }
 
