@@ -1,18 +1,27 @@
 RASTATIME — readme.txt
 =======================
 
-Version: 0.1.0
+Version: 0.1.1
 Date: 2026-04-24
 
 Summary
 -------
-T0.1 complete: LibreTime 4.5.0 imported as baseline.
-Git repository initialized. Source trees mapped into RASTATIME
-folder structure (backend/, frontend/legacy/, infra/upstream/,
-docs/upstream/). FORK_NOTES.md and docs/architecture/ skeleton created.
+T0.2 complete: ADR-001 through ADR-005 created under
+docs/architecture/decisions/. Covers Windows-first target, libVLC
+as main playout engine, Icecast as auxiliary only, English-first
+system language, and NSSM as phase 1 service strategy.
 
 Changelog
 ---------
+0.1.1 (2026-04-24)
+    - Task T0.2 complete: 5 Architecture Decision Records created.
+    - ADR-001: Windows 11 as primary runtime target.
+    - ADR-002: libVLC as mandatory main playout engine.
+    - ADR-003: Icecast as optional auxiliary stream layer.
+    - ADR-004: English as canonical system language; German UI-only.
+    - ADR-005: NSSM as phase 1 Windows service strategy.
+    - .gitkeep removed from docs/architecture/decisions/ (now has real files).
+
 0.1.0 (2026-04-24)
     - Task T0.1 complete: LibreTime 4.5.0 baseline imported.
     - git init; .gitattributes for Windows line endings.
