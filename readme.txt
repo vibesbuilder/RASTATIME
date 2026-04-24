@@ -1,17 +1,61 @@
 RASTATIME — readme.txt
 =======================
 
-Version: 0.3.3
-Date: 2026-04-25
+Version: 0.3.4
+Date: 2026-04-24
 
 Summary
 -------
-T6.1 complete: scheduler actions mapped to PlayoutEngine.
-StartMode.HARD/SOFT; schedule_next(); two back-to-back VLC shows pass.
-9 new tests (mock + VLC). Total: 185/185. Milestone M6 started.
+T6.2 complete: fallback/filler playout entry.
+FallbackQueue stub; PlayoutScheduler fallback management (set_fallback,
+clear_fallback, fallback_is_active); auto-restart for looping fallback;
+show interrupts fallback via HARD mode. 13 new tests (mock + VLC).
+Total: 198/198. Milestone M6 continued.
 
 Changelog
 ---------
+0.3.4 (2026-04-24)
+    - Task T6.2 complete: fallback playout entry.
+    - playout/fallback/_queue.py: FallbackQueue stub.
+        __init__(items, loop=True): rejects empty list (ValueError).
+        items property: returns a copy of the internal list.
+        loop property: True = restart after last item; False = play once.
+        is_empty(): always False for a valid instance (constructor guards).
+        __len__(): delegates to internal list length.
+    - playout/fallback/__init__.py: re-exports FallbackQueue.
+    - playout/scheduler/_scheduler.py: fallback management added.
+        PlayoutScheduler.__init__: _fallback=None, _fallback_active=False;
+          registers engine.on_track_change(self._on_engine_track_change).
+        set_fallback(fb): stores FallbackQueue under lock.
+        clear_fallback(): clears queue + active flag under lock.
+        fallback_is_active(): returns _fallback_active under lock.
+        _on_engine_track_change(event): if engine stops (current_item None)
+          while fallback active and loop=True, spawns _trigger_fallback thread.
+        _on_stop(show_id): calls engine.stop(), sets _fallback_active=True,
+          spawns _trigger_fallback thread if fallback configured.
+        _hard_start(show): sets _fallback_active=False BEFORE load_queue()
+          to prevent spurious fallback restart from the stop callback.
+        _soft_start(show): same guard for _fallback_active.
+        _trigger_fallback(): engine.load_queue(fb.items) + engine.start();
+          called only in daemon threads, never on the engine callback thread.
+    - tests/unit/playout/test_fallback.py: 13 tests.
+        FallbackQueue unit tests (4): stores items, non-looping, rejects
+          empty, items property returns a copy.
+        Scheduler configuration tests (2): set_fallback does not activate
+          fallback immediately; clear_fallback removes config.
+        V criterion (mock): fallback starts after show ends; active flag
+          is True while fallback is playing.
+        Interruption: HARD-mode show stops fallback and plays show items.
+        Looping: fallback restarts after last item (loop=True).
+        Non-looping: fallback plays once then engine stops (loop=False).
+        Suppress: clear_fallback() prevents fallback from starting.
+        V criterion (VLC): smoke test — VLC show plays, then VLC fallback
+          starts; skipped if VLC not installed.
+    - Timing bug found + fixed in tests: fallback item duration must exceed
+      the assertion wait-time; show2 end_at must exceed MARGIN to avoid
+      stop-timer triggering a re-activation before the assert.
+    - 198/198 unit tests green.
+
 0.3.3 (2026-04-25)
     - Task T6.1 complete: scheduler actions mapped to engine.
     - playout/scheduler/_scheduler.py: major extension.
