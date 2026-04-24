@@ -1,17 +1,33 @@
 RASTATIME — readme.txt
 =======================
 
-Version: 0.2.6
+Version: 0.2.7
 Date: 2026-04-24
 
 Summary
 -------
-T4.1 complete: MockPlayoutEngine implemented.
-In-process playout stub with timer-based automatic queue advance.
-18 new unit tests (all green). Total: 93/93. Milestone M4 complete.
+T4.2 complete: engine-selection config flag added.
+RASTATIME_PLAYOUT_ENGINE=mock|libvlc; factory create_playout_engine().
+12 new unit tests (all green). Total: 105/105.
 
 Changelog
 ---------
+0.2.7 (2026-04-24)
+    - Task T4.2 complete: engine selection config flag.
+    - rastatime_common/__init__.py: new top-level package.
+    - rastatime_common/config.py: PlayoutEngineKind(str, Enum) with
+      MOCK and LIBVLC values; get_playout_engine_kind() reads
+      RASTATIME_PLAYOUT_ENGINE env var (case-insensitive, strips
+      whitespace, defaults to "mock"); create_playout_engine(kind,
+      **kwargs) factory returns MockPlayoutEngine for MOCK and raises
+      ImportError with helpful message for LIBVLC (Phase 4).
+    - tests/unit/rastatime_common/test_engine_config.py: 12 tests.
+        Covers: enum values, str-enum comparison, default/env/case/
+        whitespace/invalid for get_playout_engine_kind, explicit/
+        env/kwargs for create_playout_engine(MOCK), ImportError path
+        for create_playout_engine(LIBVLC).
+    - 105/105 unit tests green.
+
 0.2.6 (2026-04-24)
     - Task T4.1 complete: MockPlayoutEngine.
     - playout/engine_mock/_engine.py: full MockPlayoutEngine(PlayoutEngine).
