@@ -105,13 +105,44 @@ def test_create_mock_engine_forwards_kwargs(monkeypatch):
 
 
 # ---------------------------------------------------------------------------
-# create_playout_engine — LIBVLC (not yet implemented)
+# create_playout_engine — LIBVLC
 # ---------------------------------------------------------------------------
 
-def test_create_libvlc_engine_raises_import_error():
-    """
-    engine_vlc does not exist yet (Phase 4). The factory must raise
-    ImportError with a helpful message rather than an AttributeError or crash.
-    """
+def _vlc_available() -> bool:
+    try:
+        from playout.engine_vlc.probe import probe  # noqa: PLC0415
+        return probe().available
+    except Exception:
+        return False
+
+
+def test_create_libvlc_engine_when_vlc_installed():
+    """When VLC is installed, factory returns a VlcPlayoutEngine."""
+    if not _vlc_available():
+        pytest.skip("VLC not installed in this environment")
+    from playout.engine_vlc import VlcPlayoutEngine  # noqa: PLC0415
+    engine = create_playout_engine(PlayoutEngineKind.LIBVLC, vlc_args=["--aout=dummy"])
+    assert isinstance(engine, VlcPlayoutEngine)
+    engine.close()
+
+
+def test_create_libvlc_engine_raises_import_error_when_vlc_missing(monkeypatch):
+    """When playout.engine_vlc cannot be imported, factory raises ImportError."""
+    import builtins
+    real_import = builtins.__import__
+
+    def mock_import(name, *args, **kwargs):
+        if name == "playout.engine_vlc" or name.startswith("playout.engine_vlc"):
+            raise ImportError("No module named 'playout.engine_vlc'")
+        return real_import(name, *args, **kwargs)
+
+    # Also remove from sys.modules cache so the mock import takes effect
+    import sys
+    cached = {k: v for k, v in sys.modules.items() if "playout.engine_vlc" in k}
+    for k in cached:
+        monkeypatch.delitem(sys.modules, k, raising=False)
+
+    monkeypatch.setattr(builtins, "__import__", mock_import)
+
     with pytest.raises(ImportError, match="playout.engine_vlc"):
         create_playout_engine(PlayoutEngineKind.LIBVLC)

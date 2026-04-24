@@ -1,14 +1,49 @@
 RASTATIME — readme.txt
 =======================
 
-Version: 0.2.9
+Version: 0.3.0
 Date: 2026-04-25
 
 Summary
 -------
-T5.1 complete: python-vlc dependency added; libVLC runtime probe implemented.
-Probe detects DLL path, bitness, version; CLI report; 19 new tests.
-Total: 136/136. Phase 4 started.
+T5.2 complete: VlcPlayoutEngine — first real libVLC-backed playout.
+Plays local files via URI; full transport + queue + callback contract.
+18 new tests (real WAV playback, --aout=dummy). Total: 155/155.
+
+Changelog
+---------
+0.3.0 (2026-04-25)
+    - Task T5.2 complete: VlcPlayoutEngine.
+    - playout/engine_vlc/_engine.py: VlcPlayoutEngine(PlayoutEngine).
+        One vlc.Instance + one MediaPlayer reused for all items.
+        start(): loads first item, calls player.play(), fires callback.
+        stop(): sets STOPPED, calls player.stop(), fires callback.
+        pause()/resume(): delegate to player.pause() (VLC toggle).
+        load_queue(): replaces queue, stops if active.
+        append()/clear_queue(): same semantics as MockPlayoutEngine.
+        get_remaining_duration(): uses player.get_time()/get_length()
+          (ms); falls back to item.duration if VLC reports -1.
+        select_output_device(): calls audio_output_device_set(); silent
+          best-effort.
+        close(): releases player and instance resources.
+        _on_vlc_end(): dispatches _advance_track() to daemon thread
+          (avoids deadlock from VLC callback thread).
+        _advance_track(): increments index, loads next URI outside lock,
+          fires track-change callbacks.
+        _on_vlc_error(): sets ERROR state, fires on_error callbacks.
+    - playout/engine_vlc/__init__.py: exports VlcPlayoutEngine.
+    - tests/unit/playout/engine_vlc/test_vlc_engine.py: 18 tests.
+        All use real WAV files (0.5 s, sine tone) + --aout=dummy.
+        V criterion: test_end_of_file_fires_callback_and_stops asserts
+          STOPPED state and item->None event after WAV playback ends.
+        Transport: start/stop/pause/resume; idempotency; empty-queue.
+        Queue: load_queue, append, clear_queue (playing + stopped).
+        State: remaining_duration, get_current_item, get_state.
+        Callbacks: multiple listeners; crashing callback guard.
+    - tests/unit/rastatime_common/test_engine_config.py: updated
+        libvlc test split into VLC-present path (skip if absent) and
+        mocked ImportError path.
+    - 155/155 unit tests green.
 
 Changelog
 ---------
