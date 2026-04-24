@@ -1,14 +1,38 @@
 RASTATIME — readme.txt
 =======================
 
-Version: 0.2.5
+Version: 0.2.6
 Date: 2026-04-24
 
 Summary
 -------
-T3.5 complete: import guards added to Celery/Liquidsoap/mutagen modules.
-All 4 problematic modules now import safely on Windows (flag=False).
-Django dev server unaffected. 75/75 unit tests green. Phase 2 complete.
+T4.1 complete: MockPlayoutEngine implemented.
+In-process playout stub with timer-based automatic queue advance.
+18 new unit tests (all green). Total: 93/93. Milestone M4 complete.
+
+Changelog
+---------
+0.2.6 (2026-04-24)
+    - Task T4.1 complete: MockPlayoutEngine.
+    - playout/engine_mock/_engine.py: full MockPlayoutEngine(PlayoutEngine).
+        Thread-safe via threading.RLock.
+        Automatic queue advance via threading.Timer in _advance_track().
+        on_track_change callbacks fired outside lock (deadlock-safe).
+        Exceptions in callbacks caught per-callback (guard pattern).
+        pause()/resume() preserve _paused_remaining; rebase _start_time.
+        load_queue() stops playback and fires track_change to None.
+        clear_queue() keeps current item; removes pending items only.
+        select_output_device() is a safe no-op.
+    - playout/engine_mock/__init__.py: re-exports MockPlayoutEngine.
+    - tests/unit/playout/test_mock_engine.py: 18 tests.
+        V criterion: test_state_transitions_3_item_queue verifies
+        4 TrackChangedEvents on a 3-item queue (None->t0, t0->t1,
+        t1->t2, t2->None) using TICK=0.05 s tracks.
+        Additional: transport controls, queue management, pause/resume,
+        remaining duration, device no-op, multiple callbacks,
+        crashing callback guard.
+    - 93/93 unit tests green.
+    - Milestone M4 (Mock playout engine) complete.
 
 Changelog
 ---------
