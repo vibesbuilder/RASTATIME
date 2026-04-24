@@ -1,18 +1,35 @@
 RASTATIME — readme.txt
 =======================
 
-Version: 0.2.0
+Version: 0.2.1
 Date: 2026-04-24
 
 Summary
 -------
-T2.5 complete: ServiceHealth ABC defined in infra/service_health/interface.py.
-Includes HealthStatus, ComponentHealth, SystemHealth (with JSON shape spec and
-from_components() aggregation), and ServiceHealth ABC (check_health, is_alive,
-is_ready). 18 new tests pass. All 75 unit tests green. No behaviour change.
+T3.1 complete: PowerShell bootstrap checker at infra/scripts/dev/bootstrap.ps1.
+Checks Python 3.11+, PostgreSQL, VLC/libVLC (required) and RabbitMQ (optional).
+Prints color-coded [PASS]/[FAIL]/[SKIP] per dependency with remediation hints.
+Exits 0 if all required deps found, 1 otherwise. No new unit tests (manual V).
 
 Changelog
 ---------
+0.2.1 (2026-04-24)
+    - Task T3.1 complete: PowerShell bootstrap checker.
+    - infra/scripts/dev/bootstrap.ps1 (#Requires -Version 5.1).
+    - Required checks: Python 3.11+, PostgreSQL, VLC + libvlc.dll.
+    - Optional check:  RabbitMQ (SKIP, not FAIL if absent).
+    - Detection strategies:
+        Python:     PATH (python / python3), version parse
+        PostgreSQL: psql on PATH, pg_isready on PATH, Windows service,
+                    Program Files install directory
+        VLC:        PATH, Program Files\VideoLAN\VLC, HKLM registry key;
+                    libvlc.dll presence verified separately
+        RabbitMQ:   Windows service, PATH
+    - Color-coded output; inline remediation links on failure.
+    - Execution policy unblock steps documented in .NOTES block.
+    - Exit code 0 = all required deps present; 1 = missing.
+    - Verified: script structure checks pass.
+
 0.2.0 (2026-04-24)
     - Task T2.5 complete: ServiceHealth ABC (infra/service_health/).
     - HealthStatus: HEALTHY, DEGRADED, UNHEALTHY.
