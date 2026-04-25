@@ -1,18 +1,76 @@
 RASTATIME — readme.txt
 =======================
 
-Version: 0.3.7
+Version: 0.3.8
 Date: 2026-04-25
 
 Summary
 -------
-T8.1 complete: QUEUE_BEHAVIOR.md written. Authoritative contract for queue
-priority (live > show > fallback), transition rules (HARD/SOFT), all edge
-cases, and known limitations vs. LibreTime/Liquidsoap. No code changes.
-Total: 232/232. Milestone M8 started.
+T8.2 complete: QueueManager module implemented. Central arbiter for queue
+decisions; separates scheduler timing from engine control. ContentKind enum
+(IDLE/SHOW/FALLBACK); start_show(), end_show(), set_fallback(),
+clear_fallback(), fallback_is_active(), active_content(). 18 new tests;
+all 250/250 unit tests green. Milestone M8 in progress (T8.3 next).
 
 Changelog
 ---------
+0.3.8 (2026-04-25)
+    - Task T8.2 complete: QueueManager module implemented.
+    - playout/queue_manager/_manager.py: ContentKind enum + QueueManager class.
+        ContentKind(str, Enum): IDLE / SHOW / FALLBACK — tracks intent, not
+          raw engine state.
+        QueueManager(engine): central arbiter per QUEUE_BEHAVIOR.md contract.
+          __init__: stores engine, Lock, _fallback, _fallback_active=False,
+            _content=IDLE; registers _on_engine_track_change callback.
+          start_show(items, mode): raises ValueError on empty list; dispatches
+            to _hard_start or _soft_start per StartMode.
+          end_show(): engine.stop() (hard, always); if fallback configured,
+            sets _fallback_active=True, _content=FALLBACK, spawns daemon
+            thread calling _trigger_fallback(); else sets _content=IDLE.
+          set_fallback(fb): stores FallbackQueue under lock; new config takes
+            effect at next _trigger_fallback() call.
+          clear_fallback(): sets _fallback=None, _fallback_active=False under
+            lock; currently playing item finishes naturally but does not restart.
+          fallback_is_active(): lock-safe read of _fallback_active flag.
+          active_content(): lock-safe read of _content ContentKind.
+          _hard_start(items): sets _fallback_active=False + _content=SHOW
+            under lock *before* engine.load_queue() to prevent spurious
+            fallback restart during brief STOPPED state (QUEUE_BEHAVIOR §4.1).
+            Calls engine.load_queue(items) then engine.start() outside lock.
+          _soft_start(items): sets _fallback_active=False + _content=SHOW;
+            if engine STOPPED → falls back to hard path (load + start);
+            if PLAYING/PAUSED → clear_queue() + append() per item (splice).
+          _trigger_fallback(): reads _fallback under lock; calls
+            engine.load_queue(fb.items) + engine.start(); always runs in
+            daemon thread.
+          _on_engine_track_change(event): engine callback for queue exhaustion.
+            Ignores events where current_item is not None.
+            If _fallback_active and loop=True: spawns new daemon thread calling
+              _trigger_fallback() (restart, QUEUE_BEHAVIOR §4.4).
+            If _fallback_active and loop=False: sets _content=IDLE (§4.5).
+    - playout/queue_manager/__init__.py: exports ContentKind + QueueManager.
+    - tests/unit/playout/test_queue_manager.py: 18 tests.
+        _SpyEngine(MockPlayoutEngine): records calls to load_queue, start,
+          stop, clear_queue, append for call-sequence assertions.
+        Construction (2): idle on init, fallback not active.
+        HARD start (3): sets SHOW content, load_queue before start order,
+          clears fallback-active before engine call.
+        SOFT start from STOPPED (1): falls back to hard path.
+        SOFT start from PLAYING (1): clear_queue + append, no stop/load_queue.
+        end_show (3): stops engine, IDLE when no fallback, starts fallback
+          + sets FALLBACK content when fallback configured.
+        Show interrupts fallback (1): HARD start clears flag, show item plays.
+        Looping fallback restart (1): engine queue exhausted → restarts.
+        Non-looping fallback (1): plays once → IDLE.
+        clear_fallback (1): prevents restart on next track-change event.
+        fallback_is_active transitions (1): tracks flag across lifecycle.
+        ValueError on empty items (1).
+        V criterion — full show+fallback cycle (1): start show, end_show,
+          fallback starts automatically (engine PLAYING, filler-v item).
+        V criterion — HARD show B interrupts A (1): show A playing, HARD
+          start_show B → engine immediately switches to b1 item.
+    - 250/250 unit tests green (4 VLC-dependent skipped without VLC).
+
 0.3.7 (2026-04-25)
     - Task T8.1 complete: QUEUE_BEHAVIOR.md written.
     - docs/architecture/QUEUE_BEHAVIOR.md: authoritative queue behavior
