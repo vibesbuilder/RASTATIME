@@ -1,19 +1,69 @@
 RASTATIME — readme.txt
 =======================
 
-Version: 0.3.9
+Version: 0.4.0
 Date: 2026-04-25
 
 Summary
 -------
-T8.3 complete: PlayoutScheduler wired to QueueManager. Scheduler now owns
-only the *when* (wall-clock timers); all queue decisions delegated to
-QueueManager. PlayoutScheduler accepts optional queue_manager= injection;
-exposes queue_manager property. 13 new delegation tests; all 263/263 unit
-tests green. Milestone M8 complete.
+T9.1 complete: STREAM_USE_CASES.md written. Authoritative enumeration of all
+streaming use cases: 10 egress (UC-O1–O10), 4 ingress (UC-I1–I4), 3
+monitoring (UC-M1–M3). Each UC has actor, trigger, flow, postcondition,
+mechanism, and LibreTime comparison. 8 open questions for T9.2 empirical
+testing. No code changes; 263/263 tests still green. Milestone M9 started.
 
 Changelog
 ---------
+0.4.0 (2026-04-25)
+    - Task T9.1 complete: STREAM_USE_CASES.md written.
+    - docs/architecture/STREAM_USE_CASES.md: authoritative use case
+        enumeration for T9.2 (capability matrix), T10.x (egress), T11.x (ingress).
+      §1 Purpose — scope and authority of the document.
+      §2 Terminology — egress/ingress, mount point, source client, ICY
+         metadata, HLS, Show Source, Master Source.
+      §3 Use case catalogue — 17 use cases in a summary table with UC-ID,
+         group, priority (P1/P2/P3), milestone, and mechanism.
+      §4 Output (egress) use cases (10):
+         UC-O1: MP3 → Icecast via libVLC sout + shout module.
+         UC-O2: OGG Vorbis → Icecast; OGG metadata via Vorbis comment headers.
+         UC-O3: OGG Opus → Icecast; requires Icecast ≥ 2.4.
+         UC-O4: AAC-LC → Icecast; codec availability TBC (T9.2 question #3).
+         UC-O5: MP3/AAC → SHOUTcast via libVLC sout shout module.
+         UC-O6: Multiple simultaneous streams via libVLC duplicate{} sout.
+         UC-O7: Real-time metadata via ICY injection or Icecast HTTP API;
+           OGG auto via Vorbis comments; idle state station-name fallback.
+         UC-O8: Auto-reconnect via custom StreamConnection reconnect loop
+           (libVLC sout has no native reconnect); exponential backoff 5–60 s.
+         UC-O9: Archive to local file via libVLC sout file sink; P3/T10.4.
+         UC-O10: HLS output; deferred post-M11; libVLC HLS sout or FFmpeg.
+      §5 Input (ingress) use cases (4):
+         UC-I1: Show Source — DJ streams to Icecast mount; QueueManager
+           preempts via start_show with ingress item at show start_at.
+         UC-I2: Master Source — persistent DJ override; higher priority than
+           Show Source; normal playout resumes on disconnect.
+         UC-I3: Web stream as QueueItem — HTTP URI via libVLC HTTP source;
+           already partially functional per QUEUE_BEHAVIOR §6.7.
+         UC-I4: Local audio device (line-in) — deferred to T12+ (Phase 7).
+      §6 Monitoring use cases (3):
+         UC-M1: Stream connection status state machine (DISCONNECTED →
+           CONNECTING → CONNECTED); StreamStatusEvent callbacks.
+         UC-M2: Listener count — poll Icecast /admin/stats.xml at 60 s
+           intervals; store in Django history tables.
+         UC-M3: Listener statistics history — post-M11.
+      §7 Implementation scope per milestone — M9 (enumeration), M10 (egress
+         T10.1–T10.4), M11 (ingress T11.1–T11.2), post-M11 (HLS, stats).
+         M10 baseline (T10.1) defined: UC-O1+O2+O7+O8+M1 minimum viable.
+      §8 How RASTATIME diverges from LibreTime — 12-row comparison table
+         (encoding, source protocol, live input, metadata, HLS, AAC, etc.).
+         Architectural difference: Liquidsoap is monolithic (play+encode+push);
+         RASTATIME separates concerns (libVLC plays; StreamConnection encodes;
+         IngressMonitor watches; QueueManager arbitrates).
+      §9 Open questions for T9.2 — 8 empirical questions (shout module
+         availability on Windows, MP3/AAC encoders, Opus sout, ICY metadata
+         injection, multi-sout CPU cost, SHOUTcast v2, reconnect behavior).
+      §10 Revision history.
+    - No code changes; 263/263 unit tests still green.
+
 0.3.9 (2026-04-25)
     - Task T8.3 complete: PlayoutScheduler wired to QueueManager.
     - playout/scheduler/_scheduler.py: refactored to delegate all queue
