@@ -1,14 +1,24 @@
 """
-PlayoutScheduler — time-based bridge between a show schedule and a PlayoutEngine.
+PlayoutScheduler — time-based bridge between a show schedule and a QueueManager.
 
 Responsibilities
 ----------------
 * Accept a :class:`ScheduledShow` (show id, UTC start/end, track list,
   start mode).
-* At ``start_at``: dispatch the configured start action to the engine.
-* At ``end_at``: fire a hard ``engine.stop()`` (regardless of queue state).
+* At ``start_at``: call :meth:`QueueManager.start_show` with the show's items
+  and start mode.
+* At ``end_at``: call :meth:`QueueManager.end_show` (hard stop + optional
+  fallback trigger).
 * Allow cancellation of a pending show by id.
-* Optionally manage fallback/filler content that plays between shows.
+* Delegate all queue decisions and fallback management to the
+  :class:`~playout.queue_manager.QueueManager`.
+
+Relationship to QueueManager (T8.2 / T8.3)
+-------------------------------------------
+``PlayoutScheduler`` owns the *when* (wall-clock timers).
+``QueueManager`` owns the *what* (queue decisions, fallback lifecycle).
+Neither class calls engine methods directly for queue management — only
+``QueueManager`` does.
 
 Start modes
 -----------
@@ -26,20 +36,21 @@ Load-next (queue preloading)
 ----------------------------
 ``schedule_next(show)`` appends the new show's items to the engine's queue
 *immediately* (no timer), useful when the next show is known well in advance
-and a near-gapless transition is desired.
+and a near-gapless transition is desired.  The show is then rescheduled in
+SOFT mode so the start timer becomes a no-op when the engine is already
+playing.
 
 Fallback content
 ----------------
-Call ``set_fallback(fallback_queue)`` to configure filler content.  The
-scheduler starts the fallback automatically after each scheduled show ends
-and stops it when the next show begins.  If ``fallback_queue.loop`` is
-*True* the fallback list repeats indefinitely until interrupted.
+Call ``set_fallback(fallback_queue)`` to configure filler content.  This
+delegates to :meth:`QueueManager.set_fallback`; the QueueManager starts the
+fallback automatically after each ``end_show()`` call.
 
 Threading model
 ---------------
-Timers run in daemon threads.  All mutations to ``_pending``,
-``_fallback``, and ``_fallback_active`` are protected by a single
-``threading.Lock``.  Engine calls are always made *outside* the lock.
+Timers run in daemon threads.  All mutations to ``_pending`` are protected by
+a single ``threading.Lock``.  All queue-decision logic (and its locking) is
+delegated to :class:`~playout.queue_manager.QueueManager`.
 """
 
 import logging
@@ -49,7 +60,8 @@ from datetime import datetime, timezone
 from enum import Enum
 from typing import TYPE_CHECKING, Optional
 
-from ..engine_interface import PlayoutEngine, PlayoutState, QueueItem, TrackChangedEvent
+from ..engine_interface import PlayoutEngine, QueueItem
+from ..queue_manager import QueueManager
 
 if TYPE_CHECKING:
     from ..fallback import FallbackQueue
@@ -162,15 +174,21 @@ class PlayoutScheduler:
     """
     Time-based playout dispatcher.
 
-    Wraps any :class:`~playout.engine_interface.PlayoutEngine` and drives it
-    from a wall-clock schedule.  Supports hard and soft show transitions and
-    queue preloading for near-gapless show boundaries.
+    Wraps any :class:`~playout.engine_interface.PlayoutEngine` (via a
+    :class:`~playout.queue_manager.QueueManager`) and drives playout from a
+    wall-clock schedule.  All queue decisions are delegated to the
+    ``QueueManager``; the scheduler owns only the *when*, not the *what*.
 
     Parameters
     ----------
     engine:
         The playout backend to control.  Both :class:`MockPlayoutEngine`
         and :class:`VlcPlayoutEngine` are accepted.
+    queue_manager:
+        Optional pre-constructed :class:`~playout.queue_manager.QueueManager`.
+        If omitted, a new ``QueueManager(engine)`` is created internally.
+        Supply an explicit instance when you need to share or inspect the
+        ``QueueManager`` from outside the scheduler (e.g. in tests).
 
     Example — two back-to-back shows (hard transition)
     ---------------------------------------------------
@@ -203,20 +221,18 @@ class PlayoutScheduler:
         scheduler.schedule(show_b)
     """
 
-    def __init__(self, engine: PlayoutEngine) -> None:
+    def __init__(
+        self,
+        engine: PlayoutEngine,
+        queue_manager: Optional[QueueManager] = None,
+    ) -> None:
         self._engine = engine
+        self._qm: QueueManager = queue_manager if queue_manager is not None else QueueManager(engine)
         self._lock = threading.Lock()
         self._pending: dict[str, _ShowJob] = {}
 
-        # Fallback (filler) content — set via set_fallback()
-        self._fallback: Optional["FallbackQueue"] = None
-        self._fallback_active: bool = False   # True while fallback is playing
-
-        # Register engine listener for automatic fallback restart
-        engine.on_track_change(self._on_engine_track_change)
-
     # ------------------------------------------------------------------
-    # Public API
+    # Public API — schedule management
     # ------------------------------------------------------------------
 
     def schedule(self, show: ScheduledShow) -> None:
@@ -225,7 +241,8 @@ class PlayoutScheduler:
 
         If a job with the same ``show_id`` is already pending it is cancelled
         and replaced.  Shows whose ``end_at`` is already in the past are
-        silently ignored.
+        silently ignored.  Shows with an empty ``items`` list are silently
+        ignored (per ``QUEUE_BEHAVIOR.md`` §3.1).
 
         The start action respects ``show.start_mode``:
         - ``HARD``: immediately replace the engine queue and start.
@@ -237,6 +254,10 @@ class PlayoutScheduler:
             logger.debug(
                 "Skipping past show %r (ended at %s)", show.show_id, show.end_at
             )
+            return
+
+        if not show.items:
+            logger.debug("Skipping show %r with empty items list", show.show_id)
             return
 
         delay_start = max(0.0, (show.start_at - now).total_seconds())
@@ -269,25 +290,24 @@ class PlayoutScheduler:
         Preload a show's items into the engine queue *right now*.
 
         Items are appended via ``engine.append()`` without stopping current
-        playback.  The stop timer is still armed so the show ends at
-        ``end_at``.  The start timer is still armed but the start action
-        becomes a no-op if the engine is already playing (useful for
-        near-gapless hand-off).
+        playback.  The show is then rescheduled in SOFT mode so the start
+        timer merges the items without re-interrupting the current track.
+        The stop timer is still armed so the show ends at ``end_at``.
 
         Use this when the next show is known well in advance and you want
         to minimise the inter-show gap.
         """
         for item in show.items:
             self._engine.append(item)
-        # Still schedule the stop; the start will soft-merge
-        show = ScheduledShow(
+        # Reschedule in SOFT mode so the start timer becomes a near-no-op
+        soft_show = ScheduledShow(
             show_id=show.show_id,
             start_at=show.start_at,
             end_at=show.end_at,
             items=show.items,
             start_mode=StartMode.SOFT,
         )
-        self.schedule(show)
+        self.schedule(soft_show)
         logger.info(
             "Preloaded %d item(s) for show %r", len(show.items), show.show_id
         )
@@ -322,37 +342,43 @@ class PlayoutScheduler:
             return list(self._pending.keys())
 
     # ------------------------------------------------------------------
-    # Fallback configuration
+    # Public API — fallback (delegated to QueueManager)
     # ------------------------------------------------------------------
 
     def set_fallback(self, fallback: "FallbackQueue") -> None:
         """
         Configure filler content that plays when no show is active.
 
-        The fallback starts automatically after each scheduled show ends
-        and stops when the next show begins.
+        Delegates to :meth:`QueueManager.set_fallback`.  The ``QueueManager``
+        starts the fallback automatically after each ``end_show()`` call and
+        stops it when the next show begins.
 
         Parameters
         ----------
         fallback:
             A :class:`~playout.fallback.FallbackQueue` holding the items
-            to play.  Must not be empty.
+            to play.  Must not be empty (enforced by ``FallbackQueue``).
         """
-        with self._lock:
-            self._fallback = fallback
-        logger.debug("Fallback configured: %r", fallback)
+        self._qm.set_fallback(fallback)
+        logger.debug("Fallback configured via QueueManager: %r", fallback)
 
     def clear_fallback(self) -> None:
-        """Remove the fallback configuration and stop any active fallback."""
-        with self._lock:
-            self._fallback = None
-            self._fallback_active = False
-        logger.debug("Fallback cleared")
+        """Remove the fallback configuration. Delegates to QueueManager."""
+        self._qm.clear_fallback()
+        logger.debug("Fallback cleared via QueueManager")
 
     def fallback_is_active(self) -> bool:
         """Return *True* if the fallback is currently playing."""
-        with self._lock:
-            return self._fallback_active
+        return self._qm.fallback_is_active()
+
+    # ------------------------------------------------------------------
+    # Public API — QueueManager access
+    # ------------------------------------------------------------------
+
+    @property
+    def queue_manager(self) -> QueueManager:
+        """The :class:`~playout.queue_manager.QueueManager` driven by this scheduler."""
+        return self._qm
 
     # ------------------------------------------------------------------
     # Timer callbacks — run in daemon threads
@@ -364,109 +390,15 @@ class PlayoutScheduler:
             show.show_id, show.start_mode.value, len(show.items),
         )
         try:
-            if show.start_mode == StartMode.HARD:
-                self._hard_start(show)
-            else:
-                self._soft_start(show)
+            self._qm.start_show(show.items, show.start_mode)
         except Exception:  # noqa: BLE001
             logger.exception("Error starting show %r", show.show_id)
 
-    def _on_engine_track_change(self, event: TrackChangedEvent) -> None:
-        """
-        Engine callback: restart looping fallback when the engine stops.
-
-        Fires whenever any track changes.  Only acts when the engine has
-        just stopped (``current_item is None``), the fallback is currently
-        active, and looping is enabled.
-        """
-        if event.current_item is not None:
-            return  # a track is starting — nothing to do
-        with self._lock:
-            active = self._fallback_active
-            fb = self._fallback
-        if active and fb and fb.loop and not fb.is_empty():
-            # Restart fallback in a fresh daemon thread so we never block
-            # the engine's callback thread.
-            threading.Thread(target=self._trigger_fallback, daemon=True).start()
-
     def _on_stop(self, show_id: str) -> None:
         logger.info("Show %r hard-stop (end_at reached)", show_id)
-        try:
-            self._engine.stop()
-        except Exception:  # noqa: BLE001
-            logger.exception("Error stopping show %r", show_id)
         with self._lock:
             self._pending.pop(show_id, None)
-            fb = self._fallback
-            if fb and not fb.is_empty():
-                self._fallback_active = True
-        # Start fallback (if configured) outside the lock
-        with self._lock:
-            fb = self._fallback
-            active = self._fallback_active
-        if active and fb and not fb.is_empty():
-            threading.Thread(target=self._trigger_fallback, daemon=True).start()
-            logger.info("Fallback triggered after show %r ended", show_id)
-
-    # ------------------------------------------------------------------
-    # Start-mode implementations
-    # ------------------------------------------------------------------
-
-    def _hard_start(self, show: ScheduledShow) -> None:
-        """
-        Stop current playback immediately, load new queue, start.
-
-        Disables the fallback before calling ``load_queue()`` to prevent
-        the engine's track-change callback from triggering a fallback restart
-        during the brief moment the engine is stopped between shows.
-        """
-        with self._lock:
-            self._fallback_active = False
-        self._engine.load_queue(show.items)
-        self._engine.start()
-        logger.debug("Hard-started show %r", show.show_id)
-
-    def _soft_start(self, show: ScheduledShow) -> None:
-        """
-        Transition to the new show without interrupting the current track.
-
-        If the engine is STOPPED: fall back to hard start.
-        If the engine is PLAYING or PAUSED: discard pending queue items
-        (keeping the current track) and append the new show's items so they
-        play next.  The current track finishes naturally; no gap beyond the
-        normal inter-track latency.
-
-        Disables the fallback so filler does not restart during the splice.
-        """
-        with self._lock:
-            self._fallback_active = False
-        state = self._engine.get_state()
-        if state == PlayoutState.STOPPED:
-            logger.debug(
-                "Soft-start for %r: engine stopped, falling back to hard start",
-                show.show_id,
-            )
-            self._hard_start(show)
-            return
-
-        # Engine is active — splice new items in after the current track.
-        self._engine.clear_queue()
-        for item in show.items:
-            self._engine.append(item)
-        logger.debug(
-            "Soft-started show %r: %d item(s) queued after current track",
-            show.show_id, len(show.items),
-        )
-
-    def _trigger_fallback(self) -> None:
-        """Load and start the fallback queue. Called in a daemon thread."""
-        with self._lock:
-            fb = self._fallback
-        if not fb or fb.is_empty():
-            return
         try:
-            self._engine.load_queue(fb.items)
-            self._engine.start()
-            logger.info("Fallback playback started (%d item(s))", len(fb))
+            self._qm.end_show()
         except Exception:  # noqa: BLE001
-            logger.exception("Error starting fallback playback")
+            logger.exception("Error stopping show %r", show_id)

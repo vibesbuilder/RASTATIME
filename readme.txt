@@ -1,19 +1,61 @@
 RASTATIME — readme.txt
 =======================
 
-Version: 0.3.8
+Version: 0.3.9
 Date: 2026-04-25
 
 Summary
 -------
-T8.2 complete: QueueManager module implemented. Central arbiter for queue
-decisions; separates scheduler timing from engine control. ContentKind enum
-(IDLE/SHOW/FALLBACK); start_show(), end_show(), set_fallback(),
-clear_fallback(), fallback_is_active(), active_content(). 18 new tests;
-all 250/250 unit tests green. Milestone M8 in progress (T8.3 next).
+T8.3 complete: PlayoutScheduler wired to QueueManager. Scheduler now owns
+only the *when* (wall-clock timers); all queue decisions delegated to
+QueueManager. PlayoutScheduler accepts optional queue_manager= injection;
+exposes queue_manager property. 13 new delegation tests; all 263/263 unit
+tests green. Milestone M8 complete.
 
 Changelog
 ---------
+0.3.9 (2026-04-25)
+    - Task T8.3 complete: PlayoutScheduler wired to QueueManager.
+    - playout/scheduler/_scheduler.py: refactored to delegate all queue
+        decisions to QueueManager.
+        Imports QueueManager from playout.queue_manager.
+        __init__(engine, queue_manager=None): creates QueueManager(engine)
+          internally if not provided; stores as self._qm.
+          Removed: self._fallback, self._fallback_active.
+          Removed: engine.on_track_change(self._on_engine_track_change).
+        queue_manager property: exposes self._qm for external access /
+          testing / injection.
+        schedule(show): added empty-items guard (silently ignored per
+          QUEUE_BEHAVIOR §3.1).
+        _on_start(show): calls self._qm.start_show(show.items, show.start_mode)
+          instead of _hard_start / _soft_start.
+        _on_stop(show_id): pops job from _pending then calls self._qm.end_show()
+          instead of engine.stop() + fallback trigger.
+        set_fallback(fb): delegates to self._qm.set_fallback(fb).
+        clear_fallback(): delegates to self._qm.clear_fallback().
+        fallback_is_active(): delegates to self._qm.fallback_is_active().
+        Removed methods: _on_engine_track_change, _hard_start, _soft_start,
+          _trigger_fallback (all moved to QueueManager in T8.2).
+        schedule_next(): unchanged — appends directly to engine for preload,
+          then re-schedules in SOFT mode; QueueManager handles the start.
+        All 94 pre-existing playout unit tests continue to pass unmodified.
+    - tests/unit/playout/test_scheduler_wiring.py: 13 new tests.
+        _SpyQM(QueueManager): records start_show, end_show, set_fallback,
+          clear_fallback calls for delegation assertions.
+        Injection (2): creates QM internally; accepts external QM.
+        Timer callbacks (3): start_show called at start_at; end_show called
+          at end_at; correct items count and mode passed.
+        Fallback delegation (3): set_fallback, clear_fallback, fallback_is_active
+          all route to QueueManager.
+        Guards (2): empty items silently skipped; past show silently ignored.
+        cancel (1): prevents start_show from being called.
+        V criterion — full cycle (1): schedule fires start_show+end_show;
+          engine STOPPED at end → ContentKind.IDLE.
+        V criterion — fallback (1): end_show triggers fallback; engine
+          PLAYING with fallback item; active_content()==FALLBACK.
+    - 263/263 unit tests green (4 VLC-dependent skipped without VLC).
+    - Milestone M8 complete.
+
 0.3.8 (2026-04-25)
     - Task T8.2 complete: QueueManager module implemented.
     - playout/queue_manager/_manager.py: ContentKind enum + QueueManager class.
