@@ -1,15 +1,52 @@
 RASTATIME — readme.txt
 =======================
 
-Version: 0.3.6
+Version: 0.3.7
 Date: 2026-04-25
 
 Summary
 -------
-T7.2 complete: now-playing state and playout history logger wired to engine
-events; GET /api/v2/now-playing Django endpoint added. 18 new tests
-(unit + mock V-criterion + VLC V-criterion). Total: 232/232. Milestone M7
-complete.
+T8.1 complete: QUEUE_BEHAVIOR.md written. Authoritative contract for queue
+priority (live > show > fallback), transition rules (HARD/SOFT), all edge
+cases, and known limitations vs. LibreTime/Liquidsoap. No code changes.
+Total: 232/232. Milestone M8 started.
+
+Changelog
+---------
+0.3.7 (2026-04-25)
+    - Task T8.1 complete: QUEUE_BEHAVIOR.md written.
+    - docs/architecture/QUEUE_BEHAVIOR.md: authoritative queue behavior
+        contract for T8.2 (QueueManager) and T8.3 (scheduler–engine wiring).
+      §1 Purpose — scope and authority of the document.
+      §2 Queue types and priority table: live input (P1, reserved) >
+         scheduled show (P2) > fallback/filler (P3).
+      §3 Content sources: ScheduledShow fields and validation rules;
+         FallbackQueue fields; empty-items guard.
+      §4 Transition rules (6 sub-rules):
+         4.1 Show start HARD (stop + disable fallback + load + start) and
+             SOFT (splice after current track, fallback disabled).
+         4.2 Show end: hard stop + fallback trigger.
+         4.3 Fallback start: load_queue + start.
+         4.4 Fallback restart (loop=True): daemon thread on queue-exhausted
+             TrackChangedEvent.
+         4.5 Fallback stop (loop=False): engine to STOPPED, no auto-restart.
+         4.6 Show interrupts fallback: HARD stops immediately; SOFT waits.
+      §5 Edge cases table (12 scenarios): past show, past start/future end,
+         empty items, same show_id replacement, overlapping different shows,
+         back-to-back shows, no fallback configured, clear_fallback while
+         playing, clear_fallback before end, engine error, single-item loop,
+         set_fallback while playing.
+      §6 Known limitations (8 items flagged against LibreTime):
+         cue points ignored, inter-track silence 50-200 ms, no crossfade,
+         no replay gain, single sequential queue (vs. 4 Liquidsoap queues),
+         no live DJ / line-in yet, no web-stream input type, timer precision
+         on Windows.
+      §7 Planned QueueManager (T8.2) — role and responsibilities.
+      §8 State diagram (ASCII art).
+      §9 Revision history.
+    - No code changes; 232/232 unit tests still green.
+
+0.3.6 (2026-04-25)
 
 Changelog
 ---------
