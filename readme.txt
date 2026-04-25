@@ -1,14 +1,59 @@
 RASTATIME — readme.txt
 =======================
 
-Version: 0.3.5
+Version: 0.3.6
 Date: 2026-04-25
 
 Summary
 -------
-T7.1 complete: VlcEventBridge subscribes to libVLC events and normalises
-track-change metadata. VlcPlayoutEngine refactored to use the bridge.
-16 new tests (mock + VLC). Total: 214/214. Milestone M7 started.
+T7.2 complete: now-playing state and playout history logger wired to engine
+events; GET /api/v2/now-playing Django endpoint added. 18 new tests
+(unit + mock V-criterion + VLC V-criterion). Total: 232/232. Milestone M7
+complete.
+
+Changelog
+---------
+0.3.6 (2026-04-25)
+    - Task T7.2 complete: feed now-playing and history.
+    - playout/now_playing/_state.py: NowPlayingState + NowPlayingEntry.
+        NowPlayingEntry(item, started_at): is_playing property; to_dict()
+          produces JSON-serialisable shape with item sub-dict + ISO timestamp.
+        NowPlayingState: thread-safe (threading.Lock); on_track_change()
+          registered with engine; get() returns snapshot; subscribe(cb)
+          notifies on every change; crashing subscriber isolated.
+    - playout/now_playing/_history.py: PlayoutHistoryLogger + HistoryEntry.
+        HistoryEntry(item, started_at, ended_at): duration_played property;
+          to_dict() with item_id/title/artist/started_at/ended_at/duration.
+        PlayoutHistoryLogger(max_entries=500): deque ring-buffer; on_track_change()
+          finalises previous entry (sets ended_at) and opens a new one;
+          recent(n) returns completed entries newest-first; current() returns
+          the in-progress entry (no ended_at); total_completed() count.
+    - playout/now_playing/__init__.py: exports + module-level singletons
+        default_state and default_logger for single-process deployments.
+        connect_engine(engine, state, logger): wires both sinks to
+          engine.on_track_change() in one call; defaults to singletons.
+    - backend/api/libretime_api/now_playing.py: Django view.
+        GET /api/v2/now-playing — reads default_state.get().to_dict();
+          always returns HTTP 200; is_playing discriminates idle/active.
+          Lazy import of playout.now_playing avoids circular dependency.
+    - backend/api/libretime_api/urls.py: added path for now-playing view.
+    - tests/unit/playout/test_now_playing.py: 18 tests.
+        NowPlayingState (6): idle init, track start/stop, to_dict shapes,
+          subscriber notification, crashing subscriber isolation.
+        PlayoutHistoryLogger (8): empty init, current on start, finalise
+          on next start, duration_played, stop finalises last, to_dict,
+          total_completed, recent() cap.
+        connect_engine (1): wires both sinks to MockPlayoutEngine; asserts
+          state and logger reflect the running track.
+        V criterion — mock (1): MockPlayoutEngine plays 3 TICK-duration
+          tracks; history accumulates ≥ 2 completed entries (t0, t1 in set).
+        V criterion — VLC (1): VlcPlayoutEngine plays 2 WAVs; history has
+          ≥ 1 completed entry with id "vlc-a".
+    - Production note: multi-process deployments need a shared transport
+        (Redis, DB) — current singleton is for single-process / dev use.
+    - 232/232 unit tests green. Milestone M7 complete.
+
+0.3.5 (2026-04-25)
 
 Changelog
 ---------
