@@ -1,12 +1,66 @@
 RASTATIME — readme.txt
 =======================
 
-Version: 0.3.4
-Date: 2026-04-24
+Version: 0.3.5
+Date: 2026-04-25
 
 Summary
 -------
-T6.2 complete: fallback/filler playout entry.
+T7.1 complete: VlcEventBridge subscribes to libVLC events and normalises
+track-change metadata. VlcPlayoutEngine refactored to use the bridge.
+16 new tests (mock + VLC). Total: 214/214. Milestone M7 started.
+
+Changelog
+---------
+0.3.5 (2026-04-25)
+    - Task T7.1 complete: subscribe to libVLC events; normalize payload.
+    - playout/engine_vlc/events.py: new module.
+        extract_vlc_meta(media) -> dict: standalone function; reads
+          title, artist, album, genre, track_number, year, description
+          from vlc.Media.get_meta(); adds duration_ms (int ms) when VLC
+          reports >= 0; returns {} for None media or missing python-vlc.
+        VlcEventBridge(player): subscribes to four MediaPlayer events:
+          MediaPlayerMediaChanged, MediaPlayerPlaying,
+          MediaPlayerEndReached, MediaPlayerEncounteredError.
+        attach() / detach(): idempotent; detach() uses event_detach(type)
+          (python-vlc does not accept a callback argument in detach).
+        on_playing(cb(meta)), on_end_reached(cb()), on_error(cb()),
+          on_media_changed(cb()): callback registrars; all called on
+          VLC's internal event thread.
+        _vlc_playing(): calls extract_vlc_meta(player.get_media()) and
+          passes result to all on_playing callbacks.
+        Crashing callbacks are caught per-callback; others still run.
+    - playout/engine_vlc/_engine.py: refactored to use VlcEventBridge.
+        __init__: removed direct event_attach calls; creates
+          VlcEventBridge, registers on_end_reached/_on_vlc_end,
+          on_error/_on_vlc_error, on_playing/_on_vlc_playing, then
+          calls bridge.attach().
+        _on_vlc_end(): signature changed from (self, event) to (self);
+          same behaviour (spawns daemon thread for _advance_track).
+        _on_vlc_error(): signature changed from (self, event) to (self);
+          same behaviour (sets ERROR state, fires error callbacks).
+        _on_vlc_playing(meta): new method; enriches current QueueItem
+          under _lock: fills item.title / item.artist if empty; stores
+          remaining VLC fields in item.metadata["vlc"].
+        close(): calls bridge.detach() before releasing player/instance.
+    - playout/engine_vlc/__init__.py: exports VlcEventBridge and
+        extract_vlc_meta alongside VlcPlayoutEngine.
+    - tests/unit/playout/engine_vlc/test_events.py: 16 tests.
+        extract_vlc_meta (5): None -> {}, title/artist mock, duration_ms,
+          empty strings omitted, negative duration omitted.
+        VlcEventBridge attach/detach (4): registers 4 event types,
+          idempotent attach, detach unregisters, detach-before-attach noop.
+        Event simulation via _MockEventManager (6): on_playing fires with
+          meta, on_end_reached, on_error, on_media_changed, crashing
+          callback isolation, multiple callbacks all receive event.
+        V criterion (VLC): test_vlc_engine_item_metadata_enriched_with_
+          duration_ms — plays a 1 s WAV with --aout=dummy; polls until
+          item.metadata["vlc"]["duration_ms"] is populated; asserts int > 0.
+    - Bug fixed: event_detach() in python-vlc only accepts event_type,
+        not a callback argument (unlike event_attach).
+    - 214/214 unit tests green.
+
+0.3.4 (2026-04-24)
 FallbackQueue stub; PlayoutScheduler fallback management (set_fallback,
 clear_fallback, fallback_is_active); auto-restart for looping fallback;
 show interrupts fallback via HARD mode. 13 new tests (mock + VLC).

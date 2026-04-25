@@ -48,6 +48,7 @@ from ..engine_interface import (
     TrackChangedEvent,
 )
 from ..engine_interface._engine import PlayoutEngine
+from .events import VlcEventBridge
 
 logger = logging.getLogger(__name__)
 
@@ -103,11 +104,6 @@ class VlcPlayoutEngine(PlayoutEngine):
         self._instance = vlc.Instance(*all_args)
         self._player = self._instance.media_player_new()
 
-        # Attach VLC event handlers
-        em = self._player.event_manager()
-        em.event_attach(vlc.EventType.MediaPlayerEndReached, self._on_vlc_end)
-        em.event_attach(vlc.EventType.MediaPlayerEncounteredError, self._on_vlc_error)
-
         # Internal state (protected by _lock)
         self._lock = threading.RLock()
         self._state: PlayoutState = PlayoutState.STOPPED
@@ -117,6 +113,13 @@ class VlcPlayoutEngine(PlayoutEngine):
         # Registered callbacks
         self._track_change_cbs: list[Callable[[TrackChangedEvent], None]] = []
         self._error_cbs: list[Callable[[PlayoutError], None]] = []
+
+        # VLC event bridge — translates raw VLC events into Python callbacks
+        self._bridge = VlcEventBridge(self._player)
+        self._bridge.on_end_reached(self._on_vlc_end)
+        self._bridge.on_error(self._on_vlc_error)
+        self._bridge.on_playing(self._on_vlc_playing)
+        self._bridge.attach()
 
     # ------------------------------------------------------------------
     # Transport
@@ -296,6 +299,7 @@ class VlcPlayoutEngine(PlayoutEngine):
 
     def close(self) -> None:
         """Release VLC resources.  Call when the engine is no longer needed."""
+        self._bridge.detach()
         try:
             self._player.stop()
         except Exception:  # noqa: BLE001
@@ -310,18 +314,17 @@ class VlcPlayoutEngine(PlayoutEngine):
             pass
 
     # ------------------------------------------------------------------
-    # VLC event callbacks — run in VLC's internal thread
+    # Bridge callbacks — invoked by VlcEventBridge on VLC's event thread
     # ------------------------------------------------------------------
 
-    def _on_vlc_end(self, event) -> None:
-        """Dispatched by VLC when the current item finishes."""
+    def _on_vlc_end(self) -> None:
+        """Bridge callback: current item finished naturally."""
         # Must NOT call _player.play() or _player.stop() here directly
         # — doing so from the VLC event thread can deadlock.
-        t = threading.Thread(target=self._advance_track, daemon=True)
-        t.start()
+        threading.Thread(target=self._advance_track, daemon=True).start()
 
-    def _on_vlc_error(self, event) -> None:
-        """Dispatched by VLC when a media error occurs."""
+    def _on_vlc_error(self) -> None:
+        """Bridge callback: VLC encountered a media error."""
         item: Optional[QueueItem]
         with self._lock:
             item = self._current_item_unsafe()
@@ -333,6 +336,43 @@ class VlcPlayoutEngine(PlayoutEngine):
         )
         logger.error("VLC error on item %s", item.id if item else "unknown")
         self._fire_error(error)
+
+    def _on_vlc_playing(self, meta: dict) -> None:
+        """
+        Bridge callback: VLC started (or resumed) playback.
+
+        Enriches the current ``QueueItem`` in-place with metadata extracted
+        by the bridge from VLC's media object:
+
+        * ``item.title`` and ``item.artist`` are filled if currently empty
+          and VLC reports non-empty values.
+        * ``item.metadata["vlc"]`` is updated with remaining fields
+          (``album``, ``genre``, ``duration_ms``, etc.).
+
+        Called on VLC's event thread; mutations happen under ``_lock``.
+        """
+        if not meta:
+            return
+        with self._lock:
+            item = self._current_item_unsafe()
+            if item is None:
+                return
+            # Non-destructive: only fill empty first-class fields
+            if not item.title and meta.get("title"):
+                item.title = str(meta["title"])
+            if not item.artist and meta.get("artist"):
+                item.artist = str(meta["artist"])
+            # Remaining keys go into metadata["vlc"] dict
+            vlc_extra = {
+                k: v for k, v in meta.items() if k not in ("title", "artist")
+            }
+            if vlc_extra:
+                item.metadata["vlc"] = vlc_extra
+        logger.debug(
+            "VLC metadata for %r: %s",
+            item.id if item else "?",
+            meta,
+        )
 
     # ------------------------------------------------------------------
     # Queue advance — runs in a daemon thread spawned by _on_vlc_end
