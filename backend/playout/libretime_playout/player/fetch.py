@@ -13,10 +13,20 @@ from libretime_api_client.v2 import ApiClient
 from requests import RequestException
 
 from ..config import CACHE_DIR, POLL_INTERVAL, Config
-from ..liquidsoap.client import LiquidsoapClient
-from ..liquidsoap.models import Info, MessageFormatKind, StreamPreferences, StreamState
+# T-GH-1: Liquidsoap engine removed. Imports guarded for safe import on
+# platforms where liquidsoap is not installed.
+try:
+    from ..liquidsoap.client import LiquidsoapClient
+    from ..liquidsoap.models import Info, MessageFormatKind, StreamPreferences, StreamState
+    from .liquidsoap import Liquidsoap
+except ImportError:
+    LiquidsoapClient = object  # type: ignore[assignment, misc]
+    Info = object  # type: ignore[assignment, misc]
+    MessageFormatKind = object  # type: ignore[assignment, misc]
+    StreamPreferences = object  # type: ignore[assignment, misc]
+    StreamState = object  # type: ignore[assignment, misc]
+    Liquidsoap = object  # type: ignore[assignment, misc]
 from .events import Events, FileEvent, FileEvents
-from .liquidsoap import Liquidsoap
 from .schedule import get_schedule
 
 logger = logging.getLogger(__name__)

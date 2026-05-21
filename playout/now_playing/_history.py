@@ -14,6 +14,17 @@ Connect to a ``PlayoutEngine`` via::
 
     recent = logger.recent(10)     # list[HistoryEntry], newest first
     current = logger.current()     # HistoryEntry | None (in-progress)
+
+Completion subscribers
+----------------------
+Register a callback to be notified whenever a ``HistoryEntry`` is
+finalised (i.e. the next track starts or playback stops)::
+
+    logger.on_entry_completed(my_callback)
+    # my_callback(entry: HistoryEntry) is called for each completed entry.
+
+Callbacks are invoked **outside** the internal lock, on whatever thread
+the engine fires its ``TrackChangedEvent`` on.  They must not block.
 """
 
 from __future__ import annotations
@@ -22,7 +33,7 @@ import threading
 from collections import deque
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Deque, List, Optional
+from typing import Callable, Deque, List, Optional
 
 from ..engine_interface import QueueItem, TrackChangedEvent
 
@@ -99,6 +110,31 @@ class PlayoutHistoryLogger:
         self._lock = threading.Lock()
         self._completed: Deque[HistoryEntry] = deque(maxlen=max_entries)
         self._in_progress: Optional[HistoryEntry] = None
+        self._completion_callbacks: List[Callable[[HistoryEntry], None]] = []
+
+    # ------------------------------------------------------------------
+    # Subscriber registration
+    # ------------------------------------------------------------------
+
+    def on_entry_completed(self, cb: Callable[[HistoryEntry], None]) -> None:
+        """
+        Register *cb* to be called whenever a ``HistoryEntry`` is finalised.
+
+        A ``HistoryEntry`` is finalised when the next ``TrackChangedEvent``
+        arrives (i.e. the current track ends and the next one begins, or
+        playback stops entirely).
+
+        *cb* receives the completed ``HistoryEntry`` (with ``ended_at`` set).
+        It is called **outside** the internal lock, on the engine's callback
+        thread.  It must not block.  Exceptions are silently swallowed so
+        that one bad subscriber cannot break others.
+
+        Parameters
+        ----------
+        cb:
+            Callable with signature ``(entry: HistoryEntry) -> None``.
+        """
+        self._completion_callbacks.append(cb)
 
     # ------------------------------------------------------------------
     # Engine callback
@@ -109,12 +145,16 @@ class PlayoutHistoryLogger:
         Registered with ``engine.on_track_change()``.
 
         Finalises the previous entry and opens a new one.
+        Completion subscribers are notified outside the lock.
         """
+        completed_entry: Optional[HistoryEntry] = None
+
         with self._lock:
             # Finalise in-progress entry (previous item just ended)
             if self._in_progress is not None:
                 self._in_progress.ended_at = event.timestamp
                 self._completed.append(self._in_progress)
+                completed_entry = self._in_progress
                 self._in_progress = None
 
             # Start tracking the new item (if any)
@@ -123,6 +163,14 @@ class PlayoutHistoryLogger:
                     item=event.current_item,
                     started_at=event.timestamp,
                 )
+
+        # Notify completion subscribers outside the lock
+        if completed_entry is not None:
+            for cb in list(self._completion_callbacks):
+                try:
+                    cb(completed_entry)
+                except Exception:  # noqa: BLE001
+                    pass
 
     # ------------------------------------------------------------------
     # Read API

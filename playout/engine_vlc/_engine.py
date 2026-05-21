@@ -109,6 +109,7 @@ class VlcPlayoutEngine(PlayoutEngine):
         self._state: PlayoutState = PlayoutState.STOPPED
         self._queue: list[QueueItem] = []
         self._current_index: int = -1
+        self._sout_chain: Optional[str] = None  # active sout chain, or None
 
         # Registered callbacks
         self._track_change_cbs: list[Callable[[TrackChangedEvent], None]] = []
@@ -294,6 +295,75 @@ class VlcPlayoutEngine(PlayoutEngine):
             logger.debug("select_output_device(%r) ignored by VLC", device_id)
 
     # ------------------------------------------------------------------
+    # Stream output (sout) — M10 egress support
+    # ------------------------------------------------------------------
+
+    def set_sout_chain(self, chain: Optional[str]) -> None:
+        """
+        Set the libVLC sout (stream-output) chain applied to every
+        subsequently loaded media object.
+
+        The chain string is a standard VLC sout expression, e.g.::
+
+            "#transcode{acodec=mp3,ab=128,channels=2,samplerate=44100}"
+            ":std{access=shout,mux=dummy,dst=source:pass@host:8000/live.mp3}"
+
+        Pass ``None`` to disable sout (local audio only).
+
+        **Effect timing:** the chain is applied to the *next* ``_vlc_load()``
+        call.  It does not retroactively affect the currently playing item.
+        Call :meth:`reload_sout` immediately after to restart the current
+        track with the new chain (brief ~200 ms audio gap).
+
+        Thread-safe: may be called from any thread.
+
+        Parameters
+        ----------
+        chain:
+            A VLC sout chain string, or ``None`` to remove streaming.
+        """
+        with self._lock:
+            self._sout_chain = chain
+        logger.debug("sout chain updated: %s", chain)
+
+    def reload_sout(self) -> None:
+        """
+        Re-apply the active sout chain to the currently playing item.
+
+        Stops VLC, reloads the current track media with the new sout options
+        from :attr:`_sout_chain`, and restarts playback from the beginning
+        of the current item.  This causes a brief audio gap of ~50–200 ms.
+
+        Use case: :class:`~streams.egress.LibVlcEgressManager` calls this
+        immediately after :meth:`set_sout_chain` to begin streaming without
+        waiting for the next natural track advance.
+
+        No-op if the engine is not PLAYING (use :meth:`start` instead).
+
+        Thread-safe: may be called from any thread.
+        """
+        uri: Optional[str] = None
+        item: Optional[QueueItem] = None
+
+        with self._lock:
+            if self._state != PlayoutState.PLAYING:
+                return
+            item = self._current_item_unsafe()
+            if item is None:
+                return
+            uri = item.uri
+
+        # Brief stop + reload outside the lock to avoid re-entrant deadlock
+        try:
+            self._player.stop()
+        except Exception:  # noqa: BLE001
+            pass
+
+        self._vlc_load(uri)
+        self._player.play()
+        logger.info("reload_sout: restarted %r with new sout chain", item.id if item else "?")
+
+    # ------------------------------------------------------------------
     # Resource cleanup
     # ------------------------------------------------------------------
 
@@ -428,8 +498,21 @@ class VlcPlayoutEngine(PlayoutEngine):
         return None
 
     def _vlc_load(self, uri: str) -> None:
-        """Create a VLC media object from *uri* and set it on the player."""
+        """
+        Create a VLC media object from *uri*, attach any active sout chain,
+        and set it on the player.
+
+        If ``set_sout_chain()`` has been called with a non-None value, that
+        chain is appended to the media as VLC media options so that audio is
+        both played locally and streamed to the configured destination.
+        """
         media = self._instance.media_new(uri)
+        with self._lock:
+            chain = self._sout_chain
+        if chain:
+            media.add_option(f"sout={chain}")
+            media.add_option("sout-all")    # include audio in sout
+            media.add_option("no-sout-video")  # suppress video sout
         self._player.set_media(media)
 
     def _fire_track_change(

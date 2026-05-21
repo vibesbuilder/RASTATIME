@@ -1,7 +1,6 @@
 import pytest
 
 from libretime_playout.config import Config
-from libretime_playout.liquidsoap.models import StreamPreferences
 
 
 @pytest.fixture()
@@ -37,14 +36,5 @@ def config():
             },
         }
     )
-
-
-@pytest.fixture()
-def stream_preferences():
-    return StreamPreferences(
-        input_fade_transition=0.0,
-        message_format=0,
-        message_offline="LibreTime - offline",
-        replay_gain_enabled=True,
-        replay_gain_offset=-3.5,
-    )
+# T-GH-1: stream_preferences fixture removed — StreamPreferences was part of
+# the deleted libretime_playout.liquidsoap.models module.

@@ -8,8 +8,13 @@ from typing import List, Tuple
 
 from ..config import PUSH_INTERVAL, Config
 from .events import AnyEvent, Events, FileEvent
-from .liquidsoap import Liquidsoap
 from .queue import PypoLiqQueue
+
+# T-GH-1: Liquidsoap removed — guarded import.
+try:
+    from .liquidsoap import Liquidsoap
+except ImportError:
+    Liquidsoap = object  # type: ignore[assignment, misc]
 
 logger = logging.getLogger(__name__)
 

@@ -28,7 +28,10 @@ their own instances and use a shared store (Redis, etc.) as the transport.
 """
 
 from ._history import HistoryEntry, PlayoutHistoryLogger
+from ._persister import PlaybackEventPersister
 from ._state import NowPlayingEntry, NowPlayingState
+from .linein_mapper import LineInEventMapper
+from .playback_event import PlaybackEvent, PlaybackSourceType, infer_source_type
 
 from ..engine_interface import PlayoutEngine as _PlayoutEngine
 
@@ -37,6 +40,11 @@ __all__ = [
     "NowPlayingState",
     "HistoryEntry",
     "PlayoutHistoryLogger",
+    "PlaybackEventPersister",
+    "LineInEventMapper",
+    "PlaybackEvent",
+    "PlaybackSourceType",
+    "infer_source_type",
     "connect_engine",
     "default_state",
     "default_logger",

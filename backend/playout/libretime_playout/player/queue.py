@@ -7,7 +7,12 @@ from typing import Any, Dict
 
 from ..utils import seconds_between
 from .events import AnyEvent
-from .liquidsoap import Liquidsoap
+
+# T-GH-1: Liquidsoap removed — guarded import.
+try:
+    from .liquidsoap import Liquidsoap
+except ImportError:
+    Liquidsoap = object  # type: ignore[assignment, misc]
 
 logger = logging.getLogger(__name__)
 

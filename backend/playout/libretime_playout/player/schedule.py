@@ -1,17 +1,36 @@
 from datetime import datetime, time, timedelta
 from operator import itemgetter
-from typing import Dict
+from typing import Dict, Optional
 
 from libretime_api_client.v2 import ApiClient
 from libretime_shared.datetime import time_in_milliseconds, time_in_seconds
 
-from ..liquidsoap.models import StreamPreferences
+# T-GH-1: Liquidsoap removed — guarded import.
+# When the liquidsoap package is absent (Windows / VLC-only mode), we use a
+# minimal dataclass that provides the same attribute surface so that
+# get_schedule() and generate_*_events() continue to work unchanged.
+try:
+    from ..liquidsoap.models import StreamPreferences
+except ImportError:
+    from dataclasses import dataclass
+
+    @dataclass
+    class StreamPreferences:  # type: ignore[no-redef]
+        """Minimal StreamPreferences stub for VLC-only (Liquidsoap-free) mode."""
+        input_fade_transition: float = 0.0
+        message_format: int = 0
+        message_offline: str = "Offline"
+        replay_gain_enabled: bool = False
+        replay_gain_offset: float = 0.0
+
 from .events import (
     ActionEvent,
     AnyEvent,
     EventKind,
     Events,
     FileEvent,
+    LineinEvent,
+    ShowRecordEvent,
     WebStreamEvent,
     datetime_to_event_key,
     event_isoparse,
@@ -65,6 +84,26 @@ def get_schedule(api_client: ApiClient) -> Events:
             show_instance["ends_at"] = event_isoparse(show_instance["ends_at"])
             generate_live_events(events, show_instance, stream_preferences)
 
+        # RASTATIME 2026-05-17 - Phase B: Record-per-Show
+        # (ARCHITECTURE Section 23.13).  If the show instance has
+        # ``record_enabled`` set, emit a SHOW_RECORD_START at
+        # show_instance.starts_at and a matching SHOW_RECORD_END at
+        # show_instance.ends_at.  The recorder will read the active
+        # Icecast mountpoint (which captures whichever source ends up
+        # on air during this show) and write to a single .mp3 per
+        # show-instance.  insert_event() dedupes if the same instance
+        # is touched by multiple schedule items.
+        #
+        # NOTE: the Django ShowInstance model exposes the DB column
+        # ``record`` as the Python attribute ``record_enabled``; the
+        # REST ``ModelSerializer`` with ``fields = "__all__"`` uses
+        # the Python attribute name in the JSON payload, so we must
+        # read ``record_enabled`` here, not ``record``.  (This was a
+        # silent regression first shipped in 2026-05-17 that caused
+        # the recorder to never start.)
+        if show_instance.get("record_enabled"):
+            generate_show_record_events(events, show_instance, show)
+
         if item["file"]:
             file = api_client.get_file(item["file"]).json()
             generate_file_events(events, item, file, show, stream_preferences)
@@ -73,7 +112,57 @@ def get_schedule(api_client: ApiClient) -> Events:
             webstream = api_client.get_webstream(item["stream"]).json()
             generate_webstream_events(events, item, webstream, show)
 
+        elif item.get("linein"):
+            # RASTATIME 2026-05-12 — Phase B: Line-In scheduled item.
+            #
+            # The schedule API serialises ``Schedule.linein`` as the
+            # integer pk of the rastatime_linein row.  We fetch the
+            # detail via the linein REST endpoint (which now accepts
+            # numeric pk in addition to the UUID) so we get the device
+            # stable-ID needed for FFmpeg dshow capture.
+            linein_pk = int(item["linein"])
+            linein = _fetch_linein_by_pk(api_client, linein_pk)
+            if linein is None:
+                # Disabled / deleted while still referenced by a
+                # schedule row.  Skip silently — the slot stays silent
+                # rather than crashing the whole schedule load.
+                continue
+            generate_linein_events(events, item, linein, linein_pk, show)
+
     return dict(sorted(events.items()))
+
+
+def _fetch_linein_by_pk(api_client: ApiClient, linein_pk: int) -> Optional[dict]:
+    """
+    Fetch one rastatime_linein row by its DB integer pk.
+
+    Uses the same Django endpoint the Frontend talks to
+    (``/api/v2/audio/linein/<id>``), which since Phase B.1 accepts
+    both numeric pk and UUID.  Returns the decoded JSON dict, or
+    ``None`` if the row no longer exists (or is disabled and 404s).
+
+    Implementation note: we go through ``api_client.session`` directly
+    rather than adding a typed ``get_linein()`` method because the
+    api_client package is shared with upstream LibreTime and we want
+    to keep our diff there minimal.
+
+    The custom :class:`libretime_api_client._client.Session` prepends
+    ``self.base_url`` to every request URL via ``create_url`` — so we
+    pass only the path portion here, not an absolute URL.  Passing an
+    absolute URL would produce nonsense like
+    ``http://127.0.0.1:8765/http://127.0.0.1:8765/...`` and a 404.
+    """
+    path = f"/api/v2/audio/linein/{linein_pk}"
+    try:
+        resp = api_client.session.get(path, timeout=5)
+    except Exception:  # pylint: disable=broad-exception-caught
+        return None
+    if resp.status_code != 200:
+        return None
+    try:
+        return resp.json()
+    except Exception:  # pylint: disable=broad-exception-caught
+        return None
 
 
 def generate_live_events(
@@ -151,6 +240,59 @@ def generate_file_events(
     insert_event(events, event.start_key, event)
 
 
+def generate_show_record_events(
+    events: Events,
+    show_instance: dict,
+    show: dict,
+):
+    """
+    RASTATIME 2026-05-17 - Phase B: Record-per-Show.
+
+    Emit exactly two events for a single show instance whose
+    ``record`` flag is true:
+
+      * SHOW_RECORD_START at show_instance.starts_at — the playout
+        scheduler spawns an FfmpegRecorder that taps the first
+        configured Icecast output mountpoint and writes
+        ``<recording-folder>/<YYYY-MM-DD>/<YYYY-MM-DD HH-MM> - <show-name>.mp3``.
+      * SHOW_RECORD_END at show_instance.ends_at — the scheduler
+        stops the matching recorder (looked up by show_id).
+
+    Idempotent: if the parent function calls us again for the same
+    show instance (because that show has multiple schedule items),
+    ``insert_event`` dedupes on the (event_key, structural equality)
+    pair so we end up with exactly one START + one END.
+    """
+    # show_instance timestamps may already be datetime objects (the
+    # live-events branch above mutates them); be tolerant of both.
+    starts_at = show_instance["starts_at"]
+    ends_at = show_instance["ends_at"]
+    if isinstance(starts_at, str):
+        starts_at = event_isoparse(starts_at)
+    if isinstance(ends_at, str):
+        ends_at = event_isoparse(ends_at)
+
+    start_event = ShowRecordEvent(
+        type=EventKind.SHOW_RECORD_START,
+        start=starts_at,
+        end=starts_at,
+        show_id=int(show["id"]),
+        show_name=str(show.get("name") or ""),
+        show_starts_at=starts_at,
+    )
+    insert_event(events, datetime_to_event_key(starts_at), start_event)
+
+    end_event = ShowRecordEvent(
+        type=EventKind.SHOW_RECORD_END,
+        start=ends_at,
+        end=ends_at,
+        show_id=int(show["id"]),
+        show_name=str(show.get("name") or ""),
+        show_starts_at=starts_at,
+    )
+    insert_event(events, datetime_to_event_key(ends_at), end_event)
+
+
 def generate_webstream_events(
     events: Events,
     schedule: dict,
@@ -163,6 +305,15 @@ def generate_webstream_events(
     schedule_start_event_key = datetime_to_event_key(schedule["starts_at"])
     schedule_end_event_key = datetime_to_event_key(schedule["ends_at"])
 
+    # RASTATIME 2026-05-16 - per-webstream static input gain (dB), if set
+    # on the cc_webstream row.  Older API responses without this field
+    # gracefully fall back to None (no gain).  Stamped on every event of
+    # this stream so the playout scheduler's resume path can read it
+    # back from `_current_event` after DJ-disconnect.
+    input_gain_db = webstream.get("input_gain_db")
+    if input_gain_db is not None:
+        input_gain_db = float(input_gain_db)
+
     stream_buffer_start_event = WebStreamEvent(
         type=EventKind.WEB_STREAM_BUFFER_START,
         row_id=schedule["id"],
@@ -172,6 +323,7 @@ def generate_webstream_events(
         id=webstream["id"],
         # Show data
         show_name=show["name"],
+        input_gain_db=input_gain_db,
     )
     insert_event(events, schedule_start_event_key, stream_buffer_start_event)
 
@@ -184,6 +336,7 @@ def generate_webstream_events(
         id=webstream["id"],
         # Show data
         show_name=show["name"],
+        input_gain_db=input_gain_db,
     )
     insert_event(events, schedule_start_event_key, stream_output_start_event)
 
@@ -198,6 +351,7 @@ def generate_webstream_events(
         id=webstream["id"],
         # Show data
         show_name=show["name"],
+        input_gain_db=input_gain_db,
     )
     insert_event(events, schedule_end_event_key, stream_buffer_end_event)
 
@@ -210,5 +364,51 @@ def generate_webstream_events(
         id=webstream["id"],
         # Show data
         show_name=show["name"],
+        input_gain_db=input_gain_db,
     )
     insert_event(events, schedule_end_event_key, stream_output_end_event)
+
+
+def generate_linein_events(
+    events: Events,
+    schedule: dict,
+    linein: dict,
+    linein_pk: int,
+    show: dict,
+):
+    """
+    Generate events for a scheduled Line-In Library item (Phase B).
+
+    Unlike WebStreamEvent (which has buffer-start / output-start /
+    buffer-end / output-end), Line-In capture has symmetric start and
+    teardown — one LINEIN_START event marks the slot.  The
+    PlayoutScheduler arms a separate stop timer at ``schedule["ends_at"]``
+    that runs the same teardown path as FileEvent.
+
+    No pre-buffer offset: a microphone is "live" instantly, there's
+    nothing to pre-fill like an HTTP-stream cache.
+
+    ``linein_pk`` is passed in separately because the Django
+    serializer returns the domain UUID as ``linein["id"]``, not the
+    integer DB pk — but the playout side wants the pk for log lines
+    and FK lookups.
+    """
+    schedule_start_event_key = datetime_to_event_key(schedule["starts_at"])
+
+    linein_start_event = LineinEvent(
+        type=EventKind.LINEIN_START,
+        row_id=schedule["id"],
+        start=schedule["starts_at"],
+        end=schedule["ends_at"],
+        id=linein_pk,
+        # show / display data
+        show_name=show["name"],
+        device_id=linein.get("device_id", ""),
+        name=linein.get("name", ""),
+        # RASTATIME 2026-05-14 — B.4 #4: friendly-name fallback hint
+        # for the playout's device resolver.  Optional; empty string
+        # means no fallback available (legacy rows pre-dating the
+        # rastatime_linein.device_name column).
+        device_name=linein.get("device_name", ""),
+    )
+    insert_event(events, schedule_start_event_key, linein_start_event)

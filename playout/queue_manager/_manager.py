@@ -2,23 +2,44 @@
 QueueManager — centralised queue-decision logic for RASTATIME playout.
 
 This module owns the decision of *what* to play next (show vs. fallback vs.
-silence) according to the three-level priority model defined in
-``docs/architecture/QUEUE_BEHAVIOR.md`` (T8.1):
+silence vs. live line-in) according to the four-level priority model defined
+in ``docs/architecture/QUEUE_BEHAVIOR.md`` (T8.1):
 
-    Priority 1 (highest): live input       — reserved (T12+)
+    Priority 1 (highest): live line-in     — T15.2 (this file)
     Priority 2:           scheduled show   — managed here
-    Priority 3 (lowest):  fallback/filler  — managed here
+    Priority 3:           fallback/filler  — managed here
+    Priority 4 (lowest):  silence/idle     — managed here
 
 The ``PlayoutScheduler`` (T8.3) calls ``start_show()`` / ``end_show()`` at the
 appropriate wall-clock instants; ``QueueManager`` translates those events into
 engine commands, applying the HARD/SOFT transition rules defined in §4 of the
 queue-behavior contract.
 
+Line-in integration (T15.2)
+---------------------------
+``go_to_line_in(linein, runtime)`` activates Priority-1 source selection:
+
+1. Any active line-in is deactivated first.
+2. ``_fallback_active`` is cleared **before** ``engine.stop()`` so that the
+   engine's ``on_track_change`` callback (which fires during ``stop()``)
+   does not spuriously restart the fallback.
+3. ``runtime.activate(linein)`` is called; on failure the system falls back
+   to FALLBACK (if configured) or IDLE — it never crashes.
+
+``end_line_in()`` restores normal playout after a line-in session:
+
+* The line-in is deactivated via its runtime.
+* If a fallback is configured, it starts in a daemon thread.
+* Otherwise the engine stays stopped (IDLE).
+
+Both methods are safe to call from any thread.
+
 Threading
 ---------
-All mutations to ``_fallback``, ``_fallback_active``, and ``_content`` are
-protected by ``_lock``.  Engine calls are always made *outside* the lock to
-avoid deadlocks with engine-internal callbacks.
+All mutations to ``_fallback``, ``_fallback_active``, ``_content``,
+``_active_linein_id``, and ``_active_linein_runtime`` are protected by
+``_lock``.  Engine calls and runtime calls are always made *outside* the lock
+to avoid deadlocks with engine-internal callbacks.
 """
 
 from __future__ import annotations
@@ -33,6 +54,8 @@ from ..engine_interface import PlayoutEngine, PlayoutState, QueueItem, TrackChan
 if TYPE_CHECKING:
     from ..fallback import FallbackQueue
     from ..scheduler import StartMode
+    from audio.linein.domain import LineIn as LineInDomain
+    from audio.linein._runtime import ActivationResult, LineInRuntime
 
 logger = logging.getLogger(__name__)
 
@@ -46,21 +69,24 @@ class ContentKind(str, Enum):
     Logical source of the currently active playout content (intent-based).
 
     IDLE
-        Engine is stopped; no show or fallback is playing.
+        Engine is stopped; no show, fallback, or line-in is active.
     SHOW
         A scheduled show was started via ``start_show()``.
     FALLBACK
         Fallback/filler content is playing via ``_trigger_fallback()``.
+    LINE_IN
+        A live line-in source is active at Priority 1 (T15.2).
+        The engine is stopped; audio flows through the
+        :class:`~audio.linein._runtime.LineInRuntime`.
 
     The value tracks what ``QueueManager`` *intended* to start, not the raw
-    engine state.  For example, immediately after ``end_show()`` and before the
-    fallback daemon thread fires, the value is already ``FALLBACK`` if a
-    fallback is configured.
+    engine state.
     """
 
-    IDLE = "idle"
-    SHOW = "show"
+    IDLE     = "idle"
+    SHOW     = "show"
     FALLBACK = "fallback"
+    LINE_IN  = "line_in"
 
 
 # ---------------------------------------------------------------------------
@@ -76,6 +102,9 @@ class QueueManager:
     boundaries; ``QueueManager`` issues ``load_queue()``, ``start()``, and
     ``stop()`` commands to the engine and manages the fallback lifecycle.
 
+    Line-in integration (T15.2) is provided via :meth:`go_to_line_in` and
+    :meth:`end_line_in`.
+
     Parameters
     ----------
     engine:
@@ -89,11 +118,15 @@ class QueueManager:
         self._lock = threading.Lock()
 
         # Fallback state
-        self._fallback: Optional["FallbackQueue"] = None
+        self._fallback: Optional[FallbackQueue] = None
         self._fallback_active: bool = False
 
         # Content-kind tracking (intent, not raw engine state)
         self._content: ContentKind = ContentKind.IDLE
+
+        # T15.2: Line-in state
+        self._active_linein_id: Optional[str] = None
+        self._active_linein_runtime: Optional[LineInRuntime] = None
 
         # Register for engine callbacks so we can react to queue exhaustion
         engine.on_track_change(self._on_engine_track_change)
@@ -102,7 +135,7 @@ class QueueManager:
     # Public API — show lifecycle
     # ------------------------------------------------------------------
 
-    def start_show(self, items: List[QueueItem], mode: "StartMode") -> None:
+    def start_show(self, items: List[QueueItem], mode: StartMode) -> None:
         """
         Start a scheduled show.
 
@@ -155,7 +188,7 @@ class QueueManager:
     # Public API — fallback configuration
     # ------------------------------------------------------------------
 
-    def set_fallback(self, fallback: "FallbackQueue") -> None:
+    def set_fallback(self, fallback: FallbackQueue) -> None:
         """
         Configure filler content that plays when no show is active.
 
@@ -194,7 +227,7 @@ class QueueManager:
             return self._fallback_active
 
     # ------------------------------------------------------------------
-    # Public API — state query
+    # Public API — state queries
     # ------------------------------------------------------------------
 
     def active_content(self) -> ContentKind:
@@ -205,6 +238,152 @@ class QueueManager:
         """
         with self._lock:
             return self._content
+
+    def active_linein_id(self) -> Optional[str]:
+        """
+        Return the domain UUID of the currently active Line-In source.
+
+        Returns
+        -------
+        Optional[str]
+            The :attr:`~audio.linein.domain.LineIn.id` of the active line-in
+            when ``active_content() == ContentKind.LINE_IN``, otherwise
+            ``None``.
+        """
+        with self._lock:
+            return self._active_linein_id
+
+    # ------------------------------------------------------------------
+    # Public API — T15.2 line-in integration
+    # ------------------------------------------------------------------
+
+    def go_to_line_in(
+        self,
+        linein: LineInDomain,
+        runtime: LineInRuntime,
+    ) -> ActivationResult:
+        """
+        Switch to a Line-In source at Priority 1 (highest), preempting any
+        currently active content.
+
+        Sequence
+        --------
+        1. If another line-in is active it is deactivated first.
+        2. ``_fallback_active`` is cleared *before* ``engine.stop()`` so that
+           the engine's ``on_track_change`` callback does not spuriously
+           restart the fallback.
+        3. The engine is stopped (hard preempt).
+        4. ``runtime.activate(linein)`` is called.
+        5. On failure: the system reverts to FALLBACK (if configured) or IDLE
+           and returns the failure result — it never raises.
+        6. On success: ``active_content()`` returns ``LINE_IN`` and
+           ``active_linein_id()`` returns ``linein.id``.
+
+        Parameters
+        ----------
+        linein:
+            The :class:`~audio.linein.domain.LineIn` source to activate.
+        runtime:
+            The :class:`~audio.linein._runtime.LineInRuntime` engine that
+            manages the physical device lifecycle.
+
+        Returns
+        -------
+        ActivationResult
+            ``success=True`` when the line-in is live.
+            ``success=False`` (with ``error_message``) on device failure.
+        """
+        # --- Step 1: deactivate any existing line-in (idempotent swap) ------
+        with self._lock:
+            prev_runtime = self._active_linein_runtime
+            prev_id      = self._active_linein_id
+
+        if prev_runtime is not None and prev_id is not None:
+            prev_runtime.deactivate(prev_id)
+
+        # --- Step 2: clear fallback flag BEFORE engine.stop() ---------------
+        # This prevents _on_engine_track_change from spuriously restarting the
+        # fallback when stop() fires the "current_item=None" callback.
+        with self._lock:
+            self._fallback_active = False
+
+        # --- Step 3: hard-stop the engine -----------------------------------
+        self._engine.stop()
+
+        # --- Step 4: attempt activation -------------------------------------
+        result = runtime.activate(linein)
+
+        # --- Step 5: handle failure -----------------------------------------
+        if not result.success:
+            with self._lock:
+                fb = self._fallback
+                self._active_linein_id      = None
+                self._active_linein_runtime = None
+                if fb and not fb.is_empty():
+                    self._fallback_active = True
+                    self._content = ContentKind.FALLBACK
+                else:
+                    self._content = ContentKind.IDLE
+            logger.warning(
+                "Line-in activation failed for '%s' (device: %s): %s",
+                linein.name, linein.device_id, result.error_message,
+            )
+            if fb and not fb.is_empty():
+                threading.Thread(
+                    target=self._trigger_fallback, daemon=True
+                ).start()
+            return result
+
+        # --- Step 6: record success -----------------------------------------
+        with self._lock:
+            self._content               = ContentKind.LINE_IN
+            self._active_linein_id      = linein.id
+            self._active_linein_runtime = runtime
+
+        logger.info(
+            "Line-in activated: '%s' (device: %s, id: %s)",
+            linein.name, linein.device_id, linein.id,
+        )
+        return result
+
+    def end_line_in(self) -> None:
+        """
+        Deactivate the currently active Line-In source and resume normal playout.
+
+        If not in ``LINE_IN`` mode this is a safe no-op.
+
+        After deactivation
+        ------------------
+        * If a fallback is configured it starts in a daemon thread
+          (``active_content()`` becomes ``FALLBACK``).
+        * Otherwise the engine stays stopped (``active_content()`` is ``IDLE``).
+        """
+        with self._lock:
+            if self._content != ContentKind.LINE_IN:
+                return  # nothing to do
+
+            runtime  = self._active_linein_runtime
+            linein_id = self._active_linein_id
+            self._active_linein_id      = None
+            self._active_linein_runtime = None
+            fb = self._fallback
+
+            if fb and not fb.is_empty():
+                self._fallback_active = True
+                self._content = ContentKind.FALLBACK
+            else:
+                self._content = ContentKind.IDLE
+
+        # Deactivate OUTSIDE the lock to avoid deadlock with runtime internals
+        if runtime is not None and linein_id is not None:
+            runtime.deactivate(linein_id)
+            logger.info("Line-in deactivated: %s", linein_id)
+
+        if fb and not fb.is_empty():
+            threading.Thread(target=self._trigger_fallback, daemon=True).start()
+            logger.info("Fallback started after line-in ended")
+        else:
+            logger.info("Line-in ended, engine idle")
 
     # ------------------------------------------------------------------
     # Internal — start-mode implementations
@@ -282,6 +461,9 @@ class QueueManager:
         * ``current_item`` is not None → a new track started; nothing to do.
         * ``current_item`` is None (queue exhausted):
 
+          - Content is LINE_IN: the engine stopped as part of a line-in
+            transition; the fallback must NOT be restarted (it will be
+            managed explicitly by ``end_line_in()``).
           - Fallback active + ``loop=True``:  restart fallback from the top
             (``QUEUE_BEHAVIOR.md`` §4.4).
           - Fallback active + ``loop=False``: non-looping fallback played
@@ -292,8 +474,14 @@ class QueueManager:
             return  # a new track started — nothing to do
 
         with self._lock:
-            active = self._fallback_active
-            fb = self._fallback
+            active  = self._fallback_active
+            fb      = self._fallback
+            content = self._content
+
+        # During LINE_IN mode the engine is stopped intentionally — don't
+        # interpret queue exhaustion as a signal to start the fallback.
+        if content == ContentKind.LINE_IN:
+            return
 
         if not active or not fb:
             return

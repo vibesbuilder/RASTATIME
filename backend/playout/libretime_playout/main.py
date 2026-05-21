@@ -22,14 +22,24 @@ from libretime_shared.logging import setup_logger
 from . import PACKAGE, VERSION
 from .config import CACHE_DIR, RECORD_DIR, Config
 from .history.stats import StatsCollectorThread
-from .liquidsoap.client import LiquidsoapClient
-from .liquidsoap.version import LIQUIDSOAP_MIN_VERSION
 from .message_handler import MessageListener
 from .player.events import Events, FileEvents
 from .player.fetch import PypoFetch
 from .player.file import PypoFile
-from .player.liquidsoap import Liquidsoap
 from .player.push import PypoPush
+
+# T-GH-1: Liquidsoap engine removed. Imports guarded for safe import on
+# Windows and other platforms where liquidsoap is not installed.
+try:
+    from .liquidsoap.client import LiquidsoapClient
+    from .liquidsoap.version import LIQUIDSOAP_MIN_VERSION
+    from .player.liquidsoap import Liquidsoap
+    _LIQUIDSOAP_AVAILABLE = True
+except ImportError:
+    _LIQUIDSOAP_AVAILABLE = False
+    LiquidsoapClient = None  # type: ignore[assignment, misc]
+    LIQUIDSOAP_MIN_VERSION = (0, 0, 0)  # type: ignore[assignment]
+    Liquidsoap = None  # type: ignore[assignment, misc]
 
 logger = logging.getLogger(__name__)
 

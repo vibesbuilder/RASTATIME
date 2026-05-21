@@ -36,6 +36,21 @@ class EventKind(str, Enum):
     WEB_STREAM_OUTPUT_START = "stream_output_start"
     WEB_STREAM_BUFFER_END = "stream_buffer_end"
     WEB_STREAM_OUTPUT_END = "stream_output_end"
+    # RASTATIME 2026-05-12 — Phase B: Line-In as a scheduled audio source.
+    # A LINEIN_START fires at the scheduled slot start; the scheduler is
+    # also responsible for stopping the capture at end (no dedicated
+    # *_END event needed since teardown is symmetric with FileEvent).
+    LINEIN_START = "linein_start"
+    # RASTATIME 2026-05-17 — Phase B: Record-per-Show feature
+    # (ARCHITECTURE Section 23.13).  SHOW_RECORD_START fires at the
+    # show's scheduled start when cc_show.record = true; the matching
+    # SHOW_RECORD_END fires at the show's scheduled end.  Independent
+    # from FILE / WEB_STREAM / LINEIN / Master-Show source events —
+    # the recorder reads the active Icecast output mountpoint, which
+    # naturally captures whichever source happens to be on air at
+    # any given moment during the show.
+    SHOW_RECORD_START = "show_record_start"
+    SHOW_RECORD_END = "show_record_end"
 
 
 EventKeyDatetime = Annotated[datetime, BeforeValidator(event_key_to_datetime)]
@@ -108,6 +123,62 @@ class WebStreamEvent(BaseEvent):
     # Show data
     show_name: str
 
+    # RASTATIME 2026-05-16 - per-webstream static input gain (dB).
+    # Sourced from cc_webstream.input_gain_db via the REST API.  The
+    # playout scheduler forwards this to FfmpegStreamer's `gain_db`
+    # parameter, which emits a -af volume=<dB>dB filter.  None or 0
+    # = no filter applied (default upstream behaviour).
+    input_gain_db: Optional[float] = None
+
+
+class LineinEvent(BaseEvent):
+    """
+    A scheduled Line-In Library item.
+
+    Created from a ``cc_schedule`` row whose ``linein_id`` is non-NULL.
+    Carries the device's stable ID (a Windows audio endpoint GUID, e.g.
+    ``"0fb30b0b-c875-432b-a48f-dbb5208995c9"``) so the playout can wire
+    FFmpeg's ``-f dshow -i audio="@device_cm_{...}\\wave_{<GUID>}"``
+    capture from the right microphone without any extra lookup.
+
+    Phase B fields are deliberately minimal — the device GUID and a
+    display name are all the playout side needs to start a capture.
+    """
+
+    type: Literal[EventKind.LINEIN_START]
+
+    # Schedule
+    row_id: int
+    id: int  # rastatime_linein.id (DB pk)
+
+    # Show data
+    show_name: str
+
+    # Line-In specifics
+    device_id: str
+    """
+    Stable ID of the Windows audio input endpoint (normalised GUID
+    without braces).  Combined into FFmpeg's dshow alternative-name
+    syntax at capture time.
+    """
+
+    name: str
+    """Operator-given label, e.g. ``"Studio Mic Left"``."""
+
+    device_name: str = ""
+    """
+    RASTATIME 2026-05-14 — B.4 #4 UUID-Wechsel nach Reboot.
+
+    OS-reported friendly name of the audio input endpoint at save time
+    (e.g. ``"Mikrofon (Jabra Speak 410 USB)"``).  Used as a fallback in
+    :meth:`PlayoutScheduler._resolve_linein_device` when the saved
+    ``device_id`` (USB endpoint GUID) no longer resolves to an active
+    device — a known Windows USB-audio quirk where the WASAPI GUID can
+    shift after reboots or driver / port re-enumerations.  Empty
+    string for legacy rows without a stored name; the resolver then
+    behaves as before (no fallback, preflight warns).
+    """
+
 
 class ActionEventKind(str, Enum):
     SWITCH_OFF = "switch_off"
@@ -120,8 +191,48 @@ class ActionEvent(BaseEvent):
     event_type: str
 
 
+class ShowRecordEvent(BaseEvent):
+    """
+    RASTATIME 2026-05-17 — Phase B: Record-per-Show.
+
+    Emitted by the schedule builder once per show-instance for shows
+    where ``cc_show.record == true``: one SHOW_RECORD_START at
+    ``show.starts_at`` and one matching SHOW_RECORD_END at
+    ``show.ends_at``.
+
+    Independent from FILE / WEB_STREAM / LINEIN / Master-Show source
+    events; the recorder reads the active Icecast output mountpoint,
+    which naturally captures whichever source happens to be on air at
+    any given moment during the show.
+
+    Carries the metadata the recorder needs to build the output
+    filename:
+      * ``show_id``     — used to keep separate-show concurrent recordings apart
+      * ``show_name``   — used in the filename (sanitized of NTFS-illegal
+                          chars but spaces/Umlauts retained)
+      * ``starts_at``   — used to build the YYYY-MM-DD HH-MM filename prefix
+                          (re-derived from ``start`` for SHOW_RECORD_END so
+                          stop() finds the right recorder by show_id)
+    """
+
+    type: Literal[
+        EventKind.SHOW_RECORD_START,
+        EventKind.SHOW_RECORD_END,
+    ]
+
+    show_id: int
+    show_name: str
+    show_starts_at: EventKeyDatetime
+
+
 AnyEvent = Annotated[
-    Union[FileEvent, WebStreamEvent, ActionEvent],
+    Union[
+        FileEvent,
+        WebStreamEvent,
+        LineinEvent,
+        ActionEvent,
+        ShowRecordEvent,
+    ],
     Field(discriminator="type"),
 ]
 
