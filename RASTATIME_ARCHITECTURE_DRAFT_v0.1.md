@@ -1,8 +1,176 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.1  
-Date: 2026-04-23
+Draft version: 0.12
+Date: 2026-05-21
+
+> **Revision history**
+> - **0.12 (2026-05-21)** — Auto DJ feature (Section 23.20).
+>   New `Application_Service_AutoDjService` with two passes that
+>   bookend the existing per-show autoplaylist build loop in
+>   `AutoPlaylistManager`: a pre-pass auto-creates a single
+>   non-repeating show in the next 1 h calendar gap (≥ 60 s,
+>   ≤ 12 h, with `has_autoplaylist = true` so the same poll
+>   cycle fills it), and an opt-in fill-pass appends the
+>   Auto-DJ playlist to upcoming instances whose unscheduled
+>   tail is > 5 s.  Settings page under
+>   Settings → Auto DJ persists five `cc_pref` keys; logo
+>   upload re-uses the show-image MIME-validation pattern.
+>   Programmatic show creation uses the existing
+>   `ShowService::addUpdateShow()` under a `Zend_Auth` admin-
+>   context swap because that service hard-rejects non-Admin/PM
+>   callers.  Minor-bump because of new public surface
+>   (`AutoDjService` + 5 `Preference` getters/setters +
+>   2 new controller actions); otherwise additive only.  No
+>   schema change.
+> - **0.11.1 (2026-05-20)** — Autoloading Playlist outro-reserve
+>   fix (Section 23.19).  Adds a new scheduler-side
+>   `setReservedSeconds()` hook and an optional `$reservedSecs`
+>   third parameter to `ShowInstance::addPlaylistToShow()` so the
+>   auto-build path can pre-reserve the outro playlist's length
+>   *before* expanding any time-remaining smart blocks in the
+>   autoplaylist.  Existing callers are unaffected (default
+>   reserve = 0 = upstream behaviour).  Pure backend; no UI
+>   change, no schema change, no API change.  Patch-bump.
+> - **0.11 (2026-05-19)** — Line-In entries in Playlists
+>   (Section 23.18, migration 0054).  Adds
+>   `cc_playlistcontents.linein_id INTEGER` and a new `type = 3`
+>   discriminator so the Library's Line-In rows can be dropped into
+>   a Playlist alongside Tracks / Webstreams / Smart Blocks.  When
+>   such a Playlist is later scheduled into a Show, the Scheduler's
+>   `type === 'playlist'` branch maps playlist-type 3 → schedule-
+>   type 2, producing the same `cc_schedule` row a direct
+>   Show-Line-In would have produced (Section 23.A linein-in-show
+>   flow, migration 0047).  Minor-bump because of the new table
+>   column; otherwise additive only.
+> - **0.10.2 (2026-05-19)** — Webstream "Default Length" field now
+>   accepts an optional trailing seconds component (`01h 05m 05s`)
+>   to match the Line-Input dialog's granularity (Section 23.17).
+>   Backwards-compatible — the pre-existing `01h 05m` form still
+>   validates.  Single-file patch (`Application_Model_Webstream`);
+>   no schema change (the DB column is already a Postgres `interval`),
+>   no API change.  A larger refactor unifying the three independent
+>   duration parsers (Webstream, Line-In, Smart Block) into a shared
+>   helper was considered and deferred — recorded as future work.
+>   Patch-bump.
+> - **0.10.1 (2026-05-19)** — Show-Templates follow-up fixes
+>   (Section 23.16): the Apply path is now click-trigger-free
+>   (jQuery 1.8.3's default-action simulation on checkbox click was
+>   inverting the Repeats / Linked state on every Apply), and a
+>   single `syncDependentVisibility(form)` pass at the end of
+>   `applyShowTemplate()` recomputes every collapsible section from
+>   the post-write checkbox state.  Apply + Save-as-Template buttons
+>   now explicitly `preventDefault + stopPropagation` so they cannot
+>   submit the surrounding `<form id="add-show-form">` and block the
+>   next Add-this-Show click.  Template UI rendered in New Show and
+>   Edit Show; deliberately suppressed in Edit Instance (re-stamping
+>   one occurrence of a repeating show would either silently
+>   propagate to siblings or have no effect — both confusing).
+>   Patch-bump (no schema changes, no new endpoints).
+> - **0.10 (2026-05-19)** — Show-Templates feature (Section 23.16).
+>   New table `cc_show_template` (migration 0053) stores reusable
+>   show configurations as JSON snapshots; the Calendar's New-Show
+>   dialog gains "Load Template" / "Save as Template" controls, and
+>   Settings → "Show Templates" lists / renames / deletes existing
+>   templates.  One-way stamp model (template-edit does not propagate
+>   to existing shows), station-wide scope, hosts stored as login
+>   strings (graceful degradation when a user is removed), live-
+>   stream passwords excluded from the snapshot.  Minor-bump
+>   because of the new table; otherwise additive only.
+> - **0.9.2 (2026-05-18)** — Documented a future-work item
+>   (Section 23.15) capturing the operator's 2026-05-18 evaluation of
+>   exposing RASTATIME to the public Internet over HTTPS: three
+>   tunneling/proxy options (direct Apache HTTPS + port-forwarding;
+>   Cloudflare Tunnel; external VPS with Caddy), the RASTATIME-side
+>   changes that every option entails (public_url, Mixed-Content for
+>   Icecast streams, login hardening, cookie/session domain), and an
+>   estimated setup-time + annual cost for each.  Decision: deferred
+>   — operator wants to keep RASTATIME LAN-only for now.  Pure docs
+>   change; no code touched.
+> - **0.9.1 (2026-05-17)** — Documented a future-work item (Section
+>   23.14): every source switch in the current architecture restarts
+>   all three FFmpeg streamers from scratch, leaving the
+>   `/rastatime` Icecast mountpoint sourceless for ~2-4 s.  Listeners
+>   are forced to reconnect.  Bugfix-only otherwise (recorder
+>   reconnect_at_eof / reconnect_on_network_error for surviving the
+>   gap; recorder post-roll for full-length files; UTC→local-time
+>   filename; faster dashboard polling).
+> - **0.9 (2026-05-17)** — Record-per-Show feature: shows flagged
+>   `cc_show.record = true` produce a single MP3 of the on-air output
+>   to `<folder>/<YYYY-MM-DD>/<YYYY-MM-DD HH-MM> - <show-name>.mp3`.
+>   Implementation taps the first configured Icecast output mountpoint
+>   with FFmpeg `-c copy` (1–2 % CPU on i3-1315U, no re-encode), so
+>   recording quality matches what listeners actually hear AND source
+>   switches (file track → web stream → line-in → master) are picked
+>   up automatically without scheduler-side coordination.  Two new
+>   event types (`SHOW_RECORD_START` / `SHOW_RECORD_END`) keep the
+>   recorder lifecycle independent from the per-source event chain.
+>   See **Section 23.13**.
+> - **0.8 (2026-05-16)** — Local Import Folder feature (drop-folder
+>   semantics): operator configures a single absolute path under
+>   Settings -> Local Machine (renamed from "Soundcard"); a 5-minute
+>   TaskManager scan plus a manual "Scan Now" button walk the folder
+>   and hand every audio file to the standard
+>   `CcFiles::createAndImport` pipeline (organize -> analyzer ->
+>   cc_files); source files are deleted after each attempt,
+>   successful or failed.  Reuses existing infrastructure end-to-end
+>   (no new analyzer, no new storage, no schema change).  See
+>   **Section 23.12**.
+> - **0.7 (2026-05-16)** — Track Expiry + Podcast Auto-Expiry feature,
+>   plus a shared per-track pruner.  Operators can attach an expiry
+>   date to any file (via ID3 TXXX:Expiry tag, manual edit, or
+>   per-podcast auto-expiry), and an hourly TaskManager job marks
+>   expired tracks `cc_files.disabled = true`.  Disabled tracks stay
+>   visible in the Library and in already-built Smartblocks (so
+>   scheduled shows keep playing them) but are excluded from NEW
+>   Smartblock evaluations.  Per-podcast auto-expiry takes precedence
+>   over ID3 tags (subscribers own retention, not publishers).  See
+>   **Section 23.11**.
+> - **0.6 (2026-05-16)** — Per-webstream input-gain feature, plus a
+>   generalisation of the playout engine's gain parameter.  New column
+>   `cc_webstream.input_gain_db` (default 0, range -20..+20) is applied
+>   by the FFmpeg streamer and mpv local monitor as a `-af volume=<dB>dB`
+>   filter for the lifetime of the webstream event.  The existing
+>   `replay_gain_db` parameter on `PlayoutEngine.play()` /
+>   `FfmpegStreamer.start()` / `PlayoutScheduler._start_streamers()`
+>   was renamed to `gain_db`: same plumbing, but the value's source
+>   now depends on event type (file = ReplayGain sum, webstream =
+>   `input_gain_db`, live sources = None).  See **Section 23.10**.
+> - **0.5 (2026-05-15)** — Settings → General audit: removed the phantom
+>   "Feature Previews" radio (a `cc_pref` key with no consumer); reduced
+>   the language dropdown from 22 to 4 maintained locales (`en_US`,
+>   `de_DE`, `fr_FR`, `es_ES`); added a Windows-native `.po → .mo` build
+>   pipeline (`infra/scripts/maintenance/build-locales.ps1` driven by
+>   mlocati's standalone gettext binary) so translations actually take
+>   effect — upstream LibreTime never shipped compiled `.mo` files on
+>   this branch, leaving every locale silently English at runtime.
+>   Activating the pipeline immediately uncovered three latent upstream
+>   bugs (PreferenceController wrote only one of three locale surfaces;
+>   `configureLocalization()` use-after-null silently emptied LANGUAGE;
+>   `navigation.php` translated at Bootstrap time before
+>   `configureLocalization()` ran) — all three fixed in the same
+>   release.  See **Section 23.9**.
+> - **0.4 (2026-05-15)** — ReplayGain wired end-to-end: the precomputed
+>   per-track dB offset (``cc_files.replay_gain`` + global modifier)
+>   is now actually applied by the mpv local-monitor and by every
+>   FFmpeg streamer.  Previously the value was summed into
+>   ``FileEvent.replay_gain`` by the scheduler but neither engine
+>   consumed it; the UI looked functional but produced no audible
+>   effect.  See **Section 23.8**.
+> - **0.3 (2026-05-14)** — Phase B.4 follow-up: replaced the
+>   Liquidsoap-dependent file-import playability check with an
+>   FFmpeg-based decode-verify (closes the long-running silent gap
+>   where RASTATIME imported files without playability validation);
+>   removed the phantom "Auto Switch On / Off" UI from Live
+>   Broadcasting preferences (their only consumer path was the now-
+>   defunct Liquidsoap/Pypo dispatcher).  See **Sections 23.6 and 23.7**.
+> - **0.2 (2026-05-14)** — Phase B.4 stabilisation: per-DJ source auth via
+>   Icecast 2.4 `stream_auth`, direct-to-:8770 source-event wiring, internal
+>   reconciliation watchdog against Icecast's actual mount list, live
+>   on-air state read endpoint, and a friendly-name fallback layer for
+>   Windows USB endpoint-GUID instability.  See **Section 23 — Phase B.4
+>   Stabilisation Decisions** for the architectural rationale.
+> - **0.1 (2026-04-23)** — initial draft.
 
 ---
 
@@ -374,6 +542,19 @@ A dedicated **Soundcard abstraction layer** must isolate:
 - persistence of selected devices
 - internal stable identifiers
 - mapping from logical channels to physical hardware
+
+**Stable-ID secondary identifier (added in 0.2):** the original assumption
+that the WASAPI endpoint GUID is a permanently stable identifier turned out
+to be wrong for USB-class audio devices.  Windows can reassign the endpoint
+GUID across reboots, driver updates, or port re-enumerations even when the
+same physical device is plugged in.  The Soundcard abstraction therefore
+persists a **friendly-name fallback** alongside every stable-ID
+(`device_name` in `rastatime_linein`, `main_output_name` /
+`preview_output_name` in `rastatime_soundcard_settings`).  The resolver
+`WindowsAudioDeviceManager.find_device_by_id_or_name()` tries the saved
+stable-ID first and falls back to a case-insensitive friendly-name match,
+restoring the routing without operator intervention.  See **Section 23.4**
+for the full rationale.
 
 ---
 
@@ -1008,3 +1189,2119 @@ These external references are the main evidence base for the technical direction
 
 This draft intentionally uses those sources to support a **Windows-first adaptation strategy**, not to imply that current upstream LibreTime already supports this target natively.
 
+---
+
+## 23. Phase B.4 Stabilisation Decisions (2026-05-14)
+
+Phase B.4 hardened the source-handling and audio-device-routing subsystems
+after empirical issues surfaced on the production-class Windows 11 + Icecast
+2.4.4 + Apache/PHP-fcgid stack.  The four decisions below are now binding;
+older sections of this document have been amended in-place where they
+described the previous architecture.
+
+### 23.1 Per-DJ Source Authentication via `stream_auth`
+
+**Decision.** Source clients (BUTT and equivalent) authenticate against
+Icecast's `<authentication type="url">` block using the `stream_auth`
+option only — **not** `mount_add` as a primary auth callback.
+
+**Rationale.**  Icecast 2.4's `mount_add` URL is a post-admission
+notification with no identity payload (only `action`, `mount`, `server`,
+`port` are POSTed) and cannot serve as a real auth gate.  `stream_auth`
+fires before admission and forwards `user` + `pass` + `mount` + `ip`,
+allowing a true per-DJ check.  Confirmed against the bundled Icecast 2.4
+docs (`/c/Tools/Icecast/doc/auth.html`).
+
+**Implementation.**  A light PHP at `public/icecast-source-auth.php` (no
+Zend bootstrap, to fit inside Icecast's ~3 s auth timeout) validates
+against:
+
+* `/main` → `cc_pref.live_stream_master_username` + `live_stream_master_password`
+  (plain comparison) **or** operator-override `source` / `master-secret`
+  for DB-down recovery.
+* `/show` → strict mode (Variant A): an unmodified show must be running
+  right now, then either the show's custom credentials
+  (`live_stream_user`/`live_stream_pass` plain) or a host of the show
+  (`cc_subjs ∪ cc_show_hosts`) with the Legacy LibreTime md5 password
+  hash.
+
+### 23.2 Direct-to-Playout Source-Event Wiring
+
+**Decision.**  Icecast's `mount_add` and `mount_remove` URLs point
+**directly** at the playout's HTTP listener (`http://127.0.0.1:8770/source-event`).
+PHP is **not** in this path.
+
+**Rationale.**  An earlier attempt routed these events through the same
+PHP that handles `stream_auth`, with the PHP firing async curls to
+`:8770`.  Empirically the async pattern (`popen('start /B …')` on
+Windows fcgid) reported success (`popen=ok`) but the detached curl child
+did not consistently deliver to `:8770` — observed many times in the
+debug log under `C:\Temp\icecast-source-auth.log`.  Icecast itself
+performs proper outbound HTTP for these URLs and is treated as the
+trusted notifier.
+
+The query string carries `source=master|show` and `status=on|off` (XML-
+escaped as `&amp;`); the playout listener reads from `urlparse(self.path).query`
+and ignores the POST body Icecast also sends.
+
+### 23.3 Reconciliation Watchdog
+
+**Decision.**  The playout runs a 10 s polling watchdog inside
+`libretime_playout.source_switcher` that queries Icecast's
+`/admin/listmounts` (admin Basic auth) and reconciles the in-memory
+`SourceSwitcher` state with whatever Icecast actually reports.
+
+**Rationale.**  Icecast 2.4's `mount_remove` notification is empirically
+unreliable on this stack — a source disconnect occasionally does not
+result in the configured URL being called.  Without the watchdog, the
+SourceSwitcher's `master_connected` / `show_connected` flags drift away
+from reality and the playout keeps pointing FFmpeg streamers at empty
+mounts.  Worst-case stuck-state duration with the watchdog: ~10 s.
+
+`/admin/listmounts` was chosen over the public `/status-json.xsl`
+because `/main` and `/show` are `<hidden>1</hidden>` and never appear in
+the public JSON listing.
+
+### 23.4 Friendly-Name Fallback for Stable IDs
+
+**Decision.**  Every persisted audio-device reference carries both a
+stable-ID and the OS-reported friendly name.  The resolver
+`WindowsAudioDeviceManager.find_device_by_id_or_name()` tries the saved
+stable-ID first and falls back to a case-insensitive name match.
+
+**Rationale.**  WASAPI endpoint GUIDs are not actually stable for USB-class
+audio devices.  Windows can reassign the GUID after reboots, driver
+updates, or port re-enumerations even when the same physical device is
+plugged in (observed with a Jabra USB headset).  Section 4.6.3's
+"internal stable identifiers" assumption was therefore weakened in
+practice.  Persisting the friendly name and using it as a fallback
+restores routing without operator intervention.  A WARNING in the
+service log nudges the operator to re-save the picker so the new GUID
+is persisted and future starts don't need the fallback step.
+
+Implementation: `rastatime_linein.device_name` (migration `0004`),
+`rastatime_soundcard_settings.main_output_name` /
+`preview_output_name` (migration `0002`).  Resolver is generic and
+used by both linein capture (`PlayoutScheduler._resolve_linein_device`)
+and main-output restoration (`libretime_playout/__main__.py`).
+
+### 23.5 Dashboard "On Air" Indicator — Live Source-State Read
+
+**Decision.**  The legacy Dashboard's "On Air" indicator reads source
+state live from the playout's `/source-state` endpoint, not from
+`cc_pref.{master_dj,live_dj,master_dj_switch,live_dj_switch}` columns.
+
+**Rationale.**  The cc_pref columns used to be flipped by the
+Liquidsoap-era PHP path
+(`/api/update-source-status`), which is no longer wired up — the
+direct-to-:8770 refactor removed the only remaining writer.  Reading
+from those columns now would always return "off".  The playout's
+in-memory `SourceSwitcher` is the source of truth; the
+`Preference::GetSourceStatus()` /
+`Preference::GetSourceSwitchStatus()` helpers fetch from
+`http://127.0.0.1:8770/source-state` with a per-request static cache
+(one HTTP call per dashboard poll, not per source-name lookup) and a
+500 ms timeout.
+
+### 23.6 File-Import Playability Check via FFmpeg
+
+**Decision.**  The pipeline's `analyze_playability` step decode-verifies
+every imported audio file with FFmpeg.  The upstream Liquidsoap-based
+check is no longer used.
+
+**Rationale.**  Liquidsoap was removed from the runtime in ADR-002, so
+the original Liquidsoap-dependent playability check silently no-op'd
+on every RASTATIME import.  Broken or partially-corrupted files were
+therefore admitted to the library and only surfaced their issues at
+actual playout time (typical symptom: `mpv[ffmpeg/audio/error]
+mp3float: Header missing` on the last frame of poorly-encoded MP3s,
+prematurely ending the schedule slot and producing a barely-audible
+glitch).  FFmpeg is already in the runtime for streaming and capture,
+so the replacement check adds no new dependency.
+
+**Behaviour.**  `ffmpeg -v error -i <file> -f null -` is invoked with
+a 120 s timeout per file.  Exit-code semantics:
+
+| FFmpeg result                         | Action                                       |
+|---------------------------------------|----------------------------------------------|
+| exit 0, empty stderr                  | clean — import as normal                     |
+| exit 0, stderr lines                  | soft-warn — log WARNING, import allowed      |
+| exit ≠ 0                              | hard-reject — raise `UnplayableFileError`    |
+| FFmpeg binary missing or timeout      | fail-open — log WARNING, import allowed      |
+
+The fail-open branch for "FFmpeg missing" preserves the upstream
+"missing tool ⇒ don't block uploads" semantic the Liquidsoap branch
+had.
+
+A standalone re-scan tool at
+`infra/scripts/maintenance/rescan-playability.py` applies the same
+check to the existing library to surface pre-existing soft-warn /
+broken files that were imported before this check was wired in.
+
+### 23.7 Removal of Phantom Auto-Switch UI
+
+**Decision.**  The "Auto Switch On" and "Auto Switch Off" checkboxes
+in Settings → Streams → Live Broadcasting are removed.
+
+**Rationale.**  Both checkboxes saved a value to `cc_pref` but the
+only code path that ever consumed those values was
+`ApiController::updateSourceStatusAction()`, which sent RabbitMQ
+messages to the Liquidsoap-based Pypo playout — both removed in
+ADR-002.  The post-ADR-002 `SourceSwitcher` performs the equivalent
+Master > Show > Scheduled priority transitions unconditionally; there
+is no dispatch target left for an operator gate.  Leaving the
+checkboxes visible was actively misleading — operators reasonably
+expected them to do something, and they did not.
+
+Reintroducing operator-controlled gates would require non-trivial
+architectural work in `SourceSwitcher` (per-transition skip flags,
+new HTTP endpoints to flip them at runtime, dashboard UI hooks); no
+concrete operator use-case justifies that work today.  If a real
+use-case surfaces, the gates can be reintroduced with a focused
+ADR.
+
+The `cc_pref` rows themselves (`keystr = 'auto_transition' /
+'auto_switch'`) are left in the database for legacy-data
+preservation; nothing reads them now.  The `updateSourceStatusAction`
+controller method is reduced to a no-op stub (kept for v1-API-client
+back-compat) rather than being deleted outright.
+
+### 23.8 ReplayGain End-to-End
+
+**Decision.**  The precomputed per-track ReplayGain offset is applied
+at the playout-engine boundary: both the mpv local-monitor and every
+FFmpeg streamer accept a ``replay_gain_db`` argument on ``play()`` /
+``start()`` and emit a single ``volume=<dB>dB`` audio filter.  Live
+sources (line-in, master, show, webstream) pass ``None`` and are
+not gain-modified — those don't have a per-track value to apply.
+
+**Rationale.**  The analyzer-pipeline step ``analyze_replaygain.py``
+has been writing per-track dB values into ``cc_files.replay_gain``
+all along.  The scheduler reads ``cc_pref.replay_gain_modifier``
+(operator global preamp) plus the per-track value and writes the
+sum onto ``FileEvent.replay_gain`` in ``player/schedule.py``.  Before
+this commit, neither the mpv engine nor the FFmpeg streamers
+referenced that field — the configured ReplayGain UI ran into the
+void: setting persisted, no audio change.
+
+**Implementation.**
+* ``PlayoutEngine.play()`` interface gains an optional
+  ``replay_gain_db`` keyword argument (defaults to ``None``).
+* ``MpvPlayoutEngine.play()`` sets the libmpv ``af`` property:
+  - non-``None`` and non-zero ⇒ ``lavfi=[volume=<dB>dB]``;
+  - else ⇒ ``""`` (clears any previous filter so live sources don't
+    inherit a previous track's gain).
+* ``FfmpegStreamer.start()`` injects ``-af volume=<dB>dB`` between
+  ``-i`` and the encoder args.  Near-zero (|dB| < 0.001) is treated
+  as no-op so the FFmpeg filter chain is omitted entirely.
+* ``PlayoutScheduler`` plumbs ``event.replay_gain`` into both
+  ``engine.play()`` and ``_start_streamers()`` at file-event start,
+  and caches it on ``self._current_replay_gain_db`` so the resume
+  path (DJ-disconnect fallback, hot-reload, schedule refresh) keeps
+  the right correction applied.
+* ``VlcPlayoutEngine.play()`` accepts the parameter for interface
+  compatibility but does not apply it — the libVLC backend is no
+  longer the default engine since ADR-002 and a libVLC-native
+  ReplayGain path would conflict with mpv's filter-graph approach.
+
+Out of scope for this change (deferred to a follow-up):
+* Static per-source input gain for live sources (Linein, Webstream,
+  Master/Show) — a different feature with the same FFmpeg filter
+  mechanism but per-source configuration; only worth implementing
+  if an operational need surfaces.
+* EBU R128 real-time loudness normalisation at the output stage
+  — planned as the next loudness step.
+
+### 23.9 Localisation Pipeline on Windows
+
+**Context.**  Upstream LibreTime relies on the GNU gettext toolchain on
+the deployment host to compile each `frontend/legacy/locale/<LANG>/
+LC_MESSAGES/libretime.po` into a binary `libretime.mo` at install time
+(see the existing `frontend/legacy/locale/Makefile`).  Without the `.mo`
+the PHP `gettext` extension's lookup misses and returns the English
+source string — the language dropdown silently has no effect.
+
+On a typical Linux Debian/Ubuntu LibreTime install the `gettext` package
+is a transitive dependency and the Makefile fires from the installer.
+RASTATIME's Windows install path has neither piece: `gettext` is not a
+Windows OS package, and the upstream Makefile is GNU-make + Bash and
+does not run on plain PowerShell.  Result: every locale we shipped was
+inert.
+
+**Decision.**  We adopt mlocati's `gettext-iconv-windows` standalone
+binary distribution (a ~6 MB ZIP, single-folder extract, no installer
+and no MSYS2/Cygwin dependency) and ship a small PowerShell driver
+script that compiles only the locales we actually maintain.
+
+**Why this over alternatives.**
+
+| Option | Why not |
+|---|---|
+| MSYS2 / Cygwin | ~500 MB toolchain for a single CLI tool we invoke once per change to `.po` files.  Adds a parallel POSIX environment that nothing else in the RASTATIME stack needs. |
+| WSL | Hard veto by product (RASTATIME stays Windows-native; WSL adds a Linux VM the operator must manage). |
+| Chocolatey/winget `gettext` | Works, but introduces an external package-manager dependency for one binary.  We prefer a checked-in download instruction. |
+| Bake `.mo` files into the repo | Compiled binaries from `.po` files; mixes generated artefacts with source.  Re-build is cheap; storing the source is enough. |
+| Pre-compile at CI time | Reasonable future direction, but no CI runner yet exists for RASTATIME; deferring. |
+
+**Implementation.**
+* `infra/scripts/maintenance/build-locales.ps1` searches `msgfmt.exe` on
+  PATH, then at the recommended mlocati install location
+  (`C:\Tools\gettext-iconv\bin\msgfmt.exe`), then at the `Program Files`
+  fallback paths, then accepts an explicit `-MsgfmtPath` argument.
+* The script's `$activeLanguages` array must stay in sync with the
+  `$locales` map in `frontend/legacy/application/models/Locale.php`; both
+  call out the constraint in comments.
+* `msgfmt` runs with `--check-format --check-domain` so a malformed `.po`
+  fails the build instead of producing a silently broken `.mo`.
+* `.mo` files are written next to the source `.po`.  They are an
+  intentionally-tracked artefact in the repo: the operator runs the
+  script after pulling translation updates and commits both source and
+  compiled file together.  Rationale: avoids requiring the gettext
+  toolchain on production Windows hosts that only need to *run* RASTATIME.
+
+**Operator workflow.**
+1. One-time setup: download mlocati ZIP, extract to
+   `C:\Tools\gettext-iconv\`.
+2. After any `.po` edit (translation update, new translatable string):
+   `powershell -ExecutionPolicy Bypass -File infra\scripts\maintenance\build-locales.ps1`
+3. Restart Apache (httpd) so the PHP gettext cache invalidates.
+
+Step-by-step instructions for editing individual translations and for
+adding a new language are kept in
+`frontend/legacy/locale/README.md` (operator-facing, lower abstraction
+level than this section).
+
+**Language-set reduction.**  The upstream `Locale.php $locales` array
+exposed 22 entries.  In practice we maintain four (`en_US`, `de_DE`,
+`fr_FR`, `es_ES`); the other 18 were inherited Transifex/Weblate
+translations of varying staleness and offered no support pathway from
+RASTATIME.  All 18 `.po` directories plus their matching
+`public/js/datatables/i18n/*.txt` and `public/js/plupload/i18n/*.js`
+files are deleted from the repo.  Re-adding a language requires four
+synchronised edits documented in `Locale.php`.
+
+**Known runtime quirk on Windows.**  PHP's `setlocale(LC_MESSAGES, ...)`
+returns `false` for many UTF-8 locale identifiers on Windows hosts that
+do not have the corresponding system locale installed — this is logged
+as a warning by `Application_Model_Locale::configureLocalization()`.
+The warning is tolerable: the `LANGUAGE` env var (set unconditionally
+on line 51 of `Locale.php`) is sufficient for gettext's `bindtextdomain`
+lookup to find the right `.mo` file regardless of the OS-level locale
+table.  We do not depend on `setlocale` for translation correctness.
+Even so, `configureLocalization()` now tries multiple setlocale
+variants (`<locale>.UTF-8`, bare `<locale>`, BCP47 `<locale>` with
+underscore-to-hyphen substitution) so the call succeeds when
+possible.
+
+**Three upstream-inherited bugs uncovered by activating the
+pipeline.**  Producing real `.mo` artefacts exposed three latent
+defects in the legacy frontend that had been invisible while the
+pipeline was inert (every `_()` fell through to the English source
+string regardless of which locale was selected):
+
+1. **`PreferenceController` only wrote one of three locale surfaces.**
+   RASTATIME carries three sources of locale truth: the
+   `airtime_locale` cookie (priority 1 in pre-login and Edit-User
+   paths), `cc_pref.user_locale` rows (priority for logged-in users),
+   and the global `cc_pref.locale` row (fallback / default for new
+   users).  The Settings → General form save only updated the global
+   row, so an admin flipping "Default Language" saw no UI change.
+   The save now writes all three surfaces in one transaction and
+   re-runs `configureLocalization()` inline so even the
+   confirmation message lands in the new language.
+
+2. **`configureLocalization($locale = null)` use-after-null.**  When
+   called without an argument (the `PageLayoutInitPlugin` hot path),
+   it ran `putenv("LANGUAGE={$locale}")` with `$locale` still null,
+   silently emptying the env var that drives gettext's `.mo`
+   lookup.  gettext then fell back to whatever locale state the
+   Apache/fcgid worker carried from a previous request, producing a
+   sticky-stale UI ("German never goes away after switching to
+   English").  Fix: resolve `$locale` before the `putenv` call.
+
+3. **`navigation.php` translated at Bootstrap time.**  The legacy
+   navigation config builds the top-nav Zend_Navigation container at
+   Bootstrap time — strictly before `configureLocalization()` runs —
+   using direct `_('Calendar')`, `_('Settings')` etc. calls.  Whatever
+   half-initialised locale state the worker held was baked into the
+   container; `views/scripts/menu.phtml`'s later
+   `_($page->getLabel())` pass could not reverse-translate because
+   msgid keys are always English.  The file's own header comment
+   already acknowledged that translation was supposed to happen in
+   menu.phtml, but the code did not match that intent.  Fix:
+   `navigation.php` now stores plain English source strings; the
+   single `_()` pass in menu.phtml is the only translation point.
+   The strings are still referenced from other view scripts, so the
+   gettext extraction toolchain continues to pick up their msgids
+   from those locations without a separate noop marker function.
+
+### 23.10 Per-Webstream Input-Gain and Gain Parameter Generalisation
+
+**Context.**  Section 23.8 wired ReplayGain end-to-end for scheduled
+file tracks: `cc_files.replay_gain` plus the global
+`cc_pref.replay_gain_modifier` were summed in the scheduler, threaded
+through `FfmpegStreamer.start(replay_gain_db=...)` /
+`MpvPlayoutEngine.play(replay_gain_db=...)`, and emitted as a single
+`-af volume=<dB>dB` audio filter before the encoder/output stage.
+Live sources (linein, master/show, webstream) passed `None` and were
+not gain-modified — there was no per-source gain concept on this
+branch.
+
+The operator-facing pain point that triggered this change: webstreams
+from third-party feeds (community-radio relays, news bulletins,
+weather audio) frequently arrive at substantially different levels
+than the rest of the schedule.  RASTATIME's only previous workaround
+was to ask the upstream feed operator to renormalise their stream, or
+to manually re-encode the feed through a relay — neither pleasant.
+
+**Decision.**  Add a per-webstream static input-gain field, applied
+through the same FFmpeg `volume` filter mechanism already proven for
+ReplayGain.  Same code path, same audio quality, same CPU cost
+profile.  This also opens the door to an equivalent per-line-in gain
+later (deliberately not built yet because the line-in level is more
+naturally adjusted at the soundcard input-gain stage on Windows, but
+the plumbing would be identical if we change our minds).
+
+**Schema.**
+* New column `cc_webstream.input_gain_db NUMERIC DEFAULT 0` (Django
+  migration `0048_add_cc_webstream_input_gain_db`).  Range enforced
+  at the UI and controller layers as `-20.0` to `+20.0` dB; the DB
+  column itself is unconstrained NUMERIC for forward-compat.
+* The Propel `CcWebstream` class is **not** regenerated for this
+  column — the legacy frontend's existing setter chain in
+  `Application_Model_Webstream::save()` does a `$webstream->save()`
+  via the existing Propel model and then issues a raw-SQL UPDATE for
+  the new column.  Symmetric raw-SQL read via
+  `Webstream::getInputGainDbForId($id)` for the edit form's
+  pre-fill.  Rationale: regenerating Propel classes touches many
+  files (om/ base classes) and risks unintended drift in unrelated
+  models; the dual-write (Propel + raw SQL) for one column is the
+  same workaround used for `cc_schedule.linein_id` in section 23 of
+  Phase A.
+
+**API.**  `WebstreamSerializer.Meta.fields = "__all__"` automatically
+exposes the new column to the playout's REST client.
+
+**Event model.**
+* `WebStreamEvent` gains `input_gain_db: Optional[float] = None`.
+* `player/schedule.py::generate_webstream_events` reads
+  `webstream["input_gain_db"]` (graceful `None` fallback for older
+  API responses) and stamps it on **every** event of the stream
+  (BUFFER_START / OUTPUT_START / BUFFER_END / OUTPUT_END) — the
+  scheduler's resume path reads it back from `_current_event` after
+  a DJ-disconnect.
+
+**Engine parameter generalisation.**  The existing
+`replay_gain_db` parameter on the engine `play()` /
+`FfmpegStreamer.start()` / `PlayoutScheduler._start_streamers()`
+boundary is renamed to **`gain_db`**.  The mechanism is unchanged
+(same FFmpeg `volume` filter), but the parameter name now reflects
+that the value's source depends on the calling event type:
+
+| Event type | Value source |
+|---|---|
+| `FileEvent` | precomputed ReplayGain sum (`cc_files.replay_gain` + `cc_pref.replay_gain_modifier`) |
+| `WebStreamEvent` | `cc_webstream.input_gain_db` |
+| `LineinEvent` | `None` (no per-source gain feature yet) |
+| Live source `/main` / `/show` | `None` |
+
+The scheduler picks the right source value when constructing the
+event and passes the result.  The streamer and the mpv engine treat
+`None` or `0.0` as a no-op (no filter added to the chain).
+
+The cached `_current_replay_gain_db` field on `PlayoutScheduler` is
+likewise renamed to `_current_gain_db` and now stores whichever event
+type's gain is active, so the resume path (DJ-disconnect, hot-reload)
+re-emits the correct filter when restarting the streamers.
+
+Considered alternatives, rejected:
+* **Keep `replay_gain_db` and silently overload it to also carry
+  webstream input-gain.**  Lexically clean, semantically dishonest;
+  a future maintainer would read `replay_gain_db` and assume the
+  value originated from ReplayGain analysis.
+* **Add a parallel `input_gain_db` parameter alongside
+  `replay_gain_db`.**  Two parameters that the streamer would
+  internally sum; gives the scheduler false flexibility (when would
+  it ever pass both?) and makes the FFmpeg-filter emission code
+  branch unnecessarily.
+
+**UI.**  The webstream edit dialog (`webstream.phtml`) gets a
+numeric input "Input Gain (dB)" between Default-Length and the
+Save/Cancel buttons.  Pre-filled from
+`Webstream::getInputGainDbForId()`; saved via the existing
+`webstream/save` AJAX endpoint as a new `input_gain_db` parameter.
+The controller clamps to `[-20, +20]` and falls back to 0 on
+non-numeric input.
+
+**Tests.**  The five existing tests in
+`test_ffmpeg_streamer_replay_gain.py` are renamed to
+`test_ffmpeg_streamer_gain.py` and use the new `gain_db` keyword.
+Same assertion coverage (no-op when None / near-zero, positive
+emission, negative emission with sign preservation, filter ordering
+before encoder).  The tests do not depend on whether the value
+originated as ReplayGain or input-gain — they exercise the streamer's
+filter emission only.
+
+**Out of scope for this change** (deferred):
+* Per-line-in static gain — same one-line plumbing once the operator
+  decides whether the soundcard-side input-gain stage covers it.
+* A live in-UI dB meter at the Add-Webstream stage (would require an
+  async server-side FFmpeg sampling probe and a websocket back to the
+  UI; not enough operator value to justify the complexity).
+
+### 23.11 Track Expiry and Podcast Auto-Expiry
+
+**Context.**  RASTATIME stations frequently subscribe to podcasts that
+publish daily or weekly episodes (news, weather, community bulletins).
+After a few months the library accumulates hundreds of stale podcast
+episodes that no one wants to schedule any more but that nobody has
+time to delete manually.  Disk space starts mattering, and worse, the
+Smartblocks that match on track-type tags begin to dredge up year-old
+episodes when an operator wanted "recent" ones.
+
+The complementary problem: occasional one-off tracks (timed campaigns,
+holiday spots, "valid until election day" PSAs) have a known expiry
+even when uploaded manually.  The operator wants those flagged for
+removal without having to remember the date on a sticky note.
+
+**Decision.**  Introduce a single `cc_files.expires_at TIMESTAMP NULL`
+column that drives a shared hourly pruner.  Two input pipelines write
+to it:
+
+1. **ID3-tag pipeline** (manual upload, generic file).  The analyzer's
+   `analyze_metadata` step now reads a custom ID3v2 TXXX frame whose
+   `Description` is exactly `Expiry` and whose value is an ISO-8601
+   date string (`YYYY-MM-DD`).  Tools like Mp3tag and Kid3 set this
+   trivially.  Other tag formats (Vorbis comments, MP4 atoms) are not
+   currently scanned — operator workflow on this branch is
+   dominantly MP3 + ID3v2 and adding more formats is straightforward
+   when needed.
+
+2. **Podcast Auto-Expiry pipeline** (podcast subscription).  The
+   `imported_podcast` table gains
+   `auto_expiry_enabled BOOLEAN DEFAULT false` and
+   `auto_expiry_days INTEGER NULL`.  When auto-expiry is on, the
+   Django `download_episode` view (which receives the new columns
+   from `ImportedPodcast`) computes
+   `expires_at = now() + auto_expiry_days` and writes it on the
+   `cc_files` row at the same time the file is moved into the media
+   store.
+
+**Precedence (decision B, 2026-05-16):** Podcast Auto-Expiry **wins**
+over any ID3 `Expiry` tag the upstream publisher embedded.
+Subscribers own retention; publishers don't.  The implementation is
+naturally this way: the Podcast download path writes `expires_at`
+directly on `File()` construction, without ever invoking the analyzer
+that would read the ID3 tag.  For non-podcast uploads the analyzer
+runs and reads ID3 as the sole source.
+
+**Action on expiry — `disabled` flag, not deletion (decision A,
+2026-05-16, modified):** A separate `cc_files.disabled BOOLEAN DEFAULT
+false` column captures the expired state.  The pruner only ever
+flips false → true; it never removes rows or files.  Disabled tracks:
+
+* **stay visible in the Library** (so the operator can sort, filter,
+  bulk-select, and manually delete them at their leisure — they get
+  a Disabled column in the library DataTable that can be enabled via
+  the column-picker and used as a sort key);
+* **stay in already-built Smartblocks** (so currently-scheduled
+  shows keep playing them — neither the pruner nor any other
+  background job touches `cc_blockcontents`);
+* **are excluded from NEW Smartblock evaluations** via an additional
+  `disabled = false` clause in `Block::generateSmartBlock()`'s
+  criteria query, immediately after the existing `file_exists = true`
+  and `hidden = false` clauses;
+* **may still be scheduled directly into a Show via Showbuilder** —
+  no schedule-level block.  The operator stays in control.
+
+The distinction between `cc_files.hidden` (upstream's own
+library-visibility flag for special system files) and
+`cc_files.disabled` (RASTATIME's expiry marker) is deliberate;
+collapsing them would tangle two unrelated concerns.
+
+**Pruner.**  `TrackExpiryTask` in
+`frontend/legacy/application/common/TaskManager.php`.  Runs hourly
+via the existing TaskManager piggyback (every page hit checks
+`shouldBeRun()` against
+`cc_pref.track_expiry_last_run + 3600s`).  Single atomic SQL:
+
+```sql
+UPDATE cc_files
+SET disabled = true
+WHERE expires_at IS NOT NULL
+  AND expires_at < NOW()
+  AND disabled = false
+```
+
+The `rowCount()` is logged as `TrackExpiryTask: disabled N expired
+files`.  No per-row loop, no schedule-conflict check, no cascade —
+the design keeps the pruner trivially correct.
+
+**Manual edit.**  The Library's Edit Audio MD form gains an "Expiry
+Date" text field (YYYY-MM-DD, optional).  Empty clears.  Saving a
+value back-dated to the past also flips `disabled` immediately;
+saving a future date re-enables a previously-disabled file (the
+`UPDATE … SET disabled = (CAST(:exp AS TIMESTAMP) < NOW())` clause
+in `StoredFile::setDbColMetadata`).  Symmetric round-trip semantics.
+
+**Read paths.**
+
+* `StoredFile::getDbColMetadata` reads `expires_at` via raw SQL
+  (Propel class is not regenerated for the new column) and exposes
+  it as a `YYYY-MM-DD` string in the metadata map for the edit form.
+* The library DataTable picks up `expires_at` and `disabled` through
+  `StoredFile::getLibraryColumns()` and surfaces them as two new
+  optional columns in `library.js`.  Hidden by default; the
+  operator enables them via the standard column-picker.
+
+**Why not regenerate the Propel classes:** same rationale as
+Section 23.10 (webstream input-gain).  The `om/BaseCcFiles.php`
+generator touches dozens of methods across many other files and
+risks unintended drift in unrelated models for the benefit of one
+column.  The two-column dual-write (Propel for everything else, raw
+SQL for `expires_at` and `disabled`) is the same workaround used
+elsewhere in the legacy frontend and stays isolated to two
+identifiable code blocks.
+
+**Migration.**  `0049_add_track_expiry_and_podcast_auto_expiry`:
+
+```sql
+ALTER TABLE cc_files ADD COLUMN expires_at TIMESTAMP NULL;
+ALTER TABLE cc_files ADD COLUMN disabled BOOLEAN DEFAULT false NOT NULL;
+ALTER TABLE imported_podcast ADD COLUMN auto_expiry_enabled BOOLEAN DEFAULT false NOT NULL;
+ALTER TABLE imported_podcast ADD COLUMN auto_expiry_days INTEGER NULL;
+```
+
+Existing rows get `expires_at = NULL` and `disabled = false`, so the
+feature is inactive until the operator enables it on a podcast or
+edits a track's expiry — backwards-compatible.
+
+**Out of scope for this change** (deferred):
+
+* Hard-delete instead of disable — the disabled marker plus a
+  manual Library bulk-delete is a safer first move and the
+  operator already asked for that workflow.
+* Vorbis/MP4 tag scanning for non-MP3 uploads — trivial to add
+  later when a workflow shows up.
+* "Expiring soon" notifications in the Dashboard — possible but
+  not asked for; the Library column gives operators a sortable
+  view that covers the day-to-day need.
+* Per-Show "no expired tracks" guard at schedule-render time —
+  current design lets the operator hand-schedule a disabled track
+  on purpose (e.g. one last play before retirement).  Adding a
+  warning is a 5-minute follow-up if it turns out to surprise people.
+
+### 23.12 Local Import Folder
+
+**Context.**  RASTATIME operators frequently produce or receive audio
+on the same Windows host where the station runs — recordings from
+external software, files downloaded by hand, conversion outputs from
+batch tools.  The upload-via-Plupload UI path requires opening the
+Library, drag-and-dropping each file, waiting for the analyzer.  That
+is fine for one or two files at a time, but tedious for the "drop a
+batch in a folder and walk away" workflow.
+
+**Decision (Option A, modified 2026-05-16).**  A single configured
+absolute folder on the RASTATIME host acts as a drop-folder.  Every
+5 minutes (and on-demand via a "Scan Now" button), a TaskManager job
+walks the folder, hands each audio file to the standard
+`CcFiles::createAndImport` pipeline, and deletes the source after the
+attempt — successful OR failed.
+
+Deliberately rejected alternatives:
+
+* **Option B — "Reference in place" (Watch-Folder).**  The original
+  upstream Watched-Folders pattern: leave files where they are,
+  `cc_files.filepath` points to the external path.  Operator
+  considered it too fragile — renaming or moving the file outside
+  RASTATIME breaks the playback path silently.  Drop-folder semantics
+  with copy-to-storage are safer: once a file enters the Library it
+  has a stable identity in `<storage>/imported/`, independent of
+  whatever happens to the source folder afterwards.
+* **Option C — Multiple folders, per-folder mode (copy vs. reference).**
+  Flagged as a possible future extension; not built now because the
+  single-folder drop pattern covers the announced operator workflow
+  and Option C would add UI complexity (folder list, per-row mode
+  picker, per-folder rescan/remove buttons) for a use-case nobody has
+  asked for yet.
+
+**Schema.**  None.  The feature is config-only, persisted in
+`cc_pref`:
+
+| Key | Type | Meaning |
+|---|---|---|
+| `local_import_folder` | string | absolute folder path; empty disables the scan |
+| `local_import_last_run` | UNIX timestamp | drives the 5-min throttle |
+| `local_import_last_status` | string | last-scan summary surfaced in the UI |
+
+No `cc_music_dirs` row is created — the drop-folder is not a
+permanent Library location, only a transient staging area.  Imported
+files end up under `<storage>/imported/<owner>/` like any other
+upload, indistinguishable downstream.
+
+**Pipeline reuse.**  The scan calls
+`CcFiles::createAndImport([], $fullPath, $name, $copyFile=false)`,
+which is the same entry point Plupload eventually reaches.  This
+gives the drop-folder importer **free**, in order:
+
+1. A `cc_files` row with `import_status = PENDING` and `hidden = true`.
+2. A `rename()` of the source into `<storage>/organize/` — atomic
+   when the import folder is on the same drive as `<storage>`,
+   transparent copy+delete otherwise.
+3. A RabbitMQ message to the analyzer, which runs the full pipeline:
+   `analyze_metadata` (incl. RASTATIME's ID3 `Expiry`-tag reader,
+   Section 23.11), `analyze_playability` (Section 23.6),
+   `analyze_cuepoint`, `analyze_replaygain`.
+4. A PUT back to `/rest/media/<file_id>` flipping
+   `import_status = SUCCESS`, `hidden = false`, and any extracted
+   metadata (including `expires_at`, Section 23.11).
+
+Because `moveFileToStor()` uses `rename()`, the source file is
+**removed by the move itself** on success — no explicit `unlink()`
+needed.  On failure (bad extension, permission denied, analyzer
+signal failure) the helper does an explicit `@unlink($fullPath)` so a
+permanently-broken file does not pile up forever in the drop-folder
+and re-trigger on every scan.
+
+**Throttle + on-demand entry.**  `LocalImportScanTask::scanOnce()` is
+the single import method.  Called from two paths:
+
+* `LocalImportScanTask::run()` — TaskManager-driven, 5-minute interval
+  via the existing `cc_pref.local_import_last_run` throttle pattern
+  (same shape as `TrackExpiryTask` from Section 23.11).
+* `PreferenceController::localImportScanNowAction()` — the
+  "Scan Now" button bypasses the throttle by calling `scanOnce()`
+  directly.  Useful right after configuring a new folder so the
+  operator does not have to wait up to 5 minutes for verification.
+
+Both paths persist the same `last_run` timestamp and a human-readable
+`last_status` string that the UI surfaces ("imported 3, failed 0,
+skipped 1").
+
+**UI.**  The Settings -> Soundcard page is renamed to
+**Settings -> Local Machine** in `navigation.php`.  The page now
+covers both audio devices (existing Output + Line-In sections) and a
+new **Import Folder** section: a single text input for the absolute
+path, a "Save Folder" button (validates the path is a directory AND
+writable — we need to delete after import), a "Scan Now" button
+disabled when no folder is configured, and a status line showing
+"Last scan: <timestamp>" plus the last-status string.  The
+controller action keeps its old name (`soundcard-setting`) so
+existing bookmarks / links survive the rename.
+
+**Audio file types.**  The scan recognises
+`mp3, wav, m4a, flac, ogg, oga, aac, opus`.  Non-audio extensions
+are silently skipped (operator may have placed them intentionally;
+we do not own arbitrary files in the drop-folder).
+
+**Out of scope** (deferred):
+
+* **Option C — multiple folders with per-folder mode** (copy vs.
+  reference, drop-folder vs. watch-folder).  Spec-ready, would
+  re-activate the `cc_music_dirs` Multi-Row schema, would need a
+  proper UI list with per-row controls.  Estimated +4–6 h on top of
+  this section's baseline if/when the workflow demands it.
+* **Sub-folder recursion.**  Currently flat: only the top level of
+  the configured folder is scanned.  Recursive walk is a trivial
+  one-line change in `scanOnce()` but was not asked for.
+* **Network mount support.**  Should work without changes (SMB
+  drives like `\\\\NAS\\Audio` are valid Windows paths), but is not
+  tested.  Network reliability quirks belong in the optional
+  Watch-Folder mode (Option C) if/when that lands.
+
+### 23.13 Record-per-Show
+
+**Context.**  Operators routinely want to keep an archive of what
+actually went on air — for compliance (some jurisdictions require a
+broadcast log), for re-publication as podcast / catchup, or simply
+to recover a recording the host forgot to make.  The upstream
+LibreTime feature was a Liquidsoap-driven Line-In recorder
+(checkbox label literally "Record from Line In?"); the wider
+"record whatever is on air" use case was never available on this
+branch.
+
+**Decision.**  Cross-source recording via **output-tap with
+`-c copy`** on the first configured Icecast mountpoint.  The
+recorder is an independent FFmpeg subprocess; it inherits the
+Icecast stream as a single MP3 stream and writes it verbatim to a
+file, without re-encoding.  This deliberately ties recording
+quality to the stream's quality (typically 192 k or 320 k MP3),
+but in exchange:
+
+* **CPU cost is ~1–2 %** of one core on Intel i3-1315U — well below
+  the next-cheapest option (Internal-Bus separate encoder at
+  10–15 %).
+* **Source switches are picked up automatically.**  When the
+  scheduler hands the air over from a scheduled file track to a
+  webstream to a line-in to a master/show DJ, the Icecast mountpoint
+  reflects that transition; the recorder, being a passive listener,
+  records the new source without any coordination logic of its own.
+  In particular: no need to interact with the `SourceSwitcher`,
+  no need to add per-event recording fan-out, no race conditions
+  during transition windows.
+* **Failure isolation.**  An incomplete recording (Icecast crash,
+  FFmpeg crash, disk full) never affects the live stream — the
+  recorder shares no process or file handle with the streamer.
+
+Considered alternatives, rejected:
+
+* **(b) Internal-Bus separate encoder.**  Higher recording quality
+  possible (FLAC, 320 k MP3 from PCM source), but requires teaching
+  the recorder which source is active at any moment (file path /
+  webstream URL / dshow handle / Icecast listen-URL).  ~10× the
+  code, ~10× the CPU.  Quality gain over a 320 k MP3 tap is
+  borderline-imperceptible for spoken radio.
+* **(c) Tee-filter inside the existing FfmpegStreamer.**  CPU-cheap
+  but couples recording failure to streaming failure (a single
+  FFmpeg process is now responsible for both); rejected on
+  failure-domain grounds.
+* **Liquidsoap-style internal pipeline.**  Not available — the
+  Liquidsoap stack was removed in ADR-002.
+
+**Event model.**  Two new event types in `EventKind`:
+
+* `SHOW_RECORD_START` — emitted by the schedule builder at
+  `show_instance.starts_at` for every show instance whose
+  `record == true`.
+* `SHOW_RECORD_END` — emitted at `show_instance.ends_at` for the
+  same instance.
+
+Both are carried by a new `ShowRecordEvent` Pydantic model with
+fields `show_id`, `show_name`, `show_starts_at`.  `start == end`
+(point-in-time events).  The schedule builder emits both events
+inside `generate_show_record_events()`, which is called when the
+top-level scheduler loop sees `show_instance.get("record")` truthy.
+Multiple schedule items per show instance produce identical
+`ShowRecordEvent`s, which `insert_event` dedupes on structural
+equality — so we end up with exactly one START + one END per show
+instance regardless of how many tracks are in the show.
+
+The PlayoutScheduler arms a single timer per event in
+`_arm_show_record_event` (point-in-time, so no separate stop timer
+is needed); the timer's callback dispatches to
+`_on_show_record_start` or `_on_show_record_end`.
+
+**Recorder lifecycle (`FfmpegRecorder`).**  Single instance on the
+PlayoutScheduler, instantiated eagerly so a missing `ffmpeg`
+binary surfaces at startup, not at first show-start.  Static
+state: `subprocess.Popen` handle, output path, current show id,
+threading lock.  `start()` is idempotent w.r.t. an
+already-running prior recording (which should never happen given
+RASTATIME's non-overlapping schedule, but is handled defensively
+— prior is stopped first).  `stop()` sends `q\n` to FFmpeg's stdin
+for a graceful exit; falls back to `kill()` after 5 s.
+
+The recorder command:
+
+```
+ffmpeg -reconnect 1 -reconnect_streamed 1
+       -reconnect_on_http_error 4xx,5xx -reconnect_delay_max 5
+       -loglevel warning
+       -i http://localhost:8000/<first-mountpoint>
+       -c copy -vn -y
+       <recording-folder>/<YYYY-MM-DD>/<YYYY-MM-DD HH-MM> - <show-name>.mp3
+```
+
+Reconnect options ride out short Icecast hiccups without dying;
+`-c copy` skips re-encoding; `-y` overwrites a half-written file
+left over from a prior crashed run (which would be unusable
+anyway).
+
+**Configuration surface.**  Two cc_pref keys:
+
+| Key | Meaning |
+|---|---|
+| `local_recording_folder` | absolute folder path; empty disables recording |
+| (none for source URL) | derived dynamically from the first
+                          `cc_pref` stream-output config |
+
+The recording-folder string is exposed to the playout via a new
+read-only API endpoint `GET /api/v2/preferences/local-recording-folder`
+returning `{"folder": "<path>"}`.  The playout fetches it once per
+SHOW_RECORD_START fire (~1 KB request, <50 ms typical) rather than
+caching globally — operators can change the folder mid-day in the
+UI and the next-show recording picks up the new value.
+
+The source URL is derived dynamically from
+`self._current_stream_configs[0]` (the first entry of the
+hot-reloaded stream-output config) as
+`http://{host}:{port}/{mount}`.  If the operator changes the
+mountpoint name or port in Settings → Streams, the recorder follows
+on the next show-start without any restart.
+
+**Filename construction.**  `build_output_path()` composes
+`<folder>/<YYYY-MM-DD>/<YYYY-MM-DD HH-MM> - <show-name>.mp3` from
+`show_starts_at` (UTC-naive, as carried in the event) plus a
+sanitized show name.  Sanitization strips Windows-illegal characters
+(`<>:"/\|?*` plus control chars) and replaces them with `_`; Umlauts,
+spaces, and dashes are kept verbatim per operator spec.  Per-day
+subfolder gives the operator a natural archive layout.  Start time
+in the filename guarantees uniqueness even for shows that air
+multiple times per day.
+
+**UI.**  Two surface changes:
+
+1. **Settings → Local Machine** gains a "Recording Folder" section
+   below the existing Import Folder section.  Simple text input
+   + Save button.  Server-side save validates the path is a
+   directory AND writable (the recorder creates per-day subfolders
+   and writes .mp3 into them).
+2. **Edit Show** form: the existing `add_show_record` checkbox
+   label is renamed from upstream's "Record from Line In?" to
+   simply "Record this show" — Line-In is no longer special, the
+   recorder captures whatever is on air.
+
+**Operator-visible failure modes** (all logged at WARNING, none
+crash the playout):
+
+| Precondition | Behaviour |
+|---|---|
+| No `local_recording_folder` configured | Show plays normally; log: "no recording folder configured" |
+| No stream outputs configured | Show plays; log: "no output stream configured" |
+| `ffmpeg.exe` missing at startup | `_show_recorder = None`; all subsequent SHOW_RECORD_START skip with log |
+| Icecast unreachable at recording start | FFmpeg's reconnect logic retries; if persistent, recording file is empty or 0 bytes; log shows non-zero rc on stop |
+| Disk full mid-recording | FFmpeg exits with error; partial file kept (unusable); log shows the rc; no retry attempted |
+| Show cancelled mid-air | SHOW_RECORD_END fires earlier than scheduled; recording file is shorter than the originally-planned show duration |
+| Multiple shows at the same `starts_at` (should not happen per RASTATIME's schedule model) | First `start()` wins; subsequent ones stop the prior recorder and replace it; log warning |
+
+**Disk-space management** is intentionally out of scope for this
+feature.  At 320 k MP3 a 1-hour show is ~140 MB; a typical 12-h
+broadcast day is ~1.7 GB; an unattended station fills a 1 TB disk
+in ~6 months.  Cleanup of old recordings is the job of the 7-day
+catchup feature (Section 23.x, future) or a simple operator
+cron / scheduled task; the recorder itself never deletes
+anything.
+
+**Out of scope for this change** (deferred):
+
+* Internal-Bus mode for archive-quality recording (FLAC, 320 k
+  with re-encode from PCM).  Operator can ask for it later if the
+  output-tap quality turns out to be insufficient.
+* Recordings showing up as `cc_files` entries in the Library.
+  Per spec, recordings live in their own folder structure outside
+  the Library — they are NOT auto-imported.  A future "publish
+  this recording to the Library" UI action would be a follow-up
+  if the use case shows up.
+* Per-show choice of recording format / bitrate.  Currently
+  inherits the source mountpoint.  Adding a per-show override
+  would mean falling back to (b) Internal-Bus per show; not
+  worth the complexity yet.
+* Automated cleanup of old recordings (covered by future Catchup
+  feature #9).
+
+### 23.14 Continuous Output Stream (Future Work, deferred)
+
+**Status:** Open / not implemented.  Documented here so the
+constraint is not lost between Phase B and whichever future feature
+picks it up.
+
+**Observation (2026-05-17, surfaced by Record-per-Show testing):**
+Every source switch in the current playout architecture rebuilds
+the entire output pipeline from scratch:
+
+1. `mpv` is told to stop the current input URI.
+2. The three FFmpeg streamers feeding the three Icecast mountpoints
+   (`/rastatime` MP3-320, `/rastatime-aac` AAC-320, `/rastatime-ogg`
+   Opus-128) are signaled with `q`, terminate, and exit (PIDs
+   disappear).
+3. The new source is set up — a track file path, a webstream URI, or
+   a Line-In capture via `FfmpegLineinCapture` to
+   `/linein-capture`.
+4. `mpv` is told to play the new URI.
+5. Three new FFmpeg streamer subprocesses are spawned and connect to
+   Icecast (new PIDs).
+
+Total wall-clock gap on `/rastatime` between step 2 and the first
+streamer becoming ready in step 5: **~2 s for file→webstream, ~3-4
+s for any transition involving Line-In** (because Line-In also
+needs to spawn its own dshow capture process between steps 3 and 4).
+During this gap Icecast reports zero source for the mountpoint;
+every connected listener (web player, mobile app, third-party
+re-streamer) sees the stream end and has to reconnect.  Recording
+clients are affected the same way — fixed in the recorder side by
+adding `-reconnect_at_eof 1` and `-reconnect_on_network_error 1`,
+but the public-listener side has no equivalent recourse.
+
+This is **not** a regression caused by Record-per-Show; it has been
+true since the VLC/mpv playout engine replaced Liquidsoap in
+Phase 2 (ADR-002, Section 19.1).  Record-per-Show only made it
+visible in operator testing because the recording-side EOF caused
+empty MP3 files, which forced us to look.
+
+**Operator-stated goal:** the public-facing output stream should
+behave like a real radio station — **always on**.  Listeners stay
+connected 24/7; whether a show is currently scheduled is irrelevant
+to whether the stream is up.  Between shows the stream carries
+silence (or eventually a station ident loop / news / etc.).  This
+is also how upstream LibreTime's Liquidsoap mountpoint behaved.
+
+**Candidate approaches** (none of them implemented yet — to be
+re-evaluated when this feature is scheduled):
+
+1. **Continuous streamers + silence source.**  The three FFmpeg
+   streamer subprocesses are spawned once at playout startup and
+   kept running for the lifetime of the service.  Their input is a
+   permanent audio pipeline (either an FFmpeg `anullsrc` silence
+   generator that mpv's actual playback is mixed into, or a
+   named-pipe / Windows FIFO that mpv writes to and the streamers
+   read from).  Source switches only re-target the mpv side;
+   streamers never restart, Icecast source never drops, listeners
+   never reconnect.  Off-air-meta ("RASTATIME back on air soon")
+   keeps working — it's already a separate cc_pref string.
+   - Pro: cleanest solution; matches upstream Liquidsoap behaviour;
+     also fixes the recorder gap, so the
+     `-reconnect_at_eof` / `-reconnect_on_network_error` workaround
+     becomes redundant.
+   - Con: largest implementation surface; touches mpv-Engine
+     wiring, all three FfmpegStreamer instances, source_switcher,
+     and the schedule-event loop.  Requires careful Windows
+     named-pipe handling (or an in-process audio bus).
+   - Estimated effort: 3-5 days, comparable to one Phase B
+     stabilisation item.
+
+2. **Silence-filler at transitions only.**  Streamers still restart
+   on every source switch, but between the old mpv source ending
+   and the new mpv source becoming ready, a short silence buffer
+   (~5 s) is pushed to the streamers so Icecast never sees source
+   loss.  Smaller change, but the source-switch logic gets
+   complicated and the streamer-restart cost is still paid.
+   - Pro: focused fix; the Icecast `<burst-on-connect>` machinery
+     does most of the smoothing for free if combined with a
+     larger `<burst-size>`.
+   - Con: leaves the source-switch architecturally fragile; doesn't
+     help if the streamer itself ever crashes during a show.
+
+3. **Permanent streamer reading from a Windows named-pipe.**  A
+   subset of (1): no silence generator, no audio mixer, just a
+   single permanent OS-level pipe between mpv and the three
+   streamers, with mpv writing whatever audio it has (silence
+   between shows is just mpv playing a generated silence URI).
+   - Pro: smaller than (1).
+   - Con: Windows named-pipe handling from FFmpeg subprocesses is
+     fiddly (we'd need either the `\\\\.\\pipe\\<name>` syntax on
+     stdin or `pipe:0` redirection); needs spike before commitment.
+
+**Recommendation, when the time comes:** option (1).  The 24/7
+output-stream semantics aligns with operator expectations and with
+how every other broadcast station behaves; the recorder workaround
+becomes redundant; and the source-switch logic becomes simpler
+(only mpv is restarted, not the whole pipeline).  Until then,
+listeners will continue to see a 2-4 s reconnect on every source
+boundary, and the recorder will continue to need its reconnect
+flags.
+
+**Decision recorded 2026-05-17:** deferred.  Operator wants Phase B
+/ Feature #8 (Record-per-Show) closed out first; the continuous-
+stream rework gets its own feature ticket and is scheduled separately.
+
+### 23.15 HTTPS / Public-Internet Access (Future Work, deferred)
+
+**Status:** Open / not implemented.  Captured here so the trade-off
+matrix from the 2026-05-18 evaluation does not have to be redone
+when this feature is scheduled.
+
+**Today's topology (LAN-only):**
+
+| Component | Listens on | Notes |
+|---|---|---|
+| Apache 2.4 + PHP (mod_fcgid) | `http://192.168.1.192/` | the operator UI |
+| Backend API (Django/Uvicorn) | `http://127.0.0.1:8765` | localhost only |
+| Playout HTTP listener | `http://127.0.0.1:8770` | localhost only |
+| Icecast | `http://localhost:8000/<mount>` | public streams + admin |
+| `libretime.conf` → `general.public_url` | `http://192.168.1.192` | interpolated into RSS feeds, episode download URLs, image URLs, etc. |
+
+Everything is plain HTTP, no certificate management, no
+auth-hardening assumptions beyond "trusted LAN."
+
+**Operator goal (2026-05-18):** be able to use RASTATIME's web UI
+from the public Internet, ideally over HTTPS.  This pulls in three
+unrelated concerns at once:
+
+1. **Network reachability** — get traffic from the Internet to the
+   Windows host (NAT/CGNAT, dynamic IP, port forwarding, …).
+2. **TLS termination + certificate lifecycle** — Let's Encrypt or
+   equivalent, automatic renewal.
+3. **RASTATIME-internal adjustments** — see below; not optional in
+   any of the three approaches.
+
+#### Three architecture options (compared)
+
+##### Option A — Direct Apache HTTPS + Router port-forwarding
+
+Apache binds 443 in addition to 80, router forwards 80/443 from the
+public IP to the Windows host, [`win-acme`](https://www.win-acme.com/)
+fetches and rotates the certificate via Let's Encrypt's ACME HTTP-01
+challenge.
+
+- **Pros:** full control, no third party, cost = domain registration
+  only.
+- **Cons:** entire RASTATIME stack directly exposed; requires static
+  IP or DynDNS; router port-forward must stay in sync with ACME
+  renewals; Icecast on port 8000 needs its own HTTPS story
+  separately.
+
+##### Option B — Cloudflare Tunnel  *(recommended)*
+
+`cloudflared` daemon runs on the Windows host (NSSM-friendly) and
+establishes an outbound TLS tunnel to Cloudflare's edge.  Public DNS
+points `radio.example.com` at Cloudflare; Cloudflare terminates TLS
+and forwards plain HTTP through the tunnel to the local Apache.
+
+- **Pros:** no port-forward (works through NAT/CGNAT), Cloudflare's
+  WAF/rate-limiting in front of RASTATIME's auth layer, certificate
+  fully managed off-host, free tier sufficient for small stations,
+  optional Cloudflare Access for email-OTP / SSO as a second login
+  gate without writing code.
+- **Cons:** Cloudflare dependency; audio-stream egress bandwidth
+  counts against the free tier (generous but bounded); ~30-80 ms
+  added latency on the operator UI; live-stream egress at scale may
+  need a separate path.
+
+##### Option C — External VPS reverse proxy (Caddy/Nginx)
+
+A small Linux VPS (Hetzner CX11-class, ~5 €/month) runs Caddy or
+Nginx with Let's Encrypt auto-cert.  A Wireguard or SSH reverse
+tunnel from the Windows host carries traffic from the VPS back to
+the local Apache.
+
+- **Pros:** no Cloudflare dependency; Caddy's automatic
+  HTTPS-by-default is famously low-friction; VPS can also cache /
+  fan-out the public Icecast streams.
+- **Cons:** ~60 €/year recurring; one more host to keep patched;
+  tunnel reliability needs monitoring.
+
+#### RASTATIME-side adjustments (apply to all three options)
+
+Independent of the tunneling choice, the following internal changes
+are required.  None of them are optional — without them the
+HTTPS-from-outside experience is broken in subtle ways:
+
+| Concern | Change | Effort |
+|---|---|---|
+| **`libretime.conf` → `public_url`** | Switch from `http://192.168.1.192` to `https://radio.example.com`.  Interpolated into RSS feed self-links, podcast-episode `download_url`, station-image URLs, and a handful of UI-side absolute links. | 5 min + full service restart |
+| **Mixed-Content for Icecast streams** | The HTTPS frontend cannot embed `http://localhost:8000/<mount>` audio — browsers block it.  Solve by either (a) Icecast 2.4 native TLS (fiddly on Windows), (b) Apache reverse-proxy `https://radio.example.com/stream/<mount>` → `http://localhost:8000/<mount>` (cleanest), or (c) let Cloudflare/Caddy proxy the streams. | 2-6 h — biggest single chunk |
+| **Cookie / session domain** | Currently IP-scoped; Zend usually handles this automatically once `public_url` changes, but verify. | 30 min |
+| **API-key + login hardening** | Replace the placeholder `rastatime-api-key-change-before-production` in `libretime.conf`; verify the `login_attempts` table's brute-force throttle is wired in; consider 2FA (not currently implemented). | 1-2 h |
+| **BUTT / DJ source auth** | DJ passwords were chosen for LAN use; rotate to long random values before exposing. | configuration, no code |
+| **CORS / CSRF** | If streams end up on a different subdomain than the UI, CORS headers must be set in Apache (or Cloudflare/Caddy). | 1 h if needed |
+
+#### Effort + cost matrix
+
+| Option | Setup time | Recurring (€/yr) | Operational complexity |
+|---|---|---|---|
+| **A** Apache HTTPS direct | 1-2 days | ~10 (domain) | medium — router NAT + ACME renewal both need to keep working |
+| **B** Cloudflare Tunnel ⭐ | 4-8 h | ~10 (domain), CF free tier | low — `cloudflared` runs as NSSM service like the others |
+| **C** External VPS + Caddy | 4-8 h | ~70 (domain + VPS) | medium — separate host to keep patched |
+
+Plus, for any option, the ~2-6 h to solve Mixed-Content on the
+Icecast streams.
+
+#### Security considerations
+
+Exposing a CMS-style application to the public Internet shifts the
+threat surface considerably:
+
+* LibreTime has had CVEs historically; staying on LAN-only meant
+  these never mattered.  Going public means each one must be
+  evaluated.
+* The Library upload path becomes a possible malware-upload vector
+  if an attacker gets a valid login.  Today only the operator has a
+  login, so blast radius is bounded — but credentials must be
+  strong.
+* Icecast admin (port 8000 `/admin/`) MUST NOT be public.  Whatever
+  proxy/tunnel layer is chosen has to expose only the chosen mount
+  paths, never the admin URL.
+* The placeholder `api_key` in `libretime.conf` MUST be regenerated
+  before any external exposure.
+
+#### Recommendation
+
+**Option B (Cloudflare Tunnel)** is the recommended starting point
+for RASTATIME because:
+
+* No router/NAT changes — works on residential connections with
+  CGNAT.
+* `cloudflared` slots into the existing NSSM-service pattern.
+* Certificate lifecycle is entirely off-host.
+* Cloudflare's free tier (WAF, basic rate-limiting, Tunnel) covers
+  small-station traffic.
+* Optional Cloudflare Access provides MFA without writing any code.
+
+If the streams ever outgrow Cloudflare's free-tier egress, Option C
+becomes attractive as a stream-fanout layer while keeping the UI
+behind Cloudflare.
+
+#### Open questions to resolve before implementation
+
+1. Domain name registrar + DNS provider (Cloudflare itself is fine).
+2. Expected concurrent external listener count (drives Option B vs.
+   B+C hybrid).
+3. Whether the operator wants Cloudflare Access (email-OTP / SSO
+   in front of the RASTATIME login) or just the built-in login.
+4. Whether DJ-source ingest (BUTT / show / master mounts) is part
+   of the "external" scope or stays LAN-only.
+
+**Decision recorded 2026-05-18:** deferred.  Operator wants to keep
+RASTATIME LAN-only for now; will revisit once feature stabilisation
+work has concluded.
+
+### 23.16 Show Templates
+
+**Status:** Shipped (migration 0053, frontend + backend
+2026-05-19).
+
+**Operator goal.**  Reuse the configuration of a typical show — a
+DJ slot, a music hour, a news segment, a podcast slot — across
+many calendar entries without re-entering the same dozen fields
+each time.
+
+**Data model (one new table).**
+
+```sql
+CREATE TABLE cc_show_template (
+    id             SERIAL PRIMARY KEY,
+    name           VARCHAR(255) NOT NULL UNIQUE,
+    template_data  JSONB NOT NULL,
+    created_at     TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at     TIMESTAMP NOT NULL DEFAULT NOW()
+);
+```
+
+`template_data` is a JSON dictionary keyed by show-form field
+names (`add_show_name`, `add_show_genre`, `add_show_duration`,
+`add_show_record`, `add_show_autoplaylist_id`, `cb_airtime_auth`,
+…) — a deliberate near-1:1 mapping to the existing show-form
+payload so apply-time logic stays trivial.
+
+**Fields captured / not captured.**
+
+Captured (operator-confirmed list, 2026-05-19):
+* What:  name, url, genre, description
+* When:  duration, repeats, linked, repeat_type, monthly_repeat_type,
+         day_check[], end_date, no_end
+         (start_date and start_time are deliberately NOT captured —
+         they're per-use and inherited from the calendar click that
+         opened the New-Show dialog)
+* Record:  record flag
+* Autoloading Playlist:  has_autoplaylist, autoplaylist_id,
+         autoplaylist_repeat, intro_playlist_id, outro_playlist_id
+* Live Stream Input:  cb_airtime_auth, cb_custom_auth,
+         custom_username
+* Who:   list of host LOGIN strings (NOT cc_subjs.id)
+* Style: background colour, text colour, show-logo PATH reference
+
+Explicitly **not** captured:
+* `custom_password` — security; a template stored anywhere visible
+  must not leak the DJ password
+* per-instance description — the per-show description is for the
+  template itself
+* `add_show_start_date`, `add_show_start_time` — see above
+* `add_show_id`, `add_show_instance_id` — only meaningful for an
+  existing show
+
+**Design decisions (operator-confirmed 2026-05-19).**
+
+1. **One-way stamp model.**  A template is a blueprint, not a
+   parent.  Editing a template later does NOT affect any show
+   that was previously created from it.  The alternative
+   (live binding with a `cc_show.template_id` FK and propagation
+   on template-save) was rejected as too surprising — it would
+   silently mutate scheduled shows including their recordings.
+2. **Station-wide scope.**  No `created_by` column; any
+   admin / program-manager can apply and edit any template.  A
+   per-user scoping could be added later without a schema break
+   (just a nullable `subjs_id` column + UI filter).
+3. **UI in New-Show and Edit-Show flows; suppressed in
+   Edit-Instance** (revised 2026-05-19 after the operator asked
+   to re-stamp existing shows from a template, then noticed the
+   controls also appearing in the Edit-Instance variant).  The
+   shared `schedule/add-show-form.phtml` partial gates the
+   template block on `$this->action !== 'edit-repeating-show-instance'`,
+   so the controls render in New Show, Edit Show, but NOT in Edit
+   Instance.  Rationale: a single repeating-show instance is a
+   per-occurrence override; applying a template to one occurrence
+   would either silently propagate to the linked siblings (which
+   violates the one-way stamp model) or have no effect on them
+   (which would mislead the operator).  Operators who want
+   template-driven changes to a series should use the Edit Show
+   path on the master, which acts on all linked instances.
+   In Edit-Show, Apply writes every captured field onto the
+   in-flight form values but does NOT auto-submit — the operator
+   still has to click "Update show" to persist.  `start_date` /
+   `start_time` are skipped per the one-way-stamp rule (a template
+   must never silently reschedule an existing show).
+   Save-as-Template from an Edit-Show form is also enabled and
+   behaves identically to the New-Show flow (the show name becomes
+   the template name, with overwrite-confirm).
+4. **Schema drift.**  When new columns are added to `cc_show`
+   later, existing templates will simply not have those keys in
+   their JSON.  `applyShowTemplate` only writes keys that exist
+   in the template; missing keys fall back to the show-form's
+   default value.  Templates with stale keys (e.g. a column we
+   later remove) silently ignore the extra keys.  Operator
+   accepted this "defaults win" behaviour over a stricter
+   "templates must be refreshed after schema changes" model.
+5. **Hosts stored as logins, not IDs.**  Surrogate IDs are
+   meaningless if the user is later deleted + recreated, and
+   `cc_subjs.login` is unique and human-meaningful.  Apply-time
+   missing logins are silently skipped with a `Logging::info`.
+6. **Show logo as a path reference, not a copy.**  When the
+   referenced image is deleted, the template loses its logo; the
+   alternative (copying the image into a templates/ folder) was
+   rejected to avoid duplicate storage.
+
+**Component map.**
+
+| Layer     | Files                                                  |
+|-----------|--------------------------------------------------------|
+| Schema    | `backend/api/libretime_api/legacy/migrations/0053_add_show_template.py` |
+| Service   | `frontend/legacy/application/services/ShowTemplateService.php` |
+| Controller | `ScheduleController` — 5 new JSON actions: list / get / save / rename / delete |
+| Settings UI | `PreferenceController::showTemplatesAction` + `views/scripts/preference/show-templates.phtml` |
+| Show-Dialog UI | `views/scripts/schedule/add-show-form.phtml` (controls), `public/js/airtime/schedule/add-show.js` (`setupShowTemplateControls` + `applyShowTemplate`) |
+| Navigation | `application/configs/navigation.php` (Settings → "Show Templates") |
+
+**Apply-time UI sync (lessons learned, 2026-05-19).**
+
+The first iteration of `applyShowTemplate()` re-used the existing
+checkbox-click handlers to trigger the dependent UI toggles
+(Repeats? → fieldset visibility, Record? → Rebroadcast checkbox
+visibility, …) by doing
+`$el.prop("checked", on).trigger("click").trigger("change")`.
+This appeared to work for trivial cases but produced two bugs in
+combination with jQuery 1.8.3's *default-action simulation* for
+click events on form controls:
+
+1. **Repeats inverted.**  jQuery's `.trigger("click")` runs the
+   user handlers first, then simulates the browser default action
+   for the event type.  On a checkbox, that means *toggling the
+   native checked state* — so the sequence was: write the value,
+   run the toggle handler (visibility flips correctly), then the
+   default-action flipped the checkbox back.  End state:
+   checkbox un-checked, visibility "on".
+2. **Linked lost after Record was set.**  Setting Linked first
+   then Record triggered Record's click handler, which has a
+   domain-rule branch that force-clears Linked and disables it
+   (a recorded show cannot be linked — the per-instance audio is
+   unique).  So a template with `record=false, linked=true` ended
+   up with Linked un-checked depending on the order of setCheck
+   calls.
+
+Fix (in this section's component-map files only):
+`applyShowTemplate()` now writes values (no triggers, no clicks)
+and ends with a single pass through `syncDependentVisibility(form)`
+that reads the post-write state and explicitly toggles every
+collapsible section.  This is the same set of show/hide rules
+that the New-Show form's individual click handlers contain, just
+expressed as a one-shot recompute instead of a chain of toggles.
+Adding a new toggle-driven section in the future means adding both
+the click handler (for normal user interaction) AND a line in
+`syncDependentVisibility` (for the template-apply path).
+
+**Form-submit isolation for the template buttons.**
+
+Apply and Save-as-Template both live inside the
+`<form id="add-show-form">` wrapper from `schedule/index.phtml`.
+Even with `type="button"` on the buttons themselves, a bubbling
+click event into the form was occasionally enough to leave the
+form in a "mid-click" state where the subsequent Add-this-Show
+click was discarded.  Both handlers now explicitly call
+`event.preventDefault() + event.stopPropagation() + return false`,
+and the Save-as-Template payload is built from
+`$("#add-show-form").serializeArray()` (specific) instead of
+`$("form").serializeArray()` (which would also include any sibling
+forms the page happens to host).
+
+**Out-of-scope / possible future work.**
+
+* Editing template_data directly in the Settings UI (currently the
+  only edit path is "open a show, modify, save with same template
+  name") — could be added with a JSON-editor widget if operators
+  ever need to tweak a single field without re-running the New-Show
+  flow.
+* Importing / exporting template JSON to disk for sharing between
+  installations.
+* Per-user template scoping with a `created_by` nullable column.
+
+### 23.17 Webstream Default-Length with Seconds
+
+**Status:** Shipped (2026-05-19, `Application_Model_Webstream` only).
+
+**Operator goal.**  Bring the Webstream edit dialog's "Default
+Length" field up to the same granularity the Line-Input dialog
+already had — seconds — so operators can configure short, time-
+critical stream entries (news jingles, sponsor IDs, sub-minute
+breakaways) without rounding up to the next whole minute.
+
+**Before / after.**
+
+| | Input format | DB stored | Edit readback |
+|---|---|---|---|
+| Pre-2026-05-19 | `01h 05m` (regex `/^(?:(\d{1,2})h)?\s*(?:(\d{1,2})m)?$/`) | `HH:MM:00` (`%H:%I` written, Postgres `interval` pads) | `01h 05m` (`%Hh %Im`) |
+| Now | `01h 05m 05s` (regex extended with optional `\s*(?:(\d{1,2})s)?`) | `HH:MM:SS` (`%H:%I:%S`) | `01h 05m 05s` (`%Hh %Im %Ss`) |
+
+The "s"-group is **fully optional** so any pre-existing input
+(`01h 05m`, `05m`, `30s`, `2h`) still validates — backwards-
+compatible by operator decision 2026-05-19 (Frage 1).  The
+Edit-dialog readback always renders all three components,
+including a zero seconds tail, for visual consistency (operator
+decision 2026-05-19, Frage 2a).
+
+**DB.**  `cc_webstream.length` is a Postgres `interval` type
+(see `schema.sql`).  It already round-trips `HH:MM:SS` end-to-end
+regardless of the format string the application chose to write;
+pre-2026-05-19 rows written as `%H:%I` come back from the driver
+as `HH:MM:00` and parse identically in `getDefaultLength()`.  No
+migration needed.
+
+**Validation rule change.**  The pre-2026-05-19 validator
+rejected length=0 with the message "Length needs to be greater
+than 0 minutes".  The new validator computes total seconds and
+rejects only the all-zero case, with the friendlier wording
+"Length needs to be greater than zero" — so `30s` is now a valid
+half-minute webstream entry.
+
+**Scheduler / playout.**  No changes.  `Scheduler.php` reads
+`$stream->getDbLength()` directly (raw `HH:MM:SS` from Propel,
+not the human-readable string from `getDefaultLength()`), so the
+seconds precision flows through to `cc_schedule.clip_length` and
+the FfmpegStreamer naturally.
+
+**Library list cosmetic note.**  `LibraryController` runs every
+object's `getLength()` through `LengthFormatter::format()`.  The
+formatter parses `HH:MM:SS.x` and re-formats it for display, but
+the Webstream-specific `01h 05m 05s` string does not match its
+regex and is therefore passed through unchanged — so the Library
+list shows the same `HHh MMm SSs` format the Edit dialog uses.
+This is consistent with the pre-2026-05-19 behaviour (Webstreams
+already broke from the Tracks/Blocks/Playlists convention by
+showing `HHh MMm` instead of `H:MM:SS.x`).
+
+**Decisions log (2026-05-19).**
+
+| Question | Decision | Rationale |
+|---|---|---|
+| Validator backwards-compat for `01h 05m`? | Yes — `s`-group optional | Avoid breaking every existing stream on next save |
+| Edit readback: always three components vs. only when seconds > 0? | Always three (`01h 05m 00s`) | Visual consistency; operator expectation matches the displayed input format |
+| Refactor scope — extract shared duration parser? | No, deferred | Three independent parsers exist (Webstream, Line-In `LineinController::_parseHmsToSeconds`, Smart Block in `SmartBlockCriteria`), each with a different I/O convention (`00h 00m`, `HH:MM:SS`, `HH:MM:SS` strict).  Unifying them is its own project; out-of-scope here |
+
+**Files touched.**
+
+* `frontend/legacy/application/models/Webstream.php` — five hot
+  spots, all annotated with `RASTATIME 2026-05-19 — Section 23.17`:
+  `getDefaultLength()` (readback format), `analyzeFormData()` (regex
+  + 3-group capture, normalisation, error wording), `save()`
+  (`%H:%I:%S` instead of `%H:%I`).
+
+**Out-of-scope / possible future work.**
+
+* Unify the Webstream, Line-Input and Smart-Block duration parsers
+  into a single helper that accepts both human-readable
+  (`01h 05m 05s`) and clock (`HH:MM:SS`) formats.  Today each of
+  the three dialogs has its own validator; consolidating would
+  remove the format-inconsistency between Library entries
+  (Webstream shows `01h 05m 05s`; Tracks/Blocks/Playlists show
+  `1:05:05.0`) but requires touching three live consumers and is
+  not justified just for the seconds-precision request.
+* Add a placeholder / help-text to the Webstream "Default Length"
+  input showing the accepted format examples.  The Edit-dialog
+  template (`webstream/webstream.phtml`) currently has no hint;
+  the new format is only discoverable via the validation error.
+
+### 23.18 Line-In Entries in Playlists
+
+**Status:** Shipped (migration 0054, frontend + backend
+2026-05-19).
+
+**Operator goal.**  Make Line-In sources first-class playlist
+members the same way Tracks, Webstreams and Smart Blocks already
+were.  Until 2026-05-19 a Line-In could only be scheduled
+*directly* into a Show timeline (`cc_schedule.linein_id`, added
+Phase A 2026-05-12, migration 0047).  Operators wanted to bundle
+Line-In intros / mic windows / interview slots into reusable
+playlists alongside their tracks and webstreams so that a "Monday
+Morning Show" playlist can carry "intro music → live mic → news
+webstream → music block" as one composable unit.
+
+**Data model.**
+
+```sql
+-- Migration 0054
+ALTER TABLE cc_playlistcontents
+  ADD COLUMN linein_id INTEGER DEFAULT NULL;
+```
+
+No hard FK to `rastatime_linein` — the same call as 0047 for
+`cc_schedule.linein_id`: Django and Propel each manage their own
+migration history, and putting cross-system FK constraints in
+either side leads to drop-order problems on schema reset (and
+confuses Propel's reverse-engineering tools).  Referential
+integrity for the new column lives at the ORM layer on the Django
+side; the SQL column itself is a plain nullable INTEGER.
+
+**Two parallel type-enums that are easy to confuse.**
+
+| Context              | type=0 | type=1 | type=2 | type=3 |
+|----------------------|--------|--------|--------|--------|
+| `cc_playlistcontents`| file   | stream | block  | **linein** ← new 2026-05-19 |
+| `cc_schedule`        | file   | stream | linein | — |
+
+The Scheduler maps between them when a Playlist is expanded into
+a schedule (`Scheduler.php` `type === 'playlist'` branch, around
+line 296):
+
+```
+playlist  type=0  ─→  schedule  type=0   (file)
+playlist  type=1  ─→  schedule  type=1   (stream)
+playlist  type=2  ─→  schedule  type=0   (block expands to files)
+playlist  type=3  ─→  schedule  type=2   (linein)   ← new
+```
+
+The `cc_schedule` INSERT in `Scheduler::insertAfter()` then uses
+the schedule-side type to populate exactly one of `file_id`,
+`stream_id`, `linein_id` — the others stay SQL `null`.  The
+type-discriminator overload between the two tables is unfortunate
+historical baggage (the schedule-side type was rewritten when
+line-in landed in Phase A and reused the `2` slot; the playlist-
+side started counting at `3`) and is worth keeping in mind for
+future feature work: changing one side does NOT automatically
+change the other.
+
+**Propel skip-regen pattern.**
+
+`cc_playlistcontents` follows the same pattern as the other
+RASTATIME-added columns (`cc_schedule.linein_id`,
+`cc_webstream.input_gain_db`): the Propel model classes are NOT
+regenerated.  Reading goes through `Application_Common_Database::
+prepareAndExecute()` (raw SQL) — already needed for the multi-
+table UNION in `Playlist::getContents()` anyway.  Writing the
+common columns goes through Propel (`CcPlaylistcontents->save()`),
+then a single raw-SQL `UPDATE … SET linein_id = …` populates the
+new column after the insert returned an id.  This keeps Propel
+regen out of the change list, which has been our policy across
+every RASTATIME-added column to date.
+
+**Files touched (per layer).**
+
+| Layer | File | What |
+|---|---|---|
+| Schema | `backend/api/libretime_api/legacy/migrations/0054_add_playlistcontents_linein_id.py` | ALTER TABLE ADD COLUMN |
+| Model — write | `Application_Model_Playlist::buildEntry()` | new `linein` branch (raw SELECT from rastatime_linein, build $entry directly) |
+| Model — write | `Application_Model_Playlist::insertPlaylistElement()` | type=3 + raw UPDATE to set linein_id after Propel save |
+| Model — read | `Application_Model_Playlist::getContents()` | 4th UNION ALL arm joining rastatime_linein |
+| Scheduler | `Application_Model_Scheduler` `type === 'playlist'` branch | new type==3 mapping → schedule type=2 |
+| View | `application/views/scripts/playlist/update.phtml` | type==3 row renders disabled signal icon (no browser preview possible for a server-local hardware input) |
+
+No frontend JS changes were necessary: the Library already
+classified `ftype === "linein"` as `lib-stream` (same draggable
+class as Webstream) and the toolbar / DnD code paths do not
+filter by item type — the only blocker was the
+`throw new Exception('Unknown file type')` in `buildEntry()`,
+which is now handled.
+
+**Default slot length.**  When the operator's Library record
+left `rastatime_linein.length` NULL, the playlist entry defaults
+to 30 minutes — same call the Scheduler's existing in-show
+line-in branch makes.  The operator can override the duration by
+editing the Line-In's "Default Length" in the Library before
+adding it to the playlist.
+
+**Fades.**  Line-In entries get fixed `00:00:00` fade-in/fade-out
+in both `buildEntry()` and the Scheduler mapping — fades on a
+live microphone input have no defined meaning (the source is
+already mixed; there is no source-side ramp to apply).
+
+**Out-of-scope / possible future work.**
+
+* Per-entry custom slot length on the playlist row (today the
+  duration is fixed to the Library default at add-time).  Would
+  need a UI cue-editor for type=3 rows in `update.phtml`.
+* Per-entry fade-in / fade-out for line-in entries (e.g. when
+  the playout side gains a soft-cut path for live sources).
+  Today fades are pinned to zero for line-in.
+* Visual preview / level meter in the Library when a Line-In is
+  selected — would help operators verify a device is actually
+  delivering audio before they save it into a playlist.
+
+### 23.19 Autoloading-Playlist Outro Reserve
+
+**Status:** Shipped (2026-05-20, frontend `legacy/` only — no
+schema, no API, no UI surface changed).
+
+**Operator goal.**  When a show is configured with an Intro
+Playlist + an Autoloading Playlist + an Outro Playlist, the three
+should fit *inside* the show's slot in that order — Intro first,
+Autoloading filling the middle, Outro at the end.  Before this
+section the outro silently spilled past the show's end whenever
+the autoplaylist's expansion happened to fill (or overflow) the
+remaining time.
+
+**Where the bug lived.**
+
+`Application_Common_AutoPlaylistManager::buildAutoPlaylist()` ran
+the three insertions sequentially:
+
+1. Intro inserted at start of slot (always exactly one pass).
+2. Autoloading playlist inserted in a `while`-loop — each pass
+   either expands a static playlist (whose tracks have known
+   lengths) or expands a smart block.  A smart block's
+   "time-remaining" mode sizes itself against
+   `ShowInstance::getSecondsRemaining()`, which returns
+   `showDuration − currentScheduled` — i.e. the entire unfilled
+   tail of the slot.
+3. Outro inserted at the end as an unconditional append after the
+   loop exited.
+
+When only Intro + Auto was configured, the loop's
+`getPercentScheduled() > 100` early-exit kept the slot from being
+filled to the brim (the smart block's expansion clamped at the
+remaining time, then the loop terminated), so no overbook was
+visible.  When Outro was added, step 3 was a "best-effort
+afterthought" — the upstream comment in the code even
+acknowledged it: *"it will always overbook shows that have repeat
+until full enabled because they will never have time remaining
+for the outroplaylist to be added"*.
+
+**The fix in four layers + one measurement step.**
+
+1. **`AutoPlaylistManager`** measures the outro length by
+   **trial-inserting** the outro immediately after the intro,
+   reading the before/after delta of
+   `cc_show_instances.time_filled` to capture the actual
+   smart-block-expanded outro duration, then deleting the trial
+   rows (`WHERE id > maxIdBefore`) and re-aggregating
+   `time_filled` via the new
+   `ShowInstance::refreshScheduleStatus()` helper.
+   The trial-insert is necessary because
+   `cc_playlist.length` reports `00:00:00` for any playlist
+   that contains a smart block — Propel does not aggregate the
+   smart-block contribution into the parent playlist's length
+   column.  This was the source of an embarrassing v1–v3 chain
+   of fixes that all relied on reading the length statically;
+   see the bug-history block below.
+   With the measured length in hand the auto-loop:
+   * passes `outroLenSecs` as a `$reservedSecs` reserve into
+     `addPlaylistToShow($pl_id, $checkPerm, $reservedSecs)`, and
+   * terminates as soon as
+     `$si->getSecondsRemaining() <= $outroLenSecs`
+     (replaces the old `getPercentScheduled() > 100` check).
+
+2. **`Application_Model_ShowInstance::addPlaylistToShow()`** gains
+   an optional third parameter `$reservedSecs = 0` and forwards
+   it to the scheduler via the new setter.  Existing callers
+   (manual Library "Add to current playlist" toolbar button etc.)
+   are unaffected because the default reserve is 0.
+
+3. **`Application_Model_Scheduler`** gains
+   `setReservedSeconds(int $n)` and a `private $reservedSecs = 0`
+   member.  `retrieveMediaFiles()` now computes
+   `$showLimit = max(0, $showInstance->getSecondsRemaining() - $this->reservedSecs)`
+   before passing it to `$bl->getListOfFilesUnderLimit($showLimit)`
+   for dynamic smart blocks inside playlist contents.  The
+   `max(0, …)` clamp is defensive — a caller that over-reserves
+   simply produces an empty smart-block expansion instead of a
+   negative limit.
+
+4. **`Application_Model_ShowInstance::trimTailToReserve(int $n)`**
+   — RASTATIME 2026-05-20 v3.  Deletes `cc_schedule` rows from
+   the tail of this show instance (highest-`starts` first, filter
+   `starts > NOW() AT TIME ZONE 'UTC'` so already-playing or
+   already-played tracks are never touched) until at least `$n`
+   seconds of unscheduled tail remain.
+   Called by the auto-loop *once*, immediately before the outro
+   insertion.  This is the "post-trim" half of the fix: the
+   pre-reserve in layer 3 covers the *fill-remaining* smart-block
+   case, but two upstream paths ignore the `$showLimit` parameter
+   and overbook the slot anyway —
+   (a) static playlists (every track inserted at full length;
+       `Scheduler::retrieveMediaFiles` foreach has no trim);
+   (b) fixed-duration smart blocks (they honour their own
+       `cc_block.length` limit, not `$showLimit`).
+   `trimTailToReserve()` is the safety net that removes whole
+   tail tracks until the outro fits.  Trade-off: a fixed-duration
+   smart block whose last track does not fit gets that *whole*
+   track removed (no mid-track cut), so the auto-content can be
+   noticeably shorter than the configured smart-block length when
+   tracks are long compared to the outro reserve.  Operators who
+   want exact slot fill should use a fill-remaining smart block
+   instead — the layer-3 reserve sizes that one perfectly.
+
+**Edge case — outro length ≥ show slot.**
+
+Operator-confirmed 2026-05-20 **v3** (revised again after the v2
+test pass showed the "skip outro" semantics created a visible
+38 s gap at the tail of every test slot): **the outro is always
+inserted**, even when it overbooks.  Operator policy:
+*Es ist besser, die Show ist überfüllt, als zu wenig befüllt*.
+The edge-case branch now only zeroes the reserve (so the
+autoplaylist fills the entire slot instead of bailing
+immediately with `remaining ≤ outroLenSecs`), and the outro is
+still inserted on top — overbooking the slot.  The overbook is
+logged at `WARN` level so the operator can find the
+misconfiguration in `legacy.log`.
+
+**UI surface.**  Operator-confirmed 2026-05-20 (Q3):
+**no UI hint** is rendered.  The behaviour is pure backend magic;
+this section is the contract.
+
+**Pre-2026-05-20 behaviour vs. now.**
+
+| Configuration | Pre-2026-05-20 | After Section 23.19 |
+|---|---|---|
+| Intro only | OK | OK (unchanged) |
+| Auto only | OK | OK (unchanged) |
+| Intro + Auto (no Outro) | OK (loop stops at >100 %) | OK (loop stops at remaining ≤ 0) |
+| Outro only | OK if outro ≤ slot | OK if outro ≤ slot (unchanged) |
+| **Intro + Auto + Outro** | **Outro silently overbooks** | **All three fit inside slot** ✅ |
+| Intro + Auto + Outro, Repeat-Until-Full | Worst case — Auto fills entire slot, Outro always overbooks | Auto terminates at `remaining ≤ outro`, Outro fits |
+| Outro > slot | Outro overbooks, Auto fills slot first | **Auto fills slot, Outro inserted + overbooks + WARN logged** (operator policy: overfilled is better than underfilled) |
+
+**Component map.**
+
+| File | Change |
+|---|---|
+| `frontend/legacy/application/common/AutoPlaylistManager.php` | Trial-insert + roll-back outro length measurement (after intro), Throwable-catch fallback, edge-case skip (outro > slot), reserved-secs in loop, new termination check, `trimTailToReserve()` call before outro insert |
+| `frontend/legacy/application/models/ShowInstance.php` | `addPlaylistToShow()` gains optional 3rd parameter `$reservedSecs = 0`; new `trimTailToReserve($n)` and `refreshScheduleStatus()` helpers |
+| `frontend/legacy/application/models/Scheduler.php` | New `private $reservedSecs = 0`, `setReservedSeconds()` setter, `max(0, … - reservedSecs)` in `retrieveMediaFiles()` |
+
+**Hot bug-history (2026-05-20).**
+
+The first ship of Section 23.19 used
+`new Application_Model_Playlist($outroplaylistid)->getDbLength()`
+to read the outro length.  The wrapper has no `getDbLength()`
+public method (the Propel call is on its internal `$this->pl`
+member), so this raised a fatal `Error: Call to undefined
+method` and the catch was `catch (Exception)` — which in PHP 7+
+does NOT catch `Error`.  Result: every Intro+Auto+Outro show
+left its entire slot empty for an hour of failed polls.  Two
+small follow-ups landed the same day:
+(a) read the length via `CcPlaylistQuery::findPK(...)
+->getDbLength()` instead of via the wrapper, and
+(b) widen the catch to `Throwable` so any future read failure
+falls back to a no-reserve build instead of bricking the auto
+path.  Test feedback also forced an edge-case revision (the v1
+"outro > slot → keep outro, skip auto" decision was the wrong
+way round; the operator wanted auto > outro priority — see
+table above) and the addition of layer 4 (post-trim) for the
+static-playlist / fixed-duration smart-block cases the
+in-Scheduler reserve cannot cover.
+
+A fourth hot-fix the same day swapped the safety filter on the
+layer-4 tail-trim helper from `playout_status = 0` (which means
+"overbooked", set by `updateScheduleStatus()` *after* the auto-
+loop's inserts — in-slot future tracks have `playout_status = 1`,
+not 0) to `starts > NOW() AT TIME ZONE 'UTC'`.  The original
+filter matched zero rows in every realistic test, so the trim
+helper silently did nothing and the outro continued to land
+out-of-slot.  Lesson learned for future Postgres time-window
+deletes: prefer a timestamp-based filter ("don't touch the
+past") to a status-enum filter ("don't touch already-played")
+unless we genuinely need the enum semantics — the enum is set
+by code paths we do not control and means something different
+than the safety goal.
+
+A fifth hot-fix the same day (v4) replaced the static
+`cc_playlist.length` read with a **trial-insert + roll-back**
+measurement of the outro.  Empirical test on the operator's
+8 "Tagesplaylist <Genre> Outro" playlists showed all 8 had
+`cc_playlist.length = 0:00:00` because each carried one smart
+block, and Propel does not aggregate smart-block contributions
+into the parent playlist's length column.  With length=0 the
+reserve was 0 and the layer-4 trim — even with the corrected
+filter — was a no-op, so the outro continued to overbook the
+slot.  The trial-insert approach captures the actual smart-
+block-expanded outro length (modulo dynamic-block track-set
+variance between the trial and final inserts, which is bounded
+by the smart block's own length limit).  Lesson learned:
+**any code that reads a length out of `cc_playlist` /
+`cc_block` should expect 0 / NULL for smart-block-containing
+rows and have a fallback path** — Propel's length aggregation
+is not transitive across the playlist/smart-block boundary.
+
+An eighth hot-fix (v6) added a defensive 5-second safety
+margin on top of the measured outro length when computing the
+reserve.  Operator testing on the "Time remaining in show"
+autoplaylist smart-block variant showed a consistent 4 s
+overbook: the SSP best-fit picker maximises subset sum ≤
+target, but the Scheduler's later crossfade pass shifts the
+real schedule timestamps by a few hundred ms per transition,
+and those shifts do not line up exactly with what the SSP saw.
+The margin sacrifices at most ~5 s of slot fill but eliminates
+the overbook on the "Time remaining" path.  It does not affect
+fixed-time-limit smart blocks (e.g. "Limit to: 9 minutes"):
+those blocks ignore the reserve and run against their own
+limit, so a 9 min autoplaylist in a 10 min slot will always
+have ~60 s of unscheduled tail — by design, not a bug.
+
+A ninth hot-fix (v7) briefly bumped the margin to 10 s after
+the Auto+Outro variant still showed a 4 s overbook on a
+smart-block outro (where the trial pass and the real pass
+pick different tracks).  The operator immediately reverted
+that policy: max-5 s margin is non-negotiable (any "silence"
+tail audible to listeners must stay small).
+
+A tenth hot-fix (v8) kept the margin at 5 s and instead added
+a **post-outro cleanup pass**: snapshot `MAX(cc_schedule.id)`
+before the real outro insert, then after the insert call
+`ShowInstance::trimTailExcept($snapshot, 0)` — a variant of
+`trimTailToReserve()` that filters by `id <= $snapshot` so it
+only ever trims autoplaylist tail rows (never the just-
+inserted outro rows).  The cleanup is **skipped** in the
+"outro > slot" edge case because that branch deliberately
+overbooks (operator policy: oversized outro is a config
+choice, not a bug to fix).  Worst case after v8: an
+unusually large trial-vs-real divergence on a smart-block
+outro produces an autoplaylist that is a few tracks shorter
+than ideal — but the show never overbooks.
+
+A sixth and seventh hot-fix landed together the same day (v5):
+**`cc_files.is_scheduled` cleanup after the trial insert**, and
+**edge-case revision: always insert the outro** even when it
+overbooks.  The trial-insert in v4 went through
+`Scheduler::insertAfter()`, which flips
+`cc_files.is_scheduled = TRUE` for every file it adds.  The
+roll-back DELETE on `cc_schedule` did NOT touch the
+`cc_files` flag, so the outro pool ended up marked
+"already scheduled" — autoplaylist smart blocks that read the
+flag later were picking from a poisoned pool and the
+autoplaylist effectively shrank.  v5 snapshots the TRUE-set
+before the trial, then on roll-back resets the flag for any
+row that is TRUE but not in the snapshot, before deleting the
+trial schedule rows.  Order matters: drop the flag first so a
+concurrent reader never sees `is_scheduled = TRUE` without a
+backing `cc_schedule` row.  The same release reverted the
+"skip outro when outro > slot" edge-case behaviour to "always
+insert the outro" (operator policy 2026-05-20:
+*Es ist besser, die Show ist überfüllt, als zu wenig
+befüllt*).  Lesson learned for future Scheduler callers that
+roll their own roll-back: **the
+`Scheduler::insertAfter()` → `BasePeer::doUpdate(is_scheduled)`
+side effect is implicit and easy to miss**; any caller that
+deletes schedule rows it just inserted must also reset the
+`cc_files.is_scheduled` flag, or smart-block selection
+downstream will silently misbehave.
+
+**Why not change `getSecondsRemaining()` itself?**
+
+That would have been simpler, but `getSecondsRemaining()` is read
+by lots of other code paths (the Show Builder UI overlap warning,
+the dashboard "minutes remaining" display, the trim-overbooked
+helper, …) and quietly subtracting a reserve from all of them
+would be a much larger surface change.  Passing the reserve only
+through the one Scheduler call that needs it keeps the blast
+radius small and lets `getSecondsRemaining()` keep its existing
+"unscheduled tail in seconds" contract.
+
+**Two "by-design" behaviours that look like bugs but are not.**
+
+1. **Deterministic Smart-Block track selection at fixed time
+   limits.**  `Block::getListOfFilesUnderLimit()` runs through
+   `SSPSolution::solve($tracks, $target)` (Block.php
+   l. 1942–1992) when the smart block uses a time-based
+   limit + random sort + `overflow_tracks = 0`.  The solver
+   shuffles the track list 50 times and runs a greedy fill +
+   local improvement against each shuffle, then returns the
+   subset whose summed length is closest to (but ≤) the target.
+   With a pool that has one near-optimal 2-track subset
+   (e.g. *Dogs* 4:22 + *Roxanne* 4:30 ≈ 9 min target), the
+   solver lands on it on essentially every run regardless of
+   the shuffle.  Operators who want more variety should pick
+   "Time remaining in show" instead of a fixed minutes limit —
+   the time-remaining path takes whatever shuffle the SSP
+   produces in the trial that filled the largest fraction of
+   the slot, which has more degrees of freedom.
+
+2. **Fixed-time-limit autoplaylist leaves a tail gap.**  A
+   smart block configured "Limit to: 9 minutes" produces ~9 min
+   of content regardless of the show's slot length — that's
+   the operator's stated cap, not a bug.  In a 10 min slot
+   this leaves ~60 s of unscheduled tail (~9 min content +
+   outro + safety reserve = ~9 min 40 s, then a ~20–60 s gap
+   to slot end).  If the operator wants a fully filled slot,
+   the autoplaylist's smart block must use
+   "Limit to: Time remaining in show" instead.  The reserve
+   mechanism (layer 3) keeps that variant safe inside the
+   slot; the fixed-limit variant is intentionally bounded by
+   its own limit.
+
+**Out-of-scope / possible future work.**
+
+* Same reserve mechanism for the **Intro** playlist when the
+  autoplaylist insertion happens before the intro for some
+  reason.  Today the order is hard-coded Intro → Auto → Outro,
+  so this would only matter for a future "Outro before Intro"
+  configuration that nobody has asked for.
+* A "weaken SSP determinism" mode that adds randomness to the
+  best-fit picker so the same track combination is not picked
+  on every run when the optimal subset is unique.  Today the
+  operator can work around this by switching to
+  "Time remaining" limit.  A future option could pick from the
+  top-N best fits rather than the strictly best.
+* A "best-effort outro shortening" mode that automatically trims
+  the outro to fit when the configured outro is longer than the
+  remaining tail after Auto.  Today the over-long outro is
+  skipped entirely (Section 23.19 v2 edge case) and the operator
+  gets a `WARN` log line; auto-trimming would silently mutate
+  operator content and is therefore deliberately *not*
+  implemented.
+* Per-show override of the reserve granularity (e.g. "leave at
+  least 30 s gap before outro for clean transitions") — would be
+  one more `cc_show` column; not requested.
+
+### 23.20 Auto DJ
+
+**Status:** Shipped (2026-05-21, frontend `legacy/` only — no
+schema, no API, no playout-side change).
+
+**Operator goal.**  Eliminate two manual chores: (a) filling
+calendar gaps between operator-scheduled shows, and (b) topping
+up shows that the autoplaylist build left incomplete.  Both run
+automatically on the same 60 s poll the existing
+`AutoPlaylistManager` already uses, so the operator's only
+touch-point is the new Settings → Auto DJ page.
+
+**Operator decisions (2026-05-21, Q1–Q7).**
+
+| Question | Decision |
+|---|---|
+| **Q1** Gap-search window | next 1 h only (same window AutoPlaylistManager uses for autoplaylist builds) |
+| **Q2** Max length of an auto-created show | 12 h (single show per gap; if a gap is larger only the first 12 h are filled) |
+| **Q3** Show owner | first admin (`Application_Model_User::getFirstAdmin()`) — the auto-create code path runs in a `Zend_Auth` admin-context swap so the existing ShowService permission check passes regardless of who originally triggered the poll |
+| **Q4** Auto-created show name | the configured `auto_dj_show_name` verbatim, no timestamp suffix |
+| **Q5** Fill-pass insertion point | end of existing schedule (uses the standard `ShowInstance::addPlaylistToShow()` "after-last" path) |
+| **Q6** Templates | not used — only the 5 settings fields; `record = false` is hardcoded for auto-created shows so the operator can never accidentally fill the disk with auto-DJ recordings |
+| **Q7** Minimum gap | 60 s — gaps shorter than that are left alone (typical "show-to-show breathing room" should not get a 30 s pseudo-show) |
+
+**Data model.**
+
+No schema change.  Ten new `cc_pref` keys (five from v1 plus
+five additional show-detail defaults from v2):
+
+| Key | Type | Default | Meaning |
+|---|---|---|---|
+| `auto_dj_enabled` | bool-as-string | `false` | master on/off |
+| `auto_dj_show_name` | string | `"Auto DJ"` | name for auto-created shows |
+| `auto_dj_playlist_id` | int | NULL | filler playlist (cc_playlist.id) |
+| `auto_dj_fill_any_show` | bool-as-string | `false` | enables runFillPass() |
+| `auto_dj_logo_path` | string | empty | absolute path to default logo |
+| `auto_dj_show_url` | string | empty | default URL pre-stamped on each auto-created show |
+| `auto_dj_show_genre` | string | empty | default genre |
+| `auto_dj_show_description` | string | empty | default description |
+| `auto_dj_show_bg_color` | string (6-hex) | empty | default background colour (no leading `#`) |
+| `auto_dj_show_text_color` | string (6-hex) | empty | default text colour (no leading `#`) |
+
+Helpers in `Application_Model_Preference` follow the existing
+`Get*` / `Set*` pair pattern.
+
+**Service-layer architecture.**
+
+```
+AutoPlaylistManager::buildAutoPlaylist()
+├── AutoDjService::runPrePass()           ← Section 23.20, pre-hook
+│   ├── findNextGap(now, now+1h, ≥60 s)
+│   └── createGapFillingShow(gap, playlist_id)
+│       └── withAdminContext(
+│             ShowService::addUpdateShow(showData)
+│           )
+├── [existing per-show autoplaylist build loop — Section 23.19]
+└── AutoDjService::runFillPass()          ← Section 23.20, post-hook
+    └── for each upcoming-1h instance with tail > 5 s:
+        ShowInstance::addPlaylistToShow(playlist_id, checkPerm=false, reserve=0)
+```
+
+Both passes are no-ops unless `auto_dj_enabled = true` *and*
+`auto_dj_playlist_id` is set.  `runFillPass()` further requires
+`auto_dj_fill_any_show = true`.  Each pass is wrapped in
+`try { … } catch (Throwable)` in the AutoPlaylistManager caller
+so a crash in either Auto-DJ branch can never block the
+normal autoplaylist build for other shows.
+
+**Why ShowService instead of direct Propel writes?**
+
+Programmatic show creation needs to touch `cc_show`,
+`cc_show_days`, `cc_show_hosts`, `cc_show_rebroadcast` and
+`cc_show_instances` in a single transaction; the
+existing `ShowService::addUpdateShow()` already orchestrates
+that correctly (including timezone conversion, the
+`storeInstanceIds`/`delegateInstanceCreation` sequence, and the
+RabbitMQ schedule-push).  Re-implementing that in
+`AutoDjService` would have duplicated several hundred lines
+of validation and edge-case handling.  The only friction is
+the `if (!$currentUser->isAdminOrPM()) throw …` guard at
+the top of `addUpdateShow()`, which we side-step with a
+small `withAdminContext()` helper.
+
+**v1 → v2 → v3 — three attempts at the show-create path.**
+
+v1 used `ShowService::addUpdateShow()` and wrote the admin
+identity straight into the current session adapter
+(`Zend_Auth::getInstance()->getStorage()->write($info)`).
+The polling-job context (`PageLayoutInitPlugin`) had read the
+session but had not opened it for writing, and Zend's strict-
+mode session guard threw on every write attempt:
+*"You must explicitly start the session with Zend_Session::start()
+when session options are set to strict."*  Every poll logged a
+`WARN`; gap-filling shows were never created.
+
+v2 kept the ShowService approach but swapped the *auth-storage
+adapter itself* for a `Zend_Auth_Storage_NonPersistent`
+(in-memory only) and restored the original adapter via
+`try { … } finally { … }`.  Fixed the explicit session-write
+in the identity swap.  Did NOT fix the symptom: ShowService
+internally calls `UserService::__construct` (which reads
+auth-storage — still OK with NonPersistent), `RabbitMq::PushSchedule`
+and intro/outro lookup helpers — at least one of those touches
+`Zend_Session_Namespace` and the strict-mode guard fires again.
+The poll continued to log the same WARN; no shows created.
+
+v3 abandons the ShowService dependency entirely and writes the
+three required rows (`cc_show` + `cc_show_days` +
+`cc_show_instances`) via Propel setters in a single transaction.
+These are the only rows AutoPlaylistManager's
+`_upcomingAutoPlaylistShows()` query and the calendar
+event-feed need to find the show — no hosts, no rebroadcasts,
+no linked-show machinery, no RabbitMQ publish, no
+intro/outro override lookups.  Auto-DJ shows are intentionally
+bare filler, so the simpler path is also semantically the
+right one.  `withAdminContext()` deleted; no auth-storage
+manipulation needed because the direct Propel path never
+queries the current user.  Pattern worth remembering: for any
+"background job that needs to create an admin-only resource"
+case in this codebase, prefer the direct Propel path over an
+auth-context swap — the session-strict-mode guard fires at
+multiple unexpected internal call sites of the Service
+classes.
+
+**Gap detection (`findNextGap`).**
+
+Single SQL query against `cc_show_instances` for the lookahead
+window, ordered by `starts`.  A cursor walks the instances
+front-to-back; the first gap between the cursor and the next
+instance's `starts` that is ≥ `MIN_GAP_SECS` (60 s) is
+returned.  A "tail gap" between the last instance's `ends`
+and the lookahead end is considered if no inter-show gap
+was found.  Only one gap is returned per call — the operator-
+defined "one new show per poll" rule (Q1).  No locking is
+needed: the next poll naturally picks up the next gap after
+the just-inserted show has materialised in
+`cc_show_instances`.
+
+**Show creation data (`createGapFillingShow`).**
+
+```
+add_show_name             ← Preference::GetAutoDjShowName()
+add_show_has_autoplaylist ← 1
+add_show_autoplaylist_id  ← Preference::GetAutoDjPlaylistId()
+add_show_autoplaylist_repeat ← 1   (so the build loop fills the slot)
+add_show_record           ← 0      (Q6 — hardcoded off)
+add_show_repeats          ← 0      (non-repeating, single occurrence)
+add_show_linked           ← 0
+add_show_start_date       ← gap['starts']->format('Y-m-d')   (UTC)
+add_show_start_time       ← gap['starts']->format('H:i')      (UTC)
+add_show_duration         ← min(gap_secs, 12h) → "HH:MM"
+add_show_timezone         ← 'UTC'
+add_show_intro_playlist_id ← 0  (use the global default)
+add_show_outro_playlist_id ← 0  (use the global default)
+```
+
+The logo path (if configured) is written directly to
+`cc_show.image_path` after `addUpdateShow()` returns the new
+show id, because the standard show-image upload flow is a
+second AJAX request from the operator's browser — not
+available in the polling-job context.
+
+**Fill-pass scope.**
+
+SQL:
+```sql
+SELECT si.id FROM cc_show_instances si
+WHERE si.starts > NOW()
+  AND si.starts < NOW() + INTERVAL '1 hour'
+  AND si.modified_instance = FALSE
+  AND EXTRACT(EPOCH FROM (si.ends - si.starts) - COALESCE(si.time_filled, INTERVAL '0')) > 5
+```
+
+For each match: `addPlaylistToShow($playlist_id, false, 0)`.
+`checkUserPerm = false` because we're in a polling-job
+context; `reservedSecs = 0` because the fill-pass runs *after*
+any outro the show has, so no extra reserve is needed.
+
+**Settings UI.**
+
+`PreferenceController::autoDjAction` renders `preference/auto-dj.phtml`,
+which is a single `<form>` POST-back-to-self plus two
+sibling AJAX endpoints for the logo:
+
+* `Preference/auto-dj-upload-logo` (multipart POST, replaces the
+  current logo and writes the resulting path to
+  `cc_pref.auto_dj_logo_path`)
+* `Preference/auto-dj-remove-logo` (one-line: clears the cc_pref
+  entry; the file on disk is left in place so a re-upload of
+  the same filename doesn't collide)
+
+**Component map.**
+
+| Layer | File | Purpose |
+|---|---|---|
+| Preferences | `application/models/Preference.php` (5 new getter/setter pairs) | cc_pref-backed Auto-DJ settings |
+| Service | `application/services/AutoDjService.php` (NEW) | runPrePass / runFillPass / findNextGap / createGapFillingShow / withAdminContext |
+| Hook | `application/common/AutoPlaylistManager.php` | calls pre-pass before + fill-pass after the per-show build loop |
+| Controller | `application/controllers/PreferenceController.php` (3 new actions) | autoDjAction + autoDjUploadLogoAction + autoDjRemoveLogoAction |
+| View | `application/views/scripts/preference/auto-dj.phtml` (NEW) | settings form + inline JS for the logo upload AJAX |
+| Navigation | `application/configs/navigation.php` | new "Auto DJ" entry under Settings |
+
+**Edge cases and lessons learned.**
+
+1. **Polling races.**  Two PageLayoutInitPlugin polls cannot
+   land within `AUTOPLAYLIST_POLL_INTERVAL_SECONDS` of each
+   other (`hasAutoPlaylistPollIntervalPassed()` guards that
+   for the whole autoplaylist build, including our hooks).
+   So no separate Auto-DJ lock is needed; the existing
+   `auto_playlist_poll_lock` covers us.
+
+2. **Empty admin database.**  If the system somehow has no
+   admin user (e.g. fresh install with only DJ-type users),
+   `getFirstAdmin()` returns NULL and `withAdminContext()`
+   throws.  Caught in `runPrePass()` and logged at WARN;
+   neither Auto-DJ nor the rest of `buildAutoPlaylist()`
+   crashes.
+
+3. **No playlist selected.**  Pre-pass and fill-pass both
+   early-return when `auto_dj_playlist_id` is NULL or 0 — no
+   surprise show creation.
+
+4. **12 h cap.**  If the gap is larger than 12 h (e.g. an empty
+   weekend), the auto-created show fills the first 12 h and
+   the rest stays empty.  Next poll the cursor finds the next
+   gap (= the rest of the weekend) and creates another 12 h
+   show.  Effectively chunks long gaps into 12 h blocks.
+
+5. **Race with operator-scheduled show.**  Operator schedules
+   a manual show in a calendar gap between two polls.  Next
+   poll the gap is gone → `findNextGap` returns null → no
+   surprise show.  Conflict-free.
+
+6. **Show name uniqueness.**  Per Q4 every auto-created show
+   has the same name.  Operator can identify them in the
+   calendar by that constant name; if they prefer
+   timestamp-uniqueness later, a one-line change in
+   `createGapFillingShow` is enough.
+
+**Out-of-scope / possible future work.**
+
+* Per-weekday autoplaylist (e.g. "Rock on Saturday nights, Jazz
+  on Sunday mornings").  Today there is only one global
+  auto_dj_playlist_id.
+* Random rotation of multiple playlists (would still need a
+  Smart Block to pick tracks; could just be a Smart Block over
+  multiple playlists, no Auto-DJ change required).
+* Operator confirmation before auto-creating a show.  Today the
+  show appears in the calendar without prompt; a future opt-in
+  "preview mode" could surface "5 gaps detected, 1 show would
+  be auto-created — proceed?" instead.
+* Auto-DJ-show colour theme (a dim grey background to make them
+  visually distinct from operator shows).  Currently they use
+  the calendar default colour.
+* Recording opt-in.  Today `record = false` is hardcoded; a
+  future preference could re-expose it for operators that
+  intentionally want auto-DJ recordings.

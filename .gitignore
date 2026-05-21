@@ -111,9 +111,12 @@ yarn-error.log*
 
 # -----------------------------------------------------------------------------
 # Local the coding assistant / IDE assistant state (operator-specific permission
-# allow-lists, scheduled-task locks, etc.).  Never source.
+# allow-lists, scheduled-task locks, private notes).  Never source.
+# ASSISTANT.local.md is the user's PRIVATE instructions to the coding assistant —
+# only ASSISTANT.md (the shared, checked-in project guide) is tracked.
 # -----------------------------------------------------------------------------
 .assistant/
+ASSISTANT.local.md
 
 # -----------------------------------------------------------------------------
 # Analyzer runtime state.  retry_queue is a pickle of in-flight
