@@ -1,0 +1,86 @@
+<?php
+/**
+ * RASTATIME 2026-05-12 — Line-In Media-Library edit dialog.
+ *
+ * Mirrors webstream/webstream.phtml.  Differences:
+ *  - "Stream URL" input is replaced by a "Device" dropdown that is
+ *    populated client-side from GET /api/v2/audio/devices (the same
+ *    endpoint the Soundcard Settings page uses).
+ *  - The "obj_type" hidden input is "linein" instead of "webstream",
+ *    so the library JS routes save/cancel/delete clicks to the right
+ *    Zend controller.
+ *
+ * Persistence happens via POST /linein/save → Django REST API
+ * (see LineinController::saveAction).
+ */
+?>
+<?php if (isset($this->obj)) : ?>
+    <input class="obj_id"        type="hidden" value="<?php echo $this->escape($this->obj->getId()); ?>" />
+    <input class="obj_lastMod"   type="hidden" value="1" />
+    <input class="obj_type"      type="hidden" value="linein" />
+    <input class="obj_device_id" type="hidden" value="<?php echo $this->escape($this->obj->getDeviceId()); ?>" />
+    <div class="status" style="display:none;"></div>
+
+    <div class="inner_editor_title">
+        <H2><?php echo (_("Editing ")); ?>"<span class="title_obj_name"><?php
+            if (isset($this->unsavedName)) {
+                echo $this->unsavedName;
+            } else {
+                echo $this->escape($this->obj->getName());
+            }
+        ?></span>"</H2>
+    </div>
+
+    <div class="inner_editor_wrapper">
+        <dl class="zend_form side_playlist playlist_editor">
+            <dt>
+                <label><?php echo (_("Name:")); ?></label>
+            </dt>
+            <dd>
+                <div id="name-error" class="errors" style="display:none;"></div>
+                <input class="playlist_name_display" type="text"
+                       contenteditable="true"
+                       value="<?php echo $this->escape($this->obj->getName()); ?>">
+            </dd>
+
+            <dt id="description-label">
+                <label for="description"><?php echo _("Description") ?></label>
+            </dt>
+            <dd id="description-element">
+                <textarea cols="80" rows="6" id="description" name="description"><?php
+                    echo $this->escape($this->obj->getDescription());
+                ?></textarea>
+            </dd>
+
+            <div id="device-error" class="errors" style="display:none;"></div>
+            <dt id="lineindevice-label">
+                <label for="linein-device"><?php echo _("Device:"); ?></label>
+            </dt>
+            <dd id="lineindevice-element">
+                <select id="linein-device" name="device_id" style="width:100%">
+                    <option value=""><?php echo _("— Loading devices …") ?></option>
+                </select>
+            </dd>
+
+            <div id="length-error" class="errors" style="display:none;"></div>
+            <dt id="streamlength-label">
+                <label for="streamlength"><?php echo _("Default Length:"); ?></label>
+            </dt>
+            <dd id="streamlength-element">
+                <input type="text" value="<?php echo $this->escape($this->obj->getDefaultLength()); ?>" />
+            </dd>
+        </dl>
+    </div>
+
+    <div class="btn-toolbar clearfix">
+        <div class="btn-group pull-right">
+            <button class="btn" type="button" id="linein_cancel" name="submit"><?php echo _("Cancel") ?></button>
+        </div>
+        <div class="btn-group pull-right">
+            <button class="btn" type="submit" id="linein_save" name="submit"><?php echo _("Save") ?></button>
+        </div>
+    </div>
+
+<?php else : ?>
+    <div><?php echo _("No line-in") ?></div>
+<?php endif; ?>
