@@ -1,0 +1,268 @@
+# Biblioteca
+
+> **Dónde está usted en el manual.** Este es uno de los
+> capítulos **Contenido y biblioteca**. Para detalles por
+> tipo de entrada, vea también [Webstreams](./WEBSTREAMS.md)
+> y [Line-In](./LINE_IN.md).
+
+La **Biblioteca** es el inventario de cada pieza de audio
+que RASTATIME puede poner al aire. Tiene cinco tipos de
+items:
+
+| Tipo | Qué es | Dónde viven las filas |
+|---|---|---|
+| **Pista (Track)** | Un archivo de audio único (MP3, FLAC, OGG, WAV, AAC). | `cc_files` |
+| **Smart Block** | Una *consulta* — "elegir N pistas donde género = pop y BPM > 100", evaluada en momento de build. | `cc_block` + `cc_blockcontents` |
+| **Playlist** | Una lista ordenada de items: pistas, smart blocks, webstreams o line-ins. | `cc_playlist` + `cc_playlistcontents` |
+| **Webstream** | Una URL apuntando a otra fuente Icecast / Shoutcast / HTTP audio. | `cc_webstream` |
+| **Line-In** | Una entrada de audio en vivo nombrada en la máquina del operador. | `rastatime_linein` |
+
+La Biblioteca es de donde usted arrastra cuando rellena un
+programa.
+
+---
+
+## 1. La página Biblioteca
+
+Biblioteca → abre la vista de tabla con una fila por item.
+
+### Chips de filtro
+
+Los chips encima de la tabla restringen las filas visibles.
+Se combinan con **Y**: establecer *tipo = Pista* y *género
+= pop* muestra solo pistas pop. Borre cualquier chip con
+su **×**.
+
+| Chip | Por qué filtra |
+|---|---|
+| **Tipo** | Pista / Smart Block / Playlist / Webstream / Line-In. |
+| **Creador** | El creador (artista) de metadatos de la pista, no el propietario de subida. |
+| **Género** | Tag de género de metadatos. |
+| **Longitud** | Cubos gruesos (< 30 s, 30 s – 2 min, 2 – 10 min, > 10 min, ∞). |
+| **Propietario** | El usuario RASTATIME que importó el item. Los DJs están restringidos a sus propios items; los Admins ven todo. |
+
+### Búsqueda de texto libre
+
+La caja **Buscar** funciona sobre **título, creador,
+álbum, género, nombre de archivo** para pistas; **nombre**
+para blocks / playlists / webstreams / line-ins. Usa
+correspondencia de subcadena.
+
+> **Cómo funciona bajo el capó.** La búsqueda es del lado
+> del servidor vía `LibraryController::contentsFeedAction`.
+> El widget DataTable envía el término de búsqueda + el
+> estado actual de chips como parámetros URL; el
+> controlador ensambla una consulta PostgreSQL `ILIKE`.
+
+---
+
+## 2. Pistas
+
+### Importar pistas
+
+Tres maneras:
+
+#### 2.1 Subida del navegador (puntual)
+
+Biblioteca → **Subir** → arrastre archivos al área de
+subida.
+
+| Campo | Notas |
+|---|---|
+| **Archivo** | Uno de: MP3, FLAC, OGG, WAV, AAC, M4A. |
+| **Propietario** | Por defecto usted. Los Admins pueden anular. |
+
+#### 2.2 Carpeta de importación local (lote)
+
+Configure una vez Configuración → **Máquina local** →
+**Carpeta de importación local**. Luego suelte archivos en
+ese directorio; aparecen en la biblioteca en el próximo
+poll del analyzer (por defecto cada 60 s). Subcarpetas son
+escaneadas recursivamente. Vea
+[Máquina local](./LOCAL_MACHINE.md).
+
+> **Consejo del operador.** Use la Carpeta de importación
+> local para cualquier lote de más de una docena de
+> archivos.
+
+#### 2.3 Suscripción podcast (recurrente)
+
+Configuración → **Podcasts** → **Suscribirse**. Pegue una
+URL de feed RSS, opcionalmente un tipo de pista por
+defecto, una política de auto-expiración.
+
+> **Cómo funciona bajo el capó.** La obtención de podcasts
+> dependía antes de Celery; en RASTATIME (Windows) corre
+> en el `PodcastFetchJob` del servicio
+> `RASTATIME-WORKER`, sondeado al intervalo configurado
+> (por defecto 30 min). Vea ARCHITECTURE §16.
+
+### Editar metadatos de pista
+
+Haga clic en una fila de pista → **Editar metadatos** en
+el menú de acción de la fila.
+
+| Campo | Dónde termina |
+|---|---|
+| **Título** | `cc_files.track_title` |
+| **Creador (Artista)** | `cc_files.artist_name` |
+| **Álbum** | `cc_files.album_title` |
+| **Género** | `cc_files.genre` |
+| **Año** | `cc_files.year` |
+| **BPM** | `cc_files.bpm` |
+| **Tipo de pista** | `cc_files.track_type` — usado por filtros smart-block |
+| **Cue In / Out** | `cc_files.cuein` / `cueout` — recortar el inicio / fin sin re-encodificar |
+| **Fade In / Out** | `cc_files.fadein` / `fadeout` |
+| **Replay Gain** | `cc_files.replay_gain` — usado por el motor de playout para normalización de nivel |
+
+### Eliminar una pista
+
+Fila → **Eliminar**. La pista se retira de la biblioteca
+*y* de cualquier playlist de la que era parte.
+
+> **Cómo funciona bajo el capó.** Eliminar quita la fila
+> `cc_files` y todas las filas `cc_playlistcontents` /
+> `cc_schedule` que la referencian (CASCADE). El archivo
+> en disco se mueve a `C:\rastatime\media\.trash\` en
+> lugar de ser desenlazado, así un operador que eliminó
+> por accidente puede restaurar durante 7 días.
+
+---
+
+## 3. Smart Blocks
+
+Un **smart block** es una consulta. Cuando el block se
+planifica en un programa, la consulta se evalúa en
+momento de build y se expande en un conjunto concreto de
+pistas.
+
+### Crear un smart block
+
+Biblioteca → **+ Nuevo** → **Smart Block**.
+
+| Campo | Significado |
+|---|---|
+| **Nombre** | Visible en biblioteca y calendario. |
+| **Tipo** | **Estático** — elige una vez al crear; el conjunto nunca cambia. **Dinámico** — re-elige cada vez que el block se planifica. |
+| **Criterios** | Añadir filas: *artista contiene "Bowie"*, *bpm entre 100 y 130*, etc. |
+| **Limitar a** | **Número de pistas** (ej. 10), **Duración en tiempo** (ej. 30:00), **Tiempo restante en el programa**. |
+| **Ordenar** | Aleatorio / más reciente primero / por artista / por número de reproducciones / etc. |
+
+> **Consejo del operador.** El límite **"Tiempo restante
+> en el programa"** es el más útil para autoloading
+> playlists.
+
+### Por qué un smart block puede devolver menos pistas de las pedidas
+
+Los smart blocks respetan el **alcance de biblioteca** del
+operador: el DJ propietario ve solo sus propias pistas; un
+Program Manager ve toda la biblioteca.
+
+> **Cómo funciona bajo el capó.** Los criterios están
+> almacenados en `cc_blockcriteria`. En momento de build,
+> `BlockExpander.expand()` ensambla un PostgreSQL `SELECT
+> … WHERE … LIMIT …` sobre `cc_files`.
+
+---
+
+## 4. Playlists
+
+Una **playlist** es una lista ordenada de items, donde
+cada item es una pista, un smart block, un webstream o un
+line-in. Las playlists son los bloques de construcción
+del contenido del programa.
+
+### Crear una playlist
+
+Biblioteca → **+ Nuevo** → **Playlist**.
+
+El editor de playlist se abre con la playlist a la
+izquierda y la biblioteca a la derecha. Arrastre items de
+biblioteca a la playlist; reordene por arrastrar y soltar.
+
+### Longitud por defecto
+
+Cada playlist tiene una **Longitud por defecto** que
+aparece como la duración nominal de la playlist en la
+biblioteca.
+
+### Usar una playlist en un programa
+
+Dos caminos:
+
+1. **Puntual**: arrastre la playlist en un programa vacío
+   en el show-builder. Los items de la playlist son
+   *aplanados* en el planning. La playlist original no
+   está vinculada al programa.
+
+2. **Autoloading**: adjunte la playlist a la definición
+   del programa en la sección **Autoloading Playlist**
+   del formulario de edición de programa. Cada futura
+   instancia del programa tendrá los items de la playlist
+   construidos automáticamente. Vea
+   [Autoloading Playlists](./AUTOLOADING_PLAYLISTS.md).
+
+---
+
+## 5. Webstreams y Line-Ins como items de biblioteca
+
+Tanto [Webstreams](./WEBSTREAMS.md) como
+[Line-Ins](./LINE_IN.md) aparecen en la biblioteca y se
+comportan como pistas cuando se planifican.
+
+---
+
+## 6. Acciones masivas
+
+Marque la casilla al inicio de cada fila, luego use la
+barra de herramientas que aparece en la parte inferior de
+la tabla:
+
+| Acción | Efecto |
+|---|---|
+| **Añadir a playlist** | Añadir las filas seleccionadas a una playlist existente de su elección. |
+| **Eliminar** | Eliminar las filas seleccionadas. |
+| **Editar metadatos** | Abrir un diálogo de edición por lotes. Solo aplica a pistas. |
+| **Transferir propietario** | Reasignar propiedad (solo Admin / Super Admin). |
+
+---
+
+## 7. Preguntas frecuentes
+
+### "Subí una pista y nunca apareció."
+
+Verifique la insignia de estado de subida:
+- **Amarilla (Advertencia)**: el archivo fue importado
+  con advertencias.
+- **Roja (Fallo)**: el archivo es inreproducible.
+- **Sin insignia pero sin fila**: el servicio analyzer no
+  está corriendo.
+
+### "¿Por qué mi smart block devuelve las mismas pistas cada vez?"
+
+Probablemente eligió **Estático** en lugar de **Dinámico**.
+
+### "¿Puedo importar una estructura de carpetas preservando los nombres de subcarpetas?"
+
+La Carpeta de importación local preserva nombres de
+subcarpetas como campo **álbum** de las pistas importadas
+si no hay tag ID3 de álbum.
+
+### "¿Cuál es el tamaño máximo de archivo?"
+
+El subidor del navegador está limitado por
+`LimitRequestBody` de Apache — por defecto 100 MB.
+
+---
+
+## A dónde ir después
+
+* [Calendario](./CALENDAR.md) — cómo poner items de
+  biblioteca al aire.
+* [Plantillas de programa](./SHOW_TEMPLATES.md) —
+  reutilizar configuración de programa.
+* [Autoloading Playlists](./AUTOLOADING_PLAYLISTS.md) —
+  dejar que los programas se rellenen solos desde una
+  playlist.
+* [Webstreams](./WEBSTREAMS.md) y [Line-In](./LINE_IN.md)
+  para detalle por tipo.
