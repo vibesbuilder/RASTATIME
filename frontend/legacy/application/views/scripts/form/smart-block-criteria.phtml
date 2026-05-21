@@ -154,27 +154,27 @@
             </dd>
         </dl>
         <?php /* RASTATIME 2026-05-21 — exclude-played-lately filter.
-               Master checkbox + hours-back input on one row so the
-               two controls read as a single sentence at a glance:
-               "[x] Exclude tracks played lately: [24] hours".  The
-               hours-input is shown only when the checkbox is on
-               (toggle handled in smart_blockbuilder.js); the visual
-               layout mirrors the podcast Auto-Expiry pattern but
-               folds both controls into one dl-row instead of two
-               separate rows. */ ?>
+               Master checkbox on its own line, hours-back input
+               appearing below it on a second line when the checkbox
+               is on (operator request 2026-05-21 — original
+               single-line layout was visually too dense once the
+               input field was visible).  Toggle handled in
+               smart_blockbuilder.js.  Both controls live inside the
+               same <dd> so they belong to the same dl-row and
+               inherit the same Zend-Form decorator context. */ ?>
         <dl>
             <dt>
                 <label class='sp_text_font'><?php echo $this->element->getElement('sp_exclude_played_lately')->getLabel() ?></label>
             </dt>
             <dd id='sp_exclude_played_lately-element'>
                 <?php echo $this->element->getElement('sp_exclude_played_lately') ?>
-                <span id='sp_exclude_played_lately_hours_wrap'
-                      class='sp_text_font'
-                      style='margin-left: 0.8em;'>
+                <div id='sp_exclude_played_lately_hours_wrap'
+                     class='sp_text_font'
+                     style='margin-top: 0.5em; margin-left: 1.5em;'>
                     <?php echo _('Exclude tracks played in the last'); ?>
                     <?php echo $this->element->getElement('sp_exclude_played_lately_hours') ?>
                     <?php echo _('hours'); ?>
-                </span>
+                </div>
                 <?php if ($this->element->getElement("sp_exclude_played_lately")->hasErrors()) : ?>
                     <?php foreach ($this->element->getElement("sp_exclude_played_lately")->getMessages() as $error) : ?>
                         <span class='errors sp-errors'>

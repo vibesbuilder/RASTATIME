@@ -40,8 +40,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
       hours value to [1, 8760] as defence-in-depth against a
       hand-crafted POST.
     - `application/views/scripts/form/smart-block-criteria.phtml`
-      — single `<dl>` row hosting both controls so the line reads
-      "[x] Exclude tracks played lately: [24] hours".
+      — single `<dl>` row hosting both controls.  Master
+      checkbox on its own line; the hours-input wrapper
+      appears below it (indented 1.5 em, 0.5 em top margin)
+      when the checkbox is on (operator preferred the
+      stacked layout 2026-05-21 over the original
+      single-line "[x] Exclude tracks played lately: [24]
+      hours" rendering, which was visually too dense once
+      the input field was visible).
     - `public/js/airtime/playlist/smart_blockbuilder.js` —
       show/hide of the hours-input wrapper based on master
       checkbox; auto-fills 24 on first toggle-on so the active

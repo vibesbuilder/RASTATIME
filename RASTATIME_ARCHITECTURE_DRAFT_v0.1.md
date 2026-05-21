@@ -3368,12 +3368,17 @@ against hand-crafted POSTs.
 2. **Server-side** (`Block.php`): re-clamps and defaults to
    24 h if the form-validator was somehow bypassed.
 
-**UX.**  Single dl-row hosting both controls so the line
-reads "[x] Exclude tracks played lately: [24] hours" at a
-glance.  The hours-input wrapper is hidden via
-`smart_blockbuilder.js` whenever the master checkbox is
-off.  On first toggle-on the input auto-fills with 24 so
-the active state is never visually empty.
+**UX.**  Single dl-row hosting both controls.  The master
+checkbox sits on its own line; the hours-input wrapper
+appears below it (indented 1.5 em, 0.5 em top margin) when
+the checkbox is on.  The stacked layout was chosen over a
+single inline row 2026-05-21 because the inline rendering
+became visually too dense once the input field was
+visible — the two controls competed for attention and the
+checkbox label lost focus.  Hours-input wrapper is hidden
+via `smart_blockbuilder.js` whenever the master checkbox
+is off.  On first toggle-on the input auto-fills with 24
+so the active state is never visually empty.
 
 **Compositional behaviour.**  The filter is a single
 additional `->where()` call on the Propel query, so it
