@@ -21,6 +21,54 @@
                     <input name="podcast_auto_ingest" id="podcast_auto_ingest" ng-model="podcast.auto_ingest" type="checkbox" />
                 </div>
             </div>
+
+            <?php /* RASTATIME 2026-05-16 - Auto-Expiry controls.
+                   When checkbox is on, episodes downloaded for this podcast
+                   get cc_files.expires_at = now() + days at import time.
+                   This wins over any ID3 'Expiry' tag the publisher set
+                   (precedence decision B, 2026-05-16). */ ?>
+            <div class="podcast-metadata-row">
+                <label for="podcast_auto_expiry_enabled"><?php echo _("Auto-Expiry:") ?></label>
+                <div>
+                    <input name="podcast_auto_expiry_enabled" id="podcast_auto_expiry_enabled"
+                           ng-model="podcast.auto_expiry_enabled" type="checkbox" />
+                </div>
+            </div>
+            <div class="podcast-metadata-row"
+                 ng-show="podcast.auto_expiry_enabled">
+                <label for="podcast_auto_expiry_days"><?php echo _("Auto-Expiry (days):") ?></label>
+                <div>
+                    <input name="podcast_auto_expiry_days" id="podcast_auto_expiry_days"
+                           ng-model="podcast.auto_expiry_days" type="number" min="1" max="3650" step="1"
+                           style="width: 6em;" />
+                    <span style="font-size: 0.9em; color: #666; margin-left: 0.5em;">
+                        <?php echo _("Episodes expire this many days after download."); ?>
+                    </span>
+                </div>
+            </div>
+
+            <?php /* RASTATIME 2026-05-17 - Per-podcast default Track-Type.
+                   When set, every episode imported from this podcast
+                   (manual or auto-ingest) gets cc_files.track_type_id
+                   pre-filled with this value at download time.  Empty
+                   value = no default (track-type stays at the analyzer
+                   inference, which is typically empty for podcasts). */ ?>
+            <div class="podcast-metadata-row">
+                <label for="podcast_default_track_type"><?php echo _("Track Type:") ?></label>
+                <div>
+                    <?php // RASTATIME 2026-05-17 — track-type options are
+                          // rendered into a JS literal that the Angular
+                          // PodcastController picks up at init time, so
+                          // we can use ng-options (int-aware) without an
+                          // extra REST round-trip to /api/v2/libraries. ?>
+                    <select name="podcast_default_track_type" id="podcast_default_track_type"
+                            ng-model="podcast.default_track_type_id"
+                            ng-options="opt.id as opt.name for opt in trackTypeOptions">
+                        <option value="">— <?php echo _("None") ?> —</option>
+                    </select>
+                </div>
+            </div>
+
             <div class="podcast-metadata-row">
                 <label><?php echo _("Scheduling:") ?></label>
                 <div>

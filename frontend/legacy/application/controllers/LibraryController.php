@@ -2,6 +2,15 @@
 
 class LibraryController extends Zend_Controller_Action
 {
+    /**
+     * RASTATIME 2026-05-14 — Base URL for the Django REST API.  Used by
+     * the Library deleteAction() so that ``linein`` items (which are
+     * persisted in the new ``rastatime_linein`` table, not in any of the
+     * Propel-mapped legacy tables) can be removed through their own
+     * DELETE endpoint.  Mirrors :const:`LineinController::API_BASE`.
+     */
+    private const RASTATIME_API_BASE = 'http://localhost:8765/';
+
     public function init()
     {
         $ajaxContext = $this->_helper->getHelper('AjaxContext');
@@ -117,9 +126,14 @@ class LibraryController extends Zend_Controller_Action
             if ($isAdminOrPM || $file->getFileOwnerId() == $user->getId()) {
                 $menu['del'] = ['name' => _('Delete'), 'icon' => 'delete', 'url' => $baseUrl . 'library/delete'];
                 $menu['edit'] = ['name' => _('Edit...'), 'icon' => 'edit', 'url' => $baseUrl . "library/edit-file-md/id/{$id}"];
-                // Disable My podcasts
-                // See https://github.com/libretime/libretime/issues/1320
-                // $menu["publish"] = array("name"=> _("Publish..."), "url" => $baseUrl."library/publish/id/{$id}");
+                // RASTATIME 2026-05-18 — Publish menu item re-enabled
+                // after the PodcastEpisodeService::publish NOT-NULL
+                // fix (see CHANGELOG).  Upstream had disabled it
+                // following libretime#1320; that root cause does not
+                // apply to RASTATIME's standalone station-podcast
+                // pipeline (no SoundCloud, no Celery), so the menu
+                // entry is safe to expose.
+                $menu['publish'] = ['name' => _('Publish...'), 'icon' => 'edit', 'url' => $baseUrl . "library/publish/id/{$id}"];
             }
 
             $url = $baseUrl . "api/get-media/file/{$id}/download/true";
@@ -169,6 +183,23 @@ class LibraryController extends Zend_Controller_Action
                 }
                 $menu['del'] = ['name' => _('Delete'), 'icon' => 'delete', 'url' => $baseUrl . 'library/delete'];
             }
+        } elseif ($type == 'linein') {
+            // RASTATIME 2026-05-15 — Line-In rows have no Preview entry.
+            //
+            // Earlier this branch installed a permanently-disabled
+            // "Preview (coming in Phase B)" placeholder to signal a
+            // planned feature.  Operator product-decision: don't offer
+            // Preview for Line-In at all (a meaningful preview would
+            // need a per-row Preview-on-Demand FFmpeg-capture mechanism;
+            // not worth the complexity vs. the rare "is my mic plugged
+            // in?" use-case).  ``unset`` removes the default play entry
+            // that was installed at the top of this method.
+            unset($menu['play']);
+
+            if ($isAdminOrPM) {
+                $menu['edit'] = ['name' => _('Edit...'), 'icon' => 'edit'];
+                $menu['del']  = ['name' => _('Delete'), 'icon' => 'delete', 'url' => $baseUrl . 'library/delete'];
+            }
         }
 
         if (empty($menu)) {
@@ -190,6 +221,14 @@ class LibraryController extends Zend_Controller_Action
         $playlists = [];
         $blocks = [];
         $streams = [];
+        // RASTATIME 2026-05-14 — Line-In rows live in rastatime_linein
+        // (managed by the Django API), not in any Propel-mapped legacy
+        // table.  Collected here and deleted in a separate loop below
+        // via DELETE /api/v2/audio/linein/<id>.  Without this branch the
+        // Library dashboard's "Delete" button (and the row context menu's
+        // "Delete" entry) silently failed for Line-In items — the type
+        // simply fell through the foreach with no error and no API call.
+        $lineins = [];
 
         $message = null;
         $noPermissionMsg = _("You don't have permission to delete selected items.");
@@ -203,6 +242,8 @@ class LibraryController extends Zend_Controller_Action
                 $blocks[] = intval($media['id']);
             } elseif ($media['type'] === 'stream') {
                 $streams[] = intval($media['id']);
+            } elseif ($media['type'] === 'linein') {
+                $lineins[] = intval($media['id']);
             }
         }
 
@@ -243,6 +284,34 @@ class LibraryController extends Zend_Controller_Action
                     $message = _('Could not delete file(s).');
                     Logging::info($message . ': ' . $e->getMessage());
                 }
+            }
+        }
+
+        // RASTATIME 2026-05-14 — Line-In deletion via the Django API.
+        // The /api/v2/audio/linein/<id> endpoint accepts either the
+        // domain UUID or the numeric DB pk; we send the pk because
+        // that's what the Library row carries.  Returns 204 on success,
+        // 404 if already gone, anything else gets logged and surfaced
+        // as a generic delete-failed message to the operator.
+        foreach ($lineins as $id) {
+            $url = self::RASTATIME_API_BASE . 'api/v2/audio/linein/' . $id;
+            $curl = curl_init($url);
+            curl_setopt_array($curl, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_CUSTOMREQUEST  => 'DELETE',
+                CURLOPT_TIMEOUT        => 5,
+            ]);
+            $body   = curl_exec($curl);
+            $status = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+            $err    = curl_error($curl);
+            curl_close($curl);
+
+            if ($status !== 204 && $status !== 404) {
+                $message = _('Could not delete some Line-In sources.');
+                Logging::info(sprintf(
+                    'linein delete failed: pk=%d status=%d body=%s err=%s',
+                    $id, $status, (string) $body, $err
+                ));
             }
         }
 
@@ -370,7 +439,12 @@ class LibraryController extends Zend_Controller_Action
                         $serialized['artwork'] = FileDataHelper::resetArtwork($file_id);
                     }
                 } elseif ($j['name'] == 'set_artwork') {
-                    if ($j['value'] != null || $j['value'] != '') {
+                    // Upstream had `||` here, which always evaluated true and
+                    // sent an empty data-URI through to setArtwork on every
+                    // save — silently overwriting the existing artwork file
+                    // with an empty file.  We only want to set the artwork
+                    // when the user actually chose a new image.
+                    if ($j['value'] !== null && $j['value'] !== '') {
                         $serialized['artwork'] = FileDataHelper::setArtwork($file_id, $j['value']);
                     }
                 } elseif ($j['name'] == 'remove_artwork') {
@@ -390,6 +464,17 @@ class LibraryController extends Zend_Controller_Action
                 $file->setDbColMetadata($serialized);
                 $this->view->status = true;
             } else {
+                // RASTATIME 2026-05-18 — keep a WARN-level log of which
+                // form-field rejected the save.  Without this, a silent
+                // validation failure (like the track_type_id=0 bug that
+                // shipped before sanitizeData was fixed) just makes the
+                // dialog close as if it had saved, with no breadcrumb in
+                // the operator log.
+                $msgs = $form->getMessages();
+                Logging::warn(
+                    'editFileMdAction: form INVALID, NOT saving. messages='
+                    . json_encode($msgs)
+                );
                 $this->view->status = false;
             }
         }

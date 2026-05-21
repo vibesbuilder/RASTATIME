@@ -16,69 +16,43 @@ class Application_Model_StreamConfig
 
     public static function getOutput($key, $add_prefix = false)
     {
-        $id = self::toOutputId($key);
-        $config_id = $id - 1;
+        $id     = self::toOutputId($key);
         $prefix = $add_prefix ? "s{$id}_" : '';
 
-        if (!Config::has("stream.outputs.merged.{$config_id}")) {
-            $result = [
-                $prefix . 'enable' => 'false',
-                $prefix . 'public_url' => '',
-                $prefix . 'output' => 'icecast',
-                $prefix . 'host' => 'localhost',
-                $prefix . 'port' => 8000,
-                $prefix . 'mount' => '',
-                $prefix . 'user' => 'source',
-                $prefix . 'pass' => '',
-                $prefix . 'admin_user' => 'admin',
-                $prefix . 'admin_pass' => '',
-                $prefix . 'channels' => 'stereo',
-                $prefix . 'bitrate' => 128,
-                $prefix . 'type' => '',
-                $prefix . 'name' => '',
-                $prefix . 'description' => '',
-                $prefix . 'genre' => '',
-                $prefix . 'url' => '',
-                $prefix . 'mobile' => 'false',
-            ];
-        } else {
-            $output = Config::get("stream.outputs.merged.{$config_id}");
+        // RASTATIME: read from cc_pref (user-editable).
+        // YAML config is ignored for output streams; settings are stored in the DB.
+        $pref = Application_Model_Preference::GetStreamOutput($id);
 
-            $result = [
-                $prefix . 'enable' => $output['enabled'] ?? 'false',
-                $prefix . 'output' => $output['kind'] ?? 'icecast',
-                $prefix . 'public_url' => $output['public_url'] ?? '',
-                $prefix . 'host' => $output['host'] ?? 'localhost',
-                $prefix . 'port' => $output['port'] ?? 8000,
-                $prefix . 'mount' => $output['mount'] ?? '',
-                $prefix . 'user' => $output['source_user'] ?? 'source',
-                $prefix . 'pass' => $output['source_password'] ?? '',
-                $prefix . 'admin_user' => $output['admin_user'] ?? 'admin',
-                $prefix . 'admin_pass' => $output['admin_password'] ?? '',
-                $prefix . 'channels' => $output['audio']['channels'] ?? 'stereo',
-                $prefix . 'bitrate' => $output['audio']['bitrate'] ?? 128,
-                $prefix . 'type' => $output['audio']['format'],
-                $prefix . 'name' => $output['name'] ?? '',
-                $prefix . 'description' => $output['description'] ?? '',
-                $prefix . 'genre' => $output['genre'] ?? '',
-                $prefix . 'url' => $output['website'] ?? '',
-                $prefix . 'mobile' => $output['mobile'] ?? 'false',
-                // $prefix . 'liquidsoap_error' => 'waiting',
-            ];
-        }
+        $enabled = ($pref['enable'] ?? 'false');
+        // Normalise: may be boolean true/false or string 'true'/'false' or '1'/'0'
+        $enabledStr = ($enabled === true || $enabled === 'true' || $enabled === '1') ? 'true' : 'false';
 
-        if (!$result[$prefix . 'public_url']) {
-            $host = Config::get('general.public_url_raw')->getHost();
-            $port = $result[$prefix . 'port'];
-            $mount = $result[$prefix . 'mount'];
+        $result = [
+            $prefix . 'enable'      => $enabledStr,
+            $prefix . 'output'      => 'icecast',
+            $prefix . 'host'        => $pref['host']        ?? 'localhost',
+            $prefix . 'port'        => $pref['port']        ?? 8000,
+            $prefix . 'mount'       => $pref['mount']       ?? '',
+            $prefix . 'user'        => $pref['user']        ?? 'source',
+            $prefix . 'pass'        => $pref['pass']        ?? '',
+            $prefix . 'admin_user'  => $pref['admin_user']  ?? 'admin',
+            $prefix . 'admin_pass'  => $pref['admin_pass']  ?? '',
+            $prefix . 'channels'    => $pref['channels']    ?? 'stereo',
+            $prefix . 'bitrate'     => $pref['bitrate']     ?? 128,
+            $prefix . 'samplerate'  => $pref['samplerate']  ?? 44100,
+            $prefix . 'type'        => $pref['type']        ?? 'mp3',
+            $prefix . 'name'        => $pref['name']        ?? '',
+            $prefix . 'description' => $pref['description'] ?? '',
+            $prefix . 'genre'       => $pref['genre']       ?? '',
+            $prefix . 'url'         => $pref['url']         ?? '',
+            $prefix . 'mobile'      => ($pref['mobile'] ?? 'false') === 'true' ? 'true' : 'false',
+        ];
 
-            $result[$prefix . 'public_url'] = "http://{$host}:{$port}/{$mount}";
-
-            if ($result[$prefix . 'output'] == 'shoutcast') {
-                // The semi-colon is important to make Shoutcast stream URLs play instead turn into a page.
-                $result[$prefix . 'public_url'] .= ';';
-            }
-        }
+        // Auto-generate stream public URL from host/port/mount
+        $host  = $result[$prefix . 'host'];
+        $port  = $result[$prefix . 'port'];
+        $mount = ltrim($result[$prefix . 'mount'], '/');
+        $result[$prefix . 'public_url'] = "http://{$host}:{$port}/{$mount}";
 
         return $result;
     }
@@ -87,9 +61,12 @@ class Application_Model_StreamConfig
     {
         $keys = [];
 
-        foreach (Config::get('stream.outputs.merged') as $id => $output) {
-            if ($output['enabled'] ?? false) {
-                $keys[] = self::toOutputKey($id + 1);
+        // RASTATIME: read enabled state from cc_pref, not from YAML.
+        for ($i = 1; $i <= MAX_NUM_STREAMS; ++$i) {
+            $pref    = Application_Model_Preference::GetStreamOutput($i);
+            $enabled = $pref['enable'] ?? 'false';
+            if ($enabled === true || $enabled === 'true' || $enabled === '1') {
+                $keys[] = self::toOutputKey($i);
             }
         }
 

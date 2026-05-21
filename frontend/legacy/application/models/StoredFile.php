@@ -242,6 +242,47 @@ class Application_Model_StoredFile
 
         $this->_file->setDbMtime(new DateTime('now', new DateTimeZone('UTC')));
         $this->_file->save($this->_con);
+
+        // RASTATIME 2026-05-16 - Track Expiry (expires_at).  Propel
+        // classes are not regenerated for the new column, so we apply
+        // the value via raw SQL after the regular save.  Accepts
+        // YYYY-MM-DD; empty string clears.  Also re-enables the row
+        // (disabled = false) when the operator picks a future date or
+        // clears the expiry — symmetric to the pruner which only ever
+        // flips disabled to true.
+        if (is_array($p_md) && array_key_exists('expires_at', $p_md)) {
+            $raw = trim((string) $p_md['expires_at']);
+            $fileId = $this->_file->getDbId();
+            if ($raw === '') {
+                $stmt = $this->_con->prepare(
+                    'UPDATE cc_files
+                     SET expires_at = NULL, disabled = false
+                     WHERE id = :id'
+                );
+                $stmt->bindValue(':id', $fileId, PDO::PARAM_INT);
+                $stmt->execute();
+            } elseif (preg_match('/^\d{4}-\d{2}-\d{2}$/', $raw)) {
+                // RASTATIME 2026-05-18 — split into two named placeholders.
+                // PostgreSQL's native prepared statements (PDO with
+                // ATTR_EMULATE_PREPARES=false, the default) reject the
+                // same `:exp` token bound twice, which silently throws
+                // away the entire UPDATE — the operator sees the form
+                // close as if saved, but the DB never gets the new value.
+                // Two distinct placeholders bound with the same value
+                // sidestep this PDO quirk while keeping the SQL
+                // semantics identical.
+                $stmt = $this->_con->prepare(
+                    'UPDATE cc_files
+                     SET expires_at = :exp_set,
+                         disabled = (CAST(:exp_cmp AS TIMESTAMP) < NOW())
+                     WHERE id = :id'
+                );
+                $stmt->bindValue(':exp_set', $raw, PDO::PARAM_STR);
+                $stmt->bindValue(':exp_cmp', $raw, PDO::PARAM_STR);
+                $stmt->bindValue(':id', $fileId, PDO::PARAM_INT);
+                $stmt->execute();
+            }
+        }
     }
 
     /**
@@ -289,6 +330,23 @@ class Application_Model_StoredFile
         foreach ($this->_dbMD as $dbColumn => $propelColumn) {
             $method = "get{$propelColumn}";
             $md[$dbColumn] = $this->_file->{$method}();
+        }
+
+        // RASTATIME 2026-05-16 - Track Expiry: read expires_at via raw
+        // SQL (Propel class not regenerated for the column).  Format as
+        // YYYY-MM-DD for the edit form's date input.  NULL => empty
+        // string so the form shows an empty field.
+        try {
+            $stmt = $this->_con->prepare(
+                "SELECT TO_CHAR(expires_at, 'YYYY-MM-DD') FROM cc_files WHERE id = :id"
+            );
+            $stmt->bindValue(':id', $this->_file->getDbId(), PDO::PARAM_INT);
+            $stmt->execute();
+            $value = $stmt->fetchColumn();
+            $md['expires_at'] = ($value === false || $value === null) ? '' : (string) $value;
+        } catch (Exception $exc) {
+            Logging::warn('getDbColMetadata: could not read expires_at: ' . $exc->getMessage());
+            $md['expires_at'] = '';
         }
 
         return $md;
@@ -662,6 +720,8 @@ SQL;
             'copyright', 'mime', 'language', 'filepath', 'owner_id',
             'conductor', 'replay_gain', 'lptime', 'is_playlist', 'is_scheduled',
             'cuein', 'cueout', 'description', 'artwork', 'track_type_id',
+            // RASTATIME 2026-05-16 - Track Expiry feature columns.
+            'expires_at', 'disabled',
         ];
     }
 
@@ -689,7 +749,9 @@ SQL;
             } elseif ($key === 'ftype') {
                 $plSelect[] = "'playlist'::varchar AS " . $key;
                 $blSelect[] = "'block'::varchar AS " . $key;
-                $fileSelect[] = $key;
+                // RASTATIME: Default to 'audioclip' when analyzer hasn't
+                // populated ftype yet (empty-string DB default).
+                $fileSelect[] = "COALESCE(NULLIF(FILES.{$key}, ''), 'audioclip') AS {$key}";
                 $streamSelect[] = "'stream'::varchar AS " . $key;
             } elseif ($key === 'artist_name') {
                 $plSelect[] = 'login AS ' . $key;
@@ -770,6 +832,85 @@ SQL;
         $fileSelect = 'SELECT ' . implode(',', $fileSelect);
         $streamSelect = 'SELECT ' . implode(',', $streamSelect);
 
+        // RASTATIME 2026-05-12 — Line-In Library UNION.
+        //
+        // rastatime_linein uses ``created_at`` / ``updated_at`` (Django
+        // convention) rather than the Propel ``utime`` / ``mtime`` of
+        // the cc_* tables, and has no FK to cc_subjs for "owner".  So
+        // it can't share the generic foreach mapping above — we build
+        // its SELECT clause here with explicit per-column aliases.
+        //
+        // Disabled rows are filtered out so they don't appear as
+        // schedulable Library entries.
+        $lineinSelect = [];
+        foreach ($displayColumns as $key) {
+            switch ($key) {
+                case 'id':
+                    $lineinSelect[] = 'li.id AS id';
+                    break;
+                case 'track_title':
+                    $lineinSelect[] = 'li.name AS track_title';
+                    break;
+                case 'ftype':
+                    $lineinSelect[] = "'linein'::varchar AS ftype";
+                    break;
+                case 'length':
+                    // Default 30 min if the operator left "Default Length" empty.
+                    $lineinSelect[] = "COALESCE(li.length, INTERVAL '30 minutes') AS length";
+                    break;
+                case 'utime':
+                    $lineinSelect[] = 'li.created_at AS utime';
+                    break;
+                case 'mtime':
+                    $lineinSelect[] = 'li.updated_at AS mtime';
+                    break;
+                case 'year':
+                    $lineinSelect[] = "EXTRACT(YEAR FROM li.created_at)::varchar AS year";
+                    break;
+                case 'description':
+                    $lineinSelect[] = 'li.description AS description';
+                    break;
+                case 'filepath':
+                    // No file path; show the device-stable-ID so an
+                    // operator can identify which input this line-in
+                    // refers to at a glance.
+                    $lineinSelect[] = 'li.device_id AS filepath';
+                    break;
+                case 'artist_name':
+                case 'owner_id':
+                    $lineinSelect[] = "''::varchar AS {$key}";
+                    break;
+                case 'replay_gain':
+                    $lineinSelect[] = "NULL::NUMERIC AS {$key}";
+                    break;
+                case 'lptime':
+                    $lineinSelect[] = "NULL::TIMESTAMP AS {$key}";
+                    break;
+                case 'is_playlist':
+                case 'is_scheduled':
+                    $lineinSelect[] = "NULL::boolean AS {$key}";
+                    break;
+                case 'cuein':
+                case 'cueout':
+                    $lineinSelect[] = "NULL::INTERVAL AS {$key}";
+                    break;
+                case 'track_number':
+                case 'bit_rate':
+                case 'sample_rate':
+                case 'bpm':
+                case 'track_type_id':
+                    $lineinSelect[] = "NULL::int AS {$key}";
+                    break;
+                case 'mime':
+                    $lineinSelect[] = "NULL::VARCHAR AS {$key}";
+                    break;
+                default:
+                    $lineinSelect[] = "NULL::text AS {$key}";
+                    break;
+            }
+        }
+        $lineinSelect = 'SELECT ' . implode(',', $lineinSelect);
+
         $type = intval($datatables['type']);
 
         $plTable = "({$plSelect} FROM cc_playlist AS PL LEFT JOIN cc_subjs AS sub ON (sub.id = PL.creator_id))";
@@ -777,7 +918,8 @@ SQL;
         $fileTable = "({$fileSelect} FROM cc_files AS FILES LEFT JOIN cc_subjs AS sub ON (sub.id = FILES.owner_id) WHERE file_exists = 'TRUE' AND hidden='FALSE')";
         // $fileTable = "({$fileSelect} FROM cc_files AS FILES WHERE file_exists = 'TRUE')";
         $streamTable = "({$streamSelect} FROM cc_webstream AS ws LEFT JOIN cc_subjs AS sub ON (sub.id = ws.creator_id))";
-        $unionTable = "({$plTable} UNION {$blTable} UNION {$fileTable} UNION {$streamTable}) AS RESULTS";
+        $lineinTable = "({$lineinSelect} FROM rastatime_linein AS li WHERE li.enabled = TRUE)";
+        $unionTable = "({$plTable} UNION {$blTable} UNION {$fileTable} UNION {$streamTable} UNION {$lineinTable}) AS RESULTS";
 
         // choose which table we need to select data from.
         switch ($type) {
@@ -801,6 +943,12 @@ SQL;
 
                 break;
 
+            case MediaType::LINEIN:
+                // RASTATIME 2026-05-12 — Line-In Library filter.
+                $fromTable = $lineinTable . ' AS LineinTable';
+
+                break;
+
             default:
                 $fromTable = $unionTable;
         }
@@ -818,15 +966,30 @@ SQL;
         foreach ($results['aaData'] as &$row) {
             $row['id'] = intval($row['id']);
 
+            // RASTATIME 2026-05-15 — fix copy-paste typo: this block
+            // used ``$r`` (which is undefined in this scope) instead of
+            // ``$row`` (the loop's reference variable).  Result: the
+            // recompute-on-fetch path for playlist length and block
+            // bl_type was silently skipped for every row, leaving the
+            // library DataTables response with stale ``cc_playlist.length``
+            // / ``cc_block.length`` DB values and a missing ``bl_type``
+            // field on Smart-Block rows.
+            //
+            // Symptom that surfaced this bug: the dashboard's playlist
+            // row context menu's "Preview" item silently did nothing,
+            // because ``data.length`` then got formatted as ``"0.0"``
+            // (LengthFormatter on "00:00:00") and the JS preview
+            // callback's ``data.length !== "0.0"`` check returned false.
+            //
             // taken from Datatables.php, needs to be cleaned up there.
-            if (isset($r['ftype'])) {
-                if ($r['ftype'] == 'playlist') {
-                    $pl = new Application_Model_Playlist($r['id']);
-                    $r['length'] = $pl->getLength();
-                } elseif ($r['ftype'] == 'block') {
-                    $bl = new Application_Model_Block($r['id']);
-                    $r['bl_type'] = $bl->isStatic() ? 'static' : 'dynamic';
-                    $r['length'] = $bl->getLength();
+            if (isset($row['ftype'])) {
+                if ($row['ftype'] == 'playlist') {
+                    $pl = new Application_Model_Playlist($row['id']);
+                    $row['length'] = $pl->getLength();
+                } elseif ($row['ftype'] == 'block') {
+                    $bl = new Application_Model_Block($row['id']);
+                    $row['bl_type'] = $bl->isStatic() ? 'static' : 'dynamic';
+                    $row['length'] = $bl->getLength();
                 }
             }
 

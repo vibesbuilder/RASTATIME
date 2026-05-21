@@ -57,6 +57,27 @@ class Application_Form_GeneralPreferences extends Zend_Form_SubForm
         $stationLogoRemove->setAttrib('onclick', 'removeLogo();');
         $this->addElement($stationLogoRemove);
 
+        // RASTATIME 2026-05-15 - Custom favicon upload.  Stored as base64
+        // blob in cc_pref + a separate MIME column; rendered as a data: URI
+        // in PageLayoutInitPlugin / LoginController so no file writes to
+        // public/ are needed at request time.
+        $stationFaviconUpload = new Zend_Form_Element_File('stationFavicon');
+        $stationFaviconUpload->setLabel(_('Station Favicon:'))
+            ->setDescription(_('Recommended: square PNG, at least 32x32 pixels.  ICO also accepted.'))
+            ->setRequired(false)
+            ->addValidator('Count', false, 1)
+            ->addValidator('Extension', false, 'png,jpg,jpeg,gif,ico')
+            ->setMaxFileSize(200000);  // 200 KB - favicons should be tiny
+        $stationFaviconUpload->setAttrib('accept', 'image/png,image/jpeg,image/gif,image/x-icon,image/vnd.microsoft.icon,.ico');
+        $this->addElement($stationFaviconUpload);
+
+        $stationFaviconRemove = new Zend_Form_Element_Button('stationFaviconRemove');
+        $stationFaviconRemove->setLabel(_('Remove'));
+        $stationFaviconRemove->setAttrib('class', 'btn');
+        $stationFaviconRemove->setAttrib('id', 'favicon-remove-btn');
+        $stationFaviconRemove->setAttrib('onclick', 'removeFavicon();');
+        $this->addElement($stationFaviconRemove);
+
         // Default station crossfade duration
         $this->addElement('text', 'stationDefaultCrossfadeDuration', [
             'class' => 'input_text',
@@ -188,7 +209,17 @@ class Application_Form_GeneralPreferences extends Zend_Form_SubForm
         $locale = new Zend_Form_Element_Select('locale');
         $locale->setLabel(_('Default Language'));
         $locale->setMultiOptions(Application_Model_Locale::getLocales());
-        $locale->setValue(Application_Model_Preference::GetDefaultLocale());
+        // RASTATIME 2026-05-15 - Pre-fill with GetLocale() (current user's
+        // effective locale) instead of GetDefaultLocale() (global default for
+        // new users).  Reason: PreferenceController::indexAction writes all
+        // three locale source surfaces (global default, per-user, cookie) on
+        // every save.  If we pre-filled with the global default, any save
+        // where the operator did NOT touch the language dropdown (e.g.
+        // saving a favicon upload) would silently overwrite their per-user
+        // locale and cookie with whatever the global default happens to
+        // be.  By pre-filling with the operator's current effective locale,
+        // an untouched dropdown round-trips as a no-op.
+        $locale->setValue(Application_Model_Preference::GetLocale());
         $this->addElement($locale);
 
         // Form Element for setting the Timezone
@@ -234,21 +265,10 @@ class Application_Form_GeneralPreferences extends Zend_Form_SubForm
         $radioPageDisabled->setValue($radioPageDisabledValue);
         $this->addElement($radioPageDisabled);
 
-        $feature_preview_mode = new Zend_Form_Element_Radio('featurePreviewMode');
-        $feature_preview_mode->setLabel(_('Feature Previews'));
-        $feature_preview_mode->setMultiOptions([
-            _('Disabled'),
-            _('Enabled'),
-        ]);
-        $feature_preview_mode->setValue(Application_Model_Preference::GetFeaturePreviewMode());
-        $feature_preview_mode->setDescription(_('Enable this to opt-in to test new features.'));
-        $feature_preview_mode->setSeparator(' '); // No <br> between radio buttons
-        $feature_preview_mode->addDecorator('HtmlTag', [
-            'tag' => 'dd',
-            'id' => 'featurePreviewMode-element',
-            'class' => 'radio-inline-list',
-        ]);
-        $this->addElement($feature_preview_mode);
+        // RASTATIME 2026-05-15 - Feature Previews removed: phantom setting, never
+        // consumed by any code path. Form element + render + Preference accessors
+        // + PreferenceController save line all deleted. cc_pref row left in place
+        // (non-destructive); may be dropped via a future migration.
     }
 
     private function getWeekStartDays()

@@ -141,6 +141,17 @@ class WebstreamController extends Zend_Controller_Action
             $parameters[$p] = trim($request->getParam($p));
         }
 
+        // RASTATIME 2026-05-16 - per-webstream input-gain (dB).  Range
+        // clamped server-side as a defence in depth; the UI also enforces
+        // -20..+20 via the number-input min/max.  Empty value or non-
+        // numeric input falls back to 0 (no gain).
+        $rawGain = $request->getParam('input_gain_db');
+        if ($rawGain === null || $rawGain === '' || !is_numeric($rawGain)) {
+            $parameters['input_gain_db'] = 0.0;
+        } else {
+            $parameters['input_gain_db'] = max(-20.0, min(20.0, (float) $rawGain));
+        }
+
         if (!$this->isAuthorized($id)) {
             header('Status: 401 Not Authorized');
 

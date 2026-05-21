@@ -37,6 +37,21 @@
             <dd id="streamlength-element">
                 <input type="text" value="<?php echo $this->obj->getDefaultLength() ?>" />
             </dd>
+
+            <?php /* RASTATIME 2026-05-16 - per-webstream static input gain.
+                   Saved into cc_webstream.input_gain_db.  Applied by
+                   FfmpegStreamer as -af volume=<dB>dB when this stream
+                   plays.  Default 0 = no change. */ ?>
+            <div id="inputgain-error" class="errors" style="display:none;"></div>
+            <dt id="inputgain-label"><label for="inputgain"><?php echo _("Input Gain (dB):"); ?></label></dt>
+            <dd id="inputgain-element">
+                <input type="number" id="streamInputGainDb"
+                       min="-20" max="20" step="0.1"
+                       value="<?php echo htmlspecialchars((string) Application_Model_Webstream::getInputGainDbForId($this->obj->getId()), ENT_QUOTES); ?>" />
+                <span class="help-block" style="font-size: 0.9em; color: #666;">
+                    <?php echo _("Range: -20.0 to +20.0 dB.  0 = no change."); ?>
+                </span>
+            </dd>
         </dl>
     </div>
 

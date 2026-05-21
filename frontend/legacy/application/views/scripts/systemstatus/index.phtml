@@ -7,28 +7,63 @@ $phpDependencies = checkPhpDependencies();
 $externalServices = checkExternalServices();
 $postgres = $phpDependencies["postgres"];
 
-$database =      $externalServices["database"];
-$rabbitmq =      $externalServices["rabbitmq"];
-
-$systemd = with_systemd();
-if ($systemd) {
-    $pypo = $externalServices['pypo'];
-    $liquidsoap = $externalServices['liquidsoap'];
-    $analyzer = $externalServices['analyzer'];
-    $celery = $externalServices['celery'];
-    $api = $externalServices['api'];
-}
+$database = $externalServices["database"];
+$rabbitmq = $externalServices["rabbitmq"];
+$pypo     = $externalServices["pypo"];
+$worker   = $externalServices["worker"];
+$api      = $externalServices["api"];
+// RASTATIME 2026-05-16 - extended service health visibility.
+$analyzer = $externalServices["analyzer"];
+$icecast  = $externalServices["icecast"];
+$apache   = $externalServices["apache"];
 
 $r1 = array_reduce($phpDependencies, "booleanReduce", true);
 $r2 = array_reduce($externalServices, "booleanReduce", true);
 $result = $r1 && $r2;
+
+// RASTATIME 2026-05-16 - Service restart hints.  Keep alphabetical to match
+// SystemstatusController::RESTARTABLE_SERVICES.  Each entry: short
+// description of what the service does, and a one-line "when to restart"
+// hint that the operator sees inline next to the button.
+$serviceRestartInfo = [
+    'RASTATIME-ANALYZER' => [
+        'desc' => _('Processes file imports (FFmpeg metadata extraction, playability check, storage placement).'),
+        'when' => _('Restart when: file imports hang, after analyzer code changes.'),
+    ],
+    'RASTATIME-API' => [
+        'desc' => _('Django REST API for file/show/schedule CRUD (used by frontend and playout).'),
+        'when' => _('Restart when: API errors in dashboard, after API code changes or DB migrations.'),
+    ],
+    'RASTATIME-APACHE' => [
+        'desc' => _('PHP frontend (Settings, Library, Calendar, Login, Dashboard).'),
+        'when' => _('Restart when: frontend PHP code changed, after .mo locale rebuild, after cc_pref schema change. UI is briefly unreachable.'),
+    ],
+    'RASTATIME-ICECAST' => [
+        'desc' => _('Streaming server (source authentication, mountpoints, listener connections).'),
+        'when' => _('Restart when: icecast.xml changed, stuck source-auth state, mount listing drifted.'),
+    ],
+    'RASTATIME-PLAYOUT' => [
+        'desc' => _('Playout engine (mpv playback, FFmpeg streamers, source switcher between Master/Show/Scheduled).'),
+        'when' => _('Restart when: output stream is dead, after soundcard setting change, after playout code change.'),
+    ],
+    'RASTATIME-WORKER' => [
+        'desc' => _('Celery background task worker (podcast downloads, smartblock evaluation).'),
+        'when' => _('Restart when: podcast imports stuck, after worker code change.'),
+    ],
+];
+
+// Reuse the established CSRF token from the session (initialised by
+// PageLayoutInitPlugin / Acl_plugin).  We render it as a single hidden
+// input below; the service-restart JS reads it from #csrf.val().
+$csrfNs = new Zend_Session_Namespace('csrf_namespace');
+$csrfToken = $csrfNs->authtoken ?? '';
 ?>
 
 <table width="60%" cellpadding="0" cellspacing="0" border="0" class="statustable">
     <thead>
         <tr>
-            <td class="strong"><?php echo sprintf(_("%s Version"), PRODUCT_NAME) ?></td>
-            <td colspan=2><?php echo $this->version; ?></td>
+            <td class="strong"><?php echo _("RASTATIME Version") ?></td>
+            <td colspan=2><?php echo htmlspecialchars($this->version, ENT_QUOTES); ?></td>
         </tr>
         <tr class="ui-state-default strong">
             <td><?php echo _("Service") ?></td>
@@ -49,7 +84,7 @@ $result = $r1 && $r2;
                 <?php
                                 } else {
                 ?>">
-                Try running <code>sudo apt-get install php7-pgsql</code>
+                Try running <code>winget install PostgreSQL.PostgreSQL</code> and ensure the PHP pgsql extension is enabled.
             <?php
                                 }
             ?>
@@ -60,16 +95,14 @@ $result = $r1 && $r2;
                 Database
             </td>
             <td class="description">
-                <?php echo _("Database configuration for LibreTime") ?>
+                <?php echo _("Database configuration for RASTATIME") ?>
             </td>
             <td class="solution <?php if ($database) {
                                     echo 'check'; ?>">
                 <?php
                                 } else {
                 ?>">
-                Make sure you aren't missing any of the Postgres dependencies in the table above.
-                If your dependencies check out, make sure your database configuration settings in
-                <code>/etc/libretime/config.yml</code> are correct and the LibreTime database was installed correctly.
+                Check your database settings in <code><?php echo LIBRETIME_CONFIG_FILEPATH; ?></code>.
             <?php
                                 }
             ?>
@@ -80,132 +113,104 @@ $result = $r1 && $r2;
                 RabbitMQ
             </td>
             <td class="description">
-                <?php echo _("RabbitMQ configuration for LibreTime") ?>
+                <?php echo _("RabbitMQ configuration for RASTATIME") ?>
             </td>
             <td class="solution <?php if ($rabbitmq) {
                                     echo 'check'; ?>">
                 <?php
                                 } else {
                 ?>">
-                Make sure RabbitMQ is installed correctly, and that your settings in /etc/libretime/config.yml
-                are correct. Try using <code>sudo rabbitmqctl list_users</code> and <code>sudo rabbitmqctl list_vhosts</code>
-                to see if the airtime user (or your custom RabbitMQ user) exists, then checking that
-                <code>sudo rabbitmqctl list_exchanges</code> contains entries for airtime-analyzer, airtime-pypo,
-                and airtime-uploads.
+                Check your RabbitMQ settings in <code><?php echo LIBRETIME_CONFIG_FILEPATH; ?></code>.
+                Verify the service is running: <code>sc query RabbitMQ</code>
             <?php
                                 }
             ?>
             </td>
         </tr>
-        <?php if ($systemd) { ?>
-            <tr>
-                <td class="component">
-                    Media Analyzer
-                </td>
-                <td class="description">
-                    <?php echo _("LibreTime media analyzer service") ?>
-                </td>
-                <td class="solution <?php if ($analyzer) {
-                                        echo 'check'; ?>">
-                    <?php
-                                    } else {
-                    ?>">
-                    <?php echo _("Check that the libretime-analyzer service is installed correctly in ") ?><code>/etc/systemd/system/</code>,
-                    <?php echo _(" and ensure that it's running with ") ?>
-                    <br /><code>systemctl status libretime-analyzer</code><br />
-                    <?php echo _("If not, try ") ?><br /><code>sudo systemctl restart libretime-analyzer</code>
-                <?php
-                                    }
-                ?>
-                </td>
-            </tr>
-            <tr>
-                <td class="component">
-                    Pypo
-                </td>
-                <td class="description">
-                    <?php echo _("LibreTime playout service") ?>
-                </td>
-                <td class="solution <?php if ($pypo) {
-                                        echo 'check'; ?>">
-                    <?php
-                                    } else {
-                    ?>">
-                    <?php echo _("Check that the libretime-playout service is installed correctly in ") ?><code>/etc/systemd/system/</code>,
-                    <?php echo _(" and ensure that it's running with ") ?>
-                    <br /><code>systemctl status libretime-playout</code><br />
-                    <?php echo _("If not, try ") ?><br /><code>sudo systemctl restart libretime-playout</code>
-                <?php
-                                    }
-                ?>
-                </td>
-            </tr>
-            <tr>
-                <td class="component">
-                    Liquidsoap
-                </td>
-                <td class="description">
-                    <?php echo _("LibreTime liquidsoap service") ?>
-                </td>
-                <td class="solution <?php if ($liquidsoap) {
-                                        echo 'check'; ?>">
-                    <?php
-                                    } else {
-                    ?>">
-                    <?php echo _("Check that the libretime-liquidsoap service is installed correctly in ") ?><code>/etc/systemd/system/</code>,
-                    <?php echo _(" and ensure that it's running with ") ?>
-                    <br /><code>systemctl status libretime-liquidsoap</code><br />
-                    <?php echo _("If not, try ") ?><br /><code>sudo systemctl restart libretime-liquidsoap</code>
-                <?php
-                                    }
-                ?>
-                </td>
-            </tr>
-            <tr>
-                <td class="component">
-                    Celery
-                </td>
-                <td class="description">
-                    <?php echo _("LibreTime Celery Task service") ?>
-                </td>
-                <td class="solution <?php if ($celery) {
-                                        echo 'check'; ?>">
-                    <?php
-                                    } else {
-                    ?>">
-                    <?php echo _("Check that the libretime-worker service is installed correctly in ") ?><code>/etc/systemd/system/</code>,
-                    <?php echo _(" and ensure that it's running with ") ?>
-                    <br /><code>systemctl status libretime-worker</code><br />
-                    <?php echo _("If not, try ") ?><br /><code>sudo systemctl restart libretime-worker</code>
-                <?php
-                                    }
-                ?>
-                </td>
-            </tr>
-            <tr>
-                <td class="component">
-                    API
-                </td>
-                <td class="description">
-                    <?php echo _("LibreTime API service") ?>
-                </td>
-                <td class="solution <?php if ($api) {
-                                        echo 'check'; ?>">
-                    <?php
-                                    } else {
-                    ?>">
-                    <?php echo _("Check that the libretime-api service is installed correctly in ") ?><code>/etc/systemd/system/</code>,
-                    <?php echo _(" and ensure that it's running with ") ?>
-                    <br /><code>systemctl status libretime-api</code><br />
-                    <?php echo _("If not, try ") ?><br /><code>sudo systemctl restart libretime-api</code>
-                <?php
-                                    }
-                ?>
-                </td>
-            </tr>
-        <?php } ?>
+        <?php
+        // RASTATIME 2026-05-16 - The six RASTATIME NSSM services use a
+        // pure-icon status indicator (green check for RUNNING, red cross
+        // otherwise).  Recovery instructions used to live in this cell
+        // but were removed: the Service Management table below now
+        // exposes a per-service Restart button as the canonical recovery
+        // path, so duplicating `sc query` / `sc start` hints in the
+        // status column was redundant.
+        ?>
+        <tr>
+            <td class="component">Playout</td>
+            <td class="description"><?php echo _("RASTATIME playout service (NSSM)") ?></td>
+            <td class="solution <?php echo $pypo ? 'check' : 'fail'; ?>">&nbsp;</td>
+        </tr>
+        <tr>
+            <td class="component">Worker</td>
+            <td class="description"><?php echo _("RASTATIME worker service (NSSM)") ?></td>
+            <td class="solution <?php echo $worker ? 'check' : 'fail'; ?>">&nbsp;</td>
+        </tr>
+        <tr>
+            <td class="component">API</td>
+            <td class="description"><?php echo _("RASTATIME API service (NSSM)") ?></td>
+            <td class="solution <?php echo $api ? 'check' : 'fail'; ?>">&nbsp;</td>
+        </tr>
+        <tr>
+            <td class="component">Analyzer</td>
+            <td class="description"><?php echo _("RASTATIME analyzer service (NSSM)") ?></td>
+            <td class="solution <?php echo $analyzer ? 'check' : 'fail'; ?>">&nbsp;</td>
+        </tr>
+        <tr>
+            <td class="component">Icecast</td>
+            <td class="description"><?php echo _("RASTATIME Icecast streaming server (NSSM)") ?></td>
+            <td class="solution <?php echo $icecast ? 'check' : 'fail'; ?>">&nbsp;</td>
+        </tr>
+        <tr>
+            <td class="component">Apache</td>
+            <td class="description"><?php echo _("RASTATIME Apache web server (NSSM)") ?></td>
+            <td class="solution <?php echo $apache ? 'check' : 'fail'; ?>">&nbsp;</td>
+        </tr>
     </tbody>
     <tr id="partitions" class="even">
         <th colspan="5"><?php echo _("Disk Space") ?></th>
     </tr>
 </table>
+
+<?php /* RASTATIME 2026-05-16 - Service restart controls (admin-only via ACL). */ ?>
+<input type="hidden" id="csrf" value="<?php echo htmlspecialchars($csrfToken, ENT_QUOTES); ?>" />
+
+<table width="60%" cellpadding="0" cellspacing="0" border="0" class="statustable service-restart-table" style="margin-top: 2em;">
+    <thead>
+        <tr class="ui-state-default strong">
+            <td><?php echo _("Service"); ?></td>
+            <td><?php echo _("What it does / When to restart"); ?></td>
+            <td><?php echo _("Action"); ?></td>
+        </tr>
+    </thead>
+    <tbody>
+        <?php foreach ($serviceRestartInfo as $svcName => $info): ?>
+            <tr>
+                <td class="component"><?php echo htmlspecialchars($svcName, ENT_QUOTES); ?></td>
+                <td class="description">
+                    <strong><?php echo htmlspecialchars($info['desc'], ENT_QUOTES); ?></strong><br/>
+                    <em style="color: #555;"><?php echo htmlspecialchars($info['when'], ENT_QUOTES); ?></em>
+                </td>
+                <td>
+                    <button class="btn service-restart-btn"
+                            data-service="<?php echo htmlspecialchars($svcName, ENT_QUOTES); ?>"
+                            type="button">
+                        <?php echo _("Restart"); ?>
+                    </button>
+                </td>
+            </tr>
+        <?php endforeach; ?>
+        <tr>
+            <td class="component" colspan="2" style="text-align: right;">
+                <strong><?php echo _("Restart every RASTATIME service in one go.  The UI will be unreachable for ~10 seconds."); ?></strong>
+            </td>
+            <td>
+                <button class="btn btn-danger service-restart-all-btn" type="button">
+                    <?php echo _("Restart All Services"); ?>
+                </button>
+            </td>
+        </tr>
+    </tbody>
+</table>
+
+<div id="service-restart-status" style="margin-top: 1em; max-width: 60em;"></div>

@@ -2,6 +2,25 @@
 
 class FileDataHelper
 {
+    /**
+     * Join a storage root with a DB-relative path safely.
+     *
+     * RASTATIME (Windows): cc_files.filepath is stored without a leading
+     * slash for files imported via the analyzer (e.g. "imported/2/Foo.mp3"),
+     * but Config::getStoragePath() does not have a trailing slash either
+     * ("C:/rastatime/media").  Naive concatenation produced
+     * "C:/rastatime/mediaimported/2/Foo.mp3", which then made setArtwork /
+     * resetArtwork / removeArtwork silently fail because file_put_contents
+     * could not write to a non-existent directory.
+     *
+     * Files imported via legacy paths (e.g. the podcast downloader) are
+     * stored with a leading slash, so we strip both ends defensively.
+     */
+    private static function joinStoragePath($storageRoot, $relPath)
+    {
+        return rtrim($storageRoot, '/\\') . '/' . ltrim($relPath, '/\\');
+    }
+
     public static function getAudioMimeTypeArray()
     {
         return [
@@ -62,7 +81,24 @@ class FileDataHelper
             $data['bpm'] = intval($data['bpm']);
         }
         if (array_key_exists('track_type_id', $data)) {
-            $data['track_type_id'] = intval($data['track_type_id']);
+            // RASTATIME 2026-05-18 — keep "no type chosen" as empty
+            // string instead of intval-ing it to 0.  The Edit-Track
+            // form's Track-Type dropdown uses '' as the key for the
+            // "Select a Type" placeholder option; collapsing it to
+            // 0 (which is NOT in the options list) tripped Zend's
+            // InArray validator and silently rejected the WHOLE form
+            // save — operators saw the dialog close as if it had
+            // saved, but no field (Expiry, Description, etc.) was
+            // actually persisted.  The empty value is then mapped
+            // to NULL inside StoredFile::setDbColMetadata (existing
+            // path), so the DB still stores a clean NULL for tracks
+            // without a chosen Track-Type.
+            $rawTt = $data['track_type_id'];
+            if ($rawTt === '' || $rawTt === null) {
+                $data['track_type_id'] = '';
+            } else {
+                $data['track_type_id'] = intval($rawTt);
+            }
         }
     }
 
@@ -100,15 +136,17 @@ class FileDataHelper
         $baseUrl = Config::getPublicUrl();
         $default = $baseUrl . 'css/images/no-cover.jpg';
 
+        $sizedFile = $file . '-' . $size;
+
         if ($filepath != false) {
-            $path = $filepath . $file . '-' . $size;
+            $path = self::joinStoragePath($filepath, $sizedFile);
             if (!file_exists($path)) {
                 $get_file_content = $default;
             } else {
                 $get_file_content = file_get_contents($path);
             }
         } else {
-            $path = Config::getStoragePath() . $file . '-' . $size;
+            $path = self::joinStoragePath(Config::getStoragePath(), $sizedFile);
             if (!file_exists($path)) {
                 $get_file_content = $default;
             } else {
@@ -196,7 +234,7 @@ class FileDataHelper
         $fp = Config::getStoragePath();
 
         $dbAudioPath = $md['MDATA_KEY_FILEPATH'];
-        $fullpath = $fp . $dbAudioPath;
+        $fullpath = self::joinStoragePath($fp, $dbAudioPath);
 
         if (class_exists('getID3')) {
             $getID3 = new getID3();
@@ -259,7 +297,7 @@ class FileDataHelper
         $fp = Config::getStoragePath();
 
         $dbAudioPath = $md['MDATA_KEY_FILEPATH'];
-        $fullpath = $fp . $dbAudioPath;
+        $fullpath = self::joinStoragePath($fp, $dbAudioPath);
 
         if ($data == '0') {
             $get_img = '';
@@ -309,8 +347,8 @@ class FileDataHelper
 
         $fp = Config::getStoragePath();
 
-        $artworkBasePath = $fp . $md['MDATA_KEY_ARTWORK'];
-        $audioPath = $fp . $md['MDATA_KEY_FILEPATH'];
+        $artworkBasePath = self::joinStoragePath($fp, $md['MDATA_KEY_ARTWORK']);
+        $audioPath = self::joinStoragePath($fp, $md['MDATA_KEY_FILEPATH']);
 
         $artworkPaths = [
             $artworkBasePath,

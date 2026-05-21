@@ -156,7 +156,13 @@ class PageLayoutInitPlugin extends Zend_Controller_Plugin_Abstract
 
         $baseUrl = Config::getBasePath();
 
-        $view->headLink(['rel' => 'icon', 'href' => $baseUrl . 'favicon.ico', 'type' => 'image/x-icon'], 'PREPEND')
+        // RASTATIME 2026-05-15 - Custom favicon override.  GetStationFaviconHref()
+        // returns a complete data: URI when the operator has uploaded one,
+        // else null and we fall back to the bundled public/favicon.ico.
+        $customFavicon = Application_Model_Preference::GetStationFaviconHref();
+        $faviconHref = $customFavicon !== null ? $customFavicon : ($baseUrl . 'favicon.ico');
+        $faviconMime = $customFavicon !== null ? Application_Model_Preference::GetStationFaviconMime() : 'image/x-icon';
+        $view->headLink(['rel' => 'icon', 'href' => $faviconHref, 'type' => $faviconMime], 'PREPEND')
             ->appendStylesheet(Assets::url('css/bootstrap.css'))
             ->appendStylesheet(Assets::url('css/redmond/jquery-ui-1.8.8.custom.css'))
             ->appendStylesheet(Assets::url('css/pro_dropdown_3.css'))

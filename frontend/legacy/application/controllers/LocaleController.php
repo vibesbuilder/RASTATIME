@@ -463,6 +463,8 @@ final class LocaleController extends Zend_Controller_Action
             'Cancel upload' => _('Cancel upload'),
             'Type' => _('Type'),
             "Autoloading playlists' contents are added to shows one hour before the show airs. <a target='_blank' href='https://libretime.org/docs/user-manual/playlists/'>More information</a>" => _("Autoloading playlists' contents are added to shows one hour before the show airs. <a target='_blank' href='https://libretime.org/docs/user-manual/playlists/'>More information</a>"),
+            // RASTATIME 2026-05-17 — Record-per-Show help-icon tooltip.
+            "When enabled, the Show is recorded to the folder configured in Settings → Local Machine" => _("When enabled, the Show is recorded to the folder configured in Settings → Local Machine"),
             'Podcast settings saved' => _('Podcast settings saved'),
             'Are you sure you want to delete this user?' => _('Are you sure you want to delete this user?'),
             "Can't delete yourself!" => _("Can't delete yourself!"),

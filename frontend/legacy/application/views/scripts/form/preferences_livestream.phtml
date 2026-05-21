@@ -1,10 +1,8 @@
 <h3><?php echo _("Live Broadcasting") ?></h3>
 <fieldset class="padded stream-setting-global">
     <dl class="zend_form">
-        <?php echo $this->element->getElement('auto_transition')->render() ?>
-        <span class="icecast_metadata_help_icon" id="auto_transition_help"></span>
-        <?php echo $this->element->getElement('auto_switch')->render() ?>
-        <span class="icecast_metadata_help_icon" id="auto_switch_help"></span>
+        <?php /* RASTATIME 2026-05-14: auto_transition / auto_switch fields
+                removed — see LiveStreamingPreferences.php for rationale. */ ?>
         <?php echo $this->element->getElement('transition_fade')->render() ?>
 
         <fieldset class="padded stream-setting-global" style="margin-top: 15px">

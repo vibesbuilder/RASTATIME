@@ -4,31 +4,18 @@ final class Application_Model_Locale
 {
     private static $domains = ['libretime'];
 
+    // RASTATIME 2026-05-15 - Reduced from the upstream 22-language list to the
+    // four languages we actually maintain.  Adding a language back requires:
+    //   1. an entry here,
+    //   2. a populated .po (+ compiled .mo) under locale/<LANG>/LC_MESSAGES/,
+    //   3. matching files under public/js/datatables/i18n/<LANG>.txt and
+    //      public/js/plupload/i18n/<LANG>.js,
+    //   4. a row in locale/locale.gen (informational on Linux installs).
     public static $locales = [
-        'en_US' => 'English (USA)',
-        'cs_CZ' => 'Český',
-        'de_AT' => 'Deutsch (Österreich)',
+        'en_US' => 'English',
         'de_DE' => 'Deutsch',
-        'el_GR' => 'Ελληνικά',
-        'en_CA' => 'English (Canada)',
-        'en_GB' => 'English (Britain)',
-        'es_ES' => 'Español',
         'fr_FR' => 'Français',
-        'hr_HR' => 'Hrvatski',
-        'hu_HU' => 'Magyar',
-        'it_IT' => 'Italiano',
-        'ja_JP' => '日本語',
-        'ko_KR' => '한국어',
-        'nb_NO' => 'Norwegian Bokmål (Norway)',
-        // 'nl_NL' => '',
-        'pl_PL' => 'Polski',
-        'pt_BR' => 'Português (Brasil)',
-        'ru_RU' => 'Русский',
-        'sr_RS' => 'Српски (Ћирилица)',
-        'sr_RS@latin' => 'Srpski (Latinica)',
-        // 'tr_TR' => '',
-        'uk_UA' => 'украї́нська мо́ва',
-        'zh_CN' => '简体中文',
+        'es_ES' => 'Español',
     ];
 
     public static function getLocales()
@@ -39,23 +26,49 @@ final class Application_Model_Locale
     public static function configureLocalization($locale = null)
     {
         $codeset = 'UTF-8';
+
+        // RASTATIME 2026-05-15 - Resolve $locale up front.  The upstream code
+        // only built $lang inside the is_null() branch and then ran
+        // putenv("LANGUAGE={$locale}") with $locale still null, so every call
+        // from PageLayoutInitPlugin (which passes no argument) silently emptied
+        // LANGUAGE.  gettext then fell back to whatever LC_MESSAGES the PHP
+        // worker process happened to carry from a prior request, which on
+        // recycled Apache/fcgid workers produced a sticky-stale locale (the
+        // "UI keeps showing German even after switching to English" symptom).
         if (is_null($locale)) {
-            $lang = Application_Model_Preference::GetLocale() . '.' . $codeset;
-        } else {
-            $lang = $locale . '.' . $codeset;
+            $locale = Application_Model_Preference::GetLocale();
         }
-        // putenv("LC_ALL=$lang");
-        // putenv("LANG=$lang");
-        // Setting the LANGUAGE env var supposedly lets gettext search inside our locale dir even if the system
-        // doesn't have the particular locale that we want installed. This doesn't actually seem to work though. -- Albert
+        $lang = $locale . '.' . $codeset;
+
         putenv("LANGUAGE={$locale}");
-        if (setlocale(LC_MESSAGES, $lang) === false) {
-            Logging::warn('Your system does not have the ' . $lang . ' locale installed. Run: sudo locale-gen ' . $lang);
+
+        // RASTATIME 2026-05-15 - Try multiple setlocale variants so the call
+        // succeeds on Windows hosts that do not expose POSIX-style locale
+        // names like "en_US.UTF-8" (Windows wants e.g. "en-US" or
+        // "english_united-states.utf8").  gettext's actual .mo lookup is
+        // driven by the LANGUAGE env var above and bindtextdomain() below,
+        // so setlocale here primarily affects PHP's own LC_* state.
+        $variants = [$lang, $locale, str_replace('_', '-', $locale)];
+        $setlocaleOk = false;
+        foreach ($variants as $variant) {
+            if (setlocale(LC_ALL, $variant) !== false) {
+                $setlocaleOk = true;
+                break;
+            }
+        }
+        if (!$setlocaleOk) {
+            Logging::warn('setlocale rejected all variants for ' . $locale
+                . ' (tried: ' . implode(', ', $variants) . ')');
         }
 
-        // We need to run bindtextdomain and bind_textdomain_codeset for each domain we're using.
+        // RASTATIME 2026-05-15 - Use an absolute path resolved from this
+        // file's location instead of "../locale".  Apache/fcgid does not
+        // guarantee a stable CWD, so the relative path made the lookup
+        // brittle.  __DIR__ is application/models/, so locale/ is three
+        // levels up.
+        $localeDir = realpath(__DIR__ . '/../../locale');
         foreach (self::$domains as $domain) {
-            bindtextdomain($domain, '../locale');
+            bindtextdomain($domain, $localeDir);
             bind_textdomain_codeset($domain, $codeset);
         }
 

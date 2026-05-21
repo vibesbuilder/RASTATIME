@@ -15,6 +15,112 @@ class Application_Model_RabbitMq
         self::$doPush = true;
     }
 
+    /**
+     * RASTATIME: notify the running RASTATIME-PLAYOUT that its
+     * cached schedule is stale.  Replaces the legacy Pypo /
+     * Liquidsoap RabbitMQ message that we don't use anymore.
+     *
+     * The endpoint is the playout's own HTTP listener on
+     * 127.0.0.1:8770 (set up in source_switcher.start_listener).
+     * It runs ``scheduler.refresh()`` immediately, so newly-edited
+     * shows go on-air on the next track boundary instead of after
+     * the next 120-second poll.
+     *
+     * Called once per request from RabbitMqPlugin::dispatchLoopShutdown
+     * after any controller flagged PushSchedule().  Synchronous with a
+     * tight timeout: a slow / dead playout adds at most ~2 s to a
+     * show-save round-trip and never breaks the user-facing save.
+     */
+    public static function NotifyPlayoutScheduleChanged()
+    {
+        $url = 'http://127.0.0.1:8770/reload-schedule';
+        $ctx = stream_context_create([
+            'http' => [
+                'method' => 'POST',
+                'header' => "Content-Length: 0\r\n",
+                'content' => '',
+                'timeout' => 2.0,
+                'ignore_errors' => true,
+            ],
+        ]);
+
+        // Suppress warnings — playout might be stopped or restarting.
+        $body = @file_get_contents($url, false, $ctx);
+
+        if ($body === false) {
+            Logging::warn(
+                'NotifyPlayoutScheduleChanged: could not reach the playout '
+                . 'listener at ' . $url . ' — scheduled changes will still '
+                . 'be picked up on the next 120 s poll cycle.'
+            );
+
+            return;
+        }
+
+        // $http_response_header is auto-populated by file_get_contents
+        if (isset($http_response_header[0])
+            && !preg_match('#^HTTP/\S+\s+2\d\d#', $http_response_header[0])
+        ) {
+            Logging::warn(
+                'NotifyPlayoutScheduleChanged: playout listener replied '
+                . $http_response_header[0]
+            );
+        }
+    }
+
+    /**
+     * RASTATIME: tell RASTATIME-PLAYOUT to force-disconnect a live DJ
+     * source from Icecast.
+     *
+     * Replaces the legacy SendMessageToPypo('disconnect_source', …) call.
+     * Used when the operator clicks "Cancel Show" or otherwise wants to
+     * end a live slot immediately — the playout doesn't reliably detect
+     * that on its own when the cancelled show has no scheduled tracks
+     * (e.g. a live-DJ-only slot), so we push the kick explicitly.
+     *
+     * ``$sourcename`` accepts the legacy Airtime names ('master_dj' /
+     * 'live_dj') as well as the RASTATIME names ('master' / 'show').
+     * The Python side maps both.
+     *
+     * Synchronous with a tight timeout: if the playout is stopped or
+     * restarting we add at most ~2 s and never break the user-facing
+     * cancel.
+     */
+    public static function NotifyDisconnectSource($sourcename)
+    {
+        $url = 'http://127.0.0.1:8770/disconnect-source?source=' . urlencode($sourcename);
+        $ctx = stream_context_create([
+            'http' => [
+                'method' => 'POST',
+                'header' => "Content-Length: 0\r\n",
+                'content' => '',
+                'timeout' => 2.0,
+                'ignore_errors' => true,
+            ],
+        ]);
+
+        $body = @file_get_contents($url, false, $ctx);
+
+        if ($body === false) {
+            Logging::warn(
+                'NotifyDisconnectSource: could not reach the playout '
+                . 'listener at ' . $url . ' — the show DJ may remain '
+                . 'connected until the source-timeout fires.'
+            );
+
+            return;
+        }
+
+        if (isset($http_response_header[0])
+            && !preg_match('#^HTTP/\S+\s+2\d\d#', $http_response_header[0])
+        ) {
+            Logging::warn(
+                'NotifyDisconnectSource: playout listener replied '
+                . $http_response_header[0]
+            );
+        }
+    }
+
     private static function sendMessage($exchange, $exchangeType, $autoDeleteExchange, $data, $queue = '')
     {
         $CC_CONFIG = Config::getConfig();

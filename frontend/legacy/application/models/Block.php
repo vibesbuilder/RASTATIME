@@ -1252,6 +1252,26 @@ SQL;
             ->setDbValue($p_criteriaData['etc']['sp_overflow_tracks'])
             ->setDbBlockId($this->id)
             ->save();
+
+        // RASTATIME 2026-05-18 — only-unplayed-tracks restriction.
+        // See SmartBlockCriteria.php for UX context; null-coalesce
+        // so legacy POSTs without the field default to disabled
+        // rather than crashing on undefined index.
+        $qry = new CcBlockcriteria();
+        $qry->setDbCriteria('only_unplayed')
+            ->setDbModifier('N/A')
+            ->setDbValue($p_criteriaData['etc']['sp_only_unplayed'] ?? 0)
+            ->setDbBlockId($this->id)
+            ->save();
+
+        // RASTATIME 2026-05-18 — only-tracks-with-expiry restriction.
+        // Same null-coalesce pattern as above.
+        $qry = new CcBlockcriteria();
+        $qry->setDbCriteria('only_with_expiry')
+            ->setDbModifier('N/A')
+            ->setDbValue($p_criteriaData['etc']['sp_only_with_expiry'] ?? 0)
+            ->setDbBlockId($this->id)
+            ->save();
     }
 
     /**
@@ -1371,7 +1391,50 @@ SQL;
 
             $sizeOfInsert = count($insertList);
 
+            // RASTATIME 2026-05-18 — upstream had a "repeat tracks until
+            // limit is reached" loop with no safety against the case where
+            // no remaining track fits.  When `overflow=false` and the
+            // shortest track in the pool is larger than the remaining
+            // time-to-limit, `addTrack()` silently no-ops, `totalTime`
+            // stops growing, `isFull()` never flips true, and PHP spins
+            // forever — eventually killed by mod_fcgid's pipe timeout,
+            // returning HTTP 500 to the caller with no diagnostic in
+            // legacy.log because the catch (Throwable) above never
+            // executes.  Symptom in the Operator's report 2026-05-18:
+            // "I can't add a Smart Block to a show" with 0 useful logs.
+            //
+            // Bounded retry: track the smallest track length we have and
+            // bail out as soon as `(blockTime - totalTime) < minLen` —
+            // at that point no track will ever fit and looping is futile.
+            // Falls back to "max 1000 spins" so a logically-impossible
+            // edge case (e.g. empty tracks array) still terminates.
+            $minTrackLen = null;
+            if (count($tracks) > 0) {
+                $minTrackLen = min(array_map(
+                    fn (Track $t) => $t->length, $tracks
+                ));
+            }
+            $spinGuard = 0;
             while (!$isFull() && $repeat && $sizeOfInsert > 0) {
+                if (
+                    !$overflow
+                    && $minTrackLen !== null
+                    && ($blockTime - $totalTime) < $minTrackLen
+                ) {
+                    // No remaining track can fit — stop trying.
+                    break;
+                }
+                if (++$spinGuard > 1000) {
+                    Logging::warn(
+                        'Block::getListOfFilesUnderLimit: repeat-fill loop '
+                        . 'hit spin-guard (1000 iterations); breaking. '
+                        . 'block_id=' . $this->id
+                        . ' totalTime=' . $totalTime
+                        . ' blockTime=' . $blockTime
+                        . ' minTrackLen=' . var_export($minTrackLen, true)
+                    );
+                    break;
+                }
                 Logging::debug('adding repeated tracks.');
                 Logging::debug('total time = ' . $totalTime);
                 $track = $insertList[array_rand(array_slice($insertList, 0, $sizeOfInsert))];
@@ -1413,6 +1476,12 @@ SQL;
                 $storedCrit['repeat_tracks'] = ['value' => $value];
             } elseif ($criteria == 'overflow_tracks') {
                 $storedCrit['overflow_tracks'] = ['value' => $value];
+            } elseif ($criteria == 'only_unplayed') {
+                // RASTATIME 2026-05-18
+                $storedCrit['only_unplayed'] = ['value' => $value];
+            } elseif ($criteria == 'only_with_expiry') {
+                // RASTATIME 2026-05-18
+                $storedCrit['only_with_expiry'] = ['value' => $value];
             } elseif ($criteria == 'sort') {
                 $storedCrit['sort'] = ['value' => $value];
             } else {
@@ -1463,6 +1532,12 @@ SQL;
                 $storedCrit['repeat_tracks'] = ['value' => $value];
             } elseif ($criteria == 'overflow_tracks') {
                 $storedCrit['overflow_tracks'] = ['value' => $value];
+            } elseif ($criteria == 'only_unplayed') {
+                // RASTATIME 2026-05-18
+                $storedCrit['only_unplayed'] = ['value' => $value];
+            } elseif ($criteria == 'only_with_expiry') {
+                // RASTATIME 2026-05-18
+                $storedCrit['only_with_expiry'] = ['value' => $value];
             } elseif ($criteria == 'sort') {
                 $storedCrit['sort'] = ['value' => $value];
             } else {
@@ -1626,6 +1701,12 @@ SQL;
         $qry->add('file_exists', 'true', Criteria::EQUAL);
         $qry->add('hidden', 'false', Criteria::EQUAL);
 
+        // RASTATIME 2026-05-16 - Exclude expired tracks from NEW Smartblock
+        // evaluations.  Already-built blocks keep their entries (the
+        // pruner only flips the flag; it does not touch cc_blockcontents),
+        // so currently-scheduled shows continue to play normally.
+        $qry->add('disabled', 'false', Criteria::EQUAL);
+
         $sortTracks = 'random';
         if (isset($storedCrit['sort'])) {
             $sortTracks = $storedCrit['sort']['value'];
@@ -1638,6 +1719,14 @@ SQL;
             $qry->addAscendingOrderByColumn('lptime DESC NULLS LAST, filepath');
         } elseif ($sortTracks == 'leastrecentplay') {
             $qry->addAscendingOrderByColumn('lptime ASC NULLS FIRST, filepath');
+        } elseif ($sortTracks == 'earliestexpiry') {
+            // RASTATIME 2026-05-18 — track with the soonest expires_at
+            // comes first; tracks without an expiry (NULL) go to the
+            // end so they don't dilute the air-before-expiry intent.
+            // filepath as secondary key keeps the order stable for
+            // tracks that share the same expiry second (e.g. a batch
+            // of episodes auto-expired by the same podcast setting).
+            $qry->addAscendingOrderByColumn('expires_at ASC NULLS LAST, filepath');
         } elseif ($sortTracks == 'random') {
             $qry->addAscendingOrderByColumn('random()');
         } else {
@@ -1676,6 +1765,26 @@ SQL;
 
         if (isset($storedCrit['overflow_tracks'])) {
             $overflowTracks = $storedCrit['overflow_tracks']['value'];
+        }
+
+        // RASTATIME 2026-05-18 — only-unplayed-tracks restriction
+        // (see SmartBlockCriteria.php for UX context).  Applied as a
+        // WHERE filter on cc_files.lptime so it composes naturally
+        // with whatever other criteria the operator built — same as
+        // any other Propel filter() call on $qry.  Default off
+        // (cc_block_criteria row missing or value=0): query is
+        // unchanged from upstream behaviour.
+        if (isset($storedCrit['only_unplayed']) && $storedCrit['only_unplayed']['value'] == 1) {
+            $qry->where('cc_files.lptime IS NULL');
+        }
+
+        // RASTATIME 2026-05-18 — only-tracks-with-expiry restriction.
+        // Same composition pattern as only_unplayed above, but on the
+        // expires_at column.  Pairs naturally with the new "Earliest
+        // expiry first" sort: enable both to schedule only short-lived
+        // content sorted by its retention deadline.
+        if (isset($storedCrit['only_with_expiry']) && $storedCrit['only_with_expiry']['value'] == 1) {
+            $qry->where('cc_files.expires_at IS NOT NULL');
         }
 
         try {

@@ -104,6 +104,22 @@ class Application_Form_AddShowWhat extends Zend_Form_SubForm
 
     public function makeReadonly()
     {
+        // RASTATIME 2026-05-18 — every "What" field stays read-only in
+        // the per-instance edit dialog, including add_show_name.  The
+        // show name lives on cc_show (one row per show), not on the
+        // per-instance cc_show_instances row, so renaming from this
+        // dialog would silently rename ALL instances of the series —
+        // confusing because the operator only opened the dialog for
+        // one specific instance.  The straightforward UX answer is to
+        // grey out the field here and let the operator use the
+        // separate "Edit Show" menu entry for a series-wide rename.
+        //
+        // (An earlier interim fix in this file tried to keep
+        // add_show_name editable here, but the resulting "rename all
+        // instances by editing one" semantics were equally
+        // confusing.  The reverted behaviour matches upstream
+        // LibreTime and the operator's explicit decision
+        // 2026-05-18.)
         $elements = $this->getElements();
         foreach ($elements as $element) {
             if ($element->getType() != 'Zend_Form_Element_Hidden') {

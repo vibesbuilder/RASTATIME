@@ -42,6 +42,24 @@ class EmbedController extends Zend_Controller_Action
 
         $stream = $request->getParam('stream');
         $streamData = Application_Model_StreamSetting::getEnabledStreamData();
+
+        // RASTATIME 2026-05-20 — normalise the stream-data ``mobile``
+        // flag to a real bool.  Upstream stores it as the literal
+        // STRING `"false"` (because the cc_pref persistence layer
+        // serialises everything as strings), which is truthy in PHP
+        // — so the `if ($s['mobile']) { mobile-queue } else { desktop-
+        // queue }` branch below would silently route every stream
+        // into the mobile-only queue and leave the desktop player
+        // with an empty queue.  No URL rewriting here: the operator
+        // is expected to configure a publicly-reachable host in
+        // Settings → Streams (Icecast `host` field) for LAN /
+        // external embedding to work.
+        foreach ($streamData as &$_s) {
+            $m = $_s['mobile'] ?? false;
+            $_s['mobile'] = ($m === true || $m === 'true' || $m === '1' || $m === 1);
+        }
+        unset($_s);
+
         $availableMobileStreams = [];
         $availableDesktopStreams = [];
 
@@ -51,7 +69,7 @@ class EmbedController extends Zend_Controller_Action
             foreach ($streamData as $s) {
                 if ($s['mobile']) {
                     array_push($availableMobileStreams, $s);
-                } elseif (!$s['mobile']) {
+                } else {
                     array_push($availableDesktopStreams, $s);
                 }
             }

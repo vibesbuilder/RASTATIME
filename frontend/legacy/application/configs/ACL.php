@@ -41,7 +41,8 @@ $ccAcl->add(new Zend_Acl_Resource('library'))
     ->add(new Zend_Acl_Resource('render'))
     ->add(new Zend_Acl_Resource('embeddablewidgets'))
     ->add(new Zend_Acl_Resource('setup'))
-    ->add(new Zend_Acl_Resource('feeds'));
+    ->add(new Zend_Acl_Resource('feeds'))
+    ->add(new Zend_Acl_Resource('linein'));  // T14.2 — Line-In source management
 
 // Creating permissions
 $ccAcl->allow('G', 'index')
@@ -82,7 +83,8 @@ $ccAcl->allow('G', 'index')
     ->allow('A', 'user')
     ->allow('A', 'tracktype')
     ->allow('A', 'systemstatus')
-    ->allow('A', 'preference');
+    ->allow('A', 'preference')
+    ->allow('A', 'linein');   // T14.2
 
 $aclPlugin = new Zend_Controller_Plugin_Acl($ccAcl);
 

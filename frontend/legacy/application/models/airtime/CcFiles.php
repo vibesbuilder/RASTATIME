@@ -112,6 +112,31 @@ class CcFiles extends BaseCcFiles
         self::createAndImport($fileArray, $filePath, $fileName, $copyFile);
     }
 
+    /**
+     * RASTATIME 2026-05-16 - Public wrapper around createAndImport()
+     * for the Local Import Folder feature (Section 23.12).
+     *
+     * The existing createFromLocalFile() public wrapper has a known
+     * double-extension bug (line 111: it does
+     * `basename($filePath) . '.' . $info['extension']` which produces
+     * "file.mp3.mp3"), and createFromUpload() expects a $_FILES-style
+     * array which the drop-folder scanner does not have.  This
+     * wrapper takes a pre-determined originalFilename and forwards
+     * straight to the private createAndImport implementation.
+     *
+     * @param string $filePath         absolute path to the audio file
+     * @param string $originalFilename filename only (no path), preserved
+     *                                  in the cc_files row
+     * @param bool   $copyFile         true = copy, false = move (default;
+     *                                  move atomically frees the
+     *                                  drop-folder slot)
+     * @return mixed sanitized response (see createAndImport)
+     */
+    public static function createFromImportFolder($filePath, $originalFilename, $copyFile = false)
+    {
+        return self::createAndImport([], $filePath, $originalFilename, $copyFile);
+    }
+
     /** Create a new CcFiles object/row and import a file for it.
      *  You shouldn't call this directly. Either use createFromUpload() or createFromLocalFile().
      *
@@ -160,6 +185,11 @@ class CcFiles extends BaseCcFiles
             }
             $file->setDbUtime($now);
             $file->setDbHidden(true);
+            // RASTATIME: Set ftype immediately so the file is usable even
+            // without the analyzer service (which requires RabbitMQ).
+            if (!$file->getDbFtype()) {
+                $file->setDbFtype('audioclip');
+            }
             $file->save();
 
             Application_Service_MediaService::importFileToLibrary(
@@ -213,8 +243,13 @@ class CcFiles extends BaseCcFiles
                     }
                     Application_Model_Preference::updateDiskUsage($fileSizeBytes);
 
-                    $fullPath = $fileArray['full_path'];
-                    $storDir = Config::getStoragePath();
+                    // RASTATIME (Windows): the analyzer (Python) reports full_path with
+                    // OS-native separators (backslashes), but storage.path in libretime.conf
+                    // is configured with forward slashes.  Normalise both to forward slashes
+                    // before comparing — otherwise strpos returns false on Windows and the
+                    // filepath column never gets populated.
+                    $fullPath = str_replace('\\', '/', $fileArray['full_path']);
+                    $storDir  = str_replace('\\', '/', Config::getStoragePath());
                     $pos = strpos($fullPath, $storDir);
 
                     if ($pos !== false) {
@@ -222,6 +257,19 @@ class CcFiles extends BaseCcFiles
 
                         $filePathRelativeToStor = substr($fullPath, strlen($storDir));
                         $file->setDbFilepath($filePathRelativeToStor);
+                    }
+
+                    // RASTATIME: the upstream metadata pipeline never
+                    // populates cc_files.name for upload imports — the
+                    // analyzer hands back metadata fields like track_title
+                    // and artist_name, but no plain "name".  Result: every
+                    // newly imported file shows up with name='' in any
+                    // legacy code path or REST consumer that still keys
+                    // off that column.  Derive it once from the filename
+                    // here so the column is always usable.
+                    $name = basename($fullPath);
+                    if ($name !== '' && method_exists($file, 'setDbName')) {
+                        $file->setDbName($name);
                     }
                 }
             } else {
@@ -231,6 +279,43 @@ class CcFiles extends BaseCcFiles
             $now = new DateTime('now', new DateTimeZone('UTC'));
             $file->setDbMtime($now);
             $file->save();
+
+            // RASTATIME 2026-05-16 - Track Expiry: persist expires_at via
+            // raw SQL.  Propel CcFiles class is not regenerated for this
+            // column (see schema.xml note), so $file->fromArray() above
+            // silently ignored any expires_at the analyzer sent.  Accepts
+            // ISO 8601 date / datetime strings from the analyzer's
+            // _extract_expiry_tag.  Empty / null leaves the existing
+            // value untouched.
+            if (
+                isset($fileArray['expires_at'])
+                && is_string($fileArray['expires_at'])
+                && trim($fileArray['expires_at']) !== ''
+            ) {
+                $expRaw = trim($fileArray['expires_at']);
+                try {
+                    $con = Propel::getConnection();
+                    $stmt = $con->prepare(
+                        'UPDATE cc_files
+                         SET expires_at = :exp,
+                             disabled = (CAST(:exp AS TIMESTAMP) < NOW())
+                         WHERE id = :id'
+                    );
+                    $stmt->bindValue(':exp', $expRaw, PDO::PARAM_STR);
+                    $stmt->bindValue(':id', $file->getDbId(), PDO::PARAM_INT);
+                    $stmt->execute();
+                    Logging::info(
+                        'CcFiles::updateFromArray: set expires_at='
+                        . $expRaw . ' for file id=' . $file->getDbId()
+                    );
+                } catch (Exception $exc) {
+                    Logging::warn(
+                        'CcFiles::updateFromArray: failed to persist '
+                        . 'expires_at=' . $expRaw . ' for file id='
+                        . $file->getDbId() . ': ' . $exc->getMessage()
+                    );
+                }
+            }
         } catch (LibreTimeFileNotFoundException $e) {
             $file->setDbImportStatus(self::IMPORT_STATUS_FAILED);
             $file->setDbHidden(true);

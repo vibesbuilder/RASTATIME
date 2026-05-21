@@ -9,6 +9,39 @@
  */
 class CcShowDays extends BaseCcShowDays
 {
+    /**
+     * RASTATIME 2026-05-17 — locale-safe override of the auto-generated
+     * getDbStartTime().
+     *
+     * The Propel-generated BaseCcShowDays::getDbStartTime() uses the
+     * default format `'%X'`, which is `strftime`'s "preferred time
+     * representation" and **locale-dependent**: on a 12-hour locale
+     * (en_US default) it returns strings like `"12:00:00 AM"` instead
+     * of `"00:00:00"`.  That string then propagates through callers
+     * like:
+     *
+     *   $origStartTime = explode(':', $row->getDbStartTime());
+     *   $localShowStartHour = $origStartTime[0];   // "12" instead of "00"
+     *
+     * which made `Application_Service_ShowService::getInstance()` look
+     * up an instance at 12:00 local time (10:00 UTC) instead of 00:00
+     * local time (22:00 UTC the previous day), silently failed to find
+     * it, threw "Could not find show instance with start time: ...",
+     * rolled back the entire edit-show transaction (including the show
+     * rename), and returned to the caller as if nothing had happened.
+     *
+     * Forcing the default to the unambiguous 24-hour `H:i:s` format
+     * here fixes all 29+ call sites in one place WITHOUT having to
+     * touch the auto-generated `BaseCcShowDays` (which a future
+     * `propel-gen` would overwrite).  Callers that explicitly pass a
+     * format string (or null) are unaffected — we only change the
+     * default.
+     */
+    public function getDbStartTime($format = 'H:i:s')
+    {
+        return parent::getDbStartTime($format);
+    }
+
     public function isRepeating()
     {
         return $this->getDbRepeatType() != -1;

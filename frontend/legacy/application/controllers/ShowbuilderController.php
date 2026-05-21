@@ -234,23 +234,35 @@ class ShowbuilderController extends Zend_Controller_Action
         $mediaItems = $request->getParam('mediaIds', []);
         $scheduledItems = $request->getParam('schedIds', []);
 
-        $log_vars = [];
-        $log_vars['url'] = $_SERVER['HTTP_HOST'];
-        $log_vars['action'] = 'showbuilder/schedule-add';
-        $log_vars['params'] = [];
-        $log_vars['params']['media_items'] = $mediaItems;
-        $log_vars['params']['scheduled_items'] = $scheduledItems;
-        Logging::debug($log_vars);
+        // RASTATIME 2026-05-18 — temporary INFO-level diagnostic so the
+        // operator log shows every schedule-add call (not just errors).
+        // Helps debug the "double-click smart block does nothing" report
+        // — if the POST hits this endpoint at all, the line will appear.
+        Logging::info(sprintf(
+            'showbuilder/schedule-add: mediaItems=%s schedIds=%s',
+            json_encode($mediaItems),
+            json_encode($scheduledItems)
+        ));
 
         try {
             $scheduler = new Application_Model_Scheduler();
             $scheduler->scheduleAfter($scheduledItems, $mediaItems);
+            Logging::info('showbuilder/schedule-add: success');
         } catch (OutDatedScheduleException $e) {
             $this->view->error = $e->getMessage();
-            Logging::error($e->getMessage());
-        } catch (Exception $e) {
+            Logging::error('schedule-add OutDatedSchedule: ' . $e->getMessage());
+        } catch (Throwable $e) {
+            // RASTATIME 2026-05-18 — catch Throwable (not just Exception)
+            // so PHP 7+ Errors (TypeError, undefined-method, etc.) are
+            // also surfaced in the operator log instead of bubbling up
+            // as opaque HTTP 500 from Apache.
             $this->view->error = $e->getMessage();
-            Logging::error($e->getMessage());
+            Logging::error(
+                'schedule-add throwable [' . get_class($e) . ']: '
+                . $e->getMessage()
+                . ' at ' . $e->getFile() . ':' . $e->getLine()
+                . "\nTrace: " . $e->getTraceAsString()
+            );
         }
     }
 

@@ -18,3 +18,10 @@
         <span class="selector-name"><i class='icon-random icon-white'></i><?php echo _('Webstreams'); ?></span>
     </a>
 </div>
+<!-- RASTATIME 2026-05-12 — Line-In Media-Library tab.
+     Sits between Webstreams and Podcasts per operator request. -->
+<div class="media_type_selector dashboard_sub_nav" data-selection-id="<?php echo MediaType::LINEIN; ?>">
+    <a href="<?php echo $subnavPrefix; ?>#lineins">
+        <span class="selector-name"><i class='icon-volume-up icon-white'></i><?php echo _('Line Inputs'); ?></span>
+    </a>
+</div>

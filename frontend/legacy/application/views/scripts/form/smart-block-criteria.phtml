@@ -135,6 +135,42 @@
                 <span class='overflow_tracks_help_icon'></span>
             </dd>
         </dl>
+        <?php /* RASTATIME 2026-05-18 — only-unplayed-tracks restriction.
+               Hidden behind the existing Advanced-options collapsible
+               so casual operators are not distracted by it. */ ?>
+        <dl>
+            <dt>
+                <label class='sp_text_font'><?php echo $this->element->getElement('sp_only_unplayed')->getLabel() ?></label>
+            </dt>
+            <dd id='sp_only_unplayed-element'>
+                <?php echo $this->element->getElement('sp_only_unplayed') ?>
+                <?php if ($this->element->getElement("sp_only_unplayed")->hasErrors()) : ?>
+                    <?php foreach ($this->element->getElement("sp_only_unplayed")->getMessages() as $error) : ?>
+                        <span class='errors sp-errors'>
+                            <?php echo $error; ?>
+                        </span>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </dd>
+        </dl>
+        <?php /* RASTATIME 2026-05-18 — only-tracks-with-expiry filter.
+               Sits directly under the only-unplayed toggle since both
+               are pool-restriction toggles. */ ?>
+        <dl>
+            <dt>
+                <label class='sp_text_font'><?php echo $this->element->getElement('sp_only_with_expiry')->getLabel() ?></label>
+            </dt>
+            <dd id='sp_only_with_expiry-element'>
+                <?php echo $this->element->getElement('sp_only_with_expiry') ?>
+                <?php if ($this->element->getElement("sp_only_with_expiry")->hasErrors()) : ?>
+                    <?php foreach ($this->element->getElement("sp_only_with_expiry")->getMessages() as $error) : ?>
+                        <span class='errors sp-errors'>
+                            <?php echo $error; ?>
+                        </span>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </dd>
+        </dl>
         <dl>
             <dt>
                 <label class='sp_text_font'><?php echo $this->element->getElement('sp_sort_options')->getLabel(); ?></label>

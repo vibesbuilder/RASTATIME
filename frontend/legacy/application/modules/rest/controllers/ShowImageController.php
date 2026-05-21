@@ -241,7 +241,21 @@ class Rest_ShowImageController extends Zend_Rest_Controller
             Logging::info("Warning: couldn't change permissions of {$image_file} to 0644");
         }
 
-        $newFileName = substr($tempFilePath, strrpos($tempFilePath, '/')) . '.' . $fileExtension;
+        // RASTATIME 2026-05-20 — Windows-portability fix.  The upstream
+        // line was
+        //   $newFileName = substr($tempFilePath, strrpos($tempFilePath, '/'))
+        //                . '.' . $fileExtension;
+        // which assumes a POSIX temp path like "/tmp/phpXYZ.tmp".  On
+        // Windows the upload tempfile is e.g.
+        // "C:\Temp\Python\phpD254.tmp" (backslashes), so
+        // strrpos('/') returns false, substr(s, false) is coerced to
+        // substr(s, 0) and returns the *entire* path — the resulting
+        // "newFileName" carries an embedded drive letter and breaks
+        // the @rename() call below (silently — no log line, no DB
+        // image_path ever written; see the empty "show-images"
+        // subtree in the storage folder pre-2026-05-20).
+        // basename() handles both '/' and '\\' on every platform.
+        $newFileName = basename($tempFilePath) . '.' . $fileExtension;
 
         // Did all the checks for real, now trying to copy
         $image_stor = Application_Common_OsPath::join($importedStorageDirectory, $newFileName);

@@ -289,6 +289,73 @@ class Application_Service_PodcastService
         $podcast = $podcast->toArray(BasePeer::TYPE_FIELDNAME);
         $podcast['itunes_explicit'] = ($podcast['itunes_explicit'] == 'yes') ? true : false;
 
+        // RASTATIME 2026-05-17 — embed the list of all enabled cc_track_types
+        // rows into the podcast JSON object so the Angular controller can
+        // bind the "Track Type" dropdown without a separate REST round-trip
+        // AND without relying on a server-rendered <script> tag (which is
+        // not executed reliably when the editor HTML is injected via
+        // jQuery's .html() inside the tab system).  Field name uses snake
+        // case (track_type_options) to match every other field in this
+        // podcast payload.
+        $podcast['track_type_options'] = [];
+        try {
+            $tts = Application_Model_Tracktype::getTracktypes();
+            // Sort alphabetically by display name so the dropdown matches
+            // the Library's Edit-Track-Type dropdown ordering.
+            array_multisort(
+                array_map(function ($t) { return $t['type_name']; }, $tts),
+                SORT_ASC, $tts
+            );
+            foreach ($tts as $tt) {
+                $podcast['track_type_options'][] = [
+                    'id'   => (int) $tt['id'],
+                    'name' => (string) $tt['type_name'],
+                ];
+            }
+        } catch (Throwable $exc) {
+            // Throwable (not just Exception) so PHP 7+ Error instances
+            // are also surfaced rather than bubbling up as opaque HTTP
+            // 500.  WARN is the right level — an empty dropdown is a
+            // degraded UX, not a fatal failure.
+            Logging::warn('getPodcastById: could not load track types: ' . $exc->getMessage());
+        }
+
+        // RASTATIME 2026-05-16 - Read Podcast Auto-Expiry columns via raw
+        // SQL.  Propel ImportedPodcast class is not regenerated for these
+        // columns (see schema.xml note), so toArray() above did not
+        // include them.  Empty defaults (false / null) so the edit form
+        // shows an unchecked checkbox + empty days field for legacy
+        // podcasts.  Same situation for default_track_type_id
+        // (RASTATIME 2026-05-17, see migration 0050) — read it in the
+        // same query.
+        $podcast['auto_expiry_enabled'] = false;
+        $podcast['auto_expiry_days'] = null;
+        $podcast['default_track_type_id'] = null;
+        try {
+            $con = Propel::getConnection();
+            $stmt = $con->prepare(
+                'SELECT auto_expiry_enabled, auto_expiry_days,
+                        default_track_type_id
+                 FROM imported_podcast WHERE podcast_id = :pid'
+            );
+            $stmt->bindValue(':pid', (int) $podcastId, PDO::PARAM_INT);
+            $stmt->execute();
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($row !== false) {
+                // PostgreSQL returns 't'/'f' for BOOLEAN over PDO; coerce.
+                $podcast['auto_expiry_enabled'] = ($row['auto_expiry_enabled'] === true
+                    || $row['auto_expiry_enabled'] === 't'
+                    || $row['auto_expiry_enabled'] === 1
+                    || $row['auto_expiry_enabled'] === '1');
+                $podcast['auto_expiry_days'] = $row['auto_expiry_days'] === null
+                    ? null : (int) $row['auto_expiry_days'];
+                $podcast['default_track_type_id'] = $row['default_track_type_id'] === null
+                    ? null : (int) $row['default_track_type_id'];
+            }
+        } catch (Exception $exc) {
+            Logging::warn('getPodcastById: could not read auto_expiry / default_track_type: ' . $exc->getMessage());
+        }
+
         return $podcast;
     }
 
@@ -367,7 +434,78 @@ class Application_Service_PodcastService
         $podcast->fromArray($data['podcast'], BasePeer::TYPE_FIELDNAME);
         $podcast->save();
 
-        return $podcast->toArray(BasePeer::TYPE_FIELDNAME);
+        // RASTATIME 2026-05-16 - Persist Podcast Auto-Expiry columns via
+        // raw SQL.  Propel ImportedPodcast class is not regenerated for
+        // these columns, so the fromArray() call above silently dropped
+        // them.  We clamp days to a sensible range [1, 3650]; the UI's
+        // number-input enforces the same.  Empty / null days with
+        // enabled=true is treated as 30 days (sensible default rather
+        // than refusing to save).
+        $autoExpiryEnabled = false;
+        $autoExpiryDays = null;
+        if (array_key_exists('auto_expiry_enabled', $data['podcast'])) {
+            $raw = $data['podcast']['auto_expiry_enabled'];
+            // AngularJS sends true/false, but the form also accepts
+            // checkbox-on as the string "on" or "1".  Coerce robustly.
+            $autoExpiryEnabled = ($raw === true || $raw === 1
+                || $raw === 'true' || $raw === '1' || $raw === 'on');
+        }
+        if (array_key_exists('auto_expiry_days', $data['podcast'])) {
+            $rawDays = $data['podcast']['auto_expiry_days'];
+            if (is_numeric($rawDays) && (int) $rawDays > 0) {
+                $autoExpiryDays = max(1, min(3650, (int) $rawDays));
+            }
+        }
+        if ($autoExpiryEnabled && $autoExpiryDays === null) {
+            $autoExpiryDays = 30;
+        }
+
+        // RASTATIME 2026-05-17 - Per-podcast default Track-Type.  Same
+        // raw-SQL pattern as auto_expiry above (Propel regen would
+        // be the alternative).  Empty string from the dropdown means
+        // "no default" (NULL); otherwise an integer FK to cc_track_types.
+        $defaultTrackTypeId = null;
+        if (array_key_exists('default_track_type_id', $data['podcast'])) {
+            $rawTt = $data['podcast']['default_track_type_id'];
+            if ($rawTt !== null && $rawTt !== '' && is_numeric($rawTt) && (int) $rawTt > 0) {
+                $defaultTrackTypeId = (int) $rawTt;
+            }
+        }
+
+        try {
+            $con = Propel::getConnection();
+            $stmt = $con->prepare(
+                'UPDATE imported_podcast
+                 SET auto_expiry_enabled = :enabled,
+                     auto_expiry_days = :days,
+                     default_track_type_id = :ttid
+                 WHERE podcast_id = :pid'
+            );
+            $stmt->bindValue(':enabled', $autoExpiryEnabled, PDO::PARAM_BOOL);
+            if ($autoExpiryDays === null) {
+                $stmt->bindValue(':days', null, PDO::PARAM_NULL);
+            } else {
+                $stmt->bindValue(':days', $autoExpiryDays, PDO::PARAM_INT);
+            }
+            if ($defaultTrackTypeId === null) {
+                $stmt->bindValue(':ttid', null, PDO::PARAM_NULL);
+            } else {
+                $stmt->bindValue(':ttid', $defaultTrackTypeId, PDO::PARAM_INT);
+            }
+            $stmt->bindValue(':pid', (int) $podcastId, PDO::PARAM_INT);
+            $stmt->execute();
+        } catch (Exception $exc) {
+            Logging::warn(
+                'updatePodcastFromArray: could not persist auto_expiry / default_track_type for podcast '
+                . $podcastId . ': ' . $exc->getMessage()
+            );
+        }
+
+        $result = $podcast->toArray(BasePeer::TYPE_FIELDNAME);
+        $result['auto_expiry_enabled'] = $autoExpiryEnabled;
+        $result['auto_expiry_days'] = $autoExpiryDays;
+        $result['default_track_type_id'] = $defaultTrackTypeId;
+        return $result;
     }
 
     /**

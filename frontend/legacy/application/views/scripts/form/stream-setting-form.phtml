@@ -1,158 +1,223 @@
 <?php
 $s_name = "s" . $this->stream_number;
 ?>
-<h3 class="collapsible-header <?php echo $this->enabled == 0 ? "closed" : "" ?>"><span class="arrow-icon"></span><?php echo _("Stream "); ?><?php echo $this->stream_number ?></h3>
-<div class="stream-setting-content" <?php echo $this->enabled == 0 ? 'style="display: none;' : '' ?> id="<?php echo $s_name ?>-config">
+<h3 class="collapsible-header <?php echo $this->enabled == 0 ? "closed" : "" ?>">
+    <span class="arrow-icon"></span><?php echo _("Stream "); ?><?php echo $this->stream_number ?>
+</h3>
+<div class="stream-setting-content" <?php echo $this->enabled == 0 ? 'style="display: none;"' : '' ?> id="<?php echo $s_name ?>-config">
     <fieldset class="padded">
         <dl class="zend_form clearfix">
+
+            <!-- Connection status (Liquidsoap / ping) -->
             <dd id="<?php echo $s_name ?>Liquidsoap-error-msg-element" class="liquidsoap_status">
                 <?php echo $this->liquidsoap_error_msg ?>
             </dd>
+
+            <!-- Enabled -->
             <dt id="<?php echo $s_name ?>Enabled-label">
-                <label for="<?php echo $s_name ?>Enabled"><?php echo $this->element->getElement('enable')->getLabel() ?></label>
+                <label for="<?php echo $s_name ?>_data-enable">
+                    <?php echo $this->element->getElement('enable')->getLabel() ?>
+                </label>
             </dt>
             <dd id="<?php echo $s_name ?>Enabled-element">
                 <?php echo $this->element->getElement('enable') ?>
             </dd>
 
-            <dt id="<?php echo $s_name  ?>Output-label">
-                <label for="<?php echo $s_name  ?>Output"><?php echo $this->element->getElement('output')->getLabel() ?></label>
-            </dt>
-            <dd id="<?php echo $s_name  ?>Output-element">
-                <?php echo $this->element->getElement('output')  ?>
-            </dd>
-
-            <dt id="outputServer-label">
-                <label for="outputServer"><?php echo $this->element->getElement('host')->getLabel() ?><span class="info-text-small">
-                        <?php echo _("(Required)") ?></span> :</label>
-            </dt>
-            <dd id="outputServer-element">
-                <?php echo $this->element->getElement('host') ?>
-                <?php if ($this->element->getElement('host')->hasErrors()) : ?>
-                    <ul class='errors'>
-                        <?php foreach ($this->element->getElement('host')->getMessages() as $error) : ?>
-                            <li><?php echo $error; ?></li>
-                        <?php endforeach; ?>
-                    </ul>
-                <?php endif; ?>
-            </dd>
-            <dt id="outputPort-label">
-                <label for="outputPort"><?php echo $this->element->getElement('port')->getLabel() ?><span class="info-text-small">
-                        <?php echo _("(Required)") ?></span> :</label>
-            </dt>
-            <dd id="outputPort-element">
-                <?php echo $this->element->getElement('port') ?>
-                <?php if ($this->element->getElement('port')->hasErrors()) : ?>
-                    <ul class='errors'>
-                        <?php foreach ($this->element->getElement('port')->getMessages() as $error) : ?>
-                            <li><?php echo $error; ?></li>
-                        <?php endforeach; ?>
-                    </ul>
-                <?php endif; ?>
-            </dd>
-
-            <dt id="<?php echo $s_name ?>Channels-label">
-                <label for="<?php echo $s_name ?>Channels"><?php echo $this->element->getElement('channels')->getLabel() ?></label>
-            </dt>
-            <dd id="<?php echo $s_name ?>Channels-element">
-                <?php echo $this->element->getElement('channels') ?>
-            </dd>
-
+            <!-- Stream type / format -->
             <dt id="<?php echo $s_name ?>Type-label">
-                <label for="<?php echo $s_name ?>Type"><?php echo $this->element->getElement('type')->getLabel() ?></label>
+                <label for="<?php echo $s_name ?>_data-type">
+                    <?php echo $this->element->getElement('type')->getLabel() ?>
+                </label>
             </dt>
             <dd id="<?php echo $s_name ?>Type-element">
                 <?php echo $this->element->getElement('type') ?>
-                <span class='stream_type_help_icon'></span>
+                <span class="stream_type_help_icon"></span>
             </dd>
 
+            <!-- Bit rate -->
             <dt id="<?php echo $s_name ?>Bitrate-label">
-                <label for="<?php echo $s_name ?>Bitrate"><?php echo $this->element->getElement('bitrate')->getLabel() ?></label>
+                <label for="<?php echo $s_name ?>_data-bitrate">
+                    <?php echo $this->element->getElement('bitrate')->getLabel() ?>
+                </label>
             </dt>
             <dd id="<?php echo $s_name ?>Bitrate-element">
                 <?php echo $this->element->getElement('bitrate') ?>
             </dd>
 
+            <!-- Channels -->
+            <dt id="<?php echo $s_name ?>Channels-label">
+                <label for="<?php echo $s_name ?>_data-channels">
+                    <?php echo $this->element->getElement('channels')->getLabel() ?>
+                </label>
+            </dt>
+            <dd id="<?php echo $s_name ?>Channels-element">
+                <?php echo $this->element->getElement('channels') ?>
+            </dd>
 
-            <dt id="stationName-label">
-                <label for="stationName"><?php echo $this->element->getElement('name')->getLabel() ?> :</label>
+            <!-- Sample rate -->
+            <dt id="<?php echo $s_name ?>Samplerate-label">
+                <label for="<?php echo $s_name ?>_data-samplerate">
+                    <?php echo $this->element->getElement('samplerate')->getLabel() ?>
+                </label>
             </dt>
-            <dd id="stationName-element" class="clearfix">
-                <?php echo $this->element->getElement('name') ?>
-                <?php if ($this->element->getElement('name')->hasErrors()) : ?>
-                    <ul class='errors'>
-                        <?php foreach ($this->element->getElement('name')->getMessages() as $error) : ?>
-                            <li><?php echo $error; ?></li>
-                        <?php endforeach; ?>
-                    </ul>
-                <?php endif; ?>
+            <dd id="<?php echo $s_name ?>Samplerate-element">
+                <?php echo $this->element->getElement('samplerate') ?>
             </dd>
-            <dt id="stationDescription-label">
-                <label for="stationDescription"><?php echo $this->element->getElement('description')->getLabel() ?> :</label>
+
+            <!-- Server host -->
+            <dt id="outputServer-label">
+                <label for="<?php echo $s_name ?>_data-host">
+                    <?php echo $this->element->getElement('host')->getLabel() ?>
+                    <span class="info-text-small"><?php echo _("(Required)") ?></span> :
+                </label>
             </dt>
-            <dd id="stationDescription-element" class="clearfix">
-                <?php echo $this->element->getElement('description') ?>
-                <?php if ($this->element->getElement('description')->hasErrors()) : ?>
-                    <ul class='errors'>
-                        <?php foreach ($this->element->getElement('description')->getMessages() as $error) : ?>
-                            <li><?php echo $error; ?></li>
-                        <?php endforeach; ?>
+            <dd id="outputServer-element">
+                <?php echo $this->element->getElement('host') ?>
+                <?php if ($this->element->getElement('host')->hasErrors()) : ?>
+                    <ul class="errors">
+                        <?php foreach ($this->element->getElement('host')->getMessages() as $error) : ?>
+                            <li><?php echo $error ?></li>
+                        <?php endforeach ?>
                     </ul>
-                <?php endif; ?>
+                <?php endif ?>
             </dd>
-            <dt id="stationURL-label">
-                <label for="stationURL"><?php echo $this->element->getElement('url')->getLabel() ?> :</label>
+
+            <!-- Server port -->
+            <dt id="outputPort-label">
+                <label for="<?php echo $s_name ?>_data-port">
+                    <?php echo $this->element->getElement('port')->getLabel() ?>
+                    <span class="info-text-small"><?php echo _("(Required)") ?></span> :
+                </label>
             </dt>
-            <dd id="stationURL-element" class="clearfix">
-                <?php echo $this->element->getElement('url') ?>
-                <?php if ($this->element->getElement('url')->hasErrors()) : ?>
-                    <ul class='errors'>
-                        <?php foreach ($this->element->getElement('url')->getMessages() as $error) : ?>
-                            <li><?php echo $error; ?></li>
-                        <?php endforeach; ?>
+            <dd id="outputPort-element">
+                <?php echo $this->element->getElement('port') ?>
+                <?php if ($this->element->getElement('port')->hasErrors()) : ?>
+                    <ul class="errors">
+                        <?php foreach ($this->element->getElement('port')->getMessages() as $error) : ?>
+                            <li><?php echo $error ?></li>
+                        <?php endforeach ?>
                     </ul>
-                <?php endif; ?>
+                <?php endif ?>
             </dd>
-            <dt id="outputGenre-label">
-                <label for="outputGenre"><?php echo $this->element->getElement('genre')->getLabel() ?> :</label>
-            </dt>
-            <dd id="outputGenre-element">
-                <?php echo $this->element->getElement('genre') ?>
-                <?php if ($this->element->getElement('genre')->hasErrors()) : ?>
-                    <ul class='errors'>
-                        <?php foreach ($this->element->getElement('genre')->getMessages() as $error) : ?>
-                            <li><?php echo $error; ?></li>
-                        <?php endforeach; ?>
-                    </ul>
-                <?php endif; ?>
-            </dd>
+
+            <!-- Mount point (Icecast only) -->
             <dt id="outputMountpoint-label">
-                <label for="outputMountpoint"><?php echo $this->element->getElement('mount')->getLabel() ?> :</label>
+                <label for="<?php echo $s_name ?>_data-mount">
+                    <?php echo $this->element->getElement('mount')->getLabel() ?> :
+                </label>
             </dt>
             <dd id="outputMountpoint-element">
                 <?php echo $this->element->getElement('mount') ?>
-                <?php if ($this->element->getElement('mount')->hasErrors()) : ?>
-                    <ul class='errors'>
-                        <?php foreach ($this->element->getElement('mount')->getMessages() as $error) : ?>
-                            <li><?php echo $error; ?></li>
-                        <?php endforeach; ?>
-                    </ul>
-                <?php endif; ?>
             </dd>
+
+            <!-- Source username -->
+            <dt id="outputUser-label">
+                <label for="<?php echo $s_name ?>_data-user">
+                    <?php echo $this->element->getElement('user')->getLabel() ?> :
+                    <span class="stream_username_help_icon"></span>
+                </label>
+            </dt>
+            <dd id="outputUser-element">
+                <?php echo $this->element->getElement('user') ?>
+            </dd>
+
+            <!-- Source password -->
+            <dt id="outputPass-label">
+                <label for="<?php echo $s_name ?>_data-pass">
+                    <?php echo $this->element->getElement('pass')->getLabel() ?>
+                    <span class="info-text-small"><?php echo _("(Required)") ?></span> :
+                </label>
+            </dt>
+            <dd id="outputPass-element">
+                <?php echo $this->element->getElement('pass') ?>
+            </dd>
+
+            <!-- Admin username -->
+            <dt id="<?php echo $s_name ?>AdminUser-label">
+                <label for="<?php echo $s_name ?>_data-admin_user">
+                    <?php echo $this->element->getElement('admin_user')->getLabel() ?> :
+                    <span class="admin_username_help_icon"></span>
+                </label>
+            </dt>
+            <dd id="<?php echo $s_name ?>AdminUser-element">
+                <?php echo $this->element->getElement('admin_user') ?>
+            </dd>
+
+            <!-- Admin password -->
+            <dt id="<?php echo $s_name ?>AdminPass-label">
+                <label for="<?php echo $s_name ?>_data-admin_pass">
+                    <?php echo $this->element->getElement('admin_pass')->getLabel() ?> :
+                </label>
+            </dt>
+            <dd id="<?php echo $s_name ?>AdminPass-element">
+                <?php echo $this->element->getElement('admin_pass') ?>
+            </dd>
+
+            <!-- Stream name -->
+            <dt id="stationName-label">
+                <label for="<?php echo $s_name ?>_data-name">
+                    <?php echo $this->element->getElement('name')->getLabel() ?> :
+                </label>
+            </dt>
+            <dd id="stationName-element" class="clearfix">
+                <?php echo $this->element->getElement('name') ?>
+            </dd>
+
+            <!-- Genre -->
+            <dt id="outputGenre-label">
+                <label for="<?php echo $s_name ?>_data-genre">
+                    <?php echo $this->element->getElement('genre')->getLabel() ?> :
+                </label>
+            </dt>
+            <dd id="outputGenre-element">
+                <?php echo $this->element->getElement('genre') ?>
+            </dd>
+
+            <!-- Website URL -->
+            <dt id="stationURL-label">
+                <label for="<?php echo $s_name ?>_data-url">
+                    <?php echo $this->element->getElement('url')->getLabel() ?> :
+                </label>
+            </dt>
+            <dd id="stationURL-element" class="clearfix">
+                <?php echo $this->element->getElement('url') ?>
+            </dd>
+
+            <!-- Description -->
+            <dt id="stationDescription-label">
+                <label for="<?php echo $s_name ?>_data-description">
+                    <?php echo $this->element->getElement('description')->getLabel() ?> :
+                </label>
+            </dt>
+            <dd id="stationDescription-element" class="clearfix">
+                <?php echo $this->element->getElement('description') ?>
+            </dd>
+
+            <!-- Mobile stream -->
             <dt id="<?php echo $s_name ?>Mobile-label">
-                <label for="<?php echo $s_name ?>Mobile"><?php echo $this->element->getElement('mobile')->getLabel() ?></label>
+                <label for="<?php echo $s_name ?>_data-mobile">
+                    <?php echo $this->element->getElement('mobile')->getLabel() ?>
+                </label>
             </dt>
             <dd id="<?php echo $s_name ?>Mobile-element">
                 <?php echo $this->element->getElement('mobile') ?>
             </dd>
+
+            <!-- Public stream URL (read-only, auto-generated) -->
             <dt id="outputStreamURL-label">
-                <label for="outputStreamURL"><?php echo $this->element->getElement('public_url')->getLabel() ?> :</label>
+                <label><?php echo $this->element->getElement('public_url')->getLabel() ?> :</label>
             </dt>
             <dd id="outputStreamURL-element">
-                <a href="<?php echo $this->element->getElement('public_url')->getValue() ?>" target="_blank" rel="noopener noreferrer">
-                    <?php echo $this->element->getElement('public_url')->getValue() ?>
-                </a>
+                <?php $pub = $this->element->getElement('public_url')->getValue(); ?>
+                <?php if ($pub) : ?>
+                    <a href="<?php echo htmlspecialchars($pub) ?>" target="_blank" rel="noopener noreferrer">
+                        <?php echo htmlspecialchars($pub) ?>
+                    </a>
+                <?php else : ?>
+                    <span class="info-text-small"><?php echo _('Saved after first configuration') ?></span>
+                <?php endif ?>
             </dd>
+
         </dl>
     </fieldset>
 </div>

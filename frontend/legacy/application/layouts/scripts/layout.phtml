@@ -57,6 +57,10 @@
                 <li id="new-webstream">
                     <a href="#"><?php echo _("Webstream") ?></a>
                 </li>
+                <!-- RASTATIME 2026-05-12 — Line-In dropdown entry. -->
+                <li id="new-linein">
+                    <a href="#"><?php echo _("Line Input") ?></a>
+                </li>
             </ul>
             <a href="<?php echo Config::getBasePath() . 'plupload' ?>">
                 <button id="add_media_btn" class="btn btn-small dashboard-btn btn-new">
@@ -113,6 +117,12 @@
     <div class="usability_hint <?php if ($hint == "") {
                                     echo "hidden";
                                 } ?>"><?php echo $hint; ?></div>
+
+    <!-- RASTATIME 2026-05-13 — Phase B.4 #2 dashboard banner for
+         pre-flight warnings (upcoming Line-In device missing etc.).
+         Populated by loadPreflightWarnings() in common.js — initially
+         hidden, JS unhides on first poll if there's anything to show. -->
+    <div class="preflight_warnings hidden" id="preflight_warnings_banner"></div>
 
     <div class="wrapper <?php if (isset($this->layout()->parent_page)) echo "wrapper_panel"; ?>" id="content">
         <?php echo $this->layout()->content ?>

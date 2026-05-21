@@ -10,19 +10,24 @@ if (!empty($_SERVER['HTTPS'])) {
 }
 ini_set('session.cookie_httponly', '1');
 
-error_reporting(E_ALL | E_STRICT);
+// E_DEPRECATED excluded: Zend Framework 1 triggers many deprecation notices
+// on PHP 8.2+ (dynamic properties, etc.) that must not crash the application.
+error_reporting(E_ALL | E_STRICT & ~E_DEPRECATED & ~E_USER_DEPRECATED);
 
 function exception_error_handler($errno, $errstr, $errfile, $errline)
 {
     // Check if the statement that threw this error wanted its errors to be
-    // suppressed. If so then return without with throwing exception.
+    // suppressed. If so then return without throwing exception.
     if (0 === error_reporting()) {
-        return;
+        return false;
+    }
+
+    // PHP 8.x: deprecation notices from legacy ZF1 code must not be fatal.
+    if ($errno === E_DEPRECATED || $errno === E_USER_DEPRECATED) {
+        return false;
     }
 
     throw new ErrorException($errstr, $errno, 0, $errfile, $errline);
-
-    return false;
 }
 
 set_error_handler('exception_error_handler');

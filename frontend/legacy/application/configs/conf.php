@@ -14,6 +14,7 @@ use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\Config\Definition\Processor;
+use Symfony\Component\Yaml\Yaml;
 
 class Schema implements ConfigurationInterface
 {
@@ -51,18 +52,18 @@ class Schema implements ConfigurationInterface
             ->arrayNode('database')->addDefaultsIfNotSet()->children()
             /**/->scalarNode('host')->defaultValue('localhost')->end()
             /**/->integerNode('port')->defaultValue(5432)->end()
-            /**/->scalarNode('name')->defaultValue('libretime')->end()
-            /**/->scalarNode('user')->defaultValue('libretime')->end()
-            /**/->scalarNode('password')->defaultValue('libretime')->end()
+            /**/->scalarNode('name')->defaultValue('rastatime')->end()
+            /**/->scalarNode('user')->defaultValue('rastatime')->end()
+            /**/->scalarNode('password')->defaultValue('rastatime')->end()
             ->end()->end()
 
             // Rabbitmq schema
             ->arrayNode('rabbitmq')->addDefaultsIfNotSet()->children()
             /**/->scalarNode('host')->defaultValue('localhost')->end()
             /**/->integerNode('port')->defaultValue(5672)->end()
-            /**/->scalarNode('vhost')->defaultValue('/libretime')->end()
-            /**/->scalarNode('user')->defaultValue('libretime')->end()
-            /**/->scalarNode('password')->defaultValue('libretime')->end()
+            /**/->scalarNode('vhost')->defaultValue('/rastatime')->end()
+            /**/->scalarNode('user')->defaultValue('rastatime')->end()
+            /**/->scalarNode('password')->defaultValue('rastatime')->end()
             ->end()->end()
 
             // Email schema
@@ -72,7 +73,7 @@ class Schema implements ConfigurationInterface
 
             // Storage schema
             ->arrayNode('storage')->addDefaultsIfNotSet()->children()
-            /**/->scalarNode('path')->defaultValue('/srv/libretime/')
+            /**/->scalarNode('path')->defaultValue('C:/rastatime/media/')
             /*  */->validate()->ifString()->then($force_trailing_slash)->end()
             /**/->end()
             ->end()->end()
@@ -151,6 +152,16 @@ class Schema implements ConfigurationInterface
             /*  */->integerNode('port')->defaultValue(8002)->end()
             /*  */->booleanNode('secure')->defaultValue(False)->end()
             /**/->end()->end()
+            ->end()->end()
+
+            // RASTATIME: Internal listener credentials.  The playout
+            // service uses these to read /main and /show as a listener
+            // and relay the audio to the public outputs.  The
+            // icecast-listener-allow PHP endpoint compares incoming
+            // Basic-Auth credentials against these values.
+            ->arrayNode('internal_listener')->addDefaultsIfNotSet()->children()
+            /**/->scalarNode('user')->defaultValue('')->end()
+            /**/->scalarNode('password')->defaultValue('')->end()
             ->end()->end()
 
             // Stream outputs
@@ -252,7 +263,7 @@ class Config
     private static function load()
     {
         $filename = $_SERVER['LIBRETIME_CONFIG_FILEPATH'] ?? LIBRETIME_CONFIG_FILEPATH;
-        $dirty = yaml_parse_file($filename);
+        $dirty = Yaml::parseFile($filename);
 
         $schema = new Schema();
         $processor = new Processor();
@@ -423,11 +434,13 @@ class Config
         $version = LIBRETIME_MAJOR_VERSION;
 
         foreach ([ROOT_PATH, dirname(ROOT_PATH)] as $path) {
-            $content = @file_get_contents($path . '/VERSION');
-            if ($content) {
-                $version = trim($content);
-
-                break;
+            $vfile = $path . '/VERSION';
+            if (is_readable($vfile)) {
+                $content = file_get_contents($vfile);
+                if ($content !== false) {
+                    $version = trim($content);
+                    break;
+                }
             }
         }
 

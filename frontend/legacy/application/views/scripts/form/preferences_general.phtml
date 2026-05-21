@@ -19,6 +19,21 @@
             <img onError="this.onerror = '';this.style.visibility='hidden';$('#logo-remove-btn').hide();$('[id^=stationLogoRemove]').each(function(i,v){v.style.width=v.style.height=v.style.margin=v.style.padding='0px';});" id="logo-img" onload='/*resizeImg(this, 450, 450);*/' src="<?php echo $src ?>" />
         </div>
 
+        <?php /* RASTATIME 2026-05-15 - Station Favicon upload block. */ ?>
+        <?php echo $this->element->getElement('stationFavicon')->render() ?>
+
+        <?php echo $this->element->getElement('stationFaviconRemove')->render() ?>
+
+        <div id="Favicon-img-container">
+            <?php $faviconSrc = $this->element->getView()->faviconImg; ?>
+            <?php if (!empty($faviconSrc)) : ?>
+                <img id="favicon-img" src="<?php echo $faviconSrc ?>" onError="this.style.visibility='hidden';$('#favicon-remove-btn').hide();" />
+            <?php else: ?>
+                <?php // Hide the remove button when no custom favicon is set. ?>
+                <script>document.addEventListener('DOMContentLoaded',function(){var b=document.getElementById('favicon-remove-btn');if(b){b.style.display='none';}});</script>
+            <?php endif; ?>
+        </div>
+
         <?php echo $this->element->getElement('locale')->render() ?>
 
         <?php echo $this->element->getElement('timezone')->render() ?>
@@ -41,7 +56,7 @@
 
         <?php echo $this->element->getElement('podcastAutoSmartblock')->render() ?>
 
-        <?php echo $this->element->getElement('featurePreviewMode')->render() ?>
+        <?php /* RASTATIME 2026-05-15 - featurePreviewMode removed (phantom). */ ?>
 
         <?php echo $this->element->getElement('thirdPartyApi')->render() ?>
 

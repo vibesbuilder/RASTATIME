@@ -47,6 +47,13 @@ class Application_Form_SmartBlockCriteria extends Zend_Form_SubForm
                 'oldest' => _('Oldest'),
                 'mostrecentplay' => _('Most recently played'),
                 'leastrecentplay' => _('Least recently played'),
+                // RASTATIME 2026-05-18 — sort by cc_files.expires_at
+                // ascending, NULLs last.  Pairs naturally with the
+                // Track-Expiry feature (ARCHITECTURE 23.11): tracks
+                // with the closest expiry date are picked first so
+                // they air before they get auto-disabled.  Tracks
+                // without an expiry stay at the back of the queue.
+                'earliestexpiry' => _('Earliest expiry first'),
             ];
         }
 
@@ -373,6 +380,36 @@ class Application_Form_SmartBlockCriteria extends Zend_Form_SubForm
             $overflowTracks->setChecked($storedCrit['overflow_tracks']['value'] == 1);
         }
         $this->addElement($overflowTracks);
+
+        // RASTATIME 2026-05-18 — restrict Smart Block to never-played
+        // tracks.  When enabled, the SQL projection in
+        // Block::getListofFilesMeetCriteria filters
+        // `WHERE lptime IS NULL`, i.e. only tracks whose Last Played
+        // is empty (= the playout has never logged them).  Useful for
+        // discovery / new-content rotation blocks.  Default = off,
+        // backwards-compatible with existing blocks (the cc_block_criteria
+        // row simply does not exist for them).
+        // Label shortened 2026-05-18 — see CHANGELOG.
+        $onlyUnplayed = new Zend_Form_Element_Checkbox('sp_only_unplayed');
+        $onlyUnplayed->setDecorators(['viewHelper'])
+            ->setLabel(_('Allow only tracks not played yet:'));
+        if (isset($storedCrit['only_unplayed'])) {
+            $onlyUnplayed->setChecked($storedCrit['only_unplayed']['value'] == 1);
+        }
+        $this->addElement($onlyUnplayed);
+
+        // RASTATIME 2026-05-18 — restrict Smart Block to tracks with
+        // any expiry date set (cc_files.expires_at IS NOT NULL).
+        // Useful for blocks that should only draw from short-lived /
+        // perishable content like dated news segments or trailers.
+        // Default off; backwards-compatible (missing row = disabled).
+        $onlyWithExpiry = new Zend_Form_Element_Checkbox('sp_only_with_expiry');
+        $onlyWithExpiry->setDecorators(['viewHelper'])
+            ->setLabel(_('Allow only tracks with expiry date:'));
+        if (isset($storedCrit['only_with_expiry'])) {
+            $onlyWithExpiry->setChecked($storedCrit['only_with_expiry']['value'] == 1);
+        }
+        $this->addElement($onlyWithExpiry);
 
         $sort = new Zend_Form_Element_Select('sp_sort_options');
         $sort->setAttrib('class', 'sp_input_select')

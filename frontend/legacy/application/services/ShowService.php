@@ -75,6 +75,15 @@ class Application_Service_ShowService
             $this->ccShow = CcShowQuery::create()
                 ->findPk($showId);
 
+            // (RASTATIME 2026-05-18: an interim 2026-05-17 fix here
+            // wrote a renamed add_show_name back to cc_show from the
+            // per-instance edit dialog.  Reverted on operator
+            // decision — the per-instance dialog now leaves the
+            // name field read-only via AddShowWhat::makeReadonly(),
+            // see CHANGELOG.  Series-wide rename happens through the
+            // separate "Edit Show" menu entry, which routes through
+            // editShowAction / addUpdateShow / setCcShow as before.)
+
             // DateTime in shows's local time
             $newStartDateTime = new DateTime(
                 $showData['add_show_start_date'] . ' ' .
@@ -167,8 +176,11 @@ class Application_Service_ShowService
             Application_Model_RabbitMq::PushSchedule();
         } catch (Exception $e) {
             $con->rollback();
-            Logging::info('EXCEPTION: Show update failed.');
-            Logging::info($e->getMessage());
+            // RASTATIME 2026-05-17 — upgrade exception logging (see
+            // addUpdateShow above) to surface the failure cause when
+            // a repeating-instance edit silently rolls back.
+            Logging::warn('EXCEPTION: editRepeatingShowInstance failed: ' . $e->getMessage());
+            Logging::warn('Trace: ' . $e->getTraceAsString());
         }
     }
 
@@ -276,8 +288,14 @@ class Application_Service_ShowService
         } catch (Exception $e) {
             $con->rollback();
             $this->isUpdate ? $action = 'update' : $action = 'creation';
-            Logging::info('EXCEPTION: Show ' . $action . ' failed.');
-            Logging::info($e->getMessage());
+            // RASTATIME 2026-05-17 — upgrade exception logging from INFO
+            // to WARN with full stack trace.  Without the trace, a
+            // mid-transaction exception (which silently rolls back the
+            // entire save including any rename) only showed up as a
+            // generic message — operators could not see WHICH save
+            // step failed.
+            Logging::warn('EXCEPTION: Show ' . $action . ' failed: ' . $e->getMessage());
+            Logging::warn('Trace: ' . $e->getTraceAsString());
         }
 
         // Added to pass along to the RESTful ShowImageController
@@ -1602,15 +1620,47 @@ SQL;
 
         $temp->setTimezone(new DateTimeZone('UTC'));
 
+        $startsLookup = $temp->format(DEFAULT_TIMESTAMP_FORMAT);
+        $showIdLookup = $this->ccShow->getDbId();
+
         $ccShowInstance = CcShowInstancesQuery::create()
-            ->filterByDbStarts($temp->format(DEFAULT_TIMESTAMP_FORMAT), Criteria::EQUAL)
-            ->filterByDbShowId($this->ccShow->getDbId(), Criteria::EQUAL)
+            ->filterByDbStarts($startsLookup, Criteria::EQUAL)
+            ->filterByDbShowId($showIdLookup, Criteria::EQUAL)
             // ->filterByDbModifiedInstance(false, Criteria::EQUAL)
             ->filterByDbRebroadcast(0, Criteria::EQUAL)
             ->limit(1)
             ->find();
 
+        // RASTATIME 2026-05-17 — when the lookup misses, dump every
+        // cc_show_instances row that DOES exist for this show so the
+        // operator log shows WHY we're missing (wrong show_id?
+        // off-by-one start time? rebroadcast flag set?).
         if ($ccShowInstance->isEmpty()) {
+            Logging::warn(sprintf(
+                'getInstance MISS: looking for starts=%s show_id=%s rebroadcast=0',
+                $startsLookup, $showIdLookup
+            ));
+            try {
+                $all = CcShowInstancesQuery::create()
+                    ->filterByDbShowId($showIdLookup, Criteria::EQUAL)
+                    ->find();
+                if ($all->isEmpty()) {
+                    Logging::warn('getInstance MISS: NO cc_show_instances rows exist for this show at all');
+                } else {
+                    foreach ($all as $row) {
+                        Logging::warn(sprintf(
+                            'getInstance MISS: existing row id=%s starts=%s ends=%s rebroadcast=%s modified=%s',
+                            $row->getDbId(),
+                            $row->getDbStarts(DEFAULT_TIMESTAMP_FORMAT),
+                            $row->getDbEnds(DEFAULT_TIMESTAMP_FORMAT),
+                            $row->getDbRebroadcast(),
+                            $row->getDbModifiedInstance() ? 'true' : 'false'
+                        ));
+                    }
+                }
+            } catch (Exception $exc) {
+                Logging::warn('getInstance MISS: dump failed: ' . $exc->getMessage());
+            }
             return false;
         }
 

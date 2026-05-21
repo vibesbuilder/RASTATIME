@@ -165,29 +165,79 @@ class Application_Service_PodcastEpisodeService extends Application_Service_Thir
     }
 
     /**
-     * Given an episode ID and a download URL, send a Celery task
-     * to download an RSS feed track.
+     * Download a podcast episode by calling the Python API directly.
+     *
+     * T-PODCAST-1: Replaces the defunct Celery/RabbitMQ dispatch chain.
+     * The API endpoint (POST /api/v2/podcast-episodes/{id}/download) fetches
+     * the audio file, embeds metadata via mutagen, uploads it to /rest/media,
+     * and updates podcast_episodes.file_id — all synchronously.
      *
      * @param int        $id             episode unique ID
-     * @param string     $url            download url for the episode
-     * @param string     $title          title of podcast to be downloaded - added as album to track metadata
-     * @param bool       $album_override should we override the album name when downloading
-     * @param null|mixed $track_title
+     * @param string     $url            download url (used by the API via DB lookup)
+     * @param string     $title          podcast title (used by the API via DB lookup)
+     * @param bool       $album_override album-override flag (used by the API via DB lookup)
+     * @param null|mixed $track_title    episode title (used by the API via DB lookup)
      */
     private function _download($id, $url, $title, $album_override, $track_title = null)
     {
-        $data = [
-            'episode_id' => $id,
-            'episode_url' => $url,
-            'episode_title' => $track_title,
-            'podcast_name' => $title,
-            'override_album' => $album_override,
-        ];
-        $task = $this->_executeTask(static::$_CELERY_TASKS[self::DOWNLOAD], $data);
-        // Get the created ThirdPartyTaskReference and set the episode ID so
-        // we can remove the placeholder if the import ends up stuck in a pending state
-        $ref = ThirdPartyTrackReferencesQuery::create()->findPk($task->getDbTrackReference());
-        $ref->setDbForeignId($id)->save();
+        $config  = Config::getConfig();
+        $apiKey  = $config['apiKey'][0];
+        $apiUrl  = 'http://localhost:8765/api/v2/podcast-episodes/' . intval($id) . '/download';
+
+        $ch = curl_init($apiUrl);
+        curl_setopt_array($ch, [
+            CURLOPT_POST           => true,
+            CURLOPT_POSTFIELDS     => '',
+            CURLOPT_HTTPHEADER     => ['Authorization: Api-Key ' . $apiKey],
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT        => 300,  // 5 minutes — large episodes may take a while
+        ]);
+
+        $response  = curl_exec($ch);
+        $httpCode  = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curlError = curl_error($ch);
+        curl_close($ch);
+
+        if ($response === false || $httpCode >= 400) {
+            Logging::error(
+                "podcast_download: API call failed for episode {$id}. "
+                . "HTTP {$httpCode}. cURL: {$curlError}. Response: {$response}"
+            );
+
+            // RASTATIME 2026-05-17 — without this cleanup the
+            // podcast_episodes placeholder row that addPlaceholder()
+            // just inserted stays in the DB with file_id IS NULL,
+            // and the UI's _getImportedPodcastEpisodeArray() reports
+            // ingested=-1 (pending spinner) indefinitely.  The
+            // operator's only recourse was to delete the episode by
+            // hand from the database.  Removing the placeholder on
+            // failure flips the UI back to "not imported" so the
+            // operator can simply click Download again.  Episodes
+            // that previously succeeded (file_id IS NOT NULL) are
+            // never touched — this is a no-op for them.
+            try {
+                $stuck = PodcastEpisodesQuery::create()
+                    ->filterByDbId((int) $id)
+                    ->filterByDbFileId(null, Criteria::ISNULL)
+                    ->findOne();
+                if ($stuck !== null) {
+                    Logging::info(
+                        "podcast_download: removing stuck placeholder "
+                        . "for episode {$id} so the UI exits pending state"
+                    );
+                    $stuck->delete();
+                }
+            } catch (Exception $e) {
+                Logging::warn(
+                    "podcast_download: could not clean up placeholder for "
+                    . "episode {$id}: " . $e->getMessage()
+                );
+            }
+
+            return;
+        }
+
+        Logging::info("podcast_download: episode {$id} imported successfully (HTTP {$httpCode})");
     }
 
     /**
@@ -245,7 +295,27 @@ class Application_Service_PodcastEpisodeService extends Application_Service_Thir
         if (!PodcastEpisodesQuery::create()
             ->filterByDbPodcastId($id)
             ->findOneByDbFileId($fileId)) {  // Don't allow duplicate episodes
-            $e = $this->_buildEpisode($id, $url, $guid, date('r'));
+            // RASTATIME 2026-05-18 — fill episode_title and
+            // episode_description from cc_files.  Both columns are
+            // NOT NULL in the podcast_episodes schema, but the
+            // upstream publish() path passed nulls to _buildEpisode,
+            // so every "Publish to My Podcast" click produced a
+            // SQLSTATE[23502] NOT NULL violation and HTTP 400 with
+            // no episode created.  Fall back to the file's stored
+            // name if track_title is empty, and to an empty string
+            // for description (the column is NOT NULL but allows '').
+            $file = CcFilesQuery::create()->findPk($fileId);
+            $title = '';
+            $description = '';
+            if ($file !== null) {
+                $title = (string) ($file->getDbTrackTitle() ?: $file->getDbName());
+                $description = (string) ($file->getDbDescription() ?: '');
+            }
+            if ($title === '') {
+                // Last-resort fallback: a non-empty title is required.
+                $title = 'Track ' . $fileId;
+            }
+            $e = $this->_buildEpisode($id, $url, $guid, date('r'), $title, $description);
             $e->setDbFileId($fileId)->save();
         }
     }

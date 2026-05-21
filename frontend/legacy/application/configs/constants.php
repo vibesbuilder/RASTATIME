@@ -1,5 +1,12 @@
 <?php
 
+// LC_MESSAGES is not defined on Windows. Define it for PHP compatibility;
+// setlocale() will return false for this category on Windows, which the
+// application already handles gracefully.
+if (!defined('LC_MESSAGES')) {
+    define('LC_MESSAGES', 6);
+}
+
 // Path constants
 define('ROOT_PATH', dirname(__DIR__, 2));
 define('LIB_PATH', ROOT_PATH . '/library');
@@ -16,16 +23,24 @@ defined('APPLICATION_ENV') || define('APPLICATION_ENV', getenv('APPLICATION_ENV'
 defined('VERBOSE_STACK_TRACE') || define('VERBOSE_STACK_TRACE', getenv('VERBOSE_STACK_TRACE') ?? true);
 
 // Project constants
-define('LIBRETIME_LOG_DIR', getenv('LIBRETIME_LOG_DIR') ?: '/var/log/libretime');
+define('LIBRETIME_LOG_DIR', getenv('LIBRETIME_LOG_DIR') ?: 'C:/rastatime/logs');
 define('LIBRETIME_LOG_FILEPATH', getenv('LIBRETIME_LOG_FILEPATH') ?: LIBRETIME_LOG_DIR . '/legacy.log');
 
-define('LIBRETIME_CONFIG_DIR', getenv('LIBRETIME_CONFIG_DIR') ?: '/etc/libretime');
+define('LIBRETIME_CONFIG_DIR', getenv('LIBRETIME_CONFIG_DIR') ?: 'C:/rastatime/config');
 define('LIBRETIME_CONF_DIR', LIBRETIME_CONFIG_DIR); // Deprecated
-define('LIBRETIME_CONFIG_FILEPATH', getenv('LIBRETIME_CONFIG_FILEPATH') ?: LIBRETIME_CONFIG_DIR . '/config.yml');
+define('LIBRETIME_CONFIG_FILEPATH', getenv('LIBRETIME_CONFIG_FILEPATH') ?: LIBRETIME_CONFIG_DIR . '/libretime.conf');
 
 // Legacy constants
 define('PRODUCT_NAME', 'LibreTime');
 define('PRODUCT_SITE_URL', 'https://libretime.org');
+
+/**
+ * RASTATIME 2026-05-16 - Fork version, kept separate from PRODUCT_NAME /
+ * VERSION (which still report the upstream LibreTime release this fork
+ * is based on for upstream-sync tracking and API-response compatibility).
+ * Bump in lockstep with ARCHITECTURE.md version-history entries.
+ */
+define('RASTATIME_VERSION', '0.5');
 
 define('SAAS_PRODUCT_BRANDING_NAME', 'LibreTime');
 define('SAAS_LOGIN_REFERRER', 'https://libretime.org');

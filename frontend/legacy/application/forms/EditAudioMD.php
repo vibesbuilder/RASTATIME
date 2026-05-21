@@ -30,20 +30,25 @@ class Application_Form_EditAudioMD extends Zend_Form
         $artwork->setAttrib('class', 'artwork');
         $this->addElement($artwork);
 
-        // Set artwork hidden field
+        // Set artwork hidden field.
+        // RASTATIME bug fix: the upstream code first sets `->class = 'set_artwork_<id>'`
+        // and then overwrites it with `->setAttrib('class', 'set_artwork')` — that
+        // wipes out the per-track id-suffixed selector that library.js targets via
+        // `$('.set_artwork_' + id)`.  Without the id-suffix, the JS never finds the
+        // hidden input and the chosen artwork data-URI is never written into the
+        // form, so save submits an empty value.  We collapse both into a single
+        // setAttrib call that contains every class library.js / CSS may need.
         $set_artwork = new Zend_Form_Element_Hidden('set_artwork');
-        $set_artwork->class = 'input_text set_artwork_' . $p_id;
         $set_artwork->addDecorator('HtmlTag', ['tag' => 'div', 'style' => 'display:none']);
         $set_artwork->removeDecorator('Label');
-        $set_artwork->setAttrib('class', 'set_artwork');
+        $set_artwork->setAttrib('class', 'input_text set_artwork set_artwork_' . $p_id);
         $this->addElement($set_artwork);
 
-        // Remove artwork hidden field
+        // Remove artwork hidden field — same upstream class-overwrite bug as above.
         $remove_artwork = new Zend_Form_Element_Hidden('remove_artwork');
-        $remove_artwork->class = 'input_text remove_artwork_' . $p_id;
         $remove_artwork->addDecorator('HtmlTag', ['tag' => 'div', 'style' => 'display:none']);
         $remove_artwork->removeDecorator('Label');
-        $remove_artwork->setAttrib('class', 'remove_artwork');
+        $remove_artwork->setAttrib('class', 'input_text remove_artwork remove_artwork_' . $p_id);
         $this->addElement($remove_artwork);
 
         // Add title field
@@ -262,6 +267,24 @@ class Application_Form_EditAudioMD extends Zend_Form
         );
         $cueOut->setValidators([$cueOutValidator]);
         $this->addElement($cueOut);
+
+        // RASTATIME 2026-05-16 - Track Expiry: manual override of the
+        // expires_at value.  Accepts ISO 8601 date (YYYY-MM-DD) or empty
+        // (clears the expiry).  Auto-Expiry from a parent podcast will
+        // also write to this column at import time (precedence decision
+        // B); the operator can override either at edit time.
+        $expiresAt = new Zend_Form_Element_Text('expires_at');
+        $expiresAt->class = 'input_text';
+        $expiresAt->setLabel(_('Expiry Date:'));
+        $expiresAt->setDescription(_('Format: YYYY-MM-DD.  Empty = no expiry.'));
+        $expiresAt->setFilters(['StringTrim']);
+        $expiresAt->setValidators([
+            Application_Form_Helper_ValidationTypes::overrideRegexValidator(
+                '/^(\d{4}-\d{2}-\d{2})?$/',
+                _('Expiry date must be in YYYY-MM-DD format or empty.')
+            ),
+        ]);
+        $this->addElement($expiresAt);
 
         // Add the cancel button
         $this->addElement('button', 'editmdcancel', [

@@ -29,6 +29,18 @@ class ApiController extends Zend_Controller_Action
             'track',
             'track-types',
             'stream-m3u',
+            // RASTATIME: Icecast 2.5 URL-auth and event-bindings invoke
+            // these endpoints when DJ clients connect/disconnect to the
+            // /main or /show source mounts.  Icecast cannot supply an
+            // api_key, but check-live-stream-auth has its own
+            // username/password check, update-source-status is only
+            // ever called from the local Icecast instance, and
+            // icecast-listener-allow always replies "allowed" — the
+            // mounts are hidden+non-public, so listener access is
+            // gated by mount-name knowledge, not by credentials.
+            'check-live-stream-auth',
+            'update-source-status',
+            'icecast-listener-allow',
         ];
 
         if (Zend_Session::isStarted()) {
@@ -1103,33 +1115,152 @@ class ApiController extends Zend_Controller_Action
         Application_Model_Preference::setLiquidsoapError($stream_id, $msg, $boot_time);
     }
 
+    /**
+     * Listener-auth callback for Icecast.
+     *
+     * The /main and /show source mounts are configured with
+     * <authentication type="url"> in icecast.xml.  That auth block
+     * also gates listener (GET/HEAD) access — Icecast hits this
+     * endpoint via the `client_add` option for every listener
+     * request and forwards the listener's Basic-Auth user/pass as
+     * POST fields.
+     *
+     * Only the RASTATIME-PLAYOUT (which reads /main and /show as a
+     * listener to relay them onwards to the public outputs) is meant
+     * to be able to connect.  We compare the supplied credentials to
+     * the dedicated internal-listener user/password stored in
+     * libretime.conf under stream.internal_listener — anything else
+     * gets 401, even if the attacker guessed the mount name.
+     *
+     * Matters once the Icecast port is exposed to the public internet
+     * so external DJs can stream from home: hidden+non-public mount
+     * settings only stop directory listings, not URL probing.
+     *
+     * RASTATIME admin-bypass
+     * ----------------------
+     * The same auth block also gates /admin/* operations on these
+     * mounts (an Icecast quirk of the legacy <authentication type="url">
+     * syntax — the newer <role> syntax with allow-admin="*" would
+     * sidestep this, but it caused a different regression on our
+     * Icecast version).  Without a bypass, "Cancel Show" -> POST
+     * /admin/killsource?mount=/show with admin:admin would be routed
+     * through here as a listener add, and rejected, leaving the show
+     * DJ connected.
+     *
+     * We accept the Icecast admin credentials (default admin/admin —
+     * see icecast.xml <admin-user>/<admin-password>) when the request
+     * arrives from 127.0.0.1.  Externally that path is closed because
+     * Icecast forwards the real client IP in the `ip` POST param, and
+     * 127.0.0.1 only appears for in-host admin operations issued by
+     * RASTATIME-PLAYOUT itself.
+     */
+    public function icecastListenerAllowAction()
+    {
+        $expectedUser = Config::get('stream.internal_listener.user') ?? '';
+        $expectedPass = Config::get('stream.internal_listener.password') ?? '';
+
+        $providedUser = $this->_getParam('user', '');
+        $providedPass = $this->_getParam('pass', '');
+        $clientIp = $this->_getParam('ip', '');
+
+        $configValid = ($expectedUser !== '' && $expectedPass !== '');
+
+        // Normal listener auth — RASTATIME-PLAYOUT relay.
+        if (
+            $configValid
+            && $providedUser === $expectedUser
+            && $providedPass === $expectedPass
+        ) {
+            $this->_emitIcecastAuthAllow();
+
+            return;
+        }
+
+        // Localhost admin bypass — see PHPDoc above.  Hardcoded to match
+        // icecast.xml <admin-user>/<admin-password>; when those are
+        // rotated for production, update this pair to match.
+        $icecastAdminUser = 'admin';
+        $icecastAdminPass = 'admin';
+        if (
+            $clientIp === '127.0.0.1'
+            && $providedUser === $icecastAdminUser
+            && $providedPass === $icecastAdminPass
+        ) {
+            Logging::info(
+                'icecast-listener-allow: admin bypass for in-host admin '
+                . 'operation (e.g. Cancel Show killsource)'
+            );
+            $this->_emitIcecastAuthAllow();
+
+            return;
+        }
+
+        Logging::warn(sprintf(
+            'icecast-listener-allow: rejecting listener (user=%s, ip=%s, configured=%s)',
+            $providedUser ?: '(empty)',
+            $clientIp ?: '(unknown)',
+            $configValid ? 'yes' : 'no'
+        ));
+        $this->getResponse()->setHttpResponseCode(401);
+    }
+
+    /**
+     * Emit the success response Icecast expects from a listener-auth URL.
+     *
+     * RASTATIME 2026-05-13 — Phase B.4 follow-up.
+     *
+     * For Icecast 2.4 the ``icecast-auth-user: 1`` HTTP header was the
+     * only required success indicator.  Icecast **2.5** changed the
+     * legacy-url-auth parser: if the response body does not also carry
+     * the same ``key: value`` pairs as ``icecast-auth-*`` lines (one
+     * per line), Icecast logs:
+     *
+     *   auth_url.c  client auth (...) failed with "", (curl: No error)
+     *
+     * and rejects the listener — even though the HTTP layer reports
+     * 200.  The response body is the canonical channel in 2.5; the
+     * header set is now redundant but kept for backwards compat.
+     *
+     * The empty-body symptom presented as ALL listener connects to
+     * /main and /show silently failing with HTTP 404 (Icecast hides
+     * mount existence on auth failure for hidden mounts).
+     */
+    private function _emitIcecastAuthAllow(): void
+    {
+        $resp = $this->getResponse();
+        $resp->setHeader('icecast-auth-user', '1');
+        $resp->setHttpResponseCode(200);
+        // The body MUST match the headers — Icecast 2.5 reads here:
+        $resp->setBody(
+            "icecast-auth-user: 1\nicecast-auth-message: OK\n"
+        );
+    }
+
+    /**
+     * RASTATIME 2026-05-14 — dead-code stub.
+     *
+     * This action used to be the LibreTime callback that Liquidsoap /
+     * Pypo hit on source-state changes.  It fanned out RabbitMQ
+     * messages and flipped cc_pref rows.  Three of its hard
+     * dependencies are gone:
+     *
+     *   * Liquidsoap removed (ADR-002)
+     *   * RabbitMQ / Pypo removed (replaced by direct-to-:8770
+     *     source-event wiring; see icecast.xml + source_switcher.py)
+     *   * GetAutoTransition / GetAutoSwitch removed alongside the
+     *     Live-Broadcasting auto-switch UI checkboxes
+     *
+     * The endpoint is still wired in this controller's allow-list
+     * (lines around 36-78 above) and v1 API client still posts to it,
+     * but the body is a no-op now to avoid fatal PHP errors from the
+     * removed dependencies.  Kept as a stub for v1-API-client
+     * backwards compatibility; can be removed entirely once the v1
+     * client stops calling it (the playout's :8770 source-switcher
+     * subsumes the function).
+     */
     public function updateSourceStatusAction()
     {
-        $request = $this->getRequest();
-
-        $sourcename = $request->getParam('sourcename');
-        $status = $request->getParam('status');
-
-        // on source disconnection sent msg to pypo to turn off the switch
-        // Added AutoTransition option
-        if ($status == 'false' && Application_Model_Preference::GetAutoTransition()) {
-            $data = ['sourcename' => $sourcename, 'status' => 'off'];
-            Application_Model_RabbitMq::SendMessageToPypo('switch_source', $data);
-            Application_Model_Preference::SetSourceSwitchStatus($sourcename, 'off');
-            Application_Model_LiveLog::SetEndTime(
-                $sourcename == 'scheduled_play' ? 'S' : 'L',
-                new DateTime('now', new DateTimeZone('UTC'))
-            );
-        } elseif ($status == 'true' && Application_Model_Preference::GetAutoSwitch()) {
-            $data = ['sourcename' => $sourcename, 'status' => 'on'];
-            Application_Model_RabbitMq::SendMessageToPypo('switch_source', $data);
-            Application_Model_Preference::SetSourceSwitchStatus($sourcename, 'on');
-            Application_Model_LiveLog::SetNewLogTime(
-                $sourcename == 'scheduled_play' ? 'S' : 'L',
-                new DateTime('now', new DateTimeZone('UTC'))
-            );
-        }
-        Application_Model_Preference::SetSourceStatus($sourcename, $status);
+        // no-op
     }
 
     /* This action is for use by our dev scripts, that make
@@ -1156,14 +1287,25 @@ class ApiController extends Zend_Controller_Action
         $this->view->transition_fade = Application_Model_Preference::GetDefaultTransitionFade();
     }
 
-    // This is used but Liquidsoap to check authentication of live streams
+    // Used by Icecast 2.5 URL-auth (and historically Liquidsoap) to verify
+    // live-stream source connections.  Icecast's <role type="url"> auth
+    // sends user/pass form-encoded as `user` / `pass`; legacy clients use
+    // `username` / `password`.  Accept both, and return an HTTP 401 on
+    // denial so Icecast actually rejects the source attempt — by default
+    // Zend would always emit HTTP 200 regardless of $this->view->msg.
     public function checkLiveStreamAuthAction()
     {
         $request = $this->getRequest();
 
         $username = $request->getParam('username');
+        if (!$username) { $username = $request->getParam('user'); }
+
         $password = $request->getParam('password');
+        if (!$password) { $password = $request->getParam('pass'); }
+
         $djtype = $request->getParam('djtype');
+
+        $authorised = false;
 
         if ($djtype == 'master') {
             // check against master
@@ -1171,6 +1313,7 @@ class ApiController extends Zend_Controller_Action
                 $username == Application_Model_Preference::GetLiveStreamMasterUsername()
                 && $password == Application_Model_Preference::GetLiveStreamMasterPassword()
             ) {
+                $authorised = true;
                 $this->view->msg = true;
             } else {
                 $this->view->msg = false;
@@ -1197,7 +1340,14 @@ class ApiController extends Zend_Controller_Action
                     foreach ($hosts_ids as $host) {
                         $h = new Application_Model_User($host['subjs_id']);
                         if ($username == $h->getLogin() && md5($password) == $h->getPassword()) {
+                            $authorised = true;
                             $this->view->msg = true;
+                            // Set Icecast's expected auth header right here —
+                            // the early `return` below skips the unified
+                            // post-processing block at the end of the
+                            // function, so we have to set it inline.
+                            $this->getResponse()->setHeader('icecast-auth-user', '1');
+                            $this->getResponse()->setHttpResponseCode(200);
 
                             return;
                         }
@@ -1206,6 +1356,7 @@ class ApiController extends Zend_Controller_Action
                 // check against custom auth
                 if ($CcShow->getDbLiveStreamUsingCustomAuth()) {
                     if ($username == $custom_user && $password == $custom_pass) {
+                        $authorised = true;
                         $this->view->msg = true;
                     } else {
                         $this->view->msg = false;
@@ -1217,6 +1368,17 @@ class ApiController extends Zend_Controller_Action
                 // no show is currently playing
                 $this->view->msg = false;
             }
+        }
+
+        // Icecast 2.5 URL-auth contract: the response MUST contain the
+        // header `icecast-auth-user: 1` for the source connection to be
+        // accepted.  HTTP 200 alone is not enough — Icecast defaults to
+        // rejecting sources when the expected header is absent.
+        // Anything else (missing header, HTTP 401, etc.) -> denied.
+        if ($authorised) {
+            $this->getResponse()->setHeader('icecast-auth-user', '1');
+        } else {
+            $this->getResponse()->setHttpResponseCode(401);
         }
     }
 
@@ -1588,6 +1750,51 @@ class ApiController extends Zend_Controller_Action
 
         $hint = Application_Common_UsabilityHints::getUsabilityHint($userPath);
         $this->_helper->json->sendJson($hint);
+    }
+
+    /**
+     * RASTATIME 2026-05-13 — Phase B.4 #2 Frontend banner.
+     *
+     * Proxy for the Django pre-flight-warnings endpoint, used by the
+     * dashboard banner JS to show operator warnings about upcoming
+     * shows (e.g. Line-In device unavailable).
+     *
+     * Why proxy instead of fetching directly from JS:
+     *   * Keeps the v2 API contractually a same-host service — no CORS
+     *     headers to maintain, no Api-Key exposure to the browser.
+     *   * Matches the pattern of getUsabilityHintAction / LineinController
+     *     — all PHP→Django calls go through localhost cURL.
+     *
+     * Response format
+     * ----------------
+     * {"warnings": [ <warning>, ... ]}
+     *
+     * On any cURL or Django error we deliberately return an empty
+     * warnings list rather than 5xx — the banner is a "nice-to-have"
+     * dashboard widget and must never block the page from rendering.
+     */
+    public function getPreflightWarningsAction()
+    {
+        $curl = curl_init('http://127.0.0.1:8765/api/v2/preflight/warnings');
+        curl_setopt_array($curl, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT        => 3,
+            CURLOPT_CONNECTTIMEOUT => 2,
+        ]);
+        $body   = curl_exec($curl);
+        $status = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        curl_close($curl);
+
+        if ($status !== 200 || $body === false) {
+            $this->_helper->json->sendJson(['warnings' => []]);
+            return;
+        }
+
+        $decoded  = json_decode($body, true);
+        $warnings = (is_array($decoded) && isset($decoded['warnings']))
+            ? $decoded['warnings']
+            : [];
+        $this->_helper->json->sendJson(['warnings' => $warnings]);
     }
 
     public function streamM3uAction()

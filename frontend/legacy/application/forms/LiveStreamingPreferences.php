@@ -10,17 +10,16 @@ class Application_Form_LiveStreamingPreferences extends Zend_Form_SubForm
             ['ViewScript', ['viewScript' => 'form/preferences_livestream.phtml']],
         ]);
 
-        // automatic transition on source disconnection
-        $auto_transition = new Zend_Form_Element_Checkbox('auto_transition');
-        $auto_transition->setLabel(_('Auto Switch Off:'))
-            ->setValue(Application_Model_Preference::GetAutoTransition());
-        $this->addElement($auto_transition);
-
-        // automatic switch on upon source connection
-        $auto_switch = new Zend_Form_Element_Checkbox('auto_switch');
-        $auto_switch->setLabel(_('Auto Switch On:'))
-            ->setValue(Application_Model_Preference::GetAutoSwitch());
-        $this->addElement($auto_switch);
+        // RASTATIME 2026-05-14 — the upstream "Auto Switch On" /
+        // "Auto Switch Off" checkboxes were removed.  In LibreTime
+        // their only effect path was ApiController::updateSourceStatusAction
+        // sending RabbitMQ messages to the Pypo/Liquidsoap playout —
+        // both removed in ADR-002.  The SourceSwitcher in
+        // backend/playout/libretime_playout/source_switcher.py now
+        // performs the equivalent transitions unconditionally
+        // (Master > Show > Scheduled).  Re-introducing operator gates
+        // requires real Use-Case input first; see CHANGELOG entry for
+        // the removal rationale.
 
         // Default transition fade
         $transition_fade = new Zend_Form_Element_Text('transition_fade');

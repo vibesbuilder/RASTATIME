@@ -497,10 +497,20 @@ SQL;
 
     /**
      * Check whether the current show originated
-     * from a recording.
+     * RASTATIME 2026-05-17 - Phase B: semantic change.  This method
+     * still returns true iff any non-modified instance of this show
+     * has cc_show_instances.record = 1.  The MEANING of that flag
+     * changed in RASTATIME though: it no longer means "this show is
+     * a Liquidsoap line-in recording with no schedule items"; it
+     * means "tap the on-air output to a file in parallel while the
+     * show airs normally" (see ARCHITECTURE Section 23.13).  Upstream
+     * callers that gated normal scheduling on !isRecorded() were
+     * dropped in the same change; remaining callers are the form
+     * pre-fill paths (which legitimately want to know "is the
+     * record-this-show checkbox currently on") and the calendar
+     * rebroadcast-conflict check.
      *
-     * @return bool
-     *              true if originated from recording, otherwise false
+     * @return bool true if the show is flagged for recording
      */
     public function isRecorded()
     {

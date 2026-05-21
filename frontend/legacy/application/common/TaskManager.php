@@ -327,6 +327,196 @@ class StationPodcastTask implements AirtimeTask
 }
 
 /**
+ * Class TrackExpiryTask.
+ *
+ * RASTATIME 2026-05-16 - Shared pruner for the Track-Expiry and
+ * Podcast-Auto-Expiry features.  Once per hour, walks cc_files for
+ * rows where expires_at < NOW() and disabled = false, and flips
+ * disabled = true.  Disabled tracks remain visible in the Library
+ * and in already-built Smartblocks (so already-scheduled shows keep
+ * playing them); they are excluded from NEW Smartblock evaluations
+ * via a "disabled = false" filter on the criteria query.
+ *
+ * The "last run" timestamp is stored in cc_pref.track_expiry_last_run
+ * via the Preference accessors below.
+ */
+class TrackExpiryTask implements AirtimeTask
+{
+    public const TRACK_EXPIRY_INTERVAL_SECONDS = 3600;  // 1 hour
+
+    public function shouldBeRun()
+    {
+        $lastRun = Application_Model_Preference::getTrackExpiryLastRun();
+        return empty($lastRun)
+            || (microtime(true) > $lastRun + self::TRACK_EXPIRY_INTERVAL_SECONDS);
+    }
+
+    public function run()
+    {
+        try {
+            $con = Propel::getConnection();
+            // Atomic SQL: disable every still-enabled file whose
+            // expires_at has passed.  Returns the count for logging.
+            $stmt = $con->prepare(
+                'UPDATE cc_files
+                 SET disabled = true
+                 WHERE expires_at IS NOT NULL
+                   AND expires_at < NOW()
+                   AND disabled = false'
+            );
+            $stmt->execute();
+            $rows = $stmt->rowCount();
+            if ($rows > 0) {
+                Logging::info("TrackExpiryTask: disabled {$rows} expired files");
+            }
+        } catch (Exception $exc) {
+            Logging::error('TrackExpiryTask failed: ' . $exc->getMessage());
+        }
+        Application_Model_Preference::setTrackExpiryLastRun(microtime(true));
+    }
+}
+
+/**
+ * Class LocalImportScanTask.
+ *
+ * RASTATIME 2026-05-16 - Drop-folder importer.  Every 5 minutes (and
+ * on-demand via Settings -> Local Machine -> "Scan Now") walks the
+ * operator-configured Local Import Folder, hands each audio file to
+ * the standard import pipeline (CcFiles::createAndImport -> organize
+ * -> analyzer -> cc_files), and deletes the source after the attempt
+ * - successful OR failed.  Spec call-out: a permanently-broken file
+ * must NOT pile up forever in the drop-folder; it gets deleted on the
+ * first attempt so the next scan does not re-try it.
+ *
+ * Single configured folder, not a list.  Non-audio files are left
+ * untouched (operator may have placed them there accidentally; we
+ * only own audio files).
+ *
+ * See ARCHITECTURE Section 23.12 for the design notes (single folder,
+ * Option A "copy/move to storage", drop-folder delete-after-attempt,
+ * future Option C as a possible extension).
+ */
+class LocalImportScanTask implements AirtimeTask
+{
+    public const LOCAL_IMPORT_INTERVAL_SECONDS = 300;  // 5 minutes
+    public const AUDIO_EXTENSIONS = ['mp3', 'wav', 'm4a', 'flac', 'ogg', 'oga', 'aac', 'opus'];
+
+    public function shouldBeRun()
+    {
+        $folder = Application_Model_Preference::getLocalImportFolder();
+        if (empty($folder)) {
+            return false;  // disabled
+        }
+        $lastRun = Application_Model_Preference::getLocalImportLastRun();
+        return empty($lastRun)
+            || (microtime(true) > $lastRun + self::LOCAL_IMPORT_INTERVAL_SECONDS);
+    }
+
+    public function run()
+    {
+        $folder = Application_Model_Preference::getLocalImportFolder();
+        if (empty($folder)) {
+            return;
+        }
+        self::scanOnce($folder);
+    }
+
+    /**
+     * Walk the given folder once, import every audio file, delete the
+     * source after each attempt (success or failure), and persist the
+     * last-run timestamp + a short human-readable status string.
+     *
+     * Static so the "Scan Now" UI button (PreferenceController action)
+     * can reuse the exact same path - one source of truth for the
+     * importer logic.
+     *
+     * @param  string $folder absolute path on the RASTATIME host
+     * @return array  ['imported' => int, 'failed' => int, 'skipped' => int]
+     */
+    public static function scanOnce($folder)
+    {
+        $imported = 0;
+        $failed = 0;
+        $skipped = 0;
+
+        Application_Model_Preference::setLocalImportLastRun(time());
+
+        if (!is_dir($folder)) {
+            $msg = 'Folder missing or unreadable: ' . $folder;
+            Logging::warn('LocalImportScanTask: ' . $msg);
+            Application_Model_Preference::setLocalImportLastStatus($msg);
+            return compact('imported', 'failed', 'skipped');
+        }
+
+        $entries = @scandir($folder);
+        if ($entries === false) {
+            $msg = 'scandir failed for: ' . $folder;
+            Logging::warn('LocalImportScanTask: ' . $msg);
+            Application_Model_Preference::setLocalImportLastStatus($msg);
+            return compact('imported', 'failed', 'skipped');
+        }
+
+        foreach ($entries as $name) {
+            if ($name === '.' || $name === '..') {
+                continue;
+            }
+            $fullPath = $folder . DIRECTORY_SEPARATOR . $name;
+            if (!is_file($fullPath)) {
+                continue;  // ignore subdirs
+            }
+            $ext = strtolower(pathinfo($name, PATHINFO_EXTENSION));
+            if (!in_array($ext, self::AUDIO_EXTENSIONS, true)) {
+                // Non-audio: leave it (operator may have placed
+                // intentionally; we don't own arbitrary files).
+                $skipped++;
+                continue;
+            }
+
+            // Hand the file to the standard upload pipeline.  This
+            // (a) creates a CcFiles row with import_status=PENDING,
+            // (b) moves the file to <storage>/organize/, and
+            // (c) signals the analyzer via RabbitMQ.
+            //
+            // We use the dedicated createFromImportFolder() wrapper
+            // (NOT createFromLocalFile, which has an upstream
+            // double-extension bug, and NOT createAndImport directly
+            // because that one is private to CcFiles).
+            //
+            // Because moveFileToStor() uses rename() under the hood,
+            // the source is removed by the move itself - we do NOT
+            // need an explicit unlink() after a successful import.
+            //
+            // For failures (bad extension, permission denied,
+            // analyzer signal failure), we DO delete the source
+            // explicitly so the broken file does not pile up.
+            try {
+                CcFiles::createFromImportFolder($fullPath, $name, false);
+                $imported++;
+                Logging::info('LocalImportScanTask: imported ' . $name);
+            } catch (Exception $exc) {
+                $failed++;
+                Logging::warn(
+                    'LocalImportScanTask: import failed for ' . $name
+                    . ': ' . $exc->getMessage() . ' (deleting source)'
+                );
+                @unlink($fullPath);
+            }
+        }
+
+        $status = sprintf(
+            'imported %d, failed %d, skipped %d',
+            $imported, $failed, $skipped
+        );
+        Application_Model_Preference::setLocalImportLastStatus($status);
+        if ($imported > 0 || $failed > 0) {
+            Logging::info('LocalImportScanTask: ' . $status);
+        }
+
+        return compact('imported', 'failed', 'skipped');
+    }
+}
+
+/**
  * Class TaskFactory Factory class to abstract task instantiation.
  */
 class TaskFactory
