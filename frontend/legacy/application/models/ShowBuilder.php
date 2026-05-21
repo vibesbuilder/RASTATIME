@@ -79,10 +79,12 @@ class Application_Model_ShowBuilder
     // check to see if this row should be editable by the user.
     private function isAllowed($p_item, &$row)
     {
-        // cannot schedule in a recorded show.
-        if (intval($p_item['si_record']) === 1) {
-            return;
-        }
+        // RASTATIME 2026-05-17 - Phase B: record-per-show semantic
+        // (Section 23.13).  Upstream early-returned here for
+        // si_record == 1 because "recorded show" meant "Liquidsoap
+        // line-in recording, no track scheduling allowed".  RASTATIME's
+        // record flag now just toggles a parallel output-tap recorder
+        // and does not constrain scheduling; the early return is gone.
 
         if ($this->currentShow) {
             $this->currentShowId = $p_item['show_id'];
@@ -210,9 +212,11 @@ class Application_Model_ShowBuilder
             $time = $dt->format('Y-m-d H:i');
 
             $row['rebroadcast_title'] = sprintf(_('Rebroadcast of %s from %s'), $name, $time);
-        } elseif (intval($p_item['si_record']) === 1) {
-            $row['record'] = true;
         }
+        // RASTATIME 2026-05-17 - the upstream elseif here set
+        // $row['record'] = true so the showbuilder JS would render
+        // "Recording From Line In".  Removed: record-per-show is now
+        // a parallel output-tap, not a special show kind.
 
         if ($startsEpoch < $this->epoch_now && $endsEpoch > $this->epoch_now) {
             $row['currentShow'] = true;
@@ -297,19 +301,10 @@ class Application_Model_ShowBuilder
 
             $this->contentDT = $schedEndDT;
         }
-        // show is empty or is a special kind of show (recording etc)
-        elseif (intval($p_item['si_record']) === 1) {
-            $row['record'] = true;
-            $row['instance'] = intval($p_item['si_id']);
-
-            $showStartDT = new DateTime($p_item['si_starts'], new DateTimeZone('UTC'));
-            $showEndDT = new DateTime($p_item['si_ends'], new DateTimeZone('UTC'));
-
-            $startsEpoch = floatval($showStartDT->format('U.u'));
-            $endsEpoch = floatval($showEndDT->format('U.u'));
-
-            $this->getScheduledStatus($startsEpoch, $endsEpoch, $row);
-        } else {
+        // RASTATIME 2026-05-17 - record-per-show no longer produces a
+        // "special kind of show" placeholder row; a recorded show
+        // with no schedule items renders as a regular empty show.
+        else {
             $row['empty'] = true;
             $row['id'] = 0;
             $row['instance'] = intval($p_item['si_id']);
@@ -362,9 +357,9 @@ class Application_Model_ShowBuilder
         $this->getScheduledStatus($startsEpoch, $endsEpoch, $row);
         $this->isAllowed($p_item, $row);
 
-        if (intval($p_item['si_record']) === 1) {
-            $row['record'] = true;
-        }
+        // RASTATIME 2026-05-17 - record flag is no longer surfaced to
+        // the showbuilder UI: the recorder runs in the background and
+        // does not change how show rows render.
 
         return $row;
     }

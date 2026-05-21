@@ -24,15 +24,13 @@ class Application_Model_Dashboard
             ];
         }
         if (count($row) == 0) {
-            if ($showInstance->isRecorded()) {
-                // last item is a show instance
-                return [
-                    'name' => $showInstance->getName(),
-                    'starts' => $showInstance->getShowInstanceStart(),
-                    'ends' => $showInstance->getShowInstanceEnd(),
-                ];
-            }
-
+            // RASTATIME 2026-05-17 - Phase B: record-per-show semantic
+            // (Section 23.13).  Upstream returned the show's own name
+            // here ("Recording From Line In" placeholder) when the
+            // show was a Liquidsoap line-in-recording with no schedule
+            // items.  RASTATIME's record flag now means "tap the
+            // on-air output to a file", not "show IS a recording".
+            // An empty show with no schedule items is just empty.
             return null;
         }
         // return the one that started later.
@@ -81,17 +79,9 @@ class Application_Model_Dashboard
             ];
         }
         if (count($row) == 0) {
-            // last item is a show instance
-            if ($showInstance->isRecorded()) {
-                return [
-                    'name' => $showInstance->getName(),
-                    'starts' => $showInstance->getShowInstanceStart(),
-                    'ends' => $showInstance->getShowInstanceEnd(),
-                    'media_item_played' => false,
-                    'record' => true,
-                ];
-            }
-
+            // RASTATIME 2026-05-17 - Phase B: record-per-show semantic
+            // (Section 23.13).  See GetPreviousItem above for why the
+            // upstream Linein-recording branch was removed.
             return null;
         }
 
@@ -128,15 +118,8 @@ class Application_Model_Dashboard
             ];
         }
         if (count($row) == 0) {
-            if ($showInstance->isRecorded()) {
-                // last item is a show instance
-                return [
-                    'name' => $showInstance->getName(),
-                    'starts' => $showInstance->getShowInstanceStart(),
-                    'ends' => $showInstance->getShowInstanceEnd(),
-                ];
-            }
-
+            // RASTATIME 2026-05-17 - Phase B: record-per-show semantic
+            // (Section 23.13).  See GetPreviousItem above.
             return null;
         }
         // return the one that starts sooner.

@@ -39,45 +39,37 @@ class Application_Service_CalendarService
         $start = $startDT->getTimestamp();
         $end = $endDT->getTimestamp();
 
+        // RASTATIME 2026-05-17 - Phase B: record-per-show semantic
+        // (Section 23.13).  Upstream branched the entire menu on
+        // ccShowInstance->isRecorded() because "recorded" meant
+        // "this show IS a Liquidsoap line-in recording, no schedule
+        // items".  RASTATIME's record flag now means "tap the on-air
+        // output to a file in parallel" — the show is otherwise a
+        // normal scheduled show.  All the "if (!isRecorded())"
+        // gates that used to hide Schedule Tracks / View / Clear /
+        // Cancel are dropped; the recorded-file-metadata view is
+        // also dropped because recordings are not auto-imported as
+        // cc_files rows.
         // show has ended
         if ($now > $end) {
-            if ($this->ccShowInstance->isRecorded()) {
-                $ccFile = $this->ccShowInstance->getCcFiles();
-                if (!isset($ccFile)) {
-                    $menu['error when recording'] = [
-                        'name' => _("Record file doesn't exist"),
-                        'icon' => 'error',
-                    ];
-                } else {
-                    $menu['view_recorded'] = [
-                        'name' => _('View Recorded File Metadata'),
-                        'icon' => 'overview',
-                        'url' => $baseUrl . 'library/edit-file-md/id/' . $ccFile->getDbId(),
-                    ];
-                }
-            } else {
-                $menu['content'] = [
-                    // "name"=> _("Show Content"),
-                    'name' => _('View'),
-                    'icon' => 'overview',
-                    'url' => $baseUrl . 'schedule/show-content-dialog',
-                ];
-            }
+            $menu['content'] = [
+                'name' => _('View'),
+                'icon' => 'overview',
+                'url' => $baseUrl . 'schedule/show-content-dialog',
+            ];
         } else {
             // Show content can be modified from the calendar if:
-            // the user is admin or hosting the show,
-            // the show is not recorded
+            // the user is admin or hosting the show.
             $currentShow = Application_Model_Show::getCurrentShow();
             $currentShowId = count($currentShow) == 1 ? $currentShow[0]['id'] : null;
             $showIsLinked = $this->ccShow->isLinked();
 
             // user can add/remove content if the show has not ended
-            if ($now < $end && ($isAdminOrPM || $isHostOfShow) && !$this->ccShowInstance->isRecorded()) {
+            if ($now < $end && ($isAdminOrPM || $isHostOfShow)) {
                 // if the show is not linked OR if the show is linked AND not the current playing show
                 // the user can add/remove content
                 if (!$showIsLinked || ($showIsLinked && $currentShowId != $this->ccShow->getDbId())) {
                     $menu['schedule'] = [
-                        // "name"=> _("Add / Remove Content"),
                         'name' => _('Schedule Tracks'),
                         'icon' => 'add-remove-content',
                         'url' => $baseUrl . 'showbuilder/builder-dialog/',
@@ -85,24 +77,18 @@ class Application_Service_CalendarService
                 }
             }
 
-            // "Show Content" should be a menu item at all times except when
-            // the show is recorded
-            if (!$this->ccShowInstance->isRecorded()) {
-                $menu['content'] = [
-                    // "name"=> _("Show Content"),
-                    'name' => _('View'),
-                    'icon' => 'overview',
-                    'url' => $baseUrl . 'schedule/show-content-dialog',
-                ];
-            }
+            $menu['content'] = [
+                'name' => _('View'),
+                'icon' => 'overview',
+                'url' => $baseUrl . 'schedule/show-content-dialog',
+            ];
 
             // user can remove all content if the show has not started
-            if ($now < $start && ($isAdminOrPM || $isHostOfShow) && !$this->ccShowInstance->isRecorded()) {
+            if ($now < $start && ($isAdminOrPM || $isHostOfShow)) {
                 // if the show is not linked OR if the show is linked AND not the current playing show
                 // the user can remove all content
                 if (!$showIsLinked || ($showIsLinked && $currentShowId != $this->ccShow->getDbId())) {
                     $menu['clear'] = [
-                        // "name"=> _("Remove All Content"),
                         'name' => _('Clear Show'),
                         'icon' => 'remove-all-content',
                         'url' => $baseUrl . 'schedule/clear-show',
@@ -114,20 +100,10 @@ class Application_Service_CalendarService
             if ($start <= $now && $now < $end && $isAdminOrPM) {
                 // Menu separator
                 $menu['sep1'] = '-----------';
-
-                if ($this->ccShowInstance->isRecorded()) {
-                    $menu['cancel_recorded'] = [
-                        // "name"=> _("Cancel Current Show"),
-                        'name' => _('Cancel Show'),
-                        'icon' => 'delete',
-                    ];
-                } else {
-                    $menu['cancel'] = [
-                        // "name"=> _("Cancel Current Show"),
-                        'name' => _('Cancel Show'),
-                        'icon' => 'delete',
-                    ];
-                }
+                $menu['cancel'] = [
+                    'name' => _('Cancel Show'),
+                    'icon' => 'delete',
+                ];
             }
 
             $excludeIds = $this->ccShow->getEditedRepeatingInstanceIds();

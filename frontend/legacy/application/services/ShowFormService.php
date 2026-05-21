@@ -430,7 +430,12 @@ class Application_Service_ShowFormService
             ]
         );
 
-        $form->getElement('add_show_record')->setOptions(['disabled' => true]);
+        // RASTATIME 2026-05-17 - Phase B: record-per-show semantic
+        // (Section 23.13).  Upstream disabled the checkbox once the
+        // show existed so the Liquidsoap linein-recording mode could
+        // not be toggled mid-flight.  No longer applies — the
+        // output-tap recorder is a parallel concern; the operator
+        // can flip it on or off freely between shows.
     }
 
     private function populateFormRebroadcastRelative($form)
@@ -624,8 +629,45 @@ class Application_Service_ShowFormService
             }
         }
 
-        return $what && $autoplaylist && $live && $record && $who && $style && $when
+        // RASTATIME 2026-05-17 — sub-form-level diagnostic.  When the
+        // edit-show form refused a save, the operator log only showed
+        // "validateShowForms returned FALSE" with no clue which field
+        // was the problem.  Log the individual results + the offending
+        // field messages so the root cause is greppable.
+        $result = $what && $autoplaylist && $live && $record && $who && $style && $when
             && $repeats && $absRebroadcast && $rebroadcast;
+        if (!$result) {
+            $bits = [
+                'what'           => $what ? '1' : '0',
+                'autoplaylist'   => $autoplaylist ? '1' : '0',
+                'live'           => $live ? '1' : '0',
+                'record'         => $record ? '1' : '0',
+                'who'            => $who ? '1' : '0',
+                'style'          => $style ? '1' : '0',
+                'when'           => $when ? '1' : '0',
+                'repeats'        => $repeats ? '1' : '0',
+                'absRebroadcast' => $absRebroadcast ? '1' : '0',
+                'rebroadcast'    => $rebroadcast ? '1' : '0',
+            ];
+            $summary = '';
+            foreach ($bits as $name => $val) {
+                $summary .= $name . '=' . $val . ' ';
+            }
+            Logging::warn('validateShowForms FALSE: ' . trim($summary));
+            // Dump the offending form's error messages.
+            foreach (['what', 'autoplaylist', 'live', 'record', 'who',
+                      'style', 'repeats'] as $fkey) {
+                if (isset($forms[$fkey]) && method_exists($forms[$fkey], 'getMessages')) {
+                    $msgs = $forms[$fkey]->getMessages();
+                    if (!empty($msgs)) {
+                        Logging::warn(
+                            "validateShowForms: $fkey errors = " . json_encode($msgs)
+                        );
+                    }
+                }
+            }
+        }
+        return $result;
     }
 
     public function calculateDuration($start, $end, $timezone)
