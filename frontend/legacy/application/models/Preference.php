@@ -443,6 +443,81 @@ class Application_Model_Preference
         self::setValue('outro_playlist', $playlist);
     }
 
+    // RASTATIME 2026-05-21 — Section 23.20.  Auto-DJ feature settings.
+    // Stored in cc_pref as plain key/value rows (no schema change).
+    // Keys:
+    //   auto_dj_enabled         "true" / "false"   on/off master switch
+    //   auto_dj_show_name       string             default name for auto-created shows
+    //   auto_dj_playlist_id     integer            cc_playlist.id of the filler playlist
+    //   auto_dj_fill_any_show   "true" / "false"   if on, fill incomplete shows after auto-build
+    //   auto_dj_logo_path       string             absolute path to default show logo image
+    public static function GetAutoDjEnabled()
+    {
+        return self::getValue('auto_dj_enabled') === 'true';
+    }
+
+    public static function SetAutoDjEnabled($enabled)
+    {
+        self::setValue('auto_dj_enabled', $enabled ? 'true' : 'false');
+    }
+
+    public static function GetAutoDjShowName()
+    {
+        $name = self::getValue('auto_dj_show_name');
+        return $name === '' ? 'Auto DJ' : $name;
+    }
+
+    public static function SetAutoDjShowName($name)
+    {
+        self::setValue('auto_dj_show_name', (string) $name);
+    }
+
+    public static function GetAutoDjPlaylistId()
+    {
+        $id = self::getValue('auto_dj_playlist_id');
+        return ($id === '' || $id === null) ? null : (int) $id;
+    }
+
+    public static function SetAutoDjPlaylistId($id)
+    {
+        self::setValue('auto_dj_playlist_id', $id === null ? '' : (string) (int) $id);
+    }
+
+    public static function GetAutoDjFillAnyShow()
+    {
+        return self::getValue('auto_dj_fill_any_show') === 'true';
+    }
+
+    public static function SetAutoDjFillAnyShow($enabled)
+    {
+        self::setValue('auto_dj_fill_any_show', $enabled ? 'true' : 'false');
+    }
+
+    public static function GetAutoDjLogoPath()
+    {
+        return self::getValue('auto_dj_logo_path');
+    }
+
+    public static function SetAutoDjLogoPath($path)
+    {
+        self::setValue('auto_dj_logo_path', (string) $path);
+    }
+
+    // RASTATIME 2026-05-21 — Section 23.20 v2.  Additional show-detail
+    // defaults that AutoDjService stamps onto each auto-created show.
+    // All optional; missing/empty values are passed through as empty
+    // strings to ShowService and silently ignored by Propel's setters.
+    public static function GetAutoDjShowUrl()             { return self::getValue('auto_dj_show_url'); }
+    public static function SetAutoDjShowUrl($v)           { self::setValue('auto_dj_show_url',         (string) $v); }
+    public static function GetAutoDjShowGenre()           { return self::getValue('auto_dj_show_genre'); }
+    public static function SetAutoDjShowGenre($v)         { self::setValue('auto_dj_show_genre',       (string) $v); }
+    public static function GetAutoDjShowDescription()     { return self::getValue('auto_dj_show_description'); }
+    public static function SetAutoDjShowDescription($v)   { self::setValue('auto_dj_show_description', (string) $v); }
+    public static function GetAutoDjShowBgColor()         { return self::getValue('auto_dj_show_bg_color'); }
+    public static function SetAutoDjShowBgColor($v)       { self::setValue('auto_dj_show_bg_color',    (string) $v); }
+    public static function GetAutoDjShowTextColor()       { return self::getValue('auto_dj_show_text_color'); }
+    public static function SetAutoDjShowTextColor($v)     { self::setValue('auto_dj_show_text_color',  (string) $v); }
+
     public static function SetPhone($phone)
     {
         self::setValue('phone', $phone);
@@ -579,7 +654,10 @@ class Application_Model_Preference
 
     public static function GetDefaultLocale()
     {
-        return self::getValue('locale');
+        // T20.1 — fall back to 'en_US' when cc_pref has no locale row yet
+        // (e.g. fresh install without data.sql, or row deleted by mistake).
+        $locale = self::getValue('locale');
+        return empty($locale) ? 'en_US' : $locale;
     }
 
     public static function GetUserLocale()
@@ -635,6 +713,80 @@ class Application_Model_Preference
         $image = @file_get_contents(ROOT_PATH . '/public/' . DEFAULT_LOGO_FILE);
 
         return base64_encode($image);
+    }
+
+    /**
+     * RASTATIME 2026-05-15 - Favicon stored as a base64-encoded blob plus its
+     * MIME type, both in cc_pref.  Render path emits a data: URI link.  Empty
+     * value falls back to the static public/favicon.ico (legacy behaviour).
+     *
+     * @param string $imagePath path to the uploaded file (empty string clears the favicon)
+     */
+    public static function SetStationFavicon($imagePath)
+    {
+        if (empty($imagePath)) {
+            Logging::info('Removed station favicon');
+            self::setValue('station_favicon', '');
+            self::setValue('station_favicon_mime', '');
+            return;
+        }
+        $bytes = @file_get_contents($imagePath);
+        if ($bytes === false || $bytes === '') {
+            Logging::warn('SetStationFavicon: could not read ' . $imagePath);
+            return;
+        }
+        // Detect MIME type.  getimagesize() recognises PNG/JPEG/GIF/etc.
+        // For .ico we fall back to a static MIME since getimagesize does not
+        // identify it reliably on every PHP build.
+        $mime = '';
+        $info = @getimagesize($imagePath);
+        if ($info !== false && !empty($info['mime'])) {
+            $mime = $info['mime'];
+        } else {
+            $ext = strtolower(pathinfo($imagePath, PATHINFO_EXTENSION));
+            if ($ext === 'ico') {
+                $mime = 'image/x-icon';
+            } else {
+                $mime = 'image/png';  // safe default
+            }
+        }
+        self::setValue('station_favicon', base64_encode($bytes));
+        self::setValue('station_favicon_mime', $mime);
+    }
+
+    /**
+     * @return string|null base64-encoded favicon data, or null if not set
+     */
+    public static function GetStationFavicon()
+    {
+        $favicon = self::getValue('station_favicon');
+        return empty($favicon) ? null : $favicon;
+    }
+
+    /**
+     * @return string MIME type for the stored favicon (defaults to image/png
+     *                when nothing is recorded, so legacy data uploaded before
+     *                the MIME column was introduced still renders).
+     */
+    public static function GetStationFaviconMime()
+    {
+        $mime = self::getValue('station_favicon_mime');
+        return empty($mime) ? 'image/png' : $mime;
+    }
+
+    /**
+     * Build the value to drop into the href attribute of the favicon
+     * <link>.  Returns a data: URI when the operator has uploaded a custom
+     * favicon, or null when nothing custom is set (caller falls back to the
+     * static public/favicon.ico).
+     */
+    public static function GetStationFaviconHref()
+    {
+        $b64 = self::GetStationFavicon();
+        if ($b64 === null) {
+            return null;
+        }
+        return 'data:' . self::GetStationFaviconMime() . ';base64,' . $b64;
     }
 
     public static function SetUniqueId($id)
@@ -746,21 +898,6 @@ class Application_Model_Preference
         }
 
         return $outputString;
-    }
-
-    public static function GetInstallMethod()
-    {
-        $easy_install = file_exists('/usr/bin/airtime-easy-setup');
-        $debian_install = file_exists('/var/lib/dpkg/info/airtime.config');
-        if ($debian_install) {
-            if ($easy_install) {
-                return 'easy_install';
-            }
-
-            return 'debian_install';
-        }
-
-        return 'manual_install';
     }
 
     public static function SetRemindMeDate($p_never = false)
@@ -1057,8 +1194,83 @@ class Application_Model_Preference
         self::setValue($sourcename, $status, false);
     }
 
+    /**
+     * RASTATIME 2026-05-14 — fetch live source-connection state from the
+     * playout's :8770/source-state JSON endpoint, with a per-request
+     * static cache so multiple calls within one dashboard poll don't
+     * trigger N HTTP calls.
+     *
+     * Returns an associative array:
+     *   [ 'master_connected' => bool, 'show_connected' => bool ]
+     *
+     * On any failure (playout not running, timeout, parse error) falls
+     * back to ``false``/``false`` so the dashboard's On-Air light just
+     * goes dark — a safe, visible failure mode.  We deliberately do
+     * NOT fall back to cc_pref: those columns are no longer written by
+     * any path after the direct-to-:8770 mount_add/remove refactor, so
+     * reading them would yield stale data that's worse than "off".
+     */
+    public static function GetPlayoutSourceState()
+    {
+        static $cache = null;
+        if ($cache !== null) {
+            return $cache;
+        }
+
+        $default = ['master_connected' => false, 'show_connected' => false];
+
+        $ctx = stream_context_create([
+            'http' => [
+                'method'        => 'GET',
+                'timeout'       => 0.5,    // 500 ms — dashboard polls every 5 s
+                'ignore_errors' => true,
+            ],
+        ]);
+        $resp = @file_get_contents(
+            'http://127.0.0.1:8770/source-state',
+            false,
+            $ctx
+        );
+        if ($resp === false) {
+            $cache = $default;
+
+            return $cache;
+        }
+        $data = json_decode($resp, true);
+        if (!is_array($data)) {
+            $cache = $default;
+
+            return $cache;
+        }
+        $cache = [
+            'master_connected' => (bool) ($data['master_connected'] ?? false),
+            'show_connected'   => (bool) ($data['show_connected'] ?? false),
+        ];
+
+        return $cache;
+    }
+
     public static function GetSourceStatus($sourcename)
     {
+        // RASTATIME 2026-05-14 — master_dj / live_dj source-connection
+        // state now comes from the playout's SourceSwitcher live state,
+        // not from cc_pref (which is no longer written by anyone since
+        // the direct-to-:8770 mount_add/remove refactor — see
+        // backend/playout/libretime_playout/source_switcher.py and the
+        // icecast.xml comment block above the <authentication> elements
+        // for the full rationale).
+        if ($sourcename == 'master_dj') {
+            $state = self::GetPlayoutSourceState();
+
+            return $state['master_connected'];
+        }
+        if ($sourcename == 'live_dj') {
+            $state = self::GetPlayoutSourceState();
+
+            return $state['show_connected'];
+        }
+
+        // Fallback for unknown source names: legacy cc_pref read.
         $value = self::getValue($sourcename);
 
         return !($value == null || $value == 'false');
@@ -1076,6 +1288,26 @@ class Application_Model_Preference
         // always make sure it's on or else a station's stream could go offline.
         if ($sourcename == 'scheduled_play') {
             return 'on';
+        }
+
+        // RASTATIME 2026-05-14 — same redirect as GetSourceStatus.
+        // Classic LibreTime had a separate admin-toggle here so an
+        // operator could pre-emptively kick a DJ off-air via the
+        // dashboard switch.  RASTATIME doesn't (yet) expose that
+        // toggle in the UI, so 'on' simply mirrors "is the DJ
+        // currently connected?" — when nothing is connected the
+        // switch reads 'off', when a DJ is on it reads 'on'.  The
+        // separate operator-kick flow is covered by the
+        // /disconnect-source endpoint (Cancel Show button).
+        if ($sourcename == 'master_dj') {
+            $state = self::GetPlayoutSourceState();
+
+            return $state['master_connected'] ? 'on' : 'off';
+        }
+        if ($sourcename == 'live_dj') {
+            $state = self::GetPlayoutSourceState();
+
+            return $state['show_connected'] ? 'on' : 'off';
         }
 
         $value = self::getValue($sourcename . '_switch');
@@ -1115,25 +1347,18 @@ class Application_Model_Preference
         return "{$scheme}://{$host}:{$port}/{$mount}";
     }
 
-    public static function SetAutoTransition($value)
-    {
-        self::setValue('auto_transition', $value, false);
-    }
-
-    public static function GetAutoTransition()
-    {
-        return self::getValue('auto_transition');
-    }
-
-    public static function SetAutoSwitch($value)
-    {
-        self::setValue('auto_switch', $value, false);
-    }
-
-    public static function GetAutoSwitch()
-    {
-        return self::getValue('auto_switch');
-    }
+    /*
+     * RASTATIME 2026-05-14 — SetAutoTransition / GetAutoTransition /
+     * SetAutoSwitch / GetAutoSwitch removed.  These wrapped cc_pref
+     * rows that were only consumed by ApiController::updateSourceStatusAction
+     * which sent RabbitMQ messages to the Liquidsoap-based Pypo playout
+     * — both removed in ADR-002.  The replacement SourceSwitcher in
+     * backend/playout/libretime_playout/source_switcher.py performs the
+     * Master > Show > Scheduled priority transitions unconditionally.
+     * The cc_pref rows themselves (keystr = 'auto_transition' /
+     * 'auto_switch') are left in place for legacy data preservation;
+     * they are no longer read by any code path.
+     */
     // User specific preferences end
 
     public static function ShouldShowPopUp()
@@ -1542,25 +1767,77 @@ class Application_Model_Preference
         self::setValue('station_podcast_privacy', $value);
     }
 
-    /**
-     * Getter for feature preview mode.
-     *
-     * @return bool
-     */
-    public static function GetFeaturePreviewMode()
+    // RASTATIME 2026-05-16 - Track Expiry / Podcast Auto-Expiry pruner
+    // last-run timestamp.  Used by TrackExpiryTask to throttle the
+    // hourly run interval (TRACK_EXPIRY_INTERVAL_SECONDS = 3600).
+    public static function getTrackExpiryLastRun()
     {
-        return self::getValue('feature_preview_mode') === '1';
+        return self::getValue('track_expiry_last_run');
     }
 
-    /**
-     * Setter for feature preview mode.
-     *
-     * @param bool $value
-     */
-    public static function SetFeaturePreviewMode($value)
+    public static function setTrackExpiryLastRun($value)
     {
-        return self::setValue('feature_preview_mode', $value);
+        self::setValue('track_expiry_last_run', $value);
     }
+
+    // RASTATIME 2026-05-16 - Local Import Folder.  Operator-configured
+    // absolute path on the RASTATIME host (Settings -> Local Machine).
+    // A LocalImportScanTask (TaskManager, 5-min interval) walks the
+    // folder, moves every audio file into the standard import pipeline
+    // (organize -> analyzer -> cc_files), and deletes the source after
+    // the move - successful OR failed - per design decision A modified
+    // 2026-05-16 ("drop-folder semantics, single folder").
+    public static function getLocalImportFolder()
+    {
+        return self::getValue('local_import_folder');
+    }
+
+    public static function setLocalImportFolder($value)
+    {
+        self::setValue('local_import_folder', trim((string) $value));
+    }
+
+    public static function getLocalImportLastRun()
+    {
+        return self::getValue('local_import_last_run');
+    }
+
+    public static function setLocalImportLastRun($value)
+    {
+        self::setValue('local_import_last_run', $value);
+    }
+
+    public static function getLocalImportLastStatus()
+    {
+        return self::getValue('local_import_last_status');
+    }
+
+    public static function setLocalImportLastStatus($value)
+    {
+        self::setValue('local_import_last_status', $value);
+    }
+
+    // RASTATIME 2026-05-17 - Local Recording Folder (Section 23.13).
+    // Operator-configured absolute path on the RASTATIME host (Settings ->
+    // Local Machine).  The playout PlayoutScheduler reads this via the
+    // GET /api/v2/preferences/local-recording-folder endpoint when a
+    // SHOW_RECORD_START event fires, then writes
+    //   <folder>/<YYYY-MM-DD>/<YYYY-MM-DD HH-MM> - <show-name>.mp3
+    // by tapping the first Icecast output mountpoint with `-c copy`.
+    public static function getLocalRecordingFolder()
+    {
+        return self::getValue('local_recording_folder');
+    }
+
+    public static function setLocalRecordingFolder($value)
+    {
+        self::setValue('local_recording_folder', trim((string) $value));
+    }
+
+    // RASTATIME 2026-05-15 - GetFeaturePreviewMode/SetFeaturePreviewMode removed:
+    // the cc_pref key 'feature_preview_mode' was stored but never consumed by any
+    // code path (no feature ever gated on it). Form element + render + save line
+    // also deleted. cc_pref row left in place (non-destructive).
 
     /*
      * Stores liquidsoap status if $boot_time > save time.
@@ -1598,5 +1875,58 @@ SQL;
     {
         $stream_id = trim($stream_id, 's');
         self::setValue("stream_stats_status:{$stream_id}", $value);
+    }
+
+    // -------------------------------------------------------------------------
+    // RASTATIME: Icecast Output Stream settings stored in cc_pref as JSON.
+    // Keys: stream_output_1, stream_output_2, stream_output_3
+    // -------------------------------------------------------------------------
+
+    /**
+     * Returns all editable settings for output stream N (1-3) as an array.
+     * Falls back to safe defaults when no value has been saved yet.
+     *
+     * @param int $n stream index (1, 2, or 3)
+     */
+    public static function GetStreamOutput(int $n): array
+    {
+        $raw = self::getValue('stream_output_' . $n);
+        if (!empty($raw)) {
+            $decoded = json_decode($raw, true);
+            if (is_array($decoded)) {
+                return $decoded;
+            }
+        }
+
+        return [
+            'enable'      => 'false',
+            'output'      => 'icecast',
+            'host'        => 'localhost',
+            'port'        => '8000',
+            'mount'       => '',
+            'user'        => 'source',
+            'pass'        => '',
+            'admin_user'  => 'admin',
+            'admin_pass'  => '',
+            'channels'    => 'stereo',
+            'bitrate'     => '128',
+            'type'        => 'mp3',
+            'name'        => '',
+            'description' => '',
+            'genre'       => '',
+            'url'         => '',
+            'mobile'      => 'false',
+        ];
+    }
+
+    /**
+     * Persists all editable settings for output stream N to cc_pref.
+     *
+     * @param int   $n    stream index (1, 2, or 3)
+     * @param array $data associative array of stream settings
+     */
+    public static function SetStreamOutput(int $n, array $data): void
+    {
+        self::setValue('stream_output_' . $n, json_encode($data));
     }
 }
