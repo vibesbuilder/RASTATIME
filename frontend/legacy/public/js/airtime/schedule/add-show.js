@@ -13,7 +13,7 @@ function openAddShowForm(nowOrFuture) {
     if ($("#add-show-form").css("display") == "none") {
       if (nowOrFuture === true) {
         //true means "now"
-        $("#add_show_start_now-now").attr("checked", "checked");
+        $("#add_show_start_now-now").prop("checked", true);
         setupStartTimeWidgets();
       }
       $("#add-show-form").show();
@@ -21,8 +21,19 @@ function openAddShowForm(nowOrFuture) {
       windowResize();
 
       // collapse advanced configuration sections
+      // RASTATIME 2026-05-19 — added #schedule-show-templates (new
+      // Templates collapsible) and #schedule-show-record (the
+      // Record section's real id; the legacy selector
+      // #schedule-record-rebroadcast targets the rebroadcast-only
+      // sub-container which no longer exists at the top level since
+      // Section 23.13's record-per-show refactor — it stayed in the
+      // list as a no-op).  Operator request 2026-05-19: Record and
+      // Templates should both come up collapsed by default, in line
+      // with Autoloading Playlist / Live Stream Input / Who / Style.
+      $("#schedule-show-templates").hide();
       $("#schedule-show-auto").hide();
       $("#live-stream-override").hide();
+      $("#schedule-show-record").hide();
       $("#schedule-record-rebroadcast").hide();
       $("#schedule-show-who").hide();
       $("#schedule-show-style").hide();
@@ -170,7 +181,7 @@ function createDateInput(el, onSelect) {
 }
 
 function autoSelect(event, ui) {
-  $("#add_show_hosts-" + ui.item.index).attr("checked", "checked");
+  $("#add_show_hosts-" + ui.item.index).prop("checked", true);
   event.preventDefault();
 }
 
@@ -287,25 +298,25 @@ function setAddShowEvents(form) {
     }
   });
 
-  if (!form.find("#add_show_has_autoplaylist").attr("checked")) {
+  if (!form.find("#add_show_has_autoplaylist").prop("checked")) {
     form.find("#add_show_playlist_dropdown").hide();
     form.find("#add_show_autoplaylist_repeat").hide();
   } else {
     $("#add_show_playlist_dropdown").show();
   }
 
-  if (!form.find("#add_show_repeats").attr("checked")) {
+  if (!form.find("#add_show_repeats").prop("checked")) {
     form.find("#schedule-show-when > fieldset:last").hide();
     $("#add_show_rebroadcast_relative").hide();
   } else {
     $("#add_show_rebroadcast_absolute").hide();
   }
 
-  if (!form.find("#add_show_record").attr("checked")) {
+  if (!form.find("#add_show_record").prop("checked")) {
     form.find("#add_show_rebroadcast").hide();
   }
 
-  if (!form.find("#add_show_rebroadcast").attr("checked")) {
+  if (!form.find("#add_show_rebroadcast").prop("checked")) {
     form
       .find("#schedule-record-rebroadcast > fieldset:not(:first-child)")
       .hide();
@@ -334,7 +345,7 @@ function setAddShowEvents(form) {
 
     var checkBoxSelected = false;
     var days = form.find("#add_show_day_check-element input").each(function () {
-      var currentCheckBox = $(this).attr("checked");
+      var currentCheckBox = $(this).prop("checked");
       if (currentCheckBox && currentCheckBox == "checked") {
         checkBoxSelected = true;
       }
@@ -345,12 +356,12 @@ function setAddShowEvents(form) {
         form.find("#add_show_start_date").attr("value"),
       );
       if (d != null)
-        form.find("#add_show_day_check-" + d.getDay()).attr("checked", true);
+        form.find("#add_show_day_check-" + d.getDay()).prop("checked", true);
     }
 
     //must switch rebroadcast displays
-    if (form.find("#add_show_rebroadcast").attr("checked")) {
-      if ($(this).attr("checked")) {
+    if (form.find("#add_show_rebroadcast").prop("checked")) {
+      if ($(this).prop("checked")) {
         form.find("#add_show_rebroadcast_absolute").hide();
         form.find("#add_show_rebroadcast_relative").show();
       } else {
@@ -380,7 +391,7 @@ function setAddShowEvents(form) {
     if (
       $(".button-bar.bottom").find(".ui-button-text").text() === "Update show"
     ) {
-      if ($(this).attr("checked") && $("#show-link-warning").length === 0) {
+      if ($(this).prop("checked") && $("#show-link-warning").length === 0) {
         $(this)
           .parent()
           .after(
@@ -392,7 +403,7 @@ function setAddShowEvents(form) {
           );
       }
 
-      if (!$(this).attr("checked") && $("#show-link-warning").length !== 0) {
+      if (!$(this).prop("checked") && $("#show-link-warning").length !== 0) {
         $("#show-link-warning").remove();
       }
     }
@@ -406,17 +417,17 @@ function setAddShowEvents(form) {
     $(this).blur();
     form.find("#add_show_rebroadcast").toggle();
 
-    if (form.find("#add_show_record").attr("checked")) {
+    if (form.find("#add_show_record").prop("checked")) {
       form
         .find("#add_show_linked")
-        .attr("checked", false)
+        .prop("checked", false)
         .attr("disabled", true);
     } else {
       form.find("#add_show_linked").attr("disabled", false);
     }
 
     //uncheck rebroadcast checkbox
-    form.find("#add_show_rebroadcast").attr("checked", false);
+    form.find("#add_show_rebroadcast").prop("checked", false);
 
     //hide rebroadcast options
     form
@@ -426,15 +437,15 @@ function setAddShowEvents(form) {
 
   form.find("#add_show_rebroadcast").click(function () {
     $(this).blur();
-    if (form.find("#add_show_record").attr("checked")) {
+    if (form.find("#add_show_record").prop("checked")) {
       if (
-        $(this).attr("checked") &&
-        !form.find("#add_show_repeats").attr("checked")
+        $(this).prop("checked") &&
+        !form.find("#add_show_repeats").prop("checked")
       ) {
         form.find("#add_show_rebroadcast_absolute").show();
       } else if (
-        $(this).attr("checked") &&
-        form.find("#add_show_repeats").attr("checked")
+        $(this).prop("checked") &&
+        form.find("#add_show_repeats").prop("checked")
       ) {
         form.find("#add_show_rebroadcast_relative").show();
       } else {
@@ -551,6 +562,33 @@ function setAddShowEvents(form) {
     content: {
       text: $.i18n._(
         "Autoloading playlists' contents are added to shows one hour before the show airs. <a target='_blank' href='https://libretime.org/docs/user-manual/playlists/'>More information</a>",
+      ),
+    },
+    hide: {
+      delay: 500,
+      fixed: true,
+    },
+    style: {
+      border: {
+        width: 0,
+        radius: 4,
+      },
+      classes: "ui-tooltip-dark ui-tooltip-rounded",
+    },
+    position: {
+      my: "left bottom",
+      at: "right center",
+    },
+  });
+
+  // RASTATIME 2026-05-17 — Record-per-Show tooltip.  Mirrors the
+  // Autoloading-Playlist help-icon pattern.  The text was originally
+  // an inline paragraph above the checkbox; moved into a tooltip so
+  // the Record section stays as visually compact as Live Stream Input.
+  form.find(".show_record_help_icon").qtip({
+    content: {
+      text: $.i18n._(
+        "When enabled, the Show is recorded to the folder configured in Settings → Local Machine",
       ),
     },
     hide: {
@@ -861,7 +899,7 @@ function setAddShowEvents(form) {
 
     var hosts = $("#add_show_hosts-element input")
       .map(function () {
-        if ($(this).attr("checked")) {
+        if ($(this).prop("checked")) {
           return $(this).val();
         }
       })
@@ -869,7 +907,7 @@ function setAddShowEvents(form) {
 
     var days = $("#add_show_day_check-element input")
       .map(function () {
-        if ($(this).attr("checked")) {
+        if ($(this).prop("checked")) {
           return $(this).val();
         }
       })
@@ -1079,14 +1117,14 @@ function setAddShowEvents(form) {
     },
   );
 
-  if ($("#cb_custom_auth").attr("checked")) {
+  if ($("#cb_custom_auth").prop("checked")) {
     $("#custom_auth_div").show();
   } else {
     $("#custom_auth_div").hide();
   }
 
   $("#cb_custom_auth").change(function () {
-    if ($(this).attr("checked")) {
+    if ($(this).prop("checked")) {
       $("#custom_auth_div").show();
     } else {
       $("#custom_auth_div").hide();
@@ -1114,6 +1152,355 @@ function setAddShowEvents(form) {
   $("#add_show_start_time").bind("input", "change", function () {
     calculateShowColor();
   });
+
+  // RASTATIME 2026-05-19 — wire up Show-Template Load/Save controls
+  // (Section 23.16).  Rendered in both New-Show and Edit-Show forms;
+  // setupShowTemplateControls is defensive and no-ops if the controls
+  // were not rendered into a future variant of the form.
+  setupShowTemplateControls(form);
+}
+
+/**
+ * RASTATIME 2026-05-19 — Section 23.16
+ *
+ * Wires up the Load Template dropdown + Apply button + Save-as-
+ * Template button at the top of the show form.  Used by both the
+ * New-Show flow and the Edit-Show flow (the partial template
+ * defines the controls unconditionally as of 2026-05-19).
+ * Idempotent — clears any prior bindings + dropdown contents first.
+ * Safe to call when the controls don't exist (e.g. a future variant
+ * of the form that elides them).
+ */
+function setupShowTemplateControls(form) {
+  var $controls = $("#show-template-controls");
+  if ($controls.length === 0) {
+    return; // no template UI rendered into this form variant
+  }
+
+  var $select = $("#show-template-select");
+  var $apply = $("#show-template-apply");
+  var $save = $("#show-template-save");
+  var $status = $("#show-template-status");
+
+  function setStatus(msg, isError) {
+    $status.text(msg || "");
+    $status.css("color", isError ? "#c66" : "#6c6");
+  }
+
+  function refreshDropdown(selectId) {
+    $.getJSON(
+      baseUrl + "Schedule/list-show-templates",
+      { format: "json" },
+      function (json) {
+        $select
+          .empty()
+          .append('<option value="">— ' + $.i18n._("Select a template") + " —</option>");
+        if (json && json.templates) {
+          json.templates.forEach(function (t) {
+            $select.append(
+              $("<option/>").attr("value", t.id).text(t.name),
+            );
+          });
+        }
+        if (selectId) {
+          $select.val(String(selectId));
+        }
+      },
+    );
+  }
+
+  // Initial load
+  refreshDropdown();
+
+  $apply
+    .off("click")
+    .on("click", function (event) {
+      // RASTATIME 2026-05-19 — Bug 1 mitigation.  These template
+      // controls live inside <form id="add-show-form">; suppress
+      // default + bubble so a stray submit cannot block the
+      // subsequent "Add this show" click.
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      setStatus("");
+      var tid = $select.val();
+      if (!tid) {
+        setStatus($.i18n._("Pick a template first."), true);
+        return false;
+      }
+      $.getJSON(
+        baseUrl + "Schedule/get-show-template/id/" + tid + "/format/json",
+        function (json) {
+          if (!json || json.error || !json.template) {
+            setStatus(
+              json && json.error
+                ? json.error
+                : $.i18n._("Could not load template."),
+              true,
+            );
+            return;
+          }
+          applyShowTemplate(form, json.template.template_data || {});
+          setStatus(
+            $.i18n._("Template applied: ") + (json.template.name || ""),
+          );
+        },
+      );
+      return false;
+    });
+
+  $save
+    .off("click")
+    .on("click", function (event) {
+      // RASTATIME 2026-05-19 — Bug 1 mitigation.  Explicitly stop the
+      // click from propagating into the surrounding <form id="add-show-form">
+      // so the browser cannot interpret this as a form submit (which
+      // would prevent any subsequent Add-this-Show click from posting
+      // because the form is still in mid-submit on the click cycle).
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      setStatus("");
+      var data = $("#add-show-form").serializeArray();
+      var hosts = $("#add_show_hosts-element input")
+        .map(function () {
+          return $(this).prop("checked") ? $(this).val() : undefined;
+        })
+        .get();
+      var days = $("#add_show_day_check-element input")
+        .map(function () {
+          return $(this).prop("checked") ? $(this).val() : undefined;
+        })
+        .get();
+      doSaveTemplate(data, hosts, days, 0);
+      return false;
+    });
+
+  function doSaveTemplate(data, hosts, days, overwrite) {
+    $.post(
+      baseUrl + "Schedule/save-show-template/format/json",
+      { format: "json", data: data, hosts: hosts, days: days, overwrite: overwrite },
+      function (json) {
+        if (json && json.conflict) {
+          var ok = confirm(
+            $.i18n._(
+              "A template with this name already exists. Overwrite?",
+            ),
+          );
+          if (ok) {
+            doSaveTemplate(data, hosts, days, 1);
+          } else {
+            setStatus($.i18n._("Save cancelled."), true);
+          }
+          return;
+        }
+        if (json && json.error) {
+          setStatus(json.error, true);
+          return;
+        }
+        setStatus(
+          $.i18n._("Saved as template: ") + (json && json.name ? json.name : ""),
+        );
+        refreshDropdown(json && json.id);
+      },
+    );
+  }
+}
+
+/**
+ * RASTATIME 2026-05-19 — apply a template_data blob into the
+ * currently-open New-Show form.  Writes each known field's *value*
+ * (or checkbox state) and then runs syncDependentVisibility() to
+ * recompute the show/hide state of every UI section that the existing
+ * Add-Show click handlers normally toggle.
+ *
+ * Per design: start_date and start_time are NEVER touched here —
+ * those come from the calendar click and must be preserved.
+ *
+ * Bug-history note (2026-05-19, test feedback):
+ *  - The earlier implementation used $el.prop("checked", on)
+ *    .trigger("click") to fire the existing toggle-style click handlers
+ *    on Repeats / Record / Autoplaylist / etc.  jQuery 1.8.3's
+ *    default-action simulation for click events on form controls fires
+ *    *after* user handlers and toggles the native checked state of a
+ *    checkbox a second time — so the box ended up in the inverted
+ *    state with the UI synced to the wrong logical value.  Hence the
+ *    split between "write the values" and "compute UI visibility from
+ *    the post-write values" below.
+ */
+function applyShowTemplate(form, td) {
+  function setVal(id, val) {
+    if (val === undefined || val === null) return;
+    form.find("#" + id).val(val);
+  }
+  function setCheck(id, val) {
+    var on = val === true || val === 1 || val === "1" || val === "on";
+    var $el = form.find("#" + id);
+    if ($el.length === 0) return;
+    $el.prop("checked", on);
+  }
+
+  // What
+  setVal("add_show_name", td.add_show_name);
+  setVal("add_show_url", td.add_show_url);
+  setVal("add_show_genre", td.add_show_genre);
+  setVal("add_show_description", td.add_show_description);
+
+  // When (duration + repeat shape; start_date/time deliberately skipped)
+  setVal("add_show_duration", td.add_show_duration);
+  setCheck("add_show_repeats", td.add_show_repeats);
+  setCheck("add_show_linked", td.add_show_linked);
+  setVal("add_show_repeat_type", td.add_show_repeat_type);
+  setVal("add_show_monthly_repeat_type", td.add_show_monthly_repeat_type);
+  setVal("add_show_end_date", td.add_show_end_date);
+  setCheck("add_show_no_end", td.add_show_no_end);
+
+  // Days of the week (array of weekday indices)
+  if (Array.isArray(td.add_show_day_check)) {
+    form.find("#add_show_day_check-element input").prop("checked", false);
+    td.add_show_day_check.forEach(function (d) {
+      form.find("#add_show_day_check-" + d).prop("checked", true);
+    });
+  }
+
+  // Record (must be written *before* sync so the linked-disable
+  // domain rule, applied in syncDependentVisibility, sees the right
+  // record state and does not clobber an explicit linked=true from a
+  // record=false template).
+  setCheck("add_show_record", td.add_show_record);
+
+  // Autoloading Playlist
+  setCheck("add_show_has_autoplaylist", td.add_show_has_autoplaylist);
+  setVal("add_show_autoplaylist_id", td.add_show_autoplaylist_id);
+  setCheck("add_show_autoplaylist_repeat", td.add_show_autoplaylist_repeat);
+  setVal("add_show_intro_playlist_id", td.add_show_intro_playlist_id);
+  setVal("add_show_outro_playlist_id", td.add_show_outro_playlist_id);
+
+  // Live Stream Input (password deliberately not in template)
+  setCheck("cb_airtime_auth", td.cb_airtime_auth);
+  setCheck("cb_custom_auth", td.cb_custom_auth);
+  setVal("custom_username", td.custom_username);
+
+  // Style
+  setVal("add_show_background_color", td.add_show_background_color);
+  setVal("add_show_color", td.add_show_color);
+  // Show logo: stored as a path reference.  We display it in the
+  // current-logo preview if present; the operator can keep it
+  // (no action needed) or upload a fresh image which overrides.
+  if (td.add_show_logo_path) {
+    form
+      .find("#add_show_logo_current")
+      .attr("src", baseUrl + td.add_show_logo_path)
+      .show();
+    form
+      .find("[id^=add_show_logo_current]")
+      .show();
+  }
+
+  // Hosts (array of usernames).  Resolve each to the corresponding
+  // host-checkbox by matching label text — same shape used by the
+  // existing host autocomplete in this file.
+  if (Array.isArray(td.add_show_hosts_logins)) {
+    form.find("#add_show_hosts-element input").prop("checked", false);
+    var $hostInputs = form.find("#add_show_hosts-element input");
+    td.add_show_hosts_logins.forEach(function (login) {
+      $hostInputs.each(function () {
+        var labelText = $(this).next("label").text();
+        if (labelText && labelText.indexOf(login) !== -1) {
+          $(this).prop("checked", true);
+        }
+      });
+    });
+  }
+
+  // Finally, recompute all the toggle-driven visibility from the
+  // now-written checkbox values.  Doing this once at the end avoids
+  // ordering-dependent intermediate states (e.g. setting linked=true
+  // before record=true would leave linked checked even though the
+  // domain rule forbids it).
+  syncDependentVisibility(form);
+}
+
+/**
+ * RASTATIME 2026-05-19 — Recompute the show/hide state of every
+ * collapsible section that the New-Show / Edit-Show form's click
+ * handlers normally manage.  Called after applyShowTemplate() writes
+ * the raw form values; mirrors the visibility rules in setAddShowEvents
+ * but reads the *current* checkbox state instead of toggling.
+ */
+function syncDependentVisibility(form) {
+  var $repeats = form.find("#add_show_repeats");
+  var $record = form.find("#add_show_record");
+  var $rebroadcast = form.find("#add_show_rebroadcast");
+  var $autoplaylist = form.find("#add_show_has_autoplaylist");
+  var $customAuth = form.find("#cb_custom_auth");
+  var $noEnd = form.find("#add_show_no_end");
+  var $linked = form.find("#add_show_linked");
+
+  // Repeats — show/hide the repeat-options fieldset
+  form.find("#schedule-show-when > fieldset:last").toggle(!!$repeats.prop("checked"));
+
+  // Repeat type — day-of-week pickers + monthly-type picker visibility
+  var repeatType = form.find("#add_show_repeat_type").val();
+  if (repeatType == 2 || repeatType == 3) {
+    form.find("#add_show_day_check-label, #add_show_day_check-element").hide();
+  } else {
+    form.find("#add_show_day_check-label, #add_show_day_check-element").show();
+  }
+  if (repeatType == 2) {
+    form
+      .find(
+        "#add_show_monthly_repeat_type-label, #add_show_monthly_repeat_type-element",
+      )
+      .show();
+  } else {
+    form
+      .find(
+        "#add_show_monthly_repeat_type-label, #add_show_monthly_repeat_type-element",
+      )
+      .hide();
+  }
+
+  // Record — toggle rebroadcast checkbox visibility; if record, force
+  // linked off + disabled (domain rule: a recorded show cannot be
+  // linked because the live audio is unique to its instance).
+  $rebroadcast.toggle(!!$record.prop("checked"));
+  if ($record.prop("checked")) {
+    $linked.prop("checked", false).attr("disabled", true);
+  } else {
+    $linked.attr("disabled", false);
+  }
+
+  // Rebroadcast — show absolute vs. relative fieldset based on repeats
+  if ($rebroadcast.prop("checked")) {
+    if ($repeats.prop("checked")) {
+      form.find("#add_show_rebroadcast_absolute").hide();
+      form.find("#add_show_rebroadcast_relative").show();
+    } else {
+      form.find("#add_show_rebroadcast_absolute").show();
+      form.find("#add_show_rebroadcast_relative").hide();
+    }
+  } else {
+    form.find("#schedule-record-rebroadcast > fieldset:not(:first-child)").hide();
+  }
+
+  // Autoloading playlist — show dropdowns when checked
+  form.find("#add_show_playlist_dropdown").toggle(!!$autoplaylist.prop("checked"));
+  form
+    .find("#add_show_autoplaylist_repeat")
+    .toggle(!!$autoplaylist.prop("checked"));
+
+  // Custom auth — show username/password fields when checked
+  form.find("#custom_auth_div").toggle(!!$customAuth.prop("checked"));
+
+  // End date — hide if no_end checked
+  if ($noEnd.prop("checked")) {
+    form.find("#add_show_end_date").hide();
+  } else {
+    form.find("#add_show_end_date").show();
+  }
 }
 
 function showErrorSections() {

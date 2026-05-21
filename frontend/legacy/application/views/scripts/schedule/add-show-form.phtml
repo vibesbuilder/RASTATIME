@@ -7,6 +7,41 @@
         </button>
     </div>
     <div class="clear"></div>
+    <?php /* RASTATIME 2026-05-19 — Show-Template controls
+           (Section 23.16).  Rendered in New-Show and Edit-Show
+           flows, but explicitly NOT in Edit-Instance: a single
+           repeating-show instance is a per-occurrence override and
+           re-stamping it with a template would either silently
+           propagate to the linked siblings (which violates the
+           one-way stamp model) or have no effect on them (which
+           would mislead the operator).  The action distinguishing
+           Edit-Instance from the others is set by
+           {@see ScheduleController::populateRepeatingShowInstanceFormAction()}
+           and friends.
+           UI form: a regular collapsible section (default-collapsed
+           per operator request 2026-05-19) so it lines up visually
+           with What / When / Record / Autoloading Playlist / etc.
+           openAddShowForm() in add-show.js is responsible for the
+           initial hide. */ ?>
+    <?php $isEditInstance = (isset($this->action) && $this->action === 'edit-repeating-show-instance'); ?>
+    <?php if (!$isEditInstance): ?>
+        <h3 class="collapsible-header"><span class="arrow-icon"></span><?php echo _("Templates") ?></h3>
+        <div id="schedule-show-templates" class="collapsible-content">
+            <div id="show-template-controls" style="padding: 1em;">
+                <div class="show-template-row" style="margin-bottom: 1em;">
+                    <label for="show-template-select" style="display: block; margin-bottom: 0.5em;"><?php echo _("Load Template:") ?></label>
+                    <select id="show-template-select" style="min-width: 14em;">
+                        <option value=""><?php echo _("— Select a template —") ?></option>
+                    </select>
+                    <button id="show-template-apply" class="btn btn-small" type="button" style="margin-left: 0.3em;"><?php echo _("Load") ?></button>
+                </div>
+                <div class="show-template-row">
+                    <button id="show-template-save" class="btn btn-small" type="button"><?php echo _("Save as Template") ?></button>
+                    <span id="show-template-status" style="margin-left: 0.8em; color: #6c6;"></span>
+                </div>
+            </div>
+        </div>
+    <?php endif; ?>
     <h3 class="collapsible-header"><span class="arrow-icon"></span><?php echo _("What") ?></h3>
     <div id="schedule-show-what" class="collapsible-content">
         <?php echo $this->what; ?>
@@ -24,6 +59,31 @@
         <?php echo $this->when; ?>
 
         <?php echo $this->repeats; ?>
+    </div>
+    <?php /* RASTATIME 2026-05-17 - Phase B: Record-per-Show section
+           (ARCHITECTURE Section 23.13).  Only the add_show_record
+           checkbox is rendered here; the legacy add_show_rebroadcast
+           checkbox from the same AddShowRR subform is omitted because
+           the Liquidsoap-based rebroadcast feature was removed
+           (ADR-002) and the controller/scheduler no longer act on it.
+           The hidden input below preserves the value across save so
+           Propel does not complain about a missing field. */ ?>
+    <h3 class="collapsible-header"><span class="arrow-icon"></span><?php echo _("Record") ?></h3>
+    <div id="schedule-show-record" class="collapsible-content">
+        <fieldset>
+            <dl>
+                <dt id="add_show_record_label" style="padding-right: 0.75em;">
+                    <label for="add_show_record">
+                        <?php echo $this->rr->getElement('add_show_record')->getLabel() ?>
+                    </label>
+                </dt>
+                <dd>
+                    <?php echo $this->rr->getElement('add_show_record') ?>
+                    <span class="show_record_help_icon" aria-describedby="ui-tooltip-record"></span>
+                </dd>
+            </dl>
+        </fieldset>
+        <input type="hidden" name="add_show_rebroadcast" value="0" />
     </div>
     <h3 class="collapsible-header"><span class="arrow-icon"></span><?php echo _("Autoloading Playlist") ?></h3>
     <div id="schedule-show-auto" class="collapsible-content">

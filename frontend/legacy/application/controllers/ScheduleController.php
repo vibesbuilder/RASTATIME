@@ -35,6 +35,12 @@ class ScheduleController extends Zend_Controller_Action
             ->addActionContext('get-current-show', 'json')
             ->addActionContext('update-future-is-scheduled', 'json')
             ->addActionContext('localize-start-end-time', 'json')
+            // RASTATIME 2026-05-19 — Show-Template feature (Section 23.16)
+            ->addActionContext('list-show-templates', 'json')
+            ->addActionContext('get-show-template', 'json')
+            ->addActionContext('save-show-template', 'json')
+            ->addActionContext('rename-show-template', 'json')
+            ->addActionContext('delete-show-template', 'json')
             ->initContext();
 
         $this->sched_sess = new Zend_Session_Namespace('schedule');
@@ -504,7 +510,12 @@ class ScheduleController extends Zend_Controller_Action
             if (!$validateStartTime) {
                 $this->view->when->getElement('add_show_start_time')->setOptions(['disabled' => true]);
             }
-            $this->view->rr->getElement('add_show_record')->setOptions(['disabled' => true]);
+            // RASTATIME 2026-05-17 - Phase B: record-per-show semantic
+            // (Section 23.13).  Upstream disabled the checkbox here on
+            // validation failure to prevent toggling the Liquidsoap
+            // linein-recording mode mid-show.  No longer applies — the
+            // output-tap recorder is a parallel concern and can be
+            // toggled freely.
             $this->view->addNewShow = false;
             $this->view->action = 'edit-repeating-show-instance';
             $this->view->form = $this->view->render('schedule/add-show-form.phtml');
@@ -700,9 +711,14 @@ class ScheduleController extends Zend_Controller_Action
                 $scheduler = new Application_Model_Scheduler();
                 $scheduler->cancelShow($id);
                 Application_Model_StoredFile::updatePastFilesIsScheduled();
-                // send kick out source stream signal to pypo
-                $data = ['sourcename' => 'live_dj'];
-                Application_Model_RabbitMq::SendMessageToPypo('disconnect_source', $data);
+                // RASTATIME: legacy SendMessageToPypo('disconnect_source')
+                // notified Liquidsoap-era Pypo, which we no longer run.
+                // Push the kick directly to the playout's HTTP listener
+                // so Icecast disconnects the Show DJ immediately — the
+                // playout's own schedule-refresh-based cancel path is
+                // unreliable for shows without scheduled tracks (live-
+                // DJ-only slots), so we do not depend on it here.
+                Application_Model_RabbitMq::NotifyDisconnectSource('live_dj');
             } catch (Exception $e) {
                 $this->view->error = $e->getMessage();
                 Logging::info($e->getMessage());
@@ -799,5 +815,130 @@ class ScheduleController extends Zend_Controller_Action
         );
 
         $this->_helper->json->sendJson($localTime);
+    }
+
+    // ------------------------------------------------------------------
+    // RASTATIME 2026-05-19 — Show-Template feature (Section 23.16)
+    //
+    // Five JSON actions consumed by the New-Show dialog and the
+    // Settings → "Show Templates" page.  All routed through
+    // Application_Service_ShowTemplateService; this controller is a
+    // thin parameter-marshaller and JSON-envelope wrapper.
+    // ------------------------------------------------------------------
+
+    /**
+     * GET /Schedule/list-show-templates
+     *   Lightweight list of [id, name] for the New-Show dropdown.
+     *   Also used by the Settings page (which then GETs each one
+     *   individually for editing if needed).
+     */
+    public function listShowTemplatesAction()
+    {
+        try {
+            $rows = Application_Service_ShowTemplateService::getAllForListing();
+            $this->_helper->json->sendJson(['templates' => $rows]);
+        } catch (Throwable $exc) {
+            Logging::error('list-show-templates: ' . $exc->getMessage());
+            $this->_helper->json->sendJson(['error' => $exc->getMessage()]);
+        }
+    }
+
+    /**
+     * GET /Schedule/get-show-template/id/<n>
+     *   Returns one template's full template_data JSON, ready for
+     *   the front-end populate-form helper to apply.
+     */
+    public function getShowTemplateAction()
+    {
+        try {
+            $id = (int) $this->_getParam('id', 0);
+            $tpl = Application_Service_ShowTemplateService::getTemplateById($id);
+            if ($tpl === null) {
+                $this->_helper->json->sendJson(['error' => _('Template not found.')]);
+                return;
+            }
+            $this->_helper->json->sendJson(['template' => $tpl]);
+        } catch (Throwable $exc) {
+            Logging::error('get-show-template: ' . $exc->getMessage());
+            $this->_helper->json->sendJson(['error' => $exc->getMessage()]);
+        }
+    }
+
+    /**
+     * POST /Schedule/save-show-template
+     *   Save (or overwrite) a template from an in-flight new-show
+     *   form payload.  Same {name:value} array as the editShowAction
+     *   accepts; the service whitelist controls what survives.
+     *
+     *   Body params:
+     *     - data       (jQuery serializeArray of the show form)
+     *     - hosts      (array of cc_subjs.id from the Who form)
+     *     - days       (array of day-of-week indices from When)
+     *     - overwrite  ("1" to overwrite a same-named existing one)
+     */
+    public function saveShowTemplateAction()
+    {
+        try {
+            $js = $this->_getParam('data');
+            $data = [];
+            foreach ($js as $j) {
+                $data[$j['name']] = $j['value'];
+            }
+            $data['add_show_hosts'] = $this->_getParam('hosts', []);
+            $data['add_show_day_check'] = $this->_getParam('days', []);
+            $overwrite = ((int) $this->_getParam('overwrite', 0)) === 1;
+
+            $id = Application_Service_ShowTemplateService::saveFromShowData(
+                $data, $overwrite
+            );
+            $this->_helper->json->sendJson([
+                'id' => $id,
+                'name' => $data['add_show_name'] ?? '',
+            ]);
+        } catch (Throwable $exc) {
+            // Friendly status for the "already exists" branch so the
+            // front-end can prompt the operator to overwrite.
+            $msg = $exc->getMessage();
+            $conflict = (strpos($msg, 'already exists') !== false);
+            Logging::warn('save-show-template: ' . $msg);
+            $this->_helper->json->sendJson([
+                'error' => $msg,
+                'conflict' => $conflict,
+            ]);
+        }
+    }
+
+    /**
+     * POST /Schedule/rename-show-template
+     *   Body params:
+     *     - id
+     *     - name (new name)
+     */
+    public function renameShowTemplateAction()
+    {
+        try {
+            $id = (int) $this->_getParam('id', 0);
+            $newName = (string) $this->_getParam('name', '');
+            Application_Service_ShowTemplateService::renameTemplate($id, $newName);
+            $this->_helper->json->sendJson(['id' => $id, 'name' => $newName]);
+        } catch (Throwable $exc) {
+            Logging::warn('rename-show-template: ' . $exc->getMessage());
+            $this->_helper->json->sendJson(['error' => $exc->getMessage()]);
+        }
+    }
+
+    /**
+     * POST /Schedule/delete-show-template/id/<n>
+     */
+    public function deleteShowTemplateAction()
+    {
+        try {
+            $id = (int) $this->_getParam('id', 0);
+            Application_Service_ShowTemplateService::deleteTemplate($id);
+            $this->_helper->json->sendJson(['ok' => true]);
+        } catch (Throwable $exc) {
+            Logging::warn('delete-show-template: ' . $exc->getMessage());
+            $this->_helper->json->sendJson(['error' => $exc->getMessage()]);
+        }
     }
 }
