@@ -1,3 +1,10 @@
+"""
+RASTATIME worker tasks.
+
+T-GH-2: Celery removed. All tasks are now plain Python functions that can be
+called directly. No message broker or worker process is required.
+"""
+
 import json
 import logging
 import os
@@ -7,131 +14,65 @@ from tempfile import NamedTemporaryFile
 from typing import Any, Dict, Optional
 from urllib.parse import urlsplit
 
-# RASTATIME: celery, mutagen, and libretime_api_client are not available on
-# Windows. Attempt imports and fall back to harmless stubs so this module
-# can be safely imported anywhere. Check RASTATIME_TASKS_AVAILABLE before
-# dispatching real tasks.
+import mutagen
+import requests
+from mutagen import MutagenError
+from requests import RequestException, Response
+
+from .config import config
+
+logger = logging.getLogger(__name__)
+
+# Optional: legacy API client for task-manager triggering.
 try:
-    import mutagen
-    import requests
-    from celery import Celery, signals
-    from celery.schedules import crontab
-    from celery.utils.log import get_task_logger
-    from libretime_api_client.v1 import ApiClient as LegacyClient
-    from mutagen import MutagenError
-    from requests import RequestException, Response
+    from libretime_api_client.v1 import ApiClient as _LegacyClient
 
-    from . import PACKAGE, VERSION
-    from .config import config, RASTATIME_WORKER_AVAILABLE
-
-    if not RASTATIME_WORKER_AVAILABLE:
-        raise ImportError("worker config unavailable")
-
-    worker = Celery()
-    logger = get_task_logger(__name__)
-    legacy_client = LegacyClient(
+    _legacy_client: Optional[_LegacyClient] = _LegacyClient(
         base_url=config.general.public_url,
         api_key=config.general.api_key,
     )
-    RASTATIME_TASKS_AVAILABLE = True
-
-except (ImportError, Exception) as _rastatime_e:
-    RASTATIME_TASKS_AVAILABLE = False
-
-    # Stub objects so the decorator-heavy code below parses without error.
-    class _NoopTask:
-        def __call__(self, *a, **kw):
-            raise RuntimeError("Celery tasks unavailable (RASTATIME Windows mode)")
-
-    class _NoopWorker:
-        class conf:
-            beat_schedule: dict = {}
-
-        def task(self, *args, **kwargs):
-            def decorator(fn):
-                return _NoopTask()
-            if args and callable(args[0]):
-                return _NoopTask()
-            return decorator
-
-    class _NoopSignals:
-        class worker_init:
-            @staticmethod
-            def connect(fn=None, **_kw):
-                return fn or (lambda f: f)
-
-    worker = _NoopWorker()  # type: ignore[assignment]
-    signals = _NoopSignals()  # type: ignore[assignment]
-    crontab = lambda *a, **kw: None  # type: ignore[assignment]  # noqa: E731
-    legacy_client = None  # type: ignore[assignment]
-    config = None  # type: ignore[assignment]
-    MutagenError = Exception  # type: ignore[assignment, misc]
-    RequestException = Exception  # type: ignore[assignment]
-    Response = object  # type: ignore[assignment, misc]
-    PACKAGE = VERSION = "unavailable"
-    mutagen = None  # type: ignore[assignment]
-    requests = None  # type: ignore[assignment]
-
-    logger = logging.getLogger(__name__)
-    logger.warning(
-        "libretime_worker.tasks: disabled (%s). "
-        "All Celery tasks unavailable (RASTATIME Windows mode).",
-        _rastatime_e,
+except ImportError:
+    _legacy_client = None
+    logger.debug(
+        "libretime_api_client not available; legacy_trigger_task_manager disabled."
     )
 
-    def get_task_logger(name):  # type: ignore[misc]
-        return logging.getLogger(name)
-
-
-
-
-@signals.worker_init.connect
-def init_sentry(**_kwargs):
-    if "SENTRY_DSN" in os.environ:
-        logger.info("installing sentry")
-        # pylint: disable=import-outside-toplevel
+# Optional: Sentry error tracking (no longer tied to Celery signals).
+if "SENTRY_DSN" in os.environ:
+    try:
         import sentry_sdk
-        from sentry_sdk.integrations.celery import CeleryIntegration
 
-        sentry_sdk.init(
-            traces_sample_rate=1.0,
-            release=f"{PACKAGE}@{VERSION}",
-            integrations=[
-                CeleryIntegration(),
-            ],
-        )
+        sentry_sdk.init(traces_sample_rate=1.0)
+        logger.info("Sentry initialised.")
+    except ImportError:
+        pass
 
 
-worker.conf.beat_schedule = {
-    "legacy-trigger-task-manager": {
-        "task": "libretime_worker.tasks.legacy_trigger_task_manager",
-        "schedule": crontab(minute="*/5"),
-    },
-}
-
-
-@worker.task()
-def legacy_trigger_task_manager():
+def legacy_trigger_task_manager() -> None:
     """
     Trigger the legacy task manager to perform background tasks.
+
+    No-op when libretime_api_client is not installed.
     """
-    legacy_client.trigger_task_manager()
+    if _legacy_client is None:
+        logger.warning(
+            "legacy_trigger_task_manager: libretime_api_client not available, skipping."
+        )
+        return
+    _legacy_client.trigger_task_manager()
 
 
 class PodcastDownloadException(Exception):
-    """
-    An error occurred during the podcast download task.
-    """
+    """An error occurred during the podcast download task."""
 
 
-@worker.task(name="podcast-download", acks_late=True)
 def podcast_download(
     episode_id: int,
     episode_url: str,
     episode_title: Optional[str],
     podcast_name: str,
     override_album: bool,
-):
+) -> str:
     """
     Download a podcast episode.
 
