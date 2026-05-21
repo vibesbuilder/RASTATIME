@@ -44,13 +44,21 @@ class Application_Model_Webstream implements Application_Model_LibraryEditable
 
     public function getDefaultLength()
     {
+        // RASTATIME 2026-05-19 — Section 23.17.  Webstream default-length
+        // now carries seconds end-to-end (was hh+mm only), matching the
+        // Line-Input dialog's granularity.  The DB column is a Postgres
+        // `interval` type which always serialises as "HH:MM:SS"
+        // regardless of what we wrote in (older rows stored with the
+        // pre-2026-05-19 "HH:MM" format come back as "HH:MM:00"), so a
+        // single 3-piece parser covers both old and new data.  Display
+        // is always three components per operator decision 2026-05-19.
         $dateString = $this->webstream->getDbLength();
         $arr = explode(':', $dateString);
         if (count($arr) == 3) {
             [$hours, $min, $sec] = $arr;
             $di = new DateInterval("PT{$hours}H{$min}M{$sec}S");
 
-            return $di->format('%Hh %Im');
+            return $di->format('%Hh %Im %Ss');
         }
 
         return '';
@@ -129,44 +137,60 @@ class Application_Model_Webstream implements Application_Model_LibraryEditable
 
         $di = null;
         $length = $parameters['length'];
-        $result = preg_match('/^(?:([0-9]{1,2})h)?\s*(?:([0-9]{1,2})m)?$/', $length, $matches);
+        // RASTATIME 2026-05-19 — Section 23.17.  Accept an optional
+        // trailing "<n>s" seconds component (e.g. "01h 05m 05s").  The
+        // "s"-group is fully optional so any pre-2026-05-19 input that
+        // was a valid "01h 05m" string still validates — backwards-
+        // compatible by operator decision 2026-05-19 (Frage 1).
+        $result = preg_match(
+            '/^(?:([0-9]{1,2})h)?\s*(?:([0-9]{1,2})m)?\s*(?:([0-9]{1,2})s)?$/',
+            $length,
+            $matches
+        );
 
         $invalid_date_interval = false;
-        if ($result == 1 && count($matches) == 2) {
-            $hours = $matches[1];
-            $minutes = 0;
-        } elseif ($result == 1 && count($matches) == 3) {
-            $hours = $matches[1];
-            $minutes = $matches[2];
+        if ($result == 1 && count($matches) >= 2) {
+            // PHP only populates capture-groups up to the last one that
+            // matched; the trailing optional groups may be missing
+            // entirely from $matches.  Default each to "" so the
+            // downstream is_numeric()-or-zero branch handles them.
+            $hours   = $matches[1] ?? '';
+            $minutes = $matches[2] ?? '';
+            $seconds = $matches[3] ?? '';
         } else {
             $invalid_date_interval = true;
         }
 
         if (!$invalid_date_interval) {
-            // Due to the way our Regular Expression is set up, we could have $minutes or $hours
-            // not set. Do simple test here
+            // Due to the way our Regular Expression is set up, we could have
+            // $minutes, $hours or $seconds not set. Do simple test here.
             if (!is_numeric($hours)) {
                 $hours = 0;
             }
             if (!is_numeric($minutes)) {
                 $minutes = 0;
             }
+            if (!is_numeric($seconds)) {
+                $seconds = 0;
+            }
 
-            // minutes cannot be over 59. Need to convert anything > 59 minutes into hours.
-            $hours += intval($minutes / 60);
+            // Normalise: seconds > 59 spill into minutes, minutes > 59 into hours.
+            $minutes += intval($seconds / 60);
+            $seconds %= 60;
+            $hours   += intval($minutes / 60);
             $minutes %= 60;
 
-            $di = new DateInterval("PT{$hours}H{$minutes}M");
+            $di = new DateInterval("PT{$hours}H{$minutes}M{$seconds}S");
 
-            $totalMinutes = $di->h * 60 + $di->i;
+            $totalSeconds = $di->h * 3600 + $di->i * 60 + $di->s;
 
-            if ($totalMinutes == 0) {
+            if ($totalSeconds == 0) {
                 $valid['length'][0] = false;
-                $valid['length'][1] = _('Length needs to be greater than 0 minutes');
+                $valid['length'][1] = _('Length needs to be greater than zero');
             }
         } else {
             $valid['length'][0] = false;
-            $valid['length'][1] = _('Length should be of form "00h 00m"');
+            $valid['length'][1] = _('Length should be of form "00h 00m 00s"');
         }
 
         $url = $parameters['url'];
@@ -417,7 +441,11 @@ class Application_Model_Webstream implements Application_Model_LibraryEditable
         $webstream->setDbDescription($parameters['description']);
         $webstream->setDbUrl($mediaUrl);
 
-        $dblength = $di->format('%H:%I');
+        // RASTATIME 2026-05-19 — Section 23.17.  Persist seconds too.
+        // The DB column is a Postgres `interval` so it already round-
+        // trips HH:MM:SS regardless; old rows that were written as
+        // "HH:MM" come back as "HH:MM:00" from the driver.
+        $dblength = $di->format('%H:%I:%S');
         $webstream->setDbLength($dblength);
         $webstream->setDbCreatorId($userInfo->id);
         $webstream->setDbUtime(new DateTime('now', new DateTimeZone('UTC')));
@@ -428,7 +456,45 @@ class Application_Model_Webstream implements Application_Model_LibraryEditable
         $webstream->setDbMime($mime);
         $webstream->save();
 
-        return $webstream->getDbId();
+        $newId = $webstream->getDbId();
+
+        // RASTATIME 2026-05-16 - persist input_gain_db.  The Propel
+        // CcWebstream class was not regenerated for this column (see
+        // schema.xml note), so we update it via raw SQL.  Clamped to
+        // [-20, +20] dB in the controller; default 0.
+        if (array_key_exists('input_gain_db', $parameters)) {
+            $gain = (float) $parameters['input_gain_db'];
+            $con = Propel::getConnection();
+            $stmt = $con->prepare(
+                'UPDATE cc_webstream SET input_gain_db = :gain WHERE id = :id'
+            );
+            $stmt->bindValue(':gain', $gain, PDO::PARAM_STR);  // NUMERIC
+            $stmt->bindValue(':id', $newId, PDO::PARAM_INT);
+            $stmt->execute();
+        }
+
+        return $newId;
+    }
+
+    /**
+     * RASTATIME 2026-05-16 - Read input_gain_db for a webstream id.
+     * Used by the edit form to pre-fill the input field.  Returns 0.0
+     * if the webstream does not exist or the column is NULL (legacy
+     * rows from before the migration).
+     */
+    public static function getInputGainDbForId($webstreamId)
+    {
+        if (empty($webstreamId)) {
+            return 0.0;
+        }
+        $con = Propel::getConnection();
+        $stmt = $con->prepare(
+            'SELECT input_gain_db FROM cc_webstream WHERE id = :id'
+        );
+        $stmt->bindValue(':id', (int) $webstreamId, PDO::PARAM_INT);
+        $stmt->execute();
+        $value = $stmt->fetchColumn();
+        return $value === false || $value === null ? 0.0 : (float) $value;
     }
 
     // method is not used, webstreams aren't currently kept track of for isScheduled.
