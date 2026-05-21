@@ -1,0 +1,263 @@
+<?php
+/**
+ * T13.2 — Soundcard settings page view.
+ * T20.3 — i18n: PHP-rendered script block overrides JS fallback strings.
+ *
+ * Device lists are loaded asynchronously from GET /api/v2/audio/devices.
+ * Current persisted settings are loaded from GET /api/v2/audio/soundcard-settings.
+ * The Save button POSTs to POST /api/v2/audio/soundcard-settings.
+ *
+ * This page has no server-side form object (no Zend_Form).  All data flow
+ * is through the two REST endpoints above.
+ */
+?>
+<script>
+/* T20.3 — Override JS i18n fallbacks with server-translated strings. */
+if (!window.AIRTIME) { window.AIRTIME = {}; }
+AIRTIME.i18n = {
+    none:                 "<?php echo addslashes(_('None')) ?>",
+    noLineInsConfigured:  "<?php echo addslashes(_('No line-in devices configured.')) ?>",
+    deviceLoadError:      "<?php echo addslashes(_('Could not load device list from the server.')) ?>",
+    deviceMissing:        "<?php echo addslashes(_('Device not found')) ?>",
+    devicesMissing:       "<?php echo addslashes(_("{n} configured device(s) are currently unavailable. Check connections or reconfigure.")) ?>",
+    soundcardSaved:       "<?php echo addslashes(_('Local Machine settings saved.')) ?>",
+    soundcardSaveError:   "<?php echo addslashes(_('Could not save Local Machine settings.')) ?>",
+};
+</script>
+
+<div class="ui-widget prefpanel simple-formblock clearfix padded-strong soundcard-config">
+    <h2 style="float:left"><?php echo _("Local Machine Settings") ?></h2>
+
+    <button id="soundcard_save" type="button" class="btn right-floated"><?php echo _("Save") ?></button>
+    <div style="clear:both"></div>
+
+    <div id="soundcard-status-msg"></div>
+
+    <h3 style="margin-top: 1em;"><?php echo _("Soundcard") ?></h3>
+
+    <div class="soundcard-columns" style="display:flex; gap:2em; flex-wrap:wrap;">
+
+        <!-- ── Output devices ───────────────────────────────────────── -->
+        <div style="min-width:280px; flex:1;">
+            <h3><?php echo _("Output") ?></h3>
+            <fieldset class="padded stream-setting-global">
+                <dl class="zend_form">
+
+                    <dt><label for="soundcard-main-output"><?php echo _("Main Output") ?></label></dt>
+                    <dd>
+                        <select id="soundcard-main-output" name="main_output_id" style="width:100%">
+                            <option value=""><?php echo _("— Loading devices …") ?></option>
+                        </select>
+                    </dd>
+
+                    <?php
+                    // RASTATIME: "Preview / Monitor Output" intentionally
+                    // removed from the UI — no audio-engine code currently
+                    // consumes ``preview_output_id``, so the option just
+                    // confused operators.  The DB column + domain field
+                    // remain so the option can be reinstated later without
+                    // a migration.
+                    ?>
+
+                </dl>
+            </fieldset>
+        </div>
+
+        <?php
+        // RASTATIME 2026-05-12 — Phase A.4 cleanup.
+        // The "Line-In Inputs" panel that used to live here was a
+        // settings-only CRUD list.  All line-in management now happens
+        // through the Media Library (Dashboard → Line Inputs), so the
+        // duplicate settings UI is gone.  The Django ORM, REST API,
+        // and the existing /linein/index controller route stay in
+        // place so the panel can be reinstated trivially if needed.
+        ?>
+
+    </div><!-- .soundcard-columns -->
+
+    <?php
+    // RASTATIME 2026-05-16 - Local Import Folder section.
+    // Drop-folder semantics: the LocalImportScanTask (TaskManager, 5-min
+    // interval) walks this folder, moves every audio file through the
+    // standard import pipeline (CcFiles::createAndImport -> organize ->
+    // analyzer -> cc_files), and deletes the source after the attempt
+    // succeeds OR fails.  Single folder, not a list.
+    $localImportFolder = Application_Model_Preference::getLocalImportFolder();
+    $localImportLastRun = Application_Model_Preference::getLocalImportLastRun();
+    $localImportLastStatus = Application_Model_Preference::getLocalImportLastStatus();
+    ?>
+
+    <h3 style="margin-top: 2em;"><?php echo _("Import Folder") ?></h3>
+    <p style="max-width: 60em; color: #555;">
+        <?php echo _("Audio files dropped into this folder are imported into the Media Library every 5 minutes.  After each import attempt (success or failure) the source file is deleted from the folder.  Leave empty to disable the scan."); ?>
+    </p>
+
+    <fieldset class="padded stream-setting-global">
+        <dl class="zend_form">
+            <dt><label for="local_import_folder"><?php echo _("Folder path") ?></label></dt>
+            <dd>
+                <input id="local_import_folder" name="local_import_folder"
+                       type="text" class="input_text"
+                       style="width: 100%; max-width: 50em;"
+                       value="<?php echo htmlspecialchars((string) $localImportFolder, ENT_QUOTES); ?>"
+                       placeholder="C:\rastatime\import" />
+                <div style="font-size: 0.9em; color: #666; margin-top: 0.3em;">
+                    <?php echo _("Absolute path on this machine.  Example: C:\\rastatime\\import"); ?>
+                </div>
+            </dd>
+
+            <dt></dt>
+            <dd style="padding-top: 0.5em;">
+                <button id="local_import_save" type="button" class="btn">
+                    <?php echo _("Save Folder") ?>
+                </button>
+                <button id="local_import_scan_now" type="button" class="btn"
+                        <?php echo empty($localImportFolder) ? 'disabled' : ''; ?>>
+                    <?php echo _("Scan Now") ?>
+                </button>
+                <span id="local_import_status_msg" style="margin-left: 1em;"></span>
+            </dd>
+
+            <?php if ($localImportLastRun): ?>
+            <dt></dt>
+            <dd style="padding-top: 0.5em; font-size: 0.9em; color: #555;">
+                <?php
+                $lastRunDt = (int) $localImportLastRun;
+                $lastRunStr = $lastRunDt > 0 ? date('Y-m-d H:i:s', $lastRunDt) : '—';
+                ?>
+                <strong><?php echo _("Last scan:") ?></strong> <?php echo htmlspecialchars($lastRunStr); ?><br/>
+                <?php if ($localImportLastStatus): ?>
+                    <strong><?php echo _("Last status:") ?></strong> <?php echo htmlspecialchars((string) $localImportLastStatus); ?>
+                <?php endif; ?>
+            </dd>
+            <?php endif; ?>
+        </dl>
+    </fieldset>
+
+    <?php
+    // RASTATIME 2026-05-17 - Recording Folder section (Section 23.13).
+    // Per-show recording feature: shows with cc_show.record=true get
+    // recorded by tapping the first Icecast output mountpoint with
+    // `-c copy`.  Output goes to
+    //   <folder>/<YYYY-MM-DD>/<YYYY-MM-DD HH-MM> - <show-name>.mp3.
+    // Empty folder disables recording.
+    $localRecordingFolder = Application_Model_Preference::getLocalRecordingFolder();
+    ?>
+
+    <h3 style="margin-top: 2em;"><?php echo _("Recording Folder") ?></h3>
+    <p style="max-width: 60em; color: #555;">
+        <?php echo _("Folder where per-show recordings are written.  Each show flagged as \"Record this show\" produces a single .mp3 of the on-air output, named <YYYY-MM-DD HH-MM> - <show-name>.mp3 under a per-day subfolder.  Leave empty to disable recording."); ?>
+    </p>
+
+    <fieldset class="padded stream-setting-global">
+        <dl class="zend_form">
+            <dt><label for="local_recording_folder"><?php echo _("Folder path") ?></label></dt>
+            <dd>
+                <input id="local_recording_folder" name="local_recording_folder"
+                       type="text" class="input_text"
+                       style="width: 100%; max-width: 50em;"
+                       value="<?php echo htmlspecialchars((string) $localRecordingFolder, ENT_QUOTES); ?>"
+                       placeholder="C:\rastatime\recordings" />
+                <div style="font-size: 0.9em; color: #666; margin-top: 0.3em;">
+                    <?php echo _("Absolute path on this machine.  Example: C:\\rastatime\\recordings"); ?>
+                </div>
+            </dd>
+
+            <dt></dt>
+            <dd style="padding-top: 0.5em;">
+                <button id="local_recording_save" type="button" class="btn">
+                    <?php echo _("Save Folder") ?>
+                </button>
+                <span id="local_recording_status_msg" style="margin-left: 1em;"></span>
+            </dd>
+        </dl>
+    </fieldset>
+
+    <script>
+    (function ($) {
+        // Save the configured folder path.
+        $("#local_import_save").on("click", function () {
+            var path = $("#local_import_folder").val();
+            $.post(
+                baseUrl + "preference/local-import-save",
+                {
+                    folder: path,
+                    csrf_token: $("#csrf").val()
+                },
+                function (resp) {
+                    var msg = $("#local_import_status_msg");
+                    if (resp && resp.ok) {
+                        msg.text("✓ " + (path ? "Saved." : "Disabled (empty path)."))
+                           .css("color", "#5cb85c");
+                        // Enable/disable the Scan Now button based on the saved state.
+                        $("#local_import_scan_now").prop("disabled", !path);
+                    } else {
+                        msg.text("✗ " + (resp.error || "Save failed."))
+                           .css("color", "#d9534f");
+                    }
+                },
+                "json"
+            ).fail(function () {
+                $("#local_import_status_msg").text("✗ Network error.").css("color", "#d9534f");
+            });
+        });
+
+        // Trigger an immediate scan (bypasses the 5-minute throttle).
+        $("#local_import_scan_now").on("click", function () {
+            var btn = $(this);
+            btn.prop("disabled", true);
+            $("#local_import_status_msg").text("Scanning…").css("color", "#555");
+            $.post(
+                baseUrl + "preference/local-import-scan-now",
+                { csrf_token: $("#csrf").val() },
+                function (resp) {
+                    var msg = $("#local_import_status_msg");
+                    if (resp && resp.ok) {
+                        msg.text("✓ Imported " + resp.imported + ", failed " + resp.failed + ".")
+                           .css("color", "#5cb85c");
+                    } else {
+                        msg.text("✗ " + (resp.error || "Scan failed."))
+                           .css("color", "#d9534f");
+                    }
+                    btn.prop("disabled", false);
+                },
+                "json"
+            ).fail(function () {
+                $("#local_import_status_msg").text("✗ Network error.").css("color", "#d9534f");
+                btn.prop("disabled", false);
+            });
+        });
+
+        // RASTATIME 2026-05-17 - Recording Folder save handler.
+        $("#local_recording_save").on("click", function () {
+            var path = $("#local_recording_folder").val();
+            $.post(
+                baseUrl + "preference/local-recording-save",
+                {
+                    folder: path,
+                    csrf_token: $("#csrf").val()
+                },
+                function (resp) {
+                    var msg = $("#local_recording_status_msg");
+                    if (resp && resp.ok) {
+                        msg.text("✓ " + (path ? "Saved." : "Disabled (empty path)."))
+                           .css("color", "#5cb85c");
+                    } else {
+                        msg.text("✗ " + (resp.error || "Save failed."))
+                           .css("color", "#d9534f");
+                    }
+                },
+                "json"
+            ).fail(function () {
+                $("#local_recording_status_msg").text("✗ Network error.").css("color", "#d9534f");
+            });
+        });
+    })(jQuery);
+    </script>
+
+    <?php /* CSRF token used by the two POSTs above. */ ?>
+    <input type="hidden" id="csrf" value="<?php
+        $csrfNs = new Zend_Session_Namespace('csrf_namespace');
+        echo htmlspecialchars($csrfNs->authtoken ?? '', ENT_QUOTES);
+    ?>" />
+</div><!-- .soundcard-config -->
