@@ -28,8 +28,30 @@
     width: 300px;
 }
 
+/* RASTATIME 2026-05-16 - .check and .fail rely on a CSS background-image
+   that needs minimum cell dimensions to actually render; without these
+   the empty TD collapses to ~6px and the icon is clipped to invisibility,
+   which is why the upstream .check class appeared to do nothing on the
+   six RASTATIME NSSM services even when the running state was correctly
+   detected. */
+.solution.check,
+.solution.fail {
+    min-height: 24px;
+    min-width: 24px;
+    height: 24px;
+}
+
 .check {
     background: #dff0d8 url("../images/accept.png") no-repeat center;
+}
+
+/* RASTATIME 2026-05-16 - Counterpart to .check for the six RASTATIME NSSM
+   services.  Uses the existing delete.png glyph (the same red-X
+   iconography used in context menus and Library row deletes) on the
+   Bootstrap "danger" pale-red background, so the visual language matches
+   the green-check success state. */
+.fail {
+    background: #f2dede url("../images/delete.png") no-repeat center;
 }
 
 .footer {

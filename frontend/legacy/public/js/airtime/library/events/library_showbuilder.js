@@ -25,7 +25,7 @@ var AIRTIME = (function (AIRTIME) {
     }
 
     var sortable = $(".spl_sortable");
-    if ($("#show_builder_table").is(":visible")) {
+    if ($("#show_builder_table").length > 0) {
       if (shows.length === 0) {
         check = false;
       }
@@ -69,6 +69,10 @@ var AIRTIME = (function (AIRTIME) {
         aData.image = '<span class="ui-icon ui-icon-locked"></span>';
       }
     } else if (aData.ftype === "stream") {
+      $nRow.addClass("lib-stream");
+    } else if (aData.ftype === "linein") {
+      // RASTATIME 2026-05-12 — same CSS class as Webstream for now;
+      // both are "live source" rows with no preview support.
       $nRow.addClass("lib-stream");
     } else {
       $nRow.addClass("lib-pl");
@@ -149,13 +153,23 @@ var AIRTIME = (function (AIRTIME) {
 
     mod.drawEmptyPlaceholder(table);
 
-    var sortable;
-
-    if ($("#show_builder_table").is(":visible")) {
-      sortable = "#show_builder_table";
-    } else {
-      sortable = ".active-tab .spl_sortable";
-    }
+    // RASTATIME 2026-05-19 — connectToSortable must list *both* drop
+    // targets, not pick one.  The upstream code did
+    //   if ($("#show_builder_table").length > 0) { sortable = "#show_builder_table"; }
+    //   else                                     { sortable = ".active-tab .spl_sortable"; }
+    // which silently broke drag-and-drop into the Dashboard's
+    // Playlist / Smart-Block editor tabs: in the Dashboard
+    // (showbuilder/index.phtml) #show_builder_table is *always*
+    // present in the DOM as the initial "Scheduled Shows" tab, so
+    // the if-branch always won — and the Playlist editor's
+    // .active-tab .spl_sortable was never registered as a drop
+    // target.  Only the dblClickAdd path worked because it bypasses
+    // the sortable mechanism entirely and calls fnAddItems()
+    // directly.  jQuery UI accepts a comma-separated selector and
+    // matches each resolved element as an independent connected
+    // sortable, so listing both at all times correctly delegates
+    // the drop to whichever container is the actual visible target.
+    var sortable = "#show_builder_table, .active-tab .spl_sortable";
 
     $('#library_display tr[class*="lib-"]').draggable({
       helper: function () {
@@ -400,6 +414,12 @@ var AIRTIME = (function (AIRTIME) {
           selection == AIRTIME.library.MediaTypeIntegerEnum.WEBSTREAM
         ) {
           AIRTIME.playlist.fnWsNew();
+        } else if (
+          // RASTATIME 2026-05-12 — wire toolbar "New" button to the
+          // Line-In dialog when the Line Inputs tab is selected.
+          selection == AIRTIME.library.MediaTypeIntegerEnum.LINEIN
+        ) {
+          AIRTIME.playlist.fnLineinNew();
         }
       });
 
@@ -427,6 +447,9 @@ var AIRTIME = (function (AIRTIME) {
             AIRTIME.playlist.validatePlaylistElements();
           } else if (data.ftype === "stream") {
             AIRTIME.playlist.fnEdit(data, baseUrl + "webstream/edit");
+          } else if (data.ftype === "linein") {
+            // RASTATIME 2026-05-12 — Edit handler for Line-In rows.
+            AIRTIME.playlist.fnEdit(data, baseUrl + "linein/edit");
           }
         });
       });

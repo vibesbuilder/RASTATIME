@@ -231,11 +231,14 @@ function eventRender(event, element, view) {
   $(element).attr("data-show-linked", event.linked);
   $(element).data("event", event);
 
-  //only put progress bar on shows that aren't being recorded.
-  if (
-    (view.name === "agendaDay" || view.name === "agendaWeek") &&
-    event.record === 0
-  ) {
+  // RASTATIME 2026-05-17 — Phase B record-per-show (ARCHITECTURE 23.13):
+  // upstream gated the progress bar and content icons on `event.record === 0`
+  // because "record" meant "Liquidsoap line-in recording, no schedule items".
+  // RASTATIME's `record` flag now means "tap the on-air output to MP3 in
+  // parallel" — the show still has a normal schedule.  Drop both gates so the
+  // fill-bar and empty / partial / overbooked icons render the same as for
+  // non-recording shows.
+  if (view.name === "agendaDay" || view.name === "agendaWeek") {
     var div = $("<div/>");
     div
       .height("5px")
@@ -250,7 +253,7 @@ function eventRender(event, element, view) {
     $(element).find(".fc-event-content").append(div);
   }
 
-  if (event.record === 0 && event.rebroadcast === 0) {
+  if (event.rebroadcast === 0) {
     if (view.name === "agendaDay" || view.name === "agendaWeek") {
       if (event.show_empty === 1) {
         if (event.linked) {
@@ -672,6 +675,23 @@ function alertShowErrorAndReload() {
 $(document).ready(function () {
   preloadEventFeed();
   getCurrentShow();
+
+  // RASTATIME 2026-05-20 — refresh the calendar's event list every
+  // 60 s so the per-show fill bar (rendered from event.percent in
+  // eventRender() above) picks up changes made by the
+  // AutoPlaylistManager polling job (also 60 s).  Before this the
+  // calendar only refetched on direct user actions (drag/drop,
+  // edit, delete) — an autoplaylist that filled a show 1 h before
+  // its start was invisible in the calendar until the operator
+  // manually reloaded the page.  refetchEvents() re-runs the
+  // Schedule/event-feed AJAX call, which carries the up-to-date
+  // percent from cc_show_instances.time_filled.
+  setInterval(function () {
+    var $cal = $("#schedule_calendar");
+    if ($cal.length > 0 && $cal.is(":visible")) {
+      $cal.fullCalendar("refetchEvents");
+    }
+  }, 60 * 1000);
 });
 
 var view_name;

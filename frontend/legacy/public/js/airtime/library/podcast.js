@@ -34,6 +34,13 @@ var AIRTIME = (function (AIRTIME) {
     $scope.podcast = podcast;
     $scope.tab = tab;
     $scope.csrf = jQuery("#csrf").val();
+    // RASTATIME 2026-05-17 — Track-Type dropdown options.  Embedded
+    // by PodcastService::getPodcastById() directly into the podcast
+    // JSON payload (was previously a server-rendered <script> tag
+    // in podcast.phtml, which did not run reliably when the editor
+    // HTML was injected into the tab via jQuery's .html()).  Falls
+    // back to an empty list for legacy payloads / station podcasts.
+    $scope.trackTypeOptions = podcast.track_type_options || [];
     view.find("table").attr("id", "podcast_episodes_" + podcast.id);
 
     self.onSaveCallback = function () {

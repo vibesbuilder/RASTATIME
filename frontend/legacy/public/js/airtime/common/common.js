@@ -13,6 +13,15 @@ $(document).ready(function () {
   setTimeout(function () {
     $(".success").fadeOut("slow");
   }, 5000);
+
+  // RASTATIME 2026-05-13 — Phase B.4 #2 dashboard banner.
+  // First fetch on page load (so the banner is correct from the first
+  // frame), then poll every 60 s.  Also re-pollable on demand via
+  // loadPreflightWarnings() from save-flow hooks elsewhere.
+  if (typeof loadPreflightWarnings === "function") {
+    loadPreflightWarnings();
+    setInterval(loadPreflightWarnings, 60 * 1000);
+  }
 });
 
 /*
@@ -348,6 +357,149 @@ function getUsabilityHint() {
       }
     },
   );
+}
+
+/* ----------------------------------------------------------------------
+ * RASTATIME 2026-05-13 — Phase B.4 #2 dashboard banner for pre-flight
+ * warnings (e.g. Line-In device unavailable for upcoming shows).
+ *
+ * Reads from the PHP proxy /api/get-preflight-warnings, which in turn
+ * fetches the Django /api/v2/preflight/warnings endpoint over
+ * localhost.  The endpoint returns:
+ *
+ *   {"warnings": [{
+ *      "id":            42,
+ *      "warning_type":  "linein_device_unavailable",
+ *      "severity":      "warning" | "error",
+ *      "show_id":       12,
+ *      "starts_at":     "2026-05-14T08:00:00Z",
+ *      "detail":        { "linein_name": "...", "device_id": "...",
+ *                          "show_name": "..." }
+ *    }, ...]}
+ *
+ * Render strategy
+ * ---------------
+ * Empty list      → banner stays / becomes hidden.
+ * One warning     → single-line banner.
+ * Multiple        → bulleted list, sorted server-side by starts_at.
+ * Any "error"     → banner gets ".severity-error" class (red).
+ *
+ * Polling
+ * -------
+ * Called once on page load (see jQuery ready hook below) and every
+ * 60 s thereafter via setInterval.  Also called explicitly from the
+ * existing showbuilder / schedule save flows right after they ping
+ * /reload-schedule, so the banner updates within seconds of an edit
+ * instead of waiting for the next 60-s tick.
+ * -------------------------------------------------------------------- */
+function loadPreflightWarnings() {
+  $.getJSON(
+    baseUrl + "api/get-preflight-warnings",
+    function (json) {
+      var $banner = $("#preflight_warnings_banner");
+      if (!$banner.length) {
+        return; // banner div not on this page (e.g. login screen)
+      }
+      var warnings = (json && json.warnings) ? json.warnings : [];
+
+      if (warnings.length === 0) {
+        $banner.empty().addClass("hidden").removeClass("severity-error");
+        return;
+      }
+
+      // Build the rendered HTML.  Use jQuery DOM construction (not
+      // innerHTML string concat) so detail.show_name / linein_name
+      // get auto-escaped — they originate from user-supplied show
+      // titles and could contain anything.
+      var $list = $("<ul></ul>");
+      var anyError = false;
+      $.each(warnings, function (_, w) {
+        if (w.severity === "error") {
+          anyError = true;
+        }
+        var detail = w.detail || {};
+        var $li = $("<li></li>");
+
+        // "Today 14:00" / "Tomorrow 08:00" / "Wed 14 May 08:00"
+        if (w.starts_at) {
+          var when = _formatPreflightWhen(w.starts_at);
+          $li.append(
+            $("<span class='pw-when'></span>").text(when + ":")
+          );
+        }
+
+        // Warning-type-specific copy.  Currently one type, but the
+        // dispatch keeps the door open for more.
+        if (w.warning_type === "linein_device_unavailable") {
+          // Show name in italics, device name plain.
+          var showLabel = detail.show_name || $.i18n._("(untitled show)");
+          var lineinLabel = detail.linein_name || detail.device_id || "?";
+          $li.append(
+            document.createTextNode(" " + $.i18n._("Line-In") + " ")
+          );
+          $li.append($("<strong></strong>").text(lineinLabel));
+          $li.append(
+            document.createTextNode(
+              " " + $.i18n._("for show") + " "
+            )
+          );
+          $li.append($("<span class='pw-show'></span>").text(showLabel));
+          $li.append(
+            document.createTextNode(
+              " " + $.i18n._("is not currently reachable.")
+            )
+          );
+        } else {
+          // Unknown warning type — render a generic fallback so future
+          // backend additions surface even before the JS catches up.
+          $li.text(
+            (w.warning_type || "warning") + ": " + JSON.stringify(detail)
+          );
+        }
+
+        $list.append($li);
+      });
+
+      $banner
+        .empty()
+        .append($list)
+        .removeClass("hidden")
+        .toggleClass("severity-error", anyError);
+    },
+  ).fail(function () {
+    // Network blip — keep whatever the banner currently shows rather
+    // than blanking it.  Next 60-s tick will retry.
+  });
+}
+
+/* Format an ISO-8601 UTC timestamp (e.g. "2026-05-14T08:00:00Z") into
+ * a short, operator-friendly string in the browser's local time zone.
+ * "Today" / "Tomorrow" / "Wed 14 May" prefix + HH:MM. */
+function _formatPreflightWhen(iso) {
+  var d = new Date(iso);
+  if (isNaN(d.getTime())) {
+    return iso;
+  }
+  var now = new Date();
+  var today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  var thatDay = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  var dayDiff = Math.round((thatDay - today) / 86400000);
+
+  var hh = ("0" + d.getHours()).slice(-2);
+  var mm = ("0" + d.getMinutes()).slice(-2);
+  var hhmm = hh + ":" + mm;
+
+  if (dayDiff === 0) {
+    return $.i18n._("Today") + " " + hhmm;
+  }
+  if (dayDiff === 1) {
+    return $.i18n._("Tomorrow") + " " + hhmm;
+  }
+  // Day-of-week + day + abbreviated month (browser-locale aware).
+  var dow = d.toLocaleDateString(undefined, { weekday: "short" });
+  var dnum = d.getDate();
+  var mon = d.toLocaleDateString(undefined, { month: "short" });
+  return dow + " " + dnum + " " + mon + " " + hhmm;
 }
 
 // TODO: build this out so we can use it as a fallback in fail cases

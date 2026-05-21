@@ -38,6 +38,21 @@ function restrictOggBitrate(ele, on) {
       .removeAttr("disabled");
   }
 }
+
+// Opus only accepts 48 kHz (libopus rejects 44.1 kHz).  When the user
+// selects Opus, force the Sample Rate dropdown to 48000 and disable the
+// 44100 option so it cannot be saved.  When switching away from Opus,
+// re-enable 44100 — the user may want it again for MP3/Vorbis/AAC.
+function restrictOpusSamplerate(ele, on) {
+  var div = ele.closest("div");
+  var sr  = div.find("select[id$=data-samplerate]");
+  if (on) {
+    sr.val("48000");
+    sr.find("option[value='44100']").attr("disabled", "disabled");
+  } else {
+    sr.find("option[value='44100']").removeAttr("disabled");
+  }
+}
 function hideForShoutcast(ele) {
   var div = ele.closest("div");
   div.find("#outputMountpoint-label").hide();
@@ -90,48 +105,58 @@ function showForIcecast(ele) {
 
 function checkLiquidsoapStatus() {
   var url = baseUrl + "Preference/get-liquidsoap-status/format/json";
-  var id = $(this).attr("id");
   $.post(url, function (json_obj) {
+    var keepPolling = false;
+    var pollDelay   = 5000;   // default: re-check every 5 s
+
     for (var i = 0; i < json_obj.length; i++) {
       var obj = json_obj[i];
-      var id;
-      var status;
+      var id, status;
       for (var key in obj) {
-        if (key == "id") {
-          id = obj[key];
-        }
-        if (key == "status") {
-          status = obj[key];
-        }
+        if (key == "id")     { id     = obj[key]; }
+        if (key == "status") { status = obj[key]; }
       }
       var html;
       if (status == "OK") {
-        html =
-          '<div class="stream-status status-good"><p>' +
-          $.i18n._("Connected to the streaming server") +
-          "</p></div>";
+        // Icecast running + mount point active — VLC is streaming
+        html = '<div class="stream-status status-good"><p>' +
+               $.i18n._("Connected to the streaming server") +
+               "</p></div>";
+        keepPolling = true;
+        pollDelay   = 5000;
       } else if (status == "N/A") {
-        html =
-          '<div class="stream-status status-disabled"><p>' +
-          $.i18n._("The stream is disabled") +
-          "</p></div>";
+        // Stream disabled — nothing to do
+        html = '<div class="stream-status status-disabled"><p>' +
+               $.i18n._("The stream is disabled") +
+               "</p></div>";
       } else if (status == "waiting") {
-        html =
-          '<div class="stream-status status-info"><p>' +
-          $.i18n._("Getting information from the server...") +
-          "</p></div>";
+        // RASTATIME: Icecast not reachable (service not started or wrong port/host)
+        html = '<div class="stream-status status-info"><p>' +
+               $.i18n._("Icecast is not running. Start the RASTATIME-ICECAST service.") +
+               "</p></div>";
+        keepPolling = true;
+        pollDelay   = 10000;  // retry every 10 s — no point hammering a stopped service
+      } else if (status == "inactive") {
+        // RASTATIME: Icecast is up, mount not yet active — VLC not streaming yet
+        html = '<div class="stream-status status-info"><p>' +
+               $.i18n._("Icecast is running. Start RASTATIME-PLAYOUT and schedule content to go live.") +
+               "</p></div>";
+        keepPolling = true;
+        pollDelay   = 5000;   // check every 5 s to detect stream coming up
       } else {
-        html =
-          '<div class="stream-status status-error"><p>' +
-          $.i18n._("Can not connect to the streaming server") +
-          "</p><p>" +
-          status +
-          "</p></div>";
+        // Unexpected error string returned by the server
+        html = '<div class="stream-status status-error"><p>' +
+               $.i18n._("Cannot connect to the streaming server") +
+               "</p><p>" + status + "</p></div>";
+        keepPolling = true;
+        pollDelay   = 5000;
       }
       $("#s" + id + "Liquidsoap-error-msg-element").html(html);
     }
 
-    setTimeout(checkLiquidsoapStatus, 2000);
+    if (keepPolling) {
+      setTimeout(checkLiquidsoapStatus, pollDelay);
+    }
   });
 }
 
@@ -156,11 +181,16 @@ function setupEventListeners() {
     } else {
       restrictOggBitrate($(this), false);
     }
+    // Opus → force 48 kHz; everything else → unlock 44.1 kHz again
+    restrictOpusSamplerate($(this), $(this).val() == "opus");
   });
 
   $("select[id$=data-type]").each(function () {
     if ($(this).val() == "ogg") {
       restrictOggBitrate($(this), true);
+    }
+    if ($(this).val() == "opus") {
+      restrictOpusSamplerate($(this), true);
     }
   });
 
@@ -253,51 +283,9 @@ function setupEventListeners() {
     },
   });
 
-  $("#auto_transition_help").qtip({
-    content: {
-      text: $.i18n._(
-        "Check this box to automatically switch off Master/Show source upon source disconnection.",
-      ),
-    },
-    hide: {
-      delay: 500,
-      fixed: true,
-    },
-    style: {
-      border: {
-        width: 0,
-        radius: 4,
-      },
-      classes: "ui-tooltip-dark ui-tooltip-rounded",
-    },
-    position: {
-      my: "left bottom",
-      at: "right center",
-    },
-  });
-
-  $("#auto_switch_help").qtip({
-    content: {
-      text: $.i18n._(
-        "Check this box to automatically switch on Master/Show source upon source connection.",
-      ),
-    },
-    hide: {
-      delay: 500,
-      fixed: true,
-    },
-    style: {
-      border: {
-        width: 0,
-        radius: 4,
-      },
-      classes: "ui-tooltip-dark ui-tooltip-rounded",
-    },
-    position: {
-      my: "left bottom",
-      at: "right center",
-    },
-  });
+  // RASTATIME 2026-05-14: auto_transition / auto_switch qtip help
+  // popovers removed alongside their UI checkboxes — see
+  // application/forms/LiveStreamingPreferences.php for the rationale.
 
   $(".stream_username_help_icon").qtip({
     content: {

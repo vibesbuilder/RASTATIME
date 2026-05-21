@@ -14,7 +14,16 @@ var showName = null;
 
 var currentElem;
 
-var serverUpdateInterval = 5000;
+// RASTATIME 2026-05-17 — was 5000 ms (upstream).  The dashboard's
+// On-Air light, the source-switch indicators, and the "Now Playing"
+// metadata all only refresh on this poll, so a 5-second interval
+// turned a sub-second backend state change (e.g. Icecast mount_add
+// when a show starts) into a 3-4 second perceived UI lag.  2000 ms
+// is a defensive compromise: 2.5x the request load on the local
+// Apache (negligible — a tiny JSON endpoint), worst-case lag drops
+// from ~5 s to ~2 s, average lag from ~2.5 s to ~1 s.  A push-based
+// SSE/WebSocket fix would be cleaner but is a much bigger change.
+var serverUpdateInterval = 2000;
 var uiUpdateInterval = 200;
 
 var master_dj_on_air = false;
@@ -41,16 +50,31 @@ var nextShowPrepare = true;
 
 function secondsTimer() {
   /* This function constantly calls itself every 'uiUpdateInterval'
-   * micro-seconds and is responsible for updating the UI. */
-  if (localRemoteTimeOffset !== null) {
-    var date = new Date();
-    approximateServerTime = date.getTime() - localRemoteTimeOffset;
-    updateProgressBarValue();
-    updatePlaybar();
-    controlOnAirLight();
-    controlSwitchLight();
+   * micro-seconds and is responsible for updating the UI.
+   *
+   * RASTATIME hardening: the body runs inside a try/finally so that
+   * any uncaught exception in the update routines (DOM not yet ready,
+   * stale state, race between the AJAX poll and the 200-ms tick, …)
+   * does NOT prevent the next setTimeout from being scheduled.  Before
+   * this guard, a single exception silently froze the entire clock
+   * and now-playing display until the operator hit reload — the
+   * symptom reported as "Uhr bleibt oft hängen". */
+  try {
+    if (localRemoteTimeOffset !== null) {
+      var date = new Date();
+      approximateServerTime = date.getTime() - localRemoteTimeOffset;
+      updateProgressBarValue();
+      updatePlaybar();
+      controlOnAirLight();
+      controlSwitchLight();
+    }
+  } catch (e) {
+    if (window.console && window.console.error) {
+      window.console.error("secondsTimer error (keeping loop alive):", e);
+    }
+  } finally {
+    setTimeout(secondsTimer, uiUpdateInterval);
   }
-  setTimeout(secondsTimer, uiUpdateInterval);
 }
 
 function newSongStart() {
@@ -103,7 +127,9 @@ function updateProgressBarValue() {
     } else {
       if (
         (currentSong.media_item_played == true && currentShow.length > 0) ||
-        (songElapsedTime < 5000 && currentShow[0].record != 1)
+        (songElapsedTime < 5000 &&
+          currentShow.length > 0 &&
+          currentShow[0].record != 1)
       ) {
         scheduled_play_line_to_switch.attr("class", "line-to-switch on");
         scheduled_play_div.addClass("ready");

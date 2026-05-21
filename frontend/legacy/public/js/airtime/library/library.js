@@ -74,6 +74,8 @@ var AIRTIME = (function (AIRTIME) {
     BLOCK: 3,
     WEBSTREAM: 4,
     PODCAST: 5,
+    // RASTATIME 2026-05-12 — Line-In as a fifth library media type.
+    LINEIN: 6,
   });
 
   mod.MediaTypeStringEnum = Object.freeze({
@@ -82,6 +84,7 @@ var AIRTIME = (function (AIRTIME) {
     BLOCK: "bl",
     WEBSTREAM: "ws",
     PODCAST: "pc",
+    LINEIN: "li",
   });
 
   mod.MediaTypeFullToStringEnum = Object.freeze({
@@ -89,6 +92,7 @@ var AIRTIME = (function (AIRTIME) {
     playlist: "pl",
     block: "bl",
     stream: "ws",
+    linein: "li",
   });
 
   mod.DataTableTypeEnum = Object.freeze({
@@ -133,6 +137,13 @@ var AIRTIME = (function (AIRTIME) {
           icon: "icon-headphones",
           subtext: "Click 'Add' to create one now.",
           href: "https://libretime.org/docs/user-manual/podcasts/",
+        };
+      case mod.MediaTypeIntegerEnum.LINEIN:
+        return {
+          media: "line inputs",
+          icon: "icon-volume-up",
+          subtext: "Click 'New' → 'Line Input' to create one now.",
+          href: "",
         };
       default:
         break;
@@ -254,6 +265,7 @@ var AIRTIME = (function (AIRTIME) {
           $.i18n._("Publish") +
           ">" +
           "<button class='btn btn-small' id='publish-btn'>" +
+          "<i class='publish-icon'></i>" +
           "<span>" +
           $.i18n._("Publish") +
           "</span>" +
@@ -768,6 +780,28 @@ var AIRTIME = (function (AIRTIME) {
         bVisible: false,
         sClass: "library_modified_time",
         sWidth: "155px",
+      },
+      /* RASTATIME 2026-05-16 - Expiry Date + Disabled columns.
+         Hidden by default; operator toggles via the columns picker.
+         expires_at is YYYY-MM-DD string from the searchFiles backend,
+         disabled is a 't'/'f' from PostgreSQL bool, normalised in the
+         backend formatter. */
+      /* Expiry Date - share class + width with Last Modified / Last
+         Played so the header stays single-line and the column lines
+         up visually with its siblings. */
+      {
+        sTitle: $.i18n._("Expiry Date"),
+        mDataProp: "expires_at",
+        bVisible: false,
+        sClass: "library_modified_time",
+        sWidth: "155px",
+      },
+      /* Disabled - boolean, narrow column. */ {
+        sTitle: $.i18n._("Disabled"),
+        mDataProp: "disabled",
+        bVisible: false,
+        sClass: "library_disabled",
+        sWidth: "70px",
       },
       /* Last Played */ {
         sTitle: $.i18n._("Last Played"),
@@ -1492,7 +1526,15 @@ var AIRTIME = (function (AIRTIME) {
     $libTable.on("click", "td.library_type", function () {
       var aData = $(this).parent().data().aData;
 
-      if (aData.ftype === "playlist" && aData.length !== "0.0") {
+      // RASTATIME 2026-05-15 — dropped the ``aData.length !== "0.0"``
+      // guard for playlist previews.  The upstream check was meant to
+      // silently no-op on empty playlists; in practice it also blocked
+      // playlists whose ``cc_playlist.length`` DB value happens to be
+      // 0 even when they have items (legacy import quirk where the
+      // length column was never re-summed).  Opening the popup with
+      // no audio is better UX than a click that does nothing — the
+      // operator immediately sees the playlist is empty / broken.
+      if (aData.ftype === "playlist") {
         open_playlist_preview(aData.audioFile, 0);
       } else if (aData.ftype === "audioclip") {
         if (isAudioSupported(aData.mime)) {
@@ -1650,6 +1692,11 @@ var AIRTIME = (function (AIRTIME) {
                   callback = function () {
                     AIRTIME.playlist.fnEdit(data, baseUrl + "webstream/edit");
                   };
+                } else if (data.ftype === "linein") {
+                  // RASTATIME 2026-05-12 — Line-In edit dispatcher.
+                  callback = function () {
+                    AIRTIME.playlist.fnEdit(data, baseUrl + "linein/edit");
+                  };
                 } else {
                   throw new Exception($.i18n._("Unknown type: ") + data.ftype);
                 }
@@ -1665,7 +1712,11 @@ var AIRTIME = (function (AIRTIME) {
                 }
 
                 callback = function () {
-                  if (data.ftype === "playlist" && data.length !== "0.0") {
+                  // RASTATIME 2026-05-15 — dropped the
+                  // ``data.length !== "0.0"`` guard for playlist preview.
+                  // See click-on-library_type handler above for the
+                  // full rationale.
+                  if (data.ftype === "playlist") {
                     playlistIndex = $(this).attr("id").substring(3); // remove the pl_
                     open_playlist_preview(playlistIndex, 0);
                   } else if (

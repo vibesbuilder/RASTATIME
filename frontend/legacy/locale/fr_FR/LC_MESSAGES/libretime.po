@@ -1712,7 +1712,6 @@ msgid "60m"
 msgstr "60m"
 
 #: application/controllers/LocaleController.php:219
-#, fuzzy
 msgid "Retreiving data from the server..."
 msgstr "Récupération des données du serveur ..."
 
@@ -3538,7 +3537,6 @@ msgid "Least recently played"
 msgstr "Les moins joués récemment"
 
 #: application/forms/SmartBlockCriteria.php:60
-#, fuzzy
 msgid "Select Track Type"
 msgstr "Sélectionner un type de piste"
 
@@ -3555,7 +3553,6 @@ msgid "Static"
 msgstr "Statique"
 
 #: application/forms/SmartBlockCriteria.php:277
-#, fuzzy
 msgid "Select track type"
 msgstr "Sélectionner un type de piste"
 

@@ -123,6 +123,17 @@ function removeLogo() {
   );
 }
 
+// RASTATIME 2026-05-15 - Counterpart to removeLogo for the custom favicon.
+function removeFavicon() {
+  $.post(
+    baseUrl + "preference/remove-favicon",
+    { csrf_token: $("#csrf").val() },
+    function (json) {
+      location.href = location.href.replace(location.hash, "");
+    },
+  );
+}
+
 function deleteAllFiles() {
   var resp = confirm(
     $.i18n._("Are you sure you want to delete all the tracks in your library?"),
@@ -187,6 +198,29 @@ $(document).ready(function () {
       }
     } else {
       preview.hide();
+    }
+  });
+
+  // RASTATIME 2026-05-15 - Same live-preview wiring for the favicon upload.
+  // No size validation here (favicons are tiny by definition; the form's
+  // setMaxFileSize(200000) is the only gate).
+  var favicon = $("#stationFavicon"),
+    faviconPreview = $("#favicon-img");
+  favicon.change(function (e) {
+    if (this.files && this.files[0]) {
+      // Create the preview <img> if it didn't exist yet (operator hadn't
+      // uploaded one before).
+      if (faviconPreview.length === 0) {
+        $("#Favicon-img-container").append('<img id="favicon-img" />');
+        faviconPreview = $("#favicon-img");
+      }
+      faviconPreview.show();
+      $("#favicon-remove-btn").show();
+      var reader = new FileReader();
+      reader.onload = function (e) {
+        faviconPreview.attr("src", e.target.result);
+      };
+      reader.readAsDataURL(this.files[0]);
     }
   });
 

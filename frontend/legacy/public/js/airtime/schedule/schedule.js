@@ -77,12 +77,23 @@ function findViewportDimensions() {
 }
 
 function highlightMediaTypeSelector(dialog) {
-  var selected;
-  if (location.hash === "") {
-    selected = dialog.find("a[href$='#tracks']");
-  } else {
-    selected = dialog.find("a[href$='" + location.hash + "']");
+  // RASTATIME 2026-05-17 — when the Schedule Tracks dialog opens, the
+  // operator almost always wants to pick file tracks first.  The
+  // upstream behaviour fell back to whatever `location.hash` had been
+  // set to most recently in the Library view (e.g. `#playlists`), so
+  // a previous Library navigation would persist into the dialog.
+  // Force the hash to `#tracks` so the dialog always starts on the
+  // Tracks tab regardless of where the operator was before.
+  if (location.hash !== "#tracks") {
+    // Use history.replaceState to avoid a duplicate hashchange event
+    // (the listener installed below would otherwise fire twice).
+    if (history.replaceState) {
+      history.replaceState(null, "", "#tracks");
+    } else {
+      location.hash = "#tracks";
+    }
   }
+  var selected = dialog.find("a[href$='#tracks']");
 
   selected.parent().addClass("selected");
   $("#library_filter").text(selected.text());
@@ -188,6 +199,30 @@ function buildScheduleDialog(json, instance_id) {
   fnServer.ops.showFilter = 0;
   fnServer.ops.showInstanceFilter = instance_id;
   fnServer.ops.myShows = 0;
+
+  // RASTATIME 2026-05-17 — force the Library tab back to Tracks
+  // BEFORE libraryInit + builderDataTable run.  The DataTable's
+  // server-data callback reads the filter from
+  // $(".media_type_selector.selected").data("selection-id") on
+  // every fetch (library.js around line 1022), so we need TWO
+  // things in place before libraryInit runs:
+  //   (a) location.hash = #tracks  (cleans up any leftover hash
+  //       that the operator's previous Library navigation left
+  //       in place — also used by the highlightMediaTypeSelector
+  //       function below);
+  //   (b) the .selected class moved to the #tracks tab inside
+  //       the dialog, so the very first fnServerData call sends
+  //       type=1 (FILE) instead of e.g. type=2 (PLAYLIST).
+  // The visual highlighting + window.hashchange listener
+  // installation are still left to highlightMediaTypeSelector
+  // below; this block only handles the "initial filter" race.
+  if (window.history && history.replaceState) {
+    history.replaceState(null, "", "#tracks");
+  } else {
+    location.hash = "#tracks";
+  }
+  dialog.find(".media_type_selector").removeClass("selected");
+  dialog.find("a[href$='#tracks']").parent().addClass("selected");
 
   AIRTIME.library.libraryInit();
   AIRTIME.showbuilder.builderDataTable();

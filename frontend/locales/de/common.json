@@ -1,0 +1,66 @@
+{
+  "nav": {
+    "schedule": "Sendeplan",
+    "library": "Medienbibliothek",
+    "history": "Verlauf",
+    "help": "Hilfe",
+    "settings": "Einstellungen",
+    "soundcard": "Soundkarte",
+    "lineIn": "Line-In",
+    "playbackHistory": "Wiedergabeverlauf"
+  },
+  "status": {
+    "onAir": "On Air",
+    "offAir": "Off Air",
+    "connecting": "Verbinde …",
+    "disconnected": "Getrennt",
+    "nothingScheduled": "Nichts geplant"
+  },
+  "lineIn": {
+    "title": "Line-In-Quellen",
+    "source": "Line-In-Quelle",
+    "device": "Gerät",
+    "priority": "Priorität",
+    "enabled": "Aktiviert",
+    "disabled": "Deaktiviert",
+    "addSource": "Quelle hinzufügen",
+    "noSources": "Keine Line-In-Quellen konfiguriert."
+  },
+  "soundcard": {
+    "title": "Soundkarteneinstellungen",
+    "inputDevice": "Eingabegerät",
+    "outputDevice": "Ausgabegerät",
+    "sampleRate": "Abtastrate",
+    "bufferSize": "Puffergröße",
+    "save": "Einstellungen speichern",
+    "noDevicesFound": "Keine Audiogeräte gefunden."
+  },
+  "playbackHistory": {
+    "title": "Wiedergabeverlauf",
+    "sourceType": "Quelle",
+    "duration": "Dauer",
+    "startedAt": "Gestartet um",
+    "endedAt": "Beendet um",
+    "sourceTypes": {
+      "file": "Audiodatei",
+      "webstream": "Webstream",
+      "linein": "Line-In",
+      "live": "Live",
+      "unknown": "Unbekannt"
+    }
+  },
+  "common": {
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "add": "Hinzufügen",
+    "close": "Schließen",
+    "confirm": "Bestätigen",
+    "yes": "Ja",
+    "no": "Nein",
+    "loading": "Lädt …",
+    "error": "Ein Fehler ist aufgetreten.",
+    "success": "Erfolgreich gespeichert."
+  }
+}

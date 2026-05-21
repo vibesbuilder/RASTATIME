@@ -830,11 +830,15 @@ var AIRTIME = (function (AIRTIME) {
       //stream url
       //default_length
       //playlist name
+      //input_gain_db (RASTATIME 2026-05-16)
       var id = $pl.find(".obj_id").attr("value");
       var description = $pl.find("#description").val();
       var streamurl = $pl.find("#streamurl-element input").val();
       var length = $pl.find("#streamlength-element input").val();
       var name = $pl.find(".playlist_name_display").val();
+      // RASTATIME 2026-05-16 - per-webstream input-gain (dB).  The
+      // server clamps to [-20, +20] and falls back to 0 on bad input.
+      var inputGainDb = $pl.find("#streamInputGainDb").val();
 
       //hide any previous errors (if any)
       $(".side_playlist.active-tab .errors").empty().hide();
@@ -849,6 +853,7 @@ var AIRTIME = (function (AIRTIME) {
           url: streamurl,
           length: length,
           name: name,
+          input_gain_db: inputGainDb,
         },
         function (json) {
           if (json.analysis) {
@@ -892,6 +897,117 @@ var AIRTIME = (function (AIRTIME) {
     });
 
     $pl.find("#webstream_cancel, #cancel_button").on("click", function () {
+      var tabId = $pl.attr("data-tab-id");
+      $("li[data-tab-id=" + tabId + "] .lib_pl_close").click();
+    });
+
+    // ----------------------------------------------------------------------
+    // RASTATIME 2026-05-12 — Line-In edit-dialog handlers.
+    //
+    // The dialog (linein.phtml) is structurally identical to webstream.phtml
+    // except the URL field is replaced by a Device dropdown that must be
+    // populated dynamically from GET /api/v2/audio/devices (same endpoint
+    // the Soundcard Settings page uses).
+    // ----------------------------------------------------------------------
+    var $lineinDevice = $pl.find("#linein-device");
+    if ($lineinDevice.length > 0) {
+      // Selected device-id baked into the rendered HTML.  Empty for "new".
+      var preselectId = $pl.find(".obj_device_id").val() || "";
+      $.ajax({
+        url: "/api/v2/audio/devices",
+        type: "GET",
+        dataType: "json",
+        success: function (data) {
+          $lineinDevice.empty();
+          $lineinDevice.append(
+            $("<option>").val("").text("— select device —"),
+          );
+          var inputs = (data && data.inputs) || [];
+          $.each(inputs, function (_, dev) {
+            // RASTATIME 2026-05-14 — stash friendly name as data attr
+            // so the save handler can persist it as device_name (used
+            // by the playout's resolver as a fallback when device_id
+            // doesn't resolve after a USB-GUID rebt-reshuffle).
+            $lineinDevice.append(
+              $("<option>")
+                .val(dev.stable_id)
+                .text(dev.name)
+                .attr("data-name", dev.name),
+            );
+          });
+          if (preselectId) {
+            if ($lineinDevice.find("option[value='" + preselectId + "']").length) {
+              $lineinDevice.val(preselectId);
+            } else {
+              // Configured device is currently unavailable — keep it
+              // visible so the operator notices and either reconnects
+              // or picks another input.
+              $lineinDevice.prepend(
+                $("<option>")
+                  .val(preselectId)
+                  .text("⚠ " + preselectId + " (not currently available)")
+                  .css({ color: "#c0392b", fontStyle: "italic" }),
+              );
+              $lineinDevice.val(preselectId);
+            }
+          }
+        },
+        error: function () {
+          $lineinDevice.empty().append(
+            $("<option>").val("").text("Could not load devices"),
+          );
+        },
+      });
+    }
+
+    $pl.find("#linein_save").on("click", function () {
+      var id          = $pl.find(".obj_id").attr("value");
+      var name        = $pl.find(".playlist_name_display").val();
+      var description = $pl.find("#description").val();
+      var deviceId    = $pl.find("#linein-device").val() || "";
+      // RASTATIME 2026-05-14 — pull friendly name from data attr so we
+      // get the clean form (not the "⚠ ... (not currently available)"
+      // decoration applied to missing-device option text).
+      var deviceName  = $pl.find("#linein-device option:selected").attr("data-name") || "";
+      var length      = $pl.find("#streamlength-element input").val();
+
+      // Hide any previous errors.
+      $(".side_playlist.active-tab .errors").empty().hide();
+
+      $.post(
+        baseUrl + "linein/save",
+        {
+          format:      "json",
+          id:          id,
+          name:        name,
+          description: description,
+          device_id:   deviceId,
+          device_name: deviceName,
+          length:      length,
+        },
+        function (json) {
+          var $status = $(".side_playlist.active-tab .status");
+          $status.html(json.statusMessage);
+          $status.show();
+          setTimeout(function () {
+            $status.fadeOut("slow", function () {
+              $status.empty();
+            });
+          }, 5000);
+
+          if (json.lineinId) {
+            // Update the in-DOM id so a subsequent save acts as PATCH,
+            // not a second INSERT.
+            $(".active-tab .obj_id").attr("value", json.lineinId);
+            $pl.find(".title_obj_name").text(name);
+            AIRTIME.tabs.getActiveTab().setName(name);
+            redrawLib();
+          }
+        },
+      );
+    });
+
+    $pl.find("#linein_cancel").on("click", function () {
       var tabId = $pl.attr("data-tab-id");
       $("li[data-tab-id=" + tabId + "] .lib_pl_close").click();
     });
@@ -1192,6 +1308,25 @@ var AIRTIME = (function (AIRTIME) {
 
     $.post(url, { format: "json" }, function (json) {
       var uid = AIRTIME.library.MediaTypeStringEnum.WEBSTREAM + "_" + json.id;
+      AIRTIME.tabs.openTab(
+        json.html,
+        uid,
+        AIRTIME.playlist._initPlaylistTabEvents,
+      );
+      redrawLib();
+    });
+  };
+
+  // RASTATIME 2026-05-12 — open the Line-In edit dialog for a new entry.
+  // Mirrors fnWsNew exactly; the server-side controller
+  // (LineinController::newAction) returns the same {html, ...} envelope.
+  mod.fnLineinNew = function () {
+    var url = baseUrl + "linein/new";
+
+    stopAudioPreview();
+
+    $.post(url, { format: "json" }, function (json) {
+      var uid = AIRTIME.library.MediaTypeStringEnum.LINEIN + "_new";
       AIRTIME.tabs.openTab(
         json.html,
         uid,
@@ -1692,6 +1827,10 @@ var AIRTIME = (function (AIRTIME) {
     });
     $("#new-webstream").live("click", function () {
       AIRTIME.playlist.fnWsNew();
+    });
+    // RASTATIME 2026-05-12 — Line-In dropdown entry handler.
+    $("#new-linein").live("click", function () {
+      AIRTIME.playlist.fnLineinNew();
     });
 
     AIRTIME.playlist.init();

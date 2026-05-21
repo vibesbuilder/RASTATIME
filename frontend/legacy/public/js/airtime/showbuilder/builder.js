@@ -47,6 +47,14 @@ var AIRTIME = (function (AIRTIME) {
       return;
     }
 
+    // Defensive: schedule must contain at least header + one content row.
+    // Inside the Schedule Tracks dialog the builder-feed may return a
+    // minimal result set; accessing [0] or [1] without this guard would
+    // throw and silently prevent the table from refreshing.
+    if (!json.schedule || json.schedule.length < 2) {
+      return;
+    }
+
     var instance_id = json.schedule[0].instance;
 
     var lastElem = json.schedule[json.schedule.length - 1];
@@ -327,8 +335,13 @@ var AIRTIME = (function (AIRTIME) {
     $.post(
       baseUrl + "showbuilder/schedule-add",
       { format: "json", mediaIds: aMediaIds, schedIds: aSchedIds },
-      mod.fnItemCallback,
-    );
+      function (json) {
+        mod.fnItemCallback(json);
+      },
+    ).fail(function (jqXHR, textStatus, errorThrown) {
+      console.error("schedule-add failed:", textStatus, errorThrown);
+      mod.enableUI();
+    });
   };
 
   mod.fnMove = function (aSelect, aAfter) {
@@ -1183,11 +1196,32 @@ var AIRTIME = (function (AIRTIME) {
         if (
           AIRTIME.library.getCurrentTable() == AIRTIME.library.libraryDataTable
         ) {
-          AIRTIME.library.addToChosen(ui.item);
+          // jQuery UI connectToSortable moves the original <tr> out of the
+          // library table into the sortable.  getSelectedData() searches
+          // $libTable.find("tr") and therefore can no longer find the
+          // dragged row.  Capture its data directly from ui.item first.
+          var draggedData = ui.item.data("aData");
+
           aItems = AIRTIME.library.getSelectedData();
+
+          // The dragged item is no longer inside $libTable, so
+          // getSelectedData() missed it.  Add it if not already included.
+          if (draggedData !== undefined) {
+            var draggedId = ui.item.attr("id");
+            var alreadyIncluded = false;
+            for (var j = 0; j < aItems.length; j++) {
+              if (aItems[j].tr_id === draggedId) {
+                alreadyIncluded = true;
+                break;
+              }
+            }
+            if (!alreadyIncluded) {
+              aItems.push(draggedData);
+            }
+          }
+
           origTrs = aItems;
           html = ui.helper.html();
-          AIRTIME.library.removeFromChosen(ui.item);
         } else if (
           AIRTIME.library.getCurrentTable() ==
           AIRTIME.library.podcastEpisodeDataTable

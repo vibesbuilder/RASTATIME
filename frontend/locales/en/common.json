@@ -1,0 +1,66 @@
+{
+  "nav": {
+    "schedule": "Schedule",
+    "library": "Library",
+    "history": "History",
+    "help": "Help",
+    "settings": "Settings",
+    "soundcard": "Soundcard",
+    "lineIn": "Line-In",
+    "playbackHistory": "Playback History"
+  },
+  "status": {
+    "onAir": "On Air",
+    "offAir": "Off Air",
+    "connecting": "Connecting",
+    "disconnected": "Disconnected",
+    "nothingScheduled": "Nothing Scheduled"
+  },
+  "lineIn": {
+    "title": "Line-In Sources",
+    "source": "Line-In Source",
+    "device": "Device",
+    "priority": "Priority",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "addSource": "Add Source",
+    "noSources": "No line-in sources configured."
+  },
+  "soundcard": {
+    "title": "Soundcard Settings",
+    "inputDevice": "Input Device",
+    "outputDevice": "Output Device",
+    "sampleRate": "Sample Rate",
+    "bufferSize": "Buffer Size",
+    "save": "Save Settings",
+    "noDevicesFound": "No audio devices found."
+  },
+  "playbackHistory": {
+    "title": "Playback History",
+    "sourceType": "Source",
+    "duration": "Duration",
+    "startedAt": "Started At",
+    "endedAt": "Ended At",
+    "sourceTypes": {
+      "file": "Audio File",
+      "webstream": "Web Stream",
+      "linein": "Line-In",
+      "live": "Live",
+      "unknown": "Unknown"
+    }
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "close": "Close",
+    "confirm": "Confirm",
+    "yes": "Yes",
+    "no": "No",
+    "loading": "Loading…",
+    "error": "An error occurred.",
+    "success": "Saved successfully."
+  }
+}

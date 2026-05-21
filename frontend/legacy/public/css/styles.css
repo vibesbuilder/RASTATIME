@@ -205,7 +205,7 @@ img.logo
 .airtime_auth_help_icon, .custom_auth_help_icon, .stream_username_help_icon,
 .playlist_type_help_icon, .repeat_tracks_help_icon, .show_linking_help_icon,
 .admin_username_help_icon, .stream_type_help_icon, .overflow_tracks_help_icon,
-.show_timezone_help_icon, .show_autoplaylist_help_icon, .help_icon {
+.show_timezone_help_icon, .show_autoplaylist_help_icon, .show_record_help_icon, .help_icon {
         cursor: help;
         position: relative;
         display:inline-block; zoom:1;
@@ -2514,6 +2514,21 @@ dd.radio-inline-list, .preferences dd.radio-inline-list, .stream-config dd.radio
     margin-right: 4px;
 }
 
+/* RASTATIME: Publish toolbar button icon (Dashboard → Tracks).
+   Uses a CSS mask so the SVG inherits the button's text colour (white on
+   the dark toolbar background) without having to hard-code the fill in
+   the SVG itself.  Sized to match Bootstrap 2's existing icon-* glyphs. */
+#publish-btn .publish-icon {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    margin-right: 0.3em;
+    vertical-align: text-top;
+    background-color: currentColor;
+    -webkit-mask: url("images/icon-cloud-upload.svg") no-repeat center / contain;
+    mask: url("images/icon-cloud-upload.svg") no-repeat center / contain;
+}
+
 .md-save {
     -webkit-flex: 1 0 auto;
     -moz-flex: 1 0 auto;
@@ -3692,6 +3707,61 @@ button.btn-icon-text > i.icon-white {
 
     z-index: 99; /* Need to be above elements like the shows in the calendar! */
     /*margin: 5px 10px;*/
+}
+
+/* RASTATIME — Pre-flight warnings banner (Phase B.4 #2).
+ *
+ * Same fixed-position pattern as .usability_hint, but stacked
+ * underneath it when both are visible.  Yellow background for the
+ * default "warning" severity differentiates it from the orange
+ * usability hint (which is a "you forgot something" hint, not an
+ * impending-show-failure warning).  Severity "error" turns the
+ * banner red — applied as an extra class by JS.
+ */
+.preflight_warnings {
+    position: fixed;
+    top: 132px;    /* below the .usability_hint (which sits at top: 102px) */
+    left: 152px;
+
+    width: 100%;
+    box-sizing: border-box;
+
+    padding: 5px 10px 5px 10px;
+    border: 1px solid #d4a017;
+    background-color: #f5b900;
+    color: #2a1a00;
+    font-size: 14px;
+    text-shadow: 0px 0px 1px rgba(0, 0, 0, 0.05);
+
+    z-index: 99;
+}
+.preflight_warnings.severity-error {
+    border-color: #b51717;
+    background-color: #e02020;
+    color: white;
+    text-shadow: 0px 0px 1px rgba(0, 0, 0, 0.1);
+}
+.preflight_warnings ul {
+    margin: 0;
+    padding-left: 1.4em;
+    list-style: disc;
+}
+.preflight_warnings li {
+    line-height: 1.3em;
+}
+.preflight_warnings .pw-when {
+    font-weight: bold;
+    margin-right: 0.4em;
+}
+.preflight_warnings .pw-show {
+    font-style: italic;
+}
+
+/* When the preflight banner is showing, push the content area down so
+ * the banner doesn't overlap (mirrors the .usability_hint shift). */
+.preflight_warnings:not(.hidden) + .wrapper,
+.preflight_warnings:not(.hidden) ~ #sub-menu {
+    margin-top: 32px;
 }
 
 /* Uploads/Dropzone */
