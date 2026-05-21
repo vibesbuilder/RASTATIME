@@ -44,7 +44,10 @@ class GeneralConfig(BaseModel):
 
 # pylint: disable=too-few-public-methods
 class StorageConfig(BaseModel):
-    path: StrNoTrailingSlash = "/srv/libretime"
+    # Windows-appropriate default; upstream Linux default kept for non-Windows envs.
+    path: StrNoTrailingSlash = (
+        r"C:\rastatime\media" if sys.platform == "win32" else "/srv/libretime"
+    )
 
 
 # DatabaseConfig
@@ -55,9 +58,9 @@ class StorageConfig(BaseModel):
 class DatabaseConfig(BaseModel):
     host: str = "localhost"
     port: int = 5432
-    name: str = "libretime"
-    user: str = "libretime"
-    password: str = "libretime"
+    name: str = "rastatime"
+    user: str = "rastatime"
+    password: str = "rastatime"
 
     @property
     def url(self) -> str:
@@ -75,9 +78,9 @@ class DatabaseConfig(BaseModel):
 class RabbitMQConfig(BaseModel):
     host: str = "localhost"
     port: int = 5672
-    user: str = "libretime"
-    password: str = "libretime"
-    vhost: str = "/libretime"
+    user: str = "rastatime"
+    password: str = "rastatime"
+    vhost: str = "/rastatime"
 
     @property
     def url(self) -> str:
@@ -216,50 +219,25 @@ class ShoutcastOutput(BaseModel):
     mobile: bool = False
 
 
+# T-GH-4: Linux audio backends (ALSA, AO, OSS, PortAudio, PulseAudio) removed.
+# RASTATIME runs on Windows only; WASAPI is the sole system output backend.
 class SystemOutput(str, Enum):
-    ALSA = "alsa"
-    AO = "ao"
-    OSS = "oss"
-    PORTAUDIO = "portaudio"
-    PULSEAUDIO = "pulseaudio"
+    WASAPI = "wasapi"
 
 
 class BaseSystemOutput(BaseModel):
     enabled: bool = False
 
 
-class ALSASystemOutput(BaseSystemOutput):
-    kind: Literal[SystemOutput.ALSA] = SystemOutput.ALSA
+class WASAPISystemOutput(BaseSystemOutput):
+    kind: Literal[SystemOutput.WASAPI] = SystemOutput.WASAPI
+    # Optional: pin to a specific Windows audio endpoint by stable_id.
+    # Leave None to use the OS default output device.
     device: Optional[str] = None
 
 
-class AOSystemOutput(BaseSystemOutput):
-    kind: Literal[SystemOutput.AO] = SystemOutput.AO
-
-
-class OSSSystemOutput(BaseSystemOutput):
-    kind: Literal[SystemOutput.OSS] = SystemOutput.OSS
-
-
-class PortAudioSystemOutput(BaseSystemOutput):
-    kind: Literal[SystemOutput.PORTAUDIO] = SystemOutput.PORTAUDIO
-
-
-class PulseAudioSystemOutput(BaseSystemOutput):
-    kind: Literal[SystemOutput.PULSEAUDIO] = SystemOutput.PULSEAUDIO
-    device: Optional[str] = None
-
-
-AnySystemOutput = Annotated[
-    Union[
-        ALSASystemOutput,
-        AOSystemOutput,
-        OSSSystemOutput,
-        PortAudioSystemOutput,
-        PulseAudioSystemOutput,
-    ],
-    Field(discriminator="kind", default=SystemOutput.PULSEAUDIO),
-]
+# Type alias kept for call-site compatibility; only one backend remains.
+AnySystemOutput = WASAPISystemOutput
 
 
 # pylint: disable=too-few-public-methods

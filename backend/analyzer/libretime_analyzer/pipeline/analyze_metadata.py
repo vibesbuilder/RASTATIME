@@ -1,7 +1,7 @@
 import logging
-from datetime import timedelta
+from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 # RASTATIME: mutagen is not installed on Windows by default.
 # Guard the import so this module can be safely imported without it.
@@ -33,6 +33,61 @@ if _MUTAGEN_AVAILABLE:
     EasyID3.RegisterKey("comment", comment_get)
 
 
+def _extract_expiry_tag(filepath: Path) -> Optional[datetime]:
+    """
+    RASTATIME 2026-05-16 - Read a custom ID3v2 TXXX frame named "Expiry"
+    and parse its value as an ISO-8601 date (YYYY-MM-DD).
+
+    Used by the Track-Expiry feature.  Returns a timezone-naive datetime
+    at midnight UTC on the parsed date, or None if:
+      * the file has no ID3v2 metadata,
+      * no TXXX frame with description "Expiry" exists,
+      * the value does not parse as YYYY-MM-DD.
+
+    Mutagen's EasyID3 does not expose generic TXXX frames, so we read
+    the raw ID3 here via mutagen.id3.ID3.  Other tag formats (Vorbis
+    comments in OGG/FLAC, MP4 atoms) are not currently scanned because
+    operator workflow is dominantly MP3 -> ID3v2.
+    """
+    if not _MUTAGEN_AVAILABLE:
+        return None
+
+    try:
+        # Lazy-import to keep the legacy import path light.
+        from mutagen.id3 import ID3, ID3NoHeaderError  # pylint: disable=import-outside-toplevel
+    except ImportError:
+        return None
+
+    try:
+        id3 = ID3(filepath)
+    except (ID3NoHeaderError, Exception):  # pylint: disable=broad-exception-caught
+        # File has no ID3v2 tag (typical for OGG/FLAC/M4A) — silently
+        # skip.  This is the dominant path for non-MP3 uploads.
+        return None
+
+    for frame in id3.getall("TXXX"):
+        desc = getattr(frame, "desc", "") or ""
+        if desc.strip().lower() == "expiry":
+            # TXXX.text is a list[str]; we take the first non-empty entry.
+            for raw in frame.text:
+                raw = str(raw).strip()
+                if not raw:
+                    continue
+                try:
+                    parsed = datetime.strptime(raw, "%Y-%m-%d")
+                    return parsed
+                except ValueError:
+                    logger.warning(
+                        "Expiry tag value %r in %s is not ISO 8601 date "
+                        "(YYYY-MM-DD); ignoring",
+                        raw, filepath,
+                    )
+                    return None
+            return None
+
+    return None
+
+
 def analyze_metadata(filepath_: str, metadata: Dict[str, Any]):
     """
     Extract audio metadata from tags embedded in the file using mutagen.
@@ -42,6 +97,24 @@ def analyze_metadata(filepath_: str, metadata: Dict[str, Any]):
     # Airtime <= 2.5.x required fields
     metadata["ftype"] = "audioclip"
     metadata["hidden"] = False
+
+    # RASTATIME 2026-05-16 - Track Expiry: read custom ID3 TXXX 'Expiry'
+    # tag if present.  ISO 8601 date (YYYY-MM-DD).  None ⇒ no expiry from
+    # tag (the parent Podcast service may still set one for auto-expiry
+    # podcasts, which takes precedence per design decision B).
+    #
+    # We emit the date as plain YYYY-MM-DD (not a full datetime).  Two
+    # reasons: (1) the EditAudioMD form validator expects exactly that
+    # format on the round-trip; (2) Expiry is a day-granularity concept,
+    # not a per-second one, and PostgreSQL's CAST(... AS TIMESTAMP)
+    # interprets the plain-date string as midnight on that date.
+    expiry = _extract_expiry_tag(filepath)
+    if expiry is not None:
+        metadata["expires_at"] = expiry.strftime("%Y-%m-%d")
+        logger.info(
+            "Expiry tag found in %s: %s",
+            filepath, metadata["expires_at"],
+        )
 
     # Get file properties
     metadata["filesize"] = filepath.stat().st_size

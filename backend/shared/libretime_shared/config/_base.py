@@ -12,7 +12,13 @@ from ._env import EnvLoader
 logger = logging.getLogger(__name__)
 
 DEFAULT_ENV_PREFIX = "LIBRETIME"
-DEFAULT_CONFIG_FILEPATH = Path("/etc/libretime/config.yml")
+# Use a Windows-appropriate default when running on Windows; keep the
+# upstream Linux default for non-Windows development environments.
+DEFAULT_CONFIG_FILEPATH = (
+    Path(r"C:\rastatime\config\libretime.conf")
+    if sys.platform == "win32"
+    else Path("/etc/libretime/config.yml")
+)
 
 
 # pylint: disable=too-few-public-methods

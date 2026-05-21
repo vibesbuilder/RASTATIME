@@ -36,18 +36,9 @@ FIXTURE_CONFIG_JSON_SCHEMA = {
     "$defs": {
         "AudioAAC": {
             "properties": {
-                "channels": {
-                    "allOf": [{"$ref": "#/$defs/AudioChannels"}],
-                    "default": "stereo",
-                },
+                "channels": {"$ref": "#/$defs/AudioChannels", "default": "stereo"},
                 "bitrate": {"title": "Bitrate", "type": "integer"},
-                "format": {
-                    "const": "aac",
-                    "default": "aac",
-                    "enum": ["aac"],
-                    "title": "Format",
-                    "type": "string",
-                },
+                "format": {"const": "aac", "default": "aac", "title": "Format", "type": "string"},
             },
             "required": ["bitrate"],
             "title": "AudioAAC",
@@ -60,18 +51,9 @@ FIXTURE_CONFIG_JSON_SCHEMA = {
         },
         "AudioMP3": {
             "properties": {
-                "channels": {
-                    "allOf": [{"$ref": "#/$defs/AudioChannels"}],
-                    "default": "stereo",
-                },
+                "channels": {"$ref": "#/$defs/AudioChannels", "default": "stereo"},
                 "bitrate": {"title": "Bitrate", "type": "integer"},
-                "format": {
-                    "const": "mp3",
-                    "default": "mp3",
-                    "enum": ["mp3"],
-                    "title": "Format",
-                    "type": "string",
-                },
+                "format": {"const": "mp3", "default": "mp3", "title": "Format", "type": "string"},
             },
             "required": ["bitrate"],
             "title": "AudioMP3",
@@ -79,18 +61,9 @@ FIXTURE_CONFIG_JSON_SCHEMA = {
         },
         "AudioOGG": {
             "properties": {
-                "channels": {
-                    "allOf": [{"$ref": "#/$defs/AudioChannels"}],
-                    "default": "stereo",
-                },
+                "channels": {"$ref": "#/$defs/AudioChannels", "default": "stereo"},
                 "bitrate": {"title": "Bitrate", "type": "integer"},
-                "format": {
-                    "const": "ogg",
-                    "default": "ogg",
-                    "enum": ["ogg"],
-                    "title": "Format",
-                    "type": "string",
-                },
+                "format": {"const": "ogg", "default": "ogg", "title": "Format", "type": "string"},
                 "enable_metadata": {
                     "anyOf": [{"type": "boolean"}, {"type": "null"}],
                     "default": False,
@@ -103,18 +76,9 @@ FIXTURE_CONFIG_JSON_SCHEMA = {
         },
         "AudioOpus": {
             "properties": {
-                "channels": {
-                    "allOf": [{"$ref": "#/$defs/AudioChannels"}],
-                    "default": "stereo",
-                },
+                "channels": {"$ref": "#/$defs/AudioChannels", "default": "stereo"},
                 "bitrate": {"title": "Bitrate", "type": "integer"},
-                "format": {
-                    "const": "opus",
-                    "default": "opus",
-                    "enum": ["opus"],
-                    "title": "Format",
-                    "type": "string",
-                },
+                "format": {"const": "opus", "default": "opus", "title": "Format", "type": "string"},
             },
             "required": ["bitrate"],
             "title": "AudioOpus",
@@ -122,74 +86,30 @@ FIXTURE_CONFIG_JSON_SCHEMA = {
         },
         "DatabaseConfig": {
             "properties": {
-                "host": {
-                    "default": "localhost",
-                    "title": "Host",
-                    "type": "string",
-                },
+                "host": {"default": "localhost", "title": "Host", "type": "string"},
                 "port": {"default": 5432, "title": "Port", "type": "integer"},
-                "name": {
-                    "default": "libretime",
-                    "title": "Name",
-                    "type": "string",
-                },
-                "user": {
-                    "default": "libretime",
-                    "title": "User",
-                    "type": "string",
-                },
-                "password": {
-                    "default": "libretime",
-                    "title": "Password",
-                    "type": "string",
-                },
+                "name": {"default": "rastatime", "title": "Name", "type": "string"},
+                "user": {"default": "rastatime", "title": "User", "type": "string"},
+                "password": {"default": "rastatime", "title": "Password", "type": "string"},
             },
             "title": "DatabaseConfig",
             "type": "object",
         },
         "IcecastOutput": {
             "properties": {
-                "kind": {
-                    "const": "icecast",
-                    "default": "icecast",
-                    "enum": ["icecast"],
-                    "title": "Kind",
-                    "type": "string",
-                },
-                "enabled": {
-                    "default": False,
-                    "title": "Enabled",
-                    "type": "boolean",
-                },
+                "kind": {"const": "icecast", "default": "icecast", "title": "Kind", "type": "string"},
+                "enabled": {"default": False, "title": "Enabled", "type": "boolean"},
                 "public_url": {
-                    "anyOf": [
-                        {"format": "uri", "type": "string"},
-                        {"type": "null"},
-                    ],
+                    "anyOf": [{"format": "uri", "type": "string"}, {"type": "null"}],
                     "default": None,
                     "title": "Public Url",
                 },
-                "host": {
-                    "default": "localhost",
-                    "title": "Host",
-                    "type": "string",
-                },
+                "host": {"default": "localhost", "title": "Host", "type": "string"},
                 "port": {"default": 8000, "title": "Port", "type": "integer"},
                 "mount": {"title": "Mount", "type": "string"},
-                "source_user": {
-                    "default": "source",
-                    "title": "Source User",
-                    "type": "string",
-                },
-                "source_password": {
-                    "title": "Source Password",
-                    "type": "string",
-                },
-                "admin_user": {
-                    "default": "admin",
-                    "title": "Admin User",
-                    "type": "string",
-                },
+                "source_user": {"default": "source", "title": "Source User", "type": "string"},
+                "source_password": {"title": "Source Password", "type": "string"},
+                "admin_user": {"default": "admin", "title": "Admin User", "type": "string"},
                 "admin_password": {
                     "anyOf": [{"type": "string"}, {"type": "null"}],
                     "default": None,
@@ -233,11 +153,7 @@ FIXTURE_CONFIG_JSON_SCHEMA = {
                     "default": None,
                     "title": "Genre",
                 },
-                "mobile": {
-                    "default": False,
-                    "title": "Mobile",
-                    "type": "boolean",
-                },
+                "mobile": {"default": False, "title": "Mobile", "type": "boolean"},
             },
             "required": ["mount", "source_password", "audio"],
             "title": "IcecastOutput",
@@ -245,73 +161,29 @@ FIXTURE_CONFIG_JSON_SCHEMA = {
         },
         "RabbitMQConfig": {
             "properties": {
-                "host": {
-                    "default": "localhost",
-                    "title": "Host",
-                    "type": "string",
-                },
+                "host": {"default": "localhost", "title": "Host", "type": "string"},
                 "port": {"default": 5672, "title": "Port", "type": "integer"},
-                "user": {
-                    "default": "libretime",
-                    "title": "User",
-                    "type": "string",
-                },
-                "password": {
-                    "default": "libretime",
-                    "title": "Password",
-                    "type": "string",
-                },
-                "vhost": {
-                    "default": "/libretime",
-                    "title": "Vhost",
-                    "type": "string",
-                },
+                "user": {"default": "rastatime", "title": "User", "type": "string"},
+                "password": {"default": "rastatime", "title": "Password", "type": "string"},
+                "vhost": {"default": "/rastatime", "title": "Vhost", "type": "string"},
             },
             "title": "RabbitMQConfig",
             "type": "object",
         },
         "ShoutcastOutput": {
             "properties": {
-                "kind": {
-                    "const": "shoutcast",
-                    "default": "shoutcast",
-                    "enum": ["shoutcast"],
-                    "title": "Kind",
-                    "type": "string",
-                },
-                "enabled": {
-                    "default": False,
-                    "title": "Enabled",
-                    "type": "boolean",
-                },
+                "kind": {"const": "shoutcast", "default": "shoutcast", "title": "Kind", "type": "string"},
+                "enabled": {"default": False, "title": "Enabled", "type": "boolean"},
                 "public_url": {
-                    "anyOf": [
-                        {"format": "uri", "type": "string"},
-                        {"type": "null"},
-                    ],
+                    "anyOf": [{"format": "uri", "type": "string"}, {"type": "null"}],
                     "default": None,
                     "title": "Public Url",
                 },
-                "host": {
-                    "default": "localhost",
-                    "title": "Host",
-                    "type": "string",
-                },
+                "host": {"default": "localhost", "title": "Host", "type": "string"},
                 "port": {"default": 8000, "title": "Port", "type": "integer"},
-                "source_user": {
-                    "default": "source",
-                    "title": "Source User",
-                    "type": "string",
-                },
-                "source_password": {
-                    "title": "Source Password",
-                    "type": "string",
-                },
-                "admin_user": {
-                    "default": "admin",
-                    "title": "Admin User",
-                    "type": "string",
-                },
+                "source_user": {"default": "source", "title": "Source User", "type": "string"},
+                "source_password": {"title": "Source Password", "type": "string"},
+                "admin_user": {"default": "admin", "title": "Admin User", "type": "string"},
                 "admin_password": {
                     "anyOf": [{"type": "string"}, {"type": "null"}],
                     "default": None,
@@ -319,16 +191,10 @@ FIXTURE_CONFIG_JSON_SCHEMA = {
                 },
                 "audio": {
                     "discriminator": {
-                        "mapping": {
-                            "aac": "#/$defs/AudioAAC",
-                            "mp3": "#/$defs/AudioMP3",
-                        },
+                        "mapping": {"aac": "#/$defs/AudioAAC", "mp3": "#/$defs/AudioMP3"},
                         "propertyName": "format",
                     },
-                    "oneOf": [
-                        {"$ref": "#/$defs/AudioAAC"},
-                        {"$ref": "#/$defs/AudioMP3"},
-                    ],
+                    "oneOf": [{"$ref": "#/$defs/AudioAAC"}, {"$ref": "#/$defs/AudioMP3"}],
                     "title": "Audio",
                 },
                 "name": {
@@ -346,11 +212,7 @@ FIXTURE_CONFIG_JSON_SCHEMA = {
                     "default": None,
                     "title": "Genre",
                 },
-                "mobile": {
-                    "default": False,
-                    "title": "Mobile",
-                    "type": "boolean",
-                },
+                "mobile": {"default": False, "title": "Mobile", "type": "boolean"},
             },
             "required": ["source_password", "audio"],
             "title": "ShoutcastOutput",
@@ -368,13 +230,13 @@ FIXTURE_CONFIG_JSON_SCHEMA = {
         },
         "database": {"$ref": "#/$defs/DatabaseConfig"},
         "rabbitmq": {
-            "allOf": [{"$ref": "#/$defs/RabbitMQConfig"}],
+            "$ref": "#/$defs/RabbitMQConfig",
             "default": {
                 "host": "localhost",
                 "port": 5672,
-                "user": "libretime",
-                "password": "libretime",
-                "vhost": "/libretime",
+                "user": "rastatime",
+                "password": "rastatime",
+                "vhost": "/rastatime",
             },
         },
         "outputs": {

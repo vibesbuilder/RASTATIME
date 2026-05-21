@@ -60,7 +60,7 @@ def test_stream_config():
         StreamConfig(outputs={"shoutcast": [shoutcast_output] * 2})
 
     system_output = {
-        "kind": "alsa",
+        "kind": "wasapi",
     }
     assert StreamConfig(outputs={"system": [system_output]})
     with pytest.raises(ValidationError):

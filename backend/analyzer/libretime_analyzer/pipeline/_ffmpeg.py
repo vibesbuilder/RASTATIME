@@ -1,3 +1,4 @@
+import os
 import re
 from math import inf
 from os import getenv
@@ -9,6 +10,12 @@ from ._utils import run_
 FFPROBE = getenv("FFPROBE_PATH", "ffprobe")
 FFMPEG = getenv("FFMPEG_PATH", "ffmpeg")
 
+# OS-portable null device: 'nul' on Windows, '/dev/null' on Unix.
+# Hard-coding '/dev/null' caused ffmpeg to silently produce a CompletedProcess
+# with stderr=None on Windows, which then crashed compute_silences with
+# AttributeError when it iterated over cmd.stderr.splitlines().
+_NULL_DEVICE = os.devnull
+
 
 def _ffmpeg(*args, **kwargs):
     return run_(
@@ -16,7 +23,7 @@ def _ffmpeg(*args, **kwargs):
         *args,
         "-f",
         "null",
-        "/dev/null",
+        _NULL_DEVICE,
         "-hide_banner",
         "-nostats",
         **kwargs,
@@ -75,8 +82,19 @@ def compute_silences(filepath: Path) -> List[Tuple[float, float]]:
     cmd = _ffmpeg(
         *("-i", filepath),
         "-vn",
-        *("-filter", "highpass=frequency=80,silencedetect=noise=-60dB:duration=0.9"),
+        # RASTATIME: reduced silence-duration threshold from 0.9 s to 0.3 s
+        # so short leading/trailing silences in jingles and station-IDs
+        # are picked up (a 0.5 s pre-roll is common in studio voiceovers
+        # and was previously ignored).  noise=-60 dB stays — that level is
+        # already quiet enough to handle typical studio room tone.
+        *("-filter", "highpass=frequency=80,silencedetect=noise=-60dB:duration=0.3"),
     )
+
+    # Defensive: some ffmpeg builds return CompletedProcess with stderr=None
+    # if the run produced no diagnostic output.  Treat that as "no silence
+    # info available" rather than crashing the whole pipeline.
+    if not cmd.stderr:
+        return []
 
     starts, ends = [], []
     for line in cmd.stderr.splitlines():
