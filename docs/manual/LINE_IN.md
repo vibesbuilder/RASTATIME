@@ -1,0 +1,344 @@
+# Line-In
+
+> **Where you are in the manual.** This chapter covers the
+> **Line-In** library item type — named live audio inputs you
+> can drag onto playlists and shows. For the operator-machine
+> sound-card configuration that makes a line-in physically
+> available, see [Local Machine](./LOCAL_MACHINE.md). For the
+> emergency procedure when a line-in goes silent or noisy,
+> see [`docs/operator/LINE_IN_BROKEN.md`](../operator/LINE_IN_BROKEN.md).
+
+A **Line-In** is a named live audio input from a sound-card
+device on the operator's machine — a microphone, a mixer
+output, a CD player, an external audio interface — that
+RASTATIME exposes as a library item. Once configured, you can
+drag it into playlists and onto shows exactly the same way you
+drag a track.
+
+Line-Ins are new in RASTATIME (2026-05-12). They replace the
+single hardcoded "Line In" slot the upstream LibreTime had,
+and add named, persistent, drag-and-droppable, library-listed
+behaviour.
+
+---
+
+## 1. Concept overview
+
+A Line-In has two layers:
+
+| Layer | What it is | Where it lives |
+|---|---|---|
+| **Physical device** | The actual sound-card input — a USB microphone, a built-in line jack, an XLR interface, etc. Identified by its OS-side device ID. | The operator-machine sound-card setup; see [Local Machine](./LOCAL_MACHINE.md). |
+| **Named Line-In** | A library row that *references* a physical device by ID, plus a display name and configuration. | `rastatime_linein` table; visible in Library + on the Line-In Library page. |
+
+A single physical device can back **at most one** Line-In at a
+time. Re-binding the same device to a second Line-In
+overrides the first.
+
+---
+
+## 2. The Line-In Library page
+
+Settings → **Line-In Library** (or click the green Line-In
+chip in the main Library page).
+
+```
+   ┌──────────────────────────────────────────────────────────────┐
+   │  Line-Ins                                          + New     │
+   ├──────────────────────────────────────────────────────────────┤
+   │  Name             │ Device                  │ Default Length │
+   ├───────────────────┼─────────────────────────┼────────────────┤
+   │  Studio Mic       │ USB Mic (Default Input) │  ∞              │
+   │  Mixer Out        │ Behringer X-AIR Output  │  01h 00m 00s    │
+   │  CD Player        │ Front Mic-In            │  03m 00s        │
+   │  Phone-Line       │ Realtek HD Audio In #2  │  10m 00s        │
+   └───────────────────┴─────────────────────────┴────────────────┘
+```
+
+Each row is a named Line-In. The table columns:
+
+| Column | Meaning |
+|---|---|
+| **Name** | The display name. Used everywhere the Line-In appears (Library list, drag chip, schedule item, Now-Playing widget). |
+| **Device** | The sound-card device the Line-In references. The label is the device's OS-side name. |
+| **Default Length** | The default duration a Line-In row occupies when dragged into a playlist or show. `∞` means "play until told to stop"; a finite duration means the row schedules for exactly that long. |
+
+The toolbar:
+
+| Button | What it does |
+|---|---|
+| **+ New** | Open the new-Line-In dialog. |
+| **Edit** (row context menu) | Open the edit dialog for that Line-In. |
+| **Enable / Disable** | Toggle the Line-In's available state without deleting. Disabled Line-Ins do not appear in the drag library. |
+| **Delete** | Remove the Line-In. Schedule rows referencing it are removed too. |
+
+> **How it works under the hood.** All mutating actions are
+> thin pass-throughs from
+> `application/controllers/LineinController.php` to the
+> Django REST API at `/api/v2/audio/linein[/<id>]`. The
+> controller only enforces ACL (Admin + Super Admin); the
+> Python side at `backend/api/libretime_api/linein/` owns
+> validation and persistence in `rastatime_linein`. See
+> ARCHITECTURE §14.
+
+---
+
+## 3. Creating a Line-In
+
+Line-In Library → **+ New**.
+
+```
+   ┌──────────────────────────────────────────────────────────────┐
+   │  New Line-In                                                 │
+   ├──────────────────────────────────────────────────────────────┤
+   │   Name:           [                       ]                  │
+   │   Device:         [Select a device... ▾]                     │
+   │   Default Length: [10m 00s   ]    (use 00s for infinite)     │
+   │  ☑  Enabled                                                  │
+   ├──────────────────────────────────────────────────────────────┤
+   │                                       [Cancel ]  [ Save  ]   │
+   └──────────────────────────────────────────────────────────────┘
+```
+
+| Field | Notes |
+|---|---|
+| **Name** | Required. Unique. The visible label everywhere. |
+| **Device** | Required. Dropdown lists every input device the OS sees right now. If your device is missing from the dropdown, see [Local Machine](./LOCAL_MACHINE.md) → device probing. |
+| **Default Length** | Required. Format `HHh MMm SSs` (the same parser as Webstreams). For "play until told to stop" use `0h 0m 0s` (displays as `∞`). |
+| **Enabled** | Defaults to on. Untick to create the Line-In but suppress it from the drag library. |
+
+Click **Save**. The Line-In appears immediately in the
+Library page's Line-In chip filter.
+
+### The default length matters
+
+The Default Length is the duration a Line-In row reserves in
+a show:
+
+- For a **microphone** in a normal talk-only studio, set
+  Default Length to the typical talk-segment length (5 min
+  is common).
+- For a **mixer output** that drives the entire show, set
+  Default Length to the full show length (e.g. 60 min) or
+  infinite.
+- For a **CD player** or other timed source, set Default
+  Length to the typical track length (3 min).
+
+The operator can always override the duration per use in the
+show-builder; the Default Length is just the starting value.
+
+---
+
+## 4. Using a Line-In in a show
+
+Two paths:
+
+### 4.1 Direct drag onto a show
+
+Show-builder → drag the Line-In row from the Library panel
+onto the show. A schedule item appears with the Line-In's
+name and the Line-In's Default Length.
+
+Click the item → **Edit** → set the override duration for
+this specific use, or change the cue-in delay.
+
+### 4.2 Inside a playlist
+
+Playlist editor → drag the Line-In from the Library. The
+playlist row carries the Line-In's reference + its Default
+Length, and behaves like any other playlist item.
+
+When the playlist is later scheduled into a show (via
+drag-and-drop or via an autoloading playlist), the Line-In
+becomes a schedule item exactly as in path 4.1.
+
+> **How it works under the hood.** Migration 0054
+> (2026-05-19) added `cc_playlistcontents.linein_id` as a
+> nullable foreign key into `rastatime_linein`, plus a CHECK
+> constraint that exactly one of `file_id` / `stream_id` /
+> `block_id` / `linein_id` is non-NULL per row. Type 3 in
+> `cc_playlistcontents.type` indicates a Line-In row.
+> ARCHITECTURE §23.18 covers the schema decision.
+
+### What plays when the Line-In's slot starts?
+
+The playout engine sends a `LINEIN_START` event to the
+source switcher, which:
+
+1. Stops whatever was on air (a track, the fallback queue,
+   etc.).
+2. Opens the configured sound-card input device.
+3. Routes the incoming audio to the output stream.
+
+When the slot's duration elapses, the engine sends a
+`LINEIN_END` event and the source switcher returns to the
+schedule.
+
+> **Operator tip.** If a Line-In is configured for "infinite"
+> duration in a slot, the playout engine plays it until the
+> *show* ends — not literally forever. The slot ends with the
+> show.
+
+---
+
+## 5. Editing or removing a Line-In
+
+### Edit
+
+Line-In Library → click the row → **Edit**. Change name,
+device, default length, or enabled state. Click **Save**.
+
+Effects:
+
+- **Name change** propagates to the Library list and to the
+  Now-Playing widget on the next refresh. Existing schedule
+  items keep the old name until the next build cycle.
+- **Device change** propagates to *every* future use,
+  including schedule items already in upcoming shows.
+- **Default Length change** affects only *new* uses; existing
+  schedule items keep their configured duration.
+- **Enabled = off** removes the Line-In from the drag library
+  immediately. Already-scheduled uses still play (use Delete
+  if you want to remove them too).
+
+### Disable
+
+The fastest way to "stop using this Line-In for now":
+
+Row context menu → **Disable**. The Line-In stays in the
+library page (you can re-enable later) but disappears from
+the drag-source library.
+
+### Delete
+
+Row context menu → **Delete**. Confirm. The Line-In is
+removed *and* every `cc_playlistcontents` and `cc_schedule`
+row referencing it is removed (CASCADE).
+
+> **Operator tip.** Prefer **Disable** over **Delete** unless
+> you are sure you will never use the Line-In again. Disable
+> is reversible; Delete cascades into shows you may not have
+> noticed.
+
+---
+
+## 6. The physical-device dependency
+
+A Line-In references a sound-card device by **OS-side ID**.
+That ID is stable across reboots as long as:
+
+- The device stays plugged in.
+- No other audio software has been installed that re-assigns
+  device IDs (rare on Windows, occasional on Linux).
+
+If the device goes missing (unplugged, driver crashed,
+operator-machine rebooted with the device powered off):
+
+- The Line-In is still in the Library.
+- The Line-In's row in the Settings → Line-In Library page
+  shows a **red exclamation** badge next to the device
+  column.
+- Any schedule that tries to play the Line-In skips it with
+  a "Device not found" warning in the playout log.
+- The fallback (silence or fallback loop) plays for the
+  duration of the slot.
+
+See [`docs/operator/DEVICE_MISSING.md`](../operator/DEVICE_MISSING.md)
+for the recovery runbook.
+
+> **How it works under the hood.** The playout engine checks
+> device availability via `audio.soundcard.windows_manager`
+> before opening the input. The device list comes from a live
+> WASAPI / portaudio enumeration on Windows. The "red
+> exclamation" UI cue is driven by the
+> `/api/v2/audio/devices` endpoint comparing the persisted
+> ID against the current enumeration.
+
+---
+
+## 7. Permissions
+
+Only **Admin (A)** and **Super Admin (S)** roles can create,
+edit, or delete Line-Ins. Reasons:
+
+- A Line-In references a physical device on the operator's
+  machine. Changes can break the schedule of every DJ.
+- Sound-card configuration is station-wide.
+
+DJs (H) and Program Managers (P) can drag existing Line-Ins
+into their own playlists / shows, but cannot create or
+modify the underlying Line-In definitions.
+
+> **How it works under the hood.** ACL enforced in
+> `application/configs/ACL.php` resource `linein-controller`.
+
+---
+
+## 8. Frequently-asked
+
+### "Where is the upstream 'Show Source' / 'Master Source' / 'Line In' setting?"
+
+Upstream LibreTime had three hardcoded inputs ("Show Source",
+"Master Source", "Line In") configured in
+**Settings → Live Sources**. RASTATIME keeps Show Source and
+Master Source (these are remote-DJ inputs over Icecast — see
+[Streams](./STREAMS.md) → §3 Sources) but replaces the
+single hardcoded "Line In" with the named-Line-In feature
+documented here.
+
+If you have legacy data from a LibreTime / Airtime install,
+the old "Line In" toggle is dropped during migration. The
+upstream "Record from Line In?" checkbox is repurposed (see
+[Record-per-Show](./RECORD_PER_SHOW.md)).
+
+### "Can two Line-Ins reference the same physical device?"
+
+Yes, but only one will succeed at any moment. Most sound-card
+drivers grant exclusive access to the first opener; a second
+Line-In trying to open the same device at the same time fails
+with "device busy". Useful only for "the same physical
+device under two different names" cases — typically rare.
+
+### "Why does my microphone show up as 'Microphone (USB Audio CODEC)'?"
+
+That is the OS-side device name. Windows assigns the name
+based on the driver's reported product ID. The display name
+in RASTATIME is the **Line-In's Name** (you set this on the
+new-Line-In dialog), not the OS-side device name — so call
+it "Studio Mic" or "Anna's Mic" and ignore the OS label.
+
+### "Can a Line-In be the autoloading playlist's only content?"
+
+Yes. Create a playlist containing exactly one Line-In row
+with Default Length = the show length (or infinite). Attach
+this playlist as the show's autoloading playlist. Every
+instance of the show will play exclusively from the
+Line-In.
+
+### "Is the Line-In's audio recorded if Record-per-Show is on?"
+
+Yes. The recorder taps the Icecast output, which carries
+whatever is currently on air, regardless of source. See
+[Record-per-Show](./RECORD_PER_SHOW.md).
+
+### "Can I add a network audio source (e.g. AES67 / Dante) as a Line-In?"
+
+Only if the source presents as a Windows sound-card input
+device — many AES67 / Dante drivers ship a virtual
+sound-card. If it shows up in Settings → Local Machine's
+input-device dropdown, it works as a Line-In.
+
+---
+
+## Where to go next
+
+* [Local Machine](./LOCAL_MACHINE.md) — physical sound-card
+  configuration on the operator's machine.
+* [Library](./LIBRARY.md) — Line-Ins appear in the main
+  Library too; the chip filter shows them.
+* [Dashboard](./DASHBOARD.md) → Source state — see which
+  Line-In is currently on air.
+* [`docs/operator/LINE_IN_BROKEN.md`](../operator/LINE_IN_BROKEN.md)
+  — emergency procedure when a Line-In goes silent or noisy.
+* [`docs/operator/DEVICE_MISSING.md`](../operator/DEVICE_MISSING.md)
+  — when the underlying sound-card device disappears.
