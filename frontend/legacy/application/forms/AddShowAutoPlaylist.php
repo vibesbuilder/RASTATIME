@@ -16,8 +16,9 @@ class Application_Form_AddShowAutoPlaylist extends Zend_Form_SubForm
         $playlistNames = Application_Model_Library::getPlaylistNames(true);
 
         // Add autoplaylist checkbox element
+        // RASTATIME 2026-05-19 — removed the stray space before "?".
         $this->addElement('checkbox', 'add_show_has_autoplaylist', [
-            'label' => _('Add Autoloading Playlist ?'),
+            'label' => _('Add Autoloading Playlist?'),
             'required' => false,
             'class' => 'input_text',
             'decorators' => ['ViewHelper'],

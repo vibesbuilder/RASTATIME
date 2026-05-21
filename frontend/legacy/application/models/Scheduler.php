@@ -23,6 +23,15 @@ final class Application_Model_Scheduler
 
     private $checkUserPermissions = true;
 
+    // RASTATIME 2026-05-20 — Section 23.19.  Extra seconds to subtract
+    // from `$showInstance->getSecondsRemaining()` when computing the
+    // limit for time-remaining smart blocks inside playlist contents.
+    // Callers (e.g. AutoPlaylistManager) set this before calling
+    // scheduleAfter() so the auto-loop's smart blocks don't eat into
+    // a slot reserved for a trailing outro playlist that has not been
+    // inserted yet.  Default 0 = pre-2026-05-20 behaviour.
+    private $reservedSecs = 0;
+
     public function __construct($checkUserPermissions = true)
     {
         $this->con = Propel::getConnection(CcSchedulePeer::DATABASE_NAME);
@@ -52,6 +61,22 @@ final class Application_Model_Scheduler
     public function setCheckUserPermissions($value)
     {
         $this->checkUserPermissions = $value;
+    }
+
+    /**
+     * RASTATIME 2026-05-20 — Section 23.19.  Reserve a slice of the
+     * show instance's remaining time so that time-remaining smart
+     * blocks expanded in {@see retrieveMediaFiles()} do not consume
+     * it.  Used by AutoPlaylistManager to keep room for a trailing
+     * outro playlist that will be inserted after the auto-loop
+     * finishes.  Value is in whole seconds; non-positive values clamp
+     * to zero (no-op).
+     *
+     * @param int $secs
+     */
+    public function setReservedSeconds($secs)
+    {
+        $this->reservedSecs = max(0, (int) $secs);
     }
 
     private function validateItemMove($itemsToMove, $destination)
@@ -147,9 +172,13 @@ final class Application_Model_Scheduler
                 throw new Exception(sprintf(_('You are not allowed to schedule show %s.'), $show->getDbName()));
             }
 
-            if ($instance->getDbRecord()) {
-                throw new Exception(_('You cannot add files to recording shows.'));
-            }
+            // RASTATIME 2026-05-17 - Phase B: record-per-show semantic
+            // (Section 23.13).  Upstream blocked scheduling any item
+            // into a recorded show because "recorded" meant "Liquidsoap
+            // line-in recording, content comes from the microphone".
+            // RASTATIME's record flag is now a parallel output-tap;
+            // the show schedules content normally and the recorder
+            // captures whatever ends up on air.  Guard removed.
 
             $showEndEpoch = floatval($instance->getDbEnds('U.u'));
 
@@ -218,12 +247,30 @@ final class Application_Model_Scheduler
     {
         // if there is a show we need to set a show limit to pass to smart blocks in case they use time remaining
         $showInstance = new Application_Model_ShowInstance($show);
-        $showLimit = $showInstance->getSecondsRemaining();
+        // RASTATIME 2026-05-20 — Section 23.19.  Subtract any reserve
+        // requested by the caller (typically AutoPlaylistManager
+        // reserving room for the outro playlist) so a time-remaining
+        // smart block inside an autoplaylist does not consume the
+        // outro slot.  Reserve defaults to 0 = pre-existing
+        // behaviour; clamp to zero so a negative result (caller
+        // over-reserved) never makes the limit go below zero.
+        $showLimit = max(0, $showInstance->getSecondsRemaining() - $this->reservedSecs);
         $originalShowLimit = $showLimit;
 
         $files = [];
-        if ($type === 'audioclip') {
+        // RASTATIME: Fall back to 'audioclip' when the analyzer hasn't set
+        // ftype yet (empty string coming from the library DataTable).
+        $file = null;
+        if ($type === '' || $type === null) {
             $file = CcFilesQuery::create()->findPK($id, $this->con);
+            if ($file !== null) {
+                $type = $file->getDbFtype() ?: 'audioclip';
+            }
+        }
+        if ($type === 'audioclip') {
+            if ($file === null) {
+                $file = CcFilesQuery::create()->findPK($id, $this->con);
+            }
 
             if (is_null($file) || !$file->visible()) {
                 throw new Exception(_('A selected File does not exist!'));
@@ -231,14 +278,23 @@ final class Application_Model_Scheduler
             $data = $this->fileInfo;
             $data['id'] = $id;
 
-            $cuein = Application_Common_DateHelper::playlistTimeToSeconds($file->getDbCuein());
-            $cueout = Application_Common_DateHelper::playlistTimeToSeconds($file->getDbCueout());
+            // RASTATIME: Fallback when analyzer hasn't set cuein/cueout yet
+            $rawCuein = $file->getDbCuein();
+            $rawCueout = $file->getDbCueout();
+            if (empty($rawCuein)) {
+                $rawCuein = '00:00:00';
+            }
+            if (empty($rawCueout)) {
+                $rawCueout = $file->getDbLength() ?: '00:00:00';
+            }
+            $cuein = Application_Common_DateHelper::playlistTimeToSeconds($rawCuein);
+            $cueout = Application_Common_DateHelper::playlistTimeToSeconds($rawCueout);
             $row_length = Application_Common_DateHelper::secondsToPlaylistTime($cueout - $cuein);
 
             $data['cliplength'] = $row_length;
 
-            $data['cuein'] = $file->getDbCuein();
-            $data['cueout'] = $file->getDbCueout();
+            $data['cuein'] = $rawCuein;
+            $data['cueout'] = $rawCueout;
 
             // fade is in format SS.uuuuuu
             $data['fadein'] = Application_Model_Preference::GetDefaultFadeIn();
@@ -268,6 +324,26 @@ final class Application_Model_Scheduler
                     $data['fadein'] = '00.500000'; // $plItem['fadein'];
                     $data['fadeout'] = '00.500000'; // $plItem['fadeout'];
                     $data['type'] = 1;
+                    $files[] = $data;
+                } elseif ($plItem['type'] == 3) {
+                    // RASTATIME 2026-05-19 — Section 23.18.  Line-In
+                    // entry inside a playlist.  The playlist-content
+                    // type discriminator is 3 (file=0, stream=1,
+                    // block=2, linein=3 — see Playlist::insertPlaylistElement)
+                    // and we map it to the SCHEDULE-side discriminator
+                    // type=2 which the cc_schedule INSERT uses to
+                    // populate cc_schedule.linein_id (see the switch
+                    // in Scheduler::insertAfter around line 970).
+                    $data['id']         = $plItem['item_id'];
+                    $data['cliplength'] = $plItem['length'];
+                    $data['cuein']      = $plItem['cuein']
+                        ?? '00:00:00';
+                    $data['cueout']     = $plItem['cueout']
+                        ?? $plItem['length'];
+                    // No crossfades for live inputs.
+                    $data['fadein']  = '00:00:00.000000';
+                    $data['fadeout'] = '00:00:00.000000';
+                    $data['type'] = 2;
                     $files[] = $data;
                 } elseif ($plItem['type'] == 2) {
                     // if it's a block
@@ -329,6 +405,38 @@ final class Application_Model_Scheduler
             // fade is in format SS.uuuuuu
             $data['fadein'] = Application_Model_Preference::GetDefaultFadeIn();
             $data['fadeout'] = Application_Model_Preference::GetDefaultFadeOut();
+
+            $files[] = $data;
+        } elseif ($type == 'linein') {
+            // RASTATIME 2026-05-12 — Line-In Library item.
+            //
+            // rastatime_linein is Django-managed (no Propel ORM), so
+            // we fetch the row via direct SQL.  Default length 30 min
+            // when the operator left "Default Length" empty in the
+            // Library dialog.  ``type = 2`` is the new line-in marker
+            // that the SQL INSERT in insertAfter() switches on to
+            // populate cc_schedule.linein_id.
+            $sql = 'SELECT length FROM rastatime_linein WHERE id = :id AND enabled = TRUE';
+            $row = Application_Common_Database::prepareAndExecute(
+                $sql,
+                [':id' => $id],
+                Application_Common_Database::SINGLE
+            );
+            if (!$row) {
+                throw new Exception(_('A selected Line-In does not exist or is disabled!'));
+            }
+            $length = $row['length'] ?: '00:30:00';
+
+            $data = $this->fileInfo;
+            $data['id'] = $id;
+            $data['cliplength'] = $length;
+            $data['cueout'] = $length;
+            $data['type'] = 2;
+
+            // No fades for live inputs (they don't make sense for an
+            // open microphone source — start abrupt, end abrupt).
+            $data['fadein']  = '00:00:00.000000';
+            $data['fadeout'] = '00:00:00.000000';
 
             $files[] = $data;
         } elseif ($type == 'block') {
@@ -908,6 +1016,12 @@ final class Application_Model_Scheduler
                             $file['fadeout'] = Application_Common_DateHelper::secondsToPlaylistTime($file['fadeout']);
                         }
 
+                        // RASTATIME 2026-05-12 — Line-In type=2 joins
+                        // file (0) and stream (1) as a third schedule
+                        // entry kind.  Exactly one of fileId / streamId
+                        // / lineinId is set per row; the others stay
+                        // as the SQL literal 'null'.
+                        $lineinId = 'null';
                         switch ($file['type']) {
                             case 0:
                                 $fileId = $file['id'];
@@ -919,6 +1033,13 @@ final class Application_Model_Scheduler
                             case 1:
                                 $streamId = $file['id'];
                                 $fileId = 'null';
+
+                                break;
+
+                            case 2:
+                                $lineinId = $file['id'];
+                                $fileId = 'null';
+                                $streamId = 'null';
 
                                 break;
 
@@ -952,7 +1073,8 @@ final class Application_Model_Scheduler
                                 "{$pos}, " .
                                 "{$instanceId}, " .
                                 "{$fileId}, " .
-                                "{$streamId})";
+                                "{$streamId}, " .
+                                "{$lineinId})";
                         } elseif ($doUpdate) {
                             $update_sql = 'UPDATE cc_schedule SET ' .
                                 "starts = '{$nextStartDT->format(DEFAULT_MICROTIME_FORMAT)}', " .
@@ -979,7 +1101,7 @@ final class Application_Model_Scheduler
                     if ($doInsert) {
                         $insert_sql = 'INSERT INTO cc_schedule ' .
                             '(starts, ends, cue_in, cue_out, fade_in, fade_out, ' .
-                            'clip_length, position, instance_id, file_id, stream_id) VALUES ' .
+                            'clip_length, position, instance_id, file_id, stream_id, linein_id) VALUES ' .
                             implode(',', $values) . ' RETURNING id';
 
                         $stmt = $this->con->prepare($insert_sql);
@@ -1365,27 +1487,30 @@ final class Application_Model_Scheduler
         try {
             $instance = CcShowInstancesQuery::create()->findPK($p_id);
 
-            if (!$instance->getDbRecord()) {
-                $items = CcScheduleQuery::create()
-                    ->filterByDbInstanceId($p_id)
-                    ->filterByDbEnds($this->nowDT, Criteria::GREATER_THAN)
-                    ->find($this->con);
+            // RASTATIME 2026-05-17 - Phase B: record-per-show semantic
+            // (Section 23.13).  Upstream had two branches here: a
+            // recorded show only deleted its rebroadcast children
+            // (because the recording itself was the content), while a
+            // normal show deleted future schedule items.  The
+            // Liquidsoap-based rebroadcast feature is gone (ADR-002),
+            // and recorded shows now schedule content normally, so we
+            // always run the schedule-item removal path.
+            $items = CcScheduleQuery::create()
+                ->filterByDbInstanceId($p_id)
+                ->filterByDbEnds($this->nowDT, Criteria::GREATER_THAN)
+                ->find($this->con);
 
-                if (count($items) > 0) {
-                    $remove = [];
-                    $ts = $this->nowDT->format('U');
+            if (count($items) > 0) {
+                $remove = [];
+                $ts = $this->nowDT->format('U');
 
-                    for ($i = 0; $i < count($items); ++$i) {
-                        $remove[$i]['instance'] = $p_id;
-                        $remove[$i]['timestamp'] = $ts;
-                        $remove[$i]['id'] = $items[$i]->getDbId();
-                    }
-
-                    $this->removeItems($remove, false, true);
+                for ($i = 0; $i < count($items); ++$i) {
+                    $remove[$i]['instance'] = $p_id;
+                    $remove[$i]['timestamp'] = $ts;
+                    $remove[$i]['id'] = $items[$i]->getDbId();
                 }
-            } else {
-                $rebroadcasts = $instance->getCcShowInstancessRelatedByDbId(null, $this->con);
-                $rebroadcasts->delete($this->con);
+
+                $this->removeItems($remove, false, true);
             }
 
             $instance->setDbEnds($this->nowDT);
@@ -1393,9 +1518,13 @@ final class Application_Model_Scheduler
 
             $this->con->commit();
 
-            if ($instance->getDbRecord()) {
-                Application_Model_RabbitMq::SendMessageToShowRecorder('cancel_recording');
-            }
+            // RASTATIME 2026-05-17 - the upstream
+            // SendMessageToShowRecorder('cancel_recording') branch was
+            // dropped: the Liquidsoap show-recorder RabbitMQ consumer
+            // is gone (ADR-002).  The Python FfmpegRecorder will stop
+            // on its own SHOW_RECORD_END event when the show's
+            // ends_at is reached, which now happens immediately
+            // because we just set ends_at to NOW above.
         } catch (Exception $e) {
             $this->con->rollback();
 
