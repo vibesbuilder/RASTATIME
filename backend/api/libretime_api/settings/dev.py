@@ -20,12 +20,16 @@ from ._internal import (
     AUTH_USER_MODEL,
     DEFAULT_AUTO_FIELD,
     INSTALLED_APPS,
+    LANGUAGE_CODE,
     MIDDLEWARE,
     REST_FRAMEWORK,
     ROOT_URLCONF,
     SPECTACULAR_SETTINGS,
     STATIC_URL,
     TEMPLATES,
+    TIME_ZONE,
+    USE_I18N,
+    USE_TZ,
     WSGI_APPLICATION,
     setup_logger,
 )
@@ -72,11 +76,6 @@ else:
             "NAME": str(_DEV_DB),
         }
     }
-
-LANGUAGE_CODE = "en-us"
-TIME_ZONE = "UTC"
-USE_I18N = True
-USE_TZ = True
 
 # Print emails to console instead of sending
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"

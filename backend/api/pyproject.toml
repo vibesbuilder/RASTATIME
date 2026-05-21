@@ -37,6 +37,7 @@ log_cli = true
 log_cli_level = "DEBUG"
 
 DJANGO_SETTINGS_MODULE = "libretime_api.settings.testing"
+django_find_project = false
 
 [tool.coverage.run]
 plugins = ["django_coverage_plugin"]

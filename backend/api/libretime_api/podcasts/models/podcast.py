@@ -22,6 +22,7 @@ class Podcast(models.Model):
         on_delete=models.DO_NOTHING,
         blank=True,
         null=True,
+        db_column="owner",  # actual DB column is 'owner', not 'owner_id'
     )
 
     def get_owner(self):
@@ -90,6 +91,28 @@ class ImportedPodcast(models.Model):
         blank=True,
         null=True,
         db_column="auto_ingest_timestamp",
+    )
+
+    # RASTATIME 2026-05-16 - Podcast Auto-Expiry feature.  When enabled,
+    # every episode imported from this podcast gets
+    # cc_files.expires_at = now() + auto_expiry_days at download time.
+    # Per design decision B (precedence vote 2026-05-16) podcast auto-
+    # expiry WINS over any ID3 'Expiry' tag the publisher may have set.
+    auto_expiry_enabled = models.BooleanField(default=False)
+    auto_expiry_days = models.IntegerField(blank=True, null=True)
+
+    # RASTATIME 2026-05-17 - Per-podcast Default Track-Type.  When set,
+    # every episode imported from this podcast gets
+    # cc_files.track_type_id = default_track_type_id at download time,
+    # regardless of ID3 hints.  Operator picks it once per podcast in
+    # the New/Edit Podcast dialog ("Track Type:" dropdown).  NULL =
+    # no override.  See migration 0050.
+    default_track_type = models.ForeignKey(
+        "storage.Library",
+        on_delete=models.DO_NOTHING,
+        blank=True,
+        null=True,
+        db_column="default_track_type_id",
     )
 
     def get_owner(self):

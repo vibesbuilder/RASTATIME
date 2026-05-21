@@ -32,12 +32,11 @@ setup(
         "djangorestframework>=3.14.0,<3.16",
         "drf-spectacular>=0.22.1,<0.29",
         "requests>=2.32.2,<2.33",
+        "waitress>=3.0.0,<4",
     ],
     extras_require={
         "prod": [
-            "gunicorn>=22.0.0,<23.1",
-            "psycopg[c]>=3.1.8,<3.2",
-            "uvicorn[standard]>=0.17.6,<0.33.0",
+            "psycopg[binary]>=3.1.8,<4",
         ],
         "dev": [
             "django-coverage-plugin>=3.0.0,<4",

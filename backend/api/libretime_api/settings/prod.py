@@ -8,12 +8,16 @@ from ._internal import (
     DEBUG,
     DEFAULT_AUTO_FIELD,
     INSTALLED_APPS,
+    LANGUAGE_CODE,
     MIDDLEWARE,
     REST_FRAMEWORK,
     ROOT_URLCONF,
     SPECTACULAR_SETTINGS,
     STATIC_URL,
     TEMPLATES,
+    TIME_ZONE,
+    USE_I18N,
+    USE_TZ,
     WSGI_APPLICATION,
     setup_logger,
 )
@@ -56,14 +60,6 @@ DATABASES = {
     }
 }
 
-
-# Internationalization
-# https://docs.djangoproject.com/en/3.2/topics/i18n/
-
-LANGUAGE_CODE = "en-us"
-TIME_ZONE = "UTC"
-USE_I18N = True
-USE_TZ = True
 
 # Email
 # https://docs.djangoproject.com/en/4.2/topics/email/

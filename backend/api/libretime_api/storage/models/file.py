@@ -34,6 +34,9 @@ class File(models.Model):
     md5 = models.CharField(max_length=32, blank=True, null=True)
 
     hidden = models.BooleanField(blank=True, null=True)
+    # RASTATIME 2026-05-16 - Track Expiry feature.
+    expires_at = models.DateTimeField(blank=True, null=True)
+    disabled = models.BooleanField(default=False)
     accessed = models.IntegerField(db_column="currentlyaccessing")
     scheduled = models.BooleanField(blank=True, null=True, db_column="is_scheduled")
     part_of_list = models.BooleanField(blank=True, null=True, db_column="is_playlist")

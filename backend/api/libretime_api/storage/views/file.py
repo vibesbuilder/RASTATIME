@@ -1,9 +1,11 @@
 import logging
+import mimetypes
 import os
 from os import remove
+from pathlib import Path
 
 from django.conf import settings
-from django.http import HttpResponse
+from django.http import FileResponse, Http404, HttpResponse
 from django.utils.encoding import filepath_to_uri
 from django_filters import rest_framework as filters
 from rest_framework import status, viewsets
@@ -15,6 +17,14 @@ from ..models import File
 from ..serializers import FileSerializer
 
 logger = logging.getLogger(__name__)
+
+# RASTATIME: Detect whether we're behind Nginx (X-Accel-Redirect) or
+# serving directly via Waitress on Windows.
+_USE_NGINX_REDIRECT = os.environ.get("RASTATIME_USE_NGINX", "").lower() in (
+    "1",
+    "true",
+    "yes",
+)
 
 
 class FileInUse(APIException):
@@ -35,12 +45,41 @@ class FileViewSet(viewsets.ModelViewSet):
     def download(self, request, pk=None):
         instance: File = self.get_object()
 
-        response = HttpResponse()
-        # HTTP headers must be USASCII encoded, or Nginx might not find the file and
-        # will return a 404.
-        redirect_uri = filepath_to_uri(os.path.join("/api/_media", instance.filepath))
-        response["X-Accel-Redirect"] = redirect_uri
-        return response
+        if _USE_NGINX_REDIRECT:
+            # Nginx serves the file via X-Accel-Redirect (Linux production).
+            response = HttpResponse()
+            redirect_uri = filepath_to_uri(
+                os.path.join("/api/_media", instance.filepath)
+            )
+            response["X-Accel-Redirect"] = redirect_uri
+            return response
+
+        # RASTATIME: Serve file directly (Waitress / Windows).
+        # Strip leading "/" from filepath — on Windows, Path() / "/foo"
+        # treats the right side as absolute and discards the base.
+        storage_root = str(settings.CONFIG.storage.path)
+        raw_filepath = instance.filepath or ""
+        rel_path = raw_filepath.lstrip("/")
+        file_path = Path(storage_root) / rel_path
+        if not file_path.is_file():
+            logger.error(
+                "File not found — storage_root=%r, raw=%r, rel=%r, resolved=%s",
+                storage_root, raw_filepath, rel_path, file_path,
+            )
+            raise Http404(
+                f"File not found: resolved={file_path}, "
+                f"storage={storage_root}, raw={raw_filepath}"
+            )
+
+        content_type = (
+            mimetypes.guess_type(str(file_path))[0] or "application/octet-stream"
+        )
+        return FileResponse(
+            open(file_path, "rb"),  # noqa: SIM115
+            content_type=content_type,
+            as_attachment=True,
+            filename=file_path.name,
+        )
 
     def perform_destroy(self, instance: File):
         if Schedule.is_file_scheduled_in_the_future(file_id=instance.id):
@@ -51,7 +90,8 @@ class FileViewSet(viewsets.ModelViewSet):
                 logger.warning("file does not have a filepath: %d", instance.id)
                 return
 
-            path = os.path.join(settings.CONFIG.storage.path, instance.filepath)
+            rel = instance.filepath.lstrip("/") if instance.filepath else ""
+            path = os.path.join(settings.CONFIG.storage.path, rel)
 
             if not os.path.isfile(path):
                 logger.warning("file does not exist in storage: %d", instance.id)

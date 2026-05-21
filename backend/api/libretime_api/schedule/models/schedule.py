@@ -23,6 +23,16 @@ class Schedule(models.Model):
         blank=True,
         null=True,
     )
+    # RASTATIME 2026-05-12 — Line-In Library item.  A schedule row
+    # carries at most one of (file, stream, linein); the playout
+    # picks the right Event subclass based on which FK is set.
+    linein = models.ForeignKey(
+        "linein.LineIn",
+        on_delete=models.DO_NOTHING,
+        blank=True,
+        null=True,
+        db_column="linein_id",
+    )
 
     length = models.DurationField(blank=True, null=True, db_column="clip_length")
     fade_in = models.TimeField(blank=True, null=True)

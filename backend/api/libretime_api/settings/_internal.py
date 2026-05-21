@@ -1,4 +1,5 @@
 from os import environ, getenv
+from pathlib import Path
 from typing import Optional
 
 from .. import PACKAGE, VERSION
@@ -17,6 +18,10 @@ INSTALLED_APPS = [
     "libretime_api.storage",
     "libretime_api.podcasts",
     "libretime_api.schedule",
+    "libretime_api.soundcard",     # T13.1 — soundcard settings persistence
+    "libretime_api.linein",        # T14.1 — line-in source persistence
+    "libretime_api.preflight",     # T-B4-2 — pre-flight schedule warnings (line-in device missing etc.)
+    "libretime_api.playback",      # T19.1 — normalized playback event record
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
@@ -68,6 +73,24 @@ STATIC_URL = "/api/v2/static/"
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# Internationalization
+# https://docs.djangoproject.com/en/4.2/topics/i18n/
+#
+# T20.1 — English is the canonical RASTATIME system locale (ADR-004).
+# All settings modules inherit these values from this shared base.
+# German UI strings are layered on top via Django's translation framework
+# (T20.2 adds the German locale scaffolding).
+
+LANGUAGE_CODE = "en-us"
+TIME_ZONE     = "UTC"
+USE_I18N      = True
+USE_TZ        = True
+
+# Project-level locale directory — contains German (and future) .po/.mo files
+# for RASTATIME-specific Django strings.
+# Path: backend/api/locale/  (two levels above this settings package)
+LOCALE_PATHS = [Path(__file__).resolve().parents[2] / "locale"]
 
 
 # Password validation

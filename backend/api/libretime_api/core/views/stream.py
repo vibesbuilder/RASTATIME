@@ -44,3 +44,26 @@ class StreamStateView(views.APIView):
                 }
             )
         )
+
+
+class LocalRecordingFolderView(views.APIView):
+    """
+    RASTATIME 2026-05-17 — Read-only endpoint that returns the
+    operator-configured Local Recording Folder (cc_pref key
+    ``local_recording_folder``).  Consumed by the playout's
+    PlayoutScheduler when a SHOW_RECORD_START event fires.
+
+    Returns ``{"folder": "<path>"}`` — empty string if the operator
+    has not yet configured a folder (recording will be skipped at
+    show-start with a warning in the playout log).
+    """
+
+    permission_classes = [IsSystemTokenOrUser]
+
+    def get(self, request):
+        try:
+            pref = Preference.site.get(key="local_recording_folder")
+            folder = (pref.value or "").strip()
+        except Preference.DoesNotExist:
+            folder = ""
+        return Response({"folder": folder})
