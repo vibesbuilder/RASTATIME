@@ -38,6 +38,11 @@ if (count($items) && ($isSmartBlock || $isPlaylist)) : ?>
             $fileUrl = null;
         } else if ($item['type'] == 1) {
             $fileUrl = null;
+        } else if ($item['type'] == 3) {
+            // RASTATIME 2026-05-19 — Section 23.18: Line-In in a playlist.
+            // No browser-side preview is possible (server-local hardware
+            // audio input), so the row only needs the title/length cells.
+            $fileUrl = null;
         } else if ($item['type'] == 0) {
             $audiofile = Application_Model_StoredFile::RecallById($item['item_id']);
             $fileUrl = $audiofile->getFileUrl();
@@ -62,6 +67,15 @@ if (count($items) && ($isSmartBlock || $isPlaylist)) : ?>
                 <?php elseif ($item['type'] == 2 && $item['exists']) : ?>
                     <div class="big_play" blockId="<?php echo $item["item_id"]; ?>" blocktype="<?php echo $staticBlock ? "static" : "dynamic" ?>">
                         <span class="ui-icon ui-icon-play"></span>
+                    </div>
+                <?php elseif ($item['type'] == 3 && $item['exists']) : ?>
+                    <?php /* RASTATIME 2026-05-19 — Section 23.18.  Linein
+                           cannot be previewed in the browser (server-
+                           local hardware input); show a disabled signal
+                           icon so the row still aligns visually with
+                           the play-icon column. */ ?>
+                    <div class="big_play ui-state-disabled" title="<?php echo _("Line-In source — no preview"); ?>">
+                        <span class="ui-icon ui-icon-signal"></span>
                     </div>
                 <?php else : ?>
                     <div class="big_play ui-state-hover">

@@ -178,6 +178,32 @@ SQL;
      * @return array with data about the previous, current, and next media items playing.
      *               Returns an empty arrays if there is no media item currently playing
      */
+    /**
+     * RASTATIME 2026-05-14 — fetch the rastatime_linein row attached to a
+     * cc_schedule row, if any.  Used by the previous/current/next-track
+     * lookup below so the dashboard header can show the operator-given
+     * Line-In name (e.g. "Jabra-Mikro") instead of just a comma.
+     *
+     * Necessary because Propel's generated CcSchedule base class is not
+     * aware of the ``linein_id`` column (the legacy schema.xml was
+     * updated in migration 0047 but the Propel classes were not
+     * regenerated).  Raw SQL through Application_Common_Database is
+     * the simplest bridge until the Propel regen is part of the build.
+     *
+     * @return array|null  ``['id', 'name']`` or null when the row has no linein.
+     */
+    private static function _fetchLineinForScheduleId($scheduleId)
+    {
+        $sql = 'SELECT li.id AS id, li.name AS name '
+             . 'FROM cc_schedule s '
+             . 'JOIN rastatime_linein li ON s.linein_id = li.id '
+             . 'WHERE s.id = :p1';
+        $rows = Application_Common_Database::prepareAndExecute(
+            $sql, [':p1' => $scheduleId]
+        );
+        return isset($rows[0]) ? $rows[0] : null;
+    }
+
     public static function getPreviousCurrentNextMedia($utcNow, $currentShowInstanceId, $source)
     {
         $timeZone = new DateTimeZone('UTC'); // This function works entirely in UTC.
@@ -245,7 +271,19 @@ SQL;
                     $currentMediaName .= ' - ' . $currentWebstreamMetadata->getDbLiquidsoapData();
                 }
             } else {
-                $currentMediaType = null;
+                // RASTATIME 2026-05-14 — file_id and stream_id are both
+                // NULL ⇒ this is a Line-In schedule row.  Look up the
+                // attached rastatime_linein entry by the schedule pk to
+                // get the operator-given name (e.g. "Jabra-Mikro").
+                // Without this branch the dashboard header would show
+                // just "," for the current track.
+                $currentLinein = self::_fetchLineinForScheduleId($currentMedia['id']);
+                if ($currentLinein !== null) {
+                    $currentMediaType = 'linein';
+                    $currentMediaName = $currentLinein['name'];
+                } else {
+                    $currentMediaType = null;
+                }
             }
 
             $results['current'] = [
@@ -286,7 +324,17 @@ SQL;
                     ->findOne();
                 $previousMediaName = $previousWebstream->getDbName();
             } else {
-                $previousMediaType = null;
+                // RASTATIME 2026-05-14 — try Line-In lookup.  Propel's
+                // CcSchedule base class doesn't expose linein_id; query
+                // raw via the schedule pk.  See
+                // _fetchLineinForScheduleId() docstring above.
+                $previousLinein = self::_fetchLineinForScheduleId($previousMedia->getDbId());
+                if ($previousLinein !== null) {
+                    $previousMediaType = 'linein';
+                    $previousMediaName = $previousLinein['name'];
+                } else {
+                    $previousMediaType = null;
+                }
             }
             $results['previous'] = [
                 'starts' => $previousMedia->getDbStarts(),
@@ -321,7 +369,15 @@ SQL;
                     ->findOne();
                 $nextMediaName = $nextWebstream->getDbName();
             } else {
-                $nextMediaType = null;
+                // RASTATIME 2026-05-14 — try Line-In lookup, same as
+                // for the previous-media branch above.
+                $nextLinein = self::_fetchLineinForScheduleId($nextMedia->getDbId());
+                if ($nextLinein !== null) {
+                    $nextMediaType = 'linein';
+                    $nextMediaName = $nextLinein['name'];
+                } else {
+                    $nextMediaType = null;
+                }
             }
             $results['next'] = [
                 'starts' => $nextMedia->getDbStarts(),
@@ -527,6 +583,51 @@ SQL;
             $streamSql
         );
 
+        // RASTATIME 2026-05-12 — Line-In schedule branch.
+        //
+        // rastatime_linein has no creator/owner column, so file_artist_name
+        // is empty; album_title surfaces the description instead so the
+        // operator gets useful detail in the schedule view.
+        $lineinColumns = <<<'SQL'
+                li.name AS file_track_title,
+                ''::varchar AS file_artist_name,
+                li.description AS file_album_title,
+                COALESCE(li.length, INTERVAL '30 minutes') AS file_length,
+                't'::BOOL AS file_exists,
+                NULL::varchar AS file_mime
+SQL;
+        $lineinJoin = <<<'SQL'
+      cc_schedule AS sched
+      JOIN rastatime_linein AS li ON (sched.linein_id = li.id
+          AND ((sched.starts >= :lj_ts_1
+               AND sched.starts < :lj_ts_2)
+               OR (sched.ends > :lj_ts_3
+               AND sched.ends <= :lj_ts_4)
+               OR (sched.starts <= :lj_ts_5
+               AND sched.ends >= :lj_ts_6))
+      )
+SQL;
+        $map = [
+            ':lj_ts_1' => $p_track_start,
+            ':lj_ts_2' => $p_track_end,
+            ':lj_ts_3' => $p_track_start,
+            ':lj_ts_4' => $p_track_end,
+            ':lj_ts_5' => $p_track_start,
+            ':lj_ts_6' => $p_track_end,
+        ];
+        $paramMap += $map;
+
+        $lineinSql = str_replace(
+            '%%columns%%',
+            $lineinColumns,
+            $templateSql
+        );
+        $lineinSql = str_replace(
+            '%%join%%',
+            $lineinJoin,
+            $lineinSql
+        );
+
         $showPredicate = '';
         if (count($p_shows) > 0) {
             $params = [];
@@ -561,7 +662,7 @@ SELECT showt.name AS show_name,
        si.last_scheduled AS si_last_scheduled,
        si.file_id AS si_file_id,
        *
-       FROM (({$filesSql}) UNION ({$streamSql})) as temp
+       FROM (({$filesSql}) UNION ({$streamSql}) UNION ({$lineinSql})) as temp
        RIGHT JOIN cc_show_instances AS si ON (si.id = sched_instance_id)
 JOIN cc_show AS showt ON (showt.id = si.show_id)
 WHERE si.modified_instance = FALSE

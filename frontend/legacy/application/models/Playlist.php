@@ -224,13 +224,35 @@ SQL;
             JOIN cc_block AS bl ON pc.block_id=bl.id
             JOIN cc_subjs AS sbj ON bl.creator_id=sbj.id
             WHERE pc.playlist_id = :playlist_id3
-              AND pc.TYPE = 2)) AS temp
+              AND pc.TYPE = 2)
+         UNION ALL
+           (SELECT pc.id AS id,
+                   pc.TYPE, pc.position,
+                            pc.cliplength AS LENGTH,
+                            pc.cuein,
+                            pc.cueout,
+                            pc.fadein,
+                            pc.fadeout,
+                            pc.trackoffset,
+                            li.id AS item_id,
+                            li.name AS title,
+                            ''::text AS creator,
+                            li.enabled AS EXISTS,
+                            li.device_id AS path,
+                            COALESCE(li.length, INTERVAL '00:30:00') AS orig_length,
+                            NULL::text as mime
+            FROM cc_playlistcontents AS pc
+            JOIN rastatime_linein AS li ON pc.linein_id=li.id
+            WHERE pc.playlist_id = :playlist_id4
+              AND pc.TYPE = 3)) AS temp
    ORDER BY temp.position;
 SQL;
         // Logging::info($sql);
 
         $params = [
             ':playlist_id1' => $this->id, ':playlist_id2' => $this->id, ':playlist_id3' => $this->id,
+            // RASTATIME 2026-05-19 — Section 23.18, linein UNION arm.
+            ':playlist_id4' => $this->id,
         ];
         if ($filterFiles) {
             $params[':file_exists'] = $filterFiles;
@@ -365,6 +387,7 @@ SQL;
         $row->setDbCueout($info['cueout']);
         $row->setDbFadein(Application_Common_DateHelper::secondsToPlaylistTime($info['fadein']));
         $row->setDbFadeout(Application_Common_DateHelper::secondsToPlaylistTime($info['fadeout']));
+        $lineinId = null;
         if ($info['ftype'] == 'audioclip') {
             $row->setDbFileId($info['id']);
             $row->setDbTrackOffset($info['crossfadeDuration']);
@@ -375,9 +398,27 @@ SQL;
         } elseif ($info['ftype'] == 'block') {
             $row->setDbBlockId($info['id']);
             $type = 2;
+        } elseif ($info['ftype'] == 'linein') {
+            // RASTATIME 2026-05-19 — Section 23.18.  Linein-id is set
+            // via raw SQL below because the Propel CcPlaylistcontents
+            // model was not regenerated for the new linein_id column
+            // (same regen-skip policy as cc_schedule.linein_id /
+            // cc_webstream.input_gain_db — see ARCHITECTURE).
+            $type = 3;
+            $lineinId = (int) $info['id'];
         }
         $row->setDbType($type);
         $row->save($this->con);
+        if ($lineinId !== null) {
+            // Persist the FK Propel does not know about.
+            $stmt = $this->con->prepare(
+                'UPDATE cc_playlistcontents SET linein_id = :linein_id '
+                . 'WHERE id = :id'
+            );
+            $stmt->bindValue(':linein_id', $lineinId, PDO::PARAM_INT);
+            $stmt->bindValue(':id', (int) $row->getDbId(), PDO::PARAM_INT);
+            $stmt->execute();
+        }
         // above save result update on cc_playlist table on length column.
         // but $this->pl doesn't get updated automatically
         // so we need to manually grab it again from DB so it has updated values
@@ -395,6 +436,44 @@ SQL;
             $obj = CcWebstreamQuery::create()->findPK($objId, $this->con);
         } elseif ($objType == 'block') {
             $obj = CcBlockQuery::create()->findPK($objId, $this->con);
+        } elseif ($objType == 'linein') {
+            // RASTATIME 2026-05-19 — Section 23.18.  Line-In is a
+            // Django-managed entity (rastatime_linein) with no Propel
+            // ORM mapping, so we fetch the row via raw SQL and build
+            // the entry by hand instead of going through the Propel-
+            // instance branch below.  Default length 30 min when the
+            // operator left the Library "Default Length" empty —
+            // mirrors the Scheduler branch for line-in-in-show
+            // (Scheduler.php 'linein' branch, 2026-05-12).
+            $sql = 'SELECT id, name, length FROM rastatime_linein '
+                . 'WHERE id = :id AND enabled = TRUE';
+            $row = Application_Common_Database::prepareAndExecute(
+                $sql,
+                [':id' => (int) $objId],
+                Application_Common_Database::SINGLE
+            );
+            if (!$row) {
+                throw new Exception(_(
+                    'A selected Line-In does not exist or is disabled!'
+                ));
+            }
+            $length = $row['length'] ?: '00:30:00';
+
+            $entry = $this->plItem;
+            $entry['id']         = (int) $row['id'];
+            $entry['pos']        = $pos;
+            $entry['cliplength'] = $length;
+            $entry['cuein']      = '00:00:00';
+            $entry['cueout']     = $length;
+            $entry['ftype']      = 'linein';
+            // No crossfades for live inputs — open-mic semantics
+            // (start abrupt, end abrupt).  Same call the Scheduler
+            // line-in-in-show branch makes.
+            $entry['fadein']     = isset($p_item['fadein'])
+                ? $p_item['fadein']  : $entry['fadein'];
+            $entry['fadeout']    = isset($p_item['fadeout'])
+                ? $p_item['fadeout'] : $entry['fadeout'];
+            return $entry;
         } else {
             throw new Exception('Unknown file type');
         }
