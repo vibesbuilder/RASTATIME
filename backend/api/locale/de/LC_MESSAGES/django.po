@@ -1,0 +1,127 @@
+# RASTATIME — German translations for the Django API layer.
+# T20.2 — German translation scaffolding.
+#
+# These are RASTATIME-specific strings (model verbose names, choice labels).
+# Legacy LibreTime PHP strings are handled by frontend/legacy/locale/de_DE/.
+#
+# To compile:  python scripts/compile_messages.py
+# Or:          python manage.py compilemessages  (requires gettext tools)
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: RASTATIME\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-30 00:00+0000\n"
+"PO-Revision-Date: 2026-04-30 00:00+0000\n"
+"Last-Translator: RASTATIME Project\n"
+"Language-Team: German\n"
+"Language: de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+# ---------------------------------------------------------------------------
+# soundcard app — SoundcardSettings model
+# ---------------------------------------------------------------------------
+
+msgid "Soundcard Settings"
+msgstr "Soundkarteneinstellungen"
+
+msgid "Stable ID of the primary audio output device. Empty means 'use OS default'."
+msgstr "Stabile ID des primären Audioausgabegeräts. Leer bedeutet 'Systemstandard verwenden'."
+
+msgid "Stable ID of the optional monitor / cue output. Empty means no preview output configured."
+msgstr "Stabile ID des optionalen Monitor-/Cue-Ausgangs. Leer bedeutet kein Vorschauausgang konfiguriert."
+
+msgid "Ordered list of stable IDs of configured line-in input devices."
+msgstr "Geordnete Liste stabiler IDs der konfigurierten Line-In-Eingabegeräte."
+
+msgid "Timestamp of the last settings save."
+msgstr "Zeitstempel der letzten Einstellungsspeicherung."
+
+# ---------------------------------------------------------------------------
+# linein app — LineIn model
+# ---------------------------------------------------------------------------
+
+msgid "Line-In Source"
+msgstr "Line-In-Quelle"
+
+msgid "Line-In Sources"
+msgstr "Line-In-Quellen"
+
+msgid "UUID that uniquely identifies this line-in entity."
+msgstr "UUID zur eindeutigen Identifizierung dieser Line-In-Entität."
+
+msgid "Human-readable display name (e.g. 'Drum Kit', 'Interview Mic')."
+msgstr "Lesbarer Anzeigename (z. B. 'Schlagzeug', 'Interviewmikrofon')."
+
+msgid "Routing priority.  Higher integer wins when multiple line-ins compete for the same playout slot."
+msgstr "Routing-Priorität. Höherer Wert gewinnt, wenn mehrere Line-Ins um denselben Sendeplatz konkurrieren."
+
+msgid "Whether this line-in is active and available for routing."
+msgstr "Gibt an, ob diese Line-In-Quelle aktiv und für das Routing verfügbar ist."
+
+msgid "Optional operator notes about this line-in source."
+msgstr "Optionale Betreibernotizen zu dieser Line-In-Quelle."
+
+msgid "Timestamp when this line-in was first saved."
+msgstr "Zeitstempel der ersten Speicherung dieser Line-In-Quelle."
+
+msgid "Timestamp of the last update."
+msgstr "Zeitstempel der letzten Aktualisierung."
+
+# ---------------------------------------------------------------------------
+# playback app — PlaybackEvent model and SourceType choices
+# ---------------------------------------------------------------------------
+
+msgid "Playback Event"
+msgstr "Wiedergabeereignis"
+
+msgid "Playback Events"
+msgstr "Wiedergabeereignisse"
+
+msgid "Audio file"
+msgstr "Audiodatei"
+
+msgid "Web stream"
+msgstr "Webstream"
+
+msgid "Line-in source"
+msgstr "Line-In-Quelle"
+
+msgid "Live input"
+msgstr "Live-Eingang"
+
+msgid "Unknown"
+msgstr "Unbekannt"
+
+msgid "UUID that uniquely identifies this playback event."
+msgstr "UUID zur eindeutigen Identifizierung dieses Wiedergabeereignisses."
+
+msgid "Classification of the media source."
+msgstr "Klassifizierung der Medienquelle."
+
+msgid "Denormalized track or stream title."
+msgstr "Denormalisierter Titel des Tracks oder Streams."
+
+msgid "Denormalized artist name."
+msgstr "Denormalisierter Künstlername."
+
+msgid "Original URI of the media (file path or stream URL)."
+msgstr "Ursprüngliche URI des Mediums (Dateipfad oder Stream-URL)."
+
+msgid "UTC datetime when playback of this item began."
+msgstr "UTC-Zeitpunkt, zu dem die Wiedergabe dieses Eintrags begann."
+
+msgid "UTC datetime when playback ended; NULL while still playing."
+msgstr "UTC-Zeitpunkt, zu dem die Wiedergabe endete; NULL während der laufenden Wiedergabe."
+
+msgid "Seconds actually played.  NULL for in-progress events."
+msgstr "Tatsächlich gespielte Sekunden. NULL für laufende Ereignisse."
+
+msgid "Raw QueueItem.metadata dict at the time of playback."
+msgstr "Rohes QueueItem-Metadaten-Dict zum Zeitpunkt der Wiedergabe."
+
+msgid "Timestamp when this row was first saved to the database."
+msgstr "Zeitstempel, als diese Zeile erstmals in der Datenbank gespeichert wurde."

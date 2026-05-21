@@ -1,0 +1,27 @@
+# RASTATIME runtime configuration
+# Copy this file to C:\rastatime\config\libretime.conf and fill in your values.
+# All fields can also be overridden via environment variables using the
+# LIBRETIME_ prefix, e.g. LIBRETIME_GENERAL_API_KEY.
+
+general:
+  public_url: http://localhost
+  api_key: change-before-production
+  secret_key: change-before-production-use-at-least-32-random-chars
+  timezone: Europe/Berlin
+
+storage:
+  path: C:/rastatime/media
+
+database:
+  host: localhost
+  port: 5432
+  name: rastatime
+  user: rastatime
+  password: rastatime
+
+rabbitmq:
+  host: localhost
+  port: 5672
+  vhost: /rastatime
+  user: rastatime
+  password: rastatime

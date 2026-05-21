@@ -304,9 +304,6 @@ class AirtimeInstall
             mkdir($path, 0755, true);
         }
         touch($file);
-        chmod($file, 0644);
-        chown($file, $CC_CONFIG['webServerUser']);
-        chgrp($file, $CC_CONFIG['webServerUser']);
     }
 
     public static function RemoveLogDirectories()

@@ -1,0 +1,47 @@
+# RASTATIME — repo-wide Ruff configuration.
+#
+# "Mittel"-Strenge: lint and format checks are hard-fails for all
+# code under backend/, but legacy upstream snapshots and vendored
+# fixtures are excluded so we do not have to chase obsolete style.
+
+line-length = 100
+target-version = "py311"
+
+extend-exclude = [
+    # Vendored / generated / upstream snapshots
+    "infra/upstream",
+    "**/migrations/sql",
+    "**/__pycache__",
+    "**/.venv",
+    "**/build",
+    "**/dist",
+    "**/*.egg-info",
+    # Legacy frontend is PHP — no Python here, but be defensive
+    "frontend/legacy",
+]
+
+[lint]
+# "Mittel": pyflakes (F), pycodestyle errors (E), import sort (I),
+# bugbear lite (B), and pyupgrade (UP) — strong on real bugs, lenient
+# on stylistic noise.  Skip the full PEP8 (W) and naming (N) checks
+# so Liquidsoap-fork inheritance does not generate hundreds of nags.
+select = ["E", "F", "I", "B", "UP"]
+ignore = [
+    "E501",   # line-too-long — handled by ruff-format
+    "B008",   # function-call-in-default — common in FastAPI/click handlers
+    "B904",   # raise-from — a lot of legacy code does plain raise
+    "UP007",  # `Optional[X]` — keep until we drop Python 3.9 support upstream
+    "UP045",  # idem
+]
+
+[lint.per-file-ignores]
+# Tests can be looser
+"**/tests/**" = ["B", "F401"]
+"**/conftest.py" = ["F401"]
+# CLI entry points often need top-level side effects
+"**/__main__.py" = ["E402"]
+
+[format]
+# Match existing repo conventions
+quote-style = "double"
+indent-style = "space"

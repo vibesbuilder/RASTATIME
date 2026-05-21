@@ -108,3 +108,15 @@ yarn-error.log*
 .DS_Store
 .AppleDouble
 .LSOverride
+
+# -----------------------------------------------------------------------------
+# Local the coding assistant / IDE assistant state (operator-specific permission
+# allow-lists, scheduled-task locks, etc.).  Never source.
+# -----------------------------------------------------------------------------
+.assistant/
+
+# -----------------------------------------------------------------------------
+# Analyzer runtime state.  retry_queue is a pickle of in-flight
+# upload-pipeline jobs; rebuilt at process start.
+# -----------------------------------------------------------------------------
+backend/analyzer/retry_queue

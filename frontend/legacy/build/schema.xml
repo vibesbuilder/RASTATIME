@@ -64,6 +64,16 @@
     <column name="cueout" phpName="DbCueout" type="VARCHAR" sqlType="interval" required="false" defaultValue="00:00:00" />
     <column name="silan_check" phpName="DbSilanCheck" type="BOOLEAN" defaultValue="false" />
     <column name="hidden" phpName="DbHidden" type="BOOLEAN" defaultValue="false" />
+    <!-- RASTATIME 2026-05-16 - Track Expiry feature.  expires_at is the
+         concrete expiry timestamp (sourced from ID3 TXXX:Expiry or
+         computed from the parent Podcast's auto-expiry).  disabled is
+         set by the shared pruner once expires_at < NOW.  Disabled
+         tracks remain visible in the Library and in already-built
+         Smartblocks, but are excluded from NEW Smartblock evaluations.
+         Propel classes NOT regenerated for these columns; legacy code
+         reads/writes via raw SQL (see Application_Model_StoredFile). -->
+    <column name="expires_at" phpName="DbExpiresAt" type="TIMESTAMP" required="false" />
+    <column name="disabled" phpName="DbDisabled" type="BOOLEAN" required="true" defaultValue="false" />
     <column name="is_scheduled" phpName="DbIsScheduled" type="BOOLEAN" defaultValue="false" />
     <column name="is_playlist" phpName="DbIsPlaylist" type="BOOLEAN" defaultValue="false" />
     <column name="filesize" phpName="DbFilesize" type="Integer" required="true" defaultValue="0" />
@@ -321,6 +331,15 @@
     <column name="ends" phpName="DbEnds" type="TIMESTAMP" required="true" />
     <column name="file_id" phpName="DbFileId" type="INTEGER" required="false" />
     <column name="stream_id" phpName="DbStreamId" type="INTEGER" required="false" />
+    <!--
+      RASTATIME 2026-05-12 — Line-In Library item.  A schedule row
+      carries at most one of (file_id, stream_id, linein_id); the
+      playout picks the right event subclass based on which is set.
+      Points at ``rastatime_linein.id`` (Django-managed table), so
+      no FK constraint is declared here — Propel doesn't know that
+      table.
+    -->
+    <column name="linein_id" phpName="DbLineinId" type="INTEGER" required="false" />
     <column name="clip_length" phpName="DbClipLength" type="VARCHAR" sqlType="interval" required="false" defaultValue="00:00:00" />
     <column name="fade_in" phpName="DbFadeIn" type="TIME" required="false" defaultValue="00:00:00" />
     <column name="fade_out" phpName="DbFadeOut" type="TIME" required="false" defaultValue="00:00:00" />
@@ -412,6 +431,12 @@
     <column name="utime" phpName="DbUtime" type="TIMESTAMP" size="6" required="true" />
     <column name="lptime" phpName="DbLPtime" type="TIMESTAMP" size="6" required="false" />
     <column name="mime" phpName="DbMime" type="VARCHAR" />
+    <!-- RASTATIME 2026-05-16 - per-webstream static input gain (dB), default 0.
+         Applied by the FFmpeg streamer as a -af volume=<dB>dB filter when
+         playing this webstream.  Note: the generated Propel classes
+         (om/BaseCcWebstream.php) were NOT regenerated for this column;
+         legacy code reads it via the Webstream model getter (raw SQL). -->
+    <column name="input_gain_db" phpName="DbInputGainDb" type="NUMERIC" required="false" defaultValue="0" />
   </table>
   <table name="cc_webstream_metadata" phpName="CcWebstreamMetadata">
     <column name="id" phpName="DbId" primaryKey="true" type="INTEGER" autoIncrement="true" required="true" />
@@ -549,6 +574,15 @@
     <column name="auto_ingest" phpName="DbAutoIngest" type="BOOLEAN" required="true" defaultValue="false" />
     <column name="auto_ingest_timestamp" phpName="DbAutoIngestTimestamp" type="TIMESTAMP" required="false" />
     <column name="album_override" phpName="DbAlbumOverride" type="BOOLEAN" required="true" defaultValue="false" />
+    <!-- RASTATIME 2026-05-16 - Podcast Auto-Expiry feature.  When
+         auto_expiry_enabled is true, every episode imported from this
+         podcast gets cc_files.expires_at = now() + auto_expiry_days at
+         download time.  Per design decision B (precedence vote
+         2026-05-16) podcast auto-expiry WINS over any ID3 'Expiry' tag
+         the publisher may have set.  Propel classes NOT regenerated;
+         read/write via raw SQL in PodcastService. -->
+    <column name="auto_expiry_enabled" phpName="DbAutoExpiryEnabled" type="BOOLEAN" required="true" defaultValue="false" />
+    <column name="auto_expiry_days" phpName="DbAutoExpiryDays" type="INTEGER" required="false" />
     <column name="podcast_id" phpName="DbPodcastId" required="true" type="INTEGER" />
     <foreign-key foreignTable="podcast" name="podcast_id_fkey" onDelete="CASCADE">
       <reference local="podcast_id" foreign="id" />

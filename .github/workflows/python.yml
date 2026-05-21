@@ -1,0 +1,103 @@
+# RASTATIME — Python CI
+#
+# Runs on every push and pull request that touches Python code or this
+# workflow file.  Linting / format checks are hard-fails; per-package
+# unit tests run independently so a failure in one package does not
+# mask issues in another.
+#
+# Ruff config lives in /.ruff.toml (repo root).
+#
+# What is intentionally NOT here yet:
+#   * mypy   — re-enable once type annotations are stable across packages
+#   * api    — needs Postgres + Django settings; will get its own service-
+#              container job once DB-test fixtures are in place
+#   * worker — needs RabbitMQ; same idea as api
+#
+# These exclusions are about pragmatism, not principle: the goal is a
+# CI that goes green the day we push to GitHub, then we add coverage
+# incrementally as the surrounding plumbing matures.
+
+name: python
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "backend/**"
+      - ".ruff.toml"
+      - ".github/workflows/python.yml"
+  pull_request:
+    paths:
+      - "backend/**"
+      - ".ruff.toml"
+      - ".github/workflows/python.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: python-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ------------------------------------------------------------------
+  # Lint + format check — fast, runs once across all backend packages
+  # ------------------------------------------------------------------
+  lint:
+    name: ruff (lint + format)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install ruff
+        run: pip install "ruff>=0.6"
+
+      - name: ruff check
+        run: ruff check backend
+
+      - name: ruff format --check
+        run: ruff format --check backend
+
+  # ------------------------------------------------------------------
+  # Per-package unit tests — only the packages that run standalone
+  # without external services (DB / RabbitMQ).  Each package gets its
+  # own job so failures stay isolated.
+  # ------------------------------------------------------------------
+  test:
+    name: pytest (${{ matrix.package }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package:
+          - analyzer
+          - api-client
+          - playout
+          - shared
+        python-version: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install package with dev extras
+        working-directory: backend/${{ matrix.package }}
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+          pip install pytest pytest-cov
+
+      - name: Run tests
+        working-directory: backend/${{ matrix.package }}
+        run: pytest -ra --tb=short
+        env:
+          # Most of our packages bootstrap their own config; provide a
+          # harmless default so import-time loaders do not crash.
+          LIBRETIME_CONFIG_FILEPATH: /tmp/libretime.conf

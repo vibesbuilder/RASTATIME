@@ -1,0 +1,91 @@
+# RASTATIME — PHP CI
+#
+# The PHP frontend is the LibreTime Zend-Framework-1 legacy app, lightly
+# patched for Windows / RASTATIME branding.  Strict modern style is not
+# realistic for that codebase, so CI focuses on:
+#
+#   * composer install         — guarantees the dependency lock works
+#                                 with PHP 8.3 (RASTATIME's target).
+#   * php -l (lint)            — every PHP file at least parses.
+#   * phpunit                  — runs the existing tests in
+#                                 frontend/legacy/tests/.
+#
+# PHP-CS-Fixer / PHPStan are not enforced repo-wide — that would mean
+# hundreds of fixes in vendored ZF1-era code.  Once we stabilise our own
+# RASTATIME-specific files (controllers, forms, helpers we ship) we can
+# add a whitelist-based phpcs job here.
+
+name: php
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "frontend/**"
+      - ".github/workflows/php.yml"
+  pull_request:
+    paths:
+      - "frontend/**"
+      - ".github/workflows/php.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: php-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  legacy:
+    name: legacy frontend (PHP 8.3)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend/legacy
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP 8.3
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: mbstring, intl, pdo, pdo_pgsql, xml, zip, gd
+          coverage: none
+          tools: composer:v2
+
+      - name: Cache composer packages
+        uses: actions/cache@v4
+        with:
+          path: frontend/legacy/vendor
+          key: composer-${{ hashFiles('frontend/legacy/composer.lock') }}
+          restore-keys: composer-
+
+      - name: composer install
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: php -l (syntax check on application/)
+        run: |
+          set -e
+          # Skip vendor/ — that's third-party code, not our concern here.
+          find application -name '*.php' -print0 \
+            | xargs -0 -n1 -P4 php -l > /tmp/php-lint.log
+          # php -l prints "No syntax errors detected in ..." on success;
+          # any other output should fail the step.
+          if grep -v "No syntax errors detected" /tmp/php-lint.log; then
+            exit 1
+          fi
+
+      - name: phpunit (legacy tests)
+        working-directory: frontend/legacy/tests
+        run: |
+          if [ -f phpunit.xml ]; then
+            ../vendor/bin/phpunit --testdox || exit_code=$?
+            # Many legacy tests depend on a live DB / RabbitMQ that we
+            # do not yet provide as service containers.  Allow phpunit
+            # to surface failures, but flag them as a warning rather
+            # than a hard fail until the integration harness is ready.
+            if [ "${exit_code:-0}" != "0" ]; then
+              echo "::warning::phpunit returned ${exit_code}; this will become a hard fail once test fixtures are wired up."
+            fi
+          else
+            echo "No phpunit.xml found — skipping."
+          fi
