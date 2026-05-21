@@ -1,0 +1,283 @@
+# Line-In
+
+> **Où vous êtes dans le manuel.** Ce chapitre couvre le
+> type d'item de bibliothèque **Line-In** — entrées audio
+> live nommées que vous pouvez glisser sur des playlists et
+> émissions. Pour la configuration carte son côté
+> machine-opérateur qui rend un line-in physiquement
+> disponible, voir [Machine locale](./LOCAL_MACHINE.md).
+> Pour la procédure d'urgence quand un line-in tombe en
+> silence ou bruit, voir
+> [`docs/operator/LINE_IN_BROKEN.md`](../../operator/LINE_IN_BROKEN.md).
+
+Un **Line-In** est une entrée audio live nommée depuis un
+périphérique carte son sur la machine de l'opérateur — un
+microphone, une sortie mixeur, un lecteur CD, une interface
+audio externe — que RASTATIME expose comme item de
+bibliothèque. Une fois configuré, vous pouvez le glisser
+dans des playlists et sur des émissions exactement de la
+même façon que vous glissez une piste.
+
+Les Line-Ins sont nouveaux dans RASTATIME (2026-05-12). Ils
+remplacent le slot "Line In" unique en dur que LibreTime
+d'origine avait, et ajoutent un comportement nommé,
+persistant, glisser-déposable, listé en bibliothèque.
+
+---
+
+## 1. Vue d'ensemble du concept
+
+Un Line-In a deux couches :
+
+| Couche | Ce que c'est | Où ça vit |
+|---|---|---|
+| **Périphérique physique** | L'entrée carte son réelle — un microphone USB, un jack line intégré, une interface XLR, etc. Identifié par son ID de périphérique côté OS. | La configuration carte son de la machine de l'opérateur ; voir [Machine locale](./LOCAL_MACHINE.md). |
+| **Line-In nommé** | Une ligne de bibliothèque qui *référence* un périphérique physique par ID, plus un nom d'affichage et une configuration. | Table `rastatime_linein` ; visible dans la Bibliothèque + sur la page Line-In Library. |
+
+Un seul périphérique physique peut soutenir **au plus un**
+Line-In à la fois. Re-lier le même périphérique à un
+second Line-In écrase le premier.
+
+---
+
+## 2. La page Line-In Library
+
+Paramètres → **Line-In Library** (ou cliquez sur la puce
+Line-In verte dans la page Bibliothèque principale).
+
+Chaque ligne est un Line-In nommé. Les colonnes :
+
+| Colonne | Signification |
+|---|---|
+| **Nom** | Le nom d'affichage. Utilisé partout où le Line-In apparaît. |
+| **Périphérique** | Le périphérique carte son que le Line-In référence. Le libellé est le nom côté OS du périphérique. |
+| **Longueur par défaut** | La durée par défaut qu'une ligne Line-In occupe quand glissée dans une playlist ou émission. `∞` signifie "joue jusqu'à être dit de s'arrêter". |
+
+La barre d'outils :
+
+| Bouton | Ce qu'il fait |
+|---|---|
+| **+ Nouveau** | Ouvrir le dialogue nouveau-Line-In. |
+| **Modifier** (menu contextuel ligne) | Ouvrir le dialogue d'édition. |
+| **Activer / Désactiver** | Basculer l'état disponible sans supprimer. Les Line-Ins désactivés n'apparaissent pas dans la bibliothèque de glisser. |
+| **Supprimer** | Retirer le Line-In. Les lignes de planning qui le référencent sont aussi retirées. |
+
+> **Comment ça marche sous le capot.** Toutes les actions
+> mutantes sont de minces pass-through depuis
+> `application/controllers/LineinController.php` vers
+> l'API REST Django à `/api/v2/audio/linein[/<id>]`. Le
+> contrôleur applique seulement l'ACL (Admin + Super
+> Admin) ; le côté Python à
+> `backend/api/libretime_api/linein/` possède validation
+> et persistance dans `rastatime_linein`. Voir
+> ARCHITECTURE §14.
+
+---
+
+## 3. Créer un Line-In
+
+Line-In Library → **+ Nouveau**.
+
+| Champ | Notes |
+|---|---|
+| **Nom** | Requis. Unique. Le libellé visible partout. |
+| **Périphérique** | Requis. Menu déroulant liste chaque périphérique d'entrée que l'OS voit. Si votre périphérique manque, voir [Machine locale](./LOCAL_MACHINE.md). |
+| **Longueur par défaut** | Requise. Format `HHh MMm SSs` (même parseur que Webstreams). Pour "joue jusqu'à être dit de s'arrêter" utilisez `0h 0m 0s` (affiche comme `∞`). |
+| **Activé** | Par défaut activé. Décocher pour créer le Line-In mais le supprimer de la bibliothèque de glisser. |
+
+### La longueur par défaut est importante
+
+- Pour un **microphone** dans un studio normal de parole
+  seulement, définissez la Longueur par défaut sur la
+  longueur typique de segment de parole (5 min est
+  courant).
+- Pour une **sortie mixeur** qui pilote toute l'émission,
+  définissez-la sur la longueur complète de l'émission
+  (ex. 60 min) ou infini.
+- Pour un **lecteur CD** ou autre source temporisée,
+  définissez-la sur la longueur typique de piste (3 min).
+
+L'opérateur peut toujours surcharger la durée par
+utilisation dans le show-builder ; la Longueur par défaut
+n'est que la valeur de départ.
+
+---
+
+## 4. Utiliser un Line-In dans une émission
+
+Deux chemins :
+
+### 4.1 Glisser direct sur une émission
+
+Show-builder → glissez la ligne Line-In depuis le panneau
+Bibliothèque sur l'émission. Un item de planning apparaît
+avec le nom et la Longueur par défaut du Line-In.
+
+### 4.2 À l'intérieur d'une playlist
+
+Éditeur de playlist → glissez le Line-In depuis la
+Bibliothèque. La ligne de playlist porte la référence du
+Line-In + sa Longueur par défaut.
+
+> **Comment ça marche sous le capot.** Migration 0054
+> (2026-05-19) a ajouté `cc_playlistcontents.linein_id`
+> comme foreign key nullable dans `rastatime_linein`,
+> plus une contrainte CHECK qu'exactement un de
+> `file_id` / `stream_id` / `block_id` / `linein_id` est
+> non-NULL par ligne. Type 3 dans
+> `cc_playlistcontents.type` indique une ligne Line-In.
+> ARCHITECTURE §23.18 couvre la décision de schéma.
+
+### Que joue quand le créneau du Line-In commence ?
+
+Le moteur de playout envoie un événement `LINEIN_START`
+au source switcher, qui :
+
+1. Arrête tout ce qui était à l'antenne.
+2. Ouvre le périphérique d'entrée carte son configuré.
+3. Route l'audio entrant vers le stream de sortie.
+
+Quand la durée du créneau s'écoule, le moteur envoie un
+événement `LINEIN_END` et le source switcher retourne au
+planning.
+
+---
+
+## 5. Modifier ou retirer un Line-In
+
+### Modifier
+
+Line-In Library → cliquez sur la ligne → **Modifier**.
+Changez nom, périphérique, longueur par défaut ou état
+activé. **Enregistrer**.
+
+- **Changement de nom** se propage à la liste Bibliothèque
+  et au widget En cours au prochain rafraîchissement.
+- **Changement de périphérique** se propage à *chaque*
+  utilisation future.
+- **Changement de Longueur par défaut** affecte seulement
+  les *nouvelles* utilisations.
+- **Activé = désactivé** retire le Line-In immédiatement
+  de la bibliothèque de glisser.
+
+### Désactiver
+
+Menu contextuel ligne → **Désactiver**. Le Line-In reste
+dans la page bibliothèque mais disparaît de la
+bibliothèque source de glisser.
+
+### Supprimer
+
+Menu contextuel ligne → **Supprimer**. Confirmez. Le
+Line-In est retiré *et* chaque ligne
+`cc_playlistcontents` et `cc_schedule` qui le référence
+est retirée (CASCADE).
+
+> **Conseil opérateur.** Préférez **Désactiver** plutôt
+> que **Supprimer** sauf si vous êtes sûr que vous
+> n'utiliserez plus jamais le Line-In.
+
+---
+
+## 6. La dépendance au périphérique physique
+
+Un Line-In référence un périphérique carte son par
+**ID côté OS**. Cet ID est stable à travers les
+redémarrages tant que :
+
+- Le périphérique reste branché.
+- Aucun autre logiciel audio n'a été installé qui
+  réassigne les IDs de périphérique.
+
+Si le périphérique disparaît :
+
+- Le Line-In est toujours dans la Bibliothèque.
+- Sa ligne dans Paramètres → Line-In Library affiche un
+  badge **point d'exclamation rouge** à côté de la
+  colonne périphérique.
+- Tout planning qui essaie de jouer le Line-In le saute
+  avec un avertissement "Device not found" dans le log
+  playout.
+- Le fallback (silence ou boucle fallback) joue pour la
+  durée du créneau.
+
+Voir
+[`docs/operator/DEVICE_MISSING.md`](../../operator/DEVICE_MISSING.md)
+pour le runbook de récupération.
+
+---
+
+## 7. Permissions
+
+Seuls les rôles **Admin (A)** et **Super Admin (S)**
+peuvent créer, modifier ou supprimer des Line-Ins.
+Raisons :
+
+- Un Line-In référence un périphérique physique sur la
+  machine de l'opérateur. Les changements peuvent casser
+  le planning de chaque DJ.
+- La configuration carte son est au niveau station.
+
+Les DJ (H) et Program Managers (P) peuvent glisser les
+Line-Ins existants dans leurs propres
+playlists / émissions, mais ne peuvent pas créer ou
+modifier les définitions Line-In sous-jacentes.
+
+---
+
+## 8. Foire aux questions
+
+### "Où est le paramètre 'Show Source' / 'Master Source' / 'Line In' d'origine ?"
+
+LibreTime d'origine avait trois entrées en dur ("Show
+Source", "Master Source", "Line In") configurées sous
+**Paramètres → Live Sources**. RASTATIME garde Show Source
+et Master Source (ce sont des entrées DJ distantes sur
+Icecast — voir [Streams](./STREAMS.md)) mais remplace
+le "Line In" unique en dur par la fonctionnalité Line-In
+nommé documentée ici.
+
+### "Deux Line-Ins peuvent-ils référencer le même périphérique physique ?"
+
+Oui, mais un seul réussira à un moment donné. La plupart
+des drivers carte son accordent l'accès exclusif au
+premier ouvreur ; un second Line-In essayant d'ouvrir le
+même périphérique en même temps échoue avec "device
+busy".
+
+### "Un Line-In peut-il être le seul contenu de l'autoloading playlist ?"
+
+Oui. Créez une playlist contenant exactement une ligne
+Line-In avec Longueur par défaut = la longueur de
+l'émission (ou infini). Attachez cette playlist comme
+autoloading playlist de l'émission.
+
+### "L'audio du Line-In est-il enregistré si Record-per-Show est activé ?"
+
+Oui. L'enregistreur tape la sortie Icecast, qui porte ce
+qui est actuellement à l'antenne, indépendamment de la
+source. Voir [Enregistrement par émission](./RECORD_PER_SHOW.md).
+
+### "Puis-je ajouter une source audio réseau (ex. AES67 / Dante) comme Line-In ?"
+
+Seulement si la source se présente comme périphérique
+d'entrée carte son Windows — beaucoup de drivers AES67 /
+Dante livrent une carte son virtuelle. Si elle apparaît
+dans le menu déroulant des périphériques d'entrée de
+Paramètres → Machine locale, elle fonctionne comme
+Line-In.
+
+---
+
+## Où aller ensuite
+
+* [Machine locale](./LOCAL_MACHINE.md) — configuration
+  carte son physique.
+* [Bibliothèque](./LIBRARY.md) — les Line-Ins
+  apparaissent aussi dans la Bibliothèque principale.
+* [Tableau de bord](./DASHBOARD.md) → État de source —
+  voir quel Line-In est actuellement à l'antenne.
+* [`docs/operator/LINE_IN_BROKEN.md`](../../operator/LINE_IN_BROKEN.md)
+  — procédure d'urgence.
+* [`docs/operator/DEVICE_MISSING.md`](../../operator/DEVICE_MISSING.md)
+  — quand le périphérique carte son sous-jacent disparaît.

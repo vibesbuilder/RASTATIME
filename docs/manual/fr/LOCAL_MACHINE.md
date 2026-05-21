@@ -1,0 +1,258 @@
+# Machine locale
+
+> **Où vous êtes dans le manuel.** Ce chapitre couvre la
+> page Paramètres → **Machine locale**, qui possède chaque
+> aspect lié à la *machine de l'opérateur elle-même* —
+> sortie carte son, périphériques d'entrée line-in et
+> dossier d'import local. Pour les streams sortants côté
+> réseau, voir [Streams](./STREAMS.md). Pour le type
+> d'item de bibliothèque qui *référence* une entrée carte
+> son, voir [Line-In](./LINE_IN.md).
+
+La page **Machine locale** est où vous informez RASTATIME
+sur les ressources physiques de la machine de
+l'opérateur : quelle sortie haut-parleur jouer, quels
+périphériques comptent comme candidats line-in, et quel
+dossier l'analyzer doit surveiller pour les pistes
+importées.
+
+La page remplace la page "Soundcard" de LibreTime d'origine
+et ajoute la fonctionnalité dossier d'import. L'URL legacy
+fonctionne toujours ; seuls le titre de la page et le slug
+changent.
+
+---
+
+## 1. La page
+
+Paramètres → **Machine locale**.
+
+Trois sections indépendantes : Carte son (sortie + entrée),
+Dossier d'import local.
+
+---
+
+## 2. Carte son — Périphériques de sortie
+
+La liste montre chaque périphérique de sortie audio que la
+machine de l'opérateur expose.
+
+### Sortie par défaut (le "moniteur")
+
+Le périphérique sélectionné est la sortie **moniteur /
+cue** :
+
+- Le bouton **Écouter** du tableau de bord joue dessus.
+- Le bouton **Aperçu** de la bibliothèque joue dessus.
+- L'aperçu du show-builder joue aussi dessus.
+
+> **Ce que ce n'est PAS.** La sortie par défaut n'est
+> *pas* le stream public. Les auditeurs n'entendent pas
+> ce qui est joué ici.
+
+### Pourquoi choisir un périphérique spécifique
+
+- **Stations à opérateur unique** avec un seul jeu de
+  haut-parleurs — laissez par défaut.
+- **Stations à deux moniteurs** avec un haut-parleur
+  "air-check" et un haut-parleur "interne" — choisissez
+  ici l'haut-parleur interne.
+- **Stations seulement-casque** — choisissez le
+  périphérique casque.
+
+### Pseudo-périphérique "(Défaut système)"
+
+La première entrée est toujours **(Défaut système)**.
+Ceci suit ce que le système Windows / Linux a marqué
+comme sortie audio par défaut.
+
+> **Comment ça marche sous le capot.** Les périphériques
+> sont énumérés via `audio.soundcard.windows_manager`
+> (WASAPI sous Windows, portaudio sous Linux). Le
+> périphérique sélectionné est persisté dans `cc_pref`
+> comme `default_output_device_id`. Voir ARCHITECTURE §9.
+
+---
+
+## 3. Carte son — Périphériques d'entrée
+
+La liste montre chaque périphérique d'entrée audio que la
+machine de l'opérateur expose. La case à cocher contrôle
+lesquels sont **candidats** pour utilisation comme
+Line-Ins nommés.
+
+### Lesquels activer
+
+| Périphérique | Cocher ? | Pourquoi |
+|---|---|---|
+| **Microphone studio** | Oui | La raison pour laquelle la plupart des stations ont un line-in. |
+| **Sortie mixeur** (XLR / TRS via interface) | Oui | Le mix studio complet comme source unique. |
+| **Microphone intégré** | Seulement si utilisé | Décocher le supprime du menu déroulant de création Line-In. |
+| **Microphone webcam** | Non (généralement) | Basse qualité, souvent sélectionné par accident. |
+| **Jack line-in à l'arrière** (si non utilisé) | Non | Même prévention d'accident. |
+
+Cocher / décocher ne **désactive** pas le périphérique au
+niveau OS — Windows le voit toujours. RASTATIME le retire
+juste du menu déroulant de création Line-In.
+
+### Du périphérique d'entrée au Line-In nommé
+
+Cette page marque seulement les périphériques comme
+candidats. Pour utiliser un périphérique comme source de
+planification, créez un Line-In nommé via Paramètres →
+**Line-In Library** → **+ Nouveau**. Voir
+[Line-In](./LINE_IN.md).
+
+---
+
+## 4. Sortie par défaut pour cue / moniteur
+
+Le menu déroulant sous la liste des périphériques de
+sortie répète le défaut en forme à ligne unique.
+
+---
+
+## 5. Dossier d'import local
+
+Le Dossier d'import local est un répertoire sur la machine
+de l'opérateur que l'analyzer surveille pour de nouveaux
+fichiers. Tout ce qui est déposé dans le dossier est
+automatiquement importé dans la bibliothèque au prochain
+cycle de poll de l'analyzer (par défaut toutes les 60 s).
+
+### Configurer le dossier
+
+| Champ | Notes |
+|---|---|
+| **Chemin du dossier** | Un chemin absolu sur la machine de l'opérateur. Doit exister et être lisible par le service RASTATIME-ANALYZER. Par défaut : `C:\rastatime\import\`. Laisser vide pour désactiver. |
+| **Dernier scan** | Quand l'analyzer a tourné un scan en dernier + résumé du résultat. |
+
+Le bouton **Scanner maintenant** déclenche un scan
+immédiat sans attendre le poll de 60 s.
+
+### Comment les fichiers sont traités
+
+Pour chaque nouveau fichier que l'analyzer trouve :
+
+1. Le fichier est déplacé (pas copié) dans une zone de
+   staging (`C:\rastatime\import\.staging\`).
+2. L'analyzer exécute ffprobe + vérification de
+   jouabilité ffmpeg.
+3. En cas de succès, le fichier est déplacé vers
+   `C:\rastatime\media\<owner>\<year>\<month>\<filename>`
+   et une ligne `cc_files` est insérée.
+4. En cas d'échec dur, le fichier est déplacé vers
+   `C:\rastatime\import\.failed\` avec un fichier
+   `.err` à côté.
+5. En cas d'échec mou, le fichier est importé avec un
+   badge d'avertissement jaune.
+
+### Sous-dossiers
+
+Les sous-dossiers sont scannés récursivement. Les
+fichiers dans des sous-dossiers sont importés, et le
+**nom du sous-dossier** devient le champ de métadonnées
+`album` de la piste importée si le propre tag album ID3
+du fichier est vide.
+
+### Propriété
+
+Les fichiers importés appartiennent au
+**propriétaire-d'import par défaut** configuré (défini
+sous Préférences générales → Propriétaire d'import par
+défaut). Par défaut `admin`.
+
+> **Comment ça marche sous le capot.** Le poller du
+> Dossier d'import local est l'un des jobs d'arrière-plan
+> du service `RASTATIME-WORKER` (le `LocalImportJob`).
+> Voir ARCHITECTURE §16.
+
+---
+
+## 6. Dossier d'enregistrement local (lié)
+
+Caché sous Paramètres → Préférences générales mais valant
+d'être mentionné ici : le **Dossier d'enregistrement
+local** est où
+[Enregistrement par émission](./RECORD_PER_SHOW.md) écrit
+ses fichiers capturés.
+
+Par défaut : `C:\rastatime\recordings\`.
+
+Ce n'est *pas* un candidat pour la Bibliothèque — les
+enregistrements sont sauvegardés comme fichiers
+autonomes pour téléchargement / archive, et ne sont pas
+auto-importés.
+
+---
+
+## 7. Foire aux questions
+
+### "Mon micro USB apparaît dans Windows, mais pas dans RASTATIME."
+
+Trois choses à vérifier :
+
+1. Le micro est **coché** sur la liste Périphériques
+   d'entrée sur cette page.
+2. Le service `RASTATIME-API` tourne et l'endpoint
+   `/api/v2/audio/devices` renvoie le micro.
+3. Le driver audio Windows permet encore l'accès à
+   l'entrée.
+
+### "Le Dossier d'import local n'importe rien."
+
+Ordre de diagnostic :
+
+1. Le chemin du dossier est correct et existe.
+2. Le service `RASTATIME-ANALYZER` tourne.
+3. Le service `RASTATIME-WORKER` tourne (il possède le
+   poller).
+4. Vérifiez **Dernier scan** — s'il montre "N fichiers
+   échoués", regardez dans `.failed\` pour les fichiers
+   `.err`.
+
+### "Pourquoi déplacer et pas copier dans le Dossier d'import local ?"
+
+Un workflow basé sur copie laisse l'opérateur avec deux
+copies de chaque fichier importé et aucune propriété
+claire.
+
+### "Le Dossier d'import local peut-il être sur un partage réseau ?"
+
+Oui, avec deux mises en garde : le partage doit être
+monté au chemin que RASTATIME voit (ex. `Z:\import\`).
+Les chemins UNC `\\server\share\import` ne sont *pas*
+fiables avec les services lancés par NSSM sous Windows.
+
+### "Puis-je avoir plusieurs Dossiers d'import local ?"
+
+Non. Le poller scanne un répertoire configuré.
+
+### "Quelle est la différence entre le Dossier d'import local et le bouton Téléverser ?"
+
+| | Téléverser | Dossier d'import local |
+|---|---|---|
+| Origine | Côté navigateur | Système de fichiers côté serveur |
+| Meilleur pour | Un ou deux fichiers | Lots de plusieurs fichiers |
+| Timeout | Navigateur peut timeout | Pas de timeout |
+| Propriété | Utilisateur connecté | Propriétaire par défaut configuré |
+
+### "La sélection de périphérique de sortie affecte-t-elle ce que les auditeurs entendent ?"
+
+Non. Le périphérique de sortie sur cette page est la
+sortie **moniteur / cue**. Les auditeurs entendent la
+sortie [Streams](./STREAMS.md).
+
+---
+
+## Où aller ensuite
+
+* [Line-In](./LINE_IN.md) — transformer un périphérique
+  d'entrée coché en item de bibliothèque planifiable
+  nommé.
+* [Bibliothèque](./LIBRARY.md) → §2 — alternatives au
+  Dossier d'import local.
+* [Streams](./STREAMS.md) — la sortie audio côté
+  auditeur.
+* [`docs/operator/DEVICE_MISSING.md`](../../operator/DEVICE_MISSING.md)
+  — quand un périphérique précédemment configuré disparaît.
