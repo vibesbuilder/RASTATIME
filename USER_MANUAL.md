@@ -1,5 +1,10 @@
 # RASTATIME — User Manual
 
+> 🌐 **Languages:** **English** ·
+> [Deutsch](./docs/manual/de/USER_MANUAL.md) ·
+> [Français](./docs/manual/fr/USER_MANUAL.md) ·
+> [Español](./docs/manual/es/USER_MANUAL.md)
+
 > **About this manual.** RASTATIME is a Windows-first fork of LibreTime
 > for operating a community / small commercial radio station. This
 > document is the operator-facing companion to the technical
