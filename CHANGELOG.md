@@ -7,6 +7,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Smart Block: new "Exclude tracks played lately" pool-restriction
+  toggle** (operator request 2026-05-21).  Sits between the existing
+  `Allow only tracks not played yet` and `Allow only tracks with
+  expiry date` toggles in the Advanced-options section of the
+  New/Edit Smart Block dialog.  When enabled, the smart block's
+  candidate pool is narrowed to tracks whose `cc_files.lptime` is
+  either `NULL` (never played — included by operator decision
+  2026-05-21) or older than the configured hours-back window.
+  Companion field "Exclude tracks played in the last hours" accepts
+  an integer 1..8760 (1 hour up to 1 year, operator decision
+  2026-05-21); validator rejects empty / out-of-range values when
+  the master checkbox is on.  Defaults to 24 h on first
+  toggle-on.  Compositional with all existing criteria — common
+  pairing is `Sort: Random` + `Exclude played lately: 24 h` for
+  fresh-rotation auto-build content.
+
+  Persisted in two new `cc_block_criteria` rows
+  (`exclude_played_lately`, `exclude_played_lately_hours`) — no
+  schema change.  Backwards-compatible: existing smart blocks
+  without these rows behave exactly as before.
+
+  Files:
+    - `application/forms/SmartBlockCriteria.php` — checkbox +
+      number-input form elements with Between(1, 8760) validator.
+    - `application/models/Block.php` — save (2 rows), load (2
+      elseif clauses), and `getListOfFilesUnderLimit()` WHERE
+      clause `cc_files.lptime IS NULL OR cc_files.lptime <
+      NOW() - INTERVAL 'X hours'`.  Server-side clamp of the
+      hours value to [1, 8760] as defence-in-depth against a
+      hand-crafted POST.
+    - `application/views/scripts/form/smart-block-criteria.phtml`
+      — single `<dl>` row hosting both controls so the line reads
+      "[x] Exclude tracks played lately: [24] hours".
+    - `public/js/airtime/playlist/smart_blockbuilder.js` —
+      show/hide of the hours-input wrapper based on master
+      checkbox; auto-fills 24 on first toggle-on so the active
+      state is never empty.
+
+  Documentation updated in all four languages under
+  `docs/manual/{en,de,fr,es}/LIBRARY.md` (Smart Blocks section)
+  and ARCHITECTURE.md Section 23.
+
 ### Fixed
 
 - **Calendar: per-show fill bar auto-refreshes every 60 s.**

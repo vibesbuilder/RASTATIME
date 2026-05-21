@@ -1272,6 +1272,46 @@ SQL;
             ->setDbValue($p_criteriaData['etc']['sp_only_with_expiry'] ?? 0)
             ->setDbBlockId($this->id)
             ->save();
+
+        // RASTATIME 2026-05-21 — exclude-played-lately filter.  Stores
+        // two rows: the master enable flag + the hours-back window.
+        // Hours is normalised to an integer in [1, 8760] when the
+        // master flag is on; clamps anything outside that range
+        // server-side so a hand-crafted POST cannot inject a
+        // 100000-hour interval that would defeat the filter.
+        //
+        // "checkbox on + hours empty/zero" combination: per operator
+        // decision (ii) 2026-05-21 the form validator demands ≥ 1,
+        // but the server-side guard here defaults the value to 24 h
+        // rather than rejecting the save, because rejecting at this
+        // late stage is a worse UX (the operator already left the
+        // form).  The form-side validator catches the common case;
+        // this is just a defence-in-depth fallback.
+        $excludeOn = ((int) ($p_criteriaData['etc']['sp_exclude_played_lately'] ?? 0)) === 1;
+        $excludeHoursRaw = (int) ($p_criteriaData['etc']['sp_exclude_played_lately_hours'] ?? 0);
+        if ($excludeOn) {
+            $excludeHours = max(1, min(8760, $excludeHoursRaw ?: 24));
+        } else {
+            // Persist the operator's last typed value when toggling
+            // the master flag off so re-enabling later restores it.
+            // Clamped to the same range so a stale invalid value
+            // does not survive a save.
+            $excludeHours = max(1, min(8760, $excludeHoursRaw ?: 24));
+        }
+
+        $qry = new CcBlockcriteria();
+        $qry->setDbCriteria('exclude_played_lately')
+            ->setDbModifier('N/A')
+            ->setDbValue($excludeOn ? 1 : 0)
+            ->setDbBlockId($this->id)
+            ->save();
+
+        $qry = new CcBlockcriteria();
+        $qry->setDbCriteria('exclude_played_lately_hours')
+            ->setDbModifier('N/A')
+            ->setDbValue($excludeHours)
+            ->setDbBlockId($this->id)
+            ->save();
     }
 
     /**
@@ -1482,6 +1522,15 @@ SQL;
             } elseif ($criteria == 'only_with_expiry') {
                 // RASTATIME 2026-05-18
                 $storedCrit['only_with_expiry'] = ['value' => $value];
+            } elseif ($criteria == 'exclude_played_lately') {
+                // RASTATIME 2026-05-21 — master toggle (0/1).  The
+                // companion hours value lives in a separate row
+                // (criteria = 'exclude_played_lately_hours') so the
+                // existing per-row schema does not need to change.
+                $storedCrit['exclude_played_lately'] = ['value' => $value];
+            } elseif ($criteria == 'exclude_played_lately_hours') {
+                // RASTATIME 2026-05-21 — hours-back window (1..8760).
+                $storedCrit['exclude_played_lately_hours'] = ['value' => $value];
             } elseif ($criteria == 'sort') {
                 $storedCrit['sort'] = ['value' => $value];
             } else {
@@ -1538,6 +1587,15 @@ SQL;
             } elseif ($criteria == 'only_with_expiry') {
                 // RASTATIME 2026-05-18
                 $storedCrit['only_with_expiry'] = ['value' => $value];
+            } elseif ($criteria == 'exclude_played_lately') {
+                // RASTATIME 2026-05-21 — master toggle (0/1).  The
+                // companion hours value lives in a separate row
+                // (criteria = 'exclude_played_lately_hours') so the
+                // existing per-row schema does not need to change.
+                $storedCrit['exclude_played_lately'] = ['value' => $value];
+            } elseif ($criteria == 'exclude_played_lately_hours') {
+                // RASTATIME 2026-05-21 — hours-back window (1..8760).
+                $storedCrit['exclude_played_lately_hours'] = ['value' => $value];
             } elseif ($criteria == 'sort') {
                 $storedCrit['sort'] = ['value' => $value];
             } else {
@@ -1785,6 +1843,34 @@ SQL;
         // content sorted by its retention deadline.
         if (isset($storedCrit['only_with_expiry']) && $storedCrit['only_with_expiry']['value'] == 1) {
             $qry->where('cc_files.expires_at IS NOT NULL');
+        }
+
+        // RASTATIME 2026-05-21 — re-rotation protection: exclude tracks
+        // played in the last N hours.  Pattern matches only_unplayed
+        // above (one extra Propel ->where()) so the filter composes
+        // naturally with every other criterion.
+        //
+        // "Never played" (cc_files.lptime IS NULL) is INCLUDED by the
+        // filter per operator decision (i) 2026-05-21 — a track that
+        // has never been played has by definition not been played
+        // lately.  Without the IS NULL branch this filter would shrink
+        // the pool of fresh / new tracks, which is the opposite of
+        // what an operator picks this filter for.
+        //
+        // INTERVAL '%d hours' uses a PostgreSQL-side string-formatted
+        // integer; the value is already validated to [1, 8760] in
+        // saveSmartBlockCriteria + the form validator, so there is no
+        // SQL-injection risk from the (int) cast below — Propel will
+        // pass it through to PDO unchanged.
+        if (isset($storedCrit['exclude_played_lately'])
+            && $storedCrit['exclude_played_lately']['value'] == 1
+        ) {
+            $excludeHours = (int) ($storedCrit['exclude_played_lately_hours']['value'] ?? 24);
+            $excludeHours = max(1, min(8760, $excludeHours));
+            $qry->where(
+                "cc_files.lptime IS NULL OR cc_files.lptime < NOW() - INTERVAL '"
+                . $excludeHours . " hours'"
+            );
         }
 
         try {

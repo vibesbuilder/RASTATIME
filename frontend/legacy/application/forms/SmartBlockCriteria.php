@@ -398,6 +398,60 @@ class Application_Form_SmartBlockCriteria extends Zend_Form_SubForm
         }
         $this->addElement($onlyUnplayed);
 
+        // RASTATIME 2026-05-21 — re-rotation protection: exclude tracks
+        // that were played in the last N hours (operator decision
+        // 2026-05-21).  Composes with only_unplayed above: if
+        // only_unplayed is also on, both filters compose AND-wise and
+        // only never-played tracks are eligible (the lately-filter
+        // becomes a no-op subset).  Standalone use: tracks that have
+        // a cc_files.lptime older than N hours OR no lptime at all
+        // (never played; included because "never played" satisfies
+        // "not played lately" by definition — operator decision (i)
+        // 2026-05-21).
+        //
+        // Two form fields: a master checkbox + a number input for the
+        // hours-back window.  Number-input validation: integer
+        // 1..8760 (= 1 year, operator decision (iii) 2026-05-21) so
+        // the largest realistic programme rotation fits without
+        // accepting nonsense values.  Empty hours when checkbox is
+        // on is rejected by validation (operator decision (ii)
+        // 2026-05-21).
+        $excludeLately = new Zend_Form_Element_Checkbox('sp_exclude_played_lately');
+        $excludeLately->setDecorators(['viewHelper'])
+            ->setLabel(_('Exclude tracks played lately:'));
+        if (isset($storedCrit['exclude_played_lately'])) {
+            $excludeLately->setChecked($storedCrit['exclude_played_lately']['value'] == 1);
+        }
+        $this->addElement($excludeLately);
+
+        $excludeLatelyHours = new Zend_Form_Element_Text('sp_exclude_played_lately_hours');
+        $excludeLatelyHours->setAttrib('class', 'input_text sp_input_text_limit')
+            ->setAttrib('maxlength', 4)
+            ->setDecorators(['viewHelper'])
+            ->setLabel(_('Exclude tracks played in the last hours:'))
+            // Allow-empty + required-false: the field is irrelevant
+            // when the master checkbox is off, and we want a blank
+            // submission in that case to pass validation cleanly.
+            // The "checkbox on + value empty" combination is rejected
+            // server-side by Block.php::saveSmartBlockCriteria()
+            // (operator decision (ii) 2026-05-21).
+            ->setRequired(false)
+            ->setAllowEmpty(true)
+            ->addValidator('Int', false)
+            ->addValidator('Between', false, ['min' => 1, 'max' => 8760]);
+        if (isset($storedCrit['exclude_played_lately_hours'])) {
+            $excludeLatelyHours->setValue(
+                $storedCrit['exclude_played_lately_hours']['value']
+            );
+        } else {
+            // Operator-friendly default that the operator can overwrite
+            // immediately; surfaces as the placeholder value once the
+            // checkbox is toggled on so the field is never visually
+            // empty in the "active" state.
+            $excludeLatelyHours->setValue(24);
+        }
+        $this->addElement($excludeLatelyHours);
+
         // RASTATIME 2026-05-18 — restrict Smart Block to tracks with
         // any expiry date set (cc_files.expires_at IS NOT NULL).
         // Useful for blocks that should only draw from short-lived /

@@ -1,10 +1,17 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.12
+Draft version: 0.13
 Date: 2026-05-21
 
 > **Revision history**
+> - **0.13 (2026-05-21)** — Smart Block "Exclude tracks played
+>   lately" filter (Section 23.21).  Third pool-restriction
+>   toggle in the Advanced section of the Smart Block dialog;
+>   excludes tracks whose `cc_files.lptime` is newer than the
+>   operator-set hours window (1..8760 h).  Never-played
+>   tracks are included.  No schema change — two new
+>   `cc_block_criteria` rows.
 > - **0.12 (2026-05-21)** — Auto DJ feature (Section 23.20).
 >   New `Application_Service_AutoDjService` with two passes that
 >   bookend the existing per-show autoplaylist build loop in
@@ -3305,3 +3312,90 @@ sibling AJAX endpoints for the logo:
 * Recording opt-in.  Today `record = false` is hardcoded; a
   future preference could re-expose it for operators that
   intentionally want auto-DJ recordings.
+
+---
+
+### 23.21 Smart Block: Exclude-Played-Lately Filter
+
+**Context.**  Even with the existing `only_unplayed` toggle
+(Section 23.x), operators repeatedly hit the case where a
+smart block was supposed to avoid *recent* plays without
+forbidding *every* prior play.  The classic pattern:
+
+> "Pick 30 minutes of pop music, but no track that already
+> aired in the last 4 hours."
+
+`only_unplayed` was too strict (excludes a track forever once
+it has aired once); the existing time-based criteria
+(`played_within`) was an inclusive filter, not an exclusive
+one.  Operators worked around it by manually editing a
+playlist after each rotation cycle.
+
+**Decision.**  Add a third pool-restriction toggle to the
+Advanced section of the Smart Block dialog, named
+`Exclude tracks played lately`, with a companion
+hours-back input.  The filter expands to
+
+```sql
+cc_files.lptime IS NULL OR cc_files.lptime < NOW() - INTERVAL 'N hours'
+```
+
+where N is the operator-set hours window.  `IS NULL`
+(never-played) tracks are explicitly **included** by operator
+decision 2026-05-21 — a never-played track cannot have been
+played "lately", so it would be perverse to exclude it.
+
+**Persistence.**  No schema change.  Two new rows in
+`cc_block_criteria`:
+
+| criteria | value |
+|---|---|
+| `exclude_played_lately` | `0` or `1` (master flag) |
+| `exclude_played_lately_hours` | `1..8760` (the window) |
+
+The hours value is persisted even when the master flag is
+off so toggling the flag back on restores the operator's
+last typed value.  Server-side clamp to `[1, 8760]` in
+`Block::saveSmartBlockCriteria()` as defence-in-depth
+against hand-crafted POSTs.
+
+**Validation.**  Two-layer:
+
+1. **Form-side** (`SmartBlockCriteria.php`): `Zend_Validate_Int`
+   + `Zend_Validate_Between(1, 8760)`.  Allow-empty + not
+   required so a deactivated checkbox + empty field passes
+   cleanly.
+2. **Server-side** (`Block.php`): re-clamps and defaults to
+   24 h if the form-validator was somehow bypassed.
+
+**UX.**  Single dl-row hosting both controls so the line
+reads "[x] Exclude tracks played lately: [24] hours" at a
+glance.  The hours-input wrapper is hidden via
+`smart_blockbuilder.js` whenever the master checkbox is
+off.  On first toggle-on the input auto-fills with 24 so
+the active state is never visually empty.
+
+**Compositional behaviour.**  The filter is a single
+additional `->where()` call on the Propel query, so it
+composes naturally with every other criterion.  Common
+pairings:
+
+| Configuration | Effect |
+|---|---|
+| `Exclude played lately: 4 h` + `Sort: Random` | Fresh-rotation auto-build for a one-hour show |
+| `Exclude played lately: 168 h` (1 week) + `Genre = News` + `Earliest expiry first` | Weekly news rotation with shortest-lived items first |
+| `only_unplayed` + `Exclude played lately: 24 h` | Redundant — `only_unplayed` already implies "never played", the lately filter is a no-op subset.  Allowed for clarity; no error. |
+
+**Out-of-scope.**  A per-show "lately" window (different
+hours for different shows using the same block) would
+require either per-show smart-block overrides or a
+template-style copy-on-edit, neither of which exist in
+RASTATIME today.
+
+**Files touched.**
+
+* `frontend/legacy/application/forms/SmartBlockCriteria.php`
+* `frontend/legacy/application/models/Block.php`
+* `frontend/legacy/application/views/scripts/form/smart-block-criteria.phtml`
+* `frontend/legacy/public/js/airtime/playlist/smart_blockbuilder.js`
+* `CHANGELOG.md` + `docs/manual/{en,de,fr,es}/LIBRARY.md`

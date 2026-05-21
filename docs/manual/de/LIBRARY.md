@@ -238,6 +238,41 @@ Der Block scheitert nicht.
 > Siehe ARCHITECTURE §23.19 für die Outro-Reserve-Interaktion
 > mit Time-remaining-Smart-Blocks.
 
+### Pool-Restriktions-Toggles (Erweiterte Optionen)
+
+Die Schublade **Erweiterte Optionen** unten im Smart-Block-
+Dialog beherbergt drei Pool-Restriktions-Toggles, die die
+Kandidatenmenge *vor* dem Sort + Limit einschränken:
+
+| Toggle | Worauf der Pool eingeschränkt wird |
+|---|---|
+| **Allow only tracks not played yet** (Nur noch nicht gespielte Tracks) | Tracks, bei denen `cc_files.lptime` `NULL` ist (das Playout hat sie nie protokolliert). Nützlich für Discovery- / Neue-Inhalte-Rotations-Blöcke. |
+| **Exclude tracks played lately** (Kürzlich gespielte Tracks ausschließen) | Tracks, bei denen `lptime` `NULL` ist *oder* älter als das konfigurierte Stunden-Rückblick-Fenster (1..8760 h, Default 24). Verwenden Sie dies, wenn Sie kürzliche Wiederholungen vermeiden möchten, ohne jede frühere Wiedergabe zu verbieten. Das Begleitfeld "Exclude tracks played in the last hours" erscheint, wenn der Toggle an ist. |
+| **Allow only tracks with expiry date** (Nur Tracks mit Ablaufdatum) | Tracks, bei denen `cc_files.expires_at IS NOT NULL` ist. Nützlich für Blöcke, die nur aus kurzlebigen / vergänglichen Inhalten ziehen sollen (datierte News-Segmente, Trailer). |
+
+Alle drei kombinieren sich UND-weise und mit jedem Kriterium
+in der Haupt-Kriterien-Section.
+
+> **Operator-Tipp.** Der Toggle "Exclude tracks played lately"
+> ist die richtige Antwort auf "spiele 30 min Pop, aber nichts
+> aus den letzten 4 Stunden." Kombinieren Sie ihn mit
+> `Sortieren: Zufällig` für einen Frisch-Rotations-Auto-Build,
+> der nie innerhalb des konfigurierten Fensters repetitiv
+> klingt. Nie gespielte Tracks sind im Filter *eingeschlossen*
+> — ein Track, der nie auf Sendung war, kann offensichtlich
+> nicht "kürzlich" auf Sendung gewesen sein.
+
+> **Wie es unter der Haube funktioniert.** `Exclude played
+> lately` fügt eine einzige `WHERE cc_files.lptime IS NULL OR
+> cc_files.lptime < NOW() - INTERVAL 'N hours'`-Klausel zur
+> Propel-Abfrage hinzu. Der Stundenwert wird in
+> `cc_block_criteria` persistiert (criteria =
+> `exclude_played_lately_hours`) neben dem Master-Flag
+> (criteria = `exclude_played_lately`). Keine Schemaänderung
+> — abwärtskompatibel mit Smart Blocks, die vor 2026-05-21
+> erstellt wurden (fehlende Zeilen = deaktiviert). Siehe
+> ARCHITECTURE §23.21.
+
 ### Einen Smart Block bearbeiten
 
 Klicken Sie den Block → **Bearbeiten**. Das Ändern von

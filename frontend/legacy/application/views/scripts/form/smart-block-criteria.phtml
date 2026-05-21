@@ -153,6 +153,44 @@
                 <?php endif; ?>
             </dd>
         </dl>
+        <?php /* RASTATIME 2026-05-21 — exclude-played-lately filter.
+               Master checkbox + hours-back input on one row so the
+               two controls read as a single sentence at a glance:
+               "[x] Exclude tracks played lately: [24] hours".  The
+               hours-input is shown only when the checkbox is on
+               (toggle handled in smart_blockbuilder.js); the visual
+               layout mirrors the podcast Auto-Expiry pattern but
+               folds both controls into one dl-row instead of two
+               separate rows. */ ?>
+        <dl>
+            <dt>
+                <label class='sp_text_font'><?php echo $this->element->getElement('sp_exclude_played_lately')->getLabel() ?></label>
+            </dt>
+            <dd id='sp_exclude_played_lately-element'>
+                <?php echo $this->element->getElement('sp_exclude_played_lately') ?>
+                <span id='sp_exclude_played_lately_hours_wrap'
+                      class='sp_text_font'
+                      style='margin-left: 0.8em;'>
+                    <?php echo _('Exclude tracks played in the last'); ?>
+                    <?php echo $this->element->getElement('sp_exclude_played_lately_hours') ?>
+                    <?php echo _('hours'); ?>
+                </span>
+                <?php if ($this->element->getElement("sp_exclude_played_lately")->hasErrors()) : ?>
+                    <?php foreach ($this->element->getElement("sp_exclude_played_lately")->getMessages() as $error) : ?>
+                        <span class='errors sp-errors'>
+                            <?php echo $error; ?>
+                        </span>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+                <?php if ($this->element->getElement("sp_exclude_played_lately_hours")->hasErrors()) : ?>
+                    <?php foreach ($this->element->getElement("sp_exclude_played_lately_hours")->getMessages() as $error) : ?>
+                        <span class='errors sp-errors'>
+                            <?php echo $error; ?>
+                        </span>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </dd>
+        </dl>
         <?php /* RASTATIME 2026-05-18 — only-tracks-with-expiry filter.
                Sits directly under the only-unplayed toggle since both
                are pool-restriction toggles. */ ?>

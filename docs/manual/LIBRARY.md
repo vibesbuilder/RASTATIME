@@ -217,6 +217,39 @@ error.
 > ARCHITECTURE §23.19 for the outro-reserve interaction with
 > time-remaining smart blocks.
 
+### Pool-restriction toggles (Advanced section)
+
+The **Advanced options** drawer at the bottom of the Smart
+Block dialog hosts three pool-restriction toggles that
+narrow the candidate set *before* the sort + limit run:
+
+| Toggle | What it restricts the pool to |
+|---|---|
+| **Allow only tracks not played yet** | Tracks where `cc_files.lptime` is `NULL` (the playout has never logged them). Useful for discovery / new-content rotation blocks. |
+| **Exclude tracks played lately** | Tracks where `lptime` is `NULL` *or* older than the configured hours-back window (1..8760 h, default 24). Use this when you want to avoid recent re-rotation without forbidding every prior play. Companion input "Exclude tracks played in the last hours" appears when the toggle is on. |
+| **Allow only tracks with expiry date** | Tracks where `cc_files.expires_at IS NOT NULL`. Useful for blocks that should only draw from short-lived / perishable content (dated news segments, trailers). |
+
+All three compose AND-wise and combine with every criterion
+in the main Criteria section.
+
+> **Operator tip.** The "Exclude tracks played lately" toggle
+> is the right answer to "play 30 min of pop, but nothing
+> from the last 4 hours." Pair it with `Sort: Random` for a
+> fresh-rotation auto-build that never sounds repetitive
+> within the configured window. Never-played tracks are
+> *included* by the filter — a track that has never aired
+> obviously cannot have aired "lately".
+
+> **How it works under the hood.** `Exclude played lately`
+> adds a single `WHERE cc_files.lptime IS NULL OR cc_files
+> .lptime < NOW() - INTERVAL 'N hours'` clause to the Propel
+> query. The hours value is persisted in
+> `cc_block_criteria` (criteria = `exclude_played_lately_hours`)
+> alongside the master flag (criteria = `exclude_played_lately`).
+> No schema change — backwards-compatible with smart blocks
+> created before 2026-05-21 (missing rows = disabled). See
+> ARCHITECTURE §23.21.
+
 ### Editing a smart block
 
 Click the block → **Edit**. Changing criteria does *not*

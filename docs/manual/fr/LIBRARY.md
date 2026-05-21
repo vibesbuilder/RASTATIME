@@ -242,6 +242,42 @@ vous obtenez 4. Le block ne s'arrête pas en erreur.
 > l'interaction réserve d'outro avec les smart blocks
 > de temps restant.
 
+### Bascules de restriction du pool (Options avancées)
+
+Le tiroir **Options avancées** en bas du dialogue Smart Block
+héberge trois bascules de restriction du pool qui
+restreignent l'ensemble candidat *avant* l'exécution du tri
++ limite :
+
+| Bascule | Restriction du pool |
+|---|---|
+| **Allow only tracks not played yet** (Autoriser uniquement les pistes pas encore jouées) | Pistes dont `cc_files.lptime` est `NULL` (le playout ne les a jamais journalisées). Utile pour les blocs de découverte / rotation de nouveau contenu. |
+| **Exclude tracks played lately** (Exclure les pistes jouées récemment) | Pistes dont `lptime` est `NULL` *ou* plus ancien que la fenêtre de retour configurée en heures (1..8760 h, par défaut 24). Utilisez ceci quand vous voulez éviter une re-rotation récente sans interdire toute lecture antérieure. Le champ compagnon "Exclude tracks played in the last hours" apparaît lorsque la bascule est activée. |
+| **Allow only tracks with expiry date** (Autoriser uniquement les pistes avec date d'expiration) | Pistes dont `cc_files.expires_at IS NOT NULL`. Utile pour les blocs qui doivent puiser uniquement dans du contenu éphémère (segments d'info datés, bandes-annonces). |
+
+Les trois se composent en ET et se combinent avec chaque
+critère de la section Critères principale.
+
+> **Conseil opérateur.** La bascule "Exclude tracks played
+> lately" est la bonne réponse à "joue 30 min de pop, mais
+> rien des 4 dernières heures". Combinez-la avec
+> `Trier : Aléatoire` pour un auto-build à rotation fraîche
+> qui ne sonne jamais répétitif dans la fenêtre configurée.
+> Les pistes jamais jouées sont *incluses* par le filtre —
+> une piste qui n'est jamais passée à l'antenne ne peut
+> évidemment pas être passée "récemment".
+
+> **Comment ça marche sous le capot.** `Exclude played
+> lately` ajoute une seule clause `WHERE cc_files.lptime IS
+> NULL OR cc_files.lptime < NOW() - INTERVAL 'N hours'` à
+> la requête Propel. La valeur en heures est persistée dans
+> `cc_block_criteria` (criteria =
+> `exclude_played_lately_hours`) à côté du master flag
+> (criteria = `exclude_played_lately`). Aucun changement de
+> schéma — rétrocompatible avec les smart blocks créés
+> avant 2026-05-21 (lignes manquantes = désactivé). Voir
+> ARCHITECTURE §23.21.
+
 ### Modifier un smart block
 
 Cliquez sur le block → **Modifier**. Changer les critères

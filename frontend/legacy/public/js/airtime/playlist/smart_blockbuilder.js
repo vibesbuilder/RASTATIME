@@ -743,6 +743,35 @@ function setupUI() {
       $(this).toggleClass("visible");
       $(".smart-block-advanced").toggle();
     });
+
+  // RASTATIME 2026-05-21 — Exclude-played-lately toggle wiring.
+  // The hours-input wrapper is hidden whenever the master checkbox
+  // is off so the row reads as a single "[x] Exclude tracks played
+  // lately" until the operator opts in.  When the operator toggles
+  // the master on we also auto-fill 24 h if the input was empty,
+  // so the active state is never visually empty (matches operator
+  // decision (ii) 2026-05-21 — "checkbox on + value empty" is
+  // rejected by validation, this just shortcuts the common path).
+  var $excludeChk = $("#sp_exclude_played_lately");
+  var $excludeWrap = $("#sp_exclude_played_lately_hours_wrap");
+  var $excludeHours = $("#sp_exclude_played_lately_hours");
+
+  function syncExcludeLatelyVisibility() {
+    if ($excludeChk.is(":checked")) {
+      $excludeWrap.show();
+      if (!$excludeHours.val()) {
+        $excludeHours.val(24);
+      }
+    } else {
+      $excludeWrap.hide();
+    }
+  }
+
+  // Initial render based on the value the server sent down.
+  syncExcludeLatelyVisibility();
+
+  $excludeChk.off("change.excludelately")
+    .on("change.excludelately", syncExcludeLatelyVisibility);
 }
 
 function enableAndShowTracktypeDropdown(valEle, index) {
