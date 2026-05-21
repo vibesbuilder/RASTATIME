@@ -299,6 +299,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Podcasts → Edit Podcast: Auto-Expiry helper text moved into
+  a hover tooltip** (operator request 2026-05-21).  The grey
+  inline span next to the days input field
+  (`"Episodes expire this many days after download."`) was
+  visually noisy and pushed the row width to the right.  Replaced
+  with a `?` help-icon at the same position; the same wording
+  surfaces as a qtip on hover.  Same hover convention as
+  `.album_names.help_icon` already used inside the podcast edit
+  dialog, so the visual style stays uniform.  Pure UX change —
+  the underlying `auto_expiry_days` semantics are unchanged.
+  Files: `application/views/scripts/podcast/podcast.phtml`,
+  `public/js/airtime/library/podcast.js`.
+
 - **Calendar New/Edit Show: minor label polishing**
   (operator request 2026-05-19).
   * Templates section: "Save as Template" button moved onto its

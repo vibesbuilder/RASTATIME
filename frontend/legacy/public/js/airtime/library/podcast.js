@@ -409,6 +409,32 @@ var AIRTIME = (function (AIRTIME) {
       },
     });
 
+    // RASTATIME 2026-05-21 — auto-expiry-days hover tooltip.
+    // Replaces the inline grey-text span that used to sit next to
+    // the days input.  Same qtip parameters as .album_names.help_icon
+    // above so the visual style stays uniform inside the podcast
+    // edit dialog.
+    $(".auto_expiry_help_icon").qtip({
+      content: {
+        text: $.i18n._("Episodes expire this many days after download."),
+      },
+      hide: {
+        delay: 500,
+        fixed: true,
+      },
+      style: {
+        border: {
+          width: 0,
+          radius: 4,
+        },
+        classes: "ui-tooltip-dark ui-tooltip-rounded",
+      },
+      position: {
+        my: "left bottom",
+        at: "right center",
+      },
+    });
+
     // Add podcast episode table in right-side panel below podcast edit form
     var episodeTable =
       AIRTIME.podcast.initPodcastEpisodeDatatableWithButtonEvents(
