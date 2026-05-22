@@ -42,7 +42,29 @@
     var defaultView = body.getAttribute('data-default-view') || 'day';
     var timezone    = body.getAttribute('data-timezone') || 'UTC';
     var locale      = body.getAttribute('data-locale') || 'en';
+    var clockMode   = body.getAttribute('data-clock')  || '24';   // '12' | '24' | 'auto'
     var emptyLabel  = body.getAttribute('data-label-empty') || 'No shows scheduled';
+
+    /*
+     * Build a FullCalendar time-format object that the
+     * slotLabelFormat / eventTimeFormat options can consume.
+     * Returns `undefined` for "auto" so FullCalendar falls back
+     * to the locale default (avoids overriding e.g. Arabic /
+     * RTL locale formats that have their own time conventions).
+     */
+    function clockFormat(includeMinutes) {
+        if (clockMode === 'auto') { return undefined; }
+        var hour12 = (clockMode === '12');
+        var fmt = {
+            hour: '2-digit',
+            hour12: hour12,
+            meridiem: hour12 ? 'short' : false
+        };
+        if (includeMinutes) {
+            fmt.minute = '2-digit';
+        }
+        return fmt;
+    }
 
     /*
      * Map the operator-friendly view names ('day', '2day',
@@ -95,12 +117,20 @@
     }
 
     /*
-     * Format a start/end time-of-day pair as "HH:MM – HH:MM"
-     * in the visitor's locale.
+     * Format a start/end time-of-day pair for the modal header.
+     * Honours the ?clock= operator setting so the modal matches
+     * the rest of the widget — operator's 24h widget shouldn't
+     * suddenly switch to AM/PM in the modal popover.
      */
     function fmtTimeRange(start, end) {
         try {
             var opts = { hour: '2-digit', minute: '2-digit' };
+            if (clockMode === '12') {
+                opts.hour12 = true;
+            } else if (clockMode === '24') {
+                opts.hour12 = false;
+            }
+            // 'auto' → no hour12 key → locale default wins
             return start.toLocaleTimeString(undefined, opts)
                 + ' – ' + end.toLocaleTimeString(undefined, opts);
         } catch (e) {
@@ -185,25 +215,25 @@
 
     /*
      * --------------------------------------------------------
-     * Mark the currently-airing event so the CSS can ring it.
-     * Recomputed after every fetch — fetch happens on view
-     * change / navigation, which is the same trigger we want
-     * for the "is this still on air?" recomputation.
+     * Is this event currently on air?  Evaluated client-side
+     * from Date.now() so we don't have to mutate the event
+     * objects (which used to trigger an eventsSet → re-render
+     * → eventsSet infinite loop that froze the browser).
+     *
+     * Re-evaluated on every render (which FullCalendar does on
+     * view change, navigation, and refetch).  Doesn't track
+     * the clock on a per-second basis — if the operator leaves
+     * the iframe open for a full hour, the highlight stays on
+     * the show that was current at last paint.  Acceptable
+     * trade-off: the alternative would mean a setInterval
+     * that periodically dirties the calendar, which is heavier
+     * than the value of an exact live highlight.
      * --------------------------------------------------------
      */
-    function markCurrentEvent(calendar) {
-        if (!calendar) { return; }
+    function isCurrentEvent(ev) {
+        if (!ev || !ev.start || !ev.end) { return false; }
         var now = Date.now();
-        calendar.getEvents().forEach(function (ev) {
-            var startMs = ev.start ? ev.start.getTime() : 0;
-            var endMs   = ev.end   ? ev.end.getTime()   : 0;
-            var isCurrent = (startMs <= now && endMs > now);
-            // FullCalendar's setExtendedProp triggers a re-render
-            // of just that event, which lets us toggle the
-            // .np-mv-event-current class via the
-            // eventClassNames callback below.
-            ev.setExtendedProp('isCurrent', isCurrent);
-        });
+        return ev.start.getTime() <= now && ev.end.getTime() > now;
     }
 
     /*
@@ -252,6 +282,12 @@
         slotMaxTime: '24:00',
         slotDuration: '00:15:00',
         slotLabelInterval: '01:00',
+        // Operator-controlled clock format (?clock=12|24|auto).
+        // `undefined` lets FullCalendar pick the locale default
+        // (e.g. "5 PM" for en, "17:00" for de); explicit object
+        // overrides regardless of locale.
+        slotLabelFormat:  clockFormat(false),   // hour only on the axis
+        eventTimeFormat:  clockFormat(true),    // hour + minutes in event chips
         allDaySlot: false,
         expandRows: true,
         height: '100%',
@@ -300,10 +336,12 @@
         /*
          * Tag the currently-airing event with a CSS class so
          * the surrounding stylesheet can outline it.  Re-runs
-         * after every event re-render.
+         * after every event re-render.  Evaluated directly
+         * against Date.now() — see isCurrentEvent comment for
+         * why we don't mutate the event with setExtendedProp.
          */
         eventClassNames: function (arg) {
-            return arg.event.extendedProps.isCurrent
+            return isCurrentEvent(arg.event)
                 ? ['np-mv-event-current']
                 : [];
         },
@@ -321,13 +359,16 @@
         },
 
         /*
-         * After each fetch, mark the current event + scroll to
-         * the now-line (only on first load, or after a Today
-         * click).  Tracked with a one-shot flag so subsequent
-         * navigations don't re-snap the view.
+         * After each fetch, optionally scroll to the now-line
+         * (only on first load, or after a Today click).
+         * Tracked with a one-shot flag so subsequent navigations
+         * don't re-snap the view.  Note: we deliberately do NOT
+         * mutate any event here — that would re-trigger
+         * eventsSet via the FullCalendar re-render and loop the
+         * browser into the "page unresponsive" warning that
+         * shipped with v1 of this widget.
          */
         eventsSet: function () {
-            markCurrentEvent(calendar);
             if (pendingScrollToNow) {
                 pendingScrollToNow = false;
                 // Defer until the now-indicator line has been

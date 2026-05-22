@@ -1261,6 +1261,19 @@ class EmbedController extends Zend_Controller_Action
         $locale = strtolower(preg_replace('/[._].*$/', '', $locale));
         $this->view->fcLocale = $locale;
 
+        // RASTATIME 2026-05-22 v9 — clock format.  FullCalendar
+        // picks the time format from the locale by default, which
+        // gives "5 PM" / "6 AM" for english locales — confusing
+        // for european stations that expect 24h.  ?clock=24 (the
+        // default) forces 24h regardless of locale; ?clock=12
+        // forces AM/PM; ?clock=auto leaves it locale-dependent
+        // (legacy behaviour, available for opt-in).
+        $clock = $request->getParam('clock', '24');
+        if (!in_array($clock, ['12', '24', 'auto'], true)) {
+            $clock = '24';
+        }
+        $this->view->clock = $clock;
+
         $this->view->emptyLabel = Application_Model_Preference::GetWidgetNoMultiViewSchedule();
 
         $this->view->widgetCss        = Assets::url('css/embed/now-playing-widget.css');

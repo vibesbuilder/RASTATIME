@@ -420,6 +420,7 @@ iframe listo para usar:
 |---|---|---|---|
 | `view` | `day`, `2day`, `week` | `day` | Vista inicial.  El visitante puede cambiar vía botones in-widget. |
 | `theme` | `auto`, `dark`, `light` | `auto` | Igual que los otros widgets — vea §2. |
+| `clock` | `24`, `12`, `auto` | `24` | Formato hora-del-día en eje horario, slots de programa y modal.  `24` fuerza estilo `17:00` independiente de la locale; `12` fuerza `5 PM`; `auto` deja que FullCalendar elija según locale. |
 | `cache` | entero segundos 10..3600 | `300` (5 min) | TTL caché HTTP del servidor para el feed JSON.  Por defecto más alto que los otros widgets. |
 | `bg` | URL de una imagen | ninguna | Igual que el widget Weekly Schedule — vea §6. |
 | `bgcolor` | color hex | ninguna | Igual que el widget Weekly Schedule — vea §6. |

@@ -425,6 +425,7 @@ bequem reinpasst):
 |---|---|---|---|
 | `view` | `day`, `2day`, `week` | `day` | Initial-View.  Visitor kann via In-Widget-Buttons weiter wechseln; dies steuert nur den Start-Zustand. |
 | `theme` | `auto`, `dark`, `light` | `auto` | Wie die anderen Widgets — siehe §2. |
+| `clock` | `24`, `12`, `auto` | `24` | Uhrzeit-Format auf der Stunden-Achse, in Show-Slots und im Modal.  `24` erzwingt `17:00`-Stil unabhängig vom Locale; `12` erzwingt `5 PM`-Stil; `auto` lässt FullCalendar nach Locale entscheiden (`en` → AM/PM, `de` → 24h). |
 | `cache` | Ganzzahl Sekunden 10..3600 | `300` (5 min) | Server-seitige HTTP-Cache-TTL für JSON-Event-Feed.  Höherer Default als bei den anderen Widgets — Schedule verschiebt sich selten mittags, Payload ist größer. |
 | `bg` | URL eines Bildes | keine | Wie das Weekly-Schedule-Widget — siehe §6. |
 | `bgcolor` | Hex-Farbe | keine | Wie das Weekly-Schedule-Widget — siehe §6. |

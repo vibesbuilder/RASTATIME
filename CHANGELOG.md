@@ -441,6 +441,62 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Multi-View Schedule: infinite-loop fix + ?clock parameter**
+  (operator bug report + UX request 2026-05-22 v9).
+
+  Bug fix: the browser's "page unresponsive" warning was
+  popping up every minute or so on the Multi-View Schedule
+  settings preview, and the calendar showed no events / no
+  navigation.  Root cause was an event-render infinite
+  loop:
+
+      eventsSet → markCurrentEvent → ev.setExtendedProp →
+        re-render → eventsSet → ...
+
+  FullCalendar's `setExtendedProp` triggers a re-render of
+  the mutated event, which fires the `eventsSet` callback,
+  which called `markCurrentEvent` again, which mutated every
+  event again — a tight loop that froze the browser thread
+  until it crossed the unresponsive-script threshold.
+
+  Fix: drop `markCurrentEvent` entirely.  `eventClassNames`
+  (already called by FullCalendar on every event render)
+  now evaluates `Date.now()` directly against the event's
+  start/end and returns `['np-mv-event-current']` or `[]`.
+  No mutation, no loop.
+
+  Trade-off: the "currently airing" highlight no longer
+  walks with the wall clock once the page is loaded — if
+  the operator leaves the iframe open for a full hour the
+  highlight stays on the show that was airing at first
+  paint.  Re-evaluated on every view change / navigation /
+  Today click, which catches 99 % of real-world use.  A
+  proper live-update would need a setInterval that
+  periodically dirties the calendar, heavier than the
+  value.
+
+  New feature: `?clock=24|12|auto` URL parameter to
+  control the time-of-day format on the hour axis, in
+  show slots, and in the modal.  Default `24` (operator
+  preference — the previous locale-default behaviour gave
+  `5 PM` for english locales, confusing for European
+  stations).  `12` forces AM/PM.  `auto` keeps the
+  legacy locale-default behaviour.  Threaded through
+  `slotLabelFormat` + `eventTimeFormat` on the
+  FullCalendar config, plus the modal's `fmtTimeRange`
+  helper.
+
+  Files: `application/controllers/EmbedController.php`
+  (new `?clock` param with strict validation); `application/
+  views/scripts/embed/multi-view-schedule.phtml`
+  (data-clock attribute); `public/js/airtime/embed/multi-
+  view-schedule-widget.js` (loop removal + `clockFormat`
+  helper + `isCurrentEvent` predicate + modal time-range
+  format); `application/views/scripts/embeddablewidgets/
+  multi-view-schedule.phtml` (URL params list extended
+  with `clock`); `docs/manual/WIDGETS.md` + `de/` + `fr/` +
+  `es/` (new `clock` row in the §7 parameter table).
+
 - **Weekly Schedule v2: iframe height bump 340 → 560 px**
   (operator request 2026-05-22 v8).  Pure sizing change —
   no behaviour difference.  The panel `max-height`
