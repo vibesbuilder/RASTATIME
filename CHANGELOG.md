@@ -290,6 +290,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **On-Air-Today: typography & link-default polish**
+  (operator request 2026-05-22 v4).  Three small visual
+  changes to make the widget more legible at sidebar embed
+  sizes:
+    * `?link` parameter default flipped from `underline` to
+      `plain`.  The underline competed with the (now bold)
+      show names; operators who want the classic hyperlink
+      affordance back can opt in with `?link=underline`.
+    * Row height roughly doubled — `padding: 12px 0` (was
+      `3px 0`) and `line-height: 1.6` (was `1.4`), so each
+      row reads as a distinct band instead of a tight stack.
+    * Uniform bold: header + every row now uses
+      `font-weight: 700` and a `1.1em` (rows) / `1.2em`
+      (header) font-size.  Operator explicitly asked for
+      "all bold, all bigger".  Current-row weight flourish
+      removed (would collide with the new uniform weight);
+      the `.np-row-current` selector kept live but empty as
+      a clean attachment point if the operator later wants
+      the current row distinguished by colour or background.
+  Files: `application/controllers/EmbedController.php` (link
+  default), `public/css/embed/now-playing-widget.css` (the
+  size / weight / padding block), `docs/manual/WIDGETS.md`
+  + `de/` + `fr/` + `es/` (updated `?link` default in the §5
+  parameter table).
+
 - **Public Embed Widget polish trio** (operator request 2026-05-22 v3,
   three small UX changes on top of the wave-1 widgets).
 

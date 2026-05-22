@@ -839,17 +839,16 @@ class EmbedController extends Zend_Controller_Action
         }
         $this->view->overflowClass = 'np-overflow-' . $overflow;
 
-        // RASTATIME 2026-05-22 — operator-configurable link style.
-        // Default 'underline' keeps the previous behaviour and the
-        // standard hyperlink affordance.  'plain' disables the
-        // underline (and the hover-thickness flourish) for
-        // operators who want the widget to read as a clean list
-        // rather than a navigation block — picked per-embed via
-        // the URL parameter so the same widget can render styled
-        // differently on different embedding pages.
-        $linkStyle = $request->getParam('link', 'underline');
+        // RASTATIME 2026-05-22 v3 — operator-configurable link
+        // style.  Default flipped from 'underline' to 'plain' on
+        // operator request: the underline competes with the
+        // already-bold show names and makes the row layout look
+        // cluttered.  'underline' is still available as an
+        // opt-in URL parameter for embedding pages that want
+        // the classic hyperlink affordance.
+        $linkStyle = $request->getParam('link', 'plain');
         if (!in_array($linkStyle, ['underline', 'plain'], true)) {
-            $linkStyle = 'underline';
+            $linkStyle = 'plain';
         }
         $this->view->linkClass = 'np-link-' . $linkStyle;
 

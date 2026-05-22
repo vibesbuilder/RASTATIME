@@ -246,7 +246,7 @@ migre a la línea siguiente sin esperar el TTL del caché.
 | `theme` | `auto`, `dark`, `light` | `auto` | Igual que los otros widgets — vea §2. |
 | `cache` | entero segundos 10..3600 | `60` | Igual que los otros widgets — vea §7. |
 | `overflow` | `ellipsis`, `marquee` | `ellipsis` | Comportamiento de nombres de programa más anchos que 300 px. |
-| `link` | `underline`, `plain` | `underline` | Renderizado de enlaces para nombres de programa: `underline` mantiene la affordance estándar de hipervínculo; `plain` quita el subrayado para que los nombres se lean como parte de la lista en lugar de como navegación obvia.  Con `plain` la affordance sólo sobrevive vía el cursor puntero al hover. |
+| `link` | `underline`, `plain` | `plain` | Renderizado de enlaces para nombres de programa: `plain` (por defecto) quita el subrayado para que los nombres se fundan con el texto en negrita de las filas; `underline` reactiva la affordance estándar de hipervínculo.  Con `plain` la affordance sólo sobrevive vía el cursor puntero al hover. |
 | `timezone` | cualquier zona IANA | predeterminado de la emisora | Define "hoy" y renderiza todas las horas en esta zona. |
 
 > **Límite del día.** "Hoy" es el día calendario de la

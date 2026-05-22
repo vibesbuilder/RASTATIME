@@ -238,7 +238,7 @@ without waiting out the cache TTL.
 | `theme` | `auto`, `dark`, `light` | `auto` | Same as the other widgets — see §2. |
 | `cache` | integer seconds 10..3600 | `60` | Same as the other widgets — see §7. |
 | `overflow` | `ellipsis`, `marquee` | `ellipsis` | Behaviour of show names wider than 300 px. |
-| `link` | `underline`, `plain` | `underline` | Link rendering for show names: `underline` keeps the standard hyperlink affordance; `plain` drops the underline so the names read as part of the list rather than as obvious navigation.  Operators picking `plain` should keep in mind that the link affordance then survives only through the cursor pointer on hover. |
+| `link` | `underline`, `plain` | `plain` | Link rendering for show names: `plain` (default) drops the underline so the names blend into the bold row text; `underline` opts back into the classic hyperlink affordance.  With `plain` the link affordance survives only through the cursor pointer on hover. |
 | `timezone` | any IANA zone | station default | Defines "today" and renders all times in this zone. |
 
 > **Day boundary.** "Today" is the station's calendar day —

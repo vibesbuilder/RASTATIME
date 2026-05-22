@@ -282,21 +282,24 @@ html, body {
  * ───────────────────────────────────────────────────────────── */
 
 .np-widget.np-on-air-today {
-    /*  Slightly increased line-height so the rows have visual
-        breathing room similar to the screenshot.  */
-    line-height: 1.4;
+    /*  Generous line-height so the rows have visual breathing
+        room — operator request 2026-05-22 v4 (row height roughly
+        doubled).  */
+    line-height: 1.6;
+    font-size: 1.1em;
+    font-weight: 700;
 }
 
 .np-widget.np-on-air-today .np-header {
-    /*  Accent band at the top — uses the muted variable rather
-        than a hard-coded colour so it blends with whichever theme
-        the embedding page uses.  Mirrors the screenshot's "On air
-        today" caption with a horizontal underline.  */
+    /*  Accent band at the top — uses the muted variable for the
+        underline so it blends with whichever theme the embedding
+        page uses.  Heavier weight + bigger size align with the
+        operator-requested "all bold, all bigger" treatment.  */
     color: var(--np-fg);
-    font-weight: 600;
-    font-size: 1.05em;
-    padding-bottom: 4px;
-    margin-bottom: 6px;
+    font-weight: 700;
+    font-size: 1.2em;
+    padding-bottom: 6px;
+    margin-bottom: 8px;
     border-bottom: 1px solid var(--np-fg-muted);
 }
 
@@ -310,31 +313,38 @@ html, body {
     /*  Each row: time-of-day on the left, show name on the right.
         Uses the same flex skeleton as .np-list-row in the shows-
         list widget so the marquee / ellipsis overflow handling
-        works identically.  */
+        works identically.
+
+        Padding 12 px 0 doubles the row height vs the v1 layout
+        (operator request 2026-05-22 v4).  Weight inherits the
+        700 set on the parent .np-on-air-today, so every row reads
+        as bold — the operator explicitly asked for this so the
+        widget is legible at sidebar embed sizes without needing
+        to zoom.  */
     color: var(--np-fg);
     display: flex;
     align-items: baseline;
     gap: 0.8em;
-    font-size: 0.95em;
-    padding: 3px 0;
+    padding: 12px 0;
     border-top: 1px dotted var(--np-fg-muted);
     overflow: hidden;
 }
 
 .np-widget.np-on-air-today .np-on-air-row:first-child {
     /*  No top-border on the first row — the header already
-        provides the dividing line above it.  */
+        provides the dividing line above it.  Padding-top kept
+        at 12 px so the spacing between header and first row
+        matches the inter-row spacing.  */
     border-top: 0;
-    padding-top: 0;
 }
 
 .np-widget.np-on-air-today .np-on-air-row.np-row-current {
-    /*  The currently-airing row reads as the primary item: bold
-        weight + slightly larger text.  Matches the np-row-current
-        treatment in the two-line widget so an operator looking
-        at multiple widgets side-by-side immediately sees which
-        row is live.  */
-    font-weight: 700;
+    /*  Operator request 2026-05-22 v4: with every row already
+        bold, the "current row" no longer needs an extra weight
+        flourish — it would just collide with the new uniform
+        700 weight.  Kept the selector live (empty) so we have
+        a clean attachment point if the operator later wants
+        the current row distinguished by colour or background.  */
 }
 
 .np-widget.np-on-air-today .np-on-air-time {

@@ -248,7 +248,7 @@ la TTL du cache.
 | `theme` | `auto`, `dark`, `light` | `auto` | Identique aux autres widgets — voir §2. |
 | `cache` | entier secondes 10..3600 | `60` | Identique aux autres widgets — voir §7. |
 | `overflow` | `ellipsis`, `marquee` | `ellipsis` | Comportement des noms d'émission plus larges que 300 px. |
-| `link` | `underline`, `plain` | `underline` | Rendu des liens pour les noms d'émission : `underline` garde l'affordance standard ; `plain` supprime le soulignement pour que les noms se lisent comme partie de la liste plutôt que comme navigation évidente.  Avec `plain`, l'affordance ne survit que via le curseur pointer au survol. |
+| `link` | `underline`, `plain` | `plain` | Rendu des liens pour les noms d'émission : `plain` (défaut) supprime le soulignement pour que les noms se fondent dans le texte en gras des lignes ; `underline` réactive l'affordance hyperlien classique.  Avec `plain`, l'affordance ne survit que via le curseur pointer au survol. |
 | `timezone` | tout fuseau IANA | défaut station | Définit "aujourd'hui" et rend toutes les heures dans cette zone. |
 
 > **Limite du jour.** "Aujourd'hui" est le jour calendaire
