@@ -46,29 +46,32 @@
     var emptyLabel  = body.getAttribute('data-label-empty') || 'No shows scheduled';
 
     /*
-     * Build a FullCalendar time-format object that the
+     * Build a FullCalendar time-format STRING that the
      * slotLabelFormat / eventTimeFormat options can consume.
      * Returns `undefined` for "auto" so FullCalendar falls back
-     * to the locale default (avoids overriding e.g. Arabic /
-     * RTL locale formats that have their own time conventions).
+     * to the locale default.
      *
-     * Operator request 2026-05-22 v10: `hour: 'numeric'` rather
-     * than `'2-digit'` so single-digit hours render without the
-     * leading zero (9:00 instead of 09:00).  Minutes stay
-     * 2-digit so the colon-suffix is always there (9:05, not 9:5).
+     * Operator request 2026-05-22 v11: use the string form
+     * ('H:mm' / 'h:mm a') instead of the object form
+     * ({hour:'numeric',...}).  FullCalendar's object form
+     * silently coerces 'numeric' to '2-digit' in some locale +
+     * meridiem combinations — switching to the explicit
+     * format string makes single-digit hours render without
+     * the leading zero ("9:00" not "09:00").  Minutes stay
+     * 2-digit via the lowercase `mm` token.
+     *
+     *   24h with minutes : 'H:mm'   → "9:00", "17:30"
+     *   24h hour only    : 'H'      → "9",    "17"
+     *   12h with minutes : 'h:mm a' → "9:00 AM", "5:30 PM"
+     *   12h hour only    : 'h a'    → "9 AM",   "5 PM"
      */
     function clockFormat(includeMinutes) {
         if (clockMode === 'auto') { return undefined; }
-        var hour12 = (clockMode === '12');
-        var fmt = {
-            hour: 'numeric',
-            hour12: hour12,
-            meridiem: hour12 ? 'short' : false
-        };
-        if (includeMinutes) {
-            fmt.minute = '2-digit';
+        if (clockMode === '12') {
+            return includeMinutes ? 'h:mm a' : 'h a';
         }
-        return fmt;
+        // 24h is the default
+        return includeMinutes ? 'H:mm' : 'H';
     }
 
     /*
@@ -128,24 +131,34 @@
      * suddenly switch to AM/PM in the modal popover.
      */
     function fmtTimeRange(start, end) {
+        // Manual format for 24h: guarantees single-digit hours
+        // without leading zero ("9:00" not "09:00"), with
+        // 2-digit minutes ("9:05" not "9:5").  Operator-requested
+        // convention 2026-05-22 v11.  Intl.toLocaleTimeString
+        // with hour:'numeric' would mostly do the same but is
+        // less deterministic across browsers + locale combos.
+        function fmt24(d) {
+            return d.getHours() + ':' + pad2(d.getMinutes());
+        }
+        function fmt12(d) {
+            var h = d.getHours();
+            var ampm = h >= 12 ? 'PM' : 'AM';
+            var h12 = h % 12 || 12;
+            return h12 + ':' + pad2(d.getMinutes()) + ' ' + ampm;
+        }
+        if (clockMode === '12') {
+            return fmt12(start) + ' – ' + fmt12(end);
+        }
+        if (clockMode === '24') {
+            return fmt24(start) + ' – ' + fmt24(end);
+        }
+        // 'auto' — fall back to locale default
         try {
-            // `hour: 'numeric'` drops the leading zero on single-
-            // digit hours (operator request 2026-05-22 v10);
-            // minute stays 2-digit so the colon-suffix is always
-            // there.  hour12 follows clockMode for consistency
-            // with the calendar grid + event chips.
             var opts = { hour: 'numeric', minute: '2-digit' };
-            if (clockMode === '12') {
-                opts.hour12 = true;
-            } else if (clockMode === '24') {
-                opts.hour12 = false;
-            }
-            // 'auto' → no hour12 key → locale default wins
             return start.toLocaleTimeString(undefined, opts)
                 + ' – ' + end.toLocaleTimeString(undefined, opts);
         } catch (e) {
-            return start.getHours() + ':' + pad2(start.getMinutes())
-                + ' – ' + end.getHours() + ':' + pad2(end.getMinutes());
+            return fmt24(start) + ' – ' + fmt24(end);
         }
     }
 

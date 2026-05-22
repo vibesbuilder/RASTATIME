@@ -920,6 +920,27 @@ html, body {
     color: var(--np-fg);
 }
 
+/*  Operator request 2026-05-22 v11: force every time-grid event
+    to render in the FULL column width.  FullCalendar 6 packs
+    back-to-back events (where end-time == next start-time) into
+    half-width columns even with slotEventOverlap: false because
+    it counts touch-boundaries as "shared columns".  In a radio
+    schedule we never have truly overlapping shows, so the
+    safest fix is a CSS-side override that pins every event
+    harness to inset:0 + 100% width.  !important is necessary
+    because FullCalendar writes its own inline style on every
+    render — pure cascade rules lose the specificity battle.  */
+.np-widget.np-multi-view-schedule .fc-timegrid-col-events {
+    margin: 0 !important;
+}
+
+.np-widget.np-multi-view-schedule .fc-timegrid-event-harness {
+    inset-inline-start: 0 !important;
+    inset-inline-end: 0 !important;
+    margin-right: 0 !important;
+    width: 100% !important;
+}
+
 .np-widget.np-multi-view-schedule .fc-event-title,
 .np-widget.np-multi-view-schedule .fc-event-time {
     font-weight: 600;
