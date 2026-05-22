@@ -518,22 +518,26 @@ plus header + load-more footer):
 ### What it shows
 
 ```
-[2026-05-22 ▾] [Today] [10 ▾]                       ← header
+[2026-05-22 ▾] [22:30 ▾] [Today] [10 ▾]             ← header
 ──────────────────────────────────────────────
-20:55   Leyya - Butter
-20:51   78plus - Hurrycan
-20:48   Pizzera & Jaus - Nochbarn
+22:14 - 22:18   Leyya - Butter
+22:09 - 22:12   78plus - Hurrycan
+22:04 - 22:08   Pizzera & Jaus - Nochbarn
 ...
                   [ Load more ]                     ← footer
 ```
 
 - **Header**: HTML5 date-picker (capped to last 7 days),
-  Today shortcut button, and a page-size dropdown.
-  Changing any of them resets to page 1 and re-fetches.
-- **Rows**: `HH:MM Artist - Title` — minimal, fits comfortably
-  in narrow sidebars.  Title-only / artist-only tracks
-  render with just the available field.  Empty-both rows
-  are filtered server-side.
+  HTML5 time-picker (upper-bound for which tracks to list),
+  Today shortcut button (snaps BOTH date and time to now),
+  and a page-size dropdown.  Changing any of them resets
+  to page 1 and re-fetches.
+- **Rows**: `HH:MM - HH:MM Artist - Title` — start + end
+  time on the left in tabular numerics, then the artist /
+  title in bold.  Title-only / artist-only tracks render
+  with just the available field.  Empty-both rows are
+  filtered server-side, as are tracks shorter than the
+  `min_sec` threshold when the exclude-short filter is on.
 - **Load more**: appends another page (same size) below the
   existing list.  Hidden when there are no more rows;
   disabled while a fetch is in flight.  Hard-capped at
@@ -547,7 +551,10 @@ plus header + load-more footer):
 | Param | Values | Default | Effect |
 |---|---|---|---|
 | `date` | `YYYY-MM-DD` | today | Day to load.  Clamped to `[today - 6 days, today]` — values outside snap to the nearest valid bound rather than erroring. |
+| `time` | `HH:MM` (24h) | now (today) / 23:59 (past day) | Upper-bound time-of-day.  The widget shows tracks that ended BEFORE this point, most recent first.  Default seeds the picker to "now" so the widget opens on the most-recently-played slice. |
 | `pagesize` | `10`, `20`, `50`, `100` | `10` | How many tracks load per page.  The visitor can still change it in-widget; this only controls the initial state. |
+| `exclude_short` | `0`, `1` | Preference (default `1`) | Drop tracks shorter than `min_sec` seconds — catches jingles / station IDs / silence-tail entries.  When the URL parameter is absent the operator-configured Preference (Settings → Widgets → Track History) wins. |
+| `min_sec` | integer 1..3600 | Preference (default `60`) | Duration threshold in seconds for the exclude-short filter.  Only relevant when `exclude_short=1`. |
 | `theme` | `auto`, `dark`, `light` | `auto` | Same as the other widgets — see §2. |
 | `cache` | integer seconds 10..3600 | `60` | Server-side HTTP cache TTL for the JSON feed. |
 | `bg` | URL of an image | none | Same as the Weekly Schedule widget — see §6. |
@@ -602,8 +609,17 @@ are filtered out — they have no usable display data.
 
 **Settings → Widgets → Track History** hosts:
 - The operator-configurable empty-state label,
+- An **Exclude short tracks** checkbox (default on) plus
+  the corresponding **Exclude tracks shorter than (s)**
+  threshold (default 60 s, shown only when the checkbox is
+  on — same Auto-Expiry-style toggle as the podcast
+  settings),
 - A live preview iframe on a dark backdrop,
 - Two ready-made embed-code snippets (pagesize 10 + 50).
+
+Per-embed `?exclude_short=` and `?min_sec=` URL parameters
+override the Preference for a specific iframe without
+changing the global setting.
 
 ---
 

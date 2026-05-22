@@ -1483,6 +1483,19 @@ class EmbedController extends Zend_Controller_Action
         $this->view->minDate   = $window['min_local'];
         $this->view->maxDate   = $window['max_local'];
 
+        // RASTATIME 2026-05-22 v14 — initial time of day.  The
+        // template seeds the <input type="time"> with this so
+        // the widget opens on "now" by default (operator
+        // request: "Beim erstmaligen Öffnen soll immer das
+        // aktuelle Datum und die aktuelle Zeit gewählt sein").
+        // ?time=HH:MM URL parameter overrides for pre-pinned
+        // embeds.
+        $this->view->timeLocal = $this->_resolveTrackHistoryTime(
+            $timezone,
+            $request->getParam('time'),
+            $window['day_local']
+        );
+
         // Page size — operator can change in-widget via the
         // dropdown.  Initial render uses whatever's in the URL
         // (or 10).
@@ -1535,6 +1548,23 @@ class EmbedController extends Zend_Controller_Action
             $request->getParam('date')
         );
 
+        // RASTATIME 2026-05-22 v14 — upper-bound time-of-day
+        // filter.  Visitor's date+time picks a point, widget
+        // shows tracks that finished BEFORE that point (most
+        // recent first).  Initial state is "now", so default
+        // behaviour is "what just played".  When the visitor
+        // picks an earlier time, the cap shifts back.
+        $upperBoundUtc = $this->_resolveTrackHistoryUpperBound(
+            $timezone,
+            $window['day_local'],
+            $request->getParam('time')
+        );
+
+        // Exclude-short toggle + threshold: URL params override
+        // the operator-configured Preferences when present.
+        $excludeShort = $this->_resolveExcludeShortFlag($request);
+        $minSeconds   = $this->_resolveMinSecondsThreshold($request);
+
         $pagesize = (int) $request->getParam('pagesize', 10);
         if (!in_array($pagesize, [10, 20, 50, 100], true)) {
             $pagesize = 10;
@@ -1546,10 +1576,12 @@ class EmbedController extends Zend_Controller_Action
 
         $tracks = $this->_fetchTrackHistoryRows(
             $window['start_utc'],
-            $window['end_utc'],
+            $upperBoundUtc,
             $pagesize,
             $offset,
-            $timezone
+            $timezone,
+            $excludeShort,
+            $minSeconds
         );
 
         // hasMore: lookup +1 to know whether a next page exists.
@@ -1559,10 +1591,12 @@ class EmbedController extends Zend_Controller_Action
         if (count($tracks) === $pagesize && $page < 10) {
             $extra = $this->_fetchTrackHistoryRows(
                 $window['start_utc'],
-                $window['end_utc'],
+                $upperBoundUtc,
                 1,
                 $offset + $pagesize,
-                $timezone
+                $timezone,
+                $excludeShort,
+                $minSeconds
             );
             $hasMore = !empty($extra);
         }
@@ -1581,6 +1615,97 @@ class EmbedController extends Zend_Controller_Action
                 'noTrackHistory' => Application_Model_Preference::GetWidgetNoTrackHistory(),
             ],
         ]);
+    }
+
+    /**
+     * RASTATIME 2026-05-22 v14 — resolve the operator-typed
+     * HH:MM into "the latest moment whose tracks should appear".
+     * Returns a UTC timestamp string.  When ?time is absent,
+     * falls back to:
+     *   - "now"  if dayLocal === today (visitor opened the
+     *            widget without pinning a time → wants the
+     *            currently-playing slice)
+     *   - end of day  if dayLocal is a past day (visitor wants
+     *            the whole day's history)
+     */
+    private function _resolveTrackHistoryUpperBound($timezone, $dayLocal, $timeParam)
+    {
+        $tz = new DateTimeZone($timezone);
+        $utc = new DateTimeZone('UTC');
+
+        // If the visitor supplied ?time=HH:MM, use exactly that
+        // moment on the requested day.  Strict format check so
+        // a typo'd param doesn't 500 us.
+        if ($timeParam !== null && $timeParam !== ''
+                && preg_match('/^([01]\d|2[0-3]):([0-5]\d)$/', $timeParam)) {
+            try {
+                $stamp = new DateTime($dayLocal . ' ' . $timeParam . ':59', $tz);
+                return $stamp->setTimezone($utc)->format('Y-m-d H:i:s');
+            } catch (Exception $e) {
+                // fall through to the default below
+            }
+        }
+
+        $now   = new DateTime('now', $tz);
+        $today = new DateTime('today', $tz);
+        if ($dayLocal === $today->format('Y-m-d')) {
+            // Today → "now" is the natural upper bound.
+            return $now->setTimezone($utc)->format('Y-m-d H:i:s');
+        }
+        // Past day → end of that day (23:59:59).
+        $eod = new DateTime($dayLocal . ' 23:59:59', $tz);
+        return $eod->setTimezone($utc)->format('Y-m-d H:i:s');
+    }
+
+    /**
+     * Default time-of-day for the date picker on first paint.
+     * Returns HH:MM (local timezone).  If ?time was supplied
+     * and is valid, echo it back.  Otherwise:
+     *   - today  → current HH:MM (so the widget opens on "now")
+     *   - past   → 23:59         (full-day view)
+     */
+    private function _resolveTrackHistoryTime($timezone, $timeParam, $dayLocal)
+    {
+        if ($timeParam !== null && $timeParam !== ''
+                && preg_match('/^([01]\d|2[0-3]):([0-5]\d)$/', $timeParam)) {
+            return $timeParam;
+        }
+        $tz = new DateTimeZone($timezone);
+        $today = new DateTime('today', $tz);
+        if ($dayLocal === $today->format('Y-m-d')) {
+            $now = new DateTime('now', $tz);
+            return $now->format('H:i');
+        }
+        return '23:59';
+    }
+
+    /**
+     * Operator-set Preference vs. per-embed URL override for
+     * the exclude-short-tracks toggle.  Truthy values: "1",
+     * "true", "yes" (case-insensitive).
+     */
+    private function _resolveExcludeShortFlag($request)
+    {
+        $raw = $request->getParam('exclude_short');
+        if ($raw === null || $raw === '') {
+            return Application_Model_Preference::GetWidgetTrackHistoryExcludeShort();
+        }
+        $low = strtolower((string) $raw);
+        return in_array($low, ['1', 'true', 'yes', 'on'], true);
+    }
+
+    /**
+     * Operator-set Preference vs. per-embed URL override for
+     * the min-seconds threshold.
+     */
+    private function _resolveMinSecondsThreshold($request)
+    {
+        $raw = $request->getParam('min_sec');
+        if ($raw === null || $raw === '') {
+            return Application_Model_Preference::GetWidgetTrackHistoryMinSeconds();
+        }
+        $i = (int) $raw;
+        return max(1, min(3600, $i ?: 60));
     }
 
     /**
@@ -1642,8 +1767,23 @@ class EmbedController extends Zend_Controller_Action
      * Returns rows ordered chronologically descending (most
      * recent first, most operator-typical browsing direction).
      */
-    private function _fetchTrackHistoryRows($fromUtc, $toUtc, $limit, $offset, $timezone)
+    private function _fetchTrackHistoryRows(
+        $fromUtc, $toUtc, $limit, $offset, $timezone,
+        $excludeShort = false, $minSeconds = 60
+    )
     {
+        // Build the SQL with an optional duration filter.  Using
+        // EXTRACT(EPOCH FROM ends-starts) gives the duration in
+        // seconds as a float; null-safe because ph.ends is
+        // nullable (some entries don't have an end yet — those
+        // get filtered out by the IS NOT NULL clause when the
+        // toggle is on).
+        $durationClause = '';
+        if ($excludeShort) {
+            $durationClause = "
+                  AND ph.ends IS NOT NULL
+                  AND EXTRACT(EPOCH FROM (ph.ends - ph.starts)) >= :min_sec";
+        }
         $sql = "SELECT ph.id        AS history_id,
                        ph.starts    AS starts_utc,
                        ph.ends      AS ends_utc,
@@ -1659,17 +1799,22 @@ class EmbedController extends Zend_Controller_Action
                 LEFT JOIN cc_show s         ON si.show_id = s.id
                 WHERE ph.starts >= :from_utc
                   AND ph.starts <  :to_utc
+                  {$durationClause}
                 ORDER BY ph.starts DESC
                 LIMIT :lim OFFSET :off";
 
+        $params = [
+            ':from_utc' => $fromUtc,
+            ':to_utc'   => $toUtc,
+            ':lim'      => (int) $limit,
+            ':off'      => (int) $offset,
+        ];
+        if ($excludeShort) {
+            $params[':min_sec'] = (int) $minSeconds;
+        }
         $rows = Application_Common_Database::prepareAndExecute(
             $sql,
-            [
-                ':from_utc' => $fromUtc,
-                ':to_utc'   => $toUtc,
-                ':lim'      => (int) $limit,
-                ':off'      => (int) $offset,
-            ],
+            $params,
             'all'
         );
 

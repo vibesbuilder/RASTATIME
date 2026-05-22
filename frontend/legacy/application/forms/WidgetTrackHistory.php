@@ -2,9 +2,17 @@
 
 /**
  * RASTATIME 2026-05-22 — Settings form for the Track History
- * public embed widget.  Single text input — the empty-state
- * placeholder.  Same English-fallback pattern as the other
- * widget label forms.
+ * public embed widget.
+ *
+ * Three persisted fields:
+ *   - widget_no_track_history     : empty-state label
+ *   - exclude_short_tracks         : bool toggle (default true)
+ *   - min_seconds                  : threshold (default 60)
+ *
+ * The threshold input is only relevant when the toggle is on;
+ * the settings view template shows / hides it client-side based
+ * on the checkbox state, matching the Auto-Expiry pattern from
+ * the podcast settings (operator-familiar UX).
  */
 class Application_Form_WidgetTrackHistory extends Zend_Form
 {
@@ -22,6 +30,23 @@ class Application_Form_WidgetTrackHistory extends Zend_Form
            ->setRequired(false)
            ->setAllowEmpty(true);
         $this->addElement($el);
+
+        $excludeShort = new Zend_Form_Element_Checkbox('exclude_short_tracks');
+        $excludeShort->setLabel(_('Exclude short tracks:'))
+           ->setRequired(false);
+        $this->addElement($excludeShort);
+
+        $minSec = new Zend_Form_Element_Text('min_seconds');
+        $minSec->setLabel(_('Exclude tracks shorter than (s):'))
+           ->setAttrib('class', 'input_text')
+           ->setAttrib('type', 'number')
+           ->setAttrib('min', 1)
+           ->setAttrib('max', 3600)
+           ->setAttrib('step', 1)
+           ->setAttrib('style', 'width: 6em;')
+           ->setRequired(false)
+           ->setAllowEmpty(true);
+        $this->addElement($minSec);
 
         $submit = new Zend_Form_Element_Submit('submit');
         $submit->setLabel(_('Save'))

@@ -28,12 +28,14 @@
     var emptyLabel  = body.getAttribute('data-label-empty') || 'No tracks played on this day';
 
     var currentDay      = body.getAttribute('data-day-local');
+    var currentTime     = body.getAttribute('data-time-local') || '';
     var currentPagesize = parseInt(body.getAttribute('data-pagesize') || '10', 10);
     var currentPage     = 1;
     var isLoading       = false;
 
     var el = {
         dateInput:    document.querySelector('[data-np="date"]'),
+        timeInput:    document.querySelector('[data-np="time"]'),
         todayBtn:     document.querySelector('[data-np="today"]'),
         pagesize:     document.querySelector('[data-np="pagesize"]'),
         list:         document.querySelector('[data-np="list"]'),
@@ -154,7 +156,13 @@
             var timeSpan = document.createElement('span');
             timeSpan.className = 'np-th-row-time';
             var startDate = track.starts ? new Date(track.starts) : null;
-            timeSpan.textContent = startDate ? fmtTimeOfDay(startDate) : '';
+            var endDate   = track.ends   ? new Date(track.ends)   : null;
+            // Operator request 2026-05-22 v14: show both start
+            // and end time, e.g. "23:14 - 23:18".  Falls back to
+            // just the start when the row has no end (rare).
+            timeSpan.textContent = startDate
+                ? fmtTimeRange(startDate, endDate)
+                : '';
             li.appendChild(timeSpan);
 
             var titleSpan = document.createElement('span');
@@ -185,6 +193,9 @@
             + '&pagesize=' + currentPagesize
             + '&page='     + page
             + '&timezone=' + encodeURIComponent(timezone);
+        if (currentTime) {
+            url += '&time=' + encodeURIComponent(currentTime);
+        }
 
         fetch(url, { credentials: 'omit', cache: 'default' })
             .then(function (r) {
@@ -234,10 +245,32 @@
         });
     }
 
+    if (el.timeInput) {
+        el.timeInput.addEventListener('change', function () {
+            var v = el.timeInput.value;
+            if (!/^([01]\d|2[0-3]):([0-5]\d)$/.test(v)) { return; }
+            currentTime = v;
+            currentPage = 1;
+            fetchPage(1, false);
+        });
+    }
+
     if (el.todayBtn) {
         el.todayBtn.addEventListener('click', function () {
-            if (el.dateInput) { el.dateInput.value = maxDate; }
-            currentDay  = maxDate;
+            // Operator request 2026-05-22 v14: Today snaps BOTH
+            // date and time to now, so the visitor lands on the
+            // most-recently-played slice.
+            var now = new Date();
+            var pad = function (n) { return n < 10 ? '0' + n : String(n); };
+            var todayDate = now.getFullYear()
+                + '-' + pad(now.getMonth() + 1)
+                + '-' + pad(now.getDate());
+            var todayTime = pad(now.getHours()) + ':' + pad(now.getMinutes());
+
+            if (el.dateInput) { el.dateInput.value = todayDate; }
+            if (el.timeInput) { el.timeInput.value = todayTime; }
+            currentDay  = todayDate;
+            currentTime = todayTime;
             currentPage = 1;
             fetchPage(1, false);
         });

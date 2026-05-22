@@ -616,6 +616,38 @@ class Application_Model_Preference
     }
     public static function SetWidgetNoTrackHistory($v)    { self::setValue('widget_no_track_history', (string) $v); }
 
+    // RASTATIME 2026-05-22 v14 — exclude tracks shorter than N
+    // seconds from the Track History widget (operator-typical:
+    // short fillers / jingles / silence-tail entries clutter
+    // the public log).  Two prefs: the toggle, and the
+    // threshold seconds.  Defaults are "exclude shorter than
+    // 60 seconds" which catches most filler material without
+    // hiding legitimate short tracks like news jingles or
+    // station IDs that an operator might actually want listed.
+    public static function GetWidgetTrackHistoryExcludeShort()
+    {
+        $v = self::getValue('widget_track_history_exclude_short');
+        if ($v === '' || $v === null) { return true; }   // default true
+        return ($v === '1' || $v === 1 || $v === true || $v === 'true');
+    }
+    public static function SetWidgetTrackHistoryExcludeShort($v)
+    {
+        self::setValue('widget_track_history_exclude_short', $v ? '1' : '0');
+    }
+
+    public static function GetWidgetTrackHistoryMinSeconds()
+    {
+        $v = self::getValue('widget_track_history_min_seconds');
+        if ($v === '' || $v === null) { return 60; }     // default 60 s
+        $i = (int) $v;
+        return max(1, min(3600, $i ?: 60));
+    }
+    public static function SetWidgetTrackHistoryMinSeconds($v)
+    {
+        $i = max(1, min(3600, (int) $v));
+        self::setValue('widget_track_history_min_seconds', (string) $i);
+    }
+
     public static function SetPhone($phone)
     {
         self::setValue('phone', $phone);

@@ -492,11 +492,18 @@ Load-More-Footer reinpassen):
 | Parameter | Werte | Standard | Effekt |
 |---|---|---|---|
 | `date` | `YYYY-MM-DD` | heute | Zu ladender Tag.  Gecappt auf `[heute - 6 Tage, heute]` — out-of-range snappt auf den nächsten gültigen Wert statt 500. |
+| `time` | `HH:MM` (24h) | jetzt (heute) / 23:59 (vergangener Tag) | Obere Schranke der Uhrzeit.  Das Widget zeigt Tracks die VOR diesem Zeitpunkt endeten, neueste zuerst.  Default seed auf "jetzt" → Widget öffnet auf dem zuletzt gespielten Slice. |
 | `pagesize` | `10`, `20`, `50`, `100` | `10` | Anzahl Tracks pro Seite.  Besucher kann es in-widget ändern. |
+| `exclude_short` | `0`, `1` | Preference (default `1`) | Tracks kürzer als `min_sec` Sekunden ausblenden — fängt Jingles / Station-IDs / Silence-Tails ab.  URL-Param überschreibt die Stations-Preference. |
+| `min_sec` | Ganzzahl 1..3600 | Preference (default `60`) | Schwelle in Sekunden für den Exclude-Short-Filter. |
 | `theme` | `auto`, `dark`, `light` | `auto` | Wie die anderen Widgets — siehe §2. |
 | `cache` | Ganzzahl Sekunden 10..3600 | `60` | Server-seitige HTTP-Cache-TTL. |
 | `bg`, `bgcolor` | URL bzw. Hex-Farbe | keine | Wie die anderen Widgets — siehe §6. |
 | `timezone` | beliebige IANA-Zone | Stations-Standard | Alle Zeiten in dieser Zone. |
+
+**Zeilen-Format**: `HH:MM - HH:MM Artist - Title` — Start + End-Zeit links in Tabular-Numerics, dann Artist / Title in **fett**.
+
+**Einstellungs-Seite** unter *Widgets → Track History* enthält zusätzlich den **Exclude short tracks**-Checkbox + zugehöriges **Sekunden-Feld** (Auto-Expiry-Stil — Sekunden-Feld erscheint nur wenn Checkbox aktiv).
 
 > **7-Tage-Cap-Begründung.**  Das Widget ist für "was hat
 > gerade gespielt"-Neugier gedacht, nicht als

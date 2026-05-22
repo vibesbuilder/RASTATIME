@@ -34,19 +34,45 @@ $embedUrl50  = $publicUrl . '/embed/track-history?pagesize=50';
         ?>
     </p>
 
-    <!-- ───── Label form ───── -->
-    <h3 style="margin-top: 1.5em;"><?php echo _("Label"); ?></h3>
+    <!-- ───── Label + filter form ───── -->
+    <h3 style="margin-top: 1.5em;"><?php echo _("Label & filters"); ?></h3>
     <fieldset class="padded">
         <p style="margin-bottom: 1em; color: #666;">
             <?php echo _("Placeholder shown when the picked day has no "
                 . "track history (e.g. the playout engine wasn't running "
                 . "that day).  Leave blank to fall back to the English "
-                . "default shown in the placeholder.");
+                . "default shown in the placeholder.  The exclude-short "
+                . "filter drops jingles, station IDs, and silence-tail "
+                . "entries from the public log — operators typically "
+                . "want this on with a 60 s threshold.");
             ?>
         </p>
 
         <?php echo $this->form; ?>
     </fieldset>
+
+    <!-- Auto-Expiry-style show/hide for the min-seconds input:
+         visible only when the exclude-short checkbox is on.  Plain
+         JS — the admin runs jQuery but we don't depend on it here. -->
+    <script>
+    (function () {
+        var cb   = document.getElementById('exclude_short_tracks');
+        var sec  = document.getElementById('min_seconds');
+        if (!cb || !sec) { return; }
+        // Zend renders labels as <dt> + inputs as <dd> inside a
+        // <dl>, so we hide the whole <dt>/<dd> pair containing
+        // the seconds input rather than just the input itself.
+        var secRow   = sec.closest('dd');
+        var secLabel = secRow ? secRow.previousElementSibling : null;
+        function sync() {
+            var on = !!cb.checked;
+            if (secRow)   { secRow.style.display   = on ? '' : 'none'; }
+            if (secLabel) { secLabel.style.display = on ? '' : 'none'; }
+        }
+        cb.addEventListener('change', sync);
+        sync();
+    })();
+    </script>
 
     <!-- ───── Preview ───── -->
     <h3 style="margin-top: 1.5em;"><?php echo _("Preview"); ?></h3>
@@ -80,7 +106,10 @@ $embedUrl50  = $publicUrl . '/embed/track-history?pagesize=50';
                 . "(first one starts with <code>?</code>, every "
                 . "additional one is joined with <code>&amp;</code>): "); ?>
             <code>date=YYYY-MM-DD</code> (last 7 days only),
+            <code>time=HH:MM</code> (upper bound, default now),
             <code>pagesize=10|20|50|100</code>,
+            <code>exclude_short=0|1</code>,
+            <code>min_sec=N</code>,
             <code>theme=auto|dark|light</code>,
             <code>cache=10..3600</code>,
             <code>bg=https://...image.jpg</code>,

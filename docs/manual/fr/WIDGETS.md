@@ -472,11 +472,18 @@ iframe prêt à l'emploi (~500 px de haut) :
 | Paramètre | Valeurs | Défaut | Effet |
 |---|---|---|---|
 | `date` | `YYYY-MM-DD` | aujourd'hui | Jour à charger.  Limité à `[aujourd'hui - 6 jours, aujourd'hui]`. |
+| `time` | `HH:MM` (24h) | maintenant (aujourd'hui) / 23:59 (jour passé) | Borne supérieure de l'heure.  Pistes terminées AVANT ce point, plus récentes en premier. |
 | `pagesize` | `10`, `20`, `50`, `100` | `10` | Pistes par page. |
+| `exclude_short` | `0`, `1` | Préférence (défaut `1`) | Masquer les pistes plus courtes que `min_sec` secondes (jingles / station IDs). |
+| `min_sec` | entier 1..3600 | Préférence (défaut `60`) | Seuil en secondes pour le filtre exclude-short. |
 | `theme` | `auto`, `dark`, `light` | `auto` | Identique aux autres widgets. |
 | `cache` | entier secondes 10..3600 | `60` | TTL cache HTTP. |
 | `bg`, `bgcolor` | URL / hex | aucune | Identique aux autres widgets. |
 | `timezone` | tout fuseau IANA | défaut station | Toutes les heures dans cette zone. |
+
+**Format de ligne** : `HH:MM - HH:MM Artiste - Titre` — heure de début + fin à gauche, puis artiste / titre en **gras**.
+
+La page **Paramètres → Widgets → Track History** héberge en plus la case **Exclude short tracks** + le champ de seuil en secondes (style Auto-Expiry — le champ secondes n'apparaît que quand la case est cochée).
 
 Source : `cc_playout_history` JOIN `cc_files` LEFT JOIN
 `cc_show_instances` → `cc_show`.

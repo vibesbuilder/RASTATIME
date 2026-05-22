@@ -502,6 +502,78 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Track History v14 polish — 5 operator-requested items**
+  (2026-05-22 v14):
+
+  1. **Exclude-short-tracks filter**: drops jingles / station
+     IDs / silence-tail entries from the public log.  Toggle
+     on by default with a 60 s threshold.  Two new
+     Preferences (`widget_track_history_exclude_short`,
+     `widget_track_history_min_seconds`).  Per-embed
+     `?exclude_short=0|1` + `?min_sec=N` URL parameters
+     override the global setting.  SQL adds
+     `EXTRACT(EPOCH FROM (ph.ends - ph.starts)) >= :min_sec`
+     when the filter is on.
+
+  2. **Time-of-day picker**: new `<input type="time">`
+     between the date input and the Today button.
+     Semantics: upper-bound — the widget lists tracks that
+     ended BEFORE the picked moment, most recent first.
+     Default seeds the picker to "now" on first paint so
+     the widget opens on the most-recently-played slice.
+     `?time=HH:MM` URL parameter for pre-pinned embeds.
+
+  3. **Today button snaps date + time**: clicking Today
+     now sets both the date AND the time to the current
+     wall-clock value (operator request: "Datum + Uhrzeit
+     auf jetzt").
+
+  4. **End-time in row display**: rows now read
+     `HH:MM - HH:MM Artist - Title` (was `HH:MM Artist -
+     Title`).  Row-time column widened from `min-width:
+     3.5em` to `7.5em` to comfortably hold the range.
+
+  5. **Bold artist - title**: `font-weight: 700` on the
+     `.np-th-row-title` so the artist / title reads as the
+     primary content of each row.
+
+  Settings page (Settings → Widgets → Track History) gets
+  the new Exclude-short-tracks checkbox + threshold input,
+  with the threshold field showing / hiding client-side
+  based on the checkbox state — Auto-Expiry-style toggle
+  pattern lifted from the podcast settings.
+
+  Files:
+    - `application/models/Preference.php` — 2 new
+      Preference accessor pairs.
+    - `application/controllers/EmbedController.php` —
+      `_resolveTrackHistoryUpperBound`,
+      `_resolveTrackHistoryTime`,
+      `_resolveExcludeShortFlag`,
+      `_resolveMinSecondsThreshold`; SQL `durationClause`
+      added in `_fetchTrackHistoryRows`.
+    - `application/views/scripts/embed/track-history.phtml`
+      — `<input type="time">` + `data-time-local` attribute.
+    - `application/controllers/EmbeddablewidgetsController.php`
+      — form populate / persist for the two new Preferences.
+    - `application/forms/WidgetTrackHistory.php` — checkbox
+      + number input elements.
+    - `application/views/scripts/embeddablewidgets/track-history.phtml`
+      — inline JS toggle for the show/hide behaviour;
+      embed-code parameter list updated with `time`,
+      `exclude_short`, `min_sec`.
+    - `public/css/embed/now-playing-widget.css` —
+      `.np-th-time` style; `.np-th-row-time` `min-width`
+      bumped to 7.5em; `.np-th-row-title` `font-weight: 700`.
+    - `public/js/airtime/embed/track-history-widget.js` —
+      `currentTime` state + time-input change handler +
+      Today button now snaps date+time to now + row render
+      uses `fmtTimeRange` for the start-end display.
+    - `docs/manual/WIDGETS.md` + `de/` + `fr/` + `es/` —
+      §8 parameter table extended with `time`,
+      `exclude_short`, `min_sec`; layout description
+      updated for the bold title + start-end-time format.
+
 - **Multi-View Schedule v11 follow-up** (operator-reported that
   the v10 attempt didn't fully land for items 2 + 3 of the
   polish trio below):

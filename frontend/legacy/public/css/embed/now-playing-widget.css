@@ -1112,6 +1112,7 @@ html, body {
 }
 
 .np-widget.np-track-history .np-th-date,
+.np-widget.np-track-history .np-th-time,
 .np-widget.np-track-history .np-th-pagesize {
     background: transparent;
     border: 1px solid var(--np-fg-muted);
@@ -1125,6 +1126,10 @@ html, body {
 .np-widget.np-track-history .np-th-date {
     flex: 1 1 auto;
     min-width: 0;
+}
+
+.np-widget.np-track-history .np-th-time {
+    flex: 0 0 auto;
 }
 
 .np-widget.np-track-history .np-th-pagesize {
@@ -1176,19 +1181,27 @@ html, body {
 }
 
 .np-widget.np-track-history .np-th-row-time {
+    /*  Wide enough to hold "HH:MM - HH:MM" (operator request
+        2026-05-22 v14 — show both start AND end time on each
+        row).  Tabular-nums keeps the column edge clean across
+        rows that mix single- and double-digit hours.  */
     flex: 0 0 auto;
-    min-width: 3.5em;
+    min-width: 7.5em;
     font-variant-numeric: tabular-nums;
     font-weight: 700;
     color: var(--np-fg-muted);
 }
 
 .np-widget.np-track-history .np-th-row-title {
+    /*  Operator request 2026-05-22 v14: bold the artist - title
+        so it reads as the primary content of each row (the time
+        cell is the secondary identifier).  */
     flex: 1 1 auto;
     min-width: 0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    font-weight: 700;
 }
 
 .np-widget.np-track-history .np-th-empty {

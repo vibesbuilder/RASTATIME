@@ -351,10 +351,25 @@ class EmbeddableWidgetsController extends Zend_Controller_Action
             Application_Model_Preference::SetWidgetNoTrackHistory(
                 $form->getValue('widget_no_track_history')
             );
+            Application_Model_Preference::SetWidgetTrackHistoryExcludeShort(
+                (bool) $form->getValue('exclude_short_tracks')
+            );
+            // Only persist the threshold when the operator typed
+            // something — empty input falls back to the existing
+            // value, which avoids zero-ing out the threshold by
+            // accident.
+            $minSecRaw = trim((string) $form->getValue('min_seconds'));
+            if ($minSecRaw !== '') {
+                Application_Model_Preference::SetWidgetTrackHistoryMinSeconds(
+                    (int) $minSecRaw
+                );
+            }
             $this->view->saved = true;
         } else {
             $form->populate([
                 'widget_no_track_history' => Application_Model_Preference::GetWidgetNoTrackHistory(),
+                'exclude_short_tracks'    => Application_Model_Preference::GetWidgetTrackHistoryExcludeShort() ? 1 : 0,
+                'min_seconds'             => Application_Model_Preference::GetWidgetTrackHistoryMinSeconds(),
             ]);
         }
 

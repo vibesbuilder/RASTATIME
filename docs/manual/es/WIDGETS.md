@@ -468,11 +468,18 @@ iframe listo para usar (~500 px de alto):
 | Parámetro | Valores | Por defecto | Efecto |
 |---|---|---|---|
 | `date` | `YYYY-MM-DD` | hoy | Día a cargar.  Limitado a `[hoy - 6 días, hoy]`. |
+| `time` | `HH:MM` (24h) | ahora (hoy) / 23:59 (día pasado) | Cota superior de hora.  Pistas finalizadas ANTES de este punto, más recientes primero. |
 | `pagesize` | `10`, `20`, `50`, `100` | `10` | Pistas por página. |
+| `exclude_short` | `0`, `1` | Preferencia (por defecto `1`) | Ocultar pistas más cortas que `min_sec` segundos (jingles / station IDs). |
+| `min_sec` | entero 1..3600 | Preferencia (por defecto `60`) | Umbral en segundos para el filtro exclude-short. |
 | `theme` | `auto`, `dark`, `light` | `auto` | Igual que los otros widgets. |
 | `cache` | entero segundos 10..3600 | `60` | TTL caché HTTP. |
 | `bg`, `bgcolor` | URL / hex | ninguna | Igual que los otros widgets. |
 | `timezone` | cualquier zona IANA | predeterminado de la emisora | Todas las horas en esta zona. |
+
+**Formato de fila**: `HH:MM - HH:MM Artista - Título` — hora inicio + fin a la izquierda, luego artista / título en **negrita**.
+
+La página **Configuración → Widgets → Track History** aloja además la casilla **Exclude short tracks** + el campo de umbral en segundos (estilo Auto-Expiry — el campo segundos aparece solo cuando la casilla está marcada).
 
 Fuente: `cc_playout_history` JOIN `cc_files` LEFT JOIN
 `cc_show_instances` → `cc_show`.
