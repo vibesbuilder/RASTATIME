@@ -153,6 +153,7 @@ documento maestro arriba es lo único que todos asumen.
 |---|---|
 | [Streams](./STREAMS.md) | Configurar hasta cuatro streams de salida, monitorear contadores de oyentes, solución de problemas. |
 | [Máquina local](./LOCAL_MACHINE.md) | Salida de tarjeta de sonido, entrada line-in, carpeta de importación local. |
+| [Widgets públicos integrables](./WIDGETS.md) | Widgets listos-para-usar para el sitio web público de su emisora (Now Playing — Show / Track, Weekly Program, Player). |
 
 ### Administración
 

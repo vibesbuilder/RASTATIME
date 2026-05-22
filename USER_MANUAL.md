@@ -140,6 +140,7 @@ master document above is the only thing they all assume.
 |---|---|
 | [Streams](./docs/manual/STREAMS.md) | Configuring up to four output streams, monitoring listener counts, troubleshooting. |
 | [Local Machine](./docs/manual/LOCAL_MACHINE.md) | Sound-card output, line-in input, local import drop-folder. |
+| [Public Embed Widgets](./docs/manual/WIDGETS.md) | Drop-in widgets for your station's public website (Now Playing — Show / Track, Weekly Program, Player). |
 
 ### Administration
 

@@ -1,10 +1,19 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.13
-Date: 2026-05-21
+Draft version: 0.14
+Date: 2026-05-22
 
 > **Revision history**
+> - **0.14 (2026-05-22)** — Public Now-Playing Embed Widgets
+>   (Section 23.22).  Two new public iframe widgets
+>   (`/embed/now-playing-show`, `/embed/now-playing-track`)
+>   for external station homepages.  Configurable HTTP
+>   cache TTL (10–3600 s, default 60).  No auth required
+>   — payload is intentionally limited to what a listener
+>   would see in the player anyway.  Vanilla-JS in-iframe
+>   client with per-second countdown + early re-poll on
+>   item end-time crossing.
 > - **0.13 (2026-05-21)** — Smart Block "Exclude tracks played
 >   lately" filter (Section 23.21).  Third pool-restriction
 >   toggle in the Advanced section of the Smart Block dialog;
@@ -3433,3 +3442,117 @@ RASTATIME today.
 * `frontend/legacy/application/views/scripts/form/smart-block-criteria.phtml`
 * `frontend/legacy/public/js/airtime/playlist/smart_blockbuilder.js`
 * `CHANGELOG.md` + `docs/manual/{en,de,fr,es}/LIBRARY.md`
+
+---
+
+### 23.22 Public Now-Playing Embed Widgets
+
+**Context.**  Stations want a small, drop-in "what is on
+air right now" surface for their public homepage that does
+not require any of the visitor-side machinery RASTATIME's
+internal Dashboard depends on (login, jQuery 1.x, full
+Angular bootstrap, large now-playing payload).  The
+existing `/embed/player` and `/embed/weekly-program` cover
+the audio player and the seven-day schedule grid, but
+neither shows the current item.
+
+**Decision.**  Two new iframe-only widgets sharing one
+data feed.  iframe (not JS-snippet) because:
+
+* Same-origin context inside the iframe sidesteps CORS
+  entirely — the JS poll fires against the station's own
+  host, regardless of where the embedding page lives.
+* No JS-conflict risk with the embedding page's stack
+  (which may itself be jQuery-heavy or React-based).
+* Drop-in deployment for non-technical operators (paste
+  HTML, done).
+
+The widgets are intentionally **public**: no API key, no
+session cookie.  This is safe because the exposed payload
+is limited to show / track name + start/end timestamps
+— the same data a listener would see in the audio
+player's `now-playing` overlay anyway.  Listener counts,
+source-switch state, operator names, recording state and
+internal IDs are NOT exposed.
+
+**Endpoint surface.**
+
+```
+GET /embed/now-playing-show?theme=...&cache=...&timezone=...
+GET /embed/now-playing-track?theme=...&cache=...&timezone=...
+GET /embed/now-playing-data?cache=...&timezone=...
+```
+
+The first two return self-contained HTML pages (CSS + JS
+linked from `public/`).  The third returns JSON with the
+trimmed Now-Playing payload that both widgets poll.
+
+**Data pipeline.**
+
+`Application_Model_Schedule::GetPlayOrderRange()` — the
+same call that backs `/api/live-info` — provides the
+station's `shows.current/next` + `tracks.current/next`.
+EmbedController's `_slimShow` / `_slimTrack` helpers strip
+that down to the four fields the widgets actually render
+(name/label + starts + ends + timezone-normalised ISO
+strings).  Final JSON payload size: ~1-2 kB rather than
+the ~20 kB live-info response.
+
+**Caching strategy.**
+
+Two layers, both keyed on the operator-set `cache=N`
+parameter (10–3600 s, default 60):
+
+1. **Server-side HTTP headers**: `Cache-Control: public,
+   max-age=N` + matching `Expires` header on every
+   widget response.  Apache and any CDN in front cache
+   the response identically.
+2. **In-iframe JS polling cadence**: matches `N` (with
+   ±10 % jitter so massively-deployed widgets do not
+   synchronise their backend hits to the second).  Each
+   poll hits the browser cache first; only after `N`
+   seconds does it actually round-trip to the backend.
+
+**Staleness compensation.**
+
+The in-iframe JS holds the absolute end-time of the
+current item as an ISO string (from the most recent
+payload).  Per second it computes the remaining duration
+client-side; when the remaining duration crosses zero
+(item ended) the JS fires an immediate out-of-band poll
+to grab the new "current" item.  Net effect: even with
+`cache=300` (5 min server cache), the widget flips to
+the next track within ~1 s of it actually starting.
+
+**Theming.**
+
+Three CSS modes selected via `?theme=`:
+- `auto` (default) — `prefers-color-scheme` media query
+- `dark` — light text, transparent background
+- `light` — dark text, transparent background
+
+Background is always transparent so the widget integrates
+with whatever the embedding page's layout is.  Font stack
+defaults to the embedding page's system font.
+
+**Files touched.**
+
+* `frontend/legacy/application/controllers/EmbedController.php`
+  — three new public actions + private payload helpers
+* `frontend/legacy/application/views/scripts/embed/now-playing-show.phtml`
+* `frontend/legacy/application/views/scripts/embed/now-playing-track.phtml`
+* `frontend/legacy/public/css/embed/now-playing-widget.css`
+* `frontend/legacy/public/js/airtime/embed/now-playing-widget.js`
+* `CHANGELOG.md`
+* `docs/manual/{en,de,fr,es}/WIDGETS.md` (new chapter in
+  all four languages) + master `USER_MANUAL.md` TOC updates
+
+**Out-of-scope / planned for later widget waves.**
+
+* Welle 1 / second half: Next Shows + Latest Shows widget
+  (by show-name filter)
+* Welle 2: Weekly Program polish (±2-Wochen-Buttons,
+  link-embedding) + Day/2-Day/Week view switcher
+* Welle 3: Track History widget with date-range search
+
+All tracked in `BACKLOG.md`.

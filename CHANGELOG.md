@@ -9,6 +9,59 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Public Embed Widgets: Now Playing — Show + Now Playing —
+  Track** (operator request 2026-05-22, BACKLOG widget-wave 1
+  first half).  Two new drop-in iframe widgets for external
+  station homepages.  Two-line text layout, transparent
+  background, no auth required:
+
+      <iframe src=".../embed/now-playing-show?theme=dark"
+              width="100%" height="50" frameborder="0"></iframe>
+
+  Each widget shows the current item on line 1 (name left,
+  end-countdown right) and the next item on line 2 (name left,
+  start–end window right).  Track widget renders as
+  "Artist - Title"; show widget as the show name.
+
+  URL parameters: `theme` (auto / dark / light), `cache`
+  (server-side HTTP TTL in seconds, 10–3600, default 60),
+  `timezone` (any standard IANA zone, defaults to station).
+
+  Both widgets share a single JSON feed at
+  `/embed/now-playing-data` (cached identically to the iframe
+  HTML).  The in-iframe JS recomputes the countdown every
+  second client-side from absolute ISO timestamps and
+  proactively re-polls when the current item's end-time
+  passes — so a `cache=300` embed still flips to the next
+  track within ~1 s of it starting, the staleness only ever
+  affects the first display after a long idle pause.
+
+  Files:
+    - `application/controllers/EmbedController.php`
+        Three new actions: `nowPlayingShowAction`,
+        `nowPlayingTrackAction`, `nowPlayingDataAction`.
+        Plus private helpers `_renderNowPlayingWidget`,
+        `_resolveCacheTtl`, `_resolveTimezone`,
+        `_emitCacheHeaders`, `_buildNowPlayingPayload`,
+        `_slimShow`, `_slimTrack`, `_formatTimestamp`.
+        Data source: `Application_Model_Schedule::GetPlayOrderRange()`
+        (same as `/api/live-info` but trimmed payload).
+    - `application/views/scripts/embed/now-playing-show.phtml`
+    - `application/views/scripts/embed/now-playing-track.phtml`
+    - `public/css/embed/now-playing-widget.css`
+        Two-line flexbox layout, three theme variants,
+        prefers-color-scheme media query for the auto theme,
+        muted state for stale/empty data.
+    - `public/js/airtime/embed/now-playing-widget.js`
+        Vanilla JS (no jQuery), ~250 LoC.  Per-second
+        countdown tick + cache-TTL polling + early re-poll
+        on item end-time crossing + jittered poll cadence
+        so massively-embedded widgets don't synchronise.
+
+  Documentation: new `docs/manual/{en,de,fr,es}/WIDGETS.md`
+  chapter; master USER_MANUAL TOC updated in all four
+  languages.  ARCHITECTURE.md gets a new Section 23.22.
+
 - **Smart Block: new "Exclude tracks played lately" pool-restriction
   toggle** (operator request 2026-05-21).  Sits between the existing
   `Allow only tracks not played yet` and `Allow only tracks with

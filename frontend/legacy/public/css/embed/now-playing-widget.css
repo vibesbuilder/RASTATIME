@@ -1,0 +1,119 @@
+/*
+ * RASTATIME 2026-05-22 — Now-Playing Show / Track Widget styling.
+ *
+ * Minimal text-only widget (no boxes, no shadows, no decoration).
+ * Two themes that the operator picks via the ?theme= URL param:
+ *
+ *   .np-theme-auto  — follow the host browser's prefers-color-scheme
+ *   .np-theme-dark  — light text on transparent background
+ *   .np-theme-light — dark text on transparent background
+ *
+ * Background is intentionally transparent so the widget blends into
+ * whatever the embedding page's layout looks like.  The iframe host
+ * sets its own background colour.
+ */
+
+html, body {
+    margin: 0;
+    padding: 0;
+    background: transparent;
+}
+
+.np-widget {
+    /*  System-font stack keeps the widget visually native to whichever
+        page embeds it, instead of forcing an unwanted typography.  */
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+                 Roboto, Helvetica, Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.35;
+    padding: 4px 8px;
+    box-sizing: border-box;
+
+    /*  Default theme variables; overridden below by the explicit
+        theme classes.  --np-fg is the only thing that actually
+        changes; everything else inherits transparency.  */
+    --np-fg: #222;
+    --np-fg-muted: #666;
+    color: var(--np-fg);
+}
+
+/* ───── theme switching ───── */
+
+.np-widget.np-theme-light {
+    --np-fg: #1a1a1a;
+    --np-fg-muted: #555;
+}
+
+.np-widget.np-theme-dark {
+    --np-fg: #f0f0f0;
+    --np-fg-muted: #bbb;
+}
+
+/*
+ * Auto mode: respect the browser's preference.  Default to light
+ * because more embedding pages are light-themed than dark.
+ */
+.np-widget.np-theme-auto {
+    --np-fg: #1a1a1a;
+    --np-fg-muted: #555;
+}
+@media (prefers-color-scheme: dark) {
+    .np-widget.np-theme-auto {
+        --np-fg: #f0f0f0;
+        --np-fg-muted: #bbb;
+    }
+}
+
+/* ───── two-line layout ───── */
+
+.np-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1em;
+    /* Truncate the name when the iframe is narrow so the time on the
+       right always stays visible (the time is the more time-critical
+       half of the row). */
+    overflow: hidden;
+}
+
+.np-row-current {
+    font-weight: 600;
+}
+
+.np-row-next {
+    color: var(--np-fg-muted);
+    font-size: 0.92em;
+    margin-top: 2px;
+}
+
+.np-name {
+    /*  Take all the available width; ellipsis when overflowing.  */
+    flex: 1 1 auto;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.np-time {
+    /*  Fixed-width-ish; right-aligned, doesn't shrink.  */
+    flex: 0 0 auto;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+/* ───── overflow / error states (set by JS) ───── */
+
+.np-widget.np-stale .np-time {
+    /* When the JS-poll fails repeatedly the data goes stale;
+       muted colour signals "this might not be accurate". */
+    opacity: 0.5;
+}
+
+.np-widget.np-empty .np-name {
+    /* When there is no current show or track, the placeholder
+       text shows in muted style. */
+    color: var(--np-fg-muted);
+    font-style: italic;
+}

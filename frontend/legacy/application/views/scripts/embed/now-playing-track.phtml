@@ -1,0 +1,68 @@
+<?php
+// RASTATIME 2026-05-22 — Now-Playing Track Widget template.
+// Two-line iframe content; CSS + JS shipped from public/.
+$payload = $this->initialPayload;
+$current = $payload['track']['current'] ?? null;
+$next    = $payload['track']['next'] ?? null;
+
+/**
+ * Render "Artist - Title" or just "Title" when artist is empty.
+ */
+function rastatime_format_track_label($track)
+{
+    if (empty($track)) {
+        return null;
+    }
+    $title = trim((string) ($track['title'] ?? ''));
+    $artist = trim((string) ($track['artist'] ?? ''));
+    if ($title === '' && $artist === '') {
+        return null;
+    }
+    if ($artist === '') {
+        return $title;
+    }
+    if ($title === '') {
+        return $artist;
+    }
+    return $artist . ' - ' . $title;
+}
+
+$currentLabel = rastatime_format_track_label($current);
+$nextLabel    = rastatime_format_track_label($next);
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title><?php echo _('Now Playing — Track'); ?></title>
+    <link rel="stylesheet" href="<?php echo $this->widgetCss; ?>">
+</head>
+<body class="np-widget <?php echo htmlspecialchars($this->themeClass, ENT_QUOTES, 'UTF-8'); ?>"
+      data-widget="track"
+      data-data-url="<?php echo htmlspecialchars($this->dataUrl, ENT_QUOTES, 'UTF-8'); ?>"
+      data-cache-ttl="<?php echo (int) $this->cacheTtl; ?>">
+
+    <div class="np-row np-row-current">
+        <span class="np-name" data-np="current-name"><?php
+            echo htmlspecialchars($currentLabel ?? _('No track playing'), ENT_QUOTES, 'UTF-8');
+        ?></span>
+        <span class="np-time" data-np="current-time"
+              data-starts="<?php echo htmlspecialchars($current['starts'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
+              data-ends="<?php echo htmlspecialchars($current['ends'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
+        </span>
+    </div>
+
+    <div class="np-row np-row-next">
+        <span class="np-name" data-np="next-name"><?php
+            echo htmlspecialchars($nextLabel ?? _('No upcoming track'), ENT_QUOTES, 'UTF-8');
+        ?></span>
+        <span class="np-time" data-np="next-time"
+              data-starts="<?php echo htmlspecialchars($next['starts'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
+              data-ends="<?php echo htmlspecialchars($next['ends'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
+        </span>
+    </div>
+
+    <script src="<?php echo $this->widgetJs; ?>" defer></script>
+</body>
+</html>

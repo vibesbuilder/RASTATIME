@@ -160,6 +160,7 @@ qu'ils supposent tous.
 |---|---|
 | [Streams](./STREAMS.md) | Configurer jusqu'à quatre streams de sortie, surveiller les compteurs d'auditeurs, dépannage. |
 | [Machine locale](./LOCAL_MACHINE.md) | Sortie carte son, entrée line-in, dossier d'import local. |
+| [Widgets publics intégrables](./WIDGETS.md) | Widgets prêts-à-l'emploi pour le site web public de votre station (Now Playing — Show / Track, Weekly Program, Player). |
 
 ### Administration
 

@@ -53,14 +53,14 @@ der Operator das Signal gibt.
 
 ### 🟢 Widgets — drei Wellen
 
-**Status:** Go in Wellen statt Big-Bang.
+**Status:** Go in Wellen statt Big-Bang.  In Arbeit.
 **Evaluiert:** 2026-05-22.
 **Operator-Wert:** Hoch — Widgets sind die Public-Face der Station.
 **Risiko Live-Betrieb:** Niedrig (isoliert vom Stream).
 
 **Welle 1 (~1 Woche):**
-- Current Show / Current Title Widget mit Restzeit (~200 LoC)
-- Next Shows / Latest Shows Widget mit Show-Name-Filter (~300 LoC)
+- ✅ **DONE** Current Show + Current Track Widget mit Restzeit (Section 23.22, Commit folgt)
+- Next Shows / Latest Shows Widget mit Show-Name-Filter (~300 LoC) — als Nächstes
 
 **Welle 2 (~1.5 Wochen):**
 - Weekly Program pimpen: ±2-Wochen-Buttons, Link-Embedding ohne Farb-Change, LibreTime-Branding raus, optionales BG-Bild (~250 LoC)
@@ -227,7 +227,7 @@ Sortierung der bereits-gespielten + nächsten Tracks freezable.
 
 | | Stand 2026-05-22 |
 |---|---|
-| Aktive Backlog-Items | 3 (Show-Shift, Record-per-Hour, Widgets) |
+| Aktive Backlog-Items | 3 (Show-Shift, Record-per-Hour, Widgets — Welle 1 erste Hälfte fertig) |
 | Deferred Items | 1 (JS-Modernisierung) |
 | Hold Items | 1 (Payware) |
 | Future Ideas | 13 |
