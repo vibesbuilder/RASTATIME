@@ -69,7 +69,13 @@ sous-jacentes se rafraîchissent toutes les 60 secondes
 |---|---|---|---|
 | `theme` | `auto`, `dark`, `light` | `auto` | Couleur du texte. `auto` suit le `prefers-color-scheme` du navigateur. Fond toujours transparent. |
 | `cache` | entier secondes, 10–3600 | `60` | TTL du cache HTTP côté serveur. Plus bas = données plus fraîches + plus de hits backend. |
+| `overflow` | `ellipsis`, `marquee` | `ellipsis` | Que faire des noms d'émission / piste plus larges que le widget de 300 px. `ellipsis` tronque avec `…` ; `marquee` fait défiler le texte vers la gauche pendant 24 s. |
 | `timezone` | tout fuseau horaire standard (`Europe/Paris`) | défaut station | Toutes les heures rendues dans cette zone. |
+
+> **Note.** Le corps du widget est limité à **300 px de large**
+> pour s'adapter aux mises en page de barre latérale typiques
+> des sites de stations.  Définissez la largeur de l'iframe à
+> 300 dans le HTML d'intégration pour un ajustement précis.
 
 ---
 
@@ -108,7 +114,37 @@ Identique au widget show — voir §2.
 
 ---
 
-## 4. Le paramètre `cache` — quel TTL ?
+## 4. Personnaliser les libellés d'état vide
+
+Quand il n'y a pas d'émission ou de piste actuelle / suivante,
+le widget affiche un court texte placeholder.  Les opérateurs
+peuvent personnaliser les quatre placeholders sans toucher au
+code sous :
+
+**Paramètres → Widgets → Current Show/Track**
+
+| Champ | Texte par défaut |
+|---|---|
+| Libellé quand aucune émission n'est à l'antenne | `No show on air` |
+| Libellé quand il n'y a pas d'émission à venir | `No upcoming show` |
+| Libellé quand aucune piste ne joue | `No track playing` |
+| Libellé quand il n'y a pas de piste à venir | `No upcoming track` |
+
+Les modifications sont persistées dans `cc_pref` et reprises
+par le widget dans le délai d'un TTL de cache (par défaut
+60 secondes).  Laissez un champ vide pour revenir au défaut
+anglais affiché dans son placeholder.
+
+La même page de paramètres héberge aussi :
+
+- une **prévisualisation en direct** des deux widgets côte à
+  côte ;
+- le **code d'intégration `<iframe>` prêt-à-l'emploi** pour
+  chaque widget avec l'URL absolue de la station pré-remplie.
+
+---
+
+## 5. Le paramètre `cache` — quel TTL ?
 
 Le serveur met en cache les données sous-jacentes pendant
 `cache` secondes avant de les regénérer. Le polling JS
@@ -146,7 +182,7 @@ Valeurs recommandées :
 
 ---
 
-## 5. Thèmes
+## 6. Thèmes
 
 Trois modes, contrôlés via le paramètre `theme` :
 
@@ -161,7 +197,7 @@ se fonde dans la page d'intégration.
 
 ---
 
-## 6. Authentification
+## 7. Authentification
 
 Aucune. Les widgets Now-Playing sont intentionnellement
 publics : tout l'intérêt est que n'importe quel visiteur
@@ -174,14 +210,14 @@ IDs internes.
 
 ---
 
-## 7. Intégration cross-origin
+## 8. Intégration cross-origin
 
 Les iframes fonctionnent cross-origin nativement — aucune
 configuration supplémentaire nécessaire.
 
 ---
 
-## 8. Dépannage
+## 9. Dépannage
 
 ### "Le widget affiche 'No show on air' mais une émission tourne"
 

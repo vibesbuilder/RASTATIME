@@ -41,6 +41,19 @@
     var dataUrl    = body.getAttribute('data-data-url') || '/Embed/now-playing-data';
     var cacheTtlMs = parseInt(body.getAttribute('data-cache-ttl') || '60', 10) * 1000;
 
+    // RASTATIME 2026-05-22 — empty-state labels.  Server-rendered
+    // into data-attrs on first paint so the JS-side has a default
+    // even before the first poll; the JSON payload then overrides
+    // them on each refresh so a label change in the Widgets ->
+    // Current Show/Track settings page shows up within one cache
+    // TTL without a manual iframe reload.
+    var labels = {
+        noCurrent:  body.getAttribute('data-label-no-current')
+                    || (widgetKind === 'show' ? 'No show on air' : 'No track playing'),
+        noUpcoming: body.getAttribute('data-label-no-upcoming')
+                    || (widgetKind === 'show' ? 'No upcoming show' : 'No upcoming track')
+    };
+
     var failedPolls = 0;
     var MAX_FAILED_POLLS = 3;
 
@@ -148,9 +161,7 @@
         var noCurrent = !entries.current || !entries.current.label;
         if (noCurrent) {
             body.classList.add('np-empty');
-            currentName.textContent = widgetKind === 'show'
-                ? 'No show on air'
-                : 'No track playing';
+            currentName.textContent = labels.noCurrent;
             currentTime.removeAttribute('data-starts');
             currentTime.removeAttribute('data-ends');
             currentTime.textContent = '';
@@ -163,9 +174,7 @@
 
         var noNext = !entries.next || !entries.next.label;
         if (noNext) {
-            nextName.textContent = widgetKind === 'show'
-                ? 'No upcoming show'
-                : 'No upcoming track';
+            nextName.textContent = labels.noUpcoming;
             nextTime.removeAttribute('data-starts');
             nextTime.removeAttribute('data-ends');
             nextTime.textContent = '';
@@ -227,6 +236,18 @@
             .then(function (payload) {
                 failedPolls = 0;
                 body.classList.remove('np-stale');
+                // Pick up operator-configured empty labels from the
+                // refresh payload so a settings change appears
+                // within one poll without a manual iframe reload.
+                if (payload.labels) {
+                    if (widgetKind === 'show') {
+                        labels.noCurrent  = payload.labels.noCurrentShow  || labels.noCurrent;
+                        labels.noUpcoming = payload.labels.noUpcomingShow || labels.noUpcoming;
+                    } else {
+                        labels.noCurrent  = payload.labels.noCurrentTrack  || labels.noCurrent;
+                        labels.noUpcoming = payload.labels.noUpcomingTrack || labels.noUpcoming;
+                    }
+                }
                 paint(pickEntries(payload));
                 // Repaint the time cells immediately so the user
                 // doesn't see a 1-second flash of stale countdown.

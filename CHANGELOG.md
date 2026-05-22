@@ -111,6 +111,95 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `docs/manual/{en,de,fr,es}/LIBRARY.md` (Smart Blocks section)
   and ARCHITECTURE.md Section 23.
 
+### Changed
+
+- **Now-Playing widgets: 300 px width cap + truncate / marquee
+  overflow handling + operator-configurable empty-state labels
+  + dedicated Widgets → Current Show/Track settings page**
+  (operator request 2026-05-22).  Three coupled polish items
+  that ship together because they all touch the same widget
+  pair.
+
+  Width: the widget body is now `max-width: 300 px` to fit
+  common station-website sidebar layouts.  An embedding page
+  that sets the iframe to 300 px wide gets a flush widget; a
+  wider iframe shows white space around the widget.
+
+  Overflow: long show / track names that exceed the 300 px
+  body now have a per-embed strategy picked via
+  `?overflow=ellipsis|marquee` URL parameter.  `ellipsis`
+  (default) truncates with `…`; `marquee` scrolls the text
+  left over 24 s so the operator can still read the whole
+  title.  Pure CSS animation — no extra JS.
+
+  Empty-state labels: the four placeholder texts that the
+  widgets show when a current / next show / track is missing
+  are now operator-configurable via four new cc_pref keys
+  (`widget_no_current_show`, `widget_no_upcoming_show`,
+  `widget_no_current_track`, `widget_no_upcoming_track`).
+  Each Preference getter falls back to the English source
+  string when blank so an unconfigured station behaves
+  exactly as before.  Labels are shipped both in the
+  server-rendered HTML (`data-label-no-current` /
+  `data-label-no-upcoming` body attrs) and in the JSON
+  refresh payload (`labels` key), so an operator's label edit
+  surfaces within one cache TTL without a manual iframe
+  reload.
+
+  Settings UI: new submenu entry **Widgets → Current
+  Show/Track** alongside Player and Weekly Schedule.  The
+  page combines a live side-by-side iframe preview, the
+  four label inputs, and the ready-made `<iframe>` embed
+  code for both widgets with the absolute station URL
+  pre-filled.
+
+  Files:
+    - `application/controllers/EmbedController.php`
+        New `?overflow=` parameter parsing; `emptyLabels`
+        view variable populated from `Preference::GetWidget*`
+        getters; `labels` block added to the JSON payload.
+    - `application/controllers/EmbeddablewidgetsController.php`
+        New `currentShowTrackAction` that handles GET (form
+        seeding from cc_pref) and POST (label persistence
+        via `Preference::SetWidget*`).
+    - `application/forms/WidgetCurrentShowTrack.php`
+        New Zend_Form with four text inputs (one per
+        label).  Allow-empty + placeholder-as-default
+        pattern so a cleared field falls back to the
+        English source string at render time.
+    - `application/models/Preference.php`
+        Eight new static methods (`GetWidgetNo*` +
+        `SetWidgetNo*`) using the same blank-fallback
+        pattern as `GetAutoDjShowName`.
+    - `application/views/scripts/embed/now-playing-show.phtml`
+    - `application/views/scripts/embed/now-playing-track.phtml`
+        Body class now carries both `themeClass` and
+        `overflowClass`; new `data-label-no-current` /
+        `data-label-no-upcoming` body attrs hold the
+        server-rendered labels for the JS-side fallback.
+    - `application/views/scripts/embeddablewidgets/current-show-track.phtml`
+        New settings page with three fieldsets: live
+        preview, four-input label form, embed-code blocks.
+    - `application/configs/navigation.php`
+        New "Current Show/Track" entry under the existing
+        Widgets parent.
+    - `public/css/embed/now-playing-widget.css`
+        `max-width: 300px` on `.np-widget`; new
+        `.np-overflow-marquee` class with a 24 s CSS
+        animation; documented kick-off conditions in the
+        block comment.
+    - `public/js/airtime/embed/now-playing-widget.js`
+        Reads labels from data-attrs on boot, then
+        refreshes them from each poll's `labels` payload
+        so the JS-side no longer carries hard-coded
+        English defaults.
+
+  Documentation: `docs/manual/{en,de,fr,es}/WIDGETS.md`
+  extended with two new sections (max-width note in §2 +
+  empty-state labels in §4), URL-parameter table extended
+  with the `overflow` row.  Subsequent section numbers
+  shifted by one in all four languages.
+
 ### Fixed
 
 - **Now-Playing widgets: 500 Internal Server Error on the two

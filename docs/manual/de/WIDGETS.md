@@ -68,7 +68,14 @@ Daten werden alle 60 Sekunden aktualisiert (konfigurierbar
 |---|---|---|---|
 | `theme` | `auto`, `dark`, `light` | `auto` | Textfarbe. `auto` folgt dem `prefers-color-scheme` des einbettenden Browsers. Hintergrund ist immer transparent. |
 | `cache` | Ganzzahl Sekunden, 10–3600 | `60` | Server-seitige HTTP-Cache-TTL. Niedriger = frischere Daten + mehr Backend-Anfragen. |
+| `overflow` | `ellipsis`, `marquee` | `ellipsis` | Was passiert mit Sendungs- / Tracknamen, die breiter als das 300-px-Widget sind. `ellipsis` kürzt mit `…`; `marquee` scrollt den Text 24 s lang nach links, damit der vollständige Titel lesbar wird. |
 | `timezone` | beliebige Standard-Zeitzone (`Europe/Berlin`) | Stations-Standard | Alle Zeiten in dieser Zone gerendert. |
+
+> **Hinweis.** Der Widget-Body ist auf **300 px Breite** begrenzt,
+> damit er in typische Sidebar-Layouts auf Stations-Websites
+> passt.  Setzen Sie die iframe-Breite im einbettenden HTML auf
+> 300, dann passt es bündig; ein breiteres iframe zeigt Leerraum
+> um das Widget.
 
 ---
 
@@ -107,7 +114,37 @@ Gleich wie das Show-Widget — siehe §2.
 
 ---
 
-## 4. Der `cache`-Parameter — welche TTL ist richtig?
+## 4. Empty-State-Labels anpassen
+
+Wenn keine aktuelle oder kommende Show / Track vorhanden ist,
+zeigt das Widget einen kurzen Platzhalter-Text. Operator können
+alle vier Platzhalter ohne Code-Eingriff anpassen unter:
+
+**Einstellungen → Widgets → Current Show/Track**
+
+| Feld | Standard-Text |
+|---|---|
+| Label wenn keine Sendung auf Sendung ist | `No show on air` |
+| Label wenn keine kommende Sendung | `No upcoming show` |
+| Label wenn kein Track spielt | `No track playing` |
+| Label wenn kein kommender Track | `No upcoming track` |
+
+Bearbeitungen werden in `cc_pref` persistiert und vom Widget
+innerhalb einer Cache-TTL (Standard 60 s) übernommen. Lassen Sie
+ein Feld leer, um auf den englischen Default im Placeholder
+zurückzufallen.
+
+Dieselbe Einstellungs-Seite enthält auch:
+
+- eine **Live-Vorschau** beider Widgets nebeneinander, sodass
+  Sie eine Label-Änderung sofort nach dem Speichern sehen;
+- den **vorgefertigten `<iframe>`-Embed-Code** für jedes
+  Widget mit absoluter Stations-URL, bereit zum Einfügen in
+  den HTML-Code der Homepage.
+
+---
+
+## 5. Der `cache`-Parameter — welche TTL ist richtig?
 
 Der Server cached die zugrunde liegenden Daten für `cache`
 Sekunden, bevor er sie regeneriert. Die JS-Abfrage im
@@ -146,7 +183,7 @@ Empfohlene Werte:
 
 ---
 
-## 5. Themes
+## 6. Themes
 
 Drei Modi, gesteuert über den `theme`-URL-Parameter:
 
@@ -173,7 +210,7 @@ und sich auf den transparenten Hintergrund zu verlassen:
 
 ---
 
-## 6. Authentifizierung
+## 7. Authentifizierung
 
 Keine. Die Now-Playing-Widgets sind absichtlich
 öffentlich: Der ganze Zweck ist, dass jeder Besucher auf
@@ -198,7 +235,7 @@ Sie stattdessen das passwortgeschützte
 
 ---
 
-## 7. Cross-Origin-Einbettung
+## 8. Cross-Origin-Einbettung
 
 Iframes funktionieren cross-origin von Haus aus — keine
 zusätzliche Konfiguration nötig. Die Homepage Ihrer
@@ -212,7 +249,7 @@ vollständig.
 
 ---
 
-## 8. Fehlerbehebung
+## 9. Fehlerbehebung
 
 ### "Widget zeigt 'No show on air', aber eine Sendung läuft"
 

@@ -65,7 +65,13 @@ every 60 seconds (configurable — see §4).
 |---|---|---|---|
 | `theme` | `auto`, `dark`, `light` | `auto` | Text colour. `auto` follows the embedding browser's `prefers-color-scheme`. Background is always transparent. |
 | `cache` | integer seconds, 10–3600 | `60` | Server-side HTTP cache TTL. Lower = fresher data + more backend hits. |
+| `overflow` | `ellipsis`, `marquee` | `ellipsis` | What to do with show / track names wider than the 300 px widget. `ellipsis` truncates with `…`; `marquee` scrolls left over 24 s so the operator can read the whole title. |
 | `timezone` | any standard timezone (`Europe/Berlin`) | station default | All times rendered in this zone. |
+
+> **Note.** The widget body is capped at **300 px wide** to fit
+> common sidebar layouts on station websites.  Set the iframe
+> width to 300 in the embedding HTML for a flush fit; a wider
+> iframe will show white space around the widget.
 
 ---
 
@@ -102,7 +108,36 @@ Same as the show widget — see §2.
 
 ---
 
-## 4. The `cache` parameter — what is the right TTL?
+## 4. Customising the empty-state labels
+
+When there is no current or upcoming show / track, the widget
+falls back to a short placeholder text.  Operators can customise
+all four placeholders without touching code under:
+
+**Settings → Widgets → Current Show/Track**
+
+| Field | Default text |
+|---|---|
+| Label when no show is on air | `No show on air` |
+| Label when there is no upcoming show | `No upcoming show` |
+| Label when no track is playing | `No track playing` |
+| Label when there is no upcoming track | `No upcoming track` |
+
+Edits are persisted in `cc_pref` and picked up by the widget
+within one cache TTL (default 60 seconds).  Leave a field blank
+to fall back to the English default shown in its placeholder.
+
+The same Settings page hosts:
+
+- a **live preview** of both widgets side-by-side so you can
+  see how a label change looks immediately after saving;
+- the **ready-made `<iframe>` embed code** for each widget
+  with the station's absolute URL pre-filled, ready to paste
+  into the homepage HTML.
+
+---
+
+## 5. The `cache` parameter — what is the right TTL?
 
 The server caches the underlying data for `cache` seconds
 before regenerating it. The JS poll inside the iframe
@@ -138,7 +173,7 @@ Recommended values:
 
 ---
 
-## 5. Theming
+## 6. Theming
 
 Three modes, controlled via the `theme` URL parameter:
 
@@ -166,7 +201,7 @@ transparent background:
 
 ---
 
-## 6. Authentication
+## 7. Authentication
 
 None. The Now-Playing widgets are intentionally public:
 the whole point is that any visitor on your station's
@@ -189,7 +224,7 @@ which DJ is on air right now), open the password-protected
 
 ---
 
-## 7. Cross-origin embedding
+## 8. Cross-origin embedding
 
 Iframes work cross-origin out of the box — no extra
 configuration needed. Your station's homepage can embed
@@ -201,7 +236,7 @@ and ran into CORS errors, switching to the iframe approach
 
 ---
 
-## 8. Troubleshooting
+## 9. Troubleshooting
 
 ### "Widget shows 'No show on air' but a show is running"
 

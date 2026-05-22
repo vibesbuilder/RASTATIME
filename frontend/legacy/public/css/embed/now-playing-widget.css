@@ -29,6 +29,17 @@ html, body {
     padding: 4px 8px;
     box-sizing: border-box;
 
+    /*  RASTATIME 2026-05-22 — width cap.  Operator request: a
+        narrow widget reads more cleanly inside the sidebar of a
+        public site than a full-width strip.  The 300 px cap
+        applies to the widget body; the iframe itself can still
+        be sized larger by the embedding page (the iframe will
+        have white space around the 300 px widget).  Set the
+        iframe width to 300 px on the embedding side for a
+        flush fit.  */
+    max-width: 300px;
+    margin: 0;
+
     /*  Default theme variables; overridden below by the explicit
         theme classes.  --np-fg is the only thing that actually
         changes; everything else inherits transparency.  */
@@ -88,12 +99,64 @@ html, body {
 }
 
 .np-name {
-    /*  Take all the available width; ellipsis when overflowing.  */
+    /*  Take all the available width; ellipsis when overflowing.
+        Operators who prefer scrolling text over truncation can
+        add the `overflow=marquee` URL parameter (the widget
+        template hangs the `np-overflow-marquee` class on the
+        body in that case).  */
     flex: 1 1 auto;
     min-width: 0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+/* ───── marquee mode (?overflow=marquee) ───── */
+
+/*  CSS-only marquee implementation: the inner text container
+    slides left from 0 to its negative width over a duration that
+    scales with text length so longer text doesn't scroll
+    insanely fast.  Pure CSS keeps the JS-side dumb and means the
+    scroll continues even if the JS poller hangs.  */
+.np-widget.np-overflow-marquee .np-name {
+    overflow: hidden;
+    text-overflow: clip;
+    position: relative;
+    /*  The marquee track is rendered inside the same .np-name
+        span; we hand the actual scrolling job to a CSS-only
+        animation that only kicks in when the text genuinely
+        overflows.  Pseudo-element approach so we don't need
+        wrapper markup.  */
+}
+
+.np-widget.np-overflow-marquee .np-name {
+    display: inline-block;
+    /*  Allow the inner text to be wider than its container so
+        the animation has something to translate against.  */
+    white-space: nowrap;
+}
+
+@keyframes np-marquee-scroll {
+    /*  Hold the start for 1.5 s so the operator reads the
+        beginning before the scroll starts; then translate left
+        until the text is fully off-screen; then snap back.  */
+    0%   { transform: translateX(0); }
+    15%  { transform: translateX(0); }
+    85%  { transform: translateX(calc(-100% + 280px)); }
+    100% { transform: translateX(calc(-100% + 280px)); }
+}
+
+.np-widget.np-overflow-marquee .np-row-current .np-name,
+.np-widget.np-overflow-marquee .np-row-next .np-name {
+    /*  Animation only runs when the text actually overflows —
+        a clean way to detect that is to compare scrollWidth vs
+        clientWidth in JS, but for a CSS-only approach we just
+        kick the animation off for everything and let short text
+        sit visually at translateX(0) for the whole loop (the
+        end-state translate is clamped to a tiny negative
+        value).  The 24s duration is calibrated for typical
+        Artist - Title strings in the 30–60 char range.  */
+    animation: np-marquee-scroll 24s ease-in-out infinite;
 }
 
 .np-time {

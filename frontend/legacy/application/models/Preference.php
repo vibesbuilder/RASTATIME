@@ -518,6 +518,41 @@ class Application_Model_Preference
     public static function GetAutoDjShowTextColor()       { return self::getValue('auto_dj_show_text_color'); }
     public static function SetAutoDjShowTextColor($v)     { self::setValue('auto_dj_show_text_color',  (string) $v); }
 
+    // RASTATIME 2026-05-22 — Now-Playing Widget empty-state texts.
+    // Four operator-configurable labels that the Current Show /
+    // Track widgets render when there is no current / next item.
+    // Defaults match the English source strings used pre-2026-05-22
+    // so an upgrading operator sees no visible behaviour change
+    // until they explicitly customise the labels under
+    // Widgets → Current Show/Track.
+    public static function GetWidgetNoCurrentShow()
+    {
+        $v = self::getValue('widget_no_current_show');
+        return $v === '' ? 'No show on air' : $v;
+    }
+    public static function SetWidgetNoCurrentShow($v)     { self::setValue('widget_no_current_show', (string) $v); }
+
+    public static function GetWidgetNoUpcomingShow()
+    {
+        $v = self::getValue('widget_no_upcoming_show');
+        return $v === '' ? 'No upcoming show' : $v;
+    }
+    public static function SetWidgetNoUpcomingShow($v)    { self::setValue('widget_no_upcoming_show', (string) $v); }
+
+    public static function GetWidgetNoCurrentTrack()
+    {
+        $v = self::getValue('widget_no_current_track');
+        return $v === '' ? 'No track playing' : $v;
+    }
+    public static function SetWidgetNoCurrentTrack($v)    { self::setValue('widget_no_current_track', (string) $v); }
+
+    public static function GetWidgetNoUpcomingTrack()
+    {
+        $v = self::getValue('widget_no_upcoming_track');
+        return $v === '' ? 'No upcoming track' : $v;
+    }
+    public static function SetWidgetNoUpcomingTrack($v)   { self::setValue('widget_no_upcoming_track', (string) $v); }
+
     public static function SetPhone($phone)
     {
         self::setValue('phone', $phone);

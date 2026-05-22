@@ -185,6 +185,19 @@ class EmbedController extends Zend_Controller_Action
         }
         $this->view->themeClass = 'np-theme-' . $theme;
 
+        // RASTATIME 2026-05-22 — Overflow strategy: ellipsis (default)
+        // truncates with "…" when the show / track label is wider
+        // than the 300 px widget body; marquee instead scrolls the
+        // text left so the operator can read the whole title.
+        // Picked via ?overflow=ellipsis|marquee URL parameter so
+        // an operator can decide per-embed without changing the
+        // server-side default.
+        $overflow = $request->getParam('overflow', 'ellipsis');
+        if (!in_array($overflow, ['ellipsis', 'marquee'], true)) {
+            $overflow = 'ellipsis';
+        }
+        $this->view->overflowClass = 'np-overflow-' . $overflow;
+
         $cacheTtl = $this->_resolveCacheTtl();
         $this->view->cacheTtl = $cacheTtl;
         $this->_emitCacheHeaders($cacheTtl);
@@ -194,6 +207,18 @@ class EmbedController extends Zend_Controller_Action
         // Server-side initial render so the iframe shows real data
         // immediately even before the JS poll fires.
         $this->view->initialPayload = $this->_buildNowPlayingPayload($timezone);
+
+        // RASTATIME 2026-05-22 — empty-state labels, configurable
+        // by the operator under Widgets -> Current Show/Track.
+        // Defaults match the English source strings so an
+        // un-customised station is identical to the pre-2026-05-22
+        // behaviour.
+        $this->view->emptyLabels = [
+            'noCurrentShow'  => Application_Model_Preference::GetWidgetNoCurrentShow(),
+            'noUpcomingShow' => Application_Model_Preference::GetWidgetNoUpcomingShow(),
+            'noCurrentTrack' => Application_Model_Preference::GetWidgetNoCurrentTrack(),
+            'noUpcomingTrack'=> Application_Model_Preference::GetWidgetNoUpcomingTrack(),
+        ];
 
         // Asset URLs computed here so the view template stays clean.
         $this->view->widgetCss = Assets::url('css/embed/now-playing-widget.css');
@@ -261,6 +286,16 @@ class EmbedController extends Zend_Controller_Action
             'track' => [
                 'current' => $this->_slimTrack($range['tracks']['current'] ?? null, $timezone),
                 'next'    => $this->_slimTrack($range['tracks']['next'] ?? null, $timezone),
+            ],
+            // RASTATIME 2026-05-22 — empty-state labels shipped with
+            // the payload so the in-iframe JS uses the operator-
+            // configured strings on refresh, not the hard-coded
+            // English fallbacks from the JS source.
+            'labels' => [
+                'noCurrentShow'  => Application_Model_Preference::GetWidgetNoCurrentShow(),
+                'noUpcomingShow' => Application_Model_Preference::GetWidgetNoUpcomingShow(),
+                'noCurrentTrack' => Application_Model_Preference::GetWidgetNoCurrentTrack(),
+                'noUpcomingTrack'=> Application_Model_Preference::GetWidgetNoUpcomingTrack(),
             ],
             'timezone' => $timezone,
         ];

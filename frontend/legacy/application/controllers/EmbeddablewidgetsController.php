@@ -37,6 +37,63 @@ class EmbeddableWidgetsController extends Zend_Controller_Action
         }
     }
 
+    /**
+     * RASTATIME 2026-05-22 — Settings page for the Current Show /
+     * Current Track public embed widgets.
+     *
+     * Operator can:
+     *  1. Preview both widgets side-by-side (iframe live render).
+     *  2. Customise the four empty-state labels (no current show,
+     *     no upcoming show, no current track, no upcoming track) —
+     *     persisted in cc_pref so a refreshed widget picks them up
+     *     within one cache TTL.
+     *  3. Copy the ready-made <iframe> embed code for each widget,
+     *     pre-filled with the absolute station URL.
+     *
+     * Unlike the upstream Player / Weekly-Schedule pages, these
+     * widgets do NOT require the public-API toggle (they have
+     * their own embed-only endpoints that don't go through
+     * /api/live-info), so no error message is shown when the API
+     * is disabled.
+     */
+    public function currentShowTrackAction()
+    {
+        Zend_Layout::getMvcInstance()->assign('parent_page', 'Widgets');
+
+        $request = $this->getRequest();
+        $form = new Application_Form_WidgetCurrentShowTrack();
+
+        // POST: validate and persist before the GET-side render.
+        if ($request->isPost() && $form->isValid($request->getPost())) {
+            Application_Model_Preference::SetWidgetNoCurrentShow(
+                $form->getValue('widget_no_current_show')
+            );
+            Application_Model_Preference::SetWidgetNoUpcomingShow(
+                $form->getValue('widget_no_upcoming_show')
+            );
+            Application_Model_Preference::SetWidgetNoCurrentTrack(
+                $form->getValue('widget_no_current_track')
+            );
+            Application_Model_Preference::SetWidgetNoUpcomingTrack(
+                $form->getValue('widget_no_upcoming_track')
+            );
+            $this->view->saved = true;
+        } else {
+            // GET (or POST-with-errors): seed the form with the
+            // currently-persisted labels so the field never appears
+            // empty for an operator who already customised it.
+            $form->populate([
+                'widget_no_current_show'  => Application_Model_Preference::GetWidgetNoCurrentShow(),
+                'widget_no_upcoming_show' => Application_Model_Preference::GetWidgetNoUpcomingShow(),
+                'widget_no_current_track' => Application_Model_Preference::GetWidgetNoCurrentTrack(),
+                'widget_no_upcoming_track'=> Application_Model_Preference::GetWidgetNoUpcomingTrack(),
+            ]);
+        }
+
+        $this->view->form = $form;
+        $this->view->publicUrl = Config::getPublicUrl();
+    }
+
     // The Facebook widget is untested & unsupported, the widget has been removed from the navigation in navigation.php
     public function facebookAction()
     {

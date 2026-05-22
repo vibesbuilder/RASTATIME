@@ -59,7 +59,8 @@ der Operator das Signal gibt.
 **Risiko Live-Betrieb:** Niedrig (isoliert vom Stream).
 
 **Welle 1 (~1 Woche):**
-- ✅ **DONE** Current Show + Current Track Widget mit Restzeit (Section 23.22, Commit folgt)
+- ✅ **DONE** Current Show + Current Track Widget mit Restzeit (Section 23.22, Commits 64a0b15 + Polish a5452c6)
+- ✅ **DONE** Widget-Polish 2026-05-22: 300 px Breitencap, `?overflow=ellipsis|marquee`, operator-konfigurierbare Empty-State-Labels via neuem Submenu **Widgets → Current Show/Track**
 - Next Shows / Latest Shows Widget mit Show-Name-Filter (~300 LoC) — als Nächstes
 
 **Welle 2 (~1.5 Wochen):**

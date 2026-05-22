@@ -1,0 +1,97 @@
+<?php
+// RASTATIME 2026-05-22 — Settings page for the Current Show /
+// Current Track public embed widgets.  Combines preview + embed-
+// code copy + empty-state label customisation into one page so the
+// operator can see the effect of label edits immediately in the
+// preview iframes.
+
+$publicUrl = rtrim($this->publicUrl, '/');
+$showUrl   = $publicUrl . '/embed/now-playing-show';
+$trackUrl  = $publicUrl . '/embed/now-playing-track';
+?>
+<div id="widget-current-show-track" class="prefpanel ui-widget simple-formblock clearfix padded-strong">
+
+    <h2 style="text-align:center"><?php echo _("Current Show / Track Widgets"); ?></h2>
+    <div style="clear:both"></div>
+
+    <?php if (!empty($this->saved)): ?>
+        <div class="success" style="margin-bottom: 1em; padding: 0.6em 1em;
+             background: #2a4a2a; color: #cdc; border-radius: 4px;">
+            <?php echo _("Labels saved.  Refresh any open preview to see the new text."); ?>
+        </div>
+    <?php endif; ?>
+
+    <p style="margin-bottom: 1.5em; color: #666;">
+        <?php echo _("Two drop-in iframe widgets for your station's public homepage.  "
+            . "Each widget is 300 px wide and shows the current item on line 1 "
+            . "plus the next item on line 2.  Both widgets share the empty-state "
+            . "labels you configure below.");
+        ?>
+    </p>
+
+    <!-- ───── Preview ───── -->
+    <h3 style="margin-top: 1.5em;"><?php echo _("Preview"); ?></h3>
+    <fieldset class="padded" style="display: flex; gap: 2em; flex-wrap: wrap;">
+        <div>
+            <label style="display: block; margin-bottom: 0.4em;">
+                <strong><?php echo _("Current Show widget"); ?></strong>
+            </label>
+            <iframe src="<?php echo htmlspecialchars($showUrl, ENT_QUOTES, 'UTF-8'); ?>"
+                    width="300" height="50" frameborder="0" scrolling="no"
+                    style="border: 1px solid #ccc; background: #fafafa;"></iframe>
+        </div>
+        <div>
+            <label style="display: block; margin-bottom: 0.4em;">
+                <strong><?php echo _("Current Track widget"); ?></strong>
+            </label>
+            <iframe src="<?php echo htmlspecialchars($trackUrl, ENT_QUOTES, 'UTF-8'); ?>"
+                    width="300" height="50" frameborder="0" scrolling="no"
+                    style="border: 1px solid #ccc; background: #fafafa;"></iframe>
+        </div>
+    </fieldset>
+
+    <!-- ───── Empty-state label form ───── -->
+    <h3 style="margin-top: 1.5em;"><?php echo _("Empty-state labels"); ?></h3>
+    <fieldset class="padded">
+        <p style="margin-bottom: 1em; color: #666;">
+            <?php echo _("These labels appear in the widget when no show or "
+                . "track data is available for that line.  Leave a field "
+                . "blank to fall back to the English default shown in the "
+                . "placeholder.");
+            ?>
+        </p>
+
+        <?php echo $this->form; ?>
+    </fieldset>
+
+    <!-- ───── Embed-code blocks ───── -->
+    <h3 style="margin-top: 1.5em;"><?php echo _("Embeddable code"); ?></h3>
+    <fieldset class="padded">
+
+        <label style="display: block; margin-top: 0.8em;"><strong>
+            <?php echo _("Current Show widget"); ?>:
+        </strong></label>
+        <textarea style="width: 98%; font-family: monospace;" rows="2" readonly="readonly"
+        ><iframe src="<?php echo htmlspecialchars($showUrl, ENT_QUOTES, 'UTF-8'); ?>" width="300" height="50" frameborder="0" scrolling="no" style="border: 0; background: transparent;"></iframe></textarea>
+
+        <label style="display: block; margin-top: 0.8em;"><strong>
+            <?php echo _("Current Track widget"); ?>:
+        </strong></label>
+        <textarea style="width: 98%; font-family: monospace;" rows="2" readonly="readonly"
+        ><iframe src="<?php echo htmlspecialchars($trackUrl, ENT_QUOTES, 'UTF-8'); ?>" width="300" height="50" frameborder="0" scrolling="no" style="border: 0; background: transparent;"></iframe></textarea>
+
+        <p style="margin-top: 1em; color: #666;">
+            <?php echo _("Copy the snippet above and paste it into your "
+                . "website's HTML to embed the widget.  Optional URL "
+                . "parameters: "); ?>
+            <code>?theme=auto|dark|light</code>,
+            <code>?cache=10..3600</code>,
+            <code>?overflow=ellipsis|marquee</code>,
+            <code>?timezone=Europe/Berlin</code>.
+            <?php echo _("See the operator manual chapter "
+                . "\"Public Embed Widgets\" for the full reference.");
+            ?>
+        </p>
+    </fieldset>
+
+</div>

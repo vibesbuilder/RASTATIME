@@ -66,6 +66,17 @@ $pages[] = [
             'controller' => 'embeddablewidgets',
             'action' => 'schedule',
         ],
+        // RASTATIME 2026-05-22 — Now-Playing widget pair settings page.
+        // Single submenu entry for both widgets (Current Show and
+        // Current Track) since they share the same configuration
+        // surface (empty-state labels, theme defaults, embed-code
+        // generation).
+        [
+            'label' => 'Current Show/Track',
+            'module' => 'default',
+            'controller' => 'embeddablewidgets',
+            'action' => 'current-show-track',
+        ],
     ],
 ];
 $pages[] = [
