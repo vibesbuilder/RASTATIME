@@ -515,11 +515,20 @@ Load-More-Footer reinpassen):
 Interner JSON-Endpoint unter `/Embed/track-history-data`.
 Quelle: `cc_playout_history` LEFT JOIN `cc_files` LEFT JOIN
 `cc_show_instances → cc_show` mit Fallback auf
-`cc_playout_history_metadata`.  **Webstream-Plays**
-(`file_id IS NULL`) werden eingeschlossen via Lookup auf
-die Key-Value-Tabelle — Artist = Webstream-Name, Title =
-Live-ICY-Metadata vom Source-Server.  Line-In schreibt
-noch keine Metadaten (deferred — siehe BACKLOG.md).
+`cc_playout_history_metadata`.  Drei Row-Arten:
+
+1. **Scheduled File Plays** (`file_id IS NOT NULL`) —
+   Title / Artist aus `cc_files`.
+2. **Webstream-Plays** (`file_id IS NULL`) — geschrieben
+   von `HistoryService::insertWebstreamMetadata()`.
+   Artist = Webstream-Name, Title = Live-ICY-Metadata.
+3. **Line-Input-Sessions** (`file_id IS NULL`) — neu in
+   2026-05-22 v17.  Geschrieben von `HistoryService::
+   insertLineInLog()` wenn Master Source oder Show
+   Source via Dashboard auf ON umschaltet.  Title =
+   operator-konfigurierbares Label (default "Line
+   Input"), Artist = "Master Source" / "Show Source"
+   je nach Quelle.
 
 Im Modal: über der Show-Zeile steht jetzt die Beschriftung
 **"Played in the show:"**.  Bei Webstream-Einträgen ohne

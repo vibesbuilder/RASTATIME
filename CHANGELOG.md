@@ -9,6 +9,70 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Line-Input session logging in cc_playout_history**
+  (operator request 2026-05-22 v17).  Master Source +
+  Show Source switches (= Line-In + remote-DJ) now write
+  history rows whenever the Dashboard source-switch toggles
+  ON, with `ends` set when the switch goes OFF.  Surfaces
+  in both the Track History widget AND the internal
+  Analytics Playout History dashboard (both read from
+  `cc_playout_history`).
+
+  Operator-explicit scope: do NOT pull real stream
+  metadata from Liquidsoap (Line-In is raw audio with no
+  ICY data anyway); just log the source label as the
+  display title.  Operator-configurable via the new
+  `widget_line_input_label` Preference (default "Line
+  Input"), editable under Settings → Widgets → Track
+  History → "Line-Input label".
+
+  Implementation:
+    - `application/models/Preference.php`: new
+      `GetWidgetLineInputLabel` / `SetWidgetLineInputLabel`.
+    - `application/services/HistoryService.php`: new
+      `insertLineInLog($sourcename, $startDT)` and
+      `endLineInLog($sourcename, $endDT)`.  insertLineIn-
+      Log binds to the currently-airing show instance
+      (best-effort via `Application_Model_Show::
+      GetCurrentShow`), writes `file_id = NULL` (same
+      shape as a webstream entry), and stores three
+      metadata rows: `track_title` (= operator label),
+      `artist_name` (= "Master Source" / "Show Source"
+      so a future UI can differentiate the two), and
+      `showname` (when bound to a show).  Wrapped in
+      try/catch + Logging::warn so a history-write
+      failure can never break the on-air state.  endLineIn-
+      Log closes the most-recent matching open row
+      (file_id NULL + ends NULL + artist_name match) —
+      idempotent, safe to call multiple times.
+    - `application/controllers/DashboardController.php`:
+      Source-switch handler picks up new HistoryService
+      calls for master_dj / live_dj (scheduled_play
+      stays out of this path — it goes through
+      `HistoryService::insertPlayedItem` per item start).
+    - `application/forms/WidgetTrackHistory.php`: new
+      `line_input_label` text input.
+    - `application/controllers/EmbeddablewidgetsController.php`:
+      populate + persist for the new Preference.
+    - `application/views/scripts/embeddablewidgets/
+      track-history.phtml`: caption explains what the
+      label is for + which source switches it covers.
+    - `docs/manual/WIDGETS.md` + `de/` + `fr/` + `es/` —
+      source-table description now lists the three row
+      kinds (scheduled / webstream / line-in).
+    - `BACKLOG.md`: the "Line-In Metadaten" deferred
+      item flipped to DONE with the implementation
+      scope + a note on the one known limitation
+      (direct Liquidsoap-Source-Connect bypasses the
+      Dashboard hook).
+
+  Known limitation: the hook fires only on Dashboard-UI
+  source-switches.  A DJ connecting directly to the
+  Icecast source endpoint won't trigger the history
+  write — that would need a Liquidsoap/Pypo bridge
+  extension.  Standard operator workflow is via the
+  Dashboard though, so in practice this rarely matters.
+
 - **Public Embed Widget: Track History** (operator request
   2026-05-22, BACKLOG widget-wave 3).  Recent-track playout
   log for the last 7 days — visitor picks a day from a

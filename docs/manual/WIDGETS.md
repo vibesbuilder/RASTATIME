@@ -607,17 +607,32 @@ and on Load-more.  Output shape:
 Source: `cc_playout_history` LEFT JOIN `cc_files`
 (track_title, artist_name) LEFT JOIN
 `cc_show_instances` → `cc_show` for the show context.
-**Webstream plays** (rows where `file_id IS NULL`) are
-included via a fallback lookup against
-`cc_playout_history_metadata` — the same key-value table
-that `HistoryService::insertWebstreamMetadata()` writes
-to when Liquidsoap calls `/api/notify-webstream-data`.
-For webstream entries the `artist` field carries the
-webstream's display name (`cc_webstream.name`, e.g.
-"BBC News Live") and the `title` carries whatever
-ICY-/Now-Playing-metadata the upstream stream server
-sent at the time.  Line-In plays don't write metadata
-to history yet (deferred — see BACKLOG.md).
+**Three kinds of rows** land in the table:
+
+1. **Scheduled file plays** (`file_id IS NOT NULL`) —
+   title / artist live on `cc_files` and the JOIN picks
+   them up directly.
+2. **Webstream plays** (`file_id IS NULL`, metadata-only) —
+   written by `HistoryService::insertWebstreamMetadata()`
+   when Liquidsoap calls `/api/notify-webstream-data`.
+   The `artist` field carries the webstream's display
+   name (`cc_webstream.name`, e.g. "BBC News Live") and
+   the `title` carries whatever ICY-/Now-Playing metadata
+   the upstream stream server sent.
+3. **Line-Input sessions** (`file_id IS NULL`, metadata-
+   only) — written by `HistoryService::insertLineInLog()`
+   when the operator toggles a Master Source or Show
+   Source switch in the Dashboard.  The `title` carries
+   the configurable display label (default "Line Input",
+   editable under Settings → Widgets → Track History →
+   "Line-Input label") and the `artist` carries the
+   source identifier ("Master Source" for master_dj,
+   "Show Source" for live_dj) so a future UI pass could
+   differentiate the two.
+
+For all three kinds the optional show binding (via
+`instance_id`) drives the "Played in the show:" caption
+in the modal.
 
 ### Settings page
 

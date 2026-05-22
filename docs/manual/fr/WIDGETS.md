@@ -487,12 +487,19 @@ La page **Paramètres → Widgets → Track History** héberge en plus la case *
 
 Source : `cc_playout_history` LEFT JOIN `cc_files` LEFT JOIN
 `cc_show_instances` → `cc_show` avec fallback sur
-`cc_playout_history_metadata`.  **Diffusions webstream**
-(`file_id IS NULL`) incluses via lookup sur la table
-clé-valeur — artist = nom du webstream, title =
-métadonnée ICY/Now-Playing en direct.  Le Line-In
-n'écrit pas encore de métadonnées (différé — voir
-BACKLOG.md).
+`cc_playout_history_metadata`.  Trois types de lignes :
+
+1. **Lectures de fichier programmées** (`file_id IS NOT
+   NULL`) — titre / artiste depuis `cc_files`.
+2. **Diffusions webstream** (`file_id IS NULL`) — écrites
+   par `HistoryService::insertWebstreamMetadata()`.
+   Artist = nom du webstream, Title = métadonnée live.
+3. **Sessions Line-Input** (`file_id IS NULL`) — nouveau
+   en 2026-05-22 v17.  Écrites par `HistoryService::
+   insertLineInLog()` quand Master Source ou Show
+   Source passe à ON via Dashboard.  Title = libellé
+   configurable (défaut "Line Input"), Artist =
+   "Master Source" / "Show Source" selon la source.
 
 Dans le modal : la légende **"Played in the show:"**
 précède la ligne du nom d'émission.  Pour les entrées

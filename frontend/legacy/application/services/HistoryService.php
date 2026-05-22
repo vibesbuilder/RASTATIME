@@ -529,6 +529,151 @@ class Application_Service_HistoryService
         }
     }
 
+    /**
+     * RASTATIME 2026-05-22 v17 — log a Line-Input / Live source
+     * switch into cc_playout_history.  Operator request: surface
+     * these in the Track History widget + Analytics Playout
+     * History dashboard with the operator-configured label.
+     *
+     * Writes a "synthetic" history row with file_id = NULL (same
+     * shape as a webstream entry, so the existing widget JOIN
+     * picks it up via the COALESCE fallback to
+     * cc_playout_history_metadata) and ends = NULL (set later by
+     * endLineInLog when the source switches off).
+     *
+     * The instance_id binding to the current show is best-effort:
+     * if a show is currently airing we bind to it so the modal's
+     * "Played in the show:" caption shows the show name; if no
+     * show is on, the row still lands without a show context.
+     */
+    public function insertLineInLog($sourcename, $startDT)
+    {
+        $this->con->beginTransaction();
+
+        try {
+            $label = Application_Model_Preference::GetWidgetLineInputLabel();
+
+            // Best-effort show binding: find the currently-airing
+            // instance and link to it.  Direct SQL keeps this
+            // lookup cheap and avoids dragging in the Show model
+            // (which has heavier query overhead).
+            $currentShow = Application_Model_Show::GetCurrentShow();
+            $instanceId  = null;
+            if (!empty($currentShow) && isset($currentShow[0]['instance_id'])) {
+                $instanceId = (int) $currentShow[0]['instance_id'];
+            }
+
+            $history = new CcPlayoutHistory();
+            $history->setDbStarts($startDT);
+            $history->setDbEnds(null);
+            $history->setDbInstanceId($instanceId);
+
+            // Three metadata rows, mirroring the webstream
+            // convention so existing readers (Track History
+            // widget, Analytics dashboard) don't need to special-
+            // case Line-In entries:
+            //   - track_title  : the configurable label
+            //   - artist_name  : the source identifier so a
+            //                    future UI can differentiate
+            //                    master_dj vs live_dj
+            //   - showname     : the current show's name (when
+            //                    bound) for legacy Playout
+            //                    History compatibility
+            $metadata = [
+                MDATA_KEY_TITLE   => $label,
+                MDATA_KEY_CREATOR => $this->_lineInSourceLabel($sourcename),
+            ];
+            if ($instanceId !== null) {
+                $instance = CcShowInstancesQuery::create()->findPk($instanceId, $this->con);
+                if ($instance) {
+                    $show = $instance->getCcShow($this->con);
+                    if ($show) {
+                        $metadata['showname'] = $show->getDbName();
+                    }
+                }
+            }
+
+            foreach ($metadata as $key => $val) {
+                $meta = new CcPlayoutHistoryMetaData();
+                $meta->setDbKey($key);
+                $meta->setDbValue($val);
+                $history->addCcPlayoutHistoryMetaData($meta);
+            }
+
+            $history->save($this->con);
+
+            $this->con->commit();
+        } catch (Exception $e) {
+            $this->con->rollback();
+            // Log + swallow: a failure here shouldn't break the
+            // source-switch itself.  The on-air state still
+            // toggles correctly; only the history-write is lost.
+            Logging::warn('insertLineInLog failed: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Close the most-recent open Line-Input row for this source
+     * by setting its `ends` column to now.  Idempotent — running
+     * twice is a no-op (second pass finds no open row).
+     */
+    public function endLineInLog($sourcename, $endDT)
+    {
+        try {
+            $sourceLabel = $this->_lineInSourceLabel($sourcename);
+
+            // Find the most-recently-started open row that
+            // matches this source.  Key + value join into the
+            // metadata table; LIMIT 1 because we only ever close
+            // the latest one.
+            $sql = "SELECT ph.id
+                    FROM cc_playout_history ph
+                    JOIN cc_playout_history_metadata md
+                      ON md.history_id = ph.id
+                    WHERE ph.ends IS NULL
+                      AND ph.file_id IS NULL
+                      AND md.key = :artist_key
+                      AND md.value = :source_label
+                    ORDER BY ph.starts DESC
+                    LIMIT 1";
+            $row = Application_Common_Database::prepareAndExecute(
+                $sql,
+                [
+                    ':artist_key'   => MDATA_KEY_CREATOR,
+                    ':source_label' => $sourceLabel,
+                ],
+                'all'
+            );
+
+            if (empty($row)) {
+                return;   // nothing to close — safe no-op
+            }
+
+            $history = CcPlayoutHistoryQuery::create()->findPk($row[0]['id'], $this->con);
+            if ($history) {
+                $history->setDbEnds($endDT);
+                $history->save($this->con);
+            }
+        } catch (Exception $e) {
+            Logging::warn('endLineInLog failed: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Map raw RASTATIME source names ('master_dj', 'live_dj') to
+     * the operator-readable labels stored as the artist_name
+     * metadata of Line-Input history rows.  Used to differentiate
+     * the two source types in the otherwise-uniform Line-Input
+     * log, and as a stable key for endLineInLog to find the
+     * matching open row.
+     */
+    private function _lineInSourceLabel($sourcename)
+    {
+        if ($sourcename === 'master_dj') { return 'Master Source'; }
+        if ($sourcename === 'live_dj')   { return 'Show Source'; }
+        return ucfirst((string) $sourcename);
+    }
+
     public function insertPlayedItem($schedId)
     {
         $this->con->beginTransaction();

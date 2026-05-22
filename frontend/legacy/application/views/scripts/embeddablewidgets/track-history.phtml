@@ -46,6 +46,15 @@ $embedUrl50  = $publicUrl . '/embed/track-history?pagesize=50';
                 . "entries from the public log — operators typically "
                 . "want this on with a 60 s threshold.");
             ?>
+            <br><br>
+            <?php echo _("<strong>Line-Input label</strong>: appears in the "
+                . "track history (and the internal Analytics Playout History "
+                . "dashboard) whenever a Master Source or Show Source switches "
+                . "ON via the Dashboard.  Applies to both source types — "
+                . "RASTATIME differentiates them internally as the 'artist' "
+                . "metadata (Master Source / Show Source).  Default 'Line "
+                . "Input'.");
+            ?>
         </p>
 
         <?php echo $this->form; ?>

@@ -57,6 +57,18 @@ class DashboardController extends Zend_Controller_Action
 
             $data = ['sourcename' => $sourcename, 'status' => $change_status_to];
             Application_Model_RabbitMq::SendMessageToPypo('switch_source', $data);
+
+            // RASTATIME 2026-05-22 v17 — also log Line-Input
+            // sessions into cc_playout_history so they surface
+            // in the Track History widget + Analytics Playout
+            // History dashboard.  Only for the live sources
+            // (master_dj = studio line-in, live_dj = remote DJ);
+            // scheduled_play already goes through
+            // HistoryService::insertPlayedItem on every item
+            // start, so adding it here would double-count.
+            $now = new DateTime('now', new DateTimeZone('UTC'));
+            $isLiveSource = ($sourcename === 'master_dj' || $sourcename === 'live_dj');
+
             if (strtolower($current_status) == 'on') {
                 Application_Model_Preference::SetSourceSwitchStatus($sourcename, 'off');
                 $this->view->status = 'OFF';
@@ -64,8 +76,13 @@ class DashboardController extends Zend_Controller_Action
                 // Log table updates
                 Application_Model_LiveLog::SetEndTime(
                     $sourcename == 'scheduled_play' ? 'S' : 'L',
-                    new DateTime('now', new DateTimeZone('UTC'))
+                    $now
                 );
+
+                if ($isLiveSource) {
+                    $historyService = new Application_Service_HistoryService();
+                    $historyService->endLineInLog($sourcename, $now);
+                }
             } else {
                 Application_Model_Preference::SetSourceSwitchStatus($sourcename, 'on');
                 $this->view->status = 'ON';
@@ -73,8 +90,13 @@ class DashboardController extends Zend_Controller_Action
                 // Log table updates
                 Application_Model_LiveLog::SetNewLogTime(
                     $sourcename == 'scheduled_play' ? 'S' : 'L',
-                    new DateTime('now', new DateTimeZone('UTC'))
+                    $now
                 );
+
+                if ($isLiveSource) {
+                    $historyService = new Application_Service_HistoryService();
+                    $historyService->insertLineInLog($sourcename, $now);
+                }
             }
         } else {
             if ($source_connected) {

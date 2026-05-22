@@ -364,12 +364,17 @@ class EmbeddableWidgetsController extends Zend_Controller_Action
                     (int) $minSecRaw
                 );
             }
+            // RASTATIME 2026-05-22 v17 — Line-Input display label.
+            Application_Model_Preference::SetWidgetLineInputLabel(
+                $form->getValue('line_input_label')
+            );
             $this->view->saved = true;
         } else {
             $form->populate([
                 'widget_no_track_history' => Application_Model_Preference::GetWidgetNoTrackHistory(),
                 'exclude_short_tracks'    => Application_Model_Preference::GetWidgetTrackHistoryExcludeShort() ? 1 : 0,
                 'min_seconds'             => Application_Model_Preference::GetWidgetTrackHistoryMinSeconds(),
+                'line_input_label'        => Application_Model_Preference::GetWidgetLineInputLabel(),
             ]);
         }
 

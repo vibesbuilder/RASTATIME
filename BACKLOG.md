@@ -75,39 +75,48 @@ der Operator das Signal gibt.
 
 ---
 
-### 🟡 Line-In Metadaten in Track History (Defer)
+### ✅ Line-In Metadaten in Track History (DONE 2026-05-22 v17)
 
-**Status:** Operator-Wunsch 2026-05-22, deferred bis nach
-Welle-3-Polish.
+**Status:** DONE — vereinfachte Variante umgesetzt.
+Operator-Wunsch: nur den Line-Input-Namen loggen, keine
+echten Stream-Metadaten.
 
-**Problem:** Line-Inputs (z.B. externes Studio-Mic, externes
-Mischpult) liefern aktuell **keine** Metadaten in
-`cc_playout_history`.  Liquidsoap behandelt einen Line-In
-als rohes Audio ohne Metadata-Stream — anders als bei
-einem Webstream, wo der Source-Server ICY/Now-Playing-
-Metadaten mitsendet.
+**Was wurde gebaut:**
+- `HistoryService::insertLineInLog()` + `endLineInLog()`
+  — schreiben/schließen `cc_playout_history`-Rows mit
+  `file_id = NULL` + Metadaten-Keys `track_title` /
+  `artist_name`.
+- `DashboardController::switchSourceAction` Hook — bei
+  ON/OFF eines `master_dj` oder `live_dj` Source-Switches
+  wird der History-Eintrag automatisch geschrieben /
+  geschlossen.
+- `widget_line_input_label` Preference (default "Line
+  Input"), operator-editierbar unter Settings → Widgets
+  → Track History.
+- Track History Widget + Analytics Playout History
+  Dashboard zeigen die Einträge automatisch (das LEFT
+  JOIN + COALESCE-Pattern war schon da von der
+  Webstream-Inklusion).
 
-**Lösungspfad:**
-1. Liquidsoap-Skript erweitern, sodass beim Wechsel auf
-   Line-In ein `notify_webstream_data`-äquivalenter Call
-   gefeuert wird, mit `track_title` = Show-Name (oder
-   freiem Operator-Text) und `artist_name` = "Line-In".
-2. ApiController um `notifyLineInDataAction` erweitern
-   (oder bestehenden `notifyWebstreamDataAction` für
-   Line-In wiederverwenden).
-3. HistoryService::insertLineInMetadata() neu, analog zu
-   `insertWebstreamMetadata`.
-4. Optional: Operator-konfigurierbares Label für Line-In
-   im UI (Settings → Streams → Line-In Label).
+**Was wurde explizit NICHT gebaut** (war im ursprünglichen
+Plan, aber Operator hat es verworfen):
+- Liquidsoap-Skript-Modifikation zum Auslesen echter
+  Line-In-Metadaten — Operator wollte das nicht, das
+  Label-only Logging reicht ihm.
+- Differenzierte Settings-Labels für master_dj vs
+  live_dj — beide nutzen das gleiche `track_title`, im
+  `artist_name` steht der raw source identifier
+  ("Master Source" / "Show Source") falls eine spätere
+  UI-Erweiterung sie unterscheiden möchte.
 
-**Aufwand:** ~1 Tag (Liquidsoap-Konfig-Test + Backend +
-Pypo-Bridge-Check).  Voraussetzung: stabile
-Liquidsoap-Skript-Modifikation, kein Live-Betrieb-Risiko.
-
-**Wert:** Mittel — Stationen mit häufigem Line-In-Use
-(z.B. Live-Sendungen aus dem Studio) hätten dann auch
-diese im Public-Log-Widget.  Stationen die fast nie
-Line-In nutzen sehen keinen Unterschied.
+**Bekannte Grenzen:**
+- Greift nur bei Source-Switches **via Dashboard-UI**.
+  Direkter Liquidsoap-Source-Connect ohne Operator-
+  Eingriff (z.B. ein DJ verbindet sich direkt zum
+  Icecast-Source-Endpoint) löst den Hook nicht aus —
+  würde Liquidsoap-/Pypo-Bridge-Erweiterung erfordern.
+  Operator-Workflow ist aber typischerweise via
+  Dashboard, daher in der Praxis kaum relevant.
 
 ---
 

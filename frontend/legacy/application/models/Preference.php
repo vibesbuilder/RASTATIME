@@ -648,6 +648,23 @@ class Application_Model_Preference
         self::setValue('widget_track_history_min_seconds', (string) $i);
     }
 
+    // RASTATIME 2026-05-22 v17 — display label for Line-In
+    // sessions written into cc_playout_history when a
+    // master_dj / live_dj source switches ON.  Operator
+    // request: surface line-input sessions in the public
+    // Track History widget + the internal Playout History
+    // dashboard with a recognisable name (since Liquidsoap
+    // doesn't send real metadata for raw-audio sources).
+    // The label is shared between master_dj and live_dj
+    // switches — differentiation between the two would be
+    // a follow-up if needed.
+    public static function GetWidgetLineInputLabel()
+    {
+        $v = self::getValue('widget_line_input_label');
+        return $v === '' ? 'Line Input' : $v;
+    }
+    public static function SetWidgetLineInputLabel($v)    { self::setValue('widget_line_input_label', (string) $v); }
+
     public static function SetPhone($phone)
     {
         self::setValue('phone', $phone);
