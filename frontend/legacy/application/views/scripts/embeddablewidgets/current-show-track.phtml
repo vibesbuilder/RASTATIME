@@ -96,11 +96,14 @@ $trackUrlDark  = $trackUrl . '?theme=dark';
         <p style="margin-top: 1em; color: #666;">
             <?php echo _("Copy the snippet above and paste it into your "
                 . "website's HTML to embed the widget.  Optional URL "
-                . "parameters: "); ?>
-            <code>?theme=auto|dark|light</code>,
-            <code>?cache=10..3600</code>,
-            <code>?overflow=ellipsis|marquee</code>,
-            <code>?timezone=Europe/Berlin</code>.
+                . "parameters (the first one starts with <code>?</code>, "
+                . "every additional one is joined with <code>&amp;</code>): "); ?>
+            <code>theme=auto|dark|light</code>,
+            <code>cache=10..3600</code>,
+            <code>overflow=ellipsis|marquee</code>,
+            <code>timezone=Europe/Berlin</code>.
+            <?php echo _("Example: "); ?>
+            <code>...?theme=dark&amp;cache=120</code>.
             <?php echo _("See the operator manual chapter "
                 . "\"Public Embed Widgets\" for the full reference.");
             ?>
