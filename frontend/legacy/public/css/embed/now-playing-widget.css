@@ -628,7 +628,31 @@ html, body {
 }
 
 .np-widget.np-weekly-schedule .np-ws-day {
+    /*  Each day-panel is its own scroll container (operator
+        request 2026-05-22 v7).  Max-height keeps the panel
+        inside a 340 px iframe; if the day has more shows than
+        fit, the visitor scrolls within the panel rather than
+        the iframe (which has scrolling="no").  When the
+        operator activates the today-tab, JS scrolls the
+        currently-airing show into the panel viewport so the
+        user lands directly on "what's on right now" without
+        having to scroll past the early-morning programme.  */
     display: none;
+    max-height: 250px;
+    overflow-y: auto;
+    /*  Subtle scrollbar that matches the muted theme variable,
+        only visible while scrolling (webkit) or always (firefox
+        — falls back to default).  */
+    scrollbar-width: thin;
+    scrollbar-color: var(--np-fg-muted) transparent;
+}
+
+.np-widget.np-weekly-schedule .np-ws-day::-webkit-scrollbar {
+    width: 6px;
+}
+
+.np-widget.np-weekly-schedule .np-ws-day::-webkit-scrollbar-thumb {
+    background: var(--np-fg-muted);
 }
 
 .np-widget.np-weekly-schedule .np-ws-day.np-ws-day-active {
@@ -638,18 +662,31 @@ html, body {
 .np-widget.np-weekly-schedule .np-ws-row {
     /*  One row per show: HH:MM-HH:MM on the left, show name on
         the right.  Same flex skeleton as the other list-shaped
-        widgets so the marquee / ellipsis overflow rules apply.  */
+        widgets so the marquee / ellipsis overflow rules apply.
+
+        Transparent left-border on every row so the layout
+        doesn't shift when the .np-ws-row-current rule replaces
+        it with an accent stripe.  */
     color: var(--np-fg);
     display: flex;
     align-items: baseline;
     gap: 0.8em;
-    padding: 6px 0;
+    padding: 6px 0 6px 8px;
     border-top: 1px dotted var(--np-fg-muted);
+    border-left: 3px solid transparent;
     overflow: hidden;
 }
 
 .np-widget.np-weekly-schedule .np-ws-row:first-child {
     border-top: 0;
+}
+
+.np-widget.np-weekly-schedule .np-ws-row-current {
+    /*  Accent left-border so the operator sees which show is
+        airing right now after the auto-scroll lands.  Subtle on
+        purpose — the row stays in the visual rhythm of the
+        list rather than dominating it.  */
+    border-left-color: var(--np-accent);
 }
 
 .np-widget.np-weekly-schedule .np-ws-row-time {

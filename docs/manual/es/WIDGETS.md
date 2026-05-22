@@ -347,6 +347,17 @@ MON  TUE  WED  THU  FRI  SAT  SUN                   ← pestañas
 > el mismo color de acento con alpha baja — pista de
 > interactividad sutil.
 
+> **Auto-scroll al programa actualmente al aire.**  Cuando
+> la pestaña activa es hoy, el widget desplaza el programa
+> que se está emitiendo ahora al centro del viewport del
+> panel — para que el visitante aterrice directamente en
+> "lo que suena ahora" en lugar de tener que desplazarse
+> por la programación de la madrugada.  El programa en
+> curso también se marca con un borde izquierdo color
+> acento para que el visitante lo identifique tras el
+> desplazamiento.  Sin efecto cuando hoy tiene un hueco
+> de programación o cuando otro día está activo.
+
 > **Ancho.** El widget Weekly Schedule mide **400 px de ancho**
 > (más ancho que los otros widgets Wave-1 — consume más
 > espacio horizontal por fila para hora + nombre sin

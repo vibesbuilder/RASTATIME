@@ -351,6 +351,16 @@ MON  TUE  WED  THU  FRI  SAT  SUN                   ← Tagestabs
 > oder die ◀ / ▶ Buttons leuchtet die gleiche Akzentfarbe
 > mit niedriger Alpha auf — subtiler Interaktivitäts-Cue.
 
+> **Auto-Scroll zur laufenden Sendung.**  Wenn der aktive
+> Tab heute ist, scrollt das Widget die gerade ausgestrahlte
+> Sendung in die Mitte des Panel-Viewports — so landet der
+> Besucher direkt auf "was läuft jetzt", statt erst durch das
+> Morgenprogramm scrollen zu müssen.  Die laufende Sendung
+> bekommt zusätzlich einen akzentfarbenen Left-Border, damit
+> der Besucher sie nach dem Scroll sofort erkennt.  Kein
+> Effekt, wenn heute gerade eine Programmlücke ist (keine
+> laufende Sendung) oder wenn ein anderer Tag aktiv ist.
+
 > **Breite.** Das Weekly-Schedule-Widget ist **400 px breit**
 > (breiter als die anderen Wave-1-Widgets — es braucht mehr
 > Horizontalraum pro Zeile für Zeit + Name ohne Truncation).

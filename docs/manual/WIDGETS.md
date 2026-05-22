@@ -337,6 +337,17 @@ MON  TUE  WED  THU  FRI  SAT  SUN                   ← day tabs
 > up the same accent at low alpha as a subtle interactive
 > cue.
 
+> **Auto-scroll to the currently-airing show.**  When the
+> active tab is today, the widget scrolls the show that
+> is on air right now into the centre of the panel
+> viewport — so the visitor lands directly on "what's
+> playing now" instead of having to scroll past the early-
+> morning programme.  The same show is marked with an
+> accent left-border so the visitor can spot it after the
+> scroll.  No-op when today has a programme gap (no
+> currently-airing show), or when the active tab is any
+> other day.
+
 > **Width.** The Weekly Schedule widget body is **400 px wide**
 > (wider than the other Wave-1 widgets — it consumes more
 > horizontal space per row to fit the time + name without

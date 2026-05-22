@@ -350,6 +350,18 @@ MON  TUE  WED  THU  FRI  SAT  SUN                   ← onglets
 > ◀ / ▶ allume la même couleur d'accent en alpha
 > faible — indice d'interactivité subtil.
 
+> **Défilement automatique vers l'émission en cours.**
+> Quand l'onglet actif est aujourd'hui, le widget fait
+> défiler l'émission actuellement diffusée au centre du
+> viewport du panneau — pour que le visiteur atterrisse
+> directement sur "ce qui passe maintenant" au lieu de
+> devoir faire défiler par-dessus le programme du petit
+> matin.  L'émission en cours est aussi marquée d'une
+> bordure gauche couleur d'accent pour que le visiteur la
+> repère après le défilement.  Sans effet quand
+> aujourd'hui a une lacune de programme ou quand un autre
+> jour est actif.
+
 > **Largeur.** Le widget Weekly Schedule fait **400 px de large**
 > (plus large que les autres widgets Wave-1 — il consomme plus
 > d'espace horizontal par ligne pour l'heure + le nom sans

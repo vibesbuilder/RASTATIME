@@ -243,9 +243,21 @@
                 emptyEl.textContent = emptyLabel;
                 panel.appendChild(emptyEl);
             } else {
+                var nowMs = Date.now();
                 day.shows.forEach(function (s) {
                     var row = document.createElement('div');
                     row.className = 'np-ws-row';
+
+                    // Mark the currently-airing show so the CSS can
+                    // draw the accent left-border and the activate()
+                    // handler knows where to scroll on the today-tab.
+                    // Boundary semantics match the On-Air-Today widget:
+                    // includes the start instant, excludes the end.
+                    var startMs = s.starts.getTime();
+                    var endMs   = s.ends.getTime();
+                    if (nowMs >= startMs && nowMs < endMs) {
+                        row.className += ' np-ws-row-current';
+                    }
 
                     var timeSpan = document.createElement('span');
                     timeSpan.className = 'np-ws-row-time';
@@ -306,9 +318,51 @@
                 String(idx) === tabs[i].getAttribute('data-day-idx'));
         }
         for (var j = 0; j < panels.length; j++) {
-            panels[j].classList.toggle('np-ws-day-active',
-                String(idx) === panels[j].getAttribute('data-day-idx'));
+            var isActive = (String(idx) === panels[j].getAttribute('data-day-idx'));
+            panels[j].classList.toggle('np-ws-day-active', isActive);
+            if (isActive) {
+                scrollToCurrent(panels[j]);
+            }
         }
+    }
+
+    /*
+     * Centre the currently-airing show in the panel viewport.
+     * No-op when the panel has no .np-ws-row-current (i.e. the
+     * activated day isn't today, or today has a programme gap
+     * right now).  Triggered from activate() — fires on first
+     * paint for today's tab when weekOffset === 0, and on every
+     * subsequent tab-click that lands back on today.
+     */
+    function scrollToCurrent(panel) {
+        var currentRow = panel.querySelector('.np-ws-row-current');
+        if (!currentRow) { return; }
+
+        // requestAnimationFrame defers the scroll until after the
+        // panel has been laid out as visible (display:block from
+        // the .np-ws-day-active class).  Without this, offsetTop
+        // / clientHeight read zero on the very first activate().
+        requestAnimationFrame(function () {
+            try {
+                // Centre the row inside the panel's scroll
+                // viewport.  Compute manually rather than relying
+                // on Element.scrollIntoView({block:'center'}) —
+                // that walks all scroll ancestors and would
+                // scroll the embedding iframe too in some
+                // browsers, which we definitely don't want.
+                var rowOffsetInPanel = currentRow.offsetTop;
+                var panelHeight      = panel.clientHeight;
+                var rowHeight        = currentRow.clientHeight;
+                panel.scrollTop = Math.max(
+                    0,
+                    rowOffsetInPanel - (panelHeight / 2) + (rowHeight / 2)
+                );
+            } catch (e) {
+                // Defensive fallback — modern browsers handle
+                // this fine but older WebKit can throw on
+                // hidden / detached elements.
+            }
+        });
     }
 
     /*

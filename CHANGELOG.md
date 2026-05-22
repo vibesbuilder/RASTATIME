@@ -359,6 +359,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Weekly Schedule v2: auto-scroll to the currently-airing
+  show** (operator request 2026-05-22 v7).  When the today-tab
+  is active, the widget centres the show that is on air
+  right now in the panel viewport, so the visitor lands
+  directly on "what's playing now" instead of having to
+  scroll past the early-morning programme.
+
+  Implementation:
+    * `.np-ws-day` becomes its own scroll container
+      (`max-height: 250px; overflow-y: auto;`) so the show
+      list can grow without spilling outside the 340 px
+      iframe (which has `scrolling="no"`).
+    * Subtle scrollbar styling (matches `--np-fg-muted`,
+      thin on Firefox, 6 px on WebKit).
+    * Client-side: each row gets the `.np-ws-row-current`
+      class when `Date.now()` falls in `[starts, ends)` —
+      same boundary semantics as the On-Air-Today widget.
+    * `.np-ws-row-current` is marked with an accent left-
+      border (`--np-accent`) so the visitor spots it after
+      the scroll; rows reserve a 3 px transparent border-
+      left on every line so the layout stays stable.
+    * On `activate()` of any day-panel, `scrollToCurrent`
+      runs — finds the current row (if any) and computes
+      `panel.scrollTop` to centre it.  Skipped when the
+      activated day has no airing show, or when the
+      visitor switches to a non-today tab (no
+      `.np-ws-row-current` is present there).
+    * Uses `requestAnimationFrame` so the panel is laid
+      out (display:block via `.np-ws-day-active`) before
+      reading `offsetTop` / `clientHeight` — avoids the
+      first-paint zero-height race.
+    * Manual `panel.scrollTop` instead of
+      `scrollIntoView({block:'center'})` — the latter walks
+      all scroll ancestors and would scroll the embedding
+      iframe too in some browsers.
+
+  Files: `public/css/embed/now-playing-widget.css`
+  (`.np-ws-day` scroll container + scrollbar styling +
+  `.np-ws-row-current` accent border); `public/js/airtime/
+  embed/weekly-schedule-widget.js` (current-row marker in
+  render + `scrollToCurrent` helper called from
+  `activate`); `docs/manual/WIDGETS.md` + `de/` + `fr/` +
+  `es/` (new note block about the auto-scroll behaviour).
+
 - **Weekly Schedule v2: kantig look + accent colour + tight
   navigation cap + bgcolor parameter** (operator request
   2026-05-22 v6, five polish items on the just-shipped v2
