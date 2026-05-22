@@ -66,6 +66,15 @@ $pages[] = [
             'controller' => 'embeddablewidgets',
             'action' => 'schedule',
         ],
+        // RASTATIME 2026-05-22 — Multi-View Schedule (FullCalendar
+        // Day / 2-Day / Week views).  Sits under Weekly Schedule
+        // in the submenu — operator request.
+        [
+            'label' => 'Multi-View Schedule',
+            'module' => 'default',
+            'controller' => 'embeddablewidgets',
+            'action' => 'multi-view-schedule',
+        ],
         // RASTATIME 2026-05-22 — Now-Playing widget pair settings page.
         // Single submenu entry for both widgets (Current Show and
         // Current Track) since they share the same configuration

@@ -9,6 +9,88 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Public Embed Widget: Multi-View Schedule** (operator
+  request 2026-05-22, BACKLOG widget-wave 2 second half).
+  Calendar-style iframe widget powered by FullCalendar 6.1.10
+  (locally vendored, no CDN dependency).  Sister widget to
+  the simpler Weekly-Schedule tab widget; sits under it in
+  the **Settings → Widgets** submenu.
+
+      <iframe src=".../embed/multi-view-schedule"
+              width="100%" height="600" frameborder="0"></iframe>
+
+  Three operator-switchable views: **Day**, **2-Day**,
+  **Week**.  In-widget header band with ◀ / ▶ navigation,
+  centred date-range label, **Today** button (snaps view +
+  re-runs auto-scroll), and DAY / 2-DAY / WEEK toggle.
+
+  Show slots are coloured from each show's configured
+  `cc_show.background_color`; empty colours fall back to a
+  soft accent fill.  Clicking a show opens a modal with the
+  show's name, time range, description, and a click-through
+  link to the show URL (if configured).  The currently-
+  airing show is outlined with an accent ring, and on
+  first paint (or after a Today click) the calendar auto-
+  scrolls the now-indicator line into the centre of the
+  viewport.
+
+  URL parameters: `view=day|2day|week`, `theme`, `cache`
+  (default 300 s = 5 min — bigger than the other widgets
+  because the calendar payload is larger and refreshes
+  less often), `bg`, `bgcolor`, `timezone`.
+
+  Inspired by the operator's existing radio-calendar
+  prototype (https://example.org/radio-calendar/), reworked
+  to source from RASTATIME's cc_show_instances + cc_show
+  instead of the original Outlook calendar bridge.
+
+  Files:
+    - `application/controllers/EmbedController.php` —
+      two new actions (`multiViewScheduleAction`,
+      `multiViewScheduleDataAction`) + one helper
+      (`_fetchMultiViewEvents`).  `_resolveCacheTtl` picks
+      up an optional `$defaultSeconds` parameter so this
+      widget can default to 300 s instead of 60 s.
+    - `application/views/scripts/embed/multi-view-schedule.phtml`
+      — vanilla shell with FullCalendar mount point + header
+      band markup + modal scaffolding.
+    - `application/controllers/EmbeddablewidgetsController.php`
+      — new `multiViewScheduleAction` settings page.
+    - `application/forms/WidgetMultiViewSchedule.php` —
+      single empty-state label input.
+    - `application/views/scripts/embeddablewidgets/multi-view-schedule.phtml`
+      — settings page: label form + dark-backdrop preview
+      iframe + ready-made embed-code snippets for all three
+      default views.
+    - `application/configs/navigation.php` — new submenu
+      entry "Multi-View Schedule" right under "Weekly
+      Schedule" (operator-requested placement).
+    - `application/models/Preference.php` — new
+      `GetWidgetNoMultiViewSchedule` /
+      `SetWidgetNoMultiViewSchedule` pair with English
+      fallback.
+    - `public/js/libs/fullcalendar/index.global.min.js`
+      (~282 KB) — vendored FullCalendar 6.1.10 bundle (core
+      + day-grid + time-grid + list views; CSS injected at
+      runtime, no separate stylesheet).
+    - `public/js/libs/fullcalendar/locales-all.global.min.js`
+      (~26 KB) — all 80+ locales bundled.
+    - `public/js/libs/fullcalendar/VERSION.txt` — pinned
+      version + upgrade instructions.
+    - `public/js/airtime/embed/multi-view-schedule-widget.js`
+      — vanilla JS runtime (~350 LoC): FullCalendar init +
+      lazy event-fetch + custom header wiring + modal +
+      auto-scroll-to-now + current-event marking.
+    - `public/css/embed/now-playing-widget.css` — new
+      `.np-multi-view-schedule` block (~200 LoC): header
+      band, view switcher, FullCalendar theme integration,
+      kantig (zero border-radius) overrides, accent-coloured
+      now-indicator, modal styling, light/dark theme
+      variants.
+    - `docs/manual/WIDGETS.md` + `de/` + `fr/` + `es/` —
+      new §7 chapter; family table updated; downstream
+      sections renumbered 8-13.
+
 - **Public Embed Widget: Weekly Schedule v2**
   (operator request 2026-05-22, BACKLOG widget-wave 2 first
   half).  Modernised replacement for the upstream jQuery 1.8.3

@@ -305,6 +305,35 @@ class EmbeddableWidgetsController extends Zend_Controller_Action
         $this->view->publicUrl = Config::getPublicUrl();
     }
 
+    /**
+     * RASTATIME 2026-05-22 — Settings page for the Multi-View
+     * Schedule public embed widget (FullCalendar-powered Day /
+     * 2-Day / Week view).  Single empty-state label form + live
+     * preview iframe + ready-made embed-code snippets for all
+     * three default views.
+     */
+    public function multiViewScheduleAction()
+    {
+        Zend_Layout::getMvcInstance()->assign('parent_page', 'Widgets');
+
+        $request = $this->getRequest();
+        $form = new Application_Form_WidgetMultiViewSchedule();
+
+        if ($request->isPost() && $form->isValid($request->getPost())) {
+            Application_Model_Preference::SetWidgetNoMultiViewSchedule(
+                $form->getValue('widget_no_multi_view_schedule')
+            );
+            $this->view->saved = true;
+        } else {
+            $form->populate([
+                'widget_no_multi_view_schedule' => Application_Model_Preference::GetWidgetNoMultiViewSchedule(),
+            ]);
+        }
+
+        $this->view->form = $form;
+        $this->view->publicUrl = Config::getPublicUrl();
+    }
+
     // The Facebook widget is untested & unsupported, the widget has been removed from the navigation in navigation.php
     public function facebookAction()
     {

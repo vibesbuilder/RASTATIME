@@ -66,7 +66,7 @@ der Operator das Signal gibt.
 
 **Welle 2 (~1.5 Wochen):**
 - ✅ **DONE** Weekly Schedule modernisiert (Wave-1-Style): ±N-Wochen-Navigation (`?week_offset`), Link-Embedding mit `?link=plain|underline` (default plain), LibreTime-Branding raus, optionales BG-Bild via `?bg=URL`, `?theme=auto|dark|light`, vollständiger Vanilla-JS-Stack ohne jQuery/Handlebars. Settings-Submenu **Widgets → Weekly Schedule** mit Label + Preview + Embed-Code.
-- Weekly Program → Day / 2-Day / Week View-Switcher mit Header (~450 LoC)
+- ✅ **DONE** Multi-View Schedule Widget (`/embed/multi-view-schedule`) basierend auf FullCalendar 6.1.10 (lokal gehostet, kein CDN). Day / 2-Day / Week Views umschaltbar (`?view=` + in-widget Buttons). Show-Slots aus `cc_show.background_color`, Klick → Modal mit Description + URL-Button. Auto-Scroll zur now-Linie. ~5min Cache-Default. Settings-Submenu **Widgets → Multi-View Schedule**.
 
 **Welle 3 (~1 Woche):**
 - Track History Widget für letzte 7 Tage mit Datums-Suche, paginiert, 10 Zeilen Default (~500 LoC)

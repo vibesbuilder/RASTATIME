@@ -1,0 +1,31 @@
+FullCalendar 6.1.10 — locally hosted bundle.
+
+Files:
+  index.global.min.js          (~282 KB)  bundled core + day-grid + time-grid
+                                          + list views, CSS injected at runtime
+  locales-all.global.min.js    (~26 KB)   all 80+ locales bundled in one file
+
+Source:
+  https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js
+  https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.10/locales-all.global.min.js
+
+Why locally hosted:
+  - No CDN round-trip on first paint of the Multi-View Schedule
+    widget (operator reported "loading time a bit high" on their
+    own jsdelivr-based prototype).
+  - No external network dependency — works on stations behind
+    a corporate firewall or in air-gapped environments.
+  - Version pinned exactly — no surprise breakage from a
+    silent upstream point-release.
+
+Upgrading:
+  1. Bump the version number in the URLs above.
+  2. Re-download both files into this directory.
+  3. Update this VERSION.txt.
+  4. Smoke-test the /embed/multi-view-schedule widget in
+     all three views (day / 2-day / week).
+  5. Bump the cache-buster — RASTATIME's Assets::url() does
+     this automatically from the file mtime, so just touch
+     the files or recommit.
+
+Licence: MIT (https://github.com/fullcalendar/fullcalendar/blob/main/LICENSE.md)

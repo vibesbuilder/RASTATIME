@@ -30,6 +30,7 @@ Sie sie auf einer externen Seite einbetten.
 | **Latest Shows** | `/embed/latest-shows` | Listen-Widget. Sendungstitel + umgekehrt-chronologische Liste der letzten Instanzen einer wiederkehrenden Sendung. |
 | **On Air Today** | `/embed/on-air-today` | Tages-Grid-Widget. Header-Band + heutige laufende + kommende Sendungen, jede Zeile "HH:MM – HH:MM   Sendungsname (Link)". |
 | **Weekly Schedule** | `/embed/weekly-program` | Sieben-Tage-Tab-Widget. Header mit ◀ / ▶ Wochen-Navigation + Datums-Range-Label; Tagestabs; Zeilenliste pro Tab mit HH:MM – HH:MM + Sendungsname (Link). Optionales Hintergrundbild via `?bg=URL`. |
+| **Multi-View Schedule** | `/embed/multi-view-schedule` | Kalender-Widget basierend auf FullCalendar 6 (lokal gehostet). Operator-umschaltbare Day / 2-Day / Week Views via In-Widget-Buttons oder `?view=`. Show-Slots eingefärbt aus `cc_show.background_color`. Klick → Modal mit Sendungs-Beschreibung + URL-Button. Auto-Scroll zur Now-Linie. |
 | **Audio Player** | `/embed/player` | (Bestehend) Eingebetteter HTML5-Audio-Player für den öffentlichen Stream. |
 
 Weitere Widgets sind geplant (siehe [BACKLOG.md](../../../BACKLOG.md)).
@@ -381,7 +382,91 @@ den vorgefertigten `<iframe>`-Embed-Code.
 
 ---
 
-## 7. Empty-State-Labels anpassen
+## 7. Multi-View Schedule Widget
+
+Ein Kalender-Widget basierend auf **FullCalendar 6.1.10**
+(lokal eingebettet, keine CDN-Abhängigkeit).  Drei operator-
+umschaltbare Views: **Day**, **2-Day**, **Week**.  Steht
+neben dem Weekly-Schedule-Widget als reicherer Alternative:
+Time-Grid-Layout mit eingefärbten Show-Slots, Now-Indikator-
+Linie, Auto-Scroll zur aktuell laufenden Sendung und Klick-
+zum-Öffnen-Modal mit Sendungs-Beschreibung + URL-Link.
+
+Drop-in-iframe (~600 px hoch, damit das 24-Stunden-Grid
+bequem reinpasst):
+
+```html
+<iframe src="https://ihre-station.example/embed/multi-view-schedule"
+        width="100%" height="600" frameborder="0"
+        scrolling="no" style="border: 0; background: transparent;">
+</iframe>
+```
+
+### Was es anzeigt
+
+- **Header-Band**: ◀ / ▶ Navigation, zentriertes Datums-
+  Range-Label, **Today**-Button (springt zurück zu jetzt
+  und triggert erneut den Auto-Scroll), View-Switcher
+  (DAY / 2-DAY / WEEK).
+- **Time-Grid**: 24h, 15min Slots, 60min Stundenlabels.
+  Now-Indicator-Linie in der Akzentfarbe.
+- **Show-Slots**: aus `cc_show_instances` JOIN `cc_show`.
+  Hintergrundfarbe aus dem konfigurierten `background_color`
+  der Sendung (Kalender → Sendung → Bearbeiten → Stil);
+  leere Farben fallen zurück auf einen weichen Akzent-Fill.
+  Die aktuell laufende Sendung bekommt einen Akzent-Ring.
+- **Klick**: öffnet Modal mit Sendungsname, Zeit-Range,
+  Beschreibung und Click-Through-Link zur Show-URL
+  (falls konfiguriert).
+
+### URL-Parameter
+
+| Parameter | Werte | Standard | Effekt |
+|---|---|---|---|
+| `view` | `day`, `2day`, `week` | `day` | Initial-View.  Visitor kann via In-Widget-Buttons weiter wechseln; dies steuert nur den Start-Zustand. |
+| `theme` | `auto`, `dark`, `light` | `auto` | Wie die anderen Widgets — siehe §2. |
+| `cache` | Ganzzahl Sekunden 10..3600 | `300` (5 min) | Server-seitige HTTP-Cache-TTL für JSON-Event-Feed.  Höherer Default als bei den anderen Widgets — Schedule verschiebt sich selten mittags, Payload ist größer. |
+| `bg` | URL eines Bildes | keine | Wie das Weekly-Schedule-Widget — siehe §6. |
+| `bgcolor` | Hex-Farbe | keine | Wie das Weekly-Schedule-Widget — siehe §6. |
+| `timezone` | beliebige IANA-Zone | Stations-Standard | Alle Zeiten in dieser Zone gerendert; definiert auch was "heute" für den Auto-Scroll bedeutet. |
+
+### Datenfeed
+
+Interner JSON-Endpoint unter `/Embed/multi-view-schedule-data`,
+aufgerufen vom FullCalendar-Lazy-Loading-Callback für den
+aktuell sichtbaren Datums-Bereich.  Output entspricht dem
+FullCalendar-Event-Format mit `id`, `title`, `start`, `end`,
+`url`, `backgroundColor`, `borderColor`, `textColor`,
+`extendedProps.{description, showId}`.  Modified / abgesagte
+Instanzen werden herausgefiltert.
+
+### Einstellungs-Seite
+
+**Einstellungen → Widgets → Multi-View Schedule** enthält:
+- Operator-konfigurierbares Empty-State-Label,
+- Live-Vorschau-iframe auf dunklem Backdrop,
+- Vorgefertigte `<iframe>`-Embed-Code-Snippets für alle
+  drei Default-Views (Day / 2-Day / Week).
+
+### Performance
+
+- **FullCalendar lokal gehostet** unter
+  `/js/libs/fullcalendar/` (~282 KB JS + ~26 KB Locales).
+  Kein CDN-Round-Trip, keine externe Netzwerk-Abhängigkeit,
+  funktioniert hinter Firmen-Firewalls und in air-gapped
+  Umgebungen.  Version-pinning siehe
+  `frontend/legacy/public/js/libs/fullcalendar/VERSION.txt`.
+- **CSS ist im JS gebündelt** (FullCalendar 6 injected es
+  zur Laufzeit ins `<head>`) — kein separater Stylesheet-
+  Load.
+- **Browser-Cache** absorbiert den initialen 308 KB Hit
+  nach dem ersten Page-View jedes Visitors.
+- **Lazy Event-Fetch**: FullCalendar holt nur die Events
+  für die aktuell sichtbare Range, nicht den ganzen Monat.
+
+---
+
+## 8. Empty-State-Labels anpassen
 
 Wenn keine aktuelle oder kommende Show / Track vorhanden ist,
 zeigt das Widget einen kurzen Platzhalter-Text. Operator können
@@ -427,7 +512,7 @@ URL eingebaut.
 
 ---
 
-## 8. Der `cache`-Parameter — welche TTL ist richtig?
+## 9. Der `cache`-Parameter — welche TTL ist richtig?
 
 Der Server cached die zugrunde liegenden Daten für `cache`
 Sekunden, bevor er sie regeneriert. Die JS-Abfrage im
@@ -466,7 +551,7 @@ Empfohlene Werte:
 
 ---
 
-## 9. Themes
+## 10. Themes
 
 Drei Modi, gesteuert über den `theme`-URL-Parameter:
 
@@ -493,7 +578,7 @@ und sich auf den transparenten Hintergrund zu verlassen:
 
 ---
 
-## 10. Authentifizierung
+## 11. Authentifizierung
 
 Keine. Die Now-Playing-Widgets sind absichtlich
 öffentlich: Der ganze Zweck ist, dass jeder Besucher auf
@@ -518,7 +603,7 @@ Sie stattdessen das passwortgeschützte
 
 ---
 
-## 11. Cross-Origin-Einbettung
+## 12. Cross-Origin-Einbettung
 
 Iframes funktionieren cross-origin von Haus aus — keine
 zusätzliche Konfiguration nötig. Die Homepage Ihrer
@@ -532,7 +617,7 @@ vollständig.
 
 ---
 
-## 12. Fehlerbehebung
+## 13. Fehlerbehebung
 
 ### "Widget zeigt 'No show on air', aber eine Sendung läuft"
 

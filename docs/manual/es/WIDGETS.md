@@ -30,6 +30,7 @@ un sitio externo.
 | **Latest Shows** | `/embed/latest-shows` | Widget de lista. Título del programa + lista crono-inversa de las últimas instancias pasadas de un programa recurrente. |
 | **On Air Today** | `/embed/on-air-today` | Widget de cuadrícula diaria. Banda de cabecera + programa actual + próximos del día, cada línea "HH:MM – HH:MM   Nombre (enlace)". |
 | **Weekly Schedule** | `/embed/weekly-program` | Widget de pestañas de siete días. Cabecera con ◀ / ▶ navegación semanal + etiqueta de rango de fechas; pestañas de día; lista de filas por pestaña con HH:MM – HH:MM + nombre del programa (enlace). Imagen de fondo opcional vía `?bg=URL`. |
+| **Multi-View Schedule** | `/embed/multi-view-schedule` | Widget calendario basado en FullCalendar 6 (alojado localmente). Vistas Day / 2-Day / Week conmutables vía botones in-widget o `?view=`. Slots de programa coloreados desde `cc_show.background_color`. Clic → modal con descripción + botón URL. Auto-scroll a la línea now. |
 | **Audio Player** | `/embed/player` | (Existente) Reproductor de audio HTML5 integrado para el stream público. |
 
 Más widgets están planificados (vea [BACKLOG.md](../../../BACKLOG.md)).
@@ -378,7 +379,72 @@ de integración listo-para-usar.
 
 ---
 
-## 7. Personalizar las etiquetas de estado vacío
+## 7. Widget Multi-View Schedule
+
+Widget calendario basado en **FullCalendar 6.1.10** (integrado
+localmente, sin dependencia de CDN).  Tres vistas conmutables:
+**Day**, **2-Day**, **Week**.  Layout time-grid con slots de
+programa coloreados, línea now-indicator, auto-scroll al
+programa actualmente al aire, y modal de apertura al clic con
+descripción + enlace URL.
+
+iframe listo para usar:
+
+```html
+<iframe src="https://su-emisora.example/embed/multi-view-schedule"
+        width="100%" height="600" frameborder="0"
+        scrolling="no" style="border: 0; background: transparent;">
+</iframe>
+```
+
+### Lo que muestra
+
+- **Banda de cabecera**: ◀ / ▶ navegación, etiqueta de rango
+  de fechas centrada, botón **Today** (vuelve a ahora y
+  re-dispara el auto-scroll), conmutador de vista
+  (DAY / 2-DAY / WEEK).
+- **Time-grid**: 24h, slots 15 min, etiquetas horarias
+  60 min.  Línea now-indicator en color de acento.
+- **Slots de programa**: desde `cc_show_instances` JOIN
+  `cc_show`.  Color de fondo desde el `background_color`
+  configurado (Calendario → Programa → Editar → Estilo).
+  El programa actualmente al aire recibe un anillo de
+  acento.
+- **Clic**: abre un modal con nombre, rango horario,
+  descripción y enlace click-through a la URL del
+  programa (si está configurada).
+
+### Parámetros URL
+
+| Parámetro | Valores | Por defecto | Efecto |
+|---|---|---|---|
+| `view` | `day`, `2day`, `week` | `day` | Vista inicial.  El visitante puede cambiar vía botones in-widget. |
+| `theme` | `auto`, `dark`, `light` | `auto` | Igual que los otros widgets — vea §2. |
+| `cache` | entero segundos 10..3600 | `300` (5 min) | TTL caché HTTP del servidor para el feed JSON.  Por defecto más alto que los otros widgets. |
+| `bg` | URL de una imagen | ninguna | Igual que el widget Weekly Schedule — vea §6. |
+| `bgcolor` | color hex | ninguna | Igual que el widget Weekly Schedule — vea §6. |
+| `timezone` | cualquier zona IANA | predeterminado de la emisora | Todas las horas renderizadas en esta zona. |
+
+### Página de configuración
+
+**Configuración → Widgets → Multi-View Schedule** aloja la
+etiqueta de estado vacío, un iframe de vista previa en vivo
+sobre fondo oscuro, y snippets de código de integración
+listos-para-usar para las tres vistas por defecto.
+
+### Rendimiento
+
+- **FullCalendar alojado localmente** bajo
+  `/js/libs/fullcalendar/` (~282 KB JS + ~26 KB locales).
+  Sin round-trip CDN, sin dependencia de red externa.
+- **CSS empaquetado en el JS** por FullCalendar 6 — sin
+  carga de hoja de estilos separada.
+- **Lazy event-fetch**: FullCalendar obtiene solo los
+  eventos del rango actualmente visible.
+
+---
+
+## 8. Personalizar las etiquetas de estado vacío
 
 Cuando no hay programa o pista actual / próxima, el widget
 muestra un breve texto placeholder.  Los operadores pueden
@@ -422,7 +488,7 @@ pulse Guardar, y copie el bloque `<iframe ...>` generado con
 
 ---
 
-## 8. El parámetro `cache` — ¿qué TTL?
+## 9. El parámetro `cache` — ¿qué TTL?
 
 El servidor almacena en caché los datos subyacentes
 durante `cache` segundos antes de regenerarlos. El polling
@@ -459,7 +525,7 @@ Valores recomendados:
 
 ---
 
-## 9. Temas
+## 10. Temas
 
 Tres modos, controlados vía el parámetro `theme`:
 
@@ -473,7 +539,7 @@ El fondo del widget es **siempre transparente**.
 
 ---
 
-## 10. Autenticación
+## 11. Autenticación
 
 Ninguna. Los widgets Now-Playing son intencionalmente
 públicos.
@@ -484,14 +550,14 @@ internos.
 
 ---
 
-## 11. Integración cross-origin
+## 12. Integración cross-origin
 
 Los iframes funcionan cross-origin de forma nativa —
 ninguna configuración adicional necesaria.
 
 ---
 
-## 12. Resolución de problemas
+## 13. Resolución de problemas
 
 ### "El widget muestra 'No show on air' pero un programa está corriendo"
 

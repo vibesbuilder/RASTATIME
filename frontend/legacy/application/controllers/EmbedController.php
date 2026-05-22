@@ -242,11 +242,14 @@ class EmbedController extends Zend_Controller_Action
 
     /**
      * Read & clamp the ?cache=N URL parameter.  Default 60 s.
+     * Callers can supply a different default (e.g. 300 for the
+     * Multi-View Schedule which has a larger payload and refreshes
+     * less often).
      */
-    private function _resolveCacheTtl()
+    private function _resolveCacheTtl($defaultSeconds = 60)
     {
-        $raw = (int) $this->getRequest()->getParam('cache', 60);
-        return max(10, min(3600, $raw ?: 60));
+        $raw = (int) $this->getRequest()->getParam('cache', $defaultSeconds);
+        return max(10, min(3600, $raw ?: $defaultSeconds));
     }
 
     /**
@@ -1167,5 +1170,246 @@ class EmbedController extends Zend_Controller_Action
 
         $this->view->widgetCss = Assets::url('css/embed/now-playing-widget.css');
         $this->view->widgetJs  = Assets::url('js/airtime/embed/weekly-schedule-widget.js');
+    }
+
+    /**
+     * RASTATIME 2026-05-22 — Multi-View Schedule widget (iframe).
+     *
+     * A FullCalendar-powered time-grid view of the station schedule,
+     * with operator-switchable Day / 2-Day / Week views.  Sister
+     * widget to the Weekly-Schedule v2 (which is a simpler tab
+     * widget); this one is intended for stations that want a
+     * richer calendar-style embed.
+     *
+     * Drop-in iframe (~600 px tall to comfortably fit a 24-hour
+     * time grid):
+     *
+     *     <iframe src=".../embed/multi-view-schedule"
+     *             width="100%" height="600" frameborder="0"></iframe>
+     *
+     * URL parameters (Wave-1 convention):
+     *   view        - day | 2day | week  (default day)
+     *   theme       - auto | dark | light  (default auto)
+     *   cache       - 10..3600 s server-side TTL  (default 300 = 5 min,
+     *                 longer than the other widgets because the
+     *                 calendar payload is larger and refreshes less
+     *                 often per operator request)
+     *   timezone    - any IANA zone (default station)
+     *   bg          - optional URL of a background image
+     *   bgcolor     - optional hex background colour
+     *
+     * The companion JSON endpoint is multiViewScheduleDataAction —
+     * FullCalendar's events:function(info,cb) callback hits it with
+     * `?from=YYYY-MM-DD&to=YYYY-MM-DD&timezone=...` for the visible
+     * range, so view-switches don't reload the page.
+     */
+    public function multiViewScheduleAction()
+    {
+        $this->view->layout()->disableLayout();
+
+        $request = $this->getRequest();
+
+        $theme = $request->getParam('theme', 'auto');
+        if (!in_array($theme, ['auto', 'dark', 'light'], true)) {
+            $theme = 'auto';
+        }
+        $this->view->themeClass = 'np-theme-' . $theme;
+
+        // Cache TTL: bigger default than the other widgets (5 min
+        // vs 60 s).  The calendar payload is larger and the
+        // schedule doesn't usually shift mid-day, so a longer
+        // cache is acceptable.
+        $cacheTtl = $this->_resolveCacheTtl(300);
+        $this->view->cacheTtl = $cacheTtl;
+        $this->_emitCacheHeaders($cacheTtl);
+
+        $timezone = $this->_resolveTimezone();
+        $this->view->timezone = $timezone;
+
+        // Default view: day.  Operator can switch via URL parameter
+        // and the in-widget toggle buttons.  Maps to a FullCalendar
+        // view name client-side, but the controller keeps it human-
+        // friendly here so the embed-code reads naturally.
+        $view = $request->getParam('view', 'day');
+        if (!in_array($view, ['day', '2day', 'week'], true)) {
+            $view = 'day';
+        }
+        $this->view->defaultView = $view;
+
+        // Optional cover background image + solid colour (same
+        // contract as the Weekly-Schedule widget).
+        $bgUrl = (string) $request->getParam('bg', '');
+        $this->view->backgroundUrl = $bgUrl;
+
+        $bgColor = (string) $request->getParam('bgcolor', '');
+        if ($bgColor !== '' && !preg_match('/^#[0-9a-fA-F]{3,8}$/', $bgColor)) {
+            $bgColor = '';
+        }
+        $this->view->backgroundColor = $bgColor;
+
+        // Locale for FullCalendar — fall back to the station's
+        // default UI locale.  FullCalendar's `locales-all` bundle
+        // covers 80+ codes so any IANA-style locale that matches
+        // the station setting works.
+        $locale = Application_Model_Preference::GetDefaultLocale();
+        if (!$locale) {
+            $locale = 'en';
+        }
+        // FullCalendar expects two-letter codes ('en', 'de', 'fr',
+        // 'es') or BCP-47 ('en-gb').  Strip a trailing _XX charset
+        // suffix the GNU locale identifiers sometimes carry.
+        $locale = strtolower(preg_replace('/[._].*$/', '', $locale));
+        $this->view->fcLocale = $locale;
+
+        $this->view->emptyLabel = Application_Model_Preference::GetWidgetNoMultiViewSchedule();
+
+        $this->view->widgetCss        = Assets::url('css/embed/now-playing-widget.css');
+        $this->view->widgetJs         = Assets::url('js/airtime/embed/multi-view-schedule-widget.js');
+        $this->view->fullCalendarJs   = Assets::url('js/libs/fullcalendar/index.global.min.js');
+        $this->view->fullCalendarLoc  = Assets::url('js/libs/fullcalendar/locales-all.global.min.js');
+    }
+
+    /**
+     * RASTATIME 2026-05-22 — JSON feed for the Multi-View Schedule
+     * widget.  Returns events in the format FullCalendar expects,
+     * filtered to the date range the client requested.
+     *
+     * Query params:
+     *   from     - YYYY-MM-DD inclusive start (in the resolved
+     *              timezone).  Required.
+     *   to       - YYYY-MM-DD exclusive end.  Required.
+     *   timezone - any IANA zone; defaults to station.
+     *
+     * Output: array of `{ id, title, start, end, url, description,
+     * backgroundColor, borderColor, extendedProps:{ ... } }` objects
+     * — FullCalendar's documented event shape.  The
+     * `backgroundColor` / `borderColor` come from cc_show.
+     * background_color (which is a 6-char hex like "1f8a70", no
+     * leading `#`) — the controller prepends `#` so FullCalendar
+     * accepts it as a CSS colour.  Empty backgrounds fall through
+     * to a tasteful default (the accent colour) client-side.
+     */
+    public function multiViewScheduleDataAction()
+    {
+        $this->view->layout()->disableLayout();
+        $this->_helper->viewRenderer->setNoRender(true);
+
+        $request  = $this->getRequest();
+        $cacheTtl = $this->_resolveCacheTtl(300);
+        $timezone = $this->_resolveTimezone();
+
+        $tz = new DateTimeZone($timezone);
+        $utc = new DateTimeZone('UTC');
+
+        // Parse the from / to params.  Strict YYYY-MM-DD format;
+        // fall back to today / today+1 day on bad input so a
+        // hand-crafted URL still produces a sane (small) payload.
+        $fromParam = (string) $request->getParam('from', '');
+        $toParam   = (string) $request->getParam('to',   '');
+        try {
+            $from = ($fromParam !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $fromParam))
+                ? new DateTime($fromParam . ' 00:00:00', $tz)
+                : new DateTime('today', $tz);
+        } catch (Exception $e) {
+            $from = new DateTime('today', $tz);
+        }
+        try {
+            $to = ($toParam !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $toParam))
+                ? new DateTime($toParam . ' 00:00:00', $tz)
+                : (clone $from)->modify('+1 day');
+        } catch (Exception $e) {
+            $to = (clone $from)->modify('+1 day');
+        }
+
+        // Clamp the range to a reasonable maximum (62 days) so a
+        // hand-crafted ?from=2000-01-01&to=2100-01-01 URL can't
+        // make the server haul a year's worth of shows.
+        $fromCl = clone $from;
+        $toMax  = (clone $from)->modify('+62 days');
+        if ($to > $toMax) {
+            $to = $toMax;
+        }
+
+        $fromUtc = (clone $from)->setTimezone($utc)->format('Y-m-d H:i:s');
+        $toUtc   = (clone $to)->setTimezone($utc)->format('Y-m-d H:i:s');
+
+        $events = $this->_fetchMultiViewEvents($fromUtc, $toUtc, $timezone);
+
+        header('Content-Type: application/json; charset=utf-8');
+        $this->_emitCacheHeaders($cacheTtl);
+        echo json_encode([
+            'success'  => true,
+            'events'   => $events,
+            'timezone' => $timezone,
+        ]);
+    }
+
+    /**
+     * Fetch all show instances overlapping the given UTC range,
+     * shaped as FullCalendar-compatible event objects.  Direct
+     * SQL against cc_show_instances JOIN cc_show — same pattern
+     * the other Wave-1 widgets use.  modified_instance != TRUE
+     * is filtered so cancelled / moved instances don't leak
+     * through.
+     */
+    private function _fetchMultiViewEvents($fromUtc, $toUtc, $timezone)
+    {
+        // "Overlap": include any instance that starts before the
+        // range ends AND ends after the range starts.  Catches the
+        // edge case of a show that started before `from` but is
+        // still running into the range.
+        $sql = "SELECT si.id          AS instance_id,
+                       s.id           AS show_id,
+                       s.name         AS show_name,
+                       s.url          AS show_url,
+                       s.description  AS show_description,
+                       s.background_color AS bg_color,
+                       s.color        AS text_color,
+                       si.starts      AS starts_utc,
+                       si.ends        AS ends_utc
+                FROM cc_show_instances si
+                JOIN cc_show s ON s.id = si.show_id
+                WHERE si.modified_instance != TRUE
+                  AND si.starts < :to_utc
+                  AND si.ends   > :from_utc
+                ORDER BY si.starts ASC";
+
+        $rows = Application_Common_Database::prepareAndExecute(
+            $sql,
+            [
+                ':from_utc' => $fromUtc,
+                ':to_utc'   => $toUtc,
+            ],
+            'all'
+        );
+
+        $out = [];
+        foreach ($rows as $r) {
+            $bg = (string) ($r['bg_color'] ?? '');
+            $bgHex = ($bg !== '' && preg_match('/^[0-9a-fA-F]{6}$/', $bg))
+                ? '#' . $bg
+                : null;
+            $fg = (string) ($r['text_color'] ?? '');
+            $fgHex = ($fg !== '' && preg_match('/^[0-9a-fA-F]{6}$/', $fg))
+                ? '#' . $fg
+                : null;
+
+            $out[] = [
+                'id'              => (int) $r['instance_id'],
+                'title'           => (string) $r['show_name'],
+                'start'           => $this->_formatTimestamp($r['starts_utc'], $timezone),
+                'end'             => $this->_formatTimestamp($r['ends_utc'],   $timezone),
+                'url'             => (string) $r['show_url'],
+                'backgroundColor' => $bgHex,
+                'borderColor'     => $bgHex,
+                'textColor'       => $fgHex,
+                'extendedProps'   => [
+                    'description' => (string) $r['show_description'],
+                    'url'         => (string) $r['show_url'],
+                    'showId'      => (int) $r['show_id'],
+                ],
+            ];
+        }
+        return $out;
     }
 }

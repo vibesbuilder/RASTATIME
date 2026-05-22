@@ -592,6 +592,18 @@ class Application_Model_Preference
     }
     public static function SetWidgetNoWeeklyShows($v)     { self::setValue('widget_no_weekly_shows', (string) $v); }
 
+    // RASTATIME 2026-05-22 — Multi-View Schedule widget empty-
+    // state label.  Shown when the requested date range has no
+    // scheduled shows.  Standalone label so the operator can
+    // tune the wording independently of the simpler Weekly-
+    // Schedule widget.
+    public static function GetWidgetNoMultiViewSchedule()
+    {
+        $v = self::getValue('widget_no_multi_view_schedule');
+        return $v === '' ? 'No shows scheduled' : $v;
+    }
+    public static function SetWidgetNoMultiViewSchedule($v) { self::setValue('widget_no_multi_view_schedule', (string) $v); }
+
     public static function SetPhone($phone)
     {
         self::setValue('phone', $phone);

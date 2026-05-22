@@ -738,3 +738,309 @@ html, body {
     padding: 12px 0;
     text-align: center;
 }
+
+/* ─────────────────────────────────────────────────────────────
+ *  RASTATIME 2026-05-22 — Multi-View Schedule widget.
+ *
+ *  FullCalendar 6.1.10 (locally hosted) renders the time-grid.
+ *  This block adds the surrounding chrome (header band, view
+ *  switcher, modal) plus theme integration overrides so the
+ *  FullCalendar default styling doesn't fight the Wave-1 look.
+ *
+ *  Kantig (no border-radius) throughout — matches the Weekly-
+ *  Schedule widget's operator-requested square aesthetic.
+ * ───────────────────────────────────────────────────────────── */
+
+.np-widget.np-multi-view-schedule {
+    --np-accent: #459B8F;
+    --np-accent-hover: rgba(69, 155, 143, 0.4);
+
+    /*  Multi-view fills its iframe — no inherent max-width cap
+        like the other widgets, because the calendar can stretch
+        usefully from sidebar widths (~400 px) to full-page
+        embeds.  Operator controls the size via iframe width.  */
+    max-width: 100%;
+    line-height: 1.4;
+    font-size: 0.9em;
+
+    /*  Same --np-bg-color / --np-bg-image contract as the
+        Weekly-Schedule widget.  */
+    background-color: var(--np-bg-color, transparent);
+    background-image: var(--np-bg-image, none);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+
+    /*  Use the full iframe viewport — FullCalendar's
+        `height: 'auto'` would otherwise grow indefinitely.  */
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* ─── Header band (nav + range label + view switcher) ─── */
+
+.np-widget.np-multi-view-schedule .np-mv-header {
+    display: flex;
+    align-items: center;
+    gap: 0.4em;
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--np-fg-muted);
+    color: var(--np-fg);
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.np-widget.np-multi-view-schedule .np-mv-nav,
+.np-widget.np-multi-view-schedule .np-mv-today,
+.np-widget.np-multi-view-schedule .np-mv-view {
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--np-fg);
+    padding: 4px 10px;
+    font: inherit;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.np-widget.np-multi-view-schedule .np-mv-nav {
+    padding: 4px 8px;
+    font-size: 0.95em;
+}
+
+.np-widget.np-multi-view-schedule .np-mv-nav:hover,
+.np-widget.np-multi-view-schedule .np-mv-today:hover,
+.np-widget.np-multi-view-schedule .np-mv-view:hover {
+    background: var(--np-accent-hover);
+}
+
+.np-widget.np-multi-view-schedule .np-mv-range {
+    flex: 1 1 auto;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.np-widget.np-multi-view-schedule .np-mv-today {
+    border-color: var(--np-fg-muted);
+    font-size: 0.85em;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.np-widget.np-multi-view-schedule .np-mv-views {
+    display: inline-flex;
+    border: 1px solid var(--np-fg-muted);
+    flex-shrink: 0;
+}
+
+.np-widget.np-multi-view-schedule .np-mv-view {
+    border-left: 1px solid var(--np-fg-muted);
+    font-size: 0.85em;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 4px 8px;
+}
+
+.np-widget.np-multi-view-schedule .np-mv-view:first-child {
+    border-left: 0;
+}
+
+.np-widget.np-multi-view-schedule .np-mv-view.np-mv-view-active {
+    background: var(--np-accent);
+    color: #fff;
+}
+
+/* ─── Calendar mount ─── */
+
+.np-widget.np-multi-view-schedule .np-mv-calendar {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    overflow-x: hidden;
+    min-height: 0;
+}
+
+/* FullCalendar theme integration — colour overrides so the
+   calendar inherits the Wave-1 theme variables rather than the
+   FullCalendar defaults (which assume a white page chrome).
+   Kantig: zero border-radius on every visible element so the
+   look matches the Weekly-Schedule widget. */
+
+.np-widget.np-multi-view-schedule .fc {
+    color: var(--np-fg);
+    font-family: inherit;
+    --fc-page-bg-color: transparent;
+    --fc-border-color: var(--np-fg-muted);
+    --fc-now-indicator-color: var(--np-accent);
+    --fc-today-bg-color: rgba(69, 155, 143, 0.08);
+    --fc-neutral-bg-color: transparent;
+    --fc-list-event-hover-bg-color: var(--np-accent-hover);
+}
+
+.np-widget.np-multi-view-schedule .fc table,
+.np-widget.np-multi-view-schedule .fc th,
+.np-widget.np-multi-view-schedule .fc td {
+    border-color: var(--np-fg-muted);
+}
+
+.np-widget.np-multi-view-schedule .fc-col-header-cell {
+    padding: 4px 0;
+    font-weight: 700;
+}
+
+.np-widget.np-multi-view-schedule .fc-col-header-cell-cushion {
+    color: var(--np-fg);
+    text-decoration: none;
+}
+
+.np-widget.np-multi-view-schedule .fc-timegrid-slot-label-cushion {
+    color: var(--np-fg-muted);
+    font-variant-numeric: tabular-nums;
+    font-size: 0.85em;
+}
+
+.np-widget.np-multi-view-schedule .fc-event {
+    border-radius: 0;          /* kantig */
+    padding: 2px 4px;
+    cursor: pointer;
+    border-width: 1px;
+    border-style: solid;
+    /*  Default colour when cc_show.background_color is empty —
+        accent at low alpha so empty-coloured shows still read
+        as scheduled blocks rather than invisible gaps.  */
+    background: var(--np-accent-hover);
+    border-color: var(--np-accent);
+    color: var(--np-fg);
+}
+
+.np-widget.np-multi-view-schedule .fc-event-title,
+.np-widget.np-multi-view-schedule .fc-event-time {
+    font-weight: 600;
+}
+
+.np-widget.np-multi-view-schedule .fc-event.np-mv-event-current {
+    /*  Currently-airing event: subtle accent ring so the
+        operator sees it after the auto-scroll lands.  Doesn't
+        recolour the background — the show's own colour wins.  */
+    outline: 2px solid var(--np-accent);
+    outline-offset: -2px;
+}
+
+.np-widget.np-multi-view-schedule .fc-timegrid-now-indicator-line {
+    border-color: var(--np-accent);
+    border-width: 2px 0 0 0;
+}
+
+.np-widget.np-multi-view-schedule .fc-timegrid-now-indicator-arrow {
+    border-color: var(--np-accent);
+}
+
+/* ─── Modal ─── */
+
+.np-widget.np-multi-view-schedule .np-mv-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.15s ease;
+    z-index: 100;
+}
+
+.np-widget.np-multi-view-schedule .np-mv-modal-overlay.np-mv-modal-visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+.np-widget.np-multi-view-schedule .np-mv-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #1a1a1a;
+    color: #f0f0f0;
+    border: 1px solid var(--np-accent);
+    padding: 18px 22px;
+    width: min(420px, calc(100% - 32px));
+    max-height: calc(100vh - 32px);
+    overflow-y: auto;
+    z-index: 101;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.15s ease;
+    /*  Kantig — explicit zero radius even though it's the
+        default for div, in case some embedding page resets
+        bleed in through the iframe.  */
+    border-radius: 0;
+}
+
+.np-widget.np-multi-view-schedule .np-mv-modal.np-mv-modal-visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Light-theme override: when the operator picks ?theme=light
+   the calendar lives on a light backdrop, so the modal should
+   too — otherwise it reads as a high-contrast inversion that
+   feels disconnected from the widget.  */
+.np-widget.np-multi-view-schedule.np-theme-light .np-mv-modal {
+    background: #f8f8f8;
+    color: #1a1a1a;
+}
+
+.np-widget.np-multi-view-schedule .np-mv-modal-close {
+    position: absolute;
+    top: 6px;
+    right: 10px;
+    background: transparent;
+    border: 0;
+    color: inherit;
+    font-size: 1.6em;
+    line-height: 1;
+    cursor: pointer;
+    padding: 4px 8px;
+}
+
+.np-widget.np-multi-view-schedule .np-mv-modal-close:hover {
+    color: var(--np-accent);
+}
+
+.np-widget.np-multi-view-schedule .np-mv-modal-title {
+    margin: 0 30px 8px 0;
+    font-size: 1.15em;
+    font-weight: 700;
+}
+
+.np-widget.np-multi-view-schedule .np-mv-modal-time {
+    margin: 0 0 12px 0;
+    color: var(--np-accent);
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+}
+
+.np-widget.np-multi-view-schedule .np-mv-modal-description {
+    margin: 0 0 14px 0;
+    white-space: pre-wrap;
+    line-height: 1.5;
+}
+
+.np-widget.np-multi-view-schedule .np-mv-modal-link {
+    display: inline-block;
+    padding: 8px 14px;
+    background: var(--np-accent);
+    color: #fff;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.np-widget.np-multi-view-schedule .np-mv-modal-link:hover {
+    background: var(--np-accent-hover);
+    color: var(--np-fg);
+}
+
+.np-widget.np-multi-view-schedule.np-mv-no-link .np-mv-modal-link {
+    display: none;
+}

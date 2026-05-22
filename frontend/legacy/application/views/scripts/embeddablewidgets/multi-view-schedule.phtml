@@ -1,0 +1,101 @@
+<?php
+// RASTATIME 2026-05-22 — Settings page for the Multi-View
+// Schedule widget.  Same shape as the other widget settings
+// pages.  Preview iframe is taller (600 px) since the
+// FullCalendar time-grid needs vertical room.
+
+$publicUrl = rtrim($this->publicUrl, '/');
+$previewUrl = $publicUrl . '/embed/multi-view-schedule?theme=dark';
+$embedUrlDay  = $publicUrl . '/embed/multi-view-schedule';
+$embedUrl2Day = $publicUrl . '/embed/multi-view-schedule?view=2day';
+$embedUrlWeek = $publicUrl . '/embed/multi-view-schedule?view=week';
+?>
+<div id="widget-multi-view-schedule"
+     class="prefpanel ui-widget simple-formblock clearfix padded-strong"
+     style="max-width: 800px;">
+
+    <h2 style="text-align:center"><?php echo _("Multi-View Schedule Widget"); ?></h2>
+    <div style="clear:both"></div>
+
+    <?php if (!empty($this->saved)): ?>
+        <div class="success" style="margin-bottom: 1em; padding: 0.6em 1em;
+             background: #2a4a2a; color: #cdc; border-radius: 4px;">
+            <?php echo _("Label saved.  Refresh the preview to see the new text."); ?>
+        </div>
+    <?php endif; ?>
+
+    <p style="margin-bottom: 1.5em; color: #666;">
+        <?php echo _("Calendar-style iframe widget for your station's "
+            . "public homepage.  Built on FullCalendar 6 (locally "
+            . "hosted).  Operator-switchable Day / 2-Day / Week views "
+            . "via the in-widget buttons or the <code>?view=</code> URL "
+            . "parameter.  Show slots are coloured from each show's "
+            . "configured background colour (Calendar &rarr; Show &rarr; "
+            . "Edit &rarr; Style tab).  Clicking a show opens a modal "
+            . "with its description plus a link to the show page when a "
+            . "URL is configured.");
+        ?>
+    </p>
+
+    <!-- ───── Label form ───── -->
+    <h3 style="margin-top: 1.5em;"><?php echo _("Label"); ?></h3>
+    <fieldset class="padded">
+        <p style="margin-bottom: 1em; color: #666;">
+            <?php echo _("The placeholder shown when the visible range has "
+                . "no scheduled shows.  Leave blank to fall back to the "
+                . "English default shown in the placeholder.");
+            ?>
+        </p>
+
+        <?php echo $this->form; ?>
+    </fieldset>
+
+    <!-- ───── Preview (dark backdrop to match the admin theme) ───── -->
+    <h3 style="margin-top: 1.5em;"><?php echo _("Preview"); ?></h3>
+    <fieldset class="padded">
+        <iframe src="<?php echo htmlspecialchars($previewUrl, ENT_QUOTES, 'UTF-8'); ?>"
+                width="100%" height="600" frameborder="0" scrolling="no"
+                style="border: 1px solid #444; background: #222;"></iframe>
+    </fieldset>
+
+    <!-- ───── Embed-code block (all three default views) ───── -->
+    <h3 style="margin-top: 1.5em;"><?php echo _("Embeddable code"); ?></h3>
+    <fieldset class="padded">
+
+        <label style="display: block; margin-top: 0.8em;"><strong>
+            <?php echo _("Day view (default)"); ?>:
+        </strong></label>
+        <textarea style="width: 98%; font-family: monospace;" rows="2" readonly="readonly"
+        ><iframe src="<?php echo htmlspecialchars($embedUrlDay, ENT_QUOTES, 'UTF-8'); ?>" width="100%" height="600" frameborder="0" scrolling="no" style="border: 0; background: transparent;"></iframe></textarea>
+
+        <label style="display: block; margin-top: 0.8em;"><strong>
+            <?php echo _("2-Day view"); ?>:
+        </strong></label>
+        <textarea style="width: 98%; font-family: monospace;" rows="2" readonly="readonly"
+        ><iframe src="<?php echo htmlspecialchars($embedUrl2Day, ENT_QUOTES, 'UTF-8'); ?>" width="100%" height="600" frameborder="0" scrolling="no" style="border: 0; background: transparent;"></iframe></textarea>
+
+        <label style="display: block; margin-top: 0.8em;"><strong>
+            <?php echo _("Week view"); ?>:
+        </strong></label>
+        <textarea style="width: 98%; font-family: monospace;" rows="2" readonly="readonly"
+        ><iframe src="<?php echo htmlspecialchars($embedUrlWeek, ENT_QUOTES, 'UTF-8'); ?>" width="100%" height="600" frameborder="0" scrolling="no" style="border: 0; background: transparent;"></iframe></textarea>
+
+        <p style="margin-top: 1em; color: #666;">
+            <?php echo _("Copy a snippet above and paste it into your "
+                . "website's HTML.  The visitor can still switch view "
+                . "in the widget itself; <code>?view=</code> only "
+                . "controls the initial state.  Optional URL parameters "
+                . "(first one starts with <code>?</code>, every "
+                . "additional one is joined with <code>&amp;</code>): "); ?>
+            <code>view=day|2day|week</code>,
+            <code>theme=auto|dark|light</code>,
+            <code>cache=10..3600</code> (default 300),
+            <code>bg=https://...image.jpg</code>,
+            <code>bgcolor=%23222222</code>,
+            <code>timezone=Europe/Berlin</code>.
+            <?php echo _("Example: "); ?>
+            <code>...?view=week&amp;theme=dark</code>.
+        </p>
+    </fieldset>
+
+</div>

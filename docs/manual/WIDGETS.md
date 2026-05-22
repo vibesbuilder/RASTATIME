@@ -29,6 +29,7 @@ them on an external site.
 | **Latest Shows** | `/embed/latest-shows` | List widget. Show title + reverse-chronological list of most recent past instances of one recurring show. |
 | **On Air Today** | `/embed/on-air-today` | Day-grid widget. Header band + today's current + upcoming shows, each row "HH:MM – HH:MM   Show name (link)". |
 | **Weekly Schedule** | `/embed/weekly-program` | Seven-day tab widget. Header with ◀ / ▶ week-navigation + date-range label; day tabs; per-tab row list with HH:MM – HH:MM + show name (link). Optional background-image via `?bg=URL`. |
+| **Multi-View Schedule** | `/embed/multi-view-schedule` | Calendar-style widget powered by FullCalendar 6 (locally hosted). Operator-switchable Day / 2-Day / Week views via in-widget buttons or `?view=`. Show slots coloured from `cc_show.background_color`. Click → modal with show description + URL button. Auto-scrolls to the now-line. |
 | **Audio Player** | `/embed/player` | (Existing) Inline HTML5 audio player for the public stream. |
 
 More widgets are planned (see [BACKLOG.md](../../BACKLOG.md)).
@@ -370,7 +371,130 @@ URL pre-filled.
 
 ---
 
-## 7. Customising the empty-state labels
+## 7. Multi-View Schedule widget
+
+A calendar-style widget powered by **FullCalendar 6.1.10**
+(locally vendored, no CDN dependency).  Three operator-
+switchable views: **Day**, **2-Day**, **Week**.  Sits next to
+the Weekly Schedule widget as a richer alternative: time-grid
+layout with coloured show slots, a "now" indicator line,
+auto-scroll to the currently-airing show, and a click-to-open
+modal with show description + URL link.
+
+Drop-in iframe (~600 px tall so the 24-hour grid fits
+comfortably):
+
+```html
+<iframe src="https://your-station.example/embed/multi-view-schedule"
+        width="100%" height="600" frameborder="0"
+        scrolling="no" style="border: 0; background: transparent;">
+</iframe>
+```
+
+### What it shows
+
+```
+◀  Fri 22 May 2026             ▶   Today  [DAY 2DAY WEEK]   ← header
+─────────────────────────────────────────────────────────
+06:00  ┌──────────────────────────────┐
+       │ Morning Show                 │  ← coloured slot
+07:00  │ 06:00 – 08:00                │     from cc_show.background_color
+       └──────────────────────────────┘
+08:00  ┌──────────────────────────────┐
+══════ │ Newslink                     │ ════ now-indicator line
+       │ 08:00 – 08:30                │      (accent colour)
+08:30  └──────────────────────────────┘
+...
+```
+
+- **Header band**: ◀ / ▶ navigation, centred date-range
+  label, **Today** button (snaps the view back to now and
+  re-runs the auto-scroll), and the view switcher
+  (DAY / 2-DAY / WEEK).
+- **Time grid**: 24-hour, 15-min slots, 60-min hour labels.
+  Now-indicator line in the accent colour.
+- **Show slots**: rendered from `cc_show_instances` JOIN
+  `cc_show`.  Background colour comes from the show's
+  configured `background_color` (Calendar → Show → Edit →
+  Style); empty colours fall back to a soft accent fill.
+  The currently-airing show gets an accent ring.
+- **Click**: opens a modal with the show's name, time
+  range, description, and a click-through link to the
+  show URL (if one is configured).
+
+### URL parameters
+
+| Param | Values | Default | Effect |
+|---|---|---|---|
+| `view` | `day`, `2day`, `week` | `day` | Initial view.  The visitor can still switch via the in-widget buttons; this only controls the starting state. |
+| `theme` | `auto`, `dark`, `light` | `auto` | Same as the other widgets — see §2. |
+| `cache` | integer seconds 10..3600 | `300` (5 min) | Server-side HTTP cache TTL for the JSON event feed.  Higher default than the other widgets — the schedule rarely shifts mid-day and the payload is larger, so a 5-min cache is appropriate. |
+| `bg` | URL of an image | none | Same as the Weekly Schedule widget — see §6. |
+| `bgcolor` | hex colour | none | Same as the Weekly Schedule widget — see §6. |
+| `timezone` | any IANA zone | station default | All times rendered in this zone; also defines what "today" means for the auto-scroll. |
+
+> **Day-boundary semantics.**  The grid is 00:00 to 24:00
+> in the resolved timezone.  Shows that span midnight
+> appear in both days they overlap.
+
+### Data feed
+
+Internal JSON endpoint at `/Embed/multi-view-schedule-data`,
+called by FullCalendar's lazy-loading callback for the
+currently-visible date range.  Output shape matches
+FullCalendar's documented event format:
+
+```json
+{
+  "success": true,
+  "events": [
+    {
+      "id": 620,
+      "title": "Morning Show",
+      "start": "2026-05-22T06:00:00+02:00",
+      "end":   "2026-05-22T08:00:00+02:00",
+      "url":   "https://...",
+      "backgroundColor": "#1f8a70",
+      "borderColor":     "#1f8a70",
+      "textColor":       "#ffffff",
+      "extendedProps": { "description": "...", "showId": 42 }
+    }
+  ]
+}
+```
+
+Modified / cancelled instances (`modified_instance = TRUE`)
+are filtered out, matching the convention all the other
+widgets use.
+
+### Settings page
+
+**Settings → Widgets → Multi-View Schedule** hosts:
+- the operator-configurable empty-state label,
+- a live preview iframe on a dark backdrop,
+- ready-made `<iframe>` embed-code snippets for all
+  three default views (Day / 2-Day / Week).
+
+### Performance notes
+
+- **FullCalendar locally hosted**: `/js/libs/fullcalendar/
+  index.global.min.js` (~282 KB) + `locales-all.global.min.js`
+  (~26 KB).  No CDN round-trip, no external network
+  dependency, works behind corporate firewalls and in
+  air-gapped environments.  See
+  `frontend/legacy/public/js/libs/fullcalendar/VERSION.txt`
+  for the pinned version + upgrade instructions.
+- **CSS is bundled into the JS** by FullCalendar 6 (injected
+  into `<head>` at runtime) — no separate stylesheet load.
+- **Browser cache** absorbs the initial 308 KB hit after the
+  first page-view of any visitor.
+- **Lazy event-fetch**: FullCalendar requests events for
+  exactly the visible date range, not the whole month —
+  keeps each round-trip small.
+
+---
+
+## 8. Customising the empty-state labels
 
 When there is no current or upcoming show / track, the widget
 falls back to a short placeholder text.  Operators can customise
@@ -414,7 +538,7 @@ Save, and copy the generated `<iframe ...>` block with the
 
 ---
 
-## 8. The `cache` parameter — what is the right TTL?
+## 9. The `cache` parameter — what is the right TTL?
 
 The server caches the underlying data for `cache` seconds
 before regenerating it. The JS poll inside the iframe
@@ -450,7 +574,7 @@ Recommended values:
 
 ---
 
-## 9. Theming
+## 10. Theming
 
 Three modes, controlled via the `theme` URL parameter:
 
@@ -478,7 +602,7 @@ transparent background:
 
 ---
 
-## 10. Authentication
+## 11. Authentication
 
 None. The Now-Playing widgets are intentionally public:
 the whole point is that any visitor on your station's
@@ -501,7 +625,7 @@ which DJ is on air right now), open the password-protected
 
 ---
 
-## 11. Cross-origin embedding
+## 12. Cross-origin embedding
 
 Iframes work cross-origin out of the box — no extra
 configuration needed. Your station's homepage can embed
@@ -513,7 +637,7 @@ and ran into CORS errors, switching to the iframe approach
 
 ---
 
-## 12. Troubleshooting
+## 13. Troubleshooting
 
 ### "Widget shows 'No show on air' but a show is running"
 
