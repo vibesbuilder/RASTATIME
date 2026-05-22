@@ -161,7 +161,7 @@ drops the row without waiting out the cache TTL.
 | Param | Values | Default | Effect |
 |---|---|---|---|
 | `show_id` | integer (cc_show.id) | — | Identifies the show. Stable across renames and across recurring-instance changes — every instance of a recurring show shares this id. **Recommended over `show`.** |
-| `show` | string (cc_show.name) | — | Fallback when `show_id` is absent.  Case-sensitive exact match.  `show_id` wins when both are set. |
+| `show` | string (cc_show.name) | — | Fallback when `show_id` is absent.  Case-sensitive exact match — **matches every show that shares the name**, so a station with one "BBC News" show per weekday can list them all with a single `?show=BBC%20News` embed.  `show_id` wins when both are set. |
 | `limit` | integer 1..20 | 4 (next), 3 (latest) | How many instances to list. |
 | `theme` | `auto`, `dark`, `light` | `auto` | Same as the two-line widgets — see §2. |
 | `cache` | integer seconds 10..3600 | `60` | Same as the two-line widgets — see §7. |
@@ -238,6 +238,7 @@ without waiting out the cache TTL.
 | `theme` | `auto`, `dark`, `light` | `auto` | Same as the other widgets — see §2. |
 | `cache` | integer seconds 10..3600 | `60` | Same as the other widgets — see §7. |
 | `overflow` | `ellipsis`, `marquee` | `ellipsis` | Behaviour of show names wider than 300 px. |
+| `link` | `underline`, `plain` | `underline` | Link rendering for show names: `underline` keeps the standard hyperlink affordance; `plain` drops the underline so the names read as part of the list rather than as obvious navigation.  Operators picking `plain` should keep in mind that the link affordance then survives only through the cursor pointer on hover. |
 | `timezone` | any IANA zone | station default | Defines "today" and renders all times in this zone. |
 
 > **Day boundary.** "Today" is the station's calendar day —

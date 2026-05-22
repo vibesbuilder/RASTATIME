@@ -123,7 +123,43 @@ class EmbeddableWidgetsController extends Zend_Controller_Action
         $shows = $this->_fetchAllShowsForPicker();
         $options = ['' => _('— pick a show —')];
         foreach ($shows as $s) {
-            $options[(int) $s['id']] = $s['name'];
+            // Parse the Postgres array literal "{1,2,3}" returned
+            // by ARRAY_AGG into a PHP int array.  Skips empty
+            // groups (defensive — shouldn't happen since the SQL
+            // filters out empty names).
+            $idsRaw = (string) ($s['ids'] ?? '');
+            $ids = [];
+            if ($idsRaw !== '' && $idsRaw !== '{}') {
+                foreach (explode(',', trim($idsRaw, '{}')) as $piece) {
+                    $piece = trim($piece);
+                    if (is_numeric($piece)) {
+                        $ids[] = (int) $piece;
+                    }
+                }
+            }
+            if (empty($ids)) {
+                continue;
+            }
+            $name = (string) $s['name'];
+            if (count($ids) === 1) {
+                // Single show with this name — dropdown value is
+                // the numeric id, embed snippet will use
+                // ?show_id=N (the stable, rename-proof form).
+                $options[(int) $ids[0]] = $name;
+            } else {
+                // Multi-match group — dropdown value is the
+                // "name:..." marker so the embed snippet falls
+                // back to ?show=Name (which, after the wave-1.5
+                // backend follow-up, matches every show that
+                // shares the name).  Label includes the count so
+                // the operator sees at a glance how many shows
+                // are bundled.
+                $options['name:' . $name] = sprintf(
+                    _('%1$s (%2$d shows)'),
+                    $name,
+                    count($ids)
+                );
+            }
         }
         $form->getElement('preview_show_id')->setMultiOptions($options);
 
@@ -147,17 +183,64 @@ class EmbeddableWidgetsController extends Zend_Controller_Action
 
         $this->view->form = $form;
         $this->view->publicUrl = Config::getPublicUrl();
-        $this->view->previewShowId = (int) $form->getValue('preview_show_id');
+
+        // RASTATIME 2026-05-22 — resolve which embed-code URL to
+        // generate (?show_id=N vs ?show=Name).  The dropdown
+        // pick wins over the manual name field (mirrors the
+        // ?show_id > ?show precedence the public widget already
+        // implements at the URL level).
+        //
+        // Dropdown values are either a numeric show id (single-
+        // match name) or the string "name:Some Name" (multi-match
+        // group — see _fetchAllShowsForPicker docstring).  The
+        // view consumes previewShowId / previewShowName as two
+        // pre-parsed scalars so the template stays simple.
+        $pickedRaw = (string) $form->getValue('preview_show_id');
+        $previewShowId   = 0;
+        $previewShowName = '';
+        if ($pickedRaw !== '') {
+            if (strpos($pickedRaw, 'name:') === 0) {
+                $previewShowName = substr($pickedRaw, 5);
+            } elseif (is_numeric($pickedRaw)) {
+                $previewShowId = (int) $pickedRaw;
+            }
+        }
+        // Manual name input — fallback when the dropdown is
+        // empty.  Trimmed so accidental leading whitespace
+        // doesn't break the embed URL.
+        $manualName = trim((string) $form->getValue('manual_show_name'));
+        if ($previewShowId === 0 && $previewShowName === '' && $manualName !== '') {
+            $previewShowName = $manualName;
+        }
+        $this->view->previewShowId   = $previewShowId;
+        $this->view->previewShowName = $previewShowName;
+        // The raw manual value is also exposed so the view can
+        // round-trip it back into the input (lets the operator
+        // keep editing after a Save without retyping).
+        $this->view->manualShowName  = $manualName;
     }
 
     /**
-     * Fetch all shows (id + name) ordered alphabetically for the
-     * picker dropdown.  Kept light: just the two columns the
-     * dropdown needs.
+     * Fetch all shows for the picker dropdown.  Returns the rows
+     * already grouped by `name`: each result has the display name
+     * plus an array of all cc_show.id values that share it, so the
+     * UI can render one dropdown entry per visible name (rather
+     * than seven near-identical "bbc news" lines when the operator
+     * happens to have created one show per weekday).
      */
     private function _fetchAllShowsForPicker()
     {
-        $sql = 'SELECT id, name FROM cc_show ORDER BY LOWER(name) ASC';
+        // Aggregate ids into a Postgres array per name.  Ordering
+        // on LOWER(name) gives stable alphabetical groups; the
+        // id list inside each group is sorted ascending for
+        // deterministic "first id wins" behaviour in callers that
+        // need a single id.
+        $sql = "SELECT name,
+                       ARRAY_AGG(id ORDER BY id ASC) AS ids
+                FROM cc_show
+                WHERE name <> ''
+                GROUP BY name
+                ORDER BY LOWER(name) ASC";
         try {
             $rows = Application_Common_Database::prepareAndExecute(
                 $sql,

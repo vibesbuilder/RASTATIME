@@ -242,11 +242,12 @@ html, body {
 }
 
 .np-widget.np-shows-list .np-list-time {
-    /*  Time-of-day stays slightly muted so the date reads as the
-        primary identifier of each row and the time as supplementary
-        — matches the secondary-info treatment of the start-end
-        cell in the Now-Playing widget.  */
-    color: var(--np-fg-muted);
+    /*  Time-of-day uses the full --np-fg colour so it matches the
+        treatment in the On-Air-Today widget (operator request
+        2026-05-22 v3: "Light-Theme Farben angleichen") — without
+        this, the time cell read as a mid-grey on the light theme
+        that was harder to scan than the date cell next to it.  */
+    color: var(--np-fg);
     flex: 0 0 auto;
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
@@ -362,7 +363,9 @@ html, body {
     /*  Links inherit the row's text colour so the link rendering
         feels native to the widget's theme rather than a fixed
         bright blue that fights with the embedding page.  Subtle
-        underline keeps the affordance.  */
+        underline keeps the affordance — operators who want a
+        clean text-only look pass ?link=plain on the embed URL
+        to disable the underline (see .np-link-plain below).  */
     color: inherit;
     text-decoration: underline;
     text-decoration-thickness: 1px;
@@ -373,6 +376,15 @@ html, body {
     /*  Pop the underline on hover so the operator gets a clear
         cue that the name is clickable.  */
     text-decoration-thickness: 2px;
+}
+
+/*  ?link=plain: drop the underline entirely (both default and
+    hover state) so the show names read as part of the list
+    rather than as obvious navigation.  Cursor:pointer is kept
+    so the affordance survives via the pointer change.  */
+.np-widget.np-on-air-today.np-link-plain .np-on-air-name a,
+.np-widget.np-on-air-today.np-link-plain .np-on-air-name a:hover {
+    text-decoration: none;
 }
 
 .np-widget.np-on-air-today .np-list-empty {

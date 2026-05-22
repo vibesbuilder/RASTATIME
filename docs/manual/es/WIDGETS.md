@@ -167,7 +167,7 @@ la línea superior de un widget Next-Shows se desliza al pasado
 | Parámetro | Valores | Por defecto | Efecto |
 |---|---|---|---|
 | `show_id` | entero (cc_show.id) | — | Identifica el programa. Estable frente a renombres y a cambios de instancia recurrente — cada instancia de un programa recurrente comparte este id. **Recomendado sobre `show`.** |
-| `show` | cadena (cc_show.name) | — | Fallback cuando `show_id` está ausente.  Coincidencia exacta sensible a mayúsculas/minúsculas.  `show_id` gana cuando ambos están definidos. |
+| `show` | cadena (cc_show.name) | — | Fallback cuando `show_id` está ausente.  Coincidencia exacta sensible a mayúsculas/minúsculas — **coincide con todos los programas que comparten el nombre**, así una emisora con un programa "BBC News" por día de semana puede listarlos todos con un solo embed `?show=BBC%20News`.  `show_id` gana cuando ambos están definidos. |
 | `limit` | entero 1..20 | 4 (next), 3 (latest) | Cuántas instancias listar. |
 | `theme` | `auto`, `dark`, `light` | `auto` | Igual que los widgets de dos líneas — vea §2. |
 | `cache` | entero segundos 10..3600 | `60` | Igual que los widgets de dos líneas — vea §7. |
@@ -246,6 +246,7 @@ migre a la línea siguiente sin esperar el TTL del caché.
 | `theme` | `auto`, `dark`, `light` | `auto` | Igual que los otros widgets — vea §2. |
 | `cache` | entero segundos 10..3600 | `60` | Igual que los otros widgets — vea §7. |
 | `overflow` | `ellipsis`, `marquee` | `ellipsis` | Comportamiento de nombres de programa más anchos que 300 px. |
+| `link` | `underline`, `plain` | `underline` | Renderizado de enlaces para nombres de programa: `underline` mantiene la affordance estándar de hipervínculo; `plain` quita el subrayado para que los nombres se lean como parte de la lista en lugar de como navegación obvia.  Con `plain` la affordance sólo sobrevive vía el cursor puntero al hover. |
 | `timezone` | cualquier zona IANA | predeterminado de la emisora | Define "hoy" y renderiza todas las horas en esta zona. |
 
 > **Límite del día.** "Hoy" es el día calendario de la

@@ -451,7 +451,7 @@ class EmbedController extends Zend_Controller_Action
         if (!in_array($direction, ['next', 'latest'], true)) {
             $direction = 'next';
         }
-        $showId = $this->_resolveShowId(
+        $showIds = $this->_resolveShowIds(
             $request->getParam('show_id'),
             $request->getParam('show')
         );
@@ -459,9 +459,9 @@ class EmbedController extends Zend_Controller_Action
 
         $payload = [
             'direction' => $direction,
-            'show'      => $showId !== null ? $this->_fetchShowMeta($showId) : null,
-            'instances' => $showId !== null
-                ? $this->_fetchShowInstances($showId, $direction, $limit, $timezone)
+            'show'      => !empty($showIds) ? $this->_fetchShowMeta($showIds) : null,
+            'instances' => !empty($showIds)
+                ? $this->_fetchShowInstances($showIds, $direction, $limit, $timezone)
                 : [],
             'limit'     => $limit,
             'timezone'  => $timezone,
@@ -508,7 +508,7 @@ class EmbedController extends Zend_Controller_Action
         $this->view->timezone = $timezone;
         $this->view->direction = $direction;
 
-        $showId = $this->_resolveShowId(
+        $showIds = $this->_resolveShowIds(
             $request->getParam('show_id'),
             $request->getParam('show')
         );
@@ -516,11 +516,11 @@ class EmbedController extends Zend_Controller_Action
         $limit = $this->_resolveShowsLimit($direction);
         $this->view->limit = $limit;
 
-        $this->view->showMeta  = $showId !== null
-            ? $this->_fetchShowMeta($showId)
+        $this->view->showMeta  = !empty($showIds)
+            ? $this->_fetchShowMeta($showIds)
             : null;
-        $this->view->instances = $showId !== null
-            ? $this->_fetchShowInstances($showId, $direction, $limit, $timezone)
+        $this->view->instances = !empty($showIds)
+            ? $this->_fetchShowInstances($showIds, $direction, $limit, $timezone)
             : [];
 
         // RASTATIME 2026-05-22 — empty-state labels, configurable by
@@ -543,8 +543,16 @@ class EmbedController extends Zend_Controller_Action
             'direction' => $direction,
             'limit'     => $limit,
         ];
-        if ($showId !== null) {
-            $params['show_id'] = $showId;
+        // Round-trip whatever identifier the operator used to load
+        // the iframe: if they passed ?show_id we re-use it (cheaper
+        // db round-trip on refresh); if they passed ?show we keep
+        // the name so the multi-instance match stays intact.
+        $rawShowId   = $request->getParam('show_id');
+        $rawShowName = $request->getParam('show');
+        if ($rawShowId !== null && $rawShowId !== '' && is_numeric($rawShowId)) {
+            $params['show_id'] = (int) $rawShowId;
+        } elseif ($rawShowName !== null && $rawShowName !== '') {
+            $params['show'] = (string) $rawShowName;
         }
         $cacheParam = $request->getParam('cache');
         if ($cacheParam !== null) {
@@ -574,63 +582,86 @@ class EmbedController extends Zend_Controller_Action
     }
 
     /**
-     * Resolve a show identifier from either ?show_id or ?show.
-     * Returns the cc_show.id integer, or null if neither parameter
-     * was set or no row matched.  show_id takes precedence over
-     * show name when both are set.
+     * Resolve a list of cc_show.id values from either ?show_id or
+     * ?show.  Returns an array of ints (always — empty when nothing
+     * matched, single-element for ?show_id, possibly multi-element
+     * for ?show when several shows share the same name).
+     *
+     * show_id takes precedence over show name when both are set,
+     * mirroring the precedence advertised in the widget docs.
+     *
+     * RASTATIME 2026-05-22 v2: previously this returned a single
+     * id (or null) for ?show=Name and silently dropped duplicates;
+     * the operator pointed out that stations frequently have
+     * several shows with the same display name (e.g. one per
+     * weekday).  The new contract aggregates ids so the widget
+     * shows every instance of a same-named show family.
      */
-    private function _resolveShowId($idParam, $nameParam)
+    private function _resolveShowIds($idParam, $nameParam)
     {
         if ($idParam !== null && $idParam !== '' && is_numeric($idParam)) {
             $candidate = (int) $idParam;
             // Verify the id actually exists so an invalid URL
-            // returns "no instances" rather than 500-ing later in
-            // the SQL pipeline.
+            // returns "no instances" rather than 500-ing later
+            // in the SQL pipeline.
             $sql = 'SELECT id FROM cc_show WHERE id = :id LIMIT 1';
             $row = Application_Common_Database::prepareAndExecute(
                 $sql,
                 [':id' => $candidate],
                 'column'
             );
-            if ($row) {
-                return $candidate;
-            }
-            return null;
+            return $row ? [$candidate] : [];
         }
         if ($nameParam !== null && $nameParam !== '') {
-            // Case-sensitive exact match — operator decision: if the
-            // operator types "morning Show" but the show is named
-            // "Morning Show", the embed should fail loudly (empty
-            // widget) rather than silently match.  ILIKE here would
-            // also collide with same-prefix shows ("Morning Show" +
-            // "Morning Show Special").
-            $sql = 'SELECT id FROM cc_show WHERE name = :n LIMIT 1';
-            $row = Application_Common_Database::prepareAndExecute(
+            // Case-sensitive exact match — operator decision: if
+            // the operator types "morning Show" but the show is
+            // named "Morning Show", the embed should fail loudly
+            // (empty widget) rather than silently match.  ILIKE
+            // here would also collide with same-prefix shows
+            // ("Morning Show" + "Morning Show Special").
+            $sql = 'SELECT id FROM cc_show WHERE name = :n ORDER BY id ASC';
+            $rows = Application_Common_Database::prepareAndExecute(
                 $sql,
                 [':n' => (string) $nameParam],
-                'column'
+                'all'
             );
-            if ($row) {
-                return (int) $row;
+            $out = [];
+            foreach ($rows as $r) {
+                $out[] = (int) $r['id'];
             }
+            return $out;
         }
-        return null;
+        return [];
     }
 
     /**
-     * Fetch the show's display-name + URL + description for the
-     * widget header row.  Returns null when the id no longer exists
-     * (covers the edge case of an in-flight delete).
+     * Fetch the show family's display-name + URL + description for
+     * the widget header row.  Takes an array of cc_show.id values
+     * (a single-element array for a unique show; multiple ids for
+     * same-named shows aggregated by `?show=Name`).
+     *
+     * Returns the metadata of the first id; when multiple ids
+     * share the same name (the multi-instance case) all rows have
+     * identical `name`, so picking the first is fine — but we
+     * surface the full id list under `ids` so the JS / template
+     * can show "(3 shows)" or similar if it wants.
+     *
+     * Returns null when the id list is empty or no row matches
+     * (in-flight delete edge case).
      */
-    private function _fetchShowMeta($showId)
+    private function _fetchShowMeta($showIds)
     {
+        if (empty($showIds)) {
+            return null;
+        }
+        $first = (int) $showIds[0];
         $sql = 'SELECT id, name, url, description, image_path
                 FROM cc_show
                 WHERE id = :id
                 LIMIT 1';
         $row = Application_Common_Database::prepareAndExecute(
             $sql,
-            [':id' => (int) $showId],
+            [':id' => $first],
             'all'
         );
         if (empty($row)) {
@@ -641,13 +672,15 @@ class EmbedController extends Zend_Controller_Action
             'name'        => (string) $row[0]['name'],
             'url'         => (string) $row[0]['url'],
             'description' => (string) $row[0]['description'],
+            'ids'         => array_map('intval', $showIds),
         ];
     }
 
     /**
-     * Fetch up to $limit upcoming or past instances of the given
-     * show as a chronological list, converted to the requested
-     * timezone.  Output rows: ['starts' => ISO, 'ends' => ISO].
+     * Fetch up to $limit upcoming or past instances across the
+     * given show id list, as a single chronological list converted
+     * to the requested timezone.  Output rows: ['starts' => ISO,
+     * 'ends' => ISO].
      *
      * Direction 'next' → starts >= NOW(), ORDER BY starts ASC.
      * Direction 'latest' → starts < NOW(), ORDER BY starts DESC.
@@ -656,14 +689,30 @@ class EmbedController extends Zend_Controller_Action
      * excluded so a moved/cancelled single instance does not
      * leave a phantom in the widget — matches the convention
      * Show::getNextShows uses.
+     *
+     * Multi-id support (2026-05-22 v2): the SQL uses
+     * `show_id = ANY(:sids)` so the widget can list the merged
+     * timeline of every show that shares the name passed via
+     * `?show=Name`, instead of silently dropping all but the
+     * first id.  Postgres array literal is constructed in PHP
+     * to keep the prepared statement parameter binding simple.
      */
-    private function _fetchShowInstances($showId, $direction, $limit, $timezone)
+    private function _fetchShowInstances($showIds, $direction, $limit, $timezone)
     {
+        if (empty($showIds)) {
+            return [];
+        }
+        // Build the Postgres array literal manually.  Every entry
+        // is an int (enforced by _resolveShowIds) so concatenation
+        // is safe; we don't risk SQL injection through the literal.
+        $intIds = array_map('intval', $showIds);
+        $pgArray = '{' . implode(',', $intIds) . '}';
+
         if ($direction === 'latest') {
             $sql = "SELECT si.starts AS starts_utc,
                            si.ends   AS ends_utc
                     FROM cc_show_instances si
-                    WHERE si.show_id = :sid
+                    WHERE si.show_id = ANY(:sids)
                       AND si.starts < NOW() AT TIME ZONE 'UTC'
                       AND si.modified_instance != TRUE
                     ORDER BY si.starts DESC
@@ -672,7 +721,7 @@ class EmbedController extends Zend_Controller_Action
             $sql = "SELECT si.starts AS starts_utc,
                            si.ends   AS ends_utc
                     FROM cc_show_instances si
-                    WHERE si.show_id = :sid
+                    WHERE si.show_id = ANY(:sids)
                       AND si.starts >= NOW() AT TIME ZONE 'UTC'
                       AND si.modified_instance != TRUE
                     ORDER BY si.starts ASC
@@ -681,8 +730,8 @@ class EmbedController extends Zend_Controller_Action
         $rows = Application_Common_Database::prepareAndExecute(
             $sql,
             [
-                ':sid' => (int) $showId,
-                ':lim' => (int) $limit,
+                ':sids' => $pgArray,
+                ':lim'  => (int) $limit,
             ],
             'all'
         );
@@ -789,6 +838,20 @@ class EmbedController extends Zend_Controller_Action
             $overflow = 'ellipsis';
         }
         $this->view->overflowClass = 'np-overflow-' . $overflow;
+
+        // RASTATIME 2026-05-22 — operator-configurable link style.
+        // Default 'underline' keeps the previous behaviour and the
+        // standard hyperlink affordance.  'plain' disables the
+        // underline (and the hover-thickness flourish) for
+        // operators who want the widget to read as a clean list
+        // rather than a navigation block — picked per-embed via
+        // the URL parameter so the same widget can render styled
+        // differently on different embedding pages.
+        $linkStyle = $request->getParam('link', 'underline');
+        if (!in_array($linkStyle, ['underline', 'plain'], true)) {
+            $linkStyle = 'underline';
+        }
+        $this->view->linkClass = 'np-link-' . $linkStyle;
 
         $cacheTtl = $this->_resolveCacheTtl();
         $this->view->cacheTtl = $cacheTtl;

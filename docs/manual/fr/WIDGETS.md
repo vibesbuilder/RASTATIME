@@ -169,7 +169,7 @@ sans attendre la TTL du cache.
 | Paramètre | Valeurs | Défaut | Effet |
 |---|---|---|---|
 | `show_id` | entier (cc_show.id) | — | Identifie l'émission. Stable face aux renommages et aux changements d'instances récurrentes — toutes les instances d'une émission récurrente partagent cet id. **Recommandé par rapport à `show`.** |
-| `show` | chaîne (cc_show.name) | — | Fallback quand `show_id` est absent.  Match exact sensible à la casse.  `show_id` gagne quand les deux sont définis. |
+| `show` | chaîne (cc_show.name) | — | Fallback quand `show_id` est absent.  Match exact sensible à la casse — **correspond à toutes les émissions qui partagent le nom**, donc une station avec une émission "BBC News" par jour de semaine peut toutes les lister avec un seul embed `?show=BBC%20News`.  `show_id` gagne quand les deux sont définis. |
 | `limit` | entier 1..20 | 4 (next), 3 (latest) | Nombre d'instances à lister. |
 | `theme` | `auto`, `dark`, `light` | `auto` | Identique aux widgets deux lignes — voir §2. |
 | `cache` | entier secondes 10..3600 | `60` | Identique aux widgets deux lignes — voir §7. |
@@ -248,6 +248,7 @@ la TTL du cache.
 | `theme` | `auto`, `dark`, `light` | `auto` | Identique aux autres widgets — voir §2. |
 | `cache` | entier secondes 10..3600 | `60` | Identique aux autres widgets — voir §7. |
 | `overflow` | `ellipsis`, `marquee` | `ellipsis` | Comportement des noms d'émission plus larges que 300 px. |
+| `link` | `underline`, `plain` | `underline` | Rendu des liens pour les noms d'émission : `underline` garde l'affordance standard ; `plain` supprime le soulignement pour que les noms se lisent comme partie de la liste plutôt que comme navigation évidente.  Avec `plain`, l'affordance ne survit que via le curseur pointer au survol. |
 | `timezone` | tout fuseau IANA | défaut station | Définit "aujourd'hui" et rend toutes les heures dans cette zone. |
 
 > **Limite du jour.** "Aujourd'hui" est le jour calendaire

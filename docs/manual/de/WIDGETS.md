@@ -169,7 +169,7 @@ ohne Abwarten der Cache-TTL verschwindet.
 | Parameter | Werte | Standard | Effekt |
 |---|---|---|---|
 | `show_id` | Ganzzahl (cc_show.id) | — | Identifiziert die Sendung. Stabil über Umbenennungen und über Recurring-Instanz-Änderungen — jede Instanz einer wiederkehrenden Sendung teilt sich diese ID. **Empfohlen gegenüber `show`.** |
-| `show` | String (cc_show.name) | — | Fallback, wenn `show_id` fehlt.  Case-sensitive exakter Treffer.  `show_id` gewinnt, wenn beide gesetzt sind. |
+| `show` | String (cc_show.name) | — | Fallback, wenn `show_id` fehlt.  Case-sensitive exakter Treffer — **matched alle Shows, die den Namen teilen**, sodass eine Station mit einer "BBC News"-Show pro Wochentag alle auf einmal mit einem einzigen `?show=BBC%20News`-Embed listen kann.  `show_id` gewinnt, wenn beide gesetzt sind. |
 | `limit` | Ganzzahl 1..20 | 4 (next), 3 (latest) | Wie viele Instanzen aufgelistet werden. |
 | `theme` | `auto`, `dark`, `light` | `auto` | Wie die Zwei-Zeilen-Widgets — siehe §2. |
 | `cache` | Ganzzahl Sekunden 10..3600 | `60` | Wie die Zwei-Zeilen-Widgets — siehe §7. |
@@ -249,6 +249,7 @@ zur nächsten Zeile wandert, ohne die Cache-TTL abzuwarten.
 | `theme` | `auto`, `dark`, `light` | `auto` | Wie die anderen Widgets — siehe §2. |
 | `cache` | Ganzzahl Sekunden 10..3600 | `60` | Wie die anderen Widgets — siehe §7. |
 | `overflow` | `ellipsis`, `marquee` | `ellipsis` | Verhalten bei Sendungsnamen breiter als 300 px. |
+| `link` | `underline`, `plain` | `underline` | Link-Darstellung für Sendungsnamen: `underline` behält die Standard-Hyperlink-Affordance; `plain` entfernt die Unterstreichung, sodass die Namen als Teil der Liste lesen statt als offensichtliche Navigation.  Operator, die `plain` wählen, sollten bedenken, dass die Link-Affordance dann nur noch über den Cursor-Pointer beim Hover überlebt. |
 | `timezone` | beliebige IANA-Zone | Stations-Standard | Definiert "heute" und rendert alle Zeiten in dieser Zone. |
 
 > **Tagesgrenze.** "Heute" ist der Stations-Kalendertag —

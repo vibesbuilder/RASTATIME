@@ -290,6 +290,75 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Public Embed Widget polish trio** (operator request 2026-05-22 v3,
+  three small UX changes on top of the wave-1 widgets).
+
+  1. **On-Air-Today: `?link=plain` URL parameter.**  Optional
+     URL param to drop the underline from the show-name links
+     when the operator prefers a clean text-only look.  Default
+     `underline` keeps the previous behaviour and the standard
+     hyperlink affordance.  CSS class `.np-link-plain` on the
+     widget body.
+
+  2. **Next/Latest Shows: manual show-name input + dropdown
+     grouping by name.**  The Settings → Widgets → Next/Latest
+     Shows page now offers two ways to identify the show:
+       * The existing dropdown — but **grouped by name** so a
+         station with seven shows all called "BBC News" sees
+         one dropdown entry "BBC News (7 shows)" instead of
+         seven near-identical lines.  Single-instance names
+         still resolve to `?show_id=N`; multi-instance groups
+         use `?show=Name` (semantic change below).
+       * A new **manual show-name text input** for operators
+         who want to generate embed snippets for shows not (yet)
+         in the database, or who prefer to filter by string.
+         Tooltips explain that the dropdown takes precedence
+         over the manual field (mirrors the `?show_id` >
+         `?show` rule the public widget URL uses).
+
+  3. **Next/Latest Shows: light-theme time-cell colour
+     alignment.**  The time-of-day cell in the list rows now
+     uses the full `--np-fg` colour instead of the muted
+     variant, matching the corresponding cell in the
+     On-Air-Today widget.  Previously the cell read as
+     mid-grey on the light theme that was harder to scan than
+     the date cell next to it.
+
+  **Semantic change** (worth noting for existing embeds):
+  `?show=Name` on the next-shows / latest-shows widgets now
+  matches **every** cc_show row that shares the name, rather
+  than silently taking only the first id.  Operators with
+  multiple same-named shows (e.g. one per weekday) get a
+  merged timeline; operators whose show names are unique see
+  identical behaviour.  Backend pivots from
+  `_resolveShowId` (single int) to `_resolveShowIds` (int
+  array) and switches the WHERE clause from `show_id = :sid`
+  to `show_id = ANY(:sids)`.
+
+  Files:
+    - `application/controllers/EmbedController.php` —
+      `_resolveShowIds`, multi-id WHERE in `_fetchShowMeta`
+      and `_fetchShowInstances`, new `?link` parameter for
+      On-Air-Today widget.
+    - `application/controllers/EmbeddablewidgetsController.php`
+      — group-by-name dropdown via ARRAY_AGG SQL, parse the
+      "name:..." marker on submit, expose previewShowName +
+      manualShowName to the view.
+    - `application/forms/WidgetNextLatestShows.php` — new
+      `manual_show_name` Zend_Form_Element_Text with tooltip.
+    - `application/views/scripts/embeddablewidgets/next-latest-shows.phtml`
+      — show-id OR show-name preview/embed URL generator,
+      precedence explanation in the form description.
+    - `application/views/scripts/embed/on-air-today.phtml` —
+      thread the `linkClass` view-var into the body.
+    - `public/css/embed/now-playing-widget.css` —
+      `.np-link-plain` rule for On-Air-Today links;
+      `.np-shows-list .np-list-time` colour from muted to
+      full `--np-fg`.
+    - `docs/manual/WIDGETS.md` + `de/` + `fr/` + `es/` —
+      `?link` parameter row in §5, `?show=Name` description
+      updated to reflect multi-match semantics.
+
 - **Public Embed Widgets: Next/Latest Shows theme contrast fix**
   (operator request 2026-05-22).  Bug report: all three themes
   (auto / dark / light) on the new shows-list widgets looked

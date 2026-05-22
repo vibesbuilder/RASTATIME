@@ -2,20 +2,34 @@
 // RASTATIME 2026-05-22 — Settings page for the Next-Shows /
 // Latest-Shows public embed widgets.  Same shape as the Current
 // Show/Track page: preview iframes (dark backdrop) + label form +
-// embed-code block, all driven by the show the operator picks
-// from the dropdown.
+// embed-code block, driven by either the show the operator picks
+// from the dropdown or the show name they type into the manual
+// input.  Dropdown wins when both are filled (matches the
+// ?show_id > ?show precedence the public widget uses).
 //
 // Page width and styling mirror current-show-track.phtml so the
-// two Widgets pages feel consistent.
+// Widgets pages feel consistent.
 
-$publicUrl = rtrim($this->publicUrl, '/');
-$pickedId  = (int) $this->previewShowId;
+$publicUrl       = rtrim($this->publicUrl, '/');
+$pickedId        = (int) $this->previewShowId;
+$pickedName      = (string) $this->previewShowName;
+$hasSelection    = ($pickedId > 0) || ($pickedName !== '');
 
-// Build preview + embed URLs.  The preview iframes force
-// ?theme=dark so the widget renders legibly on the admin's dark
-// chrome; the public embed code stays neutral so the visitor's
-// OS preference wins by default.
-$qsCommon = $pickedId > 0 ? ('show_id=' . $pickedId) : '';
+// Build the show-identifier query-string fragment.  show_id is
+// preferred when present (matches the public widget's URL-level
+// precedence); otherwise fall back to ?show=Name (URL-encoded so
+// names with spaces survive intact).
+if ($pickedId > 0) {
+    $qsCommon = 'show_id=' . $pickedId;
+} elseif ($pickedName !== '') {
+    $qsCommon = 'show=' . rawurlencode($pickedName);
+} else {
+    $qsCommon = '';
+}
+
+// Preview iframes force ?theme=dark so the widget renders legibly
+// on the admin's dark chrome; the public embed code stays neutral
+// so the visitor's OS preference wins by default.
 $nextPreviewUrl   = $publicUrl . '/embed/next-shows'   . ($qsCommon ? '?' . $qsCommon . '&theme=dark' : '?theme=dark');
 $latestPreviewUrl = $publicUrl . '/embed/latest-shows' . ($qsCommon ? '?' . $qsCommon . '&theme=dark' : '?theme=dark');
 $nextEmbedUrl     = $publicUrl . '/embed/next-shows'   . ($qsCommon ? '?' . $qsCommon : '');
@@ -38,9 +52,10 @@ $latestEmbedUrl   = $publicUrl . '/embed/latest-shows' . ($qsCommon ? '?' . $qsC
     <p style="margin-bottom: 1.5em; color: #666;">
         <?php echo _("Two drop-in iframe widgets for your station's public homepage.  "
             . "Each widget is 300 px wide and lists the upcoming (or most recent) "
-            . "instances of a single recurring show.  Pick a show below to see "
-            . "the preview and to get a ready-to-paste embed snippet pre-filled "
-            . "with that show's id.");
+            . "instances of a single recurring show.  Pick a show from the dropdown "
+            . "below (one entry per show name — multi-instance names are bundled) "
+            . "or type a show name into the manual input to see the preview and "
+            . "to get a ready-to-paste embed snippet.");
         ?>
     </p>
 
@@ -53,6 +68,15 @@ $latestEmbedUrl   = $publicUrl . '/embed/latest-shows' . ($qsCommon ? '?' . $qsC
                 . "blank to fall back to the English default shown in the "
                 . "placeholder.");
             ?>
+            <br><br>
+            <?php echo _("<strong>Show selection:</strong> the dropdown takes "
+                . "precedence over the manual name field — when both are filled, "
+                . "the dropdown wins (matching the <code>?show_id</code> &gt; "
+                . "<code>?show</code> rule the public widget URL uses).  "
+                . "The manual name field is useful for shows you want to filter "
+                . "by string rather than id, or for generating embed snippets "
+                . "for shows that aren't (yet) in the dropdown.");
+            ?>
         </p>
 
         <?php echo $this->form; ?>
@@ -60,10 +84,10 @@ $latestEmbedUrl   = $publicUrl . '/embed/latest-shows' . ($qsCommon ? '?' . $qsC
 
     <!-- ───── Preview (dark backdrop to match the admin theme) ───── -->
     <h3 style="margin-top: 1.5em;"><?php echo _("Preview"); ?></h3>
-    <?php if ($pickedId <= 0): ?>
+    <?php if (!$hasSelection): ?>
         <p style="color: #999; font-style: italic;">
-            <?php echo _("Pick a show above and click Save to see the preview "
-                . "and the ready-to-paste embed snippets."); ?>
+            <?php echo _("Pick a show above (or type a name) and click Save "
+                . "to see the preview and the ready-to-paste embed snippets."); ?>
         </p>
     <?php else: ?>
         <fieldset class="padded" style="display: flex; gap: 2em; flex-wrap: wrap;">
@@ -88,10 +112,10 @@ $latestEmbedUrl   = $publicUrl . '/embed/latest-shows' . ($qsCommon ? '?' . $qsC
 
     <!-- ───── Embed-code blocks ───── -->
     <h3 style="margin-top: 1.5em;"><?php echo _("Embeddable code"); ?></h3>
-    <?php if ($pickedId <= 0): ?>
+    <?php if (!$hasSelection): ?>
         <p style="color: #999; font-style: italic;">
             <?php echo _("Pick a show first to generate the embed code with "
-                . "the show id baked into the URL."); ?>
+                . "the show identifier baked into the URL."); ?>
         </p>
     <?php else: ?>
         <fieldset class="padded">
