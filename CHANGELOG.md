@@ -113,6 +113,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Now-Playing widgets: 500 Internal Server Error on the two
+  iframe widget URLs** (bug reported + fixed 2026-05-22, same
+  day as the feature shipped).  Both `/embed/now-playing-show`
+  and `/embed/now-playing-track` returned the Zend error page
+  while `/embed/now-playing-data` (the shared JSON endpoint)
+  worked fine.  Root cause: the shared `_renderNowPlayingWidget`
+  helper called `$this->_helper->viewRenderer->setScript(...)`
+  to pick the template — but `setScript()` does not exist on
+  Zend-1's `Zend_Controller_Action_Helper_ViewRenderer` (the
+  correct API is `setScriptAction()`, or simpler: rely on the
+  default convention `actionName → action-name.phtml`).  Fix:
+  rename the helper to `_prepareNowPlayingView`, drop the
+  setScript call, let Zend's default view resolution turn
+  `nowPlayingShowAction` into `now-playing-show.phtml` on its
+  own.  Plus a secondary polish in `_slimShow` /
+  `_slimTrack`: the upstream Schedule model returns a stub
+  `{ name: "", starts: null, ends: null }` for "no next show",
+  which the template's `?? 'No upcoming show'` fallback failed
+  to catch (empty string is not null).  Normalised both
+  helpers to return a single null in the empty case so the
+  template stays simple.
+
 - **Smart Block: "Exclude tracks played lately" pool count
   was inflated by broken OR-grouping in the WHERE clause**
   (bug reported + fixed 2026-05-22).  When the operator's

@@ -114,7 +114,11 @@ class EmbedController extends Zend_Controller_Action
      */
     public function nowPlayingShowAction()
     {
-        $this->_renderNowPlayingWidget('show');
+        // Default Zend-1 view-resolution turns the action name
+        // "nowPlayingShow" into the template "now-playing-show.phtml"
+        // under the embed/ script directory, so all this needs to do
+        // is populate the view variables.
+        $this->_prepareNowPlayingView();
     }
 
     /**
@@ -126,7 +130,11 @@ class EmbedController extends Zend_Controller_Action
      */
     public function nowPlayingTrackAction()
     {
-        $this->_renderNowPlayingWidget('track');
+        // Default Zend-1 view-resolution turns the action name
+        // "nowPlayingTrack" into the template "now-playing-track.phtml"
+        // under the embed/ script directory, so all this needs to do
+        // is populate the view variables.
+        $this->_prepareNowPlayingView();
     }
 
     /**
@@ -155,11 +163,14 @@ class EmbedController extends Zend_Controller_Action
     }
 
     /**
-     * Shared render path for the two Now-Playing widgets.
+     * Shared view-population for the two Now-Playing widget actions.
      *
-     * @param string $mode 'show' or 'track' — picks the template
+     * Each action's default template (now-playing-show.phtml /
+     * now-playing-track.phtml) is rendered by the standard Zend-1
+     * view-resolution — this helper only populates the variables
+     * both templates consume, plus the HTTP cache headers.
      */
-    private function _renderNowPlayingWidget($mode)
+    private function _prepareNowPlayingView()
     {
         $this->view->layout()->disableLayout();
 
@@ -193,11 +204,6 @@ class EmbedController extends Zend_Controller_Action
         $cacheParam = $request->getParam('cache');
         $this->view->dataUrl = '/Embed/now-playing-data'
             . ($cacheParam !== null ? '?cache=' . urlencode($cacheParam) : '');
-
-        // Pick the right inner-template via setScript so we can keep
-        // the two route names distinct while sharing 95 % of the
-        // controller code.
-        $this->_helper->viewRenderer->setScript('embed/now-playing-' . $mode . '.phtml');
     }
 
     /**
@@ -262,15 +268,25 @@ class EmbedController extends Zend_Controller_Action
 
     /**
      * Reduce a Show entry to just the four fields the widgets render.
-     * Null-safe: returns null if no show is present.
+     *
+     * Returns null when the entry is missing, not an array, or
+     * carries an empty name — the upstream Schedule model populates
+     * a stub `{ name: "", starts: null, ends: null }` for "no show",
+     * which the template's `?? 'No upcoming show'` fallback wouldn't
+     * otherwise catch (empty string is not null).  Normalising to a
+     * single null here lets the template stay simple.
      */
     private function _slimShow($show, $timezone)
     {
         if (empty($show) || !is_array($show)) {
             return null;
         }
+        $name = isset($show['name']) ? trim((string) $show['name']) : '';
+        if ($name === '') {
+            return null;
+        }
         return [
-            'name'   => $show['name'] ?? '',
+            'name'   => $name,
             'starts' => $this->_formatTimestamp($show['starts'] ?? null, $timezone),
             'ends'   => $this->_formatTimestamp($show['ends'] ?? null, $timezone),
         ];
@@ -278,8 +294,11 @@ class EmbedController extends Zend_Controller_Action
 
     /**
      * Reduce a Track entry to Artist + Title + start + end.  The
-     * artist field is optional; the JS template just shows the title
-     * alone when artist is empty.
+     * artist field is optional; the template shows the title alone
+     * when artist is empty.
+     *
+     * Returns null when both title and artist are empty (same null-
+     * normalisation rationale as _slimShow above).
      */
     private function _slimTrack($track, $timezone)
     {
@@ -287,9 +306,14 @@ class EmbedController extends Zend_Controller_Action
             return null;
         }
         $meta = $track['metadata'] ?? [];
+        $title  = trim((string) ($meta['track_title'] ?? ($track['name'] ?? '')));
+        $artist = trim((string) ($meta['artist_name'] ?? ''));
+        if ($title === '' && $artist === '') {
+            return null;
+        }
         return [
-            'title'  => $meta['track_title'] ?? ($track['name'] ?? ''),
-            'artist' => $meta['artist_name'] ?? '',
+            'title'  => $title,
+            'artist' => $artist,
             'starts' => $this->_formatTimestamp(
                 $track['starts'] ?? ($track['start'] ?? null),
                 $timezone
