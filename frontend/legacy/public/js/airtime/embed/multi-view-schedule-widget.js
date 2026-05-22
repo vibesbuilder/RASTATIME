@@ -46,32 +46,67 @@
     var emptyLabel  = body.getAttribute('data-label-empty') || 'No shows scheduled';
 
     /*
-     * Build a FullCalendar time-format STRING that the
+     * Build a FullCalendar time-format OBJECT that the
      * slotLabelFormat / eventTimeFormat options can consume.
      * Returns `undefined` for "auto" so FullCalendar falls back
      * to the locale default.
      *
-     * Operator request 2026-05-22 v11: use the string form
-     * ('H:mm' / 'h:mm a') instead of the object form
-     * ({hour:'numeric',...}).  FullCalendar's object form
-     * silently coerces 'numeric' to '2-digit' in some locale +
-     * meridiem combinations — switching to the explicit
-     * format string makes single-digit hours render without
-     * the leading zero ("9:00" not "09:00").  Minutes stay
-     * 2-digit via the lowercase `mm` token.
-     *
-     *   24h with minutes : 'H:mm'   → "9:00", "17:30"
-     *   24h hour only    : 'H'      → "9",    "17"
-     *   12h with minutes : 'h:mm a' → "9:00 AM", "5:30 PM"
-     *   12h hour only    : 'h a'    → "9 AM",   "5 PM"
+     * v12 lesson learned: the v11 attempt at cmdline-format
+     * strings ('H:mm' / 'h:mm a') broke FullCalendar's init
+     * and made all events invisible.  Reverted to the object
+     * form which FullCalendar 6 reliably accepts.  Padding-zero
+     * on hours is handled separately via slotLabelContent /
+     * the eventContent callback below (those run AFTER the
+     * Intl format and let us rewrite the text deterministically).
      */
     function clockFormat(includeMinutes) {
         if (clockMode === 'auto') { return undefined; }
-        if (clockMode === '12') {
-            return includeMinutes ? 'h:mm a' : 'h a';
+        var hour12 = (clockMode === '12');
+        var fmt = {
+            hour: 'numeric',
+            hour12: hour12,
+            meridiem: hour12 ? 'short' : false
+        };
+        if (includeMinutes) {
+            fmt.minute = '2-digit';
         }
-        // 24h is the default
-        return includeMinutes ? 'H:mm' : 'H';
+        return fmt;
+    }
+
+    /*
+     * Deterministic time formatter for slot labels + event chips,
+     * applied via the slotLabelContent / eventContent callbacks.
+     * Bypasses Intl entirely so we get exactly "9", "9:00",
+     * "9:00 AM" regardless of locale.  Operator request
+     * 2026-05-22 v12: Intl with hour:'numeric' silently pads
+     * to 2-digit in some locale + meridiem combinations.
+     */
+    function formatHourMinute(d, includeMinutes) {
+        if (!d) { return ''; }
+        var h = d.getHours();
+        var m = d.getMinutes();
+        if (clockMode === '12' || (clockMode === 'auto' && shouldUse12hForLocale())) {
+            var ampm = h >= 12 ? 'PM' : 'AM';
+            var h12 = h % 12 || 12;
+            return h12 + (includeMinutes ? (':' + pad2(m)) : '') + ' ' + ampm;
+        }
+        // 24h (clockMode='24', or 'auto' with a 24h locale)
+        return h + (includeMinutes ? (':' + pad2(m)) : '');
+    }
+
+    /*
+     * Detect whether the visitor's locale would render time as
+     * AM/PM by default.  Used only when clockMode === 'auto'.
+     * Falls back to false (24h) if Intl is unavailable.
+     */
+    function shouldUse12hForLocale() {
+        try {
+            var resolved = new Intl.DateTimeFormat(locale, { hour: 'numeric' })
+                .resolvedOptions();
+            return resolved.hour12 === true;
+        } catch (e) {
+            return false;
+        }
     }
 
     /*
@@ -318,6 +353,45 @@
         // overrides regardless of locale.
         slotLabelFormat:  clockFormat(false),   // hour only on the axis
         eventTimeFormat:  clockFormat(true),    // hour + minutes in event chips
+
+        // Override the text Intl gives us for slot labels with a
+        // deterministic "no-leading-zero" formatter — Intl's
+        // hour:'numeric' silently pads to 2-digit in some locale
+        // + meridiem combinations, which the operator's German
+        // locale exposed.  This runs AFTER slotLabelFormat so we
+        // get the final say on what shows up on the hour axis.
+        slotLabelContent: function (arg) {
+            return { html: formatHourMinute(arg.date, false) };
+        },
+
+        // Same deterministic-formatter trick for the time chip
+        // inside each event.  We rebuild the event chip's inner
+        // HTML so the time + title both live in there without
+        // the default 2-digit padding.
+        eventContent: function (arg) {
+            var timeText = formatHourMinute(arg.event.start, true);
+            var endText  = arg.event.end
+                ? formatHourMinute(arg.event.end, true)
+                : '';
+            var title    = arg.event.title || '';
+            var time     = endText ? (timeText + ' - ' + endText) : timeText;
+            // Mark up time + title in separate spans so the
+            // existing FullCalendar CSS variables can colour
+            // them.  Title escaping: setting via textContent
+            // would be safer, but here we render a small wrapper
+            // HTML and pass the title via a textContent step.
+            var titleHtml = document.createElement('div');
+            titleHtml.className = 'fc-event-title fc-sticky';
+            titleHtml.textContent = title;
+            var timeDiv  = document.createElement('div');
+            timeDiv.className = 'fc-event-time';
+            timeDiv.textContent = time;
+            var wrapper  = document.createElement('div');
+            wrapper.className = 'fc-event-main-frame';
+            wrapper.appendChild(timeDiv);
+            wrapper.appendChild(titleHtml);
+            return { domNodes: [wrapper] };
+        },
         allDaySlot: false,
         expandRows: true,
         height: '100%',
