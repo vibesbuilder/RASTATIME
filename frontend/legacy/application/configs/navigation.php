@@ -107,6 +107,17 @@ $pages[] = [
             'controller' => 'embeddablewidgets',
             'action' => 'on-air-today',
         ],
+        // RASTATIME 2026-05-22 — Track History (Wave-3).
+        // Recent track playout log, last 7 days, paginated,
+        // click-for-modal.  Lives at the bottom of the Widgets
+        // submenu next to On Air Today since it's a sibling
+        // "live data" widget.
+        [
+            'label' => 'Track History',
+            'module' => 'default',
+            'controller' => 'embeddablewidgets',
+            'action' => 'track-history',
+        ],
     ],
 ];
 $pages[] = [

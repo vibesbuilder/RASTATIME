@@ -334,6 +334,34 @@ class EmbeddableWidgetsController extends Zend_Controller_Action
         $this->view->publicUrl = Config::getPublicUrl();
     }
 
+    /**
+     * RASTATIME 2026-05-22 — Settings page for the Track History
+     * widget (Wave-3).  Empty-state label form + live preview
+     * iframe + ready-made embed-code snippets for the
+     * operator-typical pagesize variants.
+     */
+    public function trackHistoryAction()
+    {
+        Zend_Layout::getMvcInstance()->assign('parent_page', 'Widgets');
+
+        $request = $this->getRequest();
+        $form = new Application_Form_WidgetTrackHistory();
+
+        if ($request->isPost() && $form->isValid($request->getPost())) {
+            Application_Model_Preference::SetWidgetNoTrackHistory(
+                $form->getValue('widget_no_track_history')
+            );
+            $this->view->saved = true;
+        } else {
+            $form->populate([
+                'widget_no_track_history' => Application_Model_Preference::GetWidgetNoTrackHistory(),
+            ]);
+        }
+
+        $this->view->form = $form;
+        $this->view->publicUrl = Config::getPublicUrl();
+    }
+
     // The Facebook widget is untested & unsupported, the widget has been removed from the navigation in navigation.php
     public function facebookAction()
     {

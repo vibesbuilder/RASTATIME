@@ -69,8 +69,7 @@ der Operator das Signal gibt.
 - ✅ **DONE** Multi-View Schedule Widget (`/embed/multi-view-schedule`) basierend auf FullCalendar 6.1.10 (lokal gehostet, kein CDN). Day / 2-Day / Week Views umschaltbar (`?view=` + in-widget Buttons). Show-Slots aus `cc_show.background_color`, Klick → Modal mit Description + URL-Button. Auto-Scroll zur now-Linie. ~5min Cache-Default. Settings-Submenu **Widgets → Multi-View Schedule**.
 
 **Welle 3 (~1 Woche):**
-- Track History Widget für letzte 7 Tage mit Datums-Suche, paginiert, 10 Zeilen Default (~500 LoC)
-- Voraussetzung: `cc_playout_history` existiert (sonst +1 Woche Aufwand)
+- ✅ **DONE** Track History Widget (`/embed/track-history`) für letzte 7 Tage mit HTML5-Date-Picker + Today-Button + Pagesize-Dropdown (10/20/50/100), Load-More-Pagination, Klick → Modal mit Show-Kontext. Source: `cc_playout_history` JOIN `cc_files` LEFT JOIN `cc_show_instances → cc_show`. Settings-Submenu **Widgets → Track History**.
 
 **Aufwand gesamt:** ~1700 LoC + ~400 LoC Doku.
 

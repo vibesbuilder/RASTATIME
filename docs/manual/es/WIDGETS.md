@@ -31,6 +31,7 @@ un sitio externo.
 | **On Air Today** | `/embed/on-air-today` | Widget de cuadrícula diaria. Banda de cabecera + programa actual + próximos del día, cada línea "HH:MM – HH:MM   Nombre (enlace)". |
 | **Weekly Schedule** | `/embed/weekly-program` | Widget de pestañas de siete días. Cabecera con ◀ / ▶ navegación semanal + etiqueta de rango de fechas; pestañas de día; lista de filas por pestaña con HH:MM – HH:MM + nombre del programa (enlace). Imagen de fondo opcional vía `?bg=URL`. |
 | **Multi-View Schedule** | `/embed/multi-view-schedule` | Widget calendario basado en FullCalendar 6 (alojado localmente). Vistas Day / 2-Day / Week conmutables vía botones in-widget o `?view=`. Slots de programa coloreados desde `cc_show.background_color`. Clic → modal con descripción + botón URL. Auto-scroll a la línea now. |
+| **Track History** | `/embed/track-history` | Registro de reproducción de pistas (últimos 7 días). Date-picker HTML5 + botón Today + dropdown pagesize (10/20/50/100). Filas "HH:MM Artista - Título"; clic → modal con contexto de programa + enlace URL. Botón Load-more con tope duro a 1000 filas. |
 | **Audio Player** | `/embed/player` | (Existente) Reproductor de audio HTML5 integrado para el stream público. |
 
 Más widgets están planificados (vea [BACKLOG.md](../../../BACKLOG.md)).
@@ -445,7 +446,44 @@ listos-para-usar para las tres vistas por defecto.
 
 ---
 
-## 8. Personalizar las etiquetas de estado vacío
+## 8. Widget Track History
+
+Registro de reproducción de pistas — el visitante elige un
+día de los últimos 7, selecciona un tamaño de página (10 /
+20 / 50 / 100), y el widget muestra las pistas reproducidas
+en orden cronológico inverso.  Clic en una fila → modal con
+metadatos + contexto de programa + enlace URL.
+
+iframe listo para usar (~500 px de alto):
+
+```html
+<iframe src="https://su-emisora.example/embed/track-history"
+        width="100%" height="500" frameborder="0"
+        scrolling="no" style="border: 0; background: transparent;">
+</iframe>
+```
+
+### Parámetros URL
+
+| Parámetro | Valores | Por defecto | Efecto |
+|---|---|---|---|
+| `date` | `YYYY-MM-DD` | hoy | Día a cargar.  Limitado a `[hoy - 6 días, hoy]`. |
+| `pagesize` | `10`, `20`, `50`, `100` | `10` | Pistas por página. |
+| `theme` | `auto`, `dark`, `light` | `auto` | Igual que los otros widgets. |
+| `cache` | entero segundos 10..3600 | `60` | TTL caché HTTP. |
+| `bg`, `bgcolor` | URL / hex | ninguna | Igual que los otros widgets. |
+| `timezone` | cualquier zona IANA | predeterminado de la emisora | Todas las horas en esta zona. |
+
+Fuente: `cc_playout_history` JOIN `cc_files` LEFT JOIN
+`cc_show_instances` → `cc_show`.
+
+**Configuración → Widgets → Track History** aloja la
+etiqueta de estado vacío, vista previa en vivo, y dos
+snippets listos-para-usar (pagesize 10 + 50).
+
+---
+
+## 9. Personalizar las etiquetas de estado vacío
 
 Cuando no hay programa o pista actual / próxima, el widget
 muestra un breve texto placeholder.  Los operadores pueden
@@ -489,7 +527,7 @@ pulse Guardar, y copie el bloque `<iframe ...>` generado con
 
 ---
 
-## 9. El parámetro `cache` — ¿qué TTL?
+## 10. El parámetro `cache` — ¿qué TTL?
 
 El servidor almacena en caché los datos subyacentes
 durante `cache` segundos antes de regenerarlos. El polling
@@ -526,7 +564,7 @@ Valores recomendados:
 
 ---
 
-## 10. Temas
+## 11. Temas
 
 Tres modos, controlados vía el parámetro `theme`:
 
@@ -540,7 +578,7 @@ El fondo del widget es **siempre transparente**.
 
 ---
 
-## 11. Autenticación
+## 12. Autenticación
 
 Ninguna. Los widgets Now-Playing son intencionalmente
 públicos.
@@ -551,14 +589,14 @@ internos.
 
 ---
 
-## 12. Integración cross-origin
+## 13. Integración cross-origin
 
 Los iframes funcionan cross-origin de forma nativa —
 ninguna configuración adicional necesaria.
 
 ---
 
-## 13. Resolución de problemas
+## 14. Resolución de problemas
 
 ### "El widget muestra 'No show on air' pero un programa está corriendo"
 

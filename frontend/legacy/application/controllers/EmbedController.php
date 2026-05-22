@@ -1425,4 +1425,281 @@ class EmbedController extends Zend_Controller_Action
         }
         return $out;
     }
+
+    /**
+     * RASTATIME 2026-05-22 — Track History Widget (iframe embed,
+     * BACKLOG Wave-3).
+     *
+     * Last-N-days track history widget — operator picks a day
+     * (capped at -7..0 from today) and the widget shows the
+     * tracks that played that day, paginated.  Click a track →
+     * modal with full metadata + show context.
+     *
+     * Drop-in iframe (~500 px tall to comfortably show 10 rows
+     * + header + load-more):
+     *
+     *     <iframe src=".../embed/track-history"
+     *             width="100%" height="500" frameborder="0"></iframe>
+     *
+     * URL parameters (Wave-1 convention):
+     *   date     - YYYY-MM-DD (default today; clamped to -7..0
+     *              days from today in the resolved timezone)
+     *   pagesize - 10 | 20 | 50 | 100  (default 10)
+     *   theme    - auto | dark | light  (default auto)
+     *   cache    - 10..3600 s  (default 60)
+     *   timezone - any IANA zone (default station)
+     *   bg / bgcolor - optional background image / colour
+     *
+     * Companion JSON endpoint is trackHistoryDataAction —
+     * called by the Load-More button + on every date / pagesize
+     * change.
+     */
+    public function trackHistoryAction()
+    {
+        $this->view->layout()->disableLayout();
+
+        $request = $this->getRequest();
+
+        $theme = $request->getParam('theme', 'auto');
+        if (!in_array($theme, ['auto', 'dark', 'light'], true)) {
+            $theme = 'auto';
+        }
+        $this->view->themeClass = 'np-theme-' . $theme;
+
+        $cacheTtl = $this->_resolveCacheTtl(60);
+        $this->view->cacheTtl = $cacheTtl;
+        $this->_emitCacheHeaders($cacheTtl);
+
+        $timezone = $this->_resolveTimezone();
+        $this->view->timezone = $timezone;
+
+        // Resolve the requested day, capped to the last 7 days
+        // (operator-set scope — BACKLOG specifies "letzte 7 Tage").
+        $window = $this->_resolveTrackHistoryDay(
+            $timezone,
+            $request->getParam('date')
+        );
+        $this->view->dayLocal  = $window['day_local'];
+        $this->view->minDate   = $window['min_local'];
+        $this->view->maxDate   = $window['max_local'];
+
+        // Page size — operator can change in-widget via the
+        // dropdown.  Initial render uses whatever's in the URL
+        // (or 10).
+        $pagesize = (int) $request->getParam('pagesize', 10);
+        if (!in_array($pagesize, [10, 20, 50, 100], true)) {
+            $pagesize = 10;
+        }
+        $this->view->pagesize = $pagesize;
+
+        // Optional background image + colour, same contract as
+        // the Weekly-Schedule + Multi-View widgets.
+        $bgUrl = (string) $request->getParam('bg', '');
+        $this->view->backgroundUrl = $bgUrl;
+        $bgColor = (string) $request->getParam('bgcolor', '');
+        if ($bgColor !== '' && !preg_match('/^#[0-9a-fA-F]{3,8}$/', $bgColor)) {
+            $bgColor = '';
+        }
+        $this->view->backgroundColor = $bgColor;
+
+        $this->view->emptyLabel = Application_Model_Preference::GetWidgetNoTrackHistory();
+
+        $this->view->widgetCss = Assets::url('css/embed/now-playing-widget.css');
+        $this->view->widgetJs  = Assets::url('js/airtime/embed/track-history-widget.js');
+    }
+
+    /**
+     * RASTATIME 2026-05-22 — JSON feed for the Track History
+     * widget.  Returns one page of tracks for the requested day,
+     * already converted to the visitor's timezone.
+     *
+     * Query params:
+     *   date     - YYYY-MM-DD inclusive day (capped to -7..0
+     *              from today).  Default today.
+     *   pagesize - 10 | 20 | 50 | 100.  Default 10.
+     *   page     - 1..10 (hard cap so ?page=999 doesn't haul a
+     *              year of tracks).  Default 1.
+     *   timezone - any IANA zone; defaults to station.
+     */
+    public function trackHistoryDataAction()
+    {
+        $this->view->layout()->disableLayout();
+        $this->_helper->viewRenderer->setNoRender(true);
+
+        $request  = $this->getRequest();
+        $cacheTtl = $this->_resolveCacheTtl(60);
+        $timezone = $this->_resolveTimezone();
+
+        $window = $this->_resolveTrackHistoryDay(
+            $timezone,
+            $request->getParam('date')
+        );
+
+        $pagesize = (int) $request->getParam('pagesize', 10);
+        if (!in_array($pagesize, [10, 20, 50, 100], true)) {
+            $pagesize = 10;
+        }
+
+        $page = (int) $request->getParam('page', 1);
+        $page = max(1, min(10, $page));   // hard cap 10 pages
+        $offset = ($page - 1) * $pagesize;
+
+        $tracks = $this->_fetchTrackHistoryRows(
+            $window['start_utc'],
+            $window['end_utc'],
+            $pagesize,
+            $offset,
+            $timezone
+        );
+
+        // hasMore: lookup +1 to know whether a next page exists.
+        // Lighter than a SELECT COUNT(*) and good enough to
+        // toggle the "Load more" button.
+        $hasMore = false;
+        if (count($tracks) === $pagesize && $page < 10) {
+            $extra = $this->_fetchTrackHistoryRows(
+                $window['start_utc'],
+                $window['end_utc'],
+                1,
+                $offset + $pagesize,
+                $timezone
+            );
+            $hasMore = !empty($extra);
+        }
+
+        header('Content-Type: application/json; charset=utf-8');
+        $this->_emitCacheHeaders($cacheTtl);
+        echo json_encode([
+            'success'  => true,
+            'tracks'   => $tracks,
+            'hasMore'  => $hasMore,
+            'page'     => $page,
+            'pagesize' => $pagesize,
+            'dayLocal' => $window['day_local'],
+            'timezone' => $timezone,
+            'labels'   => [
+                'noTrackHistory' => Application_Model_Preference::GetWidgetNoTrackHistory(),
+            ],
+        ]);
+    }
+
+    /**
+     * Resolve the date parameter to a day-window (UTC range) +
+     * the min/max dates the picker should allow.  Operator-set
+     * scope: last 7 days, today included (so the picker covers
+     * today minus 6 days through today).
+     */
+    private function _resolveTrackHistoryDay($timezone, $dayParam)
+    {
+        $tz = new DateTimeZone($timezone);
+        $today = new DateTime('today', $tz);
+
+        // Min date: 6 days ago (so range is 7 days inclusive
+        // counting today).  Operator-typical history-lookback
+        // window — anything older sits in the dashboard, not
+        // in a public widget.
+        $minDate = (clone $today)->modify('-6 days');
+
+        $picked = $today;
+        if ($dayParam !== null && $dayParam !== ''
+                && preg_match('/^\d{4}-\d{2}-\d{2}$/', $dayParam)) {
+            try {
+                $candidate = new DateTime($dayParam . ' 00:00:00', $tz);
+                // Clamp to [minDate, today]; out-of-range dates
+                // silently snap to the nearest valid bound rather
+                // than 500-ing on a hand-crafted URL.
+                if ($candidate < $minDate) {
+                    $picked = $minDate;
+                } elseif ($candidate > $today) {
+                    $picked = $today;
+                } else {
+                    $picked = $candidate;
+                }
+            } catch (Exception $e) {
+                $picked = $today;
+            }
+        }
+
+        $dayEnd = (clone $picked)->modify('+1 day');
+
+        $utc = new DateTimeZone('UTC');
+        return [
+            'start_utc' => (clone $picked)->setTimezone($utc)->format('Y-m-d H:i:s'),
+            'end_utc'   => (clone $dayEnd)->setTimezone($utc)->format('Y-m-d H:i:s'),
+            'day_local' => $picked->format('Y-m-d'),
+            'min_local' => $minDate->format('Y-m-d'),
+            'max_local' => $today->format('Y-m-d'),
+        ];
+    }
+
+    /**
+     * Fetch one page of tracks from cc_playout_history, joined
+     * to cc_files for title/artist and (when present) to
+     * cc_show_instances → cc_show for the show context.  Tracks
+     * without a file_id (e.g. some auto-DJ entries) are
+     * filtered out — they have no usable display data.
+     *
+     * Returns rows ordered chronologically descending (most
+     * recent first, most operator-typical browsing direction).
+     */
+    private function _fetchTrackHistoryRows($fromUtc, $toUtc, $limit, $offset, $timezone)
+    {
+        $sql = "SELECT ph.id        AS history_id,
+                       ph.starts    AS starts_utc,
+                       ph.ends      AS ends_utc,
+                       f.track_title,
+                       f.artist_name,
+                       s.id         AS show_id,
+                       s.name       AS show_name,
+                       s.url        AS show_url,
+                       s.background_color
+                FROM cc_playout_history ph
+                JOIN cc_files f             ON ph.file_id = f.id
+                LEFT JOIN cc_show_instances si ON ph.instance_id = si.id
+                LEFT JOIN cc_show s         ON si.show_id = s.id
+                WHERE ph.starts >= :from_utc
+                  AND ph.starts <  :to_utc
+                ORDER BY ph.starts DESC
+                LIMIT :lim OFFSET :off";
+
+        $rows = Application_Common_Database::prepareAndExecute(
+            $sql,
+            [
+                ':from_utc' => $fromUtc,
+                ':to_utc'   => $toUtc,
+                ':lim'      => (int) $limit,
+                ':off'      => (int) $offset,
+            ],
+            'all'
+        );
+
+        $out = [];
+        foreach ($rows as $r) {
+            $bg = (string) ($r['background_color'] ?? '');
+            $bgHex = ($bg !== '' && preg_match('/^[0-9a-fA-F]{6}$/', $bg))
+                ? '#' . $bg
+                : null;
+            $title  = trim((string) ($r['track_title'] ?? ''));
+            $artist = trim((string) ($r['artist_name'] ?? ''));
+            // Skip rows where both title and artist are empty —
+            // they'd render as blank rows; better to drop them.
+            if ($title === '' && $artist === '') {
+                continue;
+            }
+            $out[] = [
+                'id'         => (int) $r['history_id'],
+                'title'      => $title,
+                'artist'     => $artist,
+                'starts'     => $this->_formatTimestamp($r['starts_utc'], $timezone),
+                'ends'       => $this->_formatTimestamp($r['ends_utc'],   $timezone),
+                'show'       => [
+                    'id'    => $r['show_id'] !== null ? (int) $r['show_id'] : null,
+                    'name'  => (string) ($r['show_name'] ?? ''),
+                    'url'   => (string) ($r['show_url']  ?? ''),
+                    'color' => $bgHex,
+                ],
+            ];
+        }
+        return $out;
+    }
 }

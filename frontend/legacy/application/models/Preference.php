@@ -604,6 +604,18 @@ class Application_Model_Preference
     }
     public static function SetWidgetNoMultiViewSchedule($v) { self::setValue('widget_no_multi_view_schedule', (string) $v); }
 
+    // RASTATIME 2026-05-22 — Track History widget empty-state
+    // label.  Shown when the picked day has no track history
+    // entries (e.g. the playout engine wasn't running that day,
+    // or the operator picked a future date which got clamped
+    // to today but today's playout hasn't started yet).
+    public static function GetWidgetNoTrackHistory()
+    {
+        $v = self::getValue('widget_no_track_history');
+        return $v === '' ? 'No tracks played on this day' : $v;
+    }
+    public static function SetWidgetNoTrackHistory($v)    { self::setValue('widget_no_track_history', (string) $v); }
+
     public static function SetPhone($phone)
     {
         self::setValue('phone', $phone);

@@ -30,6 +30,7 @@ them on an external site.
 | **On Air Today** | `/embed/on-air-today` | Day-grid widget. Header band + today's current + upcoming shows, each row "HH:MM – HH:MM   Show name (link)". |
 | **Weekly Schedule** | `/embed/weekly-program` | Seven-day tab widget. Header with ◀ / ▶ week-navigation + date-range label; day tabs; per-tab row list with HH:MM – HH:MM + show name (link). Optional background-image via `?bg=URL`. |
 | **Multi-View Schedule** | `/embed/multi-view-schedule` | Calendar-style widget powered by FullCalendar 6 (locally hosted). Operator-switchable Day / 2-Day / Week views via in-widget buttons or `?view=`. Show slots coloured from `cc_show.background_color`. Click → modal with show description + URL button. Auto-scrolls to the now-line. |
+| **Track History** | `/embed/track-history` | Recent-track playout log (last 7 days). HTML5 date-picker + Today button + pagesize dropdown (10/20/50/100). Rows show "HH:MM Artist - Title"; click → modal with show context + URL link. Load-more button capped at 1000 rows total. |
 | **Audio Player** | `/embed/player` | (Existing) Inline HTML5 audio player for the public stream. |
 
 More widgets are planned (see [BACKLOG.md](../../BACKLOG.md)).
@@ -495,7 +496,118 @@ widgets use.
 
 ---
 
-## 8. Customising the empty-state labels
+## 8. Track History widget
+
+Recent-track playout log — the visitor picks a day from the
+last 7, chooses a page size (10 / 20 / 50 / 100), and the
+widget renders the tracks that played in chronological-
+descending order.  Click any row → modal popover with the
+track's full metadata + show context + click-through link
+to the show's URL when one is configured.
+
+Drop-in iframe (~500 px tall to comfortably show 10 rows
+plus header + load-more footer):
+
+```html
+<iframe src="https://your-station.example/embed/track-history"
+        width="100%" height="500" frameborder="0"
+        scrolling="no" style="border: 0; background: transparent;">
+</iframe>
+```
+
+### What it shows
+
+```
+[2026-05-22 ▾] [Today] [10 ▾]                       ← header
+──────────────────────────────────────────────
+20:55   Leyya - Butter
+20:51   78plus - Hurrycan
+20:48   Pizzera & Jaus - Nochbarn
+...
+                  [ Load more ]                     ← footer
+```
+
+- **Header**: HTML5 date-picker (capped to last 7 days),
+  Today shortcut button, and a page-size dropdown.
+  Changing any of them resets to page 1 and re-fetches.
+- **Rows**: `HH:MM Artist - Title` — minimal, fits comfortably
+  in narrow sidebars.  Title-only / artist-only tracks
+  render with just the available field.  Empty-both rows
+  are filtered server-side.
+- **Load more**: appends another page (same size) below the
+  existing list.  Hidden when there are no more rows;
+  disabled while a fetch is in flight.  Hard-capped at
+  10 pages × 100 pagesize = 1000 rows total.
+- **Modal**: opens on row click with title, artist, time
+  range, show name, and an "Open show page →" button when
+  the parent show has a configured URL.
+
+### URL parameters
+
+| Param | Values | Default | Effect |
+|---|---|---|---|
+| `date` | `YYYY-MM-DD` | today | Day to load.  Clamped to `[today - 6 days, today]` — values outside snap to the nearest valid bound rather than erroring. |
+| `pagesize` | `10`, `20`, `50`, `100` | `10` | How many tracks load per page.  The visitor can still change it in-widget; this only controls the initial state. |
+| `theme` | `auto`, `dark`, `light` | `auto` | Same as the other widgets — see §2. |
+| `cache` | integer seconds 10..3600 | `60` | Server-side HTTP cache TTL for the JSON feed. |
+| `bg` | URL of an image | none | Same as the Weekly Schedule widget — see §6. |
+| `bgcolor` | hex colour | none | Same as the Weekly Schedule widget — see §6. |
+| `timezone` | any IANA zone | station default | All times rendered in this zone. |
+
+> **7-day cap rationale.**  The widget is meant for "what
+> just played" curiosity, not a long-term archive.
+> Operators with a deeper history-browser need would use the
+> internal Playout History dashboard instead, which has no
+> public-facing scope cap.
+
+### Data feed
+
+Internal JSON endpoint at `/Embed/track-history-data`,
+called by the JS runtime on every date / pagesize change
+and on Load-more.  Output shape:
+
+```json
+{
+  "success": true,
+  "tracks": [
+    {
+      "id": 820,
+      "title": "Butter",
+      "artist": "Leyya",
+      "starts": "2026-05-22T20:55:36+02:00",
+      "ends":   "2026-05-22T20:59:04+02:00",
+      "show": {
+        "id":    322,
+        "name":  "Auto DJ",
+        "url":   "",
+        "color": "#919088"
+      }
+    }
+  ],
+  "hasMore":  true,
+  "page":     1,
+  "pagesize": 10,
+  "dayLocal": "2026-05-22",
+  "timezone": "Europe/Berlin"
+}
+```
+
+Source: `cc_playout_history` JOIN `cc_files`
+(track_title, artist_name) LEFT JOIN
+`cc_show_instances` → `cc_show` for the show context.
+Tracks without a `file_id` (some auto-DJ filler entries)
+are filtered out — they have no usable display data.
+
+### Settings page
+
+**Settings → Widgets → Track History** hosts:
+- The operator-configurable empty-state label,
+- A live preview iframe on a dark backdrop,
+- Two ready-made embed-code snippets (pagesize 10 + 50).
+
+---
+
+## 9. Customising the empty-state labels
 
 When there is no current or upcoming show / track, the widget
 falls back to a short placeholder text.  Operators can customise
@@ -539,7 +651,7 @@ Save, and copy the generated `<iframe ...>` block with the
 
 ---
 
-## 9. The `cache` parameter — what is the right TTL?
+## 10. The `cache` parameter — what is the right TTL?
 
 The server caches the underlying data for `cache` seconds
 before regenerating it. The JS poll inside the iframe
@@ -575,7 +687,7 @@ Recommended values:
 
 ---
 
-## 10. Theming
+## 11. Theming
 
 Three modes, controlled via the `theme` URL parameter:
 
@@ -603,7 +715,7 @@ transparent background:
 
 ---
 
-## 11. Authentication
+## 12. Authentication
 
 None. The Now-Playing widgets are intentionally public:
 the whole point is that any visitor on your station's
@@ -626,7 +738,7 @@ which DJ is on air right now), open the password-protected
 
 ---
 
-## 12. Cross-origin embedding
+## 13. Cross-origin embedding
 
 Iframes work cross-origin out of the box — no extra
 configuration needed. Your station's homepage can embed
@@ -638,7 +750,7 @@ and ran into CORS errors, switching to the iframe approach
 
 ---
 
-## 13. Troubleshooting
+## 14. Troubleshooting
 
 ### "Widget shows 'No show on air' but a show is running"
 

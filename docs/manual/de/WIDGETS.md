@@ -31,6 +31,7 @@ Sie sie auf einer externen Seite einbetten.
 | **On Air Today** | `/embed/on-air-today` | Tages-Grid-Widget. Header-Band + heutige laufende + kommende Sendungen, jede Zeile "HH:MM – HH:MM   Sendungsname (Link)". |
 | **Weekly Schedule** | `/embed/weekly-program` | Sieben-Tage-Tab-Widget. Header mit ◀ / ▶ Wochen-Navigation + Datums-Range-Label; Tagestabs; Zeilenliste pro Tab mit HH:MM – HH:MM + Sendungsname (Link). Optionales Hintergrundbild via `?bg=URL`. |
 | **Multi-View Schedule** | `/embed/multi-view-schedule` | Kalender-Widget basierend auf FullCalendar 6 (lokal gehostet). Operator-umschaltbare Day / 2-Day / Week Views via In-Widget-Buttons oder `?view=`. Show-Slots eingefärbt aus `cc_show.background_color`. Klick → Modal mit Sendungs-Beschreibung + URL-Button. Auto-Scroll zur Now-Linie. |
+| **Track History** | `/embed/track-history` | Tracker-History-Log (letzte 7 Tage). HTML5 Date-Picker + Today-Button + Pagesize-Dropdown (10/20/50/100). Zeilen "HH:MM Künstler - Titel"; Klick → Modal mit Show-Kontext + URL-Link. Load-More-Button, hart-gecappt bei 1000 Zeilen. |
 | **Audio Player** | `/embed/player` | (Bestehend) Eingebetteter HTML5-Audio-Player für den öffentlichen Stream. |
 
 Weitere Widgets sind geplant (siehe [BACKLOG.md](../../../BACKLOG.md)).
@@ -467,7 +468,57 @@ Instanzen werden herausgefiltert.
 
 ---
 
-## 8. Empty-State-Labels anpassen
+## 8. Track History Widget
+
+Recent-Track-Playout-Log — Besucher wählt einen Tag aus den
+letzten 7, wählt eine Seitengröße (10 / 20 / 50 / 100), und
+das Widget rendert die gespielten Tracks chronologisch
+absteigend.  Klick auf eine Zeile → Modal mit Track-Metadaten
++ Show-Kontext + Click-Through-Link zur Show-URL falls
+konfiguriert.
+
+Drop-in-iframe (~500 px hoch, damit 10 Zeilen + Header +
+Load-More-Footer reinpassen):
+
+```html
+<iframe src="https://ihre-station.example/embed/track-history"
+        width="100%" height="500" frameborder="0"
+        scrolling="no" style="border: 0; background: transparent;">
+</iframe>
+```
+
+### URL-Parameter
+
+| Parameter | Werte | Standard | Effekt |
+|---|---|---|---|
+| `date` | `YYYY-MM-DD` | heute | Zu ladender Tag.  Gecappt auf `[heute - 6 Tage, heute]` — out-of-range snappt auf den nächsten gültigen Wert statt 500. |
+| `pagesize` | `10`, `20`, `50`, `100` | `10` | Anzahl Tracks pro Seite.  Besucher kann es in-widget ändern. |
+| `theme` | `auto`, `dark`, `light` | `auto` | Wie die anderen Widgets — siehe §2. |
+| `cache` | Ganzzahl Sekunden 10..3600 | `60` | Server-seitige HTTP-Cache-TTL. |
+| `bg`, `bgcolor` | URL bzw. Hex-Farbe | keine | Wie die anderen Widgets — siehe §6. |
+| `timezone` | beliebige IANA-Zone | Stations-Standard | Alle Zeiten in dieser Zone. |
+
+> **7-Tage-Cap-Begründung.**  Das Widget ist für "was hat
+> gerade gespielt"-Neugier gedacht, nicht als
+> Langzeit-Archiv.  Tieferer History-Browser-Bedarf wird
+> durch das interne Playout-History-Dashboard abgedeckt.
+
+### Datenfeed
+
+Interner JSON-Endpoint unter `/Embed/track-history-data`.
+Quelle: `cc_playout_history` JOIN `cc_files` LEFT JOIN
+`cc_show_instances → cc_show`.
+
+### Einstellungs-Seite
+
+**Einstellungen → Widgets → Track History** enthält:
+- Operator-konfigurierbares Empty-State-Label,
+- Live-Vorschau-iframe auf dunklem Backdrop,
+- Zwei vorgefertigte Embed-Code-Snippets (Pagesize 10 + 50).
+
+---
+
+## 9. Empty-State-Labels anpassen
 
 Wenn keine aktuelle oder kommende Show / Track vorhanden ist,
 zeigt das Widget einen kurzen Platzhalter-Text. Operator können
@@ -513,7 +564,7 @@ URL eingebaut.
 
 ---
 
-## 9. Der `cache`-Parameter — welche TTL ist richtig?
+## 10. Der `cache`-Parameter — welche TTL ist richtig?
 
 Der Server cached die zugrunde liegenden Daten für `cache`
 Sekunden, bevor er sie regeneriert. Die JS-Abfrage im
@@ -552,7 +603,7 @@ Empfohlene Werte:
 
 ---
 
-## 10. Themes
+## 11. Themes
 
 Drei Modi, gesteuert über den `theme`-URL-Parameter:
 
@@ -579,7 +630,7 @@ und sich auf den transparenten Hintergrund zu verlassen:
 
 ---
 
-## 11. Authentifizierung
+## 12. Authentifizierung
 
 Keine. Die Now-Playing-Widgets sind absichtlich
 öffentlich: Der ganze Zweck ist, dass jeder Besucher auf
@@ -604,7 +655,7 @@ Sie stattdessen das passwortgeschützte
 
 ---
 
-## 12. Cross-Origin-Einbettung
+## 13. Cross-Origin-Einbettung
 
 Iframes funktionieren cross-origin von Haus aus — keine
 zusätzliche Konfiguration nötig. Die Homepage Ihrer
@@ -618,7 +669,7 @@ vollständig.
 
 ---
 
-## 13. Fehlerbehebung
+## 14. Fehlerbehebung
 
 ### "Widget zeigt 'No show on air', aber eine Sendung läuft"
 

@@ -1068,3 +1068,274 @@ html, body {
 .np-widget.np-multi-view-schedule.np-mv-no-link .np-mv-modal-link {
     display: none;
 }
+
+/* ─────────────────────────────────────────────────────────────
+ *  RASTATIME 2026-05-22 — Track History widget (Wave-3).
+ *
+ *  Wave-1-style header (date-picker + Today + pagesize select),
+ *  list of tracks (HH:MM Artist - Title), Load-More button,
+ *  modal with full metadata + show context.  Kantig + accent
+ *  colour conventions match the Weekly-Schedule + Multi-View
+ *  widgets.
+ * ───────────────────────────────────────────────────────────── */
+
+.np-widget.np-track-history {
+    --np-accent: #459B8F;
+    --np-accent-hover: rgba(69, 155, 143, 0.4);
+
+    max-width: 100%;
+    line-height: 1.4;
+    font-size: 0.92em;
+
+    background-color: var(--np-bg-color, transparent);
+    background-image: var(--np-bg-image, none);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* ─── Header band ─── */
+
+.np-widget.np-track-history .np-th-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--np-fg-muted);
+    color: var(--np-fg);
+    flex-shrink: 0;
+    font-weight: 600;
+}
+
+.np-widget.np-track-history .np-th-date,
+.np-widget.np-track-history .np-th-pagesize {
+    background: transparent;
+    border: 1px solid var(--np-fg-muted);
+    color: var(--np-fg);
+    padding: 3px 6px;
+    font: inherit;
+    /* Kantig — no border-radius */
+    border-radius: 0;
+}
+
+.np-widget.np-track-history .np-th-date {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.np-widget.np-track-history .np-th-pagesize {
+    flex: 0 0 auto;
+}
+
+.np-widget.np-track-history .np-th-today {
+    background: transparent;
+    border: 1px solid var(--np-fg-muted);
+    color: var(--np-fg);
+    padding: 3px 8px;
+    font: inherit;
+    cursor: pointer;
+    border-radius: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-size: 0.85em;
+    flex: 0 0 auto;
+}
+
+.np-widget.np-track-history .np-th-today:hover {
+    background: var(--np-accent-hover);
+}
+
+/* ─── List ─── */
+
+.np-widget.np-track-history .np-th-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    flex: 1 1 auto;
+    overflow-y: auto;
+    min-height: 0;
+}
+
+.np-widget.np-track-history .np-th-row {
+    display: flex;
+    align-items: baseline;
+    gap: 0.7em;
+    padding: 6px 8px;
+    border-bottom: 1px dotted var(--np-fg-muted);
+    color: var(--np-fg);
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.np-widget.np-track-history .np-th-row:hover {
+    background: var(--np-accent-hover);
+}
+
+.np-widget.np-track-history .np-th-row-time {
+    flex: 0 0 auto;
+    min-width: 3.5em;
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    color: var(--np-fg-muted);
+}
+
+.np-widget.np-track-history .np-th-row-title {
+    flex: 1 1 auto;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.np-widget.np-track-history .np-th-empty {
+    color: var(--np-fg-muted);
+    font-style: italic;
+    padding: 18px 12px;
+    text-align: center;
+}
+
+/* ─── Footer (Load more) ─── */
+
+.np-widget.np-track-history .np-th-footer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 8px;
+    border-top: 1px solid var(--np-fg-muted);
+    flex-shrink: 0;
+}
+
+.np-widget.np-track-history .np-th-loadmore {
+    background: transparent;
+    border: 1px solid var(--np-accent);
+    color: var(--np-fg);
+    padding: 5px 14px;
+    font: inherit;
+    cursor: pointer;
+    border-radius: 0;
+    font-weight: 600;
+}
+
+.np-widget.np-track-history .np-th-loadmore:hover {
+    background: var(--np-accent);
+    color: #fff;
+}
+
+.np-widget.np-track-history .np-th-status {
+    color: var(--np-fg-muted);
+    font-style: italic;
+    font-size: 0.9em;
+}
+
+/* ─── Modal ─── */
+
+.np-widget.np-track-history .np-th-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.15s ease;
+    z-index: 100;
+}
+
+.np-widget.np-track-history .np-th-modal-overlay.np-th-modal-visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+.np-widget.np-track-history .np-th-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #1a1a1a;
+    color: #f0f0f0;
+    border: 1px solid var(--np-accent);
+    padding: 18px 22px;
+    width: min(420px, calc(100% - 32px));
+    max-height: calc(100vh - 32px);
+    overflow-y: auto;
+    z-index: 101;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.15s ease;
+    border-radius: 0;
+}
+
+.np-widget.np-track-history .np-th-modal.np-th-modal-visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+.np-widget.np-track-history.np-theme-light .np-th-modal {
+    background: #f8f8f8;
+    color: #1a1a1a;
+}
+
+.np-widget.np-track-history .np-th-modal-close {
+    position: absolute;
+    top: 6px;
+    right: 10px;
+    background: transparent;
+    border: 0;
+    color: inherit;
+    font-size: 1.6em;
+    line-height: 1;
+    cursor: pointer;
+    padding: 4px 8px;
+}
+
+.np-widget.np-track-history .np-th-modal-close:hover {
+    color: var(--np-accent);
+}
+
+.np-widget.np-track-history .np-th-modal-title {
+    margin: 0 30px 6px 0;
+    font-size: 1.2em;
+    font-weight: 700;
+}
+
+.np-widget.np-track-history .np-th-modal-artist {
+    margin: 0 0 12px 0;
+    font-size: 1em;
+    color: var(--np-fg-muted);
+}
+
+.np-widget.np-track-history.np-theme-light .np-th-modal-artist {
+    color: #555;
+}
+
+.np-widget.np-track-history .np-th-modal-time {
+    margin: 0 0 8px 0;
+    color: var(--np-accent);
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+}
+
+.np-widget.np-track-history .np-th-modal-show {
+    margin: 0 0 14px 0;
+    line-height: 1.5;
+}
+
+.np-widget.np-track-history .np-th-modal-link {
+    display: inline-block;
+    padding: 8px 14px;
+    background: var(--np-accent);
+    color: #fff;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.np-widget.np-track-history .np-th-modal-link:hover {
+    background: var(--np-accent-hover);
+    color: var(--np-fg);
+}
+
+.np-widget.np-track-history.np-th-no-link .np-th-modal-link {
+    display: none;
+}

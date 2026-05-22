@@ -9,6 +9,67 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Public Embed Widget: Track History** (operator request
+  2026-05-22, BACKLOG widget-wave 3).  Recent-track playout
+  log for the last 7 days — visitor picks a day from a
+  date-picker (HTML5 native), chooses a page size
+  (10/20/50/100), and the widget lists the played tracks in
+  reverse-chronological order.  Click any row → modal with
+  the track's metadata + show context + click-through link
+  to the show URL when configured.
+
+      <iframe src=".../embed/track-history"
+              width="100%" height="500" frameborder="0"></iframe>
+
+  URL parameters: `date` (clamped to -6..0 days from
+  today), `pagesize` (10/20/50/100, default 10), `theme`,
+  `cache`, `bg`, `bgcolor`, `timezone`.
+
+  Pagination: "Load more" button at the footer appends the
+  next page in-place.  Hard-capped at 10 pages × 100
+  pagesize = 1000 rows total — operators who need a deeper
+  history-browser use the internal Playout History
+  dashboard.
+
+  Files:
+    - `application/controllers/EmbedController.php` —
+      `trackHistoryAction` + `trackHistoryDataAction` +
+      `_resolveTrackHistoryDay` + `_fetchTrackHistoryRows`.
+      SQL: cc_playout_history JOIN cc_files LEFT JOIN
+      cc_show_instances → cc_show.  Tracks without a
+      file_id (some auto-DJ filler entries) are filtered
+      out — they have no usable display data.  hasMore
+      detection via a +1 lookup (lighter than SELECT
+      COUNT(*)).
+    - `application/views/scripts/embed/track-history.phtml`
+      — header band (date-picker + Today + pagesize),
+      `<ul>` list, footer (Load-more + status), modal
+      scaffolding.
+    - `application/controllers/EmbeddablewidgetsController.php`
+      — new `trackHistoryAction` settings page.
+    - `application/forms/WidgetTrackHistory.php` — single
+      empty-state label input.
+    - `application/views/scripts/embeddablewidgets/track-history.phtml`
+      — settings page: label form + preview iframe (dark
+      backdrop) + two embed-code snippets (pagesize 10 + 50).
+    - `application/configs/navigation.php` — new "Track
+      History" submenu entry under Widgets, next to On Air
+      Today.
+    - `application/models/Preference.php` — new
+      `GetWidgetNoTrackHistory` / `SetWidgetNoTrackHistory`
+      pair with English fallback.
+    - `public/css/embed/now-playing-widget.css` — new
+      `.np-track-history` block: header band, list, load-
+      more footer, modal styling.  Kantig + accent-colour
+      conventions match the Wave-2 widgets.
+    - `public/js/airtime/embed/track-history-widget.js` —
+      vanilla JS runtime (~260 LoC): date / pagesize
+      handlers, Load-more appender, row-click modal,
+      hour-without-leading-zero formatter.
+    - `docs/manual/WIDGETS.md` + `de/` + `fr/` + `es/` —
+      new §8 chapter, family table row added, downstream
+      sections renumbered 9-14.
+
 - **Public Embed Widget: Multi-View Schedule** (operator
   request 2026-05-22, BACKLOG widget-wave 2 second half).
   Calendar-style iframe widget powered by FullCalendar 6.1.10

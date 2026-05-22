@@ -32,6 +32,7 @@ les intégrer sur un site externe.
 | **On Air Today** | `/embed/on-air-today` | Widget grille-du-jour. Bande d'en-tête + émission actuelle + prochaines du jour, chaque ligne "HH:MM – HH:MM   Nom (lien)". |
 | **Weekly Schedule** | `/embed/weekly-program` | Widget à onglets sur sept jours. En-tête avec ◀ / ▶ navigation hebdomadaire + libellé de plage de dates ; onglets de jour ; liste de lignes par onglet avec HH:MM – HH:MM + nom d'émission (lien). Image de fond optionnelle via `?bg=URL`. |
 | **Multi-View Schedule** | `/embed/multi-view-schedule` | Widget calendrier basé sur FullCalendar 6 (hébergé localement). Vues Day / 2-Day / Week commutables via boutons in-widget ou `?view=`. Créneaux d'émission colorés depuis `cc_show.background_color`. Clic → modal avec description + bouton URL. Auto-scroll vers la ligne now. |
+| **Track History** | `/embed/track-history` | Journal de lecture des pistes (7 derniers jours). Date-picker HTML5 + bouton Today + dropdown pagesize (10/20/50/100). Lignes "HH:MM Artiste - Titre"; clic → modal avec contexte d'émission + lien URL. Bouton Load-more avec cap dur à 1000 lignes. |
 | **Audio Player** | `/embed/player` | (Existant) Lecteur audio HTML5 intégré pour le stream public. |
 
 D'autres widgets sont prévus (voir [BACKLOG.md](../../../BACKLOG.md)).
@@ -449,7 +450,44 @@ l'emploi pour les trois vues par défaut.
 
 ---
 
-## 8. Personnaliser les libellés d'état vide
+## 8. Widget Track History
+
+Journal de lecture des pistes — le visiteur choisit un jour
+des 7 derniers, sélectionne une taille de page (10 / 20 /
+50 / 100), et le widget affiche les pistes diffusées en
+ordre chronologique inverse.  Clic sur une ligne → modal
+avec métadonnées + contexte d'émission + lien URL.
+
+iframe prêt à l'emploi (~500 px de haut) :
+
+```html
+<iframe src="https://votre-station.example/embed/track-history"
+        width="100%" height="500" frameborder="0"
+        scrolling="no" style="border: 0; background: transparent;">
+</iframe>
+```
+
+### Paramètres URL
+
+| Paramètre | Valeurs | Défaut | Effet |
+|---|---|---|---|
+| `date` | `YYYY-MM-DD` | aujourd'hui | Jour à charger.  Limité à `[aujourd'hui - 6 jours, aujourd'hui]`. |
+| `pagesize` | `10`, `20`, `50`, `100` | `10` | Pistes par page. |
+| `theme` | `auto`, `dark`, `light` | `auto` | Identique aux autres widgets. |
+| `cache` | entier secondes 10..3600 | `60` | TTL cache HTTP. |
+| `bg`, `bgcolor` | URL / hex | aucune | Identique aux autres widgets. |
+| `timezone` | tout fuseau IANA | défaut station | Toutes les heures dans cette zone. |
+
+Source : `cc_playout_history` JOIN `cc_files` LEFT JOIN
+`cc_show_instances` → `cc_show`.
+
+**Paramètres → Widgets → Track History** héberge le libellé
+d'état vide, l'aperçu en direct, et deux snippets prêts à
+l'emploi (pagesize 10 + 50).
+
+---
+
+## 9. Personnaliser les libellés d'état vide
 
 Quand il n'y a pas d'émission ou de piste actuelle / suivante,
 le widget affiche un court texte placeholder.  Les opérateurs
@@ -495,7 +533,7 @@ généré avec `show_id` déjà intégré dans l'URL.
 
 ---
 
-## 9. Le paramètre `cache` — quel TTL ?
+## 10. Le paramètre `cache` — quel TTL ?
 
 Le serveur met en cache les données sous-jacentes pendant
 `cache` secondes avant de les regénérer. Le polling JS
@@ -533,7 +571,7 @@ Valeurs recommandées :
 
 ---
 
-## 10. Thèmes
+## 11. Thèmes
 
 Trois modes, contrôlés via le paramètre `theme` :
 
@@ -548,7 +586,7 @@ se fonde dans la page d'intégration.
 
 ---
 
-## 11. Authentification
+## 12. Authentification
 
 Aucune. Les widgets Now-Playing sont intentionnellement
 publics : tout l'intérêt est que n'importe quel visiteur
@@ -561,14 +599,14 @@ IDs internes.
 
 ---
 
-## 12. Intégration cross-origin
+## 13. Intégration cross-origin
 
 Les iframes fonctionnent cross-origin nativement — aucune
 configuration supplémentaire nécessaire.
 
 ---
 
-## 13. Dépannage
+## 14. Dépannage
 
 ### "Le widget affiche 'No show on air' mais une émission tourne"
 
