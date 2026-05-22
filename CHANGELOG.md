@@ -290,6 +290,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Widget width: Now-Playing + On-Air-Today bumped to 340 px**
+  (operator request 2026-05-22 v5).  The Current Show, Current
+  Track, and On-Air-Today widgets now have a 340 px-wide body
+  instead of the previous uniform 300 px — more breathing room
+  for the bold show names and the time-of-day cells.
+
+  Next-Shows / Latest-Shows widgets stay at 300 px (they
+  serve a narrower sidebar use-case where the tighter body
+  reads cleaner).
+
+  Implementation:
+  * New marker class `np-now-playing` added to both
+    Now-Playing templates so the CSS can target them
+    explicitly (`np-on-air-today` already existed).
+  * Width cap moved from the unconditional `.np-widget`
+    rule into per-family overrides: base default stays
+    300 px (covers shows-list), the two wider families
+    bump to 340 via `.np-widget.np-now-playing,
+    .np-widget.np-on-air-today { max-width: 340px; }`.
+  * Marquee animation end-offset parameterised through a
+    `--np-marquee-end` CSS variable: 280 px for the narrow
+    300 px widgets (default), 320 px for the wider 340 px
+    widgets.  Single `@keyframes np-marquee-scroll` works
+    for both via `var(--np-marquee-end, 280px)`.
+  * Settings-page preview iframes and embed-code snippets
+    updated to `width="340"` on both Current Show/Track
+    and On-Air-Today pages.
+
+  Files: `application/controllers/EmbedController.php`
+  (unchanged); `application/views/scripts/embed/now-
+  playing-{show,track}.phtml` (added `np-now-playing` to
+  body class); `application/views/scripts/embeddablewidgets/
+  current-show-track.phtml` + `on-air-today.phtml`
+  (iframe width 300 → 340); `public/css/embed/now-playing-
+  widget.css` (per-family max-width override + marquee
+  variable); `docs/manual/WIDGETS.md` + `de/` + `fr/` +
+  `es/` (Now-Playing & On-Air-Today iframe snippets + Note
+  about widget cap updated; Next/Latest still 300 px noted).
+
 - **On-Air-Today: typography & link-default polish**
   (operator request 2026-05-22 v4).  Three small visual
   changes to make the widget more legible at sidebar embed

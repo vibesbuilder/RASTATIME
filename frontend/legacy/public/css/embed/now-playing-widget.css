@@ -31,12 +31,13 @@ html, body {
 
     /*  RASTATIME 2026-05-22 — width cap.  Operator request: a
         narrow widget reads more cleanly inside the sidebar of a
-        public site than a full-width strip.  The 300 px cap
-        applies to the widget body; the iframe itself can still
-        be sized larger by the embedding page (the iframe will
-        have white space around the 300 px widget).  Set the
-        iframe width to 300 px on the embedding side for a
-        flush fit.  */
+        public site than a full-width strip.  The 300 px default
+        applies to the widget body; widget-family overrides below
+        (np-now-playing, np-on-air-today) bump specific widgets
+        to 340 px on operator request 2026-05-22 v5.  The iframe
+        itself can still be sized larger by the embedding page
+        (the iframe will have white space around the widget body).
+        Set the iframe width to match for a flush fit.  */
     max-width: 300px;
     margin: 0;
 
@@ -46,6 +47,20 @@ html, body {
     --np-fg: #222;
     --np-fg-muted: #666;
     color: var(--np-fg);
+}
+
+/* ───── per-widget-family width overrides ─────
+ *
+ *  RASTATIME 2026-05-22 v5 — Now-Playing (show + track) and
+ *  On-Air-Today widgets get bumped to 340 px on operator request
+ *  ("show / track / today look better with a bit more breathing
+ *  room").  Next/Latest Shows stays at the 300 px default — it
+ *  serves a different sidebar use-case where the narrower body
+ *  reads more cleanly.
+ */
+.np-widget.np-now-playing,
+.np-widget.np-on-air-today {
+    max-width: 340px;
 }
 
 /* ───── theme switching ───── */
@@ -139,11 +154,23 @@ html, body {
 @keyframes np-marquee-scroll {
     /*  Hold the start for 1.5 s so the operator reads the
         beginning before the scroll starts; then translate left
-        until the text is fully off-screen; then snap back.  */
+        until the text is fully off-screen; then snap back.
+        The translate distance reads a CSS variable so the same
+        keyframes work for both the 300 px shows-list widgets
+        and the 340 px now-playing / on-air-today widgets — see
+        --np-marquee-end below.  */
     0%   { transform: translateX(0); }
     15%  { transform: translateX(0); }
-    85%  { transform: translateX(calc(-100% + 280px)); }
-    100% { transform: translateX(calc(-100% + 280px)); }
+    85%  { transform: translateX(calc(-100% + var(--np-marquee-end, 280px))); }
+    100% { transform: translateX(calc(-100% + var(--np-marquee-end, 280px))); }
+}
+
+/*  Wider widgets get a larger marquee end-offset so the scroll
+    matches the container width.  Numbers track the body padding
+    (~10 px each side) subtracted from the body width.  */
+.np-widget.np-now-playing,
+.np-widget.np-on-air-today {
+    --np-marquee-end: 320px;
 }
 
 .np-widget.np-overflow-marquee .np-row-current .np-name,

@@ -71,13 +71,16 @@ subyacentes se refrescan cada 60 segundos (configurable
 |---|---|---|---|
 | `theme` | `auto`, `dark`, `light` | `auto` | Color del texto. `auto` sigue el `prefers-color-scheme` del navegador. Fondo siempre transparente. |
 | `cache` | entero segundos, 10–3600 | `60` | TTL del caché HTTP del lado del servidor. Más bajo = datos más frescos + más hits backend. |
-| `overflow` | `ellipsis`, `marquee` | `ellipsis` | Qué hacer con nombres de programa / pista más anchos que el widget de 300 px. `ellipsis` trunca con `…`; `marquee` desplaza el texto a la izquierda durante 24 s. |
+| `overflow` | `ellipsis`, `marquee` | `ellipsis` | Qué hacer con nombres de programa / pista más anchos que el widget de 340 px. `ellipsis` trunca con `…`; `marquee` desplaza el texto a la izquierda durante 24 s. |
 | `timezone` | cualquier zona horaria estándar (`Europe/Madrid`) | predeterminado de la emisora | Todas las horas renderizadas en esta zona. |
 
-> **Nota.** El cuerpo del widget está limitado a **300 px de
+> **Nota.** El cuerpo del widget está limitado a **340 px de
 > ancho** para encajar en diseños de barra lateral típicos de
 > los sitios de emisoras.  Establezca el ancho del iframe en
-> 300 en el HTML de integración para un ajuste perfecto.
+> 340 en el HTML de integración para un ajuste perfecto.
+> (Los widgets Next-Shows / Latest-Shows están limitados a
+> 300 px — sirven a un caso de uso de barra lateral más
+> estrecho.)
 
 ---
 
@@ -202,7 +205,7 @@ iframe listo para usar:
 
 ```html
 <iframe src="https://su-emisora.example/embed/on-air-today"
-        width="300" height="250" frameborder="0"
+        width="340" height="250" frameborder="0"
         scrolling="no" style="border: 0; background: transparent;">
 </iframe>
 ```
@@ -245,7 +248,7 @@ migre a la línea siguiente sin esperar el TTL del caché.
 | `day` | `YYYY-MM-DD` | hoy | Fija un día específico (en la zona horaria resuelta) para renderizar vistas históricas o futuras.  Cuando se omite o iguala a hoy, el widget filtra los programas ya emitidos; para cualquier otro día lista todos los programas cuyo inicio cae en la ventana de 24 h. |
 | `theme` | `auto`, `dark`, `light` | `auto` | Igual que los otros widgets — vea §2. |
 | `cache` | entero segundos 10..3600 | `60` | Igual que los otros widgets — vea §7. |
-| `overflow` | `ellipsis`, `marquee` | `ellipsis` | Comportamiento de nombres de programa más anchos que 300 px. |
+| `overflow` | `ellipsis`, `marquee` | `ellipsis` | Comportamiento de nombres de programa más anchos que 340 px. |
 | `link` | `underline`, `plain` | `plain` | Renderizado de enlaces para nombres de programa: `plain` (por defecto) quita el subrayado para que los nombres se fundan con el texto en negrita de las filas; `underline` reactiva la affordance estándar de hipervínculo.  Con `plain` la affordance sólo sobrevive vía el cursor puntero al hover. |
 | `timezone` | cualquier zona IANA | predeterminado de la emisora | Define "hoy" y renderiza todas las horas en esta zona. |
 

@@ -68,13 +68,15 @@ every 60 seconds (configurable — see §7).
 |---|---|---|---|
 | `theme` | `auto`, `dark`, `light` | `auto` | Text colour. `auto` follows the embedding browser's `prefers-color-scheme`. Background is always transparent. |
 | `cache` | integer seconds, 10–3600 | `60` | Server-side HTTP cache TTL. Lower = fresher data + more backend hits. |
-| `overflow` | `ellipsis`, `marquee` | `ellipsis` | What to do with show / track names wider than the 300 px widget. `ellipsis` truncates with `…`; `marquee` scrolls left over 24 s so the operator can read the whole title. |
+| `overflow` | `ellipsis`, `marquee` | `ellipsis` | What to do with show / track names wider than the 340 px widget. `ellipsis` truncates with `…`; `marquee` scrolls left over 24 s so the operator can read the whole title. |
 | `timezone` | any standard timezone (`Europe/Berlin`) | station default | All times rendered in this zone. |
 
-> **Note.** The widget body is capped at **300 px wide** to fit
+> **Note.** The widget body is capped at **340 px wide** to fit
 > common sidebar layouts on station websites.  Set the iframe
-> width to 300 in the embedding HTML for a flush fit; a wider
-> iframe will show white space around the widget.
+> width to 340 in the embedding HTML for a flush fit; a wider
+> iframe will show white space around the widget.  (Next-Shows /
+> Latest-Shows widgets are capped at 300 px — they serve a
+> narrower sidebar use-case.)
 
 ---
 
@@ -195,7 +197,7 @@ Drop-in iframe:
 
 ```html
 <iframe src="https://your-station.example/embed/on-air-today"
-        width="300" height="250" frameborder="0"
+        width="340" height="250" frameborder="0"
         scrolling="no" style="border: 0; background: transparent;">
 </iframe>
 ```
@@ -237,7 +239,7 @@ without waiting out the cache TTL.
 | `day` | `YYYY-MM-DD` | today | Pin a specific day (in the resolved timezone) to render historical or upcoming day overviews.  When omitted or equal to today, the widget filters out shows that have already aired; for any other day it lists every show whose start falls inside that day's 24-hour window. |
 | `theme` | `auto`, `dark`, `light` | `auto` | Same as the other widgets — see §2. |
 | `cache` | integer seconds 10..3600 | `60` | Same as the other widgets — see §7. |
-| `overflow` | `ellipsis`, `marquee` | `ellipsis` | Behaviour of show names wider than 300 px. |
+| `overflow` | `ellipsis`, `marquee` | `ellipsis` | Behaviour of show names wider than 340 px. |
 | `link` | `underline`, `plain` | `plain` | Link rendering for show names: `plain` (default) drops the underline so the names blend into the bold row text; `underline` opts back into the classic hyperlink affordance.  With `plain` the link affordance survives only through the cursor pointer on hover. |
 | `timezone` | any IANA zone | station default | Defines "today" and renders all times in this zone. |
 

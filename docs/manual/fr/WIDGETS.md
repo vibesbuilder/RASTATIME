@@ -72,13 +72,16 @@ sous-jacentes se rafraîchissent toutes les 60 secondes
 |---|---|---|---|
 | `theme` | `auto`, `dark`, `light` | `auto` | Couleur du texte. `auto` suit le `prefers-color-scheme` du navigateur. Fond toujours transparent. |
 | `cache` | entier secondes, 10–3600 | `60` | TTL du cache HTTP côté serveur. Plus bas = données plus fraîches + plus de hits backend. |
-| `overflow` | `ellipsis`, `marquee` | `ellipsis` | Que faire des noms d'émission / piste plus larges que le widget de 300 px. `ellipsis` tronque avec `…` ; `marquee` fait défiler le texte vers la gauche pendant 24 s. |
+| `overflow` | `ellipsis`, `marquee` | `ellipsis` | Que faire des noms d'émission / piste plus larges que le widget de 340 px. `ellipsis` tronque avec `…` ; `marquee` fait défiler le texte vers la gauche pendant 24 s. |
 | `timezone` | tout fuseau horaire standard (`Europe/Paris`) | défaut station | Toutes les heures rendues dans cette zone. |
 
-> **Note.** Le corps du widget est limité à **300 px de large**
+> **Note.** Le corps du widget est limité à **340 px de large**
 > pour s'adapter aux mises en page de barre latérale typiques
 > des sites de stations.  Définissez la largeur de l'iframe à
-> 300 dans le HTML d'intégration pour un ajustement précis.
+> 340 dans le HTML d'intégration pour un ajustement précis.
+> (Les widgets Next-Shows / Latest-Shows sont plafonnés à
+> 300 px — ils servent un cas d'usage de barre latérale plus
+> étroit.)
 
 ---
 
@@ -203,7 +206,7 @@ iframe prêt à l'emploi :
 
 ```html
 <iframe src="https://votre-station.example/embed/on-air-today"
-        width="300" height="250" frameborder="0"
+        width="340" height="250" frameborder="0"
         scrolling="no" style="border: 0; background: transparent;">
 </iframe>
 ```
@@ -247,7 +250,7 @@ la TTL du cache.
 | `day` | `YYYY-MM-DD` | aujourd'hui | Épingle un jour spécifique (dans le fuseau résolu) pour rendre des aperçus historiques ou futurs.  Quand omis ou égal à aujourd'hui, le widget filtre les émissions déjà diffusées ; pour tout autre jour il liste toutes les émissions dont le début tombe dans la fenêtre 24 h. |
 | `theme` | `auto`, `dark`, `light` | `auto` | Identique aux autres widgets — voir §2. |
 | `cache` | entier secondes 10..3600 | `60` | Identique aux autres widgets — voir §7. |
-| `overflow` | `ellipsis`, `marquee` | `ellipsis` | Comportement des noms d'émission plus larges que 300 px. |
+| `overflow` | `ellipsis`, `marquee` | `ellipsis` | Comportement des noms d'émission plus larges que 340 px. |
 | `link` | `underline`, `plain` | `plain` | Rendu des liens pour les noms d'émission : `plain` (défaut) supprime le soulignement pour que les noms se fondent dans le texte en gras des lignes ; `underline` réactive l'affordance hyperlien classique.  Avec `plain`, l'affordance ne survit que via le curseur pointer au survol. |
 | `timezone` | tout fuseau IANA | défaut station | Définit "aujourd'hui" et rend toutes les heures dans cette zone. |
 

@@ -71,14 +71,16 @@ Daten werden alle 60 Sekunden aktualisiert (konfigurierbar
 |---|---|---|---|
 | `theme` | `auto`, `dark`, `light` | `auto` | Textfarbe. `auto` folgt dem `prefers-color-scheme` des einbettenden Browsers. Hintergrund ist immer transparent. |
 | `cache` | Ganzzahl Sekunden, 10–3600 | `60` | Server-seitige HTTP-Cache-TTL. Niedriger = frischere Daten + mehr Backend-Anfragen. |
-| `overflow` | `ellipsis`, `marquee` | `ellipsis` | Was passiert mit Sendungs- / Tracknamen, die breiter als das 300-px-Widget sind. `ellipsis` kürzt mit `…`; `marquee` scrollt den Text 24 s lang nach links, damit der vollständige Titel lesbar wird. |
+| `overflow` | `ellipsis`, `marquee` | `ellipsis` | Was passiert mit Sendungs- / Tracknamen, die breiter als das 340-px-Widget sind. `ellipsis` kürzt mit `…`; `marquee` scrollt den Text 24 s lang nach links, damit der vollständige Titel lesbar wird. |
 | `timezone` | beliebige Standard-Zeitzone (`Europe/Berlin`) | Stations-Standard | Alle Zeiten in dieser Zone gerendert. |
 
-> **Hinweis.** Der Widget-Body ist auf **300 px Breite** begrenzt,
+> **Hinweis.** Der Widget-Body ist auf **340 px Breite** begrenzt,
 > damit er in typische Sidebar-Layouts auf Stations-Websites
 > passt.  Setzen Sie die iframe-Breite im einbettenden HTML auf
-> 300, dann passt es bündig; ein breiteres iframe zeigt Leerraum
-> um das Widget.
+> 340, dann passt es bündig; ein breiteres iframe zeigt Leerraum
+> um das Widget.  (Next-Shows / Latest-Shows Widgets sind auf
+> 300 px gekappt — sie bedienen einen schmaleren Sidebar-
+> Use-Case.)
 
 ---
 
@@ -205,7 +207,7 @@ Drop-in-iframe:
 
 ```html
 <iframe src="https://ihre-station.example/embed/on-air-today"
-        width="300" height="250" frameborder="0"
+        width="340" height="250" frameborder="0"
         scrolling="no" style="border: 0; background: transparent;">
 </iframe>
 ```
@@ -248,7 +250,7 @@ zur nächsten Zeile wandert, ohne die Cache-TTL abzuwarten.
 | `day` | `YYYY-MM-DD` | heute | Pinnt einen bestimmten Tag (in der aufgelösten Zeitzone), um historische oder zukünftige Tagesübersichten zu rendern.  Wenn weggelassen oder gleich heute, filtert das Widget bereits ausgestrahlte Sendungen aus; für jeden anderen Tag listet es alle Sendungen, deren Start ins 24-Stunden-Fenster fällt. |
 | `theme` | `auto`, `dark`, `light` | `auto` | Wie die anderen Widgets — siehe §2. |
 | `cache` | Ganzzahl Sekunden 10..3600 | `60` | Wie die anderen Widgets — siehe §7. |
-| `overflow` | `ellipsis`, `marquee` | `ellipsis` | Verhalten bei Sendungsnamen breiter als 300 px. |
+| `overflow` | `ellipsis`, `marquee` | `ellipsis` | Verhalten bei Sendungsnamen breiter als 340 px. |
 | `link` | `underline`, `plain` | `plain` | Link-Darstellung für Sendungsnamen: `plain` (Default) entfernt die Unterstreichung, sodass die Namen in den fetten Zeilentext eingehen; `underline` aktiviert wieder die klassische Hyperlink-Affordance.  Bei `plain` überlebt die Link-Affordance nur noch über den Cursor-Pointer beim Hover. |
 | `timezone` | beliebige IANA-Zone | Stations-Standard | Definiert "heute" und rendert alle Zeiten in dieser Zone. |
 
