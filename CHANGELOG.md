@@ -359,6 +359,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Weekly Schedule v2: iframe height bump 340 → 560 px**
+  (operator request 2026-05-22 v8).  Pure sizing change —
+  no behaviour difference.  The panel `max-height`
+  follows up from 250 to 470 px so the show list takes
+  advantage of the extra room instead of leaving
+  whitespace below.  Updated the iframe height in all six
+  places that reference it: the settings page preview
+  iframe, the settings page embed-code snippet, and the
+  drop-in iframe examples in `docs/manual/WIDGETS.md` +
+  `de/` + `fr/` + `es/`.  Operators with existing embeds
+  who want to keep the old height can still override via
+  the iframe's `height` attribute — the widget body
+  doesn't enforce a minimum.
+
 - **Weekly Schedule v2: auto-scroll to the currently-airing
   show** (operator request 2026-05-22 v7).  When the today-tab
   is active, the widget centres the show that is on air

@@ -630,15 +630,20 @@ html, body {
 .np-widget.np-weekly-schedule .np-ws-day {
     /*  Each day-panel is its own scroll container (operator
         request 2026-05-22 v7).  Max-height keeps the panel
-        inside a 340 px iframe; if the day has more shows than
-        fit, the visitor scrolls within the panel rather than
-        the iframe (which has scrolling="no").  When the
+        inside the iframe height; if the day has more shows
+        than fit, the visitor scrolls within the panel rather
+        than the iframe (which has scrolling="no").  When the
         operator activates the today-tab, JS scrolls the
         currently-airing show into the panel viewport so the
         user lands directly on "what's on right now" without
-        having to scroll past the early-morning programme.  */
+        having to scroll past the early-morning programme.
+
+        Sized for the 560 px iframe height that the settings
+        page + embed snippets use as of 2026-05-22 v8:
+        560 - header (~32) - tab strip (~50) - bottom margin
+        (~8) ≈ 470 px of usable panel height.  */
     display: none;
-    max-height: 250px;
+    max-height: 470px;
     overflow-y: auto;
     /*  Subtle scrollbar that matches the muted theme variable,
         only visible while scrolling (webkit) or always (firefox

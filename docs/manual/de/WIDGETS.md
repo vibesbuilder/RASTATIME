@@ -297,7 +297,7 @@ Drop-in-iframe:
 
 ```html
 <iframe src="https://ihre-station.example/embed/weekly-program"
-        width="400" height="340" frameborder="0"
+        width="400" height="560" frameborder="0"
         scrolling="no" style="border: 0; background: transparent;">
 </iframe>
 ```
