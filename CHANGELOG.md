@@ -441,6 +441,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Multi-View Schedule v11 follow-up** (operator-reported that
+  the v10 attempt didn't fully land for items 2 + 3 of the
+  polish trio below):
+
+  - **Full-width events**: `slotEventOverlap: false` alone
+    wasn't enough — FullCalendar 6 treats touch-boundary
+    events (event A ends 12:07, event B starts 12:07) as
+    "shared columns" and packs them into half-width slots
+    even though they don't actually overlap.  Fix: CSS
+    override on `.fc-timegrid-event-harness` pinning
+    `inset-inline-start: 0`, `inset-inline-end: 0`,
+    `width: 100%` with `!important`.  Inspected the live
+    payload — zero real overlaps, all boundaries are TOUCH
+    or gap, so the override never hides a genuinely
+    overlapping show.
+
+  - **Hour format without leading zero**: `clockFormat()`
+    was using the FullCalendar object form
+    `{ hour: 'numeric', ... }` which gets silently coerced
+    back to 2-digit padding in some locale + meridiem
+    combinations.  Switched to the explicit string form
+    (`'H:mm'` for 24h, `'h:mm a'` for 12h) which is
+    deterministic.  The modal's `fmtTimeRange` ported to
+    manual fmt24/fmt12 functions for the same reason.
+
 - **All widgets: time format polish trio** (operator request
   2026-05-22 v10).  Three independent UX items:
 
