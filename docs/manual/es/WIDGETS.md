@@ -121,12 +121,12 @@ personalizar los cuatro placeholders sin tocar el código bajo:
 
 **Configuración → Widgets → Current Show/Track**
 
-| Campo | Texto por defecto |
+| Etiqueta de configuración | Valor por defecto |
 |---|---|
-| Etiqueta cuando ningún programa está al aire | `No show on air` |
-| Etiqueta cuando no hay próximo programa | `No upcoming show` |
-| Etiqueta cuando no se reproduce ninguna pista | `No track playing` |
-| Etiqueta cuando no hay próxima pista | `No upcoming track` |
+| No show on air: | `No show on air` |
+| No upcoming show: | `No upcoming show` |
+| No track playing: | `No track playing` |
+| No upcoming track: | `No upcoming track` |
 
 Las ediciones se persisten en `cc_pref` y son recogidas por
 el widget dentro de un TTL de caché (por defecto 60 segundos).

@@ -113,6 +113,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Settings → Widgets → Current Show/Track: page polish**
+  (operator request 2026-05-22).  Pure UX cleanup — no
+  behaviour change.
+  * Page container capped at `max-width: 800px` to match the
+    Weekly Schedule settings page so the Widgets section reads
+    consistently.
+  * Preview iframes forced to `?theme=dark` so the previews
+    sit on a dark backdrop that matches the rest of the admin
+    UI (the actual embed code at the bottom of the page does
+    NOT force a theme, so the public widget keeps following
+    the visitor's `prefers-color-scheme`).
+  * Section heading renamed `Empty-state labels` → `Labels`
+    (shorter, less jargon).
+  * Four input labels shortened from `Label when no show is
+    on air:` etc. to the actual configured strings
+    (`No show on air:`, `No upcoming show:`, `No track
+    playing:`, `No upcoming track:`).  The form now reads as
+    a list of the outputs rather than meta-descriptions of
+    them.
+  * Input widths reduced from full-row to `18em` (about 30 %
+    of previous width).  Manual tables in
+    `docs/manual/{en,de,fr,es}/WIDGETS.md` updated to match
+    the new UI labels.
+
 - **Now-Playing widgets: 300 px width cap + truncate / marquee
   overflow handling + operator-configurable empty-state labels
   + dedicated Widgets → Current Show/Track settings page**

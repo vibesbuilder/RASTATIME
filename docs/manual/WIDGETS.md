@@ -116,12 +116,12 @@ all four placeholders without touching code under:
 
 **Settings → Widgets → Current Show/Track**
 
-| Field | Default text |
+| Setting label | Default value |
 |---|---|
-| Label when no show is on air | `No show on air` |
-| Label when there is no upcoming show | `No upcoming show` |
-| Label when no track is playing | `No track playing` |
-| Label when there is no upcoming track | `No upcoming track` |
+| No show on air: | `No show on air` |
+| No upcoming show: | `No upcoming show` |
+| No track playing: | `No track playing` |
+| No upcoming track: | `No upcoming track` |
 
 Edits are persisted in `cc_pref` and picked up by the widget
 within one cache TTL (default 60 seconds).  Leave a field blank

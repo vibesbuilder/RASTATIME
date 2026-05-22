@@ -123,12 +123,12 @@ code sous :
 
 **Paramètres → Widgets → Current Show/Track**
 
-| Champ | Texte par défaut |
+| Libellé du paramètre | Valeur par défaut |
 |---|---|
-| Libellé quand aucune émission n'est à l'antenne | `No show on air` |
-| Libellé quand il n'y a pas d'émission à venir | `No upcoming show` |
-| Libellé quand aucune piste ne joue | `No track playing` |
-| Libellé quand il n'y a pas de piste à venir | `No upcoming track` |
+| No show on air: | `No show on air` |
+| No upcoming show: | `No upcoming show` |
+| No track playing: | `No track playing` |
+| No upcoming track: | `No upcoming track` |
 
 Les modifications sont persistées dans `cc_pref` et reprises
 par le widget dans le délai d'un TTL de cache (par défaut

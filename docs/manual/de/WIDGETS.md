@@ -122,12 +122,12 @@ alle vier Platzhalter ohne Code-Eingriff anpassen unter:
 
 **Einstellungen → Widgets → Current Show/Track**
 
-| Feld | Standard-Text |
+| Einstellungs-Label | Standard-Wert |
 |---|---|
-| Label wenn keine Sendung auf Sendung ist | `No show on air` |
-| Label wenn keine kommende Sendung | `No upcoming show` |
-| Label wenn kein Track spielt | `No track playing` |
-| Label wenn kein kommender Track | `No upcoming track` |
+| No show on air: | `No show on air` |
+| No upcoming show: | `No upcoming show` |
+| No track playing: | `No track playing` |
+| No upcoming track: | `No upcoming track` |
 
 Bearbeitungen werden in `cc_pref` persistiert und vom Widget
 innerhalb einer Cache-TTL (Standard 60 s) übernommen. Lassen Sie
