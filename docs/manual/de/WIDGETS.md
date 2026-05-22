@@ -333,13 +333,23 @@ MON  TUE  WED  THU  FRI  SAT  SUN                   ← Tagestabs
 
 | Parameter | Werte | Standard | Effekt |
 |---|---|---|---|
-| `week_offset` | Ganzzahl -52..52 | `0` | Pinnt das gerenderte Fenster auf ±N Wochen vom heutigen rollenden 7-Tage-Block.  Default 0 = heute + 6 kommende Tage.  Server-clamped auf ±52. |
+| `week_offset` | Ganzzahl -2..4 | `0` | Pinnt das gerenderte Fenster auf ±N Wochen vom heutigen rollenden 7-Tage-Block.  Default 0 = heute + 6 kommende Tage.  Enger Cap (-2 / +4) weil Public-Homepage-Use-Cases selten eine weitere Range brauchen; die ◀ / ▶ Buttons deaktivieren sich am Limit. |
 | `theme` | `auto`, `dark`, `light` | `auto` | Wie die anderen Widgets — siehe §2. |
 | `cache` | Ganzzahl Sekunden 10..3600 | `60` | Wie die anderen Widgets — siehe §8. |
 | `overflow` | `ellipsis`, `marquee` | `ellipsis` | Verhalten bei Sendungsnamen breiter als 400 px. |
 | `link` | `underline`, `plain` | `plain` | Show-Name-Link-Darstellung (siehe On-Air-Today Widget §5 für Details). |
 | `bg` | URL eines Bildes | keine | Optionales Hintergrundbild (cover-positioniert) statt transparenter Fülle.  Operator hostet das Bild selbst. |
+| `bgcolor` | Hex-Farbe, z.B. `#222222` | keine | Optionale Hintergrundfarbe als Hex-String (3, 6 oder 8 Zeichen inkl. Alpha — z.B. `#fff`, `#112233`, `#11223388`).  Rendert hinter `?bg` wenn beide gesetzt sind.  Nicht-Hex-Werte werden aus Sicherheitsgründen abgewiesen. |
 | `timezone` | beliebige IANA-Zone | Stations-Standard | Alle Zeiten in dieser Zone gerendert. |
+
+> **Today-Tab + aktive Zustand.**  Der Wochentag-Tab, der
+> dem heutigen Kalendertag entspricht, wird in der
+> Akzentfarbe (Default LibreTime-Teal `#459B8F`) gefüllt,
+> sodass der Operator auf einen Blick weiß, wo er in der
+> Woche ist.  Der aktuell-aktive Panel-Tab bekommt eine
+> akzentfarbene Unterstreichung.  Hover über einen Tab
+> oder die ◀ / ▶ Buttons leuchtet die gleiche Akzentfarbe
+> mit niedriger Alpha auf — subtiler Interaktivitäts-Cue.
 
 > **Breite.** Das Weekly-Schedule-Widget ist **400 px breit**
 > (breiter als die anderen Wave-1-Widgets — es braucht mehr

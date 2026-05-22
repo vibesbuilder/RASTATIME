@@ -1119,13 +1119,19 @@ class EmbedController extends Zend_Controller_Action
         $this->view->timezone = $timezone;
 
         // Week-offset: pin the rendered window to ±N weeks from
-        // today's rolling 7-day block.  Clamped at ±52 weeks
-        // because the schedule database typically doesn't carry
-        // recurring shows that far out and the operator-typical
-        // range is ±4 weeks.
+        // today's rolling 7-day block.  Operator-requested cap:
+        // -2 (two weeks back) to +4 (four weeks ahead) — wider
+        // ranges aren't useful on a public homepage and the
+        // tight cap also lets the JS disable the ◀ / ▶ buttons
+        // at the limits.  Constants are exposed to the view so
+        // the JS shares the same clamp without duplication.
         $rawOffset = (int) $request->getParam('week_offset', 0);
-        $weekOffset = max(-52, min(52, $rawOffset));
-        $this->view->weekOffset = $weekOffset;
+        $weekOffsetMin = -2;
+        $weekOffsetMax = 4;
+        $weekOffset = max($weekOffsetMin, min($weekOffsetMax, $rawOffset));
+        $this->view->weekOffset    = $weekOffset;
+        $this->view->weekOffsetMin = $weekOffsetMin;
+        $this->view->weekOffsetMax = $weekOffsetMax;
 
         $weeklyScheduleData = WidgetHelper::getWeekInfoV2($weekOffset);
         $this->view->schedule_data = json_encode($weeklyScheduleData);
@@ -1136,6 +1142,19 @@ class EmbedController extends Zend_Controller_Action
         // class juggling.
         $bgUrl = (string) $request->getParam('bg', '');
         $this->view->backgroundUrl = $bgUrl;
+
+        // Optional background-color (hex only, e.g. #222 or
+        // #112233 or #11223344 with alpha).  Validated against a
+        // strict regex so the value can't smuggle CSS via the
+        // inline style attribute the template emits.  Operator
+        // can stack ?bgcolor + ?bg (image): the colour shows
+        // through transparent parts of the image and acts as a
+        // fallback while the image loads.
+        $bgColor = (string) $request->getParam('bgcolor', '');
+        if ($bgColor !== '' && !preg_match('/^#[0-9a-fA-F]{3,8}$/', $bgColor)) {
+            $bgColor = '';
+        }
+        $this->view->backgroundColor = $bgColor;
 
         // Operator-configurable empty-state label.  Defaults to the
         // legacy English string so an upgrading operator sees no

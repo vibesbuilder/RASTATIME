@@ -460,15 +460,30 @@ html, body {
         space proportional to the number of shows per day, so we
         give it a more generous max-width than the other widgets
         — 400 px reads cleanly without making the rows feel
-        cramped, and still fits common sidebar layouts.  */
+        cramped, and still fits common sidebar layouts.
+
+        Operator request 2026-05-22 v6: visual styling pulls
+        from the legacy weekly-schedule-widget look — rectangular
+        (no border-radius), accent colour #459B8F (LibreTime
+        teal) for today / hover / active states.  Exposed as a
+        --np-accent variable so a future style override could
+        switch it to a station-specific brand colour without
+        rewriting the rules.  */
+    --np-accent: #459B8F;
+    --np-accent-hover: rgba(69, 155, 143, 0.4);
+
     max-width: 400px;
     line-height: 1.5;
     font-size: 1em;
 
-    /*  Optional background image, controlled by --np-bg-image
-        which the template sets inline when ?bg=URL is present.
-        Without the variable, the body stays transparent and
-        blends into whatever the embedding page looks like.  */
+    /*  Optional background colour + image, controlled by
+        --np-bg-color (?bgcolor=#hex) and --np-bg-image (?bg=URL).
+        Both default to transparent / none so the body blends
+        into the embedding page unless the operator opts in.
+        When both are set, the image renders over the colour
+        (typical use: image with transparent regions + a fallback
+        colour while the image loads).  */
+    background-color: var(--np-bg-color, transparent);
     background-image: var(--np-bg-image, none);
     background-size: cover;
     background-position: center;
@@ -494,12 +509,13 @@ html, body {
 }
 
 .np-widget.np-weekly-schedule .np-ws-nav {
-    /*  Bare-bones button styling so the widget reads as part of
-        the embedding page rather than as a chrome-styled UI.
-        Color uses --np-fg so the hover state survives any theme.  */
+    /*  Square-ish nav buttons — no border-radius (kantig look,
+        operator request 2026-05-22 v6).  Hover state lights up
+        the accent colour at low alpha so the button reads as
+        interactive without dominating the header.  */
     background: transparent;
     border: 0;
-    padding: 0 4px;
+    padding: 2px 8px;
     color: var(--np-fg);
     cursor: pointer;
     font-size: 1.1em;
@@ -507,8 +523,16 @@ html, body {
     flex: 0 0 auto;
 }
 
-.np-widget.np-weekly-schedule .np-ws-nav:hover {
-    opacity: 0.7;
+.np-widget.np-weekly-schedule .np-ws-nav:hover:not(:disabled) {
+    background: var(--np-accent-hover);
+}
+
+.np-widget.np-weekly-schedule .np-ws-nav:disabled {
+    /*  When the operator has navigated to the boundary (-2 weeks
+        back or +4 weeks ahead), the matching arrow disables so
+        the user sees they've hit the limit.  */
+    opacity: 0.3;
+    cursor: not-allowed;
 }
 
 .np-widget.np-weekly-schedule .np-ws-range {
@@ -531,6 +555,10 @@ html, body {
 }
 
 .np-widget.np-weekly-schedule .np-ws-tab {
+    /*  Square tabs, no border-radius (kantig look).  Hover
+        background uses the accent at low alpha — matches the
+        legacy widget's "lift on hover" feel without the chunky
+        teal block.  */
     flex: 1 1 0;
     text-align: center;
     padding: 4px 0;
@@ -539,6 +567,14 @@ html, body {
     border-bottom: 2px solid transparent;
     font-weight: 700;
     line-height: 1.2;
+}
+
+.np-widget.np-weekly-schedule .np-ws-tab:hover {
+    /*  Operator request 2026-05-22 v6: hover state uses the
+        accent at low alpha — feels lit-up without overwhelming
+        the rest of the row.  */
+    background: var(--np-accent-hover);
+    color: var(--np-fg);
 }
 
 .np-widget.np-weekly-schedule .np-ws-tab .np-ws-tab-dow {
@@ -559,28 +595,28 @@ html, body {
 }
 
 .np-widget.np-weekly-schedule .np-ws-tab.np-ws-tab-active {
-    /*  Active tab: full --np-fg colour, underline accent in the
-        same colour so the active state survives any theme.  */
+    /*  Active tab: underline accent at the bottom in the full
+        accent colour — clear which day's panel is showing.  */
     color: var(--np-fg);
-    border-bottom-color: var(--np-fg);
+    border-bottom-color: var(--np-accent);
 }
 
 .np-widget.np-weekly-schedule .np-ws-tab.np-ws-tab-today {
-    /*  Today indicator: slightly heavier weight + accent-coloured
-        ring around the day-of-month number.  Doesn't override the
-        active-tab underline; both states can be visible together
-        (e.g. on first paint, when the active tab IS today).  */
-    color: var(--np-fg);
+    /*  Today indicator: solid accent background (operator
+        request 2026-05-22 v6).  No border-radius keeps the
+        kantig look.  Wins visually even when the active-tab
+        underline is on a different day.  */
+    background: var(--np-accent);
+    color: #fff;
 }
 
-.np-widget.np-weekly-schedule .np-ws-tab.np-ws-tab-today .np-ws-tab-dom {
-    /*  Pill background-ish ring via box-shadow inset so we don't
-        need extra DOM.  --np-fg-muted gives a subtle, theme-
-        compatible accent.  */
-    box-shadow: 0 0 0 1px var(--np-fg-muted);
-    border-radius: 999px;
-    padding: 0 6px;
-    display: inline-block;
+.np-widget.np-weekly-schedule .np-ws-tab.np-ws-tab-today:hover {
+    /*  Hover on today: stay solid accent (don't fade to the
+        hover-alpha variant) since today is already the
+        accent state — fading would feel like losing the
+        highlight.  */
+    background: var(--np-accent);
+    color: #fff;
 }
 
 .np-widget.np-weekly-schedule .np-ws-content {
@@ -640,6 +676,13 @@ html, body {
     text-decoration: underline;
     text-decoration-thickness: 1px;
     text-underline-offset: 2px;
+}
+
+.np-widget.np-weekly-schedule .np-ws-row-name a:hover {
+    /*  Hover on a show-name link uses the accent colour so the
+        operator gets a clear interaction cue.  Works for both
+        the underline and the plain link variant.  */
+    color: var(--np-accent);
 }
 
 .np-widget.np-weekly-schedule.np-link-plain .np-ws-row-name a,

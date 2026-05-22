@@ -328,13 +328,24 @@ MON  TUE  WED  THU  FRI  SAT  SUN                   ← pestañas
 
 | Parámetro | Valores | Por defecto | Efecto |
 |---|---|---|---|
-| `week_offset` | entero -52..52 | `0` | Fija la ventana a ±N semanas del bloque rodante de 7 días de hoy.  Server-clamped a ±52. |
+| `week_offset` | entero -2..4 | `0` | Fija la ventana a ±N semanas del bloque rodante de 7 días de hoy.  Cap ajustado (-2 / +4) porque los casos de uso homepage pública rara vez necesitan un rango más amplio; los botones ◀ / ▶ se desactivan en el límite. |
 | `theme` | `auto`, `dark`, `light` | `auto` | Igual que los otros widgets — vea §2. |
 | `cache` | entero segundos 10..3600 | `60` | Igual que los otros widgets — vea §8. |
 | `overflow` | `ellipsis`, `marquee` | `ellipsis` | Comportamiento de nombres de programa más anchos que 400 px. |
 | `link` | `underline`, `plain` | `plain` | Renderizado de enlaces de nombres de programa (vea On-Air-Today §5). |
 | `bg` | URL de una imagen | ninguna | Imagen de fondo opcional (cover-posicionada) en lugar del relleno transparente por defecto. |
+| `bgcolor` | color hex, p.ej. `#222222` | ninguna | Color de fondo opcional como cadena hex (3, 6 u 8 caracteres con alpha — p.ej. `#fff`, `#112233`, `#11223388`).  Renderiza detrás de `?bg` cuando ambos están definidos.  Valores no-hex se rechazan por razones de seguridad. |
 | `timezone` | cualquier zona IANA | predeterminado de la emisora | Todas las horas renderizadas en esta zona. |
+
+> **Pestaña de hoy + estado activo.**  La pestaña día-de-
+> semana correspondiente a la fecha de hoy se rellena con
+> el color de acento (por defecto LibreTime teal
+> `#459B8F`) para que el operador vea de un vistazo dónde
+> está en la semana.  La pestaña del panel actualmente
+> activo recibe un subrayado de color de acento.  El
+> hover sobre una pestaña o los botones ◀ / ▶ enciende
+> el mismo color de acento con alpha baja — pista de
+> interactividad sutil.
 
 > **Ancho.** El widget Weekly Schedule mide **400 px de ancho**
 > (más ancho que los otros widgets Wave-1 — consume más

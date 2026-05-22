@@ -359,6 +359,59 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Weekly Schedule v2: kantig look + accent colour + tight
+  navigation cap + bgcolor parameter** (operator request
+  2026-05-22 v6, five polish items on the just-shipped v2
+  widget):
+
+  1. **"Kantig" styling**: the today indicator switches from
+     a rounded pill ring (`border-radius: 999px`) to a solid
+     accent-coloured rectangle, matching the legacy schedule
+     widget's blocky LibreTime-teal look.  Nav buttons and
+     day tabs lose their rounded edges everywhere.
+
+  2. **Accent colour as a CSS variable**: `--np-accent`
+     (default `#459B8F`, the LibreTime teal) plus
+     `--np-accent-hover` (the same colour at 40 % alpha)
+     are exposed on the `.np-weekly-schedule` block so a
+     future per-station brand override is a one-line change.
+
+  3. **Navigation tightened from ±52 to -2 / +4 weeks**:
+     server clamp + JS clamp + view-vars supplied to the
+     template; ◀ / ▶ buttons get the `disabled` attribute
+     at the boundaries (CSS dims them to 30 % opacity and
+     switches the cursor to `not-allowed`).
+
+  4. **Hover states with the accent colour**: day tabs and
+     navigation buttons light up at `--np-accent-hover`
+     when hovered; show-name links in the row list switch
+     to the full `--np-accent` on hover.  Today's tab keeps
+     its solid accent on hover (so the highlight doesn't
+     fade away on mouse-over).
+
+  5. **`?bgcolor=#hex` URL parameter** for an optional
+     background colour, controlled via the `--np-bg-color`
+     CSS variable analogous to the existing `--np-bg-image`
+     for `?bg=URL`.  Both can stack (colour shows through
+     transparent regions of the image, or acts as a fallback
+     while the image loads).  Validated against a strict
+     `/^#[0-9a-fA-F]{3,8}$/` regex so the value can't
+     smuggle CSS via the inline style attribute.
+
+  Files: `application/controllers/EmbedController.php`
+  (clamp + bgcolor validation); `application/views/scripts/
+  embed/weekly-program.phtml` (data-week-offset-min/max
+  attrs + --np-bg-color CSS variable); `public/js/airtime/
+  embed/weekly-schedule-widget.js` (clamp + disabled-state
+  on the navigation buttons); `public/css/embed/now-playing-
+  widget.css` (kantig look + --np-accent + hover states +
+  --np-bg-color rule); `application/views/scripts/
+  embeddablewidgets/schedule.phtml` (URL params list updated
+  to mention bgcolor + new -2..4 range); `docs/manual/
+  WIDGETS.md` + `de/` + `fr/` + `es/` (week_offset range,
+  bgcolor row, new note about today-tab + active-tab
+  styling).
+
 - **Widget width: Now-Playing + On-Air-Today bumped to 340 px**
   (operator request 2026-05-22 v5).  The Current Show, Current
   Track, and On-Air-Today widgets now have a 340 px-wide body

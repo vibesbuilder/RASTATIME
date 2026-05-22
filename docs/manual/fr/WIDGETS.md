@@ -331,13 +331,24 @@ MON  TUE  WED  THU  FRI  SAT  SUN                   ← onglets
 
 | Paramètre | Valeurs | Défaut | Effet |
 |---|---|---|---|
-| `week_offset` | entier -52..52 | `0` | Épingle la fenêtre à ±N semaines du bloc roulant de 7 jours d'aujourd'hui.  Server-clamped à ±52. |
+| `week_offset` | entier -2..4 | `0` | Épingle la fenêtre à ±N semaines du bloc roulant de 7 jours d'aujourd'hui.  Cap serré (-2 / +4) car les cas d'usage homepage publique ont rarement besoin d'une plage plus large ; les boutons ◀ / ▶ se désactivent à la limite. |
 | `theme` | `auto`, `dark`, `light` | `auto` | Identique aux autres widgets — voir §2. |
 | `cache` | entier secondes 10..3600 | `60` | Identique aux autres widgets — voir §8. |
 | `overflow` | `ellipsis`, `marquee` | `ellipsis` | Comportement des noms d'émission plus larges que 400 px. |
 | `link` | `underline`, `plain` | `plain` | Rendu des liens de noms d'émission (voir On-Air-Today §5). |
 | `bg` | URL d'une image | aucune | Image de fond optionnelle (cover-positionnée) au lieu du remplissage transparent par défaut. |
+| `bgcolor` | couleur hex, p.ex. `#222222` | aucune | Couleur de fond optionnelle comme chaîne hex (3, 6 ou 8 caractères avec alpha — p.ex. `#fff`, `#112233`, `#11223388`).  Rend derrière `?bg` quand les deux sont définis.  Les valeurs non-hex sont rejetées pour des raisons de sécurité. |
 | `timezone` | tout fuseau IANA | défaut station | Toutes les heures rendues dans cette zone. |
+
+> **Onglet du jour + état actif.**  L'onglet jour-de-
+> semaine correspondant à la date d'aujourd'hui est
+> rempli de la couleur d'accent (défaut LibreTime teal
+> `#459B8F`) pour que l'opérateur voie d'un coup d'œil
+> où il se trouve dans la semaine.  L'onglet du panneau
+> actuellement actif reçoit un soulignement couleur
+> d'accent.  Le survol d'un onglet ou des boutons
+> ◀ / ▶ allume la même couleur d'accent en alpha
+> faible — indice d'interactivité subtil.
 
 > **Largeur.** Le widget Weekly Schedule fait **400 px de large**
 > (plus large que les autres widgets Wave-1 — il consomme plus

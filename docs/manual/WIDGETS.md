@@ -319,13 +319,23 @@ MON  TUE  WED  THU  FRI  SAT  SUN                   ← day tabs
 
 | Param | Values | Default | Effect |
 |---|---|---|---|
-| `week_offset` | integer -52..52 | `0` | Pin the rendered window to ±N weeks from today's rolling 7-day block.  Default 0 = today + 6 upcoming days.  Server-clamped at ±52. |
+| `week_offset` | integer -2..4 | `0` | Pin the rendered window to ±N weeks from today's rolling 7-day block.  Default 0 = today + 6 upcoming days.  Tight clamp (-2 / +4) because public-homepage use-cases rarely need a wider range; the ◀ / ▶ buttons disable at the boundary so the operator sees they've hit the limit. |
 | `theme` | `auto`, `dark`, `light` | `auto` | Same as the other widgets — see §2. |
-| `cache` | integer seconds 10..3600 | `60` | Same as the other widgets — see §7. |
+| `cache` | integer seconds 10..3600 | `60` | Same as the other widgets — see §8. |
 | `overflow` | `ellipsis`, `marquee` | `ellipsis` | Behaviour of show names wider than the 400 px widget body. |
 | `link` | `underline`, `plain` | `plain` | Show-name link rendering (see the On-Air-Today widget §5 for details — same convention). |
 | `bg` | URL of an image | none | Optional background image (cover-positioned) instead of the default transparent fill.  Operator hosts the image themselves — typically on the station's own site.  Cross-origin image loads work fine for CSS backgrounds. |
+| `bgcolor` | hex colour, e.g. `#222222` | none | Optional background colour as a hex string (3, 6, or 8 chars including alpha — e.g. `#fff`, `#112233`, `#11223388`).  Renders behind `?bg` when both are set (useful as a fallback while the image loads, or to fill transparent regions of a PNG).  Non-hex values are rejected for security. |
 | `timezone` | any IANA zone | station default | All times rendered in this zone. |
+
+> **Today's day-tab + active state.**  The day-of-week tab
+> matching today's calendar date is filled with the
+> accent colour (default LibreTime teal `#459B8F`) so the
+> operator sees at a glance where they are in the week.
+> The currently-active panel's tab gets an accent-coloured
+> underline.  Hovering any tab or the ◀ / ▶ buttons lights
+> up the same accent at low alpha as a subtle interactive
+> cue.
 
 > **Width.** The Weekly Schedule widget body is **400 px wide**
 > (wider than the other Wave-1 widgets — it consumes more

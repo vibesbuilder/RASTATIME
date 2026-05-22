@@ -40,6 +40,8 @@
     }
 
     var weekOffset    = parseInt(body.getAttribute('data-week-offset') || '0', 10);
+    var weekOffsetMin = parseInt(body.getAttribute('data-week-offset-min') || '-2', 10);
+    var weekOffsetMax = parseInt(body.getAttribute('data-week-offset-max') || '4', 10);
     var currentDom    = parseInt(body.getAttribute('data-current-dom') || '0', 10);
     var timezone      = body.getAttribute('data-timezone') || '';
     var emptyLabel    = body.getAttribute('data-label-empty') || 'No shows scheduled on this day';
@@ -310,15 +312,24 @@
     }
 
     /*
-     * Wire ◀ / ▶ buttons to navigate weeks.  Clamp at ±52 weeks
-     * client-side as a soft guard (server also clamps); going
-     * further than that almost never has scheduled shows anyway.
+     * Wire ◀ / ▶ buttons to navigate weeks.  Clamp at the server-
+     * supplied min / max (operator-set: -2 / +4 by default).
+     * Buttons that would push the offset past the limit get
+     * disabled (visual + click-blocking) so the user sees they've
+     * hit the boundary instead of clicking into a no-op.
      */
     function wireNavigation() {
         var prev = document.querySelector('[data-np="prev-week"]');
         var next = document.querySelector('[data-np="next-week"]');
+
+        // Reflect the boundary state into the disabled attribute
+        // — picks up CSS opacity + cursor: not-allowed for free.
+        if (prev) { prev.disabled = (weekOffset <= weekOffsetMin); }
+        if (next) { next.disabled = (weekOffset >= weekOffsetMax); }
+
         function navigate(deltaWeeks) {
-            var target = Math.max(-52, Math.min(52, weekOffset + deltaWeeks));
+            var target = Math.max(weekOffsetMin,
+                          Math.min(weekOffsetMax, weekOffset + deltaWeeks));
             if (target === weekOffset) { return; }
             var url = new URL(window.location.href);
             if (target === 0) {
@@ -328,8 +339,16 @@
             }
             window.location.href = url.toString();
         }
-        if (prev) { prev.addEventListener('click', function () { navigate(-1); }); }
-        if (next) { next.addEventListener('click', function () { navigate(+1); }); }
+        if (prev) {
+            prev.addEventListener('click', function () {
+                if (!prev.disabled) { navigate(-1); }
+            });
+        }
+        if (next) {
+            next.addEventListener('click', function () {
+                if (!next.disabled) { navigate(+1); }
+            });
+        }
     }
 
     /*
