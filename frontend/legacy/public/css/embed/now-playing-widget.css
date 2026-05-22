@@ -1330,9 +1330,32 @@ html, body {
     font-weight: 600;
 }
 
+.np-widget.np-track-history .np-th-modal-show-intro {
+    /*  Caption above the show-name line ("Played in the show:")
+        — muted small-caps so it reads as a label without
+        competing with the show name underneath.  */
+    margin: 0 0 2px 0;
+    font-size: 0.85em;
+    color: var(--np-fg-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.np-widget.np-track-history.np-theme-light .np-th-modal-show-intro {
+    color: #555;
+}
+
 .np-widget.np-track-history .np-th-modal-show {
     margin: 0 0 14px 0;
     line-height: 1.5;
+}
+
+/*  Hide the "Played in the show:" caption when there's no show
+    context (e.g. for a webstream entry that lost its instance
+    binding).  The JS toggles .np-th-no-show on the body.  */
+.np-widget.np-track-history.np-th-no-show .np-th-modal-show-intro,
+.np-widget.np-track-history.np-th-no-show .np-th-modal-show {
+    display: none;
 }
 
 .np-widget.np-track-history .np-th-modal-link {

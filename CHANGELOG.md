@@ -502,6 +502,71 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Track History: webstream entries + "Played in the show:"
+  modal caption** (operator request 2026-05-22 v16, two
+  items in one shot):
+
+  1. **Webstream plays included in the history**.  Previous
+     versions used an `INNER JOIN cc_files` which silently
+     dropped all rows with `file_id IS NULL` — the shape
+     that `HistoryService::insertWebstreamMetadata()`
+     writes when Liquidsoap reports a webstream metadata
+     update via `/api/notify-webstream-data`.
+
+     Fix: `LEFT JOIN cc_files` plus a fallback lookup
+     against `cc_playout_history_metadata` (correlated
+     subquery with the `track_title` / `artist_name`
+     constants from `MDATA_KEY_TITLE` / `MDATA_KEY_CREATOR`).
+     For webstream entries the `artist` field carries the
+     webstream's display name (`cc_webstream.name`,
+     typically the operator-set label like "BBC News Live")
+     and the `title` carries whatever ICY-/Now-Playing-
+     metadata the upstream stream server sent at the time.
+     New `isWebstream` flag exposed in the JSON payload so
+     future UI passes can decorate streaming entries
+     differently.
+
+     Line-In plays still don't write any metadata to
+     `cc_playout_history` — Liquidsoap treats Line-In as
+     raw audio without a metadata stream, so the playout
+     engine would need a configuration extension to emit
+     anything.  Tracked in BACKLOG.md as a defer item with
+     a documented solution path.
+
+  2. **Modal: "Played in the show:" caption** added between
+     the time-range line and the show-name line.  Operator
+     request — labels the show-context for clarity.  When
+     a webstream entry has no instance binding (e.g. the
+     stream wasn't part of a scheduled show), the caption
+     + show-name pair is hidden via a `np-th-no-show` body
+     class so the modal doesn't show an orphan label.
+
+  Files:
+    - `application/controllers/EmbedController.php` —
+      SQL rewrite in `_fetchTrackHistoryRows`: INNER JOIN
+      → LEFT JOIN; COALESCE on cc_files + correlated
+      subquery to cc_playout_history_metadata; new
+      `is_webstream` flag in the row output.
+    - `application/views/scripts/embed/track-history.phtml`
+      — new `<p class="np-th-modal-show-intro">Played in
+      the show:</p>` between time and show in the modal.
+    - `public/css/embed/now-playing-widget.css` —
+      `.np-th-modal-show-intro` muted-caps caption style;
+      `.np-th-no-show` toggle rule that hides both the
+      intro and show lines when no show context exists.
+    - `public/js/airtime/embed/track-history-widget.js` —
+      replaced inline `style.display` toggle with
+      `body.classList.toggle('np-th-no-show')` so a single
+      CSS rule covers both elements.
+    - `docs/manual/WIDGETS.md` + `de/` + `fr/` + `es/` —
+      §8 source-table description updated for the LEFT
+      JOIN + webstream fallback; modal section mentions
+      the new caption + show-context-hide rule.
+    - `BACKLOG.md` — new "Line-In Metadaten in Track
+      History" deferred entry with a documented solution
+      path (Liquidsoap-skript erweitern + insertLineIn-
+      Metadata helper).
+
 - **Track History: 'Today' button renamed to 'Now'**
   (operator request 2026-05-22 v15).  Semantically more
   accurate — the button snaps BOTH date and time to the

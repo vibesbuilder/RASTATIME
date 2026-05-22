@@ -103,11 +103,16 @@
 
         var showName = (track.show && track.show.name) || '';
         var showUrl  = (track.show && track.show.url)  || '';
+        // Operator request 2026-05-22 v16: hide both the
+        // "Played in the show:" caption and the show name when
+        // no show context is attached (e.g. a webstream entry
+        // whose instance binding got lost).  CSS class on the
+        // body controls both via a single rule pair.
         if (showName) {
             el.modalShow.textContent = showName;
-            el.modalShow.style.display = '';
+            body.classList.remove('np-th-no-show');
         } else {
-            el.modalShow.style.display = 'none';
+            body.classList.add('np-th-no-show');
         }
 
         if (showUrl) {

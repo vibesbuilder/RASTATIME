@@ -544,8 +544,12 @@ plus header + load-more footer):
   disabled while a fetch is in flight.  Hard-capped at
   10 pages × 100 pagesize = 1000 rows total.
 - **Modal**: opens on row click with title, artist, time
-  range, show name, and an "Open show page →" button when
-  the parent show has a configured URL.
+  range, a **"Played in the show:"** caption + the show
+  name, and an "Open show page →" button when the parent
+  show has a configured URL.  The show name itself stays
+  plain text — only the dedicated button is the click
+  affordance.  When a webstream entry has no instance
+  binding, the show-context block is hidden entirely.
 
 ### URL parameters
 
@@ -600,11 +604,20 @@ and on Load-more.  Output shape:
 }
 ```
 
-Source: `cc_playout_history` JOIN `cc_files`
+Source: `cc_playout_history` LEFT JOIN `cc_files`
 (track_title, artist_name) LEFT JOIN
 `cc_show_instances` → `cc_show` for the show context.
-Tracks without a `file_id` (some auto-DJ filler entries)
-are filtered out — they have no usable display data.
+**Webstream plays** (rows where `file_id IS NULL`) are
+included via a fallback lookup against
+`cc_playout_history_metadata` — the same key-value table
+that `HistoryService::insertWebstreamMetadata()` writes
+to when Liquidsoap calls `/api/notify-webstream-data`.
+For webstream entries the `artist` field carries the
+webstream's display name (`cc_webstream.name`, e.g.
+"BBC News Live") and the `title` carries whatever
+ICY-/Now-Playing-metadata the upstream stream server
+sent at the time.  Line-In plays don't write metadata
+to history yet (deferred — see BACKLOG.md).
 
 ### Settings page
 

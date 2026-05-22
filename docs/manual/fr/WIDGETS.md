@@ -485,8 +485,19 @@ iframe prêt à l'emploi (~500 px de haut) :
 
 La page **Paramètres → Widgets → Track History** héberge en plus la case **Exclude short tracks** + le champ de seuil en secondes (style Auto-Expiry — le champ secondes n'apparaît que quand la case est cochée).
 
-Source : `cc_playout_history` JOIN `cc_files` LEFT JOIN
-`cc_show_instances` → `cc_show`.
+Source : `cc_playout_history` LEFT JOIN `cc_files` LEFT JOIN
+`cc_show_instances` → `cc_show` avec fallback sur
+`cc_playout_history_metadata`.  **Diffusions webstream**
+(`file_id IS NULL`) incluses via lookup sur la table
+clé-valeur — artist = nom du webstream, title =
+métadonnée ICY/Now-Playing en direct.  Le Line-In
+n'écrit pas encore de métadonnées (différé — voir
+BACKLOG.md).
+
+Dans le modal : la légende **"Played in the show:"**
+précède la ligne du nom d'émission.  Pour les entrées
+webstream sans liaison d'instance, le bloc contexte
+d'émission est masqué.
 
 **Paramètres → Widgets → Track History** héberge le libellé
 d'état vide, l'aperçu en direct, et deux snippets prêts à

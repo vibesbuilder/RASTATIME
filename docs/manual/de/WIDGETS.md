@@ -513,8 +513,17 @@ Load-More-Footer reinpassen):
 ### Datenfeed
 
 Interner JSON-Endpoint unter `/Embed/track-history-data`.
-Quelle: `cc_playout_history` JOIN `cc_files` LEFT JOIN
-`cc_show_instances → cc_show`.
+Quelle: `cc_playout_history` LEFT JOIN `cc_files` LEFT JOIN
+`cc_show_instances → cc_show` mit Fallback auf
+`cc_playout_history_metadata`.  **Webstream-Plays**
+(`file_id IS NULL`) werden eingeschlossen via Lookup auf
+die Key-Value-Tabelle — Artist = Webstream-Name, Title =
+Live-ICY-Metadata vom Source-Server.  Line-In schreibt
+noch keine Metadaten (deferred — siehe BACKLOG.md).
+
+Im Modal: über der Show-Zeile steht jetzt die Beschriftung
+**"Played in the show:"**.  Bei Webstream-Einträgen ohne
+Instance-Bindung wird der Show-Kontext-Block ausgeblendet.
 
 ### Einstellungs-Seite
 

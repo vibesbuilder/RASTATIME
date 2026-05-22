@@ -69,9 +69,45 @@ der Operator das Signal gibt.
 - ✅ **DONE** Multi-View Schedule Widget (`/embed/multi-view-schedule`) basierend auf FullCalendar 6.1.10 (lokal gehostet, kein CDN). Day / 2-Day / Week Views umschaltbar (`?view=` + in-widget Buttons). Show-Slots aus `cc_show.background_color`, Klick → Modal mit Description + URL-Button. Auto-Scroll zur now-Linie. ~5min Cache-Default. Settings-Submenu **Widgets → Multi-View Schedule**.
 
 **Welle 3 (~1 Woche):**
-- ✅ **DONE** Track History Widget (`/embed/track-history`) für letzte 7 Tage mit HTML5-Date-Picker + Today-Button + Pagesize-Dropdown (10/20/50/100), Load-More-Pagination, Klick → Modal mit Show-Kontext. Source: `cc_playout_history` JOIN `cc_files` LEFT JOIN `cc_show_instances → cc_show`. Settings-Submenu **Widgets → Track History**.
+- ✅ **DONE** Track History Widget (`/embed/track-history`) für letzte 7 Tage mit HTML5-Date-Picker + Now-Button + Pagesize-Dropdown (10/20/50/100), Time-Filter, Load-More-Pagination, Klick → Modal mit Show-Kontext + "Played in the show:"-Label. Webstream-Inklusion via LEFT JOIN + Metadata-COALESCE. Source: `cc_playout_history` LEFT JOIN `cc_files` LEFT JOIN `cc_show_instances → cc_show` mit Fallback auf `cc_playout_history_metadata`. Exclude-Short-Tracks Filter (Preference + URL-Override). Settings-Submenu **Widgets → Track History**.
 
 **Aufwand gesamt:** ~1700 LoC + ~400 LoC Doku.
+
+---
+
+### 🟡 Line-In Metadaten in Track History (Defer)
+
+**Status:** Operator-Wunsch 2026-05-22, deferred bis nach
+Welle-3-Polish.
+
+**Problem:** Line-Inputs (z.B. externes Studio-Mic, externes
+Mischpult) liefern aktuell **keine** Metadaten in
+`cc_playout_history`.  Liquidsoap behandelt einen Line-In
+als rohes Audio ohne Metadata-Stream — anders als bei
+einem Webstream, wo der Source-Server ICY/Now-Playing-
+Metadaten mitsendet.
+
+**Lösungspfad:**
+1. Liquidsoap-Skript erweitern, sodass beim Wechsel auf
+   Line-In ein `notify_webstream_data`-äquivalenter Call
+   gefeuert wird, mit `track_title` = Show-Name (oder
+   freiem Operator-Text) und `artist_name` = "Line-In".
+2. ApiController um `notifyLineInDataAction` erweitern
+   (oder bestehenden `notifyWebstreamDataAction` für
+   Line-In wiederverwenden).
+3. HistoryService::insertLineInMetadata() neu, analog zu
+   `insertWebstreamMetadata`.
+4. Optional: Operator-konfigurierbares Label für Line-In
+   im UI (Settings → Streams → Line-In Label).
+
+**Aufwand:** ~1 Tag (Liquidsoap-Konfig-Test + Backend +
+Pypo-Bridge-Check).  Voraussetzung: stabile
+Liquidsoap-Skript-Modifikation, kein Live-Betrieb-Risiko.
+
+**Wert:** Mittel — Stationen mit häufigem Line-In-Use
+(z.B. Live-Sendungen aus dem Studio) hätten dann auch
+diese im Public-Log-Widget.  Stationen die fast nie
+Line-In nutzen sehen keinen Unterschied.
 
 ---
 

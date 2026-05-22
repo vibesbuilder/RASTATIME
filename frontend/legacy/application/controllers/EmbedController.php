@@ -1784,17 +1784,54 @@ class EmbedController extends Zend_Controller_Action
                   AND ph.ends IS NOT NULL
                   AND EXTRACT(EPOCH FROM (ph.ends - ph.starts)) >= :min_sec";
         }
+
+        // RASTATIME 2026-05-22 v16 — include webstream entries.
+        // cc_playout_history has two row shapes:
+        //
+        //   - Scheduled file plays: file_id IS NOT NULL, title /
+        //     artist live on cc_files.{track_title,artist_name}
+        //     and the JOIN below picks them up directly.
+        //
+        //   - Webstream plays: file_id IS NULL, title / artist
+        //     live in cc_playout_history_metadata as key-value
+        //     rows with keys 'track_title' / 'artist_name'
+        //     (constants MDATA_KEY_TITLE / MDATA_KEY_CREATOR in
+        //     /application/configs/constants.php).  HistoryService::
+        //     insertWebstreamMetadata() writes them.
+        //
+        // The COALESCE below uses cc_files first (cheap, single
+        // JOIN) and falls back to a correlated subquery against
+        // cc_playout_history_metadata only when the file row is
+        // missing — webstream-typical case.  Two subqueries
+        // (one per metadata key) keep the SQL readable; Postgres
+        // handles them well because cc_playout_history_metadata
+        // is indexed on history_id.
         $sql = "SELECT ph.id        AS history_id,
                        ph.starts    AS starts_utc,
                        ph.ends      AS ends_utc,
-                       f.track_title,
-                       f.artist_name,
+                       COALESCE(
+                           f.track_title,
+                           (SELECT md.value
+                              FROM cc_playout_history_metadata md
+                             WHERE md.history_id = ph.id
+                               AND md.key = 'track_title'
+                             LIMIT 1)
+                       ) AS track_title,
+                       COALESCE(
+                           f.artist_name,
+                           (SELECT md.value
+                              FROM cc_playout_history_metadata md
+                             WHERE md.history_id = ph.id
+                               AND md.key = 'artist_name'
+                             LIMIT 1)
+                       ) AS artist_name,
+                       (ph.file_id IS NULL) AS is_webstream,
                        s.id         AS show_id,
                        s.name       AS show_name,
                        s.url        AS show_url,
                        s.background_color
                 FROM cc_playout_history ph
-                JOIN cc_files f             ON ph.file_id = f.id
+                LEFT JOIN cc_files f          ON ph.file_id = f.id
                 LEFT JOIN cc_show_instances si ON ph.instance_id = si.id
                 LEFT JOIN cc_show s         ON si.show_id = s.id
                 WHERE ph.starts >= :from_utc
@@ -1832,12 +1869,18 @@ class EmbedController extends Zend_Controller_Action
                 continue;
             }
             $out[] = [
-                'id'         => (int) $r['history_id'],
-                'title'      => $title,
-                'artist'     => $artist,
-                'starts'     => $this->_formatTimestamp($r['starts_utc'], $timezone),
-                'ends'       => $this->_formatTimestamp($r['ends_utc'],   $timezone),
-                'show'       => [
+                'id'           => (int) $r['history_id'],
+                'title'        => $title,
+                'artist'       => $artist,
+                'starts'       => $this->_formatTimestamp($r['starts_utc'], $timezone),
+                'ends'         => $this->_formatTimestamp($r['ends_utc'],   $timezone),
+                // RASTATIME 2026-05-22 v16: webstream marker so
+                // the JS / future UI can decorate streaming
+                // entries differently (right now both render
+                // identically; the flag is exposed for future
+                // use without breaking the payload contract).
+                'isWebstream'  => (bool) $r['is_webstream'],
+                'show'         => [
                     'id'    => $r['show_id'] !== null ? (int) $r['show_id'] : null,
                     'name'  => (string) ($r['show_name'] ?? ''),
                     'url'   => (string) ($r['show_url']  ?? ''),
