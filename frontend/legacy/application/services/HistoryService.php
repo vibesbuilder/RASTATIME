@@ -806,10 +806,34 @@ class Application_Service_HistoryService
             $fileId   = $item->getDbFileId();
             $streamId = $item->getDbStreamId();
 
+            // RASTATIME 2026-05-23 v18.1 — read linein_id via raw
+            // SQL.  The Propel-generated CcSchedule class doesn't
+            // know about this column because it was added by
+            // RastaTime migration 0047 (add_cc_schedule_linein_id)
+            // after the Propel ORM sources were generated, and
+            // we deliberately did NOT regenerate them (would touch
+            // hundreds of files in legacy ORM territory).
+            $lineinRow = Application_Common_Database::prepareAndExecute(
+                'SELECT linein_id FROM cc_schedule WHERE id = :sid',
+                [':sid' => $schedId],
+                'all'
+            );
+            $lineinId = (!empty($lineinRow) && !empty($lineinRow[0]['linein_id']))
+                ? (int) $lineinRow[0]['linein_id']
+                : null;
+
             $instanceEnd = $showInstance->getDbEnds(null);
             $itemEnd     = $item->getDbEnds(null);
             $recordStart = $item->getDbStarts(null);
             $recordEnd   = ($instanceEnd < $itemEnd) ? $instanceEnd : $itemEnd;
+
+            Logging::debug(sprintf(
+                'insertPlayedItem schedId=%d file_id=%s stream_id=%s linein_id=%s',
+                $schedId,
+                var_export($fileId, true),
+                var_export($streamId, true),
+                var_export($lineinId, true)
+            ));
 
             if (isset($fileId)) {
                 // Scheduled file play — original path.
@@ -859,6 +883,12 @@ class Application_Service_HistoryService
                 // additional per-track entries on top — both
                 // levels of detail coexist in the history.
                 $webstream = $item->getCcWebstream($this->con);
+                if (!$webstream) {
+                    Logging::warn(sprintf(
+                        'insertPlayedItem schedId=%d has stream_id=%d but cc_webstream lookup returned null — skipping history write',
+                        $schedId, $streamId
+                    ));
+                }
                 if ($webstream) {
                     // De-dupe: only write the synthetic block
                     // once per scheduled slot (matches the
@@ -921,6 +951,90 @@ class Application_Service_HistoryService
                         $this->con->commit();
                     }
                 }
+            } elseif ($lineinId !== null) {
+                // RASTATIME 2026-05-23 v18.1 — scheduled Line-In
+                // item (cc_schedule.linein_id, RastaTime-only via
+                // legacy migration 0047).  Operator example:
+                // a show with a Jabra-Mikro slot scheduled inside.
+                //
+                // The previous v18 commit only covered file_id and
+                // stream_id paths; linein_id items silently fell
+                // through, leaving no row in cc_playout_history.
+                //
+                // We write a synthetic "block" entry on item-start
+                // analogous to the webstream branch above, with
+                // `track_title` + `artist_name` both set to the
+                // operator-chosen line-in name from
+                // `rastatime_linein.name` so the slot shows up in
+                // both the Track History widget and the internal
+                // Analytics Playout History dashboard.
+                $sqlName = 'SELECT name FROM rastatime_linein WHERE id = :lid';
+                $nameRow = Application_Common_Database::prepareAndExecute(
+                    $sqlName, [':lid' => $lineinId], 'all'
+                );
+                $lineinName = (!empty($nameRow) && !empty($nameRow[0]['name']))
+                    ? (string) $nameRow[0]['name']
+                    : ('Line-In #' . $lineinId);
+
+                // De-dupe: same shape as the webstream branch above
+                // (defends against Liquidsoap restarts that re-fire
+                // notify-media-item-start-play for the same slot).
+                $sqlDedupe = 'SELECT ph.id
+                              FROM cc_playout_history ph
+                              JOIN cc_playout_history_metadata md
+                                ON md.history_id = ph.id
+                              WHERE ph.file_id    IS NULL
+                                AND ph.instance_id = :iid
+                                AND ph.starts      = :starts
+                                AND md.key         = :key
+                                AND md.value       = :val
+                              LIMIT 1';
+                $existing = Application_Common_Database::prepareAndExecute(
+                    $sqlDedupe,
+                    [
+                        ':iid'    => $item->getDbInstanceId(),
+                        ':starts' => $recordStart,
+                        ':key'    => MDATA_KEY_CREATOR,
+                        ':val'    => $lineinName,
+                    ],
+                    'all'
+                );
+
+                if (empty($existing)) {
+                    $history = new CcPlayoutHistory();
+                    // file_id stays NULL — same shape as a
+                    // webstream / live-in entry.
+                    $history->setDbStarts($recordStart);
+                    $history->setDbEnds($recordEnd);
+                    $history->setDbInstanceId($item->getDbInstanceId());
+
+                    $metadata = [
+                        // title = line-in operator label.
+                        MDATA_KEY_TITLE   => $lineinName,
+                        // artist = line-in operator label too, so
+                        // both columns carry the identifier even
+                        // if only one is rendered by a particular
+                        // reader.  Matches the webstream / Master
+                        // Source convention.
+                        MDATA_KEY_CREATOR => $lineinName,
+                        'showname'        => $show->getDbName(),
+                    ];
+
+                    foreach ($metadata as $key => $val) {
+                        $meta = new CcPlayoutHistoryMetaData();
+                        $meta->setDbKey($key);
+                        $meta->setDbValue($val);
+                        $history->addCcPlayoutHistoryMetaData($meta);
+                    }
+
+                    $history->save($this->con);
+                    $this->con->commit();
+                }
+            } else {
+                Logging::warn(sprintf(
+                    'insertPlayedItem schedId=%d has neither file_id nor stream_id nor linein_id — schedule row shape is unexpected, skipping history write',
+                    $schedId
+                ));
             }
         } catch (Exception $e) {
             $this->con->rollback();

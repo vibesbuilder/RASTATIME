@@ -515,7 +515,7 @@ Load-More-Footer reinpassen):
 Interner JSON-Endpoint unter `/Embed/track-history-data`.
 Quelle: `cc_playout_history` LEFT JOIN `cc_files` LEFT JOIN
 `cc_show_instances → cc_show` mit Fallback auf
-`cc_playout_history_metadata`.  Fünf Row-Arten:
+`cc_playout_history_metadata`.  Sechs Row-Arten:
 
 1. **Scheduled File Plays** (`file_id IS NOT NULL`) —
    Title / Artist aus `cc_files`.
@@ -524,23 +524,36 @@ Quelle: `cc_playout_history` LEFT JOIN `cc_files` LEFT JOIN
    mit `stream_id`.  Synthetischer "Block"-Eintrag mit
    `title = artist = cc_webstream.name` — auch wenn der
    Stream-Server keine ICY-Metadata sendet.
-3. **Webstream-Tracks** (`file_id IS NULL`) — geschrieben
+3. **Scheduled Line-In-Items** (`file_id IS NULL`,
+   **RASTATIME-only**, benötigt Migration 0047
+   `cc_schedule.linein_id`) — geschrieben von
+   `insertPlayedItem()` bei Schedule-Items mit
+   `linein_id` (Operator hat Line-In aus der Library in
+   eine Show gezogen, z.B. "Jabra-Mikro").  Synthetischer
+   "Block"-Eintrag mit `title = artist =
+   rastatime_linein.name`.  `linein_id` wird per Raw-SQL
+   gelesen, weil die Propel-ORM-Klassen vor der
+   RastaTime-Migration generiert wurden.
+4. **Webstream-Tracks** (`file_id IS NULL`) — geschrieben
    von `insertWebstreamMetadata()` bei eingehender
    ICY-Metadata.  Per-Track-Granularität.
-4. **Live-Show-Sessions** (`file_id IS NULL`) — neu
+5. **Live-Show-Sessions** (`file_id IS NULL`) — neu
    2026-05-23.  Geschrieben von `ensureLiveShowLogged()`
    als Side-Effect bei `/api/live-info(-v2)`.  Catched
    Show-Instances mit `time_filled = '00:00:00'`
    (Operator hat Slot ohne Items angelegt, Liquidsoap
    schaltet automatisch auf master_dj).  Artist = "Live
    Show".
-5. **Manual Dashboard Source Switches** (`file_id IS NULL`)
+6. **Manual Dashboard Source Switches** (`file_id IS NULL`)
    — geschrieben von `insertLineInLog()` bei Operator-
    Toggle im Dashboard.  Artist = "Master Source" /
    "Show Source".
 
-Label für Arten 4+5 konfigurierbar unter Settings →
-Widgets → Track History → "Line-Input label".
+Label für Arten 5+6 konfigurierbar unter Settings →
+Widgets → Track History → "Line-Input label".  Art 3
+nutzt stattdessen den per-Line-In `name` aus
+`rastatime_linein`, den der Operator in der Line-In-
+Library setzt.
 
 Im Modal: über der Show-Zeile steht jetzt die Beschriftung
 **"Played in the show:"**.  Bei Webstream-Einträgen ohne

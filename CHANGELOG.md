@@ -7,6 +7,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Scheduled Line-In items now appear in cc_playout_history**
+  (operator follow-up 2026-05-23 v18.1).  The v18 commit
+  earlier the same day covered scheduled file plays
+  (`cc_schedule.file_id`) and scheduled webstream items
+  (`cc_schedule.stream_id`), but silently missed the third
+  shape RastaTime supports: scheduled Line-In items
+  (`cc_schedule.linein_id`, RastaTime-only column added by
+  legacy migration 0047 in the Line-In Library Phase A).
+  Operator example that exposed the gap: a show with a
+  "Jabra-Mikro" line-in slot inside — `notifyMediaItem-
+  StartPlayAction` fired (Liquidsoap's `_on_linein_start`
+  calls `_notify_media_started(row_id)` just like the file
+  and webstream paths), but `insertPlayedItem` had no
+  `linein_id` branch and dropped the call without writing
+  any history row.
+
+  Fix: `HistoryService::insertPlayedItem()` now reads
+  `cc_schedule.linein_id` via raw SQL (the Propel-generated
+  `CcSchedule` class doesn't know about the column because
+  it was added after the ORM sources were generated, and
+  we deliberately don't regenerate Propel sources just for
+  one column) and, when set, writes a synthetic "block"
+  history row analogous to the webstream branch: `file_id
+  = NULL`, `instance_id` from the schedule, `track_title
+  = artist_name = rastatime_linein.name`, plus `showname`.
+  De-duped on `(instance_id, starts, artist_name)` so
+  Liquidsoap restarts that re-fire the notify don't
+  double-insert.  Surfaces in both the Track History
+  widget and the Analytics Playout History dashboard.
+
+  Also added in the same hotfix:
+    - Debug-level `Logging::debug` line printing the
+      `(file_id, stream_id, linein_id)` triple at the
+      start of every `insertPlayedItem` call, so future
+      bug reports against this code path can be diagnosed
+      from the legacy log without re-instrumenting.
+    - Explicit `Logging::warn` when the webstream branch
+      hits `getCcWebstream() === null` (previously the
+      branch silently exited with no trace), and when a
+      schedule row arrives with none of the three FK
+      columns set.
+    - Track History widget manual (EN/DE/FR/ES) updated
+      from "Five kinds of rows" to **Six kinds of rows**
+      with the new scheduled-line-in path described.
+
 ### Added
 
 - **Live-Show + Webstream content in cc_playout_history**

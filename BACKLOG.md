@@ -137,6 +137,21 @@ Lücke für Webstream-als-Show-Inhalt:
   existiert UND ohne dass ein Operator den Dashboard-
   Switch betätigt — sehr seltener Praxisfall.
 
+**Hotfix v18.1 (2026-05-23)** — v18 hatte die dritte
+cc_schedule-FK-Spalte übersehen.  RastaTime-spezifisch
+hat `cc_schedule` neben `file_id` und `stream_id` auch
+`linein_id` (Migration 0047, Line-In-Library Phase A).
+- **Line-In als Show-Inhalt** —
+  `insertPlayedItem()` hat jetzt einen `linein_id`-
+  Branch, liest `cc_schedule.linein_id` per Raw-SQL
+  (Propel-Klasse kennt die Spalte nicht), looked
+  `rastatime_linein.name` für Title/Artist und schreibt
+  einen synthetischen Block-Eintrag.  Auch ein
+  `Logging::debug` für jeden insertPlayedItem-Aufruf
+  und ein `Logging::warn` für unerwartete Schedule-
+  Row-Shapes — Diagnose-Trace falls in Zukunft eine
+  weitere Variante auftaucht.
+
 ### ✅ AutoDj max-show-duration 12 h → 24 h (DONE 2026-05-23 v18)
 
 **Status:** DONE.

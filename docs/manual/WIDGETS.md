@@ -607,7 +607,7 @@ and on Load-more.  Output shape:
 Source: `cc_playout_history` LEFT JOIN `cc_files`
 (track_title, artist_name) LEFT JOIN
 `cc_show_instances` → `cc_show` for the show context.
-**Five kinds of rows** land in the table:
+**Six kinds of rows** land in the table:
 
 1. **Scheduled file plays** (`file_id IS NOT NULL`) —
    title / artist live on `cc_files` and the JOIN picks
@@ -621,7 +621,21 @@ Source: `cc_playout_history` LEFT JOIN `cc_files`
    cc_webstream.name` so the slot is recorded even when
    the stream server sends no ICY data (operator example:
    "Event Calendar").
-3. **Webstream tracks** (`file_id IS NULL`, metadata-
+3. **Scheduled line-in items** (`file_id IS NULL`,
+   metadata-only — **RASTATIME-only**, requires
+   migration 0047 column `cc_schedule.linein_id`) —
+   written by `HistoryService::insertPlayedItem()` when
+   Liquidsoap fires `notifyMediaItemStartPlayAction` for
+   a `cc_schedule` item with `linein_id` (operator
+   dragged a line-in from the Library into a show
+   schedule, e.g. "Jabra-Mikro").  Writes a synthetic
+   "block" entry with `title = artist =
+   rastatime_linein.name` so the slot shows up even
+   though the audio is raw line-in with no upstream
+   metadata.  `linein_id` is read via raw SQL because
+   the Propel ORM sources were generated before the
+   RastaTime migration and don't know the column.
+4. **Webstream tracks** (`file_id IS NULL`, metadata-
    only) — written by
    `HistoryService::insertWebstreamMetadata()` when
    Liquidsoap calls `/api/notify-webstream-data`.
@@ -630,7 +644,7 @@ Source: `cc_playout_history` LEFT JOIN `cc_files`
    change produces one row.  The two webstream paths
    coexist — operators see both the "block" entry for
    the whole slot AND any per-track entries inside.
-4. **Live-Show sessions** (`file_id IS NULL`, metadata-
+5. **Live-Show sessions** (`file_id IS NULL`, metadata-
    only) — written by
    `HistoryService::ensureLiveShowLogged()` as a
    side-effect on every `/api/live-info(-v2)` call.
@@ -641,7 +655,7 @@ Source: `cc_playout_history` LEFT JOIN `cc_files`
    Show"` distinguishes this path from the manual
    Dashboard-switch path below.  Idempotent — guarded
    by an `instance_id + file_id IS NULL` lookup.
-5. **Manual Dashboard source switches** (`file_id IS
+6. **Manual Dashboard source switches** (`file_id IS
    NULL`, metadata-only) — written by
    `HistoryService::insertLineInLog()` when the
    operator toggles a Master Source or Show Source
@@ -649,12 +663,14 @@ Source: `cc_playout_history` LEFT JOIN `cc_files`
    for master_dj, `"Show Source"` for live_dj, so a
    future UI pass could differentiate the two.
 
-For all five kinds the optional show binding (via
+For all six kinds the optional show binding (via
 `instance_id`) drives the "Played in the show:" caption
 in the modal.  The display label (used as `track_title`
-for kinds 4 + 5) is operator-configurable under
+for kinds 5 + 6) is operator-configurable under
 **Settings → Widgets → Track History → "Line-Input
-label"** (default `"Line Input"`).
+label"** (default `"Line Input"`).  Kind 3 uses the
+per-line-in `name` from `rastatime_linein` instead,
+which the operator sets in the Line-In Library.
 
 ### Settings page
 

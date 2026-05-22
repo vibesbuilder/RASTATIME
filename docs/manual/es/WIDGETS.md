@@ -483,7 +483,7 @@ La página **Configuración → Widgets → Track History** aloja además la cas
 
 Fuente: `cc_playout_history` LEFT JOIN `cc_files` LEFT JOIN
 `cc_show_instances` → `cc_show` con fallback en
-`cc_playout_history_metadata`.  Cinco tipos de filas:
+`cc_playout_history_metadata`.  Seis tipos de filas:
 
 1. **Reproducciones de archivo programadas** (`file_id IS
    NOT NULL`) — título / artista desde `cc_files`.
@@ -491,21 +491,33 @@ Fuente: `cc_playout_history` LEFT JOIN `cc_files` LEFT JOIN
    escritas por `insertPlayedItem()` para items con
    `stream_id`.  Bloque sintético con
    `title = artist = cc_webstream.name`.
-3. **Pistas webstream** (`file_id IS NULL`) — escritas
+3. **Items line-in programados** (`file_id IS NULL`,
+   **solo RASTATIME**, requiere migración 0047
+   `cc_schedule.linein_id`) — escritas por
+   `insertPlayedItem()` para items con `linein_id`
+   (el operador arrastró una line-in de la Library a un
+   programa, p.ej. "Jabra-Mikro").  Bloque sintético con
+   `title = artist = rastatime_linein.name`.  `linein_id`
+   se lee vía SQL bruto porque las clases ORM Propel
+   se generaron antes de la migración RastaTime.
+4. **Pistas webstream** (`file_id IS NULL`) — escritas
    por `insertWebstreamMetadata()` por cada metadata
    ICY entrante.
-4. **Sesiones Live-Show** (`file_id IS NULL`) — nuevo
+5. **Sesiones Live-Show** (`file_id IS NULL`) — nuevo
    2026-05-23.  Escritas por `ensureLiveShowLogged()`
    como side-effect en `/api/live-info(-v2)`.  Detecta
    show-instances con `time_filled = '00:00:00'`.
    Artist = "Live Show".
-5. **Cambios manuales de fuente Dashboard** (`file_id IS
+6. **Cambios manuales de fuente Dashboard** (`file_id IS
    NULL`) — escritas por `insertLineInLog()` al
    alternar Master/Show Source.  Artist = "Master
    Source" / "Show Source".
 
-Etiqueta para tipos 4+5 configurable bajo Configuración
-→ Widgets → Track History → "Line-Input label".
+Etiqueta para tipos 5+6 configurable bajo Configuración
+→ Widgets → Track History → "Line-Input label".  El tipo
+3 usa en su lugar el `name` por-line-in de
+`rastatime_linein`, que el operador configura en la
+Line-In Library.
 
 En el modal: encima de la línea del nombre de programa
 está ahora la etiqueta **"Played in the show:"**.  Para
