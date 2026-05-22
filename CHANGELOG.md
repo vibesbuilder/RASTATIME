@@ -40,22 +40,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
       hours value to [1, 8760] as defence-in-depth against a
       hand-crafted POST.
     - `application/views/scripts/form/smart-block-criteria.phtml`
-      — single `<dl>` row hosting both controls.  Master
-      checkbox on its own line; the hours-input wrapper
-      appears below it (indented 1.5 em, 0.5 em top margin)
-      when the checkbox is on (operator preferred the
-      stacked layout 2026-05-21 over the original
-      single-line "[x] Exclude tracks played lately: [24]
-      hours" rendering, which was visually too dense once
-      the input field was visible).
+      — two separate `<dl>` rows mirroring the podcast
+      Auto-Expiry pattern (operator request 2026-05-22): the
+      first row holds the master checkbox; the second row
+      (own label + own input) is hidden by default and shown
+      only when the master is on.  Initial visibility is
+      computed server-side from the persisted checkbox value
+      so the row does not flash visible before
+      smart_blockbuilder.js takes over.
     - `public/js/airtime/playlist/smart_blockbuilder.js` —
-      show/hide of the hours-input wrapper based on master
-      checkbox; auto-fills 24 on first toggle-on so the active
-      state is never empty.
+      show/hide of the entire second dl-row (selector
+      `#sp_exclude_played_lately_hours_wrap`) based on master
+      checkbox; auto-fills 24 on first toggle-on so the
+      active state is never empty.
 
   Documentation updated in all four languages under
   `docs/manual/{en,de,fr,es}/LIBRARY.md` (Smart Blocks section)
   and ARCHITECTURE.md Section 23.
+
+### Fixed
+
+- **Smart Block: "Exclude tracks played lately" pool count
+  was inflated by broken OR-grouping in the WHERE clause**
+  (bug reported + fixed 2026-05-22).  When the operator's
+  Search Criteria already contained an OR-chain (typical
+  case: "Genre is X or Y or Z"), enabling the new
+  `Exclude tracks played lately` filter caused the
+  `N tracks match your search criteria` counter to *grow*
+  instead of shrink — sometimes returning more tracks than
+  the unfiltered query.  Root cause: the WHERE string
+  `cc_files.lptime IS NULL OR cc_files.lptime < NOW() -
+  INTERVAL '24 hours'` was appended to the assembled query
+  with `AND` but without an outer set of parens around the
+  OR-pair.  SQL operator precedence (AND binds tighter than
+  OR) then re-parsed the whole WHERE as `... OR (last_genre
+  AND lptime IS NULL) OR (lptime < INTERVAL...)`, which let
+  every track with `lptime` older than the window slip back
+  in regardless of genre.  Fix: wrap the OR-expression in
+  explicit parens so it remains a single conjunctive group.
+  Other filters (`only_unplayed`, `only_with_expiry`) are
+  single-atom predicates so they were not affected by the
+  same precedence trap.
 
 ### Fixed
 

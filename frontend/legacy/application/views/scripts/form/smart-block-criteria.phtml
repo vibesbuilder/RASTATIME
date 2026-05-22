@@ -153,28 +153,21 @@
                 <?php endif; ?>
             </dd>
         </dl>
-        <?php /* RASTATIME 2026-05-21 — exclude-played-lately filter.
-               Master checkbox on its own line, hours-back input
-               appearing below it on a second line when the checkbox
-               is on (operator request 2026-05-21 — original
-               single-line layout was visually too dense once the
-               input field was visible).  Toggle handled in
-               smart_blockbuilder.js.  Both controls live inside the
-               same <dd> so they belong to the same dl-row and
-               inherit the same Zend-Form decorator context. */ ?>
+        <?php /* RASTATIME 2026-05-22 — exclude-played-lately filter.
+               Layout mirrors the podcast Auto-Expiry pattern
+               (operator request 2026-05-22): two separate dl-rows
+               so the hours-input row sits on its own line with its
+               own label, NOT stacked inside the checkbox row's <dd>.
+               The hours-input row is hidden by default and revealed
+               by smart_blockbuilder.js when the master checkbox is
+               on, matching the ng-show toggle the Auto-Expiry row
+               uses in views/scripts/podcast/podcast.phtml. */ ?>
         <dl>
             <dt>
                 <label class='sp_text_font'><?php echo $this->element->getElement('sp_exclude_played_lately')->getLabel() ?></label>
             </dt>
             <dd id='sp_exclude_played_lately-element'>
                 <?php echo $this->element->getElement('sp_exclude_played_lately') ?>
-                <div id='sp_exclude_played_lately_hours_wrap'
-                     class='sp_text_font'
-                     style='margin-top: 0.5em; margin-left: 1.5em;'>
-                    <?php echo _('Exclude tracks played in the last'); ?>
-                    <?php echo $this->element->getElement('sp_exclude_played_lately_hours') ?>
-                    <?php echo _('hours'); ?>
-                </div>
                 <?php if ($this->element->getElement("sp_exclude_played_lately")->hasErrors()) : ?>
                     <?php foreach ($this->element->getElement("sp_exclude_played_lately")->getMessages() as $error) : ?>
                         <span class='errors sp-errors'>
@@ -182,6 +175,22 @@
                         </span>
                     <?php endforeach; ?>
                 <?php endif; ?>
+            </dd>
+        </dl>
+        <?php
+            // RASTATIME 2026-05-22 — initial visibility computed
+            // server-side so the row never flashes briefly visible
+            // before smart_blockbuilder.js gets a chance to hide it.
+            // The JS still owns runtime toggles.
+            $excludeRowHidden = $this->element->getElement('sp_exclude_played_lately')
+                ->getValue() ? '' : 'style="display: none;"';
+        ?>
+        <dl id='sp_exclude_played_lately_hours_wrap' <?php echo $excludeRowHidden; ?>>
+            <dt>
+                <label class='sp_text_font'><?php echo $this->element->getElement('sp_exclude_played_lately_hours')->getLabel() ?></label>
+            </dt>
+            <dd id='sp_exclude_played_lately_hours-element'>
+                <?php echo $this->element->getElement('sp_exclude_played_lately_hours') ?>
                 <?php if ($this->element->getElement("sp_exclude_played_lately_hours")->hasErrors()) : ?>
                     <?php foreach ($this->element->getElement("sp_exclude_played_lately_hours")->getMessages() as $error) : ?>
                         <span class='errors sp-errors'>

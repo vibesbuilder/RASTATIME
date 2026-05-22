@@ -3368,17 +3368,46 @@ against hand-crafted POSTs.
 2. **Server-side** (`Block.php`): re-clamps and defaults to
    24 h if the form-validator was somehow bypassed.
 
-**UX.**  Single dl-row hosting both controls.  The master
-checkbox sits on its own line; the hours-input wrapper
-appears below it (indented 1.5 em, 0.5 em top margin) when
-the checkbox is on.  The stacked layout was chosen over a
-single inline row 2026-05-21 because the inline rendering
-became visually too dense once the input field was
-visible — the two controls competed for attention and the
-checkbox label lost focus.  Hours-input wrapper is hidden
-via `smart_blockbuilder.js` whenever the master checkbox
-is off.  On first toggle-on the input auto-fills with 24
-so the active state is never visually empty.
+**UX.**  Two separate dl-rows mirroring the podcast
+Auto-Expiry pattern (operator request 2026-05-22): the
+first row holds the master checkbox; the second row (own
+label `Exclude tracks played in the last hours:` + own
+input) is hidden by default and shown only when the master
+is on.  Initial visibility is computed server-side from the
+persisted checkbox value so the second row does not flash
+visible before `smart_blockbuilder.js` takes over.  Runtime
+toggle handled by the JS via `#sp_exclude_played_lately_hours_wrap`
+selector on the second dl element.  On first toggle-on the
+hours input auto-fills with 24 so the active state is
+never visually empty.  Earlier 2026-05-21 iterations
+(single-line `[x] label: [input] hours` and stacked
+inline-block inside one dd) were both rejected by the
+operator as visually too dense — the row pair is the
+final layout.
+
+**Bug fix 2026-05-22 — WHERE-OR grouping.**  The first
+shipping cut of this filter appended its WHERE string
+without outer parens around the `IS NULL OR < INTERVAL`
+pair.  When the operator's Search Criteria already used
+`addOr()` (typical case: "Genre is X or Y or Z"), SQL
+operator precedence (AND > OR) re-parsed the assembled
+WHERE as
+
+```sql
+... (... OR last_genre AND lptime IS NULL) OR (lptime < INTERVAL ...)
+```
+
+— letting every track with `lptime` older than the window
+slip back in regardless of genre.  Pool count
+*grew* instead of shrank when the filter was toggled on.
+Fix: wrap the OR-expression in explicit parens so it
+remains a single conjunctive group.  The two existing
+pool-restriction toggles (`only_unplayed`,
+`only_with_expiry`) are single-atom predicates so they
+were not affected by the same trap — but the lesson for
+any future raw-SQL `->where()` filter is: **always wrap
+multi-clause expressions in explicit parens** because
+Propel does not group them for you.
 
 **Compositional behaviour.**  The filter is a single
 additional `->where()` call on the Propel query, so it

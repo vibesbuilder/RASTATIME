@@ -744,14 +744,19 @@ function setupUI() {
       $(".smart-block-advanced").toggle();
     });
 
-  // RASTATIME 2026-05-21 — Exclude-played-lately toggle wiring.
-  // The hours-input wrapper is hidden whenever the master checkbox
-  // is off so the row reads as a single "[x] Exclude tracks played
-  // lately" until the operator opts in.  When the operator toggles
-  // the master on we also auto-fill 24 h if the input was empty,
-  // so the active state is never visually empty (matches operator
+  // RASTATIME 2026-05-22 — Exclude-played-lately toggle wiring.
+  // The second dl-row holding the hours-input is hidden whenever
+  // the master checkbox is off (the two rows mirror the podcast
+  // Auto-Expiry layout — master row on top, hours row below,
+  // revealed by this toggle).  When the operator toggles the
+  // master on we also auto-fill 24 h if the input was empty, so
+  // the active state is never visually empty (matches operator
   // decision (ii) 2026-05-21 — "checkbox on + value empty" is
   // rejected by validation, this just shortcuts the common path).
+  // The wrap selector targets the second <dl id="..."> element;
+  // initial visibility is already set server-side from the
+  // persisted checkbox value so this just keeps it in sync on
+  // runtime toggles.
   var $excludeChk = $("#sp_exclude_played_lately");
   var $excludeWrap = $("#sp_exclude_played_lately_hours_wrap");
   var $excludeHours = $("#sp_exclude_played_lately_hours");

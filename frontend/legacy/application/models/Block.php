@@ -1857,6 +1857,18 @@ SQL;
         // the pool of fresh / new tracks, which is the opposite of
         // what an operator picks this filter for.
         //
+        // CRITICAL: outer parentheses around the OR-expression.
+        // Propel concatenates ->where() raw strings with " AND " into
+        // the assembled WHERE clause without wrapping them in their
+        // own group.  Without explicit parens around the OR pair, the
+        // resulting SQL is mis-parsed by SQL operator precedence (AND
+        // binds tighter than OR) when the operator's Search Criteria
+        // already used addOr() — typical case "genre is X or Y or Z".
+        // The bug surfaces as the pool count GROWING when the filter
+        // is toggled on (tracks that flunk the genre filter but pass
+        // the < INTERVAL branch slip back in via the broken OR
+        // grouping).  Bug reported + fixed 2026-05-22.
+        //
         // INTERVAL '%d hours' uses a PostgreSQL-side string-formatted
         // integer; the value is already validated to [1, 8760] in
         // saveSmartBlockCriteria + the form validator, so there is no
@@ -1868,8 +1880,8 @@ SQL;
             $excludeHours = (int) ($storedCrit['exclude_played_lately_hours']['value'] ?? 24);
             $excludeHours = max(1, min(8760, $excludeHours));
             $qry->where(
-                "cc_files.lptime IS NULL OR cc_files.lptime < NOW() - INTERVAL '"
-                . $excludeHours . " hours'"
+                "(cc_files.lptime IS NULL OR cc_files.lptime < NOW() - INTERVAL '"
+                . $excludeHours . " hours')"
             );
         }
 
