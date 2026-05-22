@@ -31,7 +31,7 @@ un sitio externo.
 | **On Air Today** | `/embed/on-air-today` | Widget de cuadrícula diaria. Banda de cabecera + programa actual + próximos del día, cada línea "HH:MM – HH:MM   Nombre (enlace)". |
 | **Weekly Schedule** | `/embed/weekly-program` | Widget de pestañas de siete días. Cabecera con ◀ / ▶ navegación semanal + etiqueta de rango de fechas; pestañas de día; lista de filas por pestaña con HH:MM – HH:MM + nombre del programa (enlace). Imagen de fondo opcional vía `?bg=URL`. |
 | **Multi-View Schedule** | `/embed/multi-view-schedule` | Widget calendario basado en FullCalendar 6 (alojado localmente). Vistas Day / 2-Day / Week conmutables vía botones in-widget o `?view=`. Slots de programa coloreados desde `cc_show.background_color`. Clic → modal con descripción + botón URL. Auto-scroll a la línea now. |
-| **Track History** | `/embed/track-history` | Registro de reproducción de pistas (últimos 7 días). Date-picker HTML5 + botón Today + dropdown pagesize (10/20/50/100). Filas "HH:MM Artista - Título"; clic → modal con contexto de programa + enlace URL. Botón Load-more con tope duro a 1000 filas. |
+| **Track History** | `/embed/track-history` | Registro de reproducción de pistas (últimos 7 días). Date-picker HTML5 + time-picker + botón Now + dropdown pagesize (10/20/50/100). Filas "HH:MM - HH:MM Artista - Título"; clic → modal con contexto de programa + enlace URL. Botón Load-more con tope duro a 1000 filas. |
 | **Audio Player** | `/embed/player` | (Existente) Reproductor de audio HTML5 integrado para el stream público. |
 
 Más widgets están planificados (vea [BACKLOG.md](../../../BACKLOG.md)).

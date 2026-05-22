@@ -32,7 +32,7 @@ les intégrer sur un site externe.
 | **On Air Today** | `/embed/on-air-today` | Widget grille-du-jour. Bande d'en-tête + émission actuelle + prochaines du jour, chaque ligne "HH:MM – HH:MM   Nom (lien)". |
 | **Weekly Schedule** | `/embed/weekly-program` | Widget à onglets sur sept jours. En-tête avec ◀ / ▶ navigation hebdomadaire + libellé de plage de dates ; onglets de jour ; liste de lignes par onglet avec HH:MM – HH:MM + nom d'émission (lien). Image de fond optionnelle via `?bg=URL`. |
 | **Multi-View Schedule** | `/embed/multi-view-schedule` | Widget calendrier basé sur FullCalendar 6 (hébergé localement). Vues Day / 2-Day / Week commutables via boutons in-widget ou `?view=`. Créneaux d'émission colorés depuis `cc_show.background_color`. Clic → modal avec description + bouton URL. Auto-scroll vers la ligne now. |
-| **Track History** | `/embed/track-history` | Journal de lecture des pistes (7 derniers jours). Date-picker HTML5 + bouton Today + dropdown pagesize (10/20/50/100). Lignes "HH:MM Artiste - Titre"; clic → modal avec contexte d'émission + lien URL. Bouton Load-more avec cap dur à 1000 lignes. |
+| **Track History** | `/embed/track-history` | Journal de lecture des pistes (7 derniers jours). Date-picker HTML5 + time-picker + bouton Now + dropdown pagesize (10/20/50/100). Lignes "HH:MM - HH:MM Artiste - Titre"; clic → modal avec contexte d'émission + lien URL. Bouton Load-more avec cap dur à 1000 lignes. |
 | **Audio Player** | `/embed/player` | (Existant) Lecteur audio HTML5 intégré pour le stream public. |
 
 D'autres widgets sont prévus (voir [BACKLOG.md](../../../BACKLOG.md)).

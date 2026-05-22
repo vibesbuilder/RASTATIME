@@ -31,7 +31,7 @@ Sie sie auf einer externen Seite einbetten.
 | **On Air Today** | `/embed/on-air-today` | Tages-Grid-Widget. Header-Band + heutige laufende + kommende Sendungen, jede Zeile "HH:MM – HH:MM   Sendungsname (Link)". |
 | **Weekly Schedule** | `/embed/weekly-program` | Sieben-Tage-Tab-Widget. Header mit ◀ / ▶ Wochen-Navigation + Datums-Range-Label; Tagestabs; Zeilenliste pro Tab mit HH:MM – HH:MM + Sendungsname (Link). Optionales Hintergrundbild via `?bg=URL`. |
 | **Multi-View Schedule** | `/embed/multi-view-schedule` | Kalender-Widget basierend auf FullCalendar 6 (lokal gehostet). Operator-umschaltbare Day / 2-Day / Week Views via In-Widget-Buttons oder `?view=`. Show-Slots eingefärbt aus `cc_show.background_color`. Klick → Modal mit Sendungs-Beschreibung + URL-Button. Auto-Scroll zur Now-Linie. |
-| **Track History** | `/embed/track-history` | Tracker-History-Log (letzte 7 Tage). HTML5 Date-Picker + Today-Button + Pagesize-Dropdown (10/20/50/100). Zeilen "HH:MM Künstler - Titel"; Klick → Modal mit Show-Kontext + URL-Link. Load-More-Button, hart-gecappt bei 1000 Zeilen. |
+| **Track History** | `/embed/track-history` | Tracker-History-Log (letzte 7 Tage). HTML5 Date-Picker + Time-Picker + Now-Button + Pagesize-Dropdown (10/20/50/100). Zeilen "HH:MM - HH:MM Künstler - Titel"; Klick → Modal mit Show-Kontext + URL-Link. Load-More-Button, hart-gecappt bei 1000 Zeilen. |
 | **Audio Player** | `/embed/player` | (Bestehend) Eingebetteter HTML5-Audio-Player für den öffentlichen Stream. |
 
 Weitere Widgets sind geplant (siehe [BACKLOG.md](../../../BACKLOG.md)).

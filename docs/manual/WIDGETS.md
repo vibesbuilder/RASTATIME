@@ -30,7 +30,7 @@ them on an external site.
 | **On Air Today** | `/embed/on-air-today` | Day-grid widget. Header band + today's current + upcoming shows, each row "HH:MM – HH:MM   Show name (link)". |
 | **Weekly Schedule** | `/embed/weekly-program` | Seven-day tab widget. Header with ◀ / ▶ week-navigation + date-range label; day tabs; per-tab row list with HH:MM – HH:MM + show name (link). Optional background-image via `?bg=URL`. |
 | **Multi-View Schedule** | `/embed/multi-view-schedule` | Calendar-style widget powered by FullCalendar 6 (locally hosted). Operator-switchable Day / 2-Day / Week views via in-widget buttons or `?view=`. Show slots coloured from `cc_show.background_color`. Click → modal with show description + URL button. Auto-scrolls to the now-line. |
-| **Track History** | `/embed/track-history` | Recent-track playout log (last 7 days). HTML5 date-picker + Today button + pagesize dropdown (10/20/50/100). Rows show "HH:MM Artist - Title"; click → modal with show context + URL link. Load-more button capped at 1000 rows total. |
+| **Track History** | `/embed/track-history` | Recent-track playout log (last 7 days). HTML5 date-picker + time-picker + Now button + pagesize dropdown (10/20/50/100). Rows show "HH:MM - HH:MM Artist - Title"; click → modal with show context + URL link. Load-more button capped at 1000 rows total. |
 | **Audio Player** | `/embed/player` | (Existing) Inline HTML5 audio player for the public stream. |
 
 More widgets are planned (see [BACKLOG.md](../../BACKLOG.md)).
@@ -529,7 +529,8 @@ plus header + load-more footer):
 
 - **Header**: HTML5 date-picker (capped to last 7 days),
   HTML5 time-picker (upper-bound for which tracks to list),
-  Today shortcut button (snaps BOTH date and time to now),
+  Now shortcut button (snaps BOTH date and time to the
+  current wall-clock),
   and a page-size dropdown.  Changing any of them resets
   to page 1 and re-fetches.
 - **Rows**: `HH:MM - HH:MM Artist - Title` — start + end

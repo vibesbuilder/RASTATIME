@@ -1072,7 +1072,7 @@ html, body {
 /* ─────────────────────────────────────────────────────────────
  *  RASTATIME 2026-05-22 — Track History widget (Wave-3).
  *
- *  Wave-1-style header (date-picker + Today + pagesize select),
+ *  Wave-1-style header (date + time picker + Now + pagesize),
  *  list of tracks (HH:MM Artist - Title), Load-More button,
  *  modal with full metadata + show context.  Kantig + accent
  *  colour conventions match the Weekly-Schedule + Multi-View
@@ -1136,7 +1136,7 @@ html, body {
     flex: 0 0 auto;
 }
 
-.np-widget.np-track-history .np-th-today {
+.np-widget.np-track-history .np-th-now {
     background: transparent;
     border: 1px solid var(--np-fg-muted);
     color: var(--np-fg);
@@ -1150,7 +1150,7 @@ html, body {
     flex: 0 0 auto;
 }
 
-.np-widget.np-track-history .np-th-today:hover {
+.np-widget.np-track-history .np-th-now:hover {
     background: var(--np-accent-hover);
 }
 

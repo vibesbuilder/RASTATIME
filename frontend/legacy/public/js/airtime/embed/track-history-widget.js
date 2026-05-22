@@ -5,7 +5,8 @@
  *   1. On boot: fetch page 1 for today (or whatever ?date= says).
  *   2. Date-picker change → reset page to 1, re-fetch.
  *   3. Pagesize dropdown change → reset page to 1, re-fetch.
- *   4. Today button → snap date back to today, reset, re-fetch.
+ *   4. Now button → snap date + time to current wall clock,
+ *      reset, re-fetch.
  *   5. Load-more button → page++, append to existing list.
  *   6. Track-row click → open modal with full metadata.
  *
@@ -36,7 +37,7 @@
     var el = {
         dateInput:    document.querySelector('[data-np="date"]'),
         timeInput:    document.querySelector('[data-np="time"]'),
-        todayBtn:     document.querySelector('[data-np="today"]'),
+        nowBtn:       document.querySelector('[data-np="now"]'),
         pagesize:     document.querySelector('[data-np="pagesize"]'),
         list:         document.querySelector('[data-np="list"]'),
         loadmore:     document.querySelector('[data-np="loadmore"]'),
@@ -255,22 +256,24 @@
         });
     }
 
-    if (el.todayBtn) {
-        el.todayBtn.addEventListener('click', function () {
-            // Operator request 2026-05-22 v14: Today snaps BOTH
-            // date and time to now, so the visitor lands on the
-            // most-recently-played slice.
+    if (el.nowBtn) {
+        el.nowBtn.addEventListener('click', function () {
+            // Operator request 2026-05-22 v15: Now snaps BOTH
+            // date and time to the current wall clock, so the
+            // visitor lands on the most-recently-played slice.
+            // (Originally labelled "Today" in v14 — renamed to
+            // "Now" because the button does both date and time.)
             var now = new Date();
             var pad = function (n) { return n < 10 ? '0' + n : String(n); };
-            var todayDate = now.getFullYear()
+            var nowDate = now.getFullYear()
                 + '-' + pad(now.getMonth() + 1)
                 + '-' + pad(now.getDate());
-            var todayTime = pad(now.getHours()) + ':' + pad(now.getMinutes());
+            var nowTime = pad(now.getHours()) + ':' + pad(now.getMinutes());
 
-            if (el.dateInput) { el.dateInput.value = todayDate; }
-            if (el.timeInput) { el.timeInput.value = todayTime; }
-            currentDay  = todayDate;
-            currentTime = todayTime;
+            if (el.dateInput) { el.dateInput.value = nowDate; }
+            if (el.timeInput) { el.timeInput.value = nowTime; }
+            currentDay  = nowDate;
+            currentTime = nowTime;
             currentPage = 1;
             fetchPage(1, false);
         });

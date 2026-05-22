@@ -502,6 +502,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Track History: 'Today' button renamed to 'Now'**
+  (operator request 2026-05-22 v15).  Semantically more
+  accurate — the button snaps BOTH date and time to the
+  current wall-clock value (v14), so "Now" reads truer
+  than "Today" (which suggested only the date would
+  change).  Rename applied across the rendered button
+  label, the CSS class name (`np-th-today` → `np-th-now`),
+  the `data-np` attribute (`today` → `now`), the JS state
+  variable (`todayBtn` → `nowBtn`), the inline comments,
+  and the manual in all four languages.  No behavioural
+  change — pure label rename.  Asset hashes auto-bump.
+
 - **Track History v14 polish — 5 operator-requested items**
   (2026-05-22 v14):
 
