@@ -37,7 +37,7 @@
  *
  * Operator-confirmed design decisions (2026-05-21, Q1–Q7):
  *   Q1 — search only the next 1 h (same window AutoPlaylistManager uses)
- *   Q2 — single show per gap, max 12 h
+ *   Q2 — single show per gap, max 24 h (raised from 12 h on 2026-05-23)
  *   Q3 — first admin as owner
  *   Q4 — same default name for every auto-created show, no timestamp
  *   Q5 — fill-pass appends at the end of existing schedule
@@ -46,8 +46,13 @@
  */
 class Application_Service_AutoDjService
 {
-    /** Max show length for an auto-created show.  Operator Q2 = 12 h. */
-    private const MAX_SHOW_DURATION_SECS = 12 * 3600;
+    /** Max show length for an auto-created show.
+     *  Operator Q2 = 12 h originally, raised to 24 h on
+     *  2026-05-23 (operator request — some long-form live
+     *  events / overnight blocks legitimately need to fill
+     *  a full day before the next manually-scheduled show
+     *  kicks in). */
+    private const MAX_SHOW_DURATION_SECS = 24 * 3600;
 
     /** Minimum gap that triggers a gap-filling show.  Operator Q7 = 60 s. */
     private const MIN_GAP_SECS = 60;
@@ -179,8 +184,8 @@ class Application_Service_AutoDjService
      * even when it sits beyond the lookahead window.  The lookahead
      * is still used as the "only return a gap that *starts* before
      * here" filter so we never auto-create shows further than 1 h
-     * ahead.  The 12 h cap in `createGapFillingShow()` still
-     * applies when the gap itself is longer than 12 h.
+     * ahead.  The 24 h cap in `createGapFillingShow()` still
+     * applies when the gap itself is longer than 24 h.
      *
      * @return array{starts: DateTime, ends: DateTime, duration_secs: int}|null
      */
@@ -319,7 +324,7 @@ class Application_Service_AutoDjService
         if ($durationSecs < self::MIN_GAP_SECS) {
             return 0;
         }
-        // Apply the 12 h cap (operator Q2).
+        // Apply the 24 h cap (operator Q2, raised 2026-05-23).
         if ($durationSecs > self::MAX_SHOW_DURATION_SECS) {
             $durationSecs = self::MAX_SHOW_DURATION_SECS;
             $endsUtc = (clone $startsUtc)->add(

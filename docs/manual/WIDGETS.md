@@ -607,32 +607,54 @@ and on Load-more.  Output shape:
 Source: `cc_playout_history` LEFT JOIN `cc_files`
 (track_title, artist_name) LEFT JOIN
 `cc_show_instances` → `cc_show` for the show context.
-**Three kinds of rows** land in the table:
+**Five kinds of rows** land in the table:
 
 1. **Scheduled file plays** (`file_id IS NOT NULL`) —
    title / artist live on `cc_files` and the JOIN picks
    them up directly.
-2. **Webstream plays** (`file_id IS NULL`, metadata-only) —
-   written by `HistoryService::insertWebstreamMetadata()`
-   when Liquidsoap calls `/api/notify-webstream-data`.
-   The `artist` field carries the webstream's display
-   name (`cc_webstream.name`, e.g. "BBC News Live") and
-   the `title` carries whatever ICY-/Now-Playing metadata
-   the upstream stream server sent.
-3. **Line-Input sessions** (`file_id IS NULL`, metadata-
-   only) — written by `HistoryService::insertLineInLog()`
-   when the operator toggles a Master Source or Show
-   Source switch in the Dashboard.  The `title` carries
-   the configurable display label (default "Line Input",
-   editable under Settings → Widgets → Track History →
-   "Line-Input label") and the `artist` carries the
-   source identifier ("Master Source" for master_dj,
-   "Show Source" for live_dj) so a future UI pass could
-   differentiate the two.
+2. **Scheduled webstream items** (`file_id IS NULL`,
+   metadata-only) — written by
+   `HistoryService::insertPlayedItem()` when Liquidsoap
+   fires `notifyMediaItemStartPlayAction` for a
+   `cc_schedule` item with `stream_id`.  Writes a
+   synthetic "block" entry with `title = artist =
+   cc_webstream.name` so the slot is recorded even when
+   the stream server sends no ICY data (operator example:
+   "Event Calendar").
+3. **Webstream tracks** (`file_id IS NULL`, metadata-
+   only) — written by
+   `HistoryService::insertWebstreamMetadata()` when
+   Liquidsoap calls `/api/notify-webstream-data`.
+   Per-track granularity: when the upstream stream
+   forwards ICY-/Now-Playing metadata, each metadata
+   change produces one row.  The two webstream paths
+   coexist — operators see both the "block" entry for
+   the whole slot AND any per-track entries inside.
+4. **Live-Show sessions** (`file_id IS NULL`, metadata-
+   only) — written by
+   `HistoryService::ensureLiveShowLogged()` as a
+   side-effect on every `/api/live-info(-v2)` call.
+   Catches `cc_show_instances` rows with `time_filled =
+   '00:00:00'` (= operator created the show slot but
+   scheduled no items, so Liquidsoap auto-switches to
+   master_dj for the slot duration).  `artist = "Live
+   Show"` distinguishes this path from the manual
+   Dashboard-switch path below.  Idempotent — guarded
+   by an `instance_id + file_id IS NULL` lookup.
+5. **Manual Dashboard source switches** (`file_id IS
+   NULL`, metadata-only) — written by
+   `HistoryService::insertLineInLog()` when the
+   operator toggles a Master Source or Show Source
+   switch in the Dashboard.  `artist = "Master Source"`
+   for master_dj, `"Show Source"` for live_dj, so a
+   future UI pass could differentiate the two.
 
-For all three kinds the optional show binding (via
+For all five kinds the optional show binding (via
 `instance_id`) drives the "Played in the show:" caption
-in the modal.
+in the modal.  The display label (used as `track_title`
+for kinds 4 + 5) is operator-configurable under
+**Settings → Widgets → Track History → "Line-Input
+label"** (default `"Line Input"`).
 
 ### Settings page
 

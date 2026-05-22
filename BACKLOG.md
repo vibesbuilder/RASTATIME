@@ -118,6 +118,35 @@ Plan, aber Operator hat es verworfen):
   Operator-Workflow ist aber typischerweise via
   Dashboard, daher in der Praxis kaum relevant.
 
+**Folge-Iteration v18 (2026-05-23)** — die obige
+Grenze ist für den häufigsten Fall (Show ohne
+Scheduled Items, Liquidsoap auto-switcht auf
+master_dj) inzwischen geschlossen, ebenso die analoge
+Lücke für Webstream-als-Show-Inhalt:
+- **Webstream als Show-Inhalt** —
+  `HistoryService::insertPlayedItem()` schreibt jetzt
+  auch für `cc_schedule`-Items mit `stream_id` einen
+  synthetischen Block-Eintrag (vorher `early return`).
+- **Live-Show ohne Items** —
+  `HistoryService::ensureLiveShowLogged()` als
+  opportunistischer Side-Effect in
+  `ApiController::liveInfoAction(V2)` schreibt idem-
+  potent einen Eintrag mit `artist_name = "Live Show"`.
+- Übrig bleibt nur: ein DJ verbindet sich direkt zum
+  Icecast-Source-Endpoint, ohne dass ein Show-Slot
+  existiert UND ohne dass ein Operator den Dashboard-
+  Switch betätigt — sehr seltener Praxisfall.
+
+### ✅ AutoDj max-show-duration 12 h → 24 h (DONE 2026-05-23 v18)
+
+**Status:** DONE.
+Operator-Verdacht (2026-05-23) bestätigt: die ursprüngliche
+12 h-Obergrenze aus `AutoDjService::MAX_SHOW_DURATION_SECS`
+(Q2 vom 2026-05-21) war für lange Live-Events und Overnight-
+Blöcke zu knapp.  Cap auf 24 h gehoben, Kommentare in
+AutoDjService.php nachgezogen.  Kein Architektur-Eingriff,
+keine Migration nötig — nur ein Konstanten-Bump.
+
 ---
 
 ## 🛠️ Technical Debt / Refactor-Backlog

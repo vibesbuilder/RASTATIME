@@ -9,6 +9,61 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Live-Show + Webstream content in cc_playout_history**
+  (operator request 2026-05-23 v18).  Closes two gaps in
+  the v17 Line-Input logging:
+
+  1. **Webstream AS show content** — when an operator
+     drops a `cc_webstream` row into a show's schedule
+     (operator example: "Event Calendar" running
+     for the duration of a show slot), the schedule item
+     starting previously generated no history row at all
+     (`HistoryService::insertPlayedItem` had a "don't add
+     webstreams" early-return).  Now writes a synthetic
+     "block" row with `file_id = NULL` + `instance_id` +
+     starts/ends from `cc_schedule`, plus three metadata
+     rows: `track_title = artist_name = cc_webstream.name`
+     + `showname`.  De-duped on
+     `(instance_id, starts, artist_name)` so a Liquidsoap
+     restart that re-fires the notify call doesn't double-
+     insert.  Surfaces in both the Track History widget
+     and the internal Analytics Playout History dashboard.
+  2. **Live show with no scheduled items** — when an
+     operator creates a show slot but schedules nothing
+     in it (so `cc_show_instances.time_filled =
+     '00:00:00'`), Liquidsoap auto-switches to master_dj
+     for the slot duration.  This path bypasses the
+     Dashboard-source-switch hook from v17 entirely.  Now
+     covered by a new `HistoryService::
+     ensureLiveShowLogged()` opportunistic side-effect
+     called from `ApiController::liveInfoAction` and
+     `liveInfoV2Action` (both hot-path endpoints polled
+     by every now-playing widget).  Writes one row per
+     live-show instance with `file_id = NULL`,
+     `track_title = operator label`, `artist_name =
+     "Live Show"` (distinguishes from the manual-switch
+     "Master Source" / "Show Source" labels), guarded by
+     an idempotent `(instance_id + file_id IS NULL)` lookup
+     so polling traffic can't cause duplicates.  Failure
+     wrapped in try/catch + `Logging::warn` so a history-
+     write error never breaks the live-info response.
+
+  After v18 the Track History widget + Analytics Playout
+  History dashboard now show **five row kinds**:
+  scheduled file plays, scheduled webstream items (NEW),
+  per-track webstream ICY metadata, live-show sessions
+  (NEW), and manual Dashboard source switches.
+
+- **AutoDjService: max auto-show duration raised from
+  12 h to 24 h** (operator request 2026-05-23 v18).
+  Original 12 h cap (operator Q2 from 2026-05-21) was
+  too low for long-form live events and overnight blocks
+  that legitimately need to fill a full day before the
+  next manually-scheduled show kicks in.  Code change
+  is one constant + 3 comment-updates in
+  `AutoDjService.php`; the rest of the fill / cleanup
+  logic is unchanged.
+
 - **Line-Input session logging in cc_playout_history**
   (operator request 2026-05-22 v17).  Master Source +
   Show Source switches (= Line-In + remote-DJ) now write

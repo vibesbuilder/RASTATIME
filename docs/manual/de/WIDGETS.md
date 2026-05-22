@@ -515,20 +515,32 @@ Load-More-Footer reinpassen):
 Interner JSON-Endpoint unter `/Embed/track-history-data`.
 Quelle: `cc_playout_history` LEFT JOIN `cc_files` LEFT JOIN
 `cc_show_instances → cc_show` mit Fallback auf
-`cc_playout_history_metadata`.  Drei Row-Arten:
+`cc_playout_history_metadata`.  Fünf Row-Arten:
 
 1. **Scheduled File Plays** (`file_id IS NOT NULL`) —
    Title / Artist aus `cc_files`.
-2. **Webstream-Plays** (`file_id IS NULL`) — geschrieben
-   von `HistoryService::insertWebstreamMetadata()`.
-   Artist = Webstream-Name, Title = Live-ICY-Metadata.
-3. **Line-Input-Sessions** (`file_id IS NULL`) — neu in
-   2026-05-22 v17.  Geschrieben von `HistoryService::
-   insertLineInLog()` wenn Master Source oder Show
-   Source via Dashboard auf ON umschaltet.  Title =
-   operator-konfigurierbares Label (default "Line
-   Input"), Artist = "Master Source" / "Show Source"
-   je nach Quelle.
+2. **Scheduled Webstream-Items** (`file_id IS NULL`) —
+   geschrieben von `insertPlayedItem()` bei Schedule-Items
+   mit `stream_id`.  Synthetischer "Block"-Eintrag mit
+   `title = artist = cc_webstream.name` — auch wenn der
+   Stream-Server keine ICY-Metadata sendet.
+3. **Webstream-Tracks** (`file_id IS NULL`) — geschrieben
+   von `insertWebstreamMetadata()` bei eingehender
+   ICY-Metadata.  Per-Track-Granularität.
+4. **Live-Show-Sessions** (`file_id IS NULL`) — neu
+   2026-05-23.  Geschrieben von `ensureLiveShowLogged()`
+   als Side-Effect bei `/api/live-info(-v2)`.  Catched
+   Show-Instances mit `time_filled = '00:00:00'`
+   (Operator hat Slot ohne Items angelegt, Liquidsoap
+   schaltet automatisch auf master_dj).  Artist = "Live
+   Show".
+5. **Manual Dashboard Source Switches** (`file_id IS NULL`)
+   — geschrieben von `insertLineInLog()` bei Operator-
+   Toggle im Dashboard.  Artist = "Master Source" /
+   "Show Source".
+
+Label für Arten 4+5 konfigurierbar unter Settings →
+Widgets → Track History → "Line-Input label".
 
 Im Modal: über der Show-Zeile steht jetzt die Beschriftung
 **"Played in the show:"**.  Bei Webstream-Einträgen ohne

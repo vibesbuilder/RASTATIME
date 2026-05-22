@@ -674,6 +674,121 @@ class Application_Service_HistoryService
         return ucfirst((string) $sourcename);
     }
 
+    /**
+     * RASTATIME 2026-05-23 — opportunistic logger for Live-Show
+     * instances (a show with `time_filled = '00:00:00'`, meaning
+     * the operator created the slot but didn't schedule any
+     * items — Liquidsoap auto-switches to master_dj for the
+     * duration).
+     *
+     * Liquidsoap never fires `notifyMediaItemStartPlayAction`
+     * for these (no items to start), so the gestern v17 hook
+     * in DashboardController doesn't catch them either (no
+     * Dashboard click).  Solution: every time the now-playing
+     * lookup runs (liveInfoAction / liveInfoV2Action), we
+     * opportunistically write a one-time history row for the
+     * currently-airing Live-Show.  Idempotent — guards against
+     * double-write via an instance_id + file_id IS NULL lookup.
+     *
+     * Side-effect on a GET request: harmless because we do
+     * one cheap SELECT first, and only INSERT when there's
+     * actually a missing row.  Worst-case race-condition is
+     * two parallel requests writing duplicate rows — operator-
+     * tolerable, no live-betrieb impact.
+     */
+    public function ensureLiveShowLogged()
+    {
+        try {
+            $currentShows = Application_Model_Show::getCurrentShow();
+            if (empty($currentShows)) {
+                return;
+            }
+            $current = $currentShows[0];
+            if (empty($current['instance_id'])) {
+                return;
+            }
+            $instanceId = (int) $current['instance_id'];
+
+            // Live-Show detection: a show with no scheduled
+            // items has time_filled = '00:00:00'.  Cheap lookup
+            // via the existing query result — start/end columns
+            // are in $current already; instance lookup gets us
+            // the time_filled column.
+            $instance = CcShowInstancesQuery::create()
+                ->findPk($instanceId, $this->con);
+            if (!$instance) {
+                return;
+            }
+            $timeFilled = $instance->getDbTimeFilled();
+            if ($timeFilled !== '00:00:00' && $timeFilled !== null) {
+                // Has scheduled items — regular show, not a
+                // Live-Show.  The file/webstream notifications
+                // already log it via insertPlayedItem().
+                return;
+            }
+
+            // Idempotency check: already logged for this
+            // instance?
+            $sql = "SELECT id
+                    FROM cc_playout_history
+                    WHERE instance_id = :iid
+                      AND file_id IS NULL
+                    LIMIT 1";
+            $existing = Application_Common_Database::prepareAndExecute(
+                $sql,
+                [':iid' => $instanceId],
+                'all'
+            );
+            if (!empty($existing)) {
+                return;
+            }
+
+            // Write the entry.  starts = the show's scheduled
+            // start (not "now" — gives the operator a clean
+            // timeline aligned to the calendar slot); ends =
+            // the show's scheduled end (deterministic close
+            // without needing a later end-of-show hook).
+            $startsUtc = new DateTime(
+                $current['start_timestamp'],
+                new DateTimeZone('UTC')
+            );
+            $endsUtc = new DateTime(
+                $current['end_timestamp'],
+                new DateTimeZone('UTC')
+            );
+
+            $label   = Application_Model_Preference::GetWidgetLineInputLabel();
+            $showNm  = (string) ($current['name'] ?? '');
+
+            $history = new CcPlayoutHistory();
+            $history->setDbStarts($startsUtc);
+            $history->setDbEnds($endsUtc);
+            $history->setDbInstanceId($instanceId);
+
+            // artist_name = "Live Show" (distinct from the
+            // Master/Show-Source labels used by the manual
+            // Dashboard hook) so the two paths can be told
+            // apart by a future UI pass.
+            $metadata = [
+                MDATA_KEY_TITLE   => $label,
+                MDATA_KEY_CREATOR => 'Live Show',
+                'showname'        => $showNm,
+            ];
+
+            foreach ($metadata as $key => $val) {
+                $meta = new CcPlayoutHistoryMetaData();
+                $meta->setDbKey($key);
+                $meta->setDbValue($val);
+                $history->addCcPlayoutHistoryMetaData($meta);
+            }
+
+            $history->save($this->con);
+        } catch (Exception $e) {
+            // Side-effect failure must never break the caller.
+            Logging::warn('ensureLiveShowLogged failed: ' . $e->getMessage());
+        }
+    }
+
     public function insertPlayedItem($schedId)
     {
         $this->con->beginTransaction();
@@ -688,17 +803,18 @@ class Application_Service_HistoryService
             $showInstance = $item->getCcShowInstances($this->con);
             $show = $showInstance->getCcShow($this->con);
 
-            $fileId = $item->getDbFileId();
+            $fileId   = $item->getDbFileId();
+            $streamId = $item->getDbStreamId();
 
-            // don't add webstreams
+            $instanceEnd = $showInstance->getDbEnds(null);
+            $itemEnd     = $item->getDbEnds(null);
+            $recordStart = $item->getDbStarts(null);
+            $recordEnd   = ($instanceEnd < $itemEnd) ? $instanceEnd : $itemEnd;
+
             if (isset($fileId)) {
+                // Scheduled file play — original path.
                 $metadata = [];
                 $metadata['showname'] = $show->getDbName();
-
-                $instanceEnd = $showInstance->getDbEnds(null);
-                $itemEnd = $item->getDbEnds(null);
-                $recordStart = $item->getDbStarts(null);
-                $recordEnd = ($instanceEnd < $itemEnd) ? $instanceEnd : $itemEnd;
 
                 // first check if this is a duplicate
                 // (caused by restarting liquidsoap)
@@ -726,6 +842,84 @@ class Application_Service_HistoryService
 
                     $history->save($this->con);
                     $this->con->commit();
+                }
+            } elseif (isset($streamId)) {
+                // RASTATIME 2026-05-23 — scheduled webstream item.
+                // The upstream "// don't add webstreams" comment
+                // was correct in the original codebase because
+                // `insertWebstreamMetadata()` writes per-track
+                // entries when Liquidsoap forwards ICY metadata.
+                // But many webstreams don't send ICY at all
+                // (operator example: "Event Calendar"),
+                // so the scheduled slot would never appear in
+                // history.  We now write a synthetic "block"
+                // entry on item-start so the slot is at least
+                // recorded.  When real ICY metadata arrives
+                // afterwards, insertWebstreamMetadata() adds
+                // additional per-track entries on top — both
+                // levels of detail coexist in the history.
+                $webstream = $item->getCcWebstream($this->con);
+                if ($webstream) {
+                    // De-dupe: only write the synthetic block
+                    // once per scheduled slot (matches the
+                    // file-play de-dupe pattern above; protects
+                    // against liquidsoap restarts firing the
+                    // notification twice).
+                    $sql = "SELECT ph.id
+                            FROM cc_playout_history ph
+                            JOIN cc_playout_history_metadata md
+                              ON md.history_id = ph.id
+                            WHERE ph.file_id    IS NULL
+                              AND ph.instance_id = :iid
+                              AND ph.starts      = :starts
+                              AND md.key         = :key
+                              AND md.value       = :val
+                            LIMIT 1";
+                    $existing = Application_Common_Database::prepareAndExecute(
+                        $sql,
+                        [
+                            ':iid'    => $item->getDbInstanceId(),
+                            ':starts' => $recordStart,
+                            ':key'    => MDATA_KEY_CREATOR,
+                            ':val'    => $webstream->getDbName(),
+                        ],
+                        'all'
+                    );
+
+                    if (empty($existing)) {
+                        $history = new CcPlayoutHistory();
+                        // file_id stays NULL — same shape as
+                        // insertWebstreamMetadata writes.
+                        $history->setDbStarts($recordStart);
+                        $history->setDbEnds($recordEnd);
+                        $history->setDbInstanceId($item->getDbInstanceId());
+
+                        $metadata = [
+                            // title = webstream display name —
+                            // operator-readable label so a
+                            // webstream without ICY metadata
+                            // (e.g. silent event-info stream)
+                            // still shows something meaningful.
+                            MDATA_KEY_TITLE   => $webstream->getDbName(),
+                            // artist = webstream name too, so
+                            // both columns carry the identifier
+                            // even if only one is rendered by
+                            // a particular reader.  Matches the
+                            // insertWebstreamMetadata convention.
+                            MDATA_KEY_CREATOR => $webstream->getDbName(),
+                            'showname'        => $show->getDbName(),
+                        ];
+
+                        foreach ($metadata as $key => $val) {
+                            $meta = new CcPlayoutHistoryMetaData();
+                            $meta->setDbKey($key);
+                            $meta->setDbValue($val);
+                            $history->addCcPlayoutHistoryMetaData($meta);
+                        }
+
+                        $history->save($this->con);
+                        $this->con->commit();
+                    }
                 }
             }
         } catch (Exception $e) {

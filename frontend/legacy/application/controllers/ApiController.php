@@ -289,6 +289,20 @@ class ApiController extends Zend_Controller_Action
             $this->view->layout()->disableLayout();
             $this->_helper->viewRenderer->setNoRender(true);
 
+            // RASTATIME 2026-05-23 — opportunistic Live-Show logger.
+            // This endpoint runs every time a now-playing widget
+            // polls (every few seconds across all visitors), so it
+            // catches Live-Show instances within seconds of their
+            // start without needing a separate cron.  Idempotent —
+            // double-write guarded inside the service.
+            try {
+                $hs = new Application_Service_HistoryService();
+                $hs->ensureLiveShowLogged();
+            } catch (Exception $e) {
+                Logging::warn('liveInfo ensureLiveShowLogged failed: '
+                    . $e->getMessage());
+            }
+
             $request = $this->getRequest();
 
             $utcTimeNow = gmdate(DEFAULT_TIMESTAMP_FORMAT);
@@ -417,6 +431,16 @@ class ApiController extends Zend_Controller_Action
             // disable the view and the layout
             $this->view->layout()->disableLayout();
             $this->_helper->viewRenderer->setNoRender(true);
+
+            // RASTATIME 2026-05-23 — opportunistic Live-Show logger
+            // (see liveInfoAction above for the rationale).
+            try {
+                $hs = new Application_Service_HistoryService();
+                $hs->ensureLiveShowLogged();
+            } catch (Exception $e) {
+                Logging::warn('liveInfoV2 ensureLiveShowLogged failed: '
+                    . $e->getMessage());
+            }
 
             $request = $this->getRequest();
 

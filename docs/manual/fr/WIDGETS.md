@@ -487,19 +487,29 @@ La page **Paramètres → Widgets → Track History** héberge en plus la case *
 
 Source : `cc_playout_history` LEFT JOIN `cc_files` LEFT JOIN
 `cc_show_instances` → `cc_show` avec fallback sur
-`cc_playout_history_metadata`.  Trois types de lignes :
+`cc_playout_history_metadata`.  Cinq types de lignes :
 
 1. **Lectures de fichier programmées** (`file_id IS NOT
    NULL`) — titre / artiste depuis `cc_files`.
-2. **Diffusions webstream** (`file_id IS NULL`) — écrites
-   par `HistoryService::insertWebstreamMetadata()`.
-   Artist = nom du webstream, Title = métadonnée live.
-3. **Sessions Line-Input** (`file_id IS NULL`) — nouveau
-   en 2026-05-22 v17.  Écrites par `HistoryService::
-   insertLineInLog()` quand Master Source ou Show
-   Source passe à ON via Dashboard.  Title = libellé
-   configurable (défaut "Line Input"), Artist =
-   "Master Source" / "Show Source" selon la source.
+2. **Items webstream programmés** (`file_id IS NULL`) —
+   écrites par `insertPlayedItem()` pour les items avec
+   `stream_id`.  Bloc synthétique avec
+   `title = artist = cc_webstream.name`.
+3. **Pistes webstream** (`file_id IS NULL`) — écrites
+   par `insertWebstreamMetadata()` à chaque métadonnée
+   ICY entrante.
+4. **Sessions Live-Show** (`file_id IS NULL`) — nouveau
+   2026-05-23.  Écrites par `ensureLiveShowLogged()` en
+   side-effect sur `/api/live-info(-v2)`.  Détecte les
+   show-instances avec `time_filled = '00:00:00'`.
+   Artist = "Live Show".
+5. **Bascules manuelles Dashboard** (`file_id IS NULL`)
+   — écrites par `insertLineInLog()` lors d'un toggle
+   Master/Show Source.  Artist = "Master Source" /
+   "Show Source".
+
+Libellé pour types 4+5 configurable sous Paramètres →
+Widgets → Track History → "Line-Input label".
 
 Dans le modal : la légende **"Played in the show:"**
 précède la ligne du nom d'émission.  Pour les entrées
