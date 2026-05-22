@@ -98,15 +98,17 @@
     }
 
     /*
-     * Format a start–end pair as "HH:MM - HH:MM".  Degrades
-     * gracefully when either end is missing.
+     * Format a start–end pair as "H:MM - H:MM".  Hour drops its
+     * leading zero per operator convention 2026-05-22 v10 (9:00
+     * not 09:00); minute stays 2-digit.  Degrades gracefully
+     * when either end is missing.
      */
     function fmtTimeRange(startIso, endIso) {
         function fmt(iso) {
             if (!iso) { return ''; }
             var d = new Date(iso);
             if (isNaN(d.getTime())) { return iso; }
-            return pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+            return d.getHours() + ':' + pad2(d.getMinutes());
         }
         var a = fmt(startIso);
         var b = fmt(endIso);

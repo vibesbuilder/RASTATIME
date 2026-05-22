@@ -51,12 +51,17 @@
      * Returns `undefined` for "auto" so FullCalendar falls back
      * to the locale default (avoids overriding e.g. Arabic /
      * RTL locale formats that have their own time conventions).
+     *
+     * Operator request 2026-05-22 v10: `hour: 'numeric'` rather
+     * than `'2-digit'` so single-digit hours render without the
+     * leading zero (9:00 instead of 09:00).  Minutes stay
+     * 2-digit so the colon-suffix is always there (9:05, not 9:5).
      */
     function clockFormat(includeMinutes) {
         if (clockMode === 'auto') { return undefined; }
         var hour12 = (clockMode === '12');
         var fmt = {
-            hour: '2-digit',
+            hour: 'numeric',
             hour12: hour12,
             meridiem: hour12 ? 'short' : false
         };
@@ -124,7 +129,12 @@
      */
     function fmtTimeRange(start, end) {
         try {
-            var opts = { hour: '2-digit', minute: '2-digit' };
+            // `hour: 'numeric'` drops the leading zero on single-
+            // digit hours (operator request 2026-05-22 v10);
+            // minute stays 2-digit so the colon-suffix is always
+            // there.  hour12 follows clockMode for consistency
+            // with the calendar grid + event chips.
+            var opts = { hour: 'numeric', minute: '2-digit' };
             if (clockMode === '12') {
                 opts.hour12 = true;
             } else if (clockMode === '24') {
@@ -134,8 +144,8 @@
             return start.toLocaleTimeString(undefined, opts)
                 + ' – ' + end.toLocaleTimeString(undefined, opts);
         } catch (e) {
-            return pad2(start.getHours()) + ':' + pad2(start.getMinutes())
-                + ' – ' + pad2(end.getHours()) + ':' + pad2(end.getMinutes());
+            return start.getHours() + ':' + pad2(start.getMinutes())
+                + ' – ' + end.getHours() + ':' + pad2(end.getMinutes());
         }
     }
 
@@ -282,6 +292,13 @@
         slotMaxTime: '24:00',
         slotDuration: '00:15:00',
         slotLabelInterval: '01:00',
+        // Operator request 2026-05-22 v10: don't visually
+        // overlap events.  FullCalendar's default (true) packs
+        // back-to-back events into half-width columns when their
+        // boundaries kiss; setting false renders each event in
+        // the full column width unless they genuinely overlap
+        // in time (rare in a radio schedule).
+        slotEventOverlap: false,
         // Operator-controlled clock format (?clock=12|24|auto).
         // `undefined` lets FullCalendar pick the locale default
         // (e.g. "5 PM" for en, "17:00" for de); explicit object

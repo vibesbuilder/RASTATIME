@@ -78,8 +78,11 @@
     }
 
     /*
-     * Format a single ISO timestamp as "HH:MM" in the user's locale.
-     * Falls back to the raw string if the input cannot be parsed.
+     * Format a single ISO timestamp as "H:MM" — single-digit
+     * hours render without the leading zero per operator
+     * convention 2026-05-22 v10 (9:00, not 09:00); minutes
+     * stay 2-digit so the colon-suffix is always present.
+     * Falls back to the raw string if the input can't be parsed.
      */
     function fmtTimeOfDay(iso) {
         if (!iso) {
@@ -90,7 +93,7 @@
             return iso;
         }
         var pad = function (n) { return n < 10 ? '0' + n : String(n); };
-        return pad(d.getHours()) + ':' + pad(d.getMinutes());
+        return d.getHours() + ':' + pad(d.getMinutes());
     }
 
     /*

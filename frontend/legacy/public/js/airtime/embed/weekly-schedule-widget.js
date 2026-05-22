@@ -66,11 +66,14 @@
     function pad2(n) { return n < 10 ? '0' + n : String(n); }
 
     /*
-     * Translate a JS Date into the visitor's locale "HH:MM" string.
-     * Used to render the per-show start / end columns.
+     * Translate a JS Date into the visitor's locale "H:MM" string.
+     * Hour drops its leading zero per operator convention
+     * 2026-05-22 v10 (9:00 not 09:00); minute stays 2-digit so
+     * the colon-suffix is always there.  Used to render the
+     * per-show start / end columns.
      */
     function fmtTimeOfDay(d) {
-        return pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+        return d.getHours() + ':' + pad2(d.getMinutes());
     }
 
     /*

@@ -441,6 +441,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **All widgets: time format polish trio** (operator request
+  2026-05-22 v10).  Three independent UX items:
+
+  1. **Multi-View Schedule: event padding** — `.fc-event`
+     vertical padding dropped from `2px 4px` to `0 4px` so
+     sub-15-min shows have room for the time + name on one
+     line (the standard layout for short events) without
+     the text feeling crushed.
+
+  2. **Multi-View Schedule: `slotEventOverlap: false`** —
+     FullCalendar's default packs back-to-back events into
+     half-width columns when their boundaries kiss
+     (e.g. show A ends 12:07, show B starts 12:07).
+     Setting `slotEventOverlap: false` renders each event
+     in the full column width unless they genuinely
+     overlap in time (which is rare in a radio schedule).
+     The operator reported the indented layout was
+     confusing — full-width events read cleaner.
+
+  3. **All five widgets: hour format without leading zero**
+     — `9:00` instead of `09:00`.  Minute stays 2-digit
+     (`9:05`, not `9:5`).  Applied to:
+     * `now-playing-widget.js` (`fmtTimeOfDay`)
+     * `shows-list-widget.js` (`fmtTimeRange.fmt`)
+     * `on-air-today-widget.js` (`fmtTimeRange.fmt`)
+     * `weekly-schedule-widget.js` (`fmtTimeOfDay`)
+     * `multi-view-schedule-widget.js` (`clockFormat`
+       helper drives slotLabelFormat + eventTimeFormat,
+       plus `fmtTimeRange` for the modal) — uses
+       `hour: 'numeric'` instead of `'2-digit'` in the
+       FullCalendar / Intl format objects.
+
+  Files: `public/css/embed/now-playing-widget.css` (event
+  padding); `public/js/airtime/embed/multi-view-schedule-
+  widget.js` (slotEventOverlap, clockFormat,
+  fmtTimeRange); `public/js/airtime/embed/now-playing-
+  widget.js`, `shows-list-widget.js`,
+  `on-air-today-widget.js`, `weekly-schedule-widget.js`
+  (per-widget time-format helpers).  Asset hashes auto-
+  bump via Assets::url() mtime versioning so visitors
+  pick up the new layout on the next iframe reload.
+
 - **Multi-View Schedule: infinite-loop fix + ?clock parameter**
   (operator bug report + UX request 2026-05-22 v9).
 

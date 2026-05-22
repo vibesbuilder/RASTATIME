@@ -904,7 +904,11 @@ html, body {
 
 .np-widget.np-multi-view-schedule .fc-event {
     border-radius: 0;          /* kantig */
-    padding: 2px 4px;
+    /*  Operator request 2026-05-22 v10: zero vertical padding so
+        even very short events (sub-15-min) have room for the
+        time + name in one line.  Horizontal padding keeps the
+        text from kissing the left/right borders.  */
+    padding: 0 4px;
     cursor: pointer;
     border-width: 1px;
     border-style: solid;
