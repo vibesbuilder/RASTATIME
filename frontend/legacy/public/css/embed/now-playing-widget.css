@@ -925,20 +925,19 @@ html, body {
     back-to-back events (where end-time == next start-time) into
     half-width columns even with slotEventOverlap: false because
     it counts touch-boundaries as "shared columns".  In a radio
-    schedule we never have truly overlapping shows, so the
-    safest fix is a CSS-side override that pins every event
-    harness to inset:0 + 100% width.  !important is necessary
-    because FullCalendar writes its own inline style on every
-    render — pure cascade rules lose the specificity battle.  */
-.np-widget.np-multi-view-schedule .fc-timegrid-col-events {
-    margin: 0 !important;
-}
+    schedule we never have truly overlapping shows, so a CSS
+    override that pins every event harness to inset:0 is safe.
+    !important is required because FullCalendar writes its own
+    inline `left: x%; right: y%;` style on every render.
 
+    v12 cleanup: drop `width: 100%` and `margin-right: 0` from
+    the override — both broke FullCalendar's internal layout
+    and made the events disappear entirely.  inset-inline-{
+    start,end} alone is enough to expand each event to the
+    full column width.  */
 .np-widget.np-multi-view-schedule .fc-timegrid-event-harness {
     inset-inline-start: 0 !important;
     inset-inline-end: 0 !important;
-    margin-right: 0 !important;
-    width: 100% !important;
 }
 
 .np-widget.np-multi-view-schedule .fc-event-title,
