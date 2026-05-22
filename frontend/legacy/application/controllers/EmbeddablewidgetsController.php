@@ -94,6 +94,82 @@ class EmbeddableWidgetsController extends Zend_Controller_Action
         $this->view->publicUrl = Config::getPublicUrl();
     }
 
+    /**
+     * RASTATIME 2026-05-22 — Settings page for the Next-Shows /
+     * Latest-Shows public embed widgets.
+     *
+     * Mirrors currentShowTrackAction structurally (preview + labels +
+     * embed-code) but with one extra dimension: the operator picks a
+     * single existing show from a dropdown and the page rebuilds the
+     * preview iframes + embed-code with that show's id baked into
+     * the URL.
+     *
+     * Persisted settings are just the two empty-state labels; the
+     * show-selection is a per-session UI helper that the operator
+     * copies-and-pastes into their own homepage HTML.
+     */
+    public function nextLatestShowsAction()
+    {
+        Zend_Layout::getMvcInstance()->assign('parent_page', 'Widgets');
+
+        $request = $this->getRequest();
+        $form = new Application_Form_WidgetNextLatestShows();
+
+        // Populate the show dropdown from cc_show.  Sorted by name
+        // so the operator can scan quickly; an empty entry on top
+        // covers the "no show picked yet" state so the preview
+        // shows the empty-state label rather than an arbitrary
+        // show.
+        $shows = $this->_fetchAllShowsForPicker();
+        $options = ['' => _('— pick a show —')];
+        foreach ($shows as $s) {
+            $options[(int) $s['id']] = $s['name'];
+        }
+        $form->getElement('preview_show_id')->setMultiOptions($options);
+
+        // POST: validate + persist labels only.  The show-picker is
+        // round-tripped in the same form but not persisted (it just
+        // re-renders the preview / embed-code for the picked show).
+        if ($request->isPost() && $form->isValid($request->getPost())) {
+            Application_Model_Preference::SetWidgetNoNextShows(
+                $form->getValue('widget_no_next_shows')
+            );
+            Application_Model_Preference::SetWidgetNoLatestShows(
+                $form->getValue('widget_no_latest_shows')
+            );
+            $this->view->saved = true;
+        } else {
+            $form->populate([
+                'widget_no_next_shows'   => Application_Model_Preference::GetWidgetNoNextShows(),
+                'widget_no_latest_shows' => Application_Model_Preference::GetWidgetNoLatestShows(),
+            ]);
+        }
+
+        $this->view->form = $form;
+        $this->view->publicUrl = Config::getPublicUrl();
+        $this->view->previewShowId = (int) $form->getValue('preview_show_id');
+    }
+
+    /**
+     * Fetch all shows (id + name) ordered alphabetically for the
+     * picker dropdown.  Kept light: just the two columns the
+     * dropdown needs.
+     */
+    private function _fetchAllShowsForPicker()
+    {
+        $sql = 'SELECT id, name FROM cc_show ORDER BY LOWER(name) ASC';
+        try {
+            $rows = Application_Common_Database::prepareAndExecute(
+                $sql,
+                [],
+                'all'
+            );
+        } catch (Exception $e) {
+            return [];
+        }
+        return $rows ?: [];
+    }
+
     // The Facebook widget is untested & unsupported, the widget has been removed from the navigation in navigation.php
     public function facebookAction()
     {

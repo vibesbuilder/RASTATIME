@@ -26,6 +26,8 @@ Sie sie auf einer externen Seite einbetten.
 |---|---|---|
 | **Now Playing — Show** | `/embed/now-playing-show` | Zwei-Zeilen-Text-Widget. Aktueller Sendungsname + verbleibende Dauer; nächster Sendungsname + Start-End-Zeiten. |
 | **Now Playing — Track** | `/embed/now-playing-track` | Zwei-Zeilen-Text-Widget. Aktueller Track "Künstler - Titel" + verbleibende Dauer; nächster Track + Start-End-Zeiten. |
+| **Next Shows** | `/embed/next-shows` | Listen-Widget. Sendungstitel + chronologische Liste der kommenden Instanzen einer wiederkehrenden Sendung. |
+| **Latest Shows** | `/embed/latest-shows` | Listen-Widget. Sendungstitel + umgekehrt-chronologische Liste der letzten Instanzen einer wiederkehrenden Sendung. |
 | **Weekly Program** | `/embed/weekly-program` | (Bestehend) Sieben-Tage-Kalenderraster der Stations-Programmübersicht. |
 | **Audio Player** | `/embed/player` | (Bestehend) Eingebetteter HTML5-Audio-Player für den öffentlichen Stream. |
 
@@ -60,7 +62,7 @@ Music Hour                                          10:00 - 11:30
 Der Countdown aktualisiert sich jede Sekunde clientseitig,
 sodass die Anzeige flüssig wirkt. Die zugrunde liegenden
 Daten werden alle 60 Sekunden aktualisiert (konfigurierbar
-— siehe §4).
+— siehe §6).
 
 ### URL-Parameter
 
@@ -114,7 +116,84 @@ Gleich wie das Show-Widget — siehe §2.
 
 ---
 
-## 4. Empty-State-Labels anpassen
+## 4. Next-Shows / Latest-Shows Widgets
+
+Schwester-Widgets, die mehrere Instanzen **einer einzelnen
+wiederkehrenden Sendung** auflisten anstatt des "Was läuft gerade"-
+Rahmens der beiden Now-Playing-Widgets.  Nützlich für eine
+Sendungs-Detailseite auf Ihrer Stations-Website: Widget in die
+Sidebar, und Hörer sehen die nächsten vier Episoden (oder die
+letzten drei, je nachdem welches Widget Sie einbetten).
+
+Drop-in-iframe (Next Shows):
+
+```html
+<iframe src="https://ihre-station.example/embed/next-shows?show_id=42"
+        width="300" height="140" frameborder="0"
+        scrolling="no" style="border: 0; background: transparent;">
+</iframe>
+```
+
+Drop-in-iframe (Latest Shows):
+
+```html
+<iframe src="https://ihre-station.example/embed/latest-shows?show_id=42"
+        width="300" height="120" frameborder="0"
+        scrolling="no" style="border: 0; background: transparent;">
+</iframe>
+```
+
+### Was es anzeigt
+
+```
+Morgensendung
+Di. 21. Mai                                 06:00 - 08:00
+Mi. 22. Mai                                 06:00 - 08:00
+Do. 23. Mai                                 06:00 - 08:00
+Fr. 24. Mai                                 06:00 - 08:00
+```
+
+- **Titelzeile**: Sendungsname aus `cc_show.name`
+- **Listenzeilen**: eine Zeile pro Instanz, `Wochentag DD Mon`
+  links, `HH:MM - HH:MM` rechts
+
+Die Liste aktualisiert sich alle `cache` Sekunden (siehe §6).
+Wenn die oberste Zeile eines Next-Shows-Widgets in die
+Vergangenheit rutscht (die Sendung hat tatsächlich begonnen),
+feuert innerhalb von ~1 s ein Early-Refresh, damit die Zeile
+ohne Abwarten der Cache-TTL verschwindet.
+
+### URL-Parameter
+
+| Parameter | Werte | Standard | Effekt |
+|---|---|---|---|
+| `show_id` | Ganzzahl (cc_show.id) | — | Identifiziert die Sendung. Stabil über Umbenennungen und über Recurring-Instanz-Änderungen — jede Instanz einer wiederkehrenden Sendung teilt sich diese ID. **Empfohlen gegenüber `show`.** |
+| `show` | String (cc_show.name) | — | Fallback, wenn `show_id` fehlt.  Case-sensitive exakter Treffer.  `show_id` gewinnt, wenn beide gesetzt sind. |
+| `limit` | Ganzzahl 1..20 | 4 (next), 3 (latest) | Wie viele Instanzen aufgelistet werden. |
+| `theme` | `auto`, `dark`, `light` | `auto` | Wie die Zwei-Zeilen-Widgets — siehe §2. |
+| `cache` | Ganzzahl Sekunden 10..3600 | `60` | Wie die Zwei-Zeilen-Widgets — siehe §6. |
+| `overflow` | `ellipsis`, `marquee` | `ellipsis` | Verhalten des Sendungstitels, wenn breiter als 300 px. |
+| `timezone` | beliebige Standard-Zeitzone | Stations-Standard | Alle Zeiten in dieser Zone gerendert. |
+
+> **Tipp.** Wählen Sie die Sendung aus dem Dropdown auf der
+> Einstellungs-Seite (nächster Abschnitt) statt die ID
+> handschriftlich einzutippen — die Seite zeigt eine
+> Live-Vorschau und kopiert einen vorgefertigten iframe-Snippet
+> mit der ID schon eingebaut.
+
+### Geänderte / abgesagte Instanzen
+
+Einzelne Instanzen, die der Operator verschoben oder
+abgesagt hat (`cc_show_instances.modified_instance = TRUE`),
+werden aus der Liste herausgefiltert — passend zur
+Konvention, die `Application_Model_Show::getNextShows` im
+internen Dashboard verwendet.  Eine einzelne verschobene
+Episode hinterlässt also keinen Phantom-Eintrag im
+öffentlichen Widget.
+
+---
+
+## 5. Empty-State-Labels anpassen
 
 Wenn keine aktuelle oder kommende Show / Track vorhanden ist,
 zeigt das Widget einen kurzen Platzhalter-Text. Operator können
@@ -142,9 +221,25 @@ Dieselbe Einstellungs-Seite enthält auch:
   Widget mit absoluter Stations-URL, bereit zum Einfügen in
   den HTML-Code der Homepage.
 
+Die Next-Shows / Latest-Shows Widgets haben eine eigene
+Labels-Seite unter:
+
+**Einstellungen → Widgets → Next/Latest Shows**
+
+| Einstellungs-Label | Standard-Wert |
+|---|---|
+| No upcoming shows: | `No upcoming shows` |
+| No past shows: | `No past shows` |
+
+Diese Seite enthält außerdem ein **Show-Picker-Dropdown**, das
+die Preview-iframes und die Embed-Code-Snippets steuert —
+Sendung auswählen, Speichern drücken und den generierten
+`<iframe ...>`-Block kopieren, mit der `show_id` schon in der
+URL eingebaut.
+
 ---
 
-## 5. Der `cache`-Parameter — welche TTL ist richtig?
+## 6. Der `cache`-Parameter — welche TTL ist richtig?
 
 Der Server cached die zugrunde liegenden Daten für `cache`
 Sekunden, bevor er sie regeneriert. Die JS-Abfrage im
@@ -183,7 +278,7 @@ Empfohlene Werte:
 
 ---
 
-## 6. Themes
+## 7. Themes
 
 Drei Modi, gesteuert über den `theme`-URL-Parameter:
 
@@ -210,7 +305,7 @@ und sich auf den transparenten Hintergrund zu verlassen:
 
 ---
 
-## 7. Authentifizierung
+## 8. Authentifizierung
 
 Keine. Die Now-Playing-Widgets sind absichtlich
 öffentlich: Der ganze Zweck ist, dass jeder Besucher auf
@@ -235,7 +330,7 @@ Sie stattdessen das passwortgeschützte
 
 ---
 
-## 8. Cross-Origin-Einbettung
+## 9. Cross-Origin-Einbettung
 
 Iframes funktionieren cross-origin von Haus aus — keine
 zusätzliche Konfiguration nötig. Die Homepage Ihrer
@@ -249,7 +344,7 @@ vollständig.
 
 ---
 
-## 9. Fehlerbehebung
+## 10. Fehlerbehebung
 
 ### "Widget zeigt 'No show on air', aber eine Sendung läuft"
 
@@ -288,6 +383,25 @@ erholt sich innerhalb von ~1 s dank des Early-Poll-
 Mechanismus. Wenn es länger anhält, ist möglicherweise
 die Playout-Engine gestoppt — prüfen Sie
 `Get-Service RASTATIME-PLAYOUT`.
+
+### "Next / Latest Shows Widget zeigt den Empty-Placeholder"
+
+- Verifizieren Sie, dass die iframe-URL `?show_id=N`
+  (bevorzugt) oder `?show=Name` enthält.  Die
+  Einstellungs-Seite (§5) generiert den Snippet mit der
+  ID schon eingebaut — kopieren Sie ihn von dort, statt
+  die URL handschriftlich zu basteln.
+- Bestätigen Sie, dass die Sendung tatsächlich künftige
+  Instanzen im Kalender hat (für Next Shows) oder
+  mindestens einmal gesendet wurde (für Latest Shows).
+  Eine brandneue Sendung ohne ausgestrahlte Episoden zeigt
+  im Latest-Widget den Empty-Placeholder bis die erste
+  Episode beendet ist.
+- `modified_instance = TRUE`-Zeilen werden by-design
+  herausgefiltert (passend zum internen Dashboard).  Eine
+  Sendung, deren einzige kommende Instanz verschoben
+  oder abgesagt wurde, zeigt Empty, bis eine neue
+  Instanz generiert wird.
 
 ---
 

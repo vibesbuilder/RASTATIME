@@ -553,6 +553,25 @@ class Application_Model_Preference
     }
     public static function SetWidgetNoUpcomingTrack($v)   { self::setValue('widget_no_upcoming_track', (string) $v); }
 
+    // RASTATIME 2026-05-22 — Next-Shows / Latest-Shows widget empty-
+    // state labels.  Shown by the list widget when the requested
+    // show has no future (resp. no past) instances, or when the
+    // operator forgot to fill in show_id / show in the iframe URL.
+    // Same English-fallback pattern as the four labels above.
+    public static function GetWidgetNoNextShows()
+    {
+        $v = self::getValue('widget_no_next_shows');
+        return $v === '' ? 'No upcoming shows' : $v;
+    }
+    public static function SetWidgetNoNextShows($v)       { self::setValue('widget_no_next_shows', (string) $v); }
+
+    public static function GetWidgetNoLatestShows()
+    {
+        $v = self::getValue('widget_no_latest_shows');
+        return $v === '' ? 'No past shows' : $v;
+    }
+    public static function SetWidgetNoLatestShows($v)     { self::setValue('widget_no_latest_shows', (string) $v); }
+
     public static function SetPhone($phone)
     {
         self::setValue('phone', $phone);

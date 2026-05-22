@@ -77,6 +77,17 @@ $pages[] = [
             'controller' => 'embeddablewidgets',
             'action' => 'current-show-track',
         ],
+        // RASTATIME 2026-05-22 — Next/Latest Shows widget pair
+        // settings page.  Shares the same submenu pattern as
+        // Current Show/Track — preview + label customisation +
+        // embed-code generation, this time keyed by show-id so
+        // the operator picks WHICH show the widget should list.
+        [
+            'label' => 'Next/Latest Shows',
+            'module' => 'default',
+            'controller' => 'embeddablewidgets',
+            'action' => 'next-latest-shows',
+        ],
     ],
 ];
 $pages[] = [

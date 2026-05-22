@@ -9,6 +9,101 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Public Embed Widgets: Next Shows + Latest Shows**
+  (operator request 2026-05-22, BACKLOG widget-wave 1 second
+  half).  Two new drop-in iframe widgets that list multiple
+  instances of a single recurring show — sibling widgets to
+  the Now-Playing pair but for the "next four episodes" /
+  "last three episodes" use case typical on a per-show
+  sidebar of a station's public website.
+
+      <iframe src=".../embed/next-shows?show_id=42"
+              width="300" height="140" frameborder="0"></iframe>
+      <iframe src=".../embed/latest-shows?show_id=42"
+              width="300" height="120" frameborder="0"></iframe>
+
+  Both widgets share a single template (`shows-list.phtml`),
+  a single JSON endpoint (`/embed/shows-data`), and a single
+  300 px-wide CSS layout.  The only structural difference is
+  ASC vs DESC ordering of the instances list and the default
+  `limit` (4 for next, 3 for latest).
+
+  Show identification:
+    - `?show_id=N` — preferred, stable across renames; all
+      instances of a recurring show share the same
+      `cc_show.id`.
+    - `?show=Name` — case-sensitive fallback used when
+      `show_id` is absent.  `show_id` wins when both are set.
+
+  URL parameters: `show_id` / `show`, `limit` (1..20),
+  `theme` (auto / dark / light), `cache` (10..3600 s,
+  default 60), `overflow` (ellipsis / marquee), `timezone`.
+
+  Modified / cancelled instances
+  (`cc_show_instances.modified_instance = TRUE`) are filtered
+  out, matching the convention `Application_Model_Show::
+  getNextShows` already uses on the internal Dashboard, so a
+  single postponed episode does not leave a phantom row in
+  the public widget.
+
+  Refresh model: identical to the Now-Playing widgets — JS
+  poll cadence matches the HTTP cache TTL, and a slipped
+  topmost row (Next Shows) triggers an immediate refresh
+  within ~1 s so the widget flips on time even under long
+  cache TTLs.
+
+  Files:
+    - `application/controllers/EmbedController.php`
+        Three new actions: `nextShowsAction`,
+        `latestShowsAction`, `showsDataAction`.  Plus private
+        helpers `_prepareShowsListView`, `_resolveShowsLimit`,
+        `_resolveShowId`, `_fetchShowMeta`,
+        `_fetchShowInstances`.  Reuses `_resolveCacheTtl`,
+        `_resolveTimezone`, `_emitCacheHeaders`,
+        `_formatTimestamp` from the Now-Playing block below.
+    - `application/views/scripts/embed/shows-list.phtml`
+        Shared template for both `next-shows` and
+        `latest-shows` actions; renders the title row plus
+        the `<ul>` of instances.
+    - `application/controllers/EmbeddablewidgetsController.php`
+        New `nextLatestShowsAction` settings page with a
+        show-picker dropdown (cc_show ordered by name), the
+        two empty-state labels, live preview iframes on a
+        dark backdrop, and the ready-made embed-code blocks
+        with `show_id` baked in.
+    - `application/forms/WidgetNextLatestShows.php`
+        New form: `preview_show_id` select +
+        `widget_no_next_shows` + `widget_no_latest_shows`
+        text inputs + Save submit.
+    - `application/views/scripts/embeddablewidgets/next-latest-shows.phtml`
+        Mirror-layout of the Current Show/Track page —
+        800 px max-width, preview iframes only render once
+        a show is picked.
+    - `application/configs/navigation.php`
+        New submenu entry "Next/Latest Shows" under Widgets.
+    - `application/models/Preference.php`
+        Two new getters/setters with English-fallback pattern:
+        `GetWidgetNoNextShows`, `SetWidgetNoNextShows`,
+        `GetWidgetNoLatestShows`, `SetWidgetNoLatestShows`.
+        Backed by `cc_pref` keys `widget_no_next_shows` and
+        `widget_no_latest_shows`.
+    - `public/css/embed/now-playing-widget.css`
+        Extended with `.np-shows-list .np-list-row` /
+        `.np-list-date` / `.np-list-time` / `.np-list-empty`
+        rules.  Inherits theme variables + transparency from
+        the base `.np-widget` ruleset above.
+    - `public/js/airtime/embed/shows-list-widget.js`
+        New runtime: per-second `paintRows()` to re-render the
+        date / time cells from the absolute timestamps in
+        `data-starts` / `data-ends`, periodic `pollOnce()` to
+        rebuild the `<ul>`, plus the early-poll mechanism
+        keyed on the topmost upcoming instance for the
+        Next-Shows widget.
+    - `docs/manual/WIDGETS.md` + `de/` + `fr/` + `es/`
+        New §4 "Next-Shows / Latest-Shows widgets" plus new
+        troubleshooting entry; renumbered downstream sections
+        5–10.
+
 - **Public Embed Widgets: Now Playing — Show + Now Playing —
   Track** (operator request 2026-05-22, BACKLOG widget-wave 1
   first half).  Two new drop-in iframe widgets for external

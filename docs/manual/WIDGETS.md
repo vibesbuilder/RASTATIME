@@ -25,6 +25,8 @@ them on an external site.
 |---|---|---|
 | **Now Playing — Show** | `/embed/now-playing-show` | Two-line text widget. Current show name + remaining duration; next show name + start–end times. |
 | **Now Playing — Track** | `/embed/now-playing-track` | Two-line text widget. Current track "Artist - Title" + remaining duration; next track + start–end times. |
+| **Next Shows** | `/embed/next-shows` | List widget. Show title + chronological list of upcoming instances of one recurring show. |
+| **Latest Shows** | `/embed/latest-shows` | List widget. Show title + reverse-chronological list of most recent past instances of one recurring show. |
 | **Weekly Program** | `/embed/weekly-program` | (Existing) Seven-day calendar grid view of the station schedule. |
 | **Audio Player** | `/embed/player` | (Existing) Inline HTML5 audio player for the public stream. |
 
@@ -57,7 +59,7 @@ Music Hour                                          10:00 - 11:30
 
 The countdown updates every second on the client side, so
 the display looks smooth. The underlying data refreshes
-every 60 seconds (configurable — see §4).
+every 60 seconds (configurable — see §6).
 
 ### URL parameters
 
@@ -108,7 +110,80 @@ Same as the show widget — see §2.
 
 ---
 
-## 4. Customising the empty-state labels
+## 4. Next-Shows / Latest-Shows widgets
+
+Sister widgets that list multiple instances of **a single recurring
+show** rather than the "what is on right now" envelope of the two
+Now-Playing widgets.  Useful for a show-detail page on your station
+site: drop the widget in the sidebar and listeners see the next four
+episodes (or the last three, depending on which widget you embed).
+
+Drop-in iframe (next shows):
+
+```html
+<iframe src="https://your-station.example/embed/next-shows?show_id=42"
+        width="300" height="140" frameborder="0"
+        scrolling="no" style="border: 0; background: transparent;">
+</iframe>
+```
+
+Drop-in iframe (latest shows):
+
+```html
+<iframe src="https://your-station.example/embed/latest-shows?show_id=42"
+        width="300" height="120" frameborder="0"
+        scrolling="no" style="border: 0; background: transparent;">
+</iframe>
+```
+
+### What it shows
+
+```
+Morning Show
+Tue 21 May                                  06:00 - 08:00
+Wed 22 May                                  06:00 - 08:00
+Thu 23 May                                  06:00 - 08:00
+Fri 24 May                                  06:00 - 08:00
+```
+
+- **Title row**: the show's name from `cc_show.name`
+- **List rows**: one line per instance, `Weekday DD Mon` on the
+  left, `HH:MM - HH:MM` on the right
+
+The list refreshes every `cache` seconds (see §6).  When the topmost
+row of a Next-Shows widget slips into the past (the show has
+actually started), an early refresh fires within ~1 s so the widget
+drops the row without waiting out the cache TTL.
+
+### URL parameters
+
+| Param | Values | Default | Effect |
+|---|---|---|---|
+| `show_id` | integer (cc_show.id) | — | Identifies the show. Stable across renames and across recurring-instance changes — every instance of a recurring show shares this id. **Recommended over `show`.** |
+| `show` | string (cc_show.name) | — | Fallback when `show_id` is absent.  Case-sensitive exact match.  `show_id` wins when both are set. |
+| `limit` | integer 1..20 | 4 (next), 3 (latest) | How many instances to list. |
+| `theme` | `auto`, `dark`, `light` | `auto` | Same as the two-line widgets — see §2. |
+| `cache` | integer seconds 10..3600 | `60` | Same as the two-line widgets — see §6. |
+| `overflow` | `ellipsis`, `marquee` | `ellipsis` | Behaviour of the show title when wider than 300 px. |
+| `timezone` | any standard timezone | station default | All times rendered in this zone. |
+
+> **Tip.** Pick the show from the dropdown in the Settings page
+> (next section) rather than typing the id by hand — the page
+> shows a live preview and copies a ready-made iframe snippet with
+> the id pre-filled.
+
+### Modified / cancelled instances
+
+Single instances that the operator moved or cancelled
+(`cc_show_instances.modified_instance = TRUE`) are filtered out
+of the list, matching the convention `Application_Model_Show::
+getNextShows` uses on the internal Dashboard.  A single
+postponed episode therefore does not leave a phantom row in
+the public widget.
+
+---
+
+## 5. Customising the empty-state labels
 
 When there is no current or upcoming show / track, the widget
 falls back to a short placeholder text.  Operators can customise
@@ -135,9 +210,24 @@ The same Settings page hosts:
   with the station's absolute URL pre-filled, ready to paste
   into the homepage HTML.
 
+The Next-Shows / Latest-Shows widgets have their own labels page
+under:
+
+**Settings → Widgets → Next/Latest Shows**
+
+| Setting label | Default value |
+|---|---|
+| No upcoming shows: | `No upcoming shows` |
+| No past shows: | `No past shows` |
+
+That page also hosts a **show picker dropdown** that drives the
+preview iframes and the embed-code snippets — pick the show, hit
+Save, and copy the generated `<iframe ...>` block with the
+`show_id` already baked into the URL.
+
 ---
 
-## 5. The `cache` parameter — what is the right TTL?
+## 6. The `cache` parameter — what is the right TTL?
 
 The server caches the underlying data for `cache` seconds
 before regenerating it. The JS poll inside the iframe
@@ -173,7 +263,7 @@ Recommended values:
 
 ---
 
-## 6. Theming
+## 7. Theming
 
 Three modes, controlled via the `theme` URL parameter:
 
@@ -201,7 +291,7 @@ transparent background:
 
 ---
 
-## 7. Authentication
+## 8. Authentication
 
 None. The Now-Playing widgets are intentionally public:
 the whole point is that any visitor on your station's
@@ -224,7 +314,7 @@ which DJ is on air right now), open the password-protected
 
 ---
 
-## 8. Cross-origin embedding
+## 9. Cross-origin embedding
 
 Iframes work cross-origin out of the box — no extra
 configuration needed. Your station's homepage can embed
@@ -236,7 +326,7 @@ and ran into CORS errors, switching to the iframe approach
 
 ---
 
-## 9. Troubleshooting
+## 10. Troubleshooting
 
 ### "Widget shows 'No show on air' but a show is running"
 
@@ -272,6 +362,22 @@ not yet picked up the new data. This auto-recovers within
 ~1 s thanks to the early-poll mechanism. If it persists
 longer, the playout engine may have stopped — check
 `Get-Service RASTATIME-PLAYOUT`.
+
+### "Next / Latest Shows widget shows the empty placeholder"
+
+- Verify the iframe URL contains `?show_id=N` (preferred)
+  or `?show=Name`.  The Settings page (§5) generates the
+  snippet with the id baked in — copy it from there rather
+  than hand-crafting the URL.
+- Confirm the show actually has future instances in the
+  Calendar (for Next Shows) or has aired at least once
+  (for Latest Shows).  A brand-new show with no aired
+  episodes shows the empty placeholder on the Latest
+  widget until the first episode finishes.
+- `modified_instance = TRUE` rows are filtered out by
+  design (matches the internal Dashboard).  A show whose
+  only upcoming instance has been moved or cancelled
+  shows empty until a fresh instance is generated.
 
 ---
 

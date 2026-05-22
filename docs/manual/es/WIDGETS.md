@@ -26,6 +26,8 @@ un sitio externo.
 |---|---|---|
 | **Now Playing — Show** | `/embed/now-playing-show` | Widget de texto de dos líneas. Nombre del programa actual + duración restante; nombre del próximo programa + horas de inicio-fin. |
 | **Now Playing — Track** | `/embed/now-playing-track` | Widget de texto de dos líneas. Pista actual "Artista - Título" + duración restante; próxima pista + horas de inicio-fin. |
+| **Next Shows** | `/embed/next-shows` | Widget de lista. Título del programa + lista cronológica de las próximas instancias de un programa recurrente. |
+| **Latest Shows** | `/embed/latest-shows` | Widget de lista. Título del programa + lista crono-inversa de las últimas instancias pasadas de un programa recurrente. |
 | **Weekly Program** | `/embed/weekly-program` | (Existente) Vista de cuadrícula de calendario de siete días del programa. |
 | **Audio Player** | `/embed/player` | (Existente) Reproductor de audio HTML5 integrado para el stream público. |
 
@@ -60,7 +62,7 @@ Music Hour                                          10:00 - 11:30
 La cuenta atrás se actualiza cada segundo del lado del
 cliente, así que la pantalla se ve fluida. Los datos
 subyacentes se refrescan cada 60 segundos (configurable
-— vea §4).
+— vea §6).
 
 ### Parámetros URL
 
@@ -113,7 +115,82 @@ Igual que el widget show — vea §2.
 
 ---
 
-## 4. Personalizar las etiquetas de estado vacío
+## 4. Widgets Next-Shows / Latest-Shows
+
+Widgets hermanos que listan múltiples instancias **de un solo
+programa recurrente** en lugar del envoltorio "qué está sonando
+ahora" de los dos widgets Now-Playing.  Útil para una página de
+detalle de programa en su sitio: integre el widget en la barra
+lateral y los oyentes verán los próximos cuatro episodios (o
+los últimos tres, según el widget integrado).
+
+iframe listo para usar (next shows):
+
+```html
+<iframe src="https://su-emisora.example/embed/next-shows?show_id=42"
+        width="300" height="140" frameborder="0"
+        scrolling="no" style="border: 0; background: transparent;">
+</iframe>
+```
+
+iframe listo para usar (latest shows):
+
+```html
+<iframe src="https://su-emisora.example/embed/latest-shows?show_id=42"
+        width="300" height="120" frameborder="0"
+        scrolling="no" style="border: 0; background: transparent;">
+</iframe>
+```
+
+### Lo que muestra
+
+```
+Mañanas
+mar 21 may                                  06:00 - 08:00
+mié 22 may                                  06:00 - 08:00
+jue 23 may                                  06:00 - 08:00
+vie 24 may                                  06:00 - 08:00
+```
+
+- **Línea de título**: nombre del programa desde `cc_show.name`
+- **Líneas de lista**: una línea por instancia, `Día DD Mes`
+  a la izquierda, `HH:MM - HH:MM` a la derecha
+
+La lista se refresca cada `cache` segundos (vea §6).  Cuando
+la línea superior de un widget Next-Shows se desliza al pasado
+(el programa ha empezado), se dispara un refresh anticipado en
+~1 s para que la línea desaparezca sin esperar el TTL del caché.
+
+### Parámetros URL
+
+| Parámetro | Valores | Por defecto | Efecto |
+|---|---|---|---|
+| `show_id` | entero (cc_show.id) | — | Identifica el programa. Estable frente a renombres y a cambios de instancia recurrente — cada instancia de un programa recurrente comparte este id. **Recomendado sobre `show`.** |
+| `show` | cadena (cc_show.name) | — | Fallback cuando `show_id` está ausente.  Coincidencia exacta sensible a mayúsculas/minúsculas.  `show_id` gana cuando ambos están definidos. |
+| `limit` | entero 1..20 | 4 (next), 3 (latest) | Cuántas instancias listar. |
+| `theme` | `auto`, `dark`, `light` | `auto` | Igual que los widgets de dos líneas — vea §2. |
+| `cache` | entero segundos 10..3600 | `60` | Igual que los widgets de dos líneas — vea §6. |
+| `overflow` | `ellipsis`, `marquee` | `ellipsis` | Comportamiento del título del programa cuando es más ancho que 300 px. |
+| `timezone` | cualquier zona estándar | predeterminado de la emisora | Todas las horas renderizadas en esta zona. |
+
+> **Consejo.** Elija el programa desde el menú desplegable de
+> la página de Configuración (sección siguiente) en lugar de
+> teclear el id a mano — la página muestra una vista previa
+> en vivo y copia un snippet de iframe listo para usar con
+> el id ya rellenado.
+
+### Instancias modificadas / canceladas
+
+Las instancias individuales que el operador movió o canceló
+(`cc_show_instances.modified_instance = TRUE`) se filtran de
+la lista, coincidiendo con la convención que
+`Application_Model_Show::getNextShows` usa en el panel
+interno.  Un episodio pospuesto no deja por tanto una línea
+fantasma en el widget público.
+
+---
+
+## 5. Personalizar las etiquetas de estado vacío
 
 Cuando no hay programa o pista actual / próxima, el widget
 muestra un breve texto placeholder.  Los operadores pueden
@@ -139,9 +216,25 @@ La misma página de configuración aloja también:
 - el **código de integración `<iframe>` listo-para-usar** para
   cada widget con la URL absoluta de la emisora pre-rellenada.
 
+Los widgets Next-Shows / Latest-Shows tienen su propia página
+de etiquetas en:
+
+**Configuración → Widgets → Next/Latest Shows**
+
+| Etiqueta de configuración | Valor por defecto |
+|---|---|
+| No upcoming shows: | `No upcoming shows` |
+| No past shows: | `No past shows` |
+
+Esta página también aloja un **menú desplegable de selección
+de programa** que controla los iframes de vista previa y los
+snippets de código de integración — elija el programa,
+pulse Guardar, y copie el bloque `<iframe ...>` generado con
+`show_id` ya integrado en la URL.
+
 ---
 
-## 5. El parámetro `cache` — ¿qué TTL?
+## 6. El parámetro `cache` — ¿qué TTL?
 
 El servidor almacena en caché los datos subyacentes
 durante `cache` segundos antes de regenerarlos. El polling
@@ -178,7 +271,7 @@ Valores recomendados:
 
 ---
 
-## 6. Temas
+## 7. Temas
 
 Tres modos, controlados vía el parámetro `theme`:
 
@@ -192,7 +285,7 @@ El fondo del widget es **siempre transparente**.
 
 ---
 
-## 7. Autenticación
+## 8. Autenticación
 
 Ninguna. Los widgets Now-Playing son intencionalmente
 públicos.
@@ -203,14 +296,14 @@ internos.
 
 ---
 
-## 8. Integración cross-origin
+## 9. Integración cross-origin
 
 Los iframes funcionan cross-origin de forma nativa —
 ninguna configuración adicional necesaria.
 
 ---
 
-## 9. Resolución de problemas
+## 10. Resolución de problemas
 
 ### "El widget muestra 'No show on air' pero un programa está corriendo"
 
@@ -234,6 +327,23 @@ La hora de fin del item actual ha pasado pero el widget
 no ha recogido aún los nuevos datos. Auto-recupera en
 ~1 s. Si persiste, el motor de playout puede estar
 detenido — verifique `Get-Service RASTATIME-PLAYOUT`.
+
+### "El widget Next / Latest Shows muestra el placeholder vacío"
+
+- Verifique que la URL del iframe contenga `?show_id=N`
+  (preferido) o `?show=Nombre`.  La página de Configuración
+  (§5) genera el snippet con el id ya integrado — cópielo
+  desde ahí en lugar de armar la URL a mano.
+- Confirme que el programa realmente tenga instancias
+  futuras en el Calendario (para Next Shows) o haya salido
+  al aire al menos una vez (para Latest Shows).  Un
+  programa nuevecito sin episodios emitidos muestra el
+  placeholder vacío en el widget Latest hasta que termine
+  el primer episodio.
+- Las filas `modified_instance = TRUE` se filtran by-design
+  (coincide con el panel interno).  Un programa cuya
+  única instancia próxima fue movida o cancelada muestra
+  vacío hasta que se genere una nueva instancia.
 
 ---
 

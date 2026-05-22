@@ -379,6 +379,314 @@ class EmbedController extends Zend_Controller_Action
         }
     }
 
+    /**
+     * RASTATIME 2026-05-22 — Next Shows Widget.
+     *
+     * Lists the upcoming N instances of a single recurring show as
+     * a chronological table (oldest at top, newest at bottom).
+     * Drop-in iframe:
+     *
+     *   <iframe src=".../embed/next-shows?show_id=42&limit=4"
+     *           width="300" height="120" frameborder="0"></iframe>
+     *
+     * URL parameters:
+     *   show_id  - cc_show.id of the show to filter on.  Stable
+     *              across renames; covers all instances of a
+     *              recurring show (since all share the show_id).
+     *   show     - cc_show.name; used only as a fallback when
+     *              show_id is absent.  Case-sensitive exact match.
+     *              show_id takes precedence when both are set.
+     *   limit    - 1..20, default 4.
+     *   theme    - auto | dark | light  (default auto)
+     *   cache    - 10..3600 s (default 60)
+     *   overflow - ellipsis | marquee  (default ellipsis)
+     *   timezone - any IANA zone (default station)
+     *
+     * See nowPlayingShowAction docstring for the broader rationale
+     * (no auth, iframe-only, two-layer caching, etc.) which
+     * applies to all the public embed widgets.
+     */
+    public function nextShowsAction()
+    {
+        $this->_prepareShowsListView('next');
+    }
+
+    /**
+     * RASTATIME 2026-05-22 — Latest Shows Widget.
+     *
+     * Same as nextShowsAction but lists the most recent N PAST
+     * instances of the show (newest at top, oldest at bottom —
+     * chronologically reversed compared to next-shows).  Default
+     * limit is 3 rather than 4 (operator-typical: "the last
+     * couple of episodes" vs "the upcoming week").
+     */
+    public function latestShowsAction()
+    {
+        $this->_prepareShowsListView('latest');
+    }
+
+    /**
+     * RASTATIME 2026-05-22 — JSON feed shared by next-shows /
+     * latest-shows widgets.  Polled by the in-iframe JS every
+     * cache-TTL seconds for refresh.
+     */
+    public function showsDataAction()
+    {
+        $this->view->layout()->disableLayout();
+        $this->_helper->viewRenderer->setNoRender(true);
+
+        $request = $this->getRequest();
+        $cacheTtl = $this->_resolveCacheTtl();
+        $timezone = $this->_resolveTimezone();
+        $direction = $request->getParam('direction', 'next');
+        if (!in_array($direction, ['next', 'latest'], true)) {
+            $direction = 'next';
+        }
+        $showId = $this->_resolveShowId(
+            $request->getParam('show_id'),
+            $request->getParam('show')
+        );
+        $limit = $this->_resolveShowsLimit($direction);
+
+        $payload = [
+            'direction' => $direction,
+            'show'      => $showId !== null ? $this->_fetchShowMeta($showId) : null,
+            'instances' => $showId !== null
+                ? $this->_fetchShowInstances($showId, $direction, $limit, $timezone)
+                : [],
+            'limit'     => $limit,
+            'timezone'  => $timezone,
+            // RASTATIME 2026-05-22 — shipped with each refresh so a
+            // label change in Widgets -> Next/Latest Shows shows up
+            // within one cache TTL without a manual iframe reload.
+            'labels'    => [
+                'noNextShows'   => Application_Model_Preference::GetWidgetNoNextShows(),
+                'noLatestShows' => Application_Model_Preference::GetWidgetNoLatestShows(),
+            ],
+        ];
+
+        header('Content-Type: application/json; charset=utf-8');
+        $this->_emitCacheHeaders($cacheTtl);
+        echo json_encode($payload);
+    }
+
+    /**
+     * Shared view-population for next-shows / latest-shows actions.
+     */
+    private function _prepareShowsListView($direction)
+    {
+        $this->view->layout()->disableLayout();
+
+        $request = $this->getRequest();
+
+        $theme = $request->getParam('theme', 'auto');
+        if (!in_array($theme, ['auto', 'dark', 'light'], true)) {
+            $theme = 'auto';
+        }
+        $this->view->themeClass = 'np-theme-' . $theme;
+
+        $overflow = $request->getParam('overflow', 'ellipsis');
+        if (!in_array($overflow, ['ellipsis', 'marquee'], true)) {
+            $overflow = 'ellipsis';
+        }
+        $this->view->overflowClass = 'np-overflow-' . $overflow;
+
+        $cacheTtl = $this->_resolveCacheTtl();
+        $this->view->cacheTtl = $cacheTtl;
+        $this->_emitCacheHeaders($cacheTtl);
+
+        $timezone = $this->_resolveTimezone();
+        $this->view->timezone = $timezone;
+        $this->view->direction = $direction;
+
+        $showId = $this->_resolveShowId(
+            $request->getParam('show_id'),
+            $request->getParam('show')
+        );
+
+        $limit = $this->_resolveShowsLimit($direction);
+        $this->view->limit = $limit;
+
+        $this->view->showMeta  = $showId !== null
+            ? $this->_fetchShowMeta($showId)
+            : null;
+        $this->view->instances = $showId !== null
+            ? $this->_fetchShowInstances($showId, $direction, $limit, $timezone)
+            : [];
+
+        // RASTATIME 2026-05-22 — empty-state labels, configurable by
+        // the operator under Widgets -> Next/Latest Shows.  Each
+        // widget kind picks the matching label so a "next shows"
+        // widget with no future instances reads "No upcoming shows"
+        // (or the operator's override) while the same template
+        // wired as "latest shows" reads "No past shows".
+        $this->view->emptyLabel = ($direction === 'latest')
+            ? Application_Model_Preference::GetWidgetNoLatestShows()
+            : Application_Model_Preference::GetWidgetNoNextShows();
+
+        $this->view->widgetCss = Assets::url('css/embed/now-playing-widget.css');
+        $this->view->widgetJs  = Assets::url('js/airtime/embed/shows-list-widget.js');
+
+        // Data URL for JS-polling, carries direction + the original
+        // show identifier so the JS only knows to refresh the same
+        // payload it loaded on the first render.
+        $params = [
+            'direction' => $direction,
+            'limit'     => $limit,
+        ];
+        if ($showId !== null) {
+            $params['show_id'] = $showId;
+        }
+        $cacheParam = $request->getParam('cache');
+        if ($cacheParam !== null) {
+            $params['cache'] = $cacheParam;
+        }
+        $this->view->dataUrl = '/Embed/shows-data?' . http_build_query($params);
+
+        // Pick the right view template (the action-default convention
+        // would land on "next-shows" / "latest-shows" both fine, but
+        // we use a single shared template since the markup is
+        // identical aside from the title row which we can drive from
+        // $direction).
+        $this->_helper->viewRenderer->setScriptAction('shows-list');
+    }
+
+    /**
+     * Read & clamp ?limit=N URL parameter for shows-list widgets.
+     * Default 4 for "next", 3 for "latest" (operator-typical
+     * sizes).  Hard cap at 20 so a hand-crafted URL cannot fetch
+     * the full year of weekly-show instances.
+     */
+    private function _resolveShowsLimit($direction)
+    {
+        $default = ($direction === 'latest') ? 3 : 4;
+        $raw = (int) $this->getRequest()->getParam('limit', $default);
+        return max(1, min(20, $raw ?: $default));
+    }
+
+    /**
+     * Resolve a show identifier from either ?show_id or ?show.
+     * Returns the cc_show.id integer, or null if neither parameter
+     * was set or no row matched.  show_id takes precedence over
+     * show name when both are set.
+     */
+    private function _resolveShowId($idParam, $nameParam)
+    {
+        if ($idParam !== null && $idParam !== '' && is_numeric($idParam)) {
+            $candidate = (int) $idParam;
+            // Verify the id actually exists so an invalid URL
+            // returns "no instances" rather than 500-ing later in
+            // the SQL pipeline.
+            $sql = 'SELECT id FROM cc_show WHERE id = :id LIMIT 1';
+            $row = Application_Common_Database::prepareAndExecute(
+                $sql,
+                [':id' => $candidate],
+                'column'
+            );
+            if ($row) {
+                return $candidate;
+            }
+            return null;
+        }
+        if ($nameParam !== null && $nameParam !== '') {
+            // Case-sensitive exact match — operator decision: if the
+            // operator types "morning Show" but the show is named
+            // "Morning Show", the embed should fail loudly (empty
+            // widget) rather than silently match.  ILIKE here would
+            // also collide with same-prefix shows ("Morning Show" +
+            // "Morning Show Special").
+            $sql = 'SELECT id FROM cc_show WHERE name = :n LIMIT 1';
+            $row = Application_Common_Database::prepareAndExecute(
+                $sql,
+                [':n' => (string) $nameParam],
+                'column'
+            );
+            if ($row) {
+                return (int) $row;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Fetch the show's display-name + URL + description for the
+     * widget header row.  Returns null when the id no longer exists
+     * (covers the edge case of an in-flight delete).
+     */
+    private function _fetchShowMeta($showId)
+    {
+        $sql = 'SELECT id, name, url, description, image_path
+                FROM cc_show
+                WHERE id = :id
+                LIMIT 1';
+        $row = Application_Common_Database::prepareAndExecute(
+            $sql,
+            [':id' => (int) $showId],
+            'all'
+        );
+        if (empty($row)) {
+            return null;
+        }
+        return [
+            'id'          => (int) $row[0]['id'],
+            'name'        => (string) $row[0]['name'],
+            'url'         => (string) $row[0]['url'],
+            'description' => (string) $row[0]['description'],
+        ];
+    }
+
+    /**
+     * Fetch up to $limit upcoming or past instances of the given
+     * show as a chronological list, converted to the requested
+     * timezone.  Output rows: ['starts' => ISO, 'ends' => ISO].
+     *
+     * Direction 'next' → starts >= NOW(), ORDER BY starts ASC.
+     * Direction 'latest' → starts < NOW(), ORDER BY starts DESC.
+     *
+     * Modified-instance rows (`modified_instance = TRUE`) are
+     * excluded so a moved/cancelled single instance does not
+     * leave a phantom in the widget — matches the convention
+     * Show::getNextShows uses.
+     */
+    private function _fetchShowInstances($showId, $direction, $limit, $timezone)
+    {
+        if ($direction === 'latest') {
+            $sql = "SELECT si.starts AS starts_utc,
+                           si.ends   AS ends_utc
+                    FROM cc_show_instances si
+                    WHERE si.show_id = :sid
+                      AND si.starts < NOW() AT TIME ZONE 'UTC'
+                      AND si.modified_instance != TRUE
+                    ORDER BY si.starts DESC
+                    LIMIT :lim";
+        } else {
+            $sql = "SELECT si.starts AS starts_utc,
+                           si.ends   AS ends_utc
+                    FROM cc_show_instances si
+                    WHERE si.show_id = :sid
+                      AND si.starts >= NOW() AT TIME ZONE 'UTC'
+                      AND si.modified_instance != TRUE
+                    ORDER BY si.starts ASC
+                    LIMIT :lim";
+        }
+        $rows = Application_Common_Database::prepareAndExecute(
+            $sql,
+            [
+                ':sid' => (int) $showId,
+                ':lim' => (int) $limit,
+            ],
+            'all'
+        );
+        $out = [];
+        foreach ($rows as $r) {
+            $out[] = [
+                'starts' => $this->_formatTimestamp($r['starts_utc'], $timezone),
+                'ends'   => $this->_formatTimestamp($r['ends_utc'],   $timezone),
+            ];
+        }
+        return $out;
+    }
+
     public function weeklyProgramAction()
     {
         $this->view->layout()->disableLayout();

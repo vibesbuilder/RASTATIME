@@ -61,7 +61,7 @@ der Operator das Signal gibt.
 **Welle 1 (~1 Woche):**
 - ✅ **DONE** Current Show + Current Track Widget mit Restzeit (Section 23.22, Commits 64a0b15 + Polish a5452c6)
 - ✅ **DONE** Widget-Polish 2026-05-22: 300 px Breitencap, `?overflow=ellipsis|marquee`, operator-konfigurierbare Empty-State-Labels via neuem Submenu **Widgets → Current Show/Track**
-- Next Shows / Latest Shows Widget mit Show-Name-Filter (~300 LoC) — als Nächstes
+- ✅ **DONE** Next Shows / Latest Shows Widget mit Show-Filter via `?show_id=N` (Stable über Recurring-Instanzen) und `?show=Name` als Fallback. Shared template + JSON-Endpoint, ASC/DESC-Ordering, `modified_instance=TRUE`-Filterung wie internes Dashboard. Settings-Submenu **Widgets → Next/Latest Shows** mit Show-Picker-Dropdown + 2 Empty-State-Labels + Preview + Embed-Code-Generator.
 
 **Welle 2 (~1.5 Wochen):**
 - Weekly Program pimpen: ±2-Wochen-Buttons, Link-Embedding ohne Farb-Change, LibreTime-Branding raus, optionales BG-Bild (~250 LoC)
