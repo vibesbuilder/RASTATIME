@@ -170,6 +170,37 @@ class EmbeddableWidgetsController extends Zend_Controller_Action
         return $rows ?: [];
     }
 
+    /**
+     * RASTATIME 2026-05-22 — Settings page for the On-Air-Today
+     * public embed widget.
+     *
+     * Single empty-state label form + live preview iframe (dark
+     * backdrop, matches the admin theme) + ready-made embed-code
+     * snippet.  No show-picker (the widget pulls from the live
+     * schedule for the whole station day).
+     */
+    public function onAirTodayAction()
+    {
+        Zend_Layout::getMvcInstance()->assign('parent_page', 'Widgets');
+
+        $request = $this->getRequest();
+        $form = new Application_Form_WidgetOnAirToday();
+
+        if ($request->isPost() && $form->isValid($request->getPost())) {
+            Application_Model_Preference::SetWidgetNoOnAirToday(
+                $form->getValue('widget_no_on_air_today')
+            );
+            $this->view->saved = true;
+        } else {
+            $form->populate([
+                'widget_no_on_air_today' => Application_Model_Preference::GetWidgetNoOnAirToday(),
+            ]);
+        }
+
+        $this->view->form = $form;
+        $this->view->publicUrl = Config::getPublicUrl();
+    }
+
     // The Facebook widget is untested & unsupported, the widget has been removed from the navigation in navigation.php
     public function facebookAction()
     {

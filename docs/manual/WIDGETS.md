@@ -27,6 +27,7 @@ them on an external site.
 | **Now Playing — Track** | `/embed/now-playing-track` | Two-line text widget. Current track "Artist - Title" + remaining duration; next track + start–end times. |
 | **Next Shows** | `/embed/next-shows` | List widget. Show title + chronological list of upcoming instances of one recurring show. |
 | **Latest Shows** | `/embed/latest-shows` | List widget. Show title + reverse-chronological list of most recent past instances of one recurring show. |
+| **On Air Today** | `/embed/on-air-today` | Day-grid widget. Header band + today's current + upcoming shows, each row "HH:MM – HH:MM   Show name (link)". |
 | **Weekly Program** | `/embed/weekly-program` | (Existing) Seven-day calendar grid view of the station schedule. |
 | **Audio Player** | `/embed/player` | (Existing) Inline HTML5 audio player for the public stream. |
 
@@ -59,7 +60,7 @@ Music Hour                                          10:00 - 11:30
 
 The countdown updates every second on the client side, so
 the display looks smooth. The underlying data refreshes
-every 60 seconds (configurable — see §6).
+every 60 seconds (configurable — see §7).
 
 ### URL parameters
 
@@ -150,7 +151,7 @@ Fri 24 May                                  06:00 - 08:00
 - **List rows**: one line per instance, `Weekday DD Mon` on the
   left, `HH:MM - HH:MM` on the right
 
-The list refreshes every `cache` seconds (see §6).  When the topmost
+The list refreshes every `cache` seconds (see §7).  When the topmost
 row of a Next-Shows widget slips into the past (the show has
 actually started), an early refresh fires within ~1 s so the widget
 drops the row without waiting out the cache TTL.
@@ -163,7 +164,7 @@ drops the row without waiting out the cache TTL.
 | `show` | string (cc_show.name) | — | Fallback when `show_id` is absent.  Case-sensitive exact match.  `show_id` wins when both are set. |
 | `limit` | integer 1..20 | 4 (next), 3 (latest) | How many instances to list. |
 | `theme` | `auto`, `dark`, `light` | `auto` | Same as the two-line widgets — see §2. |
-| `cache` | integer seconds 10..3600 | `60` | Same as the two-line widgets — see §6. |
+| `cache` | integer seconds 10..3600 | `60` | Same as the two-line widgets — see §7. |
 | `overflow` | `ellipsis`, `marquee` | `ellipsis` | Behaviour of the show title when wider than 300 px. |
 | `timezone` | any standard timezone | station default | All times rendered in this zone. |
 
@@ -183,7 +184,92 @@ the public widget.
 
 ---
 
-## 5. Customising the empty-state labels
+## 5. On-Air-Today widget
+
+A compact day-grid widget that lists today's schedule from the
+currently-airing show through the next few upcoming shows —
+capped at the station's midnight so the widget never spills
+into tomorrow's programme.
+
+Drop-in iframe:
+
+```html
+<iframe src="https://your-station.example/embed/on-air-today"
+        width="300" height="250" frameborder="0"
+        scrolling="no" style="border: 0; background: transparent;">
+</iframe>
+```
+
+### What it shows
+
+```
+On Air Today                       ← header band
+────────────────────────────────
+16:00 - 16:30    Newslink           ← current row (bold)
+16:30 - 17:00    Pages of History (EN)
+17:00 - 17:30    L'Info Chez-Vous
+17:30 - 04:00    Pages d'histoire
+18:30 - 19:00    Choices (EN)
+19:00 - 19:30    L'Info chez vous (FR)
+```
+
+- **Header**: "On Air Today" (or "On Air *<date>*" when a
+  specific day is pinned via the `?day` parameter)
+- **Rows**: `HH:MM - HH:MM` on the left, show name on the
+  right.  The currently-airing row is rendered in **bold**
+  so the operator (and listener) sees at a glance which row
+  is live right now.
+- **Links**: a show with a configured **Show → Edit → URL**
+  renders its name as a clickable link that opens in a new
+  tab (`target="_blank" rel="noopener noreferrer"`).  Shows
+  without a URL render as plain text.
+
+The list refreshes every `cache` seconds (see §7).  When the
+currently-airing row's end-time passes, an early refresh fires
+within ~1 s so the bold highlight migrates to the next row
+without waiting out the cache TTL.
+
+### URL parameters
+
+| Param | Values | Default | Effect |
+|---|---|---|---|
+| `limit` | integer 1..20 | `6` | Total rows (current + upcoming).  Default = 1 current + 5 upcoming. |
+| `day` | `YYYY-MM-DD` | today | Pin a specific day (in the resolved timezone) to render historical or upcoming day overviews.  When omitted or equal to today, the widget filters out shows that have already aired; for any other day it lists every show whose start falls inside that day's 24-hour window. |
+| `theme` | `auto`, `dark`, `light` | `auto` | Same as the other widgets — see §2. |
+| `cache` | integer seconds 10..3600 | `60` | Same as the other widgets — see §7. |
+| `overflow` | `ellipsis`, `marquee` | `ellipsis` | Behaviour of show names wider than 300 px. |
+| `timezone` | any IANA zone | station default | Defines "today" and renders all times in this zone. |
+
+> **Day boundary.** "Today" is the station's calendar day —
+> 00:00 to 24:00 in the station's timezone (or in `?timezone`
+> when overridden).  A show that started yesterday 23:30 and
+> is still on air at 14:00 today counts as the current row.
+> A show that starts tomorrow 00:30 is **not** listed even if
+> the `limit` would otherwise leave room — the cap is hard.
+
+### Modified / cancelled instances
+
+Same convention as the Next-Shows / Latest-Shows widgets —
+rows with `cc_show_instances.modified_instance = TRUE` are
+filtered out so a single postponed / cancelled instance does
+not leave a phantom row in the public widget.
+
+### Settings page
+
+**Settings → Widgets → On Air Today** hosts:
+
+- A single configurable empty-state label (default `No shows
+  on air today`, falls back to the English default when blank).
+- A live preview iframe on a dark backdrop.
+- The ready-made `<iframe>` embed code with the station's
+  absolute URL pre-filled.
+
+No show picker — the widget pulls from the live schedule
+for the whole station day automatically.
+
+---
+
+## 6. Customising the empty-state labels
 
 When there is no current or upcoming show / track, the widget
 falls back to a short placeholder text.  Operators can customise
@@ -227,7 +313,7 @@ Save, and copy the generated `<iframe ...>` block with the
 
 ---
 
-## 6. The `cache` parameter — what is the right TTL?
+## 7. The `cache` parameter — what is the right TTL?
 
 The server caches the underlying data for `cache` seconds
 before regenerating it. The JS poll inside the iframe
@@ -263,7 +349,7 @@ Recommended values:
 
 ---
 
-## 7. Theming
+## 8. Theming
 
 Three modes, controlled via the `theme` URL parameter:
 
@@ -291,7 +377,7 @@ transparent background:
 
 ---
 
-## 8. Authentication
+## 9. Authentication
 
 None. The Now-Playing widgets are intentionally public:
 the whole point is that any visitor on your station's
@@ -314,7 +400,7 @@ which DJ is on air right now), open the password-protected
 
 ---
 
-## 9. Cross-origin embedding
+## 10. Cross-origin embedding
 
 Iframes work cross-origin out of the box — no extra
 configuration needed. Your station's homepage can embed
@@ -326,7 +412,7 @@ and ran into CORS errors, switching to the iframe approach
 
 ---
 
-## 10. Troubleshooting
+## 11. Troubleshooting
 
 ### "Widget shows 'No show on air' but a show is running"
 
@@ -362,6 +448,21 @@ not yet picked up the new data. This auto-recovers within
 ~1 s thanks to the early-poll mechanism. If it persists
 longer, the playout engine may have stopped — check
 `Get-Service RASTATIME-PLAYOUT`.
+
+### "On Air Today widget is empty even though shows are scheduled"
+
+- Check that *today* in your station's timezone still has
+  upcoming shows: late at night the widget legitimately becomes
+  empty until the next station-midnight rolls over.  If you
+  want to look ahead, pin a specific day via
+  `?day=YYYY-MM-DD`.
+- Verify the shows are actually scheduled in the Calendar —
+  cancelled (`modified_instance = TRUE`) instances are
+  filtered out by design.
+- If the iframe URL contains `?timezone=...`, that overrides
+  the station timezone for the "today" boundary calculation.
+  A `?timezone=Asia/Tokyo` embed will show Tokyo's today,
+  which may already be tomorrow at the station.
 
 ### "Next / Latest Shows widget shows the empty placeholder"
 

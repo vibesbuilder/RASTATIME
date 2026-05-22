@@ -9,6 +9,88 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Public Embed Widget: On Air Today** (operator request
+  2026-05-22, BACKLOG widget-wave 1 third half — added on top
+  of the Now-Playing / Next-Latest pairs).  A compact day-grid
+  widget that lists today's schedule from the currently-airing
+  show through the next several upcoming shows.  Capped at the
+  station's midnight so the widget never spills into tomorrow's
+  programme:
+
+      <iframe src=".../embed/on-air-today"
+              width="300" height="250" frameborder="0"></iframe>
+
+  Each row reads "HH:MM - HH:MM  Show name", with the
+  currently-airing row in bold and show names linked to their
+  `cc_show.url` opening in a new tab (`target="_blank"
+  rel="noopener noreferrer"`).
+
+  Code-side default = 6 total rows (1 current + 5 upcoming),
+  changeable via the `ON_AIR_TODAY_DEFAULT_LIMIT` class
+  constant on `EmbedController`.  Operators can override per-
+  embed with `?limit=N` (clamped 1..20).
+
+  URL parameters: `limit`, `day` (YYYY-MM-DD, optional —
+  pin any specific day for historical or upcoming overviews),
+  `theme`, `cache`, `overflow`, `timezone`.
+
+  Day boundary follows the station's calendar day (00:00 to
+  24:00 in the resolved timezone).  A show that started
+  yesterday 23:30 and is still on air at 14:00 today counts
+  as the current row; a show starting tomorrow 00:30 is
+  never listed even if `limit` would leave room.  Same
+  `modified_instance` filtering as the Next/Latest Shows
+  widgets so cancelled / moved instances do not leave
+  phantom rows.
+
+  Refresh model: identical to the other widgets — JS poll
+  cadence matches the HTTP cache TTL, with an early refresh
+  fired within ~1 s when the currently-airing row's end
+  passes so the bold highlight migrates to the next row
+  without waiting out the cache TTL.
+
+  Settings page at **Settings → Widgets → On Air Today**
+  hosts: a single empty-state label (default "No shows on
+  air today"), a live preview iframe on a dark backdrop,
+  and a ready-made `<iframe>` embed code block.  No show
+  picker — the widget auto-pulls the live schedule.
+
+  Files:
+    - `application/controllers/EmbedController.php`
+        Two new actions: `onAirTodayAction`,
+        `onAirTodayDataAction`.  Plus private helpers
+        `_prepareOnAirTodayView`, `_resolveOnAirTodayLimit`,
+        `_resolveOnAirTodayWindow`, `_fetchOnAirTodayShows`.
+        New class constant `ON_AIR_TODAY_DEFAULT_LIMIT = 6`.
+    - `application/views/scripts/embed/on-air-today.phtml`
+        Header band + `<ul>` of `<li>` rows with time-of-day
+        cell + name cell (anchor-wrapped when URL non-empty).
+    - `application/controllers/EmbeddablewidgetsController.php`
+        New `onAirTodayAction` settings page.
+    - `application/forms/WidgetOnAirToday.php`
+        One text input (empty-state label) + Save submit.
+    - `application/views/scripts/embeddablewidgets/on-air-today.phtml`
+        Mirror layout of the other widget settings pages.
+    - `application/configs/navigation.php`
+        New submenu entry "On Air Today" under Widgets.
+    - `application/models/Preference.php`
+        New `GetWidgetNoOnAirToday` / `SetWidgetNoOnAirToday`
+        with English-fallback.  Backed by `cc_pref` key
+        `widget_no_on_air_today`.
+    - `public/css/embed/now-playing-widget.css`
+        Extended with `.np-on-air-today` block: header band,
+        list rows with time-left/name-right flex layout,
+        bold current-row treatment, inherit-coloured
+        underlined links.
+    - `public/js/airtime/embed/on-air-today-widget.js`
+        New runtime: per-second `paintTimes()` + periodic
+        `pollOnce()` + early-poll on current-row end
+        crossover for today's view.
+    - `docs/manual/WIDGETS.md` + `de/` + `fr/` + `es/`
+        New §5 "On-Air-Today widget" plus new
+        troubleshooting entry; renumbered downstream
+        sections 6–11.
+
 - **Public Embed Widgets: Next Shows + Latest Shows**
   (operator request 2026-05-22, BACKLOG widget-wave 1 second
   half).  Two new drop-in iframe widgets that list multiple

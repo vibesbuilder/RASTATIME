@@ -28,6 +28,7 @@ un sitio externo.
 | **Now Playing — Track** | `/embed/now-playing-track` | Widget de texto de dos líneas. Pista actual "Artista - Título" + duración restante; próxima pista + horas de inicio-fin. |
 | **Next Shows** | `/embed/next-shows` | Widget de lista. Título del programa + lista cronológica de las próximas instancias de un programa recurrente. |
 | **Latest Shows** | `/embed/latest-shows` | Widget de lista. Título del programa + lista crono-inversa de las últimas instancias pasadas de un programa recurrente. |
+| **On Air Today** | `/embed/on-air-today` | Widget de cuadrícula diaria. Banda de cabecera + programa actual + próximos del día, cada línea "HH:MM – HH:MM   Nombre (enlace)". |
 | **Weekly Program** | `/embed/weekly-program` | (Existente) Vista de cuadrícula de calendario de siete días del programa. |
 | **Audio Player** | `/embed/player` | (Existente) Reproductor de audio HTML5 integrado para el stream público. |
 
@@ -62,7 +63,7 @@ Music Hour                                          10:00 - 11:30
 La cuenta atrás se actualiza cada segundo del lado del
 cliente, así que la pantalla se ve fluida. Los datos
 subyacentes se refrescan cada 60 segundos (configurable
-— vea §6).
+— vea §7).
 
 ### Parámetros URL
 
@@ -156,7 +157,7 @@ vie 24 may                                  06:00 - 08:00
 - **Líneas de lista**: una línea por instancia, `Día DD Mes`
   a la izquierda, `HH:MM - HH:MM` a la derecha
 
-La lista se refresca cada `cache` segundos (vea §6).  Cuando
+La lista se refresca cada `cache` segundos (vea §7).  Cuando
 la línea superior de un widget Next-Shows se desliza al pasado
 (el programa ha empezado), se dispara un refresh anticipado en
 ~1 s para que la línea desaparezca sin esperar el TTL del caché.
@@ -169,7 +170,7 @@ la línea superior de un widget Next-Shows se desliza al pasado
 | `show` | cadena (cc_show.name) | — | Fallback cuando `show_id` está ausente.  Coincidencia exacta sensible a mayúsculas/minúsculas.  `show_id` gana cuando ambos están definidos. |
 | `limit` | entero 1..20 | 4 (next), 3 (latest) | Cuántas instancias listar. |
 | `theme` | `auto`, `dark`, `light` | `auto` | Igual que los widgets de dos líneas — vea §2. |
-| `cache` | entero segundos 10..3600 | `60` | Igual que los widgets de dos líneas — vea §6. |
+| `cache` | entero segundos 10..3600 | `60` | Igual que los widgets de dos líneas — vea §7. |
 | `overflow` | `ellipsis`, `marquee` | `ellipsis` | Comportamiento del título del programa cuando es más ancho que 300 px. |
 | `timezone` | cualquier zona estándar | predeterminado de la emisora | Todas las horas renderizadas en esta zona. |
 
@@ -190,7 +191,95 @@ fantasma en el widget público.
 
 ---
 
-## 5. Personalizar las etiquetas de estado vacío
+## 5. Widget On-Air-Today
+
+Widget compacto de cuadrícula diaria que lista el programa
+de hoy — desde el programa actualmente al aire hasta los
+siguientes programas, tope a medianoche de la emisora para
+que el widget nunca se derrame al programa de mañana.
+
+iframe listo para usar:
+
+```html
+<iframe src="https://su-emisora.example/embed/on-air-today"
+        width="300" height="250" frameborder="0"
+        scrolling="no" style="border: 0; background: transparent;">
+</iframe>
+```
+
+### Lo que muestra
+
+```
+On Air Today                       ← banda de cabecera
+────────────────────────────────
+16:00 - 16:30    Newslink           ← línea actual (negrita)
+16:30 - 17:00    Pages of History (EN)
+17:00 - 17:30    L'Info Chez-Vous
+17:30 - 04:00    Pages d'histoire
+18:30 - 19:00    Choices (EN)
+19:00 - 19:30    L'Info chez vous (FR)
+```
+
+- **Cabecera**: "On Air Today" (o "On Air *<fecha>*" cuando
+  un día específico está fijado vía `?day`)
+- **Líneas**: `HH:MM - HH:MM` a la izquierda, nombre del
+  programa a la derecha.  La línea actualmente al aire se
+  renderiza en **negrita** para que el operador (y el
+  oyente) vea de un vistazo qué línea está en vivo.
+- **Enlaces**: un programa con una **Programa → Editar →
+  URL** configurada renderiza su nombre como enlace
+  cliqueable que abre en una nueva pestaña (`target="_blank"
+  rel="noopener noreferrer"`).  Los programas sin URL
+  renderizan como texto plano.
+
+La lista se refresca cada `cache` segundos (vea §7).  Cuando
+la hora de fin de la línea actual pasa, se dispara un
+refresh anticipado en ~1 s para que el resaltado en negrita
+migre a la línea siguiente sin esperar el TTL del caché.
+
+### Parámetros URL
+
+| Parámetro | Valores | Por defecto | Efecto |
+|---|---|---|---|
+| `limit` | entero 1..20 | `6` | Total de líneas (current + próximas).  Por defecto = 1 current + 5 próximas. |
+| `day` | `YYYY-MM-DD` | hoy | Fija un día específico (en la zona horaria resuelta) para renderizar vistas históricas o futuras.  Cuando se omite o iguala a hoy, el widget filtra los programas ya emitidos; para cualquier otro día lista todos los programas cuyo inicio cae en la ventana de 24 h. |
+| `theme` | `auto`, `dark`, `light` | `auto` | Igual que los otros widgets — vea §2. |
+| `cache` | entero segundos 10..3600 | `60` | Igual que los otros widgets — vea §7. |
+| `overflow` | `ellipsis`, `marquee` | `ellipsis` | Comportamiento de nombres de programa más anchos que 300 px. |
+| `timezone` | cualquier zona IANA | predeterminado de la emisora | Define "hoy" y renderiza todas las horas en esta zona. |
+
+> **Límite del día.** "Hoy" es el día calendario de la
+> emisora — 00:00 a 24:00 en la zona horaria de la emisora
+> (o en `?timezone` cuando se sobrescribe).  Un programa
+> que comenzó ayer 23:30 y aún está al aire a las 14:00 hoy
+> cuenta como la línea actual.  Un programa que comienza
+> mañana 00:30 **no** se lista aunque el `limit` lo
+> permitiría — el tope es duro.
+
+### Instancias modificadas / canceladas
+
+Misma convención que los widgets Next-Shows / Latest-Shows
+— las filas con `cc_show_instances.modified_instance = TRUE`
+se filtran para que una instancia pospuesta / cancelada no
+deje una línea fantasma en el widget público.
+
+### Página de configuración
+
+**Configuración → Widgets → On Air Today** aloja:
+
+- Una sola etiqueta de estado vacío configurable (por
+  defecto `No shows on air today`, fallback al inglés por
+  defecto cuando está vacío).
+- Una vista previa iframe en vivo sobre fondo oscuro.
+- El código `<iframe>` de integración listo-para-usar con
+  la URL absoluta de la emisora pre-rellenada.
+
+Sin selector de programa — el widget extrae automáticamente
+del programa en vivo para toda la jornada de la emisora.
+
+---
+
+## 6. Personalizar las etiquetas de estado vacío
 
 Cuando no hay programa o pista actual / próxima, el widget
 muestra un breve texto placeholder.  Los operadores pueden
@@ -234,7 +323,7 @@ pulse Guardar, y copie el bloque `<iframe ...>` generado con
 
 ---
 
-## 6. El parámetro `cache` — ¿qué TTL?
+## 7. El parámetro `cache` — ¿qué TTL?
 
 El servidor almacena en caché los datos subyacentes
 durante `cache` segundos antes de regenerarlos. El polling
@@ -271,7 +360,7 @@ Valores recomendados:
 
 ---
 
-## 7. Temas
+## 8. Temas
 
 Tres modos, controlados vía el parámetro `theme`:
 
@@ -285,7 +374,7 @@ El fondo del widget es **siempre transparente**.
 
 ---
 
-## 8. Autenticación
+## 9. Autenticación
 
 Ninguna. Los widgets Now-Playing son intencionalmente
 públicos.
@@ -296,14 +385,14 @@ internos.
 
 ---
 
-## 9. Integración cross-origin
+## 10. Integración cross-origin
 
 Los iframes funcionan cross-origin de forma nativa —
 ninguna configuración adicional necesaria.
 
 ---
 
-## 10. Resolución de problemas
+## 11. Resolución de problemas
 
 ### "El widget muestra 'No show on air' pero un programa está corriendo"
 
@@ -327,6 +416,21 @@ La hora de fin del item actual ha pasado pero el widget
 no ha recogido aún los nuevos datos. Auto-recupera en
 ~1 s. Si persiste, el motor de playout puede estar
 detenido — verifique `Get-Service RASTATIME-PLAYOUT`.
+
+### "El widget On-Air-Today está vacío aunque hay programas programados"
+
+- Verifique que *hoy* en la zona horaria de la emisora aún
+  tiene programas próximos: ya de noche el widget queda
+  legítimamente vacío hasta que la próxima medianoche de
+  la emisora pase.  Para mirar hacia adelante, fije un
+  día específico vía `?day=YYYY-MM-DD`.
+- Confirme que los programas realmente estén programados
+  en el Calendario — las instancias canceladas
+  (`modified_instance = TRUE`) se filtran by-design.
+- Si la URL del iframe contiene `?timezone=...`, eso
+  sobrescribe la zona horaria de la emisora para el cálculo
+  de "hoy".  Un embed `?timezone=Asia/Tokyo` mostrará el
+  hoy de Tokio, que puede ya ser mañana en la emisora.
 
 ### "El widget Next / Latest Shows muestra el placeholder vacío"
 

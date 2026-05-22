@@ -88,6 +88,16 @@ $pages[] = [
             'controller' => 'embeddablewidgets',
             'action' => 'next-latest-shows',
         ],
+        // RASTATIME 2026-05-22 — On-Air-Today widget settings.
+        // Single widget, single empty-state label, preview +
+        // embed-code block.  Auto-includes the live schedule
+        // (no show-picker required).
+        [
+            'label' => 'On Air Today',
+            'module' => 'default',
+            'controller' => 'embeddablewidgets',
+            'action' => 'on-air-today',
+        ],
     ],
 ];
 $pages[] = [

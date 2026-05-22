@@ -2,6 +2,15 @@
 
 class EmbedController extends Zend_Controller_Action
 {
+    /**
+     * RASTATIME 2026-05-22 — Default total row count for the
+     * On-Air-Today widget (1 current + 5 upcoming).  Operator can
+     * override at the URL level with ?limit=N (clamped 1..20) and
+     * a developer can change this default without touching the
+     * URL-resolver code.
+     */
+    const ON_AIR_TODAY_DEFAULT_LIMIT = 6;
+
     public function init()
     {
         // translate widgets to station default language
@@ -682,6 +691,305 @@ class EmbedController extends Zend_Controller_Action
             $out[] = [
                 'starts' => $this->_formatTimestamp($r['starts_utc'], $timezone),
                 'ends'   => $this->_formatTimestamp($r['ends_utc'],   $timezone),
+            ];
+        }
+        return $out;
+    }
+
+    /**
+     * RASTATIME 2026-05-22 — On-Air-Today Widget (iframe embed).
+     *
+     * Lists today's schedule: the currently-airing show (if any)
+     * plus the upcoming N shows of the same station day, capped at
+     * the station's midnight so the widget never spills into
+     * tomorrow's programme.  Drop-in iframe:
+     *
+     *   <iframe src=".../embed/on-air-today"
+     *           width="300" height="250" frameborder="0"></iframe>
+     *
+     * URL parameters:
+     *   limit    - 1..20 total rows (current + upcoming).  Default
+     *              ON_AIR_TODAY_DEFAULT_LIMIT (6 = 1 current + 5
+     *              upcoming).
+     *   day      - optional YYYY-MM-DD (in the resolved timezone)
+     *              to render a non-today day.  When omitted (or
+     *              equal to today), the widget filters out shows
+     *              that have already aired; for any other day it
+     *              lists every show whose start falls inside that
+     *              day's 24-hour window.  Modified / cancelled
+     *              instances are excluded in both modes.
+     *   theme    - auto | dark | light  (default auto)
+     *   cache    - 10..3600 s (default 60)
+     *   overflow - ellipsis | marquee  (default ellipsis)
+     *   timezone - any IANA zone (default station)
+     *
+     * Each row carries the show's name + start–end time-of-day +
+     * the show's URL (when configured under Show → Edit → URL) so
+     * the in-template renderer can wrap the name in an <a> tag
+     * that opens in a new tab via target="_blank".
+     */
+    public function onAirTodayAction()
+    {
+        $this->_prepareOnAirTodayView();
+    }
+
+    /**
+     * RASTATIME 2026-05-22 — JSON feed for the On-Air-Today widget.
+     * Polled by the in-iframe JS every cache-TTL seconds; reuses
+     * the same Cache-Control envelope as the iframe HTML.
+     */
+    public function onAirTodayDataAction()
+    {
+        $this->view->layout()->disableLayout();
+        $this->_helper->viewRenderer->setNoRender(true);
+
+        $request = $this->getRequest();
+        $cacheTtl = $this->_resolveCacheTtl();
+        $timezone = $this->_resolveTimezone();
+        $limit    = $this->_resolveOnAirTodayLimit();
+        $window   = $this->_resolveOnAirTodayWindow($timezone, $request->getParam('day'));
+
+        $payload = [
+            'isToday'  => $window['is_today'],
+            'dayLabel' => $window['day_label'],
+            'dayLocal' => $window['day_local'],
+            'shows'    => $this->_fetchOnAirTodayShows($window, $limit, $timezone),
+            'limit'    => $limit,
+            'timezone' => $timezone,
+            // RASTATIME 2026-05-22 — shipped with each refresh so a
+            // label change in Widgets -> On Air Today shows up
+            // within one cache TTL without a manual iframe reload.
+            'labels'   => [
+                'noOnAirToday' => Application_Model_Preference::GetWidgetNoOnAirToday(),
+            ],
+        ];
+
+        header('Content-Type: application/json; charset=utf-8');
+        $this->_emitCacheHeaders($cacheTtl);
+        echo json_encode($payload);
+    }
+
+    /**
+     * Shared view-population for the On-Air-Today action.
+     */
+    private function _prepareOnAirTodayView()
+    {
+        $this->view->layout()->disableLayout();
+
+        $request = $this->getRequest();
+
+        $theme = $request->getParam('theme', 'auto');
+        if (!in_array($theme, ['auto', 'dark', 'light'], true)) {
+            $theme = 'auto';
+        }
+        $this->view->themeClass = 'np-theme-' . $theme;
+
+        $overflow = $request->getParam('overflow', 'ellipsis');
+        if (!in_array($overflow, ['ellipsis', 'marquee'], true)) {
+            $overflow = 'ellipsis';
+        }
+        $this->view->overflowClass = 'np-overflow-' . $overflow;
+
+        $cacheTtl = $this->_resolveCacheTtl();
+        $this->view->cacheTtl = $cacheTtl;
+        $this->_emitCacheHeaders($cacheTtl);
+
+        $timezone = $this->_resolveTimezone();
+        $this->view->timezone = $timezone;
+
+        $limit  = $this->_resolveOnAirTodayLimit();
+        $window = $this->_resolveOnAirTodayWindow(
+            $timezone,
+            $request->getParam('day')
+        );
+        $this->view->limit    = $limit;
+        $this->view->isToday  = $window['is_today'];
+        $this->view->dayLabel = $window['day_label'];
+        $this->view->dayLocal = $window['day_local'];
+        $this->view->shows    = $this->_fetchOnAirTodayShows(
+            $window,
+            $limit,
+            $timezone
+        );
+
+        // RASTATIME 2026-05-22 — operator-configurable empty-state
+        // label.  Defaults to English "No shows on air today" via
+        // the GetWidgetNoOnAirToday English-fallback.
+        $this->view->emptyLabel = Application_Model_Preference::GetWidgetNoOnAirToday();
+
+        $this->view->widgetCss = Assets::url('css/embed/now-playing-widget.css');
+        $this->view->widgetJs  = Assets::url('js/airtime/embed/on-air-today-widget.js');
+
+        // JS-poller URL: carry the day-override if the operator
+        // pinned a specific day, so the refresh fetches the same
+        // payload.
+        $params = ['limit' => $limit];
+        if (!$window['is_today']) {
+            $params['day'] = $window['day_local'];
+        }
+        $cacheParam = $request->getParam('cache');
+        if ($cacheParam !== null) {
+            $params['cache'] = $cacheParam;
+        }
+        $this->view->dataUrl = '/Embed/on-air-today-data?' . http_build_query($params);
+    }
+
+    /**
+     * Read & clamp ?limit=N URL parameter.  Default
+     * ON_AIR_TODAY_DEFAULT_LIMIT (6), hard cap 20 so a hand-crafted
+     * URL cannot fetch a full station-day of half-hour slots.
+     */
+    private function _resolveOnAirTodayLimit()
+    {
+        $raw = (int) $this->getRequest()->getParam(
+            'limit',
+            self::ON_AIR_TODAY_DEFAULT_LIMIT
+        );
+        return max(1, min(20, $raw ?: self::ON_AIR_TODAY_DEFAULT_LIMIT));
+    }
+
+    /**
+     * Resolve the day-window from an optional ?day=YYYY-MM-DD URL
+     * parameter.  Always falls back to "today in $timezone".
+     *
+     * Returns an associative array with:
+     *   start_utc - day-start (00:00 local) converted to UTC,
+     *               formatted as "YYYY-MM-DD HH:MM:SS"
+     *   end_utc   - day-end (next midnight local) converted to UTC
+     *   is_today  - bool, true when day == today in $timezone
+     *   day_local - the chosen day as YYYY-MM-DD (in $timezone)
+     *   day_label - null when is_today, else a human-readable label
+     *               like "Sat, 25 May 2026" for the header
+     */
+    private function _resolveOnAirTodayWindow($timezone, $dayParam)
+    {
+        $tz = new DateTimeZone($timezone);
+
+        // Default = today; only swap to the parameter when it
+        // matches the strict YYYY-MM-DD format AND parses cleanly.
+        $dayStart = new DateTime('today', $tz);
+        if ($dayParam !== null && $dayParam !== ''
+                && preg_match('/^\d{4}-\d{2}-\d{2}$/', $dayParam)) {
+            try {
+                $candidate = new DateTime($dayParam . ' 00:00:00', $tz);
+                $dayStart = $candidate;
+            } catch (Exception $e) {
+                // Bad date — silently fall back to today rather
+                // than 500-ing, since this is a public endpoint
+                // and a typo'd embed URL should still render.
+            }
+        }
+
+        $today    = new DateTime('today', $tz);
+        $isToday  = ($dayStart->format('Y-m-d') === $today->format('Y-m-d'));
+
+        $dayEnd = clone $dayStart;
+        $dayEnd->modify('+1 day');
+
+        $utc = new DateTimeZone('UTC');
+        $startUtc = (clone $dayStart)->setTimezone($utc);
+        $endUtc   = (clone $dayEnd)->setTimezone($utc);
+
+        return [
+            'start_utc' => $startUtc->format('Y-m-d H:i:s'),
+            'end_utc'   => $endUtc->format('Y-m-d H:i:s'),
+            'is_today'  => $isToday,
+            'day_local' => $dayStart->format('Y-m-d'),
+            'day_label' => $isToday ? null : $dayStart->format('D, j M Y'),
+        ];
+    }
+
+    /**
+     * Fetch up to $limit show instances for the given day-window,
+     * joined to cc_show for the display name + show-URL.  Two
+     * filter modes:
+     *
+     *   - today (`is_today === true`): the widget shows the
+     *     currently-airing show plus upcoming shows of the same
+     *     day, so we require `ends > NOW()` (not yet finished)
+     *     AND `starts < day_end` (started before tomorrow's
+     *     midnight).  A show that started yesterday 23:30 and is
+     *     still on air at 14:00 today counts as current.
+     *
+     *   - any other day: the operator pinned a specific date, so
+     *     we list every show whose start falls inside that day's
+     *     24-hour window (regardless of whether it has already
+     *     aired or not yet started).  Useful for historical / next
+     *     week overviews on a station's website.
+     *
+     * Modified-instance rows are excluded in both modes (matches
+     * the convention `Application_Model_Show::getNextShows` uses
+     * on the internal Dashboard) so a cancelled / moved single
+     * instance doesn't leave a phantom row in the widget.
+     */
+    private function _fetchOnAirTodayShows($window, $limit, $timezone)
+    {
+        if ($window['is_today']) {
+            $sql = "SELECT si.starts AS starts_utc,
+                           si.ends   AS ends_utc,
+                           s.id      AS show_id,
+                           s.name    AS show_name,
+                           s.url     AS show_url
+                    FROM cc_show_instances si
+                    JOIN cc_show s ON s.id = si.show_id
+                    WHERE si.modified_instance != TRUE
+                      AND si.ends   > NOW() AT TIME ZONE 'UTC'
+                      AND si.starts < :day_end
+                    ORDER BY si.starts ASC
+                    LIMIT :lim";
+            $params = [
+                ':day_end' => $window['end_utc'],
+                ':lim'     => (int) $limit,
+            ];
+        } else {
+            $sql = "SELECT si.starts AS starts_utc,
+                           si.ends   AS ends_utc,
+                           s.id      AS show_id,
+                           s.name    AS show_name,
+                           s.url     AS show_url
+                    FROM cc_show_instances si
+                    JOIN cc_show s ON s.id = si.show_id
+                    WHERE si.modified_instance != TRUE
+                      AND si.starts >= :day_start
+                      AND si.starts <  :day_end
+                    ORDER BY si.starts ASC
+                    LIMIT :lim";
+            $params = [
+                ':day_start' => $window['start_utc'],
+                ':day_end'   => $window['end_utc'],
+                ':lim'       => (int) $limit,
+            ];
+        }
+
+        $rows = Application_Common_Database::prepareAndExecute(
+            $sql,
+            $params,
+            'all'
+        );
+
+        $nowUtcMs = (int) (microtime(true) * 1000);
+
+        $out = [];
+        foreach ($rows as $r) {
+            $startsIso = $this->_formatTimestamp($r['starts_utc'], $timezone);
+            $endsIso   = $this->_formatTimestamp($r['ends_utc'],   $timezone);
+
+            // Mark "current" = started before now and still ending
+            // in the future.  Lets the template / JS highlight the
+            // airing row without re-evaluating the wall clock in
+            // multiple places.
+            $startsMs = $startsIso ? strtotime($r['starts_utc'] . ' UTC') * 1000 : null;
+            $endsMs   = $endsIso   ? strtotime($r['ends_utc']   . ' UTC') * 1000 : null;
+            $isCurrent = ($startsMs !== null && $endsMs !== null
+                          && $startsMs <= $nowUtcMs && $endsMs > $nowUtcMs);
+
+            $out[] = [
+                'showId'    => (int) $r['show_id'],
+                'name'      => (string) $r['show_name'],
+                'url'       => (string) $r['show_url'],
+                'starts'    => $startsIso,
+                'ends'      => $endsIso,
+                'isCurrent' => $isCurrent,
             ];
         }
         return $out;

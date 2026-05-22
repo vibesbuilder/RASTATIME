@@ -572,6 +572,16 @@ class Application_Model_Preference
     }
     public static function SetWidgetNoLatestShows($v)     { self::setValue('widget_no_latest_shows', (string) $v); }
 
+    // RASTATIME 2026-05-22 — On-Air-Today widget empty-state label.
+    // Shown when neither a currently-airing show nor any upcoming
+    // shows fall within the station day's remaining window.
+    public static function GetWidgetNoOnAirToday()
+    {
+        $v = self::getValue('widget_no_on_air_today');
+        return $v === '' ? 'No shows on air today' : $v;
+    }
+    public static function SetWidgetNoOnAirToday($v)      { self::setValue('widget_no_on_air_today', (string) $v); }
+
     public static function SetPhone($phone)
     {
         self::setValue('phone', $phone);

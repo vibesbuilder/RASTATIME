@@ -28,6 +28,7 @@ Sie sie auf einer externen Seite einbetten.
 | **Now Playing — Track** | `/embed/now-playing-track` | Zwei-Zeilen-Text-Widget. Aktueller Track "Künstler - Titel" + verbleibende Dauer; nächster Track + Start-End-Zeiten. |
 | **Next Shows** | `/embed/next-shows` | Listen-Widget. Sendungstitel + chronologische Liste der kommenden Instanzen einer wiederkehrenden Sendung. |
 | **Latest Shows** | `/embed/latest-shows` | Listen-Widget. Sendungstitel + umgekehrt-chronologische Liste der letzten Instanzen einer wiederkehrenden Sendung. |
+| **On Air Today** | `/embed/on-air-today` | Tages-Grid-Widget. Header-Band + heutige laufende + kommende Sendungen, jede Zeile "HH:MM – HH:MM   Sendungsname (Link)". |
 | **Weekly Program** | `/embed/weekly-program` | (Bestehend) Sieben-Tage-Kalenderraster der Stations-Programmübersicht. |
 | **Audio Player** | `/embed/player` | (Bestehend) Eingebetteter HTML5-Audio-Player für den öffentlichen Stream. |
 
@@ -62,7 +63,7 @@ Music Hour                                          10:00 - 11:30
 Der Countdown aktualisiert sich jede Sekunde clientseitig,
 sodass die Anzeige flüssig wirkt. Die zugrunde liegenden
 Daten werden alle 60 Sekunden aktualisiert (konfigurierbar
-— siehe §6).
+— siehe §7).
 
 ### URL-Parameter
 
@@ -157,7 +158,7 @@ Fr. 24. Mai                                 06:00 - 08:00
 - **Listenzeilen**: eine Zeile pro Instanz, `Wochentag DD Mon`
   links, `HH:MM - HH:MM` rechts
 
-Die Liste aktualisiert sich alle `cache` Sekunden (siehe §6).
+Die Liste aktualisiert sich alle `cache` Sekunden (siehe §7).
 Wenn die oberste Zeile eines Next-Shows-Widgets in die
 Vergangenheit rutscht (die Sendung hat tatsächlich begonnen),
 feuert innerhalb von ~1 s ein Early-Refresh, damit die Zeile
@@ -171,7 +172,7 @@ ohne Abwarten der Cache-TTL verschwindet.
 | `show` | String (cc_show.name) | — | Fallback, wenn `show_id` fehlt.  Case-sensitive exakter Treffer.  `show_id` gewinnt, wenn beide gesetzt sind. |
 | `limit` | Ganzzahl 1..20 | 4 (next), 3 (latest) | Wie viele Instanzen aufgelistet werden. |
 | `theme` | `auto`, `dark`, `light` | `auto` | Wie die Zwei-Zeilen-Widgets — siehe §2. |
-| `cache` | Ganzzahl Sekunden 10..3600 | `60` | Wie die Zwei-Zeilen-Widgets — siehe §6. |
+| `cache` | Ganzzahl Sekunden 10..3600 | `60` | Wie die Zwei-Zeilen-Widgets — siehe §7. |
 | `overflow` | `ellipsis`, `marquee` | `ellipsis` | Verhalten des Sendungstitels, wenn breiter als 300 px. |
 | `timezone` | beliebige Standard-Zeitzone | Stations-Standard | Alle Zeiten in dieser Zone gerendert. |
 
@@ -193,7 +194,96 @@ Episode hinterlässt also keinen Phantom-Eintrag im
 
 ---
 
-## 5. Empty-State-Labels anpassen
+## 5. On-Air-Today Widget
+
+Kompaktes Tages-Grid-Widget, das das heutige Programm
+auflistet — von der aktuell laufenden Sendung bis zu den
+nächsten paar Sendungen, gedeckelt an Stations-Mitternacht,
+damit das Widget nie ins morgige Programm überläuft.
+
+Drop-in-iframe:
+
+```html
+<iframe src="https://ihre-station.example/embed/on-air-today"
+        width="300" height="250" frameborder="0"
+        scrolling="no" style="border: 0; background: transparent;">
+</iframe>
+```
+
+### Was es anzeigt
+
+```
+On Air Today                       ← Header-Band
+────────────────────────────────
+16:00 - 16:30    Newslink           ← aktuelle Zeile (fett)
+16:30 - 17:00    Pages of History (EN)
+17:00 - 17:30    L'Info Chez-Vous
+17:30 - 04:00    Pages d'histoire
+18:30 - 19:00    Choices (EN)
+19:00 - 19:30    L'Info chez vous (FR)
+```
+
+- **Header**: "On Air Today" (oder "On Air *<Datum>*", wenn
+  ein bestimmter Tag via `?day` gepinnt ist)
+- **Zeilen**: `HH:MM - HH:MM` links, Sendungsname rechts.
+  Die aktuell laufende Zeile wird **fett** gerendert, damit
+  Operator (und Hörer) auf einen Blick sieht, welche Zeile
+  gerade live ist.
+- **Links**: eine Sendung mit konfigurierter **Sendung →
+  Bearbeiten → URL** rendert ihren Namen als anklickbaren
+  Link, der in einem neuen Tab öffnet (`target="_blank"
+  rel="noopener noreferrer"`).  Sendungen ohne URL rendern
+  als Plain-Text.
+
+Die Liste aktualisiert sich alle `cache` Sekunden (siehe §7).
+Wenn die Endzeit der aktuell laufenden Zeile passiert, feuert
+innerhalb von ~1 s ein Early-Refresh, damit das Bold-Highlight
+zur nächsten Zeile wandert, ohne die Cache-TTL abzuwarten.
+
+### URL-Parameter
+
+| Parameter | Werte | Standard | Effekt |
+|---|---|---|---|
+| `limit` | Ganzzahl 1..20 | `6` | Gesamt-Zeilen (current + kommend).  Default = 1 current + 5 kommend. |
+| `day` | `YYYY-MM-DD` | heute | Pinnt einen bestimmten Tag (in der aufgelösten Zeitzone), um historische oder zukünftige Tagesübersichten zu rendern.  Wenn weggelassen oder gleich heute, filtert das Widget bereits ausgestrahlte Sendungen aus; für jeden anderen Tag listet es alle Sendungen, deren Start ins 24-Stunden-Fenster fällt. |
+| `theme` | `auto`, `dark`, `light` | `auto` | Wie die anderen Widgets — siehe §2. |
+| `cache` | Ganzzahl Sekunden 10..3600 | `60` | Wie die anderen Widgets — siehe §7. |
+| `overflow` | `ellipsis`, `marquee` | `ellipsis` | Verhalten bei Sendungsnamen breiter als 300 px. |
+| `timezone` | beliebige IANA-Zone | Stations-Standard | Definiert "heute" und rendert alle Zeiten in dieser Zone. |
+
+> **Tagesgrenze.** "Heute" ist der Stations-Kalendertag —
+> 00:00 bis 24:00 in der Stations-Zeitzone (oder in
+> `?timezone`, falls überschrieben).  Eine Sendung, die
+> gestern 23:30 startete und um 14:00 heute noch läuft, gilt
+> als aktuelle Zeile.  Eine Sendung, die morgen 00:30
+> startet, wird **nicht** gelistet, auch wenn das `limit`
+> sonst Platz lassen würde — die Deckelung ist hart.
+
+### Geänderte / abgesagte Instanzen
+
+Gleiche Konvention wie bei den Next-Shows / Latest-Shows
+Widgets — Zeilen mit `cc_show_instances.modified_instance =
+TRUE` werden herausgefiltert, damit eine einzelne
+verschobene / abgesagte Instanz keinen Phantom-Eintrag im
+öffentlichen Widget hinterlässt.
+
+### Einstellungs-Seite
+
+**Einstellungen → Widgets → On Air Today** enthält:
+
+- Ein einziges konfigurierbares Empty-State-Label (Default
+  `No shows on air today`, fällt auf englischen Default
+  zurück bei leerem Feld).
+- Eine Live-Vorschau-iframe auf dunklem Backdrop.
+- Den vorgefertigten `<iframe>`-Embed-Code mit absoluter
+  Stations-URL.
+
+Kein Show-Picker — das Widget zieht automatisch aus dem
+Live-Schedule für den ganzen Stations-Tag.
+
+---
+
+## 6. Empty-State-Labels anpassen
 
 Wenn keine aktuelle oder kommende Show / Track vorhanden ist,
 zeigt das Widget einen kurzen Platzhalter-Text. Operator können
@@ -239,7 +329,7 @@ URL eingebaut.
 
 ---
 
-## 6. Der `cache`-Parameter — welche TTL ist richtig?
+## 7. Der `cache`-Parameter — welche TTL ist richtig?
 
 Der Server cached die zugrunde liegenden Daten für `cache`
 Sekunden, bevor er sie regeneriert. Die JS-Abfrage im
@@ -278,7 +368,7 @@ Empfohlene Werte:
 
 ---
 
-## 7. Themes
+## 8. Themes
 
 Drei Modi, gesteuert über den `theme`-URL-Parameter:
 
@@ -305,7 +395,7 @@ und sich auf den transparenten Hintergrund zu verlassen:
 
 ---
 
-## 8. Authentifizierung
+## 9. Authentifizierung
 
 Keine. Die Now-Playing-Widgets sind absichtlich
 öffentlich: Der ganze Zweck ist, dass jeder Besucher auf
@@ -330,7 +420,7 @@ Sie stattdessen das passwortgeschützte
 
 ---
 
-## 9. Cross-Origin-Einbettung
+## 10. Cross-Origin-Einbettung
 
 Iframes funktionieren cross-origin von Haus aus — keine
 zusätzliche Konfiguration nötig. Die Homepage Ihrer
@@ -344,7 +434,7 @@ vollständig.
 
 ---
 
-## 10. Fehlerbehebung
+## 11. Fehlerbehebung
 
 ### "Widget zeigt 'No show on air', aber eine Sendung läuft"
 
@@ -383,6 +473,22 @@ erholt sich innerhalb von ~1 s dank des Early-Poll-
 Mechanismus. Wenn es länger anhält, ist möglicherweise
 die Playout-Engine gestoppt — prüfen Sie
 `Get-Service RASTATIME-PLAYOUT`.
+
+### "On-Air-Today Widget ist leer, obwohl Sendungen geplant sind"
+
+- Prüfen Sie, ob *heute* in der Stations-Zeitzone noch
+  kommende Sendungen hat: spät nachts wird das Widget
+  legitim leer, bis die nächste Stations-Mitternacht
+  vorüberzieht.  Um vorauszuschauen, pinnen Sie einen
+  bestimmten Tag via `?day=YYYY-MM-DD`.
+- Verifizieren Sie, dass die Sendungen tatsächlich im
+  Kalender geplant sind — abgesagte Instanzen
+  (`modified_instance = TRUE`) werden by-design
+  herausgefiltert.
+- Wenn die iframe-URL `?timezone=...` enthält, überschreibt
+  das die Stations-Zeitzone für die "heute"-Berechnung.
+  Ein `?timezone=Asia/Tokyo`-Embed zeigt Tokios Heute,
+  was an der Station bereits morgen sein kann.
 
 ### "Next / Latest Shows Widget zeigt den Empty-Placeholder"
 

@@ -260,3 +260,126 @@ html, body {
     color: var(--np-fg-muted);
     font-style: italic;
 }
+
+/* ─────────────────────────────────────────────────────────────
+ *  RASTATIME 2026-05-22 — On-Air-Today widget.
+ *
+ *  Layout mirrors the operator's screenshot:
+ *
+ *     ┌────────────────────────────┐
+ *     │ On Air Today           ▔   │  ← accent-tinted header
+ *     ├────────────────────────────┤
+ *     │ 16:00 -      Newslink      │
+ *     │ 16:30                      │  ← time-of-day left, name right
+ *     │ 16:30 -      Pages of His… │     current row in bold
+ *     │ 17:00                      │
+ *     │ ...                        │
+ *     └────────────────────────────┘
+ *
+ *  Shares the .np-widget base above (theme variables, transparent
+ *  background, system-font stack, 300 px width cap).
+ * ───────────────────────────────────────────────────────────── */
+
+.np-widget.np-on-air-today {
+    /*  Slightly increased line-height so the rows have visual
+        breathing room similar to the screenshot.  */
+    line-height: 1.4;
+}
+
+.np-widget.np-on-air-today .np-header {
+    /*  Accent band at the top — uses the muted variable rather
+        than a hard-coded colour so it blends with whichever theme
+        the embedding page uses.  Mirrors the screenshot's "On air
+        today" caption with a horizontal underline.  */
+    color: var(--np-fg);
+    font-weight: 600;
+    font-size: 1.05em;
+    padding-bottom: 4px;
+    margin-bottom: 6px;
+    border-bottom: 1px solid var(--np-fg-muted);
+}
+
+.np-widget.np-on-air-today .np-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.np-widget.np-on-air-today .np-on-air-row {
+    /*  Each row: time-of-day on the left, show name on the right.
+        Uses the same flex skeleton as .np-list-row in the shows-
+        list widget so the marquee / ellipsis overflow handling
+        works identically.  */
+    color: var(--np-fg);
+    display: flex;
+    align-items: baseline;
+    gap: 0.8em;
+    font-size: 0.95em;
+    padding: 3px 0;
+    border-top: 1px dotted var(--np-fg-muted);
+    overflow: hidden;
+}
+
+.np-widget.np-on-air-today .np-on-air-row:first-child {
+    /*  No top-border on the first row — the header already
+        provides the dividing line above it.  */
+    border-top: 0;
+    padding-top: 0;
+}
+
+.np-widget.np-on-air-today .np-on-air-row.np-row-current {
+    /*  The currently-airing row reads as the primary item: bold
+        weight + slightly larger text.  Matches the np-row-current
+        treatment in the two-line widget so an operator looking
+        at multiple widgets side-by-side immediately sees which
+        row is live.  */
+    font-weight: 700;
+}
+
+.np-widget.np-on-air-today .np-on-air-time {
+    /*  Time-of-day cell: fixed width-ish, left-aligned, monospace-
+        ish digits via tabular-nums so "16:00 - 16:30" doesn't
+        wobble visually between rows.  */
+    flex: 0 0 auto;
+    min-width: 6.5em;
+    color: var(--np-fg);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.np-widget.np-on-air-today .np-on-air-name {
+    /*  Show-name cell: takes the remaining width.  When the name
+        overflows the 300 px widget body the marquee / ellipsis
+        rules on the base .np-name selector handle it.  */
+    flex: 1 1 auto;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.np-widget.np-on-air-today .np-on-air-name a {
+    /*  Links inherit the row's text colour so the link rendering
+        feels native to the widget's theme rather than a fixed
+        bright blue that fights with the embedding page.  Subtle
+        underline keeps the affordance.  */
+    color: inherit;
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 2px;
+}
+
+.np-widget.np-on-air-today .np-on-air-name a:hover {
+    /*  Pop the underline on hover so the operator gets a clear
+        cue that the name is clickable.  */
+    text-decoration-thickness: 2px;
+}
+
+.np-widget.np-on-air-today .np-list-empty {
+    /*  Placeholder row when the day has no remaining shows (or
+        when looking at a future day that hasn't been scheduled
+        yet).  Muted-italic, matches the other widgets.  */
+    color: var(--np-fg-muted);
+    font-style: italic;
+    padding: 6px 0;
+}
