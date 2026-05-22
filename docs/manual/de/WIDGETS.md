@@ -29,7 +29,7 @@ Sie sie auf einer externen Seite einbetten.
 | **Next Shows** | `/embed/next-shows` | Listen-Widget. Sendungstitel + chronologische Liste der kommenden Instanzen einer wiederkehrenden Sendung. |
 | **Latest Shows** | `/embed/latest-shows` | Listen-Widget. Sendungstitel + umgekehrt-chronologische Liste der letzten Instanzen einer wiederkehrenden Sendung. |
 | **On Air Today** | `/embed/on-air-today` | Tages-Grid-Widget. Header-Band + heutige laufende + kommende Sendungen, jede Zeile "HH:MM – HH:MM   Sendungsname (Link)". |
-| **Weekly Program** | `/embed/weekly-program` | (Bestehend) Sieben-Tage-Kalenderraster der Stations-Programmübersicht. |
+| **Weekly Schedule** | `/embed/weekly-program` | Sieben-Tage-Tab-Widget. Header mit ◀ / ▶ Wochen-Navigation + Datums-Range-Label; Tagestabs; Zeilenliste pro Tab mit HH:MM – HH:MM + Sendungsname (Link). Optionales Hintergrundbild via `?bg=URL`. |
 | **Audio Player** | `/embed/player` | (Bestehend) Eingebetteter HTML5-Audio-Player für den öffentlichen Stream. |
 
 Weitere Widgets sind geplant (siehe [BACKLOG.md](../../../BACKLOG.md)).
@@ -286,7 +286,82 @@ Live-Schedule für den ganzen Stations-Tag.
 
 ---
 
-## 6. Empty-State-Labels anpassen
+## 6. Weekly Schedule Widget
+
+Ein 7-Tage-Tab-Widget — der modernisierte Ersatz für das
+Legacy-jQuery+Handlebars-Schedule-Embed.  Kompakter Header mit
+◀ / ▶ Navigation, Wochentag-Tabs und Zeilenliste der Sendungen
+pro Tag.
+
+Drop-in-iframe:
+
+```html
+<iframe src="https://ihre-station.example/embed/weekly-program"
+        width="400" height="340" frameborder="0"
+        scrolling="no" style="border: 0; background: transparent;">
+</iframe>
+```
+
+### Was es anzeigt
+
+```
+◀  21 May – 27 May 2026                ▶            ← Header-Band
+MON  TUE  WED  THU  FRI  SAT  SUN                   ← Tagestabs
+ 21   22   23   24   25   26   27                      (heute eingekreist)
+─────────────────────────────────────────────────
+06:00 - 08:00    Morgensendung                      ← Zeilenliste
+08:00 - 10:00    Newslink                              (pro aktivem Tab)
+...
+```
+
+- **Header-Band**: ◀ Button → vorige Woche, Wochen-Range-Label
+  zentriert (z.B. "21 May – 27 May 2026"; Wochen über
+  Jahresgrenzen zeigen das Jahr zweimal), ▶ Button →
+  nächste Woche.  Klick auf einen Button aktualisiert den
+  `week_offset`-Parameter der iframe-URL in-place via
+  `history.pushState` und lädt neu.
+- **Tagestabs**: 7 Tabs (Mo … So in der Visitor-Locale).
+  Heutiger Tab ist mit einem subtilen Pill-Ring um die
+  Tagesnummer dekoriert.  Klick auf einen Tab tauscht das
+  sichtbare Panel — kein Netzwerk-Round-Trip.
+- **Zeilenliste**: pro Tab eine Zeile pro Sendung.  Zeit
+  links, Sendungsname rechts.  Namen mit konfigurierter
+  `cc_show.url` rendern als Click-Through-Links, die in
+  einem neuen Tab öffnen.
+
+### URL-Parameter
+
+| Parameter | Werte | Standard | Effekt |
+|---|---|---|---|
+| `week_offset` | Ganzzahl -52..52 | `0` | Pinnt das gerenderte Fenster auf ±N Wochen vom heutigen rollenden 7-Tage-Block.  Default 0 = heute + 6 kommende Tage.  Server-clamped auf ±52. |
+| `theme` | `auto`, `dark`, `light` | `auto` | Wie die anderen Widgets — siehe §2. |
+| `cache` | Ganzzahl Sekunden 10..3600 | `60` | Wie die anderen Widgets — siehe §8. |
+| `overflow` | `ellipsis`, `marquee` | `ellipsis` | Verhalten bei Sendungsnamen breiter als 400 px. |
+| `link` | `underline`, `plain` | `plain` | Show-Name-Link-Darstellung (siehe On-Air-Today Widget §5 für Details). |
+| `bg` | URL eines Bildes | keine | Optionales Hintergrundbild (cover-positioniert) statt transparenter Fülle.  Operator hostet das Bild selbst. |
+| `timezone` | beliebige IANA-Zone | Stations-Standard | Alle Zeiten in dieser Zone gerendert. |
+
+> **Breite.** Das Weekly-Schedule-Widget ist **400 px breit**
+> (breiter als die anderen Wave-1-Widgets — es braucht mehr
+> Horizontalraum pro Zeile für Zeit + Name ohne Truncation).
+> Setzen Sie die iframe-Breite im einbettenden HTML auf 400
+> für bündige Darstellung.
+
+### Geänderte / abgesagte Instanzen
+
+Gleiche Konvention wie bei den anderen Widgets —
+`modified_instance = TRUE` werden herausgefiltert.
+
+### Einstellungs-Seite
+
+**Einstellungen → Widgets → Weekly Schedule** enthält die
+Empty-State-Label-Anpassung ("No shows scheduled on this day"
+default), eine Live-Vorschau-iframe auf dunklem Backdrop und
+den vorgefertigten `<iframe>`-Embed-Code.
+
+---
+
+## 7. Empty-State-Labels anpassen
 
 Wenn keine aktuelle oder kommende Show / Track vorhanden ist,
 zeigt das Widget einen kurzen Platzhalter-Text. Operator können
@@ -332,7 +407,7 @@ URL eingebaut.
 
 ---
 
-## 7. Der `cache`-Parameter — welche TTL ist richtig?
+## 8. Der `cache`-Parameter — welche TTL ist richtig?
 
 Der Server cached die zugrunde liegenden Daten für `cache`
 Sekunden, bevor er sie regeneriert. Die JS-Abfrage im
@@ -371,7 +446,7 @@ Empfohlene Werte:
 
 ---
 
-## 8. Themes
+## 9. Themes
 
 Drei Modi, gesteuert über den `theme`-URL-Parameter:
 
@@ -398,7 +473,7 @@ und sich auf den transparenten Hintergrund zu verlassen:
 
 ---
 
-## 9. Authentifizierung
+## 10. Authentifizierung
 
 Keine. Die Now-Playing-Widgets sind absichtlich
 öffentlich: Der ganze Zweck ist, dass jeder Besucher auf
@@ -423,7 +498,7 @@ Sie stattdessen das passwortgeschützte
 
 ---
 
-## 10. Cross-Origin-Einbettung
+## 11. Cross-Origin-Einbettung
 
 Iframes funktionieren cross-origin von Haus aus — keine
 zusätzliche Konfiguration nötig. Die Homepage Ihrer
@@ -437,7 +512,7 @@ vollständig.
 
 ---
 
-## 11. Fehlerbehebung
+## 12. Fehlerbehebung
 
 ### "Widget zeigt 'No show on air', aber eine Sendung läuft"
 

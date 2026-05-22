@@ -1,109 +1,79 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
+<?php
+// RASTATIME 2026-05-22 — Weekly Schedule Widget v2.
+//
+// Modernised replacement for the upstream jQuery 1.8.3 + Handlebars
+// template.  Vanilla JS, transparent background, Wave-1 widget
+// conventions throughout.
+//
+// Layout:
+//
+//   ┌─────────────────────────────────────────────────┐
+//   │ ◀  21 May – 27 May 2026               ▶         │  ← header
+//   │ Mon  Tue  Wed  Thu  Fri  Sat  Sun                │  ← day tabs
+//   ├─────────────────────────────────────────────────┤
+//   │ 06:00 – 08:00   Morning Show                     │  ← rows
+//   │ 08:00 – 10:00   Newslink (link, link=plain)      │
+//   │ ...                                              │
+//   └─────────────────────────────────────────────────┘
+//
+// View variables (all populated by EmbedController::weeklyProgramAction):
+//   schedule_data   - JSON dump of WidgetHelper::getWeekInfoV2(weekOffset)
+//   weekOffset      - integer ±N from current week
+//   themeClass      - 'np-theme-auto' / 'np-theme-dark' / 'np-theme-light'
+//   overflowClass   - 'np-overflow-ellipsis' / 'np-overflow-marquee'
+//   linkClass       - 'np-link-plain' / 'np-link-underline'
+//   timezone        - resolved IANA zone
+//   currentDayOfMonth - "today" day-number for the tab highlight
+//   cacheTtl        - integer seconds for the JS refresh cadence
+//   backgroundUrl   - optional URL for the cover-background image
+//   emptyLabel      - operator-configurable per-day empty-state text
+//   widgetCss / widgetJs - asset URLs
 
+$bgStyle = '';
+if (!empty($this->backgroundUrl)) {
+    // CSS-variable approach lets the stylesheet switch between
+    // transparent fill (default) and image-cover via the variable's
+    // presence/absence — no extra body class needed.
+    $bgStyle = '--np-bg-image: url(\''
+             . addslashes(htmlspecialchars($this->backgroundUrl, ENT_QUOTES, 'UTF-8'))
+             . '\');';
+}
+?>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-    <link rel="stylesheet" href="<?php echo $this->css ?>" type="text/css">
-    <script src="<?php echo $this->jquery ?>" type="text/javascript"></script>
-    <link href='https://fonts.googleapis.com/css?family=Roboto:400,100,300,700' rel='stylesheet' type='text/css'>
-    <script src="/js/libs/handlebars.min.js"></script>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title><?php echo _('Weekly Schedule'); ?></title>
+    <link rel="stylesheet" href="<?php echo $this->widgetCss; ?>">
 </head>
+<body class="np-widget np-weekly-schedule <?php echo htmlspecialchars($this->themeClass, ENT_QUOTES, 'UTF-8'); ?> <?php echo htmlspecialchars($this->overflowClass, ENT_QUOTES, 'UTF-8'); ?> <?php echo htmlspecialchars($this->linkClass, ENT_QUOTES, 'UTF-8'); ?>"
+      data-widget="weekly-schedule"
+      data-week-offset="<?php echo (int) $this->weekOffset; ?>"
+      data-current-dom="<?php echo htmlspecialchars($this->currentDayOfMonth, ENT_QUOTES, 'UTF-8'); ?>"
+      data-cache-ttl="<?php echo (int) $this->cacheTtl; ?>"
+      data-timezone="<?php echo htmlspecialchars($this->timezone, ENT_QUOTES, 'UTF-8'); ?>"
+      data-label-empty="<?php echo htmlspecialchars($this->emptyLabel, ENT_QUOTES, 'UTF-8'); ?>"
+      <?php if ($bgStyle): ?>style="<?php echo $bgStyle; ?>"<?php endif; ?>>
 
-<body>
-    <div id="wpBody" class="schedule tab_content current">
-        <script id="wpWidget" type="text/x-handlebars-template">
-            <ul class="tabs">
-            {{#each this}}
-            <li>
-                {{dayOfWeek}}<span>{{dayOfMonth}}</span>
-            </li>
-            {{/each}}
-        </ul>
-
-        <div class="schedule_content">
-            {{#each this}}
-            <div id="day-{{dayOfMonth}}" class="schedule_item">
-                {{#if (noShowsCheck this.shows)}}
-                <div class="row empty-schedule"><?php echo _('Looks like there are no shows scheduled on this day.') ?></div>
-                {{else}}
-                {{#each shows}}
-                <div class="row">
-                    <div class="time_grid">{{show_start_hour}} - {{show_end_hour}}</div>
-                    <div class="name_grid">{{{name}}}</div>
-                </div>
-                {{/each}}
-                {{/if}}
-            </div>
-            {{/each}}
-        </div>
-
-        <div class="weekly-schedule-widget-footer" <?php if ($this->widgetStyle == "premium") echo "style='display:none'"; ?>>
-            <a href="<?php echo PRODUCT_SITE_URL; ?>" target="_blank"><?php printf(_('Powered by %s'), PRODUCT_NAME); ?></a>
-        </div>
-    </script>
+    <div class="np-ws-header">
+        <button type="button" class="np-ws-nav" data-np="prev-week" aria-label="<?php echo _('Previous week'); ?>">&#x25C0;</button>
+        <span class="np-ws-range" data-np="range"><?php /* date range rendered by JS once the page boots */ ?></span>
+        <button type="button" class="np-ws-nav" data-np="next-week" aria-label="<?php echo _('Next week'); ?>">&#x25B6;</button>
     </div>
 
-    <script type="text/javascript">
-        let importSchedule = <?php echo $this->schedule_data; ?>; // Object prepared in JSON, w/o API call
-        let cleanSchedule = [];
+    <ul class="np-ws-tabs" data-np="tabs">
+        <?php /* day tabs rendered by JS — placeholders kept empty so the markup is small even before JS boots */ ?>
+    </ul>
 
-        // Insert shows into correct locations in importShows array (work-around for API v.1)
-        let importShows = importSchedule["shows"];
-        importShows.forEach(element => {
-            // Convert timestamps to JS (sec -> millisec)
-            var start_date = new Date(element.starts_timestamp * 1000);
-            var end_date = new Date(element.ends_timestamp * 1000);
-            // Check date of show so we know where to assign it to
-            var format_start_date = start_date.getFullYear() + "-" + (start_date.getMonth() + 1) + "-" + start_date.getDate();
-            // Assign show to correct location
-            if (importSchedule["weekDays"][format_start_date] !== undefined) {
-                importSchedule["weekDays"][format_start_date]["shows"].push({
-                    "show_start_hour": start_date.toLocaleTimeString([], {
-                        hour: 'numeric',
-                        minute: 'numeric'
-                    }),
-                    "show_end_hour": end_date.toLocaleTimeString([], {
-                        hour: 'numeric',
-                        minute: 'numeric'
-                    }),
-                    "name": element.name
-                });
-            }
-        });
+    <div class="np-ws-content" data-np="content">
+        <?php /* day-of-week panels rendered by JS */ ?>
+    </div>
 
-        // Re-arraying data into a Handlebars-friendly format
-        for (var i = 0; i <= 6; i++) {
-            cleanSchedule.push(Object.values(importSchedule.weekDays)[i]);
-        }
+    <script id="np-ws-data" type="application/json">
+<?php echo $this->schedule_data; ?>
+</script>
 
-        // Checker
-        Handlebars.registerHelper('noShowsCheck', function(obj) {
-            return obj.length == 0;
-        });
-
-        // Templating with Handlebars.js
-        var wpWidget = document.querySelector('#wpWidget').innerHTML;
-        var wpTemplate = Handlebars.compile(wpWidget);
-        var compiledHTML = wpTemplate(cleanSchedule);
-        document.querySelector('#wpBody').innerHTML = compiledHTML;
-
-        // Tabs logic
-        $(document).ready(function() {
-            //initialize first day to active
-            $('.tabs').find("li").first().addClass("active");
-            $('.schedule_content').find('.schedule_item').first().addClass("active");
-
-            $('.tabs li').click(function() {
-                //var tab_id = $(this).attr('data-tab');
-                var tab_id = "day-" + $(this).find('span').text();
-
-                $('.tabs li').removeClass('active');
-                $('.schedule_item').removeClass('active');
-
-                $(this).addClass('active');
-                $("#" + tab_id).addClass('active');
-            });
-        });
-    </script>
+    <script src="<?php echo $this->widgetJs; ?>" defer></script>
 </body>
-
 </html>

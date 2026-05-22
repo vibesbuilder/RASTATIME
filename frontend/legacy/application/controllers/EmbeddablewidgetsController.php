@@ -25,16 +25,37 @@ class EmbeddableWidgetsController extends Zend_Controller_Action
         }
     }
 
+    /**
+     * RASTATIME 2026-05-22 — Settings page for the modernised
+     * Weekly Schedule widget (the v2 iframe — see EmbedController
+     * ::weeklyProgramAction).
+     *
+     * Empty-state label form + live preview iframe (dark backdrop)
+     * + ready-made embed-code snippet.  Replaces the upstream
+     * preview-only page.  Doesn't gate on the public-API toggle —
+     * the v2 widget is self-contained and doesn't go through
+     * /api/live-info.
+     */
     public function scheduleAction()
     {
         Zend_Layout::getMvcInstance()->assign('parent_page', 'Widgets');
 
-        $apiEnabled = Application_Model_Preference::GetAllow3rdPartyApi();
+        $request = $this->getRequest();
+        $form = new Application_Form_WidgetWeeklySchedule();
 
-        if (!$apiEnabled) {
-            $this->view->weekly_schedule_error_msg = _('To use the embeddable weekly schedule widget you must:<br><br>
-            Enable the Public LibreTime API under Settings -> Preferences');
+        if ($request->isPost() && $form->isValid($request->getPost())) {
+            Application_Model_Preference::SetWidgetNoWeeklyShows(
+                $form->getValue('widget_no_weekly_shows')
+            );
+            $this->view->saved = true;
+        } else {
+            $form->populate([
+                'widget_no_weekly_shows' => Application_Model_Preference::GetWidgetNoWeeklyShows(),
+            ]);
         }
+
+        $this->view->form = $form;
+        $this->view->publicUrl = Config::getPublicUrl();
     }
 
     /**

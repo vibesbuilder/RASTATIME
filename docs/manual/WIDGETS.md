@@ -28,7 +28,7 @@ them on an external site.
 | **Next Shows** | `/embed/next-shows` | List widget. Show title + chronological list of upcoming instances of one recurring show. |
 | **Latest Shows** | `/embed/latest-shows` | List widget. Show title + reverse-chronological list of most recent past instances of one recurring show. |
 | **On Air Today** | `/embed/on-air-today` | Day-grid widget. Header band + today's current + upcoming shows, each row "HH:MM – HH:MM   Show name (link)". |
-| **Weekly Program** | `/embed/weekly-program` | (Existing) Seven-day calendar grid view of the station schedule. |
+| **Weekly Schedule** | `/embed/weekly-program` | Seven-day tab widget. Header with ◀ / ▶ week-navigation + date-range label; day tabs; per-tab row list with HH:MM – HH:MM + show name (link). Optional background-image via `?bg=URL`. |
 | **Audio Player** | `/embed/player` | (Existing) Inline HTML5 audio player for the public stream. |
 
 More widgets are planned (see [BACKLOG.md](../../BACKLOG.md)).
@@ -272,7 +272,84 @@ for the whole station day automatically.
 
 ---
 
-## 6. Customising the empty-state labels
+## 6. Weekly Schedule widget
+
+A 7-day tab widget — the modernised replacement for the legacy
+jQuery + Handlebars schedule embed.  Compact header with
+◀ / ▶ navigation, day-of-week tabs, and a per-day row list of
+shows.
+
+Drop-in iframe:
+
+```html
+<iframe src="https://your-station.example/embed/weekly-program"
+        width="400" height="340" frameborder="0"
+        scrolling="no" style="border: 0; background: transparent;">
+</iframe>
+```
+
+### What it shows
+
+```
+◀  21 May – 27 May 2026                ▶            ← header band
+MON  TUE  WED  THU  FRI  SAT  SUN                   ← day tabs
+ 21   22   23   24   25   26   27                      (today is circled)
+─────────────────────────────────────────────────
+06:00 - 08:00    Morning Show                       ← row list
+08:00 - 10:00    Newslink                              (per active tab)
+...
+```
+
+- **Header band**: ◀ button → previous week, week-range label
+  centred (e.g. "21 May – 27 May 2026"; year-boundary windows
+  show the year twice), ▶ button → next week.  Clicking a
+  button updates the iframe URL's `week_offset` parameter in
+  place via `history.pushState` and reloads — browser cache
+  deduplicates back-and-forth navigation.
+- **Day tabs**: 7 tabs (Mon … Sun in the visitor's locale).
+  Today's tab is decorated with a subtle pill ring on the
+  day-of-month number.  Clicking a tab swaps the visible
+  panel — no network round-trip.
+- **Row list**: per tab, one row per scheduled show.  Time
+  on the left, show name on the right.  Names linked to a
+  configured `cc_show.url` render as click-through links
+  opening in a new tab.
+
+### URL parameters
+
+| Param | Values | Default | Effect |
+|---|---|---|---|
+| `week_offset` | integer -52..52 | `0` | Pin the rendered window to ±N weeks from today's rolling 7-day block.  Default 0 = today + 6 upcoming days.  Server-clamped at ±52. |
+| `theme` | `auto`, `dark`, `light` | `auto` | Same as the other widgets — see §2. |
+| `cache` | integer seconds 10..3600 | `60` | Same as the other widgets — see §7. |
+| `overflow` | `ellipsis`, `marquee` | `ellipsis` | Behaviour of show names wider than the 400 px widget body. |
+| `link` | `underline`, `plain` | `plain` | Show-name link rendering (see the On-Air-Today widget §5 for details — same convention). |
+| `bg` | URL of an image | none | Optional background image (cover-positioned) instead of the default transparent fill.  Operator hosts the image themselves — typically on the station's own site.  Cross-origin image loads work fine for CSS backgrounds. |
+| `timezone` | any IANA zone | station default | All times rendered in this zone. |
+
+> **Width.** The Weekly Schedule widget body is **400 px wide**
+> (wider than the other Wave-1 widgets — it consumes more
+> horizontal space per row to fit the time + name without
+> truncation).  Set the iframe width to 400 in the embedding
+> HTML for a flush fit.
+
+### Modified / cancelled instances
+
+Same convention as the other widgets — rows with
+`cc_show_instances.modified_instance = TRUE` are filtered out
+so a moved / cancelled instance doesn't leave a phantom row.
+
+### Settings page
+
+**Settings → Widgets → Weekly Schedule** hosts the empty-state
+label customisation ("No shows scheduled on this day" by
+default), a live preview iframe on a dark backdrop, and the
+ready-made `<iframe>` embed code with the station's absolute
+URL pre-filled.
+
+---
+
+## 7. Customising the empty-state labels
 
 When there is no current or upcoming show / track, the widget
 falls back to a short placeholder text.  Operators can customise
@@ -316,7 +393,7 @@ Save, and copy the generated `<iframe ...>` block with the
 
 ---
 
-## 7. The `cache` parameter — what is the right TTL?
+## 8. The `cache` parameter — what is the right TTL?
 
 The server caches the underlying data for `cache` seconds
 before regenerating it. The JS poll inside the iframe
@@ -352,7 +429,7 @@ Recommended values:
 
 ---
 
-## 8. Theming
+## 9. Theming
 
 Three modes, controlled via the `theme` URL parameter:
 
@@ -380,7 +457,7 @@ transparent background:
 
 ---
 
-## 9. Authentication
+## 10. Authentication
 
 None. The Now-Playing widgets are intentionally public:
 the whole point is that any visitor on your station's
@@ -403,7 +480,7 @@ which DJ is on air right now), open the password-protected
 
 ---
 
-## 10. Cross-origin embedding
+## 11. Cross-origin embedding
 
 Iframes work cross-origin out of the box — no extra
 configuration needed. Your station's homepage can embed
@@ -415,7 +492,7 @@ and ran into CORS errors, switching to the iframe approach
 
 ---
 
-## 11. Troubleshooting
+## 12. Troubleshooting
 
 ### "Widget shows 'No show on air' but a show is running"
 

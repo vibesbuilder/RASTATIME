@@ -582,6 +582,16 @@ class Application_Model_Preference
     }
     public static function SetWidgetNoOnAirToday($v)      { self::setValue('widget_no_on_air_today', (string) $v); }
 
+    // RASTATIME 2026-05-22 — Weekly-Schedule widget empty-state
+    // label.  Shown per-day-tab when the displayed week has no
+    // shows scheduled for that particular day.
+    public static function GetWidgetNoWeeklyShows()
+    {
+        $v = self::getValue('widget_no_weekly_shows');
+        return $v === '' ? 'No shows scheduled on this day' : $v;
+    }
+    public static function SetWidgetNoWeeklyShows($v)     { self::setValue('widget_no_weekly_shows', (string) $v); }
+
     public static function SetPhone($phone)
     {
         self::setValue('phone', $phone);

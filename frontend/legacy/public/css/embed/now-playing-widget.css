@@ -432,3 +432,224 @@ html, body {
     font-style: italic;
     padding: 6px 0;
 }
+
+/* ─────────────────────────────────────────────────────────────
+ *  RASTATIME 2026-05-22 — Weekly Schedule widget v2.
+ *
+ *  Modernised replacement for the upstream jQuery + Handlebars
+ *  template.  Inherits the .np-widget base (theme variables,
+ *  transparent background, system-font stack, width cap) and adds
+ *  a header with ◀ / ▶ week-navigation buttons, a horizontal day-
+ *  tab strip, and a per-day show list.
+ *
+ *  Layout:
+ *
+ *     ┌─────────────────────────────────────────┐
+ *     │ ◀  21 May – 27 May 2026          ▶      │  ← header band
+ *     ├─────────────────────────────────────────┤
+ *     │ Mon  Tue  Wed  Thu  Fri  Sat  Sun       │  ← day tabs
+ *     ├─────────────────────────────────────────┤
+ *     │ 06:00 – 08:00   Morning Show            │
+ *     │ 08:00 – 10:00   Newslink                │
+ *     │ ...                                     │
+ *     └─────────────────────────────────────────┘
+ * ───────────────────────────────────────────────────────────── */
+
+.np-widget.np-weekly-schedule {
+    /*  Weekly schedule is the only widget that consumes vertical
+        space proportional to the number of shows per day, so we
+        give it a more generous max-width than the other widgets
+        — 400 px reads cleanly without making the rows feel
+        cramped, and still fits common sidebar layouts.  */
+    max-width: 400px;
+    line-height: 1.5;
+    font-size: 1em;
+
+    /*  Optional background image, controlled by --np-bg-image
+        which the template sets inline when ?bg=URL is present.
+        Without the variable, the body stays transparent and
+        blends into whatever the embedding page looks like.  */
+    background-image: var(--np-bg-image, none);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.np-widget.np-weekly-schedule .np-ws-header {
+    /*  Top band: ◀ button, week-range label, ▶ button on the
+        right.  Flex with space-between keeps the buttons pinned
+        to the edges and the label centred regardless of week
+        length (some January / December windows span the
+        year boundary, which makes the label string longer).  */
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5em;
+    padding-bottom: 6px;
+    margin-bottom: 6px;
+    border-bottom: 1px solid var(--np-fg-muted);
+    color: var(--np-fg);
+    font-weight: 700;
+    font-size: 1em;
+}
+
+.np-widget.np-weekly-schedule .np-ws-nav {
+    /*  Bare-bones button styling so the widget reads as part of
+        the embedding page rather than as a chrome-styled UI.
+        Color uses --np-fg so the hover state survives any theme.  */
+    background: transparent;
+    border: 0;
+    padding: 0 4px;
+    color: var(--np-fg);
+    cursor: pointer;
+    font-size: 1.1em;
+    line-height: 1;
+    flex: 0 0 auto;
+}
+
+.np-widget.np-weekly-schedule .np-ws-nav:hover {
+    opacity: 0.7;
+}
+
+.np-widget.np-weekly-schedule .np-ws-range {
+    /*  Centred date-range label, e.g. "21 May – 27 May 2026".  */
+    flex: 1 1 auto;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+}
+
+.np-widget.np-weekly-schedule .np-ws-tabs {
+    /*  Horizontal strip of 7 day-of-week tabs.  list-style off,
+        gap controlled by flex; each tab is a vertical mini-stack
+        of "Mon" + "12" — same convention as the original widget
+        so existing operators recognise the layout.  */
+    display: flex;
+    list-style: none;
+    margin: 0 0 6px 0;
+    padding: 0;
+    gap: 0.25em;
+}
+
+.np-widget.np-weekly-schedule .np-ws-tab {
+    flex: 1 1 0;
+    text-align: center;
+    padding: 4px 0;
+    cursor: pointer;
+    color: var(--np-fg-muted);
+    border-bottom: 2px solid transparent;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.np-widget.np-weekly-schedule .np-ws-tab .np-ws-tab-dow {
+    /*  Mon / Tue / Wed label — small, slightly smaller than the
+        day number below so the day-of-month reads as the primary
+        identifier.  */
+    display: block;
+    font-size: 0.8em;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.np-widget.np-weekly-schedule .np-ws-tab .np-ws-tab-dom {
+    /*  Day-of-month number — primary visual element of the tab.  */
+    display: block;
+    font-size: 1em;
+    margin-top: 1px;
+}
+
+.np-widget.np-weekly-schedule .np-ws-tab.np-ws-tab-active {
+    /*  Active tab: full --np-fg colour, underline accent in the
+        same colour so the active state survives any theme.  */
+    color: var(--np-fg);
+    border-bottom-color: var(--np-fg);
+}
+
+.np-widget.np-weekly-schedule .np-ws-tab.np-ws-tab-today {
+    /*  Today indicator: slightly heavier weight + accent-coloured
+        ring around the day-of-month number.  Doesn't override the
+        active-tab underline; both states can be visible together
+        (e.g. on first paint, when the active tab IS today).  */
+    color: var(--np-fg);
+}
+
+.np-widget.np-weekly-schedule .np-ws-tab.np-ws-tab-today .np-ws-tab-dom {
+    /*  Pill background-ish ring via box-shadow inset so we don't
+        need extra DOM.  --np-fg-muted gives a subtle, theme-
+        compatible accent.  */
+    box-shadow: 0 0 0 1px var(--np-fg-muted);
+    border-radius: 999px;
+    padding: 0 6px;
+    display: inline-block;
+}
+
+.np-widget.np-weekly-schedule .np-ws-content {
+    /*  Container for the 7 day-panels — only one is visible at a
+        time (toggled via .np-ws-day-active by the JS).  Min-
+        height keeps the iframe from jumping when switching
+        between a day with many shows and one with none.  */
+    min-height: 120px;
+}
+
+.np-widget.np-weekly-schedule .np-ws-day {
+    display: none;
+}
+
+.np-widget.np-weekly-schedule .np-ws-day.np-ws-day-active {
+    display: block;
+}
+
+.np-widget.np-weekly-schedule .np-ws-row {
+    /*  One row per show: HH:MM-HH:MM on the left, show name on
+        the right.  Same flex skeleton as the other list-shaped
+        widgets so the marquee / ellipsis overflow rules apply.  */
+    color: var(--np-fg);
+    display: flex;
+    align-items: baseline;
+    gap: 0.8em;
+    padding: 6px 0;
+    border-top: 1px dotted var(--np-fg-muted);
+    overflow: hidden;
+}
+
+.np-widget.np-weekly-schedule .np-ws-row:first-child {
+    border-top: 0;
+}
+
+.np-widget.np-weekly-schedule .np-ws-row-time {
+    flex: 0 0 auto;
+    min-width: 6.5em;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    font-weight: 700;
+}
+
+.np-widget.np-weekly-schedule .np-ws-row-name {
+    flex: 1 1 auto;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: 700;
+}
+
+.np-widget.np-weekly-schedule .np-ws-row-name a {
+    /*  Same link treatment as the On-Air-Today widget: inherit
+        the row colour, underline only when ?link=underline.  */
+    color: inherit;
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 2px;
+}
+
+.np-widget.np-weekly-schedule.np-link-plain .np-ws-row-name a,
+.np-widget.np-weekly-schedule.np-link-plain .np-ws-row-name a:hover {
+    text-decoration: none;
+}
+
+.np-widget.np-weekly-schedule .np-ws-empty {
+    color: var(--np-fg-muted);
+    font-style: italic;
+    padding: 12px 0;
+    text-align: center;
+}

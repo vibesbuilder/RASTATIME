@@ -65,7 +65,7 @@ der Operator das Signal gibt.
 - ✅ **DONE** On-Air-Today Widget mit Header-Band, Time-Range + Show-Name pro Zeile, current-Row bold, Show-Links (target="_blank"). Code-Default 6 Zeilen (`ON_AIR_TODAY_DEFAULT_LIMIT`), URL-Override `?limit=N` (1..20), optionaler `?day=YYYY-MM-DD` für historische/zukünftige Tagesübersichten. Station-Kalendertag hart gedeckelt — nie morgige Shows. Settings-Submenu **Widgets → On Air Today** mit 1 Empty-State-Label + Preview + Embed-Code.
 
 **Welle 2 (~1.5 Wochen):**
-- Weekly Program pimpen: ±2-Wochen-Buttons, Link-Embedding ohne Farb-Change, LibreTime-Branding raus, optionales BG-Bild (~250 LoC)
+- ✅ **DONE** Weekly Schedule modernisiert (Wave-1-Style): ±N-Wochen-Navigation (`?week_offset`), Link-Embedding mit `?link=plain|underline` (default plain), LibreTime-Branding raus, optionales BG-Bild via `?bg=URL`, `?theme=auto|dark|light`, vollständiger Vanilla-JS-Stack ohne jQuery/Handlebars. Settings-Submenu **Widgets → Weekly Schedule** mit Label + Preview + Embed-Code.
 - Weekly Program → Day / 2-Day / Week View-Switcher mit Header (~450 LoC)
 
 **Welle 3 (~1 Woche):**

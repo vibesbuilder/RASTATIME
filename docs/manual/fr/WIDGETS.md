@@ -30,7 +30,7 @@ les intégrer sur un site externe.
 | **Next Shows** | `/embed/next-shows` | Widget liste. Titre de l'émission + liste chronologique des prochaines instances d'une émission récurrente. |
 | **Latest Shows** | `/embed/latest-shows` | Widget liste. Titre de l'émission + liste chronologique inverse des dernières instances passées d'une émission récurrente. |
 | **On Air Today** | `/embed/on-air-today` | Widget grille-du-jour. Bande d'en-tête + émission actuelle + prochaines du jour, chaque ligne "HH:MM – HH:MM   Nom (lien)". |
-| **Weekly Program** | `/embed/weekly-program` | (Existant) Vue grille calendrier sept jours du planning. |
+| **Weekly Schedule** | `/embed/weekly-program` | Widget à onglets sur sept jours. En-tête avec ◀ / ▶ navigation hebdomadaire + libellé de plage de dates ; onglets de jour ; liste de lignes par onglet avec HH:MM – HH:MM + nom d'émission (lien). Image de fond optionnelle via `?bg=URL`. |
 | **Audio Player** | `/embed/player` | (Existant) Lecteur audio HTML5 intégré pour le stream public. |
 
 D'autres widgets sont prévus (voir [BACKLOG.md](../../../BACKLOG.md)).
@@ -286,7 +286,80 @@ journée station.
 
 ---
 
-## 6. Personnaliser les libellés d'état vide
+## 6. Widget Weekly Schedule
+
+Un widget à onglets sur 7 jours — le remplacement modernisé
+de l'ancien embed jQuery + Handlebars.  En-tête compact avec
+navigation ◀ / ▶, onglets jour-de-semaine, et liste de lignes
+par jour.
+
+iframe prêt à l'emploi :
+
+```html
+<iframe src="https://votre-station.example/embed/weekly-program"
+        width="400" height="340" frameborder="0"
+        scrolling="no" style="border: 0; background: transparent;">
+</iframe>
+```
+
+### Ce qu'il affiche
+
+```
+◀  21 May – 27 May 2026                ▶            ← bande d'en-tête
+MON  TUE  WED  THU  FRI  SAT  SUN                   ← onglets
+ 21   22   23   24   25   26   27                      (aujourd'hui encerclé)
+─────────────────────────────────────────────────
+06:00 - 08:00    Matinale                            ← liste de lignes
+08:00 - 10:00    Newslink                              (par onglet actif)
+...
+```
+
+- **Bande d'en-tête** : ◀ bouton → semaine précédente,
+  libellé de plage hebdomadaire centré (p.ex.
+  "21 May – 27 May 2026"), ▶ bouton → semaine suivante.
+  Cliquer met à jour le paramètre `week_offset` de l'URL
+  iframe en place via `history.pushState` et recharge.
+- **Onglets jour** : 7 onglets (Lun … Dim dans la locale du
+  visiteur).  L'onglet d'aujourd'hui est décoré d'un anneau
+  pill subtil autour du numéro du jour.
+- **Liste de lignes** : par onglet, une ligne par émission.
+  Heure à gauche, nom à droite.  Les noms liés à une
+  `cc_show.url` rendent comme liens ouvrant dans un
+  nouvel onglet.
+
+### Paramètres URL
+
+| Paramètre | Valeurs | Défaut | Effet |
+|---|---|---|---|
+| `week_offset` | entier -52..52 | `0` | Épingle la fenêtre à ±N semaines du bloc roulant de 7 jours d'aujourd'hui.  Server-clamped à ±52. |
+| `theme` | `auto`, `dark`, `light` | `auto` | Identique aux autres widgets — voir §2. |
+| `cache` | entier secondes 10..3600 | `60` | Identique aux autres widgets — voir §8. |
+| `overflow` | `ellipsis`, `marquee` | `ellipsis` | Comportement des noms d'émission plus larges que 400 px. |
+| `link` | `underline`, `plain` | `plain` | Rendu des liens de noms d'émission (voir On-Air-Today §5). |
+| `bg` | URL d'une image | aucune | Image de fond optionnelle (cover-positionnée) au lieu du remplissage transparent par défaut. |
+| `timezone` | tout fuseau IANA | défaut station | Toutes les heures rendues dans cette zone. |
+
+> **Largeur.** Le widget Weekly Schedule fait **400 px de large**
+> (plus large que les autres widgets Wave-1 — il consomme plus
+> d'espace horizontal par ligne pour l'heure + le nom sans
+> troncation).
+
+### Instances modifiées / annulées
+
+Même convention que les autres widgets —
+`modified_instance = TRUE` sont filtrées.
+
+### Page Paramètres
+
+**Paramètres → Widgets → Weekly Schedule** héberge la
+personnalisation du libellé d'état vide ("No shows scheduled
+on this day" par défaut), un aperçu iframe en direct sur
+fond sombre, et le code `<iframe>` d'intégration prêt à
+l'emploi.
+
+---
+
+## 7. Personnaliser les libellés d'état vide
 
 Quand il n'y a pas d'émission ou de piste actuelle / suivante,
 le widget affiche un court texte placeholder.  Les opérateurs
@@ -332,7 +405,7 @@ généré avec `show_id` déjà intégré dans l'URL.
 
 ---
 
-## 7. Le paramètre `cache` — quel TTL ?
+## 8. Le paramètre `cache` — quel TTL ?
 
 Le serveur met en cache les données sous-jacentes pendant
 `cache` secondes avant de les regénérer. Le polling JS
@@ -370,7 +443,7 @@ Valeurs recommandées :
 
 ---
 
-## 8. Thèmes
+## 9. Thèmes
 
 Trois modes, contrôlés via le paramètre `theme` :
 
@@ -385,7 +458,7 @@ se fonde dans la page d'intégration.
 
 ---
 
-## 9. Authentification
+## 10. Authentification
 
 Aucune. Les widgets Now-Playing sont intentionnellement
 publics : tout l'intérêt est que n'importe quel visiteur
@@ -398,14 +471,14 @@ IDs internes.
 
 ---
 
-## 10. Intégration cross-origin
+## 11. Intégration cross-origin
 
 Les iframes fonctionnent cross-origin nativement — aucune
 configuration supplémentaire nécessaire.
 
 ---
 
-## 11. Dépannage
+## 12. Dépannage
 
 ### "Le widget affiche 'No show on air' mais une émission tourne"
 

@@ -75,11 +75,31 @@ class WidgetHelper
      *
      * *** This function does no HTML encoding. It is up to the caller to escape or encode the data appropriately.
      *
+     * RASTATIME 2026-05-22 — `$weekOffset` (default 0) shifts the
+     * rendered 7-day window by N weeks: positive = future weeks,
+     * negative = past weeks.  When 0, behaviour is identical to
+     * the pre-2026-05-22 version (rolling 7-day block starting
+     * today).  Used by the modernised /embed/weekly-program
+     * widget to support the ◀ / ▶ navigation buttons without a
+     * separate API endpoint.
+     *
+     * @param int $weekOffset Number of weeks to shift the window
+     *
      * @return array
      */
-    public static function getWeekInfoV2()
+    public static function getWeekInfoV2($weekOffset = 0)
     {
         $weekStartDateTime = new DateTime('now', new DateTimeZone(Application_Model_Preference::GetTimezone()));
+
+        // Apply the week offset BEFORE we set up the date range so
+        // the rest of the function works identically for week 0,
+        // ±1, ±2, etc.  Operator-typical range is ±4 weeks; we
+        // don't clamp here because the EmbedController already
+        // does that at URL-parameter level.
+        if ((int) $weekOffset !== 0) {
+            $sign = $weekOffset > 0 ? '+' : '-';
+            $weekStartDateTime->modify($sign . abs((int) $weekOffset) . ' weeks');
+        }
 
         $result = [];
 

@@ -29,7 +29,7 @@ un sitio externo.
 | **Next Shows** | `/embed/next-shows` | Widget de lista. Título del programa + lista cronológica de las próximas instancias de un programa recurrente. |
 | **Latest Shows** | `/embed/latest-shows` | Widget de lista. Título del programa + lista crono-inversa de las últimas instancias pasadas de un programa recurrente. |
 | **On Air Today** | `/embed/on-air-today` | Widget de cuadrícula diaria. Banda de cabecera + programa actual + próximos del día, cada línea "HH:MM – HH:MM   Nombre (enlace)". |
-| **Weekly Program** | `/embed/weekly-program` | (Existente) Vista de cuadrícula de calendario de siete días del programa. |
+| **Weekly Schedule** | `/embed/weekly-program` | Widget de pestañas de siete días. Cabecera con ◀ / ▶ navegación semanal + etiqueta de rango de fechas; pestañas de día; lista de filas por pestaña con HH:MM – HH:MM + nombre del programa (enlace). Imagen de fondo opcional vía `?bg=URL`. |
 | **Audio Player** | `/embed/player` | (Existente) Reproductor de audio HTML5 integrado para el stream público. |
 
 Más widgets están planificados (vea [BACKLOG.md](../../../BACKLOG.md)).
@@ -283,7 +283,80 @@ del programa en vivo para toda la jornada de la emisora.
 
 ---
 
-## 6. Personalizar las etiquetas de estado vacío
+## 6. Widget Weekly Schedule
+
+Un widget de pestañas de 7 días — el reemplazo modernizado
+del embed jQuery + Handlebars heredado.  Cabecera compacta
+con navegación ◀ / ▶, pestañas día-de-semana, y lista de
+filas por día.
+
+iframe listo para usar:
+
+```html
+<iframe src="https://su-emisora.example/embed/weekly-program"
+        width="400" height="340" frameborder="0"
+        scrolling="no" style="border: 0; background: transparent;">
+</iframe>
+```
+
+### Lo que muestra
+
+```
+◀  21 May – 27 May 2026                ▶            ← banda de cabecera
+MON  TUE  WED  THU  FRI  SAT  SUN                   ← pestañas
+ 21   22   23   24   25   26   27                      (hoy circulado)
+─────────────────────────────────────────────────
+06:00 - 08:00    Mañanas                            ← lista de filas
+08:00 - 10:00    Newslink                              (por pestaña activa)
+...
+```
+
+- **Banda de cabecera**: ◀ botón → semana anterior, etiqueta
+  de rango semanal centrada (p.ej. "21 May – 27 May 2026"),
+  ▶ botón → semana siguiente.  Hacer clic actualiza el
+  parámetro `week_offset` de la URL iframe en su sitio vía
+  `history.pushState` y recarga.
+- **Pestañas día**: 7 pestañas (Lun … Dom en la locale del
+  visitante).  La pestaña de hoy está decorada con un anillo
+  pill sutil alrededor del número del día.
+- **Lista de filas**: por pestaña, una fila por programa.
+  Hora a la izquierda, nombre a la derecha.  Los nombres
+  enlazados a una `cc_show.url` renderizan como enlaces
+  que abren en una nueva pestaña.
+
+### Parámetros URL
+
+| Parámetro | Valores | Por defecto | Efecto |
+|---|---|---|---|
+| `week_offset` | entero -52..52 | `0` | Fija la ventana a ±N semanas del bloque rodante de 7 días de hoy.  Server-clamped a ±52. |
+| `theme` | `auto`, `dark`, `light` | `auto` | Igual que los otros widgets — vea §2. |
+| `cache` | entero segundos 10..3600 | `60` | Igual que los otros widgets — vea §8. |
+| `overflow` | `ellipsis`, `marquee` | `ellipsis` | Comportamiento de nombres de programa más anchos que 400 px. |
+| `link` | `underline`, `plain` | `plain` | Renderizado de enlaces de nombres de programa (vea On-Air-Today §5). |
+| `bg` | URL de una imagen | ninguna | Imagen de fondo opcional (cover-posicionada) en lugar del relleno transparente por defecto. |
+| `timezone` | cualquier zona IANA | predeterminado de la emisora | Todas las horas renderizadas en esta zona. |
+
+> **Ancho.** El widget Weekly Schedule mide **400 px de ancho**
+> (más ancho que los otros widgets Wave-1 — consume más
+> espacio horizontal por fila para hora + nombre sin
+> truncación).
+
+### Instancias modificadas / canceladas
+
+Misma convención que los otros widgets —
+`modified_instance = TRUE` se filtran.
+
+### Página de configuración
+
+**Configuración → Widgets → Weekly Schedule** aloja la
+personalización de la etiqueta de estado vacío ("No shows
+scheduled on this day" por defecto), un iframe de vista
+previa en vivo sobre fondo oscuro, y el código `<iframe>`
+de integración listo-para-usar.
+
+---
+
+## 7. Personalizar las etiquetas de estado vacío
 
 Cuando no hay programa o pista actual / próxima, el widget
 muestra un breve texto placeholder.  Los operadores pueden
@@ -327,7 +400,7 @@ pulse Guardar, y copie el bloque `<iframe ...>` generado con
 
 ---
 
-## 7. El parámetro `cache` — ¿qué TTL?
+## 8. El parámetro `cache` — ¿qué TTL?
 
 El servidor almacena en caché los datos subyacentes
 durante `cache` segundos antes de regenerarlos. El polling
@@ -364,7 +437,7 @@ Valores recomendados:
 
 ---
 
-## 8. Temas
+## 9. Temas
 
 Tres modos, controlados vía el parámetro `theme`:
 
@@ -378,7 +451,7 @@ El fondo del widget es **siempre transparente**.
 
 ---
 
-## 9. Autenticación
+## 10. Autenticación
 
 Ninguna. Los widgets Now-Playing son intencionalmente
 públicos.
@@ -389,14 +462,14 @@ internos.
 
 ---
 
-## 10. Integración cross-origin
+## 11. Integración cross-origin
 
 Los iframes funcionan cross-origin de forma nativa —
 ninguna configuración adicional necesaria.
 
 ---
 
-## 11. Resolución de problemas
+## 12. Resolución de problemas
 
 ### "El widget muestra 'No show on air' pero un programa está corriendo"
 

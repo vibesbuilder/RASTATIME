@@ -1057,29 +1057,96 @@ class EmbedController extends Zend_Controller_Action
         return $out;
     }
 
+    /**
+     * RASTATIME 2026-05-22 — Weekly Schedule Widget v2 (iframe embed).
+     *
+     * Modernised replacement for the upstream jQuery 1.8.3 + Handlebars
+     * widget.  Drop-in iframe (height ~340 to comfortably fit a 7-day
+     * tab block + header):
+     *
+     *     <iframe src=".../embed/weekly-program?theme=dark"
+     *             width="100%" height="340" frameborder="0"></iframe>
+     *
+     * URL parameters (Wave-1 convention):
+     *   theme       - auto | dark | light  (default auto)
+     *   cache       - 10..3600 s server-side TTL  (default 60)
+     *   overflow    - ellipsis | marquee  (default ellipsis)
+     *   link        - plain | underline  (default plain — matches
+     *                 the On-Air-Today widget's polished default)
+     *   timezone    - any IANA zone (default station)
+     *   week_offset - -52..52 weeks (default 0).  ◀ / ▶ buttons in
+     *                 the rendered widget edit the URL in-place to
+     *                 navigate the window without a backend round-
+     *                 trip until the next refresh.
+     *   bg          - optional URL of a background image.  When set,
+     *                 the widget body renders the image as a cover
+     *                 background instead of the default transparent
+     *                 fill.  Operator hosts the image themselves
+     *                 (typically on the station's own site).
+     */
     public function weeklyProgramAction()
     {
         $this->view->layout()->disableLayout();
 
         $request = $this->getRequest();
 
-        $this->view->angular = Config::getPublicUrl() . Assets::url('js/libs/angular.min.js');
-        $widgetStyle = $request->getParam('style');
-        if ($widgetStyle == 'premium') {
-            $this->view->widgetStyle = 'premium';
-            $this->view->css = Assets::url('css/embed/weekly-schedule-widget.css');
-        } else {
-            $this->view->widgetStyle = 'basic';
-            $this->view->css = Assets::url('css/embed/weekly-schedule-widget-basic.css');
+        $theme = $request->getParam('theme', 'auto');
+        if (!in_array($theme, ['auto', 'dark', 'light'], true)) {
+            $theme = 'auto';
         }
-        $this->view->jquery = Assets::url('js/libs/jquery-1.8.3.min.js');
+        $this->view->themeClass = 'np-theme-' . $theme;
 
-        $weeklyScheduleData = WidgetHelper::getWeekInfoV2();
+        $overflow = $request->getParam('overflow', 'ellipsis');
+        if (!in_array($overflow, ['ellipsis', 'marquee'], true)) {
+            $overflow = 'ellipsis';
+        }
+        $this->view->overflowClass = 'np-overflow-' . $overflow;
 
+        // Link style follows the On-Air-Today widget's polish: plain
+        // (no underline) is the default for a clean text layout; the
+        // hyperlink affordance can be opted back in with ?link=underline.
+        $linkStyle = $request->getParam('link', 'plain');
+        if (!in_array($linkStyle, ['underline', 'plain'], true)) {
+            $linkStyle = 'plain';
+        }
+        $this->view->linkClass = 'np-link-' . $linkStyle;
+
+        $cacheTtl = $this->_resolveCacheTtl();
+        $this->view->cacheTtl = $cacheTtl;
+        $this->_emitCacheHeaders($cacheTtl);
+
+        $timezone = $this->_resolveTimezone();
+        $this->view->timezone = $timezone;
+
+        // Week-offset: pin the rendered window to ±N weeks from
+        // today's rolling 7-day block.  Clamped at ±52 weeks
+        // because the schedule database typically doesn't carry
+        // recurring shows that far out and the operator-typical
+        // range is ±4 weeks.
+        $rawOffset = (int) $request->getParam('week_offset', 0);
+        $weekOffset = max(-52, min(52, $rawOffset));
+        $this->view->weekOffset = $weekOffset;
+
+        $weeklyScheduleData = WidgetHelper::getWeekInfoV2($weekOffset);
         $this->view->schedule_data = json_encode($weeklyScheduleData);
 
-        $currentDay = new DateTime('now', new DateTimeZone(Application_Model_Preference::GetTimezone()));
-        // day of the month without leading zeros (1 to 31)
+        // Optional background-image URL — the template wires it
+        // through a CSS variable so the stylesheet can switch
+        // between transparent fill and cover-image without any
+        // class juggling.
+        $bgUrl = (string) $request->getParam('bg', '');
+        $this->view->backgroundUrl = $bgUrl;
+
+        // Operator-configurable empty-state label.  Defaults to the
+        // legacy English string so an upgrading operator sees no
+        // visible change until they customise it.
+        $this->view->emptyLabel = Application_Model_Preference::GetWidgetNoWeeklyShows();
+
+        // Day-of-month for the "today" highlight in the tab strip.
+        $currentDay = new DateTime('now', new DateTimeZone($timezone));
         $this->view->currentDayOfMonth = $currentDay->format('j');
+
+        $this->view->widgetCss = Assets::url('css/embed/now-playing-widget.css');
+        $this->view->widgetJs  = Assets::url('js/airtime/embed/weekly-schedule-widget.js');
     }
 }

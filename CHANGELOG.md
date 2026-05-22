@@ -9,6 +9,75 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Public Embed Widget: Weekly Schedule v2**
+  (operator request 2026-05-22, BACKLOG widget-wave 2 first
+  half).  Modernised replacement for the upstream jQuery 1.8.3
+  + Handlebars schedule embed.  Same `/embed/weekly-program`
+  endpoint, fully Wave-1-styled internals:
+    * Vanilla JS (no jQuery, no Handlebars).
+    * Transparent background blends into the embedding page.
+    * Wave-1 URL parameters: `theme` (auto/dark/light),
+      `cache` (10..3600 s), `overflow` (ellipsis/marquee),
+      `link` (plain/underline, default plain), `timezone`.
+    * New `?week_offset=-52..52` parameter for ±N week
+      navigation.  ◀ / ▶ buttons in the widget header
+      update the URL parameter in-place via
+      `history.pushState` and reload.
+    * New `?bg=URL` parameter — optional cover-positioned
+      background image (operator hosts the image themselves,
+      typically on the station's own site).
+    * Show names linked to a `cc_show.url` render as
+      click-through links opening in a new tab.
+    * "Powered by LibreTime" footer removed.
+    * Operator-configurable empty-state label "No shows
+      scheduled on this day" (per-day-tab placeholder when
+      a particular day has no scheduled shows).
+
+  Settings page at **Settings → Widgets → Weekly Schedule**
+  hosts the empty-state label, a live preview on a dark
+  backdrop, and a ready-made embed-code snippet.
+
+  Width is 400 px (wider than the 340 px now-playing /
+  on-air-today widgets — the row layout needs more horizontal
+  space for the HH:MM-HH:MM cell + the show-name cell without
+  truncation).
+
+  Files:
+    - `application/controllers/EmbedController.php` —
+      modernised `weeklyProgramAction` reuses the existing
+      `_resolveCacheTtl` / `_resolveTimezone` / `_emitCacheHeaders`
+      helpers, threads new view-vars for the Wave-1 conventions.
+    - `application/common/WidgetHelper.php` — new optional
+      `$weekOffset` parameter on `getWeekInfoV2`; behaviour
+      identical to pre-2026-05-22 when offset is 0.
+    - `application/views/scripts/embed/weekly-program.phtml` —
+      complete rewrite: vanilla JS shell, JSON `<script>`
+      data block, transparent BG, optional `--np-bg-image`
+      inline CSS variable.
+    - `application/controllers/EmbeddablewidgetsController.php` —
+      modernised `scheduleAction` (now a form + preview +
+      embed-code page like the other widget settings).
+    - `application/forms/WidgetWeeklySchedule.php` — single
+      label input + Save submit.
+    - `application/views/scripts/embeddablewidgets/schedule.phtml` —
+      mirror layout of the other widget settings pages.
+    - `application/models/Preference.php` — new
+      `GetWidgetNoWeeklyShows` / `SetWidgetNoWeeklyShows`
+      with English fallback.
+    - `public/css/embed/now-playing-widget.css` — new
+      `.np-weekly-schedule` block: header band with
+      navigation buttons, day-tab strip, per-day row list.
+      Inherits the .np-widget theme variables.
+    - `public/js/airtime/embed/weekly-schedule-widget.js` —
+      new vanilla JS runtime (~280 LoC): parses the JSON
+      payload, builds the tabs + panels, wires ◀ / ▶ to
+      history.pushState + reload, pre-selects today's tab
+      when week_offset is 0.
+    - `docs/manual/WIDGETS.md` + `de/` + `fr/` + `es/` —
+      new §6 chapter for the modernised widget; family
+      table row updated; renumbered downstream sections
+      7-12.
+
 - **Public Embed Widget: On Air Today** (operator request
   2026-05-22, BACKLOG widget-wave 1 third half — added on top
   of the Now-Playing / Next-Latest pairs).  A compact day-grid
