@@ -208,6 +208,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Public Embed Widgets: Next/Latest Shows theme contrast fix**
+  (operator request 2026-05-22).  Bug report: all three themes
+  (auto / dark / light) on the new shows-list widgets looked
+  visually identical — the theme switch had no obvious effect.
+  Root cause: every list row used `color: var(--np-fg-muted)`,
+  which renders as a mid-grey in both dark (`#bbb`) and light
+  (`#555`) themes — close enough on most embedding backdrops
+  that the operator perceived them as the same shade.
+
+  Fix: realign the shows-list colour palette with the Now-Playing
+  widget's "current row" convention from wave 1.
+    * `.np-row-title` and `.np-list-row .np-list-date` now use
+      the full `var(--np-fg)` colour (near-white in dark, near-
+      black in light) instead of the muted variant — so the
+      theme switch flips text contrast clearly.
+    * `.np-list-time` and `.np-list-empty` keep `var(--np-fg-
+      muted)` to preserve the "primary date, secondary time-of-
+      day" reading hierarchy that mirrors the start–end cell in
+      the Now-Playing widget.
+  File: `public/css/embed/now-playing-widget.css`.
+
 - **Settings → Widgets → Current Show/Track: page polish**
   (operator request 2026-05-22).  Pure UX cleanup — no
   behaviour change.

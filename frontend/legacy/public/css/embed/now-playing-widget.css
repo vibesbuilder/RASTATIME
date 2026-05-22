@@ -196,10 +196,13 @@ html, body {
  * ───────────────────────────────────────────────────────────── */
 
 .np-widget.np-shows-list .np-row-title {
+    /*  Match the two-line widget's `np-row-current` styling exactly
+        so the Now-Playing and Shows-List widgets read as a visual
+        family.  Color is the full --np-fg (not muted) so the theme
+        switch is clearly visible — operator request 2026-05-22 v2.  */
+    color: var(--np-fg);
     font-weight: 600;
     margin-bottom: 4px;
-    /*  Same flex layout as the two-line widget rows so the title's
-        ellipsis / marquee overflow handling works identically.  */
     display: flex;
     align-items: baseline;
     overflow: hidden;
@@ -212,11 +215,17 @@ html, body {
 }
 
 .np-widget.np-shows-list .np-list-row {
+    /*  Listing rows mirror the "current row" treatment of the
+        Now-Playing widget: full --np-fg colour (not muted), so the
+        theme switch flips text from near-white (dark) to near-
+        black (light) instead of grey-to-grey.  Previously all rows
+        used --np-fg-muted which made the three themes look almost
+        identical on most backdrops.  */
+    color: var(--np-fg);
     display: flex;
     align-items: baseline;
     justify-content: space-between;
     gap: 1em;
-    color: var(--np-fg-muted);
     font-size: 0.92em;
     line-height: 1.45;
     overflow: hidden;
@@ -233,6 +242,11 @@ html, body {
 }
 
 .np-widget.np-shows-list .np-list-time {
+    /*  Time-of-day stays slightly muted so the date reads as the
+        primary identifier of each row and the time as supplementary
+        — matches the secondary-info treatment of the start-end
+        cell in the Now-Playing widget.  */
+    color: var(--np-fg-muted);
     flex: 0 0 auto;
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
@@ -241,7 +255,7 @@ html, body {
 .np-widget.np-shows-list .np-list-empty {
     /*  Placeholder row shown when the requested show has no
         instances in the chosen direction, or when the iframe URL
-        is missing show_id / show.  Same muted-italic treatment as
+        is missing show_id / show.  Muted-italic treatment matches
         the two-line widget's empty-state cell.  */
     color: var(--np-fg-muted);
     font-style: italic;
