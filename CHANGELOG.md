@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Track-history Artist column now carries the `description`
+  field for webstream + line-in entries** (operator request
+  2026-05-23 v18.3).  Previously the synthetic block entries
+  written by `HistoryService::insertPlayedItem()` for scheduled
+  webstream and scheduled line-in items duplicated the short
+  name into both `track_title` and `artist_name`.  Operator
+  feedback: the Artist column should carry the longer-form
+  `description` (Webstream: `cc_webstream.description`,
+  Line-In: `rastatime_linein.description`) — leaving Title as
+  the short label gives a two-line "Title — Artist" view with
+  meaningful information on both lines, instead of repeating
+  the same string.
+
+  Fallback: when `description` is empty (NULL or trimmed-empty
+  string), we keep writing `name` into the Artist column so
+  the field is never blank.
+
+  Surfaces in the Track-History widget AND the Analytics
+  Playout-History dashboard (both read from
+  `cc_playout_history` without further interpretation of
+  what's in `track_title` vs `artist_name`).
+
+  De-dupe SQL in both branches updated to look up the new
+  Artist value, so a Liquidsoap restart firing the same
+  notify still produces only one row per slot.
+
 ### Fixed
 
 - **`Object of class DateTime could not be converted to string`

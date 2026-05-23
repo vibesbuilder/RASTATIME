@@ -617,10 +617,13 @@ Source: `cc_playout_history` LEFT JOIN `cc_files`
    `HistoryService::insertPlayedItem()` when Liquidsoap
    fires `notifyMediaItemStartPlayAction` for a
    `cc_schedule` item with `stream_id`.  Writes a
-   synthetic "block" entry with `title = artist =
-   cc_webstream.name` so the slot is recorded even when
-   the stream server sends no ICY data (operator example:
-   "Event Calendar").
+   synthetic "block" entry with `title =
+   cc_webstream.name` and `artist =
+   cc_webstream.description` (falls back to `name` if
+   description is empty) so the slot is recorded even
+   when the stream server sends no ICY data (operator
+   example: title="Event Calendar" /
+   artist="Tägliche Event-Ansagen für die kommende Woche").
 3. **Scheduled line-in items** (`file_id IS NULL`,
    metadata-only — **RASTATIME-only**, requires
    migration 0047 column `cc_schedule.linein_id`) —
@@ -629,12 +632,14 @@ Source: `cc_playout_history` LEFT JOIN `cc_files`
    a `cc_schedule` item with `linein_id` (operator
    dragged a line-in from the Library into a show
    schedule, e.g. "Jabra-Mikro").  Writes a synthetic
-   "block" entry with `title = artist =
-   rastatime_linein.name` so the slot shows up even
-   though the audio is raw line-in with no upstream
-   metadata.  `linein_id` is read via raw SQL because
-   the Propel ORM sources were generated before the
-   RastaTime migration and don't know the column.
+   "block" entry with `title = rastatime_linein.name`
+   (short label, e.g. "Jabra-Mikro") and `artist =
+   rastatime_linein.description` (free-text context,
+   e.g. "Drahtloses Bluetooth-Headset im Studio A"),
+   falling back to the name when description is empty.
+   `linein_id` is read via raw SQL because the Propel
+   ORM sources were generated before the RastaTime
+   migration and don't know the column.
 4. **Webstream tracks** (`file_id IS NULL`, metadata-
    only) — written by
    `HistoryService::insertWebstreamMetadata()` when

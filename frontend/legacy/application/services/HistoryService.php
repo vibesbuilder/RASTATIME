@@ -902,6 +902,14 @@ class Application_Service_HistoryService
                     ));
                 }
                 if ($webstream) {
+                    // RASTATIME 2026-05-23 v18.3 — operator wants
+                    // title = name, artist = description (fallback
+                    // to name when description is empty so the
+                    // artist column is never blank).
+                    $wsName = (string) $webstream->getDbName();
+                    $wsDesc = trim((string) $webstream->getDbDescription());
+                    $wsArtist = ($wsDesc !== '') ? $wsDesc : $wsName;
+
                     // De-dupe: only write the synthetic block
                     // once per scheduled slot (matches the
                     // file-play de-dupe pattern above; protects
@@ -923,7 +931,7 @@ class Application_Service_HistoryService
                             ':iid'    => $item->getDbInstanceId(),
                             ':starts' => $recordStartStr,
                             ':key'    => MDATA_KEY_CREATOR,
-                            ':val'    => $webstream->getDbName(),
+                            ':val'    => $wsArtist,
                         ],
                         'all'
                     );
@@ -937,18 +945,15 @@ class Application_Service_HistoryService
                         $history->setDbInstanceId($item->getDbInstanceId());
 
                         $metadata = [
-                            // title = webstream display name —
-                            // operator-readable label so a
-                            // webstream without ICY metadata
-                            // (e.g. silent event-info stream)
-                            // still shows something meaningful.
-                            MDATA_KEY_TITLE   => $webstream->getDbName(),
-                            // artist = webstream name too, so
-                            // both columns carry the identifier
-                            // even if only one is rendered by
-                            // a particular reader.  Matches the
-                            // insertWebstreamMetadata convention.
-                            MDATA_KEY_CREATOR => $webstream->getDbName(),
+                            // title = webstream short display
+                            // name (cc_webstream.name).
+                            MDATA_KEY_TITLE   => $wsName,
+                            // artist = webstream description
+                            // (cc_webstream.description), so the
+                            // longer-form context fills the
+                            // Artist column.  Falls back to name
+                            // when description is empty.
+                            MDATA_KEY_CREATOR => $wsArtist,
                             'showname'        => $show->getDbName(),
                         ];
 
@@ -980,13 +985,23 @@ class Application_Service_HistoryService
                 // `rastatime_linein.name` so the slot shows up in
                 // both the Track History widget and the internal
                 // Analytics Playout History dashboard.
-                $sqlName = 'SELECT name FROM rastatime_linein WHERE id = :lid';
+                // RASTATIME 2026-05-23 v18.3 — also pull the
+                // operator's free-text description from
+                // rastatime_linein so the artist column carries
+                // the longer-form context (the operator-readable
+                // explanation of what the line-in is wired to)
+                // instead of repeating the short label.
+                $sqlName = 'SELECT name, description FROM rastatime_linein WHERE id = :lid';
                 $nameRow = Application_Common_Database::prepareAndExecute(
                     $sqlName, [':lid' => $lineinId], 'all'
                 );
                 $lineinName = (!empty($nameRow) && !empty($nameRow[0]['name']))
                     ? (string) $nameRow[0]['name']
                     : ('Line-In #' . $lineinId);
+                $lineinDesc = (!empty($nameRow) && isset($nameRow[0]['description']))
+                    ? trim((string) $nameRow[0]['description'])
+                    : '';
+                $lineinArtist = ($lineinDesc !== '') ? $lineinDesc : $lineinName;
 
                 // De-dupe: same shape as the webstream branch above
                 // (defends against Liquidsoap restarts that re-fire
@@ -1007,7 +1022,7 @@ class Application_Service_HistoryService
                         ':iid'    => $item->getDbInstanceId(),
                         ':starts' => $recordStartStr,
                         ':key'    => MDATA_KEY_CREATOR,
-                        ':val'    => $lineinName,
+                        ':val'    => $lineinArtist,
                     ],
                     'all'
                 );
@@ -1021,14 +1036,16 @@ class Application_Service_HistoryService
                     $history->setDbInstanceId($item->getDbInstanceId());
 
                     $metadata = [
-                        // title = line-in operator label.
+                        // title = short line-in operator label
+                        // (rastatime_linein.name, e.g.
+                        // "Jabra-Mikro").
                         MDATA_KEY_TITLE   => $lineinName,
-                        // artist = line-in operator label too, so
-                        // both columns carry the identifier even
-                        // if only one is rendered by a particular
-                        // reader.  Matches the webstream / Master
-                        // Source convention.
-                        MDATA_KEY_CREATOR => $lineinName,
+                        // artist = free-text description
+                        // (rastatime_linein.description), so the
+                        // longer-form context fills the Artist
+                        // column.  Falls back to the short name
+                        // when no description was set.
+                        MDATA_KEY_CREATOR => $lineinArtist,
                         'showname'        => $show->getDbName(),
                     ];
 

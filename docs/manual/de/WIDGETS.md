@@ -522,18 +522,22 @@ Quelle: `cc_playout_history` LEFT JOIN `cc_files` LEFT JOIN
 2. **Scheduled Webstream-Items** (`file_id IS NULL`) —
    geschrieben von `insertPlayedItem()` bei Schedule-Items
    mit `stream_id`.  Synthetischer "Block"-Eintrag mit
-   `title = artist = cc_webstream.name` — auch wenn der
-   Stream-Server keine ICY-Metadata sendet.
+   `title = cc_webstream.name` und `artist =
+   cc_webstream.description` (Fallback auf `name` wenn
+   description leer) — auch wenn der Stream-Server keine
+   ICY-Metadata sendet.
 3. **Scheduled Line-In-Items** (`file_id IS NULL`,
    **RASTATIME-only**, benötigt Migration 0047
    `cc_schedule.linein_id`) — geschrieben von
    `insertPlayedItem()` bei Schedule-Items mit
    `linein_id` (Operator hat Line-In aus der Library in
    eine Show gezogen, z.B. "Jabra-Mikro").  Synthetischer
-   "Block"-Eintrag mit `title = artist =
-   rastatime_linein.name`.  `linein_id` wird per Raw-SQL
-   gelesen, weil die Propel-ORM-Klassen vor der
-   RastaTime-Migration generiert wurden.
+   "Block"-Eintrag mit `title = rastatime_linein.name`
+   (kurzes Label) und `artist =
+   rastatime_linein.description` (Free-Text-Kontext),
+   Fallback auf name wenn description leer.  `linein_id`
+   wird per Raw-SQL gelesen, weil die Propel-ORM-Klassen
+   vor der RastaTime-Migration generiert wurden.
 4. **Webstream-Tracks** (`file_id IS NULL`) — geschrieben
    von `insertWebstreamMetadata()` bei eingehender
    ICY-Metadata.  Per-Track-Granularität.
