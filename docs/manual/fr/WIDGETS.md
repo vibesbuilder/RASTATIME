@@ -494,21 +494,21 @@ Source : `cc_playout_history` LEFT JOIN `cc_files` LEFT JOIN
 2. **Items webstream programmés** (`file_id IS NULL`) —
    écrites par `insertPlayedItem()` pour les items avec
    `stream_id`.  Bloc synthétique avec
-   `title = cc_webstream.name` et
-   `artist = cc_webstream.description` (fallback sur
-   `name` si description est vide).
+   `title = cc_webstream.description` (fallback sur
+   `name` si description est vide) et
+   `artist = cc_webstream.name`.
 3. **Items line-in programmés** (`file_id IS NULL`,
    **RASTATIME uniquement**, requiert la migration 0047
    `cc_schedule.linein_id`) — écrites par
    `insertPlayedItem()` pour les items avec `linein_id`
    (opérateur a glissé une line-in depuis la Library
    dans une émission, ex. "Jabra-Mikro").  Bloc
-   synthétique avec `title = rastatime_linein.name`
-   (libellé court) et `artist =
-   rastatime_linein.description` (texte libre),
-   fallback sur le nom si description vide.  `linein_id`
-   lu via SQL brut car les classes ORM Propel ont été
-   générées avant la migration RastaTime.
+   synthétique avec `title =
+   rastatime_linein.description` (texte libre, fallback
+   sur le nom court si description vide) et
+   `artist = rastatime_linein.name` (libellé court).
+   `linein_id` lu via SQL brut car les classes ORM
+   Propel ont été générées avant la migration RastaTime.
 4. **Pistes webstream** (`file_id IS NULL`) — écrites
    par `insertWebstreamMetadata()` à chaque métadonnée
    ICY entrante.

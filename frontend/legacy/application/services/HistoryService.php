@@ -902,19 +902,24 @@ class Application_Service_HistoryService
                     ));
                 }
                 if ($webstream) {
-                    // RASTATIME 2026-05-23 v18.3 — operator wants
-                    // title = name, artist = description (fallback
-                    // to name when description is empty so the
-                    // artist column is never blank).
-                    $wsName = (string) $webstream->getDbName();
-                    $wsDesc = trim((string) $webstream->getDbDescription());
-                    $wsArtist = ($wsDesc !== '') ? $wsDesc : $wsName;
+                    // RASTATIME 2026-05-23 v18.4 — operator request:
+                    // swap the v18.3 mapping so the longer-form
+                    // description fills the Title column and the
+                    // short name fills the Artist column.  Title
+                    // falls back to name when description is empty
+                    // so the Title column is never blank; Artist
+                    // is always the short name (never blank).
+                    $wsName  = (string) $webstream->getDbName();
+                    $wsDesc  = trim((string) $webstream->getDbDescription());
+                    $wsTitle = ($wsDesc !== '') ? $wsDesc : $wsName;
 
                     // De-dupe: only write the synthetic block
                     // once per scheduled slot (matches the
                     // file-play de-dupe pattern above; protects
                     // against liquidsoap restarts firing the
-                    // notification twice).
+                    // notification twice).  Match on artist
+                    // (= name), which is the stable identifier
+                    // across the v18.3 → v18.4 swap.
                     $sql = "SELECT ph.id
                             FROM cc_playout_history ph
                             JOIN cc_playout_history_metadata md
@@ -931,7 +936,7 @@ class Application_Service_HistoryService
                             ':iid'    => $item->getDbInstanceId(),
                             ':starts' => $recordStartStr,
                             ':key'    => MDATA_KEY_CREATOR,
-                            ':val'    => $wsArtist,
+                            ':val'    => $wsName,
                         ],
                         'all'
                     );
@@ -945,15 +950,15 @@ class Application_Service_HistoryService
                         $history->setDbInstanceId($item->getDbInstanceId());
 
                         $metadata = [
-                            // title = webstream short display
-                            // name (cc_webstream.name).
-                            MDATA_KEY_TITLE   => $wsName,
-                            // artist = webstream description
+                            // title = webstream description
                             // (cc_webstream.description), so the
                             // longer-form context fills the
-                            // Artist column.  Falls back to name
+                            // Title column.  Falls back to name
                             // when description is empty.
-                            MDATA_KEY_CREATOR => $wsArtist,
+                            MDATA_KEY_TITLE   => $wsTitle,
+                            // artist = webstream short display
+                            // name (cc_webstream.name).
+                            MDATA_KEY_CREATOR => $wsName,
                             'showname'        => $show->getDbName(),
                         ];
 
@@ -987,10 +992,12 @@ class Application_Service_HistoryService
                 // Analytics Playout History dashboard.
                 // RASTATIME 2026-05-23 v18.3 — also pull the
                 // operator's free-text description from
-                // rastatime_linein so the artist column carries
-                // the longer-form context (the operator-readable
-                // explanation of what the line-in is wired to)
-                // instead of repeating the short label.
+                // rastatime_linein.  v18.4 (same day) swapped
+                // the mapping per operator request: description
+                // fills the Title column, name fills the Artist
+                // column.  Title falls back to name when
+                // description is empty so the Title column is
+                // never blank.
                 $sqlName = 'SELECT name, description FROM rastatime_linein WHERE id = :lid';
                 $nameRow = Application_Common_Database::prepareAndExecute(
                     $sqlName, [':lid' => $lineinId], 'all'
@@ -1001,11 +1008,13 @@ class Application_Service_HistoryService
                 $lineinDesc = (!empty($nameRow) && isset($nameRow[0]['description']))
                     ? trim((string) $nameRow[0]['description'])
                     : '';
-                $lineinArtist = ($lineinDesc !== '') ? $lineinDesc : $lineinName;
+                $lineinTitle = ($lineinDesc !== '') ? $lineinDesc : $lineinName;
 
                 // De-dupe: same shape as the webstream branch above
                 // (defends against Liquidsoap restarts that re-fire
                 // notify-media-item-start-play for the same slot).
+                // Match on artist (= name), which is the stable
+                // identifier across the v18.3 → v18.4 swap.
                 $sqlDedupe = 'SELECT ph.id
                               FROM cc_playout_history ph
                               JOIN cc_playout_history_metadata md
@@ -1022,7 +1031,7 @@ class Application_Service_HistoryService
                         ':iid'    => $item->getDbInstanceId(),
                         ':starts' => $recordStartStr,
                         ':key'    => MDATA_KEY_CREATOR,
-                        ':val'    => $lineinArtist,
+                        ':val'    => $lineinName,
                     ],
                     'all'
                 );
@@ -1036,16 +1045,16 @@ class Application_Service_HistoryService
                     $history->setDbInstanceId($item->getDbInstanceId());
 
                     $metadata = [
-                        // title = short line-in operator label
+                        // title = free-text description
+                        // (rastatime_linein.description), so
+                        // the longer-form context fills the
+                        // Title column.  Falls back to the
+                        // short name when description is empty.
+                        MDATA_KEY_TITLE   => $lineinTitle,
+                        // artist = short line-in operator label
                         // (rastatime_linein.name, e.g.
                         // "Jabra-Mikro").
-                        MDATA_KEY_TITLE   => $lineinName,
-                        // artist = free-text description
-                        // (rastatime_linein.description), so the
-                        // longer-form context fills the Artist
-                        // column.  Falls back to the short name
-                        // when no description was set.
-                        MDATA_KEY_CREATOR => $lineinArtist,
+                        MDATA_KEY_CREATOR => $lineinName,
                         'showname'        => $show->getDbName(),
                     ];
 

@@ -9,6 +9,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Track-history Title/Artist mapping for webstream + line-in
+  swapped** (operator follow-up 2026-05-23 v18.4).  v18.3 put
+  `description` into the Artist column and `name` into the
+  Title column; operator preferred the opposite — short `name`
+  in the Artist column (like a band name), longer `description`
+  in the Title column (like a song title).
+
+    Webstream:  title = cc_webstream.description (fallback: name)
+                artist = cc_webstream.name
+    Line-In:    title = rastatime_linein.description (fallback: name)
+                artist = rastatime_linein.name
+
+  Same fallback rule as before: when `description` is empty
+  (NULL or trimmed-empty), `name` is used so Title is never
+  blank.  Artist is always the short `name` and therefore
+  never blank.
+
+  De-dupe SQL switched from matching on `description` (v18.3)
+  to matching on `name` (v18.4) — `name` is the stable
+  identifier across this swap and stays the same regardless
+  of how the operator edits the description later.
+
 - **Track-history Artist column now carries the `description`
   field for webstream + line-in entries** (operator request
   2026-05-23 v18.3).  Previously the synthetic block entries

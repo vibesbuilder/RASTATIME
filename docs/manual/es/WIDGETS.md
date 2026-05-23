@@ -490,20 +490,20 @@ Fuente: `cc_playout_history` LEFT JOIN `cc_files` LEFT JOIN
 2. **Items webstream programados** (`file_id IS NULL`) —
    escritas por `insertPlayedItem()` para items con
    `stream_id`.  Bloque sintético con
-   `title = cc_webstream.name` y
-   `artist = cc_webstream.description` (fallback a
-   `name` si description está vacío).
+   `title = cc_webstream.description` (fallback a
+   `name` si description está vacío) y
+   `artist = cc_webstream.name`.
 3. **Items line-in programados** (`file_id IS NULL`,
    **solo RASTATIME**, requiere migración 0047
    `cc_schedule.linein_id`) — escritas por
    `insertPlayedItem()` para items con `linein_id`
    (el operador arrastró una line-in de la Library a un
    programa, p.ej. "Jabra-Mikro").  Bloque sintético con
-   `title = rastatime_linein.name` (etiqueta corta) y
-   `artist = rastatime_linein.description` (texto
-   libre), fallback al nombre si description vacío.
-   `linein_id` se lee vía SQL bruto porque las clases
-   ORM Propel se generaron antes de la migración
+   `title = rastatime_linein.description` (texto
+   libre, fallback al nombre corto si description
+   vacío) y `artist = rastatime_linein.name` (etiqueta
+   corta).  `linein_id` se lee vía SQL bruto porque las
+   clases ORM Propel se generaron antes de la migración
    RastaTime.
 4. **Pistas webstream** (`file_id IS NULL`) — escritas
    por `insertWebstreamMetadata()` por cada metadata
