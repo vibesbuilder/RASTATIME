@@ -9,6 +9,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`Object of class DateTime could not be converted to string`
+  in `insertPlayedItem` de-dupe SQL** (operator second follow-up
+  2026-05-23 v18.2).  Both the v18 webstream branch and the
+  v18.1 line-in branch bound `$recordStart` (a `DateTime` object
+  from `CcSchedule::getDbStarts(null)`) directly to a PDO
+  `:starts` placeholder.  Under PHP 8 `PDO::bindValue()` no
+  longer auto-stringifies the object — it throws a fatal Error,
+  which the `insertPlayedItem` `try`/`catch` rolls back (`con->
+  rollback`) before re-throwing.  The outer `notifyMediaItem-
+  StartPlayAction` `catch` logs and continues, but the
+  history row is gone.  Net effect: every webstream-as-show-
+  content and every line-in-as-show-content notify silently
+  produced zero history rows.
+
+  First production trigger was today's 09:55:00 `PLAY (line-in)
+  name='Jabra-Mikro' show=test-line-in` event, which threw three
+  identical exceptions visible in `logs/legacy.log` at 07:55:00
+  / 08:01:06 / 08:07:00 UTC.
+
+  Fix: pre-format `$recordStart` once into `$recordStartStr`
+  (`'Y-m-d H:i:s'`) and bind the string to both `:starts`
+  placeholders.  The Propel `setDbStarts($recordStart)` calls
+  on the new `CcPlayoutHistory` row stay unchanged — Propel
+  accepts `DateTime` directly.
+
+  Same hotfix: the v18.1 `Logging::debug` line in
+  `insertPlayedItem` printing `(file_id, stream_id, linein_id)`
+  is promoted to `Logging::info` so it shows up in production
+  logs without flipping the log level.  Future regressions in
+  this code path will be diagnosable from a single `grep
+  insertPlayedItem` over `legacy.log` without touching the
+  PHP-frontend log config.
+
 - **Scheduled Line-In items now appear in cc_playout_history**
   (operator follow-up 2026-05-23 v18.1).  The v18 commit
   earlier the same day covered scheduled file plays

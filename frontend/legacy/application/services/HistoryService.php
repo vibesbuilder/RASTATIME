@@ -827,7 +827,19 @@ class Application_Service_HistoryService
             $recordStart = $item->getDbStarts(null);
             $recordEnd   = ($instanceEnd < $itemEnd) ? $instanceEnd : $itemEnd;
 
-            Logging::debug(sprintf(
+            // RASTATIME 2026-05-23 v18.2 — PDO `bindValue` does
+            // not auto-stringify DateTime objects under PHP 8;
+            // it throws "Object of class DateTime could not be
+            // converted to string" (observed at the very first
+            // production line-in test on 2026-05-23 09:55:00).
+            // Pre-format here once so the dedupe SQL in the
+            // stream_id and linein_id branches below can bind
+            // it as a plain string.
+            $recordStartStr = ($recordStart instanceof DateTime)
+                ? $recordStart->format('Y-m-d H:i:s')
+                : (string) $recordStart;
+
+            Logging::info(sprintf(
                 'insertPlayedItem schedId=%d file_id=%s stream_id=%s linein_id=%s',
                 $schedId,
                 var_export($fileId, true),
@@ -909,7 +921,7 @@ class Application_Service_HistoryService
                         $sql,
                         [
                             ':iid'    => $item->getDbInstanceId(),
-                            ':starts' => $recordStart,
+                            ':starts' => $recordStartStr,
                             ':key'    => MDATA_KEY_CREATOR,
                             ':val'    => $webstream->getDbName(),
                         ],
@@ -993,7 +1005,7 @@ class Application_Service_HistoryService
                     $sqlDedupe,
                     [
                         ':iid'    => $item->getDbInstanceId(),
-                        ':starts' => $recordStart,
+                        ':starts' => $recordStartStr,
                         ':key'    => MDATA_KEY_CREATOR,
                         ':val'    => $lineinName,
                     ],
