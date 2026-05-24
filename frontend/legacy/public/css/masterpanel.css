@@ -226,73 +226,75 @@
 	}
 
 /* RASTATIME 2026-05-24 — Auto-DJ shortcut button under the
-   Show Source row.  Visual style matches the operator's
-   AUTO-DJ-button reference: small dark pill with a gear icon
-   and the AUTO DJ label, with a red 2-px underline that lights
-   up when auto_dj_enabled = true (master toggle on). */
+   Show Source row.  Updated 2026-05-25 v2 per operator: clone
+   the .listen-control-button look from the on-air-block (light-
+   grey gradient pill with uppercase white text, dark borders)
+   so the two buttons match visually.  The Unicode gear ⚙ is
+   inlined in the label text, no separate icon span. */
 .status-info-block li.auto-dj-item {
-	margin-top: 4px;
+	margin-top: 3px;
 	height: auto;
 	line-height: normal;
 	background: none;
 }
 .status-info-block li.auto-dj-item .auto-dj-button {
-	/* RASTATIME 2026-05-25 — operator-tuned dimensions: 101 px
-	   wide (flush with #master_dj_div / #live_dj_div above),
-	   20 px tall, box-sizing border-box so padding/border do
-	   not push the outer size past those numbers. */
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	gap: 4px;
-	box-sizing: border-box;
-	width: 101px;
-	height: 20px;
-	padding: 0 8px;
+	/* Outer skin = .listen-control-button outer:
+	   styles.css L437–451 (and masterpanel.css L362–377). */
 	font-size: 11px;
-	font-weight: bold;
-	color: #c8c8c8;
+	text-transform: uppercase;
+	padding: 0;
+	border: 1px solid #242424;
+	color: #fff;
 	text-decoration: none;
-	background-color: #434343;
-	background: -moz-linear-gradient(top, #555555 0, #434343 100%);
-	background: -webkit-gradient(linear, left top, left bottom, color-stop(0, #555555), color-stop(100%, #434343));
-	background: linear-gradient(top, #555555 0, #434343 100%);
-	border: 1px solid #2d2d2d;
-	-webkit-border-radius: 2px;
-	-moz-border-radius: 2px;
-	border-radius: 2px;
-	-webkit-box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5);
-	-moz-box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5);
-	box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5);
+	font-weight: bold;
+	margin-top: 0;
+	display: block;
+	text-align: center;
+}
+.status-info-block li.auto-dj-item .auto-dj-button span {
+	/* Inner span = .listen-control-button span:
+	   styles.css L453–466 — light-grey gradient + 2-px
+	   horizontal padding (the .listen-control-button override
+	   for span padding). */
+	background-color: #6e6e6e;
+	background: -moz-linear-gradient(top, #868686 0, #6e6e6e 100%);
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0, #868686), color-stop(100%, #6e6e6e));
+	background: linear-gradient(top, #868686 0, #6e6e6e 100%);
+	padding: 2px 10px;
+	border: 1px solid #a1a1a1;
+	border-width: 1px 0;
+	border-bottom-color: #646464;
+	color: #dcdcdc;
+	text-shadow: #555555 0 -1px;
+	display: block;
 }
 .status-info-block li.auto-dj-item .auto-dj-button:hover {
-	color: #ffffff;
-	background: linear-gradient(top, #6a6a6a 0, #555555 100%);
+	/* Hover border = .listen-control-button:hover (styles.css L468). */
+	border: 1px solid #000;
 }
-.status-info-block li.auto-dj-item .auto-dj-icon {
-	/* Unicode gear (U+2699 ⚙) — no separate icon image needed
-	   so the button works on every theme. */
-	display: inline-block;
-	width: 12px;
-	height: 12px;
-	font-size: 12px;
-	line-height: 12px;
-	color: #c8c8c8;
-}
-.status-info-block li.auto-dj-item .auto-dj-icon::before {
-	content: "\2699";
+.status-info-block li.auto-dj-item .auto-dj-button:hover span {
+	/* Hover inner = .listen-control-button:hover span (styles.css L471–479)
+	   — dark gradient, green text for the on-press feedback.  */
+	background-color: #292929;
+	background: -moz-linear-gradient(top, #3b3b3b 0, #292929 100%);
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0, #3b3b3b), color-stop(100%, #292929));
+	background: linear-gradient(top, #3b3b3b 0, #292929 100%);
+	border: 1px solid #555555;
+	border-width: 1px 0;
+	border-bottom-color: #1e1e1e;
+	color: #0C0;
+	text-shadow: #000 0 -1px;
 }
 .status-info-block li.auto-dj-item .auto-dj-indicator {
-	/* Indicator visually flush ABOVE the AUTO-DJ pill (operator
-	   moved it from below to above on 2026-05-25): width is
-	   button-width minus the two 1-px side borders (101 - 2 = 99 px)
-	   and shifted 1 px right (margin-left) so the line aligns with
-	   the inner content area of the button rather than overshooting
-	   the border on the left.  The DOM order is also flipped in
-	   header.phtml so the indicator <div> precedes the <a> button. */
+	/* Red active-line sits ABOVE the button (operator moved it
+	   from below to above on 2026-05-25).  Width is button-content-
+	   width minus the two 1-px side borders (≈ 99 px) and shifted
+	   1 px right so the line aligns with the inner content area
+	   of the button.  Operator removed margin-bottom 2026-05-25 v2 —
+	   the .auto-dj-item margin-top now controls the gap to the
+	   button below. */
 	display: none;
 	height: 2px;
-	margin-bottom: 2px;
 	margin-left: 1px;
 	width: 99px;
 	background-color: #ff2222;
