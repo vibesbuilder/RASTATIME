@@ -274,7 +274,7 @@ img.logo
     margin-right:10px;
 }
 
-.source-info-block {
+.status-info-block {
     height:100px;
     float:left;
     min-width:170px;
@@ -417,7 +417,7 @@ ol.navigation {
     .now-playing-block, .now-playing-artwork {
         display: none;
     }
-    .source-info-block {
+    .status-info-block {
         margin-left: 152px;
     }
     .time-info-block {

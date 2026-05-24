@@ -27,9 +27,14 @@
       <div class="progress-show" id='progress-show' style="width:0%;"></div>
     </div>
   </div>
-  <div class="source-info-block">
-    <h3><?php echo _("Source Streams") ?></h3>
-    <ul style="padding-top: 10px;">
+  <?php /* RASTATIME 2026-05-24 — renamed from .source-info-block
+         to .status-info-block; heading from "Source Streams" to
+         "Status"; added an Auto-DJ shortcut button under Show
+         Source with an "active" red underline driven by the
+         auto_dj_enabled Preference. */ ?>
+  <div class="status-info-block">
+    <h3><?php echo _("Status") ?></h3>
+    <ul style="padding-top: 2px;">
       <li>
         <div id="master_dj_div" class="source-label">
           <a id="master_dj" class="source-kick-button" onclick="kickSource(this)"></a>
@@ -47,6 +52,19 @@
         <div class="line-to-switch"></div>
         <a href="#" id="live_dj" class="source-switch-button" onclick="setSwitchListener(this);"><span><?php echo $this->live_dj_switch ?></span></a>
         <div class="line-to-on-air"></div>
+      </li>
+      <?php /* Auto-DJ shortcut button — opens the Auto-DJ settings
+             page in the same tab.  The .auto-dj-active class on the
+             <li> toggles the red underline below the button so the
+             operator sees Auto-DJ status at a glance from anywhere
+             in the dashboard.  Driven by the auto_dj_enabled
+             Preference at render time. */ ?>
+      <li class="auto-dj-item<?php echo $this->auto_dj_enabled ? ' auto-dj-active' : ''; ?>">
+        <a href="<?php echo $this->baseUrl . 'preference/auto-dj'; ?>" class="auto-dj-button" title="<?php echo _('Auto DJ settings'); ?>">
+          <span class="auto-dj-icon"></span>
+          <span class="auto-dj-label"><?php echo _('AUTO DJ'); ?></span>
+        </a>
+        <div class="auto-dj-indicator"></div>
       </li>
     </ul>
   </div>

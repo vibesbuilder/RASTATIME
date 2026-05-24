@@ -25,7 +25,12 @@
             "live_dj_connection" => $scs['live_dj'],
             "master_dj_switch" => $sss['master_dj'],
             "master_dj_connection" => $scs['master_dj'],
-            "scheduled_play_switch" => $sss['scheduled_play']
+            "scheduled_play_switch" => $sss['scheduled_play'],
+            // RASTATIME 2026-05-24 — pass Auto-DJ master toggle
+            // status to the status-info-block so the header can
+            // show the red "active" indicator under the Auto-DJ
+            // button without an extra AJAX round-trip.
+            "auto_dj_enabled" => Application_Model_Preference::GetAutoDjEnabled()
         )) ?>
         <?php $partial = array('menu.phtml', 'default');
         $this->navigation()->menu()->setPartial($partial); ?>

@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Dashboard header: `source-info-block` → `status-info-block`,
+  new Auto-DJ shortcut button** (operator request 2026-05-24).
+  Four edits to the master panel header partial:
+    1. `<h3>Source Streams</h3>` → `<h3>Status</h3>`.
+    2. CSS class `.source-info-block` renamed to
+       `.status-info-block` throughout the template, both
+       stylesheets (`styles.css`, `masterpanel.css`, 27 hits
+       combined) and the layout partial that injects the
+       header.
+    3. Tighter `padding-top` on the source-status `<ul>`
+       (10 px → 2 px) — operator wanted the Master / Show /
+       Auto-DJ rows closer together to make room for the new
+       button without stretching the header.
+    4. New `<li class="auto-dj-item">` row under Show Source
+       with a small dark pill-button "⚙ AUTO DJ" linking to
+       `/preference/auto-dj` (same tab, same window).  A 2-px
+       red underline below the button is shown via the
+       `.auto-dj-active` class on the `<li>` only when
+       `Application_Model_Preference::GetAutoDjEnabled()`
+       returned true at render time — operator-visible
+       Auto-DJ status from any dashboard page at a glance.
+
+  The Auto-DJ status is read at page-render time, not
+  AJAX-polled — toggling Auto-DJ from the Preferences page
+  surfaces in the header on the next page navigation.  No
+  extra HTTP round-trips per page load.
+
 ### Fixed
 
 - **Smart Block: Save button silently fails for blocks with the
