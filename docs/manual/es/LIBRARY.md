@@ -174,9 +174,10 @@ el orden + límite:
 |---|---|
 | **Allow only tracks not played yet** (Permitir solo pistas no reproducidas todavía) | Pistas donde `cc_files.lptime` es `NULL` (el playout nunca las ha registrado). Útil para bloques de descubrimiento / rotación de contenido nuevo. |
 | **Exclude tracks played lately** (Excluir pistas reproducidas recientemente) | Pistas donde `lptime` es `NULL` *o* más antiguo que la ventana de horas-hacia-atrás configurada (1..8760 h, por defecto 24). Use esto cuando quiera evitar re-rotación reciente sin prohibir toda reproducción previa. El campo compañero "Exclude tracks played in the last hours" aparece cuando el toggle está activado. |
+| **Exclude artists played lately** (Excluir artistas reproducidos recientemente) | Pistas cuyo `artist_name` es NULL / vacío *o* cuyo artista no ha sonado vía cualquier otra pista en la ventana de horas-hacia-atrás configurada (1..8760 h, por defecto 24). Use esto cuando quiera evitar que dos pistas del mismo artista se agrupen — independientemente de qué pista específica se reprodujo. El campo compañero "Exclude tracks played in the last hours" aparece cuando el toggle está activado. |
 | **Allow only tracks with expiry date** (Permitir solo pistas con fecha de caducidad) | Pistas donde `cc_files.expires_at IS NOT NULL`. Útil para bloques que solo deben extraer de contenido perecedero (segmentos de noticias datados, trailers). |
 
-Los tres se componen de forma Y y se combinan con cada
+Los cuatro se componen de forma Y y se combinan con cada
 criterio de la sección Criterios principal.
 
 > **Consejo del operador.** El toggle "Exclude tracks played
@@ -188,6 +189,13 @@ criterio de la sección Criterios principal.
 > *incluidas* por el filtro — una pista que nunca ha estado
 > al aire obviamente no puede haber estado al aire
 > "recientemente".
+>
+> El toggle compañero **"Exclude artists played lately"** es
+> la respuesta a "no hagas seguir una pista de los Beatles
+> por otra pista de los Beatles durante al menos 6 horas,
+> incluso si tengo 50 pistas de los Beatles en el pool". Los
+> dos filtros se componen: active ambos para obtener "ni
+> pista reciente NI artista reciente" al mismo tiempo.
 
 > **Cómo funciona bajo el capó.** `Exclude played lately`
 > añade una sola cláusula `WHERE cc_files.lptime IS NULL OR
@@ -195,10 +203,19 @@ criterio de la sección Criterios principal.
 > consulta Propel. El valor en horas se persiste en
 > `cc_block_criteria` (criteria =
 > `exclude_played_lately_hours`) junto al master flag
-> (criteria = `exclude_played_lately`). Sin cambio de
-> esquema — retrocompatible con smart blocks creados antes
-> de 2026-05-21 (filas faltantes = deshabilitado). Vea
-> ARCHITECTURE §23.21.
+> (criteria = `exclude_played_lately`).  `Exclude artists
+> played lately` añade una cláusula `WHERE
+> cc_files.artist_name IS NULL OR cc_files.artist_name = ''
+> OR NOT EXISTS (SELECT 1 FROM cc_playout_history JOIN
+> cc_files ON ... WHERE artist_name matches AND starts >
+> NOW() - INTERVAL 'N hours')` — `NOT EXISTS` cortocircuita
+> en la primera coincidencia así que el coste permanece
+> acotado incluso con una gran tabla de historial.
+> Persistido como segundo par de criterios
+> (`exclude_artists_played_lately` + `..._hours`).  Sin
+> cambio de esquema para ambos filtros — retrocompatible
+> con smart blocks creados antes de la función respectiva
+> (filas faltantes = deshabilitado). Vea ARCHITECTURE §23.21.
 
 ---
 

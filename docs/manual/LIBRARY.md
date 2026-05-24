@@ -227,9 +227,10 @@ narrow the candidate set *before* the sort + limit run:
 |---|---|
 | **Allow only tracks not played yet** | Tracks where `cc_files.lptime` is `NULL` (the playout has never logged them). Useful for discovery / new-content rotation blocks. |
 | **Exclude tracks played lately** | Tracks where `lptime` is `NULL` *or* older than the configured hours-back window (1..8760 h, default 24). Use this when you want to avoid recent re-rotation without forbidding every prior play. Companion input "Exclude tracks played in the last hours" appears when the toggle is on. |
+| **Exclude artists played lately** | Tracks whose `artist_name` is NULL / empty *or* has not been heard via any other track in the configured hours-back window (1..8760 h, default 24). Use this when you want to avoid two tracks by the same artist clustering together — independent of which specific track was played. Companion input "Exclude tracks played in the last hours" appears when the toggle is on. |
 | **Allow only tracks with expiry date** | Tracks where `cc_files.expires_at IS NOT NULL`. Useful for blocks that should only draw from short-lived / perishable content (dated news segments, trailers). |
 
-All three compose AND-wise and combine with every criterion
+All four compose AND-wise and combine with every criterion
 in the main Criteria section.
 
 > **Operator tip.** The "Exclude tracks played lately" toggle
@@ -239,6 +240,13 @@ in the main Criteria section.
 > within the configured window. Never-played tracks are
 > *included* by the filter — a track that has never aired
 > obviously cannot have aired "lately".
+>
+> The **"Exclude artists played lately"** companion is the
+> answer to "don't follow a Beatles track with another
+> Beatles track for at least 6 hours, even if I have 50
+> Beatles tracks in the pool". The two filters compose:
+> activate both to get "no recent track AND no recent
+> artist" at the same time.
 
 > **How it works under the hood.** `Exclude played lately`
 > adds a single `WHERE cc_files.lptime IS NULL OR cc_files
@@ -246,9 +254,17 @@ in the main Criteria section.
 > query. The hours value is persisted in
 > `cc_block_criteria` (criteria = `exclude_played_lately_hours`)
 > alongside the master flag (criteria = `exclude_played_lately`).
-> No schema change — backwards-compatible with smart blocks
-> created before 2026-05-21 (missing rows = disabled). See
-> ARCHITECTURE §23.21.
+> `Exclude artists played lately` adds a `WHERE
+> cc_files.artist_name IS NULL OR cc_files.artist_name = ''
+> OR NOT EXISTS (SELECT 1 FROM cc_playout_history JOIN
+> cc_files ON ... WHERE artist_name matches AND starts > NOW() -
+> INTERVAL 'N hours')` — `NOT EXISTS` short-circuits on the
+> first hit so cost stays bounded even with a large history
+> table. Persisted as a second criteria pair
+> (`exclude_artists_played_lately` + `..._hours`).
+> No schema change for either filter — backwards-compatible
+> with smart blocks created before the respective feature
+> (missing rows = disabled). See ARCHITECTURE §23.21.
 
 ### Editing a smart block
 

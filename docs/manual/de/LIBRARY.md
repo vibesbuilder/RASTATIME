@@ -248,9 +248,10 @@ Kandidatenmenge *vor* dem Sort + Limit einschränken:
 |---|---|
 | **Allow only tracks not played yet** (Nur noch nicht gespielte Tracks) | Tracks, bei denen `cc_files.lptime` `NULL` ist (das Playout hat sie nie protokolliert). Nützlich für Discovery- / Neue-Inhalte-Rotations-Blöcke. |
 | **Exclude tracks played lately** (Kürzlich gespielte Tracks ausschließen) | Tracks, bei denen `lptime` `NULL` ist *oder* älter als das konfigurierte Stunden-Rückblick-Fenster (1..8760 h, Default 24). Verwenden Sie dies, wenn Sie kürzliche Wiederholungen vermeiden möchten, ohne jede frühere Wiedergabe zu verbieten. Das Begleitfeld "Exclude tracks played in the last hours" erscheint, wenn der Toggle an ist. |
+| **Exclude artists played lately** (Kürzlich gespielte Artists ausschließen) | Tracks, deren `artist_name` NULL / leer ist *oder* deren Artist nicht über irgendeinen anderen Track im konfigurierten Stunden-Rückblick-Fenster gespielt wurde (1..8760 h, Default 24). Verwenden Sie dies, wenn Sie vermeiden möchten, dass zwei Tracks desselben Artists clustern — unabhängig davon, welcher konkrete Track gespielt wurde. Das Begleitfeld "Exclude tracks played in the last hours" erscheint, wenn der Toggle an ist. |
 | **Allow only tracks with expiry date** (Nur Tracks mit Ablaufdatum) | Tracks, bei denen `cc_files.expires_at IS NOT NULL` ist. Nützlich für Blöcke, die nur aus kurzlebigen / vergänglichen Inhalten ziehen sollen (datierte News-Segmente, Trailer). |
 
-Alle drei kombinieren sich UND-weise und mit jedem Kriterium
+Alle vier kombinieren sich UND-weise und mit jedem Kriterium
 in der Haupt-Kriterien-Section.
 
 > **Operator-Tipp.** Der Toggle "Exclude tracks played lately"
@@ -261,6 +262,13 @@ in der Haupt-Kriterien-Section.
 > klingt. Nie gespielte Tracks sind im Filter *eingeschlossen*
 > — ein Track, der nie auf Sendung war, kann offensichtlich
 > nicht "kürzlich" auf Sendung gewesen sein.
+>
+> Der Begleit-Toggle **"Exclude artists played lately"** ist
+> die Antwort auf "lass auf einen Beatles-Track nicht für
+> mindestens 6 Stunden einen weiteren Beatles-Track folgen,
+> auch wenn ich 50 Beatles-Tracks im Pool habe". Die beiden
+> Filter komponieren sich: beide aktivieren ergibt "kein
+> kürzlicher Track UND kein kürzlicher Artist" gleichzeitig.
 
 > **Wie es unter der Haube funktioniert.** `Exclude played
 > lately` fügt eine einzige `WHERE cc_files.lptime IS NULL OR
@@ -268,10 +276,19 @@ in der Haupt-Kriterien-Section.
 > Propel-Abfrage hinzu. Der Stundenwert wird in
 > `cc_block_criteria` persistiert (criteria =
 > `exclude_played_lately_hours`) neben dem Master-Flag
-> (criteria = `exclude_played_lately`). Keine Schemaänderung
-> — abwärtskompatibel mit Smart Blocks, die vor 2026-05-21
-> erstellt wurden (fehlende Zeilen = deaktiviert). Siehe
-> ARCHITECTURE §23.21.
+> (criteria = `exclude_played_lately`).  `Exclude artists
+> played lately` fügt eine `WHERE cc_files.artist_name IS
+> NULL OR cc_files.artist_name = '' OR NOT EXISTS (SELECT 1
+> FROM cc_playout_history JOIN cc_files ON ... WHERE
+> artist_name matches AND starts > NOW() - INTERVAL 'N
+> hours')`-Klausel hinzu — `NOT EXISTS` short-circuited beim
+> ersten Treffer, daher bleiben die Kosten auch bei großer
+> History-Tabelle begrenzt.  Persistiert als zweites
+> Kriterien-Paar (`exclude_artists_played_lately` +
+> `..._hours`).  Keine Schemaänderung für beide Filter —
+> abwärtskompatibel mit Smart Blocks, die vor dem jeweiligen
+> Feature erstellt wurden (fehlende Zeilen = deaktiviert).
+> Siehe ARCHITECTURE §23.21.
 
 ### Einen Smart Block bearbeiten
 

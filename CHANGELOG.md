@@ -7,6 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Smart Block: "Exclude artists played lately" filter**
+  (operator request 2026-05-23).  Companion to the existing
+  "Exclude tracks played lately" toggle, identical UI shape:
+  a master checkbox that reveals an "Exclude tracks played in
+  the last hours" input (1..8760 h, default 24).  Filters the
+  pool by `cc_files.artist_name` instead of `cc_files.lptime`
+  — drops any track whose artist was heard via _any_ other
+  track in the last N hours.
+
+  Use case: a smart block with hundreds of Beatles tracks
+  should not still play two Beatles tracks back-to-back just
+  because the second one has never aired specifically.  The
+  two filters compose AND-wise: activating both gives "no
+  recent track AND no recent artist".
+
+  NULL / empty `artist_name` is intentionally never matched
+  (passes the filter as-is) — a single track with a blank
+  artist would otherwise exclude every other blank-artist
+  track globally.
+
+  Implementation: two new `cc_block_criteria` rows
+  (`exclude_artists_played_lately` master + `..._hours`
+  window), same persistence + load pattern as the per-track
+  filter so missing rows = disabled (backwards-compatible).
+  WHERE clause uses a `NOT EXISTS` subquery against
+  `cc_playout_history JOIN cc_files` so cost is bounded even
+  with a large history table.
+
+  Files: `application/forms/SmartBlockCriteria.php`,
+  `application/models/Block.php` (save/load + WHERE),
+  `application/views/scripts/form/smart-block-criteria.phtml`,
+  `public/js/airtime/playlist/smart_blockbuilder.js`, docs
+  in EN/DE/FR/ES `LIBRARY.md`.
+
 ### Changed
 
 - **Track-history Title/Artist mapping for webstream + line-in

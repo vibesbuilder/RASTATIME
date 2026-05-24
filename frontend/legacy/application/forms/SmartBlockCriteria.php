@@ -452,6 +452,48 @@ class Application_Form_SmartBlockCriteria extends Zend_Form_SubForm
         }
         $this->addElement($excludeLatelyHours);
 
+        // RASTATIME 2026-05-23 — exclude tracks whose ARTIST was
+        // played in the last N hours.  Same two-field shape as the
+        // per-track filter above: master checkbox + hours-back
+        // window (1..8760), but matched on `cc_files.artist_name`
+        // instead of `cc_files.lptime`.  Goal: prevent two tracks
+        // by the same artist from playing close together when a
+        // smart block fills a slot from a large pool.  NULL/empty
+        // artist_name is never excluded (passes the filter as-is)
+        // — otherwise a single track with a blank artist would
+        // exclude every other blank-artist track globally, which
+        // is not what the operator wants.
+        $excludeArtists = new Zend_Form_Element_Checkbox('sp_exclude_artists_played_lately');
+        $excludeArtists->setDecorators(['viewHelper'])
+            ->setLabel(_('Exclude artists played lately:'));
+        if (isset($storedCrit['exclude_artists_played_lately'])) {
+            $excludeArtists->setChecked($storedCrit['exclude_artists_played_lately']['value'] == 1);
+        }
+        $this->addElement($excludeArtists);
+
+        $excludeArtistsHours = new Zend_Form_Element_Text('sp_exclude_artists_played_lately_hours');
+        $excludeArtistsHours->setAttrib('class', 'input_text sp_input_text_limit')
+            ->setAttrib('maxlength', 4)
+            ->setDecorators(['viewHelper'])
+            ->setLabel(_('Exclude tracks played in the last hours:'))
+            // Same validation policy as the per-track filter above
+            // — allow empty + required-false so a master-off
+            // submission passes cleanly; the "checkbox on +
+            // empty hours" combination is rejected server-side
+            // in Block.php::saveSmartBlockCriteria().
+            ->setRequired(false)
+            ->setAllowEmpty(true)
+            ->addValidator('Int', false)
+            ->addValidator('Between', false, ['min' => 1, 'max' => 8760]);
+        if (isset($storedCrit['exclude_artists_played_lately_hours'])) {
+            $excludeArtistsHours->setValue(
+                $storedCrit['exclude_artists_played_lately_hours']['value']
+            );
+        } else {
+            $excludeArtistsHours->setValue(24);
+        }
+        $this->addElement($excludeArtistsHours);
+
         // RASTATIME 2026-05-18 — restrict Smart Block to tracks with
         // any expiry date set (cc_files.expires_at IS NOT NULL).
         // Useful for blocks that should only draw from short-lived /

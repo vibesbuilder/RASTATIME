@@ -1312,6 +1312,29 @@ SQL;
             ->setDbValue($excludeHours)
             ->setDbBlockId($this->id)
             ->save();
+
+        // RASTATIME 2026-05-23 — exclude_artists_played_lately
+        // companion pair: master toggle + hours-back window.  Same
+        // defence-in-depth defaults + persistence-on-off as the
+        // exclude_played_lately pair above.  Match key in fetch
+        // is cc_files.artist_name (vs. cc_files.lptime).
+        $excludeArtistsOn = ((int) ($p_criteriaData['etc']['sp_exclude_artists_played_lately'] ?? 0)) === 1;
+        $excludeArtistsHoursRaw = (int) ($p_criteriaData['etc']['sp_exclude_artists_played_lately_hours'] ?? 0);
+        $excludeArtistsHours = max(1, min(8760, $excludeArtistsHoursRaw ?: 24));
+
+        $qry = new CcBlockcriteria();
+        $qry->setDbCriteria('exclude_artists_played_lately')
+            ->setDbModifier('N/A')
+            ->setDbValue($excludeArtistsOn ? 1 : 0)
+            ->setDbBlockId($this->id)
+            ->save();
+
+        $qry = new CcBlockcriteria();
+        $qry->setDbCriteria('exclude_artists_played_lately_hours')
+            ->setDbModifier('N/A')
+            ->setDbValue($excludeArtistsHours)
+            ->setDbBlockId($this->id)
+            ->save();
     }
 
     /**
@@ -1531,6 +1554,12 @@ SQL;
             } elseif ($criteria == 'exclude_played_lately_hours') {
                 // RASTATIME 2026-05-21 — hours-back window (1..8760).
                 $storedCrit['exclude_played_lately_hours'] = ['value' => $value];
+            } elseif ($criteria == 'exclude_artists_played_lately') {
+                // RASTATIME 2026-05-23 — master toggle (0/1).
+                $storedCrit['exclude_artists_played_lately'] = ['value' => $value];
+            } elseif ($criteria == 'exclude_artists_played_lately_hours') {
+                // RASTATIME 2026-05-23 — hours-back window (1..8760).
+                $storedCrit['exclude_artists_played_lately_hours'] = ['value' => $value];
             } elseif ($criteria == 'sort') {
                 $storedCrit['sort'] = ['value' => $value];
             } else {
@@ -1596,6 +1625,12 @@ SQL;
             } elseif ($criteria == 'exclude_played_lately_hours') {
                 // RASTATIME 2026-05-21 — hours-back window (1..8760).
                 $storedCrit['exclude_played_lately_hours'] = ['value' => $value];
+            } elseif ($criteria == 'exclude_artists_played_lately') {
+                // RASTATIME 2026-05-23 — master toggle (0/1).
+                $storedCrit['exclude_artists_played_lately'] = ['value' => $value];
+            } elseif ($criteria == 'exclude_artists_played_lately_hours') {
+                // RASTATIME 2026-05-23 — hours-back window (1..8760).
+                $storedCrit['exclude_artists_played_lately_hours'] = ['value' => $value];
             } elseif ($criteria == 'sort') {
                 $storedCrit['sort'] = ['value' => $value];
             } else {
@@ -1882,6 +1917,40 @@ SQL;
             $qry->where(
                 "(cc_files.lptime IS NULL OR cc_files.lptime < NOW() - INTERVAL '"
                 . $excludeHours . " hours')"
+            );
+        }
+
+        // RASTATIME 2026-05-23 — exclude_artists_played_lately:
+        // drop any track whose artist_name matches the artist of a
+        // file played in the last N hours.  NOT EXISTS subquery
+        // joins cc_playout_history → cc_files for the artist-name
+        // lookup (history table itself stores artist via metadata
+        // rows, but for files we have the canonical value on
+        // cc_files.artist_name and that's what the pool uses).
+        // NULL / empty artist_name is intentionally never matched:
+        // a single track with a blank artist would otherwise
+        // exclude every other blank-artist track globally, which
+        // is the opposite of what the operator wants.
+        // Klammern-Wrap analog dem exclude_played_lately fix from
+        // 2026-05-22 so OR-mixing with neighbouring WHERE blocks
+        // stays predictable.
+        // Hours value is already clamped to [1, 8760] in
+        // saveSmartBlockCriteria + form validator — the integer
+        // cast below carries no SQL-injection risk.
+        if (isset($storedCrit['exclude_artists_played_lately'])
+            && $storedCrit['exclude_artists_played_lately']['value'] == 1
+        ) {
+            $excludeArtistsHours = (int) ($storedCrit['exclude_artists_played_lately_hours']['value'] ?? 24);
+            $excludeArtistsHours = max(1, min(8760, $excludeArtistsHours));
+            $qry->where(
+                '(cc_files.artist_name IS NULL '
+                . "OR cc_files.artist_name = '' "
+                . 'OR NOT EXISTS ('
+                .   'SELECT 1 FROM cc_playout_history ph '
+                .   'JOIN cc_files f ON f.id = ph.file_id '
+                .   'WHERE f.artist_name = cc_files.artist_name '
+                .   "AND ph.starts > NOW() - INTERVAL '"
+                . $excludeArtistsHours . " hours'))"
             );
         }
 

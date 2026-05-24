@@ -253,9 +253,10 @@ restreignent l'ensemble candidat *avant* l'exécution du tri
 |---|---|
 | **Allow only tracks not played yet** (Autoriser uniquement les pistes pas encore jouées) | Pistes dont `cc_files.lptime` est `NULL` (le playout ne les a jamais journalisées). Utile pour les blocs de découverte / rotation de nouveau contenu. |
 | **Exclude tracks played lately** (Exclure les pistes jouées récemment) | Pistes dont `lptime` est `NULL` *ou* plus ancien que la fenêtre de retour configurée en heures (1..8760 h, par défaut 24). Utilisez ceci quand vous voulez éviter une re-rotation récente sans interdire toute lecture antérieure. Le champ compagnon "Exclude tracks played in the last hours" apparaît lorsque la bascule est activée. |
+| **Exclude artists played lately** (Exclure les artistes joués récemment) | Pistes dont `artist_name` est NULL / vide *ou* dont l'artiste n'a pas été entendu via une autre piste dans la fenêtre de retour configurée en heures (1..8760 h, par défaut 24). Utilisez ceci pour éviter que deux pistes du même artiste se regroupent — indépendamment de la piste spécifique jouée. Le champ compagnon "Exclude tracks played in the last hours" apparaît lorsque la bascule est activée. |
 | **Allow only tracks with expiry date** (Autoriser uniquement les pistes avec date d'expiration) | Pistes dont `cc_files.expires_at IS NOT NULL`. Utile pour les blocs qui doivent puiser uniquement dans du contenu éphémère (segments d'info datés, bandes-annonces). |
 
-Les trois se composent en ET et se combinent avec chaque
+Les quatre se composent en ET et se combinent avec chaque
 critère de la section Critères principale.
 
 > **Conseil opérateur.** La bascule "Exclude tracks played
@@ -266,6 +267,13 @@ critère de la section Critères principale.
 > Les pistes jamais jouées sont *incluses* par le filtre —
 > une piste qui n'est jamais passée à l'antenne ne peut
 > évidemment pas être passée "récemment".
+>
+> La bascule compagnon **"Exclude artists played lately"**
+> est la réponse à "ne fais pas suivre une piste des Beatles
+> par une autre piste des Beatles pendant au moins 6 heures,
+> même si j'ai 50 pistes des Beatles dans le pool". Les deux
+> filtres se composent : activez les deux pour obtenir "ni
+> piste récente NI artiste récent" en même temps.
 
 > **Comment ça marche sous le capot.** `Exclude played
 > lately` ajoute une seule clause `WHERE cc_files.lptime IS
@@ -273,10 +281,19 @@ critère de la section Critères principale.
 > la requête Propel. La valeur en heures est persistée dans
 > `cc_block_criteria` (criteria =
 > `exclude_played_lately_hours`) à côté du master flag
-> (criteria = `exclude_played_lately`). Aucun changement de
-> schéma — rétrocompatible avec les smart blocks créés
-> avant 2026-05-21 (lignes manquantes = désactivé). Voir
-> ARCHITECTURE §23.21.
+> (criteria = `exclude_played_lately`).  `Exclude artists
+> played lately` ajoute une clause `WHERE
+> cc_files.artist_name IS NULL OR cc_files.artist_name = ''
+> OR NOT EXISTS (SELECT 1 FROM cc_playout_history JOIN
+> cc_files ON ... WHERE artist_name matches AND starts >
+> NOW() - INTERVAL 'N hours')` — `NOT EXISTS` court-circuite
+> au premier match donc le coût reste borné même avec une
+> grande table d'historique.  Persisté comme deuxième paire
+> de critères (`exclude_artists_played_lately` + `..._hours`).
+> Aucun changement de schéma pour les deux filtres —
+> rétrocompatible avec les smart blocks créés avant la
+> fonctionnalité respective (lignes manquantes = désactivé).
+> Voir ARCHITECTURE §23.21.
 
 ### Modifier un smart block
 

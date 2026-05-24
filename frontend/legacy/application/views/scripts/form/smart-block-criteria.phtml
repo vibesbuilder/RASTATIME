@@ -200,6 +200,46 @@
                 <?php endif; ?>
             </dd>
         </dl>
+        <?php /* RASTATIME 2026-05-23 — exclude-artists-played-lately
+               filter pair, same shape as the per-track pair above. */ ?>
+        <dl>
+            <dt>
+                <label class='sp_text_font'><?php echo $this->element->getElement('sp_exclude_artists_played_lately')->getLabel() ?></label>
+            </dt>
+            <dd id='sp_exclude_artists_played_lately-element'>
+                <?php echo $this->element->getElement('sp_exclude_artists_played_lately') ?>
+                <?php if ($this->element->getElement("sp_exclude_artists_played_lately")->hasErrors()) : ?>
+                    <?php foreach ($this->element->getElement("sp_exclude_artists_played_lately")->getMessages() as $error) : ?>
+                        <span class='errors sp-errors'>
+                            <?php echo $error; ?>
+                        </span>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </dd>
+        </dl>
+        <?php
+            // RASTATIME 2026-05-23 — initial visibility computed
+            // server-side (same pattern as the tracks pair above)
+            // so the row never flashes briefly visible before
+            // smart_blockbuilder.js gets a chance to hide it.
+            $excludeArtistsRowHidden = $this->element->getElement('sp_exclude_artists_played_lately')
+                ->getValue() ? '' : 'style="display: none;"';
+        ?>
+        <dl id='sp_exclude_artists_played_lately_hours_wrap' <?php echo $excludeArtistsRowHidden; ?>>
+            <dt>
+                <label class='sp_text_font'><?php echo $this->element->getElement('sp_exclude_artists_played_lately_hours')->getLabel() ?></label>
+            </dt>
+            <dd id='sp_exclude_artists_played_lately_hours-element'>
+                <?php echo $this->element->getElement('sp_exclude_artists_played_lately_hours') ?>
+                <?php if ($this->element->getElement("sp_exclude_artists_played_lately_hours")->hasErrors()) : ?>
+                    <?php foreach ($this->element->getElement("sp_exclude_artists_played_lately_hours")->getMessages() as $error) : ?>
+                        <span class='errors sp-errors'>
+                            <?php echo $error; ?>
+                        </span>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </dd>
+        </dl>
         <?php /* RASTATIME 2026-05-18 — only-tracks-with-expiry filter.
                Sits directly under the only-unplayed toggle since both
                are pool-restriction toggles. */ ?>

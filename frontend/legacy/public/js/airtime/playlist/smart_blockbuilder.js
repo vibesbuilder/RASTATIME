@@ -777,6 +777,30 @@ function setupUI() {
 
   $excludeChk.off("change.excludelately")
     .on("change.excludelately", syncExcludeLatelyVisibility);
+
+  // RASTATIME 2026-05-23 — identical toggle pair for the
+  // exclude-artists-played-lately filter (cc_files.artist_name
+  // match in last N hours).  Same default-24 auto-fill on
+  // master-on so the active state is never visually empty.
+  var $excludeArtistsChk   = $("#sp_exclude_artists_played_lately");
+  var $excludeArtistsWrap  = $("#sp_exclude_artists_played_lately_hours_wrap");
+  var $excludeArtistsHours = $("#sp_exclude_artists_played_lately_hours");
+
+  function syncExcludeArtistsLatelyVisibility() {
+    if ($excludeArtistsChk.is(":checked")) {
+      $excludeArtistsWrap.show();
+      if (!$excludeArtistsHours.val()) {
+        $excludeArtistsHours.val(24);
+      }
+    } else {
+      $excludeArtistsWrap.hide();
+    }
+  }
+
+  syncExcludeArtistsLatelyVisibility();
+
+  $excludeArtistsChk.off("change.excludeartistslately")
+    .on("change.excludeartistslately", syncExcludeArtistsLatelyVisibility);
 }
 
 function enableAndShowTracktypeDropdown(valEle, index) {
