@@ -237,17 +237,17 @@
 	background: none;
 }
 .status-info-block li.auto-dj-item .auto-dj-button {
-	/* RASTATIME 2026-05-25 — operator-tuned dimensions: 100 px
+	/* RASTATIME 2026-05-25 — operator-tuned dimensions: 101 px
 	   wide (flush with #master_dj_div / #live_dj_div above),
-	   18 px tall, box-sizing border-box so padding/border do
+	   20 px tall, box-sizing border-box so padding/border do
 	   not push the outer size past those numbers. */
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
 	gap: 4px;
 	box-sizing: border-box;
-	width: 100px;
-	height: 18px;
+	width: 101px;
+	height: 20px;
 	padding: 0 8px;
 	font-size: 11px;
 	font-weight: bold;
@@ -283,12 +283,12 @@
 	content: "\2699";
 }
 .status-info-block li.auto-dj-item .auto-dj-indicator {
-	/* Width = button width (100 px) so the red active-line sits
+	/* Width = button width (101 px) so the red active-line sits
 	   flush below the AUTO-DJ pill, not narrower than it. */
 	display: none;
 	height: 2px;
 	margin-top: 2px;
-	width: 100px;
+	width: 101px;
 	background-color: #ff2222;
 }
 .status-info-block li.auto-dj-item.auto-dj-active .auto-dj-indicator {
