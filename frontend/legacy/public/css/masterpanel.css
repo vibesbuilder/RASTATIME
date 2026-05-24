@@ -255,22 +255,22 @@
 	text-align: center;
 	box-sizing: border-box;
 	width: 101px;
-	height: 17px;
+	height: 19px;
 }
 .status-info-block li.auto-dj-item .auto-dj-button span {
 	/* Inner span = .listen-control-button span:
 	   styles.css L453–466 — light-grey gradient + dark
 	   horizontal borders.  Operator-pinned dimensions
 	   2026-05-25: vertical padding dropped to 0 and
-	   line-height fixed at 13 px so the inner span fits
-	   inside the 17-px outer button (17 - 2 outer borders
-	   - 2 inner borders = 13 px usable text area). */
+	   line-height fixed at 15 px so the inner span fills
+	   the 19-px outer button (19 - 2 outer borders
+	   - 2 inner borders = 15 px usable text area). */
 	background-color: #6e6e6e;
 	background: -moz-linear-gradient(top, #868686 0, #6e6e6e 100%);
 	background: -webkit-gradient(linear, left top, left bottom, color-stop(0, #868686), color-stop(100%, #6e6e6e));
 	background: linear-gradient(top, #868686 0, #6e6e6e 100%);
 	padding: 0 10px;
-	line-height: 13px;
+	line-height: 15px;
 	border: 1px solid #a1a1a1;
 	border-width: 1px 0;
 	border-bottom-color: #646464;
