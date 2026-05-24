@@ -364,10 +364,13 @@ MON  TUE  WED  THU  FRI  SAT  SUN                   ← onglets
 > aujourd'hui a une lacune de programme ou quand un autre
 > jour est actif.
 
-> **Largeur.** Le widget Weekly Schedule fait **400 px de large**
-> (plus large que les autres widgets Wave-1 — il consomme plus
-> d'espace horizontal par ligne pour l'heure + le nom sans
-> troncation).
+> **Largeur.** Le widget Weekly Schedule fait **670 px de large**
+> (élargi depuis 400 px le 2026-05-25 sur demande de l'opérateur —
+> toutes les polices, paddings et la max-height du panneau de jour
+> ont été mis à l'échelle proportionnellement ; l'iframe dans le
+> snippet d'intégration recommandé est `width="670" height="940"`).
+> Réglez l'iframe sur ces valeurs dans le HTML d'intégration pour
+> un ajustement précis.
 
 ### Instances modifiées / annulées
 

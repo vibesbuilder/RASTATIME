@@ -363,11 +363,12 @@ MON  TUE  WED  THU  FRI  SAT  SUN                   ← Tagestabs
 > Effekt, wenn heute gerade eine Programmlücke ist (keine
 > laufende Sendung) oder wenn ein anderer Tag aktiv ist.
 
-> **Breite.** Das Weekly-Schedule-Widget ist **400 px breit**
-> (breiter als die anderen Wave-1-Widgets — es braucht mehr
-> Horizontalraum pro Zeile für Zeit + Name ohne Truncation).
-> Setzen Sie die iframe-Breite im einbettenden HTML auf 400
-> für bündige Darstellung.
+> **Breite.** Das Weekly-Schedule-Widget ist **670 px breit**
+> (hochgesetzt von 400 px am 2026-05-25 auf Operator-Wunsch — alle
+> Schriften, Padding und die Day-Panel-Maxhöhe wurden proportional
+> mitskaliert; das iframe im empfohlenen Embed-Snippet ist
+> `width="670" height="940"`).  Setzen Sie die iframe-Werte im
+> einbettenden HTML auf diese Werte für bündige Darstellung.
 
 ### Geänderte / abgesagte Instanzen
 

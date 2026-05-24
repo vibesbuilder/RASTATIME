@@ -472,9 +472,15 @@ html, body {
     --np-accent: #459B8F;
     --np-accent-hover: rgba(69, 155, 143, 0.4);
 
-    max-width: 400px;
+    /*  RASTATIME 2026-05-25 — operator-requested size bump from
+        400 px to 670 px container width.  All other dimensions
+        below scaled proportionally (≈ 1.67×) — fonts via the
+        font-size bump here (1em → 1.2em) so em-based padding /
+        gap values inherit the new scale, plus targeted bumps on
+        px-based padding / heights / min-widths.  */
+    max-width: 670px;
     line-height: 1.5;
-    font-size: 1em;
+    font-size: 1.2em;
 
     /*  Optional background colour + image, controlled by
         --np-bg-color (?bgcolor=#hex) and --np-bg-image (?bg=URL).
@@ -500,8 +506,8 @@ html, body {
     align-items: center;
     justify-content: space-between;
     gap: 0.5em;
-    padding-bottom: 6px;
-    margin-bottom: 6px;
+    padding-bottom: 10px;
+    margin-bottom: 10px;
     border-bottom: 1px solid var(--np-fg-muted);
     color: var(--np-fg);
     font-weight: 700;
@@ -515,10 +521,10 @@ html, body {
         interactive without dominating the header.  */
     background: transparent;
     border: 0;
-    padding: 2px 8px;
+    padding: 4px 14px;
     color: var(--np-fg);
     cursor: pointer;
-    font-size: 1.1em;
+    font-size: 1.3em;
     line-height: 1;
     flex: 0 0 auto;
 }
@@ -549,9 +555,9 @@ html, body {
         so existing operators recognise the layout.  */
     display: flex;
     list-style: none;
-    margin: 0 0 6px 0;
+    margin: 0 0 10px 0;
     padding: 0;
-    gap: 0.25em;
+    gap: 0.3em;
 }
 
 .np-widget.np-weekly-schedule .np-ws-tab {
@@ -561,10 +567,10 @@ html, body {
         teal block.  */
     flex: 1 1 0;
     text-align: center;
-    padding: 4px 0;
+    padding: 8px 0;
     cursor: pointer;
     color: var(--np-fg-muted);
-    border-bottom: 2px solid transparent;
+    border-bottom: 3px solid transparent;
     font-weight: 700;
     line-height: 1.2;
 }
@@ -582,7 +588,7 @@ html, body {
         day number below so the day-of-month reads as the primary
         identifier.  */
     display: block;
-    font-size: 0.8em;
+    font-size: 0.85em;
     text-transform: uppercase;
     letter-spacing: 0.05em;
 }
@@ -590,8 +596,8 @@ html, body {
 .np-widget.np-weekly-schedule .np-ws-tab .np-ws-tab-dom {
     /*  Day-of-month number — primary visual element of the tab.  */
     display: block;
-    font-size: 1em;
-    margin-top: 1px;
+    font-size: 1.15em;
+    margin-top: 2px;
 }
 
 .np-widget.np-weekly-schedule .np-ws-tab.np-ws-tab-active {
@@ -624,7 +630,7 @@ html, body {
         time (toggled via .np-ws-day-active by the JS).  Min-
         height keeps the iframe from jumping when switching
         between a day with many shows and one with none.  */
-    min-height: 120px;
+    min-height: 200px;
 }
 
 .np-widget.np-weekly-schedule .np-ws-day {
@@ -638,12 +644,13 @@ html, body {
         user lands directly on "what's on right now" without
         having to scroll past the early-morning programme.
 
-        Sized for the 560 px iframe height that the settings
-        page + embed snippets use as of 2026-05-22 v8:
-        560 - header (~32) - tab strip (~50) - bottom margin
-        (~8) ≈ 470 px of usable panel height.  */
+        Sized for the 940 px iframe height that the settings
+        page + embed snippets use as of 2026-05-25 (670 px width
+        rework, scaled up from the 2026-05-22 v8 560 px height):
+        940 - header (~56) - tab strip (~84) - bottom margin
+        (~10) ≈ 790 px of usable panel height.  */
     display: none;
-    max-height: 470px;
+    max-height: 790px;
     overflow-y: auto;
     /*  Subtle scrollbar that matches the muted theme variable,
         only visible while scrolling (webkit) or always (firefox
@@ -653,7 +660,7 @@ html, body {
 }
 
 .np-widget.np-weekly-schedule .np-ws-day::-webkit-scrollbar {
-    width: 6px;
+    width: 8px;
 }
 
 .np-widget.np-weekly-schedule .np-ws-day::-webkit-scrollbar-thumb {
@@ -675,10 +682,10 @@ html, body {
     color: var(--np-fg);
     display: flex;
     align-items: baseline;
-    gap: 0.8em;
-    padding: 6px 0 6px 8px;
+    gap: 1em;
+    padding: 10px 0 10px 12px;
     border-top: 1px dotted var(--np-fg-muted);
-    border-left: 3px solid transparent;
+    border-left: 4px solid transparent;
     overflow: hidden;
 }
 

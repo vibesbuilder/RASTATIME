@@ -9,6 +9,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Weekly Schedule widget scaled up to 670 px width**
+  (operator request 2026-05-25).  Container `max-width` raised
+  from 400 px to 670 px, all other dimensions scaled
+  proportionally (≈ 1.67× factor):
+    - Body `font-size` 1em → 1.2em (em-based padding / gap
+      values inherit the new scale automatically).
+    - Header `padding-bottom` + `margin-bottom` 6px → 10px;
+      nav buttons `padding` 2/8 → 4/14, `font-size` 1.1em →
+      1.3em.
+    - Tab strip `margin-bottom` 6 → 10, tab `padding` 4 → 8,
+      active-tab border-bottom 2 → 3 px, day-of-month
+      `font-size` 1em → 1.15em.
+    - Content area `min-height` 120 → 200 px; day-panel
+      `max-height` 470 → 790 px (matches the new iframe
+      height); scrollbar 6 → 8 px wide.
+    - Row `padding` 6/8 → 10/12, `gap` 0.8em → 1em, current-
+      show left-border 3 → 4 px.
+
+  Settings page (Settings → Widgets → Weekly Schedule)
+  iframe + embed-snippet defaults raised from `width="400"
+  height="560"` to `width="670" height="940"` so the preview
+  + the copy-paste embed code match the new dimensions out of
+  the box.  Operator-doc width line updated in WIDGETS.md
+  EN/DE/FR/ES.
+
+### Changed
+
 - **Dashboard header: `source-info-block` → `status-info-block`,
   new Auto-DJ shortcut button** (operator request 2026-05-24).
   Four edits to the master panel header partial:

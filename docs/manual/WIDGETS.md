@@ -350,11 +350,12 @@ MON  TUE  WED  THU  FRI  SAT  SUN                   ← day tabs
 > currently-airing show), or when the active tab is any
 > other day.
 
-> **Width.** The Weekly Schedule widget body is **400 px wide**
-> (wider than the other Wave-1 widgets — it consumes more
-> horizontal space per row to fit the time + name without
-> truncation).  Set the iframe width to 400 in the embedding
-> HTML for a flush fit.
+> **Width.** The Weekly Schedule widget body is **670 px wide**
+> (raised from 400 px on 2026-05-25 per operator request — all
+> fonts, paddings, and the day-panel max-height scaled
+> proportionally; the iframe in the recommended embed snippet
+> is `width="670" height="940"`).  Set the iframe to these
+> values in the embedding HTML for a flush fit.
 
 ### Modified / cancelled instances
 
