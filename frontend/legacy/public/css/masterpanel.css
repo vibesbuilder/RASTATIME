@@ -241,7 +241,7 @@
 	/* Outer skin = .listen-control-button outer:
 	   styles.css L437–451 (and masterpanel.css L362–377).
 	   Operator-pinned dimensions 2026-05-25 (after the listen-
-	   control-style clone landed): 100 × 20 px, box-sizing
+	   control-style clone landed): 101 × 19 px, box-sizing
 	   border-box so padding + 1-px borders are inside the box. */
 	font-size: 11px;
 	text-transform: uppercase;
@@ -254,8 +254,8 @@
 	display: block;
 	text-align: center;
 	box-sizing: border-box;
-	width: 100px;
-	height: 20px;
+	width: 101px;
+	height: 19px;
 }
 .status-info-block li.auto-dj-item .auto-dj-button span {
 	/* Inner span = .listen-control-button span:

@@ -182,8 +182,12 @@
             // server-side so the row never flashes briefly visible
             // before smart_blockbuilder.js gets a chance to hide it.
             // The JS still owns runtime toggles.
-            $excludeRowHidden = $this->element->getElement('sp_exclude_played_lately')
-                ->getValue() ? '' : 'style="display: none;"';
+            // 2026-05-25 — switched from a full style="..." string to
+            // just the display fragment so the inline-style on the
+            // <dl> can also carry the operator-requested 10 px
+            // indent (margin-left).
+            $excludeRowDisplay = $this->element->getElement('sp_exclude_played_lately')
+                ->getValue() ? '' : ' display: none;';
         ?>
         <?php /* RASTATIME 2026-05-23 — inline label layout per
                operator request: the hours <input> sits in the
@@ -191,8 +195,10 @@
                "Exclude tracks played in the last hours:" label.
                <dt> is intentionally omitted; the <label> wraps
                the input so click-on-text still focuses it and
-               screen readers read the full sentence. */ ?>
-        <dl id='sp_exclude_played_lately_hours_wrap' <?php echo $excludeRowHidden; ?>>
+               screen readers read the full sentence.  2026-05-25:
+               margin-left 10 px on the <dl> so the row is indented
+               under the master checkbox above it. */ ?>
+        <dl id='sp_exclude_played_lately_hours_wrap' style="margin-left: 10px;<?php echo $excludeRowDisplay; ?>">
             <dd id='sp_exclude_played_lately_hours-element'>
                 <label class='sp_text_font' for='sp_exclude_played_lately_hours'>
                     <?php echo _('Exclude tracks played in the last'); ?>
@@ -227,15 +233,16 @@
         </dl>
         <?php
             // RASTATIME 2026-05-23 — initial visibility computed
-            // server-side (same pattern as the tracks pair above)
-            // so the row never flashes briefly visible before
-            // smart_blockbuilder.js gets a chance to hide it.
-            $excludeArtistsRowHidden = $this->element->getElement('sp_exclude_artists_played_lately')
-                ->getValue() ? '' : 'style="display: none;"';
+            // server-side (same pattern as the tracks pair above).
+            // 2026-05-25 — same display-fragment switch as the
+            // tracks pair so the 10 px indent on the <dl> works.
+            $excludeArtistsRowDisplay = $this->element->getElement('sp_exclude_artists_played_lately')
+                ->getValue() ? '' : ' display: none;';
         ?>
         <?php /* RASTATIME 2026-05-23 — inline label layout, same
-               shape as the tracks pair above. */ ?>
-        <dl id='sp_exclude_artists_played_lately_hours_wrap' <?php echo $excludeArtistsRowHidden; ?>>
+               shape as the tracks pair above (incl. 2026-05-25
+               margin-left 10 px indent). */ ?>
+        <dl id='sp_exclude_artists_played_lately_hours_wrap' style="margin-left: 10px;<?php echo $excludeArtistsRowDisplay; ?>">
             <dd id='sp_exclude_artists_played_lately_hours-element'>
                 <label class='sp_text_font' for='sp_exclude_artists_played_lately_hours'>
                     <?php echo _('Exclude artists played in the last'); ?>
