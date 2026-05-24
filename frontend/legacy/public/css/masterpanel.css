@@ -283,14 +283,16 @@
 	content: "\2699";
 }
 .status-info-block li.auto-dj-item .auto-dj-indicator {
-	/* Indicator visually flush under the AUTO-DJ pill: width is
+	/* Indicator visually flush ABOVE the AUTO-DJ pill (operator
+	   moved it from below to above on 2026-05-25): width is
 	   button-width minus the two 1-px side borders (101 - 2 = 99 px)
 	   and shifted 1 px right (margin-left) so the line aligns with
 	   the inner content area of the button rather than overshooting
-	   the border on the left.  Operator-tuned 2026-05-25. */
+	   the border on the left.  The DOM order is also flipped in
+	   header.phtml so the indicator <div> precedes the <a> button. */
 	display: none;
 	height: 2px;
-	margin-top: 2px;
+	margin-bottom: 2px;
 	margin-left: 1px;
 	width: 99px;
 	background-color: #ff2222;

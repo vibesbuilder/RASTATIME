@@ -354,7 +354,7 @@ MON  TUE  WED  THU  FRI  SAT  SUN                   ← day tabs
 > (raised from 400 px on 2026-05-25 per operator request — all
 > fonts, paddings, and the day-panel max-height scaled
 > proportionally; the iframe in the recommended embed snippet
-> is `width="670" height="940"`).  Set the iframe to these
+> is `width="670" height="670"`).  Set the iframe to these
 > values in the embedding HTML for a flush fit.
 
 ### Modified / cancelled instances

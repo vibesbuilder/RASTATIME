@@ -644,13 +644,12 @@ html, body {
         user lands directly on "what's on right now" without
         having to scroll past the early-morning programme.
 
-        Sized for the 940 px iframe height that the settings
-        page + embed snippets use as of 2026-05-25 (670 px width
-        rework, scaled up from the 2026-05-22 v8 560 px height):
-        940 - header (~56) - tab strip (~84) - bottom margin
-        (~10) ≈ 790 px of usable panel height.  */
+        Sized for the 670 px square iframe (operator wanted the
+        widget square 2026-05-25, height matches the new
+        670 px width).  670 - header (~56) - tab strip (~84) -
+        bottom margin (~10) ≈ 520 px of usable panel height.  */
     display: none;
-    max-height: 790px;
+    max-height: 520px;
     overflow-y: auto;
     /*  Subtle scrollbar that matches the muted theme variable,
         only visible while scrolling (webkit) or always (firefox

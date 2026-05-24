@@ -60,6 +60,12 @@
              in the dashboard.  Driven by the auto_dj_enabled
              Preference at render time. */ ?>
       <li class="auto-dj-item<?php echo $this->auto_dj_enabled ? ' auto-dj-active' : ''; ?>">
+        <?php /* RASTATIME 2026-05-25 — operator request: red active-
+               indicator sits ABOVE the button now (was below), so
+               .auto-dj-indicator is emitted before the <a> in the
+               DOM.  Matching CSS margin flipped from margin-top to
+               margin-bottom. */ ?>
+        <div class="auto-dj-indicator"></div>
         <?php /* Use baseUrl() as a Zend View-Helper function call
                (not the property concat) so the href always resolves
                to an absolute path.  The previous string concat with
@@ -71,7 +77,6 @@
           <span class="auto-dj-icon"></span>
           <span class="auto-dj-label"><?php echo _('AUTO DJ'); ?></span>
         </a>
-        <div class="auto-dj-indicator"></div>
       </li>
     </ul>
   </div>

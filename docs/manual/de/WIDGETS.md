@@ -367,7 +367,7 @@ MON  TUE  WED  THU  FRI  SAT  SUN                   ← Tagestabs
 > (hochgesetzt von 400 px am 2026-05-25 auf Operator-Wunsch — alle
 > Schriften, Padding und die Day-Panel-Maxhöhe wurden proportional
 > mitskaliert; das iframe im empfohlenen Embed-Snippet ist
-> `width="670" height="940"`).  Setzen Sie die iframe-Werte im
+> `width="670" height="670"`).  Setzen Sie die iframe-Werte im
 > einbettenden HTML auf diese Werte für bündige Darstellung.
 
 ### Geänderte / abgesagte Instanzen

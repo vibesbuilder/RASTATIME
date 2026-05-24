@@ -364,7 +364,7 @@ MON  TUE  WED  THU  FRI  SAT  SUN                   ← pestañas
 > (ampliado desde 400 px el 2026-05-25 a petición del operador —
 > todas las fuentes, paddings y la max-height del panel-día se
 > escalaron proporcionalmente; el iframe en el snippet de
-> embebido recomendado es `width="670" height="940"`).  Ajuste
+> embebido recomendado es `width="670" height="670"`).  Ajuste
 > el iframe a estos valores en el HTML de embebido para un
 > encaje preciso.
 

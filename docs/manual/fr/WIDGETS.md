@@ -368,7 +368,7 @@ MON  TUE  WED  THU  FRI  SAT  SUN                   ← onglets
 > (élargi depuis 400 px le 2026-05-25 sur demande de l'opérateur —
 > toutes les polices, paddings et la max-height du panneau de jour
 > ont été mis à l'échelle proportionnellement ; l'iframe dans le
-> snippet d'intégration recommandé est `width="670" height="940"`).
+> snippet d'intégration recommandé est `width="670" height="670"`).
 > Réglez l'iframe sur ces valeurs dans le HTML d'intégration pour
 > un ajustement précis.
 
