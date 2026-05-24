@@ -60,7 +60,14 @@
              in the dashboard.  Driven by the auto_dj_enabled
              Preference at render time. */ ?>
       <li class="auto-dj-item<?php echo $this->auto_dj_enabled ? ' auto-dj-active' : ''; ?>">
-        <a href="<?php echo $this->baseUrl . 'preference/auto-dj'; ?>" class="auto-dj-button" title="<?php echo _('Auto DJ settings'); ?>">
+        <?php /* Use baseUrl() as a Zend View-Helper function call
+               (not the property concat) so the href always resolves
+               to an absolute path.  The previous string concat with
+               $this->baseUrl returned an empty value on most pages,
+               which made the href relative — operator saw it
+               resolve to /preference/preference/auto-dj when
+               already on a /preference/* page (2026-05-25 report). */ ?>
+        <a href="<?php echo $this->baseUrl('preference/auto-dj'); ?>" class="auto-dj-button" title="<?php echo _('Auto DJ settings'); ?>">
           <span class="auto-dj-icon"></span>
           <span class="auto-dj-label"><?php echo _('AUTO DJ'); ?></span>
         </a>
