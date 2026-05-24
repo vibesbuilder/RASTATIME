@@ -425,7 +425,10 @@ class Application_Form_SmartBlockCriteria extends Zend_Form_SubForm
         $this->addElement($excludeLately);
 
         $excludeLatelyHours = new Zend_Form_Element_Text('sp_exclude_played_lately_hours');
-        $excludeLatelyHours->setAttrib('class', 'input_text sp_input_text_limit')
+        // RASTATIME 2026-05-25 — half-width variant; the input is
+        // rendered inline inside the sentence so the narrower field
+        // reads cleaner than the default 75-px width.
+        $excludeLatelyHours->setAttrib('class', 'input_text sp_input_text_limit_half')
             ->setAttrib('maxlength', 4)
             ->setDecorators(['viewHelper'])
             // Label kept for fallback / validator-message paths; the
@@ -476,7 +479,9 @@ class Application_Form_SmartBlockCriteria extends Zend_Form_SubForm
         $this->addElement($excludeArtists);
 
         $excludeArtistsHours = new Zend_Form_Element_Text('sp_exclude_artists_played_lately_hours');
-        $excludeArtistsHours->setAttrib('class', 'input_text sp_input_text_limit')
+        // RASTATIME 2026-05-25 — half-width variant, same reason as
+        // the tracks pair above.
+        $excludeArtistsHours->setAttrib('class', 'input_text sp_input_text_limit_half')
             ->setAttrib('maxlength', 4)
             ->setDecorators(['viewHelper'])
             // Label kept for fallback / validator-message paths; the

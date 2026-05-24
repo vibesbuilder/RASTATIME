@@ -730,6 +730,16 @@ table.library-get-file-md.table-small{
     width: 75px !important;
 }
 
+/* RASTATIME 2026-05-25 — half-width variant for the inline-label
+   hours inputs in smart-block-criteria.phtml ("Exclude tracks /
+   artists played in the last [field] hours").  Same CSS family as
+   .sp_input_text_limit so the operator can read them as a pair,
+   just narrower because the inline placement next to the
+   surrounding text reads cleaner with a smaller field. */
+.sp_input_text_limit_half{
+    width: 37px !important;
+}
+
 .sp_no_margins{
     margin-left: 0px !important;
     margin-right: 0px !important;
