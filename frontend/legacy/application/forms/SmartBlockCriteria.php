@@ -428,7 +428,11 @@ class Application_Form_SmartBlockCriteria extends Zend_Form_SubForm
         $excludeLatelyHours->setAttrib('class', 'input_text sp_input_text_limit')
             ->setAttrib('maxlength', 4)
             ->setDecorators(['viewHelper'])
-            ->setLabel(_('Exclude tracks played in the last hours:'))
+            // Label kept for fallback / validator-message paths; the
+            // primary rendering in smart-block-criteria.phtml puts the
+            // input inline in a sentence ("Exclude tracks played in
+            // the last N hours") per operator preference 2026-05-23.
+            ->setLabel(_('Exclude tracks played in the last hours'))
             // Allow-empty + required-false: the field is irrelevant
             // when the master checkbox is off, and we want a blank
             // submission in that case to pass validation cleanly.
@@ -475,7 +479,14 @@ class Application_Form_SmartBlockCriteria extends Zend_Form_SubForm
         $excludeArtistsHours->setAttrib('class', 'input_text sp_input_text_limit')
             ->setAttrib('maxlength', 4)
             ->setDecorators(['viewHelper'])
-            ->setLabel(_('Exclude tracks played in the last hours:'))
+            // Label kept for fallback / validator-message paths; the
+            // primary rendering in smart-block-criteria.phtml puts the
+            // input inline ("Exclude artists played in the last N
+            // hours") per operator preference 2026-05-23.  Note: the
+            // word here is "artists" (was a copy-paste bug from the
+            // tracks pair until the inline-label rework also caught
+            // and fixed it).
+            ->setLabel(_('Exclude artists played in the last hours'))
             // Same validation policy as the per-track filter above
             // — allow empty + required-false so a master-off
             // submission passes cleanly; the "checkbox on +

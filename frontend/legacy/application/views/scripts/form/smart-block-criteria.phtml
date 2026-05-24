@@ -185,12 +185,20 @@
             $excludeRowHidden = $this->element->getElement('sp_exclude_played_lately')
                 ->getValue() ? '' : 'style="display: none;"';
         ?>
+        <?php /* RASTATIME 2026-05-23 — inline label layout per
+               operator request: the hours <input> sits in the
+               middle of the sentence, not after a stand-alone
+               "Exclude tracks played in the last hours:" label.
+               <dt> is intentionally omitted; the <label> wraps
+               the input so click-on-text still focuses it and
+               screen readers read the full sentence. */ ?>
         <dl id='sp_exclude_played_lately_hours_wrap' <?php echo $excludeRowHidden; ?>>
-            <dt>
-                <label class='sp_text_font'><?php echo $this->element->getElement('sp_exclude_played_lately_hours')->getLabel() ?></label>
-            </dt>
             <dd id='sp_exclude_played_lately_hours-element'>
-                <?php echo $this->element->getElement('sp_exclude_played_lately_hours') ?>
+                <label class='sp_text_font' for='sp_exclude_played_lately_hours'>
+                    <?php echo _('Exclude tracks played in the last'); ?>
+                    <?php echo $this->element->getElement('sp_exclude_played_lately_hours') ?>
+                    <?php echo _('hours'); ?>
+                </label>
                 <?php if ($this->element->getElement("sp_exclude_played_lately_hours")->hasErrors()) : ?>
                     <?php foreach ($this->element->getElement("sp_exclude_played_lately_hours")->getMessages() as $error) : ?>
                         <span class='errors sp-errors'>
@@ -225,12 +233,15 @@
             $excludeArtistsRowHidden = $this->element->getElement('sp_exclude_artists_played_lately')
                 ->getValue() ? '' : 'style="display: none;"';
         ?>
+        <?php /* RASTATIME 2026-05-23 — inline label layout, same
+               shape as the tracks pair above. */ ?>
         <dl id='sp_exclude_artists_played_lately_hours_wrap' <?php echo $excludeArtistsRowHidden; ?>>
-            <dt>
-                <label class='sp_text_font'><?php echo $this->element->getElement('sp_exclude_artists_played_lately_hours')->getLabel() ?></label>
-            </dt>
             <dd id='sp_exclude_artists_played_lately_hours-element'>
-                <?php echo $this->element->getElement('sp_exclude_artists_played_lately_hours') ?>
+                <label class='sp_text_font' for='sp_exclude_artists_played_lately_hours'>
+                    <?php echo _('Exclude artists played in the last'); ?>
+                    <?php echo $this->element->getElement('sp_exclude_artists_played_lately_hours') ?>
+                    <?php echo _('hours'); ?>
+                </label>
                 <?php if ($this->element->getElement("sp_exclude_artists_played_lately_hours")->hasErrors()) : ?>
                     <?php foreach ($this->element->getElement("sp_exclude_artists_played_lately_hours")->getMessages() as $error) : ?>
                         <span class='errors sp-errors'>
