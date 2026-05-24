@@ -283,12 +283,16 @@
 	content: "\2699";
 }
 .status-info-block li.auto-dj-item .auto-dj-indicator {
-	/* Width = button width (101 px) so the red active-line sits
-	   flush below the AUTO-DJ pill, not narrower than it. */
+	/* Indicator visually flush under the AUTO-DJ pill: width is
+	   button-width minus the two 1-px side borders (101 - 2 = 99 px)
+	   and shifted 1 px right (margin-left) so the line aligns with
+	   the inner content area of the button rather than overshooting
+	   the border on the left.  Operator-tuned 2026-05-25. */
 	display: none;
 	height: 2px;
 	margin-top: 2px;
-	width: 101px;
+	margin-left: 1px;
+	width: 99px;
 	background-color: #ff2222;
 }
 .status-info-block li.auto-dj-item.auto-dj-active .auto-dj-indicator {
