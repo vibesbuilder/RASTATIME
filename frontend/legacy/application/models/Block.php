@@ -1313,24 +1313,54 @@ SQL;
             ->setDbBlockId($this->id)
             ->save();
 
-        // RASTATIME 2026-05-23 — exclude_artists_played_lately
+        // RASTATIME 2026-05-23 — exclude_artists_lately
         // companion pair: master toggle + hours-back window.  Same
         // defence-in-depth defaults + persistence-on-off as the
         // exclude_played_lately pair above.  Match key in fetch
         // is cc_files.artist_name (vs. cc_files.lptime).
+        //
+        // Hotfix 2026-05-24: the v1 criteria names
+        // (`exclude_artists_played_lately` + `..._hours`) were
+        // 29 + 35 chars; cc_blockcriteria.criteria is VARCHAR(32),
+        // so the hours row hit a PDO 22001 truncation error and
+        // the entire save aborted (operator-visible as "Save
+        // hangs").  Renamed to `exclude_artists_lately` + `..._hours`
+        // (22 + 28 chars, both fit).  The internal $storedCrit
+        // keys stay `exclude_artists_played_lately*` so the rest
+        // of the code (form + WHERE clause) is unchanged.  The
+        // load path accepts both names for forward-compat with any
+        // rows the operator may have already gotten into the DB
+        // before this hotfix.
         $excludeArtistsOn = ((int) ($p_criteriaData['etc']['sp_exclude_artists_played_lately'] ?? 0)) === 1;
         $excludeArtistsHoursRaw = (int) ($p_criteriaData['etc']['sp_exclude_artists_played_lately_hours'] ?? 0);
         $excludeArtistsHours = max(1, min(8760, $excludeArtistsHoursRaw ?: 24));
 
+        // Cleanup any leftover rows from the buggy v1 names so
+        // the next save is back to a clean two-row state.  Cheap
+        // even when there are none.
+        $cleanupSql = "DELETE FROM cc_blockcriteria "
+            . 'WHERE block_id = :bid '
+            . "AND criteria IN ('exclude_artists_played_lately',"
+            . "'exclude_artists_played_lately_hours')";
+        try {
+            Application_Common_Database::prepareAndExecute(
+                $cleanupSql,
+                [':bid' => $this->id],
+                Application_Common_Database::EXECUTE
+            );
+        } catch (Exception $e) {
+            Logging::warn('exclude_artists v1-name cleanup failed: ' . $e->getMessage());
+        }
+
         $qry = new CcBlockcriteria();
-        $qry->setDbCriteria('exclude_artists_played_lately')
+        $qry->setDbCriteria('exclude_artists_lately')
             ->setDbModifier('N/A')
             ->setDbValue($excludeArtistsOn ? 1 : 0)
             ->setDbBlockId($this->id)
             ->save();
 
         $qry = new CcBlockcriteria();
-        $qry->setDbCriteria('exclude_artists_played_lately_hours')
+        $qry->setDbCriteria('exclude_artists_lately_hours')
             ->setDbModifier('N/A')
             ->setDbValue($excludeArtistsHours)
             ->setDbBlockId($this->id)
@@ -1554,11 +1584,23 @@ SQL;
             } elseif ($criteria == 'exclude_played_lately_hours') {
                 // RASTATIME 2026-05-21 — hours-back window (1..8760).
                 $storedCrit['exclude_played_lately_hours'] = ['value' => $value];
-            } elseif ($criteria == 'exclude_artists_played_lately') {
+            } elseif ($criteria == 'exclude_artists_lately'
+                   || $criteria == 'exclude_artists_played_lately'
+            ) {
                 // RASTATIME 2026-05-23 — master toggle (0/1).
+                // The v1 criteria name `exclude_artists_played_lately`
+                // (29 chars) is also accepted for forward-compat
+                // with rows the operator may have saved before the
+                // 2026-05-24 VARCHAR-32 hotfix renamed the canonical
+                // name to `exclude_artists_lately` (22 chars).  Both
+                // collapse into the same $storedCrit key so the rest
+                // of the code does not care which name was on disk.
                 $storedCrit['exclude_artists_played_lately'] = ['value' => $value];
-            } elseif ($criteria == 'exclude_artists_played_lately_hours') {
+            } elseif ($criteria == 'exclude_artists_lately_hours'
+                   || $criteria == 'exclude_artists_played_lately_hours'
+            ) {
                 // RASTATIME 2026-05-23 — hours-back window (1..8760).
+                // Both v1 + v2 names accepted (see master comment).
                 $storedCrit['exclude_artists_played_lately_hours'] = ['value' => $value];
             } elseif ($criteria == 'sort') {
                 $storedCrit['sort'] = ['value' => $value];
@@ -1625,11 +1667,23 @@ SQL;
             } elseif ($criteria == 'exclude_played_lately_hours') {
                 // RASTATIME 2026-05-21 — hours-back window (1..8760).
                 $storedCrit['exclude_played_lately_hours'] = ['value' => $value];
-            } elseif ($criteria == 'exclude_artists_played_lately') {
+            } elseif ($criteria == 'exclude_artists_lately'
+                   || $criteria == 'exclude_artists_played_lately'
+            ) {
                 // RASTATIME 2026-05-23 — master toggle (0/1).
+                // The v1 criteria name `exclude_artists_played_lately`
+                // (29 chars) is also accepted for forward-compat
+                // with rows the operator may have saved before the
+                // 2026-05-24 VARCHAR-32 hotfix renamed the canonical
+                // name to `exclude_artists_lately` (22 chars).  Both
+                // collapse into the same $storedCrit key so the rest
+                // of the code does not care which name was on disk.
                 $storedCrit['exclude_artists_played_lately'] = ['value' => $value];
-            } elseif ($criteria == 'exclude_artists_played_lately_hours') {
+            } elseif ($criteria == 'exclude_artists_lately_hours'
+                   || $criteria == 'exclude_artists_played_lately_hours'
+            ) {
                 // RASTATIME 2026-05-23 — hours-back window (1..8760).
+                // Both v1 + v2 names accepted (see master comment).
                 $storedCrit['exclude_artists_played_lately_hours'] = ['value' => $value];
             } elseif ($criteria == 'sort') {
                 $storedCrit['sort'] = ['value' => $value];

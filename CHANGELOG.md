@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Smart Block: Save button silently fails for blocks with the
+  exclude-artists filter** (operator report 2026-05-24).
+  `cc_blockcriteria.criteria` is `VARCHAR(32)`.  The criteria
+  names introduced on 2026-05-23 were 29 and 35 characters long:
+  the `..._hours` row hit PDO 22001 ("Wert zu lang für Typ
+  character varying(32)"), Propel aborted the whole
+  `saveSmartBlockCriteria()` transaction, the JSON response
+  never arrived, and the frontend stayed stuck on the loading
+  icon — operator could not see the updated track-match count
+  and had to re-open the block to edit again.
+
+  Fix in `Application_Model_Block::storeCriteriaIntoDb()`:
+  rename the persisted criteria from
+  `exclude_artists_played_lately` / `..._hours` to
+  `exclude_artists_lately` / `..._hours` (22 / 28 chars, both
+  fit in VARCHAR(32)).  Load path accepts both names so any
+  rows the operator already managed to insert with the v1 name
+  are still honoured.  Save path runs a `DELETE FROM
+  cc_blockcriteria WHERE criteria IN (v1-names)` cleanup first
+  so the next save returns to a clean two-row state.  Internal
+  `$storedCrit` keys (`exclude_artists_played_lately[_hours]`)
+  stay unchanged so the rest of the code (form fields, WHERE
+  clause) needed no edits.
+
+  No schema migration — chose the rename over a column widen
+  because (a) zero downtime, (b) consistent with the existing
+  `exclude_played_lately` / `..._hours` names (27 / 21 chars,
+  both well within 32), (c) the operator's existing
+  `exclude_played_lately` filter was never affected because
+  the longest name there is 27 chars.
+
 ### Added
 
 - **Smart Block: "Exclude artists played lately" filter**
