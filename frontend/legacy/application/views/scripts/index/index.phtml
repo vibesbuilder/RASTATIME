@@ -38,10 +38,13 @@
     </div>
 
 
-    <div id="tab-2" class="about_us tab_content">
-        <h1><?php echo $this->escape($this->stationName) ?></h1>
-        <p><?php echo $this->escape($this->stationDescription) ?></p>
-    </div>
+    <?php /* RASTATIME 2026-05-24 — "About" tab removed per
+           operator request.  The matching .about_us_btn injection
+           in the player-iframe bottom-bar (further down in this
+           file) is also gone.  Station name + description are
+           still served via the Login page header and the JSON
+           API for widgets, so removing the public landing-page
+           About tab does not hide them from anywhere else. */ ?>
 
     <div id="tab-3" class="login tab_content">
         <h2>Login</h2>
@@ -312,7 +315,10 @@
 
             $("#player_iframe").contents().find('.bottom_bar').append("<div class='flex_spacer' data-tab='tab-1'></div>");
             $("#player_iframe").contents().find('.bottom_bar').append("<div class='schedule_btn button current' data-tab='tab-1'></div>");
-            $("#player_iframe").contents().find('.bottom_bar').append("<div class='about_us_btn button' data-tab='tab-2'></div>");
+            // RASTATIME 2026-05-24 — "About" button removed per
+            // operator request.  The matching <div id="tab-2"
+            // class="about_us tab_content"> block is also gone
+            // (see further up in this file).
 
             <?php
             // Is there a better way to do this?
