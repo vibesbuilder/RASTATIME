@@ -730,6 +730,14 @@ table.library-get-file-md.table-small{
     width: 75px !important;
 }
 
+/* RASTATIME 2026-05-25 — half-width override for the two inline-
+   sentence hours inputs in smart-block-criteria.phtml.  Targeted
+   via the wrap-<dl> IDs (no PHP form-class change needed). */
+#sp_exclude_played_lately_hours_wrap input.sp_input_text_limit,
+#sp_exclude_artists_played_lately_hours_wrap input.sp_input_text_limit{
+    width: 37px !important;
+}
+
 .sp_no_margins{
     margin-left: 0px !important;
     margin-right: 0px !important;
