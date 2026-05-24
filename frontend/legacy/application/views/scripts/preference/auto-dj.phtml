@@ -4,7 +4,18 @@
 // Logo upload uses a separate multipart POST to autoDjUploadLogoAction.
 ?>
 <div class="ui-widget ui-widget-content block-shadow alpha-block padded">
-    <h2><?php echo _("Auto DJ Settings") ?></h2>
+    <?php /* RASTATIME 2026-05-25 — Save-Button moved up next to the
+           heading per operator request, mirroring the Local-Machine
+           settings layout.  The button uses the HTML5 `form=` attr
+           to submit the <form id="auto-dj-form"> below even though
+           it sits outside that form element in the DOM.  The
+           bottom Save-Button has been removed (was duplicated). */ ?>
+    <h2 style="float:left"><?php echo _("Auto DJ Settings") ?></h2>
+    <button type="submit" form="auto-dj-form" class="btn right-floated">
+        <?php echo _("Save") ?>
+    </button>
+    <div style="clear:both"></div>
+
     <p style="margin-bottom: 1em; color: #888;">
         <?php echo _(
             "When enabled, Auto DJ scans the calendar for gaps in the next "
@@ -148,9 +159,11 @@
             </div>
         </fieldset>
 
-        <div style="margin-top: 1em;">
-            <button type="submit" class="btn"><?php echo _("Save") ?></button>
-        </div>
+        <?php /* RASTATIME 2026-05-25 — duplicate bottom Save-Button
+               removed.  The single Save-Button is now next to the
+               heading at the top of the page (HTML5 `form=` attr
+               makes it submit this form from outside the <form>
+               element). */ ?>
     </form>
 </div>
 
