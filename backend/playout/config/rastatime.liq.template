@@ -62,12 +62,34 @@
 # Master DJ: external source pushed to Liquidsoap via input.harbor
 # on a private port.  Operator-facing source-switch (Dashboard
 # "Master Source") flips the active flag.
-# TODO Phase C — configure port + auth from operator's icecast.xml.
-# master_dj = input.harbor("master", port=8001, password="...")
+#
+# Operator-decision 2026-05-25: Liquidsoap input.harbor is the new
+# Icecast-source-receiver for DJ verbindungen — this means
+# operator-side DJ-software (BUTT / Mixxx / etc.) muss in Phase C
+# auf den neuen Liquidsoap-Port umgestellt werden.  Plan: Master =
+# Port 8001, Show = Port 8002 (kollidieren nicht mit Icecast 8000).
+# Auth credentials kommen aus der Operator's cc_pref (Phase C will
+# read them via env-var substitution at script-load time).
+#
+# TODO Phase C — fill in port + password from env-vars
+# RASTATIME_MASTER_DJ_PORT, RASTATIME_MASTER_DJ_PASSWORD.
+# master_dj = input.harbor(
+#   "master",
+#   port = 8001,
+#   password = environment.get(default="hackme", "RASTATIME_MASTER_DJ_PASSWORD"),
+#   buffer = 2.,        # 2 s buffer — soaks micro-disconnects
+#   icy = true,         # accept ICY metadata
+# )
 
 # Show DJ: same shape as master but a separate harbor mount.
 # TODO Phase C.
-# show_dj = input.harbor("show", port=8002, password="...")
+# show_dj = input.harbor(
+#   "show",
+#   port = 8002,
+#   password = environment.get(default="hackme", "RASTATIME_SHOW_DJ_PASSWORD"),
+#   buffer = 2.,
+#   icy = true,
+# )
 
 # Line-In passthrough: the existing FfmpegLineinCapture publishes
 # audio on http://localhost:8000/linein-capture; we consume it.
@@ -137,3 +159,40 @@
 # Currently bypassed (mpv handles local monitoring in the legacy
 # path).  Phase D might wire output.portaudio here.
 # TODO Phase D.
+
+# ---------------------------------------------------------------------
+# Recording — per-show recording to file
+# ---------------------------------------------------------------------
+#
+# Operator-decision 2026-05-25: Recording wird mit nach Liquidsoap
+# migriert (ersetzt den bisherigen FfmpegRecorder).  Per-show MP3
+# files in einer dynamischen Verzeichnisstruktur:
+#
+#   <recording_folder>/<YYYY-MM-DD>/<YYYY-MM-DD HH-MM> - <show-name>.mp3
+#
+# Liquidsoap output.file kann das nativ mit metadata-driven
+# filename pattern + reopen_when={metadata-change}.  Der
+# scheduler-side trigger (only-record-if-show.record=true) wird
+# via var.set recording.enabled = true|false aus Pypo gesetzt
+# wenn eine Show mit record=true startet/endet.
+#
+# TODO Phase C — implement per-show metadata-injection so Liquidsoap
+# weiß welcher Show-Name in den Dateinamen kommt + welcher Ordner.
+# output.file(
+#   %ffmpeg(format="mp3", %audio(codec="libmp3lame", b="192k")),
+#   {recording_filename_for_current_show()},   # function defined below
+#   stream,
+#   fallible = true,
+#   reopen_when = {recording_should_reopen()},
+#   on_close = {recording_post_process()},
+# )
+#
+# def recording_filename_for_current_show() =
+#   # TODO Phase C — read current show metadata (name, start_time)
+#   # from Liquidsoap's "metadata" tracking + env-var
+#   # RASTATIME_RECORDING_FOLDER.
+#   "C:/rastatime/recordings/placeholder.mp3"
+# end
+#
+# def recording_should_reopen() = false end
+# def recording_post_process() = () end

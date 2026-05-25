@@ -119,20 +119,29 @@ Crossfade-Berechnung in PHP, mein Tail-Cut-Wait-Hack), bringt
 
 **Phasen-Plan (Tasks #88–#92, Gesamt 6–8 Wochen kalendarisch):**
 
-- **Phase 0** (Operator-Aktion, 1 Tag): Sanity-Test ob Liquidsoap-
-  Windows-Build auf Operator-Server stabil läuft.  Wenn ja → Go
-  weiter, wenn nein → diesen Plan stoppen und reevaluieren.
-  Setup-Anleitung: `docs/operator/LIQUIDSOAP_PHASE0.md`.
-- **Phase A** (~1 Woche): POC mit Trivial-.liq.  24h Burn-In auf
-  Operator-Server.  CPU/Memory-Profil.
+- **Phase 0** (Operator-Aktion, 1 Tag): ✅ DONE 2026-05-25.
+  Liquidsoap 2.4.4 Windows-Build läuft stabil; `%ffmpeg(...)`
+  encoder als Production-Format identifiziert.
+- **Phase A** (~1 Woche): 18h Burn-In mit MP3-Stream läuft seit
+  2026-05-25 ~17:02.  Memory stabil ~77 MB (kein Leak-Signal).
 - **Phase B** (~2 Wochen): `LiquidsoapEngine` Python-Adapter +
-  Telnet-Client + NSSM-Service.  Feature-Flag `audio_backend =
-  mpv | liquidsoap` als Preference.
-- **Phase C** (~2–3 Wochen): Migration aller Source-Typen
-  (scheduled files, webstreams, line-in passthrough, replay-
-  gain, ICY, source-switching).
+  Telnet-Client + NSSM-Service.  Feature-Flag
+  `RASTATIME_PLAYOUT_ENGINE=liquidsoap` als env-var (statt
+  Frontend-Preference — env-var-Pattern existiert schon im
+  Code für `vlc`-Fallback).
+- **Phase C** (~3–4 Wochen, hochgesetzt von 2–3 wegen
+  Recording-Migration): Migration aller Source-Typen + DJ-Source-
+  Receiver-Wechsel + Recording-Migration zu Liquidsoap.
 - **Phase D** (~2 Wochen): Live-A/B auf Test-Mount, Bug-Fix,
   Doku in 4 Sprachen, Cutover als operator-explicit Aktion.
+
+**Operator-Entscheidungen 2026-05-25 (Phase-B-Kickoff):**
+
+| Frage | Entscheidung | Konsequenz |
+|---|---|---|
+| Liquidsoap-Process-Lifecycle | Eigener NSSM-Service `RASTATIME-LIQUIDSOAP` | NSSM-Install-Script in `backend/playout/config/nssm-install-liquidsoap.ps1`.  Operator startet/stoppt Liquidsoap unabhängig von Pypo. |
+| DJ-Source-Receiver (Master / Show) | Liquidsoap `input.harbor` | Operator-DJ-Software muss in Phase C auf neuen Liquidsoap-Port (8001 master / 8002 show) umstellen.  Verzichtet auf Icecast `/source` für DJ.  Native crossfade zwischen DJ und Scheduled. |
+| Recording-Migration | Wird mit nach Liquidsoap migriert | FfmpegRecorder entfällt in Phase D.  `output.file` mit metadata-driven filename + `reopen_when` macht das per-show Recording.  Phase C wird größer (3–4 Wochen statt 2–3). |
 
 **Rollback-Plan:** Feature-Flag `audio_backend` erlaubt jederzeit
 Fallback zu mpv ohne Service-Reinstall — nur Preference-Toggle
@@ -410,7 +419,42 @@ Sortierung der bereits-gespielten + nächsten Tracks freezable.
 
 ## 🐞 Known Issues / Bug Backlog
 
-(Aktuell leer — alle bekannten Bugs sind committed gefixt.)
+### 🔴 Host-Hardware-Instabilität (STUDIO-Maschine, nicht RASTATIME-Code)
+
+**Status:** Hold — blockiert Live-Betrieb, externe Hardware-Aktion nötig.
+**Festgestellt:** 2026-05-25 (Analyse von 5 BSODs der letzten 11 Tage).
+
+**Befund:**
+5 unerwartete Host-Reboots (14.05. / 18.05. / 23.05. / 24.05. / 25.05.) mit
+**verschiedenen** Bug-Check-Codes (`0x0A`, `0x1E`, `0x13A`, `0x154`, `0x20001`)
+in **verschiedenen** Schuld-Domänen (Storage `storahci.sys`, Kernel-Heap,
+Intel-PPM/Hyper-V, Bitdefender-AV, Lock-Wait). Muster ist **Hardware-Instabilität**,
+nicht ein einzelner Treiber-Bug.
+
+**Top-Verdacht:**
+1. **SSD-Defekt** (`WD Blue SA510 2TB`, Consumer-Modell) — 24.05.-Crash war
+   `IO_DEVICE_ERROR` im Storage-Stack
+2. **RAM-Defekt** — Kernel-Heap-Korruption (23.05.) + Stack-Korruption (25.05.)
+3. **Thermal/CPU** — Pre-Boot-Event 25.05.: CPU 7 wurde 71 Sek. firmware-throttled
+
+**RASTATIME-Bezug:** Kein direkter. RASTATIME läuft komplett im User-Mode
+(Python, ffmpeg, mpv, Icecast, Apache) und kann diese Kernel-Crashes nicht
+auslösen. Korrelation entsteht durch 24/7-Workload, der latente Hardware-Defekte
+schneller manifestiert.
+
+**Nächste Schritte (außerhalb RASTATIME-Codebasis):**
+- SSD-SMART-Check (CrystalDiskInfo / `smartctl -a`) — wichtigste & schnellste Maßnahme
+- Memtest86+ über Nacht (USB-Boot, 6–12 h)
+- HWiNFO64 während RASTATIME-Workload (Temps, Throttling)
+- BIOS-Update prüfen
+- Bitdefender-Version auf neueste prüfen (war Process beim 25.05.-Crash)
+- Mittelfristig: Consumer-SSD durch Enterprise-Modell ersetzen (WD Red, Samsung PM, Kioxia CD)
+
+**Minidumps + cdb-Setup für künftige Analyse:** vorhanden in `C:\Temp\dumps\`,
+Symbole gecached in `C:\Temp\symbols\`, WinDbg installiert. Pro Crash:
+```
+cdbX64.exe -z <dump> -y "srv*C:\Temp\symbols*https://msdl.microsoft.com/download/symbols" -c "!analyze -v;q"
+```
 
 ---
 
@@ -422,7 +466,7 @@ Sortierung der bereits-gespielten + nächsten Tracks freezable.
 | Deferred Items | 1 (JS-Modernisierung) |
 | Hold Items | 1 (Payware) |
 | Future Ideas | 13 |
-| Known Bugs | 0 |
+| Known Bugs | 0 (RASTATIME-Code) + 1 Host-Hardware-Issue (Stand 2026-05-25) |
 
 ---
 
