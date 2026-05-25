@@ -669,7 +669,7 @@ class PlayoutScheduler:
         # slightly before mpv's end-file event arrives.  If mpv is
         # already stopped (common case: previous track ended naturally
         # before this fires) the wait returns immediately.
-        self._engine.wait_until_stopped(timeout=0.2)
+        self._engine.wait_until_stopped(timeout=0.5)
 
         # HARD start (QUEUE_BEHAVIOR §4.1): stop whatever is playing first.
         self._engine.stop()
@@ -747,7 +747,7 @@ class PlayoutScheduler:
         # RASTATIME 2026-05-25 — Seamless-Bus-Mix Phase 1 (see _on_file_start
         # for the rationale).  Short scheduled tracks just before a webstream
         # item were the prime offender for the tail-cut symptom.
-        self._engine.wait_until_stopped(timeout=0.2)
+        self._engine.wait_until_stopped(timeout=0.5)
 
         self._engine.stop()
         self._stop_streamers()
@@ -938,7 +938,7 @@ class PlayoutScheduler:
         # Master/Show source-switch behavior.
         # RASTATIME 2026-05-25 — Seamless-Bus-Mix Phase 1 (see
         # _on_file_start for the rationale).
-        self._engine.wait_until_stopped(timeout=0.2)
+        self._engine.wait_until_stopped(timeout=0.5)
 
         self._engine.stop()
         self._stop_streamers()
@@ -1469,7 +1469,7 @@ class PlayoutScheduler:
         # returns immediately and a still-decoding tail gets a brief
         # grace period before the hard-stop.
         if self._engine.get_state() == PlayoutState.PLAYING:
-            self._engine.wait_until_stopped(timeout=0.2)
+            self._engine.wait_until_stopped(timeout=0.5)
             self._engine.stop()
         self._stop_streamers()
 

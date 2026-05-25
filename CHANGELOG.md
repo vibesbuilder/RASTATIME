@@ -9,6 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Playout: tail-flush wait raised from 200 ms to 500 ms —
+  Seamless-Bus-Mix Phase 1 follow-up 2** (operator follow-up
+  2026-05-25).  After commit 2b2a787 the operator confirmed
+  the wait now greift (visible in playout-stdout.log as a
+  202 ms gap between the scheduler `STOP` event and `mpv
+  stop`), but tails of longer tracks were still being clipped
+  by a few seconds.  Operator decision: bump the wait to
+  500 ms on all four stop sites (`_on_file_start`,
+  `_on_webstream_start`, `_on_linein_start`, `_on_stop`).
+  Math on a 9.9 s-cue_out track: `9.9 − 0.5 (mpv-start
+  latency after parallel-stops) + 0.5 (tail wait) ≈ 9.9 s`
+  effective playback.
+
+  Operator preference recorded for future iterations: every
+  track should play to its configured cue_out regardless of
+  duration; a short pause on track transitions is acceptable.
+
 - **Playout: short-track tail cut — Seamless-Bus-Mix Phase 1
   follow-up** (operator follow-up 2026-05-25).  After the
   initial Phase-1 commit landed, the operator still heard
