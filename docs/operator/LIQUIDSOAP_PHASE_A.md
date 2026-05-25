@@ -1,4 +1,4 @@
-# Liquidsoap Phase A — POC + 18 h Burn-In
+# Liquidsoap Phase A — POC + 4 h Burn-In
 
 > **Zweck:** dein Liquidsoap-Build mit dem **echten Production-
 > Encoder** (MP3 via FFmpeg) gegen einen separaten Test-Mountpoint
@@ -13,9 +13,9 @@
 | | Phase 0 (✅ erledigt) | Phase A (dieser Schritt) |
 |---|---|---|
 | Encoder | WAV (kein echter Codec) | **MP3 via FFmpeg** (Production-Format) |
-| Dauer | 45 Sek Smoke-Test | **18 h Dauerlauf** |
+| Dauer | 45 Sek Smoke-Test | **4 h Dauerlauf** |
 | Browser-Playback | ❌ (WAV-Stream nicht abspielbar) | ✅ erwartet — direkt im Browser abspielbar |
-| Memory-Profil | nicht messbar | über 18 h beobachten |
+| Memory-Profil | nicht messbar | über 4 h beobachten |
 | Cache aktiv | ❌ (`./cache: Permission denied`) | ✅ (explizit konfiguriert) |
 
 ---
@@ -25,7 +25,7 @@
 PowerShell:
 
 ```powershell
-$content = "phase_a_src = sine(440.)`r`noutput.icecast(%ffmpeg(format=`"mp3`", %audio(codec=`"libmp3lame`", b=`"128k`")), host=`"localhost`", port=8000, password=`"admin`", mount=`"/phase-a-test.mp3`", name=`"Liquidsoap Phase-A POC`", description=`"18h burn-in test`", phase_a_src)"
+$content = "phase_a_src = sine(440.)`r`noutput.icecast(%ffmpeg(format=`"mp3`", %audio(codec=`"libmp3lame`", b=`"128k`")), host=`"localhost`", port=8000, password=`"admin`", mount=`"/phase-a-test.mp3`", name=`"Liquidsoap Phase-A POC`", description=`"4h burn-in test`", phase_a_src)"
 [System.IO.File]::WriteAllText('C:\Tools\liquidsoap\phase-a-poc.liq', $content, [System.Text.UTF8Encoding]::new($false))
 ```
 
@@ -42,14 +42,14 @@ zeigen, ähnlich wie Vorbis in Phase 0): Fallback ohne expliziten
 Codec (FFmpeg deduziert dann den Default-MP3-Codec):
 
 ```powershell
-$content = "phase_a_src = sine(440.)`r`noutput.icecast(%ffmpeg(format=`"mp3`"), host=`"localhost`", port=8000, password=`"admin`", mount=`"/phase-a-test.mp3`", name=`"Liquidsoap Phase-A POC`", description=`"18h burn-in test`", phase_a_src)"
+$content = "phase_a_src = sine(440.)`r`noutput.icecast(%ffmpeg(format=`"mp3`"), host=`"localhost`", port=8000, password=`"admin`", mount=`"/phase-a-test.mp3`", name=`"Liquidsoap Phase-A POC`", description=`"4h burn-in test`", phase_a_src)"
 [System.IO.File]::WriteAllText('C:\Tools\liquidsoap\phase-a-poc.liq', $content, [System.Text.UTF8Encoding]::new($false))
 ```
 
 ## Schritt 2 — Start mit korrektem current-dir + Log-File
 
 Aus `C:\Tools\liquidsoap\` starten (damit der Cache schreibbar ist),
-Output in eine Log-Datei umleiten (damit du nach 18 h zurückschauen
+Output in eine Log-Datei umleiten (damit du nach 4 h zurückschauen
 kannst):
 
 ```powershell
@@ -73,7 +73,7 @@ cd C:\Tools\liquidsoap
 **Browser-Test sofort:** `http://localhost:8000/phase-a-test.mp3`
 → durchgehender 440-Hz-Sinus sollte hörbar sein.
 
-## Schritt 3 — Burn-In-Monitoring (18 h)
+## Schritt 3 — Burn-In-Monitoring (4 h)
 
 Alle ~3–4 Stunden mal kurz in einer **zweiten** PowerShell prüfen
 (Liquidsoap im Original-Terminal weiterlaufen lassen):
@@ -95,7 +95,7 @@ Invoke-WebRequest http://localhost:8000/admin/stats.xml -Headers @{Authorization
 **C. Browser-Spot-Check:** alle paar Stunden den `phase-a-test.mp3`-
 Mount im Browser oder VLC kurz öffnen — Audio muss durchlaufen.
 
-## Schritt 4 — Burn-In stoppen (nach 18 h)
+## Schritt 4 — Burn-In stoppen (nach 4 h)
 
 Im Original-Terminal `Ctrl+C`.
 
@@ -112,8 +112,8 @@ Im Original-Terminal `Ctrl+C`.
 Schreib mir bitte:
 
 1. **WorkingSet-Werte über die Zeit:** Start vs. nach 4 h / 8 h /
-   12 h / 18 h.  Wachstum von < 10 MB über 18 h = sehr gut.
-   Wachstum von > 100 MB über 18 h = Memory-Leak, würde Phase B
+   12 h / 4 h.  Wachstum von < 10 MB über 4 h = sehr gut.
+   Wachstum von > 100 MB über 4 h = Memory-Leak, würde Phase B
    blockieren.
 2. **Browser-Playback durchgehend OK?**  Wenn irgendwann
    Aussetzer oder kein Audio mehr — exakter Zeitpunkt + ob

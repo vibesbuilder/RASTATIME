@@ -122,8 +122,11 @@ Crossfade-Berechnung in PHP, mein Tail-Cut-Wait-Hack), bringt
 - **Phase 0** (Operator-Aktion, 1 Tag): ✅ DONE 2026-05-25.
   Liquidsoap 2.4.4 Windows-Build läuft stabil; `%ffmpeg(...)`
   encoder als Production-Format identifiziert.
-- **Phase A** (~1 Woche): 18h Burn-In mit MP3-Stream läuft seit
-  2026-05-25 ~17:02.  Memory stabil ~77 MB (kein Leak-Signal).
+- **Phase A** (~1 Woche): 4h Burn-In mit MP3-Stream läuft seit
+  2026-05-25 (reduziert von 18h auf 4h auf Operator-Wunsch nach
+  ersten stabilen ~77 MB-Snapshots).  Mit dem verkürzten Test
+  bleiben subtile Memory-Leaks (~5–10 MB/h) unentdeckt, werden
+  aber in Phase D A/B-Test gegen mpv über Tage sichtbar.
 - **Phase B** (~2 Wochen): `LiquidsoapEngine` Python-Adapter +
   Telnet-Client + NSSM-Service.  Feature-Flag
   `RASTATIME_PLAYOUT_ENGINE=liquidsoap` als env-var (statt
