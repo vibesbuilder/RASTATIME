@@ -216,6 +216,27 @@ criterio de la sección Criterios principal.
 > cambio de esquema para ambos filtros — retrocompatible
 > con smart blocks creados antes de la función respectiva
 > (filas faltantes = deshabilitado). Vea ARCHITECTURE §23.21.
+>
+> **Spread dentro del bloque (2026-05-25).** El filtro SQL
+> anterior mantiene el pool de candidatos libre de artistas
+> / pistas que sonaron en las últimas N h *fuera* del bloque.
+> Pero el bloque mismo aún puede contener dos pistas de los
+> Beatles consecutivas — el SQL solo mira el historial, no
+> lo que el bloque está a punto de reproducir.  Una segunda
+> pasada se ejecuta tras la construcción de la lista de
+> pistas en `Block::applyWithinBlockSpread()`: para cada
+> slot de la lista originalmente seleccionada, la pista
+> original se prueba primero; si su artista (o file id según
+> el filtro activo) está dentro de la ventana de tiempo
+> transcurrido de las pistas ya colocadas, el motor toma un
+> reemplazo no-conflictivo del pool SQL-filtrado más amplio
+> (hasta 500 pistas) en su lugar.  La duración del bloque
+> queda igual; solo cambia la elección de pista.  Si no hay
+> más reemplazo no-conflictivo en el pool, la original se
+> coloca de todos modos y aparece una entrada
+> `Logging::warn` en `legacy.log` para que el operador vea
+> cuándo el pool era demasiado pequeño para el spread
+> configurado.
 
 ---
 

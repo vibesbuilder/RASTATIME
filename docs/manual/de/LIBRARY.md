@@ -289,6 +289,27 @@ in der Haupt-Kriterien-Section.
 > abwärtskompatibel mit Smart Blocks, die vor dem jeweiligen
 > Feature erstellt wurden (fehlende Zeilen = deaktiviert).
 > Siehe ARCHITECTURE §23.21.
+>
+> **Innerhalb-des-Blocks-Spread (2026-05-25).** Der oben
+> beschriebene SQL-Filter hält den Kandidaten-Pool frei von
+> Artists / Tracks die in den letzten N h *außerhalb* des
+> Blocks liefen.  Aber der Block selbst kann trotzdem zwei
+> Beatles-Tracks hintereinander enthalten — der SQL schaut
+> nur auf History, nicht auf das was der Block gleich
+> abspielt.  Ein zweiter Pass läuft nach dem Track-Listen-
+> Aufbau in `Block::applyWithinBlockSpread()`: für jeden
+> Slot der ursprünglich gewählten Liste wird der originale
+> Track zuerst versucht; wenn dessen Artist (oder File-ID
+> je nach aktivem Filter) innerhalb des elapsed-time-
+> Fensters der bereits platzierten Tracks liegt, holt die
+> Engine stattdessen einen nicht-konflikt-Ersatztrack aus
+> dem breiteren SQL-gefilterten Pool (bis 500 Tracks).
+> Block-Länge bleibt gleich; nur die Track-Wahl ändert
+> sich.  Falls kein nicht-konfliktierender Ersatz mehr im
+> Pool ist, wird der Original-Track trotzdem platziert
+> und ein `Logging::warn`-Eintrag in `legacy.log`
+> geschrieben, damit der Operator sieht wenn der Pool zu
+> klein war für den konfigurierten Spread.
 
 ### Einen Smart Block bearbeiten
 

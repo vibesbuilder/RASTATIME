@@ -7,6 +7,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Smart Block: within-block spread for the exclude-played-
+  lately filters** (operator request 2026-05-25).  The two
+  exclude filters (`exclude_played_lately` for tracks +
+  `exclude_artists_lately` for artists) so far only kept the
+  candidate pool clean of items that played in the last N h
+  via `cc_playout_history`.  That SQL filter does not look at
+  what the smart block itself is about to play, so the block
+  could still hold e.g. two Beatles tracks back-to-back inside
+  the same generation.
+
+  New second pass `Block::applyWithinBlockSpread()` runs after
+  the track-list build in `getListOfFilesUnderLimit`.  For each
+  slot of the originally-selected track list:
+    1. Try the original track first.
+    2. If it conflicts with the elapsed-time spread window of
+       the tracks already placed, pull a non-conflicting
+       replacement from the broader SQL-filtered pool
+       (up to 500 tracks).
+    3. If no non-conflicting replacement is left, place the
+       original anyway and emit a `Logging::warn` so the
+       operator sees in `legacy.log` when the pool was too
+       narrow for the configured spread (operator decision
+       2026-05-25 — "Track stehen lassen + Warnung loggen").
+
+  Block length stays the same (same slot count, original
+  block-limit honoured); only the track choice shifts.
+  Replacement order is deterministic (first non-conflicting
+  track in the pool order), so re-generating the same block
+  on the same inputs yields the same result.
+
+  Artist lookups for the broader pool are done in a single
+  `SELECT id, artist_name FROM cc_files WHERE id IN (...)`
+  query at the start of the pass, so the spread loop itself
+  is in-memory only.  No schema change.
+
 ### Changed
 
 - **Weekly Schedule widget scaled up to 670 px width**

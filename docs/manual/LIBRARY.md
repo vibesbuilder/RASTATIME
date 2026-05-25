@@ -265,6 +265,25 @@ in the main Criteria section.
 > No schema change for either filter — backwards-compatible
 > with smart blocks created before the respective feature
 > (missing rows = disabled). See ARCHITECTURE §23.21.
+>
+> **Within-block spread (2026-05-25).** The SQL filter above
+> keeps the candidate pool free of artists / tracks that ran
+> in the last N h *outside* the block.  But the block itself
+> can still hold two Beatles tracks back-to-back — the SQL
+> only looks at history, not at what the block is about to
+> play.  A second pass runs after the track-list build in
+> `Block::applyWithinBlockSpread()`: for each slot of the
+> originally-selected list, the original track is tried first;
+> if its artist (or file id, depending on which filter is
+> active) sits inside the elapsed-time window of the tracks
+> already placed in the block, the engine pulls a non-
+> conflicting replacement from the broader SQL-filtered pool
+> (up to 500 tracks) instead.  Block length stays the same;
+> only the track choice shifts.  If no non-conflicting
+> replacement is left in the pool, the original is placed
+> anyway and a `Logging::warn` entry lands in `legacy.log`
+> so the operator can see when the pool was too narrow for
+> the configured spread.
 
 ### Editing a smart block
 

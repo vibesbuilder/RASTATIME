@@ -1536,7 +1536,201 @@ SQL;
             }
         }
 
+        // RASTATIME 2026-05-25 — within-block spread for the
+        // exclude_played_lately / exclude_artists_lately filters.
+        // The SQL WHERE clauses upstream make sure the pool only
+        // contains tracks whose artist / file has NOT been heard
+        // in the configured hours-back window via cc_playout_history.
+        // But once the block is generated, the tracks ARE about to
+        // be played — so the same constraint must apply INSIDE the
+        // generated sequence too.
+        //
+        // Algorithm (operator decision 2026-05-25):
+        //   For every slot of the originally-selected $insertList,
+        //   try the original track first.  If it conflicts with the
+        //   elapsed-time window of the tracks placed so far, replace
+        //   it with another track from the broader $tracks pool
+        //   (the full SQL-filtered candidate set, up to maxItems 500).
+        //   If no non-conflicting replacement is left in the pool,
+        //   place the original anyway and emit a Logging::warn.
+        //
+        //   $tracks is the broader pool; $insertList is the original
+        //   selection that fit the block's time / item limit.  We
+        //   pass both so replacements can be pulled from outside the
+        //   originally-chosen subset.
+        $insertList = $this->applyWithinBlockSpread($insertList, $tracks);
+
         return array_map(fn (Track $track) => ['id' => $track->id, 'length' => $track->length], $insertList);
+    }
+
+    /**
+     * Re-order a generated track list so that the within-block
+     * spread constraints for exclude_played_lately +
+     * exclude_artists_lately are honoured.  See the call site
+     * comment above for the algorithm.
+     *
+     * @param Track[] $insertList originally-selected tracks for the block
+     * @param Track[] $pool       full SQL-filtered candidate pool (incl. tracks not in $insertList) for replacements
+     * @return Track[]            final track list with conflicts replaced where possible
+     */
+    private function applyWithinBlockSpread(array $insertList, array $pool)
+    {
+        if (count($insertList) < 2) {
+            return $insertList;
+        }
+
+        $storedCrit = $this->getCriteria();
+
+        $excludeTracksOn = isset($storedCrit['exclude_played_lately'])
+            && $storedCrit['exclude_played_lately']['value'] == 1;
+        $excludeArtistsOn = isset($storedCrit['exclude_artists_played_lately'])
+            && $storedCrit['exclude_artists_played_lately']['value'] == 1;
+
+        if (!$excludeTracksOn && !$excludeArtistsOn) {
+            return $insertList;
+        }
+
+        $excludeTracksSec = $excludeTracksOn
+            ? max(1, min(8760, (int) ($storedCrit['exclude_played_lately_hours']['value'] ?? 24))) * 3600
+            : 0;
+        $excludeArtistsSec = $excludeArtistsOn
+            ? max(1, min(8760, (int) ($storedCrit['exclude_artists_played_lately_hours']['value'] ?? 24))) * 3600
+            : 0;
+
+        // Lookup artist_name for every file_id in the broader pool
+        // (not just insertList) in a single SQL round-trip — pool is
+        // capped at maxItems = 500, so the IN-list stays small.
+        $artistByFileId = [];
+        if ($excludeArtistsOn) {
+            $fileIds = array_unique(array_map(fn (Track $t) => (int) $t->id, $pool));
+            if (!empty($fileIds)) {
+                $sql = 'SELECT id, artist_name FROM cc_files WHERE id IN ('
+                    . implode(',', array_map('intval', $fileIds)) . ')';
+                try {
+                    $rows = Application_Common_Database::prepareAndExecute(
+                        $sql, [], Application_Common_Database::ALL
+                    );
+                    foreach ($rows as $r) {
+                        $artistByFileId[(int) $r['id']] = trim((string) $r['artist_name']);
+                    }
+                } catch (Exception $e) {
+                    // If the lookup fails, fall back to no artist spread —
+                    // sequence stays exactly as before this pass.
+                    Logging::warn('applyWithinBlockSpread artist lookup failed: ' . $e->getMessage());
+                    $excludeArtistsOn = false;
+                    $excludeArtistsSec = 0;
+                }
+            }
+        }
+
+        // SplObjectStorage tracks which Track instances we have
+        // already placed in the output, so the replacement search
+        // does not re-pick something already used.
+        $placed = new SplObjectStorage();
+        $output = [];
+        $totalElapsed = 0;
+        $lastTrackTime = [];   // file_id     => elapsed seconds at the last placement
+        $lastArtistTime = [];  // artist_name => elapsed seconds at the last placement
+
+        $hasConflict = function (Track $track) use (
+            $excludeTracksSec,
+            $excludeArtistsSec,
+            $artistByFileId,
+            &$lastTrackTime,
+            &$lastArtistTime,
+            &$totalElapsed
+        ) {
+            if ($excludeTracksSec > 0 && isset($lastTrackTime[$track->id])) {
+                if ($totalElapsed - $lastTrackTime[$track->id] < $excludeTracksSec) {
+                    return true;
+                }
+            }
+            if ($excludeArtistsSec > 0) {
+                $artist = $artistByFileId[$track->id] ?? '';
+                if ($artist !== '' && isset($lastArtistTime[$artist])) {
+                    if ($totalElapsed - $lastArtistTime[$artist] < $excludeArtistsSec) {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        };
+
+        foreach ($insertList as $slotIdx => $originalTrack) {
+            $chosen = null;
+
+            // Step 1: try the originally-selected track.
+            if (!$placed->contains($originalTrack) && !$hasConflict($originalTrack)) {
+                $chosen = $originalTrack;
+            }
+
+            // Step 2: original conflicts (or is already placed —
+            // possible with repeat_tracks=true).  Walk the broader
+            // pool for the first non-conflicting unplaced track.
+            if ($chosen === null) {
+                foreach ($pool as $candidate) {
+                    if ($placed->contains($candidate)) {
+                        continue;
+                    }
+                    if ($candidate === $originalTrack) {
+                        continue; // already tried in step 1
+                    }
+                    if (!$hasConflict($candidate)) {
+                        $chosen = $candidate;
+                        break;
+                    }
+                }
+            }
+
+            // Step 3: nothing in the pool fits — place the original
+            // anyway and warn (operator decision 2026-05-25).  If
+            // even the original is already placed (only possible
+            // with repeat_tracks=true on a tiny pool), grab any
+            // unplaced track as a last resort.
+            if ($chosen === null) {
+                if (!$placed->contains($originalTrack)) {
+                    $chosen = $originalTrack;
+                } else {
+                    foreach ($pool as $candidate) {
+                        if (!$placed->contains($candidate)) {
+                            $chosen = $candidate;
+                            break;
+                        }
+                    }
+                }
+                if ($chosen !== null) {
+                    Logging::warn(sprintf(
+                        'Smart-block within-block spread: file_id=%d (artist=%s) '
+                        . 'placed at slot %d despite a conflict — no non-conflicting '
+                        . 'replacement left in the pool of %d tracks.',
+                        (int) $chosen->id,
+                        $artistByFileId[(int) $chosen->id] ?? '',
+                        $slotIdx,
+                        count($pool)
+                    ));
+                }
+            }
+
+            if ($chosen === null) {
+                // Defensive — pool exhausted (shouldn't happen since
+                // the original track is always at least one candidate).
+                break;
+            }
+
+            $placed->attach($chosen);
+            $output[] = $chosen;
+            $lastTrackTime[$chosen->id] = $totalElapsed;
+            if ($excludeArtistsOn) {
+                $artist = $artistByFileId[$chosen->id] ?? '';
+                if ($artist !== '') {
+                    $lastArtistTime[$artist] = $totalElapsed;
+                }
+            }
+            $totalElapsed += $chosen->length;
+        }
+
+        return $output;
     }
 
     /**

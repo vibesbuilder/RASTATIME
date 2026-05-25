@@ -294,6 +294,26 @@ critère de la section Critères principale.
 > rétrocompatible avec les smart blocks créés avant la
 > fonctionnalité respective (lignes manquantes = désactivé).
 > Voir ARCHITECTURE §23.21.
+>
+> **Spread intra-bloc (2026-05-25).** Le filtre SQL ci-dessus
+> garde le pool de candidats sans artiste / piste joué dans
+> les N dernières h *en dehors* du bloc.  Mais le bloc lui-
+> même peut quand même contenir deux pistes des Beatles
+> consécutives — le SQL ne regarde que l'historique, pas ce
+> que le bloc s'apprête à jouer.  Une seconde passe s'exécute
+> après la construction de la liste de pistes dans
+> `Block::applyWithinBlockSpread()` : pour chaque slot de la
+> liste originalement sélectionnée, la piste originale est
+> essayée d'abord ; si son artiste (ou file id selon le
+> filtre actif) se trouve dans la fenêtre de temps écoulé
+> des pistes déjà placées, le moteur tire un remplaçant non-
+> conflictuel du pool SQL-filtré plus large (jusqu'à 500
+> pistes) à la place.  La durée du bloc reste la même ; seul
+> le choix de piste change.  S'il n'y a plus de remplaçant
+> non-conflictuel dans le pool, l'originale est placée
+> quand même et une entrée `Logging::warn` apparaît dans
+> `legacy.log` pour que l'opérateur voie quand le pool était
+> trop étroit pour le spread configuré.
 
 ### Modifier un smart block
 
