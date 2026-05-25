@@ -81,40 +81,76 @@ jedem Track-/Show-Wechsel):
 - Aufwand: ~150 LoC + Live-Test.
 - Risiko: niedrig (isolierter Pypo-Code-Pfad, easy revert).
 
-**Phase 2 (Defer) — Option A oder B: persistente Icecast-PUT**
-- **Option A — Liquidsoap als reiner Output-Mixer** (~800–1000 LoC,
-  2 Wochen):
-  - Pypo-Scheduler bleibt unverändert
-  - Neuer schlanker Liquidsoap-Service (`rastatime-mixer.liq`)
-    konsumiert `input.harbor` (von mpv) und macht `output.icecast`
-    persistent zu allen 3 Mountpoints
-  - Pro: bewährt, well-dokumentiert
-  - Contra: Liquidsoap-Dependency wieder rein (Windows-OCaml-Build
-    ist zickig, das war ja u.a. der Grund warum sie rausgehauen
-    wurde)
-- **Option B — Langlebiger ffmpeg + Named Pipe / TCP-Source**
-  (~1500–2000 LoC, 3–4 Wochen):
-  - mpv schreibt nicht direkt an ffmpeg → Icecast, sondern an
-    eine Loopback-/Pipe-Quelle
-  - **Ein** langlebiges ffmpeg liest kontinuierlich aus der
-    Pipe, splittet via `tee` in 3 Mountpoint-Encoder
-  - mpv-Wechsel bei jedem Track sind für Icecast unsichtbar
-  - Pro: bleibt im rastatime-native FFmpeg-Stack
-  - Contra: Pipe-Setup auf Windows tricky (Named Pipe vs.
-    Loopback-Audio-Sink), neue Failure-Modi für die Pipe
-- **Option C — GStreamer Output-Bus** (~3000 LoC, 6–8 Wochen):
-  Klar Out-Of-Scope für jetzt — kompletter Output-Stack-Rewrite.
-  Würde Crossfading nativ liefern, aber zu viel auf einmal.
+**Phase 2 (in Arbeit ab 2026-05-25) — Variante A: Voll-Migration
+mpv → Liquidsoap als alleiniges Audio-Backend**
 
-**Architektur-Entscheidung A vs. B kommt zum Phase-2-Start.**
+Operator-Entscheidung 2026-05-25: nach 3 Phase-1-Fix-Iterationen
+(cb20df6, 2b2a787, 952ec3b) bleibt der Tail-Cut bei einigen
+kurzen Tracks bestehen.  Plus die Phase-2-Probleme (Listener-
+Reconnect, Stille beim Webstream-Wechsel) sind durch keinen
+Workaround im mpv-Stack zu lösen.  Statt zusätzlicher Pflege-
+Schleifen am Custom-Stack: Voll-Migration zu Liquidsoap als
+Audio-Backend (Subprocess hinter Pypo-Scheduler).  Eliminiert
+~1500 LoC Custom-Code (mpv_engine, FfmpegStreamer × 3,
+Crossfade-Berechnung in PHP, mein Tail-Cut-Wait-Hack), bringt
+~700 LoC neuen Adapter-Code dazu → netto –800 LoC.
 
-**Vorbedingung Phase 2:** Phase 1 läuft stabil im Live-Betrieb
-seit ≥ 2 Wochen (= Tail-Cut weg, keine Regressions im
-Track-Sequencing).
+**Was Liquidsoap nativ kann (löst all diese Probleme):**
+- Persistent Icecast-PUT × 3 Mountpoints (Listener-Reconnect-
+  Problem weg)
+- Gapless transitions zwischen Tracks (Tail-Cut weg, kein
+  Wait-Hack mehr nötig)
+- Crossfade nativ (PHP-Scheduler-Crossfade-Berechnung obsolet)
+- ICY-Metadata-Push automatisch beim Track-Wechsel (notify-
+  media-started-Hack obsolet)
+- Source-Switching master_dj / live_dj / scheduled via
+  `switch(...)` (eigener SourceSwitcher obsolet)
+- Replay-Gain via `amplify(override="replaygain_track_gain")`
+- Cue-Points nativ via `cue_cut(...)`
 
-**Risiko Live-Betrieb Phase 2:** mittel — Output-Pipeline-Eingriff
-geht direkt an die Hörer.  Empfohlen: ausgiebiger Test auf einem
-Test-Mountpoint vor Produktiv-Rollout.
+**Was Python-seitig bleibt:**
+- Pypo-Scheduler (Timer, Schedule-Sync mit Frontend-API)
+- FfmpegRecorder (per-show Recording)
+- FfmpegLineinCapture (Windows-dshow → localhost:8000/linein-
+  capture → von Liquidsoap als input.http konsumiert)
+- Library-Cache (Download-Pipeline vom Frontend)
+- LiquidsoapEngine-Adapter (neuer Python-Wrapper, ~300 LoC,
+  Telnet/Socket-Client für Server-Commands)
+
+**Phasen-Plan (Tasks #88–#92, Gesamt 6–8 Wochen kalendarisch):**
+
+- **Phase 0** (Operator-Aktion, 1 Tag): Sanity-Test ob Liquidsoap-
+  Windows-Build auf Operator-Server stabil läuft.  Wenn ja → Go
+  weiter, wenn nein → diesen Plan stoppen und reevaluieren.
+  Setup-Anleitung: `docs/operator/LIQUIDSOAP_PHASE0.md`.
+- **Phase A** (~1 Woche): POC mit Trivial-.liq.  24h Burn-In auf
+  Operator-Server.  CPU/Memory-Profil.
+- **Phase B** (~2 Wochen): `LiquidsoapEngine` Python-Adapter +
+  Telnet-Client + NSSM-Service.  Feature-Flag `audio_backend =
+  mpv | liquidsoap` als Preference.
+- **Phase C** (~2–3 Wochen): Migration aller Source-Typen
+  (scheduled files, webstreams, line-in passthrough, replay-
+  gain, ICY, source-switching).
+- **Phase D** (~2 Wochen): Live-A/B auf Test-Mount, Bug-Fix,
+  Doku in 4 Sprachen, Cutover als operator-explicit Aktion.
+
+**Rollback-Plan:** Feature-Flag `audio_backend` erlaubt jederzeit
+Fallback zu mpv ohne Service-Reinstall — nur Preference-Toggle
++ Service-Restart.
+
+**Risiko Live-Betrieb:** mittel.  Output-Pipeline-Eingriff geht
+direkt an die Hörer.  Gestaffelter Rollout: Phase 0/A/B sind
+unsichtbar (testen nur), Phase C/D unter Feature-Flag, finaler
+Cutover erst nach 1–2 Wochen A/B-Vergleich.
+
+**Bei Voll-Migration werden obsolet** (wird in Phase D entfernt):
+- `mpv_engine.py` (~450 LoC)
+- `ffmpeg_streamer.py` (~500 LoC)
+- `Scheduler::calculateCrossfades` (PHP, ~300 LoC)
+- `_stop_streamers` Parallel-Stops (eigener Hotfix 2b2a787,
+  obsolet weil ffmpeg nicht mehr unsere Sache ist)
+- Tail-Flush-Wait (Commits cb20df6 + 952ec3b, obsolet weil
+  Liquidsoap gapless macht)
 
 ### 🟢 Widgets — drei Wellen
 
