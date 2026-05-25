@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Playout: short-track tail cut at next-track time —
+  Seamless-Bus-Mix Phase 1** (operator request 2026-05-25).
+  Symptom: short tracks (4–10 s) regularly lost their last
+  1–2 s of audio in the Icecast output, most noticeable on
+  the transition from a scheduled track to a scheduled
+  webstream item.
+
+  Root cause: `playout_scheduler.py::_on_*_start` (file,
+  webstream, line-in) hard-stopped mpv and all three
+  FfmpegStreamer instances the instant the scheduler-clock
+  reached the next track's start time, regardless of whether
+  mpv had actually finished decoding (and ffmpeg's `-re`-
+  paced read had actually finished encoding) the previous
+  file's tail.  On short files the gap between scheduler-
+  clock and mpv's `end-file` event was large enough to clip
+  audibly.
+
+  Fix: new `PlayoutEngine.wait_until_stopped(timeout)`
+  method, overridden in `MpvPlayoutEngine` with a real
+  blocking wait on a `threading.Event` that is set by the
+  libmpv `end-file` event callback and cleared on
+  `loadfile`.  All three `_on_*_start` paths now call
+  `wait_until_stopped(timeout=0.2)` immediately before their
+  hard-stop, giving the previous file up to 200 ms to flush
+  its tail.  Common case (previous track already ended
+  naturally) returns immediately, no perceptible delay.
+
+  Phase 2 of the Seamless-Bus-Mix work (persistent
+  Icecast-PUT connection so listeners don't get kicked on
+  every track change) is parked on `BACKLOG.md` for a
+  separate dedicated session — A vs. B architecture
+  decision happens at that kickoff.
+
 ### Added
 
 - **Smart Block: within-block spread for the exclude-played-

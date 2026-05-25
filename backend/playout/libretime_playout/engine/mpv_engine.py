@@ -19,6 +19,7 @@ Why mpv instead of libVLC 3.x:
 import logging
 import os
 import sys
+import threading
 from pathlib import Path
 from typing import List, Optional
 
@@ -164,6 +165,16 @@ class MpvPlayoutEngine(PlayoutEngine):
         self._state = PlayoutState.STOPPED
         self._current_uri: Optional[str] = None
 
+        # RASTATIME 2026-05-25 (Seamless-Bus-Mix Phase 1) — threading
+        # Event used by wait_until_stopped() so the scheduler can pause
+        # briefly at next-track time until mpv has flushed the current
+        # file's last frames.  Without this, short tracks (4–10 s) got
+        # their tail 1–2 s cut off because _on_*_start(N+1) hard-stopped
+        # mpv (and the FFmpeg streamers) while audio was still in the
+        # decode pipeline.  Initial state is "stopped".
+        self._stopped_event = threading.Event()
+        self._stopped_event.set()
+
         # Log verbosity is configurable via env var so the operator can
         # flip libmpv into debug mode for one restart cycle without
         # editing code.  Accepts mpv's standard levels:
@@ -278,6 +289,8 @@ class MpvPlayoutEngine(PlayoutEngine):
                 logger.info("mpv end-file: reason=%s uri=%s", reason, self._redact(uri))
                 self._state = PlayoutState.STOPPED
             self._current_uri = None
+            # Wake any thread waiting in wait_until_stopped().
+            self._stopped_event.set()
 
         logger.info(
             "mpv playout engine ready (libmpv %s, python-mpv %s)",
@@ -372,11 +385,16 @@ class MpvPlayoutEngine(PlayoutEngine):
             else:
                 self._player["af"] = ""
 
+            # Cleared just before loadfile so wait_until_stopped() blocks
+            # until the matching end-file event sets it again.
+            self._stopped_event.clear()
             self._player.command("loadfile", uri, "replace")
             self._state = PlayoutState.PLAYING
         except Exception as exc:  # pylint: disable=broad-exception-caught
             logger.error("mpv play failed for %s: %s", self._redact(uri), exc)
             self._state = PlayoutState.ERROR
+            # Failed play counts as "not playing" for waiters.
+            self._stopped_event.set()
 
     def stop(self) -> None:
         """Hard-stop playback immediately."""
@@ -389,6 +407,24 @@ class MpvPlayoutEngine(PlayoutEngine):
             logger.debug("mpv stop (already stopped?): %s", exc)
         self._state = PlayoutState.STOPPED
         self._current_uri = None
+        self._stopped_event.set()
+
+    def wait_until_stopped(self, timeout: float) -> bool:
+        """
+        Block up to ``timeout`` seconds waiting for the engine to enter
+        STOPPED state (natural end-of-file, error, or an explicit
+        :meth:`stop`).  Returns ``True`` if stopped within the timeout,
+        ``False`` otherwise.
+
+        Used by the playout scheduler at next-track time to let mpv
+        flush the current file's last frames before hard-stopping the
+        engine + the parallel FFmpeg streamers — without this, short
+        tracks (4–10 s) get their tail 1–2 s clipped because the
+        scheduler-clock fires the next event slightly before the
+        in-flight audio has drained.  RASTATIME 2026-05-25 — Seamless-
+        Bus-Mix Phase 1.
+        """
+        return self._stopped_event.wait(timeout=timeout)
 
     def get_state(self) -> PlayoutState:
         return self._state

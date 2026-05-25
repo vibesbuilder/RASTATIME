@@ -661,6 +661,16 @@ class PlayoutScheduler:
             self._notify_media_started(event.row_id)
             return
 
+        # RASTATIME 2026-05-25 — Seamless-Bus-Mix Phase 1.  Give the
+        # previous track up to 200 ms to flush its last frames before
+        # we hard-stop mpv + the FFmpeg streamers.  Without this, the
+        # last 1–2 s of short tracks (4–10 s) regularly get clipped
+        # because the scheduler-clock fires this _on_file_start event
+        # slightly before mpv's end-file event arrives.  If mpv is
+        # already stopped (common case: previous track ended naturally
+        # before this fires) the wait returns immediately.
+        self._engine.wait_until_stopped(timeout=0.2)
+
         # HARD start (QUEUE_BEHAVIOR §4.1): stop whatever is playing first.
         self._engine.stop()
         self._stop_streamers()
@@ -733,6 +743,11 @@ class PlayoutScheduler:
                 key, self._switcher.current_state.value,
             )
             return
+
+        # RASTATIME 2026-05-25 — Seamless-Bus-Mix Phase 1 (see _on_file_start
+        # for the rationale).  Short scheduled tracks just before a webstream
+        # item were the prime offender for the tail-cut symptom.
+        self._engine.wait_until_stopped(timeout=0.2)
 
         self._engine.stop()
         self._stop_streamers()
@@ -921,6 +936,10 @@ class PlayoutScheduler:
         # the capture's listen URL.  Brief silence (~0.5 s) while
         # /linein-capture's burst buffer fills, identical to the
         # Master/Show source-switch behavior.
+        # RASTATIME 2026-05-25 — Seamless-Bus-Mix Phase 1 (see
+        # _on_file_start for the rationale).
+        self._engine.wait_until_stopped(timeout=0.2)
+
         self._engine.stop()
         self._stop_streamers()
         self._engine.play(self._linein_capture.listen_url, cue_in=0.0)

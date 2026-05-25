@@ -71,6 +71,28 @@ class PlayoutEngine(ABC):
     def close(self) -> None:
         """Release all resources held by this engine."""
 
+    def wait_until_stopped(self, timeout: float) -> bool:
+        """
+        Block up to ``timeout`` seconds waiting for playback to end
+        naturally (end-of-file, error, or an explicit :meth:`stop`).
+        Returns ``True`` if the engine is STOPPED within the timeout,
+        ``False`` otherwise.
+
+        RASTATIME 2026-05-25 — Seamless-Bus-Mix Phase 1.  The playout
+        scheduler calls this just before hard-stopping the engine at
+        next-track time so that short tracks (4–10 s) get to flush
+        their last frames into the FFmpeg streamer pipeline before
+        the streamers are torn down — without this, the tail audio
+        was getting cut off audibly.
+
+        Default implementation polls :meth:`get_state` once; engines
+        with a real event-driven end-of-file signal (e.g. MpvEngine
+        via libmpv's ``end-file`` callback) override this with a
+        blocking wait that returns as soon as the actual signal
+        arrives.
+        """
+        return self.get_state() == PlayoutState.STOPPED
+
     def set_audio_device(self, device_id: Optional[str]) -> None:
         """
         Re-route local audio playback to the given output device.
