@@ -1460,7 +1460,16 @@ class PlayoutScheduler:
         if self._switcher and self._switcher.current_state != SourceState.SCHEDULED:
             return
 
+        # RASTATIME 2026-05-25 — Seamless-Bus-Mix Phase 1 (follow-up).
+        # The _on_stop handler is the SECOND track-end stop path, fired
+        # by the track-end Timer just as _on_*_start fires for the next
+        # event.  Without a wait here the scheduler-clock-driven mpv
+        # stop cut short-track tails by 1–2 s.  Same 200 ms bounded
+        # wait as in _on_*_start so a track that's already at EOF
+        # returns immediately and a still-decoding tail gets a brief
+        # grace period before the hard-stop.
         if self._engine.get_state() == PlayoutState.PLAYING:
+            self._engine.wait_until_stopped(timeout=0.2)
             self._engine.stop()
         self._stop_streamers()
 
@@ -1500,12 +1509,42 @@ class PlayoutScheduler:
                 logger.error("FFmpeg streamer start failed: %s", exc)
 
     def _stop_streamers(self) -> None:
-        """Stop all running FFmpeg Icecast streamers."""
+        """
+        Stop all running FFmpeg Icecast streamers in parallel.
+
+        RASTATIME 2026-05-25 — was sequential; that cost ~500 ms per
+        streamer (3 × 500 = ~1.5 s) on every track change, directly
+        bloating the next-track mpv-start latency.  The visible
+        symptom was scheduled tracks getting cut 1–2 s before their
+        actual cue_out because mpv only got to play (slot – 1.5 s).
+        Running the three stops in worker threads + joining brings
+        the total wait down to roughly the cost of the slowest
+        single streamer (~500 ms instead of ~1.5 s).
+
+        Each ``streamer.stop()`` is already thread-safe (its own
+        lifecycle lock), so parallel calls do not race each other.
+        """
+        if not self._streamers:
+            return
+
+        threads = []
         for streamer in self._streamers:
-            try:
-                streamer.stop()
-            except Exception as exc:  # pylint: disable=broad-exception-caught
-                logger.error("FFmpeg streamer stop failed: %s", exc)
+            def _stop_one(_s=streamer):
+                try:
+                    _s.stop()
+                except Exception as exc:  # pylint: disable=broad-exception-caught
+                    logger.error("FFmpeg streamer stop failed: %s", exc)
+            t = threading.Thread(target=_stop_one, daemon=True,
+                                 name=f"stop-streamer-{id(streamer):x}")
+            t.start()
+            threads.append(t)
+
+        # Bounded join — if a streamer hangs we don't want to block
+        # the scheduler thread forever.  ffmpeg.stop() itself already
+        # has a 3 s graceful-exit timeout, so 4 s here is enough
+        # headroom without freezing the next track.
+        for t in threads:
+            t.join(timeout=4.0)
 
     def _reload_stream_outputs_if_changed(self) -> None:
         """

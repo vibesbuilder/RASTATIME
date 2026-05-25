@@ -9,6 +9,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Playout: short-track tail cut — Seamless-Bus-Mix Phase 1
+  follow-up** (operator follow-up 2026-05-25).  After the
+  initial Phase-1 commit landed, the operator still heard
+  the tail-cut on the 10.1-s `TOH-Jingle 12 Uhr` (cue_out
+  9.9 s) — clipped at ~8.4 s.  Two root causes that the
+  first commit didn't cover:
+
+  1. The `_on_stop` handler (the second track-end stop
+     path, fired by the track-end Timer in parallel with
+     `_on_*_start` for the next event) hard-stopped mpv
+     and the FFmpeg streamers without the new
+     `wait_until_stopped` guard.  Because Python's
+     `threading.Timer` makes no ordering guarantee for two
+     timers firing on the same wallclock instant, `_on_stop`
+     fired first about half the time and set the engine to
+     STOPPED before `_on_file_start`'s wait ever saw a
+     non-stopped state.  Added the same bounded 200 ms
+     `wait_until_stopped` in `_on_stop` so this path also
+     gives the previous file a brief grace period.
+  2. `_stop_streamers()` ran the three FfmpegStreamer
+     `stop()` calls sequentially — each costing ~500 ms for
+     its graceful 'q'-exit handshake — for a total of
+     ~1.5 s of latency injected into the next track's
+     mpv-start.  That latency was the dominant component
+     of the ~8.4 s observed clip on the 9.9 s-cue_out
+     jingle (9.9 − 1.5 ≈ 8.4).  Switched to threaded
+     parallel stops with a 4-s join timeout per thread;
+     the total cost is now bounded by the slowest single
+     streamer (~500 ms) instead of the sum.
+
+  Expected effect: short tracks should now play
+  consistently up to (or very close to) their configured
+  cue_out, since the next-track mpv-start latency drops
+  from ~1.5 s to ~0.5 s and both stop paths respect the
+  200 ms decode-tail flush.
+
 - **Playout: short-track tail cut at next-track time —
   Seamless-Bus-Mix Phase 1** (operator request 2026-05-25).
   Symptom: short tracks (4–10 s) regularly lost their last
