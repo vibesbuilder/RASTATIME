@@ -14,6 +14,23 @@
 
 ---
 
+## Vorab — Windows-Edition prüfen (nur bei N-Editionen relevant)
+
+Auf Windows 11 / 10 **N-Editionen** (EU-Spezial-Versionen ohne
+Multimedia-Komponenten) fehlen die System-Codecs für MP3 / AAC
+etc.  Liquidsoap selbst nutzt eigene FFmpeg-Libraries — funktioniert
+also auch ohne — aber **Browser- und VLC-Tests** verwenden oft
+System-Codecs für inline-Playback, und ohne installiertes
+Media Feature Pack können diese Tests fälschlich als "Liquidsoap-
+Bug" interpretiert werden.
+
+**Vor Phase 0 — falls N-Edition:** [Media Feature Pack für
+Windows 11](https://support.microsoft.com/de-de/topic/media-feature-pack-list-for-windows-n-editions-c1c6fffa-d052-8338-7a79-a4bb980a700a) installieren.
+Standard-Editionen haben das schon eingebaut.
+
+(Operator-Erfahrung 2026-05-25 — frühe VLC-Connect-Fehler ließen
+sich nach MFP-Installation klar erklären.)
+
 ## Schritt 1 — Liquidsoap-Build downloaden
 
 Aktuell stabil: **Liquidsoap 2.2.x** (oder neuer wenn verfügbar).
