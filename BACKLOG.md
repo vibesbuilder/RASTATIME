@@ -51,6 +51,71 @@ der Operator das Signal gibt.
 **Risiko Live-Betrieb:** Niedrig — paralleler Prozess.
 **Folgeprojekt:** 7-Tage-Catchup-Frontend nutzt diese Chunks als Input.
 
+### 🟢 Seamless Bus-Mix — Output-Stack-Politur
+
+**Status:** Go in zwei Phasen.  Phase 1 sofort (Tail-Cut-Bug),
+Phase 2 später (Architektur-Eingriff für persistente Icecast-PUT-
+Verbindung).
+**Evaluiert:** 2026-05-25.
+**Operator-Wert:** Sehr hoch — direkte Hörer-Erfahrung.
+
+**Drei beobachtete Symptome am aktuellen Output-Stack**
+(mpv → 3× FfmpegStreamer → Icecast PUT, hard stop+start bei
+jedem Track-/Show-Wechsel):
+
+| # | Symptom | Lösungsklasse |
+|---|---|---|
+| 1 | Listener-Player muss bei Track-/Show-Change neu verbinden, Stream-Dauer-Counter resetted | Architektur — persistente Icecast-PUT-Verbindung nötig |
+| 2 | Track-Ende um 1–2 s abgeschnitten, besonders bei kurzen Files (4–10 s) und vor Webstream-Items | Bug — Stop-Trigger hängt an Scheduler-Clock statt mpv's `end-file`-Event |
+| 3 | 1–2 s Stille beim Wechsel zu Webstreams | Folge aus #1 — verschwindet wenn persistente Verbindung steht |
+
+**Phase 1 (sofort, 2–3 Tage) — Option D: Tail-Cut-Bug-Fix**
+- Im `playout_scheduler.py::_on_file_start` (analog für webstream
+  / linein) hängt der Hard-Stop des laufenden mpv an einer
+  scheduler-clock-basierten Timer-Berechnung.  Bei kurzen Files
+  ist die Cue-Out-Zeit ggü. mpv's Decode-Latenz pessimistisch
+  → die letzten Frames werden abgeschnitten.
+- Fix: Trigger an mpv's `end-file`-Event (reason=0) hängen +
+  Timeout-Fallback wenn das Event ausbleibt.  Falls der nächste
+  Track-Slot noch nicht erreicht ist, wartet der Scheduler.
+- Aufwand: ~150 LoC + Live-Test.
+- Risiko: niedrig (isolierter Pypo-Code-Pfad, easy revert).
+
+**Phase 2 (Defer) — Option A oder B: persistente Icecast-PUT**
+- **Option A — Liquidsoap als reiner Output-Mixer** (~800–1000 LoC,
+  2 Wochen):
+  - Pypo-Scheduler bleibt unverändert
+  - Neuer schlanker Liquidsoap-Service (`rastatime-mixer.liq`)
+    konsumiert `input.harbor` (von mpv) und macht `output.icecast`
+    persistent zu allen 3 Mountpoints
+  - Pro: bewährt, well-dokumentiert
+  - Contra: Liquidsoap-Dependency wieder rein (Windows-OCaml-Build
+    ist zickig, das war ja u.a. der Grund warum sie rausgehauen
+    wurde)
+- **Option B — Langlebiger ffmpeg + Named Pipe / TCP-Source**
+  (~1500–2000 LoC, 3–4 Wochen):
+  - mpv schreibt nicht direkt an ffmpeg → Icecast, sondern an
+    eine Loopback-/Pipe-Quelle
+  - **Ein** langlebiges ffmpeg liest kontinuierlich aus der
+    Pipe, splittet via `tee` in 3 Mountpoint-Encoder
+  - mpv-Wechsel bei jedem Track sind für Icecast unsichtbar
+  - Pro: bleibt im rastatime-native FFmpeg-Stack
+  - Contra: Pipe-Setup auf Windows tricky (Named Pipe vs.
+    Loopback-Audio-Sink), neue Failure-Modi für die Pipe
+- **Option C — GStreamer Output-Bus** (~3000 LoC, 6–8 Wochen):
+  Klar Out-Of-Scope für jetzt — kompletter Output-Stack-Rewrite.
+  Würde Crossfading nativ liefern, aber zu viel auf einmal.
+
+**Architektur-Entscheidung A vs. B kommt zum Phase-2-Start.**
+
+**Vorbedingung Phase 2:** Phase 1 läuft stabil im Live-Betrieb
+seit ≥ 2 Wochen (= Tail-Cut weg, keine Regressions im
+Track-Sequencing).
+
+**Risiko Live-Betrieb Phase 2:** mittel — Output-Pipeline-Eingriff
+geht direkt an die Hörer.  Empfohlen: ausgiebiger Test auf einem
+Test-Mountpoint vor Produktiv-Rollout.
+
 ### 🟢 Widgets — drei Wellen
 
 **Status:** Go in Wellen statt Big-Bang.  In Arbeit.
