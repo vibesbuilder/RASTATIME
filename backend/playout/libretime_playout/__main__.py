@@ -272,6 +272,15 @@ def main() -> None:
     # ever needs to be sidelined (e.g. driver issue, DLL not found,
     # etc.).  VLC playback works fine for scheduled files; only the
     # DJ-source monitoring is broken on libVLC 3.x.
+    #
+    # RASTATIME 2026-05-25 — Seamless-Bus-Mix Phase B: third option
+    # 'liquidsoap' added as feature-flag for the in-progress mpv →
+    # Liquidsoap migration (see BACKLOG.md → Seamless Bus-Mix Phase 2).
+    # In Phase-B state the LiquidsoapPlayoutEngine is a skeleton:
+    # the engine instantiates but every play()/stop() raises
+    # NotImplementedError, so this option is for development /
+    # integration-test setups only.  Default stays 'mpv' — operator
+    # only switches when Phase C lands.
     engine_kind = os.environ.get("RASTATIME_PLAYOUT_ENGINE", "mpv").lower()
     try:
         if engine_kind == "vlc":
@@ -282,9 +291,19 @@ def main() -> None:
             from libretime_playout.engine.mpv_engine import MpvPlayoutEngine  # noqa: PLC0415
             engine = MpvPlayoutEngine()
             logger.info("Local-playback engine: mpv (libmpv)")
+        elif engine_kind == "liquidsoap":
+            from libretime_playout.engine.liquidsoap_engine import LiquidsoapPlayoutEngine  # noqa: PLC0415
+            engine = LiquidsoapPlayoutEngine()
+            logger.warning(
+                "Local-playback engine: Liquidsoap (SKELETON — Phase B). "
+                "play()/stop() are not implemented yet, all scheduled audio "
+                "will fail with NotImplementedError until Phase C ships.  "
+                "Only set RASTATIME_PLAYOUT_ENGINE=liquidsoap in dev / "
+                "integration setups."
+            )
         else:
             logger.critical(
-                "Unknown RASTATIME_PLAYOUT_ENGINE=%r — must be 'mpv' or 'vlc'.",
+                "Unknown RASTATIME_PLAYOUT_ENGINE=%r — must be 'mpv', 'vlc' or 'liquidsoap'.",
                 engine_kind,
             )
             sys.exit(1)
@@ -295,6 +314,12 @@ def main() -> None:
                 "Ensure libmpv-2.dll is at C:\\Tools\\mpv\\ (or set "
                 "RASTATIME_MPV_PATH) and python-mpv is installed in the "
                 "playout venv."
+            )
+        elif engine_kind == "liquidsoap":
+            logger.critical(
+                "Ensure Liquidsoap is running and its telnet server is "
+                "reachable at RASTATIME_LIQUIDSOAP_HOST / _PORT (default "
+                "127.0.0.1:1234)."
             )
         else:
             logger.critical(

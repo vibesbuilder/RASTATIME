@@ -1,0 +1,139 @@
+# =====================================================================
+# rastatime.liq — Liquidsoap script template for RASTATIME
+#
+# RASTATIME 2026-05-25 — Seamless-Bus-Mix Phase B (skeleton).
+#
+# This script is the long-running Liquidsoap subprocess that replaces
+# mpv + 3x FfmpegStreamer + the PHP-side crossfade calculations.
+# It is driven by the Python LiquidsoapPlayoutEngine over telnet
+# (see backend/playout/libretime_playout/engine/liquidsoap_telnet.py).
+#
+# Phase B (this skeleton): structural outline only.  Placeholders for
+# Icecast credentials and source-switch logic — nothing connects yet.
+#
+# Phase C will fill in:
+#   * Telnet-server enable (so the Python engine can push commands)
+#   * request.queue source for scheduled tracks
+#   * input.harbor for Master / Show DJ
+#   * switch(...) to combine sources
+#   * 3x output.icecast (mp3 / aac / ogg)
+#   * Crossfade + ReplayGain handling
+#
+# Phase D will:
+#   * Add real per-station credentials via env-var substitution
+#   * Wire local-monitoring output
+#   * Add prometheus metrics (Liquidsoap has builtin support)
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# Settings — applied before any source/output is constructed.
+# ---------------------------------------------------------------------
+
+# Telnet server on localhost:1234 so the Python engine can push
+# commands (request.queue.push, metadata.update, var.set ...).
+# TODO Phase C — confirm port matches engine default + bind-addr is
+# 127.0.0.1 only (no external access).
+# settings.server.telnet.set(true)
+# settings.server.telnet.bind_addr.set("127.0.0.1")
+# settings.server.telnet.port.set(1234)
+
+# Log to a file so the operator can debug after-the-fact.  Path
+# matches Pypo's logs/ convention.
+# TODO Phase C.
+# settings.log.file.path.set("C:/rastatime/logs/liquidsoap.log")
+# settings.log.stdout.set(true)
+# settings.log.level.set(3)
+
+# Disable harmful defaults — no audio device output yet, no scripted
+# fallback to silence on errors (we want loud failures during dev).
+# TODO Phase C — re-evaluate for production.
+
+# ---------------------------------------------------------------------
+# Sources — what audio comes in
+# ---------------------------------------------------------------------
+
+# Scheduled tracks: requests pushed by the Python engine.
+# blank() fallback so the source is infallible (output.icecast needs
+# an always-on source to keep the Icecast PUT alive).
+# TODO Phase C.
+# scheduled_q = request.queue(id="scheduled")
+# scheduled = fallback(track_sensitive=true, [scheduled_q, blank()])
+
+# Master DJ: external source pushed to Liquidsoap via input.harbor
+# on a private port.  Operator-facing source-switch (Dashboard
+# "Master Source") flips the active flag.
+# TODO Phase C — configure port + auth from operator's icecast.xml.
+# master_dj = input.harbor("master", port=8001, password="...")
+
+# Show DJ: same shape as master but a separate harbor mount.
+# TODO Phase C.
+# show_dj = input.harbor("show", port=8002, password="...")
+
+# Line-In passthrough: the existing FfmpegLineinCapture publishes
+# audio on http://localhost:8000/linein-capture; we consume it.
+# TODO Phase C.
+# linein = input.http("http://localhost:8000/linein-capture")
+
+# ---------------------------------------------------------------------
+# Source switching — master_dj > show_dj > scheduled
+# ---------------------------------------------------------------------
+#
+# Liquidsoap's switch(track_sensitive=true, [(predicate, source), ...])
+# picks the first source whose predicate returns true.  The Python
+# engine flips Liquidsoap variables (master_dj.enable, show_dj.enable)
+# via var.set when the operator toggles in the Dashboard.
+#
+# Track-sensitive switching = source change only at request boundaries
+# (no mid-track cut).  Crossfade between sources is added separately.
+# TODO Phase C.
+# stream = switch(track_sensitive=true, [
+#   ({master_dj_enabled()}, master_dj),
+#   ({show_dj_enabled()},   show_dj),
+#   ({true},                scheduled),  # always-on fallback
+# ])
+
+# Crossfade between consecutive request.queue items.  Default 2 s
+# is what the operator has in cc_pref today (default_crossfade_seconds).
+# TODO Phase C — read value from preference at start, or set
+# dynamically via var.set.
+# stream = crossfade(duration=2., stream)
+
+# ReplayGain — annotate-protocol metadata "replaygain_track_gain"
+# (set on the request URI by the Python engine, see annotate://
+# protocol).  amplify(...) picks it up automatically when the
+# override metadata key is present.
+# TODO Phase C.
+# stream = amplify(override="replaygain_track_gain", 1., stream)
+
+# ---------------------------------------------------------------------
+# Outputs — where the audio goes
+# ---------------------------------------------------------------------
+
+# 3 Icecast mountpoints, persistent PUTs.  Codec config TBD —
+# Phase 0 confirmed %ffmpeg(format="mp3", %audio(codec="libmp3lame"))
+# works on the operator's build.
+# TODO Phase C — fill in real Icecast credentials + mount names
+# from operator's cc_pref values.
+# output.icecast(
+#   %ffmpeg(format="mp3", %audio(codec="libmp3lame", b="128k")),
+#   host="localhost", port=8000, password="hackme",
+#   mount="/rastatime", name="…", description="…",
+#   stream,
+# )
+# output.icecast(
+#   %ffmpeg(format="adts", %audio(codec="aac", b="128k")),
+#   host="localhost", port=8000, password="hackme",
+#   mount="/rastatime-aac", name="…", description="…",
+#   stream,
+# )
+# output.icecast(
+#   %ffmpeg(format="ogg", %audio(codec="libvorbis")),
+#   host="localhost", port=8000, password="hackme",
+#   mount="/rastatime-ogg", name="…", description="…",
+#   stream,
+# )
+
+# Local monitor — what the operator hears at the studio speakers.
+# Currently bypassed (mpv handles local monitoring in the legacy
+# path).  Phase D might wire output.portaudio here.
+# TODO Phase D.

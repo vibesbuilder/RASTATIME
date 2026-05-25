@@ -7,6 +7,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Liquidsoap Phase-B skeleton — engine adapter + telnet client
+  + .liq template** (operator go 2026-05-25, Seamless-Bus-Mix
+  Phase 2 Variante A).  Inert until operator switches
+  `RASTATIME_PLAYOUT_ENGINE=liquidsoap`; default stays `mpv`.
+
+  New files:
+    - `backend/playout/libretime_playout/engine/liquidsoap_telnet.py`
+      — thread-safe TCP-telnet client skeleton for Liquidsoap's
+      server-line protocol on `127.0.0.1:1234`.  Class structure,
+      connection-lifecycle stubs, command wrappers
+      (`request_queue_push`, `metadata_update`, `var_set`,
+      `request_queue_skip`, `help`) — all raise
+      `NotImplementedError` pending Phase-C wire-up.
+    - `backend/playout/libretime_playout/engine/liquidsoap_engine.py`
+      — `LiquidsoapPlayoutEngine` implementing the same
+      `PlayoutEngine` ABC as the mpv / VLC adapters.  `play`,
+      `stop`, `close`, `set_audio_device`, `get_state`,
+      `wait_until_stopped` all present.  `wait_until_stopped` is
+      a true no-op-returning-True because Liquidsoap has native
+      gapless transitions — that's the whole reason for the
+      migration.
+    - `backend/playout/config/rastatime.liq.template` — heavily-
+      commented Liquidsoap-script outline showing the target
+      Phase-C architecture: telnet-server enable, request.queue
+      for scheduled tracks, input.harbor for Master/Show DJ,
+      `switch(...)` for source switching, `crossfade(...)`,
+      `amplify(override="replaygain_track_gain", ...)`, 3 ×
+      `output.icecast` (mp3/aac/ogg) with persistent PUT.  All
+      blocks commented out — this is the design contract for
+      Phase C, not a runnable script yet.
+
+  `__main__.py` engine-factory extended: third option `liquidsoap`
+  alongside `mpv` and `vlc`.  Engine instantiates cleanly but
+  scheduler will hit `NotImplementedError` on first track play,
+  with a clear `Logging::critical` pointing at the BACKLOG entry.
+
+  No production-path change.  Operator-facing risk in this
+  commit: zero — feature-flag is env-var-gated and default is
+  unchanged.
+
 ### Fixed
 
 - **Playout: tail-flush wait raised from 200 ms to 500 ms —
