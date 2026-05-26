@@ -150,8 +150,14 @@ def _render_icecast_block(stream: Dict) -> str:
     )
 
     # Render as a multi-line block matching Liquidsoap's stdlib style.
-    # `restart_delay=5.` + `fallible=true` give us the operator-
-    # requested indefinite-retry-with-5 s-backoff (per C3 Q2 decision).
+    # `on_error=fun(_) -> 5.` + `fallible=true` together give us the
+    # operator-requested indefinite-retry-with-5 s-backoff (per C3 Q2
+    # decision).  Liquidsoap 2.4.x dropped the old `restart_delay`
+    # kwarg in favour of an on_error callback whose return value is
+    # the wait-seconds before the next reconnect attempt (return -1.
+    # to disable retries entirely).  We return 5. unconditionally —
+    # so the connect loop is bounded by 5 s regardless of what the
+    # Icecast error was, identical semantics to the old restart_delay.
     # The trailing comment names the mount so operator-side grep
     # against the rendered .liq is easy.
     return (
@@ -164,7 +170,7 @@ def _render_icecast_block(stream: Dict) -> str:
         f'  mount="{mount}",\n'
         f'  name="{name}",\n'
         f'  description="{description}",\n'
-        "  restart_delay=5.,\n"
+        "  on_error=fun(_) -> 5.,\n"
         "  fallible=true,\n"
         "  bus,\n"
         f")  # mount {mount} type={stream_type} {bitrate}k\n"

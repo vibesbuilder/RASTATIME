@@ -75,8 +75,11 @@ def test_render_mp3_block_basic_shape():
     assert 'user="source"' in out
     assert 'password="hackme"' in out
     assert 'mount="/rastatime"' in out
-    # Phase-C3 operator-decision: indefinite retry 5 s
-    assert "restart_delay=5." in out
+    # Phase-C3 operator-decision: indefinite retry 5 s via the
+    # Liquidsoap-2.4 on_error callback (replaces the old restart_delay
+    # kwarg that 2.4 dropped — the new shape is a callback returning
+    # the retry-wait-seconds).
+    assert "on_error=fun(_) -> 5." in out
     assert "fallible=true" in out
     # The source name we wire up in the template:
     assert "  bus,\n" in out
