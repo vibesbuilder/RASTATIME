@@ -9,6 +9,58 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Liquidsoap Phase-C7 + C8 — Pypo Auto-Render bei Start +
+  Operator-Integration-Test-Guide** (Operator-Entscheidung
+  2026-05-26 "C7+C8 vor C4+C5 vorziehen", Seamless-Bus-Mix
+  Phase 2).
+
+  Phase-C7 verdrahtet das Pypo-Bootstrap mit dem C3-Renderer
+  hinter dem `RASTATIME_PLAYOUT_ENGINE=liquidsoap` Feature-Flag:
+
+    - `__main__.py` hat jetzt einen `_render_rastatime_liq_at_startup()`
+      Helper, der beim Pypo-Start die `cc_pref.stream_output_N`
+      Rows liest, die operator-konfigurierten Pfade aus env-vars
+      auflöst und die finale `rastatime.liq` atomar nach dem
+      Liquidsoap-Tools-Verzeichnis schreibt.
+    - Idempotent: wenn sich gegenüber dem letzten Render nichts
+      geändert hat, wird die Datei nicht neu geschrieben und Pypo
+      loggt nur ein `INFO  up-to-date — no restart needed`.  Wenn
+      sich etwas geändert hat, kommt ein `WARN  Rendered … RESTART
+      the RASTATIME-LIQUIDSOAP NSSM service` — Operator muss den
+      Service manuell restarten (wir bouncen NSSM bewusst nicht
+      automatisch, um Credential-Tippfehler nicht stillschweigend
+      live zu schalten).
+    - Skelett-Warning für die Liquidsoap-Engine entfernt — die
+      Engine ist seit C2 voll funktional und braucht keinen
+      "raises NotImplementedError" Hinweis mehr.
+    - Neue Env-Vars dokumentiert im Modul-Docstring:
+      `RASTATIME_LIQUIDSOAP_HOST` / `_PORT` /
+      `_CONFIG_PATH` / `_LOG_PATH` / `_CROSSFADE_SECONDS`.
+
+  Phase-C8 ist ein **Operator-Integration-Test-Guide**, weil ein
+  echter Liquidsoap-Spin-up nicht im pytest-Setup machbar ist:
+
+    - `docs/operator/LIQUIDSOAP_PHASE_C8.md` — Schritt-für-Schritt-
+      Guide: NSSM-Service installieren, Pypo im Liquidsoap-Modus
+      starten (rendert .liq), liquidsoap.exe --check Sanity, NSSM
+      starten, Test-Track in cc_schedule eintragen, Browser-
+      Playback prüfen (Audio, Crossfade, ReplayGain, ICY-Title),
+      strukturierter Bericht-Template am Ende.
+    - Doku weist explizit darauf hin was C8 NICHT abdeckt
+      (DJ-Sources → C4, Recording → C5) und wie der Operator
+      während C8 mit gleichzeitig laufendem mpv-DJ-Listener
+      umgeht.
+
+  Damit ist der **scheduled-tracks-Pfad** über Liquidsoap
+  vollständig in Operator-Hand testbar.  Production-Path
+  unverändert (Default bleibt `mpv`).
+
+  Combined engine + config suite weiter bei **101 Tests grün
+  in 2.5 s** — keine neuen Unit-Tests in diesem Schritt
+  (Bootstrap-Code ist zu eng an Module-Init gekoppelt um
+  sinnvoll in pytest zu kapseln; die einzelnen Bausteine —
+  Renderer, Engine, Telnet — sind bereits unabhängig getestet).
+
 - **Liquidsoap Phase-C6 (Teil 2) — ICY-Metadata via
   PlayoutEngine-Vertrag + 8 neue Tests** (Seamless-Bus-Mix
   Phase 2).  Erweitert den `PlayoutEngine`-ABC um einen

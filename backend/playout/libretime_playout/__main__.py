@@ -28,6 +28,17 @@ Environment variables (all optional — defaults match the standard install):
                                  C:\\Program Files\\mpv)
   RASTATIME_MPV_LOG_LEVEL      : mpv log verbosity (default "warn")
   RASTATIME_VLC_PLUGIN_PATH    : VLC plugins directory (only if engine=vlc)
+  RASTATIME_LIQUIDSOAP_HOST    : Liquidsoap telnet host (default 127.0.0.1)
+  RASTATIME_LIQUIDSOAP_PORT    : Liquidsoap telnet port (default 1234)
+  RASTATIME_LIQUIDSOAP_CONFIG_PATH
+                               : where to render rastatime.liq
+                                 (default C:/Tools/liquidsoap/rastatime.liq)
+  RASTATIME_LIQUIDSOAP_LOG_PATH
+                               : where Liquidsoap writes its log
+                                 (default C:/rastatime/logs/liquidsoap.log)
+  RASTATIME_LIQUIDSOAP_CROSSFADE_SECONDS
+                               : crossfade duration in the .liq bus
+                                 (default 2.0; 0 disables)
 
 Invoked as:  python -m libretime_playout
 """
@@ -194,6 +205,106 @@ def _load_config():
         sys.exit(1)
 
 
+# ---------------------------------------------------------------------------
+# Liquidsoap engine — render rastatime.liq at startup (Phase C7)
+# ---------------------------------------------------------------------------
+
+_LIQUIDSOAP_DEFAULT_CONFIG_PATH = "C:/Tools/liquidsoap/rastatime.liq"
+_LIQUIDSOAP_DEFAULT_LOG_PATH = "C:/rastatime/logs/liquidsoap.log"
+_LIQUIDSOAP_DEFAULT_CROSSFADE = 2.0
+
+
+def _render_rastatime_liq_at_startup(stream_outputs: List[Dict]) -> None:
+    """
+    Render ``rastatime.liq`` from the operator-configured environment +
+    ``cc_pref`` stream outputs.  Idempotent: writes only when content
+    actually changed.  Logs a clear hint if the operator should restart
+    the RASTATIME-LIQUIDSOAP NSSM service to apply the new config.
+
+    Never raises out of this function — a render failure should be loud
+    (logger.critical + sys.exit(1)) because the engine that follows
+    won't have a Liquidsoap to talk to if the script is unbuildable.
+    """
+    from libretime_playout.liquidsoap_config import (  # noqa: PLC0415
+        write_rastatime_liq,
+    )
+
+    config_path = Path(
+        os.environ.get(
+            "RASTATIME_LIQUIDSOAP_CONFIG_PATH",
+            _LIQUIDSOAP_DEFAULT_CONFIG_PATH,
+        )
+    )
+    log_path = os.environ.get(
+        "RASTATIME_LIQUIDSOAP_LOG_PATH",
+        _LIQUIDSOAP_DEFAULT_LOG_PATH,
+    )
+    telnet_host = os.environ.get("RASTATIME_LIQUIDSOAP_HOST", "127.0.0.1")
+    try:
+        telnet_port = int(os.environ.get("RASTATIME_LIQUIDSOAP_PORT", "1234"))
+    except ValueError as exc:
+        logger.critical(
+            "RASTATIME_LIQUIDSOAP_PORT must be an integer: %s", exc
+        )
+        sys.exit(1)
+    try:
+        crossfade = float(
+            os.environ.get(
+                "RASTATIME_LIQUIDSOAP_CROSSFADE_SECONDS",
+                str(_LIQUIDSOAP_DEFAULT_CROSSFADE),
+            )
+        )
+    except ValueError as exc:
+        logger.critical(
+            "RASTATIME_LIQUIDSOAP_CROSSFADE_SECONDS must be a float: %s",
+            exc,
+        )
+        sys.exit(1)
+
+    # Parent dir must exist — we don't auto-create it because the
+    # operator's NSSM-install script makes the standard tree, and
+    # rendering into an unexpected location is a config-error worth
+    # surfacing loudly.
+    if not config_path.parent.exists():
+        logger.critical(
+            "Liquidsoap config target directory does not exist: %s\n"
+            "Set RASTATIME_LIQUIDSOAP_CONFIG_PATH to the correct .liq "
+            "path, or create the directory with the install script.",
+            config_path.parent,
+        )
+        sys.exit(1)
+
+    try:
+        changed = write_rastatime_liq(
+            config_path,
+            stream_outputs,
+            telnet_host=telnet_host,
+            telnet_port=telnet_port,
+            log_file=log_path,
+            crossfade_duration=crossfade,
+        )
+    except Exception as exc:  # pylint: disable=broad-exception-caught
+        logger.critical(
+            "Failed to render Liquidsoap config %s: %s",
+            config_path, exc,
+        )
+        sys.exit(1)
+
+    if changed:
+        logger.warning(
+            "Rendered %s (content changed).  RESTART the "
+            "RASTATIME-LIQUIDSOAP NSSM service so it picks up the new "
+            ".liq:   nssm restart RASTATIME-LIQUIDSOAP",
+            config_path,
+        )
+    else:
+        logger.info(
+            "Liquidsoap config %s already up-to-date — no restart "
+            "needed.",
+            config_path,
+        )
+
+
 def _read_internal_listener_credentials() -> tuple:
     """
     Read the RASTATIME-specific ``stream.internal_listener`` credentials
@@ -273,14 +384,16 @@ def main() -> None:
     # etc.).  VLC playback works fine for scheduled files; only the
     # DJ-source monitoring is broken on libVLC 3.x.
     #
-    # RASTATIME 2026-05-25 — Seamless-Bus-Mix Phase B: third option
-    # 'liquidsoap' added as feature-flag for the in-progress mpv →
-    # Liquidsoap migration (see BACKLOG.md → Seamless Bus-Mix Phase 2).
-    # In Phase-B state the LiquidsoapPlayoutEngine is a skeleton:
-    # the engine instantiates but every play()/stop() raises
-    # NotImplementedError, so this option is for development /
-    # integration-test setups only.  Default stays 'mpv' — operator
-    # only switches when Phase C lands.
+    # RASTATIME 2026-05-25/26 — Seamless-Bus-Mix Phase C7: third option
+    # 'liquidsoap' fully wired (C1-C3+C6).  Setting
+    # RASTATIME_PLAYOUT_ENGINE=liquidsoap triggers a one-shot render of
+    # rastatime.liq from the operator's cc_pref settings, then connects
+    # the LiquidsoapPlayoutEngine to a long-running Liquidsoap NSSM
+    # service over telnet (default 127.0.0.1:1234).  Default stays
+    # 'mpv'; switching is a deliberate operator action.  C4 (DJ-sources
+    # via input.harbor) and C5 (recording via output.file) are not yet
+    # active in the rendered .liq — both are scheduled for a separate
+    # Phase-C iteration.
     engine_kind = os.environ.get("RASTATIME_PLAYOUT_ENGINE", "mpv").lower()
     try:
         if engine_kind == "vlc":
@@ -293,13 +406,23 @@ def main() -> None:
             logger.info("Local-playback engine: mpv (libmpv)")
         elif engine_kind == "liquidsoap":
             from libretime_playout.engine.liquidsoap_engine import LiquidsoapPlayoutEngine  # noqa: PLC0415
+
+            # RASTATIME 2026-05-26 — Phase C7.  Render the production
+            # rastatime.liq from the cc_pref stream-output rows + the
+            # operator-configured paths.  Idempotent (rewrites only
+            # when content actually changed); operator must restart
+            # the RASTATIME-LIQUIDSOAP NSSM service to pick up changes
+            # — we deliberately do NOT bounce the service ourselves
+            # because doing so silently would mask configuration bugs
+            # (the operator wants the dry-run-then-confirm cycle on
+            # production-credential changes).
+            _render_rastatime_liq_at_startup(stream_outputs)
+
             engine = LiquidsoapPlayoutEngine()
-            logger.warning(
-                "Local-playback engine: Liquidsoap (SKELETON — Phase B). "
-                "play()/stop() are not implemented yet, all scheduled audio "
-                "will fail with NotImplementedError until Phase C ships.  "
-                "Only set RASTATIME_PLAYOUT_ENGINE=liquidsoap in dev / "
-                "integration setups."
+            logger.info(
+                "Local-playback engine: Liquidsoap (Phase-C2+C3+C6 fully wired). "
+                "Telnet target %s:%d.",
+                engine._telnet._host, engine._telnet._port,
             )
         else:
             logger.critical(
