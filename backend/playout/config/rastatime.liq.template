@@ -19,6 +19,10 @@
 #   {TELNET_HOST}                   default 127.0.0.1
 #   {TELNET_PORT}                   default 1234
 #   {LOG_FILE}                      default C:/rastatime/logs/liquidsoap.log
+#   {CROSSFADE_DURATION}            default 2.0 (seconds) — used in
+#                                   crossfade(duration=..., bus).
+#                                   Operator can set this from
+#                                   cc_pref.default_crossfade_seconds.
 #   {ICECAST_OUTPUTS}               rendered output.icecast(...) blocks,
 #                                   one per stream_output_N entry in
 #                                   cc_pref that is enabled=true.
@@ -94,11 +98,26 @@ scheduled   = fallback(
 # For Phase C3 the broadcast bus is just the scheduled queue:
 bus = scheduled
 
-# Phase C6 will wrap `bus` with:
-#   bus = crossfade(duration=2., bus)
-#   bus = amplify(override="replaygain_track_gain", 1., bus)
-# For C3 the bus passes through unmodified — no crossfades, no
-# replay-gain compensation yet.
+# ---------------------------------------------------------------------
+# Phase-C6 — Crossfade + ReplayGain on the bus
+# ---------------------------------------------------------------------
+
+# Crossfade between consecutive request.queue items.  Track-sensitive
+# inside the operator so a partial track never gets clipped by an
+# incoming next-track event mid-frame.  Duration in seconds is
+# substituted from cc_pref.default_crossfade_seconds (operator-set,
+# defaults to 2.0 s if unset).  Set duration=0. to disable
+# crossfades entirely.
+bus = crossfade(duration=${CROSSFADE_DURATION}, bus)
+
+# Replay-gain via amplify(override=...) — Liquidsoap multiplies the
+# bus by the "replaygain_track_gain" metadata field when present.
+# The LiquidsoapPlayoutEngine sets this field in the annotate:
+# envelope (from cc_files.replay_gain + cc_pref.replay_gain_modifier
+# for files, or cc_webstream.input_gain_db for webstreams).  Tracks
+# without the metadata field play at unity gain — same passthrough
+# behaviour mpv has when gain_db is None.
+bus = amplify(override="replaygain_track_gain", 1., bus)
 
 # ---------------------------------------------------------------------
 # Outputs — where the audio goes

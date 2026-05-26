@@ -71,6 +71,11 @@ _DEFAULT_TEMPLATE_PATH = (
 DEFAULT_TELNET_HOST = "127.0.0.1"
 DEFAULT_TELNET_PORT = 1234
 DEFAULT_LOG_FILE = "C:/rastatime/logs/liquidsoap.log"
+# Default crossfade duration in seconds — matches the historical
+# cc_pref.default_crossfade_seconds operator default.  Operator can
+# override via the CLI / Pypo render-step, or set to 0. to disable
+# crossfades entirely.
+DEFAULT_CROSSFADE_DURATION = 2.0
 
 
 # ---------------------------------------------------------------------
@@ -184,12 +189,44 @@ def _render_icecast_outputs(stream_outputs: List[Dict]) -> str:
 # ---------------------------------------------------------------------
 
 
+def _format_crossfade_duration(value: float) -> str:
+    """
+    Format a crossfade-duration float for Liquidsoap.  Liquidsoap
+    requires a trailing dot for floats — ``2`` is invalid, ``2.`` is
+    fine.  We always include at least one fractional digit so the
+    rendered file is unambiguously a float literal.
+
+    Examples::
+
+        >>> _format_crossfade_duration(0)
+        '0.0'
+        >>> _format_crossfade_duration(2.0)
+        '2.0'
+        >>> _format_crossfade_duration(2.5)
+        '2.5'
+        >>> _format_crossfade_duration(2.123456)
+        '2.12'
+    """
+    rounded = round(float(value), 2)
+    # Drop trailing zeros past one decimal but keep at least .0 so the
+    # output is always recognisably a float literal.
+    text = f"{rounded:.2f}"
+    if text.endswith("0") and not text.endswith(".00"):
+        text = text.rstrip("0")
+    if text.endswith("."):
+        text = text + "0"
+    if text.endswith(".00"):
+        text = text[:-2] + "0"
+    return text
+
+
 def render_rastatime_liq(
     stream_outputs: List[Dict],
     *,
     telnet_host: str = DEFAULT_TELNET_HOST,
     telnet_port: int = DEFAULT_TELNET_PORT,
     log_file: str = DEFAULT_LOG_FILE,
+    crossfade_duration: float = DEFAULT_CROSSFADE_DURATION,
     template_path: Optional[Path] = None,
 ) -> str:
     """
@@ -216,6 +253,11 @@ def render_rastatime_liq(
     log_file : str
         Path Liquidsoap writes its per-line log to.  Forward slashes
         even on Windows (Liquidsoap's path parser is happier with them).
+    crossfade_duration : float
+        Seconds of crossfade between consecutive request.queue items.
+        Default 2.0 matches the historical operator preference.  Set
+        to 0. to disable crossfades.  Phase-C7 will read this from
+        cc_pref.default_crossfade_seconds at Pypo start.
     template_path : Path, optional
         Override the bundled template (mostly for tests).
     """
@@ -229,6 +271,10 @@ def render_rastatime_liq(
         .replace("${TELNET_HOST}", _escape_liq_string(telnet_host))
         .replace("${TELNET_PORT}", str(int(telnet_port)))
         .replace("${LOG_FILE}", _escape_liq_string(log_file))
+        .replace(
+            "${CROSSFADE_DURATION}",
+            _format_crossfade_duration(crossfade_duration),
+        )
         .replace("${ICECAST_OUTPUTS}", icecast_blocks)
     )
     return rendered
@@ -241,6 +287,7 @@ def write_rastatime_liq(
     telnet_host: str = DEFAULT_TELNET_HOST,
     telnet_port: int = DEFAULT_TELNET_PORT,
     log_file: str = DEFAULT_LOG_FILE,
+    crossfade_duration: float = DEFAULT_CROSSFADE_DURATION,
     template_path: Optional[Path] = None,
 ) -> bool:
     """
@@ -263,6 +310,7 @@ def write_rastatime_liq(
         telnet_host=telnet_host,
         telnet_port=telnet_port,
         log_file=log_file,
+        crossfade_duration=crossfade_duration,
         template_path=template_path,
     )
 
@@ -380,6 +428,14 @@ def main(argv: Optional[List[str]] = None) -> int:
         "--log-file", default=DEFAULT_LOG_FILE,
         help=f"Liquidsoap log-file path (default {DEFAULT_LOG_FILE}).",
     )
+    render.add_argument(
+        "--crossfade-duration", type=float,
+        default=DEFAULT_CROSSFADE_DURATION,
+        help=(
+            f"Crossfade duration in seconds between request.queue items "
+            f"(default {DEFAULT_CROSSFADE_DURATION}, 0 disables)."
+        ),
+    )
 
     args = parser.parse_args(argv)
 
@@ -404,6 +460,7 @@ def main(argv: Optional[List[str]] = None) -> int:
             telnet_host=args.telnet_host,
             telnet_port=args.telnet_port,
             log_file=args.log_file,
+            crossfade_duration=args.crossfade_duration,
         )
         if changed:
             logger.info(

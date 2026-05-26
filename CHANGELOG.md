@@ -9,6 +9,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Liquidsoap Phase-C6 (Teil 1) — Crossfade + ReplayGain
+  im `.liq`-Bus + 12 neue Tests** (Operator-Entscheidung
+  2026-05-26 "C6 vor C4 vorziehen", Seamless-Bus-Mix Phase 2).
+  Erweitert den `rastatime.liq`-Bus um die zwei Liquidsoap-
+  Operatoren die die echten "live-radio"-Eigenschaften
+  einbringen — sauber zwischen Tracks rüberfaden und
+  Lautheits-Sprünge ausgleichen.
+
+  Template-Changes (`config/rastatime.liq.template`):
+    - Neuer Platzhalter `${CROSSFADE_DURATION}` (default 2.0 s)
+    - `bus = crossfade(duration=..., bus)` zwischen
+      consecutive `request.queue` items.  `duration=0.` setzt
+      Crossfades effektiv ab.
+    - `bus = amplify(override="replaygain_track_gain", 1., bus)`
+      multipliziert den Bus mit dem ReplayGain wenn die
+      `annotate:replaygain_track_gain="X dB"` Metadata vorhanden
+      ist (die C2-Engine setzt das aus `cc_files.replay_gain` +
+      `cc_pref.replay_gain_modifier`).
+
+  Renderer-Changes (`liquidsoap_config.py`):
+    - Neuer kwarg `crossfade_duration: float = 2.0` für
+      `render_rastatime_liq()` + `write_rastatime_liq()`
+    - CLI: neues `--crossfade-duration` Flag
+    - Neuer Helper `_format_crossfade_duration()` — rendert
+      Liquidsoap-konforme Float-Syntax (`2.0`, `1.25`, `0.0`,
+      Rundung auf 2 Nachkommastellen)
+    - Defaults-Konstante `DEFAULT_CROSSFADE_DURATION = 2.0`
+      matched die historische `cc_pref.default_crossfade_seconds`
+      Vorgabe.
+
+  12 neue Tests:
+    - `_format_crossfade_duration` mit 8 parametrisierten
+      Input-Cases (Int, Float, fractional, Rundung)
+    - Custom-Duration im gerenderten Template
+    - Default-Wert `2.0` im gerenderten Template
+    - Crossfade explizit auf 0 → `duration=0.0` (no-op)
+    - Crossfade fraktional (1.25 s)
+    - Defaults-Render-Test prüft zusätzlich `crossfade(`
+      und `amplify(...)` Vorkommen
+
+  Test-Suite nun **93 Tests**, alle grün in ~2.5 s.
+
+  Production-Path unverändert.  ICY-Metadata-Push (Teil 2 von
+  C6) — der PlayoutEngine-Vertrag muss um optionalen
+  `metadata`-Parameter erweitert werden (alle drei Engines
+  + Scheduler-Aufrufstellen) — folgt als separater Commit.
+
 - **Liquidsoap Phase-C3 — Produktions-`.liq` Template +
   Python-Renderer + 25 Unit-Tests** (operator go 2026-05-26,
   Seamless-Bus-Mix Phase 2 Variante A).  Operator decisions:

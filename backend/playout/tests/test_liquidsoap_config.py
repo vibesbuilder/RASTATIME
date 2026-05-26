@@ -160,6 +160,7 @@ def test_full_render_defaults():
     assert "${TELNET_PORT}" not in out
     assert "${LOG_FILE}" not in out
     assert "${ICECAST_OUTPUTS}" not in out
+    assert "${CROSSFADE_DURATION}" not in out
     # Defaults applied
     assert '"127.0.0.1"' in out
     assert "telnet.port.set(1234)" in out
@@ -171,6 +172,9 @@ def test_full_render_defaults():
     # Silence fallback — critical for Icecast PUT persistence
     assert "fallback(" in out
     assert "blank(" in out
+    # Phase-C6: crossfade + amplify on the bus
+    assert "crossfade(duration=2.0, bus)" in out
+    assert 'amplify(override="replaygain_track_gain", 1., bus)' in out
 
 
 def test_full_render_custom_telnet_and_log():
@@ -183,6 +187,44 @@ def test_full_render_custom_telnet_and_log():
     assert '"192.168.1.50"' in out
     assert "telnet.port.set(4242)" in out
     assert '"D:/logs/ls.log"' in out
+
+
+def test_full_render_custom_crossfade_duration():
+    """Custom crossfade duration appears in crossfade() call."""
+    out = lc.render_rastatime_liq([_stream()], crossfade_duration=5.0)
+    assert "crossfade(duration=5.0, bus)" in out
+
+
+def test_full_render_crossfade_disabled():
+    """crossfade_duration=0 produces duration=0.0 (disables crossfade)."""
+    out = lc.render_rastatime_liq([_stream()], crossfade_duration=0.0)
+    # duration=0.0 means Liquidsoap performs no crossfade, but the
+    # crossfade() operator still wraps the source — that's fine, it
+    # becomes effectively a no-op pass-through.
+    assert "crossfade(duration=0.0, bus)" in out
+
+
+def test_full_render_crossfade_fractional():
+    """Sub-second crossfade renders without losing precision."""
+    out = lc.render_rastatime_liq([_stream()], crossfade_duration=1.25)
+    assert "crossfade(duration=1.25, bus)" in out
+
+
+# ---- _format_crossfade_duration -----------------------------------------
+
+
+@pytest.mark.parametrize("value,expected", [
+    (0,    "0.0"),
+    (0.0,  "0.0"),
+    (1,    "1.0"),
+    (2.0,  "2.0"),
+    (2.5,  "2.5"),
+    (2.50, "2.5"),
+    (1.25, "1.25"),
+    (2.123456, "2.12"),  # rounds to 2 decimals
+])
+def test_format_crossfade_duration(value, expected):
+    assert lc._format_crossfade_duration(value) == expected
 
 
 def test_full_render_no_streams_keeps_telnet_intact():
@@ -282,6 +324,7 @@ def test_template_has_all_expected_placeholders():
         "${TELNET_HOST}",
         "${TELNET_PORT}",
         "${LOG_FILE}",
+        "${CROSSFADE_DURATION}",
         "${ICECAST_OUTPUTS}",
     ):
         assert placeholder in text, (
