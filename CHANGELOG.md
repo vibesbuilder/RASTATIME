@@ -7,6 +7,85 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Liquidsoap Phase-C8 Reality-Test — 10 Bugfixes durch live
+  Operator-Validierung gegen Liquidsoap 2.4.4 Windows-Build**
+  (operator session 2026-05-26 Vormittag, Commits `9c8f891` …
+  `f346e37`).  Der erste echte Stack-Run hat eine Reihe von
+  Inkompatibilitäten zwischen meinem theoretischen Modell und
+  dem konkreten savonet-Windows-Build aufgedeckt.  Alle gefixt;
+  scheduled-tracks-Pfad ist jetzt **vollständig produktiv-testbar**
+  (Audio im Browser + an der lokalen Soundkarte, Crossfades,
+  ReplayGain, ICY-Metadata, Catch-Up-stabil).
+
+  Konkrete Fixes:
+    - `9c8f891` — Operator-Doku: Pypo muss aus `C:\rastatime\.venv\Scripts\python.exe`
+      gestartet werden, nicht System-Python (sonst `No module named
+      libretime_playout`).
+    - `56cabf4` — `opus` als 4. Stream-Type im Renderer (das LibreTime
+      cc_pref.stream_output_N akzeptiert seit jeher mp3/aac/ogg/opus,
+      ich hatte opus übersehen).
+    - `22690d9` → `e541558` — Liquidsoap 2.4 hat `output.icecast`'s
+      `restart_delay=5.` kwarg entfernt, neue Form heißt `on_error:
+      (string) -> float` Callback.  Erst auf `on_error=fun(_) -> 5.`
+      umgestellt, dann gemerkt dass die 2.4-Signatur eigentlich ein
+      Record-Typ `(restart_in : _, ...) -> _` ist und der einfache
+      `fun(_)` nicht passt — komplett weggelassen, Liquidsoap-Default-
+      Reconnect übernimmt.
+    - `52b3b38` — Encoder-Block braucht `samplerate=…` weil Liquidsoap-
+      internal frame samplerate 44100 Hz ist aber libopus nur 8/12/16/
+      24/48 kHz akzeptiert.  Renderer liest jetzt `samplerate` aus
+      cc_pref.stream_output_N (gleicher Pfad wie FfmpegStreamer) und
+      clampt für opus invalide Werte auf 48000.
+    - `c2d7155` — Liquidsoap 2.4 exposed `request.queue(id="X")` als
+      Server-Commands `X.push` / `X.skip` / `X.queue` / `X.flush_and_skip`,
+      NICHT als die legacy `request.queue.push` aus älteren Builds.
+      LiquidsoapTelnetClient bekommt einen `queue_id`-Parameter
+      (default `"scheduled"` matched die rastatime.liq).  Plus:
+      `play()` prüft jetzt ob Liquidsoap-Reply mit `ERROR:` startet
+      und flippt state auf ERROR statt silently auf PLAYING zu
+      bleiben (das war der bisher schlimmste silent-failure-Modus).
+    - `e82a0b4` — Doppelfix für zwei Show-Stopper:
+      * Windows-Pfade brauchen `file://C:/…` (2 slashes), nicht
+        `file:///C:/…` (3 slashes wie RFC 8089) — Liquidsoap 2.4
+        strippt `file://` und behält `/C:/…` über das es als
+        "Unknown protocol URI" abweist.
+      * `fallback(track_sensitive=true, [scheduled, blank()])` hängt
+        sich auf weil `blank()` nie ein Track-End-Event emittiert —
+        die fallback wartet ewig auf einen Track-Boundary der nie
+        kommt.  Umgestellt auf `track_sensitive=false` damit der
+        scheduled-source sofort übernimmt sobald Requests da sind.
+    - `1d131a6` — Pypo's PlayoutScheduler bekommt einen
+      `streaming_handled_externally: bool` flag.  Bei
+      `engine_kind=liquidsoap` werden die FfmpegStreamer-Subprocesses
+      gar nicht erst gespawnt — Liquidsoap hält ja schon die Icecast-
+      Mounts, parallele FFmpeg-Spawns würden mit 403 "mount taken"
+      scheitern.
+    - `5c82b47` — Deferred-Stop in LiquidsoapEngine: `stop()` sendet
+      nicht mehr sofort `scheduled.skip`, sondern markiert nur die
+      Intention + armt einen 500ms-Timer.  `play()` innerhalb des
+      Fensters mit gleichem URI cancelt beide Calls (Pypo's catch-up-
+      pattern feuert stop+play+stop+play für den gleichen Track 2-3×
+      hintereinander wenn die Schedule-API ein Event re-identifiziert).
+      Plus: lokales Audio via `output.wasapi` ins `.liq` (zunächst).
+    - `f346e37` — `output.wasapi` ist nicht im savonet Liquidsoap-
+      2.4.4-Windows-Build (`--list-functions` zeigt nur `output.ao` /
+      `output.portaudio` / `output.audio_video` / `output.external`).
+      Auf `output.portaudio` umgestellt — PortAudio nutzt auf Windows
+      unter der Haube WASAPI/DirectSound.  Liquidsoap-Clock wechselt
+      automatisch in `self-sync mode` (PortAudio wird Clock-Master)
+      was Drift zwischen Icecast und Soundkarte verhindert.
+
+  **Operator-bestätigt 2026-05-26 13:30 Uhr:** scheduled Tracks der
+  Test-Show um 13:30 sind lokal via Soundkarte UND im Webstream
+  hörbar.  Crossfades sauber, ReplayGain-Ausgleich wirkt, ICY-Title
+  propagiert zu allen 3 Icecast-Mounts.
+
+  Test-Suite: **113 Tests grün in ~3.3 s** (5 neue durch die C8-Fixes:
+  3 deferred-stop + 2 local-output).  Production-Path unverändert —
+  `RASTATIME_PLAYOUT_ENGINE` defaultet weiter auf `mpv`.
+
 ### Added
 
 - **Liquidsoap Phase-C7 + C8 — Pypo Auto-Render bei Start +

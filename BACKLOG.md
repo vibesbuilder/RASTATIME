@@ -422,6 +422,49 @@ Sortierung der bereits-gespielten + nächsten Tracks freezable.
 
 ## 🐞 Known Issues / Bug Backlog
 
+### 🟡 PowerShell `NativeCommandError`-Noise beim Pypo-Start (kosmetisch)
+
+**Status:** Defer — kosmetisch, nicht funktional.
+**Festgestellt:** 2026-05-26 (Phase-C8 Reality-Test).
+
+**Symptom:**
+Wenn Pypo manuell aus PowerShell mit `2>&1 | Tee-Object …` gestartet
+wird, kommt für die `INFO Soundcard manager registered ...` Zeile ein
+roter PowerShell-Stack-Trace:
+```
+C:\rastatime\.venv\Scripts\python.exe : INFO Soundcard manager registered ...
+    + CategoryInfo          : NotSpecified: (...) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+```
+
+**Root cause:**
+`libretime_api.soundcard.apps.SoundcardAppConfig.ready()` schreibt direkt
+auf **stderr** (per `print(..., file=sys.stderr)` oder ähnlichem
+Django-internen Mechanismus), **bevor** das Python-Logging-Framework
+voll aufgesetzt ist. PowerShell klassifiziert externes Stderr-Output
+mit `2>&1`-Merge automatisch als `NativeCommandError`, auch wenn der
+Inhalt nur ein INFO ist. Die gleiche Information wird kurz danach
+auch sauber vom Python-Logger ausgegeben (mit Timestamp + Logger-Name) —
+**keine doppelte Funktionalität, nur doppelter Log-Eintrag.**
+
+**Workaround:**
+Operator kann statt `2>&1 | Tee-Object` einfach `*> file` benutzen,
+dann landet alles sauber in der Datei + im Terminal:
+```powershell
+C:\rastatime\.venv\Scripts\python.exe -m libretime_playout *> C:\rastatime\logs\pypo.log
+```
+
+**Echter Fix (für später):**
+In `backend/api/libretime_api/soundcard/apps.py` (oder wo das `print`
+herkommt) den stderr-print auf `logger.info(...)` umstellen. Müsste
+die Audit-Aktion sein dass alle App-Init-Logs durch Python-Logging
+laufen. ~30 min.
+
+**RASTATIME-Bezug:** kein funktionaler Impact, betrifft nur das
+Terminal-Erlebnis beim manuellen Pypo-Start für Diagnose-Zwecke.
+
+---
+
 ### 🔴 Host-Hardware-Instabilität (STUDIO-Maschine, nicht RASTATIME-Code)
 
 **Status:** Hold — blockiert Live-Betrieb, externe Hardware-Aktion nötig.
@@ -445,19 +488,53 @@ nicht ein einzelner Treiber-Bug.
 auslösen. Korrelation entsteht durch 24/7-Workload, der latente Hardware-Defekte
 schneller manifestiert.
 
-**Nächste Schritte (außerhalb RASTATIME-Codebasis):**
-- SSD-SMART-Check (CrystalDiskInfo / `smartctl -a`) — wichtigste & schnellste Maßnahme
-- Memtest86+ über Nacht (USB-Boot, 6–12 h)
-- HWiNFO64 während RASTATIME-Workload (Temps, Throttling)
-- BIOS-Update prüfen
-- Bitdefender-Version auf neueste prüfen (war Process beim 25.05.-Crash)
-- Mittelfristig: Consumer-SSD durch Enterprise-Modell ersetzen (WD Red, Samsung PM, Kioxia CD)
+**Bereits durchgeführte Mitigationen (Stand 2026-05-26):**
+- ✅ SSD-SMART via `Get-StorageReliabilityCounter` + WMI ATAPISmartData
+  ausgewertet: keine harten Defekt-Indikatoren (Reallocated=0, Uncorrectable=0,
+  CRC=0), aber SSD-Temp 63 °C bei Idle + 977 ms Read-Latency-Peak verdächtig
+- ✅ WD Dashboard installiert; Firmware `530500WD` ist laut WD für 2TB-Modell aktuell
+  (kein Critical Update verfügbar; das `52046100`-Update betrifft nur 250G/500G/1T-Varianten)
+- ✅ Bitdefender aktualisiert + Exclusions gesetzt:
+  - Paths: `C:\RASTATIME`, `C:\Tools`, `C:\Program Files\PostgreSQL\17\data`
+  - Processes: Python (venv), PHP-CGI, Apache httpd, Icecast, mpv, Liquidsoap,
+    NSSM, PostgreSQL
+- ✅ Killer Performance Suite UWD (Rivet Networks) deinstalliert; Treiber bleibt
+  (ist eh Intel-Unified-Driver für die I225/I226-Hardware mit Killer-Branding)
+- ✅ Windows DISM `/RestoreHealth` erfolgreich (Component Store integer);
+  Media Feature Pack auf Pro-N installiert (Reboot ausstehend, separates Thema)
+- ✅ Übernacht-Monitoring 12.5 h (1150 Samples) mit eigenem PS-Skript:
+  - SSD-Temp **runter auf min 42 / avg 45 / max 54 °C** (vorher 63 °C)
+  - Disk Busy avg 0.1 %, CPU avg 5 %
+  - Bitdefender nur in 1 % der Samples Top-RAM (vorher 42 %)
+  - **0 BSODs** in 12.5 h (Crash-Frequenz vorher: alle ~2 Tage → statistisch
+    aber zu kurz für harte Aussage; mindestens 1 Woche stabil = signifikant)
+  - ⚠️ Caveat: Read/Write-Latenz-Counter `AvgDiskSec*` ist uint32-in-Sekunden,
+    rundet alles <1 s auf 0; sub-second Spikes nicht erfasst. Für nächsten Test
+    muss `Win32_PerfRawData_*` mit manueller Frequency-Berechnung verwendet werden.
+
+**Noch offen:**
+- ❌ Memtest86+ über Nacht — bleibt die wichtigste unabhängige Hardware-Verifikation
+- ❌ BIOS-Update prüfen
+- ❌ Sub-second Latenz-Messung mit korrektem Counter (sensor-monitor v3)
+- ❌ Mittelfristig: Consumer-SSD durch Enterprise-Modell ersetzen (WD Red, Samsung PM, Kioxia CD)
+
+**Trigger für Re-Eskalation:**
+- BSOD in den nächsten 7 Tagen → Mitigationen waren nicht ausreichend, Hardware-Test priorisieren
+- 7+ Tage BSOD-frei → Bitdefender-AV-Interaktion war wahrscheinlich Haupt-Trigger;
+  Mitigationen ausreichend, Memtest weiterhin als routine-Check empfohlen
 
 **Minidumps + cdb-Setup für künftige Analyse:** vorhanden in `C:\Temp\dumps\`,
 Symbole gecached in `C:\Temp\symbols\`, WinDbg installiert. Pro Crash:
 ```
 cdbX64.exe -z <dump> -y "srv*C:\Temp\symbols*https://msdl.microsoft.com/download/symbols" -c "!analyze -v;q"
 ```
+
+**Monitoring-Artefakte aus 2026-05-25/26 Session** (für späteres Re-Analysieren):
+- `C:\Temp\dump_analyze.py` — Minidump-Bugcheck + Driver-Liste-Parser
+- `C:\Temp\analyze-overnight.py` — CSV-Stats für sensor-log-v2
+- `C:\Temp\sensor-monitor-v2.ps1` — Übernacht-Sensor-Logger (mit oben genanntem Bug)
+- `C:\Temp\sensor-log-v2.csv` — 12.5 h Übernacht-Daten 25.→26.05.
+- `C:\Temp\ssd-smart.ps1` / `.txt` — SMART-Snapshot vom 25.05.
 
 ---
 
@@ -469,7 +546,7 @@ cdbX64.exe -z <dump> -y "srv*C:\Temp\symbols*https://msdl.microsoft.com/download
 | Deferred Items | 1 (JS-Modernisierung) |
 | Hold Items | 1 (Payware) |
 | Future Ideas | 13 |
-| Known Bugs | 0 (RASTATIME-Code) + 1 Host-Hardware-Issue (Stand 2026-05-25) |
+| Known Bugs | 0 (RASTATIME-Code) + 1 Host-Hardware-Issue (Stand 2026-05-26, Mitigationen in Verifikation) |
 
 ---
 
