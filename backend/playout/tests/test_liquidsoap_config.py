@@ -28,15 +28,18 @@ from libretime_playout import liquidsoap_config as lc
 
 def _stream(
     type_="mp3", host="localhost", port=8000, mount="rastatime",
-    password="hackme", user="source", bitrate=128,
+    password="hackme", user="source", bitrate=128, samplerate=None,
     name="RASTATIME", description="Live stream",
 ):
     """Build a stream_output_N-shaped dict for tests."""
-    return {
+    out = {
         "type": type_, "host": host, "port": port, "mount": mount,
         "pass": password, "user": user, "bitrate": bitrate,
         "name": name, "description": description,
     }
+    if samplerate is not None:
+        out["samplerate"] = samplerate
+    return out
 
 
 # ---- _escape_liq_string -------------------------------------------------
@@ -69,6 +72,8 @@ def test_render_mp3_block_basic_shape():
     # Encoder
     assert 'codec="libmp3lame"' in out
     assert 'b="128k"' in out
+    # Samplerate default 44100 (matches Liquidsoap internal frame rate)
+    assert "samplerate=44100" in out
     # Connection
     assert 'host="localhost"' in out
     assert "port=8000" in out
@@ -102,6 +107,30 @@ def test_render_opus_block_uses_opus_codec_in_ogg():
     out = lc._render_icecast_block(_stream(type_="opus"))
     assert 'codec="libopus"' in out
     assert 'format="ogg"' in out
+    # Opus REJECTS 44100 — default cc_pref sample-rate becomes 48000
+    # via the opus clamp.
+    assert "samplerate=48000" in out
+    assert "samplerate=44100" not in out
+
+
+def test_render_opus_clamps_invalid_samplerate():
+    """Opus with 22050 (FFmpeg-valid, libopus-invalid) → clamp to 48000."""
+    out = lc._render_icecast_block(_stream(type_="opus", samplerate=22050))
+    assert "samplerate=48000" in out
+    assert "samplerate=22050" not in out
+
+
+def test_render_opus_accepts_valid_samplerate():
+    """Opus with 24000 (libopus-valid) → kept."""
+    out = lc._render_icecast_block(_stream(type_="opus", samplerate=24000))
+    assert "samplerate=24000" in out
+
+
+def test_render_mp3_custom_samplerate_kept():
+    """Non-opus codecs: caller-set samplerate is rendered verbatim."""
+    out = lc._render_icecast_block(_stream(type_="mp3", samplerate=48000))
+    assert "samplerate=48000" in out
+    assert "samplerate=44100" not in out
 
 
 def test_render_unknown_type_raises():

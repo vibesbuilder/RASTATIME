@@ -94,11 +94,29 @@ _ENCODER_FOR_TYPE = {
     # cc_pref.stream_output_N "type" values FfmpegStreamer accepts
     # in the legacy mpv/VLC path — see _FFMPEG_CODEC_MAP in
     # ffmpeg_streamer.py for the parallel mapping.
-    "mp3":  '%ffmpeg(format="mp3",  %audio(codec="libmp3lame", b="${BITRATE}k"))',
-    "aac":  '%ffmpeg(format="adts", %audio(codec="aac",        b="${BITRATE}k"))',
-    "ogg":  '%ffmpeg(format="ogg",  %audio(codec="libvorbis",  b="${BITRATE}k"))',
-    "opus": '%ffmpeg(format="ogg",  %audio(codec="libopus",    b="${BITRATE}k"))',
+    #
+    # samplerate=… is mandatory: Liquidsoap's internal frame
+    # samplerate defaults to 44100 Hz, but Opus's libopus encoder
+    # REJECTS anything that isn't 8/12/16/24/48 kHz, and the AAC
+    # encoder is happier at 44.1 / 48 kHz too.  FFmpeg does the
+    # resampling automatically when this encoder samplerate differs
+    # from Liquidsoap's PCM input rate.
+    "mp3":  '%ffmpeg(format="mp3",  %audio(codec="libmp3lame", b="${BITRATE}k", samplerate=${SAMPLERATE}))',
+    "aac":  '%ffmpeg(format="adts", %audio(codec="aac",        b="${BITRATE}k", samplerate=${SAMPLERATE}))',
+    "ogg":  '%ffmpeg(format="ogg",  %audio(codec="libvorbis",  b="${BITRATE}k", samplerate=${SAMPLERATE}))',
+    "opus": '%ffmpeg(format="ogg",  %audio(codec="libopus",    b="${BITRATE}k", samplerate=${SAMPLERATE}))',
 }
+
+# Samplerates accepted by libopus (Hz).  Anything else gets clamped to
+# 48000 with a warning at render time — same policy as FfmpegStreamer's
+# legacy mpv/VLC path uses (see _OPUS_VALID_SAMPLERATES in
+# ffmpeg_streamer.py).
+_OPUS_VALID_SAMPLERATES = {8000, 12000, 16000, 24000, 48000}
+
+# Default samplerate when the cc_pref row doesn't carry one.  44100 Hz
+# matches Liquidsoap's internal frame samplerate so no resampling is
+# needed for mp3/aac/ogg-vorbis.  Opus gets clamped to 48000.
+DEFAULT_SAMPLERATE = 44100
 
 
 # ---------------------------------------------------------------------
@@ -134,8 +152,27 @@ def _render_icecast_block(stream: Dict) -> str:
         )
 
     bitrate = int(stream.get("bitrate", 128))
-    encoder = _ENCODER_FOR_TYPE[stream_type].replace(
-        "${BITRATE}", str(bitrate)
+    try:
+        samplerate = int(stream.get("samplerate") or DEFAULT_SAMPLERATE)
+    except (TypeError, ValueError):
+        samplerate = DEFAULT_SAMPLERATE
+
+    # Opus is picky about samplerates — clamp invalid rates to 48000
+    # with a warning, same policy FfmpegStreamer uses.  Other codecs
+    # accept anything FFmpeg knows about (most modern rates), so we
+    # don't second-guess them.
+    if stream_type == "opus" and samplerate not in _OPUS_VALID_SAMPLERATES:
+        logger.warning(
+            "Stream samplerate %d Hz not supported by libopus; "
+            "clamping to 48000 Hz for mount %r",
+            samplerate, stream.get("mount", "?"),
+        )
+        samplerate = 48000
+
+    encoder = (
+        _ENCODER_FOR_TYPE[stream_type]
+        .replace("${BITRATE}", str(bitrate))
+        .replace("${SAMPLERATE}", str(samplerate))
     )
 
     host = _escape_liq_string(str(stream.get("host", "localhost")))
