@@ -59,24 +59,31 @@ def _make_engine_with_mock(mock_telnet=None):
 
 
 def test_normalise_windows_path_backslash():
-    """Windows back-slash drive path → file:///C:/... with forward slashes."""
+    """Windows back-slash drive path → file://C:/... (2 slashes, Liquidsoap 2.4)."""
     assert LiquidsoapPlayoutEngine._normalise_uri(
         r"C:\rastatime\580.mp3"
-    ) == "file:///C:/rastatime/580.mp3"
+    ) == "file://C:/rastatime/580.mp3"
 
 
 def test_normalise_windows_path_forwardslash():
-    """Windows forward-slash drive path → same file:/// shape."""
+    """Windows forward-slash drive path → same file:// shape."""
     assert LiquidsoapPlayoutEngine._normalise_uri(
         "C:/rastatime/580.mp3"
-    ) == "file:///C:/rastatime/580.mp3"
+    ) == "file://C:/rastatime/580.mp3"
 
 
-def test_normalise_already_file_uri_passes_through():
-    """file:///... URIs are left alone."""
+def test_normalise_3slash_file_uri_rewritten_to_2slash():
+    """Legacy file:///C:/... URI gets rewritten to 2-slash form."""
     assert LiquidsoapPlayoutEngine._normalise_uri(
-        "file:///C:/rastatime/580.mp3"
-    ) == "file:///C:/rastatime/580.mp3"
+        "file://C:/rastatime/580.mp3"
+    ) == "file://C:/rastatime/580.mp3"
+
+
+def test_normalise_2slash_file_uri_passes_through():
+    """Already-correct 2-slash file:// URI is left alone."""
+    assert LiquidsoapPlayoutEngine._normalise_uri(
+        "file://C:/rastatime/580.mp3"
+    ) == "file://C:/rastatime/580.mp3"
 
 
 def test_normalise_http_passes_through():
@@ -87,10 +94,10 @@ def test_normalise_http_passes_through():
 
 
 def test_normalise_lowercase_drive_letter():
-    """Lower-case drive letter still gets the file:/// wrapping."""
+    """Lower-case drive letter still gets the file:// wrapping."""
     assert LiquidsoapPlayoutEngine._normalise_uri(
         r"d:\music\track.mp3"
-    ) == "file:///d:/music/track.mp3"
+    ) == "file://d:/music/track.mp3"
 
 
 # ---- Annotate URI building ----------------------------------------------
@@ -163,7 +170,7 @@ def test_annotate_with_windows_path():
     )
     assert out == (
         'annotate:replaygain_track_gain="-2.00 dB":'
-        'file:///C:/rastatime/580.mp3'
+        'file://C:/rastatime/580.mp3'
     )
 
 
@@ -242,7 +249,7 @@ def test_play_passes_metadata_to_telnet():
     expected = (
         'annotate:replaygain_track_gain="-3.00 dB",'
         'title="Song",artist="Band":'
-        'file:///C:/rastatime/foo.mp3'
+        'file://C:/rastatime/foo.mp3'
     )
     telnet.request_queue_push.assert_called_once_with(expected)
 
@@ -265,7 +272,7 @@ def test_play_pushes_to_request_queue():
     expected_uri = (
         'annotate:cue_in="0.50",cue_out="120.00",'
         'replaygain_track_gain="-3.00 dB":'
-        'file:///C:/rastatime/foo.mp3'
+        'file://C:/rastatime/foo.mp3'
     )
     telnet.request_queue_push.assert_called_once_with(expected_uri)
 

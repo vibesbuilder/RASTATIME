@@ -402,31 +402,45 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
     def _normalise_uri(uri: str) -> str:
         """
         Convert a Windows local-file path into Liquidsoap-friendly
-        ``file:///`` URI form.  HTTP URIs and already-prefixed
-        ``file://`` URIs pass through unchanged.
+        ``file://`` URI form.  HTTP URIs pass through unchanged.
 
-        Liquidsoap's request-protocol parser wants forward slashes
-        even on Windows, and it expects exactly the
-        ``file:///<drive>:/<path>`` shape — the three-slash variant
-        is what RFC 8089 / Mozilla document for Windows file URIs.
-        Two-slash variants work in some tools but Liquidsoap rejects
-        them.
+        Liquidsoap 2.4's ``file:`` protocol handler strips the
+        prefix and treats the rest as the path.  For Windows drive
+        paths that means we need ``file://C:/path`` (2 slashes) —
+        the conventional RFC-8089 ``file:///C:/path`` (3 slashes)
+        leaves ``/C:/path`` after the strip and Liquidsoap rejects
+        that as ``Unknown protocol URI "/C:/..."``.
+
+        (Phase-C8 reality-test 2026-05-26 nailed this down via the
+        manual telnet ``scheduled.push`` probe: only the 2-slash and
+        no-slash variants get accepted.  See LIQUIDSOAP_PHASE_C8.md
+        for the live-test trace.)
+
+        An already-prefixed ``file:///`` URI from somewhere else
+        gets converted to the 2-slash form for the same reason.
 
         Examples::
 
             >>> _normalise_uri("C:\\\\rastatime\\\\580.mp3")
-            'file:///C:/rastatime/580.mp3'
+            'file://C:/rastatime/580.mp3'
             >>> _normalise_uri("C:/rastatime/580.mp3")
-            'file:///C:/rastatime/580.mp3'
+            'file://C:/rastatime/580.mp3'
             >>> _normalise_uri("file:///C:/rastatime/580.mp3")
-            'file:///C:/rastatime/580.mp3'
+            'file://C:/rastatime/580.mp3'
+            >>> _normalise_uri("file://C:/rastatime/580.mp3")
+            'file://C:/rastatime/580.mp3'
             >>> _normalise_uri("http://example.com/stream.mp3")
             'http://example.com/stream.mp3'
         """
         # Bare Windows drive-letter path (back- or forward-slash).
         if _WINDOWS_DRIVE_RE.match(uri):
             forward = uri.replace("\\", "/")
-            return f"file:///{forward}"
+            return f"file://{forward}"
+        # Legacy 3-slash form fed in from somewhere else — rewrite
+        # to 2-slash so the same Liquidsoap path-stripper doesn't
+        # leave a leading "/" on the drive letter.
+        if uri.startswith("file:///") and len(uri) > 8 and _WINDOWS_DRIVE_RE.match(uri[8:]):
+            return "file://" + uri[8:]
         # Already a URI with scheme — pass through.  Liquidsoap
         # accepts file://, http://, https://, ftp://, plus its own
         # internal protocols (annotate:, replaygain:, …).  We don't

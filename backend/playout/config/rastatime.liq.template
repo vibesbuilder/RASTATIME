@@ -78,12 +78,16 @@ settings.log.level.set(3)
 # downstream always have a frame to encode, even when the scheduler
 # has not yet pushed the next track (e.g. silent gap between shows).
 #
-# track_sensitive=true => fallback transitions only at request
-# boundaries, so a half-played track never gets cut mid-frame just
-# because the queue went empty for 100 ms.
+# track_sensitive=false here is CRITICAL: blank() never emits a
+# track-end event, so the OBVIOUS choice (track_sensitive=true)
+# would cause Liquidsoap to wait FOREVER for blank() to "finish"
+# before switching back to scheduled_q once new requests arrive.
+# Sichtbares Symptom: erste push klappt, danach schaltet die
+# fallback nie mehr von silence_fallback weg.  Phase-C8 reality-
+# test 2026-05-26 hat genau das aufgedeckt.
 scheduled_q = request.queue(id="scheduled")
 scheduled   = fallback(
-                track_sensitive=true,
+                track_sensitive=false,
                 [scheduled_q, blank(id="silence_fallback")]
               )
 
