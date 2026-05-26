@@ -9,6 +9,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Liquidsoap Phase-C1 — Telnet-Client volle Implementation
+  + 17 Unit-Tests** (operator go 2026-05-26, Seamless-Bus-Mix
+  Phase 2 Variante A).  Replaces the Phase-B
+  `NotImplementedError` skeleton in
+  `backend/playout/libretime_playout/engine/liquidsoap_telnet.py`
+  with a working thread-safe TCP-telnet client for Liquidsoap's
+  server-line protocol.
+
+  * Lazy-connect on first `send_command`; explicit `connect()`
+    and `close()` for tests / shutdown.
+  * `threading.Lock`-serialised socket I/O so notify-thread,
+    recorder-thread and source-switcher-thread can't interleave
+    bytes on the wire.
+  * `END` sentinel parser accepts both `\nEND\n` (Linux build)
+    and `\nEND\r\n` (Windows build of Liquidsoap), plus the
+    empty-response special case `END\n` / `END\r\n`.
+  * Receive buffer carried across calls so any bytes pipelined
+    past the sentinel survive to the next `recv()`.
+  * One-shot reconnect-and-retry on `OSError` / `ConnectionError`;
+    after second failure the exception propagates so the
+    scheduler can decide.
+  * Convenience wrappers: `request_queue_push(uri)`,
+    `request_queue_skip()`, `metadata_update(dict)` with
+    backslash + double-quote escaping, `var_set(name, value)`,
+    `help()`.
+
+  New test file
+  `backend/playout/tests/engine/test_liquidsoap_telnet.py` —
+  17 tests against an in-process fake TCP server
+  (`_FakeLiquidsoapServer`) covering basic roundtrip, empty +
+  multiline responses, auto-newline append, reconnect on stale
+  socket (both retry-then-fail and retry-then-success via
+  `FlipFlopServer`), connection-refused → `ConnectionError`,
+  all 5 convenience wrappers including metadata-update quote +
+  backslash escaping, idempotent `connect` / `close`, CRLF END
+  sentinel handling (Windows builds), CRLF empty response.
+  All 17 pass in ~2.2 s on Windows Python 3.12.
+
+  No production-path change yet — Engine adapter `play` /
+  `stop` / `close` still raise `NotImplementedError`; that
+  wires up in Phase C2.
+
 - **Liquidsoap Phase-B skeleton — engine adapter + telnet client
   + .liq template** (operator go 2026-05-25, Seamless-Bus-Mix
   Phase 2 Variante A).  Inert until operator switches

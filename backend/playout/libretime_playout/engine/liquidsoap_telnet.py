@@ -1,8 +1,9 @@
 """
-liquidsoap_telnet — thin TCP-telnet client for Liquidsoap's
-built-in server interface.
+liquidsoap_telnet — TCP-telnet client for Liquidsoap's built-in
+server interface.
 
-RASTATIME 2026-05-25 — Seamless-Bus-Mix Phase B (skeleton).
+RASTATIME 2026-05-25 — Seamless-Bus-Mix Phase C1 (full
+implementation, replaces the Phase-B skeleton from commit eccc003).
 
 Liquidsoap 2.x exposes a line-protocol "telnet" server on a
 configurable TCP port (default ``localhost:1234``) when the
@@ -12,19 +13,43 @@ configurable TCP port (default ``localhost:1234``) when the
     settings.server.telnet.bind_addr.set("127.0.0.1")
     settings.server.telnet.port.set(1234)
 
-Commands are sent as newline-terminated lines.  Responses come
-back as newline-terminated lines and end with the literal
-sentinel ``END\\r\\n`` (or just ``END\\n`` depending on build).
+Protocol summary
+----------------
 
-This module provides a small ``LiquidsoapTelnetClient`` that the
+* Each command is one newline-terminated line.
+* Each response is one or more lines, terminated by the literal
+  sentinel ``END\\n`` (or ``END\\r\\n`` on some Windows builds) on
+  its own line.
+* The special command ``quit`` makes the server close the
+  connection immediately, without an ``END`` sentinel.
+* Encoding is UTF-8.
+
+This module provides :class:`LiquidsoapTelnetClient`, which the
 :class:`LiquidsoapPlayoutEngine` uses to push commands like::
 
     request.queue.push file:///cache/580.mp3
     var.set scheduled.gain_db = -5.95
     metadata.update title="TOH Jingle"
 
-PHASE-B STATE: skeleton.  Real connect / read / write logic comes
-in Phase C when the engine is wired into the Pypo scheduler.
+Thread-safety
+-------------
+
+All public methods serialise on a single mutex.  The Pypo
+scheduler is single-threaded for the audio hot-path but several
+helper threads (notify, recorder, source-switcher) may want to
+push commands concurrently — the lock guarantees no two requests
+interleave their bytes on the wire.
+
+Reconnect strategy
+------------------
+
+:meth:`send_command` retries exactly once on a broken-socket
+error (``OSError`` / ``ConnectionError``).  If the second attempt
+also fails the exception propagates to the caller — the
+scheduler can decide whether the failure is fatal or just a
+diagnostic warning.  We do NOT do background auto-reconnect:
+silent reconnects on a polling-driven scheduler can mask real
+problems (e.g. Liquidsoap subprocess died).
 """
 from __future__ import annotations
 
@@ -40,17 +65,10 @@ class LiquidsoapTelnetClient:
     """
     Thread-safe line-protocol client for Liquidsoap's telnet server.
 
-    Default endpoint matches the upstream Liquidsoap example
-    (``localhost:1234``) but is configurable.  Reconnects on the
-    next ``send_command`` after a connection drop — does NOT
-    auto-reconnect in the background, since Pypo's scheduler is
-    polling-driven and a missed command is usually less harmful
-    than a silent reconnect storm.
-
     Usage::
 
         client = LiquidsoapTelnetClient()
-        client.connect()
+        # connect is lazy — first send_command opens the socket
         resp = client.send_command("request.queue.push file:///foo.mp3")
         # resp -> "12345" (the request id, or "" if push failed)
         client.close()
@@ -60,9 +78,14 @@ class LiquidsoapTelnetClient:
     DEFAULT_HOST = "127.0.0.1"
     DEFAULT_PORT = 1234
     DEFAULT_TIMEOUT = 5.0  # seconds, per-command
-    # Liquidsoap's response sentinel — may be "END\r\n" or "END\n"
-    # depending on build; we accept both.
-    END_SENTINEL = b"END"
+
+    # Liquidsoap's response sentinel.  Always on its own line.
+    # We accept both line-endings because Windows-built Liquidsoap
+    # may emit \r\n while Linux builds emit \n.
+    _END_VARIANTS = (b"\nEND\r\n", b"\nEND\n")
+    # Special case: empty response — server sends just "END\n" with
+    # no preceding body.
+    _END_ONLY_VARIANTS = (b"END\r\n", b"END\n")
 
     def __init__(
         self,
@@ -74,11 +97,16 @@ class LiquidsoapTelnetClient:
         self._port = port
         self._timeout = timeout
         self._socket: Optional[socket.socket] = None
-        # One mutex around all socket I/O so two scheduler threads
-        # can't interleave commands on the same TCP stream.
+        # Mutex around all socket I/O so two threads can't interleave
+        # commands on the same TCP stream.
         self._lock = threading.Lock()
+        # Receive buffer carried across calls — recv() may return
+        # bytes from the next response if the server pipelines.
+        # (Defensive — Liquidsoap normally responds one-at-a-time,
+        # but we don't want to assume.)
+        self._recv_buf: bytes = b""
 
-    # ---- Connection lifecycle ---------------------------------------
+    # ---- Public lifecycle -------------------------------------------
 
     def connect(self) -> None:
         """
@@ -86,111 +114,246 @@ class LiquidsoapTelnetClient:
 
         Idempotent — calling on an already-open connection is a no-op.
         Raises :class:`ConnectionError` if the connect handshake fails.
-
-        TODO Phase C — implement with proper retry/backoff suited to
-        Pypo-Scheduler startup (Liquidsoap may need a few seconds
-        after its own start before the telnet server is bind-ready).
         """
         with self._lock:
             if self._socket is not None:
                 return
-            # TODO Phase C — actual socket.create_connection(...) +
-            #                 set socket timeout
-            raise NotImplementedError(
-                "LiquidsoapTelnetClient.connect — Phase C target"
-            )
+            self._connect_locked()
 
     def close(self) -> None:
         """
-        Close the TCP connection cleanly (sends ``quit\\n`` first
-        so Liquidsoap closes its end gracefully).
+        Close the TCP connection cleanly.
 
-        Idempotent.
-
-        TODO Phase C — implement.
+        Sends ``quit`` first so Liquidsoap closes its end gracefully,
+        then shuts down the socket.  Idempotent.
         """
         with self._lock:
-            if self._socket is None:
-                return
-            # TODO Phase C — try send "quit\n", then shutdown + close
-            raise NotImplementedError(
-                "LiquidsoapTelnetClient.close — Phase C target"
-            )
+            self._close_locked(send_quit=True)
 
     # ---- Core command path ------------------------------------------
 
     def send_command(self, command: str) -> str:
         """
         Send one command line to Liquidsoap, read the response up to
-        the ``END`` sentinel, return the response body (stripped).
+        the ``END`` sentinel, return the response body (stripped of
+        outer whitespace).
 
-        Reconnects once on a stale-socket detection (peer closed, etc.).
-        Multi-line responses are joined with newlines.
+        Reconnects once on a stale-socket detection (peer closed,
+        EPIPE, ECONNRESET).  Raises :class:`ConnectionError` if both
+        attempts fail.
 
-        Raises :class:`ConnectionError` if neither the initial send
-        nor the post-reconnect retry succeeds.
-
-        TODO Phase C — implement the full send/recv loop + sentinel
-        parsing + single-shot reconnect on EPIPE / ECONNRESET.
+        Multi-line responses are joined with newlines.  The trailing
+        ``END`` line itself is not included.
         """
-        # TODO Phase C — full implementation
-        raise NotImplementedError(
-            "LiquidsoapTelnetClient.send_command — Phase C target"
-        )
+        # Normalise: every command must end with a newline.
+        if not command.endswith("\n"):
+            command_to_send = command + "\n"
+        else:
+            command_to_send = command
+        cmd_bytes = command_to_send.encode("utf-8")
+
+        with self._lock:
+            # Attempt 1
+            try:
+                if self._socket is None:
+                    self._connect_locked()
+                self._socket.sendall(cmd_bytes)
+                return self._read_until_end_locked()
+            except (OSError, ConnectionError) as exc:
+                logger.debug(
+                    "Telnet attempt 1 for %r failed (%s); reconnecting + retrying",
+                    command.strip(), exc,
+                )
+                self._close_locked(send_quit=False)
+
+            # Attempt 2 — fresh connection
+            try:
+                self._connect_locked()
+                self._socket.sendall(cmd_bytes)
+                return self._read_until_end_locked()
+            except (OSError, ConnectionError) as exc:
+                self._close_locked(send_quit=False)
+                raise ConnectionError(
+                    f"Telnet command {command.strip()!r} failed after reconnect: {exc}"
+                ) from exc
 
     # ---- Higher-level convenience wrappers --------------------------
-    #
-    # These are intentionally thin — they just format the protocol
-    # string and call ``send_command``.  The point is so the
-    # engine code never has to memorise the exact Liquidsoap server
-    # syntax.
 
     def request_queue_push(self, uri: str) -> str:
         """
         Push ``uri`` onto the Liquidsoap request queue.  Returns the
-        Liquidsoap-assigned request id as a string (empty string on
-        failure).
+        Liquidsoap-assigned request id as a string (or the raw
+        response if it doesn't look like an id — caller decides).
 
-        TODO Phase C.
+        Use the ``annotate:`` and ``file:`` URI protocols to attach
+        metadata, e.g.::
+
+            client.request_queue_push(
+                'annotate:replaygain_track_gain="-5.95 dB",cue_in="0.0":'
+                'file:///C:/rastatime/scheduler/580.mp3'
+            )
         """
         return self.send_command(f"request.queue.push {uri}")
 
     def request_queue_skip(self) -> str:
-        """
-        Skip the currently-playing item in the request queue.  Used
-        by the scheduler when the operator hits "Skip" in the
-        Dashboard.
-
-        TODO Phase C.
-        """
+        """Skip the currently-playing item in the request queue."""
         return self.send_command("request.queue.skip")
 
     def metadata_update(self, fields: dict) -> str:
         """
-        Push ICY metadata (track title, artist, etc.) for the current
-        item.  ``fields`` is a dict of metadata key/value pairs.
+        Push ICY metadata for the current item.
 
-        TODO Phase C — needs proper escaping per Liquidsoap server
-        command syntax.
+        ``fields`` is a dict of metadata key/value pairs.  Values
+        are wrapped in double quotes; embedded quotes inside values
+        are escaped with a backslash.
+
+        Note: which command exactly takes the metadata depends on
+        the .liq pipeline shape.  This wrapper sends the generic
+        ``metadata.update`` — Phase-C will switch to the source-
+        specific command (``source-id.insert`` or similar) once
+        the .liq pipeline names its sources.
         """
-        # Placeholder — real implementation will quote+escape values
-        joined = ",".join(f'{k}="{v}"' for k, v in fields.items())
-        return self.send_command(f"metadata.update {joined}")
+        encoded = ",".join(
+            f'{key}="{self._escape_value(str(value))}"'
+            for key, value in fields.items()
+        )
+        return self.send_command(f"metadata.update {encoded}")
 
     def var_set(self, name: str, value: str) -> str:
         """
-        Set a Liquidsoap script-level variable (used for source
-        switching: ``scheduled.enable = true|false``).
+        Set a Liquidsoap script-level variable.
 
-        TODO Phase C.
+        Used for source switching (e.g.
+        ``var.set master_dj_active = true``) and per-track
+        configuration the .liq script reads at switch time.
         """
         return self.send_command(f"var.set {name} = {value}")
 
     def help(self) -> List[str]:
         """
         Ask Liquidsoap for the list of registered server commands.
-        Mostly useful for diagnostics.
-
-        TODO Phase C — parse the response into a list of strings.
+        Returns each command line as a separate string.  Mostly
+        useful for diagnostics / asserting the .liq script
+        configured the expected commands.
         """
-        return [self.send_command("help")]
+        resp = self.send_command("help")
+        return [line for line in resp.splitlines() if line.strip()]
+
+    # ---- Internals (lock must be held) ------------------------------
+
+    def _connect_locked(self) -> None:
+        """Open socket — caller must hold ``self._lock``."""
+        try:
+            sock = socket.create_connection(
+                (self._host, self._port),
+                timeout=self._timeout,
+            )
+            sock.settimeout(self._timeout)
+            self._socket = sock
+            self._recv_buf = b""
+            logger.info(
+                "Connected to Liquidsoap telnet at %s:%d",
+                self._host, self._port,
+            )
+        except OSError as exc:
+            raise ConnectionError(
+                f"Cannot connect to Liquidsoap telnet at "
+                f"{self._host}:{self._port}: {exc}"
+            ) from exc
+
+    def _close_locked(self, *, send_quit: bool) -> None:
+        """Close socket — caller must hold ``self._lock``."""
+        if self._socket is None:
+            return
+        if send_quit:
+            try:
+                self._socket.sendall(b"quit\n")
+            except OSError:
+                pass  # already broken — fine
+        try:
+            self._socket.shutdown(socket.SHUT_RDWR)
+        except OSError:
+            pass
+        try:
+            self._socket.close()
+        except OSError:
+            pass
+        self._socket = None
+        self._recv_buf = b""
+        logger.info("Disconnected from Liquidsoap telnet")
+
+    def _read_until_end_locked(self) -> str:
+        """
+        Read socket bytes until the ``END`` sentinel is seen.
+        Returns the response body without the sentinel line,
+        stripped of outer whitespace.  Caller must hold lock.
+
+        Uses ``self._recv_buf`` so any bytes received past the END
+        sentinel (rare, but possible if the server pipelines) are
+        carried over to the next call.
+        """
+        assert self._socket is not None  # caller already ensured
+
+        while True:
+            # Check current buffer for an END sentinel before doing
+            # more I/O — saves a round-trip when send() already
+            # delivered the response body.
+            body = self._extract_response(self._recv_buf)
+            if body is not None:
+                # body is (response_str, remaining_buf)
+                response_str, remaining = body
+                self._recv_buf = remaining
+                return response_str
+
+            try:
+                chunk = self._socket.recv(4096)
+            except socket.timeout as exc:
+                raise ConnectionError(
+                    f"Timed out waiting for END sentinel after "
+                    f"{self._timeout}s"
+                ) from exc
+
+            if not chunk:
+                raise ConnectionError(
+                    "Telnet socket closed unexpectedly before END "
+                    "sentinel"
+                )
+            self._recv_buf += chunk
+
+    @classmethod
+    def _extract_response(cls, buf: bytes):
+        """
+        Look for the END sentinel in ``buf``.  Returns
+        ``(response_str, remaining_buf)`` if found, ``None`` otherwise.
+
+        Response is everything before the END line, stripped.
+        Remaining_buf is anything after the END line (typically
+        empty, but server-side pipelining could leave bytes).
+        """
+        for sentinel in cls._END_VARIANTS:
+            idx = buf.find(sentinel)
+            if idx != -1:
+                body = buf[:idx]
+                remaining = buf[idx + len(sentinel):]
+                return body.decode("utf-8", errors="replace").strip(), remaining
+
+        # Empty-response special case: buf starts with "END\r\n" or "END\n"
+        # (no preceding body, no leading newline before END).
+        for sentinel in cls._END_ONLY_VARIANTS:
+            if buf.startswith(sentinel):
+                remaining = buf[len(sentinel):]
+                return "", remaining
+
+        return None
+
+    @staticmethod
+    def _escape_value(value: str) -> str:
+        """
+        Escape a metadata value for inclusion in
+        ``metadata.update key="..."`` format.
+
+        Backslash-escapes embedded double quotes and backslashes.
+        Liquidsoap's parser handles ``\\"`` and ``\\\\`` inside
+        the double-quoted string.
+        """
+        return value.replace("\\", "\\\\").replace('"', '\\"')
