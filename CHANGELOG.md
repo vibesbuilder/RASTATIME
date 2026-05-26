@@ -9,6 +9,76 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Liquidsoap Phase-C2 — LiquidsoapEngine play/stop/close
+  wire-up gegen Telnet-Client + 35 Unit-Tests** (operator go
+  2026-05-26, Seamless-Bus-Mix Phase 2 Variante A).  Replaces
+  the Phase-B `NotImplementedError` stubs in
+  `backend/playout/libretime_playout/engine/liquidsoap_engine.py`
+  with a working implementation that talks to a long-running
+  Liquidsoap subprocess over the C1 telnet client.
+
+  * `play(uri, cue_in, cue_out, gain_db)` normalises Windows
+    paths (`C:\…` → `file:///C:/…`), wraps the URI in a
+    Liquidsoap `annotate:` envelope when cue points or gain
+    are present, then sends `request.queue.push <annotate-uri>`
+    via telnet.  Numeric reply (the request id) is captured for
+    diagnostics.  Telnet errors flip `state = ERROR` and log
+    but never propagate out — the Pypo scheduler treats
+    play-exceptions as fatal so we deliberately swallow.
+  * `stop()` sends `request.queue.skip` and flips state to
+    `STOPPED`.  Same swallow-on-error policy.
+  * `close()` forwards to `telnet.close()`.  Does NOT terminate
+    the Liquidsoap subprocess — that's NSSM's job.
+  * `wait_until_stopped()` is a true `return True` — Liquidsoap
+    has native gapless transitions, so the 500 ms tail-flush
+    hack in the mpv path goes away once the Liquidsoap engine
+    is the active backend.
+  * `set_audio_device()` stays a warn-only no-op — runtime
+    device switching needs `.liq`-script reconfiguration and
+    is deferred to Phase D.
+  * Telnet client is injectable via constructor for tests
+    (`telnet_client=` kwarg), defaults to building a real
+    client from `RASTATIME_LIQUIDSOAP_HOST` / `_PORT` env vars.
+
+  New helpers documented + tested:
+    - `_normalise_uri` — Windows drive-letter path → `file:///`
+      forward-slash form (regex-detected, three-slash variant
+      per RFC 8089 which Liquidsoap requires).
+    - `_build_annotate_uri` — composes the
+      `annotate:cue_in="N",cue_out="N",replaygain_track_gain=
+      "X dB":<uri>` envelope; omits the wrapper entirely when
+      no annotations are needed.
+    - `_extract_request_id` — pulls Liquidsoap's numeric
+      request-id reply out of (possibly multi-line) responses.
+    - `_redact` — strips password from `http://user:pass@…`
+      URIs in log lines (mirrors `MpvPlayoutEngine._redact`).
+
+  New test file
+  `backend/playout/tests/engine/test_liquidsoap_engine.py` —
+  35 tests with `MagicMock(spec=LiquidsoapTelnetClient)`
+  injected (no real socket I/O): URI normalisation for
+  Windows back/forward slashes + already-prefixed URIs + HTTP
+  passthrough; annotate building for every combination of
+  cue_in/cue_out/gain_db including the no-annotation early-out
+  and zero-gain epsilon; play→PLAYING state transition;
+  numeric/multi-line/non-digit request-id parsing; stop→STOPPED
+  + skip telnet call; telnet `ConnectionError` swallowed in
+  play/stop/close without propagating; close idempotency;
+  `wait_until_stopped` truly immediate (not polling);
+  `set_audio_device` warn-only; both micro-helpers
+  (`_extract_request_id`, `_redact`) exercised independently.
+  All 35 pass in ~0.07 s.
+
+  Combined engine suite now at **57 tests** (35 new + 17 from
+  C1 + 5 pre-existing FFmpeg-streamer-gain) — all green in
+  ~2.2 s.
+
+  No production-path change.  `RASTATIME_PLAYOUT_ENGINE` still
+  defaults to `mpv`; switching to `liquidsoap` will now reach a
+  *working* play/stop loop but will fail at telnet-connect
+  because there's no `rastatime.liq` running yet (that's Phase
+  C3 — produktions-.liq Script).
+
 - **Liquidsoap Phase-C1 — Telnet-Client volle Implementation
   + 17 Unit-Tests** (operator go 2026-05-26, Seamless-Bus-Mix
   Phase 2 Variante A).  Replaces the Phase-B

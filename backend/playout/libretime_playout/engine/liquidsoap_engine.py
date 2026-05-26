@@ -1,11 +1,11 @@
 """
 LiquidsoapPlayoutEngine — Liquidsoap adapter for RASTATIME.
 
-RASTATIME 2026-05-25 — Seamless-Bus-Mix Phase B (skeleton).
+RASTATIME 2026-05-26 — Seamless-Bus-Mix Phase C2 (engine wire-up).
 
 Drop-in replacement for :class:`MpvPlayoutEngine` and
-:class:`VlcPlayoutEngine` (ADR-002).  Talks to a Liquidsoap
-subprocess via the telnet line-protocol server on
+:class:`VlcPlayoutEngine` (ADR-002).  Talks to a long-running
+Liquidsoap subprocess via the telnet line-protocol server on
 ``localhost:1234`` (see :mod:`liquidsoap_telnet`).
 
 Architectural shift vs. mpv/VLC engines
@@ -18,40 +18,71 @@ parallel FfmpegStreamer subprocesses that re-read the same file
 and push it to Icecast.
 
 The Liquidsoap engine inverts the relationship.  Liquidsoap is a
-long-running subprocess that holds:
+long-running NSSM-managed subprocess that holds:
 
-  * A request.queue source that we push file URIs into
-  * The Master/Show DJ input.harbor sources
-  * A switch(...) that picks the active source
-  * Three output.icecast blocks (mp3 / aac / ogg) with a single
-    persistent Icecast PUT per mount
+  * A ``request.queue`` source that we push file URIs into
+  * The Master/Show DJ ``input.harbor`` sources (Phase C4)
+  * A ``switch(...)`` that picks the active source (Phase C4)
+  * Three ``output.icecast`` blocks (mp3 / aac / ogg) with a
+    single persistent Icecast PUT per mount (Phase C3)
 
-When the scheduler wants to "play file X", it calls
-:meth:`play` which sends ``request.queue.push file:///X`` over
-telnet to Liquidsoap.  Liquidsoap then decodes + encodes + ships
-the audio entirely by itself — no separate FfmpegStreamer
-subprocesses.
+When the scheduler wants to "play file X", we call :meth:`play`
+which sends an ``annotate:`` + ``file:`` wrapped URI to
+``request.queue.push`` over telnet.  Liquidsoap then decodes,
+encodes, mixes, and ships the audio entirely by itself — no
+separate FfmpegStreamer subprocesses, and Liquidsoap's native
+gapless transitions handle the tail-cut problem that the mpv
+engine works around with ``wait_until_stopped`` + 500 ms hack.
 
-This eliminates the entire FFmpeg-streamer lifecycle that lives
-in ``playout_scheduler.py::_start_streamers / _stop_streamers``;
-in the Liquidsoap world those methods become no-ops.
+Cue points + replay-gain
+------------------------
 
-PHASE-B STATE: skeleton.  All methods are stubs with TODO
-comments pointing at Phase C work.  Instantiating this class is
-deliberately allowed (so the env-var dispatch in __main__.py can
-import and try to instantiate) — the stub methods raise
-NotImplementedError so any accidental invocation in production
-is loud, not silent.
+``cue_in`` / ``cue_out`` / ``gain_db`` ride on the Liquidsoap
+``annotate:`` protocol, which lets us attach metadata to any
+request URI.  The .liq script then reads those annotations
+with operators like ``amplify(override="replaygain_track_gain",
+…)`` and the built-in cue-handling on ``request.queue``.
+
+Example URI we send to Liquidsoap::
+
+    annotate:cue_in="0.5",cue_out="180.0",
+             replaygain_track_gain="-5.95 dB"
+             :file:///C:/rastatime/scheduler/580.mp3
+
+The .liq side picks these up automatically — the ``request.queue``
+operator parses ``cue_in`` / ``cue_out`` natively, and our
+``amplify(override="replaygain_track_gain", …)`` block picks up
+the gain value (which the operator parses as a "<float> dB"
+string).
+
+What this phase does NOT cover (deferred to later C-phases):
+
+  * Live-source switching (Master DJ / Show DJ): Phase C4 via
+    ``input.harbor`` in the .liq script + ``var.set`` over
+    telnet — not via :meth:`play`.
+  * ICY-metadata pushes per track: Phase C6 via
+    ``metadata.update`` over telnet (separate code path that
+    runs in parallel with this engine).
+  * Recording: Phase C5 via ``output.file`` in the .liq script
+    (no Python-side hook — entirely server-side).
 """
 from __future__ import annotations
 
 import logging
+import os
+import re
 from typing import List, Optional
 
 from .interface import PlayoutEngine, PlayoutState
 from .liquidsoap_telnet import LiquidsoapTelnetClient
 
 logger = logging.getLogger(__name__)
+
+
+# Regex used by _normalise_uri — matches both ``C:\foo`` and ``C:/foo``
+# at the very start of the URI argument, so we can detect a Windows
+# drive-letter path that needs ``file:///`` wrapping.
+_WINDOWS_DRIVE_RE = re.compile(r"^[A-Za-z]:[\\/]")
 
 
 class LiquidsoapPlayoutEngine(PlayoutEngine):
@@ -65,12 +96,19 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
     ``RASTATIME_LIQUIDSOAP_HOST`` and ``RASTATIME_LIQUIDSOAP_PORT``
     if the operator runs Liquidsoap on a different port (e.g. to
     isolate from a second Liquidsoap instance).
+
+    Thread-safety: ``play()``, ``stop()``, ``close()`` may be
+    called from different threads.  All public methods route
+    through :class:`LiquidsoapTelnetClient`, which serialises
+    socket I/O on its own internal lock — so concurrent calls
+    from Python are safe.
     """
 
     def __init__(
         self,
         host: Optional[str] = None,
         port: Optional[int] = None,
+        telnet_client: Optional[LiquidsoapTelnetClient] = None,
     ) -> None:
         # State mirror of what we've told Liquidsoap to do.  Until
         # we wire up a proper get-status-from-telnet pull, this is
@@ -82,19 +120,27 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
         # Telnet client to Liquidsoap.  Connection is lazy — first
         # send_command opens the socket.  Allows the scheduler to
         # boot before Liquidsoap is fully up.
-        import os  # local import to avoid module-level os dep
-        self._telnet = LiquidsoapTelnetClient(
-            host = host or os.environ.get("RASTATIME_LIQUIDSOAP_HOST", "127.0.0.1"),
-            port = port or int(os.environ.get("RASTATIME_LIQUIDSOAP_PORT", "1234")),
-        )
+        #
+        # The ``telnet_client`` injection point is for tests — production
+        # callers leave it None and the engine builds the real client
+        # from the env-var-resolved host/port.
+        if telnet_client is not None:
+            self._telnet = telnet_client
+        else:
+            self._telnet = LiquidsoapTelnetClient(
+                host=host
+                or os.environ.get("RASTATIME_LIQUIDSOAP_HOST", "127.0.0.1"),
+                port=port
+                or int(os.environ.get("RASTATIME_LIQUIDSOAP_PORT", "1234")),
+            )
 
         logger.info(
-            "LiquidsoapPlayoutEngine skeleton initialised (telnet target %s:%d)",
+            "LiquidsoapPlayoutEngine initialised (telnet target %s:%d)",
             self._telnet._host, self._telnet._port,
         )
 
     # ------------------------------------------------------------------
-    # PlayoutEngine interface — Phase B skeletons
+    # PlayoutEngine interface
     # ------------------------------------------------------------------
 
     def play(
@@ -107,66 +153,118 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
         gain_db: Optional[float] = None,
     ) -> None:
         """
-        Push ``uri`` onto Liquidsoap's request queue.  Optional cue
-        points are encoded as annotate-protocol attributes
-        (``annotate:cue_in=…,cue_out=…:file:///…``).  Replay-gain is
-        either applied via the ``replaygain`` protocol or set as a
-        per-track Liquidsoap variable that the .liq script picks up.
+        Push ``uri`` onto Liquidsoap's request queue.
 
-        TODO Phase C:
-          * URI normalisation (Windows paths need ``file:///C:/…``)
-          * annotate-protocol wrap for cue_in / cue_out
-          * gain_db handling (var.set vs. annotate)
-          * media_options ignored (Liquidsoap handles HTTP auth via
-            URI userinfo, same as mpv/ffmpeg)
+        ``cue_in`` / ``cue_out`` / ``gain_db`` are encoded as
+        Liquidsoap ``annotate:`` attributes — the .liq script reads
+        them with ``request.queue`` (cue handling) and ``amplify(
+        override="replaygain_track_gain", …)`` (gain handling).
+
+        ``media_options`` is accepted for interface compatibility but
+        ignored: Liquidsoap takes HTTP auth from the URI's userinfo,
+        same as mpv/ffmpeg.
+
+        On any telnet failure the engine flips into ``ERROR`` state
+        and logs — same pattern as the mpv engine.  We do NOT raise
+        out of ``play()`` because the Pypo scheduler treats a play()
+        exception as a scheduler-level crash; we want a clear-but-
+        contained failure that the next play() attempt can recover
+        from.
         """
-        raise NotImplementedError(
-            "LiquidsoapPlayoutEngine.play — Phase C target"
+        logger.info(
+            "Liquidsoap play: uri=%s cue_in=%.2fs cue_out=%s gain=%s",
+            self._redact(uri),
+            cue_in,
+            f"{cue_out:.2f}s" if cue_out is not None else "natural",
+            f"{gain_db:+.2f}dB" if gain_db else "none",
         )
+
+        self._current_uri = uri
+        self._current_request_id = None
+
+        try:
+            wrapped = self._build_annotate_uri(
+                uri,
+                cue_in=cue_in,
+                cue_out=cue_out,
+                gain_db=gain_db,
+            )
+            response = self._telnet.request_queue_push(wrapped)
+            self._current_request_id = self._extract_request_id(response)
+            self._state = PlayoutState.PLAYING
+            logger.debug(
+                "Liquidsoap accepted request_id=%s for %s",
+                self._current_request_id, self._redact(uri),
+            )
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            # Telnet errors (ConnectionError) and any other surprise
+            # from the wire layer end up here.  Mirror the mpv engine:
+            # set ERROR state, log, and swallow so the scheduler can
+            # decide whether the next event should still try.
+            logger.error(
+                "Liquidsoap play failed for %s: %s",
+                self._redact(uri), exc,
+            )
+            self._state = PlayoutState.ERROR
 
     def stop(self) -> None:
         """
         Skip whatever Liquidsoap is currently playing — that drops
         back to the request.queue silence-on-empty default, which
-        in our .liq script is wired to ``blank()`` (silence) so the
-        Icecast PUT stays connected but quiet.
+        in our .liq script is wired to a silent ``blank()`` fallback
+        so the Icecast PUT stays connected but quiet.
 
-        TODO Phase C — implement via ``request.queue.skip``.
+        Idempotent: calling on an already-empty queue is harmless
+        (Liquidsoap replies "Done" or similar).
         """
-        raise NotImplementedError(
-            "LiquidsoapPlayoutEngine.stop — Phase C target"
-        )
+        logger.info("Liquidsoap stop")
+        try:
+            self._telnet.request_queue_skip()
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            # Stop on an already-stopped/disconnected client should not
+            # crash the scheduler.  Demote to warning — losing the skip
+            # only means the current track plays to its natural end,
+            # which is annoying but not catastrophic.
+            logger.warning("Liquidsoap stop telnet error: %s", exc)
+        self._state = PlayoutState.STOPPED
+        self._current_uri = None
+        self._current_request_id = None
 
     def get_state(self) -> PlayoutState:
         """
-        Return cached state.  Liquidsoap's telnet ``request.queue.queue``
-        could be polled to refresh this, but Pypo only checks state
-        in the next-track-handler hot path so caching is fine.
+        Return cached state.  Liquidsoap's telnet
+        ``request.queue.queue`` could be polled to refresh this, but
+        Pypo only checks state in the next-track-handler hot path so
+        caching is fine.
 
-        TODO Phase C — optionally pull live status before returning,
-        bounded by a short telnet timeout.
+        TODO Phase C8: optionally pull live status before returning,
+        bounded by a short telnet timeout, as a robustness measure
+        against the Python-side state mirror drifting from the actual
+        Liquidsoap queue state.
         """
         return self._state
 
     def close(self) -> None:
         """
         Close the telnet connection.  Does NOT terminate the
-        Liquidsoap subprocess — that's NSSM's job.
-
-        TODO Phase C — call self._telnet.close() once that is
-        implemented.
+        Liquidsoap subprocess — that's NSSM's job (see
+        ``nssm-install-liquidsoap.ps1``).
         """
-        logger.info("LiquidsoapPlayoutEngine.close — skeleton no-op")
+        try:
+            self._telnet.close()
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            logger.warning("Liquidsoap close telnet error: %s", exc)
+        logger.info("LiquidsoapPlayoutEngine closed")
 
     def set_audio_device(self, device_id: Optional[str]) -> None:
         """
         Liquidsoap's local-monitoring output is configured in the
         .liq script (``output.ao`` / ``output.portaudio`` / etc.).
         Live device switching would need a server-command-driven
-        re-wiring inside the script — not in Phase B scope.
+        re-wiring inside the script — not in Phase C scope.
 
-        For Phase B / C we just log + warn, same fallback that the
-        PlayoutEngine ABC does by default.  Phase D may add a
+        For Phase C we just log + warn, same fallback that the
+        ``PlayoutEngine`` ABC does by default.  Phase D may add a
         proper ``var.set`` + script-side reconfigurable output.
         """
         logger.warning(
@@ -187,10 +285,133 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
         Seamless-Bus-Mix work).
 
         For Liquidsoap this is a NO-OP that returns True immediately:
-        the .liq pipeline already has gapless transitions between
-        request.queue items natively, so the scheduler does NOT need
-        to delay its next-track event for a tail-flush.  That's
-        actually one of the selling points of moving to Liquidsoap —
-        the 500 ms wait hack we have in the mpv path goes away.
+        the .liq pipeline has gapless transitions between
+        ``request.queue`` items natively, so the scheduler does NOT
+        need to delay its next-track event for a tail-flush.  That's
+        actually one of the headline benefits of moving to
+        Liquidsoap — the 500 ms wait hack in the mpv path goes away
+        once the Liquidsoap engine is the active backend.
         """
         return True
+
+    # ------------------------------------------------------------------
+    # Internal helpers — URI / annotate building
+    # ------------------------------------------------------------------
+
+    @classmethod
+    def _build_annotate_uri(
+        cls,
+        uri: str,
+        *,
+        cue_in: float,
+        cue_out: Optional[float],
+        gain_db: Optional[float],
+    ) -> str:
+        """
+        Wrap ``uri`` in a Liquidsoap ``annotate:`` envelope encoding
+        the cue points + replay-gain.  If no annotations are needed
+        the bare URI (with file:// normalisation applied) is returned
+        as-is — avoids extra parser work in Liquidsoap.
+
+        Examples::
+
+            >>> _build_annotate_uri("file:///x.mp3", cue_in=0, cue_out=None, gain_db=None)
+            'file:///x.mp3'
+
+            >>> _build_annotate_uri("file:///x.mp3", cue_in=0.5,
+            ...                     cue_out=180.0, gain_db=-5.95)
+            'annotate:cue_in="0.50",cue_out="180.00",replaygain_track_gain="-5.95 dB":file:///x.mp3'
+
+            >>> _build_annotate_uri("C:\\\\rastatime\\\\580.mp3", ...)
+            'annotate:...:file:///C:/rastatime/580.mp3'
+        """
+        normalised = cls._normalise_uri(uri)
+
+        annotations = []
+        if cue_in and cue_in > 0:
+            annotations.append(f'cue_in="{cue_in:.2f}"')
+        if cue_out is not None and cue_out > 0:
+            annotations.append(f'cue_out="{cue_out:.2f}"')
+        if gain_db is not None and abs(gain_db) > 0.001:
+            # Liquidsoap's amplify(override="replaygain_track_gain", …)
+            # parses the value as a "<float> dB" string — sign is
+            # carried in the float, "dB" suffix is required.
+            annotations.append(
+                f'replaygain_track_gain="{gain_db:+.2f} dB"'
+            )
+
+        if not annotations:
+            return normalised
+
+        return f"annotate:{','.join(annotations)}:{normalised}"
+
+    @staticmethod
+    def _normalise_uri(uri: str) -> str:
+        """
+        Convert a Windows local-file path into Liquidsoap-friendly
+        ``file:///`` URI form.  HTTP URIs and already-prefixed
+        ``file://`` URIs pass through unchanged.
+
+        Liquidsoap's request-protocol parser wants forward slashes
+        even on Windows, and it expects exactly the
+        ``file:///<drive>:/<path>`` shape — the three-slash variant
+        is what RFC 8089 / Mozilla document for Windows file URIs.
+        Two-slash variants work in some tools but Liquidsoap rejects
+        them.
+
+        Examples::
+
+            >>> _normalise_uri("C:\\\\rastatime\\\\580.mp3")
+            'file:///C:/rastatime/580.mp3'
+            >>> _normalise_uri("C:/rastatime/580.mp3")
+            'file:///C:/rastatime/580.mp3'
+            >>> _normalise_uri("file:///C:/rastatime/580.mp3")
+            'file:///C:/rastatime/580.mp3'
+            >>> _normalise_uri("http://example.com/stream.mp3")
+            'http://example.com/stream.mp3'
+        """
+        # Bare Windows drive-letter path (back- or forward-slash).
+        if _WINDOWS_DRIVE_RE.match(uri):
+            forward = uri.replace("\\", "/")
+            return f"file:///{forward}"
+        # Already a URI with scheme — pass through.  Liquidsoap
+        # accepts file://, http://, https://, ftp://, plus its own
+        # internal protocols (annotate:, replaygain:, …).  We don't
+        # try to be clever here — the scheduler hands us valid URIs.
+        return uri
+
+    @staticmethod
+    def _extract_request_id(response: str) -> Optional[str]:
+        """
+        Liquidsoap's ``request.queue.push`` replies with the
+        request-id as a bare integer string (e.g. ``"42"``), or with
+        a multi-line error if the URI couldn't be parsed.  Return the
+        id if the response looks like one, else None.
+        """
+        if not response:
+            return None
+        # Take the first line, in case the response is multi-line.
+        first = response.splitlines()[0].strip()
+        if first.isdigit():
+            return first
+        return None
+
+    @staticmethod
+    def _redact(uri: Optional[str]) -> str:
+        """
+        Strip the password from a ``http://user:pass@host/…`` URI so
+        it doesn't end up in the playout log.
+
+        Mirrors :meth:`MpvPlayoutEngine._redact` so log lines stay
+        consistent across both engines.
+        """
+        if not uri or "://" not in uri:
+            return uri or ""
+        scheme, rest = uri.split("://", 1)
+        if "@" not in rest:
+            return uri
+        userinfo, hostpart = rest.rsplit("@", 1)
+        if ":" in userinfo:
+            user, _ = userinfo.split(":", 1)
+            return f"{scheme}://{user}:***@{hostpart}"
+        return uri
