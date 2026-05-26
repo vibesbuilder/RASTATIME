@@ -294,15 +294,18 @@ def test_play_multiline_response_request_id_first_line():
     assert eng._current_request_id == "99"
 
 
-def test_play_non_numeric_response_clears_request_id():
-    """Non-digit response → request_id stays None but state still PLAYING."""
+def test_play_non_numeric_non_error_response_treated_as_unknown_id():
+    """
+    Non-digit but non-ERROR response → request_id stays None, state
+    stays PLAYING (push was accepted by some operator the engine
+    doesn't understand the reply format of, but the queue did take it).
+    The explicit 'ERROR' prefix is reserved for genuine push-failure
+    (covered by test_play_error_response_flips_state_to_error).
+    """
     eng, telnet = _make_engine_with_mock()
-    telnet.request_queue_push.return_value = "ERROR: bad uri"
+    telnet.request_queue_push.return_value = "OK pushed"
     eng.play("file:///x.mp3")
     assert eng._current_request_id is None
-    # state still PLAYING — Liquidsoap accepted the push, the engine
-    # treats lack-of-id as "id unknown" not "play failed".  Operator
-    # fix-up is via the log line + Liquidsoap's own request-queue log.
     assert eng.get_state() == PlayoutState.PLAYING
 
 
@@ -313,6 +316,28 @@ def test_play_handles_telnet_error_without_raising():
     # Must NOT raise — scheduler treats play exceptions as fatal.
     eng.play("file:///x.mp3")
     assert eng.get_state() == PlayoutState.ERROR
+
+
+def test_play_error_response_flips_state_to_error():
+    """
+    Liquidsoap reply that starts with 'ERROR' → state ERROR, not PLAYING.
+
+    The pathological case this protects against (regression from the
+    Phase-C8 reality-test): if the .liq's queue ID and the Python
+    side's command name don't match, Liquidsoap replies with
+    'ERROR: unknown command, type help to get a list of commands.'
+    The engine used to silently flip to PLAYING with request_id=None
+    and listeners only heard silence.  Now we surface the rejection
+    as ERROR + log line.
+    """
+    eng, telnet = _make_engine_with_mock()
+    telnet.request_queue_push.return_value = (
+        "ERROR: unknown command, type \"help\" to get a list of commands."
+    )
+    eng.play("file:///x.mp3")
+    assert eng.get_state() == PlayoutState.ERROR
+    # request_id stays None — nothing was actually queued.
+    assert eng._current_request_id is None
 
 
 def test_stop_sends_request_queue_skip():

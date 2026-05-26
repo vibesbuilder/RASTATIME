@@ -200,6 +200,20 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
                 metadata=metadata,
             )
             response = self._telnet.request_queue_push(wrapped)
+            # Liquidsoap signals push-failure either as "ERROR: …" or
+            # by replying with a non-numeric, non-empty string.  The
+            # most common case in the wild is "ERROR: unknown command"
+            # (queue source-id mismatch between .liq and Python side)
+            # — that used to silently flip the engine to PLAYING with
+            # request_id=None and listeners only heard silence.  Now
+            # we check the response prefix and bail out into ERROR.
+            if response.startswith("ERROR"):
+                logger.error(
+                    "Liquidsoap rejected push for %s: %s",
+                    self._redact(uri), response.strip(),
+                )
+                self._state = PlayoutState.ERROR
+                return
             self._current_request_id = self._extract_request_id(response)
             self._state = PlayoutState.PLAYING
             logger.debug(

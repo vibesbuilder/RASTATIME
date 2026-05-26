@@ -292,8 +292,10 @@ def test_connection_refused_raises():
 
 
 def test_request_queue_push_wrapper():
-    """request_queue_push() formats the command correctly."""
-    with fake_server({"request.queue.push file:///foo.mp3": "99"}) as srv:
+    """request_queue_push() formats the command using the queue_id."""
+    # Wire form on Liquidsoap 2.4: `<queue_id>.push <uri>` where
+    # queue_id defaults to "scheduled" (matches our rastatime.liq).
+    with fake_server({"scheduled.push file:///foo.mp3": "99"}) as srv:
         client = LiquidsoapTelnetClient(host=srv.host, port=srv.port)
         try:
             rid = client.request_queue_push("file:///foo.mp3")
@@ -304,11 +306,23 @@ def test_request_queue_push_wrapper():
 
 def test_request_queue_skip_wrapper():
     """request_queue_skip() sends the right command."""
-    with fake_server({"request.queue.skip": "Done"}) as srv:
+    with fake_server({"scheduled.skip": "Done"}) as srv:
         client = LiquidsoapTelnetClient(host=srv.host, port=srv.port)
         try:
             assert client.request_queue_skip() == "Done"
-            assert srv.received == ["request.queue.skip"]
+            assert srv.received == ["scheduled.skip"]
+        finally:
+            client.close()
+
+
+def test_request_queue_push_custom_queue_id():
+    """Custom queue_id is honoured in the wire-form command."""
+    with fake_server({"my_queue.push file:///bar.mp3": "5"}) as srv:
+        client = LiquidsoapTelnetClient(
+            host=srv.host, port=srv.port, queue_id="my_queue",
+        )
+        try:
+            assert client.request_queue_push("file:///bar.mp3") == "5"
         finally:
             client.close()
 

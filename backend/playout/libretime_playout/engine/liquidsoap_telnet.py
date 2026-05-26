@@ -77,7 +77,17 @@ class LiquidsoapTelnetClient:
     # ---- Defaults ---------------------------------------------------
     DEFAULT_HOST = "127.0.0.1"
     DEFAULT_PORT = 1234
-    DEFAULT_TIMEOUT = 5.0  # seconds, per-command
+    DEFAULT_TIMEOUT = 5.0
+    # Name of the request.queue source as declared in the .liq script
+    # (the ``id=`` parameter of ``request.queue(id=...)``).  Liquidsoap
+    # 2.4 exposes a request.queue with id="X" as the server commands
+    # ``X.push``, ``X.skip``, ``X.queue``, ``X.flush_and_skip`` — NOT
+    # the legacy ``request.queue.push`` style of older builds.  Our
+    # rastatime.liq names the queue ``scheduled`` (see the
+    # ``scheduled_q = request.queue(id="scheduled")`` line in the
+    # template).  If the operator renames it, override here or via the
+    # ``queue_id=`` constructor argument.
+    DEFAULT_QUEUE_ID = "scheduled"  # seconds, per-command
 
     # Liquidsoap's response sentinel.  Always on its own line.
     # We accept both line-endings because Windows-built Liquidsoap
@@ -92,10 +102,12 @@ class LiquidsoapTelnetClient:
         host: str = DEFAULT_HOST,
         port: int = DEFAULT_PORT,
         timeout: float = DEFAULT_TIMEOUT,
+        queue_id: str = DEFAULT_QUEUE_ID,
     ) -> None:
         self._host = host
         self._port = port
         self._timeout = timeout
+        self._queue_id = queue_id
         self._socket: Optional[socket.socket] = None
         # Mutex around all socket I/O so two threads can't interleave
         # commands on the same TCP stream.
@@ -181,9 +193,11 @@ class LiquidsoapTelnetClient:
 
     def request_queue_push(self, uri: str) -> str:
         """
-        Push ``uri`` onto the Liquidsoap request queue.  Returns the
-        Liquidsoap-assigned request id as a string (or the raw
-        response if it doesn't look like an id — caller decides).
+        Push ``uri`` onto the Liquidsoap request queue (the source
+        declared as ``request.queue(id=self._queue_id)`` in
+        rastatime.liq).  Returns the Liquidsoap-assigned request id
+        as a string (or the raw response if it doesn't look like an
+        id — caller decides).
 
         Use the ``annotate:`` and ``file:`` URI protocols to attach
         metadata, e.g.::
@@ -192,12 +206,19 @@ class LiquidsoapTelnetClient:
                 'annotate:replaygain_track_gain="-5.95 dB",cue_in="0.0":'
                 'file:///C:/rastatime/scheduler/580.mp3'
             )
+
+        Wire form on Liquidsoap 2.4: ``<queue_id>.push <uri>``
+        (e.g. ``scheduled.push file:///...``).
         """
-        return self.send_command(f"request.queue.push {uri}")
+        return self.send_command(f"{self._queue_id}.push {uri}")
 
     def request_queue_skip(self) -> str:
-        """Skip the currently-playing item in the request queue."""
-        return self.send_command("request.queue.skip")
+        """
+        Skip the currently-playing item in the request queue.
+
+        Wire form on Liquidsoap 2.4: ``<queue_id>.skip``.
+        """
+        return self.send_command(f"{self._queue_id}.skip")
 
     def metadata_update(self, fields: dict) -> str:
         """
