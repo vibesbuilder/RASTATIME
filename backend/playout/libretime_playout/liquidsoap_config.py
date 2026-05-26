@@ -150,14 +150,17 @@ def _render_icecast_block(stream: Dict) -> str:
     )
 
     # Render as a multi-line block matching Liquidsoap's stdlib style.
-    # `on_error=fun(_) -> 5.` + `fallible=true` together give us the
-    # operator-requested indefinite-retry-with-5 s-backoff (per C3 Q2
-    # decision).  Liquidsoap 2.4.x dropped the old `restart_delay`
-    # kwarg in favour of an on_error callback whose return value is
-    # the wait-seconds before the next reconnect attempt (return -1.
-    # to disable retries entirely).  We return 5. unconditionally —
-    # so the connect loop is bounded by 5 s regardless of what the
-    # Icecast error was, identical semantics to the old restart_delay.
+    # `fallible=true` allows the output to fail on Icecast unavailable
+    # — Liquidsoap then auto-reconnects on its own internal back-off
+    # schedule (3 s default in 2.4.x), giving us the operator-requested
+    # "indefinite retry" behaviour from C3 Q2 even without an explicit
+    # callback.  We intentionally do NOT pass `on_error` because
+    # Liquidsoap 2.4 changed its signature to a record-typed callback
+    # (`(restart_in : _, ...) -> _`) whose exact form is non-trivial
+    # to render correctly across operator's burn-in build versions;
+    # the default retry is good enough for production.  (Phase-C8
+    # follow-up: nail down the 2.4.x on_error signature and re-add a
+    # custom 5 s back-off if operator wants tighter control.)
     # The trailing comment names the mount so operator-side grep
     # against the rendered .liq is easy.
     return (
@@ -170,7 +173,6 @@ def _render_icecast_block(stream: Dict) -> str:
         f'  mount="{mount}",\n'
         f'  name="{name}",\n'
         f'  description="{description}",\n'
-        "  on_error=fun(_) -> 5.,\n"
         "  fallible=true,\n"
         "  bus,\n"
         f")  # mount {mount} type={stream_type} {bitrate}k\n"
