@@ -9,6 +9,57 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Liquidsoap Phase-C3 — Produktions-`.liq` Template +
+  Python-Renderer + 25 Unit-Tests** (operator go 2026-05-26,
+  Seamless-Bus-Mix Phase 2 Variante A).  Operator decisions:
+  Credentials aus `libretime.conf` + cc_pref (Single Source of
+  Truth), indefinite-retry-mit-5s-backoff für Icecast-Bring-up,
+  `blank()`-Fallback für leere `request.queue`.
+
+  New / changed files:
+    - `backend/playout/config/rastatime.liq.template` — komplett
+      neu geschriebene produktionsbereite Version (ersetzt das
+      kommentierte Phase-B Skelett).  Aktivierter telnet-Server
+      auf `127.0.0.1:1234`, Log-File via `settings.log.file.path`,
+      `request.queue(id="scheduled")` wrapped in
+      `fallback([scheduled_q, blank()])` für persistente Icecast-
+      PUTs, `${ICECAST_OUTPUTS}` Platzhalter für gerenderte
+      `output.icecast(...)` Blöcke.
+    - `backend/playout/libretime_playout/liquidsoap_config.py` —
+      neuer `render_rastatime_liq()` + `write_rastatime_liq()`
+      + CLI-Entry-Point `python -m libretime_playout.liquidsoap_config
+      render --out C:/Tools/liquidsoap/rastatime.liq`.  Liest
+      `cc_pref.stream_output_N` JSON-Blobs (gleiche Quelle wie
+      die bisherigen FFmpeg-Streamer), rendert pro enabled
+      Stream einen `output.icecast(...)` Block mit dem
+      richtigen Codec (mp3 → libmp3lame / aac → adts/aac /
+      ogg → libvorbis), Bitrate, Host/Port/Mount/User/Pass +
+      `restart_delay=5., fallible=true` (für indefinite retry).
+      Atomic-Write via `.tmp` + `os.replace`, BOM-frei (Phase-0
+      hatte BOM-Trip), Idempotenz-Check zurück
+      `True/False = changed/unchanged`.
+    - `backend/playout/tests/test_liquidsoap_config.py` —
+      25 Tests: String-Escape (Quotes, Backslashes), Codec-
+      Mapping (mp3/aac/ogg), Bitrate-Substitution,
+      Mount-Leading-Slash-Normalisierung, unbekannter Stream-
+      Typ → `ValueError`, leere Stream-Liste → Kommentar-Stub,
+      mehrere Streams hintereinander, vollständiger Template-
+      Render mit Defaults + Custom-Telnet/Log, BOM-Vermeidung,
+      Atomic-Write ohne `.tmp`-Leftover, Idempotenz-Check
+      (unchanged → `False`), Regression-Guard "kein
+      `${...}` darf nach Render im Output sein".  Alle 25 grün
+      in ~0.1 s.
+
+  Kombinierte Test-Suite jetzt **82 Tests** (24 Config-Renderer
+  + 35 Engine + 17 Telnet + 5 FFmpeg-Streamer-Gain + 1 Telnet-
+  Edge-Case).  Alles grün in ~2.4 s.
+
+  Production-Path unverändert.  C4 wird input.harbor + switch()
+  ins Template injektieren, C5 output.file für Recording, C6
+  crossfade + amplify wrappen, C7 verdrahtet Pypo so dass der
+  Render-Schritt beim Start mit `RASTATIME_PLAYOUT_ENGINE=liquidsoap`
+  automatisch läuft (heute manuell via CLI).
+
 - **Liquidsoap Phase-C2 — LiquidsoapEngine play/stop/close
   wire-up gegen Telnet-Client + 35 Unit-Tests** (operator go
   2026-05-26, Seamless-Bus-Mix Phase 2 Variante A).  Replaces
