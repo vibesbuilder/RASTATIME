@@ -680,10 +680,23 @@ class PlayoutScheduler:
         elapsed = (now - event.start).total_seconds()
         seek_seconds = max(0.0, elapsed) if elapsed > 1.0 else 0.0
 
+        # RASTATIME 2026-05-26 — Seamless-Bus-Mix Phase C6 Teil 2.
+        # Forward track metadata to the engine so the Liquidsoap
+        # backend can attach it via annotate: + propagate to the
+        # output.icecast blocks for live ICY metadata in listener
+        # clients.  mpv/VLC engines accept the parameter but ignore
+        # it (FfmpegStreamer continues to handle their Icecast
+        # metadata path separately).
+        track_metadata = {
+            "title":     event.track_title or "",
+            "artist":    event.artist_name or "",
+            "show_name": event.show_name or "",
+        }
         self._engine.play(
             str(local),
             cue_in=event.cue_in or 0.0,
             gain_db=event.replay_gain,
+            metadata=track_metadata,
         )
 
         # Start FFmpeg streamers in parallel (same audio file → Icecast)
@@ -1913,10 +1926,21 @@ class PlayoutScheduler:
         # RASTATIME 2026-05-16 — preserve the event's gain (file
         # ReplayGain or webstream input-gain) across the resume path;
         # live-source resumes leave it None.
+        # RASTATIME 2026-05-26 — Phase C6 Teil 2: same metadata
+        # forwarding pattern as the fresh-start path above so
+        # ICY-titles survive Pypo restarts.
+        resume_metadata = None
+        if isinstance(self._current_event, FileEvent):
+            resume_metadata = {
+                "title":     self._current_event.track_title or "",
+                "artist":    self._current_event.artist_name or "",
+                "show_name": self._current_event.show_name or "",
+            }
         self._engine.play(
             self._current_audio_path,
             cue_in=cue_in,
             gain_db=self._current_gain_db,
+            metadata=resume_metadata,
         )
         self._start_streamers(
             self._current_audio_path,

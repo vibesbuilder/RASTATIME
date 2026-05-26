@@ -167,6 +167,93 @@ def test_annotate_with_windows_path():
     )
 
 
+# ---- Annotate with metadata (Phase C6 Teil 2) ---------------------------
+
+
+def test_annotate_with_metadata_only():
+    """metadata-only annotate: no cue, no gain — just metadata keys."""
+    out = LiquidsoapPlayoutEngine._build_annotate_uri(
+        "file:///x.mp3", cue_in=0.0, cue_out=None, gain_db=None,
+        metadata={"title": "Song Title", "artist": "Band Name"},
+    )
+    assert out == (
+        'annotate:title="Song Title",artist="Band Name":file:///x.mp3'
+    )
+
+
+def test_annotate_metadata_skips_none_values():
+    """None / empty-string metadata values are silently skipped."""
+    out = LiquidsoapPlayoutEngine._build_annotate_uri(
+        "file:///x.mp3", cue_in=0.0, cue_out=None, gain_db=None,
+        metadata={"title": "Song", "artist": None, "album": ""},
+    )
+    assert out == 'annotate:title="Song":file:///x.mp3'
+
+
+def test_annotate_metadata_empty_dict_no_wrap():
+    """Empty metadata dict → no annotate wrapper at all."""
+    out = LiquidsoapPlayoutEngine._build_annotate_uri(
+        "file:///x.mp3", cue_in=0.0, cue_out=None, gain_db=None,
+        metadata={},
+    )
+    assert out == "file:///x.mp3"
+
+
+def test_annotate_metadata_escapes_quotes():
+    """Embedded double-quote in metadata value → backslash-escaped."""
+    out = LiquidsoapPlayoutEngine._build_annotate_uri(
+        "file:///x.mp3", cue_in=0.0, cue_out=None, gain_db=None,
+        metadata={"title": 'He said "Hello"'},
+    )
+    assert out == (
+        'annotate:title="He said \\"Hello\\"":file:///x.mp3'
+    )
+
+
+def test_annotate_metadata_escapes_backslashes():
+    """Embedded backslash in metadata value → doubled."""
+    out = LiquidsoapPlayoutEngine._build_annotate_uri(
+        "file:///x.mp3", cue_in=0.0, cue_out=None, gain_db=None,
+        metadata={"path": r"C:\foo\bar"},
+    )
+    assert out == 'annotate:path="C:\\\\foo\\\\bar":file:///x.mp3'
+
+
+def test_annotate_all_three_attrs_plus_metadata():
+    """Cue + gain + metadata all together — order: cue, gain, then metadata."""
+    out = LiquidsoapPlayoutEngine._build_annotate_uri(
+        "file:///x.mp3", cue_in=0.5, cue_out=180.0, gain_db=-5.95,
+        metadata={"title": "Song", "artist": "Band"},
+    )
+    assert out == (
+        'annotate:cue_in="0.50",cue_out="180.00",'
+        'replaygain_track_gain="-5.95 dB",'
+        'title="Song",artist="Band":file:///x.mp3'
+    )
+
+
+def test_play_passes_metadata_to_telnet():
+    """play(metadata=...) flows through to request_queue_push payload."""
+    eng, telnet = _make_engine_with_mock()
+    eng.play(
+        r"C:\rastatime\foo.mp3", cue_in=0.0, gain_db=-3.0,
+        metadata={"title": "Song", "artist": "Band"},
+    )
+    expected = (
+        'annotate:replaygain_track_gain="-3.00 dB",'
+        'title="Song",artist="Band":'
+        'file:///C:/rastatime/foo.mp3'
+    )
+    telnet.request_queue_push.assert_called_once_with(expected)
+
+
+def test_play_without_metadata_still_works():
+    """metadata is fully optional — old-style calls still pass."""
+    eng, telnet = _make_engine_with_mock()
+    eng.play("file:///x.mp3")
+    telnet.request_queue_push.assert_called_once_with("file:///x.mp3")
+
+
 # ---- play() / stop() / state machine ------------------------------------
 
 

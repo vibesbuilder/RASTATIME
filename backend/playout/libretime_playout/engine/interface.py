@@ -7,7 +7,7 @@ adapter; a MockPlayoutEngine (T4.1) can be used for tests.
 """
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 
 class PlayoutState(str, Enum):
@@ -28,6 +28,7 @@ class PlayoutEngine(ABC):
         cue_out: Optional[float] = None,
         media_options: Optional[List[str]] = None,
         gain_db: Optional[float] = None,
+        metadata: Optional[Dict[str, str]] = None,
     ) -> None:
         """
         Start playing a URI.
@@ -57,6 +58,23 @@ class PlayoutEngine(ABC):
                             a value or ``None`` so a previous event's
                             gain does not leak into the current
                             ``play()`` call.
+        metadata         : RASTATIME 2026-05-26 — optional dict of ICY-
+                            metadata fields the engine should attach to
+                            the current track on its way to Icecast.
+                            Common keys: ``title``, ``artist``, ``album``,
+                            ``show_name``.  None or empty dict means "use
+                            whatever metadata the URI naturally carries"
+                            (filename for files, ICY-stream header for
+                            webstreams).
+
+                            Engines that don't ship metadata to a
+                            downstream encoder (mpv/VLC are local-only
+                            — Icecast is handled by FfmpegStreamer in
+                            those configurations) may ignore this
+                            parameter.  The LiquidsoapPlayoutEngine wires
+                            it into Liquidsoap's ``annotate:`` envelope,
+                            and Liquidsoap then propagates the metadata
+                            to all output.icecast blocks natively.
         """
 
     @abstractmethod

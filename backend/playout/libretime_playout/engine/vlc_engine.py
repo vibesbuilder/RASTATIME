@@ -15,7 +15,7 @@ import os
 import sys
 import time
 from pathlib import Path
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from .interface import PlayoutEngine, PlayoutState
 
@@ -159,9 +159,17 @@ class VlcPlayoutEngine(PlayoutEngine):
         cue_out: Optional[float] = None,
         media_options: Optional[List[str]] = None,
         gain_db: Optional[float] = None,
+        metadata: Optional[Dict[str, str]] = None,
     ) -> None:
         """
         Start playing a URI.
+
+        ``metadata`` is accepted for ``PlayoutEngine`` interface
+        compatibility with the Liquidsoap engine but ignored by VLC:
+        like mpv, this adapter is local-playback-only — Icecast
+        metadata is set separately by FfmpegStreamer ``-metadata``
+        flags when the streamer subprocess is spawned alongside the
+        local playback.
 
         Cue-in: if ``cue_in > 0``, waits for VLC to start decoding (up to 3 s)
         and then seeks to the specified position.

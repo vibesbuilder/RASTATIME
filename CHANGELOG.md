@@ -9,6 +9,60 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Liquidsoap Phase-C6 (Teil 2) — ICY-Metadata via
+  PlayoutEngine-Vertrag + 8 neue Tests** (Seamless-Bus-Mix
+  Phase 2).  Erweitert den `PlayoutEngine`-ABC um einen
+  optionalen `metadata: Optional[Dict[str, str]]` Parameter
+  auf `play()` und reicht Track-Title / Artist / Show-Name
+  vom Pypo-Scheduler bis in die `annotate:`-Envelope der
+  LiquidsoapEngine durch.  Liquidsoap propagiert die
+  metadata automatisch in alle `output.icecast`-Blöcke
+  (kein zusätzlicher telnet-`metadata.update` Call nötig).
+
+  Änderungen:
+    - `interface.py` — `play()` Signatur erweitert um
+      `metadata: Optional[Dict[str, str]] = None`,
+      ausführlich dokumentiert.
+    - `mpv_engine.py` + `vlc_engine.py` — Parameter
+      angenommen + ignoriert (mpv/VLC sind local-only,
+      Icecast-Metadata kommt im mpv/VLC-Pfad weiter aus
+      FfmpegStreamer `-metadata`).
+    - `liquidsoap_engine.py`:
+       * `play()` reicht `metadata` an `_build_annotate_uri` weiter
+       * `_build_annotate_uri()` erweitert um `metadata` kwarg —
+         hängt nach cue/gain Keys weitere `key="value"` Paare an
+         (None / "" Werte werden silently übersprungen)
+       * Neuer `_escape_annotate_value()` Helper (Backslash + Quote
+         Escape, gleiche Semantik wie `LiquidsoapTelnetClient._escape_value`)
+       * Log-Line um `meta=` Spalte erweitert
+    - `playout_scheduler.py`:
+       * `_on_file_start()` baut `track_metadata = {title, artist,
+         show_name}` aus dem FileEvent + reicht es an `engine.play()`
+       * Resume-Path (`_resume_current_event` nach Pypo-Restart)
+         macht das gleiche, mit `isinstance(FileEvent)` Guard so
+         dass Webstream/Linein-Resumes nicht den Parameter setzen
+         (deren Metadata kommt ja vom Stream selbst).
+
+  8 neue Tests in `tests/engine/test_liquidsoap_engine.py`:
+    - `_build_annotate_uri` mit metadata-only (kein cue, kein gain)
+    - metadata mit `None` / "" Werten — Skip-Verhalten
+    - leerer metadata-Dict → kein annotate-Wrapper
+    - Quote-Escape in metadata-Wert
+    - Backslash-Escape in metadata-Wert
+    - Alle vier (cue_in + cue_out + gain + metadata) gleichzeitig
+      — Order-Check: cue, gain, dann metadata
+    - End-to-End `play(metadata=...)` → richtiger Payload bei
+      `request_queue_push`
+    - `play()` ohne metadata bleibt rückwärts-kompatibel
+
+  Test-Suite nun **101 Tests** (43 Engine + 17 Telnet + 36 Config
+  + 5 FFmpeg-Streamer-Gain), alle grün in ~2.5 s.
+
+  Damit ist Phase C6 vollständig: scheduled tracks werden mit
+  ReplayGain compensiert, kreuzgefadet, und tragen ICY-Metadata
+  zu allen drei Icecast-Mounts.  Mpv/VLC-Pfad unverändert —
+  der neue `metadata`-Parameter wird dort ignoriert.
+
 - **Liquidsoap Phase-C6 (Teil 1) — Crossfade + ReplayGain
   im `.liq`-Bus + 12 neue Tests** (Operator-Entscheidung
   2026-05-26 "C6 vor C4 vorziehen", Seamless-Bus-Mix Phase 2).

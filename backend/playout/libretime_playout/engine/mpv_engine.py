@@ -21,7 +21,7 @@ import os
 import sys
 import threading
 from pathlib import Path
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from .interface import PlayoutEngine, PlayoutState
 
@@ -310,6 +310,7 @@ class MpvPlayoutEngine(PlayoutEngine):
         cue_out: Optional[float] = None,
         media_options: Optional[List[str]] = None,
         gain_db: Optional[float] = None,
+        metadata: Optional[Dict[str, str]] = None,
     ) -> None:
         """
         Start playing a URI on the local soundcard.
@@ -344,6 +345,12 @@ class MpvPlayoutEngine(PlayoutEngine):
 
         (Was ``replay_gain_db`` before 2026-05-16; renamed to reflect
         that the same mechanism now carries non-ReplayGain values.)
+
+        ``metadata`` is accepted for interface compatibility with the
+        Liquidsoap engine but ignored by mpv: mpv only handles local
+        audio output, and Icecast metadata is set separately by the
+        FfmpegStreamer ``-metadata`` flags when the streamer subprocess
+        is spawned alongside the local playback.
         """
         logger.info(
             "mpv play: uri=%s cue_in=%.2fs cue_out=%s gain=%s",

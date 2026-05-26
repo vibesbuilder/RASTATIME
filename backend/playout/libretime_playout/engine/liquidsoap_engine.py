@@ -71,7 +71,7 @@ from __future__ import annotations
 import logging
 import os
 import re
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from .interface import PlayoutEngine, PlayoutState
 from .liquidsoap_telnet import LiquidsoapTelnetClient
@@ -151,14 +151,18 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
         cue_out: Optional[float] = None,
         media_options: Optional[List[str]] = None,
         gain_db: Optional[float] = None,
+        metadata: Optional[Dict[str, str]] = None,
     ) -> None:
         """
         Push ``uri`` onto Liquidsoap's request queue.
 
-        ``cue_in`` / ``cue_out`` / ``gain_db`` are encoded as
-        Liquidsoap ``annotate:`` attributes — the .liq script reads
-        them with ``request.queue`` (cue handling) and ``amplify(
-        override="replaygain_track_gain", …)`` (gain handling).
+        ``cue_in`` / ``cue_out`` / ``gain_db`` / ``metadata`` are all
+        encoded as Liquidsoap ``annotate:`` attributes — the .liq
+        script reads them with ``request.queue`` (cue handling),
+        ``amplify(override="replaygain_track_gain", …)`` (gain
+        handling), and Liquidsoap's built-in metadata propagation
+        (which ships ``title`` / ``artist`` / etc. through to every
+        ``output.icecast`` block automatically).
 
         ``media_options`` is accepted for interface compatibility but
         ignored: Liquidsoap takes HTTP auth from the URI's userinfo,
@@ -171,12 +175,17 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
         contained failure that the next play() attempt can recover
         from.
         """
+        meta_summary = (
+            ",".join(f"{k}={v!r}" for k, v in (metadata or {}).items())
+            if metadata else "none"
+        )
         logger.info(
-            "Liquidsoap play: uri=%s cue_in=%.2fs cue_out=%s gain=%s",
+            "Liquidsoap play: uri=%s cue_in=%.2fs cue_out=%s gain=%s meta=%s",
             self._redact(uri),
             cue_in,
             f"{cue_out:.2f}s" if cue_out is not None else "natural",
             f"{gain_db:+.2f}dB" if gain_db else "none",
+            meta_summary,
         )
 
         self._current_uri = uri
@@ -188,6 +197,7 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
                 cue_in=cue_in,
                 cue_out=cue_out,
                 gain_db=gain_db,
+                metadata=metadata,
             )
             response = self._telnet.request_queue_push(wrapped)
             self._current_request_id = self._extract_request_id(response)
@@ -306,24 +316,26 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
         cue_in: float,
         cue_out: Optional[float],
         gain_db: Optional[float],
+        metadata: Optional[Dict[str, str]] = None,
     ) -> str:
         """
         Wrap ``uri`` in a Liquidsoap ``annotate:`` envelope encoding
-        the cue points + replay-gain.  If no annotations are needed
-        the bare URI (with file:// normalisation applied) is returned
-        as-is — avoids extra parser work in Liquidsoap.
+        the cue points + replay-gain + ICY-metadata.  If no
+        annotations are needed the bare URI (with file:// normalisation
+        applied) is returned as-is — avoids extra parser work in
+        Liquidsoap.
 
         Examples::
 
-            >>> _build_annotate_uri("file:///x.mp3", cue_in=0, cue_out=None, gain_db=None)
+            >>> _build_annotate_uri("file:///x.mp3", cue_in=0,
+            ...                     cue_out=None, gain_db=None)
             'file:///x.mp3'
 
-            >>> _build_annotate_uri("file:///x.mp3", cue_in=0.5,
-            ...                     cue_out=180.0, gain_db=-5.95)
-            'annotate:cue_in="0.50",cue_out="180.00",replaygain_track_gain="-5.95 dB":file:///x.mp3'
-
-            >>> _build_annotate_uri("C:\\\\rastatime\\\\580.mp3", ...)
-            'annotate:...:file:///C:/rastatime/580.mp3'
+            >>> _build_annotate_uri(
+            ...   "file:///x.mp3", cue_in=0.5, cue_out=180.0,
+            ...   gain_db=-5.95,
+            ...   metadata={"title": "Song", "artist": "Band"})
+            'annotate:cue_in="0.50",cue_out="180.00",replaygain_track_gain="-5.95 dB",title="Song",artist="Band":file:///x.mp3'
         """
         normalised = cls._normalise_uri(uri)
 
@@ -340,10 +352,37 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
                 f'replaygain_track_gain="{gain_db:+.2f} dB"'
             )
 
+        # ICY-metadata fields — Liquidsoap propagates these to all
+        # output.icecast blocks automatically.  Empty values and the
+        # None entries skipped silently so callers can pass dicts
+        # that contain ``None`` for missing fields (common in Pypo,
+        # e.g. a track with no artist tag).
+        if metadata:
+            for key, value in metadata.items():
+                if value is None or value == "":
+                    continue
+                annotations.append(
+                    f'{key}="{cls._escape_annotate_value(str(value))}"'
+                )
+
         if not annotations:
             return normalised
 
         return f"annotate:{','.join(annotations)}:{normalised}"
+
+    @staticmethod
+    def _escape_annotate_value(value: str) -> str:
+        """
+        Escape a metadata value for inclusion in
+        ``annotate:key="..."`` syntax.  Liquidsoap's parser handles
+        ``\\"`` and ``\\\\`` inside the double-quoted string.
+
+        Identical semantics to
+        :meth:`LiquidsoapTelnetClient._escape_value` — kept as a
+        separate method here so the engine doesn't have to reach into
+        the telnet-client internals.
+        """
+        return value.replace("\\", "\\\\").replace('"', '\\"')
 
     @staticmethod
     def _normalise_uri(uri: str) -> str:
