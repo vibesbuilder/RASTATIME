@@ -159,10 +159,12 @@ ${ICECAST_OUTPUTS}
 # ---------------------------------------------------------------------
 # Local monitor — what the operator hears at the studio speakers.
 # Rendered by libretime_playout.liquidsoap_config based on the
-# RASTATIME_LIQUIDSOAP_LOCAL_OUTPUT env-var (default true on Windows;
-# operator can disable for headless server installs).
-# Static WASAPI default-device is the current default — runtime
-# device switching from the Dashboard is a Phase-D follow-up.
+# RASTATIME_LIQUIDSOAP_LOCAL_OUTPUT env-var (default true; operator
+# can disable for headless server installs).
+# Uses output.portaudio (cross-platform) — the savonet Windows build
+# of Liquidsoap 2.4.4 does NOT ship output.wasapi, so portaudio is
+# the natural choice for a Windows soundcard sink.  Runtime device
+# switching from the Dashboard is a Phase-D follow-up.
 # ---------------------------------------------------------------------
 ${LOCAL_OUTPUT_BLOCK}
 

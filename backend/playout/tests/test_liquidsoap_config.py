@@ -215,30 +215,30 @@ def test_full_render_defaults():
     # Phase-C6: crossfade + amplify on the bus
     assert "crossfade(duration=2.0, bus)" in out
     assert 'amplify(override="replaygain_track_gain", 1., bus)' in out
-    # Default: local soundcard output is enabled
-    assert "output.wasapi(" in out
+    # Default: local soundcard output is enabled via portaudio
+    assert "output.portaudio(" in out
 
 
 def test_full_render_local_output_disabled():
-    """RASTATIME_LIQUIDSOAP_LOCAL_OUTPUT=false → no output.wasapi block."""
+    """RASTATIME_LIQUIDSOAP_LOCAL_OUTPUT=false → no output.portaudio block."""
     out = lc.render_rastatime_liq([_stream()], local_output_enabled=False)
     # Marker comment shows the operator deliberately turned it off.
     assert "local output disabled" in out
-    # And no active output.wasapi() call (template docs mention the
+    # And no active output.portaudio() call (template docs mention the
     # operator name in comments — only uncommented lines matter).
     for line in out.splitlines():
         stripped = line.lstrip()
         if stripped.startswith("#"):
             continue
-        assert "output.wasapi(" not in stripped, (
-            f"Unexpected active output.wasapi line: {line!r}"
+        assert "output.portaudio(" not in stripped, (
+            f"Unexpected active output.portaudio line: {line!r}"
         )
 
 
 def test_full_render_local_output_enabled_explicitly():
-    """Explicit local_output_enabled=True renders output.wasapi + fallible=true."""
+    """Explicit local_output_enabled=True renders output.portaudio + fallible=true."""
     out = lc.render_rastatime_liq([_stream()], local_output_enabled=True)
-    assert "output.wasapi(" in out
+    assert "output.portaudio(" in out
     assert "fallible=true" in out
 
 

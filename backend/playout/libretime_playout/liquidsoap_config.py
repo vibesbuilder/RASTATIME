@@ -278,10 +278,20 @@ def _format_crossfade_duration(value: float) -> str:
 def _render_local_output_block(enabled: bool) -> str:
     """
     Render the local soundcard output block.  When enabled, emits a
-    Liquidsoap ``output.wasapi`` call that plays the bus to the OS-
-    default Windows audio endpoint.  When disabled, emits a single
-    comment line so the operator can grep + see it was deliberately
-    turned off (avoiding "the line just vanished" confusion).
+    Liquidsoap ``output.portaudio`` call that plays the bus to the
+    OS-default audio endpoint via PortAudio (cross-platform; on
+    Windows that's a WASAPI/DirectSound device).  When disabled,
+    emits a single comment line so the operator can grep + see it
+    was deliberately turned off (avoiding "the line just vanished"
+    confusion).
+
+    Why portaudio and not wasapi: the Phase-C8 reality-test
+    2026-05-26 showed the savonet Liquidsoap 2.4.4 Windows build
+    does NOT ship ``output.wasapi`` — ``--list-functions | Select-String
+    "^output\\."`` only listed ``output.portaudio``, ``output.ao``,
+    ``output.audio_video`` and ``output.external`` as local audio
+    sinks.  portaudio is the most natural choice for a Windows-only
+    deployment.
 
     Why fallible=true: if the audio endpoint disappears at runtime
     (USB device unplugged, audio service restart) we want Liquidsoap
@@ -290,10 +300,10 @@ def _render_local_output_block(enabled: bool) -> str:
     """
     if enabled:
         return (
-            "output.wasapi(\n"
+            "output.portaudio(\n"
             "  fallible=true,\n"
             "  bus,\n"
-            ")  # local soundcard monitor (Windows default device)\n"
+            ")  # local soundcard monitor (PortAudio default device)\n"
         )
     return (
         "# (local output disabled via RASTATIME_LIQUIDSOAP_LOCAL_OUTPUT=false)\n"
