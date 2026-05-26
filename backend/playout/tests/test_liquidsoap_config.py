@@ -94,6 +94,13 @@ def test_render_ogg_block_uses_vorbis_codec():
     assert 'format="ogg"' in out
 
 
+def test_render_opus_block_uses_opus_codec_in_ogg():
+    """Opus is libopus codec in an ogg container (matches FfmpegStreamer)."""
+    out = lc._render_icecast_block(_stream(type_="opus"))
+    assert 'codec="libopus"' in out
+    assert 'format="ogg"' in out
+
+
 def test_render_unknown_type_raises():
     with pytest.raises(ValueError) as exc:
         lc._render_icecast_block(_stream(type_="flac"))

@@ -88,12 +88,16 @@ DEFAULT_CROSSFADE_DURATION = 2.0
 # existing FfmpegStreamer can emit — keeps the operator's listener-side
 # URLs unchanged when migrating from FFmpeg to Liquidsoap output.
 _ENCODER_FOR_TYPE = {
-    # FFmpeg-format string for output.icecast.  All three use the
+    # FFmpeg-format string for output.icecast.  All four use the
     # %ffmpeg encoder so the binary build only needs FFmpeg libraries
-    # (which the operator already validated in Phase A).
-    "mp3":  '%ffmpeg(format="mp3", %audio(codec="libmp3lame", b="${BITRATE}k"))',
-    "aac":  '%ffmpeg(format="adts", %audio(codec="aac", b="${BITRATE}k"))',
-    "ogg":  '%ffmpeg(format="ogg", %audio(codec="libvorbis", b="${BITRATE}k"))',
+    # (which the operator already validated in Phase A).  Matches the
+    # cc_pref.stream_output_N "type" values FfmpegStreamer accepts
+    # in the legacy mpv/VLC path — see _FFMPEG_CODEC_MAP in
+    # ffmpeg_streamer.py for the parallel mapping.
+    "mp3":  '%ffmpeg(format="mp3",  %audio(codec="libmp3lame", b="${BITRATE}k"))',
+    "aac":  '%ffmpeg(format="adts", %audio(codec="aac",        b="${BITRATE}k"))',
+    "ogg":  '%ffmpeg(format="ogg",  %audio(codec="libvorbis",  b="${BITRATE}k"))',
+    "opus": '%ffmpeg(format="ogg",  %audio(codec="libopus",    b="${BITRATE}k"))',
 }
 
 
