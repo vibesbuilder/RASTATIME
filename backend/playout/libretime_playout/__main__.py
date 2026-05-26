@@ -488,6 +488,14 @@ def main() -> None:
     # users can change Stream 1/2/3 in the Frontend and the running playout
     # picks up the changes within one poll cycle, no service restart.
     read_streams = _read_stream_outputs if django_ok else None
+    # RASTATIME 2026-05-26 — Seamless-Bus-Mix Phase C7 follow-up.
+    # When the Liquidsoap engine is active, Liquidsoap owns the
+    # Icecast PUTs entirely (one persistent stream per mount in the
+    # rendered rastatime.liq).  Tell the scheduler NOT to spawn the
+    # legacy FfmpegStreamer subprocesses — they would fight Liquidsoap
+    # for the same mounts and lose with 403 "mount taken".
+    streaming_handled_externally = (engine_kind == "liquidsoap")
+
     scheduler = PlayoutScheduler(
         engine=engine,
         api_client=api_client,
@@ -495,6 +503,7 @@ def main() -> None:
         storage_path=storage_path,
         stream_outputs=stream_outputs,
         read_stream_outputs=read_streams,
+        streaming_handled_externally=streaming_handled_externally,
     )
 
     # Listener credentials for relaying /main and /show into the

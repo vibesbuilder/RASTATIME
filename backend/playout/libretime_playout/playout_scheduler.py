@@ -89,6 +89,7 @@ class PlayoutScheduler:
         stream_outputs: Optional[List[Dict]] = None,
         api_client_v1: Optional["object"] = None,
         read_stream_outputs: Optional[Callable[[], List[Dict]]] = None,
+        streaming_handled_externally: bool = False,
     ) -> None:
         self._engine = engine
         self._api_client = api_client
@@ -138,6 +139,18 @@ class PlayoutScheduler:
         self._read_stream_outputs = read_stream_outputs
         self._current_stream_configs: List[Dict] = list(stream_outputs or [])
 
+        # RASTATIME 2026-05-26 — Seamless-Bus-Mix Phase C7 follow-up.
+        # When the Liquidsoap engine is active, Liquidsoap itself owns
+        # the Icecast PUTs (one persistent stream per mount + per codec
+        # in rastatime.liq), and the legacy FfmpegStreamer subprocesses
+        # would fight Liquidsoap for the same mounts and lose (403
+        # "mount taken").  ``streaming_handled_externally=True`` skips
+        # both the initial FfmpegStreamer instantiation AND the
+        # hot-reload rebuild — the streamer list stays empty, so
+        # _start_streamers / _stop_streamers / _start_streamers (which
+        # all iterate over self._streamers) silently no-op.
+        self._streaming_handled_externally = streaming_handled_externally
+
         # Source-switcher integration.  Set by __main__ via
         # ``set_source_switcher``.  When non-None and reporting a state
         # other than SCHEDULED, scheduled track-start/stop callbacks
@@ -155,21 +168,33 @@ class PlayoutScheduler:
         self._listener_user = ""
         self._listener_pass = ""
 
-        # FFmpeg streamers — one per enabled Icecast stream output
+        # FFmpeg streamers — one per enabled Icecast stream output.
+        # Skipped entirely when streaming_handled_externally=True
+        # (Liquidsoap engine takes care of all three Icecast mounts
+        # from inside rastatime.liq); see Phase C7 wire-up in
+        # __main__.py.
         self._streamers: List[FfmpegStreamer] = []
-        for cfg in self._current_stream_configs:
-            try:
-                streamer = FfmpegStreamer(cfg)
-                self._streamers.append(streamer)
-            except RuntimeError as exc:
-                logger.error("Could not create FfmpegStreamer: %s", exc)
-        if self._streamers:
+        if self._streaming_handled_externally:
             logger.info(
-                "PlayoutScheduler: %d FFmpeg streamer(s) ready for Icecast.",
-                len(self._streamers),
+                "PlayoutScheduler: streaming handled externally — "
+                "FFmpeg streamers SKIPPED (%d cc_pref output(s) "
+                "delegated to the Liquidsoap subprocess).",
+                len(self._current_stream_configs),
             )
         else:
-            logger.info("PlayoutScheduler: no Icecast streamers — local playback only.")
+            for cfg in self._current_stream_configs:
+                try:
+                    streamer = FfmpegStreamer(cfg)
+                    self._streamers.append(streamer)
+                except RuntimeError as exc:
+                    logger.error("Could not create FfmpegStreamer: %s", exc)
+            if self._streamers:
+                logger.info(
+                    "PlayoutScheduler: %d FFmpeg streamer(s) ready for Icecast.",
+                    len(self._streamers),
+                )
+            else:
+                logger.info("PlayoutScheduler: no Icecast streamers — local playback only.")
 
         # RASTATIME 2026-05-12 — Phase B Line-In capture.
         #
@@ -1571,6 +1596,15 @@ class PlayoutScheduler:
         so listeners hear at most a brief reconnect on the new mountpoint.
         """
         if self._read_stream_outputs is None:
+            return
+
+        # When Liquidsoap owns the Icecast PUTs, cc_pref changes apply
+        # only after the operator manually re-renders rastatime.liq +
+        # restarts the NSSM service (see __main__._render_rastatime_liq_at_startup).
+        # Pypo's hot-reload path here would rebuild FfmpegStreamer
+        # subprocesses that fight Liquidsoap for the same mounts — so
+        # we skip the whole rebuild.
+        if self._streaming_handled_externally:
             return
 
         try:
