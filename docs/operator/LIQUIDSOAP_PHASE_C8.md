@@ -50,12 +50,13 @@ nssm status RASTATIME-LIQUIDSOAP
 
 ## Schritt 2 — Pypo im Liquidsoap-Modus starten → rendert .liq
 
-Im **normalen User-Terminal** (kein Admin):
+Im **normalen User-Terminal** (kein Admin).  **Wichtig: die
+Pypo-venv-Python-Executable verwenden, nicht das System-Python**
+— sonst kommt `No module named libretime_playout`:
 
 ```powershell
 $env:RASTATIME_PLAYOUT_ENGINE = "liquidsoap"
-cd C:\rastatime
-python -m libretime_playout
+C:\rastatime\.venv\Scripts\python.exe -m libretime_playout
 ```
 
 **Erwarteter Log-Output:**
