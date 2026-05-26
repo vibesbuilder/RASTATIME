@@ -71,6 +71,7 @@ from __future__ import annotations
 import logging
 import os
 import re
+import threading
 from typing import Dict, List, Optional
 
 from .interface import PlayoutEngine, PlayoutState
@@ -83,6 +84,18 @@ logger = logging.getLogger(__name__)
 # at the very start of the URI argument, so we can detect a Windows
 # drive-letter path that needs ``file:///`` wrapping.
 _WINDOWS_DRIVE_RE = re.compile(r"^[A-Za-z]:[\\/]")
+
+
+# How long Engine.stop() waits before it actually skips on Liquidsoap.
+# If play() comes within this window with the SAME URI, both calls
+# collapse to a no-op (Pypo's catch-up pattern can fire stop+play for
+# the same track 2-3 times in quick succession; without de-dup
+# Liquidsoap would crossfade between two copies of the same file).
+# 0.5 s is long enough to swallow the catch-up triple-bounce we saw
+# in the C8 reality-test, short enough that a DJ-source-takeover
+# (which legitimately stops the queue without a follow-up play)
+# doesn't hold up the silence-fallback noticeably.
+_DEFERRED_STOP_SECONDS = 0.5
 
 
 class LiquidsoapPlayoutEngine(PlayoutEngine):
@@ -116,6 +129,18 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
         self._state = PlayoutState.STOPPED
         self._current_uri: Optional[str] = None
         self._current_request_id: Optional[str] = None
+
+        # Deferred-stop machinery (Phase-C8 follow-up): stop() doesn't
+        # immediately send `scheduled.skip` to Liquidsoap — it only
+        # marks the intent + arms a short timer.  play() within the
+        # _DEFERRED_STOP_SECONDS window either cancels the skip (same
+        # URI, idempotent re-issue) or flushes it (different URI, real
+        # track change).  All mutations to these fields happen under
+        # self._stop_lock so a Pypo stop+play+catch-up burst doesn't
+        # race with the timer thread's flush.
+        self._stop_lock = threading.Lock()
+        self._stop_requested = False
+        self._stop_timer: Optional[threading.Timer] = None
 
         # Telnet client to Liquidsoap.  Connection is lazy — first
         # send_command opens the socket.  Allows the scheduler to
@@ -179,6 +204,41 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
             ",".join(f"{k}={v!r}" for k, v in (metadata or {}).items())
             if metadata else "none"
         )
+
+        # Deferred-stop idempotency (Phase-C8 follow-up).  Pypo's
+        # catch-up flow can call stop()+play() for the SAME URI two or
+        # three times within a few hundred ms when the schedule API
+        # re-identifies an in-progress event.  If we see a pending stop
+        # for what would be a re-issue of the currently-playing track,
+        # cancel both the deferred skip AND skip the new push — the
+        # track keeps playing uninterrupted on the Liquidsoap side.
+        with self._stop_lock:
+            if self._stop_timer is not None:
+                self._stop_timer.cancel()
+                self._stop_timer = None
+            if (
+                self._stop_requested
+                and uri == self._current_uri
+                and self._state == PlayoutState.PLAYING
+            ):
+                self._stop_requested = False
+                logger.debug(
+                    "Liquidsoap play: idempotent re-issue for %s — "
+                    "cancelling pending stop, keeping current track.",
+                    self._redact(uri),
+                )
+                return
+            # Different URI (or first play): flush any pending stop NOW
+            # so Liquidsoap can switch cleanly.
+            if self._stop_requested:
+                self._stop_requested = False
+                try:
+                    self._telnet.request_queue_skip()
+                except Exception as exc:  # pylint: disable=broad-exception-caught
+                    logger.warning(
+                        "Liquidsoap deferred-stop skip failed: %s", exc,
+                    )
+
         logger.info(
             "Liquidsoap play: uri=%s cue_in=%.2fs cue_out=%s gain=%s meta=%s",
             self._redact(uri),
@@ -233,23 +293,51 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
 
     def stop(self) -> None:
         """
-        Skip whatever Liquidsoap is currently playing — that drops
-        back to the request.queue silence-on-empty default, which
-        in our .liq script is wired to a silent ``blank()`` fallback
-        so the Icecast PUT stays connected but quiet.
+        Defer the skip-on-Liquidsoap by _DEFERRED_STOP_SECONDS so a
+        subsequent play() within the window can either cancel it (same
+        URI = catch-up idempotency, see :meth:`play`) or flush it (URI
+        change = real track-transition).  If no play() arrives, a
+        Timer thread flushes the skip eventually so DJ-takeover-style
+        stops still take effect.
 
-        Idempotent: calling on an already-empty queue is harmless
-        (Liquidsoap replies "Done" or similar).
+        The legacy mpv/VLC engines do an immediate hard-stop because
+        they own the audio path; with Liquidsoap the queue + crossfade
+        operators handle gapless transitions natively and an aggressive
+        skip-then-push produces an audible glitch (Phase-C8 reality-
+        test 2026-05-26 found this).
         """
-        logger.info("Liquidsoap stop")
+        logger.info("Liquidsoap stop (deferred up to %.1fs)", _DEFERRED_STOP_SECONDS)
+        with self._stop_lock:
+            self._stop_requested = True
+            if self._stop_timer is not None:
+                self._stop_timer.cancel()
+            self._stop_timer = threading.Timer(
+                _DEFERRED_STOP_SECONDS, self._flush_pending_stop,
+            )
+            self._stop_timer.daemon = True
+            self._stop_timer.start()
+
+    def _flush_pending_stop(self) -> None:
+        """
+        Timer-thread callback: actually send the deferred skip to
+        Liquidsoap.  No-op if play() already cancelled the stop.
+        """
+        with self._stop_lock:
+            if not self._stop_requested:
+                return
+            self._stop_requested = False
+            self._stop_timer = None
+        # Outside the lock to keep the lock-window tiny.
         try:
             self._telnet.request_queue_skip()
+            logger.debug("Liquidsoap deferred-stop flushed.")
         except Exception as exc:  # pylint: disable=broad-exception-caught
-            # Stop on an already-stopped/disconnected client should not
-            # crash the scheduler.  Demote to warning — losing the skip
-            # only means the current track plays to its natural end,
-            # which is annoying but not catastrophic.
-            logger.warning("Liquidsoap stop telnet error: %s", exc)
+            logger.warning(
+                "Liquidsoap deferred-stop telnet error: %s", exc,
+            )
+        # Clear playback state only after the actual skip — keeping
+        # _current_uri intact during the deferral window is what lets
+        # play() detect the idempotent re-issue.
         self._state = PlayoutState.STOPPED
         self._current_uri = None
         self._current_request_id = None
@@ -273,7 +361,25 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
         Close the telnet connection.  Does NOT terminate the
         Liquidsoap subprocess — that's NSSM's job (see
         ``nssm-install-liquidsoap.ps1``).
+
+        Flushes any pending deferred-stop synchronously first so the
+        running track is actually skipped at shutdown (otherwise it
+        would play on after the Python process exits — Liquidsoap's
+        queue lives in the long-running subprocess, not in Python).
         """
+        with self._stop_lock:
+            if self._stop_timer is not None:
+                self._stop_timer.cancel()
+                self._stop_timer = None
+            had_pending = self._stop_requested
+            self._stop_requested = False
+        if had_pending:
+            try:
+                self._telnet.request_queue_skip()
+            except Exception as exc:  # pylint: disable=broad-exception-caught
+                logger.warning(
+                    "Liquidsoap close: flushing pending stop failed: %s", exc,
+                )
         try:
             self._telnet.close()
         except Exception as exc:  # pylint: disable=broad-exception-caught

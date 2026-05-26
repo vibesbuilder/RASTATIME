@@ -260,6 +260,10 @@ def _render_rastatime_liq_at_startup(stream_outputs: List[Dict]) -> None:
             exc,
         )
         sys.exit(1)
+    local_output_enabled = (
+        os.environ.get("RASTATIME_LIQUIDSOAP_LOCAL_OUTPUT", "true").lower()
+        not in ("false", "0", "no", "off")
+    )
 
     # Parent dir must exist — we don't auto-create it because the
     # operator's NSSM-install script makes the standard tree, and
@@ -282,6 +286,7 @@ def _render_rastatime_liq_at_startup(stream_outputs: List[Dict]) -> None:
             telnet_port=telnet_port,
             log_file=log_path,
             crossfade_duration=crossfade,
+            local_output_enabled=local_output_enabled,
         )
     except Exception as exc:  # pylint: disable=broad-exception-caught
         logger.critical(

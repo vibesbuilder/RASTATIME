@@ -200,6 +200,7 @@ def test_full_render_defaults():
     assert "${LOG_FILE}" not in out
     assert "${ICECAST_OUTPUTS}" not in out
     assert "${CROSSFADE_DURATION}" not in out
+    assert "${LOCAL_OUTPUT_BLOCK}" not in out
     # Defaults applied
     assert '"127.0.0.1"' in out
     assert "telnet.port.set(1234)" in out
@@ -214,6 +215,31 @@ def test_full_render_defaults():
     # Phase-C6: crossfade + amplify on the bus
     assert "crossfade(duration=2.0, bus)" in out
     assert 'amplify(override="replaygain_track_gain", 1., bus)' in out
+    # Default: local soundcard output is enabled
+    assert "output.wasapi(" in out
+
+
+def test_full_render_local_output_disabled():
+    """RASTATIME_LIQUIDSOAP_LOCAL_OUTPUT=false → no output.wasapi block."""
+    out = lc.render_rastatime_liq([_stream()], local_output_enabled=False)
+    # Marker comment shows the operator deliberately turned it off.
+    assert "local output disabled" in out
+    # And no active output.wasapi() call (template docs mention the
+    # operator name in comments — only uncommented lines matter).
+    for line in out.splitlines():
+        stripped = line.lstrip()
+        if stripped.startswith("#"):
+            continue
+        assert "output.wasapi(" not in stripped, (
+            f"Unexpected active output.wasapi line: {line!r}"
+        )
+
+
+def test_full_render_local_output_enabled_explicitly():
+    """Explicit local_output_enabled=True renders output.wasapi + fallible=true."""
+    out = lc.render_rastatime_liq([_stream()], local_output_enabled=True)
+    assert "output.wasapi(" in out
+    assert "fallible=true" in out
 
 
 def test_full_render_custom_telnet_and_log():
@@ -364,6 +390,7 @@ def test_template_has_all_expected_placeholders():
         "${TELNET_PORT}",
         "${LOG_FILE}",
         "${CROSSFADE_DURATION}",
+        "${LOCAL_OUTPUT_BLOCK}",
         "${ICECAST_OUTPUTS}",
     ):
         assert placeholder in text, (

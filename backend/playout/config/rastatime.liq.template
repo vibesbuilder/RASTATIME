@@ -23,6 +23,11 @@
 #                                   crossfade(duration=..., bus).
 #                                   Operator can set this from
 #                                   cc_pref.default_crossfade_seconds.
+#   {LOCAL_OUTPUT_BLOCK}            either output.wasapi(fallible=true, bus)
+#                                   for soundcard monitoring, or a
+#                                   commented stub.  Toggled via
+#                                   RASTATIME_LIQUIDSOAP_LOCAL_OUTPUT
+#                                   (default true on Windows).
 #   {ICECAST_OUTPUTS}               rendered output.icecast(...) blocks,
 #                                   one per stream_output_N entry in
 #                                   cc_pref that is enabled=true.
@@ -153,10 +158,13 @@ ${ICECAST_OUTPUTS}
 
 # ---------------------------------------------------------------------
 # Local monitor — what the operator hears at the studio speakers.
-# Currently NOT wired in C3 — mpv handles local monitoring in the
-# legacy code path, and Liquidsoap's output.portaudio /
-# output.wasapi mapping is a Phase-D follow-up.
+# Rendered by libretime_playout.liquidsoap_config based on the
+# RASTATIME_LIQUIDSOAP_LOCAL_OUTPUT env-var (default true on Windows;
+# operator can disable for headless server installs).
+# Static WASAPI default-device is the current default — runtime
+# device switching from the Dashboard is a Phase-D follow-up.
 # ---------------------------------------------------------------------
+${LOCAL_OUTPUT_BLOCK}
 
 # ---------------------------------------------------------------------
 # Phase-C5 will add the recording output here:

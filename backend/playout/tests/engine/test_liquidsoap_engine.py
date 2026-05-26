@@ -347,31 +347,110 @@ def test_play_error_response_flips_state_to_error():
     assert eng._current_request_id is None
 
 
-def test_stop_sends_request_queue_skip():
-    """stop() calls request_queue_skip() once."""
+def test_stop_defers_request_queue_skip():
+    """
+    stop() does NOT send skip immediately — it defers up to
+    _DEFERRED_STOP_SECONDS so a follow-up play() with the same URI can
+    cancel it (catch-up idempotency).
+    """
     eng, telnet = _make_engine_with_mock()
-    eng.play("file:///x.mp3")  # PLAYING
-    eng.stop()
-    telnet.request_queue_skip.assert_called_once_with()
-
-
-def test_stop_transitions_to_stopped():
-    """stop() flips state back to STOPPED and clears current uri."""
-    eng, _ = _make_engine_with_mock()
     eng.play("file:///x.mp3")
+    telnet.request_queue_skip.reset_mock()
     eng.stop()
+    # Right after stop() returns: NO skip on the wire yet.
+    telnet.request_queue_skip.assert_not_called()
+    assert eng._stop_requested is True
+
+
+def test_stop_flushed_by_timer_after_window():
+    """
+    If no play() comes within _DEFERRED_STOP_SECONDS, the timer
+    eventually flushes the skip.
+    """
+    import time
+    from libretime_playout.engine.liquidsoap_engine import _DEFERRED_STOP_SECONDS
+    eng, telnet = _make_engine_with_mock()
+    eng.play("file:///x.mp3")
+    telnet.request_queue_skip.reset_mock()
+    eng.stop()
+    # Wait past the deferral window plus a small grace period.
+    time.sleep(_DEFERRED_STOP_SECONDS + 0.3)
+    telnet.request_queue_skip.assert_called_once_with()
     assert eng.get_state() == PlayoutState.STOPPED
     assert eng._current_uri is None
-    assert eng._current_request_id is None
+
+
+def test_stop_then_play_same_uri_is_idempotent():
+    """
+    Pypo's catch-up pattern: stop() then play() for the SAME URI
+    within the deferral window.  Both calls collapse — no skip,
+    no second push, track keeps playing on Liquidsoap.
+    """
+    eng, telnet = _make_engine_with_mock()
+    eng.play("file:///x.mp3")  # PLAYING
+    telnet.reset_mock()
+    eng.stop()
+    eng.play("file:///x.mp3")  # same URI, within window
+    # Neither skip nor a second push hit the wire.
+    telnet.request_queue_skip.assert_not_called()
+    telnet.request_queue_push.assert_not_called()
+    # State remained PLAYING.
+    assert eng.get_state() == PlayoutState.PLAYING
+    assert eng._current_uri == "file:///x.mp3"
+
+
+def test_stop_then_play_different_uri_flushes_skip_then_pushes():
+    """
+    Real track transition: stop() then play() for a DIFFERENT URI.
+    Skip is flushed immediately (no wait for the deferral timer),
+    then the new track pushed.
+    """
+    eng, telnet = _make_engine_with_mock()
+    eng.play("file:///old.mp3")
+    telnet.reset_mock()
+    telnet.request_queue_push.return_value = "42"
+    eng.stop()
+    eng.play("file:///new.mp3")
+    # Skip was flushed before the new push.
+    telnet.request_queue_skip.assert_called_once_with()
+    # file:///new.mp3 has no Windows-drive after the prefix, so the
+    # normaliser leaves it as 3-slash (the rewrite branch only triggers
+    # for real Windows drive paths like file:///C:/...).
+    telnet.request_queue_push.assert_called_once_with("file:///new.mp3")
+    assert eng.get_state() == PlayoutState.PLAYING
+    assert eng._current_uri == "file:///new.mp3"
 
 
 def test_stop_handles_telnet_error_without_raising():
-    """ConnectionError from telnet in stop() — state still flips, no raise."""
+    """
+    ConnectionError from telnet during the timer-driven flush — must
+    not propagate out of the timer thread.  We trigger the flush
+    synchronously by calling _flush_pending_stop after stop().
+    """
     eng, telnet = _make_engine_with_mock()
     eng.play("file:///x.mp3")
     telnet.request_queue_skip.side_effect = ConnectionError("ls dead")
-    eng.stop()  # must not raise
+    eng.stop()
+    # Cancel the real timer + run the flush inline so the test doesn't
+    # have to sleep.
+    if eng._stop_timer is not None:
+        eng._stop_timer.cancel()
+    eng._flush_pending_stop()
     assert eng.get_state() == PlayoutState.STOPPED
+
+
+def test_close_flushes_pending_stop():
+    """
+    close() during a deferred-stop window flushes the skip
+    synchronously so the running track stops at shutdown.
+    """
+    eng, telnet = _make_engine_with_mock()
+    eng.play("file:///x.mp3")
+    telnet.reset_mock()
+    eng.stop()  # pending stop armed
+    eng.close()
+    telnet.request_queue_skip.assert_called_once_with()
+    telnet.close.assert_called_once_with()
 
 
 # ---- close() ------------------------------------------------------------

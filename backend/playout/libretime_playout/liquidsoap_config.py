@@ -77,6 +77,12 @@ DEFAULT_LOG_FILE = "C:/rastatime/logs/liquidsoap.log"
 # crossfades entirely.
 DEFAULT_CROSSFADE_DURATION = 2.0
 
+# Whether to emit a Liquidsoap output to the local soundcard.  On the
+# Windows-only RASTATIME deployment this is `output.wasapi`, defaulting
+# to the OS-default audio endpoint.  Set RASTATIME_LIQUIDSOAP_LOCAL_OUTPUT=false
+# for headless server installs that don't want a soundcard output.
+DEFAULT_LOCAL_OUTPUT_ENABLED = True
+
 
 # ---------------------------------------------------------------------
 # Liquidsoap codec encoders per stream type
@@ -269,6 +275,31 @@ def _format_crossfade_duration(value: float) -> str:
     return text
 
 
+def _render_local_output_block(enabled: bool) -> str:
+    """
+    Render the local soundcard output block.  When enabled, emits a
+    Liquidsoap ``output.wasapi`` call that plays the bus to the OS-
+    default Windows audio endpoint.  When disabled, emits a single
+    comment line so the operator can grep + see it was deliberately
+    turned off (avoiding "the line just vanished" confusion).
+
+    Why fallible=true: if the audio endpoint disappears at runtime
+    (USB device unplugged, audio service restart) we want Liquidsoap
+    to log and retry, not crash the whole subprocess and drop the
+    Icecast PUTs.
+    """
+    if enabled:
+        return (
+            "output.wasapi(\n"
+            "  fallible=true,\n"
+            "  bus,\n"
+            ")  # local soundcard monitor (Windows default device)\n"
+        )
+    return (
+        "# (local output disabled via RASTATIME_LIQUIDSOAP_LOCAL_OUTPUT=false)\n"
+    )
+
+
 def render_rastatime_liq(
     stream_outputs: List[Dict],
     *,
@@ -276,6 +307,7 @@ def render_rastatime_liq(
     telnet_port: int = DEFAULT_TELNET_PORT,
     log_file: str = DEFAULT_LOG_FILE,
     crossfade_duration: float = DEFAULT_CROSSFADE_DURATION,
+    local_output_enabled: bool = DEFAULT_LOCAL_OUTPUT_ENABLED,
     template_path: Optional[Path] = None,
 ) -> str:
     """
@@ -324,6 +356,10 @@ def render_rastatime_liq(
             "${CROSSFADE_DURATION}",
             _format_crossfade_duration(crossfade_duration),
         )
+        .replace(
+            "${LOCAL_OUTPUT_BLOCK}",
+            _render_local_output_block(local_output_enabled),
+        )
         .replace("${ICECAST_OUTPUTS}", icecast_blocks)
     )
     return rendered
@@ -337,6 +373,7 @@ def write_rastatime_liq(
     telnet_port: int = DEFAULT_TELNET_PORT,
     log_file: str = DEFAULT_LOG_FILE,
     crossfade_duration: float = DEFAULT_CROSSFADE_DURATION,
+    local_output_enabled: bool = DEFAULT_LOCAL_OUTPUT_ENABLED,
     template_path: Optional[Path] = None,
 ) -> bool:
     """
@@ -360,6 +397,7 @@ def write_rastatime_liq(
         telnet_port=telnet_port,
         log_file=log_file,
         crossfade_duration=crossfade_duration,
+        local_output_enabled=local_output_enabled,
         template_path=template_path,
     )
 
@@ -485,6 +523,16 @@ def main(argv: Optional[List[str]] = None) -> int:
             f"(default {DEFAULT_CROSSFADE_DURATION}, 0 disables)."
         ),
     )
+    render.add_argument(
+        "--local-output", dest="local_output_enabled",
+        action="store_true", default=DEFAULT_LOCAL_OUTPUT_ENABLED,
+        help="Enable output.wasapi to OS-default soundcard (default).",
+    )
+    render.add_argument(
+        "--no-local-output", dest="local_output_enabled",
+        action="store_false",
+        help="Skip the soundcard output (headless server install).",
+    )
 
     args = parser.parse_args(argv)
 
@@ -510,6 +558,7 @@ def main(argv: Optional[List[str]] = None) -> int:
             telnet_port=args.telnet_port,
             log_file=args.log_file,
             crossfade_duration=args.crossfade_duration,
+            local_output_enabled=args.local_output_enabled,
         )
         if changed:
             logger.info(
