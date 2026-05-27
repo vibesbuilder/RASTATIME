@@ -240,7 +240,9 @@ last_opened_recording_path = ref("")
 
 def recording_should_reopen() =
   cur = recording_path()
-  prev = !last_opened_recording_path
+  # NB: Liquidsoap 2.4 deprecated `!ref` in favour of `ref()` for
+  # deref.  Both work but `!ref` emits a warning at --check time.
+  prev = last_opened_recording_path()
   if cur != prev then
     last_opened_recording_path := cur
     true
