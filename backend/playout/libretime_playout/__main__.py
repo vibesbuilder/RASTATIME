@@ -672,6 +672,7 @@ def main() -> None:
         preflight=preflight,   # …and the preflight scanner for instant rescan
         host="127.0.0.1",
         port=8770,
+        engine_kind=engine_kind,  # Phase-C4 Teil 2: picks Icecast vs Liquidsoap-telnet reconciler
     )
 
     # 9. Initial schedule fetch

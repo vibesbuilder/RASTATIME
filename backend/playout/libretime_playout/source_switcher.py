@@ -568,12 +568,126 @@ def _safe_preflight_scan(preflight) -> None:
         )
 
 
+def _liquidsoap_state_poll_loop(
+    switcher: SourceSwitcher,
+    telnet_host: str = "127.0.0.1",
+    telnet_port: int = 1234,
+    interval_s: float = 5.0,
+) -> None:
+    """
+    Reconciliation watchdog for the Liquidsoap-engine mode (Phase C4
+    Teil 2).  Polls ``master_dj.status`` and ``show_dj.status`` via
+    the Liquidsoap telnet server every ``interval_s`` seconds and
+    syncs the SourceSwitcher's internal state.
+
+    Replaces :func:`_icecast_state_poll_loop` when
+    ``engine_kind=liquidsoap`` — because in that configuration the
+    DJ-source mounts (``/main``, ``/show``) live inside the
+    Liquidsoap subprocess via ``input.harbor``, NOT inside Icecast,
+    so polling Icecast's ``/admin/listmounts`` would never see the
+    DJ-source state.
+
+    Polling cost: two localhost telnet round-trips every 5 s.
+    Telnet protocol is line-oriented and tiny — negligible.  We poll
+    twice as often as the Icecast-mode reconciler (5 s vs 10 s)
+    because there are no Icecast event-bindings in the Liquidsoap
+    path; the poll is the sole source of state truth.
+
+    Implementation notes
+    --------------------
+    Liquidsoap's ``<harbor-id>.status`` telnet command returns a
+    short text reply.  Observed values on 2.4.4:
+
+      * ``"no source client connected"`` — nobody is connected
+      * ``"source client connected"`` (or richer text including
+        the remote IP / decoding format) — a DJ is live
+
+    We treat any reply that is NOT exactly ``"no source client
+    connected"`` (after strip) as "connected".  That's the most
+    robust differentiator across Liquidsoap versions; any future
+    refinement of the status string only needs to keep the
+    "no source client connected" sentinel for the disconnected case.
+
+    Reconnect: the LiquidsoapTelnetClient already retries on a
+    broken socket (Phase C1).  If both retries fail, we log a
+    warning and try again on the next interval tick — we do NOT
+    sleep on failure because Liquidsoap might just be restarting
+    (NSSM auto-restart after a crash), and we want to reconnect as
+    soon as it's back.
+    """
+    from libretime_playout.engine.liquidsoap_telnet import (  # noqa: PLC0415
+        LiquidsoapTelnetClient,
+    )
+
+    client = LiquidsoapTelnetClient(host=telnet_host, port=telnet_port)
+    logger.info(
+        "Source state reconciler started (Liquidsoap telnet polling "
+        "%s:%d every %.0fs, commands: master_dj.status + show_dj.status)",
+        telnet_host, telnet_port, interval_s,
+    )
+
+    while True:
+        try:
+            master_resp = client.send_command("master_dj.status").strip()
+            show_resp = client.send_command("show_dj.status").strip()
+            # Liquidsoap's idle reply is literally "no source client connected".
+            # Anything else (incl. an ERROR reply for an undefined harbor)
+            # is treated as "DJ source present" — but we filter ERRORs
+            # explicitly so a mis-configured .liq doesn't fake DJ-connects.
+            actual_master = (
+                master_resp != "no source client connected"
+                and not master_resp.startswith("ERROR")
+            )
+            actual_show = (
+                show_resp != "no source client connected"
+                and not show_resp.startswith("ERROR")
+            )
+
+            if actual_master != switcher.is_master_connected():
+                logger.warning(
+                    "SourceSwitcher: master state reconcile %s -> %s "
+                    "(liquidsoap master_dj.status: %r)",
+                    switcher.is_master_connected(), actual_master,
+                    master_resp,
+                )
+                if actual_master:
+                    switcher.on_master_connect()
+                else:
+                    switcher.on_master_disconnect()
+
+            if actual_show != switcher.is_show_connected():
+                logger.warning(
+                    "SourceSwitcher: show state reconcile %s -> %s "
+                    "(liquidsoap show_dj.status: %r)",
+                    switcher.is_show_connected(), actual_show,
+                    show_resp,
+                )
+                if actual_show:
+                    switcher.on_show_connect()
+                else:
+                    switcher.on_show_disconnect()
+
+        except ConnectionError as exc:
+            logger.warning(
+                "SourceSwitcher: Liquidsoap telnet poll failed "
+                "(connection): %s — will retry next tick", exc,
+            )
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            logger.warning(
+                "SourceSwitcher: Liquidsoap telnet poll unexpected "
+                "error: %s", exc,
+            )
+
+        time.sleep(interval_s)
+
+
 def start_listener(
     switcher: SourceSwitcher,
     scheduler: Optional[object] = None,
     preflight: Optional[object] = None,
     host: str = "127.0.0.1",
     port: int = 8770,
+    engine_kind: str = "mpv",
 ) -> ThreadingHTTPServer:
     """
     Start the HTTP listener for the internal RASTATIME endpoints:
@@ -589,6 +703,16 @@ def start_listener(
     Bind defaults to localhost — Icecast and Apache live on the same
     host, and we do not want external clients to be able to fake DJ
     connect events or force expensive schedule refreshes.
+
+    ``engine_kind`` decides which reconciler thread is spawned:
+      * ``"mpv"`` / ``"vlc"`` (default) — :func:`_icecast_state_poll_loop`
+        polls Icecast's ``/admin/listmounts`` to detect DJ-source
+        state.  Used in the legacy code path where the DJ-source
+        mounts live in Icecast.
+      * ``"liquidsoap"`` — :func:`_liquidsoap_state_poll_loop` polls
+        the Liquidsoap subprocess's telnet ``master_dj.status`` and
+        ``show_dj.status`` commands.  Used when ``input.harbor``
+        inside rastatime.liq owns the DJ-source mounts (Phase C4).
     """
     _EventHandler.switcher = switcher
     _EventHandler.scheduler = scheduler
@@ -607,13 +731,21 @@ def start_listener(
         host, port,
     )
 
-    # Start the icecast-state reconciliation watchdog (catches missed
-    # mount_remove notifications — see _icecast_state_poll_loop).
-    threading.Thread(
-        target=_icecast_state_poll_loop,
-        args=(switcher,),
-        name="rastatime-source-state-reconciler",
-        daemon=True,
-    ).start()
+    # Pick the right reconciler watchdog based on which audio engine
+    # owns the DJ-source mounts.
+    if engine_kind == "liquidsoap":
+        threading.Thread(
+            target=_liquidsoap_state_poll_loop,
+            args=(switcher,),
+            name="rastatime-source-state-reconciler-liquidsoap",
+            daemon=True,
+        ).start()
+    else:
+        threading.Thread(
+            target=_icecast_state_poll_loop,
+            args=(switcher,),
+            name="rastatime-source-state-reconciler",
+            daemon=True,
+        ).start()
 
     return server
