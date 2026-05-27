@@ -206,11 +206,12 @@ ${ICECAST_OUTPUTS}
 # command updates before each ``recording.start``.  Default placeholder
 # is a sentinel path so a wild ``recording.start`` without a prior
 # var.set lands somewhere obvious + recoverable rather than overwriting
-# a random file.  MP3@192kbps fixed per Phase-C5-decision 2026-05-27 —
-# matches Pypo's PlayoutConfig.record_bitrate default.
+# a random file.  MP3@320kbps fixed per Phase-C5-decision 2026-05-27 —
+# Operator chose 320k (archive-grade quality) over Pypo's historical
+# PlayoutConfig.record_bitrate 256 / FfmpegRecorder 192 defaults.
 output.file(
   id="recording",
-  %ffmpeg(format="mp3", %audio(codec="libmp3lame", b="192k")),
+  %ffmpeg(format="mp3", %audio(codec="libmp3lame", b="320k")),
   fun() -> var.get(default="C:/rastatime/recordings/_uninitialized.mp3", "recording_path"),
   fallible=true,
   start=false,

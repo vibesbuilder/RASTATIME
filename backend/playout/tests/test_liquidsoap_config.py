@@ -271,9 +271,10 @@ def test_full_render_has_recording_output_file_block():
     )
     assert 'output.file(' in active
     assert 'id="recording"' in active
-    # MP3@192kbps fixed per C5 decision 2026-05-27
+    # MP3@320kbps fixed per C5 decision 2026-05-27 (operator chose
+    # 320k archive-grade over the historical 192/256 defaults).
     assert 'codec="libmp3lame"' in active
-    assert 'b="192k"' in active
+    assert 'b="320k"' in active
     # Filename via var.get so Pypo's recording_set_path takes effect
     assert 'var.get(default=' in active
     assert '"recording_path"' in active
