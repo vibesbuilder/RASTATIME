@@ -426,8 +426,14 @@ def test_crlf_end_sentinel():
 
 
 def test_recording_set_path_wrapper():
-    """recording_set_path() sends `var.set recording_path = "<escaped>"`."""
-    expected = 'var.set recording_path = "C:/rastatime/recordings/2026-05-27/foo.mp3"'
+    """
+    recording_set_path() sends `var.set recording_path = <path>` —
+    UNquoted.  Liquidsoap's telnet var.set parser eats the rest of
+    the line raw and does NOT strip surrounding quotes; passing
+    `"path"` lands the literal quote characters in the variable and
+    causes mkdir(`"C`) to fail at file-open time.
+    """
+    expected = 'var.set recording_path = C:/rastatime/recordings/2026-05-27/foo.mp3'
     with fake_server({expected: ""}) as srv:
         client = LiquidsoapTelnetClient(host=srv.host, port=srv.port)
         try:
@@ -439,19 +445,25 @@ def test_recording_set_path_wrapper():
             client.close()
 
 
-def test_recording_set_path_escapes_special_chars():
-    """Backslash + double-quote in the path are backslash-escaped."""
-    raw_path = r'C:\with"quote\and\backslash.mp3'
-    expected = (
-        r'var.set recording_path = "C:\\with\"quote\\and\\backslash.mp3"'
-    )
-    with fake_server({expected: ""}) as srv:
-        client = LiquidsoapTelnetClient(host=srv.host, port=srv.port)
-        try:
-            client.recording_set_path(raw_path)
-            assert srv.received == [expected]
-        finally:
-            client.close()
+def test_recording_set_path_rejects_special_chars():
+    """
+    Path with backslash / double-quote / newline / carriage-return
+    is REJECTED with a clear ValueError — these characters would
+    silently break the telnet wire form (the value would land
+    misparsed inside the recording_path variable + cause weird
+    downstream filesystem failures).  Callers must pre-sanitize the
+    show name to safe forward-slash + ASCII-ish chars.
+    """
+    import pytest
+    client = LiquidsoapTelnetClient()
+    for bad in (
+        r'C:\with"quote.mp3',
+        r'C:\backslash\path.mp3',
+        "C:/with\nnewline.mp3",
+        "C:/with\rcarriage.mp3",
+    ):
+        with pytest.raises(ValueError, match="wire form"):
+            client.recording_set_path(bad)
 
 
 def test_recording_start_wrapper():

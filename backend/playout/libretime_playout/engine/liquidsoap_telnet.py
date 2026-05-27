@@ -269,23 +269,44 @@ class LiquidsoapTelnetClient:
 
     def recording_set_path(self, path: str) -> str:
         """
-        Set the absolute output file path for the next recording start.
+        Set the absolute output file path for the next recording reopen.
 
-        Liquidsoap's filename-function reads ``var.get("recording_path")``
-        at the moment a new file is opened — so this MUST be called
-        BEFORE :meth:`recording_start`.  Path is escaped for
-        Liquidsoap's var.set syntax (backslash / quote escape, same
-        as :meth:`_escape_value`).
+        Wire-form: ``var.set recording_path = <path>`` — **without**
+        surrounding quotes.  Liquidsoap's telnet ``var.set`` parser
+        eats the rest of the line as a raw string and does NOT strip
+        surrounding quotes; the C5 reality-test 2026-05-27 hit a
+        ``mkdir("\\"C")`` crash because we previously wrapped the
+        value in ``"..."`` which then landed literally in the
+        recording_path variable.
+
+        The .liq side's ``reopen_when=recording_should_reopen``
+        callback detects the path change and triggers Liquidsoap to
+        reopen the output.file with the new path on the next bus
+        frame — no explicit ``recording.start`` needed for the
+        path-change-driven flow (though :meth:`recording_start` is
+        still useful for explicit on/off control).
+
+        Path constraints (Liquidsoap-telnet wire-form limits):
+          * MUST NOT contain ``\\n`` (newline terminates the command)
+          * MUST NOT contain ``"`` or ``\\``  — risks parser confusion
+          * Forward slashes only (Windows acceptable, mkdir handles it)
+          * Drive letter form ``C:/...`` is fine; ``C:\\...`` not
+            recommended because backslash is ambiguous
 
         Example::
 
             client.recording_set_path(
                 "C:/rastatime/recordings/2026-05-27/2026-05-27 18-00 - Show.mp3"
             )
-            client.recording_start()
         """
-        escaped = self._escape_value(path)
-        return self.send_command(f'var.set recording_path = "{escaped}"')
+        # Quick sanity guard — these characters break the wire form
+        # silently and produce mkdir-on-junk-path crashes.
+        if any(ch in path for ch in ('\n', '\r', '"', '\\')):
+            raise ValueError(
+                f"recording_set_path: path contains a character that "
+                f"would break the Liquidsoap telnet wire form: {path!r}"
+            )
+        return self.send_command(f"var.set recording_path = {path}")
 
     def recording_start(self) -> str:
         """
