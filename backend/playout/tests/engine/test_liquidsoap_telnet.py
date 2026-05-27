@@ -425,6 +425,68 @@ def test_crlf_end_sentinel():
         srv.stop()
 
 
+def test_recording_set_path_wrapper():
+    """recording_set_path() sends `var.set recording_path = "<escaped>"`."""
+    expected = 'var.set recording_path = "C:/rastatime/recordings/2026-05-27/foo.mp3"'
+    with fake_server({expected: ""}) as srv:
+        client = LiquidsoapTelnetClient(host=srv.host, port=srv.port)
+        try:
+            client.recording_set_path(
+                "C:/rastatime/recordings/2026-05-27/foo.mp3"
+            )
+            assert srv.received == [expected]
+        finally:
+            client.close()
+
+
+def test_recording_set_path_escapes_special_chars():
+    """Backslash + double-quote in the path are backslash-escaped."""
+    raw_path = r'C:\with"quote\and\backslash.mp3'
+    expected = (
+        r'var.set recording_path = "C:\\with\"quote\\and\\backslash.mp3"'
+    )
+    with fake_server({expected: ""}) as srv:
+        client = LiquidsoapTelnetClient(host=srv.host, port=srv.port)
+        try:
+            client.recording_set_path(raw_path)
+            assert srv.received == [expected]
+        finally:
+            client.close()
+
+
+def test_recording_start_wrapper():
+    """recording_start() sends the bare `recording.start` server command."""
+    with fake_server({"recording.start": "Done"}) as srv:
+        client = LiquidsoapTelnetClient(host=srv.host, port=srv.port)
+        try:
+            assert client.recording_start() == "Done"
+            assert srv.received == ["recording.start"]
+        finally:
+            client.close()
+
+
+def test_recording_stop_wrapper():
+    """recording_stop() sends the bare `recording.stop` server command."""
+    with fake_server({"recording.stop": "Done"}) as srv:
+        client = LiquidsoapTelnetClient(host=srv.host, port=srv.port)
+        try:
+            assert client.recording_stop() == "Done"
+            assert srv.received == ["recording.stop"]
+        finally:
+            client.close()
+
+
+def test_recording_status_wrapper():
+    """recording_status() sends the bare `recording.status` server command."""
+    with fake_server({"recording.status": "on"}) as srv:
+        client = LiquidsoapTelnetClient(host=srv.host, port=srv.port)
+        try:
+            assert client.recording_status() == "on"
+            assert srv.received == ["recording.status"]
+        finally:
+            client.close()
+
+
 def test_empty_response_crlf():
     """Empty response with CRLF — server sends just END\\r\\n."""
 

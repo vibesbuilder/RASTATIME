@@ -260,6 +260,64 @@ class LiquidsoapTelnetClient:
         resp = self.send_command("help")
         return [line for line in resp.splitlines() if line.strip()]
 
+    # ---- Phase C5 — recording lifecycle wrappers -------------------------
+
+    # The rastatime.liq template renders an ``output.file(id="recording",
+    # …)`` block whose filename comes from a Liquidsoap var ``recording_path``.
+    # These wrappers give Pypo's _on_show_record_start / _end a clean
+    # API instead of raw send_command() calls.
+
+    def recording_set_path(self, path: str) -> str:
+        """
+        Set the absolute output file path for the next recording start.
+
+        Liquidsoap's filename-function reads ``var.get("recording_path")``
+        at the moment a new file is opened — so this MUST be called
+        BEFORE :meth:`recording_start`.  Path is escaped for
+        Liquidsoap's var.set syntax (backslash / quote escape, same
+        as :meth:`_escape_value`).
+
+        Example::
+
+            client.recording_set_path(
+                "C:/rastatime/recordings/2026-05-27/2026-05-27 18-00 - Show.mp3"
+            )
+            client.recording_start()
+        """
+        escaped = self._escape_value(path)
+        return self.send_command(f'var.set recording_path = "{escaped}"')
+
+    def recording_start(self) -> str:
+        """
+        Start the ``output.file(id="recording", …)`` block — Liquidsoap
+        opens the file at the previously-set ``recording_path`` and
+        begins writing the current bus content.
+
+        Pre-condition: :meth:`recording_set_path` must have been
+        called with a writable, full path.  A start without a path
+        set lands the recording at the sentinel
+        ``C:/rastatime/recordings/_uninitialized.mp3`` (see the
+        template's ``var.get(default=…, "recording_path")`` fallback) —
+        loud but recoverable.
+        """
+        return self.send_command("recording.start")
+
+    def recording_stop(self) -> str:
+        """
+        Stop the recording — Liquidsoap closes the .mp3 file cleanly.
+        Idempotent: calling on an already-stopped recording is harmless
+        (Liquidsoap replies "Done" or similar).
+        """
+        return self.send_command("recording.stop")
+
+    def recording_status(self) -> str:
+        """
+        Query recording state.  Returns Liquidsoap's free-text status
+        line (e.g. ``"on"`` / ``"off"`` depending on version).  Mostly
+        useful for diagnostics.
+        """
+        return self.send_command("recording.status")
+
     # ---- Internals (lock must be held) ------------------------------
 
     def _connect_locked(self) -> None:

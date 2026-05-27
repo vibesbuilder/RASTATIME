@@ -255,6 +255,40 @@ def test_full_render_local_output_enabled_explicitly():
     assert "clock_safe" not in out
 
 
+# ---- Phase-C5: output.file recording block -----------------------------
+
+
+def test_full_render_has_recording_output_file_block():
+    """
+    Every render must include the per-show recording output.file block
+    with id="recording" — that's the telnet hook Pypo's _on_show_record_*
+    handlers use to start / stop / set-path the recording.
+    """
+    out = lc.render_rastatime_liq([_stream()])
+    # Active code (not just template-doc comments)
+    active = "\n".join(
+        ln for ln in out.splitlines() if not ln.lstrip().startswith("#")
+    )
+    assert 'output.file(' in active
+    assert 'id="recording"' in active
+    # MP3@192kbps fixed per C5 decision 2026-05-27
+    assert 'codec="libmp3lame"' in active
+    assert 'b="192k"' in active
+    # Filename via var.get so Pypo's recording_set_path takes effect
+    assert 'var.get(default=' in active
+    assert '"recording_path"' in active
+    # fallible+start=false: idle until Pypo calls recording.start
+    assert "fallible=true" in active
+    assert "start=false" in active
+    # Recording-source is the broadcast bus — same as listeners hear
+    # (post-switch, post-crossfade, post-amplify).  Last positional arg.
+    # We assert the bus name appears in the recording block by scoping
+    # to the output.file(id="recording") slice.
+    rec_idx = active.index('id="recording"')
+    rec_block = active[rec_idx:rec_idx + 600]
+    assert "  bus,\n" in rec_block
+
+
 # ---- Phase-C4: input.harbor + switch -----------------------------------
 
 

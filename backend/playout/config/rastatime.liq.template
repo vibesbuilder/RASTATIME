@@ -182,6 +182,42 @@ bus = amplify(override="replaygain_track_gain", 1., bus)
 ${ICECAST_OUTPUTS}
 
 # ---------------------------------------------------------------------
+# Phase-C5 — Per-show recording via output.file
+# ---------------------------------------------------------------------
+#
+# output.file with id="recording" so the operator-side Pypo can drive
+# its lifecycle via telnet:
+#
+#   var.set recording_path = "C:/rastatime/recordings/2026-05-27/2026-05-27 18-00 - Show Name.mp3"
+#   recording.start
+#   ... show plays ...
+#   recording.stop
+#
+# Recording-source = `bus` (post-switch / post-crossfade / post-amplify)
+# so what ends up in the file is bit-identical to what the public
+# Icecast listeners hear.  No second round-trip through Icecast
+# (vs the legacy FfmpegRecorder which pulled /rastatime via HTTP) —
+# saves one encode/decode cycle and avoids the 404-race on bring-up.
+#
+# fallible=true + start=false: by default the output sits idle, neither
+# blocking the bus nor writing to disk.  Pypo activates it per show.
+#
+# Filename comes from a Liquidsoap-side ref that the telnet ``var.set``
+# command updates before each ``recording.start``.  Default placeholder
+# is a sentinel path so a wild ``recording.start`` without a prior
+# var.set lands somewhere obvious + recoverable rather than overwriting
+# a random file.  MP3@192kbps fixed per Phase-C5-decision 2026-05-27 —
+# matches Pypo's PlayoutConfig.record_bitrate default.
+output.file(
+  id="recording",
+  %ffmpeg(format="mp3", %audio(codec="libmp3lame", b="192k")),
+  fun() -> var.get(default="C:/rastatime/recordings/_uninitialized.mp3", "recording_path"),
+  fallible=true,
+  start=false,
+  bus,
+)
+
+# ---------------------------------------------------------------------
 # Local monitor — what the operator hears at the studio speakers.
 # Rendered by libretime_playout.liquidsoap_config based on the
 # RASTATIME_LIQUIDSOAP_LOCAL_OUTPUT env-var (default true; operator
