@@ -228,6 +228,12 @@ output.file(
   {recording_path()},
   fallible=true,
   start=false,
+  # reopen_delay defaults to 120s -- without this override the
+  # `recording.start` server command would queue a file-open that
+  # only takes effect after 2 minutes (= longer than a typical
+  # short-test recording, so the file never appeared in the
+  # Phase-C5 reality-test 2026-05-27).  0. = open immediately.
+  reopen_delay=0.,
   bus,
 )
 
