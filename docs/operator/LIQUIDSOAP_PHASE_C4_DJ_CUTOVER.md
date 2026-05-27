@@ -59,9 +59,14 @@ stream:
     password: change-me-internal-listener-secret
 
   # NEU — Phase C4 (Liquidsoap input.harbor)
+  # WICHTIG: die spitzen Klammern unten sind PLATZHALTER, NICHT Teil des
+  # Passworts.  Beispiel-Eintrag korrekt:
+  #     main_password: ABC123XYZ-something-secret
+  # NICHT:
+  #     main_password: <ABC123XYZ-something-secret>
   harbor:
-    main_password: <generiere ein neues sicheres Passwort>
-    show_password: <generiere ein neues sicheres Passwort>
+    main_password: <DEIN-MAIN-SOURCE-PASSWORT-HIER>
+    show_password: <DEIN-SHOW-SOURCE-PASSWORT-HIER>
 
   inputs:
     main:
