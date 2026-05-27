@@ -202,17 +202,30 @@ ${ICECAST_OUTPUTS}
 # fallible=true + start=false: by default the output sits idle, neither
 # blocking the bus nor writing to disk.  Pypo activates it per show.
 #
-# Filename comes from a Liquidsoap-side ref that the telnet ``var.set``
-# command updates before each ``recording.start``.  Default placeholder
-# is a sentinel path so a wild ``recording.start`` without a prior
-# var.set lands somewhere obvious + recoverable rather than overwriting
-# a random file.  MP3@320kbps fixed per Phase-C5-decision 2026-05-27 —
+# Filename comes from an ``interactive.string`` whose value the
+# operator-side telnet ``var.set recording_path = "..."`` command
+# updates before each ``recording.start``.  Default placeholder is a
+# sentinel path so a wild ``recording.start`` without a prior var.set
+# lands somewhere obvious + recoverable rather than overwriting a
+# random file.  MP3@320kbps fixed per Phase-C5-decision 2026-05-27 —
 # Operator chose 320k (archive-grade quality) over Pypo's historical
 # PlayoutConfig.record_bitrate 256 / FfmpegRecorder 192 defaults.
+#
+# NB: in the .liq script we must use the `interactive.string(...)`
+# API to declare the variable + dereference its current value.
+# `var.get` / `var.set` are TELNET-side commands only — using `var.get`
+# in script-code yields `Error 4: Undefined variable var` at parse
+# time.  interactive.string returns a function `() -> string` that we
+# call from the output.file's filename-function slot.
+recording_path = interactive.string(
+  "recording_path",
+  "C:/rastatime/recordings/_uninitialized.mp3"
+)
+
 output.file(
   id="recording",
   %ffmpeg(format="mp3", %audio(codec="libmp3lame", b="320k")),
-  fun() -> var.get(default="C:/rastatime/recordings/_uninitialized.mp3", "recording_path"),
+  {recording_path()},
   fallible=true,
   start=false,
   bus,

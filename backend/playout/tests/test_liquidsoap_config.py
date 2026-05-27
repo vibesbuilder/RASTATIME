@@ -275,9 +275,13 @@ def test_full_render_has_recording_output_file_block():
     # 320k archive-grade over the historical 192/256 defaults).
     assert 'codec="libmp3lame"' in active
     assert 'b="320k"' in active
-    # Filename via var.get so Pypo's recording_set_path takes effect
-    assert 'var.get(default=' in active
+    # Filename via interactive.string + ref-deref so Pypo's
+    # `var.set recording_path = "..."` telnet command takes effect.
+    # (`var.get` only works on the telnet wire — in .liq script-code
+    # it would error "Undefined variable var".)
+    assert 'interactive.string(' in active
     assert '"recording_path"' in active
+    assert 'recording_path()' in active
     # fallible+start=false: idle until Pypo calls recording.start
     assert "fallible=true" in active
     assert "start=false" in active
