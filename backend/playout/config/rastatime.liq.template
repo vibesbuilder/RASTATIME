@@ -222,24 +222,39 @@ recording_path = interactive.string(
   "C:/rastatime/recordings/_uninitialized.mp3"
 )
 
-# Phase-C5 troubleshoot 2026-05-27 (3rd attempt):
-# `start=false` + `recording.start` over telnet didn't trigger any
-# file open in 2.4.4 (no log line, no file appeared, even with
-# reopen_delay=0.).  Trying the simplest possible form: default
-# `start=true` so the output is active right from bring-up.  This
-# WILL create the sentinel file C:/rastatime/recordings/_uninitialized.mp3
-# at startup -- that's expected and shows the operator that
-# output.file basically works.  Pypo-side (C5 Teil 2) will issue
-# `recording.stop` immediately after engine init so this sentinel
-# write window stays small (<1 second).
+# Phase-C5 troubleshoot 2026-05-27 (4th attempt):
+# Liquidsoap 2.4.4 evaluates the filename-function ONCE on first
+# file-open and then caches the value for the lifetime of the
+# output.file -- a subsequent `recording.stop` + `recording.start`
+# reopens the SAME file, ignoring updates to the recording_path
+# variable.  Reality-test confirmed: after stop -> set_path -> start
+# the sentinel `_uninitialized.mp3` kept growing instead of a new
+# `c5-test.mp3` appearing.
 #
-# Show-start flow: var.set recording_path = "..." -> recording.start
-# -> output.file reopens with the new path.  Show-end: recording.stop.
+# Fix: explicit reopen_when callback that detects path changes and
+# forces Liquidsoap to re-evaluate the filename-function on the
+# next bus frame.  ref-based bookkeeping so the callback only
+# fires `true` exactly when the path actually changed -- otherwise
+# we'd reopen on every audio frame.
+last_opened_recording_path = ref("")
+
+def recording_should_reopen() =
+  cur = recording_path()
+  prev = !last_opened_recording_path
+  if cur != prev then
+    last_opened_recording_path := cur
+    true
+  else
+    false
+  end
+end
+
 output.file(
   id="recording",
   %ffmpeg(format="mp3", %audio(codec="libmp3lame", b="320k")),
   {recording_path()},
   fallible=true,
+  reopen_when=recording_should_reopen,
   bus,
 )
 
