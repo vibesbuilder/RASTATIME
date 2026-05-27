@@ -291,6 +291,9 @@ def test_full_render_main_only_harbor():
     active = "\n".join(_active_lines(out))
     assert 'master_dj = input.harbor' in active
     assert 'id="master_dj"' in active
+    # Phase-C4 workaround: both mounts default to port 8001 because the
+    # Liquidsoap-2.4 multi-port harbor bug only lets one of two distinct
+    # ports come up.
     assert "port=8001" in active
     assert 'password="hackme-main"' in active
     # No show block in active code
@@ -309,11 +312,35 @@ def test_full_render_show_only_harbor():
     )
     active = "\n".join(_active_lines(out))
     assert 'show_dj = input.harbor' in active
-    assert "port=8002" in active
+    # Phase-C4 workaround: show defaults to port 8001 too (shared with
+    # master). Liquidsoap-2.4 multi-port harbor bug forced the merge.
+    assert "port=8001" in active
     assert 'password="hackme-show"' in active
     assert "master_dj = input.harbor" not in active
     assert "source.is_ready(show_dj)" in active
     assert "source.is_ready(master_dj)" not in active
+
+
+def test_full_render_both_harbor_mounts_share_port_by_default():
+    """
+    Both passwords set + default ports → both harbor mounts must
+    share the same port (Phase-C4 workaround for Liquidsoap-2.4
+    multi-port silent-fail bug).
+    """
+    out = lc.render_rastatime_liq(
+        [_stream()],
+        harbor_main_password="m",
+        harbor_show_password="s",
+    )
+    active = "\n".join(_active_lines(out))
+    # Both harbor blocks present
+    assert "master_dj = input.harbor" in active
+    assert "show_dj = input.harbor" in active
+    # Both bound to port 8001 by default (NOT 8001 + 8002).
+    # Count "port=8001" occurrences — should be 2 (one per harbor block).
+    assert active.count("port=8001") == 2
+    # And explicitly: NO port=8002 in the active code
+    assert "port=8002" not in active
 
 
 def test_full_render_both_harbor_passwords():
@@ -345,7 +372,12 @@ def test_full_render_harbor_password_escapes_special_chars():
 
 
 def test_full_render_custom_harbor_ports():
-    """Custom ports + mount names propagate into the input.harbor block."""
+    """
+    Custom ports + mount names propagate.  Note: operator-explicit
+    distinct ports bypass the C4 default-merge — the operator takes
+    responsibility for the Liquidsoap-2.4 multi-harbor risk if they
+    set different ports manually.
+    """
     out = lc.render_rastatime_liq(
         [_stream()],
         harbor_main_password="x",

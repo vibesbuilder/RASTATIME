@@ -25,9 +25,19 @@
 |---|---|---|
 | **Server** | localhost | localhost |
 | **Port (Master DJ)** | 8000 | **8001** |
-| **Port (Show DJ)** | 8000 | **8002** |
+| **Port (Show DJ)** | 8000 | **8001** *(gleicher Port wie Master)* |
 | **Mount (Master)** | `/main` | `/main` (gleich) |
 | **Mount (Show)** | `/show` | `/show` (gleich) |
+
+> **Wichtig zur Port-Wahl:** Operator-Decision 2026-05-25 war Master=8001
+> und Show=8002 auf getrennten Ports. **Aber:** Phase-C4-Reality-Test
+> 2026-05-27 hat einen Liquidsoap-2.4.4-Bug aufgedeckt — zwei
+> `input.harbor` Calls mit verschiedenen Ports kommen nur einer
+> wirklich hoch (das andere mount registriert silent ohne
+> Verbindungen anzunehmen). Workaround: **beide Mounts auf demselben
+> Port 8001**. Liquidsoap unterstützt das nativ (wie Icecast mit
+> mehreren Mount-Paths auf Port 8000). Show wird also auch auf
+> **Port 8001** mit Mount `/show` connectet.
 | **Username** | `source` (default) | `source` (default — egal, input.harbor ignoriert username) |
 | **Passwort** | aus `icecast.xml` `<source-password>` der jeweiligen Mount | aus `libretime.conf` `stream.harbor.{main,show}_password` |
 | **Format** | mp3 / aac / ogg / opus | gleich (Liquidsoap-Encoder akzeptiert was BUTT/Mixxx sendet) |

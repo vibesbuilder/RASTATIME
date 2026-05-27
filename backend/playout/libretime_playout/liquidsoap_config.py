@@ -83,17 +83,31 @@ DEFAULT_CROSSFADE_DURATION = 2.0
 # for headless server installs that don't want a soundcard output.
 DEFAULT_LOCAL_OUTPUT_ENABLED = True
 
-# Phase-C4: default Liquidsoap-Harbor ports for DJ-Master and DJ-Show
-# sources.  These match the existing libretime_shared schema
-# (MainHarborInput.port = 8001, ShowHarborInput.port = 8002) and the
-# operator-decision from 2026-05-25.  Mount names are "main" / "show"
-# matching the legacy /main and /show Icecast mounts so the
-# Pypo-internal naming + Dashboard "Master/Show Source" indicator
-# stays the same.
-DEFAULT_HARBOR_MAIN_PORT = 8001
-DEFAULT_HARBOR_SHOW_PORT = 8002
+# Phase-C4: default Liquidsoap-Harbor port for DJ-Master + DJ-Show
+# sources.  Operator-decision from 2026-05-25 said port 8001 (Master) /
+# 8002 (Show), matching libretime_shared's MainHarborInput/
+# ShowHarborInput defaults.  But the C4 reality-test 2026-05-27 turned
+# up a Liquidsoap-2.4.4 bug: two ``input.harbor`` calls with different
+# ports silently let only ONE of the harbor servers fully come up
+# (the second one's mount registers in the log but accepts no
+# connections).  Workaround: register both mounts on the SAME port.
+# Liquidsoap's harbor design natively supports multiple mountpaths on
+# one port (like Icecast does with mount paths on port 8000).  So we
+# bind both ``/main`` and ``/show`` to a single port (default 8001).
+#
+# Operator implication: BUTT/Mixxx/Traktor Show-source configs need
+# port 8001 too — same port as Master, different mount.
+DEFAULT_HARBOR_PORT = 8001
 DEFAULT_HARBOR_MAIN_MOUNT = "main"
 DEFAULT_HARBOR_SHOW_MOUNT = "show"
+
+# Legacy aliases kept for back-compat with older Pypo deployments that
+# still pass distinct main/show ports — both resolve to DEFAULT_HARBOR_PORT
+# when no explicit value is given.  Renderer treats main + show ports
+# as independent kwargs so an operator can keep them on different ports
+# if they accept the 2.4 silent-fail risk.
+DEFAULT_HARBOR_MAIN_PORT = DEFAULT_HARBOR_PORT
+DEFAULT_HARBOR_SHOW_PORT = DEFAULT_HARBOR_PORT
 # Buffer in seconds for input.harbor — soaks up small DJ-side
 # disconnects (Wi-Fi blip, USB-soundcard switch).  2 s matches the
 # operator-decision from 2026-05-25.
