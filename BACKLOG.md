@@ -422,6 +422,53 @@ Sortierung der bereits-gespielten + nächsten Tracks freezable.
 
 ## 🐞 Known Issues / Bug Backlog
 
+### 🟡 Liquidsoap clock.assign_new wrapped alle Outputs in portaudio_clock (Phase-D)
+
+**Status:** Defer — funktioniert pragmatisch ohne Crash, aber nicht echt isoliert.
+**Festgestellt:** 2026-05-27 (Phase-C4 Reality-Test).
+
+**Symptom / aktuelle Lösung:**
+Mein `ignore(clock.assign_new(id="portaudio_clock", [output.portaudio(...)]))`
+in `liquidsoap_config.py::_render_local_output_block` hat im Reality-Test
+funktioniert (Liquidsoap startet ohne `clock_safe`-Fehler, NSSM-Service
+bleibt RUNNING bei DJ-Source-Toggles). ABER im Bring-up-Log sieht man:
+
+```
+[clock:3] Starting top-level clock portaudio_clock with sources:
+  output.portaudio (output), output.icecast.2 (output),
+  output.icecast.1 (output), output.icecast (output), ...
+```
+
+Alle 4 Outputs hängen am `portaudio_clock`. Liquidsoap's Source-Graph-
+Dependencies haben automatisch alle Sources in den gleichen Clock-Pool
+gezogen (weil sie alle den selben `bus` als Quelle haben). Effektiv
+haben wir den Main-Clock nur umbenannt, nicht echt isoliert.
+
+**Warum trotzdem OK für Phase-C:**
+- Kein Liquidsoap-Crash mehr bei DJ-Source-Toggle (Phase-C4-Reality-
+  Test 2026-05-27 hat das mehrfach bestätigt)
+- Audio-Pipeline läuft stabil
+- Die `clock_safe=true`-Pattern in alten Liquidsoap-Versionen hat
+  vermutlich auch nicht echt isoliert sondern nur clock-naming-magic
+  gemacht
+
+**Echter Fix für Phase-D:**
+PortAudio's `bus`-Input muss von einer separaten `bus`-Kopie kommen,
+damit der Source-Graph wirklich aufteilt. Pattern:
+
+```liq
+bus_for_icecast  = bus
+bus_for_portaudio = drop_metadata(bus)    # oder ähnliches barrier-operator
+clock.assign_new(id="portaudio_clock", sync='auto', [
+  output.portaudio(fallible=true, bus_for_portaudio)
+])
+output.icecast(... bus_for_icecast ...)
+```
+
+Aufwand: ~2h Code + Test. Phase-D-Polish, kein Phase-C-Blocker.
+
+---
+
 ### 🟡 PowerShell `NativeCommandError`-Noise beim Pypo-Start (kosmetisch)
 
 **Status:** Defer — kosmetisch, nicht funktional.
