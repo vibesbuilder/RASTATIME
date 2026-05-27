@@ -314,7 +314,8 @@ def _render_local_output_block(enabled: bool) -> str:
     to log and retry, not crash the whole subprocess and drop the
     Icecast PUTs.
 
-    Why clock_safe=true (RASTATIME 2026-05-27 — Phase-C4 follow-up):
+    Why the clock.assign_new wrap (RASTATIME 2026-05-27 — Phase-C4
+    follow-up):
     the C4 reality-test caught a PortAudio underflow that took the
     WHOLE Liquidsoap process down (and killed all three Icecast
     PUTs with it) when a DJ-source connect+disconnect happened —
@@ -327,18 +328,29 @@ def _render_local_output_block(enabled: bool) -> str:
     same main clock; when the switch operator flipped sources,
     Liquidsoap had to re-buffer downstream and PortAudio drained.
 
-    ``clock_safe=true`` gives output.portaudio its own worker
-    thread + clock — if the WASAPI device hangs or the switch
-    causes a transient underflow, the icecast outputs keep
-    pumping on the main clock undisturbed.
+    First fix-attempt ``clock_safe=true`` on output.portaudio
+    didn't work — Liquidsoap 2.4.4 removed that parameter (Error 6:
+    "no argument labeled clock_safe").  Real fix: wrap the
+    output.portaudio call in ``clock.assign_new(id="portaudio_clock",
+    [...])``.  Same effect: portaudio gets its own worker-clock,
+    main clock with the Icecast PUTs is isolated.
+
+    We need ``ignore(...)`` around the clock.assign_new because
+    Liquidsoap 2.4 returns the (re-clocked) source list from
+    assign_new — without ignore, the parser warns about an
+    unused value at top-level.
     """
     if enabled:
         return (
-            "output.portaudio(\n"
-            "  clock_safe=true,\n"
-            "  fallible=true,\n"
-            "  bus,\n"
-            ")  # local soundcard monitor (PortAudio default device, isolated clock)\n"
+            "# PortAudio in its own clock (avoids C4 reality-test crash\n"
+            "# pattern: switch operator -> downstream rebuffer -> portaudio\n"
+            "# underflow -> WHOLE Liquidsoap process down).  Phase-C4 follow-up.\n"
+            "ignore(clock.assign_new(id=\"portaudio_clock\", [\n"
+            "  output.portaudio(\n"
+            "    fallible=true,\n"
+            "    bus,\n"
+            "  ),\n"
+            "]))\n"
         )
     return (
         "# (local output disabled via RASTATIME_LIQUIDSOAP_LOCAL_OUTPUT=false)\n"

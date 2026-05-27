@@ -237,16 +237,22 @@ def test_full_render_local_output_disabled():
 
 def test_full_render_local_output_enabled_explicitly():
     """
-    Explicit local_output_enabled=True renders output.portaudio with
-    both safety flags: clock_safe=true (isolate from main clock to
-    avoid the PortAudio-underflow-takes-down-Liquidsoap-process
-    pathology found in the C4 reality-test) and fallible=true
-    (transient device hiccups don't kill the output forever).
+    Explicit local_output_enabled=True renders output.portaudio wrapped
+    in clock.assign_new (isolate from main clock to avoid the
+    PortAudio-underflow-takes-down-Liquidsoap-process pathology found
+    in the C4 reality-test) plus fallible=true (transient device
+    hiccups don't kill the output forever).
+
+    Note: Liquidsoap 2.4 dropped the `clock_safe=true` shortcut, so
+    we use the standard clock.assign_new wrapper instead.
     """
     out = lc.render_rastatime_liq([_stream()], local_output_enabled=True)
     assert "output.portaudio(" in out
-    assert "clock_safe=true" in out
+    assert 'clock.assign_new(id="portaudio_clock"' in out
     assert "fallible=true" in out
+    # clock_safe was the 2.x-era parameter; it MUST NOT come back as a
+    # regression because Liquidsoap 2.4 errors on it.
+    assert "clock_safe" not in out
 
 
 # ---- Phase-C4: input.harbor + switch -----------------------------------
