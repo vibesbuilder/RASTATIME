@@ -282,9 +282,13 @@ def test_full_render_has_recording_output_file_block():
     assert 'interactive.string(' in active
     assert '"recording_path"' in active
     assert 'recording_path()' in active
-    # fallible+start=false: idle until Pypo calls recording.start
+    # fallible=true: transient device hiccups don't kill the output.
+    # NOTE: start=false was the original design but Liquidsoap-2.4.4
+    # doesn't honour `recording.start` correctly with start=false
+    # (no file ever opens).  C5 falls back to default start=true and
+    # Pypo issues `recording.stop` right after engine init to silence
+    # the initial sentinel-file write.
     assert "fallible=true" in active
-    assert "start=false" in active
     # Recording-source is the broadcast bus — same as listeners hear
     # (post-switch, post-crossfade, post-amplify).  Last positional arg.
     # We assert the bus name appears in the recording block by scoping

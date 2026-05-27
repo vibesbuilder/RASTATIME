@@ -222,18 +222,24 @@ recording_path = interactive.string(
   "C:/rastatime/recordings/_uninitialized.mp3"
 )
 
+# Phase-C5 troubleshoot 2026-05-27 (3rd attempt):
+# `start=false` + `recording.start` over telnet didn't trigger any
+# file open in 2.4.4 (no log line, no file appeared, even with
+# reopen_delay=0.).  Trying the simplest possible form: default
+# `start=true` so the output is active right from bring-up.  This
+# WILL create the sentinel file C:/rastatime/recordings/_uninitialized.mp3
+# at startup -- that's expected and shows the operator that
+# output.file basically works.  Pypo-side (C5 Teil 2) will issue
+# `recording.stop` immediately after engine init so this sentinel
+# write window stays small (<1 second).
+#
+# Show-start flow: var.set recording_path = "..." -> recording.start
+# -> output.file reopens with the new path.  Show-end: recording.stop.
 output.file(
   id="recording",
   %ffmpeg(format="mp3", %audio(codec="libmp3lame", b="320k")),
   {recording_path()},
   fallible=true,
-  start=false,
-  # reopen_delay defaults to 120s -- without this override the
-  # `recording.start` server command would queue a file-open that
-  # only takes effect after 2 minutes (= longer than a typical
-  # short-test recording, so the file never appeared in the
-  # Phase-C5 reality-test 2026-05-27).  0. = open immediately.
-  reopen_delay=0.,
   bus,
 )
 
