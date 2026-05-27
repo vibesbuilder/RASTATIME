@@ -1673,14 +1673,62 @@ class PlayoutScheduler:
         """
         React to a state transition signalled by the SourceSwitcher.
 
-        Called from a daemon thread (the HTTP listener), so we serialise
-        access to the engine + streamers via the existing scheduler
-        lock — that keeps us coherent against schedule refreshes and
-        timer callbacks happening at the same moment.
+        Called from a daemon thread (the HTTP listener / Liquidsoap
+        telnet reconciler), so we serialise access to the engine +
+        streamers via the existing scheduler lock — that keeps us
+        coherent against schedule refreshes and timer callbacks
+        happening at the same moment.
+
+        RASTATIME 2026-05-27 — Phase-C4 Teil 2b.  In the Liquidsoap
+        engine path (``streaming_handled_externally=True``) the
+        MASTER / SHOW branches are no-ops: Liquidsoap's own
+        ``switch(track_sensitive=true, [(source.is_ready(master_dj),
+        master_dj), …])`` in rastatime.liq picks the active source
+        automatically via ``input.harbor.source.is_ready()`` — Pypo
+        does NOT need to push the Icecast-mount URL into the queue
+        like the legacy mpv/VLC path does (those engines own the
+        soundcard output and must explicitly load the DJ-relay
+        stream to make it audible locally).
+
+        Pushing ``engine.play(http://127.0.0.1:8000/show)`` against
+        Liquidsoap in the C4 setup is actively harmful — that mount
+        is empty (the DJ now connects to port 8001/Liquidsoap-harbor,
+        not port 8000/Icecast), so Liquidsoap times out trying to
+        decode it + spams the log.
+
+        SCHEDULED path stays active in both modes: after a DJ
+        disconnect Pypo still wants to push the in-progress
+        scheduled track into the queue so it picks up cleanly when
+        Liquidsoap's fallback switches back from blank() to the
+        scheduled queue.
         """
         logger.info("PlayoutScheduler: switching audio source to %s", state.value)
 
         with self._lock:
+            if self._streaming_handled_externally:
+                # Liquidsoap-engine mode: skip the engine.play(http://...)
+                # DJ-source-relay dance — Liquidsoap's switch operator
+                # handles it natively.  Only the SCHEDULED branch
+                # still needs to push the in-progress track.
+                if state == SourceState.SCHEDULED:
+                    self._resume_scheduled_locked()
+                    logger.info(
+                        "PlayoutScheduler: scheduled resume after "
+                        "DJ-off (Liquidsoap input.harbor switch "
+                        "handled MASTER/SHOW routing internally)",
+                    )
+                else:
+                    logger.info(
+                        "PlayoutScheduler: %s active — Liquidsoap-side "
+                        "switch handles routing via source.is_ready(); "
+                        "no engine.play() needed.",
+                        state.value,
+                    )
+                return
+
+            # Legacy mpv / VLC path: Pypo owns the audio engine and must
+            # explicitly relay the DJ-source Icecast mount.
+            #
             # Stop whatever is currently producing audio so we can swap
             # in cleanly.  This briefly silences listeners but a fresh
             # FFmpeg subprocess connects within a second.
