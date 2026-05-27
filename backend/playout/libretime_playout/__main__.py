@@ -214,6 +214,36 @@ _LIQUIDSOAP_DEFAULT_LOG_PATH = "C:/rastatime/logs/liquidsoap.log"
 _LIQUIDSOAP_DEFAULT_CROSSFADE = 2.0
 
 
+def _read_harbor_credentials() -> tuple:
+    """
+    Read ``stream.harbor.main_password`` / ``show_password`` from
+    libretime.conf.  Returns (main_password, show_password) — either
+    field is an empty string if missing.  Same direct-YAML-read
+    pattern as :func:`_read_internal_listener_credentials`.
+
+    These passwords drive Phase-C4 ``input.harbor`` in rastatime.liq:
+    when set, the renderer emits the DJ-Master / DJ-Show source blocks
+    + the switch operator; when both unset, the bus stays on the
+    scheduled queue (= C3 behaviour).
+    """
+    try:
+        import yaml  # noqa: PLC0415
+
+        with open(_CONFIG_FILE, encoding="utf-8") as fh:
+            raw = yaml.safe_load(fh) or {}
+        section = (raw.get("stream") or {}).get("harbor") or {}
+        return (
+            str(section.get("main_password") or ""),
+            str(section.get("show_password") or ""),
+        )
+    except Exception as exc:  # pylint: disable=broad-exception-caught
+        logger.warning(
+            "Could not read stream.harbor.* from %s: %s",
+            _CONFIG_FILE, exc,
+        )
+        return ("", "")
+
+
 def _render_rastatime_liq_at_startup(stream_outputs: List[Dict]) -> None:
     """
     Render ``rastatime.liq`` from the operator-configured environment +
@@ -265,6 +295,17 @@ def _render_rastatime_liq_at_startup(stream_outputs: List[Dict]) -> None:
         not in ("false", "0", "no", "off")
     )
 
+    # Phase-C4: DJ-Source harbor passwords aus libretime.conf.
+    # Wenn unset, rendert der Renderer die input.harbor-Blöcke nicht
+    # (= C3-Stand, nur scheduled queue auf dem Bus).
+    harbor_main_pwd, harbor_show_pwd = _read_harbor_credentials()
+    if harbor_main_pwd or harbor_show_pwd:
+        logger.info(
+            "Liquidsoap input.harbor enabled: main=%s show=%s",
+            "yes" if harbor_main_pwd else "no",
+            "yes" if harbor_show_pwd else "no",
+        )
+
     # Parent dir must exist — we don't auto-create it because the
     # operator's NSSM-install script makes the standard tree, and
     # rendering into an unexpected location is a config-error worth
@@ -287,6 +328,8 @@ def _render_rastatime_liq_at_startup(stream_outputs: List[Dict]) -> None:
             log_file=log_path,
             crossfade_duration=crossfade,
             local_output_enabled=local_output_enabled,
+            harbor_main_password=harbor_main_pwd or None,
+            harbor_show_password=harbor_show_pwd or None,
         )
     except Exception as exc:  # pylint: disable=broad-exception-caught
         logger.critical(

@@ -54,6 +54,36 @@ class LiquidsoapConfig(BaseModel):
         return self
 
 
+# RASTATIME 2026-05-27 — Seamless-Bus-Mix Phase C4 (DJ-Sources via
+# input.harbor).  Pypo-lokales value-object für die Liquidsoap-Harbor-
+# Source-Passwörter.  Wird NICHT in die Pydantic-Config eingehängt —
+# stattdessen liest ``__main__._read_harbor_credentials()`` die Werte
+# direkt aus dem YAML (gleiche Pattern wie ``_read_internal_listener_credentials``).
+#
+# Operator setzt in libretime.conf::
+#
+#     stream:
+#       harbor:
+#         main_password: <BUTT/Mixxx source password for /main>
+#         show_password: <BUTT/Mixxx source password for /show>
+#
+# Wenn beide leer / None bleiben, rendert der Liquidsoap-Config-
+# Renderer die input.harbor-Blöcke NICHT — der Bus bleibt auf der
+# reinen scheduled-source, identisch zum C3-Stand.  So kann der
+# Operator stufenweise migrieren.
+class HarborInputCredentials(BaseModel):
+    """
+    Source-Passwörter für die Liquidsoap input.harbor-Mounts.
+
+    Werden aus ``stream.harbor`` in libretime.conf gelesen.  Beide
+    Felder sind optional — wenn None / leer, wird die jeweilige
+    Harbor-Mount NICHT in rastatime.liq gerendert.
+    """
+
+    main_password: Optional[str] = None
+    show_password: Optional[str] = None
+
+
 class Config(BaseConfig):
     general: GeneralConfig
     rabbitmq: RabbitMQConfig = RabbitMQConfig()

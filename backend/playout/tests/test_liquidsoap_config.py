@@ -242,6 +242,122 @@ def test_full_render_local_output_enabled_explicitly():
     assert "fallible=true" in out
 
 
+# ---- Phase-C4: input.harbor + switch -----------------------------------
+
+
+def test_full_render_no_harbor_keeps_bus_scheduled():
+    """Both harbor passwords unset → bus is plain scheduled, no input.harbor."""
+    out = lc.render_rastatime_liq([_stream()])
+    # No input.harbor (active) — only the doc-stub comment.
+    for line in out.splitlines():
+        stripped = line.lstrip()
+        if stripped.startswith("#"):
+            continue
+        assert "input.harbor(" not in stripped, (
+            f"Unexpected active input.harbor line: {line!r}"
+        )
+    # Bus is the direct scheduled assignment (no switch wrapper).
+    assert "bus = scheduled" in out
+    assert "no DJ-source harbor enabled" in out
+
+
+def _active_lines(rendered: str):
+    """Return rendered lines that aren't pure-comment (template-header docs)."""
+    return [
+        ln for ln in rendered.splitlines()
+        if not ln.lstrip().startswith("#")
+    ]
+
+
+def test_full_render_main_only_harbor():
+    """Only main_password set → input.harbor for master_dj + switch(master, scheduled)."""
+    out = lc.render_rastatime_liq(
+        [_stream()],
+        harbor_main_password="hackme-main",
+    )
+    active = "\n".join(_active_lines(out))
+    assert 'master_dj = input.harbor' in active
+    assert 'id="master_dj"' in active
+    assert "port=8001" in active
+    assert 'password="hackme-main"' in active
+    # No show block in active code
+    assert "show_dj = input.harbor" not in active
+    # Switch wraps master and scheduled (no show arm)
+    assert "bus = switch(" in active
+    assert "source.is_ready(master_dj)" in active
+    assert "source.is_ready(show_dj)" not in active
+
+
+def test_full_render_show_only_harbor():
+    """Only show_password set → only show_dj source + switch(show, scheduled)."""
+    out = lc.render_rastatime_liq(
+        [_stream()],
+        harbor_show_password="hackme-show",
+    )
+    active = "\n".join(_active_lines(out))
+    assert 'show_dj = input.harbor' in active
+    assert "port=8002" in active
+    assert 'password="hackme-show"' in active
+    assert "master_dj = input.harbor" not in active
+    assert "source.is_ready(show_dj)" in active
+    assert "source.is_ready(master_dj)" not in active
+
+
+def test_full_render_both_harbor_passwords():
+    """Both passwords → both input.harbor blocks + 3-arm switch."""
+    out = lc.render_rastatime_liq(
+        [_stream()],
+        harbor_main_password="m-pw",
+        harbor_show_password="s-pw",
+    )
+    assert 'master_dj = input.harbor' in out
+    assert 'show_dj = input.harbor' in out
+    # Order in the switch: master first (priority), show second,
+    # scheduled fallback last.
+    bus_idx = out.index("bus = switch(")
+    bus_block = out[bus_idx:bus_idx + 500]
+    master_pos = bus_block.index("master_dj")
+    show_pos = bus_block.index("show_dj")
+    scheduled_pos = bus_block.index("scheduled)")
+    assert master_pos < show_pos < scheduled_pos
+
+
+def test_full_render_harbor_password_escapes_special_chars():
+    """Quote / backslash in harbor password is escaped for Liquidsoap parser."""
+    out = lc.render_rastatime_liq(
+        [_stream()],
+        harbor_main_password=r'has"quote\and-back',
+    )
+    assert r'password="has\"quote\\and-back"' in out
+
+
+def test_full_render_custom_harbor_ports():
+    """Custom ports + mount names propagate into the input.harbor block."""
+    out = lc.render_rastatime_liq(
+        [_stream()],
+        harbor_main_password="x",
+        harbor_main_port=9001,
+        harbor_main_mount="custom-main",
+        harbor_show_password="y",
+        harbor_show_port=9002,
+        harbor_show_mount="custom-show",
+    )
+    assert "port=9001" in out
+    assert 'input.harbor(\n  "custom-main"' in out
+    assert "port=9002" in out
+    assert 'input.harbor(\n  "custom-show"' in out
+
+
+def test_full_render_harbor_buffer_seconds():
+    """harbor_buffer_seconds substituted in the buffer=... argument."""
+    out = lc.render_rastatime_liq(
+        [_stream()],
+        harbor_main_password="x",
+        harbor_buffer_seconds=3.5,
+    )
+    assert "buffer=3.5" in out
+
+
 def test_full_render_custom_telnet_and_log():
     out = lc.render_rastatime_liq(
         [_stream()],
@@ -391,6 +507,8 @@ def test_template_has_all_expected_placeholders():
         "${LOG_FILE}",
         "${CROSSFADE_DURATION}",
         "${LOCAL_OUTPUT_BLOCK}",
+        "${HARBOR_INPUTS_BLOCK}",
+        "${BUS_SOURCE_BLOCK}",
         "${ICECAST_OUTPUTS}",
     ):
         assert placeholder in text, (

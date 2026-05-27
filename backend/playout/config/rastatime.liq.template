@@ -23,11 +23,27 @@
 #                                   crossfade(duration=..., bus).
 #                                   Operator can set this from
 #                                   cc_pref.default_crossfade_seconds.
-#   {LOCAL_OUTPUT_BLOCK}            either output.wasapi(fallible=true, bus)
+#   {LOCAL_OUTPUT_BLOCK}            either output.portaudio(fallible=true, bus)
 #                                   for soundcard monitoring, or a
 #                                   commented stub.  Toggled via
 #                                   RASTATIME_LIQUIDSOAP_LOCAL_OUTPUT
 #                                   (default true on Windows).
+#   {HARBOR_INPUTS_BLOCK}           Phase-C4: input.harbor(...) blocks
+#                                   for DJ Master + DJ Show sources.
+#                                   Rendered only when stream.harbor.
+#                                   {main,show}_password are set in
+#                                   libretime.conf.  Empty stub
+#                                   otherwise.
+#   {BUS_SOURCE_BLOCK}              Phase-C4: defines the `bus` source
+#                                   either as plain `scheduled`
+#                                   (no harbor) or as
+#                                   `switch(track_sensitive=true,
+#                                           [(source.is_ready(master_dj),
+#                                             master_dj),
+#                                            (source.is_ready(show_dj),
+#                                             show_dj),
+#                                            (true, scheduled)])`
+#                                   (with harbor enabled).
 #   {ICECAST_OUTPUTS}               rendered output.icecast(...) blocks,
 #                                   one per stream_output_N entry in
 #                                   cc_pref that is enabled=true.
@@ -96,16 +112,25 @@ scheduled   = fallback(
                 [scheduled_q, blank(id="silence_fallback")]
               )
 
-# Phase C4 will add:
-#   master_dj = input.harbor("master", port=8001, password=..., buffer=2., icy=true)
-#   show_dj   = input.harbor("show",   port=8002, password=..., buffer=2., icy=true)
-#   live      = switch(track_sensitive=true, [
-#                 ({var.get(default=false, "master_dj_active")}, master_dj),
-#                 ({var.get(default=false, "show_dj_active")},   show_dj),
-#                 ({true},                                       scheduled),
-#               ])
-# For Phase C3 the broadcast bus is just the scheduled queue:
-bus = scheduled
+# ---------------------------------------------------------------------
+# Phase-C4 — DJ-Source Bus via input.harbor (optional)
+# ---------------------------------------------------------------------
+#
+# input.harbor turns Liquidsoap into a tiny Icecast-source-receiver:
+# BUTT/Mixxx connect to ``liquidsoap-host:<port>/<mount>`` with the
+# configured password, and we wire the resulting source into the bus
+# via switch(...).  source.is_ready(...) returns true automatically
+# when a DJ-client is connected; switch picks the first true predicate.
+#
+# Renderer-Verhalten:
+#   * stream.harbor.main_password gesetzt → master_dj block + switch-arm
+#   * stream.harbor.show_password gesetzt → show_dj block + switch-arm
+#   * beide unset → keine input.harbor, ``bus = scheduled``
+${HARBOR_INPUTS_BLOCK}
+
+# Bus-Auswahl: switch über Master/Show/Scheduled wenn Harbor aktiv,
+# sonst direkt ``bus = scheduled``.
+${BUS_SOURCE_BLOCK}
 
 # ---------------------------------------------------------------------
 # Phase-C6 — Crossfade + ReplayGain on the bus

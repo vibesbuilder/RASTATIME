@@ -83,6 +83,22 @@ DEFAULT_CROSSFADE_DURATION = 2.0
 # for headless server installs that don't want a soundcard output.
 DEFAULT_LOCAL_OUTPUT_ENABLED = True
 
+# Phase-C4: default Liquidsoap-Harbor ports for DJ-Master and DJ-Show
+# sources.  These match the existing libretime_shared schema
+# (MainHarborInput.port = 8001, ShowHarborInput.port = 8002) and the
+# operator-decision from 2026-05-25.  Mount names are "main" / "show"
+# matching the legacy /main and /show Icecast mounts so the
+# Pypo-internal naming + Dashboard "Master/Show Source" indicator
+# stays the same.
+DEFAULT_HARBOR_MAIN_PORT = 8001
+DEFAULT_HARBOR_SHOW_PORT = 8002
+DEFAULT_HARBOR_MAIN_MOUNT = "main"
+DEFAULT_HARBOR_SHOW_MOUNT = "show"
+# Buffer in seconds for input.harbor — soaks up small DJ-side
+# disconnects (Wi-Fi blip, USB-soundcard switch).  2 s matches the
+# operator-decision from 2026-05-25.
+DEFAULT_HARBOR_BUFFER_SECONDS = 2.0
+
 
 # ---------------------------------------------------------------------
 # Liquidsoap codec encoders per stream type
@@ -310,6 +326,110 @@ def _render_local_output_block(enabled: bool) -> str:
     )
 
 
+def _render_harbor_inputs_block(
+    *,
+    main_password: Optional[str],
+    show_password: Optional[str],
+    main_port: int,
+    show_port: int,
+    main_mount: str,
+    show_mount: str,
+    buffer_seconds: float,
+) -> str:
+    """
+    Render the Liquidsoap ``input.harbor`` block(s) for the DJ-Master
+    and DJ-Show sources.  Each side is rendered independently — the
+    operator can enable just Master, just Show, both, or neither.
+
+    Wenn beide Passwörter unset sind, returnt diese Funktion einen
+    comment-only stub.  Der Bus-Source-Render-Helper (siehe
+    :func:`_render_bus_source_block`) sieht das gleiche Flag und
+    wählt entsprechend zwischen `bus = scheduled` und dem switch.
+
+    icy=true sagt input.harbor, dass es ICY-Metadata vom DJ-Client
+    akzeptieren soll (Track-Title + Artist die BUTT/Mixxx schickt).
+    buffer=2. soakt typische Wi-Fi-Mikro-Disconnects.
+
+    Each block tagged with id="master_dj" / id="show_dj" so the
+    Pypo-side source-switcher (Phase C4 Teil 2) can poll
+    ``master_dj.status`` / ``show_dj.status`` via telnet.
+    """
+    parts = []
+    if main_password:
+        parts.append(
+            "master_dj = input.harbor(\n"
+            f'  "{_escape_liq_string(main_mount)}",\n'
+            f"  id=\"master_dj\",\n"
+            f"  port={int(main_port)},\n"
+            f'  password="{_escape_liq_string(main_password)}",\n'
+            f"  buffer={_format_crossfade_duration(buffer_seconds)},\n"
+            "  icy=true,\n"
+            ")\n"
+        )
+    if show_password:
+        parts.append(
+            "show_dj = input.harbor(\n"
+            f'  "{_escape_liq_string(show_mount)}",\n'
+            f"  id=\"show_dj\",\n"
+            f"  port={int(show_port)},\n"
+            f'  password="{_escape_liq_string(show_password)}",\n'
+            f"  buffer={_format_crossfade_duration(buffer_seconds)},\n"
+            "  icy=true,\n"
+            ")\n"
+        )
+    if not parts:
+        return (
+            "# (no DJ-source harbor enabled — stream.harbor.{main,show}_password\n"
+            "#  are unset in libretime.conf; bus stays on the scheduled queue)\n"
+        )
+    return "\n".join(parts)
+
+
+def _render_bus_source_block(
+    *,
+    main_enabled: bool,
+    show_enabled: bool,
+) -> str:
+    """
+    Render the ``bus = ...`` assignment that picks the active source.
+
+    Three combinations of enabled flags → three switch-arm layouts:
+      both enabled  → switch with master, show, scheduled (in priority order)
+      main only     → switch with master, scheduled
+      show only     → switch with show, scheduled
+      neither       → `bus = scheduled` directly (no switch operator,
+                       saves a thin wrapper layer)
+
+    ``track_sensitive=true`` matters here: a track change on the
+    scheduled queue while master_dj is connected should NOT cause
+    a momentary flicker back to scheduled — the switch waits until
+    the active source actually emits a track-end before allowing
+    a lower-priority source to take over.  source.is_ready() flips
+    automatically when input.harbor sees the DJ-client (dis)connect.
+    """
+    arms = []
+    if main_enabled:
+        arms.append("({source.is_ready(master_dj)}, master_dj)")
+    if show_enabled:
+        arms.append("({source.is_ready(show_dj)}, show_dj)")
+    arms.append("({true}, scheduled)")
+
+    if not main_enabled and not show_enabled:
+        # No harbor at all — keep the C3-era simple assignment so the
+        # switch operator doesn't show up as a noise line in `--check`
+        # output and so the bus chain is identical for non-harbor users.
+        return "bus = scheduled\n"
+
+    return (
+        "bus = switch(\n"
+        "  track_sensitive=true,\n"
+        "  [\n"
+        + "".join(f"    {arm},\n" for arm in arms)
+        + "  ]\n"
+        ")\n"
+    )
+
+
 def render_rastatime_liq(
     stream_outputs: List[Dict],
     *,
@@ -318,6 +438,13 @@ def render_rastatime_liq(
     log_file: str = DEFAULT_LOG_FILE,
     crossfade_duration: float = DEFAULT_CROSSFADE_DURATION,
     local_output_enabled: bool = DEFAULT_LOCAL_OUTPUT_ENABLED,
+    harbor_main_password: Optional[str] = None,
+    harbor_show_password: Optional[str] = None,
+    harbor_main_port: int = DEFAULT_HARBOR_MAIN_PORT,
+    harbor_show_port: int = DEFAULT_HARBOR_SHOW_PORT,
+    harbor_main_mount: str = DEFAULT_HARBOR_MAIN_MOUNT,
+    harbor_show_mount: str = DEFAULT_HARBOR_SHOW_MOUNT,
+    harbor_buffer_seconds: float = DEFAULT_HARBOR_BUFFER_SECONDS,
     template_path: Optional[Path] = None,
 ) -> str:
     """
@@ -357,6 +484,20 @@ def render_rastatime_liq(
 
     icecast_blocks = _render_icecast_outputs(stream_outputs)
 
+    harbor_block = _render_harbor_inputs_block(
+        main_password=harbor_main_password,
+        show_password=harbor_show_password,
+        main_port=harbor_main_port,
+        show_port=harbor_show_port,
+        main_mount=harbor_main_mount,
+        show_mount=harbor_show_mount,
+        buffer_seconds=harbor_buffer_seconds,
+    )
+    bus_block = _render_bus_source_block(
+        main_enabled=bool(harbor_main_password),
+        show_enabled=bool(harbor_show_password),
+    )
+
     rendered = (
         template
         .replace("${TELNET_HOST}", _escape_liq_string(telnet_host))
@@ -370,6 +511,8 @@ def render_rastatime_liq(
             "${LOCAL_OUTPUT_BLOCK}",
             _render_local_output_block(local_output_enabled),
         )
+        .replace("${HARBOR_INPUTS_BLOCK}", harbor_block)
+        .replace("${BUS_SOURCE_BLOCK}", bus_block)
         .replace("${ICECAST_OUTPUTS}", icecast_blocks)
     )
     return rendered
@@ -384,6 +527,13 @@ def write_rastatime_liq(
     log_file: str = DEFAULT_LOG_FILE,
     crossfade_duration: float = DEFAULT_CROSSFADE_DURATION,
     local_output_enabled: bool = DEFAULT_LOCAL_OUTPUT_ENABLED,
+    harbor_main_password: Optional[str] = None,
+    harbor_show_password: Optional[str] = None,
+    harbor_main_port: int = DEFAULT_HARBOR_MAIN_PORT,
+    harbor_show_port: int = DEFAULT_HARBOR_SHOW_PORT,
+    harbor_main_mount: str = DEFAULT_HARBOR_MAIN_MOUNT,
+    harbor_show_mount: str = DEFAULT_HARBOR_SHOW_MOUNT,
+    harbor_buffer_seconds: float = DEFAULT_HARBOR_BUFFER_SECONDS,
     template_path: Optional[Path] = None,
 ) -> bool:
     """
@@ -408,6 +558,13 @@ def write_rastatime_liq(
         log_file=log_file,
         crossfade_duration=crossfade_duration,
         local_output_enabled=local_output_enabled,
+        harbor_main_password=harbor_main_password,
+        harbor_show_password=harbor_show_password,
+        harbor_main_port=harbor_main_port,
+        harbor_show_port=harbor_show_port,
+        harbor_main_mount=harbor_main_mount,
+        harbor_show_mount=harbor_show_mount,
+        harbor_buffer_seconds=harbor_buffer_seconds,
         template_path=template_path,
     )
 
