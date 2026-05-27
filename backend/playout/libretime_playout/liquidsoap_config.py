@@ -313,13 +313,32 @@ def _render_local_output_block(enabled: bool) -> str:
     (USB device unplugged, audio service restart) we want Liquidsoap
     to log and retry, not crash the whole subprocess and drop the
     Icecast PUTs.
+
+    Why clock_safe=true (RASTATIME 2026-05-27 — Phase-C4 follow-up):
+    the C4 reality-test caught a PortAudio underflow that took the
+    WHOLE Liquidsoap process down (and killed all three Icecast
+    PUTs with it) when a DJ-source connect+disconnect happened —
+    the underflow surfaced as ``Source output.portaudio failed
+    while streaming: Failure("Portaudio error in write_stream:
+    Output underflowed")``, the main loop exited, NSSM had to
+    auto-restart with ~20s of dead air.
+
+    Root cause: all outputs (3× icecast + portaudio) shared the
+    same main clock; when the switch operator flipped sources,
+    Liquidsoap had to re-buffer downstream and PortAudio drained.
+
+    ``clock_safe=true`` gives output.portaudio its own worker
+    thread + clock — if the WASAPI device hangs or the switch
+    causes a transient underflow, the icecast outputs keep
+    pumping on the main clock undisturbed.
     """
     if enabled:
         return (
             "output.portaudio(\n"
+            "  clock_safe=true,\n"
             "  fallible=true,\n"
             "  bus,\n"
-            ")  # local soundcard monitor (PortAudio default device)\n"
+            ")  # local soundcard monitor (PortAudio default device, isolated clock)\n"
         )
     return (
         "# (local output disabled via RASTATIME_LIQUIDSOAP_LOCAL_OUTPUT=false)\n"

@@ -236,9 +236,16 @@ def test_full_render_local_output_disabled():
 
 
 def test_full_render_local_output_enabled_explicitly():
-    """Explicit local_output_enabled=True renders output.portaudio + fallible=true."""
+    """
+    Explicit local_output_enabled=True renders output.portaudio with
+    both safety flags: clock_safe=true (isolate from main clock to
+    avoid the PortAudio-underflow-takes-down-Liquidsoap-process
+    pathology found in the C4 reality-test) and fallible=true
+    (transient device hiccups don't kill the output forever).
+    """
     out = lc.render_rastatime_liq([_stream()], local_output_enabled=True)
     assert "output.portaudio(" in out
+    assert "clock_safe=true" in out
     assert "fallible=true" in out
 
 
