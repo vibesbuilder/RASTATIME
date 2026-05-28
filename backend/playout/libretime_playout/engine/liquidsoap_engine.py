@@ -571,22 +571,19 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
                 f'replaygain_track_gain="{gain_db:+.2f} dB"'
             )
 
-        # RASTATIME 2026-05-28 — Phase-D Stück-B: short tracks (jingles,
-        # StationIDs) get crossfade-disabled via the `liq_cross_duration`
-        # metadata override.  Without this, the 1 s fade-in + 1 s fade-out
-        # of our crossfade(duration=1.0) operator eats the start + end of
-        # short tracks, making 3-5 s jingles barely audible.  Setting
-        # liq_cross_duration=0.0 tells Liquidsoap to skip the crossfade
-        # for THIS track only — direct cut at the boundaries, jingle
-        # plays at full length and full volume.  Threshold = 8.0 s
-        # (operator-decision).  See _NO_CROSSFADE_THRESHOLD_SECONDS.
-        if (
-            cue_in is not None
-            and cue_out is not None
-            and cue_out > cue_in
-            and (cue_out - cue_in) < _NO_CROSSFADE_THRESHOLD_SECONDS
-        ):
-            annotations.append('liq_cross_duration="0.0"')
+        # RASTATIME 2026-05-28 — Phase-D Stück-B: short-track crossfade-
+        # override REVERTED.  Initial attempt was to set
+        # `liq_cross_duration="0.0"` for tracks under 8 s, expecting
+        # Liquidsoap's crossfade operator to skip the fade-in/fade-out
+        # zones for that one track.  Live-test at 18:16 and 18:21
+        # showed the OPPOSITE effect: short tracks (3-7 s jingles) became
+        # COMPLETELY SILENT instead of "barely audible".  Liquidsoap's
+        # interpretation of liq_cross_duration=0.0 seems to be "skip
+        # this track entirely" rather than "play without crossfade".
+        # See BACKLOG: Phase-D-Polish — "smarter short-track handling
+        # in Liquidsoap crossfade".  For now no per-track annotation;
+        # short tracks suffer the 1 s fade-in + 1 s fade-out eating
+        # their start + end, but at least play partially audibly.
 
         # ICY-metadata fields — Liquidsoap propagates these to all
         # output.icecast blocks automatically.  Empty values and the
