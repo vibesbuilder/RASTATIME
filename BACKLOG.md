@@ -164,6 +164,53 @@ Cutover erst nach 1–2 Wochen A/B-Vergleich.
 - Tail-Flush-Wait (Commits cb20df6 + 952ec3b, obsolet weil
   Liquidsoap gapless macht)
 
+### 🟡 Liquidsoap-Migration Phase E/F: Scheduled Webstreams + Line-Inputs
+
+**Status:** Defer — nach Abschluss Phase D (Cutover) und mindestens
+2 Wochen stabilem Live-Betrieb.
+**Evaluiert:** 2026-05-27 (während C5-Diskussion aufgekommen).
+**Operator-Wert:** Hoch — sonst werden Webstreams + Line-Inputs nicht
+ins Liquidsoap-Recording (`output.file` vom internen Bus) aufgenommen.
+
+**Hintergrund:**
+Phase C migriert Scheduled Tracks + DJ-Sources (master_dj / show_dj
+via input.harbor) zu Liquidsoap. Scheduled **Webstreams** und Scheduled
+**Line-Inputs** bleiben aber im mpv-Legacy-Pfad — Pypo ruft für diese
+Item-Typen weiterhin `engine.play(url)` an den (alten) mpv-Adapter auf.
+
+Konsequenz: das neue Liquidsoap-Recording (`output.file` vom internen
+`bus`) hört diese Quellen nicht, weil sie nie auf dem Bus landen.
+Per-Show Recordings für reine Webstream- oder reine Line-Input-Shows
+sind nach Cutover unvollständig (Stille).
+
+**Was gebaut werden muss:**
+- **Webstream-Items**: Pypo's Webstream-Branch in `playout_scheduler.py`
+  umschreiben — statt `engine.play(url)` an mpv, Liquidsoap dynamisch
+  einen `input.http(url)` als zusätzliche Bus-Quelle hinzufügen. Server-
+  Command via Telnet (`webstream.set_url <url>; webstream.start /
+  webstream.stop`) ODER Re-Render des Liquidsoap-Templates pro Show
+  und Reload. Erstes Pattern ist live-tauglicher (kein Restart).
+- **Line-Input-Items**: analog — entweder direkt `input.wasapi` von
+  Liquidsoap (Windows-Builds kennen das, müsste verifiziert werden),
+  ODER bestehender FfmpegLineinCapture läuft weiter und Liquidsoap
+  konsumiert ihn als `input.http("http://localhost:8000/linein-capture")`.
+- **Template-Erweiterung**: zusätzliche Sources in den `switch(...)`-
+  Block einbauen, Priorisierung wie bisher (DJ > Webstream > Line-Input
+  > Scheduled > Blank).
+
+**Aufwand:** ~700-1000 LoC + Tests, ~2-3 Wochen.
+**Vorbedingung:** Phase D Cutover stabil im Live-Betrieb (mindestens
+2 Wochen ohne Rollback). Operator-Bestätigung dass das mpv-Legacy-
+Webstream-Verhalten wirklich migriert werden soll (alternativ: Legacy
+behalten mit Recording-Caveat dokumentiert).
+**Risiko Live-Betrieb:** Niedrig wenn Feature-Flag-gated.
+
+**Workaround bis dahin (nach Phase D Cutover):**
+- Webstreams + Line-Inputs laufen weiter über mpv-Legacy-Pfad → hörbar
+  im Output-Stream, aber NICHT im Liquidsoap-Recording mit aufgenommen
+- Operator-Hinweis im Manual: per-Show Recordings für reine Webstream-
+  oder Line-Input-Shows sind unvollständig bis Phase E/F kommt
+
 ### 🟢 Widgets — drei Wellen
 
 **Status:** Go in Wellen statt Big-Bang.  In Arbeit.
@@ -422,50 +469,65 @@ Sortierung der bereits-gespielten + nächsten Tracks freezable.
 
 ## 🐞 Known Issues / Bug Backlog
 
-### 🟡 Liquidsoap clock.assign_new wrapped alle Outputs in portaudio_clock (Phase-D)
+### ✅ Liquidsoap clock.assign_new wrapped alle Outputs in portaudio_clock (DONE 2026-05-28 — C5-Side-Fix)
 
-**Status:** Defer — funktioniert pragmatisch ohne Crash, aber nicht echt isoliert.
+**Status:** DONE — bus-split via `buffer(buffer=0.5, bus)` als asynchrone
+Clock-Bruecke implementiert (Task #108).  Phase-D-Defer hat sich erledigt
+weil der C5-Reality-Test 2026-05-28 01:25 zeigte dass die clock.assign_new-
+allein-Variante NICHT reicht: PortAudio underflow crashte trotzdem das
+ganze Liquidsoap (Output underflowed → Shutdown started, ~5s NSSM-Restart
+mitten in einer aktiven Recording).  Der echte Bus-Split via buffer() ist
+die canonical Liquidsoap-Loesung, jetzt im Renderer + Test gesichert.
+Trade-off: lokales Monitor-Speaker laeuft 500 ms hinter Stream/Recording.
+
 **Festgestellt:** 2026-05-27 (Phase-C4 Reality-Test).
+**Behoben:** 2026-05-28 (Phase-C5 Reality-Test, Renderer-Edit in
+`liquidsoap_config.py::_render_local_output_block`).
 
-**Symptom / aktuelle Lösung:**
-Mein `ignore(clock.assign_new(id="portaudio_clock", [output.portaudio(...)]))`
-in `liquidsoap_config.py::_render_local_output_block` hat im Reality-Test
-funktioniert (Liquidsoap startet ohne `clock_safe`-Fehler, NSSM-Service
-bleibt RUNNING bei DJ-Source-Toggles). ABER im Bring-up-Log sieht man:
+---
 
-```
-[clock:3] Starting top-level clock portaudio_clock with sources:
-  output.portaudio (output), output.icecast.2 (output),
-  output.icecast.1 (output), output.icecast (output), ...
-```
+### 🟡 Liquidsoap Latency-Catchup unter System-Last verliert Recording-Audio (Phase-D)
 
-Alle 4 Outputs hängen am `portaudio_clock`. Liquidsoap's Source-Graph-
-Dependencies haben automatisch alle Sources in den gleichen Clock-Pool
-gezogen (weil sie alle den selben `bus` als Quelle haben). Effektiv
-haben wir den Main-Clock nur umbenannt, nicht echt isoliert.
+**Status:** Defer — funktional kein Showstopper, aber Recording-Loss-Risk
+unter Spitzenlast.
+**Festgestellt:** 2026-05-28 (C5 Burn-In #2).
 
-**Warum trotzdem OK für Phase-C:**
-- Kein Liquidsoap-Crash mehr bei DJ-Source-Toggle (Phase-C4-Reality-
-  Test 2026-05-27 hat das mehrfach bestätigt)
-- Audio-Pipeline läuft stabil
-- Die `clock_safe=true`-Pattern in alten Liquidsoap-Versionen hat
-  vermutlich auch nicht echt isoliert sondern nur clock-naming-magic
-  gemacht
+**Symptom:**
+Im 6-Stunden-Burn-In (02:48 - 10:05) waren 5 von 6 Shows mit
+99-100 % Recording-Duration korrekt. Eine 60-min-Show (06:00-07:00)
+landete bei 88.2 % (3173 von 3600 s = 7 min Audio verloren).
 
-**Echter Fix für Phase-D:**
-PortAudio's `bus`-Input muss von einer separaten `bus`-Kopie kommen,
-damit der Source-Graph wirklich aufteilt. Pattern:
+Korrelation: Liquidsoap-Log zeigt `Latency is too high: catchup N.NN s`
+Warnungen mit folgender Häufigkeit pro Stunde:
+- 04: 28  /  05: 21  /  06: **96**  /  07: 72  /  08: 21
 
-```liq
-bus_for_icecast  = bus
-bus_for_portaudio = drop_metadata(bus)    # oder ähnliches barrier-operator
-clock.assign_new(id="portaudio_clock", sync='auto', [
-  output.portaudio(fallible=true, bus_for_portaudio)
-])
-output.icecast(... bus_for_icecast ...)
-```
+Peak in der Stunde wo die Show 7 Minuten verlor. Zusätzlich
+1 Telnet-Timeout (Pypo → Liquidsoap) um 06:11:45 — Liquidsoap war
+zu beschäftigt mit Catchup um den `scheduled.push` Befehl
+rechtzeitig zu beantworten. Pypo hat sich nach dem Timeout
+sauber erholt (kein Folge-Error).
 
-Aufwand: ~2h Code + Test. Phase-D-Polish, kein Phase-C-Blocker.
+**Hypothesen:**
+- System-Last-Quelle: Hintergrund-Disk-I/O (Backup? Indizierung?
+  Windows-Update?), oder anderer Process (Bitdefender-Scan?)
+- Liquidsoap-Pipeline-Tuning: Frame-Size, Buffer-Größen,
+  Threading-Settings könnten Catchup-Latenz reduzieren
+- output.file selbst könnte Mit-Verursacher sein (synchroner Disk-
+  Write blockt Bus)
+
+**Diagnose-Skript für Phase-D:**
+- 24h Burn-In MIT zusätzlicher Last-Probe (perfmon-Logging
+  parallel zu burnin2_snapshots: CPU%, Disk-I/O, Memory-Pressure)
+- Cross-Reference: korrelieren Catchup-Events mit System-Metriken?
+- Falls Disk-I/O der Schuldige: output.file separat per
+  clock.assign_new vom Bus isolieren (analog zur PortAudio-Lösung)
+
+**Workaround bis dahin:**
+- Nichts. 60-min-Show-Recordings unter Spitzenlast sind potentiell
+  unvollständig. 10-min-Show-Recordings sind in der Praxis stabil
+  bei 99-100 %.
+
+**Aufwand:** ~4-8 h für Diagnose, danach 1-3 d Fix je nach Root-Cause.
 
 ---
 

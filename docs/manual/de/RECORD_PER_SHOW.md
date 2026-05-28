@@ -47,39 +47,63 @@ Das neue Modell zeichnet den **vollständigen On-Air-Output**
 auf — was auch immer die Hörer während der Sendung hören,
 unabhängig von der Quelle.
 
-Die Implementierung ist ein unabhängiger FFmpeg-Subprozess,
-der den ersten konfigurierten Icecast-Mountpoint der
-Station als Eingang öffnet und ihn wortwörtlich in eine
-Datei schreibt:
+> **Architektur-Update — Phase-C5 (2026-05-28).** Die
+> Aufnahme-Pipeline wurde von einem separaten FFmpeg-
+> Icecast-Tap-Subprozess auf einen Liquidsoap-`output.file`-
+> Block migriert, der den internen Audio-Bus direkt abgreift.
+> Beide Architekturen liefern dasselbe operator-sichtbare
+> Verhalten (Pro-Sendung-Aufnahme in einen Ordner); der
+> Bus-Tap ist nur einfacher, zuverlässiger und nutzt
+> hochwertigeres festes 320-kbps-MP3. Siehe ARCHITECTURE
+> §23.13.bis für die technischen Details.
+
+Die Implementierung ist ein Liquidsoap-
+`output.file(id="recording")`-Block im
+langlaufenden Liquidsoap-Subprozess. Er zapft denselben
+internen Audio-Bus an, der die öffentlichen Icecast-Ausgaben
+speist, und kodiert ihn in MP3 mit festen 320 kbps:
+
+```liquidsoap
+output.file(
+  id="recording",
+  %ffmpeg(format="mp3", %audio(codec="libmp3lame", b="320k")),
+  {recording_path()},
+  fallible=true,
+  bus,
+)
+```
+
+Pypos Pro-Sendung-Start/Stop-Hooks steuern den Lebenszyklus
+über die Liquidsoap-Telnet-Schnittstelle:
 
 ```
-   ffmpeg -i http://localhost:8000/rastatime \
-          -c copy \
-          -t <Sendungsdauer-Sekunden> \
-          -y C:\rastatime\recordings\<show-id>-<starts-at>.mp3
+recording.stop
+var.set recording_path = C:/.../<YYYY-MM-DD HH-MM> - <show>.mp3
+recording.start
 ```
 
-Das `-c copy`-Flag bedeutet **keine Neu-Kodierung** — die
-Bytes, die aus Icecast streamen, werden so wie sie sind in
-die Datei geschrieben. Das ergibt:
+Das ergibt:
 
 | Eigenschaft | Wert |
 |---|---|
-| **CPU-Kosten** | ~1-2 % eines Kerns auf Intel i3-1315U |
-| **Qualität** | Identisch mit dem öffentlichen Stream (typischerweise 192 k oder 320 k MP3) |
-| **Fehler-Isolation** | Recorder-Absturz beeinflusst nie den Live-Stream (separater Prozess, separate Datei-Handles) |
-| **Quellen-Wechsel** | Automatisch erfasst (Recorder hört einfach Icecast ab) |
+| **CPU-Kosten** | ~3 % eines Kerns auf Intel i3-1315U (ein libmp3lame-Encoder) |
+| **Qualität** | Feste 320 kbps MP3 — Archivqualität, identisch zum Haupt-Icecast-Stream |
+| **Quellen-Wechsel** | Automatisch erfasst (Aufnahme greift denselben internen Bus ab wie der Live-Stream) |
+| **Fehler-Isolation** | `fallible=true` an `output.file` verhindert, dass ein einzelner Output-Fehler (Disk voll, AV-Scan-Lock) sich im Source-Graph fortpflanzt |
 
-> **Warum nicht den hochwertigen internen Bus aufzeichnen?**
-> Ein separater Encoder, gespeist von PCM, könnte
-> 320-kbps-MP3 oder FLAC produzieren, würde aber ~10x die
-> CPU kosten und erfordern, dem Recorder zu lehren, welche
-> Quelle zu jedem Moment aktiv ist (Dateipfad,
-> Webstream-URL, Line-In-Geräte-Handle, Master/Show-DJ-
-> Quelle). Die CPU ist der Dealbreaker; für gesprochenes
-> Radio ist der Qualitätsunterschied grenzwertig
-> unmerklich. ARCHITECTURE §23.13 hat die Tabelle der
-> betrachteten Alternativen.
+> **Operator-Setting, das früher die Aufnahme-Bitrate
+> kontrollierte** (`PlayoutConfig.record_bitrate`, default
+> 256 kbps) wird jetzt ignoriert. Alle Aufnahmen sind
+> MP3 @ 320 kbps — Archiv-Qualität, fest durch Operator-
+> Entscheidung 2026-05-27.
+
+> **Aufnahme erfordert die Liquidsoap-Engine.** Phase-C5
+> Teil 2d hat den Legacy-FfmpegRecorder-Code-Pfad gelöscht,
+> der zuvor die Aufnahme für die mpv/VLC-Engine-Modi
+> übernommen hat. Wenn `RASTATIME_PLAYOUT_ENGINE` auf
+> `mpv` oder `vlc` gesetzt ist, werden Show-Record-Start-
+> Events geloggt, aber es findet keine Aufnahme statt (die
+> Sendung läuft normal, nur die Aufnahme fehlt).
 
 ---
 
@@ -116,11 +140,14 @@ die Sendung beginnt).
 > `cc_show.record = TRUE`. Beim Sendungsstart sendet der
 > Schedule-Builder der Playout-Engine ein
 > `SHOW_RECORD_START`-Event mit der id, dem Namen und der
-> Startzeit der Sendung. Der Recorder-Handler in
-> `backend/playout/libretime_playout/engine/ffmpeg_recorder.py`
-> startet den FFmpeg-Subprozess. Beim Sendungsende sendet
-> die Engine `SHOW_RECORD_END`, und der Subprozess wird zum
-> Stoppen signalisiert. Siehe ARCHITECTURE §23.13.
+> Startzeit der Sendung. Der Handler in
+> `backend/playout/libretime_playout/playout_scheduler.py`
+> sendet einen `recording.start`-Befehl an das Liquidsoap-
+> Telnet, das die Pro-Sendung-.mp3-Datei öffnet. Beim
+> Sendungsende sendet die Engine `SHOW_RECORD_END`, und der
+> Handler sendet `recording.stop`, um die Datei sauber zu
+> schließen. Siehe ARCHITECTURE §23.13 (originales FFmpeg-
+> Design) und §23.13.bis (Phase-C5 Liquidsoap-Migration).
 
 ---
 
@@ -156,6 +183,47 @@ Verfügbare Platzhalter: `{show_id}`, `{show_name}`,
 > bedeutet show_id-zuerst, dass die Aufnahmen in
 > chronologischer Reihenfolge bleiben, auch wenn sie
 > alphabetisch sortiert werden.
+
+## 3.5 Antivirus-Ausnahme ist PFLICHT
+
+> ⚠️ **Wichtig — gilt für jeden Studio-Rechner mit RASTATIME.**
+
+Echtzeit-Antivirus-Software (Bitdefender, Windows Defender,
+Kaspersky, McAfee, ESET, …) scannt jeden Datei-Schreibvorgang
+— einschließlich der wachsenden .mp3-Datei, die gerade
+aufgezeichnet wird. Bei langen Sendungen (>30 min) sammelt
+sich der Scan-Lock-pro-Schreibvorgang so weit an, dass
+Liquidsoaps Audio-Pipeline Frames droppt um Schritt zu halten.
+
+Reality-Test 2026-05-28: eine 60-min-Sendung ohne Antivirus-
+Ausnahme nahm nur 52 min 53 s Audio auf (~88 % der geplanten
+Dauer); dieselbe Aufnahme-Pipeline mit aus dem Antivirus
+ausgenommenem Ordner erreichte reproduzierbar 100 %.
+
+**Mitigation: Aufnahme-Ordner zur Ausnahmeliste des Antivirus
+hinzufügen.**
+
+- **Bitdefender** (am häufigsten auf RASTATIME-Deployments):
+  Bitdefender-GUI → **Schutz** → **Antivirus** →
+  **Einstellungen** → **Ausnahmen verwalten** → den
+  Aufnahme-Ordnerpfad hinzufügen (z.B.
+  `C:\Users\studio\Music\Recording\` oder was Sie unter
+  Settings → Local Machine → Recording Folder konfiguriert
+  haben).
+- **Windows Defender**: Einstellungen → **Update & Sicherheit**
+  → **Windows-Sicherheit** → **Viren- & Bedrohungsschutz** →
+  **Einstellungen verwalten** → **Ausschlüsse hinzufügen
+  oder entfernen** → den Aufnahme-Ordner hinzufügen.
+- **Andere AVs**: deren Doku konsultieren; die Option heißt
+  meist "Ausnahme", "Ausschluss" oder "Whitelist".
+
+Nach dem Hinzufügen der Ausnahme ist kein Neustart nötig;
+die nächste Sendungs-Aufnahme läuft mit voller Qualität.
+
+> **Operator-Tipp.** Fügen Sie die Ausnahme bei der
+> RASTATIME-Erst-Einrichtung hinzu BEVOR die erste Sendung
+> aufnimmt. Sonst haben Sie ggf. ein paar Stunden mit
+> verkürzten Aufnahmen, bevor Sie das Problem bemerken.
 
 ---
 
@@ -370,32 +438,55 @@ und schalten Sie die Aufnahme nur auf einer ein.
 
 ### "Können zwei gleichzeitig sendende Sendungen auf verschiedenen Outputs beide aufzeichnen?"
 
-Der Recorder erfasst nur den **ersten konfigurierten**
-Output-Stream. Die separate Aufzeichnung mehrerer Outputs
-wird nicht unterstützt.
+RASTATIMEs Schedule-Modell ist Single-Show: zu jedem
+Zeitpunkt ist höchstens eine Sendung auf Sendung, parallel
+auf allen konfigurierten Output-Streams. Die Aufnahme zapft
+den internen Liquidsoap-Bus an (derselbe Audio, der alle
+Icecast-Outputs speist), also ist "verschiedene Sendungen auf
+verschiedenen Outputs" architektonisch kein unterstützter Fall.
 
 ### "Erfasst Aufnahme pro Sendung die Live-DJ-Quelle?"
 
 Ja. Solange die Live-DJ-Quelle auf Sendung ist (auf dem
 öffentlichen Stream hörbar), wird sie erfasst. Die
-Aufnahme unterscheidet keine Quelle — sie ist, was der
-Icecast-Mountpoint sendet.
+Aufnahme unterscheidet keine Quelle — sie ist, was auf dem
+internen Liquidsoap-Bus liegt (= was die Hörer hören).
 
 ### "Warum ist die Dateigröße der Aufnahme größer als Sendungsdauer × Bitrate?"
 
 Die MP3-Frame-Struktur hat ein paar Bytes Overhead pro
-Frame. Für eine 192-kbps-1-Stunden-Datei ist die
-tatsächliche Größe typischerweise 86-87 MB statt der reinen
-Mathe-Größe von 84 MB.
+Frame. Für eine 320-kbps-1-Stunden-Datei ist die
+tatsächliche Größe typischerweise 144-145 MB statt der reinen
+Mathe-Größe von 144 MB.
+
+### "Warum ist eine lange Aufnahme kürzer als die geplante Sendungsdauer?"
+
+Mit ziemlicher Sicherheit scannt Ihr Antivirus die wachsende
+.mp3-Datei und blockiert den Liquidsoap-Encoder lange genug,
+dass Frames gedroppt werden. Siehe
+[Abschnitt 3.5](#35-antivirus-ausnahme-ist-pflicht) — den
+Aufnahme-Ordner zur Ausnahmeliste des Antivirus hinzufügen
+behebt das.
+
+Eine kleine Rest-Diskrepanz (1–3 Sekunden in einer 1-Stunden-
+Sendung) ist normal und kommt von der MP3-Frame-Grenzen-
+Ausrichtung.
 
 ### "Kann ich mit einer anderen Bitrate als dem Stream aufzeichnen?"
 
-Nein (weil `-c copy` die Neu-Kodierung überspringt). Um
-mit einer anderen Bitrate aufzuzeichnen, bräuchten Sie
-Neu-Kodierung (`-c:a libmp3lame -b:a 320k`), was CPU und
-Qualität kostet (die Neu-Kodierung einer verlustbehafteten
-Quelle ist verlustbehaftet). Nicht über die Oberfläche
-unterstützt.
+Nicht über die Oberfläche. Die Aufnahme-Bitrate ist fest auf
+MP3 @ 320 kbps eingestellt (Operator-Entscheidung Phase-C5,
+2026-05-27 — Archiv-Qualität unabhängig davon, wie die
+öffentlichen Icecast-Streams konfiguriert sind). Die Aufnahme
+ist ein separater Liquidsoap-`output.file`-Block mit eigenem
+libmp3lame-Encoder, also ist die Aufnahme-Bitrate unabhängig
+von der öffentlichen Stream-Bitrate.
+
+Um sie zu ändern, editieren Sie
+`backend/playout/config/rastatime.liq.template` und ersetzen
+`b="320k"` im Aufnahme-Block durch Ihre gewünschte Bitrate;
+dann starten Sie RASTATIME-PLAYOUT (rendert die .liq neu)
+und RASTATIME-LIQUIDSOAP (lädt die neue Vorlage) neu.
 
 ---
 

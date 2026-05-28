@@ -425,6 +425,88 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
         return True
 
     # ------------------------------------------------------------------
+    # Phase C5 — Show recording (Liquidsoap-specific, NOT on the ABC)
+    # ------------------------------------------------------------------
+    #
+    # The rastatime.liq template renders an ``output.file(id="recording",
+    # …)`` block whose filename comes from a Liquidsoap interactive
+    # variable ``recording_path``.  Pypo's _on_show_record_start /
+    # _on_show_record_end hooks call these three wrappers when
+    # ``streaming_handled_externally=True`` — the legacy mpv/VLC engines
+    # leave FfmpegRecorder in charge and never touch them.
+    #
+    # Reality-tested 2026-05-27 (Mechanismus B):
+    #   * fresh start: 100.6 % of expected byte count over 10 s
+    #   * back-to-back: 100.3 % of expected, three-command roundtrip 31 ms
+    # The OS write-cache buffers actual bytes for ~256 KB; the cache is
+    # flushed when ``recording_stop`` closes the file, so the per-show
+    # MP3 always ends complete and at the expected duration.
+
+    def recording_start(self, path: str) -> None:
+        """
+        Open Liquidsoap's ``output.file(id="recording", ...)`` at
+        ``path`` and start writing the internal bus (mixed scheduled +
+        DJ + blank-fallback audio) to a fresh MP3.
+
+        Uses Mechanismus B (verified 2026-05-27): explicit
+        stop → var.set recording_path → start triple-command — this
+        forces Liquidsoap to re-evaluate the filename function on each
+        start so the new path is honoured (otherwise the filename
+        function is only evaluated once when the output block first
+        opens).
+
+        Path constraints (Liquidsoap-telnet wire-form):
+          * forward-slash form (``C:/...`` on Windows, no backslashes)
+          * no ``\\n``, ``\\r``, ``"``, or ``\\`` characters in the path
+            — these would break the wire-form parsing.  Caller is
+            responsible for sanitisation (the rastatime.liq output.file
+            block does its own mkdir on the parent directory, but the
+            scheduler also creates the parent dir defensively because
+            output.file's mkdir behaviour is encoder-dependent).
+
+        The initial ``recording_stop`` is a safety idempotency guard:
+        if a prior show's stop somehow missed (Pypo crash mid-show,
+        telnet timeout that left Liquidsoap in 'on' state), the stop
+        here closes the orphan file before we re-open at the new path.
+        """
+        # Safety: idempotent stop in case a prior show didn't end cleanly.
+        try:
+            self._telnet.recording_stop()
+        except (OSError, ConnectionError) as exc:
+            logger.warning(
+                "Liquidsoap recording_start: prior-stop telnet failed "
+                "(%s); continuing with set_path + start anyway.", exc,
+            )
+        self._telnet.recording_set_path(path)
+        self._telnet.recording_start()
+        logger.info("Liquidsoap recording_start: opened %s", path)
+
+    def recording_stop(self) -> None:
+        """
+        Close the currently-open recording file.  Idempotent — a stop
+        on an already-stopped recording replies "Done" on the
+        Liquidsoap side and produces no error.
+
+        Closing the file forces the OS write-cache flush, so the .mp3
+        on disk reflects every audio frame that was on the bus up to
+        the stop instant.  No post-roll delay is needed because the
+        recording is on the SAME internal bus as the Icecast outputs —
+        the legacy FfmpegRecorder's 1 s post-roll was a workaround for
+        HTTP-source-buffering lag, which doesn't apply here.
+        """
+        self._telnet.recording_stop()
+        logger.info("Liquidsoap recording_stop: closed current recording")
+
+    def recording_status(self) -> str:
+        """
+        Return Liquidsoap's free-text recording status (typically
+        ``'on'`` or ``'off'``).  Mainly for diagnostics — Pypo's
+        scheduler doesn't gate on this since the start/stop wrappers
+        are themselves idempotent.
+        """
+        return self._telnet.recording_status()
+
+    # ------------------------------------------------------------------
     # Internal helpers — URI / annotate building
     # ------------------------------------------------------------------
 

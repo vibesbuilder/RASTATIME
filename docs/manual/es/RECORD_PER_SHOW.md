@@ -36,30 +36,63 @@ El nuevo modelo graba la **salida completa al aire** — lo
 que los oyentes escuchan durante el programa,
 independientemente de la fuente.
 
-La implementación es un subproceso FFmpeg independiente
-que abre el primer mountpoint Icecast configurado de la
-emisora como entrada y lo escribe textualmente a un
-archivo:
+> **Actualización arquitectónica — Phase-C5 (2026-05-28).**
+> El pipeline de grabación migró de un subproceso
+> FFmpeg-Icecast-tap separado a un bloque Liquidsoap
+> `output.file` que se conecta directamente al bus de audio
+> interno. Ambas arquitecturas entregan el mismo
+> comportamiento visible para el operador (grabación
+> por-programa en una carpeta); el tap del bus es solo más
+> simple, más fiable, y usa MP3 fijo de 320 kbps de mayor
+> calidad. Vea ARCHITECTURE §23.13.bis para el detalle
+> técnico.
+
+La implementación es un bloque Liquidsoap
+`output.file(id="recording")` en el subproceso Liquidsoap
+de larga duración. Se conecta al mismo bus de audio
+interno que alimenta las salidas Icecast públicas y lo
+codifica a MP3 con tasa fija de 320 kbps:
+
+```liquidsoap
+output.file(
+  id="recording",
+  %ffmpeg(format="mp3", %audio(codec="libmp3lame", b="320k")),
+  {recording_path()},
+  fallible=true,
+  bus,
+)
+```
+
+Los hooks start/stop por-programa de Pypo controlan el
+ciclo de vida vía la interfaz telnet de Liquidsoap:
 
 ```
-   ffmpeg -i http://localhost:8000/rastatime \
-          -c copy \
-          -t <duración-programa-segundos> \
-          -y C:\rastatime\recordings\<show-id>-<starts-at>.mp3
+recording.stop
+var.set recording_path = C:/.../<YYYY-MM-DD HH-MM> - <show>.mp3
+recording.start
 ```
 
 | Propiedad | Valor |
 |---|---|
-| **Coste CPU** | ~1-2 % de un núcleo en Intel i3-1315U |
-| **Calidad** | Idéntica al stream público (típicamente 192 k o 320 k MP3) |
-| **Aislamiento de fallos** | Crash del grabador nunca afecta el stream en vivo |
-| **Cambios de fuente** | Capturados automáticamente |
+| **Coste CPU** | ~3 % de un núcleo en Intel i3-1315U (un codificador libmp3lame) |
+| **Calidad** | MP3 fijo a 320 kbps — calidad archivo, idéntica al stream Icecast principal |
+| **Cambios de fuente** | Capturados automáticamente (la grabación se conecta al mismo bus interno que el stream en vivo) |
+| **Aislamiento de fallos** | `fallible=true` en `output.file` evita que un fallo de una sola salida (disco lleno, bloqueo de scan AV) se propague en el grafo de fuentes |
 
-> **Por qué no grabar el bus interno de alta calidad?**
-> Un codificador separado alimentado por PCM podría
-> producir 320 kbps MP3 o FLAC, pero costaría ~10x la
-> CPU. ARCHITECTURE §23.13 tiene la tabla de alternativas
-> consideradas.
+> **El ajuste del operador que anteriormente controlaba la
+> tasa de bits de grabación** (`PlayoutConfig.record_bitrate`,
+> por defecto 256 kbps) ahora se ignora. Todas las grabaciones
+> son MP3 @ 320 kbps — calidad archivo, fija por decisión
+> del operador 2026-05-27.
+
+> **La grabación requiere el motor Liquidsoap.** Phase-C5
+> Teil 2d eliminó la ruta de código heredada FfmpegRecorder
+> que anteriormente manejaba la grabación para los modos de
+> motor mpv/VLC. Si `RASTATIME_PLAYOUT_ENGINE` está
+> establecido en `mpv` o `vlc`, los eventos
+> show-record-start se registran pero no se realiza ninguna
+> grabación (el programa se reproduce normalmente, solo
+> falta la grabación).
 
 ---
 
@@ -85,9 +118,14 @@ expandir **Grabación** → marcar → Guardar.
 > **Cómo funciona bajo el capó.** El toggle establece
 > `cc_show.record = TRUE`. Al inicio del programa, el
 > constructor de planning del motor de playout emite un
-> evento `SHOW_RECORD_START`. El handler del grabador en
-> `backend/playout/libretime_playout/engine/ffmpeg_recorder.py`
-> lanza el subproceso FFmpeg. Vea ARCHITECTURE §23.13.
+> evento `SHOW_RECORD_START`. El handler en
+> `backend/playout/libretime_playout/playout_scheduler.py`
+> envía un comando `recording.start` al telnet de
+> Liquidsoap, que abre el archivo .mp3 por-programa. Al
+> final del programa, el motor emite `SHOW_RECORD_END` y
+> el handler envía `recording.stop` para cerrar el archivo
+> limpiamente. Vea ARCHITECTURE §23.13 (diseño FFmpeg
+> original) y §23.13.bis (migración Liquidsoap Phase-C5).
 
 ---
 
@@ -111,6 +149,53 @@ configuran en `config\libretime.conf` bajo la sección
 
 Placeholders disponibles: `{show_id}`, `{show_name}`,
 `{starts_at}` (datetime), `{ends_at}` (datetime).
+
+## 3.5 La exclusión antivirus es OBLIGATORIA
+
+> ⚠️ **Importante — se aplica a cada ordenador de estudio
+> que ejecuta RASTATIME.**
+
+El software antivirus en tiempo real (Bitdefender, Windows
+Defender, Kaspersky, McAfee, ESET, …) escanea cada
+escritura de archivo — incluyendo el archivo .mp3 en
+crecimiento que se está grabando. Para programas largos
+(>30 min), el coste de scan-lock-por-escritura se acumula
+hasta el punto en que el pipeline de audio de Liquidsoap
+descarta frames intentando mantener el ritmo.
+
+Reality-test 2026-05-28: un programa de 60 min sin
+exclusión antivirus grabó solo 52 min 53 s de audio
+(~88 % de la duración programada); el mismo pipeline con
+la carpeta excluida del antivirus alcanzó reproduciblemente
+el 100 %.
+
+**Mitigación: agregar la carpeta de grabación a la lista
+de excepciones de su antivirus.**
+
+- **Bitdefender** (el más común en los despliegues
+  RASTATIME): GUI Bitdefender → **Protección** →
+  **Antivirus** → **Configuración** → **Gestionar
+  excepciones** → agregar la ruta de la carpeta de
+  grabación (por ejemplo `C:\Users\studio\Music\Recording\`
+  o lo que configuró en Settings → Local Machine →
+  Recording Folder).
+- **Windows Defender**: Configuración → **Actualización y
+  seguridad** → **Seguridad de Windows** → **Protección
+  contra virus y amenazas** → **Administrar
+  configuración** → **Agregar o quitar exclusiones** →
+  agregar la carpeta de grabación.
+- **Otros AVs**: consulte su documentación; la opción
+  suele llamarse «Exclusión», «Excepción» o «Lista blanca».
+
+Después de agregar la excepción, no se necesita reinicio;
+la grabación del próximo programa se ejecutará con calidad
+completa.
+
+> **Consejo del operador.** Agregue la excepción durante
+> la configuración inicial de RASTATIME ANTES de que se
+> grabe el primer programa. De lo contrario, podría tener
+> unas horas de grabaciones cortas antes de notar el
+> problema.
 
 ---
 
@@ -244,20 +329,58 @@ No. El toggle es por-programa.
 
 ### "¿Pueden dos programas emitiendo simultáneamente en diferentes salidas grabar ambos?"
 
-El grabador solo captura el **primer stream configurado**.
+El modelo de planning de RASTATIME es single-show: en
+cualquier momento, como máximo un programa está al aire,
+en paralelo en todos los streams de salida configurados.
+La grabación se conecta al bus interno de Liquidsoap (el
+mismo audio que alimenta todas las salidas Icecast), por
+lo que «diferentes programas en diferentes salidas» no es
+un caso soportado arquitectónicamente.
 
 ### "¿Grabación por programa captura la fuente Live DJ?"
 
-Sí.
+Sí. Mientras la fuente Live DJ esté al aire (audible en
+el stream público), se captura. La grabación no distingue
+fuente — es lo que está en el bus interno de Liquidsoap
+(= lo que los oyentes escuchan).
 
 ### "¿Por qué el tamaño del archivo de grabación es mayor que duración × bitrate?"
 
 La estructura de frame MP3 tiene unos bytes de sobrecarga
-por frame.
+por frame. Para un archivo de 320 kbps de una hora, el
+tamaño real es típicamente 144-145 MB en lugar de los
+144 MB matemáticos.
+
+### "¿Por qué una grabación larga es más corta que la duración programada del programa?"
+
+Casi con certeza su antivirus está escaneando el archivo
+.mp3 en crecimiento y bloqueando el codificador Liquidsoap
+lo suficiente como para descartar frames. Vea
+[Sección 3.5](#35-la-exclusión-antivirus-es-obligatoria)
+— agregar la carpeta de grabación a la lista de
+excepciones de su antivirus soluciona esto.
+
+Una pequeña diferencia residual (1–3 segundos en un
+programa de una hora) es normal y proviene del
+alineamiento de límites de frames MP3.
 
 ### "¿Puedo grabar a un bitrate diferente del stream?"
 
-No (porque `-c copy` salta el re-encoding).
+No vía la interfaz. La tasa de bits de grabación está
+fija en MP3 @ 320 kbps (decisión del operador Phase-C5,
+2026-05-27 — calidad archivo independientemente de cómo
+estén configurados los streams Icecast públicos). La
+grabación es un bloque Liquidsoap `output.file` separado
+con su propio codificador libmp3lame, por lo que la tasa
+de bits de grabación es independiente de la tasa de bits
+del stream público.
+
+Para cambiarla, edite
+`backend/playout/config/rastatime.liq.template` y
+reemplace `b="320k"` en el bloque de grabación por su
+tasa de bits deseada; luego reinicie RASTATIME-PLAYOUT
+(re-renderiza el .liq) y RASTATIME-LIQUIDSOAP (carga la
+nueva plantilla).
 
 ---
 

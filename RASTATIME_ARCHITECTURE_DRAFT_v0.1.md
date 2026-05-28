@@ -2105,6 +2105,122 @@ anything.
 * Automated cleanup of old recordings (covered by future Catchup
   feature #9).
 
+#### 23.13.bis — Phase-C5 Migration to Liquidsoap output.file (2026-05-28)
+
+**Context shift.**  When the Seamless-Bus-Mix Phase-C migration moved
+the whole playout pipeline to Liquidsoap (ADR-002 reversed; Section
+23.x Seamless-Bus-Mix), the original FFmpeg-Icecast-tap recorder
+became architecturally redundant: Liquidsoap already had the audio
+on an internal bus, so a separate HTTP tap was wasteful (extra
+decode/encode round-trip, 404-race during bring-up, mid-show watchdog
+respawn machinery for transient HTTP source drops).  Phase-C5
+deletes the FfmpegRecorder + lifecycle code (~693 LoC net) and
+replaces it with a single Liquidsoap `output.file(id="recording", …)`
+block tapping the internal bus directly.
+
+**New decision.**  Recording is a Liquidsoap `output.file` block that
+encodes the bus into MP3 at 320 kbps and writes to a path set
+dynamically per show via the telnet interactive variable
+`recording_path`.
+
+```liquidsoap
+recording_path = interactive.string(
+  "recording_path",
+  "C:/rastatime/recordings/_uninitialized.mp3"
+)
+output.file(
+  id="recording",
+  %ffmpeg(format="mp3", %audio(codec="libmp3lame", b="320k")),
+  {recording_path()},
+  fallible=true,
+  bus,
+)
+```
+
+Per-show path-switching uses **Mechanismus B** (verified 2026-05-27
+in `test_c5_mechanism_b.py`):
+
+```
+telnet> recording.stop
+telnet> var.set recording_path = C:/.../<YYYY-MM-DD HH-MM> - <show>.mp3
+telnet> recording.start
+```
+
+The triple-command forces Liquidsoap to re-evaluate the filename
+function on the new start, opening the new file.  v1 (single `var.set`
+with `reopen_when` callback) had a ~30 s polling lag because
+`reopen_when` is only evaluated on frame boundaries.  Mechanismus B
+is sub-second (telnet roundtrip ~30 ms).
+
+**Why MP3@320kbps fixed** (operator decision 2026-05-27): archive-
+grade quality, eliminates "the recording is worse than the stream"
+class of operator complaints.  CPU cost on i3-1315U: ~3 % (one
+libmp3lame encoder vs. the prior `-c copy` zero-encode tap), well
+within budget.  ReplayGain is applied upstream (`amplify(override=
+"replaygain_track_gain", bus)`) so the recording mirrors the stream.
+
+**Why not internal-bus-with-format-override (operator-configurable
+bitrate/codec)?** Considered but rejected for C5 scope; fixed
+320 kbps MP3 keeps the configuration surface minimal.  Per-show
+choice of codec/bitrate stays in the deferred-list at the end of
+this section.
+
+**Failure isolation revisited.**  The old FfmpegRecorder was isolated
+from the streaming pipeline because it was a separate process.  The
+new Liquidsoap output.file is INSIDE the Liquidsoap process — a
+Liquidsoap crash now also kills the recording.  Mitigations:
+
+- `fallible=true` on `output.file` lets a single output failure
+  (disk full, AV scan-lock) not propagate up the source graph.
+- Recording activity is on the same main clock as the Icecast
+  outputs; both share the same failure-recovery patterns (NSSM
+  auto-restart on Liquidsoap-process-death).
+- PortAudio (local-monitor output) is in its own clock with a
+  `buffer(2.0)`-bridge (Phase-C5 Side-Fix 2026-05-28) so its
+  underflows don't take down recording.
+
+**Bitdefender / antivirus interaction.**  The C5 reality-test
+2026-05-28 caught a 12 % audio loss in a 60-min show that
+correlated with a burst of Liquidsoap latency-catchup events
+(96 catchups in one hour vs. 21–28 in neighbouring hours).
+Root cause: Bitdefender's real-time scan locked the growing
+recording .mp3 on every write, blocking the encoder for milliseconds
+per scan-tick.  Over 60 min and ~140 MB those locks accumulated to
+~7 min of dropped audio frames.  **Mitigation: the recording-folder
+MUST be in the antivirus's exception list.**  After adding the
+exception, the same 30-min direct telnet recording produced 100.3 %
+of expected duration (1804 s of 1800 s expected at 320 kbps).
+Documented in `docs/manual/RECORD_PER_SHOW.md` (and DE/FR/ES
+translations).
+
+**Operator-Pfad (Liquidsoap-only).**  Phase-C5 Teil 2d deleted
+FfmpegRecorder, which means recording is **only** available when
+`RASTATIME_PLAYOUT_ENGINE=liquidsoap` is set.  In the legacy
+mpv / VLC engine paths, `_on_show_record_start` logs a warning
+and silently skips; the show plays normally, only the recording
+is missing.  This is intentional — the operator committed to
+Liquidsoap as the recording-pipeline-of-record (no pun) on
+2026-05-27.
+
+**Hook code paths.**  Same `ShowRecordEvent` + `_arm_show_record_event`
+machinery as Section 23.13 above, but the callbacks now route to:
+
+* `_on_show_record_start` → `engine.recording_start(forward_slash_path)`
+  (the LiquidsoapPlayoutEngine wrapper sends the stop+set+start triple).
+* `_on_show_record_end` → `engine.recording_stop()` (synchronous,
+  no post-roll Timer needed because the bus-tap has no HTTP-buffering
+  lag).
+
+No lifecycle thread, no watchdog respawn, no retry-on-404, no
+post-roll Timer.
+
+**Filename construction unchanged.**  `build_output_path` was moved
+from `engine.ffmpeg_recorder` to the new `libretime_playout/
+recording_path.py` module; the format is still
+`<folder>/<YYYY-MM-DD>/<YYYY-MM-DD HH-MM> - <show-name>.mp3` with
+the same Windows-illegal-character sanitization.
+
+
 ### 23.14 Continuous Output Stream (Future Work, deferred)
 
 **Status:** Open / not implemented.  Documented here so the

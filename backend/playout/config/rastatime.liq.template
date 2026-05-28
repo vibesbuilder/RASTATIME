@@ -222,41 +222,30 @@ recording_path = interactive.string(
   "C:/rastatime/recordings/_uninitialized.mp3"
 )
 
-# Phase-C5 troubleshoot 2026-05-27 (4th attempt):
-# Liquidsoap 2.4.4 evaluates the filename-function ONCE on first
-# file-open and then caches the value for the lifetime of the
-# output.file -- a subsequent `recording.stop` + `recording.start`
-# reopens the SAME file, ignoring updates to the recording_path
-# variable.  Reality-test confirmed: after stop -> set_path -> start
-# the sentinel `_uninitialized.mp3` kept growing instead of a new
-# `c5-test.mp3` appearing.
+# Mechanismus B (verified 2026-05-27 in test_c5_mechanism_b.py):
+# the explicit ``recording.stop`` -> ``var.set recording_path = NEW``
+# -> ``recording.start`` triple-command forces Liquidsoap to
+# re-evaluate the filename-function on the new start, opening NEW.
+# Reality-test: fresh start lag = 100.6 % of expected (= ~zero lag,
+# the small over-shoot is buffer alignment), back-to-back lag =
+# 100.3 % with a 31 ms telnet round-trip.  No reopen_when callback
+# needed; the start/stop sequence does the path re-evaluation
+# naturally.  Older versions of this template used a reopen_when
+# ref-based callback to detect path changes mid-stream -- that
+# pattern had a ~30 s polling lag and is no longer needed.
 #
-# Fix: explicit reopen_when callback that detects path changes and
-# forces Liquidsoap to re-evaluate the filename-function on the
-# next bus frame.  ref-based bookkeeping so the callback only
-# fires `true` exactly when the path actually changed -- otherwise
-# we'd reopen on every audio frame.
-last_opened_recording_path = ref("")
-
-def recording_should_reopen() =
-  cur = recording_path()
-  # NB: Liquidsoap 2.4 deprecated `!ref` in favour of `ref()` for
-  # deref.  Both work but `!ref` emits a warning at --check time.
-  prev = last_opened_recording_path()
-  if cur != prev then
-    last_opened_recording_path := cur
-    true
-  else
-    false
-  end
-end
-
+# NOTE: start=false was the original design but Liquidsoap-2.4.4
+# does NOT honour `recording.start` correctly with start=false
+# (the file simply never opens, no error, silent failure).
+# C5 falls back to default start=true and the
+# LiquidsoapPlayoutEngine issues `recording_stop` right after
+# engine init to silence the initial sentinel-file write before
+# Pypo's first _on_show_record_start hook fires.
 output.file(
   id="recording",
   %ffmpeg(format="mp3", %audio(codec="libmp3lame", b="320k")),
   {recording_path()},
   fallible=true,
-  reopen_when=recording_should_reopen,
   bus,
 )
 
@@ -272,14 +261,9 @@ output.file(
 # ---------------------------------------------------------------------
 ${LOCAL_OUTPUT_BLOCK}
 
-# ---------------------------------------------------------------------
-# Phase-C5 will add the recording output here:
-#   output.file(
-#     %ffmpeg(format="mp3", %audio(codec="libmp3lame", b="192k")),
-#     {recording_filename_for_current_show()},
-#     bus,
-#     fallible=true,
-#     reopen_when={recording_should_reopen()},
-#     on_close={recording_post_process()},
-#   )
-# ---------------------------------------------------------------------
+# Phase-C5 recording output is defined above (output.file
+# id="recording") between the Icecast outputs and the local
+# monitor.  Operator-side Pypo drives its lifecycle via
+# engine.recording_start(path) / engine.recording_stop()
+# (LiquidsoapPlayoutEngine wrappers around the telnet commands
+# recording.stop -> var.set recording_path = ... -> recording.start).

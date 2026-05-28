@@ -7,6 +7,77 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Recording-Pipeline auf Liquidsoap output.file migriert
+  (Phase-C5 Komplett, 2026-05-27/28)** — die per-Show MP3-
+  Aufnahmen kommen jetzt direkt aus dem internen Liquidsoap-
+  Bus statt über einen separaten FFmpeg-Tap der Icecast-Mountpoint
+  abzapfte.  Vorteile: keine HTTP-Source-Buffering-Lücke (~500 ms
+  Tail-Cut entfällt), kein 404-Race im Bring-up, kein Watchdog-
+  Respawn nötig (Bus-Tap kann nicht netzwerk-flappen), einheitliche
+  Audio-Quelle = bit-identisch mit was Listener hören.
+
+  Implementation (Operator-Decisions 2026-05-27):
+    - **MP3@320kbps fest** (Archive-Qualität, statt historisch
+      192/256 kbps); im `output.file(%ffmpeg(format="mp3",
+      %audio(codec="libmp3lame", b="320k")), …)` Block.
+    - **Recording vom internen Bus direkt** — Quelle ist der
+      `bus` post-switch / post-crossfade / post-amplify.
+    - **Mechanismus B** für Path-Switching: `recording.stop` →
+      `var.set recording_path = NEW` → `recording.start` triple-
+      command zwingt Liquidsoap die Filename-Function neu zu
+      evaluieren.  Reality-test 2026-05-27 verifiziert: 100.3 %
+      Recording-Duration (vs. expected) bei back-to-back-Switches
+      mit < 1 s telnet-roundtrip.
+
+  Operator-spürbare Änderung: kein Workflow-Unterschied
+  (Show-Edit "Record this show"-Checkbox unverändert), aber:
+  - **Recording-Mode gilt nur bei `RASTATIME_PLAYOUT_ENGINE=
+    liquidsoap`** — im Legacy mpv/VLC-Modus ist Recording seit
+    diesem Release nicht mehr verfügbar (FfmpegRecorder gelöscht).
+  - **Antivirus-Exclusion Pflicht** — der Recording-Folder
+    (`C:\Users\studio\Music\Recording\` oder operator-konfiguriert)
+    MUSS in Bitdefender / Defender als Exception eingetragen
+    werden.  Live-Test 2026-05-28 04:00–08:00 hat reproduzierbar
+    gezeigt: ohne Exclusion verlieren lange Shows (>30 min) durch
+    Real-Time-AV-Scan auf der wachsenden .mp3-Datei messbar
+    Audio (88 % statt 100 % Duration bei einer 60-min Show).
+    Mit Exclusion: 100.3 % Duration verifiziert über 30 min.
+
+- **Liquidsoap PortAudio Bus-Split via `buffer(2.0)` + eigene Clock
+  (Phase-C5 Side-Fix, 2026-05-28)** — der C5-Reality-Test deckte
+  auf dass die Phase-C4 `clock.assign_new`-Allein-Variante nur die
+  Main-Clock umbannte, nicht echt isolierte (alle Outputs liefen
+  weiter im selben Worker-Clock).  Folge: jeder PortAudio-Underflow
+  (CPU-/Disk-Last-Spike) crashte den ganzen Liquidsoap-Prozess
+  mit-Recording und allen 3 Icecast-PUTs.  NSSM-Restart dauerte
+  ~5 s.
+
+  Real fix: `bus_for_portaudio = buffer(buffer=2.0, bus)` als
+  asynchrone Clock-Bridge, der Buffer selbst per `clock.assign_new
+  (id="portaudio_clock", sync="cpu", [bus_for_portaudio])` in einer
+  eigenen wall-time-getriebenen Clock.  output.portaudio konsumiert
+  bus_for_portaudio.  Burn-In #2 (2026-05-28 02:48–10:05, 7h 17m)
+  verifiziert: 0 PortAudio-Crashes, Liquidsoap-uptime ungebrochen.
+  Trade-off: lokales Monitor-Speaker läuft 2 s hinter Stream/Recording
+  — akzeptabel für Operator-Monitoring.
+
+### Removed
+
+- **FfmpegRecorder + Lifecycle-Code (~693 LoC netto, 2026-05-28)** —
+  `backend/playout/libretime_playout/engine/ffmpeg_recorder.py`
+  komplett gelöscht (493 LoC) sowie die zugehörige Lifecycle-
+  Maschinerie in `playout_scheduler.py`: `_show_record_lifecycle`,
+  `_show_record_mid_show_respawn`, `_show_record_initial_start`,
+  `_RECORDER_RETRY_*`-Konstanten, `_show_record_stop_events`-Dict,
+  `_first_stream_listen_url` (~250 LoC).  Die zwei noch genutzten
+  Helper (`build_output_path`, `sanitize_show_name`) wurden in das
+  neue Modul `libretime_playout/recording_path.py` (~80 LoC)
+  gerettet.  Operator-Decision irreversibel 2026-05-27 ("FfmpegRecorder
+  Code komplett loeschen"), verifiziert durch Burn-In #2 vor dem
+  Delete.
+
 ### Fixed
 
 - **Liquidsoap Phase-C8 Reality-Test — 10 Bugfixes durch live

@@ -328,26 +328,44 @@ def _render_local_output_block(enabled: bool) -> str:
     to log and retry, not crash the whole subprocess and drop the
     Icecast PUTs.
 
-    Why the clock.assign_new wrap (RASTATIME 2026-05-27 — Phase-C4
-    follow-up):
-    the C4 reality-test caught a PortAudio underflow that took the
-    WHOLE Liquidsoap process down (and killed all three Icecast
-    PUTs with it) when a DJ-source connect+disconnect happened —
-    the underflow surfaced as ``Source output.portaudio failed
-    while streaming: Failure("Portaudio error in write_stream:
-    Output underflowed")``, the main loop exited, NSSM had to
-    auto-restart with ~20s of dead air.
+    Why the buffer + clock.assign_new wrap (RASTATIME 2026-05-28 —
+    Phase-C5 follow-up — echter Bus-Split, BACKLOG-Fix vorgezogen):
 
-    Root cause: all outputs (3× icecast + portaudio) shared the
-    same main clock; when the switch operator flipped sources,
-    Liquidsoap had to re-buffer downstream and PortAudio drained.
+    The C5 reality-test (2026-05-28 01-:25 show-record test) caught
+    a PortAudio underflow that took the WHOLE Liquidsoap process
+    down mid-recording (killed all three Icecast PUTs AND the
+    output.file recording with it):
+
+        [clock:2] Source output.portaudio failed while streaming:
+            Failure("Portaudio error in write_stream: Output underflowed")!
+        [main:3] Shutdown started!
+
+    NSSM auto-restarted with ~5 s downtime, but the half-written
+    recording file was lost (post-restart state is sentinel default).
+
+    Root cause: the first-attempt ``clock.assign_new`` (Phase-C4)
+    only RENAMED the clock — all sources still shared the same
+    actual worker clock because they all referenced the same ``bus``
+    variable.  Liquidsoap's source-graph dependency analysis pulls
+    sources into a common clock when they have a common upstream.
+
+    Real fix: use ``buffer()`` to create an asynchronous bridge
+    between ``bus`` (main clock) and ``output.portaudio`` (its own
+    clock).  ``buffer`` is the canonical Liquidsoap pattern for a
+    clock-crossing audio bridge: it queues up to ``buffer`` seconds
+    of audio that the downstream output reads independently of the
+    upstream's tick rate.  When PortAudio underflows the buffer
+    absorbs it; only the local soundcard hears a small dropout, the
+    Icecast PUTs + recording stay rock-solid.
+
+    Trade-off: 0.5 s of audio latency on the local monitor speakers
+    relative to the Icecast/recording timeline.  Acceptable for
+    operator-monitoring purposes (you can still hear "is the
+    stream going?"; you just hear it 500 ms late).
 
     First fix-attempt ``clock_safe=true`` on output.portaudio
-    didn't work — Liquidsoap 2.4.4 removed that parameter (Error 6:
-    "no argument labeled clock_safe").  Real fix: wrap the
-    output.portaudio call in ``clock.assign_new(id="portaudio_clock",
-    [...])``.  Same effect: portaudio gets its own worker-clock,
-    main clock with the Icecast PUTs is isolated.
+    didn't work — Liquidsoap 2.4.4 removed that parameter
+    (Error 6: "no argument labeled clock_safe").
 
     We need ``ignore(...)`` around the clock.assign_new because
     Liquidsoap 2.4 returns the (re-clocked) source list from
@@ -356,15 +374,29 @@ def _render_local_output_block(enabled: bool) -> str:
     """
     if enabled:
         return (
-            "# PortAudio in its own clock (avoids C4 reality-test crash\n"
-            "# pattern: switch operator -> downstream rebuffer -> portaudio\n"
-            "# underflow -> WHOLE Liquidsoap process down).  Phase-C4 follow-up.\n"
-            "ignore(clock.assign_new(id=\"portaudio_clock\", [\n"
-            "  output.portaudio(\n"
-            "    fallible=true,\n"
-            "    bus,\n"
-            "  ),\n"
+            "# Echter Bus-Split fuer PortAudio (Phase-C5 follow-up v2 2026-05-28).\n"
+            "# v1 (clock.assign_new just on output.portaudio) didn't work --\n"
+            "# Liquidsoap greedily merges clocks via shared-upstream and\n"
+            "# optimised the buffer() into a no-op.  C5 reality-test 01:15:10\n"
+            "# still crashed with PortAudio underflow, dragging all outputs\n"
+            "# (icecast x3 + recording) down with it.\n"
+            "# v2 fix: assign the BUFFER itself to portaudio_clock (not the\n"
+            "# output).  The buffer is the source that has two clock-sides;\n"
+            "# putting it in a separate clock forces Liquidsoap to instantiate\n"
+            "# the bridge.  sync=cpu drives the portaudio_clock from wall-time\n"
+            "# instead of from any audio source, decoupling it from the main\n"
+            "# pipeline's tick rate.  Buffer bumped to 2.0 s to absorb longer\n"
+            "# CPU/disk stalls (the C5 crash was ~10 s after Show-start, at\n"
+            "# track-decode peak).  Trade-off: lokales Monitor-Speaker laeuft\n"
+            "# 2 s hinter Stream/Recording.\n"
+            "bus_for_portaudio = buffer(buffer=2.0, bus)\n"
+            "ignore(clock.assign_new(id=\"portaudio_clock\", sync=\"cpu\", [\n"
+            "  bus_for_portaudio,\n"
             "]))\n"
+            "output.portaudio(\n"
+            "  fallible=true,\n"
+            "  bus_for_portaudio,\n"
+            ")\n"
         )
     return (
         "# (local output disabled via RASTATIME_LIQUIDSOAP_LOCAL_OUTPUT=false)\n"

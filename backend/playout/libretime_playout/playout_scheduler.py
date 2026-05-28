@@ -45,7 +45,7 @@ from libretime_api_client.v2 import ApiClient
 
 from .config import CACHE_DIR
 from .engine.ffmpeg_linein_capture import FfmpegLineinCapture
-from .engine.ffmpeg_recorder import FfmpegRecorder, build_output_path
+from .recording_path import build_output_path
 from .engine.ffmpeg_streamer import FfmpegStreamer
 from .engine.interface import PlayoutEngine, PlayoutState
 from .player.events import (
@@ -226,27 +226,51 @@ class PlayoutScheduler:
             )
             self._linein_capture = None
 
-        # RASTATIME 2026-05-17 - Phase B: Record-per-Show
-        # (ARCHITECTURE Section 23.13).  Single FfmpegRecorder
-        # instance shared across all shows: RASTATIME's schedule
-        # cannot have two simultaneous shows, so we never need
-        # parallel recorders.  Eagerly instantiated so a missing
-        # ffmpeg binary surfaces at startup, not at first show-start.
-        try:
-            self._show_recorder: Optional[FfmpegRecorder] = FfmpegRecorder()
-        except Exception as exc:  # pylint: disable=broad-exception-caught
-            logger.error(
-                "PlayoutScheduler: FfmpegRecorder unavailable (%s) — "
-                "show recordings will be skipped at start time.",
-                exc,
+        # RASTATIME 2026-05-28 — Phase-C5 Teil 2d: Record-per-Show
+        # is owned by the Liquidsoap engine's output.file(id="recording")
+        # block on the internal bus.  The legacy FfmpegRecorder class
+        # (HTTP-tap + lifecycle-watchdog + post-roll-Timer) was deleted
+        # — recording is only available in the Liquidsoap engine path.
+        # In mpv/VLC engine paths the _on_show_record_* hooks log a
+        # warning and silently skip recording (show still plays).
+        if self._streaming_handled_externally:
+            logger.info(
+                "PlayoutScheduler: streaming handled externally — "
+                "recording is owned by Liquidsoap output.file from "
+                "the internal bus (FfmpegRecorder was deleted in C5).",
             )
-            self._show_recorder = None
-
-        # RASTATIME 2026-05-17 — per-show "the show is over" signal,
-        # set by _on_show_record_end and waited on by the lifecycle
-        # thread's mid-show watchdog loop.  Keyed by show_id.
-        # Entries are cleaned up in the lifecycle thread on exit.
-        self._show_record_stop_events: Dict[int, threading.Event] = {}
+            # rastatime.liq's output.file(id="recording") uses default
+            # start=true because Liquidsoap-2.4.4 silently swallows
+            # `recording.start` when the block was declared with
+            # start=false (the file simply never opens, no error).
+            # Without an explicit stop here, the sentinel
+            # `_uninitialized.mp3` would keep growing from Liquidsoap
+            # boot until the first _on_show_record_start hook fires —
+            # potentially hours.  Best-effort: silently log if the
+            # telnet isn't ready yet (NSSM startup race) — the worst
+            # case is a slightly longer sentinel file.
+            if hasattr(self._engine, "recording_stop"):
+                try:
+                    self._engine.recording_stop()
+                    logger.info(
+                        "PlayoutScheduler: initial recording.stop sent "
+                        "to Liquidsoap (silences sentinel-file write "
+                        "from boot until first scheduled show).",
+                    )
+                except Exception as exc:  # pylint: disable=broad-exception-caught
+                    logger.warning(
+                        "PlayoutScheduler: initial recording.stop failed "
+                        "(Liquidsoap not ready yet?): %s — sentinel "
+                        "file will keep growing until first show.",
+                        exc,
+                    )
+        else:
+            logger.warning(
+                "PlayoutScheduler: legacy engine path (mpv/VLC) — "
+                "show recordings will be SKIPPED at start time.  "
+                "Recording requires RASTATIME_PLAYOUT_ENGINE=liquidsoap "
+                "since C5 Teil 2d deleted FfmpegRecorder.",
+            )
 
         logger.info("PlayoutScheduler initialised (cache_dir=%s)", self._cache_dir)
 
@@ -448,12 +472,20 @@ class PlayoutScheduler:
         # stay locked until the OS reaped the orphaned ffmpeg subprocess.
         if self._linein_capture is not None:
             self._linein_capture.close()
-        # RASTATIME 2026-05-17 — gracefully stop any in-flight show
-        # recording so the .mp3 is playable (would still be playable
-        # without a stop because MP3 has no container trailer, but a
-        # clean stop is tidier).
-        if self._show_recorder is not None:
-            self._show_recorder.stop()
+        # RASTATIME 2026-05-28 — Phase-C5 Teil 2d: gracefully stop any
+        # in-flight show recording on the Liquidsoap side so the .mp3
+        # is playable (MP3 has no container trailer so it would still
+        # be playable without a clean stop, but tidier this way).  In
+        # the legacy mpv/VLC engine path recording is unavailable
+        # since FfmpegRecorder was deleted, so nothing to stop.
+        # Errors are logged but not raised — shutdown must complete.
+        if self._streaming_handled_externally:
+            try:
+                self._engine.recording_stop()
+            except Exception as exc:  # pylint: disable=broad-exception-caught
+                logger.warning(
+                    "Shutdown: Liquidsoap recording_stop failed: %s", exc,
+                )
         logger.info("PlayoutScheduler: shutdown complete")
 
     # ------------------------------------------------------------------
@@ -1051,19 +1083,41 @@ class PlayoutScheduler:
 
     def _on_show_record_start(self, key: str, event: ShowRecordEvent) -> None:
         """
-        RASTATIME 2026-05-17 - Phase B: Record-per-Show start handler.
+        RASTATIME 2026-05-28 — Phase-C5 Teil 2d: Record-per-Show start
+        handler.  Recording is owned by Liquidsoap's ``output.file
+        (id="recording", …)`` block on the internal bus.  Pypo's role
+        is reduced to:
 
-        Resolves the recording-folder + first-mountpoint-URL, then
-        spawns the FfmpegRecorder.  Any precondition that is not met
-        (no recorder available, no folder configured, no stream
-        output configured) is logged and silently skipped — the show
-        plays normally, only the recording is missing.
+          1. Resolve the recording-folder via the API.
+          2. Build the per-show output path (date / time / sanitised
+             show-name) using :func:`recording_path.build_output_path`.
+          3. Ensure the parent directory exists (Liquidsoap's
+             output.file does not always auto-create).
+          4. Call ``engine.recording_start(forward_slash_path)``.
+
+        Failure modes (no folder, bad path, telnet down) are logged
+        and silently skipped — the show plays normally, only the
+        recording is missing.
+
+        Legacy mpv/VLC engine path (``streaming_handled_externally=
+        False``): logs a warning and silently skips.  Recording was
+        only ever implemented for the deleted FfmpegRecorder; with
+        that gone, recording requires the Liquidsoap engine.
+
+        Compared to the deleted FfmpegRecorder lifecycle, the
+        Liquidsoap path has:
+          * No HTTP-source-tap (recording is on the same internal bus
+            as the Icecast outputs)
+          * No retry-on-404 (no HTTP source to fail)
+          * No mid-show watchdog respawn (no subprocess to crash)
+          * No post-roll Timer (no HTTP-buffering lag to compensate)
         """
-        if self._show_recorder is None:
+        if not self._streaming_handled_externally:
             logger.warning(
-                "Show-record start ignored (key=%s show_id=%s): recorder "
-                "unavailable at startup",
-                key, event.show_id,
+                "Show-record start ignored (key=%s show_id=%s name=%r): "
+                "recording requires RASTATIME_PLAYOUT_ENGINE=liquidsoap "
+                "since C5 Teil 2d deleted FfmpegRecorder.",
+                key, event.show_id, event.show_name,
             )
             return
 
@@ -1072,15 +1126,6 @@ class PlayoutScheduler:
             logger.warning(
                 "Show-record start ignored (key=%s show_id=%s name=%r): "
                 "no recording folder configured in Settings -> Local Machine",
-                key, event.show_id, event.show_name,
-            )
-            return
-
-        source_url = self._first_stream_listen_url()
-        if not source_url:
-            logger.warning(
-                "Show-record start ignored (key=%s show_id=%s name=%r): "
-                "no output stream configured",
                 key, event.show_id, event.show_name,
             )
             return
@@ -1097,289 +1142,69 @@ class PlayoutScheduler:
             )
             return
 
-        logger.info(
-            "PLAY (show-record start)  %s  |  show_id=%s name=%r  |  "
-            "source=%s  |  output=%s",
-            key, event.show_id, event.show_name, source_url, output_path,
-        )
-
-        # RASTATIME 2026-05-17 — kick off the recorder's whole
-        # lifecycle in a dedicated thread.  The lifecycle thread owns
-        # three concerns for the show:
-        #   1. Initial start with retry-on-404 (the Line-In warmup
-        #      window where /rastatime returns 404 for ~2 s).
-        #   2. Mid-show watchdog: poll the FFmpeg process every 5 s
-        #      and respawn (in MP3 append-mode) if it has died, so
-        #      a transient /rastatime drop (source switch to Master,
-        #      Icecast hiccup, webstream decode error) doesn't leave
-        #      the operator with a 11-second-of-300 recording.
-        #   3. Clean exit when SHOW_RECORD_END signals the per-show
-        #      stop event.
-        # The pre-existing post-roll Timer in _on_show_record_end
-        # still does the actual graceful FFmpeg stop; this thread
-        # only watches for unscheduled deaths.
-        stop_event = threading.Event()
-        # NB potential race: SHOW_RECORD_END could fire before this
-        # event dict insertion if the show is < a few milliseconds
-        # long, but real shows are minutes; not worth a CAS.
-        self._show_record_stop_events[event.show_id] = stop_event
-        threading.Thread(
-            target=self._show_record_lifecycle,
-            args=(
-                source_url, output_path,
-                event.show_id, event.show_name,
-                stop_event,
-            ),
-            name=f"rastatime-show-record-lifecycle-{event.show_id}",
-            daemon=True,
-        ).start()
-
-    # Lifecycle-thread tunables.
-    #
-    # Initial-retry parameters (cover Line-In warmup window):
-    #   EARLY_DEATH_WINDOW_S — how long we wait after spawning FFmpeg
-    #     before deciding it's stable.  ~3 s covers the typical Line-In
-    #     warmup (1.5-2 s + safety margin).
-    #   INIT_BACKOFF_S — pause between failed initial attempts.
-    #   INIT_MAX_ATTEMPTS — bounds the total initial-stall to ~32 s
-    #     so a truly unreachable source eventually frees the thread.
-    #
-    # Watchdog parameters (mid-show death recovery):
-    #   WATCHDOG_POLL_S — how often we check the FFmpeg process.  5 s
-    #     is a compromise: short enough that a death is detected within
-    #     a few seconds, long enough to keep CPU and log noise low.
-    #   Per operator decision 2026-05-17, the mid-show watchdog
-    #     retries UNLIMITED times until SHOW_RECORD_END signals.  A
-    #     dauerhaft source-loss therefore log-spams once per poll
-    #     until show-end; this is acceptable for the diagnostic
-    #     visibility it provides.
-    _RECORDER_RETRY_MAX_ATTEMPTS = 8
-    _RECORDER_RETRY_EARLY_DEATH_WINDOW_S = 3.0
-    _RECORDER_RETRY_BACKOFF_S = 1.0
-    # RASTATIME 2026-05-17 — poll every 2 s (was 5 s).  Source-Switch
-    # gaps on /rastatime can be up to ~16 s (master->scheduled with
-    # Tascam Line-In Capture flake), and a 5 s poll combined with
-    # FFmpeg's ~10 s internal reconnect-give-up means up to 15 s
-    # detection latency.  2 s polling keeps the dead-window below
-    # ~3 s.
-    _RECORDER_WATCHDOG_POLL_S = 2.0
-    # Inner retry loop applied after a mid-show death: if the respawn
-    # also dies inside the early-death window, retry up to MAX_ATTEMPTS
-    # times with BACKOFF_S between attempts.  Total tolerance per
-    # respawn is roughly MAX_ATTEMPTS * (EARLY_DEATH_WINDOW + BACKOFF)
-    # = 8 * (3 + 1) = 32 s, which is enough for the longest observed
-    # source-switch gap (16 s) plus some safety margin.
-    _RECORDER_RESPAWN_MAX_ATTEMPTS = 8
-
-    def _show_record_lifecycle(
-        self,
-        source_url: str,
-        output_path: Path,
-        show_id: int,
-        show_name: str,
-        stop_event: threading.Event,
-    ) -> None:
-        """
-        Own the recorder for one show: initial start with retry,
-        then mid-show watchdog that respawns FFmpeg if it dies.
-        Exits when the per-show stop_event is set by
-        :meth:`_on_show_record_end`.
-        """
-        recorder = self._show_recorder
-        if recorder is None:
-            self._show_record_stop_events.pop(show_id, None)
+        # Liquidsoap's output.file may or may not auto-create the
+        # parent dir depending on encoder + platform; do it defensively
+        # so a fresh per-day folder always exists.  mkdir(parents=True,
+        # exist_ok=True) is idempotent.
+        try:
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+        except OSError as exc:
+            logger.warning(
+                "Show-record start ignored (key=%s show_id=%s): could not "
+                "create directory %s: %s",
+                key, event.show_id, output_path.parent, exc,
+            )
             return
 
+        # Liquidsoap's telnet wire-form rejects backslashes.  Windows
+        # paths come out of pathlib with ``\\`` separators; convert to
+        # forward-slashes here (Liquidsoap on Windows handles ``C:/...``
+        # fine on the file-system side).
+        liq_path = str(output_path).replace("\\", "/")
+
+        logger.info(
+            "PLAY (show-record start, Liquidsoap)  %s  |  show_id=%s "
+            "name=%r  |  output=%s",
+            key, event.show_id, event.show_name, output_path,
+        )
         try:
-            # Phase 1: initial start with retry.  Use append=False so
-            # the first attempt truncates any stale file from a
-            # previous crash.
-            if not self._show_record_initial_start(
-                recorder, source_url, output_path, show_id, show_name,
-                stop_event,
-            ):
-                return  # gave up before anything was recorded
-
-            # Phase 2: mid-show watchdog.  Now restart in append-mode
-            # so successive segments concatenate into the same .mp3.
-            while not stop_event.is_set():
-                # stop_event.wait returns True if signaled, False on
-                # timeout — we use it as an interruptible sleep so the
-                # post-roll stop() can wake us promptly.
-                if stop_event.wait(self._RECORDER_WATCHDOG_POLL_S):
-                    return
-
-                current = recorder.current_show_id
-                if current == show_id:
-                    continue  # alive, all good
-                if current is not None and current != show_id:
-                    # Another show took over the single shared
-                    # recorder slot — bail out so we don't fight it.
-                    logger.info(
-                        "Show-record watchdog (show_id=%s): another "
-                        "show_id=%s is now recording, exiting",
-                        show_id, current,
-                    )
-                    return
-                # current is None → recorder died during the show.
-                # Respawn with an inner retry-loop so a long /rastatime
-                # gap (master <-> scheduled switch can be ~16 s on a
-                # bad Line-In day) is bridged without falling back into
-                # the outer 2 s poll loop between every attempt.
-                self._show_record_mid_show_respawn(
-                    recorder, source_url, output_path,
-                    show_id, show_name, stop_event,
-                )
-        finally:
-            self._show_record_stop_events.pop(show_id, None)
-
-    def _show_record_mid_show_respawn(
-        self,
-        recorder: FfmpegRecorder,
-        source_url: str,
-        output_path: Path,
-        show_id: int,
-        show_name: str,
-        stop_event: threading.Event,
-    ) -> None:
-        """
-        Respawn the recorder in append-mode and retry tightly if the
-        respawn also dies within the early-death window.  Returns when
-        either (a) a respawn survives the early-death window, (b) the
-        show ends, or (c) we've exhausted MAX_ATTEMPTS — in which case
-        the outer watchdog loop will pick it back up on the next poll.
-        """
-        for attempt in range(1, self._RECORDER_RESPAWN_MAX_ATTEMPTS + 1):
-            if stop_event.is_set():
-                return
-            log_method = logger.warning if attempt == 1 else logger.info
-            log_method(
-                "Show-record watchdog (show_id=%s name=%r): FFmpeg died "
-                "mid-show; respawning in append-mode (attempt %d/%d)",
-                show_id, show_name,
-                attempt, self._RECORDER_RESPAWN_MAX_ATTEMPTS,
+            self._engine.recording_start(liq_path)
+        except (OSError, ConnectionError, ValueError) as exc:
+            logger.error(
+                "Show-record start failed (Liquidsoap telnet, "
+                "key=%s show_id=%s name=%r): %s",
+                key, event.show_id, event.show_name, exc,
             )
-            recorder.start(
-                source_url, output_path, show_id, show_name,
-                append=True,
-            )
-            # Same early-death window as the initial start phase —
-            # gives FFmpeg time to open the HTTP input and start
-            # writing frames before we decide it's stable.
-            if stop_event.wait(self._RECORDER_RETRY_EARLY_DEATH_WINDOW_S):
-                return
-            if recorder.current_show_id == show_id:
-                if attempt > 1:
-                    logger.info(
-                        "Show-record watchdog: respawn succeeded on "
-                        "attempt %d (show_id=%s)",
-                        attempt, show_id,
-                    )
-                return
-            if attempt < self._RECORDER_RESPAWN_MAX_ATTEMPTS:
-                if stop_event.wait(self._RECORDER_RETRY_BACKOFF_S):
-                    return
-        logger.error(
-            "Show-record watchdog: respawn exhausted %d attempts "
-            "(show_id=%s name=%r) — the outer poll loop will try again "
-            "in %.1f s",
-            self._RECORDER_RESPAWN_MAX_ATTEMPTS, show_id, show_name,
-            self._RECORDER_WATCHDOG_POLL_S,
-        )
-
-    def _show_record_initial_start(
-        self,
-        recorder: FfmpegRecorder,
-        source_url: str,
-        output_path: Path,
-        show_id: int,
-        show_name: str,
-        stop_event: threading.Event,
-    ) -> bool:
-        """
-        Phase 1 of the lifecycle: spawn FFmpeg, retry if it dies in
-        the early-death window (Line-In warmup HTTP 404 window).
-        Returns True if a recording is up and the watchdog phase
-        should start; False if we gave up.
-        """
-        for attempt in range(1, self._RECORDER_RETRY_MAX_ATTEMPTS + 1):
-            if stop_event.is_set():
-                return False  # show ended before we ever got going
-            recorder.start(source_url, output_path, show_id, show_name)
-            # Interruptible wait so a SHOW_RECORD_END mid-init wakes us.
-            if stop_event.wait(self._RECORDER_RETRY_EARLY_DEATH_WINDOW_S):
-                return False
-
-            current = recorder.current_show_id
-            if current == show_id:
-                if attempt > 1:
-                    logger.info(
-                        "Show-record start: succeeded on attempt %d "
-                        "(show_id=%s)",
-                        attempt, show_id,
-                    )
-                return True
-            if current is not None and current != show_id:
-                logger.info(
-                    "Show-record start: aborting retry for show_id=%s "
-                    "because show_id=%s is now the active recording",
-                    show_id, current,
-                )
-                return False
-            logger.warning(
-                "Show-record start: FFmpeg died within %.1f s on attempt %d "
-                "(show_id=%s name=%r); retrying in %.1f s",
-                self._RECORDER_RETRY_EARLY_DEATH_WINDOW_S, attempt,
-                show_id, show_name, self._RECORDER_RETRY_BACKOFF_S,
-            )
-            if stop_event.wait(self._RECORDER_RETRY_BACKOFF_S):
-                return False
-
-        logger.error(
-            "Show-record start: giving up after %d attempts "
-            "(show_id=%s name=%r) — no recording will be produced for this show",
-            self._RECORDER_RETRY_MAX_ATTEMPTS, show_id, show_name,
-        )
-        return False
 
     def _on_show_record_end(self, key: str, event: ShowRecordEvent) -> None:
         """
-        RASTATIME 2026-05-17 - Phase B: Record-per-Show end handler.
+        RASTATIME 2026-05-28 — Phase-C5 Teil 2d: Record-per-Show end
+        handler.  Calls ``engine.recording_stop()`` synchronously —
+        no post-roll Timer needed because Liquidsoap's ``output.file``
+        is on the SAME internal bus as the Icecast outputs (the
+        deleted FfmpegRecorder's 1 s post-roll was a workaround for
+        HTTP-source-buffering lag that doesn't apply to the bus tap).
 
-        Two responsibilities:
-
-        1. Signal the per-show stop event so the lifecycle thread's
-           mid-show watchdog loop exits promptly (instead of waiting
-           up to ``_RECORDER_WATCHDOG_POLL_S`` for the next poll).
-
-        2. Schedule the graceful FFmpeg stop with a 1-second
-           post-roll to capture the tail of the on-air output that
-           has already been pushed to Icecast but not yet consumed by
-           the recorder.  Without this the recording typically came
-           out ~500 ms short of the wall-clock show length.  The
-           deferred stop uses ``stop_if_recording(show_id)`` so a
-           back-to-back follow-up show that has already started its
-           own recording is never interrupted by the previous show's
-           post-roll timer.
+        Legacy mpv/VLC engine path: no-op.  See
+        :meth:`_on_show_record_start` for the recording-requires-
+        Liquidsoap design decision.
         """
-        if self._show_recorder is None:
+        if not self._streaming_handled_externally:
             return
+
         logger.info(
-            "STOP (show-record end)  %s  |  show_id=%s name=%r  "
-            "(post-roll 1s)",
+            "STOP (show-record end, Liquidsoap)  %s  |  show_id=%s "
+            "name=%r",
             key, event.show_id, event.show_name,
         )
-        # 1) Wake the lifecycle watchdog (so it stops respawning).
-        stop_event = self._show_record_stop_events.get(event.show_id)
-        if stop_event is not None:
-            stop_event.set()
-        # 2) Schedule the actual FFmpeg stop after post-roll.
-        recorder = self._show_recorder
-        show_id = event.show_id
-        threading.Timer(
-            1.0,
-            lambda: recorder.stop_if_recording(show_id),
-        ).start()
+        try:
+            self._engine.recording_stop()
+        except (OSError, ConnectionError) as exc:
+            logger.error(
+                "Show-record stop failed (Liquidsoap telnet): %s "
+                "(key=%s show_id=%s name=%r)",
+                exc, key, event.show_id, event.show_name,
+            )
 
     def _fetch_recording_folder(self) -> Optional[str]:
         """
@@ -1406,26 +1231,6 @@ class PlayoutScheduler:
             return folder or None
         except Exception as exc:  # pylint: disable=broad-exception-caught
             logger.warning("_fetch_recording_folder failed: %s", exc)
-            return None
-
-    def _first_stream_listen_url(self) -> Optional[str]:
-        """
-        Build the public ``http://host:port/mount`` URL for the FIRST
-        configured output stream (operator-spec: "Stream Mountpoint 1").
-        Returns None if no streams are configured.
-        """
-        if not self._current_stream_configs:
-            return None
-        cfg = self._current_stream_configs[0]
-        try:
-            host = str(cfg.get("host", "localhost"))
-            port = int(cfg.get("port", 8000))
-            mount = str(cfg.get("mount", "")).lstrip("/")
-            if not mount:
-                return None
-            return f"http://{host}:{port}/{mount}"
-        except (TypeError, ValueError) as exc:
-            logger.warning("_first_stream_listen_url: bad config: %s", exc)
             return None
 
     def _on_stop(self, key: str) -> None:

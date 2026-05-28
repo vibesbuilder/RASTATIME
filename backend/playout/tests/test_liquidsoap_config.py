@@ -237,19 +237,49 @@ def test_full_render_local_output_disabled():
 
 def test_full_render_local_output_enabled_explicitly():
     """
-    Explicit local_output_enabled=True renders output.portaudio wrapped
-    in clock.assign_new (isolate from main clock to avoid the
-    PortAudio-underflow-takes-down-Liquidsoap-process pathology found
-    in the C4 reality-test) plus fallible=true (transient device
-    hiccups don't kill the output forever).
+    Explicit local_output_enabled=True renders output.portaudio with the
+    full bus-split: ``bus_for_portaudio = buffer(buffer=0.5, bus)`` as
+    an asynchronous clock-crossing bridge, then ``output.portaudio``
+    wrapped in ``clock.assign_new(id="portaudio_clock", …)``.
 
-    Note: Liquidsoap 2.4 dropped the `clock_safe=true` shortcut, so
-    we use the standard clock.assign_new wrapper instead.
+    Background: the C4-attempt ``clock.assign_new`` alone only
+    RENAMED the main clock — all sources still shared one worker
+    clock because they all referenced the same ``bus``.  The C5
+    reality-test (2026-05-28) caught a PortAudio underflow that
+    crashed the WHOLE Liquidsoap process mid-recording:
+
+        [clock:2] Source output.portaudio failed while streaming:
+            Failure("Portaudio error in write_stream: Output underflowed")!
+        [main:3] Shutdown started!
+
+    Real fix: ``buffer()`` between bus and portaudio is the
+    canonical Liquidsoap clock-crossing bridge.  Local-soundcard
+    underflow gets absorbed by the 500 ms async queue instead of
+    crashing the subprocess.
+
+    Note: Liquidsoap 2.4 dropped the ``clock_safe=true`` shortcut,
+    so we use the standard clock.assign_new wrapper instead.
     """
     out = lc.render_rastatime_liq([_stream()], local_output_enabled=True)
     assert "output.portaudio(" in out
     assert 'clock.assign_new(id="portaudio_clock"' in out
     assert "fallible=true" in out
+    # v2 bus-split (Phase-C5 follow-up 2026-05-28): buffer() with 2.0 s
+    # absorption + clock.assign_new on the BUFFER itself (not just the
+    # output), with sync="cpu" so the portaudio_clock is driven from
+    # wall-time and decoupled from any audio-source clock.
+    assert "bus_for_portaudio = buffer(buffer=2.0, bus)" in out
+    # The clock assign must reference bus_for_portaudio (the bridge) and
+    # sync=cpu to actually break the clock-merging:
+    assert 'sync="cpu"' in out
+    # bus_for_portaudio must appear in the clock-assign list AND as the
+    # output.portaudio source argument.
+    bus_pa_count = out.count("bus_for_portaudio")
+    assert bus_pa_count >= 3, (
+        f"Expected bus_for_portaudio to appear in: (1) the buffer assignment, "
+        f"(2) the clock.assign_new list, (3) the output.portaudio source arg "
+        f"— found {bus_pa_count} occurrence(s)."
+    )
     # clock_safe was the 2.x-era parameter; it MUST NOT come back as a
     # regression because Liquidsoap 2.4 errors on it.
     assert "clock_safe" not in out
