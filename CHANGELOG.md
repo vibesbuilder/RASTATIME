@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Deprecated
+
+- **mpv and VLC playout engines (`RASTATIME_PLAYOUT_ENGINE=mpv`
+  und `=vlc`, 2026-05-28)** — Liquidsoap is the production
+  playout engine since Phase-C5.  Setting
+  `RASTATIME_PLAYOUT_ENGINE=mpv` (the historical default) or
+  `=vlc` now emits a `DeprecationWarning` on Pypo startup and
+  the `Local-playback engine: …` log line is tagged
+  `[DEPRECATED]`.  Operators should switch to
+  `RASTATIME_PLAYOUT_ENGINE=liquidsoap`.
+
+  The mpv (and VLC) engine code paths stay in the repo as
+  fallback for two not-yet-ported schedule-item types:
+  scheduled webstreams and scheduled line-inputs.  Those will
+  move to Liquidsoap `input.http` / `input.wasapi` in the
+  separate Phase-E (webstreams) and Phase-F (line-inputs)
+  blocks.  After Phase-E + Phase-F land, ~2000 LoC of legacy
+  engine code (`mpv_engine.py`, `ffmpeg_streamer.py`, related
+  scheduler-branches) get deleted.
+
+  **Recording was ALREADY Liquidsoap-only since C5 Teil 2d
+  (2026-05-28)** — see the C5 entry below.  In the legacy
+  mpv/VLC engine modes, show-record-start events log a
+  warning and silently skip; the show plays normally, only
+  the recording is missing.
+
 ### Changed
 
 - **Recording-Pipeline auf Liquidsoap output.file migriert

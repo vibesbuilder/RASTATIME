@@ -443,15 +443,35 @@ def main() -> None:
     # active in the rendered .liq — both are scheduled for a separate
     # Phase-C iteration.
     engine_kind = os.environ.get("RASTATIME_PLAYOUT_ENGINE", "mpv").lower()
+
+    # RASTATIME 2026-05-28 — Phase-D: Liquidsoap is the production
+    # engine.  Legacy mpv and VLC engine modes are DEPRECATED — they
+    # will be removed once Phase-E (Webstreams → Liquidsoap
+    # input.http) and Phase-F (Line-Inputs → Liquidsoap input.wasapi)
+    # are done.  Until then mpv stays around as the fallback for
+    # those two not-yet-ported schedule-item types.  Recording
+    # already requires Liquidsoap since C5 Teil 2d (FfmpegRecorder
+    # deleted).  Operator-decision 2026-05-28.
+    if engine_kind in ("mpv", "vlc"):
+        logger.warning(
+            "DEPRECATED: RASTATIME_PLAYOUT_ENGINE=%s is now legacy. "
+            "Liquidsoap (RASTATIME_PLAYOUT_ENGINE=liquidsoap) is the "
+            "production engine since Phase-C5 (2026-05-28); mpv/VLC "
+            "will be removed after Phase-E (Webstreams) + Phase-F "
+            "(Line-Inputs) migrate those item types to Liquidsoap. "
+            "Recording already requires the Liquidsoap engine.",
+            engine_kind,
+        )
+
     try:
         if engine_kind == "vlc":
             from libretime_playout.engine.vlc_engine import VlcPlayoutEngine  # noqa: PLC0415
             engine = VlcPlayoutEngine()
-            logger.info("Local-playback engine: VLC (libVLC)")
+            logger.info("Local-playback engine: VLC (libVLC) [DEPRECATED]")
         elif engine_kind == "mpv":
             from libretime_playout.engine.mpv_engine import MpvPlayoutEngine  # noqa: PLC0415
             engine = MpvPlayoutEngine()
-            logger.info("Local-playback engine: mpv (libmpv)")
+            logger.info("Local-playback engine: mpv (libmpv) [DEPRECATED]")
         elif engine_kind == "liquidsoap":
             from libretime_playout.engine.liquidsoap_engine import LiquidsoapPlayoutEngine  # noqa: PLC0415
 

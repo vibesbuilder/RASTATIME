@@ -172,6 +172,14 @@ Cutover erst nach 1–2 Wochen A/B-Vergleich.
 **Operator-Wert:** Hoch — sonst werden Webstreams + Line-Inputs nicht
 ins Liquidsoap-Recording (`output.file` vom internen Bus) aufgenommen.
 
+**Phase-D Verknüpfung (Operator-Entscheidung 2026-05-28):**
+Phase E + F sind **Vorbedingungen für den Legacy-mpv-Code-Delete.**
+Nach Phase-C5 ist mpv (und VLC) als DEPRECATED markiert
+(`DeprecationWarning` beim Pypo-Startup), bleibt aber als Fallback für
+genau diese zwei Schedule-Item-Typen, bis Phase-E + Phase-F sie auch
+nach Liquidsoap migrieren. Erst dann werden ~2000 LoC mpv_engine.py +
+ffmpeg_streamer.py + zugehörige Pypo-Scheduler-Branches gelöscht.
+
 **Hintergrund:**
 Phase C migriert Scheduled Tracks + DJ-Sources (master_dj / show_dj
 via input.harbor) zu Liquidsoap. Scheduled **Webstreams** und Scheduled
