@@ -83,13 +83,22 @@ DEFAULT_CROSSFADE_DURATION = 2.0
 # clamped down to 1.0, but even 1.0 fade-in eats the first 1 s of a
 # 3-5 s jingle (StationID), making short tracks barely audible.
 #
-# 0.3 s is the Phase-D Stück-B operator-decision (2026-05-28):
-# minimal-perceivable music-to-music crossfade (no click, smooth-
-# enough), and short jingles only lose 0.6 s total (0.3 in + 0.3 out)
-# so a 3 s StationID still has 2.4 s of pure full-volume audio.
+# 0.0 s — HARD CUTS BETWEEN ALL TRACKS — is the Phase-D Stück-B
+# operator-decision (2026-05-28).  Rationale: short jingles
+# (StationIDs, 2-10 s) MUST play at 100 % of their original length
+# for the station-identity to come through.  Any fade-in/fade-out
+# zone shortens the audible portion and an even tiny 0.3 s fade
+# halves the perceived loudness of a 3 s ID.
+#
+# Trade-off: music-to-music transitions become abrupt cuts instead
+# of smooth crossfades.  The operator accepts this for now; the
+# smarter "per-track fade decision based on track length" is in
+# the BACKLOG (Phase-D-Polish — smarter short-track handling).
+#
 # Operator can tune via RASTATIME_LIQUIDSOAP_CROSSFADE_FADE_SECONDS
-# env-var (set to 0.0 for hard cuts between ALL tracks).
-DEFAULT_CROSSFADE_FADE_SECONDS = 0.3
+# env-var (e.g. 0.3 or 0.5 for a softer music transition, at the
+# cost of shorter jingles).
+DEFAULT_CROSSFADE_FADE_SECONDS = 0.0
 
 # Whether to emit a Liquidsoap output to the local soundcard.  On the
 # Windows-only RASTATIME deployment this is `output.wasapi`, defaulting

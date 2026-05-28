@@ -215,11 +215,13 @@ def test_full_render_defaults():
     # Phase-C6: crossfade + amplify on the bus.  Phase-D Stück-B
     # (2026-05-28) bumped the crossfade rendering to multi-line form
     # with fade_in / fade_out params, so the old single-line
-    # assertion was split.
+    # assertion was split.  Default fade is 0.0 (hard cuts) since the
+    # 2026-05-28 operator-decision: short jingles MUST play in full,
+    # smooth music transitions are negotiable.
     assert "bus = crossfade(" in out
     assert "duration=2.0" in out
-    assert "fade_in=0.3" in out
-    assert "fade_out=0.3" in out
+    assert "fade_in=0.0" in out
+    assert "fade_out=0.0" in out
     assert 'amplify(override="replaygain_track_gain", 1., bus)' in out
     # Default: local soundcard output is enabled via portaudio
     assert "output.portaudio(" in out

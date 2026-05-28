@@ -539,57 +539,62 @@ sauber erholt (kein Folge-Error).
 
 ---
 
-### 🟡 Smartere Behandlung kurzer Tracks (Jingles/StationIDs) im Liquidsoap-Crossfade
+### 🟡 Per-Track Crossfade-Entscheidung basierend auf Track-Länge
 
-**Status:** Defer — Phase-D-Polish.  Operator-Schmerz, kein Live-Stopper.
-**Festgestellt:** 2026-05-28 (Phase-D Stück-B Jingle-Test).
+**Status:** Defer — Phase-D-Polish.
+**Evaluiert:** 2026-05-28 (Phase-D Stück-B Operator-Wunsch).
+**Operator-Vision (klare Spezifikation):**
 
-**Symptom:**
-Kurze Tracks (Jingles, StationIDs, 2-8 s) werden durch die crossfade
-fade-in/fade-out Zonen verschluckt:
-- Default `crossfade(duration=1.0)` → 1 s fade-in + 1 s fade-out = 2 s
-  weggeschluckt
-- Bei 5 s Jingle: nur 1-3 s wirklich hörbar
-- Bei 3 s Jingle: kaum hörbar
+> "Für alle Tracks < 30 s gilt IMMER kein (0.0 s) Crossfade,
+> Fade-In oder Fade-Out.  Für alle Tracks ≥ 30 s kann man die
+> Einstellung unter SETTINGS → GENERAL vornehmen."
 
-**Erste fehlgeschlagene Lösung (2026-05-28, reverted in commit X):**
-Per-Track Annotation `liq_cross_duration="0.0"` über `_build_annotate_uri`
-für Tracks unter 8 s gesetzt.  Erwartung laut Liquidsoap-Doku: pro-Track
-crossfade-disable, direkter Cut, Track in voller Länge hörbar.
-Realität (live-test): Tracks wurden komplett SILENT — Liquidsoap
-interpretiert `liq_cross_duration=0.0` offenbar als "diesen Track
-überspringen" statt "ohne Fade abspielen".  Reverted.
+**Aktueller Stand (2026-05-28 nach Phase-D Stück-B):**
+- Globaler Default `crossfade(fade_in=0.0, fade_out=0.0)` (commit X)
+  = hart-cut für ALLE Tracks. Sicher dass jeder Track zu 100 %
+  spielt, aber Music-zu-Music-Übergänge sind abrupt.
+- Crossfade-Duration weiterhin via env-var
+  `RASTATIME_LIQUIDSOAP_CROSSFADE_SECONDS` (default 1.0).
 
-**Alternative Lösungs-Ansätze (untested):**
-1. **liq_cross_start_duration + liq_cross_end_duration**: separate per-
-   track overrides (statt der zusammenfassenden liq_cross_duration).
-   Vielleicht behandelt Liquidsoap die separat anders.
-2. **Globales fade_in/fade_out reduzieren** auf z. B. 0.3 s:
-   `crossfade(duration=1.0, fade_in=0.3, fade_out=0.3)`.  Trade-off:
-   Music-Crossfades werden auch kürzer und abrupter, aber Jingles
-   sind dann mit nur 0.6 s totalem Schluck-Loss fast voll hörbar.
-3. **Smart transition function**: custom `cross(transition=fn, ...)`
-   die bei kurzen Tracks (über metadata oder duration-detection)
-   keinen Fade macht.  Komplexer Liquidsoap-Code.
-4. **Pre-process Jingles in der DB**: silence padding auf
-   `(track_len + 2*fade_zone)` aufpolstern, so dass das fade-in/out
-   in die Stille läuft, nicht in den Audio-Inhalt.  Operator-side
-   workflow change.
+**Was gebaut werden müsste:**
 
-**Untersuchung beim nächsten Anlauf:**
-- Liquidsoap-2.4 Quelltext lesen: was macht `liq_cross_duration=0.0`
-  WIRKLICH?  Skip oder fade=0?
-- Lokales Liquidsoap-Test-Setup bauen mit einem 5 s Test-File und
-  manuell per `request.queue.push annotate:liq_cross_duration="0.0":...`
-  testen.
-- Default fade_in/fade_out aus crossfade-default 3.0 — vielleicht wird
-  das nicht von duration=1.0 geclampt und ist trotzdem 3 s aktiv?
+1. **Per-Track fade-Decision** — über Pypo's `_build_annotate_uri`
+   eine Liquidsoap-Metadata-Annotation, die der crossfade-Operator
+   pro Track liest:
+     - Tracks `(cue_out - cue_in) < 30 s`: `liq_cross_start_duration="0.0"`
+       + `liq_cross_end_duration="0.0"`  (separat, NICHT die
+       zusammenfassende `liq_cross_duration` — das hat Phase-D
+       Stück-B-Iteration 2026-05-28 silenced statt no-fade'd).
+     - Tracks `≥ 30 s`: keine Annotation, Liquidsoap nutzt das
+       globale fade_in/fade_out (= cc_pref settings, siehe unten).
 
-**Aufwand:** ~3-5 h für Recherche + Test-Setup + Iteration.
+   Vorbedingung: lokales Liquidsoap-Test-Setup mit echten Files
+   (5-s-Jingle + 60-s-Music + per-track Annotations) bauen, um
+   zu verifizieren dass `liq_cross_start/end_duration="0.0"` wirklich
+   "no fade" macht und nicht "skip track".
 
-**Workaround heute:** Operator akzeptiert dass kurze Jingles (<5 s)
-teilweise verschluckt werden (1-2 s hörbar).  Längere StationIDs
-(>10 s) sind ok.
+2. **Frontend-Settings funktional machen** (siehe separates BACKLOG-Item
+   "Frontend-Settings Default Fade In / Out / Crossfade Duration"):
+   die GLOBAL fade_in/fade_out Werte für Tracks ≥ 30 s sollen aus
+   cc_pref (Settings → General → Default Crossfade Duration / Default
+   Fade In / Fade Out) gelesen werden, nicht aus env-var.  Bei
+   Settings-Save: re-render rastatime.liq + Pypo signal-restart.
+
+**Aufwand:** ~6-10 h gesamt:
+- ~2 h Liquidsoap lokaler Test-Setup + Verify start/end_duration-Semantik
+- ~2 h Pypo `_build_annotate_uri` + Tests
+- ~3-4 h Frontend-Setting-Wiring (cc_pref-Reader + render-Hook)
+- ~1 h Doku-Updates
+
+**Vorbedingungen:**
+- Phase E + F idealerweise durch (damit auch Webstreams/Line-Inputs
+  per cue_in/cue_out durch den gleichen Mechanismus laufen)
+- Phase D Live-Betrieb stabil ohne kritische Bugs
+
+**Workaround heute (2026-05-28):**
+Operator akzeptiert globale hard-cuts.  Kurze Jingles spielen zu
+100 %; Music-zu-Music ist hart aber click-frei (kein audible
+gap, nur kein smooth fade).
 
 ---
 
