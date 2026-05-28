@@ -435,6 +435,32 @@ def test_full_render_both_harbor_passwords():
     assert master_pos < show_pos < scheduled_pos
 
 
+def test_full_render_switch_is_not_track_sensitive():
+    """
+    Operator-decision 2026-05-28 Phase-D Stück-B: when a DJ connects
+    via input.harbor, the switch must take over IMMEDIATELY (not wait
+    for the currently-playing scheduled track to end).  Trade-off:
+    crossfade-shortens the current track for fast take-over.
+
+    Regression guard: switch operator must be track_sensitive=false.
+    Previously was track_sensitive=true which caused 0-N-minute
+    delay between DJ-connect and audible take-over.
+    """
+    out = lc.render_rastatime_liq(
+        [_stream()],
+        harbor_main_password="m-pw",
+        harbor_show_password="s-pw",
+    )
+    # The bus = switch(...) block must contain track_sensitive=false
+    bus_idx = out.index("bus = switch(")
+    bus_block = out[bus_idx:bus_idx + 500]
+    assert "track_sensitive=false" in bus_block, (
+        f"switch operator must be track_sensitive=false for immediate "
+        f"DJ-take-over (operator decision 2026-05-28); got:\n{bus_block}"
+    )
+    assert "track_sensitive=true" not in bus_block
+
+
 def test_full_render_harbor_password_escapes_special_chars():
     """Quote / backslash in harbor password is escaped for Liquidsoap parser."""
     out = lc.render_rastatime_liq(

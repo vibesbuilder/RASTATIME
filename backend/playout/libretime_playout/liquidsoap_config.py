@@ -477,12 +477,21 @@ def _render_bus_source_block(
       neither       → `bus = scheduled` directly (no switch operator,
                        saves a thin wrapper layer)
 
-    ``track_sensitive=true`` matters here: a track change on the
-    scheduled queue while master_dj is connected should NOT cause
-    a momentary flicker back to scheduled — the switch waits until
-    the active source actually emits a track-end before allowing
-    a lower-priority source to take over.  source.is_ready() flips
-    automatically when input.harbor sees the DJ-client (dis)connect.
+    RASTATIME 2026-05-28 — Phase-D Stück-B operator decision:
+    ``track_sensitive=false`` for immediate DJ-take-over.
+
+    Trade-off: when a DJ connects, the currently-playing scheduled
+    track gets cut short via the crossfade transition (1.0 s default
+    in current config).  This is what the operator wants for live
+    news / emergency / impatient-DJ scenarios.  The alternative
+    (``track_sensitive=true``) waits for the current scheduled
+    track to end before switching — Live-Radio-Standard, but
+    introduces a 0–N-minute delay between DJ-connect and audible
+    take-over (where N = scheduled track length).
+
+    ``source.is_ready()`` flips automatically when input.harbor sees
+    the DJ-client (dis)connect.  With ``track_sensitive=false`` the
+    switch reacts on the very next bus frame.
     """
     arms = []
     if main_enabled:
@@ -499,7 +508,7 @@ def _render_bus_source_block(
 
     return (
         "bus = switch(\n"
-        "  track_sensitive=true,\n"
+        "  track_sensitive=false,\n"
         "  [\n"
         + "".join(f"    {arm},\n" for arm in arms)
         + "  ]\n"
