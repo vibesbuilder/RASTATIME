@@ -539,6 +539,42 @@ sauber erholt (kein Folge-Error).
 
 ---
 
+### 🟡 Frontend-Settings "Default Fade In / Out / Crossfade Duration" wieder funktional machen
+
+**Status:** Defer — Operator-Wunsch 2026-05-28, kein akuter Blocker.
+**Evaluiert:** 2026-05-28 (Phase-D Stück-B-Iteration).
+**Operator-Wert:** Mittel — bessere UX (Settings statt env-var-Bearbeitung).
+
+**Aktueller Stand:**
+- **Default Fade In (s)** und **Default Fade Out (s)** in
+  Settings → General Preferences werden vermutlich beim
+  Schedule-Build/Play noch nicht verwendet (Upstream-Erbe;
+  Liquidsoap-Engine ignoriert sie).
+- **Default Crossfade Duration (s)** wird aktuell durch die
+  env-var `RASTATIME_LIQUIDSOAP_CROSSFADE_SECONDS` am
+  RASTATIME-PLAYOUT NSSM-Service kontrolliert (default 2.0,
+  jetzt operator-gesetzt auf 1.0).  Das Frontend-Setting wird
+  ignoriert.
+
+**Was gebaut werden müsste:**
+1. Pypo: in `__main__.py` oder `liquidsoap_config.py` die env-var
+   als Fallback behalten, aber primary-source soll das cc_pref
+   sein (analog zu wie stream-outputs aus cc_pref gelesen werden).
+2. Bei Settings-Save: Pypo `reload_outputs` oder ähnlicher Mechanismus
+   triggert .liq re-render + Liquidsoap-restart (optional;
+   einfacher: Operator restartet manuell).
+3. Fade-In/Out: in Pypo's Track-push-annotate-string als
+   `fade_in="N"` / `fade_out="N"` mit-geben (Liquidsoap kann
+   diese annotations).
+
+**Aufwand:** ~3-4 h für Crossfade-Setting + Re-Render-Hook;
+~1-2 h für Fade-In/Out.
+
+**Vorbedingung:** Frontend-Setting muss Operator-Permission haben
+(Admin only — UI ist da, nur Backend-Wiring fehlt).
+
+---
+
 ### 🟡 Pypo-NSSM-Service-Resilience untersuchen (Phase-D-Beobachtung)
 
 **Status:** Defer — bei nächstem Auftreten Logs sammeln, dann analysieren.
