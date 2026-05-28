@@ -162,6 +162,68 @@ def test_annotate_all_three_attrs():
     )
 
 
+# ---- Short-track crossfade-disable (Phase-D Stück-B, 2026-05-28) -------
+
+
+def test_annotate_short_track_adds_liq_cross_duration_zero():
+    """
+    Tracks shorter than 8 s get `liq_cross_duration="0.0"` annotation
+    so Liquidsoap's crossfade operator skips the fade-in/fade-out for
+    them — otherwise the 1-s fade zones eat the start + end of jingles
+    and StationIDs.  Operator-decision 2026-05-28 (Phase-D Stück-B).
+    """
+    # 5 s StationID
+    out = LiquidsoapPlayoutEngine._build_annotate_uri(
+        "file:///jingle.mp3", cue_in=0.0, cue_out=5.0, gain_db=None,
+    )
+    assert 'liq_cross_duration="0.0"' in out
+
+
+def test_annotate_long_track_does_not_add_liq_cross_duration():
+    """Regression guard: music tracks (>8s) MUST keep their crossfade."""
+    out = LiquidsoapPlayoutEngine._build_annotate_uri(
+        "file:///music.mp3", cue_in=0.0, cue_out=180.0, gain_db=None,
+    )
+    assert 'liq_cross_duration' not in out
+
+
+def test_annotate_short_track_with_cue_in_offset():
+    """
+    `cue_in=10, cue_out=14` = 4-s effective duration → short-track
+    annotation kicks in regardless of where in the file the cue points
+    sit.
+    """
+    out = LiquidsoapPlayoutEngine._build_annotate_uri(
+        "file:///jingle.mp3", cue_in=10.0, cue_out=14.0, gain_db=None,
+    )
+    assert 'liq_cross_duration="0.0"' in out
+
+
+def test_annotate_track_at_exact_threshold_does_not_add_annotation():
+    """
+    Edge case: at exactly 8.0 s the track is NOT considered short
+    (threshold is `< 8.0`, not `<= 8.0`).  A track at 8 s gets the
+    crossfade applied normally — no annotation.
+    """
+    out = LiquidsoapPlayoutEngine._build_annotate_uri(
+        "file:///x.mp3", cue_in=0.0, cue_out=8.0, gain_db=None,
+    )
+    assert 'liq_cross_duration' not in out
+
+
+def test_annotate_unknown_cue_out_does_not_add_annotation():
+    """
+    If cue_out is None (e.g. webstream, line-input, or a file without
+    cue analysis) we cannot decide if it's a short track — default to
+    not adding the annotation (i.e. use the global crossfade duration).
+    """
+    out = LiquidsoapPlayoutEngine._build_annotate_uri(
+        "http://stream.example/radio.mp3", cue_in=0.0, cue_out=None,
+        gain_db=None,
+    )
+    assert 'liq_cross_duration' not in out
+
+
 def test_annotate_with_windows_path():
     """Windows path gets normalised THEN wrapped in annotate."""
     out = LiquidsoapPlayoutEngine._build_annotate_uri(

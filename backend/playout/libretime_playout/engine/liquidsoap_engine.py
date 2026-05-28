@@ -97,6 +97,23 @@ _WINDOWS_DRIVE_RE = re.compile(r"^[A-Za-z]:[\\/]")
 # doesn't hold up the silence-fallback noticeably.
 _DEFERRED_STOP_SECONDS = 0.5
 
+# Tracks shorter than this (in seconds) get crossfade disabled via the
+# per-track `liq_cross_duration="0.0"` annotation.  Reason: the
+# crossfade operator's fade-in/fade-out zones (default 1 s each on
+# our config) eat the start + end of short jingles / StationIDs,
+# making them barely audible or completely silent.  Phase-D Stück-B
+# observation 2026-05-28: a 3 s jingle had ~1 s of pure audio between
+# 1 s fade-in and 1 s fade-out.  Setting `liq_cross_duration=0.0` for
+# tracks under this threshold tells Liquidsoap to do a direct cut
+# instead — jingles play in their full original length.
+#
+# 8.0 s is the operator-decision threshold (Phase-D Stück-B,
+# 2026-05-28): jingles up to 8 s are typically StationIDs / sweepers
+# that should "punch" with a hard cut; tracks above 8 s are music or
+# spoken-word content where the crossfade improves the listener
+# experience.
+_NO_CROSSFADE_THRESHOLD_SECONDS = 8.0
+
 
 class LiquidsoapPlayoutEngine(PlayoutEngine):
     """
@@ -553,6 +570,23 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
             annotations.append(
                 f'replaygain_track_gain="{gain_db:+.2f} dB"'
             )
+
+        # RASTATIME 2026-05-28 — Phase-D Stück-B: short tracks (jingles,
+        # StationIDs) get crossfade-disabled via the `liq_cross_duration`
+        # metadata override.  Without this, the 1 s fade-in + 1 s fade-out
+        # of our crossfade(duration=1.0) operator eats the start + end of
+        # short tracks, making 3-5 s jingles barely audible.  Setting
+        # liq_cross_duration=0.0 tells Liquidsoap to skip the crossfade
+        # for THIS track only — direct cut at the boundaries, jingle
+        # plays at full length and full volume.  Threshold = 8.0 s
+        # (operator-decision).  See _NO_CROSSFADE_THRESHOLD_SECONDS.
+        if (
+            cue_in is not None
+            and cue_out is not None
+            and cue_out > cue_in
+            and (cue_out - cue_in) < _NO_CROSSFADE_THRESHOLD_SECONDS
+        ):
+            annotations.append('liq_cross_duration="0.0"')
 
         # ICY-metadata fields — Liquidsoap propagates these to all
         # output.icecast blocks automatically.  Empty values and the
