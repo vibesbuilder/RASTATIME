@@ -749,9 +749,19 @@ class PlayoutScheduler:
             "artist":    event.artist_name or "",
             "show_name": event.show_name or "",
         }
+        # RASTATIME 2026-05-28 — Phase-D Stück-B: pass cue_out so the
+        # Liquidsoap engine's _build_annotate_uri can detect short
+        # tracks (jingles, StationIDs under 8 s) and add the
+        # ``liq_cross_duration="0.0"`` metadata override that disables
+        # the crossfade fade-in/fade-out zones for that track only.
+        # Without cue_out, short tracks get eaten by the 1-s fade
+        # zones and are barely audible.  (mpv-engine ignores cue_out
+        # in this code path — mpv knows the natural file-end on its
+        # own; the param is harmless for mpv.)
         self._engine.play(
             str(local),
             cue_in=event.cue_in or 0.0,
+            cue_out=event.cue_out,
             gain_db=event.replay_gain,
             metadata=track_metadata,
         )
