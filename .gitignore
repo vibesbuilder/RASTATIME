@@ -123,3 +123,18 @@ ASSISTANT.local.md
 # upload-pipeline jobs; rebuilt at process start.
 # -----------------------------------------------------------------------------
 backend/analyzer/retry_queue
+
+# -----------------------------------------------------------------------------
+# Liquidsoap script-cache (re-created on every Liquidsoap startup;
+# *.liq-cache files are binary, machine-specific).
+# -----------------------------------------------------------------------------
+backend/playout/config/cache/
+
+# -----------------------------------------------------------------------------
+# Per-show .mp3 recordings (output.file destination — operator-generated
+# content, not source).  Runtime location is
+# C:\Users\<user>\Music\Recording or wherever the operator configured
+# in Settings -> Local Machine; Windows case-insensitive path
+# resolution can also drop sentinel/test files into <repo-root>/recordings/.
+# -----------------------------------------------------------------------------
+recordings/
