@@ -290,6 +290,27 @@ def _render_rastatime_liq_at_startup(stream_outputs: List[Dict]) -> None:
             exc,
         )
         sys.exit(1)
+    # Phase-D Stück-B (2026-05-28): fade_in / fade_out inside crossfade,
+    # configurable so the operator can tune short-track audibility vs.
+    # music-transition smoothness without a code-change.  Default 0.3 s
+    # is short enough to give 3-5 s jingles most of their audio back
+    # while still being noticeable as a smooth music-to-music transition.
+    from libretime_playout.liquidsoap_config import (  # noqa: PLC0415
+        DEFAULT_CROSSFADE_FADE_SECONDS as _DEFAULT_CROSSFADE_FADE,
+    )
+    try:
+        crossfade_fade = float(
+            os.environ.get(
+                "RASTATIME_LIQUIDSOAP_CROSSFADE_FADE_SECONDS",
+                str(_DEFAULT_CROSSFADE_FADE),
+            )
+        )
+    except ValueError as exc:
+        logger.critical(
+            "RASTATIME_LIQUIDSOAP_CROSSFADE_FADE_SECONDS must be a float: %s",
+            exc,
+        )
+        sys.exit(1)
     local_output_enabled = (
         os.environ.get("RASTATIME_LIQUIDSOAP_LOCAL_OUTPUT", "true").lower()
         not in ("false", "0", "no", "off")
@@ -327,6 +348,7 @@ def _render_rastatime_liq_at_startup(stream_outputs: List[Dict]) -> None:
             telnet_port=telnet_port,
             log_file=log_path,
             crossfade_duration=crossfade,
+            crossfade_fade_seconds=crossfade_fade,
             local_output_enabled=local_output_enabled,
             harbor_main_password=harbor_main_pwd or None,
             harbor_show_password=harbor_show_pwd or None,

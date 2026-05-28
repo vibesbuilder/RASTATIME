@@ -142,7 +142,20 @@ ${BUS_SOURCE_BLOCK}
 # substituted from cc_pref.default_crossfade_seconds (operator-set,
 # defaults to 2.0 s if unset).  Set duration=0. to disable
 # crossfades entirely.
-bus = crossfade(duration=${CROSSFADE_DURATION}, bus)
+#
+# fade_in / fade_out parameters control how long the actual fade-zone
+# is at each track boundary.  Defaults are 3.0 each in upstream
+# Liquidsoap, but RASTATIME uses much shorter values (0.3 s) so that
+# short jingles / StationIDs (3-5 s) don't get their start + end
+# eaten by the fade-in / fade-out zones.  Substituted from
+# RASTATIME_LIQUIDSOAP_CROSSFADE_FADE_SECONDS env-var.  Set to 0.0
+# for hard cuts between ALL tracks.
+bus = crossfade(
+  duration=${CROSSFADE_DURATION},
+  fade_in=${CROSSFADE_FADE_SECONDS},
+  fade_out=${CROSSFADE_FADE_SECONDS},
+  bus,
+)
 
 # Replay-gain via amplify(override=...) — Liquidsoap multiplies the
 # bus by the "replaygain_track_gain" metadata field when present.

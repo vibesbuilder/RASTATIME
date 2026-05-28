@@ -77,6 +77,20 @@ DEFAULT_LOG_FILE = "C:/rastatime/logs/liquidsoap.log"
 # crossfades entirely.
 DEFAULT_CROSSFADE_DURATION = 2.0
 
+# Default fade-in / fade-out duration inside the crossfade operator
+# (in seconds).  Liquidsoap's `crossfade()` defaults are fade_in=3.0
+# and fade_out=3.0; with our `duration=1.0` config those would be
+# clamped down to 1.0, but even 1.0 fade-in eats the first 1 s of a
+# 3-5 s jingle (StationID), making short tracks barely audible.
+#
+# 0.3 s is the Phase-D Stück-B operator-decision (2026-05-28):
+# minimal-perceivable music-to-music crossfade (no click, smooth-
+# enough), and short jingles only lose 0.6 s total (0.3 in + 0.3 out)
+# so a 3 s StationID still has 2.4 s of pure full-volume audio.
+# Operator can tune via RASTATIME_LIQUIDSOAP_CROSSFADE_FADE_SECONDS
+# env-var (set to 0.0 for hard cuts between ALL tracks).
+DEFAULT_CROSSFADE_FADE_SECONDS = 0.3
+
 # Whether to emit a Liquidsoap output to the local soundcard.  On the
 # Windows-only RASTATIME deployment this is `output.wasapi`, defaulting
 # to the OS-default audio endpoint.  Set RASTATIME_LIQUIDSOAP_LOCAL_OUTPUT=false
@@ -533,6 +547,7 @@ def render_rastatime_liq(
     telnet_port: int = DEFAULT_TELNET_PORT,
     log_file: str = DEFAULT_LOG_FILE,
     crossfade_duration: float = DEFAULT_CROSSFADE_DURATION,
+    crossfade_fade_seconds: float = DEFAULT_CROSSFADE_FADE_SECONDS,
     local_output_enabled: bool = DEFAULT_LOCAL_OUTPUT_ENABLED,
     harbor_main_password: Optional[str] = None,
     harbor_show_password: Optional[str] = None,
@@ -604,6 +619,10 @@ def render_rastatime_liq(
             _format_crossfade_duration(crossfade_duration),
         )
         .replace(
+            "${CROSSFADE_FADE_SECONDS}",
+            _format_crossfade_duration(crossfade_fade_seconds),
+        )
+        .replace(
             "${LOCAL_OUTPUT_BLOCK}",
             _render_local_output_block(local_output_enabled),
         )
@@ -622,6 +641,7 @@ def write_rastatime_liq(
     telnet_port: int = DEFAULT_TELNET_PORT,
     log_file: str = DEFAULT_LOG_FILE,
     crossfade_duration: float = DEFAULT_CROSSFADE_DURATION,
+    crossfade_fade_seconds: float = DEFAULT_CROSSFADE_FADE_SECONDS,
     local_output_enabled: bool = DEFAULT_LOCAL_OUTPUT_ENABLED,
     harbor_main_password: Optional[str] = None,
     harbor_show_password: Optional[str] = None,
@@ -653,6 +673,7 @@ def write_rastatime_liq(
         telnet_port=telnet_port,
         log_file=log_file,
         crossfade_duration=crossfade_duration,
+        crossfade_fade_seconds=crossfade_fade_seconds,
         local_output_enabled=local_output_enabled,
         harbor_main_password=harbor_main_password,
         harbor_show_password=harbor_show_password,

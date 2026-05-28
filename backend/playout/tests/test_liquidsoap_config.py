@@ -212,8 +212,14 @@ def test_full_render_defaults():
     # Silence fallback — critical for Icecast PUT persistence
     assert "fallback(" in out
     assert "blank(" in out
-    # Phase-C6: crossfade + amplify on the bus
-    assert "crossfade(duration=2.0, bus)" in out
+    # Phase-C6: crossfade + amplify on the bus.  Phase-D Stück-B
+    # (2026-05-28) bumped the crossfade rendering to multi-line form
+    # with fade_in / fade_out params, so the old single-line
+    # assertion was split.
+    assert "bus = crossfade(" in out
+    assert "duration=2.0" in out
+    assert "fade_in=0.3" in out
+    assert "fade_out=0.3" in out
     assert 'amplify(override="replaygain_track_gain", 1., bus)' in out
     # Default: local soundcard output is enabled via portaudio
     assert "output.portaudio(" in out
@@ -517,7 +523,7 @@ def test_full_render_custom_telnet_and_log():
 def test_full_render_custom_crossfade_duration():
     """Custom crossfade duration appears in crossfade() call."""
     out = lc.render_rastatime_liq([_stream()], crossfade_duration=5.0)
-    assert "crossfade(duration=5.0, bus)" in out
+    assert "duration=5.0" in out
 
 
 def test_full_render_crossfade_disabled():
@@ -526,13 +532,33 @@ def test_full_render_crossfade_disabled():
     # duration=0.0 means Liquidsoap performs no crossfade, but the
     # crossfade() operator still wraps the source — that's fine, it
     # becomes effectively a no-op pass-through.
-    assert "crossfade(duration=0.0, bus)" in out
+    assert "duration=0.0" in out
+
+
+def test_full_render_custom_crossfade_fade_seconds():
+    """RASTATIME_LIQUIDSOAP_CROSSFADE_FADE_SECONDS controls fade_in/fade_out."""
+    out = lc.render_rastatime_liq(
+        [_stream()],
+        crossfade_fade_seconds=0.5,
+    )
+    assert "fade_in=0.5" in out
+    assert "fade_out=0.5" in out
+
+
+def test_full_render_crossfade_fade_zero_hard_cuts():
+    """fade_seconds=0 produces hard cuts between ALL tracks."""
+    out = lc.render_rastatime_liq(
+        [_stream()],
+        crossfade_fade_seconds=0.0,
+    )
+    assert "fade_in=0.0" in out
+    assert "fade_out=0.0" in out
 
 
 def test_full_render_crossfade_fractional():
     """Sub-second crossfade renders without losing precision."""
     out = lc.render_rastatime_liq([_stream()], crossfade_duration=1.25)
-    assert "crossfade(duration=1.25, bus)" in out
+    assert "duration=1.25" in out
 
 
 # ---- _format_crossfade_duration -----------------------------------------
