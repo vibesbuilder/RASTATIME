@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Operator-Doc `docs/operator/LIQUIDSOAP_CUTOVER.md` (2026-05-28)**
+  — step-by-step recipe for the permanent switch from the legacy
+  mpv playback engine to the Liquidsoap production engine.
+  Covers the antivirus exclusion (mandatory), NSSM-service setup,
+  env-var configuration, restart sequence, smoke-test, end-to-end
+  show-record verification, and rollback path.  English only
+  (operator docs are administrative, not 4-language).
+
+- **User-Manual `SETTINGS.md` §6 "Playout Engine" (EN/DE/FR/ES,
+  2026-05-28)** — short section explaining what the three
+  available engines (Liquidsoap, mpv, VLC) do well and where each
+  is appropriate, with a pointer to the LIQUIDSOAP_CUTOVER doc
+  for the actual switch.  Documents the deprecation of mpv / VLC
+  and the conditions for the eventual delete (Phase-E + Phase-F).
+
 ### Deprecated
 
 - **mpv and VLC playout engines (`RASTATIME_PLAYOUT_ENGINE=mpv`

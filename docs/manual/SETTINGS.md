@@ -299,6 +299,83 @@ Admin because they grant access escalation. See
 
 ---
 
+## 6. Playout Engine (Liquidsoap / mpv / VLC)
+
+> **Service-level setting**, not a UI setting.  Configured via
+> the `RASTATIME_PLAYOUT_ENGINE` environment variable on the
+> RASTATIME-PLAYOUT NSSM service.  Operator-only; not exposed
+> in the web UI.
+
+RASTATIME ships with three playback engines for the
+RASTATIME-PLAYOUT service.  Only one is active at a time.
+
+| Engine | Status | What it does well | Limitations |
+|---|---|---|---|
+| **Liquidsoap** | **Production** (since 2026-05-28, Phase-C5) | Gapless transitions, native crossfades, persistent Icecast PUTs (listeners stay connected through track boundaries), DJ-source switching via `input.harbor`, per-show recording from the internal bus at fixed 320 kbps MP3 | Scheduled webstreams and scheduled line-inputs aren't ported yet (still routed through mpv in parallel; tracked as Phase-E + Phase-F) |
+| **mpv** | **Deprecated** (legacy default) | Battle-tested, works for file tracks, webstreams, line-inputs | No recording (FfmpegRecorder was deleted in C5 Teil 2d), no gapless, listeners reconnect at every track |
+| **VLC** | **Deprecated** (operator escape-hatch) | Falls back here if mpv ever has a DLL issue | Same as mpv plus VLC 3.x choking on Icecast URL-auth on Windows |
+
+**Why Liquidsoap is now the production engine** (operator
+decision 2026-05-28 after Phase-C migration):
+
+- **Recording** is captured from the internal audio bus
+  (post-switch, post-crossfade, post-amplify) — bit-identical
+  to what listeners hear, with no separate FFmpeg-Icecast-tap
+  process.  Recording bitrate is a fixed 320 kbps MP3,
+  archive-grade.
+- **Listener experience**: the Icecast mountpoints stay open
+  through track/show changes.  Listeners don't get the
+  reconnect / counter-reset they used to see on the legacy
+  mpv stack.
+- **DJ-Source routing** uses Liquidsoap's `input.harbor` +
+  `switch(...)` natively — Master / Show DJ clients connect
+  directly to the Liquidsoap-managed harbor (port 8001 by
+  default, see operator-side [Phase-C4 DJ-Cutover doc](../operator/LIQUIDSOAP_PHASE_C4_DJ_CUTOVER.md)
+  for the BUTT / Mixxx setup).
+
+**When you might still need the mpv fallback:**
+
+- A show is scheduled entirely as a **webstream** or
+  **line-input** item, and you need recording to capture
+  that content.  Today this combination is incomplete on the
+  Liquidsoap engine; recording will be silent for those item
+  types.  Workaround: don't use record=true on shows that
+  are 100 % webstream or 100 % line-input until Phase-E /
+  Phase-F land.
+- An emergency rollback after a Liquidsoap-side regression
+  (very unlikely on tested versions, but the `env-var
+  rollback` lever exists; see
+  [`docs/operator/LIQUIDSOAP_CUTOVER.md`](../operator/LIQUIDSOAP_CUTOVER.md)
+  §9).
+
+**How to switch engines** (operator-only, requires
+PowerShell-Admin on the studio computer):
+
+See the step-by-step in
+[`docs/operator/LIQUIDSOAP_CUTOVER.md`](../operator/LIQUIDSOAP_CUTOVER.md).
+The short version: set `RASTATIME_PLAYOUT_ENGINE=liquidsoap`
+in the NSSM-service environment, restart
+`RASTATIME-PLAYOUT`, then `RASTATIME-LIQUIDSOAP`.
+
+**Engine selection at startup is visible in the playout
+log:**
+
+```
+INFO __main__: Local-playback engine: Liquidsoap (Phase-C2+C3+C6 fully wired).
+   Telnet target 127.0.0.1:1234.
+```
+
+vs. (on the deprecated path):
+
+```
+WARNING __main__: DEPRECATED: RASTATIME_PLAYOUT_ENGINE=mpv is now legacy.
+   Liquidsoap (RASTATIME_PLAYOUT_ENGINE=liquidsoap) is the production engine
+   since Phase-C5 (2026-05-28); ...
+INFO __main__: Local-playback engine: mpv (libmpv) [DEPRECATED]
+```
+
+---
+
 ## Where to go next
 
 * Follow the per-page link in the table above to the

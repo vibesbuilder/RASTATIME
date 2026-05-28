@@ -184,6 +184,55 @@ acceso.
 
 ---
 
+## 6. Motor de playout (Liquidsoap / mpv / VLC)
+
+> **Configuración a nivel de servicio**, no una
+> configuración UI. Configurado vía la variable de
+> entorno `RASTATIME_PLAYOUT_ENGINE` en el servicio NSSM
+> RASTATIME-PLAYOUT. Solo operador; no expuesto en la
+> UI web.
+
+RASTATIME incluye tres motores de reproducción. Solo uno
+está activo a la vez.
+
+| Motor | Estado | Fortalezas | Limitaciones |
+|---|---|---|---|
+| **Liquidsoap** | **Producción** (desde 2026-05-28, Phase-C5) | Transiciones gapless, crossfades nativos, PUTs Icecast persistentes (oyentes permanecen conectados a través de cambios de pista), conmutación de fuentes DJ vía `input.harbor`, grabación por-programa desde el bus interno a 320 kbps MP3 fijo | Webstreams y entradas de línea programados aún no portados (todavía vía mpv en paralelo; Phase-E + Phase-F) |
+| **mpv** | **Deprecado** (default histórico) | Probado en batalla, archivos/webstreams/entradas-línea | Sin grabación (FfmpegRecorder eliminado en C5 Teil 2d), sin gapless, reconexión de oyentes en cada pista |
+| **VLC** | **Deprecado** (escape de operador) | Fallback si mpv tiene problema de DLL | Como mpv más VLC 3.x se atraganta con Icecast URL-auth en Windows |
+
+**Por qué Liquidsoap es ahora producción** (decisión del
+operador 2026-05-28): grabación bit-idéntica a lo que
+escuchan los oyentes, sin reconexión entre pistas,
+enrutamiento nativo de fuentes DJ.
+
+**Cuándo podría aún necesitar el fallback mpv**:
+programa programado 100 % webstream o 100 % entrada de
+línea con record=true (la grabación será silenciosa en
+Liquidsoap hasta Phase-E / Phase-F).
+
+**Cómo cambiar de motor**: ver
+[`docs/operator/LIQUIDSOAP_CUTOVER.md`](../../operator/LIQUIDSOAP_CUTOVER.md).
+Versión corta: establecer
+`RASTATIME_PLAYOUT_ENGINE=liquidsoap` en el entorno del
+servicio NSSM, reiniciar `RASTATIME-PLAYOUT`, luego
+`RASTATIME-LIQUIDSOAP`.
+
+El log de playout al arranque muestra:
+
+```
+INFO __main__: Local-playback engine: Liquidsoap ...
+```
+
+vs. (en el camino deprecado):
+
+```
+WARNING __main__: DEPRECATED: RASTATIME_PLAYOUT_ENGINE=mpv is now legacy. ...
+INFO __main__: Local-playback engine: mpv (libmpv) [DEPRECATED]
+```
+
+---
+
 ## A dónde ir después
 
 * Siga el enlace por-página en la tabla arriba al
