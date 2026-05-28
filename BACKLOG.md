@@ -539,6 +539,62 @@ sauber erholt (kein Folge-Error).
 
 ---
 
+### 🟡 Pypo-NSSM-Service-Resilience untersuchen (Phase-D-Beobachtung)
+
+**Status:** Defer — bei nächstem Auftreten Logs sammeln, dann analysieren.
+**Festgestellt:** 2026-05-28 (Phase-D Stück-B-Start).
+
+**Symptom:**
+Operator hat festgestellt dass `RASTATIME-PLAYOUT` (Pypo) als
+NSSM-Service nicht lief, obwohl er nicht manuell gestoppt wurde.
+Konsequenz: source_switcher pollt nicht → DJ-Source-Connect via
+Liquidsoap-Harbor wird zwar von Liquidsoap detected, aber Pypo
+meldet keinen Source-Switch an Backend → kein rotes On-Air-Light
+im Dashboard, kein Recording-Hook, kein notify-media-item-start-play.
+
+**NSSM-Config-Status (geprüft 2026-05-28):**
+- `AppExit Default = Restart` ✓
+- `AppRestartDelay = 5000` ms ✓
+- Service-Auto-Start: ✓
+
+**Mögliche Ursachen bei nächstem Auftreten zu prüfen:**
+- Pypo-Crash mit env-var-Fehler beim Liquidsoap-Engine-Init
+  (z. B. Liquidsoap-Telnet nicht erreichbar bei kalt-Boot →
+  ConnectionError → Crash)
+- Mehrfacher Crash → NSSM-Throttle (Default: nach 5 Restart-
+  Versuchen in 60 s pausiert NSSM den Auto-Restart)
+- Race beim Boot: Liquidsoap-Service startet später als Pypo,
+  Pypo crashed beim ersten Telnet-Versuch, NSSM-Throttle greift
+
+**Untersuchung beim nächsten Auftreten:**
+```powershell
+# NSSM-Reset, falls Throttle aktiv:
+nssm reset RASTATIME-PLAYOUT
+
+# Pypo-stderr für die Crash-Zeit
+Get-Content C:\rastatime\logs\playout-stderr.log -Tail 50
+
+# NSSM-Stop-Reason
+Get-WinEvent -LogName System -MaxEvents 100 |
+    Where-Object { $_.ProviderName -match "Service Control Manager" -and
+                   $_.Message -match "RASTATIME-PLAYOUT" } |
+    Format-Table TimeCreated, Id, LevelDisplayName, Message -Wrap
+```
+
+**Mögliche Fixes:**
+- NSSM-Service-Dependency auf RASTATIME-LIQUIDSOAP setzen
+  (Pypo startet erst NACH Liquidsoap)
+- Pypo-Constructor: ConnectionError beim initial recording.stop
+  bereits abgefangen, aber engine-init könnte separat crashen —
+  hier defensive try/except prüfen
+- Telnet-Retry beim Pypo-Init mit exponential-backoff (5 Versuche
+  über 30 s) bevor Crash
+
+**Workaround bis untersucht:** Operator prüft regelmäßig
+`Get-Service RASTATIME-PLAYOUT`, startet manuell falls down.
+
+---
+
 ### 🟡 PowerShell `NativeCommandError`-Noise beim Pypo-Start (kosmetisch)
 
 **Status:** Defer — kosmetisch, nicht funktional.
