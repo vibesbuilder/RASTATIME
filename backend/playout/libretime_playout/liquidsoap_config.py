@@ -109,9 +109,19 @@ DEFAULT_HARBOR_SHOW_MOUNT = "show"
 DEFAULT_HARBOR_MAIN_PORT = DEFAULT_HARBOR_PORT
 DEFAULT_HARBOR_SHOW_PORT = DEFAULT_HARBOR_PORT
 # Buffer in seconds for input.harbor — soaks up small DJ-side
-# disconnects (Wi-Fi blip, USB-soundcard switch).  2 s matches the
-# operator-decision from 2026-05-25.
-DEFAULT_HARBOR_BUFFER_SECONDS = 2.0
+# disconnects (Wi-Fi blip, USB-soundcard switch) and harbor-side
+# buffer-empty events that would otherwise cause source.is_ready() to
+# flicker false→true and produce <1 s scheduled-track audio bleeding
+# through during an active DJ session.
+#
+# 2026-05-25: initially set to 2 s as a starting point.
+# 2026-05-28: increased to 5 s after Phase-D Stück-B live-test showed
+# <1 s scheduled-track audio bleeding through while master_dj /
+# show_dj were connected and producing audio.  The 5 s buffer
+# tolerates short network spikes / encoder-side hiccups without
+# the harbor source momentarily reporting not-ready.  Trade-off:
+# +3 s additional DJ-to-air latency.
+DEFAULT_HARBOR_BUFFER_SECONDS = 5.0
 
 
 # ---------------------------------------------------------------------
