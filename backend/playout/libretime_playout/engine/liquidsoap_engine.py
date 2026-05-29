@@ -636,6 +636,87 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
         return self._telnet.webstream_status()
 
     # ------------------------------------------------------------------
+    # Phase F — Scheduled line-input lifecycle (Liquidsoap-specific)
+    # ------------------------------------------------------------------
+    #
+    # The rastatime.liq template renders an ``input.http(id="linein",
+    # start=false, ..., "<FfmpegLineinCapture-URL>")`` source.  Unlike
+    # the webstream block, the URL is FIXED at render time —
+    # FfmpegLineinCapture's local Icecast mount is the only source.
+    #
+    # Pypo's _on_linein_start (in Liquidsoap mode) starts both the
+    # FfmpegLineinCapture Python subprocess (with the device GUID from
+    # the schedule item) AND calls this engine.linein_start to tell
+    # Liquidsoap to begin consuming.  _on_stop calls linein_stop, then
+    # FfmpegLineinCapture.stop().
+    #
+    # Why FfmpegLineinCapture isn't replaced by input.portaudio:
+    #   * input.portaudio has no set_device runtime method → couldn't
+    #     switch between scheduled-different-mics without Liquidsoap
+    #     restart.
+    #   * FfmpegLineinCapture's watchdog handles USB-cable-unplug
+    #     gracefully — Liquidsoap-side has no equivalent.
+    # See BACKLOG Phase-F evaluation 2026-05-29 for the full reasoning.
+
+    def linein_start(self, url: Optional[str] = None) -> None:
+        """
+        Tell Liquidsoap to begin consuming the FfmpegLineinCapture
+        local Icecast mount.
+
+        Pre-condition: the FfmpegLineinCapture Python subprocess must
+        already be running (Pypo starts it just before calling this
+        method, with the device GUID from the schedule item).
+
+        ``url`` is optional — by default Liquidsoap uses the URL hard-
+        coded at template-render time
+        (``http://localhost:8000/linein-capture``).  Pass a URL only if
+        FfmpegLineinCapture's listen URL was customised at runtime
+        (very rare; mostly for future multi-mount scenarios).
+
+        Mirrors :meth:`webstream_start`'s fail-soft behaviour — any
+        telnet error is logged + swallowed so the scheduler can
+        continue with the next event.
+        """
+        logger.info(
+            "Liquidsoap linein_start: url=%s",
+            self._redact(url) if url else "default (rendered URL)",
+        )
+        try:
+            if url is not None:
+                self._telnet.linein_set_url(url)
+            self._telnet.linein_start()
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            logger.error(
+                "Liquidsoap linein_start failed: %s", exc,
+            )
+
+    def linein_stop(self) -> None:
+        """
+        Tell Liquidsoap to disconnect from the FfmpegLineinCapture
+        mount.  ``source.is_ready`` goes false, the switch operator
+        falls through to scheduled.
+
+        Idempotent: a stop on an already-stopped source replies "Done"
+        on the Liquidsoap side and produces no error.  Same convention
+        as :meth:`webstream_stop` and :meth:`recording_stop`.
+        """
+        try:
+            self._telnet.linein_stop()
+            logger.info("Liquidsoap linein_stop: closed")
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            logger.warning(
+                "Liquidsoap linein_stop telnet error: %s", exc,
+            )
+
+    def linein_status(self) -> str:
+        """
+        Return Liquidsoap's free-text input.http status for the linein
+        source.  Same semantics as :meth:`webstream_status`.  Mainly
+        for diagnostics.
+        """
+        return self._telnet.linein_status()
+
+    # ------------------------------------------------------------------
     # Internal helpers — URI / annotate building
     # ------------------------------------------------------------------
 

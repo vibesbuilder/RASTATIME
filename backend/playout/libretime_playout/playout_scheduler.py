@@ -1044,18 +1044,39 @@ class PlayoutScheduler:
             )
             return
 
-        # SCHEDULED path: swap mpv and the FFmpeg output streamers onto
-        # the capture's listen URL.  Brief silence (~0.5 s) while
+        # SCHEDULED path: tell the local-playback engine to consume the
+        # capture's listen URL.  Brief silence (~0.5 s) while
         # /linein-capture's burst buffer fills, identical to the
         # Master/Show source-switch behavior.
-        # RASTATIME 2026-05-25 — Seamless-Bus-Mix Phase 1 (see
-        # _on_file_start for the rationale).
-        self._engine.wait_until_stopped(timeout=0.5)
+        #
+        # RASTATIME 2026-05-29 — Phase F: dual-engine line-in handling.
+        # Liquidsoap-Engine path (streaming_handled_externally=True):
+        # the .liq script has a dedicated input.http source ("linein")
+        # bound at render-time to the FfmpegLineinCapture listen URL.
+        # We tell Liquidsoap to start consuming via telnet — the bus-
+        # switch flips from scheduled to linein once max_buffer (10 s)
+        # of audio has buffered.  FfmpegLineinCapture itself was
+        # already started above with the device GUID.
+        #
+        # Legacy mpv/VLC path: unchanged — engine.play() points VLC at
+        # the listen URL and FfmpegStreamer re-encodes to Icecast.
+        # This path stays as a fallback until mpv-engine code is
+        # deleted (post-Phase-F per BACKLOG).
+        if self._streaming_handled_externally:
+            # Phase F — Liquidsoap engine path.
+            self._engine.stop()  # clear scheduled queue (deferred-stop)
+            self._engine.linein_start()
+            # No _start_streamers — Liquidsoap owns the Icecast PUTs.
+        else:
+            # Legacy mpv/VLC path — unchanged from Phase B.
+            # RASTATIME 2026-05-25 — Seamless-Bus-Mix Phase 1 (see
+            # _on_file_start for the rationale).
+            self._engine.wait_until_stopped(timeout=0.5)
 
-        self._engine.stop()
-        self._stop_streamers()
-        self._engine.play(self._linein_capture.listen_url, cue_in=0.0)
-        self._start_streamers(self._linein_capture.listen_url)
+            self._engine.stop()
+            self._stop_streamers()
+            self._engine.play(self._linein_capture.listen_url, cue_in=0.0)
+            self._start_streamers(self._linein_capture.listen_url)
 
     def _on_linein_capture_restart(self) -> None:
         """
@@ -1353,6 +1374,20 @@ class PlayoutScheduler:
         # the DJ audio stays on air.  Only the scheduled-event bookkeeping
         # above still happens.
         if self._switcher and self._switcher.current_state != SourceState.SCHEDULED:
+            return
+
+        # RASTATIME 2026-05-29 — Phase F: linein-specific teardown.
+        # In Liquidsoap-Mode a linein-event uses input.http (not the
+        # request.queue), so engine.stop() alone would not close the
+        # HTTP session.  Call linein_stop() explicitly so the bus-
+        # switch falls through to scheduled.  FfmpegLineinCapture.stop()
+        # already happened above (line ~1349) — that's the dshow
+        # subprocess side; this is the Liquidsoap-source side.
+        if was_linein and self._streaming_handled_externally:
+            self._engine.linein_stop()
+            # No further engine.stop() / wait_until_stopped — the
+            # linein had its own source path that's now closed.
+            self._stop_streamers()  # no-op in Liquidsoap-Mode
             return
 
         # RASTATIME 2026-05-29 — Phase E: webstream-specific teardown.

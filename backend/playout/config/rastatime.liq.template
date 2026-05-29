@@ -156,6 +156,44 @@ ${HARBOR_INPUTS_BLOCK}
 ${WEBSTREAM_INPUT_BLOCK}
 
 # ---------------------------------------------------------------------
+# Phase-F — Scheduled Line-Inputs via dynamic input.http (optional)
+# ---------------------------------------------------------------------
+#
+# Phase F (2026-05-29) reuses the existing FfmpegLineinCapture Python
+# subprocess (managed by Pypo) which captures the operator-selected
+# dshow audio device and streams it to a local Icecast mount
+# (http://localhost:8000/linein-capture by default).  Liquidsoap
+# consumes that local stream via input.http — exactly the same pattern
+# as scheduled webstreams (Phase E), only with a fixed URL.
+#
+# Why NOT input.portaudio directly:
+#   * No set_device method at runtime → device switching would require
+#     a Liquidsoap restart (5-10 s on-air glitch per show).
+#   * No auto-reconnect on USB-cable unplug (FfmpegLineinCapture has a
+#     watchdog that handles this transparently today).
+#   * device_id is a PortAudio-integer-index, not the Windows audio
+#     endpoint GUID we use in the frontend library.
+#
+# Why NOT input.external.rawaudio with ffmpeg-pipe:
+#   * PR savonet/liquidsoap#5139 (2026-05-06): subprocess-EOF can crash
+#     Liquidsoap.  Avoided entirely by keeping ffmpeg as a Pypo-managed
+#     subprocess + consuming over HTTP.
+#
+# Pypo's _on_linein_start (in Liquidsoap mode) starts both the
+# FfmpegLineinCapture (with the device GUID from the schedule item)
+# AND sends the telnet sequence:
+#   linein.url http://localhost:8000/linein-capture
+#   linein.start
+# at show-start time, and linein.stop at show-end (plus stops the
+# FfmpegLineinCapture subprocess).
+#
+# Renderer-Verhalten:
+#   * Liquidsoap-Engine aktiv (always in Phase-D+) → linein source +
+#     buffer-wrapper + switch-arm gerendert
+#   * Legacy-Pfade ohne Liquidsoap → leerer Stub (kein input.http)
+${LINEIN_INPUT_BLOCK}
+
+# ---------------------------------------------------------------------
 # Phase-C6 — Crossfade between scheduled tracks
 # ---------------------------------------------------------------------
 #

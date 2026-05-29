@@ -671,3 +671,75 @@ def test_webstream_status_delegates_to_telnet():
 
     assert engine.webstream_status() == "connected http://example.com"
     telnet.webstream_status.assert_called_once()
+
+
+# ---- Phase F — linein lifecycle methods -------------------------------
+
+
+def test_linein_start_without_url_calls_only_start():
+    """
+    engine.linein_start() without explicit URL only sends
+    `linein.start` — Liquidsoap uses the URL hard-coded at template-
+    render time (FfmpegLineinCapture's local mount).
+    """
+    engine, telnet = _make_engine_with_mock()
+    engine.linein_start()
+
+    telnet.linein_start.assert_called_once()
+    telnet.linein_set_url.assert_not_called()
+
+
+def test_linein_start_with_explicit_url_calls_set_url_then_start():
+    """
+    engine.linein_start(url) sends set_url first, then start.
+    Order matters: URL must be configured before connect.
+    """
+    engine, telnet = _make_engine_with_mock()
+    engine.linein_start("http://192.168.1.5:8000/custom-mount")
+
+    method_names = [
+        c[0] for c in telnet.mock_calls
+        if c[0] in ("linein_set_url", "linein_start")
+    ]
+    assert method_names == ["linein_set_url", "linein_start"]
+    telnet.linein_set_url.assert_called_once_with(
+        "http://192.168.1.5:8000/custom-mount"
+    )
+
+
+def test_linein_start_handles_telnet_error_without_raising():
+    """Fail-soft: telnet errors during linein_start are swallowed."""
+    engine, telnet = _make_engine_with_mock()
+    telnet.linein_start.side_effect = ConnectionError("telnet down")
+
+    # Must NOT raise
+    engine.linein_start()
+
+
+def test_linein_stop_calls_telnet_linein_stop():
+    """engine.linein_stop delegates to telnet.linein_stop."""
+    engine, telnet = _make_engine_with_mock()
+    engine.linein_stop()
+    telnet.linein_stop.assert_called_once()
+
+
+def test_linein_stop_handles_telnet_error_without_raising():
+    """Linein-stop is idempotent + fail-soft."""
+    engine, telnet = _make_engine_with_mock()
+    telnet.linein_stop.side_effect = ConnectionError("telnet down")
+
+    # Must NOT raise
+    engine.linein_stop()
+
+
+def test_linein_status_delegates_to_telnet():
+    """engine.linein_status returns Liquidsoap's free-text status."""
+    engine, telnet = _make_engine_with_mock()
+    telnet.linein_status.return_value = (
+        "connected http://localhost:8000/linein-capture"
+    )
+
+    assert engine.linein_status() == (
+        "connected http://localhost:8000/linein-capture"
+    )
+    telnet.linein_status.assert_called_once()

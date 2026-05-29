@@ -9,6 +9,68 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Scheduled Line-Inputs via Liquidsoap `input.http` (Phase-F,
+  2026-05-29)** — geplante Line-In-Items im Schedule fließen jetzt
+  durch die Liquidsoap-Engine.  Pattern analog zu Phase E
+  (Webstreams), nur einfacher weil die HTTP-URL fix ist
+  (`http://localhost:8000/linein-capture`, FfmpegLineinCapture's
+  lokaler Icecast-Mount) und LineinEvent kein gain-Feld hat.
+
+  **Konsequenzen für den Operator:**
+  - **Line-In-Shows landen jetzt im Liquidsoap-Recording** — vorher
+    waren reine Line-In-Shows still im .mp3-Archiv, jetzt komplett
+    aufgenommen.
+  - **Multi-Device-Support bleibt erhalten** — Pypo's
+    FfmpegLineinCapture nutzt weiterhin die Windows-Audio-Endpoint-
+    GUID aus dem Schedule-Item; Liquidsoap konsumiert nur den
+    lokalen Icecast-Mount und kennt das Device nicht direkt.
+  - **Hot-Plug-Recovery (USB-Cable raus/rein)** funktioniert
+    weiterhin — FfmpegLineinCapture's Watchdog kümmert sich darum.
+  - **Initiale Show-Latency ~5 s** (analog zu Webstream-Buffer).
+
+  **Architektur-Entscheidung 2026-05-29:** Option B (input.http +
+  bestehendes FfmpegLineinCapture) statt Option A (input.portaudio
+  direkt).  Gründe:
+  - `input.portaudio` hat **keine `set_device`-Method zur Laufzeit**
+    → Device-Wechsel zwischen Shows würde Liquidsoap-Restart
+    erfordern (Stream-Glitch).
+  - `input.portaudio` nutzt PortAudio-Integer-Indizes (nicht stable
+    across reboots), inkompatibel mit unserem Windows-Audio-Endpoint-
+    GUID-System im Frontend.
+  - `input.portaudio` hat keinen Auto-Reconnect bei USB-Plug-Out;
+    FfmpegLineinCapture's Watchdog macht das transparent.
+  - `input.external.rawaudio` mit ffmpeg-Pipe wäre möglich, aber PR
+    [savonet/liquidsoap#5139](https://github.com/savonet/liquidsoap/pull/5139)
+    (2026-05-06) zeigte einen Crash-Bug bei Subprozess-EOF.  Umgehen
+    wir komplett indem wir ffmpeg als Pypo-Subprozess + Liquidsoap-
+    HTTP-Konsum nutzen.
+
+  Implementation:
+  - Template `rastatime.liq.template`: neuer `${LINEIN_INPUT_BLOCK}`
+    Placeholder mit `input.http(id="linein", start=false,
+    self_sync=false, ..., "<FfmpegLineinCapture-URL>")` +
+    `buffer(buffer=5.0, linein_raw)` Clock-Bridge-Wrapper.  Switch-
+    Block um neuen Arm zwischen webstream und scheduled erweitert.
+  - `liquidsoap_telnet.py`: 4 neue Convenience-Methoden
+    (`linein_set_url`, `linein_start`, `linein_stop`,
+    `linein_status`).
+  - `liquidsoap_engine.py`: `linein_start(url=None)` / `linein_stop()`
+    / `linein_status()` mit fail-soft try/except.  URL ist optional
+    weil das Template eine fixe URL hard-codet.
+  - `playout_scheduler.py`: `_on_linein_start` branches in der
+    SCHEDULED-path auf `streaming_handled_externally` — Liquidsoap-
+    Path ruft zusätzlich `engine.linein_start()` (FfmpegLineinCapture
+    wird wie zuvor gestartet); `_on_stop` ergänzt um `was_linein` +
+    Liquidsoap-Branch.
+  - Tests: 22 neue (5 Renderer + 5 Telnet + 6 Engine + 6 Scheduler);
+    voller Suite 231 pass + 2 skipped.
+
+  **Bekannte Polish-Items (BACKLOG):** Live-Verifikation steht aus —
+  wird mit der neuen Hardware nächste Woche zusammen mit Phase-E-
+  Polish-Iteration getestet.  Bei sauberem Verhalten ist Phase F
+  die letzte Vorbedingung für den Legacy-mpv-Code-Delete (~2000 LoC
+  `mpv_engine.py` + `ffmpeg_streamer.py` + Scheduler-Branches).
+
 - **Scheduled Webstreams via Liquidsoap `input.http` (Phase-E,
   2026-05-29)** — geplante Webstream-Items im Schedule laufen jetzt
   durch die Liquidsoap-Engine statt durch den Legacy-mpv-Adapter.

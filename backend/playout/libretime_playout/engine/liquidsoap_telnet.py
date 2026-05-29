@@ -460,6 +460,87 @@ class LiquidsoapTelnetClient:
         """
         return self.send_command("webstream.url")
 
+    # ---- Phase F — line-input lifecycle wrappers --------------------
+
+    # The rastatime.liq template renders an
+    # ``input.http(id="linein", start=false, ...)`` source initialised
+    # with the FfmpegLineinCapture local Icecast mount URL (default
+    # ``http://localhost:8000/linein-capture``).  Pypo's
+    # _on_linein_start drives the runtime cycle in Liquidsoap-mode:
+    #
+    #   self._linein_capture.start(device_id)   # spawns ffmpeg dshow
+    #   linein_start                            # tell Liquidsoap to consume
+    #     ... show plays ...
+    #   linein_stop                             # tell Liquidsoap to disconnect
+    #   self._linein_capture.stop()             # ffmpeg shuts down
+    #
+    # The URL is fixed at render time (set_url is exposed but Pypo
+    # doesn't need to call it because there is only one capture
+    # instance with one URL).  The set_url wrapper is kept for parity
+    # with the webstream API + future multi-mount scenarios.
+
+    def linein_set_url(self, url: str) -> str:
+        """
+        Set the HTTP URL the input.http source connects to on the next
+        :meth:`linein_start`.  Optional — the URL is normally fixed at
+        template-render time to FfmpegLineinCapture's local Icecast
+        mount, so Pypo doesn't need to call this in standard operation.
+
+        Same wire-form constraints as :meth:`webstream_set_url`:
+          * MUST NOT contain ``\\n`` / ``\\r`` (newline terminates the command)
+          * MUST NOT contain ``"`` (would confuse Liquidsoap's parser)
+
+        Wire-form: ``linein.url <url>`` (the input.http OCaml
+        ``set_url`` method exposes as the server-command ``url`` with
+        optional argument — same convention as the webstream source).
+        """
+        if any(ch in url for ch in ('\n', '\r', '"')):
+            raise ValueError(
+                f"linein_set_url: url contains a character that "
+                f"would break the Liquidsoap telnet wire form: {url!r}"
+            )
+        return self.send_command(f"linein.url {url}")
+
+    def linein_start(self) -> str:
+        """
+        Tell Liquidsoap to begin consuming the FfmpegLineinCapture
+        local Icecast mount.  Pre-condition: the FfmpegLineinCapture
+        Python subprocess must be running (Pypo starts it just before
+        calling this).
+
+        Wire-form: ``linein.start``.  The source goes
+        ``source.is_ready=true`` only after max_buffer seconds of
+        audio have been pre-fetched — the bus-switch then flips from
+        scheduled to linein automatically.
+        """
+        return self.send_command("linein.start")
+
+    def linein_stop(self) -> str:
+        """
+        Tell Liquidsoap to disconnect from the FfmpegLineinCapture
+        local Icecast mount.  ``source.is_ready`` goes false, the
+        switch operator falls through to scheduled.  Idempotent (Done
+        on already-stopped source).
+
+        Wire-form: ``linein.stop``.
+
+        Pypo's _on_stop additionally stops the FfmpegLineinCapture
+        Python subprocess after this telnet command, so the dshow
+        capture isn't kept alive between shows.
+        """
+        return self.send_command("linein.stop")
+
+    def linein_status(self) -> str:
+        """
+        Return Liquidsoap's free-text input.http status for the linein
+        source — same string semantics as :meth:`webstream_status`
+        (``"stopped"`` / ``"starting"`` / ``"polling"`` /
+        ``"connected <url>"`` / ``"stopping"``).
+
+        Wire-form: ``linein.status``.
+        """
+        return self.send_command("linein.status")
+
     # ---- Internals (lock must be held) ------------------------------
 
     def _connect_locked(self) -> None:

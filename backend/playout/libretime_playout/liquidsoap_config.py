@@ -183,6 +183,34 @@ DEFAULT_WEBSTREAM_POLL_DELAY_SECONDS = 2.0
 
 
 # ---------------------------------------------------------------------
+# Phase-F — Scheduled Line-Inputs via input.http (RASTATIME 2026-05-29)
+# ---------------------------------------------------------------------
+
+# Whether to emit the linein input.http block + switch-arm.  Defaults
+# to True for the Liquidsoap engine path.  The Phase-D-deprecated
+# mpv/VLC engine paths set this to False — those code paths still
+# handle line-inputs via the legacy mpv adapter + the existing
+# FfmpegLineinCapture watchdog.
+DEFAULT_LINEIN_ENABLED = True
+
+# The local Icecast mount that FfmpegLineinCapture streams to.  Fixed
+# at this URL because FfmpegLineinCapture has its own hard-coded
+# listen URL — there is only ever one capture instance, with one
+# operator-selected device active at a time, on this one mount.
+# Liquidsoap's input.http connects to this URL when Pypo signals a
+# scheduled line-input start.
+DEFAULT_LINEIN_LISTEN_URL = "http://localhost:8000/linein-capture"
+
+# Same buffer / timeout / poll-delay semantics as webstream — the
+# capture stream is HTTP from localhost, so jitter should be much
+# lower than from a public Internet webstream.  We keep the same
+# defaults for consistency, but the renderer accepts overrides.
+DEFAULT_LINEIN_MAX_BUFFER_SECONDS = 10.0
+DEFAULT_LINEIN_TIMEOUT_SECONDS = 10.0
+DEFAULT_LINEIN_POLL_DELAY_SECONDS = 2.0
+
+
+# ---------------------------------------------------------------------
 # Liquidsoap codec encoders per stream type
 # ---------------------------------------------------------------------
 
@@ -635,11 +663,73 @@ def _render_webstream_input_block(
     )
 
 
+def _render_linein_input_block(
+    *,
+    enabled: bool,
+    listen_url: str = DEFAULT_LINEIN_LISTEN_URL,
+    max_buffer_seconds: float = DEFAULT_LINEIN_MAX_BUFFER_SECONDS,
+    timeout_seconds: float = DEFAULT_LINEIN_TIMEOUT_SECONDS,
+    poll_delay_seconds: float = DEFAULT_LINEIN_POLL_DELAY_SECONDS,
+) -> str:
+    """
+    Render the ``input.http`` block for scheduled line-inputs (Phase F).
+
+    The URL is hard-coded to FfmpegLineinCapture's local Icecast mount
+    (``http://localhost:8000/linein-capture`` by default).  Unlike the
+    webstream block (Phase E), the URL is fixed at render time — Pypo
+    does NOT change it per-show because there is only one capture
+    instance active at a time.
+
+    Pypo's _on_linein_start (in Liquidsoap mode) starts both the
+    FfmpegLineinCapture Python subprocess (with the device GUID from
+    the schedule item) AND sends the telnet ``linein.start`` command;
+    on show-end ``linein.stop`` + FfmpegLineinCapture stop.
+
+    No gain wrapper here — :class:`LineinEvent` deliberately has no
+    ``input_gain_db`` field (line-input level is controlled at the
+    operator's audio mixer or in FfmpegLineinCapture's encode pipeline,
+    not per-show in the schedule).  Future operator-requested
+    per-line-input gain could be added analog to the webstream
+    pattern.
+
+    See ``_render_webstream_input_block`` for the full reasoning on
+    why ``self_sync=false`` + ``buffer()`` wrapper are BOTH required
+    for crossfade compatibility (compile-time source-graph latency
+    check + clock-bridge).
+    """
+    if not enabled:
+        return (
+            "# (linein input.http disabled — Liquidsoap engine not\n"
+            "#  active; legacy mpv/VLC handles line-inputs via separate path)\n"
+        )
+    return (
+        "linein_raw = input.http(\n"
+        '  id="linein",\n'
+        "  start=false,\n"
+        "  self_sync=false,\n"
+        f"  max_buffer={_format_crossfade_duration(max_buffer_seconds)},\n"
+        f"  timeout={_format_crossfade_duration(timeout_seconds)},\n"
+        f"  poll_delay={_format_crossfade_duration(poll_delay_seconds)},\n"
+        f'  "{_escape_liq_string(listen_url)}",\n'
+        ")\n"
+        "\n"
+        "# buffer(buffer=5.0, ...) is the asynchronous clock-bridge that\n"
+        "# decouples input.http's HTTP-stream clock from the main bus.\n"
+        "# Same reasoning as the webstream block.  Localhost HTTP-stream\n"
+        "# jitter is much lower than public Internet streams, but the\n"
+        "# 5 s buffer absorbs the initial-connect cold-buffer rebuild\n"
+        "# without the switch-flip-off 'Haker' symptom observed in\n"
+        "# Phase-E live-tests.\n"
+        "linein = buffer(buffer=5.0, linein_raw)\n"
+    )
+
+
 def _render_bus_source_block(
     *,
     main_enabled: bool,
     show_enabled: bool,
     webstream_enabled: bool = DEFAULT_WEBSTREAM_ENABLED,
+    linein_enabled: bool = DEFAULT_LINEIN_ENABLED,
 ) -> str:
     """
     Render the ``bus = ...`` assignment that picks the active source.
@@ -648,18 +738,21 @@ def _render_bus_source_block(
       master_dj         (if main_enabled)
       show_dj           (if show_enabled)
       webstream         (if webstream_enabled — Liquidsoap engine path)
+      linein            (if linein_enabled — Liquidsoap engine path)
       scheduled         (always — final fallback)
 
     When NO upstream switching candidates are enabled (no harbor, no
-    webstream), falls back to the C3-era simple assignment
+    webstream, no linein), falls back to the C3-era simple assignment
     ``bus = scheduled`` so the switch operator doesn't show up as a
     noise line in `--check` output.
 
-    Priority rationale (Phase-E 2026-05-29):
+    Priority rationale (Phase-E/F 2026-05-29):
       * DJ-Sources stay topmost — operator-live always wins
       * Webstream-Show goes ABOVE scheduled — when a webstream show is
-        active, the scheduled fallback (silence) must not drown the
-        webstream out
+        active, the scheduled fallback (silence) must not drown it out
+      * Line-Input-Show goes ABOVE scheduled, BELOW webstream — same
+        argument; ordering between webstream + linein is arbitrary
+        (a single schedule slot is never both at the same time)
       * Scheduled is the catch-all silence + per-show track playback
 
     RASTATIME 2026-05-28 — Phase-D Stück-B operator decision:
@@ -686,9 +779,14 @@ def _render_bus_source_block(
         arms.append("({source.is_ready(show_dj)}, show_dj)")
     if webstream_enabled:
         arms.append("({source.is_ready(webstream)}, webstream)")
+    if linein_enabled:
+        arms.append("({source.is_ready(linein)}, linein)")
     arms.append("({true}, scheduled)")
 
-    if not main_enabled and not show_enabled and not webstream_enabled:
+    if (
+        not main_enabled and not show_enabled
+        and not webstream_enabled and not linein_enabled
+    ):
         # No upstream switching candidate at all — keep the C3-era
         # simple assignment so the switch operator doesn't show up as a
         # noise line in `--check` output and so the bus chain is
@@ -725,6 +823,11 @@ def render_rastatime_liq(
     webstream_max_buffer_seconds: float = DEFAULT_WEBSTREAM_MAX_BUFFER_SECONDS,
     webstream_timeout_seconds: float = DEFAULT_WEBSTREAM_TIMEOUT_SECONDS,
     webstream_poll_delay_seconds: float = DEFAULT_WEBSTREAM_POLL_DELAY_SECONDS,
+    linein_enabled: bool = DEFAULT_LINEIN_ENABLED,
+    linein_listen_url: str = DEFAULT_LINEIN_LISTEN_URL,
+    linein_max_buffer_seconds: float = DEFAULT_LINEIN_MAX_BUFFER_SECONDS,
+    linein_timeout_seconds: float = DEFAULT_LINEIN_TIMEOUT_SECONDS,
+    linein_poll_delay_seconds: float = DEFAULT_LINEIN_POLL_DELAY_SECONDS,
     template_path: Optional[Path] = None,
 ) -> str:
     """
@@ -779,10 +882,18 @@ def render_rastatime_liq(
         timeout_seconds=webstream_timeout_seconds,
         poll_delay_seconds=webstream_poll_delay_seconds,
     )
+    linein_block = _render_linein_input_block(
+        enabled=linein_enabled,
+        listen_url=linein_listen_url,
+        max_buffer_seconds=linein_max_buffer_seconds,
+        timeout_seconds=linein_timeout_seconds,
+        poll_delay_seconds=linein_poll_delay_seconds,
+    )
     bus_block = _render_bus_source_block(
         main_enabled=bool(harbor_main_password),
         show_enabled=bool(harbor_show_password),
         webstream_enabled=webstream_enabled,
+        linein_enabled=linein_enabled,
     )
 
     rendered = (
@@ -804,6 +915,7 @@ def render_rastatime_liq(
         )
         .replace("${HARBOR_INPUTS_BLOCK}", harbor_block)
         .replace("${WEBSTREAM_INPUT_BLOCK}", webstream_block)
+        .replace("${LINEIN_INPUT_BLOCK}", linein_block)
         .replace("${BUS_SOURCE_BLOCK}", bus_block)
         .replace("${ICECAST_OUTPUTS}", icecast_blocks)
     )
@@ -831,6 +943,11 @@ def write_rastatime_liq(
     webstream_max_buffer_seconds: float = DEFAULT_WEBSTREAM_MAX_BUFFER_SECONDS,
     webstream_timeout_seconds: float = DEFAULT_WEBSTREAM_TIMEOUT_SECONDS,
     webstream_poll_delay_seconds: float = DEFAULT_WEBSTREAM_POLL_DELAY_SECONDS,
+    linein_enabled: bool = DEFAULT_LINEIN_ENABLED,
+    linein_listen_url: str = DEFAULT_LINEIN_LISTEN_URL,
+    linein_max_buffer_seconds: float = DEFAULT_LINEIN_MAX_BUFFER_SECONDS,
+    linein_timeout_seconds: float = DEFAULT_LINEIN_TIMEOUT_SECONDS,
+    linein_poll_delay_seconds: float = DEFAULT_LINEIN_POLL_DELAY_SECONDS,
     template_path: Optional[Path] = None,
 ) -> bool:
     """
@@ -867,6 +984,11 @@ def write_rastatime_liq(
         webstream_max_buffer_seconds=webstream_max_buffer_seconds,
         webstream_timeout_seconds=webstream_timeout_seconds,
         webstream_poll_delay_seconds=webstream_poll_delay_seconds,
+        linein_enabled=linein_enabled,
+        linein_listen_url=linein_listen_url,
+        linein_max_buffer_seconds=linein_max_buffer_seconds,
+        linein_timeout_seconds=linein_timeout_seconds,
+        linein_poll_delay_seconds=linein_poll_delay_seconds,
         template_path=template_path,
     )
 

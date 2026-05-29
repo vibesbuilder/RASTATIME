@@ -173,13 +173,46 @@ der Line-In zu einem Schedule-Item genau wie in Pfad 4.1.
 
 ### Was spielt, wenn der Slot des Line-Ins beginnt?
 
-Die Playout-Engine sendet ein `LINEIN_START`-Event an den
-Source-Switcher, der:
+**Liquidsoap-Engine-Pfad (Produktions-Default seit 2026-05-29):**
 
-1. Was auch immer auf Sendung war, stoppt (einen Track,
-   die Fallback-Queue usw.).
-2. Das konfigurierte Soundkarten-Eingabegerät öffnet.
-3. Das eingehende Audio an den Output-Stream routet.
+1. Pypo startet den FfmpegLineinCapture-Subprozess für das
+   konfigurierte Soundkarten-Gerät (Windows dshow → MP3 → lokaler
+   Icecast-Mount unter `http://localhost:8000/linein-capture`).
+2. Pypo sendet einen einzelnen Telnet-Befehl an Liquidsoap:
+   `linein.start` — der dediziertes `input.http`-Source beginnt
+   den lokalen Capture-Mount zu konsumieren.
+3. Liquidsoap buffert ~10 Sekunden Audio. Sobald
+   `source.is_ready` auf true schaltet, routet der Bus-Switch
+   das Audio zur Linein-Source — Hörer hören das Mikrofon.
+4. Bei der konfigurierten Dauer sendet Pypo `linein.stop` und
+   stoppt zusätzlich FfmpegLineinCapture; der Switch fällt
+   zurück auf scheduled.
+
+**Aufnahme-Verhalten (neu seit Phase F, 2026-05-29):**
+Scheduled Line-Inputs fließen jetzt durch den Liquidsoap-internen
+Bus, an den `output.file` angeschlossen ist, und landen im
+Per-Show-`.mp3`-Aufnahme-Archiv — gleiche Abdeckung wie Tracks
+und Webstreams. Vor Phase F hatten reine Line-Input-Shows stille
+Aufnahmen.
+
+**Warum FfmpegLineinCapture statt Liquidsoaps `input.portaudio`:**
+input.portaudio hat keine `set_device`-Methode zur Laufzeit, keinen
+Auto-Reconnect bei USB-Cable-Unplug und nutzt PortAudio-Integer-
+Indizes statt der Windows-Audio-Endpoint-GUIDs, die die Frontend-
+Bibliothek führt. FfmpegLineinCaptures Watchdog behandelt
+Unplug-Replug transparent; Liquidsoap konsumiert den lokalen
+Icecast-Mount ohne sich um Device-Identität zu kümmern.
+
+**Initiale Show-Latenz:** die ersten ~5 Sekunden eines Linein-
+Slots können auf den lokalen Operator-Lautsprechern still sein,
+während Liquidsoaps Buffer aufgebaut wird. Gleiche Charakteristik
+wie Scheduled Webstreams (Phase E).
+
+**Legacy-mpv-/VLC-Engine-Pfade (nur wenn
+`RASTATIME_PLAYOUT_ENGINE=mpv` oder `=vlc`):**
+mpv öffnet die FfmpegLineinCapture-Listen-URL direkt und
+FfmpegStreamer kodiert nach Icecast. Keine Aufnahme für reine
+Line-Input-Shows in diesem Modus.
 
 Wenn die Slot-Dauer abgelaufen ist, sendet die Engine ein
 `LINEIN_END`-Event, und der Source-Switcher kehrt zum
@@ -350,9 +383,15 @@ Sendung wird ausschließlich vom Line-In spielen.
 
 ### "Wird das Audio des Line-Ins aufgezeichnet, wenn Record-per-Show aktiviert ist?"
 
-Ja. Der Recorder zapft den Icecast-Output, der trägt, was
-auch immer gerade auf Sendung ist, unabhängig von der
-Quelle. Siehe [Aufnahme pro Sendung](./RECORD_PER_SHOW.md).
+Ja (seit Phase F, 2026-05-29). Im Liquidsoap-Engine-Modus
+fließt das Line-In-Audio durch denselben internen Audio-Bus,
+an den `output.file` für das Per-Show-MP3-Archiv angeschlossen
+ist, und wird nativ erfasst — zusammen mit eventuellen
+regulären Tracks oder geplanten Webstreams derselben Sendung.
+Siehe [Aufnahme pro Sendung](./RECORD_PER_SHOW.md).
+
+(In den deprecated mpv/VLC-Engine-Modi ist Aufnahme nicht
+verfügbar — siehe [Einstellungen → Playout-Engine](./SETTINGS.md).)
 
 ### "Kann ich eine Netzwerk-Audio-Quelle (z.B. AES67 / Dante) als Line-In hinzufügen?"
 

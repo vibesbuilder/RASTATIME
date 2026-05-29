@@ -164,34 +164,32 @@ Cutover erst nach 1–2 Wochen A/B-Vergleich.
 - Tail-Flush-Wait (Commits cb20df6 + 952ec3b, obsolet weil
   Liquidsoap gapless macht)
 
-### 🟡 Liquidsoap-Migration Phase F: Scheduled Line-Inputs
+### 🟡 Phase-F Live-Verifikation + Legacy-mpv-Code-Delete
 
-**Status:** Defer — nach Phase-E-Polish (siehe unten) und neuer Hardware.
-**Evaluiert:** 2026-05-27 (während C5-Diskussion); Phase E ist DONE
-2026-05-29 (siehe CHANGELOG).
-**Operator-Wert:** Hoch — sonst werden Line-Inputs nicht ins
-Liquidsoap-Recording (`output.file` vom internen Bus) aufgenommen.
-Plus: ist die letzte Voraussetzung für den Legacy-mpv-Code-Delete
-(~2000 LoC mpv_engine.py + ffmpeg_streamer.py).
+**Status:** Defer — Live-Test nach Hardware-Migration nächste Woche.
+**Evaluiert:** 2026-05-29 (Phase F Code-DONE, Live-Test offen).
 
 **Was gebaut werden muss:**
-- **Line-Input-Items**: analog zu Phase E — entweder direkt
-  `input.wasapi` von Liquidsoap (Windows-Builds kennen das, müsste
-  verifiziert werden), ODER bestehender FfmpegLineinCapture läuft
-  weiter und Liquidsoap konsumiert ihn als
-  `input.http("http://localhost:8000/linein-capture")`.  Letztere
-  Variante baut auf dem Phase-E input.http-Pattern auf (kein zweiter
-  Wire-Form-Hund nötig).
-- **Template-Erweiterung**: zusätzliche `linein`-Source im switch
-  zwischen webstream und scheduled.
-- **Pypo-Branch**: `_on_linein_start` analog zu `_on_webstream_start`
-  branchen (streaming_handled_externally).
+1. **Live-Verifikation Phase F** auf neuer Hardware mit echtem
+   Line-In-Mic — Show im Schedule, Audio hörbar, Recording-Coverage,
+   USB-Plug-Out/-In Test.  Bei Polish-Issues: Buffer-Tuning analog
+   Phase-E (5 s → 10 s, etc.).
+2. **Legacy-mpv-Code-Delete** — wenn Phase-E + Phase-F beide stabil
+   im Live-Betrieb (mindestens 1 Woche): ~2000 LoC löschen:
+     - `mpv_engine.py`
+     - `ffmpeg_streamer.py`
+     - Scheduler-Branches `_on_*_start` mpv/VLC-Paths
+     - vlc_engine.py (falls obsolete)
+     - DeprecationWarning + env-var-Fallback
+   - Plus: ffmpeg.exe-Dependency externe komplett weg, da nur noch
+     FfmpegLineinCapture es nutzt (und das bleibt).
 
-**Aufwand:** ~300-500 LoC + Tests (deutlich kleiner als Phase E weil
-Architektur + Pattern stehen).
-**Vorbedingung:** Phase-E-Polish stabil im Live-Betrieb (mindestens
-1 Woche ohne neue Issues), und Hardware-Migration durch.
-**Risiko Live-Betrieb:** Niedrig wenn Feature-Flag-gated.
+**Aufwand:** Live-Test ~1 h, Polish ggf. ~2-4 h, Delete ~2-3 h
+inkl. Tests.
+**Vorbedingung:** Neue Hardware in Betrieb + 1 Woche Stabil-Lauf
+mit Phase-E + Phase-F aktiv.
+**Risiko Live-Betrieb:** Niedrig (bekannte Architektur, schrittweiser
+Delete).
 
 
 ### 🟡 Phase-E Polish: Webstream-Buffer + Switch-Verhalten

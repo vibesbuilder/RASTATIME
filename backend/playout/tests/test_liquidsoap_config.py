@@ -687,6 +687,7 @@ def test_template_has_all_expected_placeholders():
         "${LOCAL_OUTPUT_BLOCK}",
         "${HARBOR_INPUTS_BLOCK}",
         "${WEBSTREAM_INPUT_BLOCK}",
+        "${LINEIN_INPUT_BLOCK}",
         "${BUS_SOURCE_BLOCK}",
         "${ICECAST_OUTPUTS}",
     ):
@@ -743,14 +744,19 @@ def test_full_render_default_includes_webstream_input_block():
 def test_full_render_webstream_disabled_renders_stub_comment():
     """
     With webstream_enabled=False (legacy mpv/VLC paths) the renderer
-    emits ONLY a comment stub — no input.http + no switch-arm.
+    emits ONLY a comment stub for the webstream block — no
+    webstream_raw + no webstream_gain + no switch-arm.
+
+    Note: linein also uses input.http, so we disable both here to
+    test the webstream-only-disabled stub semantics in isolation.
     """
     out = lc.render_rastatime_liq(
         [_stream()],
         webstream_enabled=False,
+        linein_enabled=False,
     )
     active = "\n".join(_active_lines(out))
-    # No active input.http for webstream
+    # No active input.http for webstream (or linein, since both off here)
     assert "input.http(" not in active
     assert "webstream_raw" not in active
     assert "webstream_gain" not in active
@@ -773,23 +779,25 @@ def test_full_render_webstream_custom_buffer_timeout_poll():
 
 def test_full_render_webstream_switch_priority_below_dj_above_scheduled():
     """
-    Switch-arm priority: master_dj > show_dj > webstream > scheduled.
-    Critical for live-radio semantics — DJ-takeover beats webstream,
-    webstream beats silence-fallback.
+    Switch-arm priority: master_dj > show_dj > webstream > linein > scheduled.
+    Critical for live-radio semantics — DJ-takeover beats everything,
+    webstream + linein beat silence-fallback.  (linein/webstream
+    ordering is arbitrary; a single slot is never both at the same time.)
     """
     out = lc.render_rastatime_liq(
         [_stream()],
         harbor_main_password="m-pw",
         harbor_show_password="s-pw",
-        # webstream_enabled defaults to True
+        # webstream + linein default to enabled
     )
     bus_idx = out.index("bus = switch(")
-    bus_block = out[bus_idx:bus_idx + 700]
+    bus_block = out[bus_idx:bus_idx + 800]
     master_pos = bus_block.index("master_dj")
     show_pos = bus_block.index("show_dj")
     webstream_pos = bus_block.index("webstream)")
+    linein_pos = bus_block.index("linein)")
     scheduled_pos = bus_block.index("scheduled)")
-    assert master_pos < show_pos < webstream_pos < scheduled_pos
+    assert master_pos < show_pos < webstream_pos < linein_pos < scheduled_pos
 
 
 def test_full_render_no_harbor_but_webstream_enabled_uses_switch():
@@ -813,13 +821,14 @@ def test_full_render_no_harbor_but_webstream_enabled_uses_switch():
 
 def test_full_render_no_harbor_no_webstream_bare_bus_scheduled():
     """
-    No DJ sources AND webstream disabled → bus = scheduled directly
-    (no switch wrapper noise, matches C3-era behaviour for legacy
-    deployments).
+    No DJ sources AND webstream + linein disabled → bus = scheduled
+    directly (no switch wrapper noise, matches C3-era behaviour for
+    legacy deployments).
     """
     out = lc.render_rastatime_liq(
         [_stream()],
         webstream_enabled=False,
+        linein_enabled=False,
     )
     active = "\n".join(_active_lines(out))
     assert "bus = scheduled" in active
@@ -831,3 +840,81 @@ def test_full_render_no_harbor_no_webstream_bare_bus_scheduled():
                 f"Bare bus= line should not wrap switch when no upstream "
                 f"sources active; got: {line!r}"
             )
+
+
+# ---- Phase-F: linein input.http block ---------------------------------
+
+
+def test_full_render_default_includes_linein_input_block():
+    """
+    Default render (DEFAULT_LINEIN_ENABLED=True) MUST include the
+    input.http linein source + buffer-wrapper + switch-arm.
+    """
+    out = lc.render_rastatime_liq([_stream()])
+    active = "\n".join(_active_lines(out))
+    assert "linein_raw = input.http(" in active
+    assert 'id="linein"' in active
+    assert "start=false" in active
+    assert "self_sync=false" in active
+    # Default URL points at FfmpegLineinCapture's local mount
+    assert '"http://localhost:8000/linein-capture"' in active
+    # buffer() wrapper is the clock-bridge
+    assert "linein = buffer(buffer=5.0, linein_raw)" in active
+    # Switch arm
+    bus_idx = active.index("bus = switch(")
+    bus_block = active[bus_idx:bus_idx + 500]
+    assert "source.is_ready(linein)" in bus_block
+
+
+def test_full_render_linein_disabled_renders_stub_comment():
+    """
+    With linein_enabled=False (legacy mpv/VLC paths) the renderer
+    emits ONLY a comment stub — no input.http + no switch-arm.
+    """
+    out = lc.render_rastatime_liq(
+        [_stream()],
+        linein_enabled=False,
+    )
+    active = "\n".join(_active_lines(out))
+    # No active linein input.http
+    assert "linein_raw" not in active
+    assert "linein = buffer" not in active
+    # Switch arm for linein MUST NOT appear
+    assert "source.is_ready(linein)" not in active
+
+
+def test_full_render_linein_custom_listen_url():
+    """Custom listen_url propagates to the rendered input.http URL."""
+    out = lc.render_rastatime_liq(
+        [_stream()],
+        linein_listen_url="http://192.168.1.5:8000/altmount",
+    )
+    assert '"http://192.168.1.5:8000/altmount"' in out
+
+
+def test_full_render_linein_custom_buffer_timeout_poll():
+    """Custom tuning params propagate."""
+    out = lc.render_rastatime_liq(
+        [_stream()],
+        linein_max_buffer_seconds=20.0,
+        linein_timeout_seconds=8.0,
+        linein_poll_delay_seconds=3.0,
+    )
+    assert "max_buffer=20.0" in out
+    assert "timeout=8.0" in out
+    assert "poll_delay=3.0" in out
+
+
+def test_full_render_switch_includes_both_webstream_and_linein_by_default():
+    """
+    Default render (both webstream + linein enabled, no harbor) →
+    switch wraps scheduled + webstream + linein.
+    """
+    out = lc.render_rastatime_liq([_stream()])
+    active = "\n".join(_active_lines(out))
+    bus_idx = active.index("bus = switch(")
+    bus_block = active[bus_idx:bus_idx + 500]
+    assert "source.is_ready(webstream)" in bus_block
+    assert "source.is_ready(linein)" in bus_block
+    # webstream before linein (priority order)
+    assert bus_block.index("webstream)") < bus_block.index("linein)")

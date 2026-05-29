@@ -615,6 +615,72 @@ def test_webstream_url_wrapper():
             client.close()
 
 
+# ---- Phase F — linein lifecycle wrappers ------------------------
+
+
+def test_linein_set_url_wrapper():
+    """
+    linein_set_url() sends `linein.url <url>` — same convention as
+    webstream_set_url (input.http exposes set_url as the server-command
+    ``url`` with optional argument).
+    """
+    url = "http://localhost:8000/linein-capture"
+    expected = f"linein.url {url}"
+    with fake_server({expected: "Done"}) as srv:
+        client = LiquidsoapTelnetClient(host=srv.host, port=srv.port)
+        try:
+            assert client.linein_set_url(url) == "Done"
+            assert srv.received == [expected]
+        finally:
+            client.close()
+
+
+def test_linein_set_url_rejects_special_chars():
+    """URL with double-quote / newline / carriage-return is REJECTED."""
+    import pytest
+    client = LiquidsoapTelnetClient()
+    for bad in (
+        'http://example.com/with"quote',
+        "http://example.com/with\nnewline",
+        "http://example.com/with\rcarriage",
+    ):
+        with pytest.raises(ValueError, match="wire form"):
+            client.linein_set_url(bad)
+
+
+def test_linein_start_wrapper():
+    """linein_start() sends the bare `linein.start` server command."""
+    with fake_server({"linein.start": "Done"}) as srv:
+        client = LiquidsoapTelnetClient(host=srv.host, port=srv.port)
+        try:
+            assert client.linein_start() == "Done"
+            assert srv.received == ["linein.start"]
+        finally:
+            client.close()
+
+
+def test_linein_stop_wrapper():
+    """linein_stop() sends the bare `linein.stop` server command."""
+    with fake_server({"linein.stop": "Done"}) as srv:
+        client = LiquidsoapTelnetClient(host=srv.host, port=srv.port)
+        try:
+            assert client.linein_stop() == "Done"
+            assert srv.received == ["linein.stop"]
+        finally:
+            client.close()
+
+
+def test_linein_status_wrapper():
+    """linein_status() returns Liquidsoap's free-text status."""
+    with fake_server({"linein.status": "connected http://localhost:8000/linein-capture"}) as srv:
+        client = LiquidsoapTelnetClient(host=srv.host, port=srv.port)
+        try:
+            assert client.linein_status() == "connected http://localhost:8000/linein-capture"
+            assert srv.received == ["linein.status"]
+        finally:
+            client.close()
+
+
 def test_empty_response_crlf():
     """Empty response with CRLF — server sends just END\\r\\n."""
 

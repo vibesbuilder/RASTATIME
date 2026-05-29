@@ -162,13 +162,47 @@ becomes a schedule item exactly as in path 4.1.
 
 ### What plays when the Line-In's slot starts?
 
-The playout engine sends a `LINEIN_START` event to the
-source switcher, which:
+**Liquidsoap engine path (production default since 2026-05-29):**
 
-1. Stops whatever was on air (a track, the fallback queue,
-   etc.).
-2. Opens the configured sound-card input device.
-3. Routes the incoming audio to the output stream.
+1. Pypo starts the FfmpegLineinCapture subprocess for the
+   configured sound-card device (Windows dshow → MP3 → local
+   Icecast mount at `http://localhost:8000/linein-capture`).
+2. Pypo sends a single telnet command to Liquidsoap:
+   `linein.start` — telling the dedicated `input.http` source
+   to begin consuming the local capture mount.
+3. Liquidsoap buffers ~10 seconds of audio.  Once
+   `source.is_ready` flips true, the bus-switch routes audio
+   to the linein source — listeners hear the microphone.
+4. At the configured duration Pypo sends `linein.stop` plus
+   stops FfmpegLineinCapture; the switch falls back to
+   scheduled.
+
+**Recording behaviour (new since Phase F, 2026-05-29):**
+Scheduled line-inputs now flow through the Liquidsoap internal
+bus that `output.file` taps, so they land in the per-show
+`.mp3` recording archive — same coverage you get for tracks
+and webstreams.  Pre-Phase F, line-input-only shows had
+silent recordings.
+
+**Why we keep FfmpegLineinCapture instead of Liquidsoap's
+`input.portaudio`:** input.portaudio has no `set_device`
+method at runtime, no auto-reconnect on USB-cable unplug,
+and uses PortAudio-integer-indices instead of the Windows
+audio endpoint GUIDs the frontend library tracks.
+FfmpegLineinCapture's watchdog handles unplug-replug
+transparently; Liquidsoap consumes its local Icecast mount
+without caring about device identity.
+
+**Initial-show latency:** the first ~5 seconds of a line-in
+slot may be silent on the operator's local speakers while
+Liquidsoap's buffer builds up.  Same characteristic as
+scheduled webstreams (Phase E).
+
+**Legacy mpv / VLC engine paths (only when
+`RASTATIME_PLAYOUT_ENGINE=mpv` or `=vlc`):**
+mpv opens the FfmpegLineinCapture listen URL directly and
+FfmpegStreamer re-encodes to Icecast.  No recording for
+line-in-only shows in this mode.
 
 When the slot's duration elapses, the engine sends a
 `LINEIN_END` event and the source switcher returns to the
@@ -317,9 +351,15 @@ Line-In.
 
 ### "Is the Line-In's audio recorded if Record-per-Show is on?"
 
-Yes. The recorder taps the Icecast output, which carries
-whatever is currently on air, regardless of source. See
-[Record-per-Show](./RECORD_PER_SHOW.md).
+Yes (since Phase F, 2026-05-29).  In the Liquidsoap engine
+mode, the line-in audio flows through the same internal
+audio bus that `output.file` taps for the per-show MP3
+archive, so it gets captured natively — alongside any
+regular tracks or scheduled webstreams in the same show.
+See [Record-per-Show](./RECORD_PER_SHOW.md).
+
+(In the deprecated mpv/VLC engine modes, recording is not
+available — see [Settings → Playout Engine](./SETTINGS.md).)
 
 ### "Can I add a network audio source (e.g. AES67 / Dante) as a Line-In?"
 
