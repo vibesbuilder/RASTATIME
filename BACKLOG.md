@@ -164,32 +164,39 @@ Cutover erst nach 1–2 Wochen A/B-Vergleich.
 - Tail-Flush-Wait (Commits cb20df6 + 952ec3b, obsolet weil
   Liquidsoap gapless macht)
 
-### 🟡 Phase-F Live-Verifikation + Legacy-mpv-Code-Delete
+### 🟢 Legacy-mpv-Code-Delete (Phase E + F beide funktional verifiziert)
 
-**Status:** Defer — Live-Test nach Hardware-Migration nächste Woche.
-**Evaluiert:** 2026-05-29 (Phase F Code-DONE, Live-Test offen).
+**Status:** Go nach 1 Woche stabilem Live-Betrieb.
+**Evaluiert:** 2026-05-29.  Phase E + F Code-DONE + Live-Test
+beide erfolgreich (Phase E: BBC-Webstream am 2026-05-29 18:40,
+Phase F: Line-Input am 2026-05-29 spätabends).
 
-**Was gebaut werden muss:**
-1. **Live-Verifikation Phase F** auf neuer Hardware mit echtem
-   Line-In-Mic — Show im Schedule, Audio hörbar, Recording-Coverage,
-   USB-Plug-Out/-In Test.  Bei Polish-Issues: Buffer-Tuning analog
-   Phase-E (5 s → 10 s, etc.).
-2. **Legacy-mpv-Code-Delete** — wenn Phase-E + Phase-F beide stabil
-   im Live-Betrieb (mindestens 1 Woche): ~2000 LoC löschen:
-     - `mpv_engine.py`
-     - `ffmpeg_streamer.py`
-     - Scheduler-Branches `_on_*_start` mpv/VLC-Paths
-     - vlc_engine.py (falls obsolete)
-     - DeprecationWarning + env-var-Fallback
-   - Plus: ffmpeg.exe-Dependency externe komplett weg, da nur noch
-     FfmpegLineinCapture es nutzt (und das bleibt).
+**Polish-Items (deferred zur Hardware-Migration):**
+- Phase-E + Phase-F: kleine Haker während Webstream/Line-Input —
+  Operator-Hypothese: CPU-bound auf i3-1315U.  Test auf neuer
+  Lenovo M70s Gen 5/6 ohne Bottleneck.
 
-**Aufwand:** Live-Test ~1 h, Polish ggf. ~2-4 h, Delete ~2-3 h
-inkl. Tests.
+**Was zu löschen ist (~2000 LoC):**
+- `backend/playout/libretime_playout/engine/mpv_engine.py` (~450 LoC)
+- `backend/playout/libretime_playout/engine/ffmpeg_streamer.py` (~500 LoC)
+- `backend/playout/libretime_playout/engine/vlc_engine.py` (falls obsolet)
+- Pypo-Scheduler-Branches `_on_*_start` mpv/VLC-Pfade in
+  `playout_scheduler.py` (~250 LoC)
+- DeprecationWarning + env-var-Fallback (`RASTATIME_PLAYOUT_ENGINE=
+  mpv|vlc`) in `__main__.py`
+- Plus zugehörige Tests (`test_ffmpeg_streamer_*`, `test_mpv_*`)
+
+**Side-Effect**: ffmpeg.exe-Dependency externe komplett weg —
+FfmpegLineinCapture nutzt es noch (bleibt), aber kein anderes
+Subprozess-spawning mehr.  liquidsoap-internal libavcodec/format
+bleibt.
+
+**Aufwand:** ~2-3 h inkl. Tests-Updates + voller Regression-Check.
 **Vorbedingung:** Neue Hardware in Betrieb + 1 Woche Stabil-Lauf
-mit Phase-E + Phase-F aktiv.
-**Risiko Live-Betrieb:** Niedrig (bekannte Architektur, schrittweiser
-Delete).
+mit Phase-E + Phase-F aktiv (deferred zur Hardware-Migration).
+**Risiko Live-Betrieb:** Niedrig — wir löschen nur Code-Pfade die
+nicht mehr aktiv sind (`streaming_handled_externally=True` ist seit
+Phase-D Cutover fest).
 
 
 ### 🟡 Phase-E Polish: Webstream-Buffer + Switch-Verhalten
