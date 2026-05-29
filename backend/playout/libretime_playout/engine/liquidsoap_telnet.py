@@ -339,6 +339,127 @@ class LiquidsoapTelnetClient:
         """
         return self.send_command("recording.status")
 
+    # ---- Phase E — webstream lifecycle wrappers ---------------------
+
+    # The rastatime.liq template renders an ``input.http(id="webstream",
+    # start=false, ...)`` source initialised with an empty URL.  Pypo's
+    # _on_webstream_start drives the runtime cycle:
+    #
+    #   webstream_set_url <url>
+    #   webstream_set_gain <linear_factor>    (optional, defaults 1.0)
+    #   webstream_start
+    #     ... show plays ...
+    #   webstream_stop
+    #
+    # Liquidsoap 2.4.4's input.http exposes set_url / start / stop /
+    # status / url methods as server-commands via the source-id namespace
+    # (here "webstream"), so we hit them directly through telnet.
+
+    def webstream_set_url(self, url: str) -> str:
+        """
+        Set the HTTP URL the input.http source will connect to on the
+        next ``webstream_start``.
+
+        Wire-form: ``webstream.url <url>`` — the input.http source
+        exposes its OCaml ``set_url`` method as the server-command
+        ``url`` (with optional argument: no arg = get, with arg = set).
+        Phase E reality-test 2026-05-29 caught this: the obvious
+        ``webstream.set_url <url>`` wire-form was a guess and got
+        silently rejected as "unknown command" by Liquidsoap.  Verified
+        via the live ``help`` output, which lists ``webstream.url [url]``.
+
+        URL constraints (Liquidsoap-telnet wire-form limits):
+          * MUST NOT contain ``\\n`` / ``\\r`` (newline terminates the command)
+          * MUST NOT contain ``"`` (would confuse Liquidsoap's parser)
+          * No length constraint enforced here, but practical limit is
+            a few KB — typical webstream URLs are well under 200 chars.
+
+        Example::
+
+            client.webstream_set_url(
+                "http://stream.live.vc.bbcmedia.co.uk/world_service_b2b_04"
+            )
+        """
+        if any(ch in url for ch in ('\n', '\r', '"')):
+            raise ValueError(
+                f"webstream_set_url: url contains a character that "
+                f"would break the Liquidsoap telnet wire form: {url!r}"
+            )
+        return self.send_command(f"webstream.url {url}")
+
+    def webstream_set_gain(self, linear_factor: float) -> str:
+        """
+        Set the linear amplify factor for the webstream source.  Pypo
+        converts cc_webstream.input_gain_db to linear before calling::
+
+            linear_factor = 10 ** (gain_db / 20.0)
+            # e.g. +3 dB → 1.412, -6 dB → 0.501, 0 dB → 1.0
+
+        Wire-form: ``var.set webstream.gain = <factor>`` —
+        ``interactive.float("webstream.gain", 1.0)`` in the .liq template
+        registers as a script-level variable, NOT as a source-method-
+        derived command.  Phase E reality-test 2026-05-29 caught this:
+        the obvious ``webstream.gain.set <factor>`` wire-form was a
+        guess and got silently rejected.  Verified via the live ``help``
+        output, which lists only ``var.set <name> = <value>`` as the
+        interactive-variable setter (no ``<name>.set`` shortcut).
+
+        1.0 = unity (no gain change), default if never set.
+        """
+        return self.send_command(f"var.set webstream.gain = {linear_factor}")
+
+    def webstream_start(self) -> str:
+        """
+        Tell the input.http source to begin connecting + buffering.
+        Pre-condition: :meth:`webstream_set_url` must have been called
+        with a valid URL (otherwise Liquidsoap tries to connect to the
+        empty default URL and immediately fails).
+
+        Wire-form: ``webstream.start``.  Returns Liquidsoap's free-text
+        ack ("Done" or similar).  The source goes ``source.is_ready=true``
+        only after ``max_buffer`` seconds of audio have been pre-fetched
+        — the switch operator in the .liq script then flips the bus
+        to webstream automatically.
+        """
+        return self.send_command("webstream.start")
+
+    def webstream_stop(self) -> str:
+        """
+        Close the HTTP connection.  ``source.is_ready`` goes false, the
+        switch operator falls through to scheduled.  Idempotent — a stop
+        on an already-stopped source replies "Done" and produces no
+        error (same convention as :meth:`recording_stop`).
+
+        Wire-form: ``webstream.stop``.
+        """
+        return self.send_command("webstream.stop")
+
+    def webstream_status(self) -> str:
+        """
+        Return Liquidsoap's free-text input.http status, one of:
+          * ``"stopped"`` — source idle (after webstream.stop or boot)
+          * ``"starting"`` — polling task is about to begin
+          * ``"polling"`` — attempting to connect to the HTTP stream
+          * ``"connected <url>"`` — connected, buffering or playing
+          * ``"stopping"`` — source is shutting down
+
+        Mostly for diagnostics — Pypo doesn't gate on this because the
+        start/stop wrappers are themselves idempotent.
+
+        Wire-form: ``webstream.status``.
+        """
+        return self.send_command("webstream.status")
+
+    def webstream_url(self) -> str:
+        """
+        Return the URL currently set on the input.http source (empty
+        string if never set).  Diagnostics-only — Pypo tracks its own
+        copy of the URL in playout_scheduler state.
+
+        Wire-form: ``webstream.url``.
+        """
+        return self.send_command("webstream.url")
+
     # ---- Internals (lock must be held) ------------------------------
 
     def _connect_locked(self) -> None:

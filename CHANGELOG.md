@@ -9,6 +9,93 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Scheduled Webstreams via Liquidsoap `input.http` (Phase-E,
+  2026-05-29)** — geplante Webstream-Items im Schedule laufen jetzt
+  durch die Liquidsoap-Engine statt durch den Legacy-mpv-Adapter.
+  Konkret: Pypo's `_on_webstream_start` schickt im Liquidsoap-Modus
+  drei Telnet-Commands (`webstream.url <url>` → `var.set
+  webstream.gain = <linear>` → `webstream.start`) an Liquidsoap, das
+  daraufhin den `input.http`-Source aktiviert.  Beim Show-Ende
+  `webstream.stop`.  Switch flippt automatisch sobald
+  `source.is_ready(webstream)` true wird.
+
+  **Konsequenzen für den Operator:**
+  - **Webstream-Shows landen jetzt im Liquidsoap-Recording** (output.file
+    vom internen Bus) — vorher waren reine Webstream-Shows still im
+    .mp3 Archiv, jetzt komplett aufgenommen.
+  - **Crossfade vom vorherigen Track zum Stream funktioniert nativ**
+    über den scheduled→switch Übergang.
+  - **Per-Stream Input-Gain** (cc_webstream.input_gain_db) wird in
+    Pypo dB→linear umgerechnet und als `amplify`-Faktor an Liquidsoap
+    weitergegeben — kein Unterschied im UI-Workflow.
+  - **Initiale Show-Latency ~5 s** (Buffer-Build-up von input.http
+    + 5 s Clock-Bridge Buffer) — Listener mit Player-Buffer merken
+    das nicht (Player buffert eh ~10 s).
+
+  Implementation:
+  - Template `rastatime.liq.template`: neuer `${WEBSTREAM_INPUT_BLOCK}`
+    Placeholder mit `input.http(id="webstream", start=false,
+    self_sync=false, max_buffer=10.0, ...)` + `interactive.float
+    ("webstream.gain", 1.0)` + `amplify({gain()}, buffer(buffer=5.0,
+    webstream_raw))` wrapper.  Switch-Block um neuen Arm zwischen
+    DJ-Sources und scheduled erweitert.
+  - **Crossfade-Architektur-Fix als Side-Effect**: crossfade wraps
+    jetzt NUR den `scheduled`-Source statt den ganzen `bus`.  Grund:
+    Liquidsoap's crossfade-Operator akzeptiert keine self-syncing
+    Sources (input.http + input.harbor beide), wirft Error 7 "This
+    source may control its own latency".  Semantisch korrekt — DJ
+    und Webstream sind kontinuierliche Live-Quellen ohne Track-
+    Übergänge.
+  - `liquidsoap_telnet.py`: 6 neue Convenience-Methoden
+    (`webstream_set_url`, `webstream_set_gain`, `webstream_start`,
+    `webstream_stop`, `webstream_status`, `webstream_url`).
+  - `liquidsoap_engine.py`: `webstream_start(url, gain_db=None)` /
+    `webstream_stop()` mit fail-soft try/except + dB→linear
+    Conversion (`10 ** (gain_db/20)`).
+  - `playout_scheduler.py`: `_on_webstream_start` + `_on_stop`
+    branchen auf `streaming_handled_externally` — Liquidsoap-Path
+    nutzt `engine.webstream_start/stop`, Legacy-mpv/VLC-Path
+    unverändert.
+  - Tests: 33 neue (9 Engine + 9 Scheduler + 6 Renderer + 9 Telnet);
+    voller Suite 209 pass + 2 skipped.
+
+  **Bug-Kette während Implementation (5 echte Bugs, alle gefixt):**
+  - **#1 Liquidsoap-Cache-Stale**: Cache-File-Hash erfasste Template-
+    Änderungen nicht zuverlässig — Liquidsoap lud Pre-Phase-E-Bytecode
+    aus dem Cache.  Workaround: vor Restart explizit
+    `del C:/Tools/liquidsoap/cache/*.liq-cache`.
+  - **#2 request.queue für Streams falsch**: Liquidsoap's
+    request.queue versucht HTTP-URLs als endliche Files zu fetchen
+    (procol.external Mime-Type-Sniff, 29 s Timeout).  Funktioniert
+    nicht für persistente Webstreams.  Dedizierter `input.http` ist
+    das richtige Pattern.
+  - **#3 crossfade(bus) rejects self-syncing sources**: Mit input.http
+    UND input.harbor zusammen im switch crash mit Error 7.  Fix:
+    crossfade nur um scheduled (Architektur-Änderung).
+  - **#4 `self_sync=false` reicht nicht allein**: crossfade-Check ist
+    compile-time auf input.http-Funktionssignatur basiert, nicht
+    runtime-parameter.  Fix: zusätzlich `buffer()` Wrapper als
+    Clock-Bridge.
+  - **#5 Telnet Wire-Forms falsch geraten**: `webstream.set_url` und
+    `webstream.gain.set` existieren nicht — die echten Commands sind
+    `webstream.url <url>` und `var.set webstream.gain = <value>`.
+    Live-`help`-Output war Wahrheits-Quelle.
+
+  **Vorbedingung erfüllt**: Phase-E ist eine der zwei Vorbedingungen
+  für den Legacy-mpv-Code-Delete.  Nach Phase-F (Line-Inputs) werden
+  ~2000 LoC mpv_engine.py + ffmpeg_streamer.py + Scheduler-Branches
+  gelöscht.
+
+  **Bekannte Polish-Items (BACKLOG):**
+  - Regelmäßige kleine Haker während Webstream (möglicherweise
+    Hardware-bedingt — wartet auf neue Maschine).
+  - Mountpoint /rastatime verschwand kurz während kurzer Tracks
+    (möglicherweise PortAudio-Cascade).
+  - Falscher Track-Schnipsel mittendrin im Webstream
+    (Switch-Flip-Verhalten bei kurzem Buffer-Underrun).
+  - ICY-Metadata-Forwarding vom Stream zu Hörern (heute nicht
+    durchgereicht, nice-to-have für später).
+
 - **Operator-Doc `docs/operator/LIQUIDSOAP_CUTOVER.md` (2026-05-28)**
   — step-by-step recipe for the permanent switch from the legacy
   mpv playback engine to the Liquidsoap production engine.

@@ -148,6 +148,41 @@ DEFAULT_HARBOR_BUFFER_SECONDS = 5.0
 
 
 # ---------------------------------------------------------------------
+# Phase-E — Scheduled Webstreams via input.http (RASTATIME 2026-05-29)
+# ---------------------------------------------------------------------
+
+# Whether to emit the webstream input.http block + switch-arm.  Defaults
+# to True for the Liquidsoap engine path (the only one Phase-D ships
+# with, and the only one Phase-E targets).  The Phase-D-deprecated
+# mpv/VLC engine paths set this to False so the rendered .liq stays
+# minimal — those code paths still handle webstreams via the legacy
+# mpv adapter and never use the Liquidsoap webstream source.
+DEFAULT_WEBSTREAM_ENABLED = True
+
+# input.http max_buffer in seconds — how much audio Liquidsoap pre-
+# fetches before it considers the source "ready".  Larger values
+# tolerate longer network hiccups (e.g. brief CDN reconnects) but
+# delay the moment source.is_ready flips true after a fresh
+# webstream.start.  10 s is the operator-tested sweet-spot for the
+# typical Internet-radio streams Phase-E targets — large enough to
+# absorb a 5 s pause without source.is_ready flickering false.
+DEFAULT_WEBSTREAM_MAX_BUFFER_SECONDS = 10.0
+
+# input.http connect-timeout in seconds.  If the upstream HTTP server
+# doesn't respond within this window, input.http retries after
+# poll_delay seconds.  10 s matches Liquidsoap's own stdlib default;
+# we expose it so the operator can shorten / lengthen for specific
+# network conditions.
+DEFAULT_WEBSTREAM_TIMEOUT_SECONDS = 10.0
+
+# input.http reconnect-poll-delay in seconds.  When a connection drops
+# (network blip, server-side restart, etc.) Liquidsoap retries every
+# poll_delay seconds.  2 s is the stdlib default and gives a quick
+# recovery without hammering the upstream server.
+DEFAULT_WEBSTREAM_POLL_DELAY_SECONDS = 2.0
+
+
+# ---------------------------------------------------------------------
 # Liquidsoap codec encoders per stream type
 # ---------------------------------------------------------------------
 
@@ -495,20 +530,137 @@ def _render_harbor_inputs_block(
     return "\n".join(parts)
 
 
+def _render_webstream_input_block(
+    *,
+    enabled: bool,
+    max_buffer_seconds: float = DEFAULT_WEBSTREAM_MAX_BUFFER_SECONDS,
+    timeout_seconds: float = DEFAULT_WEBSTREAM_TIMEOUT_SECONDS,
+    poll_delay_seconds: float = DEFAULT_WEBSTREAM_POLL_DELAY_SECONDS,
+) -> str:
+    """
+    Render the ``input.http`` block for scheduled webstreams (Phase E).
+
+    When ``enabled`` is True, emits a Liquidsoap ``input.http`` source
+    initialised with ``start=false`` (no HTTP connection at boot) and
+    an empty URL.  Pypo's :meth:`LiquidsoapPlayoutEngine.webstream_start`
+    drives the runtime cycle:
+
+        webstream.set_url <url>          # set URL via input.http method
+        webstream.gain.set <linear>      # set per-stream amplify factor
+        webstream.start                  # establish HTTP connection
+
+    The source goes ``source.is_ready=true`` once max_buffer worth of
+    audio is queued; the switch operator in :func:`_render_bus_source_block`
+    flips the bus to webstream at that moment.  ``webstream.stop`` at
+    show-end tears the connection down and the switch falls through to
+    scheduled.
+
+    A separate ``amplify`` wrapper applies the per-webstream input gain
+    (cc_webstream.input_gain_db) as a linear factor controlled via the
+    ``webstream.gain`` interactive variable.  Pypo converts dB→linear
+    in Python (10 ** (dB/20)) before pushing the value, so the
+    Liquidsoap side stays a simple multiplication.  Default 1.0 = unity.
+
+    When ``enabled`` is False (legacy mpv/VLC engine paths), emits a
+    single comment line — keeps the bus chain unchanged for non-Liquidsoap
+    deployments and prevents the switch-arm from referencing a missing
+    source.
+
+    Why ``start=false`` and not eagerly connecting: idle bandwidth and
+    CPU cost for a permanent HTTP connection that's only needed during
+    scheduled webstream shows.  Start-on-demand is also kinder to the
+    upstream server (no Liquidsoap-side reconnect loop on a stream
+    nobody is actively listening to).
+    """
+    if not enabled:
+        return (
+            "# (webstream input.http disabled — Liquidsoap engine not\n"
+            "#  active; legacy mpv/VLC handles webstreams via separate path)\n"
+        )
+    # self_sync=false + buffer() wrapper are BOTH required for crossfade
+    # compatibility.  Phase-E 2026-05-29 reality-test discovered:
+    #
+    # 1. self_sync=false ALONE is not enough.  Liquidsoap's crossfade
+    #    operator still rejects input.http with "Error 7: Invalid value:
+    #    This source may control its own latency and cannot be used with
+    #    this operator." at startup (compile-time source-graph check
+    #    based on the input.http Funktionssignatur, not the actual
+    #    runtime parameter).
+    #
+    # 2. buffer() wrapper provides an asynchronous clock-bridge between
+    #    input.http's HTTP-stream clock and the main bus clock — same
+    #    canonical pattern as the PortAudio bus-split in
+    #    _render_local_output_block.  This makes the source consumable
+    #    by crossfade.
+    #
+    # Cost: ~5 s additional latency from webstream-source-audio to
+    # listener (was 2 s pre-polish — bumped to 5 s after Phase-E
+    # reality-test caught a ~2 s "Haker" 12 s into the show when both
+    # input.http's max_buffer AND the clock-bridge buffer underran
+    # within seconds of each other, briefly flipping the switch off
+    # webstream).  Acceptable trade-off for live-radio scheduled
+    # webstreams; the listener-side player adds ~10 s buffer of its
+    # own so the effective initial-show-delay is dominated by that.
+    #
+    # max_buffer (10 s default) of input.http absorbs upstream-server
+    # jitter; buffer (5 s) absorbs the clock-bridge tick-drift and the
+    # initial-connect cold-buffer rebuild.
+    return (
+        "webstream_raw = input.http(\n"
+        '  id="webstream",\n'
+        "  start=false,\n"
+        "  self_sync=false,\n"
+        f"  max_buffer={_format_crossfade_duration(max_buffer_seconds)},\n"
+        f"  timeout={_format_crossfade_duration(timeout_seconds)},\n"
+        f"  poll_delay={_format_crossfade_duration(poll_delay_seconds)},\n"
+        '  "",\n'
+        ")\n"
+        "\n"
+        "# Per-webstream input-gain wrapper — Pypo sets the linear factor\n"
+        "# via `var.set webstream.gain = <factor>` before `webstream.start`.\n"
+        "# 1.0 = unity (no gain change); cc_webstream.input_gain_db is\n"
+        "# converted to linear in Pypo (10 ** (dB/20)) before push.\n"
+        "#\n"
+        "# buffer(buffer=5.0, ...) is the asynchronous clock-bridge that\n"
+        "# decouples input.http's HTTP-stream clock from the main bus.\n"
+        "# Without it, crossfade() at the end of the source-graph rejects\n"
+        "# the chain with Error 7 (see _render_webstream_input_block\n"
+        "# docstring for the full reasoning).  5 s buffer absorbs the\n"
+        "# initial-connect cold-buffer rebuild without producing the\n"
+        "# 'Buffer emptied, start buffering' → switch-flip-off-webstream\n"
+        "# 'Haker' that Phase-E reality-test 2026-05-29 18:40 observed\n"
+        "# (~12 s into BBC stream).\n"
+        'webstream_gain = interactive.float("webstream.gain", 1.0)\n'
+        "webstream = amplify({webstream_gain()}, buffer(buffer=5.0, webstream_raw))\n"
+    )
+
+
 def _render_bus_source_block(
     *,
     main_enabled: bool,
     show_enabled: bool,
+    webstream_enabled: bool = DEFAULT_WEBSTREAM_ENABLED,
 ) -> str:
     """
     Render the ``bus = ...`` assignment that picks the active source.
 
-    Three combinations of enabled flags → three switch-arm layouts:
-      both enabled  → switch with master, show, scheduled (in priority order)
-      main only     → switch with master, scheduled
-      show only     → switch with show, scheduled
-      neither       → `bus = scheduled` directly (no switch operator,
-                       saves a thin wrapper layer)
+    Switch-arm layout (in priority order):
+      master_dj         (if main_enabled)
+      show_dj           (if show_enabled)
+      webstream         (if webstream_enabled — Liquidsoap engine path)
+      scheduled         (always — final fallback)
+
+    When NO upstream switching candidates are enabled (no harbor, no
+    webstream), falls back to the C3-era simple assignment
+    ``bus = scheduled`` so the switch operator doesn't show up as a
+    noise line in `--check` output.
+
+    Priority rationale (Phase-E 2026-05-29):
+      * DJ-Sources stay topmost — operator-live always wins
+      * Webstream-Show goes ABOVE scheduled — when a webstream show is
+        active, the scheduled fallback (silence) must not drown the
+        webstream out
+      * Scheduled is the catch-all silence + per-show track playback
 
     RASTATIME 2026-05-28 — Phase-D Stück-B operator decision:
     ``track_sensitive=false`` for immediate DJ-take-over.
@@ -523,20 +675,24 @@ def _render_bus_source_block(
     take-over (where N = scheduled track length).
 
     ``source.is_ready()`` flips automatically when input.harbor sees
-    the DJ-client (dis)connect.  With ``track_sensitive=false`` the
-    switch reacts on the very next bus frame.
+    the DJ-client (dis)connect, or when input.http for webstream
+    finishes buffering / disconnects.  With ``track_sensitive=false``
+    the switch reacts on the very next bus frame.
     """
     arms = []
     if main_enabled:
         arms.append("({source.is_ready(master_dj)}, master_dj)")
     if show_enabled:
         arms.append("({source.is_ready(show_dj)}, show_dj)")
+    if webstream_enabled:
+        arms.append("({source.is_ready(webstream)}, webstream)")
     arms.append("({true}, scheduled)")
 
-    if not main_enabled and not show_enabled:
-        # No harbor at all — keep the C3-era simple assignment so the
-        # switch operator doesn't show up as a noise line in `--check`
-        # output and so the bus chain is identical for non-harbor users.
+    if not main_enabled and not show_enabled and not webstream_enabled:
+        # No upstream switching candidate at all — keep the C3-era
+        # simple assignment so the switch operator doesn't show up as a
+        # noise line in `--check` output and so the bus chain is
+        # identical for legacy single-source users.
         return "bus = scheduled\n"
 
     return (
@@ -565,6 +721,10 @@ def render_rastatime_liq(
     harbor_main_mount: str = DEFAULT_HARBOR_MAIN_MOUNT,
     harbor_show_mount: str = DEFAULT_HARBOR_SHOW_MOUNT,
     harbor_buffer_seconds: float = DEFAULT_HARBOR_BUFFER_SECONDS,
+    webstream_enabled: bool = DEFAULT_WEBSTREAM_ENABLED,
+    webstream_max_buffer_seconds: float = DEFAULT_WEBSTREAM_MAX_BUFFER_SECONDS,
+    webstream_timeout_seconds: float = DEFAULT_WEBSTREAM_TIMEOUT_SECONDS,
+    webstream_poll_delay_seconds: float = DEFAULT_WEBSTREAM_POLL_DELAY_SECONDS,
     template_path: Optional[Path] = None,
 ) -> str:
     """
@@ -613,9 +773,16 @@ def render_rastatime_liq(
         show_mount=harbor_show_mount,
         buffer_seconds=harbor_buffer_seconds,
     )
+    webstream_block = _render_webstream_input_block(
+        enabled=webstream_enabled,
+        max_buffer_seconds=webstream_max_buffer_seconds,
+        timeout_seconds=webstream_timeout_seconds,
+        poll_delay_seconds=webstream_poll_delay_seconds,
+    )
     bus_block = _render_bus_source_block(
         main_enabled=bool(harbor_main_password),
         show_enabled=bool(harbor_show_password),
+        webstream_enabled=webstream_enabled,
     )
 
     rendered = (
@@ -636,6 +803,7 @@ def render_rastatime_liq(
             _render_local_output_block(local_output_enabled),
         )
         .replace("${HARBOR_INPUTS_BLOCK}", harbor_block)
+        .replace("${WEBSTREAM_INPUT_BLOCK}", webstream_block)
         .replace("${BUS_SOURCE_BLOCK}", bus_block)
         .replace("${ICECAST_OUTPUTS}", icecast_blocks)
     )
@@ -659,6 +827,10 @@ def write_rastatime_liq(
     harbor_main_mount: str = DEFAULT_HARBOR_MAIN_MOUNT,
     harbor_show_mount: str = DEFAULT_HARBOR_SHOW_MOUNT,
     harbor_buffer_seconds: float = DEFAULT_HARBOR_BUFFER_SECONDS,
+    webstream_enabled: bool = DEFAULT_WEBSTREAM_ENABLED,
+    webstream_max_buffer_seconds: float = DEFAULT_WEBSTREAM_MAX_BUFFER_SECONDS,
+    webstream_timeout_seconds: float = DEFAULT_WEBSTREAM_TIMEOUT_SECONDS,
+    webstream_poll_delay_seconds: float = DEFAULT_WEBSTREAM_POLL_DELAY_SECONDS,
     template_path: Optional[Path] = None,
 ) -> bool:
     """
@@ -691,6 +863,10 @@ def write_rastatime_liq(
         harbor_main_mount=harbor_main_mount,
         harbor_show_mount=harbor_show_mount,
         harbor_buffer_seconds=harbor_buffer_seconds,
+        webstream_enabled=webstream_enabled,
+        webstream_max_buffer_seconds=webstream_max_buffer_seconds,
+        webstream_timeout_seconds=webstream_timeout_seconds,
+        webstream_poll_delay_seconds=webstream_poll_delay_seconds,
         template_path=template_path,
     )
 

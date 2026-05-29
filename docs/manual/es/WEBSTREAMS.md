@@ -93,18 +93,71 @@ Igual que cualquier item de biblioteca.
 
 ### Qué se reproduce cuando el slot comienza
 
-El motor de playout envía un evento `WEBSTREAM_START` al
-source switcher, que se conecta a la URL del webstream y
-enruta el audio al mezclador de salida.
+**Ruta del motor Liquidsoap (default de producción desde 2026-05-29):**
+
+1. Pypo envía tres comandos telnet a Liquidsoap:
+   - `webstream.url <URL>` — establece la URL HTTP en la
+     fuente dedicada `input.http`.
+   - `var.set webstream.gain = <factor>` — establece el
+     factor de amplificación por stream (conversión
+     dB → lineal en Pypo).
+   - `webstream.start` — pide a la fuente que se conecte.
+2. La fuente `input.http` de Liquidsoap abre la conexión
+   HTTP y bufferiza ~10 segundos de audio.
+3. Una vez que hay suficiente audio bufferizado,
+   `source.is_ready` cambia a true y el bus-switch enruta
+   el audio a la fuente webstream — los oyentes escuchan
+   el stream.
+4. A la duración configurada, Pypo envía `webstream.stop`;
+   el switch vuelve a scheduled (silencio o la siguiente
+   pista).
+
+**Comportamiento de grabación (nuevo desde Phase E,
+2026-05-29):**
+Los webstreams planificados ahora se incluyen en el
+archivo de grabación `.mp3` por show — el audio fluye por
+el bus interno de Liquidsoap al que `output.file` está
+conectado, y se captura junto con las pistas regulares del
+mismo show. Antes de Phase E, los shows solo-webstream
+tenían grabaciones silenciosas.
+
+**Latencia inicial del show:** los primeros ~5 segundos de
+un slot webstream pueden ser silenciosos en los altavoces
+locales del operador mientras el buffer de Liquidsoap se
+construye. Los reproductores del lado del oyente añaden su
+propio buffer de ~10 s, así que el retraso efectivo
+percibido por el oyente final está dominado por el buffer
+del lado del reproductor (ningún retraso adicional
+introducido por Phase E).
+
+**Rutas legacy mpv / VLC (solo cuando
+`RASTATIME_PLAYOUT_ENGINE=mpv` o `=vlc`):**
+mpv abre la URL HTTP directamente y FfmpegStreamer
+re-codifica a Icecast. Sin grabación para shows
+solo-webstream en este modo.
 
 ### Qué pasa si la URL es inalcanzable
 
-El source switcher espera hasta **10 segundos** para que
-la conexión tenga éxito. Si falla:
+`input.http` reintenta la conexión cada **2 segundos**
+(`poll_delay`) con un **timeout de 10 segundos** por
+intento (`timeout`). Mientras corren los reintentos,
+`source.is_ready` permanece en false y el bus-switch
+vuelve a scheduled (silencio). Los reintentos continúan
+durante toda la duración del slot planificado.
 
-- Una advertencia "Webstream connection failed: <url>" se
-  registra.
-- El slot cae al silencio durante su duración completa.
+El log de Liquidsoap captura cada intento de conexión
+fallido:
+
+```
+[input.http:3] Connection refused: <url>
+[input.http:3] Connecting to <url> ...
+```
+
+Síntoma visible para el operador: el show reproduce
+silencio durante toda su duración. Sin popup de
+advertencia en el dashboard; revisa el log de Liquidsoap
+(`C:/rastatime/logs/liquidsoap.log` en Windows) si un
+webstream planificado quedó en silencio.
 
 ---
 

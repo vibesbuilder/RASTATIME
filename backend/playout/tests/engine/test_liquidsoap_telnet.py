@@ -499,6 +499,122 @@ def test_recording_status_wrapper():
             client.close()
 
 
+# ---- Phase E — webstream lifecycle wrappers ---------------------
+
+
+def test_webstream_set_url_wrapper():
+    """
+    webstream_set_url() sends `webstream.url <url>` — the input.http
+    OCaml ``set_url`` method exposes as the server-command ``url`` with
+    optional argument (no arg = get, with arg = set).  Phase E reality-
+    test 2026-05-29 caught this: the earlier wire-form
+    ``webstream.set_url <url>`` was a guess and got silently rejected
+    as "unknown command" by Liquidsoap.
+    """
+    url = "http://stream.live.vc.bbcmedia.co.uk/world_service_b2b_04"
+    expected = f"webstream.url {url}"
+    with fake_server({expected: "Done"}) as srv:
+        client = LiquidsoapTelnetClient(host=srv.host, port=srv.port)
+        try:
+            assert client.webstream_set_url(url) == "Done"
+            assert srv.received == [expected]
+        finally:
+            client.close()
+
+
+def test_webstream_set_url_rejects_special_chars():
+    """
+    URL with double-quote / newline / carriage-return is REJECTED
+    with a clear ValueError — these characters would silently break
+    the telnet wire form (the value would land misparsed inside
+    Liquidsoap's set_url string).
+    """
+    import pytest
+    client = LiquidsoapTelnetClient()
+    for bad in (
+        'http://example.com/with"quote',
+        "http://example.com/with\nnewline",
+        "http://example.com/with\rcarriage",
+    ):
+        with pytest.raises(ValueError, match="wire form"):
+            client.webstream_set_url(bad)
+
+
+def test_webstream_set_gain_wrapper():
+    """
+    webstream_set_gain(factor) sends `var.set webstream.gain = <factor>`
+    — interactive.float variables in Liquidsoap 2.4 are settable only
+    via the global `var.set` command, NOT a `<name>.set` shortcut.
+    Phase E reality-test 2026-05-29 caught this: the earlier wire-form
+    ``webstream.gain.set <factor>`` was a guess and got silently
+    rejected.  Pypo has already converted dB→linear before calling.
+    """
+    expected = "var.set webstream.gain = 1.412"
+    with fake_server({expected: "Done"}) as srv:
+        client = LiquidsoapTelnetClient(host=srv.host, port=srv.port)
+        try:
+            assert client.webstream_set_gain(1.412) == "Done"
+            assert srv.received == [expected]
+        finally:
+            client.close()
+
+
+def test_webstream_set_gain_unity_default_renders_explicitly():
+    """A factor of 1.0 (unity) renders as `1.0`, not `1` — Liquidsoap-friendly float literal."""
+    expected = "var.set webstream.gain = 1.0"
+    with fake_server({expected: "Done"}) as srv:
+        client = LiquidsoapTelnetClient(host=srv.host, port=srv.port)
+        try:
+            client.webstream_set_gain(1.0)
+            assert srv.received == [expected]
+        finally:
+            client.close()
+
+
+def test_webstream_start_wrapper():
+    """webstream_start() sends the bare `webstream.start` server command."""
+    with fake_server({"webstream.start": "Done"}) as srv:
+        client = LiquidsoapTelnetClient(host=srv.host, port=srv.port)
+        try:
+            assert client.webstream_start() == "Done"
+            assert srv.received == ["webstream.start"]
+        finally:
+            client.close()
+
+
+def test_webstream_stop_wrapper():
+    """webstream_stop() sends the bare `webstream.stop` server command."""
+    with fake_server({"webstream.stop": "Done"}) as srv:
+        client = LiquidsoapTelnetClient(host=srv.host, port=srv.port)
+        try:
+            assert client.webstream_stop() == "Done"
+            assert srv.received == ["webstream.stop"]
+        finally:
+            client.close()
+
+
+def test_webstream_status_wrapper():
+    """webstream_status() returns Liquidsoap's free-text status."""
+    with fake_server({"webstream.status": "connected http://example.com"}) as srv:
+        client = LiquidsoapTelnetClient(host=srv.host, port=srv.port)
+        try:
+            assert client.webstream_status() == "connected http://example.com"
+            assert srv.received == ["webstream.status"]
+        finally:
+            client.close()
+
+
+def test_webstream_url_wrapper():
+    """webstream_url() returns the currently-set URL."""
+    with fake_server({"webstream.url": "http://example.com/stream"}) as srv:
+        client = LiquidsoapTelnetClient(host=srv.host, port=srv.port)
+        try:
+            assert client.webstream_url() == "http://example.com/stream"
+            assert srv.received == ["webstream.url"]
+        finally:
+            client.close()
+
+
 def test_empty_response_crlf():
     """Empty response with CRLF — server sends just END\\r\\n."""
 

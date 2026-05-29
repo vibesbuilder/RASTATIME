@@ -130,26 +130,71 @@ playlist.
 
 ### Que joue quand le créneau commence ?
 
-Le moteur de playout envoie un événement
-`WEBSTREAM_START` au source switcher, qui :
+**Chemin moteur Liquidsoap (défaut de production depuis 2026-05-29) :**
 
-1. Arrête tout ce qui était à l'antenne.
-2. Ouvre une connexion HTTP à l'URL du webstream.
-3. Décode et route l'audio vers le mixeur de sortie.
+1. Pypo envoie trois commandes telnet à Liquidsoap :
+   - `webstream.url <URL>` — définit l'URL HTTP sur la
+     source dédiée `input.http`.
+   - `var.set webstream.gain = <facteur>` — définit le
+     facteur d'amplification par stream (conversion
+     dB → linéaire dans Pypo).
+   - `webstream.start` — demande à la source de se connecter.
+2. La source `input.http` de Liquidsoap ouvre la connexion
+   HTTP et bufferise ~10 secondes d'audio.
+3. Une fois qu'assez d'audio est bufferisé,
+   `source.is_ready` passe à true et le bus-switch route
+   l'audio vers la source webstream — les auditeurs
+   entendent le stream.
+4. À la durée configurée, Pypo envoie `webstream.stop` ; le
+   switch retombe sur scheduled (silence ou la piste
+   suivante).
 
-À la durée configurée, le moteur envoie `WEBSTREAM_END`
-et le source switcher retourne au planning.
+**Comportement d'enregistrement (nouveau depuis Phase E,
+2026-05-29) :**
+Les webstreams planifiés atterrissent désormais dans
+l'archive d'enregistrement `.mp3` par émission — l'audio
+circule par le bus Liquidsoap interne sur lequel
+`output.file` est branché, et est capturé avec les pistes
+régulières de la même émission. Avant Phase E, les
+émissions webstream-only avaient des enregistrements
+silencieux.
+
+**Latence initiale d'émission :** les premières ~5 secondes
+d'un créneau webstream peuvent être silencieuses sur les
+haut-parleurs locaux de l'opérateur pendant que le buffer
+Liquidsoap se remplit. Les lecteurs côté auditeur ajoutent
+leur propre buffer de ~10 s, donc le délai effectif perçu
+par l'auditeur final est dominé par le buffer côté lecteur
+(aucun délai supplémentaire introduit par Phase E).
+
+**Chemins legacy mpv / VLC (uniquement quand
+`RASTATIME_PLAYOUT_ENGINE=mpv` ou `=vlc`) :**
+mpv ouvre l'URL HTTP directement et FfmpegStreamer
+ré-encode vers Icecast. Pas d'enregistrement pour les
+émissions webstream-only dans ce mode.
 
 ### Que se passe-t-il si l'URL est inaccessible ?
 
-Le source switcher attend jusqu'à **10 secondes** pour
-que la connexion réussisse. Si elle échoue :
+`input.http` réessaie la connexion toutes les **2 secondes**
+(`poll_delay`) avec un **timeout de 10 secondes** par
+tentative (`timeout`). Pendant que les retries tournent,
+`source.is_ready` reste à false et le bus-switch retombe
+sur scheduled (silence). Les retries continuent pendant
+toute la durée du créneau planifié.
 
-- Un avertissement "Webstream connection failed: <url>"
-  est journalisé.
-- Le créneau tombe sur le silence pour sa durée complète.
-- L'item de planning suivant démarre à son heure
-  planifiée.
+Le log Liquidsoap capture chaque tentative de connexion
+échouée :
+
+```
+[input.http:3] Connection refused: <url>
+[input.http:3] Connecting to <url> ...
+```
+
+Symptôme visible pour l'opérateur : l'émission joue du
+silence pendant toute sa durée. Aucun popup
+d'avertissement dans le dashboard ; consultez le log
+Liquidsoap (`C:/rastatime/logs/liquidsoap.log` sur
+Windows) si un webstream planifié est resté silencieux.
 
 > **Conseil opérateur.** Un webstream qui "parfois ne
 > joue rien" signifie généralement que l'URL de la source

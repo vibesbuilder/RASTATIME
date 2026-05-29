@@ -212,17 +212,23 @@ def test_full_render_defaults():
     # Silence fallback — critical for Icecast PUT persistence
     assert "fallback(" in out
     assert "blank(" in out
-    # Phase-C6: crossfade + amplify on the bus.  Phase-D Stück-B
-    # (2026-05-28) bumped the crossfade rendering to multi-line form
-    # with fade_in / fade_out params, so the old single-line
-    # assertion was split.  Default fade is 0.0 (hard cuts) since the
-    # 2026-05-28 operator-decision: short jingles MUST play in full,
-    # smooth music transitions are negotiable.
-    assert "bus = crossfade(" in out
+    # Phase-E 2026-05-29: crossfade moved to wrap scheduled ONLY, NOT
+    # the whole bus.  Wrapping the bus crashes Liquidsoap with Error 7
+    # when the switch contains self-syncing sources (input.harbor +
+    # input.http together).  Crossfade still applies between
+    # request.queue tracks (the only place track-level fades make
+    # semantic sense); DJ + Webstream are continuous live audio and
+    # don't need crossfading.
+    assert "scheduled = crossfade(" in out
     assert "duration=2.0" in out
     assert "fade_in=0.0" in out
     assert "fade_out=0.0" in out
+    # Replay-gain still applies to the whole bus (post-switch).
     assert 'amplify(override="replaygain_track_gain", 1., bus)' in out
+    # Regression guard: no `bus = crossfade(` anywhere in the active
+    # script — that was the broken Phase-D-era pattern.
+    active = "\n".join(_active_lines(out))
+    assert "bus = crossfade(" not in active
     # Default: local soundcard output is enabled via portaudio
     assert "output.portaudio(" in out
 
@@ -680,9 +686,148 @@ def test_template_has_all_expected_placeholders():
         "${CROSSFADE_DURATION}",
         "${LOCAL_OUTPUT_BLOCK}",
         "${HARBOR_INPUTS_BLOCK}",
+        "${WEBSTREAM_INPUT_BLOCK}",
         "${BUS_SOURCE_BLOCK}",
         "${ICECAST_OUTPUTS}",
     ):
         assert placeholder in text, (
             f"Template lost expected placeholder {placeholder}"
         )
+
+
+# ---- Phase-E: webstream input.http block -------------------------------
+
+
+def test_full_render_default_includes_webstream_input_block():
+    """
+    Default render (DEFAULT_WEBSTREAM_ENABLED=True) MUST include the
+    input.http webstream source + the amplify-gain wrapper + the
+    switch-arm.  Phase-E 2026-05-29 makes scheduled webstreams work
+    via Liquidsoap; the renderer must produce all three pieces.
+    """
+    out = lc.render_rastatime_liq([_stream()])
+    active = "\n".join(_active_lines(out))
+    # input.http with id="webstream" + start=false (idle until Pypo
+    # sends webstream.start)
+    assert "webstream_raw = input.http(" in active
+    assert 'id="webstream"' in active
+    assert "start=false" in active
+    # self_sync=false is CRITICAL: input.http defaults to self-syncing
+    # on non-Icecast HTTP streams, which crossfade() rejects with
+    # "Error 7: Invalid value: This source may control its own latency
+    # and cannot be used with this operator."  Regression guard.
+    assert "self_sync=false" in active
+    # max_buffer / timeout / poll_delay rendered with the defaults
+    assert f"max_buffer={lc._format_crossfade_duration(lc.DEFAULT_WEBSTREAM_MAX_BUFFER_SECONDS)}" in active
+    assert f"timeout={lc._format_crossfade_duration(lc.DEFAULT_WEBSTREAM_TIMEOUT_SECONDS)}" in active
+    assert f"poll_delay={lc._format_crossfade_duration(lc.DEFAULT_WEBSTREAM_POLL_DELAY_SECONDS)}" in active
+    # Empty initial URL (Pypo sets it via webstream.set_url before start)
+    assert '  "",' in active
+    # amplify-gain wrapper with interactive.float("webstream.gain", 1.0).
+    # buffer() wrapper around webstream_raw is the clock-bridge required
+    # by crossfade — regression guard for the 2026-05-29 Phase-E reality-
+    # test that found self_sync=false alone is not enough.  Buffer is
+    # 5.0 s (bumped from initial 2.0 s after Phase-E polish round caught
+    # a ~2-sec "Haker" 12 s into a live BBC stream when both buffers
+    # underran together).
+    assert 'interactive.float("webstream.gain", 1.0)' in active
+    assert "buffer(buffer=5.0, webstream_raw)" in active
+    assert "webstream = amplify({webstream_gain()}, buffer(buffer=5.0, webstream_raw))" in active
+    # Switch must include the webstream arm at priority between
+    # DJ-sources and scheduled.
+    bus_idx = active.index("bus = switch(")
+    bus_block = active[bus_idx:bus_idx + 400]
+    assert "source.is_ready(webstream)" in bus_block
+
+
+def test_full_render_webstream_disabled_renders_stub_comment():
+    """
+    With webstream_enabled=False (legacy mpv/VLC paths) the renderer
+    emits ONLY a comment stub — no input.http + no switch-arm.
+    """
+    out = lc.render_rastatime_liq(
+        [_stream()],
+        webstream_enabled=False,
+    )
+    active = "\n".join(_active_lines(out))
+    # No active input.http for webstream
+    assert "input.http(" not in active
+    assert "webstream_raw" not in active
+    assert "webstream_gain" not in active
+    # Switch arm for webstream MUST NOT appear (would reference missing source)
+    assert "source.is_ready(webstream)" not in active
+
+
+def test_full_render_webstream_custom_buffer_timeout_poll():
+    """Custom webstream tuning params propagate to the rendered input.http."""
+    out = lc.render_rastatime_liq(
+        [_stream()],
+        webstream_max_buffer_seconds=15.0,
+        webstream_timeout_seconds=5.0,
+        webstream_poll_delay_seconds=1.5,
+    )
+    assert "max_buffer=15.0" in out
+    assert "timeout=5.0" in out
+    assert "poll_delay=1.5" in out
+
+
+def test_full_render_webstream_switch_priority_below_dj_above_scheduled():
+    """
+    Switch-arm priority: master_dj > show_dj > webstream > scheduled.
+    Critical for live-radio semantics — DJ-takeover beats webstream,
+    webstream beats silence-fallback.
+    """
+    out = lc.render_rastatime_liq(
+        [_stream()],
+        harbor_main_password="m-pw",
+        harbor_show_password="s-pw",
+        # webstream_enabled defaults to True
+    )
+    bus_idx = out.index("bus = switch(")
+    bus_block = out[bus_idx:bus_idx + 700]
+    master_pos = bus_block.index("master_dj")
+    show_pos = bus_block.index("show_dj")
+    webstream_pos = bus_block.index("webstream)")
+    scheduled_pos = bus_block.index("scheduled)")
+    assert master_pos < show_pos < webstream_pos < scheduled_pos
+
+
+def test_full_render_no_harbor_but_webstream_enabled_uses_switch():
+    """
+    No DJ sources but webstream enabled → switch still wraps (no fallback
+    to the C3-era `bus = scheduled` direct assignment).
+    """
+    out = lc.render_rastatime_liq([_stream()])  # defaults: no harbor, webstream on
+    active = "\n".join(_active_lines(out))
+    # Must use the switch wrapper (not the bare bus = scheduled)
+    assert "bus = switch(" in active
+    # And the switch must reference both webstream + scheduled
+    assert "source.is_ready(webstream)" in active
+    bus_idx = active.index("bus = switch(")
+    bus_block = active[bus_idx:bus_idx + 400]
+    assert "scheduled)" in bus_block
+    # NO master/show in this scenario
+    assert "master_dj" not in active
+    assert "show_dj" not in active
+
+
+def test_full_render_no_harbor_no_webstream_bare_bus_scheduled():
+    """
+    No DJ sources AND webstream disabled → bus = scheduled directly
+    (no switch wrapper noise, matches C3-era behaviour for legacy
+    deployments).
+    """
+    out = lc.render_rastatime_liq(
+        [_stream()],
+        webstream_enabled=False,
+    )
+    active = "\n".join(_active_lines(out))
+    assert "bus = scheduled" in active
+    # And specifically no switch wrapper for the bus assignment
+    # (other switch operators may exist in the template doc-area)
+    for line in active.splitlines():
+        if line.startswith("bus = "):
+            assert "switch" not in line, (
+                f"Bare bus= line should not wrap switch when no upstream "
+                f"sources active; got: {line!r}"
+            )

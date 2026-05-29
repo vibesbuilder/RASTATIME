@@ -524,6 +524,118 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
         return self._telnet.recording_status()
 
     # ------------------------------------------------------------------
+    # Phase E — Scheduled webstream lifecycle (Liquidsoap-specific)
+    # ------------------------------------------------------------------
+    #
+    # The rastatime.liq template renders an ``input.http(id="webstream",
+    # start=false, ...)`` source initialised with an empty URL.  Pypo's
+    # _on_webstream_start / _on_stop hooks (for WebStreamEvent items)
+    # call these two wrappers when streaming_handled_externally=True —
+    # the legacy mpv/VLC engines keep using engine.play(url) and never
+    # touch them.
+    #
+    # Why a separate input.http source instead of request.queue.push:
+    # the Phase-E reality-test 2026-05-29 (logged in
+    # C:/rastatime/logs/liquidsoap.log around 10:55:00 + 11:01:05)
+    # showed request.queue fails on HTTP URLs:
+    #   * procol.external mime-type sniff returns "text/html" for
+    #     typical streaming endpoints (redirect URLs)
+    #   * file-extension detection fails
+    #   * 29 s default request timeout — stream never becomes ready
+    # input.http is the canonical Liquidsoap pattern for persistent
+    # HTTP audio sources; it self-syncs, auto-reconnects, and exposes
+    # set_url / start / stop methods via the source-id namespace.
+
+    def webstream_start(
+        self, url: str, *, gain_db: Optional[float] = None,
+    ) -> None:
+        """
+        Start a scheduled webstream by setting the URL + optional gain
+        on Liquidsoap's input.http source, then issuing webstream.start.
+
+        Phase-E sequence (analogue to recording_start's Mechanism B):
+          1. webstream_set_url(url)              — set the HTTP URL
+          2. webstream_set_gain(linear_factor)   — set amplify factor
+                                                   (only if gain_db is set
+                                                    and non-zero)
+          3. webstream_start                     — connect + buffer
+
+        The source goes ``source.is_ready=true`` only after the
+        input.http max_buffer seconds (default 10 s) of audio have been
+        pre-fetched.  The switch operator in the .liq script then flips
+        the bus from scheduled (silence_fallback) to webstream
+        automatically.
+
+        ``gain_db`` is in decibels (typically -12 to +12 dB).  Pypo
+        converts to a linear amplify factor before pushing to Liquidsoap::
+
+            linear_factor = 10 ** (gain_db / 20.0)
+            # e.g. +3 dB → 1.412, -6 dB → 0.501, 0 dB → 1.0
+
+        A ``gain_db`` of None or 0 skips the gain set entirely — the
+        Liquidsoap-side interactive.float defaults to 1.0 (unity) and
+        we don't need to re-set it.  But to be safe across show-to-show
+        transitions where one show had +3 dB and the next has none, we
+        DO set 1.0 explicitly when gain_db is None — otherwise the
+        next webstream would inherit the previous show's gain.
+        """
+        gain_for_log = (
+            f"{gain_db:+.2f}dB"
+            if gain_db is not None and abs(gain_db) > 0.001
+            else "unity"
+        )
+        logger.info(
+            "Liquidsoap webstream_start: url=%s gain=%s",
+            self._redact(url), gain_for_log,
+        )
+
+        try:
+            self._telnet.webstream_set_url(url)
+            # Always set the gain — either the actual value or unity —
+            # so a previous show's non-unity gain doesn't leak into the
+            # new webstream.
+            if gain_db is not None and abs(gain_db) > 0.001:
+                linear_factor = 10.0 ** (gain_db / 20.0)
+            else:
+                linear_factor = 1.0
+            self._telnet.webstream_set_gain(linear_factor)
+            self._telnet.webstream_start()
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            logger.error(
+                "Liquidsoap webstream_start failed for %s: %s",
+                self._redact(url), exc,
+            )
+            # Don't raise — same fail-soft pattern as play() so the
+            # Pypo scheduler can carry on with the next event.
+
+    def webstream_stop(self) -> None:
+        """
+        Stop the input.http source — Liquidsoap closes the HTTP
+        connection cleanly.  ``source.is_ready`` goes false, the
+        switch operator falls through to scheduled.
+
+        Idempotent: a stop on an already-stopped source replies "Done"
+        on the Liquidsoap side and produces no error.  Same convention
+        as :meth:`recording_stop`.
+        """
+        try:
+            self._telnet.webstream_stop()
+            logger.info("Liquidsoap webstream_stop: closed")
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            logger.warning(
+                "Liquidsoap webstream_stop telnet error: %s", exc,
+            )
+
+    def webstream_status(self) -> str:
+        """
+        Return Liquidsoap's free-text input.http status string, one of
+        ``"stopped"``, ``"starting"``, ``"polling"``, ``"connected <url>"``,
+        or ``"stopping"``.  Mainly for diagnostics — the start/stop
+        wrappers are themselves idempotent.
+        """
+        return self._telnet.webstream_status()
+
+    # ------------------------------------------------------------------
     # Internal helpers — URI / annotate building
     # ------------------------------------------------------------------
 

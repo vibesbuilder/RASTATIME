@@ -128,34 +128,68 @@ scheduled   = fallback(
 #   * beide unset → keine input.harbor, ``bus = scheduled``
 ${HARBOR_INPUTS_BLOCK}
 
-# Bus-Auswahl: switch über Master/Show/Scheduled wenn Harbor aktiv,
-# sonst direkt ``bus = scheduled``.
-${BUS_SOURCE_BLOCK}
-
 # ---------------------------------------------------------------------
-# Phase-C6 — Crossfade + ReplayGain on the bus
+# Phase-E — Scheduled Webstreams via dynamic input.http (optional)
 # ---------------------------------------------------------------------
-
-# Crossfade between consecutive request.queue items.  Track-sensitive
-# inside the operator so a partial track never gets clipped by an
-# incoming next-track event mid-frame.  Duration in seconds is
-# substituted from cc_pref.default_crossfade_seconds (operator-set,
-# defaults to 2.0 s if unset).  Set duration=0. to disable
-# crossfades entirely.
 #
-# fade_in / fade_out parameters control how long the actual fade-zone
-# is at each track boundary.  Defaults are 3.0 each in upstream
-# Liquidsoap, but RASTATIME uses much shorter values (0.3 s) so that
-# short jingles / StationIDs (3-5 s) don't get their start + end
-# eaten by the fade-in / fade-out zones.  Substituted from
-# RASTATIME_LIQUIDSOAP_CROSSFADE_FADE_SECONDS env-var.  Set to 0.0
-# for hard cuts between ALL tracks.
-bus = crossfade(
+# input.http with start=false is initialised idle (no HTTP connection).
+# Pypo's _on_webstream_start calls the telnet sequence
+#   webstream.set_url <url>
+#   webstream.gain.set <linear_factor>
+#   webstream.start
+# at show-start time, and webstream.stop at show-end.  source.is_ready
+# (set true when input.http has buffered enough audio) drives the switch
+# arm — when not connected the source falls through to scheduled.
+#
+# Why not request.queue.push for webstreams: tested 2026-05-29 and
+# request.queue treats HTTP URLs as endless files via procol.external,
+# fails the mime-type sniff for "text/html" redirect endpoints, and
+# times out after 29 s.  Phase-E reality-test logs in
+# C:/rastatime/logs/liquidsoap.log around 10:55:00 + 11:01:05 captured
+# the exact failure mode.  input.http is the canonical Liquidsoap
+# pattern for persistent HTTP audio sources.
+#
+# Renderer-Verhalten:
+#   * Liquidsoap-Engine aktiv (always in Phase-D+) → webstream source +
+#     amplify-wrapper + switch-arm gerendert
+#   * Legacy-Pfade ohne Liquidsoap → leerer Stub (kein input.http)
+${WEBSTREAM_INPUT_BLOCK}
+
+# ---------------------------------------------------------------------
+# Phase-C6 — Crossfade between scheduled tracks
+# ---------------------------------------------------------------------
+#
+# Crossfade ONLY around the scheduled source — NOT around the whole
+# bus.  DJ-Sources (input.harbor) and Webstreams (input.http) are
+# continuous live audio: they don't need track-level crossfades, just
+# instant switch-in / switch-out.  Wrapping crossfade around the
+# switch-output crashes Liquidsoap with "Error 7: Invalid value: This
+# source may control its own latency and cannot be used with this
+# operator." — the crossfade operator rejects self-syncing sources.
+# Phase E reality-test 2026-05-29 caught this in liquidsoap-stdout.log
+# after adding input.http to the switch (input.harbor alone slipped
+# through, possibly because of its internal buffer=N parameter, but
+# the two together tripped the source-graph latency check).
+#
+# Duration in seconds substituted from cc_pref.default_crossfade_seconds
+# (operator-set, defaults to 2.0 s if unset).  Set duration=0. to
+# disable crossfades.  fade_in / fade_out control the fade-zone length;
+# 0.0 = hard cuts between ALL tracks (Phase-D Stück-B default — short
+# jingles play at full length).
+scheduled = crossfade(
   duration=${CROSSFADE_DURATION},
   fade_in=${CROSSFADE_FADE_SECONDS},
   fade_out=${CROSSFADE_FADE_SECONDS},
-  bus,
+  scheduled,
 )
+
+# Bus-Auswahl: switch über Master/Show/Webstream/Scheduled wenn aktiv,
+# sonst direkt ``bus = scheduled``.  Renderer-Verhalten siehe oben.
+${BUS_SOURCE_BLOCK}
+
+# ---------------------------------------------------------------------
+# Phase-C6 — ReplayGain on the bus
+# ---------------------------------------------------------------------
 
 # Replay-gain via amplify(override=...) — Liquidsoap multiplies the
 # bus by the "replaygain_track_gain" metadata field when present.

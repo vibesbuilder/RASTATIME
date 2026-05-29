@@ -824,19 +824,51 @@ class PlayoutScheduler:
             )
             return
 
-        # RASTATIME 2026-05-25 — Seamless-Bus-Mix Phase 1 (see _on_file_start
-        # for the rationale).  Short scheduled tracks just before a webstream
-        # item were the prime offender for the tail-cut symptom.
-        self._engine.wait_until_stopped(timeout=0.5)
+        # RASTATIME 2026-05-29 — Phase E: dual-engine webstream handling.
+        # Liquidsoap-Engine path (streaming_handled_externally=True):
+        # the .liq script has a dedicated input.http source ("webstream")
+        # that we drive via telnet wrappers — set URL, set gain, start.
+        # The source goes ``source.is_ready=true`` after max_buffer (10 s
+        # default) of audio has buffered, at which point the switch
+        # operator in the .liq flips the bus from scheduled (silence_
+        # fallback) to webstream automatically.  We also clear the
+        # scheduled queue so the previous track doesn't linger in the
+        # background during the buffer-up phase.
+        #
+        # Legacy mpv/VLC path: unchanged Pypo-side behaviour — engine.play
+        # opens VLC/mpv against the HTTP URL directly, and the three
+        # FfmpegStreamer subprocesses re-encode the same URL to Icecast.
+        # This path stays as a fallback until both engines are removed
+        # (Phase E + F unblock the mpv/VLC deletion per BACKLOG).
+        if self._streaming_handled_externally:
+            # Phase E (2026-05-29) — Liquidsoap engine path.
+            # We do NOT call wait_until_stopped here: Liquidsoap's queue
+            # handles its own gapless transitions and we want the
+            # scheduled-track-to-webstream handover to happen as soon as
+            # input.http has buffered enough.
+            self._engine.stop()  # deferred-stop, clears request.queue
+            self._engine.webstream_start(
+                event.uri, gain_db=event.input_gain_db,
+            )
+            # No _start_streamers — Liquidsoap owns the Icecast PUTs
+            # from inside the .liq, and the webstream audio rides the
+            # same bus that the output.icecast + output.file blocks tap.
+        else:
+            # Legacy mpv/VLC path — unchanged from the Phase-C era.
+            # RASTATIME 2026-05-25 — Seamless-Bus-Mix Phase 1 (see
+            # _on_file_start for the rationale).  Short scheduled tracks
+            # just before a webstream item were the prime offender for
+            # the tail-cut symptom.
+            self._engine.wait_until_stopped(timeout=0.5)
 
-        self._engine.stop()
-        self._stop_streamers()
-        self._engine.play(event.uri, cue_in=0.0, gain_db=event.input_gain_db)
-        # Web streams: FFmpeg can also stream an HTTP URL to Icecast.
-        # The per-stream input gain (cc_webstream.input_gain_db) is
-        # applied via the same -af volume=<dB>dB mechanism as file
-        # ReplayGain (see FfmpegStreamer.start()'s gain_db parameter).
-        self._start_streamers(event.uri, gain_db=event.input_gain_db)
+            self._engine.stop()
+            self._stop_streamers()
+            self._engine.play(event.uri, cue_in=0.0, gain_db=event.input_gain_db)
+            # Web streams: FFmpeg can also stream an HTTP URL to Icecast.
+            # The per-stream input gain (cc_webstream.input_gain_db) is
+            # applied via the same -af volume=<dB>dB mechanism as file
+            # ReplayGain (see FfmpegStreamer.start()'s gain_db parameter).
+            self._start_streamers(event.uri, gain_db=event.input_gain_db)
 
     def _resolve_linein_device(self, event: "LineinEvent") -> Optional[str]:
         """
@@ -1264,6 +1296,16 @@ class PlayoutScheduler:
             if was_linein else None
         )
 
+        # RASTATIME 2026-05-29 — Phase E: webstream stop-detection.
+        # When the stopping event is a WebStreamEvent in Liquidsoap-Mode,
+        # we route the teardown through engine.webstream_stop() (closes
+        # the input.http source) instead of engine.stop() (which would
+        # be a no-op on the input.http and wouldn't disconnect the HTTP
+        # session — input.http would keep buffering and the switch would
+        # stay on webstream into the next show's silence).  Must be
+        # captured BEFORE the bookkeeping reset further down.
+        was_webstream = isinstance(self._current_event, WebStreamEvent)
+
         # Phase B.4 race fix #2 — same-device LineinEvent follow-up.
         # If we WERE the playing event AND another LineinEvent against
         # the same device is already armed with a live start-timer
@@ -1311,6 +1353,21 @@ class PlayoutScheduler:
         # the DJ audio stays on air.  Only the scheduled-event bookkeeping
         # above still happens.
         if self._switcher and self._switcher.current_state != SourceState.SCHEDULED:
+            return
+
+        # RASTATIME 2026-05-29 — Phase E: webstream-specific teardown.
+        # In Liquidsoap-Mode a webstream-event uses input.http (not the
+        # request.queue), so engine.stop() (which sends scheduled.skip)
+        # would not close the HTTP session.  Call webstream_stop()
+        # explicitly to tear down the input.http and let the switch
+        # fall through to scheduled.
+        if was_webstream and self._streaming_handled_externally:
+            self._engine.webstream_stop()
+            # No further engine.stop() / wait_until_stopped — the
+            # webstream had its own source path that's now closed.
+            # The Pypo _stop_streamers no-op below stays for API
+            # symmetry (it's already a no-op in Liquidsoap-Mode).
+            self._stop_streamers()
             return
 
         # RASTATIME 2026-05-25 — Seamless-Bus-Mix Phase 1 (follow-up).

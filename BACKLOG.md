@@ -164,60 +164,97 @@ Cutover erst nach 1–2 Wochen A/B-Vergleich.
 - Tail-Flush-Wait (Commits cb20df6 + 952ec3b, obsolet weil
   Liquidsoap gapless macht)
 
-### 🟡 Liquidsoap-Migration Phase E/F: Scheduled Webstreams + Line-Inputs
+### 🟡 Liquidsoap-Migration Phase F: Scheduled Line-Inputs
 
-**Status:** Defer — nach Abschluss Phase D (Cutover) und mindestens
-2 Wochen stabilem Live-Betrieb.
-**Evaluiert:** 2026-05-27 (während C5-Diskussion aufgekommen).
-**Operator-Wert:** Hoch — sonst werden Webstreams + Line-Inputs nicht
-ins Liquidsoap-Recording (`output.file` vom internen Bus) aufgenommen.
-
-**Phase-D Verknüpfung (Operator-Entscheidung 2026-05-28):**
-Phase E + F sind **Vorbedingungen für den Legacy-mpv-Code-Delete.**
-Nach Phase-C5 ist mpv (und VLC) als DEPRECATED markiert
-(`DeprecationWarning` beim Pypo-Startup), bleibt aber als Fallback für
-genau diese zwei Schedule-Item-Typen, bis Phase-E + Phase-F sie auch
-nach Liquidsoap migrieren. Erst dann werden ~2000 LoC mpv_engine.py +
-ffmpeg_streamer.py + zugehörige Pypo-Scheduler-Branches gelöscht.
-
-**Hintergrund:**
-Phase C migriert Scheduled Tracks + DJ-Sources (master_dj / show_dj
-via input.harbor) zu Liquidsoap. Scheduled **Webstreams** und Scheduled
-**Line-Inputs** bleiben aber im mpv-Legacy-Pfad — Pypo ruft für diese
-Item-Typen weiterhin `engine.play(url)` an den (alten) mpv-Adapter auf.
-
-Konsequenz: das neue Liquidsoap-Recording (`output.file` vom internen
-`bus`) hört diese Quellen nicht, weil sie nie auf dem Bus landen.
-Per-Show Recordings für reine Webstream- oder reine Line-Input-Shows
-sind nach Cutover unvollständig (Stille).
+**Status:** Defer — nach Phase-E-Polish (siehe unten) und neuer Hardware.
+**Evaluiert:** 2026-05-27 (während C5-Diskussion); Phase E ist DONE
+2026-05-29 (siehe CHANGELOG).
+**Operator-Wert:** Hoch — sonst werden Line-Inputs nicht ins
+Liquidsoap-Recording (`output.file` vom internen Bus) aufgenommen.
+Plus: ist die letzte Voraussetzung für den Legacy-mpv-Code-Delete
+(~2000 LoC mpv_engine.py + ffmpeg_streamer.py).
 
 **Was gebaut werden muss:**
-- **Webstream-Items**: Pypo's Webstream-Branch in `playout_scheduler.py`
-  umschreiben — statt `engine.play(url)` an mpv, Liquidsoap dynamisch
-  einen `input.http(url)` als zusätzliche Bus-Quelle hinzufügen. Server-
-  Command via Telnet (`webstream.set_url <url>; webstream.start /
-  webstream.stop`) ODER Re-Render des Liquidsoap-Templates pro Show
-  und Reload. Erstes Pattern ist live-tauglicher (kein Restart).
-- **Line-Input-Items**: analog — entweder direkt `input.wasapi` von
-  Liquidsoap (Windows-Builds kennen das, müsste verifiziert werden),
-  ODER bestehender FfmpegLineinCapture läuft weiter und Liquidsoap
-  konsumiert ihn als `input.http("http://localhost:8000/linein-capture")`.
-- **Template-Erweiterung**: zusätzliche Sources in den `switch(...)`-
-  Block einbauen, Priorisierung wie bisher (DJ > Webstream > Line-Input
-  > Scheduled > Blank).
+- **Line-Input-Items**: analog zu Phase E — entweder direkt
+  `input.wasapi` von Liquidsoap (Windows-Builds kennen das, müsste
+  verifiziert werden), ODER bestehender FfmpegLineinCapture läuft
+  weiter und Liquidsoap konsumiert ihn als
+  `input.http("http://localhost:8000/linein-capture")`.  Letztere
+  Variante baut auf dem Phase-E input.http-Pattern auf (kein zweiter
+  Wire-Form-Hund nötig).
+- **Template-Erweiterung**: zusätzliche `linein`-Source im switch
+  zwischen webstream und scheduled.
+- **Pypo-Branch**: `_on_linein_start` analog zu `_on_webstream_start`
+  branchen (streaming_handled_externally).
 
-**Aufwand:** ~700-1000 LoC + Tests, ~2-3 Wochen.
-**Vorbedingung:** Phase D Cutover stabil im Live-Betrieb (mindestens
-2 Wochen ohne Rollback). Operator-Bestätigung dass das mpv-Legacy-
-Webstream-Verhalten wirklich migriert werden soll (alternativ: Legacy
-behalten mit Recording-Caveat dokumentiert).
+**Aufwand:** ~300-500 LoC + Tests (deutlich kleiner als Phase E weil
+Architektur + Pattern stehen).
+**Vorbedingung:** Phase-E-Polish stabil im Live-Betrieb (mindestens
+1 Woche ohne neue Issues), und Hardware-Migration durch.
 **Risiko Live-Betrieb:** Niedrig wenn Feature-Flag-gated.
 
-**Workaround bis dahin (nach Phase D Cutover):**
-- Webstreams + Line-Inputs laufen weiter über mpv-Legacy-Pfad → hörbar
-  im Output-Stream, aber NICHT im Liquidsoap-Recording mit aufgenommen
-- Operator-Hinweis im Manual: per-Show Recordings für reine Webstream-
-  oder Line-Input-Shows sind unvollständig bis Phase E/F kommt
+
+### 🟡 Phase-E Polish: Webstream-Buffer + Switch-Verhalten
+
+**Status:** Defer — Polish nach Hardware-Migration nächste Woche.
+**Evaluiert:** 2026-05-29 (Phase-E Live-Tests).
+**Operator-Wert:** Mittel — Phase-E ist funktional erfolgreich;
+Polish verbessert die Hörqualität bei Webstream-Shows.
+
+**Beobachtete Symptome im Live-Test 19:00-19:09:**
+
+1. **Regelmäßige kleine Haker** während Webstream läuft —
+   möglicherweise input.http buffer-underrun bei Network-Jitter,
+   ODER CPU-Bottleneck auf der aktuellen i3-1315U-Hardware.
+2. **Mountpoint /rastatime verschwand kurz** während kurzer
+   Scheduled-Tracks — Icecast PUT-Verbindung abriss (sollte mit
+   Liquidsoap eigentlich persistent sein). Möglicherweise PortAudio-
+   underflow → Liquidsoap-Cascade.
+3. **Falscher Track (Intro BBC News kurz) wurde mittendrin im
+   Webstream hörbar** — wenn webstream.is_ready=false (Buffer leer)
+   flippt der switch kurz zu scheduled; wenn dort noch ein Track in
+   der queue hängt, kommt er als Schnipsel raus.
+
+**Hypothesen:**
+- Initial-Buffer von 5 s (post-fix) reicht möglicherweise immer noch
+  nicht bei Network-Jitter oder CPU-Last-Spitzen.
+- Switch-Flip bei kurzem Buffer-Underrun ist zu aggressiv —
+  bräuchte Debounce (z.B. minimum 3 s nicht-ready bevor wegschalten).
+- Scheduled queue sollte beim webstream.start geleert werden (Pypo
+  ruft `engine.stop()` was deferred-stop ist; eventuell racy bei
+  back-to-back Track→Webstream-Übergängen).
+
+**Diagnose-Plan (nach Hardware-Migration):**
+1. Burn-In auf neuer Maschine (i5-14400 oder Core Ultra 5 225) ohne
+   CPU-Bottleneck — wenn Haker weg → Hardware war Ursache, fertig.
+2. Wenn Haker noch da: Buffer 5s → 10s erhöhen, Live-Test.
+3. Wenn Haker noch da: Switch-Debounce via `source.available(...)`
+   wrapper testen.
+4. Mountpoint-Verschwinden: PortAudio-Logs prüfen, ggf. buffer-Größe
+   für PortAudio-Bus-Split erhöhen.
+
+**Aufwand:** ~4-8 h für Diagnose + Polish-Iterationen.
+**Vorbedingung:** Hardware-Migration durch (Lenovo ThinkCentre M70s
+mit dezenter CPU).
+**Risiko Live-Betrieb:** Niedrig — Code-Pfad steht, nur Tuning.
+
+**Workaround heute:** Phase-E funktioniert, mit den o.g. kleinen
+Haker-Symptomen. Akzeptabel für die nächsten Tage bis Hardware kommt.
+
+
+### 💡 Phase-E ICY-Metadata-Forwarding (Future-Polish)
+
+**Status:** Idea — nice-to-have, nicht eilig.
+**Evaluiert:** 2026-05-29.
+
+Aktuell setzt Pypo per `var.set webstream.gain = X` den Stream-Gain,
+aber die LIVE-ICY-Metadata vom Webstream (z.B. BBC's aktueller Track-
+Title) wird nicht an Hörer durchgereicht. Die Hörer sehen weiterhin
+die Pypo-Schedule-Metadata (Show-Name), nicht die Stream-internen
+Title-Updates.
+
+input.http hat `on_metadata` callback → könnte via Liquidsoap-Script
+in Bus-metadata gepumpt werden. Aufwand: ~50-100 LoC Template + Test.
 
 ### 🟢 Widgets — drei Wellen
 

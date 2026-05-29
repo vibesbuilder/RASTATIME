@@ -563,3 +563,111 @@ def test_redact_file_uri_no_userinfo():
 
 def test_redact_none():
     assert LiquidsoapPlayoutEngine._redact(None) == ""
+
+
+# ---- Phase E — webstream lifecycle methods ----------------------------
+
+
+def test_webstream_start_calls_telnet_set_url_set_gain_start_in_order():
+    """
+    engine.webstream_start runs the Mechanism-B-style triple:
+    set_url → set_gain → start.  All three must be called and in
+    this exact order so input.http has its URL configured BEFORE
+    Liquidsoap tries to connect.
+    """
+    engine, telnet = _make_engine_with_mock()
+    engine.webstream_start("http://stream.example.com/test.mp3", gain_db=3.0)
+
+    # Filter mock_calls for just the methods we care about (in order)
+    method_names = [
+        c[0] for c in telnet.mock_calls
+        if c[0] in ("webstream_set_url", "webstream_set_gain", "webstream_start")
+    ]
+    assert method_names == ["webstream_set_url", "webstream_set_gain", "webstream_start"]
+    telnet.webstream_set_url.assert_called_once_with(
+        "http://stream.example.com/test.mp3"
+    )
+
+
+def test_webstream_start_converts_db_to_linear_for_positive_gain():
+    """
+    +3 dB should be converted to ~1.412 linear factor before push.
+    Math: 10 ** (3/20) ≈ 1.4125.
+    """
+    engine, telnet = _make_engine_with_mock()
+    engine.webstream_start("http://x.example.com", gain_db=3.0)
+
+    # webstream_set_gain called with linear factor close to 1.4125
+    args, _ = telnet.webstream_set_gain.call_args
+    assert abs(args[0] - 1.4125) < 0.001
+
+
+def test_webstream_start_converts_db_to_linear_for_negative_gain():
+    """
+    -6 dB → ~0.501 linear factor.  Math: 10 ** (-6/20) ≈ 0.5012.
+    """
+    engine, telnet = _make_engine_with_mock()
+    engine.webstream_start("http://x.example.com", gain_db=-6.0)
+
+    args, _ = telnet.webstream_set_gain.call_args
+    assert abs(args[0] - 0.5012) < 0.001
+
+
+def test_webstream_start_unity_for_none_gain():
+    """
+    gain_db=None → push 1.0 (unity) explicitly, so a previous show's
+    non-unity gain doesn't leak into the new webstream.
+    """
+    engine, telnet = _make_engine_with_mock()
+    engine.webstream_start("http://x.example.com", gain_db=None)
+
+    telnet.webstream_set_gain.assert_called_once_with(1.0)
+
+
+def test_webstream_start_unity_for_zero_gain():
+    """
+    gain_db=0.0 (or very close to 0) → push 1.0 (unity).  Avoids
+    rounding artefacts from 10 ** (0/20).
+    """
+    engine, telnet = _make_engine_with_mock()
+    engine.webstream_start("http://x.example.com", gain_db=0.0001)
+
+    telnet.webstream_set_gain.assert_called_once_with(1.0)
+
+
+def test_webstream_start_handles_telnet_error_without_raising():
+    """
+    Same fail-soft pattern as play() — any telnet error during the
+    triple is logged + swallowed so the Pypo scheduler can carry on
+    with the next event.
+    """
+    engine, telnet = _make_engine_with_mock()
+    telnet.webstream_set_url.side_effect = ConnectionError("telnet down")
+
+    # Should NOT raise
+    engine.webstream_start("http://x.example.com", gain_db=1.0)
+
+
+def test_webstream_stop_calls_telnet_webstream_stop():
+    """engine.webstream_stop delegates to telnet.webstream_stop."""
+    engine, telnet = _make_engine_with_mock()
+    engine.webstream_stop()
+    telnet.webstream_stop.assert_called_once()
+
+
+def test_webstream_stop_handles_telnet_error_without_raising():
+    """Webstream-stop is idempotent + fail-soft (like recording_stop)."""
+    engine, telnet = _make_engine_with_mock()
+    telnet.webstream_stop.side_effect = ConnectionError("telnet down")
+
+    # Should NOT raise
+    engine.webstream_stop()
+
+
+def test_webstream_status_delegates_to_telnet():
+    """engine.webstream_status returns Liquidsoap's free-text status."""
+    engine, telnet = _make_engine_with_mock()
+    telnet.webstream_status.return_value = "connected http://example.com"
+
+    assert engine.webstream_status() == "connected http://example.com"
+    telnet.webstream_status.assert_called_once()
