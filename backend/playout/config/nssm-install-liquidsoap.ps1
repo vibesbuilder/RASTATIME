@@ -79,8 +79,11 @@ Write-Host "Installing service $serviceName ..."
 & $nssm set $serviceName AppThrottle 10000          # if it restarts within 10 s, NSSM considers it failed
 
 # Description shown in Windows services.msc.
-& $nssm set $serviceName Description "RASTATIME Liquidsoap audio backend (Seamless-Bus-Mix Phase 2)"
-& $nssm set $serviceName DisplayName "RASTATIME Liquidsoap"
+& $nssm set $serviceName Description "RASTATIME-LIQUIDSOAP audio backend (Seamless-Bus-Mix Phase 2)"
+# DisplayName matches the service name exactly (RASTATIME-LIQUIDSOAP) so the
+# services.msc list, `nssm` commands, and the docs all use one consistent
+# identifier.  (Was "RASTATIME Liquidsoap" with a space — cosmetic mismatch.)
+& $nssm set $serviceName DisplayName "RASTATIME-LIQUIDSOAP"
 
 # Optional: depend on Icecast service (if installed as service).
 # Uncomment if your Icecast runs as a service named "Icecast2":

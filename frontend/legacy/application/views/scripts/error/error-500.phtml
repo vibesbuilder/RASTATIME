@@ -12,11 +12,12 @@
         <h2><?php echo _("Oops!") ?></h2>
         <p><?php echo _("Something went wrong!") ?></p>
         <div class="button-bar">
-            <a class="toggle-button" href="<?php echo TROUBLESHOOTING_URL; ?>" target="_blank">
-                <?php echo _("Troubleshooting help") ?>
-            </a>
-            <a class="toggle-button" href="<?php echo $this->helpUrl; ?>" target="_blank">
-                <?php echo _("More help") ?>
+            <?php // RASTATIME 2026-05-29 — Troubleshooting button now points at
+                  // the local user/operator help (dashboard/help) instead of the
+                  // external libretime.org troubleshooting URL.  The separate
+                  // "More help" button was removed (single local help target). ?>
+            <a class="toggle-button" href="<?php echo $this->baseUrl('dashboard/help'); ?>">
+                <?php echo _("Troubleshooting") ?>
             </a>
         </div>
     </div>
