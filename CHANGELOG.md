@@ -7,6 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Error-Page (`error-500.phtml`) Grafik + Links (2026-05-29)** —
+  `images/maintenance.png` durch eine RASTATIME-eigene Broadcast-Tower-
+  Grafik ersetzt (Orange-Akzent #e76400 + Warn-Badge, 360×340,
+  transparent).  "Troubleshooting"-Button zeigt jetzt auf die lokale
+  User/Operator-Help (`dashboard/help`) statt die externe
+  libretime.org-Troubleshooting-URL; separater "More help"-Button
+  entfernt.  Text "Oops! / Something went wrong!" unverändert.
+
+- **`docs/operator/MIGRATION.md` Storage-Pfad-Bug (2026-05-29)** —
+  die Doku referenzierte `C:\rastatime\stor` (existiert nicht); der
+  echte Storage-Pfad ist `C:\rastatime\media` (libretime.conf
+  storage.path).  Hätte beim Media-Backup die gesamte Library
+  verfehlt.  Korrigiert + media\ aus dem Repo-Backup ausgeschlossen
+  (wird separat gesichert).
+
+### Changed
+
+- **NSSM-Service `RASTATIME-LIQUIDSOAP` DisplayName (2026-05-29)** —
+  war "RASTATIME Liquidsoap" (mit Leerzeichen), passte nicht zum
+  Service-Namen den `nssm`-Befehle + Doku nutzen.  Jetzt überall
+  konsistent "RASTATIME-LIQUIDSOAP".  (Operator führt `nssm set
+  RASTATIME-LIQUIDSOAP DisplayName "RASTATIME-LIQUIDSOAP"` auf der
+  Live-Maschine aus; das Install-Script deckt Fresh-Installs ab.)
+
+- **`docs/operator/MIGRATION.md` Storage-Bereinigung (2026-05-29)** —
+  §4.4 + §4.5 erweitert um die Storage-Struktur-Bereinigung als Teil
+  der Hardware-Migration: neuer Root `D:\stor` (SSD-B, außerhalb des
+  Projektordners) + Wegfall der `imported/<owner-id>/`-Ebene.
+  Enthält Code-Patch (MediaService.php), DB-Transaktion (cc_music_dirs
+  + cc_pref + regexp_replace auf cc_files.filepath) und robocopy-
+  Flattening.  Operator-Entscheidung: Daten-Migration im geplanten
+  Wartungs-Stopp statt riskant auf der Live-Maschine.  Details in
+  BACKLOG "Storage-Struktur-Bereinigung".
+
 ### Added
 
 - **Scheduled Line-Inputs via Liquidsoap `input.http` (Phase-F,

@@ -164,6 +164,51 @@ Cutover erst nach 1–2 Wochen A/B-Vergleich.
 - Tail-Flush-Wait (Commits cb20df6 + 952ec3b, obsolet weil
   Liquidsoap gapless macht)
 
+### 🟡 Storage-Struktur-Bereinigung (Root → D:\stor + owner-id weg)
+
+**Status:** Geplant für die Hardware-Migration nächste Woche.
+**Evaluiert:** 2026-05-29 (Operator-Wunsch "kosmetische Dinge").
+**Operator-Entscheidung 2026-05-29:** in die Hardware-Migration
+integrieren statt isoliert auf der Live-Maschine (Daten-Migration,
+nicht kosmetisch).
+
+**Zwei Wünsche, beide an der Storage-Struktur:**
+1. **Root-Folder weg vom Projektordner.**  Aktuell
+   `C:/rastatime/media` (= libretime.conf storage.path, im Repo-Baum).
+   Ziel: `D:\stor` auf SSD-B der neuen Maschine.
+2. **owner-id-Unterordner `imported/2/` wegsparen.**  Die `2` ist die
+   User-ID des importierenden Operators (`MediaService.php` Z.35
+   `'/imported/' . $fileOwnerId`).  Bei Single-Operator überflüssig.
+   Ziel: `D:\stor\imported\<artist>\<album>\...` ohne owner-id-Ebene.
+
+**Warum nicht jetzt isoliert:** beides ist Daten-Migration
+(cc_files.filepath + cc_music_dirs.directory umschreiben + Files
+physisch verschieben).  Auf der Live-Maschine = Sendeausfall-Risiko
+bei unvollständiger Migration.  Bei der Hardware-Migration werden die
+Files eh alle verschoben → risikofrei + keine Doppelarbeit.
+
+**Vollständig dokumentiert in `docs/operator/MIGRATION.md` §4.4 + §4.5:**
+- Code-Patch MediaService.php (owner-id-Segment raus)
+- libretime.conf storage.path → D:/stor
+- DB-Transaktion: cc_music_dirs.directory + cc_pref + regexp_replace
+  auf cc_files.filepath (`imported/<digits>/` → `imported/`)
+- robocopy-Flattening beim Restore
+- Verifikation (3 Tracks abspielen vor Go-Live)
+
+**Side-Fund 2026-05-29:** MIGRATION.md hatte einen falschen
+Storage-Pfad (`C:\rastatime\stor` existiert nicht, echt ist
+`C:\rastatime\media`) — beim Audit gefunden + korrigiert (sonst hätte
+das Media-Backup die Library verfehlt).
+
+**Offen bei der Migration:** show-images + auto-dj-logos behalten
+vorerst ihre `imported/<owner-id>/`-Subtrees (selten, klein); optionale
+DB-Spalten-Bereinigung dokumentiert aber nicht Pflicht.
+
+**Aufwand:** Teil der Migration (kein separater Aufwand); Code-Patch
+~3 Zeilen, DB-Transaktion ~10 Zeilen SQL.
+**Risiko:** Niedrig im Migrations-Kontext (geplanter Wartungs-Stopp +
+Verifikations-Schritt vor Go-Live).
+
 ### 🟢 Legacy-mpv-Code-Delete (Phase E + F beide funktional verifiziert)
 
 **Status:** Go nach 1 Woche stabilem Live-Betrieb.

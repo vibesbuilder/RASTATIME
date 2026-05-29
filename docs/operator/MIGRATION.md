@@ -96,8 +96,10 @@ $BUNDLE = "C:\rastatime-migration"
 New-Item -ItemType Directory -Path $BUNDLE -Force | Out-Null
 
 # 1) RASTATIME source repo (in case the new machine has no Git remote)
+#    NOTE: media\ is EXCLUDED here — the media library is backed up
+#    separately in step 6 (it's huge + gets a new home on D:\stor).
 robocopy C:\RASTATIME "$BUNDLE\RASTATIME" /MIR `
-    /XD .git\objects\pack-cache __pycache__ node_modules `
+    /XD .git\objects\pack-cache __pycache__ node_modules media `
     /XF *.pyc
 
 # 2) Liquidsoap install (binary + DLLs)
@@ -126,7 +128,11 @@ robocopy "C:\Users\studio\Music\Recording" "$BUNDLE\Recording" /MIR
 
 # 6) Media library (the bulk — easily 10-100 GB)
 #    This is the slow part.  ~30 GB takes ~5 min on Gigabit LAN.
-robocopy C:\rastatime\stor "$BUNDLE\stor" /MIR
+#    The real storage path is C:\rastatime\media (libretime.conf
+#    storage.path) — NOT C:\rastatime\stor (that path never existed;
+#    earlier drafts of this doc were wrong).  Verify with:
+#      (Get-Content C:\rastatime\config\libretime.conf | Select-String 'path:')
+robocopy C:\rastatime\media "$BUNDLE\media" /MIR
 
 # 7) Operator-specific PowerShell scripts / monitoring tools
 #    (the burnin_2026-05-28_02-48.log helpers etc., if you keep them)
@@ -289,33 +295,114 @@ Copy-Item C:\rastatime-migration\Icecast\icecast.xml `
     "C:\Program Files\Icecast\" -Force
 ```
 
-### 4.4 Update storage path for new SSD layout
+### 4.4 Storage cleanup — new root + drop the owner-id subfolder
 
-If you put the media library on D:\stor (Phase B §3.5), update
-`libretime.conf`:
+The migration is the right moment to clean up two storage warts that
+can't be changed safely on a live machine:
+
+1. **New root `D:\stor`** (SSD-B) instead of `C:\rastatime\media`
+   inside the project folder.  Keeps the media library off the system
+   drive and out of the repo tree.
+2. **Drop the `imported/<owner-id>/` level.**  On the old machine the
+   audio library lives under `media\imported\2\<artist>\<album>\...`
+   where `2` is the importing operator's user-id.  For a single-
+   operator station that level is pointless; the new layout is
+   `D:\stor\imported\<artist>\<album>\...`.
+
+This is a coordinated **code + data + DB** change.  Do all three in
+this maintenance window — never piecemeal on a live machine.
+
+**(a) Code patch — stop the importer re-creating the owner-id level.**
+On the new machine, in the restored repo, edit
+`frontend/legacy/application/services/MediaService.php` (the
+`importFileToLibrary` method):
+
+```php
+// OLD:
+$importedStorageDirectory = Config::getStoragePath() . '/imported/' . $fileOwnerId;
+// NEW (drop the owner-id segment):
+$importedStorageDirectory = Config::getStoragePath() . '/imported';
+```
+
+> Without this patch the importer would re-create `imported/<owner-id>/`
+> for every new upload on the new machine, undoing the cleanup.
+> (Show-images and auto-dj-logos keep their own `imported/<owner-id>/…`
+> subtrees — they're tiny and out of scope here; bereinige sie später
+> falls gewünscht.)
+
+**(b) Config — point the storage path at the new root.**
+Edit `C:\rastatime\config\libretime.conf`:
 
 ```yaml
 storage:
-  path: D:\stor          # was C:\rastatime\stor on old machine
+  path: D:/stor          # was C:/rastatime/media on the old machine
 ```
 
-And update `cc_pref` row for `storage_path`:
+**(c) DB — update the storage dir + every file path in one transaction.**
+`cc_music_dirs.directory` holds the storage root; `cc_files.filepath`
+holds each track's path **relative to that root** (e.g.
+`imported/2/Artist/Album/track.mp3`).  Both must change: new root, and
+the `2/` segment removed.
 
 ```powershell
 $psql = "C:\Program Files\PostgreSQL\17\bin\psql.exe"
-& $psql -U postgres -d libretime -c `
-    "UPDATE cc_pref SET valstr = 'D:\stor' WHERE keystr = 'storage_path';"
+& $psql -U postgres -d libretime -v ON_ERROR_STOP=1 -c @"
+BEGIN;
+-- 1) storage root (the 'stor'-type music dir)
+UPDATE cc_music_dirs
+   SET directory = 'D:/stor/'
+ WHERE type = 'stor';
+-- 2) cc_pref storage_path mirror (if present)
+UPDATE cc_pref SET valstr = 'D:/stor' WHERE keystr = 'storage_path';
+-- 3) drop the 'imported/<digits>/' owner-id level from every file path
+UPDATE cc_files
+   SET filepath = regexp_replace(filepath, '^imported/[0-9]+/', 'imported/')
+ WHERE filepath LIKE 'imported/%';
+COMMIT;
+"@
 ```
 
-### 4.5 Restore media library
+> The `regexp_replace` only rewrites the leading `imported/<digits>/`
+> prefix — artist/album/file parts are untouched.  Run it once; it's
+> idempotent (a second run finds no `imported/<digits>/` left to match).
+
+### 4.5 Restore media library into the new flattened layout
 
 ```powershell
-# To the NEW location on D:
-robocopy C:\rastatime-migration\stor D:\stor /MIR
+# The backup bundle has the OLD layout: ...\media\imported\2\<artist>\...
+# Move the CONTENTS of imported\2\ up one level into D:\stor\imported\.
+mkdir D:\stor\imported -Force
 
-# Verify size matches the old machine
-(Get-ChildItem D:\stor -Recurse | Measure-Object Length -Sum).Sum / 1GB
+# Everything under the owner-id folder → D:\stor\imported\ (flattened)
+robocopy C:\rastatime-migration\media\imported\2 D:\stor\imported /MIR
+
+# Any non-owner-id entries that already sat directly under imported\
+# (rare, but copy them too if present):
+Get-ChildItem C:\rastatime-migration\media\imported -Directory |
+    Where-Object { $_.Name -notmatch '^\d+$' } |
+    ForEach-Object {
+        robocopy $_.FullName "D:\stor\imported\$($_.Name)" /MIR
+    }
+
+# Verify the track count matches the DB
+$psql = "C:\Program Files\PostgreSQL\17\bin\psql.exe"
+& $psql -U postgres -d libretime -t -c "SELECT count(*) FROM cc_files WHERE filepath LIKE 'imported/%';"
+(Get-ChildItem D:\stor\imported -Recurse -File | Measure-Object).Count
 ```
+
+> **Verification before go-live:** pick 3 tracks in the UI, hit play
+> on each.  If they play, the path rewrite + file move line up.  If a
+> track 404s, the `cc_files.filepath` and the on-disk path disagree —
+> re-check step 4.4(c) and the robocopy source/target.
+
+**Show-images / auto-dj-logos note:** these still live under
+`imported/<owner-id>/show-images/` and `imported/<owner-id>/auto-dj-logos/`.
+The robocopy in this step flattened `imported/2/` wholesale, so those
+subtrees moved to `D:\stor\imported\show-images\` etc. — but the DB
+columns that reference them (`cc_show.image_path`, the auto-dj-logo
+preference) still contain the `2/` segment.  Either leave those two
+features' images as-is (re-upload on demand) or extend step 4.4(c)
+with the matching `regexp_replace` on those columns.
 
 ### 4.6 Restore recordings
 
