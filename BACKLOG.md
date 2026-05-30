@@ -564,6 +564,54 @@ Sortierung der bereits-gespielten + nächsten Tracks freezable.
 
 ## 🐞 Known Issues / Bug Backlog
 
+### 🟡 Analytics: Listener Stats + Show Listener Stats sammeln keine Daten
+
+**Status:** Defer — bis nach Live-Schaltung + erste echte Listener.
+**Evaluiert:** 2026-05-29 (Operator-Wunsch).
+**Operator-Priorität:** Low.  Listener Stats wichtiger als Show
+Listener Stats.
+
+**Symptom:** Unter ANALYTICS → "Listener Stats" + "Show Listener
+Stats" ist nur die Date-Range-Auswahl bedienbar, sonst bleibt alles
+leer (kein Chart, keine Tabelle).
+
+**Diagnose (Anzeige-Kette intakt, Daten-Sammlung gebrochen):**
+Controller (`ListenerstatController`), Model (`ListenerStat`), Views,
+flot-Chart-JS und der API-Endpoint (`ApiController::pushStreamStatsAction`
+→ `insertDataPoints`) funktionieren.  `cc_listener_count` hat aber
+**0 Zeilen** → leeres JSON → leerer Graph.  Drei Brüche:
+
+1. **StatsCollectorThread läuft nicht.**  Wird nur in der verwaisten
+   `backend/playout/libretime_playout/main.py` gestartet; der aktive
+   Entry-Point `__main__.py` (`python -m libretime_playout`) kennt ihn
+   nicht (0 Referenzen).
+2. **Output-Quelle leer.**  `StatsCollector.collect()` liest
+   `config.stream.outputs.merged` aus libretime.conf, dort
+   `outputs: icecast: []`.  Beim Liquidsoap-Cutover (Phase D) wanderte
+   die Output-Config nach cc_pref + rastatime.liq.
+3. **Admin-Passwort fehlt.**  Der Collector pollt Icecast
+   `/admin/stats.xml` und braucht das Icecast-**Admin**-Passwort
+   (nicht das Source-Passwort, das Liquidsoap zum Pushen nutzt) —
+   aktuell nirgends für den Collector verdrahtet.
+
+**Was gebaut werden müsste:**
+- `StatsCollectorThread` in `__main__.py` starten (~3-5 Zeilen).
+- Output-Quelle umstellen: Icecast `/admin/stats.xml` direkt pollen
+  mit Admin-Creds aus icecast.xml/config — unabhängig von der leeren
+  libretime.conf-Output-Liste.
+- Admin-Passwort-Config-Read.
+- Show Listener Stats: baut auf denselben cc_listener_count-Daten
+  (JOIN cc_show_instances) — funktioniert fast automatisch sobald
+  Listener Stats Daten liefert; nur Tabellen-View prüfen.
+
+**Aufwand:** Listener Stats ~150-250 LoC + Tests (~1 Tag);
+Show Listener Stats ~50 LoC zusätzlich (~0.5 Tag).
+**Vorbedingungen:** (1) Live-Betrieb aktiv, (2) erste echte Listener
+(sonst nicht testbar — ohne Hörer keine Daten), (3) Hardware-Migration
+durch (auf stabiler Plattform reparieren).
+**Risiko Live-Betrieb:** Sehr niedrig — Collector ist ein Read-Only-
+Beobachter neben dem Stream; kein Eingriff in Playout/Recording/Output.
+
 ### ✅ Liquidsoap clock.assign_new wrapped alle Outputs in portaudio_clock (DONE 2026-05-28 — C5-Side-Fix)
 
 **Status:** DONE — bus-split via `buffer(buffer=0.5, bus)` als asynchrone
