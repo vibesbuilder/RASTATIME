@@ -244,3 +244,79 @@ def test_on_stop_legacy_linein_does_not_call_linein_stop(legacy_scheduler):
     capture.stop.assert_called_once()
     # Legacy path takes engine.stop, not linein_stop
     engine.stop.assert_called_once()
+
+
+# ---- _on_stop: Phase-F-2 race fix #3 (device-switch) ------------------
+
+
+def test_on_stop_linein_device_switch_does_not_kill_new_source(
+    liquidsoap_scheduler,
+):
+    """
+    Phase-F-2 race fix #3: when show B (different device) has already
+    taken over via its own _on_linein_start before show A's late _on_stop
+    fires, A must NOT call linein_stop — that would mute B's freshly
+    started source (the live 2026-05-29 21:15:00 device-switch silence,
+    where the jabra-show start was followed 2 ms later by the tascam-show
+    stop).  Covered by the race-fix-#1 _playing_key guard at the top of
+    _on_stop, here exercised in the device-SWITCH context.
+    """
+    sched, engine, capture = liquidsoap_scheduler
+    event_a = _make_linein_event(
+        device_id="0fb30b0b-c875-432b-a48f-dbb5208995c9", id_=1, row_id=111,
+    )
+    event_b = _make_linein_event(
+        device_id="eae46b8b-2949-46ee-a1ca-c8ab319f1eee", id_=2, row_id=222,
+    )
+
+    # Show A starts, then show B (different device) takes over.
+    sched._on_linein_start("keyA", event_a)
+    sched._on_linein_start("keyB", event_b)
+    assert sched._playing_key == "keyB"
+    assert sched._linein_generation == 2  # bumped once per (re)start
+
+    engine.reset_mock()
+    engine.get_state.return_value = PlayoutState.PLAYING
+
+    # A's stop fires late.
+    sched._on_stop("keyA")
+
+    # A is no longer the playing event → no teardown of B's source.
+    engine.linein_stop.assert_not_called()
+    # B's bookkeeping survives intact.
+    assert sched._playing_key == "keyB"
+    assert sched._current_event is event_b
+
+
+def test_on_stop_linein_skips_stop_when_generation_bumped_mid_teardown(
+    liquidsoap_scheduler,
+):
+    """
+    Phase-F-2 race fix #3 (final guard): if a follow-up show (re)starts
+    the line-in source DURING A's teardown window — after A cleared its
+    bookkeeping but before it calls linein_stop — the generation counter
+    moves and A must skip linein_stop.  Simulated by bumping the counter
+    from capture.stop()'s side effect, which runs between the generation
+    snapshot and the final guard.
+    """
+    sched, engine, capture = liquidsoap_scheduler
+    event = _make_linein_event()
+    sched._on_linein_start("key1", event)  # gen -> 1, playing key1
+    assert sched._linein_generation == 1
+
+    engine.reset_mock()
+    engine.get_state.return_value = PlayoutState.PLAYING
+
+    # Simulate a racing follow-up _on_linein_start that bumps the
+    # generation (and reclaims the spotlight) mid-teardown.
+    def _bump(*_args, **_kwargs):
+        sched._linein_generation += 1
+        sched._playing_key = "key2"
+
+    capture.stop.side_effect = _bump
+
+    sched._on_stop("key1")
+
+    capture.stop.assert_called_once()
+    # Final guard tripped → the new show's source is left running.
+    engine.linein_stop.assert_not_called()

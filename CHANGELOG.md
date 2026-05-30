@@ -26,6 +26,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Scheduled Line-Inputs via Liquidsoap `input.ffmpeg(dshow)`
+  (Phase-F-2, 2026-05-30)** — die Audio-Erfassung geplanter
+  Line-In-Items läuft jetzt direkt in Liquidsoap über
+  `input.ffmpeg(format="dshow")` (in-process libavdevice), statt über
+  den separaten `FfmpegLineinCapture`-Subprozess + `input.http`-Hop aus
+  Phase F.  Ein Tool weniger im Signalweg: Liquidsoap öffnet das
+  Windows-dshow-Device selbst, Pypo baut nur noch den
+  dshow-Alternative-Name-Spec aus der Device-GUID und reicht ihn per
+  Telnet an `linein.set_url` / `linein.start`.  `FfmpegLineinCapture`
+  wird im Liquidsoap-Mode nicht mehr für die Audio-Erfassung verwendet;
+  daraus importiert wird nur noch der reine Helper
+  `_stable_id_to_dshow_audio` (dshow-Spec aus Device-GUID).
+
+  Zwei im Live-Test (2026-05-29) gefundene Bugs sind hier enthalten:
+  - **Device-Wechsel zwischen Shows** — `set_url` auf einer bereits
+    laufenden `input.ffmpeg`-Quelle ist ein No-Op; das Device wechselt
+    nur, wenn die Quelle vorher gestoppt wird.  Fix: `linein_start`
+    nutzt **Mechanismus B** (stop → set_url → start), dasselbe Muster
+    wie `recording_start`.
+  - **Timer-Race beim Show-Übergang** — feuerten die
+    `threading.Timer`-Callbacks zweier aufeinanderfolgender Shows in
+    der Reihenfolge "Stop-der-alten nach Start-der-neuen", killte das
+    `linein_stop` der alten Show die frisch geöffnete Quelle der neuen
+    (Stille, live beobachtet 21:15:00).  Fix: ein generationsbasierter
+    Guard (`_linein_generation`) in `_on_stop` — lock-frei und auf den
+    Line-In-Teardown beschränkt, sodass Webstream/File-Übergänge (wo
+    Webstream im Bus-Switch über Line-In rankt) unberührt bleiben.
+
 - **NSSM-Service `RASTATIME-LIQUIDSOAP` DisplayName (2026-05-29)** —
   war "RASTATIME Liquidsoap" (mit Leerzeichen), passte nicht zum
   Service-Namen den `nssm`-Befehle + Doku nutzen.  Jetzt überall

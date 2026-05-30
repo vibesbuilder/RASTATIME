@@ -121,6 +121,18 @@ class PlayoutScheduler:
         self._current_event: Optional[FileEvent] = None
         self._current_audio_path: Optional[str] = None
 
+        # RASTATIME 2026-05-30 — Phase-F-2 race fix #3 (line-in
+        # device-switch).  Monotonic counter bumped every time
+        # ``_on_linein_start`` actually (re)starts a line-in source.
+        # ``_on_stop`` snapshots it on entry and re-checks it before
+        # tearing the line-in down, so a finishing show's teardown can
+        # never kill a back-to-back follow-up show's freshly started
+        # source — even when the two ``threading.Timer`` callbacks fire in
+        # the "stop after start" order (observed live 2026-05-29 21:15:00:
+        # a jabra-show start was followed 2 ms later by the tascam-show
+        # stop, whose ``linein_stop`` muted the jabra source).
+        self._linein_generation: int = 0
+
         # RASTATIME 2026-05-16 — cached effective dB gain for the
         # currently-playing event.  Source of the value depends on the
         # event type (file → ReplayGain sum; webstream →
@@ -1045,6 +1057,11 @@ class PlayoutScheduler:
             from .engine.ffmpeg_linein_capture import _stable_id_to_dshow_audio
             dshow_spec = _stable_id_to_dshow_audio(resolved_device_id)
             self._engine.stop()  # clear the scheduled queue (deferred-stop)
+            # Race fix #3 — mark a new line-in generation BEFORE the telnet
+            # round-trip, so a racing _on_stop (for the previous show) that
+            # snapshotted the old value sees the bump and skips its
+            # teardown instead of stopping the source we are bringing up.
+            self._linein_generation += 1
             self._engine.linein_start(dshow_spec)
             # No _start_streamers — Liquidsoap owns the Icecast PUTs and
             # opens the dshow device itself.
@@ -1056,6 +1073,9 @@ class PlayoutScheduler:
         # pushes to /linein-capture regardless of whether a DJ is
         # overriding downstream playback.  start() is same-device-
         # idempotent (safe after a watchdog restore).
+        # Race fix #3 — see the Liquidsoap branch above; bump before
+        # touching the capture so a racing previous-show _on_stop bails.
+        self._linein_generation += 1
         try:
             self._linein_capture.start(resolved_device_id)
         except Exception as exc:  # pylint: disable=broad-exception-caught
@@ -1319,6 +1339,14 @@ class PlayoutScheduler:
         if self._playing_key != key:
             return
 
+        # Race fix #3 (line-in device-switch) — snapshot the line-in
+        # generation while we still hold the spotlight.  A back-to-back
+        # follow-up LineinEvent's ``_on_linein_start`` bumps this counter
+        # just before it (re)starts the source; re-checking it before our
+        # own teardown lets us bail instead of stopping the source the new
+        # show just brought up.
+        linein_gen = self._linein_generation
+
         was_linein = isinstance(self._current_event, LineinEvent)
         cur_device = (
             self._current_event.device_id  # type: ignore[attr-defined]
@@ -1367,6 +1395,24 @@ class PlayoutScheduler:
                     )
                     return
 
+        # Race fix #3 (line-in device-switch) — if a follow-up LineinEvent
+        # already (re)started the source on its own timer thread (the
+        # generation counter moved), leave ITS bookkeeping intact and tear
+        # nothing down.  This is the device-INDEPENDENT companion to the
+        # same-device handoff above: that one only fires while the
+        # follow-up is still *armed*, this one also covers the follow-up
+        # that has *already fired* (its start-timer is no longer alive, so
+        # the scan above misses it).  Scoped to ``was_linein`` so
+        # webstream/file stops — which must still run, since webstream
+        # outranks line-in in the bus switch — are unaffected.
+        if was_linein and self._linein_generation != linein_gen:
+            logger.info(
+                "STOP %s: a newer line-in source already started "
+                "(gen %d->%d) — skipping teardown to keep it alive.",
+                key, linein_gen, self._linein_generation,
+            )
+            return
+
         self._playing_key = None
         self._current_event = None
         self._current_audio_path = None
@@ -1392,6 +1438,18 @@ class PlayoutScheduler:
         # already happened above (line ~1349) — that's the dshow
         # subprocess side; this is the Liquidsoap-source side.
         if was_linein and self._streaming_handled_externally:
+            # Race fix #3 final guard — a follow-up show may have started
+            # its source during the brief teardown window above (after we
+            # cleared bookkeeping).  The generation counter survives that
+            # reset, so re-check it here: if it moved, the source on air is
+            # the new show's — do NOT stop it.
+            if self._linein_generation != linein_gen:
+                logger.info(
+                    "STOP %s: newer line-in source started during teardown "
+                    "(gen %d->%d) — not calling linein_stop.",
+                    key, linein_gen, self._linein_generation,
+                )
+                return
             self._engine.linein_stop()
             # No further engine.stop() / wait_until_stopped — the
             # linein had its own source path that's now closed.

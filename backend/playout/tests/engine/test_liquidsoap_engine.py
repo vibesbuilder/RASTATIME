@@ -676,11 +676,13 @@ def test_webstream_status_delegates_to_telnet():
 # ---- Phase F — linein lifecycle methods -------------------------------
 
 
-def test_linein_start_sends_set_url_then_start():
+def test_linein_start_uses_mechanism_b_stop_seturl_start():
     """
-    Phase-F-2: engine.linein_start(dshow_spec) sends set_url(spec)
-    first, then start.  Order matters: the dshow device spec must be
-    configured before the source opens it.
+    Phase-F-2: engine.linein_start(dshow_spec) uses Mechanism B —
+    stop → set_url → start, in that exact order.  The leading stop is
+    REQUIRED: set_url on a running input.ffmpeg source is a no-op, so
+    a device-switch without the stop leaves the old device on air
+    (live-test 2026-05-30).
     """
     engine, telnet = _make_engine_with_mock()
     spec = r"audio=@device_cm_{33D9A762-90C8-11D0-BD43-00A0C911CE86}\wave_{A9B77F0F-CD87-456E-9949-614E408B45FD}"
@@ -688,9 +690,9 @@ def test_linein_start_sends_set_url_then_start():
 
     method_names = [
         c[0] for c in telnet.mock_calls
-        if c[0] in ("linein_set_url", "linein_start")
+        if c[0] in ("linein_stop", "linein_set_url", "linein_start")
     ]
-    assert method_names == ["linein_set_url", "linein_start"]
+    assert method_names == ["linein_stop", "linein_set_url", "linein_start"]
     telnet.linein_set_url.assert_called_once_with(spec)
     telnet.linein_start.assert_called_once()
 

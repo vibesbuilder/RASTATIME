@@ -667,9 +667,18 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
         it from the schedule item's device GUID
         (``_stable_id_to_dshow_audio``).
 
-        Sequence (analogue to webstream_start): set_url(spec) then start.
-        The dshow device is opened only on start; ``set_url`` selects
-        which device (runtime-switchable between shows).
+        Uses **Mechanism B** (stop → set_url → start), the same pattern
+        as :meth:`recording_start`.  RASTATIME 2026-05-30 live-test
+        revealed why this is REQUIRED: ``set_url`` on an already-running
+        input.ffmpeg source is a NO-OP — the device only changes when
+        the source is stopped first, then re-opened.  Without the
+        leading stop, a device-switch between back-to-back line-in
+        shows left the OLD device on air ("Jabra selected, Tascam
+        still audible" bug).  The isolated spike confirmed
+        stop→set_url→start switches the device cleanly.
+
+        The leading stop is also an idempotency guard: a stop on an
+        already-stopped source replies "Done" and is harmless.
 
         Mirrors :meth:`webstream_start`'s fail-soft behaviour — any
         telnet error is logged + swallowed so the scheduler can
@@ -677,6 +686,9 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
         """
         logger.info("Liquidsoap linein_start: dshow_spec=%s", dshow_spec)
         try:
+            # Mechanism B: stop first so set_url actually takes effect
+            # on the (possibly already-running) source.
+            self._telnet.linein_stop()
             self._telnet.linein_set_url(dshow_spec)
             self._telnet.linein_start()
         except Exception as exc:  # pylint: disable=broad-exception-caught
