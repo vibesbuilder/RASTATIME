@@ -221,22 +221,35 @@ Phase F: Line-Input am 2026-05-29 spätabends).
   Operator-Hypothese: CPU-bound auf i3-1315U.  Test auf neuer
   Lenovo M70s Gen 5/6 ohne Bottleneck.
 
-**Was zu löschen ist (~2000 LoC):**
+**Was zu löschen ist (~2800 LoC):**
 - `backend/playout/libretime_playout/engine/mpv_engine.py` (~450 LoC)
 - `backend/playout/libretime_playout/engine/ffmpeg_streamer.py` (~500 LoC)
 - `backend/playout/libretime_playout/engine/vlc_engine.py` (falls obsolet)
-- Pypo-Scheduler-Branches `_on_*_start` mpv/VLC-Pfade in
-  `playout_scheduler.py` (~250 LoC)
+- `backend/playout/libretime_playout/engine/ffmpeg_linein_capture.py`
+  (~806 LoC) — **ABER VORHER** den reinen Helper
+  `_stable_id_to_dshow_audio` (dshow-Spec aus Device-GUID) in ein
+  neutrales Modul herauslösen (z.B. `engine/dshow_device.py`): der
+  Liquidsoap-Pfad seit Phase F-2 (`input.ffmpeg(dshow)`) importiert
+  diesen Helper und würde sonst brechen.  Operator-Entscheid
+  2026-05-30: FfmpegLineinCapture-Löschung an diesen mpv-Cleanup
+  gekoppelt (statt Einzel-Löschung).
+- Pypo-Scheduler-Branches `_on_*_start` mpv/VLC-Pfade + die
+  `_linein_capture`-Konstruktion/Watchdog-Verdrahtung in
+  `playout_scheduler.__init__` + Legacy-Line-In-Pfade
+  (`_on_linein_start`/`_on_stop`/Resume) (~250 LoC)
 - DeprecationWarning + env-var-Fallback (`RASTATIME_PLAYOUT_ENGINE=
   mpv|vlc`) in `__main__.py`
-- Plus zugehörige Tests (`test_ffmpeg_streamer_*`, `test_mpv_*`)
+- Plus zugehörige Tests (`test_ffmpeg_streamer_*`, `test_mpv_*`;
+  `test_scheduler_linein.py` Legacy-Pfad-Tests anpassen, der
+  FfmpegLineinCapture-Mock im Liquidsoap-Pfad entfällt)
 
-**Side-Effect**: ffmpeg.exe-Dependency externe komplett weg —
-FfmpegLineinCapture nutzt es noch (bleibt), aber kein anderes
-Subprozess-spawning mehr.  liquidsoap-internal libavcodec/format
-bleibt.
+**Side-Effect**: ffmpeg.exe-Dependency extern komplett weg — seit
+Phase F-2 nutzt nur noch der Legacy-mpv-Line-In-Pfad
+FfmpegLineinCapture; mit dem mpv-Delete fällt auch das letzte externe
+Subprozess-Spawning weg.  liquidsoap-internal libavcodec/format bleibt.
 
-**Aufwand:** ~2-3 h inkl. Tests-Updates + voller Regression-Check.
+**Aufwand:** ~3-4 h inkl. Helper-Umzug + Tests-Updates + voller
+Regression-Check.
 **Vorbedingung:** Neue Hardware in Betrieb + 1 Woche Stabil-Lauf
 mit Phase-E + Phase-F aktiv (deferred zur Hardware-Migration).
 **Risiko Live-Betrieb:** Niedrig — wir löschen nur Code-Pfade die
