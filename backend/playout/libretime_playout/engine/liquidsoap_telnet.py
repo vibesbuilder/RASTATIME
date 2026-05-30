@@ -479,65 +479,65 @@ class LiquidsoapTelnetClient:
     # instance with one URL).  The set_url wrapper is kept for parity
     # with the webstream API + future multi-mount scenarios.
 
-    def linein_set_url(self, url: str) -> str:
+    def linein_set_url(self, dshow_spec: str) -> str:
         """
-        Set the HTTP URL the input.http source connects to on the next
-        :meth:`linein_start`.  Optional — the URL is normally fixed at
-        template-render time to FfmpegLineinCapture's local Icecast
-        mount, so Pypo doesn't need to call this in standard operation.
+        Set the dshow input spec the input.ffmpeg linein source will
+        open on the next :meth:`linein_start`.
 
-        Same wire-form constraints as :meth:`webstream_set_url`:
+        ``dshow_spec`` is the device's dshow alternative-name form, e.g.
+        ``audio=@device_cm_{33D9A762-...}\\wave_{<GUID>}``.  Note the
+        backslash before ``wave_`` — this is REQUIRED and is passed
+        through verbatim over telnet (Liquidsoap's set_url takes the
+        rest of the line as a raw string; spike 2026-05-30 confirmed
+        the backslash survives the wire and the device opens).
+
+        Wire-form constraints (telnet line protocol):
           * MUST NOT contain ``\\n`` / ``\\r`` (newline terminates the command)
           * MUST NOT contain ``"`` (would confuse Liquidsoap's parser)
+          * Backslash IS allowed (dshow specs need it).
 
-        Wire-form: ``linein.url <url>`` (the input.http OCaml
-        ``set_url`` method exposes as the server-command ``url`` with
-        optional argument — same convention as the webstream source).
+        Wire-form: ``linein.set_url <spec>`` — registered manually in
+        rastatime.liq via server.register (input.ffmpeg does not
+        auto-expose set_url as a telnet command, unlike input.http).
         """
-        if any(ch in url for ch in ('\n', '\r', '"')):
+        if any(ch in dshow_spec for ch in ('\n', '\r', '"')):
             raise ValueError(
-                f"linein_set_url: url contains a character that "
-                f"would break the Liquidsoap telnet wire form: {url!r}"
+                f"linein_set_url: dshow_spec contains a character that "
+                f"would break the Liquidsoap telnet wire form: {dshow_spec!r}"
             )
-        return self.send_command(f"linein.url {url}")
+        return self.send_command(f"linein.set_url {dshow_spec}")
 
     def linein_start(self) -> str:
         """
-        Tell Liquidsoap to begin consuming the FfmpegLineinCapture
-        local Icecast mount.  Pre-condition: the FfmpegLineinCapture
-        Python subprocess must be running (Pypo starts it just before
-        calling this).
+        Open the dshow device on the input.ffmpeg linein source.
+        Pre-condition: :meth:`linein_set_url` must have set a valid
+        dshow spec.
 
-        Wire-form: ``linein.start``.  The source goes
-        ``source.is_ready=true`` only after max_buffer seconds of
-        audio have been pre-fetched — the bus-switch then flips from
-        scheduled to linein automatically.
+        Wire-form: ``linein.start`` (registered via server.register).
+        The source goes ``source.is_ready=true`` once max_buffer
+        seconds of audio are pre-fetched — the bus-switch then flips
+        from scheduled to linein automatically.
         """
         return self.send_command("linein.start")
 
     def linein_stop(self) -> str:
         """
-        Tell Liquidsoap to disconnect from the FfmpegLineinCapture
-        local Icecast mount.  ``source.is_ready`` goes false, the
-        switch operator falls through to scheduled.  Idempotent (Done
-        on already-stopped source).
+        Close the dshow device on the input.ffmpeg linein source.
+        ``source.is_ready`` goes false, the switch falls through to
+        scheduled.  Idempotent.
 
-        Wire-form: ``linein.stop``.
-
-        Pypo's _on_stop additionally stops the FfmpegLineinCapture
-        Python subprocess after this telnet command, so the dshow
-        capture isn't kept alive between shows.
+        Wire-form: ``linein.stop`` (registered via server.register).
+        No Python subprocess to stop anymore — input.ffmpeg owns the
+        dshow capture in-process.
         """
         return self.send_command("linein.stop")
 
     def linein_status(self) -> str:
         """
-        Return Liquidsoap's free-text input.http status for the linein
-        source — same string semantics as :meth:`webstream_status`
-        (``"stopped"`` / ``"starting"`` / ``"polling"`` /
-        ``"connected <url>"`` / ``"stopping"``).
+        Return Liquidsoap's free-text input.ffmpeg status for the
+        linein source — ``"stopped"`` / ``"connected <spec>"`` etc.
 
-        Wire-form: ``linein.status``.
+        Wire-form: ``linein.status`` (registered via server.register).
         """
         return self.send_command("linein.status")
 

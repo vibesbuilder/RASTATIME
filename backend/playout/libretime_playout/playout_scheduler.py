@@ -1007,22 +1007,55 @@ class PlayoutScheduler:
             )
             return
 
-        # Always start the capture — it pushes to /linein-capture
-        # regardless of whether a DJ is currently overriding the
-        # downstream playback.  Cheap to keep running; cheap to stop.
-        # FfmpegLineinCapture.start() is itself same-device-idempotent,
-        # so this is safe even if we got here because the previous
-        # event was a LineinEvent that crashed mid-show — the watchdog
-        # may have already restored the capture.
+        # Resolve the device GUID (with name-fallback for USB endpoint
+        # GUID shifts after reboot — see _resolve_linein_device).
         resolved_device_id = self._resolve_linein_device(event)
         if not resolved_device_id:
             logger.error(
                 "Line-In %s: device %r unavailable (and no name-fallback "
-                "matched name=%r) — leaving capture stopped.",
+                "matched name=%r) — leaving line-in stopped.",
                 key, event.device_id,
                 getattr(event, "device_name", "") or "",
             )
             return
+
+        # RASTATIME 2026-05-30 — Phase-F-2: dual-engine line-in handling.
+        #
+        # Liquidsoap-Engine path (streaming_handled_externally=True):
+        # input.ffmpeg(format="dshow") opens the device DIRECTLY in
+        # Liquidsoap's in-process libavdevice — no FfmpegLineinCapture
+        # subprocess, no HTTP hop.  Pypo builds the dshow alternative-
+        # name spec from the device GUID and hands it to
+        # engine.linein_start(spec), which does set_url + start over
+        # telnet.  The .liq switch ranks DJ sources above linein, so if
+        # a DJ is active we just bookkeep + return (same as webstream);
+        # the resume path re-arms on disconnect.
+        if self._streaming_handled_externally:
+            if self._switcher and self._switcher.current_state != SourceState.SCHEDULED:
+                logger.info(
+                    "Line-In %s queued — %s source active, scheduled "
+                    "line-in held back.",
+                    key, self._switcher.current_state.value,
+                )
+                return
+            # Build dshow alternative-name spec from the device GUID.
+            # _stable_id_to_dshow_audio lives in ffmpeg_linein_capture
+            # (kept as the legacy capture layer); it's a pure helper,
+            # safe to reuse without instantiating the capture class.
+            from .engine.ffmpeg_linein_capture import _stable_id_to_dshow_audio
+            dshow_spec = _stable_id_to_dshow_audio(resolved_device_id)
+            self._engine.stop()  # clear the scheduled queue (deferred-stop)
+            self._engine.linein_start(dshow_spec)
+            # No _start_streamers — Liquidsoap owns the Icecast PUTs and
+            # opens the dshow device itself.
+            return
+
+        # ----- Legacy mpv/VLC path (unchanged from Phase B) -----------
+        # FfmpegLineinCapture stays as the capture layer here until the
+        # mpv-engine code is deleted.  Always start the capture — it
+        # pushes to /linein-capture regardless of whether a DJ is
+        # overriding downstream playback.  start() is same-device-
+        # idempotent (safe after a watchdog restore).
         try:
             self._linein_capture.start(resolved_device_id)
         except Exception as exc:  # pylint: disable=broad-exception-caught
@@ -1044,39 +1077,14 @@ class PlayoutScheduler:
             )
             return
 
-        # SCHEDULED path: tell the local-playback engine to consume the
-        # capture's listen URL.  Brief silence (~0.5 s) while
-        # /linein-capture's burst buffer fills, identical to the
-        # Master/Show source-switch behavior.
-        #
-        # RASTATIME 2026-05-29 — Phase F: dual-engine line-in handling.
-        # Liquidsoap-Engine path (streaming_handled_externally=True):
-        # the .liq script has a dedicated input.http source ("linein")
-        # bound at render-time to the FfmpegLineinCapture listen URL.
-        # We tell Liquidsoap to start consuming via telnet — the bus-
-        # switch flips from scheduled to linein once max_buffer (10 s)
-        # of audio has buffered.  FfmpegLineinCapture itself was
-        # already started above with the device GUID.
-        #
-        # Legacy mpv/VLC path: unchanged — engine.play() points VLC at
-        # the listen URL and FfmpegStreamer re-encodes to Icecast.
-        # This path stays as a fallback until mpv-engine code is
-        # deleted (post-Phase-F per BACKLOG).
-        if self._streaming_handled_externally:
-            # Phase F — Liquidsoap engine path.
-            self._engine.stop()  # clear scheduled queue (deferred-stop)
-            self._engine.linein_start()
-            # No _start_streamers — Liquidsoap owns the Icecast PUTs.
-        else:
-            # Legacy mpv/VLC path — unchanged from Phase B.
-            # RASTATIME 2026-05-25 — Seamless-Bus-Mix Phase 1 (see
-            # _on_file_start for the rationale).
-            self._engine.wait_until_stopped(timeout=0.5)
-
-            self._engine.stop()
-            self._stop_streamers()
-            self._engine.play(self._linein_capture.listen_url, cue_in=0.0)
-            self._start_streamers(self._linein_capture.listen_url)
+        # SCHEDULED path: swap the engine + FFmpeg streamers onto the
+        # capture's listen URL.  RASTATIME 2026-05-25 — Seamless-Bus-Mix
+        # Phase 1 (see _on_file_start for the rationale).
+        self._engine.wait_until_stopped(timeout=0.5)
+        self._engine.stop()
+        self._stop_streamers()
+        self._engine.play(self._linein_capture.listen_url, cue_in=0.0)
+        self._start_streamers(self._linein_capture.listen_url)
 
     def _on_linein_capture_restart(self) -> None:
         """

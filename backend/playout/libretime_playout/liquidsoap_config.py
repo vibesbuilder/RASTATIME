@@ -183,31 +183,42 @@ DEFAULT_WEBSTREAM_POLL_DELAY_SECONDS = 2.0
 
 
 # ---------------------------------------------------------------------
-# Phase-F — Scheduled Line-Inputs via input.http (RASTATIME 2026-05-29)
+# Phase-F-2 — Scheduled Line-Inputs via input.ffmpeg(format="dshow")
+# (RASTATIME 2026-05-30)
 # ---------------------------------------------------------------------
+#
+# Phase-F-2 replaces the Phase-F approach (input.http consuming the
+# FfmpegLineinCapture local Icecast mount) with input.ffmpeg opening
+# the Windows dshow audio device DIRECTLY via Liquidsoap's in-process
+# libavdevice — no external ffmpeg subprocess, no HTTP hop.
+#
+# Spike-verified 2026-05-30:
+#   * input.ffmpeg(format="dshow", start=false, self_sync=false, "")
+#     opens a dshow device on demand (pcm_s16le 44100Hz 2ch).
+#   * input.ffmpeg does NOT auto-register its set_url/start/stop/status
+#     server-commands (unlike input.http), so the template registers
+#     them manually via server.register under the "linein" namespace.
+#   * Runtime device-switch works: `linein.set_url <dshow-spec>` then
+#     `linein.start` → "connected <spec>".  This is what input.portaudio
+#     could NOT do (no set_device at runtime).
+#
+# Pypo sends the dshow alternative-name spec (built from the schedule
+# item's device GUID via _stable_id_to_dshow_audio) as the set_url
+# argument at show-start, then linein.start; linein.stop at show-end.
 
-# Whether to emit the linein input.http block + switch-arm.  Defaults
+# Whether to emit the linein input.ffmpeg block + switch-arm.  Defaults
 # to True for the Liquidsoap engine path.  The Phase-D-deprecated
-# mpv/VLC engine paths set this to False — those code paths still
-# handle line-inputs via the legacy mpv adapter + the existing
-# FfmpegLineinCapture watchdog.
+# mpv/VLC engine paths set this to False — those still handle
+# line-inputs via the legacy mpv adapter.
 DEFAULT_LINEIN_ENABLED = True
 
-# The local Icecast mount that FfmpegLineinCapture streams to.  Fixed
-# at this URL because FfmpegLineinCapture has its own hard-coded
-# listen URL — there is only ever one capture instance, with one
-# operator-selected device active at a time, on this one mount.
-# Liquidsoap's input.http connects to this URL when Pypo signals a
-# scheduled line-input start.
-DEFAULT_LINEIN_LISTEN_URL = "http://localhost:8000/linein-capture"
-
-# Same buffer / timeout / poll-delay semantics as webstream — the
-# capture stream is HTTP from localhost, so jitter should be much
-# lower than from a public Internet webstream.  We keep the same
-# defaults for consistency, but the renderer accepts overrides.
-DEFAULT_LINEIN_MAX_BUFFER_SECONDS = 10.0
-DEFAULT_LINEIN_TIMEOUT_SECONDS = 10.0
-DEFAULT_LINEIN_POLL_DELAY_SECONDS = 2.0
+# input.ffmpeg max_buffer (seconds) — how much dshow audio is pre-
+# buffered before the source reports ready.  Much lower than the
+# webstream value (10 s) because a local sound card has near-zero
+# jitter (no network in the path), and a live mic wants minimal
+# added latency.  2 s absorbs the cold-start buffer-fill without a
+# noticeable on-air delay.
+DEFAULT_LINEIN_MAX_BUFFER_SECONDS = 2.0
 
 
 # ---------------------------------------------------------------------
@@ -666,61 +677,94 @@ def _render_webstream_input_block(
 def _render_linein_input_block(
     *,
     enabled: bool,
-    listen_url: str = DEFAULT_LINEIN_LISTEN_URL,
     max_buffer_seconds: float = DEFAULT_LINEIN_MAX_BUFFER_SECONDS,
-    timeout_seconds: float = DEFAULT_LINEIN_TIMEOUT_SECONDS,
-    poll_delay_seconds: float = DEFAULT_LINEIN_POLL_DELAY_SECONDS,
 ) -> str:
     """
-    Render the ``input.http`` block for scheduled line-inputs (Phase F).
+    Render the ``input.ffmpeg(format="dshow")`` block for scheduled
+    line-inputs (Phase-F-2, 2026-05-30).
 
-    The URL is hard-coded to FfmpegLineinCapture's local Icecast mount
-    (``http://localhost:8000/linein-capture`` by default).  Unlike the
-    webstream block (Phase E), the URL is fixed at render time — Pypo
-    does NOT change it per-show because there is only one capture
-    instance active at a time.
+    Opens a Windows dshow audio device DIRECTLY via Liquidsoap's
+    in-process libavdevice — no external ffmpeg subprocess, no HTTP
+    hop (this replaces the Phase-F input.http + FfmpegLineinCapture
+    approach).
 
-    Pypo's _on_linein_start (in Liquidsoap mode) starts both the
-    FfmpegLineinCapture Python subprocess (with the device GUID from
-    the schedule item) AND sends the telnet ``linein.start`` command;
-    on show-end ``linein.stop`` + FfmpegLineinCapture stop.
+    ``start=false`` keeps the source idle (no device opened) until
+    Pypo issues the runtime sequence:
 
-    No gain wrapper here — :class:`LineinEvent` deliberately has no
-    ``input_gain_db`` field (line-input level is controlled at the
-    operator's audio mixer or in FfmpegLineinCapture's encode pipeline,
-    not per-show in the schedule).  Future operator-requested
-    per-line-input gain could be added analog to the webstream
-    pattern.
+        linein.set_url <dshow-spec>   # e.g. audio=@device_cm_{..}\\wave_{..}
+        linein.start
+          ... show plays ...
+        linein.stop
 
-    See ``_render_webstream_input_block`` for the full reasoning on
-    why ``self_sync=false`` + ``buffer()`` wrapper are BOTH required
-    for crossfade compatibility (compile-time source-graph latency
-    check + clock-bridge).
+    The dshow-spec is the device's alternative-name form, built by
+    Pypo from the schedule item's device GUID (_stable_id_to_dshow_audio).
+    Runtime device-switch works (set_url with a different spec) — the
+    key capability input.portaudio lacked.
+
+    Why server.register: input.ffmpeg (unlike input.http) does NOT
+    auto-expose its set_url / start / stop / status methods as telnet
+    commands.  Spike 2026-05-30 confirmed the methods exist on the
+    source object but aren't registered under the source-id namespace.
+    So we register them manually under the "linein" namespace.
+
+    ``self_sync=false`` hands clock control to Liquidsoap's main clock
+    (the dshow card is the audio source but we don't want it driving
+    the whole pipeline's tick rate).  No buffer() wrapper needed here:
+    the linein source feeds the switch directly (NOT through crossfade,
+    which only wraps the scheduled source since the Phase-E fix), and
+    the switch tolerates self_sync=false sources.  Skipping the buffer
+    keeps live-mic latency minimal.
+
+    No gain wrapper — :class:`LineinEvent` has no ``input_gain_db``
+    field (line-input level is set at the operator's mixer).
+
+    When ``enabled`` is False (legacy mpv/VLC paths), emits a comment
+    stub.
     """
     if not enabled:
         return (
-            "# (linein input.http disabled — Liquidsoap engine not\n"
+            "# (linein input.ffmpeg disabled — Liquidsoap engine not\n"
             "#  active; legacy mpv/VLC handles line-inputs via separate path)\n"
         )
     return (
-        "linein_raw = input.http(\n"
+        "linein_raw = input.ffmpeg(\n"
         '  id="linein",\n'
+        "  format=\"dshow\",\n"
         "  start=false,\n"
         "  self_sync=false,\n"
         f"  max_buffer={_format_crossfade_duration(max_buffer_seconds)},\n"
-        f"  timeout={_format_crossfade_duration(timeout_seconds)},\n"
-        f"  poll_delay={_format_crossfade_duration(poll_delay_seconds)},\n"
-        f'  "{_escape_liq_string(listen_url)}",\n'
+        '  "",\n'
         ")\n"
         "\n"
-        "# buffer(buffer=5.0, ...) is the asynchronous clock-bridge that\n"
-        "# decouples input.http's HTTP-stream clock from the main bus.\n"
-        "# Same reasoning as the webstream block.  Localhost HTTP-stream\n"
-        "# jitter is much lower than public Internet streams, but the\n"
-        "# 5 s buffer absorbs the initial-connect cold-buffer rebuild\n"
-        "# without the switch-flip-off 'Haker' symptom observed in\n"
-        "# Phase-E live-tests.\n"
-        "linein = buffer(buffer=5.0, linein_raw)\n"
+        "# audio_to_stereo fixes the content type to audio=pcm(stereo).\n"
+        "# input.ffmpeg returns a polymorphic source('a) (audio+video\n"
+        "# capable); without this the switch() below rejects the arm\n"
+        "# with a type mismatch against the other (audio-only) sources.\n"
+        "linein = audio_to_stereo(linein_raw)\n"
+        "\n"
+        "# input.ffmpeg does NOT auto-register its runtime controls as\n"
+        "# telnet commands (unlike input.http).  Register them manually\n"
+        "# under the \"linein\" namespace so Pypo can drive the dshow\n"
+        "# device at show-start/-end.  Commands act on linein_raw (the\n"
+        "# input.ffmpeg source that has set_url/start/stop/status; the\n"
+        "# audio_to_stereo wrapper doesn't expose them).  Spike-verified\n"
+        "# 2026-05-30.\n"
+        'server.register(\n'
+        '  namespace="linein", description="Set the dshow input spec",\n'
+        '  "set_url", fun (spec) -> begin linein_raw.set_url(spec); "Done" end\n'
+        ")\n"
+        'server.register(\n'
+        '  namespace="linein", description="Start the dshow capture",\n'
+        '  "start", fun (_) -> begin linein_raw.start(); "Done" end\n'
+        ")\n"
+        'server.register(\n'
+        '  namespace="linein", description="Stop the dshow capture",\n'
+        '  "stop", fun (_) -> begin linein_raw.stop(); "Done" end\n'
+        ")\n"
+        'server.register(\n'
+        '  namespace="linein", description="dshow capture status",\n'
+        '  "status", fun (_) -> linein_raw.status()\n'
+        ")\n"
     )
 
 
@@ -824,10 +868,7 @@ def render_rastatime_liq(
     webstream_timeout_seconds: float = DEFAULT_WEBSTREAM_TIMEOUT_SECONDS,
     webstream_poll_delay_seconds: float = DEFAULT_WEBSTREAM_POLL_DELAY_SECONDS,
     linein_enabled: bool = DEFAULT_LINEIN_ENABLED,
-    linein_listen_url: str = DEFAULT_LINEIN_LISTEN_URL,
     linein_max_buffer_seconds: float = DEFAULT_LINEIN_MAX_BUFFER_SECONDS,
-    linein_timeout_seconds: float = DEFAULT_LINEIN_TIMEOUT_SECONDS,
-    linein_poll_delay_seconds: float = DEFAULT_LINEIN_POLL_DELAY_SECONDS,
     template_path: Optional[Path] = None,
 ) -> str:
     """
@@ -884,10 +925,7 @@ def render_rastatime_liq(
     )
     linein_block = _render_linein_input_block(
         enabled=linein_enabled,
-        listen_url=linein_listen_url,
         max_buffer_seconds=linein_max_buffer_seconds,
-        timeout_seconds=linein_timeout_seconds,
-        poll_delay_seconds=linein_poll_delay_seconds,
     )
     bus_block = _render_bus_source_block(
         main_enabled=bool(harbor_main_password),
@@ -944,10 +982,7 @@ def write_rastatime_liq(
     webstream_timeout_seconds: float = DEFAULT_WEBSTREAM_TIMEOUT_SECONDS,
     webstream_poll_delay_seconds: float = DEFAULT_WEBSTREAM_POLL_DELAY_SECONDS,
     linein_enabled: bool = DEFAULT_LINEIN_ENABLED,
-    linein_listen_url: str = DEFAULT_LINEIN_LISTEN_URL,
     linein_max_buffer_seconds: float = DEFAULT_LINEIN_MAX_BUFFER_SECONDS,
-    linein_timeout_seconds: float = DEFAULT_LINEIN_TIMEOUT_SECONDS,
-    linein_poll_delay_seconds: float = DEFAULT_LINEIN_POLL_DELAY_SECONDS,
     template_path: Optional[Path] = None,
 ) -> bool:
     """
@@ -985,10 +1020,7 @@ def write_rastatime_liq(
         webstream_timeout_seconds=webstream_timeout_seconds,
         webstream_poll_delay_seconds=webstream_poll_delay_seconds,
         linein_enabled=linein_enabled,
-        linein_listen_url=linein_listen_url,
         linein_max_buffer_seconds=linein_max_buffer_seconds,
-        linein_timeout_seconds=linein_timeout_seconds,
-        linein_poll_delay_seconds=linein_poll_delay_seconds,
         template_path=template_path,
     )
 

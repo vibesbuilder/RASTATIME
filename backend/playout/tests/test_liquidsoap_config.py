@@ -842,24 +842,36 @@ def test_full_render_no_harbor_no_webstream_bare_bus_scheduled():
             )
 
 
-# ---- Phase-F: linein input.http block ---------------------------------
+# ---- Phase-F-2: linein input.ffmpeg(format=dshow) block ---------------
 
 
 def test_full_render_default_includes_linein_input_block():
     """
     Default render (DEFAULT_LINEIN_ENABLED=True) MUST include the
-    input.http linein source + buffer-wrapper + switch-arm.
+    input.ffmpeg(format="dshow") linein source + the server.register
+    command block + switch-arm.  Phase-F-2 (2026-05-30) replaced the
+    input.http + FfmpegLineinCapture approach with direct dshow capture.
     """
     out = lc.render_rastatime_liq([_stream()])
     active = "\n".join(_active_lines(out))
-    assert "linein_raw = input.http(" in active
+    assert "linein_raw = input.ffmpeg(" in active
     assert 'id="linein"' in active
+    assert 'format="dshow"' in active
     assert "start=false" in active
     assert "self_sync=false" in active
-    # Default URL points at FfmpegLineinCapture's local mount
-    assert '"http://localhost:8000/linein-capture"' in active
-    # buffer() wrapper is the clock-bridge
-    assert "linein = buffer(buffer=5.0, linein_raw)" in active
+    # Empty initial input spec (Pypo sets it via linein.set_url before start)
+    assert '  "",' in active
+    # audio_to_stereo fixes the polymorphic input.ffmpeg type for the switch
+    assert "linein = audio_to_stereo(linein_raw)" in active
+    # input.ffmpeg does NOT auto-register commands → manual server.register
+    assert 'server.register(' in active
+    assert 'namespace="linein"' in active
+    assert '"set_url"' in active
+    assert '"start"' in active
+    assert '"stop"' in active
+    assert '"status"' in active
+    # No input.http for linein anymore (that was Phase F, superseded)
+    assert "linein_raw = input.http(" not in active
     # Switch arm
     bus_idx = active.index("bus = switch(")
     bus_block = active[bus_idx:bus_idx + 500]
@@ -869,40 +881,27 @@ def test_full_render_default_includes_linein_input_block():
 def test_full_render_linein_disabled_renders_stub_comment():
     """
     With linein_enabled=False (legacy mpv/VLC paths) the renderer
-    emits ONLY a comment stub — no input.http + no switch-arm.
+    emits ONLY a comment stub — no input.ffmpeg + no switch-arm.
     """
     out = lc.render_rastatime_liq(
         [_stream()],
         linein_enabled=False,
     )
     active = "\n".join(_active_lines(out))
-    # No active linein input.http
-    assert "linein_raw" not in active
-    assert "linein = buffer" not in active
+    # No active linein source or its server.register block
+    assert "linein = input.ffmpeg(" not in active
+    assert 'namespace="linein"' not in active
     # Switch arm for linein MUST NOT appear
     assert "source.is_ready(linein)" not in active
 
 
-def test_full_render_linein_custom_listen_url():
-    """Custom listen_url propagates to the rendered input.http URL."""
+def test_full_render_linein_custom_max_buffer():
+    """Custom max_buffer propagates to the rendered input.ffmpeg."""
     out = lc.render_rastatime_liq(
         [_stream()],
-        linein_listen_url="http://192.168.1.5:8000/altmount",
+        linein_max_buffer_seconds=4.0,
     )
-    assert '"http://192.168.1.5:8000/altmount"' in out
-
-
-def test_full_render_linein_custom_buffer_timeout_poll():
-    """Custom tuning params propagate."""
-    out = lc.render_rastatime_liq(
-        [_stream()],
-        linein_max_buffer_seconds=20.0,
-        linein_timeout_seconds=8.0,
-        linein_poll_delay_seconds=3.0,
-    )
-    assert "max_buffer=20.0" in out
-    assert "timeout=8.0" in out
-    assert "poll_delay=3.0" in out
+    assert "max_buffer=4.0" in out
 
 
 def test_full_render_switch_includes_both_webstream_and_linein_by_default():

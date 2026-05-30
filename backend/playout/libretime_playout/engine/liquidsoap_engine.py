@@ -636,54 +636,48 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
         return self._telnet.webstream_status()
 
     # ------------------------------------------------------------------
-    # Phase F — Scheduled line-input lifecycle (Liquidsoap-specific)
+    # Phase-F-2 — Scheduled line-input lifecycle (Liquidsoap-specific)
     # ------------------------------------------------------------------
     #
-    # The rastatime.liq template renders an ``input.http(id="linein",
-    # start=false, ..., "<FfmpegLineinCapture-URL>")`` source.  Unlike
-    # the webstream block, the URL is FIXED at render time —
-    # FfmpegLineinCapture's local Icecast mount is the only source.
+    # The rastatime.liq template renders an ``input.ffmpeg(id="linein",
+    # format="dshow", start=false, ...)`` source that opens a Windows
+    # dshow audio device DIRECTLY via Liquidsoap's in-process
+    # libavdevice — no external ffmpeg subprocess, no HTTP hop
+    # (this replaced the Phase-F input.http + FfmpegLineinCapture
+    # approach on 2026-05-30).
     #
-    # Pypo's _on_linein_start (in Liquidsoap mode) starts both the
-    # FfmpegLineinCapture Python subprocess (with the device GUID from
-    # the schedule item) AND calls this engine.linein_start to tell
-    # Liquidsoap to begin consuming.  _on_stop calls linein_stop, then
-    # FfmpegLineinCapture.stop().
+    # Pypo's _on_linein_start (in Liquidsoap mode) builds the dshow
+    # alternative-name spec from the schedule item's device GUID and
+    # passes it to engine.linein_start(dshow_spec).  _on_stop calls
+    # linein_stop.  No Python subprocess to manage anymore.
     #
-    # Why FfmpegLineinCapture isn't replaced by input.portaudio:
-    #   * input.portaudio has no set_device runtime method → couldn't
-    #     switch between scheduled-different-mics without Liquidsoap
-    #     restart.
-    #   * FfmpegLineinCapture's watchdog handles USB-cable-unplug
-    #     gracefully — Liquidsoap-side has no equivalent.
-    # See BACKLOG Phase-F evaluation 2026-05-29 for the full reasoning.
+    # The template exposes set_url / start / stop / status via
+    # server.register (input.ffmpeg does NOT auto-register them, unlike
+    # input.http — spike-verified 2026-05-30).  Runtime device-switch
+    # works (set_url with a different spec), the capability
+    # input.portaudio lacked.
 
-    def linein_start(self, url: Optional[str] = None) -> None:
+    def linein_start(self, dshow_spec: str) -> None:
         """
-        Tell Liquidsoap to begin consuming the FfmpegLineinCapture
-        local Icecast mount.
+        Open a scheduled line-input on Liquidsoap's input.ffmpeg dshow
+        source.
 
-        Pre-condition: the FfmpegLineinCapture Python subprocess must
-        already be running (Pypo starts it just before calling this
-        method, with the device GUID from the schedule item).
+        ``dshow_spec`` is the device's dshow alternative-name form, e.g.
+        ``audio=@device_cm_{33D9A762-...}\\wave_{<GUID>}`` — Pypo builds
+        it from the schedule item's device GUID
+        (``_stable_id_to_dshow_audio``).
 
-        ``url`` is optional — by default Liquidsoap uses the URL hard-
-        coded at template-render time
-        (``http://localhost:8000/linein-capture``).  Pass a URL only if
-        FfmpegLineinCapture's listen URL was customised at runtime
-        (very rare; mostly for future multi-mount scenarios).
+        Sequence (analogue to webstream_start): set_url(spec) then start.
+        The dshow device is opened only on start; ``set_url`` selects
+        which device (runtime-switchable between shows).
 
         Mirrors :meth:`webstream_start`'s fail-soft behaviour — any
         telnet error is logged + swallowed so the scheduler can
         continue with the next event.
         """
-        logger.info(
-            "Liquidsoap linein_start: url=%s",
-            self._redact(url) if url else "default (rendered URL)",
-        )
+        logger.info("Liquidsoap linein_start: dshow_spec=%s", dshow_spec)
         try:
-            if url is not None:
-                self._telnet.linein_set_url(url)
+            self._telnet.linein_set_url(dshow_spec)
             self._telnet.linein_start()
         except Exception as exc:  # pylint: disable=broad-exception-caught
             logger.error(

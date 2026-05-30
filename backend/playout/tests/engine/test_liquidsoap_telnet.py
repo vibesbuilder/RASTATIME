@@ -620,29 +620,36 @@ def test_webstream_url_wrapper():
 
 def test_linein_set_url_wrapper():
     """
-    linein_set_url() sends `linein.url <url>` — same convention as
-    webstream_set_url (input.http exposes set_url as the server-command
-    ``url`` with optional argument).
+    Phase-F-2: linein_set_url() sends `linein.set_url <dshow-spec>`
+    — registered manually in rastatime.liq via server.register
+    (input.ffmpeg does not auto-expose set_url, unlike input.http).
+    The dshow spec contains a backslash (\\wave_) which must pass
+    through verbatim.
     """
-    url = "http://localhost:8000/linein-capture"
-    expected = f"linein.url {url}"
+    spec = r"audio=@device_cm_{33D9A762-90C8-11D0-BD43-00A0C911CE86}\wave_{A9B77F0F-CD87-456E-9949-614E408B45FD}"
+    expected = f"linein.set_url {spec}"
     with fake_server({expected: "Done"}) as srv:
         client = LiquidsoapTelnetClient(host=srv.host, port=srv.port)
         try:
-            assert client.linein_set_url(url) == "Done"
+            assert client.linein_set_url(spec) == "Done"
             assert srv.received == [expected]
+            # backslash survived the wire form
+            assert "\\wave_" in srv.received[0]
         finally:
             client.close()
 
 
 def test_linein_set_url_rejects_special_chars():
-    """URL with double-quote / newline / carriage-return is REJECTED."""
+    """
+    Spec with double-quote / newline / carriage-return is REJECTED,
+    but backslash (needed for dshow alt-names) is ALLOWED.
+    """
     import pytest
     client = LiquidsoapTelnetClient()
     for bad in (
-        'http://example.com/with"quote',
-        "http://example.com/with\nnewline",
-        "http://example.com/with\rcarriage",
+        'audio=@device\\wave_{x}"quote',
+        "audio=@device\\wave_{x}\nnewline",
+        "audio=@device\\wave_{x}\rcarriage",
     ):
         with pytest.raises(ValueError, match="wire form"):
             client.linein_set_url(bad)

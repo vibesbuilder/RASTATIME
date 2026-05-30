@@ -109,24 +109,29 @@ def legacy_scheduler():
 # ---- _on_linein_start: Liquidsoap path --------------------------------
 
 
-def test_linein_start_liquidsoap_starts_capture_AND_engine_linein_start(
+def test_linein_start_liquidsoap_opens_dshow_via_engine(
     liquidsoap_scheduler,
 ):
     """
-    In Liquidsoap-Mode, _on_linein_start MUST:
-      1. Start FfmpegLineinCapture (the dshow subprocess) with the
-         device GUID — unchanged from legacy.
-      2. Call engine.linein_start() to tell Liquidsoap to consume.
+    Phase-F-2: In Liquidsoap-Mode, _on_linein_start opens the dshow
+    device DIRECTLY via engine.linein_start(dshow_spec) — NO
+    FfmpegLineinCapture subprocess.
     """
     sched, engine, capture = liquidsoap_scheduler
     event = _make_linein_event()
 
     sched._on_linein_start("key1", event)
 
-    # FfmpegLineinCapture started with the resolved device GUID
-    capture.start.assert_called_once_with(event.device_id)
-    # New Liquidsoap linein_start was called
-    engine.linein_start.assert_called_once()
+    # Phase-F-2: FfmpegLineinCapture is NOT started in the Liquidsoap
+    # path — input.ffmpeg opens the dshow device directly.
+    capture.start.assert_not_called()
+    # engine.linein_start was called with the dshow alternative-name
+    # spec built from the device GUID.
+    from libretime_playout.engine.ffmpeg_linein_capture import (
+        _stable_id_to_dshow_audio,
+    )
+    expected_spec = _stable_id_to_dshow_audio(event.device_id)
+    engine.linein_start.assert_called_once_with(expected_spec)
     # Legacy engine.play MUST NOT be called in this path
     engine.play.assert_not_called()
 
