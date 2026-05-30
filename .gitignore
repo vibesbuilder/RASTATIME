@@ -126,9 +126,12 @@ backend/analyzer/retry_queue
 
 # -----------------------------------------------------------------------------
 # Liquidsoap script-cache (re-created on every Liquidsoap startup;
-# *.liq-cache files are binary, machine-specific).
+# *.liq-cache files are binary, machine-specific).  Liquidsoap writes the
+# cache relative to its working directory, so depending on how the service
+# is launched it may land in config/cache/ OR at the repo root.
 # -----------------------------------------------------------------------------
 backend/playout/config/cache/
+/cache/
 
 # -----------------------------------------------------------------------------
 # Per-show .mp3 recordings (output.file destination — operator-generated
