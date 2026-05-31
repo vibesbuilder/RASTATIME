@@ -11,6 +11,9 @@ class PodcastController extends Zend_Controller_Action
         $this->view->headScript()->appendFile(Assets::url('js/airtime/library/events/library_showbuilder.js'), 'text/javascript');
 
         $this->view->headScript()->appendFile(Assets::url('js/airtime/widgets/table.js'), 'text/javascript');
+        // RASTATIME 2026-05-31 (JS-modernization stage 0): AngularJS now loaded
+        // per-page (removed from global PageLayoutInitPlugin); must precede podcast.js.
+        $this->view->headScript()->appendFile(Assets::url('js/libs/angular.min.js'), 'text/javascript');
         $this->view->headScript()->appendFile(Assets::url('js/airtime/library/podcast.js'), 'text/javascript');
 
         $this->view->headLink()->appendStylesheet(Assets::url('css/datatables/css/ColVis.css'));

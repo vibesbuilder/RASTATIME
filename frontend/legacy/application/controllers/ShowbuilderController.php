@@ -53,6 +53,9 @@ class ShowbuilderController extends Zend_Controller_Action
         $this->view->headScript()->appendFile(Assets::url('js/libs/utc.min.js'), 'text/javascript');
         $this->view->headScript()->appendFile(Assets::url('js/libs/timezone.min.js'), 'text/javascript');
         $this->view->headScript()->appendFile(Assets::url('js/airtime/library/spl.js'), 'text/javascript');
+        // RASTATIME 2026-05-31 (JS-modernization stage 0): AngularJS now loaded
+        // per-page (removed from global PageLayoutInitPlugin); must precede podcast.js/publish.js.
+        $this->view->headScript()->appendFile(Assets::url('js/libs/angular.min.js'), 'text/javascript');
         $this->view->headScript()->appendFile(Assets::url('js/airtime/library/podcast.js'), 'text/javascript');
         $this->view->headScript()->appendFile(Assets::url('js/airtime/library/publish.js'), 'text/javascript');
         $this->view->headScript()->appendFile(Assets::url('js/airtime/playlist/smart_blockbuilder.js'), 'text/javascript');
