@@ -113,7 +113,9 @@ class DashboardController extends Zend_Controller_Action
 
     public function streamPlayerAction()
     {
-        $this->view->headLink()->appendStylesheet(Assets::url('js/jplayer/skin/jplayer.blue.monday.css'));
+        // RASTATIME 2026-05-31 (JS-modernization stage 0, jPlayer part 2/3): the
+        // jPlayer skin CSS is gone — stream-player.phtml uses a native <audio>
+        // element with its own inline styling now.
         $this->_helper->layout->setLayout('livestream');
 
         $logo = Application_Model_Preference::GetStationLogo();

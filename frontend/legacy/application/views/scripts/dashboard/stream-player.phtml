@@ -1,58 +1,83 @@
+<?php /* RASTATIME 2026-05-31 (JS-modernization stage 0, jPlayer part 2/3):
+       * native <audio> live-stream player — replaces the jPlayer GUI + jPlayer
+       * skin CSS for the Dashboard "Listen" popup. The stream <select> drives a
+       * vanilla setStream(); the native controls give play/pause/volume/mute.
+       * The old shoutcast ";stream/1" trick and the ended->play reconnect are
+       * preserved. */ ?>
 <div id="content" class="jp-container">
     <h1><?php echo _("Live stream") ?></h1>
     <a id="popup-link" href="#"><?php echo _("Share") ?></a>
     <?php $ids = Application_Model_StreamSetting::getEnabledStreamIds(); ?>
+    <style>
+        body { margin: 0; font-family: Arial, Helvetica, sans-serif; }
+        #content { padding: 8px; }
+        #content h1 { font-size: 14px; margin: 0 0 4px; display: inline-block; }
+        #popup-link { font-size: 11px; margin-left: 8px; }
+        .jp-logo img { max-height: 40px; }
+        .jp-stream { margin: 6px 0; }
+        .jp-stream-text { font-size: 11px; margin-bottom: 2px; }
+        #combo-box { max-width: 100%; }
+        #stream_audio_el { width: 100%; margin-top: 4px; }
+        #popup-share { display: none; margin-top: 6px; }
+        #popup-share-link { width: 90%; }
+    </style>
     <script>
-        function setjPlayer(url, type, serverType) {
-            var obj = new Object();
-            obj[type] = url;
+        // RASTATIME 2026-05-31 (JS-modernization stage 0, jPlayer part 2/3):
+        // native <audio> replaces jPlayer for the Dashboard live-stream popup.
+        var streamAudio = null;
 
-            if (serverType == 'shoutcast') {
-                obj[type] = url + ";stream/1";
-            }
-
-            $("#jquery_jplayer_1").jPlayer("destroy");
-            $("#jquery_jplayer_1").jPlayer({
-                ready: function() {
-                    $(this).jPlayer("setMedia", obj);
-                },
-                ended: function(event) {
-                    $(this).jPlayer("play");
-                },
-                swfPath: "/js/jplayer/",
-                supplied: type,
-                wmode: "window"
-            });
+        // The stream host may be configured as "localhost", which only resolves
+        // on the server itself. For a remote browser, rewrite localhost /
+        // 127.0.0.1 to the host the app is served from (window.location), so the
+        // stream URL is actually reachable. An explicit host (a domain or a
+        // dedicated Icecast box) is left untouched.
+        function reachableStreamUrl(url) {
+            return url.replace(
+                /^(https?:\/\/)(?:localhost|127\.0\.0\.1)\b/i,
+                "$1" + window.location.hostname
+            );
         }
 
-        $(document).ready(function() {
+        function setStream(url, serverType) {
+            url = reachableStreamUrl(url);
+            if (serverType == 'shoutcast') {
+                url = url + ";stream/1";
+            }
+            if (streamAudio === null) {
+                streamAudio = document.getElementById("stream_audio_el");
+                // a live stream that "ends" (e.g. a dropout) should try to
+                // resume, mirroring the old jPlayer ended->play behaviour.
+                streamAudio.addEventListener("ended", function () {
+                    streamAudio.play().catch(function () {});
+                });
+            }
+            streamAudio.src = url;
+            streamAudio.load();
+            streamAudio.play().catch(function () {});
+        }
 
-            $("#combo-box").change(function(eventObject) {
+        $(document).ready(function () {
+            $("#combo-box").change(function () {
                 var elem = $("#combo-box option:selected");
-                setjPlayer(elem.attr("data-url"), elem.attr("data-type"), elem.attr("server-type"));
+                setStream(elem.attr("data-url"), elem.attr("server-type"));
             });
 
             <?php
             if (count($ids) > 0) {
                 $id = $ids[0];
                 $streamData = Application_Model_StreamSetting::getStreamData($id);
-                $url = $streamData["${id}_public_url"];
-                $type = $streamData["${id}_type"];
-                $serverType = $streamData["${id}_output"];
-                if ($type == "ogg" || $type == "opus")
-                    $type = "oga";
-                if ($type == "aac")
-                    $type = "m4a";
-                echo "setjPlayer('$url', '$type', '$serverType');";
+                $url = $streamData["{$id}_public_url"];
+                $serverType = $streamData["{$id}_output"];
+                echo "setStream('" . $url . "', '" . $serverType . "');";
             }
             ?>
 
-            $("#popup-link").click(function() {
+            $("#popup-link").click(function () {
                 $("#popup-share").show("slow");
-                $("#popup-share-link").val($("#combo-box option:selected").attr("data-url"));
+                $("#popup-share-link").val(reachableStreamUrl($("#combo-box option:selected").attr("data-url")));
             });
 
-            $("#popup-close").click(function() {
+            $("#popup-close").click(function () {
                 $("#popup-share").hide("slow");
             });
         });
@@ -70,36 +95,15 @@
                 <?php
                 foreach ($ids as $id) {
                     $streamData = Application_Model_StreamSetting::getStreamData($id);
-                    $url = $streamData["${id}_public_url"];
-                    $type = $streamData["${id}_type"];
-                    $serverType = $streamData["${id}_output"];
-                    if ($type == "ogg" || $type == "opus")
-                        $type = "oga";
-                    if ($type == "aac")
-                        $type = "m4a";
+                    $url = $streamData["{$id}_public_url"];
+                    $serverType = $streamData["{$id}_output"];
 
-                    $label = "(" . $streamData["${id}_host"] . ") " . $streamData["${id}_description"] . " - " . $streamData["${id}_bitrate"] . " kbit/s";
-                    echo sprintf("<option class='stream' value='%s' data-url='%s' data-type='%s' server-type='%s'>%s</option>", $id, $url, $type, $serverType, $label);
+                    $label = "(" . $streamData["{$id}_host"] . ") " . $streamData["{$id}_description"] . " - " . $streamData["{$id}_bitrate"] . " kbit/s";
+                    echo sprintf("<option class='stream' value='%s' data-url='%s' server-type='%s'>%s</option>", $id, $url, $serverType, $label);
                 }
                 ?>
             </select>
         </form>
     </div>
-    <div id="jquery_jplayer_1" class="jp-jplayer"></div>
-
-    <div id="jp_container_1" class="jp-audio">
-        <div class="jp-type-single">
-            <div id="jp_interface_1" class="jp-gui jp-interface">
-                <ul class="jp-controls">
-                    <li><a title="play" tabindex="1" class="jp-play" href="javascript:;" style='top: 5px; left: 5px;'><?php echo _("play") ?></a></li>
-                    <li><a title="pause" tabindex="1" class="jp-pause" href="javascript:;" style='top: 5px; left: 5px;'><?php echo _("pause") ?></a></li>
-                    <li><a title="mute" tabindex="1" class="jp-mute" href="javascript:;"><?php echo _("mute") ?></a></li>
-                    <li><a title="unmute" tabindex="1" class="jp-unmute" href="javascript:;"><?php echo _("unmute") ?></a></li>
-                </ul>
-                <div class="jp-volume-bar">
-                    <div class="jp-volume-bar-value"></div>
-                </div>
-            </div>
-            <div id="jp_playlist_1" class="jp-playlist"></div>
-        </div>
-    </div>
+    <audio id="stream_audio_el" controls autoplay preload="auto"></audio>
+</div>
