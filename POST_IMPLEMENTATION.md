@@ -6,6 +6,26 @@
 
 ---
 
+> ## ⚠️ HISTORISCHES DOKUMENT — teilweise überholt (Hinweis 2026-05-31)
+>
+> Dieser Fahrplan stammt vom **2026-05-03** und beschreibt die damalige
+> **VLC-zentrierte** Engine-Planung. Die Architektur hat sich seitdem
+> grundlegend geändert:
+>
+> - **Liquidsoap ist seit 2026-05-28 (Phase-C5) die Produktions-Engine**,
+>   NICHT VLC. mpv ist der Legacy-Fallback; VLC ist ein aufgegebener Plan
+>   (wird gerade aus dem Code entfernt). Maßgeblich:
+>   `docs/manual/SETTINGS.md` §6 + `docs/operator/LIQUIDSOAP_CUTOVER.md`.
+> - **VLC ist KEINE Voraussetzung** mehr (der VLC-Installationsschritt in
+>   T-OP-1 unten ist obsolet).
+> - **⛔ T-GH-1 ist UNGÜLTIG und darf NICHT ausgeführt werden** — es würde
+>   die heute produktive Liquidsoap-Engine löschen.
+>
+> Die operativen Schritte (DB, Services, GitHub) bleiben als historische
+> Referenz erhalten; vor Ausführung gegen die aktuelle Doku abgleichen.
+
+---
+
 ## Teil 1 — RASTATIME auf diesem Windows 11 in Betrieb nehmen
 
 > **Priorität: Hoch.** Die Tests beweisen, dass der Code korrekt ist — sie
@@ -234,6 +254,13 @@ noch die VLC-Hardware-Skips (~15–20). Keine neuen Fehler.
 ---
 
 ### T-GH-1 — Liquidsoap-Unterverzeichnis entfernen
+
+> **⛔ UNGÜLTIG / NICHT AUSFÜHREN (Hinweis 2026-05-31).** Die Prämisse
+> unten ist falsch: Liquidsoap wurde NICHT durch VLC ersetzt — im
+> Gegenteil, **Liquidsoap ist seit 2026-05-28 die Produktions-Engine**
+> und VLC ist tot. Das Löschen von
+> `backend/playout/libretime_playout/liquidsoap/` würde die laufende
+> Engine zerstören. Diesen Schritt übersprungen lassen.
 
 **Was zu tun ist:**  
 Der gesamte Ordner `backend/playout/libretime_playout/liquidsoap/` ist

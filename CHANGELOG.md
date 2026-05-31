@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Irreführende/gefährliche VLC-Engine-Doku korrigiert (2026-05-31)** —
+  `README.md` + `FORK_NOTES.md` beschrieben libVLC noch als „mandatory
+  main playout engine" bzw. „in development", obwohl RASTATIME seit
+  2026-05-28 (Phase-C5) produktiv auf **Liquidsoap** läuft (mpv =
+  Legacy-Fallback, VLC = aufgegebener Plan). Auf die Liquidsoap-Realität
+  korrigiert. `POST_IMPLEMENTATION.md` (datierter Fahrplan 2026-05-03)
+  mit Banner + Inline-Warnung versehen: insbesondere **T-GH-1**
+  („Liquidsoap-Ordner als toten Code löschen") ist invers zur Realität
+  und würde die Produktions-Engine zerstören — explizit als UNGÜLTIG
+  markiert. Grundlage: neue datei-genaue `CLEANUP_INVENTORY.md` (kartiert
+  toten VLC-Code, `libretime`→`rastatime`-Aufwand, `airtime`-Heritage).
+
 - **Error-Page (`error-500.phtml`) Grafik + Links (2026-05-29)** —
   `images/maintenance.png` durch eine RASTATIME-eigene Broadcast-Tower-
   Grafik ersetzt (Orange-Akzent #e76400 + Warn-Badge, 360×340,

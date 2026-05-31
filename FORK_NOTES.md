@@ -30,14 +30,21 @@ LibreTime is a Linux-first radio automation system that assumes:
 **RASTATIME redefines the runtime substrate while preserving LibreTime's functional scope.**
 
 The goal is a **Windows 11 studio machine deployment** with:
-- libVLC as the mandatory main playout engine
+- Liquidsoap (savonet Windows build) as the production playout engine
+  (libVLC was the original target — abandoned; see engine-history note below)
 - Windows-native service startup via NSSM
-- Windows audio I/O (WASAPI via libVLC)
+- Windows audio I/O via Liquidsoap / FFmpeg (dshow inputs, Icecast outputs)
 - New first-class features: local Line-In sources, Soundcard settings
 - English-first, German as the only additional UI language in phase 1
 
 This is a **functional fork**, not a literal port.
 See `RASTATIME_ARCHITECTURE_DRAFT_v0.1.md` for the full target architecture.
+
+> **Engine-history note (update 2026-05-31):** the original plan targeted
+> libVLC as the main engine. That was abandoned: via mpv (interim),
+> RASTATIME settled on **Liquidsoap** (savonet Windows build) as the
+> production engine (since 2026-05-28, Phase-C5). The libVLC mentions in
+> the tables below are the historical plan, not the current state.
 
 ## What Was Imported
 
@@ -46,7 +53,7 @@ See `RASTATIME_ARCHITECTURE_DRAFT_v0.1.md` for the full target architecture.
 | `backend/api/` | `api/` | Django REST API — keep + refactor |
 | `backend/api-client/` | `api-client/` | API client library — keep + refactor |
 | `backend/analyzer/` | `analyzer/` | Media analyzer — keep + refactor |
-| `backend/playout/` | `playout/` | Liquidsoap playout — **to be replaced** with libVLC |
+| `backend/playout/` | `playout/` | Liquidsoap playout — **kept** (savonet Windows build); libVLC replacement abandoned |
 | `backend/shared/` | `shared/` | Shared Python modules — keep + refactor |
 | `backend/worker/` | `worker/` | Celery worker — **to be replaced** with Windows-native runner |
 | `frontend/legacy/` | `legacy/` | PHP/JS legacy UI — keep + refactor |
@@ -74,11 +81,11 @@ See `RASTATIME_ARCHITECTURE_DRAFT_v0.1.md` for the full target architecture.
 ## Known Divergence Points (summary)
 
 The following LibreTime subsystems will be replaced in RASTATIME:
-- Liquidsoap → libVLC playout adapter
+- Liquidsoap (Linux) → Liquidsoap (savonet Windows build); libVLC adapter plan abandoned
 - Celery → Windows-native background runner
 - gunicorn → Waitress (or equivalent Windows-safe WSGI server)
 - nginx → to be decided (optional reverse proxy)
 - systemd/systemctl → NSSM + Windows service scripts
-- ALSA/PortAudio → Windows audio API via libVLC
+- ALSA/PortAudio → Windows audio via Liquidsoap / FFmpeg
 
 See `IMPLEMENTATION_PLAN.md` for the full phase and task breakdown.
