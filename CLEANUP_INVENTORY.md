@@ -212,7 +212,7 @@ sinnvolle Ersetzung möglich.
 | Stufe | Inhalt | Status | Risiko |
 |---|---|---|---|
 | **1 — ✅ ERLEDIGT 2026-05-31** | Toter VLC-Code (§1) + Doku-Korrektur (§3) | ✅ committet: `31eb8c4` (Doku) · `981026f` (Gruppe 1) · `9a30edd` (Gruppe 2) · `e6c4f2f` (Gruppe 3). ~12.900 Z. entfernt; Regression grün. Build-Müll (§6) war bereits `.gitignore`'d (Z20 `build/`). | erledigt |
-| **1b — offen, optional** | toten Celery-`libretime_worker` löschen (§4-Bonus) | 🟢 prüfen | niedrig |
+| **1b — ✅ ERLEDIGT 2026-05-31** | toten Celery-`libretime_worker` gelöscht (§4-Bonus) + `install-worker.ps1`-Bug gefixt (`-m libretime_worker`→`-m rastatime_worker`, `backend/` in PYTHONPATH) + `test_tgh2_no_celery.py` entfernt | ✅ committet; `tests/unit/worker` 88 passed. ⚠️ Operator: `nssm set RASTATIME-WORKER AppParameters "-m rastatime_worker"` nötig (Service läuft aktuell `-m libretime_worker`) | erledigt |
 | **2 — mit HW-Wechsel** | `libretime`→`rastatime` Pakete + `libretime.conf` + env-Prefix (§4) | 🟡 Defer | hoch |
 | **nie** | `airtime` (§5), `docs/upstream`, DB-Schema, `LICENSE`/Attribution | 🔴 No-Go | — |
 | **separat** | mpv-Cleanup (bereits im BACKLOG, an Stabilitätsphase gekoppelt) | — | — |

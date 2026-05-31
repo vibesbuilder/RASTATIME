@@ -34,6 +34,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Kein User-sichtbares Verhalten geändert.  Details + Methodik:
   `CLEANUP_INVENTORY.md`.
 
+- **Toter Celery-Worker `libretime_worker` entfernt (Cleanup §4-Bonus,
+  2026-05-31)** — `backend/worker/` war seit T-GH-2 (Celery-Removal) nur
+  noch ein Heartbeat-Stub; die echten Background-Tasks laufen direkt im
+  API via HTTP.  Funktional ersetzt durch `backend/rastatime_worker`
+  (Windows-native Runner, Phase-8-Vorbereitung).  Dabei behoben:
+  `infra/nssm/install-worker.ps1` startete fälschlich `-m libretime_worker`
+  (Z232) statt `-m rastatime_worker` — Header/Doku nannten bereits
+  rastatime_worker; jetzt konsistent (+ `backend/` im PYTHONPATH).
+  Obsoleter Celery-Guard `test_tgh2_no_celery.py` gelöscht.
+  **⚠️ Operator-Aktion nötig:** der laufende RASTATIME-WORKER-Service
+  nutzt aktuell `-m libretime_worker` (per `nssm get` verifiziert) → nach
+  diesem Update `nssm set RASTATIME-WORKER AppParameters "-m
+  rastatime_worker"` (oder Service neu installieren), sonst schlägt der
+  nächste Worker-Neustart mit ModuleNotFoundError fehl.
+
 ### Fixed
 
 - **Irreführende/gefährliche VLC-Engine-Doku korrigiert (2026-05-31)** —

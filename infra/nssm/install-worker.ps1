@@ -198,7 +198,7 @@ $nssm       = Find-Nssm
 $python     = Find-Python
 $cfgFile    = Resolve-ConfigFile
 $workDir    = "$InstallRoot\backend"
-$pythonPath = "$InstallRoot\backend\api;$InstallRoot\backend\shared;$InstallRoot"
+$pythonPath = "$InstallRoot\backend;$InstallRoot\backend\api;$InstallRoot\backend\shared;$InstallRoot"
 
 Write-Host "  Install root : $InstallRoot"   -ForegroundColor Gray
 Write-Host "  NSSM         : $nssm"          -ForegroundColor Gray
@@ -229,7 +229,7 @@ if ($existing) {
 
 # Install
 Write-Step "Installing '$ServiceName'..."
-& $nssm install $ServiceName $python "-m libretime_worker"
+& $nssm install $ServiceName $python "-m rastatime_worker"
 if ($LASTEXITCODE -ne 0) {
     Write-Err "nssm install failed (exit $LASTEXITCODE)."
     exit 1
