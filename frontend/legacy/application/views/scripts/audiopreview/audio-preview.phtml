@@ -1,87 +1,49 @@
-<div id="jquery_jplayer_1" class="jp-jplayer"></div>
-<div id="jp_container_1" class="jp-audio">
+<?php /* RASTATIME 2026-05-31 (JS-modernization stage 0c): native <audio> audio
+       * preview — replaces the jPlayerPlaylist markup + jPlayer skin CSS.
+       * The hidden <span> elements still carry the preview parameters; player
+       * logic lives in js/airtime/audiopreview/preview_audio.js (vanilla). */ ?>
+<style>
+  body { margin: 0; font-family: Arial, Helvetica, sans-serif; }
+  .audio-preview { padding: 10px; }
+  .audio-preview-logo img { max-height: 40px; margin-bottom: 8px; }
+  .audio-preview-nowplaying { font-weight: bold; margin-bottom: 8px; word-break: break-word; }
+  #preview_audio_el { width: 100%; }
+  .audio-preview-nav { margin-top: 8px; }
+  .audio-preview-nav button { padding: 3px 10px; cursor: pointer; }
+  .audio-preview-playlist { list-style: none; margin: 8px 0 0; padding: 0; max-height: 240px; overflow-y: auto; }
+  .audio-preview-playlist li { padding: 4px 6px; cursor: pointer; border-bottom: 1px solid #eee; }
+  .audio-preview-playlist li:hover { background: #f0f0f0; }
+  .audio-preview-playlist li.preview-current { background: #d9edf7; font-weight: bold; }
+</style>
+<div id="jp_container_1" class="audio-preview">
     <?php if (isset($this->playlistID)) : ?>
-        <span class='playlistID'><?php echo "$this->playlistID" ?></span>
-        <span class='playlistIndex'><?php echo "$this->playlistIndex" ?></span>
+        <span class="playlistID" style="display:none;"><?php echo "$this->playlistID" ?></span>
+        <span class="playlistIndex" style="display:none;"><?php echo "$this->playlistIndex" ?></span>
     <?php elseif (isset($this->blockId)) : ?>
-        <span class='blockId' style="display: none;"><?php echo "$this->blockId" ?></span>
-        <span class='blockIndex' style="display: none;"><?php echo "$this->blockIndex" ?></span>
+        <span class="blockId" style="display:none;"><?php echo "$this->blockId" ?></span>
+        <span class="blockIndex" style="display:none;"><?php echo "$this->blockIndex" ?></span>
     <?php elseif (isset($this->uri)) : ?>
-        <span class='audioUri' style="display: none;"><?php echo "$this->uri" ?></span>
-        <span class='audioMime' style="display: none;"><?php echo "$this->mime" ?></span>
-        <span class='audioFileTitle'><?php echo "$this->audioFileTitle" ?></span>
-        <span class='audioFileArtist'><?php echo "$this->audioFileArtist" ?></span>
+        <span class="audioUri" style="display:none;"><?php echo "$this->uri" ?></span>
+        <span class="audioMime" style="display:none;"><?php echo "$this->mime" ?></span>
+        <span class="audioFileTitle" style="display:none;"><?php echo "$this->audioFileTitle" ?></span>
+        <span class="audioFileArtist" style="display:none;"><?php echo "$this->audioFileArtist" ?></span>
     <?php elseif (isset($this->showID)) : ?>
-        <span class='showID'><?php echo "$this->showID" ?></span>
-        <span class='showIndex'><?php echo "$this->showIndex" ?></span>
+        <span class="showID" style="display:none;"><?php echo "$this->showID" ?></span>
+        <span class="showIndex" style="display:none;"><?php echo "$this->showIndex" ?></span>
     <?php endif; ?>
-    <div class="jp-type-playlist">
-        <div class="jp-gui jp-interface">
-            <ul class="jp-controls">
-                <?php if ($this->type != "audioclip") : ?>
-                    <li class="ui-state-default ui-corner-all jp-previous">
-                        <span class="ui-icon ui-icon-seek-prev" tabindex="1"><?php echo _("previous") ?></span>
-                    </li>
-                <?php endif; ?>
 
-                <li class="ui-state-default ui-corner-all jp-play">
-                    <span class="ui-icon ui-icon-play" tabindex="1"><?php echo _("play") ?></span>
-                </li>
+    <?php if (isset($this->logo) && $this->logo) : ?>
+        <div class="audio-preview-logo"><img src="<?php echo $this->logo ?>" alt="" /></div>
+    <?php endif; ?>
 
-                <li class="ui-state-default ui-corner-all jp-pause">
-                    <span class="ui-icon ui-icon-pause" tabindex="1"><?php echo _("pause") ?></span>
-                </li>
+    <div id="preview_nowplaying" class="audio-preview-nowplaying"></div>
 
-                <?php if ($this->type != "audioclip") : ?>
-                    <li class="ui-state-default ui-corner-all jp-next">
-                        <span class="ui-icon ui-icon-seek-next" tabindex="1"><?php echo _("next") ?></span>
-                    </li>
-                <?php endif; ?>
+    <audio id="preview_audio_el" controls autoplay preload="auto"></audio>
 
-                <li class="ui-state-default ui-corner-all jp-stop">
-                    <span class="ui-icon ui-icon-stop" tabindex="1"><?php echo _("stop") ?></span>
-                </li>
-            </ul>
-            <div class="jp-time-block">
-                <div class="jp-progress">
-                    <div class="jp-seek-bar">
-                        <div class="jp-play-bar"></div>
-                    </div>
-                </div>
-                <div class="jp-time-holder">
-                    <div class="jp-current-time"></div>
-                    <?php if ($this->type == "audioclip") : ?>
-                        <div class="jp-duration"></div>
-                    <?php endif; ?>
-                </div>
-            </div>
-            <div class="jp-volume-block">
-                <div class="jp-mute">
-                    <span class="ui-icon" tabindex="1" title="mute"><?php echo _("mute") ?></span>
-                </div>
-                <div class="jp-unmute">
-                    <span class="ui-icon" tabindex="1" title="unmute"><?php echo _("unmute") ?></span>
-                </div>
-                <div class="jp-volume-bar">
-                    <div class="jp-volume-bar-value"></div>
-                </div>
-                <div class="jp-volume-max">
-                    <span class="ui-icon" tabindex="1" title="max volume"><?php echo _("max volume") ?></span>
-                </div>
-            </div>
-        </div>
-        <div class="jp-playlist">
-            <ul>
-                <li></li>
-            </ul>
-        </div>
-        <div class="jp-no-solution">
-            <span><?php echo _("Update Required") ?></span>
-            <?php sprintf(
-                _("To play the media you will need to either update your browser to a recent version or update your %sFlash plugin%s."),
-                "<a href='http://get.adobe.com/flashplayer/' target='_blank'>",
-                "</a>"
-            ) ?>
-        </div>
+    <div id="preview_nav" class="audio-preview-nav" style="display:none;">
+        <button type="button" id="preview_prev"><?php echo _("Previous") ?></button>
+        <button type="button" id="preview_next"><?php echo _("Next") ?></button>
     </div>
+
+    <ul id="preview_playlist" class="audio-preview-playlist" style="display:none;"></ul>
 </div>

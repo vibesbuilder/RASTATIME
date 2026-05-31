@@ -26,16 +26,11 @@ class AudiopreviewController extends Zend_Controller_Action
 
         $baseUrl = Config::getBasePath();
 
+        // RASTATIME 2026-05-31 (JS-modernization stage 0c): native <audio>
+        // preview (vanilla) replaces jPlayer + its playlist plugin + skin CSS.
         $this->view->headScript()->appendFile(
-            Assets::url('js/airtime/audiopreview/preview_jplayer.js'),
+            Assets::url('js/airtime/audiopreview/preview_audio.js'),
             'text/javascript'
-        );
-        $this->view->headScript()->appendFile(
-            Assets::url('js/jplayer/jplayer.playlist.min.js'),
-            'text/javascript'
-        );
-        $this->view->headLink()->appendStylesheet(
-            Assets::url('js/jplayer/skin/jplayer.airtime.audio.preview.css')
         );
         $this->_helper->layout->setLayout('audioPlayer');
 
@@ -83,9 +78,8 @@ class AudiopreviewController extends Zend_Controller_Action
 
         $baseUrl = Config::getBasePath();
 
-        $this->view->headScript()->appendFile(Assets::url('js/airtime/audiopreview/preview_jplayer.js'), 'text/javascript');
-        $this->view->headScript()->appendFile(Assets::url('js/jplayer/jplayer.playlist.min.js'), 'text/javascript');
-        $this->view->headLink()->appendStylesheet(Assets::url('js/jplayer/skin/jplayer.airtime.audio.preview.css'));
+        // RASTATIME 2026-05-31 (JS-modernization stage 0c): native <audio> preview.
+        $this->view->headScript()->appendFile(Assets::url('js/airtime/audiopreview/preview_audio.js'), 'text/javascript');
         $this->_helper->layout->setLayout('audioPlayer');
 
         $logo = Application_Model_Preference::GetStationLogo();
@@ -109,9 +103,8 @@ class AudiopreviewController extends Zend_Controller_Action
 
         $baseUrl = Config::getBasePath();
 
-        $this->view->headScript()->appendFile(Assets::url('js/airtime/audiopreview/preview_jplayer.js'), 'text/javascript');
-        $this->view->headScript()->appendFile(Assets::url('js/jplayer/jplayer.playlist.min.js'), 'text/javascript');
-        $this->view->headLink()->appendStylesheet(Assets::url('js/jplayer/skin/jplayer.airtime.audio.preview.css'));
+        // RASTATIME 2026-05-31 (JS-modernization stage 0c): native <audio> preview.
+        $this->view->headScript()->appendFile(Assets::url('js/airtime/audiopreview/preview_audio.js'), 'text/javascript');
         $this->_helper->layout->setLayout('audioPlayer');
 
         $logo = Application_Model_Preference::GetStationLogo();
@@ -231,9 +224,8 @@ class AudiopreviewController extends Zend_Controller_Action
 
         $baseUrl = Config::getBasePath();
 
-        $this->view->headScript()->appendFile(Assets::url('js/airtime/audiopreview/preview_jplayer.js'), 'text/javascript');
-        $this->view->headScript()->appendFile(Assets::url('js/jplayer/jplayer.playlist.min.js'), 'text/javascript');
-        $this->view->headLink()->appendStylesheet(Assets::url('js/jplayer/skin/jplayer.airtime.audio.preview.css'));
+        // RASTATIME 2026-05-31 (JS-modernization stage 0c): native <audio> preview.
+        $this->view->headScript()->appendFile(Assets::url('js/airtime/audiopreview/preview_audio.js'), 'text/javascript');
         $this->_helper->layout->setLayout('audioPlayer');
 
         $logo = Application_Model_Preference::GetStationLogo();

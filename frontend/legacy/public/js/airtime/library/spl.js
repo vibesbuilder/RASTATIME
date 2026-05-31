@@ -33,8 +33,18 @@ var AIRTIME = (function (AIRTIME) {
   }
 
   function stopAudioPreview() {
-    // stop any preview playing
-    $("#jquery_jplayer_1").jPlayer("stop");
+    // RASTATIME 2026-05-31 (JS-modernization stage 0c): the preview runs in
+    // the popup window (native <audio>, preview_audio.js). The old
+    // "#jquery_jplayer_1" selector only ever existed in that popup, so stop it
+    // there if it's open.
+    if (
+      typeof _preview_window !== "undefined" &&
+      _preview_window &&
+      !_preview_window.closed &&
+      typeof _preview_window.stopPreview === "function"
+    ) {
+      _preview_window.stopPreview();
+    }
   }
 
   function highlightActive(el) {
