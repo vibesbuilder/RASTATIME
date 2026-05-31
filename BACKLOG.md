@@ -16,6 +16,74 @@
 Diese sind technisch evaluiert, empfohlen, und können starten sobald
 der Operator das Signal gibt.
 
+### 🟡 Backup/Restore via UI (Settings-Submenü)
+
+**Status:** Defer — A + B empfohlen & gut machbar (architektur-angepasst),
+C bewusst schlank.  Start erst nach Grundsatz-Entscheidung (Scheduler) +
+Operator-Go.  **Nicht für HW-Wechsel nötig** — das CLI-Backup aus
+`docs/operator/BACKUP.md` deckt die Migration vollständig ab.
+**Evaluiert:** 2026-05-31.
+**Operator-Wert:** Hoch (Auto-Backup) bis mittel (Manual).  Backup ist
+betriebskritisch; eine UI senkt die Hürde ggü. CLI.  Restore-via-UI: gering.
+
+**Vom Operator vorgeschlagen:** Settings-Submenü „Backup/Restore", 3 Sektionen:
+- **A) Auto-Backup:** Activate-Checkbox + Häufigkeit (alle X Tage) + Include-Media.
+- **B) Manual Backup:** Button + Include-Media + „Speicherort-Fenster".
+- **C) Restore:** Button + Include-Media + „Backup-Auswahl-Fenster".
+
+**Zentraler Architektur-Konflikt (Browser ≠ Server-Dateisystem):** Ein
+Browser kann **keinen OS-Dateidialog auf dem Server** öffnen (auch nicht
+Single-Machine, Security-Sandbox).  „Speicherort/Backup wählen" geht nur via
+(a) Browser-Download/-Upload oder (b) server-seitig konfigurierter Zielordner
++ Backup-Liste.  Die Media Library (100+ GB) sprengt jeden Browser-Transfer
+→ Media-Backup **muss server-seitig** (robocopy) bleiben, nie über den Browser.
+
+**Empfohlenes (angepasstes) Design:**
+- Server-seitiger **Backup-Zielordner** (Settings-Feld, z.B. `D:\rastatime-backups`)
+  statt OS-Dialog; UI **listet** vorhandene Backups (löst Speicherort + Auswahl).
+- **DB + Config** (klein, MB): ZIP, optional als Browser-Download.
+  **Media** (groß): immer server-seitig via `robocopy /MIR` — das ist
+  **inkrementell gratis** (nur Geändertes), erfüllt den Operator-Wunsch ohne
+  eigenes Change-Tracking.
+- Backup-Job läuft server-seitig; UI **pollt Status** (`cc_pref`
+  last_run/last_status — Muster „Local Import Scan" existiert bereits).
+- **C) Restore bewusst schlank:** UI = Backup-Browser (Liste + Metadaten) +
+  Schritt-für-Schritt-Anleitung (BACKUP.md §7).  **Kein** 1-Klick-DB-Restore
+  aus dem laufenden Web-UI (privilegiert + disruptiv: Dienste stoppen, DB als
+  Superuser droppen/neu anlegen — das System zieht sich den Teppich unter den
+  Füßen weg).  Echter Restore bleibt CLI/offline (oder dediziertes Offline-Script).
+
+**Bausteine vorhanden (Präzedenzfälle):** Settings-Page-Muster „Local Machine"
+(nav-Eintrag in `navigation.php` + `PreferenceController`-Action + plain
+`.phtml`, kein Zend_Form nötig + JS + `cc_pref`/`rastatime_*`-Django-Model).
+Datei-Download an Browser (`FileResponse(as_attachment=True)`, Windows-Branch
+in `storage/views/file.py`).  Status-Polling (`local_import_last_status`).
+
+**Net-new / Lücken:**
+- **Auto-Backup-Scheduler — größte Lücke:** `rastatime_worker` ist aktuell ein
+  Stub; der echte `BackgroundRunner` (Interval-Runner) existiert + ist getestet,
+  aber **nicht verdrahtet**.  Kein APScheduler/cron im Code.
+- Upload-Limits (PHP/Django) nicht gepinnt (nur Linux-Artefakte 512M; Django
+  Default 2.5 MB) — nur relevant bei Restore-via-Upload, das wir ohnehin nicht
+  empfehlen.
+- Async-Job/Progress-Infra: nur synchron-blockierend vorhanden.
+
+**Aufwand:** B (Manual, DB+Config, Download) ~1–2 Tage; + Media (server-seitig)
+~+1–2 Tage; A (Auto inkl. Scheduler) ~2–4 Tage; C (schlank) ~0,5–1 Tag.
+Voll: **~1–2 Wochen**.
+
+**Vorbedingungen / offene Grundsatz-Entscheidungen (vor Start klären):**
+1. **Auto-Backup-Scheduler:** Windows Task Scheduler (robust, idle-box-tauglich,
+   BACKUP.md nutzt es bereits) **[empfohlen]** vs. `BackgroundRunner` aktivieren
+   (in-app, mehr Arbeit, berührt den frisch umgestellten Worker-Dienst).
+2. **Speicherort-Modell:** server-seitiger Zielordner + Backup-Liste bestätigen.
+3. **Restore-Scope:** schlank (Backup-Browser + Anleitung) bestätigen.
+
+**Risiko Live-Betrieb:** A + B niedrig (additive, server-seitige Features).
+C (echter Restore) hoch — daher bewusst ausgeklammert.
+**Randnotiz:** Tote `cc_backup`-Tabelle (Airtime-Erbe) nicht wiederverwendbar;
+kann mit dem Storage-Cleanup mitentfernt werden.
+
 ### 🟢 Show-Shift: nachfolgende Show schiebt sich bei Overbook
 
 **Status:** Go, mit Vorbedingung (Scheduler-Tests erst).
