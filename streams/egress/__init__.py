@@ -1,11 +1,20 @@
-from ._archive import ArchiveOutput
-from ._connection import StreamConnection
-from ._health import IcecastHealthChecker
-from ._metadata import IcyMetadataPusher
+"""streams.egress — outgoing stream outputs (status-API surface).
+
+After the VLC-era cleanup (2026-05-31) only the live status-API surface
+remains: the ``StreamEgressManager`` ABC + config/status dataclasses
+(``interface``), the process-level singleton registry (``_registry``), and
+the pure serialization helpers (``_api_helpers``).  The concrete libVLC
+egress manager and its helpers (``_vlc_manager``, ``_sout``,
+``_connection``, ``_metadata``, ``_health``, ``_archive``) were removed
+together with the abandoned VLC engine.
+"""
 from ._registry import connect_egress_manager
-from ._sout import SoutBuilder
-from ._vlc_manager import LibVlcEgressManager
-from .interface import OutputStateChangedEvent, OutputStatus, StreamEgressManager, StreamOutput
+from .interface import (
+    OutputStateChangedEvent,
+    OutputStatus,
+    StreamEgressManager,
+    StreamOutput,
+)
 
 __all__ = [
     # ABC
@@ -14,14 +23,6 @@ __all__ = [
     "StreamOutput",
     "OutputStatus",
     "OutputStateChangedEvent",
-    # Concrete classes (T10.1)
-    "StreamConnection",
-    "IcyMetadataPusher",
-    "SoutBuilder",
-    "LibVlcEgressManager",
     # Process-level singleton wiring (T10.3)
     "connect_egress_manager",
-    # T10.4 — Icecast health checker + file archive output
-    "IcecastHealthChecker",
-    "ArchiveOutput",
 ]

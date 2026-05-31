@@ -1,12 +1,16 @@
 """
-T2.2 validation — StreamEgressManager and StreamIngressManager interfaces.
+T2.2 validation — StreamEgressManager interface.
 
 Verifies that:
-1. Both ABCs cannot be instantiated directly.
+1. The egress ABC cannot be instantiated directly.
 2. Incomplete subclasses cannot be instantiated.
 3. Complete subclasses can be instantiated and return correct values.
 4. All expected symbols are exported from the public interface.
 5. Shared types (StreamProtocol, StreamState) have the expected values.
+
+(The ingress interface + its concrete libVLC manager were removed with the
+abandoned VLC engine on 2026-05-31; only the live egress status surface
+remains.)
 """
 
 import pytest
@@ -17,12 +21,6 @@ from streams.egress import (
     OutputStatus,
     StreamEgressManager,
     StreamOutput,
-)
-from streams.ingress import (
-    SourceStateChangedEvent,
-    SourceStatus,
-    StreamIngressManager,
-    StreamSource,
 )
 
 
@@ -106,73 +104,5 @@ def test_output_state_changed_event_fields():
         current_state=StreamState.ACTIVE,
     )
     assert event.output_id == "o1"
-    assert event.current_state == StreamState.ACTIVE
-    assert event.timestamp is not None
-
-
-# ---------------------------------------------------------------------------
-# StreamIngressManager — instantiation guards
-# ---------------------------------------------------------------------------
-
-def test_ingress_manager_cannot_be_instantiated():
-    with pytest.raises(TypeError):
-        StreamIngressManager()  # type: ignore[abstract]
-
-
-def test_incomplete_ingress_subclass_cannot_be_instantiated():
-    class Incomplete(StreamIngressManager):
-        pass
-
-    with pytest.raises(TypeError):
-        Incomplete()
-
-
-# ---------------------------------------------------------------------------
-# StreamIngressManager — minimal concrete stub
-# ---------------------------------------------------------------------------
-
-class _StubIngressManager(StreamIngressManager):
-    def register_source(self, source): pass
-    def unregister_source(self, source_id): pass
-    def list_sources(self): return []
-    def activate_source(self, source_id): pass
-    def deactivate_source(self, source_id): pass
-    def get_active_source(self): return None
-    def get_source_status(self, source_id):
-        return SourceStatus(source_id=source_id, state=StreamState.IDLE)
-    def on_source_state_change(self, callback): pass
-
-
-def test_ingress_stub_can_be_instantiated():
-    mgr = _StubIngressManager()
-    assert mgr.get_active_source() is None
-    assert mgr.list_sources() == []
-
-
-def test_stream_source_defaults():
-    src = StreamSource(
-        id="s1",
-        name="Live DJ",
-        protocol=StreamProtocol.ICECAST,
-        url="dj.example.com",
-    )
-    assert src.port == 8000
-    assert src.priority == 0
-    assert src.enabled is True
-
-
-def test_source_status_defaults():
-    status = SourceStatus(source_id="s1", state=StreamState.IDLE)
-    assert status.is_active is False
-    assert status.connected_since is None
-
-
-def test_source_state_changed_event_fields():
-    event = SourceStateChangedEvent(
-        source_id="s1",
-        previous_state=StreamState.IDLE,
-        current_state=StreamState.ACTIVE,
-    )
-    assert event.source_id == "s1"
     assert event.current_state == StreamState.ACTIVE
     assert event.timestamp is not None
