@@ -83,7 +83,6 @@ $StderrLog      = "$LogDir\worker-stderr.log"
 $RestartDelayMs = 10000         # 10 s - per SERVICE_TOPOLOGY.md §2.2
 $ThrottleMs     = 15000         # extra startup throttle: API needs ~5 s first
 $RotateBytesMax = 10485760      # 10 MB
-$RotateFilesMax = 5
 
 # Health-check gate - documented here; implemented in rastatime_worker/__main__.py
 $ApiHealthUrl   = "http://127.0.0.1:8765/health"
@@ -247,7 +246,6 @@ Write-Step "Configuring log files..."
 & $nssm set $ServiceName AppRotateFiles 1
 & $nssm set $ServiceName AppRotateOnline 1
 & $nssm set $ServiceName AppRotateBytes $RotateBytesMax
-& $nssm set $ServiceName AppRotateFilesMax $RotateFilesMax
 Write-OK "Log files: $StdoutLog / $StderrLog"
 
 # Run headless

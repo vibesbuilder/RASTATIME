@@ -93,7 +93,6 @@ $StderrLog      = "$LogDir\api-stderr.log"
 $RestartDelayMs = 5000          # 5 s - per SERVICE_TOPOLOGY.md §2.1
 $ThrottleMs     = 5000          # startup throttle (same as restart delay)
 $RotateBytesMax = 10485760      # 10 MB per log file
-$RotateFilesMax = 5
 
 # ---------------------------------------------------------------------------
 # Console helpers
@@ -222,11 +221,10 @@ Write-Step "Setting AppDirectory = $workDir"
 Write-Step "Configuring log files..."
 & $nssm set $ServiceName AppStdout $StdoutLog
 & $nssm set $ServiceName AppStderr $StderrLog
-# Log rotation: 10 MB, 5 files
+# Log rotation: 10 MB per file (NSSM has no max-file-count cap)
 & $nssm set $ServiceName AppRotateFiles 1
 & $nssm set $ServiceName AppRotateOnline 1
 & $nssm set $ServiceName AppRotateBytes $RotateBytesMax
-& $nssm set $ServiceName AppRotateFilesMax $RotateFilesMax
 Write-OK "Log files: $StdoutLog / $StderrLog"
 
 # Run headless - no console window

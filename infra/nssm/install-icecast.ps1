@@ -102,7 +102,6 @@ $StderrLog      = "$LogDir\icecast-nssm-stderr.log"
 $RestartDelayMs = 15000         # 15 s - per SERVICE_TOPOLOGY.md §2.4
 $ThrottleMs     = 5000
 $RotateBytesMax = 10485760      # 10 MB
-$RotateFilesMax = 5
 
 # ---------------------------------------------------------------------------
 # Console helpers
