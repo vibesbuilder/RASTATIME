@@ -80,6 +80,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Audio-Preview von jPlayer auf natives `<audio>` umgestellt
+  (JS-Modernisierung Stufe 0c, Teil 1/3, 2026-05-31, `9792349`)** — der
+  Vorschau-Player (Library-Einzeltrack, Playlist, Block, Show, geplanter
+  Webstream) nutzt jetzt ein vanilla natives `<audio>`-Element statt des
+  archivierten jPlayer (2014) + dessen Playlist-Plugin + Skin-CSS.  Neuer
+  `preview_audio.js` (IIFE, behält die globalen Einstiegspunkte
+  `playAllPlaylist`/`playBlock`/`playAllShow`/`stopPreview`, baut die Queue
+  per `fetch` aus den bestehenden JSON-Endpoints, eigener Playlist-Manager
+  mit next/prev + ended→next).  `AudiopreviewController` lädt in allen vier
+  Preview-Actions `preview_audio.js`; JSON-Endpoints unverändert.  Toter
+  Flash-Fallback in `audioplaytest.js` entfernt (native `canPlayType` ist
+  maßgeblich).  Operator-Browser-verifiziert (Einzeltrack, Playlist, Block/
+  Show, geplanter Webstream).  **jPlayer-Lib bleibt vorerst** — Dashboard-
+  Stream-Player + Radio-Page nutzen sie noch (Teil 2/3 + 3/3, s. `BACKLOG.md`).
+  Player-Styling ist aktuell roh (Browser-Default); LibreTime-Optik wird
+  separat wiederhergestellt (Backlog).
+
 - **Scheduled Line-Inputs via Liquidsoap `input.ffmpeg(dshow)`
   (Phase-F-2, 2026-05-30)** — die Audio-Erfassung geplanter
   Line-In-Items läuft jetzt direkt in Liquidsoap über
