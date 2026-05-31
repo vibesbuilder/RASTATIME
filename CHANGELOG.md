@@ -80,6 +80,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Dashboard-Stream-Player von jPlayer auf natives `<audio>` umgestellt
+  (JS-Modernisierung Stufe 0, jPlayer Teil 2/3, 2026-05-31, `b2b11b4`)** — der
+  Live-Stream-Player im Dashboard-Popup nutzt jetzt ein vanilla natives
+  `<audio>`-Element statt jPlayer; die jPlayer-Skin-CSS
+  (`jplayer.blue.monday.css`) entfällt.  Operator-verifiziert remote mit allen
+  drei aktiven Streams (mp3 / aac / opus).  **Erreichbarkeits-Fix dabei:** der
+  Stream-`host` ist als `localhost` konfiguriert (nur auf dem Server selbst
+  auflösbar) → ein Remote-Browser bekam `ERR_CONNECTION_REFUSED`.
+  `reachableStreamUrl()` schreibt `localhost`/`127.0.0.1` jetzt auf den Host um,
+  über den die App aufgerufen wird (`window.location`), für Wiedergabe **und**
+  Share-Link; ein expliziter Host (Domain / dedizierter Icecast) bleibt
+  unangetastet.  War ein vorbestehendes Stream-Config-Thema, kein Regression
+  (jPlayer lud dieselbe URL).  **jPlayer-Lib lädt weiter global** — die
+  Radio-Page (`index.phtml`) ist der letzte Nutzer (Teil 3/3), danach kann die
+  Lib + der globale Load entfernt werden.
+
 - **Zweite Tooltip-Lib (Tipsy) entfernt, auf qtip2 konsolidiert
   (JS-Modernisierung Stufe 0b, 2026-05-31, `38c4525`)** — Tipsy (2012,
   lokal geforkt, EOL) wurde global auf jeder Seite **neben** qtip2 geladen,
