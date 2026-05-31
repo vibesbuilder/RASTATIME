@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- **Toter VLC-Engine-Code entfernt (Cleanup Stufe 1, 2026-05-31)** — die
+  nie produktiv gewordene libVLC-Engine-Architektur (RASTATIME lief über
+  mpv → Liquidsoap, nie über VLC) wurde vollständig entfernt: ~12.900
+  Zeilen über drei thematische Commits, jeweils mit fokussierter
+  Regression.
+  - **top-level playout-Stack**: `playout/{engine_vlc,scheduler,
+    queue_manager,fallback}/` + `rastatime_common/` (0 Live-Importe,
+    per Import-Graph verifiziert).
+  - **Streaming-Layer**: ganz `streams/ingress/` +
+    `streams/egress/{_vlc_manager,_sout,_archive,_connection,_health,
+    _metadata}.py`; `streams.egress` behält nur die lebende
+    Status-API-Oberfläche (`interface`/`_registry`/`_api_helpers`, vom
+    Django-View `/api/v2/streams/outputs` genutzt).
+  - **backend**: `engine/vlc_engine.py` + der
+    `RASTATIME_PLAYOUT_ENGINE=vlc`-Branch in `__main__.py` (mpv- +
+    liquidsoap-Pfade unberührt); VLC-Präsenz-Check + VLC-PATH-env-vars
+    aus `infra/nssm/install-playout.ps1`.
+  - **veraltete VLC-Ära-Guard-Tests**: `test_tgh1_no_liquidsoap.py`
+    gelöscht (Prämisse „Liquidsoap ist toter Code" invers zur Realität);
+    `test_tgh5_readme.py` prüft jetzt Liquidsoap statt VLC.
+  Lebende RASTATIME-Feature-Pakete (`audio/`, `playout/now_playing`,
+  `playout/engine_interface`, egress-Status-API) blieben erhalten.
+  Kein User-sichtbares Verhalten geändert.  Details + Methodik:
+  `CLEANUP_INVENTORY.md`.
+
 ### Fixed
 
 - **Irreführende/gefährliche VLC-Engine-Doku korrigiert (2026-05-31)** —

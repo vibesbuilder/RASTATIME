@@ -209,10 +209,10 @@ sinnvolle Ersetzung möglich.
 
 ## 7. Empfohlene Reihenfolge
 
-| Stufe | Inhalt | Empfehlung | Risiko |
+| Stufe | Inhalt | Status | Risiko |
 |---|---|---|---|
-| **1 — jetzt** | Toter VLC-Code (§1) + Doku-Korrektur (§3) + Build-Müll (§6) | 🟢 Go | niedrig-mittel |
-| **1b — jetzt, optional** | toten Celery-`libretime_worker` löschen (§4-Bonus) | 🟢 prüfen | niedrig |
+| **1 — ✅ ERLEDIGT 2026-05-31** | Toter VLC-Code (§1) + Doku-Korrektur (§3) | ✅ committet: `31eb8c4` (Doku) · `981026f` (Gruppe 1) · `9a30edd` (Gruppe 2) · `e6c4f2f` (Gruppe 3). ~12.900 Z. entfernt; Regression grün. Build-Müll (§6) war bereits `.gitignore`'d (Z20 `build/`). | erledigt |
+| **1b — offen, optional** | toten Celery-`libretime_worker` löschen (§4-Bonus) | 🟢 prüfen | niedrig |
 | **2 — mit HW-Wechsel** | `libretime`→`rastatime` Pakete + `libretime.conf` + env-Prefix (§4) | 🟡 Defer | hoch |
 | **nie** | `airtime` (§5), `docs/upstream`, DB-Schema, `LICENSE`/Attribution | 🔴 No-Go | — |
 | **separat** | mpv-Cleanup (bereits im BACKLOG, an Stabilitätsphase gekoppelt) | — | — |
