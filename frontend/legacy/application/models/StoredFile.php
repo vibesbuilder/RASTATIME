@@ -819,6 +819,23 @@ SQL;
                 $blSelect[] = 'NULL::VARCHAR AS ' . $key;
                 $fileSelect[] = $key;
                 $streamSelect[] = $key;
+            } elseif ($key === 'expires_at') {
+                // RASTATIME 2026-05-31: expires_at is a TIMESTAMP in cc_files.
+                // The other UNION branches previously fell through to the
+                // generic 'NULL::text' else branch below, producing
+                // "UNION types text and timestamp cannot be matched" — a 500 on
+                // Library/contents-feed. Cast the NULL to TIMESTAMP to match.
+                $plSelect[] = 'NULL::TIMESTAMP AS ' . $key;
+                $blSelect[] = 'NULL::TIMESTAMP AS ' . $key;
+                $fileSelect[] = $key;
+                $streamSelect[] = 'NULL::TIMESTAMP AS ' . $key;
+            } elseif ($key === 'disabled') {
+                // RASTATIME 2026-05-31: disabled is BOOLEAN in cc_files — same
+                // UNION-type fix as expires_at above (was NULL::text via else).
+                $plSelect[] = 'NULL::boolean AS ' . $key;
+                $blSelect[] = 'NULL::boolean AS ' . $key;
+                $fileSelect[] = $key;
+                $streamSelect[] = 'NULL::boolean AS ' . $key;
             } else {
                 $plSelect[] = 'NULL::text AS ' . $key;
                 $blSelect[] = 'NULL::text AS ' . $key;
@@ -903,6 +920,14 @@ SQL;
                     break;
                 case 'mime':
                     $lineinSelect[] = "NULL::VARCHAR AS {$key}";
+                    break;
+                case 'expires_at':
+                    // RASTATIME 2026-05-31: match cc_files.expires_at TIMESTAMP
+                    // type across the UNION (see searchLibraryFiles fix).
+                    $lineinSelect[] = "NULL::TIMESTAMP AS {$key}";
+                    break;
+                case 'disabled':
+                    $lineinSelect[] = "NULL::boolean AS {$key}";
                     break;
                 default:
                     $lineinSelect[] = "NULL::text AS {$key}";

@@ -184,6 +184,15 @@ class Application_Model_Datatables
             $sql .= ' OFFSET ' . $data['iDisplayStart'] . ' LIMIT ' . $displayLength;
         }
 
+        // RASTATIME 2026-05-31: initialise before the try so a query failure
+        // (caught + logged below) returns an empty result set instead of
+        // leaving these undefined — which previously surfaced as
+        // "Undefined variable $totalDisplayRows" -> ErrorException -> HTTP 500
+        // in the return statement rather than a clean empty feed.
+        $totalRows = 0;
+        $totalDisplayRows = 0;
+        $results = [];
+
         try {
             // Logging::info($sqlTotalRows);
 
