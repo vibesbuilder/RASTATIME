@@ -168,8 +168,7 @@ class PageLayoutInitPlugin extends Zend_Controller_Plugin_Abstract
             ->appendStylesheet(Assets::url('css/pro_dropdown_3.css'))
             ->appendStylesheet(Assets::url('css/qtip/jquery.qtip.min.css'))
             ->appendStylesheet(Assets::url('css/styles.css'))
-            ->appendStylesheet(Assets::url('css/masterpanel.css'))
-            ->appendStylesheet(Assets::url('css/tipsy/jquery.tipsy.css'));
+            ->appendStylesheet(Assets::url('css/masterpanel.css'));
     }
 
     protected function _initHeadScript()
@@ -221,7 +220,6 @@ class PageLayoutInitPlugin extends Zend_Controller_Plugin_Abstract
             ->appendFile(Assets::url('js/airtime/dashboard/helperfunctions.js'), 'text/javascript')
             ->appendFile(Assets::url('js/airtime/dashboard/dashboard.js'), 'text/javascript')
             ->appendFile(Assets::url('js/airtime/dashboard/versiontooltip.js'), 'text/javascript')
-            ->appendFile(Assets::url('js/tipsy/jquery.tipsy.js'), 'text/javascript')
 
             ->appendFile(Assets::url('js/airtime/common/common.js'), 'text/javascript')
             ->appendFile(Assets::url('js/airtime/common/audioplaytest.js'), 'text/javascript');

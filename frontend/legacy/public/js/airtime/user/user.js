@@ -153,7 +153,7 @@ function sizeFormElements() {
 
 function assignUserRightsToUserTypes() {
   //assign user-rights and id to each user type option so we can
-  //display user rights for each with tipsy tooltip
+  //display user rights for each with the qtip2 tooltip
   $.each($("#type").children(), function (i, opt) {
     switch ($(this).val()) {
       case "G":
@@ -245,21 +245,36 @@ function assignUserRightsToUserTypes() {
 function initUserData() {
   var type = $("#type");
 
-  type.live("change", function () {
-    //when the title changes on live tipsy tooltips the changes take
-    //affect the next time tipsy is shown so we need to hide and re-show it
-    $(this).tipsy("hide").tipsy("show");
+  // RASTATIME 2026-05-31 (JS-modernization stage 0b): the redundant 2nd tooltip
+  // lib (Tipsy) was replaced by qtip2 (the tooltip lib used everywhere else).
+  // Shows the rights of the currently selected user type beside the #type
+  // dropdown. gravity "w" -> my:right center / at:left center (tooltip on the
+  // left of the element); tipsy("show") -> show.ready; the old hide/show dance
+  // on change -> explicit content refresh (qtip2 caches rendered content).
+  function typeRights() {
+    return $("#user-type-" + type.val()).attr("user-rights");
+  }
+
+  type.qtip({
+    content: { text: typeRights },
+    position: { my: "right center", at: "left center", target: type },
+    // Trigger is the #type dropdown itself (no separate icon, like the old
+    // Tipsy): tooltip shows on hover/focus and hides when leaving/blurring.
+    show: { event: "mouseenter focus" },
+    hide: { event: "mouseleave blur" },
+    // qtip2 ships a built-in ".ui-tooltip-tipsy" style that replicates the old
+    // Tipsy look (dark rgba(0,0,0,.87) ~= the old opacity:0.9) -> visuals 1:1.
+    style: { classes: "ui-tooltip-tipsy ui-tooltip-shadow" },
   });
 
-  type.tipsy({
-    gravity: "w",
-    html: true,
-    opacity: 0.9,
-    trigger: "manual",
-    live: true,
-    title: function () {
-      return $("#user-type-" + $(this).val()).attr("user-rights");
-    },
+  // When the selected type changes, refresh the tooltip text in place (qtip2
+  // caches rendered content). No forced show() — if the dropdown is focused the
+  // tooltip is already visible; otherwise it stays hidden until hover/focus.
+  type.on("change", function () {
+    var api = type.qtip("api");
+    if (api) {
+      api.set("content.text", typeRights());
+    }
   });
 
   var table = $("#users_datable"); //.DataTable();
@@ -271,8 +286,6 @@ function initUserData() {
   $("#button").click(function () {
     table.row(".selected").remove().draw(false);
   });
-
-  type.tipsy("show");
 
   var newUser = { login: "", first_name: "", last_name: "", type: "G", id: "" };
 
