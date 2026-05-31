@@ -52,9 +52,10 @@ class StreamEgressManager(ABC):
     """
     Engine-agnostic contract for managing outgoing stream outputs.
 
-    Concrete implementations: LibVlcEgressManager, IcecastEgressManager.
-    Which implementation is used depends on the stream capability matrix
-    result (T9.2 / ADR-003).
+    In production, outgoing Icecast streaming is owned by Liquidsoap; this
+    ABC plus its registry/serialization helpers back the read-only stream
+    status API (``/api/v2/streams/outputs``).  The concrete libVLC egress
+    manager was removed with the abandoned VLC engine (2026-05-31).
     """
 
     # --- Output registration ---

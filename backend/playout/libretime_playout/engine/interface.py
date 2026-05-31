@@ -2,8 +2,8 @@
 PlayoutEngine abstract interface (ADR-002, T2.1).
 
 All playout actions in RASTATIME must go through this interface.
-The libVLC implementation (VlcPlayoutEngine) is the mandatory Windows
-adapter; a MockPlayoutEngine (T4.1) can be used for tests.
+The production implementation is LiquidsoapPlayoutEngine (Phase-C5,
+2026-05-28); mpv (MpvPlayoutEngine) remains as a legacy fallback.
 """
 from abc import ABC, abstractmethod
 from enum import Enum

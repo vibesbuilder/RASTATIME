@@ -10,7 +10,7 @@ Test inventory (10 tests):
   2.  README.md mentions RASTATIME as the project name.
   3.  README.md mentions LibreTime as the upstream fork source.
   4.  README.md mentions Windows 11 as the target platform.
-  5.  README.md mentions libVLC or VLC as the playout engine.
+  5.  README.md mentions Liquidsoap as the production playout engine.
   6.  README.md mentions WASAPI (Windows audio backend).
   7.  README.md mentions NSSM (Windows service management).
   8.  README.md contains an installation / quick-start section.
@@ -52,11 +52,11 @@ def test_readme_mentions_windows():
     assert "Windows 11" in _text(), "README.md does not mention Windows 11"
 
 
-def test_readme_mentions_vlc():
-    """README.md must mention VLC or libVLC as the playout engine."""
-    text = _text()
-    assert "libVLC" in text or "VLC" in text, (
-        "README.md does not mention VLC/libVLC as the playout engine"
+def test_readme_mentions_liquidsoap():
+    """README.md must mention Liquidsoap as the production playout engine."""
+    text = _text().lower()
+    assert "liquidsoap" in text, (
+        "README.md does not mention Liquidsoap as the playout engine"
     )
 
 

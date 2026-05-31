@@ -66,7 +66,7 @@ def connect_egress_manager(mgr: StreamEgressManager) -> None:
     ----------
     mgr:
         A concrete :class:`~streams.egress.interface.StreamEgressManager`
-        implementation (e.g. :class:`~streams.egress.LibVlcEgressManager`).
+        implementation.
     """
     global default_manager
     default_manager = mgr

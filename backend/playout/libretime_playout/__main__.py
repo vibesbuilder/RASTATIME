@@ -1,12 +1,12 @@
 """
-RASTATIME-PLAYOUT — libmpv (default) / libVLC playout engine entry point.
+RASTATIME-PLAYOUT — Liquidsoap (production) / libmpv (legacy) playout entry point.
 
 Replaces the LibreTime / Liquidsoap playout daemon with a Windows-native
 scheduler that:
 
   1. Polls RASTATIME-API (health gate) before entering the main loop.
   2. Reads Icecast output stream settings from ``cc_pref`` via Django ORM.
-  3. Creates a local-playback engine (mpv by default, VLC as fallback)
+  3. Creates a local-playback engine (Liquidsoap in production; mpv legacy)
      for soundcard audio output.
   4. Creates FFmpeg streamers for Icecast output (one per enabled stream).
   5. Polls the schedule API every POLL_INTERVAL seconds and arms per-item
@@ -22,12 +22,11 @@ Environment variables (all optional — defaults match the standard install):
   RASTATIME_SCHEDULE_POLL      : schedule refresh interval in seconds (default 120)
   LIBRETIME_CONFIG_FILEPATH    : path to libretime.conf
   DJANGO_SETTINGS_MODULE       : Django settings module
-  RASTATIME_PLAYOUT_ENGINE     : "mpv" (default) | "vlc"
+  RASTATIME_PLAYOUT_ENGINE     : "liquidsoap" (production, set via NSSM) | "mpv" (legacy default)
   RASTATIME_MPV_PATH           : directory containing libmpv-2.dll
                                  (default search: C:\\Tools\\mpv,
                                  C:\\Program Files\\mpv)
   RASTATIME_MPV_LOG_LEVEL      : mpv log verbosity (default "warn")
-  RASTATIME_VLC_PLUGIN_PATH    : VLC plugins directory (only if engine=vlc)
   RASTATIME_LIQUIDSOAP_HOST    : Liquidsoap telnet host (default 127.0.0.1)
   RASTATIME_LIQUIDSOAP_PORT    : Liquidsoap telnet port (default 1234)
   RASTATIME_LIQUIDSOAP_CONFIG_PATH
@@ -410,11 +409,7 @@ def _read_internal_listener_credentials() -> tuple:
 # ---------------------------------------------------------------------------
 
 def main() -> None:
-    logger.info("RASTATIME-PLAYOUT: starting (libVLC engine).")
-    logger.info(
-        "VLC playout engine replacing Liquidsoap (ADR-002). "
-        "python-vlc must be installed and VLC 64-bit must be present."
-    )
+    logger.info("RASTATIME-PLAYOUT: starting.")
 
     # 1. Health gate — block until the API is up (or timeout)
     _wait_for_api()
@@ -432,7 +427,7 @@ def main() -> None:
         if stream_outputs:
             logger.info(
                 "Found %d enabled Icecast stream output(s) — "
-                "FFmpeg will stream to Icecast alongside VLC local playback.",
+                "FFmpeg will stream to Icecast alongside local playback.",
                 len(stream_outputs),
             )
         else:
@@ -448,11 +443,6 @@ def main() -> None:
     # the Authorization header, and emits "playback error" while
     # staying silent.  mpv has none of those quirks and is actively
     # maintained.
-    #
-    # Set RASTATIME_PLAYOUT_ENGINE=vlc to fall back to libVLC if mpv
-    # ever needs to be sidelined (e.g. driver issue, DLL not found,
-    # etc.).  VLC playback works fine for scheduled files; only the
-    # DJ-source monitoring is broken on libVLC 3.x.
     #
     # RASTATIME 2026-05-25/26 — Seamless-Bus-Mix Phase C7: third option
     # 'liquidsoap' fully wired (C1-C3+C6).  Setting
@@ -474,23 +464,17 @@ def main() -> None:
     # those two not-yet-ported schedule-item types.  Recording
     # already requires Liquidsoap since C5 Teil 2d (FfmpegRecorder
     # deleted).  Operator-decision 2026-05-28.
-    if engine_kind in ("mpv", "vlc"):
+    if engine_kind == "mpv":
         logger.warning(
-            "DEPRECATED: RASTATIME_PLAYOUT_ENGINE=%s is now legacy. "
+            "DEPRECATED: RASTATIME_PLAYOUT_ENGINE=mpv is now legacy. "
             "Liquidsoap (RASTATIME_PLAYOUT_ENGINE=liquidsoap) is the "
-            "production engine since Phase-C5 (2026-05-28); mpv/VLC "
-            "will be removed after Phase-E (Webstreams) + Phase-F "
-            "(Line-Inputs) migrate those item types to Liquidsoap. "
+            "production engine since Phase-C5 (2026-05-28); mpv remains "
+            "only as a fallback and will be removed in a later cleanup. "
             "Recording already requires the Liquidsoap engine.",
-            engine_kind,
         )
 
     try:
-        if engine_kind == "vlc":
-            from libretime_playout.engine.vlc_engine import VlcPlayoutEngine  # noqa: PLC0415
-            engine = VlcPlayoutEngine()
-            logger.info("Local-playback engine: VLC (libVLC) [DEPRECATED]")
-        elif engine_kind == "mpv":
+        if engine_kind == "mpv":
             from libretime_playout.engine.mpv_engine import MpvPlayoutEngine  # noqa: PLC0415
             engine = MpvPlayoutEngine()
             logger.info("Local-playback engine: mpv (libmpv) [DEPRECATED]")
@@ -516,7 +500,7 @@ def main() -> None:
             )
         else:
             logger.critical(
-                "Unknown RASTATIME_PLAYOUT_ENGINE=%r — must be 'mpv', 'vlc' or 'liquidsoap'.",
+                "Unknown RASTATIME_PLAYOUT_ENGINE=%r — must be 'mpv' or 'liquidsoap'.",
                 engine_kind,
             )
             sys.exit(1)
@@ -533,10 +517,6 @@ def main() -> None:
                 "Ensure Liquidsoap is running and its telnet server is "
                 "reachable at RASTATIME_LIQUIDSOAP_HOST / _PORT (default "
                 "127.0.0.1:1234)."
-            )
-        else:
-            logger.critical(
-                "Ensure VLC 64-bit is installed and RASTATIME_VLC_PLUGIN_PATH is set."
             )
         sys.exit(1)
 

@@ -7,10 +7,10 @@
 .DESCRIPTION
     T22.1 - Idempotent NSSM install script for RASTATIME-PLAYOUT.
 
-    RASTATIME-PLAYOUT is the mandatory libVLC-based on-air playout engine.
-    It reads the show schedule from PostgreSQL, drives the libVLC queue,
-    and tracks now-playing state.  Like the worker, it must not start its
-    main loop until RASTATIME-API is healthy.
+    RASTATIME-PLAYOUT is the on-air playout scheduler (Pypo).  It reads the
+    show schedule from PostgreSQL, drives the playout engine (Liquidsoap in
+    production, mpv as legacy fallback), and tracks now-playing state.  Like
+    the worker, it must not start its main loop until RASTATIME-API is healthy.
 
     Health-check gate:
         Before entering its main loop, playout/__main__.py must poll
@@ -22,7 +22,7 @@
     Service properties (see docs/architecture/SERVICE_TOPOLOGY.md §2.3):
         NSSM name  : RASTATIME-PLAYOUT
         Executable : python.exe  (from the install-root venv)
-        Arguments  : -m playout
+        Arguments  : -m libretime_playout
         Port       : None (no external port; IPC via shared DB)
         Logs       : C:\rastatime\logs\playout-stdout.log
                      C:\rastatime\logs\playout-stderr.log
@@ -38,10 +38,6 @@
 .PARAMETER ConfigFile
     Path to libretime.conf.
     Default: <InstallRoot>\config\libretime.conf
-
-.PARAMETER VlcPluginPath
-    Path to the VLC plugins directory, used by libVLC.
-    Default: C:\Program Files\VideoLAN\VLC\plugins
 
 .PARAMETER NssmExe
     Path to nssm.exe.  If omitted the script searches PATH and then
@@ -60,7 +56,6 @@
 
 .NOTES
     Start RASTATIME-API and RASTATIME-WORKER before this service.
-    VLC must be installed (64-bit) so that libvlc.dll is available.
     See T22.1 health-check gate requirement: http://127.0.0.1:8000/health
 
     See docs/architecture/SERVICE_TOPOLOGY.md §2.3 for full specification.
@@ -71,7 +66,6 @@
 param(
     [string] $InstallRoot    = "C:\rastatime",
     [string] $ConfigFile     = "",
-    [string] $VlcPluginPath  = "C:\Program Files\VideoLAN\VLC\plugins",
     [string] $NssmExe        = "",
     [switch] $StartService
 )
@@ -192,21 +186,6 @@ function Resolve-ConfigFile {
 }
 
 # ---------------------------------------------------------------------------
-# Check VLC
-# ---------------------------------------------------------------------------
-function Test-VlcPresent {
-    $libvlc = Join-Path $VlcPluginPath "..\libvlc.dll"
-    if (Test-Path $libvlc) {
-        Write-OK "libvlc.dll found at $VlcPluginPath"
-        return $true
-    }
-    Write-Warn "libvlc.dll not found near $VlcPluginPath"
-    Write-Warn "Install VLC (64-bit) from https://www.videolan.org/vlc/"
-    Write-Warn "RASTATIME-PLAYOUT will fail to start without libvlc.dll."
-    return $false
-}
-
-# ---------------------------------------------------------------------------
 # Main installation
 # ---------------------------------------------------------------------------
 Write-Host ""
@@ -225,11 +204,8 @@ Write-Host "  Install root    : $InstallRoot"    -ForegroundColor Gray
 Write-Host "  NSSM            : $nssm"           -ForegroundColor Gray
 Write-Host "  Python          : $python"         -ForegroundColor Gray
 Write-Host "  Config file     : $cfgFile"        -ForegroundColor Gray
-Write-Host "  VLC plugin path : $VlcPluginPath"  -ForegroundColor Gray
 Write-Host "  Health gate     : $ApiHealthUrl"   -ForegroundColor Gray
 Write-Host ""
-
-$null = Test-VlcPresent
 
 # Ensure log directory exists
 Write-Step "Ensuring log directory: $LogDir"
@@ -286,21 +262,15 @@ Write-Step "Setting restart policy (${RestartDelayMs} ms delay)..."
 # Auto-start at boot
 & $nssm set $ServiceName Start SERVICE_AUTO_START
 
-# Environment variables (including VLC plugin path)
-# IMPORTANT: VLC's internal DLL loader needs the VLC root directory on PATH
-# to resolve plugin DLL dependencies (libshout, libvorbis, etc.).
-# RASTATIME_VLC_PLUGIN_PATH alone is not enough — it only tells VLC *where*
-# to find plugins, not where to find their transitive DLL dependencies.
-$vlcRootDir = Split-Path $VlcPluginPath -Parent
-Write-Step "Configuring environment variables (VLC root on PATH: $vlcRootDir)..."
+# Environment variables
+Write-Step "Configuring environment variables..."
 & $nssm set $ServiceName AppEnvironmentExtra `
     "DJANGO_SETTINGS_MODULE=libretime_api.settings.prod" `
     "LIBRETIME_CONFIG_FILEPATH=$cfgFile" `
-    "RASTATIME_VLC_PLUGIN_PATH=$VlcPluginPath" `
     "RASTATIME_API_URL=http://127.0.0.1:8765" `
     "PYTHONPATH=$pythonPath" `
-    "PATH=$vlcRootDir;C:\ffmpeg\bin;%PATH%"
-Write-OK "Environment variables set (VLC + FFmpeg on PATH)."
+    "PATH=C:\ffmpeg\bin;%PATH%"
+Write-OK "Environment variables set (FFmpeg on PATH)."
 
 Write-Host ""
 Write-Host "  NOTE: The playout entry point (playout/__main__.py) must" -ForegroundColor DarkYellow
