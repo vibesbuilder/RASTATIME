@@ -80,6 +80,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Zweite Tooltip-Lib (Tipsy) entfernt, auf qtip2 konsolidiert
+  (JS-Modernisierung Stufe 0b, 2026-05-31, `38c4525`)** — Tipsy (2012,
+  lokal geforkt, EOL) wurde global auf jeder Seite **neben** qtip2 geladen,
+  aber nur an **einer** Stelle genutzt (`user.js`, der User-Rechte-Tooltip am
+  `#type`-Dropdown).  Diese eine Stelle wurde auf qtip2 (die überall sonst
+  genutzte Tooltip-Lib, 30+ Stellen) migriert; Tipsy danach komplett entfernt
+  (globaler CSS+JS-Load aus `PageLayoutInitPlugin`, 4 Dateien gelöscht,
+  3 `assets.json`-Einträge raus).  qtip2 bringt einen eingebauten
+  `.ui-tooltip-tipsy`-Stil mit → die dunkle Optik bleibt 1:1.
+  Operator-Browser-verifiziert (Tooltip erscheint nur bei Hover/Fokus,
+  aktualisiert sich bei Typ-Wechsel).  Nebenbei zwei veraltete 0c-Asset-Hashes
+  korrigiert (`audioplaytest.js`, `spl.js`).
+
 - **Audio-Preview von jPlayer auf natives `<audio>` umgestellt
   (JS-Modernisierung Stufe 0c, Teil 1/3, 2026-05-31, `9792349`)** — der
   Vorschau-Player (Library-Einzeltrack, Playlist, Block, Show, geplanter
