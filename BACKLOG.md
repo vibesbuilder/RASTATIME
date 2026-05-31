@@ -502,38 +502,84 @@ keine Migration nötig — nur ein Konstanten-Bump.
 
 ## 🛠️ Technical Debt / Refactor-Backlog
 
-### 🟡 JavaScript-Stack-Modernisierung (Option B aus Eval 2026-05-22)
+### 🟡 JavaScript-Stack-Modernisierung (Hybrid/Vanilla-First — Re-Eval 2026-05-31)
 
-**Status:** Defer — nach Abschluss laufender Feature-Arbeit.
-**Evaluiert:** 2026-05-22.
-**Operator-Wert:** Mittel (Security, Wartbarkeit, Reputation).
-**Aufwand:** ~2130 LoC + ~500 LoC Doku, ~8 Wochen kalendarisch.
+**Status:** In Arbeit — Strategie geklärt (Operator 2026-05-31: **Hybrid,
+Vanilla-First**), **Stufe 0 (Quick Wins) gestartet**.  Ersetzt die grobe
+Erst-Eval 2026-05-22, deren Bestandsaufnahme an mehreren Stellen falsch war
+(s. Korrekturen).
+**Re-evaluiert:** 2026-05-31 (verifizierte Inventur des realen Stacks, Agent).
+**Operator-Wert:** Security (jQuery-CVE), Wartbarkeit, EOL-Hygiene.
+**Relativierung:** Frontend ist Operator-only (authentifiziert, intern, nicht
+öffentlich) → das XSS-CVE ist real, aber kein anonymer Angriffsvektor; stärkerer
+Treiber ist Wartbarkeit.
 
-**Bestandsaufnahme:**
-| Library | Version | Status |
-|---|---|---|
-| jQuery | **1.8.3 + 1.10.2 (parallel)** | Veraltet; bekannte XSS-Issues (CVE-2020-11023) |
-| AngularJS | 1.x | **EOL seit Januar 2022** |
-| FullCalendar | ~1.6 | EOL — v6 ist aktuell |
-| qtip2 | 2.x | EOL seit 2016 |
-| jPlayer | 2.x | Maintained-archiviert seit 2018 |
-| DataTables | ~1.10 | v2 aktuell |
-| Build-Pipeline | keine | kein Bundler, kein TS, kein Linter |
+**Strategie (Operator-Entscheid 2026-05-31): Hybrid, Vanilla-First.**
+- **Default** jeder Ablösung: modernes ES6+ (fetch, querySelector, native
+  `<dialog>`/`<audio>`) + moderne Libs als **vendored Bundle** (kein npm/Build —
+  genau wie FullCalendar 6 bereits eingebunden ist).  Einbindung wie gehabt über
+  Zend `headScript()`.
+- **Build-Pipeline** (Vite+Vue+TS) NUR, falls eine Komponente stark
+  reaktiv/zustandsbehaftet ist UND in Vanilla unverhältnismäßig viel Boilerplate
+  erzeugt → dann erst **eigener ADR + Operator-Go**.  Einziger plausibler
+  Kandidat: Podcast-Editor — aber klein genug für Vanilla.
 
-**Phasen:**
-1. **🔥 Quick Win: jQuery-Doppel-Load beheben** (Operator hat Interesse signalisiert)
-   - Aktuell: jquery-1.8.3.min.js UND jquery-1.10.2.min.js werden parallel ausgeliefert
-   - Aufwand: 1-2 Tage (analysieren welches Plugin welche Version braucht; auf 1.10 konsolidieren als Brücke vor 3.x)
-   - Sofortiger Win: weniger Auslieferungs-Größe, weniger Verwirrung im Stack
-   - Könnte als isolierte Bug-fix-Aktion vor dem Rest gestartet werden
-2. **AngularJS 1 Footprint ist klein**: nur 7 .phtml Views nutzen ng-Direktiven (Podcast-Editor + 6 kleine Form-Bits)
-   - Inseln-Portierung auf Vue 3 — ~3-4 Wochen total
-3. **jQuery 1.10 → 3.7 Migration mit `jquery-migrate`-Plugin als Warner**: ~1 Woche
-4. **Vite + TypeScript für neue Komponenten**: ~3 Tage Setup
-5. **Alte jQuery-Plugins schrittweise**: FullCalendar v6, DataTables v2, qtip → Floating UI
+**Verifizierte Bestandsaufnahme (2026-05-31) — es gibt KEINE Build-Pipeline:**
+kein package.json / Bundler / TS / Linter / node_modules; alle Libs
+hand-vendored `.min.js`, statisch via `headScript()`; `assets.json` ist nur ein
+MD5-Cache-Buster.
 
-**Vorbedingung:** Operator-ruhige Phase (keine parallele Feature-Roll-outs).
-**Risiko Live-Betrieb:** Niedrig wenn Legacy-Code parallel bleibt als Fallback.
+| Library | Version | Status | Footprint | Schwierigkeit |
+|---|---|---|---|---|
+| jQuery | 1.8.3 (global) + 1.10.2 (nur Embed-Player) | veraltet, CVE-2020-11023 | 47/53 app-JS + alle Plugins | am härtesten (Substrat) |
+| DataTables | 1.9.4 (2012) | veraltet | 28 Sites/12 Dateien, server-side, 2 geforkte Plugins | sehr hart |
+| FullCalendar (Schedule) | 1.5.4 (2012) | EOL | 3 Dateien, drag/resize, **zeitzonen-gepatcht** | hart + fragil |
+| FullCalendar (Embed) | 6.1.10 (2023) | modern (RASTATIME) | 1 Datei | schon modern |
+| qtip2 | nightly 2012 | EOL | 22 Sites/11 Dateien, flach | mittel |
+| AngularJS | 1.4.5 | EOL 2022 | **2 JS / 4 Views** (nur Podcast) | eher leicht (isoliert) |
+| jPlayer | 2.7.0 (2014) | archiviert | 2 Dateien / 3 Sites + toter Flash-Fallback | leicht (native `<audio>`) |
+| Bootstrap (JS) | 2.x (2012) | uralt | global, Modals | mittel |
+| plupload | 1.5.4 | alt | 1 Datei (Dropzone koexistiert) | leicht |
+| div. (jQuery UI 1.8.24, Underscore 1.5.1, Handlebars, Flot, blockUI, **Tipsy** = 2. Tooltip-Lib, contextMenu, datetimepicker, sprintf, colorpicker) | 2011-2013 | alt | versch. | versch. |
+| wavesurfer 4.6.0 (2024), dayjs, FC6, Embed-Widgets | aktuell | modern (RASTATIME) | — | schon modern |
+
+**Korrekturen ggü. Erst-Eval 2026-05-22:**
+- jQuery 1.8.3 + 1.10.2 laden **nicht** parallel auf einer Seite (1.10.2 nur im
+  Embed-Player, eigene Seite) → „Quick-Win Doppel-Load" war gegenstandslos.
+- AngularJS in **4** Views (nicht 7), nur Podcast/Publish.
+- **Zwei** FullCalendars (alt 1.5.4 Schedule + neu 6.1.10 Embed), nicht „~1.6".
+- Stack viel größer als die 6 Libs (Bootstrap-JS 2.x, jQuery UI, 2 Tooltip-Libs …).
+- Fork hat bereits moderne Inseln (Embed-Widgets = Vanilla JS, FC6, wavesurfer 4.6).
+
+**Stufenplan (alles Vanilla-First, risiko-aufsteigend):**
+- **Stufe 0 — Quick Wins (🟢 niedrig, GESTARTET 2026-05-31):** jPlayer→native
+  `<audio>`; Tooltip-Dedupe (qtip2 oder Tipsy global raus); AngularJS/qtip nicht
+  mehr global auf jeder Seite laden (lazy/per-page).
+- **Stufe 1 — isolierte EOL (🟢):** AngularJS→Vanilla (Podcast, 4 Views);
+  qtip2→Floating UI (vendored).
+- **Stufe 2 — harte Kerne, EINZELN m. Fallback (🟡):** FullCalendar 1.5→6
+  (Schedule-Rewrite, Zeitzonen-Patch neu lösen); DataTables 1.9→2 o. Grid.js
+  (server-side neu, 2 Forks ersetzen); jQuery 1.8→3.7 (jquery-migrate +
+  systematischer Seiten-Test) oder schrittweise jQuery aus neuen Komponenten
+  verbannen.
+- **(Optional) Build-Pipeline:** nur bei Trigger (s. Strategie), eigener ADR.
+
+**Hauptrisiken (Stufe 2 absichern):**
+1. **FullCalendar-Zeitzonen-Patch** — Schedule-Grid läuft auf Server- statt
+   Browser-Zeit via hand-gepatchter 2012-Lib (`fullcalendar/AIRTIME_DEV_README`).
+   Fragilste Kopplung.
+2. **jQuery-1.8-Semantik-Falle** — `soundcardsetting.js:228` dokumentiert
+   `method` vs `type` (1.9+); ein jQuery-Bump kann AJAX **still** auf GET
+   umstellen („200 OK, speichert aber nicht").
+3. **Lokal geforkte** Plugins (DataTables columnFilter/ColVis, serverbrowser,
+   tipsy, contextmenu) — Patches bei Lib-Update von Hand neu anwenden.
+
+**Aufwand:** Stufe 0 ~1 Woche · Stufe 1 ~3-4 Wochen · Stufe 2 ~4-6 Wochen.
+Voll ~8-12 Wochen, über Monate verteilt.
+**Vorbedingung:** ruhige Phase (kein paralleler Feature-Rollout) — HW-Wartezeit
+passt für Stufe 0/1.
+**Risiko Live-Betrieb:** Stufe 0/1 niedrig (isoliert/additiv); Stufe 2 mittel
+(Legacy parallel als Fallback halten, Live-Verifikation pro Seite).
 
 ---
 
