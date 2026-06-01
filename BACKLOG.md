@@ -579,15 +579,18 @@ MD5-Cache-Buster.
   - ⬜ **Preview für „Scheduled Line-Input" hinzufügen** — der neue
     `preview_audio.js`/`AudiopreviewController` kennt bisher nur audioclip +
     stream; ein geplanter Line-Input-Slot hat noch keine Preview-Quelle.
-- **Stufe 1 — isolierte EOL (🟢, IN ARBEIT):**
-  - ✅ **AngularJS 1.4.5 → Vanilla/jQuery KOMPLETT** (2026-06-01) — die einzigen
-    3 Controller (Publish, Podcast, StationPodcast) / 4 Views auf vanilla
-    migriert, dann die Lib + Loads entfernt.  Commits: `6b79128` (Publish-Pilot),
-    `ede7c12` (Podcast+Station), `62fbe18` (Lib raus), `b30326e` (My-Podcast ins
+- **✅ Stufe 1 — isolierte EOL ABGESCHLOSSEN (2026-06-01):**
+  - ✅ **AngularJS 1.4.5 → Vanilla/jQuery KOMPLETT** — die einzigen 3 Controller
+    (Publish, Podcast, StationPodcast) / 4 Views auf vanilla migriert, dann die
+    Lib + Loads entfernt.  Commits: `6b79128` (Publish-Pilot), `ede7c12`
+    (Podcast+Station), `62fbe18` (Lib raus), `b30326e` (My-Podcast ins
     Hauptmenü).  Strategie: Low-Diff (Controller-Bodies fast unverändert, nur
     `$http`→`$.ajax` + Form-Glue + Bootstrap), ~750 Z. DataTables unberührt.
-  - ⬜ **qtip2 → Floating UI** (vendored) — die verbleibende Stufe-1-Aufgabe
-    (EOL-Tooltip-Lib, 22 Stellen / 11 Dateien, flach).
+  - ✅ **qtip2 → Floating UI KOMPLETT** — ~31 Tooltips über 14 Dateien auf den
+    eigenen `rtTooltip`-Wrapper (Floating UI vendored) migriert, dann qtip2-Lib
+    (~3.800 Z.) + Load + assets.json entfernt.  Commits: `f07c53c`
+    (Wrapper+Pilot), `4cba934` (Rest, qtip-Kompat-Schicht), `d63394f` (Lib raus).
+    (Realer Footprint war ~31/14, nicht die geschätzten 22/11.)
 - **Stufe 2 — harte Kerne, EINZELN m. Fallback (🟡):** FullCalendar 1.5→6
   (Schedule-Rewrite, Zeitzonen-Patch neu lösen); DataTables 1.9→2 o. Grid.js
   (server-side neu, 2 Forks ersetzen); jQuery 1.8→3.7 (jquery-migrate +

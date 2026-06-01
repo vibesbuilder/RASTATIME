@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+- **qtip2-Tooltip-Bibliothek vollständig entfernt (JS-Modernisierung Stufe 1,
+  2026-06-01, `d63394f`)** — qtip2 (EOL, nightly 2012) war über ~31 Tooltip-
+  Aufrufe in 14 Dateien im Einsatz.  Alle auf **rtTooltip** (eigener Wrapper auf
+  Floating UI) migriert (s. *Changed* / *Added*), dann die Lib (`js/qtip/` +
+  `css/qtip/`, ~3.800 Zeilen) + globaler Load + 4 `assets.json`-Einträge
+  entfernt.  Verifiziert: kein funktionaler `.qtip()`-Aufruf mehr.  Damit ist
+  **JS-Modernisierung Stufe 1 komplett** — die zwei anvisierten EOL-Libraries
+  (AngularJS + qtip2) sind beide weg.
+
 - **AngularJS-Bibliothek vollständig entfernt (JS-Modernisierung Stufe 1,
   2026-06-01, `62fbe18`)** — AngularJS 1.4.5 (EOL 2022) wurde nur noch von zwei
   Stellen genutzt: dem Publish-Dialog und den Podcast-/StationPodcast-Editoren.
@@ -116,6 +125,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (wird separat gesichert).
 
 ### Changed
+
+- **Alle Tooltips von qtip2 auf rtTooltip (Floating UI) umgestellt
+  (JS-Modernisierung Stufe 1, 2026-06-01, `f07c53c` + `4cba934`)** — ein neuer
+  schlanker `$.fn.rtTooltip`-Wrapper auf Floating UI (computePosition +
+  offset/flip/shift/arrow) ersetzt qtip2.  Der Wrapper akzeptiert sowohl eine
+  saubere API als auch die alte qtip2-Optionsform (Kompat-Schicht: placement aus
+  `position.at`, interactive aus `hide.fixed`, extraClass aus `style.classes`,
+  Titel/Close-Button aus `content.title`, dismissable aus `hide.event:"unfocus"`,
+  light-Theme aus `style.name`, show-on-init aus `show.ready`, `overwrite`),
+  sodass die meisten Aufrufstellen per `.qtip(`→`.rtTooltip(`-Rename migrierten.
+  ~31 Tooltips über 14 Dateien; dunkel-abgerundeter Look (`css/tooltip.css`) wie
+  zuvor.  Operator-verifiziert (Streams, Add-Show, Calendar-Icons,
+  Users-Dropdown, Smart-Block/Podcast u.a.).
 
 - **Publish-Dialog + Podcast-/StationPodcast-Editoren von AngularJS auf
   vanilla/jQuery (JS-Modernisierung Stufe 1, 2026-06-01, `6b79128` + `ede7c12`)**
@@ -248,6 +270,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   BACKLOG "Storage-Struktur-Bereinigung".
 
 ### Added
+
+- **Floating UI (vendored) + rtTooltip-Helper (2026-06-01, `f07c53c`)** — die
+  moderne Positionierungs-Lib Floating UI (UMD core+dom, ~22 KB) unter
+  `js/libs/floating-ui/`, plus `js/airtime/common/tooltip.js` (rtTooltip) +
+  `css/tooltip.css` — die Grundlage der qtip2-Ablösung (s. *Removed* /
+  *Changed*).  Vanilla-First, kein Build-Schritt.
 
 - **„My Podcast" (Station-Podcast) im Hauptmenü (2026-06-01, `b30326e`)** — die
   Station-Podcast-Seite (`/podcast/station`) war funktionsfähig, aber nur per URL
