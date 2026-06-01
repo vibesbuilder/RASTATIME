@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+- **jPlayer-Bibliothek vollständig entfernt (JS-Modernisierung Stufe 0,
+  2026-06-01, `9fa39e8`)** — nachdem alle drei Nutzer auf natives `<audio>`
+  migriert waren (Audio-Preview 1/3, Dashboard-Stream-Player 2/3, Radio-Page
+  Podcast-Player + GUI 3/3), wurde die archivierte jPlayer-Lib (2.7.0, 2014)
+  samt globalem Load entfernt: der ganze `public/js/jplayer/`-Baum (Core,
+  Playlist-/Inspector-Plugins, Popcorn-Bridge, `Jplayer.swf`-Flash-Fallback,
+  blue.monday-Skin — 13 Dateien, ~2.600 Zeilen), der globale Script-Load in
+  `PageLayoutInitPlugin`, das tote `#jquery_jplayer_1`-Mount-Div im
+  Header-Partial und 7 `assets.json`-Einträge.  Die Radio-Page-GUI behält ihre
+  eigenen `jplayer.png`/`pbar-ani.gif`-Kopien unter `css/radio-page/` (von
+  `station-podcast.css` referenziert) → Optik unverändert.  Verifiziert: kein
+  funktionaler `.jPlayer()`/`jPlayerPlaylist`-Aufruf mehr (nur Kommentare),
+  Radio-Page + Login laden 200, kein jPlayer-Asset wird mehr ausgeliefert.
+
 - **Toter VLC-Engine-Code entfernt (Cleanup Stufe 1, 2026-05-31)** — die
   nie produktiv gewordene libVLC-Engine-Architektur (RASTATIME lief über
   mpv → Liquidsoap, nie über VLC) wurde vollständig entfernt: ~12.900
@@ -51,6 +65,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Live-Stream im Embed-Player für Remote-Hörer erreichbar gemacht
+  (2026-06-01, `bd5d9ca`)** — der Embed-Player (Muses `Html5Player`, u.a. der
+  Live-Stream-Player auf der Radio-Page) spielte die konfigurierte Stream-
+  `public_url` wörtlich ab.  Bei `host = localhost` (hiesige Default-Konfig)
+  bekam ein Remote-Hörer `ERR_CONNECTION_REFUSED`, weil `localhost` auf seinen
+  eigenen Rechner zeigt.  `reachableStreamUrl()` schreibt jetzt
+  `localhost`/`127.0.0.1` auf den Host um, über den die Embed-Seite
+  ausgeliefert wird (`window.location`); ein expliziter Host (Domain /
+  dedizierter Icecast, z.B. für externe Einbettung) bleibt unangetastet.
+  Vorbestehendes Stream-Config-Thema, kein Regression — dasselbe Muster wie
+  zuvor im Dashboard-Stream-Player.  Operator-verifiziert remote.
+
 - **Irreführende/gefährliche VLC-Engine-Doku korrigiert (2026-05-31)** —
   `README.md` + `FORK_NOTES.md` beschrieben libVLC noch als „mandatory
   main playout engine" bzw. „in development", obwohl RASTATIME seit
@@ -79,6 +105,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (wird separat gesichert).
 
 ### Changed
+
+- **Radio-Page Podcast-Player von jPlayer auf natives `<audio>` umgestellt
+  (JS-Modernisierung Stufe 0, jPlayer Teil 3/3, 2026-06-01, `86a4ef0`)** — der
+  Station-Podcast-Episoden-Player auf der öffentlichen Radio-Page nutzt jetzt
+  ein vanilla natives `<audio>` + einen kleinen `_podcastPlayer`-Manager statt
+  `jPlayerPlaylist`.  Das custom jPlayer-Skin (`station-podcast.css`,
+  `#jp_container_1`) bleibt auf Operator-Wunsch erhalten und wird nativ
+  angesteuert: Play/Pause-Sichtbarkeit per `display`-Toggle (so funktioniert der
+  bestehende Block-2-`.jp-play:hidden`-Check weiter), Seekbar klick-zum-Springen,
+  Volume-/Mute-/Max-Bar, Laufzeit-Anzeige, `ended`→nächster Track; Pagination +
+  Description-Toggle unverändert.  `IndexController` lädt kein per-page jPlayer
+  mehr.  Operator-Browser-verifiziert (alle Controls + Pagination).  Der
+  Live-Stream-Player (Embed-iframe) ist separat und unberührt.  Damit war
+  jPlayer auf dieser Seite abgelöst → Lib global entfernbar (s. *Removed*).
 
 - **Dashboard-Stream-Player von jPlayer auf natives `<audio>` umgestellt
   (JS-Modernisierung Stufe 0, jPlayer Teil 2/3, 2026-05-31, `b2b11b4`)** — der

@@ -552,32 +552,33 @@ MD5-Cache-Buster.
 - Fork hat bereits moderne Inseln (Embed-Widgets = Vanilla JS, FC6, wavesurfer 4.6).
 
 **Stufenplan (alles Vanilla-First, risiko-aufsteigend):**
-- **Stufe 0 — Quick Wins (🟢 niedrig, IN ARBEIT seit 2026-05-31):**
+- **Stufe 0 — Quick Wins (🟢 niedrig, ✅ ABGESCHLOSSEN 2026-06-01):**
   - ✅ **0a DONE** (`324ca80`): AngularJS nicht mehr global — nur noch per-page
     (Podcast/Showbuilder laden `angular.min.js` selbst vor `podcast.js`).
-  - ✅ **0c Teil 1/3 DONE** (`9792349`): jPlayer→native `<audio>` für die
-    **Audio-Preview** (Library/Playlist/Block/Show/Webstream). Operator-Browser
-    verifiziert (Test 1–4 ok). jPlayer-Lib bleibt vorerst (s. Teil 2/3 + 3/3).
-  - ⬜ **0b offen:** Tooltip-Dedupe (qtip2 **oder** Tipsy global raus — beide
-    laden parallel).
-- **jPlayer-Ablösung — verbleibende Teile (🟢 leicht, Stufe 1):** Die jPlayer-Lib
-  selbst kann erst gelöscht werden, wenn alle 3 Nutzungsstellen migriert sind:
-  - ✅ **Teil 1/3:** Audio-Preview (`9792349`, s.o.).
-  - ⬜ **Teil 2/3:** Dashboard-Stream-Player (`dashboard/stream-player.phtml`,
-    nutzt `$("#jquery_jplayer_1").jPlayer("destroy"/"setMedia"/"play")`) →
-    native `<audio>`.
-  - ⬜ **Teil 3/3:** Radio-Page (`index/index.phtml`, nutzt
-    `new jPlayerPlaylist(...)`, lädt jPlayer per-page via `IndexController`) →
-    native `<audio>`.
-  - ⬜ **Danach:** jPlayer-Lib-Dateien (`js/jplayer/*`) + globaler Load in
-    `PageLayoutInitPlugin._initHeadScript` entfernen, Assets-Eintrag bereinigen.
-- **Preview-Follow-ups (vom Operator gewünscht 2026-05-31):**
+  - ✅ **0b DONE** (`38c4525`): Tooltip-Dedupe — Tipsy (2. Tooltip-Lib, nur 1
+    Nutzung in `user.js`) global raus, die eine Stelle auf qtip2 migriert
+    (qtip2 bleibt, eingebauter `.ui-tooltip-tipsy`-Stil → Optik 1:1).
+  - ✅ **0c DONE** (`9792349`): jPlayer→native `<audio>` für die Audio-Preview
+    (= jPlayer Teil 1/3, s.u.).
+- **✅ jPlayer-Ablösung KOMPLETT (2026-06-01):** alle 3 Nutzer auf natives
+  `<audio>` migriert, dann die Lib (2.7.0, 2014) global entfernt:
+  - ✅ **Teil 1/3:** Audio-Preview (`9792349`).
+  - ✅ **Teil 2/3:** Dashboard-Stream-Player (`b2b11b4`) — inkl.
+    `reachableStreamUrl()`-Fix (localhost→`window.location` für Remote-Hörer).
+  - ✅ **Teil 3/3:** Radio-Page Podcast-Player (`86a4ef0`), custom Skin behalten
+    + nativ angesteuert. Live-Stream-Player (Embed/Muses) bekam denselben
+    localhost-Fix (`bd5d9ca`).
+  - ✅ **Lib entfernt** (`9fa39e8`): `js/jplayer/*` (13 Dateien), globaler Load,
+    totes Header-Div, 7 `assets.json`-Einträge. Verifiziert, kein 500.
+- **Player-Follow-ups (offen):**
   - ⬜ **Preview für „Scheduled Line-Input" hinzufügen** — der neue
     `preview_audio.js`/`AudiopreviewController` kennt bisher nur audioclip +
     stream; ein geplanter Line-Input-Slot hat noch keine Preview-Quelle.
-  - ⬜ **Player-Design wie bei LibreTime wiederherstellen** — die native
-    `<audio>`-Preview nutzt aktuell rohe Browser-Controls; Optik (Skin/Layout)
-    soll wieder dem alten jPlayer-Look entsprechen (rein kosmetisch, CSS).
+  - ⬜ **Player-Design wie bei LibreTime wiederherstellen** — die nativen
+    `<audio>`-Player **Preview + Dashboard-Stream** nutzen aktuell rohe
+    Browser-Controls; Optik soll wieder dem alten jPlayer-Look entsprechen
+    (rein kosmetisch, CSS). Die **Radio-Page** behielt ihr Skin bereits
+    (Teil 3/3) — dort nur Feinschliff nötig.
 - **Stufe 1 — isolierte EOL (🟢):** AngularJS→Vanilla (Podcast, 4 Views);
   qtip2→Floating UI (vendored).
 - **Stufe 2 — harte Kerne, EINZELN m. Fallback (🟡):** FullCalendar 1.5→6
