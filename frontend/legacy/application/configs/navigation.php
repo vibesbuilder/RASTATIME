@@ -23,12 +23,10 @@
  * there, so no separate xgettext marker is needed.
  */
 $pages = [];
-// Disable My podcasts
-// See https://github.com/libretime/libretime/issues/1320
-// $pages[] = array(
-//     'label'      => 'My Podcast',
-//     ...
-// );
+// RASTATIME 2026-06-01 — "My Podcast" (station podcast) was disabled upstream
+// (libretime#1320, feature incomplete).  It works in RASTATIME (migrated off
+// AngularJS to vanilla JS) and is re-enabled as a top-level main-menu entry
+// directly above Calendar (see below).
 $pages[] = [
     'label' => 'Radio Page',
     'uri' => '/',
@@ -36,6 +34,17 @@ $pages[] = [
     'class' => '<i class="icon-globe icon-white"></i>',
     'pages' => [],
     'visible' => false,
+];
+$pages[] = [
+    // RASTATIME 2026-06-01 — station podcast page in the main menu, above
+    // Calendar (operator placement).  Admin-visible (resource 'preference');
+    // the page itself also allows DJ/Program-Manager via the 'podcast' ACL.
+    'label' => 'My Podcast',
+    'module' => 'default',
+    'controller' => 'podcast',
+    'action' => 'station',
+    'resource' => 'preference',
+    'class' => '<i class="icon-bullhorn icon-white"></i>',
 ];
 $pages[] = [
     'label' => 'Calendar',
