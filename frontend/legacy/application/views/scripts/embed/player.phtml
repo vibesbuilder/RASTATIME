@@ -14,6 +14,20 @@
 
         var MAX_MOBILE_SCREEN_WIDTH = 760;
 
+        // RASTATIME 2026-06-01 (JS-modernization, jPlayer part 3/3): the stream
+        // host may be configured as "localhost", which only resolves on the
+        // server itself. For a remote listener, rewrite localhost / 127.0.0.1 to
+        // the host this page is served from so the stream is reachable. An
+        // explicit host (a domain or a dedicated Icecast box, e.g. for external
+        // embedding) is left untouched. Mirrors the Dashboard stream player.
+        function reachableStreamUrl(url) {
+            if (!url) { return url; }
+            return url.replace(
+                /^(https?:\/\/)(?:localhost|127\.0\.0\.1)\b/i,
+                "$1" + window.location.hostname
+            );
+        }
+
         var Html5Player = function() {
             var id_element = getRandomIdPlayer(3000);
             this.mobileDetect = this.mobileDetect();
@@ -39,6 +53,11 @@
                 this.settings.url = stream["url"];
                 this.settings.codec = stream["codec"];
             }
+
+            // RASTATIME 2026-06-01: make a localhost-configured stream reachable
+            // for remote listeners (see reachableStreamUrl above). No-op for an
+            // explicitly configured host.
+            this.settings.url = reachableStreamUrl(this.settings.url);
 
             // Create the Muses player object
             playerhtml5_insert(this.settings);
