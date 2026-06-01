@@ -66,3 +66,17 @@
 .rt-tooltip.file-md-long {
     max-width: 360px;
 }
+
+/* light variant (former qtip style.name "light", e.g. the dashboard "About") */
+.rt-tooltip.rt-light {
+    background: #fff;
+    color: #333;
+    border: 1px solid #bbb;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+}
+.rt-tooltip.rt-light .rt-tooltip-arrow {
+    background: #fff;
+}
+.rt-tooltip.rt-light a {
+    color: #0066cc;
+}

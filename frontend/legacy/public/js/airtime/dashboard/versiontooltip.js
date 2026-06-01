@@ -132,7 +132,7 @@ function openLatestLink() {
 function setupVersionQtip() {
   var qtipElem = $("#version-icon");
   if (qtipElem.length > 0) {
-    qtipElem.qtip({
+    qtipElem.rtTooltip({
       id: "version",
       content: {
         text: getContent(),

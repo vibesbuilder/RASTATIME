@@ -1104,7 +1104,7 @@ var AIRTIME = (function (AIRTIME) {
                       "#au_" +
                         aData.id +
                         " td.library_track_type div.library_track_type_btn",
-                    ).qtip({
+                    ).rtTooltip({
                       overwrite: false,
                       content: {
                         text: value["type_name"],

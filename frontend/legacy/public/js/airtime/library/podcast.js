@@ -484,27 +484,14 @@ var AIRTIME = (function (AIRTIME) {
       tab = AIRTIME.tabs.openTab(data.html, uid, null);
     _bootstrapAngularApp(podcast, tab);
 
-    $(".album_names.help_icon").qtip({
+    $(".album_names.help_icon").rtTooltip({
       content: {
         text: $.i18n._(
           'Overwrite downloaded podcast episodes\' "Album" and "Creator" metadata tag with the Podcast Name specified above and set the track title to the title of the Podcast Episode. This album name can then be used as a search criteria by a smartblock. ',
         ),
       },
-      hide: {
-        delay: 500,
-        fixed: true,
-      },
-      style: {
-        border: {
-          width: 0,
-          radius: 4,
-        },
-        classes: "ui-tooltip-dark ui-tooltip-rounded",
-      },
-      position: {
-        my: "left bottom",
-        at: "right center",
-      },
+      placement: "right",
+      interactive: true,
     });
 
     // RASTATIME 2026-05-21 — auto-expiry-days hover tooltip.
@@ -512,25 +499,12 @@ var AIRTIME = (function (AIRTIME) {
     // the days input.  Same qtip parameters as .album_names.help_icon
     // above so the visual style stays uniform inside the podcast
     // edit dialog.
-    $(".auto_expiry_help_icon").qtip({
+    $(".auto_expiry_help_icon").rtTooltip({
       content: {
         text: $.i18n._("Episodes expire this many days after download."),
       },
-      hide: {
-        delay: 500,
-        fixed: true,
-      },
-      style: {
-        border: {
-          width: 0,
-          radius: 4,
-        },
-        classes: "ui-tooltip-dark ui-tooltip-rounded",
-      },
-      position: {
-        my: "left bottom",
-        at: "right center",
-      },
+      placement: "right",
+      interactive: true,
     });
 
     // Add podcast episode table in right-side panel below podcast edit form

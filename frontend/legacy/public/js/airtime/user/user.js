@@ -255,25 +255,22 @@ function initUserData() {
     return $("#user-type-" + type.val()).attr("user-rights");
   }
 
-  type.qtip({
+  // RASTATIME 2026-06-01 (JS-modernization stage 1): qtip2 -> rtTooltip
+  // (Floating UI).  The trigger is the #type dropdown itself (no separate icon,
+  // like the old Tipsy): the tooltip shows on hover/focus beside the dropdown
+  // and hides when leaving/blurring.  content is the typeRights function, so it
+  // is re-evaluated on every show and always reflects the selected type.
+  type.rtTooltip({
     content: { text: typeRights },
     position: { my: "right center", at: "left center", target: type },
-    // Trigger is the #type dropdown itself (no separate icon, like the old
-    // Tipsy): tooltip shows on hover/focus and hides when leaving/blurring.
-    show: { event: "mouseenter focus" },
-    hide: { event: "mouseleave blur" },
-    // qtip2 ships a built-in ".ui-tooltip-tipsy" style that replicates the old
-    // Tipsy look (dark rgba(0,0,0,.87) ~= the old opacity:0.9) -> visuals 1:1.
-    style: { classes: "ui-tooltip-tipsy ui-tooltip-shadow" },
   });
 
-  // When the selected type changes, refresh the tooltip text in place (qtip2
-  // caches rendered content). No forced show() — if the dropdown is focused the
-  // tooltip is already visible; otherwise it stays hidden until hover/focus.
+  // When the selected type changes, refresh the tooltip text in place (re-render
+  // if it is currently visible); the function content keeps it dynamic.
   type.on("change", function () {
-    var api = type.qtip("api");
+    var api = type.data("rtTooltip");
     if (api) {
-      api.set("content.text", typeRights());
+      api.setContent(typeRights);
     }
   });
 

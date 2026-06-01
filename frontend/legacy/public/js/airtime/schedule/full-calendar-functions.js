@@ -578,90 +578,38 @@ function getCurrentShow() {
 
 function addQtipsToIcons(ele, id) {
   if ($(ele).hasClass("progress")) {
-    $(ele).qtip({
+    $(ele).rtTooltip({
       content: {
         text: $.i18n._("Uploading in progress..."),
       },
-      position: {
-        adjust: {
-          resize: true,
-          method: "flip flip",
-        },
-        at: "right center",
-        my: "left top",
-        viewport: $(window),
-      },
-      style: {
-        classes: "ui-tooltip-dark file-md-long",
-      },
-      show: {
-        ready: true, // Needed to make it show on first mouseover event
-      },
+      placement: "right-start",
+      extraClass: "file-md-long",
     });
   } else if ($(ele).hasClass("show-empty")) {
-    $(ele).qtip({
+    $(ele).rtTooltip({
       content: {
         text: $.i18n._("This show has no scheduled content."),
       },
-      position: {
-        adjust: {
-          resize: true,
-          method: "flip flip",
-        },
-        at: "right center",
-        my: "left top",
-        viewport: $(window),
-      },
-      style: {
-        classes: "ui-tooltip-dark file-md-long",
-      },
-      show: {
-        ready: true, // Needed to make it show on first mouseover event
-      },
+      placement: "right-start",
+      extraClass: "file-md-long",
     });
   } else if ($(ele).hasClass("show-partial-filled")) {
-    $(ele).qtip({
+    $(ele).rtTooltip({
       content: {
         text: $.i18n._("This show is not completely filled with content."),
       },
-      position: {
-        adjust: {
-          resize: true,
-          method: "flip flip",
-        },
-        at: "right center",
-        my: "left top",
-        viewport: $(window),
-      },
-      style: {
-        classes: "ui-tooltip-dark file-md-long",
-      },
-      show: {
-        ready: true, // Needed to make it show on first mouseover event
-      },
+      placement: "right-start",
+      extraClass: "file-md-long",
     });
   } else if ($(ele).hasClass("show-overbooked")) {
-    $(ele).qtip({
+    $(ele).rtTooltip({
       content: {
         text: $.i18n._(
           "Shows longer than their scheduled time will be cut off by a following show.",
         ),
       },
-      position: {
-        adjust: {
-          resize: true,
-          method: "flip flip",
-        },
-        at: "right center",
-        my: "left top",
-        viewport: $(window),
-      },
-      style: {
-        classes: "ui-tooltip-dark file-md-long",
-      },
-      show: {
-        ready: true, // Needed to make it show on first mouseover event
-      },
+      placement: "right-start",
+      extraClass: "file-md-long",
     });
   }
 }

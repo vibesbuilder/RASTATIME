@@ -735,7 +735,7 @@ var AIRTIME = (function (AIRTIME) {
             }
           } else {
             $image.html('<span class="ui-icon ui-icon-alert"></span>');
-            $image.find(".ui-icon-alert").qtip({
+            $image.find(".ui-icon-alert").rtTooltip({
               content: {
                 text: $.i18n._(
                   'Airtime is unsure about the status of this file. This can happen when the file is on a remote drive that is unaccessible or the file is in a directory that isn\'t "watched" anymore.',

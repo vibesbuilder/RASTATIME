@@ -522,7 +522,7 @@ function setupQtip() {
   var qtipElem = $("#about-link");
 
   if (qtipElem.length > 0) {
-    qtipElem.qtip({
+    qtipElem.rtTooltip({
       content: $("#about-txt").html(),
       show: "mouseover",
       hide: { when: "mouseout", fixed: true },

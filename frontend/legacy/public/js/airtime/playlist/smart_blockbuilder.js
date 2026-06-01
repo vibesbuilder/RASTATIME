@@ -656,7 +656,7 @@ function setupUI() {
     }
   }
 
-  $(".playlist_type_help_icon").qtip({
+  $(".playlist_type_help_icon").rtTooltip({
     content: {
       text:
         $.i18n._(
@@ -667,24 +667,11 @@ function setupUI() {
           "A dynamic smart block will only save the criteria. The block content will get generated upon adding it to a show. You will not be able to view and edit the content in the Library.",
         ),
     },
-    hide: {
-      delay: 500,
-      fixed: true,
-    },
-    style: {
-      border: {
-        width: 0,
-        radius: 4,
-      },
-      classes: "ui-tooltip-dark ui-tooltip-rounded",
-    },
-    position: {
-      my: "left bottom",
-      at: "right center",
-    },
+    placement: "right",
+    interactive: true,
   });
 
-  $(".repeat_tracks_help_icon").qtip({
+  $(".repeat_tracks_help_icon").rtTooltip({
     content: {
       text: sprintf(
         $.i18n._(
@@ -693,24 +680,11 @@ function setupUI() {
         PRODUCT_NAME,
       ),
     },
-    hide: {
-      delay: 500,
-      fixed: true,
-    },
-    style: {
-      border: {
-        width: 0,
-        radius: 4,
-      },
-      classes: "ui-tooltip-dark ui-tooltip-rounded",
-    },
-    position: {
-      my: "left bottom",
-      at: "right center",
-    },
+    placement: "right",
+    interactive: true,
   });
 
-  $(".overflow_tracks_help_icon").qtip({
+  $(".overflow_tracks_help_icon").rtTooltip({
     content: {
       text: sprintf(
         $.i18n._(
@@ -719,21 +693,8 @@ function setupUI() {
         PRODUCT_NAME,
       ),
     },
-    hide: {
-      delay: 500,
-      fixed: true,
-    },
-    style: {
-      border: {
-        width: 0,
-        radius: 4,
-      },
-      classes: "ui-tooltip-dark ui-tooltip-rounded",
-    },
-    position: {
-      my: "left bottom",
-      at: "right center",
-    },
+    placement: "right",
+    interactive: true,
   });
 
   activeTab

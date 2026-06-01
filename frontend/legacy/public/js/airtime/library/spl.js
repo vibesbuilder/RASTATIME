@@ -483,7 +483,7 @@ var AIRTIME = (function (AIRTIME) {
             $(value).bind("click", openAudioPreview);
           } else {
             $(value).attr("class", "big_play_disabled dark_class");
-            $(value).qtip({
+            $(value).rtTooltip({
               content:
                 $.i18n._(
                   "Your browser does not support playing this file type: ",
@@ -510,7 +510,7 @@ var AIRTIME = (function (AIRTIME) {
       } else {
         if ($(value).attr("blocktype") === "dynamic") {
           $(value).attr("class", "big_play_disabled dark_class");
-          $(value).qtip({
+          $(value).rtTooltip({
             content: $.i18n._("Dynamic block is not previewable"),
             show: "mouseover",
             hide: {
@@ -1800,7 +1800,7 @@ var AIRTIME = (function (AIRTIME) {
     initialEvents();
     setUpPlaylist();
 
-    $pl.find(".ui-icon-alert").qtip({
+    $pl.find(".ui-icon-alert").rtTooltip({
       content: {
         text: sprintf(
           $.i18n._(

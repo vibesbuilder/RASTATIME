@@ -534,167 +534,76 @@ function setAddShowEvents(form) {
   form.find("#add_show_day_check-element label").addClass("wrapp-label");
   form.find("#add_show_day_check-element br").remove();
 
-  form.find(".show_timezone_help_icon").qtip({
+  form.find(".show_timezone_help_icon").rtTooltip({
     content: {
       text: $.i18n._(
         "Timezone is set to the station timezone by default. Shows in the calendar will be displayed in your local time defined by the " +
           "Interface Timezone in your user settings.",
       ),
     },
-    hide: {
-      delay: 500,
-      fixed: true,
-    },
-    style: {
-      border: {
-        width: 0,
-        radius: 4,
-      },
-      classes: "ui-tooltip-dark ui-tooltip-rounded",
-    },
-    position: {
-      my: "left bottom",
-      at: "right center",
-    },
+    placement: "right",
+    interactive: true,
   });
 
-  form.find(".show_autoplaylist_help_icon").qtip({
+  form.find(".show_autoplaylist_help_icon").rtTooltip({
     content: {
       text: $.i18n._(
         "Autoloading playlists' contents are added to shows one hour before the show airs. <a target='_blank' href='https://libretime.org/docs/user-manual/playlists/'>More information</a>",
       ),
     },
-    hide: {
-      delay: 500,
-      fixed: true,
-    },
-    style: {
-      border: {
-        width: 0,
-        radius: 4,
-      },
-      classes: "ui-tooltip-dark ui-tooltip-rounded",
-    },
-    position: {
-      my: "left bottom",
-      at: "right center",
-    },
+    placement: "right",
+    interactive: true,
   });
 
   // RASTATIME 2026-05-17 — Record-per-Show tooltip.  Mirrors the
   // Autoloading-Playlist help-icon pattern.  The text was originally
   // an inline paragraph above the checkbox; moved into a tooltip so
   // the Record section stays as visually compact as Live Stream Input.
-  form.find(".show_record_help_icon").qtip({
+  form.find(".show_record_help_icon").rtTooltip({
     content: {
       text: $.i18n._(
         "When enabled, the Show is recorded to the folder configured in Settings → Local Machine",
       ),
     },
-    hide: {
-      delay: 500,
-      fixed: true,
-    },
-    style: {
-      border: {
-        width: 0,
-        radius: 4,
-      },
-      classes: "ui-tooltip-dark ui-tooltip-rounded",
-    },
-    position: {
-      my: "left bottom",
-      at: "right center",
-    },
+    placement: "right",
+    interactive: true,
   });
 
-  form.find(".airtime_auth_help_icon").qtip({
+  form.find(".airtime_auth_help_icon").rtTooltip({
     content: {
       text: $.i18n._(
         "This follows the same security pattern for the shows: only users assigned to the show can connect.",
       ),
     },
-    hide: {
-      delay: 500,
-      fixed: true,
-    },
-    style: {
-      border: {
-        width: 0,
-        radius: 4,
-      },
-      classes: "ui-tooltip-dark ui-tooltip-rounded",
-    },
-    position: {
-      my: "left bottom",
-      at: "right center",
-    },
+    placement: "right",
+    interactive: true,
   });
-  form.find(".custom_auth_help_icon").qtip({
+  form.find(".custom_auth_help_icon").rtTooltip({
     content: {
       text: $.i18n._(
         "Specify custom authentication which will work only for this show.",
       ),
     },
-    hide: {
-      delay: 500,
-      fixed: true,
-    },
-    style: {
-      border: {
-        width: 0,
-        radius: 4,
-      },
-      classes: "ui-tooltip-dark ui-tooltip-rounded",
-    },
-    position: {
-      my: "left bottom",
-      at: "right center",
-    },
+    placement: "right",
+    interactive: true,
   });
-  form.find(".stream_username_help_icon").qtip({
+  form.find(".stream_username_help_icon").rtTooltip({
     content: {
       text: $.i18n._(
         "If your live streaming client does not ask for a username, this field should be 'source'.",
       ),
     },
-    hide: {
-      delay: 500,
-      fixed: true,
-    },
-    style: {
-      border: {
-        width: 0,
-        radius: 4,
-      },
-      classes: "ui-tooltip-dark ui-tooltip-rounded",
-    },
-    position: {
-      my: "left bottom",
-      at: "right center",
-    },
+    placement: "right",
+    interactive: true,
   });
-  form.find(".show_linking_help_icon").qtip({
+  form.find(".show_linking_help_icon").rtTooltip({
     content: {
       text: $.i18n._(
         "By linking your repeating shows any media items scheduled in any repeat show will also get scheduled in the other repeat shows",
       ),
     },
-    hide: {
-      delay: 500,
-      fixed: true,
-    },
-    style: {
-      border: {
-        width: 0,
-        radius: 4,
-      },
-      classes: "ui-tooltip-dark ui-tooltip-rounded",
-    },
-    position: {
-      my: "left bottom",
-      at: "right center",
-    },
+    placement: "right",
+    interactive: true,
   });
   function endDateVisibility() {
     if (form.find("#add_show_no_end").is(":checked")) {

@@ -131,7 +131,7 @@ function setWatchedDirEvents() {
 
 $(document).ready(function () {
   setWatchedDirEvents();
-  $(".ui-icon-alert").qtip({
+  $(".ui-icon-alert").rtTooltip({
     content: {
       text: $.i18n._("This path is currently not accessible."),
     },
