@@ -126,6 +126,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Schedule-Kalender von FullCalendar 1.5 auf FullCalendar 6 umgestellt
+  (JS-Modernisierung Stufe 2, 2026-06-01, `8ce8ec1` + `5abaab5` + `169106d` +
+  `688e466` + `81d8c8d`)** — der geforkte, EOL-FullCalendar 1.5.4 (jQuery-Plugin,
+  2011) auf der Schedule-Seite wurde durch das bereits für das Embed-Multi-View-
+  Widget vendorte **FullCalendar 6.1.10** (vanilla, kein jQuery) ersetzt. Neue
+  Datei `schedule-fc6.js` (`buildScheduleFc6()`), schrittweise hinter `?fc6=1`
+  gebaut und verifiziert, jetzt **Default** (FC1.5 als Rollback via `?fc6=0` +
+  Safety-Net, falls die FC6-Datei nicht lädt; Fork-Entfernung deferred, s.
+  BACKLOG). Migriert wurde **funktionsgleich**:
+  - *Zeitzone*: Server liefert naive Stationszeit-Strings; FC6 (`timeZone:'local'`
+    + natives `now` auf Stationszeit) rendert die Wand-Uhr-Zeit verbatim →
+    Stationszeit in jedem Browser, ersetzt den FC1.5-`serverTimezoneOffset`-
+    Handpatch des Forks.
+  - *Anzeige*: drei Views (timeGridDay/Week + dayGridMonth) auf die
+    Legacy-Präferenz gemappt; Status-Icons (empty/partial/overbooked/linked/
+    autoplaylist/rebroadcast/now-playing) + jQuery-UI-Fill-Bar + Hover-Tooltips
+    aus `eventRender()` portiert; Show-Farben, 60-s-Auto-Refresh, Grid-Dropdown
+    (1/5/10/15/30/60m), Höhe via `contentHeight`. Back-to-back-Shows voll-breit
+    (`slotEventOverlap:false` + `inset-inline:0`-Override, da FC6 Touch-Boundaries
+    als geteilte Spalten wertet). Deutscher Week-Titel via `Intl.formatRange`
+    (Ordinal-Punkt, vdom-sicher über `titleFormat`).
+  - *Interaktion*: `dateClick`→Add-Show-Formular (alle Recurrence-Rhythmen
+    unverändert: weekly+Wochentage, every 2/3/4 weeks, monthly day-of-month,
+    monthly day-of-week, 5. Donnerstag), Links-Klick-ContextMenu (Selektor
+    `div.fc-event`→`.fc-event`, da FC6-Events `<a>` sind), Drag→`move-show`,
+    Resize→`resize-show`, per-Event-Editierbarkeit aus dem Feed. Geteilte Helfer
+    (`scheduleCalRefetch`, `windowResize`, `makeAddShowButton`, …) Engine-
+    agnostisch gemacht (per `SCHEDULE_USE_FC6` geguarded → FC1.5-Pfad
+    verhaltensgleich). Geschäftslogik (Endpoints, Add-Show-Formular) unangetastet.
+  - Operator-verifiziert auf beiden Pfaden (FC6 + FC1.5-Rollback). Entfernt eine
+    jQuery-Abhängigkeit (Stufe-2-Ziel: Vorarbeit für jQuery 1.8→3.7).
+
 - **Alle Tooltips von qtip2 auf rtTooltip (Floating UI) umgestellt
   (JS-Modernisierung Stufe 1, 2026-06-01, `f07c53c` + `4cba934`)** — ein neuer
   schlanker `$.fn.rtTooltip`-Wrapper auf Floating UI (computePosition +

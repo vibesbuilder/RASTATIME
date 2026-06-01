@@ -591,17 +591,42 @@ MD5-Cache-Buster.
     (~3.800 Z.) + Load + assets.json entfernt.  Commits: `f07c53c`
     (Wrapper+Pilot), `4cba934` (Rest, qtip-Kompat-Schicht), `d63394f` (Lib raus).
     (Realer Footprint war ~31/14, nicht die geschätzten 22/11.)
-- **Stufe 2 — harte Kerne, EINZELN m. Fallback (🟡):** FullCalendar 1.5→6
-  (Schedule-Rewrite, Zeitzonen-Patch neu lösen); DataTables 1.9→2 o. Grid.js
-  (server-side neu, 2 Forks ersetzen); jQuery 1.8→3.7 (jquery-migrate +
-  systematischer Seiten-Test) oder schrittweise jQuery aus neuen Komponenten
-  verbannen.
+- **Stufe 2 — harte Kerne, EINZELN m. Fallback (🟡, IN ARBEIT):**
+  - ✅ **FullCalendar 1.5 → 6 (Schedule) — FC6 ist Default seit 2026-06-01**
+    (`8ce8ec1` a1 Shell, `5abaab5` a2 Rich-Rendering, `169106d` b1 Klick-
+    Interaktionen, `688e466` b2 Drag/Resize, `81d8c8d` c1 Default-Flip).  FC6
+    6.1.10 (vanilla, kein jQuery) ersetzt den geforkten EOL-FC1.5.4.  **Zeitzonen-
+    Patch gelöst** (= Hauptrisiko 1 unten): naive Stationszeit-Strings + FC6
+    `timeZone:'local'` + natives `now` auf Stationszeit — derselbe Ansatz wie das
+    Embed-Widget, kein Lib-Handpatch mehr.  Verifiziert: 3 Views, Stationszeit,
+    Status-Icons + Fill-Bar, Grid-Dropdown (1/5/10/15/30/60m), Create + **alle
+    Recurrence-Rhythmen** (weekly+Wochentage, every 2/3/4 weeks, monthly day-of-
+    month, monthly day-of-week, 5. Donnerstag), ContextMenu, Drag/Resize,
+    Sperrlogik.  FC1.5-Fork bleibt als Rollback (`?fc6=0`) + Safety-Net.
+    - ⬜ **🟡 DEFER — FC1.5-Fork entfernen** (`js/fullcalendar/` inkl. Fork-
+      Zeitzonen-Patches, `css/fullcalendar.css`, FC1.5-Branch in
+      `createFullCalendar()`, toter Code `viewDisplay`/`eventRender`/
+      `eventAfterRender`/`dayClick`/`eventDrop`/`eventResize`, ScheduleController-
+      Load, assets.json-Einträge, Flag-Logik).  **Vorbedingung:** FC6 hat sich im
+      echten Livebetrieb über eine Bewährungsphase stabil gezeigt (Operator gibt
+      Signal).  Bis dahin Sofort-Rollback behalten.
+    - ⬜ **💡 Kalender-Design-Politur** (eigene Phase): FC6-Optik finalisieren
+      (Grid-Dropdown sitzt in der schmalen FC6-Achsen-Ecke → Zellbreite; Event-/
+      Toolbar-Styling an RASTATIME/LibreTime-Look angleichen).  **Danach** User-
+      Manual-Screenshots in allen 4 Sprachen aktualisieren — bis dahin bewusst
+      zurückgestellt, da Optik nicht final + Bedienung unverändert.
+  - ⬜ **DataTables 1.9→2** o. Grid.js (server-side neu, 2 Forks ersetzen).
+  - ⬜ **jQuery 1.8→3.7** (jquery-migrate + systematischer Seiten-Test) oder
+    schrittweise jQuery aus neuen Komponenten verbannen.
 - **(Optional) Build-Pipeline:** nur bei Trigger (s. Strategie), eigener ADR.
 
 **Hauptrisiken (Stufe 2 absichern):**
-1. **FullCalendar-Zeitzonen-Patch** — Schedule-Grid läuft auf Server- statt
-   Browser-Zeit via hand-gepatchter 2012-Lib (`fullcalendar/AIRTIME_DEV_README`).
-   Fragilste Kopplung.
+1. ✅ **FullCalendar-Zeitzonen-Patch — GELÖST (2026-06-01)** — war: Schedule-Grid
+   lief auf Server- statt Browser-Zeit via hand-gepatchter 2012-Lib
+   (`fullcalendar/AIRTIME_DEV_README`), fragilste Kopplung.  Die FC6-Migration
+   ersetzt den Handpatch durch naive Stationszeit-Strings + FC6
+   `timeZone:'local'` + natives `now` auf Stationszeit (wie das Embed-Widget).
+   Der Fork bleibt nur noch als Rollback bis zur Entfernung.
 2. **jQuery-1.8-Semantik-Falle** — `soundcardsetting.js:228` dokumentiert
    `method` vs `type` (1.9+); ein jQuery-Bump kann AJAX **still** auf GET
    umstellen („200 OK, speichert aber nicht").
