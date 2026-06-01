@@ -20,6 +20,9 @@
  * replacing the old serverTimezoneOffset hand-patch in the forked lib.
  */
 var scheduleFc6 = null;
+// current slot granularity in minutes (1/5/10/15/30/60) — drives the interval
+// dropdown's selected value across re-injections; seeded from the saved pref.
+var fc6SlotMin = 30;
 
 // View-name mapping: the stored preference + FC1.5 use agendaDay/agendaWeek/
 // month; FC6 uses timeGridDay/timeGridWeek/dayGridMonth.
@@ -74,14 +77,157 @@ function getScheduleFc6Events(info, success, failure) {
     });
 }
 
+// Status-icon spans (empty / partial / overbooked / linked / autoplaylist /
+// rebroadcast / now-playing) for an event, mirroring the FC1.5 eventRender()
+// logic (full-calendar-functions.js).  `withTitles` adds the title="" tooltips
+// FC1.5 used in month view; day/week view gets dynamic rtTooltips instead (via
+// addQtipsToIcons in eventDidMount).  Returns an array of <span> DOM nodes.
+function fc6StatusIcons(event, withTitles) {
+  var p = event.extendedProps || {};
+  var nodes = [];
+  function icon(cls, title) {
+    var s = document.createElement("span");
+    s.className = "small-icon " + cls;
+    if (withTitles && title) {
+      s.setAttribute("title", title);
+    }
+    return s;
+  }
+  if (p.rebroadcast === 1) {
+    // a rebroadcast only gets the rebroadcast icon (no fill-state icons)
+    nodes.push(icon("rebroadcast"));
+  } else {
+    var linked = !!p.linked;
+    var auto = p.show_has_auto_playlist === true;
+    if (p.show_empty === 1) {
+      if (linked) {
+        nodes.push(icon("linked"));
+        nodes.push(icon("show-empty", $.i18n._("Show is empty")));
+      } else if (auto) {
+        nodes.push(
+          icon("autoplaylist", $.i18n._("Show has an automatic playlist")),
+        );
+      } else {
+        nodes.push(icon("show-empty", $.i18n._("Show is empty")));
+      }
+    } else if (p.show_partial_filled === true) {
+      if (linked) {
+        nodes.push(icon("linked"));
+        nodes.push(
+          icon("show-partial-filled", $.i18n._("Show is partially filled")),
+        );
+      } else if (auto) {
+        nodes.push(
+          icon("autoplaylist", $.i18n._("Show has an automatic playlist")),
+        );
+      } else {
+        nodes.push(
+          icon("show-partial-filled", $.i18n._("Show is partially filled")),
+        );
+      }
+    } else if (p.percent > 100) {
+      var overTitle = $.i18n._(
+        "Shows longer than their scheduled time will be cut off by a following show.",
+      );
+      if (linked) {
+        nodes.push(icon("linked"));
+        nodes.push(icon("show-overbooked", overTitle));
+      } else if (auto) {
+        nodes.push(
+          icon("autoplaylist", $.i18n._("Show has an automatic playlist")),
+        );
+      } else {
+        nodes.push(icon("show-overbooked", overTitle));
+      }
+    } else {
+      if (linked) {
+        nodes.push(icon("linked"));
+      } else if (auto) {
+        nodes.push(
+          icon("autoplaylist", $.i18n._("Show has an automatic playlist")),
+        );
+      }
+    }
+  }
+  if (p.nowPlaying === true) {
+    nodes.push(icon("now-playing"));
+  }
+  return nodes;
+}
+
+// Build + inject the time-interval dropdown (1/5/10/15/30/60m) into the
+// timeGrid top-left axis corner, mirroring FC1.5's viewDisplay().  Re-injected
+// on every datesSet (the header corner is rebuilt on navigation/view switch);
+// a no-op in month view (no time axis).  Changing it sets slotDuration live and
+// persists the preference (Schedule/set-time-interval).
+function fc6InjectIntervalDropdown() {
+  if (!scheduleFc6) {
+    return;
+  }
+  var corner = scheduleFc6.el.querySelector(".fc-timegrid-axis-frame");
+  if (!corner) {
+    return; // not a timeGrid view (month has no axis corner)
+  }
+  if (corner.querySelector(".schedule_change_slots")) {
+    return; // already injected in this corner
+  }
+  var $select = $(
+    '<select class="schedule_change_slots input_select"/>',
+  ).css("width", "100%"); // fill the (narrow) axis corner; final styling later
+  [1, 5, 10, 15, 30, 60].forEach(function (m) {
+    $select.append(
+      '<option value="' + m + '">' + $.i18n._(m + "m") + "</option>",
+    );
+  });
+  $select.val(String(fc6SlotMin));
+  $select.on("change", function () {
+    var v = parseInt($(this).val(), 10) || 30;
+    fc6SlotMin = v;
+    scheduleFc6.setOption("slotDuration", "00:" + pad(v, 2) + ":00");
+    $.post(baseUrl + "Schedule/set-time-interval/format/json", {
+      timeInterval: v,
+    });
+    if (typeof calendarPref !== "undefined" && calendarPref) {
+      calendarPref.timeInterval = v;
+    }
+    // the slotDuration re-render can rebuild the corner -> re-inject, keeping
+    // the new selection
+    window.setTimeout(fc6InjectIntervalDropdown, 0);
+  });
+  $(corner).empty().append($select);
+}
+
+// FC6 packs back-to-back shows (end == next start) into half-width columns even
+// with slotEventOverlap:false — it treats the touch-boundary as a shared column,
+// so the following show renders inset.  A radio schedule never has truly
+// overlapping shows, so pin every event harness to the full column width.  Same
+// fix as the embed Multi-View widget (css/embed/now-playing-widget.css), incl.
+// its caveat: inset-inline only — adding width:100% breaks FC's internal layout
+// and the events vanish.  Injected from JS so all FC6-specific styling stays
+// with the FC6 code while it lives behind ?fc6=1; promote to a stylesheet when
+// FC1.5 is removed (Phase c).
+function fc6InjectOverlapCss() {
+  if (document.getElementById("fc6-schedule-overlap-css")) {
+    return;
+  }
+  var style = document.createElement("style");
+  style.id = "fc6-schedule-overlap-css";
+  style.textContent =
+    "#schedule_calendar .fc-timegrid-event-harness{" +
+    "inset-inline-start:0 !important;inset-inline-end:0 !important;}";
+  document.head.appendChild(style);
+}
+
 function buildScheduleFc6(data) {
   var el = document.getElementById("schedule_calendar");
   if (!el || !window.FullCalendar) {
     return;
   }
+  fc6InjectOverlapCss();
   var legacyView = getTimeScalePreference(data); // agendaDay/agendaWeek/month
   var slotMin = getTimeIntervalPreference(data); // minutes
   var offset = parseInt(data.calendarInit.timezoneOffset, 10);
+  fc6SlotMin = slotMin > 0 ? slotMin : 30; // guard a missing/NaN preference
 
   if (scheduleFc6) {
     scheduleFc6.destroy();
@@ -109,38 +255,102 @@ function buildScheduleFc6(data) {
       return adjustDateToServerDate(new Date(), offset);
     },
     allDaySlot: false,
-    slotDuration: "00:" + pad(slotMin, 2) + ":00",
+    // back-to-back shows must render full-width side by side, not inset/
+    // overlapping (FC6 default true insets the following event) — same fix the
+    // embed Multi-View widget uses.  Also keeps the fill bar at full width.
+    slotEventOverlap: false,
+    slotDuration: "00:" + pad(fc6SlotMin, 2) + ":00",
     slotLabelFormat: { hour: "2-digit", minute: "2-digit", hour12: false },
     eventTimeFormat: { hour: "2-digit", minute: "2-digit", hour12: false },
     expandRows: true,
-    height: $(window).height() - 200 - 35,
+    // contentHeight (not height) so the grid area — excluding the header
+    // toolbar — fills to the page bottom, matching FC1.5's contentHeight.
+    // Same offset on init and resize so there is no jump when the window moves.
+    contentHeight: $(window).height() - 200 - 24,
+    windowResize: function () {
+      if (scheduleFc6) {
+        scheduleFc6.setOption("contentHeight", $(window).height() - 200 - 24);
+      }
+    },
     editable: false, // Phase a: read-only
     events: getScheduleFc6Events,
 
-    // basic event chip: time + title (the fill bar + status icons come next)
-    eventContent: function (arg) {
-      var wrap = document.createElement("div");
-      wrap.className = "fc-event-main-frame";
-      var time = document.createElement("div");
-      time.className = "fc-event-time";
-      time.textContent = arg.timeText || "";
-      var title = document.createElement("div");
-      title.className = "fc-event-title fc-sticky";
-      title.textContent = arg.event.title || "";
-      wrap.appendChild(time);
-      wrap.appendChild(title);
-      return { domNodes: [wrap] };
-    },
-
-    // tag the DOM so the existing CSS hooks + later phases can find the instance
+    // post-render enhancement (FC6 renders the default time/title chip):
+    // status icons + jQuery-UI fill bar + hover tooltips + data attributes.
+    // Faithful port of the FC1.5 eventRender()/eventAfterRender()
+    // (full-calendar-functions.js); reads the same fields from extendedProps.
     eventDidMount: function (arg) {
-      arg.el.classList.add("fc-show-instance-" + arg.event.id);
-      if (arg.event.extendedProps.showId != null) {
-        arg.el.setAttribute("data-show-id", arg.event.extendedProps.showId);
+      var $el = $(arg.el);
+      var p = arg.event.extendedProps || {};
+
+      $el.addClass("fc-show-instance-" + arg.event.id);
+      if (p.showId != null) {
+        $el.attr("data-show-id", p.showId);
+      }
+      if (p.linked != null) {
+        $el.attr("data-show-linked", p.linked);
+      }
+
+      var isMonth = arg.view.type === "dayGridMonth";
+      var isTimeGrid =
+        arg.view.type === "timeGridDay" || arg.view.type === "timeGridWeek";
+
+      // fill bar: day/week only, matching FC1.5 (agendaDay/agendaWeek).
+      // Insert it directly below the show name (inside the slot), not pinned to
+      // the bottom — FC6 flex-grows the title container, so append to the bottom
+      // would push the bar outside the slot.
+      if (isTimeGrid && typeof $.fn.progressbar === "function") {
+        var $title = $el.find(".fc-event-title").first();
+        if (!$el.find(".fc-show-fill-bar").length) {
+          var $bar = $("<div/>", { class: "fc-show-fill-bar" })
+            .height("5px")
+            .width("95%")
+            .css("margin-top", "1px")
+            .css("margin-left", "auto")
+            .css("margin-right", "auto");
+          if ($title.length) {
+            $title.after($bar);
+          } else {
+            $el.find(".fc-event-main-frame, .fc-event-main").first().append($bar);
+          }
+          $bar.progressbar({ value: p.percent || 0 });
+        }
+      }
+
+      // status icons: before the time (day/week) or after the title (month),
+      // relative to FC6's default event nodes — same as FC1.5
+      var icons = fc6StatusIcons(arg.event, isMonth);
+      if (icons.length) {
+        if (isMonth) {
+          var $title = $el.find(".fc-event-title").first();
+          if ($title.length) {
+            $title.after(icons);
+          } else {
+            $el.find(".fc-event-main").first().append(icons);
+          }
+        } else {
+          var $time = $el.find(".fc-event-time").first();
+          if ($time.length) {
+            $time.before(icons);
+          } else {
+            $el
+              .find(".fc-event-main-frame, .fc-event-main")
+              .first()
+              .prepend(icons);
+          }
+        }
+      }
+
+      // hover tooltips on the status icons (rtTooltip) — same as eventAfterRender
+      if (typeof addQtipsToIcons === "function") {
+        $el.find(".small-icon").each(function () {
+          addQtipsToIcons($(this), arg.event.id);
+        });
       }
     },
 
-    // persist the view preference (legacy name) when the view changes
+    // persist the view preference (legacy name) when the view changes, and
+    // (re)inject the time-interval dropdown into the timeGrid corner
     datesSet: function (arg) {
       var legacy = FC6_VIEW_TO_LEGACY[arg.view.type];
       if (
@@ -154,6 +364,8 @@ function buildScheduleFc6(data) {
           timeScale: legacy,
         });
       }
+      // deferred so the timeGrid axis corner is painted before we inject
+      window.setTimeout(fc6InjectIntervalDropdown, 0);
     },
   });
 

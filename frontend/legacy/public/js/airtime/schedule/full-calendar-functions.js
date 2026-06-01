@@ -635,6 +635,18 @@ $(document).ready(function () {
   // Schedule/event-feed AJAX call, which carries the up-to-date
   // percent from cc_show_instances.time_filled.
   setInterval(function () {
+    // RASTATIME 2026-06-01 (JS-modernization stage 2): when the FC6 calendar is
+    // active (?fc6=1), refetch via its own API — FC1.5's jQuery plugin method
+    // does not apply to an FC6 calendar instance.
+    if (window.SCHEDULE_USE_FC6) {
+      if (
+        window.scheduleFc6 &&
+        typeof window.scheduleFc6.refetchEvents === "function"
+      ) {
+        window.scheduleFc6.refetchEvents();
+      }
+      return;
+    }
     var $cal = $("#schedule_calendar");
     if ($cal.length > 0 && $cal.is(":visible")) {
       $cal.fullCalendar("refetchEvents");
