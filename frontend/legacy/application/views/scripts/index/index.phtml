@@ -67,8 +67,12 @@
                 </div>
             </div>
 
-            <div id="jquery_jplayer_1" class="jp-player">
-            </div>
+            <!-- RASTATIME 2026-06-01 (JS-modernization, jPlayer part 3/3): a native
+                 <audio> engine replaces the jPlayer mount. The jPlayer-style GUI
+                 (#jp_container_1 below) is kept and driven by the vanilla player
+                 object in the script block further down. -->
+            <audio id="podcast_audio_el" class="jp-player" style="width:0;height:0;" preload="none">
+            </audio>
             <div class="podcast_bck">
                 <div id="jp_container_1" class="jp-audio">
                     <div class="jp-type-playlist">
@@ -149,14 +153,8 @@
                             artist: value.CcFiles.artist_name,
                         }
 
-                        if (value.mime == "mp3") {
-                            media.mp3 = value.download_url;
-                        } else if (value.mime == "ogg") {
-                            media.oga = value.download_url;
-                        } else if (value.mime == "m4a") {
-                            media.m4a = value.download_url;
-                        } else if (value.mime == "wav") {
-                            media.wav = value.download_url;
+                        if (value.mime == "mp3" || value.mime == "ogg" || value.mime == "m4a" || value.mime == "wav") {
+                            media.src = value.download_url;
                         } else {
                             media_mime_supported = false;
                         }
@@ -195,21 +193,12 @@
 
                     });
 
-                    _playlist_jplayer.setPlaylist(playlist);
-
-                    // we have to set the player to play the first track on page load
-                    // or else the play button won't work at first. make sure nothing
-                    // is playing first
-                    if ($("#jquery_jplayer_1").data().jPlayer.status.paused == true) {
-                        // jPlayer is not currently playing
-                        _playlist_jplayer.play(0);
-                        $("#jquery_jplayer_1").jPlayer("stop");
-                    }
+                    _podcastPlayer.setPlaylist(playlist);
 
                     $('.podcast_play').on('click', function() {
-                        _playlist_jplayer.play($(this).find('#rss-track').attr('data-rss-playlist-id'));
+                        _podcastPlayer.play($(this).find('#rss-track').attr('data-rss-playlist-id'));
 
-                        // we need to manually highlight the track that play was clicked on
+                        // manually highlight the track that play was clicked on
                         $(this).parents('li').addClass('jp-playlist-current');
 
                         return false;
@@ -222,80 +211,164 @@
 
                 } //buildPlaylist
 
-                _playlist_jplayer = new jPlayerPlaylist({
-                        jPlayer: "#jquery_jplayer_1",
-                        cssSelectorAncestor: "#jp_container_1"
-                    }, [], //array of songs will be filled with below's json call
-                    {
-                        swfPath: baseUrl + "js/jplayer",
-                        supplied: "oga, mp3, m4v, m4a, wav",
-                        size: {
-                            width: "0px",
-                            height: "0px",
-                            cssClass: "jp-video-270p"
-                        },
-                        playlistOptions: {
-                            autoPlay: false,
-                            loopOnPrevious: false,
-                            shuffleOnLoop: true,
-                            enableRemoveControls: false,
-                            displayTime: 0,
-                            addTime: 0,
-                            removeTime: 0,
-                            shuffleTime: 0
-                        },
-                        ready: function() {
+                // RASTATIME 2026-06-01 (JS-modernization, jPlayer part 3/3):
+                // vanilla native-<audio> playlist player driving the existing
+                // jPlayer-style GUI (#jp_container_1). Replaces jPlayerPlaylist.
+                var _podcastPlayer = (function () {
+                    var audio = null;       // the native <audio> element
+                    var $root = null;       // #jp_container_1 (GUI ancestor)
+                    var tracks = [];        // [{ title, artist, src }]
+                    var current = 0;
+                    var loadedIndex = -1;
 
-                            var episodes = <?php echo $this->episodes ?>;
-                            var empty_podcast_message = "<?php echo $this->emptyPodcastMessage ?>";
+                    function $f(sel) { return $root.find(sel); }
 
-                            if (Object.keys(episodes).length <= 0) {
-                                $(".jp-playlist").append(empty_podcast_message);
-                            } else {
-                                buildJplayerPlaylist(0, episodes);
-
-
-                                // update current track metadata on player bar
-                                $("#jquery_jplayer_1").bind(jQuery.jPlayer.event.play, function(event) {
-                                    var current = _playlist_jplayer.current;
-                                    $('.current-track span').html(playlist[current].title);
-                                });
-
-                                // build pagination menu
-                                var pages = "<li data-page-index='0'><</li>";
-                                $.each(episodes, function(index, value) {
-                                    var page_number = +index + 1;
-                                    pages += "<li data-page-index='" + index + "'>" + page_number + "</li>";
-                                });
-                                var last_index = Object.keys(episodes).length - 1;
-                                pages += "<li data-page-index='" + last_index + "'>></li>";
-                                $("ul.pagination").append(pages);
-                                $("ul.pagination").find("li:contains('1')").addClass('current');
-
-                                // pagination click
-                                $("ul.pagination li").click(function() {
-                                    buildJplayerPlaylist($(this).attr("data-page-index"), episodes);
-                                    $(this).siblings().removeClass('current');
-                                    if ($(this).text() === "<") {
-                                        $(this).next().addClass("current");
-                                    } else if ($(this).text() === ">") {
-                                        $(this).prev().addClass("current");
-                                    } else {
-                                        $(this).addClass('current');
-                                    }
-
-                                });
-
-                                //turn off player bar when podcast track is played
-                                $("a.jp-playlist-item, .jp-play, .podcast_play").click(function() {
-                                    if ($("#player_iframe").contents().find('.play').hasClass('pause')) {
-                                        $("#player_iframe").contents().find('.play').click();
-                                    }
-                                });
-                            }
-                        }
+                    function fmtTime(sec) {
+                        if (isNaN(sec) || sec < 0) { sec = 0; }
+                        var m = Math.floor(sec / 60);
+                        var s = Math.floor(sec % 60);
+                        return m + ":" + (s < 10 ? "0" : "") + s;
                     }
-                );
+
+                    // jPlayer toggled play/pause button visibility via display.
+                    function showPlaying(isPlaying) {
+                        $f(".jp-play").css("display", isPlaying ? "none" : "");
+                        $f(".jp-pause").css("display", isPlaying ? "" : "none");
+                    }
+
+                    function updateProgress() {
+                        var dur = audio.duration;
+                        var pct = (dur > 0) ? (audio.currentTime / dur * 100) : 0;
+                        $f(".jp-play-bar").css("width", pct + "%");
+                        $f(".jp-current-time").text(fmtTime(audio.currentTime));
+                    }
+
+                    function updateVolumeUi() {
+                        var v = audio.muted ? 0 : audio.volume;
+                        $f(".jp-volume-bar-value").css("width", (v * 100) + "%");
+                        $f(".jp-mute").css("display", audio.muted ? "none" : "");
+                        $f(".jp-unmute").css("display", audio.muted ? "" : "none");
+                    }
+
+                    function highlight(index) {
+                        var $items = $(".rss-tracks li");
+                        $items.removeClass("jp-playlist-current");
+                        $items.find("a.jp-playlist-item").removeClass("jp-playlist-current");
+                        var $cur = $items.eq(index);
+                        $cur.addClass("jp-playlist-current");
+                        $cur.find("a.jp-playlist-item").addClass("jp-playlist-current");
+                    }
+
+                    function play(index) {
+                        if (typeof index !== "undefined" && index !== null) {
+                            current = parseInt(index, 10) || 0;
+                        }
+                        var t = tracks[current];
+                        if (!t || !t.src) { return; }
+                        if (loadedIndex !== current) {
+                            audio.src = t.src;
+                            loadedIndex = current;
+                        }
+                        audio.play();
+                        $(".current-track span").html(t.title || "");
+                        highlight(current);
+                    }
+
+                    function init() {
+                        audio = document.getElementById("podcast_audio_el");
+                        $root = $("#jp_container_1");
+
+                        $f(".jp-play").on("click", function () { play(); return false; });
+                        $f(".jp-pause").on("click", function () { audio.pause(); return false; });
+                        $f(".jp-stop").on("click", function () {
+                            audio.pause();
+                            audio.currentTime = 0;
+                            return false;
+                        });
+                        $f(".jp-seek-bar").on("click", function (e) {
+                            var ratio = (e.pageX - $(this).offset().left) / $(this).width();
+                            ratio = Math.max(0, Math.min(1, ratio));
+                            if (audio.duration > 0) { audio.currentTime = ratio * audio.duration; }
+                            return false;
+                        });
+                        $f(".jp-volume-bar").on("click", function (e) {
+                            var ratio = (e.pageX - $(this).offset().left) / $(this).width();
+                            ratio = Math.max(0, Math.min(1, ratio));
+                            audio.muted = false;
+                            audio.volume = ratio;
+                            return false;
+                        });
+                        $f(".jp-mute").on("click", function () { audio.muted = true; return false; });
+                        $f(".jp-unmute").on("click", function () { audio.muted = false; return false; });
+                        $f(".jp-volume-max").on("click", function () {
+                            audio.muted = false;
+                            audio.volume = 1;
+                            return false;
+                        });
+
+                        $(audio).on("play", function () { showPlaying(true); });
+                        $(audio).on("pause", function () { showPlaying(false); });
+                        $(audio).on("timeupdate", updateProgress);
+                        $(audio).on("volumechange", updateVolumeUi);
+                        $(audio).on("ended", function () {
+                            if (current < tracks.length - 1) { play(current + 1); }
+                            else { showPlaying(false); }
+                        });
+
+                        showPlaying(false);
+                        updateVolumeUi();
+                    }
+
+                    return {
+                        init: init,
+                        setPlaylist: function (list) { tracks = list; current = 0; loadedIndex = -1; },
+                        play: play
+                    };
+                })();
+
+                $(document).ready(function () {
+                    _podcastPlayer.init();
+
+                    var episodes = <?php echo $this->episodes ?>;
+                    var empty_podcast_message = "<?php echo $this->emptyPodcastMessage ?>";
+
+                    if (Object.keys(episodes).length <= 0) {
+                        $(".jp-playlist").append(empty_podcast_message);
+                    } else {
+                        buildJplayerPlaylist(0, episodes);
+
+                        // build pagination menu
+                        var pages = "<li data-page-index='0'><</li>";
+                        $.each(episodes, function(index, value) {
+                            var page_number = +index + 1;
+                            pages += "<li data-page-index='" + index + "'>" + page_number + "</li>";
+                        });
+                        var last_index = Object.keys(episodes).length - 1;
+                        pages += "<li data-page-index='" + last_index + "'>></li>";
+                        $("ul.pagination").append(pages);
+                        $("ul.pagination").find("li:contains('1')").addClass('current');
+
+                        // pagination click
+                        $("ul.pagination li").click(function() {
+                            buildJplayerPlaylist($(this).attr("data-page-index"), episodes);
+                            $(this).siblings().removeClass('current');
+                            if ($(this).text() === "<") {
+                                $(this).next().addClass("current");
+                            } else if ($(this).text() === ">") {
+                                $(this).prev().addClass("current");
+                            } else {
+                                $(this).addClass('current');
+                            }
+                        });
+
+                        //turn off player bar when podcast track is played
+                        $("a.jp-playlist-item, .jp-play, .podcast_play").click(function() {
+                            if ($("#player_iframe").contents().find('.play').hasClass('pause')) {
+                                $("#player_iframe").contents().find('.play').click();
+                            }
+                        });
+                    }
+                });
             </script>
         </div>
     <?php

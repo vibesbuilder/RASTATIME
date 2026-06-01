@@ -22,16 +22,15 @@ class IndexController extends Zend_Controller_Action
         $this->view->headScript()->appendScript('$.i18n.setDictionary(general_dict)');
         $this->view->headScript()->appendScript("var baseUrl='{$baseUrl}'");
 
-        // jplayer
-        $this->view->headScript()->appendFile(Assets::url('js/jplayer/jquery.jplayer.min.js'), 'text/javascript');
-        $this->view->headScript()->appendFile(Assets::url('js/jplayer/jplayer.playlist.min.js'), 'text/javascript');
+        // RASTATIME 2026-06-01 (JS-modernization, jPlayer part 3/3): the per-page
+        // jPlayer load is gone — index.phtml drives a native <audio> player now.
 
         $this->view->headLink()->setStylesheet(Assets::url('css/radio-page/radio-page.css'));
         $this->view->headLink()->appendStylesheet(Assets::url('css/embed/weekly-schedule-widget.css'));
         $this->view->headLink()->appendStylesheet(Assets::url('css/radio-page/station-podcast.css'));
         $this->view->headLink()->appendStylesheet(Assets::url('css/bootstrap.css'));
 
-        // jplayer control buttons
+        // player control buttons (jQuery-UI corner/icon classes used in the GUI)
         $this->view->headLink()->appendStylesheet(Assets::url('css/redmond/jquery-ui-1.8.8.custom.css'));
 
         $this->_helper->layout->setLayout('radio-page');
