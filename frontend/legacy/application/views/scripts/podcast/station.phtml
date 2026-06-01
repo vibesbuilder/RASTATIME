@@ -1,41 +1,45 @@
+<?php /* RASTATIME 2026-06-01 (JS-modernization stage 1): AngularJS removed.
+       * Wired by the vanilla podcast.js (bootstrapStationPodcast): form fields
+       * carry data-field="<podcast property>", buttons data-action. The privacy
+       * radio + csrf stay server-rendered Zend form elements. */ ?>
 <div id="station_podcast">
-    <div class="angular_wrapper" ng-controller="StationPodcast">
+    <div class="angular_wrapper">
         <div class="station_podcast_wrapper content-pane">
             <div class="inner_editor_title">
                 <h2>
                     <span class="title_obj_name"><?php echo _("My Podcast") ?></span>
                 </h2>
-                <button ng-click="savePodcast()" class="btn" title='<?php echo _("Save station podcast") ?>' type="button">
+                <button data-action="save" class="btn" title='<?php echo _("Save station podcast") ?>' type="button">
                     <?php echo _("Save") ?>
                 </button>
-                <a href="{{podcast.url}}" target="_blank">
+                <a data-podcast-url href="" target="_blank">
                     <button class="btn"><?php echo _("View Feed") ?></button>
                 </a>
                 <div class='success' style='display:none'></div>
             </div>
             <form class="podcast-metadata">
                 <?php echo $this->form->getElement('csrf') ?>
-                <input ng-value="podcast.id" class="obj_id" type="hidden" />
+                <input class="obj_id" type="hidden" />
 
                 <h3 class="collapsible-header"><span class="arrow-icon"></span><?php echo _("General Fields") ?></h3>
                 <div class="collapsible-content">
                     <fieldset class="padded">
                         <div class="podcast-metadata-row">
                             <label><?php echo _("Name") ?></label>
-                            <input name="podcast_name" ng-model="podcast.title" type="text" />
+                            <input name="podcast_name" data-field="title" type="text" />
                         </div>
                         <div class="podcast-metadata-row">
                             <label><?php echo _("Creator") ?></label>
-                            <input name="podcast_creator" ng-model="podcast.creator" type="text" />
+                            <input name="podcast_creator" data-field="creator" type="text" />
                         </div>
 
                         <div class="podcast-metadata-row">
                             <label><?php echo _("Description") ?></label>
-                            <textarea name="podcast_description" ng-model="podcast.description"></textarea>
+                            <textarea name="podcast_description" data-field="description"></textarea>
                         </div>
                         <div class="podcast-metadata-row">
                             <label><?php echo _("Language") ?></label>
-                            <select name="podcast_language" ng-model="podcast.language">
+                            <select name="podcast_language" data-field="language">
                                 <?php
                                 foreach (Application_Common_LocaleHelper::getISO6391LanguageCodes() as $code => $lang) {
                                     echo "<option value='$code'>$lang</option>";
@@ -46,11 +50,11 @@
 
                         <div class="podcast-metadata-row">
                             <label><?php echo _("Copyright") ?></label>
-                            <input name="podcast_copyright" ng-model="podcast.copyright" type="text" />
+                            <input name="podcast_copyright" data-field="copyright" type="text" />
                         </div>
                         <div class="podcast-metadata-row">
                             <label><?php echo _("Link") ?></label>
-                            <input name="podcast_link" ng-model="podcast.link" type="url" />
+                            <input name="podcast_link" data-field="link" type="url" />
                         </div>
                     </fieldset>
                 </div>
@@ -60,32 +64,32 @@
                     <fieldset class="padded">
                         <div class="podcast-metadata-row">
                             <label><?php echo _("Author") ?></label>
-                            <input name="podcast_itunes_author" ng-model="podcast.itunes_author" type="text" />
+                            <input name="podcast_itunes_author" data-field="itunes_author" type="text" />
                         </div>
 
                         <div class="podcast-metadata-row">
                             <label><?php echo _("Keywords") ?></label>
-                            <input name="podcast_itunes_keywords" ng-model="podcast.itunes_keywords" type="text" />
+                            <input name="podcast_itunes_keywords" data-field="itunes_keywords" type="text" />
                         </div>
 
                         <div class="podcast-metadata-row">
                             <label><?php echo _("Summary") ?></label>
-                            <textarea name="podcast_itunes_summary" ng-model="podcast.itunes_summary"></textarea>
+                            <textarea name="podcast_itunes_summary" data-field="itunes_summary"></textarea>
                         </div>
 
                         <div class="podcast-metadata-row">
                             <label><?php echo _("Subtitle") ?></label>
-                            <textarea name="podcast_itunes_subtitle" ng-model="podcast.itunes_subtitle"></textarea>
+                            <textarea name="podcast_itunes_subtitle" data-field="itunes_subtitle"></textarea>
                         </div>
 
                         <div class="podcast-metadata-row">
                             <label><?php echo _("Category") ?></label>
-                            <input name="podcast_itunes_category" ng-model="podcast.itunes_category" type="text" />
+                            <input name="podcast_itunes_category" data-field="itunes_category" type="text" />
                         </div>
 
                         <div class="podcast-metadata-row">
                             <label><?php echo _("Explicit") ?></label>
-                            <input name="podcast_itunes_explicit" ng-model="podcast.itunes_explicit" type="checkbox" />
+                            <input name="podcast_itunes_explicit" data-field="itunes_explicit" type="checkbox" />
                         </div>
                     </fieldset>
                 </div>
@@ -106,7 +110,7 @@
                                     <label for="stationPodcastFeedUrl" class="optional"><?php echo _("Feed URL"); ?></label>
                                 </dt>
                                 <dd>
-                                    <input type="url" ng-model="podcast.url" disabled="disabled" class="input_text" />
+                                    <input type="url" data-field="url" disabled="disabled" class="input_text" />
                                 </dd>
                             </div>
                         </dl>
@@ -127,7 +131,7 @@
 
             <div class="btn-toolbar clearfix">
                 <div class='btn-group pull-right'>
-                    <button ng-click="savePodcast()" class="btn" title='<?php echo _("Save station podcast") ?>' type="button">
+                    <button data-action="save" class="btn" title='<?php echo _("Save station podcast") ?>' type="button">
                         <?php echo _("Save") ?>
                     </button>
                 </div>
@@ -141,10 +145,9 @@
 <script>
     $(document).ready(function() {
         <?php echo "var podcast = " . $this->podcast . ";" ?>
-        AIRTIME.podcast.podcastApp.value('podcast', podcast);
-        AIRTIME.podcast.podcastApp.value('tab', null);
-        var wrapper = $(".angular_wrapper");
-        angular.bootstrap(wrapper.get(0), ["podcast"]);
+        // RASTATIME 2026-06-01 (JS-modernization stage 1): vanilla init replaces
+        // angular.bootstrap(["podcast"]).
+        AIRTIME.podcast.bootstrapStationPodcast(podcast);
     });
 
     $('.collapsible-header').click(function() {

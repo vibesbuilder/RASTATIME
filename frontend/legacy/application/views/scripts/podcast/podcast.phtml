@@ -1,24 +1,28 @@
-<div class="angular_wrapper" ng-controller="Podcast">
+<?php /* RASTATIME 2026-06-01 (JS-modernization stage 1): AngularJS removed.
+       * Wired by the vanilla podcast.js (bootstrapPodcastEditor): form fields
+       * carry data-field="<podcast property>", buttons data-action, and the
+       * former ng-show row is .auto-expiry-row (toggled in JS). */ ?>
+<div class="angular_wrapper">
     <div class="inner_editor_title">
         <h2>
-            <?php echo _("Editing ") ?>"<span ng-bind="podcast.title" class="title_obj_name"></span>"
+            <?php echo _("Editing ") ?>"<span class="title_obj_name"></span>"
         </h2>
     </div>
     <div class="inner_editor_wrapper">
         <form class="podcast-metadata">
-            <input ng-value="podcast.id" class="obj_id" type="hidden" />
+            <input class="obj_id" type="hidden" />
             <div class="podcast-metadata-row">
                 <label for="podcast_name"><?php echo _("Podcast Name: ") ?></label>
-                <input name="podcast_name" type="text" ng-model="podcast.title" value={{podcast.title}}>
+                <input name="podcast_name" type="text" data-field="title">
             </div>
             <div class="podcast-metadata-row">
                 <label for="podcast_url"><?php echo _("Podcast URL: ") ?></label>
-                <a href="{{podcast.url}}" target="_blank" class="podcast-url">{{podcast.url}}</a>
+                <a href="" target="_blank" class="podcast-url"></a>
             </div>
             <div class="podcast-metadata-row">
                 <label for="podcast_auto_ingest"><?php echo _("Download latest episodes:") ?></label>
                 <div>
-                    <input name="podcast_auto_ingest" id="podcast_auto_ingest" ng-model="podcast.auto_ingest" type="checkbox" />
+                    <input name="podcast_auto_ingest" id="podcast_auto_ingest" data-field="auto_ingest" type="checkbox" />
                 </div>
             </div>
 
@@ -31,15 +35,14 @@
                 <label for="podcast_auto_expiry_enabled"><?php echo _("Auto-Expiry:") ?></label>
                 <div>
                     <input name="podcast_auto_expiry_enabled" id="podcast_auto_expiry_enabled"
-                           ng-model="podcast.auto_expiry_enabled" type="checkbox" />
+                           data-field="auto_expiry_enabled" type="checkbox" />
                 </div>
             </div>
-            <div class="podcast-metadata-row"
-                 ng-show="podcast.auto_expiry_enabled">
+            <div class="podcast-metadata-row auto-expiry-row" style="display:none;">
                 <label for="podcast_auto_expiry_days"><?php echo _("Auto-Expiry (days):") ?></label>
                 <div>
                     <input name="podcast_auto_expiry_days" id="podcast_auto_expiry_days"
-                           ng-model="podcast.auto_expiry_days" type="number" min="1" max="3650" step="1"
+                           data-field="auto_expiry_days" type="number" min="1" max="3650" step="1"
                            style="width: 6em;" />
                     <?php /* RASTATIME 2026-05-21 — help-text moved into a qtip
                            hover tooltip (initialised in podcast.js).  Same
@@ -62,13 +65,11 @@
                 <label for="podcast_default_track_type"><?php echo _("Track Type:") ?></label>
                 <div>
                     <?php // RASTATIME 2026-05-17 — track-type options are
-                          // rendered into a JS literal that the Angular
-                          // PodcastController picks up at init time, so
-                          // we can use ng-options (int-aware) without an
-                          // extra REST round-trip to /api/v2/libraries. ?>
+                          // rendered into a JS literal that podcast.js picks up
+                          // at init time and appends as <option>s, so we avoid
+                          // an extra REST round-trip to /api/v2/libraries. ?>
                     <select name="podcast_default_track_type" id="podcast_default_track_type"
-                            ng-model="podcast.default_track_type_id"
-                            ng-options="opt.id as opt.name for opt in trackTypeOptions">
+                            data-field="default_track_type_id">
                         <option value="">— <?php echo _("None") ?> —</option>
                     </select>
                 </div>
@@ -77,10 +78,10 @@
             <div class="podcast-metadata-row">
                 <label><?php echo _("Scheduling:") ?></label>
                 <div>
-                    <button ng-click="createSmartblock()" class="btn" type="button" name="smartblock">
+                    <button data-action="smartblock" class="btn" type="button" name="smartblock">
                         <?php echo _("Generate Smartblock and Playlist") ?>
                     </button>
-                    <div class='pc-sb-success success' style='display:none'>&quot;{{podcast.title}}&quot; <br> <?php echo _("Smartblock and Playlist generated") ?></span></div>
+                    <div class='pc-sb-success success' style='display:none'>&quot;<span class="pc-sb-title"></span>&quot; <br> <?php echo _("Smartblock and Playlist generated") ?></div>
                 </div>
             </div>
         </form>
@@ -90,12 +91,12 @@
 
     <div class="btn-toolbar clearfix">
         <div class="btn-group pull-right">
-            <button ng-click="discard()" class="btn" type="button" name="cancel">
+            <button data-action="discard" class="btn" type="button" name="cancel">
                 <?php echo _("Cancel") ?>
             </button>
         </div>
         <div class='btn-group pull-right'>
-            <button ng-click="savePodcast()" class="btn" title='<?php echo _("Save podcast") ?>' type="button">
+            <button data-action="save" class="btn" title='<?php echo _("Save podcast") ?>' type="button">
                 <?php echo _("Save") ?>
             </button>
         </div>

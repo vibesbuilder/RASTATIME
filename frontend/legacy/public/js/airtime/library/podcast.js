@@ -57,12 +57,17 @@ var AIRTIME = (function (AIRTIME) {
      * Save and update the podcast object.
      */
     $scope.savePodcast = function () {
-      $http
-        .put(endpoint + $scope.podcast.id, {
-          csrf_token: $scope.csrf,
-          podcast: $scope.podcast,
+      jQuery
+        .ajax({
+          url: endpoint + $scope.podcast.id,
+          type: "PUT",
+          contentType: "application/json",
+          data: JSON.stringify({
+            csrf_token: $scope.csrf,
+            podcast: $scope.podcast,
+          }),
         })
-        .success(function () {
+        .done(function () {
           self.onSaveCallback();
         });
     };
@@ -88,12 +93,17 @@ var AIRTIME = (function (AIRTIME) {
           }, 5000);
 
           // save podcast but do not display notification beside save button below
-          $http
-            .put(endpoint + $scope.podcast.id, {
-              csrf_token: $scope.csrf,
-              podcast: $scope.podcast,
+          jQuery
+            .ajax({
+              url: endpoint + $scope.podcast.id,
+              type: "PUT",
+              contentType: "application/json",
+              data: JSON.stringify({
+                csrf_token: $scope.csrf,
+                podcast: $scope.podcast,
+              }),
             })
-            .success(function () {
+            .done(function () {
               AIRTIME.library.podcastDataTable.fnDraw();
               self.$scope.tab.setName(self.$scope.podcast.title);
             });
@@ -157,24 +167,28 @@ var AIRTIME = (function (AIRTIME) {
     // Super call to parent controller
     PodcastController.call(this, $scope, $http, podcast, tab);
     this.onSaveCallback = function () {
-      $http({
-        method: "POST",
-        url: "/preference/station-podcast-settings",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        data: {
-          stationPodcastPrivacy: $("#podcast-settings")
-            .find("input:checked")
-            .val(),
-        },
-      }).success(function (data) {
-        jQuery.extend($scope.podcast, data);
-        $(".success")
-          .text($.i18n._("Podcast settings saved"))
-          .slideDown("fast");
-        setTimeout(function () {
-          $(".success").slideUp("fast");
-        }, 2000);
-      });
+      jQuery
+        .ajax({
+          method: "POST",
+          url: "/preference/station-podcast-settings",
+          // jQuery serialises a plain object as x-www-form-urlencoded (the old
+          // explicit Content-Type); dataType:"json" parses the JSON response.
+          data: {
+            stationPodcastPrivacy: $("#podcast-settings")
+              .find("input:checked")
+              .val(),
+          },
+          dataType: "json",
+        })
+        .done(function (data) {
+          jQuery.extend($scope.podcast, data);
+          $(".success")
+            .text($.i18n._("Podcast settings saved"))
+            .slideDown("fast");
+          setTimeout(function () {
+            $(".success").slideUp("fast");
+          }, 2000);
+        });
     };
     return this;
   }
@@ -196,16 +210,19 @@ var AIRTIME = (function (AIRTIME) {
       $scope = self.$scope,
       episodes = self.episodeTable.getSelectedRows();
     jQuery.each(episodes, function () {
-      self.$http
-        .delete(
-          endpoint +
+      var episodeId = this.id;
+      jQuery
+        .ajax({
+          url:
+            endpoint +
             $scope.podcast.id +
             "/episodes/" +
-            this.id +
+            episodeId +
             "?csrf_token=" +
             $scope.csrf,
-        )
-        .success(function () {
+          type: "DELETE",
+        })
+        .done(function () {
           self.reloadEpisodeTable();
         });
     });
@@ -295,26 +312,108 @@ var AIRTIME = (function (AIRTIME) {
   };
 
   /**
-   * AngularJS app for podcast functionality.
-   *
-   * Bootstrapped for each podcast or Station podcast tab.
+   * RASTATIME 2026-06-01 (JS-modernization stage 1): the AngularJS "podcast" app
+   * is gone.  The Podcast / StationPodcast controllers above are now plain
+   * constructors instantiated here; the former two-way ng-model binding is
+   * replaced by loading/reading the form by [data-field], and ng-click /
+   * ng-show / ng-bind are wired below.  No angular.module / $scope digest.
    */
-  mod.podcastApp = angular
-    .module("podcast", [])
-    .controller("Podcast", [
-      "$scope",
-      "$http",
-      "podcast",
-      "tab",
-      PodcastController,
-    ])
-    .controller("StationPodcast", [
-      "$scope",
-      "$http",
-      "podcast",
-      "tab",
-      StationPodcastController,
-    ]);
+
+  function podcastScope() {
+    // Minimal stand-in for the former Angular $scope: a plain data holder.
+    // $destroy is referenced by the controller's tab close handler.
+    return { $destroy: function () {} };
+  }
+
+  // Form fields carry data-field="<podcast property>".
+  function loadPodcastForm(view, podcast) {
+    view.find("[data-field]").each(function () {
+      var $el = jQuery(this),
+        f = $el.attr("data-field"),
+        v = podcast[f];
+      if ($el.attr("type") === "checkbox") {
+        $el.prop("checked", !!v);
+      } else {
+        $el.val(v == null ? "" : v);
+      }
+    });
+  }
+
+  function readPodcastForm(view, podcast) {
+    view.find("[data-field]").each(function () {
+      var $el = jQuery(this),
+        f = $el.attr("data-field");
+      if ($el.attr("type") === "checkbox") {
+        podcast[f] = $el.prop("checked");
+      } else {
+        podcast[f] = $el.val();
+      }
+    });
+  }
+
+  function renderPodcastView(view, scope) {
+    var podcast = scope.podcast;
+    // track-type <select> options (former ng-options)
+    var $tt = view.find("[data-field='default_track_type_id']");
+    if ($tt.length && podcast.track_type_options) {
+      podcast.track_type_options.forEach(function (opt) {
+        $tt.append(
+          jQuery("<option></option>").attr("value", opt.id).text(opt.name),
+        );
+      });
+    }
+    loadPodcastForm(view, podcast);
+    // read-only mirrors (former ng-bind / {{podcast.title}} / {{podcast.url}})
+    view.find(".title_obj_name").text(podcast.title || "");
+    view
+      .find(".podcast-url")
+      .attr("href", podcast.url || "")
+      .text(podcast.url || "");
+    view.find("[data-podcast-url]").attr("href", podcast.url || "");
+    // auto-expiry row show/hide (former ng-show="podcast.auto_expiry_enabled")
+    var $expiryToggle = view.find("[data-field='auto_expiry_enabled']");
+    var syncExpiry = function () {
+      view.find(".auto-expiry-row").toggle($expiryToggle.prop("checked"));
+    };
+    $expiryToggle.on("change", syncExpiry);
+    syncExpiry();
+  }
+
+  function wirePodcastButtons(view, scope) {
+    view.find("[data-action='save']").on("click", function () {
+      readPodcastForm(view, scope.podcast);
+      scope.savePodcast();
+      return false;
+    });
+    view.find("[data-action='smartblock']").on("click", function () {
+      readPodcastForm(view, scope.podcast);
+      view.find(".pc-sb-title").text(scope.podcast.title || "");
+      scope.createSmartblock();
+      return false;
+    });
+    view.find("[data-action='discard']").on("click", function () {
+      scope.discard();
+      return false;
+    });
+  }
+
+  /** Regular podcast editor (opened in a tab). */
+  mod.bootstrapPodcastEditor = function (podcast, tab) {
+    var scope = podcastScope();
+    new PodcastController(scope, null, podcast, tab);
+    var view = tab ? tab.contents : $(document);
+    renderPodcastView(view, scope);
+    wirePodcastButtons(view, scope);
+  };
+
+  /** Station podcast (rendered as its own page; tab is null). */
+  mod.bootstrapStationPodcast = function (podcast) {
+    var scope = podcastScope();
+    new StationPodcastController(scope, null, podcast, null);
+    var view = $(".angular_wrapper");
+    renderPodcastView(view, scope);
+    wirePodcastButtons(view, scope);
+  };
 
   /**
    * Implement bulk editing of podcasts in order to accommodate the existing selection
@@ -359,10 +458,9 @@ var AIRTIME = (function (AIRTIME) {
    * @private
    */
   function _bootstrapAngularApp(podcast, tab) {
-    mod.podcastApp.value("podcast", podcast);
-    mod.podcastApp.value("tab", tab);
-    var wrapper = tab.contents.find(".angular_wrapper");
-    angular.bootstrap(wrapper.get(0), ["podcast"]);
+    // RASTATIME 2026-06-01: was angular.bootstrap(["podcast"]); now a plain
+    // vanilla editor init (the controllers are no longer Angular).
+    mod.bootstrapPodcastEditor(podcast, tab);
   }
 
   /**
