@@ -17,7 +17,7 @@ function closeDialogCalendar(event, ui) {
   $el.remove();
 
   //need to refetch the events to update scheduled status.
-  $("#schedule_calendar").fullCalendar("refetchEvents");
+  scheduleCalRefetch();
 }
 
 function confirmCancelShow(show_instance_id) {
@@ -378,7 +378,13 @@ function alertShowErrorAndReload() {
 
 $(document).ready(function () {
   $.contextMenu({
-    selector: "div.fc-event",
+    // RASTATIME 2026-06-01 (JS-modernization stage 2): ".fc-event" (not
+    // "div.fc-event") so this also matches FullCalendar 6 events, which are
+    // <a class="fc-event"> anchors rather than FC1.5's <div>.  FC1.5 events
+    // still match, so the fallback is unaffected.  The build() reads the
+    // instance via $el.data("event"), which both paths set (FC6 in
+    // eventDidMount, schedule-fc6.js).
+    selector: ".fc-event",
     trigger: "left",
     ignoreRightClick: true,
     className: "calendar-context-menu",

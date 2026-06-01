@@ -197,6 +197,42 @@ function fc6InjectIntervalDropdown() {
   $(corner).empty().append($select);
 }
 
+// Week-view title formatter (FC6 titleFormat callback).  FC6's own range
+// formatting drops the ordinal period on the German start day ("1 – 7. Juni
+// 2026" instead of "1. – 7. Juni 2026") because it renders only the differing
+// field (a bare day number, which German Intl prints without the "."), and we
+// must NOT post-process the rendered title — FC6 manages it through a preact
+// virtual DOM, so mutating the node corrupts reconciliation (the title then
+// accumulates across navigations).  Instead we let FC6 render our return value.
+// Intl.formatRange is locale-correct for every language and keeps the period.
+// The end day is computed as start + 6 days (a week is always 7) to sidestep
+// FC6's inclusive/exclusive end-marker ambiguity; markers are UTC-based, so the
+// ms arithmetic is DST-safe and must be formatted with timeZone:"UTC".
+function fc6WeekTitle(arg) {
+  var locale = fc6Locale();
+  var opts = {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  };
+  var start = arg && arg.start && arg.start.marker ? arg.start.marker : null;
+  if (!start) {
+    return "";
+  }
+  var end = new Date(start.getTime() + 6 * 24 * 60 * 60 * 1000);
+  var fmt = new Intl.DateTimeFormat(locale, opts);
+  var str =
+    typeof fmt.formatRange === "function"
+      ? fmt.formatRange(start, end)
+      : fmt.format(start) + " – " + fmt.format(end);
+  if (locale === "de") {
+    // FC1.5/operator want a spaced en-dash; German Intl ranges have no spaces
+    str = str.replace(/\s*[–-]\s*/, " – ");
+  }
+  return str;
+}
+
 // FC6 packs back-to-back shows (end == next start) into half-width columns even
 // with slotEventOverlap:false — it treats the touch-boundary as a shared column,
 // so the following show renders inset.  A radio schedule never has truly
@@ -237,6 +273,11 @@ function buildScheduleFc6(data) {
     initialView: FC6_VIEW_FROM_LEGACY[legacyView] || "timeGridDay",
     locale: fc6Locale(),
     firstDay: parseInt(data.calendarInit.weekStartDay, 10) || 0,
+    // week-view title: format it ourselves (vdom-safe via FC6's titleFormat) so
+    // the German start day keeps its ordinal period — see fc6WeekTitle
+    views: {
+      timeGridWeek: { titleFormat: fc6WeekTitle },
+    },
     headerToolbar: {
       left: "prev,next today",
       center: "title",
@@ -272,8 +313,20 @@ function buildScheduleFc6(data) {
         scheduleFc6.setOption("contentHeight", $(window).height() - 200 - 24);
       }
     },
-    editable: false, // Phase a: read-only
+    editable: false, // Phase b1: clicks only; drag/resize is enabled in b2
     events: getScheduleFc6Events,
+
+    // create-show: adapt FC6 dateClick -> the legacy dayClick() pre-fill, which
+    // opens the add-show form (recurrence options unchanged).  The view object
+    // only needs .name; serverTimezoneOffset is already set by
+    // createFullCalendar() before this builds.
+    dateClick: function (info) {
+      if (typeof dayClick !== "function") {
+        return;
+      }
+      var legacy = FC6_VIEW_TO_LEGACY[info.view.type] || "agendaDay";
+      dayClick(info.date, info.allDay, info.jsEvent, { name: legacy });
+    },
 
     // post-render enhancement (FC6 renders the default time/title chip):
     // status icons + jQuery-UI fill bar + hover tooltips + data attributes.
@@ -290,6 +343,13 @@ function buildScheduleFc6(data) {
       if (p.linked != null) {
         $el.attr("data-show-linked", p.linked);
       }
+      // instance data the left-click context menu reads ($el.data("event")) —
+      // same contract as FC1.5 eventRender (schedule.js $.contextMenu build())
+      $el.data("event", {
+        id: arg.event.id,
+        showId: p.showId,
+        linked: p.linked,
+      });
 
       var isMonth = arg.view.type === "dayGridMonth";
       var isTimeGrid =
@@ -365,7 +425,19 @@ function buildScheduleFc6(data) {
         });
       }
       // deferred so the timeGrid axis corner is painted before we inject
-      window.setTimeout(fc6InjectIntervalDropdown, 0);
+      window.setTimeout(function () {
+        fc6InjectIntervalDropdown();
+        // (re)add the "+ New Show" toolbar button — FC6 rebuilds the toolbar on
+        // view switch, so re-add it here (makeAddShowButton is idempotent).
+        // Same admin gate as FC1.5's viewDisplay().
+        if (
+          typeof makeAddShowButton === "function" &&
+          typeof userType !== "undefined" &&
+          (userType === "S" || userType === "A" || userType === "P")
+        ) {
+          makeAddShowButton();
+        }
+      }, 0);
     },
   });
 

@@ -4,6 +4,23 @@
  *
  */
 
+// RASTATIME 2026-06-01 (JS-modernization stage 2): refetch the schedule
+// calendar's events regardless of engine — FC1.5 jQuery plugin or the FC6
+// instance behind ?fc6=1.  Shared by every action that mutates the schedule
+// (create / edit / delete / clear / move / resize / dialog close).
+function scheduleCalRefetch() {
+  if (window.SCHEDULE_USE_FC6) {
+    if (
+      window.scheduleFc6 &&
+      typeof window.scheduleFc6.refetchEvents === "function"
+    ) {
+      window.scheduleFc6.refetchEvents();
+    }
+    return;
+  }
+  $("#schedule_calendar").fullCalendar("refetchEvents");
+}
+
 function scheduleRefetchEvents(json) {
   if (json.show_error == true) {
     alert($.i18n._("The show instance doesn't exist anymore!"));
@@ -16,7 +33,7 @@ function scheduleRefetchEvents(json) {
       $("#add-show-close").click();
     }
   }
-  $("#schedule_calendar").fullCalendar("refetchEvents");
+  scheduleCalRefetch();
 }
 
 function makeTimeStamp(date) {
@@ -514,6 +531,12 @@ function windowResize() {
   // 200 px for top dashboard and 50 for padding on main content
   // this calculation was copied from schedule.js line 326
   var mainHeight = $(window).height() - 200 - 24;
+  if (window.SCHEDULE_USE_FC6) {
+    if (window.scheduleFc6) {
+      window.scheduleFc6.setOption("contentHeight", mainHeight);
+    }
+    return;
+  }
   $("#schedule_calendar").fullCalendar("option", "contentHeight", mainHeight);
 }
 
@@ -635,21 +658,10 @@ $(document).ready(function () {
   // Schedule/event-feed AJAX call, which carries the up-to-date
   // percent from cc_show_instances.time_filled.
   setInterval(function () {
-    // RASTATIME 2026-06-01 (JS-modernization stage 2): when the FC6 calendar is
-    // active (?fc6=1), refetch via its own API — FC1.5's jQuery plugin method
-    // does not apply to an FC6 calendar instance.
-    if (window.SCHEDULE_USE_FC6) {
-      if (
-        window.scheduleFc6 &&
-        typeof window.scheduleFc6.refetchEvents === "function"
-      ) {
-        window.scheduleFc6.refetchEvents();
-      }
-      return;
-    }
     var $cal = $("#schedule_calendar");
     if ($cal.length > 0 && $cal.is(":visible")) {
-      $cal.fullCalendar("refetchEvents");
+      // scheduleCalRefetch() picks FC1.5 vs FC6 (?fc6=1) automatically
+      scheduleCalRefetch();
     }
   }, 60 * 1000);
 });

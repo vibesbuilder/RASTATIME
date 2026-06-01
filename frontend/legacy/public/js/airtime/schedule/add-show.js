@@ -48,18 +48,21 @@ function openAddShowForm(nowOrFuture) {
 
 function makeAddShowButton() {
   if ($(".add-button").length === 0) {
-    $(".fc-header-left")
-      .prepend('<span class="fc-header-space"></span>')
-      .prepend(
-        '<span class="btn-group">' +
-          '<button onclick="showForm()" class="add-button btn btn-small btn-new">' +
-          '<i class="icon-white icon-plus"></i>' +
-          "<span>" +
-          $.i18n._("New Show") +
-          "</span>" +
-          "</button>" +
-          "</span>",
-      );
+    var space = '<span class="fc-header-space"></span>';
+    var btn =
+      '<span class="btn-group">' +
+      '<button onclick="showForm()" class="add-button btn btn-small btn-new">' +
+      '<i class="icon-white icon-plus"></i>' +
+      "<span>" +
+      $.i18n._("New Show") +
+      "</span>" +
+      "</button>" +
+      "</span>";
+    // FC1.5 header is .fc-header-left; FC6 (?fc6=1) uses the left toolbar chunk
+    var $target = window.SCHEDULE_USE_FC6
+      ? $("#schedule_calendar .fc-toolbar-chunk").first()
+      : $(".fc-header-left");
+    $target.prepend(space).prepend(btn);
   }
 }
 
@@ -871,7 +874,18 @@ function setAddShowEvents(form) {
           $("#add_show_start_date").val(start_date);
           showErrorSections();
         } else if (json.edit) {
-          $("#schedule_calendar").removeAttr("style").fullCalendar("render");
+          // re-render the schedule calendar after a successful create/edit:
+          // FC1.5 render(); FC6 (?fc6=1) refetch + updateSize, since the jQuery
+          // plugin method does not apply to an FC6 instance
+          var $cal = $("#schedule_calendar").removeAttr("style");
+          if (window.SCHEDULE_USE_FC6) {
+            if (window.scheduleFc6) {
+              window.scheduleFc6.refetchEvents();
+              window.scheduleFc6.updateSize();
+            }
+          } else {
+            $cal.fullCalendar("render");
+          }
 
           $addShowForm.hide();
           toggleAddShowButton();
