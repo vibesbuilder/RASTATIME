@@ -68,6 +68,12 @@ function getScheduleFc6Events(info, success, failure) {
         var ev = $.extend({}, e);
         ev.start = fc6Isoify(e.start);
         ev.end = fc6Isoify(e.end);
+        // Explicit per-event editability: the feed sets editable:true only for
+        // shows that may be moved/resized (false for recording/rebroadcast,
+        // UNSET for past shows and DJ users).  Force it to a hard boolean so a
+        // missing flag does not inherit the calendar's editable:true and make
+        // past shows draggable — matches FC1.5's per-event-true-unlocks model.
+        ev.editable = e.editable === true;
         return ev;
       });
       success(events);
@@ -313,7 +319,10 @@ function buildScheduleFc6(data) {
         scheduleFc6.setOption("contentHeight", $(window).height() - 200 - 24);
       }
     },
-    editable: false, // Phase b1: clicks only; drag/resize is enabled in b2
+    // calendar-level editable enables the drag/resize interaction; per-event
+    // editable (set explicitly in getScheduleFc6Events) decides which shows
+    // actually move.  eventDrop / eventResize below persist the change.
+    editable: true,
     events: getScheduleFc6Events,
 
     // create-show: adapt FC6 dateClick -> the legacy dayClick() pre-fill, which
@@ -326,6 +335,55 @@ function buildScheduleFc6(data) {
       }
       var legacy = FC6_VIEW_TO_LEGACY[info.view.type] || "agendaDay";
       dayClick(info.date, info.allDay, info.jsEvent, { name: legacy });
+    },
+
+    // move a show: POST the day + minute delta (from the FC6 Duration) to
+    // move-show; the backend validates (overlaps etc.) and on error we revert
+    // the drag.  Mirrors the legacy eventDrop() (full-calendar-functions.js).
+    eventDrop: function (info) {
+      $.post(
+        baseUrl + "Schedule/move-show/format/json",
+        {
+          day: info.delta.days,
+          min: Math.round(info.delta.milliseconds / 60000),
+          showInstanceId: info.event.id,
+        },
+        function (json) {
+          if (json.show_error == true) {
+            alertShowErrorAndReload();
+          }
+          if (json.error) {
+            alert(json.error);
+            info.revert();
+          }
+          scheduleRefetchEvents(json);
+        },
+      );
+    },
+
+    // resize a show's duration: POST the end-edge delta to resize-show; on error
+    // revert.  Mirrors the legacy eventResize(); showId comes from
+    // extendedProps (FC6 keeps non-standard fields there).
+    eventResize: function (info) {
+      $.post(
+        baseUrl + "Schedule/resize-show/format/json",
+        {
+          day: info.endDelta.days,
+          min: Math.round(info.endDelta.milliseconds / 60000),
+          showId: info.event.extendedProps.showId,
+          instanceId: info.event.id,
+        },
+        function (json) {
+          if (json.show_error == true) {
+            alertShowErrorAndReload();
+          }
+          if (json.error) {
+            alert(json.error);
+            info.revert();
+          }
+          scheduleRefetchEvents(json);
+        },
+      );
     },
 
     // post-render enhancement (FC6 renders the default time/title chip):
