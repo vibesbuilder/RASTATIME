@@ -191,7 +191,6 @@ class PageLayoutInitPlugin extends Zend_Controller_Plugin_Abstract
             ->appendFile(Assets::url('js/libs/underscore-min.js'), 'text/javascript')
 
             ->appendFile(Assets::url('js/qtip/jquery.qtip.js'), 'text/javascript')
-            ->appendFile(Assets::url('js/jplayer/jquery.jplayer.min.js'), 'text/javascript')
             ->appendFile(Assets::url('js/sprintf/sprintf-0.7-beta1.js'), 'text/javascript')
             ->appendFile(Assets::url('js/cookie/js.cookie.js'), 'text/javascript')
             ->appendFile(Assets::url('js/i18n/jquery.i18n.js'), 'text/javascript')
