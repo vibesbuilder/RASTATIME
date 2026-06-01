@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+- **AngularJS-Bibliothek vollständig entfernt (JS-Modernisierung Stufe 1,
+  2026-06-01, `62fbe18`)** — AngularJS 1.4.5 (EOL 2022) wurde nur noch von zwei
+  Stellen genutzt: dem Publish-Dialog und den Podcast-/StationPodcast-Editoren.
+  Beide auf vanilla/jQuery migriert (s. *Changed*), danach die Lib (~150 KB) +
+  ihre per-page-Loads (`PodcastController`, `ShowbuilderController`) + der
+  `assets.json`-Eintrag entfernt.  Verifiziert: kein funktionaler
+  `angular.module`/`.bootstrap`/`ng-*`-Code mehr (nur Kommentare).
+  Nebeneffekt: Angular probt beim Laden `eval` (eigene CSP-Feature-Detection),
+  was die Site-CSP auslöste und einen Konsolen-Verstoß auf diesen Seiten loggte
+  — dieses Rauschen ist jetzt weg.
+
 - **jPlayer-Bibliothek vollständig entfernt (JS-Modernisierung Stufe 0,
   2026-06-01, `9fa39e8`)** — nachdem alle drei Nutzer auf natives `<audio>`
   migriert waren (Audio-Preview 1/3, Dashboard-Stream-Player 2/3, Radio-Page
@@ -105,6 +116,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (wird separat gesichert).
 
 ### Changed
+
+- **Publish-Dialog + Podcast-/StationPodcast-Editoren von AngularJS auf
+  vanilla/jQuery (JS-Modernisierung Stufe 1, 2026-06-01, `6b79128` + `ede7c12`)**
+  — die drei AngularJS-Controller (Publish, Podcast, StationPodcast) wurden ohne
+  Framework neu verdrahtet: `$http`→`$.ajax` (mit `dataType:"json"`, da die
+  REST-API JSON ohne `application/json`-Content-Type liefert — sonst lieferte
+  jQuery rohe Strings), 2-Wege-`ng-model` → Laden/Lesen der Formulare per
+  `[data-field]`, `ng-click`/`ng-show`/`ng-repeat` → Vanilla-Handler/Toggle/
+  Rendering, `angular.bootstrap` → schlichte Init-Funktionen.  ~750 Z.
+  DataTables-Code (Podcast-Episoden) blieben unberührt (Low-Diff-Strategie:
+  „Zuverlässigkeit vor Modernität").  Operator-verifiziert (Publish/Unpublish,
+  Podcast anlegen/bearbeiten/speichern, Smartblock, Station-Metadaten + Privacy,
+  Episoden-Tabelle).
 
 - **Audio-Player im LibreTime-Look wiederhergestellt (Custom-GUI auf nativem
   `<audio>`, 2026-06-01, `6312961` + `69ab09a`)** — die nach der jPlayer-Ablösung
@@ -224,6 +248,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   BACKLOG "Storage-Struktur-Bereinigung".
 
 ### Added
+
+- **„My Podcast" (Station-Podcast) im Hauptmenü (2026-06-01, `b30326e`)** — die
+  Station-Podcast-Seite (`/podcast/station`) war funktionsfähig, aber nur per URL
+  erreichbar; der Menüeintrag war upstream deaktiviert (libretime#1320, Feature
+  dort unfertig).  Nach der Vanilla-JS-Migration funktioniert sie in RASTATIME,
+  daher bekommt sie einen Top-Level-Menüeintrag direkt über „Calendar"
+  (Bullhorn-Icon, admin-sichtbar via `resource 'preference'`).
 
 - **Scheduled Line-Inputs via Liquidsoap `input.http` (Phase-F,
   2026-05-29)** — geplante Line-In-Items im Schedule fließen jetzt
