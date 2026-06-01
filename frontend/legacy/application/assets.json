@@ -115,7 +115,6 @@
   "js/fullcalendar/fullcalendar.orig.js": "47c54fe209efe131a11c596b3563387f",
   "js/i18n/jquery.i18n.js": "41f4915c6a56ef02d7e044b1e1407e27",
   "js/libs/CSVexport.js": "42c1fcfff5c717482f21bff1a9002295",
-  "js/libs/angular.min.js": "26680517e1024ca2c4f9ed4e0aa1619e",
   "js/libs/dayjs.min.js": "bea3f1180a3e2e45eccf9d76f990f3b4",
   "js/libs/dropzone.min.js": "f59ac59a89d9c569a27ca7ead38d2396",
   "js/libs/handlebars.min.js": "90e3ec5c9ce9b231407bae1d6f573cce",

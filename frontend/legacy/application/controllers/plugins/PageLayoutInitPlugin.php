@@ -183,10 +183,9 @@ class PageLayoutInitPlugin extends Zend_Controller_Plugin_Abstract
 
         $view->headScript()->appendFile(Assets::url('js/libs/jquery-1.8.3.min.js'), 'text/javascript')
             ->appendFile(Assets::url('js/libs/jquery-ui-1.8.24.min.js'), 'text/javascript')
-            // RASTATIME 2026-05-31 (JS-modernization stage 0): AngularJS 1.4.5
-            // is no longer loaded globally on every page — only the Podcast /
-            // Publish views use it.  PodcastController + ShowbuilderController
-            // now load js/libs/angular.min.js per-page (before podcast.js).
+            // RASTATIME 2026-06-01 (JS-modernization stage 1): AngularJS 1.4.5
+            // (EOL 2022) has been fully removed — the Podcast / Publish views
+            // that used it are now vanilla/jQuery.
             ->appendFile(Assets::url('js/bootstrap/bootstrap.min.js'), 'text/javascript')
             ->appendFile(Assets::url('js/libs/underscore-min.js'), 'text/javascript')
 
