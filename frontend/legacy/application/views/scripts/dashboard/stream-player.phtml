@@ -1,9 +1,10 @@
-<?php /* RASTATIME 2026-05-31 (JS-modernization stage 0, jPlayer part 2/3):
-       * native <audio> live-stream player — replaces the jPlayer GUI + jPlayer
-       * skin CSS for the Dashboard "Listen" popup. The stream <select> drives a
-       * vanilla setStream(); the native controls give play/pause/volume/mute.
-       * The old shoutcast ";stream/1" trick and the ended->play reconnect are
-       * preserved. */ ?>
+<?php /* RASTATIME 2026-06-01 (JS-modernization stage 0, jPlayer part 2/3 + player
+       * styling): native <audio> live-stream player with a custom LibreTime-style
+       * skin (dark gradient bar, orange volume, CSS-drawn transport buttons)
+       * driving the native element.  Replaces the jPlayer GUI + jPlayer skin CSS
+       * for the Dashboard "Listen" popup.  The stream <select> drives setStream();
+       * the shoutcast ";stream/1" trick and the ended->play reconnect are kept.
+       * Live stream: play/pause/stop + volume/mute, no seek bar. */ ?>
 <div id="content" class="jp-container">
     <h1><?php echo _("Live stream") ?></h1>
     <a id="popup-link" href="#"><?php echo _("Share") ?></a>
@@ -11,20 +12,49 @@
     <style>
         body { margin: 0; font-family: Arial, Helvetica, sans-serif; }
         #content { padding: 8px; }
-        #content h1 { font-size: 14px; margin: 0 0 4px; display: inline-block; }
+        #content h1 { font-size: 14px; margin: 0 0 4px; display: inline-block; color: #fff; }
         #popup-link { font-size: 11px; margin-left: 8px; }
         .jp-logo img { max-height: 40px; }
         .jp-stream { margin: 6px 0; }
         .jp-stream-text { font-size: 11px; margin-bottom: 2px; }
         #combo-box { max-width: 100%; }
-        #stream_audio_el { width: 100%; margin-top: 4px; }
         #popup-share { display: none; margin-top: 6px; }
         #popup-share-link { width: 90%; }
+
+        /* LibreTime-style player bar (matches the audio preview skin) */
+        #stream_audio_el { display: none; }
+        .lt-interface {
+            display: flex; align-items: center; gap: 12px;
+            padding: 8px 10px; margin-top: 6px; box-sizing: border-box;
+            background: #3D3D3D;
+            background: linear-gradient(to bottom, #6E6E6E 0, #3a3a3a 100%);
+            border-top: 1px solid #5a5a5a; border-bottom: 1px solid #1a1a1a;
+        }
+        .lt-controls { display: flex; align-items: center; gap: 6px; }
+        .lt-btn {
+            width: 22px; height: 22px; padding: 0; border: 0; cursor: pointer;
+            background: transparent; position: relative; outline: none;
+        }
+        .lt-btn::before, .lt-btn::after { content: ""; position: absolute; }
+        .lt-btn:hover::before, .lt-btn:hover::after { filter: brightness(1.4); }
+        .lt-play::before { top: 4px; left: 6px; border-style: solid; border-width: 7px 0 7px 12px; border-color: transparent transparent transparent #FF6F01; }
+        .lt-pause::before { top: 4px; left: 5px; width: 4px; height: 14px; background: #FF6F01; }
+        .lt-pause::after  { top: 4px; left: 13px; width: 4px; height: 14px; background: #FF6F01; }
+        .lt-stop::before { top: 5px; left: 5px; width: 12px; height: 12px; background: #d0d0d0; }
+        .lt-live { color: #FF6F01; font-size: 11px; font-weight: bold; letter-spacing: .5px; }
+        .lt-volume { display: flex; align-items: center; gap: 6px; margin-left: auto; }
+        .lt-mute { width: 18px; height: 18px; }
+        .lt-mute::before { top: 5px; left: 2px; width: 5px; height: 8px; background: #d0d0d0; }
+        .lt-mute::after  { top: 3px; left: 4px; border-style: solid; border-width: 6px 7px 6px 0; border-color: transparent #d0d0d0 transparent transparent; }
+        #content.lt-muted .lt-mute::before, #content.lt-muted .lt-mute::after { background: #777; border-right-color: #777; }
+        .lt-vol-bar { width: 70px; height: 8px; background: #393939; border: 1px solid #262526; cursor: pointer; overflow: hidden; }
+        .lt-vol-val { background: #FF6F01; height: 100%; width: 80%; }
     </style>
     <script>
-        // RASTATIME 2026-05-31 (JS-modernization stage 0, jPlayer part 2/3):
-        // native <audio> replaces jPlayer for the Dashboard live-stream popup.
+        // RASTATIME 2026-06-01: native <audio> + custom LibreTime-style GUI for
+        // the Dashboard live-stream popup.
         var streamAudio = null;
+        var currentUrl = "";
 
         // The stream host may be configured as "localhost", which only resolves
         // on the server itself. For a remote browser, rewrite localhost /
@@ -38,11 +68,18 @@
             );
         }
 
-        function setStream(url, serverType) {
-            url = reachableStreamUrl(url);
-            if (serverType == 'shoutcast') {
-                url = url + ";stream/1";
-            }
+        function showPlaying(isPlaying) {
+            document.getElementById("stream_play").style.display = isPlaying ? "none" : "";
+            document.getElementById("stream_pause").style.display = isPlaying ? "" : "none";
+        }
+
+        function updateVolume() {
+            var v = streamAudio.muted ? 0 : streamAudio.volume;
+            document.getElementById("stream_vol_val").style.width = (v * 100) + "%";
+            document.getElementById("content").classList[streamAudio.muted ? "add" : "remove"]("lt-muted");
+        }
+
+        function ensureAudio() {
             if (streamAudio === null) {
                 streamAudio = document.getElementById("stream_audio_el");
                 // a live stream that "ends" (e.g. a dropout) should try to
@@ -50,16 +87,67 @@
                 streamAudio.addEventListener("ended", function () {
                     streamAudio.play().catch(function () {});
                 });
+                streamAudio.addEventListener("play", function () { showPlaying(true); });
+                streamAudio.addEventListener("pause", function () { showPlaying(false); });
+                streamAudio.addEventListener("volumechange", updateVolume);
             }
-            streamAudio.src = url;
-            streamAudio.load();
-            streamAudio.play().catch(function () {});
+            return streamAudio;
+        }
+
+        function setStream(rawUrl, serverType) {
+            var url = reachableStreamUrl(rawUrl);
+            if (serverType == 'shoutcast') {
+                url = url + ";stream/1";
+            }
+            currentUrl = url;
+            var a = ensureAudio();
+            a.src = url;
+            a.load();
+            a.play().catch(function () {});
+        }
+
+        function playStream() {
+            var a = ensureAudio();
+            if (!a.getAttribute("src") && currentUrl) {
+                // resume after a Stop (which dropped the connection)
+                a.src = currentUrl;
+                a.load();
+            }
+            a.play().catch(function () {});
+        }
+
+        function stopStream() {
+            var a = ensureAudio();
+            a.pause();
+            a.removeAttribute("src"); // drop the live connection
+            a.load();
+            showPlaying(false);
         }
 
         $(document).ready(function () {
+            ensureAudio();
+
             $("#combo-box").change(function () {
                 var elem = $("#combo-box option:selected");
                 setStream(elem.attr("data-url"), elem.attr("server-type"));
+            });
+
+            $("#stream_play").click(function () { playStream(); return false; });
+            $("#stream_pause").click(function () { ensureAudio().pause(); return false; });
+            $("#stream_stop").click(function () { stopStream(); return false; });
+            $("#stream_mute").click(function () {
+                var a = ensureAudio();
+                a.muted = !a.muted;
+                return false;
+            });
+            $("#stream_vol").click(function (e) {
+                var a = ensureAudio();
+                var rect = this.getBoundingClientRect();
+                var ratio = (e.clientX - rect.left) / rect.width;
+                ratio = Math.max(0, Math.min(1, ratio));
+                a.muted = false;
+                a.volume = ratio;
+                return false;
             });
 
             <?php
@@ -71,6 +159,8 @@
                 echo "setStream('" . $url . "', '" . $serverType . "');";
             }
             ?>
+
+            updateVolume();
 
             $("#popup-link").click(function () {
                 $("#popup-share").show("slow");
@@ -105,5 +195,18 @@
             </select>
         </form>
     </div>
-    <audio id="stream_audio_el" controls autoplay preload="auto"></audio>
+
+    <audio id="stream_audio_el" preload="none"></audio>
+    <div class="lt-interface">
+        <div class="lt-controls">
+            <button type="button" class="lt-btn lt-play" id="stream_play" title="<?php echo _('Play') ?>"></button>
+            <button type="button" class="lt-btn lt-pause" id="stream_pause" title="<?php echo _('Pause') ?>" style="display:none;"></button>
+            <button type="button" class="lt-btn lt-stop" id="stream_stop" title="<?php echo _('Stop') ?>"></button>
+        </div>
+        <span class="lt-live">&#9679; <?php echo _('LIVE') ?></span>
+        <div class="lt-volume">
+            <button type="button" class="lt-btn lt-mute" id="stream_mute" title="<?php echo _('Mute') ?>"></button>
+            <div class="lt-vol-bar" id="stream_vol"><div class="lt-vol-val" id="stream_vol_val"></div></div>
+        </div>
+    </div>
 </div>
