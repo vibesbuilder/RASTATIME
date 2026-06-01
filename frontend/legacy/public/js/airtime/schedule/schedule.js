@@ -284,6 +284,14 @@ function getTimeIntervalPreference(data) {
 function createFullCalendar(data) {
   serverTimezoneOffset = data.calendarInit.timezoneOffset;
 
+  // RASTATIME 2026-06-01 (JS-modernization stage 2): FullCalendar 6 path,
+  // enabled with ?fc6=1.  FC1.5 below stays the default fallback until FC6 is
+  // fully verified.  buildScheduleFc6() lives in schedule-fc6.js.
+  if (window.SCHEDULE_USE_FC6 && typeof buildScheduleFc6 === "function") {
+    buildScheduleFc6(data);
+    return;
+  }
+
   var mainHeight = $(window).height() - 200 - 35;
 
   $("#schedule_calendar").fullCalendar({

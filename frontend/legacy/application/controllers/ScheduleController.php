@@ -73,6 +73,12 @@ class ScheduleController extends Zend_Controller_Action
         $this->view->headScript()->offsetSetFile(90, Assets::url('js/airtime/schedule/full-calendar-functions.js'), 'text/javascript');
 
         $this->view->headScript()->appendFile(Assets::url('js/fullcalendar/fullcalendar.js'), 'text/javascript');
+        // RASTATIME 2026-06-01 (JS-modernization stage 2): FullCalendar 6 (vendored,
+        // vanilla) + the FC6 Schedule integration, enabled with ?fc6=1.  FC1.5
+        // above stays the default fallback until FC6 is fully verified.
+        $this->view->headScript()->appendFile(Assets::url('js/libs/fullcalendar/index.global.min.js'), 'text/javascript');
+        $this->view->headScript()->appendFile(Assets::url('js/libs/fullcalendar/locales-all.global.min.js'), 'text/javascript');
+        $this->view->headScript()->offsetSetFile(110, Assets::url('js/airtime/schedule/schedule-fc6.js'), 'text/javascript');
         $this->view->headScript()->appendFile(Assets::url('js/timepicker/jquery.ui.timepicker.js'), 'text/javascript');
         $this->view->headScript()->appendFile(Assets::url('js/colorpicker/js/colorpicker.js'), 'text/javascript');
 
