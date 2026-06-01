@@ -179,7 +179,7 @@
     // "how to configure the playlist for best results" tip — the
     // tip used to be a paragraph under the dropdown, but the
     // operator preferred a single hover surface.
-    $(".auto_dj_playlist_help_icon").qtip({
+    $(".auto_dj_playlist_help_icon").rtTooltip({
         content: {
             text: $.i18n._("Used as autoplaylist for created shows.")
                 + " <br/><br/>" + $.i18n._(
@@ -198,7 +198,7 @@
 
     // RASTATIME 2026-05-21 — Show-Logo tooltip with the file-type
     // and size constraint.  Same qtip pattern as Default Playlist.
-    $(".auto_dj_logo_help_icon").qtip({
+    $(".auto_dj_logo_help_icon").rtTooltip({
         content: {
             text: $.i18n._("Upload a JPG / PNG / GIF (max 2 MB).")
         },
