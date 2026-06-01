@@ -167,6 +167,10 @@ class PageLayoutInitPlugin extends Zend_Controller_Plugin_Abstract
             ->appendStylesheet(Assets::url('css/redmond/jquery-ui-1.8.8.custom.css'))
             ->appendStylesheet(Assets::url('css/pro_dropdown_3.css'))
             ->appendStylesheet(Assets::url('css/qtip/jquery.qtip.min.css'))
+            // RASTATIME 2026-06-01 (JS-modernization stage 1): rtTooltip (Floating
+            // UI) styling — replacing qtip2 tooltip-by-tooltip.  qtip2 stays until
+            // the last call site is migrated.
+            ->appendStylesheet(Assets::url('css/tooltip.css'))
             ->appendStylesheet(Assets::url('css/styles.css'))
             ->appendStylesheet(Assets::url('css/masterpanel.css'));
     }
@@ -190,6 +194,13 @@ class PageLayoutInitPlugin extends Zend_Controller_Plugin_Abstract
             ->appendFile(Assets::url('js/libs/underscore-min.js'), 'text/javascript')
 
             ->appendFile(Assets::url('js/qtip/jquery.qtip.js'), 'text/javascript')
+            // RASTATIME 2026-06-01 (JS-modernization stage 1): Floating UI +
+            // rtTooltip — the modern replacement for qtip2 (core before dom; the
+            // wrapper exposes $.fn.rtTooltip).  qtip2 above stays loaded until the
+            // last call site is migrated, then it is removed.
+            ->appendFile(Assets::url('js/libs/floating-ui/floating-ui.core.umd.min.js'), 'text/javascript')
+            ->appendFile(Assets::url('js/libs/floating-ui/floating-ui.dom.umd.min.js'), 'text/javascript')
+            ->appendFile(Assets::url('js/airtime/common/tooltip.js'), 'text/javascript')
             ->appendFile(Assets::url('js/sprintf/sprintf-0.7-beta1.js'), 'text/javascript')
             ->appendFile(Assets::url('js/cookie/js.cookie.js'), 'text/javascript')
             ->appendFile(Assets::url('js/i18n/jquery.i18n.js'), 'text/javascript')

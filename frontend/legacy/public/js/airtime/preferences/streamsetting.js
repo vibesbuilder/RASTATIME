@@ -226,7 +226,7 @@ function setupEventListeners() {
     "<a target='_blank' href='" + USER_MANUAL_URL + "'>";
 
   // qtip for help text
-  $(".override_help_icon").qtip({
+  $(".override_help_icon").rtTooltip({
     content: {
       text:
         sprintf(
@@ -243,120 +243,55 @@ function setupEventListeners() {
           "</a>",
         ),
     },
-    hide: {
-      delay: 500,
-      fixed: true,
-    },
-    style: {
-      border: {
-        width: 0,
-        radius: 4,
-      },
-      classes: "ui-tooltip-dark ui-tooltip-rounded",
-    },
-    position: {
-      my: "left bottom",
-      at: "right center",
-    },
+    placement: "right",
+    interactive: true,
   });
 
-  $(".icecast_metadata_help_icon").qtip({
+  $(".icecast_metadata_help_icon").rtTooltip({
     content: {
       text: $.i18n._(
         "Check this option to enable metadata for OGG streams (stream metadata is the track title, artist, and show name that is displayed in an audio player). VLC and mplayer have a serious bug when playing an OGG/VORBIS stream that has metadata information enabled: they will disconnect from the stream after every song. If you are using an OGG stream and your listeners do not require support for these audio players, then feel free to enable this option.",
       ),
     },
-    hide: {
-      delay: 500,
-      fixed: true,
-    },
-    style: {
-      border: {
-        width: 0,
-        radius: 4,
-      },
-      classes: "ui-tooltip-dark ui-tooltip-rounded",
-    },
-    position: {
-      my: "left bottom",
-      at: "right center",
-    },
+    placement: "right",
+    interactive: true,
   });
 
   // RASTATIME 2026-05-14: auto_transition / auto_switch qtip help
   // popovers removed alongside their UI checkboxes — see
   // application/forms/LiveStreamingPreferences.php for the rationale.
 
-  $(".stream_username_help_icon").qtip({
+  $(".stream_username_help_icon").rtTooltip({
     content: {
       text: $.i18n._(
         "If your Icecast server expects a username of 'source', this field can be left blank.",
       ),
     },
-    hide: {
-      delay: 500,
-      fixed: true,
-    },
-    style: {
-      border: {
-        width: 0,
-        radius: 4,
-      },
-      classes: "ui-tooltip-dark ui-tooltip-rounded",
-    },
-    position: {
-      my: "left bottom",
-      at: "right center",
-    },
+    placement: "right",
+    interactive: true,
   });
 
-  $(".admin_username_help_icon").qtip({
+  $(".admin_username_help_icon").rtTooltip({
     content: {
       text: $.i18n._(
         "This is the admin username and password for Icecast/SHOUTcast to get listener statistics.",
       ),
     },
-    hide: {
-      delay: 500,
-      fixed: true,
-    },
-    style: {
-      border: {
-        width: 0,
-        radius: 4,
-      },
-      classes: "ui-tooltip-dark ui-tooltip-rounded",
-    },
-    position: {
-      my: "left bottom",
-      at: "right center",
-    },
+    placement: "right",
+    interactive: true,
   });
 
-  $(".master_username_help_icon").qtip({
+  $(".master_username_help_icon").rtTooltip({
     content: {
       text: $.i18n._(
         "If your live streaming client does not ask for a username, this field should be 'source'.",
       ),
     },
-    hide: {
-      delay: 500,
-      fixed: true,
-    },
-    style: {
-      border: {
-        width: 0,
-        radius: 4,
-      },
-      classes: "ui-tooltip-dark ui-tooltip-rounded",
-    },
-    position: {
-      my: "left bottom",
-      at: "right center",
-    },
+    placement: "right",
+    interactive: true,
   });
 
-  $(".stream_type_help_icon").qtip({
+  $(".stream_type_help_icon").rtTooltip({
     content: {
       text: sprintf(
         $.i18n._(
@@ -368,21 +303,8 @@ function setupEventListeners() {
         "</a>",
       ),
     },
-    hide: {
-      delay: 500,
-      fixed: true,
-    },
-    style: {
-      border: {
-        width: 0,
-        radius: 4,
-      },
-      classes: "ui-tooltip-dark ui-tooltip-rounded",
-    },
-    position: {
-      my: "left bottom",
-      at: "right center",
-    },
+    placement: "right",
+    interactive: true,
   });
 }
 
