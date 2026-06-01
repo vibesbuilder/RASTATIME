@@ -106,6 +106,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Audio-Player im LibreTime-Look wiederhergestellt (Custom-GUI auf nativem
+  `<audio>`, 2026-06-01, `6312961` + `69ab09a`)** — die nach der jPlayer-Ablösung
+  rohen Browser-`<audio controls>` von **Audio-Preview** und
+  **Dashboard-Stream-Player** haben wieder einen custom jPlayer/LibreTime-Skin:
+  dunkle Gradient-Leiste, orange (`#FF6F01`) Seek-/Volume-Balken, per CSS
+  gezeichnete Transport-Buttons (kein jQuery-UI-/Bootstrap-/Sprite-Abhängigkeit),
+  Zeitanzeige + Mute, an das native Element gebunden.  Preview: Playlist +
+  Prev/Next (nur bei Mehr-Track), Popup ~20 % schmaler (384px) ohne Scrollbalken.
+  Dashboard: Live-Stream mit play/pause/stop (Stop trennt, Play verbindet neu) +
+  „● LIVE"-Marker, kein Seek.  Operator-verifiziert.  Die Radio-Page behielt ihr
+  Skin bereits (Teil 3/3).
+
 - **Radio-Page Podcast-Player von jPlayer auf natives `<audio>` umgestellt
   (JS-Modernisierung Stufe 0, jPlayer Teil 3/3, 2026-06-01, `86a4ef0`)** — der
   Station-Podcast-Episoden-Player auf der öffentlichen Radio-Page nutzt jetzt

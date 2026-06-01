@@ -570,15 +570,15 @@ MD5-Cache-Buster.
     localhost-Fix (`bd5d9ca`).
   - ✅ **Lib entfernt** (`9fa39e8`): `js/jplayer/*` (13 Dateien), globaler Load,
     totes Header-Div, 7 `assets.json`-Einträge. Verifiziert, kein 500.
-- **Player-Follow-ups (offen):**
+- **Player-Follow-ups:**
+  - ✅ **Player-Design wie bei LibreTime wiederhergestellt** (`6312961` +
+    `69ab09a`, 2026-06-01) — Preview + Dashboard-Stream haben wieder einen
+    custom jPlayer/LibreTime-Skin (dunkle Leiste, orange Balken, CSS-Buttons,
+    an natives `<audio>` gebunden, ohne jQuery-UI/Bootstrap/Sprite). Radio-Page
+    behielt ihr Skin bereits (Teil 3/3).
   - ⬜ **Preview für „Scheduled Line-Input" hinzufügen** — der neue
     `preview_audio.js`/`AudiopreviewController` kennt bisher nur audioclip +
     stream; ein geplanter Line-Input-Slot hat noch keine Preview-Quelle.
-  - ⬜ **Player-Design wie bei LibreTime wiederherstellen** — die nativen
-    `<audio>`-Player **Preview + Dashboard-Stream** nutzen aktuell rohe
-    Browser-Controls; Optik soll wieder dem alten jPlayer-Look entsprechen
-    (rein kosmetisch, CSS). Die **Radio-Page** behielt ihr Skin bereits
-    (Teil 3/3) — dort nur Feinschliff nötig.
 - **Stufe 1 — isolierte EOL (🟢):** AngularJS→Vanilla (Podcast, 4 Views);
   qtip2→Floating UI (vendored).
 - **Stufe 2 — harte Kerne, EINZELN m. Fallback (🟡):** FullCalendar 1.5→6
