@@ -25,6 +25,8 @@
   "use strict";
 
   var URL_BAR_HEIGHT = 32;
+  var POPUP_WIDTH = 384; // ~20% narrower than the previous 480
+  var HEIGHT_SLACK = 17; // headroom so the popup doesn't show a scrollbar
 
   var audioEl = null; // the <audio> element
   var playlist = []; // [{title, artist, uri, mime}]
@@ -64,11 +66,15 @@
 
   function renderPlaylistUi() {
     var ul = $one("#preview_playlist");
-    var nav = $one("#preview_nav");
-    // Single-track previews (one file / one stream) hide the playlist UI.
+    var prevBtn = $one("#preview_prev");
+    var nextBtn = $one("#preview_next");
+    // Single-track previews (one file / one stream) hide prev/next + the list.
     var multi = playlist.length > 1;
-    if (nav) {
-      nav.style.display = multi ? "" : "none";
+    if (prevBtn) {
+      prevBtn.style.display = multi ? "" : "none";
+    }
+    if (nextBtn) {
+      nextBtn.style.display = multi ? "" : "none";
     }
     if (!ul) {
       return;
@@ -194,13 +200,154 @@
   function resizeToContent() {
     var c = $one("#jp_container_1") || document.body;
     try {
-      window.resizeTo(
-        Math.max(c.offsetWidth + 2, 480),
-        c.offsetHeight + URL_BAR_HEIGHT + 2,
-      );
+      // Pin the target width first so the content reflows at that width, then
+      // size the height to the reflowed content (so no scrollbar appears).
+      window.resizeTo(POPUP_WIDTH, window.outerHeight || 240);
+      window.resizeTo(POPUP_WIDTH, c.offsetHeight + URL_BAR_HEIGHT + HEIGHT_SLACK);
     } catch (e) {
       /* popup may not allow resize */
     }
+  }
+
+  // ---- Custom LibreTime-style GUI bound to the native <audio> ---------------
+  function fmtTime(sec) {
+    if (isNaN(sec) || sec < 0) {
+      sec = 0;
+    }
+    var m = Math.floor(sec / 60);
+    var s = Math.floor(sec % 60);
+    return m + ":" + (s < 10 ? "0" : "") + s;
+  }
+
+  function showPlaying(isPlaying) {
+    var play = $one("#preview_play");
+    var pause = $one("#preview_pause");
+    if (play) {
+      play.style.display = isPlaying ? "none" : "";
+    }
+    if (pause) {
+      pause.style.display = isPlaying ? "" : "none";
+    }
+  }
+
+  function updateProgress() {
+    var a = getAudio();
+    if (!a) {
+      return;
+    }
+    var played = $one("#preview_played");
+    var cur = $one("#preview_current");
+    var dur = $one("#preview_duration");
+    var d = a.duration;
+    if (played) {
+      played.style.width = (d > 0 ? (a.currentTime / d) * 100 : 0) + "%";
+    }
+    if (cur) {
+      cur.textContent = fmtTime(a.currentTime);
+    }
+    if (dur) {
+      dur.textContent = isFinite(d) ? fmtTime(d) : "0:00";
+    }
+  }
+
+  function updateVolume() {
+    var a = getAudio();
+    if (!a) {
+      return;
+    }
+    var val = $one("#preview_vol_val");
+    var container = $one("#jp_container_1");
+    var v = a.muted ? 0 : a.volume;
+    if (val) {
+      val.style.width = v * 100 + "%";
+    }
+    if (container) {
+      container.classList[a.muted ? "add" : "remove"]("lt-muted");
+    }
+  }
+
+  function ratioFromClick(e, el) {
+    var rect = el.getBoundingClientRect();
+    var ratio = (e.clientX - rect.left) / rect.width;
+    return Math.max(0, Math.min(1, ratio));
+  }
+
+  function bindGui() {
+    var a = getAudio();
+    var play = $one("#preview_play");
+    var pause = $one("#preview_pause");
+    var stop = $one("#preview_stop");
+    var mute = $one("#preview_mute");
+    var seek = $one("#preview_seek");
+    var vol = $one("#preview_vol");
+
+    if (play) {
+      play.addEventListener("click", function () {
+        if (current < 0 && playlist.length) {
+          playAt(0);
+        } else if (a) {
+          var p = a.play();
+          if (p && typeof p.catch === "function") {
+            p.catch(function () {});
+          }
+        }
+      });
+    }
+    if (pause) {
+      pause.addEventListener("click", function () {
+        if (a) {
+          a.pause();
+        }
+      });
+    }
+    if (stop) {
+      stop.addEventListener("click", function () {
+        if (a) {
+          a.pause();
+          try {
+            a.currentTime = 0;
+          } catch (e) {
+            /* not seekable yet */
+          }
+        }
+      });
+    }
+    if (mute) {
+      mute.addEventListener("click", function () {
+        if (a) {
+          a.muted = !a.muted;
+        }
+      });
+    }
+    if (seek) {
+      seek.addEventListener("click", function (e) {
+        if (a && a.duration > 0) {
+          a.currentTime = ratioFromClick(e, seek) * a.duration;
+        }
+      });
+    }
+    if (vol) {
+      vol.addEventListener("click", function (e) {
+        if (a) {
+          a.muted = false;
+          a.volume = ratioFromClick(e, vol);
+        }
+      });
+    }
+
+    if (a) {
+      a.addEventListener("play", function () {
+        showPlaying(true);
+      });
+      a.addEventListener("pause", function () {
+        showPlaying(false);
+      });
+      a.addEventListener("timeupdate", updateProgress);
+      a.addEventListener("durationchange", updateProgress);
+      a.addEventListener("volumechange", updateVolume);
+    }
+    showPlaying(false);
+    updateVolume();
   }
 
   // ---- Globals the MAIN window calls on the popup (_preview_window.*) ------
@@ -256,6 +403,7 @@
     if (prevBtn) {
       prevBtn.addEventListener("click", prev);
     }
+    bindGui();
 
     var audioUri = spanText(".audioUri");
     var audioMime = spanText(".audioMime");

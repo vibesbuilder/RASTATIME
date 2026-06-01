@@ -1,21 +1,68 @@
-<?php /* RASTATIME 2026-05-31 (JS-modernization stage 0c): native <audio> audio
-       * preview — replaces the jPlayerPlaylist markup + jPlayer skin CSS.
-       * The hidden <span> elements still carry the preview parameters; player
-       * logic lives in js/airtime/audiopreview/preview_audio.js (vanilla). */ ?>
+<?php /* RASTATIME 2026-06-01 (JS-modernization stage 0c + player styling): native
+       * <audio> audio preview with a custom LibreTime-style skin (dark gradient
+       * bar, orange seek/volume, CSS-drawn transport buttons) driving the native
+       * element.  Replaces the jPlayerPlaylist markup + jPlayer skin CSS.  The
+       * hidden <span> elements still carry the preview parameters; player logic
+       * lives in js/airtime/audiopreview/preview_audio.js (vanilla). */ ?>
 <style>
-  body { margin: 0; font-family: Arial, Helvetica, sans-serif; }
-  .audio-preview { padding: 10px; }
-  .audio-preview-logo img { max-height: 40px; margin-bottom: 8px; }
-  .audio-preview-nowplaying { font-weight: bold; margin-bottom: 8px; word-break: break-word; }
-  #preview_audio_el { width: 100%; }
-  .audio-preview-nav { margin-top: 8px; }
-  .audio-preview-nav button { padding: 3px 10px; cursor: pointer; }
-  .audio-preview-playlist { list-style: none; margin: 8px 0 0; padding: 0; max-height: 240px; overflow-y: auto; }
-  .audio-preview-playlist li { padding: 4px 6px; cursor: pointer; border-bottom: 1px solid #eee; }
-  .audio-preview-playlist li:hover { background: #f0f0f0; }
-  .audio-preview-playlist li.preview-current { background: #d9edf7; font-weight: bold; }
+  body { margin: 0; font-family: Arial, Helvetica, sans-serif; background: #2b2b2b; color: #9B9B9B; }
+  .lt-player { width: 100%; }
+  .lt-logo img { max-height: 36px; margin: 8px 0 6px 8px; }
+  .lt-nowplaying { color: #e8e8e8; font-weight: bold; font-size: 12px; padding: 6px 10px 4px; word-break: break-word; }
+
+  /* dark gradient interface bar (jPlayer blue.monday look) */
+  .lt-interface {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 10px; box-sizing: border-box;
+    background: #3D3D3D;
+    background: linear-gradient(to bottom, #6E6E6E 0, #3a3a3a 100%);
+    border-top: 1px solid #5a5a5a; border-bottom: 1px solid #1a1a1a;
+  }
+
+  .lt-controls { display: flex; align-items: center; gap: 6px; }
+  .lt-btn {
+    width: 22px; height: 22px; padding: 0; border: 0; cursor: pointer;
+    background: transparent; position: relative; outline: none;
+  }
+  .lt-btn::before, .lt-btn::after { content: ""; position: absolute; }
+  .lt-btn:hover::before, .lt-btn:hover::after { filter: brightness(1.4); }
+
+  /* play = right-pointing triangle */
+  .lt-play::before { top: 4px; left: 6px; border-style: solid; border-width: 7px 0 7px 12px; border-color: transparent transparent transparent #FF6F01; }
+  /* pause = two bars */
+  .lt-pause::before { top: 4px; left: 5px; width: 4px; height: 14px; background: #FF6F01; }
+  .lt-pause::after  { top: 4px; left: 13px; width: 4px; height: 14px; background: #FF6F01; }
+  /* stop = square */
+  .lt-stop::before { top: 5px; left: 5px; width: 12px; height: 12px; background: #d0d0d0; }
+  /* prev = bar + left triangle */
+  .lt-prev::before { top: 5px; left: 4px; width: 3px; height: 12px; background: #d0d0d0; }
+  .lt-prev::after  { top: 5px; left: 8px; border-style: solid; border-width: 6px 9px 6px 0; border-color: transparent #d0d0d0 transparent transparent; }
+  /* next = right triangle + bar */
+  .lt-next::before { top: 5px; left: 5px; border-style: solid; border-width: 6px 0 6px 9px; border-color: transparent transparent transparent #d0d0d0; }
+  .lt-next::after  { top: 5px; left: 15px; width: 3px; height: 12px; background: #d0d0d0; }
+
+  /* progress / seek */
+  .lt-progress { flex: 1 1 auto; min-width: 80px; }
+  .lt-seek { background: #393939; border: 1px solid #262526; height: 10px; cursor: pointer; overflow: hidden; }
+  .lt-played { background: #FF6F01; height: 100%; width: 0; }
+  .lt-time { font-size: 11px; color: #cfcfcf; margin-top: 3px; }
+
+  /* volume */
+  .lt-volume { display: flex; align-items: center; gap: 6px; }
+  .lt-mute { width: 18px; height: 18px; }
+  .lt-mute::before { top: 5px; left: 2px; width: 5px; height: 8px; background: #d0d0d0; }
+  .lt-mute::after  { top: 3px; left: 4px; border-style: solid; border-width: 6px 7px 6px 0; border-color: transparent #d0d0d0 transparent transparent; }
+  .lt-player.lt-muted .lt-mute::before, .lt-player.lt-muted .lt-mute::after { background: #777; border-right-color: #777; }
+  .lt-vol-bar { width: 70px; height: 8px; background: #393939; border: 1px solid #262526; cursor: pointer; overflow: hidden; }
+  .lt-vol-val { background: #FF6F01; height: 100%; width: 80%; }
+
+  /* playlist */
+  .lt-playlist { list-style: none; margin: 0; padding: 0; max-height: 220px; overflow-y: auto; background: #2b2b2b; }
+  .lt-playlist li { padding: 5px 10px; cursor: pointer; border-bottom: 1px solid #1f1f1f; color: #c9c9c9; font-size: 12px; }
+  .lt-playlist li:hover { background: #363636; }
+  .lt-playlist li.preview-current { color: #FF6F01; font-weight: bold; }
 </style>
-<div id="jp_container_1" class="audio-preview">
+<div id="jp_container_1" class="lt-player">
     <?php if (isset($this->playlistID)) : ?>
         <span class="playlistID" style="display:none;"><?php echo "$this->playlistID" ?></span>
         <span class="playlistIndex" style="display:none;"><?php echo "$this->playlistIndex" ?></span>
@@ -33,17 +80,32 @@
     <?php endif; ?>
 
     <?php if (isset($this->logo) && $this->logo) : ?>
-        <div class="audio-preview-logo"><img src="<?php echo $this->logo ?>" alt="" /></div>
+        <div class="lt-logo"><img src="<?php echo $this->logo ?>" alt="" /></div>
     <?php endif; ?>
 
-    <div id="preview_nowplaying" class="audio-preview-nowplaying"></div>
+    <div id="preview_nowplaying" class="lt-nowplaying"></div>
 
-    <audio id="preview_audio_el" controls autoplay preload="auto"></audio>
+    <audio id="preview_audio_el" preload="auto"></audio>
 
-    <div id="preview_nav" class="audio-preview-nav" style="display:none;">
-        <button type="button" id="preview_prev"><?php echo _("Previous") ?></button>
-        <button type="button" id="preview_next"><?php echo _("Next") ?></button>
+    <div class="lt-interface">
+        <div class="lt-controls">
+            <button type="button" class="lt-btn lt-prev" id="preview_prev" title="<?php echo _('Previous') ?>"></button>
+            <button type="button" class="lt-btn lt-play" id="preview_play" title="<?php echo _('Play') ?>"></button>
+            <button type="button" class="lt-btn lt-pause" id="preview_pause" title="<?php echo _('Pause') ?>" style="display:none;"></button>
+            <button type="button" class="lt-btn lt-stop" id="preview_stop" title="<?php echo _('Stop') ?>"></button>
+            <button type="button" class="lt-btn lt-next" id="preview_next" title="<?php echo _('Next') ?>"></button>
+        </div>
+
+        <div class="lt-progress">
+            <div class="lt-seek" id="preview_seek"><div class="lt-played" id="preview_played"></div></div>
+            <div class="lt-time"><span id="preview_current">0:00</span> / <span id="preview_duration">0:00</span></div>
+        </div>
+
+        <div class="lt-volume">
+            <button type="button" class="lt-btn lt-mute" id="preview_mute" title="<?php echo _('Mute') ?>"></button>
+            <div class="lt-vol-bar" id="preview_vol"><div class="lt-vol-val" id="preview_vol_val"></div></div>
+        </div>
     </div>
 
-    <ul id="preview_playlist" class="audio-preview-playlist" style="display:none;"></ul>
+    <ul id="preview_playlist" class="lt-playlist" style="display:none;"></ul>
 </div>
