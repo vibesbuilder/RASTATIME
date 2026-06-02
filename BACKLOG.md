@@ -619,9 +619,47 @@ MD5-Cache-Buster.
     - ⬜ **💡 User-Manual-Screenshots** (Schedule-Kapitel, alle 4 Sprachen)
       auf den FC6-Look aktualisieren — Bedienung unverändert, daher niedrige
       Prio; sinnvoll gebündelt mit der FC1.5-Fork-Entfernung.
-  - ⬜ **DataTables 1.9→2** o. Grid.js (server-side neu, 2 Forks ersetzen).
-  - ⬜ **jQuery 1.8→3.7** (jquery-migrate + systematischer Seiten-Test) oder
-    schrittweise jQuery aus neuen Komponenten verbannen.
+  - 🔄 **jQuery 1.8 → 3.7 — IN ARBEIT hinter `?jq3`-Flag (Checkpoint 2026-06-01).**
+    Default = jQuery 1.8 (unberührter Live-Betrieb). Resume-Details:
+    - **Flag:** `?jq3=1` setzt Session-Cookie `rt_jq3`, `?jq3=0` löscht; Helper
+      `PageLayoutInitPlugin::rtUseJquery3()`. Weitere Helfer: `rtJqueryUiThemeCss()`
+      (redmond 1.8.8 vs `css/redmond-1.13/`) + `rtDataTablesCore()` (DT 1.9 vs
+      `js/datatables-1.13/`).
+    - **DONE (committet, operator-verifiziert auf jq3):**
+      - `841141a` 26× `.live()`→`.on()` + `$(window).load`→`.on` (safe auf 1.8).
+      - `7e673d9` jQuery 3.7.1 + jquery-migrate 3.5.2 + jQuery UI 1.13.3 vendored
+        + Flag (PageLayoutInit + IndexController).
+      - `9afafc9` `$.browser`-Shim (`js/libs/jquery-browser-shim.js` — blockUI/
+        jquery.ui.timepicker.js/contextMenu lasen `$.browser.msie`) + jQuery-UI-
+        1.13-redmond-Theme (`css/redmond-1.13/`, CSS+13 Bilder) + Grau-Umfärbung.
+      - `d9eba9e` DataTables 1.9→**1.13** Core (1.13 behält Legacy-Hungarian-
+        Optionen + Server-Side-`sEcho/aaData` → **Backend + Init unverändert**).
+        builder.js `fnStateLoadParams` `abVisCols`-Guard (1.13 änderte State-Format).
+      - `abdacd0` Fork-Foundation: ColReorder 1.6.2 + Buttons 2.4.2 (+colVis)
+        vendored; Table-Widget lädt sie auf jq3 statt der alten ColVis/colReorder.
+      - **Verifiziert läuft auf jq3:** User/Tracktype-Tabellen, Dialoge, Kalender
+        (FC6+Add-Show+Overlap), Kontextmenü, Settings/Streams, Showbuilder-Tabs+
+        -Timeline.
+    - **PENDING (Reihenfolge):**
+      1. **DataTables-Fork-Init-Umbau** (der große Brocken): `library.js`
+         (~915–1275: sDom `R`/`C`, `oColVis`, `oColReorder`, `columnFilter`
+         `bUseColVis`), `builder.js` (~882), `podcast.js` → auf jq3 die **modernen
+         Buttons/ColReorder-1.6-APIs** statt der alten. Foundation steht; bis dahin
+         Library/Showbuilder-Library/Podcast-Tabellen auf jq3 leer (kein Tabellen-
+         Element, da `R`/`C` nicht registrieren). **Kein Regress** — waren vorher
+         auch kaputt.
+      2. **columnFilter** → built-in Column-Search (DataTables `columns().search()`).
+      3. **Buttons/ColReorder-CSS** (`css/datatables-1.13/`) an redmond/grau
+         angleichen.
+      4. **Kosmetik-Politur** (zurückgestellte jQuery-UI-1.13-Punkte): Scheduled-
+         Tracks-Dialog sitzt zu weit oben; View-Dialog-Schließen-Icon unsichtbar;
+         Add/Edit-Show-Hintergrund zu hell; restliche blaue Reste (Borders/
+         Datepicker-Tage/Icons).
+      5. **Flag→Default flippen** (wie FC6: `?jq3=0` als Rollback) + **Migrate-Netz
+         entfernen**, wenn JQMIGRATE-Warnungen sauber. CHANGELOG/ARCHITECTURE.
+  - ⬜ **DataTables 1.13 → 2.0** (eigener späterer Schritt nach jQuery 3):
+    server-side-Format (sEcho/aaData → draw/data) + Init auf neue API umstellen.
+    Modernitäts-Wette, nicht jQuery-3-blockierend.
 - **(Optional) Build-Pipeline:** nur bei Trigger (s. Strategie), eigener ADR.
 
 **Hauptrisiken (Stufe 2 absichern):**
