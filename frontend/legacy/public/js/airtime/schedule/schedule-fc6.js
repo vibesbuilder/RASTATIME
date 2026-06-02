@@ -214,6 +214,29 @@ function fc6InjectIntervalDropdown() {
 // The end day is computed as start + 6 days (a week is always 7) to sidestep
 // FC6's inclusive/exclusive end-marker ambiguity; markers are UTC-based, so the
 // ms arithmetic is DST-safe and must be formatted with timeZone:"UTC".
+// No-leading-zero time formatter (FC6 slotLabelFormat / eventTimeFormat
+// callback): "8:00", "10:35", and "10:35 - 11:35" for ranges.  German Intl pads
+// the hour to two digits even with hour:'numeric' (the 24h convention), so we
+// build the string from the format arg's wall-clock fields (.array = station
+// time, since the calendar runs timeZone:'local' over naive station-local
+// timestamps; .marker UTC fields are the same value as a fallback).
+function fc6HourMinute(arg) {
+  function one(part) {
+    if (!part) {
+      return "";
+    }
+    if (part.array) {
+      return part.array[3] + ":" + pad(part.array[4], 2);
+    }
+    var mk = part.marker || part;
+    return mk.getUTCHours() + ":" + pad(mk.getUTCMinutes(), 2);
+  }
+  if (arg.start && arg.end) {
+    return one(arg.start) + " - " + one(arg.end);
+  }
+  return one(arg.date);
+}
+
 function fc6WeekTitle(arg) {
   var locale = fc6Locale();
   var opts = {
@@ -239,33 +262,11 @@ function fc6WeekTitle(arg) {
   return str;
 }
 
-// FC6 packs back-to-back shows (end == next start) into half-width columns even
-// with slotEventOverlap:false — it treats the touch-boundary as a shared column,
-// so the following show renders inset.  A radio schedule never has truly
-// overlapping shows, so pin every event harness to the full column width.  Same
-// fix as the embed Multi-View widget (css/embed/now-playing-widget.css), incl.
-// its caveat: inset-inline only — adding width:100% breaks FC's internal layout
-// and the events vanish.  Injected from JS so all FC6-specific styling stays
-// with the FC6 code while it lives behind ?fc6=1; promote to a stylesheet when
-// FC1.5 is removed (Phase c).
-function fc6InjectOverlapCss() {
-  if (document.getElementById("fc6-schedule-overlap-css")) {
-    return;
-  }
-  var style = document.createElement("style");
-  style.id = "fc6-schedule-overlap-css";
-  style.textContent =
-    "#schedule_calendar .fc-timegrid-event-harness{" +
-    "inset-inline-start:0 !important;inset-inline-end:0 !important;}";
-  document.head.appendChild(style);
-}
-
 function buildScheduleFc6(data) {
   var el = document.getElementById("schedule_calendar");
   if (!el || !window.FullCalendar) {
     return;
   }
-  fc6InjectOverlapCss();
   var legacyView = getTimeScalePreference(data); // agendaDay/agendaWeek/month
   var slotMin = getTimeIntervalPreference(data); // minutes
   var offset = parseInt(data.calendarInit.timezoneOffset, 10);
@@ -307,8 +308,8 @@ function buildScheduleFc6(data) {
     // embed Multi-View widget uses.  Also keeps the fill bar at full width.
     slotEventOverlap: false,
     slotDuration: "00:" + pad(fc6SlotMin, 2) + ":00",
-    slotLabelFormat: { hour: "2-digit", minute: "2-digit", hour12: false },
-    eventTimeFormat: { hour: "2-digit", minute: "2-digit", hour12: false },
+    slotLabelFormat: fc6HourMinute, // "8:00" not "08:00" (German Intl pads)
+    eventTimeFormat: fc6HourMinute,
     expandRows: true,
     // contentHeight (not height) so the grid area — excluding the header
     // toolbar — fills to the page bottom, matching FC1.5's contentHeight.

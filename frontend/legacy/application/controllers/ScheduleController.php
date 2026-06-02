@@ -93,6 +93,11 @@ class ScheduleController extends Zend_Controller_Action
 
         $this->view->headLink()->appendStylesheet(Assets::url('css/jquery.ui.timepicker.css'));
         $this->view->headLink()->appendStylesheet(Assets::url('css/fullcalendar.css'));
+        // RASTATIME 2026-06-01 (JS-modernization stage 2): FullCalendar 6 dark
+        // theme for the Schedule calendar.  Loaded after fullcalendar.css so it
+        // wins any shared-class bleed; scoped to FC6-specific classes, so it is
+        // a no-op for the FC1.5 rollback (?fc6=0).
+        $this->view->headLink()->appendStylesheet(Assets::url('css/schedule-fc6.css'));
         $this->view->headLink()->appendStylesheet(Assets::url('css/colorpicker/css/colorpicker.css'));
         $this->view->headLink()->appendStylesheet(Assets::url('css/add-show.css'));
         $this->view->headLink()->appendStylesheet(Assets::url('css/jquery.contextMenu.css'));

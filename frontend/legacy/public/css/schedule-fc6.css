@@ -1,0 +1,162 @@
+/*
+ * RASTATIME 2026-06-01 (JS-modernization stage 2): FullCalendar 6 Schedule theme.
+ * ------------------------------------------------------------------------------
+ * FC6 ships a light default theme.  This restores the dark "LibreTime" look of
+ * the old FC1.5 Schedule calendar, whose colours came from jQuery-UI's theme via
+ * `theme:true` (.ui-widget-header = the grey day-name bar, .ui-widget-content =
+ * the dark cells, .ui-state-default = the buttons) — a path FC6 does not use.
+ *
+ * Scoped entirely to #schedule_calendar and FC6-specific classes / CSS custom
+ * properties, so the FC1.5 rollback (?fc6=0, different .fc-agenda-*/.fc-header
+ * classes) and the embed Multi-View widget are untouched.  Loaded after
+ * css/fullcalendar.css so it wins any shared-class bleed.
+ *
+ * Colours are a first pass read off the old calendar; tune as needed.
+ */
+
+/* ---- overall dark theme via FC6 CSS custom properties ---- */
+/* FC6 adds the .fc class to the mount element (#schedule_calendar), so setting
+   the variables here cascades to the whole calendar. */
+#schedule_calendar {
+  --fc-page-bg-color: #3a3a3a; /* grid surface behind the (transparent) slots */
+  --fc-border-color: #2b2b2b; /* grid lines */
+  --fc-today-bg-color: transparent; /* kill FC6's yellow "today" column tint */
+  --fc-now-indicator-color: #ff5d1a; /* brand-orange now line (as in FC1.5) */
+  --fc-neutral-bg-color: #565656;
+
+  /* toolbar buttons (Day/Week/Month, prev/next, Today) */
+  --fc-button-text-color: #ffffff;
+  --fc-button-bg-color: #484848;
+  --fc-button-border-color: #2a2a2a;
+  --fc-button-hover-bg-color: #565656;
+  --fc-button-hover-border-color: #2a2a2a;
+  --fc-button-active-bg-color: #2c2c2c;
+  --fc-button-active-border-color: #2a2a2a;
+
+  background: #1c1c1c; /* toolbar + overall frame */
+  color: #dddddd; /* default light text on dark */
+}
+
+/* grid surface (cells) a touch lighter than the frame, like the old calendar */
+#schedule_calendar .fc-scrollgrid,
+#schedule_calendar .fc-timegrid-body,
+#schedule_calendar .fc-daygrid-body,
+#schedule_calendar .fc-timegrid-axis,
+#schedule_calendar .fc-daygrid-day {
+  background-color: #3a3a3a;
+}
+
+/* Explicit grid-line colour.  FC6's --fc-border-color is defeated here by
+   legacy CSS bleed on the grid cells (the variable works where nothing competes
+   at the element level, e.g. the now-indicator, but not here), so set the
+   border colour directly at #id specificity. */
+/* Compound (#id.class, no space): FC6 puts .fc-theme-standard ON the mount
+   (#schedule_calendar) itself, so the descendant form matched nothing and only
+   the horizontal slot lines (real descendants) went dark — the vertical day
+   borders, which live on the cell <td>/<th>, stayed light.  This also keeps the
+   rule FC6-only: the FC1.5 rollback has no .fc-theme-standard. */
+#schedule_calendar.fc-theme-standard td,
+#schedule_calendar.fc-theme-standard th,
+#schedule_calendar .fc-scrollgrid,
+#schedule_calendar .fc-timegrid-slot,
+#schedule_calendar .fc-timegrid-divider,
+#schedule_calendar .fc-timegrid-slot-minor {
+  border-color: #2b2b2b;
+}
+
+/* Explicit toolbar-button colours (same reason — the --fc-button-* variables
+   are overridden).  Targets only FC6's own buttons (prev/next, Today,
+   Day/Week/Month); the blue "+ New Show" .btn is left as-is (not a .fc-button). */
+#schedule_calendar .fc-button {
+  background: #484848;
+  border-color: #2a2a2a;
+  color: #ffffff;
+  text-shadow: none;
+  box-shadow: none;
+}
+#schedule_calendar .fc-button:hover {
+  background: #565656;
+  border-color: #2a2a2a;
+  color: #ffffff;
+}
+#schedule_calendar .fc-button-primary:disabled {
+  background: #3a3a3a;
+  border-color: #2a2a2a;
+  opacity: 0.65;
+}
+#schedule_calendar .fc-button-primary:not(:disabled).fc-button-active,
+#schedule_calendar .fc-button-primary:not(:disabled):active {
+  background: #2c2c2c;
+  border-color: #2a2a2a;
+}
+
+/* ---- day-of-week header row (the "Mon 6/1" grey bar) ---- */
+#schedule_calendar .fc-col-header-cell {
+  background: linear-gradient(#606060, #4e4e4e);
+  border-color: #2a2a2a;
+}
+#schedule_calendar .fc-col-header-cell-cushion {
+  color: #ffffff;
+  font-weight: bold;
+  padding: 6px 4px;
+}
+
+/* ---- time axis + slot labels ---- */
+#schedule_calendar .fc-timegrid-slot-label-cushion,
+#schedule_calendar .fc-timegrid-axis-cushion,
+#schedule_calendar .fc-timegrid-slot-label {
+  color: #c2c2c2;
+}
+
+/* ---- toolbar title ---- */
+#schedule_calendar .fc-toolbar-title {
+  color: #ffffff;
+}
+
+/* ---- slot-interval dropdown (top-left axis corner) ---- */
+#schedule_calendar .schedule_change_slots {
+  background: #484848;
+  color: #ffffff;
+  border: 1px solid #2a2a2a;
+}
+
+/* ---- events ---------------------------------------------------------------
+ * FC6 packs back-to-back shows (end == next start) into half-width columns,
+ * because it treats the touch boundary as a shared column — pin every event
+ * harness to the full column width.  (Moved here from the old JS injection in
+ * schedule-fc6.js.)  inset-inline only — adding width:100% breaks FC's layout
+ * and the events vanish; same fix the embed Multi-View widget uses.
+ */
+#schedule_calendar .fc-timegrid-event-harness {
+  inset-inline-start: 0 !important;
+  inset-inline-end: 0 !important;
+}
+
+/* No white frame around show-slots: FC6 gives events a 1px border in the light
+   default --fc-event-border-color (the feed already colours the fill).  Use a
+   subtle dark edge like the old calendar instead.  (.fc-v-event is FC6's
+   time-grid event class, so this is a no-op for the FC1.5 rollback.) */
+#schedule_calendar .fc-v-event,
+#schedule_calendar .fc-daygrid-event {
+  border-color: rgba(0, 0, 0, 0.25);
+  box-shadow: none;
+}
+
+/* Very short shows: FC6 lays time + title out in a row
+   (.fc-timegrid-event-short .fc-event-main-frame { flex-direction: row }) and
+   clips overflow, which squeezes the jQuery-UI fill bar (appended after the
+   title) into the narrow title column — it then looked half-width / inset.
+   Pin it to a full-width strip at the bottom of the event instead; positioning
+   it against .fc-event-main (the frame's parent) lets it escape the frame's
+   overflow:hidden.  Taller events are unaffected — bar stays under the name. */
+#schedule_calendar .fc-timegrid-event-short .fc-event-main {
+  position: relative;
+}
+#schedule_calendar .fc-timegrid-event-short .fc-show-fill-bar {
+  position: absolute;
+  left: 2.5%;
+  right: 2.5%;
+  bottom: 1px;
+  width: auto !important; /* override the inline width:95% */
+  margin: 0 !important; /* override the inline margin:auto */
+}
