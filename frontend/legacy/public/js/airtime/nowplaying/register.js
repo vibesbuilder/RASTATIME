@@ -61,16 +61,14 @@ $(document).ready(function () {
   }
   dialog.dialog("open");
 
-  $(".collapsible-header")
-    .live("click", function () {
-      $(this).next().toggle("fast");
-      $(this).toggleClass("close");
-      return false;
-    })
-    .next()
-    .hide();
+  $(document).on("click", ".collapsible-header", function () {
+    $(this).next().toggle("fast");
+    $(this).toggleClass("close");
+    return false;
+  });
+  $(".collapsible-header").next().hide();
 
-  $("#SupportFeedback").live("click", function () {
+  $(document).on("click", "#SupportFeedback", function () {
     var pub = $("#Publicise");
     var privacy = $("#Privacy");
     var button = $("#help_airtime");
@@ -88,7 +86,7 @@ $(document).ready(function () {
   });
 
   var promote = $("#Publicise");
-  promote.live("click", function () {
+  $(document).on("click", "#Publicise", function () {
     if ($(this).is(":checked")) {
       $("#public-info").show();
     } else {
@@ -99,7 +97,7 @@ $(document).ready(function () {
     $("#public-info").show();
   }
 
-  $("#Privacy").live("click", function () {
+  $(document).on("click", "#Privacy", function () {
     var support = $("#SupportFeedback");
     var button = $("#help_airtime");
     if ($(this).is(":checked") && support.is(":checked")) {
@@ -118,12 +116,12 @@ $(document).ready(function () {
     button.attr("disabled", "disabled").addClass("ui-state-disabled");
   }
 
-  $(".toggle legend").live("click", function () {
+  $(document).on("click", ".toggle legend", function () {
     $(".toggle").toggleClass("closed");
     return false;
   });
 
-  $("#Logo").live("change", function (ev) {
+  $(document).on("change", "#Logo", function (ev) {
     var content, res, logoEl;
 
     content = $(this).val();

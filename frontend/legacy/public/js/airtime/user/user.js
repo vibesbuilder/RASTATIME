@@ -286,7 +286,7 @@ function initUserData() {
 
   var newUser = { login: "", first_name: "", last_name: "", type: "G", id: "" };
 
-  $("#add_user_button").live("click", function () {
+  $(document).on("click", "#add_user_button", function () {
     populateForm(newUser);
     $("#user_details").css("visibility", "visible");
   });
@@ -297,7 +297,7 @@ $(document).ready(function () {
   assignUserRightsToUserTypes();
   initUserData();
 
-  $("#save_user").live("click", function () {
+  $(document).on("click", "#save_user", function () {
     var data = $("#user_form").serialize();
     var url = baseUrl + "User/add-user";
 

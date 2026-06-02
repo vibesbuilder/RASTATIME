@@ -7,7 +7,7 @@ function setSmartBlockEvents() {
     form = activeTab.find(".smart-block-form");
 
   /********** ADD CRITERIA ROW **********/
-  form.find("#criteria_add").live("click", function () {
+  $(document).on("click", "#criteria_add", function () {
     var div = $('dd[id="sp_criteria-element"]').children("div:visible:last");
 
     if (div.length == 0) {
@@ -42,7 +42,7 @@ function setSmartBlockEvents() {
   });
 
   /********** ADD MODIFIER ROW **********/
-  form.find('a[id^="modifier_add"]').live("click", function () {
+  $(document).on("click", 'a[id^="modifier_add"]', function () {
     var criteria_value = $(this)
       .siblings('select[name^="sp_criteria_field"]')
       .val();
@@ -91,7 +91,7 @@ function setSmartBlockEvents() {
   });
 
   /********** REMOVE ROW **********/
-  form.find('a[id^="criteria_remove"]').live("click", function () {
+  $(document).on("click", 'a[id^="criteria_remove"]', function () {
     var curr = $(this).parent();
     var curr_pos = curr.index();
     var list = curr.parent();
@@ -366,17 +366,17 @@ function setSmartBlockEvents() {
   // moved to spl.js
 
   /********** GENERATE ACTION **********/
-  activeTab.find('button[id="generate_button"]').live("click", function () {
+  $(document).on("click", 'button[id="generate_button"]', function () {
     buttonClickAction("generate", "playlist/smart-block-generate");
   });
 
   /********** SHUFFLE ACTION **********/
-  activeTab.find('button[id="shuffle_button"]').live("click", function () {
+  $(document).on("click", 'button[id="shuffle_button"]', function () {
     buttonClickAction("shuffle", "playlist/smart-block-shuffle");
   });
 
   /********** CHANGE PLAYLIST TYPE **********/
-  form.find('dd[id="sp_type-element"]').live("change", function () {
+  $(document).on("change", 'dd[id="sp_type-element"]', function () {
     //buttonClickAction('generate', 'playlist/empty-content');
     $(".active-tab").find('button[id="save_button"]').click();
     setupUI();
@@ -384,7 +384,7 @@ function setSmartBlockEvents() {
   });
 
   /********** LIMIT CHANGE *************/
-  form.find('select[id="sp_limit_options"]').live("change", function () {
+  $(document).on("change", 'select[id="sp_limit_options"]', function () {
     var limVal = form.find('input[id="sp_limit_value"]');
     if ($(this).val() === "remaining") {
       disableAndHideLimitValue();
@@ -394,11 +394,10 @@ function setSmartBlockEvents() {
   });
 
   /********** CRITERIA CHANGE **********/
-  form
-    .find(
-      'select[id^="sp_criteria"]:not([id^="sp_criteria_modifier"]):not([id^="sp_criteria_datetime"]):not([id^="sp_criteria_extra_datetime"]):not([id^="sp_criteria_value"])',
-    )
-    .live("change", function () {
+  $(document).on(
+    "change",
+    'select[id^="sp_criteria"]:not([id^="sp_criteria_modifier"]):not([id^="sp_criteria_datetime"]):not([id^="sp_criteria_extra_datetime"]):not([id^="sp_criteria_value"])',
+    function () {
       var index = getRowIndex($(this).parent());
       //need to change the criteria value for any modifier rows
       var critVal = $(this).val();
@@ -432,7 +431,7 @@ function setSmartBlockEvents() {
     });
 
   /********** MODIFIER CHANGE **********/
-  form.find('select[id^="sp_criteria_modifier"]').live("change", function () {
+  $(document).on("change", 'select[id^="sp_criteria_modifier"]', function () {
     var criteria_value = $(this).next(),
       index_num = getRowIndex($(this).parent());
 

@@ -353,8 +353,9 @@ $(document).ready(function () {
   getAdminPasswordStatus();
   var s = $("[name^='customStreamSettings']:checked");
 
-  $("[id^='stream_save'], [name^='customStreamSettings']").live(
+  $(document).on(
     "click",
+    "[id^='stream_save'], [name^='customStreamSettings']",
     function () {
       var e = $(this);
       if (e[0] == s[0]) {

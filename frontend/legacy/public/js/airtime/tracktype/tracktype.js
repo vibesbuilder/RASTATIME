@@ -152,7 +152,7 @@ function initTracktypeData() {
     id: "",
   };
 
-  $("#add_tracktype_button").live("click", function () {
+  $(document).on("click", "#add_tracktype_button", function () {
     populateForm(newTracktype);
     $("#tracktype_details").css("visibility", "visible");
   });
@@ -162,7 +162,7 @@ $(document).ready(function () {
   populateTracktypeTable();
   initTracktypeData();
 
-  $("#save_tracktype").live("click", function () {
+  $(document).on("click", "#save_tracktype", function () {
     var data = $("#tracktype_form").serialize();
     var url = baseUrl + "Tracktype/add-tracktype";
 
