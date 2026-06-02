@@ -754,6 +754,23 @@ Sortierung der bereits-gespielten + nächsten Tracks freezable.
 
 ## 🐞 Known Issues / Bug Backlog
 
+### 🟡 Playout History: Tabelle + Export-Buttons werden nicht angezeigt
+
+**Status:** Defer — separater, **vorbestehender** Bug, **nicht** jQuery-3- oder
+DataTables-bezogen.
+**Entdeckt:** 2026-06-01 beim DataTables-1.13-Test.
+**Repro:** Playout History → die DataTable bleibt leer, die Export-Buttons (Log
+Sheet / File Summary / Show Summary) erscheinen nur als Links.
+**Ausschluss:** Tritt **auch ohne `?jq3=1`** (Default, jQuery 1.8 + DataTables
+1.9) auf → unabhängig von der Migration.  Auf 1.13 ist die Konsole sauber (nur
+die JQMIGRATE-Info, keine roten Fehler, kein „DataTables warning"-Alert) → der
+DataTables-Init wirft nicht; die Ursache liegt davor/dahinter (Backend-Response
+des server-side Endpoints, leeres Ergebnis, oder die jQuery-UI-`.button()`-
+Initialisierung der Export-Buttons in `historytable.js`).
+**Zu prüfen:** Network-Tab des History-Daten-Requests (liefert er Zeilen?), der
+`HistoryService`/`PlayouthistoryController`-Endpoint, und ob ggf. schlicht keine
+History-Daten in der DB sind.
+
 ### 🟡 Smart Block speichern funktioniert nicht
 
 **Status:** Defer (Operator-Wunsch 2026-06-01) — separater Bug, **nicht** durch

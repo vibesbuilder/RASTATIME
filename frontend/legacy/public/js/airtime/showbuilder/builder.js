@@ -556,11 +556,18 @@ var AIRTIME = (function (AIRTIME) {
           length,
           a = oData.abVisCols;
 
-        //putting serialized data back into the correct js type to make
-        //sure everything works properly.
-        for (i = 0, length = a.length; i < length; i++) {
-          if (typeof a[i] === "string") {
-            a[i] = a[i] === "true";
+        // RASTATIME 2026-06-01 (JS-modernization stage 2): guard abVisCols.
+        // DataTables 1.13 changed the saved-state format (columns[].visible
+        // instead of abVisCols), so oData.abVisCols is undefined on 1.13 and the
+        // loop crashed the whole table init.  Same guard library.js already has;
+        // 1.9 still has abVisCols, so its behaviour is unchanged.
+        if (a) {
+          //putting serialized data back into the correct js type to make
+          //sure everything works properly.
+          for (i = 0, length = a.length; i < length; i++) {
+            if (typeof a[i] === "string") {
+              a[i] = a[i] === "true";
+            }
           }
         }
 

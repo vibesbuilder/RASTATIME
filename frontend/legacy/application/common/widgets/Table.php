@@ -12,7 +12,12 @@ class AirtimeTableView
     {
         return [
             'js/airtime/widgets/table.js',
-            'js/datatables/js/jquery.dataTables.js',
+            // RASTATIME 2026-06-01 (JS-modernization stage 2): DataTables core
+            // 1.9 -> 1.13 on the ?jq3 path (1.13 keeps the legacy plugin API, so
+            // the 1.9 ColVis/columnFilter/colReorder/Fixed* plugins below load
+            // unchanged; their $.browser/.size usage is covered by the shim +
+            // migrate).
+            PageLayoutInitPlugin::rtDataTablesCore(),
             'js/datatables/plugin/dataTables.pluginAPI.js',
             'js/datatables/plugin/dataTables.fnSetFilteringDelay.js',
             'js/datatables/plugin/dataTables.ColVis.js',

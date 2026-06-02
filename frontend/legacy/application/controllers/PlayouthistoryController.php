@@ -43,7 +43,7 @@ class PlayouthistoryController extends Zend_Controller_Action
         $this->view->date_form = $form;
 
         $this->view->headScript()->appendFile(Assets::url('js/contextmenu/jquery.contextMenu.js'), 'text/javascript');
-        $this->view->headScript()->appendFile(Assets::url('js/datatables/js/jquery.dataTables.js'), 'text/javascript');
+        $this->view->headScript()->appendFile(Assets::url(PageLayoutInitPlugin::rtDataTablesCore()), 'text/javascript');
         $this->view->headScript()->appendFile(Assets::url('js/datatables/plugin/dataTables.pluginAPI.js'), 'text/javascript');
         $this->view->headScript()->appendFile(Assets::url('js/datatables/plugin/dataTables.fnSetFilteringDelay.js'), 'text/javascript');
 

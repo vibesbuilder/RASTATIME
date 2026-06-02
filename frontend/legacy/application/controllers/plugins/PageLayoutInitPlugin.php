@@ -213,6 +213,20 @@ class PageLayoutInitPlugin extends Zend_Controller_Plugin_Abstract
             : 'css/redmond/jquery-ui-1.8.8.custom.css';
     }
 
+    /**
+     * RASTATIME 2026-06-01 (JS-modernization stage 2): DataTables core path.
+     * DataTables 1.9.3 is not jQuery-3 compatible; 1.13 is, and keeps the legacy
+     * Hungarian options + server-side format, so the init code and the backend
+     * response are unchanged.  Loaded on the ?jq3 path; 1.9 stays the default.
+     * (DataTables 2.0 is a separate future step — see BACKLOG.)
+     */
+    public static function rtDataTablesCore()
+    {
+        return self::rtUseJquery3()
+            ? 'js/datatables-1.13/js/jquery.dataTables.min.js'
+            : 'js/datatables/js/jquery.dataTables.js';
+    }
+
     protected function _initHeadScript()
     {
         if (!Zend_Session::isStarted()) {
