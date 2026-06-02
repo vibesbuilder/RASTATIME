@@ -15,7 +15,14 @@ class IndexController extends Zend_Controller_Action
         }
 
         $this->view->headTitle(Application_Model_Preference::GetHeadTitle());
-        $this->view->headScript()->appendFile(Assets::url('js/libs/jquery-1.8.3.min.js'), 'text/javascript');
+        // RASTATIME 2026-06-01 (JS-modernization stage 2): jQuery 1.8 vs 3.7 +
+        // migrate behind the ?jq3 flag (radio page loads no jQuery-UI JS).
+        if (PageLayoutInitPlugin::rtUseJquery3()) {
+            $this->view->headScript()->appendFile(Assets::url('js/libs/jquery-3.7.1.min.js'), 'text/javascript')
+                ->appendFile(Assets::url('js/libs/jquery-migrate-3.5.2.min.js'), 'text/javascript');
+        } else {
+            $this->view->headScript()->appendFile(Assets::url('js/libs/jquery-1.8.3.min.js'), 'text/javascript');
+        }
 
         $this->view->headScript()->appendFile(Assets::url('js/i18n/jquery.i18n.js'), 'text/javascript');
         $this->view->headScript()->appendFile($baseUrl . 'locale/general-translation-table', 'text/javascript');

@@ -173,6 +173,32 @@ class PageLayoutInitPlugin extends Zend_Controller_Plugin_Abstract
             ->appendStylesheet(Assets::url('css/masterpanel.css'));
     }
 
+    /**
+     * RASTATIME 2026-06-01 (JS-modernization stage 2): jQuery 1.8 -> 3.7
+     * migration flag.  When on, jQuery 3.7 + jquery-migrate + jQuery UI 1.13 are
+     * loaded instead of jQuery 1.8 + UI 1.8.  ?jq3=1 turns it on, ?jq3=0 off,
+     * each persisted in a session cookie so page navigation keeps the choice;
+     * with no flag/cookie, jQuery 1.8 stays the default (instant rollback).
+     * Shared by the main app layout (here) and the radio page (IndexController).
+     */
+    public static function rtUseJquery3()
+    {
+        if (isset($_GET['jq3'])) {
+            $on = ($_GET['jq3'] === '1');
+            if (!headers_sent()) {
+                setcookie('rt_jq3', $on ? '1' : '0', 0, '/');
+            }
+            $_COOKIE['rt_jq3'] = $on ? '1' : '0';
+
+            return $on;
+        }
+        if (isset($_COOKIE['rt_jq3'])) {
+            return $_COOKIE['rt_jq3'] === '1';
+        }
+
+        return false;
+    }
+
     protected function _initHeadScript()
     {
         if (!Zend_Session::isStarted()) {
@@ -183,8 +209,18 @@ class PageLayoutInitPlugin extends Zend_Controller_Plugin_Abstract
 
         $baseUrl = Config::getBasePath();
 
-        $view->headScript()->appendFile(Assets::url('js/libs/jquery-1.8.3.min.js'), 'text/javascript')
-            ->appendFile(Assets::url('js/libs/jquery-ui-1.8.24.min.js'), 'text/javascript')
+        // RASTATIME 2026-06-01 (JS-modernization stage 2): jQuery 1.8 (+ UI 1.8)
+        // vs jQuery 3.7 + migrate + UI 1.13, behind the ?jq3 flag.
+        $hs = $view->headScript();
+        if (self::rtUseJquery3()) {
+            $hs->appendFile(Assets::url('js/libs/jquery-3.7.1.min.js'), 'text/javascript')
+                ->appendFile(Assets::url('js/libs/jquery-migrate-3.5.2.min.js'), 'text/javascript')
+                ->appendFile(Assets::url('js/libs/jquery-ui-1.13.3.min.js'), 'text/javascript');
+        } else {
+            $hs->appendFile(Assets::url('js/libs/jquery-1.8.3.min.js'), 'text/javascript')
+                ->appendFile(Assets::url('js/libs/jquery-ui-1.8.24.min.js'), 'text/javascript');
+        }
+        $hs
             // RASTATIME 2026-06-01 (JS-modernization stage 1): AngularJS 1.4.5
             // (EOL 2022) has been fully removed — the Podcast / Publish views
             // that used it are now vanilla/jQuery.
