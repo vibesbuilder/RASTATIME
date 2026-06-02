@@ -128,7 +128,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Schedule-Kalender von FullCalendar 1.5 auf FullCalendar 6 umgestellt
   (JS-Modernisierung Stufe 2, 2026-06-01, `8ce8ec1` + `5abaab5` + `169106d` +
-  `688e466` + `81d8c8d`)** — der geforkte, EOL-FullCalendar 1.5.4 (jQuery-Plugin,
+  `688e466` + `81d8c8d` + `be429da`)** — der geforkte, EOL-FullCalendar 1.5.4 (jQuery-Plugin,
   2011) auf der Schedule-Seite wurde durch das bereits für das Embed-Multi-View-
   Widget vendorte **FullCalendar 6.1.10** (vanilla, kein jQuery) ersetzt. Neue
   Datei `schedule-fc6.js` (`buildScheduleFc6()`), schrittweise hinter `?fc6=1`
@@ -155,6 +155,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     (`scheduleCalRefetch`, `windowResize`, `makeAddShowButton`, …) Engine-
     agnostisch gemacht (per `SCHEDULE_USE_FC6` geguarded → FC1.5-Pfad
     verhaltensgleich). Geschäftslogik (Endpoints, Add-Show-Formular) unangetastet.
+  - *Design* (`be429da`): dediziertes `css/schedule-fc6.css` stellt den dunklen
+    LibreTime-Look wieder her (FC6 ist hell; der alte kam aus jQuery-UI
+    `theme:true`) — graue Tagesleiste, dunkle Zellen + Grid-Linien, graue
+    Toolbar-Buttons, Brand-Orange Now-Linie, kein gelber Today-Tint, dezente
+    Event-Kanten, Fill-Bar-Fix für Kurz-Events, No-Leading-Zero-Uhrzeiten
+    („8:00"). Scoped auf `#schedule_calendar` → Rollback/Embed unberührt.
   - Operator-verifiziert auf beiden Pfaden (FC6 + FC1.5-Rollback). Entfernt eine
     jQuery-Abhängigkeit (Stufe-2-Ziel: Vorarbeit für jQuery 1.8→3.7).
 

@@ -610,11 +610,15 @@ MD5-Cache-Buster.
       Load, assets.json-Einträge, Flag-Logik).  **Vorbedingung:** FC6 hat sich im
       echten Livebetrieb über eine Bewährungsphase stabil gezeigt (Operator gibt
       Signal).  Bis dahin Sofort-Rollback behalten.
-    - ⬜ **💡 Kalender-Design-Politur** (eigene Phase): FC6-Optik finalisieren
-      (Grid-Dropdown sitzt in der schmalen FC6-Achsen-Ecke → Zellbreite; Event-/
-      Toolbar-Styling an RASTATIME/LibreTime-Look angleichen).  **Danach** User-
-      Manual-Screenshots in allen 4 Sprachen aktualisieren — bis dahin bewusst
-      zurückgestellt, da Optik nicht final + Bedienung unverändert.
+    - ✅ **Kalender-Design-Politur DONE (2026-06-01, `be429da`)**: neues
+      `css/schedule-fc6.css` (dark "LibreTime"-Theme — graue Tagesleiste, dunkle
+      Zellen + Grid-Linien, graue Toolbar-Buttons, Brand-Orange Now-Linie, kein
+      gelber Today-Tint, dezente Event-Kanten, Fill-Bar-Fix für Kurz-Events) +
+      No-Leading-Zero-Uhrzeiten ("8:00").  Scoped auf `#schedule_calendar` →
+      Rollback/Embed unberührt.  Operator-verifiziert.
+    - ⬜ **💡 User-Manual-Screenshots** (Schedule-Kapitel, alle 4 Sprachen)
+      auf den FC6-Look aktualisieren — Bedienung unverändert, daher niedrige
+      Prio; sinnvoll gebündelt mit der FC1.5-Fork-Entfernung.
   - ⬜ **DataTables 1.9→2** o. Grid.js (server-side neu, 2 Forks ersetzen).
   - ⬜ **jQuery 1.8→3.7** (jquery-migrate + systematischer Seiten-Test) oder
     schrittweise jQuery aus neuen Komponenten verbannen.
