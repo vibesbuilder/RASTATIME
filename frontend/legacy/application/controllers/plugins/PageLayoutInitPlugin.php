@@ -164,7 +164,7 @@ class PageLayoutInitPlugin extends Zend_Controller_Plugin_Abstract
         $faviconMime = $customFavicon !== null ? Application_Model_Preference::GetStationFaviconMime() : 'image/x-icon';
         $view->headLink(['rel' => 'icon', 'href' => $faviconHref, 'type' => $faviconMime], 'PREPEND')
             ->appendStylesheet(Assets::url('css/bootstrap.css'))
-            ->appendStylesheet(Assets::url('css/redmond/jquery-ui-1.8.8.custom.css'))
+            ->appendStylesheet(Assets::url(self::rtJqueryUiThemeCss()))
             ->appendStylesheet(Assets::url('css/pro_dropdown_3.css'))
             // RASTATIME 2026-06-01 (JS-modernization stage 1): rtTooltip (Floating
             // UI) styling replaces the removed qtip2 CSS.
@@ -199,6 +199,20 @@ class PageLayoutInitPlugin extends Zend_Controller_Plugin_Abstract
         return false;
     }
 
+    /**
+     * RASTATIME 2026-06-01 (JS-modernization stage 2): jQuery-UI theme CSS that
+     * matches the active jQuery-UI version.  jQuery UI 1.13's widget markup
+     * differs from 1.8, so the old redmond 1.8.8 theme renders 1.13 dialogs
+     * broken (transparent overlay, missing chrome).  redmond-1.13 is the same
+     * redmond palette regenerated for 1.13.
+     */
+    public static function rtJqueryUiThemeCss()
+    {
+        return self::rtUseJquery3()
+            ? 'css/redmond-1.13/jquery-ui.min.css'
+            : 'css/redmond/jquery-ui-1.8.8.custom.css';
+    }
+
     protected function _initHeadScript()
     {
         if (!Zend_Session::isStarted()) {
@@ -215,6 +229,7 @@ class PageLayoutInitPlugin extends Zend_Controller_Plugin_Abstract
         if (self::rtUseJquery3()) {
             $hs->appendFile(Assets::url('js/libs/jquery-3.7.1.min.js'), 'text/javascript')
                 ->appendFile(Assets::url('js/libs/jquery-migrate-3.5.2.min.js'), 'text/javascript')
+                ->appendFile(Assets::url('js/libs/jquery-browser-shim.js'), 'text/javascript')
                 ->appendFile(Assets::url('js/libs/jquery-ui-1.13.3.min.js'), 'text/javascript');
         } else {
             $hs->appendFile(Assets::url('js/libs/jquery-1.8.3.min.js'), 'text/javascript')

@@ -13,7 +13,7 @@ class LoginController extends Zend_Controller_Action
 
         $this->view->headLink(['rel' => 'icon', 'href' => $faviconHref, 'type' => $faviconMime], 'PREPEND')
             ->appendStylesheet(Assets::url('css/bootstrap.css'))
-            ->appendStylesheet(Assets::url('css/redmond/jquery-ui-1.8.8.custom.css'))
+            ->appendStylesheet(Assets::url(PageLayoutInitPlugin::rtJqueryUiThemeCss()))
             ->appendStylesheet(Assets::url('css/styles.css'));
     }
 

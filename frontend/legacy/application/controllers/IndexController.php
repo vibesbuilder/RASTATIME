@@ -19,7 +19,8 @@ class IndexController extends Zend_Controller_Action
         // migrate behind the ?jq3 flag (radio page loads no jQuery-UI JS).
         if (PageLayoutInitPlugin::rtUseJquery3()) {
             $this->view->headScript()->appendFile(Assets::url('js/libs/jquery-3.7.1.min.js'), 'text/javascript')
-                ->appendFile(Assets::url('js/libs/jquery-migrate-3.5.2.min.js'), 'text/javascript');
+                ->appendFile(Assets::url('js/libs/jquery-migrate-3.5.2.min.js'), 'text/javascript')
+                ->appendFile(Assets::url('js/libs/jquery-browser-shim.js'), 'text/javascript');
         } else {
             $this->view->headScript()->appendFile(Assets::url('js/libs/jquery-1.8.3.min.js'), 'text/javascript');
         }
@@ -38,7 +39,7 @@ class IndexController extends Zend_Controller_Action
         $this->view->headLink()->appendStylesheet(Assets::url('css/bootstrap.css'));
 
         // player control buttons (jQuery-UI corner/icon classes used in the GUI)
-        $this->view->headLink()->appendStylesheet(Assets::url('css/redmond/jquery-ui-1.8.8.custom.css'));
+        $this->view->headLink()->appendStylesheet(Assets::url(PageLayoutInitPlugin::rtJqueryUiThemeCss()));
 
         $this->_helper->layout->setLayout('radio-page');
 
