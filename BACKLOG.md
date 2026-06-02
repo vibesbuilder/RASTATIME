@@ -754,6 +754,25 @@ Sortierung der bereits-gespielten + nächsten Tracks freezable.
 
 ## 🐞 Known Issues / Bug Backlog
 
+### 🟡 Smart Block speichern funktioniert nicht
+
+**Status:** Defer (Operator-Wunsch 2026-06-01) — separater Bug, **nicht** durch
+die jQuery-`.live`→`.on`-Vorarbeit verursacht.
+**Entdeckt:** 2026-06-01 beim Testen von jQuery-Schritt-1.
+**Repro:** Library → Smart Block anlegen/bearbeiten → Kriterien setzen →
+„Save" → Block wird nicht gespeichert.
+**Analyse (Ausschluss meiner Änderung):** Der Save-Handler sitzt in
+`spl.js:1088` (`$pl.find("#save_button").unbind().on("click", …)` → POST
+`playlist/save`) und wurde **nicht** angefasst (meine spl.js-Änderung betraf nur
+die 4 „+New"-Buttons bei ~1832).  Die Editor-Interaktionen (Kriterium add/remove,
+Modifier, Typ/Limit/Kriterium ändern, Generate/Shuffle) = genau die geänderten
+`.on()`-Handler, **funktionieren** → Konversion korrekt.  Der Bug ist also
+vorbestehend/separat.
+**Verdächtige (zu prüfen):** `playlist/save`-Endpoint, die `serializeArray()`
+der Criteria-Form, oder die `.dataTable()`-Interaktion in der Save-Callback
+(`spl.js:1101`).  Sinnvoll im Zuge der jQuery-Verifikation (Schritt 4) bzw. der
+DataTables-Migration mit-anzuschauen.
+
 ### 🟡 Analytics: Listener Stats + Show Listener Stats sammeln keine Daten
 
 **Status:** Defer — bis nach Live-Schaltung + erste echte Listener.
