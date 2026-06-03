@@ -15,8 +15,7 @@ class PodcastController extends Zend_Controller_Action
         // — podcast.js is vanilla/jQuery now.
         $this->view->headScript()->appendFile(Assets::url('js/airtime/library/podcast.js'), 'text/javascript');
 
-        $this->view->headLink()->appendStylesheet(Assets::url('css/datatables/css/ColVis.css'));
-        $this->view->headLink()->appendStylesheet(Assets::url('css/datatables/css/dataTables.colReorder.min.css'));
+        AirtimeTableView::injectTableCssDependencies($this->view->headLink());
 
         $this->view->headLink()->appendStylesheet(Assets::url('css/station_podcast.css'));
         $this->view->headLink()->appendStylesheet(Assets::url('css/dashboard.css'));

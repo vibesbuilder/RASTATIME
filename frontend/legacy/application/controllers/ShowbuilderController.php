@@ -33,8 +33,7 @@ class ShowbuilderController extends Zend_Controller_Action
 
         $this->view->headLink()->appendStylesheet(Assets::url('css/media_library.css'));
         $this->view->headLink()->appendStylesheet(Assets::url('css/jquery.contextMenu.css'));
-        $this->view->headLink()->appendStylesheet(Assets::url('css/datatables/css/ColVis.css'));
-        $this->view->headLink()->appendStylesheet(Assets::url('css/datatables/css/dataTables.colReorder.min.css'));
+        AirtimeTableView::injectTableCssDependencies($this->view->headLink());
         $this->view->headScript()->appendFile(Assets::url('js/airtime/library/library.js'), 'text/javascript');
         $this->view->headScript()->appendFile(Assets::url('js/airtime/library/events/library_showbuilder.js'), 'text/javascript');
         $headScript = $this->view->headScript();

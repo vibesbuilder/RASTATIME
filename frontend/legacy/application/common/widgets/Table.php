@@ -45,4 +45,30 @@ class AirtimeTableView
             $headScript->appendFile(Assets::url($path), 'text/javascript');
         }
     }
+
+    /**
+     * RASTATIME 2026-06-03 (JS-modernization stage 2): the DataTables CSS must
+     * match the loaded extension generation.  On ?jq3 the modern Buttons (colvis)
+     * + ColReorder 1.6 are loaded, which ship their own stylesheets; the 2012
+     * ColVis.css / colReorder.css do not style the modern markup (e.g. the
+     * library "Columns" button would otherwise render unstyled / invisible).  On
+     * the legacy default (1.9) keep the original stylesheets.
+     */
+    public static function injectTableCssDependencies($headLink)
+    {
+        if (PageLayoutInitPlugin::rtUseJquery3()) {
+            $css = [
+                'css/datatables-1.13/buttons.dataTables.min.css',
+                'css/datatables-1.13/colReorder.dataTables.min.css',
+            ];
+        } else {
+            $css = [
+                'css/datatables/css/ColVis.css',
+                'css/datatables/css/dataTables.colReorder.min.css',
+            ];
+        }
+        foreach ($css as $path) {
+            $headLink->appendStylesheet(Assets::url($path));
+        }
+    }
 }

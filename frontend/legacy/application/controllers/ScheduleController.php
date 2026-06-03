@@ -115,8 +115,7 @@ class ScheduleController extends Zend_Controller_Action
 
         $this->view->headLink()->appendStylesheet(Assets::url('css/media_library.css'));
         $this->view->headLink()->appendStylesheet(Assets::url('css/jquery.contextMenu.css'));
-        $this->view->headLink()->appendStylesheet(Assets::url('css/datatables/css/ColVis.css'));
-        $this->view->headLink()->appendStylesheet(Assets::url('css/datatables/css/dataTables.colReorder.min.css'));
+        AirtimeTableView::injectTableCssDependencies($this->view->headLink());
         $this->view->headLink()->appendStylesheet(Assets::url('css/showbuilder.css'));
         $this->view->headLink()->appendStylesheet(Assets::url('css/dashboard.css'));
         // End Show builder JS/CSS requirements

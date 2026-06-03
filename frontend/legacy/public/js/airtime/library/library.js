@@ -912,7 +912,12 @@ var AIRTIME = (function (AIRTIME) {
       var dataTableLocalStorageKey = "datatables-library-builder";
     }
 
-    mod.libraryDataTable = $libTable.dataTable({
+    // RASTATIME 2026-06-01 (JS-modernization stage 2): on ?jq3 the modern
+    // DataTables Buttons extension is loaded, which we use to detect the 1.13
+    // stack.  The fork-specific options (ColVis/ColReorder) are set after this
+    // base config so they can branch old (1.9) vs modern (1.13).
+    var dtModern = !!($.fn.dataTable && $.fn.dataTable.Buttons);
+    var libDtOpts = {
       // put hidden columns at the top to insure they can never be visible
       // on the table through column reordering.
 
@@ -1254,25 +1259,82 @@ var AIRTIME = (function (AIRTIME) {
       bAutoWidth: false,
       oLanguage: getLibraryDatatableStrings(),
 
-      // z = ColResize, R = ColReorder, C = ColVis
-      sDom: 'Rf<"dt-process-rel"r><"H"<"library_toolbar"C>><"dataTables_scrolling"t<".empty_placeholder"<".empty_placeholder_image"><".empty_placeholder_text">>><"F"lip>>',
+      bScrollCollapse: false,
+    };
 
-      oColVis: {
+    // RASTATIME 2026-06-01 (JS-modernization stage 2): the 2012 ColVis (sDom 'C')
+    // + ColReorder (sDom 'R') do not register on DataTables 1.13, so on ?jq3 use
+    // the modern Buttons (colvis) + ColReorder 1.6; on the default (1.9) keep the
+    // old sDom 'R'/'C' + oColVis/oColReorder.
+    if (dtModern) {
+      // RASTATIME 2026-06-03: keep the leading 'R' (the modern ColReorder 1.6
+      // build registers the feature letter) but the table 't' must be BARE --
+      // NOT wrapped in a <"dataTables_scrolling"> div.  Nesting the 38-column
+      // library table in that constrained scroll container aborts the
+      // DataTables 1.13 init (the build detaches the table and never re-attaches
+      // it -- no exception, no warning).  Column visibility is provided by the
+      // programmatic Buttons (colvis) instance built right after init below; the
+      // 'C' is a harmless empty toolbar slot (legacy ColVis is not loaded on jq3).
+      libDtOpts.sDom =
+        'Rf<"dt-process-rel"r><"H"<"library_toolbar"C>>t<"F"lip>';
+    } else {
+      // z = ColResize, R = ColReorder, C = ColVis
+      libDtOpts.sDom =
+        'Rf<"dt-process-rel"r><"H"<"library_toolbar"C>><"dataTables_scrolling"t<".empty_placeholder"<".empty_placeholder_image"><".empty_placeholder_text">>><"F"lip>>';
+      libDtOpts.oColVis = {
         sAlign: "right",
         aiExclude: colExclude,
         sSize: "css",
         fnStateChange: setFilterElement,
         buttonText: $.i18n._("Columns"),
         iOverlayFade: 0,
-      },
-
-      oColReorder: {
+      };
+      libDtOpts.oColReorder = {
         iFixedColumnsRight: 1,
         iFixedColumns: 3,
-      },
+      };
+    }
 
-      bScrollCollapse: false,
-    });
+    mod.libraryDataTable = $libTable.dataTable(libDtOpts);
+
+    // RASTATIME 2026-06-03: the scroll container could not live in the sDom
+    // (nesting the 38-column table in <"dataTables_scrolling"> aborts the 1.13
+    // init), so wrap the freshly-built table in it here.  Post-init the build is
+    // already complete, so this is safe, and the existing .dataTables_scrolling
+    // CSS (absolute fill + overflow:auto) restores vertical + horizontal
+    // scrolling exactly like the legacy path.  Only on ?jq3 -- the legacy sDom
+    // already nests the table itself.
+    if (dtModern) {
+      $libTable.wrap('<div class="dataTables_scrolling"></div>');
+    }
+
+    // RASTATIME 2026-06-03 (JS-modernization stage 2): construct the modern
+    // Buttons (colvis) AFTER the table is built and drop its container into the
+    // toolbar slot.  Using the 'B' sDom feature letter silently aborts the
+    // DataTables 1.13 init (table detached during DOM build, no error/warning),
+    // so the programmatic Buttons API is the only reliable path.  Wrapped so a
+    // colvis failure can never take the whole table down.
+    if (dtModern && $.fn.dataTable.Buttons) {
+      try {
+        var libColVis = new $.fn.dataTable.Buttons($libTable.DataTable(), {
+          buttons: [
+            {
+              extend: "colvis",
+              text: $.i18n._("Columns"),
+              columns: ":gt(2)", // first 3 columns are fixed, never toggled
+            },
+          ],
+        });
+        libColVis
+          .container()
+          .appendTo($("#library_display_wrapper .library_toolbar"));
+      } catch (colVisErr) {
+        // A colvis failure must never take the whole library table down.
+        if (window.console) {
+          console.warn("library colvis button init failed:", colVisErr);
+        }
+      }
+    }
 
     $datatables[mod.DataTableTypeEnum.LIBRARY] = mod.libraryDataTable;
 
@@ -1359,11 +1421,17 @@ var AIRTIME = (function (AIRTIME) {
         }
       });
 
-      oTable.columnFilter({
-        aoColumns: colsForAdvancedSearch,
-        bUseColVis: true,
-        sPlaceHolder: "head:before",
-      });
+      // RASTATIME 2026-06-01 (JS-modernization stage 2): the columnFilter fork
+      // (advanced per-column search) couples to the old ColVis (bUseColVis) +
+      // the colReorderMap.  On ?jq3 (modern Buttons stack) skip it for now so the
+      // table renders; it is re-wired to the modern fork APIs in a follow-up.
+      if (!($.fn.dataTable && $.fn.dataTable.Buttons)) {
+        oTable.columnFilter({
+          aoColumns: colsForAdvancedSearch,
+          bUseColVis: true,
+          sPlaceHolder: "head:before",
+        });
+      }
     }
 
     function setFilterElement(iColumn, bVisible) {

@@ -63,8 +63,7 @@ class ListenerstatController extends Zend_Controller_Action
         $this->view->headScript()->appendFile(Assets::url('js/airtime/utilities/utilities.js'), 'text/javascript');
         $this->view->headScript()->appendFile(Assets::url('js/airtime/listenerstat/showlistenerstat.js'), 'text/javascript');
 
-        $this->view->headLink()->appendStylesheet(Assets::url('css/datatables/css/ColVis.css'));
-        $this->view->headLink()->appendStylesheet(Assets::url('css/datatables/css/dataTables.colReorder.min.css'));
+        AirtimeTableView::injectTableCssDependencies($this->view->headLink());
         $this->view->headLink()->appendStylesheet(Assets::url('css/jquery.ui.timepicker.css'));
         $this->view->headLink()->appendStylesheet(Assets::url('css/show_analytics.css'));
 
