@@ -675,10 +675,21 @@ MD5-Cache-Buster.
            Graceful-Fallback, falls Floating UI fehlt).  Inline-`!important` via
            `setProperty` schlägt das `!important` der Fallback-CSS.  Beide colvis-
            Buttons jetzt Icon-only (gedrängte Toolbar).
-         - ⬜ **podcast.js** (Podcast-Tabelle, `#podcast_table`) — **nächster
-           DataTables-Schritt**; hat denselben State-Strip-Bug wie unten (Zeile
-           `delete oData.oSearch/aoSearchCols` per 1.9-Namen) → beim Umbau die
-           1.13-Form (`search` + `columns[].search`) mitstrippen.
+         - ✅ **podcast.js / Table-Widget DONE (2026-06-05, `5f3d85d`).** Beide
+           Widget-Tabellen (Podcast-Liste `#podcast_table` + Podcast-Episoden)
+           laufen über das geteilte `AIRTIME.widgets.Table`; ein Fix im Widget
+           (`table.js`) repariert beide: jq3-conditional sDom (bare `t` + Post-
+           Init-`.dataTables_scrolling`-Wrap + echter `<"dataTables_footer">`-Div,
+           da `F` reserviert), programmatischer Buttons-colvis nach den Toolbar-
+           Buttons, Flex-Spalten-Layout (`.rt-jq3-widget`-Marker), und Initial-
+           `fnDraw()` auf jq3 (deferLoading=1 wird auf 1.13 honoriert → server-
+           side-Liste blieb sonst leer bis zum ersten Sortieren).  **Kein State-
+           Strip nötig** (die Podcast-Tabellen nutzen kein `bStateSave` — mein
+           früherer Hinweis war eine falsche Extrapolation).  **Plus** Scoping-
+           Fix der Right-Panel-CSS: `.sb-content .btn-toolbar .btn-group{top:59px}`
+           + `#show_builder .dataTables_scrolling{top:90px}` leakten in die
+           Podcast-Tabellen (auch unter `.sb-content`/`#show_builder`) → auf den
+           `.sb_toolbar`-Slot eingegrenzt + Widget-Scrolling-Override.
       2. ✅ **Advanced/Per-Column-Library-Filter DONE (2026-06-04, `62923e3`).**
          Der geforkte 2012er `columnFilter` (nur DT-1.9-API) war auf jq3
          übersprungen → Panel da, Felder tot.  Neuer `wireModernColumnFilter()`
