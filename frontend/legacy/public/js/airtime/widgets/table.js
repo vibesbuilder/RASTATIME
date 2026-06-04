@@ -73,6 +73,10 @@ var AIRTIME = (function (AIRTIME) {
       );
     }
 
+    // RASTATIME 2026-06-04 (?jq3): detect the modern DataTables Buttons stack
+    // (DataTables 1.13 + Buttons/ColReorder) vs the legacy 1.9 + ColVis stack.
+    var dtModern = !!($.fn.dataTable && $.fn.dataTable.Buttons);
+
     var options = {
       aoColumns: [
         /* Title */ {
@@ -104,8 +108,17 @@ var AIRTIME = (function (AIRTIME) {
         buttonText: $.i18n._("Columns"),
         iOverlayFade: 0,
       },
-      // z = ColResize, R = ColReorder, C = ColVis
-      sDom: 'Rf<"dt-process-rel"r><"H"<"table_toolbar"C>><"dataTables_scrolling"t<".empty_placeholder"<".empty_placeholder_image"><".empty_placeholder_text">>><"F"lip>>',
+      // z = ColResize, R = ColReorder, C = ColVis.  RASTATIME 2026-06-04 (?jq3):
+      // DataTables 1.13 silently aborts the init when the table 't' is nested in
+      // the constrained <"dataTables_scrolling"> sDom wrapper (the build detaches
+      // the table and never re-attaches it -- no error/warning), so on the modern
+      // stack the 't' is BARE and the scroll container is restored post-init (see
+      // below).  'R' stays (modern ColReorder 1.6 registers it); 'C' is a harmless
+      // empty slot (legacy ColVis is not loaded on jq3 -- colvis is built
+      // programmatically post-init).  Legacy (1.9) keeps the nested sDom.
+      sDom: dtModern
+        ? 'Rf<"dt-process-rel"r><"H"<"table_toolbar"C>>t<"dataTables_footer"lip>'
+        : 'Rf<"dt-process-rel"r><"H"<"table_toolbar"C>><"dataTables_scrolling"t<".empty_placeholder"<".empty_placeholder_image"><".empty_placeholder_text">>><"F"lip>>',
 
       fnPreDrawCallback: function () {
         $("#draggingContainer").remove();
@@ -130,8 +143,74 @@ var AIRTIME = (function (AIRTIME) {
     }
 
     self._datatable = self._$wrapperDOMNode.dataTable(options);
-    // self._datatable.fnDraw(); //Load the AJAX data now that our event handlers have been bound.
+
+    // RASTATIME 2026-06-04 (?jq3): the table 't' was left bare in the sDom (see
+    // above).  Restore the scroll container here so the DOM matches the legacy
+    // layout (table inside .dataTables_scrolling inside .dataTables_wrapper) and
+    // mark the wrapper so the jq3 flex layout (search > toolbar > table > footer)
+    // applies -- without it the generic absolute .dataTables_scrolling pulls the
+    // table out of flow and the unwrapped l/i/p footer (the 'F' slot is not built
+    // on 1.13) overlaps the toolbar.
+    if (dtModern) {
+      self._$wrapperDOMNode.wrap('<div class="dataTables_scrolling"></div>');
+      self._$wrapperDOMNode
+        .closest(".dataTables_wrapper")
+        .addClass("rt-jq3-widget");
+    }
+
     self._setupEventHandlers(bItemSelection);
+
+    // RASTATIME 2026-06-04 (?jq3): build the column-visibility control as a modern
+    // Buttons (colvis) instance (the 2012 ColVis 'C' does not register on DT 1.13)
+    // AFTER _setupEventHandlers has appended the toolbar buttons, so the colvis is
+    // the LAST child of .table_toolbar and float:right drops it into the button
+    // row (right-aligned) rather than stacking above it.  Wrapped so a colvis
+    // failure can never take the whole table down.
+    if (dtModern && $.fn.dataTable.Buttons) {
+      try {
+        var colvisExclude =
+          (options.oColVis && options.oColVis.aiExclude) || [];
+        var colvisButton = {
+          extend: "colvis",
+          // icon only (no "Columns" label) -- matches the library colvis
+          text: '<i class="icon-white icon-th-list"></i>',
+          titleAttr: $.i18n._("Columns"),
+          collectionLayout: "fixed",
+        };
+        // exclude the fixed left columns (checkbox / type ...) from the toggle
+        if (colvisExclude.length) {
+          colvisButton.columns =
+            ":gt(" + Math.max.apply(null, colvisExclude) + ")";
+        }
+        var tableColVis = new $.fn.dataTable.Buttons(
+          self._$wrapperDOMNode.DataTable(),
+          { buttons: [colvisButton] },
+        );
+        tableColVis
+          .container()
+          .appendTo(
+            self._$wrapperDOMNode
+              .closest(".dataTables_wrapper")
+              .find("div.table_toolbar"),
+          )
+          .rtColvisAnchor();
+      } catch (tableColVisErr) {
+        if (window.console) {
+          console.warn("table widget colvis init failed:", tableColVisErr);
+        }
+      }
+    }
+
+    // RASTATIME 2026-06-04 (?jq3): deferLoading is the DataTables 1.10+ name and
+    // IS honoured on 1.13 (it was silently ignored on 1.9, which wanted the
+    // Hungarian iDeferLoading), so on the modern stack the server-side table
+    // never fires its initial request -- it sits empty ("No matching results")
+    // until a sort/page triggers a redraw.  Now that the handlers are bound, kick
+    // off that first load ourselves (what the old commented-out fnDraw intended).
+    // Client-side tables populate their data differently, so gate on bServerSide.
+    if (dtModern && options.bServerSide) {
+      self._datatable.fnDraw();
+    }
 
     //return self._datatable;
     return self;

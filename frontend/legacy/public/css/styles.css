@@ -4727,11 +4727,19 @@ div.dt-button-collection .dt-button > span {
 .rt-jq3 .sb-content .sb-options-form {
     top: 28px;
 }
-.rt-jq3 .sb-content .btn-toolbar .btn-group {
+/* Scope tightly to the scheduled-shows toolbar, which lives in the .sb_toolbar
+   sDom slot.  An earlier ".sb-content .btn-toolbar .btn-group" leaked into every
+   other .btn-toolbar under .sb-content -- the podcast EPISODES table toolbar
+   (.table_toolbar) AND the podcast-edit Save/Cancel toolbar
+   (.angular_wrapper > .btn-toolbar) -- shifting their buttons down 59px. */
+.rt-jq3 .sb-content .sb_toolbar .btn-toolbar .btn-group {
     top: 59px;
 }
 /* push the scrolling table down so it clears the (now lower) toolbar -- the
-   legacy rule sits at top:66px which assumed the jQuery-UI header height */
+   legacy rule sits at top:66px which assumed the jQuery-UI header height.
+   NOTE: the podcast tables also live under #show_builder and would inherit this
+   top:90px; the .rt-jq3-widget scrolling override below resets it with
+   !important so their flex layout is not shifted. */
 .rt-jq3 #show_builder .dataTables_scrolling {
     top: 90px;
 }
@@ -4772,4 +4780,100 @@ div.dt-button-collection .dt-button > span {
     .rt-jq3 .sb-content .sb_toolbar .buttons-colvis > span > span {
         display: none !important;
     }
+}
+
+/* RASTATIME jq3: colvis "Columns" button in the shared Table widget toolbar
+   (podcast list + podcast episodes), mirroring the library colvis button.  The
+   dropdown panel + checkbox styling + under-the-button anchor are shared
+   (div.dt-button-collection / rtColvisAnchor). */
+/* lay the toolbar out as a flex row so the action buttons sit on the left and
+   the colvis is pushed to the far right ON THE SAME ROW.  float:right was
+   unreliable here -- in the narrow podcast-edit pane the floated colvis broke
+   onto its own line above the buttons. */
+.rt-jq3 .table_toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+}
+.rt-jq3 .table_toolbar .dt-buttons {
+    margin: 0 4px 0 auto;
+    float: none;
+}
+.rt-jq3 .table_toolbar .dt-button {
+    background: #565656;
+    color: #eee;
+    border: 1px solid #6a6a6a;
+    border-radius: 0;
+    font-size: 12px;
+    font-weight: normal;
+    line-height: 16px;
+    padding: 4px 10px;
+    margin: 0;
+    text-shadow: none;
+    overflow: visible;
+}
+.rt-jq3 .table_toolbar .dt-button:hover {
+    background: #6a6a6a;
+    border-color: #7a7a7a;
+}
+@media screen and (max-width: 1600px) {
+    .rt-jq3 .table_toolbar .buttons-colvis > span,
+    .rt-jq3 .table_toolbar .buttons-colvis > .dt-button-down-arrow {
+        display: inline-block !important;
+    }
+    .rt-jq3 .table_toolbar .buttons-colvis > span > span {
+        display: none !important;
+    }
+}
+
+/* RASTATIME jq3: lay the shared Table widget tables (podcast list + episodes)
+   out as a flex column (search > toolbar > scrolling table > l/i/p footer) so
+   the length menu + pagination sit below the table instead of overlapping the
+   toolbar.  The generic .dataTables_scrolling is position:absolute (built for
+   the legacy jQuery-UI header/footer), and DT 1.13 does not build the 'F'
+   footer wrapper, so without this the table leaves the flow and the unwrapped
+   footer floats up under the toolbar.  Mirrors #library_display_wrapper; the
+   .rt-jq3-widget marker is set in table.js. */
+.rt-jq3 .dataTables_wrapper.rt-jq3-widget {
+    display: flex;
+    flex-direction: column;
+}
+.rt-jq3 .dataTables_wrapper.rt-jq3-widget > .dataTables_scrolling {
+    position: relative;
+    /* !important: the podcast tables sit under #show_builder, whose
+       ".dataTables_scrolling { top: 90px }" (ID specificity) would otherwise
+       shift this table down over the footer.  Reset it for the flex layout. */
+    top: auto !important;
+    bottom: auto;
+    left: auto;
+    right: auto;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+}
+/* search row: full-width field flush with the table, like the library.  DT 1.13
+   renders the search as input[type="search"], so target the input directly. */
+.rt-jq3 .dataTables_wrapper.rt-jq3-widget > .dataTables_filter {
+    margin: 0 0 5px 0;
+    padding: 0;
+}
+.rt-jq3 .dataTables_wrapper.rt-jq3-widget .dataTables_filter label {
+    display: block;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+.rt-jq3 .dataTables_wrapper.rt-jq3-widget .dataTables_filter input {
+    width: 100%;
+    box-sizing: border-box;
+    margin: 0;
+}
+/* footer row: the sDom wraps length/info/pagination in .dataTables_footer; their
+   own float CSS (length+info left, pagination right) then reads as one bottom
+   row.  flex:0 0 auto keeps it at its natural height; overflow contains the
+   floats so the row does not collapse and the table above keeps its space. */
+.rt-jq3 .dataTables_wrapper.rt-jq3-widget > .dataTables_footer {
+    flex: 0 0 auto;
+    overflow: hidden;
+    padding: 2px 0 0 0;
 }
