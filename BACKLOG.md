@@ -675,12 +675,26 @@ MD5-Cache-Buster.
            Graceful-Fallback, falls Floating UI fehlt).  Inline-`!important` via
            `setProperty` schlägt das `!important` der Fallback-CSS.  Beide colvis-
            Buttons jetzt Icon-only (gedrängte Toolbar).
-         - ⬜ **podcast.js** (Podcast-Tabelle, `#podcast_table`). **Nächster
-           DataTables-Schritt.**
-      2. **Zusätzlicher Library-Filter (Advanced/Per-Column-Search)** — der
-         geforkte `columnFilter` (`bUseColVis`) ist auf jq3 übersprungen; mit der
-         modernen API (`columns().search()`) neu aufbauen.  *(Operator-Wunsch
-         2026-06-04.)*
+         - ⬜ **podcast.js** (Podcast-Tabelle, `#podcast_table`) — **nächster
+           DataTables-Schritt**; hat denselben State-Strip-Bug wie unten (Zeile
+           `delete oData.oSearch/aoSearchCols` per 1.9-Namen) → beim Umbau die
+           1.13-Form (`search` + `columns[].search`) mitstrippen.
+      2. ✅ **Advanced/Per-Column-Library-Filter DONE (2026-06-04, `62923e3`).**
+         Der geforkte 2012er `columnFilter` (nur DT-1.9-API) war auf jq3
+         übersprungen → Panel da, Felder tot.  Neuer `wireModernColumnFilter()`
+         befüllt die vorhandenen `#advanced_search`-Slots + verdrahtet `fnFilter`
+         (Text→ILIKE, numerisch/Länge/Datum→`from~to`-Range, Track-Typ→exakt),
+         Spalten-Index reorder-fest per Datenname, 350 ms Per-Spalten-Debounce.
+         **Backend byte-genau unverändert** (DT 1.13 sendet im Legacy-Kompat-Modus
+         weiter `sSearch_{N}`/`mDataProp_{N}`, `fnServerData` sendet `advSearch`).
+         Legacy behält das Plugin.  *(Operator-Wunsch 2026-06-04.)*
+         **Plus Regressions-Fix (gleicher Commit):** `fnStateSaveParams` strippte
+         die Suche per DT-1.9-Namen (`oSearch`/`aoSearchCols`), damit sie nicht
+         über Seitenwechsel persistiert — DT 1.13 hat die State-Felder umbenannt
+         (`search` + `columns[].search`), der Strip lief ins Leere → Suche leakte
+         in den gespeicherten State (Tabelle kam gefiltert zurück, Panel leer +
+         zu).  Jetzt auch die 1.13-Form gestrippt, beim Speichern **und** Laden;
+         Library **+** rechtes Showbuilder-Panel (`builder.js`, gleicher Bug).
       3. **Buttons/ColReorder-CSS** — für die Library erledigt (`body.rt-jq3`-Block
          in styles.css); für die übrigen Tabellen noch angleichen.
       4. **Kosmetik-Politur** (zurückgestellte jQuery-UI-1.13-Punkte): Scheduled-
