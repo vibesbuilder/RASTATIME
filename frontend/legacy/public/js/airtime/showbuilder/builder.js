@@ -1466,11 +1466,14 @@ var AIRTIME = (function (AIRTIME) {
               text: '<i class="icon-white icon-th-list"></i>',
               titleAttr: $.i18n._("Columns"),
               columns: ":gt(1)", // first 2 columns (checkbox + type) are fixed
+              // 'fixed' = position:fixed panel that escapes the .sb-content
+              // overflow:hidden; rtColvisAnchor re-anchors it under the button
+              // (centered stays the fallback if Floating UI is unavailable).
               collectionLayout: "fixed",
             },
           ],
         });
-        sbColVis.container().appendTo($toolbar);
+        sbColVis.container().appendTo($toolbar).rtColvisAnchor();
       } catch (sbColVisErr) {
         if (window.console) {
           console.warn("scheduled-shows colvis init failed:", sbColVisErr);

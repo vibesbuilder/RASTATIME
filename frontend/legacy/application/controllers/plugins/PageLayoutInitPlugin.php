@@ -262,6 +262,9 @@ class PageLayoutInitPlugin extends Zend_Controller_Plugin_Abstract
             ->appendFile(Assets::url('js/libs/floating-ui/floating-ui.core.umd.min.js'), 'text/javascript')
             ->appendFile(Assets::url('js/libs/floating-ui/floating-ui.dom.umd.min.js'), 'text/javascript')
             ->appendFile(Assets::url('js/airtime/common/tooltip.js'), 'text/javascript')
+            // RASTATIME 2026-06-04 (?jq3): anchors the DataTables Buttons colvis
+            // dropdown under its button (Floating UI); no-op on the legacy stack.
+            ->appendFile(Assets::url('js/airtime/common/colvisanchor.js'), 'text/javascript')
             ->appendFile(Assets::url('js/sprintf/sprintf-0.7-beta1.js'), 'text/javascript')
             ->appendFile(Assets::url('js/cookie/js.cookie.js'), 'text/javascript')
             ->appendFile(Assets::url('js/i18n/jquery.i18n.js'), 'text/javascript')

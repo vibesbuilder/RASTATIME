@@ -1327,14 +1327,17 @@ var AIRTIME = (function (AIRTIME) {
               columns: ":gt(2)", // first 3 columns are fixed, never toggled
               // Buttons inserts the collection inline next to the button, where
               // the panel's overflow:hidden clips it to a thin strip.  'fixed'
-              // renders it as a centered, scrollable, body-level panel instead.
+              // renders it as a position:fixed panel that escapes the clip;
+              // rtColvisAnchor() (below) re-anchors it directly under the button,
+              // with the centered fallback kept if Floating UI is unavailable.
               collectionLayout: "fixed",
             },
           ],
         });
         libColVis
           .container()
-          .appendTo($("#library_display_wrapper .library_toolbar"));
+          .appendTo($("#library_display_wrapper .library_toolbar"))
+          .rtColvisAnchor();
       } catch (colVisErr) {
         // A colvis failure must never take the whole library table down.
         if (window.console) {
