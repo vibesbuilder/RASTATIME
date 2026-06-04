@@ -886,7 +886,14 @@ var AIRTIME = (function (AIRTIME) {
       },
 
       // R = ColReorder, C = ColVis
-      sDom: 'R<"dt-process-rel"r><"sb-padded"<"H"C>><"dataTables_scrolling sb-padded"t><"F">',
+      // RASTATIME 2026-06-04 (?jq3): DataTables 1.13 mangles the nested
+      // <"sb-padded"<"H"C>> / empty <"F"> sDom (only the outer divs are built,
+      // so the .H toolbar slot never appears).  On the modern Buttons stack use
+      // the library-proven flat nested-toolbar pattern (<"H"<"sb_toolbar"C>>)
+      // which 1.13 builds correctly; the legacy 1.9 default keeps the original.
+      sDom: !!($.fn.dataTable && $.fn.dataTable.Buttons)
+        ? 'R<"dt-process-rel"r><"H"<"sb_toolbar"C>><"dataTables_scrolling sb-padded"t><"F">'
+        : 'R<"dt-process-rel"r><"sb-padded"<"H"C>><"dataTables_scrolling sb-padded"t><"F">',
 
       oColVis: {
         aiExclude: [0, 1],
@@ -1356,17 +1363,22 @@ var AIRTIME = (function (AIRTIME) {
     var footer = $(".sb-content .fg-toolbar:last"),
       timerange = $(".sb-timerange");
     // RASTATIME 2026-06-04 (?jq3): DataTables 1.13 drops the jQuery-UI
-    // .fg-toolbar wrapper, so the timerange + Select/Trim/Remove/Jump/Cancel
-    // buttons have no home; fall back to the sDom .H (top) / .F (bottom) slots.
+    // .fg-toolbar wrapper, and it does NOT build the outer <"H">/<"F"> sDom divs
+    // (H/F are reserved sDom letters) -- only the *inner* nested div is created.
+    // So the timerange + Select/Trim/Remove/Jump/Cancel buttons go into the
+    // inner .sb_toolbar slot (the jq3 sDom uses <"H"<"sb_toolbar"C>>).
     if ($toolbar.length === 0) {
-      $toolbar = $(".sb-content .H:first");
-    }
-    if (footer.length === 0) {
-      footer = $(".sb-content .F:first");
+      $toolbar = $(".sb-content .sb_toolbar:first");
     }
     $toolbar.append(timerange);
 
-    $menu = $("<div class='btn-toolbar'/>");
+    // RASTATIME 2026-06-04 (?jq3): keep this $menu LOCAL.  It used to be the
+    // global window.$menu, shared with the library toolbar (library.js +
+    // library_showbuilder.js share it across files).  Now that this builder
+    // toolbar setup actually runs on ?jq3 (the .sb_toolbar slot exists), its
+    // trailing "$menu = undefined" was clobbering the library's $menu and wiping
+    // the New/Edit/Delete/Publish buttons on the next library re-append.
+    var $menu = $("<div class='btn-toolbar'/>");
     $menu
       .append(
         "<div class='btn-group'>" +
@@ -1440,6 +1452,31 @@ var AIRTIME = (function (AIRTIME) {
     }
 
     $menu = undefined;
+
+    // RASTATIME 2026-06-04 (?jq3): the 2012 ColVis (sDom 'C') does not register
+    // on DataTables 1.13, so build the modern Buttons colvis programmatically and
+    // drop it into the .sb_toolbar slot (mirrors the library "Columns" button).
+    if (!!($.fn.dataTable && $.fn.dataTable.Buttons)) {
+      try {
+        var sbColVis = new $.fn.dataTable.Buttons($sbTable.DataTable(), {
+          buttons: [
+            {
+              extend: "colvis",
+              // Icon only (no "Columns" label) -- crowded toolbar.
+              text: '<i class="icon-white icon-th-list"></i>',
+              titleAttr: $.i18n._("Columns"),
+              columns: ":gt(1)", // first 2 columns (checkbox + type) are fixed
+              collectionLayout: "fixed",
+            },
+          ],
+        });
+        sbColVis.container().appendTo($toolbar);
+      } catch (sbColVisErr) {
+        if (window.console) {
+          console.warn("scheduled-shows colvis init failed:", sbColVisErr);
+        }
+      }
+    }
 
     $("#timeline-sa").click(function () {
       mod.selectAll();

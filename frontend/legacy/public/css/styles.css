@@ -4558,8 +4558,7 @@ body.droppable .artwork-upload .artwork-preview {
     font-size: 12px;
     font-weight: normal;
     line-height: 16px;
-    min-width: 64px;
-    padding: 4px 12px;
+    padding: 4px 10px;
     margin: 0;
     text-shadow: none;
     overflow: visible;
@@ -4717,6 +4716,60 @@ div.dt-button-collection .dt-button > span {
         display: inline-block !important;
     }
     .rt-jq3 #library_display_wrapper .library_toolbar .buttons-colvis > span > span {
+        display: none !important;
+    }
+}
+
+/* RASTATIME jq3 right "Scheduled Shows" panel: the timerange form + toolbar
+   button groups land in the .sb_toolbar slot; nudge them down into the toolbar
+   row (operator-tuned offsets).  Scoped to .sb-content so the left library
+   toolbar is untouched. */
+.rt-jq3 .sb-content .sb-options-form {
+    top: 28px;
+}
+.rt-jq3 .sb-content .btn-toolbar .btn-group {
+    top: 59px;
+}
+/* push the scrolling table down so it clears the (now lower) toolbar -- the
+   legacy rule sits at top:66px which assumed the jQuery-UI header height */
+.rt-jq3 #show_builder .dataTables_scrolling {
+    top: 90px;
+}
+/* right "Scheduled Shows" colvis "Columns" button -- mirrors the library colvis
+   (grey square button, icon, icon-only collapse at the responsive breakpoint).
+   The dropdown panel + checkbox styling is shared (div.dt-button-collection). */
+.rt-jq3 .sb-content .sb_toolbar {
+    position: relative;
+}
+.rt-jq3 .sb-content .sb_toolbar .dt-buttons {
+    position: absolute;
+    top: 59px; /* button row (matches .btn-group) */
+    right: 6px; /* right-aligned, like the library colvis */
+    margin: 0;
+}
+.rt-jq3 .sb-content .sb_toolbar .dt-button {
+    background: #565656;
+    color: #eee;
+    border: 1px solid #6a6a6a;
+    border-radius: 0;
+    font-size: 12px;
+    font-weight: normal;
+    line-height: 16px;
+    padding: 4px 10px;
+    margin: 0;
+    text-shadow: none;
+    overflow: visible;
+}
+.rt-jq3 .sb-content .sb_toolbar .dt-button:hover {
+    background: #6a6a6a;
+    border-color: #7a7a7a;
+}
+@media screen and (max-width: 1600px) {
+    .rt-jq3 .sb-content .sb_toolbar .buttons-colvis > span,
+    .rt-jq3 .sb-content .sb_toolbar .buttons-colvis > .dt-button-down-arrow {
+        display: inline-block !important;
+    }
+    .rt-jq3 .sb-content .sb_toolbar .buttons-colvis > span > span {
         display: none !important;
     }
 }
