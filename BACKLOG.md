@@ -655,12 +655,28 @@ MD5-Cache-Buster.
            jQuery-UI-`.fg-toolbar` gibt's auf DT 1.13 nicht mehr); moderne Buttons/
            ColReorder-CSS via `AirtimeTableView::injectTableCssDependencies()` +
            `body.rt-jq3`-Styling (Suche/Button/Pagination/Checkbox-Dropdown).
-         - ⬜ **builder.js (Showbuilder rechtes Panel / „Scheduled Shows")** —
-           gleiches Muster: `$(".sb-content .fg-toolbar")` ist auf jq3 leer →
-           Timerange (Datum/Uhrzeit/Find-Shows/Filter) falsch platziert + funktionslos
-           und Select/Trim/Remove/Jump/Cancel/Columns fehlen; Fix = Fallback auf
-           `.H`/`.F` + Flex-Layout analog Library. **Nächster Schritt.**
-         - ⬜ **podcast.js** (Podcast-Tabelle, `#podcast_table`).
+         - ✅ **builder.js (Showbuilder rechtes Panel / „Scheduled Shows") DONE
+           (2026-06-04, `cb84741`).** Wurzel-Bug: DT 1.13 baut die verschachtelten
+           `<"sb-padded"<"H"C>>` / leeren `<"F">`-sDom-Slots nicht (H/F sind
+           reservierte sDom-Buchstaben → nur der *innere* Div entsteht), und das
+           jQuery-UI-`.fg-toolbar` fehlt → Timerange + Select/Trim/Remove/Jump/
+           Cancel/Columns waren weg.  Fix: jq3-conditional sDom mit dem library-
+           erprobten flachen `<"H"<"sb_toolbar"C>>`-Muster + Toolbar-Fallback auf
+           `.sb_toolbar` + programmatischer Buttons-colvis (Icon-only) + operator-
+           getunte Layout-Offsets (28/59/90 px).  Plus: `$menu` von global auf
+           lokal gezogen (das `$menu = undefined` am Funktionsende clobberte sonst
+           das geteilte Library-`$menu` → Library-Toolbar-Buttons verschwanden).
+         - ✅ **colvis-„Columns"-Dropdown unter den Button verankert (beide Panels)
+           DONE (2026-06-04, `6a4adad`).** Neuer `js/airtime/common/colvisanchor.js`
+           (`$.fn.rtColvisAnchor`, Floating UI: bottom-end + flip + shift +
+           autoUpdate, MutationObserver-Teardown).  `collectionLayout:'fixed'`
+           zentrierte das Panel mittig (Workaround gegen `overflow:hidden`-Clipping);
+           der Anchor setzt es jetzt direkt unter den Button (zentriert bleibt der
+           Graceful-Fallback, falls Floating UI fehlt).  Inline-`!important` via
+           `setProperty` schlägt das `!important` der Fallback-CSS.  Beide colvis-
+           Buttons jetzt Icon-only (gedrängte Toolbar).
+         - ⬜ **podcast.js** (Podcast-Tabelle, `#podcast_table`). **Nächster
+           DataTables-Schritt.**
       2. **Zusätzlicher Library-Filter (Advanced/Per-Column-Search)** — der
          geforkte `columnFilter` (`bUseColVis`) ist auf jq3 übersprungen; mit der
          modernen API (`columns().search()`) neu aufbauen.  *(Operator-Wunsch
