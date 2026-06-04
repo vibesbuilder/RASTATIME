@@ -1322,6 +1322,10 @@ var AIRTIME = (function (AIRTIME) {
               extend: "colvis",
               text: $.i18n._("Columns"),
               columns: ":gt(2)", // first 3 columns are fixed, never toggled
+              // Buttons inserts the collection inline next to the button, where
+              // the panel's overflow:hidden clips it to a thin strip.  'fixed'
+              // renders it as a centered, scrollable, body-level panel instead.
+              collectionLayout: "fixed",
             },
           ],
         });

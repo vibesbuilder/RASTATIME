@@ -641,16 +641,32 @@ MD5-Cache-Buster.
         (FC6+Add-Show+Overlap), Kontextmenü, Settings/Streams, Showbuilder-Tabs+
         -Timeline.
     - **PENDING (Reihenfolge):**
-      1. **DataTables-Fork-Init-Umbau** (der große Brocken): `library.js`
-         (~915–1275: sDom `R`/`C`, `oColVis`, `oColReorder`, `columnFilter`
-         `bUseColVis`), `builder.js` (~882), `podcast.js` → auf jq3 die **modernen
-         Buttons/ColReorder-1.6-APIs** statt der alten. Foundation steht; bis dahin
-         Library/Showbuilder-Library/Podcast-Tabellen auf jq3 leer (kein Tabellen-
-         Element, da `R`/`C` nicht registrieren). **Kein Regress** — waren vorher
-         auch kaputt.
-      2. **columnFilter** → built-in Column-Search (DataTables `columns().search()`).
-      3. **Buttons/ColReorder-CSS** (`css/datatables-1.13/`) an redmond/grau
-         angleichen.
+      1. **DataTables-Fork-Init-Umbau** (der große Brocken):
+         - ✅ **library.js (Library-Tabelle) DONE (2026-06-03/04, `f51a3c6` +
+           Styling-Commit).** Wurzel-Bug: die 38-Spalten-Tabelle, verschachtelt im
+           `<"dataTables_scrolling">`-sDom-Wrapper, bricht den 1.13-Init **still**
+           ab (Tabelle wird beim DOM-Build detached, kein Fehler/Alert/Warning).
+           Fix: `t` bare im sDom + Scroll-Container **post-init** wrappen; der
+           Buttons-`B`-sDom-Buchstabe bricht den Init genauso → colvis
+           **programmatisch** nach dem Init (`collectionLayout:'fixed'` = zentriertes
+           Panel, da Inline-Collection vom `overflow:hidden` geclippt würde);
+           ColReorder via `R`; Flex-Layout für Suche→Toolbar→Tabelle→Footer-
+           Reihenfolge; Toolbar-Buttons via `.library_toolbar`-Fallback (das
+           jQuery-UI-`.fg-toolbar` gibt's auf DT 1.13 nicht mehr); moderne Buttons/
+           ColReorder-CSS via `AirtimeTableView::injectTableCssDependencies()` +
+           `body.rt-jq3`-Styling (Suche/Button/Pagination/Checkbox-Dropdown).
+         - ⬜ **builder.js (Showbuilder rechtes Panel / „Scheduled Shows")** —
+           gleiches Muster: `$(".sb-content .fg-toolbar")` ist auf jq3 leer →
+           Timerange (Datum/Uhrzeit/Find-Shows/Filter) falsch platziert + funktionslos
+           und Select/Trim/Remove/Jump/Cancel/Columns fehlen; Fix = Fallback auf
+           `.H`/`.F` + Flex-Layout analog Library. **Nächster Schritt.**
+         - ⬜ **podcast.js** (Podcast-Tabelle, `#podcast_table`).
+      2. **Zusätzlicher Library-Filter (Advanced/Per-Column-Search)** — der
+         geforkte `columnFilter` (`bUseColVis`) ist auf jq3 übersprungen; mit der
+         modernen API (`columns().search()`) neu aufbauen.  *(Operator-Wunsch
+         2026-06-04.)*
+      3. **Buttons/ColReorder-CSS** — für die Library erledigt (`body.rt-jq3`-Block
+         in styles.css); für die übrigen Tabellen noch angleichen.
       4. **Kosmetik-Politur** (zurückgestellte jQuery-UI-1.13-Punkte): Scheduled-
          Tracks-Dialog sitzt zu weit oben; View-Dialog-Schließen-Icon unsichtbar;
          Add/Edit-Show-Hintergrund zu hell; restliche blaue Reste (Borders/

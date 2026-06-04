@@ -3661,7 +3661,7 @@ button.btn-icon-text > i.icon-white {
     left: 152px;
     right: 0;
     bottom: 0;
-    padding: 10px 10px 40px;
+    padding: 10px 10px 10px;
     border: none;
 
     -webkit-box-sizing: border-box;
@@ -4495,3 +4495,204 @@ body.droppable .artwork-upload .artwork-preview {
 }
 
 /* Track Edit - Cue and Gain editor GUI ends here */
+
+/* ===================================================================
+   RASTATIME 2026-06-03 (JS-modernization stage 2, ?jq3 path)
+   DataTables 1.13 dropped the jQuery-UI .ui-widget-header / .fg-toolbar toolbar
+   markup the legacy library CSS used to pin the top toolbar and the bottom
+   footer (length + pagination) in place; without it both collapse on top of the
+   absolutely-positioned scrolling table.  #library_display_wrapper is an
+   absolutely-sized box, so lay its children out as a flex column -- the natural
+   order is then search -> toolbar -> scrolling table -> footer, exactly like the
+   legacy / LibreTime layout.  The colvis control is the modern .dt-button (not
+   the 2012 ColVis), restyled to the RASTATIME grey.  Scoped under body.rt-jq3 so
+   the legacy (1.9) default path is completely untouched.
+   =================================================================== */
+.rt-jq3 #library_display_wrapper {
+    display: flex;
+    flex-direction: column;
+}
+.rt-jq3 #library_display_wrapper > .dataTables_scrolling {
+    position: relative;
+    top: auto;
+    bottom: auto;
+    left: auto;
+    right: auto;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+}
+/* search row: full-width field flush with the table, dropping the legacy
+   -30px/-8px pull hacks (they assumed the jQuery-UI header overlap) */
+.rt-jq3 #library_display_wrapper > .dataTables_filter {
+    margin: 0 0 5px 0;
+    padding: 0;
+}
+.rt-jq3 #library_content .dataTables_filter label {
+    display: block;
+    width: 100%;
+    margin: 0;
+}
+/* DataTables 1.13 renders the search field as input[type="search"], so the
+   legacy input[type="text"] width rules no longer match -- target it directly */
+.rt-jq3 #library_content .dataTables_filter input {
+    width: 100%;
+    box-sizing: border-box;
+    margin: 0;
+}
+/* toolbar row: colvis button floated right */
+.rt-jq3 #library_display_wrapper .H {
+    border: 0;
+    background: none;
+    padding: 0;
+}
+.rt-jq3 #library_display_wrapper .library_toolbar .dt-buttons {
+    float: right;
+    margin: 0 4px 6px 0;
+}
+.rt-jq3 #library_display_wrapper .library_toolbar .dt-button {
+    background: #565656;
+    color: #eee;
+    border: 1px solid #6a6a6a;
+    border-radius: 0;
+    font-size: 12px;
+    font-weight: normal;
+    line-height: 16px;
+    min-width: 64px;
+    padding: 4px 12px;
+    margin: 0;
+    text-shadow: none;
+    overflow: visible;
+}
+.rt-jq3 #library_display_wrapper .library_toolbar .dt-button span {
+    overflow: visible;
+}
+.rt-jq3 #library_display_wrapper .library_toolbar .dt-button:hover {
+    background: #6a6a6a;
+    border-color: #7a7a7a;
+}
+/* footer row (length + info + pagination) -- sits at the bottom via flex order */
+.rt-jq3 #library_display_wrapper > .F {
+    border: 0;
+    background: none;
+}
+/* pagination: DataTables 1.13 renders .paginate_button anchors (the legacy CSS
+   styled jQuery-UI .ui-button, which 1.13 no longer emits) */
+.rt-jq3 .dataTables_paginate .paginate_button {
+    display: inline-block;
+    box-sizing: border-box;
+    min-width: 24px;
+    padding: 2px 8px;
+    margin-left: 2px;
+    text-align: center;
+    color: #eee !important;
+    background: #565656;
+    border: 1px solid #6a6a6a;
+    border-radius: 3px;
+    font-size: 12px;
+    line-height: 16px;
+    cursor: pointer;
+}
+.rt-jq3 .dataTables_paginate .paginate_button:hover {
+    background: #6a6a6a;
+    border-color: #7a7a7a;
+}
+.rt-jq3 .dataTables_paginate .paginate_button.current,
+.rt-jq3 .dataTables_paginate .paginate_button.current:hover {
+    background: #6a6a6a;
+    border-color: #ff5d1a;
+    color: #fff !important;
+}
+.rt-jq3 .dataTables_paginate .paginate_button.disabled,
+.rt-jq3 .dataTables_paginate .paginate_button.disabled:hover {
+    opacity: .4;
+    cursor: default;
+    background: #565656;
+    border-color: #6a6a6a;
+}
+
+/* colvis collection -- rendered with collectionLayout:'fixed' (see library.js):
+   a centered, scrollable panel that escapes the panel's overflow:hidden clip.
+   Centre it explicitly (override the vendored margin-left column variants),
+   apply the dark theme, and render the column toggles as LibreTime-style
+   checkboxes.  !important because the vendored buttons CSS may load later. */
+div.dt-button-collection.fixed {
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    margin: 0 !important;
+    width: 240px !important;
+    max-height: 75vh !important;
+    overflow-y: auto !important;
+    background: #2b2b2b !important;
+    border: 1px solid #5b5b5b !important;
+    border-radius: 4px !important;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, .7) !important;
+    padding: 6px 0 !important;
+}
+/* the vendored CSS also scrolls the inner :last-child -> two scrollbars; keep
+   only the panel's own scrollbar */
+div.dt-button-collection.fixed > * {
+    max-height: none !important;
+    overflow: visible !important;
+}
+div.dt-button-collection .dt-button {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    text-align: left;
+    margin: 0;
+    padding: 5px 14px;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    color: #ccc;
+    font-size: 13px;
+    line-height: 18px;
+}
+div.dt-button-collection .dt-button:hover {
+    background: #3a3a3a;
+    color: #fff;
+}
+/* LibreTime-style checkbox in front of each column (replaces the base
+   right-aligned "checkmark", which is hidden below) */
+div.dt-button-collection .dt-button::before {
+    content: "";
+    display: inline-block;
+    width: 13px;
+    height: 13px;
+    margin-right: 9px;
+    vertical-align: -2px;
+    border: 1px solid #888;
+    border-radius: 2px;
+    background: #1a1a1a;
+    text-align: center;
+    font-size: 11px;
+    line-height: 13px;
+    color: #fff;
+}
+div.dt-button-collection .dt-button.dt-button-active {
+    color: #fff;
+}
+div.dt-button-collection .dt-button.dt-button-active::before {
+    content: "\2713";
+    background: #ff5d1a;
+    border-color: #ff5d1a;
+}
+div.dt-button-collection .dt-button.dt-button-active::after {
+    display: none !important;
+}
+
+/* tighten the gap between the panel heading and the search field (the legacy
+   layout reserved 34px at the top of the wrapper for the jQuery-UI header) */
+.rt-jq3 .outer-datatable-wrapper .dataTables_wrapper {
+    top: 8px;
+}
+/* toolbar button group: tighten the top so it sits flush under the search */
+.rt-jq3 .btn-toolbar {
+    padding: 0 5px 5px 5px;
+}
+/* drop the jQuery-UI 1.13 content border (the legacy 1.8 look had none) */
+.rt-jq3 .ui-widget.ui-widget-content {
+    border: 0;
+}

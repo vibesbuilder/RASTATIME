@@ -139,6 +139,12 @@ var AIRTIME = (function (AIRTIME) {
 
   mod.setupLibraryToolbar = function () {
     var $toolbar = $(".lib-content .fg-toolbar:first");
+    // RASTATIME 2026-06-03 (?jq3): DataTables 1.13 drops the jQuery-UI
+    // .fg-toolbar wrapper, so the toolbar buttons have no home; fall back to the
+    // sDom .library_toolbar slot (present on both stacks).
+    if ($toolbar.length === 0) {
+      $toolbar = $(".lib-content .library_toolbar:first");
+    }
 
     mod.createToolbarButtons();
 
