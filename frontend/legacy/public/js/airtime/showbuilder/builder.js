@@ -537,9 +537,21 @@ var AIRTIME = (function (AIRTIME) {
 
       bStateSave: true,
       fnStateSaveParams: function (oSettings, oData) {
-        //remove oData components we don't want to save.
-        delete oData.oSearch;
-        delete oData.aoSearchCols;
+        //remove oData components we don't want to save: searches must not
+        // persist across page loads.
+        delete oData.oSearch; // DataTables 1.9 global search
+        delete oData.aoSearchCols; // DataTables 1.9 per-column searches
+        // RASTATIME 2026-06-04 (?jq3): DataTables 1.13 renamed the state search
+        // fields, so the 1.9 deletes above silently miss on the modern stack.
+        // Strip the 1.13 shapes too, but keep columns[].visible.
+        delete oData.search; // DataTables 1.13 global search
+        if (oData.columns) {
+          $.each(oData.columns, function (i, c) {
+            if (c && c.search) {
+              c.search.search = "";
+            }
+          });
+        }
       },
       fnStateSave: function fnStateSave(oSettings, oData) {
         localStorage.setItem("datatables-timeline", JSON.stringify(oData));
@@ -572,6 +584,19 @@ var AIRTIME = (function (AIRTIME) {
         }
 
         oData.iCreate = parseInt(oData.iCreate, 10);
+
+        // RASTATIME 2026-06-04 (?jq3): never restore a persisted search (see
+        // fnStateSaveParams); also clears any search left in older saved state.
+        delete oData.oSearch;
+        delete oData.aoSearchCols;
+        delete oData.search;
+        if (oData.columns) {
+          $.each(oData.columns, function (i, c) {
+            if (c && c.search) {
+              c.search.search = "";
+            }
+          });
+        }
       },
 
       fnServerData: mod.fnServerData,

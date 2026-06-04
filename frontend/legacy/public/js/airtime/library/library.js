@@ -930,9 +930,23 @@ var AIRTIME = (function (AIRTIME) {
       aLengthMenu: [25, 50, 100],
       bStateSave: true,
       fnStateSaveParams: function (oSettings, oData) {
-        // remove oData components we don't want to save.
-        delete oData.oSearch;
-        delete oData.aoSearchCols;
+        // remove oData components we don't want to save: searches must NOT
+        // persist across page loads (otherwise the table comes back filtered
+        // while the rebuilt advanced-search panel is empty + collapsed).
+        delete oData.oSearch; // DataTables 1.9 global search
+        delete oData.aoSearchCols; // DataTables 1.9 per-column searches
+        // RASTATIME 2026-06-04 (?jq3): DataTables 1.13 renamed the state search
+        // fields, so the 1.9 deletes above silently miss on the modern stack and
+        // the search leaked into saved state.  Strip the 1.13 shapes too, but
+        // keep columns[].visible so column show/hide still persists.
+        delete oData.search; // DataTables 1.13 global search
+        if (oData.columns) {
+          $.each(oData.columns, function (i, c) {
+            if (c && c.search) {
+              c.search.search = "";
+            }
+          });
+        }
       },
       fnStateSave: function (oSettings, oData) {
         localStorage.setItem(dataTableLocalStorageKey, JSON.stringify(oData));
@@ -1004,6 +1018,21 @@ var AIRTIME = (function (AIRTIME) {
         oData.iLength = parseInt(oData.iLength, 10);
         oData.iStart = parseInt(oData.iStart, 10);
         oData.iCreate = parseInt(oData.iCreate, 10);
+
+        // RASTATIME 2026-06-04 (?jq3): never restore a persisted search (see
+        // fnStateSaveParams).  Stripping on load as well neutralises any search
+        // already left in an older saved state, so the very first page load
+        // after this fix is clean -- without waiting for the next state save.
+        delete oData.oSearch;
+        delete oData.aoSearchCols;
+        delete oData.search;
+        if (oData.columns) {
+          $.each(oData.columns, function (i, c) {
+            if (c && c.search) {
+              c.search.search = "";
+            }
+          });
+        }
       },
 
       sAjaxSource: baseUrl + "Library/contents-feed",
@@ -1431,17 +1460,172 @@ var AIRTIME = (function (AIRTIME) {
         }
       });
 
-      // RASTATIME 2026-06-01 (JS-modernization stage 2): the columnFilter fork
-      // (advanced per-column search) couples to the old ColVis (bUseColVis) +
-      // the colReorderMap.  On ?jq3 (modern Buttons stack) skip it for now so the
-      // table renders; it is re-wired to the modern fork APIs in a follow-up.
-      if (!($.fn.dataTable && $.fn.dataTable.Buttons)) {
+      // RASTATIME 2026-06-01 (JS-modernization stage 2): the 2012 columnFilter
+      // fork (advanced per-column search) couples to the old ColVis (bUseColVis)
+      // + the colReorderMap and only speaks the DataTables 1.9 API.
+      if (!dtModern) {
         oTable.columnFilter({
           aoColumns: colsForAdvancedSearch,
           bUseColVis: true,
           sPlaceHolder: "head:before",
         });
+      } else {
+        // RASTATIME 2026-06-04 (?jq3): rebuild the same per-column filters on the
+        // modern stack.  The backend contract is unchanged -- DataTables 1.13 in
+        // legacy-compat mode still sends sSearch_{N}/mDataProp_{N}, a range is
+        // just the "min~max" string the backend already parses, and fnServerData
+        // already sends advSearch -- so we only populate the #advanced_search
+        // slots and wire fnFilter (which fnSetFilteringDelay debounces).
+        wireModernColumnFilter(oTable, aoCols);
       }
+    }
+
+    // RASTATIME 2026-06-04 (?jq3 / DataTables 1.13): modern replacement for the
+    // 2012 dataTables.columnFilter.js plugin (advanced per-column library
+    // search).  Populates the #advanced_search slots built by setColumnFilter()
+    // with the right control per column type and wires each to fnFilter:
+    //   "s"  text   -> sSearch_{idx} = value      (backend ILIKE substring)
+    //   "n"  range  -> sSearch_{idx} = "from~to"  (backend >= / <= bounds)
+    //   "tt" select -> sSearch_{idx} = type id    (backend exact match)
+    // fnFilter is debounced globally by fnSetFilteringDelay(350); the table's
+    // fnServerData already sends advSearch + validates, so the PHP backend stays
+    // byte-for-byte unchanged.  The legacy stack (jQuery 1.8 / DT 1.9) keeps the
+    // plugin; this runs only on the modern Buttons stack.
+    function wireModernColumnFilter(oTable, aoCols) {
+      var sRangeFormat = $.i18n._("From {from} to {to}");
+      // Same three label fragments the plugin produced from sRangeFormat.
+      function rangeLabelPart(place) {
+        if (place === 0) {
+          return sRangeFormat.substring(0, sRangeFormat.indexOf("{from}"));
+        }
+        if (place === 1) {
+          return sRangeFormat.substring(
+            sRangeFormat.indexOf("{from}") + 6,
+            sRangeFormat.indexOf("{to}"),
+          );
+        }
+        return sRangeFormat.substring(sRangeFormat.indexOf("{to}") + 4);
+      }
+      // Unit/format hints, identical to the forked plugin's range placeholders.
+      function rangePlaceholder(dbname) {
+        if (dbname === "bit_rate") {
+          return $.i18n._("kbps");
+        }
+        if (dbname === "sample_rate") {
+          return $.i18n._("kHz");
+        }
+        if (dbname === "utime" || dbname === "mtime" || dbname === "lptime") {
+          return $.i18n._("yyyy-mm-dd");
+        }
+        if (dbname === "length" || dbname === "cuein" || dbname === "cueout") {
+          return $.i18n._("hh:mm:ss.t");
+        }
+        return "";
+      }
+      // Reorder-proof: the backend pairs sSearch_{i} with mDataProp_{i} by the
+      // current aoColumns position, and ColReorder rewrites aoColumns, so resolve
+      // the live index by data name at filter time rather than caching it.
+      function liveColIndex(dbname) {
+        var cols = oTable.fnSettings().aoColumns;
+        for (var i = 0; i < cols.length; i++) {
+          if (cols[i].mData === dbname) {
+            return i;
+          }
+        }
+        return -1;
+      }
+      // fnSetFilteringDelay only debounces the global search box, not column
+      // filters, so debounce the server round-trip here (one timer per column).
+      var filterTimers = {};
+      // Validate immediately so the inline valid/invalid icon updates on every
+      // keystroke, then debounce the actual column search + redraw.
+      function applyFilter(dbname, value) {
+        var advSearchFields = $("div#advanced_search").children(":visible");
+        if (!validateAdvancedSearch(advSearchFields)) {
+          return;
+        }
+        clearTimeout(filterTimers[dbname]);
+        filterTimers[dbname] = setTimeout(function () {
+          var idx = liveColIndex(dbname);
+          if (idx >= 0) {
+            oTable.fnFilter(value, idx, false, false);
+          }
+        }, 350);
+      }
+
+      $.each(aoCols, function (i, ele) {
+        if (!ele.bSearchable) {
+          return;
+        }
+        var dbname = ele.mDataProp;
+        var type = libraryColumnTypes[dbname];
+        // Scoped to #advanced_search so a same-named id elsewhere can't match.
+        var $slot = $("#advanced_search").find("#" + dbname);
+        if ($slot.length === 0) {
+          return;
+        }
+        $slot.empty();
+
+        if (type === "tt") {
+          // Track type: a <select> of all types (exact match on track_type_id).
+          var $sel = $('<select class="filter_track_type_select"></select>');
+          $sel.append(
+            $("<option></option>")
+              .attr("value", "")
+              .text($.i18n._("All track types")),
+          );
+          if (typeof TRACKTYPES !== "undefined" && TRACKTYPES) {
+            $.each(TRACKTYPES, function (id, tt) {
+              $sel.append(
+                $("<option></option>")
+                  .attr("value", id)
+                  .text(tt && (tt.name || tt.code) ? tt.name || tt.code : id),
+              );
+            });
+          }
+          $sel.on("change", function () {
+            applyFilter(dbname, this.value);
+          });
+          $slot.append($sel);
+        } else if (type === "n") {
+          // Numeric / length / date: a From-To pair joined as "from~to".
+          var ph = rangePlaceholder(dbname);
+          var $from = $('<input type="text" class="number_range_filter"/>').attr(
+            "placeholder",
+            ph,
+          );
+          var $to = $('<input type="text" class="number_range_filter"/>').attr(
+            "placeholder",
+            ph,
+          );
+          $slot
+            .append(document.createTextNode(rangeLabelPart(0)))
+            .append($from)
+            .append(document.createTextNode(rangeLabelPart(1)))
+            .append($to)
+            .append(document.createTextNode(rangeLabelPart(2)));
+          $slot.wrapInner(
+            '<span class="filterColumn filter_number_range"></span>',
+          );
+          var onRange = function () {
+            var from = ($from.val() || "").trim();
+            var to = ($to.val() || "").trim();
+            applyFilter(
+              dbname,
+              from === "" && to === "" ? "" : from + "~" + to,
+            );
+          };
+          $from.add($to).on("keyup change", onRange);
+        } else {
+          // String ("s") or any unmapped searchable column: plain substring text.
+          var $inp = $('<input type="text" class="text_filter"/>');
+          $slot.append($inp);
+          $slot.wrapInner('<span class="filter_column filter_text"></span>');
+          $inp.on("keyup change", function () {
+            applyFilter(dbname, this.value);
+          });
+        }
+      });
     }
 
     function setFilterElement(iColumn, bVisible) {
