@@ -1320,7 +1320,13 @@ var AIRTIME = (function (AIRTIME) {
           buttons: [
             {
               extend: "colvis",
-              text: $.i18n._("Columns"),
+              // icon + text span: the responsive rule (max-width:1600px) hides
+              // ".content-pane button > span", collapsing toolbar buttons to
+              // icon-only; give colvis an icon so it isn't an empty button there.
+              text:
+                '<i class="icon-white icon-th-list"></i> <span>' +
+                $.i18n._("Columns") +
+                "</span>",
               columns: ":gt(2)", // first 3 columns are fixed, never toggled
               // Buttons inserts the collection inline next to the button, where
               // the panel's overflow:hidden clips it to a thin strip.  'fixed'

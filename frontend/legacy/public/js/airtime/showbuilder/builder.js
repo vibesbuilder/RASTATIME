@@ -1355,6 +1355,15 @@ var AIRTIME = (function (AIRTIME) {
     $toolbar = $(".sb-content .fg-toolbar:first");
     var footer = $(".sb-content .fg-toolbar:last"),
       timerange = $(".sb-timerange");
+    // RASTATIME 2026-06-04 (?jq3): DataTables 1.13 drops the jQuery-UI
+    // .fg-toolbar wrapper, so the timerange + Select/Trim/Remove/Jump/Cancel
+    // buttons have no home; fall back to the sDom .H (top) / .F (bottom) slots.
+    if ($toolbar.length === 0) {
+      $toolbar = $(".sb-content .H:first");
+    }
+    if (footer.length === 0) {
+      footer = $(".sb-content .F:first");
+    }
     $toolbar.append(timerange);
 
     $menu = $("<div class='btn-toolbar'/>");

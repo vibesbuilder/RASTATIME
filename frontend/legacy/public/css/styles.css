@@ -4588,7 +4588,6 @@ body.droppable .artwork-upload .artwork-preview {
     color: #eee !important;
     background: #565656;
     border: 1px solid #6a6a6a;
-    border-radius: 3px;
     font-size: 12px;
     line-height: 16px;
     cursor: pointer;
@@ -4682,6 +4681,12 @@ div.dt-button-collection .dt-button.dt-button-active::before {
 div.dt-button-collection .dt-button.dt-button-active::after {
     display: none !important;
 }
+/* the responsive @media(max-width:1600px) rule hides ".content-pane button >
+   span" to collapse the toolbar to icons; the dropdown column names must stay
+   visible regardless */
+div.dt-button-collection .dt-button > span {
+    display: inline-block !important;
+}
 
 /* tighten the gap between the panel heading and the search field (the legacy
    layout reserved 34px at the top of the wrapper for the jQuery-UI header) */
@@ -4695,4 +4700,23 @@ div.dt-button-collection .dt-button.dt-button-active::after {
 /* drop the jQuery-UI 1.13 content border (the legacy 1.8 look had none) */
 .rt-jq3 .ui-widget.ui-widget-content {
     border: 0;
+}
+/* collapse the colvis "Columns" button to icon-only at the same breakpoint as
+   the other toolbar buttons.  The base @media(max-width:1600px) rule excludes
+   dropdown-toggles (so dropdowns keep their label); the colvis button is one,
+   so re-hide just its own text span here -- only the main button (direct child
+   of .dt-buttons), never the collection items (their names stay visible). */
+@media screen and (max-width: 1600px) {
+    /* The base rule hides ".content-pane button > span" for icon-only collapse,
+       which blanks the colvis button too (its icon lives inside that span).
+       Markup: <button.buttons-colvis><span><i/> <span>Columns</span></span>
+       <span.dt-button-down-arrow>.  Re-show the icon wrapper + the down arrow,
+       and hide only the inner "Columns" text. */
+    .rt-jq3 #library_display_wrapper .library_toolbar .buttons-colvis > span,
+    .rt-jq3 #library_display_wrapper .library_toolbar .buttons-colvis > .dt-button-down-arrow {
+        display: inline-block !important;
+    }
+    .rt-jq3 #library_display_wrapper .library_toolbar .buttons-colvis > span > span {
+        display: none !important;
+    }
 }
