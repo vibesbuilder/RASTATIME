@@ -642,8 +642,8 @@ MD5-Cache-Buster.
     - ⬜ **💡 User-Manual-Screenshots** (Schedule-Kapitel, alle 4 Sprachen)
       auf den FC6-Look aktualisieren — Bedienung unverändert, daher niedrige
       Prio; sinnvoll gebündelt mit der FC1.5-Fork-Entfernung.
-  - 🔄 **jQuery 1.8 → 3.7 — IN ARBEIT hinter `?jq3`-Flag (Checkpoint 2026-06-01).**
-    Default = jQuery 1.8 (unberührter Live-Betrieb). Resume-Details:
+  - 🔄 **jQuery 1.8 → 3.7 — jq3 ist Default seit 2026-06-05 (Stufe 5a); nur noch
+    5b-Cleanup offen.** `?jq3=0` bleibt der Rollback (wie FC6). Resume-Details:
     - **Flag:** `?jq3=1` setzt Session-Cookie `rt_jq3`, `?jq3=0` löscht; Helper
       `PageLayoutInitPlugin::rtUseJquery3()`. Weitere Helfer: `rtJqueryUiThemeCss()`
       (redmond 1.8.8 vs `css/redmond-1.13/`) + `rtDataTablesCore()` (DT 1.9 vs
@@ -735,9 +735,15 @@ MD5-Cache-Buster.
            `jquery.flot.time.js` für `mode:"time"`).  Beide rendern auf jq3
            (DataTable + Flot-Canvas verifiziert); sind nur leer, weil aktuell
            keine Listener-Stats vorliegen (→ separates 🔴-Item oben).
-         - ⬜ **Übrige Seiten-Verifikation (Schritt 4)** — die DataTables sind
-           durch; vor dem Default-Flip restliche Seiten auf jq3 sichten (Settings,
-           Dialoge, Smartblock, Kalender-Restkanten etc.).
+         - ✅ **Übrige Seiten-Verifikation (Schritt 4) DONE (2026-06-05).** Sweep
+           über die restlichen Seiten auf jq3 (Drag-Reorder, Slider, Autocomplete,
+           Template-Reorder, Prefs, Users, Smartblock-Generate, Radio-Seite) sauber.
+           Einziger Fund: **Datei-Upload 500** — als vorbestehender Backend-/PHP-8-
+           Bug entlarvt (REST-CSRF-Feldname `csrf` vs gelesenes `csrf_token`; bei
+           multipart zusätzlich `null['csrf_token']`-Crash auf PHP 8), **nicht**
+           jq3-verursacht (Legacy identisch).  Fix `1f66224` (ACL-Plugin akzeptiert
+           `csrf`|`csrf_token` + Null-Guard für nicht-JSON-Bodies), verifiziert auf
+           `?jq3=1` **und** `?jq3=0`.
       2. ✅ **Advanced/Per-Column-Library-Filter DONE (2026-06-04, `62923e3`).**
          Der geforkte 2012er `columnFilter` (nur DT-1.9-API) war auf jq3
          übersprungen → Panel da, Felder tot.  Neuer `wireModernColumnFilter()`
@@ -760,8 +766,31 @@ MD5-Cache-Buster.
          Tracks-Dialog sitzt zu weit oben; View-Dialog-Schließen-Icon unsichtbar;
          Add/Edit-Show-Hintergrund zu hell; restliche blaue Reste (Borders/
          Datepicker-Tage/Icons).
-      5. **Flag→Default flippen** (wie FC6: `?jq3=0` als Rollback) + **Migrate-Netz
-         entfernen**, wenn JQMIGRATE-Warnungen sauber. CHANGELOG/ARCHITECTURE.
+      5. **Flag→Default flippen + Migrate-Netz entfernen** (gestaffelt):
+         - ✅ **5a Default-Flip DONE (2026-06-05, `87c1d35` + CHANGELOG `9514981`).**
+           `rtUseJquery3()` Default `false → true` → ohne Flag/Cookie laden jetzt
+           jQuery 3.7.1 + migrate + UI 1.13.3 + DataTables 1.13 (App-Layout +
+           Radio-Page; `rtDataTablesCore()` hängt am selben Flag → 1.13 im
+           Gleichschritt).  Rollback: `?jq3=0` (Cookie, per Session) + Commit-Revert
+           (global).  jquery-migrate bleibt als Netz.  Live-verifiziert per curl
+           (Default→jquery-3.7.1 HTTP 200, `?jq3=0`→jquery-1.8.3).
+         - 🟡 **5b DEFER — Migrate-Netz + Legacy-Assets entfernen.** Zu entfernen:
+           jquery-migrate 3.5.2 + die Legacy-Assets (jQuery 1.8.3, jQuery UI 1.8.x +
+           redmond-1.8, DataTables 1.9, `$.browser`-Shim) + die `?jq3`-Flag-Logik
+           (`rtUseJquery3`/`rtJqueryUiThemeCss`/`rtDataTablesCore` + alle
+           Conditional-Loads in PageLayoutInitPlugin/IndexController) + die
+           zugehörigen `assets.json`-Einträge.
+           **Vorbedingungen (beide nötig):**
+           1. Der jq3-Default hat sich über eine Bewährungsphase im Livebetrieb
+              stabil gezeigt (Operator gibt Signal — testet ab 2026-06-05 einige
+              Tage).
+           2. Die `JQMIGRATE`-Konsolen-Warnungen sind seitenübergreifend sauber —
+              sonst entfernt man Shims, auf die noch Code baut (vgl. Hauptrisiko 2:
+              `method` vs `type` kann AJAX still auf GET kippen).  Prüfung:
+              `jQuery.migrateWarnings` pro Seite.
+           Bis dahin Legacy + Migrate als Sofort-Rollback behalten.  Abschluss:
+           CHANGELOG-Eintrag (ARCHITECTURE.md existiert nicht → CHANGELOG ist die
+           Quelle, wie bei FC6).
   - ⬜ **DataTables 1.13 → 2.0** (eigener späterer Schritt nach jQuery 3):
     server-side-Format (sEcho/aaData → draw/data) + Init auf neue API umstellen.
     Modernitäts-Wette, nicht jQuery-3-blockierend.
