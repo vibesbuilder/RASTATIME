@@ -85,6 +85,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Datei-Upload (REST-CSRF) repariert — `csrf`-Formularfeld akzeptiert
+  (2026-06-05, `1f66224`)** — Uploads auf `/rest/media` (Dashboard-Dropzone)
+  scheiterten: der Zend-CSRF-**Form**-Element-Feldname ist `csrf`, der ACL-Plugin
+  las aber `csrf_token` → `getParam('csrf_token')` leer → Fallback auf
+  `json_decode(body)` (bei multipart leer) → `verifyCSRFToken(null)` → **401** bei
+  jedem Upload.  Auf PHP 8 warf der alte `null['csrf_token']`-Body-Fallback
+  zusätzlich „Trying to access array offset on null" → **500**.  Fix: der
+  ACL-Plugin akzeptiert nun `csrf` **oder** `csrf_token` (`csrf_token` bevorzugt →
+  plupload / PUT-JSON / Query-String unverändert) + Null-Guard für
+  nicht-JSON-Bodies.  Hintergrund: der Dropzone-`sending`-Hook, der `csrf_token`
+  anhängen würde, feuert auf jQuery 3 nicht rechtzeitig (sein
+  `$(document).ready`-Setup läuft einen Microtask nach Dropzones Auto-Discover) —
+  gelesen wird daher das zuverlässig gesendete statische `csrf`-Formularfeld,
+  timing-unabhängig.  Vorbestehender Backend-/PHP-8-Bug, kein jq3-Flip-Blocker
+  (läuft auf Legacy identisch).  Operator-verifiziert: Upload läuft auf `?jq3=1`
+  **und** `?jq3=0`, Track erscheint in der Library.
+
 - **Live-Stream im Embed-Player für Remote-Hörer erreichbar gemacht
   (2026-06-01, `bd5d9ca`)** — der Embed-Player (Muses `Html5Player`, u.a. der
   Live-Stream-Player auf der Radio-Page) spielte die konfigurierte Stream-

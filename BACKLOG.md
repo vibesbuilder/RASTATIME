@@ -897,6 +897,35 @@ Sortierung der bereits-gespielten + nächsten Tracks freezable.
 
 ## 🐞 Known Issues / Bug Backlog
 
+### 🟡 „Recent Uploads"-Liste aktualisiert sich nicht automatisch nach Upload
+
+**Status:** Defer — rein kosmetisch (Operator-Beobachtung 2026-06-05).
+**Repro:** Datei via Dashboard-Dropzone hochladen → Track erscheint korrekt in der
+Library, **aber nicht** sofort in der „Recent Uploads"-Liste auf `/plupload`; erst
+nach erneutem Öffnen/Reload von `/plupload` ist er dort sichtbar.
+**Ausschluss:** Tritt auf `?jq3=1` **und** `?jq3=0` auf → kein Migrations-Bug,
+vorbestehend.  Upload + DB-Persistenz funktionieren; nur das Live-Nachladen der
+Recent-Uploads-Liste fehlt (vermutlich kein Refresh-Callback nach dem
+Dropzone-`success`).
+**Aufwand:** klein — nach erfolgreichem Upload die Liste neu ziehen.
+
+### 🟡 CSRF-Token rotiert bei jedem Fehlversuch (poisont die offene Seite bis Reload)
+
+**Status:** Defer — kein Bug, aber raue UX (notiert 2026-06-05 beim Upload-Fix).
+**Hintergrund:** `Acl_plugin.php:184` regeneriert den Session-`authtoken` bei
+**jedem** fehlgeschlagenen CSRF-Check.  Folge: ein einzelner Fehlschlag macht den
+im DOM gerenderten Token der bereits offenen Seite ungültig → alle weiteren
+nicht-GET-REST-Aktionen dieser Seite scheitern, bis hart neu geladen wird.
+Aggressiver als nötig.
+**Option:** nur bei echten Angriffs-Signalen rotieren statt bei jedem Mismatch —
+Sicherheits-Verhalten, separat zu entscheiden.
+**Verwandt (optional, jetzt unnötig):** Der Dashboard-Dropzone-`sending`-Hook, der
+`csrf_token` anhängen würde, feuert auf jQuery 3 nicht rechtzeitig (sein
+`$(document).ready`-Setup läuft einen Microtask nach Dropzones Auto-Discover).  Der
+Server-Fix (akzeptiert das statische `csrf`-Formularfeld) macht den Client-Pfad
+überflüssig; optionales Aufräumen wäre, die `Dropzone.options.content`-Zuweisung aus
+`onReady` auf Modul-Init zu ziehen (`main_builder.js`).
+
 ### 🟡 Playout History: Tabelle + Export-Buttons werden nicht angezeigt
 
 **Status:** Defer — separater, **vorbestehender** Bug, **nicht** jQuery-3- oder
