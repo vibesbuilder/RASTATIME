@@ -16,6 +16,29 @@
 Diese sind technisch evaluiert, empfohlen, und können starten sobald
 der Operator das Signal gibt.
 
+### 🔴 Listener-Statistik zeigt keine Daten — Ursache prüfen
+
+**Status:** Zu untersuchen (Operator-Beobachtung 2026-06-05).
+**Symptom:** Unter **Analytics → Show Listener Stats** (Tabelle) **und**
+**Listener Stats** (Flot-Grafik) sind **keine Daten** vorhanden — auf
+Legacy (`?jq3=0`) **und** jq3 gleichermaßen → **kein** Frontend-/jQuery-
+Migrations-Bug, sondern es werden serverseitig keine Listener-Stats
+gesammelt/gespeichert.  Operator war mehrfach mit den Mountpoints
+verbunden, trotzdem keine Stats.
+
+**Zu prüfen:**
+- Sammelt überhaupt etwas die Icecast-Listener-Zahlen? (Cron/Worker/
+  Analyzer-Job, der Icecast `/admin/stats` o. Ä. pollt und in die DB
+  schreibt — `cc_listener_count` / das Listenerstat-Model.)
+- Ist der entsprechende Dienst/Task auf der Windows-Maschine aktiv?
+- Backend-Endpunkte `Listenerstat/get-data` + `Listenerstat/get-all-show-data`
+  liefern leere Arrays — kommt das aus einer leeren Tabelle?
+- Ggf. Icecast-Stats-Zugang (admin-Credentials) korrekt konfiguriert?
+
+**Hinweis:** Die Tabelle + die Grafik selbst sind frontendseitig auf jq3
+funktionsfähig (DataTable rendert, Flot 0.8.3 vendored) — es fehlen nur
+die Daten.
+
 ### 🟡 Backup/Restore via UI (Settings-Submenü)
 
 **Status:** Defer — A + B empfohlen & gut machbar (architektur-angepasst),
@@ -702,11 +725,19 @@ MD5-Cache-Buster.
            Footer) + Post-Init-Wrap; (d) Show-Summary-Accordion:
            `accordion("destroy")` vor Init wirft auf UI 1.13 → Guard auf
            `.ui-accordion`.
-         - ⬜ **showlistenerstat.js (Analytics → Listener Stats)** — gleiche
-           Tabellen-Klasse, sDom mit `<"dataTables_scrolling"t>` **+ `T`
-           (TableTools, 2012, lädt nicht auf 1.13)** → vermutlich auch Silent-
-           Abort.  **Vor Schritt 5 prüfen/fixen** (bare `t` + Post-Init-Wrap +
-           `T` raus).  *(Beim Playout-History-Fix entdeckt 2026-06-05.)*
+         - ✅ **showlistenerstat.js + Flot-Grafik DONE (2026-06-05, `9deac05`).**
+           **Show Listener Stats** (Tabelle): jq3-sDom (bare `t`, `T`/TableTools
+           raus, `<"dataTables_footer">`-Wrapper), Post-Init-Wrap, `dtModern` via
+           `versionCheck` (Seite lädt kein Buttons); plus `.blur(validateTimeRange())`
+           → `.blur(validateTimeRange)` (das `()` band den Rückgabe-Wert als
+           Handler → jQuery-3-`apply`-Fehler).  **Listener Stats** (Grafik):
+           Flot 0.7 (jQuery-3-inkompatibel) → **Flot 0.8.3** vendored (+ neues
+           `jquery.flot.time.js` für `mode:"time"`).  Beide rendern auf jq3
+           (DataTable + Flot-Canvas verifiziert); sind nur leer, weil aktuell
+           keine Listener-Stats vorliegen (→ separates 🔴-Item oben).
+         - ⬜ **Übrige Seiten-Verifikation (Schritt 4)** — die DataTables sind
+           durch; vor dem Default-Flip restliche Seiten auf jq3 sichten (Settings,
+           Dialoge, Smartblock, Kalender-Restkanten etc.).
       2. ✅ **Advanced/Per-Column-Library-Filter DONE (2026-06-04, `62923e3`).**
          Der geforkte 2012er `columnFilter` (nur DT-1.9-API) war auf jq3
          übersprungen → Panel da, Felder tot.  Neuer `wireModernColumnFilter()`
