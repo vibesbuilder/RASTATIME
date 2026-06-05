@@ -1,0 +1,177 @@
+"""
+cue_writer — per-hour cue sidecars for the 24/7 archive recordings.
+
+RASTATIME 2026-06-05 — Record-per-Hour stage 5.
+
+For every hour the 24/7 recorder writes ``<folder>/<YYYY-MM-DD>/<YYYY-MM-DD
+HH>-00.<ext>``, this writes a JSON sidecar next to it::
+
+    <folder>/<YYYY-MM-DD>/<YYYY-MM-DD HH>-00.cues.json
+    {
+      "version": 1,
+      "recording": "2026-06-05 14-00.mp3",
+      "hour_start": "2026-06-05T14:00:00",
+      "marks": [
+        {"t": 0.0,   "kind": "track", "event": "start", "show": "...",
+                     "title": "...", "artist": "..."},
+        {"t": 183.4, "kind": "track", "event": "end"},
+        {"t": 600.0, "kind": "show",  "event": "start", "name": "Morning Show"}
+      ]
+    }
+
+``t`` is the offset in seconds from the top of the hour, so the future
+catch-up player seeks straight to it.
+
+Design
+------
+
+* Event-driven: the PlayoutScheduler calls :meth:`item_start` /
+  :meth:`item_end` from its on-air callbacks, so the marks reflect what
+  was actually recorded (the bus) — including live DJ / webstream /
+  line-in take-overs that the scheduled playout history would not show.
+* Show boundaries are DERIVED from a change of ``show`` between
+  consecutive items, so they cover every show with content, not only
+  the ones flagged for per-show recording.
+* Times use the system local wall-clock (``now_fn``), matching the
+  recorder's local file naming, so cue offsets line up with the audio.
+* Robust: every public method swallows + logs its own errors and never
+  raises into the live callback.  A no-op while the recorder is
+  disabled or no folder is set.
+
+Hour-boundary note: a track that spans the top of the hour has its
+``start`` in the previous hour's sidecar and its ``end`` (t≈small) in the
+new hour's — the player treats an ``end`` with no preceding ``start`` as
+"continued from the previous hour".
+"""
+from __future__ import annotations
+
+import json
+import logging
+import os
+import threading
+from datetime import datetime
+from pathlib import Path
+from typing import Callable, Dict, List, Optional
+
+logger = logging.getLogger(__name__)
+
+
+def _clean(meta: Dict) -> Dict:
+    """Drop None / empty-string metadata so marks stay compact."""
+    return {k: v for k, v in meta.items() if v is not None and v != ""}
+
+
+class CueWriter:
+    """
+    Writes cue marks into the current hour's sidecar.  Thread-safe (the
+    scheduler fires callbacks from several ``threading.Timer`` threads).
+
+    Parameters
+    ----------
+    get_config:
+        Callable returning the 24/7-recording dict (shape from
+        ``liquidsoap_config.read_hourly_recording_config_from_db`` — keys
+        ``enabled`` / ``folder`` / ``format``).  Read per mark so a config
+        change is picked up without a restart.
+    now_fn:
+        Injectable local-wall-clock provider (for tests).
+    """
+
+    def __init__(
+        self,
+        get_config: Callable[[], Dict],
+        *,
+        now_fn: Callable[[], datetime] = datetime.now,
+    ) -> None:
+        self._get_config = get_config
+        self._now_fn = now_fn
+        self._lock = threading.Lock()
+        self._last_show: Optional[str] = None
+
+    # -- public API (called from the scheduler) --------------------------
+
+    def item_start(self, kind: str, *, show: Optional[str] = None, **meta) -> None:
+        """
+        Record the start of an on-air item (kind = track / webstream /
+        linein).  Emits a derived show end/start pair first when ``show``
+        differs from the previous item.
+        """
+        try:
+            with self._lock:
+                cfg = self._active_cfg()
+                if cfg is None:
+                    return
+                now = self._now_fn()
+                marks: List[Dict] = []
+                if show and show != self._last_show:
+                    if self._last_show is not None:
+                        marks.append({"kind": "show", "event": "end", "name": self._last_show})
+                    marks.append({"kind": "show", "event": "start", "name": show})
+                    self._last_show = show
+                mark = {"kind": kind, "event": "start"}
+                if show:
+                    mark["show"] = show
+                mark.update(_clean(meta))
+                marks.append(mark)
+                self._append_many(cfg, now, marks)
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            logger.warning("CueWriter.item_start(%s) failed: %s", kind, exc)
+
+    def item_end(self, kind: str) -> None:
+        """Record the end of the current on-air item."""
+        try:
+            with self._lock:
+                cfg = self._active_cfg()
+                if cfg is None:
+                    return
+                self._append_many(
+                    cfg, self._now_fn(), [{"kind": kind, "event": "end"}]
+                )
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            logger.warning("CueWriter.item_end(%s) failed: %s", kind, exc)
+
+    # -- internals -------------------------------------------------------
+
+    def _active_cfg(self) -> Optional[Dict]:
+        cfg = self._get_config() or {}
+        if not cfg.get("enabled") or not cfg.get("folder"):
+            return None
+        return cfg
+
+    def _append_many(self, cfg: Dict, now: datetime, marks: List[Dict]) -> None:
+        hour_start = now.replace(minute=0, second=0, microsecond=0)
+        offset = round((now - hour_start).total_seconds(), 2)
+        day = now.strftime("%Y-%m-%d")
+        hour = now.strftime("%H")
+        ext = str(cfg.get("format") or "mp3").lower()
+        base = f"{day} {hour}-00"
+        day_dir = Path(cfg["folder"]) / day
+        sidecar = day_dir / f"{base}.cues.json"
+
+        data = self._load(sidecar, f"{base}.{ext}", hour_start)
+        for mark in marks:
+            entry = {"t": offset}
+            entry.update(mark)
+            data["marks"].append(entry)
+
+        day_dir.mkdir(parents=True, exist_ok=True)
+        tmp = day_dir / f"{base}.cues.json.tmp"
+        tmp.write_text(
+            json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8"
+        )
+        os.replace(tmp, sidecar)
+
+    def _load(self, sidecar: Path, audio_name: str, hour_start: datetime) -> Dict:
+        if sidecar.exists():
+            try:
+                d = json.loads(sidecar.read_text(encoding="utf-8"))
+                if isinstance(d, dict) and isinstance(d.get("marks"), list):
+                    return d
+            except (OSError, ValueError):
+                pass  # corrupt / unreadable -> start a fresh sidecar
+        return {
+            "version": 1,
+            "recording": audio_name,
+            "hour_start": hour_start.isoformat(),
+            "marks": [],
+        }

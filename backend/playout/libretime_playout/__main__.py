@@ -712,6 +712,15 @@ def main() -> None:
         engine_kind=engine_kind,  # Phase-C4 Teil 2: picks Icecast vs Liquidsoap-telnet reconciler
     )
 
+    # 8b. RASTATIME 2026-06-05 — Record-per-Hour cue sidecars (stage 5).
+    # Wire the CueWriter BEFORE the first refresh so on-air callbacks can
+    # mark from the start.  No-op while the 24/7 recorder is disabled.
+    from libretime_playout.cue_writer import CueWriter  # noqa: PLC0415
+    from libretime_playout.liquidsoap_config import (  # noqa: PLC0415
+        read_hourly_recording_config_from_db as _read_247_cfg,
+    )
+    scheduler.set_cue_writer(CueWriter(_read_247_cfg))
+
     # 9. Initial schedule fetch
     scheduler.refresh()
 

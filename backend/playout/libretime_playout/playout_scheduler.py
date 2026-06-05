@@ -121,6 +121,10 @@ class PlayoutScheduler:
         self._current_event: Optional[FileEvent] = None
         self._current_audio_path: Optional[str] = None
 
+        # RASTATIME 2026-06-05 — Record-per-Hour cue sidecars (stage 5).
+        # Optional; set via set_cue_writer().  None = no cue marking.
+        self._cue_writer = None
+
         # RASTATIME 2026-05-30 — Phase-F-2 race fix #3 (line-in
         # device-switch).  Monotonic counter bumped every time
         # ``_on_linein_start`` actually (re)starts a line-in source.
@@ -710,6 +714,11 @@ class PlayoutScheduler:
         self._playing_key = key
         self._current_event = event
         self._current_audio_path = str(local)
+        # RASTATIME 2026-06-05 — cue mark for the 24/7 recording sidecar.
+        self._cue_item_start(
+            "track", show=event.show_name,
+            title=event.track_title, artist=event.artist_name,
+        )
         # RASTATIME 2026-05-16 — cache the effective gain for the
         # resume path.  For file events the value is the precomputed
         # ReplayGain sum of ``cc_files.replay_gain`` and
@@ -814,6 +823,8 @@ class PlayoutScheduler:
         self._playing_key = key
         self._current_event = event
         self._current_audio_path = event.uri
+        # RASTATIME 2026-06-05 — cue mark for the 24/7 recording sidecar.
+        self._cue_item_start("webstream", show=event.show_name, uri=event.uri)
         # RASTATIME 2026-05-16 — cache the webstream's input-gain so the
         # resume path (DJ disconnect, hot-reload) reapplies it after the
         # stop/restart, instead of falling back to "no gain".
@@ -1004,6 +1015,8 @@ class PlayoutScheduler:
         self._playing_key = key
         self._current_event = event
         self._current_audio_path = self._linein_capture.listen_url
+        # RASTATIME 2026-06-05 — cue mark for the 24/7 recording sidecar.
+        self._cue_item_start("linein", show=event.show_name, name=event.name)
 
         # Drive the dashboard "On Air" light for the new row.
         row_id = getattr(event, "row_id", None)
@@ -1413,6 +1426,16 @@ class PlayoutScheduler:
             )
             return
 
+        # RASTATIME 2026-06-05 — cue mark (end of the current item) for the
+        # 24/7 recording sidecar, before the current-event bookkeeping resets.
+        _ce = self._current_event
+        if isinstance(_ce, FileEvent):
+            self._cue_item_end("track")
+        elif isinstance(_ce, WebStreamEvent):
+            self._cue_item_end("webstream")
+        elif isinstance(_ce, LineinEvent):
+            self._cue_item_end("linein")
+
         self._playing_key = None
         self._current_event = None
         self._current_audio_path = None
@@ -1637,6 +1660,25 @@ class PlayoutScheduler:
     # ------------------------------------------------------------------
     # Source switcher (MASTER > SHOW > SCHEDULED)
     # ------------------------------------------------------------------
+
+    def set_cue_writer(self, cue_writer) -> None:
+        """
+        Wire up the CueWriter (Record-per-Hour stage 5).  Called once from
+        __main__.  Optional — without it, no cue sidecars are written.  The
+        CueWriter swallows + logs its own errors, so these never break a
+        live on-air callback.
+        """
+        self._cue_writer = cue_writer
+
+    def _cue_item_start(self, kind: str, **meta) -> None:
+        cw = self._cue_writer
+        if cw is not None:
+            cw.item_start(kind, **meta)
+
+    def _cue_item_end(self, kind: str) -> None:
+        cw = self._cue_writer
+        if cw is not None:
+            cw.item_end(kind)
 
     def set_source_switcher(self, switcher) -> None:
         """Wire up the SourceSwitcher.  Called once from __main__."""
