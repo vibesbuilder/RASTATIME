@@ -690,6 +690,23 @@ MD5-Cache-Buster.
            + `#show_builder .dataTables_scrolling{top:90px}` leakten in die
            Podcast-Tabellen (auch unter `.sb-content`/`#show_builder`) → auf den
            `.sb_toolbar`-Slot eingegrenzt + Widget-Scrolling-Override.
+         - ✅ **playouthistory/historytable.js DONE (2026-06-05, `faf249d`).**
+           Die 3 Analytics-Tabellen (Log Sheet / File Summary / Show Summary)
+           rendern auf jq3.  Mehrere Versions-Gap-Bugs: (a) der Tabellen-Build
+           lief im jQuery-UI-`show`-Tab-Event, das UI 1.10+ in `activate`
+           umbenannt hat (feuert nicht mehr, auch nicht für den initialen Tab) →
+           `activate` + manueller Initial-Build; (b) `dtModern` hing an
+           `$.fn.dataTable.Buttons`, aber die Seite lädt nur den DT-Core (kein
+           Buttons) → Check via `versionCheck("1.10")`; (c) jq3-sDom (bare `t` +
+           `<"dataTables_footer">` + `.history_toolbar`-Slot, Length-Menü in den
+           Footer) + Post-Init-Wrap; (d) Show-Summary-Accordion:
+           `accordion("destroy")` vor Init wirft auf UI 1.13 → Guard auf
+           `.ui-accordion`.
+         - ⬜ **showlistenerstat.js (Analytics → Listener Stats)** — gleiche
+           Tabellen-Klasse, sDom mit `<"dataTables_scrolling"t>` **+ `T`
+           (TableTools, 2012, lädt nicht auf 1.13)** → vermutlich auch Silent-
+           Abort.  **Vor Schritt 5 prüfen/fixen** (bare `t` + Post-Init-Wrap +
+           `T` raus).  *(Beim Playout-History-Fix entdeckt 2026-06-05.)*
       2. ✅ **Advanced/Per-Column-Library-Filter DONE (2026-06-04, `62923e3`).**
          Der geforkte 2012er `columnFilter` (nur DT-1.9-API) war auf jq3
          übersprungen → Panel da, Felder tot.  Neuer `wireModernColumnFilter()`
