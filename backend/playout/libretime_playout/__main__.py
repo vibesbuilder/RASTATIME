@@ -727,6 +727,24 @@ def main() -> None:
             "appear): %s", exc,
         )
 
+    # 9c. RASTATIME 2026-06-05 — 24/7 recording retention.  Daemon thread
+    # that prunes archive day-folders older than the operator-configured
+    # window.  Re-reads cc_pref each cycle; a complete no-op while the
+    # recorder is disabled / retention_days is 0.
+    from libretime_playout.liquidsoap_config import (  # noqa: PLC0415
+        read_hourly_recording_config_from_db,
+    )
+    from libretime_playout.recording_retention import (  # noqa: PLC0415
+        RecordingRetentionThread,
+    )
+    retention_thread = RecordingRetentionThread(
+        read_hourly_recording_config_from_db
+    )
+    try:
+        retention_thread.start()
+    except Exception as exc:  # pylint: disable=broad-exception-caught
+        logger.warning("Recording retention thread failed to start: %s", exc)
+
     # 10. Main poll loop
     logger.info(
         "RASTATIME-PLAYOUT: running. "
@@ -755,6 +773,10 @@ def main() -> None:
             pass
         try:
             preflight.stop()
+        except Exception:  # pylint: disable=broad-exception-caught
+            pass
+        try:
+            retention_thread.stop()
         except Exception:  # pylint: disable=broad-exception-caught
             pass
         scheduler.shutdown()
