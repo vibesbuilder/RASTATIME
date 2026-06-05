@@ -261,6 +261,22 @@ _OPUS_VALID_SAMPLERATES = {8000, 12000, 16000, 24000, 48000}
 # needed for mp3/aac/ogg-vorbis.  Opus gets clamped to 48000.
 DEFAULT_SAMPLERATE = 44100
 
+# File extension per stream type for output.file recording targets.
+# (output.icecast uses mount paths, not extensions; output.file needs a
+# real on-disk extension matching the container the encoder writes.)
+_FILE_EXT_FOR_TYPE = {
+    "mp3": "mp3",
+    "aac": "aac",   # %ffmpeg(format="adts") = raw AAC stream
+    "ogg": "ogg",
+    "opus": "opus",
+}
+
+# RASTATIME 2026-06-05 — 24/7 hourly archive recorder defaults.  192 kbps
+# MP3 is the operator-chosen default (compliance / catch-up archive; lower
+# than the 320 k per-show recording to save disk — ~14 GB/week vs ~24 GB).
+DEFAULT_HOURLY_RECORDING_FORMAT = "mp3"
+DEFAULT_HOURLY_RECORDING_BITRATE = 192
+
 
 # ---------------------------------------------------------------------
 # Rendering helpers
@@ -768,6 +784,114 @@ def _render_linein_input_block(
     )
 
 
+def _render_hourly_recording_block(
+    *,
+    enabled: bool,
+    folder: str,
+    fmt: str = DEFAULT_HOURLY_RECORDING_FORMAT,
+    bitrate: int = DEFAULT_HOURLY_RECORDING_BITRATE,
+    samplerate: int = DEFAULT_SAMPLERATE,
+) -> str:
+    """
+    Render the 24/7 hourly archive recorder block (RASTATIME 2026-06-05).
+
+    A second ``output.file`` on the ``bus`` that runs continuously and
+    rotates to a new file at each clock-hour boundary via ``reopen_when``
+    — independent of shows, so it captures what per-show recording misses
+    (AutoDJ filler, silence, unscheduled content, emergencies).
+
+    ``enabled`` False or empty ``folder`` -> a comment stub, so the live
+    stream is unaffected until the operator turns it on in Settings ->
+    Local Machine.
+
+    Filename re-evaluated at each (re)open ->
+        <folder>/<YYYY-MM-DD>/<YYYY-MM-DD HH>-00.<ext>
+    in the system local timezone (operator-visible wall-clock).  The
+    per-day subfolder is created on reopen via file.mkdir.
+
+    ``rec247_seg`` is seeded with the current hour so there is NO spurious
+    reopen at boot — a -1 sentinel would split the first hour into two
+    files (Phase-1 reality-test 2026-06-05 confirmed the quirk + fix).
+
+    Raises ValueError for an unsupported ``fmt`` so a misconfiguration is
+    loud at render time rather than a silently missing recorder.
+    """
+    fmt = str(fmt or DEFAULT_HOURLY_RECORDING_FORMAT).lower()
+    folder = str(folder or "").strip()
+
+    if not enabled or not folder:
+        return (
+            "# (24/7 hourly recording disabled — enable it AND set a folder\n"
+            "#  in Settings -> Local Machine to turn it on)\n"
+        )
+
+    if fmt not in _ENCODER_FOR_TYPE:
+        raise ValueError(
+            f"Unsupported 24/7 recording format {fmt!r} — "
+            f"must be one of {sorted(_ENCODER_FOR_TYPE)}"
+        )
+
+    try:
+        bitrate = int(bitrate)
+    except (TypeError, ValueError):
+        bitrate = DEFAULT_HOURLY_RECORDING_BITRATE
+
+    try:
+        samplerate = int(samplerate or DEFAULT_SAMPLERATE)
+    except (TypeError, ValueError):
+        samplerate = DEFAULT_SAMPLERATE
+    if fmt == "opus" and samplerate not in _OPUS_VALID_SAMPLERATES:
+        logger.warning(
+            "24/7 recording samplerate %d Hz not supported by libopus; "
+            "clamping to 48000 Hz", samplerate,
+        )
+        samplerate = 48000
+
+    encoder = (
+        _ENCODER_FOR_TYPE[fmt]
+        .replace("${BITRATE}", str(bitrate))
+        .replace("${SAMPLERATE}", str(samplerate))
+    )
+    ext = _FILE_EXT_FOR_TYPE[fmt]
+
+    # Liquidsoap path: forward slashes (its parser prefers them on
+    # Windows), no trailing slash, escaped for the string literal.
+    folder_liq = _escape_liq_string(folder.replace("\\", "/").rstrip("/"))
+
+    return (
+        "# 24/7 hourly archive recorder (continuous, rotates on the hour).\n"
+        "# rec247_seg seeded with the current hour -> no spurious reopen at\n"
+        "# boot.  The filename fn creates the per-day subfolder on reopen.\n"
+        "rec247_seg = ref(int(gettimeofday() / 3600.))\n"
+        "def rec247_reopen() =\n"
+        "  cur = int(gettimeofday() / 3600.)\n"
+        "  if cur != rec247_seg() then\n"
+        "    rec247_seg := cur\n"
+        "    true\n"
+        "  else\n"
+        "    false\n"
+        "  end\n"
+        "end\n"
+        "def rec247_path() =\n"
+        '  day = time.string("%Y-%m-%d")\n'
+        '  hh  = time.string("%H")\n'
+        f'  p = "{folder_liq}/#{{day}}/#{{day}} #{{hh}}-00.{ext}"\n'
+        "  d = path.dirname(p)\n"
+        "  if not file.exists(d) then ignore(file.mkdir(d)) end\n"
+        "  p\n"
+        "end\n"
+        "output.file(\n"
+        '  id="recording_hourly",\n'
+        "  reopen_when=rec247_reopen,\n"
+        "  reopen_delay={120.},\n"
+        "  fallible=true,\n"
+        f"  {encoder},\n"
+        "  {rec247_path()},\n"
+        "  bus,\n"
+        ")\n"
+    )
+
+
 def _render_bus_source_block(
     *,
     main_enabled: bool,
@@ -869,6 +993,11 @@ def render_rastatime_liq(
     webstream_poll_delay_seconds: float = DEFAULT_WEBSTREAM_POLL_DELAY_SECONDS,
     linein_enabled: bool = DEFAULT_LINEIN_ENABLED,
     linein_max_buffer_seconds: float = DEFAULT_LINEIN_MAX_BUFFER_SECONDS,
+    hourly_recording_enabled: bool = False,
+    hourly_recording_folder: str = "",
+    hourly_recording_format: str = DEFAULT_HOURLY_RECORDING_FORMAT,
+    hourly_recording_bitrate: int = DEFAULT_HOURLY_RECORDING_BITRATE,
+    hourly_recording_samplerate: int = DEFAULT_SAMPLERATE,
     template_path: Optional[Path] = None,
 ) -> str:
     """
@@ -933,6 +1062,13 @@ def render_rastatime_liq(
         webstream_enabled=webstream_enabled,
         linein_enabled=linein_enabled,
     )
+    hourly_block = _render_hourly_recording_block(
+        enabled=hourly_recording_enabled,
+        folder=hourly_recording_folder,
+        fmt=hourly_recording_format,
+        bitrate=hourly_recording_bitrate,
+        samplerate=hourly_recording_samplerate,
+    )
 
     rendered = (
         template
@@ -956,6 +1092,7 @@ def render_rastatime_liq(
         .replace("${LINEIN_INPUT_BLOCK}", linein_block)
         .replace("${BUS_SOURCE_BLOCK}", bus_block)
         .replace("${ICECAST_OUTPUTS}", icecast_blocks)
+        .replace("${HOURLY_RECORDING_BLOCK}", hourly_block)
     )
     return rendered
 
@@ -983,6 +1120,11 @@ def write_rastatime_liq(
     webstream_poll_delay_seconds: float = DEFAULT_WEBSTREAM_POLL_DELAY_SECONDS,
     linein_enabled: bool = DEFAULT_LINEIN_ENABLED,
     linein_max_buffer_seconds: float = DEFAULT_LINEIN_MAX_BUFFER_SECONDS,
+    hourly_recording_enabled: bool = False,
+    hourly_recording_folder: str = "",
+    hourly_recording_format: str = DEFAULT_HOURLY_RECORDING_FORMAT,
+    hourly_recording_bitrate: int = DEFAULT_HOURLY_RECORDING_BITRATE,
+    hourly_recording_samplerate: int = DEFAULT_SAMPLERATE,
     template_path: Optional[Path] = None,
 ) -> bool:
     """
@@ -1021,6 +1163,11 @@ def write_rastatime_liq(
         webstream_poll_delay_seconds=webstream_poll_delay_seconds,
         linein_enabled=linein_enabled,
         linein_max_buffer_seconds=linein_max_buffer_seconds,
+        hourly_recording_enabled=hourly_recording_enabled,
+        hourly_recording_folder=hourly_recording_folder,
+        hourly_recording_format=hourly_recording_format,
+        hourly_recording_bitrate=hourly_recording_bitrate,
+        hourly_recording_samplerate=hourly_recording_samplerate,
         template_path=template_path,
     )
 
@@ -1077,6 +1224,74 @@ def _read_stream_outputs_from_db() -> List[Dict]:
     except Exception as exc:  # pylint: disable=broad-exception-caught
         logger.warning("Could not read stream outputs from DB: %s", exc)
         return []
+
+
+def read_hourly_recording_config_from_db() -> Dict:
+    """
+    Load the 24/7 hourly recording settings from cc_pref.  Returns a dict
+    with safe defaults (recorder disabled) when the ORM is unavailable or
+    the keys are unset, so a missing config never raises.
+
+    cc_pref keys (written by Settings -> Local Machine, frontend
+    Application_Model_Preference::*Local247Recording*):
+
+      local_247_recording_enabled         "true" / "false"
+      local_247_recording_folder          absolute path ("" = unset)
+      local_247_recording_format          mp3 / aac / ogg / opus
+      local_247_recording_bitrate         int kbps
+      local_247_recording_retention_days  int (used by the cleanup task,
+                                           NOT by the .liq render)
+
+    Shared by Pypo's startup render (libretime_playout.__main__) and the
+    manual ``render`` CLI below so both produce an identical .liq.
+    """
+    disabled = {
+        "enabled": False,
+        "folder": "",
+        "format": DEFAULT_HOURLY_RECORDING_FORMAT,
+        "bitrate": DEFAULT_HOURLY_RECORDING_BITRATE,
+        "retention_days": 0,
+    }
+    try:
+        from libretime_api.core.models import Preference  # type: ignore[import-untyped]
+
+        entries: Dict[str, str] = dict(
+            Preference.site.values_list("key", "value")
+        )
+    except Exception as exc:  # pylint: disable=broad-exception-caught
+        logger.warning("Could not read 24/7 recording config from DB: %s", exc)
+        return disabled
+
+    enabled = (
+        str(entries.get("local_247_recording_enabled", "")).strip().lower()
+        == "true"
+    )
+    folder = (entries.get("local_247_recording_folder") or "").strip()
+    fmt = (
+        entries.get("local_247_recording_format")
+        or DEFAULT_HOURLY_RECORDING_FORMAT
+    ).strip().lower()
+    try:
+        bitrate = int(
+            entries.get("local_247_recording_bitrate")
+            or DEFAULT_HOURLY_RECORDING_BITRATE
+        )
+    except (TypeError, ValueError):
+        bitrate = DEFAULT_HOURLY_RECORDING_BITRATE
+    try:
+        retention_days = int(
+            entries.get("local_247_recording_retention_days") or 0
+        )
+    except (TypeError, ValueError):
+        retention_days = 0
+
+    return {
+        "enabled": enabled,
+        "folder": folder,
+        "format": fmt,
+        "bitrate": bitrate,
+        "retention_days": retention_days,
+    }
 
 
 def _setup_django_if_available() -> bool:
@@ -1174,6 +1389,7 @@ def main(argv: Optional[List[str]] = None) -> int:
             "Read %d enabled stream output(s) from cc_pref.",
             len(stream_outputs),
         )
+        hourly = read_hourly_recording_config_from_db()
         changed = write_rastatime_liq(
             args.out,
             stream_outputs,
@@ -1182,6 +1398,10 @@ def main(argv: Optional[List[str]] = None) -> int:
             log_file=args.log_file,
             crossfade_duration=args.crossfade_duration,
             local_output_enabled=args.local_output_enabled,
+            hourly_recording_enabled=hourly["enabled"],
+            hourly_recording_folder=hourly["folder"],
+            hourly_recording_format=hourly["format"],
+            hourly_recording_bitrate=hourly["bitrate"],
         )
         if changed:
             logger.info(

@@ -1,0 +1,3 @@
+# Liquidsoap writes a cache/ dir next to the script it runs (e.g. the
+# test_hourly_rotation.liq reality-test).  Runtime junk — never commit.
+cache/

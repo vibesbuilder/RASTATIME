@@ -369,6 +369,126 @@ def _active_lines(rendered: str):
     ]
 
 
+# ---- 24/7 hourly recording block (RASTATIME 2026-06-05) ----------------
+
+
+def test_hourly_disabled_renders_stub():
+    """enabled=False -> a comment stub, no active recorder."""
+    out = lc._render_hourly_recording_block(enabled=False, folder="C:/r/247")
+    assert 'id="recording_hourly"' not in out
+    assert "disabled" in out.lower()
+
+
+def test_hourly_enabled_without_folder_renders_stub():
+    """enabled but empty folder -> stub (incomplete config is not active)."""
+    out = lc._render_hourly_recording_block(enabled=True, folder="")
+    assert 'id="recording_hourly"' not in out
+    assert "disabled" in out.lower()
+
+
+def test_hourly_enabled_basic_shape():
+    """
+    enabled + folder -> output.file(id="recording_hourly") on the bus,
+    rotating via reopen_when, with the seg seeded (no boot-reopen).
+    """
+    out = lc._render_hourly_recording_block(
+        enabled=True, folder="C:/rastatime/247", fmt="mp3", bitrate=192,
+    )
+    assert 'id="recording_hourly"' in out
+    assert "reopen_when=rec247_reopen" in out
+    # seg seeded with the CURRENT hour (not -1) so there is no spurious
+    # reopen at boot that would split the first hour into two files.
+    assert "rec247_seg = ref(int(gettimeofday() / 3600.))" in out
+    # default 192 kbps MP3 (operator-chosen archive default).
+    assert 'codec="libmp3lame"' in out
+    assert 'b="192k"' in out
+    # taps the broadcast bus (bit-identical to listeners).
+    assert "  bus,\n" in out
+    # per-day subfolder is created on reopen.
+    assert "file.mkdir(" in out
+
+
+def test_hourly_folder_backslashes_normalised_to_forward():
+    """Windows path with backslashes -> forward slashes for Liquidsoap."""
+    out = lc._render_hourly_recording_block(
+        enabled=True, folder="C:\\rastatime\\247\\",
+    )
+    assert "C:/rastatime/247/" in out
+    assert "\\rastatime" not in out
+
+
+def test_hourly_bitrate_substituted():
+    out = lc._render_hourly_recording_block(
+        enabled=True, folder="C:/r", bitrate=256,
+    )
+    assert 'b="256k"' in out
+
+
+def test_hourly_format_aac_uses_adts():
+    out = lc._render_hourly_recording_block(enabled=True, folder="C:/r", fmt="aac")
+    assert 'format="adts"' in out
+    assert "-00.aac" in out
+
+
+def test_hourly_format_ogg_uses_vorbis():
+    out = lc._render_hourly_recording_block(enabled=True, folder="C:/r", fmt="ogg")
+    assert 'codec="libvorbis"' in out
+    assert "-00.ogg" in out
+
+
+def test_hourly_format_opus_clamps_samplerate():
+    out = lc._render_hourly_recording_block(
+        enabled=True, folder="C:/r", fmt="opus", samplerate=44100,
+    )
+    assert 'codec="libopus"' in out
+    assert "samplerate=48000" in out
+    assert "-00.opus" in out
+
+
+def test_hourly_unknown_format_raises():
+    with pytest.raises(ValueError):
+        lc._render_hourly_recording_block(enabled=True, folder="C:/r", fmt="flac")
+
+
+def test_full_render_hourly_disabled_by_default_no_placeholder():
+    """
+    Default render: no enable flag -> stub, and the template placeholder
+    must be fully substituted (a leaked ${...} would break Liquidsoap).
+    """
+    out = lc.render_rastatime_liq([_stream()])
+    assert "${HOURLY_RECORDING_BLOCK}" not in out
+    assert 'id="recording_hourly"' not in "\n".join(_active_lines(out))
+
+
+def test_full_render_hourly_enabled_no_placeholder_and_present():
+    out = lc.render_rastatime_liq(
+        [_stream()],
+        hourly_recording_enabled=True,
+        hourly_recording_folder="C:/rastatime/247",
+        hourly_recording_format="mp3",
+        hourly_recording_bitrate=192,
+    )
+    assert "${HOURLY_RECORDING_BLOCK}" not in out
+    active = "\n".join(_active_lines(out))
+    assert 'id="recording_hourly"' in active
+    # co-exists with the per-show recorder (both output.file on the bus).
+    assert 'id="recording"' in active
+
+
+def test_read_hourly_config_returns_safe_dict():
+    """
+    The cc_pref reader returns a complete dict with safe types even when
+    the ORM is unavailable (it must never raise).
+    """
+    cfg = lc.read_hourly_recording_config_from_db()
+    assert set(cfg) == {
+        "enabled", "folder", "format", "bitrate", "retention_days",
+    }
+    assert isinstance(cfg["enabled"], bool)
+    assert isinstance(cfg["bitrate"], int)
+    assert isinstance(cfg["retention_days"], int)
+
+
 def test_full_render_main_only_harbor():
     """Only main_password set → input.harbor for master_dj + switch(master, scheduled)."""
     out = lc.render_rastatime_liq(
@@ -690,6 +810,7 @@ def test_template_has_all_expected_placeholders():
         "${LINEIN_INPUT_BLOCK}",
         "${BUS_SOURCE_BLOCK}",
         "${ICECAST_OUTPUTS}",
+        "${HOURLY_RECORDING_BLOCK}",
     ):
         assert placeholder in text, (
             f"Template lost expected placeholder {placeholder}"

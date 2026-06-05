@@ -255,6 +255,7 @@ def _render_rastatime_liq_at_startup(stream_outputs: List[Dict]) -> None:
     won't have a Liquidsoap to talk to if the script is unbuildable.
     """
     from libretime_playout.liquidsoap_config import (  # noqa: PLC0415
+        read_hourly_recording_config_from_db,
         write_rastatime_liq,
     )
 
@@ -339,6 +340,16 @@ def _render_rastatime_liq_at_startup(stream_outputs: List[Dict]) -> None:
         )
         sys.exit(1)
 
+    # RASTATIME 2026-06-05 — 24/7 hourly archive recorder config (cc_pref,
+    # set in Settings -> Local Machine).  Default disabled -> renders a
+    # comment stub, leaving the live stream untouched.
+    hourly = read_hourly_recording_config_from_db()
+    if hourly["enabled"] and hourly["folder"]:
+        logger.info(
+            "24/7 hourly recording enabled: folder=%s format=%s %dk",
+            hourly["folder"], hourly["format"], hourly["bitrate"],
+        )
+
     try:
         changed = write_rastatime_liq(
             config_path,
@@ -351,6 +362,10 @@ def _render_rastatime_liq_at_startup(stream_outputs: List[Dict]) -> None:
             local_output_enabled=local_output_enabled,
             harbor_main_password=harbor_main_pwd or None,
             harbor_show_password=harbor_show_pwd or None,
+            hourly_recording_enabled=hourly["enabled"],
+            hourly_recording_folder=hourly["folder"],
+            hourly_recording_format=hourly["format"],
+            hourly_recording_bitrate=hourly["bitrate"],
         )
     except Exception as exc:  # pylint: disable=broad-exception-caught
         logger.critical(

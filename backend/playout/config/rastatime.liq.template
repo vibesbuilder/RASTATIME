@@ -335,6 +335,18 @@ output.file(
 )
 
 # ---------------------------------------------------------------------
+# RASTATIME 2026-06-05 — 24/7 hourly archive recording (optional)
+# ---------------------------------------------------------------------
+# A second output.file on the `bus`, always on, rotating to a new file
+# at each clock-hour boundary — independent of shows, so it captures the
+# gaps per-show recording misses (AutoDJ filler, silence, unscheduled
+# content, emergencies).  Rendered ONLY when the operator enables it in
+# Settings -> Local Machine ("24/7 Recording") and sets a folder;
+# otherwise a comment stub.  Phase-1 reality-test 2026-06-05 proved
+# hourly rotation + dual-output clock coexistence on Liquidsoap 2.4.4.
+${HOURLY_RECORDING_BLOCK}
+
+# ---------------------------------------------------------------------
 # Local monitor — what the operator hears at the studio speakers.
 # Rendered by libretime_playout.liquidsoap_config based on the
 # RASTATIME_LIQUIDSOAP_LOCAL_OUTPUT env-var (default true; operator
