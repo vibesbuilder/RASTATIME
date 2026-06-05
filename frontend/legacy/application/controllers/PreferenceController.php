@@ -361,13 +361,15 @@ class PreferenceController extends Zend_Controller_Action
             $retention = 0;
         }
 
-        // A non-empty folder must exist + be writable (the recorder writes
-        // per-day subfolders into it).  Enabling without a folder is an error.
+        // A non-empty recording OUTPUT folder is created on demand (unlike
+        // the import drop-folder) so the operator can point anywhere
+        // writable, inside or outside the project tree.  Enabling without a
+        // folder is an error.
         if ($folder !== '') {
-            if (!is_dir($folder)) {
+            if (!is_dir($folder) && !@mkdir($folder, 0777, true) && !is_dir($folder)) {
                 $this->_helper->json->sendJson([
                     'ok' => false,
-                    'error' => 'Path is not a directory or not accessible: ' . $folder,
+                    'error' => 'Folder does not exist and could not be created (check the path, and that the web/playout service may write there): ' . $folder,
                 ]);
                 return;
             }
