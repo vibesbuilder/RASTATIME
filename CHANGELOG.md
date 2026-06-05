@@ -143,6 +143,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **jQuery 3.7 + DataTables 1.13 als Default aktiviert (JS-Modernisierung
+  Stufe 5a, 2026-06-05, `87c1d35`)** — nach bestandener app-weiter Verifikation
+  (Stufe 4) wurde der `?jq3`-Default von **jQuery 1.8 + UI 1.8 + DataTables 1.9**
+  auf **jQuery 3.7.1 + jquery-migrate 3.5.2 + jQuery UI 1.13.3 + DataTables 1.13**
+  umgestellt (`rtUseJquery3()` Default `false → true` — eine Stelle, geteilt von
+  App-Layout + Radio-Page; `rtDataTablesCore()` hängt am selben Flag, 1.13 folgt
+  also im Gleichschritt, da 1.9 nicht jQuery-3-kompatibel ist).  Ohne Flag/Cookie
+  lädt jetzt der moderne Stack.  Rückwege: **`?jq3=0`** = sofortiger
+  per-Session-Rollback (Cookie-persistent), Commit-Revert = global.
+  **jquery-migrate bleibt als Sicherheitsnetz**, bis die JQMIGRATE-Warnungen
+  seitenübergreifend sauber sind (**Stufe 5b** entfernt das Netz + die
+  Legacy-1.8/1.9-Assets — separater, späterer Schritt).  Keine
+  `assets.json`-Änderung (jq3-Assets längst registriert) → reiner Loader-Default.
+  Live-verifiziert: Login lädt ohne Flag jquery-3.7.1 + migrate + UI 1.13.3
+  (HTTP 200), `?jq3=0` weiterhin jquery-1.8.3 + UI 1.8.  Voraus ging die Migration
+  in Stufe 2–4: 29 `.live()`→`.on()`, jQuery-UI-1.13-Event-Umbau (tabs `activate`,
+  accordion-Guard), DataTables-1.13-sDom-Umbau aller Widget-Tabellen +
+  columnFilter-Neubau, Flot 0.7→0.8.3, REST-CSRF-Upload-Fix.
+
 - **Schedule-Kalender von FullCalendar 1.5 auf FullCalendar 6 umgestellt
   (JS-Modernisierung Stufe 2, 2026-06-01, `8ce8ec1` + `5abaab5` + `169106d` +
   `688e466` + `81d8c8d` + `be429da`)** — der geforkte, EOL-FullCalendar 1.5.4 (jQuery-Plugin,
