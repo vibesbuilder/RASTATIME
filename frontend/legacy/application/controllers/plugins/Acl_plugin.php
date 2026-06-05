@@ -165,11 +165,28 @@ class Zend_Controller_Plugin_Acl extends Zend_Controller_Plugin_Abstract
             // we need to check the CSRF token
             if ($_SERVER['REQUEST_METHOD'] != 'GET' && $request->getModuleName() == 'rest') {
                 $token = $request->getParam('csrf_token');
+                if (empty($token)) {
+                    // RASTATIME 2026-06-05: some upload widgets (the dashboard
+                    // Dropzone) submit the Zend CSRF *form element*, whose field name
+                    // is 'csrf', not 'csrf_token'.  Accept either name so the upload's
+                    // reliably-sent hidden input is honoured regardless of client-side
+                    // timing -- the Dropzone "sending" hook that would add 'csrf_token'
+                    // is not guaranteed to run before Dropzone's auto-discover (on
+                    // jQuery 3 its $(document).ready setup resolves a microtask too
+                    // late), so only the static form field 'csrf' is dependable.
+                    $token = $request->getParam('csrf');
+                }
                 // PUT requests don't parameterize the data in the body, so we can't
                 // fetch it with getParam or getPost; instead we have to parse the body and
                 // check for the token in the JSON. (Hopefully we can find a better way to do this) -- Duncan
                 if (empty($token)) {
-                    $token = json_decode($this->getRequest()->getRawBody(), true)['csrf_token'];
+                    // RASTATIME 2026-06-05: guard against a non-JSON request body.
+                    // A multipart file upload (or a POST body PHP dropped because it
+                    // exceeded post_max_size) makes json_decode() return null, and
+                    // null['csrf_token'] threw "Trying to access array offset on null"
+                    // on PHP 8 -> a 500 instead of a clean CSRF/size error.
+                    $decodedBody = json_decode($this->getRequest()->getRawBody(), true);
+                    $token = is_array($decodedBody) ? ($decodedBody['csrf_token'] ?? null) : null;
                 }
                 $tokenValid = $this->verifyCSRFToken($token);
 
