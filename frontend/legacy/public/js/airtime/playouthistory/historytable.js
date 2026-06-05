@@ -13,7 +13,24 @@ var AIRTIME = (function (AIRTIME) {
     [10, 25, 50, 100, 500, $.i18n._("All")],
   ];
 
-  var sDom = 'l<"dt-process-rel"r><"H"><"dataTables_scrolling"t><"F"ip>';
+  // RASTATIME 2026-06-05 (?jq3): DataTables 1.13 silently aborts the init when
+  // the table 't' is nested in <"dataTables_scrolling"> (it detaches the table
+  // during the DOM build, no error).  On the modern stack use a bare 't' -- the
+  // scroll container is restored post-init -- and wrap the footer in a real
+  // <"dataTables_footer"> div (the reserved 'F' slot is not built by 1.13).
+  // Legacy (jQuery 1.8 / DT 1.9) keeps the original nested sDom.
+  // Detect the modern DataTables 1.13 stack.  NOTE: unlike library.js /
+  // builder.js / table.js (which load the Buttons extension for colvis and can
+  // test $.fn.dataTable.Buttons), the Playout History page loads only the
+  // DataTables core -- no Buttons -- so check the DataTables version directly.
+  var dtModern = !!(
+    $.fn.dataTable &&
+    $.fn.dataTable.versionCheck &&
+    $.fn.dataTable.versionCheck("1.10")
+  );
+  var sDom = dtModern
+    ? '<"dt-process-rel"r><"H"<"history_toolbar">>t<"dataTables_footer"lip>'
+    : 'l<"dt-process-rel"r><"H"><"dataTables_scrolling"t><"F"ip>';
 
   var selectedLogItems = {};
 
@@ -207,7 +224,13 @@ var AIRTIME = (function (AIRTIME) {
       show,
       tmp;
 
-    $showList.accordion("destroy").empty();
+    // RASTATIME 2026-06-05 (?jq3): jQuery UI 1.13 throws if 'destroy' is called
+    // before the accordion is initialised (1.8 silently tolerated it).  Only
+    // destroy an existing accordion; either way the container is then emptied.
+    if ($showList.hasClass("ui-accordion")) {
+      $showList.accordion("destroy");
+    }
+    $showList.empty();
 
     for (i = 0, len = oShows.length; i < len; i++) {
       show = oShows[i];
@@ -345,6 +368,13 @@ var AIRTIME = (function (AIRTIME) {
       bAutoWidth: true,
       sDom: sDom,
     });
+    // RASTATIME 2026-06-05 (?jq3): restore the scroll container the bare-'t' sDom
+    // dropped, and tag the wrapper for the flex layout (length > table > footer)
+    // shared with the podcast widget tables (.rt-jq3-widget).
+    if (dtModern) {
+      $historyTableDiv.wrap('<div class="dataTables_scrolling"></div>');
+      $historyTableDiv.closest(".dataTables_wrapper").addClass("rt-jq3-widget");
+    }
     oTable.fnSetFilteringDelay(350);
 
     return oTable;
@@ -423,11 +453,25 @@ var AIRTIME = (function (AIRTIME) {
       bAutoWidth: true,
       sDom: sDom,
     });
+    // RASTATIME 2026-06-05 (?jq3): restore the scroll container + flex marker
+    // (see aggregateHistoryTable above).
+    if (dtModern) {
+      $historyTableDiv.wrap('<div class="dataTables_scrolling"></div>');
+      $historyTableDiv.closest(".dataTables_wrapper").addClass("rt-jq3-widget");
+    }
     oTable.fnSetFilteringDelay(350);
 
     $toolbar = $historyTableDiv
       .parents(".dataTables_wrapper")
       .find(".fg-toolbar:first");
+    // RASTATIME 2026-06-05 (?jq3): DataTables 1.13 drops the jQuery-UI .fg-toolbar
+    // header, so fall back to the sDom .history_toolbar slot for the toolbar
+    // buttons (New Log Entry / Select / Export).
+    if ($toolbar.length === 0) {
+      $toolbar = $historyTableDiv
+        .parents(".dataTables_wrapper")
+        .find(".history_toolbar:first");
+    }
     createToolbarButtons($toolbar);
 
     return oTable;
@@ -939,22 +983,50 @@ var AIRTIME = (function (AIRTIME) {
       });
     });
 
-    $historyContentDiv.find("#his-tabs").tabs({
-      show: function (event, ui) {
-        var href = $(ui.tab).attr("href");
-        var index = href.split("-").pop();
-        var tab = tabsInit[index - 1];
+    // RASTATIME 2026-06-05 (?jq3): jQuery UI 1.10+ renamed the tabs 'show' event
+    // to 'activate' (with a different ui object) and no longer fires it for the
+    // initially-selected tab.  On the modern UI (jq3) bind 'activate' AND build
+    // the active tab manually; legacy (UI 1.8) keeps 'show'.  The body -- resolve
+    // the tab href -> index -> initialize/navigate -- is shared.  Without this
+    // the tables are never DataTables-initialised on jq3 (the 'show' callback,
+    // which builds them, simply never runs).
+    function activateHistoryTab(href) {
+      if (!href) {
+        return;
+      }
+      var index = href.split("-").pop();
+      var tab = tabsInit[index - 1];
+      if (!tab) {
+        return;
+      }
+      if (!tab.initialized) {
+        tab.initialize();
+        tab.initialized = true;
+      } else {
+        tab.navigate();
+      }
+      tab.always();
+    }
 
-        if (!tab.initialized) {
-          tab.initialize();
-          tab.initialized = true;
-        } else {
-          tab.navigate();
-        }
-
-        tab.always();
-      },
-    });
+    var $hisTabs = $historyContentDiv.find("#his-tabs");
+    if (dtModern) {
+      $hisTabs.tabs({
+        activate: function (event, ui) {
+          activateHistoryTab(ui.newTab.find("a").attr("href"));
+        },
+      });
+      // 'activate' does not fire for the initially-active tab -- build it now.
+      activateHistoryTab(
+        $hisTabs.find("li.ui-tabs-active a").first().attr("href") ||
+          $hisTabs.find("li a").first().attr("href"),
+      );
+    } else {
+      $hisTabs.tabs({
+        show: function (event, ui) {
+          activateHistoryTab($(ui.tab).attr("href"));
+        },
+      });
+    }
 
     // begin context menu initialization.
     $.contextMenu({
