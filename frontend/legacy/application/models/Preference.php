@@ -1981,6 +1981,67 @@ class Application_Model_Preference
         self::setValue('local_recording_folder', trim((string) $value));
     }
 
+    // RASTATIME 2026-06-05 - 24/7 hourly archive recording (Record-per-Hour).
+    // A continuous Liquidsoap output.file on the bus, rotating hourly,
+    // independent of shows (Settings -> Local Machine -> "24/7 Recording").
+    // The playout render + retention task read these cc_pref keys directly
+    // (local_247_recording_*); these accessors back the Settings form.
+    public static function getLocal247RecordingEnabled()
+    {
+        return self::getValue('local_247_recording_enabled') === 'true';
+    }
+
+    public static function setLocal247RecordingEnabled($value)
+    {
+        $on = ($value === true || $value === 'true' || $value === '1' || $value === 1);
+        self::setValue('local_247_recording_enabled', $on ? 'true' : 'false');
+    }
+
+    public static function getLocal247RecordingFolder()
+    {
+        return self::getValue('local_247_recording_folder');
+    }
+
+    public static function setLocal247RecordingFolder($value)
+    {
+        self::setValue('local_247_recording_folder', trim((string) $value));
+    }
+
+    public static function getLocal247RecordingFormat()
+    {
+        $fmt = strtolower(trim((string) self::getValue('local_247_recording_format')));
+
+        return $fmt !== '' ? $fmt : 'mp3';
+    }
+
+    public static function setLocal247RecordingFormat($value)
+    {
+        self::setValue('local_247_recording_format', strtolower(trim((string) $value)));
+    }
+
+    public static function getLocal247RecordingBitrate()
+    {
+        $b = (int) self::getValue('local_247_recording_bitrate');
+
+        return $b > 0 ? $b : 192;
+    }
+
+    public static function setLocal247RecordingBitrate($value)
+    {
+        self::setValue('local_247_recording_bitrate', (string) (int) $value);
+    }
+
+    public static function getLocal247RecordingRetentionDays()
+    {
+        return (int) self::getValue('local_247_recording_retention_days');
+    }
+
+    public static function setLocal247RecordingRetentionDays($value)
+    {
+        $d = (int) $value;
+        self::setValue('local_247_recording_retention_days', (string) ($d < 0 ? 0 : $d));
+    }
+
     // RASTATIME 2026-05-15 - GetFeaturePreviewMode/SetFeaturePreviewMode removed:
     // the cc_pref key 'feature_preview_mode' was stored but never consumed by any
     // code path (no feature ever gated on it). Form element + render + save line

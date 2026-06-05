@@ -135,16 +135,100 @@ AIRTIME.i18n = {
     </fieldset>
 
     <?php
-    // RASTATIME 2026-05-17 - Recording Folder section (Section 23.13).
-    // Per-show recording feature: shows with cc_show.record=true get
-    // recorded by tapping the first Icecast output mountpoint with
-    // `-c copy`.  Output goes to
+    // RASTATIME 2026-06-05 - 24/7 Recording section (Record-per-Hour).
+    // Continuous hourly archive recorder (a Liquidsoap output.file on the
+    // bus, rotating on the hour), independent of shows.  The playout
+    // render reads the cc_pref local_247_recording_* keys at startup; the
+    // retention task prunes old day-folders.
+    $rec247Enabled   = Application_Model_Preference::getLocal247RecordingEnabled();
+    $rec247Folder    = Application_Model_Preference::getLocal247RecordingFolder();
+    $rec247Format    = Application_Model_Preference::getLocal247RecordingFormat();
+    $rec247Bitrate   = Application_Model_Preference::getLocal247RecordingBitrate();
+    $rec247Retention = Application_Model_Preference::getLocal247RecordingRetentionDays();
+    $rec247Formats   = ['mp3' => 'MP3', 'aac' => 'AAC', 'ogg' => 'OGG (Vorbis)', 'opus' => 'Opus'];
+    $rec247Bitrates  = [96, 128, 192, 256, 320];
+    ?>
+
+    <h3 style="margin-top: 2em;"><?php echo _("24/7 Recording Folder") ?></h3>
+    <p style="max-width: 60em; color: #555;">
+        <?php echo _("Continuous around-the-clock recording of the on-air output, one file per clock hour, independent of shows — it captures everything aired (filler, silence, unscheduled content, emergencies) for compliance, catch-up and emergency backup.  Files are written as <YYYY-MM-DD>/<YYYY-MM-DD HH>-00.<ext> under a per-day subfolder."); ?>
+    </p>
+
+    <fieldset class="padded stream-setting-global">
+        <dl class="zend_form">
+            <dt><label for="rec247_enabled"><?php echo _("Enable") ?></label></dt>
+            <dd style="padding-top: 0.4em;">
+                <input id="rec247_enabled" name="rec247_enabled" type="checkbox"
+                       <?php echo $rec247Enabled ? 'checked="checked"' : ''; ?> />
+                <label for="rec247_enabled" style="font-weight: normal; color: #666;">
+                    <?php echo _("Record 24/7 (a folder below is required)") ?>
+                </label>
+            </dd>
+
+            <dt><label for="rec247_folder"><?php echo _("Folder path") ?></label></dt>
+            <dd>
+                <input id="rec247_folder" name="rec247_folder"
+                       type="text" class="input_text"
+                       style="width: 100%; max-width: 50em;"
+                       value="<?php echo htmlspecialchars((string) $rec247Folder, ENT_QUOTES); ?>"
+                       placeholder="C:\rastatime\recordings-247" />
+                <div style="font-size: 0.9em; color: #666; margin-top: 0.3em;">
+                    <?php echo _("Absolute path on this machine, separate from the Show Recording Folder.  Example: C:\\rastatime\\recordings-247"); ?>
+                </div>
+            </dd>
+
+            <dt><label for="rec247_format"><?php echo _("Format") ?></label></dt>
+            <dd>
+                <select id="rec247_format" name="rec247_format" style="min-width: 12em;">
+                    <?php foreach ($rec247Formats as $fk => $fl) { ?>
+                        <option value="<?php echo $fk; ?>"<?php echo $rec247Format === $fk ? ' selected="selected"' : ''; ?>><?php echo $fl; ?></option>
+                    <?php } ?>
+                </select>
+            </dd>
+
+            <dt><label for="rec247_bitrate"><?php echo _("Bitrate (kbps)") ?></label></dt>
+            <dd>
+                <select id="rec247_bitrate" name="rec247_bitrate" style="min-width: 8em;">
+                    <?php foreach ($rec247Bitrates as $br) { ?>
+                        <option value="<?php echo $br; ?>"<?php echo (int) $rec247Bitrate === $br ? ' selected="selected"' : ''; ?>><?php echo $br; ?></option>
+                    <?php } ?>
+                </select>
+                <span style="font-size: 0.9em; color: #666; margin-left: 0.5em;">
+                    <?php echo _("Higher = better quality, more disk.") ?>
+                </span>
+            </dd>
+
+            <dt><label for="rec247_retention"><?php echo _("Delete after (days)") ?></label></dt>
+            <dd>
+                <input id="rec247_retention" name="rec247_retention"
+                       type="number" min="0" step="1" class="input_text"
+                       style="width: 6em;"
+                       value="<?php echo (int) $rec247Retention; ?>" />
+                <span style="font-size: 0.9em; color: #666; margin-left: 0.5em;">
+                    <?php echo _("0 = keep forever.  Older recordings are pruned automatically.") ?>
+                </span>
+            </dd>
+
+            <dt></dt>
+            <dd style="padding-top: 0.5em;">
+                <button id="rec247_save" type="button" class="btn">
+                    <?php echo _("Save") ?>
+                </button>
+                <span id="rec247_status_msg" style="margin-left: 1em;"></span>
+            </dd>
+        </dl>
+    </fieldset>
+
+    <?php
+    // RASTATIME 2026-05-17 - Show Recording section (Section 23.13).
+    // Per-show recording: shows flagged cc_show.record=true are recorded
+    // by the Liquidsoap engine's output.file on the bus (Phase-C5).  Output:
     //   <folder>/<YYYY-MM-DD>/<YYYY-MM-DD HH-MM> - <show-name>.mp3.
-    // Empty folder disables recording.
+    // Empty folder disables it.  Separate from the 24/7 folder above.
     $localRecordingFolder = Application_Model_Preference::getLocalRecordingFolder();
     ?>
 
-    <h3 style="margin-top: 2em;"><?php echo _("Recording Folder") ?></h3>
+    <h3 style="margin-top: 2em;"><?php echo _("Show Recording Folder") ?></h3>
     <p style="max-width: 60em; color: #555;">
         <?php echo _("Folder where per-show recordings are written.  Each show flagged as \"Record this show\" produces a single .mp3 of the on-air output, named <YYYY-MM-DD HH-MM> - <show-name>.mp3 under a per-day subfolder.  Leave empty to disable recording."); ?>
     </p>
@@ -250,6 +334,35 @@ AIRTIME.i18n = {
                 "json"
             ).fail(function () {
                 $("#local_recording_status_msg").text("✗ Network error.").css("color", "#d9534f");
+            });
+        });
+
+        // RASTATIME 2026-06-05 - 24/7 Recording save handler.
+        $("#rec247_save").on("click", function () {
+            var msg = $("#rec247_status_msg");
+            msg.text("…").css("color", "#666");
+            $.post(
+                baseUrl + "preference/local-247-recording-save",
+                {
+                    enabled: $("#rec247_enabled").is(":checked") ? "true" : "false",
+                    folder: $("#rec247_folder").val(),
+                    format: $("#rec247_format").val(),
+                    bitrate: $("#rec247_bitrate").val(),
+                    retention_days: $("#rec247_retention").val(),
+                    csrf_token: $("#csrf").val()
+                },
+                function (resp) {
+                    if (resp && resp.ok) {
+                        msg.text("✓ Saved.  Restart the playout service to apply.")
+                           .css("color", "#5cb85c");
+                    } else {
+                        msg.text("✗ " + (resp.error || "Save failed."))
+                           .css("color", "#d9534f");
+                    }
+                },
+                "json"
+            ).fail(function () {
+                msg.text("✗ Network error.").css("color", "#d9534f");
             });
         });
     })(jQuery);

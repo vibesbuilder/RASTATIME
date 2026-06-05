@@ -319,6 +319,99 @@ class PreferenceController extends Zend_Controller_Action
         $this->_helper->json->sendJson(['ok' => true, 'folder' => $folder]);
     }
 
+    /**
+     * RASTATIME 2026-06-05 - Save the 24/7 hourly archive recording config.
+     *
+     * Settings -> Local Machine -> "24/7 Recording".  Stores the cc_pref
+     * keys local_247_recording_{enabled,folder,format,bitrate,retention_days}
+     * that the playout render (libretime_playout) reads at startup and the
+     * retention task consults.  Changing these needs a RASTATIME-PLAYOUT
+     * restart to re-render the .liq (same as a stream-output change).
+     */
+    public function local247RecordingSaveAction()
+    {
+        $this->view->layout()->disableLayout();
+        $this->_helper->viewRenderer->setNoRender(true);
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->getResponse()->setHttpResponseCode(405);
+            $this->_helper->json->sendJson(['ok' => false, 'error' => 'method-not-allowed']);
+            return;
+        }
+        if (!SecurityHelper::verifyCSRFToken($this->_getParam('csrf_token'))) {
+            $this->_helper->json->sendJson(['ok' => false, 'error' => 'csrf']);
+            return;
+        }
+
+        $enabled = ($this->_getParam('enabled', 'false') === 'true');
+        $folder = trim((string) $this->_getParam('folder', ''));
+        $format = strtolower(trim((string) $this->_getParam('format', 'mp3')));
+        $bitrate = (int) $this->_getParam('bitrate', 192);
+        $retention = (int) $this->_getParam('retention_days', 0);
+
+        if (!in_array($format, ['mp3', 'aac', 'ogg', 'opus'], true)) {
+            $this->_helper->json->sendJson(['ok' => false, 'error' => 'Invalid format: ' . $format]);
+            return;
+        }
+        if ($bitrate < 32 || $bitrate > 320) {
+            $this->_helper->json->sendJson(['ok' => false, 'error' => 'Bitrate must be between 32 and 320 kbps.']);
+            return;
+        }
+        if ($retention < 0) {
+            $retention = 0;
+        }
+
+        // A non-empty folder must exist + be writable (the recorder writes
+        // per-day subfolders into it).  Enabling without a folder is an error.
+        if ($folder !== '') {
+            if (!is_dir($folder)) {
+                $this->_helper->json->sendJson([
+                    'ok' => false,
+                    'error' => 'Path is not a directory or not accessible: ' . $folder,
+                ]);
+                return;
+            }
+            if (!is_writable($folder)) {
+                $this->_helper->json->sendJson([
+                    'ok' => false,
+                    'error' => 'Folder is not writable: ' . $folder,
+                ]);
+                return;
+            }
+        } elseif ($enabled) {
+            $this->_helper->json->sendJson([
+                'ok' => false,
+                'error' => 'A folder is required when 24/7 recording is enabled.',
+            ]);
+            return;
+        }
+
+        Application_Model_Preference::setLocal247RecordingEnabled($enabled);
+        Application_Model_Preference::setLocal247RecordingFolder($folder);
+        Application_Model_Preference::setLocal247RecordingFormat($format);
+        Application_Model_Preference::setLocal247RecordingBitrate($bitrate);
+        Application_Model_Preference::setLocal247RecordingRetentionDays($retention);
+
+        Logging::info(sprintf(
+            '24/7 Recording config saved: enabled=%s folder=%s format=%s bitrate=%dk retention=%dd',
+            $enabled ? '1' : '0',
+            $folder === '' ? '(none)' : $folder,
+            $format,
+            $bitrate,
+            $retention
+        ));
+
+        $this->_helper->json->sendJson([
+            'ok' => true,
+            'enabled' => $enabled,
+            'folder' => $folder,
+            'format' => $format,
+            'bitrate' => $bitrate,
+            'retention_days' => $retention,
+            'restart_required' => true,
+        ]);
+    }
+
     public function streamSettingAction()
     {
         $request = $this->getRequest();
