@@ -177,8 +177,14 @@ class PageLayoutInitPlugin extends Zend_Controller_Plugin_Abstract
      * RASTATIME 2026-06-01 (JS-modernization stage 2): jQuery 1.8 -> 3.7
      * migration flag.  When on, jQuery 3.7 + jquery-migrate + jQuery UI 1.13 are
      * loaded instead of jQuery 1.8 + UI 1.8.  ?jq3=1 turns it on, ?jq3=0 off,
-     * each persisted in a session cookie so page navigation keeps the choice;
-     * with no flag/cookie, jQuery 1.8 stays the default (instant rollback).
+     * each persisted in a session cookie so page navigation keeps the choice.
+     *
+     * RASTATIME 2026-06-05 (stage 5a): the default flipped to ON -- with no
+     * flag/cookie, jQuery 3.7 + DataTables 1.13 now load by default after the
+     * app-wide verification sweep (stage 4) passed.  ?jq3=0 is the instant
+     * per-session rollback (cookie-persisted); reverting this commit is the
+     * global rollback.  jquery-migrate stays as the safety net until the
+     * JQMIGRATE console warnings are confirmed clean app-wide (stage 5b).
      * Shared by the main app layout (here) and the radio page (IndexController).
      */
     public static function rtUseJquery3()
@@ -196,7 +202,8 @@ class PageLayoutInitPlugin extends Zend_Controller_Plugin_Abstract
             return $_COOKIE['rt_jq3'] === '1';
         }
 
-        return false;
+        // RASTATIME 2026-06-05 (stage 5a): default flipped to ON (was `false`).
+        return true;
     }
 
     /**
@@ -217,7 +224,8 @@ class PageLayoutInitPlugin extends Zend_Controller_Plugin_Abstract
      * RASTATIME 2026-06-01 (JS-modernization stage 2): DataTables core path.
      * DataTables 1.9.3 is not jQuery-3 compatible; 1.13 is, and keeps the legacy
      * Hungarian options + server-side format, so the init code and the backend
-     * response are unchanged.  Loaded on the ?jq3 path; 1.9 stays the default.
+     * response are unchanged.  Follows the rtUseJquery3() flag, so since the
+     * stage-5a flip (2026-06-05) 1.13 is the default and 1.9 the ?jq3=0 rollback.
      * (DataTables 2.0 is a separate future step — see BACKLOG.)
      */
     public static function rtDataTablesCore()
