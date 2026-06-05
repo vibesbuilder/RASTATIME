@@ -61,19 +61,19 @@ function addDatePicker() {
   showlistenerstat_content
     .find(dateStartId)
     .datepicker(oBaseDatePickerSettings)
-    .blur(validateTimeRange());
+    .blur(validateTimeRange);
   showlistenerstat_content
     .find(timeStartId)
     .timepicker(oBaseTimePickerSettings)
-    .blur(validateTimeRange());
+    .blur(validateTimeRange);
   showlistenerstat_content
     .find(dateEndId)
     .datepicker(oBaseDatePickerSettings)
-    .blur(validateTimeRange());
+    .blur(validateTimeRange);
   showlistenerstat_content
     .find(timeEndId)
     .timepicker(oBaseTimePickerSettings)
-    .blur(validateTimeRange());
+    .blur(validateTimeRange);
 }
 
 function getStartEnd() {
@@ -131,7 +131,20 @@ function showListenerDataTable() {
     [10, 25, 50, 100, 500, $.i18n._("All")],
   ];
   var end = oRange.end;
-  var sDom = 'l<"dt-process-rel"r><"H"T><"dataTables_scrolling"t><"F"ip>';
+  // RASTATIME 2026-06-05 (?jq3): DataTables 1.13 silently aborts when the table
+  // 't' is nested in <"dataTables_scrolling">, and the 2012 'T' (TableTools) is
+  // not loaded on the modern stack.  So on jq3 use a bare 't' (scroll container
+  // restored post-init), drop the 'T', and put length/info/pagination in a real
+  // <"dataTables_footer"> div (the reserved 'F' slot is not built by 1.13).
+  // Detect 1.13 by version -- this page may not have the Buttons extension.
+  var dtModern = !!(
+    $.fn.dataTable &&
+    $.fn.dataTable.versionCheck &&
+    $.fn.dataTable.versionCheck("1.10")
+  );
+  var sDom = dtModern
+    ? '<"dt-process-rel"r><"H">t<"dataTables_footer"lip>'
+    : 'l<"dt-process-rel"r><"H"T><"dataTables_scrolling"t><"F"ip>';
   var show_id = $("#sb_show_filter").val();
   var dt = $("#show_stats_datatable");
   info = getStartEnd();
@@ -168,4 +181,10 @@ function showListenerDataTable() {
       });
     },
   });
+  // RASTATIME 2026-06-05 (?jq3): restore the scroll container the bare-'t' sDom
+  // dropped + tag the wrapper for the shared flex layout (.rt-jq3-widget).
+  if (dtModern) {
+    dt.wrap('<div class="dataTables_scrolling"></div>');
+    dt.closest(".dataTables_wrapper").addClass("rt-jq3-widget");
+  }
 }
