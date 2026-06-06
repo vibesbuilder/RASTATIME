@@ -252,6 +252,7 @@ find each common task in the rest of the manual:
 | Add a guest's external Icecast stream as a webstream | [Webstreams](./WEBSTREAMS.md) |
 | Add the studio mixer as a named line-in | [Line-In](./LINE_IN.md) |
 | Record what was on air today | [Record-per-Show](./RECORD_PER_SHOW.md) |
+| Archive the whole broadcast around the clock | [24/7 Recording](./RECORD_PER_HOUR.md) |
 | Add a second output stream (e.g. low-bitrate mobile) | [Streams](./STREAMS.md) |
 | Add a new DJ | [Users and Roles](./USERS_AND_ROLES.md) |
 | Change the UI language | [Languages](./I18N.md) |

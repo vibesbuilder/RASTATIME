@@ -196,7 +196,7 @@ exception list.**
   **Settings** → **Manage Exceptions** → add the recording
   folder path (e.g. `C:\Users\studio\Music\Recording\` or
   whatever you configured in Settings → Local Machine →
-  Recording Folder).
+  Show Recording Folder).
 - **Windows Defender**: Settings → **Update & Security** →
   **Windows Security** → **Virus & threat protection** →
   **Manage settings** → **Add or remove exclusions** → add

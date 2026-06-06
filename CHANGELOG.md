@@ -345,6 +345,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **24/7-Aufnahme (Record-per-Hour) — durchgehendes Stunden-Archiv
+  (2026-06-06, `80c3dbf` + `0127ff0` + `7b9a8bc` + `84c5c34` + `9b3d857`)** —
+  ein kontinuierlicher Archiv-Recorder als zweiter Liquidsoap-`output.file`
+  auf dem Bus, der rund um die Uhr aufnimmt und **stündlich rotiert** —
+  unabhängig von Shows, erfasst also auch die Lücken, die Record-per-Show
+  verpasst (AutoDJ-Filler, Stille, Unscheduled, Notfälle).  Für Compliance,
+  Catchup und Notfall-Backup.  Konfiguration unter **Settings → Local
+  Machine → „24/7 Recording Folder"** (oberhalb des in „Show Recording
+  Folder" umbenannten Per-Show-Felds): Enable, Ordner (wird beim Speichern
+  angelegt), Format (MP3/AAC/OGG/Opus, Default 192 kbps MP3), Bitrate,
+  „Delete after (days)".  Dateien
+  `<Ordner>/<YYYY-MM-DD>/<YYYY-MM-DD HH>-00.<ext>` in lokaler Zeit, nahtlose
+  Stundenübergänge.  Bausteine:
+  - **Recorder** (`80c3dbf`): `_render_hourly_recording_block` im
+    `liquidsoap_config`-Renderer (`reopen_when`-Rotation; `seg` auf die
+    aktuelle Stunde geseedet → kein Boot-Reopen; Tages-Unterordner via
+    `file.mkdir`).  Per **Default aus** → Kommentar-Stub, Live-Stream
+    unberührt bis zum Einschalten.
+  - **Retention** (`0127ff0`): Pypo-Daemon löscht Tages-Ordner älter als N
+    Tage (nur `YYYY-MM-DD`-Ordner im 24/7-Pfad; `0` = ewig behalten).
+  - **Settings-UI** (`7b9a8bc` + Auto-Create-Fix `84c5c34`): neue Sektion +
+    Umbenennung „Recording Folder" → „Show Recording Folder",
+    jQuery-3-saubere Save-Handler auf dem jq3-Default.
+  - **Cue-Sidecars** (`9b3d857`): pro Stunde ein `…-00.cues.json` mit
+    Track-/Show-/Webstream-/Line-In-Marken (Offset in Sekunden ab
+    Stundenbeginn) für den späteren Catchup-Player.
+  Neu auf die **Phase-C5-Liquidsoap-Aufnahme-Architektur** aufgesetzt (der
+  ursprüngliche 2026-05-22-FFmpeg-Tap-Plan war seit dem FfmpegRecorder-Delete
+  obsolet).  Live-verifiziert: 11-h-Lauf, fast alle Dateien exakt 60 min,
+  nahtlose Übergänge; 266 Playout-Tests grün (Render/Retention/Cue).  Manual:
+  neues Kapitel `RECORD_PER_HOUR.md` + `LOCAL_MACHINE.md`-Update.
+
 - **Floating UI (vendored) + rtTooltip-Helper (2026-06-01, `f07c53c`)** — die
   moderne Positionierungs-Lib Floating UI (UMD core+dom, ~22 KB) unter
   `js/libs/floating-ui/`, plus `js/airtime/common/tooltip.js` (rtTooltip) +

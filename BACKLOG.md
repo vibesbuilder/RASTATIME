@@ -1077,6 +1077,15 @@ zu beschäftigt mit Catchup um den `scheduled.push` Befehl
 rechtzeitig zu beantworten. Pypo hat sich nach dem Timeout
 sauber erholt (kein Folge-Error).
 
+**Realer Datenpunkt (2026-06-06, erster 24/7-Recorder-Live-Test):** Im
+11-h-Test (23:00–10:00) waren fast alle Stunden-Dateien exakt 60 min;
+einzig die 00:00-Datei verlor ~5 min (55:01), die 23:00-Datei war die
+erwartete Teil-Erststunde (57:31).  Operator korreliert den 00:00-Verlust
+mit HW-Überlast durch komplexe Schaltungen um Mitternacht (HW-Tausch steht
+unmittelbar bevor).  Bestätigt: das Symptom betrifft auch den **24/7-
+Recorder** (zweiter `output.file` auf demselben Bus), nicht nur Per-Show —
+selbe vermutete Ursache (Catchup unter Last).  Nach HW-Tausch erneut prüfen.
+
 **Hypothesen:**
 - System-Last-Quelle: Hintergrund-Disk-I/O (Backup? Indizierung?
   Windows-Update?), oder anderer Process (Bitdefender-Scan?)

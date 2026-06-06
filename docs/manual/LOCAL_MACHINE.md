@@ -225,20 +225,38 @@ specific DJ, change the owner before triggering the import.
 
 ---
 
-## 6. Local Recording Folder (related)
+## 6. Recording folders (related)
 
-Hidden under Settings → General Preferences but worth
-mentioning here: the **Local Recording Folder** is where
-[Record-per-Show](./RECORD_PER_SHOW.md) writes its captured
-files.
+Settings → Local Machine has **two** recording-output folders:
+
+### Show Recording Folder
+
+Where [Record-per-Show](./RECORD_PER_SHOW.md) writes one file
+per show flagged "Record this show". *(Renamed from "Recording
+Folder" when 24/7 Recording was added — 2026-06-06.)*
 
 Default: `C:\rastatime\recordings\`.
 
-This is *not* a candidate for the Library — recordings are
-saved as standalone files for download / archive, and are
-not auto-imported. To put a recording back into the Library
-as a track, manually drag it from the recordings folder into
-the Local Import Folder.
+### 24/7 Recording Folder
+
+Where the always-on [24/7 Recording](./RECORD_PER_HOUR.md)
+writes one file per clock hour (plus a `.cues.json` cue
+sidecar), independent of shows. Enable it, pick a format /
+bitrate, and set an automatic-delete window right in this
+section. Keep it **separate** from the Show Recording Folder so
+the retention cleanup never touches per-show files. The folder
+is created automatically on save if it does not yet exist.
+
+Neither folder is a candidate for the Library — recordings are
+standalone files for download / archive, not auto-imported. To
+put a recording back into the Library as a track, manually drag
+it into the Local Import Folder.
+
+> **Apply changes by restarting the playout service.** The
+> recorder settings are baked into the Liquidsoap script at
+> startup, so after changing them, restart **RASTATIME-PLAYOUT**
+> (the Save dialog reminds you). Only the 24/7
+> **Delete after (days)** value takes effect without a restart.
 
 ---
 
