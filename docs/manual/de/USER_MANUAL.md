@@ -148,6 +148,7 @@ sie alle voraussetzen.
 | [Autoloading Playlists](./AUTOLOADING_PLAYLISTS.md) | Eine Playlist sich selbst für jede Instanz einer Sendung aufbauen lassen, inklusive Outro-Reserve-Logik. |
 | [Auto DJ](./AUTO_DJ.md) | Der Hintergrund-Filler, der Sendungen in Kalenderlücken erstellt und unvollständige Sendungen auffüllt. |
 | [Aufnahme pro Sendung](./RECORD_PER_SHOW.md) | Den kompletten On-Air-Output einer Sendung in eine Datei aufzeichnen. |
+| [24/7-Aufnahme](./RECORD_PER_HOUR.md) | Den gesamten On-Air-Output rund um die Uhr aufzeichnen, eine Datei pro Stunde — für Compliance, Catchup und Notfall-Backup. |
 
 ### Ausgabe und Infrastruktur
 

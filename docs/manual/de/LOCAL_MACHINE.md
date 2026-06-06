@@ -245,22 +245,40 @@ Sie den Besitzer vor dem Auslösen des Imports.
 
 ---
 
-## 6. Lokaler Aufnahme-Ordner (verwandt)
+## 6. Aufnahme-Ordner (verwandt)
 
-Versteckt unter Einstellungen → Allgemeine Einstellungen,
-aber erwähnenswert hier: Der **lokale Aufnahme-Ordner** ist
-der Ort, an dem
-[Aufnahme pro Sendung](./RECORD_PER_SHOW.md) seine
-erfassten Dateien schreibt.
+Einstellungen → Lokale Maschine hat **zwei** Aufnahme-Ausgabe-
+Ordner:
+
+### Show Recording Folder
+
+Wohin [Aufnahme pro Sendung](./RECORD_PER_SHOW.md) eine Datei je
+als „Aufnahme" markierter Sendung schreibt. *(Umbenannt von
+„Recording Folder", als die 24/7-Aufnahme dazukam — 2026-06-06.)*
 
 Standard: `C:\rastatime\recordings\`.
 
-Dies ist *kein* Kandidat für die Bibliothek — Aufnahmen
-werden als eigenständige Dateien zum Download / Archiv
-gespeichert und nicht automatisch importiert. Um eine
-Aufnahme als Track zurück in die Bibliothek zu legen,
-ziehen Sie sie manuell aus dem Aufnahmen-Ordner in den
-lokalen Import-Ordner.
+### 24/7 Recording Folder
+
+Wohin die durchgehende [24/7-Aufnahme](./RECORD_PER_HOUR.md) eine
+Datei pro Uhr-Stunde schreibt (plus ein `.cues.json`-Cue-Sidecar),
+unabhängig von Sendungen. Aktivieren, Format / Bitrate wählen und
+ein Auto-Lösch-Fenster setzen Sie direkt in diesem Abschnitt.
+Halten Sie ihn **getrennt** vom Show Recording Folder, damit das
+Retention-Aufräumen nie Per-Sendung-Dateien anfasst. Der Ordner
+wird beim Speichern angelegt, falls noch nicht vorhanden.
+
+Keiner der Ordner ist ein Kandidat für die Bibliothek — Aufnahmen
+sind eigenständige Dateien zum Download / Archiv, nicht
+automatisch importiert. Um eine Aufnahme als Track zurück in die
+Bibliothek zu legen, ziehen Sie sie manuell in den lokalen
+Import-Ordner.
+
+> **Änderungen durch Neustart des Playout-Dienstes anwenden.** Die
+> Recorder-Einstellungen werden beim Start in das Liquidsoap-
+> Skript eingebacken; starten Sie nach einer Änderung also
+> **RASTATIME-PLAYOUT** neu (der Save-Dialog erinnert daran). Nur
+> der 24/7-Wert **Delete after (days)** wirkt ohne Neustart.
 
 ---
 
