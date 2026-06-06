@@ -165,18 +165,39 @@ Los archivos importados pertenecen al
 
 ---
 
-## 6. Carpeta de grabación local (relacionada)
+## 6. Carpetas de grabación (relacionadas)
 
-Oculta bajo Configuración → Preferencias generales pero
-vale la pena mencionar aquí: la **Carpeta de grabación
-local** es donde
-[Grabación por programa](./RECORD_PER_SHOW.md) escribe
-sus archivos capturados.
+Configuración → Máquina local tiene **dos** carpetas de salida
+de grabación:
+
+### Show Recording Folder
+
+Donde [Grabación por programa](./RECORD_PER_SHOW.md) escribe un
+archivo por programa marcado «grabar». *(Renombrada desde
+«Recording Folder» al añadir la grabación 24/7 — 2026-06-06.)*
 
 Por defecto: `C:\rastatime\recordings\`.
 
-Esta *no* es candidata para la Biblioteca — las
-grabaciones se guardan como archivos autónomos.
+### 24/7 Recording Folder
+
+Donde la [grabación 24/7](./RECORD_PER_HOUR.md) permanente
+escribe un archivo por hora de reloj (más un archivo de marcas
+`.cues.json`), independientemente de los programas. La activa,
+elige un formato / tasa de bits y fija una ventana de borrado
+automático directamente en esta sección. Manténgala
+**separada** de la Show Recording Folder para que la limpieza
+de retención nunca toque los archivos por programa. La carpeta
+se crea al guardar si aún no existe.
+
+Ninguna de las dos carpetas es candidata para la Biblioteca —
+las grabaciones se guardan como archivos autónomos para
+descarga / archivo.
+
+> **Aplique los cambios reiniciando el servicio de playout.**
+> Los ajustes del grabador se integran en el script Liquidsoap
+> al arrancar; tras un cambio, reinicie **RASTATIME-PLAYOUT**
+> (el diálogo Save lo recuerda). Solo el valor 24/7 **Delete
+> after (days)** surte efecto sin reinicio.
 
 ---
 

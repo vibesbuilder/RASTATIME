@@ -146,6 +146,7 @@ documento maestro arriba es lo único que todos asumen.
 | [Autoloading Playlists](./AUTOLOADING_PLAYLISTS.md) | Dejar que una playlist se construya para cada instancia de un programa, incluyendo gestión de reserva de outro. |
 | [Auto DJ](./AUTO_DJ.md) | El rellenador en segundo plano que crea programas en huecos del calendario y completa programas incompletos. |
 | [Grabación por programa](./RECORD_PER_SHOW.md) | Capturar la salida completa al aire de un programa en un archivo. |
+| [Grabación 24/7](./RECORD_PER_HOUR.md) | Grabar toda la salida al aire las 24 horas, un archivo por hora — para cumplimiento, escucha diferida y copia de seguridad de emergencia. |
 
 ### Salida e infraestructura
 

@@ -178,7 +178,7 @@ de excepciones de su antivirus.**
   excepciones** → agregar la ruta de la carpeta de
   grabación (por ejemplo `C:\Users\studio\Music\Recording\`
   o lo que configuró en Settings → Local Machine →
-  Recording Folder).
+  Show Recording Folder).
 - **Windows Defender**: Configuración → **Actualización y
   seguridad** → **Seguridad de Windows** → **Protección
   contra virus y amenazas** → **Administrar
