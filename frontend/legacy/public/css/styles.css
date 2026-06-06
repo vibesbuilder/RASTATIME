@@ -1699,6 +1699,24 @@ h2#scheduled_playlist_name span {
 .simple-formblock {
 }
 
+/* RASTATIME 2026-06-06 — tighten the Local Machine page heading spacing. */
+.simple-formblock h2 {
+    padding-bottom: 10px;
+}
+
+/* RASTATIME 2026-06-06 — info-icon trigger for the rtTooltip field hints
+   on the Local Machine settings page. */
+.rt-hint {
+    display: inline-block;
+    margin-left: 0.4em;
+    color: #0088cc;
+    font-size: 0.95em;
+    line-height: 1;
+    cursor: help;
+    vertical-align: middle;
+    user-select: none;
+}
+
 .simple-formblock dl, .simple-formblock dl.zend_form {
     margin: 0;
     padding: 0;
@@ -1757,7 +1775,7 @@ h2#scheduled_playlist_name span {
 }
 
 .stream-setting-global {
-    margin-bottom: 30px;
+    margin-bottom: 10px;
 }
 
 .simple-formblock.padded-strong {

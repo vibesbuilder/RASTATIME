@@ -25,6 +25,15 @@ AIRTIME.i18n = {
 };
 </script>
 
+<?php
+// RASTATIME 2026-06-06 — rtTooltip content helper.  Double-escapes so the
+// text survives BOTH the HTML attribute AND rtTooltip's innerHTML render
+// (e.g. "<YYYY-MM-DD>" shows as literal text instead of being parsed as a tag).
+$rtTip = function ($text) {
+    return htmlspecialchars(htmlspecialchars($text, ENT_QUOTES), ENT_QUOTES);
+};
+?>
+
 <div class="ui-widget prefpanel simple-formblock clearfix padded-strong soundcard-config">
     <h2 style="float:left"><?php echo _("Local Machine Settings") ?></h2>
 
@@ -33,13 +42,12 @@ AIRTIME.i18n = {
 
     <div id="soundcard-status-msg"></div>
 
-    <h3 style="margin-top: 1em;"><?php echo _("Soundcard") ?></h3>
+    <h3><?php echo _("Soundcard") ?></h3>
 
     <div class="soundcard-columns" style="display:flex; gap:2em; flex-wrap:wrap;">
 
         <!-- ── Output devices ───────────────────────────────────────── -->
         <div style="min-width:280px; flex:1;">
-            <h3><?php echo _("Output") ?></h3>
             <fieldset class="padded stream-setting-global">
                 <dl class="zend_form">
 
@@ -87,10 +95,7 @@ AIRTIME.i18n = {
     $localImportLastStatus = Application_Model_Preference::getLocalImportLastStatus();
     ?>
 
-    <h3 style="margin-top: 2em;"><?php echo _("Import Folder") ?></h3>
-    <p style="max-width: 60em; color: #555;">
-        <?php echo _("Audio files dropped into this folder are imported into the Media Library every 5 minutes.  After each import attempt (success or failure) the source file is deleted from the folder.  Leave empty to disable the scan."); ?>
-    </p>
+    <h3><?php echo _("Import Folder") ?><span class="rt-hint" data-rt-tip="<?php echo $rtTip(_("Audio files dropped into this folder are imported into the Media Library every 5 minutes.  After each import attempt (success or failure) the source file is deleted from the folder.  Leave empty to disable the scan.")); ?>">&#9432;</span></h3>
 
     <fieldset class="padded stream-setting-global">
         <dl class="zend_form">
@@ -98,12 +103,9 @@ AIRTIME.i18n = {
             <dd>
                 <input id="local_import_folder" name="local_import_folder"
                        type="text" class="input_text"
-                       style="width: 100%; max-width: 50em;"
+                       style="width: calc(100% - 2.5em); max-width: 50em;"
                        value="<?php echo htmlspecialchars((string) $localImportFolder, ENT_QUOTES); ?>"
-                       placeholder="C:\rastatime\import" />
-                <div style="font-size: 0.9em; color: #666; margin-top: 0.3em;">
-                    <?php echo _("Absolute path on this machine.  Example: C:\\rastatime\\import"); ?>
-                </div>
+                       placeholder="C:\rastatime\import" /><span class="rt-hint" data-rt-tip="<?php echo $rtTip(_("Absolute path on this machine.  Example: C:\\rastatime\\import")); ?>">&#9432;</span>
             </dd>
 
             <dt></dt>
@@ -149,10 +151,7 @@ AIRTIME.i18n = {
     $rec247Bitrates  = [96, 128, 192, 256, 320];
     ?>
 
-    <h3 style="margin-top: 2em;"><?php echo _("24/7 Recording Folder") ?></h3>
-    <p style="max-width: 60em; color: #555;">
-        <?php echo _("Continuous around-the-clock recording of the on-air output, one file per clock hour, independent of shows — it captures everything aired (filler, silence, unscheduled content, emergencies) for compliance, catch-up and emergency backup.  Files are written as <YYYY-MM-DD>/<YYYY-MM-DD HH>-00.<ext> under a per-day subfolder."); ?>
-    </p>
+    <h3><?php echo _("24/7 Recording") ?><span class="rt-hint" data-rt-tip="<?php echo $rtTip(_("Continuous around-the-clock recording of the on-air output, one file per clock hour, independent of shows — it captures everything aired (filler, silence, unscheduled content, emergencies) for compliance, catch-up and emergency backup.  Files are written as <YYYY-MM-DD>/<YYYY-MM-DD HH>-00.<ext> under a per-day subfolder.")); ?>">&#9432;</span></h3>
 
     <fieldset class="padded stream-setting-global">
         <dl class="zend_form">
@@ -161,20 +160,17 @@ AIRTIME.i18n = {
                 <input id="rec247_enabled" name="rec247_enabled" type="checkbox"
                        <?php echo $rec247Enabled ? 'checked="checked"' : ''; ?> />
                 <label for="rec247_enabled" style="font-weight: normal; color: #666;">
-                    <?php echo _("Record 24/7 (a folder below is required)") ?>
-                </label>
+                    <?php echo _("Record 24/7") ?>
+                </label><span class="rt-hint" data-rt-tip="<?php echo $rtTip(_("(a folder below is required)")); ?>">&#9432;</span>
             </dd>
 
             <dt><label for="rec247_folder"><?php echo _("Folder path") ?></label></dt>
             <dd>
                 <input id="rec247_folder" name="rec247_folder"
                        type="text" class="input_text"
-                       style="width: 100%; max-width: 50em;"
+                       style="width: calc(100% - 2.5em); max-width: 50em;"
                        value="<?php echo htmlspecialchars((string) $rec247Folder, ENT_QUOTES); ?>"
-                       placeholder="C:\rastatime\recordings-247" />
-                <div style="font-size: 0.9em; color: #666; margin-top: 0.3em;">
-                    <?php echo _("Absolute path on this machine, separate from the Show Recording Folder.  Example: C:\\rastatime\\recordings-247"); ?>
-                </div>
+                       placeholder="C:\rastatime\recordings-247" /><span class="rt-hint" data-rt-tip="<?php echo $rtTip(_("Absolute path on this machine, separate from the Show Recording Folder.  Example: C:\\rastatime\\recordings-247")); ?>">&#9432;</span>
             </dd>
 
             <dt><label for="rec247_format"><?php echo _("Format") ?></label></dt>
@@ -193,9 +189,7 @@ AIRTIME.i18n = {
                         <option value="<?php echo $br; ?>"<?php echo (int) $rec247Bitrate === $br ? ' selected="selected"' : ''; ?>><?php echo $br; ?></option>
                     <?php } ?>
                 </select>
-                <span style="font-size: 0.9em; color: #666; margin-left: 0.5em;">
-                    <?php echo _("Higher = better quality, more disk.") ?>
-                </span>
+                <span class="rt-hint" data-rt-tip="<?php echo $rtTip(_("Higher = better quality, more disk.")); ?>">&#9432;</span>
             </dd>
 
             <dt><label for="rec247_retention"><?php echo _("Delete after (days)") ?></label></dt>
@@ -204,9 +198,7 @@ AIRTIME.i18n = {
                        type="number" min="0" step="1" class="input_text"
                        style="width: 6em;"
                        value="<?php echo (int) $rec247Retention; ?>" />
-                <span style="font-size: 0.9em; color: #666; margin-left: 0.5em;">
-                    <?php echo _("0 = keep forever.  Older recordings are pruned automatically.") ?>
-                </span>
+                <span class="rt-hint" data-rt-tip="<?php echo $rtTip(_("0 = keep forever.  Older recordings are pruned automatically.")); ?>">&#9432;</span>
             </dd>
 
             <dt></dt>
@@ -228,10 +220,7 @@ AIRTIME.i18n = {
     $localRecordingFolder = Application_Model_Preference::getLocalRecordingFolder();
     ?>
 
-    <h3 style="margin-top: 2em;"><?php echo _("Show Recording Folder") ?></h3>
-    <p style="max-width: 60em; color: #555;">
-        <?php echo _("Folder where per-show recordings are written.  Each show flagged as \"Record this show\" produces a single .mp3 of the on-air output, named <YYYY-MM-DD HH-MM> - <show-name>.mp3 under a per-day subfolder.  Leave empty to disable recording."); ?>
-    </p>
+    <h3><?php echo _("Show Recording Folder") ?><span class="rt-hint" data-rt-tip="<?php echo $rtTip(_("Folder where per-show recordings are written.  Each show flagged as \"Record this show\" produces a single .mp3 of the on-air output, named <YYYY-MM-DD HH-MM> - <show-name>.mp3 under a per-day subfolder.  Leave empty to disable recording.")); ?>">&#9432;</span></h3>
 
     <fieldset class="padded stream-setting-global">
         <dl class="zend_form">
@@ -256,6 +245,11 @@ AIRTIME.i18n = {
             </dd>
         </dl>
     </fieldset>
+
+    <div style="margin-top: 1em;">
+        <button id="soundcard_save_bottom" type="button" class="btn"><?php echo _("Save") ?></button>
+        <div style="clear:both"></div>
+    </div>
 
     <script>
     (function ($) {
@@ -363,6 +357,23 @@ AIRTIME.i18n = {
                 "json"
             ).fail(function () {
                 msg.text("✗ Network error.").css("color", "#d9534f");
+            });
+        });
+
+        // RASTATIME 2026-06-06 — bottom Save mirrors the top "Local Machine
+        // Settings" (soundcard) Save so the operator needn't scroll up.
+        $("#soundcard_save_bottom").on("click", function () {
+            $("#soundcard_save").trigger("click");
+        });
+
+        // RASTATIME 2026-06-06 — rich tooltips (rtTooltip / Floating UI) for the
+        // section descriptions + field hints.  Each .rt-hint icon shows its
+        // data-rt-tip text on hover; interactive so longer text stays readable.
+        $(".rt-hint").each(function () {
+            $(this).rtTooltip({
+                content: $(this).attr("data-rt-tip"),
+                placement: "right",
+                interactive: true,
             });
         });
     })(jQuery);
