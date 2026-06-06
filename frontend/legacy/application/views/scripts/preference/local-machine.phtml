@@ -34,6 +34,21 @@ $rtTip = function ($text) {
 };
 ?>
 
+<style>
+/* RASTATIME 2026-06-06 — Local Machine tooltip-icon spacing + path-field
+   icon placement.  All hint icons get a little breathing room from their
+   element; the three "Folder path" hints (after a text input) are
+   absolutely positioned to the right of the full-width input so the input
+   keeps the SAME width as the others (no nowrap / no width reduction). */
+.soundcard-config .help_icon { margin-left: 0.5em; }
+.soundcard-config dd input[type="text"] + .help_icon {
+    position: absolute;
+    left: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+}
+</style>
+
 <div class="ui-widget prefpanel simple-formblock clearfix padded-strong soundcard-config">
     <h2 style="float:left"><?php echo _("Local Machine Settings") ?></h2>
 
@@ -100,7 +115,7 @@ $rtTip = function ($text) {
     <fieldset class="padded stream-setting-global">
         <dl class="zend_form">
             <dt><label for="local_import_folder"><?php echo _("Folder path") ?></label></dt>
-            <dd style="white-space: nowrap;">
+            <dd style="position: relative;">
                 <input id="local_import_folder" name="local_import_folder"
                        type="text" class="input_text"
                        style="width: 100%; max-width: 50em;"
@@ -165,7 +180,7 @@ $rtTip = function ($text) {
             </dd>
 
             <dt><label for="rec247_folder"><?php echo _("Folder path") ?></label></dt>
-            <dd style="white-space: nowrap;">
+            <dd style="position: relative;">
                 <input id="rec247_folder" name="rec247_folder"
                        type="text" class="input_text"
                        style="width: 100%; max-width: 50em;"
@@ -225,15 +240,12 @@ $rtTip = function ($text) {
     <fieldset class="padded stream-setting-global">
         <dl class="zend_form">
             <dt><label for="local_recording_folder"><?php echo _("Folder path") ?></label></dt>
-            <dd>
+            <dd style="position: relative;">
                 <input id="local_recording_folder" name="local_recording_folder"
                        type="text" class="input_text"
                        style="width: 100%; max-width: 50em;"
                        value="<?php echo htmlspecialchars((string) $localRecordingFolder, ENT_QUOTES); ?>"
-                       placeholder="C:\rastatime\recordings" />
-                <div style="font-size: 0.9em; color: #666; margin-top: 0.3em;">
-                    <?php echo _("Absolute path on this machine.  Example: C:\\rastatime\\recordings"); ?>
-                </div>
+                       placeholder="C:\rastatime\recordings" /><span class="help_icon" data-rt-tip="<?php echo $rtTip(_("Absolute path on this machine.  Example: C:\\rastatime\\recordings")); ?>"></span>
             </dd>
 
             <dt></dt>
