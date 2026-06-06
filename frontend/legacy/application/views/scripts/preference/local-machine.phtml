@@ -41,11 +41,13 @@ $rtTip = function ($text) {
    absolutely positioned to the right of the full-width input so the input
    keeps the SAME width as the others (no nowrap / no width reduction). */
 .soundcard-config .help_icon { margin-left: 0.5em; }
+/* The three "Folder path" inputs share ONE fixed width (see inline style)
+   so they line up to exactly the same length; with a fixed width the input
+   is immune to the inline hint icon beside it (no width shrink, no nowrap).
+   Centre input + icon vertically so the icon sits neatly to the right. */
+.soundcard-config dd input[type="text"],
 .soundcard-config dd input[type="text"] + .help_icon {
-    position: absolute;
-    left: 100%;
-    top: 50%;
-    transform: translateY(-50%);
+    vertical-align: middle;
 }
 </style>
 
@@ -115,10 +117,10 @@ $rtTip = function ($text) {
     <fieldset class="padded stream-setting-global">
         <dl class="zend_form">
             <dt><label for="local_import_folder"><?php echo _("Folder path") ?></label></dt>
-            <dd style="position: relative;">
+            <dd>
                 <input id="local_import_folder" name="local_import_folder"
                        type="text" class="input_text"
-                       style="width: 100%; max-width: 50em;"
+                       style="width: 372px; max-width: 100%;"
                        value="<?php echo htmlspecialchars((string) $localImportFolder, ENT_QUOTES); ?>"
                        placeholder="C:\rastatime\import" /><span class="help_icon" data-rt-tip="<?php echo $rtTip(_("Absolute path on this machine.  Example: C:\\rastatime\\import")); ?>"></span>
             </dd>
@@ -180,10 +182,10 @@ $rtTip = function ($text) {
             </dd>
 
             <dt><label for="rec247_folder"><?php echo _("Folder path") ?></label></dt>
-            <dd style="position: relative;">
+            <dd>
                 <input id="rec247_folder" name="rec247_folder"
                        type="text" class="input_text"
-                       style="width: 100%; max-width: 50em;"
+                       style="width: 372px; max-width: 100%;"
                        value="<?php echo htmlspecialchars((string) $rec247Folder, ENT_QUOTES); ?>"
                        placeholder="C:\rastatime\recordings-247" /><span class="help_icon" data-rt-tip="<?php echo $rtTip(_("Absolute path on this machine, separate from the Show Recording Folder.  Example: C:\\rastatime\\recordings-247")); ?>"></span>
             </dd>
@@ -240,10 +242,10 @@ $rtTip = function ($text) {
     <fieldset class="padded stream-setting-global">
         <dl class="zend_form">
             <dt><label for="local_recording_folder"><?php echo _("Folder path") ?></label></dt>
-            <dd style="position: relative;">
+            <dd>
                 <input id="local_recording_folder" name="local_recording_folder"
                        type="text" class="input_text"
-                       style="width: 100%; max-width: 50em;"
+                       style="width: 372px; max-width: 100%;"
                        value="<?php echo htmlspecialchars((string) $localRecordingFolder, ENT_QUOTES); ?>"
                        placeholder="C:\rastatime\recordings" /><span class="help_icon" data-rt-tip="<?php echo $rtTip(_("Absolute path on this machine.  Example: C:\\rastatime\\recordings")); ?>"></span>
             </dd>
