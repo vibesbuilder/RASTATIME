@@ -1704,19 +1704,6 @@ h2#scheduled_playlist_name span {
     padding-bottom: 10px;
 }
 
-/* RASTATIME 2026-06-06 — info-icon trigger for the rtTooltip field hints
-   on the Local Machine settings page. */
-.rt-hint {
-    display: inline-block;
-    margin-left: 0.4em;
-    color: #0088cc;
-    font-size: 0.95em;
-    line-height: 1;
-    cursor: help;
-    vertical-align: middle;
-    user-select: none;
-}
-
 .simple-formblock dl, .simple-formblock dl.zend_form {
     margin: 0;
     padding: 0;

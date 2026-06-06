@@ -95,17 +95,17 @@ $rtTip = function ($text) {
     $localImportLastStatus = Application_Model_Preference::getLocalImportLastStatus();
     ?>
 
-    <h3><?php echo _("Import Folder") ?><span class="rt-hint" data-rt-tip="<?php echo $rtTip(_("Audio files dropped into this folder are imported into the Media Library every 5 minutes.  After each import attempt (success or failure) the source file is deleted from the folder.  Leave empty to disable the scan.")); ?>">&#9432;</span></h3>
+    <h3><?php echo _("Import Folder") ?><span class="help_icon" data-rt-tip="<?php echo $rtTip(_("Audio files dropped into this folder are imported into the Media Library every 5 minutes.  After each import attempt (success or failure) the source file is deleted from the folder.  Leave empty to disable the scan.")); ?>"></span></h3>
 
     <fieldset class="padded stream-setting-global">
         <dl class="zend_form">
             <dt><label for="local_import_folder"><?php echo _("Folder path") ?></label></dt>
-            <dd>
+            <dd style="white-space: nowrap;">
                 <input id="local_import_folder" name="local_import_folder"
                        type="text" class="input_text"
-                       style="width: calc(100% - 2.5em); max-width: 50em;"
+                       style="width: 100%; max-width: 50em;"
                        value="<?php echo htmlspecialchars((string) $localImportFolder, ENT_QUOTES); ?>"
-                       placeholder="C:\rastatime\import" /><span class="rt-hint" data-rt-tip="<?php echo $rtTip(_("Absolute path on this machine.  Example: C:\\rastatime\\import")); ?>">&#9432;</span>
+                       placeholder="C:\rastatime\import" /><span class="help_icon" data-rt-tip="<?php echo $rtTip(_("Absolute path on this machine.  Example: C:\\rastatime\\import")); ?>"></span>
             </dd>
 
             <dt></dt>
@@ -151,7 +151,7 @@ $rtTip = function ($text) {
     $rec247Bitrates  = [96, 128, 192, 256, 320];
     ?>
 
-    <h3><?php echo _("24/7 Recording") ?><span class="rt-hint" data-rt-tip="<?php echo $rtTip(_("Continuous around-the-clock recording of the on-air output, one file per clock hour, independent of shows — it captures everything aired (filler, silence, unscheduled content, emergencies) for compliance, catch-up and emergency backup.  Files are written as <YYYY-MM-DD>/<YYYY-MM-DD HH>-00.<ext> under a per-day subfolder.")); ?>">&#9432;</span></h3>
+    <h3><?php echo _("24/7 Recording") ?><span class="help_icon" data-rt-tip="<?php echo $rtTip(_("Continuous around-the-clock recording of the on-air output, one file per clock hour, independent of shows — it captures everything aired (filler, silence, unscheduled content, emergencies) for compliance, catch-up and emergency backup.  Files are written as <YYYY-MM-DD>/<YYYY-MM-DD HH>-00.<ext> under a per-day subfolder.")); ?>"></span></h3>
 
     <fieldset class="padded stream-setting-global">
         <dl class="zend_form">
@@ -161,16 +161,16 @@ $rtTip = function ($text) {
                        <?php echo $rec247Enabled ? 'checked="checked"' : ''; ?> />
                 <label for="rec247_enabled" style="font-weight: normal; color: #666;">
                     <?php echo _("Record 24/7") ?>
-                </label><span class="rt-hint" data-rt-tip="<?php echo $rtTip(_("(a folder below is required)")); ?>">&#9432;</span>
+                </label><span class="help_icon" data-rt-tip="<?php echo $rtTip(_("(a folder below is required)")); ?>"></span>
             </dd>
 
             <dt><label for="rec247_folder"><?php echo _("Folder path") ?></label></dt>
-            <dd>
+            <dd style="white-space: nowrap;">
                 <input id="rec247_folder" name="rec247_folder"
                        type="text" class="input_text"
-                       style="width: calc(100% - 2.5em); max-width: 50em;"
+                       style="width: 100%; max-width: 50em;"
                        value="<?php echo htmlspecialchars((string) $rec247Folder, ENT_QUOTES); ?>"
-                       placeholder="C:\rastatime\recordings-247" /><span class="rt-hint" data-rt-tip="<?php echo $rtTip(_("Absolute path on this machine, separate from the Show Recording Folder.  Example: C:\\rastatime\\recordings-247")); ?>">&#9432;</span>
+                       placeholder="C:\rastatime\recordings-247" /><span class="help_icon" data-rt-tip="<?php echo $rtTip(_("Absolute path on this machine, separate from the Show Recording Folder.  Example: C:\\rastatime\\recordings-247")); ?>"></span>
             </dd>
 
             <dt><label for="rec247_format"><?php echo _("Format") ?></label></dt>
@@ -189,7 +189,7 @@ $rtTip = function ($text) {
                         <option value="<?php echo $br; ?>"<?php echo (int) $rec247Bitrate === $br ? ' selected="selected"' : ''; ?>><?php echo $br; ?></option>
                     <?php } ?>
                 </select>
-                <span class="rt-hint" data-rt-tip="<?php echo $rtTip(_("Higher = better quality, more disk.")); ?>">&#9432;</span>
+                <span class="help_icon" data-rt-tip="<?php echo $rtTip(_("Higher = better quality, more disk.")); ?>"></span>
             </dd>
 
             <dt><label for="rec247_retention"><?php echo _("Delete after (days)") ?></label></dt>
@@ -198,7 +198,7 @@ $rtTip = function ($text) {
                        type="number" min="0" step="1" class="input_text"
                        style="width: 6em;"
                        value="<?php echo (int) $rec247Retention; ?>" />
-                <span class="rt-hint" data-rt-tip="<?php echo $rtTip(_("0 = keep forever.  Older recordings are pruned automatically.")); ?>">&#9432;</span>
+                <span class="help_icon" data-rt-tip="<?php echo $rtTip(_("0 = keep forever.  Older recordings are pruned automatically.")); ?>"></span>
             </dd>
 
             <dt></dt>
@@ -220,7 +220,7 @@ $rtTip = function ($text) {
     $localRecordingFolder = Application_Model_Preference::getLocalRecordingFolder();
     ?>
 
-    <h3><?php echo _("Show Recording Folder") ?><span class="rt-hint" data-rt-tip="<?php echo $rtTip(_("Folder where per-show recordings are written.  Each show flagged as \"Record this show\" produces a single .mp3 of the on-air output, named <YYYY-MM-DD HH-MM> - <show-name>.mp3 under a per-day subfolder.  Leave empty to disable recording.")); ?>">&#9432;</span></h3>
+    <h3><?php echo _("Show Recording Folder") ?><span class="help_icon" data-rt-tip="<?php echo $rtTip(_("Folder where per-show recordings are written.  Each show flagged as \"Record this show\" produces a single .mp3 of the on-air output, named <YYYY-MM-DD HH-MM> - <show-name>.mp3 under a per-day subfolder.  Leave empty to disable recording.")); ?>"></span></h3>
 
     <fieldset class="padded stream-setting-global">
         <dl class="zend_form">
@@ -367,9 +367,9 @@ $rtTip = function ($text) {
         });
 
         // RASTATIME 2026-06-06 — rich tooltips (rtTooltip / Floating UI) for the
-        // section descriptions + field hints.  Each .rt-hint icon shows its
+        // section descriptions + field hints.  Each .help_icon shows its
         // data-rt-tip text on hover; interactive so longer text stays readable.
-        $(".rt-hint").each(function () {
+        $("[data-rt-tip]").each(function () {
             $(this).rtTooltip({
                 content: $(this).attr("data-rt-tip"),
                 placement: "right",
