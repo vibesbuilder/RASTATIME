@@ -169,20 +169,42 @@ défaut). Par défaut `admin`.
 
 ---
 
-## 6. Dossier d'enregistrement local (lié)
+## 6. Dossiers d'enregistrement (lié)
 
-Caché sous Paramètres → Préférences générales mais valant
-d'être mentionné ici : le **Dossier d'enregistrement
-local** est où
-[Enregistrement par émission](./RECORD_PER_SHOW.md) écrit
-ses fichiers capturés.
+Paramètres → Machine locale a **deux** dossiers de sortie
+d'enregistrement :
+
+### Show Recording Folder
+
+Où [Enregistrement par émission](./RECORD_PER_SHOW.md) écrit un
+fichier par émission marquée « enregistrer ». *(Renommé depuis
+« Recording Folder » lors de l'ajout de l'enregistrement 24/7 —
+2026-06-06.)*
 
 Par défaut : `C:\rastatime\recordings\`.
 
-Ce n'est *pas* un candidat pour la Bibliothèque — les
-enregistrements sont sauvegardés comme fichiers
-autonomes pour téléchargement / archive, et ne sont pas
-auto-importés.
+### 24/7 Recording Folder
+
+Où l'[enregistrement 24/7](./RECORD_PER_HOUR.md) permanent écrit
+un fichier par heure d'horloge (plus un fichier de repères
+`.cues.json`), indépendamment des émissions. Vous l'activez,
+choisissez un format / débit et fixez une fenêtre de
+suppression automatique directement dans cette section.
+Gardez-le **séparé** du Show Recording Folder pour que le
+nettoyage de rétention ne touche jamais les fichiers par
+émission. Le dossier est créé à l'enregistrement s'il n'existe
+pas encore.
+
+Aucun des deux dossiers n'est candidat pour la Bibliothèque —
+les enregistrements sont des fichiers autonomes pour
+téléchargement / archive, non auto-importés.
+
+> **Appliquez les modifications en redémarrant le service de
+> diffusion.** Les réglages d'enregistreur sont intégrés au
+> script Liquidsoap au démarrage ; après une modification,
+> redémarrez donc **RASTATIME-PLAYOUT** (le dialogue Save le
+> rappelle). Seule la valeur 24/7 **Delete after (days)** prend
+> effet sans redémarrage.
 
 ---
 

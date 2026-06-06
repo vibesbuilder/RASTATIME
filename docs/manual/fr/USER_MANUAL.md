@@ -153,6 +153,7 @@ qu'ils supposent tous.
 | [Autoloading Playlists](./AUTOLOADING_PLAYLISTS.md) | Laisser une playlist se construire elle-même pour chaque instance d'une émission, y compris la gestion de la réserve d'outro. |
 | [Auto DJ](./AUTO_DJ.md) | Le remplisseur d'arrière-plan qui crée des émissions dans les trous du calendrier et complète les émissions incomplètes. |
 | [Enregistrement par émission](./RECORD_PER_SHOW.md) | Capturer la sortie complète à l'antenne d'une émission dans un fichier. |
+| [Enregistrement 24/7](./RECORD_PER_HOUR.md) | Enregistrer toute la sortie à l'antenne 24h/24, un fichier par heure — pour la conformité, la réécoute et la sauvegarde d'urgence. |
 
 ### Sortie et infrastructure
 
