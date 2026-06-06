@@ -124,9 +124,21 @@ kann mit dem Storage-Cleanup mitentfernt werden.
 **Risiko Live-Betrieb:** Hoch ohne Tests — eine fehlerhafte Shift bringt Show zur falschen Zeit auf Sendung.
 **Empfohlene Ausrollung:** Feature-Flag, opt-in pro Show; 30 Tage Beobachtung; dann Default.
 
-### 🟢 Record-per-Hour (Vorstufe für 7-Tage-Catchup)
+### ✅ Record-per-Hour (Vorstufe für 7-Tage-Catchup) — DONE 2026-06-06
 
-**Status:** Go.
+**Status:** ✅ **IMPLEMENTIERT 2026-06-06** — neu auf die Phase-C5-
+Liquidsoap-Aufnahme-Architektur aufgesetzt (**nicht** der ursprüngliche
+FFmpeg-Tap-Plan unten, der seit dem FfmpegRecorder-Delete obsolet war):
+zweiter Liquidsoap-`output.file` auf dem Bus mit stündlicher
+`reopen_when`-Rotation; Format/Bitrate/Retention/Enable per Settings-UI
+(eigener „24/7 Recording Folder", „Recording Folder" → „Show Recording
+Folder" umbenannt); Pypo-Retention-Daemon; Cue-Sidecars (`.cues.json`).
+Commits `80c3dbf` (Recorder) + `0127ff0` (Retention) + `7b9a8bc`/`84c5c34`
+(UI) + `9b3d857` (Cue) + `58515c8`/`7ae8c64`/`75310e1`/`8abd631`
+(Doku EN/DE/FR/ES).  Live-verifiziert (11-h-Lauf, nahtlose Übergänge).
+Das **7-Tage-Catchup-Frontend** (nutzt die Sidecars) bleibt offen.
+Original-Evaluierung unten zur Historie:
+
 **Evaluiert:** 2026-05-22.
 **Operator-Wert:** Hoch — Compliance, Catchup, Notfall-Backup.
 
