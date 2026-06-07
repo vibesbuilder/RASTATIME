@@ -54,6 +54,13 @@ class Application_Form_SmartBlockCriteria extends Zend_Form_SubForm
                 // they air before they get auto-disabled.  Tracks
                 // without an expiry stay at the back of the queue.
                 'earliestexpiry' => _('Earliest expiry first'),
+                // RASTATIME 2026-06-07 — Song Requests.  Sort by the
+                // per-track request aggregate so a "use requests" block
+                // airs the most-wanted / longest-waiting requests first.
+                // mostrequested = request_count DESC; oldestrequest =
+                // requested_at ASC (FIFO request queue).
+                'mostrequested' => _('Most requested first'),
+                'oldestrequest' => _('Oldest request first'),
             ];
         }
 
@@ -517,6 +524,22 @@ class Application_Form_SmartBlockCriteria extends Zend_Form_SubForm
             $onlyWithExpiry->setChecked($storedCrit['only_with_expiry']['value'] == 1);
         }
         $this->addElement($onlyWithExpiry);
+
+        // RASTATIME 2026-06-07 — Song Requests.  Restrict the Smart
+        // Block to tracks that currently have an open listener request
+        // (cc_files.requested = true).  This is what turns an ordinary
+        // smart block into a "request slot": pair it with the
+        // "Most requested first" / "Oldest request first" sort and a
+        // small item limit, drop it into a request-enabled show, and
+        // the incremental fill (Phase 5) airs listeners' requests.
+        // Default off; backwards-compatible (missing row = disabled).
+        $useRequests = new Zend_Form_Element_Checkbox('sp_use_requests');
+        $useRequests->setDecorators(['viewHelper'])
+            ->setLabel(_('Allow only requested tracks:'));
+        if (isset($storedCrit['use_requests'])) {
+            $useRequests->setChecked($storedCrit['use_requests']['value'] == 1);
+        }
+        $this->addElement($useRequests);
 
         $sort = new Zend_Form_Element_Select('sp_sort_options');
         $sort->setAttrib('class', 'sp_input_select')

@@ -1273,6 +1273,15 @@ SQL;
             ->setDbBlockId($this->id)
             ->save();
 
+        // RASTATIME 2026-06-07 — Song Requests: only-requested-tracks
+        // restriction.  Same null-coalesce pattern as the toggles above.
+        $qry = new CcBlockcriteria();
+        $qry->setDbCriteria('use_requests')
+            ->setDbModifier('N/A')
+            ->setDbValue($p_criteriaData['etc']['sp_use_requests'] ?? 0)
+            ->setDbBlockId($this->id)
+            ->save();
+
         // RASTATIME 2026-05-21 — exclude-played-lately filter.  Stores
         // two rows: the master enable flag + the hours-back window.
         // Hours is normalised to an integer in [1, 8760] when the
@@ -1769,6 +1778,9 @@ SQL;
             } elseif ($criteria == 'only_with_expiry') {
                 // RASTATIME 2026-05-18
                 $storedCrit['only_with_expiry'] = ['value' => $value];
+            } elseif ($criteria == 'use_requests') {
+                // RASTATIME 2026-06-07 — Song Requests
+                $storedCrit['use_requests'] = ['value' => $value];
             } elseif ($criteria == 'exclude_played_lately') {
                 // RASTATIME 2026-05-21 — master toggle (0/1).  The
                 // companion hours value lives in a separate row
@@ -1852,6 +1864,9 @@ SQL;
             } elseif ($criteria == 'only_with_expiry') {
                 // RASTATIME 2026-05-18
                 $storedCrit['only_with_expiry'] = ['value' => $value];
+            } elseif ($criteria == 'use_requests') {
+                // RASTATIME 2026-06-07 — Song Requests
+                $storedCrit['use_requests'] = ['value' => $value];
             } elseif ($criteria == 'exclude_played_lately') {
                 // RASTATIME 2026-05-21 — master toggle (0/1).  The
                 // companion hours value lives in a separate row
@@ -2068,6 +2083,18 @@ SQL;
             // tracks that share the same expiry second (e.g. a batch
             // of episodes auto-expired by the same podcast setting).
             $qry->addAscendingOrderByColumn('expires_at ASC NULLS LAST, filepath');
+        } elseif ($sortTracks == 'mostrequested') {
+            // RASTATIME 2026-06-07 — Song Requests.  Highest request
+            // count first (the "votes" ordering); requested_at ASC as
+            // the tie-breaker so equally-voted tracks play oldest-first,
+            // filepath last for a stable order.  NULLs (never requested)
+            // sink to the bottom.
+            $qry->addAscendingOrderByColumn('request_count DESC, requested_at ASC NULLS LAST, filepath');
+        } elseif ($sortTracks == 'oldestrequest') {
+            // RASTATIME 2026-06-07 — Song Requests.  Longest-waiting
+            // request first (FIFO queue); NULLs (never requested) go
+            // last so a "use requests" block drains real requests first.
+            $qry->addAscendingOrderByColumn('requested_at ASC NULLS LAST, filepath');
         } elseif ($sortTracks == 'random') {
             $qry->addAscendingOrderByColumn('random()');
         } else {
@@ -2126,6 +2153,16 @@ SQL;
         // content sorted by its retention deadline.
         if (isset($storedCrit['only_with_expiry']) && $storedCrit['only_with_expiry']['value'] == 1) {
             $qry->where('cc_files.expires_at IS NOT NULL');
+        }
+
+        // RASTATIME 2026-06-07 — Song Requests: only-requested-tracks
+        // restriction.  Same composition pattern as only_with_expiry
+        // above, on the cc_files.requested flag (maintained by the
+        // request intake + reset lifecycle).  Pairs with the
+        // "Most requested first" / "Oldest request first" sorts to turn
+        // a smart block into a request slot.
+        if (isset($storedCrit['use_requests']) && $storedCrit['use_requests']['value'] == 1) {
+            $qry->where('cc_files.requested = true');
         }
 
         // RASTATIME 2026-05-21 — re-rotation protection: exclude tracks

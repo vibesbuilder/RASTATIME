@@ -276,6 +276,23 @@
                 <?php endif; ?>
             </dd>
         </dl>
+        <?php /* RASTATIME 2026-06-07 — Song Requests "use requests"
+               toggle.  Sits with the other pool-restriction toggles. */ ?>
+        <dl>
+            <dt>
+                <label class='sp_text_font'><?php echo $this->element->getElement('sp_use_requests')->getLabel() ?></label>
+            </dt>
+            <dd id='sp_use_requests-element'>
+                <?php echo $this->element->getElement('sp_use_requests') ?>
+                <?php if ($this->element->getElement("sp_use_requests")->hasErrors()) : ?>
+                    <?php foreach ($this->element->getElement("sp_use_requests")->getMessages() as $error) : ?>
+                        <span class='errors sp-errors'>
+                            <?php echo $error; ?>
+                        </span>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </dd>
+        </dl>
         <dl>
             <dt>
                 <label class='sp_text_font'><?php echo $this->element->getElement('sp_sort_options')->getLabel(); ?></label>
