@@ -517,6 +517,96 @@ class LocalImportScanTask implements AirtimeTask
 }
 
 /**
+ * Class RequestablePoolSyncTask.
+ *
+ * RASTATIME 2026-06-07 - Song Requests.  Keeps cc_files.requestable in
+ * sync with the operator-chosen "Requestable Pool" smart block: every
+ * REQUESTABLE_POOL_SYNC_INTERVAL_SECONDS it expands the pool block's
+ * criteria into the set of matching file ids and flips
+ * cc_files.requestable = true for exactly those rows (false for the
+ * rest).  The public catalogue-search endpoint only returns requestable
+ * tracks, so this is what bounds what listeners may request.
+ *
+ * No pool configured (preference empty / 0, or the block was deleted):
+ * the task clears every requestable flag, so removing the pool disables
+ * requesting cleanly.
+ *
+ * Pattern mirrors TrackExpiryTask: an interval gate via a cc_pref
+ * timestamp + an atomic raw-SQL update.
+ */
+class RequestablePoolSyncTask implements AirtimeTask
+{
+    public const REQUESTABLE_POOL_SYNC_INTERVAL_SECONDS = 300;  // 5 minutes
+
+    public function shouldBeRun()
+    {
+        $lastRun = Application_Model_Preference::getRequestablePoolLastSync();
+
+        return empty($lastRun)
+            || (microtime(true) > $lastRun + self::REQUESTABLE_POOL_SYNC_INTERVAL_SECONDS);
+    }
+
+    public function run()
+    {
+        try {
+            $poolId = (int) Application_Model_Preference::getRequestablePoolBlockId();
+
+            // Resolve the pool block's criteria into the set of matching
+            // file ids.  getListofFilesMeetCriteria() returns the FULL
+            // criteria-matched set (the item/time limit is only applied
+            // later in getListOfFilesUnderLimit), and already excludes
+            // disabled = true rows, so expired tracks never become
+            // requestable.  The findPk guard means a stale/deleted pool
+            // id resolves to "no pool" instead of accidentally matching
+            // every track via an empty-criteria block.
+            $ids = [];
+            if ($poolId > 0 && CcBlockQuery::create()->findPk($poolId) !== null) {
+                $block = new Application_Model_Block($poolId);
+                $result = $block->getListofFilesMeetCriteria();
+                if (is_array($result) && isset($result['files'])) {
+                    foreach ($result['files'] as $file) {
+                        $ids[] = (int) $file->getDbId();
+                    }
+                }
+            }
+
+            $con = Propel::getConnection();
+            $con->beginTransaction();
+
+            try {
+                // Both updates inside one transaction so the search
+                // endpoint never observes an all-false intermediate
+                // state.  The IN-list is built from explicitly int-cast
+                // ids (no injection vector) — same approach as
+                // AutoPlaylistManager's is_scheduled reset.
+                if (empty($ids)) {
+                    $con->exec('UPDATE cc_files SET requestable = false WHERE requestable = true');
+                } else {
+                    $idsCsv = implode(',', $ids);
+                    $con->exec(
+                        'UPDATE cc_files SET requestable = false '
+                        . "WHERE requestable = true AND id NOT IN ({$idsCsv})"
+                    );
+                    $con->exec(
+                        'UPDATE cc_files SET requestable = true '
+                        . "WHERE requestable = false AND id IN ({$idsCsv})"
+                    );
+                }
+                $con->commit();
+                Logging::info('RequestablePoolSyncTask: ' . count($ids) . ' tracks requestable');
+            } catch (Exception $inner) {
+                $con->rollBack();
+
+                throw $inner;
+            }
+        } catch (Exception $exc) {
+            Logging::error('RequestablePoolSyncTask failed: ' . $exc->getMessage());
+        }
+        Application_Model_Preference::setRequestablePoolLastSync(microtime(true));
+    }
+}
+
+/**
  * Class TaskFactory Factory class to abstract task instantiation.
  */
 class TaskFactory

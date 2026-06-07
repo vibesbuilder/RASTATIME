@@ -2042,6 +2042,31 @@ class Application_Model_Preference
         self::setValue('local_247_recording_retention_days', (string) ($d < 0 ? 0 : $d));
     }
 
+    // RASTATIME 2026-06-07 - Song Requests: the "Requestable Pool".
+    // Stores the cc_block id of the smart block whose members define
+    // which tracks listeners may request.  The RequestablePoolSyncTask
+    // (TaskManager) expands this block and flips cc_files.requestable
+    // accordingly.  Empty / 0 = no pool configured (nothing requestable).
+    public static function getRequestablePoolBlockId()
+    {
+        return self::getValue('requestable_pool_block_id');
+    }
+
+    public static function setRequestablePoolBlockId($value)
+    {
+        self::setValue('requestable_pool_block_id', (string) (int) $value);
+    }
+
+    public static function getRequestablePoolLastSync()
+    {
+        return self::getValue('requestable_pool_last_sync');
+    }
+
+    public static function setRequestablePoolLastSync($value)
+    {
+        self::setValue('requestable_pool_last_sync', $value);
+    }
+
     // RASTATIME 2026-05-15 - GetFeaturePreviewMode/SetFeaturePreviewMode removed:
     // the cc_pref key 'feature_preview_mode' was stored but never consumed by any
     // code path (no feature ever gated on it). Form element + render + save line
