@@ -51,6 +51,16 @@ class AutoPlaylistManager
             // creates a ShowInstance object to build the playlist in from the ShowInstancesQuery Object
             $si = new Application_Model_ShowInstance($autoplaylist->getDbId());
             $playlistid = $si->GetAutoPlaylistId();
+
+            // RASTATIME 2026-06-07 — Song Requests: a show whose autoload
+            // playlist contains a "use requests" smart block is a REQUEST
+            // show — filled incrementally + just-in-time by
+            // RequestShowFillTask, NOT pre-filled to 100% here.  Skip it
+            // so listeners' just-in-time requests still have room to land.
+            if (self::playlistContainsRequestBlock($playlistid)) {
+                continue;
+            }
+
             // call the addPlaylist to show function and don't check for user permission to avoid call to non-existant user object
             $sid = $si->getShowId();
             $playlistrepeat = new Application_Model_Show($sid);
@@ -353,6 +363,107 @@ class AutoPlaylistManager
         }
 
         Application_Model_Preference::setAutoPlaylistPollLock(microtime(true));
+    }
+
+    /**
+     * RASTATIME 2026-06-07 — Song Requests: true if cc_playlist $playlistId
+     * contains at least one smart block with the "use requests" criterion
+     * (cc_blockcriteria.criteria = 'use_requests', value = '1').  This is
+     * the IMPLICIT marker that turns an autoload-playlist show into a
+     * "request show" handled by the incremental just-in-time fill below
+     * (no separate per-show flag — operator decision 2026-06-07).
+     */
+    public static function playlistContainsRequestBlock($playlistId)
+    {
+        if (empty($playlistId)) {
+            return false;
+        }
+        $sql = "SELECT 1
+                FROM cc_playlistcontents pc
+                JOIN cc_blockcriteria bc ON bc.block_id = pc.block_id
+                WHERE pc.playlist_id = :pid
+                  AND pc.block_id IS NOT NULL
+                  AND bc.criteria = 'use_requests'
+                  AND bc.value = '1'
+                LIMIT 1";
+        $row = Application_Common_Database::prepareAndExecute(
+            $sql,
+            [':pid' => (int) $playlistId],
+            'column'
+        );
+
+        return !empty($row);
+    }
+
+    /**
+     * RASTATIME 2026-06-07 — Song Requests: incremental just-in-time fill
+     * (Variant Z).  For every request show (has_autoplaylist + an autoload
+     * playlist that containsRequestBlock) that is currently running OR
+     * starts within $leadSecs, top up its schedule by APPENDING the
+     * autoload playlist until it is filled to now + $leadSecs (capped at
+     * the instance end).  The autoload playlist's "use requests" smart
+     * block re-evaluates on each append, so a request that arrives mid-
+     * show flows into the next round; jingle / fallback blocks fill the
+     * rest.  We deliberately do NOT set autoplaylist_built, so the show is
+     * topped up again on every poll.
+     *
+     * Append-only (never insert): nothing already scheduled is pushed
+     * back, so a following show is never overbooked.
+     */
+    public static function fillRequestShows($leadSecs)
+    {
+        $now = new DateTime('now', new DateTimeZone('UTC'));
+        $nowTs = $now->getTimestamp();
+        $future = clone $now;
+        $future->add(new DateInterval('PT' . (int) $leadSecs . 'S'));
+
+        // Instances not yet ended that have already started or start
+        // within the lead window, restricted to shows with an autoload
+        // playlist.  (Request-show-ness is confirmed per-instance below.)
+        $instances = CcShowInstancesQuery::create()
+            ->filterByDbModifiedInstance(false)
+            ->filterByDbEnds($now, Criteria::GREATER_THAN)
+            ->filterByDbStarts($future, Criteria::LESS_THAN)
+            ->useCcShowQuery('a', 'left join')
+                ->filterByDbHasAutoPlaylist(true)
+            ->endUse()
+            ->find();
+
+        foreach ($instances as $instance) {
+            $si = new Application_Model_ShowInstance($instance->getDbId());
+            $playlistId = $si->GetAutoPlaylistId();
+            if (empty($playlistId) || !self::playlistContainsRequestBlock($playlistId)) {
+                continue;  // not a request show — leave it to buildAutoPlaylist
+            }
+            self::_incrementalFill($si, $playlistId, $leadSecs, $nowTs);
+        }
+    }
+
+    /**
+     * Top up one request-show instance to now + $leadSecs by repeatedly
+     * appending its autoload playlist.  Stops when filled far enough, when
+     * an append makes no progress (pool/playlist drew nothing this round —
+     * avoids an infinite loop AND avoids filling the slot with empty
+     * rounds / dead air), or after a hard iteration cap.
+     */
+    private static function _incrementalFill($si, $playlistId, $leadSecs, $nowTs)
+    {
+        $startTs = $si->getShowInstanceStart(null)->getTimestamp();
+        $endTs = $si->getShowInstanceEnd(null)->getTimestamp();
+        $targetTs = min($nowTs + (int) $leadSecs, $endTs);
+
+        $guard = 0;
+        while ($guard < 50) {
+            if (($startTs + $si->getTimeScheduledSecs()) >= $targetTs) {
+                break;  // filled up to the lead window
+            }
+            $before = $si->getTimeScheduledSecs();
+            $si->addPlaylistToShow($playlistId, false);
+            if ($si->getTimeScheduledSecs() <= $before) {
+                break;  // nothing drawn this round — stop (no dead-air fill)
+            }
+            $guard++;
+        }
     }
 
     /**

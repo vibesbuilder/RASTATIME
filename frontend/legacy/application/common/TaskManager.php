@@ -610,6 +610,51 @@ class RequestablePoolSyncTask implements AirtimeTask
 }
 
 /**
+ * Class RequestShowFillTask.
+ *
+ * RASTATIME 2026-06-07 - Song Requests, incremental just-in-time fill
+ * (Variant Z).  Every REQUEST_FILL_INTERVAL_SECONDS it tops up every
+ * "request show" (an autoload-playlist show whose playlist contains a
+ * "use requests" smart block) that is currently running or about to
+ * start, filling its schedule only up to now + LEAD_TIME_SECONDS by
+ * appending the autoload playlist.  This keeps a small just-in-time
+ * buffer so a request that arrives mid-show airs within ~one round,
+ * while a safety lead (longer than the poll interval) prevents dead air
+ * if a poll is delayed.  See AutoPlaylistManager::fillRequestShows().
+ *
+ * Distinct from AutoPlaylistTask: that one pre-fills NON-request
+ * autoplaylist shows to 100 %; this one incrementally tops up request
+ * shows and never sets autoplaylist_built.  Both intervals are
+ * env-overridable for tuning.
+ */
+class RequestShowFillTask implements AirtimeTask
+{
+    public const REQUEST_FILL_INTERVAL_SECONDS = 120;  // 2 minutes
+    public const LEAD_TIME_SECONDS = 480;              // 8 minutes safety lead
+
+    public function shouldBeRun()
+    {
+        $interval = (int) (getenv('RASTATIME_REQUEST_FILL_INTERVAL_SECONDS')
+            ?: self::REQUEST_FILL_INTERVAL_SECONDS);
+        $lastRun = Application_Model_Preference::getRequestShowFillLastRun();
+
+        return empty($lastRun) || (microtime(true) > $lastRun + $interval);
+    }
+
+    public function run()
+    {
+        $leadSecs = (int) (getenv('RASTATIME_REQUEST_FILL_LEAD_SECONDS')
+            ?: self::LEAD_TIME_SECONDS);
+        try {
+            AutoPlaylistManager::fillRequestShows($leadSecs);
+        } catch (Throwable $e) {
+            Logging::error('RequestShowFillTask failed: ' . $e->getMessage());
+        }
+        Application_Model_Preference::setRequestShowFillLastRun(microtime(true));
+    }
+}
+
+/**
  * Class TaskFactory Factory class to abstract task instantiation.
  */
 class TaskFactory
