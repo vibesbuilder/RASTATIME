@@ -9,8 +9,11 @@
  * the HTTP code (201 ok, 409 duplicate, 429 rate-limited, else error).
  *
  * Covers come from /api/track?id=..&return=artwork-64 (only works when
- * "3rd party API" is enabled in settings); on any load error the <img>
- * hides itself, so the table degrades cleanly to text-only.
+ * "3rd party API" is enabled in settings) and are rendered only for
+ * tracks the list endpoint flagged has_artwork.  Tracks without a cover
+ * stay text-only: the artwork endpoint answers them with a 0-byte 200
+ * (text/html), which leaves an <img> hanging forever — it fires neither
+ * load nor error — so we must not create the <img> at all.
  *
  * Track titles in cc_files are stored HTML-escaped (sometimes double-
  * escaped, e.g. "&amp;#8222;"), so entities are decoded twice and
@@ -87,13 +90,20 @@
             // cover
             var tdCover = document.createElement('td');
             tdCover.className = 'sr-cover-cell';
-            if (coverUrl) {
+            if (coverUrl && t.has_artwork) {
                 var img = document.createElement('img');
                 img.className = 'sr-cover';
-                img.loading = 'lazy';
+                // No loading='lazy': a lazy <img> inserted via JS can stay
+                // complete=false indefinitely inside an iframe (the load
+                // never resolves). Covers are tiny artwork-64 thumbnails and
+                // only render for has_artwork tracks, so eager load is fine.
                 img.alt = '';
                 img.src = coverUrl + '?id=' + encodeURIComponent(t.id) + '&return=artwork-64';
+                // Defensive only: the list already filters to has_artwork
+                // tracks, but hide the <img> if the cover was removed
+                // between pool sync and load (HTTP error or empty body).
                 img.onerror = function () { this.style.display = 'none'; };
+                img.onload = function () { if (!this.naturalWidth) { this.style.display = 'none'; } };
                 tdCover.appendChild(img);
             }
             tr.appendChild(tdCover);

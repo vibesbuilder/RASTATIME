@@ -115,7 +115,9 @@ def song_request_search(request):
 
     with connection.cursor() as cursor:
         cursor.execute(
-            "SELECT id, track_title, artist_name, album_title FROM cc_files "
+            "SELECT id, track_title, artist_name, album_title, "
+            "(artwork IS NOT NULL AND artwork <> '') AS has_artwork "
+            "FROM cc_files "
             + where
             + "ORDER BY artist_name, track_title LIMIT %s",
             params,
@@ -123,7 +125,10 @@ def song_request_search(request):
         rows = cursor.fetchall()
 
     results = [
-        {"id": r[0], "title": r[1] or "", "artist": r[2] or "", "album": r[3] or ""}
+        {
+            "id": r[0], "title": r[1] or "", "artist": r[2] or "",
+            "album": r[3] or "", "has_artwork": bool(r[4]),
+        }
         for r in rows
     ]
     return Response({"results": results})
