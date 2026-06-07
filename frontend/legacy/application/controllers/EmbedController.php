@@ -147,6 +147,49 @@ class EmbedController extends Zend_Controller_Action
     }
 
     /**
+     * RASTATIME 2026-06-07 — Song Request Widget (iframe embed).
+     *
+     * Interactive widget: a listener types into the search box, the
+     * widget queries the public catalogue-search endpoint
+     * (GET /api/v2/song-requests/search) restricted to the operator's
+     * Requestable Pool, and a "Request" button POSTs the chosen track
+     * to /api/v2/song-requests.  Drop-in iframe:
+     *
+     *   <iframe src=".../embed/song-request?theme=dark"
+     *           width="100%" height="420" frameborder="0"></iframe>
+     *
+     * URL parameters:
+     *   theme - auto | dark | light  (default auto)
+     *
+     * No API auth — the Django endpoints are public + throttled/
+     * deduped per IP (see song_request_api.py).  The widget talks to
+     * /api/v2 on the same station origin (Apache proxies it), so the
+     * fetch URLs are relative.
+     */
+    public function songRequestAction()
+    {
+        $this->view->layout()->disableLayout();
+
+        $request = $this->getRequest();
+
+        $theme = $request->getParam('theme', 'auto');
+        if (!in_array($theme, ['auto', 'dark', 'light'], true)) {
+            $theme = 'auto';
+        }
+        $this->view->themeClass = 'np-theme-' . $theme;
+
+        // Requesting is only possible when the operator has configured a
+        // Requestable Pool (Settings → General).  Surface that so the
+        // widget can show a friendly "currently unavailable" state
+        // rather than an always-empty search box.
+        $poolId = (int) Application_Model_Preference::getRequestablePoolBlockId();
+        $this->view->requestsEnabled = ($poolId > 0);
+
+        $this->view->widgetCss = Assets::url('css/embed/now-playing-widget.css');
+        $this->view->widgetJs  = Assets::url('js/airtime/embed/song-request-widget.js');
+    }
+
+    /**
      * RASTATIME 2026-05-22 — JSON feed shared by both widgets.
      *
      * Polled by the in-iframe JavaScript every 30 s to refresh state

@@ -141,6 +141,17 @@ class Application_Form_GeneralPreferences extends Zend_Form_SubForm
         $outroPlaylistSelect->setValue(Application_Model_Preference::GetOutroPlaylist());
         $this->addElement($outroPlaylistSelect);
 
+        // RASTATIME 2026-06-07 — Song Requests: pick the smart block whose
+        // members listeners may request.  A sync task mirrors its tracks
+        // into cc_files.requestable; the public catalogue-search endpoint
+        // filters on that flag.  "None" disables song requests.
+        $requestablePoolSelect = new Zend_Form_Element_Select('requestablePoolSelect');
+        $requestablePoolSelect->setLabel(_('Song-Request Pool (smart block)'));
+        $requestablePoolSelect->setMultiOptions(Application_Model_Library::getBlockNames());
+        $poolId = Application_Model_Preference::getRequestablePoolBlockId();
+        $requestablePoolSelect->setValue(($poolId && (int) $poolId > 0) ? $poolId : null);
+        $this->addElement($requestablePoolSelect);
+
         $podcast_album_override = new Zend_Form_Element_Radio('podcastAlbumOverride');
         $podcast_album_override->setLabel(_('Overwrite Podcast Episode Metatags'));
         $podcast_album_override->setMultiOptions([

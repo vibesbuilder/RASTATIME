@@ -1,0 +1,98 @@
+<?php
+// RASTATIME 2026-06-07 — Song Request Widget template (iframe embed).
+// Self-contained: inline CSS + a small vanilla-JS file from public/.
+// Talks to the public Django intake at /api/v2/song-requests* on the
+// same station origin (Apache proxies /api/v2).
+$enabled = !empty($this->requestsEnabled);
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title><?php echo _('Song Request'); ?></title>
+    <style>
+    :root {
+        --sr-fg: #1a1a1a; --sr-muted: #666; --sr-border: #ccc;
+        --sr-accent: #2b7de9; --sr-accent-fg: #fff;
+    }
+    .np-theme-dark {
+        --sr-fg: #f0f0f0; --sr-muted: #aaa; --sr-border: #555;
+    }
+    @media (prefers-color-scheme: dark) {
+        .np-theme-auto {
+            --sr-fg: #f0f0f0; --sr-muted: #aaa; --sr-border: #555;
+        }
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body.sr-widget {
+        font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+        color: var(--sr-fg); background: transparent; padding: 10px;
+        font-size: 14px;
+    }
+    .sr-search {
+        width: 100%; padding: 8px 10px; border: 1px solid var(--sr-border);
+        border-radius: 4px; background: transparent; color: var(--sr-fg);
+        font-size: 14px;
+    }
+    .sr-results {
+        list-style: none; margin: 8px 0 0; padding: 0;
+        max-height: 280px; overflow-y: auto;
+    }
+    .sr-item {
+        display: flex; align-items: center; justify-content: space-between;
+        gap: 8px; padding: 6px 4px; border-bottom: 1px solid var(--sr-border);
+    }
+    .sr-item-meta { min-width: 0; }
+    .sr-item-title {
+        font-weight: 600; white-space: nowrap; overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .sr-item-artist {
+        color: var(--sr-muted); font-size: 0.85em; white-space: nowrap;
+        overflow: hidden; text-overflow: ellipsis;
+    }
+    .sr-btn {
+        flex: 0 0 auto; padding: 5px 12px; border: 0; border-radius: 4px;
+        background: var(--sr-accent); color: var(--sr-accent-fg);
+        cursor: pointer; font-size: 13px;
+    }
+    .sr-btn:disabled { opacity: 0.5; cursor: default; }
+    .sr-status {
+        margin-top: 8px; min-height: 1.2em; font-size: 0.9em;
+        color: var(--sr-muted);
+    }
+    .sr-status.sr-ok { color: #2e9e4f; }
+    .sr-status.sr-err { color: #d9534f; }
+    .sr-unavailable { color: var(--sr-muted); padding: 10px; text-align: center; }
+    </style>
+</head>
+<body class="sr-widget <?php echo htmlspecialchars($this->themeClass, ENT_QUOTES, 'UTF-8'); ?>"
+      data-search-url="/api/v2/song-requests/search"
+      data-submit-url="/api/v2/song-requests"
+      data-min-chars="2"
+      data-label-searching="<?php echo htmlspecialchars(_('Searching…'), ENT_QUOTES, 'UTF-8'); ?>"
+      data-label-no-results="<?php echo htmlspecialchars(_('No matching tracks found.'), ENT_QUOTES, 'UTF-8'); ?>"
+      data-label-min-chars="<?php echo htmlspecialchars(_('Type at least 2 characters.'), ENT_QUOTES, 'UTF-8'); ?>"
+      data-label-request="<?php echo htmlspecialchars(_('Request'), ENT_QUOTES, 'UTF-8'); ?>"
+      data-label-success="<?php echo htmlspecialchars(_('Thanks! Your request has been received.'), ENT_QUOTES, 'UTF-8'); ?>"
+      data-label-duplicate="<?php echo htmlspecialchars(_('You already requested this track recently.'), ENT_QUOTES, 'UTF-8'); ?>"
+      data-label-ratelimit="<?php echo htmlspecialchars(_('You have reached the request limit. Please try again later.'), ENT_QUOTES, 'UTF-8'); ?>"
+      data-label-error="<?php echo htmlspecialchars(_('Something went wrong. Please try again.'), ENT_QUOTES, 'UTF-8'); ?>">
+
+<?php if (!$enabled): ?>
+    <div class="sr-unavailable"><?php echo htmlspecialchars(_('Song requests are currently unavailable.'), ENT_QUOTES, 'UTF-8'); ?></div>
+<?php else: ?>
+    <div class="sr-box">
+        <input type="search" class="sr-search" autocomplete="off"
+               placeholder="<?php echo htmlspecialchars(_('Search for a song or artist…'), ENT_QUOTES, 'UTF-8'); ?>"
+               aria-label="<?php echo htmlspecialchars(_('Search for a song or artist'), ENT_QUOTES, 'UTF-8'); ?>">
+        <ul class="sr-results" aria-live="polite"></ul>
+        <div class="sr-status" role="status" aria-live="polite"></div>
+    </div>
+<?php endif; ?>
+
+    <script src="<?php echo $this->widgetJs; ?>" defer></script>
+</body>
+</html>

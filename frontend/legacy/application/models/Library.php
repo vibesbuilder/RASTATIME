@@ -52,6 +52,26 @@ class Application_Model_Library
         return $playlistNames;
     }
 
+    /**
+     * RASTATIME 2026-06-07 — Song Requests: smart-block names for the
+     * "Requestable Pool" dropdown.  Returns [null => 'None'] + [id =>
+     * name] for every smart block, name-sorted.  Mirrors
+     * getPlaylistNames but over cc_block.
+     */
+    public static function getBlockNames()
+    {
+        $blockNames = [];
+        $blocks = CcBlockQuery::create()
+            ->setFormatter(ModelCriteria::FORMAT_ON_DEMAND)
+            ->find();
+        foreach ($blocks as $block) {
+            $blockNames[$block->getDbId()] = $block->getDbName();
+        }
+        asort($blockNames, SORT_NATURAL | SORT_FLAG_CASE);
+
+        return [null => _('None')] + $blockNames;
+    }
+
     public static function getTracktypes()
     {
         $track_type_options = [null => _('None')];
