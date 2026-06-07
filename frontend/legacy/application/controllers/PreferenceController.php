@@ -46,7 +46,7 @@ class PreferenceController extends Zend_Controller_Action
                 Application_Model_Preference::SetPodcastAutoSmartblock($values['podcastAutoSmartblock']);
                 Application_Model_Preference::SetIntroPlaylist($values['introPlaylistSelect']);
                 Application_Model_Preference::SetOutroPlaylist($values['outroPlaylistSelect']);
-                Application_Model_Preference::setRequestablePoolBlockId($values['requestablePoolSelect']);
+                Application_Model_Preference::setRequestablePoolBlockIds($values['requestablePoolSelect'] ?? []);
                 Application_Model_Preference::SetAllow3rdPartyApi($values['thirdPartyApi']);
                 // RASTATIME 2026-05-15 - Sync all three Locale source surfaces in
                 // one save.  Legacy upstream only wrote the global default

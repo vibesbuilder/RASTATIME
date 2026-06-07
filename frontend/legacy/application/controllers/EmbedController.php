@@ -182,8 +182,8 @@ class EmbedController extends Zend_Controller_Action
         // Requestable Pool (Settings → General).  Surface that so the
         // widget can show a friendly "currently unavailable" state
         // rather than an always-empty search box.
-        $poolId = (int) Application_Model_Preference::getRequestablePoolBlockId();
-        $this->view->requestsEnabled = ($poolId > 0);
+        $poolIds = Application_Model_Preference::getRequestablePoolBlockIds();
+        $this->view->requestsEnabled = !empty($poolIds);
 
         $this->view->widgetCss = Assets::url('css/embed/now-playing-widget.css');
         $this->view->widgetJs  = Assets::url('js/airtime/embed/song-request-widget.js');

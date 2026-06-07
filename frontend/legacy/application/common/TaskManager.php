@@ -549,26 +549,29 @@ class RequestablePoolSyncTask implements AirtimeTask
     public function run()
     {
         try {
-            $poolId = (int) Application_Model_Preference::getRequestablePoolBlockId();
+            $poolIds = Application_Model_Preference::getRequestablePoolBlockIds();
 
-            // Resolve the pool block's criteria into the set of matching
-            // file ids.  getListofFilesMeetCriteria() returns the FULL
-            // criteria-matched set (the item/time limit is only applied
-            // later in getListOfFilesUnderLimit), and already excludes
-            // disabled = true rows, so expired tracks never become
-            // requestable.  The findPk guard means a stale/deleted pool
-            // id resolves to "no pool" instead of accidentally matching
-            // every track via an empty-criteria block.
+            // Resolve the criteria of EACH selected pool block into the
+            // UNION of matching file ids.  getListofFilesMeetCriteria()
+            // returns the FULL criteria-matched set (the item/time limit
+            // is only applied later in getListOfFilesUnderLimit), and
+            // already excludes disabled = true rows, so expired tracks
+            // never become requestable.  The findPk guard means a
+            // stale/deleted pool id is skipped instead of accidentally
+            // matching every track via an empty-criteria block.
             $ids = [];
-            if ($poolId > 0 && CcBlockQuery::create()->findPk($poolId) !== null) {
-                $block = new Application_Model_Block($poolId);
-                $result = $block->getListofFilesMeetCriteria();
-                if (is_array($result) && isset($result['files'])) {
-                    foreach ($result['files'] as $file) {
-                        $ids[] = (int) $file->getDbId();
+            foreach ($poolIds as $poolId) {
+                if ($poolId > 0 && CcBlockQuery::create()->findPk($poolId) !== null) {
+                    $block = new Application_Model_Block($poolId);
+                    $result = $block->getListofFilesMeetCriteria();
+                    if (is_array($result) && isset($result['files'])) {
+                        foreach ($result['files'] as $file) {
+                            $ids[] = (int) $file->getDbId();
+                        }
                     }
                 }
             }
+            $ids = array_values(array_unique($ids));
 
             $con = Propel::getConnection();
             $con->beginTransaction();

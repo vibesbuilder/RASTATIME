@@ -54,11 +54,13 @@ class Application_Model_Library
 
     /**
      * RASTATIME 2026-06-07 — Song Requests: smart-block names for the
-     * "Requestable Pool" dropdown.  Returns [null => 'None'] + [id =>
-     * name] for every smart block, name-sorted.  Mirrors
+     * "Requestable Pool" picker.  Returns [id => name] for every smart
+     * block, name-sorted.  With $includeNone, a leading [null => 'None']
+     * is prepended (for single-select use).  The multicheckbox pool
+     * picker omits it (no selection = no pool).  Mirrors
      * getPlaylistNames but over cc_block.
      */
-    public static function getBlockNames()
+    public static function getBlockNames($includeNone = false)
     {
         $blockNames = [];
         $blocks = CcBlockQuery::create()
@@ -69,7 +71,7 @@ class Application_Model_Library
         }
         asort($blockNames, SORT_NATURAL | SORT_FLAG_CASE);
 
-        return [null => _('None')] + $blockNames;
+        return $includeNone ? ([null => _('None')] + $blockNames) : $blockNames;
     }
 
     public static function getTracktypes()

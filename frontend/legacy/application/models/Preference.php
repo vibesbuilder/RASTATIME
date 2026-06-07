@@ -2043,18 +2043,42 @@ class Application_Model_Preference
     }
 
     // RASTATIME 2026-06-07 - Song Requests: the "Requestable Pool".
-    // Stores the cc_block id of the smart block whose members define
-    // which tracks listeners may request.  The RequestablePoolSyncTask
-    // (TaskManager) expands this block and flips cc_files.requestable
-    // accordingly.  Empty / 0 = no pool configured (nothing requestable).
-    public static function getRequestablePoolBlockId()
+    // Stores the cc_block ids of the smart block(s) whose members define
+    // which tracks listeners may request, as a comma-separated string
+    // (e.g. "4,6,7").  The RequestablePoolSyncTask (TaskManager) expands
+    // the UNION of those blocks and flips cc_files.requestable
+    // accordingly.  Empty = no pool configured (nothing requestable).
+    public static function getRequestablePoolBlockIds()
     {
-        return self::getValue('requestable_pool_block_id');
+        $raw = trim((string) self::getValue('requestable_pool_block_ids'));
+        if ($raw === '') {
+            return [];
+        }
+        $ids = [];
+        foreach (explode(',', $raw) as $part) {
+            $id = (int) trim($part);
+            if ($id > 0 && !in_array($id, $ids, true)) {
+                $ids[] = $id;
+            }
+        }
+
+        return $ids;
     }
 
-    public static function setRequestablePoolBlockId($value)
+    public static function setRequestablePoolBlockIds($values)
     {
-        self::setValue('requestable_pool_block_id', (string) (int) $value);
+        // Accept an array of ids (from the multicheckbox) or a CSV string.
+        if (!is_array($values)) {
+            $values = ($values === null || $values === '') ? [] : explode(',', (string) $values);
+        }
+        $ids = [];
+        foreach ($values as $v) {
+            $id = (int) $v;
+            if ($id > 0 && !in_array($id, $ids, true)) {
+                $ids[] = $id;
+            }
+        }
+        self::setValue('requestable_pool_block_ids', implode(',', $ids));
     }
 
     public static function getRequestablePoolLastSync()

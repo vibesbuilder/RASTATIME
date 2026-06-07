@@ -141,15 +141,16 @@ class Application_Form_GeneralPreferences extends Zend_Form_SubForm
         $outroPlaylistSelect->setValue(Application_Model_Preference::GetOutroPlaylist());
         $this->addElement($outroPlaylistSelect);
 
-        // RASTATIME 2026-06-07 — Song Requests: pick the smart block whose
-        // members listeners may request.  A sync task mirrors its tracks
-        // into cc_files.requestable; the public catalogue-search endpoint
-        // filters on that flag.  "None" disables song requests.
-        $requestablePoolSelect = new Zend_Form_Element_Select('requestablePoolSelect');
-        $requestablePoolSelect->setLabel(_('Song-Request Pool (smart block)'));
+        // RASTATIME 2026-06-07 — Song Requests: pick the smart block(s)
+        // whose members listeners may request.  A sync task mirrors the
+        // union of their tracks into cc_files.requestable; the public
+        // catalogue-search endpoint filters on that flag.  Check none to
+        // disable song requests.  Multi-checkbox so several blocks can be
+        // combined (e.g. Pop + Rock + Indie).
+        $requestablePoolSelect = new Zend_Form_Element_MultiCheckbox('requestablePoolSelect');
+        $requestablePoolSelect->setLabel(_('Song-Request Pool (smart blocks)'));
         $requestablePoolSelect->setMultiOptions(Application_Model_Library::getBlockNames());
-        $poolId = Application_Model_Preference::getRequestablePoolBlockId();
-        $requestablePoolSelect->setValue(($poolId && (int) $poolId > 0) ? $poolId : null);
+        $requestablePoolSelect->setValue(Application_Model_Preference::getRequestablePoolBlockIds());
         $this->addElement($requestablePoolSelect);
 
         $podcast_album_override = new Zend_Form_Element_Radio('podcastAlbumOverride');
