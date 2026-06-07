@@ -184,6 +184,14 @@ REST_FRAMEWORK = {
     ],
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "URL_FIELD_NAME": "item_url",
+    # RASTATIME 2026-06-07 — Song Requests.  Per-IP rates for the public
+    # intake throttles.  Applied only on the song-request endpoints via
+    # explicit throttle_classes (NOT set as a global default, so every
+    # other endpoint is unaffected).
+    "DEFAULT_THROTTLE_RATES": {
+        "song_request_search": "60/min",
+        "song_request_submit": "5/hour",
+    },
 }
 
 # Auth

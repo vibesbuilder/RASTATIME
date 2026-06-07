@@ -14,6 +14,7 @@ from .linein_api import linein_list_or_create, linein_detail
 from .preflight_api import preflight_warnings_list, preflight_warnings_replace
 from .health import health
 from .now_playing import now_playing
+from .song_request_api import song_request_search, song_request_submit
 from .streams_status import stream_output_detail, stream_outputs
 from .core.router import urls as core_urls
 from .history.router import urls as history_urls
@@ -32,6 +33,8 @@ api_urls += storage_urls
 urlpatterns = [
     path("health", health, name="health"),
     path("api/v2/now-playing", now_playing, name="now-playing"),
+    path("api/v2/song-requests/search", song_request_search, name="song-request-search"),
+    path("api/v2/song-requests", song_request_submit, name="song-request-submit"),
     path("api/v2/audio/devices", audio_devices, name="audio-devices"),
     path("api/v2/audio/soundcard-settings", soundcard_settings, name="soundcard-settings"),
     path("api/v2/audio/linein", linein_list_or_create, name="linein-list"),
