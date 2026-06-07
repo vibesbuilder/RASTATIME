@@ -1927,7 +1927,12 @@ SQL;
     }
 
     // this function return list of propel object
-    public function getListofFilesMeetCriteria($showLimit = null)
+    //
+    // RASTATIME 2026-06-07 — $ignoreRequestFilter (default false): when
+    // true, the "use requests" criterion is NOT applied.  The Requestable-
+    // Pool sync passes true because the pool defines WHAT MAY BE REQUESTED
+    // (the catalogue), not what has already been requested.
+    public function getListofFilesMeetCriteria($showLimit = null, $ignoreRequestFilter = false)
     {
         $storedCrit = $this->getCriteria();
 
@@ -2161,7 +2166,13 @@ SQL;
         // request intake + reset lifecycle).  Pairs with the
         // "Most requested first" / "Oldest request first" sorts to turn
         // a smart block into a request slot.
-        if (isset($storedCrit['use_requests']) && $storedCrit['use_requests']['value'] == 1) {
+        // RASTATIME 2026-06-07 — skipped when $ignoreRequestFilter is set
+        // (Requestable-Pool sync), so a "use requests" criterion left on a
+        // pool block does not empty the pool.
+        if (!$ignoreRequestFilter
+            && isset($storedCrit['use_requests'])
+            && $storedCrit['use_requests']['value'] == 1
+        ) {
             $qry->where('cc_files.requested = true');
         }
 

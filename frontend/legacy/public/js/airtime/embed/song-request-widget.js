@@ -1,18 +1,20 @@
 /*
- * RASTATIME 2026-06-07 — Song Request Widget runtime.
+ * RASTATIME 2026-06-07 — Song Request Widget runtime (table view).
  *
- * Vanilla JS (no jQuery — runs inside its own iframe).  Behaviour:
- *   1. Debounced search box queries GET /api/v2/song-requests/search,
- *      restricted server-side to the operator's Requestable Pool.
- *   2. Each result renders title + artist + a "Request" button.
- *   3. The button POSTs {file_id} to /api/v2/song-requests and shows a
- *      status message based on the HTTP code (201 ok, 409 duplicate,
- *      429 rate-limited, anything else generic error).
+ * Vanilla JS (no jQuery — runs inside its own iframe).  On load it
+ * fetches the whole requestable pool from GET /api/v2/song-requests/
+ * search (no query = whole pool) and renders a scrollable, non-paginated
+ * table: cover | artist / title | "Request" button.  The button POSTs
+ * {file_id} to /api/v2/song-requests and shows a status message based on
+ * the HTTP code (201 ok, 409 duplicate, 429 rate-limited, else error).
  *
- * Track titles in cc_files are stored HTML-escaped (and sometimes
- * double-escaped, e.g. "&amp;#8222;"), so we decode entities twice
- * before inserting them as text — via textContent only, never
- * innerHTML, so a crafted title can never inject markup.
+ * Covers come from /api/track?id=..&return=artwork-64 (only works when
+ * "3rd party API" is enabled in settings); on any load error the <img>
+ * hides itself, so the table degrades cleanly to text-only.
+ *
+ * Track titles in cc_files are stored HTML-escaped (sometimes double-
+ * escaped, e.g. "&amp;#8222;"), so entities are decoded twice and
+ * inserted only via textContent (never innerHTML -> no markup injection).
  *
  * fetch uses credentials:'omit' — the endpoints are public, need no
  * cookie, and that sidesteps any session/CSRF interaction.
@@ -24,21 +26,19 @@
     if (!body || !body.classList.contains('sr-widget')) {
         return;
     }
-    var searchEl = body.querySelector('.sr-search');
-    if (!searchEl) {
+    var rowsEl = body.querySelector('.sr-rows');
+    if (!rowsEl) {
         return; // disabled state — no pool configured
     }
-    var resultsEl = body.querySelector('.sr-results');
     var statusEl = body.querySelector('.sr-status');
 
-    var searchUrl = body.getAttribute('data-search-url');
+    var listUrl = body.getAttribute('data-list-url');
     var submitUrl = body.getAttribute('data-submit-url');
-    var minChars = parseInt(body.getAttribute('data-min-chars') || '2', 10);
+    var coverUrl = body.getAttribute('data-cover-url');
 
     var L = {
-        searching: body.getAttribute('data-label-searching'),
-        noResults: body.getAttribute('data-label-no-results'),
-        minChars:  body.getAttribute('data-label-min-chars'),
+        loading:   body.getAttribute('data-label-loading'),
+        noTracks:  body.getAttribute('data-label-no-tracks'),
         request:   body.getAttribute('data-label-request'),
         success:   body.getAttribute('data-label-success'),
         duplicate: body.getAttribute('data-label-duplicate'),
@@ -46,9 +46,8 @@
         error:     body.getAttribute('data-label-error')
     };
 
-    // Decode HTML entities. cc_files titles can be double-escaped
-    // ("&amp;#8222;" → "&#8222;" → "„"), so we run the textarea decode
-    // twice. Returns a plain string; callers insert it via textContent.
+    // Decode HTML entities (cc_files titles can be double-escaped). Plain
+    // string out; callers insert via textContent only.
     function decodeEntities(s) {
         if (!s) { return ''; }
         var ta = document.createElement('textarea');
@@ -62,78 +61,70 @@
         statusEl.className = 'sr-status' + (kind ? ' sr-' + kind : '');
     }
 
-    function clearResults() {
-        while (resultsEl.firstChild) {
-            resultsEl.removeChild(resultsEl.firstChild);
-        }
+    function load() {
+        setStatus(L.loading, '');
+        fetch(listUrl, { headers: { 'Accept': 'application/json' }, credentials: 'omit' })
+            .then(function (r) { return r.json(); })
+            .then(function (data) { render((data && data.results) || []); })
+            .catch(function () { setStatus(L.error, 'err'); });
     }
 
-    var debounceTimer = null;
-    var lastQuery = '';
-
-    searchEl.addEventListener('input', function () {
-        var q = searchEl.value.trim();
-        if (debounceTimer) { clearTimeout(debounceTimer); }
-        if (q.length < minChars) {
-            clearResults();
-            setStatus(q.length ? L.minChars : '', '');
-            return;
+    function render(results) {
+        while (rowsEl.firstChild) {
+            rowsEl.removeChild(rowsEl.firstChild);
         }
-        debounceTimer = setTimeout(function () { doSearch(q); }, 300);
-    });
-
-    function doSearch(q) {
-        lastQuery = q;
-        setStatus(L.searching, '');
-        fetch(searchUrl + '?q=' + encodeURIComponent(q), {
-            headers: { 'Accept': 'application/json' },
-            credentials: 'omit'
-        }).then(function (r) {
-            return r.json();
-        }).then(function (data) {
-            if (q !== lastQuery) { return; } // a newer query already fired
-            renderResults((data && data.results) || []);
-        }).catch(function () {
-            setStatus(L.error, 'err');
-        });
-    }
-
-    function renderResults(results) {
-        clearResults();
         if (!results.length) {
-            setStatus(L.noResults, '');
+            setStatus(L.noTracks, '');
             return;
         }
         setStatus('', '');
         results.forEach(function (t) {
-            var li = document.createElement('li');
-            li.className = 'sr-item';
+            var artist = decodeEntities(t.artist);
+            var title = decodeEntities(t.title) || '(untitled)';
 
-            var meta = document.createElement('div');
-            meta.className = 'sr-item-meta';
+            var tr = document.createElement('tr');
 
-            var title = document.createElement('div');
-            title.className = 'sr-item-title';
-            title.textContent = decodeEntities(t.title) || '(untitled)';
-            meta.appendChild(title);
-
-            var artistText = decodeEntities(t.artist);
-            if (artistText) {
-                var artist = document.createElement('div');
-                artist.className = 'sr-item-artist';
-                artist.textContent = artistText;
-                meta.appendChild(artist);
+            // cover
+            var tdCover = document.createElement('td');
+            tdCover.className = 'sr-cover-cell';
+            if (coverUrl) {
+                var img = document.createElement('img');
+                img.className = 'sr-cover';
+                img.loading = 'lazy';
+                img.alt = '';
+                img.src = coverUrl + '?id=' + encodeURIComponent(t.id) + '&return=artwork-64';
+                img.onerror = function () { this.style.display = 'none'; };
+                tdCover.appendChild(img);
             }
+            tr.appendChild(tdCover);
 
+            // artist (bold) + title (muted, below)
+            var tdTrack = document.createElement('td');
+            tdTrack.className = 'sr-track';
+            var line1 = document.createElement('div');
+            line1.className = 'sr-track-artist';
+            line1.textContent = artist || title;
+            tdTrack.appendChild(line1);
+            if (artist) {
+                var line2 = document.createElement('div');
+                line2.className = 'sr-track-title';
+                line2.textContent = title;
+                tdTrack.appendChild(line2);
+            }
+            tr.appendChild(tdTrack);
+
+            // request button
+            var tdBtn = document.createElement('td');
+            tdBtn.className = 'sr-btn-cell';
             var btn = document.createElement('button');
             btn.className = 'sr-btn';
             btn.type = 'button';
             btn.textContent = L.request;
             btn.addEventListener('click', function () { submit(t.id, btn); });
+            tdBtn.appendChild(btn);
+            tr.appendChild(tdBtn);
 
-            li.appendChild(meta);
-            li.appendChild(btn);
-            resultsEl.appendChild(li);
+            rowsEl.appendChild(tr);
         });
     }
 
@@ -142,17 +133,11 @@
         setStatus('', '');
         fetch(submitUrl, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
             credentials: 'omit',
             body: JSON.stringify({ file_id: fileId })
         }).then(function (r) {
-            if (r.status === 201) {
-                setStatus(L.success, 'ok');
-                return;
-            }
+            if (r.status === 201) { setStatus(L.success, 'ok'); return; }
             if (r.status === 409) { setStatus(L.duplicate, 'err'); return; }
             if (r.status === 429) { setStatus(L.ratelimit, 'err'); return; }
             setStatus(L.error, 'err');
@@ -162,4 +147,6 @@
             btn.disabled = false;
         });
     }
+
+    load();
 })();

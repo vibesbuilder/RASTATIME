@@ -56,6 +56,7 @@ from rest_framework.throttling import AnonRateThrottle
 # --- tunables (operator-approved defaults 2026-06-07) ----------------------
 SEARCH_MIN_CHARS = 2
 SEARCH_LIMIT = 25
+AVAILABLE_LIMIT = 500  # whole-pool table listing cap (no query)
 DEDUP_WINDOW_MINUTES = 30
 
 
@@ -90,21 +91,34 @@ def _hash_ip(request) -> str:
 @permission_classes([AllowAny])
 @throttle_classes([SongRequestSearchThrottle])
 def song_request_search(request):
-    """Search the requestable pool by free text; return slim track rows."""
+    """
+    List the requestable pool as slim track rows.  Without ``q`` (or a
+    query shorter than SEARCH_MIN_CHARS) the WHOLE pool is returned (up to
+    AVAILABLE_LIMIT) — this is what the table-view widget uses.  With a
+    query the pool is filtered (up to SEARCH_LIMIT).
+    """
     q = (request.GET.get("q") or "").strip()
-    if len(q) < SEARCH_MIN_CHARS:
-        return Response({"results": []})
 
-    like = f"%{q}%"
+    where = "WHERE requestable = true AND file_exists = true AND disabled = false "
+    params = []
+    if len(q) >= SEARCH_MIN_CHARS:
+        like = f"%{q}%"
+        where += (
+            "AND (track_title ILIKE %s OR artist_name ILIKE %s "
+            "OR album_title ILIKE %s) "
+        )
+        params += [like, like, like]
+        limit = SEARCH_LIMIT
+    else:
+        limit = AVAILABLE_LIMIT
+    params.append(limit)
+
     with connection.cursor() as cursor:
         cursor.execute(
-            "SELECT id, track_title, artist_name, album_title "
-            "FROM cc_files "
-            "WHERE requestable = true AND file_exists = true AND disabled = false "
-            "  AND (track_title ILIKE %s OR artist_name ILIKE %s OR album_title ILIKE %s) "
-            "ORDER BY artist_name, track_title "
-            "LIMIT %s",
-            [like, like, like, SEARCH_LIMIT],
+            "SELECT id, track_title, artist_name, album_title FROM cc_files "
+            + where
+            + "ORDER BY artist_name, track_title LIMIT %s",
+            params,
         )
         rows = cursor.fetchall()
 

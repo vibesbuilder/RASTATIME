@@ -563,7 +563,11 @@ class RequestablePoolSyncTask implements AirtimeTask
             foreach ($poolIds as $poolId) {
                 if ($poolId > 0 && CcBlockQuery::create()->findPk($poolId) !== null) {
                     $block = new Application_Model_Block($poolId);
-                    $result = $block->getListofFilesMeetCriteria();
+                    // ignoreRequestFilter=true: the pool is the CATALOGUE of
+                    // what may be requested, not what is already requested,
+                    // so a stray "use requests" criterion on a pool block
+                    // must not empty the pool.
+                    $result = $block->getListofFilesMeetCriteria(null, true);
                     if (is_array($result) && isset($result['files'])) {
                         foreach ($result['files'] as $file) {
                             $ids[] = (int) $file->getDbId();
