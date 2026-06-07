@@ -20,6 +20,7 @@ INSTALLED_APPS = [
     "libretime_api.schedule",
     "libretime_api.soundcard",     # T13.1 — soundcard settings persistence
     "libretime_api.linein",        # T14.1 — line-in source persistence
+    "libretime_api.song_request",  # SR Phase 1 — listener song requests
     "libretime_api.preflight",     # T-B4-2 — pre-flight schedule warnings (line-in device missing etc.)
     "libretime_api.playback",      # T19.1 — normalized playback event record
     "django.contrib.auth",
