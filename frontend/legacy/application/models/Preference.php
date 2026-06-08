@@ -2103,6 +2103,30 @@ class Application_Model_Preference
         self::setValue('request_show_fill_last_run', $value);
     }
 
+    // RASTATIME 2026-06-07 - Song Requests, Phase 6b: last-run timestamp for
+    // the RequestPlayedTask (marks aired 'queued' requests as 'played').
+    public static function getRequestPlayedLastRun()
+    {
+        return self::getValue('request_played_last_run');
+    }
+
+    public static function setRequestPlayedLastRun($value)
+    {
+        self::setValue('request_played_last_run', $value);
+    }
+
+    // RASTATIME 2026-06-07 - Song Requests, Phase 6c: last-run timestamp for
+    // the RequestExpiryTask (expires stale 'pending' requests after the TTL).
+    public static function getRequestExpiryLastRun()
+    {
+        return self::getValue('request_expiry_last_run');
+    }
+
+    public static function setRequestExpiryLastRun($value)
+    {
+        self::setValue('request_expiry_last_run', $value);
+    }
+
     // RASTATIME 2026-05-15 - GetFeaturePreviewMode/SetFeaturePreviewMode removed:
     // the cc_pref key 'feature_preview_mode' was stored but never consumed by any
     // code path (no feature ever gated on it). Form element + render + save line

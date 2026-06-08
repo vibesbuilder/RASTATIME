@@ -659,6 +659,150 @@ class RequestShowFillTask implements AirtimeTask
 }
 
 /**
+ * Class RequestPlayedTask.
+ *
+ * RASTATIME 2026-06-07 — Song Requests, Phase 6b (played marking).
+ *
+ * Operator decision 2026-06-07: detect "played" via the schedule, NOT a
+ * playout hook — no change to the live broadcast path for a status that is
+ * audit-only (Phase 6a already cleared the pool filter `requested` when the
+ * track was scheduled).  Every interval, any 'queued' request whose track
+ * sat in a cc_schedule slot that has since ended (after the request was
+ * made) becomes 'played' with played_at = now.  The cc_files aggregate is
+ * untouched — Phase 6a already removed the track from the pool.
+ *
+ * Timezone: cc_schedule.ends is `timestamp WITHOUT tz` holding UTC, while
+ * created_at is `timestamp WITH tz`.  Both sides are compared as naive UTC
+ * via `AT TIME ZONE 'UTC'`, so the result is independent of the PDO session
+ * timezone.
+ */
+class RequestPlayedTask implements AirtimeTask
+{
+    public const REQUEST_PLAYED_INTERVAL_SECONDS = 120;  // 2 minutes
+
+    public function shouldBeRun()
+    {
+        $interval = (int) (getenv('RASTATIME_REQUEST_PLAYED_INTERVAL_SECONDS')
+            ?: self::REQUEST_PLAYED_INTERVAL_SECONDS);
+        $lastRun = Application_Model_Preference::getRequestPlayedLastRun();
+
+        return empty($lastRun) || (microtime(true) > $lastRun + $interval);
+    }
+
+    public function run()
+    {
+        try {
+            $stmt = Propel::getConnection()->prepare(
+                "UPDATE rastatime_song_request
+                    SET status = 'played', played_at = NOW()
+                  WHERE status = 'queued'
+                    AND EXISTS (
+                        SELECT 1 FROM cc_schedule s
+                         WHERE s.file_id = rastatime_song_request.file_id
+                           AND s.ends < (NOW() AT TIME ZONE 'UTC')
+                           AND s.ends >= (rastatime_song_request.created_at
+                                          AT TIME ZONE 'UTC')
+                    )"
+            );
+            $stmt->execute();
+            $rows = $stmt->rowCount();
+            if ($rows > 0) {
+                Logging::info("RequestPlayedTask: marked {$rows} requests played");
+            }
+        } catch (Throwable $e) {
+            Logging::error('RequestPlayedTask failed: ' . $e->getMessage());
+        }
+        Application_Model_Preference::setRequestPlayedLastRun(microtime(true));
+    }
+}
+
+/**
+ * Class RequestExpiryTask.
+ *
+ * RASTATIME 2026-06-07 — Song Requests, Phase 6c (expiry sweep).
+ *
+ * Pending requests never pulled into a show go stale.  Every interval, any
+ * 'pending' request older than the (env-overridable) TTL becomes 'expired';
+ * the cc_files aggregate for the affected tracks is then recomputed from the
+ * surviving pending rows, so a track whose last open request expired drops
+ * out of the request pool cleanly.
+ *
+ * created_at is `timestamp WITH tz`; the TTL comparison is timestamptz vs
+ * NOW() (also timestamptz), which is absolute and session-tz independent.
+ * The recomputed requested_at is cast to naive UTC to match the cc_files
+ * column type.  The TTL is a validated integer, inlined (no bind-param
+ * interval-type ambiguity).
+ */
+class RequestExpiryTask implements AirtimeTask
+{
+    public const REQUEST_EXPIRY_INTERVAL_SECONDS = 600;  // 10 minutes
+    public const REQUEST_EXPIRY_TTL_HOURS = 8;
+
+    public function shouldBeRun()
+    {
+        $interval = (int) (getenv('RASTATIME_REQUEST_EXPIRY_INTERVAL_SECONDS')
+            ?: self::REQUEST_EXPIRY_INTERVAL_SECONDS);
+        $lastRun = Application_Model_Preference::getRequestExpiryLastRun();
+
+        return empty($lastRun) || (microtime(true) > $lastRun + $interval);
+    }
+
+    public function run()
+    {
+        $ttlHours = (int) (getenv('RASTATIME_REQUEST_EXPIRY_HOURS')
+            ?: self::REQUEST_EXPIRY_TTL_HOURS);
+        try {
+            // 1. Expire stale pending requests, capturing the affected tracks.
+            $expired = Application_Common_Database::prepareAndExecute(
+                "UPDATE rastatime_song_request
+                    SET status = 'expired'
+                  WHERE status = 'pending'
+                    AND created_at < NOW() - INTERVAL '1 hour' * {$ttlHours}
+                RETURNING file_id",
+                [],
+                Application_Common_Database::ALL
+            );
+            if (empty($expired)) {
+                Application_Model_Preference::setRequestExpiryLastRun(microtime(true));
+
+                return;
+            }
+
+            // 2. Recompute the cc_files aggregate for those tracks from the
+            //    surviving pending rows (truth = rastatime_song_request).
+            $ids = [];
+            foreach ($expired as $r) {
+                $ids[(int) $r['file_id']] = true;  // dedupe via keys
+            }
+            $idList = implode(',', array_keys($ids));
+            Application_Common_Database::prepareAndExecute(
+                "UPDATE cc_files SET
+                    request_count = (
+                        SELECT COUNT(*) FROM rastatime_song_request r
+                         WHERE r.file_id = cc_files.id AND r.status = 'pending'),
+                    requested = EXISTS (
+                        SELECT 1 FROM rastatime_song_request r
+                         WHERE r.file_id = cc_files.id AND r.status = 'pending'),
+                    requested_at = (
+                        SELECT MIN(r.created_at AT TIME ZONE 'UTC')
+                          FROM rastatime_song_request r
+                         WHERE r.file_id = cc_files.id AND r.status = 'pending')
+                  WHERE id IN ({$idList})",
+                [],
+                Application_Common_Database::EXECUTE
+            );
+            Logging::info(
+                'RequestExpiryTask: expired ' . count($expired)
+                . ' requests, refreshed ' . count($ids) . ' tracks'
+            );
+        } catch (Throwable $e) {
+            Logging::error('RequestExpiryTask failed: ' . $e->getMessage());
+        }
+        Application_Model_Preference::setRequestExpiryLastRun(microtime(true));
+    }
+}
+
+/**
  * Class TaskFactory Factory class to abstract task instantiation.
  */
 class TaskFactory
