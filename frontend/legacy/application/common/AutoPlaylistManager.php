@@ -459,11 +459,76 @@ class AutoPlaylistManager
             }
             $before = $si->getTimeScheduledSecs();
             $si->addPlaylistToShow($playlistId, false);
+            // RASTATIME Phase 6a: consume the request tracks just scheduled so
+            // the NEXT round's "use requests" block draws a DIFFERENT track
+            // (enables several distinct requests per show, not the same one).
+            self::_consumeScheduledRequests($si->getShowInstanceId());
             if ($si->getTimeScheduledSecs() <= $before) {
                 break;  // nothing drawn this round — stop (no dead-air fill)
             }
             $guard++;
         }
+    }
+
+    /**
+     * RASTATIME 2026-06-07 — Song Requests, Phase 6a (consume on schedule).
+     *
+     * Once a request track has been written into a show's schedule it must
+     * leave the request pool, otherwise the next "use requests" block draws
+     * the same (oldest) track again and the show fills with duplicates.
+     *
+     * For every requestable track now scheduled in $instanceId we therefore
+     * (1) clear the cc_files aggregate cache (requested / request_count /
+     * requested_at) — the smart-block pool filter is `requested = true`, so
+     * this takes the track out of any further draw — and (2) flip its still-
+     * pending listener requests to 'queued' in the rastatime_song_request
+     * audit log.  Both run as plain SQL, the same cross-table approach the
+     * submit endpoint already uses to maintain the aggregate.
+     *
+     * Idempotent: a track already consumed has requested = false and is not
+     * matched again.  A track pulled in by an ordinary (non-request) block is
+     * consumed too — that is correct, the listener's wish aired either way.
+     */
+    private static function _consumeScheduledRequests($instanceId)
+    {
+        $rows = Application_Common_Database::prepareAndExecute(
+            "SELECT DISTINCT s.file_id
+               FROM cc_schedule s
+               JOIN cc_files f ON f.id = s.file_id
+              WHERE s.instance_id = :inst
+                AND f.requested = true",
+            [':inst' => (int) $instanceId],
+            Application_Common_Database::ALL
+        );
+        if (empty($rows)) {
+            return;
+        }
+
+        $fileIds = [];
+        foreach ($rows as $r) {
+            $fileIds[] = (int) $r['file_id'];
+        }
+        // Integers only (cast above) — safe to inline; PDO named params do
+        // not expand to a variable-length IN (...) list.
+        $idList = implode(',', $fileIds);
+
+        // 1. Take the tracks out of the request pool (aggregate cache).
+        Application_Common_Database::prepareAndExecute(
+            "UPDATE cc_files
+                SET requested = false, request_count = 0, requested_at = NULL
+              WHERE id IN ({$idList})",
+            [],
+            Application_Common_Database::EXECUTE
+        );
+
+        // 2. Mark the listeners' still-pending requests as queued.
+        Application_Common_Database::prepareAndExecute(
+            "UPDATE rastatime_song_request
+                SET status = 'queued'
+              WHERE status = 'pending' AND file_id IN ({$idList})",
+            [],
+            Application_Common_Database::EXECUTE
+        );
     }
 
     /**
