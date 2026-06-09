@@ -396,24 +396,24 @@ class AutoPlaylistManager
     }
 
     /**
-     * RASTATIME 2026-06-07 — Song Requests: incremental just-in-time fill
-     * (Variant Z).  For every request show (has_autoplaylist + an autoload
+     * RASTATIME 2026-06-07 — Song Requests: request-show fill (Option
+     * C-onepass).  For every request show (has_autoplaylist + an autoload
      * playlist that containsRequestBlock) that is currently running OR
-     * starts within $leadSecs, top up its schedule by APPENDING the
-     * autoload playlist until it is filled to now + $leadSecs (capped at
-     * the instance end).  The autoload playlist's "use requests" smart
-     * block re-evaluates on each append, so a request that arrives mid-
-     * show flows into the next round; jingle / fallback blocks fill the
-     * rest.  We deliberately do NOT set autoplaylist_built, so the show is
-     * topped up again on every poll.
+     * starts within $leadSecs, fill its schedule by walking the autoload
+     * playlist POSITION BY POSITION (see _fillRequestShowByPositions): each
+     * position is resolved on its own and a Phase 6a consume runs in
+     * between, so several "use requests" blocks in one playlist each draw a
+     * DIFFERENT track (the operator's fixed dramaturgy, e.g. jingle · track ·
+     * request · jingle · music · request · … · music-time-remaining).
      *
-     * Append-only (never insert): nothing already scheduled is pushed
-     * back, so a following show is never overbooked.
+     * We deliberately do NOT set autoplaylist_built; the fill is idempotent
+     * (a full show is a no-op) so it is safe to re-run every poll.  Append-
+     * only (never insert): nothing already scheduled is pushed back, so a
+     * following show is never overbooked.
      */
     public static function fillRequestShows($leadSecs)
     {
         $now = new DateTime('now', new DateTimeZone('UTC'));
-        $nowTs = $now->getTimestamp();
         $future = clone $now;
         $future->add(new DateInterval('PT' . (int) $leadSecs . 'S'));
 
@@ -435,38 +435,87 @@ class AutoPlaylistManager
             if (empty($playlistId) || !self::playlistContainsRequestBlock($playlistId)) {
                 continue;  // not a request show — leave it to buildAutoPlaylist
             }
-            self::_incrementalFill($si, $playlistId, $leadSecs, $nowTs);
+            self::_fillRequestShowByPositions($si, $playlistId);
         }
     }
 
     /**
-     * Top up one request-show instance to now + $leadSecs by repeatedly
-     * appending its autoload playlist.  Stops when filled far enough, when
-     * an append makes no progress (pool/playlist drew nothing this round —
-     * avoids an infinite loop AND avoids filling the slot with empty
-     * rounds / dead air), or after a hard iteration cap.
+     * RASTATIME 2026-06-07 — Song Requests, Option C-onepass.  Fill one
+     * request-show instance by walking its autoload playlist POSITION BY
+     * POSITION (cc_playlistcontents order) instead of appending the whole
+     * playlist at once.  Resolving one element at a time — with a Phase 6a
+     * consume after each — is what makes several "use requests" blocks in
+     * the same playlist draw DIFFERENT tracks: appending the whole playlist
+     * resolves every smart block against the SAME pool snapshot, so all
+     * request blocks would pull the same (oldest) track.
+     *
+     * The dramaturgy is cycled until the show is full (a trailing "time
+     * remaining" block fills the rest in pass one) or a full pass adds
+     * nothing — the latter guards against both dead-air fill (empty pools)
+     * and an infinite loop.  autoplaylist_built is left unset, so a partly
+     * filled show is topped up on the next poll while a full one is a no-op.
      */
-    private static function _incrementalFill($si, $playlistId, $leadSecs, $nowTs)
+    private static function _fillRequestShowByPositions($si, $playlistId)
     {
+        $positions = Application_Common_Database::prepareAndExecute(
+            "SELECT type, file_id, block_id, stream_id, position
+               FROM cc_playlistcontents
+              WHERE playlist_id = :pid
+              ORDER BY position",
+            [':pid' => (int) $playlistId],
+            Application_Common_Database::ALL
+        );
+        if (empty($positions)) {
+            return;
+        }
+
         $startTs = $si->getShowInstanceStart(null)->getTimestamp();
         $endTs = $si->getShowInstanceEnd(null)->getTimestamp();
-        $targetTs = min($nowTs + (int) $leadSecs, $endTs);
 
         $guard = 0;
         while ($guard < 50) {
-            if (($startTs + $si->getTimeScheduledSecs()) >= $targetTs) {
-                break;  // filled up to the lead window
+            if (($startTs + $si->getTimeScheduledSecs()) >= $endTs) {
+                break;  // show filled to its end
             }
-            $before = $si->getTimeScheduledSecs();
-            $si->addPlaylistToShow($playlistId, false);
-            // RASTATIME Phase 6a: consume the request tracks just scheduled so
-            // the NEXT round's "use requests" block draws a DIFFERENT track
-            // (enables several distinct requests per show, not the same one).
-            self::_consumeScheduledRequests($si->getShowInstanceId());
-            if ($si->getTimeScheduledSecs() <= $before) {
-                break;  // nothing drawn this round — stop (no dead-air fill)
+            $passProgressed = false;
+            foreach ($positions as $pos) {
+                if (($startTs + $si->getTimeScheduledSecs()) >= $endTs) {
+                    break;  // reached the end mid-pass
+                }
+                $before = $si->getTimeScheduledSecs();
+                self::_appendPosition($si, $pos);
+                // Phase 6a: consume the request track(s) just scheduled, so the
+                // NEXT request block in the dramaturgy draws a different track.
+                self::_consumeScheduledRequests($si->getShowInstanceId());
+                if ($si->getTimeScheduledSecs() > $before) {
+                    $passProgressed = true;
+                }
+            }
+            if (!$passProgressed) {
+                break;  // a whole pass drew nothing — stop (no dead-air fill)
             }
             $guard++;
+        }
+    }
+
+    /**
+     * Append a single autoload-playlist position to the show instance,
+     * resolved against the CURRENT pool state.  Files and smart blocks are
+     * supported (the request dramaturgy is built from those); stream / line-
+     * in positions are skipped with a warning rather than aborting the fill.
+     */
+    private static function _appendPosition($si, array $pos)
+    {
+        $type = (int) $pos['type'];
+        if ($type === 0 && !empty($pos['file_id'])) {
+            $si->addFileToShow((int) $pos['file_id'], false);
+        } elseif ($type === 2 && !empty($pos['block_id'])) {
+            $si->addBlockToShow((int) $pos['block_id'], false);
+        } else {
+            Logging::warn(
+                'RequestShowFill: skipping unsupported autoload position type '
+                . $type . ' (only file and smart-block positions are filled)'
+            );
         }
     }
 

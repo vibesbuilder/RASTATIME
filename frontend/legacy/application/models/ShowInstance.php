@@ -300,6 +300,33 @@ SQL;
     }
 
     /**
+     * RASTATIME 2026-06-07 — Song Requests (Option C-onepass).  Append a
+     * single smart block, resolved ONCE against the current pool state, to
+     * the end of this instance's schedule — the per-position counterpart of
+     * addFileToShow().  AutoPlaylistManager's request-show fill walks a
+     * request playlist position-by-position and resolves one block at a time
+     * (with a Phase 6a consume in between) so that several "use requests"
+     * blocks each draw a DIFFERENT track.  The block's item/time limit is
+     * applied by the Scheduler via getSecondsRemaining(), so a "time
+     * remaining" block correctly fills to the show end.
+     *
+     * @param int  $block_id
+     * @param bool $checkUserPerm
+     */
+    public function addBlockToShow($block_id, $checkUserPerm = true)
+    {
+        $ts = intval($this->_showInstance->getDbLastScheduled('U')) ?: 0;
+        $id = $this->_showInstance->getDbId();
+
+        $scheduler = new Application_Model_Scheduler();
+        $scheduler->setCheckUserPermissions($checkUserPerm);
+        $scheduler->scheduleAfter(
+            [['id' => 0, 'instance' => $id, 'timestamp' => $ts]],
+            [['id' => $block_id, 'type' => 'block']]
+        );
+    }
+
+    /**
      * Add the given playlists to the show.
      *
      * @param array $plIds
