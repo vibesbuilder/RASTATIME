@@ -132,6 +132,7 @@ master document above is the only thing they all assume.
 |---|---|
 | [Autoloading Playlists](./docs/manual/AUTOLOADING_PLAYLISTS.md) | Letting a playlist build itself for every instance of a show, including outro-reserve handling. |
 | [Auto DJ](./docs/manual/AUTO_DJ.md) | The background filler that creates shows in calendar gaps and tops up incomplete shows. |
+| [Song Requests](./docs/manual/SONG_REQUESTS.md) | Letting listeners request tracks from a public widget that air automatically inside a request show. |
 | [Record-per-Show](./docs/manual/RECORD_PER_SHOW.md) | Capturing the full on-air output of a show to a file. |
 
 ### Output and infrastructure
@@ -217,6 +218,7 @@ they will use.
 | **Line-In** | A named live audio input on the operator's machine (a microphone, a mixer, an external CD player). Persisted in `rastatime_linein`. |
 | **Autoloading playlist** | A playlist attached to a *show definition* so every instance of the show gets the playlist's contents built into its schedule automatically. |
 | **Auto DJ** | A background process that creates shows in calendar gaps and tops up incomplete shows. Distinct from autoloading playlists. |
+| **Song request** | A listener-submitted track wish, collected by a public widget and aired automatically by a request show (an autoloading-playlist show with a *Use requests* smart block). Persisted in `rastatime_song_request`. |
 | **Output stream** | One of up to four Icecast mountpoints the playout broadcasts to. Configured under Settings → Streams. |
 | **Source switcher** | The internal mechanism that decides which audio source (scheduler, line-in, master DJ, show DJ) is currently on air. |
 | **Fallback queue** | A configured loop that plays when no show is scheduled and Auto DJ is disabled. |

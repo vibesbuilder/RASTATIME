@@ -1,10 +1,30 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.14
-Date: 2026-05-22
+Draft version: 0.15
+Date: 2026-06-08
 
 > **Revision history**
+> - **0.15 (2026-06-08)** — Song Requests (Section 23.23).  Listeners
+>   request tracks from a public embed widget; the tracks air
+>   automatically inside a "request show" — any autoloading-playlist
+>   show whose playlist contains a "Use requests" smart block (an
+>   IMPLICIT marker, no per-show flag, avoiding ~47 Propel touchpoints
+>   a `cc_show` column would have cost).  New Django-managed table
+>   `rastatime_song_request` plus a `cc_files` aggregate cache
+>   (`requested` / `requested_at` / `request_count` / `requestable`,
+>   legacy migration 0055).  Public intake `/api/v2/song-requests`
+>   (search + submit, no auth, rate-limited + de-duped, salted-IP
+>   hash only).  The in-show fill walks the autoload playlist POSITION
+>   BY POSITION (Option C-onepass) so several "Use requests" blocks
+>   each draw a *different* request, with a random catalogue fallback
+>   for empty slots and a trailing time-remaining block for the rest;
+>   `RequestShowFillTask` (2 min poll, 8 min lead).  Lifecycle tasks
+>   `RequestPlayedTask` (schedule-based, no playout hook) +
+>   `RequestExpiryTask` (8 h TTL).  Minor-bump for the new public
+>   surface (widget + 2 API endpoints + new table); the rest is
+>   additive (one smart-block criterion, scheduler reuse, no schema
+>   change beyond the additive cache columns + new table).
 > - **0.14 (2026-05-22)** — Public Now-Playing Embed Widgets
 >   (Section 23.22).  Two new public iframe widgets
 >   (`/embed/now-playing-show`, `/embed/now-playing-track`)
@@ -3672,3 +3692,112 @@ defaults to the embedding page's system font.
 * Welle 3: Track History widget with date-range search
 
 All tracked in `BACKLOG.md`.
+
+---
+
+### 23.23 Song Requests
+
+**Context.**  Stations want listeners to request tracks from
+a public web surface and have those tracks air automatically,
+in the radio.co mould, but without a moderation desk or a new
+"request" content type.  RASTATIME already has the two
+primitives that make this possible: smart blocks (criteria →
+track set) and autoloading playlists (playlist → show).  The
+feature is assembled from those plus a public intake; it adds
+exactly one new table and four additive `cc_files` columns.
+
+**Data model (decision A2).**  A single Django-managed table
+`rastatime_song_request` is the authoritative per-request audit
+log (one row per listener wish, `status` ∈ pending / queued /
+played / expired, salted `ip_hash`, `created_at`, `played_at`,
+no cross-system FK — same policy as `rastatime_linein`).  A
+denormalised **aggregate cache** lives on `cc_files` (legacy
+migration 0055): `requested` (bool — has an open request),
+`requested_at`, `request_count`, and `requestable` (bool — is a
+pool member).  The cache exists so the hot smart-block path
+filters/sorts on indexed `cc_files` columns instead of joining
+the request table.
+
+**Implicit request-show marker (decision).**  A show is a
+"request show" iff its autoload playlist contains a smart block
+with the `use_requests` criterion — there is **no per-show
+flag**.  A `cc_show` column was rejected because the Propel
+model would have needed ~47 touchpoints (peer/query/map/om
+regeneration) for a boolean the playlist already implies.  The
+marker is detected with one SQL join
+(`AutoPlaylistManager::playlistContainsRequestBlock()`).
+
+**Components.**
+
+* **Pool sync** — `RequestablePoolSyncTask` (TaskManager,
+  5 min) expands the union of the operator-selected pool blocks
+  (`Preference::getRequestablePoolBlockIds`, cc_pref
+  `requestable_pool_block_ids`) with the request filter
+  *ignored* (`Block::getListofFilesMeetCriteria($limit, true)`)
+  and atomically rewrites `cc_files.requestable`.
+* **Smart-block consumption** — a new `use_requests` criterion
+  (`SmartBlockCriteria` + `Block.php`) restricts the block to
+  `cc_files.requested = true`; sort orders `oldestrequest`
+  (`requested_at ASC NULLS LAST`) and `mostrequested`
+  (`request_count DESC`).
+* **Public intake** — Django `song_request_api.py`:
+  `GET /api/v2/song-requests/search` (catalogue, whole pool when
+  `q` absent) and `POST /api/v2/song-requests` (submit).  Both
+  `@permission_classes([AllowAny])`; submit throttled 5/h,
+  de-duped 30 min by `ip_hash`, validates `requestable`.  The
+  raw IP is never stored (salted SHA-256).
+* **Listener widget** — `/Embed/song-request` (EmbedController),
+  a self-contained vanilla-JS iframe rendering a scrollable
+  table; covers via `/api/track?return=artwork-*` (gated on
+  `GetAllow3rdPartyApi`).  The list endpoint returns
+  `has_artwork` so cover-less tracks stay text-only (a 0-byte
+  200 from the artwork endpoint would otherwise hang an `<img>`).
+* **In-show fill (Option C-onepass)** —
+  `AutoPlaylistManager::fillRequestShows()` →
+  `_fillRequestShowByPositions()` walks `cc_playlistcontents`
+  **position by position**, appending each file/block with
+  `ShowInstance::addAutoloadItemToShow()` and running
+  `_consumeScheduledRequests()` between slots (clears
+  `requested`, flips the request to `queued`).  Because each
+  smart block is resolved on its own snapshot, several
+  `use_requests` blocks in one playlist draw *different* tracks
+  — appending the whole playlist at once would resolve them all
+  against one snapshot and draw the same oldest track.  An empty
+  request slot falls back to a random track from the block's
+  catalogue (`_appendRandomFromBlockPool`).  The dramaturgy runs
+  once; a trailing fill block (by convention a time-remaining
+  smart block) is repeated to top up the remainder, never the
+  whole dramaturgy (which would pile up jingle/ID blocks).
+  `RequestShowFillTask` polls every 2 min with an 8 min lead
+  (`RASTATIME_REQUEST_FILL_*` env overrides).  The normal
+  `AutoPlaylistTask` skips request shows so the two never fight.
+
+**Scheduler reuse note.**  `addAutoloadItemToShow()` mirrors
+`addPlaylistToShow()` (anchor on `getLastAudioItemId()` +
+`updateScheduleStatus()` after each append) and builds the
+`Scheduler` with `checkUserPermissions=false` passed to the
+**constructor** — the constructor calls
+`Application_Model_User::getCurrentUser()` whenever checking is
+on, which needs a Zend session a background task does not have.
+The one-shot `addFileToShow()` could not be reused for the loop.
+
+**Lifecycle (decision: no playout hook).**
+`RequestPlayedTask` (2 min) marks a `queued` request `played`
+once its track sat in a `cc_schedule` slot that has ended
+(after the request was made) — a schedule-based detection rather
+than a playout-side `_on_file_start` hook, so the live broadcast
+path is never modified for an audit-only status.
+`RequestExpiryTask` (10 min) expires `pending` requests older
+than the TTL (default 8 h, `RASTATIME_REQUEST_EXPIRY_HOURS`) and
+recomputes the `cc_files` aggregate from the surviving pending
+rows.  Timestamp comparisons use `AT TIME ZONE 'UTC'` so they
+are independent of the PDO session timezone (`cc_schedule.ends`
+is `timestamp WITHOUT tz` holding UTC; `created_at` is
+`timestamp WITH tz`).
+
+**Trade-off.**  One-pass fill at T-lead is dead-air-safe but
+means a request arriving after the fill (≲ 8 min before start,
+or mid-show) lands in the next request show, not the current
+one.  This was the operator's explicit preference over
+mid-show insertion (which would have required a position cursor
+per instance and reintroduced the dead-air risk).

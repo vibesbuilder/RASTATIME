@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Song Requests (2026-06-08, SR-Phasen 1–7)** — Hörer können über ein
+  öffentliches Embed-Widget (`/Embed/song-request`) Tracks wünschen, die
+  automatisch in einer **Request-Show** laufen.  Vollständig aus vorhandenen
+  Bausteinen zusammengesetzt — kein neuer Objekttyp, keine Moderations-Queue:
+  - **Datenmodell**: neue Django-Tabelle `rastatime_song_request`
+    (Lifecycle pending → queued → played → expired) + Aggregat-Cache auf
+    `cc_files` (`requested` / `requested_at` / `request_count` /
+    `requestable`).
+  - **Smart-Block-Konsum**: neues Kriterium **„Use requests"** zieht nur
+    Tracks mit offenem Request, Sortierung „ältester Request zuerst" oder
+    „meistgewünscht".
+  - **Öffentliches Intake** (Django `/api/v2/song-requests`, Such- +
+    Submit-Endpoint, ohne Login): Rate-Limit (5/h), Dedup (30 min),
+    Katalog-Beschränkung über den Pool; Roh-IP wird nie gespeichert (nur
+    gesalzener Hash).
+  - **Hörer-Widget**: scrollbare Tabelle (Cover · Artist/Title ·
+    Request-Button), kein Suchfeld, keine Pagination; Cover via 3rd-Party-API.
+  - **In-Show-Befüllung (Option C-onepass)**: eine Request-Show ist *implizit*
+    markiert (Autoload-Playlist enthält einen „Use requests"-Block — kein
+    Per-Show-Flag).  `RequestShowFillTask` (alle 2 min, 8 min Vorlauf) befüllt
+    **Position für Position**, sodass mehrere „Use requests"-Slots
+    **verschiedene** Requests ziehen; ein abschließender „time remaining"-Block
+    füllt den Rest.  Leere Request-Slots fallen auf einen **Zufalls-Track** aus
+    dem Block-Katalog zurück (kein Dead Air).
+  - **Lifecycle-Tasks**: `RequestPlayedTask` (Schedule-basiert, kein
+    Playout-Eingriff) + `RequestExpiryTask` (8 h TTL, env-overridebar).
+  - **Pool-Auswahl** (Settings → General): „Song-Request Pool" als Dropdown im
+    Stil des Library-„Columns"-Pickers.
+  - Doku: neues Kapitel **Song Requests** im User-Manual (EN/DE/FR/ES),
+    ARCHITECTURE §23.23.
+
 ### Removed
 
 - **qtip2-Tooltip-Bibliothek vollständig entfernt (JS-Modernisierung Stufe 1,
