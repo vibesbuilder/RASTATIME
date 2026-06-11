@@ -310,13 +310,18 @@ SQL;
      * limit is applied by the Scheduler via getSecondsRemaining(), so a
      * "time remaining" block correctly fills to the show end.
      *
-     * Unlike addFileToShow(), checkUserPermissions is passed to the Scheduler
-     * CONSTRUCTOR, not the post-construct setter: the constructor calls
-     * Application_Model_User::getCurrentUser() (which needs a Zend session)
-     * whenever permission checking is on, and this runs from a background
-     * TaskManager poll where NO session exists — so it must be off at
-     * construction time.  (addFileToShow's setter-after-construct pattern
-     * throws "must explicitly start the session" in that context.)
+     * This mirrors addPlaylistToShow() — NOT addFileToShow() — because the
+     * request fill appends REPEATEDLY in one loop, and that needs two things
+     * a one-shot UI add does not:
+     *  - anchor on getLastAudioItemId() (the current last item) so each
+     *    append lands at the END, in dramaturgy order; id=0 makes successive
+     *    inserts pile up at the start and scrambles the running order.
+     *  - call updateScheduleStatus() afterwards so last_scheduled advances;
+     *    otherwise the next append passes a stale timestamp and the Scheduler
+     *    rejects it with OutDatedScheduleException ("previously updated").
+     * checkUserPermissions is passed to the CONSTRUCTOR (not the setter):
+     * the constructor calls Application_Model_User::getCurrentUser(), which
+     * needs a Zend session a background TaskManager poll does not have.
      *
      * @param string $schedType 'audioclip' (file) or 'block'
      * @param int    $item_id   cc_files.id or cc_block.id
@@ -326,12 +331,19 @@ SQL;
     {
         $ts = intval($this->_showInstance->getDbLastScheduled('U')) ?: 0;
         $id = $this->_showInstance->getDbId();
+        $lastid = $this->getLastAudioItemId();
 
         $scheduler = new Application_Model_Scheduler($checkUserPerm);
         $scheduler->scheduleAfter(
-            [['id' => 0, 'instance' => $id, 'timestamp' => $ts]],
+            [['id' => $lastid, 'instance' => $id, 'timestamp' => $ts]],
             [['id' => $item_id, 'type' => $schedType]]
         );
+
+        // Refresh last_scheduled so the next append in the loop anchors after
+        // this item and clears the "previously updated" guard — exactly what
+        // addPlaylistToShow does, and for the same reason.
+        $con = Propel::getConnection(CcShowInstancesPeer::DATABASE_NAME);
+        $this->_showInstance->updateScheduleStatus($con);
     }
 
     /**
