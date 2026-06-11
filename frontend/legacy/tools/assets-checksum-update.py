@@ -30,7 +30,11 @@ def compute_md5_foreach_asset_in(root: Path):
             compute_md5_foreach_asset_in(path)
         else:
             if path.suffix in (".js", ".css"):
-                result_key = str(path)[len(str(scan_dir)) + 1 :]
+                # POSIX separators so the keys match Assets::url() lookups
+                # (e.g. "css/styles.css") on every host.  On Windows str(path)
+                # yields backslash keys ("css\styles.css") which break every
+                # lookup; relative_to(...).as_posix() is OS-independent.
+                result_key = path.relative_to(scan_dir).as_posix()
                 result[result_key] = compute_md5(path)
 
 
