@@ -145,6 +145,7 @@ documento maestro arriba es lo único que todos asumen.
 |---|---|
 | [Autoloading Playlists](./AUTOLOADING_PLAYLISTS.md) | Dejar que una playlist se construya para cada instancia de un programa, incluyendo gestión de reserva de outro. |
 | [Auto DJ](./AUTO_DJ.md) | El rellenador en segundo plano que crea programas en huecos del calendario y completa programas incompletos. |
+| [Peticiones de canciones](./SONG_REQUESTS.md) | Dejar que los oyentes pidan pistas desde un widget público, que suenan automáticamente dentro de un request show. |
 | [Grabación por programa](./RECORD_PER_SHOW.md) | Capturar la salida completa al aire de un programa en un archivo. |
 | [Grabación 24/7](./RECORD_PER_HOUR.md) | Grabar toda la salida al aire las 24 horas, un archivo por hora — para cumplimiento, escucha diferida y copia de seguridad de emergencia. |
 
@@ -230,6 +231,7 @@ inglés.
 | **Line-In** | Una entrada de audio en vivo nombrada en la máquina del operador (un micrófono, un mezclador, un reproductor CD externo). Persistido en `rastatime_linein`. |
 | **Autoloading playlist** | Una playlist adjunta a una *definición de programa* para que cada instancia del programa tenga los contenidos de la playlist construidos en su planning automáticamente. |
 | **Auto DJ** | Un proceso en segundo plano que crea programas en huecos del calendario y completa programas incompletos. Distinto de autoloading playlists. |
+| **Song request (petición de canción)** | Un deseo de pista enviado por un oyente, recogido por un widget público y emitido automáticamente por un request show (un programa con autoloading playlist y un Smart Block *Use requests*). Persistido en `rastatime_song_request`. |
 | **Stream de salida** | Uno de hasta cuatro mountpoints Icecast a los que el playout transmite. Configurado bajo Configuración → Streams. |
 | **Source switcher** | El mecanismo interno que decide qué fuente de audio (scheduler, line-in, master DJ, show DJ) está actualmente al aire. |
 | **Cola de fallback** | Un bucle configurado que se reproduce cuando ningún programa está planificado y Auto DJ está deshabilitado. |
