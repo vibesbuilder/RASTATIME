@@ -4882,3 +4882,76 @@ div.dt-button-collection .dt-button > span {
     overflow: hidden;
     padding: 2px 0 0 0;
 }
+
+/* ===================================================================
+   RASTATIME 2026-06-08 — "Song-Request Pool" field (Settings > General)
+   rendered as a "Smart Blocks" dropdown, styled after the Library
+   "Columns" colvis control: a RASTATIME-grey button toggling a dark
+   panel of checkboxes.  preferences.js wraps the Zend MultiCheckbox into
+   .rt-sbdd > (.rt-sbdd-button + .rt-sbdd-panel); the checkbox markup is
+   untouched.  NOT scoped under .rt-jq3 — this is a plain form field, not
+   a DataTable, so it should look the same on either jQuery path.
+   =================================================================== */
+.rt-sbdd {
+    position: relative;
+    display: inline-block;
+}
+.rt-sbdd-button {
+    background: #565656;
+    color: #eee;
+    border: 1px solid #6a6a6a;
+    border-radius: 0;
+    font-size: 12px;
+    line-height: 16px;
+    padding: 4px 10px;
+    cursor: pointer;
+    text-shadow: none;
+}
+.rt-sbdd-button:hover {
+    background: #6a6a6a;
+    border-color: #7a7a7a;
+}
+.rt-sbdd-button::after {
+    content: " \25BE";  /* down triangle */
+}
+.rt-sbdd-panel {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: 2px;
+    width: 240px;
+    max-height: 320px;
+    overflow-y: auto;
+    background: #2b2b2b;
+    border: 1px solid #5b5b5b;
+    border-radius: 4px;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, .7);
+    padding: 6px 0;
+    z-index: 1005;
+}
+.rt-sbdd.open .rt-sbdd-panel {
+    display: block;
+}
+.rt-sbdd-panel label {
+    display: block;
+    padding: 5px 14px;
+    margin: 0;
+    color: #ccc;
+    font-size: 13px;
+    line-height: 18px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.rt-sbdd-panel label:hover {
+    background: #3a3a3a;
+    color: #fff;
+}
+.rt-sbdd-panel input[type="checkbox"] {
+    margin-right: 9px;
+    vertical-align: -2px;
+    accent-color: #ff5d1a;
+}
+.rt-sbdd-panel br {
+    display: none;  /* labels are block-level now */
+}

@@ -149,7 +149,34 @@ function deleteAllFiles() {
   }
 }
 
+// RASTATIME 2026-06-08 — render the "Song-Request Pool" MultiCheckbox as a
+// "Smart Blocks" dropdown styled after the Library "Columns" colvis control:
+// a grey button toggling a dark panel of checkboxes.  The checkbox markup
+// (names / values / submit) is only WRAPPED, never changed, so the form posts
+// exactly as before; the look lives in styles.css (.rt-sbdd*).
+function setupRequestablePoolDropdown() {
+  var $dd = $("#requestablePoolSelect-element");
+  if ($dd.length === 0 || $dd.find(".rt-sbdd-button").length > 0) {
+    return;
+  }
+  var $panel = $('<div class="rt-sbdd-panel"></div>').append($dd.contents());
+  var $btn = $('<button type="button" class="rt-sbdd-button">Smart Blocks</button>');
+  var $wrap = $('<div class="rt-sbdd"></div>').append($btn, $panel);
+  $dd.append($wrap);
+
+  $btn.on("click", function (e) {
+    e.stopPropagation();
+    $wrap.toggleClass("open");
+  });
+  $(document).on("click", function (e) {
+    if ($(e.target).closest(".rt-sbdd").length === 0) {
+      $wrap.removeClass("open");
+    }
+  });
+}
+
 $(document).ready(function () {
+  setupRequestablePoolDropdown();
   $(document).on("click", ".collapsible-header", function () {
     $(this).next().toggle("fast");
     $(this).toggleClass("closed");
