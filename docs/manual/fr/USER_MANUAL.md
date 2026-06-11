@@ -152,6 +152,7 @@ qu'ils supposent tous.
 |---|---|
 | [Autoloading Playlists](./AUTOLOADING_PLAYLISTS.md) | Laisser une playlist se construire elle-même pour chaque instance d'une émission, y compris la gestion de la réserve d'outro. |
 | [Auto DJ](./AUTO_DJ.md) | Le remplisseur d'arrière-plan qui crée des émissions dans les trous du calendrier et complète les émissions incomplètes. |
+| [Demandes de titres](./SONG_REQUESTS.md) | Laisser les auditeurs demander des titres depuis un widget public, qui passent automatiquement dans une request show. |
 | [Enregistrement par émission](./RECORD_PER_SHOW.md) | Capturer la sortie complète à l'antenne d'une émission dans un fichier. |
 | [Enregistrement 24/7](./RECORD_PER_HOUR.md) | Enregistrer toute la sortie à l'antenne 24h/24, un fichier par heure — pour la conformité, la réécoute et la sauvegarde d'urgence. |
 
@@ -239,6 +240,7 @@ anglais.
 | **Line-In** | Une entrée audio live nommée sur la machine de l'opérateur (un microphone, un mixeur, un lecteur CD externe). Persisté dans `rastatime_linein`. |
 | **Autoloading playlist** | Une playlist attachée à une *définition d'émission* pour que chaque instance de l'émission obtienne le contenu de la playlist construit automatiquement dans son planning. |
 | **Auto DJ** | Un processus d'arrière-plan qui crée des émissions dans les trous du calendrier et complète les émissions incomplètes. Distinct des autoloading playlists. |
+| **Song request (demande de titre)** | Un souhait de titre envoyé par un auditeur, collecté par un widget public et diffusé automatiquement par une request show (une émission à autoloading playlist avec un Smart Block *Use requests*). Persisté dans `rastatime_song_request`. |
 | **Stream de sortie** | L'un des jusqu'à quatre mountpoints Icecast vers lesquels le playout diffuse. Configuré sous Paramètres → Streams. |
 | **Source switcher** | Le mécanisme interne qui décide quelle source audio (scheduler, line-in, master DJ, show DJ) est actuellement à l'antenne. |
 | **File d'attente fallback** | Une boucle configurée qui se joue quand aucune émission n'est planifiée et qu'Auto DJ est désactivé. |
