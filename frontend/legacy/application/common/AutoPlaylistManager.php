@@ -449,11 +449,15 @@ class AutoPlaylistManager
      * resolves every smart block against the SAME pool snapshot, so all
      * request blocks would pull the same (oldest) track.
      *
-     * The dramaturgy is cycled until the show is full (a trailing "time
-     * remaining" block fills the rest in pass one) or a full pass adds
-     * nothing — the latter guards against both dead-air fill (empty pools)
-     * and an infinite loop.  autoplaylist_built is left unset, so a partly
-     * filled show is topped up on the next poll while a full one is a no-op.
+     * The dramaturgy is played ONCE, in playlist order.  Any time still left
+     * is then filled by repeating ONLY the final position — by convention a
+     * "time remaining" smart block — so a gap fills with that block's content
+     * and never by replaying the jingle / request blocks (which would pile up
+     * e.g. StationIDs at the end).  The no-progress guard stops once the fill
+     * block is exhausted (no dead-air spin, no infinite loop).  A fixed-file
+     * final slot is not repeated (that would spam one track).  autoplaylist_-
+     * built is left unset, so a partly filled show is topped up on the next
+     * poll and a full one is a no-op.
      */
     private static function _fillRequestShowByPositions($si, $playlistId)
     {
@@ -472,13 +476,23 @@ class AutoPlaylistManager
         $startTs = $si->getShowInstanceStart(null)->getTimestamp();
         $endTs = $si->getShowInstanceEnd(null)->getTimestamp();
 
+        // Only the final slot is repeated to top up a remainder, and only if
+        // it is a smart block (a fixed file would be spammed).
+        $fill = end($positions);
+        $canTopUp = ((int) $fill['type'] === 2) && !empty($fill['block_id']);
+
+        $firstPass = true;
         $guard = 0;
         while ($guard < 50) {
             if (($startTs + $si->getTimeScheduledSecs()) >= $endTs) {
                 break;  // show filled to its end
             }
+            if (!$firstPass && !$canTopUp) {
+                break;  // remainder, but nothing safe to repeat
+            }
+            $sequence = $firstPass ? $positions : [$fill];
             $passProgressed = false;
-            foreach ($positions as $pos) {
+            foreach ($sequence as $pos) {
                 if (($startTs + $si->getTimeScheduledSecs()) >= $endTs) {
                     break;  // reached the end mid-pass
                 }
@@ -491,8 +505,9 @@ class AutoPlaylistManager
                     $passProgressed = true;
                 }
             }
+            $firstPass = false;
             if (!$passProgressed) {
-                break;  // a whole pass drew nothing — stop (no dead-air fill)
+                break;  // fill block exhausted — stop (no dead-air spin)
             }
             $guard++;
         }
