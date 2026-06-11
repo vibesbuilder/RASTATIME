@@ -462,10 +462,15 @@ class AutoPlaylistManager
     private static function _fillRequestShowByPositions($si, $playlistId)
     {
         $positions = Application_Common_Database::prepareAndExecute(
-            "SELECT type, file_id, block_id, stream_id, position
-               FROM cc_playlistcontents
-              WHERE playlist_id = :pid
-              ORDER BY position",
+            "SELECT pc.type, pc.file_id, pc.block_id, pc.stream_id, pc.position,
+                    (EXISTS (
+                        SELECT 1 FROM cc_blockcriteria bc
+                         WHERE bc.block_id = pc.block_id
+                           AND bc.criteria = 'use_requests' AND bc.value = '1'
+                    ))::int AS is_request_block
+               FROM cc_playlistcontents pc
+              WHERE pc.playlist_id = :pid
+              ORDER BY pc.position",
             [':pid' => (int) $playlistId],
             Application_Common_Database::ALL
         );
@@ -525,13 +530,65 @@ class AutoPlaylistManager
         if ($type === 0 && !empty($pos['file_id'])) {
             $si->addAutoloadItemToShow('audioclip', (int) $pos['file_id'], false);
         } elseif ($type === 2 && !empty($pos['block_id'])) {
-            $si->addAutoloadItemToShow('block', (int) $pos['block_id'], false);
+            $blockId = (int) $pos['block_id'];
+            $before = $si->getTimeScheduledSecs();
+            $si->addAutoloadItemToShow('block', $blockId, false);
+            // If a "use requests" block drew nothing — no open request right
+            // now — keep the dramaturgy slot filled with a RANDOM track from
+            // the block's own catalogue pool (its criteria minus the request
+            // filter), rather than leaving a gap.
+            if ((int) ($pos['is_request_block'] ?? 0) === 1
+                && $si->getTimeScheduledSecs() <= $before
+            ) {
+                self::_appendRandomFromBlockPool($si, $blockId);
+            }
         } else {
             Logging::warn(
                 'RequestShowFill: skipping unsupported autoload position type '
                 . $type . ' (only file and smart-block positions are filled)'
             );
         }
+    }
+
+    /**
+     * RASTATIME 2026-06-08 — Song Requests: random catalogue fallback for an
+     * empty request slot.  When a "use requests" block draws nothing (no open
+     * listener request at fill time), resolve the SAME block once with the
+     * request filter ignored — i.e. its plain catalogue pool (genre etc.) —
+     * and append ONE random track from it, so the request position still airs
+     * a fitting track instead of leaving a hole in the show.
+     */
+    private static function _appendRandomFromBlockPool($si, $blockId)
+    {
+        try {
+            $block = new Application_Model_Block($blockId);
+            $info = $block->getListofFilesMeetCriteria(null, true);
+        } catch (Exception $e) {
+            Logging::warn(
+                'RequestShowFill: random fallback could not load block '
+                . $blockId . ': ' . $e->getMessage()
+            );
+
+            return;
+        }
+
+        $files = $info['files'] ?? null;
+        if ($files === null || $files->isEmpty()) {
+            return;  // the catalogue pool is empty too — leave the slot
+        }
+
+        // Collect candidate file ids (capped) and append one at random.
+        $ids = [];
+        $files->getFirst();
+        $iterator = $files->getIterator();
+        while ($iterator->valid() && count($ids) < 1000) {
+            $ids[] = (int) $iterator->current()->getDbId();
+            $iterator->next();
+        }
+        if (empty($ids)) {
+            return;
+        }
+        $si->addAutoloadItemToShow('audioclip', $ids[array_rand($ids)], false);
     }
 
     /**
