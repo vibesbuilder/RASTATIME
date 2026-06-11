@@ -508,9 +508,9 @@ class AutoPlaylistManager
     {
         $type = (int) $pos['type'];
         if ($type === 0 && !empty($pos['file_id'])) {
-            $si->addFileToShow((int) $pos['file_id'], false);
+            $si->addAutoloadItemToShow('audioclip', (int) $pos['file_id'], false);
         } elseif ($type === 2 && !empty($pos['block_id'])) {
-            $si->addBlockToShow((int) $pos['block_id'], false);
+            $si->addAutoloadItemToShow('block', (int) $pos['block_id'], false);
         } else {
             Logging::warn(
                 'RequestShowFill: skipping unsupported autoload position type '

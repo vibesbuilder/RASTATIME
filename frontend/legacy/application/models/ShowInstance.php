@@ -301,28 +301,36 @@ SQL;
 
     /**
      * RASTATIME 2026-06-07 — Song Requests (Option C-onepass).  Append a
-     * single smart block, resolved ONCE against the current pool state, to
-     * the end of this instance's schedule — the per-position counterpart of
-     * addFileToShow().  AutoPlaylistManager's request-show fill walks a
-     * request playlist position-by-position and resolves one block at a time
+     * single autoload item — a file ('audioclip') or a smart 'block',
+     * resolved ONCE against the current pool state — to the END of this
+     * instance's schedule.  AutoPlaylistManager's request-show fill walks a
+     * request playlist position-by-position and resolves one item at a time
      * (with a Phase 6a consume in between) so that several "use requests"
-     * blocks each draw a DIFFERENT track.  The block's item/time limit is
-     * applied by the Scheduler via getSecondsRemaining(), so a "time
-     * remaining" block correctly fills to the show end.
+     * blocks each draw a DIFFERENT track.  A 'block' position's item/time
+     * limit is applied by the Scheduler via getSecondsRemaining(), so a
+     * "time remaining" block correctly fills to the show end.
      *
-     * @param int  $block_id
-     * @param bool $checkUserPerm
+     * Unlike addFileToShow(), checkUserPermissions is passed to the Scheduler
+     * CONSTRUCTOR, not the post-construct setter: the constructor calls
+     * Application_Model_User::getCurrentUser() (which needs a Zend session)
+     * whenever permission checking is on, and this runs from a background
+     * TaskManager poll where NO session exists — so it must be off at
+     * construction time.  (addFileToShow's setter-after-construct pattern
+     * throws "must explicitly start the session" in that context.)
+     *
+     * @param string $schedType 'audioclip' (file) or 'block'
+     * @param int    $item_id   cc_files.id or cc_block.id
+     * @param bool   $checkUserPerm
      */
-    public function addBlockToShow($block_id, $checkUserPerm = true)
+    public function addAutoloadItemToShow($schedType, $item_id, $checkUserPerm = false)
     {
         $ts = intval($this->_showInstance->getDbLastScheduled('U')) ?: 0;
         $id = $this->_showInstance->getDbId();
 
-        $scheduler = new Application_Model_Scheduler();
-        $scheduler->setCheckUserPermissions($checkUserPerm);
+        $scheduler = new Application_Model_Scheduler($checkUserPerm);
         $scheduler->scheduleAfter(
             [['id' => 0, 'instance' => $id, 'timestamp' => $ts]],
-            [['id' => $block_id, 'type' => 'block']]
+            [['id' => $item_id, 'type' => $schedType]]
         );
     }
 
