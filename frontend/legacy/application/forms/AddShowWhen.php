@@ -109,6 +109,17 @@ class Application_Form_AddShowWhen extends Zend_Form_SubForm
             'required' => false,
             'decorators' => ['ViewHelper'],
         ]);
+
+        // RASTATIME — Show-Shift / "Allow delayed start".  When checked, an
+        // instance of this show may start later than its calendar slot if the
+        // preceding show overran; a background task pushes its start (and its
+        // scheduled items) back while keeping the show's END fixed.  Persisted
+        // on cc_show.allow_delayed_start via raw SQL (no Propel accessor).
+        $this->addElement('checkbox', 'add_show_allow_delayed_start', [
+            'label' => _('Allow delayed start?'),
+            'required' => false,
+            'decorators' => ['ViewHelper'],
+        ]);
     }
 
     public function isWhenFormValid(

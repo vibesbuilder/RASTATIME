@@ -211,10 +211,34 @@ class Application_Service_ShowFormService
                 'add_show_duration' => $ccShowDay->formatDuration(true),
                 'add_show_timezone' => $ccShowDay->getDbTimezone(),
                 'add_show_repeats' => $ccShowDay->isRepeating() ? 1 : 0,
+                'add_show_allow_delayed_start' => $this->getAllowDelayedStart($this->ccShow->getDbId()),
             ]
         );
 
         return $showStart;
+    }
+
+    /**
+     * Read cc_show.allow_delayed_start for the given show id.
+     *
+     * The column was added by raw-SQL migration 0056 and has no Propel
+     * accessor, so it is read directly here.  Cast to ::int in SQL to stay
+     * independent of how the pgsql PDO driver renders booleans across
+     * versions (bool vs. 't'/'f').
+     *
+     * @param int $showId
+     *
+     * @return int 1 if delayed start is allowed, 0 otherwise
+     */
+    private function getAllowDelayedStart($showId)
+    {
+        $val = Application_Common_Database::prepareAndExecute(
+            'SELECT allow_delayed_start::int FROM cc_show WHERE id = :id',
+            [':id' => (int) $showId],
+            Application_Common_Database::COLUMN
+        );
+
+        return ((int) $val) === 1 ? 1 : 0;
     }
 
     public function getNextFutureRepeatShowTime()
@@ -277,6 +301,7 @@ class Application_Service_ShowFormService
                 ),
                 'add_show_timezone' => $timezone,
                 'add_show_repeats' => 0,
+                'add_show_allow_delayed_start' => $this->getAllowDelayedStart($ccShowInstance->getCcShow()->getDbId()),
             ]
         );
 

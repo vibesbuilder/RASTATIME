@@ -1739,6 +1739,18 @@ SQL;
         $ccShow->setDbLinked($showData['add_show_linked']);
 
         $ccShow->save();
+
+        // RASTATIME — Show-Shift / "Allow delayed start".  cc_show.allow_delayed_start
+        // has no Propel accessor (column added by raw-SQL migration 0056), so it is
+        // persisted here directly.  The boolean is emitted as a true/false literal
+        // (internally derived, no injection surface); only the id is bound.
+        $allowDelayedStart = !empty($showData['add_show_allow_delayed_start']) ? 'true' : 'false';
+        Application_Common_Database::prepareAndExecute(
+            'UPDATE cc_show SET allow_delayed_start = ' . $allowDelayedStart . ' WHERE id = :id',
+            [':id' => (int) $ccShow->getDbId()],
+            'execute'
+        );
+
         $this->ccShow = $ccShow;
     }
 
