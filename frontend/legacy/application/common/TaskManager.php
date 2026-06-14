@@ -719,19 +719,28 @@ class RequestPlayedTask implements AirtimeTask
 /**
  * Class RequestExpiryTask.
  *
- * RASTATIME 2026-06-07 — Song Requests, Phase 6c (expiry sweep).
+ * RASTATIME 2026-06-07 — Song Requests, lifecycle cleanup (Phase 6c + the
+ * 2026-06-09 queued-corpse re-pend).
  *
- * Pending requests never pulled into a show go stale.  Every interval, any
- * 'pending' request older than the (env-overridable) TTL becomes 'expired';
- * the cc_files aggregate for the affected tracks is then recomputed from the
- * surviving pending rows, so a track whose last open request expired drops
- * out of the request pool cleanly.
+ * Two sweeps every interval:
+ *  - Re-pend "queued corpses": a request that was scheduled into a show
+ *    (status 'queued') whose show was then deleted before the track aired now
+ *    sits in NO cc_schedule row.  It goes back to 'pending' so the next request
+ *    show retries it.  ONLY genuine corpses are touched — a track still
+ *    scheduled anywhere (its own show or another) is left to air and be marked
+ *    'played' — so a live queued request is never re-pended and duplicated.
+ *  - Expire stale: any 'pending' request older than the (env-overridable) TTL
+ *    becomes 'expired'.  This also catches a re-pended corpse already older
+ *    than the TTL, so a never-fulfilled wish does not loop forever.
+ * The cc_files aggregate for every affected track is then recomputed from the
+ * surviving pending rows: a re-pended track regains pool membership
+ * (requested = true), an expired track whose last request is gone drops out.
  *
  * created_at is `timestamp WITH tz`; the TTL comparison is timestamptz vs
- * NOW() (also timestamptz), which is absolute and session-tz independent.
- * The recomputed requested_at is cast to naive UTC to match the cc_files
- * column type.  The TTL is a validated integer, inlined (no bind-param
- * interval-type ambiguity).
+ * NOW() (also timestamptz), absolute and session-tz independent.  The
+ * recomputed requested_at is cast to naive UTC to match the cc_files column
+ * type.  The TTL is a validated integer, inlined (no bind-param interval-type
+ * ambiguity).
  */
 class RequestExpiryTask implements AirtimeTask
 {
@@ -752,7 +761,24 @@ class RequestExpiryTask implements AirtimeTask
         $ttlHours = (int) (getenv('RASTATIME_REQUEST_EXPIRY_HOURS')
             ?: self::REQUEST_EXPIRY_TTL_HOURS);
         try {
-            // 1. Expire stale pending requests, capturing the affected tracks.
+            // 1. Re-pend "queued corpses": a request scheduled into a show
+            //    whose show was deleted before airing now sits in NO cc_schedule
+            //    row.  Put the wish back into the pool so the next request show
+            //    retries it.  A track still scheduled anywhere is left alone.
+            $repended = Application_Common_Database::prepareAndExecute(
+                "UPDATE rastatime_song_request
+                    SET status = 'pending'
+                  WHERE status = 'queued'
+                    AND NOT EXISTS (
+                        SELECT 1 FROM cc_schedule s
+                         WHERE s.file_id = rastatime_song_request.file_id)
+                RETURNING file_id",
+                [],
+                Application_Common_Database::ALL
+            );
+
+            // 2. Expire stale pending requests (incl. any just re-pended that
+            //    are already past the TTL), capturing the affected tracks.
             $expired = Application_Common_Database::prepareAndExecute(
                 "UPDATE rastatime_song_request
                     SET status = 'expired'
@@ -762,15 +788,21 @@ class RequestExpiryTask implements AirtimeTask
                 [],
                 Application_Common_Database::ALL
             );
-            if (empty($expired)) {
+
+            if (empty($repended) && empty($expired)) {
                 Application_Model_Preference::setRequestExpiryLastRun(microtime(true));
 
                 return;
             }
 
-            // 2. Recompute the cc_files aggregate for those tracks from the
-            //    surviving pending rows (truth = rastatime_song_request).
+            // 3. Recompute the cc_files aggregate for every affected track from
+            //    the surviving pending rows (truth = rastatime_song_request):
+            //    a re-pended track regains requested = true, an expired track
+            //    whose last request is gone drops to requested = false.
             $ids = [];
+            foreach ($repended as $r) {
+                $ids[(int) $r['file_id']] = true;
+            }
             foreach ($expired as $r) {
                 $ids[(int) $r['file_id']] = true;  // dedupe via keys
             }
@@ -792,7 +824,8 @@ class RequestExpiryTask implements AirtimeTask
                 Application_Common_Database::EXECUTE
             );
             Logging::info(
-                'RequestExpiryTask: expired ' . count($expired)
+                'RequestExpiryTask: re-pended ' . count($repended)
+                . ', expired ' . count($expired)
                 . ' requests, refreshed ' . count($ids) . ' tracks'
             );
         } catch (Throwable $e) {
