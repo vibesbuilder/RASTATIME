@@ -34,7 +34,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     füllt den Rest.  Leere Request-Slots fallen auf einen **Zufalls-Track** aus
     dem Block-Katalog zurück (kein Dead Air).
   - **Lifecycle-Tasks**: `RequestPlayedTask` (Schedule-basiert, kein
-    Playout-Eingriff) + `RequestExpiryTask` (8 h TTL, env-overridebar).
+    Playout-Eingriff) + `RequestExpiryTask` (8 h TTL, env-overridebar;
+    setzt zudem eingeplante Requests einer *gelöschten* Show zurück in
+    den Pool — Re-Pending statt Verwaisung, 2026-06-09).
   - **Pool-Auswahl** (Settings → General): „Song-Request Pool" als Dropdown im
     Stil des Library-„Columns"-Pickers.
   - Doku: neues Kapitel **Song Requests** im User-Manual (EN/DE/FR/ES),

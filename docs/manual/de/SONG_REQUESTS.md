@@ -278,6 +278,10 @@ Jeder Request durchläuft vier Zustände:
   des Tracks vorbei ist (`RequestPlayedTask`, alle 2 Min) — bewusst
   gewählt statt eines Playout-seitigen Hooks, damit der
   Live-Sendepfad nie angefasst wird.
+- Wird eine **Request-Show gelöscht**, bevor ihre Tracks laufen, gehen
+  ihre eingeplanten Requests nicht verloren: derselbe Lauf setzt sie
+  zurück auf **pending** (ihr Track steht in keinem Schedule mehr),
+  sodass die nächste Request-Show den Wunsch erneut versucht.
 - Der Expiry-Lauf (`RequestExpiryTask`, alle 10 Min) lässt jeden noch
   **pending** Request nach der TTL ablaufen — Standard **8 Stunden**,
   überschreibbar mit `RASTATIME_REQUEST_EXPIRY_HOURS` — und berechnet

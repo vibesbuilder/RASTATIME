@@ -265,6 +265,10 @@ Every request moves through four states:
 - A schedule-based task marks **played** once the track's slot has
   passed (`RequestPlayedTask`, every 2 min) — chosen over a
   playout-side hook so the live broadcast path is never touched.
+- If a **request show is deleted** before its tracks air, its scheduled
+  requests are not stranded: the same sweep returns them to **pending**
+  (their track is no longer in any schedule), so the next request show
+  retries the wish.
 - The expiry sweep (`RequestExpiryTask`, every 10 min) expires any
   request still **pending** after the TTL — default **8 hours**,
   override with `RASTATIME_REQUEST_EXPIRY_HOURS` — and recomputes the

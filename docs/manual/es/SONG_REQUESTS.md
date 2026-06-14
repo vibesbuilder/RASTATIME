@@ -275,6 +275,10 @@ Cada petición pasa por cuatro estados:
   de la pista ha pasado (`RequestPlayedTask`, cada 2 min) —elegido en
   lugar de un hook del lado del playout, para no tocar nunca la ruta
   de emisión en directo.
+- Si un **request show se elimina** antes de emitir sus pistas, sus
+  peticiones planificadas no se pierden: el mismo barrido las devuelve
+  a **pending** (su pista ya no está en ningún planning), para que el
+  siguiente request show reintente el deseo.
 - El barrido de expiración (`RequestExpiryTask`, cada 10 min) hace
   expirar cualquier petición aún **pending** tras el TTL —por defecto
   **8 horas**, ajustable con `RASTATIME_REQUEST_EXPIRY_HOURS`— y

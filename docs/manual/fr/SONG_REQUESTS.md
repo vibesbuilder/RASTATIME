@@ -280,6 +280,10 @@ Chaque demande passe par quatre états :
   créneau du titre passé (`RequestPlayedTask`, toutes les 2 min) —
   choisi plutôt qu'un hook côté playout, afin de ne jamais toucher au
   chemin de diffusion en direct.
+- Si un **request show est supprimé** avant la diffusion de ses titres,
+  ses demandes planifiées ne sont pas perdues : le même balayage les
+  remet en **pending** (leur titre n'est plus dans aucun planning),
+  pour que le prochain request show réessaie le souhait.
 - Le balayage d'expiration (`RequestExpiryTask`, toutes les 10 min)
   fait expirer toute demande encore **pending** après le TTL — défaut
   **8 heures**, surchargeable avec `RASTATIME_REQUEST_EXPIRY_HOURS` —

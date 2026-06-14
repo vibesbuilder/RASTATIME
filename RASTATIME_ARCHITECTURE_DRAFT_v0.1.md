@@ -3787,10 +3787,15 @@ once its track sat in a `cc_schedule` slot that has ended
 (after the request was made) — a schedule-based detection rather
 than a playout-side `_on_file_start` hook, so the live broadcast
 path is never modified for an audit-only status.
-`RequestExpiryTask` (10 min) expires `pending` requests older
-than the TTL (default 8 h, `RASTATIME_REQUEST_EXPIRY_HOURS`) and
-recomputes the `cc_files` aggregate from the surviving pending
-rows.  Timestamp comparisons use `AT TIME ZONE 'UTC'` so they
+`RequestExpiryTask` (10 min) first re-pends "queued corpses": a
+`queued` request whose track is in NO `cc_schedule` row (its show was
+deleted before airing) returns to `pending` so the next request show
+retries it — only genuine corpses, never a still-scheduled track, so a
+live queued request is not duplicated.  It then expires `pending`
+requests older than the TTL (default 8 h,
+`RASTATIME_REQUEST_EXPIRY_HOURS`; this also sweeps up a re-pended wish
+already past the TTL) and recomputes the `cc_files` aggregate from the
+surviving pending rows.  Timestamp comparisons use `AT TIME ZONE 'UTC'` so they
 are independent of the PDO session timezone (`cc_schedule.ends`
 is `timestamp WITHOUT tz` holding UTC; `created_at` is
 `timestamp WITH tz`).
