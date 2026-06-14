@@ -858,6 +858,22 @@ Sowohl Menü-Ebene als auch Einzelfeld-Ebene gewünscht.
 
 ## 💡 Future Feature Ideas (nicht evaluiert, nur notiert)
 
+### Mid-Show Song Requests (echtes Just-in-time)
+
+Aktuell füllt sich eine Request-Show **einmal** ~8 Min vor Start
+(Option C-onepass, Dead-Air-sicher).  Ein Request, der *nach* der
+Befüllung eintrifft (oder während die Show schon läuft), landet erst
+in der nächsten Request-Show.  Bewusste Operator-Entscheidung
+2026-06-09 (C-onepass statt echtes Variante-Z).
+
+Future-Ausbau: die **laufende** Show nachfüllen, wenn ein Request
+mitten in der Show eintrifft.  Bräuchte einen **Positions-Cursor pro
+Show-Instanz** (wie weit ist die Dramaturgie aufgelöst?) + getaktetes
+Nachladen statt One-Pass.  Trade-off: erhöht das Dead-Air-Risiko
+(Show füllt sich erst nach und nach), das C-onepass bewusst vermeidet.
+Siehe ARCHITECTURE §23.23 (Trade-off-Absatz) und das Song-Requests-
+Manual-Kapitel §5.
+
 ### 7-Tage-Catchup Frontend
 
 Web-Player der auf Record-per-Hour-Chunks zugreift. HTTP-Range-
