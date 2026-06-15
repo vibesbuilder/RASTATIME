@@ -5112,3 +5112,6 @@ msgstr "Flux web"
 
 #~ msgid "unmute"
 #~ msgstr "désactiver"
+
+msgid "Allow delayed start?"
+msgstr "Autoriser le démarrage différé ?"

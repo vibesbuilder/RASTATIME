@@ -4783,3 +4783,6 @@ msgstr "Line-In-Quelle konnte nicht gelöscht werden."
 
 #~ msgid "unmute"
 #~ msgstr "Lautschalten"
+
+msgid "Allow delayed start?"
+msgstr "Verzögerten Start erlauben?"
