@@ -2127,6 +2127,18 @@ class Application_Model_Preference
         self::setValue('request_expiry_last_run', $value);
     }
 
+    // RASTATIME 2026-06-15 - Show-Shift / "Allow delayed start", Phase 3a:
+    // last-run timestamp for the ShowShiftTask interval gate.
+    public static function getShowShiftLastRun()
+    {
+        return self::getValue('show_shift_last_run');
+    }
+
+    public static function setShowShiftLastRun($value)
+    {
+        self::setValue('show_shift_last_run', $value);
+    }
+
     // RASTATIME 2026-05-15 - GetFeaturePreviewMode/SetFeaturePreviewMode removed:
     // the cc_pref key 'feature_preview_mode' was stored but never consumed by any
     // code path (no feature ever gated on it). Form element + render + save line

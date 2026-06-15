@@ -836,6 +836,42 @@ class RequestExpiryTask implements AirtimeTask
 }
 
 /**
+ * Class ShowShiftTask.
+ *
+ * RASTATIME 2026-06-15 — Show-Shift / "Allow delayed start", Phase 3a.
+ *
+ * Every interval (default 2 min, env-overridable) shifts any opted-in show
+ * (cc_show.allow_delayed_start) that a preceding overrun pushes into, within
+ * a 15-minute lead window.  Idempotent: a show already sitting at its
+ * predecessor's content end is left alone.  Applies to manually-filled shows
+ * too — it works off the cc_schedule rows, not how they were filled.  See
+ * Application_Service_ShowShiftService for the mechanism.
+ */
+class ShowShiftTask implements AirtimeTask
+{
+    public const SHOW_SHIFT_INTERVAL_SECONDS = 120;  // 2 minutes
+
+    public function shouldBeRun()
+    {
+        $interval = (int) (getenv('RASTATIME_SHOW_SHIFT_INTERVAL_SECONDS')
+            ?: self::SHOW_SHIFT_INTERVAL_SECONDS);
+        $lastRun = Application_Model_Preference::getShowShiftLastRun();
+
+        return empty($lastRun) || (microtime(true) > $lastRun + $interval);
+    }
+
+    public function run()
+    {
+        try {
+            Application_Service_ShowShiftService::applyDelayedStarts();
+        } catch (Throwable $e) {
+            Logging::error('ShowShiftTask failed: ' . $e->getMessage());
+        }
+        Application_Model_Preference::setShowShiftLastRun(microtime(true));
+    }
+}
+
+/**
  * Class TaskFactory Factory class to abstract task instantiation.
  */
 class TaskFactory
