@@ -137,6 +137,7 @@ qu'ils supposent tous.
 | [Tableau de bord](./DASHBOARD.md) | Widget En cours, état de source, surcharge manuelle, mettre la station en direct depuis un microphone. |
 | [Calendrier](./CALENDAR.md) | Créer des émissions, modifier, glisser-déposer, émissions récurrentes, répétitions, animateurs. |
 | [Modèles d'émission](./SHOW_TEMPLATES.md) | Réutiliser les paramètres d'émission sans les retaper chaque semaine. |
+| [Démarrage différé d'émission](./DELAYED_START.md) | Laisser une émission inscrite commencer en retard quand l'émission qui la précède a dépassé, au lieu de rogner cette émission. Le retard se propage à travers les émissions inscrites consécutives jusqu'à la première ancre à heure fixe. |
 
 ### Contenu et bibliothèque
 
@@ -240,6 +241,7 @@ anglais.
 | **Line-In** | Une entrée audio live nommée sur la machine de l'opérateur (un microphone, un mixeur, un lecteur CD externe). Persisté dans `rastatime_linein`. |
 | **Autoloading playlist** | Une playlist attachée à une *définition d'émission* pour que chaque instance de l'émission obtienne le contenu de la playlist construit automatiquement dans son planning. |
 | **Auto DJ** | Un processus d'arrière-plan qui crée des émissions dans les trous du calendrier et complète les émissions incomplètes. Distinct des autoloading playlists. |
+| **Démarrage différé (delayed start)** | Une inscription volontaire par émission (`cc_show.allow_delayed_start`) qui laisse une émission commencer plus tard que son créneau de calendrier lorsque l'émission précédente a dépassé, en gardant sa propre fin fixe. Une tâche d'arrière-plan l'applique quelques minutes avant l'antenne. |
 | **Song request (demande de titre)** | Un souhait de titre envoyé par un auditeur, collecté par un widget public et diffusé automatiquement par une request show (une émission à autoloading playlist avec un Smart Block *Use requests*). Persisté dans `rastatime_song_request`. |
 | **Stream de sortie** | L'un des jusqu'à quatre mountpoints Icecast vers lesquels le playout diffuse. Configuré sous Paramètres → Streams. |
 | **Source switcher** | Le mécanisme interne qui décide quelle source audio (scheduler, line-in, master DJ, show DJ) est actuellement à l'antenne. |

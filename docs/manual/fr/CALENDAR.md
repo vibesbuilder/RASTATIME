@@ -138,7 +138,7 @@ valeurs par défaut.
 |---|---|
 | **Modèles** | Pré-remplir le formulaire depuis un [Modèle d'émission](./SHOW_TEMPLATES.md) enregistré, ou enregistrer le formulaire actuel comme modèle après avoir terminé. Caché lors de l'édition d'une seule instance d'une émission récurrente. |
 | **Quoi** | Nom, URL, genre, description, animateurs, couleurs de fond / texte, image de l'émission. Le libellé visible sur le calendrier. |
-| **Quand** | Date / heure de début, durée, date de fin, répétitions. |
+| **Quand** | Date / heure de début, durée, date de fin, répétitions, **Allow delayed start** (laisser cette émission commencer en retard quand la précédente a dépassé — voir [Démarrage différé d'émission](./DELAYED_START.md)). |
 | **Entrée Live Stream** | Permettre aux animateurs distants de prendre l'émission via Show DJ (nom d'utilisateur + mot de passe par émission). |
 | **Enregistrement** | Cocher pour enregistrer la sortie à l'antenne de l'émission dans un fichier. Voir [Enregistrement par émission](./RECORD_PER_SHOW.md). |
 | **Autoloading Playlist** | Attacher une playlist pour remplir chaque instance automatiquement. Voir [Autoloading Playlists](./AUTOLOADING_PLAYLISTS.md). |
