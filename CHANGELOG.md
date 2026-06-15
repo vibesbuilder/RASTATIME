@@ -9,6 +9,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Show-Shift / „Allow delayed start" (2026-06-15, Phasen 1–3b)** — Eine
+  opt-in-Checkbox **„Allow delayed start?"** pro Show (When-Section, direkt
+  unter „Repeats?") lässt eine Show **später beginnen**, wenn die vorige Show
+  ihren Slot überzieht — statt die vorige Show am Slot-Ende abzuschneiden:
+  - **Datenmodell**: additive Spalte `cc_show.allow_delayed_start`
+    (Legacy-Migration 0056, `BOOLEAN DEFAULT false`); ohne Propel-Accessor,
+    Form liest/schreibt per raw SQL — selber Präzedenzfall wie die
+    Song-Request-Spalten (`fe630ec`).
+  - **Form/UI**: Checkbox in `AddShowWhen` + `add-show-when.phtml`, Speichern
+    in `ShowService::setCcShow`, Vorbelegung in `ShowFormService`
+    (Edit + Instanz-Edit) (`277f4e5`).
+  - **Engine** (`Application_Service_ShowShiftService`): die überbuchende Show
+    spielt voll aus (ihr Ende wird auf das Content-Ende erweitert → kein
+    Eingriff in den Python-Playout-Pfad); die folgende opted-in-Show behält ihr
+    **Ende fix** und verschiebt ihren **Start** auf das Content-Ende (Items
+    mit, letzter Track am Slot-Ende geclamped = akzeptierter Cut-off).  Der
+    Effekt **kaskadiert** über aufeinanderfolgende opted-in-Shows bis zur
+    ersten Show **ohne** Flag (harter Anker); eine komplett überrollte Show
+    wird **geleert** (leerer „skipped"-Slot bleibt als Marker).  Vorwärts-only
+    (kein automatisches Rückgängigmachen, daher keine Original-Slot-Spalte),
+    idempotent über ganzzahlige Sekunden-Deltas + `modified_instance`-Filter
+    (`5d24276` Single-Shift + Task, `bdd0f54` Kaskade + Clearing).
+  - **Trigger**: `ShowShiftTask` (TaskManager, alle 2 min, 15 min Vorlauf,
+    env-overridebar via `RASTATIME_SHOW_SHIFT_INTERVAL_SECONDS` /
+    `RASTATIME_SHOW_SHIFT_LEAD_SECONDS`); greift auch bei manuell gefüllten
+    Shows; eine wiederkehrende Show ändert nur die betroffene Episode
+    (`modified_instance`).  Die Playout-History bleibt automatisch korrekt
+    (reale Spielzeiten, kein Eingriff nötig).
+  - Verifiziert: PHP-Lint, Rollback-TX-Logiktests (Shift/Kaskade/Clearing/
+    Anker/Idempotenz), Produktions-Smoke + isolierter End-to-End-Live-Test
+    (dedizierte Test-Shows, echter Commit, mit Teardown).
+  - Doku: neues Kapitel **Delayed Show Start** im User-Manual (EN/DE/FR/ES),
+    ARCHITECTURE §23.24.
+
 - **Song Requests (2026-06-08, SR-Phasen 1–7)** — Hörer können über ein
   öffentliches Embed-Widget (`/Embed/song-request`) Tracks wünschen, die
   automatisch in einer **Request-Show** laufen.  Vollständig aus vorhandenen

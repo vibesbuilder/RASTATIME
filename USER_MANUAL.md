@@ -117,6 +117,7 @@ master document above is the only thing they all assume.
 | [Dashboard](./docs/manual/DASHBOARD.md) | Now-Playing widget, source state, manual override, taking the station live from a microphone. |
 | [Calendar](./docs/manual/CALENDAR.md) | Creating shows, editing, drag-and-drop, recurring shows, repeats, hosts. |
 | [Show Templates](./docs/manual/SHOW_TEMPLATES.md) | Reusing show settings without re-typing them every week. |
+| [Delayed Show Start](./docs/manual/DELAYED_START.md) | Letting an opted-in show start late when the show before it overran, instead of trimming that show. The delay ripples across consecutive opted-in shows up to the first fixed-time anchor. |
 
 ### Content and library
 
@@ -218,6 +219,7 @@ they will use.
 | **Line-In** | A named live audio input on the operator's machine (a microphone, a mixer, an external CD player). Persisted in `rastatime_linein`. |
 | **Autoloading playlist** | A playlist attached to a *show definition* so every instance of the show gets the playlist's contents built into its schedule automatically. |
 | **Auto DJ** | A background process that creates shows in calendar gaps and tops up incomplete shows. Distinct from autoloading playlists. |
+| **Delayed start** | A per-show opt-in (`cc_show.allow_delayed_start`) that lets a show begin later than its calendar slot when the preceding show overran, keeping its own end fixed. A background task applies it a few minutes before air. |
 | **Song request** | A listener-submitted track wish, collected by a public widget and aired automatically by a request show (an autoloading-playlist show with a *Use requests* smart block). Persisted in `rastatime_song_request`. |
 | **Output stream** | One of up to four Icecast mountpoints the playout broadcasts to. Configured under Settings → Streams. |
 | **Source switcher** | The internal mechanism that decides which audio source (scheduler, line-in, master DJ, show DJ) is currently on air. |

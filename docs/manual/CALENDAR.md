@@ -125,7 +125,7 @@ The form is divided into collapsible sections. **What** and
 |---|---|
 | **Templates** | Pre-fill the form from a saved [Show Template](./SHOW_TEMPLATES.md), or save the current form as a template after you finish. Hidden when editing a single instance of a repeating show. |
 | **What** | Name, URL, genre, description, hosts, background / text colours, show image. The visible label on the calendar. |
-| **When** | Start date / time, duration, end date, repeats. |
+| **When** | Start date / time, duration, end date, repeats, **Allow delayed start** (let this show begin late when the previous one overran — see [Delayed Show Start](./DELAYED_START.md)). |
 | **Live Stream Input** | Allow remote hosts to take the show via Show DJ (per-show username + password). |
 | **Record** | Tick to record the show's on-air output to a file. See [Record-per-Show](./RECORD_PER_SHOW.md). |
 | **Autoloading Playlist** | Attach a playlist to fill every instance automatically. See [Autoloading Playlists](./AUTOLOADING_PLAYLISTS.md). |

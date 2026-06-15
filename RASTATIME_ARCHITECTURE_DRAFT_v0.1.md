@@ -1,10 +1,28 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.15
-Date: 2026-06-08
+Draft version: 0.16
+Date: 2026-06-15
 
 > **Revision history**
+> - **0.16 (2026-06-15)** — Delayed Show Start (Section 23.24).  An
+>   opt-in `cc_show.allow_delayed_start` boolean (legacy migration
+>   0056, no Propel accessor — raw-SQL read/write like the
+>   song-request columns) lets a show begin later than its slot when
+>   the preceding show overran, instead of trimming that show.  A
+>   background `ShowShiftTask` (TaskManager, 2 min poll, 15 min lead)
+>   extends the overbooking show's end to its content end (so it airs
+>   in full with NO change to the Python playout path), slides the next
+>   opted-in show's START to that point while keeping its END fixed
+>   (items move with it, last track clamped = accepted cut-off),
+>   cascades across consecutive opted-in shows — clearing
+>   completely-overrun ones to "skipped" empty slots — and stops at the
+>   first un-ticked anchor, which always begins on time.  Forward-only
+>   by operator decision (no original-slot column / migration);
+>   idempotent via whole-second deltas + a `modified_instance` trigger
+>   filter.  Minor-bump for the new per-show scheduling behaviour + the
+>   additive schema column; no new public/external surface, otherwise
+>   additive.
 > - **0.15 (2026-06-08)** — Song Requests (Section 23.23).  Listeners
 >   request tracks from a public embed widget; the tracks air
 >   automatically inside a "request show" — any autoloading-playlist
@@ -3806,3 +3824,93 @@ or mid-show) lands in the next request show, not the current
 one.  This was the operator's explicit preference over
 mid-show insertion (which would have required a position cursor
 per instance and reintroduced the dead-air risk).
+
+### 23.24 Delayed Show Start ("Allow delayed start")
+
+**Context.**  When a show's scheduled content runs past its slot, the
+backend playout serializer clamps the last item at the slot end
+(`get_cue_out` / `get_ends_at` in `schedule.py`) and the following
+show starts on time — the overbooked show is simply trimmed.  Stations
+wanted the opposite for selected slots: let the overbooked show finish
+and have the *following* show start late, without touching the live
+playout path.
+
+**Opt-in flag (decision).**  One additive boolean
+`cc_show.allow_delayed_start` (legacy migration 0056,
+`BOOLEAN DEFAULT false NOT NULL`).  Propel is **not** regenerated for
+it — the legacy frontend reads/writes it via raw SQL
+(`Application_Common_Database`), the same precedent as the `cc_files`
+request columns (0055) and `expires_at` / `disabled` (0049), avoiding
+the ~47 Propel touchpoints a regenerated column costs.  The flag is
+per *show* (definition), so it applies to every episode; an actual
+shift only ever modifies the affected *instance*.
+
+**The core trick — extend, don't clamp.**  The overbooking show's own
+`cc_show_instances.ends` is pushed out to its content end
+(`MAX(cc_schedule.ends)`).  That makes its last item "inside" its
+instance, so the existing serializer no longer clamps it — the show
+airs in full **with no change to the Python playout path**.  This is
+the whole reason the feature needs no playout-side code.
+
+**The shift (decision: end fixed).**  The next opted-in show keeps its
+`ends` FIXED and moves its `starts` to the overbooking show's content
+end; its `cc_schedule` items shift by the same whole-second delta
+(`SchedulerService::updateScheduleStartTime`), and its now-overflowing
+last track is clamped at its own slot end by the existing overbook
+logic (the accepted cut-off).  The instance is stamped
+`modified_instance = true` so a repeated show changes only the
+affected episode and the repeat regenerator leaves it alone.  Keeping
+the end fixed bounds the ripple: a show absorbs the delay by losing
+its head, then hands over on time.
+
+**Cascade + clearing (Phase 3b).**
+`Application_Service_ShowShiftService::cascadeFrom()` walks forward
+from the overbooking instance holding its content end constant:
+
+* **anchor** — the next show is not opted in: clamp the content at the
+  anchor's start and stop.
+* **clearing** — an opted-in show is COMPLETELY overrun (content end ≥
+  its slot end): empty it (delete `cc_schedule`, zero `time_filled`,
+  mark `modified_instance`, drop `cc_files.is_scheduled` where no
+  longer scheduled — a single-instance mirror of `emptyShowContent`),
+  leave the empty slot as a "skipped" marker, and continue the cascade
+  with the same content end.
+* **shift** — an opted-in show is PARTIALLY overrun: slide it (above)
+  and stop; it absorbs the rest.
+
+The overbooking show's `ends` is extended to where the content settled
+**only** if a flagged show was actually cleared or shifted, so a plain
+overrun into a gap or a non-flagged anchor keeps the current clamp
+behaviour.
+
+**Trigger + idempotency.**  `ShowShiftTask` (TaskManager,
+auto-discovered via the `AirtimeTask` interface) runs every
+`RASTATIME_SHOW_SHIFT_INTERVAL_SECONDS` (default 120), gated on a
+`cc_pref` `show_shift_last_run` timestamp.  `applyDelayedStarts()`
+selects cascade origins: overbooking, `modified_instance = false`
+instances whose slot is within `RASTATIME_SHOW_SHIFT_LEAD_SECONDS`
+(default 900) ahead — the lead window means only imminent shows move,
+manually-filled shows included (it works off `cc_schedule`, not how it
+was filled).  Forward-only by operator decision: a slide is never
+walked back, so no original-slot column is stored.  Idempotency comes
+from (a) whole-second deltas (`strtotime`), so an already-shifted show
+computes a sub-second delta that floors to a no-op, and (b) the
+`modified_instance = false` trigger filter, so a show already shifted
+(modified) is never re-taken as a new ripple origin — at the cost that
+an operator-moved instance is not itself an origin, though it is still
+shifted/cleared when an earlier show overruns into it (consistent with
+how `modified_instance` excludes instances from other automatic
+passes).
+
+**Playout history (decision: no intervention).**  The shift happens
+before air; playout history records actual wall-clock play times from
+`TrackChangedEvent.timestamp`, not schedule times, so a show aired
+late is logged correctly with no extra code.
+
+**Verification.**  PHP-lint; rollback-transaction logic tests (single
+shift; cascade A→B cleared→C shifted→D untouched; direct anchor leaves
+the origin's end untouched; clearing-then-anchor clamps the origin's
+end at the anchor; idempotent re-runs); production smoke (the task
+runs on session-less API polls); and an isolated end-to-end live test
+(dedicated far-future test shows, real `applyDelayedStarts()` commit,
+full teardown) — all six post-conditions confirmed.
