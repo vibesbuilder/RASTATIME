@@ -79,12 +79,12 @@ den Abschnitt **Wann** auf. Direkt unter **Wiederholt sich?** steht:
    ─────────────────────────────
    Start  [2026-06-15] [08:00]
    …
-   Wiederholt sich?         [ ]
-   Allow delayed start?     [x]   ◀── ankreuzen, damit DIESE Sendung
-                                       sich verschieben darf
+   Wiederholt sich?              [ ]
+   Verzögerten Start erlauben?   [x]   ◀── ankreuzen, damit DIESE
+                                           Sendung sich verschieben darf
 ```
 
-Kreuzen Sie **„Allow delayed start?"** (verzögerten Start erlauben) bei
+Kreuzen Sie **„Verzögerten Start erlauben?"** bei
 jeder Sendung an, die später beginnen darf, wenn die vorige Sendung
 überzogen hat. Lassen Sie es bei Sendungen frei, die exakt pünktlich
 beginnen müssen (Nachrichten zur vollen Stunde, ein Netz-Feed, eine
@@ -110,7 +110,7 @@ behalten ihren normalen Slot.
 
 Wenn der Hintergrund-Task feststellt, dass der geplante Inhalt von
 Sendung A **nach** ihrem Slot endet, und die nächste Sendung B
-**„Allow delayed start"** angekreuzt hat:
+**„Verzögerten Start erlauben"** angekreuzt hat:
 
 | | Vorher | Nachher |
 |---|---|---|
@@ -290,7 +290,8 @@ Der Task ist **idempotent und arbeitet nur vorwärts**:
 Damit sich ein Block des Sendeplans verschiebt, wenn eine Sendung
 überzieht:
 
-1. **Kreuzen Sie „Allow delayed start?"** bei jeder Sendung an, die
+1. **Kreuzen Sie „Verzögerten Start erlauben?"** bei jeder Sendung an,
+   die
    später beginnen darf — im Abschnitt **Wann** ihres Formulars
    „Neue Sendung" / „Sendung bearbeiten".
 2. **Lassen Sie es frei** bei jeder zeitgebundenen Sendung, die auf die
@@ -359,6 +360,6 @@ der Zeit gemeldet, zu der sie tatsächlich lief.
 * [Autoloading Playlists](./AUTOLOADING_PLAYLISTS.md) — ein häufiger Weg,
   wie eine Sendung überbucht wird (eine Dramaturgie, die leicht
   überfüllt).
-* [Sendungs-Vorlagen](./SHOW_TEMPLATES.md) — „Allow delayed start" in
+* [Sendungs-Vorlagen](./SHOW_TEMPLATES.md) — „Verzögerten Start erlauben" in
   eine Vorlage backen, sodass eine ganze Klasse von Sendungen auf einmal
   freigeschaltet wird.

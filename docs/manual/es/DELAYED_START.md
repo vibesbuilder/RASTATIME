@@ -77,12 +77,11 @@ Abra **Nuevo programa** o **Editar programa** y despliegue la sección
    ─────────────────────────────
    Inicio  [2026-06-15] [08:00]
    …
-   Se repite                [ ]
-   Allow delayed start?     [x]   ◀── marque para que ESTE programa se deslice
+   Se repite                      [ ]
+   ¿Permitir inicio diferido?     [x]   ◀── marque para que ESTE programa se deslice
 ```
 
-Marque **«Allow delayed start?»** (permitir inicio diferido) en
-cualquier programa al que se le permita empezar tarde cuando el
+Marque **«¿Permitir inicio diferido?»** en cualquier programa al que se le permita empezar tarde cuando el
 programa precedente se sobrepasó.
 Déjela sin marcar en los programas que deben empezar exactamente a
 tiempo (las noticias en punto, un feed de la red, un enlace en vivo a
@@ -108,7 +107,7 @@ conservan su slot normal.
 
 Cuando la tarea en segundo plano ve que el contenido planificado del
 programa A termina **después** del slot de A, y el programa siguiente
-B tiene **Allow delayed start?** marcado:
+B tiene **¿Permitir inicio diferido?** marcado:
 
 | | Antes | Después |
 |---|---|---|
@@ -287,7 +286,7 @@ La tarea es **idempotente y solo hacia adelante**:
 Para dejar que un bloque del horario se deslice cuando un programa se
 sobrepasa:
 
-1. **Marque «Allow delayed start?»** en cada programa que pueda
+1. **Marque «¿Permitir inicio diferido?»** en cada programa que pueda
    empezar tarde — en la sección **Cuándo** de su formulario Nuevo /
    Editar programa.
 2. **Déjela sin marcar** en cada programa a hora fija que deba empezar

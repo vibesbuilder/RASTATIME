@@ -81,13 +81,12 @@ trouve :
    ─────────────────────────────
    Début  [2026-06-15] [08:00]
    …
-   Se répète ?              [ ]
-   Allow delayed start?     [x]   ◀── cocher pour laisser CETTE
+   Se répète ?                        [ ]
+   Autoriser le démarrage différé ?   [x]   ◀── cocher pour laisser CETTE
                                        émission glisser
 ```
 
-Cochez **« Allow delayed start? »** (autoriser le démarrage différé)
-sur toute émission autorisée à commencer en retard lorsque l'émission
+Cochez **« Autoriser le démarrage différé ? »** sur toute émission autorisée à commencer en retard lorsque l'émission
 précédente a dépassé. Laissez-la décochée sur les émissions qui doivent
 commencer exactement à l'heure (info au top horaire, un flux
 réseau, une liaison live à heure fixe) — celles-ci deviennent les
@@ -113,7 +112,7 @@ est modifié (il devient une surcharge par occurrence) ; les autres
 
 Lorsque la tâche d'arrière-plan constate que le contenu planifié
 de l'émission A se termine **après** le créneau de A, et que
-l'émission suivante B a **Allow delayed start?** coché :
+l'émission suivante B a **Autoriser le démarrage différé ?** coché :
 
 | | Avant | Après |
 |---|---|---|
@@ -305,7 +304,7 @@ La tâche est **idempotente et à sens unique** :
 Pour laisser un bloc du planning glisser quand une émission
 dépasse :
 
-1. **Cochez « Allow delayed start? »** sur chaque
+1. **Cochez « Autoriser le démarrage différé ? »** sur chaque
    émission qui peut commencer en retard — dans la section
    **Quand** de son formulaire Nouvelle / Modifier l'émission.
 2. **Laissez-la décochée** sur chaque émission à heure fixe qui
