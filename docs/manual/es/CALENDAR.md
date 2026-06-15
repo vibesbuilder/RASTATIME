@@ -91,7 +91,7 @@ El formulario se divide en secciones plegables. **Qué** y
 |---|---|
 | **Plantillas** | Pre-rellenar el formulario desde una [Plantilla de programa](./SHOW_TEMPLATES.md) guardada. |
 | **Qué** | Nombre, URL, género, descripción, presentadores, colores, imagen del programa. |
-| **Cuándo** | Fecha / hora de inicio, duración, fecha de fin, repeticiones. |
+| **Cuándo** | Fecha / hora de inicio, duración, fecha de fin, repeticiones, **Allow delayed start** (dejar que este programa empiece tarde cuando el anterior se sobrepasó — vea [Inicio diferido de programa](./DELAYED_START.md)). |
 | **Entrada Live Stream** | Permitir a presentadores remotos tomar el programa vía Show DJ. |
 | **Grabación** | Marcar para grabar la salida al aire del programa. Vea [Grabación por programa](./RECORD_PER_SHOW.md). |
 | **Autoloading Playlist** | Adjuntar una playlist para rellenar cada instancia automáticamente. |

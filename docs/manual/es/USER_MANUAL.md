@@ -130,6 +130,7 @@ documento maestro arriba es lo único que todos asumen.
 | [Panel](./DASHBOARD.md) | Widget En reproducción, estado de fuente, anulación manual, poner la emisora en vivo desde un micrófono. |
 | [Calendario](./CALENDAR.md) | Crear programas, editar, arrastrar y soltar, programas recurrentes, repeticiones, presentadores. |
 | [Plantillas de programa](./SHOW_TEMPLATES.md) | Reutilizar configuración de programa sin reescribir cada semana. |
+| [Inicio diferido de programa](./DELAYED_START.md) | Dejar que un programa inscrito empiece tarde cuando el programa anterior se sobrepasó, en lugar de recortar ese programa. El retraso se propaga a través de programas inscritos consecutivos hasta la primera ancla a hora fija. |
 
 ### Contenido y biblioteca
 
@@ -231,6 +232,7 @@ inglés.
 | **Line-In** | Una entrada de audio en vivo nombrada en la máquina del operador (un micrófono, un mezclador, un reproductor CD externo). Persistido en `rastatime_linein`. |
 | **Autoloading playlist** | Una playlist adjunta a una *definición de programa* para que cada instancia del programa tenga los contenidos de la playlist construidos en su planning automáticamente. |
 | **Auto DJ** | Un proceso en segundo plano que crea programas en huecos del calendario y completa programas incompletos. Distinto de autoloading playlists. |
+| **Inicio diferido** | Un opt-in por programa (`cc_show.allow_delayed_start`) que permite a un programa empezar más tarde que su slot del calendario cuando el programa precedente se sobrepasó, manteniendo su propio fin fijo. Una tarea en segundo plano lo aplica unos minutos antes del aire. |
 | **Song request (petición de canción)** | Un deseo de pista enviado por un oyente, recogido por un widget público y emitido automáticamente por un request show (un programa con autoloading playlist y un Smart Block *Use requests*). Persistido en `rastatime_song_request`. |
 | **Stream de salida** | Uno de hasta cuatro mountpoints Icecast a los que el playout transmite. Configurado bajo Configuración → Streams. |
 | **Source switcher** | El mecanismo interno que decide qué fuente de audio (scheduler, line-in, master DJ, show DJ) está actualmente al aire. |
