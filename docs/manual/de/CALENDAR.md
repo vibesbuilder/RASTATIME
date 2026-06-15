@@ -137,7 +137,7 @@ Standardwerten bleiben.
 |---|---|
 | **Vorlagen** | Das Formular aus einer gespeicherten [Sendungs-Vorlage](./SHOW_TEMPLATES.md) vorausfüllen oder das aktuelle Formular nach Abschluss als Vorlage speichern. Versteckt beim Bearbeiten einer einzelnen Instanz einer wiederkehrenden Sendung. |
 | **Was** | Name, URL, Genre, Beschreibung, Hosts, Hintergrund- / Textfarben, Sendungs-Bild. Das sichtbare Label im Kalender. |
-| **Wann** | Startdatum / Uhrzeit, Dauer, Enddatum, Wiederholungen. |
+| **Wann** | Startdatum / Uhrzeit, Dauer, Enddatum, Wiederholungen, **Allow delayed start** (diese Sendung später beginnen lassen, wenn die vorige überzogen hat — siehe [Verzögerter Sendungsstart](./DELAYED_START.md)). |
 | **Live-Stream-Eingabe** | Remote-Hosts erlauben, die Sendung via Show DJ zu übernehmen (Pro-Sendung-Benutzername + Passwort). |
 | **Aufnahme** | Ankreuzen, um den On-Air-Output der Sendung in eine Datei aufzuzeichnen. Siehe [Aufnahme pro Sendung](./RECORD_PER_SHOW.md). |
 | **Autoloading Playlist** | Eine Playlist anhängen, um jede Instanz automatisch zu füllen. Siehe [Autoloading Playlists](./AUTOLOADING_PLAYLISTS.md). |

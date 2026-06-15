@@ -132,6 +132,7 @@ sie alle voraussetzen.
 | [Dashboard](./DASHBOARD.md) | Now-Playing-Widget, Quellenstatus, manuelle Übersteuerung, Station live über ein Mikrofon nehmen. |
 | [Kalender](./CALENDAR.md) | Sendungen erstellen, bearbeiten, Drag-and-Drop, wiederkehrende Sendungen, Wiederholungen, Hosts. |
 | [Sendungs-Vorlagen](./SHOW_TEMPLATES.md) | Sendungseinstellungen wiederverwenden, ohne sie jede Woche neu einzugeben. |
+| [Verzögerter Sendungsstart](./DELAYED_START.md) | Eine freigeschaltete Sendung später beginnen lassen, wenn die Sendung davor überzogen hat, statt diese abzuschneiden. Die Verzögerung pflanzt sich über aufeinanderfolgende freigeschaltete Sendungen bis zum ersten zeitgebundenen Anker fort. |
 
 ### Inhalt und Bibliothek
 
@@ -234,6 +235,7 @@ Diese Runbooks sind aktuell nur auf Englisch verfügbar.
 | **Line-In** | Ein benannter Live-Audio-Eingang auf der Operator-Maschine (ein Mikrofon, ein Mixer, ein externer CD-Player). Persistiert in `rastatime_linein`. |
 | **Autoloading Playlist** | Eine Playlist, die an eine *Sendungsdefinition* angehängt ist, sodass jede Instanz der Sendung die Inhalte der Playlist automatisch in den Sendeplan aufnimmt. |
 | **Auto DJ** | Ein Hintergrundprozess, der Sendungen in Kalenderlücken erstellt und unvollständige Sendungen auffüllt. Unterscheidet sich von Autoloading Playlists. |
+| **Verzögerter Start** | Eine Opt-in-Einstellung pro Sendung (`cc_show.allow_delayed_start`), die eine Sendung später als ihren Kalender-Slot beginnen lässt, wenn die vorige Sendung überzogen hat, wobei ihr eigenes Ende fix bleibt. Ein Hintergrund-Task wendet sie wenige Minuten vor der Ausstrahlung an. |
 | **Song Request** | Ein vom Hörer gesendeter Track-Wunsch, gesammelt von einem öffentlichen Widget und automatisch von einer Request-Show ausgestrahlt (eine Autoloading-Playlist-Sendung mit einem *Use requests*-Smart-Block). Persistiert in `rastatime_song_request`. |
 | **Output-Stream** | Einer von bis zu vier Icecast-Mountpoints, an die das Playout sendet. Konfiguriert unter Einstellungen → Streams. |
 | **Source-Switcher** | Der interne Mechanismus, der entscheidet, welche Audio-Quelle (Scheduler, Line-In, Master DJ, Show DJ) gerade auf Sendung ist. |
