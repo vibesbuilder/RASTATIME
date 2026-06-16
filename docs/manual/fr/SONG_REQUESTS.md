@@ -37,7 +37,7 @@ rien d'autre.
    └─────────┘              │ cc_files.requested=t  │
                             └──────────┬────────────┘
                                        │  la request show se remplit
-                                       │  ~8 min avant le début
+                                       │  au fil de l'antenne
                             ┌──────────▼────────────┐   ┌──────────┐
                             │ bloc « Use requests »  │──▶│ Émission │
                             │  tire les pending,      │   │ planning │
@@ -52,7 +52,8 @@ Deux moitiés indépendantes se rejoignent au milieu :
    le titre marqué comme « voulu ».
 2. Une **request show** — toute émission dont l'Autoloading Playlist
    contient un Smart Block *Use requests* — se remplit à partir de ces
-   titres voulus quelques minutes avant la diffusion.
+   titres voulus **au fur et à mesure de sa diffusion**, de sorte
+   qu'une demande envoyée *pendant* l'émission peut encore y passer.
 
 Les deux moitiés ne sont liées que par le **pool** de demandes (§2) et
 le critère *Use requests* (§3). Vous configurez les deux une fois ;
@@ -171,25 +172,42 @@ show.
 
 ## 5. Comment et quand une request show se remplit
 
-Une request show est remplie **une fois, quelques minutes avant son
-début** — pas titre par titre pendant sa diffusion.
+Une request show se remplit **au fur et à mesure qu'elle est à
+l'antenne** — sa dramaturgie est résolue un peu en avance sur la tête
+de lecture, pas d'un seul coup avant le début de l'émission. C'est ce
+qui permet à une demande envoyée *pendant* l'émission d'y passer encore.
 
 - Une tâche d'arrière-plan (`RequestShowFillTask`, toutes les 2 min)
-  cherche les request shows commençant dans les **8 minutes**
-  suivantes (le *lead*).
-- Elle remplit l'émission en parcourant la playlist **position par
-  position**, résolvant un créneau à la fois. Après chaque créneau,
-  elle retire la demande tirée du pool, de sorte que le créneau *Use
-  requests* **suivant** tire un autre titre.
-- Le bloc « temps restant » final remplit le reste.
-- Une émission entièrement remplie est laissée intacte lors des
-  passages suivants.
+  démarre sur une request show lorsqu'elle entre dans une fenêtre de
+  **lead** (`RASTATIME_REQUEST_FILL_LEAD_SECONDS`, défaut 8 min avant
+  le début) et continue de la traiter pendant qu'elle est à l'antenne.
+- Elle parcourt la playlist **position par position**, mais ne résout
+  les positions qu'un court instant **en avance sur la tête de
+  lecture** (`RASTATIME_REQUEST_FILL_AHEAD_SECONDS`, défaut 5 min).
+  Après chaque créneau, elle retire la demande tirée du pool, de sorte
+  que le créneau *Use requests* **suivant** tire un autre titre.
+- Un curseur par émission mémorise jusqu'où la dramaturgie a été
+  résolue, de sorte que le passage suivant continue au lieu de remplir
+  à nouveau depuis le début. Un bloc *Use requests* situé plus loin
+  dans la dramaturgie n'est donc résolu que lorsque son créneau est sur
+  le point de passer — tirant les demandes arrivées **depuis que
+  l'émission est à l'antenne**.
+- Une fois la dramaturgie épuisée, le bloc « temps restant » final
+  remplit **entièrement** le reste de l'émission jusqu'à la fin.
 
-Ce remplissage en une passe est **sûr contre le silence** : l'émission
-est complète bien avant sa diffusion. Le compromis — choisi
-délibérément — est qu'une demande arrivant *après* le remplissage
-(moins de ~8 min avant le début, ou pendant que l'émission est déjà à
-l'antenne) atterrit dans la request show **suivante**, pas l'actuelle.
+Cela reste **sûr contre le silence** : l'émission est toujours remplie
+en avance sur la tête de lecture (la fenêtre d'avance dépasse
+confortablement le passage de 2 min), et la longue queue musicale est
+remplie entièrement dès que la dramaturgie est placée.
+
+> **Où atterrissent les demandes tardives.** Une demande passe dans
+> l'émission en cours **si un créneau *Use requests* est encore en
+> avance sur la tête de lecture** au moment où elle arrive. Répartissez
+> vos créneaux de demandes tout au long de la dramaturgie plutôt que de
+> les concentrer au début : une demande envoyée à la minute 20 a besoin
+> d'un créneau de demandes qui passe *après* la minute 20. Une demande
+> qui arrive après que le dernier créneau de demandes de l'émission a
+> déjà été résolu atterrit dans la request show suivante.
 
 > **Créneau de demande vide → titre aléatoire.** Si un créneau *Use
 > requests* n'a aucune demande en attente au moment du remplissage, il
@@ -200,14 +218,25 @@ l'antenne) atterrit dans la request show **suivante**, pas l'actuelle.
 > mesure que les demandes arrivent, elles remplacent les choix
 > aléatoires créneau par créneau.
 
+> **Fraîcheur vs. sécurité anti-silence.**
+> `RASTATIME_REQUEST_FILL_AHEAD_SECONDS` est le levier : plus petit, il
+> résout chaque créneau plus près de son heure de passage (demandes
+> plus fraîches) mais laisse une marge plus mince en avance sur la tête
+> de lecture ; plus grand, il résout les créneaux plus tôt (plus sûr).
+> Gardez-le au-dessus de l'intervalle de passage de 2 minutes.
+
 > **Comment ça marche en coulisses.** `AutoPlaylistManager::`
-> `fillRequestShows()` (lead `RASTATIME_REQUEST_FILL_LEAD_SECONDS`,
-> défaut 480) parcourt `cc_playlistcontents` dans l'ordre, ajoute
-> chaque fichier/bloc avec `addAutoloadItemToShow()` et exécute l'étape
-> de consommation entre les créneaux. Le constructeur d'autoplaylist
-> normal (§ Autoloading Playlists) ignore délibérément les request
-> shows pour que les deux n'entrent jamais en conflit. Voir
-> ARCHITECTURE §23.23.
+> `fillRequestShows()` traite les instances déjà à l'antenne (pas
+> encore terminées) tout comme les imminentes.
+> `_fillRequestShowByPositions()` résout `cc_playlistcontents` à partir
+> du curseur persisté `cc_show_instances.autoplaylist_cursor` jusqu'à
+> `now +` `RASTATIME_REQUEST_FILL_AHEAD_SECONDS` (défaut 300), ajoute
+> chaque fichier/bloc avec `addAutoloadItemToShow()` et consomme au fil
+> du planning entre les créneaux, puis enregistre le curseur pour que le
+> passage suivant continue. Le playout backend (pypo) reprend l'ajout en
+> cours d'émission à son heure de début, donc aucune modification du
+> playout n'est nécessaire. Le constructeur d'autoplaylist normal ignore
+> délibérément les request shows. Voir ARCHITECTURE §23.23.
 
 ---
 
@@ -311,7 +340,9 @@ Pour mettre en place les Song Requests à partir de zéro :
    **Allow 3rd party API** pour les pochettes.
 
 C'est toute la configuration. Dès lors, les auditeurs demandent et
-l'émission se remplit ~8 min avant chaque diffusion.
+l'émission se remplit au fur et à mesure de sa diffusion — récupérant
+les demandes qui arrivent pendant qu'elle est à l'antenne, tant qu'un
+créneau de demandes est encore en avance sur la tête de lecture.
 
 ---
 
@@ -327,13 +358,14 @@ attendez un cycle de synchro.
 
 ### « Ma request show est passée mais n'a joué aucun titre demandé. »
 
-Très probablement, il n'y avait aucune demande *ouverte* au moment du
-remplissage (plus de ~8 min avant le début), donc chaque créneau *Use
-requests* est retombé sur un titre aléatoire du catalogue (§5).
-Envoyez quelques demandes et observez la request show *suivante*.
-Vérifiez aussi que le bloc de demandes de la playlist a **Use
-requests** coché et que ses critères correspondent au genre des titres
-demandés.
+Très probablement, il n'y avait aucune demande *ouverte* au moment où
+chaque créneau *Use requests* a été résolu (quelques minutes avant que
+ce créneau ne passe), donc il est retombé sur un titre aléatoire du
+catalogue (§5). Envoyez une demande tant qu'un créneau de demandes est
+encore en avance sur la tête de lecture et elle sera tirée ; sinon,
+elle passe dans la request show suivante. Vérifiez aussi que le bloc de
+demandes de la playlist a **Use requests** coché et que ses critères
+correspondent au genre des titres demandés.
 
 ### « Plusieurs créneaux de demandes ont joué le même titre. »
 
@@ -353,10 +385,14 @@ diffusés » pour qu'il puisse remplir tout le reste.
 
 ### « Des demandes arrivent après le début de l'émission — passent-elles ? »
 
-Pas dans cette émission. Le remplissage est unique, ~8 min avant le
-début (décision de l'opérateur : sécurité anti-silence plutôt
-qu'insertion en cours d'émission). Les demandes tardives passent dans
-la request show suivante.
+Oui — si un créneau *Use requests* est encore en avance sur la tête de
+lecture au moment où la demande arrive. L'émission se remplit **au fur
+et à mesure** (§5), de sorte qu'un créneau résolu plus loin dans la
+dramaturgie tire les demandes arrivées pendant que l'émission était à
+l'antenne. Une demande qui arrive après que le dernier créneau de
+demandes de l'émission a déjà été résolu passe dans la request show
+suivante — répartissez donc les créneaux de demandes tout au long de la
+dramaturgie pour donner aux demandes tardives un créneau où atterrir.
 
 ### « Puis-je modérer les demandes avant diffusion ? »
 

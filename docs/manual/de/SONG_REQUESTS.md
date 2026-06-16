@@ -36,7 +36,7 @@ requests*-Block enthält — sonst nichts.
    └─────────┘              │ cc_files.requested=t  │
                             └──────────┬────────────┘
                                        │  Request-Show füllt sich
-                                       │  ~8 Min vor Start
+                                       │  inkrementell, on air
                             ┌──────────▼────────────┐   ┌──────────┐
                             │ „Use requests"-Block   │──▶│  Show    │
                             │  zieht pending Requests │   │ Schedule │
@@ -51,7 +51,8 @@ Zwei unabhängige Hälften treffen sich in der Mitte:
    der Track als „gewünscht" markiert.
 2. **Eine Request-Show** — jede Sendung, deren Autoloading Playlist
    einen *Use requests*-Smart-Block enthält — füllt sich aus diesen
-   gewünschten Tracks ein paar Minuten vor der Ausstrahlung.
+   gewünschten Tracks inkrementell, während sie läuft, sodass ein
+   während der Show abgesendeter Wunsch noch in ihr laufen kann.
 
 Die beiden Hälften sind nur über den Request-**Pool** (§2) und das
 *Use requests*-Kriterium (§3) verbunden. Sie konfigurieren beides
@@ -171,25 +172,39 @@ Playlist hinzufügen?**) — und diese Sendung ist nun eine Request-Show.
 
 ## 5. Wie und wann sich eine Request-Show füllt
 
-Eine Request-Show wird **einmal, ein paar Minuten vor dem Start**
-gefüllt — nicht Track für Track, während sie läuft.
+Eine Request-Show füllt sich **inkrementell, während sie läuft** — ihre
+Dramaturgie wird Stück für Stück vor dem Play-Head aufgelöst, nicht alles
+auf einmal vor dem Start. Genau das lässt einen *während* der Show
+abgesendeten Wunsch noch in ihr laufen.
 
-- Eine Hintergrundaufgabe (`RequestShowFillTask`, alle 2 Min) sucht
-  Request-Shows, die innerhalb der nächsten **8 Minuten** beginnen
-  (der *Vorlauf*).
-- Sie füllt die Show, indem sie die Playlist **Position für Position**
-  durchläuft und einen Slot nach dem anderen auflöst. Nach jedem Slot
-  nimmt sie den gezogenen Request aus dem Pool, damit der **nächste**
-  *Use requests*-Slot einen anderen Track zieht.
-- Der abschließende „verbleibende Zeit"-Block füllt den Rest.
-- Eine vollständig gefüllte Show bleibt bei späteren Durchläufen
-  unangetastet.
+- Eine Hintergrundaufgabe (`RequestShowFillTask`, alle 2 Min) nimmt sich
+  eine Request-Show vor, sobald sie in ein **Vorlauf**-Fenster eintritt
+  (`RASTATIME_REQUEST_FILL_LEAD_SECONDS`, Standard 8 Min vor Start), und
+  bearbeitet sie weiter, solange sie läuft.
+- Sie durchläuft die Playlist **Position für Position**, löst aber nur
+  Positionen bis kurz **vor den Play-Head** auf
+  (`RASTATIME_REQUEST_FILL_AHEAD_SECONDS`, Standard 5 Min). Nach jedem
+  Slot nimmt sie den gezogenen Request aus dem Pool, damit der
+  **nächste** *Use requests*-Slot einen anderen Track zieht.
+- Ein Cursor pro Show merkt sich, wie weit die Dramaturgie aufgelöst ist,
+  sodass der nächste Durchlauf fortsetzt statt von vorne zu füllen. Ein
+  *Use requests*-Block weiter hinten in der Dramaturgie wird damit erst
+  aufgelöst, wenn sein Slot gleich dran ist — und zieht die Wünsche, die
+  **seit Sendebeginn** eingingen.
+- Sobald die Dramaturgie durch ist, füllt der abschließende
+  „verbleibende Zeit"-Block den Rest der Show **komplett** bis zum Ende.
 
-Diese Einmal-Befüllung ist **dead-air-sicher**: die Show ist lange
-vor der Ausstrahlung fertig. Der bewusst gewählte Kompromiss: ein
-Request, der *nach* der Befüllung eintrifft (weniger als ~8 Min vor
-Start oder während die Show schon läuft), landet in der **nächsten**
-Request-Show, nicht in der aktuellen.
+Das bleibt **dead-air-sicher**: die Show ist stets vor dem Play-Head
+gefüllt (das Vorlauf-Fenster übersteigt den 2-Min-Poll deutlich), und der
+lange Musik-Tail wird komplett gefüllt, sobald die Dramaturgie steht.
+
+> **Wo späte Requests landen.** Ein Request läuft in der laufenden Show,
+> **wenn beim Eintreffen noch ein *Use requests*-Slot vor dem Play-Head
+> liegt**. Verteilen Sie Ihre Request-Slots über die Dramaturgie, statt
+> sie vorne zu bündeln: ein in Minute 20 abgesendeter Wunsch braucht
+> einen Request-Slot, der *nach* Minute 20 läuft. Ein Request, der
+> eintrifft, nachdem der letzte Request-Slot der Show schon aufgelöst
+> wurde, landet in der nächsten Request-Show.
 
 > **Leerer Request-Slot → Zufalls-Track.** Wenn ein *Use
 > requests*-Slot zur Befüllzeit keinen offenen Request hat, lässt er
@@ -199,13 +214,23 @@ Request-Show, nicht in der aktuellen.
 > Requests trotzdem eine normale, formatgerechte Stunde; sobald
 > Requests eintreffen, ersetzen sie die Zufallswahl Slot für Slot.
 
+> **Frische vs. Dead-Air-Sicherheit.** `RASTATIME_REQUEST_FILL_AHEAD_SECONDS`
+> ist der Regler: kleiner löst jeden Slot näher an seiner Spielzeit auf
+> (frischere Requests), lässt aber einen dünneren Puffer vor dem
+> Play-Head; größer löst früher auf (sicherer). Über dem 2-Min-Poll
+> halten.
+
 > **Wie es unter der Haube funktioniert.** `AutoPlaylistManager::`
-> `fillRequestShows()` (Vorlauf `RASTATIME_REQUEST_FILL_LEAD_SECONDS`,
-> Standard 480) durchläuft `cc_playlistcontents` in Reihenfolge, hängt
-> jede Datei/jeden Block mit `addAutoloadItemToShow()` an und führt
-> zwischen den Slots den Consume-Schritt aus. Der normale
-> Autoplaylist-Builder (§ Autoloading Playlists) überspringt
-> Request-Shows bewusst, damit beide nie kollidieren. Siehe
+> `fillRequestShows()` bearbeitet sowohl bereits laufende (noch nicht
+> beendete) als auch unmittelbar bevorstehende Instanzen.
+> `_fillRequestShowByPositions()` löst `cc_playlistcontents` ab dem
+> persistierten `cc_show_instances.autoplaylist_cursor` bis
+> `now + RASTATIME_REQUEST_FILL_AHEAD_SECONDS` (Standard 300) auf, hängt
+> jede Datei/jeden Block mit `addAutoloadItemToShow()` an, führt zwischen
+> den Slots den Consume-Schritt aus und speichert den Cursor, damit der
+> nächste Durchlauf fortsetzt. Das Backend-Playout (pypo) nimmt den
+> Mid-Show-Insert zur Startzeit auf, daher kein Playout-Eingriff. Der
+> normale Autoplaylist-Builder überspringt Request-Shows bewusst. Siehe
 > ARCHITECTURE §23.23.
 
 ---
@@ -310,7 +335,9 @@ Um Song Requests von Grund auf einzurichten:
    **Allow 3rd party API** für Cover-Art aktivieren.
 
 Das ist die gesamte Einrichtung. Von da an wünschen Hörer, und die
-Show füllt sich ~8 Min vor jeder Ausstrahlung selbst.
+Show füllt sich inkrementell, während sie läuft — und nimmt Wünsche
+auf, die eintreffen, solange sie auf Sendung ist, sofern noch ein
+Request-Slot vor dem Play-Head liegt.
 
 ---
 
@@ -326,13 +353,14 @@ einen Sync-Zyklus.
 
 ### „Meine Request-Show lief, spielte aber keine gewünschten Tracks."
 
-Höchstwahrscheinlich gab es zur Befüllzeit (mehr als ~8 Min vor
-Start) keine *offenen* Requests, also fiel jeder *Use requests*-Slot
-auf einen zufälligen Katalog-Track zurück (§5). Senden Sie ein paar
-Requests und beobachten Sie die *nächste* Request-Show. Prüfen Sie
-außerdem, dass der Request-Block der Playlist **Use requests**
-angekreuzt hat und seine Kriterien zum Genre der gewünschten Tracks
-passen.
+Höchstwahrscheinlich gab es in dem Moment, in dem jeder *Use
+requests*-Slot aufgelöst wurde (ein paar Minuten bevor dieser Slot
+lief), keine *offenen* Requests, also fiel er auf einen zufälligen
+Katalog-Track zurück (§5). Senden Sie einen Request, solange noch ein
+Request-Slot vor dem Play-Head liegt, dann wird er gezogen; sonst läuft
+er in der nächsten Request-Show. Prüfen Sie außerdem, dass der
+Request-Block der Playlist **Use requests** angekreuzt hat und seine
+Kriterien zum Genre der gewünschten Tracks passen.
 
 ### „Mehrere Request-Slots spielten denselben Song."
 
@@ -352,9 +380,14 @@ Künstler ausschließen"-Fenster, damit er den ganzen Rest füllen kann.
 
 ### „Requests treffen ein, nachdem die Show schon begann — laufen sie?"
 
-Nicht in dieser Show. Die Befüllung ist einmalig, ~8 Min vor Start
-(Operator-Entscheidung: Dead-Air-Sicherheit vor Mid-Show-Einfügung).
-Späte Requests laufen in der nächsten Request-Show.
+Ja — wenn beim Eintreffen des Requests noch ein *Use requests*-Slot vor
+dem Play-Head liegt. Die Show füllt sich **inkrementell** (§5), sodass
+ein weiter hinten in der Dramaturgie aufgelöster Slot die Wünsche zieht,
+die eingingen, während die Show auf Sendung war. Ein Request, der
+eintrifft, nachdem der letzte Request-Slot der Show schon aufgelöst
+wurde, läuft in der nächsten Request-Show — verteilen Sie die
+Request-Slots also über die Dramaturgie, damit späte Wünsche einen Slot
+zum Landen haben.
 
 ### „Kann ich Requests vor der Ausstrahlung moderieren?"
 

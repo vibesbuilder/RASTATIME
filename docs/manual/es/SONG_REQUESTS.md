@@ -35,7 +35,7 @@ Autoloading Playlist contiene un bloque *Use requests*; nada más.
    └─────────┘              │ cc_files.requested=t  │
                             └──────────┬────────────┘
                                        │  el request show se llena
-                                       │  ~8 min antes del inicio
+                                       │  de forma incremental, al aire
                             ┌──────────▼────────────┐   ┌──────────┐
                             │ bloque «Use requests»  │──▶│ Programa │
                             │  extrae los pending,    │   │ horario  │
@@ -50,7 +50,8 @@ Dos mitades independientes se encuentran en el medio:
    pista se marca como «deseada».
 2. Un **request show** —cualquier programa cuya Autoloading Playlist
    contenga un Smart Block *Use requests*— se llena con esas pistas
-   deseadas unos minutos antes de salir al aire.
+   deseadas de forma incremental mientras está al aire, de modo que una
+   petición hecha durante el programa todavía puede sonar en él.
 
 Las dos mitades solo están unidas por el **pool** de peticiones (§2) y
 el criterio *Use requests* (§3). Usted configura ambos una vez;
@@ -168,25 +169,44 @@ programa es ahora un request show.
 
 ## 5. Cómo y cuándo se llena un request show
 
-Un request show se llena **una vez, unos minutos antes de empezar**,
-no pista a pista mientras suena.
+Un request show se llena **de forma incremental mientras está al
+aire**: su dramaturgia se resuelve un poco por delante de la cabeza de
+reproducción, no toda de golpe antes de que el programa empiece. Eso es
+lo que permite que una petición enviada *durante* el programa todavía
+suene en él.
 
-- Una tarea en segundo plano (`RequestShowFillTask`, cada 2 min) busca
-  request shows que empiezan en los próximos **8 minutos** (el
-  *lead*).
-- Llena el programa recorriendo la playlist **posición por posición**,
-  resolviendo un hueco cada vez. Tras cada hueco, saca la petición
-  extraída del pool, de modo que el **siguiente** hueco *Use requests*
-  extraiga otra pista.
-- El bloque «tiempo restante» final llena el resto.
-- Un programa completamente lleno se deja intacto en pasadas
-  posteriores.
+- Una tarea en segundo plano (`RequestShowFillTask`, cada 2 min)
+  empieza con un request show cuando este entra en una ventana de
+  **lead** (`RASTATIME_REQUEST_FILL_LEAD_SECONDS`, por defecto 8 min
+  antes del inicio) y lo sigue procesando mientras está al aire.
+- Recorre la playlist **posición por posición**, pero resuelve las
+  posiciones solo un poco **por delante de la cabeza de reproducción**
+  (`RASTATIME_REQUEST_FILL_AHEAD_SECONDS`, por defecto 5 min). Tras cada
+  hueco, saca la petición extraída del pool, de modo que el
+  **siguiente** hueco *Use requests* extraiga otra pista.
+- Un cursor por programa recuerda hasta dónde se ha resuelto la
+  dramaturgia, de manera que la siguiente pasada continúa en lugar de
+  volver a llenar desde el principio. Por eso, un bloque *Use requests*
+  situado más adelante en la dramaturgia se resuelve solo cuando su
+  hueco está a punto de sonar, extrayendo las peticiones que llegaron
+  **desde que el programa salió al aire**.
+- Una vez agotada la dramaturgia, el bloque «tiempo restante» final
+  llena el resto del programa **por completo** hasta el final.
 
-Este llenado de una pasada es **seguro frente al aire muerto**: el
-programa está completo mucho antes de salir al aire. El compromiso
-—elegido deliberadamente— es que una petición que llega *después* del
-llenado (menos de ~8 min antes del inicio, o mientras el programa ya
-está al aire) cae en el **siguiente** request show, no en el actual.
+Esto sigue siendo **seguro frente al aire muerto**: el programa siempre
+está lleno por delante de la cabeza de reproducción (la ventana de
+llenado anticipado supera con holgura la pasada de 2 min) y la larga
+cola musical se llena por completo en cuanto la dramaturgia queda
+colocada.
+
+> **Dónde caen las peticiones tardías.** Una petición suena en el
+> programa en curso **si todavía queda un hueco *Use requests* por
+> delante de la cabeza de reproducción** cuando llega. Reparta sus
+> huecos de petición a lo largo de la dramaturgia en vez de
+> concentrarlos al principio: una petición enviada en el minuto 20
+> necesita un hueco de petición que suene *después* del minuto 20. Una
+> petición que llega después de que el último hueco de petición del
+> programa ya se haya resuelto cae en el siguiente request show.
 
 > **Hueco de petición vacío → pista aleatoria.** Si un hueco *Use
 > requests* no tiene ninguna petición pendiente en el momento del
@@ -196,13 +216,26 @@ está al aire) cae en el **siguiente** request show, no en el actual.
 > una hora normal y acorde al formato; a medida que llegan peticiones,
 > reemplazan las elecciones aleatorias hueco por hueco.
 
+> **Frescura frente a seguridad ante el aire muerto.**
+> `RASTATIME_REQUEST_FILL_AHEAD_SECONDS` es la palanca: un valor menor
+> resuelve cada hueco más cerca de su hora de emisión (peticiones más
+> frescas) pero deja un margen más fino por delante de la cabeza de
+> reproducción; un valor mayor resuelve los huecos antes (más seguro).
+> Manténgalo por encima del intervalo de pasada de 2 minutos.
+
 > **Cómo funciona por dentro.** `AutoPlaylistManager::`
-> `fillRequestShows()` (lead `RASTATIME_REQUEST_FILL_LEAD_SECONDS`,
-> por defecto 480) recorre `cc_playlistcontents` en orden, añade cada
-> archivo/bloque con `addAutoloadItemToShow()` y ejecuta el paso de
-> consumo entre huecos. El constructor de autoplaylist normal
-> (§ Autoloading Playlists) omite deliberadamente los request shows
-> para que ambos nunca entren en conflicto. Véase ARCHITECTURE §23.23.
+> `fillRequestShows()` procesa tanto las instancias que ya están al
+> aire (aún no terminadas) como las inminentes.
+> `_fillRequestShowByPositions()` resuelve `cc_playlistcontents` desde
+> el `cc_show_instances.autoplaylist_cursor` persistido hasta `now +`
+> `RASTATIME_REQUEST_FILL_AHEAD_SECONDS` (por defecto 300), añadiendo
+> cada archivo/bloque con `addAutoloadItemToShow()` y consumiendo según
+> el horario entre huecos, y luego guarda el cursor para que la
+> siguiente pasada continúe. El playout del backend (pypo) recoge el
+> añadido a mitad de programa en su hora de inicio, así que no hace
+> falta ningún cambio en el playout. El constructor de autoplaylist
+> normal omite deliberadamente los request shows. Véase ARCHITECTURE
+> §23.23.
 
 ---
 
@@ -307,7 +340,10 @@ Para poner en marcha las Song Requests desde cero:
    3rd party API** para las carátulas.
 
 Eso es toda la configuración. A partir de ahí, los oyentes piden y el
-programa se llena solo ~8 min antes de cada emisión.
+programa se llena solo de forma incremental mientras está al aire,
+recogiendo las peticiones que llegan mientras está al aire, siempre que
+todavía quede un hueco de petición por delante de la cabeza de
+reproducción.
 
 ---
 
@@ -324,12 +360,13 @@ espere un ciclo de sincronización.
 ### «Mi request show salió al aire pero no sonó ninguna pista pedida.»
 
 Lo más probable es que no hubiera peticiones *abiertas* en el momento
-del llenado (más de ~8 min antes del inicio), así que cada hueco *Use
-requests* recurrió a una pista aleatoria del catálogo (§5). Envíe
-algunas peticiones y observe el *siguiente* request show. Confirme
-también que el bloque de peticiones de la playlist tiene **Use
-requests** marcado y que sus criterios coinciden con el género de las
-pistas pedidas.
+en que se resolvió cada hueco *Use requests* (unos minutos antes de que
+ese hueco sonara), así que recurrió a una pista aleatoria del catálogo
+(§5). Envíe una petición mientras todavía quede un hueco de petición
+por delante de la cabeza de reproducción y se extraerá; de lo
+contrario suena en el siguiente request show. Confirme también que el
+bloque de peticiones de la playlist tiene **Use requests** marcado y
+que sus criterios coinciden con el género de las pistas pedidas.
 
 ### «Varios huecos de petición sonaron con la misma canción.»
 
@@ -349,10 +386,14 @@ para que pueda llenar todo el resto.
 
 ### «Llegan peticiones después de empezar el programa, ¿suenan?»
 
-No en ese programa. El llenado es de una sola pasada, ~8 min antes del
-inicio (decisión del operador: seguridad frente al aire muerto por
-encima de la inserción a mitad de programa). Las peticiones tardías
-suenan en el siguiente request show.
+Sí, si todavía queda un hueco *Use requests* por delante de la cabeza
+de reproducción cuando llega la petición. El programa se llena de forma
+**incremental** (§5), de modo que un hueco resuelto más adelante en la
+dramaturgia extrae peticiones que llegaron mientras el programa estaba
+al aire. Una petición que llega después de que el último hueco de
+petición del programa ya se haya resuelto suena en el siguiente request
+show; por eso conviene repartir los huecos de petición a lo largo de la
+dramaturgia para dar a las peticiones tardías un hueco donde caer.
 
 ### «¿Puedo moderar las peticiones antes de emitirlas?»
 
