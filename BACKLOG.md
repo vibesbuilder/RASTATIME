@@ -39,6 +39,30 @@ verbunden, trotzdem keine Stats.
 funktionsfähig (DataTable rendert, Flot 0.8.3 vendored) — es fehlen nur
 die Daten.
 
+### 🟡 Migration: Backup→Restore-Durchlauf auf der alten Maschine validieren
+
+**Status:** Defer — Operator-Wunsch 2026-06-16: vor dem echten Umzug auf die
+neue Maschine den kompletten Backup→Restore-Weg **einmal auf der alten
+Maschine durchspielen**, um `docs/operator/BACKUP.md` (Full-Backup) +
+`docs/operator/MIGRATION.md` Phase A/C (Restore) als reproduzierbar zu
+beweisen, bevor man sich beim Cutover darauf verlässt.
+**Operator-Wert:** Hoch — Migration ist betriebskritisch; ein validierter
+Restore ist die Versicherung gegen einen fehlgeschlagenen Umzug.
+
+**Vorbedingung / Durchführung:** in **isolierte Ziele** restoren, damit die
+alte Maschine als Rollback-Quelle unangetastet bleibt:
+- DB-Dumps in **temporäre DB-Namen** (z.B. `rastatime_restore_test`) statt
+  der Live-DB restoren.
+- Medien-/Config-Restore in **temporäre Pfade** statt der Live-Pfade.
+- Verifizieren: Track-Count DB vs. Dateien, 3 Stichproben abspielbar (analog
+  MIGRATION.md §4.5), Config-Parsing; danach Test-Artefakte aufräumen.
+
+**Parameter für den echten Lauf (2026-06-16):** neue Maschine bekommt **neue
+IP/Hostname** (nicht „gleiche IP") → MIGRATION.md §6.3 + `public_url` +
+Icecast + Firewall + externe Stream-/Embed-URLs entsprechend anpassen.
+Station derzeit **nicht live** → Downtime unkritisch, kein Low-Traffic-Fenster
+nötig.
+
 ### 🟡 Backup/Restore via UI (Settings-Submenü)
 
 **Status:** Defer — A + B empfohlen & gut machbar (architektur-angepasst),
