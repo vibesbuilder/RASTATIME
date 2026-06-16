@@ -68,7 +68,13 @@ class AutoPlaylistManager
             // show — filled incrementally + just-in-time by
             // RequestShowFillTask, NOT pre-filled to 100% here.  Skip it
             // so listeners' just-in-time requests still have room to land.
-            if (self::playlistContainsRequestBlock($playlistid)) {
+            // RASTATIME 2026-06-16 — Traffic Alerts: likewise a show whose
+            // autoload playlist contains the configured traffic-alert block is
+            // filled incrementally (so alerts imported mid-show still land in
+            // it); skip the one-pass fill here too.
+            if (self::playlistContainsRequestBlock($playlistid)
+                || self::playlistContainsTrafficBlock($playlistid)
+            ) {
                 continue;
             }
 
@@ -407,6 +413,36 @@ class AutoPlaylistManager
     }
 
     /**
+     * RASTATIME 2026-06-16 — Traffic Alerts: does this autoload playlist place
+     * the Settings-configured traffic-alert smart block into a show's
+     * dramaturgy?  Such a show is filled incrementally (like a request show) so
+     * that traffic alerts imported while it is already on air are picked up at
+     * the next traffic slot.  Returns false when the feature is disabled
+     * (no traffic block configured, id 0).
+     */
+    public static function playlistContainsTrafficBlock($playlistId)
+    {
+        if (empty($playlistId)) {
+            return false;
+        }
+        $trafficBlockId = Application_Model_Preference::getTrafficAlertBlockId();
+        if ($trafficBlockId <= 0) {
+            return false;  // feature disabled — no traffic block selected
+        }
+        $row = Application_Common_Database::prepareAndExecute(
+            "SELECT 1
+                FROM cc_playlistcontents pc
+                WHERE pc.playlist_id = :pid
+                  AND pc.block_id = :bid
+                LIMIT 1",
+            [':pid' => (int) $playlistId, ':bid' => (int) $trafficBlockId],
+            'column'
+        );
+
+        return !empty($row);
+    }
+
+    /**
      * RASTATIME 2026-06-07 — Song Requests: request-show fill (Option
      * C-onepass).  For every request show (has_autoplaylist + an autoload
      * playlist that containsRequestBlock) that is currently running OR
@@ -443,8 +479,11 @@ class AutoPlaylistManager
         foreach ($instances as $instance) {
             $si = new Application_Model_ShowInstance($instance->getDbId());
             $playlistId = $si->GetAutoPlaylistId();
-            if (empty($playlistId) || !self::playlistContainsRequestBlock($playlistId)) {
-                continue;  // not a request show — leave it to buildAutoPlaylist
+            if (empty($playlistId)
+                || (!self::playlistContainsRequestBlock($playlistId)
+                    && !self::playlistContainsTrafficBlock($playlistId))
+            ) {
+                continue;  // neither a request nor a traffic show — leave it to buildAutoPlaylist
             }
             self::_fillRequestShowByPositions($si, $playlistId);
         }
@@ -476,20 +515,33 @@ class AutoPlaylistManager
      * is also what makes several "use requests" blocks draw DIFFERENT tracks.
      * An empty request slot falls back to a random catalogue track
      * (_appendPosition).  A fixed-file final slot is not repeated.
+     *
+     * RASTATIME 2026-06-16 — Traffic Alerts reuse the very same incremental
+     * walk: a position pointing at the Settings-configured traffic-alert block
+     * is resolved by _appendTrafficAlert (newest queued alert, exclude already
+     * scheduled, no random fallback) instead of the request path.  Because the
+     * dramaturgy is resolved only just ahead of the play head, an alert
+     * imported mid-show is picked up at the next traffic slot — no following
+     * item has to be pushed back, so there is no schedule-shift to undo.
      */
     private static function _fillRequestShowByPositions($si, $playlistId)
     {
+        // The Settings-configured traffic-alert block (0 = feature disabled);
+        // a position pointing at it is resolved as a traffic slot below.
+        $trafficBlockId = Application_Model_Preference::getTrafficAlertBlockId();
+
         $positions = Application_Common_Database::prepareAndExecute(
             "SELECT pc.type, pc.file_id, pc.block_id, pc.stream_id, pc.position,
                     (EXISTS (
                         SELECT 1 FROM cc_blockcriteria bc
                          WHERE bc.block_id = pc.block_id
                            AND bc.criteria = 'use_requests' AND bc.value = '1'
-                    ))::int AS is_request_block
+                    ))::int AS is_request_block,
+                    COALESCE((pc.block_id = :tbid)::int, 0) AS is_traffic_block
                FROM cc_playlistcontents pc
               WHERE pc.playlist_id = :pid
               ORDER BY pc.position",
-            [':pid' => (int) $playlistId],
+            [':pid' => (int) $playlistId, ':tbid' => (int) $trafficBlockId],
             Application_Common_Database::ALL
         );
         if (empty($positions)) {
@@ -538,7 +590,10 @@ class AutoPlaylistManager
         //     if it is a smart block (a fixed file would be spammed).  No
         //     freshness concern, so it is filled completely (dead-air-safe).
         $fill = end($positions);
-        $canTopUp = ((int) $fill['type'] === 2) && !empty($fill['block_id']);
+        // The trailing time-remaining block tops up to the show end — but never
+        // the traffic block (alerts are not a dead-air filler).
+        $canTopUp = ((int) $fill['type'] === 2) && !empty($fill['block_id'])
+            && (int) ($fill['is_traffic_block'] ?? 0) !== 1;
         if ($cursor >= $count && $canTopUp) {
             $guard = 0;
             while ($guard < 200) {
@@ -594,6 +649,15 @@ class AutoPlaylistManager
             $si->addAutoloadItemToShow('audioclip', (int) $pos['file_id'], false);
         } elseif ($type === 2 && !empty($pos['block_id'])) {
             $blockId = (int) $pos['block_id'];
+            if ((int) ($pos['is_traffic_block'] ?? 0) === 1) {
+                // Traffic-alert block: air the next queued alert (FIFO, and
+                // never one already scheduled in this show).  Deliberately NO
+                // random fallback — an empty traffic slot airs nothing and the
+                // following dramaturgy item simply plays.
+                self::_appendTrafficAlert($si, $blockId);
+
+                return;
+            }
             $before = $si->getTimeScheduledSecs();
             $si->addAutoloadItemToShow('block', $blockId, false);
             // If a "use requests" block drew nothing — no open request right
@@ -652,6 +716,85 @@ class AutoPlaylistManager
             return;
         }
         $si->addAutoloadItemToShow('audioclip', $ids[array_rand($ids)], false);
+    }
+
+    /**
+     * RASTATIME 2026-06-16 — Traffic Alerts: resolve the configured traffic-
+     * alert smart block at one dramaturgy position.  Traffic alerts are short
+     * MP3s imported at very short notice that must air within ~10 minutes; the
+     * operator designates ONE smart block as their source in Settings and
+     * places it into a show's dramaturgy wherever an alert may interrupt.
+     *
+     * Because the show is filled INCREMENTALLY (only a little ahead of the play
+     * head), a traffic position is resolved just before its slot airs — so it
+     * picks up alerts imported WHILE the show is already on air, the whole
+     * point of the feature, and no following item ever has to be pushed back.
+     *
+     * Selection: from the block's current pool, air the queued alert that is
+     * (a) not already scheduled anywhere in this instance — so the same alert
+     * never airs twice across several traffic positions — and (b) imported
+     * earliest (FIFO: the alert closest to its 10-min deadline goes first).
+     * If every queued alert is already scheduled (or the block is empty) the
+     * slot stays empty — unlike a request slot there is NO random fallback.
+     */
+    private static function _appendTrafficAlert($si, $blockId)
+    {
+        try {
+            $block = new Application_Model_Block($blockId);
+            $info = $block->getListofFilesMeetCriteria(null, false);
+        } catch (Exception $e) {
+            Logging::warn(
+                'TrafficAlertFill: could not load traffic block '
+                . $blockId . ': ' . $e->getMessage()
+            );
+
+            return;
+        }
+
+        $files = $info['files'] ?? null;
+        if ($files === null || $files->isEmpty()) {
+            return;  // no traffic alert queued in the block — leave the slot empty
+        }
+
+        // Candidate alert ids from the block's pool (capped defensively).
+        $ids = [];
+        $iterator = $files->getIterator();
+        while ($iterator->valid() && count($ids) < 1000) {
+            $ids[] = (int) $iterator->current()->getDbId();
+            $iterator->next();
+        }
+        if (empty($ids)) {
+            return;
+        }
+
+        // Pick the earliest-imported alert NOT already scheduled in this show.
+        // One SQL does the exclude (cc_schedule of this instance) + the FIFO
+        // ordering (cc_files.utime = library import time).
+        $inClause = [];
+        $params = [];
+        foreach ($ids as $i => $fid) {
+            $key = ':a' . $i;
+            $inClause[] = $key;
+            $params[$key] = (int) $fid;
+        }
+        $params[':inst'] = (int) $si->getShowInstanceId();
+        $fileId = Application_Common_Database::prepareAndExecute(
+            'SELECT f.id FROM cc_files f
+              WHERE f.id IN (' . implode(',', $inClause) . ')
+                AND f.id NOT IN (
+                    SELECT s.file_id FROM cc_schedule s
+                     WHERE s.instance_id = :inst AND s.file_id IS NOT NULL
+                )
+              ORDER BY f.utime ASC, f.id ASC
+              LIMIT 1',
+            $params,
+            Application_Common_Database::COLUMN
+        );
+        if (empty($fileId)) {
+            return;  // every queued alert is already scheduled in this show
+        }
+
+        $si->addAutoloadItemToShow('audioclip', (int) $fileId, false);
     }
 
     /**
