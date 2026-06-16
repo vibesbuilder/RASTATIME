@@ -858,21 +858,68 @@ Sowohl Menü-Ebene als auch Einzelfeld-Ebene gewünscht.
 
 ## 💡 Future Feature Ideas (nicht evaluiert, nur notiert)
 
-### Mid-Show Song Requests (echtes Just-in-time)
+### 🟢 Mid-Show Song Requests (echtes Just-in-time) — GO 2026-06-16
 
-Aktuell füllt sich eine Request-Show **einmal** ~8 Min vor Start
-(Option C-onepass, Dead-Air-sicher).  Ein Request, der *nach* der
-Befüllung eintrifft (oder während die Show schon läuft), landet erst
-in der nächsten Request-Show.  Bewusste Operator-Entscheidung
-2026-06-09 (C-onepass statt echtes Variante-Z).
+**Status:** 🟢 Go (Operator 2026-06-16).  Variante **(a) inkrementell entlang
+der Dramaturgie** gewählt.
+**Evaluiert:** 2026-06-16.
+**Operator-Wert:** Hoch — der Hörer hört seinen Wunsch in DERSELBEN Show
+statt erst in der nächsten.
 
-Future-Ausbau: die **laufende** Show nachfüllen, wenn ein Request
-mitten in der Show eintrifft.  Bräuchte einen **Positions-Cursor pro
-Show-Instanz** (wie weit ist die Dramaturgie aufgelöst?) + getaktetes
-Nachladen statt One-Pass.  Trade-off: erhöht das Dead-Air-Risiko
-(Show füllt sich erst nach und nach), das C-onepass bewusst vermeidet.
-Siehe ARCHITECTURE §23.23 (Trade-off-Absatz) und das Song-Requests-
-Manual-Kapitel §5.
+Aktuell füllt sich eine Request-Show **einmal** ~8 Min vor Start (Option
+C-onepass, Dead-Air-sicher).  Ein Request *nach* der Befüllung landet erst
+in der nächsten Show.
+
+**Gewähltes Design (Variante a):** den Ein-Pass-Fill (`AutoPlaylistManager::
+_fillRequestShowByPositions`) auf **inkrementelles Cursor-Fill** umstellen —
+pro Poll nur die nächste(n) Dramaturgie-Position(en) bis `now + kleiner
+Vorlauf` auflösen, mit den dann **frischen** Requests.  Braucht einen
+**persistenten Positions-Cursor pro Instanz** (kleine additive Spalte
+`cc_show_instances.autoplaylist_cursor`, Migration 0057 — sonst füllt der
+nächste Poll die Dramaturgie doppelt).  Reuse `addAutoloadItemToShow` +
+`_consumeScheduledRequests`.  **Kein Playout-Eingriff** — pypo nimmt
+Mid-Show-`cc_schedule`-Änderungen auf (deque-replace bei `PushSchedule`,
+Push zur Startzeit); `fillRequestShows` erfasst bereits laufende Instanzen.
+
+**Aufwand:** ~150–300 Z. PHP + Migration 0057 + Doku-Umschrift (SONG_REQUESTS
+§5/FAQ "late requests" dreht sich um, 4 Sprachen).  ~1–2 Tage.
+**Risiko Live-Betrieb:** Niedrig (Frontend, kein Playout-Eingriff).
+
+### 🟢 Traffic Alerts (kurzfristige MP3, max. 10 min bis Ausstrahlung) — GO 2026-06-16
+
+**Status:** 🟢 Go (Operator 2026-06-16).  **Weg A (Schedule-Insert) +
+Deadline-Skip** gewählt; Quelle = **Smart Block in Settings**.
+**Evaluiert:** 2026-06-16.
+**Operator-Wert:** Hoch — hartes Betriebs-Requirement mit klarer 10-min-SLA.
+
+Kurzfristig eintreffende Traffic-MP3s müssen binnen max. 10 min laufen.
+
+**Gewähltes Design (Weg A):** ein in Settings definierter **Traffic-Alert-
+Smart-Block** (Dropdown wie Song-Request-Pool); ein Detect-Task erkennt neue
+MP3s darin und fügt sie in `cc_schedule` **direkt nach dem aktuellen Track**
+ein (Folge-Items Show-Shift-artig nach hinten via `updateScheduleStartTime`),
+pypo spielt sie über die normale `scheduled`-Queue.  Kein Liquidsoap-Template-
+Eingriff.  Erscheint in History/Kalender.  **Deadline-Skip:** würde ein
+laufender Langtrack die 10-min-SLA reißen, `source.skip` über die bestehende
+Liquidsoap-Telnet-Verbindung.
+
+**Verworfen:** Weg B (Liquidsoap interrupting queue, AzuraCast-Stil) — Playout-
+Eingriff + Drift mit pypos zeitbasiertem Modell + nicht in History.  Nur falls
+"immer sofort, mitten im Track abbrechen" zwingend würde.
+
+**Wie andere das machen:** AzuraCast = interrupting `request.queue` +
+Fallback-Priorität (`track_sensitive`); klassische Automation (Zetta/Rivendell/
+mAirList/RadioDJ) = Cart-Wall/Insert-Next oder feste Uhrzeit-Slots + Netz-Trigger.
+
+**Aufwand:** ~250–450 Z. (Detect-Task + Settings-UI + Insert-Logik + Skip) +
+1 cc_pref (Block-ID).  Reuse Show-Shift + bestehende Telnet-Steuerung.  ~2–3 Tage.
+**Risiko Live-Betrieb:** Niedrig (Weg A, kein `.liq`-Umbau).
+
+**Gemeinsame Basis (Operator-Wunsch 4):** Beide schreiben mid-show in
+`cc_schedule` und verlassen sich auf pypo-Pickup.  Die „Insert"-Bausteine
+existieren bereits (`addAutoloadItemToShow` aus Song-Requests +
+`updateScheduleStartTime` aus Show-Shift) — Feature 1 baut darauf, Feature 2
+ergänzt nur Insert-after-current + Shift + Deadline-Skip.
 
 ### 7-Tage-Catchup Frontend
 
