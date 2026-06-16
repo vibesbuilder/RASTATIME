@@ -35,7 +35,7 @@ autoload playlist contains a *Use requests* block — nothing else.
    └─────────┘              │ cc_files.requested=t  │
                             └──────────┬────────────┘
                                        │  request show fills
-                                       │  ~8 min before start
+                                       │  incrementally, on air
                             ┌──────────▼────────────┐   ┌──────────┐
                             │ "Use requests" block   │──▶│  Show    │
                             │  draws pending requests │   │ schedule │
@@ -50,7 +50,8 @@ Two independent halves meet in the middle:
    track is flagged as "wanted".
 2. **A request show** — any show whose autoload playlist contains a
    *Use requests* smart block — fills itself from those wanted tracks
-   a few minutes before it airs.
+   incrementally as it airs, so a request made during the show can
+   still play in it.
 
 The two halves are linked only by the request **pool** (§2) and the
 *Use requests* criterion (§3). You configure them once; after that
@@ -164,23 +165,40 @@ show is now a request show.
 
 ## 5. How and when a request show fills
 
-A request show is filled **once, a few minutes before it starts** —
-not track-by-track as it airs.
+A request show fills itself **incrementally while it is on air** — its
+dramaturgy is resolved a little ahead of the play head, not all at once
+before the show starts. That is what lets a request submitted *during*
+the show still air in it.
 
-- A background task (`RequestShowFillTask`, every 2 min) looks for
-  request shows starting within the next **8 minutes** (the *lead*).
-- It fills the show by walking the playlist **position by position**,
-  resolving one slot at a time. After each slot it takes the drawn
-  request out of the pool, so the **next** *Use requests* slot draws
-  a different track.
-- The trailing time-remaining block fills the remainder.
-- A fully-filled show is left alone on later polls.
+- A background task (`RequestShowFillTask`, every 2 min) starts on a
+  request show when it enters a **lead** window
+  (`RASTATIME_REQUEST_FILL_LEAD_SECONDS`, default 8 min before start)
+  and keeps processing it while it is on air.
+- It walks the playlist **position by position**, but resolves
+  positions only a short way **ahead of the play head**
+  (`RASTATIME_REQUEST_FILL_AHEAD_SECONDS`, default 5 min). After each
+  slot it takes the drawn request out of the pool, so the **next**
+  *Use requests* slot draws a different track.
+- A per-show cursor remembers how far the dramaturgy has been resolved,
+  so the next poll continues instead of re-filling from the start. A
+  *Use requests* block later in the dramaturgy is therefore resolved
+  only when its slot is about to play — drawing the requests that
+  arrived **since the show went on air**.
+- Once the dramaturgy is exhausted, the trailing time-remaining block
+  fills the rest of the show **completely** to the end.
 
-This one-pass fill is **dead-air-safe**: the show is complete well
-before it airs. The trade-off — chosen deliberately — is that a
-request arriving *after* the fill (less than ~8 min before start, or
-while the show is already on air) lands in the **next** request show,
-not the current one.
+This stays **dead-air-safe**: the show is always filled ahead of the
+play head (the fill-ahead window comfortably exceeds the 2-min poll),
+and the long music tail is filled completely as soon as the dramaturgy
+is placed.
+
+> **Where late requests land.** A request airs in the running show **if
+> a *Use requests* slot is still ahead of the play head** when it
+> arrives. Spread your request slots through the dramaturgy rather than
+> front-loading them: a request submitted at minute 20 needs a request
+> slot that plays *after* minute 20. A request that arrives after the
+> last request slot of a show has already been resolved lands in the
+> next request show.
 
 > **Empty request slot → random track.** If a *Use requests* slot
 > has no pending request at fill time, it does **not** leave a hole.
@@ -189,13 +207,23 @@ not the current one.
 > zero requests still plays a normal, on-format hour; as requests
 > come in, they replace the random picks slot by slot.
 
+> **Freshness vs. dead-air safety.** `RASTATIME_REQUEST_FILL_AHEAD_SECONDS`
+> is the lever: smaller resolves each slot closer to its play time
+> (fresher requests) but leaves a thinner buffer ahead of the play head;
+> larger resolves slots earlier (safer). Keep it above the 2-minute poll
+> interval.
+
 > **How it works under the hood.** `AutoPlaylistManager::`
-> `fillRequestShows()` (lead `RASTATIME_REQUEST_FILL_LEAD_SECONDS`,
-> default 480) walks `cc_playlistcontents` in order, appending each
-> file/block with `addAutoloadItemToShow()` and running the
-> consume-on-schedule step between slots. The normal autoplaylist
-> builder (§ Autoloading Playlists) deliberately **skips** request
-> shows so the two never fight. See ARCHITECTURE §23.23.
+> `fillRequestShows()` processes instances already on air (not yet
+> ended) as well as imminent ones. `_fillRequestShowByPositions()`
+> resolves `cc_playlistcontents` from the persisted
+> `cc_show_instances.autoplaylist_cursor` up to `now +`
+> `RASTATIME_REQUEST_FILL_AHEAD_SECONDS` (default 300), appending each
+> file/block with `addAutoloadItemToShow()` and consuming on schedule
+> between slots, then saves the cursor so the next poll continues. The
+> backend playout (pypo) picks the mid-show append up at its start time,
+> so no playout change is needed. The normal autoplaylist builder
+> deliberately **skips** request shows. See ARCHITECTURE §23.23.
 
 ---
 
@@ -296,7 +324,9 @@ To stand up song requests from scratch:
    **Allow 3rd party API** for cover art.
 
 That is the whole setup. From then on, listeners request, and the
-show fills itself ~8 min before each airing.
+show fills itself incrementally as it airs — picking up requests that
+arrive while it is on the air, as long as a request slot is still
+ahead of the play head.
 
 ---
 
@@ -311,12 +341,13 @@ Library shows tracks; wait one sync cycle.
 
 ### "My request show aired but played no requested tracks."
 
-Most likely there were no *open* requests when it filled (more than
-~8 min before start), so each *Use requests* slot fell back to a
-random catalogue track (§5). Submit a few requests and watch the
-*next* request show. Also confirm the playlist's request block has
-**Use requests** ticked and its criteria match the requested tracks'
-genre.
+Most likely there were no *open* requests at the moment each *Use
+requests* slot was resolved (a few minutes before that slot played),
+so it fell back to a random catalogue track (§5). Submit a request
+while a request slot is still ahead of the play head and it will be
+drawn; otherwise it airs in the next request show. Also confirm the
+playlist's request block has **Use requests** ticked and its criteria
+match the requested tracks' genre.
 
 ### "Several request slots played the same song."
 
@@ -335,9 +366,13 @@ remainder.
 
 ### "Requests appear after the show already started — do they air?"
 
-Not in that show. The fill is one-pass, ~8 min before start
-(operator decision: dead-air safety over mid-show insertion). Late
-requests air in the next request show.
+Yes — if a *Use requests* slot is still ahead of the play head when
+the request arrives. The show fills **incrementally** (§5), so a slot
+resolved later in the dramaturgy draws requests that came in while the
+show was on air. A request that arrives after the show's last request
+slot has already been resolved airs in the next request show — so
+spread the request slots through the dramaturgy to give late requests
+a slot to land in.
 
 ### "Can I moderate requests before they air?"
 

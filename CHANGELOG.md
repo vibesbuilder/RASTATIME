@@ -212,6 +212,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Song Requests: echte Mid-Show-Befüllung (2026-06-16, Mid-Show R1,
+  `a820bdf`)** — Eine Request-Show löst ihre Dramaturgie nicht mehr in einem
+  Pass ~8 min vor Start auf, sondern **inkrementell während der Sendung**: pro
+  2-Min-Poll nur die nächste(n) Position(en) bis
+  `now + RASTATIME_REQUEST_FILL_AHEAD_SECONDS` (Default 300 s) vor dem Play-Head.
+  Ein „use requests"-Block weiter hinten in der Dramaturgie wird damit erst
+  aufgelöst, wenn er gleich dran ist, und zieht die Wünsche, die **während** der
+  laufenden Show eingingen (statt sie in die nächste Show zu verschieben).  Ein
+  persistenter Positions-Cursor (`cc_show_instances.autoplaylist_cursor`,
+  Legacy-Migration 0057, raw-SQL) merkt sich den Fortschritt über die Polls;
+  sobald die Dramaturgie durch ist, füllt der time-remaining-Block den Rest
+  **komplett** bis zum Show-Ende (Dead-Air-Fenster auf die kurze Dramaturgie
+  begrenzt).  **Kein Playout-Eingriff** — pypos `PypoLiqQueue` ersetzt bei
+  jedem `PushSchedule` die Zukunfts-Deque und pusht Items zur Startzeit, nimmt
+  einen Mid-Show-Insert also auf.  Regler
+  `RASTATIME_REQUEST_FILL_AHEAD_SECONDS` (kleiner = frischere Requests, größer =
+  mehr Dead-Air-Sicherheit; > 2-Min-Poll halten).  Live-verifiziert (ein um
+  15:01 — nach der Vorab-Befüllung — gewünschter Track lief in derselben Show).
+  Doku: SONG_REQUESTS §5/FAQ (EN/DE/FR/ES), ARCHITECTURE §23.23.
+
 - **jQuery 3.7 + DataTables 1.13 als Default aktiviert (JS-Modernisierung
   Stufe 5a, 2026-06-05, `87c1d35`)** — nach bestandener app-weiter Verifikation
   (Stufe 4) wurde der `?jq3`-Default von **jQuery 1.8 + UI 1.8 + DataTables 1.9**

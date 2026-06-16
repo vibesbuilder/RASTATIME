@@ -1,10 +1,24 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.16
-Date: 2026-06-15
+Draft version: 0.17
+Date: 2026-06-16
 
 > **Revision history**
+> - **0.17 (2026-06-16)** — Mid-Show Song Requests / incremental fill
+>   (Section 23.23 update).  A request show now resolves its dramaturgy
+>   INCREMENTALLY across the 2-min polls, only up to
+>   `RASTATIME_REQUEST_FILL_AHEAD_SECONDS` (default 300 s) ahead of the
+>   play head, instead of one-pass at T-lead.  A "use requests" block
+>   later in the dramaturgy is resolved only when its slot is about to
+>   play, so it draws requests submitted WHILE the show is on air — they
+>   air in the same show.  A persistent per-instance position cursor
+>   `cc_show_instances.autoplaylist_cursor` (legacy migration 0057, raw
+>   SQL) carries fill progress across polls; once the dramaturgy is done
+>   the trailing time-remaining block is filled completely, bounding the
+>   dead-air window to the short dramaturgy.  No playout change (pypo
+>   picks the mid-show append up at start-time).  Minor-bump for the new
+>   per-show fill behaviour + the additive schema column.
 > - **0.16 (2026-06-15)** — Delayed Show Start (Section 23.24).  An
 >   opt-in `cc_show.allow_delayed_start` boolean (legacy migration
 >   0056, no Propel accessor — raw-SQL read/write like the
@@ -3818,12 +3832,28 @@ are independent of the PDO session timezone (`cc_schedule.ends`
 is `timestamp WITHOUT tz` holding UTC; `created_at` is
 `timestamp WITH tz`).
 
-**Trade-off.**  One-pass fill at T-lead is dead-air-safe but
-means a request arriving after the fill (≲ 8 min before start,
-or mid-show) lands in the next request show, not the current
-one.  This was the operator's explicit preference over
-mid-show insertion (which would have required a position cursor
-per instance and reintroduced the dead-air risk).
+**Trade-off, and its 2026-06-16 resolution (Mid-Show R1).**  The
+original one-pass fill at T-lead was dead-air-safe but meant a request
+arriving after the fill (≲ 8 min before start, or mid-show) landed in
+the next request show.  Mid-Show R1 lifted this:
+`_fillRequestShowByPositions` now resolves the dramaturgy INCREMENTALLY
+across the 2-min polls, only up to
+`now + RASTATIME_REQUEST_FILL_AHEAD_SECONDS` (default 300 s) ahead of
+the play head, persisting the next position in
+`cc_show_instances.autoplaylist_cursor` (legacy migration 0057, raw
+SQL).  A "use requests" block later in the dramaturgy is thus resolved
+only when its slot is about to play, drawing requests submitted while
+the show is on air; once the dramaturgy is exhausted the trailing
+time-remaining block is filled COMPLETELY to the show end, bounding the
+dead-air window to the short dramaturgy (the fill-ahead exceeds the
+poll interval).  No playout change — `PypoLiqQueue` replaces its future
+deque on each `PushSchedule` and pushes at start-time, so it picks the
+mid-show append up.  `RASTATIME_REQUEST_FILL_AHEAD_SECONDS` is the
+freshness/dead-air lever.  A request arriving after a show's LAST
+request slot has resolved still falls to the next request show, so
+dramaturgies should spread request slots through the show rather than
+front-load them.  Verified live (a request made at T+~3 min, after the
+pre-start fill, aired in the same show via the mid-show-resolved slot).
 
 ### 23.24 Delayed Show Start ("Allow delayed start")
 
