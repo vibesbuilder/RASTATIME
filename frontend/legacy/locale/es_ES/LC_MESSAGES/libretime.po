@@ -4947,3 +4947,12 @@ msgstr "Retransmisiones por Internet"
 
 msgid "Allow delayed start?"
 msgstr "¿Permitir inicio diferido?"
+
+msgid "Traffic-Alert Smart Block"
+msgstr "Bloque inteligente de alertas de tráfico"
+
+msgid "(none — disabled)"
+msgstr "(ninguno — desactivado)"
+
+msgid "New tracks added to this smart block air in the running show at its next traffic slot, within ~10 minutes. Add this block at several points in a show so alerts interrupt promptly."
+msgstr "Las pistas nuevas añadidas a este bloque inteligente se emiten en el programa en curso en su siguiente franja de tráfico, en ~10 minutos. Añada este bloque en varios puntos de un programa para que las alertas se intercalen con prontitud."

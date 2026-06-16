@@ -5115,3 +5115,12 @@ msgstr "Flux web"
 
 msgid "Allow delayed start?"
 msgstr "Autoriser le démarrage différé ?"
+
+msgid "Traffic-Alert Smart Block"
+msgstr "Bloc intelligent infos-trafic"
+
+msgid "(none — disabled)"
+msgstr "(aucun — désactivé)"
+
+msgid "New tracks added to this smart block air in the running show at its next traffic slot, within ~10 minutes. Add this block at several points in a show so alerts interrupt promptly."
+msgstr "Les nouveaux titres ajoutés à ce bloc intelligent passent dans l'émission en cours au prochain créneau infos-trafic, en ~10 minutes. Ajoutez ce bloc à plusieurs endroits d'une émission pour que les alertes s'intercalent rapidement."

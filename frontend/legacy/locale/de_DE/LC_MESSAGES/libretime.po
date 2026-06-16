@@ -4786,3 +4786,12 @@ msgstr "Line-In-Quelle konnte nicht gelöscht werden."
 
 msgid "Allow delayed start?"
 msgstr "Verzögerten Start erlauben?"
+
+msgid "Traffic-Alert Smart Block"
+msgstr "Verkehrsmeldungs-Smart-Block"
+
+msgid "(none — disabled)"
+msgstr "(keiner — deaktiviert)"
+
+msgid "New tracks added to this smart block air in the running show at its next traffic slot, within ~10 minutes. Add this block at several points in a show so alerts interrupt promptly."
+msgstr "Neue Titel in diesem Smart-Block laufen in der aktiven Sendung am nächsten Verkehrsmeldungs-Slot, innerhalb von ~10 Minuten. Fügen Sie diesen Block an mehreren Stellen einer Sendung ein, damit Meldungen zügig dazwischenkommen."
