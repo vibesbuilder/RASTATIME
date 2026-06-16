@@ -8,6 +8,17 @@ class AutoPlaylistManager
     private static $_AUTOPLAYLIST_POLL_INTERVAL_SECONDS = 60;  // 10 minutes
 
     /**
+     * @var int RASTATIME 2026-06-16 — Mid-Show Song Requests (incremental
+     *          fill).  How far ahead of the play head, in seconds, the
+     *          request fill resolves dramaturgy positions on each poll.
+     *          MUST exceed the RequestShowFillTask poll interval (2 min) so a
+     *          show never runs dry between polls.  Larger = more dead-air-safe;
+     *          smaller = "use requests" blocks draw fresher requests.
+     *          Env-overridable via RASTATIME_REQUEST_FILL_AHEAD_SECONDS.
+     */
+    private static $_REQUEST_FILL_AHEAD_SECONDS = 300;  // 5 minutes
+
+    /**
      * Check whether $_AUTOPLAYLIST_POLL_INTERVAL_SECONDS have passed since the last call to
      * buildAutoPlaylist.
      *
@@ -440,24 +451,31 @@ class AutoPlaylistManager
     }
 
     /**
-     * RASTATIME 2026-06-07 — Song Requests, Option C-onepass.  Fill one
-     * request-show instance by walking its autoload playlist POSITION BY
-     * POSITION (cc_playlistcontents order) instead of appending the whole
-     * playlist at once.  Resolving one element at a time — with a Phase 6a
-     * consume after each — is what makes several "use requests" blocks in
-     * the same playlist draw DIFFERENT tracks: appending the whole playlist
-     * resolves every smart block against the SAME pool snapshot, so all
-     * request blocks would pull the same (oldest) track.
+     * RASTATIME 2026-06-16 — Mid-Show Song Requests (incremental fill,
+     * Variante a).  Fill a request-show instance by walking its autoload
+     * playlist POSITION BY POSITION (cc_playlistcontents order) — but
+     * INCREMENTALLY across the 2-minute poll cycles, only a little ahead of
+     * the play head, instead of resolving the whole dramaturgy in one pass.
      *
-     * The dramaturgy is played ONCE, in playlist order.  Any time still left
-     * is then filled by repeating ONLY the final position — by convention a
-     * "time remaining" smart block — so a gap fills with that block's content
-     * and never by replaying the jingle / request blocks (which would pile up
-     * e.g. StationIDs at the end).  The no-progress guard stops once the fill
-     * block is exhausted (no dead-air spin, no infinite loop).  A fixed-file
-     * final slot is not repeated (that would spam one track).  autoplaylist_-
-     * built is left unset, so a partly filled show is topped up on the next
-     * poll and a full one is a no-op.
+     * A persistent per-instance cursor (cc_show_instances.autoplaylist_cursor)
+     * remembers the next UNRESOLVED dramaturgy position, so each poll continues
+     * where the last one stopped rather than re-filling from position 0 (which
+     * would double the dramaturgy).  Because a "use requests" block placed
+     * later in the dramaturgy is now resolved only when its slot is about to
+     * play, it draws the requests that arrived WHILE the show was already on
+     * air — the whole point of mid-show requests.
+     *
+     * Dead-air safety: dramaturgy positions are resolved up to
+     * now + _REQUEST_FILL_AHEAD_SECONDS (default 5 min, > the 2-min poll
+     * interval) so the show stays filled ahead of the play head between polls.
+     * Once the dramaturgy is exhausted (cursor at its end) the trailing
+     * time-remaining block is topped up COMPLETELY to the show end — the long
+     * music tail has no freshness requirement and must never risk dead air.
+     *
+     * Resolving one element at a time — with a Phase-6a consume after each —
+     * is also what makes several "use requests" blocks draw DIFFERENT tracks.
+     * An empty request slot falls back to a random catalogue track
+     * (_appendPosition).  A fixed-file final slot is not repeated.
      */
     private static function _fillRequestShowByPositions($si, $playlistId)
     {
@@ -478,44 +496,89 @@ class AutoPlaylistManager
             return;
         }
 
+        $instanceId = $si->getShowInstanceId();
         $startTs = $si->getShowInstanceStart(null)->getTimestamp();
         $endTs = $si->getShowInstanceEnd(null)->getTimestamp();
 
-        // Only the final slot is repeated to top up a remainder, and only if
-        // it is a smart block (a fixed file would be spammed).
-        $fill = end($positions);
-        $canTopUp = ((int) $fill['type'] === 2) && !empty($fill['block_id']);
+        // Resolve the dramaturgy this far ahead of the play head this poll.
+        $fillAhead = (int) (getenv('RASTATIME_REQUEST_FILL_AHEAD_SECONDS')
+            ?: self::$_REQUEST_FILL_AHEAD_SECONDS);
+        $fillUntilTs = max(time(), $startTs) + $fillAhead;
 
-        $firstPass = true;
+        $count = count($positions);
+
+        // Persistent cursor: the next UNRESOLVED dramaturgy position.  Clamped
+        // in case the playlist was edited shorter mid-show.
+        $cursor = min(self::_getAutoplaylistCursor($instanceId), $count);
+
+        // --- Dramaturgy: resolve positions from the cursor, ahead of the play
+        //     head, drawing the CURRENT requests for each slot.
         $guard = 0;
-        while ($guard < 50) {
-            if (($startTs + $si->getTimeScheduledSecs()) >= $endTs) {
-                break;  // show filled to its end
+        while ($cursor < $count && $guard < 200) {
+            $filledTo = $startTs + $si->getTimeScheduledSecs();
+            if ($filledTo >= $endTs) {
+                $cursor = $count;  // show already full — dramaturgy effectively done
+                break;
             }
-            if (!$firstPass && !$canTopUp) {
-                break;  // remainder, but nothing safe to repeat
+            if ($filledTo >= $fillUntilTs) {
+                break;  // filled far enough ahead; the next poll continues here
             }
-            $sequence = $firstPass ? $positions : [$fill];
-            $passProgressed = false;
-            foreach ($sequence as $pos) {
-                if (($startTs + $si->getTimeScheduledSecs()) >= $endTs) {
-                    break;  // reached the end mid-pass
-                }
-                $before = $si->getTimeScheduledSecs();
-                self::_appendPosition($si, $pos);
-                // Phase 6a: consume the request track(s) just scheduled, so the
-                // NEXT request block in the dramaturgy draws a different track.
-                self::_consumeScheduledRequests($si->getShowInstanceId());
-                if ($si->getTimeScheduledSecs() > $before) {
-                    $passProgressed = true;
-                }
-            }
-            $firstPass = false;
-            if (!$passProgressed) {
-                break;  // fill block exhausted — stop (no dead-air spin)
-            }
+            self::_appendPosition($si, $positions[$cursor]);
+            // Phase 6a: consume the request track(s) just scheduled so the NEXT
+            // request block draws a different (and now possibly newer) track.
+            self::_consumeScheduledRequests($instanceId);
+            $cursor++;
             $guard++;
         }
+
+        self::_setAutoplaylistCursor($instanceId, $cursor);
+
+        // --- Tail: dramaturgy done → top up the remainder with the trailing
+        //     time-remaining block, all the way to the show end.  Only repeated
+        //     if it is a smart block (a fixed file would be spammed).  No
+        //     freshness concern, so it is filled completely (dead-air-safe).
+        $fill = end($positions);
+        $canTopUp = ((int) $fill['type'] === 2) && !empty($fill['block_id']);
+        if ($cursor >= $count && $canTopUp) {
+            $guard = 0;
+            while ($guard < 200) {
+                if (($startTs + $si->getTimeScheduledSecs()) >= $endTs) {
+                    break;  // filled to the end
+                }
+                $before = $si->getTimeScheduledSecs();
+                self::_appendPosition($si, $fill);
+                self::_consumeScheduledRequests($instanceId);
+                if ($si->getTimeScheduledSecs() <= $before) {
+                    break;  // fill block exhausted — stop (no dead-air spin)
+                }
+                $guard++;
+            }
+        }
+    }
+
+    /**
+     * Read cc_show_instances.autoplaylist_cursor (the next unresolved
+     * dramaturgy position).  No Propel accessor — column added by raw-SQL
+     * migration 0057 — so it is read directly.
+     */
+    private static function _getAutoplaylistCursor($instanceId)
+    {
+        $v = Application_Common_Database::prepareAndExecute(
+            'SELECT autoplaylist_cursor FROM cc_show_instances WHERE id = :id',
+            [':id' => (int) $instanceId],
+            Application_Common_Database::COLUMN
+        );
+
+        return $v === false || $v === null ? 0 : (int) $v;
+    }
+
+    private static function _setAutoplaylistCursor($instanceId, $cursor)
+    {
+        Application_Common_Database::prepareAndExecute(
+            'UPDATE cc_show_instances SET autoplaylist_cursor = :cur WHERE id = :id',
+            [':cur' => (int) $cursor, ':id' => (int) $instanceId],
+            Application_Common_Database::EXECUTE
+        );
     }
 
     /**
