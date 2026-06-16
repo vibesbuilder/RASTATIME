@@ -153,6 +153,19 @@ class Application_Form_GeneralPreferences extends Zend_Form_SubForm
         $requestablePoolSelect->setValue(Application_Model_Preference::getRequestablePoolBlockIds());
         $this->addElement($requestablePoolSelect);
 
+        // RASTATIME 2026-06-16 — Traffic Alerts: pick ONE smart block whose
+        // newly-imported tracks are auto-inserted into the running show after
+        // the current track (within a 10-minute SLA).  A background task
+        // detects new members and inserts them.  "(none)" disables the feature.
+        $trafficAlertSelect = new Zend_Form_Element_Select('trafficAlertBlockSelect');
+        $trafficAlertSelect->setLabel(_('Traffic-Alert Smart Block'));
+        $trafficAlertSelect->setMultiOptions(
+            [0 => _('(none — disabled)')] + Application_Model_Library::getBlockNames()
+        );
+        $trafficAlertSelect->setValue(Application_Model_Preference::getTrafficAlertBlockId());
+        $trafficAlertSelect->setDescription(_('New tracks added to this smart block are aired within ~10 minutes, inserted into the current show right after the playing track.'));
+        $this->addElement($trafficAlertSelect);
+
         $podcast_album_override = new Zend_Form_Element_Radio('podcastAlbumOverride');
         $podcast_album_override->setLabel(_('Overwrite Podcast Episode Metatags'));
         $podcast_album_override->setMultiOptions([

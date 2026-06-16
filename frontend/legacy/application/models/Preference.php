@@ -2091,6 +2091,29 @@ class Application_Model_Preference
         self::setValue('requestable_pool_last_sync', $value);
     }
 
+    // RASTATIME 2026-06-16 - Traffic Alerts: the single smart block whose
+    // newly-imported tracks are auto-inserted into the running show after the
+    // current track (within the SLA).  0 / empty = traffic alerts disabled.
+    public static function getTrafficAlertBlockId()
+    {
+        return (int) self::getValue('traffic_alert_block_id');
+    }
+
+    public static function setTrafficAlertBlockId($value)
+    {
+        self::setValue('traffic_alert_block_id', (int) $value);
+    }
+
+    public static function getTrafficAlertLastRun()
+    {
+        return self::getValue('traffic_alert_last_run');
+    }
+
+    public static function setTrafficAlertLastRun($value)
+    {
+        self::setValue('traffic_alert_last_run', $value);
+    }
+
     // RASTATIME 2026-06-07 - Song Requests: last-run timestamp for the
     // RequestShowFillTask (incremental just-in-time fill of request shows).
     public static function getRequestShowFillLastRun()
