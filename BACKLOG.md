@@ -885,23 +885,45 @@ Push zur Startzeit); `fillRequestShows` erfasst bereits laufende Instanzen.
 §5/FAQ "late requests" dreht sich um, 4 Sprachen).  ~1–2 Tage.
 **Risiko Live-Betrieb:** Niedrig (Frontend, kein Playout-Eingriff).
 
-### 🟢 Traffic Alerts (kurzfristige MP3, max. 10 min bis Ausstrahlung) — GO 2026-06-16
+### 🟢 Traffic Alerts (kurzfristige MP3, max. 10 min bis Ausstrahlung) — T1+T2 GELIEFERT 2026-06-16
 
-**Status:** 🟢 Go (Operator 2026-06-16).  **Weg A (Schedule-Insert) +
-Deadline-Skip** gewählt; Quelle = **Smart Block in Settings**.
-**Evaluiert:** 2026-06-16.
+**Status:** 🟢 Kern geliefert 2026-06-16 — T1 Settings-Picker (`96b5f30`) +
+T2 inkrementeller Fill (`e0c7873`).  **Design-Pivot** gegenüber der
+ursprünglichen Go-Entscheidung (siehe unten).  🟡 **Deadline-Skip deferred**
+(Operator wählte 2026-06-16 Dramaturgie-Dichte statt aktivem Skip).
+🟢 **T4 Doku** noch offen (Verifikation + Manual-Kapitel 4 Sprachen + i18n +
+CHANGELOG + ARCHITECTURE).
 **Operator-Wert:** Hoch — hartes Betriebs-Requirement mit klarer 10-min-SLA.
 
 Kurzfristig eintreffende Traffic-MP3s müssen binnen max. 10 min laufen.
 
-**Gewähltes Design (Weg A):** ein in Settings definierter **Traffic-Alert-
-Smart-Block** (Dropdown wie Song-Request-Pool); ein Detect-Task erkennt neue
-MP3s darin und fügt sie in `cc_schedule` **direkt nach dem aktuellen Track**
-ein (Folge-Items Show-Shift-artig nach hinten via `updateScheduleStartTime`),
-pypo spielt sie über die normale `scheduled`-Queue.  Kein Liquidsoap-Template-
-Eingriff.  Erscheint in History/Kalender.  **Deadline-Skip:** würde ein
-laufender Langtrack die 10-min-SLA reißen, `source.skip` über die bestehende
-Liquidsoap-Telnet-Verbindung.
+**GELIEFERTES Design (Pivot — inkrementeller Fill statt Insert+Shift):** Ein in
+Settings definierter **Traffic-Alert-Smart-Block** (Single-Select-Dropdown,
+cc_pref `traffic_alert_block_id`).  Eine Show, die diesen Block in ihrer
+Autoload-Dramaturgie trägt, wird **inkrementell gefüllt — exakt wie eine
+Request-Show** (Reuse der Mid-Show-R1-Engine): jede Traffic-Position wird erst
+kurz vor ihrem Slot aufgelöst und zieht dann den neuesten, noch nicht
+eingeplanten Alert (FIFO nach `utime`, kein Random-Fallback, keine
+Doppel-Ausstrahlung).  Weil künftige Items noch gar nicht aufgelöst sind,
+**entfällt das Insert-after-current + Folge-Item-Schieben komplett** —
+Operator-Vereinfachung 2026-06-16.  pypo spielt über die normale
+`scheduled`-Queue, kein Liquidsoap-Template-Eingriff, erscheint in
+History/Kalender.
+
+**SLA-Methode (Operator-Entscheidung B, 2026-06-16):** Die 10-min-Frist wird
+über **Dramaturgie-Dichte** gehalten — der Operator platziert Traffic-Slots eng
+genug (≤ SLA) und hält Tracks direkt vor einem Slot kurz.  Kein aktiver
+Deadline-Skip.
+
+**🟡 Deferred — Deadline-Skip (Vorbedingung zum Wiederaufgreifen):** Falls der
+Live-Betrieb zeigt, dass Dramaturgie-Dichte allein die SLA nicht hält (z. B. ein
+überlanger laufender Track schiebt einen Alert-Slot über `Import+10min`), dann
+schmaler Skip (Option A): wenn das **nächste** eingeplante Item ein Traffic-Alert
+ist und seine Frist zu reißen droht, `source.skip` auf den laufenden Track über
+die bestehende Liquidsoap-Telnet-Verbindung.  Erkennung des Alert-Items via
+`file_id ∈ Traffic-Block-Pool` (kein Schema) oder Marker-Spalte auf
+`cc_schedule` (Migration 0058).  ~80–150 Z.  Erst bauen, wenn die Vorbedingung
+im Betrieb eintritt.
 
 **Verworfen:** Weg B (Liquidsoap interrupting queue, AzuraCast-Stil) — Playout-
 Eingriff + Drift mit pypos zeitbasiertem Modell + nicht in History.  Nur falls
@@ -911,15 +933,10 @@ Eingriff + Drift mit pypos zeitbasiertem Modell + nicht in History.  Nur falls
 Fallback-Priorität (`track_sensitive`); klassische Automation (Zetta/Rivendell/
 mAirList/RadioDJ) = Cart-Wall/Insert-Next oder feste Uhrzeit-Slots + Netz-Trigger.
 
-**Aufwand:** ~250–450 Z. (Detect-Task + Settings-UI + Insert-Logik + Skip) +
-1 cc_pref (Block-ID).  Reuse Show-Shift + bestehende Telnet-Steuerung.  ~2–3 Tage.
-**Risiko Live-Betrieb:** Niedrig (Weg A, kein `.liq`-Umbau).
-
-**Gemeinsame Basis (Operator-Wunsch 4):** Beide schreiben mid-show in
-`cc_schedule` und verlassen sich auf pypo-Pickup.  Die „Insert"-Bausteine
-existieren bereits (`addAutoloadItemToShow` aus Song-Requests +
-`updateScheduleStartTime` aus Show-Shift) — Feature 1 baut darauf, Feature 2
-ergänzt nur Insert-after-current + Shift + Deadline-Skip.
+**Gemeinsame Basis (Operator-Wunsch 4) — eingelöst:** Mid-Show Requests und
+Traffic Alerts teilen sich EINE inkrementelle Fill-Engine
+(`_fillRequestShowByPositions`); der Unterschied ist nur die Slot-Auflösung
+(Request-Draw + Random-Fallback vs. `_appendTrafficAlert` FIFO ohne Fallback).
 
 ### 7-Tage-Catchup Frontend
 

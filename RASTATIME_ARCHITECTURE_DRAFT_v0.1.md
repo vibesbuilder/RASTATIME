@@ -1,10 +1,21 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.17
+Draft version: 0.18
 Date: 2026-06-16
 
 > **Revision history**
+> - **0.18 (2026-06-16)** — Traffic Alerts (Section 23.25).  Short-notice
+>   traffic MP3s air within a ~10-min SLA with no change to the Python
+>   playout path.  An operator designates ONE smart block as the source
+>   (Settings, `cc_pref` `traffic_alert_block_id`); a show carrying that
+>   block in its autoload dramaturgy is filled INCREMENTALLY like a request
+>   show (reusing the Mid-Show R1 engine), so a traffic slot picks up alerts
+>   imported WHILE the show is already on air — no insert-after-current and
+>   no following-item shift.  Each slot draws the oldest not-yet-scheduled
+>   alert (FIFO by `utime`, no random fallback, no double-airing).  The SLA
+>   is held by dramaturgy density (operator decision B); an active
+>   deadline-skip is deferred to the backlog with a precondition.
 > - **0.17 (2026-06-16)** — Mid-Show Song Requests / incremental fill
 >   (Section 23.23 update).  A request show now resolves its dramaturgy
 >   INCREMENTALLY across the 2-min polls, only up to
@@ -3944,3 +3955,89 @@ end at the anchor; idempotent re-runs); production smoke (the task
 runs on session-less API polls); and an isolated end-to-end live test
 (dedicated far-future test shows, real `applyDelayedStarts()` commit,
 full teardown) — all six post-conditions confirmed.
+
+### 23.25 Traffic Alerts
+
+**Context.**  Traffic bulletins arrive at very short notice as MP3 files
+and must air within a hard ~10-minute SLA.  The requirement is the same
+mid-show-insert family as Song Requests: get a freshly-imported file
+into the *running* show without touching the time-based Python playout
+path (pypo re-fetches `cc_schedule` on every `PushSchedule` and pushes
+each item at its start time, so a mid-show schedule change is honoured
+as long as the item sits a few seconds ahead — see 23.23).
+
+**Source (decision: a Settings smart block).**  The operator designates
+ONE smart block as the traffic source under **Settings → General**
+(`cc_pref` `traffic_alert_block_id`, single-select; `0` = disabled).
+New bulletins are simply imported into the library so they match that
+block's criteria (e.g. a "Traffic" genre/folder).  No new media path, no
+`.liq` change — bulletins play through the normal `scheduled` queue and
+appear in history/calendar like any track.
+
+**The core decision — incremental fill, not insert-and-shift.**  The
+original design (BACKLOG "Weg A") detected new members and inserted them
+into `cc_schedule` right after the current track, shifting every
+following item back (Show-Shift-style).  The operator simplified this
+(2026-06-16): a show that carries the traffic block in its **autoload
+dramaturgy** is filled **incrementally, exactly like a request show**,
+reusing the Mid-Show R1 engine (`AutoPlaylistManager::
+_fillRequestShowByPositions`).  Because the dramaturgy is resolved only
+just ahead of the play head, a traffic position is resolved shortly
+before its slot airs and picks up whatever was imported in the meantime
+— so an alert imported mid-show airs at the **next traffic slot**, and
+since the following items are not resolved yet, **nothing has to be
+shifted**.  The whole insert + ripple problem dissolves.
+
+**Detection + routing.**  `playlistContainsTrafficBlock()` (false when
+the feature is disabled) marks a show as a traffic show; such shows are
+skipped from the one-pass `buildAutoPlaylist()` and picked up by the
+incremental `RequestShowFillTask` instead — the same dual treatment
+request shows get.  The positions query gains an `is_traffic_block`
+flag; `_appendPosition()` routes a flagged position to
+`_appendTrafficAlert()` instead of the normal block resolve, and the
+trailing time-remaining top-up never uses the traffic block as a
+dead-air filler.
+
+**Selection (decision: FIFO, exclude-scheduled, no fallback).**
+`_appendTrafficAlert()` resolves the block's pool, then airs the bulletin
+that is (a) **not already scheduled anywhere in this instance** — so the
+same alert never airs twice across several traffic slots — and (b)
+**imported earliest** (FIFO by `cc_files.utime`, the alert closest to its
+deadline first).  One SQL does the `IN (pool)` + `NOT IN (scheduled)` +
+`ORDER BY utime`.  Unlike a request slot there is **no random fallback**:
+an empty traffic slot simply airs nothing and the following dramaturgy
+item plays.  No new "consume" marker is needed — the exclude-scheduled
+query is the idempotency, and the 2-min poll is naturally re-runnable.
+
+**SLA (operator decision B: dramaturgy density).**  Because a bulletin
+airs at its dramaturgy position, the 10-minute budget is held by placing
+traffic slots densely enough in the show (≤ SLA apart) and keeping the
+track immediately before a slot short.  An **active deadline-skip** —
+`source.skip` on the current track over the existing Liquidsoap telnet
+link when the next item is a late traffic alert — was **deferred to the
+backlog** with a precondition: build it only if live operation shows
+density alone is insufficient.
+
+**Disable path.**  Setting the Settings field back to "(none)" makes
+`playlistContainsTrafficBlock()` return false: the show is no longer
+taken for incremental fill, and the block (if still in a dramaturgy) is
+resolved once by the ordinary one-pass `buildAutoPlaylist()` — a clean
+fallback, no orphaned state.
+
+**Shared base (the Operator-wish-4 payoff).**  Mid-Show Requests and
+Traffic Alerts now run through ONE incremental fill engine; the only
+difference is how a slot resolves — request draw + random fallback
+(`_appendRandomFromBlockPool`) versus FIFO-without-fallback
+(`_appendTrafficAlert`).  Feature 2 added ~150 lines on top of Feature 1
+and no new schema.
+
+**Verification.**  PHP-lint; CLI read-only logic checks in a fresh
+process (both new methods registered — lint cannot catch a missing
+method; `playlistContainsTrafficBlock` correct on the disabled / enabled
+/ contains / not-contains paths with the pref saved & restored; the
+`is_traffic_block` flag marks exactly the traffic position; the
+candidate SQL is valid PostgreSQL and returns the oldest-`utime`
+unscheduled file).  The block-resolve reuses the exact shape already
+proven by `_appendRandomFromBlockPool`.  The live airing test (a real
+bulletin imported mid-show and aired at the next slot) is the
+operator-run end-to-end test, mirroring the Mid-Show R1 live test.

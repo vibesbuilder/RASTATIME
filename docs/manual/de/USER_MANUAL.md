@@ -149,6 +149,7 @@ sie alle voraussetzen.
 | [Autoloading Playlists](./AUTOLOADING_PLAYLISTS.md) | Eine Playlist sich selbst für jede Instanz einer Sendung aufbauen lassen, inklusive Outro-Reserve-Logik. |
 | [Auto DJ](./AUTO_DJ.md) | Der Hintergrund-Filler, der Sendungen in Kalenderlücken erstellt und unvollständige Sendungen auffüllt. |
 | [Song Requests](./SONG_REQUESTS.md) | Hörer Tracks über ein öffentliches Widget wünschen lassen, die automatisch in einer Request-Show laufen. |
+| [Verkehrsmeldungen](./TRAFFIC_ALERTS.md) | Kurzfristige Verkehrsmeldungs-MP3s über einen Smart Block in die laufende Sendung einspeisen — binnen ~10 Minuten am nächsten Traffic-Slot, ohne Eingriff ins Playout. |
 | [Aufnahme pro Sendung](./RECORD_PER_SHOW.md) | Den kompletten On-Air-Output einer Sendung in eine Datei aufzeichnen. |
 | [24/7-Aufnahme](./RECORD_PER_HOUR.md) | Den gesamten On-Air-Output rund um die Uhr aufzeichnen, eine Datei pro Stunde — für Compliance, Catchup und Notfall-Backup. |
 
@@ -237,6 +238,7 @@ Diese Runbooks sind aktuell nur auf Englisch verfügbar.
 | **Auto DJ** | Ein Hintergrundprozess, der Sendungen in Kalenderlücken erstellt und unvollständige Sendungen auffüllt. Unterscheidet sich von Autoloading Playlists. |
 | **Verzögerter Start** | Eine Opt-in-Einstellung pro Sendung (`cc_show.allow_delayed_start`), die eine Sendung später als ihren Kalender-Slot beginnen lässt, wenn die vorige Sendung überzogen hat, wobei ihr eigenes Ende fix bleibt. Ein Hintergrund-Task wendet sie wenige Minuten vor der Ausstrahlung an. |
 | **Song Request** | Ein vom Hörer gesendeter Track-Wunsch, gesammelt von einem öffentlichen Widget und automatisch von einer Request-Show ausgestrahlt (eine Autoloading-Playlist-Sendung mit einem *Use requests*-Smart-Block). Persistiert in `rastatime_song_request`. |
+| **Verkehrsmeldung (Traffic Alert)** | Eine kurzfristig eintreffende Verkehrsmeldungs-MP3, die binnen ~10 Minuten in der laufenden Sendung laufen muss. Die Quelle ist ein in den Einstellungen gewählter Smart Block (`traffic_alert_block_id`); eine Sendung mit diesem Block in ihrer Autoloading-Playlist wird inkrementell gefüllt und spielt den ältesten noch nicht eingeplanten Alert am nächsten Traffic-Slot. |
 | **Output-Stream** | Einer von bis zu vier Icecast-Mountpoints, an die das Playout sendet. Konfiguriert unter Einstellungen → Streams. |
 | **Source-Switcher** | Der interne Mechanismus, der entscheidet, welche Audio-Quelle (Scheduler, Line-In, Master DJ, Show DJ) gerade auf Sendung ist. |
 | **Fallback-Queue** | Eine konfigurierte Schleife, die abgespielt wird, wenn keine Sendung eingeplant ist und Auto DJ deaktiviert ist. |

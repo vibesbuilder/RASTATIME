@@ -9,6 +9,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Traffic Alerts (2026-06-16, T1–T2)** — Kurzfristig eintreffende
+  Verkehrsmeldungs-MP3s laufen binnen ~10 Minuten on air, ohne Eingriff in den
+  Python-Playout-Pfad:
+  - **Settings**: ein **Traffic-Alert-Smart-Block** wird unter
+    **Settings → General** als Quelle gewählt (Single-Select, cc_pref
+    `traffic_alert_block_id`; „(none — disabled)" schaltet das Feature ab)
+    (`96b5f30`).
+  - **Inkrementeller Fill statt Insert+Shift** (Operator-Vereinfachung
+    2026-06-16): eine Show, die diesen Block in ihrer Autoload-Dramaturgie
+    trägt, wird **inkrementell gefüllt wie eine Request-Show** — Reuse der
+    Mid-Show-R1-Engine (`_fillRequestShowByPositions`).  Jeder Traffic-Slot
+    wird erst kurz vor seiner Spielzeit aufgelöst und zieht dann den ältesten
+    noch nicht eingeplanten Alert (`_appendTrafficAlert`: FIFO nach
+    `cc_files.utime`, kein Random-Fallback, keine Doppel-Ausstrahlung).  So
+    läuft eine **mitten in der Sendung importierte Meldung am nächsten Slot**,
+    und kein Folge-Item muss geschoben werden (`e0c7873`).
+  - **SLA über Dramaturgie-Dichte** (Operator-Entscheidung B): die 10-Min-Frist
+    wird gehalten, indem der Operator Traffic-Slots eng genug platziert und
+    Tracks direkt davor kurz hält; ein aktiver **Deadline-Skip** ist mit
+    Vorbedingung in den Backlog gestellt (🟡 Defer).
+  - Feature lässt sich jederzeit abschalten (Settings → „(none)"): eine
+    Traffic-Show fällt dann sauber auf den normalen One-Pass-Fill zurück.
+  - i18n der drei Settings-Strings (de/fr/es), korrigierte Feld-Beschreibung
+    (`f61e470`).
+
 - **Show-Shift / „Allow delayed start" (2026-06-15, Phasen 1–3b)** — Eine
   opt-in-Checkbox **„Allow delayed start?"** pro Show (When-Section, direkt
   unter „Repeats?") lässt eine Show **später beginnen**, wenn die vorige Show
