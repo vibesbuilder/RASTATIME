@@ -138,6 +138,12 @@ robocopy "C:\Users\studio\Music\Recording" "$BUNDLE\Recording" /MIR
 #    storage.path) — NOT C:\rastatime\stor (that path never existed;
 #    earlier drafts of this doc were wrong).  Verify with:
 #      (Get-Content C:\rastatime\config\libretime.conf | Select-String 'path:')
+# ⚠️ Run this media copy from an ELEVATED shell (Administrator).  Verified
+#    2026-06-17: the podcast-feature downloads (imported/2/podcast_ep*.mp3,
+#    ~33 files in cc_files) carry a restrictive ACL with NO access for the
+#    `studio` user — a non-elevated robocopy SILENTLY skips them (exit >=8,
+#    "Zugriff verweigert").  Administrators have full access and copy them.
+#    See BACKLOG "Podcast-Downloads: ACL sperrt den studio-User aus".
 robocopy C:\rastatime\media "$BUNDLE\media" /MIR
 
 # 7) Operator-specific PowerShell scripts / monitoring tools

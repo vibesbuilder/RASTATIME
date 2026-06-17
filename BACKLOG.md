@@ -73,6 +73,33 @@ Icecast + Firewall + externe Stream-/Embed-URLs entsprechend anpassen.
 Station derzeit **nicht live** → Downtime unkritisch, kein Low-Traffic-Fenster
 nötig.
 
+### 🔴 Podcast-Downloads: ACL sperrt den studio-User aus (Backup-/Migrations-Integrität)
+
+**Status:** Zu beheben (gefunden 2026-06-17 beim Medien-Transfer zur neuen
+Maschine).
+**Symptom:** Die per Podcast-Feature heruntergeladenen Episoden
+(`media/imported/2/podcast_ep*.mp3`, **33 Stück, in `cc_files` referenziert**)
+haben eine Windows-ACL **ohne** `studio`/`Benutzer` — `studio` kann sie nicht
+einmal lesen (`icacls` → „Zugriff verweigert"). Normale Tracks haben
+`VORDEFINIERT\Benutzer:(I)(RX)`. Der Downloader läuft offenbar als
+SYSTEM/Dienstkonto und setzt eine restriktive, nicht vererbte ACL.
+
+**Auswirkung:**
+- **Playout funktioniert** (Liquidsoap-Dienst läuft als SYSTEM/Admin, darf lesen).
+- **Aber jedes Backup/Robocopy als `studio` überspringt diese Dateien
+  stillschweigend** — betrifft `docs/operator/BACKUP.md` (Full-Backup) **und**
+  den Migrations-Medien-Copy (32 Dateien / 2,86 GB fielen beim ersten
+  LAN-Robocopy aus, exit ≥8).
+
+**Fixes:**
+1. **Sofort (Migration):** Medien-Robocopy **elevated** laufen lassen
+   (Administratoren haben `(F)`) → kopiert die fehlenden Podcasts.
+2. **Dauerhaft:** Quell-ACL korrigieren — `icacls … /reset` (Vererbung vom
+   Eltern-Ordner → `Benutzer:(RX)`) und/oder den Podcast-Downloader so
+   anpassen, dass er die ACL nicht restriktiv setzt.
+3. **BACKUP.md** muss den Medien-Robocopy elevated empfehlen **oder** auf
+   nicht-lesbare Dateien prüfen — sonst stille Backup-Lücke.
+
 ### 🟡 Backup/Restore via UI (Settings-Submenü)
 
 **Status:** Defer — A + B empfohlen & gut machbar (architektur-angepasst),
