@@ -39,9 +39,19 @@ verbunden, trotzdem keine Stats.
 funktionsfähig (DataTable rendert, Flot 0.8.3 vendored) — es fehlen nur
 die Daten.
 
-### 🟡 Migration: Backup→Restore-Durchlauf auf der alten Maschine validieren
+### ✅ Migration: Backup→Restore-Durchlauf auf der alten Maschine validiert (2026-06-16)
 
-**Status:** Defer — Operator-Wunsch 2026-06-16: vor dem echten Umzug auf die
+**Status:** ERLEDIGT 2026-06-16 — isolierter Trockenlauf gefahren (Temp-DB +
+Temp-Pfade, Live-DB nur gelesen, danach aufgeräumt). **Ergebnis: bestanden** —
+DB-Round-Trip 47/47 Tabellen identisch (0 `pg_restore`-Fehler), Pfad-Rewrite
+307/307 + idempotent, 307/307 Medien-Dateien auf Disk vorhanden, `libretime.conf`
+parst. **Dabei gefundene MIGRATION.md-Fehler korrigiert** (Commit `70bb994`):
+eine DB statt zwei (`libretime` = totes Leftover), Pfad-Rewrite auf
+`rastatime.cc_files` statt `libretime.cc_music_dirs` (Tabelle existiert nicht),
+`cc_music_dirs`/`storage_path`-Schritte gestrichen, Config-Pfad `\config\` statt
+`\etc\`, neuer §4.8 für die neue IP. Nächster Schritt: echter Umzug.
+
+**(Historie der Vorbedingung — erfüllt:)** vor dem echten Umzug auf die
 neue Maschine den kompletten Backup→Restore-Weg **einmal auf der alten
 Maschine durchspielen**, um `docs/operator/BACKUP.md` (Full-Backup) +
 `docs/operator/MIGRATION.md` Phase A/C (Restore) als reproduzierbar zu
