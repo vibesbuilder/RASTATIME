@@ -14,6 +14,12 @@
 > see [`INSTALL.md`](INSTALL.md) for that.  Day-to-day backup —
 > see [`BACKUP.md`](BACKUP.md) for the routine procedure (this
 > doc reuses BACKUP.md mechanisms).
+>
+> **Revised 2026-06-16.** Validated by an isolated backup→restore dry-run on
+> the live machine and corrected accordingly: there is **one** live database
+> (`rastatime`; `libretime` is a stale leftover — §4.1), the media path
+> rewrite runs on **`rastatime.cc_files`** and there is **no `cc_music_dirs`
+> table** (§4.4c), and this run targets a **new IP/hostname** (§4.8).
 
 ---
 
@@ -170,8 +176,10 @@ years of registry cruft, driver-conflicts, AV exclusion drift.
   during operation — see Phase-D 2026-05-29 00:15-00:30 lesson)
 - Disable Auto-Sleep, Hibernate, Screensaver (system always on)
 - Set time-zone correctly (same as old machine)
-- Configure network: static IP or DHCP-reservation matching the
-  old machine if possible (so DNS/firewall rules carry over)
+- Configure network: static IP or DHCP-reservation.  For a same-IP swap,
+  match the old machine (so DNS/firewall rules carry over).  For a **new
+  IP/hostname** (this migration), pick the new address now and apply the
+  config touchpoints in §4.8.
 
 ### 3.2 Bitdefender install + MANDATORY exclusions
 
@@ -249,7 +257,15 @@ location (we'll do this in Phase C step 4.4).
 
 ## 4. Phase C — Restore from backup bundle
 
-### 4.1 PostgreSQL databases
+### 4.1 PostgreSQL database
+
+> **Validated 2026-06-16 (isolated backup→restore dry-run).** `rastatime`
+> is the **only** live database — the legacy PHP frontend *and* the Django
+> API both use it (it holds `django_migrations`; 47 tables, ~4100 schedule
+> rows).  The `libretime` database is a **stale leftover** from before the
+> `rastatime` rename (separate owner, **zero** connections) and does **not**
+> need restoring.  If the backup bundle still contains `pg-libretime.dump`,
+> ignore it (and optionally drop the empty `libretime` DB on the new box).
 
 ```powershell
 # Stop the API + Worker services while DB is being restored
@@ -258,18 +274,19 @@ Stop-Service RASTATIME-API, RASTATIME-WORKER
 $pgrestore = "C:\Program Files\PostgreSQL\17\bin\pg_restore.exe"
 $psql = "C:\Program Files\PostgreSQL\17\bin\psql.exe"
 
-# Drop the empty databases created by INSTALL.md
+# Drop the empty database created by INSTALL.md and recreate it
 & $psql -U postgres -c "DROP DATABASE IF EXISTS rastatime;"
-& $psql -U postgres -c "DROP DATABASE IF EXISTS libretime;"
-& $psql -U postgres -c "CREATE DATABASE rastatime;"
-& $psql -U postgres -c "CREATE DATABASE libretime;"
+& $psql -U postgres -c "CREATE DATABASE rastatime OWNER rastatime;"
 
-# Restore from the dumps
+# Restore the single live database
 & $pgrestore -U postgres -d rastatime C:\rastatime-migration\pg-rastatime.dump
-& $pgrestore -U postgres -d libretime C:\rastatime-migration\pg-libretime.dump
 
 Start-Service RASTATIME-API, RASTATIME-WORKER
 ```
+
+> **DB-restore round-trip was validated** on 2026-06-16 by dumping the live
+> `rastatime` DB, restoring into an isolated temp DB and diffing every table:
+> **47/47 tables identical, zero pg_restore errors.**
 
 ### 4.2 Source repo
 
@@ -287,8 +304,9 @@ robocopy C:\rastatime-migration\RASTATIME C:\RASTATIME /MIR
 
 ```powershell
 # libretime.conf (contains DB credentials, harbor passwords,
-# Icecast credentials, the lot)
-Copy-Item C:\rastatime-migration\libretime.conf C:\rastatime\etc\ -Force
+# Icecast credentials, the lot).  Live location is C:\rastatime\config\
+# (NOT \etc\ — verified 2026-06-16).
+Copy-Item C:\rastatime-migration\libretime.conf C:\rastatime\config\ -Force
 
 # Icecast config
 Copy-Item C:\rastatime-migration\Icecast\icecast.xml `
@@ -338,23 +356,27 @@ storage:
   path: D:/stor          # was C:/rastatime/media on the old machine
 ```
 
-**(c) DB — update the storage dir + every file path in one transaction.**
-`cc_music_dirs.directory` holds the storage root; `cc_files.filepath`
-holds each track's path **relative to that root** (e.g.
-`imported/2/Artist/Album/track.mp3`).  Both must change: new root, and
-the `2/` segment removed.
+**(c) DB — flatten the owner-id level in every file path.**
+
+> **Corrected 2026-06-16 (dry-run).** Earlier drafts ran an
+> `UPDATE cc_music_dirs … -d libretime`.  That is wrong on three counts:
+> there is **no `cc_music_dirs` table** in this schema, there is **no
+> `cc_pref` `storage_path`** key, and the live data is in the **`rastatime`**
+> database, **not** `libretime` (the stale leftover — see §4.1).  Running it
+> against `libretime` would leave the **real** paths untouched and the media
+> would 404 after cutover.  The storage **root** is not in the DB at all — it
+> lives only in `libretime.conf` (already changed in step (b)).  So the only
+> DB change is the relative paths in `rastatime.cc_files`.
+
+`cc_files.filepath` holds each track's path **relative to the storage
+root** (e.g. `imported/2/Artist/Album/track.mp3`, where `2` is the
+importing operator's user-id).  Drop that owner-id segment:
 
 ```powershell
 $psql = "C:\Program Files\PostgreSQL\17\bin\psql.exe"
-& $psql -U postgres -d libretime -v ON_ERROR_STOP=1 -c @"
+& $psql -U postgres -d rastatime -v ON_ERROR_STOP=1 -c @"
 BEGIN;
--- 1) storage root (the 'stor'-type music dir)
-UPDATE cc_music_dirs
-   SET directory = 'D:/stor/'
- WHERE type = 'stor';
--- 2) cc_pref storage_path mirror (if present)
-UPDATE cc_pref SET valstr = 'D:/stor' WHERE keystr = 'storage_path';
--- 3) drop the 'imported/<digits>/' owner-id level from every file path
+-- drop the 'imported/<digits>/' owner-id level from every file path
 UPDATE cc_files
    SET filepath = regexp_replace(filepath, '^imported/[0-9]+/', 'imported/')
  WHERE filepath LIKE 'imported/%';
@@ -363,8 +385,14 @@ COMMIT;
 ```
 
 > The `regexp_replace` only rewrites the leading `imported/<digits>/`
-> prefix — artist/album/file parts are untouched.  Run it once; it's
-> idempotent (a second run finds no `imported/<digits>/` left to match).
+> prefix — artist/album/file parts are untouched.  **Validated 2026-06-16**:
+> all 307 library paths rewrote correctly and a re-run matched nothing.
+> **Caveat (run it exactly once):** idempotency relies on no artist/album
+> folder being *purely numeric* — a path like `imported/2/2026/…` becomes
+> `imported/2026/…`, and a second run would wrongly strip the `2026/`.
+> Afterwards, confirm
+> `SELECT count(*) FROM cc_files WHERE filepath ~ '^imported/[0-9]+/';`
+> returns **0**.
 
 ### 4.5 Restore media library into the new flattened layout
 
@@ -386,7 +414,7 @@ Get-ChildItem C:\rastatime-migration\media\imported -Directory |
 
 # Verify the track count matches the DB
 $psql = "C:\Program Files\PostgreSQL\17\bin\psql.exe"
-& $psql -U postgres -d libretime -t -c "SELECT count(*) FROM cc_files WHERE filepath LIKE 'imported/%';"
+& $psql -U postgres -d rastatime -t -c "SELECT count(*) FROM cc_files WHERE filepath LIKE 'imported/%';"
 (Get-ChildItem D:\stor\imported -Recurse -File | Measure-Object).Count
 ```
 
@@ -444,6 +472,31 @@ Verify the env-vars came across (especially the Liquidsoap engine flag):
 #   RASTATIME_PLAYOUT_ENGINE=liquidsoap
 #   RASTATIME_LIQUIDSOAP_CROSSFADE_SECONDS=1.0
 ```
+
+### 4.8 New IP / hostname adjustments
+
+> **This migration moves to a NEW IP/hostname** (operator decision
+> 2026-06-16 — not the old machine's address).  The restored configs still
+> point at the old IP; update every reference **before** the smoke test so
+> the new machine is self-consistent.  (For a same-IP swap, skip this
+> section — that is the doc's default assumption elsewhere.)
+
+- **`libretime.conf` → `general.public_url`** — set to the new address
+  (`http://<new-ip>` or `https://<new-host>`).  It is interpolated into
+  RSS/podcast self-links, episode `download_url`, station-image URLs and
+  UI-side absolute links — a wrong value breaks feeds + embeds.
+- **Icecast** (`icecast.xml`) — `<hostname>` and any per-mount public URL
+  to the new address; restart Icecast afterwards.
+- **Windows Firewall** — open the stream/DJ/web ports on the **new**
+  machine: 8000 (Icecast), 8001 (DJ harbor), 80/443 (web UI).
+- **External references** (off the box) — website `<audio src>`, the
+  request-/now-playing-widget iframes, external monitoring (Uptime-Robot),
+  and any DNS A-record must point at the new address.
+- **DJ tools** (BUTT / Mixxx / Traktor) — new server-host; port, mount and
+  password stay the same.
+
+After these, the new machine streams on its own IP independently of the old
+one — verify in §5.4.
 
 ---
 
@@ -517,11 +570,15 @@ foreach ($svc in @(
 ```
 
 ### 6.3 DNS / IP cutover
+- **New IP/hostname (this migration):** the new machine keeps its **own**
+  address — the in-box configs were already pointed at it in §4.8.  Here you
+  only repoint the **outside** world: DNS A-record → new IP, and every
+  external embed/widget/monitor (see §4.8) → new address.  No need to steal
+  the old machine's IP.
 - **If you use DNS** (e.g. `radio.example.org` points at the machine):
   update the A-record to new IP, wait for TTL (usually 5 min).
-- **If listeners connect directly to IP**: change the new machine
-  to the old machine's IP (you may need a brief network
-  reconfiguration).
+- **If a same-IP swap instead**: change the new machine to the old
+  machine's IP (brief network reconfiguration; then §4.8 is not needed).
 - **Firewall rules**: forward ports 8000 (Icecast), 8001 (DJ
   harbor), 80/443 (web UI) to the new machine.
 
