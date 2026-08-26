@@ -100,6 +100,66 @@ SYSTEM/Dienstkonto und setzt eine restriktive, nicht vererbte ACL.
 3. **BACKUP.md** muss den Medien-Robocopy elevated empfehlen **oder** auf
    nicht-lesbare Dateien prüfen — sonst stille Backup-Lücke.
 
+### 🟡 INSTALL.md / MIGRATION.md auf den realen Liquidsoap-Stack nachziehen
+
+**Status:** Defer — gefunden 2026-06-17 beim Stack-Install der neuen Maschine
+(192.168.1.164). Die Operator-Docs beschreiben einen veralteten Stand; die echten
+`infra\nssm\install-*.ps1` + `backend\playout\config\nssm-install-liquidsoap.ps1`
+sind die Quelle der Wahrheit. Drei verifizierte Drifts:
+
+1. **API-Port ist 8765, nicht 8000.** `install-api.ps1` bindet Waitress auf
+   Param-Default `$ApiPort = 8765` (Header-Kommentar „8000" ist tot);
+   `install-playout.ps1` pollt `http://127.0.0.1:8765/health` + setzt
+   `RASTATIME_API_URL=http://127.0.0.1:8765`. **Port 8000 gehört Icecast.**
+   → INSTALL.md §9a und MIGRATION.md §5 (`…:8000/health`) korrigieren auf 8765.
+2. **RabbitMQ fehlt als Voraussetzung.** `install-analyzer.ps1` + die PHP-Uploads
+   brauchen RabbitMQ (Queue `analyzer`, vhost `/rastatime`, Port 5672) + Erlang.
+   Steht in **keiner** Prereq-Liste (INSTALL.md §2, MIGRATION.md §3.3). → ergänzen.
+3. **Echte Topologie = 7 Dienste:** `API, WORKER, PLAYOUT, ANALYZER, APACHE,
+   ICECAST` (in `infra\nssm\`) **+ LIQUIDSOAP** (eigenes Skript). INSTALL.md nennt
+   4 (libVLC-Ära), MIGRATION.md 6 (vergisst **ANALYZER**). → beide angleichen.
+
+**Nebenpunkte:** INSTALL.md §9c `-VlcPluginPath` existiert im echten
+`install-playout.ps1` nicht mehr (libVLC-Reste); `RASTATIME_PLAYOUT_ENGINE=
+liquidsoap` wird von `install-playout.ps1` **nicht** gesetzt (muss separat als
+AppEnvironmentExtra ans PLAYOUT-Service, sonst Default-Engine); `libretime.conf.
+template` heißt real `libretime.conf.example`.
+
+**Weitere Funde beim echten Install 2026-08-26:**
+- `psycopg2` wird von keinem backend-Paket als Dependency deklariert —
+  venv-Aufbau nach INSTALL.md ergibt einen API-Stack ohne DB-Treiber
+  (`pip install psycopg2-binary` manuell nötig). → in backend/api
+  pyproject.toml deklarieren oder in INSTALL.md §4 aufnehmen.
+- INSTALL.md Step 7: `manage.py` liegt unter `backend\api\libretime_api\
+  manage.py` (nicht `backend\api\manage.py`); `collectstatic` ist mit den
+  prod-Settings gar nicht lauffähig (kein `STATIC_ROOT` gesetzt) und im
+  Deployment auch nicht nötig → Schritt streichen/korrigieren.
+- INSTALL.md nennt VLC/libVLC als Pflicht + `python-vlc` in requirements.txt —
+  seit dem Liquidsoap-Cutover obsolet (Neue Maschine läuft ohne VLC).
+- `infra\scripts\dev\bootstrap.ps1` prüft VLC als *required* und RabbitMQ
+  als *optional* — für den Produktiv-Stack genau invertiert.
+- Icecast: Live-Config (`config/icecast.xml`) ist auf **2.4.4**-Semantik
+  gebaut (`stream_auth`, `mount_add/remove`); `install-icecast.ps1`-Default
+  (`C:\Program Files\Icecast\bin\icecast.exe`) + MIGRATION.md-AV-Liste
+  (`Icecast2.exe`) passen nicht zum realen Layout `C:\Tools\Icecast\bin\
+  icecast.exe` (Betriebsort auf alter wie neuer Maschine).
+- MIGRATION.md §2.2(5)/§4.6 + §3.2-AV-Liste nennen den Recordings-Pfad
+  `C:\Users\studio\Music\Recording` — seit dem Record-per-Hour-Umbau
+  (2026-06-06) real: `Music\Show Recordings` + `Music\Permanent Recordings`
+  (+ `Music\Import` als Local-Import-Quelle); Pfade kommen aus `cc_pref`
+  (`local_recording_folder`, `local_247_recording_folder`,
+  `local_import_folder`).
+- Apache-Host-Setup: die produktive `httpd.conf` (Rewrite-Front-Controller,
+  `/api/v2`-ProxyPass, **`RewriteRule ^ - [E=HTTP_AUTHORIZATION:...]`** für
+  fcgid) war nie im Repo/Doc — INSTALL_APACHE.md um die drei Blöcke ergänzen
+  (bei der Migration 2026-08-26 aus der alten Maschine rekonstruiert).
+
+**Operator-Wert:** Mittel — kein Live-Risiko, aber jeder künftige Install/Umzug
+läuft sonst gegen falsche Ports/fehlende Prereqs. **Aufwand:** ~1–2 h Doku in
+EN (+ DE/FR/ES falls Manual betroffen). **Vorbedingung:** Migration durch — die
+realen Schritte werden beim echten Install dieser Maschine ohnehin verifiziert,
+danach 1:1 in die Docs übernehmen.
+
 ### 🟡 Backup/Restore via UI (Settings-Submenü)
 
 **Status:** Defer — A + B empfohlen & gut machbar (architektur-angepasst),
@@ -330,7 +390,18 @@ Cutover erst nach 1–2 Wochen A/B-Vergleich.
 
 ### 🟡 Storage-Struktur-Bereinigung (Root → D:\stor + owner-id weg)
 
-**Status:** Geplant für die Hardware-Migration nächste Woche.
+**Status:** ERNEUT DEFER (Operator-Entscheid 2026-08-26 bei der Migration):
+die neue Maschine hat **keine zweite SSD/D:** — Medien bleiben unter
+`C:\RASTATIME\media`, MIGRATION.md §4.4/§4.5 wurden übersprungen (kein
+MediaService-Patch, kein cc_files-Rewrite; 340/340 DB-Pfade auf Disk
+verifiziert). **Neue Vorbedingung:** D:-Laufwerk nachrüsten — Operator
+erhält die zusätzliche Festplatte laut eigener Aussage in den Tagen nach
+dem 2026-08-26; danach als eigenes Wartungsfenster nach §4.4/§4.5
+durchziehen (Doku bleibt gültig; Reihenfolge: Platte als D: formatieren →
+Dienste stoppen → §4.4 a–c Code/Conf/DB → §4.5 robocopy-Flatten →
+3-Track-Verifikation → Dienste starten).
+**(Ursprünglicher Plan unten zur Historie:)**
+**Status (alt):** Geplant für die Hardware-Migration nächste Woche.
 **Evaluiert:** 2026-05-29 (Operator-Wunsch "kosmetische Dinge").
 **Operator-Entscheidung 2026-05-29:** in die Hardware-Migration
 integrieren statt isoliert auf der Live-Maschine (Daten-Migration,
@@ -468,6 +539,34 @@ mit dezenter CPU).
 **Workaround heute:** Phase-E funktioniert, mit den o.g. kleinen
 Haker-Symptomen. Akzeptabel für die nächsten Tage bis Hardware kommt.
 
+
+### 💡 Internet-Erreichbarkeit (Public Stream + optional Remote-UI)
+
+**Status:** Idea (Operator-Frage 2026-08-26, noch nicht evaluiert — Operator
+wollte zunächst nur eine Erklärung).
+**Kern:** Router-Forwards minimal halten (nur Stream; UI/DJ besser via VPN),
+DynDNS/Domain + A-Record, `public_url` auf öffentliche URL (erfordert
+Hairpin-NAT oder Split-DNS für LAN-Zugriff), TLS via Reverse-Proxy (Mixed-
+Content: HTTPS-Website blockt HTTP-Stream → auch Icecast hinter TLS).
+**Harte Vorbedingung:** Secrets-Härtung — `api_key`/`secret_key`
+(change-before-production), Icecast source/relay/admin = `admin` (inkl.
+`cc_pref stream_output_*`), Harbor `changeme`, `internal_listener`-Default;
+PostgreSQL/RabbitMQ niemals forwarden. Bei Interesse formale Evaluierung
+nach Konvention (6 Punkte).
+
+### 💡 Icecast 2.4.4 → 2.5.x Upgrade (Future)
+
+**Status:** Idea — bewusst NICHT in der Hardware-Migration 2026-08 gemacht
+(Operator-Entscheid: 2.4.4 wie alte Maschine, kein Versionssprung im Umzug).
+Die Live-`icecast.xml` ist empirisch auf 2.4-Semantik abgestimmt: Source-Auth
+via `<authentication type="url">` + `stream_auth`, DJ-Connect/Disconnect via
+`mount_add`/`mount_remove` direkt an den Playout-Listener :8770. Icecast 2.5
+ersetzt diese Optionen durch `event-bindings` — Upgrade erfordert Portierung
+der Auth-/Notify-Verdrahtung + Livetest des kompletten DJ-Pfads (Master/Show
+connect, Source-Switch, Watchdog). 2.5.0-win64-Installer lag bereits vor
+(`C:\_install\icecast_win64_2.5.0.exe`). **Vorbedingung:** stabiler Betrieb
+nach Migration + eigenes Wartungsfenster mit Rollback (2.4.4-Baum unter
+`C:\Tools\Icecast` sichern).
 
 ### 💡 Phase-E ICY-Metadata-Forwarding (Future-Polish)
 
