@@ -194,6 +194,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Flankierend: BACKUP.md warnt jetzt vor nicht-elevated Medien-Copies
   und prüft das robocopy-Log (`3c5d413`).
 
+- **`status.ps1` meldet kein falsches „alles läuft" mehr (2026-08-27,
+  `e1bfc11`)** — das Status-Werkzeug (erster Schritt jedes Notfall-
+  Runbooks) kannte nur die 4 Ur-Dienste und druckte „All mandatory
+  services are Running", selbst wenn ANALYZER/APACHE/LIQUIDSOAP down
+  waren (= Uploads hängen / kein Web-UI / Stille auf Sendung).  Jetzt:
+  alle 7 Dienste inkl. HTTP-Proben (API `:8765/health`, Apache `:80`,
+  Icecast `:8000`), korrigierte Port-Tabelle (Icecast 8000 statt 8001,
+  nicht mehr „optional"), Install-Hints pro Dienst.  Die
+  „prüfe die anderen drei separat"-Workarounds aus `3c5d413` sind
+  wieder aus INSTALL/RESTART_ORDER/CRASH_RECOVERY/README entfernt.
+  Live getestet: 7× Running, 3× HTTP 200.  Außerdem `run-api.ps1`
+  (Dev-Helfer) Default-Port 8000 → **8766** (Operator-Entscheid:
+  kollidiert weder mit Icecast 8000 noch mit dem Produktions-API-Dienst
+  8765; parallel zum vollen Stack getestet), WINDOWS_DEV_STATUS.md
+  nachgezogen.
+
 - **Datei-Upload (REST-CSRF) repariert — `csrf`-Formularfeld akzeptiert
   (2026-06-05, `1f66224`)** — Uploads auf `/rest/media` (Dashboard-Dropzone)
   scheiterten: der Zend-CSRF-**Form**-Element-Feldname ist `csrf`, der ACL-Plugin

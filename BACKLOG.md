@@ -131,9 +131,15 @@ Manual RECORD_PER_SHOW (EN/DE/FR/ES Pfad), ADR-002/-006 (Superseded-Notes).
 Code-seitig: `bootstrap.ps1` Required/Optional-Tausch (RabbitMQ required,
 VLC optional; funktional getestet, Exit 0) + `install-api.ps1`-Header 8765.
 Adversarial verifiziert (3-Agent-Pass gegen Skripte + Live-System).
-**Offen geblieben (bewusst):** `status.ps1` kennt nur 4 Dienste (Doku
-verweist auf manuellen Get-Service-Check) und `run-api.ps1` Default-Port
-8000 (Dev-only) — beides Kandidaten für einen kleinen Infra-Folge-Fix.
+**Nachtrag 2026-08-27 — beide Infra-Folge-Fixes ERLEDIGT:**
+`status.ps1` kennt jetzt alle **7** Dienste (inkl. HTTP-Proben für API
+:8765/health, Apache :80, Icecast :8000; Port-Tabelle + Install-Hints
+korrigiert; live getestet — 7× Running, 3× HTTP 200) und die
+„prüfe die anderen drei separat"-Workarounds sind wieder aus INSTALL/
+RESTART_ORDER/CRASH_RECOVERY/README entfernt.  `run-api.ps1` Default-Port
+8000 → **8766** (Operator-Entscheid; kollidiert weder mit Icecast 8000
+noch mit dem Produktions-API-Dienst 8765 — Dev-Server lief im Test
+parallel zum vollen Stack), WINDOWS_DEV_STATUS.md nachgezogen.
 **(Ursprüngliche Befundliste zur Historie:)**
 
 1. **API-Port ist 8765, nicht 8000.** `install-api.ps1` bindet Waitress auf
