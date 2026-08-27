@@ -530,21 +530,17 @@ powershell -ExecutionPolicy Bypass `
     -File C:\rastatime\infra\nssm\status.ps1
 ```
 
-Expected output:
+Expected output (all seven services; HTTP probes for API, Apache and
+Icecast):
 ```
-  RASTATIME-API     Running    HTTP 200 healthy
-  RASTATIME-WORKER  Running
-  RASTATIME-PLAYOUT Running
-  RASTATIME-ICECAST Running
+  RASTATIME-API         Running    HTTP 200 healthy
+  RASTATIME-WORKER      Running
+  RASTATIME-PLAYOUT     Running
+  RASTATIME-ANALYZER    Running
+  RASTATIME-APACHE      Running    HTTP 200 healthy
+  RASTATIME-ICECAST     Running    HTTP 200 healthy
+  RASTATIME-LIQUIDSOAP  Running
   All mandatory services are Running.
-```
-
-`status.ps1` predates the analyzer, Apache and Liquidsoap services —
-check those three separately:
-
-```powershell
-Get-Service RASTATIME-ANALYZER, RASTATIME-APACHE, RASTATIME-LIQUIDSOAP
-# Expected: all Running
 ```
 
 If any mandatory service shows `Stopped` or `Not installed`, see §5
@@ -637,8 +633,7 @@ explicit `RABBITMQ_BASE` (see §2.4).
 
 After completing §4, verify each item:
 
-- [ ] `status.ps1` shows all mandatory services `Running`
-- [ ] `Get-Service RASTATIME-ANALYZER, RASTATIME-APACHE, RASTATIME-LIQUIDSOAP` — all `Running`
+- [ ] `status.ps1` shows all seven services `Running` (incl. the HTTP probes)
 - [ ] `Get-Service RabbitMQ` shows `Running`
 - [ ] `http://127.0.0.1:8765/health` returns HTTP 200
 - [ ] `http://127.0.0.1:8765/api/v2/schema/swagger-ui` loads the API docs

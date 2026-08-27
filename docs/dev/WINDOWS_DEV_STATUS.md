@@ -44,7 +44,7 @@ every Milestone. Do not prettify — keep it accurate.
 | Script | Command | Status |
 |---|---|---|
 | Bootstrap checker | `.\infra\scripts\dev\bootstrap.ps1` | **Working** — checks Python, PostgreSQL, VLC, RabbitMQ |
-| API dev server | `.\infra\scripts\dev\run-api.ps1` | **Working** — Django dev server on 127.0.0.1:8000 |
+| API dev server | `.\infra\scripts\dev\run-api.ps1` | **Working** — Django dev server on 127.0.0.1:8766 (default since 2026-08-27; 8000 = Icecast, 8765 = production API service) |
 | Worker dev stub | `.\infra\scripts\dev\run-worker.ps1` | **Working** — logs "idle" heartbeat |
 
 ### 2.3 API server
@@ -150,7 +150,7 @@ python backend\api\libretime_api\manage.py migrate
 .\infra\scripts\dev\run-api.ps1
 
 # 7. Verify health
-Invoke-RestMethod http://127.0.0.1:8000/health
+Invoke-RestMethod http://127.0.0.1:8766/health
 
 # 8. Start worker stub (separate terminal)
 .\infra\scripts\dev\run-worker.ps1

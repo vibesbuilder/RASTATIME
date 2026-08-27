@@ -16,7 +16,11 @@
     Bind address. Default: 127.0.0.1
 
 .PARAMETER Port
-    Bind port. Default: 8000
+    Bind port. Default: 8766
+    (Changed from 8000 on 2026-08-27: in the production stack 8000 is
+    Icecast and 8765 is the RASTATIME-API service - 8766 collides with
+    neither, so the dev server can run alongside the full stack on the
+    studio machine.)
 
 .EXAMPLE
     # From the repo root:
@@ -44,7 +48,8 @@
 [CmdletBinding()]
 param(
     [string]$BindHost = "127.0.0.1",
-    [int]$Port = 8000
+    # 8766: clear of Icecast (8000) and the production API service (8765)
+    [int]$Port = 8766
 )
 
 Set-StrictMode -Version Latest

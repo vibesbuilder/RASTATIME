@@ -162,7 +162,7 @@ Invoke-WebRequest -Uri http://127.0.0.1:8765/health
 | `infra\nssm\install-api.ps1` | Install RASTATIME-API service |
 | `infra\nssm\install-worker.ps1` | Install RASTATIME-WORKER service |
 | `infra\nssm\install-playout.ps1` | Install RASTATIME-PLAYOUT service |
-| `infra\nssm\status.ps1` | Show status of the core services (API/worker/playout/Icecast — the other three via `Get-Service RASTATIME-*`) |
+| `infra\nssm\status.ps1` | Show status of all seven services (incl. HTTP probes for API, Apache, Icecast) |
 | `infra\nssm\remove-api.ps1` | Uninstall RASTATIME-API service |
 | `infra\nssm\remove-worker.ps1` | Uninstall RASTATIME-WORKER service |
 | `infra\nssm\remove-playout.ps1` | Uninstall RASTATIME-PLAYOUT service |

@@ -113,16 +113,10 @@ After all services are started, run the status helper:
 powershell -ExecutionPolicy Bypass -File infra\nssm\status.ps1
 ```
 
-Expected output:
+Expected output (covers all seven services, with HTTP probes for the
+API, Apache and Icecast):
 - All mandatory services: `Running`
-- API health check: `HTTP 200  OK — API is healthy`
-
-> `status.ps1` covers only the four original services (API, WORKER,
-> PLAYOUT, ICECAST).  Check the other three explicitly:
-> ```powershell
-> Get-Service RASTATIME-ANALYZER, RASTATIME-APACHE, RASTATIME-LIQUIDSOAP
-> # Expected: all Running
-> ```
+- API / Apache / Icecast probes: `HTTP 200 healthy`
 
 ---
 
@@ -357,9 +351,8 @@ nssm start RASTATIME-PLAYOUT
 powershell -File infra\nssm\install-analyzer.ps1 -StartService
 powershell -File infra\nssm\install-apache.ps1   -StartService
 
-# 4. Verify
+# 4. Verify (status.ps1 covers all seven services)
 powershell -File infra\nssm\status.ps1
-Get-Service RASTATIME-ANALYZER, RASTATIME-APACHE, RASTATIME-LIQUIDSOAP
 ```
 
 ---

@@ -18,16 +18,9 @@ the planned outage procedures in `docs\operator\RESTART_ORDER.md`.
 powershell -ExecutionPolicy Bypass -File C:\rastatime\infra\nssm\status.ps1
 ```
 
-The output of `status.ps1` tells you which services are running, which are
-stopped, and whether the API is returning HTTP 200.  Note that
-`status.ps1` covers only the four original services (API, WORKER,
-PLAYOUT, ICECAST) — check the other three explicitly:
-
-```powershell
-Get-Service RASTATIME-ANALYZER, RASTATIME-APACHE, RASTATIME-LIQUIDSOAP
-```
-
-Use both outputs to determine which recovery path applies.
+The output of `status.ps1` covers all seven RASTATIME services — SCM
+status plus live HTTP probes for the API (8765), Apache (80) and
+Icecast (8000).  Use it to determine which recovery path applies.
 
 ---
 

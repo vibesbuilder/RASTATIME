@@ -6,17 +6,16 @@
 .DESCRIPTION
     T22.3 - Status and health helper for the RASTATIME service stack.
 
-    For each of the four RASTATIME NSSM services this script reports:
+    For each of the seven RASTATIME NSSM services (API, WORKER, PLAYOUT,
+    ANALYZER, APACHE, ICECAST, LIQUIDSOAP) this script reports:
         * Windows SCM status (Running / Stopped / not installed)
         * PID and uptime (if running)
         * Recent log tail (configurable line count)
 
-    Additionally for RASTATIME-API:
-        * Live HTTP health check against http://127.0.0.1:8000/health
-          HTTP 200 = healthy; any other result = degraded / unreachable
-
-    RASTATIME-ICECAST is marked [optional] - it is normal for it to be
-    absent on deployments that do not require public audio streaming.
+    Additionally, live HTTP probes:
+        * RASTATIME-API     : http://127.0.0.1:8765/health   (expect 200)
+        * RASTATIME-APACHE  : http://127.0.0.1:80/           (expect 200)
+        * RASTATIME-ICECAST : http://127.0.0.1:8000/         (expect 200)
 
     Does NOT require administrator privileges for read-only status.
     Run as administrator to use 'nssm status' for richer NSSM detail.
@@ -31,11 +30,11 @@
 
 .PARAMETER ApiPort
     Port of the RASTATIME-API (must match SERVICE_TOPOLOGY.md §2.1).
-    Default: 8000
+    Default: 8765
 
 .PARAMETER IcecastPort
     Stream port of RASTATIME-ICECAST (must match icecast.xml).
-    Default: 8001
+    Default: 8000
 
 .PARAMETER LogLines
     Number of recent log lines to display per service.
@@ -75,7 +74,7 @@ param(
     [string] $InstallRoot       = "C:\rastatime",
     [string] $ApiHost           = "127.0.0.1",
     [int]    $ApiPort           = 8765,
-    [int]    $IcecastPort       = 8001,
+    [int]    $IcecastPort       = 8000,
     [int]    $LogLines          = 15,
     [int]    $HealthTimeoutSec  = 5,
     [string] $NssmExe           = ""
@@ -89,39 +88,68 @@ $ErrorActionPreference = 'Continue'   # non-fatal; show all services even if one
 # ---------------------------------------------------------------------------
 # Log files live under C:\rastatime\logs by default (see SERVICE_TOPOLOGY.md §6).
 # Override with -InstallRoot if the deployment uses a non-standard path.
+$ApiHealthUrl   = "http://${ApiHost}:${ApiPort}/health"
+$ApacheUrl      = "http://${ApiHost}:80/"
+$IcecastUrl     = "http://${ApiHost}:${IcecastPort}/"
+
 $Services = @(
     [PSCustomObject]@{
-        Name     = "RASTATIME-API"
-        Logs     = @("$InstallRoot\logs\api-stdout.log",
-                     "$InstallRoot\logs\api-stderr.log")
-        Optional = $false
-        CheckHttp = $true
+        Name        = "RASTATIME-API"
+        Logs        = @("$InstallRoot\logs\api-stdout.log",
+                        "$InstallRoot\logs\api-stderr.log")
+        Optional    = $false
+        HttpUrl     = $ApiHealthUrl
+        InstallHint = "infra\nssm\install-api.ps1"
     },
     [PSCustomObject]@{
-        Name     = "RASTATIME-WORKER"
-        Logs     = @("$InstallRoot\logs\worker-stdout.log",
-                     "$InstallRoot\logs\worker-stderr.log")
-        Optional = $false
-        CheckHttp = $false
+        Name        = "RASTATIME-WORKER"
+        Logs        = @("$InstallRoot\logs\worker-stdout.log",
+                        "$InstallRoot\logs\worker-stderr.log")
+        Optional    = $false
+        HttpUrl     = $null
+        InstallHint = "infra\nssm\install-worker.ps1"
     },
     [PSCustomObject]@{
-        Name     = "RASTATIME-PLAYOUT"
-        Logs     = @("$InstallRoot\logs\playout-stdout.log",
-                     "$InstallRoot\logs\playout-stderr.log")
-        Optional = $false
-        CheckHttp = $false
+        Name        = "RASTATIME-PLAYOUT"
+        Logs        = @("$InstallRoot\logs\playout-stdout.log",
+                        "$InstallRoot\logs\playout-stderr.log")
+        Optional    = $false
+        HttpUrl     = $null
+        InstallHint = "infra\nssm\install-playout.ps1  (then re-apply the engine env vars - MIGRATION.md 4.7)"
     },
     [PSCustomObject]@{
-        Name     = "RASTATIME-ICECAST"
-        Logs     = @("$InstallRoot\logs\icecast-nssm-stdout.log",
-                     "$InstallRoot\logs\icecast-nssm-stderr.log")
-        Optional = $true
-        CheckHttp = $false
+        Name        = "RASTATIME-ANALYZER"
+        Logs        = @("$InstallRoot\logs\analyzer-stdout.log",
+                        "$InstallRoot\logs\analyzer-stderr.log")
+        Optional    = $false
+        HttpUrl     = $null
+        InstallHint = "infra\nssm\install-analyzer.ps1"
+    },
+    [PSCustomObject]@{
+        Name        = "RASTATIME-APACHE"
+        Logs        = @("$InstallRoot\logs\apache-nssm-stdout.log",
+                        "$InstallRoot\logs\apache-nssm-stderr.log")
+        Optional    = $false
+        HttpUrl     = $ApacheUrl
+        InstallHint = "infra\nssm\install-apache.ps1"
+    },
+    [PSCustomObject]@{
+        Name        = "RASTATIME-ICECAST"
+        Logs        = @("$InstallRoot\logs\icecast-nssm-stdout.log",
+                        "$InstallRoot\logs\icecast-nssm-stderr.log")
+        Optional    = $false
+        HttpUrl     = $IcecastUrl
+        InstallHint = "infra\nssm\install-icecast.ps1 -IcecastExe 'C:\Tools\Icecast\bin\icecast.exe'"
+    },
+    [PSCustomObject]@{
+        Name        = "RASTATIME-LIQUIDSOAP"
+        Logs        = @("$InstallRoot\logs\liquidsoap-stdout.log",
+                        "$InstallRoot\logs\liquidsoap-stderr.log")
+        Optional    = $false
+        HttpUrl     = $null
+        InstallHint = "backend\playout\config\nssm-install-liquidsoap.ps1"
     }
 )
-
-$ApiHealthUrl   = "http://${ApiHost}:${ApiPort}/health"
-$IcecastUrl     = "http://${ApiHost}:${IcecastPort}/"
 
 # ---------------------------------------------------------------------------
 # Locate NSSM (optional - used only for richer detail)
@@ -189,28 +217,16 @@ function Show-LogTail([string]$LogPath, [int]$Lines) {
 }
 
 # ---------------------------------------------------------------------------
-# HTTP health check for RASTATIME-API
+# HTTP probe (API health endpoint, Apache frontend, Icecast status page)
 # ---------------------------------------------------------------------------
-function Invoke-ApiHealthCheck {
+function Invoke-HttpProbe([string]$Url, [string]$SvcName) {
     Write-Host ""
-    Write-Host "  Health endpoint : $ApiHealthUrl" -ForegroundColor DarkCyan
+    Write-Host "  HTTP probe      : $Url" -ForegroundColor DarkCyan
     try {
-        $resp = Invoke-WebRequest -Uri $ApiHealthUrl -UseBasicParsing `
+        $resp = Invoke-WebRequest -Uri $Url -UseBasicParsing `
                     -TimeoutSec $HealthTimeoutSec -ErrorAction Stop
         if ($resp.StatusCode -eq 200) {
-            Write-Host "  HTTP status     : 200  OK  - API is healthy" -ForegroundColor Green
-            # Pretty-print JSON body if present
-            if ($resp.Content) {
-                try {
-                    $json = $resp.Content | ConvertFrom-Json -ErrorAction Stop
-                    Write-Host "  Response body   :" -ForegroundColor DarkCyan
-                    $resp.Content.Trim().Split("`n") | ForEach-Object {
-                        Write-Host "    $_" -ForegroundColor Gray
-                    }
-                } catch {
-                    Write-Host "  Response        : $($resp.Content.Trim())" -ForegroundColor Gray
-                }
-            }
+            Write-Host "  HTTP status     : 200  OK" -ForegroundColor Green
             return $true
         } else {
             Write-Host "  HTTP status     : $($resp.StatusCode) - unexpected (expected 200)" -ForegroundColor DarkYellow
@@ -218,7 +234,7 @@ function Invoke-ApiHealthCheck {
         }
     } catch {
         Write-Host "  HTTP status     : UNREACHABLE - $($_.Exception.Message)" -ForegroundColor Red
-        Write-Host "  (Is RASTATIME-API running and bound on port ${ApiPort}?)" -ForegroundColor DarkYellow
+        Write-Host "  (Is $SvcName running and bound on this port?)" -ForegroundColor DarkYellow
         return $false
     }
 }
@@ -235,7 +251,7 @@ function Show-ServiceStatus([PSCustomObject]$Svc) {
         if ($Svc.Optional) {
             Write-Host "  Status : Not installed  (optional - OK)" -ForegroundColor DarkYellow
         } else {
-            Write-Host "  Status : Not installed  [REQUIRED - install with install-$($Svc.Name.ToLower().Replace('rastatime-','')).ps1]" `
+            Write-Host "  Status : Not installed  [REQUIRED - install with $($Svc.InstallHint)]" `
                        -ForegroundColor Red
         }
         return
@@ -272,9 +288,9 @@ function Show-ServiceStatus([PSCustomObject]$Svc) {
         }
     } catch { <# non-fatal #> }
 
-    # HTTP health check (API only)
-    if ($Svc.CheckHttp) {
-        $null = Invoke-ApiHealthCheck
+    # HTTP probe (API / Apache / Icecast)
+    if ($Svc.HttpUrl) {
+        $null = Invoke-HttpProbe -Url $Svc.HttpUrl -SvcName $Svc.Name
     }
 
     # Log tail
@@ -307,9 +323,9 @@ function Show-Summary([System.Collections.Generic.List[PSCustomObject]]$Results)
                  }
         Write-Host "  $optLabel  $($r.Name.PadRight(24))  $statusPad" `
                    -ForegroundColor $color -NoNewline
-        if ($r.ApiHealthy -ne $null) {
-            $hLabel = if ($r.ApiHealthy) { "HTTP 200 healthy" } else { "HTTP health FAIL" }
-            $hColor = if ($r.ApiHealthy) { "Green" } else { "Red" }
+        if ($r.HttpOk -ne $null) {
+            $hLabel = if ($r.HttpOk) { "HTTP 200 healthy" } else { "HTTP probe FAIL" }
+            $hColor = if ($r.HttpOk) { "Green" } else { "Red" }
             Write-Host "  $hLabel" -ForegroundColor $hColor
         } else {
             Write-Host ""
@@ -319,9 +335,12 @@ function Show-Summary([System.Collections.Generic.List[PSCustomObject]]$Results)
 
     Write-Host ""
     Write-Host "  Ports:" -ForegroundColor DarkCyan
-    Write-Host "    RASTATIME-API     : port $ApiPort   (HTTP, Waitress)" -ForegroundColor Gray
-    Write-Host "    RASTATIME-ICECAST : port $IcecastPort  (HTTP, Icecast streams)  [optional]" -ForegroundColor Gray
-    Write-Host "    PostgreSQL        : port 5432 (managed externally)" -ForegroundColor Gray
+    Write-Host "    RASTATIME-APACHE     : port 80    (HTTP, web UI; proxies /api/v2/ to $ApiPort)" -ForegroundColor Gray
+    Write-Host "    RASTATIME-API        : port $ApiPort  (HTTP, Waitress)" -ForegroundColor Gray
+    Write-Host "    RASTATIME-ICECAST    : port $IcecastPort  (HTTP, listener streams + admin)" -ForegroundColor Gray
+    Write-Host "    RASTATIME-LIQUIDSOAP : port 8001  (DJ harbor - /main + /show share it), telnet 1234 (localhost)" -ForegroundColor Gray
+    Write-Host "    RabbitMQ             : port 5672 (managed externally)" -ForegroundColor Gray
+    Write-Host "    PostgreSQL           : port 5432 (managed externally)" -ForegroundColor Gray
     Write-Host ""
     Write-Host "  Log directory : $InstallRoot\logs" -ForegroundColor Gray
     Write-Host ""
@@ -352,15 +371,15 @@ foreach ($svc in $Services) {
     # Collect result for summary
     $svcObj    = Get-Service -Name $svc.Name -ErrorAction SilentlyContinue
     $isRunning = $svcObj -and $svcObj.Status -eq 'Running'
-    $apiOk     = $null
+    $httpOk    = $null
 
-    if ($svc.CheckHttp -and $isRunning) {
+    if ($svc.HttpUrl -and $isRunning) {
         try {
-            $r = Invoke-WebRequest -Uri $ApiHealthUrl -UseBasicParsing `
+            $r = Invoke-WebRequest -Uri $svc.HttpUrl -UseBasicParsing `
                      -TimeoutSec $HealthTimeoutSec -ErrorAction Stop
-            $apiOk = ($r.StatusCode -eq 200)
+            $httpOk = ($r.StatusCode -eq 200)
         } catch {
-            $apiOk = $false
+            $httpOk = $false
         }
     }
 
@@ -369,7 +388,7 @@ foreach ($svc in $Services) {
         Status     = if ($svcObj) { "$($svcObj.Status)" } else { "Not installed" }
         Healthy    = $isRunning
         Optional   = $svc.Optional
-        ApiHealthy = $apiOk
+        HttpOk     = $httpOk
     }) | Out-Null
 }
 
