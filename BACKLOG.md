@@ -73,10 +73,23 @@ Icecast + Firewall + externe Stream-/Embed-URLs entsprechend anpassen.
 Station derzeit **nicht live** → Downtime unkritisch, kein Low-Traffic-Fenster
 nötig.
 
-### 🔴 Podcast-Downloads: ACL sperrt den studio-User aus (Backup-/Migrations-Integrität)
+### ✅ Podcast-Downloads: ACL sperrt den studio-User aus — BEHOBEN 2026-08-27
 
-**Status:** Zu beheben (gefunden 2026-06-17 beim Medien-Transfer zur neuen
-Maschine).
+**Status:** ERLEDIGT 2026-08-27. **Root Cause bestätigt:** `download.py`
+lud in den %TEMP% des Dienstkontos (`NamedTemporaryFile` ohne `dir=`) und
+`shutil.move` = Same-Volume-Rename **behält die Quell-ACL** (NTFS) — die
+restriktive SYSTEM-Temp-ACL wanderte so in die Library. **Fix:** Temp-Datei
+wird jetzt direkt im Ziel-Ordner geboren (`NamedTemporaryFile(dir=import_dir,
+prefix="podcast_tmp_")`) und per `os.replace` im selben Ordner umbenannt —
+erbt die Library-ACL ab Erstellung, kein icacls nötig. Regressionstests
+`podcasts/tests/test_download.py` (Temp-Dir-Spy + Failure-Cleanup, 2 passed);
+E2E-verifiziert auf der Live-Library (`studio:(I)(F)` vererbt). BACKUP.md
+trägt jetzt die elevated-Warnung + Robocopy-Log-Prüfschritt. Bestand auf der
+neuen Maschine war bereits sauber (Transfer vererbte ACLs neu); alte Maschine
+bleibt unangetastet (Rollback-Box). `download.py` war die einzige
+NamedTemporaryFile-Stelle im Backend.
+**(Ursprünglicher Befund zur Historie:)** gefunden 2026-06-17 beim
+Medien-Transfer zur neuen Maschine.
 **Symptom:** Die per Podcast-Feature heruntergeladenen Episoden
 (`media/imported/2/podcast_ep*.mp3`, **33 Stück, in `cc_files` referenziert**)
 haben eine Windows-ACL **ohne** `studio`/`Benutzer` — `studio` kann sie nicht
@@ -100,12 +113,28 @@ SYSTEM/Dienstkonto und setzt eine restriktive, nicht vererbte ACL.
 3. **BACKUP.md** muss den Medien-Robocopy elevated empfehlen **oder** auf
    nicht-lesbare Dateien prüfen — sonst stille Backup-Lücke.
 
-### 🟡 INSTALL.md / MIGRATION.md auf den realen Liquidsoap-Stack nachziehen
+### ✅ INSTALL.md / MIGRATION.md auf den realen Liquidsoap-Stack nachziehen — DONE 2026-08-27
 
-**Status:** Defer — gefunden 2026-06-17 beim Stack-Install der neuen Maschine
-(192.168.1.164). Die Operator-Docs beschreiben einen veralteten Stand; die echten
-`infra\nssm\install-*.ps1` + `backend\playout\config\nssm-install-liquidsoap.ps1`
-sind die Quelle der Wahrheit. Drei verifizierte Drifts:
+**Status:** ERLEDIGT 2026-08-27. Umfang wuchs beim agenten-gestützten
+Voll-Audit von 2 auf **16 Dateien**: INSTALL.md (7-Dienste-Topologie, §2.0
+Windows-Prep/SAC/statische IP, RabbitMQ+VC-Redist+Liquidsoap+Icecast+FFmpeg
+als Prereqs, YAML-Config, venv-Sequenz inkl. psycopg2 + editierbare Pakete,
+Step 9a–9h mit Engine-Env + .liq-Render, Checkliste), MIGRATION.md (ANALYZER
+in allen Listen, Recordings-Ordner-Trio, AV-Liste, §4.7-Alternative ohne
+NSSM-Dumps, neuer §4.9 .liq-Render, 8765-Healthcheck), INSTALL_APACHE.md
+(VC-Redist, Module, ZF1-Rewrite inkl. HTTP_AUTHORIZATION, /api/v2-Proxy),
+BACKUP.md (7-Dienste-Env-Export, elevated-Warnung, Robocopy-Log-Check,
+`rastatime` statt `rastatime_user`), RESTART_ORDER.md + SERVICE_TOPOLOGY.md
+(Voll-Umbau auf 7 Dienste), UPGRADE.md, CRASH_RECOVERY.md, DEVICE_MISSING.md,
+LINE_IN_BROKEN.md, README.md, LIQUIDSOAP_CUTOVER.md (Hist.-Hinweis),
+Manual RECORD_PER_SHOW (EN/DE/FR/ES Pfad), ADR-002/-006 (Superseded-Notes).
+Code-seitig: `bootstrap.ps1` Required/Optional-Tausch (RabbitMQ required,
+VLC optional; funktional getestet, Exit 0) + `install-api.ps1`-Header 8765.
+Adversarial verifiziert (3-Agent-Pass gegen Skripte + Live-System).
+**Offen geblieben (bewusst):** `status.ps1` kennt nur 4 Dienste (Doku
+verweist auf manuellen Get-Service-Check) und `run-api.ps1` Default-Port
+8000 (Dev-only) — beides Kandidaten für einen kleinen Infra-Folge-Fix.
+**(Ursprüngliche Befundliste zur Historie:)**
 
 1. **API-Port ist 8765, nicht 8000.** `install-api.ps1` bindet Waitress auf
    Param-Default `$ApiPort = 8765` (Header-Kommentar „8000" ist tot);

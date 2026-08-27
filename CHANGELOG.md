@@ -179,6 +179,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Podcast-Downloads erben jetzt die Library-ACL (2026-08-27, `a34f914`)** —
+  Root-Cause des BACKLOG-Items „ACL sperrt den studio-User aus":
+  `download_episode()` lud in den %TEMP% des Dienstkontos und
+  `shutil.move` = Same-Volume-**Rename behält die NTFS-ACL** — die
+  restriktive SYSTEM-Temp-ACL wanderte in `media\imported\`, jedes
+  nicht-elevated Backup übersprang die Episoden still (robocopy
+  exit ≥ 8; real passiert beim Migrations-Transfer 2026-06-17 und
+  erneut am 2026-08-26).  Fix: Temp-Datei wird direkt im Ziel-Ordner
+  geboren (`NamedTemporaryFile(dir=import_dir)`) + `os.replace` im
+  selben Ordner → erbt die Library-ACL ab Erstellung.  Regressionstests
+  (`podcasts/tests/test_download.py`, Temp-Dir-Spy + Failure-Cleanup);
+  E2E auf der Live-Library verifiziert (`studio:(I)(F)` vererbt).
+  Flankierend: BACKUP.md warnt jetzt vor nicht-elevated Medien-Copies
+  und prüft das robocopy-Log (`3c5d413`).
+
 - **Datei-Upload (REST-CSRF) repariert — `csrf`-Formularfeld akzeptiert
   (2026-06-05, `1f66224`)** — Uploads auf `/rest/media` (Dashboard-Dropzone)
   scheiterten: der Zend-CSRF-**Form**-Element-Feldname ist `csrf`, der ACL-Plugin
@@ -236,6 +251,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (wird separat gesichert).
 
 ### Changed
+
+- **Operator-/Architektur-Doku auf den realen Liquidsoap-Stack
+  nachgezogen (2026-08-27, `3c5d413`)** — 15 Docs + 2 Skript-Header:
+  API-Port 8765 überall (8000 = Icecast), 7-Dienste-Topologie inkl.
+  ANALYZER/APACHE/LIQUIDSOAP, RabbitMQ+Erlang als Pflicht-Prereq,
+  INSTALL.md-Neuaufbau (Windows-Prep/SAC, venv-Sequenz inkl.
+  psycopg2, Step 9a–9h mit Engine-Env, DB-Rolle `rastatime`),
+  MIGRATION.md ohne den nie funktionierenden `nssm dump`-Pfad
+  (NSSM 2.24 kennt kein `dump`; Fresh-Install ist der dokumentierte
+  Weg) + dediziertem `pg_dump -Fc`-Bundle-Schritt + §4.9
+  (`rastatime.liq` rendert der Playout-Startup — der CLI-Render
+  strippt die DJ-Harbors, live am 2026-08-27 passiert), DJ-Harbor-
+  Wahrheit `/main`+`/show` teilen Port 8001 (2.4.4-Workaround),
+  LINE_IN_BROKEN-Debug-Rezept ohne Env-Block-Wipe, INSTALL_APACHE
+  (VC-Redist, Module, HTTP_AUTHORIZATION-Rewrite, /api/v2-Proxy),
+  `bootstrap.ps1` Required/Optional-Tausch.  Agenten-gestützter
+  Audit (94 Findings) + adversarialer Verify-Pass (43 Findings).
 
 - **Song Requests: echte Mid-Show-Befüllung (2026-06-16, Mid-Show R1,
   `a820bdf`)** — Eine Request-Show löst ihre Dramaturgie nicht mehr in einem
