@@ -50,14 +50,16 @@ upstream processes.
 
 ```powershell
 # As Administrator:
-nssm stop RASTATIME-ICECAST confirm    # optional — skip if not installed
-nssm stop RASTATIME-PLAYOUT confirm    # ⚠ stops on-air audio
-nssm stop RASTATIME-WORKER  confirm
-nssm stop RASTATIME-API     confirm
+nssm stop RASTATIME-APACHE     confirm
+nssm stop RASTATIME-ANALYZER   confirm
+nssm stop RASTATIME-PLAYOUT    confirm  # ⚠ stops schedule-driven playout
+nssm stop RASTATIME-LIQUIDSOAP confirm  # ⚠ stops on-air audio
+nssm stop RASTATIME-ICECAST    confirm
+nssm stop RASTATIME-WORKER     confirm
+nssm stop RASTATIME-API        confirm
 
 # Verify all are stopped:
-Get-Service RASTATIME-API, RASTATIME-WORKER, RASTATIME-PLAYOUT |
-    Select-Object Name, Status
+Get-Service RASTATIME-* | Select-Object Name, Status
 # Expected: all show Status = Stopped
 ```
 
@@ -88,20 +90,32 @@ cd C:\rastatime
 
 pip install --upgrade pip
 pip install -r requirements.txt
+# The root requirements.txt holds only python-vlc + pytest — Django,
+# Waitress and psycopg2 come from the editable backend installs.
+# Editable installs pick up code changes automatically; re-run them
+# only if a pyproject.toml changed (full sequence: INSTALL.md §4 Step 4).
 
 # Verify key packages after update:
 python -c "import django; print('Django', django.__version__)"
-python -c "import waitress; print('Waitress', waitress.__version__)"
+python -c "import importlib.metadata as m; print('Waitress', m.version('waitress'))"
 ```
 
-> If `requirements.txt` has changed significantly, consider recreating the
-> venv to avoid stale dependency artifacts:
+> If the venv must be **recreated**, `pip install -r requirements.txt`
+> alone is NOT enough — run the full dependency sequence from
+> INSTALL.md §4 Step 4 (requirements.txt + `psycopg2-binary` + the five
+> editable backend installs), or no service will start:
 > ```powershell
 > deactivate
 > Remove-Item -Recurse -Force C:\rastatime\.venv
 > python -m venv C:\rastatime\.venv
 > C:\rastatime\.venv\Scripts\Activate.ps1
 > pip install -r requirements.txt
+> pip install psycopg2-binary
+> pip install -e backend/shared
+> pip install -e backend/api-client
+> pip install -e backend/api
+> pip install -e backend/playout
+> pip install -e backend/analyzer
 > ```
 
 ### Step 4 — Apply database migrations
@@ -114,27 +128,27 @@ $env:LIBRETIME_CONFIG_FILEPATH  = "C:\rastatime\config\libretime.conf"
 $env:PYTHONPATH                 = "C:\rastatime\backend\api;C:\rastatime\backend\shared;C:\rastatime"
 
 # Show pending migrations before applying:
-python manage.py showmigrations --plan | Where-Object { $_ -match '\[ \]' }
+python libretime_api\manage.py showmigrations --plan | Where-Object { $_ -match '\[ \]' }
 
 # Apply:
-python manage.py migrate
+python libretime_api\manage.py migrate
 
 # Confirm no pending migrations remain:
-python manage.py migrate --check
+python libretime_api\manage.py migrate --check
 # Expected: exit code 0, "No migrations to apply."
 ```
 
+> `manage.py` lives at `backend\api\libretime_api\manage.py` — the
+> commands above are run from `backend\api`.
+
 > **Warning:** If the migration output mentions locking a large table
-> (e.g. `scheduleshow`, `files`), ensure no external clients are
+> (e.g. `cc_schedule`, `cc_files`), ensure no external clients are
 > connected to the database during this step.
 
-### Step 5 — Collect static files (if changed)
+### Step 5 — Restart services in dependency order
 
-```powershell
-python manage.py collectstatic --noinput --clear
-```
-
-### Step 6 — Restart services in dependency order
+(There is no `collectstatic` step — the prod settings define no
+`STATIC_ROOT` and none is needed.)
 
 ```powershell
 # Start API first:
@@ -145,18 +159,23 @@ $deadline = (Get-Date).AddSeconds(60)
 do {
     Start-Sleep -Seconds 3
     try {
-        $r = Invoke-WebRequest http://127.0.0.1:8000/health -UseBasicParsing -TimeoutSec 4
+        $r = Invoke-WebRequest http://127.0.0.1:8765/health -UseBasicParsing -TimeoutSec 4
         if ($r.StatusCode -eq 200) { Write-Host "API healthy."; break }
     } catch {}
 } while ((Get-Date) -lt $deadline)
 
-# Start remaining services:
+# Start remaining services (engine before playout — RESTART_ORDER.md §3):
 nssm start RASTATIME-WORKER
+nssm start RASTATIME-ICECAST
+nssm start RASTATIME-LIQUIDSOAP
 nssm start RASTATIME-PLAYOUT
-nssm start RASTATIME-ICECAST   # optional
+# (the playout's startup render rewrites rastatime.liq; if it logs
+#  "content changed", restart RASTATIME-LIQUIDSOAP once afterwards)
+nssm start RASTATIME-ANALYZER
+nssm start RASTATIME-APACHE
 ```
 
-### Step 7 — Verify the upgrade
+### Step 6 — Verify the upgrade
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File C:\rastatime\infra\nssm\status.ps1
@@ -182,9 +201,13 @@ version.
 ### 4.1 Stop services
 
 ```powershell
-nssm stop RASTATIME-PLAYOUT confirm
-nssm stop RASTATIME-WORKER  confirm
-nssm stop RASTATIME-API     confirm
+nssm stop RASTATIME-APACHE     confirm
+nssm stop RASTATIME-ANALYZER   confirm
+nssm stop RASTATIME-PLAYOUT    confirm
+nssm stop RASTATIME-LIQUIDSOAP confirm
+nssm stop RASTATIME-ICECAST    confirm
+nssm stop RASTATIME-WORKER     confirm
+nssm stop RASTATIME-API        confirm
 ```
 
 ### 4.2 Restore the previous code
@@ -210,7 +233,7 @@ backup (see `docs\operator\BACKUP.md` §4):
 # Stop all services if still running
 # Then restore:
 psql -U postgres -c "DROP DATABASE rastatime;"
-psql -U postgres -c "CREATE DATABASE rastatime OWNER rastatime_user;"
+psql -U postgres -c "CREATE DATABASE rastatime OWNER rastatime;"
 psql -U postgres -d rastatime -f C:\rastatime\backups\pre-upgrade-rastatime.sql
 ```
 
@@ -220,7 +243,15 @@ psql -U postgres -d rastatime -f C:\rastatime\backups\pre-upgrade-rastatime.sql
 Remove-Item -Recurse -Force C:\rastatime\.venv
 python -m venv C:\rastatime\.venv
 C:\rastatime\.venv\Scripts\Activate.ps1
+# Full dependency sequence (INSTALL.md §4 Step 4) — requirements.txt
+# alone is not enough:
 pip install -r requirements.txt
+pip install psycopg2-binary
+pip install -e backend/shared
+pip install -e backend/api-client
+pip install -e backend/api
+pip install -e backend/playout
+pip install -e backend/analyzer
 ```
 
 ### 4.5 Restart services
@@ -228,7 +259,11 @@ pip install -r requirements.txt
 ```powershell
 nssm start RASTATIME-API
 nssm start RASTATIME-WORKER
+nssm start RASTATIME-ICECAST
+nssm start RASTATIME-LIQUIDSOAP
 nssm start RASTATIME-PLAYOUT
+nssm start RASTATIME-ANALYZER
+nssm start RASTATIME-APACHE
 powershell -File C:\rastatime\infra\nssm\status.ps1
 ```
 
@@ -240,7 +275,8 @@ powershell -File C:\rastatime\infra\nssm\status.ps1
 |---|---|---|
 | Python | 3.11 | 64-bit; 3.12/3.13 supported |
 | PostgreSQL | 14 | 17 recommended; `pg_dump` for migration between PG versions |
-| VLC / libVLC | 3.0 | 64-bit; installed at `C:\Program Files\VideoLAN\VLC\` |
+| Liquidsoap | 2.4.4 | at `C:\Tools\liquidsoap\` (production playout engine) |
+| RabbitMQ | 4.x | requires Erlang OTP; vhost `/rastatime` |
 | NSSM | 2.24 | 64-bit build |
 | Django | pinned in `requirements.txt` | check release notes for ORM changes |
 

@@ -34,9 +34,9 @@ New features not present in LibreTime:
 | Component | Minimum version | Notes |
 |---|---|---|
 | Windows | 11 | Only supported platform |
-| Python | 3.12 | 3.13 tested and working |
+| Python | 3.11 | 3.13 tested and working |
 | PostgreSQL | 14 | Windows installer or Chocolatey |
-| RabbitMQ | 3.x | With management plugin |
+| RabbitMQ | 4.x | Requires Erlang OTP; vhost `/rastatime` |
 | PHP | 8.1 | For the legacy web frontend |
 | NSSM | 2.24 | Windows service wrapper |
 
@@ -51,8 +51,8 @@ RASTATIME/
 │   ├── api-client/    # Python API client library
 │   ├── analyzer/      # Media file analyzer
 │   ├── playout/       # Playout engine (Liquidsoap; mpv legacy fallback)
-│   ├── shared/        # Shared config models and utilities
-│   └── worker/        # Background task runner (plain Python)
+│   ├── shared/            # Shared config models and utilities
+│   └── rastatime_worker/  # Background task runner (runs via `python -m rastatime_worker`; not pip-installed)
 ├── frontend/
 │   └── legacy/        # PHP/JS web UI (LibreTime-compatible)
 ├── audio/
@@ -88,12 +88,17 @@ python -m venv .venv
 ### 3. Install backend packages
 
 ```powershell
+pip install -r requirements.txt
+# psycopg2 is not declared by any backend package — install it explicitly:
+pip install psycopg2-binary
+
 pip install -e "backend\shared"
 pip install -e "backend\api-client"
 pip install -e "backend\api[dev]"
-pip install -e "backend\worker"
 pip install -e "backend\playout"
 pip install -e "backend\analyzer"
+# (backend\rastatime_worker has no pyproject — it runs via
+#  `python -m rastatime_worker` with C:\rastatime\backend on PYTHONPATH.)
 ```
 
 ### 4. Create directories and configuration
@@ -117,8 +122,10 @@ psql -U postgres -c "GRANT ALL PRIVILEGES ON DATABASE rastatime TO rastatime;"
 
 ```powershell
 $env:LIBRETIME_CONFIG_FILEPATH = "C:\rastatime\config\libretime.conf"
+$env:DJANGO_SETTINGS_MODULE    = "libretime_api.settings.prod"
+$env:PYTHONPATH = "C:\rastatime\backend\api;C:\rastatime\backend\shared;C:\rastatime"
 cd backend\api
-python manage.py migrate
+python libretime_api\manage.py migrate
 ```
 
 ### 6. Install Windows services
@@ -128,6 +135,12 @@ python manage.py migrate
 powershell -ExecutionPolicy Bypass -File infra\nssm\install-api.ps1
 powershell -ExecutionPolicy Bypass -File infra\nssm\install-worker.ps1
 powershell -ExecutionPolicy Bypass -File infra\nssm\install-playout.ps1
+powershell -ExecutionPolicy Bypass -File infra\nssm\install-analyzer.ps1
+powershell -ExecutionPolicy Bypass -File infra\nssm\install-apache.ps1
+powershell -ExecutionPolicy Bypass -File infra\nssm\install-icecast.ps1 -IcecastExe 'C:\Tools\Icecast\bin\icecast.exe'
+powershell -ExecutionPolicy Bypass -File backend\playout\config\nssm-install-liquidsoap.ps1
+# Full sequence incl. the playout engine env vars and the Liquidsoap
+# script handling: docs\operator\INSTALL.md §4 Step 9.
 ```
 
 ### 7. Verify
@@ -149,7 +162,7 @@ Invoke-WebRequest -Uri http://127.0.0.1:8765/health
 | `infra\nssm\install-api.ps1` | Install RASTATIME-API service |
 | `infra\nssm\install-worker.ps1` | Install RASTATIME-WORKER service |
 | `infra\nssm\install-playout.ps1` | Install RASTATIME-PLAYOUT service |
-| `infra\nssm\status.ps1` | Show status of all services |
+| `infra\nssm\status.ps1` | Show status of the core services (API/worker/playout/Icecast — the other three via `Get-Service RASTATIME-*`) |
 | `infra\nssm\remove-api.ps1` | Uninstall RASTATIME-API service |
 | `infra\nssm\remove-worker.ps1` | Uninstall RASTATIME-WORKER service |
 | `infra\nssm\remove-playout.ps1` | Uninstall RASTATIME-PLAYOUT service |

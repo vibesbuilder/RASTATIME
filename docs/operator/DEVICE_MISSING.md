@@ -15,7 +15,10 @@ contains one of these messages:
 ```
 DeviceUnavailableError: Audio device '<stable_id>' is not available
 Audio output opened: <stable_id>   ← absent (never logged)
-OSError: CDLL libvlc.dll ...        ← different issue — see INSTALL.md §5.3
+OSError: CDLL libvlc.dll ...        ← different issue — playout fell back to
+                                      the legacy VLC engine; verify
+                                      RASTATIME_PLAYOUT_ENGINE=liquidsoap
+                                      (see MIGRATION.md §4.7)
 ```
 
 In the RASTATIME web UI (Settings → Soundcard), the configured main output
@@ -85,8 +88,7 @@ Get-ChildItem $path | ForEach-Object {
     $state = (Get-ItemProperty $_.PSPath).DeviceState
     if ($state -eq 1) {   # DEVICE_STATE_ACTIVE = 0x00000001
         $props = Join-Path $_.PSPath "Properties"
-        $name  = (Get-ItemProperty $props -ErrorAction SilentlyContinue)."
-{a45c254e-df1c-4efd-8020-67d146a850e0},2"
+        $name  = (Get-ItemProperty $props -ErrorAction SilentlyContinue)."{a45c254e-df1c-4efd-8020-67d146a850e0},2"
         [PSCustomObject]@{
             GUID         = $_.PSChildName
             FriendlyName = $name
@@ -152,12 +154,12 @@ devices appear in the dropdown.
 
 ```powershell
 # List available output devices via the REST API:
-Invoke-RestMethod http://127.0.0.1:8000/api/v2/soundcard/devices/outputs/ |
+Invoke-RestMethod http://127.0.0.1:8765/api/v2/soundcard/devices/outputs/ |
     Select-Object stable_id, name, channels | Format-Table
 
 # Update the main output (replace <new-stable-id> with the chosen device):
 $body = @{ main_output_id = "<new-stable-id>" } | ConvertTo-Json
-Invoke-RestMethod http://127.0.0.1:8000/api/v2/soundcard/settings/ `
+Invoke-RestMethod http://127.0.0.1:8765/api/v2/soundcard/settings/ `
     -Method Patch -ContentType "application/json" -Body $body
 ```
 

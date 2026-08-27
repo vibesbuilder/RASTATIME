@@ -194,7 +194,7 @@ liste d'exceptions de votre antivirus.**
   RASTATIME) : GUI Bitdefender → **Protection** →
   **Antivirus** → **Paramètres** → **Gérer les exceptions**
   → ajoutez le chemin du dossier d'enregistrement (par
-  exemple `C:\Users\studio\Music\Recording\` ou ce que vous
+  exemple `C:\Users\studio\Music\Show Recordings\` ou ce que vous
   avez configuré dans Settings → Local Machine → Recording
   Folder).
 - **Windows Defender** : Paramètres → **Mise à jour et

@@ -80,19 +80,32 @@ Total operator-effort: **~4-6 h** spread across 1-2 days
 This bundles everything the new machine needs: database, configs,
 media, recordings, repo, and NSSM service configurations.
 
-### 2.1 Run the BACKUP.md "Full Backup Script"
+### 2.1 Database dump for the migration
 
-See [`BACKUP.md` §6](BACKUP.md) for the canonical full-backup
-PowerShell script.  Run it; it produces:
+> **Revised 2026-08-27.** Earlier drafts claimed the BACKUP.md §6 script
+> produces a `C:\rastatime-backup\<date>\` bundle with custom-format
+> dumps — it does not: BACKUP.md §6 writes **plain-SQL** dumps to
+> `C:\rastatime-backups\db\rastatime-<date>.sql` plus dated config
+> copies.  Plain SQL cannot be fed to `pg_restore` (§4.1).  For the
+> migration, make a dedicated **custom-format** dump directly into the
+> bundle:
 
+```powershell
+New-Item -ItemType Directory -Path C:\rastatime-migration -Force | Out-Null
+$env:PGPASSWORD = '<db-password>'
+& "C:\Program Files\PostgreSQL\17\bin\pg_dump.exe" `
+    -h 127.0.0.1 -U rastatime -d rastatime -Fc `
+    -f C:\rastatime-migration\pg-rastatime.dump
+Remove-Item Env:\PGPASSWORD
 ```
-C:\rastatime-backup\<YYYY-MM-DD>\
-    pg-rastatime.dump      (PostgreSQL custom format)
-    pg-libretime.dump
-    libretime.conf
-    icecast.xml
-    .env-files
-    media-library-tree.csv  (file inventory)
+
+> `rastatime` is the **only** live database (§4.1) — there is no
+> `pg-libretime.dump` to make.  Also copy the two config files the
+> restore (§4.3) expects:
+
+```powershell
+Copy-Item C:\rastatime\config\libretime.conf C:\rastatime-migration\
+Copy-Item C:\rastatime\config\icecast.xml    C:\rastatime-migration\
 ```
 
 ### 2.2 Additional migration-only items (NOT in BACKUP.md)
@@ -114,11 +127,15 @@ robocopy C:\Tools\liquidsoap "$BUNDLE\Tools\liquidsoap" /MIR
 # 3) NSSM tool itself (in case the new machine doesn't have it)
 robocopy C:\Tools\nssm "$BUNDLE\Tools\nssm" /MIR
 
-# 4) NSSM service configurations (env-vars, paths, restart policies)
-#    "nssm dump" produces a "nssm install" + "nssm set" script
-#    that recreates the service identically on the new machine.
+# 4) NSSM service environments.  NOTE (2026-08-27): the deployed NSSM
+#    2.24 has NO "dump" command (that is a 2.25-prerelease feature) —
+#    earlier drafts of this step produced empty files.  Services are
+#    re-created fresh on the new machine via the install scripts (§4.7);
+#    export only the partly operator-maintained env blocks as reference
+#    (esp. RASTATIME-PLAYOUT's engine vars):
 $nssm = "C:\Tools\nssm\nssm.exe"
 foreach ($svc in @(
+    "RASTATIME-ANALYZER",
     "RASTATIME-APACHE",
     "RASTATIME-API",
     "RASTATIME-ICECAST",
@@ -126,11 +143,17 @@ foreach ($svc in @(
     "RASTATIME-PLAYOUT",
     "RASTATIME-WORKER"
 )) {
-    & $nssm dump $svc 2>&1 | Out-File "$BUNDLE\nssm-$svc.txt" -Encoding UTF8
+    & $nssm get $svc AppEnvironmentExtra 2>&1 |
+        Out-File "$BUNDLE\nssm-env-$svc.txt" -Encoding UTF8
 }
 
-# 5) Recordings (operator content — important to preserve)
-robocopy "C:\Users\studio\Music\Recording" "$BUNDLE\Recording" /MIR
+# 5) Recordings + import inbox (operator content — important to preserve)
+#    Three folders since Record-per-Hour (2026-06-06); the live values are the
+#    cc_pref keys local_recording_folder / local_247_recording_folder /
+#    local_import_folder.
+robocopy "C:\Users\studio\Music\Show Recordings"      "$BUNDLE\Show Recordings"      /MIR
+robocopy "C:\Users\studio\Music\Permanent Recordings" "$BUNDLE\Permanent Recordings" /MIR
+robocopy "C:\Users\studio\Music\Import"               "$BUNDLE\Import"               /MIR
 
 # 6) Media library (the bulk — easily 10-100 GB)
 #    This is the slow part.  ~30 GB takes ~5 min on Gigabit LAN.
@@ -182,10 +205,17 @@ years of registry cruft, driver-conflicts, AV exclusion drift.
   during operation — see Phase-D 2026-05-29 00:15-00:30 lesson)
 - Disable Auto-Sleep, Hibernate, Screensaver (system always on)
 - Set time-zone correctly (same as old machine)
-- Configure network: static IP or DHCP-reservation.  For a same-IP swap,
-  match the old machine (so DNS/firewall rules carry over).  For a **new
-  IP/hostname** (this migration), pick the new address now and apply the
-  config touchpoints in §4.8.
+- **Smart App Control: OFF.**  Enforced SAC silently blocks unsigned
+  binaries (php-cgi.exe, httpd.exe exit without a trace).  Switching it
+  off is only possible interactively in Windows Security and is
+  irreversible without a reinstall — do it now, before any stack
+  component runs.
+- Configure network **first**: static IP or DHCP-reservation **before**
+  any config references the address — a silent DHCP lease change after
+  the configs were written cost real debugging time (2026-08 run).
+  For a same-IP swap, match the old machine (so DNS/firewall rules
+  carry over).  For a **new IP/hostname** (this migration), pick the
+  new address now and apply the config touchpoints in §4.8.
 
 ### 3.2 Bitdefender install + MANDATORY exclusions
 
@@ -199,18 +229,22 @@ Paths:
   C:\RASTATIME
   C:\Tools
   C:\Program Files\PostgreSQL\17\data
-  C:\Users\studio\Music\Recording             ← Operator's recording folder
+  C:\Users\studio\Music\Show Recordings        ← show recordings (Record-per-Hour)
+  C:\Users\studio\Music\Permanent Recordings   ← 24/7 recordings
+  C:\Users\studio\Music\Import                 ← import inbox
   C:\rastatime                                ← runtime, scheduler cache, logs
-  D:\stor                                     ← media library on SSD-B (new!)
+  D:\stor                                     ← only once the second SSD exists
+                                                (see BACKLOG storage cleanup)
 
 Processes:
   C:\Tools\liquidsoap\liquidsoap.exe
   C:\Tools\nssm\nssm.exe
   C:\rastatime\.venv\Scripts\python.exe
-  C:\Program Files\Icecast\Icecast2.exe
+  C:\Tools\Icecast\bin\icecast.exe
   C:\Program Files\PostgreSQL\17\bin\postgres.exe
-  C:\xampp\php\php-cgi.exe                    ← or wherever PHP-CGI lives
-  C:\Apache24\bin\httpd.exe
+  C:\Tools\PHP\php-cgi.exe
+  C:\Tools\Apache24\bin\httpd.exe
+  C:\Program Files\Erlang OTP\erts-*\bin\erl.exe   ← RabbitMQ runtime
 ```
 
 Set Bitdefender update-check interval to **24h** (Settings → Update).
@@ -220,14 +254,26 @@ Liquidsoap pipeline (Phase-D learning 2026-05-29).
 ### 3.3 Run INSTALL.md
 
 Follow [`INSTALL.md`](INSTALL.md) §4 step-by-step to install:
+- Visual C++ Redistributable x64 (latest) — needed **before** Apache/PHP;
+  without it httpd.exe / php-cgi.exe exit silently
 - PostgreSQL 17
 - Python 3.13 + venv at `C:\rastatime\.venv`
-- Apache + PHP
-- Icecast
+- RabbitMQ 4.x + Erlang OTP — the analyzer's message queue (the PHP
+  frontend dispatches upload messages to it).  Create vhost `/rastatime`
+  + the user/password from `libretime.conf`'s `rabbitmq` section (port
+  5672).  Windows quirk: (re)install the service with an explicit
+  `RABBITMQ_BASE` (e.g. `C:\ProgramData\RabbitMQ`) via
+  `rabbitmq-service.bat remove` / `install`, otherwise the LocalSystem
+  service can crash on start when the installer ran as a normal user.
+- Apache (Apache Lounge 2.4.x Win64 at `C:\Tools\Apache24`) + PHP 8.3
+  NTS x64 at `C:\Tools\PHP`
+- Icecast **2.4.4** at `C:\Tools\Icecast` (deliberate — the live
+  `icecast.xml` relies on Icecast-2.4 auth semantics; 2.5 replaced them
+  with event-bindings and is a separate future upgrade, see BACKLOG)
 - NSSM (`C:\Tools\nssm\nssm.exe`)
-- All 6 RASTATIME NSSM services (APACHE, API, ICECAST,
+- All 7 RASTATIME NSSM services (ANALYZER, APACHE, API, ICECAST,
   LIQUIDSOAP, PLAYOUT, WORKER)
-- FFmpeg (for legacy mpv fallback path + Pypo audio analyzer)
+- FFmpeg (for legacy mpv fallback path + audio analysis)
 
 **Skip these INSTALL.md steps** (they're done by the restore in
 Phase C instead):
@@ -314,12 +360,19 @@ robocopy C:\rastatime-migration\RASTATIME C:\RASTATIME /MIR
 # (NOT \etc\ — verified 2026-06-16).
 Copy-Item C:\rastatime-migration\libretime.conf C:\rastatime\config\ -Force
 
-# Icecast config
-Copy-Item C:\rastatime-migration\Icecast\icecast.xml `
-    "C:\Program Files\Icecast\" -Force
+# Icecast config — the RASTATIME-ICECAST service reads it from
+# C:\rastatime\config\ (nssm AppParameters:
+#   -c C:\rastatime\config\icecast.xml), NOT from the Icecast
+# install folder (C:\Tools\Icecast).
+Copy-Item C:\rastatime-migration\icecast.xml C:\rastatime\config\ -Force
 ```
 
 ### 4.4 Storage cleanup — new root + drop the owner-id subfolder
+
+> **2026-08 run:** §§4.4-4.5 were deliberately **skipped** — the machine
+> went live on a single SSD with media still at `C:\rastatime\media`.
+> They remain valid and pending for the future D:-disk window (see
+> BACKLOG storage cleanup).
 
 The migration is the right moment to clean up two storage warts that
 can't be changed safely on a live machine:
@@ -441,39 +494,62 @@ with the matching `regexp_replace` on those columns.
 ### 4.6 Restore recordings
 
 ```powershell
-robocopy C:\rastatime-migration\Recording "C:\Users\studio\Music\Recording" /MIR
+robocopy "C:\rastatime-migration\Show Recordings"      "C:\Users\studio\Music\Show Recordings"      /MIR
+robocopy "C:\rastatime-migration\Permanent Recordings" "C:\Users\studio\Music\Permanent Recordings" /MIR
+robocopy "C:\rastatime-migration\Import"               "C:\Users\studio\Music\Import"               /MIR
 ```
 
-### 4.7 Restore NSSM service configurations
+### 4.7 Install the NSSM services
 
-The `nssm-*.txt` files from §2.2 are PowerShell-runnable scripts
-that recreate each service with the exact same env-vars, paths,
-and restart policies:
+> **Revised 2026-08-27.** Earlier drafts restored services by running
+> `nssm dump` output as PowerShell — that never worked: the deployed
+> NSSM **2.24 has no `dump` command** (a 2.25-prerelease feature; on
+> 2.24 it just opens the NSSM GUI), and `powershell.exe -File` refuses
+> `.txt` files outright.  Services are installed **fresh** via the
+> install scripts — the path the 2026-08-26 migration actually took.
+> The `nssm-env-*.txt` exports from §2.2 serve as reference for the
+> env blocks, nothing more.
 
 ```powershell
-# Stop old services first if they exist (from INSTALL.md fresh-install)
-foreach ($svc in @(
-    "RASTATIME-APACHE","RASTATIME-API","RASTATIME-ICECAST",
-    "RASTATIME-LIQUIDSOAP","RASTATIME-PLAYOUT","RASTATIME-WORKER"
-)) {
-    Stop-Service $svc -ErrorAction SilentlyContinue
-    & "C:\Tools\nssm\nssm.exe" remove $svc confirm
+# The six infra scripts (services install stopped; Phase D starts them):
+foreach ($s in @('api','worker','playout','analyzer','apache')) {
+    powershell -ExecutionPolicy Bypass `
+        -File "C:\rastatime\infra\nssm\install-$s.ps1"
 }
-
-# Re-create each from the dump
-foreach ($svc in @(
-    "RASTATIME-APACHE","RASTATIME-API","RASTATIME-ICECAST",
-    "RASTATIME-LIQUIDSOAP","RASTATIME-PLAYOUT","RASTATIME-WORKER"
-)) {
-    & powershell.exe -File "C:\rastatime-migration\nssm-$svc.txt"
-}
+# Icecast needs the explicit exe path (production layout C:\Tools\Icecast):
+powershell -ExecutionPolicy Bypass `
+    -File C:\rastatime\infra\nssm\install-icecast.ps1 `
+    -IcecastExe 'C:\Tools\Icecast\bin\icecast.exe'
+# Liquidsoap has its own script:
+powershell -ExecutionPolicy Bypass `
+    -File C:\rastatime\backend\playout\config\nssm-install-liquidsoap.ps1
 ```
 
-Verify the env-vars came across (especially the Liquidsoap engine flag):
+Caveat: `install-playout.ps1` does **not** set the engine variables.
+After it runs, set the **full** `AppEnvironmentExtra` on
+RASTATIME-PLAYOUT yourself — `nssm set` **replaces** the whole env
+block, so repeat the five script-set vars *and* add the three extras:
+
+```powershell
+& "C:\Tools\nssm\nssm.exe" set RASTATIME-PLAYOUT AppEnvironmentExtra `
+    "DJANGO_SETTINGS_MODULE=libretime_api.settings.prod" `
+    "LIBRETIME_CONFIG_FILEPATH=C:\rastatime\config\libretime.conf" `
+    "RASTATIME_API_URL=http://127.0.0.1:8765" `
+    "PYTHONPATH=C:\rastatime\backend\api;C:\rastatime\backend\shared;C:\rastatime" `
+    "PATH=C:\ffmpeg\bin;%PATH%" `
+    "RASTATIME_MPV_LOG_LEVEL=warn" `
+    "RASTATIME_PLAYOUT_ENGINE=liquidsoap" `
+    "RASTATIME_LIQUIDSOAP_CROSSFADE_SECONDS=1.0"
+```
+
+Verify the env-vars are complete (especially the Liquidsoap engine flag):
 
 ```powershell
 & "C:\Tools\nssm\nssm.exe" get RASTATIME-PLAYOUT AppEnvironmentExtra
-# Expected (3 lines):
+# Must contain, BESIDES the five install-script vars
+# (DJANGO_SETTINGS_MODULE=libretime_api.settings.prod,
+#  LIBRETIME_CONFIG_FILEPATH=..., RASTATIME_API_URL=http://127.0.0.1:8765,
+#  PYTHONPATH=..., PATH=C:\ffmpeg\bin;%PATH%), the three engine extras:
 #   RASTATIME_MPV_LOG_LEVEL=warn
 #   RASTATIME_PLAYOUT_ENGINE=liquidsoap
 #   RASTATIME_LIQUIDSOAP_CROSSFADE_SECONDS=1.0
@@ -494,7 +570,9 @@ Verify the env-vars came across (especially the Liquidsoap engine flag):
 - **Icecast** (`icecast.xml`) — `<hostname>` and any per-mount public URL
   to the new address; restart Icecast afterwards.
 - **Windows Firewall** — open the stream/DJ/web ports on the **new**
-  machine: 8000 (Icecast), 8001 (DJ harbor), 80/443 (web UI).
+  machine: 8000 (Icecast), 8001 (Liquidsoap DJ harbor — `/main` and
+  `/show` share it; 8002 is only its ICY companion listener), 80/443
+  (web UI).
 - **External references** (off the box) — website `<audio src>`, the
   request-/now-playing-widget iframes, external monitoring (Uptime-Robot),
   and any DNS A-record must point at the new address.
@@ -503,6 +581,35 @@ Verify the env-vars came across (especially the Liquidsoap engine flag):
 
 After these, the new machine streams on its own IP independently of the old
 one — verify in §5.4.
+
+### 4.9 `rastatime.liq` — rendered by the playout, not by hand
+
+The Liquidsoap production script `C:\Tools\liquidsoap\rastatime.liq` is
+**machine-generated**: rendered from the template plus the stream
+outputs stored in the restored DB (`cc_pref` keys `stream_output_N` —
+**not** `libretime.conf`).  Any copy that came over in the bundle still
+embeds the old machine's values.
+
+**RASTATIME-PLAYOUT re-renders the script at every startup** — with the
+`stream.harbor` DJ passwords from `libretime.conf` and the crossfade
+setting from its service environment.  So in the §5.1 smoke test, after
+all services are up, restart Liquidsoap **once** so it loads the script
+the playout just rendered:
+
+```powershell
+nssm restart RASTATIME-LIQUIDSOAP
+# Then verify the DJ harbors are listening:
+Get-NetTCPConnection -State Listen | Where-Object { $_.LocalPort -in 8001,8002 }
+```
+
+> **Do NOT use the manual CLI render**
+> (`python -m libretime_playout.liquidsoap_config render`) on a
+> configured system: it does not read `stream.harbor` and strips the DJ
+> harbor inputs from the script (found the hard way on 2026-08-27 —
+> the DJ harbor on 8001 was dead until a Liquidsoap restart with the
+> playout-rendered script; `/main` and `/show` share port 8001).  The same rule applies after **any**
+> Settings → Streams change: `nssm restart RASTATIME-PLAYOUT`, then
+> `nssm restart RASTATIME-LIQUIDSOAP`.
 
 ---
 
@@ -514,14 +621,19 @@ one — verify in §5.4.
 
 ```powershell
 foreach ($svc in @(
-    "RASTATIME-APACHE","RASTATIME-API","RASTATIME-ICECAST",
-    "RASTATIME-LIQUIDSOAP","RASTATIME-PLAYOUT","RASTATIME-WORKER"
+    "RASTATIME-APACHE","RASTATIME-API","RASTATIME-ANALYZER",
+    "RASTATIME-ICECAST","RASTATIME-LIQUIDSOAP","RASTATIME-PLAYOUT",
+    "RASTATIME-WORKER"
 )) {
     Start-Service $svc
 }
 Start-Sleep -Seconds 30
 Get-Service RASTATIME-* | Format-Table Name, Status -AutoSize
-# All should be Running.
+# All 7 should be Running.
+
+# API health gate — the API listens on 8765 (port 8000 is Icecast):
+curl.exe -i http://127.0.0.1:8765/health
+# Expect HTTP 200.
 ```
 
 ### 5.2 Web-UI loads
@@ -529,7 +641,8 @@ Get-Service RASTATIME-* | Format-Table Name, Status -AutoSize
 - Login with operator credentials (from the restored database)
 - Calendar shows your schedule
 - Settings → Streams shows configured outputs
-- Settings → Local Machine shows recording folder
+- Settings → Local Machine shows the three folders (show recordings,
+  permanent recordings, import inbox)
 
 ### 5.3 Telnet sanity-check
 ```powershell
@@ -568,8 +681,9 @@ machine's IP.  Tell them now.
 ```powershell
 # On the OLD machine
 foreach ($svc in @(
-    "RASTATIME-APACHE","RASTATIME-API","RASTATIME-ICECAST",
-    "RASTATIME-LIQUIDSOAP","RASTATIME-PLAYOUT","RASTATIME-WORKER"
+    "RASTATIME-APACHE","RASTATIME-API","RASTATIME-ANALYZER",
+    "RASTATIME-ICECAST","RASTATIME-LIQUIDSOAP","RASTATIME-PLAYOUT",
+    "RASTATIME-WORKER"
 )) {
     Stop-Service $svc
 }
@@ -585,8 +699,9 @@ foreach ($svc in @(
   update the A-record to new IP, wait for TTL (usually 5 min).
 - **If a same-IP swap instead**: change the new machine to the old
   machine's IP (brief network reconfiguration; then §4.8 is not needed).
-- **Firewall rules**: forward ports 8000 (Icecast), 8001 (DJ
-  harbor), 80/443 (web UI) to the new machine.
+- **Firewall rules**: forward ports 8000 (Icecast), 8001 (Liquidsoap
+  DJ harbor — both mounts; 8002 = ICY companion), 80/443 (web UI) to
+  the new machine.
 
 ### 6.4 DJ-tool reconfiguration
 - BUTT / Mixxx / Traktor: update server-host to new machine's
@@ -608,7 +723,8 @@ required.
 - Liquidsoap log: no `Latency is too high` catchups (this was the
   whole point of the hardware upgrade)
 - Pypo log: no errors, schedule refreshes happen on time
-- Disk usage: media library on D:, recordings on C: (or wherever
+- Disk usage: media library on D: (or still `C:\rastatime\media` while
+  the §4.4 storage cleanup is pending), recordings on C: (or wherever
   configured), no disk filling up unexpectedly
 
 ### 7.2 Decommission old machine
@@ -634,13 +750,21 @@ If the new machine has issues within the first 24 h:
 
 ### 8.1 Stop new machine services
 ```powershell
-foreach ($svc in @(...)) { Stop-Service $svc }
+foreach ($svc in @(
+    "RASTATIME-APACHE","RASTATIME-API","RASTATIME-ANALYZER",
+    "RASTATIME-ICECAST","RASTATIME-LIQUIDSOAP","RASTATIME-PLAYOUT",
+    "RASTATIME-WORKER"
+)) { Stop-Service $svc }
 ```
 
 ### 8.2 Restart old machine services
 ```powershell
 # On the OLD machine
-foreach ($svc in @(...)) { Start-Service $svc }
+foreach ($svc in @(
+    "RASTATIME-APACHE","RASTATIME-API","RASTATIME-ANALYZER",
+    "RASTATIME-ICECAST","RASTATIME-LIQUIDSOAP","RASTATIME-PLAYOUT",
+    "RASTATIME-WORKER"
+)) { Start-Service $svc }
 ```
 
 ### 8.3 DNS/IP back to old machine
@@ -662,7 +786,7 @@ time you need to debug the new one.
 - [`BACKUP.md`](BACKUP.md) — routine backup procedure (referenced
   in Phase A)
 - [`LIQUIDSOAP_CUTOVER.md`](LIQUIDSOAP_CUTOVER.md) — engine-mode
-  cutover (the env-var setup of Phase B §4.7)
+  cutover (the env-var setup of Phase C §4.7)
 - [`CRASH_RECOVERY.md`](CRASH_RECOVERY.md) — if the new machine
   crashes mid-migration
 - ARCHITECTURE §23 — system design context (file paths, service

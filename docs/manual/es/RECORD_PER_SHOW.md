@@ -176,7 +176,7 @@ de excepciones de su antivirus.**
   RASTATIME): GUI Bitdefender → **Protección** →
   **Antivirus** → **Configuración** → **Gestionar
   excepciones** → agregar la ruta de la carpeta de
-  grabación (por ejemplo `C:\Users\studio\Music\Recording\`
+  grabación (por ejemplo `C:\Users\studio\Music\Show Recordings\`
   o lo que configuró en Settings → Local Machine →
   Show Recording Folder).
 - **Windows Defender**: Configuración → **Actualización y

@@ -6,7 +6,7 @@
 general:
   public_url: http://localhost
   api_key: change-before-production
-  secret_key: change-before-production-use-at-least-32-random-chars
+  secret_key: change-before-production-use-at-least-50-random-chars
   timezone: Europe/Berlin
 
 storage:

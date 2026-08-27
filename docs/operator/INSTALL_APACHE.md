@@ -16,19 +16,25 @@ Service registration is handled separately by `infra/nssm/install-apache.ps1`.
 
 ## 1. Install the binaries
 
-1. Download Apache 2.4 (Win64, with `mod_fcgid`) — the [Apache Lounge
+1. Install the latest **Microsoft Visual C++ Redistributable (x64)**
+   first.  The Apache Lounge builds (currently the VS18 build) and
+   PHP 8.3 NTS x64 are linked against it — without it `httpd.exe`
+   and `php-cgi.exe` exit **silently**, with no error message and
+   nothing in the logs.
+2. Download Apache 2.4 (Win64) — the [Apache Lounge
    distribution](https://www.apachelounge.com/download/) is the
-   standard choice.
-2. Extract to `C:\Tools\Apache24\` (the install scripts assume this
+   standard choice.  `mod_fcgid` is a **separate** module zip on the
+   same download page — fetch it too and drop `mod_fcgid.so` into
+   `modules\`.
+3. Extract to `C:\Tools\Apache24\` (the install scripts assume this
    path; pass `-ApacheRoot` to `install-apache.ps1` if you put it
    elsewhere).
-3. Install PHP 8.3 (Non-Thread-Safe / x64) to `C:\Tools\PHP\`.
+4. Install PHP 8.3 (Non-Thread-Safe / x64) to `C:\Tools\PHP\`.
 
 After extracting, the layout should be:
 
     C:\Tools\Apache24\
         bin\httpd.exe
-        bin\httpd.conf
         conf\httpd.conf
         modules\mod_fcgid.so
         logs\
@@ -50,6 +56,19 @@ Listen 80
 ServerName localhost:80
 ```
 
+### Required modules
+
+```apache
+LoadModule rewrite_module    modules/mod_rewrite.so
+LoadModule proxy_module      modules/mod_proxy.so
+LoadModule proxy_http_module modules/mod_proxy_http.so
+```
+
+`mod_rewrite` drives the ZF1 front-controller rules below;
+`mod_proxy` / `mod_proxy_http` serve the `/api/v2/` reverse proxy to
+the Django API.  (`mod_fcgid` is loaded in its own section further
+down.)
+
 ### DocumentRoot pointed at the RASTATIME frontend
 
 ```apache
@@ -58,8 +77,25 @@ DocumentRoot "C:/RASTATIME/frontend/legacy/public"
     Options Indexes FollowSymLinks
     AllowOverride All
     Require all granted
+
+    # ZF1 front controller: send every request that is not an
+    # existing file, symlink, or directory to index.php.
+    RewriteEngine On
+    # Re-export the Authorization header into the FastCGI env.
+    # mod_fcgid strips it otherwise, which breaks Basic-auth
+    # endpoints (e.g. the Icecast stream_auth listener-allow hook).
+    RewriteRule ^ - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+    RewriteCond %{REQUEST_FILENAME} -s [OR]
+    RewriteCond %{REQUEST_FILENAME} -l [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^.*$ - [NC,L]
+    RewriteRule ^.*$ index.php [NC,L]
 </Directory>
 ```
+
+The `HTTP_AUTHORIZATION` line is not optional: without it the
+frontend appears to work, but every endpoint relying on HTTP Basic
+auth silently receives no credentials.
 
 ### mod_fcgid + PHP
 
@@ -80,13 +116,30 @@ LoadModule fcgid_module modules/mod_fcgid.so
 </IfModule>
 ```
 
-### .htaccess support (the legacy frontend uses it)
+### .htaccess
+
+The frontend ships **no** `.htaccess` files — the front-controller
+rewrite lives directly in `httpd.conf` (see above), and production
+keeps the stock `<Directory /> AllowOverride none`.  The
+`AllowOverride All` inside the DocumentRoot `<Directory>` block is
+sufficient.
+
+### Reverse proxy to the RASTATIME API (server scope)
+
+At **server scope** (not inside any `<Directory>` or `<VirtualHost>`):
 
 ```apache
-<Directory />
-    AllowOverride All
-</Directory>
+ProxyPreserveHost On
+ProxyPass        /api/v2/   http://127.0.0.1:8765/api/v2/
+ProxyPassReverse /api/v2/   http://127.0.0.1:8765/api/v2/
+ProxyPass        /api-auth/ http://127.0.0.1:8765/api-auth/
+ProxyPassReverse /api-auth/ http://127.0.0.1:8765/api-auth/
 ```
+
+Port **8765** is the RASTATIME API (`RASTATIME-API` service).  Do
+not use 8000 — that port belongs to Icecast.  `ProxyPreserveHost On`
+keeps the original `Host:` header so the API builds correct absolute
+URLs.
 
 ## 3. Adjust PHP upload limits
 

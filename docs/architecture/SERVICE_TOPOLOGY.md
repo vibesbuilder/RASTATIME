@@ -3,7 +3,12 @@
 **Status:** Accepted  
 **Task:** T21.1  
 **Date:** 2026-04-30  
-**Prerequisite ADRs:** ADR-001 (Windows-first), ADR-002 (libVLC), ADR-003 (Icecast auxiliary), ADR-005 (NSSM)
+**Revised:** 2026-08-27 — updated to the seven-service production topology
+(Liquidsoap engine since the 2026-05 cutover, API on 8765, RabbitMQ
+required, ANALYZER/APACHE/LIQUIDSOAP services added; verified against the
+2026-08 studio-machine migration).  
+**Prerequisite ADRs:** ADR-001 (Windows-first), ADR-002 (libVLC — superseded
+by the 2026-05 Liquidsoap cutover), ADR-003 (Icecast auxiliary), ADR-005 (NSSM)
 
 ---
 
@@ -13,25 +18,39 @@ RASTATIME runs as a set of Windows services managed by NSSM (Non-Sucking
 Service Manager, ADR-005).  Each service is an independent OS process; NSSM
 handles auto-start on reboot and restart-on-crash for each.
 
-There are **four candidate services**.  Two are mandatory in all deployments;
-two are conditional on feature adoption.
+There are **seven production services** (plus two external Windows
+services, PostgreSQL and RabbitMQ).
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│  PostgreSQL 17  (external, Windows service, always required) │
+│  PostgreSQL 17   (external, Windows service, always required)│
+│  RabbitMQ 4.x    (external, Windows service, required —      │
+│                   analyzer queue + upload dispatch)          │
 └──────────────────┬───────────────────────────────────────────┘
-                   │ DB connection
+                   │
        ┌───────────▼───────────┐     ┌─────────────────────────┐
-       │  RASTATIME-API        │◄────│  RASTATIME-WORKER        │
-       │  Waitress / Django    │     │  Background job runner   │
-       │  port 8000            │     │  (APScheduler-based)     │
-       └───────────┬───────────┘     └─────────────────────────┘
-                   │ DB + shared state
-       ┌───────────▼───────────┐     ┌─────────────────────────┐
-       │  RASTATIME-PLAYOUT    │────►│  RASTATIME-ICECAST       │
-       │  libVLC playout engine│     │  Icecast 2.x stream srv  │
-       │  (no external port)   │     │  port 8001  [OPTIONAL]   │
-       └───────────────────────┘     └─────────────────────────┘
+       │  RASTATIME-API        │◄────│  RASTATIME-WORKER       │
+       │  Waitress / Django    │     │  Background job runner  │
+       │  port 8765            │     └─────────────────────────┘
+       └───────────┬───────────┘     ┌─────────────────────────┐
+                   │◄────────────────│  RASTATIME-ANALYZER     │
+                   │                 │  RabbitMQ upload consumer│
+       ┌───────────▼───────────┐     └─────────────────────────┘
+       │  RASTATIME-APACHE     │  port 80 — PHP frontend;
+       │  (proxies /api/v2/ →  │  serves the web UI
+       │   127.0.0.1:8765)     │
+       └───────────────────────┘
+       ┌───────────────────────┐     ┌─────────────────────────┐
+       │  RASTATIME-PLAYOUT    │────►│  RASTATIME-LIQUIDSOAP   │
+       │  Pypo scheduler       │     │  audio engine; DJ       │
+       │  (drives Liquidsoap   │     │  harbor 8001 (both      │
+       │   via telnet)         │     │  mounts /main + /show)  │
+       └───────────────────────┘     └───────────┬─────────────┘
+                                                 │ source client
+                                     ┌───────────▼─────────────┐
+                                     │  RASTATIME-ICECAST      │
+                                     │  port 8000 (listeners)  │
+                                     └─────────────────────────┘
 ```
 
 ---
@@ -44,9 +63,9 @@ two are conditional on feature adoption.
 |---|---|
 | NSSM service name | `RASTATIME-API` |
 | Executable | `python.exe` |
-| Arguments | `-m libretime_api.waitress_serve --host 0.0.0.0 --port 8000 --threads 8` |
+| Arguments | `-m libretime_api.waitress_serve --host 0.0.0.0 --port 8765 --threads 8` |
 | Working directory | `C:\rastatime\backend\api` |
-| Bind address | `0.0.0.0:8000` |
+| Bind address | `0.0.0.0:8765` |
 | Log (stdout) | `C:\rastatime\logs\api-stdout.log` |
 | Log (stderr) | `C:\rastatime\logs\api-stderr.log` |
 | Depends on | PostgreSQL (external Windows service) |
@@ -63,7 +82,7 @@ the API tier go through this process.
 DJANGO_SETTINGS_MODULE = libretime_api.settings.prod
 LIBRETIME_CONFIG_FILEPATH = C:\rastatime\config\libretime.conf
 RASTATIME_API_HOST = 0.0.0.0
-RASTATIME_API_PORT = 8000
+RASTATIME_API_PORT = 8765
 RASTATIME_API_THREADS = 8
 ```
 
@@ -92,9 +111,11 @@ Windows-native background runner.  Handles:
 - Playout history aggregation
 - Scheduled cleanup tasks
 
-No broker (RabbitMQ) is required.  All job state lives in PostgreSQL.  A
-broker may be introduced in a later phase if fan-out or deferred retries
-become necessary — this is a conditional item (see §4).
+The worker itself needs no broker — its job state lives in PostgreSQL.
+RabbitMQ is nevertheless **required** in the stack: the PHP frontend
+publishes a message for every upload, and RASTATIME-ANALYZER (§2.5)
+consumes that queue (vhost `/rastatime`, port 5672, credentials in the
+`rabbitmq` section of `libretime.conf`).
 
 **Key environment variables:**
 
@@ -111,7 +132,7 @@ LIBRETIME_CONFIG_FILEPATH = C:\rastatime\config\libretime.conf
 |---|---|
 | NSSM service name | `RASTATIME-PLAYOUT` |
 | Executable | `python.exe` |
-| Arguments | `-m playout` |
+| Arguments | `-m libretime_playout` |
 | Working directory | `C:\rastatime` |
 | External port | None (IPC via shared DB; future: named pipe or local socket) |
 | Log (stdout) | `C:\rastatime\logs\playout-stdout.log` |
@@ -120,18 +141,30 @@ LIBRETIME_CONFIG_FILEPATH = C:\rastatime\config\libretime.conf
 | Restart on crash | Yes — NSSM automatic restart, 5 s delay |
 
 **Responsibility:**  
-libVLC-based on-air playout engine (ADR-002).  Reads the show schedule from
-PostgreSQL, drives the libVLC queue, tracks now-playing state, writes playback
-history events via `PlaybackEventPersister`, and manages line-in routing.  
-Soundcard output device selection is read from `rastatime_soundcard_settings`.
+On-air playout scheduler (Pypo).  Reads the show schedule from
+PostgreSQL/API, drives the **Liquidsoap** audio engine (RASTATIME-LIQUIDSOAP,
+§2.7) via its telnet interface, tracks now-playing state, writes playback
+history events, and manages line-in routing.  Soundcard output device
+selection is read from `rastatime_soundcard_settings`.  The Liquidsoap
+production script `C:\Tools\liquidsoap\rastatime.liq` is rendered from a
+template plus the DB stream settings via
+`python -m libretime_playout.liquidsoap_config render`.
+(mpv/VLC remain only as legacy fallback engine code pending deletion.)
 
 **Key environment variables:**
 
 ```
 DJANGO_SETTINGS_MODULE = libretime_api.settings.prod
 LIBRETIME_CONFIG_FILEPATH = C:\rastatime\config\libretime.conf
-RASTATIME_VLC_PLUGIN_PATH = C:\Program Files\VideoLAN\VLC\plugins
+RASTATIME_API_URL = http://127.0.0.1:8765
+RASTATIME_PLAYOUT_ENGINE = liquidsoap
+RASTATIME_MPV_LOG_LEVEL = warn
+RASTATIME_LIQUIDSOAP_CROSSFADE_SECONDS = 1.0
 ```
+
+> `install-playout.ps1` sets only the first three (plus PYTHONPATH/PATH);
+> the three `RASTATIME_*` engine extras are applied manually after install
+> (`nssm set` replaces the whole env block — see MIGRATION.md §4.7).
 
 **Note on IPC:**  
 In the initial implementation the playout engine and the API server share state
@@ -143,33 +176,82 @@ requirements demand it.
 
 ---
 
-### 2.4 RASTATIME-ICECAST  *(optional — stream egress/ingress)*
+### 2.4 RASTATIME-ICECAST  *(streaming)*
 
 | Property | Value |
 |---|---|
 | NSSM service name | `RASTATIME-ICECAST` |
-| Executable | `icecast.exe` |
+| Executable | `C:\Tools\Icecast\bin\icecast.exe` (Icecast **2.4.4** — deliberate; the live `icecast.xml` uses 2.4 auth semantics) |
 | Arguments | `-c C:\rastatime\config\icecast.xml` |
-| Working directory | `C:\Program Files\Icecast` |
-| External ports | `8001` (HTTP streams), `8002` (admin UI) — configurable in `icecast.xml` |
-| Log | `C:\rastatime\logs\icecast.log` (via `icecast.xml` `<logdir>`) |
+| Working directory | `C:\Tools\Icecast` |
+| External port | `8000` (HTTP streams + admin UI) — configurable in `icecast.xml` |
+| Log | `C:\rastatime\logs\` (via `icecast.xml` `<logdir>`) |
 | Depends on | Nothing from RASTATIME stack (standalone audio server) |
 | Restart on crash | Yes — NSSM automatic restart, 15 s delay |
 
 **Responsibility:**  
-Auxiliary stream server (ADR-003).  Used only if the deployment requires:
-- Outgoing internet audio streams (HTTP/Opus/MP3) for public listeners, OR
-- Incoming remote live streams (source client → Icecast mount → RASTATIME-PLAYOUT)
+Stream server (ADR-003).  Serves the public listener mounts
+(`/rastatime`, `/rastatime-aac`, `/rastatime-ogg`) pushed by
+RASTATIME-LIQUIDSOAP as a source client, plus the hidden input mounts
+`/main` and `/show` with `stream_auth`-based DJ authentication, and the
+hidden `/linein-capture` mount (raw line-in fan-out; source-password
+only, no `stream_auth`).
 
-When Icecast is present, RASTATIME-PLAYOUT connects to it as a source client
-via libVLC's `stream_out` module.  When Icecast is absent, audio reaches
-listeners only through the local soundcard (direct studio monitoring) — no
-public stream is available.
+**Port rationale:**  
+The API listens on 8765, so Icecast keeps its default **8000**.  Port
+**8001** is the **Liquidsoap DJ harbor** — both DJ mounts (`/main` and
+`/show`) share it (single-port workaround for a Liquidsoap 2.4.4
+multi-port harbor bug, 2026-05-27; 8002, the originally planned Show
+port, is only the harbor's ICY companion listener).  It belongs to
+RASTATIME-LIQUIDSOAP, not to Icecast.
 
-**Port selection rationale:**  
-Icecast defaults to port 8000.  RASTATIME-API occupies port 8000.  Icecast is
-therefore configured to port 8001 to avoid the conflict.  Adjust `icecast.xml`
-and inform DJs/listeners of the correct mount URL.
+---
+
+### 2.5 RASTATIME-ANALYZER  *(mandatory)*
+
+| Property | Value |
+|---|---|
+| NSSM service name | `RASTATIME-ANALYZER` |
+| Executable | `libretime-analyzer.exe` (venv console script) |
+| Working directory | `C:\rastatime\backend\analyzer` |
+| External port | None (consumes RabbitMQ) |
+| Logs | `analyzer-stdout.log` / `analyzer-stderr.log` |
+| Depends on | RabbitMQ + RASTATIME-API |
+| Restart on crash | Yes — 10 s delay |
+
+Media-import pipeline: consumes the RabbitMQ upload queue, extracts
+metadata/ReplayGain/cue points (FFmpeg on PATH), moves files into the
+storage tree and flips `cc_files` from "Pending Import" to "Ready".
+
+### 2.6 RASTATIME-APACHE  *(mandatory — web UI)*
+
+| Property | Value |
+|---|---|
+| NSSM service name | `RASTATIME-APACHE` |
+| Executable | `C:\Tools\Apache24\bin\httpd.exe` |
+| External port | `80` (web UI) |
+| Logs | `apache-nssm-*.log` (NSSM) + Apache's own logs under `C:\Tools\Apache24\logs` |
+| Depends on | RASTATIME-API (proxies `/api/v2/` + `/api-auth/` to `127.0.0.1:8765`) |
+| Restart on crash | Yes — 5 s delay; bounded stop methods |
+
+PHP 8.3 legacy frontend via mod_fcgid (see INSTALL_APACHE.md).
+
+### 2.7 RASTATIME-LIQUIDSOAP  *(mandatory — audio engine)*
+
+| Property | Value |
+|---|---|
+| NSSM service name | `RASTATIME-LIQUIDSOAP` |
+| Executable | `C:\Tools\liquidsoap\liquidsoap.exe` |
+| Arguments | `C:\Tools\liquidsoap\rastatime.liq` (machine-rendered — see §2.3) |
+| External ports | `8001` (DJ harbor — `/main` and `/show` share it; `8002` is the harbor's ICY companion listener), telnet `1234` (localhost, Pypo control) |
+| Logs | `liquidsoap-stdout.log` / `liquidsoap-stderr.log` |
+| Depends on | RASTATIME-ICECAST (pushes the output mounts) |
+| Restart on crash | Yes — 5 s delay, throttled |
+
+Production audio engine since the 2026-05 cutover (Seamless-Bus-Mix
+Phase 2): gapless transitions, native crossfade, persistent Icecast
+source connections, DJ harbors, hourly 24/7 recording.
+Install script: `backend\playout\config\nssm-install-liquidsoap.ps1`.
 
 ---
 
@@ -178,15 +260,19 @@ and inform DJs/listeners of the correct mount URL.
 ```
 Boot
  │
- ├─1─► PostgreSQL           (Windows built-in service; must be Running)
+ ├─1─► PostgreSQL + RabbitMQ  (Windows services; must be Running)
  │
- ├─2─► RASTATIME-API        (waits ~5 s for PostgreSQL TCP readiness)
+ ├─2─► RASTATIME-API          (waits ~5 s for PostgreSQL TCP readiness)
  │
- ├─3─► RASTATIME-WORKER     (waits for RASTATIME-API /health 200)
+ ├─3─► RASTATIME-WORKER       (waits for RASTATIME-API /health 200)
  │
- ├─4─► RASTATIME-PLAYOUT    (waits for RASTATIME-API /health 200)
+ ├─4─► RASTATIME-ICECAST      (standalone; before Liquidsoap)
+ ├─5─► RASTATIME-LIQUIDSOAP   (pushes output mounts to Icecast)
  │
- └─5─► RASTATIME-ICECAST    (optional; independent; start any time)
+ ├─6─► RASTATIME-PLAYOUT      (waits for /health 200; drives Liquidsoap)
+ │
+ ├─7─► RASTATIME-ANALYZER     (needs RabbitMQ + API)
+ └─8─► RASTATIME-APACHE       (web UI; proxies to the API)
 ```
 
 **NSSM does not natively enforce service-start ordering.**  
@@ -195,7 +281,7 @@ Ordering is achieved in two ways:
 1. **Startup delay** — each NSSM service is configured with a startup delay
    (`AppThrottle`) that gives earlier services time to become ready.
 2. **Health-check gate** (implemented in T22.1 install scripts) — worker and
-   playout entry points poll `http://127.0.0.1:8000/health` with exponential
+   playout entry points poll `http://127.0.0.1:8765/health` with exponential
    backoff before starting their main loop.
 
 ---
@@ -204,8 +290,8 @@ Ordering is achieved in two ways:
 
 | Component | Condition | Phase |
 |---|---|---|
-| **RASTATIME-ICECAST** | Required only if outgoing public streams or remote live-stream ingress is needed | Install-time choice; add service with T22.1 script |
-| **RabbitMQ broker** | Deferred; only if worker fan-out or deferred retry patterns exceed SQLite/PG capabilities | Not in phase 1; re-evaluate in M30+ |
+| **RASTATIME-ICECAST** | Part of the production stack (public streams + DJ input mounts) | Installed by default since the Liquidsoap cutover |
+| **RabbitMQ broker** | **Required** — analyzer upload queue + PHP upload dispatch (vhost `/rastatime`, port 5672) | In production since the analyzer service |
 
 ---
 
@@ -213,13 +299,16 @@ Ordering is achieved in two ways:
 
 | Service | Port | Protocol | Notes |
 |---|---|---|---|
-| RASTATIME-API | 8000 | HTTP (Waitress) | REST API + legacy PHP frontend proxy |
-| RASTATIME-ICECAST | 8001 | HTTP (Icecast) | Audio stream HTTP endpoint; configurable |
-| RASTATIME-ICECAST | 8002 | HTTP (Icecast) | Icecast admin UI; configurable |
+| RASTATIME-APACHE | 80 | HTTP (Apache) | Web UI; proxies `/api/v2/` to the API |
+| RASTATIME-API | 8765 | HTTP (Waitress) | REST API + health endpoint |
+| RASTATIME-ICECAST | 8000 | HTTP (Icecast) | Listener streams + admin UI |
+| RASTATIME-LIQUIDSOAP | 8001 | HTTP (harbor) | DJ source inputs — `/main` **and** `/show` (shared port; 8002 = ICY companion) |
+| RASTATIME-LIQUIDSOAP | 1234 | telnet (localhost) | Pypo control channel |
+| RabbitMQ | 5672 | AMQP | Upload queue (vhost `/rastatime`); managed externally |
 | PostgreSQL | 5432 | TCP | Standard PostgreSQL; managed externally |
 
-All ports are configurable via environment variables (API) or `icecast.xml`
-(Icecast).  The values above are the RASTATIME defaults for phase 1.
+All ports are configurable via install-script parameters (API), the
+rendered `rastatime.liq` (harbors/telnet), or `icecast.xml` (Icecast).
 
 ---
 
@@ -231,14 +320,24 @@ C:\rastatime\logs\
 ├── api-stderr.log         # Python uncaught exceptions (API)
 ├── worker-stdout.log      # Job runner output
 ├── worker-stderr.log      # Python uncaught exceptions (worker)
-├── playout-stdout.log     # libVLC events, schedule reads, now-playing changes
+├── playout-stdout.log     # Scheduler events, schedule reads, now-playing changes
 ├── playout-stderr.log     # Python uncaught exceptions (playout)
-└── icecast.log            # Icecast connections, mount events (optional)
+├── analyzer-stdout.log    # Import pipeline output
+├── analyzer-stderr.log    # Python uncaught exceptions (analyzer)
+├── apache-nssm-stdout.log # NSSM-side Apache capture (Apache's own logs: C:\Tools\Apache24\logs)
+├── apache-nssm-stderr.log
+├── liquidsoap-stdout.log  # Liquidsoap engine log (clock, sources, Icecast connections)
+├── liquidsoap-stderr.log
+├── access.log             # Icecast access log (via icecast.xml <logdir>)
+└── error.log              # Icecast error log
 ```
 
-NSSM routes stdout/stderr per service to the files above.  Log rotation is
-handled by NSSM's built-in `AppRotateFiles` option; target: 10 MB per file,
-5 files kept.
+NSSM routes stdout/stderr per service to the files above (the two
+Icecast `access.log`/`error.log` are written by Icecast itself via
+`<logdir>`; NSSM additionally captures `icecast-nssm-stdout.log` /
+`icecast-nssm-stderr.log`).  Log rotation is handled by NSSM's built-in
+`AppRotateFiles` option at 10 MB per file; rotated generations
+accumulate — NSSM has no file-count cap.
 
 ---
 
@@ -249,9 +348,9 @@ handled by NSSM's built-in `AppRotateFiles` option; target: 10 MB per file,
 | `SIGTERM` / Unix signals | NSSM sends `WM_CLOSE` or `TerminateProcess`; Python services must use `signal.SIGBREAK` (Windows) or NSSM `AppStopMethodConsole` |
 | Console window | All services run `AppNoConsole = 1` via NSSM |
 | Working directory | Always set explicitly in NSSM; never rely on `cwd` at startup |
-| Python path | NSSM `AppEnvironmentExtra = PYTHONPATH=C:\rastatime` set per service |
-| libVLC DLLs | `RASTATIME_VLC_PLUGIN_PATH` set for playout service; libVLC installed system-wide |
-| Config file | `LIBRETIME_CONFIG_FILEPATH` set for API, worker, and playout services |
+| Python path | `PYTHONPATH=C:\rastatime\backend\api;C:\rastatime\backend\shared;C:\rastatime` on the API/worker/playout services (worker additionally gets `C:\rastatime\backend`) |
+| Liquidsoap engine | `RASTATIME_PLAYOUT_ENGINE=liquidsoap` on the playout service; engine at `C:\Tools\liquidsoap` (own NSSM service) |
+| Config file | `LIBRETIME_CONFIG_FILEPATH` set for the API, worker, playout, and analyzer services |
 
 ---
 

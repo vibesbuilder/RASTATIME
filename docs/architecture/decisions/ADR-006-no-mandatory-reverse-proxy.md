@@ -1,6 +1,6 @@
 # ADR-006 — No Mandatory Reverse Proxy for Phase 1
 
-**Status:** Accepted  
+**Status:** Accepted; **note (2026-08-27):** the API binds port 8765 (not 8000), and the production Apache frontend reverse-proxies /api/v2/ to it; still no TLS-terminating proxy required on the LAN  
 **Date:** 2026-04-29  
 **Deciders:** RASTATIME project  
 **Relates to:** ADR-005 (NSSM service strategy), T17.1 (Waitress), T17.2

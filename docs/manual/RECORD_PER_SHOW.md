@@ -194,7 +194,7 @@ exception list.**
 - **Bitdefender** (most common on RASTATIME deployments):
   Bitdefender GUI → **Protection** → **Antivirus** →
   **Settings** → **Manage Exceptions** → add the recording
-  folder path (e.g. `C:\Users\studio\Music\Recording\` or
+  folder path (e.g. `C:\Users\studio\Music\Show Recordings\` or
   whatever you configured in Settings → Local Machine →
   Show Recording Folder).
 - **Windows Defender**: Settings → **Update & Security** →

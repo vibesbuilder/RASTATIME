@@ -16,10 +16,12 @@ on a fresh Windows machine.  By the end you will have:
 - The RASTATIME codebase deployed to `C:\rastatime`
 - A Python virtual environment with all dependencies
 - A `libretime.conf` configuration file pointing at your PostgreSQL database
-- All four NSSM Windows services registered and running
+- All seven NSSM Windows services registered and running
+- A rendered Liquidsoap production script (`C:\Tools\liquidsoap\rastatime.liq`)
 - A healthy API confirmed by `status.ps1`
 
-Estimated time: **45–90 minutes** on a clean machine.
+Estimated time: **2–4 hours** on a clean machine (incl. RabbitMQ,
+Apache/PHP, Icecast and Liquidsoap).
 
 ---
 
@@ -27,6 +29,19 @@ Estimated time: **45–90 minutes** on a clean machine.
 
 Install these tools before starting.  The **bootstrap checker** will verify
 them automatically (§4).
+
+### 2.0 Windows preparation
+
+On a fresh Windows machine, do these two things before installing anything:
+
+1. **Turn Smart App Control OFF** (Windows Security → App & browser control).
+   Enforced SAC blocks unsigned binaries such as `httpd.exe` and
+   `php-cgi.exe` — they exit silently with no error.  SAC can only be
+   switched off interactively, and the change is irreversible without
+   reinstalling Windows, so do it first.
+2. **Assign a static IP address** (or a DHCP reservation) before any
+   config file references the machine's address.  A silent DHCP lease
+   change breaks stream URLs and configs and is painful to debug.
 
 ### 2.1 Python 3.11 or later
 
@@ -41,8 +56,8 @@ Python 3.12 or 3.13 are supported.
    # Expected: Python 3.11.x  (or higher)
    ```
 
-> **Note:** Use the 64-bit build.  libVLC (ADR-002) requires a 64-bit
-> Python process to load `libvlc.dll`.
+> **Note:** Use the 64-bit build.  The production stack (PostgreSQL,
+> psycopg2, Liquidsoap tooling) is 64-bit throughout.
 
 ### 2.2 PostgreSQL 17
 
@@ -58,36 +73,64 @@ RASTATIME uses PostgreSQL as its sole database (port **5432**).
    # Expected: 127.0.0.1:5432 - accepting connections
    ```
 
-### 2.3 VLC / libVLC (64-bit)
+### 2.3 Liquidsoap 2.4.4
 
-The RASTATIME playout engine uses **libVLC** (ADR-002) for audio output.
-VLC must be installed in its standard location so `libvlc.dll` is present.
+Liquidsoap has been the production playout engine since the 2026-05
+cutover.  **VLC/libVLC is no longer required** — mpv/VLC remain only as
+legacy fallback code paths pending deletion.
 
-1. Download the **64-bit** installer from <https://www.videolan.org/vlc/>
-2. Install to the default path: `C:\Program Files\VideoLAN\VLC\`
-3. Verify:
+1. Install Liquidsoap **2.4.4** (Windows build) to `C:\Tools\liquidsoap\`
+2. Verify:
    ```powershell
-   Test-Path "C:\Program Files\VideoLAN\VLC\libvlc.dll"
-   # Expected: True
+   & C:\Tools\liquidsoap\liquidsoap.exe --version
+   # Expected: Liquidsoap 2.4.4
    ```
 
-> **Warning:** Do NOT install the 32-bit VLC build on a 64-bit machine.
-> python-vlc will fail to load libvlc.dll and RASTATIME-PLAYOUT will not start.
+> The production script `C:\Tools\liquidsoap\rastatime.liq` is rendered
+> from a template plus database settings later in the install (§4 Step 9).
 
-### 2.4 NSSM — Non-Sucking Service Manager
+### 2.4 RabbitMQ 4.x + Erlang OTP
+
+RabbitMQ is a **required** prerequisite: the analyzer service consumes a
+RabbitMQ queue, and the PHP frontend dispatches a message to it for
+every uploaded media file.  Without RabbitMQ, uploads stay at
+"Pending Import" forever.
+
+1. Install Erlang OTP (64-bit), then RabbitMQ 4.x
+2. RASTATIME expects vhost `/rastatime` on port **5672** with the
+   user/password from the `rabbitmq:` section of `libretime.conf`
+3. Verify:
+   ```powershell
+   Get-Service RabbitMQ
+   # Expected: Running
+   ```
+
+> **Windows service quirk:** if the installer ran as a normal user, the
+> LocalSystem service can crash on start.  Re-register the service with
+> an explicit base directory:
+> ```powershell
+> $env:RABBITMQ_BASE = "C:\ProgramData\RabbitMQ"
+> rabbitmq-service.bat remove
+> rabbitmq-service.bat install
+> ```
+
+### 2.5 NSSM — Non-Sucking Service Manager
 
 NSSM (ADR-005) wraps the Python processes as Windows services.
 
 1. Download from <https://nssm.cc/download>
-2. Extract `nssm.exe` (64-bit) to a permanent location, e.g. `C:\nssm\`
-3. Add `C:\nssm\` to the system PATH
+2. Extract `nssm.exe` (64-bit) to `C:\Tools\nssm\` — the install scripts
+   fall back to `C:\Tools\nssm\nssm.exe` when NSSM is not on PATH
+3. Add `C:\Tools\nssm\` to the system PATH — the fallback only covers
+   the install/remove/status scripts; the bare `nssm` commands later in
+   this guide (§4 Step 9d/9h, §5, §7, §8) need it on PATH
 4. Verify:
    ```
    nssm version
    # Expected: NSSM 2.24 (or later)
    ```
 
-### 2.5 Apache 2.4 + PHP 8.3 (frontend)
+### 2.6 Apache 2.4 + PHP 8.3 (frontend)
 
 The legacy PHP frontend runs on Apache 2.4 with `mod_fcgid` and PHP CGI.
 
@@ -97,7 +140,69 @@ The legacy PHP frontend runs on Apache 2.4 with `mod_fcgid` and PHP CGI.
 > no equivalent knob and routinely takes 15+ seconds to stop.
 
 For the full host setup (binaries, `httpd.conf`, `php.ini`, NSSM wrap),
-see **[INSTALL_APACHE.md](INSTALL_APACHE.md)**.
+see **[INSTALL_APACHE.md](INSTALL_APACHE.md)**.  Production layout:
+Apache Lounge 2.4.x Win64 at `C:\Tools\Apache24`, PHP 8.3 NTS x64 at
+`C:\Tools\PHP`.
+
+> **Install the latest Visual C++ Redistributable (x64) FIRST.**  The
+> Apache Lounge VS18 build and PHP 8.3 both depend on it — without it
+> `httpd.exe` / `php-cgi.exe` exit silently with no error message.
+
+Beyond the base setup in INSTALL_APACHE.md, `httpd.conf` needs:
+
+1. `LoadModule` lines for `rewrite_module`, `proxy_module`, and
+   `proxy_http_module`
+2. The ZF1 front-controller rewrite in the `<Directory>` block of the
+   frontend public dir — the `HTTP_AUTHORIZATION` line is essential
+   (mod_fcgid strips the Authorization header otherwise, breaking
+   Basic-auth endpoints such as `icecast-listener-allow`):
+   ```apache
+   RewriteEngine On
+   RewriteRule ^ - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+   RewriteCond %{REQUEST_FILENAME} -s [OR]
+   RewriteCond %{REQUEST_FILENAME} -l [OR]
+   RewriteCond %{REQUEST_FILENAME} -d
+   RewriteRule ^.*$ - [NC,L]
+   RewriteRule ^.*$ index.php [NC,L]
+   ```
+3. A server-scope reverse proxy to the API:
+   ```apache
+   ProxyPreserveHost On
+   ProxyPass        /api/v2/   http://127.0.0.1:8765/api/v2/
+   ProxyPassReverse /api/v2/   http://127.0.0.1:8765/api/v2/
+   ProxyPass        /api-auth/ http://127.0.0.1:8765/api-auth/
+   ProxyPassReverse /api-auth/ http://127.0.0.1:8765/api-auth/
+   ```
+
+### 2.7 Icecast 2.4.4 (streaming)
+
+Production runs Icecast **2.4.4** deliberately: the live `icecast.xml`
+is built on Icecast 2.4 auth semantics (`<authentication type="url">`
+with the `stream_auth`, `mount_add` and `mount_remove` options).
+Icecast 2.5 replaced those with event bindings — upgrading to 2.5 is a
+separate future project (see BACKLOG.md).
+
+1. Run the Icecast 2.4.4 Windows installer
+2. Copy the installed tree to `C:\Tools\Icecast\` so that
+   `C:\Tools\Icecast\bin\icecast.exe` exists with its `web\` and
+   `admin\` siblings under `C:\Tools\Icecast\`
+3. Register the service later (§4 Step 9) with
+   `install-icecast.ps1 -IcecastExe 'C:\Tools\Icecast\bin\icecast.exe'`
+   — the script's built-in default points at `C:\Program Files\Icecast`,
+   which is NOT where production installs it
+
+### 2.8 FFmpeg
+
+The analyzer uses FFmpeg for the ReplayGain and cue-point pipeline
+steps; the playout keeps it on PATH for the legacy fallback paths.
+
+1. Extract an FFmpeg release build so that `C:\ffmpeg\bin\ffmpeg.exe`
+   exists — the service install scripts prepend exactly `C:\ffmpeg\bin`
+   to each service's `PATH`
+2. Verify:
+   ```powershell
+   & C:\ffmpeg\bin\ffmpeg.exe -version
+   ```
 
 ---
 
@@ -108,8 +213,12 @@ RASTATIME uses `C:\rastatime` as its standard install root.
 ```
 C:\rastatime\
 ├── backend\
-│   ├── api\          — Django REST API (libretime_api)
-│   └── shared\       — Shared library modules
+│   ├── analyzer\          — Media import pipeline (libretime_analyzer)
+│   ├── api\               — Django REST API (libretime_api)
+│   ├── api-client\        — Shared API client library
+│   ├── playout\           — Playout scheduler (libretime_playout) + Liquidsoap config
+│   ├── rastatime_worker\  — Background job runner (no pyproject; runs via PYTHONPATH)
+│   └── shared\            — Shared library modules
 ├── config\
 │   ├── libretime.conf   — Main RASTATIME configuration file
 │   └── icecast.xml      — Icecast config (optional)
@@ -120,6 +229,10 @@ C:\rastatime\
 
 > If you deploy to a non-standard path, pass `-InstallRoot D:\rastatime`
 > to all `infra\nssm\install-*.ps1` and `remove-*.ps1` scripts.
+
+> Third-party binaries live under `C:\Tools\`:
+> `C:\Tools\nssm`, `C:\Tools\liquidsoap`, `C:\Tools\Icecast`,
+> `C:\Tools\Apache24`, `C:\Tools\PHP`.
 
 ---
 
@@ -148,6 +261,11 @@ Expected output: `All required dependencies found.`
 
 Fix any `[FAIL]` items before continuing.
 
+> **Note:** `bootstrap.ps1` checks Python 3.11+, PostgreSQL and RabbitMQ
+> as **required** (a missing one is a `[FAIL]` and exits 1) and reports
+> VLC only as an optional legacy-engine check — a missing VLC shows as
+> `[SKIP]` and is expected on a production machine.
+
 ### Step 3 — Create the Python virtual environment
 
 ```powershell
@@ -168,58 +286,93 @@ where python
 pip install --upgrade pip
 pip install -r requirements.txt
 
+# psycopg2 is not declared by any backend package but is required by the
+# API (and the Liquidsoap config renderer) — install it explicitly:
+pip install psycopg2-binary
+
+# Editable installs of the backend packages, in dependency order:
+pip install -e backend/shared
+pip install -e backend/api-client
+pip install -e backend/api
+pip install -e backend/playout
+pip install -e backend/analyzer
+
 # Verify key packages are installed:
 python -c "import django; print('Django', django.__version__)"
-python -c "import waitress; print('Waitress', waitress.__version__)"
-python -c "import vlc; print('python-vlc OK')"
+python -c "import importlib.metadata as m; print('Waitress', m.version('waitress'))"
+python -c "import psycopg2; print('psycopg2 OK')"
 ```
 
-> If `import vlc` fails: ensure VLC 64-bit is installed at
-> `C:\Program Files\VideoLAN\VLC\` and the 64-bit Python venv is active.
+> `backend\rastatime_worker` has **no** `pyproject.toml` on purpose — the
+> worker runs as `python -m rastatime_worker` with `C:\rastatime\backend`
+> on `PYTHONPATH` (set by `install-worker.ps1`); it is not pip-installed.
+
+> `requirements.txt` still lists `python-vlc` (legacy fallback engine).
+> It installs fine without VLC — VLC itself is no longer required.
 
 ### Step 5 — Create the configuration file
 
-Copy the template and edit it for your environment:
+Copy the example file and edit it for your environment:
 
 ```powershell
-Copy-Item C:\rastatime\config\libretime.conf.template `
+Copy-Item C:\rastatime\config\libretime.conf.example `
           C:\rastatime\config\libretime.conf
 ```
 
-Open `C:\rastatime\config\libretime.conf` in a text editor and set at
-minimum:
+Open `C:\rastatime\config\libretime.conf` in a text editor.  The file
+is **YAML**; set at minimum:
 
-```ini
-[database]
-host     = 127.0.0.1
-port     = 5432
-name     = rastatime
-user     = rastatime_user
-password = <your-db-password>
+```yaml
+general:
+  public_url: http://<your-host>
+  api_key: <generate — see below>
+  secret_key: <generate — see below>
+  timezone: Europe/Berlin
 
-[api]
-host = 0.0.0.0
-port = 8000
+storage:
+  path: C:/rastatime/media
 
-[general]
-timezone = UTC
+database:
+  host: localhost
+  port: 5432
+  name: rastatime
+  user: rastatime
+  password: <your-db-password>
+
+rabbitmq:
+  host: localhost
+  port: 5672
+  vhost: /rastatime
+  user: rastatime
+  password: <your-rabbitmq-password>
 ```
 
-> The configuration file path is injected into every service via the
-> `LIBRETIME_CONFIG_FILEPATH` environment variable (set automatically by
-> the install scripts).
+> The API port is NOT set in this file — it defaults to **8765** via the
+> `-ApiPort` parameter of `install-api.ps1` and is injected into the
+> services as an environment variable.
+
+> The configuration file path is injected into every **Python** service
+> (API, worker, playout, analyzer) via the `LIBRETIME_CONFIG_FILEPATH`
+> environment variable (set automatically by their install scripts).
+> Apache/PHP uses its built-in default path, Icecast gets the config as
+> a `-c` argument, and Liquidsoap gets its rendered script as argument.
 
 #### Secrets that MUST be changed before production
 
-The template ships with placeholder values that are safe for a fresh
+The example file ships with placeholder values that are safe for a fresh
 install on a local LAN but **must** be replaced before the host is
 reachable from the public internet:
+
+> **Note:** the `stream:` section (`stream.internal_listener`,
+> `stream.harbor`) is not included in `libretime.conf.example` — add it
+> to your live `libretime.conf` by hand when configuring the relay
+> listener and DJ harbor passwords.
 
 | Setting | Where | Why |
 |---|---|---|
 | `general.api_key` | `libretime.conf` | Authenticates inter-service API calls and the v1 legacy notify hook. |
 | `general.secret_key` | `libretime.conf` | Django session / CSRF signing key. Must be at least 50 random chars. |
-| `stream.internal_listener.password` | `libretime.conf` | Service-to-service password the playout uses to listen to `/main` and `/show` for relay. Default value is `change-me-internal-listener-secret`. Replace with a long random string (32+ chars). After changing, restart **both** `RASTATIME-APACHE` and `RASTATIME-PLAYOUT` — they each cache the value at startup. |
+| `stream.internal_listener.password` | `libretime.conf` | Service-to-service password the playout uses to listen to `/main` and `/show` for relay. Default value is `change-me-internal-listener-secret`. Replace with a long random string (32+ chars). After changing, restart `RASTATIME-PLAYOUT` (it caches the value at startup); the PHP frontend re-reads the config on the next request — no Apache restart needed. |
 | `<source-password>` | `C:\rastatime\config\icecast.xml` | Icecast admin / relay / source password. Default value is `admin`. Replace with a long random string. |
 | Master DJ password | `cc_pref` row `live_stream_master_password` (set via Settings → Streams in the frontend) | Authenticates the master-source DJ at `/main`. |
 
@@ -236,23 +389,38 @@ Generate strong values e.g. with PowerShell:
 psql -U postgres -h 127.0.0.1 -p 5432
 
 -- Inside psql:
-CREATE USER rastatime_user WITH PASSWORD '<your-db-password>';
-CREATE DATABASE rastatime OWNER rastatime_user;
+CREATE USER rastatime WITH PASSWORD '<your-db-password>';
+CREATE DATABASE rastatime OWNER rastatime;
 \q
 ```
+
+### Step 6b — Create the RabbitMQ vhost and user
+
+```powershell
+rabbitmqctl add_user rastatime <your-rabbitmq-password>
+rabbitmqctl add_vhost /rastatime
+rabbitmqctl set_permissions -p /rastatime rastatime ".*" ".*" ".*"
+```
+
+The values must match the `rabbitmq:` section of `libretime.conf`.
 
 ### Step 7 — Run database migrations
 
 ```powershell
 # With the venv active:
-cd C:\rastatime\backend\api
+cd C:\rastatime\backend\api\libretime_api
 $env:DJANGO_SETTINGS_MODULE = "libretime_api.settings.prod"
 $env:LIBRETIME_CONFIG_FILEPATH = "C:\rastatime\config\libretime.conf"
 $env:PYTHONPATH = "C:\rastatime\backend\api;C:\rastatime\backend\shared;C:\rastatime"
 
 python manage.py migrate
-python manage.py collectstatic --noinput
 ```
+
+> `manage.py` lives at `backend\api\libretime_api\manage.py` (not at the
+> package root).  Against a database restored from a backup, `migrate`
+> correctly reports `No migrations to apply`.
+> There is no `collectstatic` step — the prod settings define no
+> `STATIC_ROOT` and none is needed.
 
 ### Step 8 — Create the log directory
 
@@ -265,7 +433,7 @@ New-Item -ItemType Directory -Path C:\rastatime\logs -Force
 
 ### Step 9 — Install the Windows services
 
-Run the T22.1 install scripts as **Administrator**, in dependency order:
+Run the install scripts as **Administrator**, in dependency order:
 
 ```powershell
 # Open an elevated PowerShell prompt, then:
@@ -278,8 +446,7 @@ powershell -ExecutionPolicy Bypass `
     -StartService
 
 # Wait for the API health gate before continuing:
-# (install-api.ps1 does NOT poll health automatically; check manually)
-Invoke-WebRequest http://127.0.0.1:8000/health -UseBasicParsing
+Invoke-WebRequest http://127.0.0.1:8765/health -UseBasicParsing
 # Expected: StatusCode 200
 
 # 9b — Worker (mandatory)
@@ -289,20 +456,70 @@ powershell -ExecutionPolicy Bypass `
     -ConfigFile C:\rastatime\config\libretime.conf `
     -StartService
 
-# 9c — Playout (mandatory)
+# 9c — Playout (mandatory; do NOT start yet — engine env vars follow in 9d)
 powershell -ExecutionPolicy Bypass `
     -File C:\rastatime\infra\nssm\install-playout.ps1 `
     -InstallRoot C:\rastatime `
+    -ConfigFile C:\rastatime\config\libretime.conf
+
+# 9d — Playout engine environment variables
+# install-playout.ps1 does NOT set the engine selection.  `nssm set`
+# REPLACES the whole environment block, so repeat the five variables the
+# script sets and append the three engine extras:
+nssm set RASTATIME-PLAYOUT AppEnvironmentExtra `
+    "DJANGO_SETTINGS_MODULE=libretime_api.settings.prod" `
+    "LIBRETIME_CONFIG_FILEPATH=C:\rastatime\config\libretime.conf" `
+    "RASTATIME_API_URL=http://127.0.0.1:8765" `
+    "PYTHONPATH=C:\rastatime\backend\api;C:\rastatime\backend\shared;C:\rastatime" `
+    "PATH=C:\ffmpeg\bin;%PATH%" `
+    "RASTATIME_MPV_LOG_LEVEL=warn" `
+    "RASTATIME_PLAYOUT_ENGINE=liquidsoap" `
+    "RASTATIME_LIQUIDSOAP_CROSSFADE_SECONDS=1.0"
+nssm start RASTATIME-PLAYOUT
+
+# 9e — Analyzer (mandatory — uploads stay at "Pending Import" without it)
+powershell -ExecutionPolicy Bypass `
+    -File C:\rastatime\infra\nssm\install-analyzer.ps1 `
+    -InstallRoot C:\rastatime `
     -ConfigFile C:\rastatime\config\libretime.conf `
-    -VlcPluginPath "C:\Program Files\VideoLAN\VLC\plugins" `
     -StartService
 
-# 9d — Icecast (optional — only if public streaming is required)
+# 9f — Apache (frontend; httpd.conf per §2.6 / INSTALL_APACHE.md)
+powershell -ExecutionPolicy Bypass `
+    -File C:\rastatime\infra\nssm\install-apache.ps1 `
+    -InstallRoot C:\rastatime `
+    -ApacheRoot C:\Tools\Apache24 `
+    -StartService
+
+# 9g — Icecast (streaming; note the explicit exe path)
 powershell -ExecutionPolicy Bypass `
     -File C:\rastatime\infra\nssm\install-icecast.ps1 `
     -InstallRoot C:\rastatime `
+    -IcecastExe 'C:\Tools\Icecast\bin\icecast.exe' `
     -StartService
+
+# 9h — Install and start the Liquidsoap service.
+# The production script C:\Tools\liquidsoap\rastatime.liq was already
+# rendered by RASTATIME-PLAYOUT at its startup (9d) — the playout's
+# startup render is the authoritative one: it includes the stream.harbor
+# DJ passwords and the crossfade setting from the service environment.
+Test-Path C:\Tools\liquidsoap\rastatime.liq   # must be True; if False,
+                                              # restart RASTATIME-PLAYOUT
+
+powershell -ExecutionPolicy Bypass `
+    -File C:\rastatime\backend\playout\config\nssm-install-liquidsoap.ps1
+nssm start RASTATIME-LIQUIDSOAP
 ```
+
+> Stream outputs are rendered from the **database** (`cc_pref` rows
+> `stream_output_N`, maintained via Settings → Streams) — not from
+> `libretime.conf`.  After any stream-setting change:
+> `nssm restart RASTATIME-PLAYOUT` (re-renders the `.liq` at startup,
+> incl. harbor credentials), then `nssm restart RASTATIME-LIQUIDSOAP`.
+> Avoid the manual CLI render
+> (`python -m libretime_playout.liquidsoap_config render`) on a
+> configured system — it does not read `stream.harbor` and would strip
+> the DJ harbor inputs from the rendered script.
 
 ### Step 10 — Verify the installation
 
@@ -318,9 +535,16 @@ Expected output:
   RASTATIME-API     Running    HTTP 200 healthy
   RASTATIME-WORKER  Running
   RASTATIME-PLAYOUT Running
-  RASTATIME-ICECAST Running  (or: Not installed  — optional)
-
+  RASTATIME-ICECAST Running
   All mandatory services are Running.
+```
+
+`status.ps1` predates the analyzer, Apache and Liquidsoap services —
+check those three separately:
+
+```powershell
+Get-Service RASTATIME-ANALYZER, RASTATIME-APACHE, RASTATIME-LIQUIDSOAP
+# Expected: all Running
 ```
 
 If any mandatory service shows `Stopped` or `Not installed`, see §5
@@ -357,36 +581,55 @@ pg_isready -h 127.0.0.1 -p 5432
 ```
 Check the `[database]` section of `libretime.conf` for correct credentials.
 
-### 5.3 Playout does not start — libVLC not found
+### 5.3 Liquidsoap does not start — rastatime.liq missing
 
 ```
-OSError: CDLL libvlc.dll could not be loaded
+liquidsoap-stderr.log: ... rastatime.liq: no such file
 ```
 
-**Fix:** Confirm that 64-bit VLC is installed:
+**Fix:** Restart the playout (its startup render writes the script,
+incl. DJ harbor credentials), then Liquidsoap:
 ```powershell
-Test-Path "C:\Program Files\VideoLAN\VLC\libvlc.dll"
+nssm restart RASTATIME-PLAYOUT
+nssm restart RASTATIME-LIQUIDSOAP
 ```
-Reinstall RASTATIME-PLAYOUT with the correct `-VlcPluginPath` if needed.
+Also confirm the engine selection on the playout service:
+```powershell
+nssm get RASTATIME-PLAYOUT AppEnvironmentExtra
+# Must contain RASTATIME_PLAYOUT_ENGINE=liquidsoap
+```
+If the variable is missing, re-apply the full environment block from
+§4 Step 9d (`nssm set` replaces the whole block).
 
 ### 5.4 Worker or playout stay in `StartPending`
 
 The health-check gate in the worker/playout entry points is waiting for
 the API to return HTTP 200.  Check the API is healthy:
 ```powershell
-Invoke-WebRequest http://127.0.0.1:8000/health -UseBasicParsing
+Invoke-WebRequest http://127.0.0.1:8765/health -UseBasicParsing
 ```
 If the API is not healthy, resolve it first (see §5.2 and
 `docs\operator\RESTART_ORDER.md` §5.1).
 
 ### 5.5 Status script shows wrong venv
 
-The install scripts default to `C:\rastatime\.venv\Scripts\python.exe`.
-If you used a different venv path, pass `-NssmExe` and inspect:
+The install scripts derive the venv python from `-InstallRoot`
+(`<InstallRoot>\.venv\Scripts\python.exe`, falling back to `python` on
+PATH).  If the wrong python is registered, re-run the install script
+with the correct `-InstallRoot` and inspect:
 ```powershell
 nssm get RASTATIME-API Application
 # Should show the python.exe from your venv
 ```
+
+### 5.6 Uploads stay at "Pending Import"
+
+The analyzer is not consuming the RabbitMQ queue.  Check both services:
+```powershell
+Get-Service RabbitMQ, RASTATIME-ANALYZER
+```
+If the RabbitMQ service crashes on start, re-register it with an
+explicit `RABBITMQ_BASE` (see §2.4).
 
 ---
 
@@ -395,13 +638,17 @@ nssm get RASTATIME-API Application
 After completing §4, verify each item:
 
 - [ ] `status.ps1` shows all mandatory services `Running`
-- [ ] `http://127.0.0.1:8000/health` returns HTTP 200
-- [ ] `http://127.0.0.1:8000/api/v2/schema/swagger-ui` loads the API docs
+- [ ] `Get-Service RASTATIME-ANALYZER, RASTATIME-APACHE, RASTATIME-LIQUIDSOAP` — all `Running`
+- [ ] `Get-Service RabbitMQ` shows `Running`
+- [ ] `http://127.0.0.1:8765/health` returns HTTP 200
+- [ ] `http://127.0.0.1:8765/api/v2/schema/swagger-ui` loads the API docs
+- [ ] The web UI loads at `http://<host>/` (Apache) and login works
+- [ ] A test upload leaves "Pending Import" and becomes "Ready" (analyzer round-trip)
 - [ ] `C:\rastatime\logs\` contains `api-stdout.log` (non-empty after first request)
 - [ ] `pg_isready -h 127.0.0.1 -p 5432` succeeds
 - [ ] All services survive a `Restart-Computer` (auto-start verified)
 - [ ] Soundcard settings are visible in the RASTATIME web UI (Settings → Soundcard)
-- [ ] (Optional) Icecast stream accessible at `http://localhost:8001/`
+- [ ] Icecast status page reachable at `http://localhost:8000/` (port 8001 is the Liquidsoap DJ harbor — `/main` and `/show` share it —, NOT Icecast)
 
 ---
 
@@ -411,10 +658,13 @@ To update RASTATIME to a new version:
 
 ```powershell
 # 1. Stop services in reverse order
-nssm stop RASTATIME-ICECAST confirm   # optional
-nssm stop RASTATIME-PLAYOUT confirm
-nssm stop RASTATIME-WORKER  confirm
-nssm stop RASTATIME-API     confirm
+nssm stop RASTATIME-LIQUIDSOAP confirm
+nssm stop RASTATIME-ICECAST    confirm
+nssm stop RASTATIME-APACHE     confirm
+nssm stop RASTATIME-ANALYZER   confirm
+nssm stop RASTATIME-PLAYOUT    confirm
+nssm stop RASTATIME-WORKER     confirm
+nssm stop RASTATIME-API        confirm
 
 # 2. Pull the new code
 cd C:\rastatime
@@ -423,17 +673,24 @@ git pull
 # 3. Update Python dependencies
 .venv\Scripts\Activate.ps1
 pip install -r requirements.txt
+# Editable installs pick up code changes automatically; re-run
+# `pip install -e backend/<pkg>` only if a pyproject.toml changed.
 
-# 4. Run any new migrations
-cd C:\rastatime\backend\api
+# 4. Run any new migrations (env vars as in §4 Step 7)
+cd C:\rastatime\backend\api\libretime_api
 python manage.py migrate
 
 # 5. Restart services in dependency order
 nssm start RASTATIME-API
-# (wait for health)
+# (wait for HTTP 200 on http://127.0.0.1:8765/health)
 nssm start RASTATIME-WORKER
 nssm start RASTATIME-PLAYOUT
-nssm start RASTATIME-ICECAST   # optional
+nssm start RASTATIME-ANALYZER
+nssm start RASTATIME-APACHE
+nssm start RASTATIME-ICECAST
+# If the playout/Liquidsoap templates changed, re-render first:
+#   python -m libretime_playout.liquidsoap_config render --out C:/Tools/liquidsoap/rastatime.liq
+nssm start RASTATIME-LIQUIDSOAP
 
 # 6. Verify
 powershell -File C:\rastatime\infra\nssm\status.ps1
@@ -445,10 +702,14 @@ powershell -File C:\rastatime\infra\nssm\status.ps1
 
 ```powershell
 # Remove services (preserves logs and config)
-powershell -File infra\nssm\remove-playout.ps1 -Force
-powershell -File infra\nssm\remove-worker.ps1  -Force
-powershell -File infra\nssm\remove-api.ps1     -Force
-powershell -File infra\nssm\remove-icecast.ps1 -Force
+nssm stop   RASTATIME-LIQUIDSOAP confirm
+nssm remove RASTATIME-LIQUIDSOAP confirm
+powershell -File infra\nssm\remove-icecast.ps1  -Force
+powershell -File infra\nssm\remove-apache.ps1   -Force
+powershell -File infra\nssm\remove-analyzer.ps1 -Force
+powershell -File infra\nssm\remove-playout.ps1  -Force
+powershell -File infra\nssm\remove-worker.ps1   -Force
+powershell -File infra\nssm\remove-api.ps1      -Force
 
 # Optional: purge logs
 powershell -File infra\nssm\remove-api.ps1 -Force -PurgeLogs
@@ -456,7 +717,7 @@ powershell -File infra\nssm\remove-api.ps1 -Force -PurgeLogs
 
 # Optional: drop the database
 psql -U postgres -c "DROP DATABASE rastatime;"
-psql -U postgres -c "DROP USER rastatime_user;"
+psql -U postgres -c "DROP USER rastatime;"
 
 # Optional: delete the install directory
 Remove-Item -Recurse -Force C:\rastatime
@@ -471,6 +732,7 @@ Remove-Item -Recurse -Force C:\rastatime
 | `docs\architecture\SERVICE_TOPOLOGY.md` | Service definitions, ports, log layout (T21.1) |
 | `docs\operator\RESTART_ORDER.md` | Startup / shutdown / recovery procedures (T22.4) |
 | `infra\nssm\install-*.ps1` | Service install scripts (T22.1) |
+| `backend\playout\config\nssm-install-liquidsoap.ps1` | RASTATIME-LIQUIDSOAP service install script |
 | `infra\nssm\remove-*.ps1` | Service remove scripts (T22.2) |
 | `infra\nssm\status.ps1` | Live status and health helper (T22.3) |
 | `infra\scripts\dev\bootstrap.ps1` | Dependency checker (T3.1) |

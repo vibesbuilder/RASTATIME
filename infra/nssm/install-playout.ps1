@@ -14,7 +14,7 @@
 
     Health-check gate:
         Before entering its main loop, playout/__main__.py must poll
-        http://127.0.0.1:8000/health with exponential backoff until a
+        http://127.0.0.1:8765/health with exponential backoff until a
         HTTP 200 response is received (or a timeout elapses).  This
         ensures the API is serving DB-backed schedule data before playout
         begins.
@@ -56,7 +56,7 @@
 
 .NOTES
     Start RASTATIME-API and RASTATIME-WORKER before this service.
-    See T22.1 health-check gate requirement: http://127.0.0.1:8000/health
+    See T22.1 health-check gate requirement: http://127.0.0.1:8765/health
 
     See docs/architecture/SERVICE_TOPOLOGY.md §2.3 for full specification.
     See T22.2 (remove-playout.ps1) to cleanly uninstall this service.

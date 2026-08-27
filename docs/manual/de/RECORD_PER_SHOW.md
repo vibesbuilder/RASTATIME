@@ -207,7 +207,7 @@ hinzufügen.**
   Bitdefender-GUI → **Schutz** → **Antivirus** →
   **Einstellungen** → **Ausnahmen verwalten** → den
   Aufnahme-Ordnerpfad hinzufügen (z.B.
-  `C:\Users\studio\Music\Recording\` oder was Sie unter
+  `C:\Users\studio\Music\Show Recordings\` oder was Sie unter
   Settings → Local Machine → Show Recording Folder konfiguriert
   haben).
 - **Windows Defender**: Einstellungen → **Update & Sicherheit**

@@ -87,8 +87,7 @@ Get-ChildItem $path | ForEach-Object {
     $state = (Get-ItemProperty $_.PSPath).DeviceState
     if ($state -eq 1) {
         $props = Join-Path $_.PSPath "Properties"
-        $name  = (Get-ItemProperty $props -ErrorAction SilentlyContinue)."
-{a45c254e-df1c-4efd-8020-67d146a850e0},2"
+        $name  = (Get-ItemProperty $props -ErrorAction SilentlyContinue)."{a45c254e-df1c-4efd-8020-67d146a850e0},2"
         [PSCustomObject]@{
             GUID         = $_.PSChildName
             FriendlyName = $name
@@ -118,7 +117,7 @@ Open the RASTATIME web UI → **Settings → Line-In**.  For the affected source
 To inspect the raw configuration via the REST API:
 
 ```powershell
-Invoke-RestMethod http://127.0.0.1:8000/api/v2/linein/ | Format-List
+Invoke-RestMethod http://127.0.0.1:8765/api/v2/linein/ | Format-List
 # Each entry shows: id, name, device_id, channel_mapping, priority, enabled
 ```
 
@@ -155,7 +154,7 @@ To reassign via the REST API (headless):
 
 ```powershell
 # List available input devices:
-Invoke-RestMethod http://127.0.0.1:8000/api/v2/soundcard/devices/inputs/ |
+Invoke-RestMethod http://127.0.0.1:8765/api/v2/soundcard/devices/inputs/ |
     Select-Object stable_id, name, channels | Format-Table
 
 # Patch the line-in source (replace <linein-uuid> and <new-stable-id>):
@@ -163,7 +162,7 @@ $body = @{
     device_id       = "<new-stable-id>"
     channel_mapping = "0,1"
 } | ConvertTo-Json
-Invoke-RestMethod http://127.0.0.1:8000/api/v2/linein/<linein-uuid>/ `
+Invoke-RestMethod http://127.0.0.1:8765/api/v2/linein/<linein-uuid>/ `
     -Method Patch -ContentType "application/json" -Body $body
 ```
 
@@ -181,17 +180,36 @@ Invoke-RestMethod http://127.0.0.1:8000/api/v2/linein/<linein-uuid>/ `
 Check the `enabled` flag and that the playout loop is calling the activate
 signal.  Temporarily enable debug logging in the playout service:
 
+> **⚠ `nssm set … AppEnvironmentExtra` REPLACES the whole environment
+> block.**  Setting only the three variables below would silently drop
+> `RASTATIME_PLAYOUT_ENGINE=liquidsoap`, `PYTHONPATH`, the FFmpeg
+> `PATH` and `RASTATIME_API_URL` — reverting the playout to the legacy
+> mpv engine on restart.  Always read the current block first and
+> re-set it in full, with `RASTATIME_LOG_LEVEL=DEBUG` appended:
+
 ```powershell
-# Inject a debug log level override in the NSSM environment:
+# 1. Show the current block — copy every line from the output:
+nssm get RASTATIME-PLAYOUT AppEnvironmentExtra
+
+# 2. Re-set the FULL block (all lines from step 1) plus the override:
 nssm set RASTATIME-PLAYOUT AppEnvironmentExtra `
-    "RASTATIME_LOG_LEVEL=DEBUG" `
     "DJANGO_SETTINGS_MODULE=libretime_api.settings.prod" `
-    "LIBRETIME_CONFIG_FILEPATH=C:\rastatime\config\libretime.conf"
+    "LIBRETIME_CONFIG_FILEPATH=C:\rastatime\config\libretime.conf" `
+    "RASTATIME_API_URL=http://127.0.0.1:8765" `
+    "PYTHONPATH=C:\rastatime\backend\api;C:\rastatime\backend\shared;C:\rastatime" `
+    "PATH=C:\ffmpeg\bin;%PATH%" `
+    "RASTATIME_MPV_LOG_LEVEL=warn" `
+    "RASTATIME_PLAYOUT_ENGINE=liquidsoap" `
+    "RASTATIME_LIQUIDSOAP_CROSSFADE_SECONDS=1.0" `
+    "RASTATIME_LOG_LEVEL=DEBUG"
 nssm restart RASTATIME-PLAYOUT
 
 Get-Content C:\rastatime\logs\playout-stdout.log -Tail 100 |
     Select-String "linein"
 ```
+
+Remove `RASTATIME_LOG_LEVEL=DEBUG` again afterwards (same procedure —
+re-set the block without that line).
 
 ---
 
@@ -219,7 +237,7 @@ indices that select which physical channels to read from the device.
 To check how many channels a capture device has:
 
 ```powershell
-Invoke-RestMethod http://127.0.0.1:8000/api/v2/soundcard/devices/inputs/ |
+Invoke-RestMethod http://127.0.0.1:8765/api/v2/soundcard/devices/inputs/ |
     Select-Object stable_id, name, channels
 # The 'channels' field shows the physical channel count of the device
 ```

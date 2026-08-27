@@ -1,5 +1,11 @@
 # Liquidsoap Cutover — switching the playout engine permanently
 
+> **Note (2026-08-27).** Historical runbook from the 2026-05 cutover.
+> Recording paths have since moved: `C:\Users\studio\Music\Show Recordings`
+> (per-show), `Permanent Recordings` (24/7), `Import` (inbox) — the
+> `Music\Recording` folder named below is no longer used
+> (Record-per-Hour, 2026-06-06).
+>
 > **Audience.** Operators who set up RASTATIME and decide whether the
 > station runs on the legacy mpv engine (default) or the Liquidsoap
 > engine (production-recommended since 2026-05-28, Phase-C5).

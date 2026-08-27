@@ -61,7 +61,7 @@ New-Item -ItemType Directory -Path $OutDir -Force | Out-Null
 pg_dump `
     --host=127.0.0.1 `
     --port=5432 `
-    --username=rastatime_user `
+    --username=rastatime `
     --dbname=rastatime `
     --file=$File `
     --format=plain `
@@ -74,7 +74,7 @@ Set `PGPASSWORD` to avoid the interactive password prompt:
 
 ```powershell
 $env:PGPASSWORD = "your-db-password"
-pg_dump --host=127.0.0.1 --port=5432 --username=rastatime_user `
+pg_dump --host=127.0.0.1 --port=5432 --username=rastatime `
         --dbname=rastatime --file=$File --format=plain
 Remove-Item Env:\PGPASSWORD   # clear from environment afterwards
 ```
@@ -86,7 +86,7 @@ The custom format is faster to restore for large databases:
 ```powershell
 pg_dump `
     --host=127.0.0.1 --port=5432 `
-    --username=rastatime_user --dbname=rastatime `
+    --username=rastatime --dbname=rastatime `
     --file="$OutDir\rastatime-$Date.dump" `
     --format=custom --compress=9
 ```
@@ -102,7 +102,7 @@ $env:PGPASSWORD = "your-db-password"
 $Date  = Get-Date -Format "yyyy-MM-ddTHHmm"
 $Out   = "C:\rastatime-backups\db\rastatime-$Date.sql"
 New-Item -ItemType Directory -Path "C:\rastatime-backups\db" -Force | Out-Null
-pg_dump --host=127.0.0.1 --port=5432 --username=rastatime_user `
+pg_dump --host=127.0.0.1 --port=5432 --username=rastatime `
         --dbname=rastatime --file=$Out --format=plain
 Remove-Item Env:\PGPASSWORD
 
@@ -151,11 +151,18 @@ if (Test-Path C:\rastatime\config\icecast.xml) {
     Copy-Item C:\rastatime\config\icecast.xml "$CfgOut\icecast.xml.$Date"
 }
 
-# Export current NSSM environment for each service:
-foreach ($svc in "RASTATIME-API","RASTATIME-WORKER","RASTATIME-PLAYOUT","RASTATIME-ICECAST") {
+# Export current NSSM environment for each service (all 7):
+foreach ($svc in "RASTATIME-API","RASTATIME-WORKER","RASTATIME-PLAYOUT",
+                 "RASTATIME-ANALYZER","RASTATIME-APACHE","RASTATIME-ICECAST",
+                 "RASTATIME-LIQUIDSOAP") {
     $envOut = "$CfgOut\nssm-env-$svc.$Date.txt"
     nssm get $svc AppEnvironmentExtra 2>&1 | Out-File $envOut -Encoding utf8
 }
+
+# RASTATIME-PLAYOUT's AppEnvironmentExtra is partly operator-maintained
+# (engine selection: RASTATIME_PLAYOUT_ENGINE, RASTATIME_MPV_LOG_LEVEL,
+# RASTATIME_LIQUIDSOAP_CROSSFADE_SECONDS).  install-playout.ps1 does NOT
+# recreate those three values — this export is the only record of them.
 
 Write-Host "Config backup complete: $CfgOut"
 ```
@@ -166,6 +173,15 @@ Write-Host "Config backup complete: $CfgOut"
 
 The RASTATIME media library may be several hundred GB.  Back it up to a
 separate storage volume or NAS using robocopy or a dedicated backup tool.
+
+> ⚠️ **Run the media copy from an ELEVATED shell (Administrator).**
+> Verified 2026-06-17: the podcast-feature downloads
+> (`imported/2/podcast_ep*.mp3`, ~33 files in `cc_files`) carry a
+> restrictive ACL with **no** access for the `studio` user — a
+> non-elevated robocopy **silently skips them** (exit code >= 8,
+> "Zugriff verweigert" in the log).  Administrators have full access
+> and copy them.  See BACKLOG "Podcast-Downloads: ACL sperrt den
+> studio-User aus".
 
 ```powershell
 # Mirror the media directory to a backup volume (adjust paths):
@@ -194,7 +210,7 @@ $Root = "C:\rastatime-backups"
 $env:PGPASSWORD = "your-db-password"
 $DbOut = "$Root\db\rastatime-$Date.sql"
 New-Item -ItemType Directory -Path "$Root\db" -Force | Out-Null
-pg_dump --host=127.0.0.1 --port=5432 --username=rastatime_user `
+pg_dump --host=127.0.0.1 --port=5432 --username=rastatime `
         --dbname=rastatime --file=$DbOut --format=plain
 Remove-Item Env:\PGPASSWORD
 
@@ -221,19 +237,23 @@ Write-Host "$Date  Full backup complete."
 ### 7.1 Restore the database (plain SQL)
 
 ```powershell
-# Stop all RASTATIME services first:
-nssm stop RASTATIME-PLAYOUT confirm
-nssm stop RASTATIME-WORKER  confirm
-nssm stop RASTATIME-API     confirm
+# Stop all RASTATIME services that write to the database first
+# (incl. Apache — the PHP frontend holds DB connections, which would
+#  make DROP DATABASE fail with "database is being accessed"):
+nssm stop RASTATIME-APACHE   confirm
+nssm stop RASTATIME-PLAYOUT  confirm
+nssm stop RASTATIME-ANALYZER confirm
+nssm stop RASTATIME-WORKER   confirm
+nssm stop RASTATIME-API      confirm
 
 # Drop and recreate the database:
 $env:PGPASSWORD = "superuser-password"
 psql -U postgres -h 127.0.0.1 -p 5432 -c "DROP DATABASE IF EXISTS rastatime;"
-psql -U postgres -h 127.0.0.1 -p 5432 -c "CREATE DATABASE rastatime OWNER rastatime_user;"
+psql -U postgres -h 127.0.0.1 -p 5432 -c "CREATE DATABASE rastatime OWNER rastatime;"
 
 # Restore from plain SQL backup:
-$env:PGPASSWORD = "rastatime_user-password"
-psql -U rastatime_user -h 127.0.0.1 -p 5432 -d rastatime `
+$env:PGPASSWORD = "rastatime-password"
+psql -U rastatime -h 127.0.0.1 -p 5432 -d rastatime `
      -f C:\rastatime-backups\db\rastatime-2026-04-30T0200.sql
 
 Remove-Item Env:\PGPASSWORD
@@ -241,14 +261,16 @@ Remove-Item Env:\PGPASSWORD
 # Restart services:
 nssm start RASTATIME-API
 nssm start RASTATIME-WORKER
+nssm start RASTATIME-ANALYZER
 nssm start RASTATIME-PLAYOUT
+nssm start RASTATIME-APACHE
 ```
 
 ### 7.2 Restore the database (custom format)
 
 ```powershell
 pg_restore --host=127.0.0.1 --port=5432 `
-           --username=rastatime_user --dbname=rastatime `
+           --username=rastatime --dbname=rastatime `
            --format=custom --clean --if-exists `
            C:\rastatime-backups\db\rastatime-2026-04-30T0200.dump
 ```
@@ -275,6 +297,14 @@ $f = "C:\rastatime-backups\db\rastatime-2026-04-30T0200.sql"
 Get-Item $f | Select-Object Name, Length, LastWriteTime
 Select-String "PostgreSQL database dump complete" $f
 # Expected: one match at the end of the file
+
+# Verify the media robocopy copied everything (it must have run elevated):
+# robocopy exit codes >= 8 mean at least one file FAILED to copy.
+Select-String -Pattern "ERROR 5","Zugriff verweigert","Access is denied" `
+    -Path C:\rastatime-backups\media-robocopy.log
+# Expected: no matches.  Hits here almost always mean the copy ran
+# non-elevated and the ACL-restricted podcast downloads were silently
+# skipped (see the warning in section 5).
 ```
 
 ---

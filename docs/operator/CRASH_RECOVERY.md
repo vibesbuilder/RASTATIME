@@ -19,8 +19,15 @@ powershell -ExecutionPolicy Bypass -File C:\rastatime\infra\nssm\status.ps1
 ```
 
 The output of `status.ps1` tells you which services are running, which are
-stopped, and whether the API is returning HTTP 200.  Use it to determine
-which recovery path applies.
+stopped, and whether the API is returning HTTP 200.  Note that
+`status.ps1` covers only the four original services (API, WORKER,
+PLAYOUT, ICECAST) — check the other three explicitly:
+
+```powershell
+Get-Service RASTATIME-ANALYZER, RASTATIME-APACHE, RASTATIME-LIQUIDSOAP
+```
+
+Use both outputs to determine which recovery path applies.
 
 ---
 
@@ -108,7 +115,7 @@ Get-Content C:\rastatime\logs\api-stderr.log -Tail 100
 | Log message | Cause | Fix |
 |---|---|---|
 | `could not connect to server` | PostgreSQL unreachable (port 5432) | Start PostgreSQL; check `libretime.conf` |
-| `CDLL libvlc.dll could not be loaded` | Missing 64-bit VLC | Reinstall VLC (64-bit) |
+| `CDLL libvlc.dll could not be loaded` | Playout fell back to the legacy VLC engine | Verify `RASTATIME_PLAYOUT_ENGINE=liquidsoap` in the playout `AppEnvironmentExtra` (MIGRATION.md §4.7) — VLC is no longer part of the stack |
 | `No module named 'libretime_api'` | PYTHONPATH incorrect | Reinstall service with `install-api.ps1` |
 | `FileNotFoundError: libretime.conf` | Config file missing or wrong path | Copy from backup; check `LIBRETIME_CONFIG_FILEPATH` |
 | `django.core.exceptions.ImproperlyConfigured` | Missing env var or bad settings | Check `DJANGO_SETTINGS_MODULE` in NSSM env |
@@ -165,7 +172,7 @@ nssm stop RASTATIME-PLAYOUT confirm
 nssm stop RASTATIME-WORKER  confirm
 
 # Ensure API is healthy first:
-Invoke-WebRequest http://127.0.0.1:8000/health -UseBasicParsing
+Invoke-WebRequest http://127.0.0.1:8765/health -UseBasicParsing
 
 nssm start RASTATIME-WORKER
 nssm start RASTATIME-PLAYOUT
@@ -204,7 +211,7 @@ Once PostgreSQL is accepting connections, restart in dependency order:
 nssm restart RASTATIME-API
 # Wait for health:
 Start-Sleep -Seconds 8
-Invoke-WebRequest http://127.0.0.1:8000/health -UseBasicParsing
+Invoke-WebRequest http://127.0.0.1:8765/health -UseBasicParsing
 
 nssm restart RASTATIME-WORKER
 nssm restart RASTATIME-PLAYOUT
@@ -219,7 +226,7 @@ If `psql` reports errors or expected rows are missing, restore from backup.
 ### 7.1 Assess the damage
 
 ```powershell
-psql -U rastatime_user -h 127.0.0.1 -p 5432 -d rastatime -c "\dt"
+psql -U rastatime -h 127.0.0.1 -p 5432 -d rastatime -c "\dt"
 # Look for missing tables or unexpected errors
 ```
 
@@ -239,9 +246,9 @@ See `docs\operator\BACKUP.md` §7 for the full restore procedure.
 # Quick reference — plain SQL restore:
 $env:PGPASSWORD = "postgres-superuser-password"
 psql -U postgres -h 127.0.0.1 -p 5432 -c "DROP DATABASE IF EXISTS rastatime;"
-psql -U postgres -h 127.0.0.1 -p 5432 -c "CREATE DATABASE rastatime OWNER rastatime_user;"
-$env:PGPASSWORD = "rastatime_user-password"
-psql -U rastatime_user -h 127.0.0.1 -p 5432 -d rastatime `
+psql -U postgres -h 127.0.0.1 -p 5432 -c "CREATE DATABASE rastatime OWNER rastatime;"
+$env:PGPASSWORD = "rastatime-password"
+psql -U rastatime -h 127.0.0.1 -p 5432 -d rastatime `
      -f C:\rastatime-backups\db\<latest-backup>.sql
 Remove-Item Env:\PGPASSWORD
 ```
@@ -253,7 +260,7 @@ cd C:\rastatime\backend\api
 $env:DJANGO_SETTINGS_MODULE    = "libretime_api.settings.prod"
 $env:LIBRETIME_CONFIG_FILEPATH = "C:\rastatime\config\libretime.conf"
 $env:PYTHONPATH                = "C:\rastatime\backend\api;C:\rastatime\backend\shared;C:\rastatime"
-python manage.py migrate
+python libretime_api\manage.py migrate
 ```
 
 ### 7.5 Restart and verify
@@ -261,7 +268,7 @@ python manage.py migrate
 ```powershell
 nssm start RASTATIME-API
 Start-Sleep -Seconds 8
-Invoke-WebRequest http://127.0.0.1:8000/health -UseBasicParsing
+Invoke-WebRequest http://127.0.0.1:8765/health -UseBasicParsing
 nssm start RASTATIME-WORKER
 nssm start RASTATIME-PLAYOUT
 
@@ -277,13 +284,17 @@ the latest backup.
 
 ### 8.1 Provision the new machine
 
-Install all prerequisites on the replacement hardware following
-`docs\operator\INSTALL.md` §2:
+Install **all** prerequisites on the replacement hardware following
+`docs\operator\INSTALL.md` §2 (the full set — not a subset):
 
-- Python 3.11+ (64-bit)
-- PostgreSQL 17 (port 5432)
-- VLC 64-bit / libVLC
-- NSSM
+- Windows prep (Smart App Control OFF, static IP), VC++ Redistributable
+- Python 3.11+ (64-bit), PostgreSQL 17 (port 5432)
+- RabbitMQ 4.x + Erlang OTP (vhost `/rastatime`)
+- Liquidsoap 2.4.4 (`C:\Tools\liquidsoap`)
+- Apache 2.4 + PHP 8.3 (`C:\Tools\Apache24` / `C:\Tools\PHP`)
+- Icecast 2.4.4 (`C:\Tools\Icecast`), FFmpeg (`C:\ffmpeg\bin`), NSSM
+
+(VLC is **not** required — Liquidsoap is the production engine.)
 
 ### 8.2 Restore the codebase
 
@@ -309,13 +320,13 @@ Copy-Item <backup-drive>\config\libretime.conf.* `
 ```powershell
 # Create the DB user and database:
 psql -U postgres -h 127.0.0.1 -p 5432 -c `
-    "CREATE USER rastatime_user WITH PASSWORD '<password>';"
+    "CREATE USER rastatime WITH PASSWORD '<password>';"
 psql -U postgres -h 127.0.0.1 -p 5432 -c `
-    "CREATE DATABASE rastatime OWNER rastatime_user;"
+    "CREATE DATABASE rastatime OWNER rastatime;"
 
 # Restore:
-$env:PGPASSWORD = "rastatime_user-password"
-psql -U rastatime_user -h 127.0.0.1 -p 5432 -d rastatime `
+$env:PGPASSWORD = "rastatime-password"
+psql -U rastatime -h 127.0.0.1 -p 5432 -d rastatime `
      -f <backup-drive>\db\<latest-backup>.sql
 Remove-Item Env:\PGPASSWORD
 ```
@@ -326,21 +337,25 @@ Remove-Item Env:\PGPASSWORD
 cd C:\rastatime
 python -m venv .venv
 .venv\Scripts\Activate.ps1
+# Full dependency sequence per INSTALL.md §4 Step 4:
 pip install -r requirements.txt
+pip install psycopg2-binary
+pip install -e backend/shared
+pip install -e backend/api-client
+pip install -e backend/api
+pip install -e backend/playout
+pip install -e backend/analyzer
 
-# Install services (as Administrator):
-powershell -File infra\nssm\install-api.ps1     -StartService
-Start-Sleep -Seconds 10
-powershell -File infra\nssm\install-worker.ps1  -StartService
-powershell -File infra\nssm\install-playout.ps1 -StartService
-powershell -File infra\nssm\install-icecast.ps1 -StartService  # optional
+# Install ALL 7 services (as Administrator) — full sequence incl. the
+# playout engine env vars and the Liquidsoap service:
+# see INSTALL.md §4 Step 9 (9a-9h).
 ```
 
 ### 8.6 Verify
 
 ```powershell
 powershell -File C:\rastatime\infra\nssm\status.ps1
-Invoke-WebRequest http://127.0.0.1:8000/health -UseBasicParsing
+Invoke-WebRequest http://127.0.0.1:8765/health -UseBasicParsing
 ```
 
 ---

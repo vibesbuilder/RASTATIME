@@ -1,6 +1,6 @@
 # ADR-002 — libVLC as the Mandatory Main Playout Engine
 
-**Status:** Accepted  
+**Status:** Accepted; **superseded in practice** by the 2026-05 Liquidsoap cutover (Liquidsoap 2.4.4 is the production playout engine; mpv/libVLC remain legacy fallback code pending deletion)  
 **Date:** 2026-04-24  
 **Deciders:** RASTATIME project
 

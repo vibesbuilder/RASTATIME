@@ -8,14 +8,14 @@
     T22.1 - Idempotent NSSM install script for RASTATIME-API.
 
     RASTATIME-API is the mandatory Django/Waitress REST API service.
-    It binds on port 8000 and must be running before the worker and
+    It binds on port 8765 and must be running before the worker and
     playout services are started.
 
     Service properties (see docs/architecture/SERVICE_TOPOLOGY.md §2.1):
         NSSM name  : RASTATIME-API
         Executable : python.exe  (from the install-root venv)
-        Arguments  : -m libretime_api.waitress_serve --host 0.0.0.0 --port 8000 --threads 8
-        Port       : 8000  (HTTP, Waitress)
+        Arguments  : -m libretime_api.waitress_serve --host 0.0.0.0 --port 8765 --threads 8
+        Port       : 8765  (HTTP, Waitress)
         Logs       : C:\rastatime\logs\api-stdout.log
                      C:\rastatime\logs\api-stderr.log
         Restart    : automatic, 5 000 ms delay
@@ -37,7 +37,7 @@
 
 .PARAMETER ApiPort
     TCP port for the Waitress WSGI server.
-    Default: 8000
+    Default: 8765
 
 .PARAMETER ApiThreads
     Number of Waitress worker threads.
@@ -276,3 +276,4 @@ if ($StartService) {
 Write-Host ""
 Write-Host "  Done.  Health endpoint will be at http://${ApiHost}:${ApiPort}/health" -ForegroundColor Green
 Write-Host ""
+

@@ -10,10 +10,11 @@
     Required:
         - Python 3.11 or later
         - PostgreSQL (psql reachable on PATH or installed as a service)
-        - VLC / libVLC  (VLC installed in its default location or on PATH)
+        - RabbitMQ  (analyzer message queue + frontend upload dispatch)
 
     Optional:
-        - RabbitMQ  (only needed if the worker backend uses it)
+        - VLC / libVLC  (legacy mpv/VLC fallback engines only;
+          Liquidsoap is the production engine since 2026-05)
 
     Run once after cloning, and again after any major system change.
 
@@ -197,10 +198,9 @@ function Test-VLC {
         $hasSdk = Test-Path (Join-Path $vlcDir 'libvlc.dll')
         $sdkNote = if ($hasSdk) { 'libvlc.dll present' } else { 'libvlc.dll NOT found' }
         if ($hasSdk) {
-            Write-Pass "VLC on PATH" "$($vlcCmd.Source)  - $sdkNote"
+            Write-Pass "VLC on PATH [optional]" "$($vlcCmd.Source)  - $sdkNote"
         } else {
-            Write-Fail "VLC on PATH" "$($vlcCmd.Source)  - $sdkNote (python-vlc will not work)"
-            Write-Info "Reinstall VLC (64-bit) from https://www.videolan.org/vlc/download-windows.html"
+            Write-Skip "VLC on PATH [optional]" "$($vlcCmd.Source)  - $sdkNote (only needed for legacy engines)"
         }
         return $hasSdk
     }
@@ -211,10 +211,7 @@ function Test-VLC {
         $vlcDir = Split-Path $defaultPath
         $hasSdk = Test-Path (Join-Path $vlcDir 'libvlc.dll')
         $sdkNote = if ($hasSdk) { 'libvlc.dll present' } else { 'libvlc.dll NOT found' }
-        Write-Pass "VLC (Program Files)" "$defaultPath  - $sdkNote"
-        if (-not $hasSdk) {
-            Write-Info "Reinstall VLC to ensure libvlc.dll is included."
-        }
+        Write-Pass "VLC (Program Files) [optional]" "$defaultPath  - $sdkNote"
         return $hasSdk
     }
 
@@ -225,37 +222,42 @@ function Test-VLC {
         if ($installDir -and (Test-Path $installDir)) {
             $hasSdk = Test-Path (Join-Path $installDir 'libvlc.dll')
             $sdkNote = if ($hasSdk) { 'libvlc.dll present' } else { 'libvlc.dll NOT found' }
-            Write-Pass "VLC (registry)" "$installDir  - $sdkNote"
+            Write-Pass "VLC (registry) [optional]" "$installDir  - $sdkNote"
             return $hasSdk
         }
     }
 
-    Write-Fail "VLC / libVLC" "not found on PATH, not in Program Files, not in registry"
-    Write-Info "Install VLC from https://www.videolan.org/vlc/download-windows.html"
-    Write-Info "Use the 64-bit installer so libvlc.dll is available for python-vlc."
+    Write-Skip "VLC / libVLC [optional]" "not found  - only needed for legacy mpv/VLC fallback engines"
+    Write-Info "Production playout uses Liquidsoap; VLC is not required."
     return $false
 }
 
 
 function Test-RabbitMQ {
     <#
-    Optional check  - returns $true if found, but never fails the bootstrap.
+    Required check: the analyzer consumes a RabbitMQ queue and the PHP
+    frontend dispatches upload messages to it (vhost /rastatime, port
+    5672, credentials in libretime.conf's rabbitmq section).
     Detects via Windows service 'RabbitMQ' or rabbitmq-server on PATH.
     #>
 
     $svc = Get-Service -Name 'RabbitMQ' -ErrorAction SilentlyContinue
     if ($svc) {
-        Write-Pass "RabbitMQ (Windows service) [optional]" "status: $($svc.Status)"
+        Write-Pass "RabbitMQ (Windows service)" "status: $($svc.Status)"
         return $true
     }
 
     $cmd = Get-Command rabbitmq-server -ErrorAction SilentlyContinue
     if ($cmd) {
-        Write-Pass "RabbitMQ (on PATH) [optional]" $cmd.Source
+        Write-Pass "RabbitMQ (on PATH)" $cmd.Source
         return $true
     }
 
-    Write-Skip "RabbitMQ [optional]" "not found  - worker will run without broker"
+    Write-Fail "RabbitMQ" "not found (Windows service or rabbitmq-server on PATH)"
+    Write-Info "Install RabbitMQ 4.x + Erlang OTP; create vhost /rastatime on port 5672"
+    Write-Info "(credentials in libretime.conf's rabbitmq section).  If the service"
+    Write-Info "crashes at start, reinstall it with an explicit RABBITMQ_BASE"
+    Write-Info "(e.g. C:\ProgramData\RabbitMQ) via rabbitmq-service.bat remove/install."
     return $false
 }
 
@@ -269,11 +271,11 @@ Write-SectionHeader "Required dependencies"
 
 $pythonOk    = Test-Python
 $postgresOk  = Test-PostgreSQL
-$vlcOk       = Test-VLC
+$rabbitOk    = Test-RabbitMQ
 
 Write-SectionHeader "Optional dependencies"
 
-$null = Test-RabbitMQ   # result not used in pass/fail count
+$null = Test-VLC   # result not used in pass/fail count (legacy engines only)
 
 # ---------------------------------------------------------------------------
 # Summary
@@ -288,7 +290,7 @@ Write-Host ""
 $failed = @()
 if (-not $pythonOk)   { $failed += "Python $MIN_PYTHON_MAJOR.$MIN_PYTHON_MINOR+" }
 if (-not $postgresOk) { $failed += "PostgreSQL" }
-if (-not $vlcOk)      { $failed += "VLC / libVLC" }
+if (-not $rabbitOk)   { $failed += "RabbitMQ" }
 
 if ($failed.Count -eq 0) {
     Write-Host "  All required dependencies found." -ForegroundColor Green
