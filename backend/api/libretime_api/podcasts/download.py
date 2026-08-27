@@ -12,7 +12,7 @@ via Django ORM — bypassing the entire PHP multipart-upload chain.
 
 import hashlib
 import logging
-import shutil
+import os
 from datetime import timedelta
 from email.message import EmailMessage
 from pathlib import Path
@@ -108,9 +108,10 @@ def download_episode(
     Download a podcast episode and import it into the media library.
 
     Steps:
-      1. Fetch the audio file over HTTP.
+      1. Fetch the audio file over HTTP into a temp file that lives
+         directly inside {storage_path}/imported/{owner_dir}/.
       2. Embed metadata tags via mutagen (non-fatal on failure).
-      3. Move the file to  {storage_path}/imported/{owner_dir}/
+      3. Rename the temp file to its final name (same directory).
       4. Create a cc_files record (storage.File) via Django ORM.
 
     Args:
@@ -156,14 +157,29 @@ def download_episode(
 
     try:
         # ------------------------------------------------------------------
-        # Step 1: Download audio to a temporary file
+        # Step 1: Download audio to a temporary file INSIDE the destination
+        # directory.  The temp file must NOT be created in %TEMP%: under the
+        # NSSM service account that directory's restrictive ACL travels with
+        # the file on a same-volume rename (NTFS keeps the security
+        # descriptor), producing library files no regular user can read —
+        # which silently broke every non-elevated media backup.  Born in
+        # import_dir, the file inherits the media-library ACL from creation.
         # ------------------------------------------------------------------
+        owner_dir = str(owner_id) if owner_id else "podcast"
+        import_dir = Path(storage_path) / "imported" / owner_dir
+        import_dir.mkdir(parents=True, exist_ok=True)
+
         try:
             with requests.get(episode_url, stream=True, timeout=60) as resp:
                 resp.raise_for_status()
                 original_filename = _extract_filename(resp)
                 suffix = Path(original_filename).suffix or ".mp3"
-                with NamedTemporaryFile(suffix=suffix, delete=False) as fp:
+                with NamedTemporaryFile(
+                    dir=import_dir,
+                    prefix="podcast_tmp_",
+                    suffix=suffix,
+                    delete=False,
+                ) as fp:
                     for chunk in resp.iter_content(chunk_size=65536):
                         fp.write(chunk)
                     tmp_path = Path(fp.name)
@@ -233,16 +249,13 @@ def download_episode(
             )
 
         # ------------------------------------------------------------------
-        # Step 4: Move the tagged file into the media store
+        # Step 4: Rename the tagged temp file to its final name (same
+        # directory, so the ACL inherited at creation is untouched)
         # ------------------------------------------------------------------
-        owner_dir = str(owner_id) if owner_id else "podcast"
-        import_dir = Path(storage_path) / "imported" / owner_dir
-        import_dir.mkdir(parents=True, exist_ok=True)
-
         dest_filename = _safe_filename(episode_id, original_filename)
         dest_path = import_dir / dest_filename
-        shutil.move(str(tmp_path), str(dest_path))
-        tmp_path = None  # successfully moved — nothing to clean up
+        os.replace(tmp_path, dest_path)
+        tmp_path = None  # successfully renamed — nothing to clean up
 
         # filepath stored in cc_files is relative to storage_path.
         # Use a leading slash and forward slashes (LibreTime convention;
