@@ -122,6 +122,12 @@ def setup_logger(log_filepath: Optional[str]):
         "console": {
             "level": "INFO",
             "class": "logging.StreamHandler",
+            # RASTATIME 2026-08-30: explicit stdout — StreamHandler's
+            # default is stderr, which PowerShell flags as
+            # NativeCommandError noise for every INFO line when the
+            # playout (which imports these settings via Django) runs
+            # with merged streams (BACKLOG "NativeCommandError-Noise").
+            "stream": "ext://sys.stdout",
             "formatter": "simple",
         },
     }
@@ -139,7 +145,11 @@ def setup_logger(log_filepath: Optional[str]):
         "disable_existing_loggers": False,
         "formatters": {
             "simple": {
-                "format": "{levelname} {message}",
+                # RASTATIME 2026-08-30: asctime + name added so the
+                # single console line is self-sufficient — the
+                # duplicate timestamped line via the root logger is
+                # gone now that "libretime_api" no longer propagates.
+                "format": "{asctime} {levelname} {name}: {message}",
                 "style": "{",
             },
             "verbose": {
@@ -157,7 +167,12 @@ def setup_logger(log_filepath: Optional[str]):
             "libretime_api": {
                 "handlers": logging_handlers.keys(),
                 "level": "INFO",
-                "propagate": True,
+                # RASTATIME 2026-08-30: no propagation — in the playout
+                # process the root logger carries its own stdout handler
+                # (logging.basicConfig in libretime_playout.__main__),
+                # so propagate=True emitted every libretime_api record
+                # TWICE (once per handler, one of them on stderr).
+                "propagate": False,
             },
         },
     }
