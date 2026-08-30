@@ -375,7 +375,10 @@ var AIRTIME = (function (AIRTIME) {
       $historyTableDiv.wrap('<div class="dataTables_scrolling"></div>');
       $historyTableDiv.closest(".dataTables_wrapper").addClass("rt-jq3-widget");
     }
-    oTable.fnSetFilteringDelay(350);
+    // RASTATIME 2026-08-30: fnSetFilteringDelay(350) removed — neither
+    // sDom here contains an "f" (filter input), so the plugin resolved
+    // $('input', undefined) = EVERY input on the page and re-bound their
+    // keyup handlers, stripping the date/time range pickers' listeners.
 
     return oTable;
   }
@@ -459,7 +462,9 @@ var AIRTIME = (function (AIRTIME) {
       $historyTableDiv.wrap('<div class="dataTables_scrolling"></div>');
       $historyTableDiv.closest(".dataTables_wrapper").addClass("rt-jq3-widget");
     }
-    oTable.fnSetFilteringDelay(350);
+    // RASTATIME 2026-08-30: fnSetFilteringDelay removed (see note in
+    // aggregateHistoryTable above — no "f" in sDom, the plugin re-bound
+    // keyup on every input of the page).
 
     $toolbar = $historyTableDiv
       .parents(".dataTables_wrapper")

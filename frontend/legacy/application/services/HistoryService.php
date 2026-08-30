@@ -366,13 +366,21 @@ class Application_Service_HistoryService
 
         for ($i = 0; $i < $numOrderColumns; ++$i) {
             $colNum = $opts['iSortCol_' . $i];
-            $key = $opts['mDataProp_' . $colNum];
-            $sortDir = $opts['sSortDir_' . $i];
+            $key = $opts['mDataProp_' . $colNum] ?? '';
+            // RASTATIME 2026-08-30: sanitize both values — they come
+            // straight from the DataTables request and were interpolated
+            // into the SQL unchecked (the item feed in getPlayedItemData
+            // whitelists against the template keys; this feed did not =
+            // SQL injection via mDataProp_N / sSortDir_N).
+            $sortDir = strtoupper($opts['sSortDir_' . $i] ?? '') === 'DESC' ? 'DESC' : 'ASC';
+            if (!preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $key)) {
+                continue;
+            }
 
             $orderBys[] = "summary.{$key} {$sortDir}";
         }
 
-        if ($numOrderColumns > 0) {
+        if (count($orderBys) > 0) {
             $orders = implode(', ', $orderBys);
 
             $mainSqlQuery .=
