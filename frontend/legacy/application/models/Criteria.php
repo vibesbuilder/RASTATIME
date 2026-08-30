@@ -205,6 +205,18 @@ class BlockCriteria
 
     public static function get(string $key): BlockCriteria
     {
-        return self::criteriaMap()[$key];
+        // RASTATIME 2026-08-30 (PHP 8): a submitted criteria row that is
+        // still on its "Select criteria" placeholder carries the key '0',
+        // which is not in the map.  On PHP 7 the missing-key access limped
+        // through as null + notice and isValid() then reported the
+        // friendly "You must select Criteria and Modifier" error.  On
+        // PHP 8 the same access returned null into this non-nullable
+        // return type -> TypeError -> HTTP 500, swallowed silently by the
+        // save JS: EVERY save of a block containing an untouched criteria
+        // row failed (BACKLOG "Smart Block speichern funktioniert nicht").
+        // Return a neutral placeholder instead so preValidation() can set
+        // the row up and the intended validation error surfaces.
+        return self::criteriaMap()[$key]
+            ?? new BlockCriteria('0', ModifierType::STRING, '', _('Select criteria'));
     }
 }

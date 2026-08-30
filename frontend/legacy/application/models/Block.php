@@ -1222,18 +1222,24 @@ SQL;
         }
 
         // insert sort info
+        // RASTATIME 2026-08-30: null-coalesce ALL etc-fields (same
+        // pattern the newer toggles below always had).  A POST missing
+        // one of these fields used to hit setDbValue(null) on a
+        // NOT-NULL column -> PDO 23502 -> abort AFTER the DELETE at the
+        // top of this method had already wiped the stored criteria =
+        // silent criteria loss on a failed save.
         $qry = new CcBlockcriteria();
         $qry->setDbCriteria('sort')
             ->setDbModifier('N/A')
-            ->setDbValue($p_criteriaData['etc']['sp_sort_options'])
+            ->setDbValue($p_criteriaData['etc']['sp_sort_options'] ?? 'random')
             ->setDbBlockId($this->id)
             ->save();
 
         // insert limit info
         $qry = new CcBlockcriteria();
         $qry->setDbCriteria('limit')
-            ->setDbModifier($p_criteriaData['etc']['sp_limit_options'])
-            ->setDbValue($p_criteriaData['etc']['sp_limit_value'])
+            ->setDbModifier($p_criteriaData['etc']['sp_limit_options'] ?? 'items')
+            ->setDbValue($p_criteriaData['etc']['sp_limit_value'] ?? 0)
             ->setDbBlockId($this->id)
             ->save();
 
@@ -1241,7 +1247,7 @@ SQL;
         $qry = new CcBlockcriteria();
         $qry->setDbCriteria('repeat_tracks')
             ->setDbModifier('N/A')
-            ->setDbValue($p_criteriaData['etc']['sp_repeat_tracks'])
+            ->setDbValue($p_criteriaData['etc']['sp_repeat_tracks'] ?? 0)
             ->setDbBlockId($this->id)
             ->save();
 
@@ -1249,7 +1255,7 @@ SQL;
         $qry = new CcBlockcriteria();
         $qry->setDbCriteria('overflow_tracks')
             ->setDbModifier('N/A')
-            ->setDbValue($p_criteriaData['etc']['sp_overflow_tracks'])
+            ->setDbValue($p_criteriaData['etc']['sp_overflow_tracks'] ?? 0)
             ->setDbBlockId($this->id)
             ->save();
 

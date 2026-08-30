@@ -1131,7 +1131,21 @@ var AIRTIME = (function (AIRTIME) {
             mod.setFadeIcon();
             disableLoadingIcon();
           },
-        );
+        ).fail(function (jqXHR) {
+          // RASTATIME 2026-08-30: an HTTP-level failure (e.g. a PHP
+          // fatal -> 500) used to vanish here — no message, and the
+          // blockUI overlay from enableLoadingIcon() stayed up forever
+          // (BACKLOG "Smart Block speichern funktioniert nicht").
+          // Surface it and release the UI.
+          disableLoadingIcon();
+          alert(
+            $.i18n._("Saving failed") +
+              " (HTTP " +
+              jqXHR.status +
+              "). " +
+              $.i18n._("Please check the server logs."),
+          );
+        });
       });
 
     $pl
