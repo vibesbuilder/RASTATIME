@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Listener-Statistik-Collector läuft jetzt wirklich (2026-08-30,
+  `00ce768`)** — Root Cause des 🔴-BACKLOG-Items „Listener-Statistik
+  zeigt keine Daten": der `StatsCollectorThread` wurde nur im
+  verwaisten `main.py` gestartet, der aktive Entry-Point
+  `__main__.py` kannte ihn nicht → `cc_listener_count` blieb leer.
+  Jetzt startet der Playout-Dienst den Collector (120-s-Poll gegen
+  Icecast `/admin/stats.xml`); die Poll-Liste kommt via
+  `outputs_from_stream_settings()` aus den live
+  `cc_pref stream_output_N`-Settings (inkl. Admin-Creds; Einträge
+  ohne Admin-Passwort werden mit Warnung übersprungen) statt aus der
+  seit dem Phase-D-Cutover leeren `libretime.conf`-Output-Liste.
+  4 neue Tests; E2E live bewiesen (2 Test-Listener → exakt 1/1/0 in
+  `cc_listener_count`).  Flankierend: neues Manual-Kapitel
+  **Analytics** in EN/DE/FR/ES + TOC-Zeilen (`96cc252`).
+
 - **Traffic Alerts (2026-06-16, T1–T2)** — Kurzfristig eintreffende
   Verkehrsmeldungs-MP3s laufen binnen ~10 Minuten on air, ohne Eingriff in den
   Python-Playout-Pfad:
@@ -178,6 +193,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   nächste Worker-Neustart mit ModuleNotFoundError fehl.
 
 ### Fixed
+
+- **Smart-Block-Save crashte auf PHP 8 bei unberührter Criteria-Zeile
+  (2026-08-30, `5029a7c`)** — Root Cause des BACKLOG-Items „Smart
+  Block speichern funktioniert nicht": der „Select criteria"-
+  Platzhalter postet Key `'0'`, der Missing-Key-Zugriff lief auf
+  PHP 8 in den non-nullable Return-Type von `BlockCriteria::get()`
+  → TypeError → HTTP 500, vom Save-`$.post` ohne `.fail()`-Handler
+  stumm geschluckt (Spinner hing).  Empirisch per Standalone-Harness
+  bewiesen.  Fix: neutraler Platzhalter für unbekannte Keys (die
+  gewollte Validierungsmeldung greift wieder), etc-Feld-Reads in
+  `Block.php` null-coalesced (Datenverlust-Guard: die Methode DELETEt
+  Kriterien vor dem Re-Insert), `.fail()`-Handler am Save-Post.
+
+- **Dropzone-Init-Race: Recent-Uploads-Liste zog nach Upload nicht
+  nach (2026-08-30, `8110b47`)** — Dropzone 4 Auto-Discover scannt
+  das DOM vor jQuery 3s asynchronem `$(document).ready`, in dem die
+  `Dropzone.options.*` (mit dem `success`-Refresh) erst zugewiesen
+  werden → Zone initialisierte ohne Optionen.  Fix:
+  `Dropzone.autoDiscover = false` + explizites `new Dropzone(...)`
+  nach der Options-Zuweisung (Upload-Seite + Dashboard-Zone);
+  `dropzone.min.js` wird vor den Options-Files geladen.
+
+- **Playout-History-Feed gehärtet (2026-08-30, `4522e43`)** —
+  Diagnose-Nebenfunde: SQL-Injection im File-Summary-Sort
+  (client-gesendete Spaltennamen/Richtung liefen roh ins ORDER BY —
+  jetzt Identifier-Whitelist + erzwungenes ASC/DESC) und beide
+  `fnSetFilteringDelay(350)`-Aufrufe entfernt (kein „f" im sDom →
+  das Plugin band `$('input', undefined)` = alle Inputs der Seite
+  neu und riss den Datum/Zeit-Range-Pickern die Keyup-Listener ab).
+  Der Haupt-Bug „Tabelle bleibt leer" ist damit noch nicht
+  geschlossen — Backend ist entlastet (Feed-SQL liefert live
+  Zeilen), Rest-Verdächtige client-seitig im BACKLOG dokumentiert.
+
+- **Django-Console-Logging: stdout, einmal, mit Timestamp
+  (2026-08-30, `88e1071`)** — Der Console-`StreamHandler` des
+  API-`LOGGING`-Dicts defaultete auf stderr und `propagate: True`
+  doppelte jede Zeile über playouts Root-Logger — die stderr-Kopie
+  erschien in PowerShell als roter `NativeCommandError`-Stack
+  (BACKLOG „NativeCommandError-Noise beim Pypo-Start").  Handler auf
+  `ext://sys.stdout`, `propagate: False`, Formatter angeglichen.
 
 - **Phase-E-Webstream-Haker behoben — `localhost`→IPv6 fror die
   Playout-Clock ein (2026-08-30, `428805e` + cc_pref-Update)** — Root

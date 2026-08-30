@@ -16,28 +16,25 @@
 Diese sind technisch evaluiert, empfohlen, und können starten sobald
 der Operator das Signal gibt.
 
-### 🔴 Listener-Statistik zeigt keine Daten — Ursache prüfen
+### ✅ Listener-Statistik zeigt keine Daten (DONE 2026-08-30, `00ce768`)
 
-**Status:** Zu untersuchen (Operator-Beobachtung 2026-06-05).
-**Symptom:** Unter **Analytics → Show Listener Stats** (Tabelle) **und**
-**Listener Stats** (Flot-Grafik) sind **keine Daten** vorhanden — auf
-Legacy (`?jq3=0`) **und** jq3 gleichermaßen → **kein** Frontend-/jQuery-
-Migrations-Bug, sondern es werden serverseitig keine Listener-Stats
-gesammelt/gespeichert.  Operator war mehrfach mit den Mountpoints
-verbunden, trotzdem keine Stats.
-
-**Zu prüfen:**
-- Sammelt überhaupt etwas die Icecast-Listener-Zahlen? (Cron/Worker/
-  Analyzer-Job, der Icecast `/admin/stats` o. Ä. pollt und in die DB
-  schreibt — `cc_listener_count` / das Listenerstat-Model.)
-- Ist der entsprechende Dienst/Task auf der Windows-Maschine aktiv?
-- Backend-Endpunkte `Listenerstat/get-data` + `Listenerstat/get-all-show-data`
-  liefern leere Arrays — kommt das aus einer leeren Tabelle?
-- Ggf. Icecast-Stats-Zugang (admin-Credentials) korrekt konfiguriert?
-
-**Hinweis:** Die Tabelle + die Grafik selbst sind frontendseitig auf jq3
-funktionsfähig (DataTable rendert, Flot 0.8.3 vendored) — es fehlen nur
-die Daten.
+**Status:** Behoben — Sammel-Kette komplett, E2E live bewiesen.
+**Ursache (deckte sich mit dem 🟡-Defer-Eintrag unten):** Der
+`StatsCollectorThread` existierte, wurde aber nur im verwaisten
+`main.py` gestartet — der aktive Entry-Point `__main__.py` kannte ihn
+nicht → `cc_listener_count` blieb leer, beide Analytics-Views
+korrekterweise ohne Daten.  Zusätzlich wäre die Output-Quelle
+(`libretime.conf outputs:`) seit dem Phase-D-Cutover leer gewesen.
+**Fix:** Collector-Start in `__main__.py` (120-s-Poll); Poll-Liste
+kommt jetzt via `outputs_from_stream_settings()` aus den live
+`cc_pref stream_output_N`-Settings (Admin-Creds inklusive; Einträge
+ohne Admin-Passwort werden mit Warnung übersprungen).  4 neue Tests.
+**E2E-Beweis:** 2 Test-Listener (mp3/aac) erschienen im nächsten
+Zyklus als exakt 1/1/0 in `cc_listener_count`.
+**Rest-Check (offen, klein):** Chart-Ansicht im Browser + **Show
+Listener Stats** mit echten Show-Daten gegenprüfen, sobald im
+Sendebetrieb reale Hörerdaten aufgelaufen sind.
+**Doku:** neues Manual-Kapitel ANALYTICS (EN/DE/FR/ES, `96cc252`).
 
 ### ✅ Migration: Backup→Restore-Durchlauf auf der alten Maschine validiert (2026-06-16)
 
@@ -1233,17 +1230,22 @@ Sortierung der bereits-gespielten + nächsten Tracks freezable.
 
 ## 🐞 Known Issues / Bug Backlog
 
-### 🟡 „Recent Uploads"-Liste aktualisiert sich nicht automatisch nach Upload
+### ✅ „Recent Uploads"-Liste aktualisiert sich nicht automatisch nach Upload (DONE 2026-08-30, `8110b47`)
 
-**Status:** Defer — rein kosmetisch (Operator-Beobachtung 2026-06-05).
-**Repro:** Datei via Dashboard-Dropzone hochladen → Track erscheint korrekt in der
-Library, **aber nicht** sofort in der „Recent Uploads"-Liste auf `/plupload`; erst
-nach erneutem Öffnen/Reload von `/plupload` ist er dort sichtbar.
-**Ausschluss:** Tritt auf `?jq3=1` **und** `?jq3=0` auf → kein Migrations-Bug,
-vorbestehend.  Upload + DB-Persistenz funktionieren; nur das Live-Nachladen der
-Recent-Uploads-Liste fehlt (vermutlich kein Refresh-Callback nach dem
-Dropzone-`success`).
-**Aufwand:** klein — nach erfolgreichem Upload die Liste neu ziehen.
+**Status:** Behoben.
+**Ursache (nicht fehlender Callback — Callback kam nie zum Zug):**
+Dropzone 4 Auto-Discover scannt das DOM auf seinem eigenen
+DOMContentLoaded-Hook, die `Dropzone.options.*`-Objekte (mit dem
+`success`-Handler, der die Liste nachzieht) werden aber erst in
+jQuery 3s asynchronem `$(document).ready` zugewiesen — einen Microtask
+später.  Je nach Load-Order initialisierte die Zone **ohne** Optionen
+→ Upload lief, `success`-Refresh nie.
+**Fix:** `Dropzone.autoDiscover = false` + explizites `new Dropzone(...)`
+direkt nach der Options-Zuweisung (`plupload.js` + Dashboard-Zone in
+`main_builder.js`); `dropzone.min.js` wird jetzt vor den Options-Files
+appended (`PluploadController.php`).
+**Rest-Check (offen, klein):** ein realer Upload-Roundtrip im Browser
+(Liste zieht nach) — Operator-Sichtprüfung genügt.
 
 ### 🟡 CSRF-Token rotiert bei jedem Fehlversuch (poisont die offene Seite bis Reload)
 
@@ -1264,43 +1266,83 @@ Server-Fix (akzeptiert das statische `csrf`-Formularfeld) macht den Client-Pfad
 
 ### 🟡 Playout History: Tabelle + Export-Buttons werden nicht angezeigt
 
-**Status:** Defer — separater, **vorbestehender** Bug, **nicht** jQuery-3- oder
-DataTables-bezogen.
+**Status:** Diagnose 2026-08-30 durch — Backend **entlastet**, Rest ist
+client-seitig; finaler Live-Browser-Repro steht aus (Login nötig).
 **Entdeckt:** 2026-06-01 beim DataTables-1.13-Test.
 **Repro:** Playout History → die DataTable bleibt leer, die Export-Buttons (Log
 Sheet / File Summary / Show Summary) erscheinen nur als Links.
-**Ausschluss:** Tritt **auch ohne `?jq3=1`** (Default, jQuery 1.8 + DataTables
-1.9) auf → unabhängig von der Migration.  Auf 1.13 ist die Konsole sauber (nur
-die JQMIGRATE-Info, keine roten Fehler, kein „DataTables warning"-Alert) → der
-DataTables-Init wirft nicht; die Ursache liegt davor/dahinter (Backend-Response
-des server-side Endpoints, leeres Ergebnis, oder die jQuery-UI-`.button()`-
-Initialisierung der Export-Buttons in `historytable.js`).
-**Zu prüfen:** Network-Tab des History-Daten-Requests (liefert er Zeilen?), der
-`HistoryService`/`PlayouthistoryController`-Endpoint, und ob ggf. schlicht keine
-History-Daten in der DB sind.
+**Diagnose 2026-08-30:**
+- **Backend sauber:** die Feed-SQL von `HistoryService` liefert live
+  Zeilen (direkt gegen die DB verifiziert); `cc_playout_history` ist
+  gefüllt.  „Keine Daten in der DB" scheidet aus.
+- **Der ursprüngliche jq3-Verdacht ist stale:** die 2026-06-05er
+  historytable-Fixes (`faf249d`: `activate`-Tab-Event, sDom, Accordion-
+  Guard) haben die Render-Kette auf jq3 bereits repariert — dieser
+  Eintrag stammt aus der Zeit davor.
+- **Verbleibende Verdächtige (client-seitig, in Reihenfolge):**
+  (a) `JSON.parse(localStorage['datatables-historyitem-aoColumns'])`
+  = `null` → 0-Spalten-Init, und die Tabellen in `index.phtml` haben
+  **kein `<thead>`** als Fallback → still leere Tabelle;
+  (b) ein Throw in `mod.onReady` **vor** dem jQuery-UI-Tabs-Init
+  (datetimepicker/`hisSubmit`-Kette) ließe alles unschaltbar zurück;
+  (c) der Controller-`catch` schluckt Fehler zu HTTP 200 `{}`.
+- **Gehärtet nebenbei (`4522e43`):** SQL-Injection im File-Summary-
+  Sort (ORDER-BY-Whitelist) + beide `fnSetFilteringDelay(350)`-Aufrufe
+  entfernt (kein „f" im sDom → Plugin band `$('input', undefined)` =
+  **alle** Inputs der Seite neu und riss den Range-Pickern die
+  Keyup-Listener ab).
+**Nächster Schritt:** eingeloggte Browser-Sitzung → Seite laden,
+Konsole + `localStorage`-Wert + Network-Response des Feeds prüfen;
+danach entscheidet sich, welcher der drei Verdächtigen es ist.
 
-### 🟡 Smart Block speichern funktioniert nicht
+### 💡 Latent: `HistoryService::getSqlTypes()` mappt DATETIME auf ungültigen PG-Cast
 
-**Status:** Defer (Operator-Wunsch 2026-06-01) — separater Bug, **nicht** durch
-die jQuery-`.live`→`.on`-Vorarbeit verursacht.
-**Entdeckt:** 2026-06-01 beim Testen von jQuery-Schritt-1.
-**Repro:** Library → Smart Block anlegen/bearbeiten → Kriterien setzen →
-„Save" → Block wird nicht gespeichert.
-**Analyse (Ausschluss meiner Änderung):** Der Save-Handler sitzt in
-`spl.js:1088` (`$pl.find("#save_button").unbind().on("click", …)` → POST
-`playlist/save`) und wurde **nicht** angefasst (meine spl.js-Änderung betraf nur
-die 4 „+New"-Buttons bei ~1832).  Die Editor-Interaktionen (Kriterium add/remove,
-Modifier, Typ/Limit/Kriterium ändern, Generate/Shuffle) = genau die geänderten
-`.on()`-Handler, **funktionieren** → Konversion korrekt.  Der Bug ist also
-vorbestehend/separat.
-**Verdächtige (zu prüfen):** `playlist/save`-Endpoint, die `serializeArray()`
-der Criteria-Form, oder die `.dataTable()`-Interaktion in der Save-Callback
-(`spl.js:1101`).  Sinnvoll im Zuge der jQuery-Verifikation (Schritt 4) bzw. der
-DataTables-Migration mit-anzuschauen.
+**Status:** Idea/Latent — heute harmlos, Fund der 2026-08-30er
+Playout-History-Diagnose.
+**Befund:** `getSqlTypes()` übersetzt `TEMPLATE_DATETIME` in den
+Cast-String `'datetime'` — den Typ gibt es in PostgreSQL nicht
+(korrekt wäre `timestamp`).  Harmlos, solange kein History-Template
+ein eigenes DATETIME-Feld definiert (die Stock-Templates tun es
+nicht); sobald eines angelegt wird, wirft der Feed-Query einen
+SQL-Fehler.  Einzeiler-Fix, bei nächster Arbeit an
+`HistoryService.php` mitnehmen.
 
-### 🟡 Analytics: Listener Stats + Show Listener Stats sammeln keine Daten
+### ✅ Smart Block speichern funktioniert nicht (DONE 2026-08-30, `5029a7c`)
 
-**Status:** Defer — bis nach Live-Schaltung + erste echte Listener.
+**Status:** Behoben — Root Cause empirisch bewiesen (Standalone-Harness).
+**Ursache (PHP-8-Klasse, nicht jQuery):** Eine Criteria-Zeile, die noch
+auf ihrem „Select criteria"-Platzhalter steht, postet den Key `'0'` —
+der nicht in der Criteria-Map liegt.  Auf PHP 7 humpelte der
+Missing-Key-Zugriff als null + Notice durch und das Formular zeigte
+danach den gewollten Fehler „You must select Criteria and Modifier";
+auf PHP 8 knallt derselbe Zugriff in den non-nullable Return-Type von
+`BlockCriteria::get()` → TypeError → HTTP 500.  Das Save-`$.post`
+hatte keinen `.fail()`-Handler → Editor hing stumm am Spinner =
+„Block wird nicht gespeichert".  Traf **jeden** Save mit unberührter
+Criteria-Zeile.
+**Fix:**
+- `Criteria.php`: `BlockCriteria::get()` liefert für unbekannte Keys
+  einen neutralen Platzhalter → die freundliche Validierung greift
+  wieder statt des 500ers.
+- `Block.php`: etc-Feld-Reads in `saveSmartBlockCriteria()`
+  null-coalesced — die Methode DELETEt erst alle gespeicherten
+  Kriterien und insertet dann neu; ein TypeError mittendrin
+  vernichtete die Kriterien des Blocks endgültig (Datenverlust-Guard).
+- `spl.js`: Save-`$.post` hat jetzt einen `.fail()`-Handler (meldet
+  HTTP-Status statt stumm zu hängen).
+**Rest-Check (offen, klein):** ein Save-Roundtrip im eingeloggten
+Browser (unberührte Zeile → Validierungsfehler; echte Kriterien →
+gespeichert) — Operator-Sichtprüfung genügt.
+
+### ✅ Analytics: Listener Stats + Show Listener Stats sammeln keine Daten (DONE 2026-08-30, `00ce768`)
+
+**Status:** Behoben — gebaut wie unten evaluiert, mit einer Abweichung:
+die Poll-Liste kommt aus den live `cc_pref stream_output_N`-Settings
+(inkl. Admin-Creds) statt aus icecast.xml — damit folgt der Collector
+Stream-Änderungen ohne Neustart.  E2E bewiesen (2 Test-Listener →
+exakt 1/1/0 in `cc_listener_count`); Details im ✅-Eintrag
+„Listener-Statistik zeigt keine Daten" oben.  Ursprüngliche
+Evaluierung darunter als Referenz belassen:
 **Evaluiert:** 2026-05-29 (Operator-Wunsch).
 **Operator-Priorität:** Low.  Listener Stats wichtiger als Show
 Listener Stats.
@@ -1568,9 +1610,19 @@ Get-WinEvent -LogName System -MaxEvents 100 |
 
 ---
 
-### 🟡 PowerShell `NativeCommandError`-Noise beim Pypo-Start (kosmetisch)
+### ✅ PowerShell `NativeCommandError`-Noise beim Pypo-Start (DONE 2026-08-30, `88e1071`)
 
-**Status:** Defer — kosmetisch, nicht funktional.
+**Status:** Behoben — Root Cause war präziser als unten vermutet:
+**kein** `print(file=sys.stderr)` in `soundcard/apps.py`, sondern das
+Django-`LOGGING`-Dict in `settings/_internal.py`: der Console-
+`StreamHandler` defaultete auf **stderr**, und `propagate: True` ließ
+jede Zeile zusätzlich über playouts Root-`basicConfig` laufen →
+Doppel-Emission, wovon die stderr-Kopie in PowerShell als roter
+`NativeCommandError` erschien.  Fix: Handler auf `ext://sys.stdout`,
+`propagate: False`, Formatter mit Timestamp/Level angeglichen.
+Live verifiziert: die Soundcard-Zeile erscheint genau einmal,
+getimestampt, auf stdout.  Ursprüngliche Analyse darunter als
+Referenz belassen:
 **Festgestellt:** 2026-05-26 (Phase-C8 Reality-Test).
 
 **Symptom:**
