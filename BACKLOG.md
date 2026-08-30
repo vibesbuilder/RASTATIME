@@ -527,12 +527,32 @@ nicht mehr aktiv sind (`streaming_handled_externally=True` ist seit
 Phase-D Cutover fest).
 
 
-### 🟡 Phase-E Polish: Webstream-Buffer + Switch-Verhalten
+### ✅ Phase-E Polish: Webstream-Buffer + Switch-Verhalten — ROOT CAUSE BEHOBEN 2026-08-30
 
-**Status:** Defer — Polish nach Hardware-Migration nächste Woche.
+**Status:** ERLEDIGT 2026-08-30 (`428805e` + cc_pref-Update) — und die
+Ursache war **weder Buffer noch Switch noch Hardware**: Auf Windows löst
+`localhost` AAAA-first (`::1`) auf, Icecast 2.4.4 lauscht nur IPv4 —
+jeder **ICY-Metadata-Update-Call** der Icecast-Outputs (pro Trackstart,
+für mp3+aac-Mount) verbrannte ~5 s im IPv6-Connect und fror die
+Liquidsoap-**Hauptclock** ein (~10 s gestapelt). Bei Webstream-Shows
+fraß jeder Freeze-Catchup den 5-s-Brückenpuffer → Switch-Flip → neuer
+Trackstart → nächster Freeze = der 11-s-Ping-Pong (Symptome 1+3).
+Datei-Shows hatten dieselben Freezes an jedem Trackwechsel (4–9/Show).
+Symptom 2 (Mount-Abriss): seit Cutover 0× — Alt-Hardware-Artefakt.
+**Beweiskette** (autonom, 0 On-Air-Impact, Testbett auf /polish-test):
+3-Tage-Log-Korrelation (Webstream 50–86, Datei 4–9, Leerlauf 0 Catchups)
+→ Quelle sekundengenau glatt (320 kbit/s) → T1/T2/T5/T7 isoliert sauber
+→ **T9 host=localhost: 25 Tracks = 25 Catchups (1:1)** →
+**T10 host=127.0.0.1: 26 Tracks = 0 Catchups**.
+**Fix:** (a) `cc_pref stream_output_1..3` host → `127.0.0.1`;
+(b) Renderer-Härtung `_normalize_loopback_host()` in
+`liquidsoap_config.py` (+6 Tests, 81/81 grün). Live seit 2026-08-30
+17:16 (Referenz: 17:07-Show 9 min vor dem Fix hatte noch 12 Catchups).
+**Rest-Validierung:** Show-Fenster 2026-08-31 (08:07 Datei / 12:07 +
+17:07 Webstream lokal) müssen ~0 Catchups zeigen —
+`Select-String C:\RASTATIME\logs\liquidsoap-stdout.log -Pattern '2026/08/31.*catchup'`.
+**(Ursprüngliche Symptom-Analyse unten zur Historie:)**
 **Evaluiert:** 2026-05-29 (Phase-E Live-Tests).
-**Operator-Wert:** Mittel — Phase-E ist funktional erfolgreich;
-Polish verbessert die Hörqualität bei Webstream-Shows.
 
 **Beobachtete Symptome im Live-Test 19:00-19:09:**
 

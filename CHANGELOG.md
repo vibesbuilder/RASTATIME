@@ -179,6 +179,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Phase-E-Webstream-Haker behoben — `localhost`→IPv6 fror die
+  Playout-Clock ein (2026-08-30, `428805e` + cc_pref-Update)** — Root
+  Cause des BACKLOG-Items „Phase-E Polish: Webstream-Buffer + Switch-
+  Verhalten": Windows löst `localhost` AAAA-first auf, Icecast 2.4.4
+  lauscht IPv4-only → jeder ICY-Metadata-Call der Icecast-Outputs
+  (pro Trackstart, mp3+aac) blockierte ~5 s im IPv6-Connect und fror
+  die Liquidsoap-Hauptclock ein (~10 s gestapelt). Webstream-Shows:
+  Freeze-Catchup leerte den 5-s-Brückenpuffer → Switch-Ping-Pong alle
+  ~11 s; Datei-Shows: hörbare Mikro-Stalls an jedem Trackwechsel.
+  Empirisch bewiesen im isolierten Testbett (T9 localhost: 25 Tracks =
+  25 Catchups 1:1; T10 127.0.0.1: 26 Tracks = 0). Fix: Stream-Settings-
+  Hosts auf `127.0.0.1` + Renderer normalisiert `localhost` künftig
+  automatisch (`_normalize_loopback_host`, +6 Tests, 81/81).
+
 - **Podcast-Downloads erben jetzt die Library-ACL (2026-08-27, `a34f914`)** —
   Root-Cause des BACKLOG-Items „ACL sperrt den studio-User aus":
   `download_episode()` lud in den %TEMP% des Dienstkontos und
