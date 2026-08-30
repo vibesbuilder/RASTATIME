@@ -156,6 +156,7 @@ documento maestro arriba es lo único que todos asumen.
 | Capítulo | Contenido |
 |---|---|
 | [Streams](./STREAMS.md) | Configurar hasta cuatro streams de salida, monitorear contadores de oyentes, solución de problemas. |
+| [Analytics](./ANALYTICS.md) | Playout History (qué salió realmente al aire, registros exportables), History Templates, Listener Stats (audiencia por flujo y por programa a lo largo del tiempo). |
 | [Máquina local](./LOCAL_MACHINE.md) | Salida de tarjeta de sonido, entrada line-in, carpeta de importación local. |
 | [Widgets públicos integrables](./WIDGETS.md) | Widgets listos-para-usar para el sitio web público de su emisora (Now Playing — Show / Track, Weekly Program, Player). |
 

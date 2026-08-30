@@ -1,0 +1,140 @@
+# Analytics
+
+> **Dónde está usted en el manual.** Este es un capítulo de
+> **Salida e infraestructura**, un acompañante de
+> [Streams](./STREAMS.md). Streams cubre la *configuración* de sus
+> salidas y su supervisión en vivo; este capítulo cubre el
+> **espejo retrovisor** — qué salió realmente al aire y cuántas
+> personas escuchaban mientras tanto.
+
+El menú **Analytics** de la barra de navegación agrupa cuatro
+páginas:
+
+| Página | Pregunta que responde |
+|---|---|
+| **Playout History** | ¿Qué emitió realmente la emisora, minuto a minuto? |
+| **History Templates** | ¿Qué columnas debe registrar y exportar el registro de emisión? |
+| **Listener Stats** | ¿Cuántos oyentes estaban conectados a cada flujo, a lo largo del tiempo? |
+| **Show Listener Stats** | ¿Qué audiencia logró cada *programa*? |
+
+Las dos primeras existen para la **rendición de cuentas** —
+informes de derechos de autor, registros para el regulador,
+llamadas del tipo «¿qué canción sonó a las 14:32?». Las dos
+últimas existen para **decisiones de programación** — qué franjas
+y programas atraen realmente audiencia.
+
+---
+
+## 1. Playout History
+
+**Analytics → Playout History** muestra todo lo que el motor de
+emisión envió realmente al aire, sin importar cómo llegó a la
+parrilla (programa del calendario, Auto DJ, override manual, DJ en
+vivo).
+
+Arriba, un **selector de rango de fecha/hora** con **Filter
+History** limita cada vista a una ventana — por defecto, el día
+actual.
+
+Debajo, tres pestañas (los DJ solo ven la tercera):
+
+* **Log Sheet** — el registro bruto de emisión, una fila por
+  elemento reproducido, con su hora de inicio / fin y las columnas
+  de metadatos que define su plantilla activa (véase §2). Esta es
+  la vista que se exporta para las sociedades de gestión de
+  derechos.
+* **File Summary** — la misma ventana agregada **por pista**:
+  cuántas veces sonó cada archivo en el período. Ordenable por
+  cualquier columna.
+* **Show Summary** — la misma ventana agrupada **por instancia de
+  programa**. Despliegue un programa para ver qué sonó dentro.
+
+> **Consejo para el operador.** El Log Sheet registra lo que
+> reprodujo el *motor*. Un DJ en vivo hablando sobre el flujo no
+> deja filas aquí — solo se registra la reproducción de archivos y
+> webstreams.
+
+> **Cómo funciona por dentro.** El servicio de playout escribe una
+> fila por elemento emitido en `cc_playout_history` (más
+> `cc_playout_history_metadata`) en el momento en que el elemento
+> comienza. Las tres pestañas son vistas DataTables sobre
+> `/playouthistory/{playout-history-feed,file-history-feed,show-history-feed}`,
+> todas filtradas en el servidor según el rango elegido.
+
+---
+
+## 2. History Templates
+
+**Analytics → History Templates** controla **qué columnas de
+metadatos** registran y muestran el Log Sheet y el File Summary.
+Existen dos tipos de plantilla — **Log Sheet Template** y **File
+Summary Template** — y exactamente una de cada tipo es la
+plantilla predeterminada activa.
+
+Añada campos por nombre y tipo (cadena / entero / fecha …),
+ordénelos y pulse **Set Default Template**. Las filas nuevas del
+historial registran los campos de la plantilla activa *en el
+momento de la emisión*; cambiar de plantilla no reescribe las
+filas antiguas.
+
+> **Consejo para el operador.** Configure su plantilla **una vez,
+> antes** de necesitar su primer informe de derechos, y luego no
+> la toque. Los campos de serie (artista, título, fecha/hora de
+> emisión) satisfacen la mayoría de las obligaciones de reporte.
+
+---
+
+## 3. Listener Stats
+
+**Analytics → Listener Stats** grafica el número de **oyentes
+conectados simultáneamente por punto de montaje** en el rango
+elegido, una línea de color por montaje (p. ej. `rastatime`,
+`rastatime-aac`). Use el mismo selector de fecha/hora que en
+Playout History; las casillas de la leyenda muestran u ocultan
+cada montaje.
+
+Las cifras provienen de su servidor de streaming, por lo que
+cuentan oyentes *directos* del flujo. Los oyentes detrás de un
+relay, CDN o agregador aparecen como **una sola** conexión.
+
+> **Cómo funciona por dentro.** El servicio de playout consulta
+> cada **120 segundos** el `/admin/stats.xml` de cada servidor
+> Icecast configurado, con las credenciales de administrador de la
+> configuración de ese flujo, y guarda un punto de datos por
+> montaje en `cc_listener_count`. Solo se consultan los flujos
+> cuyo **Admin Password** está definido en **Settings → Streams**;
+> los flujos sin contraseña se omiten con una advertencia en
+> `logs/playout.log`.
+> *(Restaurado en Windows en RASTATIME 2026-08-30 — en versiones
+> anteriores este gráfico quedaba vacío porque no corría ningún
+> colector.)*
+
+**¿Gráfico vacío?** En orden de probabilidad:
+
+1. El servicio **RASTATIME-PLAYOUT** no está en ejecución (él
+   aloja el colector).
+2. El **Admin Password** del flujo en **Settings → Streams** está
+   vacío o es incorrecto — busque en `logs/playout.log` una
+   advertencia de omisión o un HTTP 401.
+3. Está mirando un rango anterior al inicio de la recolección —
+   los datos solo se acumulan desde la primera pasada del
+   colector.
+
+---
+
+## 4. Show Listener Stats
+
+**Analytics → Show Listener Stats** pliega los mismos datos de
+audiencia **por instancia de programa**: para cada programa del
+rango elegido obtiene el número **medio** y el **máximo** de
+oyentes simultáneos durante su emisión.
+
+Esta es la página para decisiones de programación — compare las
+cifras de un programa a lo largo de semanas, o dos programas en la
+misma franja.
+
+> **Las cifras de programa necesitan datos de programa.** Un
+> programa emitido antes del inicio de la recolección (o con el
+> playout detenido) muestra ceros — la agregación solo puede
+> plegar los puntos de datos que existan en `cc_listener_count`
+> para la ventana horaria del programa.

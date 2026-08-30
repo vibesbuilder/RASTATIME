@@ -141,6 +141,7 @@ master document above is the only thing they all assume.
 | Chapter | What's in it |
 |---|---|
 | [Streams](./docs/manual/STREAMS.md) | Configuring up to four output streams, monitoring listener counts, troubleshooting. |
+| [Analytics](./docs/manual/ANALYTICS.md) | Playout History (what actually aired, exportable log sheets), History Templates, Listener Stats (audience per stream and per show over time). |
 | [Local Machine](./docs/manual/LOCAL_MACHINE.md) | Sound-card output, line-in input, local import drop-folder. |
 | [Public Embed Widgets](./docs/manual/WIDGETS.md) | Drop-in widgets for your station's public website (Now Playing — Show / Track, Weekly Program, Player). |
 

@@ -158,6 +158,7 @@ sie alle voraussetzen.
 | Kapitel | Inhalt |
 |---|---|
 | [Streams](./STREAMS.md) | Bis zu vier Output-Streams konfigurieren, Hörerzahlen überwachen, Fehlerbehebung. |
+| [Analytics](./ANALYTICS.md) | Playout History (was tatsächlich lief, exportierbare Sendeprotokolle), History Templates, Listener Stats (Publikum pro Stream und pro Sendung im Zeitverlauf). |
 | [Lokale Maschine](./LOCAL_MACHINE.md) | Soundkarten-Ausgang, Line-In-Eingang, lokaler Import-Ordner. |
 | [Öffentliche Embed-Widgets](./WIDGETS.md) | Drop-in-Widgets für die öffentliche Website Ihrer Station (Now Playing — Show / Track, Weekly Program, Player). |
 

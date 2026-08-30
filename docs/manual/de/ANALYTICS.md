@@ -1,0 +1,139 @@
+# Analytics
+
+> **Wo Sie sich im Handbuch befinden.** Dies ist ein Kapitel aus
+> **Ausgabe und Infrastruktur**, ein Begleiter zu
+> [Streams](./STREAMS.md). Streams behandelt das *Konfigurieren*
+> Ihrer Ausgänge und deren Live-Überwachung; dieses Kapitel
+> behandelt den **Rückspiegel** — was tatsächlich gesendet wurde
+> und wie viele Menschen dabei zugehört haben.
+
+Das Menü **Analytics** in der oberen Navigation bündelt vier
+Seiten:
+
+| Seite | Frage, die sie beantwortet |
+|---|---|
+| **Playout History** | Was hat die Station tatsächlich gesendet, Minute für Minute? |
+| **History Templates** | Welche Spalten soll das Sendeprotokoll aufzeichnen und exportieren? |
+| **Listener Stats** | Wie viele Hörer waren je Stream verbunden, im Zeitverlauf? |
+| **Show Listener Stats** | Wie hat jede *Sendung* bei den Hörerzahlen abgeschnitten? |
+
+Die ersten beiden existieren für die **Rechenschaftspflicht** —
+Tantiemen-Meldungen, Sendeprotokolle für Behörden, Anrufe der Art
+„Welcher Track lief um 14:32?". Die letzten beiden existieren für
+**Programmentscheidungen** — welche Sendeplätze und Sendungen
+tatsächlich Publikum ziehen.
+
+---
+
+## 1. Playout History
+
+**Analytics → Playout History** zeigt alles, was die
+Playout-Engine tatsächlich auf Sendung gebracht hat — unabhängig
+davon, wie es in den Plan kam (Kalender-Sendung, Auto DJ,
+manueller Override, Live-DJ).
+
+Oben grenzt eine **Datum/Uhrzeit-Bereichsauswahl** mit **Filter
+History** jede Ansicht auf ein Zeitfenster ein — Standard ist der
+aktuelle Tag.
+
+Darunter drei Tabs (DJs sehen nur den dritten):
+
+* **Log Sheet** — das rohe Sendeprotokoll, eine Zeile pro
+  gespieltem Element, mit Start-/Endzeit und den
+  Metadaten-Spalten, die Ihr aktives Template definiert (siehe
+  §2). Diese Ansicht exportieren Sie für
+  Verwertungsgesellschaften.
+* **File Summary** — dasselbe Zeitfenster aggregiert **pro
+  Track**: wie oft jede Datei im Zeitraum lief. Nach jeder Spalte
+  sortierbar.
+* **Show Summary** — dasselbe Zeitfenster gruppiert **pro
+  Sendungs-Instanz**. Eine Sendung aufklappen zeigt, was darin
+  lief.
+
+> **Operator-Tipp.** Das Log Sheet protokolliert, was die *Engine*
+> gespielt hat. Ein Live-DJ, der über den Stream sendet,
+> hinterlässt hier keine Zeilen — nur Datei- und
+> Webstream-Wiedergabe wird protokolliert.
+
+> **Wie es unter der Haube funktioniert.** Der Playout-Dienst
+> schreibt beim Start jedes gesendeten Elements eine Zeile in
+> `cc_playout_history` (plus `cc_playout_history_metadata`). Die
+> drei Tabs sind DataTables-Ansichten über
+> `/playouthistory/{playout-history-feed,file-history-feed,show-history-feed}`,
+> alle serverseitig nach dem gewählten Bereich gefiltert.
+
+---
+
+## 2. History Templates
+
+**Analytics → History Templates** steuert, **welche
+Metadaten-Spalten** Log Sheet und File Summary aufzeichnen und
+anzeigen. Es gibt zwei Template-Arten — **Log Sheet Template** und
+**File Summary Template** — und von jeder ist genau eine das
+aktive Standard-Template.
+
+Felder nach Name und Typ (String / Integer / Datum …) hinzufügen,
+ordnen, dann **Set Default Template**. Neue History-Zeilen
+zeichnen die Felder des Templates auf, das *zum Sendezeitpunkt*
+aktiv ist; ein Template-Wechsel schreibt alte Zeilen nicht um.
+
+> **Operator-Tipp.** Richten Sie Ihr Template **einmal ein, bevor**
+> Sie Ihren ersten Tantiemen-Report brauchen, und lassen Sie es
+> dann in Ruhe. Die mitgelieferten Felder (Künstler, Titel,
+> Sendedatum/-zeit) erfüllen die meisten Meldepflichten.
+
+---
+
+## 3. Listener Stats
+
+**Analytics → Listener Stats** zeichnet die Zahl der **gleichzeitig
+verbundenen Hörer pro Stream-Mount** über den gewählten Zeitraum,
+eine farbige Linie pro Mount (z.B. `rastatime`,
+`rastatime-aac`). Verwenden Sie dieselbe Datum/Uhrzeit-Auswahl wie
+in der Playout History; die Checkboxen der Legende blenden
+einzelne Mounts ein und aus.
+
+Die Zahlen stammen von Ihrem Streaming-Server und zählen daher
+*direkte* Stream-Hörer. Hörer hinter einem Relay, CDN oder
+Aggregator erscheinen als **eine** Verbindung.
+
+> **Wie es unter der Haube funktioniert.** Der Playout-Dienst
+> fragt alle **120 Sekunden** die `/admin/stats.xml` jedes
+> konfigurierten Icecast-Servers mit den Admin-Zugangsdaten aus
+> der jeweiligen Stream-Konfiguration ab und speichert einen
+> Datenpunkt pro Mount in `cc_listener_count`. Abgefragt werden
+> nur Streams, deren **Admin Password** in **Settings → Streams**
+> gesetzt ist; Streams ohne Passwort werden mit einer Warnung in
+> `logs/playout.log` übersprungen.
+> *(Unter Windows wiederhergestellt in RASTATIME 2026-08-30 — auf
+> früheren Builds blieb dieses Diagramm leer, weil kein Collector
+> lief.)*
+
+**Leeres Diagramm?** In absteigender Wahrscheinlichkeit:
+
+1. Der Dienst **RASTATIME-PLAYOUT** läuft nicht (er beherbergt
+   den Collector).
+2. Das **Admin Password** des Streams in **Settings → Streams**
+   ist leer oder falsch — prüfen Sie `logs/playout.log` auf eine
+   Skip-Warnung oder HTTP 401.
+3. Sie betrachten einen Zeitraum vor Beginn der Statistik-Erfassung
+   — Daten sammeln sich erst ab dem ersten Lauf des Collectors an.
+
+---
+
+## 4. Show Listener Stats
+
+**Analytics → Show Listener Stats** faltet dieselben Hörerdaten
+**pro Sendungs-Instanz**: Für jede Sendung im gewählten Zeitraum
+erhalten Sie die **durchschnittliche** und die **maximale** Zahl
+gleichzeitiger Hörer während ihrer Sendezeit.
+
+Das ist die Seite für Programmentscheidungen — vergleichen Sie die
+Zahlen einer Sendung über Wochen hinweg oder zwei Sendungen im
+selben Sendeplatz.
+
+> **Sendungszahlen brauchen Sendungsdaten.** Eine Sendung, die vor
+> Beginn der Hörer-Erfassung lief (oder während Playout gestoppt
+> war), zeigt Nullen — die Aggregation kann nur Datenpunkte
+> falten, die für das Zeitfenster der Sendung in
+> `cc_listener_count` existieren.
