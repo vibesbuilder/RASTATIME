@@ -153,3 +153,79 @@ def test_stats_collector_collect(
             )
         ]
     )
+
+
+# ---- RASTATIME: outputs_from_stream_settings (cc_pref adapter) ----------
+
+
+def test_outputs_from_stream_settings_maps_fields():
+    from libretime_playout.history.stats import outputs_from_stream_settings
+
+    outputs = outputs_from_stream_settings([
+        {
+            "enable": "true", "output": "icecast", "host": "127.0.0.1",
+            "port": "8000", "mount": "/rastatime", "user": "source",
+            "pass": "sourcepw", "admin_user": "admin", "admin_pass": "adminpw",
+            "type": "mp3", "bitrate": "320",
+        }
+    ])
+    assert len(outputs) == 1
+    out = outputs[0]
+    assert out.kind == "icecast"
+    assert out.enabled is True
+    assert out.host == "127.0.0.1"
+    assert out.port == 8000
+    assert out.mount == "rastatime"  # leading slash stripped
+    assert out.admin_user == "admin"
+    assert out.admin_password == "adminpw"
+
+
+def test_outputs_from_stream_settings_skips_missing_admin_pass():
+    from libretime_playout.history.stats import outputs_from_stream_settings
+
+    outputs = outputs_from_stream_settings([
+        {"mount": "/no-admin", "host": "127.0.0.1", "port": "8000"},
+        {"mount": "/ok", "host": "127.0.0.1", "port": "8000",
+         "admin_pass": "pw"},
+    ])
+    assert [o.mount for o in outputs] == ["ok"]
+
+
+def test_outputs_from_stream_settings_skips_empty_mount_and_bad_port():
+    from libretime_playout.history.stats import outputs_from_stream_settings
+
+    outputs = outputs_from_stream_settings([
+        {"mount": "", "admin_pass": "pw"},
+        {"mount": "/weird-port", "port": "notanint", "admin_pass": "pw"},
+    ])
+    assert len(outputs) == 1
+    assert outputs[0].mount == "weird-port"
+    assert outputs[0].port == 8000  # fallback
+
+
+def test_stats_collector_accepts_mounted_output(requests_mock):
+    """The duck-typed cc_pref adapter drives a full collect() round."""
+    from libretime_playout.history.stats import (
+        StatsCollector,
+        outputs_from_stream_settings,
+    )
+
+    outputs = outputs_from_stream_settings([
+        {
+            "enable": "true", "host": "127.0.0.1", "port": "8000",
+            "mount": "/main.ogg", "admin_user": "admin",
+            "admin_pass": "hackme", "type": "mp3",
+        }
+    ])
+    requests_mock.get(
+        "http://127.0.0.1:8000/admin/stats.xml",
+        content=icecast_stats.read_bytes(),
+    )
+
+    legacy_client = Mock()
+    collector = StatsCollector(legacy_client)
+    collector.collect(outputs, _timestamp=datetime(2022, 8, 22, 20, 30))
+
+    assert legacy_client.push_stream_stats.call_count == 1
+    pushed = legacy_client.push_stream_stats.call_args[0][0]
+    assert pushed[0]["mount_name"] == "main.ogg"

@@ -560,6 +560,35 @@ def main() -> None:
     )
     logger.info("Legacy v1 API client base URL: %s", public_url)
 
+    # 6b. Listener-stats collector (BACKLOG "Analytics: Listener Stats
+    # sammeln keine Daten", fixed 2026-08-30).  Upstream started this
+    # thread only in the orphaned main.py — the active entry point never
+    # did, so cc_listener_count stayed empty forever.  The outputs are
+    # rebuilt from cc_pref on every poll cycle (same hot-reload idea as
+    # read_streams below); libretime.conf's stream.outputs list is empty
+    # on RASTATIME deployments and must not be used.  Pushes go through
+    # the v1 client to the PHP /api/push-stream-stats endpoint, which
+    # inserts into cc_listener_count.
+    if django_ok:
+        from libretime_playout.history.stats import (  # noqa: PLC0415
+            StatsCollectorThread,
+            outputs_from_stream_settings,
+        )
+
+        stats_thread = StatsCollectorThread(
+            config=config,
+            legacy_client=api_client_v1,
+            outputs_provider=lambda: outputs_from_stream_settings(
+                _read_stream_outputs()
+            ),
+        )
+        stats_thread.start()
+        logger.info("Listener-stats collector started (poll every 120 s).")
+    else:
+        logger.warning(
+            "Django ORM unavailable — listener-stats collector NOT started."
+        )
+
     # 7. Initialise PlayoutScheduler
     # RASTATIME: pass storage path for direct file access (avoids API download
     # issues with X-Accel-Redirect on Windows/Waitress).
