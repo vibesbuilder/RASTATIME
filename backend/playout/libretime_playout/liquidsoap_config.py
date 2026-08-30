@@ -293,6 +293,24 @@ def _escape_liq_string(value: str) -> str:
     return value.replace("\\", "\\\\").replace('"', '\\"')
 
 
+def _normalize_loopback_host(host: str) -> str:
+    """
+    Map ``localhost`` to ``127.0.0.1`` in rendered output targets.
+
+    On Windows ``localhost`` resolves AAAA-first (``::1``) while Icecast
+    2.4.4 listens IPv4-only — every ICY metadata update the icecast
+    outputs send at track start then burns ~5 s in the IPv6 connect
+    attempt and freezes the Liquidsoap main clock (one freeze per ICY
+    mount, so ~10 s with mp3+aac).  During webstream shows those
+    catchups drain the 5 s input bridge buffer and produce the
+    switch ping-pong from the Phase-E reality-test 2026-05-29.
+    Proven empirically 2026-08-29 (testbed T9/T10): identical graph,
+    25/25 track:catchup correlation on ``localhost`` vs 0 catchups in
+    26 tracks on ``127.0.0.1``.
+    """
+    return "127.0.0.1" if host.strip().lower() == "localhost" else host
+
+
 def _render_icecast_block(stream: Dict) -> str:
     """
     Render one output.icecast(...) block from a stream_output_N dict.
@@ -334,7 +352,9 @@ def _render_icecast_block(stream: Dict) -> str:
         .replace("${SAMPLERATE}", str(samplerate))
     )
 
-    host = _escape_liq_string(str(stream.get("host", "localhost")))
+    host = _escape_liq_string(
+        _normalize_loopback_host(str(stream.get("host", "localhost")))
+    )
     port = int(stream.get("port", 8000))
     mount_raw = str(stream.get("mount", "stream")).lstrip("/")
     mount = "/" + _escape_liq_string(mount_raw)

@@ -74,8 +74,11 @@ def test_render_mp3_block_basic_shape():
     assert 'b="128k"' in out
     # Samplerate default 44100 (matches Liquidsoap internal frame rate)
     assert "samplerate=44100" in out
-    # Connection
-    assert 'host="localhost"' in out
+    # Connection — "localhost" is normalized to 127.0.0.1 at render time
+    # (Windows resolves localhost AAAA-first while Icecast listens
+    # IPv4-only; the failed ::1 connect froze the clock on every ICY
+    # metadata update — see _normalize_loopback_host).
+    assert 'host="127.0.0.1"' in out
     assert "port=8000" in out
     assert 'user="source"' in out
     assert 'password="hackme"' in out
@@ -1038,3 +1041,31 @@ def test_full_render_switch_includes_both_webstream_and_linein_by_default():
     assert "source.is_ready(linein)" in bus_block
     # webstream before linein (priority order)
     assert bus_block.index("webstream)") < bus_block.index("linein)")
+
+
+# ---- _normalize_loopback_host -------------------------------------------
+
+
+def test_normalize_localhost_becomes_ipv4_loopback():
+    assert lc._normalize_loopback_host("localhost") == "127.0.0.1"
+
+
+def test_normalize_localhost_case_and_whitespace():
+    assert lc._normalize_loopback_host(" LocalHost ") == "127.0.0.1"
+
+
+def test_normalize_leaves_other_hosts_alone():
+    assert lc._normalize_loopback_host("127.0.0.1") == "127.0.0.1"
+    assert lc._normalize_loopback_host("icecast.example.org") == "icecast.example.org"
+    assert lc._normalize_loopback_host("192.168.1.164") == "192.168.1.164"
+
+
+def test_render_block_normalizes_localhost_host():
+    out = lc._render_icecast_block(_stream(host="localhost"))
+    assert 'host="127.0.0.1"' in out
+    assert "localhost" not in out
+
+
+def test_render_block_keeps_remote_host():
+    out = lc._render_icecast_block(_stream(host="stream.example.org"))
+    assert 'host="stream.example.org"' in out
