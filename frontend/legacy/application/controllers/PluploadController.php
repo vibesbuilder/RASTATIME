@@ -17,9 +17,17 @@ class PluploadController extends Zend_Controller_Action
         $this->view->headScript()->appendFile(Assets::url('js/datatables/js/jquery.dataTables.js'), 'text/javascript');
         $this->view->headScript()->appendFile(Assets::url('js/plupload/plupload.full.min.js'), 'text/javascript');
         $this->view->headScript()->appendFile(Assets::url('js/plupload/jquery.plupload.queue.min.js'), 'text/javascript');
+        // RASTATIME 2026-08-30: dropzone.min.js must load BEFORE
+        // airtime/library/plupload.js — plupload.js disables Dropzone's
+        // auto-discover at parse time and instantiates explicitly in
+        // $(document).ready.  On jQuery 3, ready resolves asynchronously
+        // AFTER Dropzone's own DOMContentLoaded auto-discover, so the
+        // discover path instantiated the dropzone with default options
+        // and the whole init: block (csrf hook, recent-uploads refresh)
+        // silently never attached.
+        $this->view->headScript()->appendFile(Assets::url('js/libs/dropzone.min.js'), 'text/javascript');
         $this->view->headScript()->appendFile(Assets::url('js/airtime/library/plupload.js'), 'text/javascript');
         $this->view->headScript()->appendFile(Assets::url('js/plupload/i18n/' . $locale . '.js'), 'text/javascript');
-        $this->view->headScript()->appendFile(Assets::url('js/libs/dropzone.min.js'), 'text/javascript');
 
         $this->view->headLink()->appendStylesheet(Assets::url('css/plupload.queue.css'));
         $this->view->headLink()->appendStylesheet(Assets::url('css/addmedia.css'));

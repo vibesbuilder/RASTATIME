@@ -1,3 +1,14 @@
+// RASTATIME 2026-08-30: Dropzone 4.0 auto-discovers ".dropzone" forms on
+// its own vanilla DOMContentLoaded listener.  On jQuery 3 the
+// $(document).ready below resolves asynchronously AFTER that, so the
+// auto-discovered instance was built with DEFAULT options — the init:
+// block (csrf hook, recent-uploads fnDraw refresh) silently never
+// attached (BACKLOG "Recent Uploads aktualisiert sich nicht").
+// Disable auto-discover at parse time (dropzone.min.js loads before this
+// file — see PluploadController) and instantiate explicitly once the
+// options are registered.
+Dropzone.autoDiscover = false;
+
 $(document).ready(function () {
   var uploadProgress;
   var self = this;
@@ -43,6 +54,10 @@ $(document).ready(function () {
       });
     },
   };
+
+  // Explicit instantiation — the constructor picks up the
+  // Dropzone.options.addMediaDropzone registry entry by element id.
+  new Dropzone("#add-media-dropzone");
 
   $(window).bind("beforeunload", function () {
     if (uploadProgress) {

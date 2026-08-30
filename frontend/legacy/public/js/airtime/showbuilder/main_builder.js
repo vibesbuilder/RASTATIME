@@ -1,3 +1,12 @@
+// RASTATIME 2026-08-30: same jQuery-3 timing fix as
+// js/airtime/library/plupload.js — Dropzone's vanilla DOMContentLoaded
+// auto-discover ran BEFORE mod.onReady assigned Dropzone.options.content,
+// so the #content drop target was built with default options (wrong url,
+// visible previews, no csrf hook).  dropzone.min.js loads before this
+// file (ShowbuilderController), so the flag is safe at parse time; the
+// explicit instantiation happens in mod.onReady below.
+Dropzone.autoDiscover = false;
+
 AIRTIME = (function (AIRTIME) {
   var viewport,
     $lib,
@@ -170,6 +179,9 @@ AIRTIME = (function (AIRTIME) {
       createImageThumbnails: false,
       previewTemplate: '<div style="display:none"></div>',
     };
+
+    // Explicit instantiation (auto-discover is off — see file header).
+    new Dropzone("#content");
 
     // define module vars.
     $lib = $("#library_content");
