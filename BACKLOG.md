@@ -31,9 +31,14 @@ kommt jetzt via `outputs_from_stream_settings()` aus den live
 ohne Admin-Passwort werden mit Warnung übersprungen).  4 neue Tests.
 **E2E-Beweis:** 2 Test-Listener (mp3/aac) erschienen im nächsten
 Zyklus als exakt 1/1/0 in `cc_listener_count`.
-**Rest-Check (offen, klein):** Chart-Ansicht im Browser + **Show
-Listener Stats** mit echten Show-Daten gegenprüfen, sobald im
-Sendebetrieb reale Hörerdaten aufgelaufen sind.
+**Browser-Check (2026-08-30, 18:20):** Chart rendert mit allen drei
+Mounts in der Legende; `get-data` liefert live Punkte im
+2-Minuten-Takt (letzter Punkt ≤ 2 min alt).  **Show Listener Stats**
+funktioniert wie designt: Tabelle füllt erst nach Filter-Klick und
+lässt Shows ohne Datenpunkte im Sendefenster weg — Sammlung begann
+17:42 (Playout-Neustart mit dem Patch), daher erscheinen Shows ab
+der 08:07-Sendung am 2026-08-31.  Rest-Check: dann einmal
+draufschauen.
 **Doku:** neues Manual-Kapitel ANALYTICS (EN/DE/FR/ES, `96cc252`).
 
 ### ✅ Migration: Backup→Restore-Durchlauf auf der alten Maschine validiert (2026-06-16)
@@ -1264,36 +1269,28 @@ Server-Fix (akzeptiert das statische `csrf`-Formularfeld) macht den Client-Pfad
 überflüssig; optionales Aufräumen wäre, die `Dropzone.options.content`-Zuweisung aus
 `onReady` auf Modul-Init zu ziehen (`main_builder.js`).
 
-### 🟡 Playout History: Tabelle + Export-Buttons werden nicht angezeigt
+### ✅ Playout History: Tabelle + Export-Buttons werden nicht angezeigt (CLOSED 2026-08-30)
 
-**Status:** Diagnose 2026-08-30 durch — Backend **entlastet**, Rest ist
-client-seitig; finaler Live-Browser-Repro steht aus (Login nötig).
+**Status:** Geschlossen — reproduziert nicht mehr; live in eingeloggter
+Browser-Session verifiziert (2026-08-30, 18:15).
 **Entdeckt:** 2026-06-01 beim DataTables-1.13-Test.
-**Repro:** Playout History → die DataTable bleibt leer, die Export-Buttons (Log
-Sheet / File Summary / Show Summary) erscheinen nur als Links.
-**Diagnose 2026-08-30:**
-- **Backend sauber:** die Feed-SQL von `HistoryService` liefert live
-  Zeilen (direkt gegen die DB verifiziert); `cc_playout_history` ist
-  gefüllt.  „Keine Daten in der DB" scheidet aus.
-- **Der ursprüngliche jq3-Verdacht ist stale:** die 2026-06-05er
-  historytable-Fixes (`faf249d`: `activate`-Tab-Event, sDom, Accordion-
-  Guard) haben die Render-Kette auf jq3 bereits repariert — dieser
-  Eintrag stammt aus der Zeit davor.
-- **Verbleibende Verdächtige (client-seitig, in Reihenfolge):**
-  (a) `JSON.parse(localStorage['datatables-historyitem-aoColumns'])`
-  = `null` → 0-Spalten-Init, und die Tabellen in `index.phtml` haben
-  **kein `<thead>`** als Fallback → still leere Tabelle;
-  (b) ein Throw in `mod.onReady` **vor** dem jQuery-UI-Tabs-Init
-  (datetimepicker/`hisSubmit`-Kette) ließe alles unschaltbar zurück;
-  (c) der Controller-`catch` schluckt Fehler zu HTTP 200 `{}`.
-- **Gehärtet nebenbei (`4522e43`):** SQL-Injection im File-Summary-
-  Sort (ORDER-BY-Whitelist) + beide `fnSetFilteringDelay(350)`-Aufrufe
-  entfernt (kein „f" im sDom → Plugin band `$('input', undefined)` =
-  **alle** Inputs der Seite neu und riss den Range-Pickern die
-  Keyup-Listener ab).
-**Nächster Schritt:** eingeloggte Browser-Sitzung → Seite laden,
-Konsole + `localStorage`-Wert + Network-Response des Feeds prüfen;
-danach entscheidet sich, welcher der drei Verdächtigen es ist.
+**Browser-Befund (alle drei Tabs funktionieren):**
+- **Log Sheet:** 5 Spalten + echte Zeilen (heutige 08:07/12:07-
+  Sendungen), Export-/Toolbar-Buttons gerendert;
+  `localStorage['datatables-historyitem-aoColumns']` korrekt gefüllt.
+- **File Summary:** baut beim Tab-Wechsel (6 Spalten, aggregierte
+  Track-Zählung).  **Show Summary:** Per-Show-Blöcke inkl.
+  CSV/PDF-Export.  Konsole über alles hinweg fehlerfrei.
+**Einordnung:** Der Eintrag stammte vom 2026-06-01 — **vor** den
+historytable-Fixes vom 2026-06-05 (`faf249d`: `activate`-Tab-Event,
+sDom, Accordion-Guard), die die Render-Kette reparierten; der Eintrag
+war seither stale.  Diagnose 2026-08-30 hatte das Backend bereits
+entlastet (Feed-SQL liefert Zeilen).
+**Nebenbei gehärtet (`4522e43`):** SQL-Injection im File-Summary-Sort
+(ORDER-BY-Whitelist) + beide `fnSetFilteringDelay(350)`-Aufrufe
+entfernt (kein „f" im sDom → Plugin band `$('input', undefined)` =
+alle Inputs der Seite neu und riss den Range-Pickern die
+Keyup-Listener ab).
 
 ### 💡 Latent: `HistoryService::getSqlTypes()` mappt DATETIME auf ungültigen PG-Cast
 

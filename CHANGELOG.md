@@ -222,9 +222,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `fnSetFilteringDelay(350)`-Aufrufe entfernt (kein „f" im sDom →
   das Plugin band `$('input', undefined)` = alle Inputs der Seite
   neu und riss den Datum/Zeit-Range-Pickern die Keyup-Listener ab).
-  Der Haupt-Bug „Tabelle bleibt leer" ist damit noch nicht
-  geschlossen — Backend ist entlastet (Feed-SQL liefert live
-  Zeilen), Rest-Verdächtige client-seitig im BACKLOG dokumentiert.
+  Der Haupt-Bug „Tabelle bleibt leer" reproduziert nicht mehr —
+  in eingeloggter Browser-Session verifiziert (alle 3 Tabs rendern
+  mit echten Daten, Export-Buttons da, Konsole sauber); der
+  BACKLOG-Eintrag stammte von vor den historytable-Fixes vom
+  2026-06-05 (`faf249d`) und war stale → geschlossen.
 
 - **Django-Console-Logging: stdout, einmal, mit Timestamp
   (2026-08-30, `88e1071`)** — Der Console-`StreamHandler` des
