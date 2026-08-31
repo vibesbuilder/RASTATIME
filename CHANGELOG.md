@@ -239,10 +239,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `#his-tabs` (jQuery-UI-Tabs, `.ui-widget-content`) zeigte Redmonds
   Fast-Weiß als Rahmen — neue `#id`-Regel in `styles.css`
   (Background + Border `#242424`).  Beides live im DOM verifiziert.
-  Feintuning nach Operator-Sichtung (`14752a4`): Kalender-Rahmen von
-  `#242424` auf **`#3a3a3a`** aufgehellt und Redmonds hellblauer
-  1px-`.ui-widget-content`-Border passend eingefärbt (1px bleibt —
-  kein Layout-Shift); Playout History bleibt wie gewünscht `#242424`.
+  Feintuning nach Operator-Sichtung (`14752a4`, `b23056b`): beide
+  Rahmen von `#242424` auf **`#3a3a3a`** aufgehellt und Redmonds
+  hellblauer 1px-`.ui-widget-content`-Border am Kalender passend
+  eingefärbt (1px bleibt — kein Layout-Shift).
   Andere Browser brauchen wegen des versionsbasierten Cache-Busters
   einmal Strg+F5 (Folge-Item im BACKLOG).
 
