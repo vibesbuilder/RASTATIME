@@ -59,6 +59,24 @@ Liquidsoap-Umbau (bricht Phase-B-Design), virtuelle Audio-Kabel
 installieren, 1-s-16ch-WASAPI-Capture gegen das Tascam als harte
 Machbarkeitsbestätigung (shared-mode-Format-Frage), erst dann bauen.
 
+**Modus-Frage (Operator 2026-08-31, „ASIO oder WDM?"):** Klarstellung:
+das „WASAPI" im Device-Picker ist nur das Enumerations-Label
+(MMDevice); die heutige Capture läuft über **DirectShow/WDM** — genau
+der Pfad mit dem 2-Kanal-Deckel.  Entschieden: **kein
+Operator-sichtbarer Modus-Schalter**, sondern Automatik — ≤2ch-Device
+→ bewährter dshow-Pfad, >2ch-Device → WASAPI-**shared**-Feeder
+(Endpoint bleibt für andere Apps frei); versteckter
+Config/Env-Fallback shared↔exclusive nur, falls der PoC
+Format-Probleme im shared mode zeigt.  **ASIO verworfen:** (1) nicht
+in ffmpeg und nicht in Standard-PortAudio/sounddevice-Wheels
+(Steinberg-SDK nicht redistributierbar → eigener Build wäre zu
+pflegen), (2) Single-Client — RASTATIME würde das Interface für jede
+andere ASIO-Nutzung sperren, plus WDM/ASIO-Samplerate-Kopplung der
+Tascam-Treiber, (3) kein Nutzen: der ms-Latenzvorteil verpufft in der
+~0.5–0.8-s-Kette (Encoder + Icecast + Monitor).  MME/DirectSound
+(ebenfalls 2ch) und WDM-KS (fragilster PortAudio-Backend, nur
+Notnagel) bringen nichts.
+
 ### ✅ Listener-Statistik zeigt keine Daten (DONE 2026-08-30, `00ce768`)
 
 **Status:** Behoben — Sammel-Kette komplett, E2E live bewiesen.
