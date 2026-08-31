@@ -336,6 +336,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   25 Catchups 1:1; T10 127.0.0.1: 26 Tracks = 0). Fix: Stream-Settings-
   Hosts auf `127.0.0.1` + Renderer normalisiert `localhost` künftig
   automatisch (`_normalize_loopback_host`, +6 Tests, 81/81).
+  **Validierung abgeschlossen (2026-08-31):** vier
+  Webstream-Show-Fenster über den Tag — 08:07 → 0 Catchups, 12:07 →
+  3 einmalige Start-Einschwinger (0,5–1 s, erste 15 s), 17:07 → 0,
+  19:00 (Extra-Test, frisch neu gestarteter Liquidsoap) → 0 inkl.
+  sauberem Start- und End-Übergang.  Vorher-Referenz: 12 Catchups +
+  Switch-Ping-Pong in einem einzigen Fenster.
 
 - **Podcast-Downloads erben jetzt die Library-ACL (2026-08-27, `a34f914`)** —
   Root-Cause des BACKLOG-Items „ACL sperrt den studio-User aus":
