@@ -9,6 +9,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Line-In-Kanalwahl auf Mehrkanal-Interfaces (2026-08-31,
+  `e91ae9b`)** — Ein Line-In wählt jetzt, **welche Kanäle** seines
+  Geräts er aufnimmt (Stereo-Paar oder Mono-Kanal): am 16-Input-Tascam
+  US-16x08 bedient damit ein Interface mehrere Studios (ein Line-In
+  pro Paar).  `channel_mapping` existierte durch alle Schichten, wurde
+  aber von keiner Capture angewendet.  PoC-getriebener Modus-Entscheid:
+  WASAPI shared ist aufs Stereo-Mix-Format gedeckelt, exclusive lehnt
+  der Treiber ab, DirectSound liefert Stille, WDM-KS kann kein
+  Blocking-Read — **MME** liefert nachweislich alle 16 echten Kanäle
+  (Per-Lane-Bitvergleich).  Neuer `linein_feeder`-Subprozess
+  (sounddevice/MME → s16le-Stereo an ffmpeg-stdin, `/linein-capture`
+  wie gehabt); in Liquidsoap-Mode konsumiert eine zweite Source
+  `input.http(id="linein_http")` den Mount (Phase-F-Muster neben der
+  F-2-dshow-Source, per `fallback` in denselben Switch-Arm gefaltet).
+  Schlichtes `Stereo 1/2` bleibt byte-identisch auf dem bewährten
+  dshow-Pfad.  Same-Device-Transition vergleicht jetzt auch das
+  Mapping (zwei Studios an einer Karte müssen bouncen); der
+  Linein-Resume re-armt in Liquidsoap-Mode die Sourcen statt eine
+  Capture-URL durch die Request-Queue zu schieben (vor-F-2-Altlast).
+  UI: Freitext `0,1` → Picker aus der Gerät-Kanalzahl („Stereo 1/2"
+  … „Mono 16"; live verifiziert: Tascam 24 Optionen, Jabra exakt
+  „Mono 1").  Domain lehnt Mappings > 2 ab.  Neue Dependency
+  `sounddevice` (pip-only, bündelt PortAudio).  Tests: playout 295
+  passed, audio-unit 196 passed; Feeder live gegen das Tascam
+  verifiziert (16 ch @ 48 kHz, Kanäle 5/6 → Stereo).  Doku: Manual
+  LINE_IN in EN/DE/FR/ES + ARCHITECTURE 0.19 (`e003f08`).
+  **Deploy-Hinweis:** PLAYOUT-Neustart rendert das rastatime.liq mit
+  der neuen linein_http-Source — bis dahin ist der Multichannel-Pfad
+  inaktiv (Stereo-Betrieb unverändert).
+
 - **Listener-Statistik-Collector läuft jetzt wirklich (2026-08-30,
   `00ce768`)** — Root Cause des 🔴-BACKLOG-Items „Listener-Statistik
   zeigt keine Daten": der `StatsCollectorThread` wurde nur im

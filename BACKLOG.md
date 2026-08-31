@@ -16,10 +16,38 @@
 Diese sind technisch evaluiert, empfohlen, und können starten sobald
 der Operator das Signal gibt.
 
-### 🟢 Line-In: Kanal-Auswahl auf Multi-Input-Devices (Tascam US-16x08)
+### ✅ Line-In: Kanal-Auswahl auf Multi-Input-Devices (DONE 2026-08-31, `e91ae9b`)
 
-**Status:** Evaluiert 2026-08-31 (Operator-Wunsch) — Empfehlung Go,
-wartet auf Operator-Go.
+**Status:** Implementiert nach Operator-Go 2026-08-31 — Code + Tests +
+Doku committet (`e91ae9b` Feature, `e003f08` Manual/Architecture).
+**Wichtige Abweichung vom Evaluierungs-Plan:** Der PoC (Schritt 1)
+widerlegte die WASAPI-shared-Annahme — das Windows-Mix-Format des
+Tascam-Endpoints steht auf Stereo und PortAudio deckelt hart;
+exclusive lehnt der Treiber ab, DirectSound liefert Stille, WDM-KS
+kann kein Blocking-Read.  **MME** liefert nachweislich alle 16
+echten Kanäle (Per-Lane-Bitvergleich des ADC-Rauschens) und wurde
+der Feeder-Modus.  Zweite Abweichung: Der Live-Pfad ist die
+Liquidsoap-Engine (F-2, dshow direkt in-process) — dafür kam eine
+zweite Source `input.http(id="linein_http")` auf den lokalen
+`/linein-capture`-Mount hinzu (Phase-F-Muster), per `fallback` in
+denselben Switch-Arm gefaltet; Stereo `1/2` bleibt unverändert auf
+dshow-direkt.
+**Verifiziert:** Feeder live gegen das Tascam (16 ch @ 48 kHz, Kanäle
+5/6 → Stereo); UI-Picker live (Tascam → 24 Optionen, Jabra → „Mono
+1"); playout-Suite 295 passed, audio-unit 196 passed.
+**Offen (Deploy + Abnahme):**
+1. **PLAYOUT-Dienst-Neustart** (rendert rastatime.liq mit
+   linein_http; kurze On-Air-Unterbrechung → Operator wählt den
+   Moment).  Bis dahin: Multichannel-Pfad inaktiv, Stereo-Betrieb
+   unverändert.
+2. Operator legt die Studio-Line-Ins an (ein Line-In pro Paar) und
+   fährt einen Hörtest über eine geplante Line-In-Show auf einem
+   Paar > 1/2.
+3. Alt-Zeilen einmal neu speichern (device_name-Pflicht für den
+   Feeder; ohne Namen fällt der Pfad laut loggend auf dshow 1/2
+   zurück).
+
+Ursprüngliche Evaluierung (2026-08-31, als Referenz):
 **Anforderung:** Am US-16x08 hängen mehrere Studios (ein Stereo- bzw.
 zwei Mono-Inputs pro Studio).  Ein Line-In soll nicht nur das Device,
 sondern auch **welche Kanäle** (Stereo-Paar oder Mono-Kanal) wählen.
@@ -76,6 +104,12 @@ Tascam-Treiber, (3) kein Nutzen: der ms-Latenzvorteil verpufft in der
 ~0.5–0.8-s-Kette (Encoder + Icecast + Monitor).  MME/DirectSound
 (ebenfalls 2ch) und WDM-KS (fragilster PortAudio-Backend, nur
 Notnagel) bringen nichts.
+**Nachtrag nach PoC (selber Tag):** Zwei Annahmen dieses Absatzes
+waren falsch — WASAPI shared ist real aufs 2ch-Mix-Format gedeckelt,
+und MME meldet nicht 2ch, sondern liefert **alle 16 echten Kanäle**.
+Der Feeder-Modus wurde daher MME (siehe ✅-Status oben); die
+Automatik-Entscheidung (kein Operator-Schalter, ≤2ch→dshow) und das
+ASIO-No-Go bleiben unverändert gültig.
 
 ### ✅ Listener-Statistik zeigt keine Daten (DONE 2026-08-30, `00ce768`)
 
