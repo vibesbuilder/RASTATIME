@@ -986,7 +986,7 @@ def test_full_render_default_includes_linein_input_block():
     # Empty initial input spec (Pypo sets it via linein.set_url before start)
     assert '  "",' in active
     # audio_to_stereo fixes the polymorphic input.ffmpeg type for the switch
-    assert "linein = audio_to_stereo(linein_raw)" in active
+    assert "linein_dshow = audio_to_stereo(linein_raw)" in active
     # input.ffmpeg does NOT auto-register commands → manual server.register
     assert 'server.register(' in active
     assert 'namespace="linein"' in active
@@ -994,7 +994,18 @@ def test_full_render_default_includes_linein_input_block():
     assert '"start"' in active
     assert '"stop"' in active
     assert '"status"' in active
-    # No input.http for linein anymore (that was Phase F, superseded)
+    # RASTATIME 2026-08-31 — multichannel path: the fixed-URL
+    # input.http companion source consuming /linein-capture, and the
+    # fallback that folds both paths into the single `linein` arm.
+    assert 'linein_http_raw = input.http(' in active
+    assert 'id="linein_http"' in active
+    assert '"http://127.0.0.1:8000/linein-capture",' in active
+    assert "linein_http = audio_to_stereo(linein_http_raw)" in active
+    assert (
+        "linein = fallback(track_sensitive=false, [linein_dshow, linein_http])"
+        in active
+    )
+    # The dshow source itself must NOT have turned into input.http
     assert "linein_raw = input.http(" not in active
     # Switch arm
     bus_idx = active.index("bus = switch(")

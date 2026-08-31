@@ -220,6 +220,23 @@ DEFAULT_LINEIN_ENABLED = True
 # noticeable on-air delay.
 DEFAULT_LINEIN_MAX_BUFFER_SECONDS = 2.0
 
+# RASTATIME 2026-08-31 — multichannel line-in path (BACKLOG "Line-In:
+# Kanal-Auswahl auf Multi-Input-Devices").  For a channel_mapping other
+# than plain stereo, Pypo runs FfmpegLineinCapture with the
+# sounddevice/MME feeder (the dshow pin of multichannel interfaces
+# only ever offers 2 channels) pushing the selected pair to the local
+# /linein-capture Icecast mount, and Liquidsoap consumes that mount
+# through a second, fixed-URL input.http source — the original Phase-F
+# pattern kept alongside the Phase-F-2 direct-dshow source.  127.0.0.1
+# deliberately, not localhost (Phase-E lesson: OCaml resolves
+# localhost AAAA-first and Icecast is IPv4-only).
+DEFAULT_LINEIN_HTTP_URL = "http://127.0.0.1:8000/linein-capture"
+
+# Slightly above the dshow value: the mount adds mp3 encode/decode and
+# Icecast hand-off jitter; still far below the webstream 10 s because
+# the hop is loopback-local and a live studio wants low latency.
+DEFAULT_LINEIN_HTTP_MAX_BUFFER_SECONDS = 4.0
+
 
 # ---------------------------------------------------------------------
 # Liquidsoap codec encoders per stream type
@@ -714,6 +731,8 @@ def _render_linein_input_block(
     *,
     enabled: bool,
     max_buffer_seconds: float = DEFAULT_LINEIN_MAX_BUFFER_SECONDS,
+    http_url: str = DEFAULT_LINEIN_HTTP_URL,
+    http_max_buffer_seconds: float = DEFAULT_LINEIN_HTTP_MAX_BUFFER_SECONDS,
 ) -> str:
     """
     Render the ``input.ffmpeg(format="dshow")`` block for scheduled
@@ -776,7 +795,7 @@ def _render_linein_input_block(
         "# input.ffmpeg returns a polymorphic source('a) (audio+video\n"
         "# capable); without this the switch() below rejects the arm\n"
         "# with a type mismatch against the other (audio-only) sources.\n"
-        "linein = audio_to_stereo(linein_raw)\n"
+        "linein_dshow = audio_to_stereo(linein_raw)\n"
         "\n"
         "# input.ffmpeg does NOT auto-register its runtime controls as\n"
         "# telnet commands (unlike input.http).  Register them manually\n"
@@ -801,6 +820,33 @@ def _render_linein_input_block(
         '  namespace="linein", description="dshow capture status",\n'
         '  "status", fun (_) -> linein_raw.status()\n'
         ")\n"
+        "\n"
+        "# RASTATIME 2026-08-31 — multichannel line-in path (BACKLOG\n"
+        '# "Line-In: Kanal-Auswahl auf Multi-Input-Devices").  The dshow\n'
+        "# pin of multichannel interfaces only offers 2 channels, so for\n"
+        "# any channel_mapping other than plain stereo Pypo starts the\n"
+        "# FfmpegLineinCapture with its sounddevice/MME feeder (selected\n"
+        "# channels -> stereo mp3 on the local /linein-capture mount) and\n"
+        "# Liquidsoap consumes the mount through this second source —\n"
+        "# the original Phase-F pattern kept alongside the Phase-F-2\n"
+        "# direct-dshow source above.  input.http auto-registers its\n"
+        "# telnet commands under the id (linein_http.start/stop), and\n"
+        "# poll_delay re-connects on its own after capture-watchdog\n"
+        "# restarts of the mount.  URL is fixed at render time.\n"
+        "linein_http_raw = input.http(\n"
+        '  id="linein_http",\n'
+        "  start=false,\n"
+        "  self_sync=false,\n"
+        f"  max_buffer={_format_crossfade_duration(http_max_buffer_seconds)},\n"
+        f"  poll_delay={_format_crossfade_duration(DEFAULT_WEBSTREAM_POLL_DELAY_SECONDS)},\n"
+        f'  "{http_url}",\n'
+        ")\n"
+        "linein_http = audio_to_stereo(linein_http_raw)\n"
+        "\n"
+        "# One switch arm serves both paths: Pypo only ever starts one\n"
+        "# of the two sources per show, so a track-insensitive fallback\n"
+        "# simply forwards whichever is up.\n"
+        "linein = fallback(track_sensitive=false, [linein_dshow, linein_http])\n"
     )
 
 

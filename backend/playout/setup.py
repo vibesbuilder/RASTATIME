@@ -31,6 +31,10 @@ setup(
         "python-dateutil>=2.8.1,<2.10",
         "python-vlc>=3.0.0",
         "requests>=2.32.2,<2.33",
+        # RASTATIME 2026-08-31 — multichannel line-in feeder (MME capture
+        # via PortAudio; the wheel bundles the PortAudio DLL, no system
+        # install needed).  See engine/linein_feeder.py.
+        "sounddevice>=0.5.0,<0.6",
         "typing-extensions",
     ],
     extras_require={

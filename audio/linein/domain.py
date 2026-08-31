@@ -146,6 +146,16 @@ class LineIn:
             raise TypeError("LineIn.device_name must be a string (may be empty)")
         if not isinstance(self.channel_mapping, tuple) or len(self.channel_mapping) == 0:
             raise ValueError("LineIn.channel_mapping must be a non-empty tuple")
+        # RASTATIME 2026-08-31 — the capture layer produces a stereo
+        # signal from at most two source channels (a pair, or one
+        # channel duplicated to both lanes).  Longer mappings were
+        # never applied by any runtime; reject them at the boundary so
+        # the UI/API surface matches what playout can actually do.
+        if len(self.channel_mapping) > 2:
+            raise ValueError(
+                "LineIn.channel_mapping supports 1 (mono) or 2 (stereo) "
+                f"channels, got {len(self.channel_mapping)}"
+            )
         for idx, ch in enumerate(self.channel_mapping):
             if not isinstance(ch, int):
                 raise TypeError(

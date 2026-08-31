@@ -31,6 +31,9 @@ AIRTIME.linein.i18n = {
     errNameRequired:    "<?php echo addslashes(_('Name is required.')) ?>",
     errDeviceRequired:  "<?php echo addslashes(_('Please select an input device.')) ?>",
     errChannelsInvalid: "<?php echo addslashes(_('Channel mapping must be comma-separated non-negative integers (e.g. 0,1).')) ?>",
+    labelStereo:        "<?php echo addslashes(_('Stereo')) ?>",
+    labelMono:          "<?php echo addslashes(_('Mono')) ?>",
+    labelCustom:        "<?php echo addslashes(_('Custom mapping')) ?>",
     editHint:           "<?php echo addslashes(_('Edit')) ?>",
     deleteHint:         "<?php echo addslashes(_('Delete')) ?>",
     enableHint:         "<?php echo addslashes(_('Enable')) ?>",
@@ -116,17 +119,21 @@ AIRTIME.linein.i18n = {
             </tr>
             <tr>
                 <td style="padding-right:0.75em">
-                    <label for="linein-field-channels"><b><?php echo _("Channel Mapping") ?></b> *
+                    <label for="linein-field-channels"><b><?php echo _("Input Channels") ?></b> *
                         <br><small style="font-weight:normal; color:#666">
-                            <?php echo _("Comma-separated 0-based indices, e.g. 0,1") ?>
+                            <?php echo _("Stereo pair or mono channel on the selected device") ?>
                         </small>
                     </label>
                 </td>
                 <td>
-                    <input type="text" id="linein-field-channels" name="channel_mapping"
-                           class="ui-widget-content ui-corner-all"
-                           style="width:100%; box-sizing:border-box"
-                           placeholder="0,1">
+                    <!-- RASTATIME 2026-08-31: was a free-text "0,1" field;
+                         now a picker built from the device's channel count
+                         (multichannel interfaces offer one entry per
+                         stereo pair plus mono channels). -->
+                    <select id="linein-field-channels" name="channel_mapping"
+                            class="ui-widget-content ui-corner-all"
+                            style="width:100%; box-sizing:border-box">
+                    </select>
                 </td>
             </tr>
             <tr>

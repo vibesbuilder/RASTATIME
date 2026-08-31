@@ -63,12 +63,21 @@
   /**
    * Build the list of available input devices for the dialog select box.
    *
+   * RASTATIME 2026-08-31: carries the device's input-channel count so
+   * the channel picker can offer one entry per stereo pair on
+   * multichannel interfaces (e.g. a 16-input Tascam US-16x08 serving
+   * several studios).
+   *
    * @param  {Object} devicesData
-   * @return {Array}  [{stable_id, name}, ...]
+   * @return {Array}  [{stable_id, name, channels}, ...]
    */
   function buildInputList(devicesData) {
     return (devicesData.inputs || []).map(function (d) {
-      return { stable_id: d.stable_id, name: d.name };
+      return {
+        stable_id: d.stable_id,
+        name: d.name,
+        channels: parseInt(d.channels, 10) || 2,
+      };
     });
   }
 
@@ -218,6 +227,80 @@
   }
 
   /* ---------------------------------------------------------------------- */
+  /* Populate channel <select> in the dialog                                 */
+  /* ---------------------------------------------------------------------- */
+
+  /**
+   * RASTATIME 2026-08-31 — channel picker (BACKLOG "Line-In:
+   * Kanal-Auswahl auf Multi-Input-Devices").
+   *
+   * Replaces the former free-text "0,1" field: offers one option per
+   * stereo pair of the selected device ("Stereo 1/2", "Stereo 3/4",
+   * ...) followed by every mono channel.  Option values keep the
+   * comma-separated 0-based wire format ("2,3"), so parseChannels()
+   * and the API payload are unchanged.  A persisted mapping that is
+   * not among the generated options (edited rows from the free-text
+   * era) is kept selectable as a "Custom mapping" entry.
+   *
+   * @param {number}        deviceChannels  input channels of the device
+   * @param {number[]|null} currentMapping  mapping to preselect
+   */
+  function populateChannelSelect(deviceChannels, currentMapping) {
+    var i18n = AIRTIME.linein.i18n;
+    var $sel = $("#linein-field-channels");
+    var n    = Math.max(1, parseInt(deviceChannels, 10) || 2);
+    $sel.empty();
+
+    var i;
+    for (i = 0; i + 1 < n; i += 2) {
+      $sel.append(
+        $("<option>")
+          .val(i + "," + (i + 1))
+          .text(i18n.labelStereo + " " + (i + 1) + "/" + (i + 2))
+      );
+    }
+    for (i = 0; i < n; i++) {
+      $sel.append(
+        $("<option>").val(String(i)).text(i18n.labelMono + " " + (i + 1))
+      );
+    }
+
+    var hasCurrent = !!(currentMapping && currentMapping.length);
+    var wanted = hasCurrent ? currentMapping.join(",") : "0,1";
+    if ($sel.find('option[value="' + wanted + '"]').length === 0) {
+      if (hasCurrent) {
+        // Persisted mapping from the free-text era — keep it selectable.
+        $sel.append(
+          $("<option>")
+            .val(wanted)
+            .text(i18n.labelCustom + " (" + wanted + ")")
+        );
+      } else {
+        // No stereo pair on this device (mono mic): default to the
+        // first real option instead of inventing a "0,1" entry.
+        $sel.prop("selectedIndex", 0);
+        return;
+      }
+    }
+    $sel.val(wanted);
+  }
+
+  /**
+   * Channel count of the input device currently picked in the dialog.
+   * Falls back to stereo for unknown devices (missing-hardware rows).
+   *
+   * @return {number}
+   */
+  function selectedDeviceChannels() {
+    var devId = $("#linein-field-device").val();
+    var hit = null;
+    $.each(_availableInputs, function (_, dev) {
+      if (dev.stable_id === devId) { hit = dev; return false; }
+    });
+    return hit ? hit.channels : 2;
+  }
+
+  /* ---------------------------------------------------------------------- */
   /* Dialog helpers                                                           */
   /* ---------------------------------------------------------------------- */
 
@@ -236,14 +319,16 @@
     clearDialogErrors();
     $("#linein-field-id").val(isEdit ? linein.id : "");
     $("#linein-field-name").val(isEdit ? linein.name : "");
-    $("#linein-field-channels").val(
-      isEdit ? (linein.channel_mapping || []).join(",") : ""
-    );
     $("#linein-field-priority").val(isEdit ? linein.priority : 0);
     $("#linein-field-description").val(isEdit ? (linein.description || "") : "");
     $("#linein-field-enabled").prop("checked", isEdit ? !!linein.enabled : true);
 
     populateDeviceSelect(isEdit ? linein.device_id : "");
+    // Channel picker follows the picked device (RASTATIME 2026-08-31).
+    populateChannelSelect(
+      selectedDeviceChannels(),
+      isEdit ? (linein.channel_mapping || null) : null
+    );
 
     var i18n = AIRTIME.linein.i18n;
 
@@ -436,6 +521,13 @@
       openDialog(i18n.titleNew, null);
     });
 
+    // --- Device change rebuilds the channel picker (RASTATIME 2026-08-31):
+    // a different interface has a different channel count, and a stale
+    // pair (e.g. "Stereo 5/6" on a 2-channel mic) must not survive.
+    $("#linein-field-device").on("change", function () {
+      populateChannelSelect(selectedDeviceChannels(), null);
+    });
+
     // --- Delegated: Edit button ---
     $("#linein-tbody").on("click", ".linein-edit-btn", function () {
       clearStatus();
@@ -514,6 +606,9 @@
       errNameRequired:    "Name is required.",
       errDeviceRequired:  "Please select an input device.",
       errChannelsInvalid: "Channel mapping must be comma-separated non-negative integers (e.g. 0,1).",
+      labelStereo:        "Stereo",
+      labelMono:          "Mono",
+      labelCustom:        "Custom mapping",
       // action hints
       editHint:    "Edit",
       deleteHint:  "Delete",

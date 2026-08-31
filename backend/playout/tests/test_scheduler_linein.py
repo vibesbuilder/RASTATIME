@@ -41,6 +41,7 @@ def _make_linein_event(
     duration_seconds: int = 600,
     row_id: int = 12345,
     id_: int = 42,
+    channel_mapping=None,
 ) -> LineinEvent:
     """Build a LineinEvent without going through the API."""
     from datetime import timedelta
@@ -56,6 +57,7 @@ def _make_linein_event(
         device_id=device_id,
         device_name=device_name,
         name=name,
+        channel_mapping=list(channel_mapping or [0, 1]),
     )
 
 
@@ -183,7 +185,13 @@ def test_linein_start_legacy_uses_engine_play(legacy_scheduler):
 
     sched._on_linein_start("key1", event)
 
-    capture.start.assert_called_once_with(event.device_id)
+    # RASTATIME 2026-08-31 — start() now carries the channel selection
+    # (default plain stereo) and the friendly-name hint for the feeder.
+    capture.start.assert_called_once_with(
+        event.device_id,
+        channel_mapping=(0, 1),
+        device_name=event.device_name,
+    )
     engine.play.assert_called_once_with(capture.listen_url, cue_in=0.0)
     # Legacy engine does not have linein_start (it's on the Liquidsoap
     # spec only) — verifying via mock attribute presence is fragile
@@ -320,3 +328,78 @@ def test_on_stop_linein_skips_stop_when_generation_bumped_mid_teardown(
     capture.stop.assert_called_once()
     # Final guard tripped → the new show's source is left running.
     engine.linein_stop.assert_not_called()
+
+
+# ---- RASTATIME 2026-08-31: multichannel line-in (channel selection) ----
+
+
+def test_linein_start_liquidsoap_multichannel_uses_feeder_and_http(
+    liquidsoap_scheduler,
+):
+    """
+    A channel_mapping other than plain stereo routes through the
+    FfmpegLineinCapture (MME feeder -> /linein-capture) and arms the
+    linein_http companion source — NOT the direct dshow source.
+    """
+    sched, engine, capture = liquidsoap_scheduler
+    event = _make_linein_event(
+        device_name="Mikrofon (US-16x08)", channel_mapping=[4, 5]
+    )
+
+    sched._on_linein_start("key1", event)
+
+    capture.start.assert_called_once_with(
+        event.device_id,
+        channel_mapping=(4, 5),
+        device_name="Mikrofon (US-16x08)",
+    )
+    engine.linein_start_http.assert_called_once_with()
+    engine.linein_start.assert_not_called()
+
+
+def test_linein_start_liquidsoap_multichannel_without_name_falls_back(
+    liquidsoap_scheduler,
+):
+    """
+    A multichannel mapping on a legacy row without a stored
+    device_name cannot run the feeder (no PortAudio lookup key) —
+    falls back to the direct dshow source instead of staying silent.
+    """
+    sched, engine, capture = liquidsoap_scheduler
+    event = _make_linein_event(device_name="", channel_mapping=[4, 5])
+
+    sched._on_linein_start("key1", event)
+
+    capture.start.assert_not_called()
+    engine.linein_start_http.assert_not_called()
+    engine.linein_start.assert_called_once()
+
+
+def test_linein_same_device_different_mapping_is_not_a_transition(
+    liquidsoap_scheduler,
+):
+    """
+    Back-to-back shows on the SAME interface but different channel
+    pairs (two studios on one multichannel card) must NOT ride the
+    same-device-transition shortcut — the second show needs its own
+    capture with its own mapping.
+    """
+    sched, engine, capture = liquidsoap_scheduler
+    first = _make_linein_event(
+        device_name="Mikrofon (US-16x08)", channel_mapping=[4, 5]
+    )
+    sched._current_event = first
+    capture.is_running = True
+
+    second = _make_linein_event(
+        device_name="Mikrofon (US-16x08)", channel_mapping=[6, 7]
+    )
+    sched._on_linein_start("key2", second)
+
+    # No shortcut: the http companion is (re)armed for the new pair.
+    capture.start.assert_called_once_with(
+        second.device_id,
+        channel_mapping=(6, 7),
+        device_name="Mikrofon (US-16x08)",
+    )
+    engine.linein_start_http.assert_called_once_with()

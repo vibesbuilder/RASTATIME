@@ -161,6 +161,16 @@ def test_negative_channel_index_raises_value_error():
         _linein(channel_mapping=(-1, 0))
 
 
+def test_channel_mapping_longer_than_two_raises_value_error():
+    # RASTATIME 2026-08-31 — the capture layer produces stereo from at
+    # most two source channels; longer mappings were never applied.
+    with pytest.raises(ValueError):
+        _linein(channel_mapping=(0, 1, 2))
+    # 1 (mono) and 2 (stereo pair) stay valid.
+    assert _linein(channel_mapping=(4,)).channel_mapping == (4,)
+    assert _linein(channel_mapping=(4, 5)).channel_mapping == (4, 5)
+
+
 def test_non_integer_channel_element_raises_type_error():
     with pytest.raises(TypeError):
         _linein(channel_mapping=(0, "1"))

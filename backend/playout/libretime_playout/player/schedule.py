@@ -410,5 +410,9 @@ def generate_linein_events(
         # means no fallback available (legacy rows pre-dating the
         # rastatime_linein.device_name column).
         device_name=linein.get("device_name", ""),
+        # RASTATIME 2026-08-31 — channel selection on multichannel
+        # interfaces.  Falsy / missing (legacy rows) defaults to plain
+        # stereo, which keeps the proven dshow capture path.
+        channel_mapping=list(linein.get("channel_mapping") or [0, 1]),
     )
     insert_event(events, schedule_start_event_key, linein_start_event)

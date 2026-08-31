@@ -1,7 +1,7 @@
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Dict, Literal, Optional, Union
+from typing import Dict, List, Literal, Optional, Union
 
 from dateutil.parser import isoparse
 from pydantic import BaseModel, BeforeValidator, Field, parse_obj_as
@@ -177,6 +177,19 @@ class LineinEvent(BaseEvent):
     shift after reboots or driver / port re-enumerations.  Empty
     string for legacy rows without a stored name; the resolver then
     behaves as before (no fallback, preflight warns).
+    """
+
+    channel_mapping: List[int] = [0, 1]
+    """
+    RASTATIME 2026-08-31 — BACKLOG "Line-In: Kanal-Auswahl auf
+    Multi-Input-Devices".
+
+    0-based input channels to capture from the device (from
+    ``rastatime_linein.channel_mapping``): ``[0, 1]`` = plain stereo
+    (default, proven dshow path); any other pair or a single channel
+    routes through the sounddevice/MME feeder so multichannel
+    interfaces (e.g. the 16-input Tascam US-16x08) can serve one
+    studio per input pair.
     """
 
 

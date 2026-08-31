@@ -687,7 +687,10 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
         logger.info("Liquidsoap linein_start: dshow_spec=%s", dshow_spec)
         try:
             # Mechanism B: stop first so set_url actually takes effect
-            # on the (possibly already-running) source.
+            # on the (possibly already-running) source.  Also stop the
+            # http companion — the previous show may have been a
+            # multichannel line-in (RASTATIME 2026-08-31).
+            self._telnet.linein_http_stop()
             self._telnet.linein_stop()
             self._telnet.linein_set_url(dshow_spec)
             self._telnet.linein_start()
@@ -696,11 +699,37 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
                 "Liquidsoap linein_start failed: %s", exc,
             )
 
+    def linein_start_http(self) -> None:
+        """
+        RASTATIME 2026-08-31 — multichannel line-in path (BACKLOG
+        "Line-In: Kanal-Auswahl auf Multi-Input-Devices").
+
+        Start the fixed-URL ``input.http`` companion source that
+        consumes the local /linein-capture mount.  The caller must
+        have started :class:`FfmpegLineinCapture` (with its MME
+        feeder) first, so the mount carries audio by the time the
+        source's max_buffer fills.  Stops the direct-dshow source
+        first — the previous show may have been a plain-stereo
+        line-in.  Fail-soft like :meth:`linein_start`.
+        """
+        logger.info("Liquidsoap linein_start_http: /linein-capture mount")
+        try:
+            self._telnet.linein_stop()
+            self._telnet.linein_http_stop()
+            self._telnet.linein_http_start()
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            logger.error(
+                "Liquidsoap linein_start_http failed: %s", exc,
+            )
+
     def linein_stop(self) -> None:
         """
-        Tell Liquidsoap to disconnect from the FfmpegLineinCapture
-        mount.  ``source.is_ready`` goes false, the switch operator
-        falls through to scheduled.
+        Tell Liquidsoap to disconnect the line-in sources.  Stops both
+        the direct-dshow source and the http companion (RASTATIME
+        2026-08-31 — only one is ever running, and a stop on the idle
+        one is harmless), so the caller needs no path bookkeeping.
+        ``source.is_ready`` goes false, the switch operator falls
+        through to scheduled.
 
         Idempotent: a stop on an already-stopped source replies "Done"
         on the Liquidsoap side and produces no error.  Same convention
@@ -708,6 +737,7 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
         """
         try:
             self._telnet.linein_stop()
+            self._telnet.linein_http_stop()
             logger.info("Liquidsoap linein_stop: closed")
         except Exception as exc:  # pylint: disable=broad-exception-caught
             logger.warning(

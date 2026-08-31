@@ -1006,6 +1006,11 @@ class PlayoutScheduler:
         same_device_transition = (
             isinstance(prev_event, LineinEvent)
             and prev_event.device_id == event.device_id  # type: ignore[attr-defined]
+            # RASTATIME 2026-08-31 — a different channel mapping on the
+            # SAME interface is a different studio: must bounce the
+            # capture, not ride the running one.
+            and list(getattr(prev_event, "channel_mapping", None) or [0, 1])
+            == list(getattr(event, "channel_mapping", None) or [0, 1])
             and self._linein_capture.is_running
         )
 
@@ -1063,18 +1068,58 @@ class PlayoutScheduler:
                     key, self._switcher.current_state.value,
                 )
                 return
-            # Build dshow alternative-name spec from the device GUID.
-            # _stable_id_to_dshow_audio lives in ffmpeg_linein_capture
-            # (kept as the legacy capture layer); it's a pure helper,
-            # safe to reuse without instantiating the capture class.
-            from .engine.ffmpeg_linein_capture import _stable_id_to_dshow_audio
-            dshow_spec = _stable_id_to_dshow_audio(resolved_device_id)
+            # RASTATIME 2026-08-31 — channel selection (BACKLOG
+            # "Line-In: Kanal-Auswahl auf Multi-Input-Devices").
+            # Plain stereo takes the proven direct-dshow source; any
+            # other mapping cannot (the dshow pin of multichannel
+            # interfaces only offers 2 channels), so it runs the
+            # FfmpegLineinCapture with its sounddevice/MME feeder and
+            # Liquidsoap consumes the local mount via the linein_http
+            # companion source.
+            mapping = list(getattr(event, "channel_mapping", None) or [0, 1])
+            dev_name = getattr(event, "device_name", "") or ""
+            use_feeder = mapping != [0, 1]
+            if use_feeder and not dev_name:
+                logger.error(
+                    "Line-In %s: channel mapping %s needs the MME feeder, "
+                    "which requires the stored device name — this row has "
+                    "none (legacy save).  Falling back to the direct dshow "
+                    "source (channels 1/2).  Re-save the line-in in "
+                    "Settings to store the device name.",
+                    key, mapping,
+                )
+                use_feeder = False
+
             self._engine.stop()  # clear the scheduled queue (deferred-stop)
             # Race fix #3 — mark a new line-in generation BEFORE the telnet
             # round-trip, so a racing _on_stop (for the previous show) that
             # snapshotted the old value sees the bump and skips its
             # teardown instead of stopping the source we are bringing up.
             self._linein_generation += 1
+
+            if use_feeder and self._linein_capture is not None:
+                try:
+                    self._linein_capture.start(
+                        resolved_device_id,
+                        channel_mapping=tuple(mapping),
+                        device_name=dev_name,
+                    )
+                except Exception as exc:  # pylint: disable=broad-exception-caught
+                    logger.error(
+                        "Line-In %s: feeder capture start failed for "
+                        "device %s (channels %s): %s",
+                        key, resolved_device_id, mapping, exc,
+                    )
+                    return
+                self._engine.linein_start_http()
+                return
+
+            # Build dshow alternative-name spec from the device GUID.
+            # _stable_id_to_dshow_audio lives in ffmpeg_linein_capture
+            # (kept as the legacy capture layer); it's a pure helper,
+            # safe to reuse without instantiating the capture class.
+            from .engine.ffmpeg_linein_capture import _stable_id_to_dshow_audio
+            dshow_spec = _stable_id_to_dshow_audio(resolved_device_id)
             self._engine.linein_start(dshow_spec)
             # No _start_streamers — Liquidsoap owns the Icecast PUTs and
             # opens the dshow device itself.
@@ -1090,7 +1135,13 @@ class PlayoutScheduler:
         # touching the capture so a racing previous-show _on_stop bails.
         self._linein_generation += 1
         try:
-            self._linein_capture.start(resolved_device_id)
+            self._linein_capture.start(
+                resolved_device_id,
+                channel_mapping=tuple(
+                    getattr(event, "channel_mapping", None) or (0, 1)
+                ),
+                device_name=getattr(event, "device_name", "") or "",
+            )
         except Exception as exc:  # pylint: disable=broad-exception-caught
             logger.error(
                 "Line-In %s: capture start failed for device %s: %s",
@@ -1987,25 +2038,57 @@ class PlayoutScheduler:
                 self._current_event.name,
                 self._current_event.show_name,
             )
-            # Make sure the capture is still running.  start() is a
-            # no-op (well: stop+start, idempotent in practice) if the
-            # process is already alive on the same device.
-            if self._linein_capture is not None:
-                resume_device_id = self._resolve_linein_device(self._current_event)
-                if resume_device_id:
-                    try:
-                        self._linein_capture.start(resume_device_id)
-                    except Exception as exc:  # pylint: disable=broad-exception-caught
-                        logger.error(
-                            "Resume line-in: capture (re)start failed: %s", exc,
-                        )
-                else:
-                    logger.error(
-                        "Resume line-in: device %r unavailable (no "
-                        "name-fallback match for %r) — capture stays down.",
-                        self._current_event.device_id,
-                        getattr(self._current_event, "device_name", "") or "",
+            resume_device_id = self._resolve_linein_device(self._current_event)
+            if not resume_device_id:
+                logger.error(
+                    "Resume line-in: device %r unavailable (no "
+                    "name-fallback match for %r) — capture stays down.",
+                    self._current_event.device_id,
+                    getattr(self._current_event, "device_name", "") or "",
+                )
+                return
+            mapping = list(
+                getattr(self._current_event, "channel_mapping", None) or [0, 1]
+            )
+            dev_name = getattr(self._current_event, "device_name", "") or ""
+            use_feeder = mapping != [0, 1] and bool(dev_name)
+
+            # Make sure the capture is still running where the path
+            # needs it.  start() is same-device+mapping idempotent, so
+            # this never bounces a healthy pipeline.
+            if self._linein_capture is not None and (
+                use_feeder or not self._streaming_handled_externally
+            ):
+                try:
+                    self._linein_capture.start(
+                        resume_device_id,
+                        channel_mapping=tuple(mapping),
+                        device_name=dev_name,
                     )
+                except Exception as exc:  # pylint: disable=broad-exception-caught
+                    logger.error(
+                        "Resume line-in: capture (re)start failed: %s", exc,
+                    )
+
+            # RASTATIME 2026-08-31 — Liquidsoap mode re-arms the linein
+            # sources themselves (mirror of _on_linein_start), instead
+            # of pushing the capture URL through the request queue —
+            # that legacy branch predates Phase F-2 and pointed the
+            # queue at a mount that does not even exist on the
+            # direct-dshow path.
+            if self._streaming_handled_externally:
+                self._linein_generation += 1
+                if use_feeder:
+                    self._engine.linein_start_http()
+                else:
+                    from .engine.ffmpeg_linein_capture import (
+                        _stable_id_to_dshow_audio,
+                    )
+                    self._engine.linein_start(
+                        _stable_id_to_dshow_audio(resume_device_id)
+                    )
+                return
+
             self._engine.play(self._current_audio_path, cue_in=0.0)
             self._start_streamers(self._current_audio_path, seek_seconds=0.0)
             return

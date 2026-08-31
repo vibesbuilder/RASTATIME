@@ -532,6 +532,31 @@ class LiquidsoapTelnetClient:
         """
         return self.send_command("linein.stop")
 
+    def linein_http_start(self) -> str:
+        """
+        RASTATIME 2026-08-31 — multichannel line-in path.
+
+        Start the fixed-URL ``input.http`` companion source
+        (id="linein_http") that consumes the local /linein-capture
+        Icecast mount fed by FfmpegLineinCapture's MME feeder.  Used
+        for line-ins whose channel_mapping is not plain stereo — the
+        in-process dshow source cannot reach channels 3+ of a
+        multichannel interface.
+
+        Wire-form: ``linein_http.start`` (auto-registered by
+        input.http under its source id).
+        """
+        return self.send_command("linein_http.start")
+
+    def linein_http_stop(self) -> str:
+        """
+        Stop the ``input.http`` companion source.  Idempotent — a stop
+        on an already-stopped source replies harmlessly.
+
+        Wire-form: ``linein_http.stop`` (auto-registered).
+        """
+        return self.send_command("linein_http.stop")
+
     def linein_status(self) -> str:
         """
         Return Liquidsoap's free-text input.ffmpeg status for the

@@ -210,6 +210,10 @@ class FfmpegLineinCapture:
         self._channels = int(channels)
 
         self._process: Optional[subprocess.Popen] = None
+        # RASTATIME 2026-08-31 — multichannel path: the sounddevice/MME
+        # feeder subprocess whose stdout feeds ffmpeg's stdin.  None on
+        # the classic dshow path.  See linein_feeder module docstring.
+        self._feeder_process: Optional[subprocess.Popen] = None
         self._stderr_fh: Optional[IO[bytes]] = None
         # Same lifecycle-lock pattern as FfmpegStreamer: serialises
         # start()/stop() against each other across the scheduler timer
@@ -218,6 +222,12 @@ class FfmpegLineinCapture:
 
         # Watchdog state — see class docstring.
         self._device_id: Optional[str] = None
+        # RASTATIME 2026-08-31 — channel selection (BACKLOG "Line-In:
+        # Kanal-Auswahl").  Kept as instance state so the watchdog's
+        # restart path re-creates the same capture without re-plumbing
+        # its call chain.
+        self._channel_mapping: tuple = (0, 1)
+        self._device_name: str = ""
         self._watchdog: Optional[threading.Thread] = None
         self._watchdog_stop = threading.Event()
         self._on_restart_callback = on_restart_callback
@@ -254,19 +264,33 @@ class FfmpegLineinCapture:
     _IMMEDIATE_RETRY_MAX_ATTEMPTS = 3
     _IMMEDIATE_RETRY_BACKOFF_S = 1.0
 
-    def start(self, device_id: str) -> None:
+    def start(
+        self,
+        device_id: str,
+        *,
+        channel_mapping: tuple = (0, 1),
+        device_name: str = "",
+    ) -> None:
         """
         Begin capturing from ``device_id`` (the rastatime_linein stable
         ID, i.e. lower-cased GUID without braces) and pushing the
         encoded stream to the configured Icecast mount.
 
-        If a capture is already running with a DIFFERENT device, it is
-        stopped first.  If it is already running with the SAME device,
-        ``start()`` is a no-op — this matters for back-to-back shows
-        that share a mic (Phase B.4 #3 — same-device transition): the
-        scheduler can call ``start()`` on every show boundary without
-        causing a 1.5-4.5 s silence gap while FFmpeg drains its 'q'
-        and a fresh subprocess warms up.
+        RASTATIME 2026-08-31 — ``channel_mapping`` selects which input
+        channels to capture (0-based; ``(0, 1)`` = plain stereo).  The
+        default keeps the proven dshow path; any other mapping routes
+        through the sounddevice/MME feeder subprocess (multichannel
+        interfaces — see the linein_feeder module docstring), which
+        needs ``device_name`` (the OS friendly name persisted on the
+        rastatime_linein row) to locate the device in PortAudio.
+
+        If a capture is already running with a DIFFERENT device or
+        channel mapping, it is stopped first.  If it is already running
+        with the SAME device and mapping, ``start()`` is a no-op — this
+        matters for back-to-back shows that share a mic (Phase B.4 #3 —
+        same-device transition): the scheduler can call ``start()`` on
+        every show boundary without causing a 1.5-4.5 s silence gap
+        while FFmpeg drains its 'q' and a fresh subprocess warms up.
 
         Holds the lifecycle lock for the whole start, so a parallel
         :meth:`stop` from another thread cannot race the new
@@ -284,19 +308,26 @@ class FfmpegLineinCapture:
         retries the start up to :attr:`MAX_AUTO_RESTART_ATTEMPTS` times
         (Phase B.4 #1 — device unplugged mid-show).
         """
+        mapping = tuple(channel_mapping) if channel_mapping else (0, 1)
         with self._lifecycle_lock:
             # Same-device idempotency.  poll() == None means alive.
+            # A different channel mapping counts as a different capture
+            # even on the same device (two studios on one interface).
             if (
                 self._process is not None
                 and self._process.poll() is None
                 and self._device_id == device_id
+                and self._channel_mapping == mapping
             ):
                 logger.info(
                     "FfmpegLineinCapture.start: device %s already capturing "
-                    "(PID=%d) — keeping subprocess alive, no bounce.",
-                    device_id, self._process.pid,
+                    "(PID=%d, channels=%s) — keeping subprocess alive, no bounce.",
+                    device_id, self._process.pid, mapping,
                 )
                 return
+
+            self._channel_mapping = mapping
+            self._device_name = device_name or ""
 
             self._stop_locked()
             # Clear stop signal: a previous stop() may have left it set.
@@ -353,43 +384,116 @@ class FfmpegLineinCapture:
         # Remember the device for watchdog-driven restart attempts.
         self._device_id = device_id
 
-        dshow_input = _stable_id_to_dshow_audio(device_id)
+        # RASTATIME 2026-08-31 — path selection (BACKLOG "Line-In:
+        # Kanal-Auswahl"): plain stereo (0, 1) keeps the proven dshow
+        # path; any other mapping needs the MME feeder because the
+        # DirectShow pin of multichannel interfaces only offers 2
+        # channels (measured on the Tascam US-16x08).
+        use_feeder = self._channel_mapping != (0, 1)
+        if use_feeder and not self._device_name:
+            # Legacy row without a stored friendly name — the feeder
+            # cannot resolve a PortAudio device from a GUID.  Fall back
+            # to dshow (channels 1/2) rather than staying silent, and
+            # say so loudly.
+            logger.error(
+                "FfmpegLineinCapture: channel mapping %s requested but the "
+                "line-in row has no device_name — the MME feeder cannot "
+                "locate the device.  Falling back to dshow (channels 1/2). "
+                "Re-save the line-in in Settings to store the device name.",
+                self._channel_mapping,
+            )
+            use_feeder = False
+
+        feeder_cmd = self._build_feeder_cmd() if use_feeder else None
+        cmd = self._build_ffmpeg_cmd(device_id, use_feeder)
+
+        self._launch_processes(device_id, feeder_cmd, cmd)
+
+    def _build_feeder_cmd(self) -> list:
+        """
+        Command line for the linein_feeder subprocess (multichannel path).
+
+        Runs the feeder with the same interpreter as the playout so it
+        finds the venv's sounddevice package.
+        """
+        import sys as _sys  # local: keep module import surface unchanged
+
+        return [
+            _sys.executable,
+            "-m",
+            "libretime_playout.engine.linein_feeder",
+            "--device-name", self._device_name,
+            "--mapping", ",".join(str(c) for c in self._channel_mapping),
+            "--rate", str(self._samplerate),
+        ]
+
+    def _build_ffmpeg_cmd(self, device_id: str, use_feeder: bool) -> list:
+        """
+        FFmpeg command line.  Input side is either the dshow device
+        (classic stereo path) or ``pipe:0`` fed by the linein_feeder
+        subprocess (multichannel path); the encoder/output side is
+        identical for both.
+        """
         icecast_url = (
             f"icecast://{self._icecast_user}:{self._icecast_password}@"
             f"{self._icecast_host}:{self._icecast_port}/{self._icecast_mount}"
         )
 
-        cmd = [
+        if use_feeder:
+            input_args = [
+                # The feeder delivers a live s16le stereo stream at the
+                # configured rate on stdin.  Same low-latency knobs as
+                # the dshow path where they apply.
+                "-fflags", "+nobuffer",
+                "-flags", "+low_delay",
+                "-f", "s16le",
+                "-ar", str(self._samplerate),
+                "-ac", "2",
+                "-thread_queue_size", "4096",
+                "-i", "pipe:0",
+            ]
+        else:
+            dshow_input = _stable_id_to_dshow_audio(device_id)
+            input_args = [
+                # --------------------------------------------------------
+                # Low-latency input/output knobs (RASTATIME 2026-05-13).
+                # -fflags +nobuffer  : disable the demuxer's input buffer
+                #                      so samples are forwarded to the
+                #                      encoder the moment dshow delivers
+                #                      them, rather than batched in
+                #                      200-300 ms chunks.
+                # -flags +low_delay  : tell codecs that this is a live
+                #                      stream — libmp3lame skips reorder
+                #                      buffering.
+                # -flush_packets 1   : push every encoded MP3 packet to
+                #                      the muxer (and from there to
+                #                      Icecast) the moment it is ready,
+                #                      not buffered.
+                # Combined with Icecast's per-mount burst-size=0 on
+                # /linein-capture, this brings the operator-side monitor
+                # latency from ~3.5 s down to roughly 0.5-0.8 s while
+                # leaving the public mounts (/rastatime192 et al.)
+                # unaffected.
+                # --------------------------------------------------------
+                "-fflags", "+nobuffer",
+                "-flags", "+low_delay",
+                # dshow capture options must precede ``-i``.
+                "-f", "dshow",
+                # ``rtbufsize`` raises the Windows DirectShow callback
+                # ring buffer.  Default is small and tends to drop
+                # samples on busy systems; ~200 MB is overkill but
+                # harmless.
+                "-rtbufsize", "200M",
+                # Bigger thread_queue_size between dshow demuxer and the
+                # encoder — same headroom we use for live HTTP-stream
+                # inputs in FfmpegStreamer to avoid drops.
+                "-thread_queue_size", "4096",
+                "-i", dshow_input,
+            ]
+
+        return [
             self._ffmpeg_path,
-            # ------------------------------------------------------------
-            # Low-latency input/output knobs (RASTATIME 2026-05-13).
-            # -fflags +nobuffer  : disable the demuxer's input buffer so
-            #                      samples are forwarded to the encoder
-            #                      the moment dshow delivers them, rather
-            #                      than batched in 200-300 ms chunks.
-            # -flags +low_delay  : tell codecs that this is a live stream
-            #                      — libmp3lame skips reorder buffering.
-            # -flush_packets 1   : push every encoded MP3 packet to the
-            #                      muxer (and from there to Icecast) the
-            #                      moment it is ready, not buffered.
-            # Combined with Icecast's per-mount burst-size=0 on
-            # /linein-capture, this brings the operator-side monitor
-            # latency from ~3.5 s down to roughly 0.5-0.8 s while leaving
-            # the public mounts (/rastatime192 et al.) unaffected.
-            # ------------------------------------------------------------
-            "-fflags", "+nobuffer",
-            "-flags", "+low_delay",
-            # dshow capture options must precede ``-i``.
-            "-f", "dshow",
-            # ``rtbufsize`` raises the Windows DirectShow callback ring
-            # buffer.  Default is small and tends to drop samples on
-            # busy systems; ~200 MB is overkill but harmless.
-            "-rtbufsize", "200M",
-            # Bigger thread_queue_size between dshow demuxer and the
-            # encoder — same headroom we use for live HTTP-stream
-            # inputs in FfmpegStreamer to avoid drops.
-            "-thread_queue_size", "4096",
-            "-i", dshow_input,
+            *input_args,
             "-vn",
             "-c:a", self._codec,
             "-b:a", self._bitrate,
@@ -401,18 +505,33 @@ class FfmpegLineinCapture:
             icecast_url,
         ]
 
+    def _launch_processes(
+        self,
+        device_id: str,
+        feeder_cmd: Optional[list],
+        cmd: list,
+    ) -> None:
+        """
+        Spawn the capture pipeline: optional feeder subprocess plus
+        FFmpeg, wired stdout→stdin on the multichannel path.  Caller
+        holds the lifecycle lock.
+        """
         logger.info(
-            "FfmpegLineinCapture start: device_id=%s -> %s:%d/%s",
-            device_id, self._icecast_host, self._icecast_port, self._icecast_mount,
+            "FfmpegLineinCapture start: device_id=%s channels=%s%s -> %s:%d/%s",
+            device_id, self._channel_mapping,
+            " (MME feeder)" if feeder_cmd else "",
+            self._icecast_host, self._icecast_port, self._icecast_mount,
         )
-        logger.debug("FfmpegLineinCapture cmd: %s", cmd)
+        logger.debug("FfmpegLineinCapture cmd: %s (feeder: %s)", cmd, feeder_cmd)
 
         try:
             self._stderr_fh = open(self._stderr_log_path, "ab", buffering=0)
             header = (
                 f"\n===== FfmpegLineinCapture start device={device_id} "
+                f"channels={self._channel_mapping} "
                 f"@ {time.strftime('%Y-%m-%d %H:%M:%S')} =====\n"
-                f"cmd: {' '.join(cmd)}\n"
+                + (f"feeder: {' '.join(feeder_cmd)}\n" if feeder_cmd else "")
+                + f"cmd: {' '.join(cmd)}\n"
             ).encode()
             self._stderr_fh.write(header)
         except OSError as exc:
@@ -422,26 +541,58 @@ class FfmpegLineinCapture:
             )
             self._stderr_fh = None
 
+        stderr_target = self._stderr_fh if self._stderr_fh else subprocess.DEVNULL
+        no_window = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+
+        # ---- optional feeder subprocess (multichannel path) ----------
+        self._feeder_process = None
+        if feeder_cmd is not None:
+            try:
+                self._feeder_process = subprocess.Popen(
+                    feeder_cmd,
+                    stdin=subprocess.DEVNULL,
+                    stdout=subprocess.PIPE,        # → ffmpeg stdin
+                    stderr=stderr_target,          # shared capture log
+                    creationflags=no_window,
+                )
+            except Exception as exc:  # pylint: disable=broad-exception-caught
+                logger.error("Failed to start linein_feeder: %s", exc)
+                self._close_stderr_fh()
+                return
+
         try:
             self._process = subprocess.Popen(
                 cmd,
-                stdin=subprocess.PIPE,             # for graceful 'q' shutdown
-                stdout=subprocess.DEVNULL,
-                stderr=self._stderr_fh if self._stderr_fh else subprocess.DEVNULL,
-                creationflags=getattr(
-                    subprocess, "CREATE_NO_WINDOW", 0
+                # dshow path: PIPE for the graceful 'q' shutdown.
+                # Feeder path: stdin IS the PCM pipe — shutdown happens
+                # via feeder terminate → EOF (see _stop_locked).
+                stdin=(
+                    self._feeder_process.stdout
+                    if self._feeder_process is not None
+                    else subprocess.PIPE
                 ),
+                stdout=subprocess.DEVNULL,
+                stderr=stderr_target,
+                creationflags=no_window,
             )
         except FileNotFoundError:
             logger.error("ffmpeg.exe not found at %s", self._ffmpeg_path)
+            self._kill_feeder_locked()
             self._close_stderr_fh()
             self._process = None
             return
         except Exception as exc:  # pylint: disable=broad-exception-caught
             logger.error("Failed to start FfmpegLineinCapture: %s", exc)
+            self._kill_feeder_locked()
             self._close_stderr_fh()
             self._process = None
             return
+
+        # Close the parent's copy of the feeder→ffmpeg pipe write end
+        # reader; otherwise ffmpeg would never see EOF when the feeder
+        # exits (standard pipeline plumbing).
+        if self._feeder_process is not None and self._feeder_process.stdout:
+            self._feeder_process.stdout.close()
 
         # Brief health check — if the capture crashes immediately (bad
         # device GUID, codec missing, icecast unreachable), poll()
@@ -449,20 +600,34 @@ class FfmpegLineinCapture:
         # negotiation is a bit slower than HTTP, so we give it 1.5 s.
         time.sleep(1.5)
         rc = self._process.poll()
-        if rc is not None:
+        feeder_rc = (
+            self._feeder_process.poll()
+            if self._feeder_process is not None
+            else None
+        )
+        if rc is not None or feeder_rc is not None:
             tail = self._read_stderr_tail(2000)
             logger.error(
-                "FfmpegLineinCapture exited immediately (rc=%d).  "
-                "Last stderr:\n%s",
-                rc, tail,
+                "FfmpegLineinCapture pipeline exited immediately "
+                "(ffmpeg rc=%s, feeder rc=%s).  Last stderr:\n%s",
+                rc, feeder_rc, tail,
             )
+            self._kill_feeder_locked()
+            if self._process is not None and self._process.poll() is None:
+                try:
+                    self._process.kill()
+                except Exception:  # pylint: disable=broad-exception-caught
+                    pass
             self._close_stderr_fh()
             self._process = None
             return
 
         logger.info(
-            "FfmpegLineinCapture streaming PID=%d: device=%s",
-            self._process.pid, device_id,
+            "FfmpegLineinCapture streaming PID=%d: device=%s channels=%s%s",
+            self._process.pid, device_id, self._channel_mapping,
+            f" (feeder PID={self._feeder_process.pid})"
+            if self._feeder_process is not None
+            else "",
         )
 
         # Hand this specific subprocess to a watchdog.  The watchdog
@@ -588,8 +753,14 @@ class FfmpegLineinCapture:
                 continue
 
             # Subprocess exited.  rc == 0 means graceful 'q' shutdown
-            # (stop_locked path) — not our problem.
-            if rc == 0:
+            # (stop_locked path) — not our problem.  EXCEPT on the
+            # feeder path (RASTATIME 2026-08-31): there ffmpeg exits 0
+            # whenever its stdin hits EOF, which mid-show means the
+            # feeder died underneath us — that must restart.  A real
+            # stop() sets _watchdog_stop before touching the processes,
+            # so reaching this line with the flag clear is never a
+            # deliberate shutdown.
+            if rc == 0 and self._feeder_process is None:
                 return
 
             # Unexpected non-zero exit — capture the stderr tail for
@@ -677,26 +848,58 @@ class FfmpegLineinCapture:
             wd.join(timeout=3)
         self._watchdog = None
 
+    def _kill_feeder_locked(self) -> None:
+        """
+        Terminate the linein_feeder subprocess if one is running.
+        Caller holds the lifecycle lock.  Safe to call on the dshow
+        path (no-op).
+        """
+        feeder = self._feeder_process
+        self._feeder_process = None
+        if feeder is None or feeder.poll() is not None:
+            return
+        try:
+            feeder.terminate()
+            try:
+                feeder.wait(timeout=2)
+            except subprocess.TimeoutExpired:
+                feeder.kill()
+                feeder.wait(timeout=2)
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            logger.debug("linein_feeder cleanup error: %s", exc)
+
     def _stop_locked(self) -> None:
         if self._process is None:
+            self._kill_feeder_locked()
             self._close_stderr_fh()
             return
 
         proc = self._process
+        via_feeder = self._feeder_process is not None
 
         if proc.poll() is None:
             logger.info(
-                "FfmpegLineinCapture stop (PID=%d) — sending 'q' for clean exit",
+                "FfmpegLineinCapture stop (PID=%d) — %s",
                 proc.pid,
+                "terminating feeder for EOF shutdown" if via_feeder
+                else "sending 'q' for clean exit",
             )
             try:
-                self._send_quit_signal(proc)
+                if via_feeder:
+                    # Multichannel path: ffmpeg's stdin is the PCM pipe,
+                    # so the 'q' protocol does not apply.  Terminating
+                    # the feeder gives ffmpeg EOF on stdin — it flushes
+                    # the encoder and exits 0 on its own.
+                    self._kill_feeder_locked()
+                else:
+                    self._send_quit_signal(proc)
                 try:
                     proc.wait(timeout=3)
                 except subprocess.TimeoutExpired:
                     logger.warning(
-                        "FfmpegLineinCapture PID=%d did not exit on 'q' "
-                        "within 3 s; falling back to terminate()", proc.pid,
+                        "FfmpegLineinCapture PID=%d did not exit on %s "
+                        "within 3 s; falling back to terminate()",
+                        proc.pid, "EOF" if via_feeder else "'q'",
                     )
                     try:
                         proc.terminate()
@@ -719,6 +922,9 @@ class FfmpegLineinCapture:
                 rc, tail,
             )
 
+        # ffmpeg may have died on its own while the feeder lives on —
+        # make sure no orphan keeps the MME device open.
+        self._kill_feeder_locked()
         self._process = None
         self._close_stderr_fh()
 
