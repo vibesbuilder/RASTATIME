@@ -242,7 +242,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Feintuning nach Operator-Sichtung (`14752a4`, `b23056b`): beide
   Rahmen von `#242424` auf **`#3a3a3a`** aufgehellt und Redmonds
   hellblauer 1px-`.ui-widget-content`-Border am Kalender passend
-  eingefärbt (1px bleibt — kein Layout-Shift).
+  eingefärbt (1px bleibt — kein Layout-Shift).  Gleiche Ursache am
+  **„+ New Show"-Panel** (`cd987dd`): `#schedule-add-show` bekam
+  `#2f2f2f` und kippt die vererbte `#222`-Textfarbe auf Weiß (129
+  Labels/DTs/DDs live verifiziert, explizit gefärbte Elemente
+  unberührt).
   Andere Browser brauchen wegen des versionsbasierten Cache-Busters
   einmal Strg+F5 (Folge-Item im BACKLOG).
 
