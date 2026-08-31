@@ -238,10 +238,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   volle Design.  Playout History hatte schlicht keinen Override:
   `#his-tabs` (jQuery-UI-Tabs, `.ui-widget-content`) zeigte Redmonds
   Fast-Weiß als Rahmen — neue `#id`-Regel in `styles.css`
-  (Background + Border `#242424`).  Beides live im DOM verifiziert
-  (computed `rgb(36,36,36)`).  Andere Browser brauchen wegen des
-  versionsbasierten Cache-Busters einmal Strg+F5 (Folge-Item im
-  BACKLOG).
+  (Background + Border `#242424`).  Beides live im DOM verifiziert.
+  Feintuning nach Operator-Sichtung (`14752a4`): Kalender-Rahmen von
+  `#242424` auf **`#3a3a3a`** aufgehellt und Redmonds hellblauer
+  1px-`.ui-widget-content`-Border passend eingefärbt (1px bleibt —
+  kein Layout-Shift); Playout History bleibt wie gewünscht `#242424`.
+  Andere Browser brauchen wegen des versionsbasierten Cache-Busters
+  einmal Strg+F5 (Folge-Item im BACKLOG).
 
 - **Smart-Block-Save crashte auf PHP 8 bei unberührter Criteria-Zeile
   (2026-08-30, `5029a7c`)** — Root Cause des BACKLOG-Items „Smart
