@@ -4969,3 +4969,13 @@ div.dt-button-collection .dt-button > span {
     background: #3a3a3a;
     border-color: #3a3a3a;
 }
+
+/* Same redmond near-white on the "+ New Show" panel (operator report
+   2026-08-31, spec #2f2f2f).  The inherited #222 base text colour is
+   unreadable on it, so the panel root flips it to white — elements
+   with their own explicit colour (collapsible headers, links, inputs,
+   buttons) are unaffected. */
+#schedule-add-show.ui-widget-content {
+    background: #2f2f2f;
+    color: #fff;
+}
