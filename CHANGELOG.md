@@ -224,6 +224,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Asset-Cache-Buster jetzt mtime-basiert (2026-08-31, `0767393`)** —
+  `Assets::url()` las den `?<hash>` aus der build-zeitlichen
+  `assets.json`: Datei-Edits änderten die URL nie, und da Apache
+  keine Cache-Header für statische Assets sendet, klebten Browser
+  tagelang an alten CSS/JS (heuristisches Caching; biss allein am
+  2026-08-31 dreimal bei den UI-Fixes).  Der Hash kommt jetzt aus
+  mtime+Größe der Live-Datei — jede Änderung ergibt sofort eine neue
+  URL, Unverändertes bleibt stabil gecacht.  Strg+F5 nach UI-Fixes
+  entfällt damit dauerhaft.
+
 - **Weiße Rahmen um Kalender + Playout History → #242424 (2026-08-31,
   `5ff7713`)** — Kalender-Root-Cause war ein Ein-Zeichen-CSS-Bug vom
   2026-06-01: der Header-Kommentar von `schedule-fc6.css` schrieb eine

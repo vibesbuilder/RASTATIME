@@ -1347,9 +1347,20 @@ appended (`PluploadController.php`).
 **Rest-Check (offen, klein):** ein realer Upload-Roundtrip im Browser
 (Liste zieht nach) — Operator-Sichtprüfung genügt.
 
-### 🟡 Statische Asset-Cache-Buster: Clients kleben an alten CSS/JS
+### ✅ Statische Asset-Cache-Buster: Clients kleben an alten CSS/JS (DONE 2026-08-31, `0767393`)
 
-**Status:** Defer — Fund 2026-08-31 beim Rahmen-Fix (`5ff7713`).
+**Status:** Behoben (Operator-Go am selben Tag — das Problem biss
+allein heute dreimal).  `Assets::url()` leitet den `?<hash>` jetzt
+aus **mtime+Größe der echten Datei** ab (12-Hex-md5, per Request
+memoisiert) statt aus der build-zeitlichen `assets.json`: jede
+Änderung ergibt sofort eine neue URL, Unverändertes bleibt stabil
+gecacht.  Fehlende Dateien behalten das Upstream-Verhalten
+(Error-Log + time()).  `tools/assets-checksum-update.py` +
+`application/assets.json` sind damit obsolet (liegen gelassen,
+nichts referenziert sie).  Live bewiesen: Hash stabil über Requests,
+ändert sich bei touch, /schedule lädt ohne Asset-Fehler.  Kein
+Strg+F5 mehr nötig — ein normaler Reload genügt ab jetzt.
+**Ursprünglicher Eintrag:**
 **Befund:** Die `?<hash>`-Query an CSS/JS-Links ist **versionsbasiert,
 nicht inhaltsbasiert** — sie ändert sich bei Datei-Edits nicht.  Dazu
 sendet Apache für statische Assets **weder `Cache-Control` noch
