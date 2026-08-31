@@ -265,6 +265,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Kalender-Content-Dialogen (Schedule Tracks + Contents of Show) mit
   `#2f2f2f`-Regel.  Live verifiziert: Playlists-Klick lädt
   Playlist-Zeilen bei sauberer Konsole, Dialog liegt über dem Header.
+  Nachtrag (`2715872`): die zwei Dauer-Anzeigen unter der
+  Content-Tabelle des View-Dialogs (`#show_time_filled`,
+  `#show_length`) erbten die `#222`-Basisfarbe → jetzt Weiß.
   Andere Browser brauchen wegen des versionsbasierten Cache-Busters
   einmal Strg+F5 (Folge-Item im BACKLOG).
 
