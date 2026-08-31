@@ -16,6 +16,49 @@
 Diese sind technisch evaluiert, empfohlen, und können starten sobald
 der Operator das Signal gibt.
 
+### 🟢 Line-In: Kanal-Auswahl auf Multi-Input-Devices (Tascam US-16x08)
+
+**Status:** Evaluiert 2026-08-31 (Operator-Wunsch) — Empfehlung Go,
+wartet auf Operator-Go.
+**Anforderung:** Am US-16x08 hängen mehrere Studios (ein Stereo- bzw.
+zwei Mono-Inputs pro Studio).  Ein Line-In soll nicht nur das Device,
+sondern auch **welche Kanäle** (Stereo-Paar oder Mono-Kanal) wählen.
+
+**Befund (Ist-Zustand, live verifiziert):**
+- Windows exponiert das US-16x08 als **einen** 16-Kanal-WASAPI-
+  Endpoint („Mikrofon", channels: 16) — keine Per-Paar-Devices.
+  Device-Manager liest die Kanalzahl bereits aus (WAVEFORMATEX).
+- Das Feature ist **halb gebaut**: `rastatime_linein.channel_mapping`
+  (DB + Domain-Validierung + API) und sogar das UI-Feld „Channel
+  Mapping" (Komma-Indizes, `0,1`) existieren — aber die Capture
+  (`FfmpegLineinCapture`, dshow) **wendet das Mapping nie an**.
+- Und sie **kann es dort auch nicht**: der Tascam-dshow-Pin bietet
+  laut `-list_options` **max. 2 Kanäle** (= fix Inputs 1+2); `-channels
+  16` wird abgelehnt.  Die 16 Kanäle sind nur via WASAPI erreichbar;
+  der ffmpeg-Build hat kein WASAPI-Input (nur dshow/openal).
+
+**Lösungsweg (Option A, empfohlen):** Kleiner Python-**WASAPI-Feeder**
+(sounddevice/PortAudio, shared mode) öffnet den 16ch-Endpoint,
+extrahiert die `channel_mapping`-Kanäle (Paar → Stereo, ein Kanal →
+Dual-Mono) und pipet s16le-PCM an ffmpeg-stdin; ffmpeg encodiert
+unverändert weiter nach `/linein-capture`.  Bestehender
+Watchdog-Pfad bleibt wirksam (Feeder-Stall → ffmpeg-`time=`-Freeze;
+Device-Verlust → PortAudio-Error → Pipe-EOF → bestehende
+Restart-Logik).  **2-Kanal-Devices bleiben auf dem bewährten
+dshow-Pfad** — der Feeder greift nur bei >2-Kanal-Devices.
+UI: Textfeld → Picker („Input 1/2", „3/4", …, „Mono 5", gespeist aus
+`channels` der Device-API).
+**Verworfen:** Tascam-Mixer-Routing (nur global, nicht pro Studio),
+Liquidsoap-Umbau (bricht Phase-B-Design), virtuelle Audio-Kabel
+(Fremd-Infra im Sendepfad).
+
+**Aufwand:** Feeder ~150–250 LoC + Capture-Anpassung + UI-Picker
+~100–150 LoC + Tests + Manual (4 Sprachen); neue Dependency
+`sounddevice` (pip-only, bündelt PortAudio-DLL).  ~1.5–2.5 Tage.
+**Vorbedingung / Schritt 1 nach Go:** 15-min-PoC — sounddevice
+installieren, 1-s-16ch-WASAPI-Capture gegen das Tascam als harte
+Machbarkeitsbestätigung (shared-mode-Format-Frage), erst dann bauen.
+
 ### ✅ Listener-Statistik zeigt keine Daten (DONE 2026-08-30, `00ce768`)
 
 **Status:** Behoben — Sammel-Kette komplett, E2E live bewiesen.
