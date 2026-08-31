@@ -93,6 +93,7 @@ Line-In Library → **+ New**.
    ├──────────────────────────────────────────────────────────────┤
    │   Name:           [                       ]                  │
    │   Device:         [Select a device... ▾]                     │
+   │   Input Channels: [Stereo 1/2 ▾]                             │
    │   Default Length: [10m 00s   ]    (use 00s for infinite)     │
    │  ☑  Enabled                                                  │
    ├──────────────────────────────────────────────────────────────┤
@@ -104,8 +105,35 @@ Line-In Library → **+ New**.
 |---|---|
 | **Name** | Required. Unique. The visible label everywhere. |
 | **Device** | Required. Dropdown lists every input device the OS sees right now. If your device is missing from the dropdown, see [Local Machine](./LOCAL_MACHINE.md) → device probing. |
+| **Input Channels** | Required. Which channels of the device this Line-In captures — a stereo pair (`Stereo 1/2`, `Stereo 3/4`, …) or a single mono channel (played on both sides). A plain stereo device offers just `Stereo 1/2` and its two mono channels; a multichannel interface offers one entry per pair. |
 | **Default Length** | Required. Format `HHh MMm SSs` (the same parser as Webstreams). For "play until told to stop" use `0h 0m 0s` (displays as `∞`). |
 | **Enabled** | Defaults to on. Untick to create the Line-In but suppress it from the drag library. |
+
+### Multichannel interfaces: one Line-In per studio
+
+If the station's audio interface has more than two inputs (e.g. a
+16-input Tascam US-16x08 with several studios wired to it), create
+**one Line-In per studio** — same **Device**, different **Input
+Channels**:
+
+- `Studio A` → Device `US-16x08`, Input Channels `Stereo 1/2`
+- `Studio B` → Device `US-16x08`, Input Channels `Stereo 5/6`
+- `Studio C guest mic` → Device `US-16x08`, Input Channels `Mono 7`
+
+Each Line-In then behaves like its own source in the Library and in
+shows; back-to-back shows from different studios on the same
+interface switch cleanly at the show boundary.
+
+> **How it works under the hood.** Plain `Stereo 1/2` uses the
+> proven DirectShow capture path. Any other selection cannot — the
+> Windows DirectShow pin of multichannel interfaces only ever offers
+> two channels — so playout starts a small capture feeder that reads
+> the device over the MME API (the one Windows API that demonstrably
+> delivers all channels without touching system settings), extracts
+> the selected channels, and feeds them through the local
+> `/linein-capture` mount into the stream engine. This needs the
+> device's display name stored on the row — Line-Ins saved before
+> this feature exist should be re-saved once so the name is stored.
 
 Click **Save**. The Line-In appears immediately in the
 Library page's Line-In chip filter.

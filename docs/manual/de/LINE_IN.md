@@ -98,6 +98,7 @@ Line-In-Bibliothek → **+ Neu**.
    ├──────────────────────────────────────────────────────────────┤
    │   Name:           [                       ]                  │
    │   Gerät:          [Gerät auswählen... ▾]                     │
+   │   Eingangskanäle: [Stereo 1/2 ▾]                             │
    │   Standardlänge:  [10m 00s   ]   (00s für unendlich)         │
    │  ☑  Aktiviert                                                │
    ├──────────────────────────────────────────────────────────────┤
@@ -109,8 +110,37 @@ Line-In-Bibliothek → **+ Neu**.
 |---|---|
 | **Name** | Erforderlich. Eindeutig. Das sichtbare Label überall. |
 | **Gerät** | Erforderlich. Dropdown listet jedes Eingabegerät, das das OS gerade sieht. Wenn Ihr Gerät im Dropdown fehlt, siehe [Lokale Maschine](./LOCAL_MACHINE.md) → Geräte-Probing. |
+| **Eingangskanäle** | Erforderlich. Welche Kanäle des Geräts dieser Line-In aufnimmt — ein Stereo-Paar (`Stereo 1/2`, `Stereo 3/4`, …) oder ein einzelner Mono-Kanal (läuft auf beiden Seiten). Ein einfaches Stereo-Gerät bietet nur `Stereo 1/2` und seine zwei Mono-Kanäle; ein Mehrkanal-Interface bietet einen Eintrag pro Paar. |
 | **Standardlänge** | Erforderlich. Format `HHh MMm SSs` (derselbe Parser wie Webstreams). Für "spielt bis gestoppt" verwenden Sie `0h 0m 0s` (zeigt als `∞`). |
 | **Aktiviert** | Standardmäßig an. Abwählen, um den Line-In zu erstellen, aber von der Drag-Bibliothek zu unterdrücken. |
+
+### Mehrkanal-Interfaces: ein Line-In pro Studio
+
+Hat das Audio-Interface der Station mehr als zwei Eingänge (z.B.
+ein Tascam US-16x08 mit 16 Eingängen und mehreren angeschlossenen
+Studios), legen Sie **einen Line-In pro Studio** an — gleiches
+**Gerät**, unterschiedliche **Eingangskanäle**:
+
+- `Studio A` → Gerät `US-16x08`, Eingangskanäle `Stereo 1/2`
+- `Studio B` → Gerät `US-16x08`, Eingangskanäle `Stereo 5/6`
+- `Studio C Gastmikro` → Gerät `US-16x08`, Eingangskanäle `Mono 7`
+
+Jeder Line-In verhält sich dann in Bibliothek und Sendungen wie
+eine eigene Quelle; aufeinanderfolgende Sendungen aus verschiedenen
+Studios am selben Interface wechseln sauber an der Sendungsgrenze.
+
+> **Wie es unter der Haube funktioniert.** Schlichtes `Stereo 1/2`
+> nutzt den bewährten DirectShow-Aufnahmepfad. Jede andere Auswahl
+> kann das nicht — der Windows-DirectShow-Pin von
+> Mehrkanal-Interfaces bietet grundsätzlich nur zwei Kanäle — daher
+> startet das Playout einen kleinen Capture-Feeder, der das Gerät
+> über die MME-API liest (die eine Windows-API, die nachweislich
+> alle Kanäle liefert, ohne Systemeinstellungen anzufassen), die
+> gewählten Kanäle extrahiert und sie über den lokalen
+> `/linein-capture`-Mount in die Stream-Engine speist. Dafür muss
+> der Anzeigename des Geräts auf der Zeile gespeichert sein —
+> Line-Ins, die vor diesem Feature gespeichert wurden, einmal neu
+> speichern.
 
 Klicken Sie **Speichern**. Der Line-In erscheint sofort im
 Line-In-Chip-Filter der Bibliotheks-Seite.

@@ -82,8 +82,38 @@ Line-In Library → **+ Nouveau**.
 |---|---|
 | **Nom** | Requis. Unique. Le libellé visible partout. |
 | **Périphérique** | Requis. Menu déroulant liste chaque périphérique d'entrée que l'OS voit. Si votre périphérique manque, voir [Machine locale](./LOCAL_MACHINE.md). |
+| **Canaux d'entrée** | Requis. Quels canaux du périphérique ce Line-In capture — une paire stéréo (`Stereo 1/2`, `Stereo 3/4`, …) ou un canal mono unique (joué des deux côtés). Un périphérique stéréo simple n'offre que `Stereo 1/2` et ses deux canaux mono ; une interface multicanal offre une entrée par paire. |
 | **Longueur par défaut** | Requise. Format `HHh MMm SSs` (même parseur que Webstreams). Pour "joue jusqu'à être dit de s'arrêter" utilisez `0h 0m 0s` (affiche comme `∞`). |
 | **Activé** | Par défaut activé. Décocher pour créer le Line-In mais le supprimer de la bibliothèque de glisser. |
+
+### Interfaces multicanal : un Line-In par studio
+
+Si l'interface audio de la station a plus de deux entrées (p. ex.
+un Tascam US-16x08 à 16 entrées avec plusieurs studios câblés),
+créez **un Line-In par studio** — même **Périphérique**, mais des
+**Canaux d'entrée** différents :
+
+- `Studio A` → Périphérique `US-16x08`, Canaux `Stereo 1/2`
+- `Studio B` → Périphérique `US-16x08`, Canaux `Stereo 5/6`
+- `Micro invité Studio C` → Périphérique `US-16x08`, Canaux `Mono 7`
+
+Chaque Line-In se comporte alors comme sa propre source dans la
+bibliothèque et les émissions ; des émissions consécutives depuis
+des studios différents sur la même interface commutent proprement à
+la frontière d'émission.
+
+> **Comment ça marche sous le capot.** Le simple `Stereo 1/2`
+> utilise le chemin de capture DirectShow éprouvé. Toute autre
+> sélection ne le peut pas — le pin DirectShow Windows des
+> interfaces multicanal n'offre jamais que deux canaux — donc le
+> playout démarre un petit feeder de capture qui lit le
+> périphérique via l'API MME (la seule API Windows qui livre
+> démontrablement tous les canaux sans toucher aux réglages
+> système), extrait les canaux choisis et les injecte via le
+> montage local `/linein-capture` dans le moteur de flux. Cela
+> requiert le nom d'affichage du périphérique stocké sur la ligne —
+> re-sauvegardez une fois les Line-Ins créés avant cette
+> fonctionnalité.
 
 ### La longueur par défaut est importante
 

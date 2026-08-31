@@ -77,8 +77,37 @@ Line-In Library → **+ Nuevo**.
 |---|---|
 | **Nombre** | Requerido. Único. La etiqueta visible en todas partes. |
 | **Dispositivo** | Requerido. El menú desplegable lista cada dispositivo de entrada que el OS ve ahora. Si su dispositivo falta, vea [Máquina local](./LOCAL_MACHINE.md). |
+| **Canales de entrada** | Requerido. Qué canales del dispositivo captura este Line-In — un par estéreo (`Stereo 1/2`, `Stereo 3/4`, …) o un solo canal mono (reproducido en ambos lados). Un dispositivo estéreo simple solo ofrece `Stereo 1/2` y sus dos canales mono; una interfaz multicanal ofrece una entrada por par. |
 | **Longitud por defecto** | Requerida. Formato `HHh MMm SSs` (mismo parser que Webstreams). Para "se reproduce hasta que se le diga que pare" use `0h 0m 0s`. |
 | **Habilitado** | Por defecto activado. |
+
+### Interfaces multicanal: un Line-In por estudio
+
+Si la interfaz de audio de la emisora tiene más de dos entradas
+(p. ej. un Tascam US-16x08 de 16 entradas con varios estudios
+cableados), cree **un Line-In por estudio** — mismo
+**Dispositivo**, distintos **Canales de entrada**:
+
+- `Estudio A` → Dispositivo `US-16x08`, Canales `Stereo 1/2`
+- `Estudio B` → Dispositivo `US-16x08`, Canales `Stereo 5/6`
+- `Micro invitado Estudio C` → Dispositivo `US-16x08`, Canales `Mono 7`
+
+Cada Line-In se comporta entonces como su propia fuente en la
+biblioteca y en los programas; programas consecutivos desde
+estudios distintos en la misma interfaz conmutan limpiamente en el
+límite del programa.
+
+> **Cómo funciona por dentro.** El simple `Stereo 1/2` usa la
+> probada ruta de captura DirectShow. Cualquier otra selección no
+> puede — el pin DirectShow de Windows de las interfaces multicanal
+> solo ofrece dos canales — así que el playout arranca un pequeño
+> feeder de captura que lee el dispositivo por la API MME (la única
+> API de Windows que demostrablemente entrega todos los canales sin
+> tocar ajustes del sistema), extrae los canales elegidos y los
+> inyecta por el punto de montaje local `/linein-capture` al motor
+> de emisión. Esto requiere el nombre visible del dispositivo
+> guardado en la fila — vuelva a guardar una vez los Line-Ins
+> creados antes de esta función.
 
 ### La longitud por defecto importa
 

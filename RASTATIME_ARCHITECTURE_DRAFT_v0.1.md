@@ -1,10 +1,39 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.18
-Date: 2026-06-16
+Draft version: 0.19
+Date: 2026-08-31
 
 > **Revision history**
+> - **0.19 (2026-08-31)** — Line-In channel selection on multichannel
+>   interfaces (Sections 13.3-13.5 follow-up).  A line-in now selects
+>   WHICH input channels of its device it captures (`channel_mapping`,
+>   a stereo pair or one mono channel — the field existed through
+>   DB/domain/API/UI but was never applied by any capture layer), so a
+>   16-input interface (Tascam US-16x08) can serve one studio per
+>   pair.  Plain `(0, 1)` keeps the proven paths untouched: direct
+>   `input.ffmpeg(format="dshow")` in Liquidsoap mode, dshow
+>   FfmpegLineinCapture on the legacy path.  Any other mapping routes
+>   through a new `linein_feeder` subprocess (sounddevice/**MME** —
+>   measured: WASAPI shared is capped at the endpoint's 2-ch mix
+>   format, WASAPI exclusive is rejected, DirectSound delivers
+>   silence, WDM-KS lacks blocking reads, while MME delivers all 16
+>   REAL channels, verified by per-lane bit-comparison) piping s16le
+>   stereo into FfmpegLineinCapture's ffmpeg (`-f s16le -i pipe:0`,
+>   shutdown via feeder-EOF instead of 'q'), which pushes
+>   /linein-capture as before; in Liquidsoap mode a second fixed-URL
+>   `input.http(id="linein_http")` source (the original Phase-F
+>   pattern, kept alongside Phase-F-2) consumes that mount, folded
+>   with the dshow source into the single `linein` switch arm via
+>   `fallback`.  Same-device transitions now also compare the
+>   mapping (two studios on one card must bounce);
+>   the line-in resume path re-arms the Liquidsoap sources instead of
+>   pushing a capture URL through the request queue (pre-F-2 leftover).
+>   UI: the free-text "0,1" field became a picker fed by the device's
+>   channel count ("Stereo 1/2" … "Mono N"); domain now rejects
+>   mappings longer than 2.  New runtime dependency `sounddevice`
+>   (bundled PortAudio, pip-only).  Minor-bump: additive sources +
+>   subprocess, no schema change (column already existed).
 > - **0.18 (2026-06-16)** — Traffic Alerts (Section 23.25).  Short-notice
 >   traffic MP3s air within a ~10-min SLA with no change to the Python
 >   playout path.  An operator designates ONE smart block as the source
