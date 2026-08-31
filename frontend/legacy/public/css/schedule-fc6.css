@@ -41,7 +41,12 @@
   --fc-button-active-bg-color: #2c2c2c;
   --fc-button-active-border-color: #2a2a2a;
 
-  background: #242424; /* toolbar + overall frame (operator spec 2026-08-31) */
+  background: #3a3a3a; /* toolbar + overall frame (operator spec 2026-08-31,
+                          revised same day from #242424 — too dark) */
+  border-color: #3a3a3a; /* kill redmond's light-blue 1px .ui-widget-content
+                            border by matching the frame (operator: "thin
+                            white border"); keeping the 1px avoids a layout
+                            shift */
   color: #dddddd; /* default light text on dark */
 }
 
