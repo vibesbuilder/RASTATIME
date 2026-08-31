@@ -112,7 +112,15 @@ function highlightMediaTypeSelector(dialog) {
     });
     $("#library_filter").text(selected.text());
     selected.parent().addClass("selected");
-    oTable.fnDraw();
+    // RASTATIME 2026-08-31: was `oTable.fnDraw()` — but oTable is a
+    // library.js MODULE-scoped variable, never a global, so every tab
+    // click died here with a ReferenceError and the library table
+    // silently stayed on the previous media type.  Route the redraw
+    // through the public API instead (same pattern as
+    // main_builder.js); setCurrentTable() re-queries with the media
+    // type of the new hash.  The dialog has no Podcasts tab, so the
+    // table type is always LIBRARY.
+    AIRTIME.library.setCurrentTable(AIRTIME.library.DataTableTypeEnum.LIBRARY);
   });
 }
 
@@ -179,6 +187,9 @@ function buildScheduleDialog(json, instance_id) {
     resizable: false,
     draggable: true,
     modal: true,
+    // RASTATIME 2026-08-31: CSS hook for the dark dialog theme
+    // (frame + buttonpane #2f2f2f — see styles.css).
+    classes: { "ui-dialog": "schedule-tracks-dialog" },
     close: closeDialogCalendar,
     buttons: [
       {
@@ -252,6 +263,9 @@ function buildContentDialog(json) {
     width: width,
     height: height,
     modal: true,
+    // RASTATIME 2026-08-31: same dark-frame hook as the Schedule
+    // Tracks dialog (they share the redmond near-white otherwise).
+    classes: { "ui-dialog": "schedule-tracks-dialog" },
     close: closeDialogCalendar,
     buttons: [
       {

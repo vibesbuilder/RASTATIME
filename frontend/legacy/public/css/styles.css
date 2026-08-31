@@ -4979,3 +4979,26 @@ div.dt-button-collection .dt-button > span {
     background: #2f2f2f;
     color: #fff;
 }
+
+/* Modal dialogs must sit ABOVE the fixed dashboard header (#Panel,
+   z-index 1000).  redmond-1.13 gives .ui-front only z-index 100, so
+   the header overlapped the top of every jQuery-UI dialog (operator
+   report 2026-08-31: Schedule Tracks title bar + library tabs half
+   hidden) — and even the modal overlay sat BELOW the header, leaving
+   it clickable during a modal.  jQuery-UI 1.13 stacks dialogs via DOM
+   order on a shared .ui-front base, so raising the base breaks no
+   stacking; attached widgets (datepicker etc.) compute their z-index
+   relative to the dialog and follow along. */
+.ui-front {
+    z-index: 1001;
+}
+
+/* Dark frame for the calendar's content dialogs (Schedule Tracks +
+   Contents of Show — `classes` hook set in schedule.js).  The
+   .ui-dialog wrapper and its buttonpane are .ui-widget-content =
+   redmond near-white; spec #2f2f2f (operator 2026-08-31). */
+.ui-dialog.schedule-tracks-dialog,
+.ui-dialog.schedule-tracks-dialog .ui-dialog-buttonpane {
+    background: #2f2f2f;
+    border-color: #2f2f2f;
+}
