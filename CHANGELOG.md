@@ -224,6 +224,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Weiße Rahmen um Kalender + Playout History → #242424 (2026-08-31,
+  `5ff7713`)** — Kalender-Root-Cause war ein Ein-Zeichen-CSS-Bug vom
+  2026-06-01: der Header-Kommentar von `schedule-fc6.css` schrieb eine
+  Klassenliste als „.fc-agenda-*/.fc-header" — das Stern-Slash-Paar
+  beendete den Kommentar vorzeitig, der Resttext wurde ein ungültiger
+  Selektor, und die Browser-Fehler-Erholung verschluckte den kompletten
+  `#schedule_calendar`-Block mitsamt aller FC6-Variablen (dunkler
+  Rahmen, Grid `#3a3a3a`, dunkle Toolbar-Buttons, orange Now-Linie,
+  Today-Tint-Kill) — das gedachte Dark-Theme wirkte nie.  Kommentar
+  entschärft, Rahmen auf Operator-Spec `#242424`; das Sheet parst
+  jetzt 16 statt 15 Regeln und der Kalender rendert erstmals das
+  volle Design.  Playout History hatte schlicht keinen Override:
+  `#his-tabs` (jQuery-UI-Tabs, `.ui-widget-content`) zeigte Redmonds
+  Fast-Weiß als Rahmen — neue `#id`-Regel in `styles.css`
+  (Background + Border `#242424`).  Beides live im DOM verifiziert
+  (computed `rgb(36,36,36)`).  Andere Browser brauchen wegen des
+  versionsbasierten Cache-Busters einmal Strg+F5 (Folge-Item im
+  BACKLOG).
+
 - **Smart-Block-Save crashte auf PHP 8 bei unberührter Criteria-Zeile
   (2026-08-30, `5029a7c`)** — Root Cause des BACKLOG-Items „Smart
   Block speichern funktioniert nicht": der „Select criteria"-

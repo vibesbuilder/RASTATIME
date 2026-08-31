@@ -1347,6 +1347,25 @@ appended (`PluploadController.php`).
 **Rest-Check (offen, klein):** ein realer Upload-Roundtrip im Browser
 (Liste zieht nach) — Operator-Sichtprüfung genügt.
 
+### 🟡 Statische Asset-Cache-Buster: Clients kleben an alten CSS/JS
+
+**Status:** Defer — Fund 2026-08-31 beim Rahmen-Fix (`5ff7713`).
+**Befund:** Die `?<hash>`-Query an CSS/JS-Links ist **versionsbasiert,
+nicht inhaltsbasiert** — sie ändert sich bei Datei-Edits nicht.  Dazu
+sendet Apache für statische Assets **weder `Cache-Control` noch
+`Expires`** → Browser nutzen Heuristik-Caching (10 % der Zeit seit
+Last-Modified; bei monatealten Dateien Tage bis Wochen) und
+revalidieren nicht.  Folge: UI-Fixes erreichen bereits benutzte
+Browser erst stark verzögert.  So blieb auch der (heute behobene)
+Juni-Parse-Bug in `schedule-fc6.css` unsichtbar konsistent.
+**Workaround heute:** Operator-Browser wurde per `fetch(cache:
+'reload')` aktualisiert; andere Rechner: einmal **Strg+F5** pro Seite.
+**Fix-Optionen (bei Umsetzung entscheiden):** (a) mtime-basierter
+Buster im Layout-Helper (kleiner PHP-Eingriff, präzise), (b)
+`mod_expires`/`Cache-Control: no-cache` für `/css`+`/js` in der
+Apache-Conf (2 Zeilen, revalidiert per 304, minimal mehr Requests).
+**Aufwand:** ~0.5–2 h je nach Option.
+
 ### 🟡 CSRF-Token rotiert bei jedem Fehlversuch (poisont die offene Seite bis Reload)
 
 **Status:** Defer — kein Bug, aber raue UX (notiert 2026-06-05 beim Upload-Fix).
