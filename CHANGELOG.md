@@ -247,6 +247,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `#2f2f2f` und kippt die vererbte `#222`-Textfarbe auf Weiß (129
   Labels/DTs/DDs live verifiziert, explizit gefärbte Elemente
   unberührt).
+
+- **Schedule-Tracks-Dialog: Tab-Wechsel tot, Header-Überdeckung,
+  weißer Rahmen (2026-08-31, `3b1e23e`)** — Drei Ursachen: (1) Der
+  hashchange-Handler des Dialogs rief `oTable.fnDraw()` — `oTable`
+  ist aber eine library.js-**modul**-lokale Variable, nie global →
+  ReferenceError bei jedem Tab-Klick, die Library blieb still auf
+  Tracks stehen.  Jetzt über die öffentliche API
+  (`AIRTIME.library.setCurrentTable(LIBRARY)`, das
+  main_builder.js-Muster).  (2) Der fixe Dashboard-Header (`#Panel`,
+  z-index 1000) überdeckte Titelzeile + obere Tab-Hälfte — und sogar
+  das Modal-Overlay; redmond-1.13 gibt `.ui-front` nur z-index 100 →
+  auf 1001 angehoben (jQuery-UI 1.13 stackt Dialoge per DOM-Reihenfolge
+  auf der gemeinsamen Basis, kein Stacking-Bruch).  (3) Weißer
+  Dialog-Rahmen + Buttonpane (Redmond `.ui-widget-content`) → neue
+  `classes`-Hook `schedule-tracks-dialog` an beiden
+  Kalender-Content-Dialogen (Schedule Tracks + Contents of Show) mit
+  `#2f2f2f`-Regel.  Live verifiziert: Playlists-Klick lädt
+  Playlist-Zeilen bei sauberer Konsole, Dialog liegt über dem Header.
   Andere Browser brauchen wegen des versionsbasierten Cache-Busters
   einmal Strg+F5 (Folge-Item im BACKLOG).
 
