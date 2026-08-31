@@ -141,3 +141,13 @@ backend/playout/config/cache/
 # resolution can also drop sentinel/test files into <repo-root>/recordings/.
 # -----------------------------------------------------------------------------
 recordings/
+
+# -----------------------------------------------------------------------------
+# RASTATIME 2026-08-31: local working state, never repository content.
+# _assistant-state/ holds the coding assistant session artefacts; _migration/ holds the
+# one-off machine-migration snapshot (incl. a full DB dump - secrets!).
+# They sat untracked since the 2026-08 migration and inflated every
+# "uncommitted changes" view.
+# -----------------------------------------------------------------------------
+_assistant-state/
+_migration/
