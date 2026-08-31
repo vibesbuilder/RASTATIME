@@ -4955,3 +4955,16 @@ div.dt-button-collection .dt-button > span {
 .rt-sbdd-panel br {
     display: none;  /* labels are block-level now */
 }
+
+/* ===================================================================
+   RASTATIME 2026-08-31 — dark frame for the Playout History tabs.
+   redmond-1.13 paints .ui-widget-content #fcfdfd; the jQuery-UI tabs
+   wrapper on Analytics > Playout History showed that as a light frame
+   around the dark tables (operator report; spec colour #242424).  The
+   #id selector outbeats the theme's single-class rule.  The tab strip
+   (.ui-tabs-nav, a .ui-widget-header) keeps its own styling.
+   =================================================================== */
+#his-tabs.ui-widget-content {
+    background: #242424;
+    border-color: #242424;
+}

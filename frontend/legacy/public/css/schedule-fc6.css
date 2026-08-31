@@ -7,9 +7,17 @@
  * the dark cells, .ui-state-default = the buttons) — a path FC6 does not use.
  *
  * Scoped entirely to #schedule_calendar and FC6-specific classes / CSS custom
- * properties, so the FC1.5 rollback (?fc6=0, different .fc-agenda-*/.fc-header
- * classes) and the embed Multi-View widget are untouched.  Loaded after
- * css/fullcalendar.css so it wins any shared-class bleed.
+ * properties, so the FC1.5 rollback (?fc6=0, different .fc-agenda- and
+ * .fc-header classes) and the embed Multi-View widget are untouched.  Loaded
+ * after css/fullcalendar.css so it wins any shared-class bleed.
+ *
+ * RASTATIME 2026-08-31: the paragraph above used to spell the class list as
+ * ".fc-agenda-STAR/.fc-header" with a literal star — the "star-slash" pair
+ * terminated THIS comment early, the rest of the prose became an invalid
+ * selector, and the browser's error recovery swallowed the entire
+ * #schedule_calendar rule below with it.  Net effect: the dark frame never
+ * applied and the calendar sat on redmond's #fcfdfd (the "white frame" the
+ * operator reported).  Never put * followed by / inside a CSS comment.
  *
  * Colours are a first pass read off the old calendar; tune as needed.
  */
@@ -33,7 +41,7 @@
   --fc-button-active-bg-color: #2c2c2c;
   --fc-button-active-border-color: #2a2a2a;
 
-  background: #1c1c1c; /* toolbar + overall frame */
+  background: #242424; /* toolbar + overall frame (operator spec 2026-08-31) */
   color: #dddddd; /* default light text on dark */
 }
 
