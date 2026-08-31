@@ -5002,3 +5002,11 @@ div.dt-button-collection .dt-button > span {
     background: #2f2f2f;
     border-color: #2f2f2f;
 }
+
+/* Contents-of-Show (View) dialog: the two duration read-outs under
+   the content table (#show_time_filled = scheduled content length,
+   #show_length = show duration) inherited the #222 base text colour —
+   near-invisible on the dark dialog (operator 2026-08-31: white). */
+#show_time_info .time {
+    color: #fff;
+}
