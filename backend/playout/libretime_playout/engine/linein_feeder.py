@@ -266,6 +266,9 @@ def run(
         )
         return 4
 
+    out = sys.stdout.buffer
+    overflows = 0
+
     try:
         with stream:
             while True:
