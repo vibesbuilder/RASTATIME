@@ -345,6 +345,10 @@ def test_linein_start_liquidsoap_multichannel_uses_feeder_and_http(
     event = _make_linein_event(
         device_name="Mikrofon (US-16x08)", channel_mapping=[4, 5]
     )
+    # start() is mocked, so simulate the capture coming up — the
+    # scheduler checks is_running before arming linein_http
+    # (RASTATIME 2026-09-01 guard).
+    capture.is_running = True
 
     sched._on_linein_start("key1", event)
 
@@ -354,6 +358,28 @@ def test_linein_start_liquidsoap_multichannel_uses_feeder_and_http(
         device_name="Mikrofon (US-16x08)",
     )
     engine.linein_start_http.assert_called_once_with()
+    engine.linein_start.assert_not_called()
+
+
+def test_linein_start_liquidsoap_feeder_gave_up_leaves_http_unarmed(
+    liquidsoap_scheduler,
+):
+    """
+    RASTATIME 2026-09-01: capture.start() gives up quietly after its
+    retry ladder (no exception) — the scheduler must then NOT arm the
+    linein_http companion, or Liquidsoap polls the missing mount with
+    a 404 every 2 s for the rest of the slot.
+    """
+    sched, engine, capture = liquidsoap_scheduler
+    event = _make_linein_event(
+        device_name="Mikrofon (US-16x08)", channel_mapping=[4, 5]
+    )
+    capture.is_running = False  # start() ran but nothing came up
+
+    sched._on_linein_start("key1", event)
+
+    capture.start.assert_called_once()
+    engine.linein_start_http.assert_not_called()
     engine.linein_start.assert_not_called()
 
 

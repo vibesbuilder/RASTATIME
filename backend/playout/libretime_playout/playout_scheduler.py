@@ -1111,6 +1111,17 @@ class PlayoutScheduler:
                         key, resolved_device_id, mapping, exc,
                     )
                     return
+                # RASTATIME 2026-09-01 — start() gives up QUIETLY after
+                # its retry ladder (logs, no raise), so verify before
+                # arming the http companion: without a capture there is
+                # no mount, and linein_http would poll a 404 every 2 s
+                # for the rest of the slot (observed on the 09:30 test).
+                if not self._linein_capture.is_running:
+                    logger.error(
+                        "Line-In %s: capture did not come up — leaving "
+                        "the linein_http source unarmed.", key,
+                    )
+                    return
                 self._engine.linein_start_http()
                 return
 
