@@ -222,6 +222,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   rastatime_worker"` (oder Service neu installieren), sonst schlägt der
   nächste Worker-Neustart mit ModuleNotFoundError fehl.
 
+### Changed
+
+- **Line-In-Verwaltung jetzt unter Settings → Local Machine
+  (2026-08-31, `1f60295`)** — Die eigenständige `/linein`-Seite hatte
+  nie einen Settings-Menüeintrag und war praktisch unauffindbar
+  (Operator fand nur den Library-Editor, der die Kanalwahl nicht
+  kennt).  Der Inhalt lebt jetzt als Sektion **„Line-In Sources"**
+  (mit Tooltip) oberhalb von Import Folder auf Local Machine — exakt
+  der Ort, von dem das Panel beim Phase-A.4-Cleanup (2026-05-12)
+  entfernt worden war; `/linein` leitet dorthin um, die
+  Ajax-CRUD-Routen sind unverändert.  Außerdem trugen **Show
+  Templates** und **Auto DJ** noch den Redmond-hellen
+  `.ui-widget-content`-Wrapper → beide auf das dunkle
+  `.prefpanel`-Muster der übrigen Settings-Unterseiten umgestellt.
+  Live verifiziert (Redirect, Sektionsreihenfolge, Dialog inkl.
+  Kanal-Picker, beide Seiten durchgehend dunkel).
+
 ### Fixed
 
 - **Asset-Cache-Buster jetzt mtime-basiert (2026-08-31, `0767393`)** —
