@@ -390,7 +390,13 @@
 
     var url, method;
     if (lineinId) {
-      url    = "/linein/update/" + encodeURIComponent(lineinId);
+      // RASTATIME 2026-09-01: id as a QUERY param, not a path segment.
+      // Zend's default route pairs extra path segments as key/value,
+      // so "/linein/update/<uuid>" made the uuid a parameter NAME and
+      // getParam('id') came back empty — every update/delete hit the
+      // Django API with an empty id and failed (create, having no URL
+      // param, always worked).
+      url    = "/linein/update?id=" + encodeURIComponent(lineinId);
       method = "POST";
       // Send only fields that are actually patchable
     } else {
@@ -431,7 +437,8 @@
     if (!window.confirm(i18n.confirmDelete)) { return; }
 
     $.ajax({
-      url:      "/linein/delete/" + encodeURIComponent(lineinId),
+      // RASTATIME 2026-09-01: id as query param — see submitDialog.
+      url:      "/linein/delete?id=" + encodeURIComponent(lineinId),
       // ``type``, not ``method`` — legacy LibreTime is locked to
       // jQuery 1.8.3 (see PageLayoutInitPlugin.php), which only
       // gained the ``method`` alias in jQuery 1.9.  With 1.8 the
@@ -461,7 +468,8 @@
     var i18n = AIRTIME.linein.i18n;
 
     $.ajax({
-      url:          "/linein/update/" + encodeURIComponent(lineinId),
+      // RASTATIME 2026-09-01: id as query param — see submitDialog.
+      url:          "/linein/update?id=" + encodeURIComponent(lineinId),
       // See delete handler above for the jQuery-1.8 ``type``-vs-``method`` rationale.
       type:         "POST",
       contentType:  "application/json",
