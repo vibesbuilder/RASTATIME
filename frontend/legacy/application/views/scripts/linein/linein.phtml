@@ -60,6 +60,20 @@
                 <select id="linein-device" name="device_id" style="width:100%">
                     <option value=""><?php echo _("— Loading devices …") ?></option>
                 </select>
+                <?php
+                // RASTATIME 2026-08-31 (operator decision: option B) — this
+                // quick editor deliberately stays lean; the channel picker
+                // (stereo pair / mono on multichannel interfaces) lives in
+                // the full editor on Settings → Local Machine.  Saving here
+                // keeps an existing mapping and defaults new entries to
+                // stereo 1/2 (see LineinController::saveAction).
+                ?>
+                <p style="margin:0.4em 0 0 0; font-size:0.9em; color:#888;">
+                    <?php echo _("Input channels (stereo pair or mono) are chosen in"); ?>
+                    <a href="<?php echo Config::getBasePath(); ?>preference/local-machine"
+                       target="_blank" style="color:#ff5d1a;">
+                        <?php echo _("Settings → Local Machine → Line-In Sources"); ?></a>.
+                </p>
             </dd>
 
             <div id="length-error" class="errors" style="display:none;"></div>

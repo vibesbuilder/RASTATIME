@@ -127,10 +127,13 @@ the Line-In creation dropdown.
 
 ### Going from input device to named Line-In
 
-This page only marks devices as candidates. To actually use a
-device as a scheduling source, create a named Line-In via
-Settings → **Line-In Library** → **+ New**. See
-[Line-In](./LINE_IN.md).
+To use a device as a scheduling source, create a named Line-In
+in the **Line-In Sources** section of this very page (it sits
+above Import Folder since 2026-08-31) — that full editor also
+picks the **input channels** (stereo pair or mono) on
+multichannel interfaces. A lean quick-create also exists in the
+Library under **Line Inputs → + New** (channels default to 1/2
+there). See [Line-In](./LINE_IN.md).
 
 > **Operator tip.** A device must be ticked here *before* it
 > appears in the new-Line-In dialog's device dropdown. If

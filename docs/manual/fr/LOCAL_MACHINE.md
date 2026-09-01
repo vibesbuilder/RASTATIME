@@ -97,11 +97,14 @@ juste du menu déroulant de création Line-In.
 
 ### Du périphérique d'entrée au Line-In nommé
 
-Cette page marque seulement les périphériques comme
-candidats. Pour utiliser un périphérique comme source de
-planification, créez un Line-In nommé via Paramètres →
-**Line-In Library** → **+ Nouveau**. Voir
-[Line-In](./LINE_IN.md).
+Pour utiliser un périphérique comme source de
+planification, créez un Line-In nommé dans la section
+**Line-In Sources** de cette page même (au-dessus d'Import
+Folder depuis le 2026-08-31) — cet éditeur complet choisit
+aussi les **canaux d'entrée** (paire stéréo ou mono) sur les
+interfaces multicanal. Une création rapide épurée existe
+aussi dans la bibliothèque sous **Line Inputs → + Nouveau**
+(canaux 1/2 par défaut). Voir [Line-In](./LINE_IN.md).
 
 ---
 

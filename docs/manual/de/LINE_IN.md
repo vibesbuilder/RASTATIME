@@ -98,7 +98,7 @@ Line-In-Bibliothek → **+ Neu**.
    ├──────────────────────────────────────────────────────────────┤
    │   Name:           [                       ]                  │
    │   Gerät:          [Gerät auswählen... ▾]                     │
-   │   Eingangskanäle: [Stereo 1/2 ▾]                             │
+   │     Eingangskanäle wählen Sie unter Settings → Local Machine │
    │   Standardlänge:  [10m 00s   ]   (00s für unendlich)         │
    │  ☑  Aktiviert                                                │
    ├──────────────────────────────────────────────────────────────┤
@@ -110,16 +110,23 @@ Line-In-Bibliothek → **+ Neu**.
 |---|---|
 | **Name** | Erforderlich. Eindeutig. Das sichtbare Label überall. |
 | **Gerät** | Erforderlich. Dropdown listet jedes Eingabegerät, das das OS gerade sieht. Wenn Ihr Gerät im Dropdown fehlt, siehe [Lokale Maschine](./LOCAL_MACHINE.md) → Geräte-Probing. |
-| **Eingangskanäle** | Erforderlich. Welche Kanäle des Geräts dieser Line-In aufnimmt — ein Stereo-Paar (`Stereo 1/2`, `Stereo 3/4`, …) oder ein einzelner Mono-Kanal (läuft auf beiden Seiten). Ein einfaches Stereo-Gerät bietet nur `Stereo 1/2` und seine zwei Mono-Kanäle; ein Mehrkanal-Interface bietet einen Eintrag pro Paar. |
 | **Standardlänge** | Erforderlich. Format `HHh MMm SSs` (derselbe Parser wie Webstreams). Für "spielt bis gestoppt" verwenden Sie `0h 0m 0s` (zeigt als `∞`). |
 | **Aktiviert** | Standardmäßig an. Abwählen, um den Line-In zu erstellen, aber von der Drag-Bibliothek zu unterdrücken. |
+
+> **Wo sind die Eingangskanäle?** Dieser Schnell-Editor bleibt
+> bewusst schlank — die **Eingangskanäle**-Auswahl (und Priorität /
+> die vollständige Verwaltungstabelle) liegt im vollen Editor unter
+> **Settings → Local Machine → Line-In Sources**; der Dialog
+> verlinkt dorthin. Ein hier angelegter Line-In nimmt die Kanäle
+> 1/2 auf, bis Sie im vollen Editor ein anderes Paar wählen.
 
 ### Mehrkanal-Interfaces: ein Line-In pro Studio
 
 Hat das Audio-Interface der Station mehr als zwei Eingänge (z.B.
 ein Tascam US-16x08 mit 16 Eingängen und mehreren angeschlossenen
 Studios), legen Sie **einen Line-In pro Studio** an — gleiches
-**Gerät**, unterschiedliche **Eingangskanäle**:
+**Gerät**, unterschiedliche **Eingangskanäle** (Auswahl unter
+**Settings → Local Machine → Line-In Sources**):
 
 - `Studio A` → Gerät `US-16x08`, Eingangskanäle `Stereo 1/2`
 - `Studio B` → Gerät `US-16x08`, Eingangskanäle `Stereo 5/6`

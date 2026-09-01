@@ -77,16 +77,23 @@ Line-In Library → **+ Nuevo**.
 |---|---|
 | **Nombre** | Requerido. Único. La etiqueta visible en todas partes. |
 | **Dispositivo** | Requerido. El menú desplegable lista cada dispositivo de entrada que el OS ve ahora. Si su dispositivo falta, vea [Máquina local](./LOCAL_MACHINE.md). |
-| **Canales de entrada** | Requerido. Qué canales del dispositivo captura este Line-In — un par estéreo (`Stereo 1/2`, `Stereo 3/4`, …) o un solo canal mono (reproducido en ambos lados). Un dispositivo estéreo simple solo ofrece `Stereo 1/2` y sus dos canales mono; una interfaz multicanal ofrece una entrada por par. |
 | **Longitud por defecto** | Requerida. Formato `HHh MMm SSs` (mismo parser que Webstreams). Para "se reproduce hasta que se le diga que pare" use `0h 0m 0s`. |
 | **Habilitado** | Por defecto activado. |
+
+> **¿Dónde están los canales de entrada?** Este editor rápido se
+> mantiene deliberadamente sencillo — el selector de **Canales de
+> entrada** (y la prioridad / la tabla de gestión completa) vive en
+> el editor completo bajo **Settings → Local Machine → Line-In
+> Sources**; el diálogo enlaza allí. Un Line-In creado aquí captura
+> los canales 1/2 hasta que elija otro par en el editor completo.
 
 ### Interfaces multicanal: un Line-In por estudio
 
 Si la interfaz de audio de la emisora tiene más de dos entradas
 (p. ej. un Tascam US-16x08 de 16 entradas con varios estudios
 cableados), cree **un Line-In por estudio** — mismo
-**Dispositivo**, distintos **Canales de entrada**:
+**Dispositivo**, distintos **Canales de entrada** (elegidos en
+**Settings → Local Machine → Line-In Sources**):
 
 - `Estudio A` → Dispositivo `US-16x08`, Canales `Stereo 1/2`
 - `Estudio B` → Dispositivo `US-16x08`, Canales `Stereo 5/6`

@@ -138,10 +138,14 @@ entfernt es nur aus dem Line-In-Erstellungs-Dropdown.
 
 ### Vom Eingabegerät zum benannten Line-In
 
-Diese Seite markiert Geräte nur als Kandidaten. Um ein
-Gerät tatsächlich als Scheduling-Quelle zu verwenden,
-erstellen Sie einen benannten Line-In über Einstellungen →
-**Line-In-Bibliothek** → **+ Neu**. Siehe
+Um ein Gerät als Scheduling-Quelle zu verwenden, erstellen
+Sie einen benannten Line-In in der Sektion **Line-In
+Sources** auf genau dieser Seite (seit 2026-08-31 oberhalb
+von Import Folder) — dieser volle Editor wählt auch die
+**Eingangskanäle** (Stereo-Paar oder Mono) auf
+Mehrkanal-Interfaces. Eine schlanke Schnell-Anlage gibt es
+zusätzlich in der Bibliothek unter **Line Inputs → + Neu**
+(Kanäle dort standardmäßig 1/2). Siehe
 [Line-In](./LINE_IN.md).
 
 > **Operator-Tipp.** Ein Gerät muss hier *vor* dem
