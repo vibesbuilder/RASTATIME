@@ -49,16 +49,14 @@ class LineinController extends Zend_Controller_Action
     // -------------------------------------------------------------------------
 
     /**
-     * GET /linein — renders the page shell; the table is populated by linein.js.
+     * GET /linein — redirects to Settings → Local Machine, where the
+     * Line-In sources section lives since 2026-08-31 (the standalone
+     * page had no Settings menu entry and was undiscoverable; operator
+     * request).  Kept as a route so old deep links stay functional.
      */
     public function indexAction(): void
     {
-        Zend_Layout::getMvcInstance()->assign('parent_page', 'Settings');
-
-        $this->view->headScript()->appendFile(
-            Assets::url('js/airtime/linein/linein.js'),
-            'text/javascript'
-        );
+        $this->_redirect('preference/local-machine');
     }
 
     // -------------------------------------------------------------------------

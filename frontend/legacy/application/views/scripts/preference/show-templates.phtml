@@ -3,7 +3,12 @@
 // Read-only listing + per-row inline rename + delete; full Create
 // flow happens in the Calendar's New-Show dialog (Save as Template).
 ?>
-<div class="ui-widget ui-widget-content block-shadow alpha-block padded">
+<?php
+// RASTATIME 2026-08-31: wrapper switched from the redmond-white
+// .ui-widget-content combo to the dark .prefpanel used by every other
+// Settings sub-page (operator report: white frame/background).
+?>
+<div class="ui-widget prefpanel clearfix padded-strong">
     <h2><?php echo _("Show Templates") ?></h2>
     <p style="margin-bottom: 1em; color: #888;">
         <?php echo _("Templates are created from the Calendar's 'New Show' dialog (Save as Template). Here you can rename or delete existing templates."); ?>

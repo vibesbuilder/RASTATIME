@@ -88,17 +88,19 @@ $rtTip = function ($text) {
             </fieldset>
         </div>
 
-        <?php
-        // RASTATIME 2026-05-12 — Phase A.4 cleanup.
-        // The "Line-In Inputs" panel that used to live here was a
-        // settings-only CRUD list.  All line-in management now happens
-        // through the Media Library (Dashboard → Line Inputs), so the
-        // duplicate settings UI is gone.  The Django ORM, REST API,
-        // and the existing /linein/index controller route stay in
-        // place so the panel can be reinstated trivially if needed.
-        ?>
-
     </div><!-- .soundcard-columns -->
+
+    <?php
+    // RASTATIME 2026-08-31 — Line-In sources management (operator
+    // request).  The Phase-A.4 cleanup (2026-05-12) had moved this
+    // CRUD list to the standalone /linein page, but that page never
+    // got a Settings menu entry and was effectively undiscoverable.
+    // It now lives here as a section (above Import Folder); /linein
+    // redirects to this page.  Markup + dialog come from the shared
+    // partial; linein.js is appended by localMachineAction.
+    ?>
+    <h3><?php echo _("Line-In Sources") ?><span class="help_icon" data-rt-tip="<?php echo $rtTip(_("Named live inputs for shows — each entry picks an input device AND which of its channels to capture (a stereo pair or a mono channel), so a multichannel interface can serve one studio per pair.  Entries appear in the Library under Line Inputs and can be scheduled like any other content.")); ?>"></span></h3>
+    <?php echo $this->render('linein/_sources.phtml'); ?>
 
     <?php
     // RASTATIME 2026-05-16 - Local Import Folder section.

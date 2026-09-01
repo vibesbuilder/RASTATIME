@@ -1,7 +1,14 @@
 <?php
 /**
- * T14.2 / T14.3 — Line-In source list view + add/edit dialog.
+ * T14.2 / T14.3 — Line-In source list + add/edit dialog.
  * T20.3 — i18n: PHP-rendered script block overrides JS fallback strings.
+ *
+ * RASTATIME 2026-08-31: extracted from linein/index.phtml into this
+ * partial and embedded in Settings → Local Machine (operator request —
+ * the standalone /linein page had no menu entry and was effectively
+ * undiscoverable).  /linein now redirects there; the Ajax CRUD routes
+ * (/linein/create|update|delete) are unchanged and still serve
+ * linein.js, which the embedding page must append.
  *
  * The table is populated asynchronously by linein.js from
  * GET /api/v2/audio/linein.  Device names are cross-referenced from
@@ -49,9 +56,7 @@ AIRTIME.linein.i18n = {
 };
 </script>
 
-<div class="ui-widget prefpanel clearfix padded-strong linein-management">
-
-    <h2><?php echo _("Line-In Sources") ?></h2>
+<div class="linein-management">
 
     <div id="linein-status-msg"></div>
 

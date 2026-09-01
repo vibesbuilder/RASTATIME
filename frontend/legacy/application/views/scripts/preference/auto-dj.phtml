@@ -3,7 +3,12 @@
 // All fields persisted via Application_Model_Preference::*AutoDj*().
 // Logo upload uses a separate multipart POST to autoDjUploadLogoAction.
 ?>
-<div class="ui-widget ui-widget-content block-shadow alpha-block padded">
+<?php
+// RASTATIME 2026-08-31: wrapper switched from the redmond-white
+// .ui-widget-content combo to the dark .prefpanel used by every other
+// Settings sub-page (operator report: white frame/background).
+?>
+<div class="ui-widget prefpanel clearfix padded-strong">
     <?php /* RASTATIME 2026-05-25 — Save-Button moved up next to the
            heading per operator request, mirroring the Local-Machine
            settings layout.  The button uses the HTML5 `form=` attr
