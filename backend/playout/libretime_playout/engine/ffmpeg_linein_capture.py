@@ -228,6 +228,14 @@ class FfmpegLineinCapture:
         # its call chain.
         self._channel_mapping: tuple = (0, 1)
         self._device_name: str = ""
+        # RASTATIME 2026-09-01 — feeder capture rate for the current
+        # attempt.  Under the LocalSystem service session WinMM can
+        # refuse the resampled 48 kHz open that works interactively
+        # (PaErrorCode -9999), so start() walks a rate ladder per
+        # retry; ffmpeg is told the same input rate and resamples to
+        # the output rate itself, so a 44.1 kHz capture still streams
+        # at the configured output rate without pitch shift.
+        self._feeder_rate: int = int(samplerate)
         self._watchdog: Optional[threading.Thread] = None
         self._watchdog_stop = threading.Event()
         self._on_restart_callback = on_restart_callback
@@ -334,7 +342,14 @@ class FfmpegLineinCapture:
             # _start_locked spawns the watchdog only if it sees the
             # subprocess come up healthy.
             self._watchdog_stop.clear()
+            # Rate ladder for the feeder path (see _feeder_rate note in
+            # __init__); the dshow path ignores it.  The last working
+            # value sticks around for watchdog-driven restarts.
+            feeder_rates = [self._samplerate, 44100, 44100]
             for attempt in range(1, self._IMMEDIATE_RETRY_MAX_ATTEMPTS + 1):
+                self._feeder_rate = int(
+                    feeder_rates[min(attempt, len(feeder_rates)) - 1]
+                )
                 self._start_locked(device_id)
                 if self._process is not None and self._process.poll() is None:
                     # Success: subprocess survived the 1.5 s warmup
@@ -424,7 +439,7 @@ class FfmpegLineinCapture:
             "libretime_playout.engine.linein_feeder",
             "--device-name", self._device_name,
             "--mapping", ",".join(str(c) for c in self._channel_mapping),
-            "--rate", str(self._samplerate),
+            "--rate", str(self._feeder_rate),
         ]
 
     def _build_ffmpeg_cmd(self, device_id: str, use_feeder: bool) -> list:
@@ -447,7 +462,9 @@ class FfmpegLineinCapture:
                 "-fflags", "+nobuffer",
                 "-flags", "+low_delay",
                 "-f", "s16le",
-                "-ar", str(self._samplerate),
+                # Input rate = the feeder's actual capture rate for this
+                # attempt; ffmpeg resamples to the output -ar below.
+                "-ar", str(self._feeder_rate),
                 "-ac", "2",
                 "-thread_queue_size", "4096",
                 "-i", "pipe:0",

@@ -162,6 +162,56 @@ def parse_mapping(text: str) -> Tuple[int, ...]:
     return mapping
 
 
+def _open_candidates(device_name: str, mapping: Sequence[int], rate: int, sd):
+    """
+    Yield ``((device_index, open_channels), label)`` candidates, best
+    first, all at the GIVEN rate — the rate is owned by the caller
+    (FfmpegLineinCapture tells ffmpeg the same value per attempt and
+    retries with a different one if every candidate fails).
+
+    RASTATIME 2026-09-01: under the LocalSystem service session the MME
+    open that works interactively can fail with PaErrorCode -9999
+    ("invalid parameter"), so the feeder no longer trusts a single
+    combination.  Candidates:
+
+      1. MME with the device's full channel count (interactive-proven),
+      2. MME with the smallest even channel count covering the mapping
+         (session-0 WinMM may accept 4 ch where it refuses 16),
+      3. any WASAPI endpoint for the device whose mix format carries
+         enough channels — the 2-ch mix cap seen interactively is a
+         per-session setting, the service session may expose the full
+         format (WASAPI shared only opens at its mix rate, so this
+         candidate simply fails on a rate mismatch and costs nothing).
+
+    DirectSound is deliberately absent: it opens 16 ch but delivers
+    digital silence (measured 2026-08-31).
+    """
+    min_ch = max(mapping) + 1
+    cover_ch = min_ch + (min_ch % 2)  # round up to even
+    wanted = device_name.strip().lower()
+    core = wanted.rstrip(")").strip()
+    apis = sd.query_hostapis()
+    for idx, dev in enumerate(sd.query_devices()):
+        if dev["max_input_channels"] < min_ch:
+            continue
+        name = dev["name"].strip().lower()
+        got_core = name.rstrip(")").strip()
+        if not (
+            name == wanted
+            or wanted in name
+            or name in wanted
+            or (core and (core in got_core or got_core in core))
+        ):
+            continue
+        api = apis[dev["hostapi"]]["name"]
+        if HOST_API_SUBSTRING in api:
+            yield (idx, dev["max_input_channels"]), f"MME all-ch@{rate}"
+            if cover_ch < dev["max_input_channels"]:
+                yield (idx, cover_ch), f"MME {cover_ch}ch@{rate}"
+        elif "WASAPI" in api:
+            yield (idx, dev["max_input_channels"]), f"WASAPI@{rate}"
+
+
 def run(
     device_name: str,
     mapping: Sequence[int],
@@ -175,35 +225,45 @@ def run(
         print(f"linein_feeder: sounddevice unavailable: {exc}", file=sys.stderr)
         return 2
 
-    found = find_input_device(device_name, max(mapping) + 1, sd)
-    if found is None:
+    stream = None
+    n_channels = 0
+    tried = []
+    for (dev_idx, dev_channels), label in _open_candidates(
+        device_name, mapping, rate, sd
+    ):
+        try:
+            stream = sd.RawInputStream(
+                samplerate=rate,
+                channels=dev_channels,
+                dtype="int16",
+                device=dev_idx,
+                blocksize=0,  # let PortAudio choose its internal buffering
+            )
+            n_channels = dev_channels
+            print(
+                f"linein_feeder: capturing dev[{dev_idx}] via {label} "
+                f"({dev_channels} ch) -> stereo from channels "
+                f"{[c + 1 for c in mapping]}",
+                file=sys.stderr,
+            )
+            break
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            tried.append(f"{label}: {exc}")
+            stream = None
+
+    if stream is None:
+        if not tried:
+            print(
+                f"linein_feeder: no input device matching {device_name!r} "
+                f"with >= {max(mapping) + 1} channels",
+                file=sys.stderr,
+            )
+            return 3
         print(
-            f"linein_feeder: no {HOST_API_SUBSTRING} input device matching "
-            f"{device_name!r} with >= {max(mapping) + 1} channels",
+            "linein_feeder: cannot open capture; tried -> "
+            + " | ".join(tried),
             file=sys.stderr,
         )
-        return 3
-
-    dev_idx, n_channels, pa_name = found
-    print(
-        f"linein_feeder: capturing dev[{dev_idx}] {pa_name!r} "
-        f"({n_channels} ch @ {rate} Hz) -> stereo from channels "
-        f"{[c + 1 for c in mapping]}",
-        file=sys.stderr,
-    )
-
-    out = sys.stdout.buffer
-    overflows = 0
-    try:
-        stream = sd.RawInputStream(
-            samplerate=rate,
-            channels=n_channels,
-            dtype="int16",
-            device=dev_idx,
-            blocksize=0,  # let PortAudio choose its internal buffering
-        )
-    except Exception as exc:  # pylint: disable=broad-exception-caught
-        print(f"linein_feeder: cannot open capture: {exc}", file=sys.stderr)
         return 4
 
     try:
