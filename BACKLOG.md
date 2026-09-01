@@ -1417,6 +1417,39 @@ entfernt (kein „f" im sDom → Plugin band `$('input', undefined)` =
 alle Inputs der Seite neu und riss den Range-Pickern die
 Keyup-Listener ab).
 
+### 🟡 Lokales Monitoring zurück auf die Tascam-Ausgänge
+
+**Status:** Defer — Operator-Wunsch 2026-09-01 („am liebsten
+Tascam-Ausgänge als Output"); Interim: Windows-Default-Ausgabe =
+Jabra (entspricht dem konfigurierten Main-Output-Setting).
+**Hintergrund (Messung 2026-09-01):** Der Tascam-WDM-Treiber ist
+faktisch **Single-Direction**: Hält ein Client den Render-Pfad
+(Liquidsoaps `output.portaudio` auf dem Windows-Default), scheitert
+JEDER WDM/MME-Capture-Open (INVALPARAM/BADFORMAT) — und ein
+Capture-Versuch gegen laufenden Render riss umgekehrt den Output um
+(der Monitor-Ausfall vom 2026-08-31, „host error 6").  Vollduplex
+kann das Gerät nur über ASIO (für uns No-Go).
+**Zwei Bausteine für die Rückkehr:**
+1. **WASAPI-Koexistenz-Probe:** Windows-Aufnahmeformat des
+   Tascam-Endpoints auf 16 Kanäle stellen (Sound-Panel → Aufnahme →
+   Erweitert, sofern der Treiber es anbietet) → der Feeder kann dann
+   über seinen WASAPI-Kandidaten shared aufnehmen; die
+   Windows-Audio-Engine beherrscht Render+Capture parallel.  Erst
+   testen, dann Monitor zurückstellen.
+2. **`output.portaudio` ans Main-Output-Setting binden:** Liquidsoap
+   nimmt heute stur das Windows-Default-Gerät und ignoriert
+   `main_output_id` aus Settings → Local Machine (Lücke).  Renderer
+   um eine Device-Auswahl erweitern (PortAudio-Device-Match per
+   Name), damit Monitoring-Ziel explizit konfiguriert ist statt
+   Default-abhängig.
+**Betriebswissen (2026-09-01):** Nach Fehlopen-Serien kann der
+Tascam-WDM-Stack verklemmen (alle Opens INVALPARAM) und ein
+PnP-Restart bei belegtem Gerät hinterlässt Geister-Endpoints —
+Heilung: Gerät freigeben (ggf. LIQUIDSOAP kurz stoppen) + **USB
+kurz ab-/anstecken**.  Studio-Wechsel am selben Interface
+(Back-to-Back-Shows, anderes Paar) kostet ~14 s Übergang
+(Mount-Neuaufbau + input.http-Puffer).
+
 ### 💡 Line-In: Kanalwahl auch im Library-Schnell-Editor (Option A)
 
 **Status:** Idea — Operator-Entscheid 2026-09-01: „vorerst Option B,

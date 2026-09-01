@@ -38,6 +38,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   **Deploy-Hinweis:** PLAYOUT-Neustart rendert das rastatime.liq mit
   der neuen linein_http-Source — bis dahin ist der Multichannel-Pfad
   inaktiv (Stereo-Betrieb unverändert).
+  **Live-Härtung nach den ersten Testläufen (2026-09-01):** Der
+  Erstlauf scheiterte an der **Tascam-WDM-Exklusivität** (Render
+  belegt → jeder Capture-Open scheitert; gemessen in beide
+  Richtungen — auch der Monitor-Ausfall vom 31.08. war die
+  Gegenrichtung).  Interim: Windows-Default-Ausgabe auf den Jabra
+  (BACKLOG-Eintrag „Monitoring zurück auf Tascam" mit
+  WASAPI-Koexistenz-Plan).  Gehärtet: Feeder-Open-Kandidaten-Kette
+  (MME all-ch / MME cover-ch / WASAPI) + Rate-Ladder in der Capture
+  (`d73e6bc`), `is_running`-Guard vor `linein_start_http` — kein
+  404-Polling auf toten Mount mehr (`b4cd37b`), verlorenes
+  stdout-Handle aus dem Refactor restauriert (`b2dee35`).  Danach
+  end-to-end ON AIR bewiesen: Kaltstart 12:17 (Paar 3/4, 1,5 s bis
+  streaming) und Same-Device-Studio-Wechsel 12:30 (3/4 → 9/10,
+  sauberer Capture-Bounce, ~14 s Umschalt-Übergang).
 
 - **Listener-Statistik-Collector läuft jetzt wirklich (2026-08-30,
   `00ce768`)** — Root Cause des 🔴-BACKLOG-Items „Listener-Statistik
