@@ -248,6 +248,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Line-In: Bearbeiten/Löschen bestehender Einträge schlug fehl
+  (2026-09-01, `9f40ad2`)** — Operator-Fund auf der neuen
+  Settings-Sektion: Update/Delete meldeten Fehler, Create ging.
+  Ursache (so alt wie die nie benutzte Standalone-Seite): linein.js
+  rief `/linein/update/<uuid>` bzw. `/delete/<uuid>` auf — Zends
+  Default-Route paart überzählige Pfad-Segmente aber als
+  Key/Value, die UUID wurde zum Parameter-**Namen**, `getParam('id')`
+  blieb leer und der Controller sprach die Django-API mit leerer ID
+  an.  Die ID reist jetzt als Query-Parameter (`?id=<uuid>`) an
+  allen drei Aufrufstellen (Save, Delete, Enable-Toggle).  Live
+  verifiziert: Edit-Roundtrip meldet Erfolg, beide alten
+  „Untitled"-Duplikate ließen sich löschen.
+
 - **Asset-Cache-Buster jetzt mtime-basiert (2026-08-31, `0767393`)** —
   `Assets::url()` las den `?<hash>` aus der build-zeitlichen
   `assets.json`: Datei-Edits änderten die URL nie, und da Apache
