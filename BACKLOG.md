@@ -1417,6 +1417,28 @@ entfernt (kein „f" im sDom → Plugin band `$('input', undefined)` =
 alle Inputs der Seite neu und riss den Range-Pickern die
 Keyup-Listener ab).
 
+### 💡 Line-In: Kanalwahl auch im Library-Schnell-Editor (Option A)
+
+**Status:** Idea — Operator-Entscheid 2026-09-01: „vorerst Option B,
+eventuell später Option A".
+**Kontext:** Es gibt zwei Line-In-Editoren: (1) den vollen Editor
+unter Settings → Local Machine → Line-In Sources (seit `1f60295`;
+inkl. Kanal-Picker, Priorität, Verwaltungstabelle) und (2) den
+schlanken Library-Seiten-Editor (`linein/linein.phtml`, Name/Gerät/
+Standardlänge/Beschreibung).  Option B (umgesetzt): der
+Library-Editor zeigt einen Hinweis-Link auf den vollen Editor; neue
+Einträge dort starten mit Kanälen 1/2 (`saveAction` lässt
+`channel_mapping` bei PATCH unangetastet, defaultet bei POST).
+**Option A (bei Umsetzung):** Kanal-Picker (wie in linein.js
+`populateChannelSelect`) auch in `linein/linein.phtml` + `saveAction`
+um `channel_mapping` erweitern.  ~1–2 h.
+**Mitzunehmen:** LINE_IN.md trägt Alt-Drift aus der Frühzeit — §2/§5/
+§6 referenzieren eine Seite „Settings → Line-In Library", die es
+nicht (mehr) gibt (real: Library-Hauptmenü „Line Inputs" + Settings →
+Local Machine); LOCAL_MACHINE.md §3 beschreibt eine
+Input-Device-Checkbox-Liste, die die Seite nicht hat.  Bei
+Option-A-Umsetzung das Kapitel in einem Zug sanieren (4 Sprachen).
+
 ### 💡 Latent: `HistoryService::getSqlTypes()` mappt DATETIME auf ungültigen PG-Cast
 
 **Status:** Idea/Latent — heute harmlos, Fund der 2026-08-30er

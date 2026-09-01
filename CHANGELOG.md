@@ -237,7 +237,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `.ui-widget-content`-Wrapper → beide auf das dunkle
   `.prefpanel`-Muster der übrigen Settings-Unterseiten umgestellt.
   Live verifiziert (Redirect, Sektionsreihenfolge, Dialog inkl.
-  Kanal-Picker, beide Seiten durchgehend dunkel).
+  Kanal-Picker, beide Seiten durchgehend dunkel).  Nachtrag
+  (`d12c6ca`, Operator-Entscheid Option B): der schlanke
+  Library-Schnell-Editor bleibt ohne Kanal-Feld, verlinkt aber unter
+  dem Geräte-Feld auf den vollen Editor (neue Einträge starten mit
+  Kanälen 1/2); Option A — Picker auch dort — liegt im BACKLOG.
+  Manual in vier Sprachen nachgezogen (LINE_IN §3 ordnete die
+  Kanalwahl fälschlich dem Schnell-Dialog zu; LOCAL_MACHINE-Wegweiser
+  zeigt jetzt auf die On-Page-Sektion).
 
 ### Fixed
 
