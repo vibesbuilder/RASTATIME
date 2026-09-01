@@ -1449,6 +1449,16 @@ Heilung: Gerät freigeben (ggf. LIQUIDSOAP kurz stoppen) + **USB
 kurz ab-/anstecken**.  Studio-Wechsel am selben Interface
 (Back-to-Back-Shows, anderes Paar) kostet ~14 s Übergang
 (Mount-Neuaufbau + input.http-Puffer).
+**Zweiter Klemm-Modus (Nachmittag 2026-09-01):** Nach dem
+Feeder-Crash-Zyklus von 12:15 (3× Open+Sofort-Tod durch den
+NameError) fiel der Capture-Pfad in einen **Dither-Zombie-Modus**:
+Opens gelingen, aber es kommen keine ADC-Daten mehr — Fingerabdruck:
+alle 16 Kanäle uniform −96,7 dBFS Floor, Mount konstant
+−91,0/−84,3 dB, während das Tascam-Panel real anliegendes Signal
+zeigt (Kanal 3 bestätigt).  Heilung auch hier nur USB-Re-Plug (um
+11:02 nachweislich wirksam — Scan 11:04 sah Signal).  Falls die
+Verklemmer chronisch werden: **Tascam-Treiber-Update prüfen**
+(nachhaltige Kur; eigenes Wartungsfenster, da Treiberwechsel).
 
 ### 💡 Line-In: Kanalwahl auch im Library-Schnell-Editor (Option A)
 
