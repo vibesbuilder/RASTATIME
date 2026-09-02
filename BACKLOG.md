@@ -1459,24 +1459,35 @@ zeigt (Kanal 3 bestätigt).  Heilung auch hier nur USB-Re-Plug (um
 11:02 nachweislich wirksam — Scan 11:04 sah Signal).  Falls die
 Verklemmer chronisch werden: **Tascam-Treiber-Update prüfen**
 (nachhaltige Kur; eigenes Wartungsfenster, da Treiberwechsel).
-**Eskalations-Ende (2026-09-02): Verdacht Gerätedefekt USB-Block.**
-Der Dither-Zombie überlebte SÄMTLICHE Hebel: Host-Reboot,
-USB-Re-Plug ×3, anderen USB-Port (wirkungslos — Gerät meldet
-Pseudo-Serial „NO_SERIAL_NUMBER", Windows-Instanz bleibt daher
-port-unabhängig identisch), Geräte-Powercycle, drei Treiberstände
-(alter TEAC 2019, Microsoft-USB-Audio-2.0-Class-Fallback nach
-Deinstallation, frisch installierter TEAC V4.00 = letzte je
-veröffentlichte Version, 2020-02-19), Audiosrv-Neustart,
-Panel-Zustände, Mikrofon-Consent (Allow), Geräte-**Werksreset**
-(Initialize im Panel).  Konstante: DSP-Metering + Hardware-Monitor
-(Mixer→Phones) sehen das Signal, der USB-Send liefert über ALLE
-Treiber identischen Dither.  Bruchzeitpunkt 2026-09-01 zwischen
-11:05 und 12:15.  **Nächster beweiskräftiger Schritt:** US-16x08 an
-einem ZWEITEN Rechner testen (V4.00 + Audacity, Eingang 3): dort
-still → Gerät defekt (Reparatur/Ersatz); dort ok → System-seitig
-weiterdiagnostizieren.  Die Kanalwahl-SOFTWARE ist davon unberührt
-(am 2026-09-01 zweifach on air bewiesen); Jabra-Line-Ins
-funktionieren als Interim für Sprachbeiträge.
+**ROOT CAUSE GEFUNDEN (2026-09-02): Windows „Voice Clarity"-APO —
+das Tascam war nie defekt.**  Beweisführung:
+1. Fremdrechner-Test (Operator): US-16x08 liefert an einem zweiten
+   Windows-Rechner via Audacity/MME einwandfrei Signal → Gerät ok.
+2. Jabra-Mikrofon auf der Studio-Maschine zeigt via MME denselben
+   Fingerabdruck: ~1 s reales Signal, dann Abfall auf exakt
+   −90,3/−96,7 dBFS Dauer-Floor (KI-Filter „konvergiert").
+3. Kontrollexperiment gleiche Sekunde, gleiches Gerät: WDM-KS
+   (treiber-direkt, ohne APO-Kette) liefert dauerhaft Raumsignal;
+   MME (Engine + Effekte) unterdrückt nach 1 Block alles → einziger
+   Unterschied ist die Effektkette der Windows-Audio-Engine.
+Täter: APO-Paket „Voice Clarity" (PnP „VocaEffectPack",
+`SWD\DRIVERENUM\{96BEDF2C-18CB-4A15-B821-5E95ED0FEA61}#VOCAEFFECTPACK
+&1&1E3C765A&0`, Klasse AudioProcessingObject, Provider Microsoft,
+1.0.4.7057, installiert 2026-08-25), per FxProperties an ALLE
+Capture-Endpoints geheftet (TEAC-, Class- und Jabra-Endpoint).
+KI-Sprachfreistellung klassifiziert Line-Signal (Musik/Ton = „keine
+Stimme") als Störgeräusch → Rest = Dither-Teppich.  Das erklärt
+rückwirkend ALLE „Zombie"-Phänomene: die „Heilungen" nach Re-Plug
+waren nur frische Konvergenz-Fenster (Kurz-Scans erwischten die
+erste Sekunde), die Treiber-Odyssee jagte einen Geist.
+**Fix:** Voice-Clarity-APO-Gerät im Geräte-Manager deaktivieren
+(global, admin, reversibel via Enable-PnpDevice) und/oder pro
+Endpoint Einstellungen → System → Sound → Eingabe →
+Audioverbesserungen = Aus.  Auf einer Sende-Maschine hat KEIN
+Capture-Endpoint KI-Filter zu tragen.  **Betriebs-Lore:** Nach
+großen Windows-Updates prüfen, ob der Effekt reaktiviert/neu
+angeheftet wurde (Kurztest: MME-Scan eines Line-Signals > 5 s —
+bleibt der Pegel, ist alles gut).
 
 ### 💡 Line-In: Kanalwahl auch im Library-Schnell-Editor (Option A)
 
