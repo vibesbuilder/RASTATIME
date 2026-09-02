@@ -1489,6 +1489,37 @@ großen Windows-Updates prüfen, ob der Effekt reaktiviert/neu
 angeheftet wurde (Kurztest: MME-Scan eines Line-Signals > 5 s —
 bleibt der Pegel, ist alles gut).
 
+**ABNAHME BESTANDEN + Rauschteppich-Ursache = Erdschleife
+(2026-09-02).**  Nach dem Deaktivieren von Voice Clarity lief die
+Kanalwahl mehrfach sauber on air (Kaltstart-Show 12:36, Feeder ab
++1,5 s, Mount ≡ öffentlicher Stream).  Operator hörte im Webstream
+aber einen Rauschteppich.  Systematische Lokalisierung (alle
+Messungen mit `analyze_clean.py`/`raw_floor.py`/`spectrum.py` im
+Scratchpad, floor(p5) + HF-Proxy + Goertzel-Sweep):
+- Feeder-Code ist transparent (`extract_frames` sortiert nur
+  int16-Lanes, kein Float/Dither/Gain); ffmpeg-Cmd ohne Gain/Filter.
+- **Stille-Messung ADC-direkt vs. Feeder-Ausgang: auf 0,3 dB
+  identisch** (rms −58, HF −69,8) → die Software fügt NULL hinzu.
+- Spektrum bei Stille: Brummen bei **100/200/300 Hz je −30 dBFS**
+  (gerade Vielfache von 50 Hz dominant = Vollweg-Gleichrichter-
+  Fingerabdruck), Höhen 3–10 kHz nur −57…−62 dB → kein Hiss.
+- **Beweistest Kabel getrennt:** Eingang unbeschaltet fällt der Floor
+  auf −84 dBFS, die 100-Hz-Linie auf −100 dB (70 dB weg).  Das
+  Brummen kommt also über die Signalleitung → **Erdschleife**
+  (Schirm → Tascam → USB → PC → Netz).
+**RASTATIME ist vollständig freigesprochen** — Rauschteppich ist
+externe Studio-Verkabelung.  **Fix (Operator-Seite, Priorität):**
+(1) Mantelstromfilter/Trennübertrager in die Ch-3/4-Leitung, (2)
+symmetrisch (XLR/TRS) verbinden, (3) DI-Box mit Ground-Lift, (4)
+gemeinsame Steckdosenleiste.  USB-Isolator NICHT nötig (Schleife
+läuft übers Audiokabel).  **Betriebs-Lore:** Kanal 3/4 sind
+Mic/Line-Combo-Eingänge; unsymmetrische Quellen brauchen galvanische
+Trennung.  Software-Abnahme der Kanalwahl = bestanden.
+Rest-Housekeeping: die Line-In-Rows tragen noch die alte, vor der
+Treiber-Odyssee gespeicherte `device_id`; der Name-Fallback greift
+bei jedem Start (Warnung im Log).  Beim nächsten Settings-Besuch die
+Sources einmal neu speichern, dann matcht die aktuelle Endpoint-ID.
+
 ### 💡 Line-In: Kanalwahl auch im Library-Schnell-Editor (Option A)
 
 **Status:** Idea — Operator-Entscheid 2026-09-01: „vorerst Option B,
