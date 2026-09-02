@@ -1520,6 +1520,24 @@ Treiber-Odyssee gespeicherte `device_id`; der Name-Fallback greift
 bei jedem Start (Warnung im Log).  Beim nächsten Settings-Besuch die
 Sources einmal neu speichern, dann matcht die aktuelle Endpoint-ID.
 
+**FINAL ABGESCHLOSSEN (2026-09-02 abends).**  Housekeeping erledigt:
+die 4 Tascam-Rows per API-PATCH von `eb8ab9e3-…` auf die aktuelle
+`15982059-3662-4bfb-ab8c-ecb06ad66f71` gesetzt (Mappings erhalten);
+seither startet der Feeder ohne Name-Fallback-Warnung (Log der
+19:06-Show bestätigt).  **Erdschleife-Gegenprobe live bestanden:**
+Operator schloss eine Signalquelle OHNE eigenes Netzteil an (kein
+zweiter Erdungspfad) — Stille-Messung auf dem Stream: 100 Hz von
+−30 auf **−90 dBFS** (59 dB weg), 200/300 Hz −72/−75, Floor Ch3
+−72 dBFS.  Operator bestätigt per Ohr: „Das Brummen ist weg."  Damit
+Kanalwahl-Feature **vollständig abgenommen** (Software + Live-Hörtest).
+**Klarstellung „zwei Feeder-Prozesse":** kein Bug — der venv-Python
+`…\.venv\Scripts\python.exe` ist ein Launcher-Stub, der den
+Basis-Python (`C:\Program Files\Python313\python.exe`) als Kind
+startet; nur EINER öffnet das MME-Gerät.  Beim Show-Ende werden beide
+sauber beendet (Feeder-Count 0 verifiziert).  Restpegel-Hinweis:
+Ch4 rauscht ~12 dB mehr als Ch3 (kanalspezifisch, auch bei
+getrenntem Eingang so — unkritisch, Nutzsignal lag auf Ch3).
+
 ### 💡 Line-In: Kanalwahl auch im Library-Schnell-Editor (Option A)
 
 **Status:** Idea — Operator-Entscheid 2026-09-01: „vorerst Option B,
