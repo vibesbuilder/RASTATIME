@@ -1481,13 +1481,41 @@ JEDER WDM/MME-Capture-Open (INVALPARAM/BADFORMAT) — und ein
 Capture-Versuch gegen laufenden Render riss umgekehrt den Output um
 (der Monitor-Ausfall vom 2026-08-31, „host error 6").  Vollduplex
 kann das Gerät nur über ASIO (für uns No-Go).
+**KOEXISTENZ-PROBE GEFAHREN (2026-09-03) — „Vollduplex nur über ASIO"
+ist WIDERLEGT.**  Messmatrix (Tascam-Output + gleichzeitig
+MME-16ch-Capture, Skripte `coexist_probe.py` / `crosstalk_scaling.py`):
+
+| Output-Host-API | Ergebnis |
+|---|---|
+| WASAPI | ❌ Open scheitert (`Invalid device`, −9996) |
+| MME | ❌ Open scheitert (`Unanticipated host error`, −9999) |
+| DirectSound | ❌ Start scheitert (−9999) |
+| **WDM-KS** | ✅ **Output + Capture gleichzeitig, echte ADC-Daten** |
+
+Zusatzbefund **Übersprechen Ausgang→Eingang**: real und
+pegel-skalierend nachgewiesen (Ton −20 → −8 dBFS, Anstieg auf den
+unbeschalteten Kanälen +9…+13 dB = 1:1-Skalierung).  Stärkster Kanal
+**Ch9: Isolation ~45 dB** unter Ausgangspegel; andere Kanäle 55–65 dB.
+**Schleifenverstärkung 45 dB unter Eins → KEINE Rückkopplungsgefahr**,
+aber ein leiser Programm-„Geist" kann in einem Line-In mitlaufen.
+Getriebene Eingänge (echte Quelle dran) sind besser als der
+gemessene Worst Case an offenen Buchsen.
+**Messfalle dokumentiert:** Eine erste Bleed-Messung an Ch3/4 zeigte
+scheinbar +23 dB Übersprechen — das war das laufende Programmsignal,
+nicht der Ton.  Übersprechen NUR auf unbeschalteten Kanälen messen
+und immer über Pegel-Skalierung verifizieren, nie aus einem
+Einzelvergleich schließen.
+**Konsequenz für die Implementierung:** Der Device-Resolver darf sich
+NICHT auf eine Host-API festlegen — er muss Kandidaten durchprobieren,
+bis ein Open gelingt (für den Tascam-Ausgang ist das WDM-KS, für
+Jabra/Realtek vermutlich WASAPI/MME).  Hinweis: WDM-KS ist ein
+kernel-naher, exklusiver Pfad — währenddessen können andere
+Windows-Apps den Tascam-Ausgang nicht mitbenutzen (auf einer
+dedizierten Sendemaschine unkritisch).
+
 **Zwei Bausteine für die Rückkehr:**
-1. **WASAPI-Koexistenz-Probe:** Windows-Aufnahmeformat des
-   Tascam-Endpoints auf 16 Kanäle stellen (Sound-Panel → Aufnahme →
-   Erweitert, sofern der Treiber es anbietet) → der Feeder kann dann
-   über seinen WASAPI-Kandidaten shared aufnehmen; die
-   Windows-Audio-Engine beherrscht Render+Capture parallel.  Erst
-   testen, dann Monitor zurückstellen.
+1. ~~**WASAPI-Koexistenz-Probe**~~ — erledigt 2026-09-03, siehe oben;
+   WASAPI-Output geht gar nicht, WDM-KS ist der Weg.
 2. **`output.portaudio` ans Main-Output-Setting binden:** Liquidsoap
    nimmt heute stur das Windows-Default-Gerät und ignoriert
    `main_output_id` aus Settings → Local Machine (Lücke).  Renderer
