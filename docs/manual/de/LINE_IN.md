@@ -218,7 +218,8 @@ der Line-In zu einem Schedule-Item genau wie in Pfad 4.1.
 2. Pypo sendet einen einzelnen Telnet-Befehl an Liquidsoap:
    `linein.start` — der dediziertes `input.http`-Source beginnt
    den lokalen Capture-Mount zu konsumieren.
-3. Liquidsoap buffert ~10 Sekunden Audio. Sobald
+3. Liquidsoap buffert nur wenig Audio (~1,5 s auf dem
+   Mehrkanal-Pfad seit 2026-09-03). Sobald
    `source.is_ready` auf true schaltet, routet der Bus-Switch
    das Audio zur Linein-Source — Hörer hören das Mikrofon.
 4. Bei der konfigurierten Dauer sendet Pypo `linein.stop` und
@@ -240,7 +241,7 @@ Bibliothek führt. FfmpegLineinCaptures Watchdog behandelt
 Unplug-Replug transparent; Liquidsoap konsumiert den lokalen
 Icecast-Mount ohne sich um Device-Identität zu kümmern.
 
-**Initiale Show-Latenz:** die ersten ~5 Sekunden eines Linein-
+**Initiale Show-Latenz:** die ersten ~2-3 Sekunden eines Linein-
 Slots können auf den lokalen Operator-Lautsprechern still sein,
 während Liquidsoaps Buffer aufgebaut wird. Gleiche Charakteristik
 wie Scheduled Webstreams (Phase E).

@@ -1098,6 +1098,17 @@ class PlayoutScheduler:
             self._linein_generation += 1
 
             if use_feeder and self._linein_capture is not None:
+                # RASTATIME 2026-09-03 - Lever 2 (line-in start-gap fix).
+                # Arm the input.http companion BEFORE the blocking feeder
+                # start.  FfmpegLineinCapture.start() spends ~1.5 s on a
+                # health-check sleep before returning; starting input.http
+                # first lets its connect + max_buffer fill overlap that
+                # window instead of running strictly after it (~1.5 s of
+                # dead air shaved).  A small poll_delay in the .liq lets it
+                # grab the mount within half a second of the feeder
+                # publishing it.  If the feeder never comes up we stop the
+                # source again below (the b4cd37b guard, preserved).
+                self._engine.linein_start_http()
                 try:
                     self._linein_capture.start(
                         resolved_device_id,
@@ -1110,19 +1121,20 @@ class PlayoutScheduler:
                         "device %s (channels %s): %s",
                         key, resolved_device_id, mapping, exc,
                     )
+                    self._engine.linein_stop()
                     return
-                # RASTATIME 2026-09-01 — start() gives up QUIETLY after
-                # its retry ladder (logs, no raise), so verify before
-                # arming the http companion: without a capture there is
-                # no mount, and linein_http would poll a 404 every 2 s
-                # for the rest of the slot (observed on the 09:30 test).
+                # start() gives up QUIETLY after its retry ladder (logs,
+                # no raise), so verify: without a capture there is no
+                # mount, and the http source armed above would poll a 404
+                # for the rest of the slot unless we stop it now.
                 if not self._linein_capture.is_running:
                     logger.error(
-                        "Line-In %s: capture did not come up — leaving "
-                        "the linein_http source unarmed.", key,
+                        "Line-In %s: capture did not come up - stopping "
+                        "the pre-armed linein_http source so it does not "
+                        "poll a dead mount.", key,
                     )
+                    self._engine.linein_stop()
                     return
-                self._engine.linein_start_http()
                 return
 
             # Build dshow alternative-name spec from the device GUID.

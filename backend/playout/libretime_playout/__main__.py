@@ -340,6 +340,7 @@ def _render_rastatime_liq_at_startup(stream_outputs: List[Dict]) -> None:
     won't have a Liquidsoap to talk to if the script is unbuildable.
     """
     from libretime_playout.liquidsoap_config import (  # noqa: PLC0415
+        DEFAULT_LINEIN_HTTP_MAX_BUFFER_SECONDS,
         read_hourly_recording_config_from_db,
         write_rastatime_liq,
     )
@@ -375,6 +376,29 @@ def _render_rastatime_liq_at_startup(stream_outputs: List[Dict]) -> None:
             exc,
         )
         sys.exit(1)
+    # RASTATIME 2026-09-03 - linein_http start-up buffer, env-overridable
+    # so 1.0 can be A/B tested against the 1.5 default (dead-air-gap vs.
+    # under-run safety) without a rebuild.  Clamped to a sane floor: a
+    # sub-0.2 s buffer invites glitches even on a loopback hop.
+    try:
+        linein_http_max_buffer = float(
+            os.environ.get(
+                "RASTATIME_LIQUIDSOAP_LINEIN_HTTP_MAX_BUFFER_SECONDS",
+                str(DEFAULT_LINEIN_HTTP_MAX_BUFFER_SECONDS),
+            )
+        )
+    except ValueError as exc:
+        logger.critical(
+            "RASTATIME_LIQUIDSOAP_LINEIN_HTTP_MAX_BUFFER_SECONDS must be "
+            "a float: %s", exc,
+        )
+        sys.exit(1)
+    if linein_http_max_buffer < 0.2:
+        logger.warning(
+            "RASTATIME_LIQUIDSOAP_LINEIN_HTTP_MAX_BUFFER_SECONDS=%.3f is "
+            "below the 0.2 s floor; using 0.2 s.", linein_http_max_buffer,
+        )
+        linein_http_max_buffer = 0.2
     # Phase-D Stück-B (2026-05-28): fade_in / fade_out inside crossfade,
     # configurable so the operator can tune short-track audibility vs.
     # music-transition smoothness without a code-change.  Default 0.3 s
@@ -462,6 +486,7 @@ def _render_rastatime_liq_at_startup(stream_outputs: List[Dict]) -> None:
             local_output_device_id=local_output_device_id,
             local_output_device_label=local_output_device_label,
             local_output_endpoint_id=local_output_endpoint_id,
+            linein_http_max_buffer_seconds=linein_http_max_buffer,
             harbor_main_password=harbor_main_pwd or None,
             harbor_show_password=harbor_show_pwd or None,
             hourly_recording_enabled=hourly["enabled"],

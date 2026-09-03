@@ -164,7 +164,8 @@ Biblioteca.
 2. Pypo envía un único comando telnet a Liquidsoap:
    `linein.start` — la fuente `input.http` dedicada
    comienza a consumir el mount de captura local.
-3. Liquidsoap bufferiza ~10 segundos de audio. Una vez que
+3. Liquidsoap bufferiza poco audio (~1,5 s en la ruta
+   multicanal desde 2026-09-03). Una vez que
    `source.is_ready` cambia a true, el bus-switch enruta el
    audio a la fuente linein — los oyentes escuchan el
    micrófono.
@@ -189,7 +190,7 @@ unplug-replug transparentemente; Liquidsoap consume su
 mount Icecast local sin preocuparse por la identidad del
 dispositivo.
 
-**Latencia inicial del show:** los primeros ~5 segundos de
+**Latencia inicial del show:** los primeros ~2-3 segundos de
 un slot line-in pueden ser silenciosos en los altavoces
 locales del operador mientras el buffer de Liquidsoap se
 construye. Misma característica que los webstreams

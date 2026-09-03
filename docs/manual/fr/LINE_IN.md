@@ -177,7 +177,8 @@ Line-In + sa Longueur par défaut.
 2. Pypo envoie une seule commande telnet à Liquidsoap :
    `linein.start` — la source `input.http` dédiée commence à
    consommer le mount de capture local.
-3. Liquidsoap bufferise ~10 secondes d'audio. Une fois
+3. Liquidsoap bufferise peu d'audio (~1,5 s sur le chemin
+   multicanal depuis 2026-09-03). Une fois
    `source.is_ready` passé à true, le bus-switch route
    l'audio vers la source linein — les auditeurs entendent
    le microphone.
@@ -203,7 +204,7 @@ FfmpegLineinCapture gère unplug-replug de manière
 transparente ; Liquidsoap consomme son mount Icecast local
 sans se soucier de l'identité du périphérique.
 
-**Latence initiale d'émission :** les premières ~5 secondes
+**Latence initiale d'émission :** les premières ~2-3 secondes
 d'un créneau line-in peuvent être silencieuses sur les
 haut-parleurs locaux de l'opérateur pendant que le buffer
 Liquidsoap se remplit. Même caractéristique que les

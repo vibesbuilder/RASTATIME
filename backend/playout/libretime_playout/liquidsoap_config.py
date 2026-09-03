@@ -232,10 +232,23 @@ DEFAULT_LINEIN_MAX_BUFFER_SECONDS = 2.0
 # localhost AAAA-first and Icecast is IPv4-only).
 DEFAULT_LINEIN_HTTP_URL = "http://127.0.0.1:8000/linein-capture"
 
-# Slightly above the dshow value: the mount adds mp3 encode/decode and
-# Icecast hand-off jitter; still far below the webstream 10 s because
-# the hop is loopback-local and a live studio wants low latency.
-DEFAULT_LINEIN_HTTP_MAX_BUFFER_SECONDS = 4.0
+# RASTATIME 2026-09-03 - lowered 4.0 -> 1.5 to cut the line-in start
+# gap.  input.http becomes ready (and the switch takes it) only once
+# this many real seconds of audio are buffered, so it was the biggest
+# single contributor to the ~7 s dead-air on a scheduled line-in start
+# (measured 14:20 show: mount alive at +1.8 s, switch at +7.0 s).  The
+# hop is a loopback-local Icecast mount fed at a constant 1x rate, so
+# jitter is minimal and a small buffer is safe.  Env-overridable
+# (RASTATIME_LIQUIDSOAP_LINEIN_HTTP_MAX_BUFFER_SECONDS) so 1.0 can be
+# A/B tested against 1.5 without a rebuild.
+DEFAULT_LINEIN_HTTP_MAX_BUFFER_SECONDS = 1.5
+
+# RASTATIME 2026-09-03 - the http companion polls this often while
+# trying to (re)connect.  0.5 s (vs the 2.0 s webstream default) lets
+# an input.http armed IN PARALLEL with the feeder grab the mount within
+# half a second of the feeder publishing it, instead of waiting up to a
+# full webstream poll cycle.  Cheap on a loopback hop.
+DEFAULT_LINEIN_HTTP_POLL_DELAY_SECONDS = 0.5
 
 
 # ---------------------------------------------------------------------
@@ -771,6 +784,7 @@ def _render_linein_input_block(
     max_buffer_seconds: float = DEFAULT_LINEIN_MAX_BUFFER_SECONDS,
     http_url: str = DEFAULT_LINEIN_HTTP_URL,
     http_max_buffer_seconds: float = DEFAULT_LINEIN_HTTP_MAX_BUFFER_SECONDS,
+    http_poll_delay_seconds: float = DEFAULT_LINEIN_HTTP_POLL_DELAY_SECONDS,
 ) -> str:
     """
     Render the ``input.ffmpeg(format="dshow")`` block for scheduled
@@ -876,7 +890,7 @@ def _render_linein_input_block(
         "  start=false,\n"
         "  self_sync=false,\n"
         f"  max_buffer={_format_crossfade_duration(http_max_buffer_seconds)},\n"
-        f"  poll_delay={_format_crossfade_duration(DEFAULT_WEBSTREAM_POLL_DELAY_SECONDS)},\n"
+        f"  poll_delay={_format_crossfade_duration(http_poll_delay_seconds)},\n"
         f'  "{http_url}",\n'
         ")\n"
         "linein_http = audio_to_stereo(linein_http_raw)\n"
@@ -1100,6 +1114,8 @@ def render_rastatime_liq(
     webstream_poll_delay_seconds: float = DEFAULT_WEBSTREAM_POLL_DELAY_SECONDS,
     linein_enabled: bool = DEFAULT_LINEIN_ENABLED,
     linein_max_buffer_seconds: float = DEFAULT_LINEIN_MAX_BUFFER_SECONDS,
+    linein_http_max_buffer_seconds: float = DEFAULT_LINEIN_HTTP_MAX_BUFFER_SECONDS,
+    linein_http_poll_delay_seconds: float = DEFAULT_LINEIN_HTTP_POLL_DELAY_SECONDS,
     hourly_recording_enabled: bool = False,
     hourly_recording_folder: str = "",
     hourly_recording_format: str = DEFAULT_HOURLY_RECORDING_FORMAT,
@@ -1162,6 +1178,8 @@ def render_rastatime_liq(
     linein_block = _render_linein_input_block(
         enabled=linein_enabled,
         max_buffer_seconds=linein_max_buffer_seconds,
+        http_max_buffer_seconds=linein_http_max_buffer_seconds,
+        http_poll_delay_seconds=linein_http_poll_delay_seconds,
     )
     bus_block = _render_bus_source_block(
         main_enabled=bool(harbor_main_password),
@@ -1235,6 +1253,8 @@ def write_rastatime_liq(
     webstream_poll_delay_seconds: float = DEFAULT_WEBSTREAM_POLL_DELAY_SECONDS,
     linein_enabled: bool = DEFAULT_LINEIN_ENABLED,
     linein_max_buffer_seconds: float = DEFAULT_LINEIN_MAX_BUFFER_SECONDS,
+    linein_http_max_buffer_seconds: float = DEFAULT_LINEIN_HTTP_MAX_BUFFER_SECONDS,
+    linein_http_poll_delay_seconds: float = DEFAULT_LINEIN_HTTP_POLL_DELAY_SECONDS,
     hourly_recording_enabled: bool = False,
     hourly_recording_folder: str = "",
     hourly_recording_format: str = DEFAULT_HOURLY_RECORDING_FORMAT,
@@ -1281,6 +1301,8 @@ def write_rastatime_liq(
         webstream_poll_delay_seconds=webstream_poll_delay_seconds,
         linein_enabled=linein_enabled,
         linein_max_buffer_seconds=linein_max_buffer_seconds,
+        linein_http_max_buffer_seconds=linein_http_max_buffer_seconds,
+        linein_http_poll_delay_seconds=linein_http_poll_delay_seconds,
         hourly_recording_enabled=hourly_recording_enabled,
         hourly_recording_folder=hourly_recording_folder,
         hourly_recording_format=hourly_recording_format,

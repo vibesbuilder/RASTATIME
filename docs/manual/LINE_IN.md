@@ -205,9 +205,13 @@ becomes a schedule item exactly as in path 4.1.
 2. Pypo sends a single telnet command to Liquidsoap:
    `linein.start` — telling the dedicated `input.http` source
    to begin consuming the local capture mount.
-3. Liquidsoap buffers ~10 seconds of audio.  Once
-   `source.is_ready` flips true, the bus-switch routes audio
-   to the linein source — listeners hear the microphone.
+3. Liquidsoap buffers a short amount of audio (~1.5 s on the
+   multichannel path since 2026-09-03).  Once `source.is_ready`
+   flips true, the bus-switch routes audio to the linein source
+   — listeners hear the microphone.  On the multichannel path the
+   `input.http` companion is armed *in parallel* with the capture
+   start, so its buffer fills while the capture is warming up
+   instead of strictly afterwards.
 4. At the configured duration Pypo sends `linein.stop` plus
    stops FfmpegLineinCapture; the switch falls back to
    scheduled.
@@ -228,10 +232,13 @@ FfmpegLineinCapture's watchdog handles unplug-replug
 transparently; Liquidsoap consumes its local Icecast mount
 without caring about device identity.
 
-**Initial-show latency:** the first ~5 seconds of a line-in
-slot may be silent on the operator's local speakers while
-Liquidsoap's buffer builds up.  Same characteristic as
-scheduled webstreams (Phase E).
+**Initial-show latency:** the first ~2-3 seconds of a line-in
+slot may be silent while the capture spins up and Liquidsoap's
+buffer fills.  This was ~7 s before the 2026-09-03 tuning
+(smaller `input.http` buffer + parallel arming).  The buffer is
+env-tunable via `RASTATIME_LIQUIDSOAP_LINEIN_HTTP_MAX_BUFFER_SECONDS`
+(default 1.5 s); lower trims the gap further at some risk of a
+start-up glitch under load.
 
 **Legacy mpv / VLC engine paths (only when
 `RASTATIME_PLAYOUT_ENGINE=mpv` or `=vlc`):**

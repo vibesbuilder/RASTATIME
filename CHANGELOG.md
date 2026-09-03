@@ -9,6 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Line-In-Start-Lücke von ~7 s auf ~2-3 s verkürzt (2026-09-03)** —
+  Bei einer geplanten Line-In-Show auf dem Mehrkanal-Pfad
+  (Feeder → `/linein-capture` → `input.http`) lagen zwischen Ende der
+  Vorshow und erstem hörbaren Signal ~7 s Stille (14:20-Show gemessen:
+  Mount ab +1,8 s, Umschaltung erst +7,0 s).  Hauptursache war
+  `input.http`'s `max_buffer` — die Quelle wird erst „ready", wenn so
+  viele echte Sekunden gepuffert sind.  **Hebel 1:** `max_buffer`
+  4,0 → 1,5 s (per `RASTATIME_LIQUIDSOAP_LINEIN_HTTP_MAX_BUFFER_SECONDS`
+  auf 1,0 A/B-testbar, Boden 0,2 s) und `poll_delay` des http-Companions
+  2,0 → 0,5 s.  **Hebel 2:** der Scheduler armt `input.http` jetzt
+  *parallel* zum blockierenden Feeder-Start (der ~1,5 s
+  Health-Check-Schlaf), statt strikt danach — die Pufferfüllung
+  überlappt das Feeder-Hochlaufen; scheitert der Feeder, wird die
+  vorab-gestartete Quelle wieder gestoppt (der b4cd37b-404-Poll-Schutz
+  bleibt).  Verifiziert mit echtem Liquidsoap-Lauf + Tests; die
+  tatsächliche Lücke misst der Operator an einer Live-Show gegen 1,5
+  vs. 1,0.
+
 - **Sendeausfall durch Callback-Probe behoben (2026-09-03)** — Die
   Geräte-Probe des Main-Output-Features testete im PortAudio-
   *Callback*-Modus, Liquidsoap benutzt aber die *blockierende* API.

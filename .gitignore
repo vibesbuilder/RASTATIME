@@ -132,6 +132,10 @@ backend/analyzer/retry_queue
 # -----------------------------------------------------------------------------
 backend/playout/config/cache/
 /cache/
+# ...and wherever else a local --check/run drops it (e.g. under the
+# package dir during tests): match the binary cache file by name.
+*.liq-cache
+backend/playout/libretime_playout/cache/
 
 # -----------------------------------------------------------------------------
 # Per-show .mp3 recordings (output.file destination — operator-generated
