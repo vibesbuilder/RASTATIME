@@ -248,3 +248,25 @@ def test_render_label_cannot_break_out_of_the_comment():
     block = _render_local_output_block(True, 3, "evil\nshutdown()")
     assert "\nshutdown()" not in block
     assert "device_id=3," in block
+
+def test_render_emits_machine_readable_endpoint_marker():
+    """The Settings page reads this marker to show which output is
+    REALLY active, so it must carry the Windows endpoint id — not the
+    PortAudio name, which differs per host API and would produce false
+    mismatches."""
+    block = _render_local_output_block(True, 4, "Jabra [MME]", "abc-123")
+    assert "# rastatime-main-output: abc-123" in block
+
+
+def test_render_marks_os_default_when_no_device_resolved():
+    block = _render_local_output_block(True, None, "", "")
+    assert "# rastatime-main-output: os-default" in block
+
+
+def test_render_marker_strips_hostile_endpoint_id():
+    """The id reaches the .liq from the database; anything but
+    id-shaped characters must not survive into the script."""
+    hostile = "a b" + chr(10) + "shutdown()"
+    block = _render_local_output_block(True, 4, "x", hostile)
+    assert "shutdown()" not in block
+    assert "# rastatime-main-output: absh" in block

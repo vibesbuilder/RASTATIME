@@ -129,6 +129,14 @@ bietet die Seite unter der Auswahl einen bewussten Knopf:
 RASTATIME-PLAYOUT neu (rendert das Skript mit dem neuen Gerät)
 und danach RASTATIME-LIQUIDSOAP (lädt es).
 
+Über dem Knopf zeigt die Seite an, **welcher Ausgang gerade
+wirklich den Monitor speist** — ausgelesen aus dem gerenderten
+Liquidsoap-Skript, nicht aus der gespeicherten Einstellung. Weichen
+beide voneinander ab (Änderung noch nicht angewendet, oder das Gerät
+ließ sich nicht öffnen), sagt die Zeile das in Bernstein. Ein
+gespeicherter Wert ist kein Beleg dafür, dass er auch benutzt wird.
+
+
 > **Auswirkung auf den Sendebetrieb.** Der zweite Neustart
 > trennt die Icecast-Quellverbindungen für einige Sekunden;
 > Hörer nehmen eine kurze Lücke wahr. Am besten zwischen zwei

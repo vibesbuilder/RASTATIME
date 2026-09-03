@@ -44,6 +44,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Anzeige „welcher Ausgang läuft wirklich" (2026-09-03)** — Settings
+  → Local Machine zeigt über dem Anwenden-Knopf den **tatsächlich
+  aktiven** Ausgang, gelesen aus einem Marker in der gerenderten
+  `.liq` (`# rastatime-main-output: <endpoint-id>`), nicht aus dem
+  gespeicherten Wert.  Weichen beide ab — Änderung noch nicht
+  angewendet, oder Gerät nicht öffenbar —, sagt die Zeile das
+  ausdrücklich.  Anlass: Ein gespeichertes „Tascam" bei real laufendem
+  Jabra war für den Operator nicht erkennbar.  Verglichen wird die
+  Windows-Endpunkt-ID, nicht der Gerätename: PortAudio benennt
+  denselben Endpunkt je Host-API anders, ein Namensvergleich erzeugte
+  Fehlalarme.
+
 - **„Jetzt anwenden"-Knopf für Main Output (2026-09-03)** — Das
   gewählte Gerät wird beim PLAYOUT-Start in die `.liq` kompiliert und
   von Liquidsoap erst beim eigenen Start gelesen; ein Wechsel braucht

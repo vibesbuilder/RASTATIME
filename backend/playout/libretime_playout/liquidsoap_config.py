@@ -469,6 +469,7 @@ def _render_local_output_block(
     enabled: bool,
     device_id: Optional[int] = None,
     device_label: str = "",
+    endpoint_id: str = "",
 ) -> str:
     """
     Render the local soundcard output block.  When enabled, emits a
@@ -552,11 +553,20 @@ def _render_local_output_block(
     if enabled:
         if device_id is None:
             device_line = (
+                # The marker line below is machine-read by the
+                # Settings page so it can show which output is
+                # REALLY active; "os-default" means the operator
+                # pick was unusable or unset.
+                "  # rastatime-main-output: os-default\n"
                 "  # no device= -> PortAudio uses the OS-default endpoint\n"
             )
         else:
             safe_label = str(device_label).replace("\n", " ").strip()
+            safe_ep = "".join(
+                c for c in str(endpoint_id) if c.isalnum() or c in "-_"
+            )
             device_line = (
+                f"  # rastatime-main-output: {safe_ep or 'unknown'}\n"
                 f"  # Main Output (Settings -> Local Machine): {safe_label}\n"
                 f"  device_id={int(device_id)},\n"
             )
@@ -1076,6 +1086,7 @@ def render_rastatime_liq(
     local_output_enabled: bool = DEFAULT_LOCAL_OUTPUT_ENABLED,
     local_output_device_id: Optional[int] = None,
     local_output_device_label: str = "",
+    local_output_endpoint_id: str = "",
     harbor_main_password: Optional[str] = None,
     harbor_show_password: Optional[str] = None,
     harbor_main_port: int = DEFAULT_HARBOR_MAIN_PORT,
@@ -1185,6 +1196,7 @@ def render_rastatime_liq(
                 local_output_enabled,
                 local_output_device_id,
                 local_output_device_label,
+                local_output_endpoint_id,
             ),
         )
         .replace("${HARBOR_INPUTS_BLOCK}", harbor_block)
@@ -1209,6 +1221,7 @@ def write_rastatime_liq(
     local_output_enabled: bool = DEFAULT_LOCAL_OUTPUT_ENABLED,
     local_output_device_id: Optional[int] = None,
     local_output_device_label: str = "",
+    local_output_endpoint_id: str = "",
     harbor_main_password: Optional[str] = None,
     harbor_show_password: Optional[str] = None,
     harbor_main_port: int = DEFAULT_HARBOR_MAIN_PORT,
@@ -1254,6 +1267,7 @@ def write_rastatime_liq(
         local_output_enabled=local_output_enabled,
         local_output_device_id=local_output_device_id,
         local_output_device_label=local_output_device_label,
+        local_output_endpoint_id=local_output_endpoint_id,
         harbor_main_password=harbor_main_password,
         harbor_show_password=harbor_show_password,
         harbor_main_port=harbor_main_port,

@@ -47,6 +47,59 @@ function checkDatabaseDependencies()
 }
 
 /**
+ * Which audio output is REALLY driving the local monitor right now?
+ *
+ * RASTATIME 2026-09-03.  Settings -> Local Machine stores the operator's
+ * Main Output choice, but that choice only reaches Liquidsoap when the
+ * audio chain is restarted -- and it can be rejected outright (not every
+ * endpoint can be opened through PortAudio's blocking API; the Tascam
+ * US-16x08 output cannot).  Showing only the stored value would keep
+ * claiming a device that is not in use, which is exactly the confusion
+ * this page had before.
+ *
+ * The rendered rastatime.liq carries a machine-readable marker written
+ * by the playout renderer:
+ *
+ *     # rastatime-main-output: <windows endpoint id>
+ *     # rastatime-main-output: os-default
+ *
+ * We read that rather than guessing from device names: PortAudio names
+ * the same endpoint differently per host API, so a name comparison
+ * would produce false mismatches.
+ *
+ * @return array{known: bool, os_default: bool, endpoint_id: string}
+ *         ``known=false`` when the script is missing/unreadable or has
+ *         no marker (e.g. rendered by an older build) -- callers should
+ *         then say nothing rather than guess.
+ */
+function rastatime_active_main_output()
+{
+    $unknown = ['known' => false, 'os_default' => false, 'endpoint_id' => ''];
+
+    $path = getenv('RASTATIME_LIQUIDSOAP_CONFIG_PATH');
+    if (!$path) {
+        $path = 'C:\Tools\liquidsoap\rastatime.liq';
+    }
+    if (!@is_readable($path)) {
+        return $unknown;
+    }
+    $body = @file_get_contents($path);
+    if ($body === false) {
+        return $unknown;
+    }
+    if (!preg_match('/#\s*rastatime-main-output:\s*(\S+)/', $body, $m)) {
+        return $unknown;
+    }
+
+    $value = trim($m[1]);
+    if ($value === 'os-default' || $value === 'unknown') {
+        return ['known' => true, 'os_default' => true, 'endpoint_id' => ''];
+    }
+
+    return ['known' => true, 'os_default' => false, 'endpoint_id' => $value];
+}
+
+/**
  * Restart the Liquidsoap audio chain so a changed rastatime.liq takes
  * effect.
  *

@@ -90,6 +90,13 @@ deliberado bajo el selector:
 RASTATIME-PLAYOUT (que regenera el script con el nuevo
 dispositivo) y después RASTATIME-LIQUIDSOAP (que lo carga).
 
+Encima del botón, la página indica **qué salida está impulsando
+realmente el monitor**, leída del script de Liquidsoap generado y no
+del ajuste guardado. Si ambos difieren — el cambio aún no se ha
+aplicado, o el dispositivo no pudo abrirse — la línea lo señala en
+ámbar. Un valor guardado no prueba que esté en uso.
+
+
 > **Impacto en antena.** El segundo reinicio corta las
 > conexiones de fuente de Icecast durante unos segundos; los
 > oyentes perciben un breve silencio. Hágalo entre programas.

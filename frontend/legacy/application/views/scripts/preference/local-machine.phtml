@@ -62,6 +62,13 @@ $rtTip = function ($text) {
     opacity: 0.85;
     line-height: 1.4;
 }
+.soundcard-config .rt-output-active {
+    margin: 0.6em 0 0.2em;
+    font-size: 12px;
+    line-height: 1.4;
+}
+.soundcard-config .rt-output-active.rt-ok       { color: #8fce8f; }
+.soundcard-config .rt-output-active.rt-mismatch { color: #e0b877; }
 .soundcard-config .rt-restart-msg {
     margin-left: 0.8em;
     font-size: 12px;
@@ -101,6 +108,65 @@ $rtTip = function ($text) {
                         // save (which would drop the stream without warning),
                         // the operator triggers it deliberately here.
                         ?>
+                        <?php
+                        // RASTATIME 2026-09-03 - show what is ACTUALLY driving
+                        // the monitor, not just what is stored.  The two can
+                        // differ in two ways: the operator saved a device but
+                        // has not applied it yet, or the device was rejected
+                        // by every PortAudio host API (the Tascam US-16x08
+                        // output is, so it silently falls back).  Rendering
+                        // only the stored value is what made the page mislead
+                        // the operator in the first place.
+                        $rtActive = function_exists('rastatime_active_main_output')
+                            ? rastatime_active_main_output()
+                            : ['known' => false, 'os_default' => false, 'endpoint_id' => ''];
+
+                        $rtSavedId = '';
+                        $rtSavedName = '';
+                        $rtCurl = curl_init('http://localhost:8765/api/v2/audio/soundcard-settings');
+                        curl_setopt_array($rtCurl, [
+                            CURLOPT_RETURNTRANSFER => true,
+                            CURLOPT_TIMEOUT => 3,
+                        ]);
+                        $rtBody = curl_exec($rtCurl);
+                        curl_close($rtCurl);
+                        if (is_string($rtBody)) {
+                            $rtJson = json_decode($rtBody, true) ?: [];
+                            $rtSavedId = trim((string) ($rtJson['main_output_id'] ?? ''));
+                            $rtSavedName = trim((string) ($rtJson['main_output_name'] ?? ''));
+                        }
+
+                        $rtMismatch = false;
+                        $rtActiveText = '';
+                        if ($rtActive['known']) {
+                            if ($rtActive['os_default']) {
+                                $rtActiveText = _('system default output');
+                                $rtMismatch = ($rtSavedId !== '');
+                            } else {
+                                $rtActiveText = $rtSavedName !== '' && $rtActive['endpoint_id'] === $rtSavedId
+                                    ? $rtSavedName
+                                    : $rtActive['endpoint_id'];
+                                $rtMismatch = ($rtSavedId !== '' && $rtActive['endpoint_id'] !== $rtSavedId);
+                            }
+                        }
+                        ?>
+                        <?php if ($rtActive['known']): ?>
+                            <p class="rt-output-active <?php echo $rtMismatch ? 'rt-mismatch' : 'rt-ok' ?>">
+                                <?php if ($rtMismatch): ?>
+                                    <?php echo sprintf(
+                                        _('Currently active: %1$s — this does not match the saved device (%2$s). Either it has not been applied yet, or the device cannot be opened; see the playout log.'),
+                                        '<strong>' . htmlspecialchars($rtActiveText, ENT_QUOTES) . '</strong>',
+                                        htmlspecialchars($rtSavedName !== '' ? $rtSavedName : $rtSavedId, ENT_QUOTES)
+                                    ) ?>
+                                <?php else: ?>
+                                    <?php echo sprintf(
+                                        _('Currently active: %s'),
+                                        '<strong>' . htmlspecialchars($rtActiveText, ENT_QUOTES) . '</strong>'
+                                    ) ?>
+                                <?php endif; ?>
+                            </p>
+                        <?php endif; ?>
+
                         <p class="rt-output-hint">
                             <?php echo _("Saving stores the device. It becomes active for the local monitor after the audio chain restarts.") ?>
                         </p>

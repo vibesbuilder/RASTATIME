@@ -119,6 +119,14 @@ button under the picker:
 RASTATIME-PLAYOUT (which re-renders the script with the new
 device) and then RASTATIME-LIQUIDSOAP (which loads it).
 
+Above the button the page states **which output is really
+driving the monitor right now**, read back from the rendered
+Liquidsoap script rather than from the stored setting. If the two
+differ — because the change has not been applied yet, or because
+the device could not be opened — the line says so in amber. A
+saved value alone is not proof that it is in use.
+
+
 > **On-air impact.** The second restart drops the Icecast
 > source connections for a few seconds; listeners hear a short
 > gap. Do it between shows. The button asks for confirmation

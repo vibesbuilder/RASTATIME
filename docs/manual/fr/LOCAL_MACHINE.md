@@ -90,6 +90,14 @@ redémarre RASTATIME-PLAYOUT (qui regénère le script avec le
 nouveau périphérique) puis RASTATIME-LIQUIDSOAP (qui le
 charge).
 
+Au-dessus du bouton, la page indique **quelle sortie pilote
+réellement le moniteur**, lue depuis le script Liquidsoap généré et
+non depuis le réglage enregistré. Si les deux diffèrent — changement
+pas encore appliqué, ou périphérique impossible à ouvrir — la ligne
+le signale en ambre. Une valeur enregistrée ne prouve pas qu'elle
+soit utilisée.
+
+
 > **Impact à l'antenne.** Le second redémarrage coupe les
 > connexions source Icecast pendant quelques secondes ; les
 > auditeurs entendent un bref silence. À faire entre deux

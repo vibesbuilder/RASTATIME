@@ -243,7 +243,7 @@ def _read_harbor_credentials() -> tuple:
         return ("", "")
 
 
-def _resolve_local_output_device() -> Tuple[Optional[int], str]:
+def _resolve_local_output_device() -> Tuple[Optional[int], str, str]:
     """
     Resolve the operator's **Main Output** setting to a PortAudio
     device index for ``output.portaudio``.
@@ -255,7 +255,10 @@ def _resolve_local_output_device() -> Tuple[Optional[int], str]:
     .liq was rendered without any device argument.  The setting
     promised something it did not deliver.
 
-    Returns ``(device_index, label)``.  ``(None, "")`` means "render
+    Returns ``(device_index, label, endpoint_id)``.  The endpoint id is
+    the Windows stable id we actually resolved, echoed into the .liq
+    so the Settings page can tell "saved" from "active".  A ``None``
+    index means "render
     without a device argument", i.e. keep the previous OS-default
     behaviour — the safe fallback for every failure mode here
     (no setting, unresolvable name, nothing openable).
@@ -273,14 +276,14 @@ def _resolve_local_output_device() -> Tuple[Optional[int], str]:
             "Could not read the Main Output setting (%s) — the local "
             "monitor falls back to the OS-default endpoint.", exc,
         )
-        return (None, "")
+        return (None, "", "")
 
     if not stable_id and not name:
         logger.info(
             "No Main Output configured — local monitor uses the "
             "OS-default endpoint."
         )
-        return (None, "")
+        return (None, "", "")
 
     # Older rows may carry only the GUID; recover the friendly name via
     # the device manager, because PortAudio matches on names, not on
@@ -306,7 +309,7 @@ def _resolve_local_output_device() -> Tuple[Optional[int], str]:
             "Settings → Local Machine.  Falling back to the OS-default "
             "endpoint.", stable_id,
         )
-        return (None, "")
+        return (None, "", "")
 
     try:
         from libretime_playout.engine.portaudio_output import (  # noqa: PLC0415
@@ -318,11 +321,11 @@ def _resolve_local_output_device() -> Tuple[Optional[int], str]:
             "Main Output resolve raised %s — falling back to the "
             "OS-default endpoint.", exc,
         )
-        return (None, "")
+        return (None, "", "")
 
     if resolved is None:
-        return (None, "")
-    return (resolved.index, resolved.label)
+        return (None, "", "")
+    return (resolved.index, resolved.label, stable_id)
 
 
 def _render_rastatime_liq_at_startup(stream_outputs: List[Dict]) -> None:
@@ -437,11 +440,14 @@ def _render_rastatime_liq_at_startup(stream_outputs: List[Dict]) -> None:
     # device as a script argument; a later change therefore needs a
     # PLAYOUT restart (the UI offers a button for it).
     if local_output_enabled:
-        local_output_device_id, local_output_device_label = (
-            _resolve_local_output_device()
-        )
+        (
+            local_output_device_id,
+            local_output_device_label,
+            local_output_endpoint_id,
+        ) = _resolve_local_output_device()
     else:
         local_output_device_id, local_output_device_label = (None, "")
+        local_output_endpoint_id = ""
 
     try:
         changed = write_rastatime_liq(
@@ -455,6 +461,7 @@ def _render_rastatime_liq_at_startup(stream_outputs: List[Dict]) -> None:
             local_output_enabled=local_output_enabled,
             local_output_device_id=local_output_device_id,
             local_output_device_label=local_output_device_label,
+            local_output_endpoint_id=local_output_endpoint_id,
             harbor_main_password=harbor_main_pwd or None,
             harbor_show_password=harbor_show_pwd or None,
             hourly_recording_enabled=hourly["enabled"],
