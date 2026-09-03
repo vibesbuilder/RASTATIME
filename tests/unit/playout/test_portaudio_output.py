@@ -63,12 +63,21 @@ JABRA_MME = 1
 
 
 class FakeStream:
-    def __init__(self, ok):
+    """``write_ok=False`` models an endpoint that opens fine and only
+    refuses once data is pushed through the blocking path — exactly how
+    DirectSound behaves on the Tascam."""
+
+    def __init__(self, ok, write_ok=True):
+        self._write_ok = write_ok
         if not ok:
             raise RuntimeError("Unanticipated host error")
 
     def start(self):
         pass
+
+    def write(self, data):
+        if not self._write_ok:
+            raise RuntimeError("DirectSound error")
 
     def stop(self):
         pass
@@ -81,8 +90,10 @@ class FakeSD:
     """Minimal sounddevice stand-in; ``openable`` are the indices that
     actually accept an output open."""
 
-    def __init__(self, openable):
+    def __init__(self, openable, writable=None):
         self.openable = set(openable)
+        # Default: whatever opens can also be written to.
+        self.writable = set(openable if writable is None else writable)
         self.attempted = []
 
     def query_hostapis(self):
@@ -94,15 +105,20 @@ class FakeSD:
     def RawOutputStream(self, **kwargs):  # noqa: N802 (sounddevice API)
         index = kwargs["device"]
         self.attempted.append(index)
-        return FakeStream(index in self.openable)
+        assert "callback" not in kwargs, (
+            "the probe must use PortAudio's BLOCKING api - a callback-mode "
+            "probe reports WDM-KS as working and then kills liquidsoap at "
+            "device-open (RASTATIME 2026-09-03 outage)"
+        )
+        return FakeStream(index in self.openable, index in self.writable)
 
 
 @pytest.fixture
 def fake_sd_factory(monkeypatch):
     """Install a FakeSD so ``resolve_output_device`` imports it."""
 
-    def _install(openable):
-        fake = FakeSD(openable)
+    def _install(openable, writable=None):
+        fake = FakeSD(openable, writable)
         import sys
         monkeypatch.setitem(sys.modules, "sounddevice", fake)
         return fake
@@ -154,16 +170,24 @@ def test_candidates_ignore_input_only_devices():
 # Resolution with probing
 # --------------------------------------------------------------------
 
-def test_resolve_falls_through_to_wdmks_when_others_refuse(fake_sd_factory):
-    """The real Tascam case: only WDM-KS opens."""
-    fake = fake_sd_factory([TASCAM_WDMKS])
+def test_resolve_tries_every_candidate_before_giving_up(fake_sd_factory):
+    """The real Tascam case (measured 2026-09-03): NO host API accepts a
+    blocking output open, so we must try all four and then fall back."""
+    fake = fake_sd_factory([])
+    assert resolve_output_device("Tascam-Lautsprecher") is None
+    assert fake.attempted == [
+        TASCAM_WASAPI, TASCAM_MME, TASCAM_DS, TASCAM_WDMKS
+    ], "all candidates get a chance, cheapest host API first"
+
+
+def test_resolve_rejects_device_that_opens_but_fails_on_write(fake_sd_factory):
+    """DirectSound on the Tascam opens and only fails once audio is
+    pushed.  Accepting it would hand liquidsoap a device that dies at
+    the first buffer, so the probe has to write, not just open."""
+    fake = fake_sd_factory([TASCAM_DS, TASCAM_WDMKS], writable=[TASCAM_WDMKS])
     resolved = resolve_output_device("Tascam-Lautsprecher")
     assert resolved is not None
-    assert resolved.index == TASCAM_WDMKS
-    assert "WDM-KS" in resolved.host_api
-    assert resolved.probed is True
-    # It must have actually tried the cheaper APIs first.
-    assert fake.attempted[0] == TASCAM_WASAPI
+    assert resolved.index == TASCAM_WDMKS, "the write-only-fails device is skipped"
 
 
 def test_resolve_prefers_first_opening_candidate(fake_sd_factory):

@@ -126,24 +126,27 @@ device) and then RASTATIME-LIQUIDSOAP (which loads it).
 
 > **How the device is matched.** PortAudio lists the same
 > endpoint once per Windows host API (MME, DirectSound,
-> WASAPI, WDM-KS), and which copy actually opens is
-> device-specific — measured on the studio machine, the Tascam
-> US-16x08 output opens **only** via WDM-KS, while a USB
-> headset opens via MME. RASTATIME therefore *probes* the
-> candidates at startup, least-invasive first, and uses the
-> first one that really opens. The result is written into the
-> script as `device_id=` plus a comment naming the endpoint.
-> If no candidate opens, RASTATIME falls back to the
-> OS-default endpoint and says so in the playout log.
+> WASAPI, WDM-KS), and which copy actually works is
+> device-specific. RASTATIME therefore *probes* the
+> candidates at startup — using PortAudio's **blocking** API,
+> the one Liquidsoap itself uses — and takes the first that
+> really opens. Measured at 44.1 kHz on the studio machine:
+> MME and DirectSound work for a USB headset, while WASAPI
+> rejects 44.1 kHz and WDM-KS offers no blocking support at
+> all. The result goes into the script as `device_id=` plus a
+> comment naming the endpoint. If no candidate opens,
+> RASTATIME keeps the OS-default endpoint and records every
+> failure reason in the playout log.
 
-> **Using one interface for input and output.** A multi-channel
-> interface can serve as Main Output *and* as a Line-In source
-> at the same time (verified on the US-16x08: WDM-KS output
-> alongside a 16-channel MME capture). Be aware that a small
-> amount of the output signal couples into the capture
-> channels — measured at roughly 45–65 dB below the output
-> level, far too little to cause feedback, but a faint echo of
-> the programme can sit under a very quiet line-in signal.
+> **Not every output device can be used.** A device Windows
+> offers as an output is not automatically usable here:
+> Liquidsoap drives PortAudio through its blocking API, and
+> some endpoints refuse it. Measured on the studio machine,
+> the **Tascam US-16x08 output is refused by every host API**
+> and therefore cannot serve as the local monitor — the
+> setting falls back to the OS default and says so in the
+> log. The same interface *does* work as a Line-In capture
+> source; only the output direction is unavailable.
 
 ---
 

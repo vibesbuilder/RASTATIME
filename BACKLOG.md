@@ -1484,8 +1484,23 @@ und bewusst NICHT an der Django-API (bindet `0.0.0.0` ohne Auth).
 **Live verifiziert:** Jabra → PortAudio-Index 4 (MME), `device_id=4` in
 der gerenderten `.liq`, `liquidsoap --check` grün, 14 neue Tests,
 keine Regression (37 Fehler auch auf Baseline).
-Damit ist auch der ursprüngliche Tascam-Wunsch erfüllt — Tascam als
-Main Output ist jetzt einfach eine Auswahl im Picker.
+**Der ursprüngliche Tascam-Wunsch ist damit NICHT erfüllt:** Der
+US-16x08-**Ausgang** wird von jeder Host-API abgelehnt, sobald man ihn
+blockierend öffnet (MME „format not supported", DirectSound-Fehler,
+WASAPI „invalid sample rate" bei 44,1 UND 48 kHz, WDM-KS „Blocking API
+not supported yet").  Liquidsoap benutzt genau diese blockierende API,
+also ist der Tascam als lokaler Monitor mit diesem Stack nicht
+verwendbar; die Auswahl landet sauber auf dem OS-Standard-Rückfall.
+Als Line-In-**Aufnahmequelle** funktioniert das Interface unverändert.
+**Teures Learning (Sendeausfall 2026-09-03):** Die erste Probe testete
+im Callback-Modus, meldete WDM-KS als tauglich → Liquidsoap starb beim
+Geräte-Öffnen und riss die Icecast-Ausgänge mit.  `liquidsoap --check`
+fängt das NICHT (nur Typprüfung, öffnet nie ein Gerät).  Regel daraus:
+**Geräte-Features immer mit einem echten Liquidsoap-Lauf verifizieren**,
+und eine Probe muss dieselbe API-Betriebsart nutzen wie der Konsument.
+Offen bleibt damit: ein Monitor-Ausgang am Tascam wäre nur über einen
+anderen Weg erreichbar (z. B. Hardware-Routing im Tascam-Panel:
+„Computer 1/2 → Line-Out", also ohne Windows-Beteiligung).
 
 **(Ursprünglicher Eintrag zur Historie:)**
 **Status (alt):** Defer — Operator-Wunsch 2026-09-01 („am liebsten

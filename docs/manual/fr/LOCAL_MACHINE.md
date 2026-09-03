@@ -96,27 +96,29 @@ charge).
 > émissions. Le bouton demande confirmation.
 
 > **Comment le périphérique est identifié.** PortAudio liste le
-> même point de terminaison une fois par API hôte Windows
-> (MME, DirectSound, WASAPI, WDM-KS), et la copie qui s'ouvre
-> réellement dépend du matériel — mesuré sur la machine du
-> studio : la sortie du Tascam US-16x08 ne s'ouvre **que** via
-> WDM-KS, alors qu'un casque USB s'ouvre via MME. RASTATIME
-> teste donc les candidats au démarrage, du moins invasif au
-> plus invasif, et retient le premier qui s'ouvre vraiment. Le
-> résultat est inscrit dans le script sous forme de
-> `device_id=` accompagné d'un commentaire. Si aucun candidat
-> ne s'ouvre, RASTATIME revient au point de terminaison par
-> défaut du système et le signale dans le journal de diffusion.
+> même point de terminaison une fois par API hôte Windows (MME,
+> DirectSound, WASAPI, WDM-KS), et la copie qui fonctionne
+> réellement dépend du matériel. RASTATIME teste donc les
+> candidats au démarrage — via l'API **bloquante** de PortAudio,
+> celle qu'utilise Liquidsoap — et retient le premier qui
+> s'ouvre vraiment. Mesuré à 44,1 kHz sur la machine du studio :
+> MME et DirectSound fonctionnent pour un casque USB, tandis que
+> WASAPI refuse 44,1 kHz et que WDM-KS ne gère pas du tout l'API
+> bloquante. Le résultat est inscrit dans le script sous forme de
+> `device_id=` avec un commentaire. Si aucun candidat ne s'ouvre,
+> RASTATIME conserve le point de terminaison par défaut du
+> système et consigne chaque raison d'échec dans le journal.
 
-> **Une seule interface en entrée et en sortie.** Une interface
-> multicanal peut servir de sortie principale **et** de source
-> Line-In simultanément (vérifié sur l'US-16x08 : sortie
-> WDM-KS avec une capture MME 16 canaux). Notez qu'une faible
-> partie du signal de sortie se couple dans les canaux de
-> capture — mesurée à environ 45–65 dB sous le niveau de
-> sortie, bien trop peu pour provoquer un larsen, mais un léger
-> écho du programme peut subsister sous un signal Line-In très
-> faible.
+> **Tous les périphériques de sortie ne conviennent pas.** Un
+> périphérique proposé par Windows n'est pas automatiquement
+> utilisable ici : Liquidsoap pilote PortAudio via son API
+> bloquante, que certains points de terminaison refusent. Sur la
+> machine du studio, **la sortie du Tascam US-16x08 est refusée
+> par toutes les API hôtes** et ne peut donc pas servir de
+> moniteur local — le réglage revient au défaut système et le
+> signale dans le journal. La même interface fonctionne en
+> revanche comme source de capture Line-In ; seule la direction
+> de sortie est indisponible.
 
 ---
 

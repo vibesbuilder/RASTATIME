@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Sendeausfall durch Callback-Probe behoben (2026-09-03)** — Die
+  Geräte-Probe des Main-Output-Features testete im PortAudio-
+  *Callback*-Modus, Liquidsoap benutzt aber die *blockierende* API.
+  WDM-KS beherrscht nur ersteres, wurde deshalb als tauglich gemeldet,
+  und Liquidsoap stürzte beim Öffnen ab (`Blocking API not supported
+  yet` → `Invalid_argument("option is None")`) — inklusive aller
+  Icecast-Ausgänge.  `liquidsoap --check` fand das nicht, weil es nur
+  typprüft und nie ein Gerät öffnet.  Die Probe läuft jetzt blockierend
+  **und schreibt** einen Puffer (DirectSound am Tascam öffnet und
+  scheitert erst beim Schreiben); die Verifikation umfasst jetzt einen
+  echten Liquidsoap-Lauf, nicht nur `--check`.
+
 - **„Main Output" wirkt jetzt tatsächlich (2026-09-03)** — Die
   Geräteauswahl unter Settings → Local Machine war für die
   Liquidsoap-Engine wirkungslos: Der Wert wurde gespeichert und an
@@ -19,14 +31,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   eine Funktion, die es nicht hatte.  Neu: `engine/portaudio_output.py`
   löst den Endpunkt zu einem PortAudio-Index auf und rendert ihn als
   `device_id=` in die `.liq`.  Die Auflösung **probiert die Host-APIs
-  durch** statt eine zu unterstellen — auf der Studio-Maschine
-  gemessen öffnet der Tascam-US-16x08-Ausgang **nur** über WDM-KS
-  (WASAPI/MME/DirectSound scheitern), ein USB-Headset dagegen über
-  MME; eine Regel statt einer Probe hätte je ein Gerät stillschweigend
-  kaputtgemacht.  Reihenfolge WASAPI → MME → DirectSound → WDM-KS
-  (letzteres exklusiv, daher nur als Rückfall).  Findet sich kein
-  öffnbarer Kandidat, bleibt es beim OS-Standard — mit deutlichem
-  Log-Eintrag statt stiller Stille.  Zusätzlich findet die Zuordnung
+  durch** statt eine zu unterstellen, und zwar über PortAudios
+  **blockierende** API — genau den Weg, den Liquidsoap selbst nimmt.
+  Bei 44,1 kHz gemessen: MME und DirectSound funktionieren fürs
+  USB-Headset; WASAPI lehnt 44,1 kHz ab, WDM-KS kann keine
+  blockierende Ausgabe.  Der **Tascam-Ausgang wird von jeder Host-API
+  abgelehnt** und ist als lokaler Monitor mit diesem Stack nicht
+  verwendbar — die Auswahl fällt dann auf den OS-Standard zurück, mit
+  Log-Eintrag je Fehlgrund statt stiller Stille.  Zusätzlich findet die Zuordnung
   die WDM-KS-Variante über einen Hardware-Token (`US-16x08`), weil der
   Treiber sie anders benennt als den Windows-Anzeigenamen.
 

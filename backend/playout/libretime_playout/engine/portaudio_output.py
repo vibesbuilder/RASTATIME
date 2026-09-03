@@ -37,12 +37,35 @@ the studio machine 2026-09-03, Tascam US-16x08 output:
   **WDM-KS**       **opens and plays**
   ===============  ==============================================
 
-A USB headset, by contrast, resolves happily on WASAPI.  Picking a
-host API by rule would therefore silently break one device or the
-other, and ``fallible=true`` means Liquidsoap would just retry
-forever without any monitor sound and without a hard error.  So we
-enumerate the candidates, order them least-invasive first, and probe
-each by briefly opening it; the first that really opens wins.
+So we enumerate the candidates, order them least-invasive first, and
+probe each by briefly opening it; the first that really opens wins.
+
+The probe MUST use PortAudio's **blocking** API, because that is what
+Liquidsoap's ``output.portaudio`` uses.  This is not a detail: a
+callback-mode probe reports WDM-KS as working, and Liquidsoap then
+dies at device-open with ``Blocking API not supported yet`` followed
+by ``Invalid_argument("option is None")`` -- taking the whole process
+down, Icecast outputs included.  (RASTATIME 2026-09-03: a
+callback-mode probe put the station off air.  ``linein_feeder``
+already noted the same limitation for capture; it applies to output
+too.)
+
+Measured with the blocking API on the studio machine at 44.1 kHz,
+Liquidsoap's internal frame rate:
+
+  ==================  ======  ===========  =======  ======
+  Device              MME     DirectSound  WASAPI   WDM-KS
+  ==================  ======  ===========  =======  ======
+  Jabra EVOLVE LINK   works   works        no       no
+  Tascam US-16x08     no      no           no       no
+  ==================  ======  ===========  =======  ======
+
+WASAPI rejects 44.1 kHz outright (its shared mix format differs) and
+WDM-KS has no blocking support at all, so MME and DirectSound are the
+only usable output APIs here.  The **Tascam output cannot be driven by
+Liquidsoap at all** -- every blocking open is refused, at 44.1 and at
+48 kHz -- so selecting it lands on the OS-default fallback with a
+loud log line rather than a working monitor.
 
 Host-API order
 --------------
@@ -209,17 +232,17 @@ def probe_output(
     def _worker() -> None:
         stream = None
         try:
-            def _silence(outdata, frames, time_info, status):  # noqa: ANN001
-                memoryview(outdata).cast("B")[:] = b"\x00" * (frames * channels * 2)
-
             stream = sd.RawOutputStream(
                 samplerate=samplerate,
                 channels=channels,
                 dtype="int16",
                 device=index,
-                callback=_silence,
             )
             stream.start()
+            # The write is the point of the probe: some endpoints open
+            # and only refuse once data is actually pushed through the
+            # blocking path (DirectSound on the Tascam does exactly that).
+            stream.write(bytes(1024 * channels * 2))
             result["ok"] = True
         except Exception as exc:  # pylint: disable=broad-exception-caught
             result["detail"] = f"{type(exc).__name__}: {exc}"

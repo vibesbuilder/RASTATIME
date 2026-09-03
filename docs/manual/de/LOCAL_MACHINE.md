@@ -136,25 +136,28 @@ und danach RASTATIME-LIQUIDSOAP (lädt es).
 
 > **Wie das Gerät zugeordnet wird.** PortAudio listet denselben
 > Endpunkt einmal pro Windows-Host-API auf (MME, DirectSound,
-> WASAPI, WDM-KS), und welche Kopie sich tatsächlich öffnen
-> lässt, ist gerätespezifisch — auf der Studio-Maschine
-> gemessen: Der Tascam-US-16x08-Ausgang öffnet **nur** über
-> WDM-KS, ein USB-Headset dagegen über MME. RASTATIME probiert
-> die Kandidaten daher beim Start durch, den am wenigsten
-> invasiven zuerst, und nimmt den ersten, der wirklich
-> aufgeht. Das Ergebnis steht als `device_id=` samt Kommentar
-> im Skript. Öffnet kein Kandidat, fällt RASTATIME auf den
-> OS-Standard-Endpunkt zurück und vermerkt das im Playout-Log.
+> WASAPI, WDM-KS), und welche Kopie tatsächlich funktioniert,
+> ist gerätespezifisch. RASTATIME probiert die Kandidaten daher
+> beim Start durch — über PortAudios **blockierende** API, also
+> genau den Weg, den Liquidsoap selbst nimmt — und nimmt den
+> ersten, der wirklich aufgeht. Auf der Studio-Maschine bei
+> 44,1 kHz gemessen: MME und DirectSound funktionieren für ein
+> USB-Headset, WASAPI lehnt 44,1 kHz ab und WDM-KS beherrscht
+> die blockierende API überhaupt nicht. Das Ergebnis steht als
+> `device_id=` samt Kommentar im Skript. Öffnet kein Kandidat,
+> bleibt der OS-Standard-Endpunkt aktiv, und jeder Fehlergrund
+> wird im Playout-Log vermerkt.
 
-> **Ein Interface für Ein- und Ausgang.** Ein Mehrkanal-
-> Interface kann gleichzeitig Main Output **und** Line-In-
-> Quelle sein (am US-16x08 verifiziert: WDM-KS-Ausgang neben
-> einer 16-Kanal-MME-Aufnahme). Beachten Sie, dass ein
-> geringer Teil des Ausgangssignals in die Aufnahmekanäle
-> einkoppelt — gemessen rund 45–65 dB unter dem Ausgangspegel,
-> viel zu wenig für eine Rückkopplung, aber bei einem sehr
-> leisen Line-In-Signal kann ein leiser Nachhall des Programms
-> mitlaufen.
+> **Nicht jedes Ausgabegerät ist verwendbar.** Ein Gerät, das
+> Windows als Ausgang anbietet, ist hier nicht automatisch
+> nutzbar: Liquidsoap spricht PortAudio über die blockierende
+> API an, und manche Endpunkte verweigern das. Auf der
+> Studio-Maschine gemessen wird der **Tascam-US-16x08-Ausgang
+> von jeder Host-API abgelehnt** und kann daher nicht als
+> lokaler Monitor dienen — die Einstellung fällt auf den
+> OS-Standard zurück und vermerkt das im Log. Als
+> Line-In-Aufnahmequelle funktioniert dasselbe Interface sehr
+> wohl; nur die Ausgaberichtung steht nicht zur Verfügung.
 
 ---
 

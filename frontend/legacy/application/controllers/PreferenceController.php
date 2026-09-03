@@ -570,6 +570,12 @@ class PreferenceController extends Zend_Controller_Action
      */
     public function restartAudioChainAction(): void
     {
+        // Restarting two NSSM services takes ~25-30 s (playout, a pause
+        // so it can re-render the .liq, then liquidsoap).  Make sure
+        // neither PHP nor a default time limit aborts us halfway and
+        // leaves the chain in a half-restarted state.
+        @set_time_limit(180);
+
         SessionHelper::reopenSessionForWriting();
 
         $this->view->layout()->disableLayout();
