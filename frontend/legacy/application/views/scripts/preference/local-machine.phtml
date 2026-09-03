@@ -22,6 +22,10 @@ AIRTIME.i18n = {
     devicesMissing:       "<?php echo addslashes(_("{n} configured device(s) are currently unavailable. Check connections or reconfigure.")) ?>",
     soundcardSaved:       "<?php echo addslashes(_('Local Machine settings saved.')) ?>",
     soundcardSaveError:   "<?php echo addslashes(_('Could not save Local Machine settings.')) ?>",
+    /* RASTATIME 2026-09-03 — Main Output apply/restart. */
+    restartConfirm:       "<?php echo addslashes(_('This restarts the audio chain and interrupts the stream for a few seconds. Continue?')) ?>",
+    restartRunning:       "<?php echo addslashes(_('Restarting audio chain …')) ?>",
+    restartError:         "<?php echo addslashes(_('Could not restart the audio chain.')) ?>",
 };
 </script>
 
@@ -49,6 +53,21 @@ $rtTip = function ($text) {
 .soundcard-config dd input[type="text"] + .help_icon {
     vertical-align: middle;
 }
+/* RASTATIME 2026-09-03 — Main Output: the setting only reaches the local
+   monitor after the audio chain restarts, so the hint and the deliberate
+   "Apply now" button sit directly under the picker. */
+.soundcard-config .rt-output-hint {
+    margin: 0.6em 0 0.5em;
+    font-size: 12px;
+    opacity: 0.85;
+    line-height: 1.4;
+}
+.soundcard-config .rt-restart-msg {
+    margin-left: 0.8em;
+    font-size: 12px;
+}
+.soundcard-config .rt-restart-msg.ok    { color: #8fce8f; }
+.soundcard-config .rt-restart-msg.error { color: #e58f8f; }
 </style>
 
 <div class="ui-widget prefpanel simple-formblock clearfix padded-strong soundcard-config">
@@ -73,6 +92,22 @@ $rtTip = function ($text) {
                         <select id="soundcard-main-output" name="main_output_id" style="width:100%">
                             <option value=""><?php echo _("— Loading devices …") ?></option>
                         </select>
+
+                        <?php
+                        // RASTATIME 2026-09-03 — the chosen device is
+                        // compiled into rastatime.liq when RASTATIME-PLAYOUT
+                        // starts, so saving alone does not move the local
+                        // monitor.  Rather than restarting automatically on
+                        // save (which would drop the stream without warning),
+                        // the operator triggers it deliberately here.
+                        ?>
+                        <p class="rt-output-hint">
+                            <?php echo _("Saving stores the device. It becomes active for the local monitor after the audio chain restarts.") ?>
+                        </p>
+                        <button id="soundcard_restart_chain" type="button" class="btn">
+                            <?php echo _("Apply now (restarts audio chain)") ?>
+                        </button>
+                        <span id="soundcard-restart-msg" class="rt-restart-msg"></span>
                     </dd>
 
                     <?php
@@ -380,6 +415,51 @@ $rtTip = function ($text) {
         // Settings" (soundcard) Save so the operator needn't scroll up.
         $("#soundcard_save_bottom").on("click", function () {
             $("#soundcard_save").trigger("click");
+        });
+
+        // RASTATIME 2026-09-03 — "Apply now" for Main Output.  The device is
+        // compiled into rastatime.liq at RASTATIME-PLAYOUT startup, so it only
+        // reaches the local monitor once playout AND liquidsoap restart.  We
+        // never do that implicitly on Save: it drops the stream for a few
+        // seconds, so the operator triggers it knowingly.
+        $("#soundcard_restart_chain").on("click", function () {
+            var i18n = (window.AIRTIME && AIRTIME.i18n) || {};
+            var $btn = $(this);
+            var $msg = $("#soundcard-restart-msg");
+
+            if (!window.confirm(i18n.restartConfirm ||
+                    "This restarts the audio chain and interrupts the stream " +
+                    "for a few seconds. Continue?")) {
+                return;
+            }
+
+            $btn.prop("disabled", true);
+            $msg.removeClass("ok error")
+                .text(i18n.restartRunning || "Restarting audio chain …");
+
+            $.post(
+                baseUrl + "preference/restart-audio-chain",
+                { csrf_token: $("#csrf").val() },
+                null,
+                "json"
+            ).done(function (resp) {
+                if (resp && resp.valid) {
+                    $msg.addClass("ok").text(resp.message || "OK");
+                } else {
+                    $msg.addClass("error").text(
+                        (resp && resp.error) ||
+                        i18n.restartError || "Could not restart the audio chain."
+                    );
+                }
+            }).fail(function () {
+                // A restart tears down the request path it was asked over, so
+                // a transport error here does NOT mean the restart failed.
+                $msg.addClass("error").text(
+                    i18n.restartError || "Could not restart the audio chain."
+                );
+            }).always(function () {
+                $btn.prop("disabled", false);
+            });
         });
 
         // RASTATIME 2026-06-06 — rich tooltips (rtTooltip / Floating UI) for the

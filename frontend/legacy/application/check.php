@@ -47,6 +47,86 @@ function checkDatabaseDependencies()
 }
 
 /**
+ * Restart the Liquidsoap audio chain so a changed rastatime.liq takes
+ * effect.
+ *
+ * RASTATIME 2026-09-03 — added for the "Main Output" setting.  The
+ * chosen output device is baked into rastatime.liq by RASTATIME-PLAYOUT
+ * at *its* startup, and RASTATIME-LIQUIDSOAP only reads that file when
+ * *it* starts.  So applying a device change needs both, in this order:
+ *
+ *   1. RASTATIME-PLAYOUT    — re-renders rastatime.liq with the new
+ *                             device_id (playout survives a Liquidsoap
+ *                             bounce; its telnet client reconnects).
+ *   2. RASTATIME-LIQUIDSOAP — loads the freshly rendered script.
+ *
+ * The pause between the two is not cosmetic: playout renders the .liq
+ * a few seconds into its startup, and restarting Liquidsoap before
+ * that would just reload the OLD file and silently do nothing.
+ *
+ * ON AIR IMPACT: step 2 drops the Icecast source connections for a few
+ * seconds.  Callers must confirm with the operator first.
+ *
+ * Service names are hard-coded on purpose — nothing here is derived
+ * from request input, so there is no command-injection surface.
+ *
+ * Uses PowerShell rather than sc.exe for the same reason
+ * check_windows_service() does: sc.exe output is localised, the .NET
+ * ServiceControllerStatus names are not.
+ *
+ * @return array{ok: bool, detail: string}
+ */
+function rastatime_restart_liquidsoap_chain()
+{
+    $psExe = _rastatime_powershell_exe_path();
+
+    // -Force also restarts dependent services; NSSM services have no
+    // declared dependants here, but it keeps the call robust if that
+    // ever changes.  ErrorAction Stop turns a failure into a catchable
+    // terminating error so we can report it instead of exiting 0.
+    $script = '[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; '
+            . 'try { '
+            . '  Restart-Service -Name RASTATIME-PLAYOUT -Force -ErrorAction Stop; '
+            . '  Start-Sleep -Seconds 8; '
+            . '  Restart-Service -Name RASTATIME-LIQUIDSOAP -Force -ErrorAction Stop; '
+            . '  Start-Sleep -Seconds 2; '
+            . '  $p = (Get-Service RASTATIME-PLAYOUT).Status; '
+            . '  $l = (Get-Service RASTATIME-LIQUIDSOAP).Status; '
+            . '  Write-Output ("RESULT=" + $p + "," + $l) '
+            . '} catch { Write-Output ("ERROR=" + $_.Exception.Message) }';
+
+    $psCmd = '"' . $psExe . '" -NoProfile -NonInteractive -Command "'
+           . str_replace('"', '\\"', $script) . '" 2>&1';
+
+    $output = [];
+    $status = 0;
+    @exec($psCmd, $output, $status);
+
+    $joined = trim(implode(' ', array_map('trim', $output)));
+    foreach ($output as $line) {
+        $line = trim($line);
+        if (strpos($line, 'RESULT=') === 0) {
+            $states = explode(',', substr($line, 7));
+            $ok = (count($states) === 2)
+                && trim($states[0]) === 'Running'
+                && trim($states[1]) === 'Running';
+            return [
+                'ok'     => $ok,
+                'detail' => trim(substr($line, 7)),
+            ];
+        }
+        if (strpos($line, 'ERROR=') === 0) {
+            return ['ok' => false, 'detail' => substr($line, 6)];
+        }
+    }
+
+    return [
+        'ok'     => false,
+        'detail' => $joined !== '' ? $joined : 'no output from PowerShell',
+    ];
+}
+
+/**
  * Check whether a Windows NSSM service is currently running.
  *
  * RASTATIME 2026-05-16 - We use PowerShell `Get-Service` because

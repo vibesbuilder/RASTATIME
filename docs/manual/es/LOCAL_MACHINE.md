@@ -73,6 +73,51 @@ ha marcado como salida de audio por defecto.
 > seleccionado se persiste en `cc_pref` como
 > `default_output_device_id`. Vea ARCHITECTURE §9.
 
+### Aplicar un cambio — «Aplicar ahora»
+
+Guardar almacena el dispositivo; **todavía no** mueve el
+monitor local. El motor de emisión compila el dispositivo
+elegido en su script de Liquidsoap al arrancar el servicio, y
+Liquidsoap lee ese script solo en su *propio* arranque.
+Aplicar un cambio requiere por tanto reiniciar ambos
+servicios, en ese orden.
+
+En lugar de reiniciar en silencio al guardar — lo que cortaría
+la emisión pública sin avisar — la página ofrece un botón
+deliberado bajo el selector:
+
+**Aplicar ahora (reinicia la cadena de audio)** — reinicia
+RASTATIME-PLAYOUT (que regenera el script con el nuevo
+dispositivo) y después RASTATIME-LIQUIDSOAP (que lo carga).
+
+> **Impacto en antena.** El segundo reinicio corta las
+> conexiones de fuente de Icecast durante unos segundos; los
+> oyentes perciben un breve silencio. Hágalo entre programas.
+> El botón pide confirmación.
+
+> **Cómo se identifica el dispositivo.** PortAudio enumera el
+> mismo punto final una vez por API anfitriona de Windows
+> (MME, DirectSound, WASAPI, WDM-KS), y cuál de esas copias
+> se abre realmente depende del dispositivo — medido en la
+> máquina del estudio: la salida del Tascam US-16x08 se abre
+> **solo** vía WDM-KS, mientras que unos auriculares USB se
+> abren vía MME. Por eso RASTATIME *prueba* los candidatos al
+> arrancar, del menos invasivo al más invasivo, y usa el
+> primero que se abre de verdad. El resultado se escribe en el
+> script como `device_id=` con un comentario. Si ningún
+> candidato se abre, RASTATIME recurre al punto final por
+> defecto del sistema y lo indica en el registro de emisión.
+
+> **Una interfaz para entrada y salida.** Una interfaz
+> multicanal puede ser salida principal **y** fuente de Line-In
+> a la vez (verificado en la US-16x08: salida WDM-KS junto a
+> una captura MME de 16 canales). Tenga en cuenta que una
+> pequeña parte de la señal de salida se acopla en los canales
+> de captura — medida en torno a 45–65 dB por debajo del nivel
+> de salida, demasiado poco para provocar realimentación, pero
+> un leve eco del programa puede quedar bajo una señal de
+> Line-In muy silenciosa.
+
 ---
 
 ## 3. Tarjeta de sonido — Dispositivos de entrada

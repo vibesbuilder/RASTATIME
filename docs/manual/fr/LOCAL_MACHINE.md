@@ -72,6 +72,52 @@ comme sortie audio par défaut.
 > périphérique sélectionné est persisté dans `cc_pref`
 > comme `default_output_device_id`. Voir ARCHITECTURE §9.
 
+### Appliquer un changement — « Appliquer maintenant »
+
+Enregistrer mémorise le périphérique ; cela ne déplace **pas**
+encore le moniteur local. Le moteur de diffusion compile le
+périphérique choisi dans son script Liquidsoap au démarrage du
+service, et Liquidsoap ne lit ce script qu'à son *propre*
+démarrage. Appliquer un changement exige donc le redémarrage
+des deux services, dans cet ordre.
+
+Plutôt que de redémarrer silencieusement à l'enregistrement —
+ce qui couperait le flux public sans prévenir — la page
+propose un bouton explicite sous le sélecteur :
+
+**Appliquer maintenant (redémarre la chaîne audio)** —
+redémarre RASTATIME-PLAYOUT (qui regénère le script avec le
+nouveau périphérique) puis RASTATIME-LIQUIDSOAP (qui le
+charge).
+
+> **Impact à l'antenne.** Le second redémarrage coupe les
+> connexions source Icecast pendant quelques secondes ; les
+> auditeurs entendent un bref silence. À faire entre deux
+> émissions. Le bouton demande confirmation.
+
+> **Comment le périphérique est identifié.** PortAudio liste le
+> même point de terminaison une fois par API hôte Windows
+> (MME, DirectSound, WASAPI, WDM-KS), et la copie qui s'ouvre
+> réellement dépend du matériel — mesuré sur la machine du
+> studio : la sortie du Tascam US-16x08 ne s'ouvre **que** via
+> WDM-KS, alors qu'un casque USB s'ouvre via MME. RASTATIME
+> teste donc les candidats au démarrage, du moins invasif au
+> plus invasif, et retient le premier qui s'ouvre vraiment. Le
+> résultat est inscrit dans le script sous forme de
+> `device_id=` accompagné d'un commentaire. Si aucun candidat
+> ne s'ouvre, RASTATIME revient au point de terminaison par
+> défaut du système et le signale dans le journal de diffusion.
+
+> **Une seule interface en entrée et en sortie.** Une interface
+> multicanal peut servir de sortie principale **et** de source
+> Line-In simultanément (vérifié sur l'US-16x08 : sortie
+> WDM-KS avec une capture MME 16 canaux). Notez qu'une faible
+> partie du signal de sortie se couple dans les canaux de
+> capture — mesurée à environ 45–65 dB sous le niveau de
+> sortie, bien trop peu pour provoquer un larsen, mais un léger
+> écho du programme peut subsister sous un signal Line-In très
+> faible.
+
 ---
 
 ## 3. Carte son — Périphériques d'entrée

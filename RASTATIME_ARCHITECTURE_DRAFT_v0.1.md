@@ -1,10 +1,34 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.19
-Date: 2026-08-31
+Draft version: 0.20
+Date: 2026-09-03
 
 > **Revision history**
+> - **0.20 (2026-09-03)** — The **Main Output** setting now actually
+>   drives the Liquidsoap local monitor.  Until now the value was
+>   stored and pushed to playout but discarded by a no-op
+>   (`LiquidsoapPlayoutEngine.set_audio_device`), and
+>   `output.portaudio` rendered without a device argument, so the
+>   monitor always followed the Windows default endpoint.  New module
+>   `libretime_playout/engine/portaudio_output.py` maps the Windows
+>   endpoint to a PortAudio index which is rendered as `device_id=`
+>   into rastatime.liq at playout start.  The mapping **probes** host
+>   APIs rather than assuming one: measured on the studio machine, the
+>   Tascam US-16x08 output opens only via WDM-KS (WASAPI/MME/
+>   DirectSound all fail) while a USB headset opens via MME, so a
+>   fixed rule would silently break one device or the other; order is
+>   WASAPI → MME → DirectSound → WDM-KS (exclusive, hence last), with
+>   an OS-default fallback when nothing opens.  Because the device is
+>   baked in at render time, applying a change needs PLAYOUT then
+>   LIQUIDSOAP restarted — exposed as a deliberate, confirmed
+>   "Apply now" button (`preference/restart-audio-chain`) rather than
+>   an implicit restart on Save, and kept in the authenticated legacy
+>   PHP layer because the Django API binds 0.0.0.0 without auth.
+>   Side finding, recorded for the Line-In work: one interface can
+>   serve output and capture simultaneously (refuting the earlier
+>   "full duplex only via ASIO" note); output-to-input coupling
+>   measures ~45-65 dB down — no feedback risk.
 > - **0.19 (2026-08-31)** — Line-In channel selection on multichannel
 >   interfaces (Sections 13.3-13.5 follow-up).  A line-in now selects
 >   WHICH input channels of its device it captures (`channel_mapping`,

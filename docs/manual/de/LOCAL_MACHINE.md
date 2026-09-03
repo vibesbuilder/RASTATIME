@@ -112,6 +112,50 @@ Nützlich, wenn:
 > Audio-Output-Modul mit der Geräte-ID pro Output gesetzt.
 > Siehe ARCHITECTURE §9.
 
+### Änderung anwenden — "Jetzt anwenden"
+
+Speichern legt das Gerät ab; der lokale Monitor wechselt
+dadurch **noch nicht**. Die Playout-Engine kompiliert das
+gewählte Gerät beim Dienststart in ihr Liquidsoap-Skript, und
+Liquidsoap liest dieses Skript nur beim *eigenen* Start. Eine
+Änderung braucht daher einen Neustart beider Dienste, in
+genau dieser Reihenfolge.
+
+Statt beim Speichern stillschweigend neu zu starten — was den
+öffentlichen Stream ohne Vorwarnung unterbrechen würde —
+bietet die Seite unter der Auswahl einen bewussten Knopf:
+
+**Jetzt anwenden (startet Audiokette neu)** — startet
+RASTATIME-PLAYOUT neu (rendert das Skript mit dem neuen Gerät)
+und danach RASTATIME-LIQUIDSOAP (lädt es).
+
+> **Auswirkung auf den Sendebetrieb.** Der zweite Neustart
+> trennt die Icecast-Quellverbindungen für einige Sekunden;
+> Hörer nehmen eine kurze Lücke wahr. Am besten zwischen zwei
+> Sendungen ausführen. Der Knopf fragt vorher nach.
+
+> **Wie das Gerät zugeordnet wird.** PortAudio listet denselben
+> Endpunkt einmal pro Windows-Host-API auf (MME, DirectSound,
+> WASAPI, WDM-KS), und welche Kopie sich tatsächlich öffnen
+> lässt, ist gerätespezifisch — auf der Studio-Maschine
+> gemessen: Der Tascam-US-16x08-Ausgang öffnet **nur** über
+> WDM-KS, ein USB-Headset dagegen über MME. RASTATIME probiert
+> die Kandidaten daher beim Start durch, den am wenigsten
+> invasiven zuerst, und nimmt den ersten, der wirklich
+> aufgeht. Das Ergebnis steht als `device_id=` samt Kommentar
+> im Skript. Öffnet kein Kandidat, fällt RASTATIME auf den
+> OS-Standard-Endpunkt zurück und vermerkt das im Playout-Log.
+
+> **Ein Interface für Ein- und Ausgang.** Ein Mehrkanal-
+> Interface kann gleichzeitig Main Output **und** Line-In-
+> Quelle sein (am US-16x08 verifiziert: WDM-KS-Ausgang neben
+> einer 16-Kanal-MME-Aufnahme). Beachten Sie, dass ein
+> geringer Teil des Ausgangssignals in die Aufnahmekanäle
+> einkoppelt — gemessen rund 45–65 dB unter dem Ausgangspegel,
+> viel zu wenig für eine Rückkopplung, aber bei einem sehr
+> leisen Line-In-Signal kann ein leiser Nachhall des Programms
+> mitlaufen.
+
 ---
 
 ## 3. Soundkarte — Eingabegeräte

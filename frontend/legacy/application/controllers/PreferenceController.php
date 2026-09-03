@@ -550,6 +550,70 @@ class PreferenceController extends Zend_Controller_Action
     }
 
     /**
+     * POST /preference/restart-audio-chain — apply a changed
+     * "Main Output" selection by restarting the audio chain.
+     *
+     * RASTATIME 2026-09-03.  The Main-Output device is baked into
+     * rastatime.liq by RASTATIME-PLAYOUT at startup and read by
+     * RASTATIME-LIQUIDSOAP at *its* startup, so a device change needs
+     * both services restarted, playout first (see
+     * rastatime_restart_liquidsoap_chain() in check.php for the
+     * ordering rationale).
+     *
+     * Deliberately NOT exposed on the Django API: that listener binds
+     * 0.0.0.0:8765 without authentication, so a restart endpoint there
+     * would let anyone on the LAN interrupt the broadcast.  Here it
+     * sits behind the operator login plus a CSRF token.
+     *
+     * ON AIR IMPACT: a few seconds of stream interruption.  The UI
+     * asks for confirmation before calling this.
+     */
+    public function restartAudioChainAction(): void
+    {
+        SessionHelper::reopenSessionForWriting();
+
+        $this->view->layout()->disableLayout();
+        $this->_helper->viewRenderer->setNoRender(true);
+
+        if (!SecurityHelper::verifyCSRFToken($this->_getParam('csrf_token'))) {
+            Logging::error(__FILE__ . ': Invalid CSRF token');
+            $this->_helper->json->sendJson([
+                'valid' => false,
+                'error' => _('CSRF token did not match.'),
+            ]);
+
+            return;
+        }
+
+        Logging::info(
+            'Operator requested an audio-chain restart '
+            . '(Settings -> Local Machine -> Main Output).'
+        );
+
+        $result = rastatime_restart_liquidsoap_chain();
+
+        if ($result['ok']) {
+            Logging::info('Audio-chain restart OK: ' . $result['detail']);
+            $this->_helper->json->sendJson([
+                'valid'   => true,
+                'message' => _('Audio chain restarted — the Main Output setting is now active.'),
+            ]);
+
+            return;
+        }
+
+        Logging::error('Audio-chain restart FAILED: ' . $result['detail']);
+        $this->_helper->json->sendJson([
+            'valid' => false,
+            'error' => sprintf(
+                // translators: %s is a technical status string
+                _('Restart failed: %s'),
+                $result['detail']
+            ),
+        ]);
+    }
+
+    /**
      * Set stream settings preferences.
      *
      * @param array $values stream setting preference values

@@ -465,15 +465,32 @@ def _format_crossfade_duration(value: float) -> str:
     return text
 
 
-def _render_local_output_block(enabled: bool) -> str:
+def _render_local_output_block(
+    enabled: bool,
+    device_id: Optional[int] = None,
+    device_label: str = "",
+) -> str:
     """
     Render the local soundcard output block.  When enabled, emits a
     Liquidsoap ``output.portaudio`` call that plays the bus to the
-    OS-default audio endpoint via PortAudio (cross-platform; on
-    Windows that's a WASAPI/DirectSound device).  When disabled,
-    emits a single comment line so the operator can grep + see it
-    was deliberately turned off (avoiding "the line just vanished"
-    confusion).
+    audio endpoint via PortAudio.  When disabled, emits a single
+    comment line so the operator can grep + see it was deliberately
+    turned off (avoiding "the line just vanished" confusion).
+
+    ``device_id`` is a **PortAudio device index**, resolved from the
+    operator's Main-Output setting by
+    :func:`~.engine.portaudio_output.resolve_output_device`.  When it
+    is ``None`` we omit the argument and PortAudio falls back to the
+    OS-default endpoint — the pre-2026-09-03 behaviour.
+
+    RASTATIME 2026-09-03: before this, the argument was never emitted
+    at all, so Settings → Local Machine → **Main Output** had no
+    effect on the local monitor for the Liquidsoap engine (the value
+    was stored and then dropped by a no-op ``set_audio_device``).
+    ``device_label`` is only rendered as a comment so an operator
+    reading rastatime.liq can see *which* endpoint the index means —
+    indices are not stable across re-plugs, the label is the human
+    anchor.
 
     Why portaudio and not wasapi: the Phase-C8 reality-test
     2026-05-26 showed the savonet Liquidsoap 2.4.4 Windows build
@@ -533,6 +550,16 @@ def _render_local_output_block(enabled: bool) -> str:
     unused value at top-level.
     """
     if enabled:
+        if device_id is None:
+            device_line = (
+                "  # no device= -> PortAudio uses the OS-default endpoint\n"
+            )
+        else:
+            safe_label = str(device_label).replace("\n", " ").strip()
+            device_line = (
+                f"  # Main Output (Settings -> Local Machine): {safe_label}\n"
+                f"  device_id={int(device_id)},\n"
+            )
         return (
             "# Echter Bus-Split fuer PortAudio (Phase-C5 follow-up v2 2026-05-28).\n"
             "# v1 (clock.assign_new just on output.portaudio) didn't work --\n"
@@ -555,6 +582,7 @@ def _render_local_output_block(enabled: bool) -> str:
             "]))\n"
             "output.portaudio(\n"
             "  fallible=true,\n"
+            + device_line +
             "  bus_for_portaudio,\n"
             ")\n"
         )
@@ -1046,6 +1074,8 @@ def render_rastatime_liq(
     crossfade_duration: float = DEFAULT_CROSSFADE_DURATION,
     crossfade_fade_seconds: float = DEFAULT_CROSSFADE_FADE_SECONDS,
     local_output_enabled: bool = DEFAULT_LOCAL_OUTPUT_ENABLED,
+    local_output_device_id: Optional[int] = None,
+    local_output_device_label: str = "",
     harbor_main_password: Optional[str] = None,
     harbor_show_password: Optional[str] = None,
     harbor_main_port: int = DEFAULT_HARBOR_MAIN_PORT,
@@ -1151,7 +1181,11 @@ def render_rastatime_liq(
         )
         .replace(
             "${LOCAL_OUTPUT_BLOCK}",
-            _render_local_output_block(local_output_enabled),
+            _render_local_output_block(
+                local_output_enabled,
+                local_output_device_id,
+                local_output_device_label,
+            ),
         )
         .replace("${HARBOR_INPUTS_BLOCK}", harbor_block)
         .replace("${WEBSTREAM_INPUT_BLOCK}", webstream_block)
@@ -1173,6 +1207,8 @@ def write_rastatime_liq(
     crossfade_duration: float = DEFAULT_CROSSFADE_DURATION,
     crossfade_fade_seconds: float = DEFAULT_CROSSFADE_FADE_SECONDS,
     local_output_enabled: bool = DEFAULT_LOCAL_OUTPUT_ENABLED,
+    local_output_device_id: Optional[int] = None,
+    local_output_device_label: str = "",
     harbor_main_password: Optional[str] = None,
     harbor_show_password: Optional[str] = None,
     harbor_main_port: int = DEFAULT_HARBOR_MAIN_PORT,
@@ -1216,6 +1252,8 @@ def write_rastatime_liq(
         crossfade_duration=crossfade_duration,
         crossfade_fade_seconds=crossfade_fade_seconds,
         local_output_enabled=local_output_enabled,
+        local_output_device_id=local_output_device_id,
+        local_output_device_label=local_output_device_label,
         harbor_main_password=harbor_main_password,
         harbor_show_password=harbor_show_password,
         harbor_main_port=harbor_main_port,

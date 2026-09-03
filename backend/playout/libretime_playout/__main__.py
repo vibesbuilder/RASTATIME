@@ -48,7 +48,7 @@ import os
 import sys
 import time
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 import requests
 
@@ -243,6 +243,88 @@ def _read_harbor_credentials() -> tuple:
         return ("", "")
 
 
+def _resolve_local_output_device() -> Tuple[Optional[int], str]:
+    """
+    Resolve the operator's **Main Output** setting to a PortAudio
+    device index for ``output.portaudio``.
+
+    RASTATIME 2026-09-03 — before this, Settings → Local Machine →
+    Main Output had no effect on the Liquidsoap local monitor: the
+    value was stored and pushed to playout, but
+    ``LiquidsoapPlayoutEngine.set_audio_device`` is a no-op, and the
+    .liq was rendered without any device argument.  The setting
+    promised something it did not deliver.
+
+    Returns ``(device_index, label)``.  ``(None, "")`` means "render
+    without a device argument", i.e. keep the previous OS-default
+    behaviour — the safe fallback for every failure mode here
+    (no setting, unresolvable name, nothing openable).
+
+    Never raises: a monitor-device problem must not stop the playout
+    service from starting.
+    """
+    try:
+        from libretime_api.soundcard.models import SoundcardSettings  # noqa: PLC0415
+        row = SoundcardSettings.get_settings()
+        stable_id = (row.main_output_id or "").strip()
+        name = (row.main_output_name or "").strip()
+    except Exception as exc:  # pylint: disable=broad-exception-caught
+        logger.warning(
+            "Could not read the Main Output setting (%s) — the local "
+            "monitor falls back to the OS-default endpoint.", exc,
+        )
+        return (None, "")
+
+    if not stable_id and not name:
+        logger.info(
+            "No Main Output configured — local monitor uses the "
+            "OS-default endpoint."
+        )
+        return (None, "")
+
+    # Older rows may carry only the GUID; recover the friendly name via
+    # the device manager, because PortAudio matches on names, not on
+    # Windows endpoint IDs.
+    if not name and stable_id:
+        try:
+            import audio.soundcard._registry as _reg  # noqa: PLC0415
+            from audio.soundcard.interface import AudioDeviceKind  # noqa: PLC0415
+            mgr = _reg.default_manager
+            if mgr is not None:
+                dev = mgr.find_device_by_id_or_name(
+                    stable_id, "", AudioDeviceKind.OUTPUT
+                )
+                if dev is not None:
+                    name = dev.name
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            logger.debug("Main Output name lookup failed: %s", exc)
+
+    if not name:
+        logger.warning(
+            "Main Output %r has no friendly name stored — cannot match it "
+            "against PortAudio.  Re-save the Main Output picker in "
+            "Settings → Local Machine.  Falling back to the OS-default "
+            "endpoint.", stable_id,
+        )
+        return (None, "")
+
+    try:
+        from libretime_playout.engine.portaudio_output import (  # noqa: PLC0415
+            resolve_output_device,
+        )
+        resolved = resolve_output_device(name)
+    except Exception as exc:  # pylint: disable=broad-exception-caught
+        logger.warning(
+            "Main Output resolve raised %s — falling back to the "
+            "OS-default endpoint.", exc,
+        )
+        return (None, "")
+
+    if resolved is None:
+        return (None, "")
+    return (resolved.index, resolved.label)
+
+
 def _render_rastatime_liq_at_startup(stream_outputs: List[Dict]) -> None:
     """
     Render ``rastatime.liq`` from the operator-configured environment +
@@ -350,6 +432,17 @@ def _render_rastatime_liq_at_startup(stream_outputs: List[Dict]) -> None:
             hourly["folder"], hourly["format"], hourly["bitrate"],
         )
 
+    # Main Output (Settings -> Local Machine) -> PortAudio device index.
+    # Resolved here, at render time, because output.portaudio takes the
+    # device as a script argument; a later change therefore needs a
+    # PLAYOUT restart (the UI offers a button for it).
+    if local_output_enabled:
+        local_output_device_id, local_output_device_label = (
+            _resolve_local_output_device()
+        )
+    else:
+        local_output_device_id, local_output_device_label = (None, "")
+
     try:
         changed = write_rastatime_liq(
             config_path,
@@ -360,6 +453,8 @@ def _render_rastatime_liq_at_startup(stream_outputs: List[Dict]) -> None:
             crossfade_duration=crossfade,
             crossfade_fade_seconds=crossfade_fade,
             local_output_enabled=local_output_enabled,
+            local_output_device_id=local_output_device_id,
+            local_output_device_label=local_output_device_label,
             harbor_main_password=harbor_main_pwd or None,
             harbor_show_password=harbor_show_pwd or None,
             hourly_recording_enabled=hourly["enabled"],

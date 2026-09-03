@@ -7,7 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **„Main Output" wirkt jetzt tatsächlich (2026-09-03)** — Die
+  Geräteauswahl unter Settings → Local Machine war für die
+  Liquidsoap-Engine wirkungslos: Der Wert wurde gespeichert und an
+  Playout gepusht, dort aber von einem No-Op
+  (`LiquidsoapPlayoutEngine.set_audio_device`) verworfen, und
+  `output.portaudio` wurde ohne Geräteargument gerendert — der lokale
+  Monitor hing also immer am Windows-Standardgerät.  Das UI versprach
+  eine Funktion, die es nicht hatte.  Neu: `engine/portaudio_output.py`
+  löst den Endpunkt zu einem PortAudio-Index auf und rendert ihn als
+  `device_id=` in die `.liq`.  Die Auflösung **probiert die Host-APIs
+  durch** statt eine zu unterstellen — auf der Studio-Maschine
+  gemessen öffnet der Tascam-US-16x08-Ausgang **nur** über WDM-KS
+  (WASAPI/MME/DirectSound scheitern), ein USB-Headset dagegen über
+  MME; eine Regel statt einer Probe hätte je ein Gerät stillschweigend
+  kaputtgemacht.  Reihenfolge WASAPI → MME → DirectSound → WDM-KS
+  (letzteres exklusiv, daher nur als Rückfall).  Findet sich kein
+  öffnbarer Kandidat, bleibt es beim OS-Standard — mit deutlichem
+  Log-Eintrag statt stiller Stille.  Zusätzlich findet die Zuordnung
+  die WDM-KS-Variante über einen Hardware-Token (`US-16x08`), weil der
+  Treiber sie anders benennt als den Windows-Anzeigenamen.
+
 ### Added
+
+- **„Jetzt anwenden"-Knopf für Main Output (2026-09-03)** — Das
+  gewählte Gerät wird beim PLAYOUT-Start in die `.liq` kompiliert und
+  von Liquidsoap erst beim eigenen Start gelesen; ein Wechsel braucht
+  also beide Dienste neu.  Automatischer Neustart beim Speichern wäre
+  falsch (er unterbräche den Stream ohne Vorwarnung), daher ein
+  bewusster Knopf mit Bestätigung unter der Geräteauswahl
+  (`preference/restart-audio-chain`, PLAYOUT zuerst, dann LIQUIDSOAP).
+  Der Endpunkt liegt bewusst in der Legacy-PHP-Schicht hinter Login +
+  CSRF und **nicht** an der Django-API: Die bindet `0.0.0.0:8765` ohne
+  Authentifizierung, ein Neustart-Endpunkt dort wäre für jeden im Netz
+  erreichbar.
 
 - **Line-In-Kanalwahl auf Mehrkanal-Interfaces (2026-08-31,
   `e91ae9b`)** — Ein Line-In wählt jetzt, **welche Kanäle** seines

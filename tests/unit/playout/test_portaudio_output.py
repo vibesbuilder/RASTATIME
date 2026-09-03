@@ -1,0 +1,226 @@
+"""
+Tests for the Main-Output → PortAudio device resolution
+(``libretime_playout.engine.portaudio_output``) and for the
+``output.portaudio`` device argument in the rendered rastatime.liq.
+
+Background: Settings → Local Machine → **Main Output** used to have no
+effect on the Liquidsoap local monitor — the value was stored, pushed
+to playout, and dropped by a no-op ``set_audio_device``, while the
+.liq rendered ``output.portaudio`` without any device argument.
+
+The resolution deliberately *probes* candidates instead of picking a
+host API by rule.  Measured on the studio machine 2026-09-03: the
+Tascam US-16x08 output opens ONLY via WDM-KS (WASAPI/MME/DirectSound
+all fail), while the Jabra headset opens via MME.  These tests encode
+that reality with a fake PortAudio so it cannot silently regress.
+"""
+
+import pytest
+
+from libretime_playout.engine.portaudio_output import (
+    HOST_API_PREFERENCE,
+    _hardware_tokens,
+    _host_api_rank,
+    find_output_candidates,
+    resolve_output_device,
+)
+from libretime_playout.liquidsoap_config import _render_local_output_block
+
+
+# --------------------------------------------------------------------
+# Fake PortAudio ("sounddevice") — mirrors the real studio machine.
+# --------------------------------------------------------------------
+
+#: Host-API table as PortAudio reports it on Windows.
+_APIS = [
+    {"name": "MME"},
+    {"name": "Windows DirectSound"},
+    {"name": "Windows WASAPI"},
+    {"name": "Windows WDM-KS"},
+]
+
+#: Device table taken from the real machine (2026-09-03).  Note the
+#: WDM-KS entry for the Tascam carries the *driver's* wording, not the
+#: Windows friendly name — that is the whole reason for the
+#: hardware-token matching pass.
+_DEVICES = [
+    {"name": "Mikrofon (US-16x08)", "hostapi": 0,
+     "max_input_channels": 16, "max_output_channels": 0},
+    {"name": "Jabra-Lautsprecher (Jabra EVOLV", "hostapi": 0,
+     "max_input_channels": 0, "max_output_channels": 2},
+    {"name": "Tascam-Lautsprecher (US-16x08)", "hostapi": 0,
+     "max_input_channels": 0, "max_output_channels": 8},
+    {"name": "Tascam-Lautsprecher (US-16x08)", "hostapi": 1,
+     "max_input_channels": 0, "max_output_channels": 8},
+    {"name": "Tascam-Lautsprecher (US-16x08)", "hostapi": 2,
+     "max_input_channels": 0, "max_output_channels": 2},
+    {"name": "Lautsprecher (US-16x08 Audio)", "hostapi": 3,
+     "max_input_channels": 0, "max_output_channels": 8},
+]
+
+TASCAM_MME, TASCAM_DS, TASCAM_WASAPI, TASCAM_WDMKS = 2, 3, 4, 5
+JABRA_MME = 1
+
+
+class FakeStream:
+    def __init__(self, ok):
+        if not ok:
+            raise RuntimeError("Unanticipated host error")
+
+    def start(self):
+        pass
+
+    def stop(self):
+        pass
+
+    def close(self):
+        pass
+
+
+class FakeSD:
+    """Minimal sounddevice stand-in; ``openable`` are the indices that
+    actually accept an output open."""
+
+    def __init__(self, openable):
+        self.openable = set(openable)
+        self.attempted = []
+
+    def query_hostapis(self):
+        return _APIS
+
+    def query_devices(self):
+        return _DEVICES
+
+    def RawOutputStream(self, **kwargs):  # noqa: N802 (sounddevice API)
+        index = kwargs["device"]
+        self.attempted.append(index)
+        return FakeStream(index in self.openable)
+
+
+@pytest.fixture
+def fake_sd_factory(monkeypatch):
+    """Install a FakeSD so ``resolve_output_device`` imports it."""
+
+    def _install(openable):
+        fake = FakeSD(openable)
+        import sys
+        monkeypatch.setitem(sys.modules, "sounddevice", fake)
+        return fake
+
+    return _install
+
+
+# --------------------------------------------------------------------
+# Candidate discovery
+# --------------------------------------------------------------------
+
+def test_hardware_tokens_extract_model_not_generic_words():
+    tokens = _hardware_tokens(["Tascam-Lautsprecher (US-16x08)"])
+    assert "us-16x08" in tokens
+    # "Audio"/"Lautsprecher" must not become tokens or they'd match
+    # half the system.
+    assert all(any(c.isdigit() for c in t) for t in tokens)
+
+
+def test_host_api_rank_orders_wdmks_last():
+    ranks = [_host_api_rank(api) for api in
+             ("Windows WASAPI", "MME", "Windows DirectSound", "Windows WDM-KS")]
+    assert ranks == sorted(ranks)
+    assert _host_api_rank("Windows WDM-KS") == len(HOST_API_PREFERENCE) - 1
+
+
+def test_candidates_include_wdmks_variant_via_hardware_token():
+    """The Tascam's WDM-KS entry is named differently and would be
+    missed by friendly-name matching alone — yet it is the only one
+    that opens on the real machine."""
+    found = find_output_candidates("Tascam-Lautsprecher", FakeSD([]))
+    indices = [i for i, _, _ in found]
+    assert TASCAM_WDMKS in indices, "WDM-KS variant must be discovered"
+    assert set(indices) == {TASCAM_MME, TASCAM_DS, TASCAM_WASAPI, TASCAM_WDMKS}
+
+
+def test_candidates_are_ordered_least_invasive_first():
+    found = find_output_candidates("Tascam-Lautsprecher", FakeSD([]))
+    assert found[0][0] == TASCAM_WASAPI, "WASAPI is tried first"
+    assert found[-1][0] == TASCAM_WDMKS, "exclusive WDM-KS is the last resort"
+
+
+def test_candidates_ignore_input_only_devices():
+    found = find_output_candidates("Mikrofon", FakeSD([]))
+    assert found == [], "a capture-only endpoint is not an output candidate"
+
+
+# --------------------------------------------------------------------
+# Resolution with probing
+# --------------------------------------------------------------------
+
+def test_resolve_falls_through_to_wdmks_when_others_refuse(fake_sd_factory):
+    """The real Tascam case: only WDM-KS opens."""
+    fake = fake_sd_factory([TASCAM_WDMKS])
+    resolved = resolve_output_device("Tascam-Lautsprecher")
+    assert resolved is not None
+    assert resolved.index == TASCAM_WDMKS
+    assert "WDM-KS" in resolved.host_api
+    assert resolved.probed is True
+    # It must have actually tried the cheaper APIs first.
+    assert fake.attempted[0] == TASCAM_WASAPI
+
+
+def test_resolve_prefers_first_opening_candidate(fake_sd_factory):
+    """The Jabra case: MME opens, so we stop there and never reach
+    the exclusive WDM-KS path."""
+    fake = fake_sd_factory([JABRA_MME])
+    resolved = resolve_output_device("Jabra-Lautsprecher")
+    assert resolved is not None
+    assert resolved.index == JABRA_MME
+
+
+def test_resolve_returns_none_when_nothing_opens(fake_sd_factory):
+    """Falling back to None means 'render without device' — the safe
+    OS-default behaviour, never a crash."""
+    fake_sd_factory([])
+    assert resolve_output_device("Tascam-Lautsprecher") is None
+
+
+def test_resolve_returns_none_for_unknown_name(fake_sd_factory):
+    fake_sd_factory([TASCAM_WDMKS])
+    assert resolve_output_device("Nicht Vorhanden") is None
+
+
+def test_resolve_without_probe_takes_best_ranked(fake_sd_factory):
+    fake = fake_sd_factory([])
+    resolved = resolve_output_device("Tascam-Lautsprecher", probe=False)
+    assert resolved is not None
+    assert resolved.index == TASCAM_WASAPI
+    assert resolved.probed is False
+    assert fake.attempted == [], "probe=False must not open anything"
+
+
+# --------------------------------------------------------------------
+# Rendering
+# --------------------------------------------------------------------
+
+def test_render_emits_device_id_when_resolved():
+    block = _render_local_output_block(True, 28, "Lautsprecher [WDM-KS]")
+    assert "device_id=28," in block
+    assert "Lautsprecher [WDM-KS]" in block, "label helps the operator read the .liq"
+
+
+def test_render_omits_device_id_when_unresolved():
+    block = _render_local_output_block(True, None, "")
+    assert "device_id" not in block
+    assert "OS-default" in block
+
+
+def test_render_disabled_has_no_output_call():
+    block = _render_local_output_block(False, 28, "x")
+    assert "output.portaudio(" not in block
+    assert "device_id" not in block
+
+
+def test_render_label_cannot_break_out_of_the_comment():
+    """A device label is operator-controlled text landing in the .liq;
+    a newline in it would inject script lines."""
+    block = _render_local_output_block(True, 3, "evil\nshutdown()")
+    assert "\nshutdown()" not in block
+    assert "device_id=3," in block

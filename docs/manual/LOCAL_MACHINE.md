@@ -102,6 +102,49 @@ the default audio output. Useful when:
 > audio output module with the device ID set per output. See
 > ARCHITECTURE §9.
 
+### Applying a change — "Apply now"
+
+Saving stores the device; it does **not** move the local
+monitor yet. The playout engine compiles the chosen device
+into its Liquidsoap script when the service starts, and
+Liquidsoap reads that script only when *it* starts. Applying
+a change therefore needs both services restarted, in that
+order.
+
+Rather than restarting silently on Save — which would drop the
+public stream without warning — the page offers a deliberate
+button under the picker:
+
+**Apply now (restarts audio chain)** — restarts
+RASTATIME-PLAYOUT (which re-renders the script with the new
+device) and then RASTATIME-LIQUIDSOAP (which loads it).
+
+> **On-air impact.** The second restart drops the Icecast
+> source connections for a few seconds; listeners hear a short
+> gap. Do it between shows. The button asks for confirmation
+> first.
+
+> **How the device is matched.** PortAudio lists the same
+> endpoint once per Windows host API (MME, DirectSound,
+> WASAPI, WDM-KS), and which copy actually opens is
+> device-specific — measured on the studio machine, the Tascam
+> US-16x08 output opens **only** via WDM-KS, while a USB
+> headset opens via MME. RASTATIME therefore *probes* the
+> candidates at startup, least-invasive first, and uses the
+> first one that really opens. The result is written into the
+> script as `device_id=` plus a comment naming the endpoint.
+> If no candidate opens, RASTATIME falls back to the
+> OS-default endpoint and says so in the playout log.
+
+> **Using one interface for input and output.** A multi-channel
+> interface can serve as Main Output *and* as a Line-In source
+> at the same time (verified on the US-16x08: WDM-KS output
+> alongside a 16-channel MME capture). Be aware that a small
+> amount of the output signal couples into the capture
+> channels — measured at roughly 45–65 dB below the output
+> level, far too little to cause feedback, but a faint echo of
+> the programme can sit under a very quiet line-in signal.
+
 ---
 
 ## 3. Soundcard — Input Devices
