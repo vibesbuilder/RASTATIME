@@ -1650,6 +1650,51 @@ sauber beendet (Feeder-Count 0 verifiziert).  Restpegel-Hinweis:
 Ch4 rauscht ~12 dB mehr als Ch3 (kanalspezifisch, auch bei
 getrenntem Eingang so — unkritisch, Nutzsignal lag auf Ch3).
 
+### 🟡 Tascam als Sende-/Monitor-Ausgang ohne PortAudio-Blocking (evaluiert 2026-09-03, wartet auf Go)
+
+**Status:** Evaluiert, Empfehlung Go *falls* der Tascam-Ausgang Teil des
+Sendewegs ist (Operator-Hinweis 2026-09-03: „viele Stationen senden
+direkt via Soundkarte"); sonst Defer.  Kein Code vor Operator-Go.
+**Ausgangslage (gemessen 2026-09-03):** Der Tascam-US-16x08-Ausgang
+lässt sich über KEINEN Weg durch die Windows-Audio-Engine öffnen —
+PortAudio (MME/DirectSound/WASAPI, blocking + callback, int16/float32,
+44,1 + 48 kHz, 2 + 8 Kanäle), libao/wmm (`waveOutOpen FAILED`), und
+sogar SDL/ffplay als „normale App" (`WASAPI can't initialize audio
+client`).  Registry: aktiver Render-Endpunkt `{97af73f9…}` state=1,
+Mix-Format 48000/24bit/stereo, FxProperties LEER.  Vermutlich
+Windows-seitig defekter Render-Endpunkt (Operator hörte schon am
+2026-09-01 nichts, als der Tascam Windows-Default war) → nach dem
+geplanten Reboot 5-Minuten-Recheck.  **Nur WDM-KS (kernel streaming,
+exklusiv, NUR Callback-Modus) funktioniert.**  Liquidsoaps
+`output.portaudio` nutzt die blockierende API → am Tascam unbrauchbar;
+auch bei `settings.frame.audio.samplerate := 48000` („Invalid device").
+**Prototyp bewiesen — `output.external` + eigener Output-Feeder
+(sounddevice, WDM-KS, Callback; Spiegelbild des linein_feeder):**
+- Audio fließt in Echtzeit (455 323 Frames / 10,3 s @ 44,1 kHz).
+- Mit 300 ms Vorpuffer + blocksize 2048: 8 Startup-Underruns, danach
+  **konstant 0** über 15 s.
+- **Feeder abgeschossen:** Liquidsoap überlebt, `output.file`
+  (Icecast-Stellvertreter) läuft weiter, Feeder wird per
+  `reopen_on_error` automatisch neu gestartet (Supervision liegt in
+  Liquidsoap, kein Python-Watchdog nötig).
+- **Feeder hängt (liest stdin nicht mehr):** UNGESCHÜTZT steht der
+  Icecast-Stellvertreter (0 B in 8 s) — die Pipe blockiert die Clock.
+  MIT `buffer(buffer=2.0)` + `clock.assign_new(sync="cpu")` (dasselbe
+  Muster wie der PortAudio-Block) läuft er ungestört weiter.  →
+  **Isolation ist Pflicht.**
+**Optionen:** (A) output.external-Feeder wie oben, ~150 LoC Feeder +
+~60 Renderer + ~40 Resolver (Callback-Probe für den Feeder-Pfad,
+Blocking-Probe für portaudio — Probe-Modus MUSS zum Konsumenten
+passen, Lehre aus dem Ausfall) + Tests + Doku ×4; ~6–8 h, ~1–1,5 Tage
+mit Live-Fenster.  Exklusives KS ist für einen Sendeweg ein Vorteil
+(bit-transparent, kein Windows-Mixer, keine Fremd-App kann
+einspeisen).  Latenz ≈ Vorpuffer + buffer() (heute 2 s am Monitor-
+Block; für Sendeweg auf ~0,5 s tunen).  (B) Engine-Pfad heilt nach
+Reboot → evtl. plain output.portaudio via MME/DS wie beim Jabra;
+unsicher, 5-min-Check nach Reboot.  (C) PortAudio/Liquidsoap neu bauen
+→ No-Go (Zuverlässigkeit vor Modernität).
+**Mess-Skripte:** Scratchpad `out_feeder*.py`, `ext*.liq`, `hang*.liq`.
+
 ### 💡 Line-In: Kanalwahl auch im Library-Schnell-Editor (Option A)
 
 **Status:** Idea — Operator-Entscheid 2026-09-01: „vorerst Option B,
