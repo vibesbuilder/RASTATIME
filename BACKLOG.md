@@ -11,10 +11,58 @@
 
 ---
 
+## 📋 Arbeitsreihenfolge (Operator-Festlegung 2026-09-02)
+
+Verbindliche Abarbeitungsreihenfolge, vom Operator am 2026-09-02
+festgelegt.  Jeder Punkt bekommt vor Implementierung die
+6-Punkte-Evaluierung + explizites Go (siehe ASSISTANT.local.md).
+
+| # | Punkt | Sektion |
+|---|-------|---------|
+| 1 | Tascam-Ausgänge als lokales Monitoring | „Lokales Monitoring zurück auf die Tascam-Ausgänge" |
+| 2 | Crossfade-Paket (Per-Track + Settings-Wiring) | zwei Items: „Per-Track Crossfade" + „Frontend-Settings Fade" |
+| 3 | CSRF-Token-Rotation entschärfen | Known Issues |
+| 4 | `getSqlTypes()`-Cast (DATETIME → PG) | Known Issues (latent) |
+| 5 | Show-Shift bei Overbook | Aktive Items |
+| 6 | Seamless Bus-Mix | Aktive Items (Status prüfen — evtl. durch Liquidsoap-Migration erledigt) |
+| 7 | Storage-Umbau (Root → D:\stor) | **entblockt — Platte geliefert 2026-09-02** |
+| 8 | ICY-Metadata-Forwarding | Ideen |
+| 9 | Recording-Loss bei Latency-Catchup | Playout/Liquidsoap |
+| 10 | Backup/Restore via UI | Aktive Items |
+| 11 | Pypo-NSSM-Resilience | Playout/Liquidsoap |
+| 12 | Widgets | Aktive Items (in Arbeit) |
+| 13 | JavaScript-Stack-Modernisierung | Technical Debt (in Arbeit) |
+| 14 | **Testplan erstellen** | neu 2026-09-02 — siehe unten |
+| 15 | Legacy-mpv-Code löschen | Aktive Items |
+| 16 | Internet-Erreichbarkeit | Ideen |
+
+---
+
 ## 🎯 Aktive Backlog-Items (warten auf Operator-Go)
 
 Diese sind technisch evaluiert, empfohlen, und können starten sobald
 der Operator das Signal gibt.
+
+### 💡 Testplan erstellen (neu 2026-09-02, Reihenfolge-Punkt 14)
+
+**Status:** Idea — Operator-Wunsch 2026-09-02, Umfang noch zu klären.
+**Kontext:** Bisher wird punktuell getestet (pytest-Suiten für
+playout/audio/api, plus manuelle Live-Verifikation nach UI-Commits
+laut ASSISTANT.local.md).  Was fehlt, ist ein **zusammenhängender,
+dokumentierter Testplan** — insbesondere für die Dinge, die nur
+live prüfbar sind (Sendekette, Line-In, Recording, Show-Übergänge).
+**Vor der Evaluierung mit dem Operator zu klären:**
+- Zielgruppe: nur Operator-Selbsttest, oder übergabefähig für Dritte?
+- Umfang: reine Abnahme-Checkliste (manuell) vs. automatisierte
+  Regressionsschicht vs. beides?
+- Auslöser: vor jedem Release / nach Maschinenwechsel / periodisch?
+- Soll die Live-Verifikations-Konvention aus ASSISTANT.local.md darin
+  aufgehen?
+**Erfahrungswert aus der Line-In-Abnahme (2026-09-01/02):** die
+teuersten Fehler waren NICHT im Code (Voice-Clarity-APO, Erdschleife,
+verklemmter Capture-Handle).  Ein guter Testplan braucht daher auch
+**Umfeld-Checks** (Windows-Audio-Effekte aus, Pegel/Rauschabstand
+messbar, Geräte-IDs aktuell), nicht nur Software-Tests.
 
 ### ✅ Line-In: Kanal-Auswahl auf Multi-Input-Devices (DONE 2026-08-31, `e91ae9b`)
 
@@ -522,7 +570,11 @@ Cutover erst nach 1–2 Wochen A/B-Vergleich.
 
 ### 🟡 Storage-Struktur-Bereinigung (Root → D:\stor + owner-id weg)
 
-**Status:** ERNEUT DEFER (Operator-Entscheid 2026-08-26 bei der Migration):
+**Status:** 🟢 **ENTBLOCKT 2026-09-02** — die zusätzliche Festplatte ist
+geliefert (Operator-Meldung 2026-09-02); als Reihenfolge-Punkt 7
+eingeplant.  Vor Umsetzung: 6-Punkte-Evaluierung + Wartungsfenster
+vereinbaren (Sendepause nötig), Backup vorher verifizieren.
+**(Vorgeschichte:)** ERNEUT DEFER (Operator-Entscheid 2026-08-26 bei der Migration):
 die neue Maschine hat **keine zweite SSD/D:** — Medien bleiben unter
 `C:\RASTATIME\media`, MIGRATION.md §4.4/§4.5 wurden übersprungen (kein
 MediaService-Patch, kein cc_files-Rewrite; 340/340 DB-Pfade auf Disk
