@@ -138,7 +138,9 @@ def _hardware_tokens(names: Sequence[str]) -> List[str]:
     variants (``"Tascam-Lautsprecher (US-16x08)"``) but WDM-KS uses
     the driver's own wording (``"Lautsprecher (US-16x08 Audio)"``).
     Matching on the friendly name alone would therefore never find the
-    WDM-KS copy — which is exactly the one that works for the Tascam.
+    WDM-KS copy, so a device that only answers on WDM-KS would be
+    missed.  (WDM-KS turned out to be unusable for output anyway — no
+    blocking support — but the discovery must still be complete.)
 
     So we pull the hardware model out of the parenthesis (``US-16x08``)
     and use it as a second matching pass.  Only tokens that look like a

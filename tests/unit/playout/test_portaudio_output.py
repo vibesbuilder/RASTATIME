@@ -152,8 +152,8 @@ def test_host_api_rank_orders_wdmks_last():
 
 def test_candidates_include_wdmks_variant_via_hardware_token():
     """The Tascam's WDM-KS entry is named differently and would be
-    missed by friendly-name matching alone — yet it is the only one
-    that opens on the real machine."""
+    missed by friendly-name matching alone; discovery must still be
+    complete so every host API gets its chance."""
     found = find_output_candidates("Tascam-Lautsprecher", FakeSD([]))
     indices = [i for i, _, _ in found]
     assert TASCAM_WDMKS in indices, "WDM-KS variant must be discovered"

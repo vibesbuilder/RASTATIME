@@ -150,7 +150,8 @@ gespeicherter Wert ist kein Beleg dafür, dass er auch benutzt wird.
 > genau den Weg, den Liquidsoap selbst nimmt — und nimmt den
 > ersten, der wirklich aufgeht. Auf der Studio-Maschine bei
 > 44,1 kHz gemessen: MME und DirectSound funktionieren für ein
-> USB-Headset, WASAPI lehnt 44,1 kHz ab und WDM-KS beherrscht
+> USB-Headset; WASAPI funktioniert, wenn das Windows-Format des
+> Endpunkts passt (siehe nächster Hinweis), und WDM-KS beherrscht
 > die blockierende API überhaupt nicht. Das Ergebnis steht als
 > `device_id=` samt Kommentar im Skript. Öffnet kein Kandidat,
 > bleibt der OS-Standard-Endpunkt aktiv, und jeder Fehlergrund

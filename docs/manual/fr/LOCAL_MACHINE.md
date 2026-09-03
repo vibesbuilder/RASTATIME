@@ -110,9 +110,10 @@ soit utilisée.
 > candidats au démarrage — via l'API **bloquante** de PortAudio,
 > celle qu'utilise Liquidsoap — et retient le premier qui
 > s'ouvre vraiment. Mesuré à 44,1 kHz sur la machine du studio :
-> MME et DirectSound fonctionnent pour un casque USB, tandis que
-> WASAPI refuse 44,1 kHz et que WDM-KS ne gère pas du tout l'API
-> bloquante. Le résultat est inscrit dans le script sous forme de
+> MME et DirectSound fonctionnent pour un casque USB ; WASAPI
+> fonctionne lorsque le format Windows du point de terminaison
+> correspond (voir la note suivante), et WDM-KS ne gère pas du tout
+> l'API bloquante. Le résultat est inscrit dans le script sous forme de
 > `device_id=` avec un commentaire. Si aucun candidat ne s'ouvre,
 > RASTATIME conserve le point de terminaison par défaut du
 > système et consigne chaque raison d'échec dans le journal.

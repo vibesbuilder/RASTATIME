@@ -139,9 +139,10 @@ saved value alone is not proof that it is in use.
 > candidates at startup — using PortAudio's **blocking** API,
 > the one Liquidsoap itself uses — and takes the first that
 > really opens. Measured at 44.1 kHz on the studio machine:
-> MME and DirectSound work for a USB headset, while WASAPI
-> rejects 44.1 kHz and WDM-KS offers no blocking support at
-> all. The result goes into the script as `device_id=` plus a
+> MME and DirectSound work for a USB headset; WASAPI works when
+> the endpoint's Windows format matches (see the next note), and
+> WDM-KS offers no blocking support at all. The result goes into
+> the script as `device_id=` plus a
 > comment naming the endpoint. If no candidate opens,
 > RASTATIME keeps the OS-default endpoint and records every
 > failure reason in the playout log.
