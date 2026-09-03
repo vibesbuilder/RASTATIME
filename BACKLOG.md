@@ -1704,6 +1704,37 @@ unsicher, 5-min-Check nach Reboot.  (C) PortAudio/Liquidsoap neu bauen
 → No-Go (Zuverlässigkeit vor Modernität).
 **Mess-Skripte:** Scratchpad `out_feeder*.py`, `ext*.liq`, `hang*.liq`.
 
+### 🟡 Boot-Race: LIQUIDSOAP startet parallel zu PLAYOUT und liest die alte .liq
+
+**Status:** Defer — Design-Entscheidung nötig (gefunden 2026-09-03 beim
+Tascam-Sendeausgang).  Kein akuter Blocker: der „Jetzt anwenden"-Knopf
+löst es jederzeit auf, und der „Aktiv"-Anzeiger macht es sichtbar.
+**Befund:** RASTATIME-PLAYOUT und RASTATIME-LIQUIDSOAP sind beide
+StartMode=Auto, DelayedAutoStart=False, ohne Dienst-Abhängigkeit.
+PLAYOUT rendert rastatime.liq erst Sekunden nach seinem Start (Django,
+DB, API); Liquidsoap liest die Datei sofort beim Start → nach einem
+Reboot läuft Liquidsoap mit dem VORHERIGEN Skript.  Jede Änderung, die
+ein Re-Rendern braucht (Main Output, Stream-Outputs, Harbor, Hourly
+Recording), wird durch einen Reboot also NICHT angewendet; PLAYOUT
+loggt nur „RESTART the RASTATIME-LIQUIDSOAP NSSM service".
+**Optionen (Trade-offs, vor Umsetzung mit Operator klären):**
+1. NSSM: LIQUIDSOAP mit DelayedAutoStart oder Abhängigkeit von PLAYOUT
+   — billig, aber nur ein Zeitpolster; die Render-Dauer ist nicht
+   garantiert (DB-Start).  Kein echtes Handshake.
+2. PLAYOUT startet LIQUIDSOAP selbst neu, wenn der Render-Inhalt sich
+   beim Start geändert hat (`changed=True`) — deterministisch; Nachteil:
+   ein automatischer Liquidsoap-Neustart ist genau die Aktion, die wir
+   beim Speichern bewusst NICHT automatisch auslösen (Stream-Abriss).
+   Beim Boot ist noch nichts on air → vertretbar, aber es braucht eine
+   Schutzlogik (nur innerhalb der ersten Minute nach Boot, nie im
+   laufenden Betrieb).
+3. Liquidsoap wartet beim Start auf ein „Render fertig"-Signal (Datei-
+   Marker/Health-Gate wie bei WORKER/PLAYOUT gegen die API) — sauberste
+   Lösung, mehr Aufwand (NSSM-Wrapper-Skript).
+**Empfehlung:** Option 2 mit Boot-Fenster-Schutz, ~2–3 h; vorher Go.
+**Bis dahin (Betriebsregel):** Nach jedem Reboot Settings → Local Machine
+→ „Aktiv"-Zeile prüfen; bei Abweichung einmal „Jetzt anwenden".
+
 ### 💡 Line-In: Kanalwahl auch im Library-Schnell-Editor (Option A)
 
 **Status:** Idea — Operator-Entscheid 2026-09-01: „vorerst Option B,
