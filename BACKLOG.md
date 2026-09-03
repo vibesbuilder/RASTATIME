@@ -19,7 +19,7 @@ festgelegt.  Jeder Punkt bekommt vor Implementierung die
 
 | # | Punkt | Sektion |
 |---|-------|---------|
-| 1 | Tascam-Ausgänge als lokales Monitoring | „Lokales Monitoring zurück auf die Tascam-Ausgänge" |
+| 1 | ✅ Tascam-Ausgänge als lokales Monitoring | **DONE 2026-09-03** (`6464b17`) — Main-Output-Setting wirkt jetzt |
 | 2 | Crossfade-Paket (Per-Track + Settings-Wiring) | zwei Items: „Per-Track Crossfade" + „Frontend-Settings Fade" |
 | 3 | CSRF-Token-Rotation entschärfen | Known Issues |
 | 4 | `getSqlTypes()`-Cast (DATETIME → PG) | Known Issues (latent) |
@@ -1469,9 +1469,26 @@ entfernt (kein „f" im sDom → Plugin band `$('input', undefined)` =
 alle Inputs der Seite neu und riss den Range-Pickern die
 Keyup-Listener ab).
 
-### 🟡 Lokales Monitoring zurück auf die Tascam-Ausgänge
+### ✅ Lokales Monitoring / Main-Output-Setting (DONE 2026-09-03, `6464b17`)
 
-**Status:** Defer — Operator-Wunsch 2026-09-01 („am liebsten
+**Status:** ERLEDIGT — Reihenfolge-Punkt 1.  Das Main-Output-Setting
+wirkt jetzt tatsächlich: `engine/portaudio_output.py` löst den
+Windows-Endpunkt zu einem PortAudio-Index auf (probiert die Host-APIs
+durch, WASAPI → MME → DirectSound → WDM-KS, Hardware-Token-Matching für
+die anders benannte WDM-KS-Variante) und rendert ihn als `device_id=`
+in die `.liq`.  Kein Kandidat öffnbar → OS-Default + lauter Log-Eintrag.
+Anwenden per bewusstem, bestätigtem Knopf „Jetzt anwenden"
+(`preference/restart-audio-chain`: PLAYOUT zuerst, dann LIQUIDSOAP) —
+bewusst NICHT automatisch beim Speichern (Stream-Abriss ohne Vorwarnung)
+und bewusst NICHT an der Django-API (bindet `0.0.0.0` ohne Auth).
+**Live verifiziert:** Jabra → PortAudio-Index 4 (MME), `device_id=4` in
+der gerenderten `.liq`, `liquidsoap --check` grün, 14 neue Tests,
+keine Regression (37 Fehler auch auf Baseline).
+Damit ist auch der ursprüngliche Tascam-Wunsch erfüllt — Tascam als
+Main Output ist jetzt einfach eine Auswahl im Picker.
+
+**(Ursprünglicher Eintrag zur Historie:)**
+**Status (alt):** Defer — Operator-Wunsch 2026-09-01 („am liebsten
 Tascam-Ausgänge als Output"); Interim: Windows-Default-Ausgabe =
 Jabra (entspricht dem konfigurierten Main-Output-Setting).
 **Hintergrund (Messung 2026-09-01):** Der Tascam-WDM-Treiber ist
