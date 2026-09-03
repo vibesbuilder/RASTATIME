@@ -34,11 +34,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   durch** statt eine zu unterstellen, und zwar über PortAudios
   **blockierende** API — genau den Weg, den Liquidsoap selbst nimmt.
   Bei 44,1 kHz gemessen: MME und DirectSound funktionieren fürs
-  USB-Headset; WASAPI lehnt 44,1 kHz ab, WDM-KS kann keine
-  blockierende Ausgabe.  Der **Tascam-Ausgang wird von jeder Host-API
-  abgelehnt** und ist als lokaler Monitor mit diesem Stack nicht
-  verwendbar — die Auswahl fällt dann auf den OS-Standard zurück, mit
-  Log-Eintrag je Fehlgrund statt stiller Stille.  Zusätzlich findet die Zuordnung
+  USB-Headset; WDM-KS kann keine blockierende Ausgabe.  **Tascam:**
+  Solange das Windows-Mix-Format des Endpunkts auf 48 kHz stand, lehnte
+  ihn jede Host-API ab (WASAPI shared verlangt exakt die Mix-Rate) —
+  das sah nach totem Gerät aus.  Nach Umstellung des Endpunkt-Formats
+  auf **44,1 kHz** (Windows-Sound → Erweitert) öffnet WASAPI blockierend,
+  Liquidsoap treibt den Tascam als Sendeausgang, Line-In-Aufnahme am
+  selben Interface und Fremd-Apps laufen parallel (verifiziert
+  2026-09-03).  Der Resolver loggt bei „Invalid sample rate" jetzt
+  genau diesen Hinweis.  Kein Kandidat öffenbar → OS-Standard-Rückfall
+  mit Log-Eintrag je Fehlgrund statt stiller Stille.  Zusätzlich findet die Zuordnung
   die WDM-KS-Variante über einen Hardware-Token (`US-16x08`), weil der
   Treiber sie anders benennt als den Windows-Anzeigenamen.
 

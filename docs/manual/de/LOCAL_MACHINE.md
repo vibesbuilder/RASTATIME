@@ -156,16 +156,18 @@ gespeicherter Wert ist kein Beleg dafür, dass er auch benutzt wird.
 > bleibt der OS-Standard-Endpunkt aktiv, und jeder Fehlergrund
 > wird im Playout-Log vermerkt.
 
-> **Nicht jedes Ausgabegerät ist verwendbar.** Ein Gerät, das
-> Windows als Ausgang anbietet, ist hier nicht automatisch
-> nutzbar: Liquidsoap spricht PortAudio über die blockierende
-> API an, und manche Endpunkte verweigern das. Auf der
-> Studio-Maschine gemessen wird der **Tascam-US-16x08-Ausgang
-> von jeder Host-API abgelehnt** und kann daher nicht als
-> lokaler Monitor dienen — die Einstellung fällt auf den
-> OS-Standard zurück und vermerkt das im Log. Als
-> Line-In-Aufnahmequelle funktioniert dasselbe Interface sehr
-> wohl; nur die Ausgaberichtung steht nicht zur Verfügung.
+> **Das Windows-Format des Geräts muss 44,1 kHz sein.** Liquidsoap
+> läuft mit 44,1 kHz, und WASAPI im Shared-Modus verlangt exakt die
+> eingestellte Mix-Rate des Endpunkts. Ein Gerät, dessen Windows-
+> Standardformat auf 48 kHz steht, wird von jeder Host-API abgelehnt
+> und wirkt tot — gemessen am Tascam US-16x08, der unbrauchbar war
+> und in dem Moment funktionierte, als sein Format auf 44,1 kHz
+> gestellt wurde (Windows-Sound → der Ausgang → Erweitert →
+> Standardformat). Das Playout-Log verweist bei einer abgelehnten
+> Abtastrate genau auf diese Korrektur. Eine Treiber-Neuinstallation
+> kann das Format zurücksetzen; die Aktiv-Zeile oben zeigt dann die
+> Abweichung. Ausgabe und Line-In-Aufnahme am selben Interface
+> laufen gleichzeitig.
 
 ---
 

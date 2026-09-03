@@ -1484,14 +1484,13 @@ und bewusst NICHT an der Django-API (bindet `0.0.0.0` ohne Auth).
 **Live verifiziert:** Jabra → PortAudio-Index 4 (MME), `device_id=4` in
 der gerenderten `.liq`, `liquidsoap --check` grün, 14 neue Tests,
 keine Regression (37 Fehler auch auf Baseline).
-**Der ursprüngliche Tascam-Wunsch ist damit NICHT erfüllt:** Der
-US-16x08-**Ausgang** wird von jeder Host-API abgelehnt, sobald man ihn
-blockierend öffnet (MME „format not supported", DirectSound-Fehler,
-WASAPI „invalid sample rate" bei 44,1 UND 48 kHz, WDM-KS „Blocking API
-not supported yet").  Liquidsoap benutzt genau diese blockierende API,
-also ist der Tascam als lokaler Monitor mit diesem Stack nicht
-verwendbar; die Auswahl landet sauber auf dem OS-Standard-Rückfall.
-Als Line-In-**Aufnahmequelle** funktioniert das Interface unverändert.
+**Tascam-Wunsch erfüllt — mit einer Vorbedingung (2026-09-03 13:30):**
+Der US-16x08-Ausgang lehnte jede Host-API ab, solange sein Windows-
+Mix-Format auf 48 kHz stand (WASAPI shared verlangt exakt die Mix-Rate,
+Liquidsoap läuft auf 44,1).  Nach Umstellung auf **44,1 kHz** öffnet
+WASAPI blockierend und Liquidsoap treibt den Tascam als Sendeausgang;
+Line-In-Aufnahme am selben Interface läuft parallel.  Details im
+Eintrag „Tascam als Sende-/Monitor-Ausgang" weiter unten.
 **Teures Learning (Sendeausfall 2026-09-03):** Die erste Probe testete
 im Callback-Modus, meldete WDM-KS als tauglich → Liquidsoap starb beim
 Geräte-Öffnen und riss die Icecast-Ausgänge mit.  `liquidsoap --check`
@@ -1652,9 +1651,19 @@ getrenntem Eingang so — unkritisch, Nutzsignal lag auf Ch3).
 
 ### 🟡 Tascam als Sende-/Monitor-Ausgang ohne PortAudio-Blocking (evaluiert 2026-09-03, wartet auf Go)
 
-**Status:** Evaluiert, Empfehlung Go *falls* der Tascam-Ausgang Teil des
-Sendewegs ist (Operator-Hinweis 2026-09-03: „viele Stationen senden
-direkt via Soundkarte"); sonst Defer.  Kein Code vor Operator-Go.
+**Status:** ✅ **ERLEDIGT über Option B (2026-09-03, 13:30)** — Ursache
+war das Windows-Mix-Format des Render-Endpunkts (48 kHz/24 bit).
+Operator stellte es auf **44,1 kHz** um → WASAPI öffnet blockierend,
+Resolver löst `Tascam-Lautsprecher [WASAPI] idx 18` auf, Produktions-
+Rendering läuft stabil, hörbarer Testton läuft, **Koexistenz bewiesen**
+(Liquidsoap→Tascam + Line-In-Feeder MME-16ch-Capture vom selben Gerät +
+ffplay parallel).  Kein Reboot nötig; Option A (unten) bleibt als
+dokumentierter Notfallplan, wird NICHT gebaut.  **Betriebs-Lore:** Das
+Endpunkt-Format muss 44,1 kHz bleiben (Liquidsoap-Framerate); springt es
+(Treiber-Neuinstallation!) auf 48 kHz zurück, fällt der Ausgang auf
+OS-Default, der Resolver loggt den Hinweis, der „Aktiv"-Anzeiger zeigt
+die Abweichung.  Check-Skript: `C:/Temp/rastatime-postreboot-check.py`.
+**(Evaluierung vor der Lösung, zur Historie:)**
 **Ausgangslage (gemessen 2026-09-03):** Der Tascam-US-16x08-Ausgang
 lässt sich über KEINEN Weg durch die Windows-Audio-Engine öffnen —
 PortAudio (MME/DirectSound/WASAPI, blocking + callback, int16/float32,

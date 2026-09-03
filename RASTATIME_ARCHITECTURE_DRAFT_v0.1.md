@@ -14,21 +14,25 @@ Date: 2026-09-03
 >   `libretime_playout/engine/portaudio_output.py` maps the Windows
 >   endpoint to a PortAudio index which is rendered as `device_id=`
 >   into rastatime.liq at playout start.  The mapping **probes** host
->   APIs rather than assuming one: measured on the studio machine, the
->   Tascam US-16x08 output opens only via WDM-KS (WASAPI/MME/
->   DirectSound all fail) while a USB headset opens via MME, so a
->   fixed rule would silently break one device or the other; order is
->   WASAPI → MME → DirectSound → WDM-KS (exclusive, hence last), with
->   an OS-default fallback when nothing opens.  Because the device is
+>   APIs rather than assuming one, using PortAudio's BLOCKING api (what
+>   Liquidsoap uses; a callback-mode probe once approved WDM-KS and
+>   crashed Liquidsoap at device-open).  Measured: a USB headset opens
+>   via MME; the Tascam US-16x08 opens via WASAPI — but only once its
+>   Windows shared-mode format matches Liquidsoap's 44.1 kHz (at the
+>   factory 48 kHz it refused every host API and looked dead).  Order
+>   is WASAPI → MME → DirectSound → WDM-KS, with an OS-default
+>   fallback and a targeted "set the endpoint format to 44100 Hz" hint
+>   when a candidate rejects the sample rate.  Because the device is
 >   baked in at render time, applying a change needs PLAYOUT then
 >   LIQUIDSOAP restarted — exposed as a deliberate, confirmed
 >   "Apply now" button (`preference/restart-audio-chain`) rather than
 >   an implicit restart on Save, and kept in the authenticated legacy
 >   PHP layer because the Django API binds 0.0.0.0 without auth.
->   Side finding, recorded for the Line-In work: one interface can
->   serve output and capture simultaneously (refuting the earlier
->   "full duplex only via ASIO" note); output-to-input coupling
->   measures ~45-65 dB down — no feedback risk.
+>   Side finding: one interface can serve output (WASAPI shared) and
+>   line-in capture (MME) simultaneously, with other applications
+>   coexisting (refuting the earlier "full duplex only via ASIO"
+>   note); output-to-input coupling measures ~45-65 dB down — no
+>   feedback risk.
 > - **0.19 (2026-08-31)** — Line-In channel selection on multichannel
 >   interfaces (Sections 13.3-13.5 follow-up).  A line-in now selects
 >   WHICH input channels of its device it captures (`channel_mapping`,

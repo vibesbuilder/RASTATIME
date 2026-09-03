@@ -117,16 +117,18 @@ soit utilisée.
 > RASTATIME conserve le point de terminaison par défaut du
 > système et consigne chaque raison d'échec dans le journal.
 
-> **Tous les périphériques de sortie ne conviennent pas.** Un
-> périphérique proposé par Windows n'est pas automatiquement
-> utilisable ici : Liquidsoap pilote PortAudio via son API
-> bloquante, que certains points de terminaison refusent. Sur la
-> machine du studio, **la sortie du Tascam US-16x08 est refusée
-> par toutes les API hôtes** et ne peut donc pas servir de
-> moniteur local — le réglage revient au défaut système et le
-> signale dans le journal. La même interface fonctionne en
-> revanche comme source de capture Line-In ; seule la direction
-> de sortie est indisponible.
+> **Le format Windows du périphérique doit être 44,1 kHz.** Liquidsoap
+> tourne à 44,1 kHz, et WASAPI en mode partagé exige exactement la
+> fréquence de mixage configurée du point de terminaison. Un
+> périphérique dont le format par défaut Windows est à 48 kHz est
+> refusé par toutes les API hôtes et semble mort — mesuré sur le
+> Tascam US-16x08, inutilisable jusqu'au réglage de son format à
+> 44,1 kHz (Paramètres son Windows → la sortie → Avancé → format par
+> défaut). Le journal de diffusion indique ce correctif dès qu'une
+> fréquence est refusée. Une réinstallation de pilote peut réinitialiser
+> le format ; la ligne « active » ci-dessus signale alors l'écart.
+> Sortie et capture Line-In sur la même interface fonctionnent
+> simultanément.
 
 ---
 

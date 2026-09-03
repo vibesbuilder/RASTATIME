@@ -9,10 +9,11 @@ to playout, and dropped by a no-op ``set_audio_device``, while the
 .liq rendered ``output.portaudio`` without any device argument.
 
 The resolution deliberately *probes* candidates instead of picking a
-host API by rule.  Measured on the studio machine 2026-09-03: the
-Tascam US-16x08 output opens ONLY via WDM-KS (WASAPI/MME/DirectSound
-all fail), while the Jabra headset opens via MME.  These tests encode
-that reality with a fake PortAudio so it cannot silently regress.
+host API by rule.  Measured on the studio machine 2026-09-03: the Jabra
+headset opens via MME; the Tascam US-16x08 refused every host API while
+its Windows shared format sat at 48 kHz, and opened via WASAPI once the
+operator set it to 44.1 kHz.  These tests encode that reality with a
+fake PortAudio so it cannot silently regress.
 """
 
 import pytest
@@ -90,10 +91,12 @@ class FakeSD:
     """Minimal sounddevice stand-in; ``openable`` are the indices that
     actually accept an output open."""
 
-    def __init__(self, openable, writable=None):
+    def __init__(self, openable, writable=None, fail_messages=None):
         self.openable = set(openable)
         # Default: whatever opens can also be written to.
         self.writable = set(openable if writable is None else writable)
+        # Per-index error text for refused opens (default: generic).
+        self.fail_messages = dict(fail_messages or {})
         self.attempted = []
 
     def query_hostapis(self):
@@ -110,6 +113,8 @@ class FakeSD:
             "probe reports WDM-KS as working and then kills liquidsoap at "
             "device-open (RASTATIME 2026-09-03 outage)"
         )
+        if index not in self.openable and index in self.fail_messages:
+            raise RuntimeError(self.fail_messages[index])
         return FakeStream(index in self.openable, index in self.writable)
 
 
@@ -117,8 +122,8 @@ class FakeSD:
 def fake_sd_factory(monkeypatch):
     """Install a FakeSD so ``resolve_output_device`` imports it."""
 
-    def _install(openable, writable=None):
-        fake = FakeSD(openable, writable)
+    def _install(openable, writable=None, fail_messages=None):
+        fake = FakeSD(openable, writable, fail_messages)
         import sys
         monkeypatch.setitem(sys.modules, "sounddevice", fake)
         return fake
@@ -171,8 +176,9 @@ def test_candidates_ignore_input_only_devices():
 # --------------------------------------------------------------------
 
 def test_resolve_tries_every_candidate_before_giving_up(fake_sd_factory):
-    """The real Tascam case (measured 2026-09-03): NO host API accepts a
-    blocking output open, so we must try all four and then fall back."""
+    """The Tascam with its shared format at 48 kHz (measured 2026-09-03):
+    no host API accepts a blocking 44.1 kHz open, so we must try all
+    four and then fall back."""
     fake = fake_sd_factory([])
     assert resolve_output_device("Tascam-Lautsprecher") is None
     assert fake.attempted == [
@@ -270,3 +276,20 @@ def test_render_marker_strips_hostile_endpoint_id():
     block = _render_local_output_block(True, 4, "x", hostile)
     assert "shutdown()" not in block
     assert "# rastatime-main-output: absh" in block
+
+
+def test_resolve_hints_at_windows_shared_format_on_rate_rejection(
+    fake_sd_factory, caplog
+):
+    """A WASAPI 'Invalid sample rate' means the endpoint's Windows
+    shared format is set to another rate (the Tascam sat at 48 kHz).
+    The generic failure reads like a dead device, so the resolver must
+    point the operator at the actual fix."""
+    import logging
+    fake_sd_factory(
+        [], fail_messages={TASCAM_WASAPI: "Invalid sample rate [PaErrorCode -9997]"}
+    )
+    with caplog.at_level(logging.ERROR):
+        assert resolve_output_device("Tascam-Lautsprecher") is None
+    assert "shared format" in caplog.text
+    assert "44100" in caplog.text

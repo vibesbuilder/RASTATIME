@@ -116,16 +116,18 @@ aplicado, o el dispositivo no pudo abrirse — la línea lo señala en
 > abre, RASTATIME mantiene el punto final por defecto del sistema
 > y registra cada motivo de fallo en el registro de emisión.
 
-> **No todo dispositivo de salida sirve.** Un dispositivo que
-> Windows ofrece como salida no es automáticamente utilizable
-> aquí: Liquidsoap maneja PortAudio por su API bloqueante, y
-> algunos puntos finales la rechazan. Medido en la máquina del
-> estudio, **la salida del Tascam US-16x08 es rechazada por todas
-> las API anfitrionas** y por tanto no puede servir de monitor
-> local: el ajuste recurre al valor por defecto del sistema y lo
-> indica en el registro. La misma interfaz sí funciona como
-> fuente de captura Line-In; solo la dirección de salida no está
-> disponible.
+> **El formato de Windows del dispositivo debe ser 44,1 kHz.**
+> Liquidsoap funciona a 44,1 kHz, y WASAPI en modo compartido exige
+> exactamente la frecuencia de mezcla configurada del punto final. Un
+> dispositivo cuyo formato predeterminado de Windows está en 48 kHz es
+> rechazado por todas las API anfitrionas y parece muerto — medido en
+> el Tascam US-16x08, inutilizable hasta que su formato se puso en
+> 44,1 kHz (Configuración de sonido → la salida → Avanzado → formato
+> predeterminado). El registro de emisión señala esta corrección al
+> ver una frecuencia rechazada. Una reinstalación del controlador puede
+> restablecer el formato; la línea «activa» de arriba muestra entonces
+> la discrepancia. Salida y captura Line-In en la misma interfaz
+> funcionan a la vez.
 
 ---
 

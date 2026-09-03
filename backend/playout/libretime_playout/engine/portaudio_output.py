@@ -27,15 +27,29 @@ PortAudio index*.
 Why that mapping needs a probe, not a lookup
 --------------------------------------------
 The same physical endpoint is enumerated once per host API, and which
-of those copies actually **opens** is device-specific.  Measured on
-the studio machine 2026-09-03, Tascam US-16x08 output:
+of those copies actually opens depends on the device AND on how its
+Windows shared-mode format is configured.  Measured on the studio
+machine 2026-09-03 with the blocking API at 44.1 kHz (Liquidsoap's
+frame rate):
 
-  ===============  ==============================================
-  WASAPI           open fails (PaErrorCode −9996, invalid device)
-  MME              open fails (−9999, unanticipated host error)
-  DirectSound      start fails (−9999)
-  **WDM-KS**       **opens and plays**
-  ===============  ==============================================
+  ==================  ======  ===========  =======  ======
+  Device              MME     DirectSound  WASAPI   WDM-KS
+  ==================  ======  ===========  =======  ======
+  Jabra EVOLVE LINK   works   works        no       no
+  Tascam @ 48 kHz     no      no           no       no
+  Tascam @ 44.1 kHz   no      no           WORKS    no
+  ==================  ======  ===========  =======  ======
+
+The Tascam rows are the lesson: with the endpoint's shared format
+left at 48 kHz/24 bit it was unusable through EVERY engine path
+(PortAudio, libao, even SDL) and looked like a dead endpoint.  It was
+not -- WASAPI shared mode insists on the endpoint's mix rate, so
+44.1 kHz was "Invalid sample rate".  Once the operator set the
+endpoint's default format to 44.1 kHz (Windows Sound settings ->
+Advanced), WASAPI opened in blocking mode and Liquidsoap drove it,
+with line-in capture on the same interface and other applications
+coexisting fine.  ``resolve_output_device`` therefore logs a targeted
+hint when a candidate rejects the sample rate.
 
 So we enumerate the candidates, order them least-invasive first, and
 probe each by briefly opening it; the first that really opens wins.
@@ -49,23 +63,6 @@ down, Icecast outputs included.  (RASTATIME 2026-09-03: a
 callback-mode probe put the station off air.  ``linein_feeder``
 already noted the same limitation for capture; it applies to output
 too.)
-
-Measured with the blocking API on the studio machine at 44.1 kHz,
-Liquidsoap's internal frame rate:
-
-  ==================  ======  ===========  =======  ======
-  Device              MME     DirectSound  WASAPI   WDM-KS
-  ==================  ======  ===========  =======  ======
-  Jabra EVOLVE LINK   works   works        no       no
-  Tascam US-16x08     no      no           no       no
-  ==================  ======  ===========  =======  ======
-
-WASAPI rejects 44.1 kHz outright (its shared mix format differs) and
-WDM-KS has no blocking support at all, so MME and DirectSound are the
-only usable output APIs here.  The **Tascam output cannot be driven by
-Liquidsoap at all** -- every blocking open is refused, at 44.1 and at
-48 kHz -- so selecting it lands on the OS-default fallback with a
-loud log line rather than a working monitor.
 
 Host-API order
 --------------
@@ -337,4 +334,18 @@ def resolve_output_device(
         "not follow the Main Output setting.",
         device_name, samplerate, " | ".join(tried),
     )
+    if any("invalid sample rate" in t.lower() for t in tried):
+        # Measured 2026-09-03: this is exactly what a WASAPI endpoint says
+        # when its Windows shared-mode format is set to another rate
+        # (the Tascam US-16x08 sat at 48 kHz and was unusable; at
+        # 44.1 kHz it works).  Say so, because the generic error above
+        # reads like a dead device.
+        logger.error(
+            "Main Output %r: a candidate rejected %d Hz (Invalid sample "
+            "rate).  This usually means the endpoint's Windows shared "
+            "format is set to a different rate.  Fix: Windows Sound "
+            "settings -> this output -> Advanced -> default format %d Hz, "
+            "then apply the audio chain again.",
+            device_name, samplerate, samplerate,
+        )
     return None

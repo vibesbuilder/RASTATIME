@@ -146,15 +146,17 @@ saved value alone is not proof that it is in use.
 > RASTATIME keeps the OS-default endpoint and records every
 > failure reason in the playout log.
 
-> **Not every output device can be used.** A device Windows
-> offers as an output is not automatically usable here:
-> Liquidsoap drives PortAudio through its blocking API, and
-> some endpoints refuse it. Measured on the studio machine,
-> the **Tascam US-16x08 output is refused by every host API**
-> and therefore cannot serve as the local monitor — the
-> setting falls back to the OS default and says so in the
-> log. The same interface *does* work as a Line-In capture
-> source; only the output direction is unavailable.
+> **The device's Windows format must match 44.1 kHz.** Liquidsoap
+> runs at 44.1 kHz, and WASAPI shared mode insists on the endpoint's
+> configured mix rate. A device whose Windows default format is set
+> to 48 kHz is refused by every host API and looks dead — measured on
+> the Tascam US-16x08, which came up unusable and worked the moment
+> its format was set to 44.1 kHz (Windows Sound settings → the
+> output → Advanced → default format). The playout log points at
+> this fix when it sees a sample-rate rejection. A driver reinstall
+> can reset the format; the active-output line above then shows the
+> mismatch. Output and Line-In capture on the same interface work
+> simultaneously.
 
 ---
 
