@@ -1658,7 +1658,9 @@ Resolver löst `Tascam-Lautsprecher [WASAPI] idx 18` auf, Produktions-
 Rendering läuft stabil, hörbarer Testton läuft, **Koexistenz bewiesen**
 (Liquidsoap→Tascam + Line-In-Feeder MME-16ch-Capture vom selben Gerät +
 ffplay parallel).  Kein Reboot nötig; Option A (unten) bleibt als
-dokumentierter Notfallplan, wird NICHT gebaut.  **Betriebs-Lore:** Das
+dokumentierter Notfallplan, wird NICHT gebaut.  **Ohr-Abnahme nach dem
+Reboot (2026-09-03 ~14:10, Operator):** Tascam als aktives Geraet
+angezeigt, Test-Show ueber den Tascam-Ausgang kristallklar.  **Betriebs-Lore:** Das
 Endpunkt-Format muss 44,1 kHz bleiben (Liquidsoap-Framerate); springt es
 (Treiber-Neuinstallation!) auf 48 kHz zurück, fällt der Ausgang auf
 OS-Default, der Resolver loggt den Hinweis, der „Aktiv"-Anzeiger zeigt
