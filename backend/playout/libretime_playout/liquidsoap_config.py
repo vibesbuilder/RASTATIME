@@ -1185,7 +1185,7 @@ def _render_bus_source_block(
         'linein_live = interactive.bool("linein_live", true)\n'
         "\n"
         f"# input transitions: {shape}\n"
-        "def bus_instant(_old, new) = new end\n"
+        "def bus_instant(_, new) = new end\n"
         + transition_fn
         + "\n"
         "bus = switch(\n"
