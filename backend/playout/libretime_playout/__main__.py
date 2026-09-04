@@ -151,6 +151,44 @@ def _setup_django() -> bool:
 # Read Icecast stream outputs from cc_pref
 # ---------------------------------------------------------------------------
 
+def _resolve_crossfade_seconds() -> float:
+    """
+    RASTATIME 2026-09-04 - the house crossfade duration.  Primary source
+    is Settings -> General "Default Crossfade Duration (s)" (cc_pref
+    ``default_crossfade_duration``); the env var
+    RASTATIME_LIQUIDSOAP_CROSSFADE_SECONDS is the fallback for a
+    missing/invalid key.  Drives the queue's track crossfade, the bus
+    input transitions (0 = ducking) and the scheduler's drain time.  A
+    UI change takes effect at the next PLAYOUT + LIQUIDSOAP restart
+    ("Apply now" in Settings -> Local Machine).
+    """
+    try:
+        crossfade = float(
+            os.environ.get(
+                "RASTATIME_LIQUIDSOAP_CROSSFADE_SECONDS",
+                str(_LIQUIDSOAP_DEFAULT_CROSSFADE),
+            )
+        )
+    except ValueError as exc:
+        logger.critical(
+            "RASTATIME_LIQUIDSOAP_CROSSFADE_SECONDS must be a float: %s", exc,
+        )
+        sys.exit(1)
+    pref_crossfade = _read_pref_crossfade_duration()
+    if pref_crossfade is not None:
+        logger.info(
+            "Crossfade duration %.2f s from Settings -> General "
+            "(cc_pref default_crossfade_duration)%s",
+            pref_crossfade, " - input switches use ducking" if pref_crossfade == 0 else "",
+        )
+        return pref_crossfade
+    logger.info(
+        "Crossfade duration %.2f s from env/default (cc_pref key missing "
+        "or invalid)", crossfade,
+    )
+    return crossfade
+
+
 def _read_pref_crossfade_duration() -> Optional[float]:
     """
     RASTATIME 2026-09-04 - ``cc_pref.default_crossfade_duration`` (the
@@ -394,40 +432,7 @@ def _render_rastatime_liq_at_startup(stream_outputs: List[Dict]) -> None:
             "RASTATIME_LIQUIDSOAP_PORT must be an integer: %s", exc
         )
         sys.exit(1)
-    try:
-        crossfade = float(
-            os.environ.get(
-                "RASTATIME_LIQUIDSOAP_CROSSFADE_SECONDS",
-                str(_LIQUIDSOAP_DEFAULT_CROSSFADE),
-            )
-        )
-    except ValueError as exc:
-        logger.critical(
-            "RASTATIME_LIQUIDSOAP_CROSSFADE_SECONDS must be a float: %s",
-            exc,
-        )
-        sys.exit(1)
-    # RASTATIME 2026-09-04 - Settings -> General "Default Crossfade
-    # Duration (s)" is the primary source (operator wish: one house
-    # crossfade, set in the UI).  It drives the queue's track crossfade
-    # AND the input transitions of the bus switch (0 = ducking).  Read
-    # via the Django ORM like the stream outputs; the env var above stays
-    # the fallback for a missing/invalid key.  A change in the UI takes
-    # effect at the next PLAYOUT + LIQUIDSOAP restart ("Apply now" in
-    # Settings -> Local Machine).
-    pref_crossfade = _read_pref_crossfade_duration()
-    if pref_crossfade is not None:
-        crossfade = pref_crossfade
-        logger.info(
-            "Crossfade duration %.2f s from Settings -> General "
-            "(cc_pref default_crossfade_duration)%s",
-            crossfade, " - input switches use ducking" if crossfade == 0 else "",
-        )
-    else:
-        logger.info(
-            "Crossfade duration %.2f s from env/default (cc_pref key "
-            "missing or invalid)", crossfade,
-        )
+    crossfade = _resolve_crossfade_seconds()
     # RASTATIME 2026-09-03 - linein_http start-up buffer, env-overridable
     # so it can be tuned against the 1.0 default (start gap + end-of-slot
     # latency vs.
@@ -798,7 +803,11 @@ def main() -> None:
         stream_outputs=stream_outputs,
         read_stream_outputs=read_streams,
         streaming_handled_externally=streaming_handled_externally,
+        input_transition_seconds=_resolve_crossfade_seconds(),
     )
+    # RASTATIME 2026-09-04 - a previous Pypo may have died mid-prepare
+    # with a bus gate closed; open both before the first refresh.
+    scheduler.reset_gates()
 
     # Listener credentials for relaying /main and /show into the
     # public outputs.  Without these the icecast-listener-allow

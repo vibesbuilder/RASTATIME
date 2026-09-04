@@ -210,29 +210,31 @@ def test_on_stop_liquidsoap_linein_calls_linein_stop_and_capture_stop(
 ):
     """
     In Liquidsoap-Mode, when a LineinEvent is the current event,
-    _on_stop must:
-      1. Stop FfmpegLineinCapture (dshow subprocess shutdown).
-      2. Call engine.linein_stop() to close the input.http source.
+    _on_stop must take it off air and tear it down.  Since 2026-09-04
+    (Paket 2) that is two steps: the bus GATE closes at once (the switch
+    fades the line-in out under the successor while its buffered tail
+    plays), and FfmpegLineinCapture + the input.http source are stopped
+    only after the drain.
     """
     sched, engine, capture = liquidsoap_scheduler
     event = _make_linein_event()
     sched._on_linein_start("key1", event)
-
     engine.reset_mock()
     capture.reset_mock()
     engine.get_state.return_value = PlayoutState.PLAYING
 
     sched._on_stop("key1")
 
-    # FfmpegLineinCapture stop was called (dshow subprocess shutdown)
-    capture.stop.assert_called_once()
-    # linein_stop was called (input.http source closed)
-    engine.linein_stop.assert_called_once()
-    # generic engine.stop must NOT be called for a linein
+    engine.linein_gate.assert_called_once_with(False)
+    capture.stop.assert_not_called()        # the tail is still draining
+    engine.linein_stop.assert_not_called()
     engine.stop.assert_not_called()
-    # Bookkeeping cleared
     assert sched._playing_key is None
     assert sched._current_event is None
+
+    sched._drained_linein_stop(sched._linein_generation)
+    capture.stop.assert_called_once()
+    engine.linein_stop.assert_called_once()
 
 
 def test_on_stop_legacy_linein_does_not_call_linein_stop(legacy_scheduler):
@@ -302,33 +304,29 @@ def test_on_stop_linein_skips_stop_when_generation_bumped_mid_teardown(
 ):
     """
     Phase-F-2 race fix #3 (final guard): if a follow-up show (re)starts
-    the line-in source DURING A's teardown window — after A cleared its
-    bookkeeping but before it calls linein_stop — the generation counter
-    moves and A must skip linein_stop.  Simulated by bumping the counter
-    from capture.stop()'s side effect, which runs between the generation
-    snapshot and the final guard.
+    the line-in source DURING A's teardown window, the generation
+    counter moves and A must not touch the source - since Paket 2 that
+    means it must not even close the gate (the newer show owns it).
+    Simulated by bumping the counter from the cue-sheet hook, which runs
+    between the generation snapshot and the guards.
     """
     sched, engine, capture = liquidsoap_scheduler
     event = _make_linein_event()
     sched._on_linein_start("key1", event)  # gen -> 1, playing key1
     assert sched._linein_generation == 1
-
     engine.reset_mock()
+    capture.reset_mock()
     engine.get_state.return_value = PlayoutState.PLAYING
 
-    # Simulate a racing follow-up _on_linein_start that bumps the
-    # generation (and reclaims the spotlight) mid-teardown.
     def _bump(*_args, **_kwargs):
         sched._linein_generation += 1
-        sched._playing_key = "key2"
-
-    capture.stop.side_effect = _bump
+    sched._cue_item_end = _bump
 
     sched._on_stop("key1")
 
-    capture.stop.assert_called_once()
-    # Final guard tripped → the new show's source is left running.
+    engine.linein_gate.assert_not_called()
     engine.linein_stop.assert_not_called()
+    capture.stop.assert_not_called()
 
 
 # ---- RASTATIME 2026-08-31: multichannel line-in (channel selection) ----
@@ -509,7 +507,8 @@ def test_on_stop_tears_down_linein_when_same_device_follow_up_is_minutes_away(
     liquidsoap_scheduler,
 ):
     """The 11:00 incident: a same-device line-in armed 7 min later kept
-    the ending line-in on air through the whole show in between."""
+    the ending line-in on air through the whole show in between.  Now
+    the line-in is released (gate) and torn down after the drain."""
     sched, engine, capture = liquidsoap_scheduler
     sched._switcher = None
     _playing_linein(sched, capture, key="A")
@@ -523,10 +522,12 @@ def test_on_stop_tears_down_linein_when_same_device_follow_up_is_minutes_away(
     finally:
         t.cancel()
 
-    capture.stop.assert_called_once()
-    engine.linein_stop.assert_called_once()
+    engine.linein_gate.assert_called_once_with(False)
     assert sched._playing_key is None
     assert sched._current_event is None
+    sched._drained_linein_stop(sched._linein_generation)
+    capture.stop.assert_called_once()
+    engine.linein_stop.assert_called_once()
 
 
 def test_on_stop_keeps_linein_alive_for_a_back_to_back_same_device_follow_up(
@@ -580,8 +581,9 @@ def test_on_stop_bails_when_superseded_mid_teardown(liquidsoap_scheduler):
 
 
 def test_file_start_closes_a_linein_predecessor_itself(liquidsoap_scheduler):
-    """Whoever takes the spotlight from a line-in closes it: a line-in
-    that stays up outranks every scheduled track in the bus switch."""
+    """Whoever takes the spotlight from a line-in releases it: the gate
+    closes before the queue is touched, so the bus fades the line-in
+    out under the jingle; the capture is stopped only after the drain."""
     sched, engine, capture = liquidsoap_scheduler
     sched._switcher = None
     _playing_linein(sched, capture, key="A")
@@ -593,16 +595,18 @@ def test_file_start_closes_a_linein_predecessor_itself(liquidsoap_scheduler):
 
     sched._on_file_start("B", _file_event(datetime.utcnow()))
 
-    capture.stop.assert_called_once()
-    engine.linein_stop.assert_called_once()
+    engine.linein_gate.assert_called_once_with(False)
+    capture.stop.assert_not_called()
+    engine.linein_stop.assert_not_called()
     names = [c[0] for c in engine.mock_calls]
-    assert names.index("linein_stop") < names.index("stop") < names.index("play")
+    assert names.index("linein_gate") < names.index("stop") < names.index("play")
     assert sched._playing_key == "B"
 
 
 def test_webstream_start_closes_a_linein_predecessor_itself(liquidsoap_scheduler):
     """11:06 symptom: when the webstream ended, the switch fell straight
-    back onto the line-in it had been masking."""
+    back onto the line-in it had been masking.  The webstream releases
+    the line-in (gate) and opens its own gate after connecting."""
     sched, engine, capture = liquidsoap_scheduler
     sched._switcher = None
     _playing_linein(sched, capture, key="A")
@@ -611,14 +615,16 @@ def test_webstream_start_closes_a_linein_predecessor_itself(liquidsoap_scheduler
 
     sched._on_webstream_start("B", _webstream_event(datetime.utcnow()))
 
-    capture.stop.assert_called_once()
-    engine.linein_stop.assert_called_once()
+    engine.linein_gate.assert_called_once_with(False)
+    capture.stop.assert_not_called()
     engine.webstream_start.assert_called_once()
+    engine.webstream_gate.assert_called_with(True)
 
 
 def test_linein_start_closes_a_webstream_predecessor_itself(liquidsoap_scheduler):
-    """A webstream outranks the line-in in the bus switch, so a racing
-    _on_stop that bails would leave the line-in inaudible."""
+    """A webstream outranks the line-in in the bus switch, so the line-in
+    must release it itself: gate closed at once (the bus fades it out),
+    source stopped after the drain."""
     sched, engine, capture = liquidsoap_scheduler
     sched._switcher = None
     sched._playing_key = "A"
@@ -627,8 +633,12 @@ def test_linein_start_closes_a_webstream_predecessor_itself(liquidsoap_scheduler
 
     sched._on_linein_start("B", _make_linein_event())
 
-    engine.webstream_stop.assert_called_once()
+    engine.webstream_gate.assert_called_once_with(False)
+    engine.webstream_stop.assert_not_called()
     engine.linein_start_http.assert_called_once()
+    engine.linein_gate.assert_called_with(True)
+    sched._drained_webstream_stop(sched._webstream_generation)
+    engine.webstream_stop.assert_called_once()
 
 
 def test_file_start_after_a_file_touches_no_exclusive_source(liquidsoap_scheduler):
@@ -789,3 +799,243 @@ def test_re_arming_the_playing_key_itself_logs_no_rebinding(
         sched._timers["F_0"][1].cancel()
     on_start.assert_not_called()
     assert "rebinding" not in caplog.text
+
+
+# =====================================================================
+# RASTATIME 2026-09-04 - Paket 2: pre-warm + bus gates + drained stop
+# =====================================================================
+
+from libretime_playout.playout_scheduler import PREPARE_LEAD_SECONDS
+
+
+class _FakeTimer:
+    """Records what would be scheduled; .fire() runs it synchronously."""
+    instances = []
+
+    def __init__(self, interval, function, args=()):
+        self.interval, self.function, self.args = interval, function, tuple(args)
+        self.daemon = False
+        self.cancelled = False
+        _FakeTimer.instances.append(self)
+
+    def start(self):
+        pass
+
+    def cancel(self):
+        self.cancelled = True
+
+    def is_alive(self):
+        return not self.cancelled
+
+    def join(self, *_):
+        pass
+
+    def fire(self):
+        self.function(*self.args)
+
+
+@pytest.fixture
+def fake_timer():
+    _FakeTimer.instances = []
+    with patch("libretime_playout.playout_scheduler.threading.Timer", _FakeTimer):
+        yield _FakeTimer
+
+
+def _future_linein(seconds_ahead, **kw):
+    now = datetime.utcnow()
+    return _make_linein_event(**kw).model_copy(update={
+        "start": now + timedelta(seconds=seconds_ahead),
+        "end": now + timedelta(seconds=seconds_ahead + 300),
+    })
+
+
+def test_prepare_timer_is_armed_ten_seconds_before_the_slot(liquidsoap_scheduler, fake_timer):
+    sched, engine, capture = liquidsoap_scheduler
+    sched._arm_linein_event("K", _future_linein(60), datetime.utcnow())
+    prep = [t for t in fake_timer.instances if t.function == sched._on_linein_prepare]
+    assert len(prep) == 1
+    assert abs(prep[0].interval - (60 - PREPARE_LEAD_SECONDS)) < 0.5
+    assert sched._prepare_timers["K"] is prep[0]
+
+
+def test_no_prepare_timer_when_the_slot_is_too_close(liquidsoap_scheduler, fake_timer):
+    sched, engine, capture = liquidsoap_scheduler
+    sched._arm_linein_event("K", _future_linein(6), datetime.utcnow())
+    assert not [t for t in fake_timer.instances if t.function == sched._on_linein_prepare]
+
+
+def test_cancel_all_timers_cancels_prepare_timers(liquidsoap_scheduler, fake_timer):
+    sched, engine, capture = liquidsoap_scheduler
+    sched._arm_linein_event("K", _future_linein(60), datetime.utcnow())
+    sched._cancel_all_timers()
+    assert sched._prepare_timers == {}
+    assert all(t.cancelled for t in fake_timer.instances)
+
+
+def test_linein_prepare_brings_the_source_up_with_the_gate_closed(liquidsoap_scheduler):
+    sched, engine, capture = liquidsoap_scheduler
+    capture.is_running = True
+    event = _future_linein(10)
+
+    sched._on_linein_prepare("K", event)
+
+    engine.linein_gate.assert_called_with(False)
+    engine.linein_start_http.assert_called_once()
+    capture.start.assert_called_once()
+    assert sched._prepared is not None and sched._prepared[0] == "K"
+    names = [c[0] for c in engine.mock_calls]
+    assert names.index("linein_gate") < names.index("linein_start_http")
+
+
+def test_linein_prepare_is_skipped_while_a_line_in_is_on_air(liquidsoap_scheduler):
+    sched, engine, capture = liquidsoap_scheduler
+    sched._current_event = _make_linein_event(row_id=1)
+    sched._on_linein_prepare("K", _future_linein(10, row_id=2))
+    capture.start.assert_not_called()
+    engine.linein_gate.assert_not_called()
+    assert sched._prepared is None
+
+
+def test_linein_prepare_failure_reopens_the_gate(liquidsoap_scheduler):
+    sched, engine, capture = liquidsoap_scheduler
+    capture.is_running = False
+    sched._on_linein_prepare("K", _future_linein(10))
+    engine.linein_stop.assert_called_once()
+    engine.linein_gate.assert_called_with(True)
+    assert sched._prepared is None
+
+
+def test_prepared_linein_start_only_opens_the_gate(liquidsoap_scheduler):
+    sched, engine, capture = liquidsoap_scheduler
+    sched._switcher = None
+    capture.is_running = True
+    event = _future_linein(0)
+    sched._prepared = ("K", event)
+
+    sched._on_linein_start("K", event.model_copy())
+
+    engine.linein_gate.assert_called_with(True)
+    engine.linein_start_http.assert_not_called()
+    capture.start.assert_not_called()
+    engine.stop.assert_called_once()   # queue cleared as usual
+    assert sched._prepared is None
+    assert sched._playing_key == "K"
+
+
+def test_unprepared_linein_start_opens_the_gate_on_the_normal_path(liquidsoap_scheduler):
+    sched, engine, capture = liquidsoap_scheduler
+    sched._switcher = None
+    capture.is_running = True
+    sched._on_linein_start("K", _make_linein_event())
+    engine.linein_start_http.assert_called_once()
+    engine.linein_gate.assert_called_with(True)
+
+
+def test_slot_end_closes_the_gate_and_stops_after_the_drain(liquidsoap_scheduler, fake_timer):
+    sched, engine, capture = liquidsoap_scheduler
+    sched._switcher = None
+    _playing_linein(sched, capture, key="A")
+
+    sched._on_stop("A")
+
+    engine.linein_gate.assert_called_once_with(False)
+    engine.linein_stop.assert_not_called()      # not yet - the tail is draining
+    capture.stop.assert_not_called()
+    drain = [t for t in fake_timer.instances if t.function == sched._drained_linein_stop]
+    assert len(drain) == 1
+    assert abs(drain[0].interval - sched._drain_seconds) < 1e-6
+    drain[0].fire()
+    engine.linein_stop.assert_called_once()
+    capture.stop.assert_called_once()
+
+
+def test_drained_stop_is_skipped_when_a_newer_line_in_took_over(liquidsoap_scheduler, fake_timer):
+    sched, engine, capture = liquidsoap_scheduler
+    sched._switcher = None
+    _playing_linein(sched, capture, key="A")
+    sched._on_stop("A")
+    drain = [t for t in fake_timer.instances if t.function == sched._drained_linein_stop][0]
+    sched._linein_generation += 1   # e.g. the next line-in's prepare/start
+    drain.fire()
+    engine.linein_stop.assert_not_called()
+    capture.stop.assert_not_called()
+
+
+def test_successor_releases_a_line_in_through_the_gate(liquidsoap_scheduler, fake_timer):
+    sched, engine, capture = liquidsoap_scheduler
+    sched._switcher = None
+    _playing_linein(sched, capture, key="A")
+    sched._ensure_file_cached = lambda evt: "C:/rastatime/scheduler/1.mp3"
+    sched._cue_item_start = MagicMock()
+    sched._notify_media_started = MagicMock()
+    sched._start_streamers = MagicMock()
+    sched._stop_streamers = MagicMock()
+
+    sched._on_file_start("B", _file_event(datetime.utcnow()))
+
+    engine.linein_gate.assert_called_once_with(False)
+    capture.stop.assert_not_called()
+    names = [c[0] for c in engine.mock_calls]
+    assert names.index("linein_gate") < names.index("stop") < names.index("play")
+
+
+def test_drain_seconds_follow_the_house_crossfade():
+    from libretime_playout.liquidsoap_config import DEFAULT_INPUT_DUCK_FADE_SECONDS
+    s1, _, _ = _patched_scheduler(True)
+    assert s1._drain_seconds == 2.0 + 0.5      # default input_transition_seconds
+    from libretime_playout.playout_scheduler import PlayoutScheduler
+    with patch("libretime_playout.playout_scheduler.FfmpegLineinCapture"):
+        s2 = PlayoutScheduler(engine=MagicMock(), api_client=MagicMock(),
+                              streaming_handled_externally=True, input_transition_seconds=0.0)
+        s3 = PlayoutScheduler(engine=MagicMock(), api_client=MagicMock(),
+                              streaming_handled_externally=True, input_transition_seconds=1.0)
+    assert s2._drain_seconds == DEFAULT_INPUT_DUCK_FADE_SECONDS + 0.5
+    assert s3._drain_seconds == 1.5
+
+
+def test_webstream_prepare_start_and_release(liquidsoap_scheduler, fake_timer):
+    sched, engine, capture = liquidsoap_scheduler
+    sched._switcher = None
+    sched._cue_item_start = MagicMock()
+    sched._notify_media_started = MagicMock()
+    event = _webstream_event(datetime.utcnow() + timedelta(seconds=10))
+
+    sched._on_webstream_prepare("W", event)
+    engine.webstream_gate.assert_called_with(False)
+    engine.webstream_start.assert_called_once()
+    assert sched._prepared[0] == "W"
+
+    sched._on_webstream_start("W", event.model_copy())
+    engine.webstream_start.assert_called_once()          # no reconnect
+    engine.webstream_gate.assert_called_with(True)
+    assert sched._prepared is None
+
+    sched._on_stop("W")
+    engine.webstream_gate.assert_called_with(False)
+    engine.webstream_stop.assert_not_called()
+    drain = [t for t in fake_timer.instances if t.function == sched._drained_webstream_stop]
+    assert len(drain) == 1
+    drain[0].fire()
+    engine.webstream_stop.assert_called_once()
+
+
+def test_refresh_undoes_a_pre_warm_whose_item_vanished(liquidsoap_scheduler):
+    sched, engine, capture = liquidsoap_scheduler
+    sched._switcher = None
+    capture.is_running = True
+    event = _future_linein(8)
+    sched._prepared = ("K", event)
+
+    _refresh_with(sched, {})   # empty schedule
+
+    engine.linein_stop.assert_called_once()
+    capture.stop.assert_called_once()
+    engine.linein_gate.assert_called_with(True)
+    assert sched._prepared is None
+
+
+def test_reset_gates_opens_both(liquidsoap_scheduler):
+    sched, engine, capture = liquidsoap_scheduler
+    sched.reset_gates()
+    engine.linein_gate.assert_called_once_with(True)
+    engine.webstream_gate.assert_called_once_with(True)

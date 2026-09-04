@@ -210,8 +210,10 @@ def test_on_stop_liquidsoap_webstream_calls_webstream_stop(
 ):
     """
     In Liquidsoap-Mode, when a WebStreamEvent is the current event,
-    _on_stop must call engine.webstream_stop() — NOT engine.stop()
-    (which is request.queue.skip and wouldn't close input.http).
+    _on_stop must take it off air via the bus GATE (since 2026-09-04,
+    Paket 2: the switch fades it out under the successor) and call
+    engine.webstream_stop() only after the drain - NEVER engine.stop()
+    (request.queue.skip would not close input.http).
     """
     sched, engine = liquidsoap_scheduler
     event = _make_webstream_event()
@@ -223,14 +225,14 @@ def test_on_stop_liquidsoap_webstream_calls_webstream_stop(
 
     sched._on_stop("key1")
 
-    # webstream_stop must have been called (closes input.http session)
-    engine.webstream_stop.assert_called_once()
-    # The generic engine.stop() must NOT have been called for a webstream
-    # (would be a no-op on input.http but signals intent confusion)
+    engine.webstream_gate.assert_called_once_with(False)
+    engine.webstream_stop.assert_not_called()   # draining
     engine.stop.assert_not_called()
-    # And bookkeeping has been cleared
     assert sched._playing_key is None
     assert sched._current_event is None
+
+    sched._drained_webstream_stop(sched._webstream_generation)
+    engine.webstream_stop.assert_called_once()
 
 
 def test_on_stop_liquidsoap_file_event_unchanged(liquidsoap_scheduler):

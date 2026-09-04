@@ -48,6 +48,7 @@ from .engine.ffmpeg_linein_capture import FfmpegLineinCapture
 from .recording_path import build_output_path
 from .engine.ffmpeg_streamer import FfmpegStreamer
 from .engine.interface import PlayoutEngine, PlayoutState
+from .liquidsoap_config import DEFAULT_INPUT_DUCK_FADE_SECONDS
 from .player.events import (
     EventKind,
     FileEvent,
@@ -73,6 +74,14 @@ logger = logging.getLogger(__name__)
 # target, so 2 s is generous for a true same-instant handoff and far
 # below any real gap between shows.
 LINEIN_FOLLOW_UP_WINDOW_SECONDS = 2.0
+
+# RASTATIME 2026-09-04 - "Paket 2": how long before its slot a line-in
+# or webstream is connected and buffered with its bus gate CLOSED, so
+# that at the slot start only the gate has to open (start gap ~0
+# instead of the ~2 s the capture chain / the webstream pre-buffer
+# need).  10 s was the operator's figure; the slowest observed
+# webstream buffer-up was 9 s.
+PREPARE_LEAD_SECONDS = 10.0
 
 
 class PlayoutScheduler:
@@ -101,6 +110,7 @@ class PlayoutScheduler:
         api_client_v1: Optional["object"] = None,
         read_stream_outputs: Optional[Callable[[], List[Dict]]] = None,
         streaming_handled_externally: bool = False,
+        input_transition_seconds: float = 2.0,
     ) -> None:
         self._engine = engine
         self._api_client = api_client
@@ -147,6 +157,22 @@ class PlayoutScheduler:
         # a jabra-show start was followed 2 ms later by the tascam-show
         # stop, whose ``linein_stop`` muted the jabra source).
         self._linein_generation: int = 0
+        # RASTATIME 2026-09-04 - Paket 2 state (see PREPARE_LEAD_SECONDS).
+        # _prepared: (key, event) of the ONE source currently pre-warmed
+        # with its gate closed; identity-compared (keys shift across
+        # refreshes).  _webstream_generation mirrors _linein_generation so
+        # a drained stop can tell "my" source from a newer one.  The drain
+        # is the bus transition length (crossfade D, or the fixed duck
+        # fade when D = 0) plus a margin: the old source must keep being
+        # pulled until the fade is over, THEN it is stopped.
+        self._webstream_generation: int = 0
+        self._prepare_timers: Dict[str, threading.Timer] = {}
+        self._prepared: Optional[Tuple[str, object]] = None
+        self._input_transition_seconds = max(0.0, float(input_transition_seconds))
+        fade = (self._input_transition_seconds
+                if self._input_transition_seconds > 0
+                else DEFAULT_INPUT_DUCK_FADE_SECONDS)
+        self._drain_seconds = fade + 0.5
 
         # RASTATIME 2026-05-16 — cached effective dB gain for the
         # currently-playing event.  Source of the value depends on the
@@ -332,6 +358,16 @@ class PlayoutScheduler:
 
         with self._lock:
             self._cancel_all_timers()
+
+            # RASTATIME 2026-09-04 - a pre-warmed source whose item is no
+            # longer in the schedule must be torn down again (its gate is
+            # closed, so it is inaudible, but the capture holds the
+            # device and the http source polls the mount).  Identity
+            # comparison, keys shift across refreshes.
+            if self._prepared is not None and not any(
+                self._same_scheduled_item(e, self._prepared[1]) for e in events.values()
+            ):
+                self._undo_prepare("its item left the schedule")
 
             # If the currently-playing event is no longer valid, stop
             # playback now — otherwise the track keeps running until its
@@ -552,6 +588,9 @@ class PlayoutScheduler:
             if stop_t is not None:
                 stop_t.cancel()
         self._timers.clear()
+        for t in self._prepare_timers.values():
+            t.cancel()
+        self._prepare_timers.clear()
         # Parallel armed-events lookup is cleared in lockstep so
         # ``_on_stop``'s same-device-follow-up check sees a consistent
         # snapshot of "what's armed right now" (rather than ghosts of
@@ -652,6 +691,7 @@ class PlayoutScheduler:
             start_t.daemon = True
             start_t.start()
 
+        self._arm_prepare(key, event, start_delay, self._on_webstream_prepare)
         stop_t = threading.Timer(stop_delay, self._on_stop, args=(key,))
         stop_t.daemon = True
         stop_t.start()
@@ -733,6 +773,7 @@ class PlayoutScheduler:
                 start_t.daemon = True
                 start_t.start()
 
+        self._arm_prepare(key, event, start_delay, self._on_linein_prepare)
         stop_t = threading.Timer(stop_delay, self._on_stop, args=(key,))
         stop_t.daemon = True
         stop_t.start()
@@ -854,20 +895,167 @@ class PlayoutScheduler:
             return  # a DJ is on air; sources stay as they are
         if isinstance(prev_event, LineinEvent):
             logger.info(
-                "PLAY %s takes over from line-in %r - closing its capture "
-                "and Liquidsoap source.", key, prev_event.name,
+                "PLAY %s takes over from line-in %r - releasing it.",
+                key, prev_event.name,
             )
-            if self._linein_capture is not None:
-                self._linein_capture.stop()
-            if self._streaming_handled_externally:
-                self._engine.linein_stop()
+            self._release_linein(f"successor {key}")
         elif isinstance(prev_event, WebStreamEvent):
             if self._streaming_handled_externally:
                 logger.info(
-                    "PLAY %s takes over from web stream %s - closing its "
-                    "source.", key, prev_event.uri,
+                    "PLAY %s takes over from web stream %s - releasing it.",
+                    key, prev_event.uri,
                 )
-                self._engine.webstream_stop()
+                self._release_webstream(f"successor {key}")
+
+    # ------------------------------------------------------------------
+    # RASTATIME 2026-09-04 - Paket 2: pre-warm + gates + drained stop
+    # ------------------------------------------------------------------
+
+    def _arm_prepare(self, key: str, event: object, start_delay: float,
+                     handler: Callable[[str, object], None]) -> None:
+        """Arm the prepare timer at start - PREPARE_LEAD_SECONDS (Liquidsoap
+        mode only; an item starting sooner than that goes the normal way)."""
+        if not self._streaming_handled_externally:
+            return
+        lead = start_delay - PREPARE_LEAD_SECONDS
+        if lead <= 0.5:
+            return
+        t = threading.Timer(lead, handler, args=(key, event))
+        t.daemon = True
+        t.start()
+        self._prepare_timers[key] = t
+
+    def _on_linein_prepare(self, key: str, event: LineinEvent) -> None:
+        """T - 10 s: bring the line-in up with the bus gate CLOSED."""
+        if self._linein_capture is None:
+            return
+        if isinstance(self._current_event, LineinEvent):
+            logger.info(
+                "Prepare %s skipped: a line-in is on air (single capture); "
+                "it starts the normal way at its slot.", key,
+            )
+            return
+        if self._prepared is not None and not self._same_scheduled_item(
+            self._prepared[1], event
+        ):
+            logger.info("Prepare %s skipped: %s is already pre-warmed.", key, self._prepared[0])
+            return
+        dev_name = getattr(event, "device_name", "") or ""
+        if not dev_name:
+            return  # legacy dshow path cannot be pre-warmed
+        resolved = self._resolve_linein_device(event)
+        if not resolved:
+            logger.warning("Prepare %s: device unavailable - no pre-warm.", key)
+            return
+        mapping = list(getattr(event, "channel_mapping", None) or [0, 1])
+        logger.info("Prepare %s: pre-warming line-in %r (gate closed).", key, event.name)
+        self._linein_generation += 1  # a pending drained stop must not kill us
+        self._engine.linein_gate(False)
+        self._engine.linein_start_http()
+        try:
+            self._linein_capture.start(
+                resolved, channel_mapping=tuple(mapping), device_name=dev_name,
+            )
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            logger.error("Prepare %s: capture start failed: %s", key, exc)
+            self._engine.linein_stop()
+            self._engine.linein_gate(True)
+            return
+        if not self._linein_capture.is_running:
+            logger.error("Prepare %s: capture did not come up - not pre-warmed.", key)
+            self._engine.linein_stop()
+            self._engine.linein_gate(True)
+            return
+        self._prepared = (key, event)
+
+    def _on_webstream_prepare(self, key: str, event: WebStreamEvent) -> None:
+        """T - 10 s: connect + buffer the webstream with the bus gate CLOSED."""
+        if isinstance(self._current_event, WebStreamEvent):
+            logger.info(
+                "Prepare %s skipped: a web stream is on air (single source).", key,
+            )
+            return
+        if self._prepared is not None and not self._same_scheduled_item(
+            self._prepared[1], event
+        ):
+            logger.info("Prepare %s skipped: %s is already pre-warmed.", key, self._prepared[0])
+            return
+        logger.info("Prepare %s: pre-buffering web stream %s (gate closed).", key, event.uri)
+        self._webstream_generation += 1
+        self._engine.webstream_gate(False)
+        self._engine.webstream_start(event.uri, gain_db=event.input_gain_db)
+        self._prepared = (key, event)
+
+    def _take_prepared(self, event: object) -> bool:
+        """True (and clears the mark) when ``event`` is the pre-warmed item."""
+        if self._prepared is None or not self._same_scheduled_item(self._prepared[1], event):
+            return False
+        self._prepared = None
+        return True
+
+    def _undo_prepare(self, reason: str) -> None:
+        if self._prepared is None:
+            return
+        key, event = self._prepared
+        self._prepared = None
+        logger.info("Undoing pre-warm of %s: %s.", key, reason)
+        if isinstance(event, LineinEvent):
+            self._linein_generation += 1
+            self._engine.linein_stop()
+            if self._linein_capture is not None:
+                self._linein_capture.stop()
+            self._engine.linein_gate(True)
+        elif isinstance(event, WebStreamEvent):
+            self._webstream_generation += 1
+            self._engine.webstream_stop()
+            self._engine.webstream_gate(True)
+
+    def reset_gates(self) -> None:
+        """Open both bus gates (startup: a previous Pypo may have died
+        mid-prepare with a gate closed)."""
+        if self._streaming_handled_externally:
+            self._engine.linein_gate(True)
+            self._engine.webstream_gate(True)
+
+    def _release_linein(self, why: str) -> None:
+        """Take the line-in off air NOW via the gate (the bus fades it out
+        under the successor while its buffered tail plays) and stop the
+        capture + source once the fade is over."""
+        if not self._streaming_handled_externally:
+            if self._linein_capture is not None:
+                self._linein_capture.stop()
+            return
+        gen = self._linein_generation
+        self._engine.linein_gate(False)
+        logger.info("Line-in released (%s): gate closed, stop in %.1f s.", why, self._drain_seconds)
+        t = threading.Timer(self._drain_seconds, self._drained_linein_stop, args=(gen,))
+        t.daemon = True
+        t.start()
+
+    def _drained_linein_stop(self, gen: int) -> None:
+        if self._linein_generation != gen:
+            logger.info("Drained line-in stop skipped: a newer line-in took over (gen %d->%d).",
+                        gen, self._linein_generation)
+            return
+        if self._linein_capture is not None:
+            self._linein_capture.stop()
+        self._engine.linein_stop()
+
+    def _release_webstream(self, why: str) -> None:
+        if not self._streaming_handled_externally:
+            return
+        gen = self._webstream_generation
+        self._engine.webstream_gate(False)
+        logger.info("Web stream released (%s): gate closed, stop in %.1f s.", why, self._drain_seconds)
+        t = threading.Timer(self._drain_seconds, self._drained_webstream_stop, args=(gen,))
+        t.daemon = True
+        t.start()
+
+    def _drained_webstream_stop(self, gen: int) -> None:
+        if self._webstream_generation != gen:
+            logger.info("Drained web stream stop skipped: a newer web stream took over.")
+            return
+        self._engine.webstream_stop()
 
     def _on_file_start(self, key: str, event: FileEvent) -> None:
         logger.info(
@@ -1055,9 +1243,18 @@ class PlayoutScheduler:
             # would drop straight back onto it when we end.
             self._close_predecessor_source(prev_event, key)
             self._engine.stop()  # deferred-stop, clears request.queue
+            if self._take_prepared(event):
+                # RASTATIME 2026-09-04 - pre-buffered at T-10 s: only the
+                # gate has to open.  No reconnect, no buffer-up gap.
+                logger.info("Web stream %s was pre-buffered - opening the gate.", key)
+                self._webstream_generation += 1
+                self._engine.webstream_gate(True)
+                return
+            self._webstream_generation += 1
             self._engine.webstream_start(
                 event.uri, gain_db=event.input_gain_db,
             )
+            self._engine.webstream_gate(True)
             # No _start_streamers — Liquidsoap owns the Icecast PUTs
             # from inside the .liq, and the webstream audio rides the
             # same bus that the output.icecast + output.file blocks tap.
@@ -1222,6 +1419,24 @@ class PlayoutScheduler:
             )
             return
 
+        # RASTATIME 2026-09-04 - pre-warmed at T-10 s (Paket 2): capture
+        # and http source are up with the gate closed; open it.  The
+        # webstream predecessor (if any) is released by the same call
+        # that would run below, the queue is cleared, and we are done.
+        if (
+            self._streaming_handled_externally
+            and self._linein_capture is not None
+            and self._linein_capture.is_running
+            and self._take_prepared(event)
+        ):
+            logger.info("Line-In %s was pre-warmed - opening the gate.", key)
+            if isinstance(prev_event, WebStreamEvent):
+                self._close_predecessor_source(prev_event, key)
+            self._engine.stop()
+            self._linein_generation += 1
+            self._engine.linein_gate(True)
+            return
+
         # Resolve the device GUID (with name-fallback for USB endpoint
         # GUID shifts after reboot — see _resolve_linein_device).
         resolved_device_id = self._resolve_linein_device(event)
@@ -1309,6 +1524,7 @@ class PlayoutScheduler:
                 # publishing it.  If the feeder never comes up we stop the
                 # source again below (the b4cd37b guard, preserved).
                 self._engine.linein_start_http()
+                self._engine.linein_gate(True)  # may be closed from an undone pre-warm
                 try:
                     self._linein_capture.start(
                         resolved_device_id,
@@ -1751,7 +1967,11 @@ class PlayoutScheduler:
         # event being torn down AND no same-device successor needs the
         # capture alive.  Safe to call even when no capture is running
         # (idempotent).
-        if was_linein and self._linein_capture is not None:
+        # RASTATIME 2026-09-04 - the capture is no longer stopped here:
+        # in Liquidsoap mode _release_linein() (below) closes the gate
+        # first and stops capture + source after the drain, so the
+        # buffered tail is heard.  Legacy engines still stop it at once.
+        if was_linein and not self._streaming_handled_externally and self._linein_capture is not None:
             self._linein_capture.stop()
 
         # If a DJ source is currently dominant, leave the engine alone —
@@ -1780,7 +2000,7 @@ class PlayoutScheduler:
                     key, linein_gen, self._linein_generation,
                 )
                 return
-            self._engine.linein_stop()
+            self._release_linein(f"slot end {key}")
             # No further engine.stop() / wait_until_stopped — the
             # linein had its own source path that's now closed.
             self._stop_streamers()  # no-op in Liquidsoap-Mode
@@ -1793,7 +2013,7 @@ class PlayoutScheduler:
         # explicitly to tear down the input.http and let the switch
         # fall through to scheduled.
         if was_webstream and self._streaming_handled_externally:
-            self._engine.webstream_stop()
+            self._release_webstream(f"slot end {key}")
             # No further engine.stop() / wait_until_stopped — the
             # webstream had its own source path that's now closed.
             # The Pypo _stop_streamers no-op below stays for API
@@ -2343,6 +2563,7 @@ class PlayoutScheduler:
                 self._linein_generation += 1
                 if use_feeder:
                     self._engine.linein_start_http()
+                    self._engine.linein_gate(True)
                 else:
                     from .engine.ffmpeg_linein_capture import (
                         _stable_id_to_dshow_audio,
