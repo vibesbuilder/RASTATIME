@@ -192,14 +192,20 @@ Line-In + sa Longueur par défaut.
    d'attendre la fin.
 4. À la durée configurée, Pypo envoie `linein.stop` et
    arrête FfmpegLineinCapture ; le switch retombe sur
-   scheduled.  Ce qui suit — jingle, webstream — ferme aussi le
-   Line-In lui-même à son démarrage : le micro ne peut donc jamais
+   scheduled.  Depuis le 2026-09-04 la passation est un **mixage,
+   pas une coupure** : le Line-In est retiré de l'antenne par une
+   *porte* (gate) dans le bus Liquidsoap, le bus le fond sous le
+   successeur pendant la durée de crossfade par défaut (Settings →
+   General ; 0 = le successeur démarre aussitôt à plein niveau et le
+   Line-In s'efface en dessous, « ducking »), et ce n'est qu'ensuite
+   que la capture et la source sont arrêtées — les derniers mots de
+   l'animateur, encore dans la chaîne, sont entendus au lieu d'être
+   perdus.  Ce qui suit — jingle, webstream — libère le Line-In de
+   la même façon à son démarrage : le micro ne peut donc jamais
    rester à l'antenne au-delà de son créneau.  Seule exception : un
    **vrai enchaînement** sur le même périphérique (Line-In suivant
    démarrant sous ~2 s), qui hérite de la capture en cours sans
-   coupure.  Un Line-In sur le même périphérique planifié *plus
-   tard* (même de quelques minutes) ne garde plus le micro ouvert
-   entre-temps — c'était l'incident du 2026-09-04.
+   coupure.
 
 **Comportement d'enregistrement (nouveau depuis Phase F,
 2026-05-29) :** les line-inputs planifiés circulent
@@ -234,13 +240,20 @@ verrouiller. Depuis le 2026-09-04 le format est imposé
 (`format="mp3"`, la capture muxe toujours en MP3), le tampon
 `input.http` vaut 1,0 s (réglable via
 `RASTATIME_LIQUIDSOAP_LINEIN_HTTP_MAX_BUFFER_SECONDS`) et le
-contrôle de santé au démarrage de la capture 0,75 s. Attendu :
-écart de démarrage ~2–3 s, latence de fin de créneau ~2 s. **Les
-animateurs doivent donc cesser de parler environ deux secondes
-avant la fin du créneau** — pratique habituelle des chaînes de
-diffusion. Le préchargement des sources avant le créneau (pour
-supprimer entièrement l'écart de démarrage) est un point séparé du
-backlog.
+contrôle de santé au démarrage de la capture 0,75 s. Mesuré
+ensuite : écart de démarrage 2 s, perte en fin de créneau 2 s.
+
+Ces deux secondes restantes sont traitées depuis le 2026-09-04
+(soir) : **préchauffage** — 10 s avant un créneau Line-In, le
+playout démarre déjà la capture et connecte la source Liquidsoap
+avec la porte du bus fermée, si bien qu'au début du créneau seule
+la porte s'ouvre et le Line-In est à l'antenne en une trame ; et le
+**mixage à la fermeture de la porte** en fin de créneau (voir
+l'étape 4), qui joue la queue mise en tampon sous le successeur au
+lieu de la jeter. Pas de préchauffage quand un autre Line-In est à
+l'antenne (une capture à la fois) ou quand la ligne n'a pas de nom
+de périphérique enregistré ; ces créneaux démarrent normalement
+(~2 s).
 
 **Chemins legacy mpv / VLC (uniquement quand
 `RASTATIME_PLAYOUT_ENGINE=mpv` ou `=vlc`) :**

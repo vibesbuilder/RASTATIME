@@ -48,7 +48,7 @@ Paramètres → **Préférences générales**.
 | Champ | Notes |
 |---|---|
 | **Langue par défaut** | Langue UI pour nouveaux utilisateurs + l'écran de connexion. |
-| **Crossfade par défaut** | Crossfade entre pistes consécutives. 1 seconde est typique. |
+| **Crossfade par défaut** | Le *crossfade maison* de la station. Entre pistes consécutives d'une même émission c'est la durée du crossfade (1 seconde est typique ; 0 = coupures nettes). Depuis le 2026-09-04 la valeur façonne aussi chaque bascule entre **entrées** (piste ↔ webstream ↔ Line-In) : une valeur supérieure à 0 fond la source sortante dans l'entrante pendant ce nombre de secondes ; **0 signifie « ducking »** — la source entrante démarre aussitôt à plein niveau et la sortante s'efface en dessous en 1 s. Dans les deux cas la queue mise en tampon de la source sortante est entendue, pas coupée. Prend effet après redémarrage de la chaîne audio (« Appliquer maintenant » dans Settings → Local Machine). |
 | **Type de piste par défaut** | Type de piste assigné aux nouveaux téléversements. |
 | **Propriétaire d'import par défaut** | Compte crédité comme propriétaire pour fichiers importés via le Dossier d'import local. |
 | **Enregistrement par défaut** | Si coché, nouvelles émissions ont **Enregistrer cette émission :** pré-cochée. |

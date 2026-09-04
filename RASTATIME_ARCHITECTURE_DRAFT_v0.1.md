@@ -1,10 +1,26 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.20
-Date: 2026-09-03
+Draft version: 0.21
+Date: 2026-09-04
 
 > **Revision history**
+> - **0.21 (2026-09-04)** — **Seamless input switching** (§23.26).  The
+>   Liquidsoap bus switch gains per-source **gates** (`webstream_live`,
+>   `linein_live`, interactive bools ANDed into the predicates) and
+>   **transition functions**: a crossfade of the house duration, or
+>   "ducking" when that duration is 0.  The house duration is now the
+>   Settings → General "Default Crossfade Duration" (cc_pref), read at
+>   render time; the env var is a fallback.  The playout **pre-warms**
+>   line-ins and webstreams 10 s before their slot behind a closed gate
+>   and opens the gate at the slot start; at the slot end it closes the
+>   gate and stops the source only after the transition has drained,
+>   so a line-in's buffered tail (~2 s of the presenter's last words)
+>   is heard under the successor instead of being cut.  Same-day
+>   groundwork: every scheduled line-in on the MME feeder (dshow only
+>   as a legacy fallback), `format="mp3"` on the capture source (FFmpeg
+>   autodetection cost ~5 s of latency), successor-side release of
+>   line-in/webstream predecessors, identity-based catch-up.
 > - **0.20 (2026-09-03)** — The **Main Output** setting now actually
 >   drives the Liquidsoap local monitor.  Until now the value was
 >   stored and pushed to playout but discarded by a no-op
@@ -4098,3 +4114,61 @@ unscheduled file).  The block-resolve reuses the exact shape already
 proven by `_appendRandomFromBlockPool`.  The live airing test (a real
 bulletin imported mid-show and aired at the next slot) is the
 operator-run end-to-end test, mirroring the Mid-Show R1 live test.
+
+
+### 23.26 Seamless Input Switching — Gates, Transitions, Pre-warm (2026-09-04)
+
+**Context.**  With the show-transition fixes of 2026-09-04 the bus
+switched *correctly* between files, webstreams and line-ins, but every
+switch was a hard cut on the next frame.  Two audible consequences
+remained after the line-in latency package: ~2 s of silence at the start
+of a line-in or webstream slot (the pipeline has to come up), and the
+last ~2 s of a line-in show never reaching the stream (they were still
+in the pipeline when the source was killed).  The operator's guiding
+principle is a seamless mix between all input kinds.
+
+**Decision.**  Three mechanisms, all in Liquidsoap-mode only and each
+with a fallback that reproduces the previous behaviour:
+
+1. *Gates.*  `webstream_live` and `linein_live` are `interactive.bool`
+   variables (default `true`) ANDed into the bus predicates
+   (`{linein_live() and source.is_ready(linein)}`).  A Pypo that never
+   touches them gets the old `is_ready` behaviour.  Telnet: `var.set`.
+2. *Transitions.*  The bus `switch` carries `transitions=[...]`,
+   index-aligned with its arms: DJ arms hand over instantly
+   (`bus_instant`), the programme arms (webstream, line-in, scheduled)
+   go through `bus_transition`.  With the house crossfade D > 0 that is
+   `add(normalize=false, [fade.out(duration=D, old), fade.in(duration=D, new)])`;
+   with D = 0 it is "ducking": the new source at full level after a
+   50 ms ramp (click-free; also keeps both `add` elements the same
+   source type, which the 2.4.4 typer demands), the old source fading
+   out underneath over `DEFAULT_INPUT_DUCK_FADE_SECONDS` (1 s).
+   `transition_length` is the fade length + 0.5 s.  Verified in
+   isolation on the exact rendered block: two sines, gate flipped over
+   telnet, spectral analysis of the recording — both shapes act at the
+   flip, not at `transition_length`.
+3. *Scheduling.*  `PREPARE_LEAD_SECONDS` (10 s) before a line-in or
+   webstream slot the scheduler connects and buffers the source with
+   its gate closed (`_on_linein_prepare` / `_on_webstream_prepare`); at
+   the slot start it only opens the gate.  At the slot end — and when a
+   successor takes over — it closes the gate at once and stops capture
+   + source after the drain (fade + 0.5 s), guarded by the line-in /
+   webstream generation counters so an older drain never kills a newer
+   source.  One pre-warm at a time; none while a line-in is on air
+   (single capture) or a webstream plays (single source); a pre-warm
+   whose item leaves the schedule is undone at the next refresh;
+   startup opens both gates.
+
+**House crossfade.**  Settings → General "Default Crossfade Duration"
+(cc_pref `default_crossfade_duration`) is read via the Django ORM at
+render time and drives the queue's track crossfade, the bus transitions
+and the scheduler's drain.  `RASTATIME_LIQUIDSOAP_CROSSFADE_SECONDS`
+remains the fallback for a missing/invalid key.  A change takes effect
+at the next PLAYOUT + LIQUIDSOAP restart.
+
+**Rejected.**  Delaying the successor by the latency ("drain without
+mixing"): every following item would start late, jingles and
+top-of-hour would drift.  Shrinking the webstream clock-bridge buffer
+below 5 s: the Phase-E experience is "Buffer emptied" flapping on
+jittery upstreams; pre-warming removes the start gap without touching
+the buffer.

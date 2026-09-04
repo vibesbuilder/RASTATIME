@@ -48,7 +48,7 @@ Configuración → **Preferencias generales**.
 | Campo | Notas |
 |---|---|
 | **Idioma por defecto** | Idioma UI para nuevos usuarios + la pantalla de inicio de sesión. |
-| **Crossfade por defecto** | Crossfade entre pistas consecutivas. 1 segundo es típico. |
+| **Crossfade por defecto** | El *crossfade de la casa*. Entre pistas consecutivas del mismo programa es la duración del crossfade (1 segundo es típico; 0 = cortes secos). Desde el 2026-09-04 el valor también da forma a cada cambio entre **entradas** (pista ↔ webstream ↔ Line-In): un valor mayor que 0 funde la fuente saliente en la entrante durante esos segundos; **0 significa «ducking»** — la fuente entrante arranca de inmediato a nivel completo y la saliente se desvanece por debajo en 1 s. En ambos casos la cola almacenada de la fuente saliente se oye, no se corta. Surte efecto tras reiniciar la cadena de audio («Aplicar ahora» en Settings → Local Machine). |
 | **Tipo de pista por defecto** | Tipo de pista asignado a nuevos uploads. |
 | **Propietario de importación por defecto** | Cuenta acreditada como propietario para archivos importados vía la Carpeta de importación local. |
 | **Grabación por defecto** | Si marcado, los nuevos programas tienen **Grabar este programa:** pre-marcado. |

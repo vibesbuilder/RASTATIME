@@ -178,15 +178,20 @@ Biblioteca.
    mientras la captura calienta en vez de estrictamente
    después.
 4. A la duración configurada, Pypo envía `linein.stop` y
-   detiene FfmpegLineinCapture; el switch vuelve a scheduled.  Lo
-   que sigue — un jingle, un webstream — también cierra el Line-In
-   por sí mismo al arrancar, así que el micrófono nunca puede
-   quedar en antena más allá de su slot.  La única excepción es un
-   **encadenado real** en el mismo dispositivo (el siguiente
-   Line-In arranca en ~2 s): ese hereda la captura en marcha sin
-   corte.  Un Line-In en el mismo dispositivo programado *más
-   tarde* (aunque sean pocos minutos) ya no mantiene el micrófono
-   abierto entre medias — ese fue el incidente del 2026-09-04.
+   detiene FfmpegLineinCapture; el switch vuelve a scheduled.
+   Desde el 2026-09-04 el relevo es una **mezcla, no un corte**: el
+   Line-In se retira de antena mediante una *puerta* (gate) en el
+   bus de Liquidsoap, el bus lo funde bajo el sucesor durante la
+   duración de crossfade por defecto (Settings → General; 0 = el
+   sucesor arranca de inmediato a nivel completo y el Line-In se
+   desvanece por debajo, «ducking»), y solo después se detienen la
+   captura y la fuente — así las últimas palabras del presentador,
+   aún en la cadena, se oyen en vez de perderse.  Lo que sigue — un
+   jingle, un webstream — libera el Line-In del mismo modo al
+   arrancar, así que el micrófono nunca puede quedar en antena más
+   allá de su slot.  La única excepción es un **encadenado real** en
+   el mismo dispositivo (el siguiente Line-In arranca en ~2 s): ese
+   hereda la captura en marcha sin corte.
 
 **Comportamiento de grabación (nuevo desde Phase F,
 2026-05-29):** los line-inputs planificados ahora fluyen
@@ -221,12 +226,19 @@ vista, y el decodificador escanea ~5 s antes de enganchar. Desde el
 muxea MP3), el búfer `input.http` es de 1,0 s (ajustable por
 `RASTATIME_LIQUIDSOAP_LINEIN_HTTP_MAX_BUFFER_SECONDS`) y la
 comprobación de salud al arranque de la captura es de 0,75 s.
-Esperado: hueco de inicio ~2–3 s, latencia de fin de slot ~2 s.
-**Los presentadores deben, por tanto, dejar de hablar unos dos
-segundos antes del final del slot** — la práctica habitual en
-cadenas de emisión. La precarga de fuentes antes del slot (para
-eliminar el hueco de inicio por completo) es un punto aparte del
-backlog.
+Medido después: hueco de inicio 2 s, pérdida al final del slot 2 s.
+
+Esos dos segundos restantes se abordan desde el 2026-09-04 (por la
+tarde): **precalentamiento** — 10 s antes de un slot Line-In el
+playout ya arranca la captura y conecta la fuente de Liquidsoap con
+la puerta del bus cerrada, de modo que al inicio del slot solo se
+abre la puerta y el Line-In está en antena en un frame; y la
+**mezcla al cerrar la puerta** al final del slot (ver el paso 4),
+que reproduce la cola almacenada bajo el sucesor en lugar de
+descartarla. No se precalienta cuando otro Line-In está en antena
+(una captura a la vez) ni cuando la fila no tiene nombre de
+dispositivo guardado; esos slots arrancan por la vía normal
+(~2 s).
 
 **Rutas legacy mpv / VLC (solo cuando
 `RASTATIME_PLAYOUT_ENGINE=mpv` o `=vlc`):**

@@ -180,13 +180,20 @@ behaves like any other playlist item.
      happens in Pypo).
    - `webstream.start` — tells the source to connect.
 2. Liquidsoap's `input.http` source opens the HTTP
-   connection and buffers ~10 seconds of audio.
-3. Once enough audio is buffered, `source.is_ready` flips
-   true and the bus-switch routes audio to the webstream
-   source — listeners hear the stream.
-4. At the configured duration Pypo sends `webstream.stop`;
-   the switch falls back to scheduled (silence or the
-   next track).
+   connection and buffers a few seconds of audio (5 s clock
+   bridge, up to 10 s stream buffer).  Since 2026-09-04 this
+   already happens **10 s before the slot** ("pre-warm") with the
+   bus *gate* closed, so the buffer is full when the slot starts.
+3. At the slot start Pypo opens the gate; the bus-switch routes
+   audio to the webstream source within a frame — listeners
+   hear the stream.  (A webstream that could not be pre-warmed —
+   e.g. one webstream directly after another — connects at the
+   slot start and is on air once its buffer is full, ~5 s.)
+4. At the configured duration Pypo closes the gate: the bus
+   fades the webstream out under the next item over the Default
+   Crossfade Duration (Settings → General; 0 = "ducking"), then
+   sends `webstream.stop`.  The next item starts on time instead
+   of waiting for the buffer to drain.
 
 **Recording behaviour (new since Phase E, 2026-05-29):**
 Scheduled webstreams now land in the per-show `.mp3`
@@ -195,12 +202,13 @@ internal bus that `output.file` taps, so it gets captured
 alongside any regular tracks in the same show.  Pre-Phase E,
 webstream-only shows had silent recordings.
 
-**Initial-show latency:** the first ~5 seconds of a webstream
-slot may be silent on the operator's local speakers while
-Liquidsoap's buffer builds up. Listener-side players add their
-own ~10 s buffer, so the effective end-listener-perceived
-delay is dominated by the player-side buffer (no extra delay
-introduced by Phase E).
+**Initial-show latency:** with pre-warming (since 2026-09-04)
+a webstream slot starts without a gap — the stream was connected
+and buffered 10 s earlier.  Only a webstream that could not be
+pre-warmed (see step 3) still needs ~5 s to buffer.  Listener-side
+players add their own ~10 s buffer, so the effective
+end-listener-perceived delay is dominated by the player-side
+buffer.
 
 **Legacy mpv / VLC engine paths (only when
 `RASTATIME_PLAYOUT_ENGINE=mpv` or `=vlc`):**

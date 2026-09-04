@@ -140,10 +140,16 @@ playlist.
      dB → linéaire dans Pypo).
    - `webstream.start` — demande à la source de se connecter.
 2. La source `input.http` de Liquidsoap ouvre la connexion
-   HTTP et bufferise ~10 secondes d'audio.
-3. Une fois qu'assez d'audio est bufferisé,
-   `source.is_ready` passe à true et le bus-switch route
-   l'audio vers la source webstream — les auditeurs
+   HTTP et bufferise quelques secondes d'audio (pont d'horloge
+   5 s, tampon de flux jusqu'à 10 s). Depuis le 2026-09-04 cela
+   se fait déjà **10 s avant le créneau** (« préchauffage »), la
+   *porte* du bus fermée, si bien que le tampon est plein au début
+   du créneau. En fin de créneau, Pypo ferme la porte : le bus fond
+   le webstream sous l'élément suivant pendant la durée de crossfade
+   par défaut (Settings → General ; 0 = « ducking »), puis envoie
+   `webstream.stop` — l'élément suivant démarre à l'heure.
+3. Au début du créneau Pypo ouvre la porte ; le bus-switch route
+   l'audio vers la source webstream en une trame — les auditeurs
    entendent le stream.
 4. À la durée configurée, Pypo envoie `webstream.stop` ; le
    switch retombe sur scheduled (silence ou la piste
@@ -159,13 +165,14 @@ régulières de la même émission. Avant Phase E, les
 émissions webstream-only avaient des enregistrements
 silencieux.
 
-**Latence initiale d'émission :** les premières ~5 secondes
-d'un créneau webstream peuvent être silencieuses sur les
-haut-parleurs locaux de l'opérateur pendant que le buffer
-Liquidsoap se remplit. Les lecteurs côté auditeur ajoutent
-leur propre buffer de ~10 s, donc le délai effectif perçu
-par l'auditeur final est dominé par le buffer côté lecteur
-(aucun délai supplémentaire introduit par Phase E).
+**Latence initiale d'émission :** avec le préchauffage (depuis
+le 2026-09-04) un créneau webstream démarre sans trou — le flux a
+été connecté et mis en tampon 10 s plus tôt. Seul un webstream qui
+n'a pas pu être préchauffé (p. ex. directement après un autre
+webstream) a encore besoin de ~5 s de mise en tampon. Les lecteurs
+côté auditeur ajoutent leur propre buffer de ~10 s, donc le délai
+effectif perçu par l'auditeur final est dominé par le buffer côté
+lecteur.
 
 **Chemins legacy mpv / VLC (uniquement quand
 `RASTATIME_PLAYOUT_ENGINE=mpv` ou `=vlc`) :**

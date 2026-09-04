@@ -114,7 +114,7 @@ Einstellungen → **Allgemeine Einstellungen**.
 | Feld | Hinweise |
 |---|---|
 | **Standardsprache** | UI-Sprache für neue Benutzer + den Anmeldebildschirm. Bestehende Benutzer behalten ihre per-user Spracheinstellung (über das Benutzer-Dropdown gesetzt). |
-| **Standard-Crossfade** | Crossfade zwischen aufeinanderfolgenden Tracks in derselben Sendung. 1 Sekunde ist typisch. 0 = harte Schnitte. Bis zu 10 Sekunden für weiche Übergänge. |
+| **Standard-Crossfade** | Der *Haus-Crossfade* der Station. Zwischen aufeinanderfolgenden Tracks derselben Sendung ist es die Crossfade-Länge (1 Sekunde ist typisch; 0 = harte Schnitte; bis zu 10 Sekunden für weiche Übergänge). Seit 2026-09-04 prägt der Wert auch jeden Wechsel zwischen **Eingängen** (Track ↔ Webstream ↔ Line-In): ein Wert über 0 blendet die abgehende Quelle über so viele Sekunden in die ankommende über; **0 bedeutet „Ducking"** — die ankommende Quelle startet sofort in voller Lautstärke, die abgehende blendet darunter über 1 s aus. In beiden Fällen ist der gepufferte Rest der abgehenden Quelle hörbar, nicht abgeschnitten. Wirksam nach Neustart der Audiokette („Jetzt anwenden" in Settings → Local Machine). |
 | **Standard-Track-Typ** | Der Track-Typ, der neuen Uploads zugewiesen wird, wenn der Operator nicht explizit einen setzt. Beeinflusst Smart-Block-Filter. |
 | **Standard-Import-Besitzer** | Das Benutzerkonto, dem als Besitzer für Dateien, die über den lokalen Import-Ordner importiert werden, gutgeschrieben wird. Standardmäßig `admin`. |
 | **Standard-Aufnahme** | Wenn angekreuzt, haben neue Sendungen **Diese Sendung aufzeichnen:** vor-angekreuzt. Siehe [Aufnahme pro Sendung](./RECORD_PER_SHOW.md). |

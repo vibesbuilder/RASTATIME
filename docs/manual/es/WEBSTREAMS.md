@@ -103,10 +103,17 @@ Igual que cualquier item de biblioteca.
      dB → lineal en Pypo).
    - `webstream.start` — pide a la fuente que se conecte.
 2. La fuente `input.http` de Liquidsoap abre la conexión
-   HTTP y bufferiza ~10 segundos de audio.
-3. Una vez que hay suficiente audio bufferizado,
-   `source.is_ready` cambia a true y el bus-switch enruta
-   el audio a la fuente webstream — los oyentes escuchan
+   HTTP y bufferiza unos segundos de audio (puente de reloj de
+   5 s, búfer de flujo de hasta 10 s). Desde el 2026-09-04 esto
+   ocurre ya **10 s antes del slot** («precalentamiento») con la
+   *puerta* del bus cerrada, así que el búfer está lleno al inicio
+   del slot. Al final del slot Pypo cierra la puerta: el bus funde
+   el webstream bajo el siguiente elemento durante la duración de
+   crossfade por defecto (Settings → General; 0 = «ducking») y
+   luego envía `webstream.stop` — el siguiente elemento arranca a
+   su hora.
+3. Al inicio del slot Pypo abre la puerta; el bus-switch enruta
+   el audio a la fuente webstream en un frame — los oyentes escuchan
    el stream.
 4. A la duración configurada, Pypo envía `webstream.stop`;
    el switch vuelve a scheduled (silencio o la siguiente
@@ -121,14 +128,14 @@ conectado, y se captura junto con las pistas regulares del
 mismo show. Antes de Phase E, los shows solo-webstream
 tenían grabaciones silenciosas.
 
-**Latencia inicial del show:** los primeros ~5 segundos de
-un slot webstream pueden ser silenciosos en los altavoces
-locales del operador mientras el buffer de Liquidsoap se
-construye. Los reproductores del lado del oyente añaden su
-propio buffer de ~10 s, así que el retraso efectivo
-percibido por el oyente final está dominado por el buffer
-del lado del reproductor (ningún retraso adicional
-introducido por Phase E).
+**Latencia inicial del show:** con el precalentamiento (desde
+el 2026-09-04) un slot webstream arranca sin hueco — el flujo se
+conectó y almacenó 10 s antes. Solo un webstream que no pudo
+precalentarse (p. ej. justo después de otro webstream) necesita
+aún ~5 s de búfer. Los reproductores del lado del oyente añaden su
+propio buffer de ~10 s, así que el retraso efectivo percibido por
+el oyente final está dominado por el buffer del lado del
+reproductor.
 
 **Rutas legacy mpv / VLC (solo cuando
 `RASTATIME_PLAYOUT_ENGINE=mpv` o `=vlc`):**

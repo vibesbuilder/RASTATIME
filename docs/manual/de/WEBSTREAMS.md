@@ -191,10 +191,21 @@ Playlist-Item.
      passiert in Pypo).
    - `webstream.start` — fordert die Source auf zu verbinden.
 2. Liquidsoaps `input.http`-Source öffnet die HTTP-
-   Verbindung und buffert ~10 Sekunden Audio.
-3. Sobald genug Audio gebuffert ist, schaltet
-   `source.is_ready` auf true und der Bus-Switch routet das
-   Audio zur Webstream-Source — Hörer hören den Stream.
+   Verbindung und buffert einige Sekunden Audio (5-s-Clock-
+   Bridge, bis zu 10 s Stream-Puffer). Seit 2026-09-04 passiert
+   das bereits **10 s vor dem Slot** („Vorwärmen") bei
+   geschlossenem Bus-*Gate*, sodass der Puffer beim Slot-Start
+   voll ist.
+3. Beim Slot-Start öffnet Pypo das Gate; der Bus-Switch routet
+   das Audio innerhalb eines Frames zur Webstream-Source — Hörer
+   hören den Stream. (Ein Webstream, der nicht vorgewärmt werden
+   konnte — z. B. direkt nach einem anderen Webstream — verbindet
+   beim Slot-Start und ist nach vollem Puffer, ~5 s, auf Sendung.)
+   Am Slot-Ende schließt Pypo das Gate: Der Bus blendet den
+   Webstream über die Standard-Crossfade-Dauer (Settings → General;
+   0 = „Ducking") unter dem nächsten Element aus und sendet dann
+   `webstream.stop`. Das nächste Element startet pünktlich, statt
+   auf das Leerlaufen des Puffers zu warten.
 4. Bei der konfigurierten Dauer sendet Pypo `webstream.stop`;
    der Switch fällt zurück auf scheduled (Stille oder den
    nächsten Track).
@@ -207,13 +218,13 @@ wird zusammen mit eventuellen regulären Tracks der Show
 aufgezeichnet. Vor Phase E hatten Webstream-only-Shows
 stille Aufnahmen.
 
-**Initiale Show-Latenz:** die ersten ~5 Sekunden eines
-Webstream-Slots können auf den lokalen Operator-Lautsprechern
-still sein, während Liquidsoaps Buffer aufgebaut wird.
-Listener-seitige Player haben ihren eigenen ~10-s-Puffer,
-sodass die effektive End-Hörer-wahrgenommene Verzögerung von
-diesem Player-seitigen Puffer dominiert wird (keine
-zusätzliche Verzögerung durch Phase E).
+**Initiale Show-Latenz:** Mit Vorwärmen (seit 2026-09-04)
+startet ein Webstream-Slot ohne Lücke — der Stream wurde 10 s
+vorher verbunden und gepuffert. Nur ein Webstream, der nicht
+vorgewärmt werden konnte (siehe Schritt 3), braucht noch ~5 s
+zum Puffern. Listener-seitige Player haben ihren eigenen
+~10-s-Puffer, sodass die effektive End-Hörer-wahrgenommene
+Verzögerung von diesem Player-seitigen Puffer dominiert wird.
 
 **Legacy-mpv-/VLC-Engine-Pfade (nur wenn
 `RASTATIME_PLAYOUT_ENGINE=mpv` oder `=vlc`):**

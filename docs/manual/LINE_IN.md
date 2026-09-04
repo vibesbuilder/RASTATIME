@@ -219,14 +219,19 @@ becomes a schedule item exactly as in path 4.1.
    capture is warming up instead of strictly afterwards.
 4. At the configured duration Pypo sends `linein.stop` plus
    stops FfmpegLineinCapture; the switch falls back to
-   scheduled.  Whatever follows — a jingle, a webstream — also
-   closes the Line-In itself when it starts, so the microphone can
-   never stay on air past its slot.  The one exception is a **true
-   back-to-back** follow-up on the same device (the next Line-In
-   starting within ~2 s): that one inherits the running capture
-   without a bounce.  A same-device Line-In scheduled *later* (even
-   a few minutes) no longer keeps the microphone open in between —
-   that was the 2026-09-04 incident.
+   scheduled.  Since 2026-09-04 the hand-over is a **mix, not a
+   cut**: the Line-In is taken off air through a *gate* in the
+   Liquidsoap bus, the bus fades it out under the successor over
+   the Default Crossfade Duration (Settings → General; 0 = the
+   successor starts at full level at once and the Line-In fades
+   out underneath, "ducking"), and only then are the capture and
+   the source stopped — so the presenter's last words, which are
+   still in the pipeline, are heard instead of lost.  Whatever
+   follows — a jingle, a webstream — releases the Line-In the same
+   way when it starts, so the microphone can never stay on air past
+   its slot.  The one exception is a **true back-to-back** follow-up
+   on the same device (the next Line-In starting within ~2 s): that
+   one inherits the running capture without a bounce.
 
 **Recording behaviour (new since Phase F, 2026-05-29):**
 Scheduled line-inputs now flow through the Liquidsoap internal
@@ -258,12 +263,19 @@ mid-stream with no header in sight, so the decoder scanned for
 (`format="mp3"`, the capture always muxes MP3), the `input.http`
 buffer is 1.0 s (env-tunable via
 `RASTATIME_LIQUIDSOAP_LINEIN_HTTP_MAX_BUFFER_SECONDS`) and the
-capture's start-up health check is 0.75 s.  Expected: start gap
-~2–3 s, end-of-slot latency ~2 s.  **Presenters should therefore
-finish speaking about two seconds before the slot ends** — the
-usual broadcast-chain practice.  Pre-loading sources before the
-slot (to remove the start gap entirely) is a separate backlog
-item.
+capture's start-up health check is 0.75 s.  Measured after that:
+start gap 2 s, end-of-slot loss 2 s.
+
+Both remaining seconds are addressed since 2026-09-04 (evening):
+**pre-warm** — 10 s before a Line-In slot the playout already
+starts the capture and connects the Liquidsoap source with the
+bus gate closed, so at the slot start only the gate opens and the
+Line-In is on air within a frame; and the **gate-off mix** at the
+slot end (see step 4 above), which plays the buffered tail under
+the successor instead of discarding it.  Pre-warming is skipped
+when another Line-In is on air (one capture at a time) or when
+the row has no stored device name; such slots start the normal way
+(~2 s).
 
 **Legacy mpv / VLC engine paths (only when
 `RASTATIME_PLAYOUT_ENGINE=mpv` or `=vlc`):**

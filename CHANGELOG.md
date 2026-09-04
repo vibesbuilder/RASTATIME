@@ -7,6 +7,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Nahtlose Eingangswechsel: Bus-Gates, Übergangsfunktionen,
+  Vorwärmen — „Paket 2" (2026-09-04, Operator-Go, Leitlinie
+  „Seamless-Mix")** — Nach Paket „Line-In-Latenz" blieben 2 s Stille am
+  Slot-Anfang und 2 s verlorener Rest am Slot-Ende.  Beides adressiert:
+  1. **Gates im Bus-Switch** (`webstream_live`, `linein_live`,
+     `interactive.bool`, Default true): Pypo kann eine Quelle mit
+     geschlossenem Gate verbinden und puffern (kein vorzeitiges
+     Auf-Sendung-Gehen) und sie per `var.set` am Slot-Start öffnen
+     bzw. am Slot-Ende schließen.
+  2. **Übergangsfunktionen** (`switch(transitions=…)`): Wechsel
+     zwischen Webstream-, Line-In- und Scheduled-Arm laufen über
+     `bus_transition` — Crossfade D > 0: `fade.out(old, D)` +
+     `fade.in(new, D)`; D = 0: **Ducking**, neue Quelle sofort voll
+     (50-ms-Rampe, klickfrei und typgleich), alte blendet über 1 s
+     darunter aus.  DJ-Arme bleiben sofort.  Isoliert verifiziert
+     (zwei Sinus-Quellen, Gate per Telnet, Spektralanalyse der
+     Aufnahme): beide Formen wirken am Umschaltpunkt, nicht erst nach
+     `transition_length`.
+  3. **Haus-Crossfade aus Settings → General**: `default_crossfade_duration`
+     (cc_pref, per ORM beim Render gelesen) ist jetzt primäre Quelle für
+     Queue-Crossfade, Bus-Übergänge und Drain; die Env-Var
+     `RASTATIME_LIQUIDSOAP_CROSSFADE_SECONDS` ist nur noch Fallback.
+     **Achtung:** Das Feld stand auf 0 — vor dem Neustart auf den
+     gewünschten Wert setzen (Operator: 1 s).
+  4. **Vorwärmen** (`PREPARE_LEAD_SECONDS` = 10): Prepare-Timer starten
+     Capture + `linein_http` bzw. `webstream_start` bei geschlossenem
+     Gate; am Slot-Start öffnet nur das Gate → Startlücke ~0.  Kein
+     Vorwärmen, wenn ein Line-In auf Sendung ist (ein Capture), ein
+     Webstream spielt (eine Quelle) oder die Zeile keinen Gerätenamen
+     hat.  Verschwindet ein vorgewärmtes Item beim Refresh, wird es
+     zurückgebaut.
+  5. **Freigabe mit Drain**: Slot-Ende und Nachfolger schließen nur das
+     Gate (der Bus blendet aus), Capture + Quelle werden erst nach
+     Übergangslänge + 0,5 s gestoppt — Generation-Zähler verhindern,
+     dass ein alter Drain eine neuere Quelle killt.  Startup öffnet
+     beide Gates.
+  Commits `eabf798`, `b92c08a`, `1a150a0`, `6820158`.  Manuals (LINE_IN,
+  WEBSTREAMS, SETTINGS) in vier Sprachen; Architektur 0.21 / §23.26.
+  **Live-Abnahme ausstehend.**
+
 ### Fixed
 
 - **Line-In: letzte ~6 s der Show fehlten, ~6 s Stille am Anfang —

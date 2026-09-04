@@ -232,15 +232,20 @@ der Line-In zu einem Schedule-Item genau wie in Pfad 4.1.
    während der Capture warmläuft statt erst danach.
 4. Bei der konfigurierten Dauer sendet Pypo `linein.stop` und
    stoppt zusätzlich FfmpegLineinCapture; der Switch fällt
-   zurück auf scheduled.  Was danach kommt — Jingle, Webstream —
-   schließt den Line-In beim eigenen Start zusätzlich selbst; das
+   zurück auf scheduled.  Seit 2026-09-04 ist die Übergabe ein
+   **Mix, kein Schnitt**: Der Line-In wird über ein *Gate* im
+   Liquidsoap-Bus von der Sendung genommen, der Bus blendet ihn über
+   die Standard-Crossfade-Dauer (Settings → General; 0 = der
+   Nachfolger startet sofort in voller Lautstärke und der Line-In
+   blendet darunter aus, „Ducking") unter dem Nachfolger aus, und
+   erst danach werden Capture und Quelle gestoppt — die letzten
+   Worte des Moderators, die noch in der Kette stecken, sind so
+   hörbar statt verloren.  Was danach kommt — Jingle, Webstream —
+   gibt den Line-In beim eigenen Start auf dieselbe Weise frei; das
    Mikrofon kann also nie über seinen Slot hinaus auf Sendung
    bleiben.  Einzige Ausnahme ist ein **echtes Back-to-Back** auf
    demselben Gerät (nächster Line-In startet innerhalb von ~2 s):
-   der übernimmt den laufenden Capture ohne Unterbrechung.  Ein
-   *später* geplanter Line-In auf demselben Gerät (auch nur wenige
-   Minuten) hält das Mikrofon dazwischen nicht mehr offen — das war
-   der Vorfall vom 2026-09-04.
+   der übernimmt den laufenden Capture ohne Unterbrechung.
 
 **Aufnahme-Verhalten (neu seit Phase F, 2026-05-29):**
 Scheduled Line-Inputs fließen jetzt durch den Liquidsoap-internen
@@ -271,11 +276,20 @@ einrastet. Seit 2026-09-04 ist das Format fest vorgegeben
 (`format="mp3"`, die Capture muxt immer MP3), der `input.http`-
 Buffer beträgt 1,0 s (einstellbar über
 `RASTATIME_LIQUIDSOAP_LINEIN_HTTP_MAX_BUFFER_SECONDS`), und der
-Start-Health-Check der Capture 0,75 s. Erwartung: Startlücke
-~2–3 s, Latenz am Slot-Ende ~2 s. **Moderatoren sollten daher etwa
-zwei Sekunden vor Slot-Ende zu sprechen aufhören** — die übliche
-Praxis in Sendeketten. Das Vorladen von Quellen vor dem Slot (um
-die Startlücke ganz zu entfernen) ist ein eigener Backlog-Punkt.
+Start-Health-Check der Capture 0,75 s. Danach gemessen: Startlücke
+2 s, Verlust am Slot-Ende 2 s.
+
+Beide verbleibenden Sekunden werden seit 2026-09-04 (abends)
+angegangen: **Vorwärmen** — 10 s vor einem Line-In-Slot startet das
+Playout bereits den Capture und verbindet die Liquidsoap-Quelle bei
+geschlossenem Bus-Gate, sodass beim Slot-Start nur noch das Gate
+öffnet und der Line-In innerhalb eines Frames auf Sendung ist; und
+der **Gate-Off-Mix** am Slot-Ende (siehe Schritt 4 oben), der den
+gepufferten Rest unter dem Nachfolger abspielt, statt ihn zu
+verwerfen. Vorgewärmt wird nicht, wenn ein anderer Line-In auf
+Sendung ist (ein Capture zur Zeit) oder die Zeile keinen
+gespeicherten Gerätenamen hat; solche Slots starten auf dem
+normalen Weg (~2 s).
 
 **Legacy-mpv-/VLC-Engine-Pfade (nur wenn
 `RASTATIME_PLAYOUT_ENGINE=mpv` oder `=vlc`):**

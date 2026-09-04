@@ -112,7 +112,7 @@ Settings → **General Preferences**.
 | Field | Notes |
 |---|---|
 | **Default Language** | UI language for new users + the login screen. Existing users keep their per-user language preference (set via the user dropdown). |
-| **Default Crossfade** | Crossfade between consecutive tracks in the same show. 1 second is typical. 0 = hard cuts. Up to 10 seconds for soft transitions. |
+| **Default Crossfade** | The station's *house crossfade*. Between consecutive tracks in the same show it is the crossfade length (1 second is typical; 0 = hard cuts; up to 10 seconds for soft transitions). Since 2026-09-04 it also shapes every switch between **inputs** (track ↔ webstream ↔ Line-In): a value above 0 cross-fades the outgoing source into the incoming one over that many seconds; **0 means "ducking"** — the incoming source starts at full level at once and the outgoing one fades out underneath over 1 s. Either way the outgoing source's buffered tail is heard, not cut. Takes effect after the audio chain restarts ("Apply now" in Settings → Local Machine). |
 | **Default Track Type** | The track-type assigned to new uploads when the operator does not explicitly set one. Affects smart-block filters. |
 | **Default Import Owner** | The user account credited as owner for files imported via the Local Import Folder. Defaults to `admin`. |
 | **Default Recording** | When ticked, new shows have **Record this show:** pre-ticked. See [Record-per-Show](./RECORD_PER_SHOW.md). |

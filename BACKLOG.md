@@ -190,6 +190,18 @@ vs. „Ducking": Jingle sofort voll, Line-In darunter ausblenden).
 **Empfehlung:** Go — nach Paket „Line-In-Latenz" (abgenommen) ist das
 der nächste Schritt zur Leitlinie.
 
+**UMGESETZT 2026-09-04 (abends, Go des Operators; Crossfade 1 s,
+0 = Ducking):** Teil A (`eabf798`, `b92c08a`, `1a150a0`): Gates +
+Übergangsfunktionen im Bus-Switch, Haus-Crossfade aus Settings →
+General.  Teil B (`6820158`): Prepare-Timer, Gate-Start, Freigabe
+mit Drain, Refresh-Rückbau, Gate-Reset beim Start.  Der exakt
+gerenderte Bus-Block wurde isoliert mit Sinus-Quellen geprüft
+(Crossfade 1 s: 1,0 s aus / 1,0 s ein; Ducking: neu sofort voll, alt
+über 1 s darunter aus).  **Live-Abnahme ausstehend** — Show-Folge
+Datei → Line-In (≥ 10 s Vorlauf) → Jingle → Webstream → Line-In, Ohr
++ Monitor; Operator setzt vorher das Feld „Default Crossfade
+Duration" auf 1 (steht auf 0).
+
 ### 🟡 Line-In-Startlücke: Capture-Kette verkürzen (neu 2026-09-03)
 
 **Stand:** Die Lücke zwischen Show-Ende und erstem hörbaren Line-In-
@@ -2227,6 +2239,11 @@ gap, nur kein smooth fade).
 3. Fade-In/Out: in Pypo's Track-push-annotate-string als
    `fade_in="N"` / `fade_out="N"` mit-geben (Liquidsoap kann
    diese annotations).
+
+**Teil-Erledigung 2026-09-04:** Punkt 1 (Crossfade-Setting als
+primäre Quelle, Env-Var als Fallback) ist mit Paket 2 umgesetzt
+(`eabf798`).  Offen bleiben Punkt 2 (Re-Render-Hook beim Speichern —
+heute: „Jetzt anwenden" in Local Machine) und Punkt 3 (Fade-In/Out).
 
 **Aufwand:** ~3-4 h für Crossfade-Setting + Re-Render-Hook;
 ~1-2 h für Fade-In/Out.
