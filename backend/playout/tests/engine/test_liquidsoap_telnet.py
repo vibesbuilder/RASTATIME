@@ -724,3 +724,15 @@ def test_empty_response_crlf():
             client.close()
     finally:
         srv.stop()
+
+
+def test_request_queue_flush_wrapper():
+    """RASTATIME 2026-09-04: request_queue_flush() sends <queue_id>.flush
+    (registered in rastatime.liq; drops pending requests only)."""
+    with fake_server({"scheduled.flush": "Done"}) as srv:
+        client = LiquidsoapTelnetClient(host=srv.host, port=srv.port)
+        try:
+            assert client.request_queue_flush() == "Done"
+            assert srv.received == ["scheduled.flush"]
+        finally:
+            client.close()

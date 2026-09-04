@@ -324,6 +324,19 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
         test 2026-05-26 found this).
         """
         logger.info("Liquidsoap stop (deferred up to %.1fs)", _DEFERRED_STOP_SECONDS)
+        # RASTATIME 2026-09-04 - drop PENDING requests right away, before
+        # the deferred skip.  The deferred skip only affects the item on
+        # air; requests queued while the scheduled branch was NOT on air
+        # (line-in or webstream dominant) are never "played" and so never
+        # skipped - they spill out later, all at once (11:00 incident:
+        # four stale jingles at 11:07).  Flushing pending items cannot
+        # touch the playing one, and in this scheduler there is never a
+        # legitimately pending item at a stop (one push per event, at its
+        # start), so this is a pure safety net.
+        try:
+            self._telnet.request_queue_flush()
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            logger.warning("Liquidsoap queue flush failed: %s", exc)
         with self._stop_lock:
             self._stop_requested = True
             if self._stop_timer is not None:

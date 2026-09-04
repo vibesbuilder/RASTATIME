@@ -7,6 +7,56 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Show-Übergänge nach einem Line-In: Line-In blieb auf Sendung,
+  Jingles stauten sich, laufender Slot wurde abgeschossen
+  (2026-09-04)** — Beobachtet bei der Show-Folge Line-In 10:55 →
+  Jingles + BBC-Webstream 11:00 → Line-In 11:07: die Jingles um 11:00
+  waren unhörbar, nach dem Webstream kam sofort wieder das Tascam-Signal
+  statt des Showteasers, die vier Jingles kamen um 11:07 gebündelt
+  sieben Minuten zu spät, und um 11:08:17 wurde der laufende Line-In
+  für 9 s abgeschossen.  Vier Ursachen, vier Fixe (Operator-Go, Option A):
+  1. **Follow-up-Regel nur noch für echtes Back-to-Back.**  `_on_stop`
+     übersprang den Line-In-Teardown, sobald *irgendein* Line-In auf
+     demselben Gerät scharf war — auch einer sieben Minuten später.  Der
+     Line-In blieb dadurch die ganze Zwischen-Show über im Bus-Switch
+     (Line-In > Scheduled; Webstream > Line-In, fällt aber nach seinem
+     Ende darauf zurück).  Jetzt greift die Übergabe nur, wenn der
+     Nachfolger innerhalb von `LINEIN_FOLLOW_UP_WINDOW_SECONDS` (2 s)
+     startet.
+  2. **`scheduled.flush`** — neues Telnet-Kommando im `.liq`
+     (`scheduled_q.set_queue([])`), das `engine.stop()` vor dem
+     verzögerten `skip` absetzt.  `skip` erreicht nur das laufende
+     Element; Requests, die gepusht wurden, während Line-In oder
+     Webstream den Bus hielten, wurden nie „gespielt", also nie
+     übersprungen, und kamen später gebündelt heraus.  Isolierter
+     Liquidsoap-Lauf (Telnet 1235, ohne Ausgänge): RID 0 spielt, `queue`
+     = „1 2", `flush` → Done, `queue` leer, RID 0 läuft ungestört weiter.
+  3. **Option A der Key-Instabilität:** `insert_event` vergibt `_N`-
+     Suffixe nach Einfügereihenfolge; fällt ein Event mit gleichem
+     Startzeitpunkt (z. B. das Record-End der Vorshow) aus dem
+     Abruffenster, rutscht der laufende Slot auf einen anderen Key.
+     `refresh()` hielt das für „aus dem Schedule entfernt", killte den
+     Capture und startete per Catch-up neu.  Jetzt vergleichen der
+     Removed-Check und alle Catch-up-Zweige die **Identität** des
+     Schedule-Items (`_same_scheduled_item`: Klasse, Typ, Row-ID,
+     Start; bei Line-In zusätzlich Gerät + Kanäle) und binden nur den
+     Key um.  Option B (stabile Keys) im Backlog.
+  4. **Race-Härtung:** `_on_stop` prüft unmittelbar vor dem Zurücksetzen
+     der Buchführung erneut, ob es noch der spielende Event ist (11:00:09:
+     der STOP des Jingles überschrieb die Buchführung des schon
+     laufenden Nachfolgers).  Und jeder Nachfolger schließt einen
+     Line-In- bzw. Webstream-Vorgänger **selbst**
+     (`_close_predecessor_source`, alle Aufrufe idempotent), statt sich
+     auf die Timer-Reihenfolge mit dessen `_on_stop` zu verlassen.
+  Dazu: drei Verträge in `backend/playout/tests/test_scheduler_linein.py`
+  beschrieben noch den dshow-Pfad für 1/2 und „http nicht vorab scharf"
+  — beides seit 2026-09-03 bewusst anders; auf den aktuellen Vertrag
+  nachgezogen (die Paket-Suite war gestern nicht mitgelaufen).  Und die
+  harmlose `→`-cp1252-Logging-Warnung aus dem Main-Output-Resolver ist
+  weg (`->`).
+
 ### Changed
 
 - **`input.http`-Puffer des Line-In-Companions 1,5 → 2,0 s

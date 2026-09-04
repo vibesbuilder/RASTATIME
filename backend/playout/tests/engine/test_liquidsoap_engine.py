@@ -733,3 +733,30 @@ def test_linein_status_delegates_to_telnet():
         "connected http://localhost:8000/linein-capture"
     )
     telnet.linein_status.assert_called_once()
+
+
+# RASTATIME 2026-09-04 - stop() drops PENDING requests immediately (the
+# deferred skip only reaches the item on air).  Four jingles pushed
+# while a line-in masked the scheduled branch came out 7 min late.
+
+def test_stop_flushes_pending_requests_before_deferring_the_skip():
+    engine, telnet = _make_engine_with_mock()
+    engine.stop()
+    telnet.request_queue_flush.assert_called_once()
+    # the skip itself is still deferred, not sent synchronously
+    telnet.request_queue_skip.assert_not_called()
+
+
+def test_stop_survives_a_failing_flush():
+    engine, telnet = _make_engine_with_mock()
+    telnet.request_queue_flush.side_effect = OSError("telnet down")
+    engine.stop()  # must not raise
+    telnet.request_queue_flush.assert_called_once()
+
+
+def test_play_does_not_flush_on_its_own():
+    """One push per event: play() must not add a round-trip of its own."""
+    engine, telnet = _make_engine_with_mock()
+    telnet.request_queue_push.return_value = "42"
+    engine.play("file:///C:/x.mp3")
+    telnet.request_queue_flush.assert_not_called()

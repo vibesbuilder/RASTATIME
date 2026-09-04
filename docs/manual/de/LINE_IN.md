@@ -232,7 +232,15 @@ der Line-In zu einem Schedule-Item genau wie in Pfad 4.1.
    während der Capture warmläuft statt erst danach.
 4. Bei der konfigurierten Dauer sendet Pypo `linein.stop` und
    stoppt zusätzlich FfmpegLineinCapture; der Switch fällt
-   zurück auf scheduled.
+   zurück auf scheduled.  Was danach kommt — Jingle, Webstream —
+   schließt den Line-In beim eigenen Start zusätzlich selbst; das
+   Mikrofon kann also nie über seinen Slot hinaus auf Sendung
+   bleiben.  Einzige Ausnahme ist ein **echtes Back-to-Back** auf
+   demselben Gerät (nächster Line-In startet innerhalb von ~2 s):
+   der übernimmt den laufenden Capture ohne Unterbrechung.  Ein
+   *später* geplanter Line-In auf demselben Gerät (auch nur wenige
+   Minuten) hält das Mikrofon dazwischen nicht mehr offen — das war
+   der Vorfall vom 2026-09-04.
 
 **Aufnahme-Verhalten (neu seit Phase F, 2026-05-29):**
 Scheduled Line-Inputs fließen jetzt durch den Liquidsoap-internen

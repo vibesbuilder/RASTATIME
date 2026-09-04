@@ -192,7 +192,14 @@ Line-In + sa Longueur par défaut.
    d'attendre la fin.
 4. À la durée configurée, Pypo envoie `linein.stop` et
    arrête FfmpegLineinCapture ; le switch retombe sur
-   scheduled.
+   scheduled.  Ce qui suit — jingle, webstream — ferme aussi le
+   Line-In lui-même à son démarrage : le micro ne peut donc jamais
+   rester à l'antenne au-delà de son créneau.  Seule exception : un
+   **vrai enchaînement** sur le même périphérique (Line-In suivant
+   démarrant sous ~2 s), qui hérite de la capture en cours sans
+   coupure.  Un Line-In sur le même périphérique planifié *plus
+   tard* (même de quelques minutes) ne garde plus le micro ouvert
+   entre-temps — c'était l'incident du 2026-09-04.
 
 **Comportement d'enregistrement (nouveau depuis Phase F,
 2026-05-29) :** les line-inputs planifiés circulent

@@ -220,6 +220,22 @@ class LiquidsoapTelnetClient:
         """
         return self.send_command(f"{self._queue_id}.skip")
 
+    def request_queue_flush(self) -> str:
+        """
+        Drop every PENDING request from the queue; the item currently
+        playing is untouched.
+
+        RASTATIME 2026-09-04 - ``skip`` only ends the item being played.
+        While the scheduled branch is not the one on air (a line-in or
+        webstream is), nothing is being played from the queue, so
+        ``skip`` is a no-op and every push piles up behind the last one.
+        Live 2026-09-04 11:00-11:08: four jingles pushed under a masking
+        line-in came out back-to-back seven minutes later, the moment
+        the line-in dropped.  ``flush`` is registered in rastatime.liq
+        (``scheduled_q.set_queue([])``); wire form ``<queue_id>.flush``.
+        """
+        return self.send_command(f"{self._queue_id}.flush")
+
     def metadata_update(self, fields: dict) -> str:
         """
         Push ICY metadata for the current item.

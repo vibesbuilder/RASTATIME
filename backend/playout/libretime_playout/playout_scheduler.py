@@ -64,6 +64,17 @@ logger = logging.getLogger(__name__)
 # self._playing_key to avoid restarting in-progress tracks.)
 
 
+# RASTATIME 2026-09-04 - how close (seconds) a same-device line-in
+# follow-up must start to count as "back-to-back" for the STOP handoff
+# in _on_stop.  Live incident 2026-09-04 11:00: a line-in armed SEVEN
+# MINUTES later kept the ending line-in on air through a whole jingle
+# + webstream show, because the old check only asked "is a same-device
+# timer armed at all?".  Timer callbacks fire within a few ms of their
+# target, so 2 s is generous for a true same-instant handoff and far
+# below any real gap between shows.
+LINEIN_FOLLOW_UP_WINDOW_SECONDS = 2.0
+
+
 class PlayoutScheduler:
     """
     Schedule-driven playout controller.  Engine-agnostic — talks to a
@@ -355,6 +366,32 @@ class PlayoutScheduler:
             #             audio source.  Stop it immediately.
             if self._playing_key is not None:
                 current_evt = events.get(self._playing_key)
+                # RASTATIME 2026-09-04 - Option A of the key-instability
+                # fix: look the playing item up by IDENTITY, not by key
+                # (see _same_scheduled_item).  Live 2026-09-04 11:08:17:
+                # the running line-in came back as a different key, this
+                # block declared it "removed from schedule", killed the
+                # capture, and the catch-up below restarted it -- 9 s of
+                # dead air filled with stale jingles.  A schedule item
+                # that is still present under any key is simply rebound;
+                # only an item present under NO key is really gone.
+                cur = self._current_event
+                if cur is not None and not self._same_scheduled_item(current_evt, cur):
+                    match = next(
+                        (k for k, e in events.items() if self._same_scheduled_item(e, cur)),
+                        None,
+                    )
+                    if match is not None:
+                        logger.info(
+                            "Playing event %s is keyed %s in the refreshed "
+                            "schedule (same item) - rebinding, no teardown.",
+                            self._playing_key, match,
+                        )
+                        self._playing_key = match
+                        current_evt = events[match]
+                    else:
+                        # A DIFFERENT item under our old key is not us.
+                        current_evt = None
                 event_gone_or_truncated = (
                     current_evt is None
                     or current_evt.end <= now
@@ -542,6 +579,15 @@ class PlayoutScheduler:
                 key, start_delay, event.track_title,
             )
 
+        elif self._same_scheduled_item(self._current_event, event):
+            # RASTATIME 2026-09-04 - same item, new key (see
+            # _same_scheduled_item): adopt the key, do not re-play.
+            logger.info(
+                "Catch-up skipped: %s is the playing track under a new key "
+                "(%s -> %s); rebinding.", event.track_title, self._playing_key, key,
+            )
+            self._playing_key = key
+
         elif key != self._playing_key:
             # Event has already started but we are NOT playing it.
             # This covers: (a) service restart during a running show,
@@ -585,6 +631,14 @@ class PlayoutScheduler:
             start_t = threading.Timer(start_delay, self._on_webstream_start, args=(key, event))
             start_t.daemon = True
             start_t.start()
+        elif self._same_scheduled_item(self._current_event, event):
+            # RASTATIME 2026-09-04 - same item, new key: rebind instead of
+            # reconnecting the stream (an audible gap).
+            logger.info(
+                "Catch-up skipped: web stream already playing under a new "
+                "key (%s -> %s); rebinding.", self._playing_key, key,
+            )
+            self._playing_key = key
         elif key != self._playing_key:
             logger.info(
                 "Catch-up: in-progress web stream %s (started %.0fs ago)",
@@ -644,12 +698,11 @@ class PlayoutScheduler:
             # Skip catch-up when the same device + channel mapping is
             # already on air, but adopt the new key so the _on_stop armed
             # below still matches.
-            current = self._current_event
+            # 2026-09-04: identity instead of device+mapping (Option A,
+            # see _same_scheduled_item); is_running stays, because a dead
+            # capture is exactly what catch-up should rescue.
             already_on_air = (
-                isinstance(current, LineinEvent)
-                and current.device_id == event.device_id
-                and list(getattr(current, "channel_mapping", None) or [0, 1])
-                == list(getattr(event, "channel_mapping", None) or [0, 1])
+                self._same_scheduled_item(self._current_event, event)
                 and self._linein_capture is not None
                 and self._linein_capture.is_running
             )
@@ -727,6 +780,91 @@ class PlayoutScheduler:
     # Timer callbacks (run in daemon threads)
     # ------------------------------------------------------------------
 
+    @staticmethod
+    def _same_scheduled_item(a: object, b: object) -> bool:
+        """
+        RASTATIME 2026-09-04 - identity of a schedule item, independent
+        of its event KEY.
+
+        Keys are ``<start timestamp>`` plus an ``_N`` suffix that
+        ``insert_event`` hands out by INSERTION ORDER when several
+        events share a start second (show-record start/end, the
+        webstream buffer/output pair, ...).  As time passes, events at
+        the same second drop out of the fetch window and the survivors'
+        suffixes shift -- the same running slot came back as
+        ``<ts>_0`` in one refresh and bare ``<ts>`` in the next
+        (2026-09-04 11:08:17).  Anything that trusts keys across a
+        refresh therefore has to compare by identity instead:
+
+          * same event class and kind,
+          * same schedule row (``row_id``) and start,
+          * for line-ins additionally the same device + channel
+            mapping, so an edited row is NOT mistaken for the running
+            one (the capture would keep the old device).
+
+        Show-record events carry no row_id; they never occupy the
+        playing slot, so they simply never match.
+        """
+        if a is None or b is None or type(a) is not type(b):
+            return False
+        if getattr(a, "type", None) != getattr(b, "type", None):
+            return False
+        if getattr(a, "row_id", None) is None:
+            return False
+        if a.row_id != b.row_id or a.start != b.start:  # type: ignore[attr-defined]
+            return False
+        if isinstance(a, LineinEvent):
+            return (
+                a.device_id == b.device_id  # type: ignore[attr-defined]
+                and list(getattr(a, "channel_mapping", None) or [0, 1])
+                == list(getattr(b, "channel_mapping", None) or [0, 1])
+            )
+        return True
+
+    def _close_predecessor_source(self, prev_event: object, key: str) -> None:
+        """
+        RASTATIME 2026-09-04 - the successor closes the predecessor's
+        EXCLUSIVE source (line-in capture + source, or the webstream
+        source) instead of trusting the predecessor's own _on_stop to
+        get there first.
+
+        Why: _on_stop and the successor's _on_*_start fire on separate
+        Timer threads at the same wallclock instant, and _on_stop bails
+        out the moment it is no longer the playing key (race fix #1).
+        If the successor wins the race, nobody closes the line-in --
+        and a line-in that stays up outranks every scheduled track in
+        the bus switch (webstreams outrank it, and drop back onto it
+        when they end).  That is exactly the 2026-09-04 11:00 incident,
+        reached through the follow-up rule instead of the race; this
+        closes the race-shaped door as well.
+
+        Every call here is idempotent (capture.stop on a stopped capture,
+        ``linein_stop`` / ``webstream_stop`` reply "Done" on an idle
+        source), so it does not matter whether _on_stop already ran.
+        A file predecessor needs nothing: engine.stop() handles the
+        request queue.  Line-in -> line-in is NOT routed here -- that
+        transition has its own same-device shortcut / bounce logic in
+        _on_linein_start.
+        """
+        if self._switcher and self._switcher.current_state != SourceState.SCHEDULED:
+            return  # a DJ is on air; sources stay as they are
+        if isinstance(prev_event, LineinEvent):
+            logger.info(
+                "PLAY %s takes over from line-in %r - closing its capture "
+                "and Liquidsoap source.", key, prev_event.name,
+            )
+            if self._linein_capture is not None:
+                self._linein_capture.stop()
+            if self._streaming_handled_externally:
+                self._engine.linein_stop()
+        elif isinstance(prev_event, WebStreamEvent):
+            if self._streaming_handled_externally:
+                logger.info(
+                    "PLAY %s takes over from web stream %s - closing its "
+                    "source.", key, prev_event.uri,
+                )
+                self._engine.webstream_stop()
+
     def _on_file_start(self, key: str, event: FileEvent) -> None:
         logger.info(
             "PLAY  %s  |  %r  |  show: %s",
@@ -744,6 +882,7 @@ class PlayoutScheduler:
         # disconnects.  These four lines must run BEFORE the DJ-active
         # short-circuit below, otherwise switch_audio_source(SCHEDULED)
         # at disconnect time would not know what to fall back to.
+        prev_event = self._current_event  # for _close_predecessor_source
         self._playing_key = key
         self._current_event = event
         self._current_audio_path = str(local)
@@ -781,6 +920,10 @@ class PlayoutScheduler:
         # already stopped (common case: previous track ended naturally
         # before this fires) the wait returns immediately.
         self._engine.wait_until_stopped(timeout=0.5)
+
+        # RASTATIME 2026-09-04 - close a line-in / webstream predecessor
+        # ourselves (see _close_predecessor_source).
+        self._close_predecessor_source(prev_event, key)
 
         # HARD start (QUEUE_BEHAVIOR §4.1): stop whatever is playing first.
         self._engine.stop()
@@ -853,6 +996,7 @@ class PlayoutScheduler:
         # BEFORE the DJ-active short-circuit below — otherwise
         # ``_resume_scheduled_locked`` at DJ-disconnect time would not
         # know what to fall back to.  Same pattern as _on_file_start.
+        prev_event = self._current_event  # for _close_predecessor_source
         self._playing_key = key
         self._current_event = event
         self._current_audio_path = event.uri
@@ -902,6 +1046,10 @@ class PlayoutScheduler:
             # handles its own gapless transitions and we want the
             # scheduled-track-to-webstream handover to happen as soon as
             # input.http has buffered enough.
+            # RASTATIME 2026-09-04 - a line-in predecessor must be closed
+            # by us: it outranks nothing while we play, but the switch
+            # would drop straight back onto it when we end.
+            self._close_predecessor_source(prev_event, key)
             self._engine.stop()  # deferred-stop, clears request.queue
             self._engine.webstream_start(
                 event.uri, gain_db=event.input_gain_db,
@@ -1133,6 +1281,11 @@ class PlayoutScheduler:
                     key, mapping,
                 )
 
+            # RASTATIME 2026-09-04 - a webstream predecessor outranks us in
+            # the bus switch; close it ourselves rather than trusting the
+            # racing _on_stop (see _close_predecessor_source).
+            if isinstance(prev_event, WebStreamEvent):
+                self._close_predecessor_source(prev_event, key)
             self._engine.stop()  # clear the scheduled queue (deferred-stop)
             # Race fix #3 — mark a new line-in generation BEFORE the telnet
             # round-trip, so a racing _on_stop (for the previous show) that
@@ -1507,6 +1660,7 @@ class PlayoutScheduler:
         # We deliberately do NOT clear our own bookkeeping in this
         # branch — leaving _playing_key / _current_event in place is
         # exactly what makes B's same-device check fire.
+        now = datetime.utcnow()
         if was_linein and cur_device is not None and self._linein_capture is not None:
             for other_key, other_event in self._armed_events.items():
                 if other_key == key:
@@ -1516,14 +1670,30 @@ class PlayoutScheduler:
                 if other_event.device_id != cur_device:
                     continue
                 start_t, _ = self._timers.get(other_key, (None, None))
-                if start_t is not None and start_t.is_alive():
+                if start_t is None or not start_t.is_alive():
+                    continue
+                # RASTATIME 2026-09-04 - "armed" is not "back-to-back".
+                # Every line-in in the 24 h fetch window is armed; only
+                # one starting at (practically) this instant may inherit
+                # the running capture.  Anything further away gets the
+                # normal teardown -- otherwise this line-in stays on air
+                # through whatever is scheduled in between (the 11:00
+                # incident: a follow-up 7 min out masked a whole show).
+                starts_in = (other_event.start - now).total_seconds()
+                if abs(starts_in) > LINEIN_FOLLOW_UP_WINDOW_SECONDS:
                     logger.info(
-                        "STOP %s: same-device follow-up %s armed (device=%s) "
-                        "— skipping audio teardown; bookkeeping handoff "
-                        "happens when %s's start timer fires.",
-                        key, other_key, cur_device, other_key,
+                        "STOP %s: same-device line-in %s is armed but starts "
+                        "in %.0fs - not back-to-back, tearing down normally.",
+                        key, other_key, starts_in,
                     )
-                    return
+                    continue
+                logger.info(
+                    "STOP %s: same-device follow-up %s starts in %.1fs "
+                    "(device=%s) - skipping audio teardown; bookkeeping "
+                    "handoff happens when its start timer fires.",
+                    key, other_key, starts_in, cur_device,
+                )
+                return
 
         # Race fix #3 (line-in device-switch) — if a follow-up LineinEvent
         # already (re)started the source on its own timer thread (the
@@ -1552,6 +1722,22 @@ class PlayoutScheduler:
             self._cue_item_end("webstream")
         elif isinstance(_ce, LineinEvent):
             self._cue_item_end("linein")
+
+        # RASTATIME 2026-09-04 - re-check ownership right before the
+        # reset.  The check at the top of this handler and this point
+        # are separated by telnet round-trips and the follow-up scan; a
+        # successor's _on_*_start can take the spotlight in between (seen
+        # live 2026-09-04 11:00:09: STOP(A) and PLAY(B) on the same
+        # instant, STOP's reset landed AFTER PLAY's bookkeeping and wiped
+        # it, so the next refresh "caught up" B again).  If the key moved,
+        # the successor owns bookkeeping AND has closed our source itself
+        # (_close_predecessor_source) - nothing left for us to do.
+        if self._playing_key != key:
+            logger.info(
+                "STOP %s: superseded by %s during teardown - leaving its "
+                "bookkeeping and sources alone.", key, self._playing_key,
+            )
+            return
 
         self._playing_key = None
         self._current_event = None

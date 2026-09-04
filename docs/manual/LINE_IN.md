@@ -219,7 +219,14 @@ becomes a schedule item exactly as in path 4.1.
    capture is warming up instead of strictly afterwards.
 4. At the configured duration Pypo sends `linein.stop` plus
    stops FfmpegLineinCapture; the switch falls back to
-   scheduled.
+   scheduled.  Whatever follows — a jingle, a webstream — also
+   closes the Line-In itself when it starts, so the microphone can
+   never stay on air past its slot.  The one exception is a **true
+   back-to-back** follow-up on the same device (the next Line-In
+   starting within ~2 s): that one inherits the running capture
+   without a bounce.  A same-device Line-In scheduled *later* (even
+   a few minutes) no longer keeps the microphone open in between —
+   that was the 2026-09-04 incident.
 
 **Recording behaviour (new since Phase F, 2026-05-29):**
 Scheduled line-inputs now flow through the Liquidsoap internal

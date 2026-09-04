@@ -112,6 +112,20 @@ scheduled   = fallback(
                 [scheduled_q, blank(id="silence_fallback")]
               )
 
+# RASTATIME 2026-09-04 - `scheduled.flush`: drop every PENDING request
+# (the one playing is untouched).  request.queue only auto-registers
+# push/queue/skip, and skip cannot reach requests that never started
+# playing: while a line-in or webstream holds the bus, pushes pile up
+# unheard and spill out together the moment the bus falls back to the
+# scheduled branch (2026-09-04 11:07: four jingles from 11:00 played
+# back-to-back over the next line-in).  Pypo calls this from
+# engine.stop(), i.e. on every event transition.
+server.register(
+  namespace="scheduled",
+  description="Drop all pending (not yet playing) requests",
+  "flush", fun (_) -> begin scheduled_q.set_queue([]); "Done" end
+)
+
 # ---------------------------------------------------------------------
 # Phase-C4 — DJ-Source Bus via input.harbor (optional)
 # ---------------------------------------------------------------------

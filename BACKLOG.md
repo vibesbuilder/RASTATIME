@@ -43,6 +43,43 @@ festgelegt.  Jeder Punkt bekommt vor Implementierung die
 Diese sind technisch evaluiert, empfohlen, und können starten sobald
 der Operator das Signal gibt.
 
+### 🟡 Event-Keys stabil machen — „Option B" (neu 2026-09-04)
+
+**Problem:** `player/schedule.py::insert_event` bildet Event-Keys aus
+dem Startzeitpunkt und hängt bei Kollisionen `_0`, `_1`, … nach
+**Einfügereihenfolge** an.  Show-Record-Start/-End, das
+Webstream-Buffer/Output-Paar und der erste Inhalt einer Show teilen sich
+regelmäßig eine Sekunde.  Fällt ein solches Event aus dem Abruffenster
+(z. B. das Record-End der Vorshow, sobald die Vorshow vorbei ist),
+rutschen die Suffixe der Überlebenden nach — derselbe laufende Slot kam
+live als `…-09-07-00_0` und einen Refresh später als `…-09-07-00`
+zurück (2026-09-04 11:08:17, Teardown + Catch-up = 9 s Loch).
+
+**Stand:** Option A ist umgesetzt (2026-09-04): Removed-Check und
+Catch-up vergleichen Item-Identität statt Keys und binden nur um.  Das
+neutralisiert das Symptom vollständig, lässt die Ursache aber stehen.
+
+**Option B (empfohlen, Operator-Bauchgefühl 2026-09-04 ebenfalls):**
+Keys deterministisch aus Zeitstempel **plus Identität** bilden
+(Typ + Row-ID bzw. Show-Instanz), nie aus Einfügereihenfolge.  Dann
+gibt es keine Suffix-Wanderung mehr, Logs werden lesbarer
+(`2026-09-04-09-07-00#linein-4711` statt `_0`), und Option A wird zur
+reinen Absicherung.
+
+**Vorbedingungen / Aufwand:**
+- Formatwechsel im ganzen Playout-Modul; Keys sind dort zwar opak
+  (nur `start_key`/`end_key` werden aus Zeitstempeln gebildet, nichts
+  parst Keys), aber jede Stelle, die Keys loggt oder vergleicht, muss
+  einmal durchgesehen werden.
+- Sechs Upstream-Fixtures in `backend/playout/tests/player/schedule_test.py`
+  pinnen das `_0`/`_1`-Format und müssen nachgezogen werden.
+- Sortierung `dict(sorted(events.items()))` bleibt zeitlich korrekt,
+  solange das Suffix hinter einem Trennzeichen steht, das nach Ziffern
+  sortiert (`#` oder `~`).
+- Muss in einem Rutsch stimmen (kein Mischbetrieb alter/neuer Keys);
+  Live-Abnahme mit der Show-Folge Line-In → Jingles + Webstream → Line-In.
+- ~80–120 Zeilen + Tests, ~3 h.
+
 ### 🟡 Line-In-Startlücke: Capture-Kette verkürzen (neu 2026-09-03)
 
 **Stand:** Die Lücke zwischen Show-Ende und erstem hörbaren Line-In-

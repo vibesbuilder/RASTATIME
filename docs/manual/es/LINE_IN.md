@@ -178,7 +178,15 @@ Biblioteca.
    mientras la captura calienta en vez de estrictamente
    después.
 4. A la duración configurada, Pypo envía `linein.stop` y
-   detiene FfmpegLineinCapture; el switch vuelve a scheduled.
+   detiene FfmpegLineinCapture; el switch vuelve a scheduled.  Lo
+   que sigue — un jingle, un webstream — también cierra el Line-In
+   por sí mismo al arrancar, así que el micrófono nunca puede
+   quedar en antena más allá de su slot.  La única excepción es un
+   **encadenado real** en el mismo dispositivo (el siguiente
+   Line-In arranca en ~2 s): ese hereda la captura en marcha sin
+   corte.  Un Line-In en el mismo dispositivo programado *más
+   tarde* (aunque sean pocos minutos) ya no mantiene el micrófono
+   abierto entre medias — ese fue el incidente del 2026-09-04.
 
 **Comportamiento de grabación (nuevo desde Phase F,
 2026-05-29):** los line-inputs planificados ahora fluyen

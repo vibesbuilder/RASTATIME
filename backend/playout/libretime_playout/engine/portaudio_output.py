@@ -302,13 +302,13 @@ def resolve_output_device(
         logger.warning(
             "Main Output %r matches no PortAudio output device — falling "
             "back to the OS-default endpoint.  (Re-save the Main Output "
-            "picker in Settings → Local Machine if the device was renamed.)",
+            "picker in Settings -> Local Machine if the device was renamed.)",
             device_name,
         )
         return None
 
     logger.info(
-        "Main Output %r → %d PortAudio candidate(s): %s",
+        "Main Output %r -> %d PortAudio candidate(s): %s",
         device_name, len(candidates),
         ", ".join(f"{n} [{a}]" for _, n, a in candidates),
     )
