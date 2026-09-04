@@ -87,3 +87,14 @@ def test_full_render_threads_the_house_crossfade_into_the_bus(duration):
         assert f"fade.out(duration={duration:.1f}, old)" in liq
     else:
         assert "ducking" in liq
+
+
+def test_dj_arms_use_a_same_typed_instant_transition():
+    """Live outage 2026-09-04 19:26: `def bus_instant(_, new) = new` in a
+    transition list next to bus_transition is a type error in 2.4.4
+    (the list must be homogeneous).  The DJ hand-over must be the same
+    add-of-fades shape, just 50 ms long."""
+    block = _bus(transition_seconds=1.0)
+    assert "def bus_instant(old, new) =" in block
+    assert "fade.out(duration=0.05, old), fade.in(duration=0.05, new)" in block
+    assert "= new end" not in block

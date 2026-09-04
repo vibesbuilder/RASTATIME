@@ -1187,7 +1187,14 @@ def _render_bus_source_block(
         'linein_live = interactive.bool("linein_live", true)\n'
         "\n"
         f"# input transitions: {shape}\n"
-        "def bus_instant(_, new) = new end\n"
+        "# DJ arms: an effectively instant hand-over (50 ms).  It has to be\n"
+        "# the SAME shape as bus_transition (add of two fades): a transition\n"
+        "# list must be homogeneous, and a raw `new` picks up the fade methods\n"
+        "# through the list -- 2.4.4 rejected the mixed list at load (live\n"
+        "# outage 2026-09-04 19:26; DJ arms were never in the verify render).\n"
+        "def bus_instant(old, new) =\n"
+        "  add(normalize=false, [fade.out(duration=0.05, old), fade.in(duration=0.05, new)])\n"
+        "end\n"
         + transition_fn
         + "\n"
         "bus = switch(\n"
