@@ -51,6 +51,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Sendeausfall 19:26–19:35 durch Typfehler im Bus-Switch (2026-09-04,
+  `acdde5c`)** — Nach dem Neustart auf Paket 2 startete Liquidsoap
+  nicht: Die Übergangsliste `[bus_instant, bus_instant, bus_transition,
+  …]` ist für den Typprüfer nicht homogen — `bus_instant` gab `new` roh
+  zurück, `bus_transition` ein `add()` aus Fades.  Alle Prüf-Renders und
+  der isolierte Prüfstand hatten keine DJ-Arme (Harbor-Passwörter leer),
+  also stand `bus_instant` nie in einer geprüften Liste.  Der Dienst
+  blieb „Paused", der Stream war ~8,5 min tot.  Behoben durch Hot-Fix
+  der Live-`rastatime.liq` (Neustart durch den Operator 19:35:19) und im
+  Repo: `bus_instant` ist jetzt dieselbe Form (add zweier 50-ms-Fades),
+  die Prüf-Renders enthalten die DJ-Arme für Crossfade und Ducking, ein
+  Test pinnt die Form.  Lehre: **Prüf-Render immer in Produktionsform
+  (mit DJ-Armen)** — steht jetzt im Render-Check-Skript.
+
 - **Line-In: letzte ~6 s der Show fehlten, ~6 s Stille am Anfang —
   Paket „Line-In-Latenz" (2026-09-04)** — Der Operator zählte die
   Sekunden live ins Mikrofon: die letzten ~6 s einer Line-In-Show
