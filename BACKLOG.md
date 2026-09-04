@@ -170,9 +170,25 @@ Server-Kommandos), Telnet-Client +4, Engine +4, Scheduler ~150 Zeilen
 Eingriff: Bus-Switch + Scheduler = Sendeweg, aber mit klarem Fallback
 (Gate-Variablen default `true` = heutiges Verhalten).
 
-**Empfehlung:** Erst Paket „Line-In-Latenz" (klein, wirkt auf Start UND
-Ende), dann anhand des Rests entscheiden.  Für den Webstream-Start ist
-das Gate das richtige Werkzeug — Go nach der Latenz-Runde.
+**Erweiterung 2026-09-04 (nach der Latenz-Runde, Rest = 2 s vorne und
+2 s hinten):** Das Gate kann auch das **Slot-Ende** retten.  Heute
+schließt der Nachfolger die Quelle bei E sofort; die 2 s im Puffer
+gehen verloren.  Mit Gate: bei E nur `linein_live := false` → der
+Bus-Switch wechselt zum Nachfolger **mit Übergangsfunktion**
+(`switch(transitions=…)`: alte Quelle ~2 s ausblenden, während ihr
+Puffer ausläuft, neue Quelle einblenden) → die letzten 2 s des
+Moderators sind hörbar, unter dem beginnenden Jingle; `linein_stop`
++ Capture-Stop erst bei E+3 s (Timer).  Heute hat der Bus-Switch keine
+Übergangsfunktionen (nur `cross` innerhalb der Queue).  Gleiches
+Prinzip beim Webstream-Ende (5-s-Puffer-Nachlauf → kurzer Crossfade
+statt Verzögerung des Folgeelements).  Das ist die technische Form der
+Leitlinie „Seamless-Mix".  Aufwand +~0,5 Tag (Transition-Funktion,
+verzögerter Stop, Tests), Gesamt ~1,5 Tage.  Designfrage an den
+Operator: Crossfade-Länge (1–2 s) und Charakter (echtes Überblenden
+vs. „Ducking": Jingle sofort voll, Line-In darunter ausblenden).
+
+**Empfehlung:** Go — nach Paket „Line-In-Latenz" (abgenommen) ist das
+der nächste Schritt zur Leitlinie.
 
 ### 🟡 Line-In-Startlücke: Capture-Kette verkürzen (neu 2026-09-03)
 
@@ -220,9 +236,14 @@ Mount (16:56, vier isolierte Hörer):**
 1. `linein_http`: `format="mp3"` (Konstante `LINEIN_HTTP_FORMAT`).
 2. `max_buffer` 2,0 → 1,0 s.
 3. Health-Check 1,5 → 0,75 s (`_STARTUP_HEALTH_CHECK_S`).
-Kein ICECAST-Neustart nötig; PLAYOUT + LIQUIDSOAP.  Erwartung:
-Abschneiden ~6 → ~2 s, Startlücke ~6 → ~2–3 s.  **Live-Abnahme
-ausstehend** („Sekunden zählen" + Monitor).
+Kein ICECAST-Neustart nötig; PLAYOUT + LIQUIDSOAP.  **Live-Abnahme
+2026-09-04 17:45–17:50 (Operator zählt Sekunden ins Mikrofon + Monitor):
+Startlücke 6 → 2,0 s** (Feeder streamt +0,93 s, Decoder bereit +2,0 s,
+keine Decoder-Fehler), **Abschneiden am Ende 6 → ~2 s**.  Damit ist
+das Paket abgenommen.  Die verbleibenden 2 s an beiden Enden sind die
+Kette selbst (Feeder-Start + Poll + Decoder bzw. Puffer + Decoder) —
+weiter nur über „Quellen vorwärmen — Gate im Bus-Switch" (Start) und
+den dort beschriebenen Gate-Off-Crossfade (Ende).
 
 Die verbleibenden ~2 s sind normale Sendeketten-Latenz; Moderatoren
 enden entsprechend früher (Studio-Praxis, im Manual dokumentieren).
