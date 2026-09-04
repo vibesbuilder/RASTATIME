@@ -123,6 +123,49 @@ gebaut wird, entscheiden: (a) Marker erst nach dem Re-Check schreiben
 das Ende) oder (b) Marker mit Item-Identität (row_id) versehen, damit
 der Leser Paare bilden kann.  (b) ist robuster.
 
+### 💡 Quellen vorwärmen — Gate im Bus-Switch (Operator-Idee 2026-09-04)
+
+**Idee (Operator):** Webstreams und Line-Ins ~10 s vor dem Play-Zeitpunkt
+laden, damit sie beim Start sofort spielen.
+
+**Befund:** Möglich, aber nicht „einfach früher starten" — der Bus
+wählt heute jede Quelle, sobald sie `source.is_ready` ist
+(`rastatime.liq`: `switch([... (is_ready(webstream), webstream),
+(is_ready(linein), linein), ({true}, scheduled)])`).  Früh verbinden
+hieße früh auf Sendung = das Vorgänger-Element wird abgeschnitten.
+Es braucht ein **Gate**: `webstream_live = interactive.bool(...)`,
+`linein_live = interactive.bool(...)`; Prädikat `{webstream_live()
+and source.is_ready(webstream)}`; Telnet `var.set`.  Pypo bekommt pro
+Event einen zweiten Timer „prepare" bei T−10 s (Verbinden/Capture +
+http-Quelle starten, Gate zu), bei T nur noch Gate auf → Umschaltung
+sofort; Stop = Gate zu + Quelle stoppen.
+
+**Nutzen:** Webstream-Startstille (5 s = `buffer(buffer=5.0)`-
+Vorpufferung; BBC 5–6 s, cloud.example.org 5–9 s) → ~0 s, ohne den
+Puffer zu verkleinern (Phase-E-Lektion: kleiner Puffer flattert bei
+Jitter).  Line-In-Startlücke → ~0 s.  **Kein Effekt auf das
+Abschneiden am Line-In-Ende** (Latenz L bleibt) — siehe Eintrag
+„Line-In-Startlücke".
+
+**Randfälle:** Vorgänger ist Line-In auf demselben Gerät mit anderer
+Kanalwahl → Capture kann nicht früh gebounct werden (Vorgänger würde
+stumm) → kein Prepare, Bounce bei T wie heute.  Gleiche Kanalwahl →
+Same-Device-Transition ist schon nahtlos, Prepare überflüssig.
+Schedule-Refresh: ein bereits „prepared" Item, das verschwindet, muss
+zurückgebaut werden (Gate zu, Quelle stoppen).  DJ auf Sendung: Gate
+irrelevant (DJ steht höher im Switch).
+
+**Aufwand:** `.liq`-Template ~40 Zeilen (2 Bools, 2 Prädikate, 4
+Server-Kommandos), Telnet-Client +4, Engine +4, Scheduler ~150 Zeilen
+(Prepare-Timer, Handler, Refresh-Rückbau), ~12 Tests, Manual 4×.
+~1 Tag + Live-Abnahme (Clone-Workflow + Monitor vorhanden).
+Eingriff: Bus-Switch + Scheduler = Sendeweg, aber mit klarem Fallback
+(Gate-Variablen default `true` = heutiges Verhalten).
+
+**Empfehlung:** Erst Paket „Line-In-Latenz" (klein, wirkt auf Start UND
+Ende), dann anhand des Rests entscheiden.  Für den Webstream-Start ist
+das Gate das richtige Werkzeug — Go nach der Latenz-Runde.
+
 ### 🟡 Line-In-Startlücke: Capture-Kette verkürzen (neu 2026-09-03)
 
 **Stand:** Die Lücke zwischen Show-Ende und erstem hörbaren Line-In-
@@ -138,21 +181,45 @@ Schritt (`input.http` `max_buffer` 4,0 → 2,0 s, `poll_delay` 2,0 →
 Gerät öffnen → sounddevice-Feeder-Health-Check (~1,5 s) → ffmpeg-
 Encoding → genug MP3 im Icecast-Mount, damit ein Decoder einrastet.
 
-**Ideenrichtung (noch nicht evaluiert):**
-- Feeder-Health-Check-Fenster verkürzen oder asynchron machen.
-- Den Feeder für ein anstehendes Line-In-Slot **vorwärmen** (z. B.
-  10–15 s vor Showbeginn starten, Audio verwerfen), sodass der Mount
-  bei Slot-Start bereits läuft.  Größter erwarteter Hebel, aber
-  Wechselwirkung mit dem Watchdog und mit Back-to-Back-Shows auf
-  demselben Gerät prüfen.
-- Kleinere ffmpeg-Latenzparameter (`-flush_packets`, kleinere
-  MP3-Frames / niedrigere `-bufsize`) gegen Encoder-Robustheit
-  abwägen.
-- Prüfen, ob Icecast `burst-size` / `burst-on-connect` den
-  Decoder-Einrast-Zeitpunkt beeinflusst.
+**Evaluierung 2026-09-04 (nach Hörtest 15:55–16:20, Go ausstehend):**
+Der Operator hat die Sekunden live ins Mikrofon gesprochen — die
+**letzten ~6 s der Line-In-Show fehlen** auf dem Stream.  Das ist
+dieselbe Größe wie die Startlücke: die **Durchlauf-Latenz L** der
+Kette.  Was zur Studiozeit t gesprochen wird, erreicht den Stream bei
+t+L; beim Slot-Ende E steckt alles aus [E−L, E] noch in der Kette und
+wird mit dem Schließen der Quelle verworfen.  Vorwärmen behebt nur die
+Startlücke, NICHT das Abschneiden — nur ein kleineres L hilft beidem.
 
-**Vorbedingung:** Operator-Go; die Änderungen liegen im Sendeweg und
-brauchen wieder eine Live-Abnahme mit Hörtest.
+Aufschlüsselung von L (~6 s):
+- Icecast **`burst-size` 65535 B global** (kein Mount-Override): bei
+  192 kbps ≈ **2,7 s** *alte* Daten an jeden neuen Client → Liquidsoaps
+  `input.http` hängt dauerhaft 2,7 s hinter live.  Für Internet-Hörer
+  sinnvoll, auf dem Loopback-Hop reiner Ballast.  Größter Einzelposten.
+- `input.http max_buffer` = 2,0 s (seit 2026-09-03; zuvor 1,5).
+- Decoder-Einrasten + Switch-Transition ≈ 0,5–1 s.
+- Feeder → ffmpeg: Blocksize 4800 @ 48 kHz = 0,1 s; ffmpeg läuft bereits
+  mit `-fflags +nobuffer -flags +low_delay -flush_packets 1` → kein
+  Hebel mehr.
+- Nur Startlücke, nicht L: Feeder-Health-Check `time.sleep(1.5)` in
+  `FfmpegLineinCapture._launch_processes`.
+
+**Paket „Line-In-Latenz" (klein, kein Architekturwechsel):**
+1. `icecast.xml`: `<mount type="normal"><mount-name>/linein-capture</mount-name>
+   <burst-size>0</burst-size></mount>` (oder ≤ 8 KB) → L −2,5 s.
+   Nebenwirkung: `input.http` muss `max_buffer` in Echtzeit füllen
+   statt aus dem Burst → daher zusammen mit 2.
+2. `max_buffer` 2,0 → 1,0 s (env-tunbar; die 1-s-Störung vom 03.09. war
+   der Catch-up-Bounce, kein Under-run; Loopback-Jitter ≈ 0).
+3. Health-Check 1,5 → 0,75 s (fängt weiterhin Sofort-Abstürze).
+Erwartung: Abschneiden ~6 → ~2 s, Startlücke ~6 → ~3–3,5 s.  Kosten:
+ICECAST-Neustart (Hörer fliegen für Sekunden raus → ruhiger Moment),
+PLAYOUT + LIQUIDSOAP-Neustart, Live-Abnahme mit „Sekunden zählen".
+Aufwand ~40 Zeilen + Tests + Doku, ~2 h.  **Empfehlung: Go.**
+
+Die verbleibenden ~2 s sind normale Sendeketten-Latenz; Moderatoren
+enden entsprechend früher (Studio-Praxis, im Manual dokumentieren).
+Nicht empfohlen: „Drain" am Slot-Ende (Quelle L Sekunden länger halten)
+— verschiebt jedes Folgeelement um L, Jingles/Stundenwechsel unpünktlich.
 
 ### 💡 Testplan erstellen (neu 2026-09-02, Reihenfolge-Punkt 14)
 
