@@ -224,7 +224,7 @@ der Line-In zu einem Schedule-Item genau wie in Pfad 4.1.
 2. Pypo sendet einen einzelnen Telnet-Befehl an Liquidsoap:
    `linein.start` — der dediziertes `input.http`-Source beginnt
    den lokalen Capture-Mount zu konsumieren.
-3. Liquidsoap buffert nur wenig Audio (2,0 s seit 2026-09-03).
+3. Liquidsoap buffert nur wenig Audio (1,0 s seit 2026-09-04).
    Sobald `source.is_ready` auf true schaltet, routet der
    Bus-Switch das Audio zur Linein-Source — Hörer hören das
    Mikrofon. Die `input.http`-Begleitquelle wird *parallel* zum
@@ -257,18 +257,25 @@ Bibliothek führt. FfmpegLineinCaptures Watchdog behandelt
 Unplug-Replug transparent; Liquidsoap konsumiert den lokalen
 Icecast-Mount ohne sich um Device-Identität zu kümmern.
 
-**Initiale Show-Latenz:** der Beginn eines Linein-Slots ist
-einige Sekunden still, während der Capture hochfährt und
-Liquidsoaps Buffer sich füllt. Auf Sendung gemessen: ~7 s vor dem
-Tuning vom 2026-09-03 (kleinerer `input.http`-Buffer + paralleles
-Scharfschalten), ~6 s danach. Der Buffer ist über
-`RASTATIME_LIQUIDSOAP_LINEIN_HTTP_MAX_BUFFER_SECONDS` (Standard
-2,0 s) einstellbar — erwarten Sie davon aber wenig: die Messung
-zeigt, dass der Buffer *nicht* der dominierende Anteil ist. Der
-größte Rest ist die Capture-Kette selbst — der Feeder muss das
-Gerät öffnen, ffmpeg muss kodieren, und Icecast muss genug MP3
-ausliefern, damit ein Decoder einrastet. Diese Verkürzung ist
-separat im Backlog vermerkt.
+**Latenz — Slot-Anfang und Slot-Ende:** Der Line-In-Pfad hat eine
+Durchlauf-Latenz: Was zur Studiozeit *t* gesprochen wird, erreicht
+den Stream bei *t + L*. Zwei Folgen: Der Slot-Anfang ist etwa L
+lang still, während sich die Kette füllt, und am Slot-Ende stecken
+die letzten L Sekunden noch in der Kette, wenn die Quelle
+geschlossen wird — **sie erreichen den Stream nie**. Auf Sendung
+gemessen am 2026-09-04 (Sekunden ins Mikrofon gezählt): L war
+~6 s. Fünf davon waren FFmpegs *Format-Autodetection* am
+Capture-Mount — ein Hörer steigt mitten in den Icecast-Datenstrom
+ein, ohne Header in Sicht, und der Decoder scannt ~5 s, bevor er
+einrastet. Seit 2026-09-04 ist das Format fest vorgegeben
+(`format="mp3"`, die Capture muxt immer MP3), der `input.http`-
+Buffer beträgt 1,0 s (einstellbar über
+`RASTATIME_LIQUIDSOAP_LINEIN_HTTP_MAX_BUFFER_SECONDS`), und der
+Start-Health-Check der Capture 0,75 s. Erwartung: Startlücke
+~2–3 s, Latenz am Slot-Ende ~2 s. **Moderatoren sollten daher etwa
+zwei Sekunden vor Slot-Ende zu sprechen aufhören** — die übliche
+Praxis in Sendeketten. Das Vorladen von Quellen vor dem Slot (um
+die Startlücke ganz zu entfernen) ist ein eigener Backlog-Punkt.
 
 **Legacy-mpv-/VLC-Engine-Pfade (nur wenn
 `RASTATIME_PLAYOUT_ENGINE=mpv` oder `=vlc`):**

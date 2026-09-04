@@ -211,8 +211,8 @@ becomes a schedule item exactly as in path 4.1.
 2. Pypo sends a single telnet command to Liquidsoap:
    `linein.start` — telling the dedicated `input.http` source
    to begin consuming the local capture mount.
-3. Liquidsoap buffers a short amount of audio (2.0 s since
-   2026-09-03).  Once `source.is_ready` flips true, the
+3. Liquidsoap buffers a short amount of audio (1.0 s since
+   2026-09-04).  Once `source.is_ready` flips true, the
    bus-switch routes audio to the linein source — listeners hear
    the microphone.  The `input.http` companion is armed *in
    parallel* with the capture start, so its buffer fills while the
@@ -244,18 +244,26 @@ FfmpegLineinCapture's watchdog handles unplug-replug
 transparently; Liquidsoap consumes its local Icecast mount
 without caring about device identity.
 
-**Initial-show latency:** the start of a line-in slot is silent
-for a few seconds while the capture spins up and Liquidsoap's
-buffer fills.  Measured on air: ~7 s before the 2026-09-03 tuning
-(smaller `input.http` buffer + parallel arming), ~6 s after it.
-The buffer is env-tunable via
-`RASTATIME_LIQUIDSOAP_LINEIN_HTTP_MAX_BUFFER_SECONDS` (default
-2.0 s), but do not expect much from it: measurement showed the
-buffer is *not* the dominant term.  Most of the remaining time is
-the capture pipeline itself — the feeder has to open the device,
-ffmpeg has to encode, and Icecast has to serve enough MP3 for a
-decoder to lock on.  Shortening that is tracked separately in the
-backlog.
+**Latency — start of the slot and end of the slot:** the line-in
+path has an end-to-end latency: what is spoken at studio time *t*
+reaches the stream at *t + L*.  Two consequences: the start of a
+slot is silent for roughly L while the pipeline fills, and at the
+end of the slot the last L seconds are still in the pipeline when
+the source is closed — **they never reach the stream**.  Measured
+on air 2026-09-04 (counting seconds into the microphone): L was
+~6 s.  Five of those seconds were FFmpeg's *format autodetection*
+on the capture mount — a listener joins the Icecast mount
+mid-stream with no header in sight, so the decoder scanned for
+~5 s before it locked on.  Since 2026-09-04 the format is forced
+(`format="mp3"`, the capture always muxes MP3), the `input.http`
+buffer is 1.0 s (env-tunable via
+`RASTATIME_LIQUIDSOAP_LINEIN_HTTP_MAX_BUFFER_SECONDS`) and the
+capture's start-up health check is 0.75 s.  Expected: start gap
+~2–3 s, end-of-slot latency ~2 s.  **Presenters should therefore
+finish speaking about two seconds before the slot ends** — the
+usual broadcast-chain practice.  Pre-loading sources before the
+slot (to remove the start gap entirely) is a separate backlog
+item.
 
 **Legacy mpv / VLC engine paths (only when
 `RASTATIME_PLAYOUT_ENGINE=mpv` or `=vlc`):**

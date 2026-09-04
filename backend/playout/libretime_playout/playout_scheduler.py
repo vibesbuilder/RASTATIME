@@ -1300,10 +1300,10 @@ class PlayoutScheduler:
             if use_feeder and self._linein_capture is not None:
                 # RASTATIME 2026-09-03 - Lever 2 (line-in start-gap fix).
                 # Arm the input.http companion BEFORE the blocking feeder
-                # start.  FfmpegLineinCapture.start() spends ~1.5 s on a
+                # start.  FfmpegLineinCapture.start() spends ~0.75 s on a
                 # health-check sleep before returning; starting input.http
                 # first lets its connect + max_buffer fill overlap that
-                # window instead of running strictly after it (~1.5 s of
+                # window instead of running strictly after it (~0.75 s of
                 # dead air shaved).  A small poll_delay in the .liq lets it
                 # grab the mount within half a second of the feeder
                 # publishing it.  If the feeder never comes up we stop the

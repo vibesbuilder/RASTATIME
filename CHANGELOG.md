@@ -9,6 +9,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Line-In: letzte ~6 s der Show fehlten, ~6 s Stille am Anfang —
+  Paket „Line-In-Latenz" (2026-09-04)** — Der Operator zählte die
+  Sekunden live ins Mikrofon: die letzten ~6 s einer Line-In-Show
+  erreichten den Stream nie.  Das ist keine Startlücke, sondern die
+  Durchlauf-Latenz L der Kette (Studiozeit t → Stream t+L; am Slot-Ende
+  steckt [E−L, E] noch in der Kette und wird mit der Quelle verworfen).
+  Messung, wo L steckt — zuerst falsch, dann richtig:
+  - *Falsch:* Icecast-`burst-size` (2,7 s) — der `/linein-capture`-Mount
+    hat seit 2026-05-13 bereits `burst-size 0`.  Kein ICECAST-Neustart.
+  - *Richtig* (Icecast-`access.log`: Quelle UND Hörer ab +0,0 s
+    verbunden, Audio ab +0,7 s, Decoder erst bei +6 s; dann vier
+    isolierte Hörer gegen den echten Mount): **FFmpegs
+    Format-Autodetection** braucht auf dem Icecast-Stream ~5 s (Hörer
+    steigt mitten im Datenstrom ohne Header ein).  Autodetect 6 s,
+    `format="mp3"` **1 s**, `format`+Probe-Argumente 2 s, nur
+    Probe-Argumente 6 s.
+  Fixe: `linein_http` bekommt `format="mp3"` (Container ist Eigenschaft
+  unserer eigenen Capture, `-f mp3`); `max_buffer` 2,0 → 1,0 s (der
+  Puffer ist permanente Latenz, nicht nur Startlücke); Capture-Start-
+  Health-Check 1,5 → 0,75 s (`_STARTUP_HEALTH_CHECK_S`).  Erwartung:
+  Abschneiden ~6 → ~2 s, Startlücke ~6 → ~2–3 s.  Manual (4 Sprachen):
+  Latenz-Absatz neu, inkl. Moderations-Praxis „~2 s vor Slot-Ende
+  aufhören".  Webstreams behalten die Autodetection (beliebige
+  Container).
+
 - **Show-Übergänge nach einem Line-In: Line-In blieb auf Sendung,
   Jingles stauten sich, laufender Slot wurde abgeschossen
   (2026-09-04)** — Beobachtet bei der Show-Folge Line-In 10:55 →

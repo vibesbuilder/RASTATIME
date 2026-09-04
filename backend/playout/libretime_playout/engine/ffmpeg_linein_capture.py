@@ -271,6 +271,17 @@ class FfmpegLineinCapture:
     # ~7.5 s of total tolerance before we surface a hard error.
     _IMMEDIATE_RETRY_MAX_ATTEMPTS = 3
     _IMMEDIATE_RETRY_BACKOFF_S = 1.0
+    # RASTATIME 2026-09-04 - startup health-check window (seconds).  The
+    # feeder + ffmpeg pair is left alone for this long after launch and
+    # then polled; an immediate crash (bad device, codec missing, Icecast
+    # unreachable) shows up as a non-None returncode and triggers the
+    # retry ladder.  Was 1.5 s from the dshow days ("device negotiation
+    # is slower than HTTP"); the MME feeder opens in ~0.2 s and every
+    # crash we have seen was well inside 0.5 s.  The window is a fixed
+    # part of the line-in start gap (start() blocks on it), so it is
+    # kept as short as the crash detection allows.  Later deaths are
+    # the watchdog's job, not this check's.
+    _STARTUP_HEALTH_CHECK_S = 0.75
 
     def start(
         self,
@@ -300,7 +311,7 @@ class FfmpegLineinCapture:
         with the SAME device and mapping, ``start()`` is a no-op — this
         matters for back-to-back shows that share a mic (Phase B.4 #3 —
         same-device transition): the scheduler can call ``start()`` on
-        every show boundary without causing a 1.5-4.5 s silence gap
+        every show boundary without causing a multi-second silence gap
         while FFmpeg drains its 'q' and a fresh subprocess warms up.
 
         Holds the lifecycle lock for the whole start, so a parallel
@@ -355,7 +366,7 @@ class FfmpegLineinCapture:
                 )
                 self._start_locked(device_id)
                 if self._process is not None and self._process.poll() is None:
-                    # Success: subprocess survived the 1.5 s warmup
+                    # Success: subprocess survived the startup warmup
                     # health-check inside _start_locked.
                     if attempt > 1:
                         logger.info(
@@ -628,9 +639,9 @@ class FfmpegLineinCapture:
 
         # Brief health check — if the capture crashes immediately (bad
         # device GUID, codec missing, icecast unreachable), poll()
-        # returns within ~1 s and we surface the error.  dshow's device
-        # negotiation is a bit slower than HTTP, so we give it 1.5 s.
-        time.sleep(1.5)
+        # returns quickly and we surface the error.  Window sized in
+        # _STARTUP_HEALTH_CHECK_S (2026-09-04: 1.5 -> 0.75 s, see there).
+        time.sleep(self._STARTUP_HEALTH_CHECK_S)
         rc = self._process.poll()
         feeder_rc = (
             self._feeder_process.poll()
@@ -723,7 +734,7 @@ class FfmpegLineinCapture:
         # ``last_time_str`` is the most recent ``time=HH:MM:SS.ss``
         # value seen in the FFmpeg stderr status lines.  None means we
         # have not seen any status line yet (the warm-up window after
-        # ``_start_locked``'s 1.5 s healthcheck) — we DEFER the stall
+        # ``_start_locked``'s startup healthcheck) — we DEFER the stall
         # judgment in that case rather than false-firing on startup.
         last_time_str: Optional[bytes] = self._safe_stderr_last_time()
         last_progress_at = time.monotonic()

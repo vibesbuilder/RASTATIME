@@ -170,7 +170,7 @@ Biblioteca.
 2. Pypo envía un único comando telnet a Liquidsoap:
    `linein.start` — la fuente `input.http` dedicada
    comienza a consumir el mount de captura local.
-3. Liquidsoap bufferiza poco audio (2,0 s desde 2026-09-03).
+3. Liquidsoap bufferiza poco audio (1,0 s desde 2026-09-04).
    Una vez que `source.is_ready` cambia a true, el bus-switch
    enruta el audio a la fuente linein — los oyentes escuchan el
    micrófono. La fuente acompañante `input.http` se arma *en
@@ -206,18 +206,27 @@ unplug-replug transparentemente; Liquidsoap consume su
 mount Icecast local sin preocuparse por la identidad del
 dispositivo.
 
-**Latencia inicial del show:** el comienzo de un slot line-in es
-silencioso durante unos segundos mientras la captura arranca y el
-búfer de Liquidsoap se llena. Medido en emisión: ~7 s antes del
-ajuste del 2026-09-03 (búfer `input.http` menor + armado en
-paralelo), ~6 s después. El búfer se ajusta por
-`RASTATIME_LIQUIDSOAP_LINEIN_HTTP_MAX_BUFFER_SECONDS` (por defecto
-2,0 s), pero no espere mucho de ello: la medición muestra que el
-búfer *no* es el término dominante. La mayor parte del resto es la
-propia cadena de captura — el feeder debe abrir el dispositivo,
-ffmpeg debe codificar e Icecast debe servir suficiente MP3 para
-que un decodificador enganche. Acortarla se sigue por separado en
-el backlog.
+**Latencia — inicio y fin del slot:** la ruta line-in tiene una
+latencia de extremo a extremo: lo que se dice en el instante de
+estudio *t* llega al stream en *t + L*. Dos consecuencias: el
+inicio del slot queda en silencio aproximadamente L mientras la
+cadena se llena, y al final del slot los últimos L segundos siguen
+en la cadena cuando se cierra la fuente — **nunca llegan al
+stream**. Medido en emisión el 2026-09-04 (contando segundos en el
+micrófono): L era ~6 s. Cinco de ellos eran la *autodetección de
+formato* de FFmpeg en el punto de montaje de captura: un oyente se
+incorpora al flujo Icecast a mitad de stream, sin cabecera a la
+vista, y el decodificador escanea ~5 s antes de enganchar. Desde el
+2026-09-04 el formato se fuerza (`format="mp3"`, la captura siempre
+muxea MP3), el búfer `input.http` es de 1,0 s (ajustable por
+`RASTATIME_LIQUIDSOAP_LINEIN_HTTP_MAX_BUFFER_SECONDS`) y la
+comprobación de salud al arranque de la captura es de 0,75 s.
+Esperado: hueco de inicio ~2–3 s, latencia de fin de slot ~2 s.
+**Los presentadores deben, por tanto, dejar de hablar unos dos
+segundos antes del final del slot** — la práctica habitual en
+cadenas de emisión. La precarga de fuentes antes del slot (para
+eliminar el hueco de inicio por completo) es un punto aparte del
+backlog.
 
 **Rutas legacy mpv / VLC (solo cuando
 `RASTATIME_PLAYOUT_ENGINE=mpv` o `=vlc`):**

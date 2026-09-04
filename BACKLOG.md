@@ -40,6 +40,14 @@ festgelegt.  Jeder Punkt bekommt vor Implementierung die
 
 ## 🎯 Aktive Backlog-Items (warten auf Operator-Go)
 
+> **Leitlinie (Operator, 2026-09-04):** *„Ich möchte so weit wie möglich
+> einen Seamless-Mix beim Wechseln zwischen verschiedenen Inputs
+> erreichen."*  Gilt für alle Übergänge File ↔ Webstream ↔ Line-In.
+> Darauf zahlen ein: „Quellen vorwärmen — Gate im Bus-Switch",
+> „Webstream-Puffer-Nachlauf", das Crossfade-Paket (#2) und die
+> Line-In-Latenz-Arbeit.  Bei Bewertungen dieser Punkte ist das
+> Kriterium „hörbar nahtlos?" das entscheidende.
+
 Diese sind technisch evaluiert, empfohlen, und können starten sobald
 der Operator das Signal gibt.
 
@@ -190,31 +198,31 @@ t+L; beim Slot-Ende E steckt alles aus [E−L, E] noch in der Kette und
 wird mit dem Schließen der Quelle verworfen.  Vorwärmen behebt nur die
 Startlücke, NICHT das Abschneiden — nur ein kleineres L hilft beidem.
 
-Aufschlüsselung von L (~6 s):
-- Icecast **`burst-size` 65535 B global** (kein Mount-Override): bei
-  192 kbps ≈ **2,7 s** *alte* Daten an jeden neuen Client → Liquidsoaps
-  `input.http` hängt dauerhaft 2,7 s hinter live.  Für Internet-Hörer
-  sinnvoll, auf dem Loopback-Hop reiner Ballast.  Größter Einzelposten.
-- `input.http max_buffer` = 2,0 s (seit 2026-09-03; zuvor 1,5).
-- Decoder-Einrasten + Switch-Transition ≈ 0,5–1 s.
-- Feeder → ffmpeg: Blocksize 4800 @ 48 kHz = 0,1 s; ffmpeg läuft bereits
-  mit `-fflags +nobuffer -flags +low_delay -flush_packets 1` → kein
-  Hebel mehr.
-- Nur Startlücke, nicht L: Feeder-Health-Check `time.sleep(1.5)` in
-  `FfmpegLineinCapture._launch_processes`.
+Aufschlüsselung von L (~6 s) — **korrigiert nach Messung am echten
+Mount (16:56, vier isolierte Hörer):**
+- ~~Icecast `burst-size` 65535 B (2,7 s)~~ — der `/linein-capture`-
+  Mount hat seit 2026-05-13 bereits `burst-size 0` (`config/icecast.xml`
+  ist die Live-Konfiguration, `-c C:\rastatime\config\icecast.xml`).
+  Meine erste Zuordnung war falsch.
+- **FFmpeg-Format-Autodetection ≈ 5 s** (dominant): Icecast-
+  `access.log` zeigte Quelle und Hörer ab +0,0 s verbunden, Audio ab
+  +0,7 s, Decoder erst bei +6 s.  Hörer mit Default-Argumenten: 6 s;
+  mit `format="mp3"`: **1 s**; `format` + Probe-Argumente: 2 s; nur
+  Probe-Argumente: 6 s.  Ein ffmpeg-HTTP-Server im Reinraum zeigte das
+  nicht (1 s) — er sendet einen Header, Icecast-Hörer steigen mitten
+  im Datenstrom ein.
+- `input.http max_buffer` = 2,0 s → permanente Latenz.
+- Decoder + Switch-Transition ≈ 0,5–1 s.
+- Feeder → ffmpeg: 0,1 s; ffmpeg bereits `nobuffer/low_delay/flush_packets`.
+- Nur Startlücke: Health-Check `time.sleep(1.5)`.
 
-**Paket „Line-In-Latenz" (klein, kein Architekturwechsel):**
-1. `icecast.xml`: `<mount type="normal"><mount-name>/linein-capture</mount-name>
-   <burst-size>0</burst-size></mount>` (oder ≤ 8 KB) → L −2,5 s.
-   Nebenwirkung: `input.http` muss `max_buffer` in Echtzeit füllen
-   statt aus dem Burst → daher zusammen mit 2.
-2. `max_buffer` 2,0 → 1,0 s (env-tunbar; die 1-s-Störung vom 03.09. war
-   der Catch-up-Bounce, kein Under-run; Loopback-Jitter ≈ 0).
-3. Health-Check 1,5 → 0,75 s (fängt weiterhin Sofort-Abstürze).
-Erwartung: Abschneiden ~6 → ~2 s, Startlücke ~6 → ~3–3,5 s.  Kosten:
-ICECAST-Neustart (Hörer fliegen für Sekunden raus → ruhiger Moment),
-PLAYOUT + LIQUIDSOAP-Neustart, Live-Abnahme mit „Sekunden zählen".
-Aufwand ~40 Zeilen + Tests + Doku, ~2 h.  **Empfehlung: Go.**
+**Paket „Line-In-Latenz" — UMGESETZT 2026-09-04 (Go des Operators):**
+1. `linein_http`: `format="mp3"` (Konstante `LINEIN_HTTP_FORMAT`).
+2. `max_buffer` 2,0 → 1,0 s.
+3. Health-Check 1,5 → 0,75 s (`_STARTUP_HEALTH_CHECK_S`).
+Kein ICECAST-Neustart nötig; PLAYOUT + LIQUIDSOAP.  Erwartung:
+Abschneiden ~6 → ~2 s, Startlücke ~6 → ~2–3 s.  **Live-Abnahme
+ausstehend** („Sekunden zählen" + Monitor).
 
 Die verbleibenden ~2 s sind normale Sendeketten-Latenz; Moderatoren
 enden entsprechend früher (Studio-Praxis, im Manual dokumentieren).

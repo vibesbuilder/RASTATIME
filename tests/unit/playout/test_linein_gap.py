@@ -7,7 +7,7 @@ air before the first audible audio (measured 14:20 show: mount alive at
 cause was ``input.http``'s ``max_buffer`` — the source only becomes
 ready once that many real seconds of audio are buffered.
 
-Lever 1 lowers the http companion's ``max_buffer`` (4.0 -> 2.0, env
+Lever 1 lowers the http companion's ``max_buffer`` (4.0 -> 1.0, env
 overridable) and its ``poll_delay`` (2.0 -> 0.5), so a source armed in
 parallel with the feeder connects the moment the mount appears.  These
 tests pin those rendered values and the env-facing thread so a refactor
@@ -41,16 +41,16 @@ def _num(block: str, key: str) -> float:
 
 
 def test_defaults_are_low_latency():
-    # 2.0 since 2026-09-03: cushion against under-runs on a broadcast
-    # path, after measurement showed max_buffer is not the dominant
-    # term in the start gap.
-    assert DEFAULT_LINEIN_HTTP_MAX_BUFFER_SECONDS == 2.0
+    # 1.0 since 2026-09-04: the http buffer is permanent end-to-end
+    # latency on the line-in path (the last L seconds of a slot are
+    # cut off with the source), and the hop is loopback Icecast at 1x.
+    assert DEFAULT_LINEIN_HTTP_MAX_BUFFER_SECONDS == 1.0
     assert DEFAULT_LINEIN_HTTP_POLL_DELAY_SECONDS == 0.5
 
 
 def test_rendered_http_block_uses_the_low_defaults():
     block = _http_block(render_rastatime_liq(_STREAMS))
-    assert _num(block, "max_buffer") == 2.0
+    assert _num(block, "max_buffer") == 1.0
     assert _num(block, "poll_delay") == 0.5
 
 
@@ -84,3 +84,17 @@ def test_http_max_buffer_is_not_the_dshow_max_buffer():
     # the dshow source keeps its own value
     dshow = liq[liq.index("linein_raw = input.ffmpeg"):liq.index("linein_dshow =")]
     assert "max_buffer=2." in dshow
+
+
+def test_http_block_forces_the_mp3_format():
+    """RASTATIME 2026-09-04: without ``format=`` FFmpeg autodetects the
+    stream format on the Icecast mount and needs ~5 s for it (measured
+    live: 6 s vs 1 s with format="mp3").  That was the dominant term of
+    the start gap and of the end-of-slot latency."""
+    block = _http_block(render_rastatime_liq(_STREAMS))
+    assert 'format="mp3"' in block
+    # and it must stay on the line-in companion only: webstreams carry
+    # arbitrary containers and keep autodetection
+    liq = render_rastatime_liq(_STREAMS)
+    ws = liq[liq.index("webstream_raw = input.http("):liq.index("webstream_raw = input.http(") + 400]
+    assert "format=" not in ws

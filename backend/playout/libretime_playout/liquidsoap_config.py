@@ -233,7 +233,7 @@ DEFAULT_LINEIN_MAX_BUFFER_SECONDS = 2.0
 # localhost AAAA-first and Icecast is IPv4-only).
 DEFAULT_LINEIN_HTTP_URL = "http://127.0.0.1:8000/linein-capture"
 
-# RASTATIME 2026-09-03 - lowered 4.0 -> 2.0 to cut the line-in start
+# RASTATIME 2026-09-03 - lowered 4.0 -> 1.5 to cut the line-in start
 # gap.  input.http becomes ready (and the switch takes it) only once
 # this many real seconds of audio are buffered, so it was the biggest
 # single contributor to the ~7 s dead-air on a scheduled line-in start
@@ -245,11 +245,33 @@ DEFAULT_LINEIN_HTTP_URL = "http://127.0.0.1:8000/linein-capture"
 # RASTATIME 2026-09-03, second pass: raised 1.5 -> 2.0 on operator
 # request after a ~1 s dropout was heard mid-show.  Measurement showed
 # that dropout came from a catch-up re-arm, not an under-run (see the
-# catch-up guard in playout_scheduler), and that max_buffer is NOT the
-# dominant term in the start gap anyway -- the feeder -> mount pipeline
-# is.  So the extra cushion costs ~0.5 s of start gap and buys headroom
-# against real under-runs: a good trade for a broadcast path.
-DEFAULT_LINEIN_HTTP_MAX_BUFFER_SECONDS = 2.0
+# catch-up guard in playout_scheduler).
+#
+# RASTATIME 2026-09-04, third pass: 2.0 -> 1.0.  The buffer is not only
+# start-gap: whatever input.http holds is permanent END-TO-END LATENCY
+# of the line-in path -- what is spoken at studio time t reaches the
+# stream at t + L, and at the slot end the last L seconds are still in
+# the pipe and get cut off with the source.  The operator heard the
+# last ~6 s of a line-in show vanish (16:07-16:12 show, counting
+# seconds into the mic).  This hop is loopback Icecast at a constant
+# 1x rate; 1.0 s is ample jitter cover there.  Env-overridable as
+# before, floor 0.2 s in __main__.
+DEFAULT_LINEIN_HTTP_MAX_BUFFER_SECONDS = 1.0
+
+# RASTATIME 2026-09-04 - container format of the /linein-capture mount,
+# passed to input.http as ``format=`` so FFmpeg skips its format
+# AUTODETECTION.  Measured on the live mount (four isolated listeners,
+# 16:56): autodetect needs ~5 s before the decoder is ready -- a
+# listener joins an Icecast mount mid-stream with no header in sight,
+# so libavformat scans up to its probe budget first -- while a forced
+# "mp3" is ready after ~1 s.  Those 5 s were the dominant term of BOTH
+# the line-in start gap AND the permanent end-to-end latency (the last
+# ~6 s of a line-in show never reached the stream).  The value is a
+# property of our own capture pipeline (FfmpegLineinCapture muxes with
+# ``-f mp3``), not of the device, hence a constant.  Probe-size /
+# analyzeduration int_args were measured too and only made it worse
+# (2 s) -- keep it to the format.
+LINEIN_HTTP_FORMAT = "mp3"
 
 # RASTATIME 2026-09-03 - the http companion polls this often while
 # trying to (re)connect.  0.5 s (vs the 2.0 s webstream default) lets
@@ -896,6 +918,8 @@ def _render_linein_input_block(
         '  id="linein_http",\n'
         "  start=false,\n"
         "  self_sync=false,\n"
+        "  # format forced: skips FFmpeg's ~5 s autodetect on the mount\n"
+        f'  format="{LINEIN_HTTP_FORMAT}",\n'
         f"  max_buffer={_format_crossfade_duration(http_max_buffer_seconds)},\n"
         f"  poll_delay={_format_crossfade_duration(http_poll_delay_seconds)},\n"
         f'  "{http_url}",\n'

@@ -183,7 +183,7 @@ Line-In + sa Longueur par défaut.
 2. Pypo envoie une seule commande telnet à Liquidsoap :
    `linein.start` — la source `input.http` dédiée commence à
    consommer le mount de capture local.
-3. Liquidsoap bufferise peu d'audio (2,0 s depuis 2026-09-03).
+3. Liquidsoap bufferise peu d'audio (1,0 s depuis 2026-09-04).
    Une fois `source.is_ready` passé à true, le bus-switch route
    l'audio vers la source linein — les auditeurs entendent le
    microphone. La source compagnon `input.http` est armée *en
@@ -219,19 +219,28 @@ FfmpegLineinCapture gère unplug-replug de manière
 transparente ; Liquidsoap consomme son mount Icecast local
 sans se soucier de l'identité du périphérique.
 
-**Latence initiale d'émission :** le début d'un créneau line-in
-est silencieux pendant quelques secondes, le temps que la capture
-démarre et que le tampon Liquidsoap se remplisse. Mesuré à
-l'antenne : ~7 s avant le réglage du 2026-09-03 (tampon
-`input.http` réduit + armement parallèle), ~6 s après. Le tampon
-est réglable via
-`RASTATIME_LIQUIDSOAP_LINEIN_HTTP_MAX_BUFFER_SECONDS` (défaut
-2,0 s), mais n'en attendez pas grand-chose : la mesure montre que
-le tampon n'est *pas* le terme dominant. L'essentiel du reste est
-la chaîne de capture elle-même — le feeder doit ouvrir le
-périphérique, ffmpeg doit encoder, et Icecast doit servir assez de
-MP3 pour qu'un décodeur se verrouille. Son raccourcissement est
-suivi séparément dans le backlog.
+**Latence — début et fin de créneau :** le chemin line-in a une
+latence de bout en bout : ce qui est dit à l'instant studio *t*
+atteint le flux à *t + L*. Deux conséquences : le début du créneau
+est silencieux pendant environ L, le temps que la chaîne se
+remplisse, et à la fin du créneau les L dernières secondes sont
+encore dans la chaîne quand la source est fermée — **elles
+n'atteignent jamais le flux**. Mesuré à l'antenne le 2026-09-04
+(en comptant les secondes dans le micro) : L valait ~6 s. Cinq de
+ces secondes venaient de l'*autodétection de format* de FFmpeg sur
+le montage de capture — un auditeur rejoint le flux Icecast en
+cours, sans en-tête en vue, et le décodeur balaie ~5 s avant de se
+verrouiller. Depuis le 2026-09-04 le format est imposé
+(`format="mp3"`, la capture muxe toujours en MP3), le tampon
+`input.http` vaut 1,0 s (réglable via
+`RASTATIME_LIQUIDSOAP_LINEIN_HTTP_MAX_BUFFER_SECONDS`) et le
+contrôle de santé au démarrage de la capture 0,75 s. Attendu :
+écart de démarrage ~2–3 s, latence de fin de créneau ~2 s. **Les
+animateurs doivent donc cesser de parler environ deux secondes
+avant la fin du créneau** — pratique habituelle des chaînes de
+diffusion. Le préchargement des sources avant le créneau (pour
+supprimer entièrement l'écart de démarrage) est un point séparé du
+backlog.
 
 **Chemins legacy mpv / VLC (uniquement quand
 `RASTATIME_PLAYOUT_ENGINE=mpv` ou `=vlc`) :**

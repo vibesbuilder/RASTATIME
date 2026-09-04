@@ -2,7 +2,7 @@
 Lever 2 of the line-in start-gap fix (RASTATIME 2026-09-03):
 ``_on_linein_start`` must arm the ``input.http`` companion BEFORE the
 blocking feeder start, so its connect + buffer-fill overlaps the
-feeder's ~1.5 s health-check window instead of running strictly after
+feeder's startup health-check window instead of running strictly after
 it.  And if the feeder never comes up, it must stop that source again
 so it does not poll a dead mount for the rest of the slot (the b4cd37b
 guard).

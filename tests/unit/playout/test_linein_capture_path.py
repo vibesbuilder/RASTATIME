@@ -97,3 +97,10 @@ def test_empty_device_id_starts_nothing(capture):
     capture._start_locked("")
 
     capture._launch_processes.assert_not_called()
+
+
+def test_startup_health_check_window_is_short():
+    """RASTATIME 2026-09-04: start() blocks on this window, so it is a
+    fixed part of every line-in start gap.  Pin it so a future "let's be
+    safe" bump is a conscious decision, not drift."""
+    assert 0.5 <= FfmpegLineinCapture._STARTUP_HEALTH_CHECK_S <= 0.75
