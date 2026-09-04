@@ -1170,9 +1170,11 @@ def _render_bus_source_block(
     else:
         transition_fn = (
             "# ducking (Default Crossfade Duration = 0): new source at full\n"
-            "# level at once, old source fades out UNDER it\n"
+            "# level at once (50 ms click-free ramp, which also keeps both\n"
+            "# add() elements the same source type), old fades out UNDER it\n"
             "def bus_transition(old, new) =\n"
-            f"  add(normalize=false, [fade.out(duration={_format_crossfade_duration(duck)}, old), new])\n"
+            f"  add(normalize=false, [fade.out(duration={_format_crossfade_duration(duck)}, old),\n"
+            "                        fade.in(duration=0.05, new)])\n"
             "end\n"
         )
         shape = f"ducking, old fades over {_format_crossfade_duration(duck)} s"

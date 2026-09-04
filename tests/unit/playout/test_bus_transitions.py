@@ -54,8 +54,12 @@ def test_positive_duration_renders_a_crossfade():
 
 def test_zero_duration_renders_ducking_with_the_fixed_fade():
     block = _bus(transition_seconds=0.0)
-    assert f"fade.out(duration={DEFAULT_INPUT_DUCK_FADE_SECONDS:.1f}, old), new])" in block
-    assert "fade.in(" not in block
+    assert f"fade.out(duration={DEFAULT_INPUT_DUCK_FADE_SECONDS:.1f}, old)," in block
+    # the new source gets only a 50 ms click-free ramp (= "at once"); it
+    # also keeps both add() elements the same source type, which the
+    # switch's transition signature requires (2.4.4 type error otherwise)
+    assert "fade.in(duration=0.05, new)" in block
+    assert "fade.in(duration=1" not in block
     assert "ducking" in block
 
 
