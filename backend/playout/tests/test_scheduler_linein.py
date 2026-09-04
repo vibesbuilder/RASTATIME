@@ -759,3 +759,33 @@ def test_webstream_catch_up_rebinds_instead_of_reconnecting(liquidsoap_scheduler
     on_start.assert_not_called()
     assert start_t is None
     assert sched._playing_key == "W"
+
+
+def test_re_arming_the_playing_key_itself_logs_no_rebinding(
+    liquidsoap_scheduler, caplog
+):
+    """First live run of ff567ce (2026-09-04 15:12:52): the identity
+    branch fired for the playing key itself and logged a no-op
+    'Catch-up skipped (X -> X); rebinding' on every refresh."""
+    import logging
+    sched, engine, capture = liquidsoap_scheduler
+    now = datetime.utcnow()
+    playing = _webstream_event(now - timedelta(seconds=30))
+    sched._playing_key = "W_0"
+    sched._current_event = playing
+    with caplog.at_level(logging.INFO), patch.object(sched, "_on_webstream_start") as on_start:
+        sched._arm_webstream_event("W_0", playing.model_copy(), now)
+        sched._timers["W_0"][1].cancel()
+    on_start.assert_not_called()
+    assert sched._playing_key == "W_0"
+    assert "rebinding" not in caplog.text
+
+    track = _file_event(now - timedelta(seconds=9))
+    sched._playing_key = "F_0"
+    sched._current_event = track
+    caplog.clear()
+    with caplog.at_level(logging.INFO), patch.object(sched, "_on_file_start") as on_start:
+        sched._arm_file_event("F_0", track.model_copy(), now)
+        sched._timers["F_0"][1].cancel()
+    on_start.assert_not_called()
+    assert "rebinding" not in caplog.text

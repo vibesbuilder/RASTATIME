@@ -579,7 +579,9 @@ class PlayoutScheduler:
                 key, start_delay, event.track_title,
             )
 
-        elif self._same_scheduled_item(self._current_event, event):
+        elif key != self._playing_key and self._same_scheduled_item(
+            self._current_event, event
+        ):
             # RASTATIME 2026-09-04 - same item, new key (see
             # _same_scheduled_item): adopt the key, do not re-play.
             logger.info(
@@ -631,7 +633,9 @@ class PlayoutScheduler:
             start_t = threading.Timer(start_delay, self._on_webstream_start, args=(key, event))
             start_t.daemon = True
             start_t.start()
-        elif self._same_scheduled_item(self._current_event, event):
+        elif key != self._playing_key and self._same_scheduled_item(
+            self._current_event, event
+        ):
             # RASTATIME 2026-09-04 - same item, new key: rebind instead of
             # reconnecting the stream (an audible gap).
             logger.info(

@@ -55,7 +55,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   — beides seit 2026-09-03 bewusst anders; auf den aktuellen Vertrag
   nachgezogen (die Paket-Suite war gestern nicht mitgelaufen).  Und die
   harmlose `→`-cp1252-Logging-Warnung aus dem Main-Output-Resolver ist
-  weg (`->`).
+  weg (`->`).  Commit `ff567ce`.
+  **Live-Abnahme 2026-09-04 14:55–15:20** (Line-In → Jingles + BBC +
+  Showteaser → Line-In → Webstream), 21 Log-Prüfpunkte, alle grün:
+  um 15:00:00 „armed but starts in 420s - not back-to-back" (Fix 1),
+  „superseded … during teardown" + „takes over from line-in … closing
+  its capture" (Fix 4 — der Nachfolger hat das Rennen tatsächlich
+  gewonnen, ohne den Nachfolger-Teardown wäre der 11:00-Ausfall über
+  diesen zweiten Weg wiedergekommen), TOH-Jingle sofort „Prepared",
+  nach dem Webstream der Showteaser statt Tascam, um 15:07 keine
+  gestauten Jingles, beim Refresh um 15:08:50 „rebinding, no teardown"
+  statt „removed from schedule" (Option A), um 15:12 schließt der
+  Webstream den Line-In selbst, um 15:20 kein Line-In-Comeback.
+
+- **Catch-up-Log-Politur (2026-09-04)** — Die neue Identitäts-Prüfung
+  für File- und Webstream-Catch-ups griff auch, wenn der Key bereits der
+  spielende war, und loggte bei jedem Refresh ein sinnloses „Catch-up
+  skipped (X → X); rebinding" (live 15:12:52 ff.).  Funktional harmlos
+  (Rebinding auf denselben Key), jetzt an `key != playing_key` gekoppelt
+  wie beim Line-In-Zweig; Test dazu.
 
 ### Changed
 

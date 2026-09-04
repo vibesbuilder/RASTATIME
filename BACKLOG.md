@@ -55,9 +55,13 @@ rutschen die Suffixe der Überlebenden nach — derselbe laufende Slot kam
 live als `…-09-07-00_0` und einen Refresh später als `…-09-07-00`
 zurück (2026-09-04 11:08:17, Teardown + Catch-up = 9 s Loch).
 
-**Stand:** Option A ist umgesetzt (2026-09-04): Removed-Check und
-Catch-up vergleichen Item-Identität statt Keys und binden nur um.  Das
-neutralisiert das Symptom vollständig, lässt die Ursache aber stehen.
+**Stand:** Option A ist umgesetzt (2026-09-04, `ff567ce`): Removed-Check
+und Catch-up vergleichen Item-Identität statt Keys und binden nur um.
+Live-Abnahme 14:55–15:20: die Wanderung trat erneut auf (Line-In
+`…-13-07-00_0` → `…-13-07-00` um 15:08:50, Webstream `_1` → `_0` um
+15:12:52) und wurde beide Male per Rebinding ohne Teardown abgefangen.
+Das neutralisiert das Symptom vollständig, lässt die Ursache aber
+stehen — jeder Refresh produziert weiterhin Rebinding-Logzeilen.
 
 **Option B (empfohlen, Operator-Bauchgefühl 2026-09-04 ebenfalls):**
 Keys deterministisch aus Zeitstempel **plus Identität** bilden
@@ -79,6 +83,45 @@ reinen Absicherung.
 - Muss in einem Rutsch stimmen (kein Mischbetrieb alter/neuer Keys);
   Live-Abnahme mit der Show-Folge Line-In → Jingles + Webstream → Line-In.
 - ~80–120 Zeilen + Tests, ~3 h.
+
+### 💡 Webstream-Puffer verschiebt und verkürzt das Folgeelement (beobachtet 2026-09-04)
+
+**Beobachtung (Live-Abnahme 14:55–15:20):** Der Webstream-Zweig hängt
+hinter `buffer(buffer=5.0, …)` (Phase-E-Clock-Bridge).  Beim
+`webstream_stop` läuft dieser Puffer erst leer, bevor `switch.2` auf
+den Scheduled-Zweig zurückfällt — der Showteaser (15:06:08–15:06:58,
+50 s) startete daher erst 15:06:13 und wurde um 15:06:58 nach 45 s
+abgeschnitten.  Analog um 15:20:05.  Beim Start dagegen 5 s (BBC) bzw.
+9 s (cloud.example.org) Stille bis `Switch to amplify` — das ist die
+dokumentierte Buffer-up-Latenz.
+
+**Nicht Teil der 2026-09-04-Fixe** (Verhalten war vorher identisch, die
+Fixe haben es nur sichtbar gemacht, weil die Übergänge jetzt stimmen).
+
+**Ideenrichtung (nicht evaluiert):** (a) `webstream_stop` mit
+`buffer`-Flush statt Leerlaufen; (b) den Folge-Push um die
+Pufferlänge vorziehen; (c) Puffer 5 → 2–3 s, gegen Reconnect-
+Robustheit abwägen (Phase-E-Lektion: zu kleiner Puffer → „Buffer
+emptied"-Flattern).  Vorbedingung: Operator-Go + Hörtest, Sendeweg.
+
+### 🟡 Cue-Sheet: überzähliger „end"-Marker bei überholtem STOP (beobachtet 2026-09-04)
+
+**Mechanismus:** `_on_stop` schreibt `cue_item_end(kind)` *vor* dem
+Ownership-Re-Check.  Gewinnt der Nachfolger das Rennen (live bei
+**jedem** File→File-Übergang der Fall: „superseded … during
+teardown"), ist `_current_event` schon der Nachfolger, und der Marker
+landet ~30 ms nach dessen `start`-Marker als „end" seines Typs.  Der
+Sidecar (`cue_writer.py`, flache Markerliste, kein Item-Bezug) enthält
+dann `start(B) → end(B)` im Abstand von 30 ms.  **Vorbestehend** — der
+alte Pfad schrieb denselben Marker und überschrieb danach zusätzlich
+die Buchführung.
+
+**Vorbedingung:** Es gibt noch keinen Leser für `*.cues.json` im Repo
+(nur Writer + Test).  Sobald der 7-Tage-Catchup / die Cue-Auswertung
+gebaut wird, entscheiden: (a) Marker erst nach dem Re-Check schreiben
+(überholter STOP schreibt nichts; `start` des Nachfolgers impliziert
+das Ende) oder (b) Marker mit Item-Identität (row_id) versehen, damit
+der Leser Paare bilden kann.  (b) ist robuster.
 
 ### 🟡 Line-In-Startlücke: Capture-Kette verkürzen (neu 2026-09-03)
 
