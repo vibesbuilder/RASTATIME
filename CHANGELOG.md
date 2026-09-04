@@ -7,9 +7,56 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **`input.http`-Puffer des Line-In-Companions 1,5 → 2,0 s
+  (2026-09-03)** — Auf Operator-Wunsch nach dem ~1 s Aussetzer der
+  15:15-Show.  Die Ursache war zwar der Catch-up-Bounce (siehe Fixed)
+  und kein Under-run, aber die Messung zeigte auch, dass `max_buffer`
+  ohnehin nicht der dominierende Anteil der Startlücke ist: die
+  zusätzliche Reserve kostet ~0,5 s Startlücke und kauft dafür
+  Reserve gegen echte Under-runs — auf einem Sendeweg ein guter
+  Tausch.  Weiterhin per
+  `RASTATIME_LIQUIDSOAP_LINEIN_HTTP_MAX_BUFFER_SECONDS` einstellbar
+  (Boden 0,2 s).  Laufzeitgeprüft mit echtem Liquidsoap-Lauf: 2,0 s /
+  `poll_delay` 0,5 s werden akzeptiert (11 Polls in 6 s).
+
 ### Fixed
 
-- **Line-In-Start-Lücke von ~7 s auf ~2-3 s verkürzt (2026-09-03)** —
+- **Geplante Line-Ins auf Kanal 1/2 sendeten Stille (2026-09-03)** —
+  „Option B".  Schlichtes Stereo 1/2 nahm bisher den direkten
+  DirectShow-Pfad: ffmpeg öffnete das Gerät als
+  `audio=@device_cm_{...}\wave_{<GUID>}`, gebaut aus der auf der
+  Line-In-Zeile gespeicherten Windows-Audio-*Endpoint*-GUID.
+  DirectShow führt aber eine eigene Geräte-GUID-Liste und kennt diese
+  nicht — an der 15:20-Testshow („Tascam 1-2") antwortete ffmpeg
+  `Could not find audio only device` und der Slot ging stumm auf
+  Sendung.  Dasselbe Gerät öffnet über MME einwandfrei, deshalb läuft
+  **jeder** geplante Line-In jetzt über den sounddevice/MME-Feeder, der
+  per Anzeigename auflöst.  Der dshow-Pfad bleibt nur noch als
+  Fallback für Alt-Zeilen ohne gespeicherten Gerätenamen (die der
+  Feeder nicht auflösen kann) — solche Zeilen bitte einmal neu
+  speichern.  Die Entscheidung fällt an drei Stellen und wird jetzt
+  im Gleichschritt gehalten: `PlayoutScheduler._on_linein_start`,
+  `PlayoutScheduler._resume_scheduled_locked` (sonst hätte ein
+  Liquidsoap-Neustart mitten in der Show den Slot still zurück auf
+  dshow geworfen) und `FfmpegLineinCapture._start_locked` — letztere
+  ist die, die tatsächlich über den Audiofluss entscheidet.
+
+- **~1 s Aussetzer mitten in einer laufenden Line-In-Show
+  (2026-09-03)** — Ein Schedule-Refresh kann denselben laufenden
+  Line-In-Slot unter einem *anderen* Key zurückliefern (live gesehen:
+  `…-13-15-00_2` beim Start, blankes `…-13-15-00` 70 s später).  Der
+  Catch-up-Wächter verglich nur Keys, spielte den Slot deshalb erneut
+  an, und `linein_start_http` riss die http-Quelle mitten in der Show
+  ab und wieder auf — hörbar als ~1 s Stille um 15:16:20.  Der Capture
+  selbst war idempotent („already capturing"), der Quellen-Bounce war
+  also der ganze Schaden.  Catch-up überspringt jetzt einen Line-In,
+  der mit gleichem Gerät + gleicher Kanalwahl bereits auf Sendung ist,
+  und übernimmt nur den neuen Key, damit der zugehörige `_on_stop`
+  weiterhin greift.
+
+- **Line-In-Start-Lücke von ~7 s auf ~6 s verkürzt (2026-09-03)** —
   Bei einer geplanten Line-In-Show auf dem Mehrkanal-Pfad
   (Feeder → `/linein-capture` → `input.http`) lagen zwischen Ende der
   Vorshow und erstem hörbaren Signal ~7 s Stille (14:20-Show gemessen:
@@ -23,9 +70,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Health-Check-Schlaf), statt strikt danach — die Pufferfüllung
   überlappt das Feeder-Hochlaufen; scheitert der Feeder, wird die
   vorab-gestartete Quelle wieder gestoppt (der b4cd37b-404-Poll-Schutz
-  bleibt).  Verifiziert mit echtem Liquidsoap-Lauf + Tests; die
-  tatsächliche Lücke misst der Operator an einer Live-Show gegen 1,5
-  vs. 1,0.
+  bleibt).  Verifiziert mit echtem Liquidsoap-Lauf + Tests.
+  **Nachgemessen an der 15:15-Live-Show: nur ~7 s → ~6 s.**  Die
+  ursprüngliche Schätzung „~2-3 s" war zu optimistisch — `max_buffer`
+  war *nicht* der dominierende Anteil.  Den Löwenanteil hält die
+  Capture-Kette selbst (Gerät öffnen, ffmpeg-Encoding, genug MP3 im
+  Mount, damit ein Decoder einrastet: ~4 s vom ffmpeg-Start bis zu
+  dekodierbarem Audio).  Als eigener Backlog-Punkt notiert.
 
 - **Sendeausfall durch Callback-Probe behoben (2026-09-03)** — Die
   Geräte-Probe des Main-Output-Features testete im PortAudio-

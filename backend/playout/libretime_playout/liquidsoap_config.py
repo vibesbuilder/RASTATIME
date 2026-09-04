@@ -221,27 +221,35 @@ DEFAULT_LINEIN_ENABLED = True
 DEFAULT_LINEIN_MAX_BUFFER_SECONDS = 2.0
 
 # RASTATIME 2026-08-31 — multichannel line-in path (BACKLOG "Line-In:
-# Kanal-Auswahl auf Multi-Input-Devices").  For a channel_mapping other
-# than plain stereo, Pypo runs FfmpegLineinCapture with the
-# sounddevice/MME feeder (the dshow pin of multichannel interfaces
-# only ever offers 2 channels) pushing the selected pair to the local
-# /linein-capture Icecast mount, and Liquidsoap consumes that mount
-# through a second, fixed-URL input.http source — the original Phase-F
-# pattern kept alongside the Phase-F-2 direct-dshow source.  127.0.0.1
+# Kanal-Auswahl auf Multi-Input-Devices"), widened 2026-09-03.  Pypo
+# runs FfmpegLineinCapture with the sounddevice/MME feeder for EVERY
+# channel_mapping now, plain stereo included, pushing the selected pair
+# to the local /linein-capture Icecast mount; Liquidsoap consumes that
+# mount through a second, fixed-URL input.http source.  The direct-dshow
+# source below survives only for legacy rows with no stored device
+# name: it addresses the device by endpoint GUID, which DirectShow does
+# not recognise, and went out silent on the Tascam.  127.0.0.1
 # deliberately, not localhost (Phase-E lesson: OCaml resolves
 # localhost AAAA-first and Icecast is IPv4-only).
 DEFAULT_LINEIN_HTTP_URL = "http://127.0.0.1:8000/linein-capture"
 
-# RASTATIME 2026-09-03 - lowered 4.0 -> 1.5 to cut the line-in start
+# RASTATIME 2026-09-03 - lowered 4.0 -> 2.0 to cut the line-in start
 # gap.  input.http becomes ready (and the switch takes it) only once
 # this many real seconds of audio are buffered, so it was the biggest
 # single contributor to the ~7 s dead-air on a scheduled line-in start
 # (measured 14:20 show: mount alive at +1.8 s, switch at +7.0 s).  The
 # hop is a loopback-local Icecast mount fed at a constant 1x rate, so
 # jitter is minimal and a small buffer is safe.  Env-overridable
-# (RASTATIME_LIQUIDSOAP_LINEIN_HTTP_MAX_BUFFER_SECONDS) so 1.0 can be
-# A/B tested against 1.5 without a rebuild.
-DEFAULT_LINEIN_HTTP_MAX_BUFFER_SECONDS = 1.5
+# (RASTATIME_LIQUIDSOAP_LINEIN_HTTP_MAX_BUFFER_SECONDS) without a rebuild.
+#
+# RASTATIME 2026-09-03, second pass: raised 1.5 -> 2.0 on operator
+# request after a ~1 s dropout was heard mid-show.  Measurement showed
+# that dropout came from a catch-up re-arm, not an under-run (see the
+# catch-up guard in playout_scheduler), and that max_buffer is NOT the
+# dominant term in the start gap anyway -- the feeder -> mount pipeline
+# is.  So the extra cushion costs ~0.5 s of start gap and buys headroom
+# against real under-runs: a good trade for a broadcast path.
+DEFAULT_LINEIN_HTTP_MAX_BUFFER_SECONDS = 2.0
 
 # RASTATIME 2026-09-03 - the http companion polls this often while
 # trying to (re)connect.  0.5 s (vs the 2.0 s webstream default) lets
@@ -874,14 +882,13 @@ def _render_linein_input_block(
         ")\n"
         "\n"
         "# RASTATIME 2026-08-31 — multichannel line-in path (BACKLOG\n"
-        '# "Line-In: Kanal-Auswahl auf Multi-Input-Devices").  The dshow\n'
-        "# pin of multichannel interfaces only offers 2 channels, so for\n"
-        "# any channel_mapping other than plain stereo Pypo starts the\n"
-        "# FfmpegLineinCapture with its sounddevice/MME feeder (selected\n"
-        "# channels -> stereo mp3 on the local /linein-capture mount) and\n"
-        "# Liquidsoap consumes the mount through this second source —\n"
-        "# the original Phase-F pattern kept alongside the Phase-F-2\n"
-        "# direct-dshow source above.  input.http auto-registers its\n"
+        '# "Line-In: Kanal-Auswahl auf Multi-Input-Devices"), widened to\n'
+        "# every mapping on 2026-09-03.  Pypo starts FfmpegLineinCapture\n"
+        "# with its sounddevice/MME feeder (selected channels -> stereo\n"
+        "# mp3 on the local /linein-capture mount) and Liquidsoap\n"
+        "# consumes the mount through this second source.  The\n"
+        "# direct-dshow source above is now only the fallback for legacy\n"
+        "# rows with no stored device name.  input.http auto-registers its\n"
         "# telnet commands under the id (linein_http.start/stop), and\n"
         "# poll_delay re-connects on its own after capture-watchdog\n"
         "# restarts of the mount.  URL is fixed at render time.\n"

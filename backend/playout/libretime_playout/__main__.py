@@ -377,7 +377,7 @@ def _render_rastatime_liq_at_startup(stream_outputs: List[Dict]) -> None:
         )
         sys.exit(1)
     # RASTATIME 2026-09-03 - linein_http start-up buffer, env-overridable
-    # so 1.0 can be A/B tested against the 1.5 default (dead-air-gap vs.
+    # so it can be tuned against the 2.0 default (dead-air-gap vs.
     # under-run safety) without a rebuild.  Clamped to a sane floor: a
     # sub-0.2 s buffer invites glitches even on a loopback hop.
     try:

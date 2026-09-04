@@ -633,15 +633,48 @@ class PlayoutScheduler:
             start_t.daemon = True
             start_t.start()
         elif key != self._playing_key:
-            logger.info(
-                "Catch-up: in-progress line-in %s (started %.0fs ago)  name=%r",
-                key, -start_delay, event.name,
+            # RASTATIME 2026-09-03 - a schedule refresh can hand the SAME
+            # in-progress line-in back under a DIFFERENT key (seen live:
+            # "<ts>_2" at start, bare "<ts>" 70 s later).  The old guard
+            # only compared keys, so catch-up re-played it and
+            # linein_start_http tore the http source down and back up
+            # mid-show -- the audible ~1 s dropout the operator reported
+            # at 15:16.  The capture itself was idempotent ("already
+            # capturing"), so the source bounce was the whole damage.
+            # Skip catch-up when the same device + channel mapping is
+            # already on air, but adopt the new key so the _on_stop armed
+            # below still matches.
+            current = self._current_event
+            already_on_air = (
+                isinstance(current, LineinEvent)
+                and current.device_id == event.device_id
+                and list(getattr(current, "channel_mapping", None) or [0, 1])
+                == list(getattr(event, "channel_mapping", None) or [0, 1])
+                and self._linein_capture is not None
+                and self._linein_capture.is_running
             )
-            start_t = threading.Timer(
-                0, self._on_linein_start, args=(key, event)
-            )
-            start_t.daemon = True
-            start_t.start()
+            if already_on_air:
+                logger.info(
+                    "Catch-up skipped: line-in already on air with the same "
+                    "device+channels (key %s -> %s); not bouncing the source.",
+                    self._playing_key, key,
+                )
+                self._playing_key = key
+                # Nothing to arm: the source is already playing.  None is
+                # the same "no start timer" marker the resume path stores,
+                # and both consumers (_cancel_all_timers, the same-device
+                # follow-up check in _on_stop) already handle it.
+                start_t = None
+            else:
+                logger.info(
+                    "Catch-up: in-progress line-in %s (started %.0fs ago)  "
+                    "name=%r", key, -start_delay, event.name,
+                )
+                start_t = threading.Timer(
+                    0, self._on_linein_start, args=(key, event)
+                )
+                start_t.daemon = True
+                start_t.start()
 
         stop_t = threading.Timer(stop_delay, self._on_stop, args=(key,))
         stop_t.daemon = True
@@ -1068,27 +1101,37 @@ class PlayoutScheduler:
                     key, self._switcher.current_state.value,
                 )
                 return
-            # RASTATIME 2026-08-31 — channel selection (BACKLOG
-            # "Line-In: Kanal-Auswahl auf Multi-Input-Devices").
-            # Plain stereo takes the proven direct-dshow source; any
-            # other mapping cannot (the dshow pin of multichannel
-            # interfaces only offers 2 channels), so it runs the
-            # FfmpegLineinCapture with its sounddevice/MME feeder and
-            # Liquidsoap consumes the local mount via the linein_http
-            # companion source.
+            # RASTATIME 2026-09-03 - EVERY scheduled line-in now runs
+            # through the sounddevice/MME feeder, plain stereo included
+            # (operator decision "Option B", 2026-09-03).
+            #
+            # Until today plain stereo (1/2) took the direct-dshow source
+            # instead.  That path addresses the device by GUID
+            # (wave_{<endpoint guid>}), but DirectShow enumerates its own
+            # device GUIDs -- which are NOT the WASAPI endpoint GUIDs we
+            # store.  Live proof (15:20 test show, "Tascam 1-2"): dshow
+            # answered "Could not find audio only device" and the slot
+            # stayed silent, while the very same device opened fine
+            # through MME.  Rather than teach the dshow path a second
+            # addressing scheme, we unify on the feeder: it resolves by
+            # friendly name, is proven on every channel pair, and is
+            # already the path the operator listens to.
+            #
+            # The dshow source stays in the .liq as the fallback for
+            # legacy rows that never stored a device name -- the feeder
+            # cannot resolve a PortAudio device from a GUID alone.
             mapping = list(getattr(event, "channel_mapping", None) or [0, 1])
             dev_name = getattr(event, "device_name", "") or ""
-            use_feeder = mapping != [0, 1]
-            if use_feeder and not dev_name:
+            use_feeder = bool(dev_name)
+            if not use_feeder:
                 logger.error(
-                    "Line-In %s: channel mapping %s needs the MME feeder, "
-                    "which requires the stored device name — this row has "
-                    "none (legacy save).  Falling back to the direct dshow "
-                    "source (channels 1/2).  Re-save the line-in in "
-                    "Settings to store the device name.",
+                    "Line-In %s: no stored device name (legacy save), so the "
+                    "MME feeder cannot resolve the device; falling back to "
+                    "the direct dshow source on channels 1/2 (requested "
+                    "mapping %s).  Re-save the line-in in Settings -> Local "
+                    "Machine to store the device name.",
                     key, mapping,
                 )
-                use_feeder = False
 
             self._engine.stop()  # clear the scheduled queue (deferred-stop)
             # Race fix #3 — mark a new line-in generation BEFORE the telnet
@@ -2074,7 +2117,14 @@ class PlayoutScheduler:
                 getattr(self._current_event, "channel_mapping", None) or [0, 1]
             )
             dev_name = getattr(self._current_event, "device_name", "") or ""
-            use_feeder = mapping != [0, 1] and bool(dev_name)
+            # RASTATIME 2026-09-03 - mirrors the Option B decision in
+            # _on_linein_start: the feeder serves every mapping, plain
+            # stereo included, and dshow is only the legacy fallback for
+            # rows without a stored device name.  Kept in lockstep on
+            # purpose -- if this branch still sent 1/2 to dshow, a
+            # Liquidsoap restart mid-show would silently drop a studio
+            # slot back onto the by-GUID path that plays silence.
+            use_feeder = bool(dev_name)
 
             # Make sure the capture is still running where the path
             # needs it.  start() is same-device+mapping idempotent, so

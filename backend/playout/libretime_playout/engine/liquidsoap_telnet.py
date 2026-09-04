@@ -534,14 +534,16 @@ class LiquidsoapTelnetClient:
 
     def linein_http_start(self) -> str:
         """
-        RASTATIME 2026-08-31 — multichannel line-in path.
+        RASTATIME 2026-08-31 — multichannel line-in path, widened to
+        every mapping on 2026-09-03.
 
         Start the fixed-URL ``input.http`` companion source
         (id="linein_http") that consumes the local /linein-capture
-        Icecast mount fed by FfmpegLineinCapture's MME feeder.  Used
-        for line-ins whose channel_mapping is not plain stereo — the
-        in-process dshow source cannot reach channels 3+ of a
-        multichannel interface.
+        Icecast mount fed by FfmpegLineinCapture's MME feeder.  This is
+        the path for every scheduled line-in that has a stored device
+        name — the in-process dshow source cannot reach channels 3+ of
+        a multichannel interface, and addresses even channels 1/2 by an
+        endpoint GUID DirectShow does not recognise.
 
         Wire-form: ``linein_http.start`` (auto-registered by
         input.http under its source id).

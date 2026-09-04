@@ -104,17 +104,23 @@ biblioteca y en los programas; programas consecutivos desde
 estudios distintos en la misma interfaz conmutan limpiamente en el
 límite del programa.
 
-> **Cómo funciona por dentro.** El simple `Stereo 1/2` usa la
-> probada ruta de captura DirectShow. Cualquier otra selección no
-> puede — el pin DirectShow de Windows de las interfaces multicanal
-> solo ofrece dos canales — así que el playout arranca un pequeño
-> feeder de captura que lee el dispositivo por la API MME (la única
+> **Cómo funciona por dentro.** Cada Line-In — incluido el simple
+> `Stereo 1/2` desde el 2026-09-03 — pasa por un pequeño feeder de
+> captura. El feeder lee el dispositivo por la API MME (la única
 > API de Windows que demostrablemente entrega todos los canales sin
 > tocar ajustes del sistema), extrae los canales elegidos y los
 > inyecta por el punto de montaje local `/linein-capture` al motor
-> de emisión. Esto requiere el nombre visible del dispositivo
-> guardado en la fila — vuelva a guardar una vez los Line-Ins
-> creados antes de esta función.
+> de emisión. Hasta el 2026-09-03 el simple `Stereo 1/2` tomaba en
+> su lugar una ruta DirectShow directa; esa ruta direcciona el
+> dispositivo por su GUID de punto final de audio de Windows, que
+> DirectShow no conoce — en una interfaz multicanal no lograba
+> abrir el dispositivo y el slot quedaba en silencio. Cualquier
+> otra selección de canales nunca pudo usarla de todos modos: el
+> pin DirectShow de una interfaz multicanal solo ofrece dos
+> canales. El feeder necesita el nombre visible del dispositivo
+> guardado en la fila, así que **los Line-Ins creados antes de esta
+> función deben volver a guardarse una vez** — sin ese nombre caen
+> a la antigua ruta DirectShow y pueden emitir silencio.
 
 ### La longitud por defecto importa
 
@@ -159,16 +165,18 @@ Biblioteca.
 
 1. Pypo inicia el subproceso FfmpegLineinCapture para el
    dispositivo de tarjeta de sonido configurado (Windows
-   dshow → MP3 → mount Icecast local
+   feeder de captura MME → MP3 → mount Icecast local
    `http://localhost:8000/linein-capture`).
 2. Pypo envía un único comando telnet a Liquidsoap:
    `linein.start` — la fuente `input.http` dedicada
    comienza a consumir el mount de captura local.
-3. Liquidsoap bufferiza poco audio (~1,5 s en la ruta
-   multicanal desde 2026-09-03). Una vez que
-   `source.is_ready` cambia a true, el bus-switch enruta el
-   audio a la fuente linein — los oyentes escuchan el
-   micrófono.
+3. Liquidsoap bufferiza poco audio (2,0 s desde 2026-09-03).
+   Una vez que `source.is_ready` cambia a true, el bus-switch
+   enruta el audio a la fuente linein — los oyentes escuchan el
+   micrófono. La fuente acompañante `input.http` se arma *en
+   paralelo* al arranque de la captura, así su búfer se llena
+   mientras la captura calienta en vez de estrictamente
+   después.
 4. A la duración configurada, Pypo envía `linein.stop` y
    detiene FfmpegLineinCapture; el switch vuelve a scheduled.
 
@@ -190,11 +198,18 @@ unplug-replug transparentemente; Liquidsoap consume su
 mount Icecast local sin preocuparse por la identidad del
 dispositivo.
 
-**Latencia inicial del show:** los primeros ~2-3 segundos de
-un slot line-in pueden ser silenciosos en los altavoces
-locales del operador mientras el buffer de Liquidsoap se
-construye. Misma característica que los webstreams
-planificados (Phase E).
+**Latencia inicial del show:** el comienzo de un slot line-in es
+silencioso durante unos segundos mientras la captura arranca y el
+búfer de Liquidsoap se llena. Medido en emisión: ~7 s antes del
+ajuste del 2026-09-03 (búfer `input.http` menor + armado en
+paralelo), ~6 s después. El búfer se ajusta por
+`RASTATIME_LIQUIDSOAP_LINEIN_HTTP_MAX_BUFFER_SECONDS` (por defecto
+2,0 s), pero no espere mucho de ello: la medición muestra que el
+búfer *no* es el término dominante. La mayor parte del resto es la
+propia cadena de captura — el feeder debe abrir el dispositivo,
+ffmpeg debe codificar e Icecast debe servir suficiente MP3 para
+que un decodificador enganche. Acortarla se sigue por separado en
+el backlog.
 
 **Rutas legacy mpv / VLC (solo cuando
 `RASTATIME_PLAYOUT_ENGINE=mpv` o `=vlc`):**

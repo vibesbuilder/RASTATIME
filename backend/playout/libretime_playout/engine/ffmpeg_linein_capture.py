@@ -285,12 +285,15 @@ class FfmpegLineinCapture:
         encoded stream to the configured Icecast mount.
 
         RASTATIME 2026-08-31 — ``channel_mapping`` selects which input
-        channels to capture (0-based; ``(0, 1)`` = plain stereo).  The
-        default keeps the proven dshow path; any other mapping routes
-        through the sounddevice/MME feeder subprocess (multichannel
-        interfaces — see the linein_feeder module docstring), which
-        needs ``device_name`` (the OS friendly name persisted on the
-        rastatime_linein row) to locate the device in PortAudio.
+        channels to capture (0-based; ``(0, 1)`` = plain stereo).
+
+        RASTATIME 2026-09-03 ("Option B") — every mapping now routes
+        through the sounddevice/MME feeder subprocess, plain stereo
+        included, so ``device_name`` (the OS friendly name persisted on
+        the rastatime_linein row) is required to locate the device in
+        PortAudio.  Rows without it fall back to the legacy dshow path,
+        which addresses the device by an endpoint GUID DirectShow does
+        not recognise and can therefore go out silent.
 
         If a capture is already running with a DIFFERENT device or
         channel mapping, it is stopped first.  If it is already running
@@ -399,25 +402,37 @@ class FfmpegLineinCapture:
         # Remember the device for watchdog-driven restart attempts.
         self._device_id = device_id
 
-        # RASTATIME 2026-08-31 — path selection (BACKLOG "Line-In:
-        # Kanal-Auswahl"): plain stereo (0, 1) keeps the proven dshow
-        # path; any other mapping needs the MME feeder because the
-        # DirectShow pin of multichannel interfaces only offers 2
-        # channels (measured on the Tascam US-16x08).
-        use_feeder = self._channel_mapping != (0, 1)
-        if use_feeder and not self._device_name:
-            # Legacy row without a stored friendly name — the feeder
+        # RASTATIME 2026-09-03 - path selection, "Option B": the MME
+        # feeder serves EVERY mapping, plain stereo (0, 1) included.
+        #
+        # Until 2026-09-03 plain stereo let ffmpeg open the device
+        # directly over DirectShow.  That addresses the device as
+        # ``audio=@device_cm_{...}\wave_{<endpoint guid>}``, built from
+        # the Windows audio *endpoint* GUID we store -- but DirectShow
+        # enumerates its own device GUIDs and does not know that one.
+        # Live proof (15:20 test show, Tascam US-16x08 on 1/2): ffmpeg
+        # answered "Could not find audio only device" and the slot went
+        # out silent.  The feeder resolves by friendly name instead and
+        # is proven on every channel pair, so it is now the only path
+        # for rows that carry a device name.
+        #
+        # Kept in lockstep with the twin decisions in
+        # ``PlayoutScheduler._on_linein_start`` and
+        # ``_resume_scheduled_locked``.
+        use_feeder = bool(self._device_name)
+        if not use_feeder:
+            # Legacy row without a stored friendly name - the feeder
             # cannot resolve a PortAudio device from a GUID.  Fall back
-            # to dshow (channels 1/2) rather than staying silent, and
-            # say so loudly.
+            # to dshow (channels 1/2) rather than not starting at all,
+            # and say so loudly.
             logger.error(
                 "FfmpegLineinCapture: channel mapping %s requested but the "
-                "line-in row has no device_name — the MME feeder cannot "
-                "locate the device.  Falling back to dshow (channels 1/2). "
-                "Re-save the line-in in Settings to store the device name.",
+                "line-in row has no device_name - the MME feeder cannot "
+                "locate the device.  Falling back to dshow (channels 1/2), "
+                "which may fail to open a multichannel interface.  Re-save "
+                "the line-in in Settings to store the device name.",
                 self._channel_mapping,
             )
-            use_feeder = False
 
         feeder_cmd = self._build_feeder_cmd() if use_feeder else None
         cmd = self._build_ffmpeg_cmd(device_id, use_feeder)

@@ -136,18 +136,24 @@ Jeder Line-In verhält sich dann in Bibliothek und Sendungen wie
 eine eigene Quelle; aufeinanderfolgende Sendungen aus verschiedenen
 Studios am selben Interface wechseln sauber an der Sendungsgrenze.
 
-> **Wie es unter der Haube funktioniert.** Schlichtes `Stereo 1/2`
-> nutzt den bewährten DirectShow-Aufnahmepfad. Jede andere Auswahl
-> kann das nicht — der Windows-DirectShow-Pin von
-> Mehrkanal-Interfaces bietet grundsätzlich nur zwei Kanäle — daher
-> startet das Playout einen kleinen Capture-Feeder, der das Gerät
-> über die MME-API liest (die eine Windows-API, die nachweislich
-> alle Kanäle liefert, ohne Systemeinstellungen anzufassen), die
-> gewählten Kanäle extrahiert und sie über den lokalen
-> `/linein-capture`-Mount in die Stream-Engine speist. Dafür muss
-> der Anzeigename des Geräts auf der Zeile gespeichert sein —
-> Line-Ins, die vor diesem Feature gespeichert wurden, einmal neu
-> speichern.
+> **Wie es unter der Haube funktioniert.** Jeder Line-In — seit
+> 2026-09-03 auch schlichtes `Stereo 1/2` — läuft über einen
+> kleinen Capture-Feeder. Der Feeder liest das Gerät über die
+> MME-API (die eine Windows-API, die nachweislich alle Kanäle
+> liefert, ohne Systemeinstellungen anzufassen), extrahiert die
+> gewählten Kanäle und speist sie über den lokalen
+> `/linein-capture`-Mount in die Stream-Engine. Bis 2026-09-03
+> nahm schlichtes `Stereo 1/2` stattdessen einen direkten
+> DirectShow-Pfad; dieser Pfad adressiert das Gerät über seine
+> Windows-Audio-Endpoint-GUID, die DirectShow nicht kennt — an
+> einem Mehrkanal-Interface öffnete er das Gerät daher nicht und
+> der Slot blieb still. Jede andere Kanalauswahl konnte ihn
+> ohnehin nie nutzen: der DirectShow-Pin eines Mehrkanal-
+> Interfaces bietet grundsätzlich nur zwei Kanäle. Der Feeder
+> braucht den Anzeigenamen des Geräts auf der Zeile, deshalb
+> **müssen Line-Ins, die vor diesem Feature gespeichert wurden,
+> einmal neu gespeichert werden** — ohne den Namen fallen sie auf
+> den alten DirectShow-Pfad zurück und senden womöglich Stille.
 
 Klicken Sie **Speichern**. Der Line-In erscheint sofort im
 Line-In-Chip-Filter der Bibliotheks-Seite.
@@ -213,15 +219,17 @@ der Line-In zu einem Schedule-Item genau wie in Pfad 4.1.
 **Liquidsoap-Engine-Pfad (Produktions-Default seit 2026-05-29):**
 
 1. Pypo startet den FfmpegLineinCapture-Subprozess für das
-   konfigurierte Soundkarten-Gerät (Windows dshow → MP3 → lokaler
+   konfigurierte Soundkarten-Gerät (MME-Capture-Feeder → MP3 → lokaler
    Icecast-Mount unter `http://localhost:8000/linein-capture`).
 2. Pypo sendet einen einzelnen Telnet-Befehl an Liquidsoap:
    `linein.start` — der dediziertes `input.http`-Source beginnt
    den lokalen Capture-Mount zu konsumieren.
-3. Liquidsoap buffert nur wenig Audio (~1,5 s auf dem
-   Mehrkanal-Pfad seit 2026-09-03). Sobald
-   `source.is_ready` auf true schaltet, routet der Bus-Switch
-   das Audio zur Linein-Source — Hörer hören das Mikrofon.
+3. Liquidsoap buffert nur wenig Audio (2,0 s seit 2026-09-03).
+   Sobald `source.is_ready` auf true schaltet, routet der
+   Bus-Switch das Audio zur Linein-Source — Hörer hören das
+   Mikrofon. Die `input.http`-Begleitquelle wird *parallel* zum
+   Capture-Start scharfgeschaltet, ihr Buffer füllt sich also
+   während der Capture warmläuft statt erst danach.
 4. Bei der konfigurierten Dauer sendet Pypo `linein.stop` und
    stoppt zusätzlich FfmpegLineinCapture; der Switch fällt
    zurück auf scheduled.
@@ -241,10 +249,18 @@ Bibliothek führt. FfmpegLineinCaptures Watchdog behandelt
 Unplug-Replug transparent; Liquidsoap konsumiert den lokalen
 Icecast-Mount ohne sich um Device-Identität zu kümmern.
 
-**Initiale Show-Latenz:** die ersten ~2-3 Sekunden eines Linein-
-Slots können auf den lokalen Operator-Lautsprechern still sein,
-während Liquidsoaps Buffer aufgebaut wird. Gleiche Charakteristik
-wie Scheduled Webstreams (Phase E).
+**Initiale Show-Latenz:** der Beginn eines Linein-Slots ist
+einige Sekunden still, während der Capture hochfährt und
+Liquidsoaps Buffer sich füllt. Auf Sendung gemessen: ~7 s vor dem
+Tuning vom 2026-09-03 (kleinerer `input.http`-Buffer + paralleles
+Scharfschalten), ~6 s danach. Der Buffer ist über
+`RASTATIME_LIQUIDSOAP_LINEIN_HTTP_MAX_BUFFER_SECONDS` (Standard
+2,0 s) einstellbar — erwarten Sie davon aber wenig: die Messung
+zeigt, dass der Buffer *nicht* der dominierende Anteil ist. Der
+größte Rest ist die Capture-Kette selbst — der Feeder muss das
+Gerät öffnen, ffmpeg muss kodieren, und Icecast muss genug MP3
+ausliefern, damit ein Decoder einrastet. Diese Verkürzung ist
+separat im Backlog vermerkt.
 
 **Legacy-mpv-/VLC-Engine-Pfade (nur wenn
 `RASTATIME_PLAYOUT_ENGINE=mpv` oder `=vlc`):**

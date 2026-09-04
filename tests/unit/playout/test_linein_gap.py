@@ -7,7 +7,7 @@ air before the first audible audio (measured 14:20 show: mount alive at
 cause was ``input.http``'s ``max_buffer`` — the source only becomes
 ready once that many real seconds of audio are buffered.
 
-Lever 1 lowers the http companion's ``max_buffer`` (4.0 -> 1.5, env
+Lever 1 lowers the http companion's ``max_buffer`` (4.0 -> 2.0, env
 overridable) and its ``poll_delay`` (2.0 -> 0.5), so a source armed in
 parallel with the feeder connects the moment the mount appears.  These
 tests pin those rendered values and the env-facing thread so a refactor
@@ -41,18 +41,21 @@ def _num(block: str, key: str) -> float:
 
 
 def test_defaults_are_low_latency():
-    assert DEFAULT_LINEIN_HTTP_MAX_BUFFER_SECONDS == 1.5
+    # 2.0 since 2026-09-03: cushion against under-runs on a broadcast
+    # path, after measurement showed max_buffer is not the dominant
+    # term in the start gap.
+    assert DEFAULT_LINEIN_HTTP_MAX_BUFFER_SECONDS == 2.0
     assert DEFAULT_LINEIN_HTTP_POLL_DELAY_SECONDS == 0.5
 
 
 def test_rendered_http_block_uses_the_low_defaults():
     block = _http_block(render_rastatime_liq(_STREAMS))
-    assert _num(block, "max_buffer") == 1.5
+    assert _num(block, "max_buffer") == 2.0
     assert _num(block, "poll_delay") == 0.5
 
 
 def test_max_buffer_is_env_facing_and_overridable():
-    """The operator A/B-tests 1.0 vs 1.5 by env var + restart; the value
+    """The operator tunes this by env var + restart; the value
     must thread all the way into the rendered script."""
     block = _http_block(
         render_rastatime_liq(_STREAMS, linein_http_max_buffer_seconds=1.0)

@@ -43,6 +43,37 @@ festgelegt.  Jeder Punkt bekommt vor Implementierung die
 Diese sind technisch evaluiert, empfohlen, und können starten sobald
 der Operator das Signal gibt.
 
+### 🟡 Line-In-Startlücke: Capture-Kette verkürzen (neu 2026-09-03)
+
+**Stand:** Die Lücke zwischen Show-Ende und erstem hörbaren Line-In-
+Signal liegt bei **~6 s** (vorher ~7 s).  Der 2026-09-03er Tuning-
+Schritt (`input.http` `max_buffer` 4,0 → 2,0 s, `poll_delay` 2,0 →
+0,5 s, http-Quelle parallel zum Feeder-Start scharfgeschaltet) hat nur
+~1 s gebracht — `max_buffer` ist **nicht** der dominierende Anteil.
+
+**Messung (15:15-Show):** PLAY bei +0,005 s, `linein_start_http` bei
++0,054 s (Parallel-Arming greift), ffmpeg meldet „streaming" bei
++1,6 s — bis Liquidsoap die Quelle übernimmt vergehen aber weitere
+~4 s.  Der Löwenanteil steckt also in der Capture-Kette selbst:
+Gerät öffnen → sounddevice-Feeder-Health-Check (~1,5 s) → ffmpeg-
+Encoding → genug MP3 im Icecast-Mount, damit ein Decoder einrastet.
+
+**Ideenrichtung (noch nicht evaluiert):**
+- Feeder-Health-Check-Fenster verkürzen oder asynchron machen.
+- Den Feeder für ein anstehendes Line-In-Slot **vorwärmen** (z. B.
+  10–15 s vor Showbeginn starten, Audio verwerfen), sodass der Mount
+  bei Slot-Start bereits läuft.  Größter erwarteter Hebel, aber
+  Wechselwirkung mit dem Watchdog und mit Back-to-Back-Shows auf
+  demselben Gerät prüfen.
+- Kleinere ffmpeg-Latenzparameter (`-flush_packets`, kleinere
+  MP3-Frames / niedrigere `-bufsize`) gegen Encoder-Robustheit
+  abwägen.
+- Prüfen, ob Icecast `burst-size` / `burst-on-connect` den
+  Decoder-Einrast-Zeitpunkt beeinflusst.
+
+**Vorbedingung:** Operator-Go; die Änderungen liegen im Sendeweg und
+brauchen wieder eine Live-Abnahme mit Hörtest.
+
 ### 💡 Testplan erstellen (neu 2026-09-02, Reihenfolge-Punkt 14)
 
 **Status:** Idea — Operator-Wunsch 2026-09-02, Umfang noch zu klären.
@@ -155,9 +186,20 @@ Notnagel) bringen nichts.
 **Nachtrag nach PoC (selber Tag):** Zwei Annahmen dieses Absatzes
 waren falsch — WASAPI shared ist real aufs 2ch-Mix-Format gedeckelt,
 und MME meldet nicht 2ch, sondern liefert **alle 16 echten Kanäle**.
-Der Feeder-Modus wurde daher MME (siehe ✅-Status oben); die
-Automatik-Entscheidung (kein Operator-Schalter, ≤2ch→dshow) und das
-ASIO-No-Go bleiben unverändert gültig.
+Der Feeder-Modus wurde daher MME (siehe ✅-Status oben); das
+ASIO-No-Go bleibt unverändert gültig.
+
+**Nachtrag 2026-09-03 („Option B"):** Auch die Automatik-Entscheidung
+„≤2ch → dshow" ist gefallen.  Der dshow-Pfad adressiert das Gerät als
+`audio=@device_cm_{...}\wave_{<GUID>}` aus der gespeicherten Windows-
+Audio-**Endpoint**-GUID — DirectShow führt aber eine eigene
+Geräte-GUID-Liste und kennt diese nicht.  An der 15:20-Testshow
+(„Tascam 1-2") antwortete ffmpeg `Could not find audio only device`
+und der Slot ging **stumm auf Sendung**.  Seither läuft jeder geplante
+Line-In über den MME-Feeder (löst per Anzeigename auf); dshow ist nur
+noch Fallback für Alt-Zeilen ohne `device_name`.  Kein
+Operator-Schalter — die Automatik bleibt, nur ihre Bedingung ist jetzt
+„device_name vorhanden?" statt „Kanalzahl?".
 
 ### ✅ Listener-Statistik zeigt keine Daten (DONE 2026-08-30, `00ce768`)
 

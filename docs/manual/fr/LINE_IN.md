@@ -110,18 +110,24 @@ bibliothèque et les émissions ; des émissions consécutives depuis
 des studios différents sur la même interface commutent proprement à
 la frontière d'émission.
 
-> **Comment ça marche sous le capot.** Le simple `Stereo 1/2`
-> utilise le chemin de capture DirectShow éprouvé. Toute autre
-> sélection ne le peut pas — le pin DirectShow Windows des
-> interfaces multicanal n'offre jamais que deux canaux — donc le
-> playout démarre un petit feeder de capture qui lit le
-> périphérique via l'API MME (la seule API Windows qui livre
-> démontrablement tous les canaux sans toucher aux réglages
-> système), extrait les canaux choisis et les injecte via le
-> montage local `/linein-capture` dans le moteur de flux. Cela
-> requiert le nom d'affichage du périphérique stocké sur la ligne —
-> re-sauvegardez une fois les Line-Ins créés avant cette
-> fonctionnalité.
+> **Comment ça marche sous le capot.** Chaque Line-In — y compris
+> le simple `Stereo 1/2` depuis le 2026-09-03 — passe par un petit
+> feeder de capture. Le feeder lit le périphérique via l'API MME
+> (la seule API Windows qui livre démontrablement tous les canaux
+> sans toucher aux réglages système), extrait les canaux choisis
+> et les injecte via le montage local `/linein-capture` dans le
+> moteur de flux. Jusqu'au 2026-09-03, le simple `Stereo 1/2`
+> empruntait un chemin DirectShow direct ; ce chemin adresse le
+> périphérique par son GUID de point de terminaison audio Windows,
+> que DirectShow ne connaît pas — sur une interface multicanal il
+> n'ouvrait donc pas le périphérique et le créneau restait
+> silencieux. Toute autre sélection de canaux ne pouvait de toute
+> façon jamais l'utiliser : le pin DirectShow d'une interface
+> multicanal n'offre jamais que deux canaux. Le feeder a besoin du
+> nom d'affichage du périphérique stocké sur la ligne, donc **les
+> Line-Ins créés avant cette fonctionnalité doivent être
+> re-sauvegardés une fois** — sans ce nom, ils retombent sur
+> l'ancien chemin DirectShow et risquent de diffuser du silence.
 
 ### La longueur par défaut est importante
 
@@ -171,17 +177,19 @@ Line-In + sa Longueur par défaut.
 **Chemin moteur Liquidsoap (défaut de production depuis 2026-05-29) :**
 
 1. Pypo démarre le sous-processus FfmpegLineinCapture pour
-   le périphérique carte son configuré (Windows dshow → MP3
+   le périphérique carte son configuré (feeder de capture MME → MP3
    → mount Icecast local
    `http://localhost:8000/linein-capture`).
 2. Pypo envoie une seule commande telnet à Liquidsoap :
    `linein.start` — la source `input.http` dédiée commence à
    consommer le mount de capture local.
-3. Liquidsoap bufferise peu d'audio (~1,5 s sur le chemin
-   multicanal depuis 2026-09-03). Une fois
-   `source.is_ready` passé à true, le bus-switch route
-   l'audio vers la source linein — les auditeurs entendent
-   le microphone.
+3. Liquidsoap bufferise peu d'audio (2,0 s depuis 2026-09-03).
+   Une fois `source.is_ready` passé à true, le bus-switch route
+   l'audio vers la source linein — les auditeurs entendent le
+   microphone. La source compagnon `input.http` est armée *en
+   parallèle* du démarrage de la capture, son tampon se remplit
+   donc pendant la mise en route de la capture au lieu
+   d'attendre la fin.
 4. À la durée configurée, Pypo envoie `linein.stop` et
    arrête FfmpegLineinCapture ; le switch retombe sur
    scheduled.
@@ -204,11 +212,19 @@ FfmpegLineinCapture gère unplug-replug de manière
 transparente ; Liquidsoap consomme son mount Icecast local
 sans se soucier de l'identité du périphérique.
 
-**Latence initiale d'émission :** les premières ~2-3 secondes
-d'un créneau line-in peuvent être silencieuses sur les
-haut-parleurs locaux de l'opérateur pendant que le buffer
-Liquidsoap se remplit. Même caractéristique que les
-webstreams planifiés (Phase E).
+**Latence initiale d'émission :** le début d'un créneau line-in
+est silencieux pendant quelques secondes, le temps que la capture
+démarre et que le tampon Liquidsoap se remplisse. Mesuré à
+l'antenne : ~7 s avant le réglage du 2026-09-03 (tampon
+`input.http` réduit + armement parallèle), ~6 s après. Le tampon
+est réglable via
+`RASTATIME_LIQUIDSOAP_LINEIN_HTTP_MAX_BUFFER_SECONDS` (défaut
+2,0 s), mais n'en attendez pas grand-chose : la mesure montre que
+le tampon n'est *pas* le terme dominant. L'essentiel du reste est
+la chaîne de capture elle-même — le feeder doit ouvrir le
+périphérique, ffmpeg doit encoder, et Icecast doit servir assez de
+MP3 pour qu'un décodeur se verrouille. Son raccourcissement est
+suivi séparément dans le backlog.
 
 **Chemins legacy mpv / VLC (uniquement quand
 `RASTATIME_PLAYOUT_ENGINE=mpv` ou `=vlc`) :**

@@ -6,14 +6,22 @@ Multi-Input-Devices").
 
 Why this exists
 ---------------
-:class:`~.ffmpeg_linein_capture.FfmpegLineinCapture` reads the input
-device through FFmpeg's ``dshow`` demuxer.  That path is fine for
-plain stereo devices, but on multichannel interfaces the DirectShow
-capture pin only ever offers mono/stereo — measured on the Tascam
-US-16x08: ``-list_options`` shows ``ch=1``/``ch=2`` only, and
-``-channels 16`` is rejected.  The interface's 16 real inputs are
-unreachable through dshow, so "capture studio B on inputs 5/6" was
-impossible.
+:class:`~.ffmpeg_linein_capture.FfmpegLineinCapture` used to read the
+input device through FFmpeg's ``dshow`` demuxer.  On multichannel
+interfaces the DirectShow capture pin only ever offers mono/stereo —
+measured on the Tascam US-16x08: ``-list_options`` shows
+``ch=1``/``ch=2`` only, and ``-channels 16`` is rejected.  The
+interface's 16 real inputs are unreachable through dshow, so "capture
+studio B on inputs 5/6" was impossible.
+
+A second dshow defect showed up on 2026-09-03 and cost a test show its
+audio: we address the device as
+``audio=@device_cm_{...}\\wave_{<guid>}``, built from the Windows
+audio *endpoint* GUID stored on the line-in row, but DirectShow
+enumerates its own device GUIDs and does not know that one.  ffmpeg
+answered "Could not find audio only device" and the slot went out
+silent.  Since this feeder resolves devices by friendly name instead,
+it now serves plain stereo too, not just the exotic mappings.
 
 Probing every Windows host API against the US-16x08 gave:
 

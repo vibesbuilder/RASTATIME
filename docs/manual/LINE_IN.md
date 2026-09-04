@@ -131,16 +131,22 @@ Each Line-In then behaves like its own source in the Library and in
 shows; back-to-back shows from different studios on the same
 interface switch cleanly at the show boundary.
 
-> **How it works under the hood.** Plain `Stereo 1/2` uses the
-> proven DirectShow capture path. Any other selection cannot — the
-> Windows DirectShow pin of multichannel interfaces only ever offers
-> two channels — so playout starts a small capture feeder that reads
-> the device over the MME API (the one Windows API that demonstrably
-> delivers all channels without touching system settings), extracts
-> the selected channels, and feeds them through the local
-> `/linein-capture` mount into the stream engine. This needs the
-> device's display name stored on the row — Line-Ins saved before
-> this feature exist should be re-saved once so the name is stored.
+> **How it works under the hood.** Every Line-In — `Stereo 1/2`
+> included, since 2026-09-03 — runs through a small capture feeder.
+> The feeder reads the device over the MME API (the one Windows API
+> that demonstrably delivers all channels without touching system
+> settings), extracts the selected channels, and feeds them through
+> the local `/linein-capture` mount into the stream engine. Until
+> 2026-09-03 plain `Stereo 1/2` took a direct DirectShow path
+> instead; that path addresses the device by its Windows audio
+> endpoint GUID, which DirectShow does not recognise, so on a
+> multichannel interface it failed to open the device and the slot
+> stayed silent. Any other channel selection could never use it
+> anyway — the DirectShow pin of a multichannel interface only ever
+> offers two channels. The feeder needs the device's display name
+> stored on the row, so **Line-Ins saved before this feature exist
+> must be re-saved once**; without the name they fall back to the
+> old DirectShow path and may play silence.
 
 Click **Save**. The Line-In appears immediately in the
 Library page's Line-In chip filter.
@@ -200,18 +206,17 @@ becomes a schedule item exactly as in path 4.1.
 **Liquidsoap engine path (production default since 2026-05-29):**
 
 1. Pypo starts the FfmpegLineinCapture subprocess for the
-   configured sound-card device (Windows dshow → MP3 → local
+   configured sound-card device (MME capture feeder → MP3 → local
    Icecast mount at `http://localhost:8000/linein-capture`).
 2. Pypo sends a single telnet command to Liquidsoap:
    `linein.start` — telling the dedicated `input.http` source
    to begin consuming the local capture mount.
-3. Liquidsoap buffers a short amount of audio (~1.5 s on the
-   multichannel path since 2026-09-03).  Once `source.is_ready`
-   flips true, the bus-switch routes audio to the linein source
-   — listeners hear the microphone.  On the multichannel path the
-   `input.http` companion is armed *in parallel* with the capture
-   start, so its buffer fills while the capture is warming up
-   instead of strictly afterwards.
+3. Liquidsoap buffers a short amount of audio (2.0 s since
+   2026-09-03).  Once `source.is_ready` flips true, the
+   bus-switch routes audio to the linein source — listeners hear
+   the microphone.  The `input.http` companion is armed *in
+   parallel* with the capture start, so its buffer fills while the
+   capture is warming up instead of strictly afterwards.
 4. At the configured duration Pypo sends `linein.stop` plus
    stops FfmpegLineinCapture; the switch falls back to
    scheduled.
@@ -232,13 +237,18 @@ FfmpegLineinCapture's watchdog handles unplug-replug
 transparently; Liquidsoap consumes its local Icecast mount
 without caring about device identity.
 
-**Initial-show latency:** the first ~2-3 seconds of a line-in
-slot may be silent while the capture spins up and Liquidsoap's
-buffer fills.  This was ~7 s before the 2026-09-03 tuning
-(smaller `input.http` buffer + parallel arming).  The buffer is
-env-tunable via `RASTATIME_LIQUIDSOAP_LINEIN_HTTP_MAX_BUFFER_SECONDS`
-(default 1.5 s); lower trims the gap further at some risk of a
-start-up glitch under load.
+**Initial-show latency:** the start of a line-in slot is silent
+for a few seconds while the capture spins up and Liquidsoap's
+buffer fills.  Measured on air: ~7 s before the 2026-09-03 tuning
+(smaller `input.http` buffer + parallel arming), ~6 s after it.
+The buffer is env-tunable via
+`RASTATIME_LIQUIDSOAP_LINEIN_HTTP_MAX_BUFFER_SECONDS` (default
+2.0 s), but do not expect much from it: measurement showed the
+buffer is *not* the dominant term.  Most of the remaining time is
+the capture pipeline itself — the feeder has to open the device,
+ffmpeg has to encode, and Icecast has to serve enough MP3 for a
+decoder to lock on.  Shortening that is tracked separately in the
+backlog.
 
 **Legacy mpv / VLC engine paths (only when
 `RASTATIME_PLAYOUT_ENGINE=mpv` or `=vlc`):**
