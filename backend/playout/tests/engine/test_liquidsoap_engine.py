@@ -760,3 +760,27 @@ def test_play_does_not_flush_on_its_own():
     telnet.request_queue_push.return_value = "42"
     engine.play("file:///C:/x.mp3")
     telnet.request_queue_flush.assert_not_called()
+
+
+
+# RASTATIME 2026-09-04 - bus gates (Paket 2)
+
+def test_linein_gate_sets_the_bus_variable():
+    engine, telnet = _make_engine_with_mock()
+    engine.linein_gate(False)
+    telnet.var_set.assert_called_with("linein_live", "false")
+    engine.linein_gate(True)
+    telnet.var_set.assert_called_with("linein_live", "true")
+
+
+def test_webstream_gate_sets_the_bus_variable():
+    engine, telnet = _make_engine_with_mock()
+    engine.webstream_gate(False)
+    telnet.var_set.assert_called_with("webstream_live", "false")
+
+
+def test_gates_survive_a_telnet_error():
+    engine, telnet = _make_engine_with_mock()
+    telnet.var_set.side_effect = OSError("telnet down")
+    engine.linein_gate(True)      # must not raise
+    engine.webstream_gate(False)  # must not raise

@@ -735,6 +735,29 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
                 "Liquidsoap linein_start_http failed: %s", exc,
             )
 
+    def linein_gate(self, open_: bool) -> None:
+        """
+        RASTATIME 2026-09-04 - open/close the line-in arm of the bus
+        switch (``var.set linein_live``).  Closed, a connected + buffered
+        line-in stays off air (pre-warm before the slot); flipping it
+        open puts it on air on the next frame; flipping it closed at the
+        slot end lets the switch fade it out under the successor while
+        its buffered tail plays -- see the .liq bus block.
+        """
+        try:
+            self._telnet.var_set("linein_live", "true" if open_ else "false")
+            logger.info("Liquidsoap linein_gate: %s", "open" if open_ else "closed")
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            logger.warning("Liquidsoap linein_gate telnet error: %s", exc)
+
+    def webstream_gate(self, open_: bool) -> None:
+        """Same as :meth:`linein_gate` for the webstream arm."""
+        try:
+            self._telnet.var_set("webstream_live", "true" if open_ else "false")
+            logger.info("Liquidsoap webstream_gate: %s", "open" if open_ else "closed")
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            logger.warning("Liquidsoap webstream_gate telnet error: %s", exc)
+
     def linein_stop(self) -> None:
         """
         Tell Liquidsoap to disconnect the line-in sources.  Stops both

@@ -36,8 +36,13 @@ Environment variables (all optional — defaults match the standard install):
                                : where Liquidsoap writes its log
                                  (default C:/rastatime/logs/liquidsoap.log)
   RASTATIME_LIQUIDSOAP_CROSSFADE_SECONDS
-                               : crossfade duration in the .liq bus
-                                 (default 2.0; 0 disables)
+                               : FALLBACK crossfade duration for the .liq
+                                 (since 2026-09-04 the primary source is
+                                 Settings -> General "Default Crossfade
+                                 Duration"; this env var is used only when
+                                 that cc_pref key is missing/invalid;
+                                 default 2.0; 0 = hard cut between tracks
+                                 and "ducking" at input switches)
 
 Invoked as:  python -m libretime_playout
 """
@@ -145,6 +150,32 @@ def _setup_django() -> bool:
 # ---------------------------------------------------------------------------
 # Read Icecast stream outputs from cc_pref
 # ---------------------------------------------------------------------------
+
+def _read_pref_crossfade_duration() -> Optional[float]:
+    """
+    RASTATIME 2026-09-04 - ``cc_pref.default_crossfade_duration`` (the
+    Settings -> General field) as a float, or None when the key is
+    missing, empty, negative or not a number -- the caller then keeps
+    the env/default value.  Same ORM path as :func:`_read_stream_outputs`.
+    """
+    try:
+        from libretime_api.core.models import Preference  # type: ignore[import-untyped]
+        raw = dict(Preference.site.values_list("key", "value")).get(
+            "default_crossfade_duration"
+        )
+        if raw is None or str(raw).strip() == "":
+            return None
+        value = float(str(raw).strip())
+        if value < 0:
+            logger.warning(
+                "cc_pref default_crossfade_duration=%r is negative - ignored", raw
+            )
+            return None
+        return value
+    except Exception as exc:  # pylint: disable=broad-exception-caught
+        logger.warning("Could not read default_crossfade_duration from DB: %s", exc)
+        return None
+
 
 def _read_stream_outputs() -> List[Dict]:
     """
@@ -376,6 +407,27 @@ def _render_rastatime_liq_at_startup(stream_outputs: List[Dict]) -> None:
             exc,
         )
         sys.exit(1)
+    # RASTATIME 2026-09-04 - Settings -> General "Default Crossfade
+    # Duration (s)" is the primary source (operator wish: one house
+    # crossfade, set in the UI).  It drives the queue's track crossfade
+    # AND the input transitions of the bus switch (0 = ducking).  Read
+    # via the Django ORM like the stream outputs; the env var above stays
+    # the fallback for a missing/invalid key.  A change in the UI takes
+    # effect at the next PLAYOUT + LIQUIDSOAP restart ("Apply now" in
+    # Settings -> Local Machine).
+    pref_crossfade = _read_pref_crossfade_duration()
+    if pref_crossfade is not None:
+        crossfade = pref_crossfade
+        logger.info(
+            "Crossfade duration %.2f s from Settings -> General "
+            "(cc_pref default_crossfade_duration)%s",
+            crossfade, " - input switches use ducking" if crossfade == 0 else "",
+        )
+    else:
+        logger.info(
+            "Crossfade duration %.2f s from env/default (cc_pref key "
+            "missing or invalid)", crossfade,
+        )
     # RASTATIME 2026-09-03 - linein_http start-up buffer, env-overridable
     # so it can be tuned against the 1.0 default (start gap + end-of-slot
     # latency vs.

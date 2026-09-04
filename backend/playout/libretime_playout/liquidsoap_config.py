@@ -273,6 +273,38 @@ DEFAULT_LINEIN_HTTP_MAX_BUFFER_SECONDS = 1.0
 # (2 s) -- keep it to the format.
 LINEIN_HTTP_FORMAT = "mp3"
 
+# RASTATIME 2026-09-04 - input transitions on the bus switch ("Paket 2").
+#
+# The bus switch used to be a hard cut: whichever arm's predicate turned
+# true was on air from the next frame, and the previous source was gone
+# with it -- including the ~2 s of a line-in still sitting in its
+# buffer, i.e. the presenter's last words.  Two things change:
+#
+#   * GATES.  ``webstream_live`` / ``linein_live`` are interactive bools
+#     the predicates AND with ``source.is_ready``.  Pypo can now connect
+#     and buffer a source BEFORE its slot (gate closed) and put it on air
+#     at the slot start by flipping the gate -- no start gap -- and take
+#     it off air at the slot end with the gate instead of killing it.
+#     Default ``true`` = today's behaviour for a Pypo that never touches
+#     the gates.
+#   * TRANSITIONS.  Switching between the webstream / line-in / scheduled
+#     arms goes through ``bus_transition``: with a crossfade duration
+#     D > 0 the old source fades out over D while the new fades in
+#     (add + fade.out/fade.in); with D = 0 it is "ducking" -- the new
+#     source starts at full level immediately and the old one fades out
+#     UNDER it over DEFAULT_INPUT_DUCK_FADE_SECONDS.  Either way the old
+#     source keeps being pulled during the fade, so a line-in's buffered
+#     tail is heard instead of lost.  Verified 2026-09-04 in an isolated
+#     run (two sines, gate flipped over telnet, spectral analysis of the
+#     recording): both shapes act at the flip, not at transition_length.
+#     The DJ arms (master/show) keep the instant hand-over.
+#
+# D is the operator's Settings -> General "Default Crossfade Duration"
+# (cc_pref default_crossfade_duration, read by __main__ at render time;
+# 0 = ducking, > 0 = crossfade of that length).  The same value drives
+# the queue's track-to-track crossfade, so there is ONE house crossfade.
+DEFAULT_INPUT_DUCK_FADE_SECONDS = 1.0
+
 # RASTATIME 2026-09-03 - the http companion polls this often while
 # trying to (re)connect.  0.5 s (vs the 2.0 s webstream default) lets
 # an input.http armed IN PARALLEL with the feeder grab the mount within
@@ -1047,6 +1079,8 @@ def _render_bus_source_block(
     show_enabled: bool,
     webstream_enabled: bool = DEFAULT_WEBSTREAM_ENABLED,
     linein_enabled: bool = DEFAULT_LINEIN_ENABLED,
+    transition_seconds: float = DEFAULT_CROSSFADE_DURATION,
+    duck_fade_seconds: float = DEFAULT_INPUT_DUCK_FADE_SECONDS,
 ) -> str:
     """
     Render the ``bus = ...`` assignment that picks the active source.
@@ -1090,15 +1124,26 @@ def _render_bus_source_block(
     the switch reacts on the very next bus frame.
     """
     arms = []
+    # (arm, transition) pairs -- transitions is index-aligned with the
+    # arm list, so both are built together.  DJ arms hand over instantly;
+    # the programme arms go through bus_transition (see the module
+    # comment at DEFAULT_INPUT_DUCK_FADE_SECONDS).
+    instant, faded = "bus_instant", "bus_transition"
+    transitions: List[str] = []
     if main_enabled:
         arms.append("({source.is_ready(master_dj)}, master_dj)")
+        transitions.append(instant)
     if show_enabled:
         arms.append("({source.is_ready(show_dj)}, show_dj)")
+        transitions.append(instant)
     if webstream_enabled:
-        arms.append("({source.is_ready(webstream)}, webstream)")
+        arms.append("({webstream_live() and source.is_ready(webstream)}, webstream)")
+        transitions.append(faded)
     if linein_enabled:
-        arms.append("({source.is_ready(linein)}, linein)")
+        arms.append("({linein_live() and source.is_ready(linein)}, linein)")
+        transitions.append(faded)
     arms.append("({true}, scheduled)")
+    transitions.append(faded)
 
     if (
         not main_enabled and not show_enabled
@@ -1110,9 +1155,45 @@ def _render_bus_source_block(
         # identical for legacy single-source users.
         return "bus = scheduled\n"
 
+    d = max(0.0, float(transition_seconds))
+    duck = max(0.1, float(duck_fade_seconds))
+    fade_len = d if d > 0 else duck
+    if d > 0:
+        transition_fn = (
+            "# crossfade: old fades out over D while new fades in over D\n"
+            "def bus_transition(old, new) =\n"
+            f"  add(normalize=false, [fade.out(duration={_format_crossfade_duration(d)}, old),\n"
+            f"                        fade.in(duration={_format_crossfade_duration(d)}, new)])\n"
+            "end\n"
+        )
+        shape = f"crossfade {_format_crossfade_duration(d)} s"
+    else:
+        transition_fn = (
+            "# ducking (Default Crossfade Duration = 0): new source at full\n"
+            "# level at once, old source fades out UNDER it\n"
+            "def bus_transition(old, new) =\n"
+            f"  add(normalize=false, [fade.out(duration={_format_crossfade_duration(duck)}, old), new])\n"
+            "end\n"
+        )
+        shape = f"ducking, old fades over {_format_crossfade_duration(duck)} s"
     return (
+        "# RASTATIME 2026-09-04 - gates: Pypo pre-connects a source with its\n"
+        "# gate closed (no early on-air) and flips it at the slot start /\n"
+        "# end.  Default true = plain is_ready behaviour.  Telnet:\n"
+        "#   var.set webstream_live = false   /   var.set linein_live = true\n"
+        'webstream_live = interactive.bool("webstream_live", true)\n'
+        'linein_live = interactive.bool("linein_live", true)\n'
+        "\n"
+        f"# input transitions: {shape}\n"
+        "def bus_instant(_old, new) = new end\n"
+        + transition_fn
+        + "\n"
         "bus = switch(\n"
         "  track_sensitive=false,\n"
+        f"  transition_length={_format_crossfade_duration(fade_len + 0.5)},\n"
+        "  transitions=[\n"
+        + "".join(f"    {t},\n" for t in transitions)
+        + "  ],\n"
         "  [\n"
         + "".join(f"    {arm},\n" for arm in arms)
         + "  ]\n"
@@ -1217,6 +1298,7 @@ def render_rastatime_liq(
         show_enabled=bool(harbor_show_password),
         webstream_enabled=webstream_enabled,
         linein_enabled=linein_enabled,
+        transition_seconds=crossfade_duration,
     )
     hourly_block = _render_hourly_recording_block(
         enabled=hourly_recording_enabled,
