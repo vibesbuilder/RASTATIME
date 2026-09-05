@@ -168,18 +168,33 @@ DEFAULT_WEBSTREAM_ENABLED = True
 # absorb a 5 s pause without source.is_ready flickering false.
 DEFAULT_WEBSTREAM_MAX_BUFFER_SECONDS = 10.0
 
-# input.http connect-timeout in seconds.  If the upstream HTTP server
-# doesn't respond within this window, input.http retries after
-# poll_delay seconds.  10 s matches Liquidsoap's own stdlib default;
-# we expose it so the operator can shorten / lengthen for specific
-# network conditions.
-DEFAULT_WEBSTREAM_TIMEOUT_SECONDS = 10.0
+# input.http connect/read timeout in seconds.  If the upstream HTTP
+# server doesn't respond (or stops sending) within this window,
+# input.http gives the connection up and retries after poll_delay
+# seconds.  RASTATIME 2026-09-05 ("Option 1", operator-go): 10 s
+# (the stdlib default) -> 3 s.  The cloud DEVA stream stalls silently
+# a few seconds after a fresh connection; with 10 s the recovery took
+# 20-50 s of dead air (11:36: 52 s).  A stream that really needs
+# more than 3 s to answer is not usable for a scheduled slot anyway.
+DEFAULT_WEBSTREAM_TIMEOUT_SECONDS = 3.0
 
 # input.http reconnect-poll-delay in seconds.  When a connection drops
 # (network blip, server-side restart, etc.) Liquidsoap retries every
-# poll_delay seconds.  2 s is the stdlib default and gives a quick
-# recovery without hammering the upstream server.
-DEFAULT_WEBSTREAM_POLL_DELAY_SECONDS = 2.0
+# poll_delay seconds.  RASTATIME 2026-09-05: 2 s (stdlib default) ->
+# 0.5 s, part of the recovery budget below.
+DEFAULT_WEBSTREAM_POLL_DELAY_SECONDS = 0.5
+
+# Clock-bridge pre-buffer between input.http and the bus, in seconds,
+# and the bridge's hard maximum.  RASTATIME 2026-09-05: 5 s -> 10 s.
+# The recovery budget after a silent stall is timeout (3 s) +
+# poll_delay (0.5 s) + connect (~0.1 s) + FFmpeg format detection
+# (~1-5 s) = ~5-9 s; a bridge that holds 10 s bridges it without
+# "Buffer emptied", i.e. without audible dead air.  The price is a
+# longer fill-up before a fresh webstream is ready (~10 s instead of
+# ~5 s), which the scheduler pays 20 s before the slot
+# (WEBSTREAM_PREPARE_LEAD_SECONDS) instead of 10 s.
+DEFAULT_WEBSTREAM_BRIDGE_SECONDS = 10.0
+DEFAULT_WEBSTREAM_BRIDGE_MAX_SECONDS = 20.0
 
 
 # ---------------------------------------------------------------------
@@ -860,17 +875,24 @@ def _render_webstream_input_block(
         "# 1.0 = unity (no gain change); cc_webstream.input_gain_db is\n"
         "# converted to linear in Pypo (10 ** (dB/20)) before push.\n"
         "#\n"
-        "# buffer(buffer=5.0, ...) is the asynchronous clock-bridge that\n"
+        "# buffer(buffer=..., ...) is the asynchronous clock-bridge that\n"
         "# decouples input.http's HTTP-stream clock from the main bus.\n"
         "# Without it, crossfade() at the end of the source-graph rejects\n"
         "# the chain with Error 7 (see _render_webstream_input_block\n"
-        "# docstring for the full reasoning).  5 s buffer absorbs the\n"
-        "# initial-connect cold-buffer rebuild without producing the\n"
-        "# 'Buffer emptied, start buffering' → switch-flip-off-webstream\n"
-        "# 'Haker' that Phase-E reality-test 2026-05-29 18:40 observed\n"
-        "# (~12 s into BBC stream).\n"
+        "# docstring for the full reasoning).  The 5 s of Phase E absorbed\n"
+        "# the initial-connect cold-buffer rebuild (2026-05-29 18:40 'Haker');\n"
+        "# RASTATIME 2026-09-05: 10 s so that a silent upstream stall plus\n"
+        "# the reconnect (timeout 3 s + poll 0.5 s + format detection) is\n"
+        "# bridged without 'Buffer emptied' - the cloud DEVA stream stalls a\n"
+        "# few seconds into a fresh connection, and 11:36 that cost 52 s of\n"
+        "# dead air.  The scheduler pre-warms webstreams 20 s before the slot\n"
+        "# to pay for the longer fill-up.\n"
         'webstream_gain = interactive.float("webstream.gain", 1.0)\n'
-        "webstream = amplify({webstream_gain()}, buffer(buffer=5.0, webstream_raw))\n"
+        "webstream = amplify({webstream_gain()}, buffer(\n"
+        f"  buffer={_format_crossfade_duration(DEFAULT_WEBSTREAM_BRIDGE_SECONDS)},\n"
+        f"  max={_format_crossfade_duration(DEFAULT_WEBSTREAM_BRIDGE_MAX_SECONDS)},\n"
+        "  webstream_raw,\n"
+        "))\n"
     )
 
 

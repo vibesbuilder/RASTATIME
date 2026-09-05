@@ -83,6 +83,12 @@ LINEIN_FOLLOW_UP_WINDOW_SECONDS = 2.0
 # need).  10 s was the operator's figure; the slowest observed
 # webstream buffer-up was 9 s.
 PREPARE_LEAD_SECONDS = 10.0
+# RASTATIME 2026-09-05 ("Option 1") - webstreams get a longer lead: the
+# clock bridge now pre-buffers 10 s (was 5 s) so that a silent upstream
+# stall is bridged without dead air, and the cloud DEVA stream took up
+# to 16 s from connect to the first decodable audio (11:35:50).  Connect
+# + format detection + 10 s fill-up must be done before the gate opens.
+WEBSTREAM_PREPARE_LEAD_SECONDS = 20.0
 # Below this many seconds to the slot a pre-warm cannot finish (capture
 # health check + decoder lock ~2 s); the slot then starts the normal way.
 MIN_PREPARE_SECONDS = 2.5
@@ -1047,7 +1053,11 @@ class PlayoutScheduler:
         # and the slot started with the normal 2 s gap.  Now the pre-warm
         # fires immediately; the handlers are idempotent for an item that
         # is already pre-warmed.
-        lead = max(0.0, start_delay - PREPARE_LEAD_SECONDS)
+        lead_seconds = (
+            WEBSTREAM_PREPARE_LEAD_SECONDS if isinstance(event, WebStreamEvent)
+            else PREPARE_LEAD_SECONDS
+        )
+        lead = max(0.0, start_delay - lead_seconds)
         t = threading.Timer(lead, handler, args=(key, event))
         t.daemon = True
         t.start()

@@ -1140,3 +1140,23 @@ def test_on_stop_keeps_the_stream_for_a_same_stream_back_to_back_follow_up(
     engine.webstream_gate.assert_not_called()
     engine.webstream_stop.assert_not_called()
     assert sched._playing_key == "A"      # bookkeeping left for B's hand-over
+
+
+# RASTATIME 2026-09-05 ("Option 1") - webstreams pre-warm 20 s before the
+# slot (10 s clock bridge), line-ins keep the 10 s lead.
+def test_prepare_timer_for_a_webstream_uses_the_longer_lead(liquidsoap_scheduler, fake_timer):
+    from libretime_playout.playout_scheduler import WEBSTREAM_PREPARE_LEAD_SECONDS
+    from libretime_playout.player.events import EventKind, WebStreamEvent
+
+    sched, engine, capture = liquidsoap_scheduler
+    now = datetime.utcnow()
+    event = WebStreamEvent(
+        type=EventKind.WEB_STREAM_OUTPUT_START, start=now + timedelta(seconds=60),
+        end=now + timedelta(seconds=360), row_id=7, id=7,
+        uri="http://cloud.example/", show_name="cloud", input_gain_db=None,
+    )
+    sched._arm_webstream_event("W", event, now)
+    prep = [t for t in fake_timer.instances if t.function == sched._on_webstream_prepare]
+    assert len(prep) == 1
+    assert WEBSTREAM_PREPARE_LEAD_SECONDS == 20.0
+    assert abs(prep[0].interval - (60 - WEBSTREAM_PREPARE_LEAD_SECONDS)) < 0.5
