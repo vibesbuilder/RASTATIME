@@ -127,3 +127,24 @@ def test_endpoints_holding():
     sessions = {"A": [1, 2], "B": [3], "C": []}
     assert lh.endpoints_holding(sessions, [2]) == ["A"]
     assert lh.endpoints_holding(sessions, [9]) == []
+
+
+def test_endpoint_matches_short_setting_name_against_friendly_name():
+    # Settings store "Tascam-Lautsprecher", the session API says
+    # "Tascam-Lautsprecher (US-16x08)" (live false alarm 2026-09-05 17:51)
+    assert lh.endpoint_matches("Tascam-Lautsprecher", TASCAM)
+    assert lh.endpoint_matches(TASCAM, TASCAM)
+    assert lh.endpoint_matches(TASCAM, "Tascam-Lautsprecher")
+    assert lh.endpoint_matches("tascam-lautsprecher (us-16x08)", TASCAM)
+    assert not lh.endpoint_matches("Tascam-Lautsprecher", "Tascam-Mikrofon (US-16x08)")
+    assert not lh.endpoint_matches("Tascam", TASCAM)          # a bare prefix is not enough
+    assert not lh.endpoint_matches("", TASCAM)
+    assert not lh.endpoint_matches("Realtek-Lautsprecher", TASCAM)
+
+
+def test_session_matches_with_short_setting_name(checker, monkeypatch):
+    monkeypatch.setattr(checker, "_expected_main_output_name", lambda: "Tascam-Lautsprecher")
+    monkeypatch.setattr(lh, "liquidsoap_process_info", lambda: _procs(500))
+    monkeypatch.setattr(lh, "render_endpoint_sessions", lambda: {TASCAM: [9064]})
+    checker._scan_liquidsoap_health()
+    assert checker._submitted[PreflightChecker.WARNING_TYPE_MAIN_OUTPUT_SESSION] == []

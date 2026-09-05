@@ -259,7 +259,7 @@ class PreflightChecker:
             return []
         pids = [i.pid for i in mature]
         holding = liquidsoap_health.endpoints_holding(sessions, pids)
-        if any(name.strip().lower() == expected.strip().lower() for name in holding):
+        if any(liquidsoap_health.endpoint_matches(expected, name) for name in holding):
             return []
         actual = ", ".join(holding) if holding else "no render endpoint"
         return [{

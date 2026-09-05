@@ -162,3 +162,27 @@ def endpoints_holding(sessions: Dict[str, List[int]], pids: List[int]) -> List[s
     """Names of the endpoints on which any of ``pids`` has a session."""
     wanted = set(pids)
     return [name for name, holders in sessions.items() if wanted.intersection(holders)]
+
+
+def endpoint_matches(expected: str, endpoint_name: str) -> bool:
+    """
+    Does the Core Audio endpoint ``endpoint_name`` denote the configured
+    Main Output ``expected``?
+
+    Settings → Local Machine stores the endpoint's short name
+    (``"Tascam-Lautsprecher"``), the session API reports the friendly
+    name with the device description appended
+    (``"Tascam-Lautsprecher (US-16x08)"``).  Live 2026-09-05 17:51 an
+    exact comparison flagged a correctly wired Tascam as missing.  So:
+    equal, or the endpoint name continues the expected one with the
+    parenthesised description, or the expected one is the full name.
+    """
+    exp = (expected or "").strip().lower()
+    got = (endpoint_name or "").strip().lower()
+    if not exp or not got:
+        return False
+    if exp == got:
+        return True
+    if got.startswith(exp) and got[len(exp):].lstrip().startswith("("):
+        return True
+    return exp.startswith(got) and exp[len(got):].lstrip().startswith("(")
