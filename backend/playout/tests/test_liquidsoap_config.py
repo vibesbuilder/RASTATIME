@@ -283,12 +283,14 @@ def test_full_render_local_output_enabled_explicitly():
     assert "fallible=true" in out
     # v2 bus-split (Phase-C5 follow-up 2026-05-28): buffer() with 2.0 s
     # absorption + clock.assign_new on the BUFFER itself (not just the
-    # output), with sync="cpu" so the portaudio_clock is driven from
-    # wall-time and decoupled from any audio-source clock.
+    # output).  RASTATIME 2026-09-05: sync="auto" — output.portaudio is
+    # self-synced (blocking writes), sync="cpu" fought it and logged
+    # "Latency is too high" every second whenever the output really
+    # played; the buffer() bridge absorbs the drift to the main clock.
     assert "bus_for_portaudio = buffer(buffer=2.0, bus)" in out
-    # The clock assign must reference bus_for_portaudio (the bridge) and
-    # sync=cpu to actually break the clock-merging:
-    assert 'sync="cpu"' in out
+    # The clock assign must reference bus_for_portaudio (the bridge):
+    assert 'clock.assign_new(id="portaudio_clock", sync="auto", [' in out
+    assert 'sync="cpu", [' not in out
     # bus_for_portaudio must appear in the clock-assign list AND as the
     # output.portaudio source argument.
     bus_pa_count = out.count("bus_for_portaudio")

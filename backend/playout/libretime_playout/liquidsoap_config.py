@@ -545,6 +545,7 @@ def _render_local_output_block(
     device_id: Optional[int] = None,
     device_label: str = "",
     endpoint_id: str = "",
+    device_name: Optional[str] = None,
 ) -> str:
     """
     Render the local soundcard output block.  When enabled, emits a
@@ -552,6 +553,18 @@ def _render_local_output_block(
     audio endpoint via PortAudio.  When disabled, emits a single
     comment line so the operator can grep + see it was deliberately
     turned off (avoiding "the line just vanished" confusion).
+
+    RASTATIME 2026-09-05 — ``device_name`` wins over ``device_id``.
+    PortAudio indices are not stable on the studio machine (endpoints
+    appear late after boot and come and go); between PLAYOUT's probe
+    and Liquidsoap's open the list shifted and the live instance played
+    the Main Output to the wrong jack for hours, while a later restart
+    with the stale index would have killed the process at device-open
+    (NSSM restart loop).  ``output.portaudio(device_name=...)`` matches
+    the exact PortAudio name at Liquidsoap's own start, so the index
+    drift cannot bite.  The resolver only offers a name when the entry
+    it selects is known to play (see ``portaudio_output.with_name_selection``);
+    otherwise we keep the index.
 
     ``device_id`` is a **PortAudio device index**, resolved from the
     operator's Main-Output setting by
@@ -626,7 +639,23 @@ def _render_local_output_block(
     unused value at top-level.
     """
     if enabled:
-        if device_id is None:
+        if device_name:
+            safe_label = str(device_label).replace("\n", " ").strip()
+            safe_ep = "".join(
+                c for c in str(endpoint_id) if c.isalnum() or c in "-_"
+            )
+            quoted = (
+                str(device_name).replace("\\", "\\\\").replace('"', '\\"')
+                .replace("\n", " ")
+            )
+            device_line = (
+                f"  # rastatime-main-output: {safe_ep or 'unknown'}\n"
+                f"  # Main Output (Settings -> Local Machine): {safe_label}\n"
+                "  # selected by exact PortAudio name at Liquidsoap start:\n"
+                "  # immune to the index drift (RASTATIME 2026-09-05)\n"
+                f'  device_name="{quoted}",\n'
+            )
+        elif device_id is None:
             device_line = (
                 # The marker line below is machine-read by the
                 # Settings page so it can show which output is
@@ -655,14 +684,19 @@ def _render_local_output_block(
             "# v2 fix: assign the BUFFER itself to portaudio_clock (not the\n"
             "# output).  The buffer is the source that has two clock-sides;\n"
             "# putting it in a separate clock forces Liquidsoap to instantiate\n"
-            "# the bridge.  sync=cpu drives the portaudio_clock from wall-time\n"
-            "# instead of from any audio source, decoupling it from the main\n"
-            "# pipeline's tick rate.  Buffer bumped to 2.0 s to absorb longer\n"
+            "# the bridge.  Buffer bumped to 2.0 s to absorb longer\n"
             "# CPU/disk stalls (the C5 crash was ~10 s after Show-start, at\n"
             "# track-decode peak).  Trade-off: lokales Monitor-Speaker laeuft\n"
             "# 2 s hinter Stream/Recording.\n"
+            "# RASTATIME 2026-09-05: sync=\"auto\" instead of sync=\"cpu\".\n"
+            "# output.portaudio is self-synced (blocking writes pace the clock\n"
+            "# at the device's sample clock); with sync=cpu the clock ALSO tried\n"
+            "# to hold wall-time and logged \"Latency is too high\" every second\n"
+            "# (3,560/h) whenever the output really played.  auto lets the device\n"
+            "# pace the clock; the buffer() bridge above absorbs the drift to the\n"
+            "# main clock, which is exactly what it is for.\n"
             "bus_for_portaudio = buffer(buffer=2.0, bus)\n"
-            "ignore(clock.assign_new(id=\"portaudio_clock\", sync=\"cpu\", [\n"
+            "ignore(clock.assign_new(id=\"portaudio_clock\", sync=\"auto\", [\n"
             "  bus_for_portaudio,\n"
             "]))\n"
             "output.portaudio(\n"
@@ -1222,6 +1256,7 @@ def render_rastatime_liq(
     local_output_device_id: Optional[int] = None,
     local_output_device_label: str = "",
     local_output_endpoint_id: str = "",
+    local_output_device_name: Optional[str] = None,
     harbor_main_password: Optional[str] = None,
     harbor_show_password: Optional[str] = None,
     harbor_main_port: int = DEFAULT_HARBOR_MAIN_PORT,
@@ -1337,6 +1372,7 @@ def render_rastatime_liq(
                 local_output_device_id,
                 local_output_device_label,
                 local_output_endpoint_id,
+                local_output_device_name,
             ),
         )
         .replace("${HARBOR_INPUTS_BLOCK}", harbor_block)
@@ -1362,6 +1398,7 @@ def write_rastatime_liq(
     local_output_device_id: Optional[int] = None,
     local_output_device_label: str = "",
     local_output_endpoint_id: str = "",
+    local_output_device_name: Optional[str] = None,
     harbor_main_password: Optional[str] = None,
     harbor_show_password: Optional[str] = None,
     harbor_main_port: int = DEFAULT_HARBOR_MAIN_PORT,
@@ -1410,6 +1447,7 @@ def write_rastatime_liq(
         local_output_device_id=local_output_device_id,
         local_output_device_label=local_output_device_label,
         local_output_endpoint_id=local_output_endpoint_id,
+        local_output_device_name=local_output_device_name,
         harbor_main_password=harbor_main_password,
         harbor_show_password=harbor_show_password,
         harbor_main_port=harbor_main_port,

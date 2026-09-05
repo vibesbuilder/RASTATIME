@@ -75,6 +75,15 @@ settings.log.file.path.set("${LOG_FILE}")
 settings.log.stdout.set(true)
 settings.log.level.set(3)
 
+# RASTATIME 2026-09-05 - "There are currently N sources, possible
+# source leak!" fires at settings.clock.leak_warning (default 50).  Our
+# chain has ~45 static sources and every bus transition / queue
+# crossfade adds 10-13 short-lived ones (fade_in/fade_out/audio.add/
+# source.dynamic/track_audio_amplify) that are collected afterwards;
+# 50-63 is normal here, not a leak (clock.dump_all_sources, verified
+# 2026-09-05).  200 keeps the warning meaningful for a real leak.
+settings.clock.leak_warning.set(200)
+
 # Audio frame size — keep Liquidsoap's default of 0.04 s (40 ms).
 # Smaller values reduce latency but cost CPU; larger values batch
 # more samples per frame but make crossfades less precise.  0.04 s
@@ -106,7 +115,191 @@ settings.log.level.set(3)
 # Sichtbares Symptom: erste push klappt, danach schaltet die
 # fallback nie mehr von silence_fallback weg.  Phase-C8 reality-
 # test 2026-05-26 hat genau das aufgedeckt.
-scheduled_q = request.queue(id="scheduled")
+# RASTATIME 2026-09-05 - synchronous request queue (memory-leak fix).
+# Verbatim copy of Liquidsoap 2.4.4's stdlib `request.queue`
+# (libs/request.liq) with ONE change: the underlying request.dynamic
+# is created with synchronous=true (plus `native` dropped, it does not
+# exist in this build).
+#
+# Why: the savonet Windows build (OCaml 4.14) leaks ~5 KB in every
+# Unix.select call of the Duppy scheduler (win32unix select.c,
+# SELECTDATA + read_pipe_poll worker; savonet/liquidsoap #1122).  The
+# asynchronous fetch task that a `scheduled.push` starts keeps polling
+# `next()` every retry_delay (0.1 s) once the queue is empty or a
+# request failed - forever, ~33 selects/s, 0.15-0.8 MB/s on the live
+# instance (3.4 GB after two hours on 2026-09-05).  With
+# synchronous=true the push resolves the request inline in the telnet
+# handler (local, already downloaded files: milliseconds) and no
+# polling task exists: replicas stayed flat and every push started at
+# once, also after a failed push.  `timeout` (set at the call site)
+# bounds that inline resolution so an unreadable file cannot hold the
+# push - and Pypo's telnet call - for the default 20 s.
+#
+# Do NOT switch this back to plain request.queue without re-measuring
+# the process memory (Get-Process liquidsoap, PrivateMemorySize64).
+def request.queue_sync(
+  ~id=null,
+  ~interactive=true,
+  ~prefetch=null,
+  ~queue=[],
+  ~timeout=null
+) =
+  id = string.id.default(default="request.queue_sync", id)
+  initial_queue = ref(queue)
+  queue = ref([])
+  fetch = ref(fun () -> ())
+  started = ref(false)
+
+  def next() =
+    if
+      queue() != []
+    then
+      let [r, ...q] = queue()
+      queue := q
+      (r : request)
+    else
+      null
+    end
+  end
+
+  def push(r) =
+    if
+      started()
+    then
+      log.info(
+        label=id,
+        "Pushing #{r} on the queue."
+      )
+      queue := [...queue(), r]
+      fn = fetch()
+      fn()
+    else
+      log.info(
+        label=id,
+        "Pushing #{r} on the initial queue."
+      )
+      initial_queue := [...initial_queue(), r]
+    end
+  end
+
+  def push_uri(uri) =
+    r = request.create(uri)
+    push(r)
+  end
+
+  default =
+    fun () ->
+      request.dynamic(
+        id=id,
+        prefetch=prefetch,
+        timeout=timeout,
+        synchronous=true,
+        available={not list.is_empty(queue())},
+        next
+      )
+
+  s = default()
+
+  def add(r) =
+    log.severe(
+      label=s.id(),
+      "Please use #{s.id()}.push instead of #{s.id()}.add()"
+    )
+
+    s.add(r)
+  end
+
+  def set_queue(q) =
+    if started() then queue := q else initial_queue := q end
+    s.set_queue([])
+  end
+
+  def get_queue() =
+    [...s.queue(), ...initial_queue(), ...queue()]
+  end
+
+  s =
+    s.{
+      add=add,
+      push=push.{uri=push_uri},
+      length={list.length(queue()) + list.length(s.queue())},
+      set_queue=set_queue,
+      queue=get_queue
+    }
+
+  s.on_wake_up(
+    synchronous=true,
+    fun () ->
+      begin
+        started := true
+        s.set_queue(initial_queue())
+        initial_queue := []
+      end
+  )
+
+  fetch := s.fetch
+
+  if
+    interactive
+  then
+    def push(uri) =
+      r = request.create(uri)
+      push(r)
+      "#{request.id(r)}"
+    end
+
+    s.register_command(
+      description="Flush the queue and skip the current track",
+      "flush_and_skip",
+      fun (_) ->
+        try
+          s.set_queue([])
+          s.skip()
+          "Done."
+        catch err do
+          "Error while flushing and skipping source: #{err}"
+        end
+    )
+
+    s.register_command(
+      description="Push a new request in the queue.",
+      usage="push <uri>",
+      "push",
+      push
+    )
+
+    def show_queue(_) =
+      queue = s.queue()
+      string.concat(
+        separator=" ",
+        list.map(fun (r) -> string(request.id(r)), queue)
+      )
+    end
+
+    s.register_command(
+      description="Display current queue content.",
+      usage="queue",
+      "queue",
+      show_queue
+    )
+
+    def skip(_) =
+      s.skip()
+      "Done."
+    end
+
+    s.register_command(
+      description="Skip current song.",
+      usage="skip",
+      "skip",
+      skip
+    )
+  end
+
+  s
+end
+
+scheduled_q = request.queue_sync(id="scheduled", timeout=5.0)
 scheduled   = fallback(
                 track_sensitive=false,
                 [scheduled_q, blank(id="silence_fallback")]
