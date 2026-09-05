@@ -1271,7 +1271,22 @@ class PlayoutScheduler:
                 self._engine.stop()               # clear the scheduled queue as usual
                 self._engine.webstream_gate(True)  # in case a race closed it
                 return
-            self._close_predecessor_source(prev_event, key)
+            if isinstance(prev_event, WebStreamEvent):
+                # RASTATIME 2026-09-05 - a DIFFERENT stream on the single
+                # webstream source: the drained release cannot work here
+                # (set_url + start on a running input.http does not
+                # reconnect, and the drained stop is then skipped as "a
+                # newer stream took over" - live 11:44:30 the old stream
+                # simply kept playing).  Hard stop, then start: the old
+                # tail is cut and the new stream needs its buffer-up.
+                logger.info(
+                    "Web stream %s replaces %s on the single stream source - "
+                    "stop + start (no drain possible).", key, prev_event.uri,
+                )
+                self._webstream_generation += 1
+                self._engine.webstream_stop()
+            else:
+                self._close_predecessor_source(prev_event, key)
             self._engine.stop()  # deferred-stop, clears request.queue
             if self._take_prepared(event):
                 # RASTATIME 2026-09-04 - pre-buffered at T-10 s: only the

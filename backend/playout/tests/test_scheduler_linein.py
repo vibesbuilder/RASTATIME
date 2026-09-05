@@ -1098,7 +1098,11 @@ def test_same_webstream_next_show_is_a_bookkeeping_hand_over(liquidsoap_schedule
     assert sched._playing_key == "B" and sched._current_event is nxt
 
 
-def test_different_webstream_next_show_still_releases_the_old_one(liquidsoap_scheduler):
+def test_different_webstream_next_show_hard_stops_the_old_one(liquidsoap_scheduler):
+    """2026-09-05 11:44:30 regression: the drained release left the old
+    stream playing through the whole new slot (set_url + start on a
+    running input.http does not reconnect; the drained stop was skipped).
+    With one stream source a different stream needs stop, then start."""
     sched, engine, capture = liquidsoap_scheduler
     sched._switcher = None
     sched._cue_item_start = MagicMock()
@@ -1110,8 +1114,13 @@ def test_different_webstream_next_show_still_releases_the_old_one(liquidsoap_sch
 
     sched._on_webstream_start("B", other)
 
-    engine.webstream_gate.assert_any_call(False)   # release of the old one
+    engine.webstream_stop.assert_called_once()
     engine.webstream_start.assert_called_once()
+    names = [c[0] for c in engine.mock_calls]
+    assert names.index("webstream_stop") < names.index("webstream_start")
+    # no drained release for this case: the gate is only opened, never closed
+    assert not any(c == ("webstream_gate", (False,), {}) for c in engine.mock_calls)
+    engine.webstream_gate.assert_called_with(True)
 
 
 def test_on_stop_keeps_the_stream_for_a_same_stream_back_to_back_follow_up(
