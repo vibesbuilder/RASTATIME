@@ -230,6 +230,18 @@ per Übernahme/ohne Vorlauf, jeweils Log auf `10054`/`-138` und
 Prepare-Vorlauf für Webstreams auf 5 s senken (unter Bridge-`max`)
 oder Bridge-`max` erhöhen.
 
+**Ergebnis 2026-09-05 (erledigt):** Vier Cloud-Slots live (11:42–
+12:15) plus isolierte Runden (`C:/Temp/prewarm_ab.py`, `prewarm_ab2.py`:
+Gate 10 s bzw. 20 s geschlossen, mit/ohne `output.dummy`-Keep-alive,
+direkt ohne Vorlauf).  Der Shoutcast-Upstream stallt in **jedem**
+Modus (Muster: ~45–65 s Ton, dann „Buffer emptied" → `-138` nach
+weiteren 20–25 s → Reconnect), auch mit Keep-alive-Konsument, auch bei
+sofort offenem Gate; BBC läuft in allen Modi stabil.  `-138` ist
+Windows/MSVC `ETIMEDOUT` (nicht „host unreachable"), `10054` =
+WSAECONNRESET.  Hypothese (b) ist damit widerlegt — das Vorwärmen ist
+nicht die Ursache.  Follow-up ist ein Upstream-/Netzthema (Cloud-
+Server bzw. Strecke), kein Playout-Fix; Pre-Warm bleibt wie gebaut.
+
 ### 🟡 „Latency is too high" jede Sekunde auf `clock.portaudio_clock` (Operator will testen)
 
 **Befund 2026-09-04:** ~3.560 Warnungen pro Stunde, den ganzen Tag,
@@ -242,6 +254,24 @@ gegen die Gerätetaktung des Tascam (44,1 kHz), Blockgröße/Latenz von
 Test: Werte bei Jabra vs. Tascam als Main Output vergleichen;
 `settings.log.level` für die Uhr senken, falls harmlos.
 
+**Ergebnis 2026-09-05:** Ursache ist das Zusammenspiel
+`clock.assign_new(sync="cpu")` + `output.portaudio` (blockierende
+Writes, `self_sync=true`): der Ausgang taktet die Uhr über die
+Gerätesamplerate, `sync="cpu"` will sie zusätzlich an der Wanduhr
+halten → jede Sekunde „catchup".  Beweis ex negativo: nach dem Reboot
+um 11:15 verschwanden die Meldungen (4 statt 3.560/h) — weil die
+Instanz auf einem **DirectSound**-Gerät landete, dessen blockierender
+PortAudio-Write ein Stub ohne Wirkung ist (kein Ton, keine Taktung).
+Die Meldung ist also das Zeichen für einen FUNKTIONIERENDEN WASAPI-
+Ausgang; harmlos für den Sendeweg, aber 60 MB Log/Tag.
+**Fix-Optionen (Go nötig):** (a) `sync="auto"` für die `portaudio_clock`
+— die Uhr folgt dem Gerät, `buffer(buffer=2.0)` fängt die Drift zur
+Haupt-Uhr ab (so ist die Bridge gedacht); Risiko: bei einem Gerät ohne
+echte Taktung (DirectSound-Stub!) liefe die Uhr frei → dann muss der
+Geräte-Fix (Eintrag „PortAudio-Index instabil") zuerst kommen; (b)
+`settings.log.level` der Uhr senken (Symptom kaschieren).  Empfehlung:
+(a) zusammen mit dem Geräte-Fix, ~1 h inkl. Prüf-Render.
+
 ### 🟡 „possible source leak, 61 sources" (Operator will testen)
 
 **Befund:** Warnung seit 2026-09-03 (54 Quellen), am 2026-09-04 abends
@@ -250,6 +280,133 @@ erzeugt `add`/`fade_in`/`fade_out`/`track_audio_amplify`-Quellen, die
 Queue-Crossfades ebenso.  Test: Quellenzahl und Speicher über einen
 Sendetag beobachten (Zählung aus „Current sources" im Log); steigt sie
 monoton, Übergangsquellen nach `transition_length` prüfen.
+
+**Ergebnis 2026-09-05:** Falscher Alarm.  Die Warnung feuert ab
+`settings.clock.leak_warning` (Default 50); unsere Kette hat ~45
+statische Quellen, jeder Bus-Übergang/Queue-Crossfade legt kurzzeitig
+10–13 dazu (`clock.dump_all_sources`: `fade_in`/`fade_out`/`audio.add`/
+`source.dynamic`/`track_audio_amplify`, dazu je Übergang ein `fail`-
+Clock-Stub) und die Zahl pendelt zurück (50 → 63 → 50 → 59 → 50).
+Nicht monoton, kein Quellen-Leck.  Fix: `settings.clock.leak_warning := 200`
+im Template (Go nötig, 5 min).  **Das echte Speicherleck ist ein
+anderes** — siehe nächster Eintrag.
+
+### 🔴 Liquidsoap-Windows-Speicherleck: ~5 KB pro `Unix.select` (Hold — Upstream-Bug, Milderung möglich)
+
+**Befund 2026-09-05:** Die Live-Instanz (Start 11:15:27) wuchs auf
+3,2 GB um 13:11 (Mittel 0,46 MB/s; 0,15 MB/s im Leerlauf, bis
+0,8 MB/s während Shows).  `runtime.memory` (Telnet): OCaml-Heap
+konstant 78 MB; `runtime.gc.full_major` + `compact` geben nichts frei
+→ C-seitig.  Read-only-Speicheranalyse (`C:/Temp/memscan*.py`,
+`structdecode.py`, `symlookup.py` über die COFF-Symboltabelle der
+liquidsoap.exe): 16-MB-NT-Heap-Segmente voller nie freigegebener
+Blöcke à 2032 + 3104 Byte (Einheit 5136 Byte), Funktionszeiger darin
+= `read_pipe_poll`, Felder = Windows-HANDLEs des Duppy-fd-Sets.  Das
+ist OCamls Windows-Emulation von `Unix.select` (`otherlibs/win32unix/
+select.c`, SELECTDATA + Worker-Thread für Pipes; Liquidsoap 2.4.4 ist
+mit OCaml 4.14.1 gebaut).  **Jeder `Unix.select`-Aufruf des Duppy-
+Schedulers leakt ~5 KB.**  Bekannt als savonet/liquidsoap #1122
+(2020, „Memory leak on windows using telnet commands", offen).
+Vor dem Reboot lief die Instanz 15,5 h — die Rate hängt an der
+Wakeup-Frequenz, nicht an der Laufzeit.
+
+**Auslöser (Replika-Bisektion, `C:/Temp/leak_*.py`, Kopien der Live-
+.liq mit eigenen Ports/Mounts):** frische Instanz ohne Requests bleibt
+flach — mit PortAudio auf jedem Gerät, mit drei Icecast/FFmpeg-
+Encodern, nach einer Webstream-Show, mit dauerhaft offener oder halb
+geschlossener Telnet-Verbindung, und auch nach einem Titel aus der
+Initial-Queue.  **Ein expliziter `scheduled.push` im laufenden Betrieb
+(so pusht der Playout jeden Titel) startet den asynchronen Fetch-Task
+von `request.dynamic`; sobald die Queue leer ist oder ein Request
+scheitert, pollt der Task mit `retry_delay` (Default 0,1 s) für immer
+weiter** — ein erfolgreicher Titel danach beendet ihn nicht.  Gemessen:
+ein Push → +50–80 KB/s, zwei Pushes → +100 KB/s; live ~33 Selects/s
+= 0,15 MB/s im Leerlauf, in Shows mehr.  Telnet-Kommandos kosten je
+~2 Selects (vernachlässigbar).  Fehlende Datei = „Unknown protocol
+URI", unlesbare Datei = „Error while checking file's content" (der
+Jingle „StationID Friska Viljor.mp3" schlägt mit
+`Channel_layout.Unsupported` fehl — eigener Punkt, siehe unten).
+
+**Milderungen gemessen (Replika, 150–180 s):**
+- `retry_delay={2.0}` (eigene `request.queue`-Kopie mit Parameter):
+  Leck ~10 KB/s statt 50–100; Pushes starten sofort — **außer** nach
+  einem Decoder-Fehler, dann wartet der nächste Push bis zu
+  `retry_delay` (bei 5 s gemessen: Start erst beim nächsten Poll).
+- **`synchronous=true`** an `request.dynamic` (Kopie der Stdlib-
+  `request.queue` mit diesem Parameter): **flach** (124–126 MB), auch
+  nach fehlgeschlagenem Push; alle Pushes sofort vorbereitet.  Die
+  Auflösung läuft dann im Telnet-Handler-Thread (lokale, bereits
+  heruntergeladene Dateien: Millisekunden) — kein Duppy-Task, kein
+  Polling.  Schutz: `timeout=5.0` an der Queue, damit eine kaputte
+  Datei den Push (und damit den Playout-Telnet-Aufruf) nicht 20 s
+  blockiert.
+
+**Optionen (Trade-offs, Go nötig):**
+1. **Template-Fix:** `scheduled_q` auf die synchrone Variante umstellen
+   (Stdlib-`request.queue` kopiert, `synchronous=true`, `timeout=5.0`);
+   Prüf-Render mit DJ-Armen, Unit-Test auf den gerenderten Block,
+   Live-Abnahme einer Jingle-Folge.  ~1,5 h.  Restrisiko: Pushes von
+   Nicht-Datei-URIs (gibt es im Scheduled-Pfad nicht).
+2. **Betriebs-Sicherung:** Speicher-Schwelle im Preflight (Warnung ab
+   2 GB im UI) und ein geplanter Neustart PLAYOUT → LIQUIDSOAP in der
+   Nacht als Netz und doppelter Boden (Stream-Abriss ~5 s).  ~2 h.
+3. **Upstream:** Meldung an savonet mit dieser Beweiskette (5136 Byte
+   pro Select, `read_pipe_poll`, Trigger `request.dynamic`-Retry);
+   Fix wäre ein OCaml-5-Build oder ein Socketpair statt Pipe für den
+   Duppy-Wakeup.  Zeit bis Fix unbekannt.
+**Empfehlung:** 1 sofort (behebt den einzigen dauerhaften Poller),
+2 als Schutznetz, 3 parallel.  Bis dahin: Speicher der Instanz
+beobachten (`Get-Process liquidsoap`), Neustart ab ~4 GB.
+
+### 🟡 Jingle „StationID Friska Viljor.mp3" ist für Liquidsoap unlesbar (neu 2026-09-05)
+
+**Befund:** Replika-Push der Datei aus `media/imported/2/artwork/`
+scheitert mit `[decoder:2] Error while checking file's content:
+Audio_converter.Channel_layout.Unsupported` — ein Kanal-Layout, das
+der Decoder nicht wandelt (vermutlich Mono/Mehrkanal-Tag).  Im Live-
+Betrieb würde der Titel still ausfallen UND den Retry-Poller starten.
+**Test:** `ffprobe` auf die Datei (Kanäle/Layout), Datei als Stereo
+neu kodieren oder in Liquidsoap `audio_to_stereo`/Decoder-Settings
+prüfen; danach Library auf weitere Dateien mit demselben Layout
+scannen (Preflight-Kandidat: „Datei nicht dekodierbar").
+
+### 🟡 PortAudio-Geräteindex instabil → `device_name` statt `device_id` (neu 2026-09-05)
+
+**Befund:** Der Index desselben Tascam-WASAPI-Endpunkts war 11:15 = 14,
+12:10 = 18, 12:33 = 15 (sounddevice und Liquidsoaps PortAudio stimmen
+überein; Endpoints kommen und gehen — Jabra-USB, HDMI).  Nach dem
+Reboot löste PLAYOUT 11:15:18 Index 14 auf, Liquidsoap öffnete
+11:15:28 Index 14 = inzwischen Realtek: **der Main Output lag den
+ganzen Tag auf der Realtek-Onboard-Buchse** (Session-Sonde
+`C:/Temp/audio_sessions.py <pid>`, pycaw in `C:/Temp/pylibs`), auf
+dem Tascam kam nichts an.  Zweite Gefahr: ein ungültiger Index beim
+Öffnen (`Invalid number of channels` / `Invalid sample rate` / WDM-KS
+„Blocking API not supported") ist eine unbehandelte Exception im
+Clock-Thread → Prozess-Exit 2 → NSSM startet mit derselben .liq neu →
+**Neustart-Schleife = Sendeausfall** (heute 11:15:15 einmal passiert,
+gerettet nur, weil PLAYOUT dazwischen neu gerendert hatte).
+**Semantik `device_name` (gemessen):** exakter Namensvergleich, erster
+Treffer in PortAudio-Reihenfolge (MME → DirectSound → WASAPI → WDM-KS);
+MME-Namen sind auf 31 Zeichen gekürzt.  „Tascam-Lautsprecher
+(US-16x08)" (30 Zeichen) → **MME-Eintrag** (8 Kanäle, blockierend OK,
+Windows resampelt; Session landet auf dem Tascam); „Realtek-
+Lautsprecher (Realtek(R) Audio)" → DirectSound (Stub, kein Ton!).
+Nicht-Treffer → Fehlermeldung listet alle Gerätenamen (Prozess-Exit).
+**Optionen (Trade-offs, Go nötig):**
+1. Renderer schreibt `device_name="<PortAudio-Name>"` statt
+   `device_id` — indexunabhängig, aber Host-API nicht wählbar (Tascam →
+   MME statt WASAPI: höhere Latenz, kein Mix-Format-Zwang mehr).
+   ~2 h inkl. Resolver-Anpassung, Prüf-Render, Tests.
+2. `device_id` behalten, aber der Boot-Race-Fix (Option 2 dort:
+   PLAYOUT startet LIQUIDSOAP nach dem Render) plus **Geräte-Watchdog**:
+   Session-Sonde alle 15 min im Preflight — liegt die Liquidsoap-
+   Session nicht auf dem gewählten Endpunkt → Warnung im UI.  Löst
+   den Index-Drift zwischen Render und Öffnen nicht.  ~3 h.
+3. Beides: `device_name` für Robustheit + Watchdog für Sichtbarkeit.
+**Empfehlung:** 3, beginnend mit 1.  **Betriebsregel bis dahin:**
+nie LIQUIDSOAP allein neu starten — immer PLAYOUT (rendert den Index
+neu) → LIQUIDSOAP, danach Session-Sonde: Session muss auf
+„Tascam-Lautsprecher (US-16x08)" liegen.
 
 ### 🟡 Line-In-Startlücke: Capture-Kette verkürzen (neu 2026-09-03)
 
@@ -2015,6 +2172,17 @@ loggt nur „RESTART the RASTATIME-LIQUIDSOAP NSSM service".
 **Empfehlung:** Option 2 mit Boot-Fenster-Schutz, ~2–3 h; vorher Go.
 **Bis dahin (Betriebsregel):** Nach jedem Reboot Settings → Local Machine
 → „Aktiv"-Zeile prüfen; bei Abweichung einmal „Jetzt anwenden".
+
+**Nachtrag 2026-09-05 (Beweis nach dem Reboot 11:15):** Instanz #1
+startete 11:15:15 mit der .liq vom Vorabend (`device_id=18`), PLAYOUT
+renderte 11:15:18 neu (`device_id=14`), Instanz #1 starb 11:15:22 an
+„Blocking API not supported" (18 war inzwischen ein WDM-KS-Gerät),
+NSSM startete Instanz #2 um 11:15:27 — die nun Index 14 = Realtek
+öffnete (Endpoints erschienen zwischen Probe und Öffnen; siehe
+„PortAudio-Geräteindex instabil").  Ohne den zufälligen Re-Render
+wäre es eine Neustart-Schleife gewesen.  Die Empfehlung (Option 2 mit
+Boot-Fenster-Schutz) steht; sie muss zusammen mit dem `device_name`-
+Eintrag umgesetzt werden, sonst bleibt der Index-Drift.
 
 ### 💡 Line-In: Kanalwahl auch im Library-Schnell-Editor (Option A)
 

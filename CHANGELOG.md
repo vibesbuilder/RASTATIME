@@ -56,8 +56,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Sendung (vorher 5–9 s), Showteaser pünktlich mit BBC-Ausklang
   darunter, Slot-Ende mit Nachlauf.  Zwei Nachbesserungen daraus
   (`59c8e8f`, siehe Fixed): Vorwärmen bei Refresh im 10-s-Fenster, und
-  gleicher Stream → gleicher Stream ohne Dip.  Offen (Backlog): A/B-Test
-  der vorgewärmten Cloud-Verbindung (Reset 10054 nach 17 s, einmalig).
+  gleicher Stream → gleicher Stream ohne Dip.  Die drei offenen
+  Test-Themen wurden am 2026-09-05 untersucht (Ergebnisse im BACKLOG):
+  der Cloud-Stream stallt in jedem Modus (Upstream, nicht das
+  Vorwärmen); „Latency is too high" ist das Zeichen eines
+  funktionierenden WASAPI-Ausgangs gegen `sync="cpu"`; „possible source
+  leak" ist die Warnschwelle 50 bei 50–63 Quellen während Übergängen.
+  Dabei gefunden: ein echtes Speicherleck von ~5 KB pro `Unix.select`
+  (OCaml-4.14-Windows-Build, Duppy-Scheduler, savonet #1122) und die
+  Instabilität des PortAudio-Geräteindex (Main Output lag nach dem
+  Reboot auf der Realtek-Buchse) — beides mit Optionen im BACKLOG.
 
 ### Fixed
 
