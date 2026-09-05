@@ -47,9 +47,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
      beide Gates.
   Commits `eabf798`, `b92c08a`, `1a150a0`, `6820158`.  Manuals (LINE_IN,
   WEBSTREAMS, SETTINGS) in vier Sprachen; Architektur 0.21 / §23.26.
-  **Live-Abnahme ausstehend.**
+  **Live-Abnahme 2026-09-04 19:50–20:22** (sechs Shows: Line-In →
+  Line-In gleiches Gerät → Jingles + BBC + Showteaser → Cloud-Stream →
+  gleicher Cloud-Stream → Line-In; Crossfade 1 s), Ohr + Monitor, alle
+  Übergänge vom Operator abgenommen: Line-In vorgewärmt **0,15 s**
+  Startlücke (vorher 2 s), gleiches Gerät nahtlos, Line-In → Jingle mit
+  hörbarem Nachlauf unter dem Jingle, BBC und Cloud-Stream sofort auf
+  Sendung (vorher 5–9 s), Showteaser pünktlich mit BBC-Ausklang
+  darunter, Slot-Ende mit Nachlauf.  Zwei Nachbesserungen daraus
+  (`59c8e8f`, siehe Fixed): Vorwärmen bei Refresh im 10-s-Fenster, und
+  gleicher Stream → gleicher Stream ohne Dip.  Offen (Backlog): A/B-Test
+  der vorgewärmten Cloud-Verbindung (Reset 10054 nach 17 s, einmalig).
 
 ### Fixed
+
+- **Vorwärmen ging am Refresh verloren; gleicher Stream → gleicher
+  Stream hatte einen Dip (2026-09-05, `59c8e8f`)** — Aus der Live-Abnahme
+  von Paket 2: (1) Ein Schedule-Refresh löscht und armt alle Timer neu.
+  Fiel er in die letzten 10 s vor einem Slot (20:16:49 für 20:17:00),
+  verwarf die Regel „Vorlauf ≤ 0,5 s → kein Prepare" das Vorwärmen, und
+  der Slot startete mit den normalen 2 s Lücke.  Jetzt feuert das
+  Prepare in dem Fall sofort (einzige Untergrenze
+  `MIN_PREPARE_SECONDS` = 2,5 s), und beide Prepare-Handler sind für ein
+  bereits vorgewärmtes Item idempotent — ein Re-Arm bounct nie eine
+  laufende Vorwärmung.  (2) Webstream → derselbe Webstream in der
+  Folgeshow (20:12) gab die laufende Quelle frei und startete sie neu:
+  ~1 s Aus-/Einblend-Dip.  Jetzt eine Buchführungs-Übergabe wie beim
+  Line-In auf gleichem Gerät (Quelle bleibt, Generation hochgezählt,
+  Gate offen), mit passender Same-Stream-Follow-up-Regel in `_on_stop`,
+  damit die Übergabe bei beiden Timer-Reihenfolgen hält.  Abweichender
+  Gain startet weiterhin neu.
 
 - **Sendeausfall 19:26–19:35 durch Typfehler im Bus-Switch (2026-09-04,
   `acdde5c`)** — Nach dem Neustart auf Paket 2 startete Liquidsoap

@@ -130,9 +130,10 @@ tenían grabaciones silenciosas.
 
 **Latencia inicial del show:** con el precalentamiento (desde
 el 2026-09-04) un slot webstream arranca sin hueco — el flujo se
-conectó y almacenó 10 s antes. Solo un webstream que no pudo
-precalentarse (p. ej. justo después de otro webstream) necesita
-aún ~5 s de búfer. Los reproductores del lado del oyente añaden su
+conectó y almacenó 10 s antes. El **mismo** flujo en el programa
+siguiente simplemente continúa (solo se traspasa la contabilidad,
+sin corte). Solo un webstream *distinto* justo después de otro
+webstream (una única fuente de flujo) necesita aún ~5 s de búfer. Los reproductores del lado del oyente añaden su
 propio buffer de ~10 s, así que el retraso efectivo percibido por
 el oyente final está dominado por el buffer del lado del
 reproductor.

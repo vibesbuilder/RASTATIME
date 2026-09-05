@@ -197,10 +197,59 @@ General.  Teil B (`6820158`): Prepare-Timer, Gate-Start, Freigabe
 mit Drain, Refresh-Rückbau, Gate-Reset beim Start.  Der exakt
 gerenderte Bus-Block wurde isoliert mit Sinus-Quellen geprüft
 (Crossfade 1 s: 1,0 s aus / 1,0 s ein; Ducking: neu sofort voll, alt
-über 1 s darunter aus).  **Live-Abnahme ausstehend** — Show-Folge
-Datei → Line-In (≥ 10 s Vorlauf) → Jingle → Webstream → Line-In, Ohr
-+ Monitor; Operator setzt vorher das Feld „Default Crossfade
-Duration" auf 1 (steht auf 0).
+über 1 s darunter aus).  **Live abgenommen 2026-09-04 19:50–20:22**
+(sechs Shows, Crossfade 1 s, Ohr + Monitor): Line-In vorgewärmt 0,15 s
+Startlücke, gleiches Gerät nahtlos, Freigaben mit hörbarem Nachlauf,
+BBC/Cloud sofort auf Sendung, Showteaser pünktlich.  Zwei
+Nachbesserungen (`59c8e8f`): Prepare bei Refresh im Fenster sofort;
+gleicher Stream → gleicher Stream als Übergabe.  Zuvor: Sendeausfall
+19:26–19:35 durch Typfehler bei den DJ-Armen (`acdde5c`), Lehre
+„Prüf-Render in Produktionsform".
+
+### 🟡 A/B-Test: vorgewärmte Cloud-Stream-Verbindung (Vorbehalt 20:07, Operator will testen)
+
+**Beobachtung 2026-09-04 20:07:** Die einzige vorgewärmte Cloud-
+Verbindung des Abends (`cloud.example.org:3001`, Prepare 20:06:50,
+Gate auf 20:07:00) wurde 17 s nach dem Verbinden vom Server
+zurückgesetzt (`Error 10054`), danach Puffer leer → Stille →
+Reconnect 20:07:29 → erneut Abriss 20:07:39 → `-138` → Reconnect
+20:07:59.  Icecast-Ausgänge blieben verbunden (kein Stream-Abriss),
+die Show war aber bis ~20:08 zerhackt.  Die 20:12-Show auf demselben
+Stream (Übernahme, kein Prepare) lief fehlerfrei; BBC (vorgewärmt
+20:00:53) ebenfalls.
+
+**Hypothesen:** (a) Upstream-Wackler zu genau dieser Zeit (`-138` =
+Host unreachable spricht dafür); (b) der Server kickt einen Client,
+der während der Gate-zu-Phase nicht liest — rechnerisch stallt die
+Kette aber erst nach Bridge-`max` (10 s) + `max_buffer` (10 s) = 20 s,
+der Reset kam bei 17 s.
+
+**Test:** Zwei Cloud-Shows mit ≥ 10 s Vorlauf (vorgewärmt) und zwei
+per Übernahme/ohne Vorlauf, jeweils Log auf `10054`/`-138` und
+„Buffer emptied" prüfen.  Tritt der Reset nur vorgewärmt auf:
+Prepare-Vorlauf für Webstreams auf 5 s senken (unter Bridge-`max`)
+oder Bridge-`max` erhöhen.
+
+### 🟡 „Latency is too high" jede Sekunde auf `clock.portaudio_clock` (Operator will testen)
+
+**Befund 2026-09-04:** ~3.560 Warnungen pro Stunde, den ganzen Tag,
+seit dem Main-Output-Umbau (Monitor über `buffer(buffer=2.0, bus)` +
+`clock.assign_new(id="portaudio_clock", sync="cpu")`).  Betrifft den
+lokalen Monitor-Ausgang (Tascam), **nicht** den Sendeweg (Icecast-
+Uhr meldet nichts).  Werte 0,3–1,2 s „catchup".  Kandidaten: `sync="cpu"`
+gegen die Gerätetaktung des Tascam (44,1 kHz), Blockgröße/Latenz von
+`output.portaudio`, `buffer`-Größe.  Nebenwirkung: 60 MB Log/Tag.
+Test: Werte bei Jabra vs. Tascam als Main Output vergleichen;
+`settings.log.level` für die Uhr senken, falls harmlos.
+
+### 🟡 „possible source leak, 61 sources" (Operator will testen)
+
+**Befund:** Warnung seit 2026-09-03 (54 Quellen), am 2026-09-04 abends
+59–61; Liquidsoap-Speicher 232 MB nach 53 min.  Jeder Bus-Übergang
+erzeugt `add`/`fade_in`/`fade_out`/`track_audio_amplify`-Quellen, die
+Queue-Crossfades ebenso.  Test: Quellenzahl und Speicher über einen
+Sendetag beobachten (Zählung aus „Current sources" im Log); steigt sie
+monoton, Übergangsquellen nach `transition_length` prüfen.
 
 ### 🟡 Line-In-Startlücke: Capture-Kette verkürzen (neu 2026-09-03)
 

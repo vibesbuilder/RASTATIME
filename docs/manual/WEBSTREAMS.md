@@ -186,9 +186,11 @@ behaves like any other playlist item.
    bus *gate* closed, so the buffer is full when the slot starts.
 3. At the slot start Pypo opens the gate; the bus-switch routes
    audio to the webstream source within a frame — listeners
-   hear the stream.  (A webstream that could not be pre-warmed —
-   e.g. one webstream directly after another — connects at the
-   slot start and is on air once its buffer is full, ~5 s.)
+   hear the stream.  The **same** stream in the next show simply
+   keeps playing (hand-over of the bookkeeping only, no bounce).  A
+   *different* webstream directly after a webstream cannot be
+   pre-warmed (one stream source): it connects at the slot start
+   and is on air once its buffer is full, ~5 s.
 4. At the configured duration Pypo closes the gate: the bus
    fades the webstream out under the next item over the Default
    Crossfade Duration (Settings → General; 0 = "ducking"), then

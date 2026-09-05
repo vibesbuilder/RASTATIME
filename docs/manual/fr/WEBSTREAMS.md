@@ -167,9 +167,11 @@ silencieux.
 
 **Latence initiale d'émission :** avec le préchauffage (depuis
 le 2026-09-04) un créneau webstream démarre sans trou — le flux a
-été connecté et mis en tampon 10 s plus tôt. Seul un webstream qui
-n'a pas pu être préchauffé (p. ex. directement après un autre
-webstream) a encore besoin de ~5 s de mise en tampon. Les lecteurs
+été connecté et mis en tampon 10 s plus tôt. Le **même** flux dans
+l'émission suivante continue simplement (passation de la seule
+comptabilité, sans coupure). Seul un webstream *différent* juste
+après un webstream (une seule source de flux) a encore besoin de
+~5 s de mise en tampon. Les lecteurs
 côté auditeur ajoutent leur propre buffer de ~10 s, donc le délai
 effectif perçu par l'auditeur final est dominé par le buffer côté
 lecteur.

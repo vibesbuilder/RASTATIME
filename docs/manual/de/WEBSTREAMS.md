@@ -198,9 +198,11 @@ Playlist-Item.
    voll ist.
 3. Beim Slot-Start öffnet Pypo das Gate; der Bus-Switch routet
    das Audio innerhalb eines Frames zur Webstream-Source — Hörer
-   hören den Stream. (Ein Webstream, der nicht vorgewärmt werden
-   konnte — z. B. direkt nach einem anderen Webstream — verbindet
-   beim Slot-Start und ist nach vollem Puffer, ~5 s, auf Sendung.)
+   hören den Stream. Der **gleiche** Stream in der Folgeshow läuft
+   einfach weiter (nur Übergabe der Buchführung, kein Bounce). Ein
+   *anderer* Webstream direkt nach einem Webstream kann nicht
+   vorgewärmt werden (eine Stream-Quelle): Er verbindet beim
+   Slot-Start und ist nach vollem Puffer, ~5 s, auf Sendung.
    Am Slot-Ende schließt Pypo das Gate: Der Bus blendet den
    Webstream über die Standard-Crossfade-Dauer (Settings → General;
    0 = „Ducking") unter dem nächsten Element aus und sendet dann
