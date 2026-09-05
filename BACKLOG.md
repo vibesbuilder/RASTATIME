@@ -242,6 +242,18 @@ WSAECONNRESET.  Hypothese (b) ist damit widerlegt — das Vorwärmen ist
 nicht die Ursache.  Follow-up ist ein Upstream-/Netzthema (Cloud-
 Server bzw. Strecke), kein Playout-Fix; Pre-Warm bleibt wie gebaut.
 
+**Hörtest des Operators (11:36, Show „vah", Cloud-Stream):** ~60 s
+ohne Signal.  Log: Verbindung 11:35:50 (Prepare), erstes dekodierbares
+Audio erst 11:36:06 (16 s — länger als der 10-s-Vorlauf), auf Sendung
+11:36:11, Puffer leer 11:36:18 (der Server stallte nach 7 s), `-138`
+11:36:23, Reconnect dekodiert 11:37:05, wieder auf Sendung 11:37:10 →
+52 s Stille.  Gleiches Muster wie in den A/B-Runden.
+**Optionen, falls der Upstream so bleibt (Go nötig, je ~30 min):**
+(a) `timeout` des Webstream-`input.http` 10 → 5 s und `poll_delay`
+2 → 1 s: Erholung ~25 s statt ~50 s; (b) Prepare-Vorlauf für
+Webstreams 10 → 15 s (`PREPARE_LEAD_SECONDS` je Typ), damit ein
+langsamer Erst-Connect wie hier vor dem Slot-Start fertig ist.
+
 ### 🟡 „Latency is too high" jede Sekunde auf `clock.portaudio_clock` (Operator will testen)
 
 **Befund 2026-09-04:** ~3.560 Warnungen pro Stunde, den ganzen Tag,
