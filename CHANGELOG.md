@@ -61,6 +61,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Regression: fremder Webstream direkt nach einem Webstream verband
+  nicht neu — der alte Stream lief weiter (2026-09-05, `2e6367c`)** —
+  Beim A/B-Test um 11:44:30 und 11:59:00 (BBC → Cloud-Stream) blieb
+  **BBC** für den ganzen Cloud-Slot auf Sendung.  Ursache: Die
+  Drain-Freigabe aus Paket 2 hält die einzige `webstream`-Quelle am
+  Leben; `set_url` + `start` auf einer laufenden `input.http` verbindet
+  nicht neu, und der verzögerte Stop wurde per Generation-Wächter als
+  „neuere Quelle hat übernommen" übersprungen.  Vor Paket 2 war es
+  Stop + Start.  Jetzt wieder: bei fremder URL harter Stop, dann
+  Start (alter Rest fällt weg, neuer Stream puffert ~5 s) — mit einer
+  Stream-Quelle die einzig korrekte Übergabe.  Gleiche URL bleibt
+  Übergabe ohne Bounce, vorgewärmte Streams bleiben Gate-Start.  Test
+  angepasst.  Lehre: Der A/B-Kontrollarm (frische Verbindung) ist
+  dadurch nie gelaufen — Vergleich isoliert nachgeholt.
+
 - **Vorwärmen ging am Refresh verloren; gleicher Stream → gleicher
   Stream hatte einen Dip (2026-09-05, `59c8e8f`)** — Aus der Live-Abnahme
   von Paket 2: (1) Ein Schedule-Refresh löscht und armt alle Timer neu.
