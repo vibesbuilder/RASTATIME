@@ -109,16 +109,33 @@ DEFAULT_PROBE_SAMPLERATE = 44100
 
 
 class ResolvedOutput(NamedTuple):
-    """A PortAudio output device that was proven to open."""
+    """
+    A PortAudio output device that was proven to open.
+
+    ``by_name`` (RASTATIME 2026-09-05) is the exact PortAudio device
+    name to render as ``output.portaudio(device_name=...)`` when that
+    is safe, else ``None`` and the renderer falls back to ``device_id``.
+    See :func:`first_exact_name_match` for the rules.
+    """
 
     index: int
     name: str
     host_api: str
     probed: bool
+    by_name: Optional[str] = None
 
     @property
     def label(self) -> str:
         return f"{self.name} [{self.host_api}]"
+
+
+#: Host APIs whose blocking write really plays audio.  DirectSound's
+#: blocking ``Pa_WriteStream`` is an unimplemented stub in PortAudio
+#: (returns at once, plays nothing — the live instance sat on it for
+#: hours on 2026-09-05, silent, without a single error), WDM-KS has no
+#: blocking API at all (process exit at open).  A name that Liquidsoap
+#: would resolve to one of those must NOT be rendered by name.
+NAME_SAFE_HOST_APIS: Tuple[str, ...] = ("MME", "WASAPI")
 
 
 def _host_api_rank(host_api: str) -> int:
@@ -263,6 +280,94 @@ def probe_output(
     return bool(result["ok"]), str(result["detail"])
 
 
+def first_exact_name_match(name: str, sd) -> Optional[Tuple[int, str, int]]:
+    """
+    ``(index, host_api, max_output_channels)`` of the first PortAudio
+    device whose name equals ``name`` — inputs included — or ``None``.
+
+    This is the entry Liquidsoap's ``output.portaudio(device_name=)``
+    opens: ``portaudio_io.ml`` walks the device list in order and takes
+    the first equal name (measured 2026-09-05: exact comparison, no
+    substring, the error message lists every device name).  PortAudio
+    orders host APIs MME → DirectSound → WASAPI → WDM-KS, and MME
+    truncates names to 31 characters — so a friendly name of at most
+    31 characters lands on the MME entry, a longer one on DirectSound.
+    """
+    apis = sd.query_hostapis()
+    for idx, dev in enumerate(sd.query_devices()):
+        if dev["name"] == name:
+            return idx, apis[dev["hostapi"]]["name"], int(dev["max_output_channels"])
+    return None
+
+
+def with_name_selection(
+    resolved: ResolvedOutput,
+    sd,
+    *,
+    samplerate: int = DEFAULT_PROBE_SAMPLERATE,
+    channels: int = 2,
+    probe: bool = True,
+) -> ResolvedOutput:
+    """
+    Decide whether ``resolved`` may be rendered by name.
+
+    RASTATIME 2026-09-05: PortAudio indices are not stable on the
+    studio machine — endpoints appear late after boot and come and go
+    (Jabra USB, HDMI), and the Tascam WASAPI entry was index 14 at
+    11:15, 18 at 12:10 and 15 at 12:33.  Between PLAYOUT's probe and
+    Liquidsoap's open the list shifted, the live instance opened the
+    Realtek onboard jack, and a later restart with the stale index
+    would have crashed the process (unhandled exception in the clock
+    thread → NSSM restart loop).  A name is immune to that.
+
+    Rules: the first exact match (what Liquidsoap will open) must be an
+    output, must sit on a host API whose blocking write really plays
+    (:data:`NAME_SAFE_HOST_APIS`), and must open in the same blocking
+    probe the index path uses.  Otherwise keep ``device_id`` and say
+    why in the log.
+    """
+    match = first_exact_name_match(resolved.name, sd)
+    if match is None:
+        logger.info(
+            "Main Output %r: no exact PortAudio name match — rendering by index.",
+            resolved.name,
+        )
+        return resolved
+    idx, api, outputs = match
+    if outputs < channels:
+        logger.warning(
+            "Main Output %r: the first PortAudio entry with that name (%d, %s) "
+            "has %d output channel(s) — rendering by index %d instead.",
+            resolved.name, idx, api, outputs, resolved.index,
+        )
+        return resolved
+    if not any(safe.lower() in api.lower() for safe in NAME_SAFE_HOST_APIS):
+        logger.warning(
+            "Main Output %r: the first PortAudio entry with that name is %d [%s]; "
+            "%s cannot be used through Liquidsoap's blocking write (DirectSound: "
+            "silent stub, WDM-KS: no blocking API) — rendering by index %d instead. "
+            "A shorter device name (<= 31 characters) would match the MME entry.",
+            resolved.name, idx, api, api, resolved.index,
+        )
+        return resolved
+    if idx != resolved.index and probe:
+        ok, detail = probe_output(idx, sd, samplerate=samplerate, channels=channels)
+        if not ok:
+            logger.warning(
+                "Main Output %r: PortAudio %d [%s] (the entry the name selects) "
+                "did not open at %d Hz (%s) — rendering by index %d instead.",
+                resolved.name, idx, api, samplerate, detail or "open failed",
+                resolved.index,
+            )
+            return resolved
+    logger.info(
+        "Main Output %r rendered by name -> PortAudio %d [%s] "
+        "(index-independent; the index path would have used %d [%s]).",
+        resolved.name, idx, api, resolved.index, resolved.host_api,
+    )
+    return resolved._replace(by_name=resolved.name)
+
+
 def resolve_output_device(
     device_name: str,
     *,
@@ -315,7 +420,10 @@ def resolve_output_device(
 
     if not probe:
         idx, name, api = candidates[0]
-        return ResolvedOutput(index=idx, name=name, host_api=api, probed=False)
+        return with_name_selection(
+            ResolvedOutput(index=idx, name=name, host_api=api, probed=False),
+            sd, samplerate=samplerate, channels=channels, probe=False,
+        )
 
     tried: List[str] = []
     for idx, name, api in candidates:
@@ -327,7 +435,10 @@ def resolve_output_device(
                 "Main Output resolved: PortAudio device %d — %s [%s] "
                 "(probe at %d Hz succeeded)", idx, name, api, samplerate,
             )
-            return ResolvedOutput(index=idx, name=name, host_api=api, probed=True)
+            return with_name_selection(
+                ResolvedOutput(index=idx, name=name, host_api=api, probed=True),
+                sd, samplerate=samplerate, channels=channels, probe=True,
+            )
         tried.append(f"{api}: {detail or 'open failed'}")
 
     logger.error(

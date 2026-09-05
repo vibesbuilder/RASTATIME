@@ -20,10 +20,13 @@ import pytest
 
 from libretime_playout.engine.portaudio_output import (
     HOST_API_PREFERENCE,
+    ResolvedOutput,
     _hardware_tokens,
     _host_api_rank,
     find_output_candidates,
+    first_exact_name_match,
     resolve_output_device,
+    with_name_selection,
 )
 from libretime_playout.liquidsoap_config import _render_local_output_block
 
@@ -129,6 +132,91 @@ def fake_sd_factory(monkeypatch):
         return fake
 
     return _install
+
+
+# --------------------------------------------------------------------
+# Rendering by name (RASTATIME 2026-09-05 — index drift)
+# --------------------------------------------------------------------
+
+TASCAM_NAME = "Tascam-Lautsprecher (US-16x08)"
+
+
+def test_first_exact_name_match_is_the_mme_entry():
+    """PortAudio lists MME first; a <= 31-char name lands there —
+    exactly what Liquidsoap's device_name= opens."""
+    sd = FakeSD(openable=[TASCAM_MME])
+    assert first_exact_name_match(TASCAM_NAME, sd) == (TASCAM_MME, "MME", 8)
+    assert first_exact_name_match("nope", sd) is None
+    # substring is NOT a match (measured on the real binary)
+    assert first_exact_name_match("Tascam", sd) is None
+
+
+def test_by_name_when_the_mme_entry_opens():
+    sd = FakeSD(openable=[TASCAM_WASAPI, TASCAM_MME])
+    resolved = ResolvedOutput(TASCAM_WASAPI, TASCAM_NAME, "Windows WASAPI", True)
+    out = with_name_selection(resolved, sd)
+    assert out.by_name == TASCAM_NAME
+    assert out.index == TASCAM_WASAPI          # the index path is kept as comment/fallback
+    assert TASCAM_MME in sd.attempted          # the entry the name selects was probed
+
+
+def test_no_name_when_the_mme_entry_refuses():
+    sd = FakeSD(openable=[TASCAM_WASAPI])
+    resolved = ResolvedOutput(TASCAM_WASAPI, TASCAM_NAME, "Windows WASAPI", True)
+    assert with_name_selection(resolved, sd).by_name is None
+
+
+def test_no_name_when_the_first_match_is_directsound():
+    """A friendly name longer than 31 characters cannot match the MME
+    entry, so the first match is DirectSound — whose blocking write is
+    a silent stub.  Keep the index."""
+    long_name = "Realtek-Lautsprecher (Realtek(R) Audio)"
+
+    class LongNameSD(FakeSD):
+        def query_devices(self):
+            return [
+                {"name": "Realtek-Lautsprecher (Realtek(R", "hostapi": 0,
+                 "max_input_channels": 0, "max_output_channels": 2},
+                {"name": long_name, "hostapi": 1,
+                 "max_input_channels": 0, "max_output_channels": 2},
+                {"name": long_name, "hostapi": 2,
+                 "max_input_channels": 0, "max_output_channels": 2},
+            ]
+
+    sd = LongNameSD(openable=[1, 2])
+    assert first_exact_name_match(long_name, sd) == (1, "Windows DirectSound", 2)
+    resolved = ResolvedOutput(2, long_name, "Windows WASAPI", True)
+    assert with_name_selection(resolved, sd).by_name is None
+
+
+def test_no_name_when_the_first_match_is_an_input():
+    class InputFirstSD(FakeSD):
+        def query_devices(self):
+            return [
+                {"name": "Same Name", "hostapi": 0,
+                 "max_input_channels": 2, "max_output_channels": 0},
+                {"name": "Same Name", "hostapi": 2,
+                 "max_input_channels": 0, "max_output_channels": 2},
+            ]
+
+    sd = InputFirstSD(openable=[1])
+    resolved = ResolvedOutput(1, "Same Name", "Windows WASAPI", True)
+    assert with_name_selection(resolved, sd).by_name is None
+
+
+def test_resolve_output_device_offers_the_name(fake_sd_factory):
+    fake_sd_factory(openable=[TASCAM_WASAPI, TASCAM_MME])
+    resolved = resolve_output_device(TASCAM_NAME)
+    assert resolved is not None
+    assert resolved.index == TASCAM_WASAPI
+    assert resolved.by_name == TASCAM_NAME
+
+
+def test_resolve_output_device_without_probe_still_checks_host_api(fake_sd_factory):
+    fake_sd_factory(openable=[])
+    resolved = resolve_output_device(TASCAM_NAME, probe=False)
+    assert resolved is not None
+    assert resolved.by_name == TASCAM_NAME     # MME entry, no probe requested
 
 
 # --------------------------------------------------------------------

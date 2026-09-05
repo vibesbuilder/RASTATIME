@@ -449,6 +449,49 @@ function loadPreflightWarnings() {
               " " + $.i18n._("is not currently reachable.")
             )
           );
+        } else if (w.warning_type === "liquidsoap_memory_high") {
+          // RASTATIME 2026-09-05: the Liquidsoap process leaks memory
+          // on Windows (Unix.select); the preflight warns above the
+          // configured threshold so the operator restarts in time.
+          $li.append(
+            document.createTextNode(
+              " " + $.i18n._("Liquidsoap uses") + " "
+            )
+          );
+          $li.append($("<strong></strong>").text(
+            (detail.private_mb || "?") + " MB"
+          ));
+          $li.append(
+            document.createTextNode(
+              " " + $.i18n._("(threshold") + " " +
+              (detail.threshold_mb || "?") + " MB). " +
+              $.i18n._("Restart PLAYOUT, then LIQUIDSOAP, in a quiet moment.")
+            )
+          );
+        } else if (w.warning_type === "main_output_session_missing") {
+          // RASTATIME 2026-09-05: Liquidsoap holds no audio session on
+          // the configured Main Output endpoint (PortAudio index drift
+          // after a reboot played the monitor to the wrong jack).
+          var actualList = (detail.actual && detail.actual.length)
+            ? detail.actual.join(", ")
+            : $.i18n._("no output device");
+          $li.append(
+            document.createTextNode(
+              " " + $.i18n._("Main Output: Liquidsoap plays to") + " "
+            )
+          );
+          $li.append($("<strong></strong>").text(actualList));
+          $li.append(
+            document.createTextNode(
+              " " + $.i18n._("instead of") + " "
+            )
+          );
+          $li.append($("<strong></strong>").text(detail.expected || "?"));
+          $li.append(
+            document.createTextNode(
+              ". " + $.i18n._("Restart PLAYOUT, then LIQUIDSOAP.")
+            )
+          );
         } else {
           // Unknown warning type — render a generic fallback so future
           // backend additions surface even before the JS catches up.

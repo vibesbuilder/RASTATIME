@@ -49,6 +49,8 @@ from typing import Optional, Set
 
 from libretime_api_client.v2 import ApiClient
 
+from libretime_playout import liquidsoap_health
+
 logger = logging.getLogger(__name__)
 
 
@@ -70,6 +72,10 @@ class PreflightChecker:
     # frontend looks for in the JSON.  Add new ones here when you
     # introduce more warning kinds.
     WARNING_TYPE_LINEIN_UNAVAILABLE = "linein_device_unavailable"
+    # RASTATIME 2026-09-05 — Liquidsoap process health (see
+    # liquidsoap_health.py for the why of both).
+    WARNING_TYPE_LIQUIDSOAP_MEMORY = "liquidsoap_memory_high"
+    WARNING_TYPE_MAIN_OUTPUT_SESSION = "main_output_session_missing"
 
     # ------------------------------------------------------------------
     # Construction & lifecycle
@@ -161,6 +167,10 @@ class PreflightChecker:
           1. ``_scan_linein_devices`` — checks each scheduled Line-In
              item against the live :class:`AudioDeviceManager` and
              emits ``linein_device_unavailable`` warnings.
+          2. ``_scan_liquidsoap_health`` — private bytes of the
+             Liquidsoap process (``liquidsoap_memory_high``) and
+             whether its audio session sits on the configured Main
+             Output endpoint (``main_output_session_missing``).
 
         When more warning types are added, call them here too.  Each
         type submits its own atomic replace, so a failure in one does
@@ -173,6 +183,116 @@ class PreflightChecker:
         self._linein_cache.clear()
 
         self._scan_linein_devices()
+        self._scan_liquidsoap_health()
+
+    # ------------------------------------------------------------------
+    # Liquidsoap process health (RASTATIME 2026-09-05)
+    # ------------------------------------------------------------------
+
+    def _scan_liquidsoap_health(self) -> None:
+        """
+        Two warnings about the running Liquidsoap instance:
+
+        * ``liquidsoap_memory_high`` — private bytes above
+          ``RASTATIME_LIQUIDSOAP_MEMORY_WARN_MB`` (default 2048).  The
+          savonet Windows build leaks in ``Unix.select``; the template's
+          synchronous queue removed the permanent poller and the nightly
+          restart is the safety net, but a runaway instance must be
+          visible before it exhausts the machine (3.4 GB after two
+          hours on 2026-09-05).
+        * ``main_output_session_missing`` — the process holds no audio
+          session on the configured Main Output endpoint although it
+          has been up for a while.  That is what the 2026-09-05 index
+          drift looked like from the outside: hours of silence on the
+          Tascam, Liquidsoap happily playing to the Realtek jack.
+
+        Both probes return ``None`` when they cannot run; a probe that
+        cannot run clears its warning type rather than inventing one.
+        """
+        infos = liquidsoap_health.liquidsoap_process_info()
+        memory_warnings: list[dict] = []
+        session_warnings: list[dict] = []
+        if infos is None:
+            logger.debug("preflight: Liquidsoap process probe unavailable.")
+        else:
+            threshold = liquidsoap_health.memory_warn_threshold_mb()
+            for info in infos:
+                if info.private_mb >= threshold:
+                    memory_warnings.append({
+                        "severity": "error" if info.private_mb >= 2 * threshold else "warning",
+                        "show_id": None,
+                        "show_instance_id": None,
+                        "starts_at": None,
+                        "detail": {
+                            "pid": info.pid,
+                            "private_mb": int(info.private_mb),
+                            "threshold_mb": int(threshold),
+                            "age_seconds": int(info.age_seconds),
+                            "message": (
+                                f"Liquidsoap (PID {info.pid}) uses {int(info.private_mb)} MB "
+                                f"(threshold {int(threshold)} MB) — restart PLAYOUT, then "
+                                "LIQUIDSOAP, in a quiet moment."
+                            ),
+                        },
+                    })
+            session_warnings = self._main_output_session_warnings(infos)
+        self._submit_warnings(
+            self.WARNING_TYPE_LIQUIDSOAP_MEMORY, str(uuid.uuid4()), memory_warnings,
+        )
+        self._submit_warnings(
+            self.WARNING_TYPE_MAIN_OUTPUT_SESSION, str(uuid.uuid4()), session_warnings,
+        )
+
+    def _main_output_session_warnings(
+        self, infos: list["liquidsoap_health.ProcessInfo"],
+    ) -> list[dict]:
+        """Warn when no old-enough Liquidsoap process has a session on the Main Output."""
+        expected = self._expected_main_output_name()
+        if not expected:
+            return []
+        mature = [i for i in infos if i.age_seconds >= liquidsoap_health.MIN_PROCESS_AGE_SECONDS]
+        if not mature:
+            return []
+        sessions = liquidsoap_health.render_endpoint_sessions()
+        if sessions is None:
+            logger.debug("preflight: render endpoint sessions unavailable.")
+            return []
+        pids = [i.pid for i in mature]
+        holding = liquidsoap_health.endpoints_holding(sessions, pids)
+        if any(name.strip().lower() == expected.strip().lower() for name in holding):
+            return []
+        actual = ", ".join(holding) if holding else "no render endpoint"
+        return [{
+            "severity": "error",
+            "show_id": None,
+            "show_instance_id": None,
+            "starts_at": None,
+            "detail": {
+                "expected": expected,
+                "actual": holding,
+                "pids": pids,
+                "message": (
+                    f"Liquidsoap plays its Main Output to {actual}, not to "
+                    f"'{expected}' — restart PLAYOUT, then LIQUIDSOAP."
+                ),
+            },
+        }]
+
+    @staticmethod
+    def _expected_main_output_name() -> str:
+        """Main Output friendly name from Settings → Local Machine ('' when unset/disabled)."""
+        import os  # noqa: PLC0415
+        if os.environ.get("RASTATIME_LIQUIDSOAP_LOCAL_OUTPUT", "true").strip().lower() in (
+            "0", "false", "no", "off",
+        ):
+            return ""
+        try:
+            from libretime_api.soundcard.models import SoundcardSettings  # noqa: PLC0415
+            row = SoundcardSettings.get_settings()
+            return (row.main_output_name or "").strip()
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            logger.debug("preflight: Main Output setting unavailable: %s", exc)
+            return ""
 
     # ------------------------------------------------------------------
     # Line-In device availability

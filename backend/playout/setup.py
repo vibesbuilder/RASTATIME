@@ -35,6 +35,12 @@ setup(
         # via PortAudio; the wheel bundles the PortAudio DLL, no system
         # install needed).  See engine/linein_feeder.py.
         "sounddevice>=0.5.0,<0.6",
+        # RASTATIME 2026-09-05 — Core Audio session API for the preflight
+        # "main_output_session_missing" watchdog (which Windows render
+        # endpoint does liquidsoap.exe actually play to?).  Pure Python +
+        # comtypes; Windows-only at runtime, imports are guarded.
+        "pycaw>=20240210",
+        "comtypes>=1.4",
         "typing-extensions",
     ],
     extras_require={

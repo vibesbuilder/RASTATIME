@@ -312,10 +312,16 @@ def _read_harbor_credentials() -> tuple:
         return ("", "")
 
 
-def _resolve_local_output_device() -> Tuple[Optional[int], str, str]:
+def _resolve_local_output_device() -> Tuple[Optional[int], str, str, Optional[str]]:
     """
     Resolve the operator's **Main Output** setting to a PortAudio
     device index for ``output.portaudio``.
+
+    RASTATIME 2026-09-05 — the fourth element is the exact PortAudio
+    device *name* when the resolver judged rendering by name safe
+    (``ResolvedOutput.by_name``); the renderer then emits
+    ``device_name=`` and the index is only a comment.  See
+    ``portaudio_output.with_name_selection`` for why.
 
     RASTATIME 2026-09-03 — before this, Settings → Local Machine →
     Main Output had no effect on the Liquidsoap local monitor: the
@@ -345,14 +351,14 @@ def _resolve_local_output_device() -> Tuple[Optional[int], str, str]:
             "Could not read the Main Output setting (%s) — the local "
             "monitor falls back to the OS-default endpoint.", exc,
         )
-        return (None, "", "")
+        return (None, "", "", None)
 
     if not stable_id and not name:
         logger.info(
             "No Main Output configured — local monitor uses the "
             "OS-default endpoint."
         )
-        return (None, "", "")
+        return (None, "", "", None)
 
     # Older rows may carry only the GUID; recover the friendly name via
     # the device manager, because PortAudio matches on names, not on
@@ -378,7 +384,7 @@ def _resolve_local_output_device() -> Tuple[Optional[int], str, str]:
             "Settings → Local Machine.  Falling back to the OS-default "
             "endpoint.", stable_id,
         )
-        return (None, "", "")
+        return (None, "", "", None)
 
     try:
         from libretime_playout.engine.portaudio_output import (  # noqa: PLC0415
@@ -390,23 +396,29 @@ def _resolve_local_output_device() -> Tuple[Optional[int], str, str]:
             "Main Output resolve raised %s — falling back to the "
             "OS-default endpoint.", exc,
         )
-        return (None, "", "")
+        return (None, "", "", None)
 
     if resolved is None:
-        return (None, "", "")
-    return (resolved.index, resolved.label, stable_id)
+        return (None, "", "", None)
+    return (resolved.index, resolved.label, stable_id, resolved.by_name)
 
 
-def _render_rastatime_liq_at_startup(stream_outputs: List[Dict]) -> None:
+class _LiquidsoapRenderError(RuntimeError):
+    """Raised by :func:`_render_rastatime_liq` after logging the cause."""
+
+
+def _render_rastatime_liq(stream_outputs: List[Dict]) -> bool:
     """
     Render ``rastatime.liq`` from the operator-configured environment +
     ``cc_pref`` stream outputs.  Idempotent: writes only when content
-    actually changed.  Logs a clear hint if the operator should restart
-    the RASTATIME-LIQUIDSOAP NSSM service to apply the new config.
+    actually changed; returns that ``changed`` flag.
 
-    Never raises out of this function — a render failure should be loud
-    (logger.critical + sys.exit(1)) because the engine that follows
-    won't have a Liquidsoap to talk to if the script is unbuildable.
+    RASTATIME 2026-09-05: split out of the startup wrapper so the
+    scheduler's nightly quiet-window restart can re-render right before
+    it restarts LIQUIDSOAP (fresh device resolution, fresh cc_pref).
+    Every failure is logged here and then raised as
+    :class:`_LiquidsoapRenderError`; the startup wrapper turns that
+    into ``sys.exit(1)``, the nightly caller into a log line.
     """
     from libretime_playout.liquidsoap_config import (  # noqa: PLC0415
         DEFAULT_LINEIN_HTTP_MAX_BUFFER_SECONDS,
@@ -431,7 +443,7 @@ def _render_rastatime_liq_at_startup(stream_outputs: List[Dict]) -> None:
         logger.critical(
             "RASTATIME_LIQUIDSOAP_PORT must be an integer: %s", exc
         )
-        sys.exit(1)
+        raise _LiquidsoapRenderError(str(exc)) from exc
     crossfade = _resolve_crossfade_seconds()
     # RASTATIME 2026-09-03 - linein_http start-up buffer, env-overridable
     # so it can be tuned against the 1.0 default (start gap + end-of-slot
@@ -450,7 +462,7 @@ def _render_rastatime_liq_at_startup(stream_outputs: List[Dict]) -> None:
             "RASTATIME_LIQUIDSOAP_LINEIN_HTTP_MAX_BUFFER_SECONDS must be "
             "a float: %s", exc,
         )
-        sys.exit(1)
+        raise _LiquidsoapRenderError(str(exc)) from exc
     if linein_http_max_buffer < 0.2:
         logger.warning(
             "RASTATIME_LIQUIDSOAP_LINEIN_HTTP_MAX_BUFFER_SECONDS=%.3f is "
@@ -477,7 +489,7 @@ def _render_rastatime_liq_at_startup(stream_outputs: List[Dict]) -> None:
             "RASTATIME_LIQUIDSOAP_CROSSFADE_FADE_SECONDS must be a float: %s",
             exc,
         )
-        sys.exit(1)
+        raise _LiquidsoapRenderError(str(exc)) from exc
     local_output_enabled = (
         os.environ.get("RASTATIME_LIQUIDSOAP_LOCAL_OUTPUT", "true").lower()
         not in ("false", "0", "no", "off")
@@ -505,7 +517,7 @@ def _render_rastatime_liq_at_startup(stream_outputs: List[Dict]) -> None:
             "path, or create the directory with the install script.",
             config_path.parent,
         )
-        sys.exit(1)
+        raise _LiquidsoapRenderError(f"missing directory {config_path.parent}")
 
     # RASTATIME 2026-06-05 — 24/7 hourly archive recorder config (cc_pref,
     # set in Settings -> Local Machine).  Default disabled -> renders a
@@ -526,10 +538,12 @@ def _render_rastatime_liq_at_startup(stream_outputs: List[Dict]) -> None:
             local_output_device_id,
             local_output_device_label,
             local_output_endpoint_id,
+            local_output_device_name,
         ) = _resolve_local_output_device()
     else:
         local_output_device_id, local_output_device_label = (None, "")
         local_output_endpoint_id = ""
+        local_output_device_name = None
 
     try:
         changed = write_rastatime_liq(
@@ -544,6 +558,7 @@ def _render_rastatime_liq_at_startup(stream_outputs: List[Dict]) -> None:
             local_output_device_id=local_output_device_id,
             local_output_device_label=local_output_device_label,
             local_output_endpoint_id=local_output_endpoint_id,
+            local_output_device_name=local_output_device_name,
             linein_http_max_buffer_seconds=linein_http_max_buffer,
             harbor_main_password=harbor_main_pwd or None,
             harbor_show_password=harbor_show_pwd or None,
@@ -557,21 +572,68 @@ def _render_rastatime_liq_at_startup(stream_outputs: List[Dict]) -> None:
             "Failed to render Liquidsoap config %s: %s",
             config_path, exc,
         )
-        sys.exit(1)
+        raise _LiquidsoapRenderError(str(exc)) from exc
 
     if changed:
-        logger.warning(
-            "Rendered %s (content changed).  RESTART the "
-            "RASTATIME-LIQUIDSOAP NSSM service so it picks up the new "
-            ".liq:   nssm restart RASTATIME-LIQUIDSOAP",
-            config_path,
-        )
+        logger.info("Rendered %s (content changed).", config_path)
     else:
         logger.info(
             "Liquidsoap config %s already up-to-date — no restart "
             "needed.",
             config_path,
         )
+    return changed
+
+
+def _render_rastatime_liq_at_startup(stream_outputs: List[Dict]) -> None:
+    """
+    Startup wrapper around :func:`_render_rastatime_liq`.
+
+    A render failure is loud (``sys.exit(1)``) because the engine that
+    follows won't have a Liquidsoap to talk to if the script is
+    unbuildable.
+
+    RASTATIME 2026-09-05 — boot race: LIQUIDSOAP starts in parallel
+    with PLAYOUT and loads the *previous* ``rastatime.liq``.  When this
+    render changed the file inside the boot window, PLAYOUT restarts
+    LIQUIDSOAP itself (nothing is on air that early).  Outside the
+    window the operator keeps the manual rule: PLAYOUT first, then
+    LIQUIDSOAP.  See ``liquidsoap_service`` for the 2026-09-05 evidence.
+    """
+    try:
+        changed = _render_rastatime_liq(stream_outputs)
+    except _LiquidsoapRenderError:
+        sys.exit(1)
+    if not changed:
+        return
+
+    from libretime_playout.liquidsoap_service import (  # noqa: PLC0415
+        boot_restart_enabled,
+        restart_liquidsoap_service,
+        system_uptime_seconds,
+        within_boot_window,
+    )
+
+    uptime = system_uptime_seconds()
+    if boot_restart_enabled() and within_boot_window(uptime):
+        logger.warning(
+            "rastatime.liq changed %.0f s after boot — restarting "
+            "RASTATIME-LIQUIDSOAP so it loads this render instead of the "
+            "stale one it started with (boot race).",
+            uptime or 0.0,
+        )
+        if not restart_liquidsoap_service("boot window: fresh render"):
+            logger.error(
+                "Automatic restart failed.  RESTART the RASTATIME-LIQUIDSOAP "
+                "NSSM service manually:   nssm restart RASTATIME-LIQUIDSOAP"
+            )
+        return
+
+    logger.warning(
+        "Rendered rastatime.liq (content changed).  RESTART the "
+        "RASTATIME-LIQUIDSOAP NSSM service so it picks up the new "
+        ".liq:   nssm restart RASTATIME-LIQUIDSOAP"
+    )
 
 
 def _read_internal_listener_credentials() -> tuple:
@@ -795,12 +857,33 @@ def main() -> None:
     # for the same mounts and lose with 403 "mount taken".
     streaming_handled_externally = (engine_kind == "liquidsoap")
 
+    # RASTATIME 2026-09-05 - nightly quiet-window restart of LIQUIDSOAP
+    # (memory-leak safety net).  Only with the Liquidsoap engine, and the
+    # re-render before the restart needs the ORM for cc_pref.
+    from libretime_playout.liquidsoap_service import NightlyRestartPolicy  # noqa: PLC0415
+    nightly_policy = (
+        NightlyRestartPolicy.from_env() if engine_kind == "liquidsoap" else None
+    )
+    render_for_restart = (
+        (lambda: _render_rastatime_liq(_read_stream_outputs()))
+        if (django_ok and engine_kind == "liquidsoap") else None
+    )
+    if nightly_policy is not None and nightly_policy.enabled:
+        logger.info(
+            "Nightly Liquidsoap restart window starts at %s local time "
+            "(%s to change, 'off' to disable).",
+            nightly_policy.start.strftime("%H:%M"),
+            "RASTATIME_LIQUIDSOAP_NIGHTLY_RESTART",
+        )
+
     scheduler = PlayoutScheduler(
         engine=engine,
         api_client=api_client,
         api_client_v1=api_client_v1,
         storage_path=storage_path,
         stream_outputs=stream_outputs,
+        render_liquidsoap=render_for_restart,
+        nightly_restart=nightly_policy,
         read_stream_outputs=read_streams,
         streaming_handled_externally=streaming_handled_externally,
         input_transition_seconds=_resolve_crossfade_seconds(),

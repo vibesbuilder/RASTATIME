@@ -35,7 +35,7 @@ import logging
 import threading
 import time
 import urllib.request as urllib_request
-from datetime import datetime
+from datetime import date, datetime
 from pathlib import Path
 from typing import Callable, Dict, List, Optional, Tuple
 from urllib.parse import quote
@@ -49,6 +49,7 @@ from .recording_path import build_output_path
 from .engine.ffmpeg_streamer import FfmpegStreamer
 from .engine.interface import PlayoutEngine, PlayoutState
 from .liquidsoap_config import DEFAULT_INPUT_DUCK_FADE_SECONDS
+from .liquidsoap_service import NightlyRestartPolicy, restart_liquidsoap_service
 from .player.events import (
     EventKind,
     FileEvent,
@@ -114,6 +115,8 @@ class PlayoutScheduler:
         read_stream_outputs: Optional[Callable[[], List[Dict]]] = None,
         streaming_handled_externally: bool = False,
         input_transition_seconds: float = 2.0,
+        render_liquidsoap: Optional[Callable[[], bool]] = None,
+        nightly_restart: Optional[NightlyRestartPolicy] = None,
     ) -> None:
         self._engine = engine
         self._api_client = api_client
@@ -138,6 +141,13 @@ class PlayoutScheduler:
         # internals.
         self._armed_events: Dict[str, object] = {}
         self._lock = threading.Lock()
+        # RASTATIME 2026-09-05 - nightly quiet-window restart of LIQUIDSOAP
+        # (memory-leak safety net, see liquidsoap_service).  The render
+        # callable runs right before the restart so the fresh instance
+        # gets today's device resolution and cc_pref.
+        self._render_liquidsoap = render_liquidsoap
+        self._nightly_restart = nightly_restart
+        self._nightly_restart_done: Optional[date] = None
 
         # Track which event key is currently playing so that refresh()
         # doesn't restart an in-progress track every 120 s.
@@ -550,6 +560,115 @@ class PlayoutScheduler:
             "PlayoutScheduler: armed=%d  past=%d  other=%d",
             armed_count, skipped_past, skipped_type,
         )
+
+        # RASTATIME 2026-09-05 - after the timers are re-armed we know
+        # exactly what is on air and what comes next: the right moment
+        # to decide about the nightly quiet-window restart.
+        self._maybe_nightly_restart()
+
+    # ------------------------------------------------------------------
+    # RASTATIME 2026-09-05 - nightly quiet-window restart of LIQUIDSOAP
+    # ------------------------------------------------------------------
+
+    def _quiet_for_restart_locked(self, margin_seconds: float) -> Tuple[bool, str]:
+        """
+        Caller holds ``_lock``.  Quiet means: nothing on air, nothing
+        pre-warmed, and no armed item starting within ``margin_seconds``.
+        """
+        if self._playing_key is not None or self._current_event is not None:
+            return False, "an item is on air"
+        if self._prepared is not None:
+            return False, "a source is pre-warmed"
+        now = datetime.utcnow()
+        soonest = None
+        for event in self._armed_events.values():
+            start = getattr(event, "start", None)
+            if start is None or start <= now:
+                continue
+            if soonest is None or start < soonest:
+                soonest = start
+        if soonest is not None:
+            wait = (soonest - now).total_seconds()
+            if wait < margin_seconds:
+                return False, f"next item starts in {wait:.0f} s"
+        return True, ""
+
+    def _maybe_nightly_restart(self, now_local: Optional[datetime] = None) -> bool:
+        """
+        Restart LIQUIDSOAP once per day inside the configured quiet
+        window when nothing is on air.
+
+        Why: the savonet Windows build leaks memory in ``Unix.select``
+        (3.4 GB after two hours on 2026-09-05 before the template fix).
+        The synchronous queue removed the permanent poller; a daily
+        restart in a quiet window is the safety net for what remains
+        (telnet, harbor and http wake-ups).  Returns True when a restart
+        was attempted.
+        """
+        policy = self._nightly_restart
+        if policy is None or not policy.enabled:
+            return False
+        now_local = now_local or datetime.now()
+        if not policy.due(now_local, self._nightly_restart_done):
+            return False
+        with self._lock:
+            quiet, why = self._quiet_for_restart_locked(policy.quiet_margin_seconds)
+        if not quiet:
+            logger.info("Nightly Liquidsoap restart postponed: %s.", why)
+            return False
+        # One attempt per day, success or not - a failing restart must
+        # not be retried every poll cycle.
+        self._nightly_restart_done = now_local.date()
+        logger.warning(
+            "Nightly Liquidsoap restart (window from %s, nothing on air): "
+            "re-rendering rastatime.liq and restarting RASTATIME-LIQUIDSOAP.",
+            policy.start.strftime("%H:%M") if policy.start else "?",
+        )
+        if self._render_liquidsoap is not None:
+            try:
+                self._render_liquidsoap()
+            except Exception as exc:  # pylint: disable=broad-exception-caught
+                logger.error(
+                    "Nightly restart: re-render failed (%s) - restarting "
+                    "with the existing rastatime.liq.", exc,
+                )
+        if not restart_liquidsoap_service("nightly quiet-window restart"):
+            logger.error(
+                "Nightly Liquidsoap restart failed - the running instance "
+                "keeps going; restart PLAYOUT, then LIQUIDSOAP, manually."
+            )
+            return True
+        self._after_liquidsoap_restart()
+        return True
+
+    def _after_liquidsoap_restart(self, attempts: int = 15, delay: float = 2.0) -> None:
+        """
+        Put the fresh instance into the state it has right after a
+        playout start: nothing playing, nothing pre-warmed, gates
+        closed.  Telnet needs a few seconds to come up, hence the
+        retries around ``reset_gates``.
+        """
+        with self._lock:
+            self._prepared = None
+            self._playing_key = None
+            self._current_event = None
+        for attempt in range(1, attempts + 1):
+            try:
+                self.reset_gates()
+            except Exception as exc:  # pylint: disable=broad-exception-caught
+                if attempt == attempts:
+                    logger.error(
+                        "Nightly restart: Liquidsoap telnet did not come "
+                        "back after %d attempts (%s).", attempts, exc,
+                    )
+                    return
+                time.sleep(delay)
+                continue
+            logger.info(
+                "Nightly restart: Liquidsoap is back (attempt %d), gates reset.",
+                attempt,
+            )
+            return
 
     def shutdown(self) -> None:
         """Cancel all pending timers, stop the engine and all streamers."""
