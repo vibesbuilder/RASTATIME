@@ -82,6 +82,9 @@ LINEIN_FOLLOW_UP_WINDOW_SECONDS = 2.0
 # need).  10 s was the operator's figure; the slowest observed
 # webstream buffer-up was 9 s.
 PREPARE_LEAD_SECONDS = 10.0
+# Below this many seconds to the slot a pre-warm cannot finish (capture
+# health check + decoder lock ~2 s); the slot then starts the normal way.
+MIN_PREPARE_SECONDS = 2.5
 
 
 class PlayoutScheduler:
@@ -917,9 +920,15 @@ class PlayoutScheduler:
         mode only; an item starting sooner than that goes the normal way)."""
         if not self._streaming_handled_externally:
             return
-        lead = start_delay - PREPARE_LEAD_SECONDS
-        if lead <= 0.5:
+        if start_delay < MIN_PREPARE_SECONDS:
             return
+        # RASTATIME 2026-09-05 - a refresh cancels and re-arms every timer.
+        # When it lands INSIDE the lead window (seen live 20:16:49 for a
+        # 20:17:00 slot) the old "lead <= 0.5 -> skip" dropped the pre-warm
+        # and the slot started with the normal 2 s gap.  Now the pre-warm
+        # fires immediately; the handlers are idempotent for an item that
+        # is already pre-warmed.
+        lead = max(0.0, start_delay - PREPARE_LEAD_SECONDS)
         t = threading.Timer(lead, handler, args=(key, event))
         t.daemon = True
         t.start()
@@ -935,9 +944,10 @@ class PlayoutScheduler:
                 "it starts the normal way at its slot.", key,
             )
             return
-        if self._prepared is not None and not self._same_scheduled_item(
-            self._prepared[1], event
-        ):
+        if self._prepared is not None:
+            if self._same_scheduled_item(self._prepared[1], event):
+                logger.debug("Prepare %s: already pre-warmed.", key)
+                return
             logger.info("Prepare %s skipped: %s is already pre-warmed.", key, self._prepared[0])
             return
         dev_name = getattr(event, "device_name", "") or ""
@@ -975,9 +985,10 @@ class PlayoutScheduler:
                 "Prepare %s skipped: a web stream is on air (single source).", key,
             )
             return
-        if self._prepared is not None and not self._same_scheduled_item(
-            self._prepared[1], event
-        ):
+        if self._prepared is not None:
+            if self._same_scheduled_item(self._prepared[1], event):
+                logger.debug("Prepare %s: already pre-buffered.", key)
+                return
             logger.info("Prepare %s skipped: %s is already pre-warmed.", key, self._prepared[0])
             return
         logger.info("Prepare %s: pre-buffering web stream %s (gate closed).", key, event.uri)
@@ -1241,6 +1252,25 @@ class PlayoutScheduler:
             # RASTATIME 2026-09-04 - a line-in predecessor must be closed
             # by us: it outranks nothing while we play, but the switch
             # would drop straight back onto it when we end.
+            # RASTATIME 2026-09-05 - same stream, next show: the source is
+            # already playing this URL, so this is a bookkeeping hand-over
+            # (mirror of the line-in same-device transition).  Releasing and
+            # restarting it (20:12 live) cost a ~1 s fade-out/fade-in dip.
+            # A different gain would need a restart - rare; fall through.
+            if (
+                isinstance(prev_event, WebStreamEvent)
+                and prev_event.uri == event.uri
+                and (prev_event.input_gain_db or 0.0) == (event.input_gain_db or 0.0)
+            ):
+                logger.info(
+                    "Web stream %s: same stream as %s - keeping the source, "
+                    "no bounce.", key, prev_event.uri,
+                )
+                self._take_prepared(event)
+                self._webstream_generation += 1   # a pending drain must not stop us
+                self._engine.stop()               # clear the scheduled queue as usual
+                self._engine.webstream_gate(True)  # in case a race closed it
+                return
             self._close_predecessor_source(prev_event, key)
             self._engine.stop()  # deferred-stop, clears request.queue
             if self._take_prepared(event):
@@ -1912,6 +1942,30 @@ class PlayoutScheduler:
                     "(device=%s) - skipping audio teardown; bookkeeping "
                     "handoff happens when its start timer fires.",
                     key, other_key, starts_in, cur_device,
+                )
+                return
+
+        # RASTATIME 2026-09-05 - same-stream follow-up (mirror of the
+        # line-in rule above): a WebStreamEvent with the SAME url starting
+        # within the back-to-back window inherits the running source; do
+        # not release it here, _on_webstream_start does the hand-over.
+        if was_webstream and self._streaming_handled_externally:
+            cur_uri = getattr(self._current_event, "uri", None)
+            for other_key, other_event in self._armed_events.items():
+                if other_key == key or not isinstance(other_event, WebStreamEvent):
+                    continue
+                if other_event.uri != cur_uri:
+                    continue
+                start_t, _ = self._timers.get(other_key, (None, None))
+                if start_t is None or not start_t.is_alive():
+                    continue
+                starts_in = (other_event.start - now).total_seconds()
+                if abs(starts_in) > LINEIN_FOLLOW_UP_WINDOW_SECONDS:
+                    continue
+                logger.info(
+                    "STOP %s: same-stream follow-up %s starts in %.1fs - "
+                    "skipping release; hand-over happens at its start.",
+                    key, other_key, starts_in,
                 )
                 return
 

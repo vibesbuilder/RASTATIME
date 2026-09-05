@@ -859,8 +859,11 @@ def test_prepare_timer_is_armed_ten_seconds_before_the_slot(liquidsoap_scheduler
 
 
 def test_no_prepare_timer_when_the_slot_is_too_close(liquidsoap_scheduler, fake_timer):
+    """Below MIN_PREPARE_SECONDS a pre-warm cannot finish; the slot starts
+    the normal way.  (Inside the 10 s lead window but above that minimum
+    the pre-warm fires at once - see the 2026-09-05 test further down.)"""
     sched, engine, capture = liquidsoap_scheduler
-    sched._arm_linein_event("K", _future_linein(6), datetime.utcnow())
+    sched._arm_linein_event("K", _future_linein(1.5), datetime.utcnow())
     assert not [t for t in fake_timer.instances if t.function == sched._on_linein_prepare]
 
 
@@ -1039,3 +1042,92 @@ def test_reset_gates_opens_both(liquidsoap_scheduler):
     sched.reset_gates()
     engine.linein_gate.assert_called_once_with(True)
     engine.webstream_gate.assert_called_once_with(True)
+
+
+# --- 2026-09-05 follow-ups after the 19:50-20:22 live run -----------------
+
+from libretime_playout.playout_scheduler import MIN_PREPARE_SECONDS
+
+
+def test_prepare_fires_at_once_when_the_refresh_lands_inside_the_lead_window(
+    liquidsoap_scheduler, fake_timer
+):
+    """20:16:49 refresh for a 20:17:00 slot: the pre-warm was dropped and
+    the slot started with the normal 2 s gap."""
+    sched, engine, capture = liquidsoap_scheduler
+    sched._arm_linein_event("K", _future_linein(6), datetime.utcnow())
+    prep = [t for t in fake_timer.instances if t.function == sched._on_linein_prepare]
+    assert len(prep) == 1
+    assert prep[0].interval == 0.0
+
+
+def test_min_prepare_seconds_is_below_the_lead(liquidsoap_scheduler, fake_timer):
+    """The boundary the older 'too close' test relies on."""
+    assert 0 < MIN_PREPARE_SECONDS < PREPARE_LEAD_SECONDS
+
+
+def test_linein_prepare_is_idempotent_for_the_same_item(liquidsoap_scheduler):
+    """A refresh re-arms the prepare of an item that is already pre-warmed;
+    the second call must not bounce the http source."""
+    sched, engine, capture = liquidsoap_scheduler
+    capture.is_running = True
+    event = _future_linein(10)
+    sched._on_linein_prepare("K", event)
+    sched._on_linein_prepare("K2", event.model_copy())   # same item, shifted key
+    engine.linein_start_http.assert_called_once()
+    capture.start.assert_called_once()
+
+
+def test_same_webstream_next_show_is_a_bookkeeping_hand_over(liquidsoap_scheduler):
+    """20:12 live: releasing + restarting the same URL cost a ~1 s dip."""
+    sched, engine, capture = liquidsoap_scheduler
+    sched._switcher = None
+    sched._cue_item_start = MagicMock()
+    sched._notify_media_started = MagicMock()
+    now = datetime.utcnow()
+    prev = _webstream_event(now - timedelta(minutes=5), row_id=1)
+    sched._playing_key = "A"
+    sched._current_event = prev
+    nxt = _webstream_event(now, row_id=2)          # same uri, same gain
+
+    sched._on_webstream_start("B", nxt)
+
+    engine.webstream_gate.assert_called_once_with(True)
+    engine.webstream_start.assert_not_called()
+    engine.webstream_stop.assert_not_called()
+    assert sched._playing_key == "B" and sched._current_event is nxt
+
+
+def test_different_webstream_next_show_still_releases_the_old_one(liquidsoap_scheduler):
+    sched, engine, capture = liquidsoap_scheduler
+    sched._switcher = None
+    sched._cue_item_start = MagicMock()
+    sched._notify_media_started = MagicMock()
+    now = datetime.utcnow()
+    sched._playing_key = "A"
+    sched._current_event = _webstream_event(now - timedelta(minutes=5), row_id=1)
+    other = _webstream_event(now, row_id=2).model_copy(update={"uri": "http://other.example/x"})
+
+    sched._on_webstream_start("B", other)
+
+    engine.webstream_gate.assert_any_call(False)   # release of the old one
+    engine.webstream_start.assert_called_once()
+
+
+def test_on_stop_keeps_the_stream_for_a_same_stream_back_to_back_follow_up(
+    liquidsoap_scheduler
+):
+    sched, engine, capture = liquidsoap_scheduler
+    sched._switcher = None
+    now = datetime.utcnow()
+    sched._playing_key = "A"
+    sched._current_event = _webstream_event(now - timedelta(minutes=5), row_id=1)
+    nxt = _webstream_event(now + timedelta(seconds=0.5), row_id=2)
+    t = _arm_fake_timer(sched, "B", nxt)
+    try:
+        sched._on_stop("A")
+    finally:
+        t.cancel()
+    engine.webstream_gate.assert_not_called()
+    engine.webstream_stop.assert_not_called()
+    assert sched._playing_key == "A"      # bookkeeping left for B's hand-over
