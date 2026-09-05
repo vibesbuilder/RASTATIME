@@ -4278,3 +4278,23 @@ pushes.  A Windows scheduled task for the nightly restart: not
 schedule-aware and needs an admin step; the scheduler knows what is
 on air.  An OCaml-5 build or a socketpair-based Duppy wake-up:
 upstream work, reported (docs/upstream/2026-09-05-…).
+
+**Addendum 2026-09-05 (evening) — webstream recovery ("Option 1",
+operator-go).**  The cloud DEVA stream (`DEVAStreamServer 1.4`,
+`Event Calendar`, live signal) stalled silently a few seconds
+into fresh connections on 09/02, 09/04 and 09/05, each time costing
+20–50 s of dead air because `input.http` waited 10 s before giving
+up, polled every 2 s and re-detected the format, while the clock
+bridge held 5 s.  Two plain probes from the studio (6 min continuous,
+15 min with a fresh connection every 90 s) were clean; a deliberately
+slow reader was starved after 48 s and reset after 328 s, so the
+appliance stops feeding a client that does not drain.  Decision:
+`timeout` 10 → 3 s, `poll_delay` 2 → 0.5 s, bridge 5 → 10 s
+(`max` 20 s), and webstreams pre-warm 20 s before the slot instead of
+10 s (`WEBSTREAM_PREPARE_LEAD_SECONDS`; line-ins keep 10 s) so the
+longer fill-up is paid before the gate opens.  Recovery budget after a
+stall ≈ 5–9 s < 10 s bridge → no "Buffer emptied" for stalls up to
+roughly 10 s.  Verified against a local pacing server that stalls 6 s
+every 60 s (old settings: dropouts; new: none) — see CHANGELOG.  The
+appliance side (listener limit, per-client buffer, logs) is checked by
+the operator, who runs the DEVA.

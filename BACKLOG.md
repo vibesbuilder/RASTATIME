@@ -254,6 +254,85 @@ Audio erst 11:36:06 (16 s — länger als der 10-s-Vorlauf), auf Sendung
 Webstreams 10 → 15 s (`PREPARE_LEAD_SECONDS` je Typ), damit ein
 langsamer Erst-Connect wie hier vor dem Slot-Start fertig ist.
 
+**Bewertung 2026-09-05 abends (Operator: „Können wir den Upstream
+angehen?"):** Server ist `DEVAStreamServer 1.4` (DEVA-Broadcast-
+Encoder/Appliance, `icy-name: Event Calendar`, 320 kbit/s),
+Host `ip10.isp.example.net` (203.0.113.10, the provider), Pfad ~25 ms
+ohne Hop-Verluste, ICMP geblockt.  Zwei nackte, ständig lesende
+Hörer (`C:/Temp/cloud_probe.py`, 19:09–19:15): 360 von 360 Sekunden
+Daten, keine Lücke, kein Abbruch.  Log-Statistik seit 29.08.: die
+täglichen 12:07/17:07-Cloud-Shows liefen am 01.–03.09. ohne
+Aussetzer; alle Aussetzer treffen die Verbindung in den ersten
+6–60 s nach dem Verbinden (02.09. 17:07:18, 04.09. 20:07 Reset nach
+17 s, 05.09. 11:36 nach 7 s auf Sendung, 17:06:56 `-138` sechs
+Sekunden nach dem Pre-Warm-Connect), die zweite Verbindung hält dann
+(heute 17:07–17:15 lückenlos).  Zweite Sonde (`cloud_probe2.py`,
+19:17–19:32): zehn frische Verbindungen im 90-s-Takt, jede mit ersten
+Daten nach ~150 ms und ohne Lücke; Kontrolle 15 min sauber; der
+absichtlich langsame Leser (4 KB/s statt 40) bekam nach 48 s
+(192 KB) **keine Daten mehr** und wurde nach 328 s vom Server
+zurückgesetzt (10054).  Die DEVA stoppt also einen Client, der nicht
+mitliest, und wirft ihn später raus — vom Studio-Netz aus sind frische
+Verbindungen abends dagegen unauffällig.  Die Live-Aussetzer fielen
+alle in Phasen mit mehreren Verbindungen von unserer IP (Live-Show
+plus Tests) bzw. in die Sendezeiten der DEVA — der Betreiber (der
+Operator selbst) prüft Listener-Limit, Puffer und Log der DEVA.
+**Optionen:** (1) Erholung beschleunigen: Webstream-`input.http`
+`timeout` 10 → 3 s, `poll_delay` 2 → 0,5 s, Bridge 5 → 10 s, optional
+`format="mp3"` per Webstream-Zeile (Autodetect kostet ~5 s) — ein
+Stall unter ~10 s wird unhörbar überbrückt, ~1 h; (2) **Dauerverbindung
+(„pinned")** für diesen Stream: Quelle bleibt 24/7 verbunden, Slot-
+Start öffnet nur das Gate — nutzt den Befund „frische Verbindungen sind
+fragil, stehende halten"; entweder Flag am `webstream`-Datensatz mit
+Scheduler-Sonderfall (Release schließt nur das Gate) oder zweite
+`input.http`-Quelle mit eigenem Bus-Arm, ~½ Tag; (3) Server-Seite:
+DEVA-Weboberfläche (Listener-Limit, Puffer, Logs) durch den Betreiber
+prüfen; (4) falls der Inhalt eine produzierte Schleife ist: als Datei
+in die Library, kein Netz im Sendeweg.  Empfehlung: 1 sofort, 3
+parallel anfragen, 2 wenn die Sonde die Fragilität frischer
+Verbindungen bestätigt.
+
+**Umgesetzt 2026-09-05 (Operator-Go, `860ebee`): Option 1.**
+`timeout` 3 s, `poll_delay` 0,5 s, Bridge 10 s (`max` 20 s), Webstream-
+Vorlauf 20 s (`WEBSTREAM_PREPARE_LEAD_SECONDS`, Line-In bleibt 10 s).
+Nebenbefund E1 (`C:/Temp/prewarm_drain.py`): bei geschlossenem Gate
+liest Liquidsoap 100 s lang durchgehend weiter (`webstream.buffer_length`
+≈ 0, Server sah keinen blockierten Send) — das Vorwärmen erzeugt
+keinen Backpressure, die DEVA-Aushungerung trifft uns dadurch nicht.
+**A/B E2 (`C:/Temp/stall_ab.py`, lokaler Server, der jede Verbindung
+30 s nach dem Connect für 6 s schweigt, ohne Burst beim Reconnect):**
+alte Werte — erster Stall vom Startpuffer geschluckt, zweiter Stall
+hörbar (11 s Stille: 6 s Stall + 5 s Neu-Puffern); neue Werte — erster
+und zweiter Stall unhörbar (Timeout nach 3 s, Reconnect + Decode in
+~2 s), dritter Stall hörbar (14 s Stille), weil jeder Reconnect ~5–6 s
+Puffer kostet und der Testserver nichts nachliefert.  Lehre: **ein**
+Stall bis ~9 s wird überbrückt, wiederholte Stalls innerhalb einer
+Minute leeren die Bridge trotzdem; und wenn es doch zum Aussetzer
+kommt, dauert das Neu-Puffern jetzt 10 s statt 5 s.  Die echte DEVA
+stallt pro Verbindung höchstens einmal (Show-Start) und hält ~5 s
+Client-Puffer, der beim Reconnect als Burst kommt — damit füllt sich
+die Bridge nach jedem Reconnect wieder.
+Option 4 entfällt (Live-Signal).  Option 2 (Dauerverbindung) bleibt
+🟡 in Reserve: die Sonden zeigten frische Verbindungen abends stabil;
+Option 3 macht der Operator (betreibt die DEVA selbst): Listener-Limit,
+Puffer, Log zu den Stall-Zeiten 02.09. 17:07:18, 04.09. 20:07:17,
+05.09. 11:36:13 und 17:06:50.
+
+### 🟡 Webstream: 5 s alte Puffer-Reste spielen nach einem PLAYOUT-Neustart (neu 2026-09-05)
+
+**Befund 17:50:52:** Beim PLAYOUT-Neustart öffnete `reset_gates()`
+beide Gates; die Webstream-Bridge (`buffer(buffer=5.0)`) hielt noch
+Reste vom 17:15 gestoppten Cloud-Stream, `source.is_ready(webstream)`
+war damit wahr → der Bus schaltete für 5 s auf 35 min alten Cloud-Ton
+(„Switch to amplify" 17:50:52, „Buffer emptied" 17:50:57).  Betrifft
+jeden PLAYOUT-Neustart nach einer Webstream-Show, hörbar auf Sendung.
+**Fix-Optionen (Go nötig, ~1 h):** (a) Gates beim Reset geschlossen
+lassen und im nicht-vorgewärmten Start-Pfad explizit öffnen; (b) die
+Bridge beim Release leeren (kein Telnet-Kommando vorhanden → Quelle
+per `webstream.url` auf leer + kurzes `start/stop` ist kein Flush);
+(c) `webstream_live` erst öffnen, wenn `webstream.buffer_length` nach
+einem `start` wieder wächst.  Empfehlung: (a).
+
 ### 🟡 „Latency is too high" jede Sekunde auf `clock.portaudio_clock` (Operator will testen)
 
 **Befund 2026-09-04:** ~3.560 Warnungen pro Stunde, den ganzen Tag,

@@ -141,10 +141,11 @@ playlist.
    - `webstream.start` — demande à la source de se connecter.
 2. La source `input.http` de Liquidsoap ouvre la connexion
    HTTP et bufferise quelques secondes d'audio (pont d'horloge
-   5 s, tampon de flux jusqu'à 10 s). Depuis le 2026-09-04 cela
-   se fait déjà **10 s avant le créneau** (« préchauffage »), la
-   *porte* du bus fermée, si bien que le tampon est plein au début
-   du créneau. En fin de créneau, Pypo ferme la porte : le bus fond
+   10 s, tampon de flux jusqu'à 10 s). Depuis le 2026-09-04 cela
+   se fait déjà avant le créneau (« préchauffage »), la *porte* du
+   bus fermée, si bien que le tampon est plein au début du
+   créneau — depuis le 2026-09-05 **20 s avant le créneau** (10 s
+   auparavant), le pont étant passé de 5 s à 10 s. En fin de créneau, Pypo ferme la porte : le bus fond
    le webstream sous l'élément suivant pendant la durée de crossfade
    par défaut (Settings → General ; 0 = « ducking »), puis envoie
    `webstream.stop` — l'élément suivant démarre à l'heure.
@@ -154,6 +155,14 @@ playlist.
 4. À la durée configurée, Pypo envoie `webstream.stop` ; le
    switch retombe sur scheduled (silence ou la piste
    suivante).
+
+**Ratés du serveur de flux (depuis le 2026-09-05) :** si le serveur
+cesse d'émettre un instant, Liquidsoap abandonne la connexion après
+3 s (10 s auparavant), se reconnecte après 0,5 s et redétecte le
+format ; le pont de 10 s couvre cela, si bien qu'un blocage
+d'environ 10 s au plus n'est pas entendu à l'antenne. Seul un
+serveur qui reste muet plus longtemps, ou refuse les nouvelles
+connexions, produit encore du silence jusqu'à son retour.
 
 **Comportement d'enregistrement (nouveau depuis Phase E,
 2026-05-29) :**
@@ -167,11 +176,11 @@ silencieux.
 
 **Latence initiale d'émission :** avec le préchauffage (depuis
 le 2026-09-04) un créneau webstream démarre sans trou — le flux a
-été connecté et mis en tampon 10 s plus tôt. Le **même** flux dans
+été connecté et mis en tampon 20 s plus tôt. Le **même** flux dans
 l'émission suivante continue simplement (passation de la seule
 comptabilité, sans coupure). Seul un webstream *différent* juste
 après un webstream (une seule source de flux) a encore besoin de
-~5 s de mise en tampon. Les lecteurs
+~10 s de mise en tampon. Les lecteurs
 côté auditeur ajoutent leur propre buffer de ~10 s, donc le délai
 effectif perçu par l'auditeur final est dominé par le buffer côté
 lecteur.

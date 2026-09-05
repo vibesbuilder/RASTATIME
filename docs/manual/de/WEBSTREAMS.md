@@ -191,18 +191,19 @@ Playlist-Item.
      passiert in Pypo).
    - `webstream.start` — fordert die Source auf zu verbinden.
 2. Liquidsoaps `input.http`-Source öffnet die HTTP-
-   Verbindung und buffert einige Sekunden Audio (5-s-Clock-
+   Verbindung und buffert einige Sekunden Audio (10-s-Clock-
    Bridge, bis zu 10 s Stream-Puffer). Seit 2026-09-04 passiert
-   das bereits **10 s vor dem Slot** („Vorwärmen") bei
-   geschlossenem Bus-*Gate*, sodass der Puffer beim Slot-Start
-   voll ist.
+   das bereits vor dem Slot („Vorwärmen") bei geschlossenem
+   Bus-*Gate*, sodass der Puffer beim Slot-Start voll ist — seit
+   2026-09-05 **20 s vor dem Slot** (vorher 10 s), weil die Bridge
+   von 5 s auf 10 s gewachsen ist.
 3. Beim Slot-Start öffnet Pypo das Gate; der Bus-Switch routet
    das Audio innerhalb eines Frames zur Webstream-Source — Hörer
    hören den Stream. Der **gleiche** Stream in der Folgeshow läuft
    einfach weiter (nur Übergabe der Buchführung, kein Bounce). Ein
    *anderer* Webstream direkt nach einem Webstream kann nicht
    vorgewärmt werden (eine Stream-Quelle): Er verbindet beim
-   Slot-Start und ist nach vollem Puffer, ~5 s, auf Sendung.
+   Slot-Start und ist nach vollem Puffer, ~10 s, auf Sendung.
    Am Slot-Ende schließt Pypo das Gate: Der Bus blendet den
    Webstream über die Standard-Crossfade-Dauer (Settings → General;
    0 = „Ducking") unter dem nächsten Element aus und sendet dann
@@ -211,6 +212,14 @@ Playlist-Item.
 4. Bei der konfigurierten Dauer sendet Pypo `webstream.stop`;
    der Switch fällt zurück auf scheduled (Stille oder den
    nächsten Track).
+
+**Aussetzer des Stream-Servers (seit 2026-09-05):** Hört der
+Server kurz auf zu senden, gibt Liquidsoap die Verbindung nach 3 s
+auf (vorher 10 s), verbindet nach 0,5 s neu und erkennt das Format
+erneut; die 10-s-Bridge deckt das ab, sodass ein Aussetzer von bis
+zu etwa 10 s auf Sendung nicht zu hören ist. Nur ein Server, der
+länger schweigt oder keine neuen Verbindungen annimmt, erzeugt
+weiterhin Stille, bis er zurück ist.
 
 **Aufnahme-Verhalten (neu seit Phase E, 2026-05-29):**
 Scheduled Webstreams landen jetzt im Per-Show-`.mp3`-
@@ -221,9 +230,9 @@ aufgezeichnet. Vor Phase E hatten Webstream-only-Shows
 stille Aufnahmen.
 
 **Initiale Show-Latenz:** Mit Vorwärmen (seit 2026-09-04)
-startet ein Webstream-Slot ohne Lücke — der Stream wurde 10 s
+startet ein Webstream-Slot ohne Lücke — der Stream wurde 20 s
 vorher verbunden und gepuffert. Nur ein Webstream, der nicht
-vorgewärmt werden konnte (siehe Schritt 3), braucht noch ~5 s
+vorgewärmt werden konnte (siehe Schritt 3), braucht noch ~10 s
 zum Puffern. Listener-seitige Player haben ihren eigenen
 ~10-s-Puffer, sodass die effektive End-Hörer-wahrgenommene
 Verzögerung von diesem Player-seitigen Puffer dominiert wird.

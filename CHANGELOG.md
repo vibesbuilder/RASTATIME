@@ -262,6 +262,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Webstream-Erholung nach Server-Aussetzern: Timeout 3 s, Poll 0,5 s,
+  10-s-Bridge, Vorwärmen 20 s vor dem Slot („Option 1", 2026-09-05,
+  Operator-Go, `860ebee`)** — Der Cloud-Stream (`DEVAStreamServer 1.4`,
+  Live-Signal „Event Calendar") stallt gelegentlich wenige
+  Sekunden nach einer frischen Verbindung; mit `timeout` 10 s,
+  `poll_delay` 2 s und 5-s-Bridge kostete jeder Stall 20–50 s Stille
+  (11:36: 52 s).  Jetzt `timeout` 3 s, `poll_delay` 0,5 s, Bridge 10 s
+  (`max` 20 s): Erholung ≈ 5–9 s, also unter der Bridge — ein Stall bis
+  etwa 10 s erreicht die Sendung nicht mehr.  Webstreams werden dafür
+  20 s vor dem Slot vorgewärmt (`WEBSTREAM_PREPARE_LEAD_SECONDS`,
+  Line-Ins weiter 10 s); ein nicht vorwärmbarer Webstream braucht ~10
+  statt ~5 s.  Messungen: zwei nackte Sonden vom Studio (6 min
+  Dauerlesen, 15 min mit frischer Verbindung alle 90 s) waren sauber;
+  ein absichtlich langsamer Leser wurde von der DEVA nach 48 s
+  ausgehungert und nach 328 s zurückgesetzt; Liquidsoap liest bei
+  geschlossenem Gate durchgehend weiter (Server sah 100 s lang keinen
+  blockierten Send), das Vorwärmen löst dieses Verhalten also nicht
+  aus.  A/B gegen einen lokalen Server, der alle 60 s für 6 s
+  schweigt: siehe BACKLOG-Eintrag A/B-Test.  Manual WEBSTREAMS in vier
+  Sprachen, Architektur §23.27 Addendum.
+
 - **Monitor-Uhr `sync="auto"`, Quellen-Warnschwelle 200 (2026-09-05,
   `462d684`)** — `output.portaudio` ist selbst-synchron (blockierende
   Writes takten die Uhr am Gerät); `sync="cpu"` kämpfte dagegen und
