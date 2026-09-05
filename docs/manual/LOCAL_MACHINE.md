@@ -141,11 +141,22 @@ saved value alone is not proof that it is in use.
 > really opens. Measured at 44.1 kHz on the studio machine:
 > MME and DirectSound work for a USB headset; WASAPI works when
 > the endpoint's Windows format matches (see the next note), and
-> WDM-KS offers no blocking support at all. The result goes into
-> the script as `device_id=` plus a
-> comment naming the endpoint. If no candidate opens,
+> WDM-KS offers no blocking support at all. If no candidate opens,
 > RASTATIME keeps the OS-default endpoint and records every
 > failure reason in the playout log.
+
+> **The device goes into the script by name, not by number.**
+> PortAudio numbers its devices in enumeration order, and on a
+> machine where endpoints appear late after a reboot or come and
+> go (USB headsets, HDMI audio) those numbers shift. Since
+> 2026-09-05 the script therefore names the endpoint
+> (`device_name="…"`); Liquidsoap looks the name up when *it*
+> starts, so a number that changed between the two service starts
+> can no longer send the monitor to the wrong jack. The name is
+> only used when the entry it selects is known to play (MME or
+> WASAPI, opened in the same test as above); otherwise RASTATIME
+> falls back to the number and says why in the playout log. The
+> active-output line above shows which one is in use.
 
 > **The device's Windows format must match 44.1 kHz.** Liquidsoap
 > runs at 44.1 kHz, and WASAPI shared mode insists on the endpoint's
@@ -158,6 +169,36 @@ saved value alone is not proof that it is in use.
 > can reset the format; the active-output line above then shows the
 > mismatch. Output and Line-In capture on the same interface work
 > simultaneously.
+
+### Automatic restarts and health warnings
+
+Two situations restart the audio engine without the button, and
+two dashboard warnings watch it (all since 2026-09-05):
+
+- **After a reboot.** Both services start in parallel, and the
+  engine may load the previous script before the playout has
+  rendered the new one. When the playout finds that its render
+  changed the script within the first ten minutes after boot, it
+  restarts RASTATIME-LIQUIDSOAP itself. Nothing is on air that
+  early. Later changes still need the button or the manual
+  order: playout first, then Liquidsoap.
+- **Once a night.** The Windows build of Liquidsoap slowly leaks
+  memory while it runs. The playout therefore restarts it once a
+  day inside a quiet window that opens at 04:00 (machine setting
+  `RASTATIME_LIQUIDSOAP_NIGHTLY_RESTART`, `HH:MM` or `off`) — only
+  when nothing is on air, nothing is being pre-warmed and no show
+  starts within the next five minutes. Listeners hear a gap of a
+  few seconds; a show that runs through the night postpones the
+  restart until the window closes.
+- **Memory warning.** The dashboard banner shows *Liquidsoap uses
+  N MB* when the engine's memory exceeds 2048 MB (machine setting
+  `RASTATIME_LIQUIDSOAP_MEMORY_WARN_MB`). Restart the playout and
+  then Liquidsoap in a quiet moment.
+- **Main Output warning.** The banner shows *Main Output: Liquidsoap
+  plays to … instead of …* when the engine holds no audio session
+  on the chosen output device although it has been running for a
+  while. The monitor is then on the wrong jack; restart the
+  playout and then Liquidsoap.
 
 ---
 

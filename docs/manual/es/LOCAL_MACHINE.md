@@ -112,10 +112,23 @@ aplicado, o el dispositivo no pudo abrirse — la línea lo señala en
 > estudio: MME y DirectSound funcionan con unos auriculares USB;
 > WASAPI funciona cuando el formato de Windows del punto final
 > coincide (véase la nota siguiente), y WDM-KS no admite la API
-> bloqueante en absoluto. El resultado se escribe en el script
-> como `device_id=` con un comentario. Si ningún candidato se
+> bloqueante en absoluto. Si ningún candidato se
 > abre, RASTATIME mantiene el punto final por defecto del sistema
 > y registra cada motivo de fallo en el registro de emisión.
+
+> **El dispositivo se escribe en el script por su nombre, no por
+> su número.** PortAudio numera sus dispositivos en el orden de
+> enumeración, y en una máquina donde los puntos finales aparecen
+> tarde tras un reinicio o van y vienen (auriculares USB, audio
+> HDMI), esos números se desplazan. Desde el 2026-09-05 el script
+> nombra por tanto el punto final (`device_name="…"`); Liquidsoap
+> busca el nombre cuando *él* arranca, de modo que un número que
+> cambió entre los dos arranques de servicio ya no puede enviar el
+> monitor a la toma equivocada. El nombre solo se usa cuando la
+> entrada que selecciona se sabe que reproduce (MME o WASAPI,
+> abierta en la misma prueba de arriba); si no, RASTATIME vuelve al
+> número y lo explica en el registro de emisión. La línea «activo»
+> de arriba muestra cuál está en uso.
 
 > **El formato de Windows del dispositivo debe ser 44,1 kHz.**
 > Liquidsoap funciona a 44,1 kHz, y WASAPI en modo compartido exige
@@ -129,6 +142,37 @@ aplicado, o el dispositivo no pudo abrirse — la línea lo señala en
 > restablecer el formato; la línea «activa» de arriba muestra entonces
 > la discrepancia. Salida y captura Line-In en la misma interfaz
 > funcionan a la vez.
+
+### Reinicios automáticos y avisos de salud
+
+Dos situaciones reinician el motor de audio sin el botón, y dos
+avisos del panel lo vigilan (todo desde el 2026-09-05):
+
+- **Tras un reinicio de la máquina.** Ambos servicios arrancan en
+  paralelo, y el motor puede cargar el script anterior antes de que
+  la emisión haya generado el nuevo. Si la emisión detecta que su
+  generación cambió el script en los primeros diez minutos tras el
+  arranque, reinicia ella misma RASTATIME-LIQUIDSOAP. Tan pronto no
+  hay nada en antena. Los cambios posteriores siguen necesitando el
+  botón o el orden manual: primero la emisión, luego Liquidsoap.
+- **Una vez por noche.** La versión de Windows de Liquidsoap pierde
+  memoria lentamente mientras funciona. Por eso la emisión lo
+  reinicia una vez al día dentro de una ventana tranquila que se
+  abre a las 04:00 (ajuste de máquina
+  `RASTATIME_LIQUIDSOAP_NIGHTLY_RESTART`, `HH:MM` u `off`), solo si
+  no hay nada en antena, nada precalentándose y ningún programa
+  empieza en los próximos cinco minutos. Los oyentes escuchan un
+  hueco de pocos segundos; un programa que dura toda la noche
+  pospone el reinicio hasta que la ventana se cierra.
+- **Aviso de memoria.** El banner del panel muestra *Liquidsoap usa
+  N MB* cuando la memoria del motor supera 2048 MB (ajuste de
+  máquina `RASTATIME_LIQUIDSOAP_MEMORY_WARN_MB`). Reinicie la
+  emisión y después Liquidsoap en un momento tranquilo.
+- **Aviso de Main Output.** El banner muestra *Main Output:
+  Liquidsoap reproduce en … en lugar de …* cuando el motor no
+  mantiene ninguna sesión de audio en el dispositivo de salida
+  elegido aunque lleve un rato funcionando. El monitor está entonces
+  en la toma equivocada; reinicie la emisión y después Liquidsoap.
 
 ---
 

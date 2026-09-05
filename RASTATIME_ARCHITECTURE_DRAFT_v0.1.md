@@ -1,10 +1,19 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.21
-Date: 2026-09-04
+Draft version: 0.22
+Date: 2026-09-05
 
 > **Revision history**
+> - **0.22 (2026-09-05)** — **Liquidsoap process hygiene on Windows**
+>   (§23.27).  The savonet Windows build leaks ~5 KB per `Unix.select`;
+>   the scheduled queue becomes a *synchronous* `request.queue` copy
+>   (no Duppy retry poller), the Main Output is rendered by exact
+>   PortAudio **name** instead of index (indices drift after boot),
+>   PLAYOUT restarts LIQUIDSOAP itself inside the boot window and once
+>   a night in a quiet window, and the preflight watches the process
+>   memory and the Main Output audio session.  `sync="auto"` on the
+>   monitor clock ends the "Latency is too high" spam.
 > - **0.21 (2026-09-04)** — **Seamless input switching** (§23.26).  The
 >   Liquidsoap bus switch gains per-source **gates** (`webstream_live`,
 >   `linein_live`, interactive bools ANDed into the predicates) and
@@ -4172,3 +4181,100 @@ top-of-hour would drift.  Shrinking the webstream clock-bridge buffer
 below 5 s: the Phase-E experience is "Buffer emptied" flapping on
 jittery upstreams; pre-warming removes the start gap without touching
 the buffer.
+
+### 23.27 Liquidsoap Process Hygiene on Windows — Leak, Device Index, Restarts (2026-09-05)
+
+**Context.**  The day after the seamless-switching package the live
+Liquidsoap instance (started 11:15 after a reboot) had grown to 3.4 GB
+of private memory by 13:25 while the OCaml heap stayed at 78 MB, and
+its Main Output had been playing to the Realtek onboard jack for
+hours although the setting said Tascam.  Two independent defects of
+the Windows deployment, one investigation.
+
+**Findings.**
+
+1. *Memory.*  A read-only scan of the process showed NT-heap segments
+   full of 5136-byte units whose function pointer resolves (COFF
+   symbol table of `liquidsoap.exe`) to `read_pipe_poll`, the worker
+   of OCaml 4.14's `Unix.select` emulation (`win32unix/select.c`);
+   the fields are the Windows HANDLEs of the Duppy scheduler's fd set.
+   Every `Unix.select` of the scheduler thread leaks its SELECTDATA
+   (savonet/liquidsoap #1122, open since 2020).  Replica bisection:
+   a fresh instance is flat; an explicit `scheduled.push` starts
+   `request.dynamic`'s asynchronous fetch task, which then re-arms
+   itself every `retry_delay` (0.1 s) once the queue is empty or a
+   request failed — forever.  50–100 KB/s per instance; the live one
+   ran at 33 selects/s idle.
+2. *Device index.*  PortAudio indices on the studio machine are not
+   stable: endpoints appear late after boot and come and go (Jabra
+   USB, HDMI).  The Tascam WASAPI entry was index 14 at 11:15, 18 at
+   12:10, 15 at 12:33.  PLAYOUT resolved 14 at 11:15:18, Liquidsoap
+   opened 14 at 11:15:28 — by then a Realtek entry.  Worse, a stale
+   index that now points at an input or a WDM-KS entry is an
+   unhandled exception in the clock thread: the process exits and NSSM
+   restarts it with the same file (instance #1 at 11:15:22 did exactly
+   that; a coincidental re-render saved the day).
+3. *Latency warnings.*  `output.portaudio` is self-synced (blocking
+   writes pace the clock at the device's sample clock); with
+   `sync="cpu"` the clock also tried to hold wall time and logged
+   "Latency is too high" every second whenever the output really
+   played.  The warnings vanished after the reboot only because the
+   instance sat on a DirectSound entry — whose blocking write is an
+   unimplemented stub in PortAudio: no sound, no error.
+4. *"Possible source leak".*  `settings.clock.leak_warning` defaults
+   to 50; the chain has ~45 static sources plus 10–13 short-lived ones
+   per transition that are collected again.  Not a leak.
+
+**Decisions.**
+
+- *Synchronous scheduled queue.*  The template carries a verbatim
+  copy of the 2.4.4 stdlib `request.queue` as `request.queue_sync`
+  with `request.dynamic(synchronous=true)` and `timeout=5.0`.  The
+  push resolves inline in the telnet handler (local files:
+  milliseconds); no Duppy task, no poller.  Replicas: flat memory,
+  every push prepared at once, also after a failed push.  The 5-s
+  resolution timeout bounds a broken file so Pypo's telnet call is
+  never held for the default 20 s.  `settings.clock.leak_warning` is
+  raised to 200.
+- *Main Output by name.*  `output.portaudio(device_name=)` matches
+  the exact PortAudio name at Liquidsoap's own start (first equal name
+  in enumeration order, MME → DirectSound → WASAPI → WDM-KS; MME names
+  are truncated to 31 characters).  The resolver still probes as
+  before and then checks the entry the *name* would select: it must be
+  an output, on MME or WASAPI (DirectSound's blocking write is a
+  silent stub, WDM-KS has no blocking API), and it must open in the
+  same blocking probe.  Only then `device_name=` is rendered; otherwise
+  `device_id=` as before, with the reason in the log.  For the Tascam
+  (30-character name) this selects the MME entry — 8 channels,
+  Windows resampling, index-independent.
+- *Boot-window restart.*  When PLAYOUT's render at start changed the
+  file and the machine booted less than 10 minutes ago, PLAYOUT runs
+  `nssm restart RASTATIME-LIQUIDSOAP` itself (it runs as LocalSystem);
+  nothing is on air that early.  Outside the window the manual rule
+  stays: PLAYOUT first, then LIQUIDSOAP.  Env
+  `RASTATIME_LIQUIDSOAP_BOOT_RESTART=0` disables it.
+- *Nightly quiet-window restart.*  `RASTATIME_LIQUIDSOAP_NIGHTLY_RESTART`
+  (default `04:00`, `off` disables) opens a 60-minute window; on the
+  first schedule refresh inside it with nothing on air, nothing
+  pre-warmed and no item starting within 5 minutes, the scheduler
+  re-renders `rastatime.liq` (fresh device resolution and cc_pref),
+  restarts LIQUIDSOAP, waits for telnet and resets the gates.  One
+  attempt per day.  Safety net for the wake-ups that remain (telnet,
+  harbor, http).
+- *Preflight watchdogs.*  Every 15 minutes: `liquidsoap_memory_high`
+  when private bytes exceed `RASTATIME_LIQUIDSOAP_MEMORY_WARN_MB`
+  (default 2048; error at twice that), and `main_output_session_missing`
+  when no Liquidsoap process older than 90 s holds a Core Audio
+  session on the configured Main Output endpoint (pycaw/comtypes,
+  Windows-only, guarded).  Both surface in the dashboard banner.
+- *Monitor clock.*  `clock.assign_new(id="portaudio_clock", sync="auto")`;
+  the `buffer()` bridge absorbs the drift between device clock and
+  main clock, which is what it was built for.
+
+**Rejected / deferred.**  `retry_delay` as the lever: 2.0 s cuts the
+leak to a tenth but a push after a decoder failure waits up to
+`retry_delay` (measured 5 s at 5.0) — not acceptable for just-in-time
+pushes.  A Windows scheduled task for the nightly restart: not
+schedule-aware and needs an admin step; the scheduler knows what is
+on air.  An OCaml-5 build or a socketpair-based Duppy wake-up:
+upstream work, reported (docs/upstream/2026-09-05-…).

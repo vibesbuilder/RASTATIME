@@ -271,6 +271,8 @@ echte Taktung (DirectSound-Stub!) liefe die Uhr frei → dann muss der
 Geräte-Fix (Eintrag „PortAudio-Index instabil") zuerst kommen; (b)
 `settings.log.level` der Uhr senken (Symptom kaschieren).  Empfehlung:
 (a) zusammen mit dem Geräte-Fix, ~1 h inkl. Prüf-Render.
+**Umgesetzt 2026-09-05 (`462d684`):** (a) `sync="auto"`; Replika mit
+dem Tascam (MME): „Switching to self-sync mode", 0 Warnungen.
 
 ### 🟡 „possible source leak, 61 sources" (Operator will testen)
 
@@ -288,10 +290,10 @@ statische Quellen, jeder Bus-Übergang/Queue-Crossfade legt kurzzeitig
 `source.dynamic`/`track_audio_amplify`, dazu je Übergang ein `fail`-
 Clock-Stub) und die Zahl pendelt zurück (50 → 63 → 50 → 59 → 50).
 Nicht monoton, kein Quellen-Leck.  Fix: `settings.clock.leak_warning := 200`
-im Template (Go nötig, 5 min).  **Das echte Speicherleck ist ein
-anderes** — siehe nächster Eintrag.
+im Template — umgesetzt 2026-09-05 (`462d684`).  **Das echte
+Speicherleck ist ein anderes** — siehe nächster Eintrag.
 
-### 🔴 Liquidsoap-Windows-Speicherleck: ~5 KB pro `Unix.select` (Hold — Upstream-Bug, Milderung möglich)
+### 🟢 Liquidsoap-Windows-Speicherleck: ~5 KB pro `Unix.select` — Milderung umgesetzt 2026-09-05 (`462d684`, `1dbeb71`), Upstream offen
 
 **Befund 2026-09-05:** Die Live-Instanz (Start 11:15:27) wuchs auf
 3,2 GB um 13:11 (Mittel 0,46 MB/s; 0,15 MB/s im Leerlauf, bis
@@ -358,6 +360,17 @@ Jingle „StationID Friska Viljor.mp3" schlägt mit
 2 als Schutznetz, 3 parallel.  Bis dahin: Speicher der Instanz
 beobachten (`Get-Process liquidsoap`), Neustart ab ~4 GB.
 
+**Umgesetzt 2026-09-05 (Operator-Go):** Option 1 als
+`request.queue_sync` im Template (`462d684`), Option 2 als
+Preflight-Warnung `liquidsoap_memory_high` (2048 MB, Fehler ab 4096)
+plus nächtlicher Neustart im ruhigen Fenster ab 04:00 durch den
+Scheduler (`1dbeb71`, `RASTATIME_LIQUIDSOAP_NIGHTLY_RESTART`).
+Replika des Produktions-Renders gegen Icecast + Tascam: Speicher flach
+(94 MB konstant), alle Pushes sofort, auch nach Fehl-Push.  **Offen:**
+Option 3 — Entwurf liegt in
+`docs/upstream/2026-09-05-liquidsoap-windows-unix-select-leak.md`,
+Operator postet ihn bei savonet.
+
 ### 🟡 Jingle „StationID Friska Viljor.mp3" ist für Liquidsoap unlesbar (neu 2026-09-05)
 
 **Befund:** Replika-Push der Datei aus `media/imported/2/artwork/`
@@ -370,7 +383,7 @@ neu kodieren oder in Liquidsoap `audio_to_stereo`/Decoder-Settings
 prüfen; danach Library auf weitere Dateien mit demselben Layout
 scannen (Preflight-Kandidat: „Datei nicht dekodierbar").
 
-### 🟡 PortAudio-Geräteindex instabil → `device_name` statt `device_id` (neu 2026-09-05)
+### 🟢 PortAudio-Geräteindex instabil → `device_name` statt `device_id` — umgesetzt 2026-09-05 (`1dbeb71`)
 
 **Befund:** Der Index desselben Tascam-WASAPI-Endpunkts war 11:15 = 14,
 12:10 = 18, 12:33 = 15 (sounddevice und Liquidsoaps PortAudio stimmen
@@ -407,6 +420,17 @@ Nicht-Treffer → Fehlermeldung listet alle Gerätenamen (Prozess-Exit).
 nie LIQUIDSOAP allein neu starten — immer PLAYOUT (rendert den Index
 neu) → LIQUIDSOAP, danach Session-Sonde: Session muss auf
 „Tascam-Lautsprecher (US-16x08)" liegen.
+
+**Umgesetzt 2026-09-05 (Operator-Go, `1dbeb71`):** Option 3.
+Renderer schreibt `device_name=` wenn der erste exakte Namens-Treffer
+ein Ausgang auf MME/WASAPI ist und im blockierenden Probe öffnet
+(Tascam → MME-Eintrag), sonst weiter `device_id=` mit Begründung im
+Log; Boot-Race-Fix (PLAYOUT startet LIQUIDSOAP im 10-min-Boot-Fenster
+selbst neu); Preflight-Watchdog `main_output_session_missing`
+(Session-Sonde alle 15 min, pycaw/comtypes im venv).  Replika:
+Session liegt auf dem Tascam.  Die Betriebsregel bleibt für manuelle
+Neustarts außerhalb des Boot-Fensters sinnvoll (Index-Drift zwischen
+Render und Öffnen ist mit `device_name` aber entschärft).
 
 ### 🟡 Line-In-Startlücke: Capture-Kette verkürzen (neu 2026-09-03)
 
@@ -2183,6 +2207,11 @@ NSSM startete Instanz #2 um 11:15:27 — die nun Index 14 = Realtek
 wäre es eine Neustart-Schleife gewesen.  Die Empfehlung (Option 2 mit
 Boot-Fenster-Schutz) steht; sie muss zusammen mit dem `device_name`-
 Eintrag umgesetzt werden, sonst bleibt der Index-Drift.
+**Umgesetzt 2026-09-05 (`1dbeb71`):** Option 2 — PLAYOUT ruft
+`nssm restart RASTATIME-LIQUIDSOAP` selbst, wenn sein Render die .liq
+innerhalb von 10 min nach dem Hochfahren geändert hat
+(`liquidsoap_service.py`, `RASTATIME_LIQUIDSOAP_BOOT_RESTART=0`
+schaltet ab).  Status damit 🟢.
 
 ### 💡 Line-In: Kanalwahl auch im Library-Schnell-Editor (Option A)
 

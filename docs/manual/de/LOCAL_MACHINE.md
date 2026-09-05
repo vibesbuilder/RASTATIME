@@ -152,10 +152,23 @@ gespeicherter Wert ist kein Beleg dafür, dass er auch benutzt wird.
 > 44,1 kHz gemessen: MME und DirectSound funktionieren für ein
 > USB-Headset; WASAPI funktioniert, wenn das Windows-Format des
 > Endpunkts passt (siehe nächster Hinweis), und WDM-KS beherrscht
-> die blockierende API überhaupt nicht. Das Ergebnis steht als
-> `device_id=` samt Kommentar im Skript. Öffnet kein Kandidat,
+> die blockierende API überhaupt nicht. Öffnet kein Kandidat,
 > bleibt der OS-Standard-Endpunkt aktiv, und jeder Fehlergrund
 > wird im Playout-Log vermerkt.
+
+> **Das Gerät steht mit Namen im Skript, nicht mit Nummer.**
+> PortAudio nummeriert seine Geräte in Aufzählungsreihenfolge, und
+> auf einer Maschine, auf der Endpunkte nach einem Neustart spät
+> erscheinen oder kommen und gehen (USB-Headsets, HDMI-Audio),
+> verschieben sich diese Nummern. Seit dem 2026-09-05 benennt das
+> Skript den Endpunkt daher (`device_name="…"`); Liquidsoap schlägt
+> den Namen nach, wenn *es* startet, sodass eine Nummer, die sich
+> zwischen den beiden Dienststarts geändert hat, den Monitor nicht
+> mehr auf die falsche Buchse schicken kann. Der Name wird nur
+> verwendet, wenn der Eintrag, den er auswählt, bekanntermaßen
+> spielt (MME oder WASAPI, im selben Test wie oben geöffnet);
+> andernfalls fällt RASTATIME auf die Nummer zurück und begründet
+> das im Playout-Log. Die „Aktiv"-Zeile oben zeigt, was in Gebrauch ist.
 
 > **Das Windows-Format des Geräts muss 44,1 kHz sein.** Liquidsoap
 > läuft mit 44,1 kHz, und WASAPI im Shared-Modus verlangt exakt die
@@ -169,6 +182,39 @@ gespeicherter Wert ist kein Beleg dafür, dass er auch benutzt wird.
 > kann das Format zurücksetzen; die Aktiv-Zeile oben zeigt dann die
 > Abweichung. Ausgabe und Line-In-Aufnahme am selben Interface
 > laufen gleichzeitig.
+
+### Automatische Neustarts und Gesundheitswarnungen
+
+Zwei Situationen starten die Audio-Engine ohne den Knopf neu, und
+zwei Dashboard-Warnungen wachen über sie (alles seit dem 2026-09-05):
+
+- **Nach einem Neustart der Maschine.** Beide Dienste starten
+  parallel, und die Engine kann das vorherige Skript laden, bevor
+  das Playout das neue gerendert hat. Stellt das Playout fest, dass
+  sein Render das Skript innerhalb der ersten zehn Minuten nach dem
+  Hochfahren geändert hat, startet es RASTATIME-LIQUIDSOAP selbst
+  neu. So früh ist nichts auf Sendung. Spätere Änderungen brauchen
+  weiterhin den Knopf oder die manuelle Reihenfolge: zuerst
+  Playout, dann Liquidsoap.
+- **Einmal pro Nacht.** Der Windows-Build von Liquidsoap verliert
+  im Betrieb langsam Speicher. Das Playout startet ihn daher einmal
+  täglich in einem ruhigen Fenster neu, das um 04:00 Uhr öffnet
+  (Maschinen-Einstellung `RASTATIME_LIQUIDSOAP_NIGHTLY_RESTART`,
+  `HH:MM` oder `off`) — nur wenn nichts auf Sendung ist, nichts
+  vorgewärmt wird und in den nächsten fünf Minuten keine Sendung
+  beginnt. Hörer hören eine Lücke von wenigen Sekunden; eine
+  Sendung, die durch die Nacht läuft, verschiebt den Neustart, bis
+  das Fenster schließt.
+- **Speicher-Warnung.** Das Dashboard-Banner zeigt *Liquidsoap
+  belegt N MB*, wenn der Speicher der Engine 2048 MB überschreitet
+  (Maschinen-Einstellung `RASTATIME_LIQUIDSOAP_MEMORY_WARN_MB`).
+  Starten Sie in einem ruhigen Moment das Playout und danach
+  Liquidsoap neu.
+- **Main-Output-Warnung.** Das Banner zeigt *Main Output: Liquidsoap
+  spielt auf … statt …*, wenn die Engine keine Audio-Sitzung auf
+  dem gewählten Ausgabegerät hält, obwohl sie schon eine Weile
+  läuft. Der Monitor liegt dann auf der falschen Buchse; starten
+  Sie das Playout und danach Liquidsoap neu.
 
 ---
 

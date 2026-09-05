@@ -9,6 +9,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Liquidsoap-Prozesshygiene auf Windows: automatische Neustarts und
+  Watchdogs (2026-09-05, Operator-Go, `1dbeb71`)** — Drei Ergänzungen
+  aus der Untersuchung des Speicherlecks und des Geräteindex:
+  1. **Boot-Fenster-Neustart:** Ändert PLAYOUTs Render die `rastatime.liq`
+     innerhalb von 10 min nach dem Hochfahren, startet PLAYOUT
+     RASTATIME-LIQUIDSOAP selbst neu (`nssm restart`, LocalSystem) —
+     die Instanz vom Boot lief bisher mit der Datei vom Vortag
+     (Boot-Race; am 2026-09-05 11:15 starb Instanz #1 an einem
+     veralteten Geräteindex).  `RASTATIME_LIQUIDSOAP_BOOT_RESTART=0`
+     schaltet ab.
+  2. **Nächtlicher Neustart im ruhigen Fenster:** ab 04:00
+     (`RASTATIME_LIQUIDSOAP_NIGHTLY_RESTART`, `HH:MM` oder `off`) startet
+     der Scheduler LIQUIDSOAP einmal täglich neu — nur wenn nichts auf
+     Sendung, nichts vorgewärmt und kein Titel in den nächsten 5 min;
+     vorher Re-Render, danach Telnet-Warten und Gate-Reset.
+     Schutznetz gegen das verbleibende `Unix.select`-Leck.
+  3. **Preflight-Warnungen** im Dashboard-Banner:
+     `liquidsoap_memory_high` (private Bytes über
+     `RASTATIME_LIQUIDSOAP_MEMORY_WARN_MB`, Default 2048, Fehler ab dem
+     Doppelten) und `main_output_session_missing` (kein Liquidsoap-
+     Prozess älter als 90 s hält eine Core-Audio-Session auf dem
+     gewählten Main-Output-Endpunkt; pycaw/comtypes im Playout-venv).
+     Handbuch „Lokale Maschine" in vier Sprachen, Architektur 0.22 §23.27.
+
 - **Nahtlose Eingangswechsel: Bus-Gates, Übergangsfunktionen,
   Vorwärmen — „Paket 2" (2026-09-04, Operator-Go, Leitlinie
   „Seamless-Mix")** — Nach Paket „Line-In-Latenz" blieben 2 s Stille am
@@ -68,6 +92,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Reboot auf der Realtek-Buchse) — beides mit Optionen im BACKLOG.
 
 ### Fixed
+
+- **Speicherleck der Windows-Liquidsoap: synchrone Scheduled-Queue
+  (2026-09-05, Operator-Go, `462d684`)** — Der savonet-Windows-Build
+  (OCaml 4.14) leakt ~5 KB pro `Unix.select` des Duppy-Schedulers
+  (win32unix `select.c`, savonet #1122).  Ein `scheduled.push` startete
+  den asynchronen Fetch-Task von `request.dynamic`, der sich nach dem
+  Leerlaufen der Queue oder einem gescheiterten Request alle
+  `retry_delay` (0,1 s) neu einplant — für immer: 0,15–0,8 MB/s, 3,4 GB
+  nach zwei Stunden am 2026-09-05.  Das Template rendert jetzt
+  `request.queue_sync`, eine wörtliche Kopie der Stdlib-`request.queue`
+  mit `request.dynamic(synchronous=true)` und `timeout=5.0`: der Push
+  löst inline im Telnet-Handler auf, kein Poller existiert.  Replika
+  des Produktions-Renders gegen Icecast + Tascam: Speicher flach
+  (94 MB konstant), jeder Push sofort vorbereitet, auch nach einem
+  Fehl-Push; `skip`/`flush`/`annotate:` unverändert.  Upstream-Entwurf
+  in `docs/upstream/`.
+- **Main Output landete nach dem Reboot auf der falschen Buchse:
+  Gerät per Namen statt Index (2026-09-05, Operator-Go, `1dbeb71`)** —
+  PortAudio-Indizes sind auf der Studio-Maschine nicht stabil (Tascam
+  WASAPI: 14 um 11:15, 18 um 12:10, 15 um 12:33); zwischen PLAYOUT-Probe
+  und Liquidsoap-Open verschob sich die Liste, die Live-Instanz spielte
+  stundenlang auf die Realtek-Onboard-Buchse, und ein Neustart mit dem
+  veralteten Index hätte den Prozess am Geräte-Open beendet (NSSM-
+  Neustart-Schleife).  Der Resolver prüft nach dem blockierenden Probe
+  den Eintrag, den der exakte Name auswählt (Liquidsoap nimmt den
+  ersten gleichen Namen; MME zuerst, MME-Namen 31 Zeichen): Ausgang
+  auf MME/WASAPI, der öffnet → `device_name=`; sonst wie bisher
+  `device_id=` mit Begründung im Log.  DirectSounds blockierender Write
+  ist ein stummer Stub, WDM-KS hat keine blockierende API.
+  Replika: Audio-Session liegt auf dem Tascam.
 
 - **Regression: fremder Webstream direkt nach einem Webstream verband
   nicht neu — der alte Stream lief weiter (2026-09-05, `2e6367c`)** —
@@ -207,6 +261,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   wie beim Line-In-Zweig; Test dazu.
 
 ### Changed
+
+- **Monitor-Uhr `sync="auto"`, Quellen-Warnschwelle 200 (2026-09-05,
+  `462d684`)** — `output.portaudio` ist selbst-synchron (blockierende
+  Writes takten die Uhr am Gerät); `sync="cpu"` kämpfte dagegen und
+  meldete „Latency is too high" jede Sekunde (3.560/h), sobald der
+  Ausgang wirklich spielte — nach dem Reboot fehlten die Meldungen nur,
+  weil die Instanz auf DirectSound (Stub) lag.  `sync="auto"` lässt das
+  Gerät takten, die `buffer()`-Brücke fängt die Drift.  Replika mit dem
+  Tascam: „Switching to self-sync mode", 0 Warnungen.
+  `settings.clock.leak_warning := 200`: die Kette hat ~45 statische
+  Quellen plus 10–13 kurzlebige je Übergang; 50–63 war Fehlalarm.
 
 - **`input.http`-Puffer des Line-In-Companions 1,5 → 2,0 s
   (2026-09-03)** — Auf Operator-Wunsch nach dem ~1 s Aussetzer der
