@@ -93,6 +93,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Startreihenfolge-Lücke: `recording.stop` und Gate-Reset warten jetzt
+  auf Liquidsoaps Telnet (2026-09-06, `578e950`)** — Kommt PLAYOUT vor
+  LIQUIDSOAP hoch (manuelle Reihenfolge mit Abstand, Boot-Fenster-
+  Neustart, nächtlicher Neustart), lief der einmalige Startversuch ins
+  Leere: die frische Instanz nahm die Sentinel-Datei
+  `_uninitialized.mp3` auf (32 MB in 14 min am 2026-09-06 17:30) und
+  behielt ihren Boot-Gate-Zustand.  Der Konstruktor versucht es weiter
+  einmal; `ensure_liquidsoap_initial_state()` (aus `__main__`) wiederholt
+  in einem Daemon-Thread alle 2 s bis 90 s, `recording.stop` dient als
+  Bereitschafts-Sonde; der nächtliche Neustart nutzt dieselbe Sonde vor
+  dem Gate-Reset.
+
 - **Speicherleck der Windows-Liquidsoap: synchrone Scheduled-Queue
   (2026-09-05, Operator-Go, `462d684`)** — Der savonet-Windows-Build
   (OCaml 4.14) leakt ~5 KB pro `Unix.select` des Duppy-Schedulers

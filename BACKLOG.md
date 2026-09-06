@@ -2303,6 +2303,11 @@ Eintrag umgesetzt werden, sonst bleibt der Index-Drift.
 innerhalb von 10 min nach dem Hochfahren geändert hat
 (`liquidsoap_service.py`, `RASTATIME_LIQUIDSOAP_BOOT_RESTART=0`
 schaltet ab).  Status damit 🟢.
+**Nachtrag 2026-09-06 (`578e950`):** Das Gegenstück — PLAYOUT vor
+LIQUIDSOAP — ließ den einmaligen `recording.stop`/Gate-Reset ins
+Leere laufen (Sentinel-Datei wuchs).  Jetzt wiederholt der Scheduler
+beides bis zu 90 s, bis Telnet antwortet; gilt auch nach dem Boot-
+Fenster- und dem nächtlichen Neustart.
 
 ### 💡 Line-In: Kanalwahl auch im Library-Schnell-Editor (Option A)
 
