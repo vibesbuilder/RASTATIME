@@ -101,11 +101,71 @@ def test_failed_restart_is_not_retried_today(sched):
     assert not sched._maybe_nightly_restart(now_local=IN_WINDOW + timedelta(minutes=5))
 
 
-def test_after_restart_retries_reset_gates_until_telnet_is_back(sched):
-    sched.reset_gates = MagicMock(side_effect=[ConnectionError("down"), ConnectionError("down"), None])
-    sched._playing_key = None
+def test_after_restart_retries_until_telnet_is_back(sched):
+    """recording.stop is the readiness probe (it raises while telnet is
+    down); gates are reset once it succeeded."""
+    engine = sched._test["engine"]
+    engine.recording_stop.reset_mock()
+    engine.recording_stop.side_effect = [ConnectionError("down"), ConnectionError("down"), None]
+    sched.reset_gates.reset_mock()
     sched._after_liquidsoap_restart(attempts=5, delay=0.0)
-    assert sched.reset_gates.call_count == 3
+    assert engine.recording_stop.call_count == 3
+    assert sched.reset_gates.call_count == 1
+
+
+def test_after_restart_gives_up_after_attempts(sched):
+    engine = sched._test["engine"]
+    engine.recording_stop.reset_mock()
+    engine.recording_stop.side_effect = ConnectionError("down")
+    sched.reset_gates.reset_mock()
+    sched._after_liquidsoap_restart(attempts=3, delay=0.0)
+    assert engine.recording_stop.call_count == 3
+    sched.reset_gates.assert_not_called()
+
+
+# RASTATIME 2026-09-06 - initial state with retries (startup race)
+
+def test_constructor_success_makes_ensure_a_noop(sched):
+    engine = sched._test["engine"]
+    assert sched._initial_state_ok is True          # MagicMock recording_stop succeeded
+    calls = engine.recording_stop.call_count
+    assert sched.ensure_liquidsoap_initial_state(background=False) is True
+    assert engine.recording_stop.call_count == calls
+
+
+def test_ensure_retries_after_a_failed_constructor_attempt(monkeypatch):
+    engine = MagicMock(spec=LiquidsoapPlayoutEngine)
+    engine.get_state.return_value = PlayoutState.STOPPED
+    engine.recording_stop.side_effect = [ConnectionError("not up"), ConnectionError("not up"), None]
+    monkeypatch.setattr(ps.time, "sleep", lambda _s: None)
+    s = ps.PlayoutScheduler(engine=engine, api_client=MagicMock(), streaming_handled_externally=True)
+    assert s._initial_state_ok is False
+    assert engine.recording_stop.call_count == 1
+    s.reset_gates = MagicMock()
+    assert s.ensure_liquidsoap_initial_state(background=False, attempts=5, delay=0.0) is True
+    assert engine.recording_stop.call_count == 3
+    sched_gates = s.reset_gates.call_count
+    assert sched_gates == 1
+    assert s._initial_state_ok is True
+
+
+def test_ensure_gives_up_after_the_timeout(monkeypatch):
+    engine = MagicMock(spec=LiquidsoapPlayoutEngine)
+    engine.get_state.return_value = PlayoutState.STOPPED
+    engine.recording_stop.side_effect = ConnectionError("never")
+    monkeypatch.setattr(ps.time, "sleep", lambda _s: None)
+    s = ps.PlayoutScheduler(engine=engine, api_client=MagicMock(), streaming_handled_externally=True)
+    assert s.ensure_liquidsoap_initial_state(background=False, attempts=4, delay=0.0) is False
+    assert engine.recording_stop.call_count == 1 + 4
+    assert s._initial_state_ok is False
+
+
+def test_ensure_is_none_for_legacy_engines():
+    from libretime_playout.engine.interface import PlayoutEngine
+    engine = MagicMock(spec=PlayoutEngine)
+    engine.get_state.return_value = PlayoutState.STOPPED
+    s = ps.PlayoutScheduler(engine=engine, api_client=MagicMock(), streaming_handled_externally=False)
+    assert s.ensure_liquidsoap_initial_state(background=False) is None
 
 
 def test_disabled_policy_is_a_noop(monkeypatch):

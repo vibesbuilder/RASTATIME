@@ -154,6 +154,10 @@ class PlayoutScheduler:
         self._render_liquidsoap = render_liquidsoap
         self._nightly_restart = nightly_restart
         self._nightly_restart_done: Optional[date] = None
+        # RASTATIME 2026-09-06 - did the constructor's recording.stop +
+        # gate reset reach Liquidsoap?  False means telnet was not up yet
+        # and ensure_liquidsoap_initial_state() has to keep trying.
+        self._initial_state_ok: bool = False
 
         # Track which event key is currently playing so that refresh()
         # doesn't restart an in-progress track every 120 s.
@@ -318,22 +322,29 @@ class PlayoutScheduler:
             # Without an explicit stop here, the sentinel
             # `_uninitialized.mp3` would keep growing from Liquidsoap
             # boot until the first _on_show_record_start hook fires —
-            # potentially hours.  Best-effort: silently log if the
-            # telnet isn't ready yet (NSSM startup race) — the worst
-            # case is a slightly longer sentinel file.
+            # potentially hours.  RASTATIME 2026-09-06: a single attempt
+            # was not enough - whenever PLAYOUT comes up before
+            # LIQUIDSOAP (manual restart order, boot-window restart,
+            # nightly restart) the stop hit a dead telnet and the
+            # sentinel grew (32 MB in 14 min on 2026-09-06 17:30).
+            # First attempt synchronously; on failure a daemon thread
+            # keeps trying until telnet is back (see
+            # ensure_liquidsoap_initial_state).
             if hasattr(self._engine, "recording_stop"):
-                try:
-                    self._engine.recording_stop()
+                ok, exc = self._apply_initial_liquidsoap_state(reset_gates=False)
+                self._initial_state_ok = ok
+                if ok:
                     logger.info(
                         "PlayoutScheduler: initial recording.stop sent "
                         "to Liquidsoap (silences sentinel-file write "
                         "from boot until first scheduled show).",
                     )
-                except Exception as exc:  # pylint: disable=broad-exception-caught
+                else:
                     logger.warning(
                         "PlayoutScheduler: initial recording.stop failed "
-                        "(Liquidsoap not ready yet?): %s — sentinel "
-                        "file will keep growing until first show.",
+                        "(Liquidsoap not ready yet?): %s — "
+                        "ensure_liquidsoap_initial_state() retries until "
+                        "telnet is back.",
                         exc,
                     )
         else:
@@ -650,31 +661,99 @@ class PlayoutScheduler:
     def _after_liquidsoap_restart(self, attempts: int = 15, delay: float = 2.0) -> None:
         """
         Put the fresh instance into the state it has right after a
-        playout start: nothing playing, nothing pre-warmed, gates
-        closed.  Telnet needs a few seconds to come up, hence the
-        retries around ``reset_gates``.
+        playout start: nothing playing, nothing pre-warmed, recording
+        sentinel stopped, gates open.  Telnet needs a few seconds to
+        come up, hence the retries.
         """
         with self._lock:
             self._prepared = None
             self._playing_key = None
             self._current_event = None
-        for attempt in range(1, attempts + 1):
-            try:
-                self.reset_gates()
-            except Exception as exc:  # pylint: disable=broad-exception-caught
-                if attempt == attempts:
-                    logger.error(
-                        "Nightly restart: Liquidsoap telnet did not come "
-                        "back after %d attempts (%s).", attempts, exc,
-                    )
-                    return
-                time.sleep(delay)
-                continue
-            logger.info(
-                "Nightly restart: Liquidsoap is back (attempt %d), gates reset.",
-                attempt,
+        if self._retry_initial_liquidsoap_state(attempts, delay, sleep=time.sleep):
+            logger.info("Nightly restart: Liquidsoap is back, sentinel stopped, gates reset.")
+        else:
+            logger.error(
+                "Nightly restart: Liquidsoap telnet did not come back "
+                "within %d attempts.", attempts,
             )
-            return
+
+    # ------------------------------------------------------------------
+    # RASTATIME 2026-09-06 - initial Liquidsoap state with retries
+    # ------------------------------------------------------------------
+
+    def _apply_initial_liquidsoap_state(
+        self, reset_gates: bool = True,
+    ) -> Tuple[bool, Optional[BaseException]]:
+        """
+        One attempt: ``recording.stop`` (raises while telnet is down,
+        so it doubles as the readiness probe) and then, unless
+        ``reset_gates`` is False, both bus gates open.  Returns
+        ``(ok, exception)``.  The constructor passes ``reset_gates=False``
+        - ``__main__`` resets the gates itself right after construction.
+        """
+        try:
+            self._engine.recording_stop()
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            return False, exc
+        if reset_gates:
+            self.reset_gates()
+        return True, None
+
+    def _retry_initial_liquidsoap_state(
+        self, attempts: int, delay: float, sleep: Callable[[float], None],
+    ) -> bool:
+        for attempt in range(1, attempts + 1):
+            ok, exc = self._apply_initial_liquidsoap_state()
+            if ok:
+                if attempt > 1:
+                    logger.info(
+                        "PlayoutScheduler: Liquidsoap telnet is back (attempt %d): "
+                        "recording sentinel stopped, gates reset.", attempt,
+                    )
+                return True
+            logger.debug("PlayoutScheduler: Liquidsoap not ready (attempt %d): %s", attempt, exc)
+            if attempt < attempts:
+                sleep(delay)
+        return False
+
+    def ensure_liquidsoap_initial_state(
+        self, attempts: int = 45, delay: float = 2.0, background: bool = True,
+    ) -> Optional[bool]:
+        """
+        Keep trying to put Liquidsoap into its start state until its
+        telnet answers (default: up to 90 s).
+
+        Why: PLAYOUT regularly comes up before LIQUIDSOAP - the manual
+        restart order, the boot-window restart in ``__main__`` and the
+        nightly restart all leave a window in which the old single
+        attempt failed silently; the fresh instance then recorded the
+        ``_uninitialized.mp3`` sentinel for hours and kept whatever
+        gate state it booted with.  ``background=False`` runs the loop
+        inline (tests) and returns the result.
+        """
+        if not self._streaming_handled_externally or not hasattr(self._engine, "recording_stop"):
+            return None
+        if self._initial_state_ok:
+            return True
+        if not background:
+            ok = self._retry_initial_liquidsoap_state(attempts, delay, sleep=time.sleep)
+            self._initial_state_ok = ok
+            return ok
+
+        def _worker() -> None:
+            if self._retry_initial_liquidsoap_state(attempts, delay, sleep=time.sleep):
+                self._initial_state_ok = True
+            else:
+                logger.error(
+                    "PlayoutScheduler: Liquidsoap telnet never answered within "
+                    "%.0f s - recording sentinel and gates are in an unknown "
+                    "state; restart PLAYOUT once Liquidsoap is up.",
+                    attempts * delay,
+                )
+
+        t = threading.Thread(target=_worker, name="liquidsoap-initial-state", daemon=True)
+        t.start()
+        return None
 
     def shutdown(self) -> None:
         """Cancel all pending timers, stop the engine and all streamers."""

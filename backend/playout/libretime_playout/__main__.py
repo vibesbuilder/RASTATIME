@@ -890,7 +890,12 @@ def main() -> None:
     )
     # RASTATIME 2026-09-04 - a previous Pypo may have died mid-prepare
     # with a bus gate closed; open both before the first refresh.
+    # RASTATIME 2026-09-06 - the constructor tried once (recording
+    # sentinel stop + gates); when Liquidsoap was not up yet (manual
+    # restart order, boot-window restart, nightly restart) a daemon
+    # thread keeps trying until telnet answers.
     scheduler.reset_gates()
+    scheduler.ensure_liquidsoap_initial_state()
 
     # Listener credentials for relaying /main and /show into the
     # public outputs.  Without these the icecast-listener-allow
