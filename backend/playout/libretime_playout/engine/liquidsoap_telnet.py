@@ -466,6 +466,18 @@ class LiquidsoapTelnetClient:
         """
         return self.send_command("webstream.status")
 
+    def webstream_ready(self) -> str:
+        """
+        Return ``"true"``/``"false"`` — whether the webstream source is
+        producing audio right now (``source.is_ready(webstream)``, the
+        same predicate the bus switch gates on).  Registered by the
+        rastatime.liq template as ``webstream.ready``; the scheduler's
+        webstream watchdog polls it to detect a silent upstream stall.
+
+        Wire-form: ``webstream.ready``.
+        """
+        return self.send_command("webstream.ready")
+
     def webstream_url(self) -> str:
         """
         Return the URL currently set on the input.http source (empty

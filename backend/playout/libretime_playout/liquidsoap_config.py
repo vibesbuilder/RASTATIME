@@ -185,16 +185,17 @@ DEFAULT_WEBSTREAM_TIMEOUT_SECONDS = 3.0
 DEFAULT_WEBSTREAM_POLL_DELAY_SECONDS = 0.5
 
 # Clock-bridge pre-buffer between input.http and the bus, in seconds,
-# and the bridge's hard maximum.  RASTATIME 2026-09-05: 5 s -> 10 s.
-# The recovery budget after a silent stall is timeout (3 s) +
-# poll_delay (0.5 s) + connect (~0.1 s) + FFmpeg format detection
-# (~1-5 s) = ~5-9 s; a bridge that holds 10 s bridges it without
-# "Buffer emptied", i.e. without audible dead air.  The price is a
-# longer fill-up before a fresh webstream is ready (~10 s instead of
-# ~5 s), which the scheduler pays 20 s before the slot
-# (WEBSTREAM_PREPARE_LEAD_SECONDS) instead of 10 s.
-DEFAULT_WEBSTREAM_BRIDGE_SECONDS = 10.0
-DEFAULT_WEBSTREAM_BRIDGE_MAX_SECONDS = 20.0
+# and the bridge's hard maximum.  RASTATIME 2026-09-06: back to 5 s /
+# 10 s.  The 2026-09-05 bump to 10 s / 20 s ("Option 1") was a mistake:
+# a bigger bridge does not bridge the cloud DEVA's stalls (they last far
+# longer than any sane buffer) and it doubled the window in which a
+# DIFFERENT stream's buffered tail plays at the slot start ("wrong
+# stream for N seconds").  Recovery from a stall is now handled by the
+# scheduler webstream watchdog (a clean stop+start), not by a fat
+# buffer.  5 s is the Phase-E-proven minimum that avoids the cold-start
+# "Haker" without over-buffering.
+DEFAULT_WEBSTREAM_BRIDGE_SECONDS = 5.0
+DEFAULT_WEBSTREAM_BRIDGE_MAX_SECONDS = 10.0
 
 
 # ---------------------------------------------------------------------
@@ -886,13 +887,23 @@ def _render_webstream_input_block(
         "# bridged without 'Buffer emptied' - the cloud DEVA stream stalls a\n"
         "# few seconds into a fresh connection, and 11:36 that cost 52 s of\n"
         "# dead air.  The scheduler pre-warms webstreams 20 s before the slot\n"
-        "# to pay for the longer fill-up.\n"
+        "# to pay for the fill-up.\n"
         'webstream_gain = interactive.float("webstream.gain", 1.0)\n'
         "webstream = amplify({webstream_gain()}, buffer(\n"
+        '  id="webstream_bridge",\n'
         f"  buffer={_format_crossfade_duration(DEFAULT_WEBSTREAM_BRIDGE_SECONDS)},\n"
         f"  max={_format_crossfade_duration(DEFAULT_WEBSTREAM_BRIDGE_MAX_SECONDS)},\n"
         "  webstream_raw,\n"
         "))\n"
+        "# RASTATIME 2026-09-06 - readiness probe for the scheduler's\n"
+        "# webstream watchdog.  source.is_ready(webstream) is exactly the\n"
+        "# predicate the bus switch uses; it goes false the moment the\n"
+        "# bridge drains (a silent upstream stall), which is when the bus\n"
+        "# falls off the webstream to silence.  The watchdog polls this and\n"
+        "# forces a clean stop+start so a stalled cloud connection recovers\n"
+        "# in ~1-2 s instead of staying dead until the slot ends.\n"
+        'server.register(namespace="webstream", description="Webstream source producing audio right now (watchdog probe)",\n'
+        '  "ready", fun (_) -> string(source.is_ready(webstream)))\n'
     )
 
 

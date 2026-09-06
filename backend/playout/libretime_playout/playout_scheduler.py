@@ -83,12 +83,24 @@ LINEIN_FOLLOW_UP_WINDOW_SECONDS = 2.0
 # need).  10 s was the operator's figure; the slowest observed
 # webstream buffer-up was 9 s.
 PREPARE_LEAD_SECONDS = 10.0
-# RASTATIME 2026-09-05 ("Option 1") - webstreams get a longer lead: the
-# clock bridge now pre-buffers 10 s (was 5 s) so that a silent upstream
-# stall is bridged without dead air, and the cloud DEVA stream took up
-# to 16 s from connect to the first decodable audio (11:35:50).  Connect
-# + format detection + 10 s fill-up must be done before the gate opens.
-WEBSTREAM_PREPARE_LEAD_SECONDS = 20.0
+# RASTATIME 2026-09-06 - webstreams pre-warm 10 s early, same as
+# line-ins.  The 2026-09-05 bump to 20 s ("Option 1") went with the fat
+# bridge and is reverted along with it; the 5 s bridge fills well within
+# 10 s.  A stalled upstream is handled by the watchdog below, not by
+# pre-warming earlier.
+WEBSTREAM_PREPARE_LEAD_SECONDS = 10.0
+
+# RASTATIME 2026-09-06 - webstream watchdog.  While a webstream is on
+# air, poll source.is_ready(webstream) every INTERVAL seconds; if it has
+# been starved (bridge drained -> bus fell to silence) for STARVE_TICKS
+# consecutive polls AFTER having been ready once, force a clean
+# webstream stop+start.  The cloud DEVA stalls a connection a few
+# seconds in and input.http does not detect the silent mid-stream stall
+# (no reconnect logged until the slot ends); a fresh connection succeeds
+# in <200 ms, and the clean stop frees the DEVA listener slot so its
+# 10-connection limit is not exhausted by our zombies.
+WEBSTREAM_WATCHDOG_INTERVAL_SECONDS = 2.0
+WEBSTREAM_WATCHDOG_STARVE_TICKS = 2
 # Below this many seconds to the slot a pre-warm cannot finish (capture
 # health check + decoder lock ~2 s); the slot then starts the normal way.
 MIN_PREPARE_SECONDS = 2.5
@@ -158,6 +170,15 @@ class PlayoutScheduler:
         # gate reset reach Liquidsoap?  False means telnet was not up yet
         # and ensure_liquidsoap_initial_state() has to keep trying.
         self._initial_state_ok: bool = False
+        # RASTATIME 2026-09-06 - webstream watchdog state.  A monotonic
+        # id supersedes an older watchdog when a new stream starts; the
+        # tick self-cancels when its id is stale or the current event is
+        # no longer a webstream.  _seen_ready gates out the legitimate
+        # initial buffer-up; _starved_ticks counts consecutive dead polls.
+        self._webstream_watchdog_timer: Optional[threading.Timer] = None
+        self._webstream_watchdog_id: int = 0
+        self._webstream_watchdog_seen_ready: bool = False
+        self._webstream_watchdog_starved_ticks: int = 0
 
         # Track which event key is currently playing so that refresh()
         # doesn't restart an in-progress track every 120 s.
@@ -1263,6 +1284,7 @@ class PlayoutScheduler:
     def _release_webstream(self, why: str) -> None:
         if not self._streaming_handled_externally:
             return
+        self._stop_webstream_watchdog()
         gen = self._webstream_generation
         self._engine.webstream_gate(False)
         logger.info("Web stream released (%s): gate closed, stop in %.1f s.", why, self._drain_seconds)
@@ -1275,6 +1297,98 @@ class PlayoutScheduler:
             logger.info("Drained web stream stop skipped: a newer web stream took over.")
             return
         self._engine.webstream_stop()
+
+    # ------------------------------------------------------------------
+    # RASTATIME 2026-09-06 - webstream watchdog
+    # ------------------------------------------------------------------
+
+    def _start_webstream_watchdog(self) -> None:
+        """Begin (or restart) watching the on-air webstream for a silent
+        upstream stall.  Liquidsoap mode only; no-op if the engine has no
+        readiness probe."""
+        if not self._streaming_handled_externally:
+            return
+        if not hasattr(self._engine, "webstream_is_ready"):
+            return
+        self._stop_webstream_watchdog()
+        self._webstream_watchdog_id += 1
+        self._webstream_watchdog_seen_ready = False
+        self._webstream_watchdog_starved_ticks = 0
+        self._arm_webstream_watchdog(self._webstream_watchdog_id)
+
+    def _stop_webstream_watchdog(self) -> None:
+        if self._webstream_watchdog_timer is not None:
+            self._webstream_watchdog_timer.cancel()
+            self._webstream_watchdog_timer = None
+
+    def _arm_webstream_watchdog(self, watchdog_id: int) -> None:
+        t = threading.Timer(
+            WEBSTREAM_WATCHDOG_INTERVAL_SECONDS,
+            self._webstream_watchdog_tick, args=(watchdog_id,),
+        )
+        t.daemon = True
+        self._webstream_watchdog_timer = t
+        t.start()
+
+    def _webstream_watchdog_tick(self, watchdog_id: int) -> None:
+        """One poll.  Re-arms itself until a newer watchdog supersedes it
+        or the current event stops being a webstream."""
+        # Superseded by a newer start, or the stream is gone.
+        if watchdog_id != self._webstream_watchdog_id:
+            return
+        if not isinstance(self._current_event, WebStreamEvent):
+            return
+        # A DJ/master source on air hides the webstream - the bus is not
+        # on it, so its readiness is irrelevant; keep watching.
+        if self._switcher is not None and self._switcher.current_state != SourceState.SCHEDULED:
+            self._webstream_watchdog_starved_ticks = 0
+            self._arm_webstream_watchdog(watchdog_id)
+            return
+        try:
+            ready = self._engine.webstream_is_ready()
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            logger.debug("Webstream watchdog: readiness probe failed: %s", exc)
+            self._arm_webstream_watchdog(watchdog_id)
+            return
+
+        if ready:
+            self._webstream_watchdog_seen_ready = True
+            self._webstream_watchdog_starved_ticks = 0
+        elif not self._webstream_watchdog_seen_ready:
+            # Legitimate initial buffer-up (fresh, not pre-warmed) or the
+            # buffer-up right after our own reconnect - do not count it.
+            pass
+        else:
+            self._webstream_watchdog_starved_ticks += 1
+            if self._webstream_watchdog_starved_ticks >= WEBSTREAM_WATCHDOG_STARVE_TICKS:
+                self._reconnect_stalled_webstream(watchdog_id)
+                return
+        self._arm_webstream_watchdog(watchdog_id)
+
+    def _reconnect_stalled_webstream(self, watchdog_id: int) -> None:
+        """Clean stop+start of the on-air webstream after a detected
+        stall.  Frees the upstream connection (so a listener-limited
+        server does not fill up with our zombies) and reconnects fresh."""
+        event = self._current_event
+        if not isinstance(event, WebStreamEvent):
+            return
+        starved_for = self._webstream_watchdog_starved_ticks * WEBSTREAM_WATCHDOG_INTERVAL_SECONDS
+        logger.warning(
+            "Webstream watchdog: %s starved for ~%.0f s (upstream stall) - "
+            "reconnecting (stop+start) to recover and free the server slot.",
+            event.uri, starved_for,
+        )
+        self._webstream_generation += 1          # a pending drained stop must not fire
+        try:
+            self._engine.webstream_stop()
+            self._engine.webstream_start(event.uri, gain_db=event.input_gain_db)
+            self._engine.webstream_gate(True)     # in case a race closed it
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            logger.error("Webstream watchdog: reconnect failed: %s", exc)
+        # Fresh buffer-up follows; do not count it until ready again.
+        self._webstream_watchdog_seen_ready = False
+        self._webstream_watchdog_starved_ticks = 0
+        self._arm_webstream_watchdog(watchdog_id)
 
     def _on_file_start(self, key: str, event: FileEvent) -> None:
         logger.info(
@@ -1478,6 +1592,7 @@ class PlayoutScheduler:
                 self._webstream_generation += 1   # a pending drain must not stop us
                 self._engine.stop()               # clear the scheduled queue as usual
                 self._engine.webstream_gate(True)  # in case a race closed it
+                self._start_webstream_watchdog()
                 return
             if isinstance(prev_event, WebStreamEvent):
                 # RASTATIME 2026-09-05 - a DIFFERENT stream on the single
@@ -1502,12 +1617,14 @@ class PlayoutScheduler:
                 logger.info("Web stream %s was pre-buffered - opening the gate.", key)
                 self._webstream_generation += 1
                 self._engine.webstream_gate(True)
+                self._start_webstream_watchdog()
                 return
             self._webstream_generation += 1
             self._engine.webstream_start(
                 event.uri, gain_db=event.input_gain_db,
             )
             self._engine.webstream_gate(True)
+            self._start_webstream_watchdog()
             # No _start_streamers — Liquidsoap owns the Icecast PUTs
             # from inside the .liq, and the webstream audio rides the
             # same bus that the output.icecast + output.file blocks tap.

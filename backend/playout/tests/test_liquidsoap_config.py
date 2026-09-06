@@ -858,12 +858,17 @@ def test_full_render_default_includes_webstream_input_block():
     # a ~2-sec "Haker" 12 s into a live BBC stream when both buffers
     # underran together).
     assert 'interactive.float("webstream.gain", 1.0)' in active
-    # RASTATIME 2026-09-05 ("Option 1"): 10 s pre-buffer with a 20 s
-    # hard maximum so a silent upstream stall plus the reconnect
-    # (timeout 3 s + poll 0.5 s + format detection) is bridged without
-    # "Buffer emptied"; the scheduler pre-warms webstreams 20 s early.
-    assert "webstream = amplify({webstream_gain()}, buffer(\n  buffer=10.0,\n  max=20.0,\n  webstream_raw,\n))" in active
-    assert "buffer(buffer=5.0, webstream_raw)" not in active
+    # RASTATIME 2026-09-06: the named 5 s bridge (max 10 s) - the
+    # 2026-09-05 "Option 1" 10 s/20 s bump was reverted; a fat bridge
+    # cannot bridge the cloud DEVA's stalls and doubled the wrong-stream
+    # window.  Recovery is handled by the scheduler webstream watchdog.
+    assert ('webstream = amplify({webstream_gain()}, buffer(\n'
+            '  id="webstream_bridge",\n  buffer=5.0,\n  max=10.0,\n'
+            '  webstream_raw,\n))') in active
+    assert "buffer=10.0,\n  max=20.0" not in active
+    # the watchdog readiness probe is registered
+    assert 'namespace="webstream"' in active and '"ready"' in active
+    assert "source.is_ready(webstream)" in active
     assert lc.DEFAULT_WEBSTREAM_TIMEOUT_SECONDS == 3.0
     assert lc.DEFAULT_WEBSTREAM_POLL_DELAY_SECONDS == 0.5
     assert "timeout=3.0," in active and "poll_delay=0.5," in active

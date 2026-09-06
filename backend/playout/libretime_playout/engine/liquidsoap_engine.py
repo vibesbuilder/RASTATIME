@@ -639,6 +639,24 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
                 "Liquidsoap webstream_stop telnet error: %s", exc,
             )
 
+    def webstream_is_ready(self) -> bool:
+        """
+        Is the webstream source producing audio right now?
+
+        RASTATIME 2026-09-06 - polled by the scheduler's webstream
+        watchdog.  Returns the Liquidsoap-side
+        ``source.is_ready(webstream)`` (registered as ``webstream.ready``
+        by the .liq template) as a bool.  On any telnet error we report
+        ``True`` (fail-safe: an unreachable probe must not trigger a
+        reconnect storm).
+        """
+        try:
+            reply = self._telnet.webstream_ready()
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            logger.debug("Liquidsoap webstream_ready telnet error: %s", exc)
+            return True
+        return "true" in (reply or "").strip().lower()
+
     def webstream_status(self) -> str:
         """
         Return Liquidsoap's free-text input.http status string, one of
