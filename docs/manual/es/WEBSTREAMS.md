@@ -104,8 +104,8 @@ Igual que cualquier item de biblioteca.
    - `webstream.start` — pide a la fuente que se conecte.
 2. La fuente `input.http` de Liquidsoap abre la conexión
    HTTP y bufferiza unos segundos de audio (puente de reloj de
-   10 s, búfer de flujo de hasta 10 s). Desde el 2026-09-04 esto
-   ocurre ya **20 s antes del slot** (antes 10 s; el puente creció de 5 a 10 s) («precalentamiento») con la
+   5 s, búfer de flujo de hasta 10 s). Desde el 2026-09-04 esto
+   ocurre ya **10 s antes del slot** («precalentamiento») con la
    *puerta* del bus cerrada, así que el búfer está lleno al inicio
    del slot. Al final del slot Pypo cierra la puerta: el bus funde
    el webstream bajo el siguiente elemento durante la duración de
@@ -119,13 +119,16 @@ Igual que cualquier item de biblioteca.
    el switch vuelve a scheduled (silencio o la siguiente
    pista).
 
-**Cortes del servidor de flujo (desde el 2026-09-05):** si el
-servidor deja de emitir un momento, Liquidsoap abandona la conexión
-tras 3 s (antes 10 s), se reconecta tras 0,5 s y vuelve a detectar
-el formato; el puente de 10 s lo cubre, de modo que un corte de
-hasta unos 10 s no se oye en antena. Solo un servidor que calla más
-tiempo, o que rechaza nuevas conexiones, sigue produciendo silencio
-hasta que vuelve.
+**Bloqueos del servidor de flujo (desde el 2026-09-06):** algunos
+servidores dejan de emitir a mitad de flujo sin cerrar la conexión —
+Liquidsoap no lo nota por sí solo, y el slot quedaría en silencio
+hasta su fin. Un vigilante controla ahora cada webstream en antena:
+si la fuente deja de producir audio unos segundos, la emisión la
+reconecta (un stop + start limpio). Una conexión nueva vuelve a
+antena en unos segundos, y el stop limpio libera la plaza de oyente
+en el servidor, para que su límite de conexiones no se llene de
+conexiones muertas. Un servidor que rechaza nuevas conexiones sigue
+produciendo silencio hasta que acepta una.
 
 **Comportamiento de grabación (nuevo desde Phase E,
 2026-05-29):**
@@ -138,10 +141,10 @@ tenían grabaciones silenciosas.
 
 **Latencia inicial del show:** con el precalentamiento (desde
 el 2026-09-04) un slot webstream arranca sin hueco — el flujo se
-conectó y almacenó 20 s antes. El **mismo** flujo en el programa
+conectó y almacenó 10 s antes. El **mismo** flujo en el programa
 siguiente simplemente continúa (solo se traspasa la contabilidad,
 sin corte). Solo un webstream *distinto* justo después de otro
-webstream (una única fuente de flujo) necesita aún ~10 s de búfer. Los reproductores del lado del oyente añaden su
+webstream (una única fuente de flujo) necesita aún ~5 s de búfer. Los reproductores del lado del oyente añaden su
 propio buffer de ~10 s, así que el retraso efectivo percibido por
 el oyente final está dominado por el buffer del lado del
 reproductor.

@@ -93,6 +93,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Webstream-Wächter: Erholung nach stillem Upstream-Stall; Rücknahme
+  der „Option 1"-Aufblähung (2026-09-06, Operator-Go, `405b200`)** — Der
+  Live-Testlauf am 2026-09-06 legte die echte Ursache der Cloud-
+  Aussetzer offen.  Der DEVA-Server ist gesund (eine Einzelverbindung
+  liefert makellos, Listener-Limit 10, die elfte bekommt `503`), aber
+  `input.http` erkennt einen Stall MITTEN im Stream nicht: nach „Buffer
+  emptied" wird bis zum Slot-Ende kein Reconnect versucht, und die
+  stehengelassene Zombie-Verbindung belegt einen der zehn DEVA-Plätze,
+  bis nach ein paar toten Slots `503` kommt.  **Wächter:** Während ein
+  Webstream sendet, pollt der Scheduler alle 2 s
+  `source.is_ready(webstream)` (Telnet `webstream.ready`) und erzwingt
+  nach zwei toten Abfragen, die auf eine lebende folgen, ein sauberes
+  `webstream.stop` + `webstream.start`; frische Verbindung < 200 ms,
+  der saubere Stop gibt den DEVA-Platz frei.  End-to-End gegen einen
+  dauerhaft verstummenden Server bewiesen (zwei Stalls, zwei Erholungen
+  in ~6 s statt tot).  **Zurückgenommen:** die Option-1-Aufblähung
+  (Clock-Bridge 10 s/20 s → 5 s/10 s, Webstream-Vorlauf 20 s → 10 s) —
+  eine fette Bridge überbrückt diese Stalls nicht und verdoppelte das
+  Fenster, in dem am Slot-Anfang der Rest eines anderen Streams spielt;
+  `timeout` 3 s / `poll` 0,5 s bleiben.  Die ffmpeg-`reconnect`-Optionen
+  werden NICHT verwendet (hängen in einer Reconnect-Schleife).  Manual
+  WEBSTREAMS in vier Sprachen, Architektur §23.27 Addendum.  Offen: Live-
+  Abnahme 2026-09-07; „falscher Stream am Anfang" nur auf ~5 s
+  zurückgestutzt (eigener BACKLOG-Punkt „Bridge leeren").
+
 - **Startreihenfolge-Lücke: `recording.stop` und Gate-Reset warten jetzt
   auf Liquidsoaps Telnet (2026-09-06, `578e950`)** — Kommt PLAYOUT vor
   LIQUIDSOAP hoch (manuelle Reihenfolge mit Abstand, Boot-Fenster-

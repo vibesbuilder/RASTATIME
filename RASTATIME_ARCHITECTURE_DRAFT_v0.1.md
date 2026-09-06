@@ -4298,3 +4298,26 @@ roughly 10 s.  Verified against a local pacing server that stalls 6 s
 every 60 s (old settings: dropouts; new: none) — see CHANGELOG.  The
 appliance side (listener limit, per-client buffer, logs) is checked by
 the operator, who runs the DEVA.
+
+**Addendum 2026-09-06 (evening) — the Option-1 revert and the webstream
+watchdog.**  The 2026-09-05 recovery tuning ("Option 1") was tested live
+on 2026-09-06 and made things worse: three of eight cloud slots went
+dead until the slot end, two started on the wrong (previous) stream.
+The real cause, measured against the DEVA directly: the server is
+healthy (one connection is flawless; listener limit 10, the eleventh
+gets `503`), but `input.http` does not detect a silent mid-stream stall
+— after "Buffer emptied" no reconnect is logged until the slot ends, and
+the lingering zombie connection occupies one of the ten DEVA slots, so
+after a few dead slots fresh pre-warms get `503` (the failures worsen
+over the run).  Backpressure and the ffmpeg `reconnect` options were
+ruled out (the latter wedge input.http in a reconnect loop).  Fix: a
+**scheduler watchdog** polls `source.is_ready(webstream)` (registered as
+`webstream.ready`) every 2 s while a webstream is on air and, after two
+not-ready polls following a ready one, forces a clean `webstream.stop` +
+`webstream.start` — a fresh connection is back in <200 ms and the clean
+stop frees the server slot.  Proven end-to-end against a permanently
+silent server (two stalls, two ~6 s recoveries).  The Option-1
+inflation (bridge 10 s/20 s, pre-warm 20 s) is reverted to 5 s/10 s and
+10 s; `timeout` 3 s / `poll` 0.5 s stay.  The stale-bridge "wrong stream
+for ~5 s at the slot start" is only reduced, not eliminated — a separate
+follow-up (flush the bridge on a stream change).

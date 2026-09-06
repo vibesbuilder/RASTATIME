@@ -206,7 +206,7 @@ gleicher Stream → gleicher Stream als Übergabe.  Zuvor: Sendeausfall
 19:26–19:35 durch Typfehler bei den DJ-Armen (`acdde5c`), Lehre
 „Prüf-Render in Produktionsform".
 
-### 🟡 A/B-Test: vorgewärmte Cloud-Stream-Verbindung (Vorbehalt 20:07, Operator will testen)
+### 🟢 Cloud-Stream-Aussetzer — Ursache gefunden, Webstream-Wächter gebaut 2026-09-06 (`405b200`), Live-Abnahme 2026-09-07 offen
 
 **Beobachtung 2026-09-04 20:07:** Die einzige vorgewärmte Cloud-
 Verbindung des Abends (`cloud.example.org:3001`, Prepare 20:06:50,
@@ -317,6 +317,65 @@ Option 4 entfällt (Live-Signal).  Option 2 (Dauerverbindung) bleibt
 Option 3 macht der Operator (betreibt die DEVA selbst): Listener-Limit,
 Puffer, Log zu den Stall-Zeiten 02.09. 17:07:18, 04.09. 20:07:17,
 05.09. 11:36:13 und 17:06:50.
+
+**Live-Testlauf 2026-09-06 (zwei Phasen, sechs Cloud-Slots): Option 1
+war der falsche Weg, echte Ursache gefunden, Wächter gebaut
+(`405b200`).**  Von acht Shows liefen drei tot bis Slot-Ende (Signal
+weg ab +10 s), zwei zeigten am Anfang den falschen Stream.  Diagnose
+am echten DEVA:
+- **Der Server ist gesund.** Sonde vom Studio: eine Einzelverbindung
+  liefert 20 s makellos in jedem der acht Zyklen; zehn gleichzeitige
+  Verbindungen 40 s durchgehend, die elfte bekommt `HTTP 503 Too many
+  connections` (Listener-Limit 10, `DEVAStreamServer 1.4`).
+- **input.http erkennt einen Stall MITTEN im Stream nicht.** Zwischen
+  „Buffer emptied" und dem Slot-Ende steht KEIN Reconnect im Log; das
+  `-138`/die ffmpeg-Assertion kommen erst beim Teardown.  Das
+  `timeout` (3 s) gilt nur beim Verbinden, nicht für einen stillen
+  Read mitten im Stream.  Die stehengelassene Zombie-Verbindung belegt
+  einen der zehn DEVA-Plätze → nach ein paar toten Slots `503` → tote
+  Slots.  Erklärt die Verschlechterung über den Lauf (Show 1 gut, 2
+  erholt, ab 3 tot).
+- **Widerlegt:** Rückstau/Nicht-Leser (Liquidsoap liest bei
+  geschlossenem Gate durchgehend weiter, `C:/Temp/prewarm_deva.py`);
+  ffmpeg-`reconnect`-Optionen (hängen in einer Reconnect-Schleife,
+  `rwtimeout_test.py`).
+- **Option 1 verschlimmerte beides:** Bridge 5→10 s verdoppelte das
+  Falscher-Stream-Fenster, Vorlauf 10→20 s die Leerlaufzeit.  **Zurück-
+  genommen** auf Bridge 5 s / Vorlauf 10 s; `timeout` 3 s / `poll`
+  0,5 s bleiben.
+- **Wächter (der Fix):** Während ein Webstream sendet, pollt der
+  Scheduler alle 2 s `source.is_ready(webstream)` (Telnet
+  `webstream.ready`); nach zwei toten Abfragen, die auf eine lebende
+  folgen, sauberes `webstream.stop` + `webstream.start`.  Frische
+  Verbindung < 200 ms, sauberer Stop gibt den DEVA-Platz frei.  End-
+  to-End bewiesen (`C:/Temp/watchdog_repro.py`, Server verstummt
+  dauerhaft): zwei Stalls, zwei saubere Erholungen in ~6 s statt tot.
+  Konstanten `WEBSTREAM_WATCHDOG_INTERVAL_SECONDS` 2,0 /
+  `WEBSTREAM_WATCHDOG_STARVE_TICKS` 2.
+- **Offen:** Live-Abnahme am 2026-09-07 (Operator will die Erholung
+  hören und die Latenz bis zur Rückkehr messen; Konstanten ggf.
+  straffen).  Der „falsche Stream am Anfang" ist nur auf ~5 s
+  zurückgestutzt (Bridge-Rest des Vorgänger-Streams), nicht beseitigt
+  — eigener Punkt „Bridge leeren", unten.
+
+### 🟡 Webstream: falscher Stream (~5 s) am Slot-Anfang nach einem anderen Stream (neu 2026-09-06)
+
+**Befund:** Beim Umschalten auf einen ANDEREN Webstream spielt der Bus
+zuerst den gepufferten Rest des vorherigen Streams — die Clock-Bridge
+(`buffer`) ist FIFO und gibt den alten Inhalt zuerst aus.  Live am
+2026-09-06 mehrfach gehört (5–20 s, verschlimmert durch die Option-1-
+Bridge von 10 s; nach dem Zurücknehmen wieder ~5 s).  Betrifft nur den
+Wechsel zwischen VERSCHIEDENEN Streams, nicht denselben Stream und
+nicht Datei→Stream.
+**Fix-Optionen (Go nötig):** (a) beim Wechsel die Bridge frisch
+aufsetzen — `source.dynamic` mit einer neu erzeugten `buffer()`-Quelle
+(die Signatur braucht ein Funktions-Argument, `2026-09-06` erste
+Fassung scheiterte am fehlenden Argument; korrekt: `source.dynamic(id=…,
+fun () -> buffer(...))` plus `.set(...)` beim Wechsel); (b) Bridge auf
+2 s verkleinern (Phase-E-„Haker"-Risiko, jetzt vom Wächter abgefedert);
+(c) beim Anderer-Stream-Start das Gate erst öffnen, wenn `webstream.
+ready` NACH dem Start neu wahr wurde UND die Bridge einmal
+durchgelaufen ist.  Empfehlung: (a), im Replikat testen bevor live.
 
 ### 🟡 Webstream: 5 s alte Puffer-Reste spielen nach einem PLAYOUT-Neustart (neu 2026-09-05)
 

@@ -180,31 +180,33 @@ behaves like any other playlist item.
      happens in Pypo).
    - `webstream.start` — tells the source to connect.
 2. Liquidsoap's `input.http` source opens the HTTP
-   connection and buffers a few seconds of audio (10 s clock
+   connection and buffers a few seconds of audio (5 s clock
    bridge, up to 10 s stream buffer).  Since 2026-09-04 this
-   already happens before the slot ("pre-warm") with the bus
-   *gate* closed, so the buffer is full when the slot starts —
-   since 2026-09-05 **20 s before the slot** (was 10 s), because
-   the bridge grew from 5 s to 10 s.
+   already happens **10 s before the slot** ("pre-warm") with the
+   bus *gate* closed, so the buffer is full when the slot starts.
 3. At the slot start Pypo opens the gate; the bus-switch routes
    audio to the webstream source within a frame — listeners
    hear the stream.  The **same** stream in the next show simply
    keeps playing (hand-over of the bookkeeping only, no bounce).  A
    *different* webstream directly after a webstream cannot be
    pre-warmed (one stream source): it connects at the slot start
-   and is on air once its buffer is full, ~10 s.
+   and is on air once its buffer is full, ~5 s.
 4. At the configured duration Pypo closes the gate: the bus
    fades the webstream out under the next item over the Default
    Crossfade Duration (Settings → General; 0 = "ducking"), then
    sends `webstream.stop`.  The next item starts on time instead
    of waiting for the buffer to drain.
 
-**Upstream hiccups (since 2026-09-05):** if the stream server stops
-sending for a moment, Liquidsoap gives the connection up after 3 s
-(was 10 s), reconnects after 0.5 s and re-detects the format; the
-10 s bridge covers that, so a stall of up to roughly 10 s is not
-heard on air.  Only a server that stays silent longer, or refuses
-new connections, still produces dead air until it is back.
+**Upstream stalls (since 2026-09-06):** some stream servers stop
+sending mid-stream without closing the connection — Liquidsoap does
+not notice on its own, and the slot would stay silent until it ends.
+A watchdog now guards every on-air webstream: if the source stops
+producing audio for a few seconds, the playout reconnects it (a clean
+stop + start).  A fresh connection is back on air within a few
+seconds, and the clean stop frees the listener slot on the server so
+its connection limit is not filled up by dead connections.  A server
+that refuses new connections still produces silence until it accepts
+one again.
 
 **Recording behaviour (new since Phase E, 2026-05-29):**
 Scheduled webstreams now land in the per-show `.mp3`
@@ -215,8 +217,8 @@ webstream-only shows had silent recordings.
 
 **Initial-show latency:** with pre-warming (since 2026-09-04)
 a webstream slot starts without a gap — the stream was connected
-and buffered 20 s earlier.  Only a webstream that could not be
-pre-warmed (see step 3) still needs ~10 s to buffer.  Listener-side
+and buffered 10 s earlier.  Only a webstream that could not be
+pre-warmed (see step 3) still needs ~5 s to buffer.  Listener-side
 players add their own ~10 s buffer, so the effective
 end-listener-perceived delay is dominated by the player-side
 buffer.
