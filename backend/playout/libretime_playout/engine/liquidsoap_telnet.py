@@ -466,6 +466,18 @@ class LiquidsoapTelnetClient:
         """
         return self.send_command("webstream.status")
 
+    def uptime(self) -> str:
+        """
+        Return Liquidsoap's process uptime, free-text
+        ``"0d 00h 03m 25s"``.  RASTATIME 2026-09-07: the scheduler polls
+        it to notice that LIQUIDSOAP was restarted out from under a
+        running PLAYOUT (manual restart order) and re-apply the initial
+        state (recording sentinel stop + gates).
+
+        Wire-form: ``uptime``.
+        """
+        return self.send_command("uptime")
+
     def webstream_ready(self) -> str:
         """
         Return ``"true"``/``"false"`` — whether the webstream source is

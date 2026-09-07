@@ -639,6 +639,29 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
                 "Liquidsoap webstream_stop telnet error: %s", exc,
             )
 
+    def liquidsoap_uptime_seconds(self) -> Optional[float]:
+        """
+        Liquidsoap's process uptime in seconds, or ``None`` if the
+        telnet is unreachable or the reply cannot be parsed.
+
+        RASTATIME 2026-09-07 - the scheduler compares this across polls
+        to detect that LIQUIDSOAP was restarted while PLAYOUT kept
+        running (the operator's "PLAYOUT then LIQUIDSOAP" restart order
+        leaves the fresh instance with the recording sentinel on).
+        """
+        try:
+            reply = self._telnet.uptime()
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            logger.debug("Liquidsoap uptime telnet error: %s", exc)
+            return None
+        match = re.search(
+            r"(\d+)\s*d\s+(\d+)\s*h\s+(\d+)\s*m\s+(\d+)\s*s", reply or "",
+        )
+        if not match:
+            return None
+        d, h, m, s = (int(g) for g in match.groups())
+        return float(((d * 24 + h) * 60 + m) * 60 + s)
+
     def webstream_is_ready(self) -> bool:
         """
         Is the webstream source producing audio right now?

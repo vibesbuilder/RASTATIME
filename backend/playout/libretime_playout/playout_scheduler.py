@@ -170,6 +170,12 @@ class PlayoutScheduler:
         # gate reset reach Liquidsoap?  False means telnet was not up yet
         # and ensure_liquidsoap_initial_state() has to keep trying.
         self._initial_state_ok: bool = False
+        # RASTATIME 2026-09-07 - last observed Liquidsoap uptime.  A drop
+        # between polls means LIQUIDSOAP was restarted under a running
+        # PLAYOUT (manual "PLAYOUT then LIQUIDSOAP" order leaves the fresh
+        # instance with the recording sentinel on and default gates);
+        # refresh() then re-applies the initial state.
+        self._last_liquidsoap_uptime: Optional[float] = None
         # RASTATIME 2026-09-06 - webstream watchdog state.  A monotonic
         # id supersedes an older watchdog when a new stream starts; the
         # tick self-cancels when its id is stale or the current event is
@@ -391,6 +397,12 @@ class PlayoutScheduler:
         cc_pref are also re-read on each refresh so user edits in the
         Frontend take effect within one poll cycle, no service restart.
         """
+        # RASTATIME 2026-09-07 - notice a LIQUIDSOAP restart that happened
+        # under us (manual restart order, or a crash+NSSM-restart) and
+        # re-apply the initial state so the fresh instance does not record
+        # the _uninitialized.mp3 sentinel forever.
+        self._maybe_reinit_after_liquidsoap_restart()
+
         # Hot-reload stream outputs from cc_pref BEFORE we touch timers,
         # so the new streamers can pick up an in-progress track immediately.
         self._reload_stream_outputs_if_changed()
@@ -718,6 +730,10 @@ class PlayoutScheduler:
             return False, exc
         if reset_gates:
             self.reset_gates()
+        # Seed the restart detector with this instance's uptime so a
+        # later drop is recognised as a fresh Liquidsoap (2026-09-07).
+        if hasattr(self._engine, "liquidsoap_uptime_seconds"):
+            self._last_liquidsoap_uptime = self._engine.liquidsoap_uptime_seconds()
         return True, None
 
     def _retry_initial_liquidsoap_state(
@@ -736,6 +752,36 @@ class PlayoutScheduler:
             if attempt < attempts:
                 sleep(delay)
         return False
+
+    def _maybe_reinit_after_liquidsoap_restart(self) -> None:
+        """Detect a Liquidsoap restart via an uptime drop and re-apply the
+        initial state (recording sentinel stop + gates).  Called each
+        refresh; a no-op unless the uptime went backwards."""
+        if not self._streaming_handled_externally:
+            return
+        if not hasattr(self._engine, "liquidsoap_uptime_seconds"):
+            return
+        uptime = self._engine.liquidsoap_uptime_seconds()
+        # Contract is float|None; anything else (unreachable telnet, a
+        # loosely-mocked engine) is treated as "unknown" and ignored.
+        if not isinstance(uptime, (int, float)) or isinstance(uptime, bool):
+            return
+        prev = self._last_liquidsoap_uptime
+        if isinstance(prev, (int, float)) and not isinstance(prev, bool) and uptime + 5.0 < prev:
+            logger.warning(
+                "Liquidsoap restarted under PLAYOUT (uptime %.0f s < previous "
+                "%.0f s) - re-sending recording.stop and reopening the gates.",
+                uptime, prev,
+            )
+            ok, exc = self._apply_initial_liquidsoap_state()   # also re-seeds uptime
+            if not ok:
+                logger.warning(
+                    "Post-restart re-init failed (telnet not ready yet?): %s - "
+                    "retrying next poll.", exc,
+                )
+                return
+        else:
+            self._last_liquidsoap_uptime = uptime
 
     def ensure_liquidsoap_initial_state(
         self, attempts: int = 45, delay: float = 2.0, background: bool = True,
