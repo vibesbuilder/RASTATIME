@@ -94,7 +94,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **Nächtlicher LIQUIDSOAP-Neustart: Absturzschleife 04:02–08:21
-  behoben (2026-09-07)** — In beiden Nächten seit dem Feature
+  behoben (2026-09-07, `e66e675`)** — In beiden Nächten seit dem Feature
   (2026-09-06 und 2026-09-07) endete der 04:01-Neustart in einer
   NSSM-Absturzschleife bis zum manuellen Neustart am Morgen: Sendeweg
   und alle Icecast-Mounts über vier Stunden tot, Preflight meldete
