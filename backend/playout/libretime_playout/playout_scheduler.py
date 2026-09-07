@@ -105,6 +105,13 @@ WEBSTREAM_PREPARE_LEAD_SECONDS = 10.0
 # 10-connection limit is not exhausted by our zombies.
 WEBSTREAM_WATCHDOG_INTERVAL_SECONDS = 2.0
 WEBSTREAM_WATCHDOG_STARVE_TICKS = 2
+#: RASTATIME 2026-09-07 - where the webstream watchdog runs.  Default:
+#: inside Liquidsoap (frame counter on the bus, rendered by
+#: liquidsoap_config, no telnet, no leak).  "scheduler" keeps the
+#: 2026-09-06 telnet poll above as a fallback (~87 KB leaked per poll
+#: on the Windows build, ~157 MB per webstream hour).
+WEBSTREAM_WATCHDOG_LIQUIDSOAP = "liquidsoap"
+WEBSTREAM_WATCHDOG_SCHEDULER = "scheduler"
 # Below this many seconds to the slot a pre-warm cannot finish (capture
 # health check + decoder lock ~2 s); the slot then starts the normal way.
 MIN_PREPARE_SECONDS = 2.5
@@ -139,6 +146,7 @@ class PlayoutScheduler:
         input_transition_seconds: float = 2.0,
         render_liquidsoap: Optional[Callable[[], object]] = None,
         nightly_restart: Optional[NightlyRestartPolicy] = None,
+        webstream_watchdog: str = WEBSTREAM_WATCHDOG_LIQUIDSOAP,
     ) -> None:
         self._engine = engine
         self._api_client = api_client
@@ -170,6 +178,21 @@ class PlayoutScheduler:
         self._render_liquidsoap = render_liquidsoap
         self._nightly_restart = nightly_restart
         self._nightly_restart_done: Optional[date] = None
+        # RASTATIME 2026-09-07 - the webstream watchdog runs inside
+        # Liquidsoap by default (frame counter, rendered into the .liq);
+        # "scheduler" re-enables the telnet poll below as a fallback.
+        if webstream_watchdog not in (WEBSTREAM_WATCHDOG_LIQUIDSOAP, WEBSTREAM_WATCHDOG_SCHEDULER):
+            logger.warning(
+                "Unknown webstream watchdog mode %r - using %r.",
+                webstream_watchdog, WEBSTREAM_WATCHDOG_LIQUIDSOAP,
+            )
+            webstream_watchdog = WEBSTREAM_WATCHDOG_LIQUIDSOAP
+        self._webstream_watchdog_mode = webstream_watchdog
+        # Probed once per Liquidsoap instance: does the loaded .liq carry
+        # the in-process watchdog?  None = not probed yet (reset whenever
+        # a fresh instance is detected).  A running instance with an
+        # older render gets the scheduler poll as a stop-gap.
+        self._liquidsoap_watchdog_present: Optional[bool] = None
         # RASTATIME 2026-09-06 - did the constructor's recording.stop +
         # gate reset reach Liquidsoap?  False means telnet was not up yet
         # and ensure_liquidsoap_initial_state() has to keep trying.
@@ -822,6 +845,8 @@ class PlayoutScheduler:
             return False, exc
         if reset_gates:
             self.reset_gates()
+        # A fresh instance may carry a different render - probe again.
+        self._liquidsoap_watchdog_present = None
         # Seed the restart detector with this instance's uptime so a
         # later drop is recognised as a fresh Liquidsoap (2026-09-07).
         if hasattr(self._engine, "liquidsoap_uptime_seconds"):
@@ -1446,6 +1471,14 @@ class PlayoutScheduler:
         readiness probe."""
         if not self._streaming_handled_externally:
             return
+        if (
+            self._webstream_watchdog_mode != WEBSTREAM_WATCHDOG_SCHEDULER
+            and self._liquidsoap_has_internal_watchdog()
+        ):
+            # The in-process watchdog rendered into rastatime.liq covers
+            # this (RASTATIME 2026-09-07); polling here would leak and
+            # could double-reconnect.
+            return
         if not hasattr(self._engine, "webstream_is_ready"):
             return
         self._stop_webstream_watchdog()
@@ -1453,6 +1486,37 @@ class PlayoutScheduler:
         self._webstream_watchdog_seen_ready = False
         self._webstream_watchdog_starved_ticks = 0
         self._arm_webstream_watchdog(self._webstream_watchdog_id)
+
+    def _liquidsoap_has_internal_watchdog(self) -> bool:
+        """
+        Cached probe: does the running Liquidsoap carry the in-process
+        watchdog (``webstream.watchdog`` answers)?  Only a definite
+        "no" (the command is unknown - an older rastatime.liq is still
+        loaded, e.g. PLAYOUT restarted before LIQUIDSOAP) makes the
+        scheduler fall back to its own poll; an unreachable telnet is
+        treated as "yes" and probed again next time.
+        """
+        if self._liquidsoap_watchdog_present is not None:
+            return self._liquidsoap_watchdog_present
+        probe = getattr(self._engine, "webstream_watchdog_present", None)
+        if probe is None:
+            return True
+        try:
+            present = probe()
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            logger.debug("Webstream watchdog presence probe failed: %s", exc)
+            present = None
+        if present is None:
+            return True                      # unknown: do not cache, assume covered
+        self._liquidsoap_watchdog_present = bool(present)
+        if not present:
+            logger.warning(
+                "The running Liquidsoap has no in-process webstream watchdog "
+                "(older rastatime.liq still loaded) - using the scheduler's "
+                "telnet poll for this webstream as a stop-gap.  Restart "
+                "RASTATIME-LIQUIDSOAP in a quiet moment to load the new render."
+            )
+        return self._liquidsoap_watchdog_present
 
     def _stop_webstream_watchdog(self) -> None:
         if self._webstream_watchdog_timer is not None:

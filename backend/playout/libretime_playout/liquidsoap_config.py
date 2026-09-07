@@ -197,6 +197,18 @@ DEFAULT_WEBSTREAM_POLL_DELAY_SECONDS = 0.5
 DEFAULT_WEBSTREAM_BRIDGE_SECONDS = 5.0
 DEFAULT_WEBSTREAM_BRIDGE_MAX_SECONDS = 10.0
 
+# RASTATIME 2026-09-07 - the webstream watchdog lives inside Liquidsoap:
+# a counter on the bus's per-frame callback (streaming thread, 50 frames
+# per second at frame.duration 0.02 s) checks source.is_ready(webstream)
+# every CHECK_FRAMES frames and reconnects after STARVE_CHECKS not-ready
+# checks that follow a ready one.  Measured 2026-09-07 in a replica:
+# the frame counter costs nothing, a thread.run.recurrent timer ~31 KB
+# per tick and the scheduler's telnet poll 66-87 KB per command (the
+# Windows Unix.select leak) - ~157 MB per webstream hour in production.
+DEFAULT_WEBSTREAM_WATCHDOG_IN_LIQUIDSOAP = True
+DEFAULT_WEBSTREAM_WATCHDOG_CHECK_FRAMES = 100      # 2 s at 50 frames/s
+DEFAULT_WEBSTREAM_WATCHDOG_STARVE_CHECKS = 2       # -> reconnect after ~4 s
+
 
 # ---------------------------------------------------------------------
 # Phase-F-2 — Scheduled Line-Inputs via input.ffmpeg(format="dshow")
@@ -907,6 +919,114 @@ def _render_webstream_input_block(
     )
 
 
+def _render_webstream_watchdog_block(
+    *,
+    enabled: bool,
+    webstream_enabled: bool,
+    check_frames: int = DEFAULT_WEBSTREAM_WATCHDOG_CHECK_FRAMES,
+    starve_checks: int = DEFAULT_WEBSTREAM_WATCHDOG_STARVE_CHECKS,
+) -> str:
+    """
+    Render the in-process webstream watchdog (RASTATIME 2026-09-07).
+
+    Placed right after the final ``bus`` definition: ``bus.on_frame``
+    runs in the streaming thread on every frame, so counting frames
+    there and checking ``source.is_ready(webstream)`` every
+    ``check_frames`` frames never touches the Duppy scheduler - the
+    thread whose ``Unix.select`` leaks ~5-50 KB per call on the
+    savonet Windows build.  The scheduler-side watchdog of 2026-09-06
+    did the same check over telnet (~87 KB per poll in production,
+    ~157 MB per webstream hour); a ``thread.run.recurrent`` timer
+    would still cost ~31 KB per tick.  Measured in a 15-min replica
+    run on 2026-09-07: the frame counter is flat.
+
+    Semantics are the scheduler watchdog's: only while the input is
+    started; a not-ready right after start (buffer-up, or right after
+    our own reconnect) does not count; ``starve_checks`` not-ready
+    checks after a ready one -> clean ``stop`` + ``start`` of the
+    input, run from a one-shot ``thread.run`` (the streaming thread
+    must not block on socket teardown).  A DJ on air hides the bus
+    from the bridge, which then stays full and ready - no false
+    alarm.  ``webstream.watchdog`` (telnet) reports the counters.
+
+    Disabled (``enabled=False``, the PLAYOUT fallback
+    ``RASTATIME_WEBSTREAM_WATCHDOG=scheduler``) or without a webstream
+    input, a comment stub is rendered.
+    """
+    if not enabled or not webstream_enabled:
+        why = (
+            "the scheduler-side telnet watchdog is selected (RASTATIME_WEBSTREAM_WATCHDOG=scheduler)"
+            if webstream_enabled else "no webstream input is rendered"
+        )
+        return (
+            "# ---------------------------------------------------------------------\n"
+            "# RASTATIME 2026-09-07 - in-process webstream watchdog: disabled\n"
+            f"# ({why})\n"
+            "# ---------------------------------------------------------------------\n"
+        )
+    check_frames = max(1, int(check_frames))
+    starve_checks = max(1, int(starve_checks))
+    return (
+        "# ---------------------------------------------------------------------\n"
+        "# RASTATIME 2026-09-07 - in-process webstream watchdog\n"
+        "# ---------------------------------------------------------------------\n"
+        "# input.http does not notice a silent mid-stream stall (the cloud DEVA\n"
+        "# failure mode of 2026-09-06).  This watchdog counts the bus's frames\n"
+        f"# in the streaming thread and, every {check_frames} frames\n"
+        f"# ({check_frames * 0.02:.0f} s), checks source.is_ready(webstream) while the input is\n"
+        f"# started.  After {starve_checks} not-ready checks that follow a ready one it\n"
+        "# reconnects (stop + start) from a one-shot thread.  No telnet, no timer:\n"
+        "# both leak memory on the Windows build (Unix.select), this does not\n"
+        "# (measured 2026-09-07).  Counters: telnet `webstream.watchdog`.\n"
+        "webstream_wd_frames = ref(0)\n"
+        "webstream_wd_checks = ref(0)\n"
+        "webstream_wd_seen_ready = ref(false)\n"
+        "webstream_wd_starved = ref(0)\n"
+        "webstream_wd_reconnects = ref(0)\n"
+        "\n"
+        "def webstream_wd_reconnect() =\n"
+        "  webstream_wd_reconnects.set(webstream_wd_reconnects() + 1)\n"
+        '  log(level=2, label="webstream_watchdog",\n'
+        f'      "upstream stalled ({starve_checks} not-ready checks after being ready) - "\n'
+        '      ^ "reconnecting: stop + start")\n'
+        "  webstream_raw.stop()\n"
+        "  webstream_raw.start()\n"
+        "end\n"
+        "\n"
+        "def webstream_wd_check() =\n"
+        "  webstream_wd_checks.set(webstream_wd_checks() + 1)\n"
+        "  if webstream_raw.is_started() then\n"
+        "    if source.is_ready(webstream) then\n"
+        "      webstream_wd_seen_ready.set(true)\n"
+        "      webstream_wd_starved.set(0)\n"
+        "    elsif webstream_wd_seen_ready() then\n"
+        "      webstream_wd_starved.set(webstream_wd_starved() + 1)\n"
+        f"      if webstream_wd_starved() >= {starve_checks} then\n"
+        "        webstream_wd_seen_ready.set(false)\n"
+        "        webstream_wd_starved.set(0)\n"
+        "        thread.run(webstream_wd_reconnect)\n"
+        "      end\n"
+        "    end\n"
+        "  else\n"
+        "    webstream_wd_seen_ready.set(false)\n"
+        "    webstream_wd_starved.set(0)\n"
+        "  end\n"
+        "end\n"
+        "\n"
+        "bus.on_frame(synchronous=true, fun () -> begin\n"
+        "  webstream_wd_frames.set(webstream_wd_frames() + 1)\n"
+        f"  if webstream_wd_frames() mod {check_frames} == 0 then webstream_wd_check() end\n"
+        "end)\n"
+        "\n"
+        'server.register(namespace="webstream",\n'
+        '  description="In-process watchdog counters (checks, reconnects, state)",\n'
+        '  "watchdog", fun (_) ->\n'
+        '    "checks=#{webstream_wd_checks()} reconnects=#{webstream_wd_reconnects()} "\n'
+        '    ^ "started=#{webstream_raw.is_started()} ready=#{source.is_ready(webstream)} "\n'
+        '    ^ "seen_ready=#{webstream_wd_seen_ready()} starved=#{webstream_wd_starved()}")\n'
+    )
+
+
 def _render_linein_input_block(
     *,
     enabled: bool,
@@ -1301,6 +1421,7 @@ def render_rastatime_liq(
     webstream_max_buffer_seconds: float = DEFAULT_WEBSTREAM_MAX_BUFFER_SECONDS,
     webstream_timeout_seconds: float = DEFAULT_WEBSTREAM_TIMEOUT_SECONDS,
     webstream_poll_delay_seconds: float = DEFAULT_WEBSTREAM_POLL_DELAY_SECONDS,
+    webstream_watchdog_in_liquidsoap: bool = DEFAULT_WEBSTREAM_WATCHDOG_IN_LIQUIDSOAP,
     linein_enabled: bool = DEFAULT_LINEIN_ENABLED,
     linein_max_buffer_seconds: float = DEFAULT_LINEIN_MAX_BUFFER_SECONDS,
     linein_http_max_buffer_seconds: float = DEFAULT_LINEIN_HTTP_MAX_BUFFER_SECONDS,
@@ -1364,6 +1485,10 @@ def render_rastatime_liq(
         timeout_seconds=webstream_timeout_seconds,
         poll_delay_seconds=webstream_poll_delay_seconds,
     )
+    webstream_watchdog_block = _render_webstream_watchdog_block(
+        enabled=webstream_watchdog_in_liquidsoap,
+        webstream_enabled=webstream_enabled,
+    )
     linein_block = _render_linein_input_block(
         enabled=linein_enabled,
         max_buffer_seconds=linein_max_buffer_seconds,
@@ -1412,6 +1537,7 @@ def render_rastatime_liq(
         .replace("${WEBSTREAM_INPUT_BLOCK}", webstream_block)
         .replace("${LINEIN_INPUT_BLOCK}", linein_block)
         .replace("${BUS_SOURCE_BLOCK}", bus_block)
+        .replace("${WEBSTREAM_WATCHDOG_BLOCK}", webstream_watchdog_block)
         .replace("${ICECAST_OUTPUTS}", icecast_blocks)
         .replace("${HOURLY_RECORDING_BLOCK}", hourly_block)
     )
@@ -1443,6 +1569,7 @@ def write_rastatime_liq(
     webstream_max_buffer_seconds: float = DEFAULT_WEBSTREAM_MAX_BUFFER_SECONDS,
     webstream_timeout_seconds: float = DEFAULT_WEBSTREAM_TIMEOUT_SECONDS,
     webstream_poll_delay_seconds: float = DEFAULT_WEBSTREAM_POLL_DELAY_SECONDS,
+    webstream_watchdog_in_liquidsoap: bool = DEFAULT_WEBSTREAM_WATCHDOG_IN_LIQUIDSOAP,
     linein_enabled: bool = DEFAULT_LINEIN_ENABLED,
     linein_max_buffer_seconds: float = DEFAULT_LINEIN_MAX_BUFFER_SECONDS,
     linein_http_max_buffer_seconds: float = DEFAULT_LINEIN_HTTP_MAX_BUFFER_SECONDS,
@@ -1492,6 +1619,7 @@ def write_rastatime_liq(
         webstream_max_buffer_seconds=webstream_max_buffer_seconds,
         webstream_timeout_seconds=webstream_timeout_seconds,
         webstream_poll_delay_seconds=webstream_poll_delay_seconds,
+        webstream_watchdog_in_liquidsoap=webstream_watchdog_in_liquidsoap,
         linein_enabled=linein_enabled,
         linein_max_buffer_seconds=linein_max_buffer_seconds,
         linein_http_max_buffer_seconds=linein_http_max_buffer_seconds,

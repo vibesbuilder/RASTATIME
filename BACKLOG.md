@@ -563,6 +563,20 @@ Replikat, ~2 h); (d) Switcher ereignisgesteuert über Harbor-
 `on_connect`/`on_disconnect` (größerer Umbau).  Empfehlung: (c) + (a);
 (d) später.  Echte Heilung nur upstream (OCaml 5 / socketpair).
 
+**Stand 2026-09-07 abends:** (c) umgesetzt, aber als **Frame-Zähler**
+statt Timer — Replikat-Messung über 15 min: Telnet-Poll +57 MB (66 KB/
+Kommando), `thread.run.recurrent`-Timer +25 MB (~31 KB/Tick; die „~9
+MB/h" von oben waren falsch, das Leck pro Select skaliert mit dem
+fd-Set), `bus.on_frame`-Zähler +0,1 MB = flach.  Live nach Neustart
+PLAYOUT → LIQUIDSOAP (Details CHANGELOG „Webstream-Wächter läuft jetzt
+in Liquidsoap selbst").  **(a) vom Operator abgelehnt** (DJ-Latenz),
+**(b) hinfällig**, **(d) offen**: Leerlauf-Wachstum der
+Produktionsinstanz weiterhin ~150 MB/h (19:34 1582 → 19:49 1620 MB),
+2048-MB-Banner erscheint daher täglich am Abend, Nacht-Neustart setzt
+zurück.  Scheduler-Poll bleibt als Rückfall (`RASTATIME_WEBSTREAM_
+WATCHDOG=scheduler`) und als Übergangs-Notnagel, wenn eine ältere .liq
+geladen ist; nach einer Woche ohne Auffälligkeit entfernen.
+
 ### 🟡 Jingle „StationID Friska Viljor.mp3" ist für Liquidsoap unlesbar (neu 2026-09-05)
 
 **Befund:** Replika-Push der Datei aus `media/imported/2/artwork/`

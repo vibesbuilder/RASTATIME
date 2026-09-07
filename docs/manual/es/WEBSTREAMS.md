@@ -128,7 +128,15 @@ reconecta (un stop + start limpio). Una conexión nueva vuelve a
 antena en unos segundos, y el stop limpio libera la plaza de oyente
 en el servidor, para que su límite de conexiones no se llene de
 conexiones muertas. Un servidor que rechaza nuevas conexiones sigue
-produciendo silencio hasta que acepta una.
+produciendo silencio hasta que acepta una. Desde el 2026-09-07 el
+vigilante funciona dentro del propio motor de audio: un contador de
+fotogramas comprueba la fuente cada dos segundos y reconecta tras dos
+comprobaciones mudas, sin ningún tráfico de sondeo entre la emisión y
+el motor (la versión de Windows de Liquidsoap pierde memoria con cada
+sondeo de ese tipo). El sondeo anterior desde la emisión sigue
+disponible como respaldo mediante el ajuste de máquina
+`RASTATIME_WEBSTREAM_WATCHDOG=scheduler`; el comportamiento y los
+tiempos son iguales en ambos casos.
 
 **Comportamiento de grabación (nuevo desde Phase E,
 2026-05-29):**

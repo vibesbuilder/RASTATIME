@@ -31,7 +31,10 @@ def wd():
     engine = MagicMock(spec=LiquidsoapPlayoutEngine)
     engine.get_state.return_value = PlayoutState.STOPPED
     engine.webstream_is_ready.return_value = True
-    s = ps.PlayoutScheduler(engine=engine, api_client=MagicMock(), streaming_handled_externally=True)
+    # the scheduler-side poll is now the opt-in fallback (2026-09-07);
+    # these tests cover exactly that path
+    s = ps.PlayoutScheduler(engine=engine, api_client=MagicMock(), streaming_handled_externally=True,
+                            webstream_watchdog=ps.WEBSTREAM_WATCHDOG_SCHEDULER)
     # no real timers - record re-arms instead of scheduling them
     s._arm_webstream_watchdog = MagicMock()
     s._current_event = _webstream_event()

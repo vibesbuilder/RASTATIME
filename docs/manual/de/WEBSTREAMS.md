@@ -221,7 +221,15 @@ die Quelle ein paar Sekunden kein Audio, verbindet das Playout sie neu
 Sekunden wieder auf Sendung, und der saubere Stop gibt den Hörer-Platz
 auf dem Server frei, damit dessen Verbindungslimit nicht von toten
 Verbindungen belegt wird. Ein Server, der keine neuen Verbindungen
-annimmt, erzeugt weiter Stille, bis er wieder eine annimmt.
+annimmt, erzeugt weiter Stille, bis er wieder eine annimmt. Seit dem
+2026-09-07 läuft der Wächter in der Audio-Engine selbst: ein
+Frame-Zähler prüft die Quelle alle zwei Sekunden und verbindet nach
+zwei stillen Prüfungen neu, ganz ohne Abfrageverkehr zwischen Playout
+und Engine (der Windows-Build von Liquidsoap verliert bei jeder
+solchen Abfrage Speicher). Die frühere Abfrage aus dem Playout bleibt
+als Rückfall über die Maschinen-Einstellung
+`RASTATIME_WEBSTREAM_WATCHDOG=scheduler` verfügbar; Zeitverhalten und
+Wirkung sind in beiden Fällen gleich.
 
 **Aufnahme-Verhalten (neu seit Phase E, 2026-05-29):**
 Scheduled Webstreams landen jetzt im Per-Show-`.mp3`-

@@ -423,6 +423,30 @@ class RenderOutcome(NamedTuple):
     main_output_mode: str
 
 
+WEBSTREAM_WATCHDOG_ENV = "RASTATIME_WEBSTREAM_WATCHDOG"
+
+
+def _webstream_watchdog_mode() -> str:
+    """
+    RASTATIME 2026-09-07 - where the webstream watchdog runs.
+
+    ``liquidsoap`` (default): a frame counter on the bus inside the
+    audio engine, rendered into rastatime.liq - no telnet traffic, and
+    measured flat on the leaking Windows build.  ``scheduler``: the
+    2026-09-06 telnet poll in PlayoutScheduler, kept as a fallback
+    (~87 KB leaked per poll, ~157 MB per webstream hour).  Both the
+    render and the scheduler read this so they never run both.
+    """
+    raw = os.environ.get(WEBSTREAM_WATCHDOG_ENV, "liquidsoap").strip().lower()
+    if raw in ("liquidsoap", "scheduler"):
+        return raw
+    logger.warning(
+        "%s=%r is neither 'liquidsoap' nor 'scheduler' - using 'liquidsoap'.",
+        WEBSTREAM_WATCHDOG_ENV, raw,
+    )
+    return "liquidsoap"
+
+
 def _render_rastatime_liq(stream_outputs: List[Dict]) -> bool:
     """Compatibility wrapper: the ``changed`` flag of
     :func:`_render_rastatime_liq_outcome`."""
@@ -600,6 +624,7 @@ def _render_rastatime_liq_outcome(stream_outputs: List[Dict]) -> RenderOutcome:
             hourly_recording_folder=hourly["folder"],
             hourly_recording_format=hourly["format"],
             hourly_recording_bitrate=hourly["bitrate"],
+            webstream_watchdog_in_liquidsoap=(_webstream_watchdog_mode() == "liquidsoap"),
         )
     except Exception as exc:  # pylint: disable=broad-exception-caught
         logger.critical(
@@ -937,6 +962,14 @@ def main() -> None:
         read_stream_outputs=read_streams,
         streaming_handled_externally=streaming_handled_externally,
         input_transition_seconds=_resolve_crossfade_seconds(),
+        webstream_watchdog=_webstream_watchdog_mode(),
+    )
+    logger.info(
+        "Webstream watchdog: %s (%s=%s).",
+        "inside Liquidsoap (frame counter, rendered into rastatime.liq)"
+        if _webstream_watchdog_mode() == "liquidsoap"
+        else "PLAYOUT telnet poll (fallback)",
+        WEBSTREAM_WATCHDOG_ENV, _webstream_watchdog_mode(),
     )
     # RASTATIME 2026-09-04 - a previous Pypo may have died mid-prepare
     # with a bus gate closed; open both before the first refresh.

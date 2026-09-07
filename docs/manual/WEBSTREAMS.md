@@ -206,7 +206,14 @@ stop + start).  A fresh connection is back on air within a few
 seconds, and the clean stop frees the listener slot on the server so
 its connection limit is not filled up by dead connections.  A server
 that refuses new connections still produces silence until it accepts
-one again.
+one again.  Since 2026-09-07 the watchdog runs inside the audio
+engine itself: a frame counter checks the source every two seconds
+and reconnects after two silent checks, without any polling traffic
+between playout and engine (the Windows build of Liquidsoap leaks
+memory on every such poll).  The earlier playout-side poll remains
+available as a fallback through the machine setting
+`RASTATIME_WEBSTREAM_WATCHDOG=scheduler`; timing and behaviour are
+the same either way.
 
 **Recording behaviour (new since Phase E, 2026-05-29):**
 Scheduled webstreams now land in the per-show `.mp3`

@@ -165,7 +165,15 @@ stop + start propre). Une connexion neuve revient à l'antenne en
 quelques secondes, et le stop propre libère la place d'auditeur sur
 le serveur, pour que sa limite de connexions ne soit pas remplie de
 connexions mortes. Un serveur qui refuse les nouvelles connexions
-produit encore du silence jusqu'à ce qu'il en accepte une.
+produit encore du silence jusqu'à ce qu'il en accepte une. Depuis le
+2026-09-07, le chien de garde tourne dans le moteur audio lui-même :
+un compteur de trames vérifie la source toutes les deux secondes et
+reconnecte après deux vérifications muettes, sans aucun trafic
+d'interrogation entre la diffusion et le moteur (la version Windows
+de Liquidsoap perd de la mémoire à chaque interrogation de ce type).
+L'ancienne interrogation côté diffusion reste disponible en repli via
+le réglage machine `RASTATIME_WEBSTREAM_WATCHDOG=scheduler` ; le
+comportement et les délais sont identiques dans les deux cas.
 
 **Comportement d'enregistrement (nouveau depuis Phase E,
 2026-05-29) :**

@@ -490,6 +490,18 @@ class LiquidsoapTelnetClient:
         """
         return self.send_command("webstream.ready")
 
+    def webstream_watchdog(self) -> str:
+        """
+        Counters of the in-process webstream watchdog (RASTATIME
+        2026-09-07): ``checks=N reconnects=N started=… ready=…
+        seen_ready=… starved=N``.  Registered by rastatime.liq as
+        ``webstream.watchdog``; a render without the block answers
+        ``ERROR: unknown command``.
+
+        Wire-form: ``webstream.watchdog``.
+        """
+        return self.send_command("webstream.watchdog")
+
     def webstream_url(self) -> str:
         """
         Return the URL currently set on the input.http source (empty

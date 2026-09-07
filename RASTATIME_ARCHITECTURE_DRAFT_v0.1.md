@@ -1,10 +1,17 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.23
+Draft version: 0.24
 Date: 2026-09-07
 
 > **Revision history**
+> - **0.24 (2026-09-07)** — **Webstream watchdog moves into Liquidsoap**
+>   (§23.27, addendum 2026-09-07 evening).  The 2026-09-06 scheduler
+>   poll cost ~87 KB of leaked memory per telnet command on the Windows
+>   build; a frame counter on `bus.on_frame` inside the engine does the
+>   same check for free (measured flat over 15 min).  PLAYOUT keeps the
+>   poll as an opt-in fallback and as a stop-gap while an older render
+>   is still loaded.
 > - **0.23 (2026-09-07)** — **Nightly-restart hardening** (§23.27,
 >   addendum 2026-09-07).  Both nightly restarts so far crash-looped
 >   LIQUIDSOAP until the morning: PortAudio's device list is built once
@@ -4372,3 +4379,34 @@ Until the upstream fix, the daily reset by the nightly restart is what
 bounds this; the cheaper designs (longer poll intervals, or a watchdog
 inside Liquidsoap via `thread.run.recurrent` + `source.is_ready`, ~9
 MB/h) are in the BACKLOG awaiting an operator decision.
+
+**Addendum 2026-09-07 (evening) — the webstream watchdog moves into
+Liquidsoap.**  Four replicas of the production render ran 15 minutes
+side by side: nothing polling (+0.9 MB), a `thread.run.recurrent` timer
+checking `source.is_ready(webstream)` every second (+25 MB, ~31 KB per
+tick — the timer wakes the Duppy scheduler, whose `Unix.select` leaks),
+a frame counter on `bus.on_frame` doing the same check every 50th frame
+(+0.1 MB — the callback runs in the streaming thread and never touches
+the scheduler), and an external persistent telnet client asking
+`webstream.ready` every second (+57 MB, 66 KB per command; 87 KB on the
+production instance).  The scheduler's 2026-09-06 poll therefore cost
+~157 MB per webstream hour, the "~9 MB/h" timer estimate of the
+previous addendum was wrong (the per-select leak scales with the fd
+set), and the frame counter is free.  Design (operator go): the
+renderer emits a `${WEBSTREAM_WATCHDOG_BLOCK}` right after the final
+`bus` definition — refs for frames/checks/seen-ready/starved/
+reconnects, a check every 100 frames (2 s) while `webstream_raw` is
+started, the scheduler watchdog's semantics (a not-ready right after
+start does not count; two not-ready checks after a ready one →
+`stop` + `start` from a one-shot `thread.run`, never from the streaming
+thread), and a telnet `webstream.watchdog` reporting the counters.
+PLAYOUT: `RASTATIME_WEBSTREAM_WATCHDOG=liquidsoap|scheduler` selects
+where the watchdog lives (the render and the scheduler read the same
+switch so both never run); in the default mode the scheduler probes
+once per Liquidsoap instance whether the loaded .liq answers
+`webstream.watchdog` and, if not (older render still loaded after a
+PLAYOUT-only restart), polls itself as a stop-gap.  End-to-end in the
+replica against a stalling server: two stalls, two reconnects after
+3–4 s, bus back on the stream after ~11 s (bridge refill included).
+The idle growth of the production instance (~150 MB/h, the
+SourceSwitcher's status poll) is untouched by decision.

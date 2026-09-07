@@ -445,6 +445,8 @@ ${BUS_SOURCE_BLOCK}
 # behaviour mpv has when gain_db is None.
 bus = amplify(override="replaygain_track_gain", 1., bus)
 
+${WEBSTREAM_WATCHDOG_BLOCK}
+
 # ---------------------------------------------------------------------
 # Outputs — where the audio goes
 # ---------------------------------------------------------------------

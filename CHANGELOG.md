@@ -342,6 +342,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Webstream-Wächter läuft jetzt in Liquidsoap selbst, als Frame-Zähler
+  ohne Poll (2026-09-07, Operator-Go)** — Der Wächter vom 2026-09-06
+  fragte alle 2 s per Telnet `webstream.ready` ab; auf dem Windows-Build
+  leckt jedes Telnet-Kommando ~87 KB (`Unix.select`), also ~157 MB pro
+  Webstream-Stunde.  Replikat-Messung 2026-09-07 über 15 min: Telnet-
+  Poll +57 MB, `thread.run.recurrent`-Timer +25 MB, Frame-Zähler auf
+  `bus.on_frame` +0,1 MB (flach wie die Basis).  Das Template rendert
+  daher einen Block hinter der `bus`-Definition: der Zähler im
+  Streaming-Thread prüft alle 100 Frames (2 s) `source.is_ready
+  (webstream)`, solange der Eingang gestartet ist, und lässt nach zwei
+  toten Prüfungen hinter einer guten per einmaligem `thread.run`
+  `stop`+`start` des Eingangs laufen (Logik des Scheduler-Wächters,
+  unverändertes Zeitverhalten).  Telnet `webstream.watchdog` liefert
+  Zähler und Zustand.  Ende-zu-Ende im Replikat gegen einen stallenden
+  Server: zwei Stalls, zwei Reconnects nach 3–4 s, Bus nach ~11 s
+  wieder auf dem Stream.  PLAYOUT: `RASTATIME_WEBSTREAM_WATCHDOG`
+  (`liquidsoap` Standard, `scheduler` = alter Telnet-Poll als
+  Rückfall); im Standardmodus prüft der Scheduler einmal je Liquidsoap-
+  Instanz, ob die geladene .liq den Block hat, und pollt sonst selbst
+  (Übergang PLAYOUT-Neustart vor LIQUIDSOAP-Neustart).  Tests
+  `test_webstream_watchdog_in_liquidsoap.py` (17); Handbuch
+  „Webstreams" in vier Sprachen; Architektur 0.24.  Aktiv nach dem
+  nächsten Neustart PLAYOUT → LIQUIDSOAP (der nächtliche Neustart
+  erledigt den zweiten Schritt selbst).
+
 - **Webstream-Erholung nach Server-Aussetzern: Timeout 3 s, Poll 0,5 s,
   10-s-Bridge, Vorwärmen 20 s vor dem Slot („Option 1", 2026-09-05,
   Operator-Go, `860ebee`)** — Der Cloud-Stream (`DEVAStreamServer 1.4`,
