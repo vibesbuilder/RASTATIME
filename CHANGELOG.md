@@ -343,7 +343,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **Webstream-Wächter läuft jetzt in Liquidsoap selbst, als Frame-Zähler
-  ohne Poll (2026-09-07, Operator-Go)** — Der Wächter vom 2026-09-06
+  ohne Poll (2026-09-07, Operator-Go, `8785bec`)** — Der Wächter vom 2026-09-06
   fragte alle 2 s per Telnet `webstream.ready` ab; auf dem Windows-Build
   leckt jedes Telnet-Kommando ~87 KB (`Unix.select`), also ~157 MB pro
   Webstream-Stunde.  Replikat-Messung 2026-09-07 über 15 min: Telnet-
