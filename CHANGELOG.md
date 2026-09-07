@@ -93,6 +93,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Sentinel-Aufnahme nach separatem LIQUIDSOAP-Neustart gestoppt
+  (2026-09-07, `0d3f097`)** — Die Betriebs-Reihenfolge „PLAYOUT dann
+  LIQUIDSOAP" (und ein Crash + NSSM-Neustart) ließ die frische
+  Liquidsoap-Instanz die Sentinel-Datei `_uninitialized.mp3` weiter
+  aufnehmen, weil PLAYOUT seine einmalige Initialisierung schon gegen
+  die vorherige Instanz erledigt hatte (live 2026-09-07 08:21, 7 MB in
+  ~3 min).  `refresh()` liest jetzt bei jedem Poll die Liquidsoap-
+  Uptime; ein Rückgang (neue Instanz) setzt das Init-Flag zurück und
+  sendet `recording.stop` + Gate-Reset erneut.  Ergänzt den
+  Startreihenfolge-Fix `578e950`.
+
 - **Webstream-Wächter: Erholung nach stillem Upstream-Stall; Rücknahme
   der „Option 1"-Aufblähung (2026-09-06, Operator-Go, `405b200`)** — Der
   Live-Testlauf am 2026-09-06 legte die echte Ursache der Cloud-
