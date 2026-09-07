@@ -106,6 +106,14 @@ def boot_restart_enabled() -> bool:
     )
 
 
+#: How the last render addressed the Main Output - the renderer reports
+#: it so automatic restarts can refuse the one mode that is unsafe
+#: across a device-list change (RASTATIME 2026-09-07).
+MAIN_OUTPUT_BY_NAME = "name"      # output.portaudio(device_name=...) - index-independent
+MAIN_OUTPUT_BY_INDEX = "index"    # output.portaudio(device_id=N) - valid for one device list only
+MAIN_OUTPUT_DEFAULT = "default"   # no device argument - OS default endpoint
+
+
 def restart_liquidsoap_service(
     reason: str,
     *,
@@ -115,12 +123,24 @@ def restart_liquidsoap_service(
     retry_delay: float = RESTART_RETRY_DELAY_SECONDS,
     runner: Callable[..., "subprocess.CompletedProcess[str]"] = subprocess.run,
     sleep: Callable[[float], None] = time.sleep,
+    verify: Optional[Callable[[], bool]] = None,
 ) -> bool:
     """
     ``nssm restart <service>``, retried a few times.  Never raises.
 
-    Returns True when NSSM reported success.  ``runner``/``sleep`` are
-    injectable for tests.
+    Returns True when NSSM reported success - or, when ``verify`` is
+    given, when it confirms the service is back although NSSM exited
+    non-zero.  ``runner``/``sleep``/``verify`` are injectable for tests.
+
+    RASTATIME 2026-09-07: ``nssm restart`` exited 1 on every nightly
+    restart so far ("STOP: ... erfolgreich beendet" followed by
+    "Unexpected status SERVICE_PAUSED in response to START control")
+    even though the stop and the start had both happened - the
+    started instance died within NSSM's throttle window, which NSSM
+    reports as *paused*.  Retrying blindly then killed each fresh
+    instance again.  So: on a non-zero exit, ask the caller's
+    ``verify`` (telnet back, uptime small) before retrying; a retry is
+    only for a restart that demonstrably did not happen.
     """
     if not os.path.exists(nssm_exe):
         logger.error(
@@ -155,6 +175,19 @@ def restart_liquidsoap_service(
                 "nssm restart %s exited %s: %s",
                 service, proc.returncode, detail.replace("\x00", "").strip()[:300],
             )
+            if verify is not None:
+                try:
+                    verified = bool(verify())
+                except Exception as exc:  # pylint: disable=broad-exception-caught
+                    logger.debug("restart verification raised: %s", exc)
+                    verified = False
+                if verified:
+                    logger.warning(
+                        "%s is back after the restart (%s) although nssm exited %s "
+                        "- treating the restart as done, not retrying.",
+                        service, reason, proc.returncode,
+                    )
+                    return True
         if attempt < attempts:
             sleep(retry_delay)
     return False

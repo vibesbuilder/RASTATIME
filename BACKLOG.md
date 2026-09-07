@@ -376,6 +376,13 @@ fun () -> buffer(...))` plus `.set(...)` beim Wechsel); (b) Bridge auf
 (c) beim Anderer-Stream-Start das Gate erst öffnen, wenn `webstream.
 ready` NACH dem Start neu wahr wurde UND die Bridge einmal
 durchgelaufen ist.  Empfehlung: (a), im Replikat testen bevor live.
+**Beobachtung 2026-09-07 (Phase C, derselbe Stream):** Auch beim
+SELBEN Stream hört der Operator in den ersten ~5 s einen kurzen
+„Hacker" (Slots 2 und 3; Slot 1 mit leerer Bridge nicht): die Bridge
+gibt erst 5–10 s alten Inhalt des vorigen Slots aus, dann folgt der
+Zeitsprung zum frischen Material.  Messbar: `webstream.ready` war
+schon 11,6 s VOR dem Slot wahr (vor dem Vorwärmen), weil die Bridge
+nach dem Slot-Ende voll bleibt.  Fix (a) behebt beides.
 
 ### 🟡 Webstream: 5 s alte Puffer-Reste spielen nach einem PLAYOUT-Neustart (neu 2026-09-05)
 
@@ -520,6 +527,41 @@ Replika des Produktions-Renders gegen Icecast + Tascam: Speicher flach
 Option 3 — Entwurf liegt in
 `docs/upstream/2026-09-05-liquidsoap-windows-unix-select-leak.md`,
 Operator postet ihn bei savonet.
+
+**Vorfall 2026-09-06/07 — Nacht-Neustart in Absturzschleife (behoben
+2026-09-07):** beide 04:01-Neustarts endeten in einer NSSM-Schleife bis
+08:21 (Display schlief → HD-Audio-Endpunkt `DELL U2419HC` weg →
+PortAudio-Indizes verschoben; PLAYOUTs Geräteliste stammte vom
+Prozessstart; Namens-Probe scheiterte mit MME error 2; Fallback
+`device_id=18` öffnete ein anderes Gerät; `nssm restart` Exit 1 →
+dreifacher Retry; Preflight blind, weil nur Prozesse > 90 s beurteilt).
+Fix: Re-Enumeration vor jeder Auflösung, „per Name oder gar nicht",
+Verifikation per `uptime`, Bleibt-oben-Prüfung, Preflight
+`liquidsoap_unavailable`.  Details CHANGELOG / Architektur-Addendum
+2026-09-07.  Aktiv nach PLAYOUT-Neustart; erste scharfe Nacht danach
+im Log prüfen (`grep "Nightly" logs/playout-stdout.log`).
+
+### 🟡 Liquidsoap-Leck: Kosten pro Telnet-Kommando — Poll-Design (neu 2026-09-07)
+
+**Messung 2026-09-07 an der Produktionsinstanz (nichts auf Sendung):**
+jede Telnet-**Verbindung** +262 KB, jedes **Kommando** über eine offene
+Verbindung +87 KB (≈17 `Unix.select` à ~5 KB); offene, stille
+Verbindung kostet nichts.  PLAYOUTs Client ist persistent, also:
+SourceSwitcher-Statuspoll alle 5 s ≈ 66 MB/h Leerlauf (≈1,6 GB/Tag),
+Webstream-Wächter alle 2 s ≈ 157 MB pro Webstream-Stunde; der 1-s-
+Messpoller der Phase C allein +340 MB in 20 min.  Der nächtliche
+Neustart (seit 2026-09-07 gehärtet) ist die tägliche Nullstellung;
+die 2048-MB-Warnung wird bei mehreren Webstream-Stunden am Tag
+trotzdem erreicht.
+**Optionen (Go nötig):** (a) Switcher-Poll 5 s → 10–15 s (DJ-Umschalt-
+Latenz steigt entsprechend; ~1 GB/Tag gespart, 1 Zeile); (b) Wächter-
+Intervall 2 s → 4 s (Erkennung 8 s statt 4 s, halbe Kosten, 1 Zeile);
+(c) Wächter in Liquidsoap selbst (`thread.run.recurrent` alle 2 s +
+`source.is_ready(webstream)` + Gate-Prüfung, stop/start im Prozess,
+~9 MB/h; Scheduler pollt gar nicht; Template-Änderung + Test im
+Replikat, ~2 h); (d) Switcher ereignisgesteuert über Harbor-
+`on_connect`/`on_disconnect` (größerer Umbau).  Empfehlung: (c) + (a);
+(d) später.  Echte Heilung nur upstream (OCaml 5 / socketpair).
 
 ### 🟡 Jingle „StationID Friska Viljor.mp3" ist für Liquidsoap unlesbar (neu 2026-09-05)
 

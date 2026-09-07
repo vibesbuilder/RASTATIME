@@ -146,9 +146,10 @@ soit utilisée.
 
 ### Redémarrages automatiques et avertissements de santé
 
-Deux situations redémarrent le moteur audio sans le bouton, et deux
-avertissements du tableau de bord le surveillent (le tout depuis le
-2026-09-05) :
+Deux situations redémarrent le moteur audio sans le bouton, et trois
+avertissements du tableau de bord le surveillent (depuis le
+2026-09-05 ; la protection et le troisième avertissement depuis le
+2026-09-07) :
 
 - **Après un redémarrage de la machine.** Les deux services
   démarrent en parallèle, et le moteur peut charger l'ancien script
@@ -167,6 +168,19 @@ avertissements du tableau de bord le surveillent (le tout depuis le
   Les auditeurs entendent une coupure de quelques secondes ; une
   émission qui dure toute la nuit reporte le redémarrage jusqu'à la
   fermeture de la fenêtre.
+- **Par nom ou pas du tout.** Juste avant chaque redémarrage
+  automatique, la diffusion relit la liste des cartes son et adresse
+  le Main Output par le *nom* du périphérique. Si ce n'est pas
+  possible à cet instant (l'écran du studio dort et son point de
+  terminaison HD-Audio a disparu, le périphérique a été renommé, ou
+  seule une entrée DirectSound/WDM-KS correspond), le redémarrage
+  automatique est ignoré et le moteur en cours continue de jouer ;
+  le journal de la diffusion en donne la raison. Redémarrez
+  manuellement une fois le périphérique revenu. Contexte : les
+  2026-09-06 et 2026-09-07, le redémarrage de 04:01 a utilisé un
+  index de périphérique relevé pendant que l'écran dormait ; le
+  nouveau moteur a ouvert le mauvais point de terminaison, est mort
+  en deux secondes et a été relancé en boucle jusqu'au matin.
 - **Avertissement mémoire.** La bannière du tableau de bord affiche
   *Liquidsoap utilise N Mo* lorsque la mémoire du moteur dépasse
   2048 Mo (réglage machine `RASTATIME_LIQUIDSOAP_MEMORY_WARN_MB`).
@@ -176,6 +190,12 @@ avertissements du tableau de bord le surveillent (le tout depuis le
   aucune session audio sur le périphérique de sortie choisi alors
   qu'il tourne depuis un moment. Le moniteur est alors sur la
   mauvaise prise ; redémarrez la diffusion puis Liquidsoap.
+- **Avertissement moteur arrêté.** La bannière affiche *Liquidsoap
+  ne tourne pas* ou *Liquidsoap redémarre sans cesse (boucle de
+  plantage)* lorsqu'aucun processus du moteur n'existe ou qu'un
+  nouveau apparaît à chaque analyse. Lisez `liquidsoap.log` (en
+  général le périphérique Main Output), corrigez la cause, puis
+  redémarrez la diffusion puis Liquidsoap.
 
 ---
 

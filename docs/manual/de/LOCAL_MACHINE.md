@@ -186,7 +186,8 @@ gespeicherter Wert ist kein Beleg dafür, dass er auch benutzt wird.
 ### Automatische Neustarts und Gesundheitswarnungen
 
 Zwei Situationen starten die Audio-Engine ohne den Knopf neu, und
-zwei Dashboard-Warnungen wachen über sie (alles seit dem 2026-09-05):
+drei Dashboard-Warnungen wachen über sie (seit dem 2026-09-05; die
+Sicherung und die dritte Warnung seit dem 2026-09-07):
 
 - **Nach einem Neustart der Maschine.** Beide Dienste starten
   parallel, und die Engine kann das vorherige Skript laden, bevor
@@ -205,6 +206,19 @@ zwei Dashboard-Warnungen wachen über sie (alles seit dem 2026-09-05):
   beginnt. Hörer hören eine Lücke von wenigen Sekunden; eine
   Sendung, die durch die Nacht läuft, verschiebt den Neustart, bis
   das Fenster schließt.
+- **Per Name oder gar nicht.** Unmittelbar vor jedem automatischen
+  Neustart liest das Playout die Soundkarten-Liste neu ein und
+  adressiert den Main Output über den Geräte-*Namen*. Ist das in
+  diesem Moment nicht möglich (das Studio-Display schläft und sein
+  HD-Audio-Endpunkt ist verschwunden, das Gerät wurde umbenannt,
+  oder nur ein DirectSound/WDM-KS-Eintrag passt), entfällt der
+  automatische Neustart und die laufende Engine spielt weiter; das
+  Playout-Log nennt den Grund. Starten Sie manuell neu, sobald das
+  Gerät wieder da ist. Hintergrund: am 2026-09-06 und 2026-09-07
+  verwendete der 04:01-Neustart einen Geräteindex, der bei
+  schlafendem Display ermittelt worden war; die frische Engine
+  öffnete den falschen Endpunkt, starb nach zwei Sekunden und wurde
+  bis zum Morgen in einer Schleife neu gestartet.
 - **Speicher-Warnung.** Das Dashboard-Banner zeigt *Liquidsoap
   belegt N MB*, wenn der Speicher der Engine 2048 MB überschreitet
   (Maschinen-Einstellung `RASTATIME_LIQUIDSOAP_MEMORY_WARN_MB`).
@@ -215,6 +229,12 @@ zwei Dashboard-Warnungen wachen über sie (alles seit dem 2026-09-05):
   dem gewählten Ausgabegerät hält, obwohl sie schon eine Weile
   läuft. Der Monitor liegt dann auf der falschen Buchse; starten
   Sie das Playout und danach Liquidsoap neu.
+- **Engine-läuft-nicht-Warnung.** Das Banner zeigt *Liquidsoap läuft
+  nicht* oder *Liquidsoap startet ständig neu (Absturzschleife)*,
+  wenn kein Engine-Prozess existiert oder bei jedem Scan ein neuer
+  auftaucht. Lesen Sie `liquidsoap.log` (meist das Main-Output-
+  Gerät), beheben Sie die Ursache und starten Sie dann das Playout
+  und danach Liquidsoap neu.
 
 ---
 

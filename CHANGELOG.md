@@ -93,6 +93,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Nächtlicher LIQUIDSOAP-Neustart: Absturzschleife 04:02–08:21
+  behoben (2026-09-07)** — In beiden Nächten seit dem Feature
+  (2026-09-06 und 2026-09-07) endete der 04:01-Neustart in einer
+  NSSM-Absturzschleife bis zum manuellen Neustart am Morgen: Sendeweg
+  und alle Icecast-Mounts über vier Stunden tot, Preflight meldete
+  „keine Warnungen".  Ursache: PortAudio zählt seine Geräte nur beim
+  Prozessstart; um 04:01 schlief das Studio-Display, sein HD-Audio-
+  Endpunkt (`DELL U2419HC`) fehlte in allen vier Host-APIs, alle
+  späteren Indizes waren verschoben.  PLAYOUTs veraltete Liste
+  lieferte für den MME-Eintrag des Tascam „device ID out of range"
+  (MME error 2), der Renderer fiel auf `device_id=18` zurück, und die
+  frische Instanz öffnete unter 18 ein anderes Gerät („Invalid number
+  of channels") und starb nach 2 s; `nssm restart` meldete Exit 1
+  (Dienst „paused" = NSSM-Drossel), PLAYOUT versuchte es dreimal und
+  schoss jede frische Instanz erneut ab.  Vier Maßnahmen:
+  (1) `refresh_device_list()` — PortAudio wird vor jeder Auflösung
+  neu initialisiert (`sounddevice._terminate/_initialize`), Namens-
+  Treffer und Probe sehen die aktuelle Liste; (2) „per Name oder gar
+  nicht": Boot-Fenster- und Nacht-Neustart werden übersprungen, wenn
+  der Render den Main Output nur per Index adressieren kann
+  (`RenderOutcome.main_output_mode`), die laufende Instanz spielt
+  weiter; (3) `restart_liquidsoap_service(verify=)` — ein Exit ≠ 0
+  wird per Telnet-`uptime` verifiziert (frische Instanz < 120 s) statt
+  blind wiederholt, danach 10 s Bleibt-oben-Prüfung mit lautem Fehler;
+  (4) neue Preflight-Warnung `liquidsoap_unavailable` (kein
+  liquidsoap.exe oder auf jedem Scan eine neue junge PID =
+  Absturzschleife) im Dashboard-Banner.  Tests
+  `test_nightly_restart_hardening.py` (23) und
+  `test_portaudio_refresh.py` (4); Handbuch „Lokale Maschine" in vier
+  Sprachen; Architektur 0.23 (Addendum 2026-09-07 zu §23.27).  Aktiv
+  nach dem nächsten PLAYOUT-Neustart.
+
 - **Sentinel-Aufnahme nach separatem LIQUIDSOAP-Neustart gestoppt
   (2026-09-07, `0d3f097`)** — Die Betriebs-Reihenfolge „PLAYOUT dann
   LIQUIDSOAP" (und ein Crash + NSSM-Neustart) ließ die frische

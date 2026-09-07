@@ -49,7 +49,11 @@ from .recording_path import build_output_path
 from .engine.ffmpeg_streamer import FfmpegStreamer
 from .engine.interface import PlayoutEngine, PlayoutState
 from .liquidsoap_config import DEFAULT_INPUT_DUCK_FADE_SECONDS
-from .liquidsoap_service import NightlyRestartPolicy, restart_liquidsoap_service
+from .liquidsoap_service import (
+    MAIN_OUTPUT_BY_INDEX,
+    NightlyRestartPolicy,
+    restart_liquidsoap_service,
+)
 from .player.events import (
     EventKind,
     FileEvent,
@@ -133,7 +137,7 @@ class PlayoutScheduler:
         read_stream_outputs: Optional[Callable[[], List[Dict]]] = None,
         streaming_handled_externally: bool = False,
         input_transition_seconds: float = 2.0,
-        render_liquidsoap: Optional[Callable[[], bool]] = None,
+        render_liquidsoap: Optional[Callable[[], object]] = None,
         nightly_restart: Optional[NightlyRestartPolicy] = None,
     ) -> None:
         self._engine = engine
@@ -674,22 +678,110 @@ class PlayoutScheduler:
             "re-rendering rastatime.liq and restarting RASTATIME-LIQUIDSOAP.",
             policy.start.strftime("%H:%M") if policy.start else "?",
         )
+        outcome = None
         if self._render_liquidsoap is not None:
             try:
-                self._render_liquidsoap()
+                outcome = self._render_liquidsoap()
             except Exception as exc:  # pylint: disable=broad-exception-caught
                 logger.error(
                     "Nightly restart: re-render failed (%s) - restarting "
                     "with the existing rastatime.liq.", exc,
                 )
-        if not restart_liquidsoap_service("nightly quiet-window restart"):
+        # RASTATIME 2026-09-07: name-safe or not at all.  A device_id
+        # render is only valid for the device list it was taken from;
+        # on 09-06 and 09-07 the display was asleep at 04:01, the index
+        # pointed at another endpoint and the fresh instance crash-looped
+        # until 08:21.  The running instance is healthy - keep it.
+        if getattr(outcome, "main_output_mode", None) == MAIN_OUTPUT_BY_INDEX:
+            logger.error(
+                "Nightly Liquidsoap restart skipped: the fresh render addresses "
+                "the Main Output by PortAudio index (no name-safe entry right "
+                "now: display asleep, device renamed, or a non-MME/WASAPI "
+                "match).  The running instance keeps playing.  Check "
+                "Settings -> Local Machine -> Main Output."
+            )
+            return True
+        if not restart_liquidsoap_service(
+            "nightly quiet-window restart",
+            verify=self._liquidsoap_restarted_recently,
+        ):
             logger.error(
                 "Nightly Liquidsoap restart failed - the running instance "
                 "keeps going; restart PLAYOUT, then LIQUIDSOAP, manually."
             )
             return True
         self._after_liquidsoap_restart()
+        self._confirm_liquidsoap_stays_up()
         return True
+
+    def _liquidsoap_restarted_recently(
+        self, timeout: float = 30.0, fresh_seconds: float = 120.0,
+        sleep: Optional[Callable[[float], None]] = None,
+    ) -> bool:
+        """
+        Did LIQUIDSOAP come back as a *fresh* instance?  Polls the
+        telnet ``uptime`` for up to ``timeout`` seconds and returns
+        True once it answers with less than ``fresh_seconds``.
+
+        Passed to :func:`restart_liquidsoap_service` as ``verify``:
+        ``nssm restart`` exits 1 even when stop and start both happened
+        (2026-09-07), and a blind retry would restart the fresh
+        instance again.
+        """
+        reader = getattr(self._engine, "liquidsoap_uptime_seconds", None)
+        if reader is None:
+            return False
+        sleep = sleep or time.sleep
+        deadline = time.monotonic() + timeout
+        while True:
+            uptime = reader()
+            if (
+                isinstance(uptime, (int, float))
+                and not isinstance(uptime, bool)
+                and 0 <= uptime < fresh_seconds
+            ):
+                logger.info(
+                    "Liquidsoap is back as a fresh instance (uptime %.0f s).", uptime,
+                )
+                return True
+            if time.monotonic() >= deadline:
+                return False
+            sleep(1.0)
+
+    def _confirm_liquidsoap_stays_up(
+        self, settle_seconds: float = 10.0,
+        sleep: Optional[Callable[[float], None]] = None,
+    ) -> bool:
+        """
+        After a restart: wait ``settle_seconds`` and check that the
+        instance is still there.  A Liquidsoap that cannot open its
+        Main Output dies within ~2 s of start and NSSM throttles it
+        into a crash loop - that must be loud, not "no warnings
+        active" (the 2026-09-07 04:02-08:21 outage).
+        """
+        reader = getattr(self._engine, "liquidsoap_uptime_seconds", None)
+        if reader is None:
+            return True
+        (sleep or time.sleep)(settle_seconds)
+        uptime = reader()
+        alive = (
+            isinstance(uptime, (int, float))
+            and not isinstance(uptime, bool)
+            and uptime >= 0
+        )
+        if alive:
+            logger.info(
+                "Nightly restart: Liquidsoap still up after %.0f s (uptime %.0f s).",
+                settle_seconds, uptime,
+            )
+            return True
+        logger.error(
+            "Nightly restart: Liquidsoap is DOWN again %.0f s after the restart "
+            "- a crash loop (NSSM throttling)?  Most likely the Main Output "
+            "device: read liquidsoap.log, then restart PLAYOUT and LIQUIDSOAP "
+            "manually once the cause is fixed.", settle_seconds,
+        )
+        return False
 
     def _after_liquidsoap_restart(self, attempts: int = 15, delay: float = 2.0) -> None:
         """

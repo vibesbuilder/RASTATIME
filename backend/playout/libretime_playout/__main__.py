@@ -53,7 +53,7 @@ import os
 import sys
 import time
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, NamedTuple
 
 import requests
 
@@ -407,11 +407,34 @@ class _LiquidsoapRenderError(RuntimeError):
     """Raised by :func:`_render_rastatime_liq` after logging the cause."""
 
 
+class RenderOutcome(NamedTuple):
+    """
+    What :func:`_render_rastatime_liq_outcome` produced.
+
+    ``main_output_mode`` is one of the ``liquidsoap_service.MAIN_OUTPUT_*``
+    strings: ``name`` (``device_name=``, index-independent), ``index``
+    (``device_id=N``, only valid for the device list it was taken from)
+    or ``default`` (no device argument).  Automatic restarts refuse the
+    ``index`` mode - see :func:`_render_rastatime_liq_at_startup` and
+    ``PlayoutScheduler._maybe_nightly_restart`` (RASTATIME 2026-09-07).
+    """
+
+    changed: bool
+    main_output_mode: str
+
+
 def _render_rastatime_liq(stream_outputs: List[Dict]) -> bool:
+    """Compatibility wrapper: the ``changed`` flag of
+    :func:`_render_rastatime_liq_outcome`."""
+    return _render_rastatime_liq_outcome(stream_outputs).changed
+
+
+def _render_rastatime_liq_outcome(stream_outputs: List[Dict]) -> RenderOutcome:
     """
     Render ``rastatime.liq`` from the operator-configured environment +
     ``cc_pref`` stream outputs.  Idempotent: writes only when content
-    actually changed; returns that ``changed`` flag.
+    actually changed; returns that ``changed`` flag together with how
+    the Main Output was addressed.
 
     RASTATIME 2026-09-05: split out of the startup wrapper so the
     scheduler's nightly quiet-window restart can re-render right before
@@ -420,6 +443,11 @@ def _render_rastatime_liq(stream_outputs: List[Dict]) -> bool:
     :class:`_LiquidsoapRenderError`; the startup wrapper turns that
     into ``sys.exit(1)``, the nightly caller into a log line.
     """
+    from libretime_playout.liquidsoap_service import (  # noqa: PLC0415
+        MAIN_OUTPUT_BY_INDEX,
+        MAIN_OUTPUT_BY_NAME,
+        MAIN_OUTPUT_DEFAULT,
+    )
     from libretime_playout.liquidsoap_config import (  # noqa: PLC0415
         DEFAULT_LINEIN_HTTP_MAX_BUFFER_SECONDS,
         read_hourly_recording_config_from_db,
@@ -544,6 +572,12 @@ def _render_rastatime_liq(stream_outputs: List[Dict]) -> bool:
         local_output_device_id, local_output_device_label = (None, "")
         local_output_endpoint_id = ""
         local_output_device_name = None
+    if local_output_device_name:
+        main_output_mode = MAIN_OUTPUT_BY_NAME
+    elif local_output_device_id is not None:
+        main_output_mode = MAIN_OUTPUT_BY_INDEX
+    else:
+        main_output_mode = MAIN_OUTPUT_DEFAULT
 
     try:
         changed = write_rastatime_liq(
@@ -582,7 +616,7 @@ def _render_rastatime_liq(stream_outputs: List[Dict]) -> bool:
             "needed.",
             config_path,
         )
-    return changed
+    return RenderOutcome(changed=changed, main_output_mode=main_output_mode)
 
 
 def _render_rastatime_liq_at_startup(stream_outputs: List[Dict]) -> None:
@@ -601,13 +635,14 @@ def _render_rastatime_liq_at_startup(stream_outputs: List[Dict]) -> None:
     LIQUIDSOAP.  See ``liquidsoap_service`` for the 2026-09-05 evidence.
     """
     try:
-        changed = _render_rastatime_liq(stream_outputs)
+        outcome = _render_rastatime_liq_outcome(stream_outputs)
     except _LiquidsoapRenderError:
         sys.exit(1)
-    if not changed:
+    if not outcome.changed:
         return
 
     from libretime_playout.liquidsoap_service import (  # noqa: PLC0415
+        MAIN_OUTPUT_BY_INDEX,
         boot_restart_enabled,
         restart_liquidsoap_service,
         system_uptime_seconds,
@@ -616,6 +651,21 @@ def _render_rastatime_liq_at_startup(stream_outputs: List[Dict]) -> None:
 
     uptime = system_uptime_seconds()
     if boot_restart_enabled() and within_boot_window(uptime):
+        if outcome.main_output_mode == MAIN_OUTPUT_BY_INDEX:
+            # RASTATIME 2026-09-07: an index is only valid for the device
+            # list it was taken from; restarting LIQUIDSOAP into an index
+            # render is what crash-looped it on the 09-06/09-07 nightly
+            # restarts.  Keep the running instance, tell the operator.
+            logger.error(
+                "rastatime.liq changed %.0f s after boot, but the Main Output "
+                "is rendered by PortAudio index (no name-safe entry right "
+                "now: display asleep, device renamed, or a non-MME/WASAPI "
+                "match) - NOT restarting RASTATIME-LIQUIDSOAP automatically.  "
+                "Check Settings -> Local Machine -> Main Output, then restart "
+                "PLAYOUT and LIQUIDSOAP manually in a quiet moment.",
+                uptime or 0.0,
+            )
+            return
         logger.warning(
             "rastatime.liq changed %.0f s after boot — restarting "
             "RASTATIME-LIQUIDSOAP so it loads this render instead of the "
@@ -865,7 +915,7 @@ def main() -> None:
         NightlyRestartPolicy.from_env() if engine_kind == "liquidsoap" else None
     )
     render_for_restart = (
-        (lambda: _render_rastatime_liq(_read_stream_outputs()))
+        (lambda: _render_rastatime_liq_outcome(_read_stream_outputs()))
         if (django_ok and engine_kind == "liquidsoap") else None
     )
     if nightly_policy is not None and nightly_policy.enabled:

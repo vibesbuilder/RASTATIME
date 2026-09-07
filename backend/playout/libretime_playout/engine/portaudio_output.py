@@ -368,6 +368,46 @@ def with_name_selection(
     return resolved._replace(by_name=resolved.name)
 
 
+def refresh_device_list(sd) -> bool:
+    """
+    Re-enumerate PortAudio so the indices describe the endpoints that
+    exist *now*, not the ones that existed when this process started.
+
+    RASTATIME 2026-09-07: PortAudio builds its device list once, at
+    ``Pa_Initialize``.  A long-running PLAYOUT therefore resolved the
+    Main Output against the list from its own start.  Both nightly
+    restarts so far (2026-09-06 and 2026-09-07, 04:01) ran while the
+    studio display slept - its HD-Audio endpoint was gone from all four
+    host APIs, every later index had shifted, the stale MME id of the
+    Tascam entry was "out of range" (MME error 2), the resolver fell
+    back to ``device_id=18``, and the fresh Liquidsoap opened whatever
+    sat at 18 by then ("Invalid number of channels") - a crash loop
+    under NSSM until the operator restarted at 08:21.
+
+    ``sounddevice`` exposes ``_terminate``/``_initialize`` for exactly
+    this re-enumeration.  Returns True when the list was refreshed;
+    a stand-in without those hooks (tests) is left alone.
+    """
+    terminate = getattr(sd, "_terminate", None)
+    initialize = getattr(sd, "_initialize", None)
+    if not callable(terminate) or not callable(initialize):
+        return False
+    try:
+        terminate()
+        initialize()
+    except Exception as exc:  # pylint: disable=broad-exception-caught
+        logger.warning(
+            "PortAudio re-enumeration failed (%s) - resolving against the "
+            "cached device list.", exc,
+        )
+        try:
+            initialize()
+        except Exception:  # pylint: disable=broad-exception-caught
+            pass
+        return False
+    return True
+
+
 def resolve_output_device(
     device_name: str,
     *,
@@ -401,6 +441,11 @@ def resolve_output_device(
             "Falling back to the OS-default endpoint.", device_name, exc,
         )
         return None
+
+    # Fresh device list: PLAYOUT runs for days, endpoints come and go
+    # (display sleep, USB), and an index from a stale list is exactly
+    # what crash-looped Liquidsoap on the 2026-09-06/07 nightly restarts.
+    refresh_device_list(sd)
 
     candidates = find_output_candidates(device_name, sd)
     if not candidates:

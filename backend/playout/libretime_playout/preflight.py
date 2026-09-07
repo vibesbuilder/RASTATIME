@@ -76,6 +76,9 @@ class PreflightChecker:
     # liquidsoap_health.py for the why of both).
     WARNING_TYPE_LIQUIDSOAP_MEMORY = "liquidsoap_memory_high"
     WARNING_TYPE_MAIN_OUTPUT_SESSION = "main_output_session_missing"
+    # RASTATIME 2026-09-07: no liquidsoap.exe at all, or a fresh PID on
+    # every scan (NSSM throttling a crash loop).
+    WARNING_TYPE_LIQUIDSOAP_UNAVAILABLE = "liquidsoap_unavailable"
 
     # ------------------------------------------------------------------
     # Construction & lifecycle
@@ -91,6 +94,9 @@ class PreflightChecker:
         self._show_cache: dict[int, dict] = {}
         self._show_instance_cache: dict[int, dict] = {}
         self._linein_cache: dict[int, dict] = {}
+        # (pid, age_seconds) of the youngest liquidsoap.exe seen on the
+        # last few scans - a crash loop shows as a new young PID each time.
+        self._liquidsoap_recent: list[tuple[int, float]] = []
 
     def start(self) -> None:
         """
@@ -212,6 +218,7 @@ class PreflightChecker:
         infos = liquidsoap_health.liquidsoap_process_info()
         memory_warnings: list[dict] = []
         session_warnings: list[dict] = []
+        unavailable_warnings: list[dict] = []
         if infos is None:
             logger.debug("preflight: Liquidsoap process probe unavailable.")
         else:
@@ -236,12 +243,74 @@ class PreflightChecker:
                         },
                     })
             session_warnings = self._main_output_session_warnings(infos)
+            unavailable_warnings = self._liquidsoap_unavailable_warnings(infos)
         self._submit_warnings(
             self.WARNING_TYPE_LIQUIDSOAP_MEMORY, str(uuid.uuid4()), memory_warnings,
         )
         self._submit_warnings(
             self.WARNING_TYPE_MAIN_OUTPUT_SESSION, str(uuid.uuid4()), session_warnings,
         )
+        self._submit_warnings(
+            self.WARNING_TYPE_LIQUIDSOAP_UNAVAILABLE, str(uuid.uuid4()), unavailable_warnings,
+        )
+
+    def _liquidsoap_unavailable_warnings(
+        self, infos: list["liquidsoap_health.ProcessInfo"],
+    ) -> list[dict]:
+        """
+        ``liquidsoap_unavailable``: no ``liquidsoap.exe`` at all, or a
+        new young PID on consecutive scans.
+
+        RASTATIME 2026-09-07: after the 04:01 nightly restart the fresh
+        instance could not open its Main Output (device index shifted
+        while the display slept), died within 2 s and NSSM throttled it
+        into a crash loop until the operator restarted at 08:21 - and
+        this checker said "no warnings active" the whole time, because
+        the session watchdog only judges processes older than
+        ``MIN_PROCESS_AGE_SECONDS``.  Never again.
+        """
+        youngest = min(infos, key=lambda i: i.age_seconds) if infos else None
+        if youngest is not None:
+            self._liquidsoap_recent.append((youngest.pid, youngest.age_seconds))
+            del self._liquidsoap_recent[:-4]
+        recent_pids = sorted({pid for pid, _ in self._liquidsoap_recent})
+        base = {"show_id": None, "show_instance_id": None, "starts_at": None}
+        if not infos:
+            return [{
+                "severity": "error",
+                **base,
+                "detail": {
+                    "crash_loop": False,
+                    "pids": recent_pids,
+                    "message": (
+                        "Liquidsoap is not running (no liquidsoap.exe process).  If "
+                        "NSSM is throttling a crash loop, liquidsoap.log says why "
+                        "(Main Output device?).  Fix the cause, then restart PLAYOUT, "
+                        "then LIQUIDSOAP."
+                    ),
+                },
+            }]
+        young_limit = liquidsoap_health.MIN_PROCESS_AGE_SECONDS
+        young_pids = sorted({
+            pid for pid, age in self._liquidsoap_recent if age < young_limit
+        })
+        if youngest.age_seconds < young_limit and len(young_pids) >= 2:
+            return [{
+                "severity": "error",
+                **base,
+                "detail": {
+                    "crash_loop": True,
+                    "pids": young_pids,
+                    "message": (
+                        f"Liquidsoap keeps restarting (PIDs "
+                        f"{', '.join(str(p) for p in young_pids)} within the last "
+                        "scans) - a crash loop, most likely the Main Output device.  "
+                        "Read liquidsoap.log, fix the cause, then restart PLAYOUT, "
+                        "then LIQUIDSOAP."
+                    ),
+                },
+            }]
+        return []
 
     def _main_output_session_warnings(
         self, infos: list["liquidsoap_health.ProcessInfo"],

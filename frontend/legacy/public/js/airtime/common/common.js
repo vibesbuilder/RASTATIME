@@ -492,6 +492,30 @@ function loadPreflightWarnings() {
               ". " + $.i18n._("Restart PLAYOUT, then LIQUIDSOAP.")
             )
           );
+        } else if (w.warning_type === "liquidsoap_unavailable") {
+          // RASTATIME 2026-09-07: no liquidsoap.exe at all, or a fresh
+          // PID on every scan (NSSM throttling a crash loop).  The
+          // 04:02-08:21 outage after a nightly restart looked like
+          // "no warnings active" before this type existed.
+          $li.append(
+            document.createTextNode(
+              " " + (detail.crash_loop
+                ? $.i18n._("Liquidsoap keeps restarting (crash loop)")
+                : $.i18n._("Liquidsoap is not running")) + ". "
+            )
+          );
+          if (detail.pids && detail.pids.length) {
+            $li.append(
+              document.createTextNode(
+                $.i18n._("Recent PIDs") + ": " + detail.pids.join(", ") + ". "
+              )
+            );
+          }
+          $li.append(
+            document.createTextNode(
+              $.i18n._("Check liquidsoap.log (Main Output device?), then restart PLAYOUT, then LIQUIDSOAP.")
+            )
+          );
         } else {
           // Unknown warning type — render a generic fallback so future
           // backend additions surface even before the JS catches up.

@@ -145,8 +145,9 @@ aplicado, o el dispositivo no pudo abrirse — la línea lo señala en
 
 ### Reinicios automáticos y avisos de salud
 
-Dos situaciones reinician el motor de audio sin el botón, y dos
-avisos del panel lo vigilan (todo desde el 2026-09-05):
+Dos situaciones reinician el motor de audio sin el botón, y tres
+avisos del panel lo vigilan (desde el 2026-09-05; la salvaguarda y
+el tercer aviso desde el 2026-09-07):
 
 - **Tras un reinicio de la máquina.** Ambos servicios arrancan en
   paralelo, y el motor puede cargar el script anterior antes de que
@@ -164,6 +165,18 @@ avisos del panel lo vigilan (todo desde el 2026-09-05):
   empieza en los próximos cinco minutos. Los oyentes escuchan un
   hueco de pocos segundos; un programa que dura toda la noche
   pospone el reinicio hasta que la ventana se cierra.
+- **Por nombre o nada.** Justo antes de cada reinicio automático la
+  emisión vuelve a leer la lista de tarjetas de sonido y direcciona
+  el Main Output por el *nombre* del dispositivo. Si en ese momento
+  no es posible (la pantalla del estudio duerme y su punto final
+  HD-Audio ha desaparecido, el dispositivo fue renombrado, o solo
+  coincide una entrada DirectSound/WDM-KS), el reinicio automático
+  se omite y el motor en marcha sigue reproduciendo; el registro de
+  la emisión indica el motivo. Reinicie manualmente cuando el
+  dispositivo vuelva. Antecedente: el 2026-09-06 y el 2026-09-07 el
+  reinicio de las 04:01 usó un índice de dispositivo tomado con la
+  pantalla dormida; el motor nuevo abrió el punto final equivocado,
+  murió a los dos segundos y fue reiniciado en bucle hasta la mañana.
 - **Aviso de memoria.** El banner del panel muestra *Liquidsoap usa
   N MB* cuando la memoria del motor supera 2048 MB (ajuste de
   máquina `RASTATIME_LIQUIDSOAP_MEMORY_WARN_MB`). Reinicie la
@@ -173,6 +186,12 @@ avisos del panel lo vigilan (todo desde el 2026-09-05):
   mantiene ninguna sesión de audio en el dispositivo de salida
   elegido aunque lleve un rato funcionando. El monitor está entonces
   en la toma equivocada; reinicie la emisión y después Liquidsoap.
+- **Aviso de motor parado.** El banner muestra *Liquidsoap no está
+  en marcha* o *Liquidsoap se reinicia sin parar (bucle de fallos)*
+  cuando no existe ningún proceso del motor o aparece uno nuevo en
+  cada exploración. Lea `liquidsoap.log` (normalmente el dispositivo
+  Main Output), corrija la causa y reinicie la emisión y después
+  Liquidsoap.
 
 ---
 

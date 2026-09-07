@@ -173,7 +173,8 @@ saved value alone is not proof that it is in use.
 ### Automatic restarts and health warnings
 
 Two situations restart the audio engine without the button, and
-two dashboard warnings watch it (all since 2026-09-05):
+three dashboard warnings watch it (since 2026-09-05; the safeguard
+and the third warning since 2026-09-07):
 
 - **After a reboot.** Both services start in parallel, and the
   engine may load the previous script before the playout has
@@ -190,6 +191,18 @@ two dashboard warnings watch it (all since 2026-09-05):
   starts within the next five minutes. Listeners hear a gap of a
   few seconds; a show that runs through the night postpones the
   restart until the window closes.
+- **Name-safe or not at all.** Right before either automatic
+  restart the playout re-reads the sound-card list and addresses
+  the Main Output by device *name*. When that is not possible at
+  that moment (the studio display is asleep and its HD-Audio
+  endpoint has vanished, the device was renamed, or only a
+  DirectSound/WDM-KS entry matches), the automatic restart is
+  skipped and the running engine keeps playing; the playout log
+  says why. Restart manually once the device is back. Background:
+  on 2026-09-06 and 2026-09-07 the 04:01 restart used a device
+  index taken while the display slept, the fresh engine opened the
+  wrong endpoint, died within two seconds and was restarted in a
+  loop until the morning.
 - **Memory warning.** The dashboard banner shows *Liquidsoap uses
   N MB* when the engine's memory exceeds 2048 MB (machine setting
   `RASTATIME_LIQUIDSOAP_MEMORY_WARN_MB`). Restart the playout and
@@ -199,6 +212,11 @@ two dashboard warnings watch it (all since 2026-09-05):
   on the chosen output device although it has been running for a
   while. The monitor is then on the wrong jack; restart the
   playout and then Liquidsoap.
+- **Engine-down warning.** The banner shows *Liquidsoap is not
+  running* or *Liquidsoap keeps restarting (crash loop)* when no
+  engine process exists or a new one appears on every scan. Read
+  `liquidsoap.log` (usually the Main Output device), fix the cause,
+  then restart the playout and then Liquidsoap.
 
 ---
 

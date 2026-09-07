@@ -1,10 +1,18 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.22
-Date: 2026-09-05
+Draft version: 0.23
+Date: 2026-09-07
 
 > **Revision history**
+> - **0.23 (2026-09-07)** — **Nightly-restart hardening** (§23.27,
+>   addendum 2026-09-07).  Both nightly restarts so far crash-looped
+>   LIQUIDSOAP until the morning: PortAudio's device list is built once
+>   per process, the display's HD-Audio endpoint was gone at 04:01, and
+>   the stale index opened the wrong device.  Now: re-enumeration before
+>   every resolution, automatic restarts only for a by-name render,
+>   `nssm restart` verified by observation plus a stays-up check, and
+>   the `liquidsoap_unavailable` preflight warning.
 > - **0.22 (2026-09-05)** — **Liquidsoap process hygiene on Windows**
 >   (§23.27).  The savonet Windows build leaks ~5 KB per `Unix.select`;
 >   the scheduled queue becomes a *synchronous* `request.queue` copy
@@ -4321,3 +4329,46 @@ inflation (bridge 10 s/20 s, pre-warm 20 s) is reverted to 5 s/10 s and
 10 s; `timeout` 3 s / `poll` 0.5 s stay.  The stale-bridge "wrong stream
 for ~5 s at the slot start" is only reduced, not eliminated — a separate
 follow-up (flush the bridge on a stream change).
+
+**Addendum 2026-09-07 — nightly-restart hardening after the 04:02–08:21
+crash loop.**  The nightly restart of this section failed on both
+nights it ran (2026-09-06 and 2026-09-07, 04:01): the fresh instance
+died within 2 s ("Portaudio error in open_device: Invalid number of
+channels") and NSSM throttled it into a restart loop (a `LOG START`
+every ~4 min) until the operator restarted at 08:21 — programme output
+and all Icecast mounts dead for four hours while the preflight reported
+"no warnings active".  Root cause, in order: (1) PortAudio enumerates
+devices once per process, so PLAYOUT (up for days) resolved against the
+list from its own start; (2) at 04:01 the studio display slept and its
+HD-Audio endpoint (`DELL U2419HC`) was absent from all four host APIs,
+shifting every later index; (3) the by-name probe used the stale MME id
+of the Tascam entry → "device ID out of range" (MME error 2) → the
+resolver fell back to `device_id=18`; (4) the fresh Liquidsoap, with a
+fresh list, found another endpoint at 18; (5) `nssm restart` exited 1
+(the started app died inside NSSM's throttle window, reported as
+`SERVICE_PAUSED`), PLAYOUT retried three times and killed each fresh
+instance again; (6) `main_output_session_missing` judges only processes
+older than 90 s — a crash loop has none.  Fixes: `refresh_device_list`
+(`sounddevice._terminate/_initialize` before every resolution);
+`RenderOutcome.main_output_mode` and the rule *name-safe or not at all*
+for the boot-window and the nightly restart (an index render keeps the
+running instance and logs why); `restart_liquidsoap_service(verify=)`
+polls the telnet `uptime` for a fresh instance (< 120 s) before it would
+retry, followed by a 10 s stays-up check; and the preflight type
+`liquidsoap_unavailable` (no `liquidsoap.exe`, or a new young PID on
+consecutive scans).  Lesson: an automatic restart must prove the new
+instance is alive — NSSM's exit code and a cached device list are not
+evidence.
+
+*Telnet cost of the leak, measured the same morning (production
+instance, nothing on air):* every telnet **connection** grows the
+Liquidsoap process by ~262 KB, every **command** over an open
+connection by ~87 KB (≈17 `Unix.select` calls at ~5 KB) — an idle
+open connection costs nothing.  PLAYOUT's client is persistent, so the
+idle growth (~66 MB/h) is the SourceSwitcher's 5 s status poll, and the
+webstream watchdog's 2 s poll adds ~157 MB per webstream hour; a
+per-second external poller (the Phase-C probe) added ~340 MB in 20 min.
+Until the upstream fix, the daily reset by the nightly restart is what
+bounds this; the cheaper designs (longer poll intervals, or a watchdog
+inside Liquidsoap via `thread.run.recurrent` + `source.is_ready`, ~9
+MB/h) are in the BACKLOG awaiting an operator decision.
