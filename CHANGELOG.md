@@ -122,6 +122,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Stall-Server mit zwei Wächter-Erholungen über frische Quellen.  Tests
   angepasst (295 Backend, 105 Unit); Handbuch „Webstreams" EN/DE/FR/ES;
   Architektur 0.25.  Aktiv nach Neustart PLAYOUT → LIQUIDSOAP.
+  **Nachtrag 22:40 — Reaper für verworfene Eingänge:** Live-Stall-Test
+  22:20 (DEVA zweimal stromlos, ~30 s / ~55 s): Erholung über frische
+  Quellen 6–7 s nach Rückkehr des DEVA (Stille 29 s / 58 s), aber die
+  verworfenen `webstream_in_1/_2` pollten weiter, verbanden sich beim
+  DEVA selbst wieder und hielten je eine Verbindung — `input.http`
+  verliert ein Stop, solange es einen toten Server pollt (der Connect-
+  Task überschreibt `Stopping` nach jedem Fehlversuch mit `Starting`).
+  Ein zweites `start`+`stop` auf einer „connected" gemeldeten Quelle
+  trennt sie sauber (live an beiden Zombies bestätigt).  Das Template
+  merkt sich jetzt jede Quelle, deren Stop nicht griff
+  (`webstream_zombies`), und der Frame-Zähler räumt sie beim ersten
+  „connected" ab (`webstream_reap`, auch im Scheduler-Modus);
+  `webstream.watchdog` zeigt `zombies=`/`reaped=`.  Replikat: drei
+  Stalls, jede verworfene Quelle binnen 3 s abgeräumt.  Test
+  `test_dropped_inputs_are_remembered_and_reaped`.
 
 - **Nächtlicher LIQUIDSOAP-Neustart: Absturzschleife 04:02–08:21
   behoben (2026-09-07, `e66e675`)** — In beiden Nächten seit dem Feature

@@ -143,7 +143,10 @@ versión de Windows una entrada reutilizada tardaba a veces un minuto o
 más en reconectar, y un slot podía empezar con unos segundos del flujo
 anterior todavía en el búfer. Ambas cosas han desaparecido; un slot
 empieza con su propio flujo, y el precalentamiento diez segundos antes
-del slot da tiempo a la nueva conexión para llenarse.
+del slot da tiempo a la nueva conexión para llenarse. Una conexión
+descartada que vuelve por sí sola tras una caída se cierra de nuevo en
+pocos segundos, para que el servidor de flujo nunca mantenga ocupada
+una plaza de oyente con una conexión que nadie escucha.
 
 **Comportamiento de grabación (nuevo desde Phase E,
 2026-05-29):**

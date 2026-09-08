@@ -618,8 +618,15 @@ Slot-Start, keine Wächter-Ereignisse, Operator: alle vier „gut
 gelungen").  **Bekannte Kosten:** ~12 MB und ~1 Thread pro Slot-Start
 bleiben bis zum Nacht-Neustart (verworfene Quelle/Bridge werden nicht
 freigegeben); bei wenigen Slots/Tag vernachlässigbar gegenüber dem
-Leerlauf-Leck.  Stall-Test unter Plan A noch nicht live gefahren
-(Replikat: zwei Erholungen in je 10 s).
+Leerlauf-Leck.  **Stall-Test unter Plan A live 22:20 (DEVA zweimal
+stromlos):** Erholung über frische Quellen 6–7 s nach Rückkehr des DEVA
+(Stille 29 s / 58 s = Ausfall + Bridge), kurzer „Hacker" beim Übergang
+von Stille auf den frischen Puffer (Operator: verschmerzbar).  Befund:
+verworfene Eingänge pollten weiter und hielten nach der Rückkehr je
+einen DEVA-Platz (Stop geht in `input.http` verloren, solange es einen
+toten Server pollt) → **Reaper** im Frame-Zähler (`webstream_reap`,
+`start`+`stop` beim ersten „connected"), Replikat: jede verworfene
+Quelle binnen 3 s weg.  Aktiv nach Neustart PLAYOUT → LIQUIDSOAP.
 
 ### 🟡 Jingle „StationID Friska Viljor.mp3" ist für Liquidsoap unlesbar (neu 2026-09-05)
 

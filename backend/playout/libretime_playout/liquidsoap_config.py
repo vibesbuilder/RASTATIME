@@ -893,6 +893,10 @@ def _render_webstream_input_block(
         "webstream_current = ref(source.fail())\n"
         "webstream_stopper = ref(fun () -> ())\n"
         'webstream_status_fn = ref(fun () -> "stopped")\n'
+        'webstream_current_name = ref("")\n'
+        "webstream_reaper = ref(fun () -> ())\n"
+        "webstream_zombies = ref([])\n"
+        "webstream_reaped = ref(0)\n"
         "# The bus arm: whatever the current slot's bridge is (source.fail()\n"
         "# between slots, so the switch falls through exactly as before).\n"
         'webstream_raw = source.dynamic(id="webstream", self_sync=false,\n'
@@ -903,6 +907,16 @@ def _render_webstream_input_block(
         "  if webstream_started() then\n"
         "    f = webstream_stopper()\n"
         "    f()\n"
+        "    status_fn = webstream_status_fn()\n"
+        '    if status_fn() != "stopped" then\n'
+        "      # input.http loses a stop while it polls a dead server (the\n"
+        "      # connect task overwrites Stopping with Starting after each\n"
+        "      # failed attempt): the dropped input would reconnect on its own\n"
+        "      # and hold a listener slot for nothing.  The reaper below stops\n"
+        "      # it for good once it reports connected (2026-09-08 22:23).\n"
+        "      webstream_zombies.set(list.append(webstream_zombies(),\n"
+        "        [(webstream_current_name(), status_fn, webstream_reaper())]))\n"
+        "    end\n"
         "  end\n"
         "  webstream_started.set(false)\n"
         '  webstream_active_url.set("")\n'
@@ -910,6 +924,26 @@ def _render_webstream_input_block(
         "  webstream_stopper.set(fun () -> ())\n"
         '  webstream_status_fn.set(fun () -> "stopped")\n'
         '  "Done"\n'
+        "end\n"
+        "\n"
+        "def webstream_reap() =\n"
+        "  if list.length(webstream_zombies()) > 0 then\n"
+        "    webstream_zombies.set(list.filter(fun (z) -> begin\n"
+        "      let (name, status_fn, reap_fn) = z\n"
+        "      st = status_fn()\n"
+        '      if st == "stopped" then\n'
+        "        false\n"
+        '      elsif string.contains(prefix="connected", st) then\n'
+        '        log(level=2, label="webstream_watchdog",\n'
+        '            "dropped input #{name} reconnected on its own - reaping (start+stop)")\n'
+        "        reap_fn()\n"
+        "        webstream_reaped.set(webstream_reaped() + 1)\n"
+        "        true\n"
+        "      else\n"
+        "        true\n"
+        "      end\n"
+        "    end, webstream_zombies()))\n"
+        "  end\n"
         "end\n"
         "\n"
         "def webstream_start() =\n"
@@ -931,6 +965,13 @@ def _render_webstream_input_block(
         f"      buffer={bridge}, max={bridge_max}, s)\n"
         "    webstream_stopper.set(fun () -> s.stop())\n"
         "    webstream_status_fn.set(fun () -> s.status())\n"
+        '    webstream_current_name.set("webstream_in_#{n}")\n'
+        "    # start+stop on a source that reconnected after being dropped:\n"
+        "    # start is a no-op while connected, stop then really disconnects\n"
+        "    webstream_reaper.set(fun () -> begin\n"
+        "      s.start()\n"
+        "      s.stop()\n"
+        "    end)\n"
         "    webstream_active_url.set(url)\n"
         "    webstream_started.set(true)\n"
         "    webstream_current.set(b)\n"
@@ -992,16 +1033,27 @@ def _render_webstream_watchdog_block(
     ``RASTATIME_WEBSTREAM_WATCHDOG=scheduler``) or without a webstream
     input, a comment stub is rendered.
     """
-    if not enabled or not webstream_enabled:
-        why = (
-            "the scheduler-side telnet watchdog is selected (RASTATIME_WEBSTREAM_WATCHDOG=scheduler)"
-            if webstream_enabled else "no webstream input is rendered"
-        )
+    if not webstream_enabled:
         return (
             "# ---------------------------------------------------------------------\n"
             "# RASTATIME 2026-09-07 - in-process webstream watchdog: disabled\n"
-            f"# ({why})\n"
+            "# (no webstream input is rendered)\n"
             "# ---------------------------------------------------------------------\n"
+        )
+    if not enabled:
+        check_frames = max(1, int(check_frames))
+        return (
+            "# ---------------------------------------------------------------------\n"
+            "# RASTATIME 2026-09-07 - in-process webstream watchdog: disabled\n"
+            "# (the scheduler-side telnet watchdog is selected:\n"
+            "#  RASTATIME_WEBSTREAM_WATCHDOG=scheduler).  Only the reaper for\n"
+            "# dropped inputs runs on the frame counter (RASTATIME 2026-09-08).\n"
+            "# ---------------------------------------------------------------------\n"
+            "webstream_wd_frames = ref(0)\n"
+            "bus.on_frame(synchronous=true, fun () -> begin\n"
+            "  webstream_wd_frames.set(webstream_wd_frames() + 1)\n"
+            f"  if webstream_wd_frames() mod {check_frames} == 0 then webstream_reap() end\n"
+            "end)\n"
         )
     check_frames = max(1, int(check_frames))
     starve_checks = max(1, int(starve_checks))
@@ -1034,6 +1086,7 @@ def _render_webstream_watchdog_block(
         "\n"
         "def webstream_wd_check() =\n"
         "  webstream_wd_checks.set(webstream_wd_checks() + 1)\n"
+        "  webstream_reap()\n"
         "  if webstream_started() then\n"
         "    if source.is_ready(webstream) then\n"
         "      webstream_wd_seen_ready.set(true)\n"
@@ -1062,7 +1115,8 @@ def _render_webstream_watchdog_block(
         '  "watchdog", fun (_) ->\n'
         '    "checks=#{webstream_wd_checks()} reconnects=#{webstream_wd_reconnects()} "\n'
         '    ^ "started=#{webstream_started()} ready=#{source.is_ready(webstream)} "\n'
-        '    ^ "seen_ready=#{webstream_wd_seen_ready()} starved=#{webstream_wd_starved()}")\n'
+        '    ^ "seen_ready=#{webstream_wd_seen_ready()} starved=#{webstream_wd_starved()} "\n'
+        '    ^ "zombies=#{list.length(webstream_zombies())} reaped=#{webstream_reaped()}")\n'
     )
 
 

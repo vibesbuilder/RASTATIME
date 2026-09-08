@@ -219,7 +219,10 @@ reusing one long-lived input: on the Windows build a reused input
 sometimes took a minute or more to reconnect, and a slot could start
 with a few seconds of the previous stream still in the buffer.  Both
 are gone; a slot now starts on its own stream, and the pre-warm ten
-seconds before the slot gives the fresh connection time to fill up.
+seconds before the slot gives the fresh connection time to fill up.  A
+dropped connection that comes back on its own after an outage is
+closed again within seconds, so the stream server never keeps a
+listener slot occupied by a connection nobody is listening to.
 
 **Recording behaviour (new since Phase E, 2026-05-29):**
 Scheduled webstreams now land in the per-show `.mp3`

@@ -46,13 +46,36 @@ def test_default_render_carries_the_in_process_watchdog():
     assert liq.index("bus.on_frame(") < liq.index("\noutput.icecast(")
 
 
-def test_scheduler_mode_renders_a_stub_without_frame_hook():
+def test_scheduler_mode_renders_a_reaper_only_frame_hook():
     liq = render_rastatime_liq(STREAMS, harbor_main_password="x", harbor_show_password="y",
                                webstream_watchdog_in_liquidsoap=False)
-    assert "bus.on_frame(" not in liq
     assert "in-process webstream watchdog: disabled" in liq
     assert "RASTATIME_WEBSTREAM_WATCHDOG=scheduler" in liq
+    # no stall detection ...
+    assert "def webstream_wd_check()" not in liq and "webstream_wd_reconnect" not in liq
+    # ... but the zombie reaper still runs on the frame counter (2026-09-08)
+    assert "bus.on_frame(" in liq and "then webstream_reap() end" in liq
     assert '"ready", fun (_) -> string(source.is_ready(webstream))' in liq   # the poll still has its probe
+
+
+def test_dropped_inputs_are_remembered_and_reaped():
+    """2026-09-08 22:23: input.http loses a stop while polling a dead server;
+    the dropped input reconnects on its own and holds a listener slot.  The
+    template remembers such inputs and reaps them (start+stop) once they
+    report connected."""
+    liq = render_rastatime_liq(STREAMS, harbor_main_password="x", harbor_show_password="y")
+    assert "webstream_zombies = ref([])" in liq
+    assert 'if status_fn() != "stopped" then' in liq
+    assert "[(webstream_current_name(), status_fn, webstream_reaper())]" in liq
+    assert "def webstream_reap() =" in liq
+    assert 'elsif string.contains(prefix="connected", st) then' in liq
+    assert "reaping (start+stop)" in liq
+    # the reaper closure really is start followed by stop
+    i = liq.index("webstream_reaper.set(fun () -> begin")
+    assert "s.start()" in liq[i:i + 120] and "s.stop()" in liq[i:i + 120]
+    # reaped on every watchdog check, counters exposed
+    assert "  webstream_reap()\n" in liq
+    assert "zombies=#{list.length(webstream_zombies())} reaped=#{webstream_reaped()}" in liq
 
 
 def test_no_webstream_input_means_no_watchdog():

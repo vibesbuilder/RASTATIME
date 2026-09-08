@@ -237,7 +237,10 @@ Minute und länger bis zur Neuverbindung, und ein Slot konnte mit ein
 paar Sekunden des vorigen Streams im Puffer beginnen. Beides ist
 Geschichte; ein Slot beginnt auf seinem eigenen Stream, und das
 Vorwärmen zehn Sekunden vor dem Slot gibt der neuen Verbindung Zeit,
-sich zu füllen.
+sich zu füllen. Eine verworfene Verbindung, die nach einem Ausfall von
+selbst zurückkommt, wird binnen Sekunden wieder geschlossen, damit der
+Stream-Server keinen Hörerplatz mit einer Verbindung belegt hält, der
+niemand zuhört.
 
 **Aufnahme-Verhalten (neu seit Phase E, 2026-05-29):**
 Scheduled Webstreams landen jetzt im Per-Show-`.mp3`-

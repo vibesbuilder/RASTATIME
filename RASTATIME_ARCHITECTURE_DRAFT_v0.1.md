@@ -4450,3 +4450,20 @@ remnant of the previous stream ("Hacker") at a slot start is gone.
 Cost: about one lingering thread per slot until the nightly restart.
 Plan B (a relay in PLAYOUT pushing the stream into `input.harbor`)
 stays documented in the BACKLOG should Plan A disappoint.
+
+*Live stall test under Plan A (22:20, DEVA power-cycled twice) and the
+reaper.*  Both stalls recovered through fresh sources 6–7 s after the
+DEVA returned (silence 29 s and 58 s, i.e. the outage plus the bridge).
+But the dropped inputs kept polling, reconnected on their own when the
+DEVA came back and then held one listener slot each without being on
+the bus: `input.http` loses a stop while it polls a dead server — its
+connect task overwrites `Stopping` with `Starting` after every failed
+attempt, and a later `stop` is a no-op because the `Start_stop` layer
+already believes the source is stopped.  A second `start` (a no-op
+while connected) followed by `stop` disconnects such a source for good
+(verified on both live zombies).  The template therefore records every
+input whose stop did not take (`webstream_zombies`), and the frame
+counter reaps each one the moment it reports `connected`
+(`webstream_reap`, rendered in both watchdog modes); `webstream.watchdog`
+exposes `zombies=` and `reaped=`.  Replica: three stalls, every dropped
+input gone within 3 s.

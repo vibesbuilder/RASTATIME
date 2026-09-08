@@ -181,7 +181,10 @@ réutilisée mettait parfois une minute ou plus à se reconnecter, et un
 créneau pouvait commencer avec quelques secondes du flux précédent
 encore dans le tampon. Les deux ont disparu ; un créneau démarre sur
 son propre flux, et le préchauffage dix secondes avant le créneau laisse
-à la nouvelle connexion le temps de se remplir.
+à la nouvelle connexion le temps de se remplir. Une connexion
+abandonnée qui revient d'elle-même après une panne est refermée en
+quelques secondes, pour que le serveur de flux ne garde jamais une
+place d'auditeur occupée par une connexion que personne n'écoute.
 
 **Comportement d'enregistrement (nouveau depuis Phase E,
 2026-05-29) :**
