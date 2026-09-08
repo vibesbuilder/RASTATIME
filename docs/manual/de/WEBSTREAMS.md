@@ -229,7 +229,15 @@ und Engine (der Windows-Build von Liquidsoap verliert bei jeder
 solchen Abfrage Speicher). Die frühere Abfrage aus dem Playout bleibt
 als Rückfall über die Maschinen-Einstellung
 `RASTATIME_WEBSTREAM_WATCHDOG=scheduler` verfügbar; Zeitverhalten und
-Wirkung sind in beiden Fällen gleich.
+Wirkung sind in beiden Fällen gleich. Seit dem 2026-09-08 öffnet jeder
+Webstream-Slot und jede Neuverbindung eine ganz neue Verbindung mit
+eigenem Puffer, statt einen dauerhaften Eingang wiederzuverwenden: auf
+dem Windows-Build brauchte ein wiederverwendeter Eingang mitunter eine
+Minute und länger bis zur Neuverbindung, und ein Slot konnte mit ein
+paar Sekunden des vorigen Streams im Puffer beginnen. Beides ist
+Geschichte; ein Slot beginnt auf seinem eigenen Stream, und das
+Vorwärmen zehn Sekunden vor dem Slot gibt der neuen Verbindung Zeit,
+sich zu füllen.
 
 **Aufnahme-Verhalten (neu seit Phase E, 2026-05-29):**
 Scheduled Webstreams landen jetzt im Per-Show-`.mp3`-

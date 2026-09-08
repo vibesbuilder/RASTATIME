@@ -93,6 +93,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Webstream-Eingang: frische Quelle pro Slot statt Wiederverwendung
+  (2026-09-08, Operator-Go „Plan A")** — Phase D am 2026-09-08 (drei
+  Cloud-Slots, ein BBC-Slot): zwei Starts dekodierten erst nach 48 s und
+  97 s, der BBC-Slot kam nie auf Sendung; danach hing jeder Start an der
+  Produktionsinstanz über 90 s in „starting" oder „polling", ein Stop
+  in „stopping", und eine BBC-Zombie-Verbindung blieb ohne gestarteten
+  Zustand zurück (`ffmpeg_io.ml:121 Assertion failed`: der Verbindungs-
+  Task lief erst beim zweiten Weckbyte doppelt).  Ursache: `input.http`
+  verbindet über einen Duppy-Async-Task, dessen Weckbyte-Pipe auf dem
+  Windows-Build unter normaler Last unzuverlässig ist — Replikate: ohne
+  Last 12/12 Starts in 3,7 s; mit Icecast-Ausgängen oder dem 5-s-Telnet-
+  Poll von PLAYOUT hingen in vier von fünf Läufen Starts 20–110 s, auch
+  mit Warten auf „stopped" vor jedem Start.  Der ERSTE Start einer
+  frischen Quelle war in 9/9 Zyklen schnell.  Fix: das Template rendert
+  `webstream_raw = source.dynamic(id="webstream", …)`; `webstream.start`
+  erzeugt einen neuen `input.http` (`webstream_in_N`, `start=true`) mit
+  eigener 5-s-Bridge (`webstream_bridge_N`) und hängt ihn ein,
+  `webstream.stop` stoppt und verwirft ihn (`source.fail()` dazwischen,
+  der Switch fällt wie bisher durch); der interne Wächter erholt sich
+  ebenfalls mit frischer Quelle.  Telnet-Vertrag für PLAYOUT unverändert
+  (`webstream.url [<url>]`, `.start` idempotent bei gleicher URL, `.stop`,
+  `.status`, `.ready`, `.watchdog`, `var.set webstream.gain`).  Nebeneffekt:
+  keine veraltete Bridge mehr, der Rest des vorigen Streams bzw. der
+  „Hacker" am Slot-Anfang (BACKLOG „falscher Stream ~5 s") entfällt.
+  Kosten: ~1 Thread pro Slot bis zum Nacht-Neustart.  Ende-zu-Ende im
+  produktionsnahen Replikat: Slot-Folge Cloud/BBC/Cloud 3,7 / 1,0 / 3,7 s,
+  Stall-Server mit zwei Wächter-Erholungen über frische Quellen.  Tests
+  angepasst (295 Backend, 105 Unit); Handbuch „Webstreams" EN/DE/FR/ES;
+  Architektur 0.25.  Aktiv nach Neustart PLAYOUT → LIQUIDSOAP.
+
 - **Nächtlicher LIQUIDSOAP-Neustart: Absturzschleife 04:02–08:21
   behoben (2026-09-07, `e66e675`)** — In beiden Nächten seit dem Feature
   (2026-09-06 und 2026-09-07) endete der 04:01-Neustart in einer

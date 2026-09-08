@@ -834,40 +834,33 @@ def test_full_render_default_includes_webstream_input_block():
     """
     out = lc.render_rastatime_liq([_stream()])
     active = "\n".join(_active_lines(out))
-    # input.http with id="webstream" + start=false (idle until Pypo
-    # sends webstream.start)
-    assert "webstream_raw = input.http(" in active
-    assert 'id="webstream"' in active
-    assert "start=false" in active
-    # self_sync=false is CRITICAL: input.http defaults to self-syncing
-    # on non-Icecast HTTP streams, which crossfade() rejects with
-    # "Error 7: Invalid value: This source may control its own latency
-    # and cannot be used with this operator."  Regression guard.
-    assert "self_sync=false" in active
+    # RASTATIME 2026-09-08: a FRESH input.http per slot.  The bus arm is
+    # a source.dynamic (id "webstream") that holds the current slot's
+    # bridge, source.fail() between slots; webstream.start opens a new
+    # input.http (start=true, numbered id) + a new bridge, webstream.stop
+    # drops them.  A reused input.http hung 20-110 s on restart in four
+    # of five production-like replica runs (Windows Duppy wake-up).
+    assert 'webstream_raw = source.dynamic(id="webstream", self_sync=false,' in active
+    assert "webstream_current = ref(source.fail())" in active
+    assert 'input.http(id="webstream_in_#{n}", start=true, self_sync=false,' in active
+    assert "start=false" not in active.split("linein")[0]      # no idle static input any more
     # max_buffer / timeout / poll_delay rendered with the defaults
     assert f"max_buffer={lc._format_crossfade_duration(lc.DEFAULT_WEBSTREAM_MAX_BUFFER_SECONDS)}" in active
     assert f"timeout={lc._format_crossfade_duration(lc.DEFAULT_WEBSTREAM_TIMEOUT_SECONDS)}" in active
     assert f"poll_delay={lc._format_crossfade_duration(lc.DEFAULT_WEBSTREAM_POLL_DELAY_SECONDS)}" in active
-    # Empty initial URL (Pypo sets it via webstream.set_url before start)
-    assert '  "",' in active
-    # amplify-gain wrapper with interactive.float("webstream.gain", 1.0).
-    # buffer() wrapper around webstream_raw is the clock-bridge required
-    # by crossfade — regression guard for the 2026-05-29 Phase-E reality-
-    # test that found self_sync=false alone is not enough.  Buffer is
-    # 5.0 s (bumped from initial 2.0 s after Phase-E polish round caught
-    # a ~2-sec "Haker" 12 s into a live BBC stream when both buffers
-    # underran together).
+    # amplify-gain wrapper with interactive.float("webstream.gain", 1.0)
+    # around the dynamic arm
     assert 'interactive.float("webstream.gain", 1.0)' in active
-    # RASTATIME 2026-09-06: the named 5 s bridge (max 10 s) - the
-    # 2026-09-05 "Option 1" 10 s/20 s bump was reverted; a fat bridge
-    # cannot bridge the cloud DEVA's stalls and doubled the wrong-stream
-    # window.  Recovery is handled by the scheduler webstream watchdog.
-    assert ('webstream = amplify({webstream_gain()}, buffer(\n'
-            '  id="webstream_bridge",\n  buffer=5.0,\n  max=10.0,\n'
-            '  webstream_raw,\n))') in active
+    assert "webstream = amplify({webstream_gain()}, webstream_raw)" in active
+    # a fresh 5 s bridge (max 10 s) per slot - no stale audio from the
+    # previous slot, and crossfade-compatible like before
+    assert ('b = buffer(id="webstream_bridge_#{n}",\n'
+            '      buffer=5.0, max=10.0, s)') in active
     assert "buffer=10.0,\n  max=20.0" not in active
-    # the watchdog readiness probe is registered
-    assert 'namespace="webstream"' in active and '"ready"' in active
+    # PLAYOUT's telnet contract is registered by the template itself
+    for cmd in ('"url"', '"start"', '"stop"', '"status"', '"ready"'):
+        assert cmd in active, cmd
+    assert "def webstream_start() =" in active and "def webstream_stop() =" in active
     assert "source.is_ready(webstream)" in active
     assert lc.DEFAULT_WEBSTREAM_TIMEOUT_SECONDS == 3.0
     assert lc.DEFAULT_WEBSTREAM_POLL_DELAY_SECONDS == 0.5

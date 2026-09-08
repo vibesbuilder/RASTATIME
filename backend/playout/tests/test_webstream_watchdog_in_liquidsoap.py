@@ -33,7 +33,9 @@ def test_default_render_carries_the_in_process_watchdog():
     assert "bus.on_frame(synchronous=true" in liq
     assert f"mod {DEFAULT_WEBSTREAM_WATCHDOG_CHECK_FRAMES} == 0" in liq
     assert f"webstream_wd_starved() >= {DEFAULT_WEBSTREAM_WATCHDOG_STARVE_CHECKS}" in liq
-    assert "webstream_raw.is_started()" in liq
+    assert "if webstream_started() then" in liq            # 2026-09-08: fresh source per slot
+    assert "ignore(webstream_stop())" in liq and "ignore(webstream_start())" in liq
+    assert "webstream_raw.is_started()" not in liq
     assert "thread.run(webstream_wd_reconnect)" in liq
     assert '"watchdog", fun (_) ->' in liq                 # telnet webstream.watchdog
     assert '"ready", fun (_) -> string(source.is_ready(webstream))' in liq   # probe kept

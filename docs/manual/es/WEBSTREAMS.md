@@ -136,7 +136,14 @@ el motor (la versión de Windows de Liquidsoap pierde memoria con cada
 sondeo de ese tipo). El sondeo anterior desde la emisión sigue
 disponible como respaldo mediante el ajuste de máquina
 `RASTATIME_WEBSTREAM_WATCHDOG=scheduler`; el comportamiento y los
-tiempos son iguales en ambos casos.
+tiempos son iguales en ambos casos. Desde el 2026-09-08 cada slot de
+webstream, y cada reconexión, abre una conexión completamente nueva con
+su propio búfer en lugar de reutilizar una entrada permanente: en la
+versión de Windows una entrada reutilizada tardaba a veces un minuto o
+más en reconectar, y un slot podía empezar con unos segundos del flujo
+anterior todavía en el búfer. Ambas cosas han desaparecido; un slot
+empieza con su propio flujo, y el precalentamiento diez segundos antes
+del slot da tiempo a la nueva conexión para llenarse.
 
 **Comportamiento de grabación (nuevo desde Phase E,
 2026-05-29):**

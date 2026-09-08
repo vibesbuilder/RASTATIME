@@ -872,48 +872,87 @@ def _render_webstream_input_block(
     # max_buffer (10 s default) of input.http absorbs upstream-server
     # jitter; buffer (5 s) absorbs the clock-bridge tick-drift and the
     # initial-connect cold-buffer rebuild.
+    bridge = _format_crossfade_duration(DEFAULT_WEBSTREAM_BRIDGE_SECONDS)
+    bridge_max = _format_crossfade_duration(DEFAULT_WEBSTREAM_BRIDGE_MAX_SECONDS)
     return (
-        "webstream_raw = input.http(\n"
-        '  id="webstream",\n'
-        "  start=false,\n"
-        "  self_sync=false,\n"
-        f"  max_buffer={_format_crossfade_duration(max_buffer_seconds)},\n"
-        f"  timeout={_format_crossfade_duration(timeout_seconds)},\n"
-        f"  poll_delay={_format_crossfade_duration(poll_delay_seconds)},\n"
-        '  "",\n'
-        ")\n"
-        "\n"
-        "# Per-webstream input-gain wrapper — Pypo sets the linear factor\n"
-        "# via `var.set webstream.gain = <factor>` before `webstream.start`.\n"
-        "# 1.0 = unity (no gain change); cc_webstream.input_gain_db is\n"
-        "# converted to linear in Pypo (10 ** (dB/20)) before push.\n"
-        "#\n"
-        "# buffer(buffer=..., ...) is the asynchronous clock-bridge that\n"
-        "# decouples input.http's HTTP-stream clock from the main bus.\n"
-        "# Without it, crossfade() at the end of the source-graph rejects\n"
-        "# the chain with Error 7 (see _render_webstream_input_block\n"
-        "# docstring for the full reasoning).  The 5 s of Phase E absorbed\n"
-        "# the initial-connect cold-buffer rebuild (2026-05-29 18:40 'Haker');\n"
-        "# RASTATIME 2026-09-05: 10 s so that a silent upstream stall plus\n"
-        "# the reconnect (timeout 3 s + poll 0.5 s + format detection) is\n"
-        "# bridged without 'Buffer emptied' - the cloud DEVA stream stalls a\n"
-        "# few seconds into a fresh connection, and 11:36 that cost 52 s of\n"
-        "# dead air.  The scheduler pre-warms webstreams 20 s before the slot\n"
-        "# to pay for the fill-up.\n"
+        "# RASTATIME 2026-09-08 - a FRESH input.http (with its own clock bridge)\n"
+        "# per slot.  A reused input.http reconnects through one Duppy async\n"
+        "# task whose wake-up is unreliable on this Windows build under normal\n"
+        "# load: in four of five production-like replica runs a start hung\n"
+        "# 20-110 s in 'starting'/'polling' (Phase D 2026-09-08: 48 s and 97 s\n"
+        "# live, one slot never came on air), while the FIRST start of a fresh\n"
+        "# source was fast in 9/9 cycles.  A fresh bridge also means no stale\n"
+        "# audio from the previous slot at the slot start.  PLAYOUT keeps its\n"
+        "# telnet contract: webstream.url [<url>], .start, .stop, .status,\n"
+        "# .ready, .watchdog and var.set webstream.gain.\n"
         'webstream_gain = interactive.float("webstream.gain", 1.0)\n'
-        "webstream = amplify({webstream_gain()}, buffer(\n"
-        '  id="webstream_bridge",\n'
-        f"  buffer={_format_crossfade_duration(DEFAULT_WEBSTREAM_BRIDGE_SECONDS)},\n"
-        f"  max={_format_crossfade_duration(DEFAULT_WEBSTREAM_BRIDGE_MAX_SECONDS)},\n"
-        "  webstream_raw,\n"
-        "))\n"
-        "# RASTATIME 2026-09-06 - readiness probe for the scheduler's\n"
-        "# webstream watchdog.  source.is_ready(webstream) is exactly the\n"
-        "# predicate the bus switch uses; it goes false the moment the\n"
-        "# bridge drains (a silent upstream stall), which is when the bus\n"
-        "# falls off the webstream to silence.  The watchdog polls this and\n"
-        "# forces a clean stop+start so a stalled cloud connection recovers\n"
-        "# in ~1-2 s instead of staying dead until the slot ends.\n"
+        'webstream_url = ref("")\n'
+        "webstream_seq = ref(0)\n"
+        'webstream_active_url = ref("")\n'
+        "webstream_started = ref(false)\n"
+        "webstream_current = ref(source.fail())\n"
+        "webstream_stopper = ref(fun () -> ())\n"
+        'webstream_status_fn = ref(fun () -> "stopped")\n'
+        "# The bus arm: whatever the current slot's bridge is (source.fail()\n"
+        "# between slots, so the switch falls through exactly as before).\n"
+        'webstream_raw = source.dynamic(id="webstream", self_sync=false,\n'
+        "  track_sensitive=false, {webstream_current()})\n"
+        "webstream = amplify({webstream_gain()}, webstream_raw)\n"
+        "\n"
+        "def webstream_stop() =\n"
+        "  if webstream_started() then\n"
+        "    f = webstream_stopper()\n"
+        "    f()\n"
+        "  end\n"
+        "  webstream_started.set(false)\n"
+        '  webstream_active_url.set("")\n'
+        "  webstream_current.set(source.fail())\n"
+        "  webstream_stopper.set(fun () -> ())\n"
+        '  webstream_status_fn.set(fun () -> "stopped")\n'
+        '  "Done"\n'
+        "end\n"
+        "\n"
+        "def webstream_start() =\n"
+        "  url = webstream_url()\n"
+        '  if url == "" then\n'
+        '    "ERROR: no url set - send webstream.url <url> first"\n'
+        "  elsif webstream_started() and webstream_active_url() == url then\n"
+        '    "already started"\n'
+        "  else\n"
+        "    if webstream_started() then ignore(webstream_stop()) end\n"
+        "    webstream_seq.set(webstream_seq() + 1)\n"
+        "    n = webstream_seq()\n"
+        '    s = input.http(id="webstream_in_#{n}", start=true, self_sync=false,\n'
+        f"      max_buffer={_format_crossfade_duration(max_buffer_seconds)},\n"
+        f"      timeout={_format_crossfade_duration(timeout_seconds)},\n"
+        f"      poll_delay={_format_crossfade_duration(poll_delay_seconds)},\n"
+        "      url)\n"
+        '    b = buffer(id="webstream_bridge_#{n}",\n'
+        f"      buffer={bridge}, max={bridge_max}, s)\n"
+        "    webstream_stopper.set(fun () -> s.stop())\n"
+        "    webstream_status_fn.set(fun () -> s.status())\n"
+        "    webstream_active_url.set(url)\n"
+        "    webstream_started.set(true)\n"
+        "    webstream_current.set(b)\n"
+        '    "Done"\n'
+        "  end\n"
+        "end\n"
+        "\n"
+        'server.register(namespace="webstream", usage="url [<url>]",\n'
+        '  description="Get, or set, the URL the next webstream.start opens (a fresh input per start)",\n'
+        '  "url", fun (arg) -> if arg == "" then webstream_url() else\n'
+        "    webstream_url.set(arg)\n"
+        '    "Done"\n'
+        "  end)\n"
+        'server.register(namespace="webstream", description="Open a fresh input for the current URL (no-op if that URL is already playing)",\n'
+        '  "start", fun (_) -> webstream_start())\n'
+        'server.register(namespace="webstream", description="Stop and drop the current input; the bus arm falls through",\n'
+        '  "stop", fun (_) -> webstream_stop())\n'
+        'server.register(namespace="webstream", description="Status of the current input (stopped / starting / polling / connected <url>)",\n'
+        '  "status", fun (_) -> begin\n'
+        "    f = webstream_status_fn()\n"
+        "    f()\n"
+        "  end)\n"
         'server.register(namespace="webstream", description="Webstream source producing audio right now (watchdog probe)",\n'
         '  "ready", fun (_) -> string(source.is_ready(webstream)))\n'
     )
@@ -989,13 +1028,13 @@ def _render_webstream_watchdog_block(
         '  log(level=2, label="webstream_watchdog",\n'
         f'      "upstream stalled ({starve_checks} not-ready checks after being ready) - "\n'
         '      ^ "reconnecting: stop + start")\n'
-        "  webstream_raw.stop()\n"
-        "  webstream_raw.start()\n"
+        "  ignore(webstream_stop())\n"
+        "  ignore(webstream_start())\n"
         "end\n"
         "\n"
         "def webstream_wd_check() =\n"
         "  webstream_wd_checks.set(webstream_wd_checks() + 1)\n"
-        "  if webstream_raw.is_started() then\n"
+        "  if webstream_started() then\n"
         "    if source.is_ready(webstream) then\n"
         "      webstream_wd_seen_ready.set(true)\n"
         "      webstream_wd_starved.set(0)\n"
@@ -1022,7 +1061,7 @@ def _render_webstream_watchdog_block(
         '  description="In-process watchdog counters (checks, reconnects, state)",\n'
         '  "watchdog", fun (_) ->\n'
         '    "checks=#{webstream_wd_checks()} reconnects=#{webstream_wd_reconnects()} "\n'
-        '    ^ "started=#{webstream_raw.is_started()} ready=#{source.is_ready(webstream)} "\n'
+        '    ^ "started=#{webstream_started()} ready=#{source.is_ready(webstream)} "\n'
         '    ^ "seen_ready=#{webstream_wd_seen_ready()} starved=#{webstream_wd_starved()}")\n'
     )
 

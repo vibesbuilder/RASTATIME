@@ -1,10 +1,19 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.24
-Date: 2026-09-07
+Draft version: 0.25
+Date: 2026-09-08
 
 > **Revision history**
+> - **0.25 (2026-09-08)** — **A fresh `input.http` per webstream slot**
+>   (§23.27, addendum 2026-09-08).  A reused `input.http` reconnects
+>   through one Duppy async task whose pipe wake-up is unreliable on
+>   the Windows build under normal load (starts hung 20–110 s in four
+>   of five production-like replica runs; Phase D 2026-09-08 lost a
+>   slot).  The bus arm is now a `source.dynamic`; every
+>   `webstream.start` opens a new input with its own bridge, the
+>   watchdog recovers the same way, and the stale-bridge remnant at
+>   slot start is gone with it.  PLAYOUT's telnet contract is unchanged.
 > - **0.24 (2026-09-07)** — **Webstream watchdog moves into Liquidsoap**
 >   (§23.27, addendum 2026-09-07 evening).  The 2026-09-06 scheduler
 >   poll cost ~87 KB of leaked memory per telnet command on the Windows
@@ -4410,3 +4419,34 @@ replica against a stalling server: two stalls, two reconnects after
 3–4 s, bus back on the stream after ~11 s (bridge refill included).
 The idle growth of the production instance (~150 MB/h, the
 SourceSwitcher's status poll) is untouched by decision.
+
+**Addendum 2026-09-08 — a fresh `input.http` per webstream slot.**  The
+live stall test (DEVA power-cycled twice) recovered as designed, but the
+cloud test phase right after it did not: two pre-warm starts decoded
+only after 48 s and 97 s, the BBC slot never came on air, and afterwards
+every `webstream.start` on the production instance sat in `starting`
+for more than 90 s while `stop` sat in `stopping`.  Read against
+`ffmpeg_io.ml` (2.4.4): `input.http` (re)connects through one
+`Duppy.Async` task that is woken by a byte written to a pipe; on this
+Windows build that wake-up is unreliable under ordinary load — the task
+runs late (`starting`) or `Av.open_input` stalls (`polling`), and two
+queued wake-up bytes make it run twice, the second run failing the
+`assert (status = Starting)` at line 121 and leaving a "connected"
+container that is not started (a zombie upstream connection).  Replica
+bisection: the bare render was fast in 12/12 start/stop cycles; with
+the Icecast outputs or with PLAYOUT's 5 s telnet poll present, four of
+five runs hung one or two starts for 20–110 s, and waiting for
+`stopped` before the next `start` did not help.  The first start of a
+*fresh* source, however, was fast in 9/9 cycles under the same load.
+Design (operator go, "Plan A"): the bus arm becomes
+`source.dynamic(id="webstream")`; `webstream.start` creates a new
+`input.http` (`webstream_in_N`, `start=true`) with its own 5 s bridge
+(`webstream_bridge_N`) and swaps it in, `webstream.stop` stops and
+drops it (`source.fail()` in between, so the switch falls through as
+before), and the in-process watchdog recovers with a fresh source too.
+The telnet contract is registered by the template itself and stays
+byte-for-byte what PLAYOUT sends.  Side effect: no stale bridge, so the
+remnant of the previous stream ("Hacker") at a slot start is gone.
+Cost: about one lingering thread per slot until the nightly restart.
+Plan B (a relay in PLAYOUT pushing the stream into `input.harbor`)
+stays documented in the BACKLOG should Plan A disappoint.

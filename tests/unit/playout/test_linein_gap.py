@@ -96,5 +96,8 @@ def test_http_block_forces_the_mp3_format():
     # and it must stay on the line-in companion only: webstreams carry
     # arbitrary containers and keep autodetection
     liq = render_rastatime_liq(_STREAMS)
-    ws = liq[liq.index("webstream_raw = input.http("):liq.index("webstream_raw = input.http(") + 400]
+    # 2026-09-08: the webstream input is created per slot inside
+    # webstream_start() (fresh source), so anchor on that call
+    anchor = 's = input.http(id="webstream_in_#{n}"'
+    ws = liq[liq.index(anchor):liq.index(anchor) + 400]
     assert "format=" not in ws

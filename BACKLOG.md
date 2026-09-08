@@ -383,6 +383,10 @@ gibt erst 5–10 s alten Inhalt des vorigen Slots aus, dann folgt der
 Zeitsprung zum frischen Material.  Messbar: `webstream.ready` war
 schon 11,6 s VOR dem Slot wahr (vor dem Vorwärmen), weil die Bridge
 nach dem Slot-Ende voll bleibt.  Fix (a) behebt beides.
+**✅ Erledigt 2026-09-08:** mit der frischen Quelle pro Slot (Eintrag
+„Webstream-Eingang: frische Quelle pro Slot" unter „Cloud-Stream-
+Aussetzer") bekommt jeder Slot eine neue Bridge — kein Rest, kein
+Hacker.  Live-Abnahme mit der nächsten Cloud-Sendung.
 
 ### 🟡 Webstream: 5 s alte Puffer-Reste spielen nach einem PLAYOUT-Neustart (neu 2026-09-05)
 
@@ -576,6 +580,38 @@ Produktionsinstanz weiterhin ~150 MB/h (19:34 1582 → 19:49 1620 MB),
 zurück.  Scheduler-Poll bleibt als Rückfall (`RASTATIME_WEBSTREAM_
 WATCHDOG=scheduler`) und als Übergangs-Notnagel, wenn eine ältere .liq
 geladen ist; nach einer Woche ohne Auffälligkeit entfernen.
+
+### 🟢 Webstream-Eingang: frische Quelle pro Slot (Plan A, 2026-09-08)
+
+**Befund 2026-09-08:** Live-Stall-Test (DEVA zweimal stromlos) erholte
+sich wie gebaut (11 s bzw. Ausfalldauer + 5 s), aber Phase D danach:
+zwei Vorwärm-Starts dekodierten erst nach 48 s / 97 s, der BBC-Slot kam
+nie auf Sendung, anschließend hing jeder Start an der Produktions-
+instanz > 90 s in „starting"/„polling", Stop in „stopping", plus BBC-
+Zombie-Verbindung (`ffmpeg_io.ml:121 Assertion failed`).  Ursache im
+Quelltext: `input.http` verbindet über EINEN Duppy-Async-Task mit
+Pipe-Weckbyte; auf dem Windows-Build wird das Weckbyte unter Last spät
+oder doppelt zugestellt.  Replikat-Aufteilung (je 6 Start/Stop-Zyklen):
+
+| Replikat | Ergebnis |
+|---|---|
+| Grundgerüst | 12/12 in 3,7 s |
+| nur Icecast-Ausgänge | 1 Hänger („polling", > 100 s) |
+| nur PLAYOUT-Telnet-Poll (5 s) | 1 Hänger („polling", 110 s) |
+| Icecast + Poll + PortAudio | 1 Hänger („starting"), 1× 19,6 s |
+| Icecast + Poll, Warten auf „stopped" vor Start | 2 Hänger |
+| **frische Quelle pro Zyklus (source.dynamic), Icecast + Poll** | **9/9 in 3,7 s (Cloud) / 0,7 s (BBC)** |
+
+**Umgesetzt (Operator-Go „Plan A"):** `source.dynamic(id="webstream")`
+als Bus-Arm, `webstream.start` = neuer `input.http` + neue Bridge,
+`webstream.stop` = stoppen und verwerfen, Wächter erholt sich mit
+frischer Quelle; Telnet-Vertrag unverändert.  Kosten ~1 Thread/Slot bis
+zum Nacht-Neustart.  **Plan B (falls A enttäuscht):** Relais in PLAYOUT
+holt den Stream per HTTP (Socket-Timeout = Stall-Erkennung in Python)
+und schiebt die Bytes als Source-Client in `input.harbor` (wie der
+Line-In-Feeder); Liquidsoap öffnet dann keine HTTP-Quellen mehr.
+Aufwand ~1 Tag.  **Live-Abnahme offen:** nächste Cloud-Sendungen
+(12:07/17:07) und eine Testphase mit Stall.
 
 ### 🟡 Jingle „StationID Friska Viljor.mp3" ist für Liquidsoap unlesbar (neu 2026-09-05)
 
