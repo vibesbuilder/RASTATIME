@@ -610,8 +610,16 @@ zum Nacht-Neustart.  **Plan B (falls A enttäuscht):** Relais in PLAYOUT
 holt den Stream per HTTP (Socket-Timeout = Stall-Erkennung in Python)
 und schiebt die Bytes als Source-Client in `input.harbor` (wie der
 Line-In-Feeder); Liquidsoap öffnet dann keine HTTP-Quellen mehr.
-Aufwand ~1 Tag.  **Live-Abnahme offen:** nächste Cloud-Sendungen
-(12:07/17:07) und eine Testphase mit Stall.
+Aufwand ~1 Tag.  **Live-Abnahme 2026-09-08 bestanden:** Cloud-Sendung
+12:07 (Vorwärmen −10 s, Dekodieren +3 s, Gate 12:07:00, keine Stille)
+und Phase E 15:00 (drei Cloud-Slots + BBC: jeder Slot mit frischer
+Quelle `webstream_in_5…8`, Dekodieren 3 s bzw. 0 s, Hörer-Ton exakt zum
+Slot-Start, keine Wächter-Ereignisse, Operator: alle vier „gut
+gelungen").  **Bekannte Kosten:** ~12 MB und ~1 Thread pro Slot-Start
+bleiben bis zum Nacht-Neustart (verworfene Quelle/Bridge werden nicht
+freigegeben); bei wenigen Slots/Tag vernachlässigbar gegenüber dem
+Leerlauf-Leck.  Stall-Test unter Plan A noch nicht live gefahren
+(Replikat: zwei Erholungen in je 10 s).
 
 ### 🟡 Jingle „StationID Friska Viljor.mp3" ist für Liquidsoap unlesbar (neu 2026-09-05)
 
