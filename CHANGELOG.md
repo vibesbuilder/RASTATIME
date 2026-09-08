@@ -122,7 +122,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Stall-Server mit zwei Wächter-Erholungen über frische Quellen.  Tests
   angepasst (295 Backend, 105 Unit); Handbuch „Webstreams" EN/DE/FR/ES;
   Architektur 0.25.  Aktiv nach Neustart PLAYOUT → LIQUIDSOAP.
-  **Nachtrag 22:40 — Reaper für verworfene Eingänge:** Live-Stall-Test
+  **Nachtrag 22:40 — Reaper für verworfene Eingänge (`6a0fa8d`):** Live-Stall-Test
   22:20 (DEVA zweimal stromlos, ~30 s / ~55 s): Erholung über frische
   Quellen 6–7 s nach Rückkehr des DEVA (Stille 29 s / 58 s), aber die
   verworfenen `webstream_in_1/_2` pollten weiter, verbanden sich beim
