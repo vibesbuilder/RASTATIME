@@ -94,7 +94,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **Webstream-Eingang: frische Quelle pro Slot statt Wiederverwendung
-  (2026-09-08, Operator-Go „Plan A")** — Phase D am 2026-09-08 (drei
+  (2026-09-08, Operator-Go „Plan A", `1eb8713`)** — Phase D am 2026-09-08 (drei
   Cloud-Slots, ein BBC-Slot): zwei Starts dekodierten erst nach 48 s und
   97 s, der BBC-Slot kam nie auf Sendung; danach hing jeder Start an der
   Produktionsinstanz über 90 s in „starting" oder „polling", ein Stop
