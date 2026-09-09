@@ -593,7 +593,19 @@ Millisekunden, Kick sofort, Auflegen erst nach dem 30-s-Harbor-Timeout
 Leerlauf-Wachstum danach wenige MB/h statt ~150 MB/h.  **Offen:**
 Speicher der LIQUIDSOAP-Instanz eine Woche beobachten (2048-MB-Banner,
 Task-Manager, `memscan`), dann `RASTATIME_LIQUIDSOAP_RESTART_EVERY_DAYS`
-auf 7–30 setzen.
+auf 7–30 setzen.  **Live seit 10:19 (PLAYOUT 10:19:03, LIQUIDSOAP
+10:19:24, Probe im Log „posts harbor events").  Messung 10:20–10:50,
+nichts auf Sendung: Private Bytes 97 → 104 MB = 14 MB/h** (vorher
+~150 MB/h).  Der Rest ist erklärt: der Telnet-Server trennt stille
+Verbindungen nach 30 s (`settings.server.timeout`), beide PLAYOUT-
+Clients verbinden sich daher alle 2 min neu (30 Neuverbindungen in
+30 min à ~262 KB ≈ 16 MB/h).  Vorschlag (Go offen):
+`settings.server.timeout.set(-1.)` im Template (Build akzeptiert es,
+geprüft) → erwartet ~5–8 MB/h; wirkt ab dem nächsten LIQUIDSOAP-
+Neustart.  Rechnung für das Intervall: bei 14 MB/h erreicht die
+Instanz die weiche Grenze 1536 MB nach ~4 Tagen, bei ~8 MB/h nach
+~8 Tagen → 7 Tage realistisch, 30 nicht (harte Grenze 3072 MB nach
+~15 Tagen).
 
 ### 🟢 24/7-Programm: geplanter Neustart an der Titelgrenze + Standby-Fallback (2026-09-09, Go a+b)
 
