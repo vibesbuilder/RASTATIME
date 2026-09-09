@@ -421,7 +421,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Quellen-Umschalter ereignisgesteuert: der Harbor meldet DJ-Verbindungen
   selbst, der 5-s-Telnet-Poll entfällt (Option d = Ziel c, 2026-09-09,
-  Operator-Go)** — PLAYOUTs SourceSwitcher fragte `master_dj.status` und
+  Operator-Go, `758fd6f`)** — PLAYOUTs SourceSwitcher fragte `master_dj.status` und
   `show_dj.status` alle 5 s per Telnet ab; auf dem Windows-Build leckt
   jedes Telnet-Kommando ~87 KB, und dieser Poll war das Leerlauf-Wachstum
   von ~150 MB/h, also der Grund für den täglichen Neustart.  Jetzt rendert
