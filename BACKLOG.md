@@ -564,7 +564,27 @@ Verifikation per `uptime`, Bleibt-oben-Prüfung, Preflight
 2026-09-07.  Aktiv nach PLAYOUT-Neustart; erste scharfe Nacht danach
 im Log prüfen (`grep "Nightly" logs/playout-stdout.log`).
 
-### 💡 Liquidsoap-Upgrade als echte Heilung des `Unix.select`-Lecks (Operator 2026-09-09)
+### 🟡 Liquidsoap-Upgrade als echte Heilung des `Unix.select`-Lecks (Operator 2026-09-09, evaluiert 2026-09-09: Defer)
+
+**Evaluierung 2026-09-09 (Go, Reihenfolge-Punkt 4):** Stand savonet:
+2.4.5 (15.06.2026, win64-Zip 47 MB) ist die neueste Version mit
+Windows-Build; die Rolling-Version 2.5.x (18.08.2026) verlangt OCaml 5.5
+und hat keinen Windows-Build.  Die `liquidsoap-2.4.5-win64.config` weist
+**OCaml 4.14.1** aus — derselbe Compiler wie 2.4.4, also dieselbe
+`win32unix/select.c`.  Messung (`C:/Temp/liq245/leak_compare.py`, 400
+`uptime`-Kommandos über eine offene Telnet-Verbindung): Minimal-Skript
+2.4.4 = 3 KB, 2.4.5 = 2 KB je Kommando; **produktionsnahes Replikat**
+(`make_replica_prod.py`: echter Render, Telnet 8823, Harbor 8831,
+Icecast-Mounts `-leaktest`, Dummy statt PortAudio) **2.4.4 = 46 KB,
+2.4.5 = 48 KB je Kommando** — kein Unterschied; das Leck skaliert mit
+dem fd-Set, nicht mit der Liquidsoap-Version.  2.4.5 prüft unseren
+Render (`--check`) sauber und hat alle benötigten Operatoren; seine
+Fixes (Crash bei EOF externer Eingänge, Crossfade außerhalb des Clock-
+Threads, `Strings.Mutable`-Leck) treffen bei uns kein bekanntes Problem.
+**Empfehlung: Defer.**  Bleiben bei 2.4.4; erneut prüfen, sobald savonet
+einen Windows-Build auf OCaml 5 veröffentlicht (2.5.x) — dann dieselbe
+Replikat-Messung wiederholen.  Der 2.4.5-Download liegt in
+`C:\Temp\liq245` (Zip + entpackt) für spätere Tests.
 
 **Status:** Idea — Operator 2026-09-09: „Wir merken uns dieses Leck mit
 diesem Windows-Build.  Unter Umständen updaten wir irgendwann einmal
