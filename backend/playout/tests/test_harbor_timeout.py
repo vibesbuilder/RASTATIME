@@ -69,4 +69,5 @@ def test_write_wrapper_forwards_the_timeout(tmp_path):
 
 def test_no_harbor_no_timeout_line():
     out = _active(lc.render_rastatime_liq([_stream()]))
-    assert "timeout=5.0" not in out
+    assert _harbor_blocks(out) == []
+    assert "input.harbor(" not in out
