@@ -15,7 +15,10 @@ from libretime_playout.engine.liquidsoap_engine import LiquidsoapPlayoutEngine
 
 
 @pytest.fixture
-def sched():
+def sched(monkeypatch):
+    # Since 2026-09-09 the process table is the primary restart signal;
+    # these tests cover the telnet uptime fallback, so it reports nothing.
+    monkeypatch.setattr(ps.liquidsoap_health, "liquidsoap_process_info", lambda: [])
     engine = MagicMock(spec=LiquidsoapPlayoutEngine)
     engine.get_state.return_value = PlayoutState.STOPPED
     engine.recording_stop.return_value = None

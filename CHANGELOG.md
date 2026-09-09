@@ -419,6 +419,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Neustart-Erkennung ohne Telnet, DJ-Verifikation alle 10 min, Prozess-
+  Probe kennt die Standby-Instanz (2026-09-09, Operator-Go)** — Nach dem
+  ereignisgesteuerten Umschalter blieben drei Telnet-Kommandos je 2 min
+  (Scheduler `uptime` zur Neustart-Erkennung, Umschalter zweimal Status),
+  gemessen 14 MB/h.  (1) Der Scheduler erkennt einen LIQUIDSOAP-Neustart
+  jetzt an der Prozesstabelle: neue PID oder jüngeres Prozessalter der
+  Hauptinstanz (`_liquidsoap_process_identity`, `_maybe_reinit_by_process`);
+  die Tabelle wird einmal je Zyklus gelesen (`_liquidsoap_process_infos`)
+  und mit den Neustart-Auslösern geteilt; der Telnet-`uptime`-Vergleich
+  bleibt Rückfall, wenn die Tabelle nicht lesbar ist.  (2)
+  `RASTATIME_DJ_RECONCILE_SECONDS` Standard 120 → 600 s; Verbinden, Kick
+  und Neustart werden weiterhin sofort verarbeitet, nur ein verlorenes
+  Ereignis wird spätestens nach 10 statt 2 Minuten korrigiert.  (3) Dabei
+  gefundener Fehler behoben: `liquidsoap_process_info` meldet jetzt das
+  Skript jeder Instanz (WMI-Kommandozeile) und `main_instances` wählt die
+  Hauptinstanz (Basisname von `RASTATIME_LIQUIDSOAP_CONFIG_PATH`,
+  Standard `rastatime.liq`) — bisher nahmen Neustart-Auslöser und Preflight
+  „den ältesten liquidsoap.exe", seit dem Standby-Dienst (09:18) also die
+  Standby-Instanz: Speicher-Auslöser und `liquidsoap_unavailable` wären
+  blind gewesen.  Erwartung ~2 MB/h Leerlauf (0,4 statt 3 Kommandos je
+  2 min).  Tests `test_scheduler_process_restart_detection.py`,
+  `test_liquidsoap_health_main_instance.py`,
+  `test_preflight_main_instance.py`.  Aktiv nach PLAYOUT-Neustart,
+  LIQUIDSOAP unberührt.
 - **Telnet-Server trennt stille PLAYOUT-Clients nicht mehr (2026-09-09,
   Operator-Go, `8d9b067`)** — Erste Messung nach dem ereignisgesteuerten Umschalter
   (10:20–10:50, nichts auf Sendung): 14 MB/h statt ~150 MB/h.  Der Rest

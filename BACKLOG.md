@@ -607,11 +607,14 @@ Neuverbindungen sind weg (keine „New client"-Zeilen mehr nach dem
 Wiederanbinden 11:27:37), waren aber nicht der Rest: übrig bleiben
 3 Telnet-Kommandos je 120 s (Scheduler `uptime` zur Neustart-Erkennung
 + Umschalter `master_dj.status`/`show_dj.status`) ≈ 155 KB je
-Kommando bei der jetzigen fd-Menge.  Nächster Schritt (Go offen):
-Neustart-Erkennung über die Prozess-Probe (PID/Alter aus
-`liquidsoap_process_info`, ohne Telnet) und Verifikations-Intervall
-120 → 600 s → ~0,4 Kommandos je 120 s, erwartet ~2 MB/h, weiche
-Grenze erst nach ~4 Wochen.  Rechnung für das Intervall: bei 14 MB/h erreicht die
+Kommando bei der jetzigen fd-Menge.  Dritter Schritt (Go 2026-09-09,
+umgesetzt): Neustart-Erkennung über die Prozesstabelle (PID/Alter der
+Hauptinstanz, ohne Telnet; `uptime` nur Rückfall) und Verifikations-
+Intervall 120 → 600 s → ~0,4 Kommandos je 120 s, erwartet ~2 MB/h,
+weiche Grenze erst nach ~4 Wochen; dabei behoben: die Prozess-Probe
+nahm seit dem Standby-Dienst die älteste = Standby-Instanz (jetzt
+`main_instances` per Skriptname).  Nachmessen nach PLAYOUT-Neustart.
+Rechnung für das Intervall: bei 14 MB/h erreicht die
 Instanz die weiche Grenze 1536 MB nach ~4 Tagen, bei ~8 MB/h nach
 ~8 Tagen → 7 Tage realistisch, 30 nicht (harte Grenze 3072 MB nach
 ~15 Tagen).

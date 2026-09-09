@@ -2,7 +2,8 @@
 RASTATIME 2026-09-09 - option d: /source-event is fed by the harbor
 callbacks rendered into rastatime.liq; the Liquidsoap telnet loop only
 verifies - about a second after each event and otherwise every
-``RASTATIME_DJ_RECONCILE_SECONDS`` (default 120 s, floor 5 s).  While an
+``RASTATIME_DJ_RECONCILE_SECONDS`` (default 600 s since the second
+step of 2026-09-09, floor 5 s).  While an
 older render without the callbacks is loaded (probe
 ``rastatime.source_events``), the loop polls every 5 s as before.
 """
@@ -81,7 +82,7 @@ def handler(monkeypatch):
 
 
 def test_defaults_are_slow_and_bounded():
-    assert ss.DEFAULT_RECONCILE_INTERVAL_S == 120.0
+    assert ss.DEFAULT_RECONCILE_INTERVAL_S == 600.0
     assert ss.MIN_RECONCILE_INTERVAL_S == 5.0
     assert ss.RECONCILE_SETTLE_S == 1.0
     assert ss.LEGACY_POLL_INTERVAL_S == 5.0
@@ -90,10 +91,10 @@ def test_defaults_are_slow_and_bounded():
 
 
 @pytest.mark.parametrize("raw,expected", [
-    ("", 120.0),
+    ("", 600.0),
     ("300", 300.0),
     (" 45 ", 45.0),
-    ("abc", 120.0),      # not a number -> default
+    ("abc", 600.0),      # not a number -> default
     ("1", 5.0),          # below the floor -> floor
     ("0", 5.0),
 ])
@@ -102,7 +103,7 @@ def test_reconcile_interval_from_env(raw, expected):
 
 
 def test_reconcile_interval_env_unset_uses_default():
-    assert ss.reconcile_interval_from_env({}) == 120.0
+    assert ss.reconcile_interval_from_env({}) == 600.0
     assert ss.reconcile_interval_from_env({}, default=7.0) == 7.0
 
 

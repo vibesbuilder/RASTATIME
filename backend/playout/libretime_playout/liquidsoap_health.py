@@ -49,6 +49,10 @@ class ProcessInfo:
     pid: int
     private_mb: float
     age_seconds: float
+    #: The .liq the instance runs (from its command line), "" when
+    #: unknown.  RASTATIME 2026-09-09: the standby source is a second
+    #: liquidsoap.exe, so callers must tell the instances apart.
+    script: str = ""
 
 
 def memory_warn_threshold_mb() -> int:
@@ -63,18 +67,30 @@ def memory_warn_threshold_mb() -> int:
 
 
 _PS_QUERY = (
+    # Command lines come from WMI (Get-Process has none), keyed by PID as
+    # a string because Get-Process.Id is Int32 and WMI's ProcessId UInt32.
+    "$cl = @{}; "
+    "Get-CimInstance Win32_Process -Filter \"name='liquidsoap.exe'\" | "
+    "ForEach-Object { $cl[[string]$_.ProcessId] = $_.CommandLine }; "
     "$ps = Get-Process liquidsoap -ErrorAction SilentlyContinue; "
     "foreach ($p in $ps) { "
     "$age = [math]::Round(((Get-Date) - $p.StartTime).TotalSeconds); "
+    "$script = ''; $c = $cl[[string]$p.Id]; "
+    "if ($c -and ($c -match '([^\\s\"]+\\.liq)')) { $script = $matches[1] }; "
     "Write-Output ($p.Id.ToString() + ' ' + "
-    "[math]::Round($p.PrivateMemorySize64/1MB).ToString() + ' ' + $age.ToString()) }"
+    "[math]::Round($p.PrivateMemorySize64/1MB).ToString() + ' ' + "
+    "$age.ToString() + ' ' + $script) }"
 )
 
 
 def liquidsoap_process_info(
     runner=subprocess.run,
 ) -> Optional[List[ProcessInfo]]:
-    """All ``liquidsoap.exe`` processes (usually one), or None on error."""
+    """
+    All ``liquidsoap.exe`` processes, or None on error.  Since the
+    standby source (2026-09-09) there are normally two; each carries
+    the script it runs so :func:`main_instances` can pick the main one.
+    """
     if sys.platform != "win32":
         return None
     try:
@@ -90,14 +106,58 @@ def liquidsoap_process_info(
         return None
     infos: List[ProcessInfo] = []
     for line in (proc.stdout or "").splitlines():
-        parts = line.split()
-        if len(parts) != 3:
+        parts = line.split(None, 3)
+        if len(parts) not in (3, 4):
             continue
+        script = parts[3].strip() if len(parts) == 4 else ""
         try:
-            infos.append(ProcessInfo(int(parts[0]), float(parts[1]), float(parts[2])))
+            infos.append(ProcessInfo(int(parts[0]), float(parts[1]), float(parts[2]), script))
         except ValueError:
             continue
     return infos
+
+
+#: The main instance's script: the basename of
+#: ``RASTATIME_LIQUIDSOAP_CONFIG_PATH`` (default rastatime.liq).
+MAIN_SCRIPT_ENV = "RASTATIME_LIQUIDSOAP_CONFIG_PATH"
+DEFAULT_MAIN_SCRIPT_NAME = "rastatime.liq"
+
+
+def main_script_name() -> str:
+    """Lower-case basename of the main instance's .liq."""
+    raw = os.environ.get(MAIN_SCRIPT_ENV, "").strip()
+    name = os.path.basename(raw.replace("\\", "/")) if raw else ""
+    return (name or DEFAULT_MAIN_SCRIPT_NAME).lower()
+
+
+def _script_basename(info) -> str:
+    return os.path.basename((getattr(info, "script", "") or "").replace("\\", "/")).lower()
+
+
+def main_instances(infos, script_name: Optional[str] = None) -> List[ProcessInfo]:
+    """
+    The processes that run the main script (RASTATIME 2026-09-09).
+
+    Until the standby source there was one liquidsoap.exe and "the
+    oldest process" was the production instance; the standby service
+    started earlier than every later restart of the main one, so the
+    planned-restart triggers and the preflight would have judged the
+    standby.  Processes whose script is known and is not the main one
+    are dropped.  When no process reports a script at all (older query,
+    command line unavailable) every process counts, as before; when
+    scripts are known but none is the main one, only the processes
+    without a script remain candidates.
+    """
+    if not infos:
+        return []
+    wanted = (script_name or main_script_name()).lower()
+    named = [i for i in infos if getattr(i, "script", "")]
+    if not named:
+        return list(infos)
+    matching = [i for i in named if _script_basename(i) == wanted]
+    if matching:
+        return matching
+    return [i for i in infos if not getattr(i, "script", "")]
 
 
 def render_endpoint_sessions() -> Optional[Dict[str, List[int]]]:

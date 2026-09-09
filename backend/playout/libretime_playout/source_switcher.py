@@ -63,7 +63,10 @@ logger = logging.getLogger(__name__)
 # (lost POST, Liquidsoap restart).  Before: a 5-s poll = two telnet
 # commands per 5 s, and every telnet command leaks ~87 KB on the Windows
 # build of Liquidsoap 2.4.4 (~150 MB/h idle growth).
-DEFAULT_RECONCILE_INTERVAL_S = 120.0
+# 2026-09-09, second step: 120 -> 600 s.  The events are the truth; the
+# periodic round only catches a lost POST, and each round is two of the
+# leaking telnet commands.
+DEFAULT_RECONCILE_INTERVAL_S = 600.0
 MIN_RECONCILE_INTERVAL_S = 5.0
 RECONCILE_SETTLE_S = 1.0
 RECONCILE_INTERVAL_ENV = "RASTATIME_DJ_RECONCILE_SECONDS"

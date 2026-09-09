@@ -216,6 +216,11 @@ class PreflightChecker:
         cannot run clears its warning type rather than inventing one.
         """
         infos = liquidsoap_health.liquidsoap_process_info()
+        if infos is not None:
+            # RASTATIME 2026-09-09 - the standby source is a second
+            # liquidsoap.exe; judge only the main instance (rastatime.liq).
+            # A standby-only table therefore means "Liquidsoap is down".
+            infos = liquidsoap_health.main_instances(infos)
         memory_warnings: list[dict] = []
         session_warnings: list[dict] = []
         unavailable_warnings: list[dict] = []

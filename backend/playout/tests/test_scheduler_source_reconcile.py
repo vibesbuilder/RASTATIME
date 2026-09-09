@@ -17,7 +17,9 @@ from libretime_playout.source_switcher import SourceSwitcher
 
 
 @pytest.fixture
-def sched():
+def sched(monkeypatch):
+    # uptime-drop tests: the process-table detector (2026-09-09) is muted
+    monkeypatch.setattr(ps.liquidsoap_health, "liquidsoap_process_info", lambda: [])
     engine = MagicMock(spec=LiquidsoapPlayoutEngine)
     engine.get_state.return_value = PlayoutState.STOPPED
     engine.recording_stop.return_value = None

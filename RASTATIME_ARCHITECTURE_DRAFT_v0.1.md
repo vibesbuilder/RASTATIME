@@ -4550,3 +4550,15 @@ silent clients after 30 s (`settings.server.timeout`), so both clients
 reconnected every 2 min at ~262 KB each (~16 MB/h).  The template now
 sets `settings.server.timeout.set(-1.)`; only loopback clients exist,
 and Windows closes their sockets when PLAYOUT exits.
+The second measurement (11:27–11:57) still read 14 MB/h: the reconnects
+were gone, the remaining growth was the three telnet commands per
+cycle (scheduler `uptime`, two status verifications).  Third step
+(operator go): the scheduler detects a Liquidsoap restart from the
+process table (PID / age of the main instance, read once per cycle and
+shared with the planned-restart triggers; telnet `uptime` only as the
+fallback), the DJ verification interval defaults to 600 s, and the
+process probe distinguishes the main instance from the standby by
+script name (`liquidsoap_health.main_instances`) — until then "the
+oldest liquidsoap.exe" had been the standby since its installation,
+which would have blinded the memory triggers and the
+`liquidsoap_unavailable` check.

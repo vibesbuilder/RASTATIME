@@ -210,6 +210,13 @@ class PlayoutScheduler:
         # instance with the recording sentinel on and default gates);
         # refresh() then re-applies the initial state.
         self._last_liquidsoap_uptime: Optional[float] = None
+        # RASTATIME 2026-09-09 - restart detection without telnet: (pid,
+        # age_seconds) of the main instance from the process table; the
+        # process probe is fetched once per refresh cycle and shared with
+        # the planned-restart triggers.
+        self._last_liquidsoap_process: Optional[Tuple[int, float]] = None
+        self._cycle_process_infos: Optional[tuple] = None
+        self._cycle_process_cache_enabled = False
         # RASTATIME 2026-09-06 - webstream watchdog state.  A monotonic
         # id supersedes an older watchdog when a new stream starts; the
         # tick self-cancels when its id is stale or the current event is
@@ -434,7 +441,11 @@ class PlayoutScheduler:
         # RASTATIME 2026-09-07 - notice a LIQUIDSOAP restart that happened
         # under us (manual restart order, or a crash+NSSM-restart) and
         # re-apply the initial state so the fresh instance does not record
-        # the _uninitialized.mp3 sentinel forever.
+        # the _uninitialized.mp3 sentinel forever.  The process table is
+        # read once per cycle (2026-09-09) and shared with the
+        # planned-restart triggers at the end of the cycle.
+        self._cycle_process_infos = None
+        self._cycle_process_cache_enabled = True
         self._maybe_reinit_after_liquidsoap_restart()
 
         # Hot-reload stream outputs from cc_pref BEFORE we touch timers,
@@ -649,6 +660,8 @@ class PlayoutScheduler:
         # exactly what is on air and what comes next: the right moment
         # to decide about the nightly quiet-window restart.
         self._maybe_nightly_restart()
+        self._cycle_process_cache_enabled = False
+        self._cycle_process_infos = None
 
     # ------------------------------------------------------------------
     # RASTATIME 2026-09-05 - nightly quiet-window restart of LIQUIDSOAP
@@ -721,18 +734,52 @@ class PlayoutScheduler:
         )
         return False
 
-    def _liquidsoap_process_probe(self) -> Tuple[Optional[float], Optional[float]]:
-        """``(age_seconds, private_mb)`` of the oldest liquidsoap.exe (the
-        production instance; replicas are younger), or ``(None, None)``."""
+    def _liquidsoap_process_infos(self) -> Optional[list]:
+        """
+        The liquidsoap.exe process table (``liquidsoap_health.
+        liquidsoap_process_info``), read once per refresh cycle and shared
+        by the restart detector and the planned-restart triggers; None
+        when the probe cannot run.  Outside a cycle every call reads it.
+        """
+        cached = self._cycle_process_infos
+        if cached is not None:
+            return cached[0]
         try:
             infos = liquidsoap_health.liquidsoap_process_info()
         except Exception as exc:  # pylint: disable=broad-exception-caught
             logger.debug("Liquidsoap process probe failed: %s", exc)
+            infos = None
+        if self._cycle_process_cache_enabled:
+            self._cycle_process_infos = (infos,)
+        return infos
+
+    def _liquidsoap_main_process(self):
+        """
+        The main instance (rastatime.liq) from the process table, or None.
+        Since the standby source (2026-09-09) two liquidsoap.exe run and
+        the oldest one is usually the standby, so the script name decides
+        (``liquidsoap_health.main_instances``); among several candidates
+        the oldest wins (replicas are younger).
+        """
+        infos = self._liquidsoap_process_infos()
+        candidates = liquidsoap_health.main_instances(infos) if infos else []
+        if not candidates:
+            return None
+        return max(candidates, key=lambda i: i.age_seconds)
+
+    def _liquidsoap_process_probe(self) -> Tuple[Optional[float], Optional[float]]:
+        """``(age_seconds, private_mb)`` of the main instance, or ``(None, None)``."""
+        info = self._liquidsoap_main_process()
+        if info is None:
             return None, None
-        if not infos:
-            return None, None
-        oldest = max(infos, key=lambda i: i.age_seconds)
-        return float(oldest.age_seconds), float(oldest.private_mb)
+        return float(info.age_seconds), float(info.private_mb)
+
+    def _liquidsoap_process_identity(self) -> Optional[Tuple[int, float]]:
+        """``(pid, age_seconds)`` of the main instance, or None."""
+        info = self._liquidsoap_main_process()
+        if info is None:
+            return None
+        return int(info.pid), float(info.age_seconds)
 
     @staticmethod
     def _boundary_allows_restart(prev_event: object, next_event: object) -> bool:
@@ -920,6 +967,10 @@ class PlayoutScheduler:
         # later drop is recognised as a fresh Liquidsoap (2026-09-07).
         if hasattr(self._engine, "liquidsoap_uptime_seconds"):
             self._last_liquidsoap_uptime = self._engine.liquidsoap_uptime_seconds()
+        # The process-table detector (2026-09-09) re-seeds itself on the
+        # next cycle; a fresh baseline avoids a second "restarted" round
+        # after a planned restart.
+        self._last_liquidsoap_process = None
         return True, None
 
     def _retry_initial_liquidsoap_state(
@@ -940,10 +991,23 @@ class PlayoutScheduler:
         return False
 
     def _maybe_reinit_after_liquidsoap_restart(self) -> None:
-        """Detect a Liquidsoap restart via an uptime drop and re-apply the
-        initial state (recording sentinel stop + gates).  Called each
-        refresh; a no-op unless the uptime went backwards."""
+        """
+        Detect a Liquidsoap restart and re-apply the initial state
+        (recording sentinel stop + gates).  Called each refresh.
+
+        RASTATIME 2026-09-09: the process table is the primary signal -
+        a new PID, or a younger age of the main instance than last cycle
+        (``_liquidsoap_process_identity``) - because it costs no telnet
+        command (every telnet command leaks ~87-155 KB on the Windows
+        build and ``uptime`` was one of the last three periodic ones).
+        The telnet ``uptime`` drop of 2026-09-07 remains the fallback
+        while the process table cannot be read.
+        """
         if not self._streaming_handled_externally:
+            return
+        ident = self._liquidsoap_process_identity()
+        if ident is not None:
+            self._maybe_reinit_by_process(ident)
             return
         if not hasattr(self._engine, "liquidsoap_uptime_seconds"):
             return
@@ -969,6 +1033,36 @@ class PlayoutScheduler:
             self._request_source_reconcile()
         else:
             self._last_liquidsoap_uptime = uptime
+
+    def _maybe_reinit_by_process(self, ident: Tuple[int, float]) -> None:
+        """
+        Process-table restart detector (2026-09-09): a new PID, or the
+        same PID with a younger age than last cycle, is a fresh instance.
+        The first call after a start or a planned restart only seeds.
+        """
+        pid, age = ident
+        prev = self._last_liquidsoap_process
+        if prev is None:
+            self._last_liquidsoap_process = ident
+            return
+        prev_pid, prev_age = prev
+        if pid == prev_pid and age + 5.0 >= prev_age:
+            self._last_liquidsoap_process = ident
+            return
+        logger.warning(
+            "Liquidsoap restarted under PLAYOUT (pid %d, %.0f s old; before pid "
+            "%d, %.0f s) - re-sending recording.stop and reopening the gates.",
+            pid, age, prev_pid, prev_age,
+        )
+        ok, exc = self._apply_initial_liquidsoap_state()
+        if not ok:
+            logger.warning(
+                "Post-restart re-init failed (telnet not ready yet?): %s - "
+                "retrying next poll.", exc,
+            )
+            return                      # baseline kept -> detected again next cycle
+        self._last_liquidsoap_process = ident
+        self._request_source_reconcile()
 
     def ensure_liquidsoap_initial_state(
         self, attempts: int = 45, delay: float = 2.0, background: bool = True,
