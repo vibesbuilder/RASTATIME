@@ -599,10 +599,10 @@ nichts auf Sendung: Private Bytes 97 → 104 MB = 14 MB/h** (vorher
 ~150 MB/h).  Der Rest ist erklärt: der Telnet-Server trennt stille
 Verbindungen nach 30 s (`settings.server.timeout`), beide PLAYOUT-
 Clients verbinden sich daher alle 2 min neu (30 Neuverbindungen in
-30 min à ~262 KB ≈ 16 MB/h).  Vorschlag (Go offen):
-`settings.server.timeout.set(-1.)` im Template (Build akzeptiert es,
-geprüft) → erwartet ~5–8 MB/h; wirkt ab dem nächsten LIQUIDSOAP-
-Neustart.  Rechnung für das Intervall: bei 14 MB/h erreicht die
+30 min à ~262 KB ≈ 16 MB/h).  Umgesetzt (Go 2026-09-09):
+`settings.server.timeout.set(-1.)` im Template → erwartet ~5–8 MB/h;
+wirkt ab dem nächsten LIQUIDSOAP-Neustart (04:00 rendert vorher neu),
+danach nachmessen.  Rechnung für das Intervall: bei 14 MB/h erreicht die
 Instanz die weiche Grenze 1536 MB nach ~4 Tagen, bei ~8 MB/h nach
 ~8 Tagen → 7 Tage realistisch, 30 nicht (harte Grenze 3072 MB nach
 ~15 Tagen).

@@ -67,6 +67,12 @@
 settings.server.telnet.set(true)
 settings.server.telnet.bind_addr.set("${TELNET_HOST}")
 settings.server.telnet.port.set(${TELNET_PORT})
+# RASTATIME 2026-09-09 - keep PLAYOUT's two telnet clients connected.
+# The default drops a silent client after 30 s; both clients then
+# reconnect every 2 min, and every new telnet connection leaks ~262 KB
+# on the Windows build (~16 MB/h, the whole idle growth left after the
+# event-driven source switcher).  Only loopback clients exist.
+settings.server.timeout.set(-1.)
 
 # Log to file so the operator can debug after-the-fact.  Path matches
 # Pypo's logs/ convention.  Log level 3 (= info) for production; bump

@@ -419,6 +419,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Telnet-Server trennt stille PLAYOUT-Clients nicht mehr (2026-09-09,
+  Operator-Go)** — Erste Messung nach dem ereignisgesteuerten Umschalter
+  (10:20–10:50, nichts auf Sendung): 14 MB/h statt ~150 MB/h.  Der Rest
+  waren Telnet-Neuverbindungen: `settings.server.timeout` (Standard 30 s)
+  trennte die stillen Verbindungen beider PLAYOUT-Clients, die sich
+  danach alle 2 min neu aufbauten (30 in 30 min, je ~262 KB ≈ 16 MB/h).
+  Das Template setzt jetzt `settings.server.timeout.set(-1.)`; es gibt
+  nur Loopback-Clients, und Windows schließt deren Sockets beim
+  Prozessende.  Erwartung ~5–8 MB/h; wirkt ab dem nächsten LIQUIDSOAP-
+  Neustart (der geplante um 04:00 rendert vorher neu, kein PLAYOUT-
+  Neustart nötig).  Test `test_telnet_server_timeout.py`.
 - **Quellen-Umschalter ereignisgesteuert: der Harbor meldet DJ-Verbindungen
   selbst, der 5-s-Telnet-Poll entfällt (Option d = Ziel c, 2026-09-09,
   Operator-Go, `758fd6f`)** — PLAYOUTs SourceSwitcher fragte `master_dj.status` und

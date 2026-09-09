@@ -4544,3 +4544,9 @@ its socket is noticed only when the harbor's 30-s read timeout expires
 latency the status poll had as well (BACKLOG idea: a shorter harbor
 `timeout`).  Cost after the change: two telnet commands per DJ event
 and per 120 s, ~125 MB/day, instead of 1,440 commands per hour.
+First live measurement (10:20–10:50, nothing on air): 14 MB/h instead
+of ~150 MB/h; the remainder was the telnet server dropping PLAYOUT's
+silent clients after 30 s (`settings.server.timeout`), so both clients
+reconnected every 2 min at ~262 KB each (~16 MB/h).  The template now
+sets `settings.server.timeout.set(-1.)`; only loopback clients exist,
+and Windows closes their sockets when PLAYOUT exits.
