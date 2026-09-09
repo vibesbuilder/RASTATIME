@@ -1742,6 +1742,106 @@ def write_rastatime_liq(
 
 
 # ---------------------------------------------------------------------
+# RASTATIME 2026-09-09 - standby source for the Icecast fallback mounts
+# ---------------------------------------------------------------------
+
+DEFAULT_STANDBY_MOUNT_SUFFIX = "-standby"
+DEFAULT_STANDBY_LOG_FILE = "C:/rastatime/logs/liquidsoap-standby.log"
+
+
+def standby_mount(mount: str, suffix: str = DEFAULT_STANDBY_MOUNT_SUFFIX) -> str:
+    """``/rastatime`` -> ``/rastatime-standby`` (the Icecast fallback mount)."""
+    mount = mount if mount.startswith("/") else "/" + mount
+    return mount + suffix
+
+
+def render_standby_liq(
+    stream_outputs: List[Dict],
+    *,
+    audio_file: Optional[str] = None,
+    log_file: str = DEFAULT_STANDBY_LOG_FILE,
+    mount_suffix: str = DEFAULT_STANDBY_MOUNT_SUFFIX,
+) -> str:
+    """
+    Render ``standby.liq``: a second, tiny Liquidsoap that streams silence
+    (or ``audio_file`` in a loop) to one fallback mount per configured
+    stream output, with the SAME encoders as the main render.
+
+    Why (RASTATIME 2026-09-09): the planned restart of RASTATIME-LIQUIDSOAP
+    drops its Icecast sources for 1-2 s.  Without a fallback Icecast
+    disconnects every listener of those mounts.  With
+    ``<fallback-mount>/rastatime-standby</fallback-mount>`` and
+    ``<fallback-override>1</fallback-override>`` in icecast.xml, Icecast
+    moves the listeners to the standby mount and back once the main
+    source returns - nobody is disconnected, they hear the standby
+    content for a moment.  The standby process has no telnet server and
+    nothing that polls, so it does not grow (the Windows ``Unix.select``
+    leak needs scheduler wake-ups) and is never restarted on purpose.
+
+    The encoders must match the main outputs (same codec / rate /
+    bitrate) or listener players choke on the switch - hence the same
+    ``_render_icecast_outputs`` with the mounts retargeted.
+    """
+    standby_outputs = []
+    for out in stream_outputs:
+        out = dict(out)
+        out["mount"] = standby_mount(str(out.get("mount", "")), mount_suffix)
+        name = str(out.get("name") or "").strip()
+        out["name"] = (name + " (standby)") if name else "standby"
+        standby_outputs.append(out)
+    if audio_file:
+        source = (
+            "# a station bed / loop; mksafe falls back to silence if the file is unreadable\n"
+            f'bus = mksafe(single(id="standby_loop", "{_escape_liq_string(audio_file)}"))\n'
+        )
+    else:
+        source = 'bus = blank(id="standby_silence")\n'
+    return (
+        "# =====================================================================\n"
+        "# standby.liq - RASTATIME standby source (rendered, do not edit)\n"
+        "#\n"
+        "# Streams silence (or a configured loop) to the Icecast fallback mounts\n"
+        "# so listeners are not disconnected while RASTATIME-LIQUIDSOAP restarts.\n"
+        "# Rendered by libretime_playout.liquidsoap_config.render_standby_liq from\n"
+        "# the same stream outputs as rastatime.liq.  Runs as RASTATIME-STANDBY.\n"
+        "# =====================================================================\n"
+        "settings.init.allow_root.set(true)\n"
+        "settings.log.level.set(3)\n"
+        "settings.log.stdout.set(false)\n"
+        "settings.log.file.set(true)\n"
+        f'settings.log.file.path.set("{_escape_liq_string(log_file)}")\n'
+        "settings.server.telnet.set(false)\n"
+        "\n"
+        + source
+        + "\n"
+        + _render_icecast_outputs(standby_outputs)
+    )
+
+
+def write_standby_liq(
+    output_path: Path,
+    stream_outputs: List[Dict],
+    *,
+    audio_file: Optional[str] = None,
+    log_file: str = DEFAULT_STANDBY_LOG_FILE,
+) -> bool:
+    """Atomically write ``standby.liq``; True when the content changed."""
+    rendered = render_standby_liq(stream_outputs, audio_file=audio_file, log_file=log_file)
+    previous: Optional[str] = None
+    if output_path.exists():
+        try:
+            previous = output_path.read_text(encoding="utf-8")
+        except OSError:
+            previous = None
+    if previous == rendered:
+        return False
+    tmp_path = output_path.with_suffix(output_path.suffix + ".tmp")
+    tmp_path.write_text(rendered, encoding="utf-8", newline="\n")
+    os.replace(tmp_path, output_path)
+    return True
+
+
+# ---------------------------------------------------------------------
 # CLI — for manual re-rendering by the operator
 # ---------------------------------------------------------------------
 

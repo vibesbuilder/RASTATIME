@@ -9,6 +9,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Geplanter LIQUIDSOAP-Neustart für 24/7-Programm: an der Titelgrenze,
+  Auslöser Intervall/Speicher, Icecast-Standby-Fallback ohne
+  Hörer-Trennung (2026-09-09, Operator-Go a+b)** — Mit durchgehendem
+  Programm fand der Nacht-Neustart nie einen ruhigen Moment und entfiel
+  (Speicher wächst 150–180 MB/h, nach Tagen unkontrollierter Absturz).
+  (1) Auslöser (`NightlyRestartPolicy.reason_due`): Fenster ab 04:00
+  (`RASTATIME_LIQUIDSOAP_NIGHTLY_RESTART`), alle N Tage nach Prozessalter
+  (`RASTATIME_LIQUIDSOAP_RESTART_EVERY_DAYS`, Standard 1, 0 = aus), weiche
+  Speicher-Schwelle im Fenster (`RASTATIME_LIQUIDSOAP_RESTART_AT_MB`,
+  Standard 1536), harte Schwelle jederzeit
+  (`RASTATIME_LIQUIDSOAP_RESTART_HARD_MB`, Standard 3072); Prozessalter und
+  Speicher je Scheduler-Zyklus per `liquidsoap_process_info`; Fehlversuche
+  30 min gedrosselt.  (2) Ausführung: ruhiger Moment → sofort wie bisher;
+  sonst führt `_on_file_start` den Neustart zwischen zwei Datei-Titeln aus
+  (Webstream/Line-In auf einer Seite → nächste Grenze), Bleibt-oben-
+  Prüfung dann asynchron.  (3) Standby-Fallback: PLAYOUT rendert
+  `standby.liq` (`render_standby_liq`: gleiche Encoder, Mounts `-standby`,
+  Stille oder `RASTATIME_STANDBY_AUDIO`-Loop, kein Telnet), Dienst
+  RASTATIME-STANDBY (`config/nssm-install-standby.ps1`), `icecast.xml`
+  mit `fallback-mount`/`fallback-override` für /rastatime, -aac, -ogg:
+  Icecast schiebt die Hörer während des Neustarts auf den Standby-Mount
+  und zurück, niemand wird getrennt.  Tests
+  `test_planned_restart_triggers.py` (13), `test_standby_render.py` (4);
+  Handbuch „Lokale Maschine" EN/DE/FR/ES; Architektur 0.26.  Aktiv:
+  Standby-Dienst installieren, Icecast einmal neu starten (einmalige
+  Trennung), PLAYOUT neu starten.
+
 - **Liquidsoap-Prozesshygiene auf Windows: automatische Neustarts und
   Watchdogs (2026-09-05, Operator-Go, `1dbeb71`)** — Drei Ergänzungen
   aus der Untersuchung des Speicherlecks und des Geräteindex:

@@ -581,6 +581,25 @@ zurück.  Scheduler-Poll bleibt als Rückfall (`RASTATIME_WEBSTREAM_
 WATCHDOG=scheduler`) und als Übergangs-Notnagel, wenn eine ältere .liq
 geladen ist; nach einer Woche ohne Auffälligkeit entfernen.
 
+### 🟢 24/7-Programm: geplanter Neustart an der Titelgrenze + Standby-Fallback (2026-09-09, Go a+b)
+
+**Befund:** Mit durchgehendem Programm (normal bei Example Radio, um 04:00
+läuft eine Playlist) fand der Nacht-Neustart nie einen ruhigen Moment
+und entfiel → Speicher wächst 150–180 MB/h unbegrenzt.
+**Umgesetzt:** a) Auslöser Fenster/alle N Tage/Speicher weich 1536 MB
+im Fenster/Speicher hart 3072 MB jederzeit (`RASTATIME_LIQUIDSOAP_
+RESTART_EVERY_DAYS|_AT_MB|_HARD_MB`), Ausführung im ruhigen Moment oder
+zwischen zwei Datei-Titeln (`_on_file_start`); b) Standby-Quelle
+`standby.liq` (Dienst RASTATIME-STANDBY, `nssm-install-standby.ps1`)
+und Icecast-Fallback-Mounts → keine Hörer-Trennung, ~2 s Stille an
+einer Titelgrenze.  **Inbetriebnahme durch den Operator:** PLAYOUT neu
+starten (rendert standby.liq), `nssm-install-standby.ps1` als Admin,
+RASTATIME-ICECAST einmal neu starten (einmalige Trennung), Standby-
+Mounts in `status-json.xsl` prüfen.  **Ziel c) = Option d** (Switcher
+ereignisgesteuert, Leck weg): danach `RESTART_EVERY_DAYS` auf 7–30
+setzen.  Offen: Live-Abnahme des Titelgrenzen-Neustarts in der ersten
+Nacht mit Programm.
+
 ### 🟢 Scheduler-Poll-Rückfall entfernen (fällig ab 2026-09-15, Operator 2026-09-09)
 
 Nach einer ruhigen Woche mit Plan A + Reaper (live seit 2026-09-08

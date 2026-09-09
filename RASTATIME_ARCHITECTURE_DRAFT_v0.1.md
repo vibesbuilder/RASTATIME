@@ -1,10 +1,17 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.25
-Date: 2026-09-08
+Draft version: 0.26
+Date: 2026-09-09
 
 > **Revision history**
+> - **0.26 (2026-09-09)** — **Planned LIQUIDSOAP restart for a 24/7
+>   programme** (§23.27, addendum 2026-09-09).  Triggers: window, every
+>   N days by process age, soft memory limit in the window, hard limit
+>   any time; execution in a quiet moment or else between two file
+>   tracks.  A standby Liquidsoap (`standby.liq`, rendered by PLAYOUT)
+>   feeds Icecast fallback mounts so listeners are moved, not
+>   disconnected, while the main instance restarts.
 > - **0.25 (2026-09-08)** — **A fresh `input.http` per webstream slot**
 >   (§23.27, addendum 2026-09-08).  A reused `input.http` reconnects
 >   through one Duppy async task whose pipe wake-up is unreliable on
@@ -4467,3 +4474,30 @@ counter reaps each one the moment it reports `connected`
 (`webstream_reap`, rendered in both watchdog modes); `webstream.watchdog`
 exposes `zombies=` and `reaped=`.  Replica: three stalls, every dropped
 input gone within 3 s.
+
+**Addendum 2026-09-09 — the planned restart under a 24/7 programme.**
+The nightly restart of §23.27 requires a quiet moment; with a
+continuous programme it is postponed every poll and dropped when the
+window closes, and the ~150–180 MB/h idle leak then runs unbounded.
+Two changes (operator go a+b): *triggers* — `NightlyRestartPolicy.reason_due`
+decides from the process age and private bytes
+(`liquidsoap_health.liquidsoap_process_info` every scheduler cycle):
+every N days inside the window (`RASTATIME_LIQUIDSOAP_RESTART_EVERY_DAYS`,
+1 = daily as before), a soft memory limit inside the window
+(`RASTATIME_LIQUIDSOAP_RESTART_AT_MB`, 1536), a hard limit at any time
+(`RASTATIME_LIQUIDSOAP_RESTART_HARD_MB`, 3072); failed attempts are
+rate-limited to one per 30 min.  *Execution* — in a quiet moment as
+before; otherwise the scheduler arms `_boundary_restart_pending` and
+`_on_file_start` performs the restart between two file tracks (a
+webstream or line-in on either side keeps waiting), so the gap replaces
+a crossfade instead of punching a hole into a track; the stays-up check
+runs asynchronously there.  *Listeners* — a second, tiny Liquidsoap
+(`standby.liq`, rendered by PLAYOUT from the same stream outputs with
+the same encoders, no telnet, silence or a configured loop) feeds
+`/<mount>-standby`; `icecast.xml` gives every public mount a
+`<fallback-mount>` with `<fallback-override>`, so Icecast moves the
+listeners to the standby mount during the 1–2 s the main sources are
+gone and back afterwards.  The standby service is never restarted on
+purpose (only when the stream outputs change) and, having no scheduler
+wake-ups, does not grow.  Remaining goal (BACKLOG "Option d"): remove
+the idle leak itself, after which the interval can be raised to weeks.

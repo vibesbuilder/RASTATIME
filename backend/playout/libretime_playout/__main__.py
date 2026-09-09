@@ -279,6 +279,8 @@ def _load_config():
 
 _LIQUIDSOAP_DEFAULT_CONFIG_PATH = "C:/Tools/liquidsoap/rastatime.liq"
 _LIQUIDSOAP_DEFAULT_LOG_PATH = "C:/rastatime/logs/liquidsoap.log"
+# RASTATIME 2026-09-09 - standby source for the Icecast fallback mounts
+_LIQUIDSOAP_DEFAULT_STANDBY_PATH = "C:/Tools/liquidsoap/standby.liq"
 _LIQUIDSOAP_DEFAULT_CROSSFADE = 2.0
 
 
@@ -476,6 +478,7 @@ def _render_rastatime_liq_outcome(stream_outputs: List[Dict]) -> RenderOutcome:
         DEFAULT_LINEIN_HTTP_MAX_BUFFER_SECONDS,
         read_hourly_recording_config_from_db,
         write_rastatime_liq,
+        write_standby_liq,
     )
 
     config_path = Path(
@@ -641,6 +644,27 @@ def _render_rastatime_liq_outcome(stream_outputs: List[Dict]) -> RenderOutcome:
             "needed.",
             config_path,
         )
+    # RASTATIME 2026-09-09 - the standby source for the Icecast fallback
+    # mounts is rendered from the same stream outputs (same encoders).
+    # It runs as RASTATIME-STANDBY and only needs a restart when this
+    # file changes, i.e. when the stream outputs change.
+    standby_path = Path(
+        os.environ.get("RASTATIME_LIQUIDSOAP_STANDBY_PATH", _LIQUIDSOAP_DEFAULT_STANDBY_PATH)
+    )
+    standby_audio = os.environ.get("RASTATIME_STANDBY_AUDIO", "").strip() or None
+    try:
+        standby_changed = write_standby_liq(
+            standby_path, stream_outputs, audio_file=standby_audio,
+        )
+    except Exception as exc:  # pylint: disable=broad-exception-caught
+        logger.warning("Could not render the standby source %s: %s", standby_path, exc)
+    else:
+        if standby_changed:
+            logger.warning(
+                "Rendered %s (content changed).  RESTART the RASTATIME-STANDBY "
+                "NSSM service so the fallback mounts carry the new encoders "
+                "(no listener is affected by that restart).", standby_path,
+            )
     return RenderOutcome(changed=changed, main_output_mode=main_output_mode)
 
 

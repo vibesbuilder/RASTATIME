@@ -35,7 +35,7 @@ import logging
 import threading
 import time
 import urllib.request as urllib_request
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Callable, Dict, List, Optional, Tuple
 from urllib.parse import quote
@@ -49,6 +49,7 @@ from .recording_path import build_output_path
 from .engine.ffmpeg_streamer import FfmpegStreamer
 from .engine.interface import PlayoutEngine, PlayoutState
 from .liquidsoap_config import DEFAULT_INPUT_DUCK_FADE_SECONDS
+from . import liquidsoap_health
 from .liquidsoap_service import (
     MAIN_OUTPUT_BY_INDEX,
     NightlyRestartPolicy,
@@ -178,6 +179,12 @@ class PlayoutScheduler:
         self._render_liquidsoap = render_liquidsoap
         self._nightly_restart = nightly_restart
         self._nightly_restart_done: Optional[date] = None
+        # RASTATIME 2026-09-09 - a planned restart that found something on
+        # air (24/7 programme) waits for the next file-to-file track
+        # boundary; the reason text is kept for the log.  Attempts are
+        # rate-limited so a failing restart is not hammered every poll.
+        self._boundary_restart_pending: Optional[str] = None
+        self._planned_restart_attempted_at: Optional[datetime] = None
         # RASTATIME 2026-09-07 - the webstream watchdog runs inside
         # Liquidsoap by default (frame counter, rendered into the .liq);
         # "scheduler" re-enables the telnet poll below as a fallback.
@@ -672,8 +679,10 @@ class PlayoutScheduler:
 
     def _maybe_nightly_restart(self, now_local: Optional[datetime] = None) -> bool:
         """
-        Restart LIQUIDSOAP once per day inside the configured quiet
-        window when nothing is on air.
+        Restart LIQUIDSOAP when the policy says so (daily / every N days
+        / memory limits, see NightlyRestartPolicy): in a quiet moment
+        when nothing is on air, otherwise at the next file-to-file track
+        boundary (RASTATIME 2026-09-09, 24/7 programme).
 
         Why: the savonet Windows build leaks memory in ``Unix.select``
         (3.4 GB after two hours on 2026-09-05 before the template fix).
@@ -686,20 +695,72 @@ class PlayoutScheduler:
         if policy is None or not policy.enabled:
             return False
         now_local = now_local or datetime.now()
-        if not policy.due(now_local, self._nightly_restart_done):
+        if self._boundary_restart_pending:
+            return False                      # armed - waits for a track boundary
+        if (
+            self._planned_restart_attempted_at is not None
+            and now_local - self._planned_restart_attempted_at < timedelta(minutes=30)
+        ):
+            return False                      # a failed attempt is not hammered
+        age_seconds, private_mb = self._liquidsoap_process_probe()
+        reason = policy.reason_due(
+            now_local, self._nightly_restart_done, age_seconds, private_mb,
+        )
+        if reason is None:
             return False
         with self._lock:
             quiet, why = self._quiet_for_restart_locked(policy.quiet_margin_seconds)
-        if not quiet:
-            logger.info("Nightly Liquidsoap restart postponed: %s.", why)
-            return False
-        # One attempt per day, success or not - a failing restart must
-        # not be retried every poll cycle.
-        self._nightly_restart_done = now_local.date()
+        if quiet:
+            return self._perform_planned_restart(f"quiet moment: {reason}", now_local)
+        # RASTATIME 2026-09-09 - 24/7 programme: never a quiet moment, so
+        # restart between two file tracks instead (see _on_file_start).
+        self._boundary_restart_pending = reason
         logger.warning(
-            "Nightly Liquidsoap restart (window from %s, nothing on air): "
-            "re-rendering rastatime.liq and restarting RASTATIME-LIQUIDSOAP.",
-            policy.start.strftime("%H:%M") if policy.start else "?",
+            "Planned Liquidsoap restart due (%s) but %s - restarting at the "
+            "next file-to-file track boundary instead.", reason, why,
+        )
+        return False
+
+    def _liquidsoap_process_probe(self) -> Tuple[Optional[float], Optional[float]]:
+        """``(age_seconds, private_mb)`` of the oldest liquidsoap.exe (the
+        production instance; replicas are younger), or ``(None, None)``."""
+        try:
+            infos = liquidsoap_health.liquidsoap_process_info()
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            logger.debug("Liquidsoap process probe failed: %s", exc)
+            return None, None
+        if not infos:
+            return None, None
+        oldest = max(infos, key=lambda i: i.age_seconds)
+        return float(oldest.age_seconds), float(oldest.private_mb)
+
+    @staticmethod
+    def _boundary_allows_restart(prev_event: object, next_event: object) -> bool:
+        """A restart may sit between two FILE tracks (or at the very first
+        track); a webstream or line-in on either side keeps waiting."""
+        if not isinstance(next_event, FileEvent):
+            return False
+        return prev_event is None or isinstance(prev_event, FileEvent)
+
+    def _perform_planned_restart(
+        self, reason: str, now_local: Optional[datetime] = None,
+        settle_async: bool = False,
+    ) -> bool:
+        """
+        Re-render, restart RASTATIME-LIQUIDSOAP, re-apply the initial
+        state.  Returns True when an attempt was made.  ``settle_async``
+        runs the 10 s stays-up check in a daemon thread so a track that
+        waits for us (boundary restart) is not delayed by it.
+        """
+        now_local = now_local or datetime.now()
+        self._nightly_restart_done = now_local.date()
+        self._planned_restart_attempted_at = now_local
+        policy = self._nightly_restart
+        logger.warning(
+            "Planned Liquidsoap restart (%s; window from %s): re-rendering "
+            "rastatime.liq and restarting RASTATIME-LIQUIDSOAP.",
+            reason,
+            policy.start.strftime("%H:%M") if policy and policy.start else "?",
         )
         outcome = None
         if self._render_liquidsoap is not None:
@@ -707,7 +768,7 @@ class PlayoutScheduler:
                 outcome = self._render_liquidsoap()
             except Exception as exc:  # pylint: disable=broad-exception-caught
                 logger.error(
-                    "Nightly restart: re-render failed (%s) - restarting "
+                    "Planned restart: re-render failed (%s) - restarting "
                     "with the existing rastatime.liq.", exc,
                 )
         # RASTATIME 2026-09-07: name-safe or not at all.  A device_id
@@ -717,7 +778,7 @@ class PlayoutScheduler:
         # until 08:21.  The running instance is healthy - keep it.
         if getattr(outcome, "main_output_mode", None) == MAIN_OUTPUT_BY_INDEX:
             logger.error(
-                "Nightly Liquidsoap restart skipped: the fresh render addresses "
+                "Planned Liquidsoap restart skipped: the fresh render addresses "
                 "the Main Output by PortAudio index (no name-safe entry right "
                 "now: display asleep, device renamed, or a non-MME/WASAPI "
                 "match).  The running instance keeps playing.  Check "
@@ -725,16 +786,23 @@ class PlayoutScheduler:
             )
             return True
         if not restart_liquidsoap_service(
-            "nightly quiet-window restart",
+            f"planned restart ({reason})",
             verify=self._liquidsoap_restarted_recently,
         ):
             logger.error(
-                "Nightly Liquidsoap restart failed - the running instance "
+                "Planned Liquidsoap restart failed - the running instance "
                 "keeps going; restart PLAYOUT, then LIQUIDSOAP, manually."
             )
             return True
         self._after_liquidsoap_restart()
-        self._confirm_liquidsoap_stays_up()
+        if settle_async:
+            t = threading.Thread(
+                target=self._confirm_liquidsoap_stays_up, daemon=True,
+                name="liquidsoap-settle-check",
+            )
+            t.start()
+        else:
+            self._confirm_liquidsoap_stays_up()
         return True
 
     def _liquidsoap_restarted_recently(
@@ -1603,6 +1671,22 @@ class PlayoutScheduler:
         if local is None:
             logger.error("Cannot play %s — file could not be downloaded", key)
             return
+
+        # RASTATIME 2026-09-09 - a planned Liquidsoap restart that found
+        # the station on air (24/7 programme) happens here, between two
+        # file tracks: the previous track has ended, the fresh instance
+        # is up within a few seconds, then this track starts.  Listeners
+        # hear a short gap instead of a mid-track hole; Icecast keeps
+        # them on the fallback mounts meanwhile (see icecast.xml).
+        if self._boundary_restart_pending and self._boundary_allows_restart(
+            self._current_event, event,
+        ):
+            reason = self._boundary_restart_pending
+            self._boundary_restart_pending = None
+            self._perform_planned_restart(
+                f"at the track boundary before {key}: {reason}",
+                settle_async=True,
+            )
 
         # Track which event is "current" regardless of whether a DJ is
         # overriding right now — this is what we resume to once the DJ

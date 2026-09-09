@@ -156,15 +156,32 @@ el tercer aviso desde el 2026-09-07):
   arranque, reinicia ella misma RASTATIME-LIQUIDSOAP. Tan pronto no
   hay nada en antena. Los cambios posteriores siguen necesitando el
   botón o el orden manual: primero la emisión, luego Liquidsoap.
-- **Una vez por noche.** La versión de Windows de Liquidsoap pierde
-  memoria lentamente mientras funciona. Por eso la emisión lo
-  reinicia una vez al día dentro de una ventana tranquila que se
-  abre a las 04:00 (ajuste de máquina
-  `RASTATIME_LIQUIDSOAP_NIGHTLY_RESTART`, `HH:MM` u `off`), solo si
-  no hay nada en antena, nada precalentándose y ningún programa
-  empieza en los próximos cinco minutos. Los oyentes escuchan un
-  hueco de pocos segundos; un programa que dura toda la noche
-  pospone el reinicio hasta que la ventana se cierra.
+- **Reinicio planificado.** La versión de Windows de Liquidsoap
+  pierde memoria lentamente mientras funciona, así que la emisión lo
+  reinicia a propósito. Cuándo: dentro de una ventana que se abre a
+  las 04:00 (ajuste de máquina `RASTATIME_LIQUIDSOAP_NIGHTLY_RESTART`,
+  `HH:MM` u `off`) en cuanto el motor tiene más de N días
+  (`RASTATIME_LIQUIDSOAP_RESTART_EVERY_DAYS`, 1 por defecto, `0` =
+  desactivado) u ocupa más de `RASTATIME_LIQUIDSOAP_RESTART_AT_MB`
+  (1536 por defecto); y a cualquier hora por encima de
+  `RASTATIME_LIQUIDSOAP_RESTART_HARD_MB` (3072 por defecto). Cómo
+  (desde el 2026-09-09): en un momento tranquilo sin nada en antena o,
+  con programa 24/7, entre dos pistas de la lista en curso, de modo
+  que el hueco de unos dos segundos sustituye a un fundido en lugar de
+  cortar una pista. Un webstream o line-in a cualquiera de los lados
+  del límite hace esperar al siguiente.
+- **Respaldo standby para los oyentes.** Un segundo Liquidsoap
+  diminuto (servicio RASTATIME-STANDBY, script `standby.liq` generado
+  por la emisión con los mismos codificadores) emite silencio en una
+  copia `-standby` de cada punto de montaje público, e `icecast.xml`
+  señala esa copia como respaldo de cada punto público. Durante los
+  dos segundos de un reinicio Icecast traslada a los oyentes al punto
+  standby y los devuelve; nadie se desconecta. Instálelo una vez como
+  administrador con `backend/playout/config/nssm-install-standby.ps1`
+  después de que la emisión haya generado `standby.liq`, y reinicie
+  Icecast una vez para que lea los puntos de respaldo. Ajuste
+  `RASTATIME_STANDBY_AUDIO` a un archivo de audio si prefiere una cama
+  sonora de emisora en lugar de silencio.
 - **Por nombre o nada.** Justo antes de cada reinicio automático la
   emisión vuelve a leer la lista de tarjetas de sonido y direcciona
   el Main Output por el *nombre* del dispositivo. Si en ese momento

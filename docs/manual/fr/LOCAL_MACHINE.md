@@ -159,15 +159,34 @@ avertissements du tableau de bord le surveillent (depuis le
   RASTATIME-LIQUIDSOAP. Rien n'est à l'antenne si tôt. Les
   changements ultérieurs nécessitent toujours le bouton ou l'ordre
   manuel : la diffusion d'abord, puis Liquidsoap.
-- **Une fois par nuit.** La version Windows de Liquidsoap perd
-  lentement de la mémoire en fonctionnant. La diffusion le redémarre
-  donc une fois par jour dans une fenêtre calme qui s'ouvre à 04:00
-  (réglage machine `RASTATIME_LIQUIDSOAP_NIGHTLY_RESTART`, `HH:MM`
-  ou `off`) — seulement si rien n'est à l'antenne, rien n'est en
-  préchauffage et aucune émission ne commence dans les cinq minutes.
-  Les auditeurs entendent une coupure de quelques secondes ; une
-  émission qui dure toute la nuit reporte le redémarrage jusqu'à la
-  fermeture de la fenêtre.
+- **Redémarrage planifié.** La version Windows de Liquidsoap perd
+  lentement de la mémoire en fonctionnant ; la diffusion le
+  redémarre donc volontairement. Quand : dans une fenêtre qui s'ouvre
+  à 04:00 (réglage machine `RASTATIME_LIQUIDSOAP_NIGHTLY_RESTART`,
+  `HH:MM` ou `off`) dès que le moteur a plus de N jours
+  (`RASTATIME_LIQUIDSOAP_RESTART_EVERY_DAYS`, 1 par défaut, `0` =
+  désactivé) ou occupe plus de `RASTATIME_LIQUIDSOAP_RESTART_AT_MB`
+  (1536 par défaut) ; et à toute heure au-delà de
+  `RASTATIME_LIQUIDSOAP_RESTART_HARD_MB` (3072 par défaut). Comment
+  (depuis le 2026-09-09) : dans un moment calme où rien n'est à
+  l'antenne, ou, en programme 24/7, entre deux titres de la playlist
+  en cours, de sorte que la coupure d'environ deux secondes remplace
+  un fondu enchaîné au lieu de couper un titre. Un webstream ou un
+  line-in de part et d'autre de la frontière fait attendre la
+  suivante.
+- **Repli standby pour les auditeurs.** Un second Liquidsoap
+  minuscule (service RASTATIME-STANDBY, script `standby.liq` rendu par
+  la diffusion avec les mêmes encodeurs) diffuse du silence sur une
+  copie `-standby` de chaque point de montage public, et
+  `icecast.xml` désigne cette copie comme repli de chaque point
+  public. Pendant les deux secondes d'un redémarrage, Icecast déplace
+  les auditeurs vers le point standby puis les ramène ; personne
+  n'est déconnecté. À installer une fois en administrateur avec
+  `backend/playout/config/nssm-install-standby.ps1` après que la
+  diffusion a rendu `standby.liq`, puis redémarrer Icecast une fois
+  pour qu'il lise les points de repli. Réglez
+  `RASTATIME_STANDBY_AUDIO` sur un fichier audio si vous préférez un
+  tapis sonore de station au silence.
 - **Par nom ou pas du tout.** Juste avant chaque redémarrage
   automatique, la diffusion relit la liste des cartes son et adresse
   le Main Output par le *nom* du périphérique. Si ce n'est pas

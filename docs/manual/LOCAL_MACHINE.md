@@ -183,14 +183,30 @@ and the third warning since 2026-09-07):
   restarts RASTATIME-LIQUIDSOAP itself. Nothing is on air that
   early. Later changes still need the button or the manual
   order: playout first, then Liquidsoap.
-- **Once a night.** The Windows build of Liquidsoap slowly leaks
-  memory while it runs. The playout therefore restarts it once a
-  day inside a quiet window that opens at 04:00 (machine setting
-  `RASTATIME_LIQUIDSOAP_NIGHTLY_RESTART`, `HH:MM` or `off`) — only
-  when nothing is on air, nothing is being pre-warmed and no show
-  starts within the next five minutes. Listeners hear a gap of a
-  few seconds; a show that runs through the night postpones the
-  restart until the window closes.
+- **Planned restart.** The Windows build of Liquidsoap slowly leaks
+  memory while it runs, so the playout restarts it on purpose. When:
+  inside a window that opens at 04:00 (machine setting
+  `RASTATIME_LIQUIDSOAP_NIGHTLY_RESTART`, `HH:MM` or `off`) once the
+  engine is older than N days (`RASTATIME_LIQUIDSOAP_RESTART_EVERY_DAYS`,
+  default 1, `0` = off) or uses more than
+  `RASTATIME_LIQUIDSOAP_RESTART_AT_MB` (default 1536); and at any time
+  of day above `RASTATIME_LIQUIDSOAP_RESTART_HARD_MB` (default 3072).
+  How (since 2026-09-09): in a quiet moment when nothing is on air,
+  or, with a 24/7 programme, between two tracks of the running
+  playlist, so the gap of about two seconds replaces a crossfade
+  instead of cutting into a track. A webstream or line-in on either
+  side of the boundary makes it wait for the next one.
+- **Standby fallback for listeners.** A second, tiny Liquidsoap
+  (service RASTATIME-STANDBY, script `standby.liq` rendered by the
+  playout with the same encoders) streams silence to a `-standby`
+  copy of every public mount, and `icecast.xml` points each public
+  mount at it as a fallback. During the two seconds of a restart
+  Icecast moves the listeners to the standby mount and back again;
+  nobody is disconnected. Install once as administrator with
+  `backend/playout/config/nssm-install-standby.ps1` after the
+  playout has rendered `standby.liq`, then restart Icecast once so
+  it reads the fallback mounts. Set `RASTATIME_STANDBY_AUDIO` to an
+  audio file if you prefer a station bed over silence.
 - **Name-safe or not at all.** Right before either automatic
   restart the playout re-reads the sound-card list and addresses
   the Main Output by device *name*. When that is not possible at

@@ -197,15 +197,33 @@ Sicherung und die dritte Warnung seit dem 2026-09-07):
   neu. So früh ist nichts auf Sendung. Spätere Änderungen brauchen
   weiterhin den Knopf oder die manuelle Reihenfolge: zuerst
   Playout, dann Liquidsoap.
-- **Einmal pro Nacht.** Der Windows-Build von Liquidsoap verliert
-  im Betrieb langsam Speicher. Das Playout startet ihn daher einmal
-  täglich in einem ruhigen Fenster neu, das um 04:00 Uhr öffnet
+- **Geplanter Neustart.** Der Windows-Build von Liquidsoap verliert
+  im Betrieb langsam Speicher, deshalb startet das Playout ihn
+  gezielt neu. Wann: in einem Fenster ab 04:00 Uhr
   (Maschinen-Einstellung `RASTATIME_LIQUIDSOAP_NIGHTLY_RESTART`,
-  `HH:MM` oder `off`) — nur wenn nichts auf Sendung ist, nichts
-  vorgewärmt wird und in den nächsten fünf Minuten keine Sendung
-  beginnt. Hörer hören eine Lücke von wenigen Sekunden; eine
-  Sendung, die durch die Nacht läuft, verschiebt den Neustart, bis
-  das Fenster schließt.
+  `HH:MM` oder `off`), sobald die Engine älter als N Tage ist
+  (`RASTATIME_LIQUIDSOAP_RESTART_EVERY_DAYS`, Standard 1, `0` = aus)
+  oder mehr als `RASTATIME_LIQUIDSOAP_RESTART_AT_MB` belegt (Standard
+  1536); und zu jeder Tageszeit oberhalb von
+  `RASTATIME_LIQUIDSOAP_RESTART_HARD_MB` (Standard 3072). Wie (seit
+  2026-09-09): in einem ruhigen Moment, wenn nichts auf Sendung ist,
+  oder bei 24/7-Programm zwischen zwei Titeln der laufenden Playlist,
+  sodass die Lücke von etwa zwei Sekunden einen Crossfade ersetzt,
+  statt in einen Titel zu schneiden. Ein Webstream oder Line-In auf
+  einer Seite der Titelgrenze lässt den Neustart auf die nächste
+  warten.
+- **Standby-Fallback für Hörer.** Ein zweites, kleines Liquidsoap
+  (Dienst RASTATIME-STANDBY, Skript `standby.liq`, vom Playout mit
+  denselben Encodern gerendert) streamt Stille auf eine `-standby`-
+  Kopie jedes öffentlichen Mounts, und `icecast.xml` verweist jeden
+  öffentlichen Mount als Fallback darauf. Während der zwei Sekunden
+  eines Neustarts schiebt Icecast die Hörer auf den Standby-Mount und
+  wieder zurück; niemand wird getrennt. Einmalig als Administrator mit
+  `backend/playout/config/nssm-install-standby.ps1` installieren,
+  nachdem das Playout `standby.liq` gerendert hat, danach Icecast
+  einmal neu starten, damit es die Fallback-Mounts liest. Setzen Sie
+  `RASTATIME_STANDBY_AUDIO` auf eine Audiodatei, wenn Sie ein
+  Stations-Bett statt Stille bevorzugen.
 - **Per Name oder gar nicht.** Unmittelbar vor jedem automatischen
   Neustart liest das Playout die Soundkarten-Liste neu ein und
   adressiert den Main Output über den Geräte-*Namen*. Ist das in

@@ -32,6 +32,9 @@ def sched(monkeypatch):
     restart = MagicMock(return_value=True)
     monkeypatch.setattr(ps, "restart_liquidsoap_service", restart)
     monkeypatch.setattr(ps.time, "sleep", lambda _s: None)
+    # 2026-09-09: the planned-restart probe would run PowerShell against
+    # the real process - no process here keeps the daily-window semantics
+    monkeypatch.setattr(ps.liquidsoap_health, "liquidsoap_process_info", lambda: [])
     s = ps.PlayoutScheduler(
         engine=engine, api_client=MagicMock(), streaming_handled_externally=True,
         render_liquidsoap=render,
