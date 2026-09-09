@@ -887,6 +887,7 @@ class PlayoutScheduler:
             self._current_event = None
         if self._retry_initial_liquidsoap_state(attempts, delay, sleep=time.sleep):
             logger.info("Nightly restart: Liquidsoap is back, sentinel stopped, gates reset.")
+            self._request_source_reconcile()
         else:
             logger.error(
                 "Nightly restart: Liquidsoap telnet did not come back "
@@ -965,6 +966,7 @@ class PlayoutScheduler:
                     "retrying next poll.", exc,
                 )
                 return
+            self._request_source_reconcile()
         else:
             self._last_liquidsoap_uptime = uptime
 
@@ -2890,6 +2892,18 @@ class PlayoutScheduler:
     def set_source_switcher(self, switcher) -> None:
         """Wire up the SourceSwitcher.  Called once from __main__."""
         self._switcher = switcher
+
+    def _request_source_reconcile(self) -> None:
+        """
+        Ask the SourceSwitcher's reconciler to verify the DJ state over
+        telnet now (option d, 2026-09-09).  Called after a Liquidsoap
+        restart: the harbor callbacks of the old process cannot report
+        the connections that died with it, and the fresh process only
+        reports new ones.
+        """
+        switcher = self._switcher
+        if switcher is not None and hasattr(switcher, "request_reconcile"):
+            switcher.request_reconcile()
 
     def switch_audio_source(self, state: SourceState) -> None:
         """

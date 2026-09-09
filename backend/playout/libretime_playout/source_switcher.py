@@ -26,6 +26,10 @@ in ``icecast.xml`` are configured to fire GET requests to::
     /source-event?source=show&status=on
     /source-event?source=show&status=off
 
+    Since 2026-09-09 (option d) these events are posted by the harbor
+    on_connect/on_disconnect callbacks rendered into rastatime.liq;
+    the Liquidsoap telnet reconciler only verifies them.
+
 The listener stays bound to localhost — Icecast runs on the same host
 and we don't want random external clients to be able to fake DJ
 connect events.
@@ -39,6 +43,7 @@ No polling.  Meets the "max 1 s" requirement comfortably.
 import base64
 import json
 import logging
+import os
 import threading
 import time
 import urllib.error
@@ -46,10 +51,59 @@ import urllib.request
 import xml.etree.ElementTree as ET
 from enum import Enum
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from typing import Callable, Optional
+from typing import Callable, Mapping, Optional
 from urllib.parse import parse_qs, urlparse
 
 logger = logging.getLogger(__name__)
+
+# RASTATIME 2026-09-09 - option d: DJ connect/disconnect events come from
+# Liquidsoap's harbor callbacks (rastatime.liq POSTs to /source-event); the
+# telnet reconciler only *verifies* - once about a second after each
+# event and then every RASTATIME_DJ_RECONCILE_SECONDS as the safety net
+# (lost POST, Liquidsoap restart).  Before: a 5-s poll = two telnet
+# commands per 5 s, and every telnet command leaks ~87 KB on the Windows
+# build of Liquidsoap 2.4.4 (~150 MB/h idle growth).
+DEFAULT_RECONCILE_INTERVAL_S = 120.0
+MIN_RECONCILE_INTERVAL_S = 5.0
+RECONCILE_SETTLE_S = 1.0
+RECONCILE_INTERVAL_ENV = "RASTATIME_DJ_RECONCILE_SECONDS"
+# While the loaded rastatime.liq predates the harbor callbacks (or telnet
+# is down), the loop falls back to the old 5-s status poll, so the order
+# in which PLAYOUT and LIQUIDSOAP are restarted does not matter.
+LEGACY_POLL_INTERVAL_S = 5.0
+SOURCE_EVENTS_PROBE = "rastatime.source_events"
+
+
+def reconcile_interval_from_env(
+    env: Optional[Mapping[str, str]] = None,
+    default: float = DEFAULT_RECONCILE_INTERVAL_S,
+) -> float:
+    """
+    Seconds between two periodic telnet verifications of the DJ state
+    (``RASTATIME_DJ_RECONCILE_SECONDS``).  Unset/blank -> ``default``;
+    not a number -> ``default`` with a warning; anything below
+    :data:`MIN_RECONCILE_INTERVAL_S` is raised to that floor - the poll
+    is what leaks, so a very short interval would bring the leak back.
+    """
+    source = os.environ if env is None else env
+    raw = (source.get(RECONCILE_INTERVAL_ENV, "") or "").strip()
+    if not raw:
+        return default
+    try:
+        value = float(raw)
+    except ValueError:
+        logger.warning(
+            "%s=%r is not a number - using %.0f s",
+            RECONCILE_INTERVAL_ENV, raw, default,
+        )
+        return default
+    if value < MIN_RECONCILE_INTERVAL_S:
+        logger.warning(
+            "%s=%r is below the %.0f s floor - using the floor",
+            RECONCILE_INTERVAL_ENV, raw, MIN_RECONCILE_INTERVAL_S,
+        )
+        return MIN_RECONCILE_INTERVAL_S
+    return value
 
 
 class SourceState(str, Enum):
@@ -86,6 +140,10 @@ class SourceSwitcher:
         self._show_connected = False
         self._current_state: SourceState = SourceState.SCHEDULED
         self._switch_callback = switch_callback
+        # Option d (2026-09-09): set by /source-event and by the
+        # scheduler after a Liquidsoap restart; the telnet reconciler
+        # waits on it instead of sleeping a fixed interval.
+        self._reconcile_wake = threading.Event()
 
     # ---------- public API -----------------------------------------------
 
@@ -112,6 +170,20 @@ class SourceSwitcher:
     def is_show_connected(self) -> bool:
         with self._lock:
             return self._show_connected
+
+    def request_reconcile(self) -> None:
+        """Ask the state reconciler to verify the DJ state soon
+        (option d, 2026-09-09).  Cheap and idempotent."""
+        self._reconcile_wake.set()
+
+    def wait_reconcile(self, timeout: float) -> bool:
+        """Block until a reconcile was requested or ``timeout`` seconds
+        passed.  Returns True when it was requested (and clears the
+        request), False on timeout."""
+        requested = self._reconcile_wake.wait(timeout)
+        if requested:
+            self._reconcile_wake.clear()
+        return requested
 
     # ---------- internals ------------------------------------------------
 
@@ -248,6 +320,12 @@ class _EventHandler(BaseHTTPRequestHandler):
             else:
                 sw.on_show_disconnect()
 
+        logger.info("source-event: %s %s", source, status)
+        # Option d (2026-09-09): the event normally comes from the harbor
+        # callback in rastatime.liq; let the reconciler confirm the state
+        # over telnet shortly after (quick connect/disconnect pairs, a
+        # POST that overtook another one).
+        sw.request_reconcile()
         self._send(200, "ok")
 
     def _handle_source_state(self) -> None:
@@ -568,17 +646,89 @@ def _safe_preflight_scan(preflight) -> None:
         )
 
 
+def _reconcile_liquidsoap_once(client, switcher: SourceSwitcher) -> None:
+    """
+    One verification round: ``master_dj.status`` + ``show_dj.status``
+    over telnet, then sync the SourceSwitcher to what Liquidsoap says.
+    Raises whatever the telnet client raises - the loop logs it.
+    """
+    master_resp = client.send_command("master_dj.status").strip()
+    show_resp = client.send_command("show_dj.status").strip()
+    # Liquidsoap's idle reply is literally "no source client connected".
+    # Anything else (incl. an ERROR reply for an undefined harbor)
+    # is treated as "DJ source present" - but we filter ERRORs
+    # explicitly so a mis-configured .liq doesn't fake DJ-connects.
+    actual_master = (
+        master_resp != "no source client connected"
+        and not master_resp.startswith("ERROR")
+    )
+    actual_show = (
+        show_resp != "no source client connected"
+        and not show_resp.startswith("ERROR")
+    )
+
+    if actual_master != switcher.is_master_connected():
+        logger.warning(
+            "SourceSwitcher: master state reconcile %s -> %s "
+            "(liquidsoap master_dj.status: %r)",
+            switcher.is_master_connected(), actual_master,
+            master_resp,
+        )
+        if actual_master:
+            switcher.on_master_connect()
+        else:
+            switcher.on_master_disconnect()
+
+    if actual_show != switcher.is_show_connected():
+        logger.warning(
+            "SourceSwitcher: show state reconcile %s -> %s "
+            "(liquidsoap show_dj.status: %r)",
+            switcher.is_show_connected(), actual_show,
+            show_resp,
+        )
+        if actual_show:
+            switcher.on_show_connect()
+        else:
+            switcher.on_show_disconnect()
+
+
+def _source_events_present(client) -> bool:
+    """
+    Does the loaded rastatime.liq post harbor events?  The render
+    registers the telnet command ``rastatime.source_events`` answering
+    ``on``; an older render replies ``ERROR: unknown command``.  Raises
+    whatever the telnet client raises.
+    """
+    reply = client.send_command(SOURCE_EVENTS_PROBE).strip()
+    if reply.startswith("ERROR"):
+        return False
+    return reply.lower().startswith("on")
+
+
 def _liquidsoap_state_poll_loop(
     switcher: SourceSwitcher,
     telnet_host: str = "127.0.0.1",
     telnet_port: int = 1234,
-    interval_s: float = 5.0,
+    interval_s: float = DEFAULT_RECONCILE_INTERVAL_S,
+    settle_s: float = RECONCILE_SETTLE_S,
+    max_ticks: Optional[int] = None,
 ) -> None:
     """
     Reconciliation watchdog for the Liquidsoap-engine mode (Phase C4
-    Teil 2).  Polls ``master_dj.status`` and ``show_dj.status`` via
-    the Liquidsoap telnet server every ``interval_s`` seconds and
-    syncs the SourceSwitcher's internal state.
+    Teil 2).  Verifies ``master_dj.status`` and ``show_dj.status`` via
+    the Liquidsoap telnet server and syncs the SourceSwitcher's
+    internal state - once at start, ``settle_s`` after every
+    :meth:`SourceSwitcher.request_reconcile` (a harbor event arrived on
+    /source-event, or the scheduler saw a Liquidsoap restart) and
+    otherwise every ``interval_s`` seconds.  ``max_ticks`` bounds the
+    loop for tests.
+
+    RASTATIME 2026-09-09 (option d): until now this was a plain 5-s poll
+    and the sole source of truth.  The state now arrives from the
+    harbor ``on_connect``/``on_disconnect`` callbacks rendered into
+    rastatime.liq; the periodic round is only the safety net, because
+    every telnet command leaks ~87 KB on the Windows build (the 5-s
+    poll alone grew the process by ~150 MB/h).
 
     Replaces :func:`_icecast_state_poll_loop` when
     ``engine_kind=liquidsoap`` — because in that configuration the
@@ -587,11 +737,8 @@ def _liquidsoap_state_poll_loop(
     so polling Icecast's ``/admin/listmounts`` would never see the
     DJ-source state.
 
-    Polling cost: two localhost telnet round-trips every 5 s.
-    Telnet protocol is line-oriented and tiny — negligible.  We poll
-    twice as often as the Icecast-mode reconciler (5 s vs 10 s)
-    because there are no Icecast event-bindings in the Liquidsoap
-    path; the poll is the sole source of state truth.
+    Cost: two localhost telnet round-trips per verification - a few
+    per hour instead of 1,440.
 
     Implementation notes
     --------------------
@@ -621,64 +768,51 @@ def _liquidsoap_state_poll_loop(
 
     client = LiquidsoapTelnetClient(host=telnet_host, port=telnet_port)
     logger.info(
-        "Source state reconciler started (Liquidsoap telnet polling "
-        "%s:%d every %.0fs, commands: master_dj.status + show_dj.status)",
-        telnet_host, telnet_port, interval_s,
+        "Source state reconciler started (Liquidsoap telnet %s:%d; verifies "
+        "master_dj.status + show_dj.status %.1fs after each harbor event "
+        "and every %.0fs)",
+        telnet_host, telnet_port, settle_s, interval_s,
     )
 
-    while True:
+    ticks = 0
+    events_present: Optional[bool] = None    # unknown until probed
+    while max_ticks is None or ticks < max_ticks:
         try:
-            master_resp = client.send_command("master_dj.status").strip()
-            show_resp = client.send_command("show_dj.status").strip()
-            # Liquidsoap's idle reply is literally "no source client connected".
-            # Anything else (incl. an ERROR reply for an undefined harbor)
-            # is treated as "DJ source present" — but we filter ERRORs
-            # explicitly so a mis-configured .liq doesn't fake DJ-connects.
-            actual_master = (
-                master_resp != "no source client connected"
-                and not master_resp.startswith("ERROR")
-            )
-            actual_show = (
-                show_resp != "no source client connected"
-                and not show_resp.startswith("ERROR")
-            )
-
-            if actual_master != switcher.is_master_connected():
-                logger.warning(
-                    "SourceSwitcher: master state reconcile %s -> %s "
-                    "(liquidsoap master_dj.status: %r)",
-                    switcher.is_master_connected(), actual_master,
-                    master_resp,
-                )
-                if actual_master:
-                    switcher.on_master_connect()
-                else:
-                    switcher.on_master_disconnect()
-
-            if actual_show != switcher.is_show_connected():
-                logger.warning(
-                    "SourceSwitcher: show state reconcile %s -> %s "
-                    "(liquidsoap show_dj.status: %r)",
-                    switcher.is_show_connected(), actual_show,
-                    show_resp,
-                )
-                if actual_show:
-                    switcher.on_show_connect()
-                else:
-                    switcher.on_show_disconnect()
-
+            if events_present is not True:
+                probed = _source_events_present(client)
+                if probed and events_present is not None:
+                    logger.info(
+                        "SourceSwitcher: the loaded rastatime.liq posts harbor "
+                        "events - verifying every %.0fs from now on", interval_s,
+                    )
+                elif not probed and events_present is not False:
+                    logger.warning(
+                        "SourceSwitcher: the loaded rastatime.liq has no harbor "
+                        "source events (older render) - polling master_dj/show_dj "
+                        "every %.0fs until LIQUIDSOAP restarts with the new one",
+                        LEGACY_POLL_INTERVAL_S,
+                    )
+                events_present = probed
+            _reconcile_liquidsoap_once(client, switcher)
         except ConnectionError as exc:
+            events_present = None         # a fresh instance may carry another render
             logger.warning(
-                "SourceSwitcher: Liquidsoap telnet poll failed "
-                "(connection): %s — will retry next tick", exc,
+                "SourceSwitcher: Liquidsoap telnet verification failed "
+                "(connection): %s - will retry next round", exc,
             )
         except Exception as exc:  # pylint: disable=broad-exception-caught
             logger.warning(
-                "SourceSwitcher: Liquidsoap telnet poll unexpected "
+                "SourceSwitcher: Liquidsoap telnet verification unexpected "
                 "error: %s", exc,
             )
-
-        time.sleep(interval_s)
+        ticks += 1
+        if max_ticks is not None and ticks >= max_ticks:
+            break
+        timeout = interval_s if events_present else LEGACY_POLL_INTERVAL_S
+        if switcher.wait_reconcile(timeout) and settle_s > 0:
+            # An event just arrived - give Liquidsoap a moment (a DJ
+            # client that reconnects right away) before verifying.
+            time.sleep(settle_s)
 
 
 def start_listener(
@@ -688,6 +822,7 @@ def start_listener(
     host: str = "127.0.0.1",
     port: int = 8770,
     engine_kind: str = "mpv",
+    reconcile_interval_s: float = DEFAULT_RECONCILE_INTERVAL_S,
 ) -> ThreadingHTTPServer:
     """
     Start the HTTP listener for the internal RASTATIME endpoints:
@@ -709,10 +844,12 @@ def start_listener(
         polls Icecast's ``/admin/listmounts`` to detect DJ-source
         state.  Used in the legacy code path where the DJ-source
         mounts live in Icecast.
-      * ``"liquidsoap"`` — :func:`_liquidsoap_state_poll_loop` polls
+      * ``"liquidsoap"`` — :func:`_liquidsoap_state_poll_loop` verifies
         the Liquidsoap subprocess's telnet ``master_dj.status`` and
-        ``show_dj.status`` commands.  Used when ``input.harbor``
-        inside rastatime.liq owns the DJ-source mounts (Phase C4).
+        ``show_dj.status`` after each harbor event posted to
+        /source-event and every ``reconcile_interval_s`` seconds
+        (option d, 2026-09-09).  Used when ``input.harbor`` inside
+        rastatime.liq owns the DJ-source mounts (Phase C4).
     """
     _EventHandler.switcher = switcher
     _EventHandler.scheduler = scheduler
@@ -737,6 +874,7 @@ def start_listener(
         threading.Thread(
             target=_liquidsoap_state_poll_loop,
             args=(switcher,),
+            kwargs={"interval_s": reconcile_interval_s},
             name="rastatime-source-state-reconciler-liquidsoap",
             daemon=True,
         ).start()

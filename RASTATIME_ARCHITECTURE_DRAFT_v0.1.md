@@ -1,10 +1,17 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.26
+Draft version: 0.27
 Date: 2026-09-09
 
 > **Revision history**
+> - **0.27 (2026-09-09)** — **Event-driven source switcher** (§23.3 note,
+>   §23.27 addendum 2026-09-09 b).  `input.harbor` reports DJ connects
+>   and disconnects to PLAYOUT's listener (`on_connect`/`on_disconnect`
+>   → `http.post`); PLAYOUT verifies once per event and every 120 s
+>   instead of polling telnet every 5 s — the ~150 MB/h idle leak goes
+>   with the poll.  An older render without the callbacks is detected
+>   (`rastatime.source_events`) and polled as before.
 > - **0.26 (2026-09-09)** — **Planned LIQUIDSOAP restart for a 24/7
 >   programme** (§23.27, addendum 2026-09-09).  Triggers: window, every
 >   N days by process age, soft memory limit in the window, hard limit
@@ -1453,6 +1460,14 @@ mounts.  Worst-case stuck-state duration with the watchdog: ~10 s.
 `/admin/listmounts` was chosen over the public `/status-json.xsl`
 because `/main` and `/show` are `<hidden>1</hidden>` and never appear in
 the public JSON listing.
+
+**Liquidsoap engine (Phase C4, revised 2026-09-09).**  With
+`input.harbor` owning `/main` and `/show`, the watchdog polled
+`master_dj.status` / `show_dj.status` over telnet every 5 s instead.
+Since option d (§23.27, addendum 2026-09-09 b) the harbor callbacks
+report every connect and disconnect to `/source-event` themselves and
+the telnet round is only a verification — one second after each event
+and every `RASTATIME_DJ_RECONCILE_SECONDS` (120 s) otherwise.
 
 ### 23.4 Friendly-Name Fallback for Stable IDs
 
@@ -4501,3 +4516,31 @@ gone and back afterwards.  The standby service is never restarted on
 purpose (only when the stream outputs change) and, having no scheduler
 wake-ups, does not grow.  Remaining goal (BACKLOG "Option d"): remove
 the idle leak itself, after which the interval can be raised to weeks.
+
+**Addendum 2026-09-09 b — the event-driven source switcher (option d).**
+The last periodic telnet consumer was the SourceSwitcher: two status
+commands every 5 s, ~87 KB each on the Windows build, i.e. the whole
+~150 MB/h idle growth that forced a daily restart.  The harbor sources
+now tell PLAYOUT themselves: `_render_harbor_source_events` renders
+`master_dj.on_connect`/`on_disconnect` (and the show pair) with
+`synchronous=true`, so a quick connect/disconnect pair keeps its
+order, while the `http.post` to
+`http://127.0.0.1:8770/source-event?source=…&status=…` runs in a
+detached `thread.run` task with a 2-s timeout and a caught error — a
+slow or absent listener never stalls the harbor handler.  PLAYOUT
+applies the event at once and asks its reconciler
+(`SourceSwitcher.request_reconcile`) to verify the state over telnet
+one second later; otherwise the reconciler sleeps on that event for
+`RASTATIME_DJ_RECONCILE_SECONDS` (default 120 s, floor 5 s) as the
+safety net for a lost POST, and the scheduler requests a verification
+after every Liquidsoap restart (the old process cannot report the
+connections that died with it).  The loop probes
+`rastatime.source_events` once per instance: an older render without
+the callbacks is polled every 5 s as before, so the restart order does
+not matter.  Replica: connect events arrive within milliseconds and a
+kick (`show_dj.stop`) is reported at once; a client that merely closes
+its socket is noticed only when the harbor's 30-s read timeout expires
+— the Windows build does not see the FIN in `select` — which is the
+latency the status poll had as well (BACKLOG idea: a shorter harbor
+`timeout`).  Cost after the change: two telnet commands per DJ event
+and per 120 s, ~125 MB/day, instead of 1,440 commands per hour.

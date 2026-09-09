@@ -545,7 +545,7 @@ Verifikation per `uptime`, Bleibt-oben-Prüfung, Preflight
 2026-09-07.  Aktiv nach PLAYOUT-Neustart; erste scharfe Nacht danach
 im Log prüfen (`grep "Nightly" logs/playout-stdout.log`).
 
-### 🟡 Liquidsoap-Leck: Kosten pro Telnet-Kommando — Poll-Design (neu 2026-09-07)
+### 🟢 Liquidsoap-Leck: Kosten pro Telnet-Kommando — Poll-Design (neu 2026-09-07, abgeschlossen 2026-09-09)
 
 **Messung 2026-09-07 an der Produktionsinstanz (nichts auf Sendung):**
 jede Telnet-**Verbindung** +262 KB, jedes **Kommando** über eine offene
@@ -581,6 +581,20 @@ zurück.  Scheduler-Poll bleibt als Rückfall (`RASTATIME_WEBSTREAM_
 WATCHDOG=scheduler`) und als Übergangs-Notnagel, wenn eine ältere .liq
 geladen ist; nach einer Woche ohne Auffälligkeit entfernen.
 
+**Stand 2026-09-09 — (d) umgesetzt (Ziel c des Operators):** Harbor-
+Callbacks `on_connect`/`on_disconnect` posten `source=master|show&
+status=on|off` an PLAYOUTs Listener (`/source-event`); PLAYOUT
+übernimmt sofort, verifiziert 1 s nach jedem Ereignis und sonst alle
+`RASTATIME_DJ_RECONCILE_SECONDS` (120 s) per Telnet; eine alte .liq
+ohne Callbacks wird erkannt (Probe `rastatime.source_events`) und wie
+bisher alle 5 s gepollt.  Replikat: Verbinden → Ereignis in
+Millisekunden, Kick sofort, Auflegen erst nach dem 30-s-Harbor-Timeout
+(wie der Status-Poll zuvor; eigener 💡-Eintrag unten).  Erwartetes
+Leerlauf-Wachstum danach wenige MB/h statt ~150 MB/h.  **Offen:**
+Speicher der LIQUIDSOAP-Instanz eine Woche beobachten (2048-MB-Banner,
+Task-Manager, `memscan`), dann `RASTATIME_LIQUIDSOAP_RESTART_EVERY_DAYS`
+auf 7–30 setzen.
+
 ### 🟢 24/7-Programm: geplanter Neustart an der Titelgrenze + Standby-Fallback (2026-09-09, Go a+b)
 
 **Befund:** Mit durchgehendem Programm (normal bei Example Radio, um 04:00
@@ -596,9 +610,21 @@ einer Titelgrenze.  **Inbetriebnahme durch den Operator:** PLAYOUT neu
 starten (rendert standby.liq), `nssm-install-standby.ps1` als Admin,
 RASTATIME-ICECAST einmal neu starten (einmalige Trennung), Standby-
 Mounts in `status-json.xsl` prüfen.  **Ziel c) = Option d** (Switcher
-ereignisgesteuert, Leck weg): danach `RESTART_EVERY_DAYS` auf 7–30
-setzen.  Offen: Live-Abnahme des Titelgrenzen-Neustarts in der ersten
+ereignisgesteuert, Leck weg): umgesetzt 2026-09-09 (Leck-Eintrag oben);
+`RESTART_EVERY_DAYS` auf 7–30 setzen, sobald eine Woche Speicherverlauf
+flach ist.  Offen: Live-Abnahme des Titelgrenzen-Neustarts in der ersten
 Nacht mit Programm.
+
+### 💡 DJ-Auflegen erst nach 30 s erkannt (Harbor-Timeout, Windows-Build)
+
+Replikat 2026-09-09: schließt ein DJ-Client nur den Socket, meldet
+`input.harbor` auf dem Windows-Build das Ende nicht sofort (`select`
+sieht das FIN nicht), sondern erst mit „Timed out after waiting for
+30.00 sec" — Audio fällt wegen des 5-s-Puffers trotzdem sofort auf den
+Sendeplan zurück, nur Dashboard-Status und Scheduler-Reaktion hängen
+30 s nach (vorher mit dem Status-Poll genauso).  Option: `timeout=`
+am `input.harbor` auf z. B. 10 s senken (Trade-off: ein DJ mit 10 s
+Netzstörung fliegt raus).  Operator-Entscheidung; kein Handlungsdruck.
 
 ### 🟢 Scheduler-Poll-Rückfall entfernen (fällig ab 2026-09-15, Operator 2026-09-09)
 

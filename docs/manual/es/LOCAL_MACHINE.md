@@ -169,7 +169,12 @@ el tercer aviso desde el 2026-09-07):
   con programa 24/7, entre dos pistas de la lista en curso, de modo
   que el hueco de unos dos segundos sustituye a un fundido en lugar de
   cortar una pista. Un webstream o line-in a cualquiera de los lados
-  del límite hace esperar al siguiente.
+  del límite hace esperar al siguiente. Desde el 2026-09-09 las
+  fuentes DJ comunican ellas mismas sus conexiones y desconexiones,
+  así que la emisión ya no consulta al motor cada cinco segundos; esa
+  consulta era la causa principal del crecimiento. Si la memoria se
+  mantiene estable durante una semana,
+  `RASTATIME_LIQUIDSOAP_RESTART_EVERY_DAYS` puede subirse (7 a 30).
 - **Respaldo standby para los oyentes.** Un segundo Liquidsoap
   diminuto (servicio RASTATIME-STANDBY, script `standby.liq` generado
   por la emisión con los mismos codificadores) emite silencio en una

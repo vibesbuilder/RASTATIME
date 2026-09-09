@@ -163,6 +163,15 @@ des Inhalts des Schedulers. Wenn die Live-Quelle die
 Verbindung trennt, kehrt der Source-Switcher zum Sendeplan
 zurück.
 
+Seit dem 2026-09-09 meldet die Engine jedes Verbinden und Trennen
+selbst sofort an das Playout, die Umschaltung erfolgt also
+unmittelbar; das Playout prüft nur noch über seine Kommando-
+verbindung nach (Maschinen-Einstellung
+`RASTATIME_DJ_RECONCILE_SECONDS`, Standard 120 Sekunden). Ein DJ,
+der die Verbindung einfach schließt, wird erkannt, sobald der
+Netzwerk-Timeout der Engine von 30 Sekunden abläuft; das Trennen
+eines DJs über das Dashboard wirkt sofort.
+
 > **Operator-Tipp.** Master DJ hat Vorrang vor Show DJ.
 > Ein Stations-Ingenieur kann mitten in einer Sendung über
 > die Master-Quelle einspringen, und der Show DJ wird

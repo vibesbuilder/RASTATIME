@@ -428,6 +428,12 @@ class RenderOutcome(NamedTuple):
 
 WEBSTREAM_WATCHDOG_ENV = "RASTATIME_WEBSTREAM_WATCHDOG"
 
+# Where the internal HTTP listener binds (source_switcher.start_listener)
+# and, since option d (2026-09-09), where the harbor callbacks rendered
+# into rastatime.liq POST DJ connect/disconnect events.
+_LISTENER_HOST = "127.0.0.1"
+_LISTENER_PORT = 8770
+
 
 def _webstream_watchdog_mode() -> str:
     """
@@ -630,6 +636,7 @@ def _render_rastatime_liq_outcome(stream_outputs: List[Dict]) -> RenderOutcome:
             hourly_recording_format=hourly["format"],
             hourly_recording_bitrate=hourly["bitrate"],
             webstream_watchdog_in_liquidsoap=(_webstream_watchdog_mode() == "liquidsoap"),
+            source_event_url=f"http://{_LISTENER_HOST}:{_LISTENER_PORT}/source-event",
         )
     except Exception as exc:  # pylint: disable=broad-exception-caught
         logger.critical(
@@ -1132,6 +1139,7 @@ def main() -> None:
     # <event-bindings> blocks in icecast.xml for the full wiring.
     from libretime_playout.source_switcher import (  # noqa: PLC0415
         SourceSwitcher,
+        reconcile_interval_from_env,
         start_listener,
     )
     switcher = SourceSwitcher(switch_callback=scheduler.switch_audio_source)
@@ -1140,9 +1148,12 @@ def main() -> None:
         switcher,
         scheduler=scheduler,   # /reload-schedule needs the scheduler too
         preflight=preflight,   # …and the preflight scanner for instant rescan
-        host="127.0.0.1",
-        port=8770,
+        host=_LISTENER_HOST,
+        port=_LISTENER_PORT,
         engine_kind=engine_kind,  # Phase-C4 Teil 2: picks Icecast vs Liquidsoap-telnet reconciler
+        # Option d (2026-09-09): the harbor callbacks report DJ events;
+        # the telnet reconciler only verifies (RASTATIME_DJ_RECONCILE_SECONDS).
+        reconcile_interval_s=reconcile_interval_from_env(),
     )
 
     # 8b. RASTATIME 2026-06-05 — Record-per-Hour cue sidecars (stage 5).

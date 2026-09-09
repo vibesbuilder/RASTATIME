@@ -153,6 +153,14 @@ its audio to the output mixer in place of the scheduler's
 content. When the live source disconnects, the source
 switcher reverts to the schedule.
 
+Since 2026-09-09 the engine itself reports every connect and
+disconnect to the playout the moment it happens, so the switch is
+immediate; the playout only double-checks over its command link
+(machine setting `RASTATIME_DJ_RECONCILE_SECONDS`, default 120
+seconds). A DJ who simply closes the connection is noticed when the
+engine's network timeout of 30 seconds expires; disconnecting a DJ
+from the Dashboard takes effect immediately.
+
 > **Operator tip.** Master DJ takes precedence over Show DJ.
 > A station engineer can step in mid-show via the Master
 > source and the Show DJ is muted (still connected, just not

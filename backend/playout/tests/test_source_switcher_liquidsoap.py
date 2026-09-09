@@ -24,6 +24,7 @@ from libretime_playout.source_switcher import (
     SourceState,
     SourceSwitcher,
     _liquidsoap_state_poll_loop,
+    _reconcile_liquidsoap_once,
 )
 
 
@@ -39,35 +40,12 @@ def _make_switcher_with_recorder():
 
 def _run_one_poll_tick(client_mock, switcher):
     """
-    Manually run ONE iteration of the inner poll-loop body.  Since the
-    real loop is an infinite ``while True: ... time.sleep(...)``, we
-    extract the logic by calling the relevant SourceSwitcher methods
-    directly with whatever the mock would have replied.
-
-    Mirrors _liquidsoap_state_poll_loop's per-tick logic exactly so a
-    behaviour-drift between this test and the real loop would be a
-    real regression.
+    Run ONE verification round of the reconciler with whatever the mock
+    telnet client replies.  Since 2026-09-09 (option d) the per-round
+    logic lives in ``_reconcile_liquidsoap_once`` and the loop around it
+    only decides *when* to run it, so the tests call the real function.
     """
-    master_resp = client_mock.send_command("master_dj.status").strip()
-    show_resp = client_mock.send_command("show_dj.status").strip()
-    actual_master = (
-        master_resp != "no source client connected"
-        and not master_resp.startswith("ERROR")
-    )
-    actual_show = (
-        show_resp != "no source client connected"
-        and not show_resp.startswith("ERROR")
-    )
-    if actual_master != switcher.is_master_connected():
-        if actual_master:
-            switcher.on_master_connect()
-        else:
-            switcher.on_master_disconnect()
-    if actual_show != switcher.is_show_connected():
-        if actual_show:
-            switcher.on_show_connect()
-        else:
-            switcher.on_show_disconnect()
+    _reconcile_liquidsoap_once(client_mock, switcher)
 
 
 # ---- Status-string parsing ----------------------------------------------

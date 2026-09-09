@@ -196,6 +196,11 @@ and the third warning since 2026-09-07):
   playlist, so the gap of about two seconds replaces a crossfade
   instead of cutting into a track. A webstream or line-in on either
   side of the boundary makes it wait for the next one.
+  Since 2026-09-09 the DJ sources report their connects and
+  disconnects themselves, so the playout no longer polls the engine
+  every five seconds; that poll was the main source of the growth.
+  Once a week of memory readings stays flat,
+  `RASTATIME_LIQUIDSOAP_RESTART_EVERY_DAYS` can be raised (7 to 30).
 - **Standby fallback for listeners.** A second, tiny Liquidsoap
   (service RASTATIME-STANDBY, script `standby.liq` rendered by the
   playout with the same encoders) streams silence to a `-standby`

@@ -90,6 +90,17 @@ conexiones de **fuente en vivo** por programa:
 | **Show DJ** | Login por-programa. El presentador principal del programa se conecta desde cualquier lugar. |
 | **Master DJ** | Login a nivel emisora. Un productor / ingeniero puede tomar el control en cualquier momento. |
 
+Cuando una fuente en vivo se conecta, el conmutador de fuentes
+enruta su audio a la salida en lugar del contenido programado y
+vuelve a la programación cuando se desconecta. Desde el 2026-09-09 el
+motor comunica cada conexión y desconexión a la emisión en el
+momento en que ocurre, así que el cambio es inmediato; la emisión
+solo lo verifica por su enlace de mandos (ajuste de máquina
+`RASTATIME_DJ_RECONCILE_SECONDS`, 120 segundos por defecto). Un DJ
+que simplemente cierra la conexión se detecta cuando vence el tiempo
+de espera de red del motor, 30 segundos; desconectar a un DJ desde el
+panel es inmediato.
+
 > **Consejo del operador.** Master DJ tiene precedencia
 > sobre Show DJ.
 

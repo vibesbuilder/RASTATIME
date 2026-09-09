@@ -419,6 +419,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Quellen-Umschalter ereignisgesteuert: der Harbor meldet DJ-Verbindungen
+  selbst, der 5-s-Telnet-Poll entfällt (Option d = Ziel c, 2026-09-09,
+  Operator-Go)** — PLAYOUTs SourceSwitcher fragte `master_dj.status` und
+  `show_dj.status` alle 5 s per Telnet ab; auf dem Windows-Build leckt
+  jedes Telnet-Kommando ~87 KB, und dieser Poll war das Leerlauf-Wachstum
+  von ~150 MB/h, also der Grund für den täglichen Neustart.  Jetzt rendert
+  das Template pro Harbor `on_connect`/`on_disconnect`-Callbacks
+  (`_render_harbor_source_events`, `synchronous=true`, damit ein schnelles
+  Verbinden/Trennen seine Reihenfolge behält), die aus einer abgesetzten
+  `thread.run`-Aufgabe `http.post` auf PLAYOUTs Listener
+  `http://127.0.0.1:8770/source-event?source=master|show&status=on|off`
+  absetzen (Timeout 2 s, Fehler nur geloggt).  PLAYOUT übernimmt das
+  Ereignis sofort und verifiziert 1 s später einmal per Telnet
+  (`SourceSwitcher.request_reconcile`, `_reconcile_liquidsoap_once`);
+  die periodische Verifikation läuft nur noch alle
+  `RASTATIME_DJ_RECONCILE_SECONDS` (Standard 120, Minimum 5) als
+  Sicherheitsnetz, und nach einem LIQUIDSOAP-Neustart fordert der
+  Scheduler eine Verifikation an (`_request_source_reconcile`), weil der
+  alte Prozess seine Verbindungen nicht mehr abmelden kann.  Läuft noch
+  eine alte rastatime.liq ohne Callbacks (Probe `rastatime.source_events`),
+  pollt PLAYOUT wie bisher alle 5 s, bis LIQUIDSOAP mit dem neuen Render
+  startet — die Reihenfolge der Neustarts ist damit egal.  Replikat
+  2026-09-09: Verbinden → Ereignis binnen Millisekunden, Kick
+  (`show_dj.stop`) → sofort; ein DJ, der einfach auflegt, wird wie bisher
+  erst nach dem 30-s-Netzwerk-Timeout des Harbors erkannt (der Windows-
+  Build sieht das Verbindungsende im `select` nicht; BACKLOG-Idee).
+  Restkosten: zwei Telnet-Kommandos je DJ-Ereignis und je 120 s (~125 MB
+  pro Tag statt 1440 Kommandos pro Stunde).  Tests:
+  `test_harbor_source_events.py` (inkl. `liquidsoap --check` des
+  Voll-Renders), `test_source_switcher_events.py`,
+  `test_scheduler_source_reconcile.py`; die bestehenden Reconciler-Tests
+  rufen jetzt die echte Rundenfunktion.  Aktiv nach PLAYOUT-Neustart; die
+  Callbacks ab dem nächsten LIQUIDSOAP-Neustart (spätestens 04:00).
+  Danach `RASTATIME_LIQUIDSOAP_RESTART_EVERY_DAYS` auf 7–30 setzen, sobald
+  eine Woche Speicherverlauf flach ist.
 - **Webstream-Wächter läuft jetzt in Liquidsoap selbst, als Frame-Zähler
   ohne Poll (2026-09-07, Operator-Go, `8785bec`)** — Der Wächter vom 2026-09-06
   fragte alle 2 s per Telnet `webstream.ready` ab; auf dem Windows-Build

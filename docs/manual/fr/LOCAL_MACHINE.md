@@ -173,7 +173,12 @@ avertissements du tableau de bord le surveillent (depuis le
   en cours, de sorte que la coupure d'environ deux secondes remplace
   un fondu enchaîné au lieu de couper un titre. Un webstream ou un
   line-in de part et d'autre de la frontière fait attendre la
-  suivante.
+  suivante. Depuis le 2026-09-09, les sources DJ signalent
+  elles-mêmes leurs connexions et déconnexions ; la diffusion
+  n'interroge donc plus le moteur toutes les cinq secondes, et cette
+  interrogation était la principale cause de la croissance. Si la
+  mémoire reste stable pendant une semaine,
+  `RASTATIME_LIQUIDSOAP_RESTART_EVERY_DAYS` peut être augmenté (7 à 30).
 - **Repli standby pour les auditeurs.** Un second Liquidsoap
   minuscule (service RASTATIME-STANDBY, script `standby.liq` rendu par
   la diffusion avec les mêmes encodeurs) diffuse du silence sur une

@@ -146,6 +146,15 @@ DEFAULT_HARBOR_SHOW_PORT = DEFAULT_HARBOR_PORT
 # +3 s additional DJ-to-air latency.
 DEFAULT_HARBOR_BUFFER_SECONDS = 5.0
 
+# RASTATIME 2026-09-09 - DJ connect/disconnect events (option d).  The
+# harbor sources call back into PLAYOUT's HTTP listener the moment a DJ
+# connects or drops, so PLAYOUT no longer polls ``master_dj.status`` /
+# ``show_dj.status`` over telnet every 5 s (every telnet command leaks
+# ~87 KB on the Windows build; the poll alone was ~150 MB/h).  None
+# renders no callbacks (PLAYOUT then relies on its periodic reconcile).
+DEFAULT_SOURCE_EVENT_URL = "http://127.0.0.1:8770/source-event"
+DEFAULT_SOURCE_EVENT_TIMEOUT_SECONDS = 2.0
+
 
 # ---------------------------------------------------------------------
 # Phase-E — Scheduled Webstreams via input.http (RASTATIME 2026-05-29)
@@ -747,6 +756,8 @@ def _render_harbor_inputs_block(
     main_mount: str,
     show_mount: str,
     buffer_seconds: float,
+    source_event_url: Optional[str] = DEFAULT_SOURCE_EVENT_URL,
+    source_event_timeout_seconds: float = DEFAULT_SOURCE_EVENT_TIMEOUT_SECONDS,
 ) -> str:
     """
     Render the Liquidsoap ``input.harbor`` block(s) for the DJ-Master
@@ -763,8 +774,15 @@ def _render_harbor_inputs_block(
     buffer=2. soakt typische Wi-Fi-Mikro-Disconnects.
 
     Each block tagged with id="master_dj" / id="show_dj" so the
-    Pypo-side source-switcher (Phase C4 Teil 2) can poll
+    Pypo-side source-switcher (Phase C4 Teil 2) can verify
     ``master_dj.status`` / ``show_dj.status`` via telnet.
+
+    RASTATIME 2026-09-09 (option d): when ``source_event_url`` is set,
+    every rendered harbor gets ``on_connect``/``on_disconnect``
+    callbacks that POST ``?source=master|show&status=on|off`` to
+    PLAYOUT's listener from a detached task (``thread.run``), so the
+    switcher learns about a DJ within milliseconds and only verifies
+    over telnet instead of polling every 5 s.
     """
     parts = []
     if main_password:
@@ -794,7 +812,75 @@ def _render_harbor_inputs_block(
             "# (no DJ-source harbor enabled — stream.harbor.{main,show}_password\n"
             "#  are unset in libretime.conf; bus stays on the scheduled queue)\n"
         )
+    if source_event_url:
+        parts.append(
+            _render_harbor_source_events(
+                main_enabled=bool(main_password),
+                show_enabled=bool(show_password),
+                url=source_event_url,
+                timeout_seconds=source_event_timeout_seconds,
+            )
+        )
     return "\n".join(parts)
+
+
+def _render_harbor_source_events(
+    *,
+    main_enabled: bool,
+    show_enabled: bool,
+    url: str,
+    timeout_seconds: float = DEFAULT_SOURCE_EVENT_TIMEOUT_SECONDS,
+) -> str:
+    """
+    Render the harbor ``on_connect``/``on_disconnect`` callbacks that
+    report DJ connects and drops to PLAYOUT (option d, 2026-09-09).
+
+    The callbacks are registered ``synchronous=true`` so the order of a
+    quick connect/disconnect pair is preserved, but the HTTP POST
+    itself runs in a detached ``thread.run`` task: a slow or absent
+    listener (PLAYOUT restarting) must never stall the harbor
+    connection handler.  Failures are logged, never raised - PLAYOUT's
+    periodic telnet reconcile is the safety net.
+    """
+    timeout = _format_crossfade_duration(timeout_seconds)
+    target = _escape_liq_string(url)
+    lines = [
+        "# RASTATIME 2026-09-09 - DJ connect/disconnect events -> PLAYOUT (option d).",
+        "# Each harbor reports its source client to PLAYOUT's listener; PLAYOUT",
+        "# then verifies once over telnet instead of polling every 5 s (the",
+        "# poll leaked ~150 MB/h on the Windows build).  The POST runs in a",
+        "# detached task so a slow listener never stalls the harbor handler.",
+        "def rastatime_source_event(src, status) =",
+        "  thread.run(fun () ->",
+        "    try",
+        f"      ignore(http.post(timeout={timeout}, data=\"\",",
+        f"        \"{target}?source=#{{src}}&status=#{{status}}\"))",
+        "    catch err do",
+        "      log(level=3, label=\"rastatime.source_event\",",
+        "        \"POST #{src}/#{status} failed: #{err}\")",
+        "    end)",
+        "end",
+        "# Telnet marker for PLAYOUT: this render posts harbor events.  PLAYOUT",
+        "# keeps its old 5-s status poll while an older render is loaded.",
+        "server.register(namespace=\"rastatime\", "
+        "description=\"Harbor source events rendered (option d)\",",
+        "  \"source_events\", fun (_) -> \"on\")",
+    ]
+    for enabled, source_id, name in (
+        (main_enabled, "master_dj", "master"),
+        (show_enabled, "show_dj", "show"),
+    ):
+        if not enabled:
+            continue
+        lines.append(
+            f"{source_id}.on_connect(synchronous=true, "
+            f"fun (_) -> rastatime_source_event(\"{name}\", \"on\"))"
+        )
+        lines.append(
+            f"{source_id}.on_disconnect(synchronous=true, "
+            f"fun () -> rastatime_source_event(\"{name}\", \"off\"))"
+        )
+    return "\n".join(lines) + "\n"
 
 
 def _render_webstream_input_block(
@@ -1510,6 +1596,7 @@ def render_rastatime_liq(
     harbor_main_mount: str = DEFAULT_HARBOR_MAIN_MOUNT,
     harbor_show_mount: str = DEFAULT_HARBOR_SHOW_MOUNT,
     harbor_buffer_seconds: float = DEFAULT_HARBOR_BUFFER_SECONDS,
+    source_event_url: Optional[str] = DEFAULT_SOURCE_EVENT_URL,
     webstream_enabled: bool = DEFAULT_WEBSTREAM_ENABLED,
     webstream_max_buffer_seconds: float = DEFAULT_WEBSTREAM_MAX_BUFFER_SECONDS,
     webstream_timeout_seconds: float = DEFAULT_WEBSTREAM_TIMEOUT_SECONDS,
@@ -1571,6 +1658,7 @@ def render_rastatime_liq(
         main_mount=harbor_main_mount,
         show_mount=harbor_show_mount,
         buffer_seconds=harbor_buffer_seconds,
+        source_event_url=source_event_url,
     )
     webstream_block = _render_webstream_input_block(
         enabled=webstream_enabled,
@@ -1658,6 +1746,7 @@ def write_rastatime_liq(
     harbor_main_mount: str = DEFAULT_HARBOR_MAIN_MOUNT,
     harbor_show_mount: str = DEFAULT_HARBOR_SHOW_MOUNT,
     harbor_buffer_seconds: float = DEFAULT_HARBOR_BUFFER_SECONDS,
+    source_event_url: Optional[str] = DEFAULT_SOURCE_EVENT_URL,
     webstream_enabled: bool = DEFAULT_WEBSTREAM_ENABLED,
     webstream_max_buffer_seconds: float = DEFAULT_WEBSTREAM_MAX_BUFFER_SECONDS,
     webstream_timeout_seconds: float = DEFAULT_WEBSTREAM_TIMEOUT_SECONDS,
@@ -1708,6 +1797,7 @@ def write_rastatime_liq(
         harbor_main_mount=harbor_main_mount,
         harbor_show_mount=harbor_show_mount,
         harbor_buffer_seconds=harbor_buffer_seconds,
+        source_event_url=source_event_url,
         webstream_enabled=webstream_enabled,
         webstream_max_buffer_seconds=webstream_max_buffer_seconds,
         webstream_timeout_seconds=webstream_timeout_seconds,

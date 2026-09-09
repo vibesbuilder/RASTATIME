@@ -211,7 +211,11 @@ Sicherung und die dritte Warnung seit dem 2026-09-07):
   sodass die Lücke von etwa zwei Sekunden einen Crossfade ersetzt,
   statt in einen Titel zu schneiden. Ein Webstream oder Line-In auf
   einer Seite der Titelgrenze lässt den Neustart auf die nächste
-  warten.
+  warten. Seit dem 2026-09-09 melden die DJ-Quellen ihr Verbinden
+  und Trennen selbst, das Playout fragt die Engine also nicht mehr
+  alle fünf Sekunden ab; diese Abfrage war die Hauptursache des
+  Wachstums. Bleibt der Speicher eine Woche lang flach, kann
+  `RASTATIME_LIQUIDSOAP_RESTART_EVERY_DAYS` erhöht werden (7 bis 30).
 - **Standby-Fallback für Hörer.** Ein zweites, kleines Liquidsoap
   (Dienst RASTATIME-STANDBY, Skript `standby.liq`, vom Playout mit
   denselben Encodern gerendert) streamt Stille auf eine `-standby`-
