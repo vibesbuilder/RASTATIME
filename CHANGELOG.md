@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Geplanter LIQUIDSOAP-Neustart für 24/7-Programm: an der Titelgrenze,
   Auslöser Intervall/Speicher, Icecast-Standby-Fallback ohne
-  Hörer-Trennung (2026-09-09, Operator-Go a+b)** — Mit durchgehendem
+  Hörer-Trennung (2026-09-09, Operator-Go a+b, `1362634`)** — Mit durchgehendem
   Programm fand der Nacht-Neustart nie einen ruhigen Moment und entfiel
   (Speicher wächst 150–180 MB/h, nach Tagen unkontrollierter Absturz).
   (1) Auslöser (`NightlyRestartPolicy.reason_due`): Fenster ab 04:00
