@@ -352,13 +352,17 @@ am echten DEVA:
   dauerhaft): zwei Stalls, zwei saubere Erholungen in ~6 s statt tot.
   Konstanten `WEBSTREAM_WATCHDOG_INTERVAL_SECONDS` 2,0 /
   `WEBSTREAM_WATCHDOG_STARVE_TICKS` 2.
-- **Offen:** Live-Abnahme am 2026-09-07 (Operator will die Erholung
+- **Erledigt 2026-09-08:** Stall-Tests unter Plan A (DEVA 10 s bzw.
+  60 s stromlos, 08:22/08:26 und 22:20): Erholung wie gebaut, Operator
+  zufrieden („kurzer Hacker, verschmerzbar").  Der folgende Punkt ist
+  damit abgehakt.
+- **Offen (historisch):** Live-Abnahme am 2026-09-07 (Operator will die Erholung
   hören und die Latenz bis zur Rückkehr messen; Konstanten ggf.
   straffen).  Der „falsche Stream am Anfang" ist nur auf ~5 s
   zurückgestutzt (Bridge-Rest des Vorgänger-Streams), nicht beseitigt
   — eigener Punkt „Bridge leeren", unten.
 
-### 🟡 Webstream: falscher Stream (~5 s) am Slot-Anfang nach einem anderen Stream (neu 2026-09-06)
+### ✅ Webstream: falscher Stream (~5 s) am Slot-Anfang nach einem anderen Stream (neu 2026-09-06, erledigt 2026-09-08 durch Plan A)
 
 **Befund:** Beim Umschalten auf einen ANDEREN Webstream spielt der Bus
 zuerst den gepufferten Rest des vorherigen Streams — die Clock-Bridge
@@ -544,6 +548,31 @@ Verifikation per `uptime`, Bleibt-oben-Prüfung, Preflight
 `liquidsoap_unavailable`.  Details CHANGELOG / Architektur-Addendum
 2026-09-07.  Aktiv nach PLAYOUT-Neustart; erste scharfe Nacht danach
 im Log prüfen (`grep "Nightly" logs/playout-stdout.log`).
+
+### 💡 Liquidsoap-Upgrade als echte Heilung des `Unix.select`-Lecks (Operator 2026-09-09)
+
+**Status:** Idea — Operator 2026-09-09: „Wir merken uns dieses Leck mit
+diesem Windows-Build.  Unter Umständen updaten wir irgendwann einmal
+zu einer aktuelleren Version von Liquidsoap."  Bis dahin gilt der
+Betrieb mit den Milderungen (Option d, kein Telnet-Poll, geplanter
+Neustart alle ~7 Tage, Standby-Fallback).
+**Stand der Milderungen (2026-09-09):** Leerlauf ~5 MB/h (ursprünglich
+~150), Webstream-Slot-Start +7–12 MB einmalig.
+**Vorbedingungen für ein Upgrade:**
+- Ein Windows-Build einer neueren Liquidsoap-Version, dessen `Unix.select`
+  nicht mehr pro Aufruf leckt (OCaml 5 / socketpair-basiertes Select oder
+  korrigiertes `win32unix/select.c`) — vorab mit `telnet_leak_probe`/
+  `wd_cost_probe` im Replikat messen (Kommando-Kosten, Verbindungs-Kosten,
+  `thread.run.recurrent`-Tick).
+- Gleiche Fähigkeiten wie 2.4.4: `%ffmpeg`-Encoder (mp3/aac/ogg),
+  PortAudio-Ausgang per Gerätename, `input.harbor`, `input.http` mit
+  `source.dynamic`, `http.post`, `bus.on_frame`, Telnet-Server.
+- Replikat-Test des vollen Renders (`liquidsoap --check` + Laufzeit gegen
+  Icecast + Tascam) und der Standby-Render; Prüfung, ob der wieder-
+  verwendete `input.http` (Duppy-Weckbyte) und das DJ-Auflegen (30-s-
+  Harbor-Timeout) in der neuen Version anders reagieren.
+- Wartungsfenster mit Rückweg (alte `liquidsoap.exe` behalten; NSSM-
+  Pfad umschalten).
 
 ### 🟢 Liquidsoap-Leck: Kosten pro Telnet-Kommando — Poll-Design (neu 2026-09-07, abgeschlossen 2026-09-09)
 
