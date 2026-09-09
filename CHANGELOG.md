@@ -420,7 +420,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **DJ-Auflegen wird nach 5 s statt 30 s erkannt: `input.harbor`
-  `timeout=5.` (2026-09-09, Operator-Go)** — Der Windows-Build bemerkt
+  `timeout=5.` (2026-09-09, Operator-Go, `10e682f`)** — Der Windows-Build bemerkt
   einen DJ-Client, der nur den Socket schließt, erst mit dem Netzwerk-
   Timeout des Harbors (Standard 30 s).  Solange PLAYOUT einen DJ für live
   hält, schiebt es keine Titel nach; der Bus fiel nach dem 5-s-Puffer auf
