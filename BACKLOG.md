@@ -581,6 +581,19 @@ zurück.  Scheduler-Poll bleibt als Rückfall (`RASTATIME_WEBSTREAM_
 WATCHDOG=scheduler`) und als Übergangs-Notnagel, wenn eine ältere .liq
 geladen ist; nach einer Woche ohne Auffälligkeit entfernen.
 
+### 🟢 Scheduler-Poll-Rückfall entfernen (fällig ab 2026-09-15, Operator 2026-09-09)
+
+Nach einer ruhigen Woche mit Plan A + Reaper (live seit 2026-09-08
+22:45) den Telnet-Poll-Rückfall aus PLAYOUT ausbauen: Modus-Schalter
+`RASTATIME_WEBSTREAM_WATCHDOG`, Poll/Reconnect-Pfad im Scheduler, Probe
+„hat die geladene .liq den internen Wächter", Scheduler-Modus-Stub des
+Renderers, zugehörige Tests, Handbuch-Satz EN/DE/FR/ES, CHANGELOG
+„Removed".  Wirksam nach PLAYOUT-Neustart, LIQUIDSOAP unberührt
+(Standard-Render bleibt gleich), risikofrei für den Sendebetrieb.
+Kriterien „ruhig": keine Wächter-Reconnects außer echten Stalls,
+`reaped=0` außerhalb von Stall-Tests, alle Starts 1–4 s, Nacht-Neustart
+täglich sauber.  Operator wird ab dem 15.09. erinnert.
+
 ### 🟢 Webstream-Eingang: frische Quelle pro Slot (Plan A, 2026-09-08)
 
 **Befund 2026-09-08:** Live-Stall-Test (DEVA zweimal stromlos) erholte
