@@ -392,7 +392,13 @@ nach dem Slot-Ende voll bleibt.  Fix (a) behebt beides.
 Aussetzer") bekommt jeder Slot eine neue Bridge — kein Rest, kein
 Hacker.  Live-Abnahme mit der nächsten Cloud-Sendung.
 
-### 🟡 Webstream: 5 s alte Puffer-Reste spielen nach einem PLAYOUT-Neustart (neu 2026-09-05)
+### ✅ Webstream: 5 s alte Puffer-Reste spielen nach einem PLAYOUT-Neustart (neu 2026-09-05, erledigt durch Plan A, geprüft 2026-09-09)
+
+**Geprüft 2026-09-09 (Operator-Go):** seit Plan A (frische Quelle pro
+Slot, `1eb8713`) tauscht jedes `webstream.stop` eine leere Quelle
+(`source.fail()`) ein und verwirft die alte Brücke; nach dem 17:07-Slot
+meldete Telnet `webstream.status = stopped`, `webstream.ready = false`.
+Ein PLAYOUT-Neustart (`reset_gates`) findet also keine Reste mehr vor.
 
 **Befund 17:50:52:** Beim PLAYOUT-Neustart öffnete `reset_gates()`
 beide Gates; die Webstream-Bridge (`buffer(buffer=5.0)`) hielt noch
@@ -407,7 +413,12 @@ per `webstream.url` auf leer + kurzes `start/stop` ist kein Flush);
 (c) `webstream_live` erst öffnen, wenn `webstream.buffer_length` nach
 einem `start` wieder wächst.  Empfehlung: (a).
 
-### 🟡 „Latency is too high" jede Sekunde auf `clock.portaudio_clock` (Operator will testen)
+### ✅ „Latency is too high" jede Sekunde auf `clock.portaudio_clock` (verschwunden seit 2026-09-05, abgehakt 2026-09-09)
+
+**Abgehakt 2026-09-09 (Operator-Go):** `liquidsoap.log` zählt am
+2026-09-04 81.222 dieser Warnungen, am 2026-09-08 noch 5, am 2026-09-09
+keine.  Verschwunden mit den Änderungen vom 05.09. (synchrone Queue
+`request.queue_sync`, kein Dauer-Poller mehr); kein Test mehr nötig.
 
 **Befund 2026-09-04:** ~3.560 Warnungen pro Stunde, den ganzen Tag,
 seit dem Main-Output-Umbau (Monitor über `buffer(buffer=2.0, bus)` +
@@ -439,7 +450,11 @@ Geräte-Fix (Eintrag „PortAudio-Index instabil") zuerst kommen; (b)
 **Umgesetzt 2026-09-05 (`462d684`):** (a) `sync="auto"`; Replika mit
 dem Tascam (MME): „Switching to self-sync mode", 0 Warnungen.
 
-### 🟡 „possible source leak, 61 sources" (Operator will testen)
+### ✅ „possible source leak, 61 sources" (letzte Warnung 2026-09-05, abgehakt 2026-09-09)
+
+**Abgehakt 2026-09-09 (Operator-Go):** letzte Warnung am 2026-09-05
+17:50 (58 Quellen), seither keine — die Quellen sammelten sich mit dem
+alten `request.dynamic`-Poller an, der am 05.09. entfernt wurde.
 
 **Befund:** Warnung seit 2026-09-03 (54 Quellen), am 2026-09-04 abends
 59–61; Liquidsoap-Speicher 232 MB nach 53 min.  Jeder Bus-Übergang
@@ -805,9 +820,15 @@ Session liegt auf dem Tascam.  Die Betriebsregel bleibt für manuelle
 Neustarts außerhalb des Boot-Fensters sinnvoll (Index-Drift zwischen
 Render und Öffnen ist mit `device_name` aber entschärft).
 
-### 🟡 Line-In-Startlücke: Capture-Kette verkürzen (neu 2026-09-03)
+### ✅ Line-In-Startlücke: Capture-Kette verkürzen (neu 2026-09-03, Paket umgesetzt und abgenommen 2026-09-04, abgehakt 2026-09-09)
 
-**Stand:** Die Lücke zwischen Show-Ende und erstem hörbaren Line-In-
+**Abgehakt 2026-09-09:** das Paket „Line-In-Latenz" (unten) ist seit
+2026-09-04 live und abgenommen — Startlücke 6 → 2,0 s, Abschneiden am
+Ende 6 → ~2 s.  Die restlichen ~2 s sind die Kette selbst; weiter nur
+über „Quellen vorwärmen — Gate im Bus-Switch" (💡 oben).  Der folgende
+Absatz ist der Stand vor dem Paket.
+
+**Stand (vor dem Paket):** Die Lücke zwischen Show-Ende und erstem hörbaren Line-In-
 Signal liegt bei **~6 s** (vorher ~7 s).  Der 2026-09-03er Tuning-
 Schritt (`input.http` `max_buffer` 4,0 → 2,0 s, `poll_delay` 2,0 →
 0,5 s, http-Quelle parallel zum Feeder-Start scharfgeschaltet) hat nur
@@ -2731,6 +2752,10 @@ Trade-off: lokales Monitor-Speaker laeuft 500 ms hinter Stream/Recording.
 
 ### 🟡 Liquidsoap Latency-Catchup unter System-Last verliert Recording-Audio (Phase-D)
 
+**Beobachtung bis 2026-09-15 (Operator-Go 2026-09-09):** die Catchups
+(„We must catchup") liefen am 2026-09-04 81.222-mal, am 2026-09-08
+fünfmal, am 2026-09-09 gar nicht — der Auslöser ist mit den Änderungen
+vom 05.09. weg.  Bleibt es bis 15.09. dabei, wird der Punkt geschlossen.
 **Status:** Defer — funktional kein Showstopper, aber Recording-Loss-Risk
 unter Spitzenlast.
 **Festgestellt:** 2026-05-28 (C5 Burn-In #2).
@@ -2885,6 +2910,11 @@ heute: „Jetzt anwenden" in Local Machine) und Punkt 3 (Fade-In/Out).
 
 ### 🟡 Pypo-NSSM-Service-Resilience untersuchen (Phase-D-Beobachtung)
 
+**Beobachtung bis 2026-09-15 (Operator-Go 2026-09-09):** im gesamten
+`playout-stdout.log` stehen 39 Starts gegen 38 angeforderte Shutdowns,
+also höchstens ein ungeplanter Neustart seit Mai und keiner in den
+letzten Wochen (die letzten fünf Starts waren Operator-Neustarts am
+08./09.09.).  Passiert bis 15.09. nichts, wird der Punkt geschlossen.
 **Status:** Defer — bei nächstem Auftreten Logs sammeln, dann analysieren.
 **Festgestellt:** 2026-05-28 (Phase-D Stück-B-Start).
 
