@@ -56,7 +56,7 @@ if (-not (Test-Path $logDir)) {
 Write-Host "Installing service $serviceName ..."
 & $nssm install $serviceName $liquidsoap $script
 & $nssm set $serviceName AppDirectory $workingDir
-& $nssm set $serviceName DisplayName "RASTATIME Standby (Icecast fallback source)"
+& $nssm set $serviceName DisplayName "RASTATIME-STANDBY"
 & $nssm set $serviceName Description "Streams silence to the /*-standby Icecast mounts so listeners survive a RASTATIME-LIQUIDSOAP restart."
 & $nssm set $serviceName Start SERVICE_AUTO_START
 & $nssm set $serviceName AppStdout "$logDir\standby-stdout.log"
@@ -70,4 +70,6 @@ Write-Host "Installing service $serviceName ..."
 Write-Host "Starting service $serviceName ..."
 & $nssm start $serviceName
 & $nssm status $serviceName
-Write-Host "Done.  Check http://127.0.0.1:8000/status-json.xsl for the *-standby mounts."
+Write-Host "Done.  The *-standby mounts are hidden (icecast.xml), so they do NOT appear on"
+Write-Host "status-json.xsl; verify with http://127.0.0.1:8000/admin/listmounts (admin login)"
+Write-Host "or a listener request such as  curl -s -o NUL -w '%{http_code}' --max-time 2 http://127.0.0.1:8000/rastatime-standby"
