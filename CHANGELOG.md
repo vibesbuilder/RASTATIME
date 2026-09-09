@@ -420,7 +420,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **Neustart-Erkennung ohne Telnet, DJ-Verifikation alle 10 min, Prozess-
-  Probe kennt die Standby-Instanz (2026-09-09, Operator-Go)** — Nach dem
+  Probe kennt die Standby-Instanz (2026-09-09, Operator-Go, `9f8089a`)** — Nach dem
   ereignisgesteuerten Umschalter blieben drei Telnet-Kommandos je 2 min
   (Scheduler `uptime` zur Neustart-Erkennung, Umschalter zweimal Status),
   gemessen 14 MB/h.  (1) Der Scheduler erkennt einen LIQUIDSOAP-Neustart
