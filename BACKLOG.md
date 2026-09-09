@@ -2482,7 +2482,7 @@ sauber beendet (Feeder-Count 0 verifiziert).  Restpegel-Hinweis:
 Ch4 rauscht ~12 dB mehr als Ch3 (kanalspezifisch, auch bei
 getrenntem Eingang so — unkritisch, Nutzsignal lag auf Ch3).
 
-### 🟡 Tascam als Sende-/Monitor-Ausgang ohne PortAudio-Blocking (evaluiert 2026-09-03, wartet auf Go)
+### ✅ Tascam als Sende-/Monitor-Ausgang ohne PortAudio-Blocking (evaluiert 2026-09-03, erledigt 2026-09-03 über Option B)
 
 **Status:** ✅ **ERLEDIGT über Option B (2026-09-03, 13:30)** — Ursache
 war das Windows-Mix-Format des Render-Endpunkts (48 kHz/24 bit).
@@ -2539,7 +2539,13 @@ unsicher, 5-min-Check nach Reboot.  (C) PortAudio/Liquidsoap neu bauen
 → No-Go (Zuverlässigkeit vor Modernität).
 **Mess-Skripte:** Scratchpad `out_feeder*.py`, `ext*.liq`, `hang*.liq`.
 
-### 🟡 Boot-Race: LIQUIDSOAP startet parallel zu PLAYOUT und liest die alte .liq
+### ✅ Boot-Race: LIQUIDSOAP startet parallel zu PLAYOUT und liest die alte .liq (erledigt 2026-09-07, abgehakt 2026-09-09)
+
+**Erledigt (Operator-Bestätigung 2026-09-09):** der Boot-Fenster-Neustart
+vom 2026-09-07 (`__main__`: ändert das Rendern die .liq in den ersten
+zehn Minuten nach dem Boot, startet PLAYOUT RASTATIME-LIQUIDSOAP selbst
+neu; bei Index-Adressierung des Main Output übersprungen) ist der hier
+empfohlene „Boot-Fenster-Schutz".
 
 **Status:** Defer — Design-Entscheidung nötig (gefunden 2026-09-03 beim
 Tascam-Sendeausgang).  Kein akuter Blocker: der „Jetzt anwenden"-Knopf
@@ -2986,7 +2992,11 @@ Terminal-Erlebnis beim manuellen Pypo-Start für Diagnose-Zwecke.
 
 ---
 
-### 🔴 Host-Hardware-Instabilität (STUDIO-Maschine, nicht RASTATIME-Code)
+### ✅ Host-Hardware-Instabilität (STUDIO-Maschine, nicht RASTATIME-Code) — obsolet seit dem Maschinenwechsel 2026-08
+
+**Abgehakt 2026-09-09 (Operator-Bestätigung):** betraf die alte
+Maschine; seit der Migration auf den neuen Studio-Rechner (2026-08,
+192.168.1.164) nicht mehr aufgetreten.
 
 **Status:** Hold — blockiert Live-Betrieb, externe Hardware-Aktion nötig.
 **Festgestellt:** 2026-05-25 (Analyse von 5 BSODs der letzten 11 Tage).
