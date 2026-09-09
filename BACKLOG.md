@@ -613,8 +613,13 @@ Hauptinstanz, ohne Telnet; `uptime` nur Rückfall) und Verifikations-
 Intervall 120 → 600 s → ~0,4 Kommandos je 120 s, erwartet ~2 MB/h,
 weiche Grenze erst nach ~4 Wochen; dabei behoben: die Prozess-Probe
 nahm seit dem Standby-Dienst die älteste = Standby-Instanz (jetzt
-`main_instances` per Skriptname).  Nachmessen nach PLAYOUT-Neustart.
-Rechnung für das Intervall: bei 14 MB/h erreicht die
+`main_instances` per Skriptname).  **Nachmessung 16:40–17:10 (PLAYOUT
+seit 16:39): ruhiger Teil 16:40–17:05 93 → 95 MB = ~5 MB/h** (vorher
+14, ursprünglich ~150); der Webstream-Slot 17:07 kostete beim Start
+einmalig +7 MB (frischer input.http + Brücke, bekannt) und lief dann
+flach.  Damit: weiche Grenze 1536 MB im Leerlauf nach ~12 Tagen, mit
+einigen Webstream-Slots pro Tag nach ~6–7 Tagen → `RESTART_EVERY_DAYS`
+7 ist der realistische Wert, 30 nicht.  Rechnung für das Intervall: bei 14 MB/h erreicht die
 Instanz die weiche Grenze 1536 MB nach ~4 Tagen, bei ~8 MB/h nach
 ~8 Tagen → 7 Tage realistisch, 30 nicht (harte Grenze 3072 MB nach
 ~15 Tagen).
