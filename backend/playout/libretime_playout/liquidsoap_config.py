@@ -155,6 +155,16 @@ DEFAULT_HARBOR_BUFFER_SECONDS = 5.0
 DEFAULT_SOURCE_EVENT_URL = "http://127.0.0.1:8770/source-event"
 DEFAULT_SOURCE_EVENT_TIMEOUT_SECONDS = 2.0
 
+# RASTATIME 2026-09-09 - input.harbor network timeout.  The Windows build
+# does not notice a DJ client that merely closes its socket until this
+# timeout expires (Liquidsoap default 30 s); PLAYOUT pushes no tracks
+# while it believes a DJ is live, so the bus fell back to an empty queue
+# for up to 25 s after a hang-up.  5 s matches the harbor buffer: the
+# state flips when the buffered audio runs out.  A client silent for
+# longer is dropped and has to reconnect (BUTT does that on its own).
+# Replica 2026-09-09: timeout=5 -> disconnect reported after 5.06 s.
+DEFAULT_HARBOR_TIMEOUT_SECONDS = 5.0
+
 
 # ---------------------------------------------------------------------
 # Phase-E — Scheduled Webstreams via input.http (RASTATIME 2026-05-29)
@@ -758,6 +768,7 @@ def _render_harbor_inputs_block(
     buffer_seconds: float,
     source_event_url: Optional[str] = DEFAULT_SOURCE_EVENT_URL,
     source_event_timeout_seconds: float = DEFAULT_SOURCE_EVENT_TIMEOUT_SECONDS,
+    timeout_seconds: float = DEFAULT_HARBOR_TIMEOUT_SECONDS,
 ) -> str:
     """
     Render the Liquidsoap ``input.harbor`` block(s) for the DJ-Master
@@ -794,6 +805,7 @@ def _render_harbor_inputs_block(
             f'  password="{_escape_liq_string(main_password)}",\n'
             f"  buffer={_format_crossfade_duration(buffer_seconds)},\n"
             "  icy=true,\n"
+            f"  timeout={_format_crossfade_duration(timeout_seconds)},\n"
             ")\n"
         )
     if show_password:
@@ -805,6 +817,7 @@ def _render_harbor_inputs_block(
             f'  password="{_escape_liq_string(show_password)}",\n'
             f"  buffer={_format_crossfade_duration(buffer_seconds)},\n"
             "  icy=true,\n"
+            f"  timeout={_format_crossfade_duration(timeout_seconds)},\n"
             ")\n"
         )
     if not parts:
@@ -1597,6 +1610,7 @@ def render_rastatime_liq(
     harbor_show_mount: str = DEFAULT_HARBOR_SHOW_MOUNT,
     harbor_buffer_seconds: float = DEFAULT_HARBOR_BUFFER_SECONDS,
     source_event_url: Optional[str] = DEFAULT_SOURCE_EVENT_URL,
+    harbor_timeout_seconds: float = DEFAULT_HARBOR_TIMEOUT_SECONDS,
     webstream_enabled: bool = DEFAULT_WEBSTREAM_ENABLED,
     webstream_max_buffer_seconds: float = DEFAULT_WEBSTREAM_MAX_BUFFER_SECONDS,
     webstream_timeout_seconds: float = DEFAULT_WEBSTREAM_TIMEOUT_SECONDS,
@@ -1659,6 +1673,7 @@ def render_rastatime_liq(
         show_mount=harbor_show_mount,
         buffer_seconds=harbor_buffer_seconds,
         source_event_url=source_event_url,
+        timeout_seconds=harbor_timeout_seconds,
     )
     webstream_block = _render_webstream_input_block(
         enabled=webstream_enabled,
@@ -1747,6 +1762,7 @@ def write_rastatime_liq(
     harbor_show_mount: str = DEFAULT_HARBOR_SHOW_MOUNT,
     harbor_buffer_seconds: float = DEFAULT_HARBOR_BUFFER_SECONDS,
     source_event_url: Optional[str] = DEFAULT_SOURCE_EVENT_URL,
+    harbor_timeout_seconds: float = DEFAULT_HARBOR_TIMEOUT_SECONDS,
     webstream_enabled: bool = DEFAULT_WEBSTREAM_ENABLED,
     webstream_max_buffer_seconds: float = DEFAULT_WEBSTREAM_MAX_BUFFER_SECONDS,
     webstream_timeout_seconds: float = DEFAULT_WEBSTREAM_TIMEOUT_SECONDS,
@@ -1798,6 +1814,7 @@ def write_rastatime_liq(
         harbor_show_mount=harbor_show_mount,
         harbor_buffer_seconds=harbor_buffer_seconds,
         source_event_url=source_event_url,
+        harbor_timeout_seconds=harbor_timeout_seconds,
         webstream_enabled=webstream_enabled,
         webstream_max_buffer_seconds=webstream_max_buffer_seconds,
         webstream_timeout_seconds=webstream_timeout_seconds,

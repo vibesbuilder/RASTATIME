@@ -434,6 +434,32 @@ WEBSTREAM_WATCHDOG_ENV = "RASTATIME_WEBSTREAM_WATCHDOG"
 _LISTENER_HOST = "127.0.0.1"
 _LISTENER_PORT = 8770
 
+# RASTATIME 2026-09-09 - input.harbor network timeout in seconds (how
+# fast a DJ who merely closes the connection is noticed; a client silent
+# for longer is dropped).  Default 5 = the harbor buffer; floor 1.
+HARBOR_TIMEOUT_ENV = "RASTATIME_HARBOR_TIMEOUT_SECONDS"
+
+
+def _harbor_timeout_seconds() -> float:
+    from libretime_playout.liquidsoap_config import (  # noqa: PLC0415
+        DEFAULT_HARBOR_TIMEOUT_SECONDS,
+    )
+    raw = os.environ.get(HARBOR_TIMEOUT_ENV, "").strip()
+    if not raw:
+        return DEFAULT_HARBOR_TIMEOUT_SECONDS
+    try:
+        value = float(raw)
+    except ValueError:
+        logger.warning(
+            "%s=%r is not a number - using %.0f s",
+            HARBOR_TIMEOUT_ENV, raw, DEFAULT_HARBOR_TIMEOUT_SECONDS,
+        )
+        return DEFAULT_HARBOR_TIMEOUT_SECONDS
+    if value < 1.0:
+        logger.warning("%s=%r is below 1 s - using 1 s", HARBOR_TIMEOUT_ENV, raw)
+        return 1.0
+    return value
+
 
 def _webstream_watchdog_mode() -> str:
     """
@@ -637,6 +663,7 @@ def _render_rastatime_liq_outcome(stream_outputs: List[Dict]) -> RenderOutcome:
             hourly_recording_bitrate=hourly["bitrate"],
             webstream_watchdog_in_liquidsoap=(_webstream_watchdog_mode() == "liquidsoap"),
             source_event_url=f"http://{_LISTENER_HOST}:{_LISTENER_PORT}/source-event",
+            harbor_timeout_seconds=_harbor_timeout_seconds(),
         )
     except Exception as exc:  # pylint: disable=broad-exception-caught
         logger.critical(

@@ -119,9 +119,11 @@ déconnexion à la diffusion au moment où elle se produit ; la
 commutation est donc immédiate, et la diffusion ne fait que
 revérifier par sa liaison de commande (réglage machine
 `RASTATIME_DJ_RECONCILE_SECONDS`, 600 secondes par défaut). Un DJ qui
-ferme simplement la connexion est détecté à l'expiration du délai
-réseau du moteur, 30 secondes ; déconnecter un DJ depuis le tableau
-de bord est immédiat.
+ferme simplement la connexion est détecté dans le délai réseau du
+moteur, 5 secondes (réglage machine `RASTATIME_HARBOR_TIMEOUT_SECONDS`) ;
+un DJ dont la connexion se fige plus longtemps est déconnecté et doit se
+reconnecter, ce que BUTT fait tout seul. Déconnecter un DJ depuis le
+tableau de bord est immédiat.
 
 > **Conseil opérateur.** Master DJ a préséance sur Show
 > DJ.

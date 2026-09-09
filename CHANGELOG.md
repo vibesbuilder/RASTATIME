@@ -419,6 +419,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **DJ-Auflegen wird nach 5 s statt 30 s erkannt: `input.harbor`
+  `timeout=5.` (2026-09-09, Operator-Go)** — Der Windows-Build bemerkt
+  einen DJ-Client, der nur den Socket schließt, erst mit dem Netzwerk-
+  Timeout des Harbors (Standard 30 s).  Solange PLAYOUT einen DJ für live
+  hält, schiebt es keine Titel nach; der Bus fiel nach dem 5-s-Puffer auf
+  eine leere Warteschlange zurück — bis zu 25 s Stille nach dem Auflegen.
+  Der Renderer setzt jetzt `timeout=` an beiden Harbors
+  (`DEFAULT_HARBOR_TIMEOUT_SECONDS` 5, Maschinen-Einstellung
+  `RASTATIME_HARBOR_TIMEOUT_SECONDS`, Minimum 1), passend zum 5-s-Puffer:
+  Zustand und Audio kippen praktisch gleichzeitig.  Preis: ein Client,
+  dessen Verbindung länger als 5 s stockt, wird getrennt und muss neu
+  verbinden (BUTT tut das selbst).  Replikat: Trennen nach 5,06 s
+  gemeldet (zwei Durchläufe).  Aktiv nach PLAYOUT-Neustart (rendert) und
+  LIQUIDSOAP-Neustart.
 - **Neustart-Erkennung ohne Telnet, DJ-Verifikation alle 10 min, Prozess-
   Probe kennt die Standby-Instanz (2026-09-09, Operator-Go, `9f8089a`)** — Nach dem
   ereignisgesteuerten Umschalter blieben drei Telnet-Kommandos je 2 min

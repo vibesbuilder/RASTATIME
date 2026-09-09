@@ -4562,3 +4562,9 @@ script name (`liquidsoap_health.main_instances`) — until then "the
 oldest liquidsoap.exe" had been the standby since its installation,
 which would have blinded the memory triggers and the
 `liquidsoap_unavailable` check.
+Same evening: the harbor `timeout` is rendered as 5 s (default 30;
+`RASTATIME_HARBOR_TIMEOUT_SECONDS`).  The Windows build only notices a
+client that merely closes its socket when that timeout expires, and
+PLAYOUT pushes no tracks while it believes a DJ is live, so a hang-up
+meant up to 25 s of an empty queue; with 5 s the state flips when the
+harbor buffer runs out (replica: 5.06 s).

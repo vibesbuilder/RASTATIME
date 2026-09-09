@@ -157,9 +157,11 @@ Since 2026-09-09 the engine itself reports every connect and
 disconnect to the playout the moment it happens, so the switch is
 immediate; the playout only double-checks over its command link
 (machine setting `RASTATIME_DJ_RECONCILE_SECONDS`, default 600
-seconds). A DJ who simply closes the connection is noticed when the
-engine's network timeout of 30 seconds expires; disconnecting a DJ
-from the Dashboard takes effect immediately.
+seconds). A DJ who simply closes the connection is noticed within
+the engine's network timeout of 5 seconds (machine setting
+`RASTATIME_HARBOR_TIMEOUT_SECONDS`); a DJ whose connection stalls for
+longer is dropped and has to reconnect, which BUTT does on its own.
+Disconnecting a DJ from the Dashboard takes effect immediately.
 
 > **Operator tip.** Master DJ takes precedence over Show DJ.
 > A station engineer can step in mid-show via the Master

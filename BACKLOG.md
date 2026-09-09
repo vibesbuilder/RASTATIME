@@ -688,9 +688,16 @@ ereignisgesteuert, Leck weg): umgesetzt 2026-09-09 (Leck-Eintrag oben);
 flach ist.  Offen: Live-Abnahme des Titelgrenzen-Neustarts in der ersten
 Nacht mit Programm.
 
-### 💡 DJ-Auflegen erst nach 30 s erkannt (Harbor-Timeout, Windows-Build)
+### ✅ DJ-Auflegen erst nach 30 s erkannt (Harbor-Timeout, Windows-Build) — umgesetzt 2026-09-09 (`timeout=5.`)
 
-Replikat 2026-09-09: schließt ein DJ-Client nur den Socket, meldet
+**Umgesetzt (Operator-Go 2026-09-09, Reihenfolge-Punkt 2):** der Renderer
+setzt `timeout=5.` an beiden Harbors (`RASTATIME_HARBOR_TIMEOUT_SECONDS`,
+Minimum 1).  Kern des Problems: PLAYOUT schiebt keine Titel nach, solange
+es einen DJ für live hält → nach dem Auflegen bis zu 25 s leere
+Warteschlange.  Replikat: Trennen nach 5,06 s gemeldet.  Aktiv nach
+PLAYOUT- und LIQUIDSOAP-Neustart.
+
+Replikat 2026-09-09 (Befund): schließt ein DJ-Client nur den Socket, meldet
 `input.harbor` auf dem Windows-Build das Ende nicht sofort (`select`
 sieht das FIN nicht), sondern erst mit „Timed out after waiting for
 30.00 sec" — Audio fällt wegen des 5-s-Puffers trotzdem sofort auf den

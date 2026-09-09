@@ -97,9 +97,11 @@ motor comunica cada conexión y desconexión a la emisión en el
 momento en que ocurre, así que el cambio es inmediato; la emisión
 solo lo verifica por su enlace de mandos (ajuste de máquina
 `RASTATIME_DJ_RECONCILE_SECONDS`, 600 segundos por defecto). Un DJ
-que simplemente cierra la conexión se detecta cuando vence el tiempo
-de espera de red del motor, 30 segundos; desconectar a un DJ desde el
-panel es inmediato.
+que simplemente cierra la conexión se detecta dentro del tiempo de
+espera de red del motor, 5 segundos (ajuste de máquina
+`RASTATIME_HARBOR_TIMEOUT_SECONDS`); un DJ cuya conexión se congela más
+tiempo es desconectado y debe reconectarse, cosa que BUTT hace solo.
+Desconectar a un DJ desde el panel es inmediato.
 
 > **Consejo del operador.** Master DJ tiene precedencia
 > sobre Show DJ.

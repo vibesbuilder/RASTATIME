@@ -168,9 +168,11 @@ selbst sofort an das Playout, die Umschaltung erfolgt also
 unmittelbar; das Playout prüft nur noch über seine Kommando-
 verbindung nach (Maschinen-Einstellung
 `RASTATIME_DJ_RECONCILE_SECONDS`, Standard 600 Sekunden). Ein DJ,
-der die Verbindung einfach schließt, wird erkannt, sobald der
-Netzwerk-Timeout der Engine von 30 Sekunden abläuft; das Trennen
-eines DJs über das Dashboard wirkt sofort.
+der die Verbindung einfach schließt, wird innerhalb des Netzwerk-
+Timeouts der Engine von 5 Sekunden erkannt (Maschinen-Einstellung
+`RASTATIME_HARBOR_TIMEOUT_SECONDS`); ein DJ, dessen Verbindung länger
+stockt, wird getrennt und muss neu verbinden, was BUTT von selbst tut.
+Das Trennen eines DJs über das Dashboard wirkt sofort.
 
 > **Operator-Tipp.** Master DJ hat Vorrang vor Show DJ.
 > Ein Stations-Ingenieur kann mitten in einer Sendung über
