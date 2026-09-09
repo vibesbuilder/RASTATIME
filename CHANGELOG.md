@@ -34,7 +34,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `test_planned_restart_triggers.py` (13), `test_standby_render.py` (4);
   Handbuch „Lokale Maschine" EN/DE/FR/ES; Architektur 0.26.  Aktiv:
   Standby-Dienst installieren, Icecast einmal neu starten (einmalige
-  Trennung), PLAYOUT neu starten.
+  Trennung), PLAYOUT neu starten.  Nachtrag: PLAYOUT prüft bei jedem
+  Render `icecast.xml` gegen die Stream-Outputs
+  (`icecast_mounts_without_fallback`, `RASTATIME_ICECAST_CONFIG_PATH`) und
+  warnt im Log vor öffentlichen Mounts ohne Standby-Fallback — die
+  Standby-Seite folgt Umbenennungen von selbst, Icecasts Fallback-Blöcke
+  nicht.
 
 - **Liquidsoap-Prozesshygiene auf Windows: automatische Neustarts und
   Watchdogs (2026-09-05, Operator-Go, `1dbeb71`)** — Drei Ergänzungen

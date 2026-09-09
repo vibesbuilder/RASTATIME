@@ -57,3 +57,23 @@ def test_write_standby_is_idempotent(tmp_path):
     assert write_standby_liq(p, STREAMS) is False
     assert write_standby_liq(p, STREAMS, audio_file="C:/x/bed.mp3") is True
     assert "standby_loop" in p.read_text(encoding="utf-8")
+
+
+def test_icecast_fallback_check_reports_uncovered_mounts(tmp_path):
+    from libretime_playout.liquidsoap_config import icecast_mounts_without_fallback
+
+    xml = tmp_path / "icecast.xml"
+    xml.write_text(
+        "<icecast><mount type=\"normal\"><mount-name>/rastatime</mount-name>"
+        "<fallback-mount>/rastatime-standby</fallback-mount></mount>"
+        "<mount type=\"normal\"><mount-name>/rastatime-aac</mount-name>"
+        "<fallback-mount>/wrong</fallback-mount></mount>"
+        "<mount type=\"normal\"><mount-name>/main</mount-name><hidden>1</hidden></mount></icecast>",
+        encoding="utf-8",
+    )
+    # /rastatime covered, /rastatime-aac points elsewhere, /rastatime-ogg has no block
+    assert icecast_mounts_without_fallback(xml, STREAMS) == ["/rastatime-aac", "/rastatime-ogg"]
+    assert icecast_mounts_without_fallback(xml, STREAMS[:1]) == []
+    assert icecast_mounts_without_fallback(tmp_path / "missing.xml", STREAMS) is None
+    xml.write_text("<icecast><mount>", encoding="utf-8")                # broken file
+    assert icecast_mounts_without_fallback(xml, STREAMS) is None

@@ -181,7 +181,13 @@ el tercer aviso desde el 2026-09-07):
   después de que la emisión haya generado `standby.liq`, y reinicie
   Icecast una vez para que lea los puntos de respaldo. Ajuste
   `RASTATIME_STANDBY_AUDIO` a un archivo de audio si prefiere una cama
-  sonora de emisora en lugar de silencio.
+  sonora de emisora en lugar de silencio. Si renombra o añade una salida
+  de flujo, el lado standby la sigue por sí solo (reinicie
+  RASTATIME-STANDBY cuando el registro de la emisión lo pida), pero los
+  bloques de respaldo de Icecast no: añada un bloque correspondiente
+  para el nuevo punto de montaje en `icecast.xml` y reinicie Icecast. La
+  emisión avisa en su registro, en cada arranque, de los puntos públicos
+  sin respaldo.
 - **Por nombre o nada.** Justo antes de cada reinicio automático la
   emisión vuelve a leer la lista de tarjetas de sonido y direcciona
   el Main Output por el *nombre* del dispositivo. Si en ese momento

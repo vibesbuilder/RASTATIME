@@ -223,7 +223,13 @@ Sicherung und die dritte Warnung seit dem 2026-09-07):
   nachdem das Playout `standby.liq` gerendert hat, danach Icecast
   einmal neu starten, damit es die Fallback-Mounts liest. Setzen Sie
   `RASTATIME_STANDBY_AUDIO` auf eine Audiodatei, wenn Sie ein
-  Stations-Bett statt Stille bevorzugen.
+  Stations-Bett statt Stille bevorzugen. Wenn Sie einen Stream-Output
+  umbenennen oder neu anlegen, folgt die Standby-Seite von selbst
+  (RASTATIME-STANDBY neu starten, sobald das Playout-Log dazu
+  auffordert); die Fallback-Blöcke von Icecast folgen nicht: tragen Sie
+  in `icecast.xml` einen passenden Block für den neuen Mount ein und
+  starten Sie Icecast neu. Das Playout warnt bei jedem Start im Log
+  vor öffentlichen Mounts ohne Fallback.
 - **Per Name oder gar nicht.** Unmittelbar vor jedem automatischen
   Neustart liest das Playout die Soundkarten-Liste neu ein und
   adressiert den Main Output über den Geräte-*Namen*. Ist das in

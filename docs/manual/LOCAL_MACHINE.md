@@ -206,7 +206,12 @@ and the third warning since 2026-09-07):
   `backend/playout/config/nssm-install-standby.ps1` after the
   playout has rendered `standby.liq`, then restart Icecast once so
   it reads the fallback mounts. Set `RASTATIME_STANDBY_AUDIO` to an
-  audio file if you prefer a station bed over silence.
+  audio file if you prefer a station bed over silence. When you rename
+  or add a stream output, the standby side follows by itself (restart
+  RASTATIME-STANDBY when the playout log asks for it), but Icecast's
+  fallback blocks do not: add a matching block for the new mount in
+  `icecast.xml` and restart Icecast. The playout warns in its log at
+  every start about public mounts without a fallback.
 - **Name-safe or not at all.** Right before either automatic
   restart the playout re-reads the sound-card list and addresses
   the Main Output by device *name*. When that is not possible at

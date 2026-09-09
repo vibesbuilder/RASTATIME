@@ -186,7 +186,13 @@ avertissements du tableau de bord le surveillent (depuis le
   diffusion a rendu `standby.liq`, puis redémarrer Icecast une fois
   pour qu'il lise les points de repli. Réglez
   `RASTATIME_STANDBY_AUDIO` sur un fichier audio si vous préférez un
-  tapis sonore de station au silence.
+  tapis sonore de station au silence. Si vous renommez ou ajoutez une
+  sortie de flux, le côté standby suit de lui-même (redémarrez
+  RASTATIME-STANDBY quand le journal de la diffusion le demande), mais
+  pas les blocs de repli d'Icecast : ajoutez un bloc correspondant pour
+  le nouveau point de montage dans `icecast.xml` et redémarrez Icecast.
+  La diffusion avertit dans son journal, à chaque démarrage, des points
+  publics sans repli.
 - **Par nom ou pas du tout.** Juste avant chaque redémarrage
   automatique, la diffusion relit la liste des cartes son et adresse
   le Main Output par le *nom* du périphérique. Si ce n'est pas

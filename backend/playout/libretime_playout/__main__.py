@@ -281,6 +281,7 @@ _LIQUIDSOAP_DEFAULT_CONFIG_PATH = "C:/Tools/liquidsoap/rastatime.liq"
 _LIQUIDSOAP_DEFAULT_LOG_PATH = "C:/rastatime/logs/liquidsoap.log"
 # RASTATIME 2026-09-09 - standby source for the Icecast fallback mounts
 _LIQUIDSOAP_DEFAULT_STANDBY_PATH = "C:/Tools/liquidsoap/standby.liq"
+_ICECAST_DEFAULT_CONFIG_PATH = "C:/rastatime/config/icecast.xml"
 _LIQUIDSOAP_DEFAULT_CROSSFADE = 2.0
 
 
@@ -477,6 +478,7 @@ def _render_rastatime_liq_outcome(stream_outputs: List[Dict]) -> RenderOutcome:
     from libretime_playout.liquidsoap_config import (  # noqa: PLC0415
         DEFAULT_LINEIN_HTTP_MAX_BUFFER_SECONDS,
         read_hourly_recording_config_from_db,
+        icecast_mounts_without_fallback,
         write_rastatime_liq,
         write_standby_liq,
     )
@@ -665,6 +667,24 @@ def _render_rastatime_liq_outcome(stream_outputs: List[Dict]) -> RenderOutcome:
                 "NSSM service so the fallback mounts carry the new encoders "
                 "(no listener is affected by that restart).", standby_path,
             )
+    # The standby side follows the stream outputs by itself; Icecast's
+    # fallback blocks do not.  Say so loudly when a public mount has none.
+    icecast_xml = Path(os.environ.get("RASTATIME_ICECAST_CONFIG_PATH", _ICECAST_DEFAULT_CONFIG_PATH))
+    uncovered = icecast_mounts_without_fallback(icecast_xml, stream_outputs)
+    if uncovered is None:
+        logger.warning(
+            "Cannot check the Icecast fallback mounts (%s unreadable) - listeners "
+            "of mounts without <fallback-mount> are disconnected by a planned "
+            "restart.", icecast_xml,
+        )
+    elif uncovered:
+        logger.warning(
+            "Icecast mount(s) without a standby fallback in %s: %s - add a "
+            "<mount type=\"normal\"> block with <fallback-mount>%s-standby</fallback-mount> "
+            "and <fallback-override>1</fallback-override>, then restart RASTATIME-ICECAST; "
+            "until then a planned restart disconnects their listeners.",
+            icecast_xml, ", ".join(uncovered), uncovered[0],
+        )
     return RenderOutcome(changed=changed, main_output_mode=main_output_mode)
 
 

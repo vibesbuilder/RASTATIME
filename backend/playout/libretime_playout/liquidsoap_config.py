@@ -1841,6 +1841,47 @@ def write_standby_liq(
     return True
 
 
+def icecast_mounts_without_fallback(
+    icecast_xml: Path,
+    stream_outputs: List[Dict],
+    *,
+    mount_suffix: str = DEFAULT_STANDBY_MOUNT_SUFFIX,
+) -> Optional[List[str]]:
+    """
+    Which configured public mounts have NO ``<fallback-mount>`` to their
+    standby mount in ``icecast.xml``?
+
+    The standby side follows the stream outputs automatically (PLAYOUT
+    re-renders standby.liq), but Icecast's fallback blocks are static
+    config: a renamed or added stream output needs a matching
+    ``<mount type="normal">`` block and an Icecast restart, otherwise its
+    listeners are disconnected by the next planned restart.  Returns the
+    list of uncovered mounts, ``[]`` when all are covered, ``None`` when
+    the file cannot be read or parsed (the caller logs that).
+    """
+    import xml.etree.ElementTree as ET  # noqa: PLC0415
+
+    try:
+        root = ET.parse(icecast_xml).getroot()
+    except (OSError, ET.ParseError):
+        return None
+    covered = {}
+    for mount in root.iter("mount"):
+        name = (mount.findtext("mount-name") or "").strip()
+        fallback = (mount.findtext("fallback-mount") or "").strip()
+        if name and fallback:
+            covered[name] = fallback
+    missing: List[str] = []
+    for out in stream_outputs:
+        mount = str(out.get("mount", "")).strip()
+        if not mount:
+            continue
+        mount = mount if mount.startswith("/") else "/" + mount
+        if covered.get(mount) != standby_mount(mount, mount_suffix):
+            missing.append(mount)
+    return missing
+
+
 # ---------------------------------------------------------------------
 # CLI — for manual re-rendering by the operator
 # ---------------------------------------------------------------------
