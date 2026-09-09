@@ -420,7 +420,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **Telnet-Server trennt stille PLAYOUT-Clients nicht mehr (2026-09-09,
-  Operator-Go)** — Erste Messung nach dem ereignisgesteuerten Umschalter
+  Operator-Go, `8d9b067`)** — Erste Messung nach dem ereignisgesteuerten Umschalter
   (10:20–10:50, nichts auf Sendung): 14 MB/h statt ~150 MB/h.  Der Rest
   waren Telnet-Neuverbindungen: `settings.server.timeout` (Standard 30 s)
   trennte die stillen Verbindungen beider PLAYOUT-Clients, die sich
