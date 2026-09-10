@@ -51,7 +51,13 @@ festgelegt.  Jeder Punkt bekommt vor Implementierung die
 Diese sind technisch evaluiert, empfohlen, und können starten sobald
 der Operator das Signal gibt.
 
-### 🟡 Event-Keys stabil machen — „Option B" (neu 2026-09-04)
+### ✅ Event-Keys stabil machen — „Option B" (neu 2026-09-04, umgesetzt 2026-09-10)
+
+**Umgesetzt 2026-09-10 (Operator-Go, Punkt 3):** Keys
+`<Zeitstempel>#<Typ>-<Identität>` (`make_event_key`), Details im
+CHANGELOG „Event-Keys mit Identität".  Option A (Rebinding) bleibt als
+Absicherung.  Live-Abnahme: Show-Folge Line-In → Jingles + Webstream →
+Line-In ohne Rebinding-Logzeilen (`grep -i rebind logs/playout-stdout.log`).
 
 **Problem:** `player/schedule.py::insert_event` bildet Event-Keys aus
 dem Startzeitpunkt und hängt bei Kollisionen `_0`, `_1`, … nach
@@ -120,7 +126,12 @@ Pufferlänge vorziehen; (c) Puffer 5 → 2–3 s, gegen Reconnect-
 Robustheit abwägen (Phase-E-Lektion: zu kleiner Puffer → „Buffer
 emptied"-Flattern).  Vorbedingung: Operator-Go + Hörtest, Sendeweg.
 
-### 🟡 Cue-Sheet: überzähliger „end"-Marker bei überholtem STOP (beobachtet 2026-09-04)
+### ✅ Cue-Sheet: überzähliger „end"-Marker bei überholtem STOP (beobachtet 2026-09-04, behoben 2026-09-10)
+
+**Behoben 2026-09-10 (Operator-Go, Punkt 4):** (a) und (b) zusammen —
+der Marker wird erst nach dem Ownership-Re-Check geschrieben, und
+`start`/`end` tragen `item` = Schedule-Row-ID.  Details im CHANGELOG
+(Fixed).
 
 **Mechanismus:** `_on_stop` schreibt `cue_item_end(kind)` *vor* dem
 Ownership-Re-Check.  Gewinnt der Nachfolger das Rennen (live bei

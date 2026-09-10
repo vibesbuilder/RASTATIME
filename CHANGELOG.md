@@ -125,6 +125,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Cue-Sheet: kein überzähliger „end"-Marker mehr bei überholtem STOP,
+  Marker tragen die Item-Identität (2026-09-10, Operator-Go, `2b208a0`)** —
+  `_on_stop` schrieb `cue_item_end` vor dem Ownership-Re-Check; gewann
+  der Nachfolger das Rennen (bei jedem Datei→Datei-Übergang), landete
+  der Marker ~30 ms hinter dessen `start` als „end" seines Typs.  Der
+  Marker wird jetzt erst nach dem Re-Check geschrieben (ein überholter
+  STOP schreibt nichts; der `start` des Nachfolgers impliziert das
+  Ende), und `start`/`end` beider Seiten tragen `item` = Schedule-Row-ID
+  (`CueWriter.item_end(kind, **meta)`), damit ein späterer Leser Paare
+  bilden kann.  Tests `test_cue_marker_ownership.py`,
+  `test_cue_writer.py`.  Aktiv nach PLAYOUT-Neustart.
 - **Webstream-Eingang: frische Quelle pro Slot statt Wiederverwendung
   (2026-09-08, Operator-Go „Plan A", `1eb8713`)** — Phase D am 2026-09-08 (drei
   Cloud-Slots, ein BBC-Slot): zwei Starts dekodierten erst nach 48 s und
@@ -419,6 +430,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Event-Keys mit Identität statt Einfügereihenfolge — „Option B"
+  (2026-09-10, Operator-Go, `23012bc`)** — `player/schedule.py` bildete Event-Keys
+  aus dem Zeitstempel und hängte bei Kollisionen `_0`, `_1`, … nach
+  Einfügereihenfolge an; fiel ein Ereignis aus dem Abruffenster,
+  wanderten die Suffixe der übrigen (derselbe Slot kam als `…_0` und
+  einen Refresh später als `…` zurück; 2026-09-04 ein 9-s-Loch, seit
+  Option A per Rebinding abgefangen).  Keys lauten jetzt
+  `<Zeitstempel>#<Tag>` mit einem Tag aus Typ und Identität
+  (`make_event_key` in `player/events.py`): `file-<row>`,
+  `ws-buffer-<row>`/`ws-play-<row>`/`ws-buffer-end-<row>`/`ws-stop-<row>`,
+  `linein-<row>`, `record-start-<instance>`/`record-end-<instance>`,
+  `switch_off-<instance>`/`kick_out-<instance>`.  Sortierung bleibt
+  zeitlich (gleicher Präfix bis zum `#`), `insert_event` dedupliziert
+  weiter strukturell und behält `_N` nur als theoretischen Rückfall;
+  `event_key_to_datetime` ignoriert einen Tag.  Logs zeigen jetzt
+  `PLAY 2026-09-10-10-00-00#file-4711`.  Sechs Upstream-Fixtures in
+  `tests/player/schedule_test.py` nachgezogen.  Aktiv nach
+  PLAYOUT-Neustart (keine Mischform alter/neuer Keys: die Schlüssel
+  leben nur im Prozess).
 - **DJ-Auflegen wird nach 5 s statt 30 s erkannt: `input.harbor`
   `timeout=5.` (2026-09-09, Operator-Go, `10e682f`)** — Der Windows-Build bemerkt
   einen DJ-Client, der nur den Socket schließt, erst mit dem Netzwerk-
