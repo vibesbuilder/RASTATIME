@@ -33,6 +33,7 @@ from .events import (
     ShowRecordEvent,
     WebStreamEvent,
     datetime_to_event_key,
+    make_event_key,
     event_isoparse,
 )
 
@@ -40,6 +41,9 @@ from .events import (
 def insert_event(events: Events, event_key: str, event: AnyEvent) -> None:
     key = event_key
 
+    # RASTATIME 2026-09-10: callers pass keys with identity
+    # (``make_event_key``), so two different events never share a key
+    # any more; the ``_N`` search below only remains as a fallback.
     # Search for an empty slot
     index = 0
     while key in events:
@@ -174,8 +178,9 @@ def generate_live_events(
 
     switch_off = show_instance["ends_at"] - transition
     kick_out = show_instance["ends_at"]
-    switch_off_event_key = datetime_to_event_key(switch_off)
-    kick_out_event_key = datetime_to_event_key(kick_out)
+    instance_id = show_instance.get("id")
+    switch_off_event_key = make_event_key(switch_off, f"switch_off-{instance_id}")
+    kick_out_event_key = make_event_key(kick_out, f"kick_out-{instance_id}")
 
     # If enabled, fade the input source out
     if switch_off != kick_out:
@@ -237,7 +242,7 @@ def generate_file_events(
     else:
         event.replay_gain = None
 
-    insert_event(events, event.start_key, event)
+    insert_event(events, make_event_key(event.start, f"file-{event.row_id}"), event)
 
 
 def generate_show_record_events(
@@ -280,7 +285,8 @@ def generate_show_record_events(
         show_name=str(show.get("name") or ""),
         show_starts_at=starts_at,
     )
-    insert_event(events, datetime_to_event_key(starts_at), start_event)
+    instance_id = show_instance.get("id")
+    insert_event(events, make_event_key(starts_at, f"record-start-{instance_id}"), start_event)
 
     end_event = ShowRecordEvent(
         type=EventKind.SHOW_RECORD_END,
@@ -290,7 +296,7 @@ def generate_show_record_events(
         show_name=str(show.get("name") or ""),
         show_starts_at=starts_at,
     )
-    insert_event(events, datetime_to_event_key(ends_at), end_event)
+    insert_event(events, make_event_key(ends_at, f"record-end-{instance_id}"), end_event)
 
 
 def generate_webstream_events(
@@ -302,8 +308,11 @@ def generate_webstream_events(
     """
     Generate events for a scheduled webstream.
     """
-    schedule_start_event_key = datetime_to_event_key(schedule["starts_at"])
-    schedule_end_event_key = datetime_to_event_key(schedule["ends_at"])
+    row = schedule["id"]
+    buffer_start_key = make_event_key(schedule["starts_at"], f"ws-buffer-{row}")
+    play_key = make_event_key(schedule["starts_at"], f"ws-play-{row}")
+    buffer_end_key = make_event_key(schedule["ends_at"], f"ws-buffer-end-{row}")
+    stop_key = make_event_key(schedule["ends_at"], f"ws-stop-{row}")
 
     # RASTATIME 2026-05-16 - per-webstream static input gain (dB), if set
     # on the cc_webstream row.  Older API responses without this field
@@ -325,7 +334,7 @@ def generate_webstream_events(
         show_name=show["name"],
         input_gain_db=input_gain_db,
     )
-    insert_event(events, schedule_start_event_key, stream_buffer_start_event)
+    insert_event(events, buffer_start_key, stream_buffer_start_event)
 
     stream_output_start_event = WebStreamEvent(
         type=EventKind.WEB_STREAM_OUTPUT_START,
@@ -338,7 +347,7 @@ def generate_webstream_events(
         show_name=show["name"],
         input_gain_db=input_gain_db,
     )
-    insert_event(events, schedule_start_event_key, stream_output_start_event)
+    insert_event(events, play_key, stream_output_start_event)
 
     # NOTE: stream_*_end were previously triggered 1 second before
     # the schedule end.
@@ -353,7 +362,7 @@ def generate_webstream_events(
         show_name=show["name"],
         input_gain_db=input_gain_db,
     )
-    insert_event(events, schedule_end_event_key, stream_buffer_end_event)
+    insert_event(events, buffer_end_key, stream_buffer_end_event)
 
     stream_output_end_event = WebStreamEvent(
         type=EventKind.WEB_STREAM_OUTPUT_END,
@@ -366,7 +375,7 @@ def generate_webstream_events(
         show_name=show["name"],
         input_gain_db=input_gain_db,
     )
-    insert_event(events, schedule_end_event_key, stream_output_end_event)
+    insert_event(events, stop_key, stream_output_end_event)
 
 
 def generate_linein_events(
@@ -393,7 +402,7 @@ def generate_linein_events(
     integer DB pk — but the playout side wants the pk for log lines
     and FK lookups.
     """
-    schedule_start_event_key = datetime_to_event_key(schedule["starts_at"])
+    linein_key = make_event_key(schedule["starts_at"], f"linein-{schedule['id']}")
 
     linein_start_event = LineinEvent(
         type=EventKind.LINEIN_START,
@@ -415,4 +424,4 @@ def generate_linein_events(
         # stereo, which keeps the proven dshow capture path.
         channel_mapping=list(linein.get("channel_mapping") or [0, 1]),
     )
-    insert_event(events, schedule_start_event_key, linein_start_event)
+    insert_event(events, linein_key, linein_start_event)

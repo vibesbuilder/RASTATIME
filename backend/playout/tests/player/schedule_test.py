@@ -282,7 +282,7 @@ def test_generate_live_events(stream_preferences):
     result = {}
     generate_live_events(result, show_instance_3, stream_preferences)
     assert result == {
-        "2022-09-05-13-00-00": ActionEvent(
+        "2022-09-05-13-00-00#kick_out-3": ActionEvent(
             start=datetime(2022, 9, 5, 13, 0),
             end=datetime(2022, 9, 5, 13, 0),
             type=EventKind.ACTION,
@@ -294,13 +294,13 @@ def test_generate_live_events(stream_preferences):
     stream_preferences.input_fade_transition = 2.0
     generate_live_events(result, show_instance_3, stream_preferences)
     assert result == {
-        "2022-09-05-12-59-58": ActionEvent(
+        "2022-09-05-12-59-58#switch_off-3": ActionEvent(
             start=datetime(2022, 9, 5, 12, 59, 58),
             end=datetime(2022, 9, 5, 12, 59, 58),
             type=EventKind.ACTION,
             event_type="switch_off",
         ),
-        "2022-09-05-13-00-00": ActionEvent(
+        "2022-09-05-13-00-00#kick_out-3": ActionEvent(
             start=datetime(2022, 9, 5, 13, 0),
             end=datetime(2022, 9, 5, 13, 0),
             type=EventKind.ACTION,
@@ -318,7 +318,7 @@ def test_generate_file_events(stream_preferences):
     result = {}
     generate_file_events(result, schedule_1, FILE_2, SHOW_1, stream_preferences)
     assert result == {
-        "2022-09-05-11-00-00": FileEvent(
+        "2022-09-05-11-00-00#file-1": FileEvent(
             start=datetime(2022, 9, 5, 11, 0),
             end=datetime(2022, 9, 5, 11, 5, 2),
             type=EventKind.FILE,
@@ -343,7 +343,7 @@ def test_generate_file_events(stream_preferences):
     stream_preferences.replay_gain_enabled = False
     generate_file_events(result, schedule_1, FILE_2, SHOW_1, stream_preferences)
     assert result == {
-        "2022-09-05-11-00-00": FileEvent(
+        "2022-09-05-11-00-00#file-1": FileEvent(
             start=datetime(2022, 9, 5, 11, 0),
             end=datetime(2022, 9, 5, 11, 5, 2),
             type=EventKind.FILE,
@@ -373,7 +373,7 @@ def test_generate_webstream_events():
     result = {}
     generate_webstream_events(result, schedule_5, WEBSTREAM_1, SHOW_3)
     assert result == {
-        "2022-09-05-12-10-00": WebStreamEvent(
+        "2022-09-05-12-10-00#ws-buffer-5": WebStreamEvent(
             start=datetime(2022, 9, 5, 12, 9, 55),
             end=datetime(2022, 9, 5, 12, 9, 55),
             type=EventKind.WEB_STREAM_BUFFER_START,
@@ -382,7 +382,7 @@ def test_generate_webstream_events():
             id=1,
             show_name="Show 3",
         ),
-        "2022-09-05-12-10-00_0": WebStreamEvent(
+        "2022-09-05-12-10-00#ws-play-5": WebStreamEvent(
             start=datetime(2022, 9, 5, 12, 10),
             end=datetime(2022, 9, 5, 12, 40),
             type=EventKind.WEB_STREAM_OUTPUT_START,
@@ -391,7 +391,7 @@ def test_generate_webstream_events():
             id=1,
             show_name="Show 3",
         ),
-        "2022-09-05-12-40-00": WebStreamEvent(
+        "2022-09-05-12-40-00#ws-buffer-end-5": WebStreamEvent(
             start=datetime(2022, 9, 5, 12, 40),
             end=datetime(2022, 9, 5, 12, 40),
             type=EventKind.WEB_STREAM_BUFFER_END,
@@ -400,7 +400,7 @@ def test_generate_webstream_events():
             id=1,
             show_name="Show 3",
         ),
-        "2022-09-05-12-40-00_0": WebStreamEvent(
+        "2022-09-05-12-40-00#ws-stop-5": WebStreamEvent(
             start=datetime(2022, 9, 5, 12, 40),
             end=datetime(2022, 9, 5, 12, 40),
             type=EventKind.WEB_STREAM_OUTPUT_END,
@@ -451,7 +451,7 @@ def test_get_schedule(schedule, requests_mock, api_client: ApiClient):
     requests_mock.get(f"{base_url}/api/v2/webstreams/1", json=WEBSTREAM_1)
 
     assert get_schedule(api_client) == {
-        "2022-09-05-11-00-00": FileEvent(
+        "2022-09-05-11-00-00#file-1": FileEvent(
             start=datetime(2022, 9, 5, 11, 0),
             end=datetime(2022, 9, 5, 11, 5, 2),
             type=EventKind.FILE,
@@ -470,7 +470,7 @@ def test_get_schedule(schedule, requests_mock, api_client: ApiClient):
             filesize=10000,
             file_ready=False,
         ),
-        "2022-09-05-11-05-02": FileEvent(
+        "2022-09-05-11-05-02#file-2": FileEvent(
             start=datetime(2022, 9, 5, 11, 5, 2),
             end=datetime(2022, 9, 5, 11, 10),
             type=EventKind.FILE,
@@ -489,7 +489,7 @@ def test_get_schedule(schedule, requests_mock, api_client: ApiClient):
             filesize=10000,
             file_ready=False,
         ),
-        "2022-09-05-11-10-00": FileEvent(
+        "2022-09-05-11-10-00#file-3": FileEvent(
             start=datetime(2022, 9, 5, 11, 10),
             end=datetime(2022, 9, 5, 12, 8, 59),
             type=EventKind.FILE,
@@ -508,7 +508,7 @@ def test_get_schedule(schedule, requests_mock, api_client: ApiClient):
             filesize=10000,
             file_ready=False,
         ),
-        "2022-09-05-12-08-59": FileEvent(
+        "2022-09-05-12-08-59#file-4": FileEvent(
             start=datetime(2022, 9, 5, 12, 8, 59),
             end=datetime(2022, 9, 5, 12, 10),
             type=EventKind.FILE,
@@ -527,7 +527,7 @@ def test_get_schedule(schedule, requests_mock, api_client: ApiClient):
             filesize=10000,
             file_ready=False,
         ),
-        "2022-09-05-12-10-00": WebStreamEvent(
+        "2022-09-05-12-10-00#ws-buffer-5": WebStreamEvent(
             start=datetime(2022, 9, 5, 12, 9, 55),
             end=datetime(2022, 9, 5, 12, 9, 55),
             type=EventKind.WEB_STREAM_BUFFER_START,
@@ -536,7 +536,7 @@ def test_get_schedule(schedule, requests_mock, api_client: ApiClient):
             id=1,
             show_name="Show 3",
         ),
-        "2022-09-05-12-10-00_0": WebStreamEvent(
+        "2022-09-05-12-10-00#ws-play-5": WebStreamEvent(
             start=datetime(2022, 9, 5, 12, 10),
             end=datetime(2022, 9, 5, 12, 40),
             type=EventKind.WEB_STREAM_OUTPUT_START,
@@ -545,7 +545,7 @@ def test_get_schedule(schedule, requests_mock, api_client: ApiClient):
             id=1,
             show_name="Show 3",
         ),
-        "2022-09-05-12-40-00": WebStreamEvent(
+        "2022-09-05-12-40-00#ws-buffer-end-5": WebStreamEvent(
             start=datetime(2022, 9, 5, 12, 40),
             end=datetime(2022, 9, 5, 12, 40),
             type=EventKind.WEB_STREAM_BUFFER_END,
@@ -554,7 +554,7 @@ def test_get_schedule(schedule, requests_mock, api_client: ApiClient):
             id=1,
             show_name="Show 3",
         ),
-        "2022-09-05-12-40-00_0": WebStreamEvent(
+        "2022-09-05-12-40-00#ws-stop-5": WebStreamEvent(
             start=datetime(2022, 9, 5, 12, 40),
             end=datetime(2022, 9, 5, 12, 40),
             type=EventKind.WEB_STREAM_OUTPUT_END,
@@ -563,7 +563,7 @@ def test_get_schedule(schedule, requests_mock, api_client: ApiClient):
             id=1,
             show_name="Show 3",
         ),
-        "2022-09-05-12-40-00_1": FileEvent(
+        "2022-09-05-12-40-00#file-6": FileEvent(
             start=datetime(2022, 9, 5, 12, 40),
             end=datetime(2022, 9, 5, 12, 53, 23),
             type=EventKind.FILE,
@@ -582,7 +582,7 @@ def test_get_schedule(schedule, requests_mock, api_client: ApiClient):
             filesize=10000,
             file_ready=False,
         ),
-        "2022-09-05-12-53-23": FileEvent(
+        "2022-09-05-12-53-23#file-7": FileEvent(
             start=datetime(2022, 9, 5, 12, 53, 23),
             end=datetime(2022, 9, 5, 12, 58, 25),
             type=EventKind.FILE,
@@ -601,7 +601,7 @@ def test_get_schedule(schedule, requests_mock, api_client: ApiClient):
             filesize=10000,
             file_ready=False,
         ),
-        "2022-09-05-12-58-25": FileEvent(
+        "2022-09-05-12-58-25#file-8": FileEvent(
             start=datetime(2022, 9, 5, 12, 58, 25),
             end=datetime(2022, 9, 5, 13, 0),
             type=EventKind.FILE,
@@ -620,19 +620,19 @@ def test_get_schedule(schedule, requests_mock, api_client: ApiClient):
             filesize=10000,
             file_ready=False,
         ),
-        "2022-09-05-12-59-58": ActionEvent(
+        "2022-09-05-12-59-58#switch_off-3": ActionEvent(
             start=datetime(2022, 9, 5, 12, 59, 58),
             end=datetime(2022, 9, 5, 12, 59, 58),
             type=EventKind.ACTION,
             event_type="switch_off",
         ),
-        "2022-09-05-13-00-00": ActionEvent(
+        "2022-09-05-13-00-00#kick_out-3": ActionEvent(
             start=datetime(2022, 9, 5, 13, 0),
             end=datetime(2022, 9, 5, 13, 0),
             type=EventKind.ACTION,
             event_type="kick_out",
         ),
-        "2022-09-05-13-00-00_0": FileEvent(
+        "2022-09-05-13-00-00#file-9": FileEvent(
             start=datetime(2022, 9, 5, 13, 0),
             end=datetime(2022, 9, 5, 13, 5, 2),
             type=EventKind.FILE,
@@ -651,7 +651,7 @@ def test_get_schedule(schedule, requests_mock, api_client: ApiClient):
             filesize=10000,
             file_ready=False,
         ),
-        "2022-09-05-13-05-02": FileEvent(
+        "2022-09-05-13-05-02#file-10": FileEvent(
             start=datetime(2022, 9, 5, 13, 5, 2),
             end=datetime(2022, 9, 5, 13, 10),
             type=EventKind.FILE,

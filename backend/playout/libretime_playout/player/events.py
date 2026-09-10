@@ -13,9 +13,23 @@ from ..utils import mime_guess_extension
 EVENT_KEY_FORMAT = "%Y-%m-%d-%H-%M-%S"
 
 
+# RASTATIME 2026-09-10 - event keys are ``<timestamp>#<tag>``; the tag
+# names the event type and the schedule row / show instance it belongs
+# to (``file-4711``, ``ws-play-4711``, ``linein-4711``,
+# ``record-start-12``, ``kick_out-12``).  Until now a key was the bare
+# timestamp plus an insertion-order suffix (``_0``, ``_1``) on
+# collisions, so the keys of the survivors moved whenever an event left
+# the fetch window (2026-09-04: the same running slot came back as
+# ``..._0`` and, a refresh later, as ``...`` - a 9-s hole).  Keys stay
+# chronologically sortable: equal-length timestamp before the ``#``.
+EVENT_KEY_SEPARATOR = "#"
+
+
 def event_key_to_datetime(value: Union[str, datetime]) -> datetime:
     if isinstance(value, str):
-        value = datetime.strptime(value, EVENT_KEY_FORMAT)
+        # tolerate a ``#tag`` (2026-09-10) or a legacy ``_N`` suffix
+        stamp = value.split(EVENT_KEY_SEPARATOR, 1)[0].split("_", 1)[0]
+        value = datetime.strptime(stamp, EVENT_KEY_FORMAT)
     return value
 
 
@@ -23,6 +37,11 @@ def datetime_to_event_key(value: Union[str, datetime]) -> str:
     if isinstance(value, datetime):
         value = value.strftime(EVENT_KEY_FORMAT)
     return value
+
+
+def make_event_key(value: Union[str, datetime], tag: str) -> str:
+    """``<timestamp>#<tag>`` - the key of an event with identity."""
+    return f"{datetime_to_event_key(value)}{EVENT_KEY_SEPARATOR}{tag}"
 
 
 def event_isoparse(value: str) -> datetime:
