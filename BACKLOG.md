@@ -92,7 +92,15 @@ reinen Absicherung.
   Live-Abnahme mit der Show-Folge Line-In → Jingles + Webstream → Line-In.
 - ~80–120 Zeilen + Tests, ~3 h.
 
-### 💡 Webstream-Puffer verschiebt und verkürzt das Folgeelement (beobachtet 2026-09-04)
+### ✅ Webstream-Puffer verschiebt und verkürzt das Folgeelement (beobachtet 2026-09-04, durch die Bus-Gates erledigt, abgehakt 2026-09-10)
+
+**Abgehakt 2026-09-10:** mit den Gates aus „Paket 2" schließt
+`webstream_stop` zuerst das Gate (Playout-Log 2026-09-08: STOP
+15:14:00,016 → „webstream_gate: closed" 15:14:00,065), der Switch
+fällt sofort auf den Sendeplan zurück und der Rest im 5-s-Puffer wird
+verworfen statt abgespielt; die Folgeelemente der Phase-E-Shows
+starteten sekundengenau.  Die Beobachtung stammt vom Nachmittag des
+04.09., vor dem Paket.
 
 **Beobachtung (Live-Abnahme 14:55–15:20):** Der Webstream-Zweig hängt
 hinter `buffer(buffer=5.0, …)` (Phase-E-Clock-Bridge).  Beim
@@ -131,7 +139,14 @@ gebaut wird, entscheiden: (a) Marker erst nach dem Re-Check schreiben
 das Ende) oder (b) Marker mit Item-Identität (row_id) versehen, damit
 der Leser Paare bilden kann.  (b) ist robuster.
 
-### 💡 Quellen vorwärmen — Gate im Bus-Switch (Operator-Idee 2026-09-04)
+### ✅ Quellen vorwärmen — Gate im Bus-Switch (Operator-Idee 2026-09-04, umgesetzt 2026-09-04 abends als „Paket 2", abgehakt 2026-09-10)
+
+**Abgehakt 2026-09-10:** seit „Paket 2" (CHANGELOG „Nahtlose
+Eingangswechsel: Bus-Gates, Übergangsfunktionen, Vorwärmen") live —
+`PREPARE_LEAD_SECONDS` = 10, Gates `webstream_live`/`linein_live`,
+Playout-Log z. B. 2026-09-09 17:06:50 „Prepare … pre-buffering",
+17:07:00 „was pre-buffered - opening the gate".  Die Überschrift war
+veraltet.
 
 **Idee (Operator):** Webstreams und Line-Ins ~10 s vor dem Play-Zeitpunkt
 laden, damit sie beim Start sofort spielen.
@@ -786,7 +801,22 @@ toten Server pollt) → **Reaper** im Frame-Zähler (`webstream_reap`,
 `start`+`stop` beim ersten „connected"), Replikat: jede verworfene
 Quelle binnen 3 s weg.  Aktiv nach Neustart PLAYOUT → LIQUIDSOAP.
 
-### 🟡 Jingle „StationID Friska Viljor.mp3" ist für Liquidsoap unlesbar (neu 2026-09-05)
+### ✅ Jingle „StationID Friska Viljor.mp3" ist für Liquidsoap unlesbar (neu 2026-09-05) — Fehlalarm, geklärt 2026-09-10
+
+**Geklärt 2026-09-10 (Operator-Go, Punkt 1):** die Datei, die der
+Replika-Push am 05.09. ablehnte, war nicht der Jingle, sondern der
+**Artwork-Cache** der Library: `imported/<owner>/artwork/<Dateiname>`
+ist die Cover-Grafik als Text-Datei (`data:image/...;base64,...`), dazu
+die Größen `-32`/`-64`/`-128`/`-256`/`-512` (Data-URI) und `.jpg`
+(binär).  Weil der Track-Dateiname selbst auf „.mp3" endet, heißt die
+Cache-Datei ebenfalls „StationID Friska Viljor.mp3" — Inhalt beginnt
+mit `data:ima`, mutagen: „can't sync to MPEG frame".  Der echte
+Jingle liegt unter `imported/2/Example Radio/StationID/StationID Friska
+Viljor.mp3.mp3` (Analyzer hängt die Endung an): MPEG-1 Layer 3,
+320 kbit/s, 48 kHz, Stereo, 9,96 s, ID3v2.3 mit Cover; Liquidsoap
+`request.resolve` = true, Dauer 9.96 s.  Kein Handlungsbedarf; ein
+Library-Scan nach unlesbaren Dateien bleibt ein Preflight-Kandidat
+(💡, nicht dringend).
 
 **Befund:** Replika-Push der Datei aus `media/imported/2/artwork/`
 scheitert mit `[decoder:2] Error while checking file's content:
