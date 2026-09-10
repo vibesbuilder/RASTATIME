@@ -22,7 +22,7 @@ festgelegt.  Jeder Punkt bekommt vor Implementierung die
 | 1 | ✅ Tascam-Ausgänge als lokales Monitoring | **DONE 2026-09-03** (`6464b17`) — Main-Output-Setting wirkt jetzt |
 | 2 | Crossfade-Paket | **kein Go (Operator 2026-09-10)** — neue Richtung „Show-Grenzen mit eigener Crossfade-Dauer" als 💡 notiert (Future Feature Ideas); die Items „Per-Track Crossfade" + „Frontend-Settings Fade" bleiben 🟡 |
 | 3 | ✅ CSRF-Token-Rotation entschärfen | **DONE 2026-09-10** — Rotation war wirkungslos (Session bereits schreibend geschlossen), Prüfung gehärtet (`7f51156`) |
-| 4 | ✅ `getSqlTypes()`-Cast (DATETIME → PG) | **DONE 2026-09-10** — `datetime` → `timestamp` (Commit-Hash im CHANGELOG) |
+| 4 | ✅ `getSqlTypes()`-Cast (DATETIME → PG) | **DONE 2026-09-10** — `datetime` → `timestamp` (`cdc8f0b`) |
 | 5 | Show-Shift bei Overbook | Aktive Items |
 | 6 | Seamless Bus-Mix | Aktive Items (Status prüfen — evtl. durch Liquidsoap-Migration erledigt) |
 | 7 | Storage-Umbau (Root → D:\stor) | **entblockt — Platte geliefert 2026-09-02** |
@@ -2823,8 +2823,7 @@ Option-A-Umsetzung das Kapitel in einem Zug sanieren (4 Sprachen).
 
 ### ✅ Latent: `HistoryService::getSqlTypes()` mappt DATETIME auf ungültigen PG-Cast (DONE 2026-09-10)
 
-**Status:** Behoben 2026-09-10 (Arbeitsreihenfolge Punkt 4, Commit-Hash im
-CHANGELOG): Cast-String `timestamp`; Typnamen der ganzen Tabelle gegen die
+**Status:** Behoben 2026-09-10 (Arbeitsreihenfolge Punkt 4, `cdc8f0b`): Cast-String `timestamp`; Typnamen der ganzen Tabelle gegen die
 Datenbank geprüft (`date`, `time`, `timestamp`, `text`, `boolean`, `integer`,
 `float` gültig, `datetime` nicht).
 **Ursprünglicher Befund:** Idea/Latent — heute harmlos, Fund der 2026-08-30er

@@ -229,7 +229,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **Playout History: `HistoryService::getSqlTypes()` bildet DATETIME jetzt auf
-  `timestamp` ab (2026-09-10, Arbeitsreihenfolge Punkt 4)** — der bisherige
+  `timestamp` ab (2026-09-10, Arbeitsreihenfolge Punkt 4, `cdc8f0b`)** — der bisherige
   Cast-String `datetime` existiert in PostgreSQL nicht (gegen die Datenbank
   geprüft: `SELECT NULL::datetime` scheitert, `::timestamp` nicht).  Latent,
   weil die einzigen DATETIME-Felder der Vorlagen (`starts`/`ends`) Pflicht-
