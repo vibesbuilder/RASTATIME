@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **DJ-Logins: die Oberfläche wird zur Wahrheit (2026-09-10, Operator-Go
-  Option 2)** — Bisher akzeptierten die Liquidsoap-Harbors nur Benutzer
+  Option 2, `fec9df9`)** — Bisher akzeptierten die Liquidsoap-Harbors nur Benutzer
   `source` mit den statischen Passwörtern aus `stream.harbor` in
   libretime.conf; die Master-Source-Zugangsdaten aus Settings → Streams
   und die per-Show-Logins wurden nicht benutzt, und die Settings-Seite
