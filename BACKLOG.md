@@ -780,8 +780,10 @@ Harbor-Puffer; sauberes Trennen → Harbor-Timeout 5,00 s → `master off`
 + „Resume scheduled … at +86.6s" in derselben Sekunde; harter
 Prozessabbruch → `ECONNRESET` sofort → `off` + Resume nach 0,8 s, Audio
 zurück, sobald der gepufferte DJ-Ton abgespielt war (~9 s).  Operator:
-alle Übergänge klangen gut.  Offen nur noch der Show-Login (Live Stream
-Input einer laufenden Show), bei Gelegenheit.
+alle Übergänge klangen gut.  **Show-Login 13:35/13:36 ebenfalls
+abgenommen:** Login über den Custom-Login der laufenden Show akzeptiert,
+Switcher `scheduled -> show` nach 22 ms, Audio nach dem 5-s-Puffer,
+Trennen → Timeout 5,0 s → `show off` + Resume an der richtigen Stelle.
 
 ### 🟢 Scheduler-Poll-Rückfall entfernen (fällig ab 2026-09-15, Operator 2026-09-09)
 
