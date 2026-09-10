@@ -176,22 +176,24 @@ SAM Broadcaster) configured with:
 | Field | Value |
 |---|---|
 | Server | The station's public hostname or IP |
-| Port | 8001 (the source-input port, *not* the listener port 8000) |
-| Mount | `/show` for Show DJ, `/master` for Master DJ |
-| Username | The configured per-show or station-wide username |
-| Password | The configured password |
+| Port | The **Master Source Port** / **Show Source Port** shown under Settings → Streams (8001 by default; 8000 is the listener port) |
+| Mount | The **Master Source Mount** / **Show Source Mount** shown under Settings → Streams (`main` and `show` by default) |
+| Username | Master DJ: the username under Settings → Streams → **Master Source**. Show DJ: a registered host's RASTATIME login, or the custom username of the show's **Live Stream Input** section |
+| Password | The matching password |
 | Format | MP3 (matching the station's main stream format is preferred) |
 
 Once connected, the audio appears on the output stream
 within ~1 second.
 
-> **How it works under the hood.** The source-input port
-> (8001) is a separate Icecast `<authentication>` mount that
-> calls back into PHP via `icecast-source-auth.php` to
-> validate the username + password against the per-show or
-> station-wide credentials. Auth-success connections are
-> picked up by the source switcher in the playout engine.
-> See ARCHITECTURE §10.5.
+> **How it works under the hood.** The source-input port is a
+> Liquidsoap harbor inside the playout engine. Every login is
+> checked the moment the client connects (since 2026-09-10): the
+> engine asks the playout, the playout asks the web application,
+> which applies the settings above. For the Show DJ that means
+> the show on air right now, so a Show DJ cannot log in before
+> the show starts. Only while the playout itself is unreachable
+> does the engine fall back to the static harbor password from
+> `libretime.conf`. See ARCHITECTURE §23.27 (addendum 2026-09-10).
 
 ---
 

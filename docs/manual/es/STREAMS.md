@@ -115,16 +115,22 @@ con:
 | Campo | Valor |
 |---|---|
 | Servidor | Hostname / IP público de la emisora |
-| Puerto | 8001 (puerto de entrada source, *no* el puerto de oyente 8000) |
-| Mount | `/show` para Show DJ, `/master` para Master DJ |
-| Usuario | Credenciales configuradas |
-| Contraseña | Credenciales configuradas |
+| Puerto | El **Master Source Port** / **Show Source Port** que muestra Ajustes → Streams (8001 por defecto; 8000 es el puerto de oyentes) |
+| Mount | El **Master Source Mount** / **Show Source Mount** que muestra Ajustes → Streams (`main` y `show` por defecto) |
+| Usuario | Master DJ: el usuario de Ajustes → Streams → **Master Source**. Show DJ: el login RASTATIME de un presentador registrado, o el usuario personalizado de la sección **Live Stream Input** del programa |
+| Contraseña | La contraseña correspondiente |
 | Formato | MP3 |
 
-> **Cómo funciona bajo el capó.** El puerto de entrada
-> source (8001) es un mount Icecast separado que llama de
-> vuelta a PHP vía `icecast-source-auth.php` para validar
-> credenciales. Vea ARCHITECTURE §10.5.
+> **Cómo funciona bajo el capó.** El puerto de entrada source es
+> un harbor de Liquidsoap dentro del motor de emisión. Cada
+> login se comprueba en el momento de conectar (desde el
+> 2026-09-10): el motor pregunta a la emisión, la emisión
+> pregunta a la aplicación web, que aplica los ajustes de arriba.
+> Para el Show DJ cuenta el programa que está en antena ahora
+> mismo; un Show DJ no puede entrar antes de que empiece el
+> programa. Solo mientras la propia emisión no esté accesible el
+> motor recurre a la contraseña estática del harbor de
+> `libretime.conf`. Vea ARCHITECTURE §23.27 (addendum 2026-09-10).
 
 ---
 

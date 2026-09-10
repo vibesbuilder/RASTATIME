@@ -9,6 +9,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **DJ-Logins: die Oberfläche wird zur Wahrheit (2026-09-10, Operator-Go
+  Option 2)** — Bisher akzeptierten die Liquidsoap-Harbors nur Benutzer
+  `source` mit den statischen Passwörtern aus `stream.harbor` in
+  libretime.conf; die Master-Source-Zugangsdaten aus Settings → Streams
+  und die per-Show-Logins wurden nicht benutzt, und die Settings-Seite
+  zeigte Port 8000 statt des Harbor-Ports 8001 (BUTT-Login schlug fehl).
+  Jetzt: (1) Beide Harbors bekommen `auth=rastatime_dj_auth(...)`
+  (`_render_dj_auth_function`): jeder Login-Versuch wird per POST an
+  PLAYOUTs Listener `/dj-auth` gemeldet; `ok` akzeptiert, `denied` lehnt
+  ab, alles andere (PLAYOUT nicht erreichbar — `http.post` wirft dann
+  nicht, sondern liefert einen leeren Body — oder `error`) fällt auf die
+  statische Prüfung `source` + Harbor-Passwort zurück.  (2) PLAYOUT
+  (`dj_auth.DjAuthenticator`) fragt die bestehende Legacy-Prüfung
+  `check-live-stream-auth` (POST, `general.public_url` bzw.
+  `RASTATIME_DJ_AUTH_WEB_URL`): Master = Settings → Streams → Master
+  Source; Show = die gerade laufende Show, registrierter Host oder
+  Custom-Login aus „Live Stream Input"; keine laufende Show → abgelehnt.
+  200 + `icecast-auth-user: 1` = ok, 401 = denied, sonst error.
+  Passwörter erscheinen in keinem Log.  (3) Harbor-Ports und -Mounts
+  kommen aus `stream.inputs.main/show` in libretime.conf — genau die
+  readonly-Felder von Settings → Streams (`_read_harbor_inputs`; ein
+  Icecast-Port wird mit Warnung durch 8001 ersetzt); libretime.conf auf
+  8001/main und 8001/show gesetzt, `libretime.conf.example` dokumentiert.
+  Replikat: akzeptiert/abgelehnt/Fallback in vier Runden; Legacy-Endpunkt
+  live mit falschen Daten geprüft (401 → denied).  Tests
+  `test_harbor_dj_auth.py` (inkl. `--check`), `test_dj_auth.py`,
+  `test_main_harbor_inputs.py`.  Handbuch STREAMS EN/DE/FR/ES.  Aktiv
+  nach PLAYOUT- und LIQUIDSOAP-Neustart.
 - **Geplanter LIQUIDSOAP-Neustart für 24/7-Programm: an der Titelgrenze,
   Auslöser Intervall/Speicher, Icecast-Standby-Fallback ohne
   Hörer-Trennung (2026-09-09, Operator-Go a+b, `1362634`)** — Mit durchgehendem

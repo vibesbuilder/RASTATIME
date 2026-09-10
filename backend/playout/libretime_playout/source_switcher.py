@@ -263,6 +263,9 @@ class _EventHandler(BaseHTTPRequestHandler):
     # show edit, instead of waiting up to 15 min for the next periodic
     # scan.  Same "object"-typing for the same circular-import reason.
     preflight: Optional[object] = None
+    # RASTATIME 2026-09-10 - DJ login check for the harbors (dj_auth.py):
+    # /dj-auth is called by the auth callback rendered into rastatime.liq.
+    dj_auth: Optional[object] = None
 
     # Silence the default access log line on stderr; route via our logger.
     def log_message(self, format: str, *args) -> None:  # noqa: A002
@@ -281,6 +284,8 @@ class _EventHandler(BaseHTTPRequestHandler):
                 self._handle_disconnect_source(parsed)
             elif parsed.path == "/set-audio-output":
                 self._handle_set_audio_output(parsed)
+            elif parsed.path == "/dj-auth":
+                self._handle_dj_auth(parsed)
             else:
                 self._send(404, "not found")
         except Exception as exc:  # pylint: disable=broad-exception-caught
@@ -330,6 +335,39 @@ class _EventHandler(BaseHTTPRequestHandler):
         # POST that overtook another one).
         sw.request_reconcile()
         self._send(200, "ok")
+
+    def _handle_dj_auth(self, parsed) -> None:
+        """
+        POST /dj-auth (form body: source=master|show, user, password,
+        address) - the harbor's auth callback asks whether a DJ login is
+        valid.  Replies ``ok`` (200), ``denied`` (403) or ``error`` (503,
+        the web application could not be asked - the harbor then falls
+        back to its static password).  The password is never logged.
+        """
+        params = parse_qs(parsed.query)
+        try:
+            length = int(self.headers.get("Content-Length") or 0)
+        except ValueError:
+            length = 0
+        if length > 0:
+            body = self.rfile.read(min(length, 65536)).decode("utf-8", "replace")
+            params.update(parse_qs(body, keep_blank_values=True))
+        source = (params.get("source", [""])[0] or "").lower()
+        user = params.get("user", [""])[0] or ""
+        password = params.get("password", [""])[0] or ""
+        address = params.get("address", [""])[0] or ""
+        checker = _EventHandler.dj_auth
+        if checker is None:
+            logger.warning("dj-auth: no authenticator wired - answering error")
+            self._send(503, "error")
+            return
+        try:
+            verdict = checker.check(source, user, password, address)
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            logger.exception("dj-auth: check failed: %s", exc)
+            verdict = "error"
+        code = {"ok": 200, "denied": 403}.get(verdict, 503)
+        self._send(code, verdict if verdict in ("ok", "denied") else "error")
 
     def _handle_source_state(self) -> None:
         """
@@ -826,6 +864,7 @@ def start_listener(
     port: int = 8770,
     engine_kind: str = "mpv",
     reconcile_interval_s: float = DEFAULT_RECONCILE_INTERVAL_S,
+    dj_auth: Optional[object] = None,
 ) -> ThreadingHTTPServer:
     """
     Start the HTTP listener for the internal RASTATIME endpoints:
@@ -857,6 +896,7 @@ def start_listener(
     _EventHandler.switcher = switcher
     _EventHandler.scheduler = scheduler
     _EventHandler.preflight = preflight
+    _EventHandler.dj_auth = dj_auth      # /dj-auth (RASTATIME 2026-09-10)
     server = ThreadingHTTPServer((host, port), _EventHandler)
     thread = threading.Thread(
         target=server.serve_forever,
@@ -867,7 +907,7 @@ def start_listener(
     logger.info(
         "Playout HTTP listener bound to http://%s:%d "
         "(/source-event, /source-state, /reload-schedule, "
-        "/disconnect-source, /set-audio-output)",
+        "/disconnect-source, /set-audio-output, /dj-auth)",
         host, port,
     )
 

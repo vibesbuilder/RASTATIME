@@ -315,6 +315,80 @@ def _read_harbor_credentials() -> tuple:
         return ("", "")
 
 
+def _read_config_yaml() -> dict:
+    """libretime.conf as a dict ({} when unreadable; the caller logs)."""
+    import yaml  # noqa: PLC0415
+
+    with open(_CONFIG_FILE, encoding="utf-8") as fh:
+        return yaml.safe_load(fh) or {}
+
+
+def _read_harbor_inputs(stream_outputs) -> Tuple[int, str, int, str]:
+    """
+    RASTATIME 2026-09-10 - the harbor ports and mounts come from
+    ``stream.inputs.main`` / ``stream.inputs.show`` in libretime.conf,
+    exactly what Settings -> Streams shows as Master/Show Source Port
+    and Mount ("UI wird zur Wahrheit").  Returns
+    ``(main_port, main_mount, show_port, show_mount)``.
+
+    Safety net: a port that an Icecast output already uses (or 8000)
+    cannot host the harbor - Liquidsoap would fail to bind and die;
+    such a value is replaced by the default with a loud warning.
+    """
+    from libretime_playout.liquidsoap_config import (  # noqa: PLC0415
+        DEFAULT_HARBOR_MAIN_MOUNT, DEFAULT_HARBOR_PORT, DEFAULT_HARBOR_SHOW_MOUNT,
+    )
+    taken = {8000}
+    for out in stream_outputs or []:
+        try:
+            taken.add(int(out.get("port")))
+        except (TypeError, ValueError, AttributeError):
+            pass
+    try:
+        inputs = (_read_config_yaml().get("stream") or {}).get("inputs") or {}
+    except Exception as exc:  # pylint: disable=broad-exception-caught
+        logger.warning("Could not read stream.inputs from %s: %s", _CONFIG_FILE, exc)
+        inputs = {}
+
+    def one(name, default_mount):
+        section = inputs.get(name) or {}
+        mount = str(section.get("mount") or default_mount).strip().strip("/") or default_mount
+        try:
+            port = int(section.get("port") or DEFAULT_HARBOR_PORT)
+        except (TypeError, ValueError):
+            port = DEFAULT_HARBOR_PORT
+        if port in taken:
+            logger.warning(
+                "stream.inputs.%s.port=%d is an Icecast port - the Liquidsoap harbor "
+                "cannot bind it; using %d instead.  Set it to %d in libretime.conf so "
+                "Settings -> Streams shows what DJs must use.",
+                name, port, DEFAULT_HARBOR_PORT, DEFAULT_HARBOR_PORT,
+            )
+            port = DEFAULT_HARBOR_PORT
+        return port, mount
+
+    main_port, main_mount = one("main", DEFAULT_HARBOR_MAIN_MOUNT)
+    show_port, show_mount = one("show", DEFAULT_HARBOR_SHOW_MOUNT)
+    return main_port, main_mount, show_port, show_mount
+
+
+DJ_AUTH_WEB_URL_ENV = "RASTATIME_DJ_AUTH_WEB_URL"
+
+
+def _dj_auth_web_url() -> str:
+    """Base URL of the legacy web application that answers
+    check-live-stream-auth: ``RASTATIME_DJ_AUTH_WEB_URL`` or
+    ``general.public_url`` from libretime.conf."""
+    override = os.environ.get(DJ_AUTH_WEB_URL_ENV, "").strip()
+    if override:
+        return override
+    try:
+        return str((_read_config_yaml().get("general") or {}).get("public_url") or "").strip()
+    except Exception as exc:  # pylint: disable=broad-exception-caught
+        logger.warning("Could not read general.public_url from %s: %s", _CONFIG_FILE, exc)
+        return ""
+
+
 def _resolve_local_output_device() -> Tuple[Optional[int], str, str, Optional[str]]:
     """
     Resolve the operator's **Main Output** setting to a PortAudio
@@ -588,6 +662,9 @@ def _render_rastatime_liq_outcome(stream_outputs: List[Dict]) -> RenderOutcome:
     # Wenn unset, rendert der Renderer die input.harbor-Blöcke nicht
     # (= C3-Stand, nur scheduled queue auf dem Bus).
     harbor_main_pwd, harbor_show_pwd = _read_harbor_credentials()
+    harbor_main_port, harbor_main_mount, harbor_show_port, harbor_show_mount = (
+        _read_harbor_inputs(stream_outputs)
+    )
     if harbor_main_pwd or harbor_show_pwd:
         logger.info(
             "Liquidsoap input.harbor enabled: main=%s show=%s",
@@ -664,6 +741,13 @@ def _render_rastatime_liq_outcome(stream_outputs: List[Dict]) -> RenderOutcome:
             webstream_watchdog_in_liquidsoap=(_webstream_watchdog_mode() == "liquidsoap"),
             source_event_url=f"http://{_LISTENER_HOST}:{_LISTENER_PORT}/source-event",
             harbor_timeout_seconds=_harbor_timeout_seconds(),
+            # RASTATIME 2026-09-10 - ports/mounts as shown in Settings -> Streams,
+            # logins checked by PLAYOUT (/dj-auth -> legacy web application).
+            harbor_main_port=harbor_main_port,
+            harbor_main_mount=harbor_main_mount,
+            harbor_show_port=harbor_show_port,
+            harbor_show_mount=harbor_show_mount,
+            dj_auth_url=f"http://{_LISTENER_HOST}:{_LISTENER_PORT}/dj-auth",
         )
     except Exception as exc:  # pylint: disable=broad-exception-caught
         logger.critical(
@@ -1164,6 +1248,7 @@ def main() -> None:
     # http://127.0.0.1:8770/source-event and drives the scheduler's
     # switch_audio_source() method.  See source_switcher.py and the
     # <event-bindings> blocks in icecast.xml for the full wiring.
+    from libretime_playout.dj_auth import DjAuthenticator  # noqa: PLC0415
     from libretime_playout.source_switcher import (  # noqa: PLC0415
         SourceSwitcher,
         reconcile_interval_from_env,
@@ -1181,6 +1266,15 @@ def main() -> None:
         # Option d (2026-09-09): the harbor callbacks report DJ events;
         # the telnet reconciler only verifies (RASTATIME_DJ_RECONCILE_SECONDS).
         reconcile_interval_s=reconcile_interval_from_env(),
+        # RASTATIME 2026-09-10 - /dj-auth: the harbors ask PLAYOUT, PLAYOUT
+        # asks the web application (Settings / show Live Stream Input).
+        dj_auth=DjAuthenticator(_dj_auth_web_url()),
+    )
+    logger.info(
+        "DJ logins are checked against the web application at %s "
+        "(harbor main %s:%d, show %s:%d).",
+        _dj_auth_web_url() or "<unset>", harbor_main_mount, harbor_main_port,
+        harbor_show_mount, harbor_show_port,
     )
 
     # 8b. RASTATIME 2026-06-05 — Record-per-Hour cue sidecars (stage 5).

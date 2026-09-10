@@ -26,6 +26,7 @@ festgelegt.  Jeder Punkt bekommt vor Implementierung die
 | 5 | Show-Shift bei Overbook | Aktive Items |
 | 6 | Seamless Bus-Mix | Aktive Items (Status prüfen — evtl. durch Liquidsoap-Migration erledigt) |
 | 7 | Storage-Umbau (Root → D:\stor) | **entblockt — Platte geliefert 2026-09-02** |
+| 7a | Cue-Marker-Test: 24/7-Aufnahme einschalten (Settings → Local Machine), Cue-Datei prüfen | **neu 2026-09-10 (Operator), nach dem Storage-Umbau** |
 | 8 | ICY-Metadata-Forwarding | Ideen |
 | 9 | Recording-Loss bei Latency-Catchup | Playout/Liquidsoap |
 | 10 | Backup/Restore via UI | Aktive Items |
@@ -751,6 +752,20 @@ Sendeplan zurück, nur Dashboard-Status und Scheduler-Reaktion hängen
 30 s nach (vorher mit dem Status-Poll genauso).  Option: `timeout=`
 am `input.harbor` auf z. B. 10 s senken (Trade-off: ein DJ mit 10 s
 Netzstörung fliegt raus).  Operator-Entscheidung; kein Handlungsdruck.
+
+### ✅ DJ-Logins: die Oberfläche wird zur Wahrheit (Operator-Go Option 2, umgesetzt 2026-09-10)
+
+**Befund 2026-09-10:** BUTT-Login schlug fehl.  Die Harbors prüften nur
+`source` + statisches Passwort aus libretime.conf; Settings → Streams
+zeigte Port 8000 (Icecast-Ära), der Harbor hörte auf 8001; Master-Source-
+und per-Show-Logins aus der UI wurden nie benutzt.
+**Umgesetzt:** Harbor-`auth` → PLAYOUT `/dj-auth` → Legacy
+`check-live-stream-auth` (Master aus Settings, Show = laufende Show mit
+Host- oder Custom-Login); statisches Passwort nur als Rückfall bei
+unerreichbarem PLAYOUT; Ports/Mounts aus `stream.inputs` (jetzt 8001,
+main/show).  Details CHANGELOG „DJ-Logins".  **Offen:** Live-Abnahme
+mit BUTT (Master-Zugangsdaten in Settings → Streams setzen; Show-Login
+nur während die Show läuft), danach das Auflegen (Harbor-Timeout 5 s).
 
 ### 🟢 Scheduler-Poll-Rückfall entfernen (fällig ab 2026-09-15, Operator 2026-09-09)
 

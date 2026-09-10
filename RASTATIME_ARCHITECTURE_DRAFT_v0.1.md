@@ -1,10 +1,18 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.27
-Date: 2026-09-09
+Draft version: 0.28
+Date: 2026-09-10
 
 > **Revision history**
+> - **0.28 (2026-09-10)** — **DJ logins checked against the UI**
+>   (§23.27, addendum 2026-09-10).  The harbors' `auth` callback asks
+>   PLAYOUT (`/dj-auth`), PLAYOUT asks the legacy
+>   `check-live-stream-auth` (Master Source credentials, the running
+>   show's Live Stream Input or registered hosts); the static harbor
+>   password is only the fallback while PLAYOUT is unreachable.  Harbor
+>   ports and mounts come from `stream.inputs`, i.e. what Settings →
+>   Streams shows.
 > - **0.27 (2026-09-09)** — **Event-driven source switcher** (§23.3 note,
 >   §23.27 addendum 2026-09-09 b).  `input.harbor` reports DJ connects
 >   and disconnects to PLAYOUT's listener (`on_connect`/`on_disconnect`
@@ -4568,3 +4576,25 @@ client that merely closes its socket when that timeout expires, and
 PLAYOUT pushes no tracks while it believes a DJ is live, so a hang-up
 meant up to 25 s of an empty queue; with 5 s the state flips when the
 harbor buffer runs out (replica: 5.06 s).
+
+**Addendum 2026-09-10 — DJ logins: the UI is the source of truth.**
+Since Phase C4 the harbors accepted one static password per mount
+(user `source`, `stream.harbor.*_password` in libretime.conf) and
+listened on 8001, while Settings → Streams displayed `stream.inputs`
+(port 8000, an Icecast-era value) and the Master Source credentials
+nobody checked.  Now every login attempt runs through the harbor's
+`auth` callback (`_render_dj_auth_function`): a form POST to PLAYOUT's
+listener `/dj-auth`; PLAYOUT's `DjAuthenticator` POSTs to the legacy
+`check-live-stream-auth` endpoint (api_key-exempt, localhost), which
+holds the rules the operator sees — master username/password from
+Settings, and for the show mount the show on air right now: a
+registered host's login or the show's custom Live Stream Input
+credentials.  Verdicts: `ok` / `denied` / `error`; the callback falls
+back to the static password only for `error` or an empty body (a
+refused connection does not raise in `http.post`), so a DJ can still
+broadcast while PLAYOUT or the web application is down.  Passwords
+travel in POST bodies on loopback and never reach a log.  The harbor
+port and mount are rendered from `stream.inputs.main/show`, so the
+readonly fields of Settings → Streams and the rendered script cannot
+drift apart; a port already used by an Icecast output is refused with
+a warning (Liquidsoap would fail to bind and die).

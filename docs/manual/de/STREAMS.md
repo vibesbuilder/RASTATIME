@@ -188,23 +188,25 @@ Mixxx, RadioDJ, SAM Broadcaster), konfiguriert mit:
 | Feld | Wert |
 |---|---|
 | Server | Der öffentliche Hostname oder IP der Station |
-| Port | 8001 (der Quell-Eingang-Port, *nicht* der Hörer-Port 8000) |
-| Mount | `/show` für Show DJ, `/master` für Master DJ |
-| Benutzername | Der konfigurierte per-show oder stationsweite Benutzername |
-| Passwort | Das konfigurierte Passwort |
+| Port | Der **Master Source Port** / **Show Source Port** aus Einstellungen → Streams (Standard 8001; 8000 ist der Hörer-Port) |
+| Mount | Der **Master Source Mount** / **Show Source Mount** aus Einstellungen → Streams (Standard `main` und `show`) |
+| Benutzername | Master DJ: der Benutzername unter Einstellungen → Streams → **Master-Quelle**. Show DJ: das RASTATIME-Login eines eingetragenen Moderators oder der Custom-Benutzername im Abschnitt **Live Stream Input** der Show |
+| Passwort | Das zugehörige Passwort |
 | Format | MP3 (Anpassung an das Format des Hauptstreams der Station ist bevorzugt) |
 
 Sobald verbunden, erscheint das Audio innerhalb von
 ~1 Sekunde auf dem Output-Stream.
 
-> **Wie es unter der Haube funktioniert.** Der Quell-
-> Eingang-Port (8001) ist ein separater Icecast-
-> `<authentication>`-Mount, der zur Validierung des
-> Benutzernamens + Passworts gegen die per-show oder
-> stationsweiten Anmeldedaten über `icecast-source-auth.php`
-> ins PHP zurückruft. Auth-erfolgreiche Verbindungen
-> werden vom Source-Switcher in der Playout-Engine
-> aufgenommen. Siehe ARCHITECTURE §10.5.
+> **Wie es unter der Haube funktioniert.** Der Quell-Eingang-Port
+> ist ein Liquidsoap-Harbor in der Playout-Engine. Jedes Login wird
+> im Moment des Verbindens geprüft (seit 2026-09-10): Die Engine
+> fragt das Playout, das Playout fragt die Web-Anwendung, und die
+> wendet die obigen Einstellungen an. Für den Show DJ zählt die
+> gerade laufende Show; ein Show DJ kann sich also nicht vor dem
+> Showbeginn einwählen. Nur solange das Playout selbst nicht
+> erreichbar ist, greift die Engine auf das statische Harbor-
+> Passwort aus `libretime.conf` zurück. Siehe ARCHITECTURE §23.27
+> (Addendum 2026-09-10).
 
 ---
 

@@ -137,17 +137,23 @@ configuré avec :
 | Champ | Valeur |
 |---|---|
 | Serveur | Hostname / IP public de la station |
-| Port | 8001 (port d'entrée source, *pas* le port auditeur 8000) |
-| Mount | `/show` pour Show DJ, `/master` pour Master DJ |
-| Nom d'utilisateur | Credentials configurés |
-| Mot de passe | Credentials configurés |
+| Port | Le **Master Source Port** / **Show Source Port** affiché sous Paramètres → Streams (8001 par défaut ; 8000 est le port auditeur) |
+| Mount | Le **Master Source Mount** / **Show Source Mount** affiché sous Paramètres → Streams (`main` et `show` par défaut) |
+| Nom d'utilisateur | Master DJ : le nom d'utilisateur sous Paramètres → Streams → **Master Source**. Show DJ : le login RASTATIME d'un animateur inscrit, ou le nom personnalisé de la section **Live Stream Input** de l'émission |
+| Mot de passe | Le mot de passe correspondant |
 | Format | MP3 (correspondance avec le format stream principal préférée) |
 
-> **Comment ça marche sous le capot.** Le port d'entrée
-> source (8001) est un mount Icecast `<authentication>`
-> séparé qui rappelle dans PHP via
-> `icecast-source-auth.php` pour valider nom
-> d'utilisateur + mot de passe. Voir ARCHITECTURE §10.5.
+> **Comment ça marche sous le capot.** Le port d'entrée source
+> est un harbor Liquidsoap dans le moteur de diffusion. Chaque
+> login est vérifié au moment de la connexion (depuis le
+> 2026-09-10) : le moteur interroge la diffusion, la diffusion
+> interroge l'application web, qui applique les réglages
+> ci-dessus. Pour le Show DJ, c'est l'émission à l'antenne en ce
+> moment qui compte ; un Show DJ ne peut donc pas se connecter
+> avant le début de l'émission. Ce n'est que lorsque la diffusion
+> elle-même est injoignable que le moteur se rabat sur le mot de
+> passe harbor statique de `libretime.conf`. Voir ARCHITECTURE
+> §23.27 (addendum 2026-09-10).
 
 ---
 

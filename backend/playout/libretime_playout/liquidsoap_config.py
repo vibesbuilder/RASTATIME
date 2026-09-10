@@ -165,6 +165,14 @@ DEFAULT_SOURCE_EVENT_TIMEOUT_SECONDS = 2.0
 # Replica 2026-09-09: timeout=5 -> disconnect reported after 5.06 s.
 DEFAULT_HARBOR_TIMEOUT_SECONDS = 5.0
 
+# RASTATIME 2026-09-10 - DJ logins are checked by PLAYOUT ("UI wird zur
+# Wahrheit"): the harbor's auth callback POSTs user/password to this URL,
+# PLAYOUT asks the legacy web application (Settings -> Streams -> Master
+# Source; the show's Live Stream Input).  None renders no callback: the
+# static harbor password from libretime.conf is the only check then.
+DEFAULT_DJ_AUTH_URL = "http://127.0.0.1:8770/dj-auth"
+DEFAULT_DJ_AUTH_TIMEOUT_SECONDS = 3.0
+
 
 # ---------------------------------------------------------------------
 # Phase-E — Scheduled Webstreams via input.http (RASTATIME 2026-05-29)
@@ -769,6 +777,7 @@ def _render_harbor_inputs_block(
     source_event_url: Optional[str] = DEFAULT_SOURCE_EVENT_URL,
     source_event_timeout_seconds: float = DEFAULT_SOURCE_EVENT_TIMEOUT_SECONDS,
     timeout_seconds: float = DEFAULT_HARBOR_TIMEOUT_SECONDS,
+    dj_auth_url: Optional[str] = DEFAULT_DJ_AUTH_URL,
 ) -> str:
     """
     Render the Liquidsoap ``input.harbor`` block(s) for the DJ-Master
@@ -796,6 +805,17 @@ def _render_harbor_inputs_block(
     over telnet instead of polling every 5 s.
     """
     parts = []
+    # RASTATIME 2026-09-10: with a dj_auth_url the harbor's auth callback
+    # decides (PLAYOUT -> legacy check-live-stream-auth); the static
+    # password is passed along as the fallback for an unreachable PLAYOUT.
+    main_auth = (
+        f'  auth=rastatime_dj_auth("master", "{_escape_liq_string(main_password or "")}"),\n'
+        if dj_auth_url else ""
+    )
+    show_auth = (
+        f'  auth=rastatime_dj_auth("show", "{_escape_liq_string(show_password or "")}"),\n'
+        if dj_auth_url else ""
+    )
     if main_password:
         parts.append(
             "master_dj = input.harbor(\n"
@@ -806,6 +826,7 @@ def _render_harbor_inputs_block(
             f"  buffer={_format_crossfade_duration(buffer_seconds)},\n"
             "  icy=true,\n"
             f"  timeout={_format_crossfade_duration(timeout_seconds)},\n"
+            f"{main_auth}"
             ")\n"
         )
     if show_password:
@@ -818,8 +839,11 @@ def _render_harbor_inputs_block(
             f"  buffer={_format_crossfade_duration(buffer_seconds)},\n"
             "  icy=true,\n"
             f"  timeout={_format_crossfade_duration(timeout_seconds)},\n"
+            f"{show_auth}"
             ")\n"
         )
+    if dj_auth_url and parts:
+        parts.insert(0, _render_dj_auth_function(dj_auth_url))
     if not parts:
         return (
             "# (no DJ-source harbor enabled — stream.harbor.{main,show}_password\n"
@@ -835,6 +859,62 @@ def _render_harbor_inputs_block(
             )
         )
     return "\n".join(parts)
+
+
+def _render_dj_auth_function(
+    url: str, timeout_seconds: float = DEFAULT_DJ_AUTH_TIMEOUT_SECONDS,
+) -> str:
+    """
+    Render ``rastatime_dj_auth(kind, static_password)``: the harbor's
+    ``auth`` callback (RASTATIME 2026-09-10).  Every login attempt is
+    POSTed to PLAYOUT (form body, localhost); ``ok`` accepts, anything
+    else rejects, and only an unreachable PLAYOUT falls back to the
+    static harbor password (user ``source``).  The password never
+    appears in a log line.
+    """
+    timeout = _format_crossfade_duration(timeout_seconds)
+    target = _escape_liq_string(url)
+    lines = [
+        "# RASTATIME 2026-09-10 - DJ logins are checked by PLAYOUT (Settings ->",
+        "# Streams -> Master Source; the show's Live Stream Input).  The static",
+        "# harbor password from libretime.conf only counts while PLAYOUT is",
+        "# unreachable.  Passwords never reach the log.",
+        "def rastatime_dj_auth(kind, static_password) =",
+        "  fun (login) ->",
+        "    begin",
+        "      verdict =",
+        "        try",
+        "          string.trim(http.post(timeout=" + timeout + ",",
+        '            headers=[("Content-Type", "application/x-www-form-urlencoded")],',
+        '            data="source=#{kind}&user=#{url.encode(login.user)}"',
+        '              ^ "&password=#{url.encode(login.password)}"',
+        '              ^ "&address=#{url.encode(login.address)}",',
+        '            "' + target + '"))',
+        "        catch err do",
+        '          log(level=2, label="rastatime.dj_auth",',
+        '            "#{kind}: PLAYOUT request failed (#{err})")',
+        '          ""',
+        "        end",
+        "      # A refused connection does not raise: http.post returns an empty",
+        "      # body.  Decide on the body - PLAYOUT answers ok / denied / error.",
+        '      if verdict == "ok" then',
+        '        log(level=3, label="rastatime.dj_auth",',
+        '          "#{kind}: accepted user \'#{login.user}\' from #{login.address}")',
+        "        true",
+        '      elsif verdict == "denied" then',
+        '        log(level=3, label="rastatime.dj_auth",',
+        '          "#{kind}: rejected user \'#{login.user}\' from #{login.address}")',
+        "        false",
+        "      else",
+        '        ok = login.user == "source" and login.password == static_password',
+        '        log(level=3, label="rastatime.dj_auth",',
+        '          "#{kind}: PLAYOUT unreachable or failing (\'#{verdict}\') - static check for \'#{login.user}\': #{ok}")',
+        "        ok",
+        "      end",
+        "    end",
+        "end",
+    ]
+    return "\n".join(lines) + "\n"
 
 
 def _render_harbor_source_events(
@@ -1611,6 +1691,7 @@ def render_rastatime_liq(
     harbor_buffer_seconds: float = DEFAULT_HARBOR_BUFFER_SECONDS,
     source_event_url: Optional[str] = DEFAULT_SOURCE_EVENT_URL,
     harbor_timeout_seconds: float = DEFAULT_HARBOR_TIMEOUT_SECONDS,
+    dj_auth_url: Optional[str] = DEFAULT_DJ_AUTH_URL,
     webstream_enabled: bool = DEFAULT_WEBSTREAM_ENABLED,
     webstream_max_buffer_seconds: float = DEFAULT_WEBSTREAM_MAX_BUFFER_SECONDS,
     webstream_timeout_seconds: float = DEFAULT_WEBSTREAM_TIMEOUT_SECONDS,
@@ -1674,6 +1755,7 @@ def render_rastatime_liq(
         buffer_seconds=harbor_buffer_seconds,
         source_event_url=source_event_url,
         timeout_seconds=harbor_timeout_seconds,
+        dj_auth_url=dj_auth_url,
     )
     webstream_block = _render_webstream_input_block(
         enabled=webstream_enabled,
@@ -1763,6 +1845,7 @@ def write_rastatime_liq(
     harbor_buffer_seconds: float = DEFAULT_HARBOR_BUFFER_SECONDS,
     source_event_url: Optional[str] = DEFAULT_SOURCE_EVENT_URL,
     harbor_timeout_seconds: float = DEFAULT_HARBOR_TIMEOUT_SECONDS,
+    dj_auth_url: Optional[str] = DEFAULT_DJ_AUTH_URL,
     webstream_enabled: bool = DEFAULT_WEBSTREAM_ENABLED,
     webstream_max_buffer_seconds: float = DEFAULT_WEBSTREAM_MAX_BUFFER_SECONDS,
     webstream_timeout_seconds: float = DEFAULT_WEBSTREAM_TIMEOUT_SECONDS,
@@ -1815,6 +1898,7 @@ def write_rastatime_liq(
         harbor_buffer_seconds=harbor_buffer_seconds,
         source_event_url=source_event_url,
         harbor_timeout_seconds=harbor_timeout_seconds,
+        dj_auth_url=dj_auth_url,
         webstream_enabled=webstream_enabled,
         webstream_max_buffer_seconds=webstream_max_buffer_seconds,
         webstream_timeout_seconds=webstream_timeout_seconds,

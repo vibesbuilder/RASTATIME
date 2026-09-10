@@ -25,3 +25,21 @@ rabbitmq:
   vhost: /rastatime
   user: rastatime
   password: rastatime
+
+# RASTATIME 2026-09-10 - DJ inputs (Liquidsoap harbors).  Settings ->
+# Streams shows these ports and mounts to DJs; PLAYOUT renders the
+# harbors from them.  Keep the port away from Icecast (8000).  Logins are
+# checked against the web application (Master Source credentials, the
+# show's Live Stream Input); stream.harbor.*_password is only the
+# fallback while PLAYOUT is unreachable (user "source").
+# stream:
+#   inputs:
+#     main:
+#       mount: main
+#       port: 8001
+#     show:
+#       mount: show
+#       port: 8001
+#   harbor:
+#     main_password: change-me
+#     show_password: change-me
