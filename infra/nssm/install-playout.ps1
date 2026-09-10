@@ -8,8 +8,8 @@
     T22.1 - Idempotent NSSM install script for RASTATIME-PLAYOUT.
 
     RASTATIME-PLAYOUT is the on-air playout scheduler (Pypo).  It reads the
-    show schedule from PostgreSQL, drives the playout engine (Liquidsoap in
-    production, mpv as legacy fallback), and tracks now-playing state.  Like
+    show schedule from PostgreSQL, drives the playout engine (Liquidsoap,
+    the only engine since 2026-09-10), and tracks now-playing state.  Like
     the worker, it must not start its main loop until RASTATIME-API is healthy.
 
     Health-check gate:

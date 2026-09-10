@@ -3,15 +3,12 @@ FfmpegLineinCapture — FFmpeg dshow-based Line-In capture for RASTATIME.
 
 Phase B (RASTATIME-2026-05-12).
 
-Companion to ``FfmpegStreamer``:
-
-  * :class:`FfmpegStreamer` reads a file or HTTP stream and pushes it
-    to one of the public Icecast output mounts.
-  * :class:`FfmpegLineinCapture` reads a Windows audio capture device
-    (microphone / line-in) via FFmpeg's ``dshow`` demuxer and pushes
-    the result to an internal Icecast mount (e.g. ``/linein-capture``).
-
-The two are then composed by the scheduler at LineinEvent-start time:
+:class:`FfmpegLineinCapture` reads a Windows audio capture device
+(microphone / line-in) - since 2026-09-03 through the sounddevice/MME
+feeder subprocess, historically via FFmpeg's ``dshow`` demuxer - and
+pushes the result to an internal Icecast mount (``/linein-capture``).
+Liquidsoap's ``input.http`` companion source (``linein_http``) consumes
+that mount, so the scheduler composes at LineinEvent-start time:
 
 ::
 
@@ -19,11 +16,14 @@ The two are then composed by the scheduler at LineinEvent-start time:
         ↓
     FfmpegLineinCapture  →  icecast://source:****@.../linein-capture
                                     ↓
-                          mpv (local monitor)  +  3× FfmpegStreamer
+                          Liquidsoap input.http (linein_http) → bus
                                                  ↓
-                                       rastatime192 / -aac / -ogg
+                                       Icecast outputs + recording
 
-Why a separate class instead of "another FfmpegStreamer instance":
+(Until 2026-09-10 the mount was also consumed by the mpv local monitor
+and three FfmpegStreamer subprocesses; that engine path was deleted.)
+
+Why a dedicated capture class:
 
   * Input is a live capture device, not a file/URL — different ffmpeg
     args (``-f dshow -i audio="@device_cm_{...}\\wave_{<GUID>}"``).
@@ -122,7 +122,7 @@ class FfmpegLineinCapture:
     Captures audio from a Windows dshow input device and streams it
     to Icecast as a source.
 
-    Lifecycle is symmetric with :class:`FfmpegStreamer`:
+    Lifecycle:
 
       * ``start(device_id)`` — spawn the ffmpeg subprocess.
       * ``stop()`` — graceful 'q'-shutdown, terminate fallback.
@@ -151,10 +151,9 @@ class FfmpegLineinCapture:
     the existing ``_lifecycle_lock``.
 
     An optional ``on_restart_callback`` (set by the scheduler) is fired
-    after each successful restart so downstream consumers (mpv +
-    FfmpegStreamer) can re-attach to the freshly re-published mount —
-    without it, the mount would come back but mpv would already have
-    given up on "stream ends prematurely".
+    after each successful restart so the downstream consumer (the
+    Liquidsoap ``input.http`` companion) can re-attach to the freshly
+    re-published mount instead of staying on a dead stream.
     """
 
     DEFAULT_MOUNT = "linein-capture"
@@ -215,7 +214,7 @@ class FfmpegLineinCapture:
         # the classic dshow path.  See linein_feeder module docstring.
         self._feeder_process: Optional[subprocess.Popen] = None
         self._stderr_fh: Optional[IO[bytes]] = None
-        # Same lifecycle-lock pattern as FfmpegStreamer: serialises
+        # Lifecycle lock: serialises
         # start()/stop() against each other across the scheduler timer
         # threads and the source-switcher webhook.
         self._lifecycle_lock = threading.Lock()
@@ -396,10 +395,10 @@ class FfmpegLineinCapture:
         Install/replace the callback fired by the watchdog after every
         successful auto-restart.
 
-        Typically wired by the scheduler to re-point mpv and the
-        FfmpegStreamer instances at the listen URL — without it, the
-        Icecast mount comes back but downstream consumers stay tuned to
-        a dead stream until the next schedule poll.
+        Wired by the scheduler to re-arm Liquidsoap's ``input.http``
+        companion on the listen URL — without it, the Icecast mount
+        comes back but the consumer stays tuned to a dead stream until
+        the next schedule poll.
         """
         self._on_restart_callback = callback
 
@@ -528,8 +527,8 @@ class FfmpegLineinCapture:
                 # harmless.
                 "-rtbufsize", "200M",
                 # Bigger thread_queue_size between dshow demuxer and the
-                # encoder — same headroom we use for live HTTP-stream
-                # inputs in FfmpegStreamer to avoid drops.
+                # encoder — generous headroom for a live input to avoid
+                # drops.
                 "-thread_queue_size", "4096",
                 "-i", dshow_input,
             ]
@@ -847,11 +846,11 @@ class FfmpegLineinCapture:
                 self._start_locked(self._device_id)
 
             # Fire the consumer-re-attach callback OUTSIDE the lock — it
-            # touches mpv + FfmpegStreamer which take their own locks and
-            # we must not invert lock order.  We do this even when the
+            # takes the scheduler lock and talks to Liquidsoap, and we
+            # must not invert lock order.  We do this even when the
             # new _start_locked failed (process is None) because the
-            # callback should be idempotent and merely re-points mpv at
-            # the listen URL — if Icecast is silent, mpv just buffers.
+            # callback should be idempotent and merely re-arms the
+            # consumer on the listen URL.
             cb = self._on_restart_callback
             if cb is not None:
                 try:
@@ -870,9 +869,9 @@ class FfmpegLineinCapture:
         """
         Stop the current capture subprocess (if running).
 
-        Same graceful 'q' → terminate → kill ladder as
-        :class:`FfmpegStreamer.stop`.  Also signals the watchdog to
-        exit and waits up to 3 s for it to do so — so a caller can rely
+        Graceful 'q' → terminate → kill ladder.  Also signals the
+        watchdog to exit and waits up to 3 s for it to do so — so a
+        caller can rely
         on the FFmpeg subprocess being truly gone (no zombie restart)
         once stop() returns.
         """
@@ -993,11 +992,11 @@ class FfmpegLineinCapture:
 
     @property
     def listen_url(self) -> str:
-        """``http://host:port/mount`` for downstream consumers (mpv, FFmpegStreamer)."""
+        """``http://host:port/mount`` for the downstream consumer (Liquidsoap input.http)."""
         return f"http://{self._icecast_host}:{self._icecast_port}/{self._icecast_mount}"
 
     def close(self) -> None:
-        """Stop and release resources.  Mirrors FfmpegStreamer.close."""
+        """Stop and release resources."""
         self.stop()
         logger.info("FfmpegLineinCapture closed")
 

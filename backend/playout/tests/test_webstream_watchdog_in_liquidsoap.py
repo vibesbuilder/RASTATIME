@@ -99,7 +99,7 @@ def _sched(**kw):
     engine = MagicMock(spec=LiquidsoapPlayoutEngine)
     engine.get_state.return_value = PlayoutState.STOPPED
     engine.webstream_is_ready.return_value = True
-    s = ps.PlayoutScheduler(engine=engine, api_client=MagicMock(), streaming_handled_externally=True, **kw)
+    s = ps.PlayoutScheduler(engine=engine, api_client=MagicMock(), **kw)
     s._arm_webstream_watchdog = MagicMock()
     return s
 

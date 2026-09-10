@@ -34,7 +34,7 @@ festgelegt.  Jeder Punkt bekommt vor Implementierung die
 | 12 | Widgets | Aktive Items (in Arbeit) |
 | 13 | JavaScript-Stack-Modernisierung | Technical Debt (in Arbeit) |
 | 14 | **Testplan erstellen** | neu 2026-09-02 — siehe unten |
-| 15 | Legacy-mpv-Code löschen | Aktive Items |
+| 15 | ✅ Legacy-mpv-Code löschen | **DONE 2026-09-10** — Liquidsoap ist die einzige Engine, DJ-Kick per Harbor-Telnet (Commit-Hash im CHANGELOG) |
 | 16 | Internet-Erreichbarkeit | Ideen |
 
 ---
@@ -1583,9 +1583,27 @@ DB-Spalten-Bereinigung dokumentiert aber nicht Pflicht.
 **Risiko:** Niedrig im Migrations-Kontext (geplanter Wartungs-Stopp +
 Verifikations-Schritt vor Go-Live).
 
-### 🟢 Legacy-mpv-Code-Delete (Phase E + F beide funktional verifiziert)
+### ✅ Legacy-mpv-Code-Delete (erledigt 2026-09-10)
 
-**Status:** Go nach 1 Woche stabilem Live-Betrieb.
+**Status:** ✅ **DONE 2026-09-10** (Arbeitsreihenfolge Punkt 15, Operator-Go).
+Gelöscht: `mpv_engine.py`, `ffmpeg_streamer.py`, der Streamer-Test, alle
+`streaming_handled_externally`-Zweige im Scheduler, Icecast-`killsource`,
+Listener-Relais-Zugangsdaten, Stream-Output-Hot-Reload, der Icecast-
+`listmounts`-Poller und `engine_kind` im Switcher, Engine-Auswahl in
+`__main__` (`RASTATIME_PLAYOUT_ENGINE` nur noch `liquidsoap`, sonst
+CRITICAL + Abbruch).  DJ-Kick jetzt per Harbor-Telnet
+(`master_dj.stop`/`show_dj.stop`); Capture-Restart-Callback und
+Webstream-Resume bewaffnen die Liquidsoap-Quellen statt URLs in die
+Request-Queue zu schieben.  Details CHANGELOG „Legacy-mpv-Engine
+gelöscht", ARCHITECTURE §23.28.  **Abweichung vom Plan:**
+`ffmpeg_linein_capture.py` bleibt — es ist seit Option B (2026-09-03)
+der aktive MME-Feeder-Pfad jedes geplanten Line-Ins, kein Legacy-Rest;
+`_stable_id_to_dshow_audio` musste daher nicht umziehen.  ffmpeg.exe
+bleibt damit als Feeder-Encoder in Betrieb.
+
+**Ursprünglicher Plan (historisch):**
+
+**Status (alt):** Go nach 1 Woche stabilem Live-Betrieb.
 **Evaluiert:** 2026-05-29.  Phase E + F Code-DONE + Live-Test
 beide erfolgreich (Phase E: BBC-Webstream am 2026-05-29 18:40,
 Phase F: Line-Input am 2026-05-29 spätabends).

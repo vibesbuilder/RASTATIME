@@ -620,6 +620,21 @@ class LiquidsoapTelnetClient:
         """
         return self.send_command("linein.status")
 
+    def harbor_stop(self, harbor_id: str) -> str:
+        """
+        RASTATIME 2026-09-10 - disconnect the DJ client on a harbor
+        (``master_dj`` / ``show_dj``).  Replaces the Icecast admin
+        ``killsource`` of the deleted mpv path: the DJs connect to the
+        harbor inside Liquidsoap, so only Liquidsoap can drop them.
+
+        Wire-form: ``<harbor_id>.stop`` (registered by input.harbor,
+        "Stop current source client, if connected.").  Replies
+        ``Done`` - also when nobody is connected.
+        """
+        if harbor_id not in ("master_dj", "show_dj"):
+            raise ValueError(f"unknown harbor id {harbor_id!r}")
+        return self.send_command(f"{harbor_id}.stop")
+
     # ---- Internals (lock must be held) ------------------------------
 
     def _connect_locked(self) -> None:

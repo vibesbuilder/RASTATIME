@@ -65,10 +65,10 @@ El bloque se renderiza en el script Liquidsoap en ejecución
 **solo cuando activa la función**; de lo contrario es un
 comentario sin efecto y el flujo en directo queda intacto.
 
-> **Requiere el motor Liquidsoap.** Como la grabación por
-> programa, la 24/7 la provee `output.file` de Liquidsoap. Si
-> `RASTATIME_PLAYOUT_ENGINE` es `mpv` o `vlc`, no hay grabación
-> 24/7 (el flujo se reproduce normalmente).
+> **Escrita por Liquidsoap.** Como la grabación por programa,
+> la 24/7 la provee `output.file` de Liquidsoap en el bus
+> interno (Liquidsoap es el único motor de playout desde el
+> 2026-09-10).
 
 ---
 

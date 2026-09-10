@@ -2,19 +2,15 @@
 RASTATIME 2026-05-29 — Unit tests for PlayoutScheduler's webstream
 hooks in Liquidsoap-Mode (Phase E).
 
-In Liquidsoap-Mode (``streaming_handled_externally=True``) scheduled
-webstream items use Liquidsoap's dedicated ``input.http`` source
-(``LiquidsoapPlayoutEngine.webstream_start`` / ``webstream_stop``)
-instead of the legacy ``engine.play(url)`` + FfmpegStreamer
-re-encoding path.
+Scheduled webstream items use Liquidsoap's dedicated ``input.http``
+source (``LiquidsoapPlayoutEngine.webstream_start`` / ``webstream_stop``);
+the legacy ``engine.play(url)`` + FfmpegStreamer re-encoding path was
+deleted on 2026-09-10.
 
-These tests verify the branch logic in:
-  * ``_on_webstream_start`` — branch on streaming_handled_externally
+These tests verify:
+  * ``_on_webstream_start`` — source start, gates, same-stream hand-over
   * ``_on_stop`` — webstream-specific teardown via webstream_stop()
-
-The legacy mpv/VLC path is left untouched (still calls engine.play +
-start_streamers) until both engines are removed (Phase E + F unblock
-the mpv/VLC deletion per BACKLOG).
+  * ``_resume_scheduled_locked`` — the DJ-off resume re-arms the source
 """
 from __future__ import annotations
 
@@ -23,7 +19,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from libretime_playout.engine.interface import PlayoutEngine, PlayoutState
+from libretime_playout.engine.interface import PlayoutState
 from libretime_playout.engine.liquidsoap_engine import LiquidsoapPlayoutEngine
 from libretime_playout.player.events import EventKind, WebStreamEvent
 
@@ -62,7 +58,7 @@ def _make_webstream_event(
 @pytest.fixture
 def liquidsoap_scheduler():
     """
-    PlayoutScheduler with streaming_handled_externally=True + a mocked
+    PlayoutScheduler with a mocked
     LiquidsoapPlayoutEngine (so engine.webstream_start / _stop exist on
     the mock per spec=).
     """
@@ -75,24 +71,6 @@ def liquidsoap_scheduler():
     sched = PlayoutScheduler(
         engine=engine,
         api_client=api_client,
-        streaming_handled_externally=True,
-    )
-    return sched, engine
-
-
-@pytest.fixture
-def legacy_scheduler():
-    """PlayoutScheduler in legacy mpv/VLC mode."""
-    from libretime_playout.playout_scheduler import PlayoutScheduler
-
-    engine = MagicMock(spec=PlayoutEngine)
-    engine.get_state.return_value = PlayoutState.STOPPED
-    api_client = MagicMock()
-
-    sched = PlayoutScheduler(
-        engine=engine,
-        api_client=api_client,
-        streaming_handled_externally=False,
     )
     return sched, engine
 
@@ -104,9 +82,8 @@ def test_webstream_start_liquidsoap_path_calls_engine_webstream_start(
     liquidsoap_scheduler,
 ):
     """
-    In Liquidsoap-Mode, _on_webstream_start MUST call
-    engine.webstream_start(uri, gain_db) — NOT the legacy
-    engine.play() + start_streamers().
+    _on_webstream_start MUST call engine.webstream_start(uri, gain_db)
+    — NOT engine.play() (the request queue).
     """
     sched, engine = liquidsoap_scheduler
     event = _make_webstream_event(
@@ -171,35 +148,6 @@ def test_webstream_start_liquidsoap_path_updates_playing_event(
     assert sched._playing_key == "key1"
     assert sched._current_event is event
     assert sched._current_audio_path == event.uri
-
-
-# ---- _on_webstream_start: Legacy mpv/VLC path --------------------------
-
-
-def test_webstream_start_legacy_path_uses_engine_play(legacy_scheduler):
-    """
-    Legacy mpv/VLC path: unchanged — engine.play(uri, gain_db=...)
-    + start_streamers, NOT engine.webstream_start (which doesn't
-    exist on the legacy PlayoutEngine spec).
-    """
-    sched, engine = legacy_scheduler
-    event = _make_webstream_event(
-        uri="http://stream.example.com/test.mp3",
-        input_gain_db=2.0,
-    )
-
-    # _start_streamers iterates over self._streamers — in tests we
-    # have an empty list, so it's effectively a no-op but doesn't crash.
-    sched._on_webstream_start("key1", event)
-
-    # Legacy engine.play was called with the URL + gain
-    engine.play.assert_called_once_with(
-        event.uri, cue_in=0.0, gain_db=2.0,
-    )
-    # New Liquidsoap webstream_start MUST NOT have been called
-    # (the legacy engine spec doesn't have that method, but if the
-    # branch leaked we'd see an AttributeError instead of a clean test)
-    assert not hasattr(engine, "webstream_start") or not engine.webstream_start.called
 
 
 # ---- _on_stop: Liquidsoap webstream teardown ----------------------------
@@ -271,24 +219,6 @@ def test_on_stop_liquidsoap_file_event_unchanged(liquidsoap_scheduler):
     engine.webstream_stop.assert_not_called()
 
 
-def test_on_stop_legacy_webstream_does_not_call_webstream_stop(legacy_scheduler):
-    """
-    In legacy mpv/VLC mode, the webstream-stop-specific branch is NOT
-    taken (engine doesn't have webstream_stop and we don't have the
-    Liquidsoap flag set).  Falls through to engine.stop().
-    """
-    sched, engine = legacy_scheduler
-    event = _make_webstream_event()
-    sched._playing_key = "key1"
-    sched._current_event = event
-    engine.get_state.return_value = PlayoutState.PLAYING
-
-    sched._on_stop("key1")
-
-    # engine.stop() is the legacy path
-    engine.stop.assert_called_once()
-
-
 # ---- Edge cases --------------------------------------------------------
 
 
@@ -310,3 +240,32 @@ def test_on_stop_already_handed_off_to_next_event(liquidsoap_scheduler):
     # Nothing should have been called on the engine
     engine.webstream_stop.assert_not_called()
     engine.stop.assert_not_called()
+
+
+# ---- DJ-off resume (RASTATIME 2026-09-10) -------------------------------
+
+
+def test_resume_webstream_rearms_the_source_instead_of_engine_play(
+    liquidsoap_scheduler,
+):
+    """
+    After a DJ hang-up the in-progress webstream is re-armed through
+    webstream_start + gate + watchdog (webstream.start on the same URL
+    answers "already started" in the .liq, so a still-running source is
+    left alone).  The deleted mpv wiring pushed the URL into the request
+    queue via engine.play.
+    """
+    sched, engine = liquidsoap_scheduler
+    event = _make_webstream_event(input_gain_db=-2.0, duration_seconds=10 ** 8)
+    sched._playing_key = "key1"
+    sched._current_event = event
+    sched._current_audio_path = event.uri
+    sched._current_gain_db = event.input_gain_db
+    sched._start_webstream_watchdog = MagicMock()
+
+    sched._resume_scheduled_locked()
+
+    engine.webstream_start.assert_called_once_with(event.uri, gain_db=-2.0)
+    engine.webstream_gate.assert_called_once_with(True)
+    engine.play.assert_not_called()
+    sched._start_webstream_watchdog.assert_called_once_with()

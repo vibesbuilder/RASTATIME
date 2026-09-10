@@ -12,9 +12,10 @@ schließen `**/build/**`, `**/*.egg-info/**`, `**/__pycache__/**`, `.venv/`
 aus (generiert).
 
 **Grundsatz (ASSISTANT.local.md):** Zuverlässigkeit vor Modernität. Der
-Live-Betrieb darf durch das Aufräumen nicht gefährdet werden. **mpv wird
-NICHT angefasst** (lebender Legacy-Fallback, separat im BACKLOG an die
-Stabilitätsphase gekoppelt).
+Live-Betrieb darf durch das Aufräumen nicht gefährdet werden. **mpv wurde
+am 2026-09-10 gelöscht** (BACKLOG „Legacy-mpv-Code-Delete",
+Arbeitsreihenfolge Punkt 15); zum Zeitpunkt dieser Inventur war es noch
+der lebende Legacy-Fallback und wurde bewusst nicht angefasst.
 
 ---
 
@@ -102,7 +103,8 @@ ggf. nur anpassen. Die `tests/unit/streams/test_output_status_api.py` +
 ### 1e. NICHT betroffen (häufiges Missverständnis)
 - `infra/nssm/install-playout.ps1` startet tatsächlich `-m libretime_playout`
   (Z256, live) — nur der **Kommentar-Header** sagt fälschlich `-m playout`.
-- `backend/playout/libretime_playout/engine/mpv_engine.py` → **behalten**.
+- `backend/playout/libretime_playout/engine/mpv_engine.py` → **behalten**
+  (Stand 2026-05-31; am 2026-09-10 mit dem mpv-Cleanup gelöscht).
 
 **Aufwand 1a-1d:** ~3-5 h inkl. Test-Bereinigung + voller Regression-Lauf
 (`tests/unit/` + `backend/playout/tests/`). **Risiko:** niedrig-mittel —
@@ -215,4 +217,4 @@ sinnvolle Ersetzung möglich.
 | **1b — ✅ ERLEDIGT 2026-05-31** | toten Celery-`libretime_worker` gelöscht (§4-Bonus) + `install-worker.ps1`-Bug gefixt (`-m libretime_worker`→`-m rastatime_worker`, `backend/` in PYTHONPATH) + `test_tgh2_no_celery.py` entfernt | ✅ committet; `tests/unit/worker` 88 passed. ⚠️ Operator: `nssm set RASTATIME-WORKER AppParameters "-m rastatime_worker"` nötig (Service läuft aktuell `-m libretime_worker`) | erledigt |
 | **2 — mit HW-Wechsel** | `libretime`→`rastatime` Pakete + `libretime.conf` + env-Prefix (§4) | 🟡 Defer | hoch |
 | **nie** | `airtime` (§5), `docs/upstream`, DB-Schema, `LICENSE`/Attribution | 🔴 No-Go | — |
-| **separat** | mpv-Cleanup (bereits im BACKLOG, an Stabilitätsphase gekoppelt) | — | — |
+| **separat — ✅ ERLEDIGT 2026-09-10** | mpv-Cleanup (BACKLOG „Legacy-mpv-Code-Delete") | ✅ | — |

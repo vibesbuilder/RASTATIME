@@ -784,3 +784,36 @@ def test_gates_survive_a_telnet_error():
     telnet.var_set.side_effect = OSError("telnet down")
     engine.linein_gate(True)      # must not raise
     engine.webstream_gate(False)  # must not raise
+
+
+# ---- dj_kick (RASTATIME 2026-09-10) -------------------------------------
+#
+# Replaces the Icecast admin killsource of the deleted mpv path: the DJs
+# connect to the harbor inside Liquidsoap, so the kick is `<harbor>.stop`.
+
+
+def test_dj_kick_master_sends_harbor_stop():
+    engine, telnet = _make_engine_with_mock()
+    telnet.harbor_stop.return_value = "Done"
+    engine.dj_kick("master")
+    telnet.harbor_stop.assert_called_once_with("master_dj")
+
+
+def test_dj_kick_show_sends_harbor_stop():
+    engine, telnet = _make_engine_with_mock()
+    telnet.harbor_stop.return_value = "Done"
+    engine.dj_kick("show")
+    telnet.harbor_stop.assert_called_once_with("show_dj")
+
+
+def test_dj_kick_unknown_source_raises():
+    engine, telnet = _make_engine_with_mock()
+    with pytest.raises(ValueError):
+        engine.dj_kick("scheduled")
+    telnet.harbor_stop.assert_not_called()
+
+
+def test_dj_kick_swallows_telnet_errors():
+    engine, telnet = _make_engine_with_mock()
+    telnet.harbor_stop.side_effect = ConnectionError("telnet down")
+    engine.dj_kick("show")          # must not raise - best-effort kick

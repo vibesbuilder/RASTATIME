@@ -255,12 +255,6 @@ l'antenne (une capture à la fois) ou quand la ligne n'a pas de nom
 de périphérique enregistré ; ces créneaux démarrent normalement
 (~2 s).
 
-**Chemins legacy mpv / VLC (uniquement quand
-`RASTATIME_PLAYOUT_ENGINE=mpv` ou `=vlc`) :**
-mpv ouvre l'URL d'écoute FfmpegLineinCapture directement et
-FfmpegStreamer ré-encode vers Icecast. Pas d'enregistrement
-pour les émissions line-input-only dans ce mode.
-
 Quand la durée du créneau s'écoule, le moteur envoie un
 événement `LINEIN_END` et le source switcher retourne au
 planning.
@@ -385,10 +379,6 @@ l'archive MP3 par émission, et est capturé nativement —
 avec les pistes régulières ou webstreams planifiés de la
 même émission. Voir
 [Enregistrement par émission](./RECORD_PER_SHOW.md).
-
-(Dans les modes moteur mpv/VLC dépréciés, l'enregistrement
-n'est pas disponible — voir
-[Paramètres → Moteur de Playout](./SETTINGS.md).)
 
 ### "Puis-je ajouter une source audio réseau (ex. AES67 / Dante) comme Line-In ?"
 

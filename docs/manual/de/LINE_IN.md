@@ -291,12 +291,6 @@ Sendung ist (ein Capture zur Zeit) oder die Zeile keinen
 gespeicherten Gerätenamen hat; solche Slots starten auf dem
 normalen Weg (~2 s).
 
-**Legacy-mpv-/VLC-Engine-Pfade (nur wenn
-`RASTATIME_PLAYOUT_ENGINE=mpv` oder `=vlc`):**
-mpv öffnet die FfmpegLineinCapture-Listen-URL direkt und
-FfmpegStreamer kodiert nach Icecast. Keine Aufnahme für reine
-Line-Input-Shows in diesem Modus.
-
 Wenn die Slot-Dauer abgelaufen ist, sendet die Engine ein
 `LINEIN_END`-Event, und der Source-Switcher kehrt zum
 Sendeplan zurück.
@@ -472,9 +466,6 @@ an den `output.file` für das Per-Show-MP3-Archiv angeschlossen
 ist, und wird nativ erfasst — zusammen mit eventuellen
 regulären Tracks oder geplanten Webstreams derselben Sendung.
 Siehe [Aufnahme pro Sendung](./RECORD_PER_SHOW.md).
-
-(In den deprecated mpv/VLC-Engine-Modi ist Aufnahme nicht
-verfügbar — siehe [Einstellungen → Playout-Engine](./SETTINGS.md).)
 
 ### "Kann ich eine Netzwerk-Audio-Quelle (z.B. AES67 / Dante) als Line-In hinzufügen?"
 

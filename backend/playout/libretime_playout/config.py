@@ -58,7 +58,7 @@ class LiquidsoapConfig(BaseModel):
 # input.harbor).  Pypo-lokales value-object für die Liquidsoap-Harbor-
 # Source-Passwörter.  Wird NICHT in die Pydantic-Config eingehängt —
 # stattdessen liest ``__main__._read_harbor_credentials()`` die Werte
-# direkt aus dem YAML (gleiche Pattern wie ``_read_internal_listener_credentials``).
+# direkt aus dem YAML (gleiche Pattern wie ``_read_harbor_inputs``).
 #
 # Operator setzt in libretime.conf::
 #

@@ -13,32 +13,25 @@ simpler, engine-agnostic loop that:
 
 Naming note (RASTATIME 2026-05-13)
 ----------------------------------
-This class used to be called ``PlayoutScheduler`` back when local playback ran
-through libVLC.  We moved to mpv (libmpv) in May 2026 — the "Vlc" prefix
-became actively misleading, so the class was renamed to
-``PlayoutScheduler``.  The implementation is engine-agnostic by
-construction (it talks to :class:`PlayoutEngine`, not to libVLC or libmpv
-directly), so the rename is purely cosmetic.
-
-Icecast streaming is handled by FfmpegStreamer (one instance per configured
-stream output).  For each track, FFmpeg reads the same audio file and
-streams it to Icecast via the ``icecast://`` protocol — independently of
-the local playback engine.
+The implementation is engine-agnostic by construction (it talks to
+:class:`PlayoutEngine`); since 2026-09-10 the only engine is the
+:class:`LiquidsoapPlayoutEngine`.  Liquidsoap owns local playback, the
+Icecast outputs, the DJ harbors, the webstream / line-in inputs and the
+recording; this scheduler drives it over telnet.  (The mpv engine, its
+FfmpegStreamer Icecast companions and the Icecast admin kick were
+deleted with BACKLOG "Legacy-mpv-Code-Delete".)
 
 Design references
 -----------------
 QUEUE_BEHAVIOR.md §3.1, §4.1 (show start HARD mode), §4.2 (show end),
 §6.1 (cue_in/cue_out not yet enforced — stop timer uses schedule end_at).
 """
-import base64
 import logging
 import threading
 import time
-import urllib.request as urllib_request
 from datetime import date, datetime, timedelta
 from pathlib import Path
-from typing import Callable, Dict, List, Optional, Tuple
-from urllib.parse import quote
+from typing import Callable, Dict, Optional, Tuple
 
 import requests
 from libretime_api_client.v2 import ApiClient
@@ -46,7 +39,6 @@ from libretime_api_client.v2 import ApiClient
 from .config import CACHE_DIR
 from .engine.ffmpeg_linein_capture import FfmpegLineinCapture
 from .recording_path import build_output_path
-from .engine.ffmpeg_streamer import FfmpegStreamer
 from .engine.interface import PlayoutEngine, PlayoutState
 from .liquidsoap_config import DEFAULT_INPUT_DUCK_FADE_SECONDS
 from . import liquidsoap_health
@@ -121,17 +113,17 @@ MIN_PREPARE_SECONDS = 2.5
 class PlayoutScheduler:
     """
     Schedule-driven playout controller.  Engine-agnostic — talks to a
-    :class:`PlayoutEngine` (currently the mpv-backed implementation in
-    :mod:`engine.mpv_engine`) without knowing which library does the
-    actual decoding.
+    :class:`PlayoutEngine` (the Liquidsoap adapter in
+    :mod:`engine.liquidsoap_engine`) without knowing which library does
+    the actual decoding.
 
     Thread model
     ------------
     * The main thread calls ``refresh()`` periodically.
     * ``threading.Timer`` daemon threads fire ``_on_start`` / ``_on_stop``
       callbacks at the appropriate wall-clock times.
-    * The callbacks call into ``PlayoutEngine``; both python-mpv and
-      python-vlc are thread-safe for the operations used here.
+    * The callbacks call into ``PlayoutEngine``; the Liquidsoap telnet
+      client serialises its socket I/O on its own lock.
     """
 
     def __init__(
@@ -140,10 +132,7 @@ class PlayoutScheduler:
         api_client: ApiClient,
         cache_dir: Optional[Path] = None,
         storage_path: Optional[str] = None,
-        stream_outputs: Optional[List[Dict]] = None,
         api_client_v1: Optional["object"] = None,
-        read_stream_outputs: Optional[Callable[[], List[Dict]]] = None,
-        streaming_handled_externally: bool = False,
         input_transition_seconds: float = 2.0,
         render_liquidsoap: Optional[Callable[[], object]] = None,
         nightly_restart: Optional[NightlyRestartPolicy] = None,
@@ -269,31 +258,12 @@ class PlayoutScheduler:
         # currently-playing event.  Source of the value depends on the
         # event type (file → ReplayGain sum; webstream →
         # cc_webstream.input_gain_db; live sources → None).  The
-        # streamers and mpv read this back when restarting after a
-        # hot-reload or after a DJ-source disconnect, so a previous
-        # event's gain does not leak into the new playback.
+        # resume path reads this back after a DJ-source disconnect, so
+        # a previous event's gain does not leak into the new playback.
         #
         # (Was ``_current_replay_gain_db`` before 2026-05-16; renamed
         # when webstream input-gain joined the same plumbing.)
         self._current_gain_db: Optional[float] = None
-
-        # Stream-output hot-reload: the callable lets the scheduler refresh
-        # its view of cc_pref every poll cycle and re-instantiate streamers
-        # when the user changes settings without needing a service restart.
-        self._read_stream_outputs = read_stream_outputs
-        self._current_stream_configs: List[Dict] = list(stream_outputs or [])
-
-        # RASTATIME 2026-05-26 — Seamless-Bus-Mix Phase C7 follow-up.
-        # When the Liquidsoap engine is active, Liquidsoap itself owns
-        # the Icecast PUTs (one persistent stream per mount + per codec
-        # in rastatime.liq), and the legacy FfmpegStreamer subprocesses
-        # would fight Liquidsoap for the same mounts and lose (403
-        # "mount taken").  ``streaming_handled_externally=True`` skips
-        # both the initial FfmpegStreamer instantiation AND the
-        # hot-reload rebuild — the streamer list stays empty, so
-        # _start_streamers / _stop_streamers / _start_streamers (which
-        # all iterate over self._streamers) silently no-op.
-        self._streaming_handled_externally = streaming_handled_externally
 
         # Source-switcher integration.  Set by __main__ via
         # ``set_source_switcher``.  When non-None and reporting a state
@@ -302,43 +272,6 @@ class PlayoutScheduler:
         # currently-tracked event so we know what to resume to when
         # the DJ disconnects.
         self._switcher = None
-        # Icecast input mounts for live DJ pickup.  Credentials are set
-        # by __main__ from libretime.conf (stream.internal_listener.*).
-        # The /main and /show mounts gate listener access via URL-auth
-        # in icecast.xml, so we need to supply Basic-Auth credentials
-        # in the listen URL to be allowed in.
-        self._icecast_host = "127.0.0.1"
-        self._icecast_port = 8000
-        self._listener_user = ""
-        self._listener_pass = ""
-
-        # FFmpeg streamers — one per enabled Icecast stream output.
-        # Skipped entirely when streaming_handled_externally=True
-        # (Liquidsoap engine takes care of all three Icecast mounts
-        # from inside rastatime.liq); see Phase C7 wire-up in
-        # __main__.py.
-        self._streamers: List[FfmpegStreamer] = []
-        if self._streaming_handled_externally:
-            logger.info(
-                "PlayoutScheduler: streaming handled externally — "
-                "FFmpeg streamers SKIPPED (%d cc_pref output(s) "
-                "delegated to the Liquidsoap subprocess).",
-                len(self._current_stream_configs),
-            )
-        else:
-            for cfg in self._current_stream_configs:
-                try:
-                    streamer = FfmpegStreamer(cfg)
-                    self._streamers.append(streamer)
-                except RuntimeError as exc:
-                    logger.error("Could not create FfmpegStreamer: %s", exc)
-            if self._streamers:
-                logger.info(
-                    "PlayoutScheduler: %d FFmpeg streamer(s) ready for Icecast.",
-                    len(self._streamers),
-                )
-            else:
-                logger.info("PlayoutScheduler: no Icecast streamers — local playback only.")
 
         # RASTATIME 2026-05-12 — Phase B Line-In capture.
         #
@@ -350,11 +283,11 @@ class PlayoutScheduler:
         try:
             self._linein_capture: Optional[FfmpegLineinCapture] = FfmpegLineinCapture()
             # Phase B.4 #1 — wire the auto-restart callback so the
-            # capture's watchdog can re-point mpv + the FfmpegStreamer
-            # instances at the listen URL after a successful restart
+            # capture's watchdog can re-arm Liquidsoap's input.http
+            # companion on the listen URL after a successful restart
             # (e.g. operator yanked the mic USB cable mid-show).
-            # Otherwise the Icecast mount comes back but downstream
-            # consumers stay tuned to a now-dead stream.
+            # Otherwise the Icecast mount comes back but the consumer
+            # stays tuned to a now-dead stream.
             self._linein_capture.set_on_restart_callback(
                 self._on_linein_capture_restart
             )
@@ -373,55 +306,43 @@ class PlayoutScheduler:
         # RASTATIME 2026-05-28 — Phase-C5 Teil 2d: Record-per-Show
         # is owned by the Liquidsoap engine's output.file(id="recording")
         # block on the internal bus.  The legacy FfmpegRecorder class
-        # (HTTP-tap + lifecycle-watchdog + post-roll-Timer) was deleted
-        # — recording is only available in the Liquidsoap engine path.
-        # In mpv/VLC engine paths the _on_show_record_* hooks log a
-        # warning and silently skip recording (show still plays).
-        if self._streaming_handled_externally:
-            logger.info(
-                "PlayoutScheduler: streaming handled externally — "
-                "recording is owned by Liquidsoap output.file from "
-                "the internal bus (FfmpegRecorder was deleted in C5).",
-            )
-            # rastatime.liq's output.file(id="recording") uses default
-            # start=true because Liquidsoap-2.4.4 silently swallows
-            # `recording.start` when the block was declared with
-            # start=false (the file simply never opens, no error).
-            # Without an explicit stop here, the sentinel
-            # `_uninitialized.mp3` would keep growing from Liquidsoap
-            # boot until the first _on_show_record_start hook fires —
-            # potentially hours.  RASTATIME 2026-09-06: a single attempt
-            # was not enough - whenever PLAYOUT comes up before
-            # LIQUIDSOAP (manual restart order, boot-window restart,
-            # nightly restart) the stop hit a dead telnet and the
-            # sentinel grew (32 MB in 14 min on 2026-09-06 17:30).
-            # First attempt synchronously; on failure a daemon thread
-            # keeps trying until telnet is back (see
-            # ensure_liquidsoap_initial_state).
-            if hasattr(self._engine, "recording_stop"):
-                ok, exc = self._apply_initial_liquidsoap_state(reset_gates=False)
-                self._initial_state_ok = ok
-                if ok:
-                    logger.info(
-                        "PlayoutScheduler: initial recording.stop sent "
-                        "to Liquidsoap (silences sentinel-file write "
-                        "from boot until first scheduled show).",
-                    )
-                else:
-                    logger.warning(
-                        "PlayoutScheduler: initial recording.stop failed "
-                        "(Liquidsoap not ready yet?): %s — "
-                        "ensure_liquidsoap_initial_state() retries until "
-                        "telnet is back.",
-                        exc,
-                    )
-        else:
-            logger.warning(
-                "PlayoutScheduler: legacy engine path (mpv/VLC) — "
-                "show recordings will be SKIPPED at start time.  "
-                "Recording requires RASTATIME_PLAYOUT_ENGINE=liquidsoap "
-                "since C5 Teil 2d deleted FfmpegRecorder.",
-            )
+        # (HTTP-tap + lifecycle-watchdog + post-roll-Timer) was deleted.
+        logger.info(
+            "PlayoutScheduler: recording is owned by Liquidsoap output.file "
+            "from the internal bus.",
+        )
+        # rastatime.liq's output.file(id="recording") uses default
+        # start=true because Liquidsoap-2.4.4 silently swallows
+        # `recording.start` when the block was declared with
+        # start=false (the file simply never opens, no error).
+        # Without an explicit stop here, the sentinel
+        # `_uninitialized.mp3` would keep growing from Liquidsoap
+        # boot until the first _on_show_record_start hook fires —
+        # potentially hours.  RASTATIME 2026-09-06: a single attempt
+        # was not enough - whenever PLAYOUT comes up before
+        # LIQUIDSOAP (manual restart order, boot-window restart,
+        # nightly restart) the stop hit a dead telnet and the
+        # sentinel grew (32 MB in 14 min on 2026-09-06 17:30).
+        # First attempt synchronously; on failure a daemon thread
+        # keeps trying until telnet is back (see
+        # ensure_liquidsoap_initial_state).
+        if hasattr(self._engine, "recording_stop"):
+            ok, exc = self._apply_initial_liquidsoap_state(reset_gates=False)
+            self._initial_state_ok = ok
+            if ok:
+                logger.info(
+                    "PlayoutScheduler: initial recording.stop sent "
+                    "to Liquidsoap (silences sentinel-file write "
+                    "from boot until first scheduled show).",
+                )
+            else:
+                logger.warning(
+                    "PlayoutScheduler: initial recording.stop failed "
+                    "(Liquidsoap not ready yet?): %s — "
+                    "ensure_liquidsoap_initial_state() retries until "
+                    "telnet is back.",
+                    exc,
+                )
 
         logger.info("PlayoutScheduler initialised (cache_dir=%s)", self._cache_dir)
 
@@ -434,9 +355,7 @@ class PlayoutScheduler:
         Fetch the schedule from the API and re-arm all pending timers.
 
         Any previously armed timers are cancelled first so that edits to
-        the schedule take effect immediately.  Stream-output settings in
-        cc_pref are also re-read on each refresh so user edits in the
-        Frontend take effect within one poll cycle, no service restart.
+        the schedule take effect immediately.
         """
         # RASTATIME 2026-09-07 - notice a LIQUIDSOAP restart that happened
         # under us (manual restart order, or a crash+NSSM-restart) and
@@ -447,10 +366,6 @@ class PlayoutScheduler:
         self._cycle_process_infos = None
         self._cycle_process_cache_enabled = True
         self._maybe_reinit_after_liquidsoap_restart()
-
-        # Hot-reload stream outputs from cc_pref BEFORE we touch timers,
-        # so the new streamers can pick up an in-progress track immediately.
-        self._reload_stream_outputs_if_changed()
 
         logger.info("PlayoutScheduler: refreshing schedule from API …")
         try:
@@ -559,14 +474,14 @@ class PlayoutScheduler:
                             "active — Master stays on-air, clearing bookkeeping.",
                             stale_key, reason,
                         )
-                        # Engine/streamers are relaying /main; leave them be.
+                        # Liquidsoap keeps relaying the master harbor; leave it be.
                     elif dj_state == SourceState.SHOW:
                         logger.info(
                             "Scheduled event %s %s while Show source is "
-                            "active — kicking the show DJ via Icecast admin.",
+                            "active — kicking the show DJ off the harbor.",
                             stale_key, reason,
                         )
-                        self._kick_icecast_source("/show")
+                        self.kick_dj_source("show")
                         # The source-disconnect event will transition the
                         # switcher to SCHEDULED and trigger resume; since
                         # we wipe _current_event right after this block,
@@ -578,7 +493,6 @@ class PlayoutScheduler:
                             stale_key, reason,
                         )
                         self._engine.stop()
-                        self._stop_streamers()
 
                     # Phase B — if the now-stale event was a Line-In,
                     # also tear down the dshow capture; otherwise the
@@ -1003,8 +917,6 @@ class PlayoutScheduler:
         The telnet ``uptime`` drop of 2026-09-07 remains the fallback
         while the process table cannot be read.
         """
-        if not self._streaming_handled_externally:
-            return
         ident = self._liquidsoap_process_identity()
         if ident is not None:
             self._maybe_reinit_by_process(ident)
@@ -1079,7 +991,7 @@ class PlayoutScheduler:
         gate state it booted with.  ``background=False`` runs the loop
         inline (tests) and returns the result.
         """
-        if not self._streaming_handled_externally or not hasattr(self._engine, "recording_stop"):
+        if not hasattr(self._engine, "recording_stop"):
             return None
         if self._initial_state_ok:
             return True
@@ -1104,13 +1016,11 @@ class PlayoutScheduler:
         return None
 
     def shutdown(self) -> None:
-        """Cancel all pending timers, stop the engine and all streamers."""
+        """Cancel all pending timers, stop the engine and the line-in capture."""
         logger.info("PlayoutScheduler: shutting down …")
         with self._lock:
             self._cancel_all_timers()
         self._engine.stop()
-        for streamer in self._streamers:
-            streamer.close()
         # RASTATIME 2026-05-12 — also release the Line-In capture so
         # the microphone device handle is freed.  Otherwise it would
         # stay locked until the OS reaped the orphaned ffmpeg subprocess.
@@ -1119,17 +1029,14 @@ class PlayoutScheduler:
         # RASTATIME 2026-05-28 — Phase-C5 Teil 2d: gracefully stop any
         # in-flight show recording on the Liquidsoap side so the .mp3
         # is playable (MP3 has no container trailer so it would still
-        # be playable without a clean stop, but tidier this way).  In
-        # the legacy mpv/VLC engine path recording is unavailable
-        # since FfmpegRecorder was deleted, so nothing to stop.
+        # be playable without a clean stop, but tidier this way).
         # Errors are logged but not raised — shutdown must complete.
-        if self._streaming_handled_externally:
-            try:
-                self._engine.recording_stop()
-            except Exception as exc:  # pylint: disable=broad-exception-caught
-                logger.warning(
-                    "Shutdown: Liquidsoap recording_stop failed: %s", exc,
-                )
+        try:
+            self._engine.recording_stop()
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            logger.warning(
+                "Shutdown: Liquidsoap recording_stop failed: %s", exc,
+            )
         logger.info("PlayoutScheduler: shutdown complete")
 
     # ------------------------------------------------------------------
@@ -1455,12 +1362,11 @@ class PlayoutScheduler:
             )
             self._release_linein(f"successor {key}")
         elif isinstance(prev_event, WebStreamEvent):
-            if self._streaming_handled_externally:
-                logger.info(
-                    "PLAY %s takes over from web stream %s - releasing it.",
-                    key, prev_event.uri,
-                )
-                self._release_webstream(f"successor {key}")
+            logger.info(
+                "PLAY %s takes over from web stream %s - releasing it.",
+                key, prev_event.uri,
+            )
+            self._release_webstream(f"successor {key}")
 
     # ------------------------------------------------------------------
     # RASTATIME 2026-09-04 - Paket 2: pre-warm + gates + drained stop
@@ -1468,10 +1374,8 @@ class PlayoutScheduler:
 
     def _arm_prepare(self, key: str, event: object, start_delay: float,
                      handler: Callable[[str, object], None]) -> None:
-        """Arm the prepare timer at start - PREPARE_LEAD_SECONDS (Liquidsoap
-        mode only; an item starting sooner than that goes the normal way)."""
-        if not self._streaming_handled_externally:
-            return
+        """Arm the prepare timer at start - PREPARE_LEAD_SECONDS (an item
+        starting sooner than that goes the normal way)."""
         if start_delay < MIN_PREPARE_SECONDS:
             return
         # RASTATIME 2026-09-05 - a refresh cancels and re-arms every timer.
@@ -1580,18 +1484,13 @@ class PlayoutScheduler:
     def reset_gates(self) -> None:
         """Open both bus gates (startup: a previous Pypo may have died
         mid-prepare with a gate closed)."""
-        if self._streaming_handled_externally:
-            self._engine.linein_gate(True)
-            self._engine.webstream_gate(True)
+        self._engine.linein_gate(True)
+        self._engine.webstream_gate(True)
 
     def _release_linein(self, why: str) -> None:
         """Take the line-in off air NOW via the gate (the bus fades it out
         under the successor while its buffered tail plays) and stop the
         capture + source once the fade is over."""
-        if not self._streaming_handled_externally:
-            if self._linein_capture is not None:
-                self._linein_capture.stop()
-            return
         gen = self._linein_generation
         self._engine.linein_gate(False)
         logger.info("Line-in released (%s): gate closed, stop in %.1f s.", why, self._drain_seconds)
@@ -1609,8 +1508,6 @@ class PlayoutScheduler:
         self._engine.linein_stop()
 
     def _release_webstream(self, why: str) -> None:
-        if not self._streaming_handled_externally:
-            return
         self._stop_webstream_watchdog()
         gen = self._webstream_generation
         self._engine.webstream_gate(False)
@@ -1631,10 +1528,7 @@ class PlayoutScheduler:
 
     def _start_webstream_watchdog(self) -> None:
         """Begin (or restart) watching the on-air webstream for a silent
-        upstream stall.  Liquidsoap mode only; no-op if the engine has no
-        readiness probe."""
-        if not self._streaming_handled_externally:
-            return
+        upstream stall.  No-op if the engine has no readiness probe."""
         if (
             self._webstream_watchdog_mode != WEBSTREAM_WATCHDOG_SCHEDULER
             and self._liquidsoap_has_internal_watchdog()
@@ -1818,14 +1712,10 @@ class PlayoutScheduler:
             self._notify_media_started(event.row_id)
             return
 
-        # RASTATIME 2026-05-25 — Seamless-Bus-Mix Phase 1.  Give the
-        # previous track up to 200 ms to flush its last frames before
-        # we hard-stop mpv + the FFmpeg streamers.  Without this, the
-        # last 1–2 s of short tracks (4–10 s) regularly get clipped
-        # because the scheduler-clock fires this _on_file_start event
-        # slightly before mpv's end-file event arrives.  If mpv is
-        # already stopped (common case: previous track ended naturally
-        # before this fires) the wait returns immediately.
+        # RASTATIME 2026-05-25 — Seamless-Bus-Mix Phase 1.  Let the
+        # engine flush the previous track's last frames before the hard
+        # stop (the Liquidsoap engine returns at once: its queue is
+        # gapless by itself).
         self._engine.wait_until_stopped(timeout=0.5)
 
         # RASTATIME 2026-09-04 - close a line-in / webstream predecessor
@@ -1834,20 +1724,12 @@ class PlayoutScheduler:
 
         # HARD start (QUEUE_BEHAVIOR §4.1): stop whatever is playing first.
         self._engine.stop()
-        self._stop_streamers()
-
-        # Calculate seek offset for catch-up (in-progress tracks)
-        now = datetime.utcnow()
-        elapsed = (now - event.start).total_seconds()
-        seek_seconds = max(0.0, elapsed) if elapsed > 1.0 else 0.0
 
         # RASTATIME 2026-05-26 — Seamless-Bus-Mix Phase C6 Teil 2.
         # Forward track metadata to the engine so the Liquidsoap
         # backend can attach it via annotate: + propagate to the
         # output.icecast blocks for live ICY metadata in listener
-        # clients.  mpv/VLC engines accept the parameter but ignore
-        # it (FfmpegStreamer continues to handle their Icecast
-        # metadata path separately).
+        # clients.
         track_metadata = {
             "title":     event.track_title or "",
             "artist":    event.artist_name or "",
@@ -1859,22 +1741,13 @@ class PlayoutScheduler:
         # ``liq_cross_duration="0.0"`` metadata override that disables
         # the crossfade fade-in/fade-out zones for that track only.
         # Without cue_out, short tracks get eaten by the 1-s fade
-        # zones and are barely audible.  (mpv-engine ignores cue_out
-        # in this code path — mpv knows the natural file-end on its
-        # own; the param is harmless for mpv.)
+        # zones and are barely audible.
         self._engine.play(
             str(local),
             cue_in=event.cue_in or 0.0,
             cue_out=event.cue_out,
             gain_db=event.replay_gain,
             metadata=track_metadata,
-        )
-
-        # Start FFmpeg streamers in parallel (same audio file → Icecast)
-        self._start_streamers(
-            str(local),
-            seek_seconds=seek_seconds,
-            gain_db=event.replay_gain,
         )
 
         # Notify the legacy v1 API that this schedule row started playing.
@@ -1933,9 +1806,8 @@ class PlayoutScheduler:
             )
             return
 
-        # RASTATIME 2026-05-29 — Phase E: dual-engine webstream handling.
-        # Liquidsoap-Engine path (streaming_handled_externally=True):
-        # the .liq script has a dedicated input.http source ("webstream")
+        # RASTATIME 2026-05-29 — Phase E: Liquidsoap webstream handling.
+        # The .liq script has a dedicated input.http source ("webstream")
         # that we drive via telnet wrappers — set URL, set gain, start.
         # The source goes ``source.is_ready=true`` after max_buffer (10 s
         # default) of audio has buffered, at which point the switch
@@ -1943,91 +1815,65 @@ class PlayoutScheduler:
         # fallback) to webstream automatically.  We also clear the
         # scheduled queue so the previous track doesn't linger in the
         # background during the buffer-up phase.
-        #
-        # Legacy mpv/VLC path: unchanged Pypo-side behaviour — engine.play
-        # opens VLC/mpv against the HTTP URL directly, and the three
-        # FfmpegStreamer subprocesses re-encode the same URL to Icecast.
-        # This path stays as a fallback until both engines are removed
-        # (Phase E + F unblock the mpv/VLC deletion per BACKLOG).
-        if self._streaming_handled_externally:
-            # Phase E (2026-05-29) — Liquidsoap engine path.
-            # We do NOT call wait_until_stopped here: Liquidsoap's queue
-            # handles its own gapless transitions and we want the
-            # scheduled-track-to-webstream handover to happen as soon as
-            # input.http has buffered enough.
-            # RASTATIME 2026-09-04 - a line-in predecessor must be closed
-            # by us: it outranks nothing while we play, but the switch
-            # would drop straight back onto it when we end.
-            # RASTATIME 2026-09-05 - same stream, next show: the source is
-            # already playing this URL, so this is a bookkeeping hand-over
-            # (mirror of the line-in same-device transition).  Releasing and
-            # restarting it (20:12 live) cost a ~1 s fade-out/fade-in dip.
-            # A different gain would need a restart - rare; fall through.
-            if (
-                isinstance(prev_event, WebStreamEvent)
-                and prev_event.uri == event.uri
-                and (prev_event.input_gain_db or 0.0) == (event.input_gain_db or 0.0)
-            ):
-                logger.info(
-                    "Web stream %s: same stream as %s - keeping the source, "
-                    "no bounce.", key, prev_event.uri,
-                )
-                self._take_prepared(event)
-                self._webstream_generation += 1   # a pending drain must not stop us
-                self._engine.stop()               # clear the scheduled queue as usual
-                self._engine.webstream_gate(True)  # in case a race closed it
-                self._start_webstream_watchdog()
-                return
-            if isinstance(prev_event, WebStreamEvent):
-                # RASTATIME 2026-09-05 - a DIFFERENT stream on the single
-                # webstream source: the drained release cannot work here
-                # (set_url + start on a running input.http does not
-                # reconnect, and the drained stop is then skipped as "a
-                # newer stream took over" - live 11:44:30 the old stream
-                # simply kept playing).  Hard stop, then start: the old
-                # tail is cut and the new stream needs its buffer-up.
-                logger.info(
-                    "Web stream %s replaces %s on the single stream source - "
-                    "stop + start (no drain possible).", key, prev_event.uri,
-                )
-                self._webstream_generation += 1
-                self._engine.webstream_stop()
-            else:
-                self._close_predecessor_source(prev_event, key)
-            self._engine.stop()  # deferred-stop, clears request.queue
-            if self._take_prepared(event):
-                # RASTATIME 2026-09-04 - pre-buffered at T-10 s: only the
-                # gate has to open.  No reconnect, no buffer-up gap.
-                logger.info("Web stream %s was pre-buffered - opening the gate.", key)
-                self._webstream_generation += 1
-                self._engine.webstream_gate(True)
-                self._start_webstream_watchdog()
-                return
-            self._webstream_generation += 1
-            self._engine.webstream_start(
-                event.uri, gain_db=event.input_gain_db,
+        # Phase E (2026-05-29) — Liquidsoap engine path.
+        # We do NOT call wait_until_stopped here: Liquidsoap's queue
+        # handles its own gapless transitions and we want the
+        # scheduled-track-to-webstream handover to happen as soon as
+        # input.http has buffered enough.
+        # RASTATIME 2026-09-04 - a line-in predecessor must be closed
+        # by us: it outranks nothing while we play, but the switch
+        # would drop straight back onto it when we end.
+        # RASTATIME 2026-09-05 - same stream, next show: the source is
+        # already playing this URL, so this is a bookkeeping hand-over
+        # (mirror of the line-in same-device transition).  Releasing and
+        # restarting it (20:12 live) cost a ~1 s fade-out/fade-in dip.
+        # A different gain would need a restart - rare; fall through.
+        if (
+            isinstance(prev_event, WebStreamEvent)
+            and prev_event.uri == event.uri
+            and (prev_event.input_gain_db or 0.0) == (event.input_gain_db or 0.0)
+        ):
+            logger.info(
+                "Web stream %s: same stream as %s - keeping the source, "
+                "no bounce.", key, prev_event.uri,
             )
+            self._take_prepared(event)
+            self._webstream_generation += 1   # a pending drain must not stop us
+            self._engine.stop()               # clear the scheduled queue as usual
+            self._engine.webstream_gate(True)  # in case a race closed it
+            self._start_webstream_watchdog()
+            return
+        if isinstance(prev_event, WebStreamEvent):
+            # RASTATIME 2026-09-05 - a DIFFERENT stream on the single
+            # webstream source: the drained release cannot work here
+            # (set_url + start on a running input.http does not
+            # reconnect, and the drained stop is then skipped as "a
+            # newer stream took over" - live 11:44:30 the old stream
+            # simply kept playing).  Hard stop, then start: the old
+            # tail is cut and the new stream needs its buffer-up.
+            logger.info(
+                "Web stream %s replaces %s on the single stream source - "
+                "stop + start (no drain possible).", key, prev_event.uri,
+            )
+            self._webstream_generation += 1
+            self._engine.webstream_stop()
+        else:
+            self._close_predecessor_source(prev_event, key)
+        self._engine.stop()  # deferred-stop, clears request.queue
+        if self._take_prepared(event):
+            # RASTATIME 2026-09-04 - pre-buffered at T-10 s: only the
+            # gate has to open.  No reconnect, no buffer-up gap.
+            logger.info("Web stream %s was pre-buffered - opening the gate.", key)
+            self._webstream_generation += 1
             self._engine.webstream_gate(True)
             self._start_webstream_watchdog()
-            # No _start_streamers — Liquidsoap owns the Icecast PUTs
-            # from inside the .liq, and the webstream audio rides the
-            # same bus that the output.icecast + output.file blocks tap.
-        else:
-            # Legacy mpv/VLC path — unchanged from the Phase-C era.
-            # RASTATIME 2026-05-25 — Seamless-Bus-Mix Phase 1 (see
-            # _on_file_start for the rationale).  Short scheduled tracks
-            # just before a webstream item were the prime offender for
-            # the tail-cut symptom.
-            self._engine.wait_until_stopped(timeout=0.5)
-
-            self._engine.stop()
-            self._stop_streamers()
-            self._engine.play(event.uri, cue_in=0.0, gain_db=event.input_gain_db)
-            # Web streams: FFmpeg can also stream an HTTP URL to Icecast.
-            # The per-stream input gain (cc_webstream.input_gain_db) is
-            # applied via the same -af volume=<dB>dB mechanism as file
-            # ReplayGain (see FfmpegStreamer.start()'s gain_db parameter).
-            self._start_streamers(event.uri, gain_db=event.input_gain_db)
+            return
+        self._webstream_generation += 1
+        self._engine.webstream_start(
+            event.uri, gain_db=event.input_gain_db,
+        )
+        self._engine.webstream_gate(True)
+        self._start_webstream_watchdog()
 
     def _resolve_linein_device(self, event: "LineinEvent") -> Optional[str]:
         """
@@ -2094,33 +1940,32 @@ class PlayoutScheduler:
 
     def _on_linein_start(self, key: str, event: LineinEvent) -> None:
         """
-        Bring a scheduled Line-In on air (Phase B).
+        Bring a scheduled Line-In on air (Phase B, Liquidsoap since
+        Phase F).
 
         Pipeline:
 
-          FFmpegLineinCapture → /linein-capture  →  mpv (local monitor)
-                                              \\
-                                               → 3× FfmpegStreamer →
-                                                 rastatime192 / -aac / -ogg
+          FfmpegLineinCapture (MME feeder) → /linein-capture mount
+                → Liquidsoap input.http (linein_http) → bus
+                → Icecast outputs + recording
 
-        The capture itself runs the same source-switcher-aware "queue
-        but don't override DJ" pattern as :meth:`_on_file_start` /
-        :meth:`_on_webstream_start`.  Specifically: we DO start the
-        capture process even when a DJ is active, because mpv would
-        otherwise have nothing to fall back to at DJ-disconnect time
-        — but we don't repoint mpv or the streamers, so the DJ stream
-        stays on air.  ``switch_audio_source(SCHEDULED)`` /
-        :meth:`_resume_scheduled_locked` then wires the listeners up.
+        Rows without a stored device name use the in-process dshow
+        source (``engine.linein_start``) instead of the feeder.
+
+        Same source-switcher-aware "queue but don't override DJ"
+        pattern as :meth:`_on_file_start` / :meth:`_on_webstream_start`:
+        while a DJ is active only the bookkeeping happens, and the
+        resume path re-arms the line-in on disconnect.
 
         Same-device transition shortcut (Phase B.4 #3 — 2026-05-13)
         ----------------------------------------------------------
         If the PREVIOUS event was already a LineinEvent against the
         same physical device AND the capture is still running, this
-        is a "back-to-back same-mic show change" — keep the capture,
-        mpv playback, and three FfmpegStreamer instances all alive.
-        Zero audio bounce, no dshow re-acquisition race.  The earlier
-        event's ``_on_stop`` is also same-device-aware and skips its
-        own teardown in that situation, so this shortcut works
+        is a "back-to-back same-mic show change" — keep the capture
+        and the Liquidsoap source alive.  Zero audio bounce, no device
+        re-acquisition race.  The earlier event's ``_on_stop`` is also
+        same-device-aware and skips its own teardown in that
+        situation, so this shortcut works
         regardless of which timer fired first.
         """
         logger.info(
@@ -2169,7 +2014,7 @@ class PlayoutScheduler:
         if same_device_transition:
             logger.info(
                 "Line-In %s: same-device transition (device=%s) — keeping "
-                "the running capture, mpv playback, and streamers alive; "
+                "the running capture and the Liquidsoap source alive; "
                 "no audio-pipeline bounce.",
                 key, event.device_id,
             )
@@ -2180,8 +2025,7 @@ class PlayoutScheduler:
         # webstream predecessor (if any) is released by the same call
         # that would run below, the queue is cleared, and we are done.
         if (
-            self._streaming_handled_externally
-            and self._linein_capture is not None
+            self._linein_capture is not None
             and self._linein_capture.is_running
             and self._take_prepared(event)
         ):
@@ -2205,185 +2049,122 @@ class PlayoutScheduler:
             )
             return
 
-        # RASTATIME 2026-05-30 — Phase-F-2: dual-engine line-in handling.
-        #
-        # Liquidsoap-Engine path (streaming_handled_externally=True):
-        # input.ffmpeg(format="dshow") opens the device DIRECTLY in
-        # Liquidsoap's in-process libavdevice — no FfmpegLineinCapture
-        # subprocess, no HTTP hop.  Pypo builds the dshow alternative-
-        # name spec from the device GUID and hands it to
-        # engine.linein_start(spec), which does set_url + start over
-        # telnet.  The .liq switch ranks DJ sources above linein, so if
-        # a DJ is active we just bookkeep + return (same as webstream);
-        # the resume path re-arms on disconnect.
-        if self._streaming_handled_externally:
-            if self._switcher and self._switcher.current_state != SourceState.SCHEDULED:
-                logger.info(
-                    "Line-In %s queued — %s source active, scheduled "
-                    "line-in held back.",
-                    key, self._switcher.current_state.value,
-                )
-                return
-            # RASTATIME 2026-09-03 - EVERY scheduled line-in now runs
-            # through the sounddevice/MME feeder, plain stereo included
-            # (operator decision "Option B", 2026-09-03).
-            #
-            # Until today plain stereo (1/2) took the direct-dshow source
-            # instead.  That path addresses the device by GUID
-            # (wave_{<endpoint guid>}), but DirectShow enumerates its own
-            # device GUIDs -- which are NOT the WASAPI endpoint GUIDs we
-            # store.  Live proof (15:20 test show, "Tascam 1-2"): dshow
-            # answered "Could not find audio only device" and the slot
-            # stayed silent, while the very same device opened fine
-            # through MME.  Rather than teach the dshow path a second
-            # addressing scheme, we unify on the feeder: it resolves by
-            # friendly name, is proven on every channel pair, and is
-            # already the path the operator listens to.
-            #
-            # The dshow source stays in the .liq as the fallback for
-            # legacy rows that never stored a device name -- the feeder
-            # cannot resolve a PortAudio device from a GUID alone.
-            mapping = list(getattr(event, "channel_mapping", None) or [0, 1])
-            dev_name = getattr(event, "device_name", "") or ""
-            use_feeder = bool(dev_name)
-            if not use_feeder:
-                logger.error(
-                    "Line-In %s: no stored device name (legacy save), so the "
-                    "MME feeder cannot resolve the device; falling back to "
-                    "the direct dshow source on channels 1/2 (requested "
-                    "mapping %s).  Re-save the line-in in Settings -> Local "
-                    "Machine to store the device name.",
-                    key, mapping,
-                )
-
-            # RASTATIME 2026-09-04 - a webstream predecessor outranks us in
-            # the bus switch; close it ourselves rather than trusting the
-            # racing _on_stop (see _close_predecessor_source).
-            if isinstance(prev_event, WebStreamEvent):
-                self._close_predecessor_source(prev_event, key)
-            self._engine.stop()  # clear the scheduled queue (deferred-stop)
-            # Race fix #3 — mark a new line-in generation BEFORE the telnet
-            # round-trip, so a racing _on_stop (for the previous show) that
-            # snapshotted the old value sees the bump and skips its
-            # teardown instead of stopping the source we are bringing up.
-            self._linein_generation += 1
-
-            if use_feeder and self._linein_capture is not None:
-                # RASTATIME 2026-09-03 - Lever 2 (line-in start-gap fix).
-                # Arm the input.http companion BEFORE the blocking feeder
-                # start.  FfmpegLineinCapture.start() spends ~0.75 s on a
-                # health-check sleep before returning; starting input.http
-                # first lets its connect + max_buffer fill overlap that
-                # window instead of running strictly after it (~0.75 s of
-                # dead air shaved).  A small poll_delay in the .liq lets it
-                # grab the mount within half a second of the feeder
-                # publishing it.  If the feeder never comes up we stop the
-                # source again below (the b4cd37b guard, preserved).
-                self._engine.linein_start_http()
-                self._engine.linein_gate(True)  # may be closed from an undone pre-warm
-                try:
-                    self._linein_capture.start(
-                        resolved_device_id,
-                        channel_mapping=tuple(mapping),
-                        device_name=dev_name,
-                    )
-                except Exception as exc:  # pylint: disable=broad-exception-caught
-                    logger.error(
-                        "Line-In %s: feeder capture start failed for "
-                        "device %s (channels %s): %s",
-                        key, resolved_device_id, mapping, exc,
-                    )
-                    self._engine.linein_stop()
-                    return
-                # start() gives up QUIETLY after its retry ladder (logs,
-                # no raise), so verify: without a capture there is no
-                # mount, and the http source armed above would poll a 404
-                # for the rest of the slot unless we stop it now.
-                if not self._linein_capture.is_running:
-                    logger.error(
-                        "Line-In %s: capture did not come up - stopping "
-                        "the pre-armed linein_http source so it does not "
-                        "poll a dead mount.", key,
-                    )
-                    self._engine.linein_stop()
-                    return
-                return
-
-            # Build dshow alternative-name spec from the device GUID.
-            # _stable_id_to_dshow_audio lives in ffmpeg_linein_capture
-            # (kept as the legacy capture layer); it's a pure helper,
-            # safe to reuse without instantiating the capture class.
-            from .engine.ffmpeg_linein_capture import _stable_id_to_dshow_audio
-            dshow_spec = _stable_id_to_dshow_audio(resolved_device_id)
-            self._engine.linein_start(dshow_spec)
-            # No _start_streamers — Liquidsoap owns the Icecast PUTs and
-            # opens the dshow device itself.
-            return
-
-        # ----- Legacy mpv/VLC path (unchanged from Phase B) -----------
-        # FfmpegLineinCapture stays as the capture layer here until the
-        # mpv-engine code is deleted.  Always start the capture — it
-        # pushes to /linein-capture regardless of whether a DJ is
-        # overriding downstream playback.  start() is same-device-
-        # idempotent (safe after a watchdog restore).
-        # Race fix #3 — see the Liquidsoap branch above; bump before
-        # touching the capture so a racing previous-show _on_stop bails.
-        self._linein_generation += 1
-        try:
-            self._linein_capture.start(
-                resolved_device_id,
-                channel_mapping=tuple(
-                    getattr(event, "channel_mapping", None) or (0, 1)
-                ),
-                device_name=getattr(event, "device_name", "") or "",
-            )
-        except Exception as exc:  # pylint: disable=broad-exception-caught
-            logger.error(
-                "Line-In %s: capture start failed for device %s: %s",
-                key, resolved_device_id, exc,
-            )
-            return
-
-        # If a DJ source is currently dominant, leave the audio engine
-        # and outgoing streamers on the DJ feed.  Capture is running
-        # though, so when the DJ disconnects, the resume path will
-        # point mpv + streamers at the listen URL we just set.
+        # RASTATIME 2026-05-30 — Phase-F-2: Liquidsoap line-in handling.
+        # The .liq switch ranks DJ sources above linein, so if a DJ is
+        # active we just bookkeep + return (same as webstream); the
+        # resume path re-arms on disconnect.
         if self._switcher and self._switcher.current_state != SourceState.SCHEDULED:
             logger.info(
-                "Line-In %s queued — %s source active, capture running "
-                "but local/output stream stays on DJ feed.",
+                "Line-In %s queued — %s source active, scheduled "
+                "line-in held back.",
                 key, self._switcher.current_state.value,
             )
             return
+        # RASTATIME 2026-09-03 - EVERY scheduled line-in now runs
+        # through the sounddevice/MME feeder, plain stereo included
+        # (operator decision "Option B", 2026-09-03).
+        #
+        # Until today plain stereo (1/2) took the direct-dshow source
+        # instead.  That path addresses the device by GUID
+        # (wave_{<endpoint guid>}), but DirectShow enumerates its own
+        # device GUIDs -- which are NOT the WASAPI endpoint GUIDs we
+        # store.  Live proof (15:20 test show, "Tascam 1-2"): dshow
+        # answered "Could not find audio only device" and the slot
+        # stayed silent, while the very same device opened fine
+        # through MME.  Rather than teach the dshow path a second
+        # addressing scheme, we unify on the feeder: it resolves by
+        # friendly name, is proven on every channel pair, and is
+        # already the path the operator listens to.
+        #
+        # The dshow source stays in the .liq as the fallback for
+        # legacy rows that never stored a device name -- the feeder
+        # cannot resolve a PortAudio device from a GUID alone.
+        mapping = list(getattr(event, "channel_mapping", None) or [0, 1])
+        dev_name = getattr(event, "device_name", "") or ""
+        use_feeder = bool(dev_name)
+        if not use_feeder:
+            logger.error(
+                "Line-In %s: no stored device name (legacy save), so the "
+                "MME feeder cannot resolve the device; falling back to "
+                "the direct dshow source on channels 1/2 (requested "
+                "mapping %s).  Re-save the line-in in Settings -> Local "
+                "Machine to store the device name.",
+                key, mapping,
+            )
 
-        # SCHEDULED path: swap the engine + FFmpeg streamers onto the
-        # capture's listen URL.  RASTATIME 2026-05-25 — Seamless-Bus-Mix
-        # Phase 1 (see _on_file_start for the rationale).
-        self._engine.wait_until_stopped(timeout=0.5)
-        self._engine.stop()
-        self._stop_streamers()
-        self._engine.play(self._linein_capture.listen_url, cue_in=0.0)
-        self._start_streamers(self._linein_capture.listen_url)
+        # RASTATIME 2026-09-04 - a webstream predecessor outranks us in
+        # the bus switch; close it ourselves rather than trusting the
+        # racing _on_stop (see _close_predecessor_source).
+        if isinstance(prev_event, WebStreamEvent):
+            self._close_predecessor_source(prev_event, key)
+        self._engine.stop()  # clear the scheduled queue (deferred-stop)
+        # Race fix #3 — mark a new line-in generation BEFORE the telnet
+        # round-trip, so a racing _on_stop (for the previous show) that
+        # snapshotted the old value sees the bump and skips its
+        # teardown instead of stopping the source we are bringing up.
+        self._linein_generation += 1
+
+        if use_feeder and self._linein_capture is not None:
+            # RASTATIME 2026-09-03 - Lever 2 (line-in start-gap fix).
+            # Arm the input.http companion BEFORE the blocking feeder
+            # start.  FfmpegLineinCapture.start() spends ~0.75 s on a
+            # health-check sleep before returning; starting input.http
+            # first lets its connect + max_buffer fill overlap that
+            # window instead of running strictly after it (~0.75 s of
+            # dead air shaved).  A small poll_delay in the .liq lets it
+            # grab the mount within half a second of the feeder
+            # publishing it.  If the feeder never comes up we stop the
+            # source again below (the b4cd37b guard, preserved).
+            self._engine.linein_start_http()
+            self._engine.linein_gate(True)  # may be closed from an undone pre-warm
+            try:
+                self._linein_capture.start(
+                    resolved_device_id,
+                    channel_mapping=tuple(mapping),
+                    device_name=dev_name,
+                )
+            except Exception as exc:  # pylint: disable=broad-exception-caught
+                logger.error(
+                    "Line-In %s: feeder capture start failed for "
+                    "device %s (channels %s): %s",
+                    key, resolved_device_id, mapping, exc,
+                )
+                self._engine.linein_stop()
+                return
+            # start() gives up QUIETLY after its retry ladder (logs,
+            # no raise), so verify: without a capture there is no
+            # mount, and the http source armed above would poll a 404
+            # for the rest of the slot unless we stop it now.
+            if not self._linein_capture.is_running:
+                logger.error(
+                    "Line-In %s: capture did not come up - stopping "
+                    "the pre-armed linein_http source so it does not "
+                    "poll a dead mount.", key,
+                )
+                self._engine.linein_stop()
+                return
+            return
+
+        # Build dshow alternative-name spec from the device GUID.
+        # _stable_id_to_dshow_audio lives in ffmpeg_linein_capture (the
+        # feeder module); it's a pure helper, safe to reuse without
+        # instantiating the capture class.
+        from .engine.ffmpeg_linein_capture import _stable_id_to_dshow_audio
+        dshow_spec = _stable_id_to_dshow_audio(resolved_device_id)
+        self._engine.linein_start(dshow_spec)
 
     def _on_linein_capture_restart(self) -> None:
         """
         Callback fired by :class:`FfmpegLineinCapture`'s watchdog after a
-        successful auto-restart of the dshow subprocess (Phase B.4 #1 —
+        successful auto-restart of the capture subprocess (Phase B.4 #1 —
         device unplugged mid-show).
 
-        When FFmpeg dies, mpv sees the HTTP stream disconnect and logs
-        ``"Stream ends prematurely"`` followed by ``end-file`` — i.e.
-        mpv is now idle.  The three FfmpegStreamer instances reading
-        the same /linein-capture mount likewise lose their input.
-        Just respawning FFmpeg fixes the *Icecast source* but not the
-        downstream consumers; they would stay tuned to a dead stream
-        until the next 120-s schedule poll re-armed everything.
-
-        This callback re-points mpv and the streamers at the (now
-        live again) listen URL — same wiring as ``_on_linein_start``'s
-        SCHEDULED path, minus the bookkeeping.  Runs on the watchdog
-        thread; takes the scheduler lock so a parallel ``refresh()``
-        cannot tear things down underneath us.
+        The local /linein-capture mount is published again, but the
+        Liquidsoap ``input.http`` companion may have given up on the
+        dead stream.  Re-arm it (stop + start of ``linein_http``, same
+        wiring as the resume path) and make sure the gate is open.
+        Runs on the watchdog thread; takes the scheduler lock so a
+        parallel ``refresh()`` cannot tear things down underneath us.
 
         Idempotent and safe-no-op if:
 
@@ -2391,9 +2172,15 @@ class PlayoutScheduler:
             Show ended exactly during the 5-s restart back-off and
             ``_on_stop`` already ran).
           * A non-SCHEDULED source is dominant — DJ or Master takes
-            priority; capture is alive but mpv/streamers stay on the
-            DJ feed.  When the DJ disconnects, ``_resume_scheduled_locked``
-            will pick up the (still running) capture.
+            priority; capture is alive but the DJ stays on air.  When
+            the DJ disconnects, ``_resume_scheduled_locked`` re-arms
+            the (still running) capture.
+          * The playing line-in uses the in-process dshow source (no
+            stored device name) — the capture is not part of that path.
+
+        RASTATIME 2026-09-10: until the mpv cleanup this callback pushed
+        the listen URL through ``engine.play`` (the mpv wiring), which
+        with Liquidsoap would have queued the mount as a file request.
         """
         with self._lock:
             if not isinstance(self._current_event, LineinEvent):
@@ -2409,23 +2196,25 @@ class PlayoutScheduler:
             ):
                 logger.info(
                     "Line-In capture restart callback: %s source dominant "
-                    "— capture is back, but local/output stay on that feed.",
+                    "— capture is back, but the DJ stays on air.",
                     self._switcher.current_state.value,
                 )
                 return
 
-            if self._linein_capture is None:
-                return  # defensive; should not happen if callback fired
+            if not (getattr(self._current_event, "device_name", "") or ""):
+                logger.info(
+                    "Line-In capture restart callback: the playing line-in "
+                    "uses the direct dshow source — nothing to re-wire.",
+                )
+                return
 
-            listen_url = self._linein_capture.listen_url
             logger.info(
-                "Line-In capture restart callback: re-pointing mpv + "
-                "streamers at %s", listen_url,
+                "Line-In capture restart callback: re-arming the Liquidsoap "
+                "input.http companion on %s",
+                self._linein_capture.listen_url if self._linein_capture else "?",
             )
-            self._engine.stop()
-            self._stop_streamers()
-            self._engine.play(listen_url, cue_in=0.0)
-            self._start_streamers(listen_url)
+            self._engine.linein_start_http()
+            self._engine.linein_gate(True)
 
     # ------------------------------------------------------------------
     # Show-record callbacks (Phase B / ARCHITECTURE Section 23.13)
@@ -2449,11 +2238,6 @@ class PlayoutScheduler:
         and silently skipped — the show plays normally, only the
         recording is missing.
 
-        Legacy mpv/VLC engine path (``streaming_handled_externally=
-        False``): logs a warning and silently skips.  Recording was
-        only ever implemented for the deleted FfmpegRecorder; with
-        that gone, recording requires the Liquidsoap engine.
-
         Compared to the deleted FfmpegRecorder lifecycle, the
         Liquidsoap path has:
           * No HTTP-source-tap (recording is on the same internal bus
@@ -2462,15 +2246,6 @@ class PlayoutScheduler:
           * No mid-show watchdog respawn (no subprocess to crash)
           * No post-roll Timer (no HTTP-buffering lag to compensate)
         """
-        if not self._streaming_handled_externally:
-            logger.warning(
-                "Show-record start ignored (key=%s show_id=%s name=%r): "
-                "recording requires RASTATIME_PLAYOUT_ENGINE=liquidsoap "
-                "since C5 Teil 2d deleted FfmpegRecorder.",
-                key, event.show_id, event.show_name,
-            )
-            return
-
         folder = self._fetch_recording_folder()
         if not folder:
             logger.warning(
@@ -2534,14 +2309,7 @@ class PlayoutScheduler:
         is on the SAME internal bus as the Icecast outputs (the
         deleted FfmpegRecorder's 1 s post-roll was a workaround for
         HTTP-source-buffering lag that doesn't apply to the bus tap).
-
-        Legacy mpv/VLC engine path: no-op.  See
-        :meth:`_on_show_record_start` for the recording-requires-
-        Liquidsoap design decision.
         """
-        if not self._streaming_handled_externally:
-            return
-
         logger.info(
             "STOP (show-record end, Liquidsoap)  %s  |  show_id=%s "
             "name=%r",
@@ -2626,9 +2394,8 @@ class PlayoutScheduler:
         # If we WERE the playing event AND another LineinEvent against
         # the same device is already armed with a live start-timer
         # (back-to-back shows that share a mic), defer everything to
-        # B's _on_linein_start: keep the FFmpeg-dshow capture, the
-        # mpv-monitor playback, and the three FfmpegStreamer instances
-        # all alive.  B's handler will see ``self._current_event`` is
+        # B's _on_linein_start: keep the capture and the Liquidsoap
+        # line-in source alive.  B's handler will see ``self._current_event`` is
         # still us (a LineinEvent with the same device_id) and take the
         # same-device-transition shortcut — net result is a pure
         # bookkeeping swap with zero audio bounce.
@@ -2675,7 +2442,7 @@ class PlayoutScheduler:
         # line-in rule above): a WebStreamEvent with the SAME url starting
         # within the back-to-back window inherits the running source; do
         # not release it here, _on_webstream_start does the hand-over.
-        if was_webstream and self._streaming_handled_externally:
+        if was_webstream:
             cur_uri = getattr(self._current_event, "uri", None)
             for other_key, other_event in self._armed_events.items():
                 if other_key == key or not isinstance(other_event, WebStreamEvent):
@@ -2758,12 +2525,9 @@ class PlayoutScheduler:
         # event being torn down AND no same-device successor needs the
         # capture alive.  Safe to call even when no capture is running
         # (idempotent).
-        # RASTATIME 2026-09-04 - the capture is no longer stopped here:
-        # in Liquidsoap mode _release_linein() (below) closes the gate
-        # first and stops capture + source after the drain, so the
-        # buffered tail is heard.  Legacy engines still stop it at once.
-        if was_linein and not self._streaming_handled_externally and self._linein_capture is not None:
-            self._linein_capture.stop()
+        # RASTATIME 2026-09-04 - the capture is not stopped here:
+        # _release_linein() (below) closes the gate first and stops
+        # capture + source after the drain, so the buffered tail is heard.
 
         # If a DJ source is currently dominant, leave the engine alone —
         # the DJ audio stays on air.  Only the scheduled-event bookkeeping
@@ -2772,13 +2536,11 @@ class PlayoutScheduler:
             return
 
         # RASTATIME 2026-05-29 — Phase F: linein-specific teardown.
-        # In Liquidsoap-Mode a linein-event uses input.http (not the
+        # A linein-event uses input.http / input.ffmpeg (not the
         # request.queue), so engine.stop() alone would not close the
-        # HTTP session.  Call linein_stop() explicitly so the bus-
-        # switch falls through to scheduled.  FfmpegLineinCapture.stop()
-        # already happened above (line ~1349) — that's the dshow
-        # subprocess side; this is the Liquidsoap-source side.
-        if was_linein and self._streaming_handled_externally:
+        # source.  _release_linein() closes the gate now and stops
+        # capture + source after the drain.
+        if was_linein:
             # Race fix #3 final guard — a follow-up show may have started
             # its source during the brief teardown window above (after we
             # cleared bookkeeping).  The generation counter survives that
@@ -2794,186 +2556,30 @@ class PlayoutScheduler:
             self._release_linein(f"slot end {key}")
             # No further engine.stop() / wait_until_stopped — the
             # linein had its own source path that's now closed.
-            self._stop_streamers()  # no-op in Liquidsoap-Mode
             return
 
         # RASTATIME 2026-05-29 — Phase E: webstream-specific teardown.
-        # In Liquidsoap-Mode a webstream-event uses input.http (not the
-        # request.queue), so engine.stop() (which sends scheduled.skip)
-        # would not close the HTTP session.  Call webstream_stop()
-        # explicitly to tear down the input.http and let the switch
-        # fall through to scheduled.
-        if was_webstream and self._streaming_handled_externally:
+        # A webstream-event uses input.http (not the request.queue), so
+        # engine.stop() (which sends scheduled.skip) would not close the
+        # HTTP session.  _release_webstream() closes the gate now and
+        # stops the source after the drain, so the switch falls through
+        # to scheduled.
+        if was_webstream:
             self._release_webstream(f"slot end {key}")
             # No further engine.stop() / wait_until_stopped — the
             # webstream had its own source path that's now closed.
-            # The Pypo _stop_streamers no-op below stays for API
-            # symmetry (it's already a no-op in Liquidsoap-Mode).
-            self._stop_streamers()
             return
 
         # RASTATIME 2026-05-25 — Seamless-Bus-Mix Phase 1 (follow-up).
         # The _on_stop handler is the SECOND track-end stop path, fired
         # by the track-end Timer just as _on_*_start fires for the next
-        # event.  Without a wait here the scheduler-clock-driven mpv
-        # stop cut short-track tails by 1–2 s.  Same 200 ms bounded
-        # wait as in _on_*_start so a track that's already at EOF
-        # returns immediately and a still-decoding tail gets a brief
-        # grace period before the hard-stop.
+        # event.  Same bounded wait as in _on_*_start so a track that
+        # is already at EOF returns immediately and a still-decoding
+        # tail gets a brief grace period before the hard-stop (the
+        # Liquidsoap engine returns at once).
         if self._engine.get_state() == PlayoutState.PLAYING:
             self._engine.wait_until_stopped(timeout=0.5)
             self._engine.stop()
-        self._stop_streamers()
-
-    # ------------------------------------------------------------------
-    # FFmpeg streamer management
-    # ------------------------------------------------------------------
-
-    def _start_streamers(
-        self,
-        audio_path: str,
-        *,
-        seek_seconds: float = 0.0,
-        gain_db: Optional[float] = None,
-    ) -> None:
-        """Start all FFmpeg Icecast streamers for the given audio file.
-
-        RASTATIME 2026-05-16 — ``gain_db`` is a generic per-event dB
-        offset that each streamer applies as a ``-af volume=<dB>dB``
-        filter (see FfmpegStreamer.start()).  Source of the value
-        depends on the calling event type:
-
-          * File events: precomputed ReplayGain sum.
-          * Webstream events: ``cc_webstream.input_gain_db``.
-          * Live sources (Master/Show, Linein): ``None`` (no gain).
-
-        (Was ``replay_gain_db`` before 2026-05-16; renamed when
-        webstream input-gain joined the same plumbing.)
-        """
-        for streamer in self._streamers:
-            try:
-                streamer.start(
-                    audio_path,
-                    seek_seconds=seek_seconds,
-                    gain_db=gain_db,
-                )
-            except Exception as exc:  # pylint: disable=broad-exception-caught
-                logger.error("FFmpeg streamer start failed: %s", exc)
-
-    def _stop_streamers(self) -> None:
-        """
-        Stop all running FFmpeg Icecast streamers in parallel.
-
-        RASTATIME 2026-05-25 — was sequential; that cost ~500 ms per
-        streamer (3 × 500 = ~1.5 s) on every track change, directly
-        bloating the next-track mpv-start latency.  The visible
-        symptom was scheduled tracks getting cut 1–2 s before their
-        actual cue_out because mpv only got to play (slot – 1.5 s).
-        Running the three stops in worker threads + joining brings
-        the total wait down to roughly the cost of the slowest
-        single streamer (~500 ms instead of ~1.5 s).
-
-        Each ``streamer.stop()`` is already thread-safe (its own
-        lifecycle lock), so parallel calls do not race each other.
-        """
-        if not self._streamers:
-            return
-
-        threads = []
-        for streamer in self._streamers:
-            def _stop_one(_s=streamer):
-                try:
-                    _s.stop()
-                except Exception as exc:  # pylint: disable=broad-exception-caught
-                    logger.error("FFmpeg streamer stop failed: %s", exc)
-            t = threading.Thread(target=_stop_one, daemon=True,
-                                 name=f"stop-streamer-{id(streamer):x}")
-            t.start()
-            threads.append(t)
-
-        # Bounded join — if a streamer hangs we don't want to block
-        # the scheduler thread forever.  ffmpeg.stop() itself already
-        # has a 3 s graceful-exit timeout, so 4 s here is enough
-        # headroom without freezing the next track.
-        for t in threads:
-            t.join(timeout=4.0)
-
-    def _reload_stream_outputs_if_changed(self) -> None:
-        """
-        Re-read stream outputs from cc_pref and rebuild streamers if the
-        configuration has changed.  Called on every refresh() so user
-        changes in Frontend → Settings → Streams take effect within one
-        poll cycle, with no service restart required.
-
-        If a track is currently playing, the new streamers are started
-        immediately on the same audio file (with seek to current position),
-        so listeners hear at most a brief reconnect on the new mountpoint.
-        """
-        if self._read_stream_outputs is None:
-            return
-
-        # When Liquidsoap owns the Icecast PUTs, cc_pref changes apply
-        # only after the operator manually re-renders rastatime.liq +
-        # restarts the NSSM service (see __main__._render_rastatime_liq_at_startup).
-        # Pypo's hot-reload path here would rebuild FfmpegStreamer
-        # subprocesses that fight Liquidsoap for the same mounts — so
-        # we skip the whole rebuild.
-        if self._streaming_handled_externally:
-            return
-
-        try:
-            new_configs = self._read_stream_outputs()
-        except Exception as exc:  # pylint: disable=broad-exception-caught
-            logger.warning("Hot-reload: could not re-read stream outputs: %s", exc)
-            return
-
-        if new_configs == self._current_stream_configs:
-            return  # unchanged — fast path on every poll
-
-        logger.info(
-            "Stream outputs changed in cc_pref — reloading streamers "
-            "(was %d, now %d)",
-            len(self._current_stream_configs), len(new_configs),
-        )
-
-        # Tear down the existing streamers cleanly
-        self._stop_streamers()
-        for streamer in self._streamers:
-            try:
-                streamer.close()
-            except Exception:  # pylint: disable=broad-exception-caught
-                pass
-
-        # Build the new set of streamers
-        new_streamers: List[FfmpegStreamer] = []
-        for cfg in new_configs:
-            try:
-                new_streamers.append(FfmpegStreamer(cfg))
-            except RuntimeError as exc:
-                logger.error("Hot-reload: could not create FfmpegStreamer: %s", exc)
-
-        self._streamers = new_streamers
-        self._current_stream_configs = list(new_configs)
-
-        # If a track is playing right now, kick the new streamers off
-        # mid-track so the new mountpoints/codecs come online immediately.
-        if (
-            self._current_audio_path is not None
-            and self._current_event is not None
-            and self._streamers
-        ):
-            now = datetime.utcnow()
-            elapsed = (now - self._current_event.start).total_seconds()
-            seek = max(0.0, elapsed)
-            logger.info(
-                "Hot-reload: restarting streamers mid-track at seek=%.1fs",
-                seek,
-            )
-            self._start_streamers(
-                self._current_audio_path,
-                seek_seconds=seek,
-                gain_db=self._current_gain_db,
-            )
 
     # ------------------------------------------------------------------
     # Source switcher (MASTER > SHOW > SCHEDULED)
@@ -3019,81 +2625,36 @@ class PlayoutScheduler:
         React to a state transition signalled by the SourceSwitcher.
 
         Called from a daemon thread (the HTTP listener / Liquidsoap
-        telnet reconciler), so we serialise access to the engine +
-        streamers via the existing scheduler lock — that keeps us
-        coherent against schedule refreshes and timer callbacks
-        happening at the same moment.
+        telnet reconciler), so we serialise access to the engine via
+        the existing scheduler lock — that keeps us coherent against
+        schedule refreshes and timer callbacks happening at the same
+        moment.
 
-        RASTATIME 2026-05-27 — Phase-C4 Teil 2b.  In the Liquidsoap
-        engine path (``streaming_handled_externally=True``) the
-        MASTER / SHOW branches are no-ops: Liquidsoap's own
+        MASTER / SHOW are no-ops here: Liquidsoap's own
         ``switch(track_sensitive=true, [(source.is_ready(master_dj),
-        master_dj), …])`` in rastatime.liq picks the active source
-        automatically via ``input.harbor.source.is_ready()`` — Pypo
-        does NOT need to push the Icecast-mount URL into the queue
-        like the legacy mpv/VLC path does (those engines own the
-        soundcard output and must explicitly load the DJ-relay
-        stream to make it audible locally).
-
-        Pushing ``engine.play(http://127.0.0.1:8000/show)`` against
-        Liquidsoap in the C4 setup is actively harmful — that mount
-        is empty (the DJ now connects to port 8001/Liquidsoap-harbor,
-        not port 8000/Icecast), so Liquidsoap times out trying to
-        decode it + spams the log.
-
-        SCHEDULED path stays active in both modes: after a DJ
-        disconnect Pypo still wants to push the in-progress
-        scheduled track into the queue so it picks up cleanly when
-        Liquidsoap's fallback switches back from blank() to the
-        scheduled queue.
+        master_dj), …])`` in rastatime.liq picks the active harbor via
+        ``input.harbor.source.is_ready()`` (Phase-C4 Teil 2b).  Only
+        SCHEDULED does work: after a DJ disconnect the in-progress
+        scheduled item is pushed / re-armed so the bus has something to
+        fall back to (see :meth:`_resume_scheduled_locked`).
         """
         logger.info("PlayoutScheduler: switching audio source to %s", state.value)
 
         with self._lock:
-            if self._streaming_handled_externally:
-                # Liquidsoap-engine mode: skip the engine.play(http://...)
-                # DJ-source-relay dance — Liquidsoap's switch operator
-                # handles it natively.  Only the SCHEDULED branch
-                # still needs to push the in-progress track.
-                if state == SourceState.SCHEDULED:
-                    self._resume_scheduled_locked()
-                    logger.info(
-                        "PlayoutScheduler: scheduled resume after "
-                        "DJ-off (Liquidsoap input.harbor switch "
-                        "handled MASTER/SHOW routing internally)",
-                    )
-                else:
-                    logger.info(
-                        "PlayoutScheduler: %s active — Liquidsoap-side "
-                        "switch handles routing via source.is_ready(); "
-                        "no engine.play() needed.",
-                        state.value,
-                    )
-                return
-
-            # Legacy mpv / VLC path: Pypo owns the audio engine and must
-            # explicitly relay the DJ-source Icecast mount.
-            #
-            # Stop whatever is currently producing audio so we can swap
-            # in cleanly.  This briefly silences listeners but a fresh
-            # FFmpeg subprocess connects within a second.
-            self._engine.stop()
-            self._stop_streamers()
-
-            if state == SourceState.MASTER:
-                url = self._build_icecast_input_url("main")
-                self._engine.play(url, cue_in=0.0)
-                self._start_streamers(url, seek_seconds=0.0)
-                logger.info("PlayoutScheduler: now relaying MASTER input from %s", url)
-
-            elif state == SourceState.SHOW:
-                url = self._build_icecast_input_url("show")
-                self._engine.play(url, cue_in=0.0)
-                self._start_streamers(url, seek_seconds=0.0)
-                logger.info("PlayoutScheduler: now relaying SHOW input from %s", url)
-
-            else:  # SCHEDULED — fall back to whichever track should be running
+            if state == SourceState.SCHEDULED:
                 self._resume_scheduled_locked()
+                logger.info(
+                    "PlayoutScheduler: scheduled resume after "
+                    "DJ-off (Liquidsoap input.harbor switch "
+                    "handled MASTER/SHOW routing internally)",
+                )
+            else:
+                logger.info(
+                    "PlayoutScheduler: %s active — Liquidsoap-side "
+                    "switch handles routing via source.is_ready(); "
+                    "no engine.play() needed.",
+                    state.value,
+                )
 
     def set_audio_output(self, device_id: Optional[str]) -> None:
         """
@@ -3116,14 +2677,10 @@ class PlayoutScheduler:
         with self._lock:
             self._engine.set_audio_device(device_id)
 
-    def set_listener_credentials(self, user: str, password: str) -> None:
-        """Set the Basic-Auth credentials used to pick up /main and /show."""
-        self._listener_user = user or ""
-        self._listener_pass = password or ""
-
     def kick_dj_source(self, kind: str) -> None:
         """
-        Force-disconnect the DJ currently streaming to /main or /show.
+        Force-disconnect the DJ currently connected to the Master or
+        Show harbor.
 
         Exposed for the HTTP listener so the PHP frontend can push a
         kick request directly when the operator hits "Cancel Show" or
@@ -3136,130 +2693,35 @@ class PlayoutScheduler:
         as well as the legacy Airtime equivalents ``master_dj`` /
         ``live_dj`` so the PHP side can pass through whatever it already
         uses without translation.
+
+        RASTATIME 2026-09-10: the kick goes over telnet to the harbor
+        inside Liquidsoap (``master_dj.stop`` / ``show_dj.stop``).  The
+        former Icecast admin ``killsource`` of the deleted mpv path
+        could not reach a DJ at all - since Phase C4 the DJs connect to
+        the harbor on port 8001, not to Icecast.  The harbor's
+        on_disconnect callback then reports the disconnect to
+        /source-event, the SourceSwitcher goes to SCHEDULED and the
+        resume path runs as for a voluntary hang-up.  Best-effort: a
+        telnet error is logged by the engine and swallowed.
         """
         kind_norm = (kind or "").lower()
         if kind_norm in ("master", "master_dj"):
-            mount = "/main"
+            source = "master"
         elif kind_norm in ("show", "live_dj", "dj"):
-            mount = "/show"
+            source = "show"
         else:
             logger.warning(
                 "kick_dj_source: unknown source kind %r — ignoring.", kind,
             )
             return
-        logger.info("kick_dj_source(%s) -> killsource %s", kind, mount)
-        self._kick_icecast_source(mount)
-
-    def _kick_icecast_source(self, mount: str) -> None:
-        """
-        Tell Icecast to disconnect the source currently streaming to ``mount``.
-
-        Used when "Cancel Show" is invoked while a show DJ is connected
-        to /show — ending the show by definition ends that DJ's slot.
-
-        Icecast will then emit a source-disconnect event-binding back
-        to our SourceSwitcher, which transitions state to SCHEDULED.
-        Since we clear ``_current_event`` right after this call, the
-        resume path finds nothing to play and the playout falls silent
-        — matching the visible "show cancelled" state.
-
-        Best-effort: if the admin call fails (e.g. credentials wrong,
-        icecast down) we log a warning and carry on.  Scheduled audio
-        was already stopped or about to be by the caller.
-        """
-        # TODO(production): once the Icecast admin-password is hardened
-        # (it ships as 'admin' / 'admin'), move these into libretime.conf
-        # under stream.icecast_admin and load them via __main__ like the
-        # internal-listener credentials.  For now we match the
-        # icecast.xml default so a fresh install works out of the box.
-        admin_user = "admin"
-        admin_pass = "admin"
-        auth = base64.b64encode(
-            f"{admin_user}:{admin_pass}".encode()
-        ).decode()
-        # The mount parameter must keep its leading slash UN-encoded —
-        # ``quote(mount, safe='')`` would emit ``%2Fshow`` and Icecast
-        # would respond "Mount Point /%2Fshow does not exist", silently
-        # leaving the DJ connected.  ``safe='/'`` keeps the slash literal
-        # while still escaping anything exotic that might appear in a
-        # custom mount name.
-        url = (
-            f"http://{self._icecast_host}:{self._icecast_port}"
-            f"/admin/killsource?mount={quote(mount, safe='/')}"
-        )
-        req = urllib_request.Request(
-            url, headers={"Authorization": f"Basic {auth}"}
-        )
-        logger.info("Icecast killsource: POST %s", url)
-        try:
-            with urllib_request.urlopen(req, timeout=2.0) as resp:
-                body = resp.read(2000).decode("utf-8", errors="replace").strip()
-                logger.info(
-                    "Icecast killsource %s -> HTTP %d  body=%r",
-                    mount, resp.status, body,
-                )
-        except urllib_request.HTTPError as exc:
-            body = ""
-            try:
-                body = exc.read(2000).decode("utf-8", errors="replace").strip()
-            except Exception:  # pylint: disable=broad-exception-caught
-                pass
-            # 404 "Source does not exist" is the expected response when
-            # nobody is currently pushing to the mount we tried to kick.
-            # That happens on every Cancel Show that fires while Master
-            # is on-air, or while no DJ at all is connected — perfectly
-            # normal.  Log it at INFO without the "something is wrong"
-            # framing.  Other codes (401 / 400 / 5xx) stay at WARNING
-            # because they DO point at a real misconfiguration.
-            if exc.code == 404:
-                logger.info(
-                    "Icecast killsource %s -> HTTP 404 (no source connected, no-op).",
-                    mount,
-                )
-            else:
-                logger.warning(
-                    "Icecast killsource %s -> HTTP %d  body=%r — the show DJ "
-                    "may remain connected.  Check icecast.xml admin-user / "
-                    "admin-password and the mount name.",
-                    mount, exc.code, body,
-                )
-        except Exception as exc:  # pylint: disable=broad-exception-caught
+        if not hasattr(self._engine, "dj_kick"):
             logger.warning(
-                "Icecast killsource %s failed: %s — the show DJ may "
-                "remain connected; their audio will be ignored once the "
-                "source-disconnect event eventually fires.",
-                mount, exc,
+                "kick_dj_source(%s): the engine cannot kick harbor clients — "
+                "ignoring.", kind,
             )
-
-    def _build_icecast_input_url(self, mount: str) -> str:
-        """
-        Build the icecast input URL the playout uses to relay a DJ's
-        audio onwards to the public output streams.
-
-        Both /main and /show are URL-auth-gated for listeners via the
-        icecast-listener-allow PHP endpoint, which compares the Basic-
-        Auth user/pass against the values from libretime.conf
-        (stream.internal_listener.*).  The credentials must be encoded
-        so a password with reserved characters (':' / '@' / '/' / '#')
-        does not corrupt the URL.
-        """
-        path = f"http://{self._icecast_host}:{self._icecast_port}/{mount.lstrip('/')}"
-        if self._listener_user and self._listener_pass:
-            user_enc = quote(self._listener_user, safe="")
-            pass_enc = quote(self._listener_pass, safe="")
-            return (
-                f"http://{user_enc}:{pass_enc}@"
-                f"{self._icecast_host}:{self._icecast_port}/{mount.lstrip('/')}"
-            )
-        # Falling back to no-credentials would only work if listener-auth
-        # was disabled — warn so the operator sees this in the playout log.
-        logger.warning(
-            "Listener credentials are not configured "
-            "(stream.internal_listener.* in libretime.conf is missing); "
-            "the playout will likely get a 401 from Icecast for %s",
-            mount,
-        )
-        return path
+            return
+        logger.info("kick_dj_source(%s) -> Liquidsoap %s harbor stop", kind, source)
+        self._engine.dj_kick(source)
 
     def _resume_scheduled_locked(self) -> None:
         """
@@ -3278,12 +2740,13 @@ class PlayoutScheduler:
                                  a live source; listeners pick up
                                  wherever the upstream encoder is
                                  right now.
-          * ``LineinEvent``    — re-target mpv + output streamers to
-                                 the /linein-capture mount.  Capture
-                                 process keeps running across DJ-
-                                 override windows, so the mount is
-                                 already populated and resume is
-                                 instant.  (Phase B.)
+          * ``LineinEvent``    — re-arm the Liquidsoap line-in source
+                                 (input.http companion on the feeder's
+                                 /linein-capture mount, or the direct
+                                 dshow source).  The capture keeps
+                                 running across DJ-override windows,
+                                 so the mount is already populated and
+                                 resume is quick.  (Phase B / F.)
 
         Must be called with ``self._lock`` already held.
         """
@@ -3306,8 +2769,19 @@ class PlayoutScheduler:
                 self._current_audio_path,
                 self._current_event.show_name,
             )
-            self._engine.play(self._current_audio_path, cue_in=0.0)
-            self._start_streamers(self._current_audio_path, seek_seconds=0.0)
+            # RASTATIME 2026-09-10 - same wiring as _on_webstream_start:
+            # the slot may have begun while the DJ was live (source never
+            # started), or the source is still running underneath the DJ
+            # (webstream.start on the same URL answers "already started"
+            # in the .liq).  Until the mpv cleanup this pushed the URL
+            # through engine.play, i.e. into the request queue as a file
+            # request.
+            self._webstream_generation += 1
+            self._engine.webstream_start(
+                self._current_audio_path, gain_db=self._current_gain_db,
+            )
+            self._engine.webstream_gate(True)
+            self._start_webstream_watchdog()
             return
 
         if isinstance(self._current_event, LineinEvent):
@@ -3342,9 +2816,7 @@ class PlayoutScheduler:
             # Make sure the capture is still running where the path
             # needs it.  start() is same-device+mapping idempotent, so
             # this never bounces a healthy pipeline.
-            if self._linein_capture is not None and (
-                use_feeder or not self._streaming_handled_externally
-            ):
+            if self._linein_capture is not None and use_feeder:
                 try:
                     self._linein_capture.start(
                         resume_device_id,
@@ -3356,28 +2828,19 @@ class PlayoutScheduler:
                         "Resume line-in: capture (re)start failed: %s", exc,
                     )
 
-            # RASTATIME 2026-08-31 — Liquidsoap mode re-arms the linein
-            # sources themselves (mirror of _on_linein_start), instead
-            # of pushing the capture URL through the request queue —
-            # that legacy branch predates Phase F-2 and pointed the
-            # queue at a mount that does not even exist on the
-            # direct-dshow path.
-            if self._streaming_handled_externally:
-                self._linein_generation += 1
-                if use_feeder:
-                    self._engine.linein_start_http()
-                    self._engine.linein_gate(True)
-                else:
-                    from .engine.ffmpeg_linein_capture import (
-                        _stable_id_to_dshow_audio,
-                    )
-                    self._engine.linein_start(
-                        _stable_id_to_dshow_audio(resume_device_id)
-                    )
-                return
-
-            self._engine.play(self._current_audio_path, cue_in=0.0)
-            self._start_streamers(self._current_audio_path, seek_seconds=0.0)
+            # RASTATIME 2026-08-31 — re-arm the linein sources themselves
+            # (mirror of _on_linein_start).
+            self._linein_generation += 1
+            if use_feeder:
+                self._engine.linein_start_http()
+                self._engine.linein_gate(True)
+            else:
+                from .engine.ffmpeg_linein_capture import (
+                    _stable_id_to_dshow_audio,
+                )
+                self._engine.linein_start(
+                    _stable_id_to_dshow_audio(resume_device_id)
+                )
             return
 
         # FileEvent — seek into the track to catch up.
@@ -3408,11 +2871,6 @@ class PlayoutScheduler:
             cue_in=cue_in,
             gain_db=self._current_gain_db,
             metadata=resume_metadata,
-        )
-        self._start_streamers(
-            self._current_audio_path,
-            seek_seconds=seek,
-            gain_db=self._current_gain_db,
         )
 
     # ------------------------------------------------------------------

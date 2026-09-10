@@ -1,9 +1,9 @@
 """
 SourceSwitcher — live-source switching for RASTATIME playout.
 
-Bridges Icecast's source-connect / source-disconnect event bindings
-into a state machine that decides which audio the RASTATIME playout
-should be on:
+Bridges the DJ-source connect / disconnect events of the Liquidsoap
+harbors into a state machine that decides which audio the RASTATIME
+playout should be on:
 
     MASTER  > SHOW > SCHEDULED
 
@@ -18,37 +18,35 @@ this module is just the trigger plumbing.
 Wire-up
 -------
 A small HTTP listener (``http.server.ThreadingHTTPServer``) is started
-in a daemon thread on ``127.0.0.1:8770``.  Icecast's ``<event-bindings>``
-in ``icecast.xml`` are configured to fire GET requests to::
+in a daemon thread on ``127.0.0.1:8770``.  The harbor
+``on_connect``/``on_disconnect`` callbacks rendered into rastatime.liq
+(option d, 2026-09-09) post::
 
     /source-event?source=master&status=on
     /source-event?source=master&status=off
     /source-event?source=show&status=on
     /source-event?source=show&status=off
 
-    Since 2026-09-09 (option d) these events are posted by the harbor
-    on_connect/on_disconnect callbacks rendered into rastatime.liq;
-    the Liquidsoap telnet reconciler only verifies them.
+The Liquidsoap telnet reconciler only verifies them (once after each
+event, then every RASTATIME_DJ_RECONCILE_SECONDS).  Until 2026-09-10
+the same endpoint was fed by Icecast event bindings for the deleted
+mpv engine path.
 
-The listener stays bound to localhost — Icecast runs on the same host
-and we don't want random external clients to be able to fake DJ
-connect events.
+The listener stays bound to localhost — Liquidsoap and Apache run on
+the same host and we don't want random external clients to be able to
+fake DJ connect events.
 
 Latency
 -------
-Push-based, end-to-end Icecast → Playout: a few tens of milliseconds.
-No polling.  Meets the "max 1 s" requirement comfortably.
+Push-based, end-to-end Liquidsoap → Playout: a few tens of
+milliseconds.  No polling.  Meets the "max 1 s" requirement comfortably.
 """
 
-import base64
 import json
 import logging
 import os
 import threading
 import time
-import urllib.error
-import urllib.request
-import xml.etree.ElementTree as ET
 from enum import Enum
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Callable, Mapping, Optional
@@ -119,7 +117,7 @@ class SourceState(str, Enum):
 
 class SourceSwitcher:
     """
-    Tracks Icecast source connect/disconnect events and decides which
+    Tracks DJ-source (harbor) connect/disconnect events and decides which
     audio source the playout should be on.
 
     Thread-safety
@@ -242,8 +240,8 @@ class _EventHandler(BaseHTTPRequestHandler):
     HTTP listener for two internal endpoints used by RASTATIME:
 
       GET / POST  /source-event?source=<master|show>&status=<on|off>
-            Driven by Icecast event-bindings on the /main and /show
-            mounts.  Forwards to the SourceSwitcher state machine.
+            Posted by the harbor on_connect/on_disconnect callbacks in
+            rastatime.liq.  Forwards to the SourceSwitcher state machine.
 
       POST        /reload-schedule
             Called by the PHP frontend after a show is created / edited /
@@ -544,132 +542,6 @@ class _EventHandler(BaseHTTPRequestHandler):
             pass
 
 
-def _icecast_state_poll_loop(
-    switcher: SourceSwitcher,
-    base_url: str = "http://127.0.0.1:8000",
-    admin_user: str = "admin",
-    admin_password: str = "admin",
-    interval_s: float = 10.0,
-) -> None:
-    """
-    Reconciliation watchdog — polls Icecast's actual mount list every
-    ``interval_s`` seconds and syncs the SourceSwitcher's internal state
-    to it.  Catches missed mount_add/mount_remove notifications.
-
-    Endpoint choice — IMPORTANT
-    ---------------------------
-    We hit ``/admin/listmounts`` (with HTTP Basic Auth using the
-    ``<admin-user>/<admin-password>`` from icecast.xml) instead of the
-    open ``/status-json.xsl`` because the latter EXCLUDES mounts
-    marked ``<hidden>1</hidden>``.  /main and /show are both hidden in
-    our config — listing only the public output mounts would make the
-    watchdog always think master/show are disconnected and falsely
-    reset the state to scheduled every 10 s.  Empirically observed:
-    state would flicker SHOW -> SCHEDULED four seconds after a
-    successful BUTT-on-/show connection because of exactly this.
-
-    Background
-    ----------
-    Icecast 2.4's URL-auth ``mount_add`` notification fires reliably on
-    source connect — empirically verified.  But ``mount_remove`` is much
-    less reliable: in our setup, source disconnects often DO NOT result
-    in the configured mount_remove URL being called, leaving the
-    SourceSwitcher stuck in MASTER or SHOW state even after the DJ has
-    long left.  That kept the playout pointing FFmpeg streamers at an
-    empty /main or /show mount, producing silence on the public stream.
-
-    Rather than chase the root cause inside Icecast (likely a 2.4
-    regression around URL-auth source disconnects), we treat the
-    notifications as a best-effort fast path and add this slow path
-    as the source of truth: every 10 s we ask Icecast itself what
-    mounts are currently up, and if our state machine disagrees we
-    reconcile.  Worst-case stuck-state duration: ~10 s.
-
-    Polling cost: one localhost GET to ``/admin/listmounts`` every 10 s.
-    The XML response is tiny.  Negligible.
-    """
-    poll_url = f"{base_url}/admin/listmounts"
-    auth_token = base64.b64encode(
-        f"{admin_user}:{admin_password}".encode("utf-8")
-    ).decode("ascii")
-    auth_header = f"Basic {auth_token}"
-
-    logger.info(
-        "Source state reconciler started (polling %s every %.0fs, "
-        "admin-user=%s)",
-        poll_url, interval_s, admin_user,
-    )
-    while True:
-        try:
-            req = urllib.request.Request(
-                poll_url,
-                headers={"Authorization": auth_header},
-            )
-            with urllib.request.urlopen(req, timeout=3) as resp:
-                xml_bytes = resp.read()
-
-            # admin/listmounts XML shape:
-            #   <icestats>
-            #     <source mount="/main">...</source>
-            #     <source mount="/show">...</source>
-            #     ...
-            #   </icestats>
-            # A <source> element only exists when a source client is
-            # currently connected to the mount — if there's no source,
-            # Icecast omits the <source> element entirely.
-            root = ET.fromstring(xml_bytes)
-            mount_names = set()
-            for source_elem in root.findall("source"):
-                mount = (source_elem.get("mount") or "").lstrip("/")
-                if mount:
-                    mount_names.add(mount)
-
-            actual_master = "main" in mount_names
-            actual_show = "show" in mount_names
-
-            if actual_master != switcher.is_master_connected():
-                logger.warning(
-                    "SourceSwitcher: master state reconcile %s -> %s "
-                    "(icecast actual: /main %s in admin/listmounts)",
-                    switcher.is_master_connected(), actual_master,
-                    "is" if actual_master else "NOT",
-                )
-                if actual_master:
-                    switcher.on_master_connect()
-                else:
-                    switcher.on_master_disconnect()
-
-            if actual_show != switcher.is_show_connected():
-                logger.warning(
-                    "SourceSwitcher: show state reconcile %s -> %s "
-                    "(icecast actual: /show %s in admin/listmounts)",
-                    switcher.is_show_connected(), actual_show,
-                    "is" if actual_show else "NOT",
-                )
-                if actual_show:
-                    switcher.on_show_connect()
-                else:
-                    switcher.on_show_disconnect()
-
-        except urllib.error.URLError as exc:
-            logger.warning(
-                "SourceSwitcher: icecast state poll failed (network): %s",
-                exc,
-            )
-        except ET.ParseError as exc:
-            logger.warning(
-                "SourceSwitcher: icecast state poll failed (xml parse): %s",
-                exc,
-            )
-        except Exception as exc:  # pylint: disable=broad-exception-caught
-            logger.warning(
-                "SourceSwitcher: icecast state poll unexpected error: %s",
-                exc,
-            )
-
-        time.sleep(interval_s)
-
-
 def _safe_preflight_scan(preflight) -> None:
     """
     Run ``preflight.scan_once()`` and log any failure — never raise.
@@ -771,12 +643,10 @@ def _liquidsoap_state_poll_loop(
     every telnet command leaks ~87 KB on the Windows build (the 5-s
     poll alone grew the process by ~150 MB/h).
 
-    Replaces :func:`_icecast_state_poll_loop` when
-    ``engine_kind=liquidsoap`` — because in that configuration the
-    DJ-source mounts (``/main``, ``/show``) live inside the
-    Liquidsoap subprocess via ``input.harbor``, NOT inside Icecast,
-    so polling Icecast's ``/admin/listmounts`` would never see the
-    DJ-source state.
+    The DJ-source mounts (``/main``, ``/show``) live inside the
+    Liquidsoap subprocess via ``input.harbor``, so only Liquidsoap can
+    be asked about them (the Icecast ``/admin/listmounts`` poll of the
+    deleted mpv path never saw them).
 
     Cost: two localhost telnet round-trips per verification - a few
     per hour instead of 1,440.
@@ -862,36 +732,31 @@ def start_listener(
     preflight: Optional[object] = None,
     host: str = "127.0.0.1",
     port: int = 8770,
-    engine_kind: str = "mpv",
     reconcile_interval_s: float = DEFAULT_RECONCILE_INTERVAL_S,
     dj_auth: Optional[object] = None,
 ) -> ThreadingHTTPServer:
     """
     Start the HTTP listener for the internal RASTATIME endpoints:
 
-      /source-event       (Icecast event bindings → SourceSwitcher)
+      /source-event       (harbor callbacks → SourceSwitcher)
       /source-state       (Dashboard / PHP frontend → JSON readout)
       /reload-schedule    (PHP frontend → scheduler.refresh()
                                        + preflight.scan_once())
       /disconnect-source  (PHP frontend → SourceSwitcher kick)
-      /set-audio-output   (PHP frontend → mpv audio-device swap)
+      /set-audio-output   (PHP frontend → playout audio-device swap)
+      /dj-auth            (Liquidsoap harbor auth → web application check)
 
     Returns the server instance so the caller can shut it down on exit.
-    Bind defaults to localhost — Icecast and Apache live on the same
+    Bind defaults to localhost — Liquidsoap and Apache live on the same
     host, and we do not want external clients to be able to fake DJ
     connect events or force expensive schedule refreshes.
 
-    ``engine_kind`` decides which reconciler thread is spawned:
-      * ``"mpv"`` / ``"vlc"`` (default) — :func:`_icecast_state_poll_loop`
-        polls Icecast's ``/admin/listmounts`` to detect DJ-source
-        state.  Used in the legacy code path where the DJ-source
-        mounts live in Icecast.
-      * ``"liquidsoap"`` — :func:`_liquidsoap_state_poll_loop` verifies
-        the Liquidsoap subprocess's telnet ``master_dj.status`` and
-        ``show_dj.status`` after each harbor event posted to
-        /source-event and every ``reconcile_interval_s`` seconds
-        (option d, 2026-09-09).  Used when ``input.harbor`` inside
-        rastatime.liq owns the DJ-source mounts (Phase C4).
+    A reconciler thread (:func:`_liquidsoap_state_poll_loop`) verifies
+    the Liquidsoap subprocess's telnet ``master_dj.status`` and
+    ``show_dj.status`` after each harbor event posted to /source-event
+    and every ``reconcile_interval_s`` seconds (option d, 2026-09-09).
+    The Icecast ``/admin/listmounts`` reconciler of the deleted mpv
+    path is gone (2026-09-10).
     """
     _EventHandler.switcher = switcher
     _EventHandler.scheduler = scheduler
@@ -911,22 +776,14 @@ def start_listener(
         host, port,
     )
 
-    # Pick the right reconciler watchdog based on which audio engine
-    # owns the DJ-source mounts.
-    if engine_kind == "liquidsoap":
-        threading.Thread(
-            target=_liquidsoap_state_poll_loop,
-            args=(switcher,),
-            kwargs={"interval_s": reconcile_interval_s},
-            name="rastatime-source-state-reconciler-liquidsoap",
-            daemon=True,
-        ).start()
-    else:
-        threading.Thread(
-            target=_icecast_state_poll_loop,
-            args=(switcher,),
-            name="rastatime-source-state-reconciler",
-            daemon=True,
-        ).start()
+    # The DJ-source mounts live inside Liquidsoap; its telnet server is
+    # the only place their state can be verified.
+    threading.Thread(
+        target=_liquidsoap_state_poll_loop,
+        args=(switcher,),
+        kwargs={"interval_s": reconcile_interval_s},
+        name="rastatime-source-state-reconciler-liquidsoap",
+        daemon=True,
+    ).start()
 
     return server

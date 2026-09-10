@@ -736,3 +736,20 @@ def test_request_queue_flush_wrapper():
             assert srv.received == ["scheduled.flush"]
         finally:
             client.close()
+
+
+def test_harbor_stop_wrapper():
+    """harbor_stop('show_dj') sends `show_dj.stop` (RASTATIME 2026-09-10)."""
+    with fake_server({"show_dj.stop": "Done"}) as srv:
+        client = LiquidsoapTelnetClient(host=srv.host, port=srv.port)
+        try:
+            assert client.harbor_stop("show_dj") == "Done"
+            assert srv.received == ["show_dj.stop"]
+        finally:
+            client.close()
+
+
+def test_harbor_stop_rejects_unknown_harbor():
+    client = LiquidsoapTelnetClient(host="127.0.0.1", port=1)
+    with pytest.raises(ValueError):
+        client.harbor_stop("scheduled")

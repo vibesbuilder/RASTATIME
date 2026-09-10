@@ -874,7 +874,7 @@ def test_full_render_default_includes_webstream_input_block():
 
 def test_full_render_webstream_disabled_renders_stub_comment():
     """
-    With webstream_enabled=False (legacy mpv/VLC paths) the renderer
+    With webstream_enabled=False (render option) the renderer
     emits ONLY a comment stub for the webstream block — no
     webstream_raw + no webstream_gain + no switch-arm.
 
@@ -1022,7 +1022,7 @@ def test_full_render_default_includes_linein_input_block():
 
 def test_full_render_linein_disabled_renders_stub_comment():
     """
-    With linein_enabled=False (legacy mpv/VLC paths) the renderer
+    With linein_enabled=False (render option) the renderer
     emits ONLY a comment stub — no input.ffmpeg + no switch-arm.
     """
     out = lc.render_rastatime_liq(

@@ -33,7 +33,7 @@ def wd():
     engine.webstream_is_ready.return_value = True
     # the scheduler-side poll is now the opt-in fallback (2026-09-07);
     # these tests cover exactly that path
-    s = ps.PlayoutScheduler(engine=engine, api_client=MagicMock(), streaming_handled_externally=True,
+    s = ps.PlayoutScheduler(engine=engine, api_client=MagicMock(),
                             webstream_watchdog=ps.WEBSTREAM_WATCHDOG_SCHEDULER)
     # no real timers - record re-arms instead of scheduling them
     s._arm_webstream_watchdog = MagicMock()
@@ -149,7 +149,7 @@ def test_legacy_engine_has_no_watchdog(monkeypatch):
     from libretime_playout.engine.interface import PlayoutEngine
     engine = MagicMock(spec=PlayoutEngine)      # no webstream_is_ready
     engine.get_state.return_value = PlayoutState.STOPPED
-    s = ps.PlayoutScheduler(engine=engine, api_client=MagicMock(), streaming_handled_externally=False)
+    s = ps.PlayoutScheduler(engine=engine, api_client=MagicMock())
     s._arm_webstream_watchdog = MagicMock()
     s._start_webstream_watchdog()
     s._arm_webstream_watchdog.assert_not_called()

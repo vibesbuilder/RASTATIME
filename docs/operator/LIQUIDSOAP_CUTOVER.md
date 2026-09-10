@@ -314,6 +314,11 @@ mpv-stack pain points that Phase-C migration fixed.
 
 ## 9. Rollback (if you need to go back to mpv)
 
+> **Obsolete since 2026-09-10:** the mpv engine was deleted from the
+> code base (BACKLOG "Legacy-mpv-Code-Delete"); there is nothing to
+> roll back to.  Kept for the history of the cutover — "fix forward"
+> is the only path.
+
 If something goes wrong and you need the legacy mpv path back:
 
 ```powershell

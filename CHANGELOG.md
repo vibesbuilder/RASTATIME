@@ -7,6 +7,55 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- **Legacy-mpv-Engine gelöscht — Liquidsoap ist die einzige Playout-Engine
+  (2026-09-10, Arbeitsreihenfolge Punkt 15, Operator-Go)** — Seit dem
+  Phase-D-Cutover (2026-05-28) lief PLAYOUT ausschließlich mit
+  `streaming_handled_externally=True`; der mpv-Pfad (libmpv-Monitor plus
+  drei FfmpegStreamer-Subprozesse für die Icecast-Ausgänge, Icecast-Admin-
+  `killsource`, Hot-Reload der Stream-Ausgänge, Listener-Zugangsdaten für
+  das /main-/show-Relais) war seit Monaten toter Code mit einem `if` an
+  jedem Scheduler-Einstieg (~1.600 Zeilen).  Gelöscht: `engine/mpv_engine.py`,
+  `engine/ffmpeg_streamer.py`, `tests/engine/test_ffmpeg_streamer_gain.py`;
+  in `playout_scheduler.py` alle `streaming_handled_externally`-Zweige,
+  `_start_streamers`/`_stop_streamers`, `_reload_stream_outputs_if_changed`,
+  `_kick_icecast_source`, `_build_icecast_input_url`,
+  `set_listener_credentials` (Konstruktor ohne `stream_outputs`,
+  `read_stream_outputs`, `streaming_handled_externally`); in
+  `source_switcher.py` der Icecast-`listmounts`-Poller und der
+  `engine_kind`-Parameter von `start_listener`; in `__main__.py` die
+  Engine-Auswahl samt Deprecation-Warnung und
+  `_read_internal_listener_credentials` (der Schlüssel
+  `stream.internal_listener` in libretime.conf bleibt für die PHP-Seite).
+  `ffmpeg_linein_capture.py` bleibt — es ist seit Option B (2026-09-03)
+  der aktive MME-Feeder-Pfad jedes geplanten Line-Ins.  Verhalten:
+  `RASTATIME_PLAYOUT_ENGINE` wird weiter gelesen, akzeptiert aber nur
+  `liquidsoap` (fehlend = liquidsoap; alles andere bricht den Start mit
+  CRITICAL ab, `_require_liquidsoap_engine`); `RASTATIME_MPV_PATH` und
+  `RASTATIME_MPV_LOG_LEVEL` sind wirkungslos.  Der DJ-Kick („Cancel Show",
+  `/disconnect-source`, gelöschte Show bei aktiver Show-Quelle) geht jetzt
+  per Telnet an den Harbor in Liquidsoap (`master_dj.stop`/`show_dj.stop`;
+  `LiquidsoapPlayoutEngine.dj_kick`, `LiquidsoapTelnetClient.harbor_stop`)
+  — der bisherige Icecast-`killsource` konnte einen Harbor-DJ gar nicht
+  erreichen.  Zwei mpv-förmige Restpfade wurden dabei korrigiert: der
+  Neustart-Callback der Line-In-Capture (Watchdog) hätte die Listen-URL
+  per `engine.play` in die Request-Queue geschoben und bewaffnet jetzt den
+  `input.http`-Begleiter (`linein_start_http` + Gate); der Webstream-Resume
+  nach DJ-Off tat dasselbe und ruft jetzt `webstream_start` + Gate +
+  Wächter (in der .liq antwortet `webstream.start` bei gleicher URL
+  „already started", eine laufende Quelle bleibt unangetastet).  Tests: elf
+  Legacy-Tests entfernt, Fixtures ohne Engine-Flag; neu
+  `test_main_engine_env.py`, `test_scheduler_dj_kick.py`, `dj_kick`/
+  `harbor_stop` in den Engine-Tests, Capture-Restart- und Webstream-
+  Resume-Tests (Backend inkl. Engine-Tests 563 bestanden / 2 übersprungen,
+  Unit 105).  Doku: Handbuch SETTINGS §6 (nur noch Liquidsoap), LINE_IN,
+  WEBSTREAMS, RECORD_PER_HOUR, RECORD_PER_SHOW in EN/DE/FR/ES; README,
+  CLEANUP_INVENTORY, Operator-Doku, Systemstatus-Text, .liq-Template-
+  Kommentare.  Aktiv nach PLAYOUT-Neustart; rastatime.liq wird dabei nur
+  wegen geänderter Kommentare neu gerendert (ein LIQUIDSOAP-Neustart ist
+  dafür nicht nötig, der nächste geplante Neustart übernimmt sie).
+
 ### Added
 
 - **DJ-Logins: die Oberfläche wird zur Wahrheit (2026-09-10, Operator-Go

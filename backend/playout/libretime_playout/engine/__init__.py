@@ -1,21 +1,21 @@
 """
 RASTATIME playout engine package.
 
-Exports the abstract PlayoutEngine interface (ADR-002, T2.1) and
-FfmpegStreamer for Icecast streaming.  Concrete engines are imported
-lazily by ``__main__`` based on ``RASTATIME_PLAYOUT_ENGINE``: Liquidsoap
-(production, since Phase-C5 2026-05-28) or mpv (legacy fallback).
+Exports the abstract PlayoutEngine interface (ADR-002, T2.1).  The only
+implementation is :class:`~libretime_playout.engine.liquidsoap_engine.LiquidsoapPlayoutEngine`
+(production since Phase-C5, 2026-05-28); ``__main__`` imports it lazily.
+The mpv engine and its FfmpegStreamer Icecast companions were deleted on
+2026-09-10 (BACKLOG "Legacy-mpv-Code-Delete").
 
-Architecture: in production Liquidsoap owns both local playback and the
-Icecast PUTs.  In the legacy mpv fallback path, FfmpegStreamer runs a
-parallel FFmpeg subprocess that reads the same audio file and streams it
-to Icecast via the built-in ``icecast://`` protocol (see ffmpeg_streamer.py).
+Architecture: Liquidsoap owns local playback, the Icecast outputs, the DJ
+harbors and the recording; this package only talks to it over telnet.
+The remaining subprocess module, ``ffmpeg_linein_capture``, is the MME
+feeder that publishes a scheduled line-in on the local /linein-capture
+mount for Liquidsoap's ``input.http`` companion source.
 """
-from .ffmpeg_streamer import FfmpegStreamer
 from .interface import PlayoutEngine, PlayoutState
 
 __all__ = [
-    "FfmpegStreamer",
     "PlayoutEngine",
     "PlayoutState",
 ]

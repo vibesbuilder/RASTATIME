@@ -183,8 +183,8 @@ signal.  Temporarily enable debug logging in the playout service:
 > **⚠ `nssm set … AppEnvironmentExtra` REPLACES the whole environment
 > block.**  Setting only the three variables below would silently drop
 > `RASTATIME_PLAYOUT_ENGINE=liquidsoap`, `PYTHONPATH`, the FFmpeg
-> `PATH` and `RASTATIME_API_URL` — reverting the playout to the legacy
-> mpv engine on restart.  Always read the current block first and
+> `PATH` and `RASTATIME_API_URL` — the playout would not find its
+> modules or the API on restart.  Always read the current block first and
 > re-set it in full, with `RASTATIME_LOG_LEVEL=DEBUG` appended:
 
 ```powershell

@@ -1,15 +1,16 @@
 """
-RASTATIME-PLAYOUT — Liquidsoap (production) / libmpv (legacy) playout entry point.
+RASTATIME-PLAYOUT — Liquidsoap playout entry point.
 
-Replaces the LibreTime / Liquidsoap playout daemon with a Windows-native
-scheduler that:
+Replaces the LibreTime playout daemon with a Windows-native scheduler
+that:
 
   1. Polls RASTATIME-API (health gate) before entering the main loop.
-  2. Reads Icecast output stream settings from ``cc_pref`` via Django ORM.
-  3. Creates a local-playback engine (Liquidsoap in production; mpv legacy)
-     for soundcard audio output.
-  4. Creates FFmpeg streamers for Icecast output (one per enabled stream).
-  5. Polls the schedule API every POLL_INTERVAL seconds and arms per-item
+  2. Reads Icecast output stream settings from ``cc_pref`` via Django ORM
+     and renders rastatime.liq for the RASTATIME-LIQUIDSOAP service.
+  3. Connects the LiquidsoapPlayoutEngine to that service over telnet
+     (Liquidsoap owns local playback, the Icecast outputs, the DJ harbors
+     and the recording).
+  4. Polls the schedule API every POLL_INTERVAL seconds and arms per-item
      timers to start/stop playback at the scheduled wall-clock times.
 
 Health gate (required by NSSM install script and SERVICE_TOPOLOGY §2.3):
@@ -22,11 +23,8 @@ Environment variables (all optional — defaults match the standard install):
   RASTATIME_SCHEDULE_POLL      : schedule refresh interval in seconds (default 120)
   LIBRETIME_CONFIG_FILEPATH    : path to libretime.conf
   DJANGO_SETTINGS_MODULE       : Django settings module
-  RASTATIME_PLAYOUT_ENGINE     : "liquidsoap" (production, set via NSSM) | "mpv" (legacy default)
-  RASTATIME_MPV_PATH           : directory containing libmpv-2.dll
-                                 (default search: C:\\Tools\\mpv,
-                                 C:\\Program Files\\mpv)
-  RASTATIME_MPV_LOG_LEVEL      : mpv log verbosity (default "warn")
+  RASTATIME_PLAYOUT_ENGINE     : "liquidsoap" (the only engine since 2026-09-10;
+                                 any other value aborts startup)
   RASTATIME_LIQUIDSOAP_HOST    : Liquidsoap telnet host (default 127.0.0.1)
   RASTATIME_LIQUIDSOAP_PORT    : Liquidsoap telnet port (default 1234)
   RASTATIME_LIQUIDSOAP_CONFIG_PATH
@@ -290,7 +288,7 @@ def _read_harbor_credentials() -> tuple:
     Read ``stream.harbor.main_password`` / ``show_password`` from
     libretime.conf.  Returns (main_password, show_password) — either
     field is an empty string if missing.  Same direct-YAML-read
-    pattern as :func:`_read_internal_listener_credentials`.
+    pattern as :func:`_read_config_yaml`.
 
     These passwords drive Phase-C4 ``input.harbor`` in rastatime.liq:
     when set, the renderer emits the DJ-Master / DJ-Show source blocks
@@ -878,34 +876,28 @@ def _render_rastatime_liq_at_startup(stream_outputs: List[Dict]) -> None:
     )
 
 
-def _read_internal_listener_credentials() -> tuple:
+PLAYOUT_ENGINE_ENV = "RASTATIME_PLAYOUT_ENGINE"
+
+
+def _require_liquidsoap_engine() -> str:
     """
-    Read the RASTATIME-specific ``stream.internal_listener`` credentials
-    from libretime.conf.
-
-    These are not part of the Pydantic schema used by ``_load_config``
-    so we re-parse the YAML directly.  Used by PlayoutScheduler to log in
-    to /main and /show as a listener when relaying live DJ audio to
-    the public outputs.
-
-    Returns (user, password) — both empty strings if the section is
-    missing or unreadable.
+    RASTATIME 2026-09-10 - Liquidsoap is the only playout engine (the
+    mpv engine was deleted).  ``RASTATIME_PLAYOUT_ENGINE`` is still
+    honoured for installed service environments: unset or
+    ``liquidsoap`` is fine, anything else aborts the start with a
+    critical log line instead of silently running a different setup
+    than the operator configured.
     """
-    try:
-        import yaml  # noqa: PLC0415
-
-        with open(_CONFIG_FILE, encoding="utf-8") as fh:
-            raw = yaml.safe_load(fh) or {}
-        section = (raw.get("stream") or {}).get("internal_listener") or {}
-        user = str(section.get("user") or "")
-        password = str(section.get("password") or "")
-        return (user, password)
-    except Exception as exc:  # pylint: disable=broad-exception-caught
-        logger.warning(
-            "Could not read stream.internal_listener from %s: %s",
-            _CONFIG_FILE, exc,
+    kind = (os.environ.get(PLAYOUT_ENGINE_ENV) or "liquidsoap").strip().lower()
+    if kind != "liquidsoap":
+        logger.critical(
+            "%s=%r is not supported - Liquidsoap is the only playout engine "
+            "since 2026-09-10 (the mpv engine was deleted).  Set "
+            "%s=liquidsoap or remove the variable.",
+            PLAYOUT_ENGINE_ENV, kind, PLAYOUT_ENGINE_ENV,
         )
-        return ("", "")
+        sys.exit(1)
+    return kind
 
 
 # ---------------------------------------------------------------------------
@@ -939,89 +931,42 @@ def main() -> None:
     else:
         logger.info("Django unavailable — local playback only (no Icecast egress).")
 
-    # 5. Initialise the local-playback engine.
+    # 5. Initialise the playout engine.
     #
-    # Default is mpv (libmpv 0.41+) since libVLC 3.x on Windows chokes
-    # on Icecast's icy-* reply headers when reading URL-auth-gated
-    # mounts like /main and /show — it falls back to icyx://, drops
-    # the Authorization header, and emits "playback error" while
-    # staying silent.  mpv has none of those quirks and is actively
-    # maintained.
-    #
-    # RASTATIME 2026-05-25/26 — Seamless-Bus-Mix Phase C7: third option
-    # 'liquidsoap' fully wired (C1-C3+C6).  Setting
-    # RASTATIME_PLAYOUT_ENGINE=liquidsoap triggers a one-shot render of
-    # rastatime.liq from the operator's cc_pref settings, then connects
-    # the LiquidsoapPlayoutEngine to a long-running Liquidsoap NSSM
-    # service over telnet (default 127.0.0.1:1234).  Default stays
-    # 'mpv'; switching is a deliberate operator action.  C4 (DJ-sources
-    # via input.harbor) and C5 (recording via output.file) are not yet
-    # active in the rendered .liq — both are scheduled for a separate
-    # Phase-C iteration.
-    engine_kind = os.environ.get("RASTATIME_PLAYOUT_ENGINE", "mpv").lower()
-
-    # RASTATIME 2026-05-28 — Phase-D: Liquidsoap is the production
-    # engine.  Legacy mpv and VLC engine modes are DEPRECATED — they
-    # will be removed once Phase-E (Webstreams → Liquidsoap
-    # input.http) and Phase-F (Line-Inputs → Liquidsoap input.wasapi)
-    # are done.  Until then mpv stays around as the fallback for
-    # those two not-yet-ported schedule-item types.  Recording
-    # already requires Liquidsoap since C5 Teil 2d (FfmpegRecorder
-    # deleted).  Operator-decision 2026-05-28.
-    if engine_kind == "mpv":
-        logger.warning(
-            "DEPRECATED: RASTATIME_PLAYOUT_ENGINE=mpv is now legacy. "
-            "Liquidsoap (RASTATIME_PLAYOUT_ENGINE=liquidsoap) is the "
-            "production engine since Phase-C5 (2026-05-28); mpv remains "
-            "only as a fallback and will be removed in a later cleanup. "
-            "Recording already requires the Liquidsoap engine.",
-        )
+    # RASTATIME 2026-09-10 - Liquidsoap is the only engine: the mpv engine
+    # and its FfmpegStreamer Icecast companions were deleted (BACKLOG
+    # "Legacy-mpv-Code-Delete").  RASTATIME_PLAYOUT_ENGINE is still read
+    # so an installed service environment keeps working, but the only
+    # accepted value is "liquidsoap" - anything else is a configuration
+    # error that must not be papered over at startup.
+    _require_liquidsoap_engine()
 
     try:
-        if engine_kind == "mpv":
-            from libretime_playout.engine.mpv_engine import MpvPlayoutEngine  # noqa: PLC0415
-            engine = MpvPlayoutEngine()
-            logger.info("Local-playback engine: mpv (libmpv) [DEPRECATED]")
-        elif engine_kind == "liquidsoap":
-            from libretime_playout.engine.liquidsoap_engine import LiquidsoapPlayoutEngine  # noqa: PLC0415
+        from libretime_playout.engine.liquidsoap_engine import LiquidsoapPlayoutEngine  # noqa: PLC0415
 
-            # RASTATIME 2026-05-26 — Phase C7.  Render the production
-            # rastatime.liq from the cc_pref stream-output rows + the
-            # operator-configured paths.  Idempotent (rewrites only
-            # when content actually changed); operator must restart
-            # the RASTATIME-LIQUIDSOAP NSSM service to pick up changes
-            # — we deliberately do NOT bounce the service ourselves
-            # because doing so silently would mask configuration bugs
-            # (the operator wants the dry-run-then-confirm cycle on
-            # production-credential changes).
-            _render_rastatime_liq_at_startup(stream_outputs)
+        # RASTATIME 2026-05-26 — Phase C7.  Render the production
+        # rastatime.liq from the cc_pref stream-output rows + the
+        # operator-configured paths.  Idempotent (rewrites only
+        # when content actually changed); operator must restart
+        # the RASTATIME-LIQUIDSOAP NSSM service to pick up changes
+        # — we deliberately do NOT bounce the service ourselves
+        # because doing so silently would mask configuration bugs
+        # (the operator wants the dry-run-then-confirm cycle on
+        # production-credential changes).
+        _render_rastatime_liq_at_startup(stream_outputs)
 
-            engine = LiquidsoapPlayoutEngine()
-            logger.info(
-                "Local-playback engine: Liquidsoap (Phase-C2+C3+C6 fully wired). "
-                "Telnet target %s:%d.",
-                engine._telnet._host, engine._telnet._port,
-            )
-        else:
-            logger.critical(
-                "Unknown RASTATIME_PLAYOUT_ENGINE=%r — must be 'mpv' or 'liquidsoap'.",
-                engine_kind,
-            )
-            sys.exit(1)
+        engine = LiquidsoapPlayoutEngine()
+        logger.info(
+            "Playout engine: Liquidsoap (telnet target %s:%d).",
+            engine._telnet._host, engine._telnet._port,
+        )
     except RuntimeError as exc:
-        logger.critical("%s engine failed to initialise: %s", engine_kind.upper(), exc)
-        if engine_kind == "mpv":
-            logger.critical(
-                "Ensure libmpv-2.dll is at C:\\Tools\\mpv\\ (or set "
-                "RASTATIME_MPV_PATH) and python-mpv is installed in the "
-                "playout venv."
-            )
-        elif engine_kind == "liquidsoap":
-            logger.critical(
-                "Ensure Liquidsoap is running and its telnet server is "
-                "reachable at RASTATIME_LIQUIDSOAP_HOST / _PORT (default "
-                "127.0.0.1:1234)."
-            )
+        logger.critical("Liquidsoap engine failed to initialise: %s", exc)
+        logger.critical(
+            "Ensure Liquidsoap is running and its telnet server is "
+            "reachable at RASTATIME_LIQUIDSOAP_HOST / _PORT (default "
+            "127.0.0.1:1234)."
+        )
         sys.exit(1)
 
     # 6. Initialise API client
@@ -1053,8 +998,8 @@ def main() -> None:
     # sammeln keine Daten", fixed 2026-08-30).  Upstream started this
     # thread only in the orphaned main.py — the active entry point never
     # did, so cc_listener_count stayed empty forever.  The outputs are
-    # rebuilt from cc_pref on every poll cycle (same hot-reload idea as
-    # read_streams below); libretime.conf's stream.outputs list is empty
+    # rebuilt from cc_pref on every poll cycle; libretime.conf's
+    # stream.outputs list is empty
     # on RASTATIME deployments and must not be used.  Pushes go through
     # the v1 client to the PHP /api/push-stream-stats endpoint, which
     # inserts into cc_listener_count.
@@ -1086,29 +1031,19 @@ def main() -> None:
         logger.info("Storage path for direct file access: %s", storage_path)
 
     from libretime_playout.playout_scheduler import PlayoutScheduler  # noqa: PLC0415
-    # If Django ORM is up, pass _read_stream_outputs as a callable so the
-    # scheduler can hot-reload stream-output settings on every refresh —
-    # users can change Stream 1/2/3 in the Frontend and the running playout
-    # picks up the changes within one poll cycle, no service restart.
-    read_streams = _read_stream_outputs if django_ok else None
-    # RASTATIME 2026-05-26 — Seamless-Bus-Mix Phase C7 follow-up.
-    # When the Liquidsoap engine is active, Liquidsoap owns the
-    # Icecast PUTs entirely (one persistent stream per mount in the
-    # rendered rastatime.liq).  Tell the scheduler NOT to spawn the
-    # legacy FfmpegStreamer subprocesses — they would fight Liquidsoap
-    # for the same mounts and lose with 403 "mount taken".
-    streaming_handled_externally = (engine_kind == "liquidsoap")
+    # Stream-output changes (Settings → Streams) reach the air only via a
+    # re-render of rastatime.liq + a LIQUIDSOAP restart (planned restart
+    # or operator); the scheduler has no hot-reload of its own since the
+    # FfmpegStreamer path was deleted (2026-09-10).
 
     # RASTATIME 2026-09-05 - nightly quiet-window restart of LIQUIDSOAP
-    # (memory-leak safety net).  Only with the Liquidsoap engine, and the
-    # re-render before the restart needs the ORM for cc_pref.
+    # (memory-leak safety net).  The re-render before the restart needs
+    # the ORM for cc_pref.
     from libretime_playout.liquidsoap_service import NightlyRestartPolicy  # noqa: PLC0415
-    nightly_policy = (
-        NightlyRestartPolicy.from_env() if engine_kind == "liquidsoap" else None
-    )
+    nightly_policy = NightlyRestartPolicy.from_env()
     render_for_restart = (
         (lambda: _render_rastatime_liq_outcome(_read_stream_outputs()))
-        if (django_ok and engine_kind == "liquidsoap") else None
+        if django_ok else None
     )
     if nightly_policy is not None and nightly_policy.enabled:
         logger.info(
@@ -1123,11 +1058,8 @@ def main() -> None:
         api_client=api_client,
         api_client_v1=api_client_v1,
         storage_path=storage_path,
-        stream_outputs=stream_outputs,
         render_liquidsoap=render_for_restart,
         nightly_restart=nightly_policy,
-        read_stream_outputs=read_streams,
-        streaming_handled_externally=streaming_handled_externally,
         input_transition_seconds=_resolve_crossfade_seconds(),
         webstream_watchdog=_webstream_watchdog_mode(),
     )
@@ -1147,27 +1079,11 @@ def main() -> None:
     scheduler.reset_gates()
     scheduler.ensure_liquidsoap_initial_state()
 
-    # Listener credentials for relaying /main and /show into the
-    # public outputs.  Without these the icecast-listener-allow
-    # endpoint will reject our listen request with 401.
-    listener_user, listener_pass = _read_internal_listener_credentials()
-    if listener_user and listener_pass:
-        logger.info(
-            "Listener credentials configured for /main and /show (user=%s)",
-            listener_user,
-        )
-    else:
-        logger.warning(
-            "stream.internal_listener.user / .password missing from "
-            "libretime.conf — Master / Show relays will fail with 401."
-        )
-    scheduler.set_listener_credentials(listener_user, listener_pass)
-
     # 7b. Restore the operator-selected audio output device.
     # SoundcardSettings is the singleton table written by
     # /api/v2/audio/soundcard-settings.  We read it directly via the
     # Django ORM so the engine starts on the right soundcard from the
-    # first track onwards — without this, mpv would default to the
+    # first track onwards — without this, the engine would start on the
     # OS-default endpoint and only switch later when the Frontend
     # POSTs the setting again.
     if django_ok:
@@ -1267,7 +1183,6 @@ def main() -> None:
         preflight=preflight,   # …and the preflight scanner for instant rescan
         host=_LISTENER_HOST,
         port=_LISTENER_PORT,
-        engine_kind=engine_kind,  # Phase-C4 Teil 2: picks Icecast vs Liquidsoap-telnet reconciler
         # Option d (2026-09-09): the harbor callbacks report DJ events;
         # the telnet reconciler only verifies (RASTATIME_DJ_RECONCILE_SECONDS).
         reconcile_interval_s=reconcile_interval_from_env(),

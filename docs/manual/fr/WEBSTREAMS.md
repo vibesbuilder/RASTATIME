@@ -207,12 +207,6 @@ côté auditeur ajoutent leur propre buffer de ~10 s, donc le délai
 effectif perçu par l'auditeur final est dominé par le buffer côté
 lecteur.
 
-**Chemins legacy mpv / VLC (uniquement quand
-`RASTATIME_PLAYOUT_ENGINE=mpv` ou `=vlc`) :**
-mpv ouvre l'URL HTTP directement et FfmpegStreamer
-ré-encode vers Icecast. Pas d'enregistrement pour les
-émissions webstream-only dans ce mode.
-
 ### Que se passe-t-il si l'URL est inaccessible ?
 
 `input.http` réessaie la connexion toutes les **2 secondes**

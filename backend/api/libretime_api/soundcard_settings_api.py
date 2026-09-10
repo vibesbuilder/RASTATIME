@@ -187,7 +187,7 @@ def soundcard_settings(request: HttpRequest) -> JsonResponse:
     obj.save()
 
     # Push the (possibly new) main-output selection to the live playout
-    # service so mpv re-routes immediately.  Only meaningful when
+    # service so the playout re-routes immediately.  Only meaningful when
     # ``main_output_id`` was in the request body — other field changes
     # (line-ins, preview) don't affect the playback device.  Best-effort:
     # if the playout isn't running, the setting is still persisted and

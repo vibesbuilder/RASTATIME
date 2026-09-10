@@ -286,7 +286,7 @@ def test_start_listener_passes_the_interval_to_the_liquidsoap_loop(monkeypatch):
     monkeypatch.setattr(ss, "_liquidsoap_state_poll_loop", fake_loop)
     sw, _ = _switcher()
     server = ss.start_listener(
-        sw, host="127.0.0.1", port=0, engine_kind="liquidsoap",
+        sw, host="127.0.0.1", port=0,
         reconcile_interval_s=77.0,
     )
     try:

@@ -116,7 +116,7 @@ def sched(monkeypatch):
     probe = MagicMock(return_value=[SimpleNamespace(pid=1, private_mb=900.0, age_seconds=DAY)])
     monkeypatch.setattr(ps.liquidsoap_health, "liquidsoap_process_info", probe)
     s = ps.PlayoutScheduler(
-        engine=engine, api_client=MagicMock(), streaming_handled_externally=True,
+        engine=engine, api_client=MagicMock(),
         render_liquidsoap=MagicMock(return_value=True),
         nightly_restart=NightlyRestartPolicy(start=dtime(4, 0), quiet_margin_seconds=300),
     )
@@ -157,7 +157,7 @@ def test_file_start_performs_the_armed_restart_before_playing(sched, monkeypatch
     sched._current_event = _file_event(IN_WINDOW - timedelta(minutes=4))
     monkeypatch.setattr(sched, "_ensure_file_cached", lambda e: "C:/cache/a.mp3")
     for name in ("_cue_item_start", "_notify_media_started", "_close_predecessor_source",
-                 "_stop_streamers", "_start_streamers", "_arm_stop_timer"):
+                 "_arm_stop_timer"):
         if hasattr(sched, name):
             monkeypatch.setattr(sched, name, MagicMock())
     calls = []
@@ -174,7 +174,7 @@ def test_webstream_boundary_keeps_waiting(sched, monkeypatch):
     sched._current_event = _webstream_event(IN_WINDOW - timedelta(minutes=4))
     monkeypatch.setattr(sched, "_ensure_file_cached", lambda e: "C:/cache/a.mp3")
     for name in ("_cue_item_start", "_notify_media_started", "_close_predecessor_source",
-                 "_stop_streamers", "_start_streamers", "_arm_stop_timer"):
+                 "_arm_stop_timer"):
         if hasattr(sched, name):
             monkeypatch.setattr(sched, name, MagicMock())
     sched._on_file_start("k", _file_event(IN_WINDOW))

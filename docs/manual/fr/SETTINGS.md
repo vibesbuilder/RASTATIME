@@ -184,50 +184,49 @@ escalade d'accès.
 
 ---
 
-## 6. Moteur de playout (Liquidsoap / mpv / VLC)
+## 6. Moteur de playout (Liquidsoap)
 
-> **Paramètre niveau service**, pas un paramètre UI.
-> Configuré via la variable d'environnement
-> `RASTATIME_PLAYOUT_ENGINE` sur le service NSSM
-> RASTATIME-PLAYOUT. Opérateur uniquement ; non exposé
-> dans l'UI web.
+> **Paramètre niveau service**, pas un paramètre UI.  Le service NSSM
+> RASTATIME-PLAYOUT peut porter `RASTATIME_PLAYOUT_ENGINE=liquidsoap`
+> dans son environnement ; c'est la seule valeur acceptée.  Opérateur
+> uniquement ; non exposé dans l'UI web.
 
-RASTATIME embarque trois moteurs de lecture. Un seul est
-actif à la fois.
+Depuis le 2026-09-10, Liquidsoap est le **seul** moteur de playout.
+L'ancien moteur mpv (avec ses streamers FFmpeg pour les sorties
+Icecast) et le plan VLC jamais achevé ont été retirés du code après
+que Liquidsoap a porté en production chaque type d'élément de grille
+(fichiers, webstreams, entrées ligne, enregistrement, sources DJ)
+depuis le 2026-05-28.
 
-| Moteur | Statut | Forces | Limitations |
-|---|---|---|---|
-| **Liquidsoap** | **Production** (depuis 2026-05-28, Phase-C5) | Transitions gapless, crossfades natifs, PUTs Icecast persistants (auditeurs restent connectés à travers les changements de pistes), commutation de sources DJ via `input.harbor`, enregistrement par émission depuis le bus interne à 320 kbps MP3 fixe | Webstreams et entrées ligne programmés pas encore portés (toujours via mpv en parallèle ; Phase-E + Phase-F) |
-| **mpv** | **Déprécié** (défaut historique) | Éprouvé, fichiers/webstreams/entrées-ligne | Pas d'enregistrement (FfmpegRecorder supprimé en C5 Teil 2d), pas de gapless, reconnexion auditeurs à chaque piste |
-| **VLC** | **Déprécié** (échappatoire) | Fallback si mpv a un problème de DLL | Comme mpv plus VLC 3.x problématique sur Icecast URL-auth Windows |
+Ce que Liquidsoap fournit :
 
-**Pourquoi Liquidsoap est maintenant en production**
-(décision opérateur 2026-05-28) : enregistrement
-bit-identique aux auditeurs, pas de reconnexion entre
-pistes, routage natif des sources DJ.
+- **Enregistrement** capté sur le bus audio interne (post-switch,
+  post-crossfade, post-amplify) — bit-identique à ce qu'entendent les
+  auditeurs.  Débit fixe 320 kbps MP3, qualité archive.
+- **Expérience auditeur** : les points de montage Icecast restent
+  ouverts à travers les changements de piste/émission — pas de
+  reconnexion, pas de remise à zéro des compteurs.
+- **Routage des sources DJ** natif via `input.harbor` + `switch(...)`
+  de Liquidsoap — les clients DJ Master / Show se connectent
+  directement au harbor géré par Liquidsoap (port 8001 par défaut,
+  voir [Flux](./STREAMS.md)).
 
-**Quand vous pourriez encore avoir besoin du fallback
-mpv** : émission programmée 100 % webstream ou 100 %
-entrée ligne avec record=true (l'enregistrement sera
-silencieux sur Liquidsoap jusqu'à Phase-E / Phase-F).
-
-**Comment changer de moteur** : voir
-[`docs/operator/LIQUIDSOAP_CUTOVER.md`](../../operator/LIQUIDSOAP_CUTOVER.md).
-Version courte : définir `RASTATIME_PLAYOUT_ENGINE=liquidsoap`
-dans l'environnement du service NSSM, redémarrer
-`RASTATIME-PLAYOUT`, puis `RASTATIME-LIQUIDSOAP`.
-
-Le journal playout au démarrage montre :
+**Si le service refuse de démarrer** avec
 
 ```
-INFO __main__: Local-playback engine: Liquidsoap ...
+CRITICAL __main__: RASTATIME_PLAYOUT_ENGINE='mpv' is not supported - Liquidsoap is the only playout engine since 2026-09-10 ...
 ```
 
-vs. (sur le chemin déprécié) :
+l'environnement du service nomme encore le moteur retiré : définir
+`RASTATIME_PLAYOUT_ENGINE=liquidsoap` (ou retirer la variable) dans
+l'environnement NSSM de `RASTATIME-PLAYOUT`, puis redémarrer le service.
+`RASTATIME_MPV_PATH` / `RASTATIME_MPV_LOG_LEVEL` sont ignorés et
+peuvent être supprimés.
+
+**Le démarrage du moteur est visible dans le journal playout :**
 
 ```
-WARNING __main__: DEPRECATED: RASTATIME_PLAYOUT_ENGINE=mpv is now legacy. ...
-INFO __main__: Local-playback engine: mpv (libmpv) [DEPRECATED]
+INFO __main__: Playout engine: Liquidsoap (telnet target 127.0.0.1:1234).
 ```
 
 ---

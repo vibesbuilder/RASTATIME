@@ -43,7 +43,7 @@ $serviceRestartInfo = [
         'when' => _('Restart when: icecast.xml changed, stuck source-auth state, mount listing drifted.'),
     ],
     'RASTATIME-PLAYOUT' => [
-        'desc' => _('Playout engine (mpv playback, FFmpeg streamers, source switcher between Master/Show/Scheduled).'),
+        'desc' => _('Playout scheduler (drives Liquidsoap over telnet: scheduled playback, recording, source switcher between Master/Show/Scheduled).'),
         'when' => _('Restart when: output stream is dead, after soundcard setting change, after playout code change.'),
     ],
     'RASTATIME-WORKER' => [

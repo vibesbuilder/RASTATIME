@@ -25,7 +25,7 @@ def sched(monkeypatch):
     engine.recording_stop.return_value = None
     engine.liquidsoap_uptime_seconds.return_value = 1000.0
     s = ps.PlayoutScheduler(
-        engine=engine, api_client=MagicMock(), streaming_handled_externally=True,
+        engine=engine, api_client=MagicMock(),
     )
     s.reset_gates = MagicMock()
     switcher = SourceSwitcher(switch_callback=lambda _state: None)

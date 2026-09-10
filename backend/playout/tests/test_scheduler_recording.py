@@ -2,14 +2,12 @@
 RASTATIME 2026-05-28 — Unit tests for PlayoutScheduler's per-show
 recording hooks (Phase-C5 Teil 2c + Teil 2d cleanup).
 
-Recording is owned by the Liquidsoap engine path
-(``streaming_handled_externally=True``): driven by
+Recording is owned by Liquidsoap: driven by
 ``engine.recording_start(path)`` / ``engine.recording_stop()`` over
 the same telnet that drives play/stop on the LiquidsoapPlayoutEngine.
 
 The legacy FfmpegRecorder + mpv/VLC engine recording path was deleted
-in C5 Teil 2d (2026-05-28).  Legacy engines now log a warning and
-silently skip recording.
+in C5 Teil 2d (2026-05-28); the mpv engine itself on 2026-09-10.
 
 We build a minimal PlayoutScheduler with mocked dependencies and call
 ``_on_show_record_start`` / ``_on_show_record_end`` with synthetic
@@ -24,8 +22,6 @@ events — asserting:
   * Constructor in Liquidsoap mode sends the initial sentinel-
     silencing ``recording.stop``.
   * Shutdown in Liquidsoap mode calls ``engine.recording_stop()``.
-  * Legacy mpv/VLC path: both _on_show_record_start and _end are
-    no-ops (recording requires the Liquidsoap engine).
 """
 from __future__ import annotations
 
@@ -35,7 +31,6 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from libretime_playout.engine.interface import PlayoutEngine
 from libretime_playout.engine.liquidsoap_engine import LiquidsoapPlayoutEngine
 from libretime_playout.player.events import EventKind, ShowRecordEvent
 
@@ -70,7 +65,7 @@ def _make_show_record_event(
 @pytest.fixture
 def liquidsoap_scheduler(tmp_path):
     """
-    PlayoutScheduler with streaming_handled_externally=True + a mocked
+    PlayoutScheduler with a mocked
     LiquidsoapPlayoutEngine (so engine.recording_start / _stop exist on
     the mock per spec=).  api_client.session.get returns a recording-
     folder pointing at tmp_path so build_output_path produces a real
@@ -90,29 +85,8 @@ def liquidsoap_scheduler(tmp_path):
     sched = PlayoutScheduler(
         engine=engine,
         api_client=api_client,
-        streaming_handled_externally=True,
     )
     return sched, engine, tmp_path
-
-
-@pytest.fixture
-def legacy_scheduler():
-    """
-    PlayoutScheduler in legacy mpv/VLC mode (FfmpegRecorder is deleted
-    in C5 Teil 2d, so this fixture only verifies that
-    _on_show_record_* hooks no-op cleanly in the legacy path).
-    """
-    from libretime_playout.playout_scheduler import PlayoutScheduler
-
-    engine = MagicMock(spec=PlayoutEngine)
-    api_client = MagicMock()
-
-    sched = PlayoutScheduler(
-        engine=engine,
-        api_client=api_client,
-        streaming_handled_externally=False,
-    )
-    return sched, engine
 
 
 # ---- Constructor behaviour ---------------------------------------------
@@ -141,18 +115,8 @@ def test_constructor_liquidsoap_tolerates_engine_recording_stop_failure(tmp_path
     sched = PlayoutScheduler(
         engine=engine,
         api_client=api_client,
-        streaming_handled_externally=True,
     )
     engine.recording_stop.assert_called_once_with()
-
-
-def test_constructor_legacy_does_not_call_recording_stop(legacy_scheduler):
-    """In legacy mpv/VLC mode: no engine.recording_stop call at init."""
-    _sched, engine = legacy_scheduler
-    # PlayoutEngine spec doesn't have recording_stop — even if it did,
-    # construct() must not invoke it in the legacy path.
-    if hasattr(engine, "recording_stop"):
-        engine.recording_stop.assert_not_called()
 
 
 # ---- _on_show_record_start happy path -----------------------------------
@@ -362,48 +326,3 @@ def test_liquidsoap_shutdown_tolerates_engine_recording_stop_failure(
     sched.shutdown()
 
     engine.recording_stop.assert_called_once_with()
-
-
-# ---- Legacy path still works (regression guard) ------------------------
-
-
-def test_legacy_record_start_is_silent_noop(legacy_scheduler):
-    """
-    Legacy mpv/VLC mode: _on_show_record_start logs a warning and
-    silently skips.  Recording requires the Liquidsoap engine since
-    C5 Teil 2d deleted FfmpegRecorder.  No threads, no timers, no
-    engine calls.
-    """
-    sched, engine = legacy_scheduler
-
-    with patch(
-        "libretime_playout.playout_scheduler.threading.Thread"
-    ) as mock_thread, patch(
-        "libretime_playout.playout_scheduler.threading.Timer"
-    ) as mock_timer:
-        event = _make_show_record_event()
-        sched._on_show_record_start("k", event)
-
-    mock_thread.assert_not_called()
-    mock_timer.assert_not_called()
-    # The legacy PlayoutEngine spec doesn't have recording_start.
-    if hasattr(engine, "recording_start"):
-        engine.recording_start.assert_not_called()
-
-
-def test_legacy_record_end_is_silent_noop(legacy_scheduler):
-    """
-    Legacy mpv/VLC mode: _on_show_record_end is a silent no-op (no
-    post-roll Timer, no engine call, no threads).
-    """
-    sched, engine = legacy_scheduler
-
-    with patch(
-        "libretime_playout.playout_scheduler.threading.Timer"
-    ) as mock_timer:
-        event = _make_show_record_event(type_=EventKind.SHOW_RECORD_END)
-        sched._on_show_record_end("k", event)
-
-    mock_timer.assert_not_called()
-    if hasattr(engine, "recording_stop"):
-        engine.recording_stop.assert_not_called()

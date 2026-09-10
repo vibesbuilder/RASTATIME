@@ -13,8 +13,8 @@
 > grundlegend geändert:
 >
 > - **Liquidsoap ist seit 2026-05-28 (Phase-C5) die Produktions-Engine**,
->   NICHT VLC. mpv ist der Legacy-Fallback; VLC ist ein aufgegebener Plan
->   (wird gerade aus dem Code entfernt). Maßgeblich:
+>   NICHT VLC. mpv war der Legacy-Fallback und wurde am 2026-09-10 gelöscht;
+>   VLC ist ein aufgegebener Plan (aus dem Code entfernt). Maßgeblich:
 >   `docs/manual/SETTINGS.md` §6 + `docs/operator/LIQUIDSOAP_CUTOVER.md`.
 > - **VLC ist KEINE Voraussetzung** mehr (der VLC-Installationsschritt in
 >   T-OP-1 unten ist obsolet).

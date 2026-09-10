@@ -184,51 +184,49 @@ acceso.
 
 ---
 
-## 6. Motor de playout (Liquidsoap / mpv / VLC)
+## 6. Motor de playout (Liquidsoap)
 
-> **Configuración a nivel de servicio**, no una
-> configuración UI. Configurado vía la variable de
-> entorno `RASTATIME_PLAYOUT_ENGINE` en el servicio NSSM
-> RASTATIME-PLAYOUT. Solo operador; no expuesto en la
-> UI web.
+> **Configuración a nivel de servicio**, no una configuración UI.  El
+> servicio NSSM RASTATIME-PLAYOUT puede llevar
+> `RASTATIME_PLAYOUT_ENGINE=liquidsoap` en su entorno; es el único valor
+> aceptado.  Solo operador; no expuesto en la UI web.
 
-RASTATIME incluye tres motores de reproducción. Solo uno
-está activo a la vez.
+Desde el 2026-09-10 Liquidsoap es el **único** motor de playout.  El
+motor mpv anterior (con sus streamers FFmpeg para las salidas Icecast)
+y el plan VLC nunca terminado se eliminaron del código después de que
+Liquidsoap llevara en producción cada tipo de elemento de la parrilla
+(archivos, webstreams, entradas de línea, grabación, fuentes DJ) desde
+el 2026-05-28.
 
-| Motor | Estado | Fortalezas | Limitaciones |
-|---|---|---|---|
-| **Liquidsoap** | **Producción** (desde 2026-05-28, Phase-C5) | Transiciones gapless, crossfades nativos, PUTs Icecast persistentes (oyentes permanecen conectados a través de cambios de pista), conmutación de fuentes DJ vía `input.harbor`, grabación por-programa desde el bus interno a 320 kbps MP3 fijo | Webstreams y entradas de línea programados aún no portados (todavía vía mpv en paralelo; Phase-E + Phase-F) |
-| **mpv** | **Deprecado** (default histórico) | Probado en batalla, archivos/webstreams/entradas-línea | Sin grabación (FfmpegRecorder eliminado en C5 Teil 2d), sin gapless, reconexión de oyentes en cada pista |
-| **VLC** | **Deprecado** (escape de operador) | Fallback si mpv tiene problema de DLL | Como mpv más VLC 3.x se atraganta con Icecast URL-auth en Windows |
+Lo que Liquidsoap provee:
 
-**Por qué Liquidsoap es ahora producción** (decisión del
-operador 2026-05-28): grabación bit-idéntica a lo que
-escuchan los oyentes, sin reconexión entre pistas,
-enrutamiento nativo de fuentes DJ.
+- **Grabación** capturada desde el bus de audio interno (post-switch,
+  post-crossfade, post-amplify) — bit-idéntica a lo que escuchan los
+  oyentes.  Bitrate fijo de 320 kbps MP3, calidad de archivo.
+- **Experiencia del oyente**: los puntos de montaje Icecast permanecen
+  abiertos a través de cambios de pista/programa — sin reconexión, sin
+  reinicio de contadores.
+- **Enrutamiento de fuentes DJ** nativo vía `input.harbor` +
+  `switch(...)` de Liquidsoap — los clientes DJ Master / Show se
+  conectan directamente al harbor gestionado por Liquidsoap (puerto 8001
+  por defecto, vea [Streams](./STREAMS.md)).
 
-**Cuándo podría aún necesitar el fallback mpv**:
-programa programado 100 % webstream o 100 % entrada de
-línea con record=true (la grabación será silenciosa en
-Liquidsoap hasta Phase-E / Phase-F).
-
-**Cómo cambiar de motor**: ver
-[`docs/operator/LIQUIDSOAP_CUTOVER.md`](../../operator/LIQUIDSOAP_CUTOVER.md).
-Versión corta: establecer
-`RASTATIME_PLAYOUT_ENGINE=liquidsoap` en el entorno del
-servicio NSSM, reiniciar `RASTATIME-PLAYOUT`, luego
-`RASTATIME-LIQUIDSOAP`.
-
-El log de playout al arranque muestra:
+**Si el servicio se niega a arrancar** con
 
 ```
-INFO __main__: Local-playback engine: Liquidsoap ...
+CRITICAL __main__: RASTATIME_PLAYOUT_ENGINE='mpv' is not supported - Liquidsoap is the only playout engine since 2026-09-10 ...
 ```
 
-vs. (en el camino deprecado):
+el entorno del servicio aún nombra el motor eliminado: establezca
+`RASTATIME_PLAYOUT_ENGINE=liquidsoap` (o elimine la variable) en el
+entorno NSSM de `RASTATIME-PLAYOUT` y arranque el servicio de nuevo.
+`RASTATIME_MPV_PATH` / `RASTATIME_MPV_LOG_LEVEL` se ignoran y pueden
+eliminarse.
+
+**El arranque del motor es visible en el log de playout:**
 
 ```
-WARNING __main__: DEPRECATED: RASTATIME_PLAYOUT_ENGINE=mpv is now legacy. ...
-INFO __main__: Local-playback engine: mpv (libmpv) [DEPRECATED]
+INFO __main__: Playout engine: Liquidsoap (telnet target 127.0.0.1:1234).
 ```
 
 ---

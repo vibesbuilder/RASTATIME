@@ -273,7 +273,7 @@ Follow [`INSTALL.md`](INSTALL.md) §4 step-by-step to install:
 - NSSM (`C:\Tools\nssm\nssm.exe`)
 - All 7 RASTATIME NSSM services (ANALYZER, APACHE, API, ICECAST,
   LIQUIDSOAP, PLAYOUT, WORKER)
-- FFmpeg (for legacy mpv fallback path + audio analysis)
+- FFmpeg (line-in MME feeder + audio analysis)
 
 **Skip these INSTALL.md steps** (they're done by the restore in
 Phase C instead):

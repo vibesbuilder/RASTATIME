@@ -76,8 +76,8 @@ RASTATIME uses PostgreSQL as its sole database (port **5432**).
 ### 2.3 Liquidsoap 2.4.4
 
 Liquidsoap has been the production playout engine since the 2026-05
-cutover.  **VLC/libVLC is no longer required** — mpv/VLC remain only as
-legacy fallback code paths pending deletion.
+cutover and the only one since 2026-09-10.  **VLC/libVLC and mpv are
+not required** — their legacy code paths were deleted.
 
 1. Install Liquidsoap **2.4.4** (Windows build) to `C:\Tools\liquidsoap\`
 2. Verify:

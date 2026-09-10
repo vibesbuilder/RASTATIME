@@ -239,12 +239,6 @@ players add their own ~10 s buffer, so the effective
 end-listener-perceived delay is dominated by the player-side
 buffer.
 
-**Legacy mpv / VLC engine paths (only when
-`RASTATIME_PLAYOUT_ENGINE=mpv` or `=vlc`):**
-mpv opens the HTTP URL directly and FfmpegStreamer re-encodes
-to Icecast. No recording for webstream-only shows in this
-mode.
-
 ### What happens if the URL is unreachable?
 
 `input.http` retries the connection every **2 seconds**

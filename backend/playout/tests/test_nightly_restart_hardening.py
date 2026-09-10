@@ -111,7 +111,7 @@ def sched(monkeypatch):
     monkeypatch.setattr(ps.liquidsoap_health, "liquidsoap_process_info", lambda: [])
     render = MagicMock(return_value=True)
     s = ps.PlayoutScheduler(
-        engine=engine, api_client=MagicMock(), streaming_handled_externally=True,
+        engine=engine, api_client=MagicMock(),
         render_liquidsoap=render,
         nightly_restart=NightlyRestartPolicy(start=dtime(4, 0), quiet_margin_seconds=300),
     )

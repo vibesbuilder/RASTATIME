@@ -36,7 +36,7 @@ def sched(monkeypatch):
     # the real process - no process here keeps the daily-window semantics
     monkeypatch.setattr(ps.liquidsoap_health, "liquidsoap_process_info", lambda: [])
     s = ps.PlayoutScheduler(
-        engine=engine, api_client=MagicMock(), streaming_handled_externally=True,
+        engine=engine, api_client=MagicMock(),
         render_liquidsoap=render,
         nightly_restart=NightlyRestartPolicy(start=dtime(4, 0), quiet_margin_seconds=300),
     )
@@ -141,7 +141,7 @@ def test_ensure_retries_after_a_failed_constructor_attempt(monkeypatch):
     engine.get_state.return_value = PlayoutState.STOPPED
     engine.recording_stop.side_effect = [ConnectionError("not up"), ConnectionError("not up"), None]
     monkeypatch.setattr(ps.time, "sleep", lambda _s: None)
-    s = ps.PlayoutScheduler(engine=engine, api_client=MagicMock(), streaming_handled_externally=True)
+    s = ps.PlayoutScheduler(engine=engine, api_client=MagicMock())
     assert s._initial_state_ok is False
     assert engine.recording_stop.call_count == 1
     s.reset_gates = MagicMock()
@@ -157,17 +157,17 @@ def test_ensure_gives_up_after_the_timeout(monkeypatch):
     engine.get_state.return_value = PlayoutState.STOPPED
     engine.recording_stop.side_effect = ConnectionError("never")
     monkeypatch.setattr(ps.time, "sleep", lambda _s: None)
-    s = ps.PlayoutScheduler(engine=engine, api_client=MagicMock(), streaming_handled_externally=True)
+    s = ps.PlayoutScheduler(engine=engine, api_client=MagicMock())
     assert s.ensure_liquidsoap_initial_state(background=False, attempts=4, delay=0.0) is False
     assert engine.recording_stop.call_count == 1 + 4
     assert s._initial_state_ok is False
 
 
-def test_ensure_is_none_for_legacy_engines():
+def test_ensure_is_none_when_the_engine_has_no_recording_stop():
     from libretime_playout.engine.interface import PlayoutEngine
     engine = MagicMock(spec=PlayoutEngine)
     engine.get_state.return_value = PlayoutState.STOPPED
-    s = ps.PlayoutScheduler(engine=engine, api_client=MagicMock(), streaming_handled_externally=False)
+    s = ps.PlayoutScheduler(engine=engine, api_client=MagicMock())
     assert s.ensure_liquidsoap_initial_state(background=False) is None
 
 
@@ -177,7 +177,7 @@ def test_disabled_policy_is_a_noop(monkeypatch):
     restart = MagicMock(return_value=True)
     monkeypatch.setattr(ps, "restart_liquidsoap_service", restart)
     s = ps.PlayoutScheduler(
-        engine=engine, api_client=MagicMock(), streaming_handled_externally=True,
+        engine=engine, api_client=MagicMock(),
         nightly_restart=NightlyRestartPolicy(start=None),
     )
     assert not s._maybe_nightly_restart(now_local=IN_WINDOW)

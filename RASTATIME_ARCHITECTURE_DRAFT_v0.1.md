@@ -1,10 +1,17 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.28
+Draft version: 0.29
 Date: 2026-09-10
 
 > **Revision history**
+> - **0.29 (2026-09-10)** — **Legacy mpv engine removed** (§23.28).
+>   Liquidsoap is the only playout engine; `RASTATIME_PLAYOUT_ENGINE`
+>   accepts only `liquidsoap`.  The DJ kick goes to the harbor over
+>   telnet (`master_dj.stop` / `show_dj.stop`) instead of the Icecast
+>   admin `killsource`; the line-in capture restart callback and the
+>   webstream resume re-arm the Liquidsoap sources instead of pushing
+>   URLs into the request queue.
 > - **0.28 (2026-09-10)** — **DJ logins checked against the UI**
 >   (§23.27, addendum 2026-09-10).  The harbors' `auth` callback asks
 >   PLAYOUT (`/dj-auth`), PLAYOUT asks the legacy
@@ -4598,3 +4605,63 @@ port and mount are rendered from `stream.inputs.main/show`, so the
 readonly fields of Settings → Streams and the rendered script cannot
 drift apart; a port already used by an Icecast output is refused with
 a warning (Liquidsoap would fail to bind and die).
+
+### 23.28 Legacy mpv Engine Removed — Liquidsoap Only (2026-09-10)
+
+**Context.**  Since the Phase-D cutover (2026-05-28) PLAYOUT has run with
+`streaming_handled_externally=True`: Liquidsoap owns local playback, the
+Icecast outputs, the DJ harbors, the webstream / line-in inputs and the
+recording.  The mpv engine (libmpv monitor plus three FfmpegStreamer
+subprocesses re-encoding the same file to Icecast, the Icecast admin
+`killsource`, the hot reload of stream outputs and the listener
+credentials for relaying /main and /show) stayed in the tree as a
+fallback that was never exercised again — about 1,600 lines of dead
+code with an `if` at every scheduler entry point.  BACKLOG
+"Legacy-mpv-Code-Delete", operator Go 2026-09-10 (work-order point 15).
+
+**Change.**
+
+1. Deleted `engine/mpv_engine.py`, `engine/ffmpeg_streamer.py` and the
+   streamer test; `engine/__init__.py` exports only the interface.
+   `engine/ffmpeg_linein_capture.py` stays: since option B (2026-09-03)
+   it is the active MME feeder path of every scheduled line-in, not a
+   legacy remnant, so `_stable_id_to_dshow_audio` did not have to move.
+2. `PlayoutScheduler` lost the `stream_outputs`, `read_stream_outputs`
+   and `streaming_handled_externally` parameters and every branch behind
+   the flag: `_start_streamers` / `_stop_streamers`,
+   `_reload_stream_outputs_if_changed`, the mpv relay in
+   `switch_audio_source`, `_kick_icecast_source`,
+   `_build_icecast_input_url`, `set_listener_credentials`.
+3. `__main__` accepts `RASTATIME_PLAYOUT_ENGINE` only as `liquidsoap`
+   (unset counts as liquidsoap; anything else aborts the start with a
+   CRITICAL line, `_require_liquidsoap_engine`); the `RASTATIME_MPV_*`
+   variables are ignored.  `source_switcher.start_listener` has no
+   `engine_kind`; the Icecast `listmounts` reconciler is gone.
+4. DJ kick over the harbor: `kick_dj_source` →
+   `LiquidsoapPlayoutEngine.dj_kick` → `LiquidsoapTelnetClient.harbor_stop`
+   → `master_dj.stop` / `show_dj.stop`.  The former Icecast `killsource`
+   could not reach a harbor DJ at all (since Phase C4 the DJs connect to
+   port 8001); the harbor's `on_disconnect` callback then drives the
+   switcher and the resume exactly as for a voluntary hang-up.
+5. Two remaining mpv-shaped paths were corrected while removing the
+   flag: the line-in capture's watchdog restart callback used to push
+   the listen URL through `engine.play` (a request-queue push of the
+   mount); it now re-arms the `input.http` companion
+   (`linein_start_http` + gate).  The webstream resume after a DJ
+   hang-up did the same and now calls `webstream_start` + gate +
+   watchdog (`webstream.start` on the same URL answers "already
+   started" in the .liq, so a source still running underneath the DJ
+   is left alone).
+
+**Consequences.**  One engine, one code path per schedule item type;
+the scheduler no longer needs to know which engine it is talking to.
+Stream-output changes reach the air only through the re-render of
+rastatime.liq plus a LIQUIDSOAP restart (planned restart or operator)
+— the Pypo-side hot reload that rebuilt FfmpegStreamer subprocesses is
+gone with them.  `stream.internal_listener` in libretime.conf stays for
+the PHP listener-auth endpoint; PLAYOUT no longer reads it.  An
+installed service environment that still says
+`RASTATIME_PLAYOUT_ENGINE=liquidsoap` keeps working unchanged;
+`RASTATIME_MPV_LOG_LEVEL` may be removed at leisure.  The rollback to
+mpv described in LIQUIDSOAP_CUTOVER §9 no longer exists; "fix forward"
+is the only path, as it has been in practice since June.

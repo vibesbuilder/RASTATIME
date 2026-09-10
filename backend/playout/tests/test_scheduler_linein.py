@@ -2,20 +2,22 @@
 RASTATIME 2026-05-29 — Unit tests for PlayoutScheduler's linein
 hooks in Liquidsoap-Mode (Phase F).
 
-In Liquidsoap-Mode (``streaming_handled_externally=True``) scheduled
-line-input items use Liquidsoap's dedicated ``input.http`` source bound
-to FfmpegLineinCapture's local Icecast mount.  FfmpegLineinCapture
-itself (the Python subprocess that captures dshow audio) is unchanged
-— only the downstream consumer side is migrated:
+Scheduled line-input items use Liquidsoap's dedicated ``input.http``
+source bound to FfmpegLineinCapture's local Icecast mount
+(FfmpegLineinCapture is the Python subprocess that captures the
+device through the MME feeder):
 
-  Legacy:    FfmpegLineinCapture → /linein-capture → mpv + 3× FfmpegStreamer
-  Phase F:   FfmpegLineinCapture → /linein-capture → Liquidsoap input.http
-                                                     → bus → Icecast (×3)
-                                                     → output.file (recording)
+  FfmpegLineinCapture → /linein-capture → Liquidsoap input.http
+                                          → bus → Icecast (×3)
+                                          → output.file (recording)
 
-These tests verify the branch logic in:
-  * ``_on_linein_start`` — branch on streaming_handled_externally
+(The legacy mpv + FfmpegStreamer consumer path was deleted on
+2026-09-10.)
+
+These tests verify:
+  * ``_on_linein_start`` — feeder vs. direct-dshow decision, gates
   * ``_on_stop`` — linein-specific teardown via linein_stop()
+  * ``_on_linein_capture_restart`` — the watchdog re-arms input.http
 """
 from __future__ import annotations
 
@@ -24,7 +26,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from libretime_playout.engine.interface import PlayoutEngine, PlayoutState
+from libretime_playout.engine.interface import PlayoutState
 from libretime_playout.engine.liquidsoap_engine import LiquidsoapPlayoutEngine
 from libretime_playout.player.events import EventKind, LineinEvent
 
@@ -61,17 +63,14 @@ def _make_linein_event(
     )
 
 
-def _patched_scheduler(streaming_handled_externally: bool):
+def _patched_scheduler():
     """
     Build a PlayoutScheduler with a mocked FfmpegLineinCapture so the
     test doesn't try to spawn an actual ffmpeg subprocess.
     """
     from libretime_playout.playout_scheduler import PlayoutScheduler
 
-    if streaming_handled_externally:
-        engine = MagicMock(spec=LiquidsoapPlayoutEngine)
-    else:
-        engine = MagicMock(spec=PlayoutEngine)
+    engine = MagicMock(spec=LiquidsoapPlayoutEngine)
     engine.get_state.return_value = PlayoutState.STOPPED
     api_client = MagicMock()
 
@@ -89,7 +88,6 @@ def _patched_scheduler(streaming_handled_externally: bool):
         sched = PlayoutScheduler(
             engine=engine,
             api_client=api_client,
-            streaming_handled_externally=streaming_handled_externally,
         )
         # Patch the device resolver so it doesn't try to use the
         # WindowsAudioDeviceManager.  Returns the input device_id
@@ -100,12 +98,7 @@ def _patched_scheduler(streaming_handled_externally: bool):
 
 @pytest.fixture
 def liquidsoap_scheduler():
-    return _patched_scheduler(streaming_handled_externally=True)
-
-
-@pytest.fixture
-def legacy_scheduler():
-    return _patched_scheduler(streaming_handled_externally=False)
+    return _patched_scheduler()
 
 
 # ---- _on_linein_start: Liquidsoap path --------------------------------
@@ -173,35 +166,6 @@ def test_linein_start_liquidsoap_updates_playing_event(
     assert sched._current_audio_path == capture.listen_url
 
 
-# ---- _on_linein_start: Legacy mpv/VLC path ----------------------------
-
-
-def test_linein_start_legacy_uses_engine_play(legacy_scheduler):
-    """
-    Legacy mpv/VLC path: unchanged — capture.start + engine.play
-    + start_streamers.  No engine.linein_start in this path.
-    """
-    sched, engine, capture = legacy_scheduler
-    event = _make_linein_event()
-
-    sched._on_linein_start("key1", event)
-
-    # RASTATIME 2026-08-31 — start() now carries the channel selection
-    # (default plain stereo) and the friendly-name hint for the feeder.
-    capture.start.assert_called_once_with(
-        event.device_id,
-        channel_mapping=(0, 1),
-        device_name=event.device_name,
-    )
-    engine.play.assert_called_once_with(capture.listen_url, cue_in=0.0)
-    # Legacy engine does not have linein_start (it's on the Liquidsoap
-    # spec only) — verifying via mock attribute presence is fragile
-    # since MagicMock auto-generates attrs.  Instead: confirm the
-    # PlayoutEngine-spec mock was used (no linein_start attribute when
-    # spec is enforced).
-    assert not hasattr(engine, "linein_start") or not engine.linein_start.called
-
-
 # ---- _on_stop: Liquidsoap linein teardown -----------------------------
 
 
@@ -235,26 +199,6 @@ def test_on_stop_liquidsoap_linein_calls_linein_stop_and_capture_stop(
     sched._drained_linein_stop(sched._linein_generation)
     capture.stop.assert_called_once()
     engine.linein_stop.assert_called_once()
-
-
-def test_on_stop_legacy_linein_does_not_call_linein_stop(legacy_scheduler):
-    """
-    In legacy mode, _on_stop calls engine.stop() (the regular path)
-    + capture.stop().  No engine.linein_stop call (that's Liquidsoap-only).
-    """
-    sched, engine, capture = legacy_scheduler
-    event = _make_linein_event()
-    sched._on_linein_start("key1", event)
-
-    engine.reset_mock()
-    capture.reset_mock()
-    engine.get_state.return_value = PlayoutState.PLAYING
-
-    sched._on_stop("key1")
-
-    capture.stop.assert_called_once()
-    # Legacy path takes engine.stop, not linein_stop
-    engine.stop.assert_called_once()
 
 
 # ---- _on_stop: Phase-F-2 race fix #3 (device-switch) ------------------
@@ -596,8 +540,6 @@ def test_file_start_closes_a_linein_predecessor_itself(liquidsoap_scheduler):
     sched._ensure_file_cached = lambda evt: "C:/rastatime/scheduler/1.mp3"
     sched._cue_item_start = MagicMock()
     sched._notify_media_started = MagicMock()
-    sched._start_streamers = MagicMock()
-    sched._stop_streamers = MagicMock()
 
     sched._on_file_start("B", _file_event(datetime.utcnow()))
 
@@ -656,8 +598,6 @@ def test_file_start_after_a_file_touches_no_exclusive_source(liquidsoap_schedule
     sched._ensure_file_cached = lambda evt: "C:/rastatime/scheduler/1.mp3"
     sched._cue_item_start = MagicMock()
     sched._notify_media_started = MagicMock()
-    sched._start_streamers = MagicMock()
-    sched._stop_streamers = MagicMock()
 
     sched._on_file_start("B", _file_event(datetime.utcnow(), row_id=778))
 
@@ -689,7 +629,6 @@ def test_same_scheduled_item_identity():
 
 def _refresh_with(sched, events):
     """Run refresh() against a canned schedule; cancel the timers it arms."""
-    sched._reload_stream_outputs_if_changed = MagicMock()
     with patch("libretime_playout.playout_scheduler.get_schedule", return_value=events):
         sched.refresh()
     sched._cancel_all_timers()
@@ -977,8 +916,6 @@ def test_successor_releases_a_line_in_through_the_gate(liquidsoap_scheduler, fak
     sched._ensure_file_cached = lambda evt: "C:/rastatime/scheduler/1.mp3"
     sched._cue_item_start = MagicMock()
     sched._notify_media_started = MagicMock()
-    sched._start_streamers = MagicMock()
-    sched._stop_streamers = MagicMock()
 
     sched._on_file_start("B", _file_event(datetime.utcnow()))
 
@@ -990,14 +927,14 @@ def test_successor_releases_a_line_in_through_the_gate(liquidsoap_scheduler, fak
 
 def test_drain_seconds_follow_the_house_crossfade():
     from libretime_playout.liquidsoap_config import DEFAULT_INPUT_DUCK_FADE_SECONDS
-    s1, _, _ = _patched_scheduler(True)
+    s1, _, _ = _patched_scheduler()
     assert s1._drain_seconds == 2.0 + 0.5      # default input_transition_seconds
     from libretime_playout.playout_scheduler import PlayoutScheduler
     with patch("libretime_playout.playout_scheduler.FfmpegLineinCapture"):
         s2 = PlayoutScheduler(engine=MagicMock(), api_client=MagicMock(),
-                              streaming_handled_externally=True, input_transition_seconds=0.0)
+                              input_transition_seconds=0.0)
         s3 = PlayoutScheduler(engine=MagicMock(), api_client=MagicMock(),
-                              streaming_handled_externally=True, input_transition_seconds=1.0)
+                              input_transition_seconds=1.0)
     assert s2._drain_seconds == DEFAULT_INPUT_DUCK_FADE_SECONDS + 0.5
     assert s3._drain_seconds == 1.5
 
@@ -1167,3 +1104,56 @@ def test_prepare_timer_for_a_webstream_uses_the_webstream_lead(liquidsoap_schedu
     assert len(prep) == 1
     assert WEBSTREAM_PREPARE_LEAD_SECONDS == 10.0
     assert abs(prep[0].interval - (60 - WEBSTREAM_PREPARE_LEAD_SECONDS)) < 0.5
+
+
+# ---- capture watchdog restart callback (RASTATIME 2026-09-10) ----------
+#
+# The mpv cleanup replaced the callback's engine.play(listen_url) wiring
+# (a request-queue push of the mount) with the Liquidsoap re-arm of the
+# input.http companion.
+
+
+def test_capture_restart_rearms_the_http_companion(liquidsoap_scheduler):
+    sched, engine, _capture = liquidsoap_scheduler
+    sched._playing_key = "key1"
+    sched._current_event = _make_linein_event()      # stored device name -> feeder
+
+    sched._on_linein_capture_restart()
+
+    engine.linein_start_http.assert_called_once_with()
+    engine.linein_gate.assert_called_once_with(True)
+    engine.play.assert_not_called()
+
+
+def test_capture_restart_is_a_noop_without_a_playing_linein(liquidsoap_scheduler):
+    sched, engine, _capture = liquidsoap_scheduler
+
+    sched._on_linein_capture_restart()
+
+    engine.linein_start_http.assert_not_called()
+    engine.play.assert_not_called()
+
+
+def test_capture_restart_is_a_noop_while_a_dj_is_live(liquidsoap_scheduler):
+    from libretime_playout.source_switcher import SourceState
+
+    sched, engine, _capture = liquidsoap_scheduler
+    sched._current_event = _make_linein_event()
+    switcher = MagicMock()
+    switcher.current_state = SourceState.SHOW
+    sched.set_source_switcher(switcher)
+
+    sched._on_linein_capture_restart()
+
+    engine.linein_start_http.assert_not_called()
+    engine.linein_gate.assert_not_called()
+
+
+def test_capture_restart_is_a_noop_for_direct_dshow_rows(liquidsoap_scheduler):
+    sched, engine, _capture = liquidsoap_scheduler
+    sched._current_event = _make_linein_event(device_name="")
+
+    sched._on_linein_capture_restart()
+
+    engine.linein_start_http.assert_not_called()
+    engine.play.assert_not_called()

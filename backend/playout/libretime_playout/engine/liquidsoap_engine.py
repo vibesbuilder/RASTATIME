@@ -3,36 +3,29 @@ LiquidsoapPlayoutEngine — Liquidsoap adapter for RASTATIME.
 
 RASTATIME 2026-05-26 — Seamless-Bus-Mix Phase C2 (engine wire-up).
 
-Drop-in replacement for :class:`MpvPlayoutEngine` and
-:class:`VlcPlayoutEngine` (ADR-002).  Talks to a long-running
+The only :class:`PlayoutEngine` implementation (ADR-002) since the
+legacy mpv engine was deleted on 2026-09-10.  Talks to a long-running
 Liquidsoap subprocess via the telnet line-protocol server on
 ``localhost:1234`` (see :mod:`liquidsoap_telnet`).
 
-Architectural shift vs. mpv/VLC engines
----------------------------------------
+What Liquidsoap owns
+--------------------
 
-The mpv and VLC engines own the audio output themselves — when
-``play(uri)`` is called, mpv/VLC starts decoding and pushing to
-the OS audio device, and the Pypo scheduler then spawns three
-parallel FfmpegStreamer subprocesses that re-read the same file
-and push it to Icecast.
-
-The Liquidsoap engine inverts the relationship.  Liquidsoap is a
-long-running NSSM-managed subprocess that holds:
+Liquidsoap is a long-running NSSM-managed subprocess that holds:
 
   * A ``request.queue`` source that we push file URIs into
   * The Master/Show DJ ``input.harbor`` sources (Phase C4)
+  * The webstream and line-in input sources (Phases E / F)
   * A ``switch(...)`` that picks the active source (Phase C4)
   * Three ``output.icecast`` blocks (mp3 / aac / ogg) with a
     single persistent Icecast PUT per mount (Phase C3)
+  * The per-show and 24/7 recording via ``output.file`` (Phase C5)
 
 When the scheduler wants to "play file X", we call :meth:`play`
 which sends an ``annotate:`` + ``file:`` wrapped URI to
 ``request.queue.push`` over telnet.  Liquidsoap then decodes,
-encodes, mixes, and ships the audio entirely by itself — no
-separate FfmpegStreamer subprocesses, and Liquidsoap's native
-gapless transitions handle the tail-cut problem that the mpv
-engine works around with ``wait_until_stopped`` + 500 ms hack.
+encodes, mixes, and ships the audio entirely by itself, with native
+gapless transitions.
 
 Cue points + replay-gain
 ------------------------
@@ -117,9 +110,9 @@ _NO_CROSSFADE_THRESHOLD_SECONDS = 8.0
 
 class LiquidsoapPlayoutEngine(PlayoutEngine):
     """
-    Liquidsoap-backed playout engine — same PlayoutEngine contract
-    as the mpv/VLC adapters, but delegates the actual audio work to
-    a long-running Liquidsoap subprocess over telnet.
+    Liquidsoap-backed playout engine: implements the PlayoutEngine
+    contract by delegating the actual audio work to a long-running
+    Liquidsoap subprocess over telnet.
 
     Connection target defaults match the Liquidsoap stdlib telnet
     server example (``127.0.0.1:1234``); override via env-vars
@@ -207,11 +200,10 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
         ``output.icecast`` block automatically).
 
         ``media_options`` is accepted for interface compatibility but
-        ignored: Liquidsoap takes HTTP auth from the URI's userinfo,
-        same as mpv/ffmpeg.
+        ignored: Liquidsoap takes HTTP auth from the URI's userinfo.
 
         On any telnet failure the engine flips into ``ERROR`` state
-        and logs — same pattern as the mpv engine.  We do NOT raise
+        and logs.  We do NOT raise
         out of ``play()`` because the Pypo scheduler treats a play()
         exception as a scheduler-level crash; we want a clear-but-
         contained failure that the next play() attempt can recover
@@ -299,8 +291,8 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
             )
         except Exception as exc:  # pylint: disable=broad-exception-caught
             # Telnet errors (ConnectionError) and any other surprise
-            # from the wire layer end up here.  Mirror the mpv engine:
-            # set ERROR state, log, and swallow so the scheduler can
+            # from the wire layer end up here.  Set ERROR state, log,
+            # and swallow so the scheduler can
             # decide whether the next event should still try.
             logger.error(
                 "Liquidsoap play failed for %s: %s",
@@ -317,11 +309,10 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
         Timer thread flushes the skip eventually so DJ-takeover-style
         stops still take effect.
 
-        The legacy mpv/VLC engines do an immediate hard-stop because
-        they own the audio path; with Liquidsoap the queue + crossfade
-        operators handle gapless transitions natively and an aggressive
-        skip-then-push produces an audible glitch (Phase-C8 reality-
-        test 2026-05-26 found this).
+        No immediate hard-stop: the queue + crossfade operators handle
+        gapless transitions natively and an aggressive skip-then-push
+        produces an audible glitch (Phase-C8 reality-test 2026-05-26
+        found this).
         """
         logger.info("Liquidsoap stop (deferred up to %.1fs)", _DEFERRED_STOP_SECONDS)
         # RASTATIME 2026-09-04 - drop PENDING requests right away, before
@@ -440,17 +431,11 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
 
     def wait_until_stopped(self, timeout: float) -> bool:
         """
-        For mpv this waits for libmpv's end-file event so short-track
-        tails get flushed before the hard stop (see the Phase-1
-        Seamless-Bus-Mix work).
-
-        For Liquidsoap this is a NO-OP that returns True immediately:
-        the .liq pipeline has gapless transitions between
-        ``request.queue`` items natively, so the scheduler does NOT
-        need to delay its next-track event for a tail-flush.  That's
-        actually one of the headline benefits of moving to
-        Liquidsoap — the 500 ms wait hack in the mpv path goes away
-        once the Liquidsoap engine is the active backend.
+        NO-OP that returns True immediately: the .liq pipeline has
+        gapless transitions between ``request.queue`` items natively,
+        so the scheduler does NOT need to delay its next-track event
+        for a tail-flush (the deleted mpv engine needed a 500 ms wait
+        here).
         """
         return True
 
@@ -461,9 +446,7 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
     # The rastatime.liq template renders an ``output.file(id="recording",
     # …)`` block whose filename comes from a Liquidsoap interactive
     # variable ``recording_path``.  Pypo's _on_show_record_start /
-    # _on_show_record_end hooks call these three wrappers when
-    # ``streaming_handled_externally=True`` — the legacy mpv/VLC engines
-    # leave FfmpegRecorder in charge and never touch them.
+    # _on_show_record_end hooks call these three wrappers.
     #
     # Reality-tested 2026-05-27 (Mechanismus B):
     #   * fresh start: 100.6 % of expected byte count over 10 s
@@ -543,9 +526,7 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
     # The rastatime.liq template renders an ``input.http(id="webstream",
     # start=false, ...)`` source initialised with an empty URL.  Pypo's
     # _on_webstream_start / _on_stop hooks (for WebStreamEvent items)
-    # call these two wrappers when streaming_handled_externally=True —
-    # the legacy mpv/VLC engines keep using engine.play(url) and never
-    # touch them.
+    # call these two wrappers.
     #
     # Why a separate input.http source instead of request.queue.push:
     # the Phase-E reality-test 2026-05-29 (logged in
@@ -854,6 +835,35 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
         return self._telnet.linein_status()
 
     # ------------------------------------------------------------------
+    # RASTATIME 2026-09-10 — DJ harbor kick (replaces the Icecast admin
+    # killsource of the deleted mpv path)
+    # ------------------------------------------------------------------
+
+    _HARBOR_IDS = {"master": "master_dj", "show": "show_dj"}
+
+    def dj_kick(self, source: str) -> None:
+        """
+        Disconnect the DJ client on the Master or Show harbor
+        (``master_dj.stop`` / ``show_dj.stop``, registered by
+        ``input.harbor``).  Idempotent: with nobody connected Liquidsoap
+        replies "Done" as well.  The harbor's on_disconnect callback
+        then reports the disconnect to PLAYOUT's /source-event, so the
+        SourceSwitcher follows on its own.
+
+        ``source`` is ``"master"`` or ``"show"``; anything else is a
+        programming error (ValueError).  Telnet errors are logged and
+        swallowed - the kick is best-effort, same as the other wrappers.
+        """
+        harbor_id = self._HARBOR_IDS.get(source)
+        if harbor_id is None:
+            raise ValueError(f"unknown DJ source {source!r} (master|show)")
+        try:
+            resp = self._telnet.harbor_stop(harbor_id)
+            logger.info("Liquidsoap %s.stop -> %s", harbor_id, (resp or "").strip() or "<empty>")
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            logger.warning("Liquidsoap %s.stop telnet error: %s", harbor_id, exc)
+
+    # ------------------------------------------------------------------
     # Internal helpers — URI / annotate building
     # ------------------------------------------------------------------
 
@@ -1018,8 +1028,8 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
         Strip the password from a ``http://user:pass@host/…`` URI so
         it doesn't end up in the playout log.
 
-        Mirrors :meth:`MpvPlayoutEngine._redact` so log lines stay
-        consistent across both engines.
+        Keeps log lines free of credentials (the deleted mpv engine
+        had the same helper).
         """
         if not uri or "://" not in uri:
             return uri or ""

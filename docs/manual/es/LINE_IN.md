@@ -240,12 +240,6 @@ descartarla. No se precalienta cuando otro Line-In está en antena
 dispositivo guardado; esos slots arrancan por la vía normal
 (~2 s).
 
-**Rutas legacy mpv / VLC (solo cuando
-`RASTATIME_PLAYOUT_ENGINE=mpv` o `=vlc`):**
-mpv abre la URL de escucha de FfmpegLineinCapture
-directamente y FfmpegStreamer re-codifica a Icecast. Sin
-grabación para programas solo-line-input en este modo.
-
 Cuando la duración del slot transcurre, el motor envía un
 evento `LINEIN_END` y el source switcher regresa al
 planning.
@@ -356,10 +350,6 @@ el archivo MP3 por programa, y es capturado nativamente —
 junto con las pistas regulares o webstreams planificados
 del mismo programa. Vea
 [Grabación por programa](./RECORD_PER_SHOW.md).
-
-(En los modos de motor mpv/VLC deprecados, la grabación
-no está disponible — vea
-[Configuración → Motor de Playout](./SETTINGS.md).)
 
 ### "¿Puedo añadir una fuente de audio de red (ej. AES67 / Dante) como Line-In?"
 

@@ -2,8 +2,8 @@
 PlayoutEngine abstract interface (ADR-002, T2.1).
 
 All playout actions in RASTATIME must go through this interface.
-The production implementation is LiquidsoapPlayoutEngine (Phase-C5,
-2026-05-28); mpv (MpvPlayoutEngine) remains as a legacy fallback.
+The only implementation is LiquidsoapPlayoutEngine (production since
+Phase-C5, 2026-05-28); the mpv engine was deleted on 2026-09-10.
 """
 from abc import ABC, abstractmethod
 from enum import Enum
@@ -38,12 +38,10 @@ class PlayoutEngine(ABC):
                             playback
         cue_out          : seconds from the start of the file to stop
                             playback (None = natural end)
-        media_options    : engine-specific per-media options (e.g. for
-                            libVLC ``[":http-user=…", ":http-pwd=…",
-                            ":network-caching=500"]`` — auth credentials
-                            and caching tweaks that don't fit in the URI
-                            itself).  Engines that don't have a
-                            per-media-option concept may ignore them.
+        media_options    : engine-specific per-media options (kept on
+                            the interface for compatibility; the
+                            Liquidsoap engine has no per-media-option
+                            concept and ignores them).
         gain_db          : RASTATIME 2026-05-16 — generic per-event dB
                             offset.  Source of the value depends on the
                             event type; the scheduler computes it:
@@ -67,14 +65,10 @@ class PlayoutEngine(ABC):
                             (filename for files, ICY-stream header for
                             webstreams).
 
-                            Engines that don't ship metadata to a
-                            downstream encoder (mpv/VLC are local-only
-                            — Icecast is handled by FfmpegStreamer in
-                            those configurations) may ignore this
-                            parameter.  The LiquidsoapPlayoutEngine wires
-                            it into Liquidsoap's ``annotate:`` envelope,
-                            and Liquidsoap then propagates the metadata
-                            to all output.icecast blocks natively.
+                            The LiquidsoapPlayoutEngine wires it into
+                            Liquidsoap's ``annotate:`` envelope, and
+                            Liquidsoap then propagates the metadata to
+                            all output.icecast blocks natively.
         """
 
     @abstractmethod
@@ -98,16 +92,12 @@ class PlayoutEngine(ABC):
 
         RASTATIME 2026-05-25 — Seamless-Bus-Mix Phase 1.  The playout
         scheduler calls this just before hard-stopping the engine at
-        next-track time so that short tracks (4–10 s) get to flush
-        their last frames into the FFmpeg streamer pipeline before
-        the streamers are torn down — without this, the tail audio
-        was getting cut off audibly.
+        next-track time so that a short track (4–10 s) can flush its
+        last frames first.
 
-        Default implementation polls :meth:`get_state` once; engines
-        with a real event-driven end-of-file signal (e.g. MpvEngine
-        via libmpv's ``end-file`` callback) override this with a
-        blocking wait that returns as soon as the actual signal
-        arrives.
+        Default implementation polls :meth:`get_state` once.  The
+        Liquidsoap engine returns immediately: the .liq pipeline has
+        gapless transitions between queue items natively.
         """
         return self.get_state() == PlayoutState.STOPPED
 
@@ -118,10 +108,9 @@ class PlayoutEngine(ABC):
         ``device_id`` is the engine-specific identifier of the OS audio
         endpoint to play to.  ``None`` (or empty) means "OS default".
 
-        For libmpv on Windows the format is ``wasapi/{<GUID>}`` —
-        :class:`MpvPlayoutEngine` converts a RASTATIME stable-ID
-        (normalised GUID without braces) into that format internally,
-        so the scheduler can pass the bare stable-ID straight through.
+        The scheduler passes the RASTATIME stable-ID (normalised
+        endpoint GUID without braces) straight through; an engine maps
+        it to its own device naming.
 
         Default implementation is a no-op + warning — engines that
         don't support live audio-device switching just keep playing

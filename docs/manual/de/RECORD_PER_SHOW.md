@@ -97,13 +97,11 @@ Das ergibt:
 > MP3 @ 320 kbps — Archiv-Qualität, fest durch Operator-
 > Entscheidung 2026-05-27.
 
-> **Aufnahme erfordert die Liquidsoap-Engine.** Phase-C5
-> Teil 2d hat den Legacy-FfmpegRecorder-Code-Pfad gelöscht,
-> der zuvor die Aufnahme für die mpv/VLC-Engine-Modi
-> übernommen hat. Wenn `RASTATIME_PLAYOUT_ENGINE` auf
-> `mpv` oder `vlc` gesetzt ist, werden Show-Record-Start-
-> Events geloggt, aber es findet keine Aufnahme statt (die
-> Sendung läuft normal, nur die Aufnahme fehlt).
+> **Die Aufnahme schreibt Liquidsoap** (`output.file` am
+> internen Bus). Phase-C5 Teil 2d hat den Legacy-
+> FfmpegRecorder-Code-Pfad gelöscht; seit dem 2026-09-10 ist
+> Liquidsoap die einzige Playout-Engine, jede Sendung mit
+> aktivierter Aufnahme wird also aufgezeichnet.
 
 ---
 

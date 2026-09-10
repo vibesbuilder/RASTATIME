@@ -108,7 +108,7 @@ Get-Content C:\rastatime\logs\api-stderr.log -Tail 100
 | Log message | Cause | Fix |
 |---|---|---|
 | `could not connect to server` | PostgreSQL unreachable (port 5432) | Start PostgreSQL; check `libretime.conf` |
-| `CDLL libvlc.dll could not be loaded` | Playout fell back to the legacy VLC engine | Verify `RASTATIME_PLAYOUT_ENGINE=liquidsoap` in the playout `AppEnvironmentExtra` (MIGRATION.md §4.7) — VLC is no longer part of the stack |
+| `RASTATIME_PLAYOUT_ENGINE='mpv' is not supported` | The service environment still names the removed mpv engine (Liquidsoap is the only engine since 2026-09-10) | Set `RASTATIME_PLAYOUT_ENGINE=liquidsoap` (or remove the variable) in the playout `AppEnvironmentExtra`, then restart RASTATIME-PLAYOUT |
 | `No module named 'libretime_api'` | PYTHONPATH incorrect | Reinstall service with `install-api.ps1` |
 | `FileNotFoundError: libretime.conf` | Config file missing or wrong path | Copy from backup; check `LIBRETIME_CONFIG_FILEPATH` |
 | `django.core.exceptions.ImproperlyConfigured` | Missing env var or bad settings | Check `DJANGO_SETTINGS_MODULE` in NSSM env |

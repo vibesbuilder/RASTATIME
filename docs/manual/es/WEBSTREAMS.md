@@ -167,12 +167,6 @@ propio buffer de ~10 s, así que el retraso efectivo percibido por
 el oyente final está dominado por el buffer del lado del
 reproductor.
 
-**Rutas legacy mpv / VLC (solo cuando
-`RASTATIME_PLAYOUT_ENGINE=mpv` o `=vlc`):**
-mpv abre la URL HTTP directamente y FfmpegStreamer
-re-codifica a Icecast. Sin grabación para shows
-solo-webstream en este modo.
-
 ### Qué pasa si la URL es inalcanzable
 
 `input.http` reintenta la conexión cada **2 segundos**

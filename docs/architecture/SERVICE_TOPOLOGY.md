@@ -149,7 +149,8 @@ selection is read from `rastatime_soundcard_settings`.  The Liquidsoap
 production script `C:\Tools\liquidsoap\rastatime.liq` is rendered from a
 template plus the DB stream settings via
 `python -m libretime_playout.liquidsoap_config render`.
-(mpv/VLC remain only as legacy fallback engine code pending deletion.)
+(The mpv/VLC legacy engine code was deleted on 2026-09-10; Liquidsoap is
+the only engine.)
 
 **Key environment variables:**
 

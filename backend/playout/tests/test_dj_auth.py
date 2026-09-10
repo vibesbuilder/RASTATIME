@@ -136,7 +136,7 @@ def test_start_listener_wires_the_authenticator(monkeypatch):
     checker = object()
     server = ss.start_listener(
         ss.SourceSwitcher(switch_callback=lambda _s: None),
-        host="127.0.0.1", port=0, engine_kind="liquidsoap", dj_auth=checker,
+        host="127.0.0.1", port=0, dj_auth=checker,
     )
     try:
         assert ss._EventHandler.dj_auth is checker

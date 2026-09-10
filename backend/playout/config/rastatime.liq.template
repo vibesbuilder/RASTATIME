@@ -5,8 +5,9 @@
 # (production-ready outline; placeholders rendered by
 #  libretime_playout.liquidsoap_config at Pypo start time).
 #
-# This script is the long-running Liquidsoap subprocess that replaces
-# mpv + 3x FfmpegStreamer + the PHP-side crossfade calculations.  It
+# This script is the long-running Liquidsoap subprocess that owns local
+# playback, the Icecast outputs and the crossfades (it replaced the
+# former mpv + 3x FfmpegStreamer stack, deleted 2026-09-10).  It
 # is driven by the Python LiquidsoapPlayoutEngine over telnet (see
 # backend/playout/libretime_playout/engine/liquidsoap_telnet.py).
 #
@@ -447,8 +448,8 @@ ${BUS_SOURCE_BLOCK}
 # The LiquidsoapPlayoutEngine sets this field in the annotate:
 # envelope (from cc_files.replay_gain + cc_pref.replay_gain_modifier
 # for files, or cc_webstream.input_gain_db for webstreams).  Tracks
-# without the metadata field play at unity gain — same passthrough
-# behaviour mpv has when gain_db is None.
+# without the metadata field play at unity gain (gain_db None on the
+# Python side).
 bus = amplify(override="replaygain_track_gain", 1., bus)
 
 ${WEBSTREAM_WATCHDOG_BLOCK}

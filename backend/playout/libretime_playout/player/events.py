@@ -144,9 +144,9 @@ class WebStreamEvent(BaseEvent):
 
     # RASTATIME 2026-05-16 - per-webstream static input gain (dB).
     # Sourced from cc_webstream.input_gain_db via the REST API.  The
-    # playout scheduler forwards this to FfmpegStreamer's `gain_db`
-    # parameter, which emits a -af volume=<dB>dB filter.  None or 0
-    # = no filter applied (default upstream behaviour).
+    # playout scheduler forwards this to the engine's webstream_start
+    # `gain_db`, which Liquidsoap applies as a linear amplify factor.
+    # None or 0 = unity gain (default upstream behaviour).
     input_gain_db: Optional[float] = None
 
 

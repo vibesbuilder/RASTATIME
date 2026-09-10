@@ -65,10 +65,10 @@ Der Block wird **nur in das laufende Liquidsoap-Skript
 gerendert, wenn Sie die Funktion aktivieren**; andernfalls ist
 er ein No-Op-Kommentar und der Live-Stream bleibt unberührt.
 
-> **Erfordert die Liquidsoap-Engine.** Wie die Sendungs-
-> Aufnahme wird die 24/7-Aufnahme von Liquidsoaps `output.file`
-> erbracht. Bei `RASTATIME_PLAYOUT_ENGINE` = `mpv` oder `vlc`
-> findet keine 24/7-Aufnahme statt (der Stream läuft normal).
+> **Von Liquidsoap geschrieben.** Wie die Sendungs-Aufnahme
+> wird die 24/7-Aufnahme von Liquidsoaps `output.file` am
+> internen Bus erbracht (Liquidsoap ist seit dem 2026-09-10 die
+> einzige Playout-Engine).
 
 ---
 

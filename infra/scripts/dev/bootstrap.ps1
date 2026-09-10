@@ -13,8 +13,8 @@
         - RabbitMQ  (analyzer message queue + frontend upload dispatch)
 
     Optional:
-        - VLC / libVLC  (legacy mpv/VLC fallback engines only;
-          Liquidsoap is the production engine since 2026-05)
+        - VLC / libVLC  (not used: Liquidsoap is the only playout engine
+          since 2026-09-10; the check is kept for older checkouts)
 
     Run once after cloning, and again after any major system change.
 
@@ -227,7 +227,7 @@ function Test-VLC {
         }
     }
 
-    Write-Skip "VLC / libVLC [optional]" "not found  - only needed for legacy mpv/VLC fallback engines"
+    Write-Skip "VLC / libVLC [optional]" "not found  - not needed (Liquidsoap is the only playout engine)"
     Write-Info "Production playout uses Liquidsoap; VLC is not required."
     return $false
 }

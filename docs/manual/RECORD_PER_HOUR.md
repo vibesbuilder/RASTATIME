@@ -63,10 +63,10 @@ The block is rendered into the running Liquidsoap script
 **only when you enable the feature** in Settings; otherwise it
 is a no-op comment and the live stream is untouched.
 
-> **Requires the Liquidsoap engine.** Like per-show recording,
-> 24/7 recording is provided by Liquidsoap's `output.file`. If
-> `RASTATIME_PLAYOUT_ENGINE` is `mpv` or `vlc`, no 24/7
-> recording happens (the stream plays normally).
+> **Written by Liquidsoap.** Like per-show recording, 24/7
+> recording is provided by Liquidsoap's `output.file` on the
+> internal bus (Liquidsoap is the only playout engine since
+> 2026-09-10).
 
 ---
 

@@ -85,14 +85,11 @@ recording.start
 > son MP3 @ 320 kbps — calidad archivo, fija por decisión
 > del operador 2026-05-27.
 
-> **La grabación requiere el motor Liquidsoap.** Phase-C5
-> Teil 2d eliminó la ruta de código heredada FfmpegRecorder
-> que anteriormente manejaba la grabación para los modos de
-> motor mpv/VLC. Si `RASTATIME_PLAYOUT_ENGINE` está
-> establecido en `mpv` o `vlc`, los eventos
-> show-record-start se registran pero no se realiza ninguna
-> grabación (el programa se reproduce normalmente, solo
-> falta la grabación).
+> **La grabación la escribe Liquidsoap** (`output.file` en el
+> bus interno). Phase-C5 Teil 2d eliminó la ruta de código
+> heredada FfmpegRecorder; desde el 2026-09-10 Liquidsoap es
+> el único motor de playout, así que cada programa con
+> grabación activada se graba.
 
 ---
 

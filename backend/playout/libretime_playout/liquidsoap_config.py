@@ -375,15 +375,13 @@ DEFAULT_LINEIN_HTTP_POLL_DELAY_SECONDS = 0.5
 # Validated on the operator's Liquidsoap 2.4.4 + FFmpeg build (Phase-A
 # burn-in confirmed mp3 via libmp3lame); aac via FFmpeg's native AAC
 # encoder; vorbis via libvorbis.  These are the same three formats the
-# existing FfmpegStreamer can emit — keeps the operator's listener-side
-# URLs unchanged when migrating from FFmpeg to Liquidsoap output.
+# former FfmpegStreamer emitted — the operator's listener-side URLs
+# stayed unchanged when the output moved from FFmpeg to Liquidsoap.
 _ENCODER_FOR_TYPE = {
     # FFmpeg-format string for output.icecast.  All four use the
     # %ffmpeg encoder so the binary build only needs FFmpeg libraries
     # (which the operator already validated in Phase A).  Matches the
-    # cc_pref.stream_output_N "type" values FfmpegStreamer accepts
-    # in the legacy mpv/VLC path — see _FFMPEG_CODEC_MAP in
-    # ffmpeg_streamer.py for the parallel mapping.
+    # cc_pref.stream_output_N "type" values of Settings → Streams.
     #
     # samplerate=… is mandatory: Liquidsoap's internal frame
     # samplerate defaults to 44100 Hz, but Opus's libopus encoder
@@ -398,9 +396,7 @@ _ENCODER_FOR_TYPE = {
 }
 
 # Samplerates accepted by libopus (Hz).  Anything else gets clamped to
-# 48000 with a warning at render time — same policy as FfmpegStreamer's
-# legacy mpv/VLC path uses (see _OPUS_VALID_SAMPLERATES in
-# ffmpeg_streamer.py).
+# 48000 with a warning at render time.
 _OPUS_VALID_SAMPLERATES = {8000, 12000, 16000, 24000, 48000}
 
 # Default samplerate when the cc_pref row doesn't carry one.  44100 Hz
@@ -482,7 +478,7 @@ def _render_icecast_block(stream: Dict) -> str:
         samplerate = DEFAULT_SAMPLERATE
 
     # Opus is picky about samplerates — clamp invalid rates to 48000
-    # with a warning, same policy FfmpegStreamer uses.  Other codecs
+    # with a warning.  Other codecs
     # accept anything FFmpeg knows about (most modern rates), so we
     # don't second-guess them.
     if stream_type == "opus" and samplerate not in _OPUS_VALID_SAMPLERATES:

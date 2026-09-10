@@ -13,7 +13,7 @@ RASTATIME preserves the core user-visible feature set of LibreTime — schedule 
 
 | LibreTime | RASTATIME |
 |---|---|
-| Liquidsoap (Linux build) | Liquidsoap (savonet Windows build); mpv legacy fallback |
+| Liquidsoap (Linux build) | Liquidsoap (savonet Windows build) — the only playout engine since 2026-09-10 |
 | Celery background worker | Plain Python task runner |
 | Gunicorn WSGI server | Waitress (port **8765**) |
 | systemd / systemctl | NSSM Windows services |
@@ -50,7 +50,7 @@ RASTATIME/
 │   ├── api/           # Django REST API (Waitress, port 8765)
 │   ├── api-client/    # Python API client library
 │   ├── analyzer/      # Media file analyzer
-│   ├── playout/       # Playout engine (Liquidsoap; mpv legacy fallback)
+│   ├── playout/       # Playout scheduler (drives Liquidsoap over telnet)
 │   ├── shared/            # Shared config models and utilities
 │   └── rastatime_worker/  # Background task runner (runs via `python -m rastatime_worker`; not pip-installed)
 ├── frontend/

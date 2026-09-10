@@ -67,11 +67,10 @@ d'exécution **que lorsque vous activez la fonction** ; sinon
 c'est un commentaire sans effet et le flux en direct reste
 intact.
 
-> **Nécessite le moteur Liquidsoap.** Comme l'enregistrement
-> par émission, le 24/7 est assuré par `output.file` de
-> Liquidsoap. Si `RASTATIME_PLAYOUT_ENGINE` vaut `mpv` ou
-> `vlc`, aucun enregistrement 24/7 n'a lieu (le flux joue
-> normalement).
+> **Écrit par Liquidsoap.** Comme l'enregistrement par
+> émission, le 24/7 est assuré par `output.file` de Liquidsoap
+> sur le bus interne (Liquidsoap est le seul moteur de playout
+> depuis le 2026-09-10).
 
 ---
 

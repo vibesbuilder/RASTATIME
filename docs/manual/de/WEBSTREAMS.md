@@ -258,12 +258,6 @@ zum Puffern. Listener-seitige Player haben ihren eigenen
 ~10-s-Puffer, sodass die effektive End-Hörer-wahrgenommene
 Verzögerung von diesem Player-seitigen Puffer dominiert wird.
 
-**Legacy-mpv-/VLC-Engine-Pfade (nur wenn
-`RASTATIME_PLAYOUT_ENGINE=mpv` oder `=vlc`):**
-mpv öffnet die HTTP-URL direkt und FfmpegStreamer kodiert
-re-en nach Icecast. Keine Aufnahme für Webstream-only-Shows
-in diesem Modus.
-
 ### Was passiert, wenn die URL nicht erreichbar ist?
 
 `input.http` versucht die Verbindung alle **2 Sekunden** neu

@@ -23,7 +23,7 @@ from libretime_playout.playout_scheduler import PlayoutScheduler
 def _make_scheduler():
     engine = MagicMock(name="engine")
     scheduler = PlayoutScheduler(
-        engine, MagicMock(name="api"), streaming_handled_externally=True
+        engine, MagicMock(name="api")
     )
     # Replace the real capture with a controllable stand-in.
     capture = MagicMock(name="capture")
@@ -225,7 +225,6 @@ def test_resume_after_liquidsoap_restart_also_uses_the_feeder():
     capture.is_running = True
     scheduler._current_event = _plain_stereo_event()
     scheduler._current_audio_path = "http://127.0.0.1:8000/linein-capture"
-    scheduler._streaming_handled_externally = True
 
     scheduler._resume_scheduled_locked()
 

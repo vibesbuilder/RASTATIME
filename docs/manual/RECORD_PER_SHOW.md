@@ -90,12 +90,11 @@ This gives:
 > kbps) is now ignored.  All recordings are MP3 @ 320 kbps —
 > archive-grade quality, fixed by operator decision 2026-05-27.
 
-> **Recording requires the Liquidsoap engine.**  Phase-C5
-> Teil 2d deleted the legacy FfmpegRecorder code path that
-> previously handled recording for the mpv/VLC engine modes.
-> If `RASTATIME_PLAYOUT_ENGINE` is set to `mpv` or `vlc`,
-> show-record-start events are logged but no recording happens
-> (the show plays normally, only the recording is missing).
+> **Recording is written by Liquidsoap** (`output.file` on the
+> internal bus).  Phase-C5 Teil 2d deleted the legacy
+> FfmpegRecorder code path; since 2026-09-10 Liquidsoap is the
+> only playout engine, so every show with recording enabled is
+> recorded.
 
 ---
 

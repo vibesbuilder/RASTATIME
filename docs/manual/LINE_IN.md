@@ -277,12 +277,6 @@ when another Line-In is on air (one capture at a time) or when
 the row has no stored device name; such slots start the normal way
 (~2 s).
 
-**Legacy mpv / VLC engine paths (only when
-`RASTATIME_PLAYOUT_ENGINE=mpv` or `=vlc`):**
-mpv opens the FfmpegLineinCapture listen URL directly and
-FfmpegStreamer re-encodes to Icecast.  No recording for
-line-in-only shows in this mode.
-
 When the slot's duration elapses, the engine sends a
 `LINEIN_END` event and the source switcher returns to the
 schedule.
@@ -436,9 +430,6 @@ audio bus that `output.file` taps for the per-show MP3
 archive, so it gets captured natively — alongside any
 regular tracks or scheduled webstreams in the same show.
 See [Record-per-Show](./RECORD_PER_SHOW.md).
-
-(In the deprecated mpv/VLC engine modes, recording is not
-available — see [Settings → Playout Engine](./SETTINGS.md).)
 
 ### "Can I add a network audio source (e.g. AES67 / Dante) as a Line-In?"
 

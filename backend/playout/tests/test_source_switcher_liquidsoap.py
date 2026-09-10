@@ -200,48 +200,22 @@ def test_no_transition_when_state_unchanged():
     assert states == []
 
 
-# ---- start_listener engine_kind dispatch --------------------------------
+# ---- start_listener reconciler dispatch ---------------------------------
 
 
-def test_start_listener_picks_liquidsoap_reconciler_for_liquidsoap_engine():
+def test_start_listener_spawns_the_liquidsoap_reconciler():
     """
-    start_listener(engine_kind="liquidsoap") must spawn the Liquidsoap
-    reconciler thread, NOT the Icecast one.
+    start_listener must spawn the Liquidsoap reconciler thread.  Until
+    2026-09-10 an ``engine_kind`` argument chose between this and an
+    Icecast admin poll for the deleted mpv path; both are gone.
 
-    We patch both reconciler functions so neither actually runs, and
-    verify only the expected one was scheduled to run.
+    We patch the reconciler function so it does not actually run, and
+    the HTTP server so no socket is bound.
     """
     sw, _ = _make_switcher_with_recorder()
     with patch(
         "libretime_playout.source_switcher._liquidsoap_state_poll_loop"
     ) as ls_mock, patch(
-        "libretime_playout.source_switcher._icecast_state_poll_loop"
-    ) as ic_mock, patch(
-        "libretime_playout.source_switcher.ThreadingHTTPServer"
-    ) as srv_mock, patch(
-        "libretime_playout.source_switcher.threading.Thread"
-    ) as thread_mock:
-        # Make the listener thread "start" call a no-op so we capture
-        # which loop-function the reconciler thread was given.
-        thread_mock.return_value.start = MagicMock()
-        srv_mock.return_value = MagicMock()
-        from libretime_playout.source_switcher import start_listener
-        start_listener(sw, engine_kind="liquidsoap")
-        # Find the reconciler-thread invocation — should target the
-        # liquidsoap loop, not icecast.
-        targets = [call.kwargs.get("target") for call in thread_mock.call_args_list]
-        assert ls_mock in targets, "liquidsoap reconciler thread not scheduled"
-        assert ic_mock not in targets, "icecast reconciler should NOT run for liquidsoap engine"
-
-
-def test_start_listener_picks_icecast_reconciler_for_mpv_engine():
-    """Default engine_kind='mpv' picks the legacy Icecast reconciler."""
-    sw, _ = _make_switcher_with_recorder()
-    with patch(
-        "libretime_playout.source_switcher._liquidsoap_state_poll_loop"
-    ) as ls_mock, patch(
-        "libretime_playout.source_switcher._icecast_state_poll_loop"
-    ) as ic_mock, patch(
         "libretime_playout.source_switcher.ThreadingHTTPServer"
     ) as srv_mock, patch(
         "libretime_playout.source_switcher.threading.Thread"
@@ -249,7 +223,20 @@ def test_start_listener_picks_icecast_reconciler_for_mpv_engine():
         thread_mock.return_value.start = MagicMock()
         srv_mock.return_value = MagicMock()
         from libretime_playout.source_switcher import start_listener
-        start_listener(sw, engine_kind="mpv")
-        targets = [call.kwargs.get("target") for call in thread_mock.call_args_list]
-        assert ic_mock in targets, "icecast reconciler not scheduled for mpv engine"
-        assert ls_mock not in targets, "liquidsoap reconciler must not run for mpv engine"
+        start_listener(sw, reconcile_interval_s=123.0)
+        reconcilers = [
+            call for call in thread_mock.call_args_list
+            if call.kwargs.get("target") is ls_mock
+        ]
+        assert len(reconcilers) == 1, "liquidsoap reconciler thread not scheduled"
+        assert reconcilers[0].kwargs["kwargs"] == {"interval_s": 123.0}
+
+
+def test_start_listener_has_no_engine_kind_argument():
+    import libretime_playout.source_switcher as ss
+    assert not hasattr(ss, "_icecast_state_poll_loop")
+    with patch("libretime_playout.source_switcher.ThreadingHTTPServer"), patch(
+        "libretime_playout.source_switcher.threading.Thread"
+    ):
+        with pytest.raises(TypeError):
+            ss.start_listener(_make_switcher_with_recorder()[0], engine_kind="liquidsoap")
