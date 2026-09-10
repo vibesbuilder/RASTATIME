@@ -273,7 +273,7 @@ class CcFiles extends BaseCcFiles
                     }
                 }
             } else {
-                throw new LibreTimeFileNotFoundException();
+                throw new LibreTimeFileNotFoundException("File id {$fileId} not found");
             }
 
             $now = new DateTime('now', new DateTimeZone('UTC'));
@@ -317,9 +317,15 @@ class CcFiles extends BaseCcFiles
                 }
             }
         } catch (LibreTimeFileNotFoundException $e) {
-            $file->setDbImportStatus(self::IMPORT_STATUS_FAILED);
-            $file->setDbHidden(true);
-            $file->save();
+            // RASTATIME 2026-09-10: only an EXISTING row can be marked as a
+            // failed import.  With an unknown id $file is null, and the old
+            // unguarded call was a PHP Error (not an Exception), which turned
+            // the REST 404 into an HTML 500 page.
+            if ($file !== null) {
+                $file->setDbImportStatus(self::IMPORT_STATUS_FAILED);
+                $file->setDbHidden(true);
+                $file->save();
+            }
 
             throw $e;
         }

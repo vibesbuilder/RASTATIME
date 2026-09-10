@@ -228,6 +228,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **REST `PUT /rest/media/<id>` mit unbekannter ID: 404 statt 500 (2026-09-10,
+  Nebenbefund des CSRF-Live-Beweises)** — `CcFiles::updateFromArray()` warf für
+  eine unbekannte ID zwar `LibreTimeFileNotFoundException`, markierte im
+  `catch` aber `$file->setDbImportStatus()` auf `null` — ein PHP-`Error`, den
+  das `catch (Exception)` in `MediaController::putAction` nicht fängt, also
+  eine HTML-500-Seite.  Jetzt wird nur eine existierende Zeile als
+  fehlgeschlagener Import markiert, die Ausnahme trägt die ID im Text, und
+  der REST-Aufruf antwortet `404 ERROR: Media not found.` (live geprüft:
+  PUT und DELETE auf ID 999999999).  Sofort live, kein Neustart.
+
 - **Cue-Sheet: kein überzähliger „end"-Marker mehr bei überholtem STOP,
   Marker tragen die Item-Identität (2026-09-10, Operator-Go, `2b208a0`)** —
   `_on_stop` schrieb `cue_item_end` vor dem Ownership-Re-Check; gewann

@@ -2355,10 +2355,11 @@ Sortierung der bereits-gespielten + nächsten Tracks freezable.
 
 ## 🐞 Known Issues / Bug Backlog
 
-### 💡 REST `PUT /rest/media/<id>` mit unbekannter ID: 500 statt 404 (Nebenbefund 2026-09-10)
+### ✅ REST `PUT /rest/media/<id>` mit unbekannter ID: 500 statt 404 (Nebenbefund 2026-09-10, DONE gleichen Tags)
 
-**Status:** Idee, kleiner Fix; kein Live-Problem (tritt nur bei einer ID auf,
-die es nicht gibt).  **Befund:** beim CSRF-Live-Beweis (`PUT
+**Status:** Behoben 2026-09-10 (Commit-Hash im CHANGELOG): Null-Guard im `catch`
+von `CcFiles::updateFromArray`, Ausnahme mit ID im Text; live geprüft, PUT und
+DELETE auf eine unbekannte ID antworten jetzt 404.  **Befund (Original):** beim CSRF-Live-Beweis (`PUT
 /rest/media/999999999`) antwortet das REST-Modul mit einer HTML-500-Seite:
 `CcFiles::updateFromArray()` ruft `setDbImportStatus()` auf `null` auf
 (`findPk` findet nichts); das ist ein PHP-`Error`, den das `catch (Exception)`
