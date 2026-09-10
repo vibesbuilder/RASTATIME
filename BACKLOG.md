@@ -753,6 +753,15 @@ Sendeplan zurück, nur Dashboard-Status und Scheduler-Reaktion hängen
 am `input.harbor` auf z. B. 10 s senken (Trade-off: ein DJ mit 10 s
 Netzstörung fliegt raus).  Operator-Entscheidung; kein Handlungsdruck.
 
+### 💡 Statisches Harbor-Rückfall-Passwort in libretime.conf ersetzen (Operator 2026-09-10)
+
+**Status:** Idea/Defer — vom Operator am 2026-09-10 für später notiert.
+`stream.harbor.main_password`/`show_password` sind noch Installations-
+Platzhalter.  Seit den UI-Logins greifen sie nur, wenn PLAYOUT nicht
+erreichbar ist (Benutzer `source`), also gerade im Notfall.  To do:
+beide Werte in libretime.conf durch echte Passwörter ersetzen, dann
+PLAYOUT (rendert) und LIQUIDSOAP neu starten; Werte nie ins Log/Chat.
+
 ### ✅ DJ-Logins: die Oberfläche wird zur Wahrheit (Operator-Go Option 2, umgesetzt 2026-09-10)
 
 **Befund 2026-09-10:** BUTT-Login schlug fehl.  Die Harbors prüften nur
