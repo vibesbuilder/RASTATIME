@@ -1533,10 +1533,14 @@ class Application_Service_HistoryService
 
     private function getSqlTypes()
     {
+        // RASTATIME 2026-09-10: PostgreSQL has no 'datetime' type; the cast
+        // string must be 'timestamp'.  Latent until now because the only
+        // DATETIME template fields (starts / ends) are mandatory and skipped
+        // in the cast loops, and the template editor cannot add new ones.
         return [
             TEMPLATE_DATE => 'date',
             TEMPLATE_TIME => 'time',
-            TEMPLATE_DATETIME => 'datetime',
+            TEMPLATE_DATETIME => 'timestamp',
             TEMPLATE_STRING => 'text',
             TEMPLATE_BOOLEAN => 'boolean',
             TEMPLATE_INT => 'integer',

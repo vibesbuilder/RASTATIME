@@ -20,9 +20,9 @@ festgelegt.  Jeder Punkt bekommt vor Implementierung die
 | # | Punkt | Sektion |
 |---|-------|---------|
 | 1 | ✅ Tascam-Ausgänge als lokales Monitoring | **DONE 2026-09-03** (`6464b17`) — Main-Output-Setting wirkt jetzt |
-| 2 | Crossfade-Paket (Per-Track + Settings-Wiring) | zwei Items: „Per-Track Crossfade" + „Frontend-Settings Fade" |
+| 2 | Crossfade-Paket | **kein Go (Operator 2026-09-10)** — neue Richtung „Show-Grenzen mit eigener Crossfade-Dauer" als 💡 notiert (Future Feature Ideas); die Items „Per-Track Crossfade" + „Frontend-Settings Fade" bleiben 🟡 |
 | 3 | ✅ CSRF-Token-Rotation entschärfen | **DONE 2026-09-10** — Rotation war wirkungslos (Session bereits schreibend geschlossen), Prüfung gehärtet (`7f51156`) |
-| 4 | `getSqlTypes()`-Cast (DATETIME → PG) | Known Issues (latent) |
+| 4 | ✅ `getSqlTypes()`-Cast (DATETIME → PG) | **DONE 2026-09-10** — `datetime` → `timestamp` (Commit-Hash im CHANGELOG) |
 | 5 | Show-Shift bei Overbook | Aktive Items |
 | 6 | Seamless Bus-Mix | Aktive Items (Status prüfen — evtl. durch Liquidsoap-Migration erledigt) |
 | 7 | Storage-Umbau (Root → D:\stor) | **entblockt — Platte geliefert 2026-09-02** |
@@ -2195,6 +2195,38 @@ Sowohl Menü-Ebene als auch Einzelfeld-Ebene gewünscht.
 
 ## 💡 Future Feature Ideas (nicht evaluiert, nur notiert)
 
+### 💡 Show-Grenzen mit eigener Crossfade-Dauer (Operator-Wunsch 2026-09-10, kein Go)
+
+**Status:** 💡 Idee, evaluiert 2026-09-10, Operator: „kein Go, merken wir uns
+für später".  Ersetzt als Richtung die Per-Track-Idee (kurze Titel ohne
+Fade) aus dem Mai.
+**Wunsch:** Der heutige Crossfade (Überlapp aus Settings → General „Default
+Crossfade Duration", derzeit 1,0 s, keine Ein-/Ausblendung) funktioniert gut,
+gilt aber für alle Übergänge.  An Show-Grenzen (Show-Start/-Ende) sollen
+andere Werte gelten als innerhalb einer Show; einstellbar ebenfalls unter
+Settings → General.
+**Skizze (Evaluierung 2026-09-10):**
+- Neues Feld „Show Crossfade Duration" neben dem bestehenden; `cc_pref`-
+  Schlüssel, kein Schema-Umbau.
+- Scheduler kennt die Show-Instanz je Titel (`FileEvent.instance_id` aus
+  `schedule.instance`); beim Push bekommt der letzte Titel einer Show die
+  Metadaten `liq_cross_duration` + `liq_fade_out` mit dem Show-Wert, alle
+  übrigen den Standardwert (Liquidsoaps `cross` liest beide Schlüssel pro
+  Titel; `liq_fade_in` optional für den ersten Titel der Folgeshow).
+- Werte je Refresh-Zyklus aus `cc_pref` lesen → Änderungen wirken ab dem
+  nächsten Titel ohne Neustart; nur der Gate-Fade für Line-In/Webstream
+  bleibt im gerenderten Skript (Neustart der Audio-Kette wie heute).
+- Show-Ende in Stille / Show-Start aus Stille bleiben harte Schnitte
+  (kein Partner-Titel), separat lösbar (`fade.skip`).
+**Aufwand:** ~5–6 h inkl. Replikat-Nachweis, Tests, Handbuch ×4.
+**Vor einem Go zu klären:** (1) Form des Show-Übergangs: alte Show blendet
+über N s aus und der neue Titel startet sofort voll (Vorschlag, weil Shows
+oft mit Jingle/ID beginnen) oder echtes Crossfade mit Einblenden; (2) bleibt
+es innerhalb der Show beim heutigen Überlapp ohne Fades, und entfällt die
+30-s-Regel für kurze Titel; (3) steuert der Show-Wert auch den Gate-Fade
+bei Line-In/Webstream-Showwechseln; (4) Startwert des neuen Feldes (1,0 s
+= heutiger Standard).
+
 ### 🟢 Mid-Show Song Requests (echtes Just-in-time) — GO 2026-06-16
 
 **Status:** 🟢 Go (Operator 2026-06-16).  Variante **(a) inkrementell entlang
@@ -2789,9 +2821,13 @@ Local Machine); LOCAL_MACHINE.md §3 beschreibt eine
 Input-Device-Checkbox-Liste, die die Seite nicht hat.  Bei
 Option-A-Umsetzung das Kapitel in einem Zug sanieren (4 Sprachen).
 
-### 💡 Latent: `HistoryService::getSqlTypes()` mappt DATETIME auf ungültigen PG-Cast
+### ✅ Latent: `HistoryService::getSqlTypes()` mappt DATETIME auf ungültigen PG-Cast (DONE 2026-09-10)
 
-**Status:** Idea/Latent — heute harmlos, Fund der 2026-08-30er
+**Status:** Behoben 2026-09-10 (Arbeitsreihenfolge Punkt 4, Commit-Hash im
+CHANGELOG): Cast-String `timestamp`; Typnamen der ganzen Tabelle gegen die
+Datenbank geprüft (`date`, `time`, `timestamp`, `text`, `boolean`, `integer`,
+`float` gültig, `datetime` nicht).
+**Ursprünglicher Befund:** Idea/Latent — heute harmlos, Fund der 2026-08-30er
 Playout-History-Diagnose.
 **Befund:** `getSqlTypes()` übersetzt `TEMPLATE_DATETIME` in den
 Cast-String `'datetime'` — den Typ gibt es in PostgreSQL nicht

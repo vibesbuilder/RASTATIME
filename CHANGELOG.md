@@ -228,6 +228,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Playout History: `HistoryService::getSqlTypes()` bildet DATETIME jetzt auf
+  `timestamp` ab (2026-09-10, Arbeitsreihenfolge Punkt 4)** — der bisherige
+  Cast-String `datetime` existiert in PostgreSQL nicht (gegen die Datenbank
+  geprüft: `SELECT NULL::datetime` scheitert, `::timestamp` nicht).  Latent,
+  weil die einzigen DATETIME-Felder der Vorlagen (`starts`/`ends`) Pflicht-
+  felder sind, die die Cast-Schleifen überspringen, und der Vorlagen-Editor
+  keine neuen DATETIME-Felder anbietet — ein künftiges Feld hätte den
+  History-Feed mit einem SQL-Fehler abgeschossen.  Einzeiler, sofort live.
+
 - **REST `PUT /rest/media/<id>` mit unbekannter ID: 404 statt 500 (2026-09-10,
   Nebenbefund des CSRF-Live-Beweises, `7993bfe`)** — `CcFiles::updateFromArray()` warf für
   eine unbekannte ID zwar `LibreTimeFileNotFoundException`, markierte im
