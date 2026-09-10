@@ -123,3 +123,21 @@ def test_never_raises_on_bad_config(tmp_path):
         now_fn=lambda: datetime(2026, 6, 5, 14, 0, 0),
     ).item_start("track", show="A")
     CueWriter(lambda: {"enabled": True, "folder": str(tmp_path)}).item_end("track")
+
+
+# ---- RASTATIME 2026-09-10 - item identity on start and end markers ----------
+
+
+def test_item_markers_carry_the_item_id(tmp_path):
+    cw = _cw(tmp_path, datetime(2026, 6, 5, 14, 0, 5))
+    cw.item_start("track", show="Morning", item=4711, title="Song A")
+    cw.item_end("track", item=4711)
+    marks = [m for m in _read(tmp_path)["marks"] if m["kind"] == "track"]
+    assert [(m["event"], m["item"]) for m in marks] == [("start", 4711), ("end", 4711)]
+
+
+def test_item_end_without_meta_is_unchanged(tmp_path):
+    cw = _cw(tmp_path, datetime(2026, 6, 5, 14, 0, 5))
+    cw.item_end("webstream")
+    (mark,) = [m for m in _read(tmp_path)["marks"] if m["kind"] == "webstream"]
+    assert mark == {"t": 5.0, "kind": "webstream", "event": "end"}

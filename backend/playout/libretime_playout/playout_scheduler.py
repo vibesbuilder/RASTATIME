@@ -1795,7 +1795,7 @@ class PlayoutScheduler:
         self._current_audio_path = str(local)
         # RASTATIME 2026-06-05 — cue mark for the 24/7 recording sidecar.
         self._cue_item_start(
-            "track", show=event.show_name,
+            "track", show=event.show_name, item=event.row_id,
             title=event.track_title, artist=event.artist_name,
         )
         # RASTATIME 2026-05-16 — cache the effective gain for the
@@ -1908,7 +1908,9 @@ class PlayoutScheduler:
         self._current_event = event
         self._current_audio_path = event.uri
         # RASTATIME 2026-06-05 — cue mark for the 24/7 recording sidecar.
-        self._cue_item_start("webstream", show=event.show_name, uri=event.uri)
+        self._cue_item_start(
+            "webstream", show=event.show_name, item=event.row_id, uri=event.uri,
+        )
         # RASTATIME 2026-05-16 — cache the webstream's input-gain so the
         # resume path (DJ disconnect, hot-reload) reapplies it after the
         # stop/restart, instead of falling back to "no gain".
@@ -2155,7 +2157,9 @@ class PlayoutScheduler:
         self._current_event = event
         self._current_audio_path = self._linein_capture.listen_url
         # RASTATIME 2026-06-05 — cue mark for the 24/7 recording sidecar.
-        self._cue_item_start("linein", show=event.show_name, name=event.name)
+        self._cue_item_start(
+            "linein", show=event.show_name, item=event.row_id, name=event.name,
+        )
 
         # Drive the dashboard "On Air" light for the new row.
         row_id = getattr(event, "row_id", None)
@@ -2709,16 +2713,6 @@ class PlayoutScheduler:
             )
             return
 
-        # RASTATIME 2026-06-05 — cue mark (end of the current item) for the
-        # 24/7 recording sidecar, before the current-event bookkeeping resets.
-        _ce = self._current_event
-        if isinstance(_ce, FileEvent):
-            self._cue_item_end("track")
-        elif isinstance(_ce, WebStreamEvent):
-            self._cue_item_end("webstream")
-        elif isinstance(_ce, LineinEvent):
-            self._cue_item_end("linein")
-
         # RASTATIME 2026-09-04 - re-check ownership right before the
         # reset.  The check at the top of this handler and this point
         # are separated by telnet round-trips and the follow-up scan; a
@@ -2734,7 +2728,21 @@ class PlayoutScheduler:
                 "bookkeeping and sources alone.", key, self._playing_key,
             )
             return
-
+        # RASTATIME 2026-06-05 — cue mark (end of the current item) for the
+        # 24/7 recording sidecar, before the current-event bookkeeping
+        # resets.  2026-09-10: written only here, AFTER the re-check - a
+        # superseded STOP used to stamp its "end" ~30 ms behind the
+        # successor's "start" (start(B) -> end(B) in the sidecar); the
+        # successor's start implies our end.  The ``item`` id lets a
+        # reader pair the markers regardless.
+        _ce = self._current_event
+        _item = getattr(_ce, "row_id", None)
+        if isinstance(_ce, FileEvent):
+            self._cue_item_end("track", item=_item)
+        elif isinstance(_ce, WebStreamEvent):
+            self._cue_item_end("webstream", item=_item)
+        elif isinstance(_ce, LineinEvent):
+            self._cue_item_end("linein", item=_item)
         self._playing_key = None
         self._current_event = None
         self._current_audio_path = None
@@ -2978,10 +2986,10 @@ class PlayoutScheduler:
         if cw is not None:
             cw.item_start(kind, **meta)
 
-    def _cue_item_end(self, kind: str) -> None:
+    def _cue_item_end(self, kind: str, **meta) -> None:
         cw = self._cue_writer
         if cw is not None:
-            cw.item_end(kind)
+            cw.item_end(kind, **meta)
 
     def set_source_switcher(self, switcher) -> None:
         """Wire up the SourceSwitcher.  Called once from __main__."""

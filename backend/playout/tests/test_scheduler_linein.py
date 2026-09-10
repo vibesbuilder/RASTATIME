@@ -565,11 +565,17 @@ def test_on_stop_bails_when_superseded_mid_teardown(liquidsoap_scheduler):
     sched._switcher = None
     _playing_linein(sched, capture, key="A")
 
-    def _b_takes_over(*_a, **_k):
-        sched._playing_key = "B"
-        sched._current_event = _file_event(datetime.utcnow())
-    # _cue_item_end runs between the top check and the reset
-    sched._cue_item_end = _b_takes_over
+    class _ArmedEvents(dict):
+        # The follow-up scan iterates _armed_events between the top check
+        # and the ownership re-check: the moment PLAY(B) can take the
+        # spotlight.  (Until 2026-09-10 the cue end marker sat there and
+        # served as the injection point; it now runs after the re-check.)
+        def items(self):
+            sched._playing_key = "B"
+            sched._current_event = _file_event(datetime.utcnow())
+            return dict.items(self)
+
+    sched._armed_events = _ArmedEvents(sched._armed_events)
 
     sched._on_stop("A")
 

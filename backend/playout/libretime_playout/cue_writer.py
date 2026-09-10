@@ -117,16 +117,21 @@ class CueWriter:
         except Exception as exc:  # pylint: disable=broad-exception-caught
             logger.warning("CueWriter.item_start(%s) failed: %s", kind, exc)
 
-    def item_end(self, kind: str) -> None:
-        """Record the end of the current on-air item."""
+    def item_end(self, kind: str, **meta) -> None:
+        """
+        Record the end of the current on-air item.  ``meta`` (RASTATIME
+        2026-09-10: ``item`` = schedule row id) lets a reader pair the
+        marker with its ``start`` even when markers of two items sit
+        milliseconds apart.
+        """
         try:
             with self._lock:
                 cfg = self._active_cfg()
                 if cfg is None:
                     return
-                self._append_many(
-                    cfg, self._now_fn(), [{"kind": kind, "event": "end"}]
-                )
+                mark = {"kind": kind, "event": "end"}
+                mark.update(_clean(meta))
+                self._append_many(cfg, self._now_fn(), [mark])
         except Exception as exc:  # pylint: disable=broad-exception-caught
             logger.warning("CueWriter.item_end(%s) failed: %s", kind, exc)
 
