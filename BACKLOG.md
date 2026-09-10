@@ -21,7 +21,7 @@ festgelegt.  Jeder Punkt bekommt vor Implementierung die
 |---|-------|---------|
 | 1 | ✅ Tascam-Ausgänge als lokales Monitoring | **DONE 2026-09-03** (`6464b17`) — Main-Output-Setting wirkt jetzt |
 | 2 | Crossfade-Paket (Per-Track + Settings-Wiring) | zwei Items: „Per-Track Crossfade" + „Frontend-Settings Fade" |
-| 3 | CSRF-Token-Rotation entschärfen | Known Issues |
+| 3 | ✅ CSRF-Token-Rotation entschärfen | **DONE 2026-09-10** — Rotation war wirkungslos (Session bereits schreibend geschlossen), Prüfung gehärtet (Commit-Hash im CHANGELOG) |
 | 4 | `getSqlTypes()`-Cast (DATETIME → PG) | Known Issues (latent) |
 | 5 | Show-Shift bei Overbook | Aktive Items |
 | 6 | Seamless Bus-Mix | Aktive Items (Status prüfen — evtl. durch Liquidsoap-Migration erledigt) |
@@ -2355,6 +2355,18 @@ Sortierung der bereits-gespielten + nächsten Tracks freezable.
 
 ## 🐞 Known Issues / Bug Backlog
 
+### 💡 REST `PUT /rest/media/<id>` mit unbekannter ID: 500 statt 404 (Nebenbefund 2026-09-10)
+
+**Status:** Idee, kleiner Fix; kein Live-Problem (tritt nur bei einer ID auf,
+die es nicht gibt).  **Befund:** beim CSRF-Live-Beweis (`PUT
+/rest/media/999999999`) antwortet das REST-Modul mit einer HTML-500-Seite:
+`CcFiles::updateFromArray()` ruft `setDbImportStatus()` auf `null` auf
+(`findPk` findet nichts); das ist ein PHP-`Error`, den das `catch (Exception)`
+in `MediaController::putAction` nicht fängt (legacy.log 2026-09-10 18:55:42).
+**Fix (~5 Zeilen):** in `updateFromArray` bei `!$file` eine
+`LibreTimeFileNotFoundException` werfen (bestehender 404-Pfad) und/oder in
+`putAction` `Throwable` fangen.
+
 ### ✅ „Recent Uploads"-Liste aktualisiert sich nicht automatisch nach Upload (DONE 2026-08-30, `8110b47`)
 
 **Status:** Behoben.
@@ -2402,9 +2414,26 @@ Buster im Layout-Helper (kleiner PHP-Eingriff, präzise), (b)
 Apache-Conf (2 Zeilen, revalidiert per 304, minimal mehr Requests).
 **Aufwand:** ~0.5–2 h je nach Option.
 
-### 🟡 CSRF-Token rotiert bei jedem Fehlversuch (poisont die offene Seite bis Reload)
+### ✅ CSRF-Token rotiert bei jedem Fehlversuch (DONE 2026-09-10 — die Rotation war wirkungslos)
 
-**Status:** Defer — kein Bug, aber raue UX (notiert 2026-06-05 beim Upload-Fix).
+**Status:** Erledigt 2026-09-10 (Arbeitsreihenfolge Punkt 3, Operator-Go „kleine
+Form").  **Korrigierte Diagnose:** die Rotation in `Acl_plugin.php` hat nie
+gewirkt — `PageLayoutInitPlugin::_initCsrfNamespace()` schließt die Session in
+`routeShutdown` schreibend (`session_write_close()`), der `preDispatch`-Hook
+schrieb den neuen Token nur in den Speicher des abgebrochenen Requests.  Live
+bewiesen (eingeloggte Brave-Sitzung, `PUT /rest/media/999999999`): zwei falsche
+Tokens → 401, echter Token danach → Request erreicht den Controller.  Ein
+Fehlschlag kostete also immer nur den einen Request; die „Vergiftung" war ein
+Trugschluss aus dem Code-Lesen.  **Gemacht:** tote Rotation entfernt, 401-
+Warnung mit Methode/Pfad/Origin/Sec-Fetch-Site/Token-Status;
+`SecurityHelper::verifyCSRFToken` mit `hash_equals` und ohne `null == null`-
+Durchwinken; `PluploadController::uploadAction` auf dieselbe Prüfung.  Details
+CHANGELOG „CSRF-Prüfung gehärtet".  Nicht gemacht (Option B, Operator-
+Entscheid): das 5-Minuten-Timeout der Zend-Hash-Formulare (Login, Add User,
+Add Track Type) bleibt.
+
+**Ursprüngliche Annahme (2026-06-05, überholt):**
+**Status (alt):** Defer — kein Bug, aber raue UX (notiert 2026-06-05 beim Upload-Fix).
 **Hintergrund:** `Acl_plugin.php:184` regeneriert den Session-`authtoken` bei
 **jedem** fehlgeschlagenen CSRF-Check.  Folge: ein einzelner Fehlschlag macht den
 im DOM gerenderten Token der bereits offenen Seite ungültig → alle weiteren

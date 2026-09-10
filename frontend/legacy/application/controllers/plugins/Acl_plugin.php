@@ -191,10 +191,27 @@ class Zend_Controller_Plugin_Acl extends Zend_Controller_Plugin_Abstract
                 $tokenValid = $this->verifyCSRFToken($token);
 
                 if (!$tokenValid) {
-                    $csrf_namespace = new Zend_Session_Namespace('csrf_namespace');
-                    $csrf_namespace->authtoken = sha1(openssl_random_pseudo_bytes(128));
-
-                    Logging::warn("Invalid CSRF token: {$token}");
+                    // RASTATIME 2026-09-10: no token rotation on a mismatch.  The old
+                    // code re-generated the session token here, which (a) never
+                    // persisted anyway - PageLayoutInitPlugin::_initCsrfNamespace()
+                    // closes the session for writing in routeShutdown, before this
+                    // preDispatch hook runs - and (b) would only have punished the
+                    // legitimate user: every other open tab still carries the old
+                    // token, while an attacker never had either one.  A stale tab
+                    // costs exactly this one request.  The origin headers go into
+                    // the log so a real cross-site attempt can be told apart from a
+                    // stale tab.  Browsers send Sec-Fetch-* only to HTTPS/localhost,
+                    // so on the plain-HTTP studio LAN only the Origin header speaks.
+                    $origin = $request->getHeader('Origin') ?: '-';
+                    $fetchSite = $request->getHeader('Sec-Fetch-Site') ?: '-';
+                    Logging::warn(sprintf(
+                        'Invalid CSRF token for %s %s (origin=%s sec-fetch-site=%s, token %s)',
+                        $_SERVER['REQUEST_METHOD'],
+                        $request->getRequestUri(),
+                        $origin,
+                        $fetchSite,
+                        empty($token) ? 'missing' : 'present but wrong'
+                    ));
                     $this->getResponse()
                         ->setHttpResponseCode(401)
                         ->appendBody('ERROR: CSRF token mismatch.')

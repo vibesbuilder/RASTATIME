@@ -17,10 +17,19 @@ class SecurityHelper
 
     public static function verifyCSRFToken($observedToken)
     {
+        // RASTATIME 2026-09-10: constant-time comparison, and a missing or
+        // non-string token on either side is a failure.  The old `==` accepted
+        // null == null, i.e. a session without a token plus a request without
+        // one passed the check.
+        if (!is_string($observedToken) || $observedToken === '') {
+            return false;
+        }
         $current_namespace = new Zend_Session_Namespace('csrf_namespace');
-        $observed_csrf_token = $observedToken;
         $expected_csrf_token = $current_namespace->authtoken;
+        if (!is_string($expected_csrf_token) || $expected_csrf_token === '') {
+            return false;
+        }
 
-        return $observed_csrf_token == $expected_csrf_token;
+        return hash_equals($expected_csrf_token, $observedToken);
     }
 }

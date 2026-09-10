@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- **CSRF-Prüfung gehärtet, wirkungslose Token-Rotation entfernt (2026-09-10,
+  Arbeitsreihenfolge Punkt 3, Operator-Go „kleine Form")** — Befund beim
+  Lesen: das ACL-Plugin würfelte bei jedem fehlgeschlagenen REST-CSRF-Check
+  einen neuen Session-Token, aber `PageLayoutInitPlugin::_initCsrfNamespace()`
+  schließt die Session in `routeShutdown` schreibend, bevor der `preDispatch`-
+  Hook läuft — die Rotation landete nur im Speicher des abgebrochenen Requests
+  und persistierte nie.  Der im BACKLOG beschriebene Effekt („ein Fehlschlag
+  vergiftet alle offenen Tabs bis zum Reload") existierte also nicht; live
+  bewiesen (Brave, eingeloggte Sitzung, `PUT /rest/media/999999999`): zwei
+  falsche Tokens → 401, danach der echte Token → der Request erreicht den
+  Controller.  Änderungen: (1) Rotation entfernt; die 401-Warnung nennt jetzt
+  Methode, Pfad, `Origin`, `Sec-Fetch-Site` und ob der Token fehlte oder
+  falsch war (Sec-Fetch-Header senden Browser nur an HTTPS/localhost, im
+  Studio-LAN über HTTP bleibt das Feld leer, der Origin genügt).  (2)
+  `SecurityHelper::verifyCSRFToken` vergleicht mit `hash_equals` und lehnt
+  fehlende, leere oder nicht-string Tokens auf beiden Seiten ab — das alte
+  `==` hätte `null == null` durchgewinkt (Session ohne Token + Request ohne
+  Token).  (3) `PluploadController::uploadAction` nutzt dieselbe Prüfung statt
+  eines eigenen `==`.  Live nach dem Patch: falsch, fehlend, numerisch → 401,
+  echter Token → durch.  Nebenbefund, separat im BACKLOG: `PUT /rest/media/<id>`
+  mit nicht existierender ID antwortet 500 statt 404 (PHP-`Error` aus
+  `CcFiles::updateFromArray`, vom `catch (Exception)` nicht gefangen).  Kein
+  Neustart nötig (PHP ohne OpCache, sofort live).
+
 ### Removed
 
 - **Legacy-mpv-Engine gelöscht — Liquidsoap ist die einzige Playout-Engine

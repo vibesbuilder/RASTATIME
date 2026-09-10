@@ -61,11 +61,9 @@ class PluploadController extends Zend_Controller_Action
 
     public function uploadAction()
     {
-        $current_namespace = new Zend_Session_Namespace('csrf_namespace');
-        $observed_csrf_token = $this->_getParam('csrf_token');
-        $expected_csrf_token = $current_namespace->authtoken;
-
-        if ($observed_csrf_token == $expected_csrf_token) {
+        // RASTATIME 2026-09-10: same hardened check as the REST module
+        // (constant-time, no empty-token pass-through).
+        if (SecurityHelper::verifyCSRFToken($this->_getParam('csrf_token'))) {
             $upload_dir = ini_get('upload_tmp_dir') . DIRECTORY_SEPARATOR . 'plupload';
             $tempFilePath = Application_Model_StoredFile::uploadFile($upload_dir);
             $tempFileName = basename($tempFilePath);
