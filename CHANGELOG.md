@@ -135,7 +135,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Ende), und `start`/`end` beider Seiten tragen `item` = Schedule-Row-ID
   (`CueWriter.item_end(kind, **meta)`), damit ein späterer Leser Paare
   bilden kann.  Tests `test_cue_marker_ownership.py`,
-  `test_cue_writer.py`.  Aktiv nach PLAYOUT-Neustart.
+  `test_cue_writer.py`.  Aktiv nach PLAYOUT-Neustart.  **Nachbesserung
+  (Testfolge 11:00, Übergang BBC → Teaser 11:16:08):** der Marker stand
+  zunächst zwischen Re-Check und Reset; `CueWriter.item_end` liest dabei
+  die 24/7-Konfiguration (DB-Roundtrip), und in dieses Fenster fiel der
+  Bookkeeping-Wechsel des Nachfolgers, den der Reset dann löschte — beim
+  nächsten Refresh „Catch-up" des laufenden Teasers (unhörbar dank der
+  Same-URI-Idempotenz des Engines, aber 28 s falscher Zustand).  Jetzt:
+  Re-Check, Reset, danach der Marker.
 - **Webstream-Eingang: frische Quelle pro Slot statt Wiederverwendung
   (2026-09-08, Operator-Go „Plan A", `1eb8713`)** — Phase D am 2026-09-08 (drei
   Cloud-Slots, ein BBC-Slot): zwei Starts dekodierten erst nach 48 s und

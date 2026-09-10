@@ -2728,24 +2728,31 @@ class PlayoutScheduler:
                 "bookkeeping and sources alone.", key, self._playing_key,
             )
             return
-        # RASTATIME 2026-06-05 — cue mark (end of the current item) for the
-        # 24/7 recording sidecar, before the current-event bookkeeping
-        # resets.  2026-09-10: written only here, AFTER the re-check - a
-        # superseded STOP used to stamp its "end" ~30 ms behind the
-        # successor's "start" (start(B) -> end(B) in the sidecar); the
-        # successor's start implies our end.  The ``item`` id lets a
-        # reader pair the markers regardless.
+        # The re-check above and this reset must stay adjacent: a
+        # successor's bookkeeping swap that lands in between is wiped by
+        # the reset (2026-09-10 11:16:08 - the teaser's bookkeeping was
+        # lost and the next refresh re-"caught up" the running track;
+        # harmless thanks to the engine's same-URI idempotency, but a
+        # false state for 28 s).  Capture what we need, reset, then do
+        # the slow work.
         _ce = self._current_event
         _item = getattr(_ce, "row_id", None)
+        self._playing_key = None
+        self._current_event = None
+        self._current_audio_path = None
+        # RASTATIME 2026-06-05 — cue mark (end of the current item) for the
+        # 24/7 recording sidecar.  2026-09-10: written only by the owner
+        # (after the re-check) - a superseded STOP used to stamp its "end"
+        # ~30 ms behind the successor's "start"; the successor's start
+        # implies our end.  The ``item`` id lets a reader pair the markers.
+        # CueWriter.item_end reads the 24/7 config (a DB round trip), which
+        # is why it runs AFTER the reset, not between re-check and reset.
         if isinstance(_ce, FileEvent):
             self._cue_item_end("track", item=_item)
         elif isinstance(_ce, WebStreamEvent):
             self._cue_item_end("webstream", item=_item)
         elif isinstance(_ce, LineinEvent):
             self._cue_item_end("linein", item=_item)
-        self._playing_key = None
-        self._current_event = None
-        self._current_audio_path = None
 
         # Stop the Line-In capture: at this point we know we ARE the
         # event being torn down AND no same-device successor needs the
