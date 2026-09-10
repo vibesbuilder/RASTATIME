@@ -772,9 +772,16 @@ und per-Show-Logins aus der UI wurden nie benutzt.
 `check-live-stream-auth` (Master aus Settings, Show = laufende Show mit
 Host- oder Custom-Login); statisches Passwort nur als Rückfall bei
 unerreichbarem PLAYOUT; Ports/Mounts aus `stream.inputs` (jetzt 8001,
-main/show).  Details CHANGELOG „DJ-Logins".  **Offen:** Live-Abnahme
-mit BUTT (Master-Zugangsdaten in Settings → Streams setzen; Show-Login
-nur während die Show läuft), danach das Auflegen (Harbor-Timeout 5 s).
+main/show).  Details CHANGELOG „DJ-Logins".  **Live-Abnahme 2026-09-10
+13:20–13:23 (Operator, BUTT als Master Source in einer eigenen
+Test-Show, drei Runden):** Login → `dj-auth … accepted` → Switcher
+`scheduled -> master` binnen 25 ms, Audio-Umschaltung nach dem 5-s-
+Harbor-Puffer; sauberes Trennen → Harbor-Timeout 5,00 s → `master off`
++ „Resume scheduled … at +86.6s" in derselben Sekunde; harter
+Prozessabbruch → `ECONNRESET` sofort → `off` + Resume nach 0,8 s, Audio
+zurück, sobald der gepufferte DJ-Ton abgespielt war (~9 s).  Operator:
+alle Übergänge klangen gut.  Offen nur noch der Show-Login (Live Stream
+Input einer laufenden Show), bei Gelegenheit.
 
 ### 🟢 Scheduler-Poll-Rückfall entfernen (fällig ab 2026-09-15, Operator 2026-09-09)
 
