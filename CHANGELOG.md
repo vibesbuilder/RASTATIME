@@ -229,7 +229,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **REST `PUT /rest/media/<id>` mit unbekannter ID: 404 statt 500 (2026-09-10,
-  Nebenbefund des CSRF-Live-Beweises)** — `CcFiles::updateFromArray()` warf für
+  Nebenbefund des CSRF-Live-Beweises, `7993bfe`)** — `CcFiles::updateFromArray()` warf für
   eine unbekannte ID zwar `LibreTimeFileNotFoundException`, markierte im
   `catch` aber `$file->setDbImportStatus()` auf `null` — ein PHP-`Error`, den
   das `catch (Exception)` in `MediaController::putAction` nicht fängt, also

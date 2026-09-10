@@ -2357,7 +2357,7 @@ Sortierung der bereits-gespielten + nächsten Tracks freezable.
 
 ### ✅ REST `PUT /rest/media/<id>` mit unbekannter ID: 500 statt 404 (Nebenbefund 2026-09-10, DONE gleichen Tags)
 
-**Status:** Behoben 2026-09-10 (Commit-Hash im CHANGELOG): Null-Guard im `catch`
+**Status:** Behoben 2026-09-10 (`7993bfe`): Null-Guard im `catch`
 von `CcFiles::updateFromArray`, Ausnahme mit ID im Text; live geprüft, PUT und
 DELETE auf eine unbekannte ID antworten jetzt 404.  **Befund (Original):** beim CSRF-Live-Beweis (`PUT
 /rest/media/999999999`) antwortet das REST-Modul mit einer HTML-500-Seite:
