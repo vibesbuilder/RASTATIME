@@ -21,7 +21,7 @@ festgelegt.  Jeder Punkt bekommt vor Implementierung die
 |---|-------|---------|
 | 1 | ✅ Tascam-Ausgänge als lokales Monitoring | **DONE 2026-09-03** (`6464b17`) — Main-Output-Setting wirkt jetzt |
 | 2 | Crossfade-Paket (Per-Track + Settings-Wiring) | zwei Items: „Per-Track Crossfade" + „Frontend-Settings Fade" |
-| 3 | ✅ CSRF-Token-Rotation entschärfen | **DONE 2026-09-10** — Rotation war wirkungslos (Session bereits schreibend geschlossen), Prüfung gehärtet (Commit-Hash im CHANGELOG) |
+| 3 | ✅ CSRF-Token-Rotation entschärfen | **DONE 2026-09-10** — Rotation war wirkungslos (Session bereits schreibend geschlossen), Prüfung gehärtet (`7f51156`) |
 | 4 | `getSqlTypes()`-Cast (DATETIME → PG) | Known Issues (latent) |
 | 5 | Show-Shift bei Overbook | Aktive Items |
 | 6 | Seamless Bus-Mix | Aktive Items (Status prüfen — evtl. durch Liquidsoap-Migration erledigt) |

@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 
 - **CSRF-Prüfung gehärtet, wirkungslose Token-Rotation entfernt (2026-09-10,
-  Arbeitsreihenfolge Punkt 3, Operator-Go „kleine Form")** — Befund beim
+  Arbeitsreihenfolge Punkt 3, Operator-Go „kleine Form", `7f51156`)** — Befund beim
   Lesen: das ACL-Plugin würfelte bei jedem fehlgeschlagenen REST-CSRF-Check
   einen neuen Session-Token, aber `PageLayoutInitPlugin::_initCsrfNamespace()`
   schließt die Session in `routeShutdown` schreibend, bevor der `preDispatch`-
