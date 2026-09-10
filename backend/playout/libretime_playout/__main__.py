@@ -665,6 +665,11 @@ def _render_rastatime_liq_outcome(stream_outputs: List[Dict]) -> RenderOutcome:
     harbor_main_port, harbor_main_mount, harbor_show_port, harbor_show_mount = (
         _read_harbor_inputs(stream_outputs)
     )
+    logger.info(
+        "Liquidsoap harbors: main %s:%d, show %s:%d (stream.inputs in libretime.conf, "
+        "as shown under Settings -> Streams).",
+        harbor_main_mount, harbor_main_port, harbor_show_mount, harbor_show_port,
+    )
     if harbor_main_pwd or harbor_show_pwd:
         logger.info(
             "Liquidsoap input.harbor enabled: main=%s show=%s",
@@ -1271,10 +1276,8 @@ def main() -> None:
         dj_auth=DjAuthenticator(_dj_auth_web_url()),
     )
     logger.info(
-        "DJ logins are checked against the web application at %s "
-        "(harbor main %s:%d, show %s:%d).",
-        _dj_auth_web_url() or "<unset>", harbor_main_mount, harbor_main_port,
-        harbor_show_mount, harbor_show_port,
+        "DJ logins are checked against the web application at %s.",
+        _dj_auth_web_url() or "<unset>",
     )
 
     # 8b. RASTATIME 2026-06-05 — Record-per-Hour cue sidecars (stage 5).
