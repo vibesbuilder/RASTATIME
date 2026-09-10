@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 - **Legacy-mpv-Engine gelöscht — Liquidsoap ist die einzige Playout-Engine
-  (2026-09-10, Arbeitsreihenfolge Punkt 15, Operator-Go)** — Seit dem
+  (2026-09-10, Arbeitsreihenfolge Punkt 15, Operator-Go, `2590cf2`)** — Seit dem
   Phase-D-Cutover (2026-05-28) lief PLAYOUT ausschließlich mit
   `streaming_handled_externally=True`; der mpv-Pfad (libmpv-Monitor plus
   drei FfmpegStreamer-Subprozesse für die Icecast-Ausgänge, Icecast-Admin-

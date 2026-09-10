@@ -34,7 +34,7 @@ festgelegt.  Jeder Punkt bekommt vor Implementierung die
 | 12 | Widgets | Aktive Items (in Arbeit) |
 | 13 | JavaScript-Stack-Modernisierung | Technical Debt (in Arbeit) |
 | 14 | **Testplan erstellen** | neu 2026-09-02 — siehe unten |
-| 15 | ✅ Legacy-mpv-Code löschen | **DONE 2026-09-10** — Liquidsoap ist die einzige Engine, DJ-Kick per Harbor-Telnet (Commit-Hash im CHANGELOG) |
+| 15 | ✅ Legacy-mpv-Code löschen | **DONE 2026-09-10** — Liquidsoap ist die einzige Engine, DJ-Kick per Harbor-Telnet (`2590cf2`) |
 | 16 | Internet-Erreichbarkeit | Ideen |
 
 ---
