@@ -23,8 +23,8 @@ festgelegt.  Jeder Punkt bekommt vor Implementierung die
 | 2 | Crossfade-Paket | **kein Go (Operator 2026-09-10)** — neue Richtung „Show-Grenzen mit eigener Crossfade-Dauer" als 💡 notiert (Future Feature Ideas); die Items „Per-Track Crossfade" + „Frontend-Settings Fade" bleiben 🟡 |
 | 3 | ✅ CSRF-Token-Rotation entschärfen | **DONE 2026-09-10** — Rotation war wirkungslos (Session bereits schreibend geschlossen), Prüfung gehärtet (`7f51156`) |
 | 4 | ✅ `getSqlTypes()`-Cast (DATETIME → PG) | **DONE 2026-09-10** — `datetime` → `timestamp` (`cdc8f0b`) |
-| 5 | Show-Shift bei Overbook | Aktive Items |
-| 6 | Seamless Bus-Mix | Aktive Items (Status prüfen — evtl. durch Liquidsoap-Migration erledigt) |
+| 5 | Show-Shift bei Overbook | Aktive Items — **für später gemerkt (Operator 2026-09-10)**, Neubewertung im Item (Stufe A/B) |
+| 6 | ✅ Seamless Bus-Mix | **CLOSED 2026-09-11** — alle drei Symptome durch die Liquidsoap-Migration erledigt (Belege im Item) |
 | 7 | Storage-Umbau (Root → D:\stor) | **entblockt — Platte geliefert 2026-09-02** |
 | 7a | Cue-Marker-Test: 24/7-Aufnahme einschalten (Settings → Local Machine), Cue-Datei prüfen | **neu 2026-09-10 (Operator), nach dem Storage-Umbau** |
 | 8 | ICY-Metadata-Forwarding | Ideen |
@@ -1365,7 +1365,19 @@ kann mit dem Storage-Cleanup mitentfernt werden.
 
 ### 🟢 Show-Shift: nachfolgende Show schiebt sich bei Overbook
 
-**Status:** Go, mit Vorbedingung (Scheduler-Tests erst).
+**Status:** Go vom 2026-05-22; Operator 2026-09-10: „für später gemerkt".
+Die Vorbedingung ist inzwischen erfüllt (zehn Scheduler-Testdateien,
+~2.900 Zeilen).  **Neubewertung 2026-09-10:** Stufe A nur im Playout
+(Checkbox pro Show, die Timer der Folgeshow werden um den Überhang des
+letzten Titels verschoben, Datenbank und Anzeige bleiben unverändert, die
+Folgeshow wird am Ende gestaucht; ~600 Zeilen, 2–3 Tage) oder Stufe B wie
+unten (Zeilen der Folgeshow in der Datenbank verschieben, Dashboard,
+Aufnahme und History folgen; mehrere Wochen).  Vor dem Start ein
+Design-Entscheid in eigener Sitzung: Stufe, Verhalten am Ende der
+verschobenen Show, Obergrenze des Überhangs, Zusammenspiel mit der
+Einstellung „Overbooked trimmen" (`schedule_trim_overbooked`), die das
+Gegenteil tut.
+**Status (alt):** Go, mit Vorbedingung (Scheduler-Tests erst).
 **Evaluiert:** 2026-05-22.
 **Operator-Wert:** Sehr hoch — echtes Live-Radio-Problem (Musik überzieht, News wird mitten im Wort gecuttet).
 **Differenzierung:** Echter Unterschied ggü. Airtime / LibreTime.
@@ -1410,9 +1422,36 @@ Original-Evaluierung unten zur Historie:
 **Risiko Live-Betrieb:** Niedrig — paralleler Prozess.
 **Folgeprojekt:** 7-Tage-Catchup-Frontend nutzt diese Chunks als Input.
 
-### 🟢 Seamless Bus-Mix — Output-Stack-Politur
+### ✅ Seamless Bus-Mix — Output-Stack-Politur (CLOSED 2026-09-11)
 
-**Status:** Go in zwei Phasen.  Phase 1 sofort (Tail-Cut-Bug),
+**Status:** ✅ Geschlossen 2026-09-11 (Arbeitsreihenfolge Punkt 6,
+Statusprüfung auf Operator-Wunsch).  Alle drei Symptome sind durch die
+Liquidsoap-Migration (Phase 0–D, Cutover 2026-05-28) und die Folgearbeiten
+erledigt:
+- **#1 Listener-Reconnect / Counter-Reset:** Liquidsoap hält je Mount eine
+  persistente Icecast-Quelle.  Beleg 2026-09-11 08:20 (`status-json.xsl`):
+  `rastatime`, `rastatime-aac`, `rastatime-ogg` verbunden seit 2026-09-10
+  13:28:15 = seit dem letzten LIQUIDSOAP-Start, über alle Titel- und
+  Showwechsel hinweg.
+- **#2 Tail-Cut bei kurzen Titeln:** Liquidsoap spielt die Queue gapless;
+  `cue_out` läuft als Annotation mit, der Titel läuft in der Überlappung zu
+  Ende statt abgeschnitten zu werden.  Live-Abnahmen: Paket 2 (`ff567ce`,
+  2026-09-04) und die Sechs-Show-Sequenz 2026-09-10 11:00 („alle Shows
+  klangen gut", Übergang Show 1→2 nahtlos).
+- **#3 1–2 s Stille beim Webstream-Wechsel:** Vorwärmen mit Gate (Paket 2)
+  und frische `input.http`-Quelle je Slot (Plan A, `1eb8713`, 2026-09-08),
+  live bestätigt 2026-09-08 (12:07, 17:07, Stall-Test 22:20).
+- **Obsolet-Liste:** `mpv_engine.py`, `ffmpeg_streamer.py`, `_stop_streamers`
+  und der Tail-Flush-Wait sind am 2026-09-10 gelöscht (`2590cf2`).
+  `Scheduler::calculateCrossfades` (PHP) bleibt bewusst: sie legt die
+  Überlappung in der Zeitachse (`cc_schedule.starts/ends`) aus
+  `default_crossfade_duration` an, derselben Quelle wie der Liquidsoap-
+  Crossfade.  Der Rollback-Plan (Feature-Flag zu mpv) ist mit der Löschung
+  hinfällig.
+
+**Ursprünglicher Eintrag (2026-05-25):**
+
+**Status (alt):** Go in zwei Phasen.  Phase 1 sofort (Tail-Cut-Bug),
 Phase 2 später (Architektur-Eingriff für persistente Icecast-PUT-
 Verbindung).
 **Evaluiert:** 2026-05-25.
