@@ -937,8 +937,8 @@ def main() -> None:
         stream_outputs = _read_stream_outputs()
         if stream_outputs:
             logger.info(
-                "Found %d enabled Icecast stream output(s) — "
-                "FFmpeg will stream to Icecast alongside local playback.",
+                "Found %d enabled Icecast stream output(s) - "
+                "Liquidsoap streams them from the internal bus (output.icecast).",
                 len(stream_outputs),
             )
         else:
