@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Stream-Metadaten: Stream Label, Off Air Metadata und Show-Namen erreichen
-  die Hörer (2026-09-13, Arbeitsreihenfolge Punkt 8, Operator-Go)** — Befund:
+  die Hörer (2026-09-13, Arbeitsreihenfolge Punkt 8, Operator-Go, `b997a7a`)** — Befund:
   die Werte aus Settings → Streams kamen nie im Liquidsoap-Skript an (PHP
   schickte sie auf RabbitMQ, das in RASTATIME niemand liest); bei Stille
   blieb der letzte Titel stundenlang auf Icecast stehen, „Stream Label" war

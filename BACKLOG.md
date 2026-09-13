@@ -27,7 +27,7 @@ festgelegt.  Jeder Punkt bekommt vor Implementierung die
 | 6 | ✅ Seamless Bus-Mix | **CLOSED 2026-09-11** — alle drei Symptome durch die Liquidsoap-Migration erledigt (Belege im Item) |
 | 7 | Storage-Umbau (Root → D:\stor) | **entblockt — Platte geliefert 2026-09-02** |
 | 7a | Cue-Marker-Test: 24/7-Aufnahme einschalten (Settings → Local Machine), Cue-Datei prüfen | **neu 2026-09-10 (Operator), nach dem Storage-Umbau** |
-| 8 | ✅ Stream-Metadaten (Stream Label, Off Air, Show-Namen) | **DONE 2026-09-13** — Off-Air-Text bei Stille, Stream Label wirkt, Webstream-Titel durchgereicht (Commit-Hash im CHANGELOG) |
+| 8 | ✅ Stream-Metadaten (Stream Label, Off Air, Show-Namen) | **DONE 2026-09-13** — Off-Air-Text bei Stille, Stream Label wirkt, Webstream-Titel durchgereicht (`b997a7a`) |
 | 9 | Recording-Loss bei Latency-Catchup | Playout/Liquidsoap |
 | 10 | Backup/Restore via UI | Aktive Items |
 | 11 | Pypo-NSSM-Resilience | Playout/Liquidsoap |
@@ -1796,8 +1796,8 @@ nach Migration + eigenes Wartungsfenster mit Rollback (2.4.4-Baum unter
 
 ### ✅ Phase-E ICY-Metadata-Forwarding → Stream-Metadaten komplett (DONE 2026-09-13)
 
-**Status:** Erledigt 2026-09-13 (Arbeitsreihenfolge Punkt 8, Operator-Go;
-Commit-Hash im CHANGELOG).  Umfang gewachsen: nicht nur Webstream-Titel,
+**Status:** Erledigt 2026-09-13 (Arbeitsreihenfolge Punkt 8, Operator-Go,
+`b997a7a`).  Umfang gewachsen: nicht nur Webstream-Titel,
 sondern Stream Label (drei Varianten), Off Air Metadata bei Stille,
 Show-Name für DJ/Webstream/Line-In, Mount-Genre/URL.  Details CHANGELOG
 „Stream-Metadaten" und ARCHITECTURE §23.29; Replikat-E2E acht Schritte grün.
