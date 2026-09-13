@@ -58,6 +58,12 @@ from typing import Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
+from .icy_metadata import (  # noqa: E402
+    DEFAULT_ICY_FORMAT,
+    DEFAULT_OFFAIR_TEXT,
+    DEFAULT_STATION_NAME,
+)
+
 
 # Template lives next to this module's config directory.
 # In the repo: backend/playout/config/rastatime.liq.template
@@ -454,12 +460,116 @@ def _normalize_loopback_host(host: str) -> str:
     return "127.0.0.1" if host.strip().lower() == "localhost" else host
 
 
-def _render_icecast_block(stream: Dict) -> str:
+def _render_icy_metadata_block(
+    label_format: int = DEFAULT_ICY_FORMAT,
+    offair_text: str = DEFAULT_OFFAIR_TEXT,
+    station_name: str = DEFAULT_STATION_NAME,
+) -> str:
+    """
+    RASTATIME 2026-09-13 - the ``${ICY_METADATA_BLOCK}``: four telnet-
+    settable values and the ``icy_label`` function every output.icecast
+    block uses as ``icy_song``.
+
+    ``icy_label`` sees ONE metadata packet at a time (that is how
+    output.icecast calls it), so a harbor or webstream packet that only
+    carries a title takes the show from ``bus_show``, which the scheduler
+    keeps at the show on air.  Formats (Settings -> Streams, Stream
+    Label): 0 Artist - Title, 1 Show - Artist - Title, 2 Station name -
+    Show name.  A packet flagged ``off_air`` (the silence fallback, see
+    the template) always yields the Off Air Metadata text.
+    """
+    fmt = int(label_format) if int(label_format) in (0, 1, 2) else DEFAULT_ICY_FORMAT
+    lines = [
+        "# ---------------------------------------------------------------------",
+        "# RASTATIME 2026-09-13 - ICY metadata (Settings -> Streams)",
+        "# ---------------------------------------------------------------------",
+        "#",
+        "# What listeners see in their player.  Four telnet-settable values;",
+        "# PLAYOUT pushes the first three on every schedule refresh when they",
+        "# change (no restart) and bus_show at every show change:",
+        "#   var.set icy_format = 1          var.set offair_text = Back soon",
+        "#   var.set station_name = Name     var.set bus_show = Show name",
+        "# (interactive.set takes the raw text after '=', no quotes.)",
+        f'icy_format = interactive.int("icy_format", {fmt})',
+        f'offair_text = interactive.string("offair_text", "{_escape_liq_string(offair_text)}")',
+        f'station_name = interactive.string("station_name", "{_escape_liq_string(station_name)}")',
+        'bus_show = interactive.string("bus_show", "")',
+        "",
+        "# icy_label: the Stream Label for one metadata packet (\"\" = leave the",
+        "# packet alone).  Only the fields of THAT",
+        "# packet are known - a harbor packet with just a title takes the show",
+        "# from bus_show().  Formats: 0 Artist - Title, 1 Show - Artist - Title,",
+        "# 2 Station name - Show name; an off_air packet always shows the text;",
+        "# a packet without any of these fields leaves the title alone (null).",
+        "def icy_label(m) =",
+        '  title = m["title"]',
+        '  artist = m["artist"]',
+        '  show = if m["show_name"] != "" then m["show_name"] else bus_show() end',
+        "  fmt = icy_format()",
+        "  # packets without any of our fields (blank's empty track start,",
+        "  # transition internals, replays) must not touch the title -> null",
+        '  known = title != "" or artist != "" or m["show_name"] != "" or m["off_air"] == "true"',
+        "  label =",
+        "    if not known then",
+        '      ""',
+        '    elsif m["off_air"] == "true" then',
+        "      offair_text()",
+        "    elsif fmt == 2 then",
+        '      if show != "" then "#{station_name()} - #{show}" else station_name() end',
+        "    else",
+        "      parts = if fmt == 1 then [show, artist, title] else [artist, title] end",
+        '      parts = list.filter(fun (p) -> p != "", parts)',
+        "      if list.length(parts) > 0 then",
+        '        string.concat(separator=" - ", parts)',
+        '      elsif show != "" then',
+        "        show",
+        "      else",
+        "        station_name()",
+        "      end",
+        "    end",
+        "  label",
+        "end",
+        "",
+        "# icy_rewrite: applied to the bus (metadata.map, see the template).  The",
+        "# label replaces the packet's title and the artist is cleared, so every",
+        "# consumer - ICY on mp3/aac, in-band Ogg comments, recording tags - shows",
+        "# exactly the Stream Label.  Why not icy_song alone: output.icecast hands",
+        "# that hook only the standard fields (title, artist, genre, ...), never",
+        "# show_name / off_air (replica probe 2026-09-13).",
+        "def icy_rewrite(m) =",
+        "  label = icy_label(m)",
+        '  if label == "" then [] else [("title", label), ("artist", "")] end',
+        "end",
+        "",
+        "# output.icecast hook: the rewritten title is the ICY song (null = keep).",
+        "def icy_song_title(m) =",
+        '  if m["title"] == "" then null else m["title"] end',
+        "end",
+        "",
+        "server.register(",
+        '  namespace="icy", description="ICY metadata settings in effect",',
+        '  "status",',
+        '  fun (_) -> "format=#{icy_format()} offair=\\"#{offair_text()}\\" station=\\"#{station_name()}\\" show=\\"#{bus_show()}\\""',
+        ")",
+    ]
+    return "\n".join(lines) + "\n"
+
+
+def _render_icecast_block(
+    stream: Dict,
+    *,
+    station_name: str = DEFAULT_STATION_NAME,
+    icy_song: Optional[str] = "icy_song_title",
+) -> str:
     """
     Render one output.icecast(...) block from a stream_output_N dict.
 
     Required keys (silently skipped if missing): type, host, port,
-    mount, pass.  Optional: user, name, description, bitrate, channels.
+    mount, pass.  Optional: user, name, description, genre, url,
+    bitrate, channels.  ``icy_song`` names the Liquidsoap function
+    that turns a metadata packet into the ICY title (the bus already
+    carries the Stream Label as title, see icy_rewrite; None = Liquidsoap
+    default, used by the standby script which has no ICY block).
 
     Raises ValueError if ``type`` is not one of mp3 / aac / ogg, so
     the operator gets a loud failure rather than a silent omission.
@@ -503,10 +613,23 @@ def _render_icecast_block(stream: Dict) -> str:
     mount = "/" + _escape_liq_string(mount_raw)
     password = _escape_liq_string(str(stream.get("pass", "")))
     user = _escape_liq_string(str(stream.get("user", "source") or "source"))
-    name = _escape_liq_string(str(stream.get("name", "RASTATIME")))
+    # RASTATIME 2026-09-13 - an empty Name / Description in Settings ->
+    # Streams showed up as "Unspecified name" on Icecast; fall back to
+    # the station name.  Genre and URL are rendered when set (they never
+    # were before), and icy_song hands the ICY title to icy_label.
+    name = _escape_liq_string(str(stream.get("name") or station_name))
     description = _escape_liq_string(
-        str(stream.get("description", "RASTATIME live stream"))
+        str(stream.get("description") or f"{station_name} live stream")
     )
+    genre = _escape_liq_string(str(stream.get("genre") or "").strip())
+    url = _escape_liq_string(str(stream.get("url") or "").strip())
+    extra = ""
+    if genre:
+        extra += f'  genre="{genre}",\n'
+    if url:
+        extra += f'  url="{url}",\n'
+    if icy_song:
+        extra += f"  icy_song={icy_song},\n"
 
     # Render as a multi-line block matching Liquidsoap's stdlib style.
     # `fallible=true` allows the output to fail on Icecast unavailable
@@ -532,13 +655,19 @@ def _render_icecast_block(stream: Dict) -> str:
         f'  mount="{mount}",\n'
         f'  name="{name}",\n'
         f'  description="{description}",\n'
+        f"{extra}"
         "  fallible=true,\n"
         "  bus,\n"
         f")  # mount {mount} type={stream_type} {bitrate}k\n"
     )
 
 
-def _render_icecast_outputs(stream_outputs: List[Dict]) -> str:
+def _render_icecast_outputs(
+    stream_outputs: List[Dict],
+    *,
+    station_name: str = DEFAULT_STATION_NAME,
+    icy_song: Optional[str] = "icy_song_title",
+) -> str:
     """
     Render all output.icecast(...) blocks back-to-back, separated by
     blank lines.  Empty list → returns a single comment line noting
@@ -551,7 +680,10 @@ def _render_icecast_outputs(stream_outputs: List[Dict]) -> str:
             "Liquidsoap will run idle.  Pypo logs a warning at "
             "startup.)\n"
         )
-    blocks = [_render_icecast_block(s) for s in stream_outputs]
+    blocks = [
+        _render_icecast_block(s, station_name=station_name, icy_song=icy_song)
+        for s in stream_outputs
+    ]
     return "\n".join(blocks)
 
 
@@ -1585,20 +1717,53 @@ def _render_bus_source_block(
     # comment at DEFAULT_INPUT_DUCK_FADE_SECONDS).
     instant, faded = "bus_instant", "bus_transition"
     transitions: List[str] = []
+    # RASTATIME 2026-09-13 - every arm gets a thin wrapper around the
+    # shared shape: live arms insert one metadata packet with the show on
+    # air (show_name from bus_show) so the ICY title changes at once, the
+    # scheduled arm marks the silence off-air when the queue is empty.
+    # The packet is inserted on the transition's OWN source (the add of
+    # the two fades): a replica probe showed that an insert on the arm
+    # (an operator such as amplify) or on the source under it never
+    # reaches the bus, while the transition source carries it at once.
+    wrappers: List[str] = []
+
+    def _arm(name: str, source: str, shape: str) -> str:
+        return (
+            f"def {name}(old, new) =  # {source}\n"
+            f"  s = {shape}(old, new)\n"
+            '  s.insert_metadata([("show_name", bus_show())])\n'
+            "  s\n"
+            "end\n"
+        )
+
     if main_enabled:
         arms.append("({source.is_ready(master_dj)}, master_dj)")
-        transitions.append(instant)
+        transitions.append("bus_arm_master")
+        wrappers.append(_arm("bus_arm_master", "master_dj", instant))
     if show_enabled:
         arms.append("({source.is_ready(show_dj)}, show_dj)")
-        transitions.append(instant)
+        transitions.append("bus_arm_show")
+        wrappers.append(_arm("bus_arm_show", "show_dj", instant))
     if webstream_enabled:
         arms.append("({webstream_live() and source.is_ready(webstream)}, webstream)")
-        transitions.append(faded)
+        transitions.append("bus_arm_webstream")
+        wrappers.append(_arm("bus_arm_webstream", "webstream", faded))
     if linein_enabled:
         arms.append("({linein_live() and source.is_ready(linein)}, linein)")
-        transitions.append(faded)
+        transitions.append("bus_arm_linein")
+        wrappers.append(_arm("bus_arm_linein", "linein", faded))
     arms.append("({true}, scheduled)")
-    transitions.append(faded)
+    transitions.append("bus_arm_scheduled")
+    wrappers.append(
+        "def bus_arm_scheduled(old, new) =\n"
+        f"  s = {faded}(old, new)\n"
+        "  # queue empty: the silence arm goes on air -> Off Air Metadata\n"
+        "  if not source.is_ready(scheduled_q) then\n"
+        '    s.insert_metadata([("off_air", "true"), ("title", offair_text())])\n'
+        "  end\n"
+        "  s\n"
+        "end\n"
+    )
 
     if (
         not main_enabled and not show_enabled
@@ -1652,6 +1817,8 @@ def _render_bus_source_block(
         "end\n"
         + transition_fn
         + "\n"
+        + "".join(wrappers)
+        + "\n"
         "bus = switch(\n"
         "  track_sensitive=false,\n"
         f"  transition_length={_format_crossfade_duration(fade_len + 0.5)},\n"
@@ -1702,6 +1869,9 @@ def render_rastatime_liq(
     hourly_recording_format: str = DEFAULT_HOURLY_RECORDING_FORMAT,
     hourly_recording_bitrate: int = DEFAULT_HOURLY_RECORDING_BITRATE,
     hourly_recording_samplerate: int = DEFAULT_SAMPLERATE,
+    icy_label_format: int = DEFAULT_ICY_FORMAT,
+    icy_offair_text: str = DEFAULT_OFFAIR_TEXT,
+    icy_station_name: str = DEFAULT_STATION_NAME,
     template_path: Optional[Path] = None,
 ) -> str:
     """
@@ -1739,7 +1909,12 @@ def render_rastatime_liq(
     template_path = template_path or _DEFAULT_TEMPLATE_PATH
     template = template_path.read_text(encoding="utf-8")
 
-    icecast_blocks = _render_icecast_outputs(stream_outputs)
+    icecast_blocks = _render_icecast_outputs(
+        stream_outputs, station_name=icy_station_name,
+    )
+    icy_block = _render_icy_metadata_block(
+        icy_label_format, icy_offair_text, icy_station_name,
+    )
 
     harbor_block = _render_harbor_inputs_block(
         main_password=harbor_main_password,
@@ -1812,6 +1987,7 @@ def render_rastatime_liq(
         .replace("${LINEIN_INPUT_BLOCK}", linein_block)
         .replace("${BUS_SOURCE_BLOCK}", bus_block)
         .replace("${WEBSTREAM_WATCHDOG_BLOCK}", webstream_watchdog_block)
+        .replace("${ICY_METADATA_BLOCK}", icy_block)
         .replace("${ICECAST_OUTPUTS}", icecast_blocks)
         .replace("${HOURLY_RECORDING_BLOCK}", hourly_block)
     )
@@ -1856,6 +2032,9 @@ def write_rastatime_liq(
     hourly_recording_format: str = DEFAULT_HOURLY_RECORDING_FORMAT,
     hourly_recording_bitrate: int = DEFAULT_HOURLY_RECORDING_BITRATE,
     hourly_recording_samplerate: int = DEFAULT_SAMPLERATE,
+    icy_label_format: int = DEFAULT_ICY_FORMAT,
+    icy_offair_text: str = DEFAULT_OFFAIR_TEXT,
+    icy_station_name: str = DEFAULT_STATION_NAME,
     template_path: Optional[Path] = None,
 ) -> bool:
     """
@@ -1909,6 +2088,9 @@ def write_rastatime_liq(
         hourly_recording_format=hourly_recording_format,
         hourly_recording_bitrate=hourly_recording_bitrate,
         hourly_recording_samplerate=hourly_recording_samplerate,
+        icy_label_format=icy_label_format,
+        icy_offair_text=icy_offair_text,
+        icy_station_name=icy_station_name,
         template_path=template_path,
     )
 
@@ -2001,7 +2183,8 @@ def render_standby_liq(
         "\n"
         + source
         + "\n"
-        + _render_icecast_outputs(standby_outputs)
+        # no ICY block in the standby script -> Liquidsoap's default title
+        + _render_icecast_outputs(standby_outputs, icy_song=None)
     )
 
 

@@ -27,7 +27,7 @@ festgelegt.  Jeder Punkt bekommt vor Implementierung die
 | 6 | ✅ Seamless Bus-Mix | **CLOSED 2026-09-11** — alle drei Symptome durch die Liquidsoap-Migration erledigt (Belege im Item) |
 | 7 | Storage-Umbau (Root → D:\stor) | **entblockt — Platte geliefert 2026-09-02** |
 | 7a | Cue-Marker-Test: 24/7-Aufnahme einschalten (Settings → Local Machine), Cue-Datei prüfen | **neu 2026-09-10 (Operator), nach dem Storage-Umbau** |
-| 8 | ICY-Metadata-Forwarding | Ideen |
+| 8 | ✅ Stream-Metadaten (Stream Label, Off Air, Show-Namen) | **DONE 2026-09-13** — Off-Air-Text bei Stille, Stream Label wirkt, Webstream-Titel durchgereicht (Commit-Hash im CHANGELOG) |
 | 9 | Recording-Loss bei Latency-Catchup | Playout/Liquidsoap |
 | 10 | Backup/Restore via UI | Aktive Items |
 | 11 | Pypo-NSSM-Resilience | Playout/Liquidsoap |
@@ -754,6 +754,16 @@ am `input.harbor` auf z. B. 10 s senken (Trade-off: ein DJ mit 10 s
 Netzstörung fliegt raus).  Operator-Entscheidung; kein Handlungsdruck.
 
 ### 💡 Statisches Harbor-Rückfall-Passwort in libretime.conf ersetzen (Operator 2026-09-10)
+
+**Nachtrag 2026-09-13:** beim Rendern des Replikats fiel auf, dass auch das
+Icecast-Quellpasswort (Settings → Streams, Source Password) noch der
+Auslieferungsstandard ist; bei derselben Gelegenheit mit ändern (Icecast-
+Konfiguration + Settings → Streams + LIQUIDSOAP-Neustart).
+
+**Nachtrag 2026-09-13:** beim Rendern des Replikats fiel auf, dass auch das
+Icecast-Quellpasswort (Settings → Streams, Source Password) noch der
+Auslieferungsstandard ist; bei derselben Gelegenheit mit ändern (Icecast-
+Konfiguration + Settings → Streams + LIQUIDSOAP-Neustart).
 
 **Status:** Idea/Defer — vom Operator am 2026-09-10 für später notiert.
 `stream.harbor.main_password`/`show_password` sind noch Installations-
@@ -1784,9 +1794,15 @@ connect, Source-Switch, Watchdog). 2.5.0-win64-Installer lag bereits vor
 nach Migration + eigenes Wartungsfenster mit Rollback (2.4.4-Baum unter
 `C:\Tools\Icecast` sichern).
 
-### 💡 Phase-E ICY-Metadata-Forwarding (Future-Polish)
+### ✅ Phase-E ICY-Metadata-Forwarding → Stream-Metadaten komplett (DONE 2026-09-13)
 
-**Status:** Idea — nice-to-have, nicht eilig.
+**Status:** Erledigt 2026-09-13 (Arbeitsreihenfolge Punkt 8, Operator-Go;
+Commit-Hash im CHANGELOG).  Umfang gewachsen: nicht nur Webstream-Titel,
+sondern Stream Label (drei Varianten), Off Air Metadata bei Stille,
+Show-Name für DJ/Webstream/Line-In, Mount-Genre/URL.  Details CHANGELOG
+„Stream-Metadaten" und ARCHITECTURE §23.29; Replikat-E2E acht Schritte grün.
+**Ursprünglicher Eintrag:**
+**Status (alt):** Idea — nice-to-have, nicht eilig.
 **Evaluiert:** 2026-05-29.
 
 Aktuell setzt Pypo per `var.set webstream.gain = X` den Stream-Gain,

@@ -635,6 +635,32 @@ class LiquidsoapTelnetClient:
             raise ValueError(f"unknown harbor id {harbor_id!r}")
         return self.send_command(f"{harbor_id}.stop")
 
+    # ---- RASTATIME 2026-09-13 - ICY metadata variables -----------------
+
+    @staticmethod
+    def _one_line(value: str) -> str:
+        """``interactive.set`` splits the command on ``=`` and takes the
+        raw, trimmed text after it (no quotes, no unescaping) - so the
+        value must be one line and must not contain ``=``."""
+        text = " ".join(str(value or "").split())
+        return text.replace("=", "-")
+
+    def var_set_string(self, name: str, value: str) -> str:
+        """
+        Set an ``interactive.string`` variable.  Wire-form: ``var.set
+        <name> = <raw text>`` - the stdlib takes everything after the
+        first ``=`` verbatim (quotes would become part of the value).
+        """
+        return self.send_command(f"var.set {name} = {self._one_line(value)}")
+
+    def var_set_int(self, name: str, value: int) -> str:
+        """Set an ``interactive.int`` variable (``var.set <name> = <int>``)."""
+        return self.send_command(f"var.set {name} = {int(value)}")
+
+    def icy_status(self) -> str:
+        """The ICY settings in effect (``icy.status``, rendered 2026-09-13)."""
+        return self.send_command("icy.status")
+
     # ---- Internals (lock must be held) ------------------------------
 
     def _connect_locked(self) -> None:

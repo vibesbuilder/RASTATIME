@@ -70,7 +70,28 @@ Each of the four stream cards has the same field set; only
 | **Bitrate** | Kbps. Picking the right value is the most consequential per-stream decision; see §2. |
 | **Channels** | **Stereo** (default), **Mono** (saves ~30 % bandwidth for talk-only). |
 | **Sample Rate** | 22.05 / 32 / 44.1 / 48 kHz. 44.1 kHz is the universal default. |
-| **Stream Name / URL / Genre / Description** | ICY metadata advertised to listeners. Appears in their player as the station's name + click-through. |
+| **Stream Name / URL / Genre / Description** | ICY metadata advertised to listeners. Appears in their player as the station's name + click-through. Since 2026-09-13 all four are rendered; an empty Name or Description falls back to the station name (Icecast used to show "Unspecified name"). |
+
+### Stream Label and Off Air Metadata
+
+What listeners see as the "now playing" title in their player.  Both
+fields sit on the Streams page above the per-stream blocks; the station
+name comes from Settings → General.
+
+| Source on air | Artist - Title | Show - Artist - Title | Station name - Show name |
+|---|---|---|---|
+| Scheduled track | Artist - Title | Show - Artist - Title | RASTATIME - Show |
+| Webstream with its own titles | title of the source stream | Show - title of the source stream | RASTATIME - Show |
+| Webstream without titles, Line-In | Show | Show | RASTATIME - Show |
+| DJ (BUTT / Mixxx) | title sent by the DJ software, else Show | Show - title sent by the DJ software | RASTATIME - Show |
+| Nothing scheduled | Off Air Metadata text | Off Air Metadata text | Off Air Metadata text |
+
+- **Off Air Metadata** replaces the last track's title as soon as
+  nothing is on air (before 2026-09-13 the old title stayed for hours).
+- Changes to either field take effect within one schedule refresh
+  (about two minutes), no restart needed.
+- The label is written into the stream's title metadata, so it applies
+  to MP3/AAC (ICY), to OGG (in-band comments) and to the recordings.
 
 ### Stream status badge
 
@@ -354,11 +375,12 @@ silence during the reconnect.
 
 ### "How do I add ICY metadata (now-playing track title)?"
 
-ICY metadata is set automatically by the playout for
-scheduled tracks (track title appears in players that
-support ICY). Live source content does not have ICY
-metadata — set it via your broadcasting software's ICY
-fields.
+It is there already: the playout labels every metadata packet
+according to **Stream Label** (see §1), shows the **Off Air
+Metadata** text while nothing is on air, and passes the titles a
+webstream or a DJ's broadcasting software sends through the same
+label.  A live source without titles of its own is labelled with the
+show on air.
 
 ### "Why does the same stream URL play differently on different players?"
 

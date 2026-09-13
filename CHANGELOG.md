@@ -7,6 +7,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Stream-Metadaten: Stream Label, Off Air Metadata und Show-Namen erreichen
+  die Hörer (2026-09-13, Arbeitsreihenfolge Punkt 8, Operator-Go)** — Befund:
+  die Werte aus Settings → Streams kamen nie im Liquidsoap-Skript an (PHP
+  schickte sie auf RabbitMQ, das in RASTATIME niemand liest); bei Stille
+  blieb der letzte Titel stundenlang auf Icecast stehen, „Stream Label" war
+  wirkungslos, AAC/OGG meldeten „Unspecified name".  Jetzt: (1)
+  `icy_metadata.py` liest `stream_label_format`, `off_air_meta`,
+  `station_name` (ORM); der Renderer schreibt sie als Standardwerte in einen
+  ICY-Block (`interactive` `icy_format`, `offair_text`, `station_name`,
+  `bus_show`); der Scheduler liest sie bei jedem Refresh neu und schiebt
+  Änderungen per Telnet (`var.set`, nur bei Änderung); `bus_show` = Show auf
+  Sendung, gesetzt bei Refresh und Slot-Start.  (2) `icy_label` baut das
+  Label je Metadaten-Paket (0 Artist - Title, 1 Show - Artist - Title, 2
+  Station name - Show name; `off_air`-Pakete = Off-Air-Text; Pakete ohne
+  unsere Felder bleiben unangetastet), `icy_rewrite` schreibt es per
+  `metadata.map` auf dem Bus in `title` (Artist geleert) — so gilt es für
+  ICY auf MP3/AAC, in-band bei OGG und für die Aufnahme-Tags;
+  `output.icecast` bekommt `icy_song=icy_song_title`.  (3) Die Stille-Quelle
+  trägt Off-Air-Metadaten: beim Fallen aus der Queue (Transition der
+  `fallback`, `replay_metadata=false`), einmal beim Start und wenn der Bus
+  mit leerer Queue auf den Scheduled-Arm fällt; die Live-Arme (Master, Show,
+  Webstream, Line-In) fügen beim Umschalten ein `show_name`-Paket ein —
+  jeweils auf der Transition-Quelle selbst, der einzigen Stelle, die den Bus
+  erreicht (Replikat-Sonde: Inserts auf dem Arm oder der Quelle darunter
+  kommen nie an; `icy_song` sieht nur Standardfelder wie title/artist/genre).
+  (4) Mounts: leerer Name/Beschreibung → Sendername, Genre und URL werden
+  gerendert.  Replikat-E2E `C:/Temp/optd/run_e2e_icy.py` (eigener Test-Mount
+  am Produktions-Icecast, Sonden `probe_song.py`/`probe_insert.py`), acht
+  Schritte grün: Startstille → Off-Air-Text; Datei → „Attwenger - Muamen";
+  Format 1 → „Morgenshow - Attwenger - Zwoa"; Format 2 → „RASTATIME -
+  Morgenshow"; Queue leer → Off-Air; Webstream-Arm → „RASTATIME - Webshow";
+  Gate zu → Off-Air; geänderter Off-Air-Text nach dem nächsten Titel.  Tests
+  `test_icy_metadata.py` (28, inkl. `--check` mit allen Bus-Armen), Backend
+  591 / Unit 105.  Handbuch STREAMS EN/DE/FR/ES.  Aktiv nach PLAYOUT- **und**
+  LIQUIDSOAP-Neustart (neuer Skript-Block).
+
 ### Security
 
 - **CSRF-Prüfung gehärtet, wirkungslose Token-Rotation entfernt (2026-09-10,

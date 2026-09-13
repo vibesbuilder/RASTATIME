@@ -133,6 +133,7 @@ class PlayoutScheduler:
         cache_dir: Optional[Path] = None,
         storage_path: Optional[str] = None,
         api_client_v1: Optional["object"] = None,
+        read_icy_preferences: Optional[Callable[[], Optional[object]]] = None,
         input_transition_seconds: float = 2.0,
         render_liquidsoap: Optional[Callable[[], object]] = None,
         nightly_restart: Optional[NightlyRestartPolicy] = None,
@@ -273,6 +274,14 @@ class PlayoutScheduler:
         # the DJ disconnects.
         self._switcher = None
 
+        # RASTATIME 2026-09-13 - ICY metadata: the Settings -> Streams values
+        # (Stream Label, Off Air Metadata, station name) are re-read every
+        # refresh and pushed over telnet only when they changed; bus_show
+        # follows the show on air (see _sync_icy_metadata).
+        self._read_icy_preferences = read_icy_preferences
+        self._icy_pushed: Optional[object] = None
+        self._bus_show_pushed: Optional[str] = None
+
         # RASTATIME 2026-05-12 — Phase B Line-In capture.
         #
         # Lazy-created instance shared across all LineinEvents.  We
@@ -378,6 +387,9 @@ class PlayoutScheduler:
         armed_count = 0
         skipped_past = 0
         skipped_type = 0
+
+        # RASTATIME 2026-09-13 - ICY metadata settings + show on air.
+        self._sync_icy_metadata(events, now)
 
         with self._lock:
             self._cancel_all_timers()
@@ -885,6 +897,10 @@ class PlayoutScheduler:
         # next cycle; a fresh baseline avoids a second "restarted" round
         # after a planned restart.
         self._last_liquidsoap_process = None
+        # A fresh instance starts with the rendered ICY defaults; push the
+        # live values again on the next refresh (2026-09-13).
+        self._icy_pushed = None
+        self._bus_show_pushed = None
         return True, None
 
     def _retry_initial_liquidsoap_state(
@@ -1699,6 +1715,7 @@ class PlayoutScheduler:
         # ``None`` ⇒ replay-gain globally disabled; engines/streamers
         # skip the volume filter.
         self._current_gain_db = event.replay_gain
+        self._set_bus_show(event.show_name)   # ICY show for DJ takeovers (2026-09-13)
 
         # If a DJ source is currently dominant, do not touch the audio
         # engine — the DJ stream stays on air.  We've already recorded
@@ -1788,6 +1805,7 @@ class PlayoutScheduler:
         # resume path (DJ disconnect, hot-reload) reapplies it after the
         # stop/restart, instead of falling back to "no gain".
         self._current_gain_db = event.input_gain_db
+        self._set_bus_show(event.show_name)   # ICY show for the webstream packets (2026-09-13)
 
         # Drive the dashboard "On Air" light (web streams have row_id too)
         row_id = getattr(event, "row_id", None)
@@ -2005,6 +2023,7 @@ class PlayoutScheduler:
         self._cue_item_start(
             "linein", show=event.show_name, item=event.row_id, name=event.name,
         )
+        self._set_bus_show(event.show_name)   # ICY show for the line-in packets (2026-09-13)
 
         # Drive the dashboard "On Air" light for the new row.
         row_id = getattr(event, "row_id", None)
@@ -2603,6 +2622,54 @@ class PlayoutScheduler:
         cw = self._cue_writer
         if cw is not None:
             cw.item_end(kind, **meta)
+
+    # ------------------------------------------------------------------
+    # RASTATIME 2026-09-13 - ICY metadata (Settings -> Streams)
+    # ------------------------------------------------------------------
+
+    def _sync_icy_metadata(self, events: Dict[str, object], now: datetime) -> None:
+        """
+        Once per refresh: push the Stream Label / Off Air Metadata /
+        station name when they changed (the reader is None without the
+        ORM), then keep ``bus_show`` at the show on air.  Engines without
+        the ICY methods (tests, ABC mocks) are skipped.
+        """
+        if not hasattr(self._engine, "icy_settings"):
+            return
+        if self._read_icy_preferences is not None:
+            try:
+                prefs = self._read_icy_preferences()
+            except Exception as exc:  # pylint: disable=broad-exception-caught
+                logger.warning("ICY preferences could not be read: %s", exc)
+                prefs = None
+            if prefs is not None and prefs != self._icy_pushed:
+                self._engine.icy_settings(
+                    prefs.label_format, prefs.offair_text, prefs.station_name,
+                )
+                self._icy_pushed = prefs
+        self._set_bus_show(self._show_on_air(events, now))
+
+    @staticmethod
+    def _show_on_air(events: Dict[str, object], now: datetime) -> str:
+        """Name of the show whose file / webstream / line-in item covers
+        ``now`` - '' when nothing is scheduled right now."""
+        for event in events.values():
+            if not isinstance(event, (FileEvent, WebStreamEvent, LineinEvent)):
+                continue
+            if event.start <= now < event.end:
+                return (getattr(event, "show_name", "") or "").strip()
+        return ""
+
+    def _set_bus_show(self, show_name: str) -> None:
+        """Push ``bus_show`` only when it changes (every telnet command
+        leaks on the Windows build)."""
+        if not hasattr(self._engine, "bus_show_set"):
+            return
+        name = (show_name or "").strip()
+        if name == self._bus_show_pushed:
+            return
+        self._engine.bus_show_set(name)
+        self._bus_show_pushed = name
 
     def set_source_switcher(self, switcher) -> None:
         """Wire up the SourceSwitcher.  Called once from __main__."""

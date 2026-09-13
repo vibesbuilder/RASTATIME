@@ -104,6 +104,8 @@ settings.clock.leak_warning.set(200)
 #  had settings.frame.audio.sample_rate.set etc. — we use only the
 #  options we know are stable on the burn-in build.)
 
+${ICY_METADATA_BLOCK}
+
 # ---------------------------------------------------------------------
 # Sources — what audio comes in
 # ---------------------------------------------------------------------
@@ -307,10 +309,35 @@ def request.queue_sync(
 end
 
 scheduled_q = request.queue_sync(id="scheduled", timeout=5.0)
+
+# RASTATIME 2026-09-13 - the silence arm carries the Off Air Metadata.
+# Every fall from the queue into silence inserts one metadata packet
+# (off_air=true + the operator's text); icy_label (ICY block above)
+# turns it into the ICY title, so Icecast shows "back on air soon"
+# instead of the last track.  The bus switch does the same when it
+# lands on the scheduled arm while the queue is empty
+# (bus_arm_scheduled in the rendered bus block).
+silence_fallback = blank(id="silence_fallback")
+def offair_mark() =
+  silence_fallback.insert_metadata([("off_air", "true"), ("title", offair_text())])
+end
+def scheduled_keep(_, new) = new end
+def scheduled_offair(_, new) =
+  offair_mark()
+  new
+end
 scheduled   = fallback(
                 track_sensitive=false,
-                [scheduled_q, blank(id="silence_fallback")]
+                # no replay of an old packet when the arm changes: the queue's
+                # next track and the silence mark bring their own (2026-09-13)
+                replay_metadata=false,
+                transitions=[scheduled_keep, scheduled_offair],
+                [scheduled_q, silence_fallback]
               )
+# Transitions do not fire for the very first selection: mark the silence
+# once at startup, so Icecast shows the Off Air text from the first frame
+# (harmless if PLAYOUT pushes a track right away - its metadata follows).
+offair_mark()
 
 # RASTATIME 2026-09-04 - `scheduled.flush`: drop every PENDING request
 # (the one playing is untouched).  request.queue only auto-registers
@@ -452,6 +479,11 @@ ${BUS_SOURCE_BLOCK}
 # Python side).
 bus = amplify(override="replaygain_track_gain", 1., bus)
 
+# RASTATIME 2026-09-13 - Stream Label / Off Air text: rewrite every packet
+# that carries title, artist, show_name or off_air so its title IS the
+# label (icy_rewrite, ICY block above); other packets pass untouched.
+bus = metadata.map(id="icy_rewrite", update=true, strip=false, insert_missing=false, icy_rewrite, bus)
+
 ${WEBSTREAM_WATCHDOG_BLOCK}
 
 # ---------------------------------------------------------------------
@@ -470,6 +502,7 @@ ${WEBSTREAM_WATCHDOG_BLOCK}
 #     mount="/rastatime",
 #     name="RASTATIME",
 #     description="…",
+#     icy_song=icy_label,   # ICY title per the Stream Label setting (2026-09-13)
 #     fallible=true,
 #     bus,
 #   )

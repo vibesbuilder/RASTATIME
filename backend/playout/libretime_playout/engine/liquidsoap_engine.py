@@ -864,6 +864,44 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
             logger.warning("Liquidsoap %s.stop telnet error: %s", harbor_id, exc)
 
     # ------------------------------------------------------------------
+    # RASTATIME 2026-09-13 — ICY metadata (Settings -> Streams)
+    # ------------------------------------------------------------------
+
+    def icy_settings(self, label_format: int, offair_text: str, station_name: str) -> None:
+        """
+        Push the Stream Label variant, the Off Air Metadata text and the
+        station name into the running script (``icy_format``,
+        ``offair_text``, ``station_name`` interactive variables).  The
+        scheduler calls this only when a value changed.  Fail-soft.
+        """
+        try:
+            self._telnet.var_set_int("icy_format", int(label_format))
+            self._telnet.var_set_string("offair_text", offair_text)
+            self._telnet.var_set_string("station_name", station_name)
+            logger.info(
+                "Liquidsoap ICY settings: format=%d offair=%r station=%r",
+                int(label_format), offair_text, station_name,
+            )
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            logger.warning("Liquidsoap ICY settings telnet error: %s", exc)
+
+    def bus_show_set(self, show_name: str) -> None:
+        """
+        Tell the script which show is on air (``bus_show``): the ICY
+        title of sources without a show_name of their own (DJ harbors,
+        webstreams, line-in) is built from it.  Empty = no show.
+        """
+        try:
+            self._telnet.var_set_string("bus_show", show_name or "")
+            logger.info("Liquidsoap bus_show: %r", show_name or "")
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            logger.warning("Liquidsoap bus_show telnet error: %s", exc)
+
+    def icy_status(self) -> str:
+        """The ICY settings the script reports (diagnostics)."""
+        return self._telnet.icy_status()
+
+    # ------------------------------------------------------------------
     # Internal helpers — URI / annotate building
     # ------------------------------------------------------------------
 

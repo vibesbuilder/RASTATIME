@@ -70,7 +70,10 @@ def test_transition_list_is_aligned_with_the_arms():
     t = [x.strip().rstrip(",") for x in trans.splitlines()]
     a = [x.strip() for x in arms.splitlines()]
     assert len(t) == len(a) == 5
-    assert t == ["bus_instant", "bus_instant", "bus_transition", "bus_transition", "bus_transition"]
+    # RASTATIME 2026-09-13: per-arm wrappers (ICY show_name insert / off-air mark)
+    # around the two shared shapes bus_instant / bus_transition.
+    assert t == ["bus_arm_master", "bus_arm_show", "bus_arm_webstream", "bus_arm_linein", "bus_arm_scheduled"]
+    assert block.count("s = bus_instant(old, new)") == 2 and block.count("s = bus_transition(old, new)") == 3
 
 
 def test_transition_length_bounds_the_fade():

@@ -1,10 +1,16 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.29
-Date: 2026-09-10
+Draft version: 0.30
+Date: 2026-09-13
 
 > **Revision history**
+> - **0.30 (2026-09-13)** — **Stream metadata** (§23.29): the Stream
+>   Label, the Off Air Metadata text and the show on air reach the
+>   listeners.  The label is written into the packet on the bus
+>   (`metadata.map`), the silence fallback announces itself, the live
+>   arms insert the show name on the transition source; PLAYOUT pushes
+>   the Settings values over telnet on change.
 > - **0.29 (2026-09-10)** — **Legacy mpv engine removed** (§23.28).
 >   Liquidsoap is the only playout engine; `RASTATIME_PLAYOUT_ENGINE`
 >   accepts only `liquidsoap`.  The DJ kick goes to the harbor over
@@ -4665,3 +4671,75 @@ installed service environment that still says
 `RASTATIME_MPV_LOG_LEVEL` may be removed at leisure.  The rollback to
 mpv described in LIQUIDSOAP_CUTOVER §9 no longer exists; "fix forward"
 is the only path, as it has been in practice since June.
+
+### 23.29 Stream Metadata — Stream Label, Off-Air Text, Show Names (2026-09-13)
+
+**Context.**  Settings → Streams has always offered a *Stream Label*
+(Artist - Title / Show - Artist - Title / Station name - Show name) and
+an *Off Air Metadata* text, and Settings → General the station name.
+None of it reached the Liquidsoap script: the PHP side published a
+RabbitMQ message that nothing in RASTATIME consumes, and the rendered
+script had no off-air handling at all.  Listeners saw Liquidsoap's
+default `artist - title` (which happens to equal format 0) and, while
+nothing was on air, the last track's title for hours; the AAC and OGG
+mounts announced "Unspecified name" because their Name/Description
+fields were empty.  Work-order point 8, operator Go 2026-09-13.
+
+**Findings on the replica (what the Liquidsoap 2.4.4 build really does).**
+
+1. `output.icecast`'s `icy_song` hook receives only the standard
+   fields (title, artist, genre, comment, ...) - never custom keys,
+   whatever `icy_metadata` lists.  A label that needs `show_name` or an
+   off-air flag cannot be computed there.
+2. `insert_metadata` reaches the bus only when called on the source that
+   actually produces the frames the consumer pulls: on the silence
+   `blank()` inside its own `fallback` transition, and on the transition
+   source (the `add` of the two fades) of the bus `switch`.  An insert on
+   an arm that is an operator (`amplify`, `fallback`) or on the source
+   under it never shows up.
+3. `fallback(replay_metadata=true)` (the default) replays an old packet
+   when the arm changes; with the off-air mark in play that ordering is
+   not worth having, so the queue/silence fallback runs with
+   `replay_metadata=false`.
+
+**Design.**
+
+- `icy_metadata.py`: `IcyPreferences(label_format, offair_text,
+  station_name)` parsed from `cc_pref` (`stream_label_format`,
+  `off_air_meta`, `station_name`); tolerant parser, ORM reader.
+- The renderer writes the values as defaults into the
+  `${ICY_METADATA_BLOCK}`: `interactive.int icy_format`,
+  `interactive.string offair_text / station_name / bus_show`, the label
+  function `icy_label(m)` (0/1/2; `off_air` packets yield the text;
+  packets without title, artist, show_name or off_air are left alone),
+  `icy_rewrite` = `metadata.map` on the bus writing the label into
+  `title` and clearing `artist`, `icy_song_title` as every output's
+  `icy_song`, and `icy.status` for diagnostics.  One rewrite on the bus
+  means MP3/AAC (ICY), OGG (in-band comments) and the recording tags all
+  carry the same label.
+- Silence announces itself: `silence_fallback = blank()`; the
+  queue/silence `fallback` inserts `off_air=true` + the text in its
+  transition to silence, once at startup, and the bus arm
+  `bus_arm_scheduled` inserts it on its transition source when the queue
+  is not ready.  Live arms (`bus_arm_master/show/webstream/linein`)
+  insert `show_name = bus_show()` on their transition source, so a DJ
+  or webstream without titles of its own is labelled with the show.
+- PLAYOUT: `PlayoutScheduler._sync_icy_metadata` runs every refresh -
+  the three values go out over telnet only when they changed
+  (`var.set`, raw text after `=`, one line, `=` replaced), `bus_show`
+  follows the item on air and every `_on_*_start`; a detected Liquidsoap
+  restart resets the "pushed" memory so the fresh instance gets them
+  again.  Every telnet command leaks on the Windows build, hence the
+  change-only pushes.
+- Mounts: empty Name/Description fall back to the station name; Genre
+  and URL are rendered.
+
+**Consequences.**  A Settings change is on air within one refresh
+(≤ 2 min) with no restart; the script change itself needs one
+PLAYOUT + LIQUIDSOAP restart.  Recordings' title tags now carry the
+label (artist empty) - the recording is the stream.  Webstream titles
+from the source pass through as title/artist packets and are labelled
+like tracks.  The replica E2E (`C:/Temp/optd/run_e2e_icy.py`, a test
+mount on the production Icecast) covers startup, three formats, queue
+drain, the webstream arm via gate and a text change; `probe_song.py`
+and `probe_insert.py` are the two findings above as runnable evidence.

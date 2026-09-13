@@ -46,7 +46,28 @@ champs ; seul **Stream 1** est activé par défaut.
 | **Bitrate** | Kbps. La décision la plus conséquente par stream ; voir §2. |
 | **Canaux** | **Stéréo** (par défaut), **Mono** (économise ~30 % de bande passante pour parole). |
 | **Fréquence d'échantillonnage** | 22,05 / 32 / 44,1 / 48 kHz. 44,1 kHz est le standard universel. |
-| **Nom de stream / URL / Genre / Description** | Métadonnées ICY annoncées aux auditeurs. |
+| **Nom de stream / URL / Genre / Description** | Métadonnées ICY annoncées aux auditeurs. Depuis le 2026-09-13 les quatre champs sont rendus ; un Nom ou une Description vide retombe sur le nom de la station (Icecast affichait « Unspecified name »). |
+
+### Stream Label et Off Air Metadata
+
+Ce que les auditeurs voient comme titre « en cours » dans leur lecteur.
+Les deux champs se trouvent sur la page Streams au-dessus des blocs par
+stream ; le nom de la station vient de Paramètres → General.
+
+| Source à l'antenne | Artist - Title | Show - Artist - Title | Station name - Show name |
+|---|---|---|---|
+| Piste planifiée | Artiste - Titre | Émission - Artiste - Titre | RASTATIME - Émission |
+| Webstream avec ses propres titres | titre du flux source | Émission - titre du flux source | RASTATIME - Émission |
+| Webstream sans titres, Line-In | Émission | Émission | RASTATIME - Émission |
+| DJ (BUTT / Mixxx) | titre envoyé par le logiciel DJ, sinon Émission | Émission - titre envoyé par le logiciel DJ | RASTATIME - Émission |
+| Rien de planifié | texte Off Air Metadata | texte Off Air Metadata | texte Off Air Metadata |
+
+- **Off Air Metadata** remplace le titre de la dernière piste dès que rien
+  n'est à l'antenne (avant le 2026-09-13 l'ancien titre restait des heures).
+- Une modification de l'un des deux champs prend effet dans le prochain
+  rafraîchissement de grille (environ deux minutes), sans redémarrage.
+- Le label est écrit dans les métadonnées de titre du flux : il s'applique
+  au MP3/AAC (ICY), à l'OGG (in-band) et aux enregistrements.
 
 ### Badge d'état du stream
 
@@ -241,10 +262,11 @@ de silence pendant la reconnexion.
 
 ### "Comment ajouter des métadonnées ICY ?"
 
-Les métadonnées ICY sont définies automatiquement par le
-playout pour les pistes planifiées. Le contenu source
-live n'a pas de métadonnées ICY — définissez-les via
-votre logiciel de diffusion.
+Elles y sont déjà : le playout étiquette chaque paquet de métadonnées
+selon **Stream Label** (voir §1), affiche le texte **Off Air Metadata**
+tant que rien n'est à l'antenne, et fait passer les titres envoyés par
+un webstream ou par le logiciel DJ à travers le même label.  Une source
+live sans titres propres est étiquetée avec l'émission en cours.
 
 ---
 

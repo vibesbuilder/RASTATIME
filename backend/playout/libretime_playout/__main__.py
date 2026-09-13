@@ -720,6 +720,16 @@ def _render_rastatime_liq_outcome(stream_outputs: List[Dict]) -> RenderOutcome:
     else:
         main_output_mode = MAIN_OUTPUT_DEFAULT
 
+    from libretime_playout.icy_metadata import (  # noqa: PLC0415
+        IcyPreferences, read_icy_preferences_from_db,
+    )
+    icy = read_icy_preferences_from_db() or IcyPreferences()
+    logger.info(
+        "ICY metadata: Stream Label format %d, off-air text %r, station %r "
+        "(Settings -> Streams / General).",
+        icy.label_format, icy.offair_text, icy.station_name,
+    )
+
     try:
         changed = write_rastatime_liq(
             config_path,
@@ -751,6 +761,11 @@ def _render_rastatime_liq_outcome(stream_outputs: List[Dict]) -> RenderOutcome:
             harbor_show_port=harbor_show_port,
             harbor_show_mount=harbor_show_mount,
             dj_auth_url=f"http://{_LISTENER_HOST}:{_LISTENER_PORT}/dj-auth",
+            # RASTATIME 2026-09-13 - rendered defaults of the ICY metadata
+            # values; the scheduler pushes changes over telnet afterwards.
+            icy_label_format=icy.label_format,
+            icy_offair_text=icy.offair_text,
+            icy_station_name=icy.station_name,
         )
     except Exception as exc:  # pylint: disable=broad-exception-caught
         logger.critical(
@@ -1031,6 +1046,7 @@ def main() -> None:
         logger.info("Storage path for direct file access: %s", storage_path)
 
     from libretime_playout.playout_scheduler import PlayoutScheduler  # noqa: PLC0415
+    from libretime_playout.icy_metadata import read_icy_preferences_from_db  # noqa: PLC0415
     # Stream-output changes (Settings → Streams) reach the air only via a
     # re-render of rastatime.liq + a LIQUIDSOAP restart (planned restart
     # or operator); the scheduler has no hot-reload of its own since the
@@ -1062,6 +1078,9 @@ def main() -> None:
         nightly_restart=nightly_policy,
         input_transition_seconds=_resolve_crossfade_seconds(),
         webstream_watchdog=_webstream_watchdog_mode(),
+        # RASTATIME 2026-09-13 - Stream Label / Off Air Metadata / station
+        # name re-read every refresh (ORM), pushed over telnet on change.
+        read_icy_preferences=(read_icy_preferences_from_db if django_ok else None),
     )
     logger.info(
         "Webstream watchdog: %s (%s=%s).",

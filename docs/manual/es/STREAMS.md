@@ -37,7 +37,28 @@ tarjetas de stream tiene el mismo conjunto de campos.
 | **Bitrate** | Kbps. La decisión más consecuente por stream; vea §2. |
 | **Canales** | **Estéreo** (por defecto), **Mono**. |
 | **Frecuencia de muestreo** | 22,05 / 32 / 44,1 / 48 kHz. |
-| **Nombre de stream / URL / Género / Descripción** | Metadatos ICY anunciados a los oyentes. |
+| **Nombre de stream / URL / Género / Descripción** | Metadatos ICY anunciados a los oyentes. Desde el 2026-09-13 se renderizan los cuatro; un Nombre o una Descripción vacíos recurren al nombre de la emisora (Icecast mostraba "Unspecified name"). |
+
+### Stream Label y Off Air Metadata
+
+Lo que los oyentes ven como título "sonando ahora" en su reproductor.
+Ambos campos están en la página Streams sobre los bloques por stream; el
+nombre de la emisora viene de Configuración → General.
+
+| Fuente en el aire | Artist - Title | Show - Artist - Title | Station name - Show name |
+|---|---|---|---|
+| Pista programada | Artista - Título | Programa - Artista - Título | RASTATIME - Programa |
+| Webstream con títulos propios | título del flujo fuente | Programa - título del flujo fuente | RASTATIME - Programa |
+| Webstream sin títulos, Line-In | Programa | Programa | RASTATIME - Programa |
+| DJ (BUTT / Mixxx) | título enviado por el software DJ, si no Programa | Programa - título enviado por el software DJ | RASTATIME - Programa |
+| Nada programado | texto Off Air Metadata | texto Off Air Metadata | texto Off Air Metadata |
+
+- **Off Air Metadata** sustituye el título de la última pista en cuanto no
+  hay nada en el aire (antes del 2026-09-13 el título viejo permanecía horas).
+- Un cambio en cualquiera de los dos campos surte efecto en el siguiente
+  refresco de la parrilla (unos dos minutos), sin reinicio.
+- La etiqueta se escribe en los metadatos de título del flujo: aplica a
+  MP3/AAC (ICY), a OGG (in-band) y a las grabaciones.
 
 ### Insignia de estado del stream
 
@@ -212,10 +233,11 @@ reconexión.
 
 ### "¿Cómo añadir metadatos ICY?"
 
-Los metadatos ICY se establecen automáticamente por el
-playout para pistas planificadas. El contenido de fuente
-en vivo no tiene metadatos ICY — establézcalos vía su
-software de difusión.
+Ya están: el playout etiqueta cada paquete de metadatos según **Stream
+Label** (vea §1), muestra el texto **Off Air Metadata** mientras no hay
+nada en el aire, y pasa los títulos que envía un webstream o el software
+DJ por la misma etiqueta.  Una fuente en vivo sin títulos propios se
+etiqueta con el programa en curso.
 
 ---
 

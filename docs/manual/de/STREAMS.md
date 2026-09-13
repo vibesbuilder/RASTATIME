@@ -73,7 +73,28 @@ Standard).
 | **Bitrate** | Kbps. Die Wahl des richtigen Werts ist die folgenreichste Pro-Stream-Entscheidung; siehe §2. |
 | **Kanäle** | **Stereo** (Standard), **Mono** (spart ~30 % Bandbreite für reines Sprechen). |
 | **Samplerate** | 22,05 / 32 / 44,1 / 48 kHz. 44,1 kHz ist der universelle Standard. |
-| **Stream-Name / URL / Genre / Beschreibung** | ICY-Metadaten, die an Hörer annonciert werden. Erscheinen in ihrem Player als Stationsname + Click-Through. |
+| **Stream-Name / URL / Genre / Beschreibung** | ICY-Metadaten, die an Hörer annonciert werden. Erscheinen in ihrem Player als Stationsname + Click-Through. Seit 2026-09-13 werden alle vier gerendert; leerer Name oder leere Beschreibung fallen auf den Sendernamen zurück (Icecast zeigte vorher „Unspecified name"). |
+
+### Stream Label und Off Air Metadata
+
+Was Hörer als „Now playing"-Titel in ihrem Player sehen.  Beide Felder
+stehen auf der Streams-Seite über den Pro-Stream-Blöcken; der Sendername
+kommt aus Einstellungen → General.
+
+| Quelle auf Sendung | Artist - Title | Show - Artist - Title | Station name - Show name |
+|---|---|---|---|
+| Geplanter Titel | Interpret - Titel | Show - Interpret - Titel | RASTATIME - Show |
+| Webstream mit eigenen Titeln | Titel des Quellstreams | Show - Titel des Quellstreams | RASTATIME - Show |
+| Webstream ohne Titel, Line-In | Show | Show | RASTATIME - Show |
+| DJ (BUTT / Mixxx) | Titel der DJ-Software, sonst Show | Show - Titel der DJ-Software | RASTATIME - Show |
+| Nichts geplant | Off-Air-Text | Off-Air-Text | Off-Air-Text |
+
+- **Off Air Metadata** ersetzt den letzten Titel, sobald nichts auf
+  Sendung ist (vor dem 2026-09-13 blieb der alte Titel stundenlang stehen).
+- Änderungen an beiden Feldern wirken innerhalb eines Sendeplan-Refreshs
+  (etwa zwei Minuten), ohne Neustart.
+- Das Label wird in die Titel-Metadaten des Streams geschrieben und gilt
+  damit für MP3/AAC (ICY), für OGG (in-band) und für die Aufnahmen.
 
 ### Stream-Status-Badge
 
@@ -376,11 +397,11 @@ sehen ~5 s Stille während der Neuverbindung.
 
 ### "Wie füge ich ICY-Metadaten (Now-Playing-Track-Titel) hinzu?"
 
-ICY-Metadaten werden vom Playout für geplante Tracks
-automatisch gesetzt (Tracktitel erscheint in Playern, die
-ICY unterstützen). Live-Quell-Inhalt hat keine
-ICY-Metadaten — setzen Sie sie über die ICY-Felder Ihrer
-Broadcasting-Software.
+Sie sind bereits da: das Playout beschriftet jedes Metadaten-Paket
+nach **Stream Label** (siehe §1), zeigt den **Off Air Metadata**-Text,
+solange nichts auf Sendung ist, und reicht die Titel eines Webstreams
+oder der DJ-Broadcasting-Software durch dasselbe Label.  Eine Live-
+Quelle ohne eigene Titel wird mit der laufenden Sendung beschriftet.
 
 ### "Warum spielt dieselbe Stream-URL anders auf verschiedenen Playern?"
 
