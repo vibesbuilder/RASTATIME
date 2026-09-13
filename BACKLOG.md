@@ -760,11 +760,6 @@ Icecast-Quellpasswort (Settings → Streams, Source Password) noch der
 Auslieferungsstandard ist; bei derselben Gelegenheit mit ändern (Icecast-
 Konfiguration + Settings → Streams + LIQUIDSOAP-Neustart).
 
-**Nachtrag 2026-09-13:** beim Rendern des Replikats fiel auf, dass auch das
-Icecast-Quellpasswort (Settings → Streams, Source Password) noch der
-Auslieferungsstandard ist; bei derselben Gelegenheit mit ändern (Icecast-
-Konfiguration + Settings → Streams + LIQUIDSOAP-Neustart).
-
 **Status:** Idea/Defer — vom Operator am 2026-09-10 für später notiert.
 `stream.harbor.main_password`/`show_password` sind noch Installations-
 Platzhalter.  Seit den UI-Logins greifen sie nur, wenn PLAYOUT nicht
