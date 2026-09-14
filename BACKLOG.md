@@ -3155,7 +3155,7 @@ heute: „Jetzt anwenden" in Local Machine) und Punkt 3 (Fade-In/Out).
 
 ### ✅ Liquidsoap stirbt beim Wiederöffnen des Tascam-Ausgangs nach Pufferleerlauf (festgestellt 2026-09-14, DONE 2026-09-14)
 
-**Status:** Erledigt 2026-09-14 (Operator-Go Variante B, Commit-Hash folgt):
+**Status:** Erledigt 2026-09-14 (Operator-Go Variante B, `9b0aa3e`):
 `output.portaudio(fallible=false, …, mksafe(…))`, Brücke `buffer.adaptative`
 mit höchstens 0,1 % Tempoanpassung, abschaltbar per
 `RASTATIME_LIQUIDSOAP_LOCAL_OUTPUT_ADAPTIVE=false`.  Aktiv nach PLAYOUT- und

@@ -268,7 +268,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Main Output: Liquidsoap öffnet den Tascam-Ausgang nur noch einmal pro
   Prozess — keine Abstürze und keine stillen Fehlleitungen mehr nach einem
-  Pufferleerlauf (2026-09-14, Operator-Go Variante B)** — Befund: der 2-s-Puffer
+  Pufferleerlauf (2026-09-14, Operator-Go Variante B, `9b0aa3e`)** — Befund: der 2-s-Puffer
   vor `output.portaudio` lief durch Taktdrift (Tascam ≈ 50 ppm schneller als die
   Haupt-Uhr) alle 10–12 h leer; mit `fallible=true` stoppte der Ausgang dabei
   und öffnete das Gerät nach dem Nachfüllen neu.  PortAudio zählt die Geräte
