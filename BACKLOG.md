@@ -3158,9 +3158,17 @@ heute: „Jetzt anwenden" in Local Machine) und Punkt 3 (Fade-In/Out).
 **Status:** Erledigt 2026-09-14 (Operator-Go Variante B, `9b0aa3e`):
 `output.portaudio(fallible=false, …, mksafe(…))`, Brücke `buffer.adaptative`
 mit höchstens 0,1 % Tempoanpassung, abschaltbar per
-`RASTATIME_LIQUIDSOAP_LOCAL_OUTPUT_ADAPTIVE=false`.  Aktiv nach PLAYOUT- und
-LIQUIDSOAP-Neustart; danach beobachten, dass kein `Buffer emptied` mehr
-auftaucht und die Main-Output-Warnung ausbleibt.  Nicht durch die
+`RASTATIME_LIQUIDSOAP_LOCAL_OUTPUT_ADAPTIVE=false`.  Aktiv seit 2026-09-14 10:43 (Operator-Neustart PLAYOUT und LIQUIDSOAP,
+Tascam-Session bestätigt).  Beobachten: nach dem Start kein
+`[portaudio_safe:3] Switch to safe_blank.` und kein `Buffer emptied` mehr,
+keine Main-Output-Warnung.  3-h-Dauertest beider Brücken auf dem
+Realtek-Ausgang (Stille, `C:/Temp/optd/bridge_probe.py soak`): kein Leerlauf,
+kein Stopp; dort ist die Drift klein und läuft in die Gegenrichtung (der
+Puffer wächst um ≈ 0,2 s in 3 h), `estimated()` blieb konstant bei 2,002 s —
+die Driftkorrektur selbst ist damit nicht belegt.  Maßgeblich ist die erste
+Nacht in Produktion (der Tascam leerte den Puffer bisher nach 10–12 h).
+Wirkt sie nicht, bleibt nur die kurze Stille am Tascam, ohne Absturz und ohne
+Fehlleitung.  Nicht durch die
 Stream-Metadaten verursacht: das Muster besteht seit 2026-09-07.
 
 **Befund:** Läuft der 2-s-Puffer vor `output.portaudio` leer
