@@ -3155,8 +3155,9 @@ heute: „Jetzt anwenden" in Local Machine) und Punkt 3 (Fade-In/Out).
 
 ### 🟡 Liquidsoap stirbt beim Wiederöffnen des Tascam-Ausgangs nach Pufferleerlauf (festgestellt 2026-09-14)
 
-**Status:** offen — Evaluierung und Operator-Go nötig.  Nicht durch die
-Stream-Metadaten verursacht: das Muster besteht seit 2026-09-07.
+**Status:** evaluiert 2026-09-14, Empfehlung Go für Variante B — wartet auf
+das Operator-Go.  Nicht durch die Stream-Metadaten verursacht: das Muster
+besteht seit 2026-09-07.
 
 **Befund:** Läuft der 2-s-Puffer vor `output.portaudio` leer
 (`[buffer.producer] Buffer emptied`, `portaudio_clock` wechselt in den
@@ -3175,7 +3176,7 @@ Clock-Thread → Prozessende mit Exit-Code 2 → NSSM startet nach 5 s neu.
 | 2026-09-08 20:22:44 | Geräte-ID ungültig | Neustart 20:22:52 |
 | 2026-09-09 16:36:39 | Geräte-ID ungültig | Neustart 16:36:47 |
 | 2026-09-10 03:06:42 | ok | — |
-| 2026-09-10 21:38:11 | ok | — |
+| 2026-09-10 21:38:11 | ohne Fehler, falsches Gerät | Main-Output-Warnung bis 12.09. 04:14 |
 | 2026-09-12 15:43:06 | ok | — |
 | 2026-09-14 03:51:21 | Geräte-ID ungültig | Neustart 03:51:29 |
 
@@ -3183,18 +3184,47 @@ Clock-Thread → Prozessende mit Exit-Code 2 → NSSM startet nach 5 s neu.
 ~6 s ohne Quelle (die Standby-Mounts waren verbunden), Tascam ~10 s stumm.
 PLAYOUT hat den Neustart erkannt und `recording.stop`, die Gates und die
 Stream-Metadaten neu gesetzt; Preflight danach ohne Warnung.  Während einer
-Sendung wäre das ein hörbarer Aussetzer; ob der laufende Titel danach
-weiterläuft, ist ungeprüft.  Denkbar ist auch ein stiller Fall: zeigt der
-veraltete Index auf ein anderes vorhandenes Gerät, spielt der Ausgang dort.
+Sendung wäre das ein hörbarer Aussetzer, und laut Code setzt PLAYOUT den
+laufenden Datei-Titel danach nicht fort (Wiederaufnahme mit Sprung gibt es
+nur nach einem DJ-Ende); der Rest fehlt bis zum nächsten Titel-Timer.
 
-**Ansätze für die Evaluierung (ungeprüft):**
-- Ausgang bei Leerlauf nicht stoppen: eine immer verfügbare Quelle vor
-  `output.portaudio` (Stille als Rückfall hinter dem Puffer), damit das
-  Gerät offen bleibt und nie neu geöffnet wird.  Replikat-Test nötig.
-- Prüfen, ob Liquidsoap 2.4.4 Streaming-Fehler einer einzelnen Ausgabe
-  abfangen kann, ohne den Prozess zu beenden; dann braucht es eine
-  Preflight-Warnung für einen toten Tascam-Ausgang.
-- Ursache der Leerläufe klären (kurzer Hänger der Haupt-Uhr oder Drift).
+**Stiller Fall, belegt:** Nach dem Reboot am 10.09. startete Liquidsoap um
+13:28:15 mit einer kurzen Geräteliste (Tascam = PortAudio 3 [MME]).  Beim
+Wiederöffnen um 21:38:11 zeigte der veraltete Index auf ein anderes Gerät:
+kein Fehler, aber die Preflight-Prüfung meldete ab 21:43 im Dashboard
+(Schwere error) „Liquidsoap plays its Main Output to …, not to
+'Tascam-Lautsprecher (US-16x08)'" bis zum Nacht-Neustart am 12.09. 04:01 —
+rund 30 h ohne Liquidsoap-Ton am Tascam.
+
+**Evaluierung 2026-09-14:**
+- *Ursache der Leerläufe:* Drift zwischen Tascam-Takt und Haupt-Uhr.  Der
+  2-s-Puffer ist nach 10–12 h leer (≈ 50 ppm); das ergibt etwa zweimal am
+  Tag eine Lücke von ~2 s am Tascam, auch ohne Absturz.
+- *Listenwechsel:* Tagsüber rendert PLAYOUT den Tascam als PortAudio 7 [MME]
+  (Display-Audio des DELL-Monitors vorhanden), nachts als 6, direkt nach dem
+  Reboot am 10.09. als 3.  Alle vier Abstürze: Start mit langer Liste,
+  Leerlauf bei ausgeschaltetem Bildschirm (Kernel-Power 566, Abschaltung
+  nach 15 min).
+- *Laufzeitversuche* (`C:/Temp/optd/probe_p1..p4.liq`, Realtek-Gerät, Stille,
+  Erzeuger 4 s abgeschaltet): die heutige Form stoppt den Ausgang und startet
+  ihn neu (= Wiederöffnen).  Mit `mksafe` und `fallible=false` läuft der
+  Ausgang durch, ohne Neustart, und bleibt self-sync.
+  `buffer.adaptative(limit=1.001)` läuft auf dem Windows-Build zusammen mit
+  `clock.assign_new`, Füllstand stabil bei ~2,0 s.  Ohne `mksafe` lehnt
+  Liquidsoap `fallible=false` beim Start ab („That source is fallible");
+  `--check` erkennt das nicht.
+- *Optionen:* (A) `mksafe` + `fallible=false`: kein Wiederöffnen mehr, die
+  Lücke von ~2 s alle ~12 h bleibt.  (B) A + `buffer.adaptative` mit enger
+  Geschwindigkeitsgrenze (0,1 %), per Umgebungsvariable abschaltbar: auch
+  keine Lücken mehr; die Funktion ist in 2.4.4 als experimentell markiert.
+  (C) Display-Audio des DELL-Monitors in Windows deaktivieren (Operator):
+  weniger Listenwechsel, deckt Reboot und USB-Geräte nicht ab.  (D) Eine
+  Einstellung für nicht tödliche Streaming-Fehler gibt es in 2.4.4 nicht.
+  (E) Externer Feeder statt PortAudio: zu groß für das Problem.
+- *Empfehlung:* Go für B (enthält A); C optional.  Aufwand ~3–4 h plus
+  Beobachtung über mindestens einen Tag; Aktivierung per PLAYOUT- und
+  LIQUIDSOAP-Neustart.  Vor `RASTATIME_LIQUIDSOAP_RESTART_EVERY_DAYS=7`
+  umsetzen, weil längere Laufzeiten mehr Leerläufe bedeuten.
 
 **Belege:** `logs/liquidsoap.log` (grep `Buffer emptied|out of range|LOG START`),
 `logs/liquidsoap-stderr.log` (`Fatal error: exception Invalid_argument`),
