@@ -238,6 +238,17 @@ and the third warning since 2026-09-07):
   on the chosen output device although it has been running for a
   while. The monitor is then on the wrong jack; restart the
   playout and then Liquidsoap.
+- **Main Output stays open.** Since 2026-09-14 the engine opens the
+  Main Output once when it starts and never closes it while it runs.
+  The small buffer in front of the device used to run empty about
+  twice a day; the engine then reopened the device from an outdated
+  device list and either stopped or played to another device. Now a
+  short silence fills such a moment, and the buffer adjusts the
+  playback speed by an inaudible fraction so that it stays full.
+  Should you ever suspect this adjustment, set the machine setting
+  `RASTATIME_LIQUIDSOAP_LOCAL_OUTPUT_ADAPTIVE` to `false` and restart
+  the playout and then Liquidsoap; the output then stays open with a
+  fixed buffer.
 - **Engine-down warning.** The banner shows *Liquidsoap is not
   running* or *Liquidsoap keeps restarting (crash loop)* when no
   engine process exists or a new one appears on every scan. Read

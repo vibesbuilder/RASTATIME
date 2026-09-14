@@ -560,6 +560,21 @@ def _render_rastatime_liq(stream_outputs: List[Dict]) -> bool:
     return _render_rastatime_liq_outcome(stream_outputs).changed
 
 
+LOCAL_OUTPUT_ADAPTIVE_ENV = "RASTATIME_LIQUIDSOAP_LOCAL_OUTPUT_ADAPTIVE"
+
+
+def _local_output_adaptive_enabled() -> bool:
+    """
+    RASTATIME 2026-09-14: the monitor bridge compensates the drift between
+    the Main Output's sample clock and Liquidsoap's main clock with
+    ``buffer.adaptative`` (default on).  ``false``/``0``/``no``/``off``
+    renders the plain ``buffer()`` again; ``mksafe`` + ``fallible=false``
+    keep the output open either way.
+    """
+    raw = os.environ.get(LOCAL_OUTPUT_ADAPTIVE_ENV, "true").strip().lower()
+    return raw not in ("false", "0", "no", "off")
+
+
 def _render_rastatime_liq_outcome(stream_outputs: List[Dict]) -> RenderOutcome:
     """
     Render ``rastatime.liq`` from the operator-configured environment +
@@ -655,6 +670,16 @@ def _render_rastatime_liq_outcome(stream_outputs: List[Dict]) -> RenderOutcome:
         os.environ.get("RASTATIME_LIQUIDSOAP_LOCAL_OUTPUT", "true").lower()
         not in ("false", "0", "no", "off")
     )
+    # RASTATIME 2026-09-14 - monitor bridge with drift compensation
+    # (buffer.adaptative) unless the machine setting turns it off.
+    local_output_adaptive = _local_output_adaptive_enabled()
+    if local_output_enabled:
+        logger.info(
+            "Liquidsoap local output: %s bridge, output kept open with mksafe (%s=%s).",
+            "adaptive" if local_output_adaptive else "plain buffer()",
+            LOCAL_OUTPUT_ADAPTIVE_ENV,
+            "true" if local_output_adaptive else "false",
+        )
 
     # Phase-C4: DJ-Source harbor passwords aus libretime.conf.
     # Wenn unset, rendert der Renderer die input.harbor-Blöcke nicht
@@ -744,6 +769,7 @@ def _render_rastatime_liq_outcome(stream_outputs: List[Dict]) -> RenderOutcome:
             local_output_device_label=local_output_device_label,
             local_output_endpoint_id=local_output_endpoint_id,
             local_output_device_name=local_output_device_name,
+            local_output_adaptive=local_output_adaptive,
             linein_http_max_buffer_seconds=linein_http_max_buffer,
             harbor_main_password=harbor_main_pwd or None,
             harbor_show_password=harbor_show_pwd or None,

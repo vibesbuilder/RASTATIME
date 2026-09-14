@@ -214,6 +214,18 @@ el tercer aviso desde el 2026-09-07):
   mantiene ninguna sesión de audio en el dispositivo de salida
   elegido aunque lleve un rato funcionando. El monitor está entonces
   en la toma equivocada; reinicie la emisión y después Liquidsoap.
+- **El Main Output permanece abierto.** Desde el 14/09/2026 el motor
+  abre el Main Output una sola vez al arrancar y ya no lo cierra
+  mientras funciona. El pequeño búfer delante del dispositivo se
+  vaciaba antes unas dos veces al día; el motor volvía a abrir entonces
+  el dispositivo con una lista de dispositivos desactualizada y se
+  detenía o reproducía en otro dispositivo. Ahora un breve silencio
+  cubre ese momento y el búfer ajusta la velocidad de reproducción de
+  forma inaudible para mantenerse lleno. Si alguna vez sospecha de ese
+  ajuste, ponga la configuración de la máquina
+  `RASTATIME_LIQUIDSOAP_LOCAL_OUTPUT_ADAPTIVE` en `false` y reinicie
+  la emisión y después Liquidsoap; la salida sigue abierta con un
+  búfer fijo.
 - **Aviso de motor parado.** El banner muestra *Liquidsoap no está
   en marcha* o *Liquidsoap se reinicia sin parar (bucle de fallos)*
   cuando no existe ningún proceso del motor o aparece uno nuevo en

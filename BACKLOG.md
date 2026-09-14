@@ -3153,11 +3153,15 @@ heute: „Jetzt anwenden" in Local Machine) und Punkt 3 (Fade-In/Out).
 
 ---
 
-### 🟡 Liquidsoap stirbt beim Wiederöffnen des Tascam-Ausgangs nach Pufferleerlauf (festgestellt 2026-09-14)
+### ✅ Liquidsoap stirbt beim Wiederöffnen des Tascam-Ausgangs nach Pufferleerlauf (festgestellt 2026-09-14, DONE 2026-09-14)
 
-**Status:** evaluiert 2026-09-14, Empfehlung Go für Variante B — wartet auf
-das Operator-Go.  Nicht durch die Stream-Metadaten verursacht: das Muster
-besteht seit 2026-09-07.
+**Status:** Erledigt 2026-09-14 (Operator-Go Variante B, Commit-Hash folgt):
+`output.portaudio(fallible=false, …, mksafe(…))`, Brücke `buffer.adaptative`
+mit höchstens 0,1 % Tempoanpassung, abschaltbar per
+`RASTATIME_LIQUIDSOAP_LOCAL_OUTPUT_ADAPTIVE=false`.  Aktiv nach PLAYOUT- und
+LIQUIDSOAP-Neustart; danach beobachten, dass kein `Buffer emptied` mehr
+auftaucht und die Main-Output-Warnung ausbleibt.  Nicht durch die
+Stream-Metadaten verursacht: das Muster besteht seit 2026-09-07.
 
 **Befund:** Läuft der 2-s-Puffer vor `output.portaudio` leer
 (`[buffer.producer] Buffer emptied`, `portaudio_clock` wechselt in den

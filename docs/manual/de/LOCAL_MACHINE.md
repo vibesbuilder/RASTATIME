@@ -257,6 +257,18 @@ Sicherung und die dritte Warnung seit dem 2026-09-07):
   dem gewählten Ausgabegerät hält, obwohl sie schon eine Weile
   läuft. Der Monitor liegt dann auf der falschen Buchse; starten
   Sie das Playout und danach Liquidsoap neu.
+- **Main Output bleibt offen.** Seit dem 14.09.2026 öffnet die Engine
+  den Main Output einmal beim Start und schließt ihn nicht mehr,
+  solange sie läuft. Der kleine Puffer vor dem Gerät lief früher etwa
+  zweimal am Tag leer; die Engine öffnete das Gerät dann mit einer
+  veralteten Geräteliste neu und brach entweder ab oder spielte auf
+  ein anderes Gerät. Jetzt überbrückt eine kurze Stille einen solchen
+  Moment, und der Puffer passt das Abspieltempo unhörbar an, damit er
+  gefüllt bleibt. Falls Sie diese Anpassung je in Verdacht haben,
+  setzen Sie die Maschinen-Einstellung
+  `RASTATIME_LIQUIDSOAP_LOCAL_OUTPUT_ADAPTIVE` auf `false` und starten
+  Sie das Playout und danach Liquidsoap neu; der Ausgang bleibt dann
+  mit einem festen Puffer offen.
 - **Engine-läuft-nicht-Warnung.** Das Banner zeigt *Liquidsoap läuft
   nicht* oder *Liquidsoap startet ständig neu (Absturzschleife)*,
   wenn kein Engine-Prozess existiert oder bei jedem Scan ein neuer

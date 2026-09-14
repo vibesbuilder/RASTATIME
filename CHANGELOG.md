@@ -266,6 +266,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Main Output: Liquidsoap öffnet den Tascam-Ausgang nur noch einmal pro
+  Prozess — keine Abstürze und keine stillen Fehlleitungen mehr nach einem
+  Pufferleerlauf (2026-09-14, Operator-Go Variante B)** — Befund: der 2-s-Puffer
+  vor `output.portaudio` lief durch Taktdrift (Tascam ≈ 50 ppm schneller als die
+  Haupt-Uhr) alle 10–12 h leer; mit `fallible=true` stoppte der Ausgang dabei
+  und öffnete das Gerät nach dem Nachfüllen neu.  PortAudio zählt die Geräte
+  nur beim Prozessstart, der Audio-Endpunkt des DELL-Monitors kommt und geht
+  mit dem Bildschirm.  War die Liste beim Wiederöffnen kürzer, beendete sich
+  Liquidsoap („device ID out of range" → `Invalid_argument("option is None")`,
+  Exit 2, NSSM-Neustart; 2026-09-07 21:44, 09-08 20:22, 09-09 16:36, 09-14
+  03:51); war sie anders, öffnete der Ausgang ohne Fehler ein falsches Gerät
+  (2026-09-10 21:38, Start nach dem Reboot mit kurzer Liste — Main-Output-
+  Warnung rund 30 h bis zum Nacht-Neustart).  Jetzt: (1)
+  `output.portaudio(fallible=false, …, mksafe(id="portaudio_safe",
+  bus_for_portaudio))` — bei Leerlauf spielt Stille, der Ausgang stoppt nie und
+  öffnet das Gerät nie neu; fehlt `mksafe`, verweigert Liquidsoap den Start
+  („That source is fallible"; `--check` erkennt das nicht, deshalb der
+  Render-Test `test_local_output_bridge.py`).  (2) Die Brücke ist
+  `buffer.adaptative(id="portaudio_buffer", buffer=2.0, limit=1.001)`: eine
+  Tempoanpassung von höchstens 0,1 % gleicht die Drift aus, die 2-s-Lücken am
+  Tascam entfallen.  Die Funktion ist in 2.4.4 als experimentell markiert,
+  deshalb schaltet die Maschinen-Einstellung
+  `RASTATIME_LIQUIDSOAP_LOCAL_OUTPUT_ADAPTIVE=false` auf den festen `buffer()`
+  zurück (weiter mit `mksafe`); PLAYOUT loggt die Wahl bei jedem Rendern.
+  Laufzeitprobe `C:/Temp/optd/bridge_probe.py` (Realtek-Gerät, Stille,
+  erzwungener Leerlauf): beide Brücken starten, laufen leer, der Ausgang stoppt
+  nicht; ohne `mksafe` kein Start.  Handbuch LOCAL_MACHINE EN/DE/FR/ES,
+  ARCHITECTURE 0.31 (§23.30).  Aktiv nach PLAYOUT- **und** LIQUIDSOAP-Neustart.
+
 - **Playout History: `HistoryService::getSqlTypes()` bildet DATETIME jetzt auf
   `timestamp` ab (2026-09-10, Arbeitsreihenfolge Punkt 4, `cdc8f0b`)** — der bisherige
   Cast-String `datetime` existiert in PostgreSQL nicht (gegen die Datenbank

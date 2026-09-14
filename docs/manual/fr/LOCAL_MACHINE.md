@@ -220,6 +220,18 @@ avertissements du tableau de bord le surveillent (depuis le
   aucune session audio sur le périphérique de sortie choisi alors
   qu'il tourne depuis un moment. Le moniteur est alors sur la
   mauvaise prise ; redémarrez la diffusion puis Liquidsoap.
+- **Le Main Output reste ouvert.** Depuis le 14/09/2026, le moteur
+  ouvre le Main Output une seule fois au démarrage et ne le ferme plus
+  tant qu'il tourne. La petite mémoire tampon devant le périphérique
+  se vidait auparavant environ deux fois par jour ; le moteur rouvrait
+  alors le périphérique avec une liste de périphériques périmée et
+  s'arrêtait ou jouait sur un autre périphérique. Désormais, un court
+  silence comble ce moment et la mémoire tampon ajuste la vitesse de
+  lecture de façon inaudible pour rester remplie. Si vous soupçonnez
+  un jour cet ajustement, mettez le réglage machine
+  `RASTATIME_LIQUIDSOAP_LOCAL_OUTPUT_ADAPTIVE` sur `false` et
+  redémarrez la diffusion puis Liquidsoap ; la sortie reste alors
+  ouverte avec une mémoire tampon fixe.
 - **Avertissement moteur arrêté.** La bannière affiche *Liquidsoap
   ne tourne pas* ou *Liquidsoap redémarre sans cesse (boucle de
   plantage)* lorsqu'aucun processus du moteur n'existe ou qu'un

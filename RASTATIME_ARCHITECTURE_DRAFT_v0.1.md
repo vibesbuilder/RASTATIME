@@ -1,10 +1,15 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.30
-Date: 2026-09-13
+Draft version: 0.31
+Date: 2026-09-14
 
 > **Revision history**
+> - **0.31 (2026-09-14)** — **Main Output kept open** (§23.30): the local
+>   `output.portaudio` never stops (`mksafe` behind the bridge,
+>   `fallible=false`), so a bridge underrun no longer re-opens the device
+>   with the stale PortAudio device list (crashes, silent wrong device); the
+>   bridge is `buffer.adaptative` (drift compensation, switchable).
 > - **0.30 (2026-09-13)** — **Stream metadata** (§23.29): the Stream
 >   Label, the Off Air Metadata text and the show on air reach the
 >   listeners.  The label is written into the packet on the bus
@@ -4336,7 +4341,9 @@ the Windows deployment, one investigation.
   Windows-only, guarded).  Both surface in the dashboard banner.
 - *Monitor clock.*  `clock.assign_new(id="portaudio_clock", sync="auto")`;
   the `buffer()` bridge absorbs the drift between device clock and
-  main clock, which is what it was built for.
+  main clock, which is what it was built for.  Correction 2026-09-14
+  (§23.30): a plain `buffer()` does not absorb drift, it runs dry; the
+  bridge is now `buffer.adaptative` behind `mksafe`.
 
 **Rejected / deferred.**  `retry_delay` as the lever: 2.0 s cuts the
 leak to a tenth but a push after a decoder failure waits up to
@@ -4743,3 +4750,49 @@ like tracks.  The replica E2E (`C:/Temp/optd/run_e2e_icy.py`, a test
 mount on the production Icecast) covers startup, three formats, queue
 drain, the webstream arm via gate and a text change; `probe_song.py`
 and `probe_insert.py` are the two findings above as runnable evidence.
+
+
+### 23.30 Main Output Kept Open — mksafe Bridge with Drift Compensation (2026-09-14)
+
+**Problem.**  The local monitor/Tascam path was `bus → buffer(2.0) →
+output.portaudio(fallible=true)` on its own `portaudio_clock` (§23.27).  The
+Tascam's sample clock runs about 50 ppm faster than the main clock, so the
+bridge ran dry every 10–12 h.  A fallible output stops on an empty source and
+re-opens the device once the source is ready again.  PortAudio enumerates the
+devices once per process, and the studio display's HD-Audio endpoint appears
+and disappears with the display, so the list used for the re-open is stale.
+A shorter list gives `MMSYSERR_BADDEVICEID` ("device ID out of range") →
+`Invalid_argument("option is None")` in the clock thread → exit 2 → NSSM
+restart (2026-09-07, -08, -09, -14).  A different list lets the stale
+host-API device id open another device without any error (2026-09-10 21:38,
+after a start with the short post-reboot list: Main Output preflight warning
+for about 30 h).  Every underrun was also a gap of about 2 s on the Tascam.
+
+**Decision.**
+- `output.portaudio(fallible=false, …, mksafe(id="portaudio_safe",
+  bus_for_portaudio))`.  Silence fills an underrun; the output is opened once
+  per process and never stopped or re-opened.  `fallible=false` turns a
+  missing `mksafe` into a start error ("That source is fallible") — the type
+  check (`liquidsoap --check`) does not see fallibility, hence the render
+  test `test_local_output_bridge.py`.
+- Bridge `buffer.adaptative(id="portaudio_buffer", fallible=true, buffer=2.0,
+  limit=1.001)`: resampling by at most 0.1 % holds the level, so drift no
+  longer empties it.  Flagged experimental in 2.4.4, therefore
+  `RASTATIME_LIQUIDSOAP_LOCAL_OUTPUT_ADAPTIVE=false` renders the plain
+  `buffer(buffer=2.0, bus)` again (still behind `mksafe`).  PLAYOUT logs the
+  choice at every render.
+
+**Rejected.**  A setting that makes streaming errors non-fatal (not present in
+2.4.4, and it would leave a dead output running silently).  An external audio
+feeder instead of PortAudio (large, not needed for this).  Disabling the
+display's audio endpoint in Windows only makes list changes rarer (reboots
+and USB devices remain) — an optional operator measure, not the fix.
+
+**Consequences.**  A device that really vanishes while open still fails the
+write and restarts the engine with a fresh list (unchanged behaviour).
+`[portaudio_buffer:3] Buffer emptied` should no longer appear from drift; if
+a long main-clock stall still empties the bridge, the Tascam hears a short
+silence instead of a re-open.  Evidence: the evaluation in the BACKLOG item,
+the runtime probe `C:/Temp/optd/bridge_probe.py` (Realtek device, silence,
+forced underrun — both bridges start and run dry without stopping the output;
+without `mksafe` the engine refuses to start) and the render tests.

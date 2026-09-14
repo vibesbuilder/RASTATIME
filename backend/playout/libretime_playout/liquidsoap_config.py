@@ -111,6 +111,12 @@ DEFAULT_CROSSFADE_FADE_SECONDS = 0.0
 # to the OS-default audio endpoint.  Set RASTATIME_LIQUIDSOAP_LOCAL_OUTPUT=false
 # for headless server installs that don't want a soundcard output.
 DEFAULT_LOCAL_OUTPUT_ENABLED = True
+# RASTATIME 2026-09-14 - the monitor bridge compensates the device clock
+# drift (buffer.adaptative, at most 0.1 % speed change); the machine setting
+# RASTATIME_LIQUIDSOAP_LOCAL_OUTPUT_ADAPTIVE=false renders the plain buffer().
+DEFAULT_LOCAL_OUTPUT_ADAPTIVE = True
+LOCAL_OUTPUT_BUFFER_SECONDS = 2.0
+LOCAL_OUTPUT_ADAPTIVE_LIMIT = 1.001
 
 # Phase-C4: default Liquidsoap-Harbor port for DJ-Master + DJ-Show
 # sources.  Operator-decision from 2026-05-25 said port 8001 (Master) /
@@ -729,6 +735,7 @@ def _render_local_output_block(
     device_label: str = "",
     endpoint_id: str = "",
     device_name: Optional[str] = None,
+    adaptive: bool = DEFAULT_LOCAL_OUTPUT_ADAPTIVE,
 ) -> str:
     """
     Render the local soundcard output block.  When enabled, emits a
@@ -772,10 +779,32 @@ def _render_local_output_block(
     sinks.  portaudio is the most natural choice for a Windows-only
     deployment.
 
-    Why fallible=true: if the audio endpoint disappears at runtime
-    (USB device unplugged, audio service restart) we want Liquidsoap
-    to log and retry, not crash the whole subprocess and drop the
-    Icecast PUTs.
+    Why mksafe + fallible=false (RASTATIME 2026-09-14): with
+    ``fallible=true`` every underrun of the bridge buffer stopped the
+    output and re-opened the device once the buffer had refilled.
+    PortAudio enumerates the devices once per process, so the re-open
+    used the device list from Liquidsoap's start.  The studio display's
+    audio endpoint comes and goes with the display; a changed list either
+    killed the process ("device ID out of range", four crashes between
+    2026-09-07 and 2026-09-14) or silently opened another device
+    (2026-09-10 21:38, about 30 h without Liquidsoap audio on the Tascam).
+    ``mksafe`` plays silence while the bridge refills, so the output never
+    stops and the device is opened exactly once per process.
+    ``fallible=false`` turns a missing ``mksafe`` into a start error
+    ("That source is fallible") instead of a silent regression -
+    ``liquidsoap --check`` does not see it, only the start does.  A device
+    that really vanishes still fails the write; NSSM then restarts the
+    engine with a fresh device list.
+
+    Why buffer.adaptative (default, RASTATIME 2026-09-14): the Tascam's
+    sample clock runs about 50 ppm faster than the main clock, so the
+    plain 2 s bridge ran dry every 10-12 h - a gap of about 2 s on the
+    monitor path even without the re-open.  ``buffer.adaptative``
+    resamples by at most ``LOCAL_OUTPUT_ADAPTIVE_LIMIT`` (0.1 %, far below
+    audibility) to hold the level.  It is flagged experimental in 2.4.4,
+    hence ``adaptive=False`` (machine setting
+    ``RASTATIME_LIQUIDSOAP_LOCAL_OUTPUT_ADAPTIVE=false``) renders the plain
+    ``buffer()`` again - with ``mksafe`` either way.
 
     Why the buffer + clock.assign_new wrap (RASTATIME 2026-05-28 —
     Phase-C5 follow-up — echter Bus-Split, BACKLOG-Fix vorgezogen):
@@ -857,6 +886,17 @@ def _render_local_output_block(
                 f"  # Main Output (Settings -> Local Machine): {safe_label}\n"
                 f"  device_id={int(device_id)},\n"
             )
+        if adaptive:
+            bridge_line = (
+                "bus_for_portaudio = buffer.adaptative(id=\"portaudio_buffer\", "
+                f"fallible=true, buffer={LOCAL_OUTPUT_BUFFER_SECONDS:.1f}, "
+                f"limit={LOCAL_OUTPUT_ADAPTIVE_LIMIT}, bus)\n"
+            )
+        else:
+            bridge_line = (
+                "# RASTATIME_LIQUIDSOAP_LOCAL_OUTPUT_ADAPTIVE=false: plain bridge\n"
+                f"bus_for_portaudio = buffer(buffer={LOCAL_OUTPUT_BUFFER_SECONDS:.1f}, bus)\n"
+            )
         return (
             "# Echter Bus-Split fuer PortAudio (Phase-C5 follow-up v2 2026-05-28).\n"
             "# v1 (clock.assign_new just on output.portaudio) didn't work --\n"
@@ -878,14 +918,21 @@ def _render_local_output_block(
             "# (3,560/h) whenever the output really played.  auto lets the device\n"
             "# pace the clock; the buffer() bridge above absorbs the drift to the\n"
             "# main clock, which is exactly what it is for.\n"
-            "bus_for_portaudio = buffer(buffer=2.0, bus)\n"
+            "# RASTATIME 2026-09-14: the output is opened once and never stopped.\n"
+            "# With fallible=true an underrun stopped it and re-opened the device\n"
+            "# with the device list from Liquidsoap's start; the display audio\n"
+            "# endpoint comes and goes, so the re-open crashed the engine or\n"
+            "# silently opened another device.  mksafe plays silence while the\n"
+            "# bridge refills, fallible=false turns a missing mksafe into a start\n"
+            "# error, buffer.adaptative compensates the device clock drift.\n"
+            + bridge_line +
             "ignore(clock.assign_new(id=\"portaudio_clock\", sync=\"auto\", [\n"
             "  bus_for_portaudio,\n"
             "]))\n"
             "output.portaudio(\n"
-            "  fallible=true,\n"
+            "  fallible=false,\n"
             + device_line +
-            "  bus_for_portaudio,\n"
+            "  mksafe(id=\"portaudio_safe\", bus_for_portaudio),\n"
             ")\n"
         )
     return (
@@ -1845,6 +1892,7 @@ def render_rastatime_liq(
     local_output_device_label: str = "",
     local_output_endpoint_id: str = "",
     local_output_device_name: Optional[str] = None,
+    local_output_adaptive: bool = DEFAULT_LOCAL_OUTPUT_ADAPTIVE,
     harbor_main_password: Optional[str] = None,
     harbor_show_password: Optional[str] = None,
     harbor_main_port: int = DEFAULT_HARBOR_MAIN_PORT,
@@ -1980,6 +2028,7 @@ def render_rastatime_liq(
                 local_output_device_label,
                 local_output_endpoint_id,
                 local_output_device_name,
+                adaptive=local_output_adaptive,
             ),
         )
         .replace("${HARBOR_INPUTS_BLOCK}", harbor_block)
@@ -2008,6 +2057,7 @@ def write_rastatime_liq(
     local_output_device_label: str = "",
     local_output_endpoint_id: str = "",
     local_output_device_name: Optional[str] = None,
+    local_output_adaptive: bool = DEFAULT_LOCAL_OUTPUT_ADAPTIVE,
     harbor_main_password: Optional[str] = None,
     harbor_show_password: Optional[str] = None,
     harbor_main_port: int = DEFAULT_HARBOR_MAIN_PORT,
@@ -2064,6 +2114,7 @@ def write_rastatime_liq(
         local_output_device_label=local_output_device_label,
         local_output_endpoint_id=local_output_endpoint_id,
         local_output_device_name=local_output_device_name,
+        local_output_adaptive=local_output_adaptive,
         harbor_main_password=harbor_main_password,
         harbor_show_password=harbor_show_password,
         harbor_main_port=harbor_main_port,
@@ -2436,6 +2487,11 @@ def main(argv: Optional[List[str]] = None) -> int:
         action="store_false",
         help="Skip the soundcard output (headless server install).",
     )
+    render.add_argument(
+        "--no-local-output-adaptive", dest="local_output_adaptive",
+        action="store_false", default=DEFAULT_LOCAL_OUTPUT_ADAPTIVE,
+        help="Plain buffer() instead of buffer.adaptative for the soundcard bridge.",
+    )
 
     args = parser.parse_args(argv)
 
@@ -2463,6 +2519,7 @@ def main(argv: Optional[List[str]] = None) -> int:
             log_file=args.log_file,
             crossfade_duration=args.crossfade_duration,
             local_output_enabled=args.local_output_enabled,
+            local_output_adaptive=args.local_output_adaptive,
             hourly_recording_enabled=hourly["enabled"],
             hourly_recording_folder=hourly["folder"],
             hourly_recording_format=hourly["format"],

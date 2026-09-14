@@ -280,14 +280,24 @@ def test_full_render_local_output_enabled_explicitly():
     out = lc.render_rastatime_liq([_stream()], local_output_enabled=True)
     assert "output.portaudio(" in out
     assert 'clock.assign_new(id="portaudio_clock"' in out
-    assert "fallible=true" in out
+    # RASTATIME 2026-09-14: the output never stops (mksafe) and is not
+    # fallible - an underrun used to stop it and re-open the device with a
+    # stale device list (crash or wrong device).  test_local_output_bridge.py
+    # covers the block in detail.
+    assert "  fallible=false,\n" in out
+    assert 'mksafe(id="portaudio_safe", bus_for_portaudio)' in out
     # v2 bus-split (Phase-C5 follow-up 2026-05-28): buffer() with 2.0 s
     # absorption + clock.assign_new on the BUFFER itself (not just the
     # output).  RASTATIME 2026-09-05: sync="auto" — output.portaudio is
     # self-synced (blocking writes), sync="cpu" fought it and logged
     # "Latency is too high" every second whenever the output really
     # played; the buffer() bridge absorbs the drift to the main clock.
-    assert "bus_for_portaudio = buffer(buffer=2.0, bus)" in out
+    # RASTATIME 2026-09-14: the default bridge is buffer.adaptative (drift
+    # compensation); buffer(buffer=2.0, bus) is the switched-off path.
+    assert (
+        'bus_for_portaudio = buffer.adaptative(id="portaudio_buffer", '
+        "fallible=true, buffer=2.0, limit=1.001, bus)"
+    ) in out
     # The clock assign must reference bus_for_portaudio (the bridge):
     assert 'clock.assign_new(id="portaudio_clock", sync="auto", [' in out
     assert 'sync="cpu", [' not in out

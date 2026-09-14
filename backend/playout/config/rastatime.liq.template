@@ -24,8 +24,10 @@
 #                                   crossfade(duration=..., bus).
 #                                   Operator can set this from
 #                                   cc_pref.default_crossfade_seconds.
-#   {LOCAL_OUTPUT_BLOCK}            either output.portaudio(fallible=true, bus)
-#                                   for soundcard monitoring, or a
+#   {LOCAL_OUTPUT_BLOCK}            either output.portaudio(fallible=false,
+#                                   mksafe(bridge)) for soundcard
+#                                   monitoring (bridge = buffer.adaptative,
+#                                   RASTATIME_LIQUIDSOAP_LOCAL_OUTPUT_ADAPTIVE), or a
 #                                   commented stub.  Toggled via
 #                                   RASTATIME_LIQUIDSOAP_LOCAL_OUTPUT
 #                                   (default true on Windows).
@@ -604,6 +606,10 @@ ${HOURLY_RECORDING_BLOCK}
 # of Liquidsoap 2.4.4 does NOT ship output.wasapi, so portaudio is
 # the natural choice for a Windows soundcard sink.  Runtime device
 # switching from the Dashboard is a Phase-D follow-up.
+# 2026-09-14: the output is opened once per process and never stopped
+# (mksafe); the bridge compensates the device clock drift
+# (buffer.adaptative; RASTATIME_LIQUIDSOAP_LOCAL_OUTPUT_ADAPTIVE=false
+# renders the plain buffer).
 # ---------------------------------------------------------------------
 ${LOCAL_OUTPUT_BLOCK}
 
