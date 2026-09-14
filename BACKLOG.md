@@ -27,7 +27,7 @@ festgelegt.  Jeder Punkt bekommt vor Implementierung die
 | 6 | ✅ Seamless Bus-Mix | **CLOSED 2026-09-11** — alle drei Symptome durch die Liquidsoap-Migration erledigt (Belege im Item) |
 | 7 | Storage-Umbau (Root → D:\stor) | **entblockt — Platte geliefert 2026-09-02** |
 | 7a | Cue-Marker-Test: 24/7-Aufnahme einschalten (Settings → Local Machine), Cue-Datei prüfen | **neu 2026-09-10 (Operator), nach dem Storage-Umbau** |
-| 8 | ✅ Stream-Metadaten (Stream Label, Off Air, Show-Namen) | **DONE 2026-09-13** — Off-Air-Text bei Stille, Stream Label wirkt, Webstream-Titel durchgereicht (`b997a7a`) |
+| 8 | ✅ Stream-Metadaten (Stream Label, Off Air, Show-Namen) | **DONE 2026-09-13** — Off-Air-Text bei Stille, Stream Label wirkt, Webstream-Titel durchgereicht (`b997a7a`); live abgenommen 2026-09-13/14 (Datei-Show und Webstream-Show) |
 | 9 | Recording-Loss bei Latency-Catchup | Playout/Liquidsoap |
 | 10 | Backup/Restore via UI | Aktive Items |
 | 11 | Pypo-NSSM-Resilience | Playout/Liquidsoap |
@@ -1796,6 +1796,17 @@ nach Migration + eigenes Wartungsfenster mit Rollback (2.4.4-Baum unter
 sondern Stream Label (drei Varianten), Off Air Metadata bei Stille,
 Show-Name für DJ/Webstream/Line-In, Mount-Genre/URL.  Details CHANGELOG
 „Stream-Metadaten" und ARCHITECTURE §23.29; Replikat-E2E acht Schritte grün.
+**Live-Abnahme 2026-09-13/14 (nach dem Operator-Neustart aller Dienste):**
+Datei-Show 13.09. 16:17–16:20: „C-60 - Mutters kleine Helfer" auf MP3/AAC
+binnen 5 s nach dem Start, 2 s nach dem Ende wieder der Off-Air-Text.
+Webstream-Show „Event Calendar" 14.09. 08:07–08:15: Show-Name ab
+08:07:00 (der Cloud-Stream sendet keine eigenen ICY-Titel), Off-Air-Text ab
+08:15:00.  OGG jeweils im Stream geprüft (Opus-Tags); die Icecast-Statusseite
+zeigt für OGG-Mounts keinen Titel.  Rückwirkend nicht belegbar: das
+Icecast-`access.log` protokolliert `/admin/metadata` ohne Titeltext.  Nach
+dem außerplanmäßigen LIQUIDSOAP-Neustart 14.09. 03:51 hat PLAYOUT die Werte
+neu gesetzt (siehe Item „Liquidsoap stirbt beim Wiederöffnen des
+Tascam-Ausgangs nach Pufferleerlauf").
 **Ursprünglicher Eintrag:**
 **Status (alt):** Idea — nice-to-have, nicht eilig.
 **Evaluiert:** 2026-05-29.
@@ -3141,6 +3152,55 @@ heute: „Jetzt anwenden" in Local Machine) und Punkt 3 (Fade-In/Out).
 (Admin only — UI ist da, nur Backend-Wiring fehlt).
 
 ---
+
+### 🟡 Liquidsoap stirbt beim Wiederöffnen des Tascam-Ausgangs nach Pufferleerlauf (festgestellt 2026-09-14)
+
+**Status:** offen — Evaluierung und Operator-Go nötig.  Nicht durch die
+Stream-Metadaten verursacht: das Muster besteht seit 2026-09-07.
+
+**Befund:** Läuft der 2-s-Puffer vor `output.portaudio` leer
+(`[buffer.producer] Buffer emptied`, `portaudio_clock` wechselt in den
+„non self-sync mode"), stoppt der Ausgang (`fallible=true`) und öffnet das
+Gerät beim Wiederanlaufen neu.  PortAudio kennt nur die Geräteliste vom
+Prozessstart.  Hat Windows seitdem einen Endpunkt entfernt (vermutlich wie
+bei der Nacht-Neustart-Schleife 2026-09-06/07 der Display-Audio-Endpunkt
+beim Display-Schlaf), zeigt der per Name aufgelöste Index ins Leere:
+`Unanticipated host error 2 in open_device: A device ID has been used that
+is out of range for your system` → `Invalid_argument("option is None")` im
+Clock-Thread → Prozessende mit Exit-Code 2 → NSSM startet nach 5 s neu.
+
+| Leerlauf | Wiederöffnen | Folge |
+|---|---|---|
+| 2026-09-07 21:44:12 | Geräte-ID ungültig | Neustart 21:44:20 |
+| 2026-09-08 20:22:44 | Geräte-ID ungültig | Neustart 20:22:52 |
+| 2026-09-09 16:36:39 | Geräte-ID ungültig | Neustart 16:36:47 |
+| 2026-09-10 03:06:42 | ok | — |
+| 2026-09-10 21:38:11 | ok | — |
+| 2026-09-12 15:43:06 | ok | — |
+| 2026-09-14 03:51:21 | Geräte-ID ungültig | Neustart 03:51:29 |
+
+**Auswirkung 2026-09-14 03:51 (nichts geplant):** die drei Icecast-Mounts
+~6 s ohne Quelle (die Standby-Mounts waren verbunden), Tascam ~10 s stumm.
+PLAYOUT hat den Neustart erkannt und `recording.stop`, die Gates und die
+Stream-Metadaten neu gesetzt; Preflight danach ohne Warnung.  Während einer
+Sendung wäre das ein hörbarer Aussetzer; ob der laufende Titel danach
+weiterläuft, ist ungeprüft.  Denkbar ist auch ein stiller Fall: zeigt der
+veraltete Index auf ein anderes vorhandenes Gerät, spielt der Ausgang dort.
+
+**Ansätze für die Evaluierung (ungeprüft):**
+- Ausgang bei Leerlauf nicht stoppen: eine immer verfügbare Quelle vor
+  `output.portaudio` (Stille als Rückfall hinter dem Puffer), damit das
+  Gerät offen bleibt und nie neu geöffnet wird.  Replikat-Test nötig.
+- Prüfen, ob Liquidsoap 2.4.4 Streaming-Fehler einer einzelnen Ausgabe
+  abfangen kann, ohne den Prozess zu beenden; dann braucht es eine
+  Preflight-Warnung für einen toten Tascam-Ausgang.
+- Ursache der Leerläufe klären (kurzer Hänger der Haupt-Uhr oder Drift).
+
+**Belege:** `logs/liquidsoap.log` (grep `Buffer emptied|out of range|LOG START`),
+`logs/liquidsoap-stderr.log` (`Fatal error: exception Invalid_argument`),
+Windows-Anwendungsprotokoll, Quelle `nssm`, Ereignisse 1013/1014 (Exit-Code 2,
+Aktion Restart).  PLAYOUT selbst lief durch; Item 11 (NSSM-Resilience)
+betrifft PLAYOUT und ist davon nicht berührt.
 
 ### 🟡 Pypo-NSSM-Service-Resilience untersuchen (Phase-D-Beobachtung)
 
