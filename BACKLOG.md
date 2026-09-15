@@ -1578,6 +1578,90 @@ Cutover erst nach 1–2 Wochen A/B-Vergleich.
 geliefert (Operator-Meldung 2026-09-02); als Reihenfolge-Punkt 7
 eingeplant.  Vor Umsetzung: 6-Punkte-Evaluierung + Wartungsfenster
 vereinbaren (Sendepause nötig), Backup vorher verifizieren.
+
+**Evaluierung 2026-09-15 (Arbeitsreihenfolge Punkt 7):** Empfehlung **Go**
+in drei Stufen, wartet auf Operator-Go und Wartungsfenster.
+
+*Ist-Stand:* `D:` = Intel-RAID-1-SSD, 1,86 TB, NTFS, leer, gesund,
+Authentifizierte Benutzer haben Ändern-Recht (Dienste laufen als
+LocalSystem).  Bibliothek `C:\rastatime\media`: 4,3 GB, 2.489 Dateien
+(344 Audio, 2.120 Cover unter `imported/2/artwork`, 1 Show-Bild, 1 Auto-DJ-
+Logo, 4 hängende Importe vom 2026-05-20 in `organize/`, deren cc_files-Zeilen
+599/616/627/631 leeren `filepath` und `import_status=2` haben).  Die
+Storage-Wurzel steht nur in `libretime.conf` (`storage.path`); PHP
+(`Config::getStoragePath`), API (`settings.CONFIG.storage.path`), PLAYOUT
+(`config.storage.path`, Direktzugriff auf die Bibliothek für den Cache) und
+Analyzer (Zielordner kommt je Import-Nachricht aus PHP) lesen sie von dort.
+Kein Apache-Alias, keine Tabelle `cc_music_dirs`.
+
+*Abweichungen von MIGRATION.md §4.4/§4.5 (dort nicht erfasst):*
+- Die owner-id-Ebene wird an **vier** Stellen erzeugt, nicht nur in
+  `MediaService.php:35`: `backend/api/libretime_api/podcasts/download.py:169`
+  (Podcast-Downloads, `imported/<owner>` bzw. `imported/podcast`),
+  `PreferenceController.php:1055` (Auto-DJ-Logos) und
+  `ShowImageController.php:168/292` (Show-Bilder).
+- `cc_files.filepath`: 343 Zeilen unter `imported/2/`, davon **36 mit
+  führendem Schrägstrich** (`/imported/2/podcast_…`, Podcast-Importe) — das
+  Muster in §4.4(c) (`^imported/[0-9]+/`) träfe sie nicht; nötig ist
+  `^/?imported/[0-9]+/`.  Kein Interpret-Ordner ist rein numerisch (die
+  Idempotenz-Warnung greift nicht).
+- `cc_files.artwork`: 216 Zeilen `imported/2/artwork/…` — ebenfalls umschreiben.
+- `cc_show.image_path` (29 Zeilen) und `cc_pref.auto_dj_logo_path` halten
+  **absolute** Pfade `C:/rastatime/media/imported/2/…` — brechen schon durch
+  den Wurzelwechsel, müssen auf `D:/stor/imported/…` umgeschrieben werden.
+- PLAYOUT entfernt einen führenden Schrägstrich selbst (`lstrip("/")`),
+  PHP joint per `OsPath::join`, API per `Path(...) / rel` — die Schreibweise
+  der DB-Pfade darf bleiben.
+
+*Eingriff:* (1) `libretime.conf` `storage.path: D:/stor`; (2) vier
+Code-Stellen ohne owner-id-Segment (PHP live ohne OpCache, API/Worker
+Neustart); (3) eine DB-Transaktion: `cc_files.filepath`, `cc_files.artwork`
+(`^/?imported/[0-9]+/` → `imported/`), `cc_show.image_path` und
+`cc_pref.auto_dj_logo_path` (Präfix `C:/rastatime/media/imported/2/` →
+`D:/stor/imported/`); (4) Dateien: `imported/2/*` → `D:\stor\imported\`
+(flach), `organize/` → `D:\stor\organize\`; (5) Neustart API, WORKER,
+ANALYZER, PLAYOUT — LIQUIDSOAP, STANDBY, Icecast und Apache bleiben laufen
+(Liquidsoap spielt aus dem PLAYOUT-Cache `C:\rastatime\scheduler`); (6)
+Umfeld: Windows-Search-Indexierung auf `D:` ist an (für `D:\stor` abschalten),
+Defender-Ausnahme für `D:\stor` (siehe Nebenbefund).
+
+*Ablauf in drei Stufen:* **A** Vorbereitung ohne Betriebseingriff:
+Migrations- und Prüfskript mit Trockenlauf (zählt, schreibt nichts),
+Vorkopie `robocopy /MIR` der 4,3 GB nach `D:\stor` im laufenden Betrieb, DB-
+Dump.  **B** Wartungsfenster ~15 min ohne geplante Datei-Sendung
+(Webstream-Slots sind unbetroffen, Hörer bleiben verbunden, der Stream zeigt
+den Off-Air-Text): Dienste API/WORKER/ANALYZER/PLAYOUT stoppen, Schluss-Sync
+(Sekunden), Conf + Code + DB-Transaktion, Dienste starten, Prüfung (3 Titel
+abspielen, ein Cover, das Show-Bild, ein Test-Upload, ein Podcast-Download).
+**C** `C:\rastatime\media` bleibt 7 Tage als Rückfall liegen, dann löschen.
+Rückfall in B: Conf zurück, DB-Dump einspielen, Dienste starten — die Dateien
+liegen noch an beiden Orten.
+
+*Aufwand:* Code ~10 Zeilen an vier Stellen + API-Test für den Podcast-Pfad;
+Migrationsskript mit Trockenlauf ~150 Zeilen (PowerShell/Python); DB-
+Transaktion ~20 Zeilen; MIGRATION.md §4.4/§4.5 korrigieren, CHANGELOG,
+ARCHITECTURE (Minor: Storage-Layout), BACKLOG, INSTALL.md/Handbuch-Stellen mit
+dem Pfad.  *Dauer:* Stufe A ~3 h, Stufe B ~15–30 min, Stufe C 7 Tage warten.
+*Sinn:* mittel — Bibliothek auf der gespiegelten Datenplatte, raus aus dem
+Repo-Baum, sauberere Backups und Pfade; kein Platzdruck (C: 848 GB frei).
+*Regel:* die DB-Umschreibung ist der eine direkte SQL-Schreibzugriff, den die
+Betriebsregel „nur per API" sonst verbietet — nur im Fenster, nur mit
+explizitem Go, in einer Transaktion.
+
+*Offene Entscheidungen für den Operator:* (a) Fenster-Termin; (b) die 4
+hängenden Importe in `organize/`: Zeilen löschen und Dateien neu importieren,
+oder mitnehmen; (c) Aufnahme- und Import-Ordner (`C:\Users\studio\Music\…`,
+Settings → Local Machine) ebenfalls nach `D:` (eigene Einstellung, kein Teil
+dieses Umbaus); (d) Cover-Ordner `artwork` liegt danach unter
+`D:\stor\imported\artwork` neben den Interpreten-Ordnern (wie heute unter
+`imported/2/`).
+
+*Nebenbefund (eigenes Thema):* Auf der Maschine läuft **Microsoft Defender**,
+nicht Bitdefender, und **keine einzige Pfad- oder Prozess-Ausnahme** ist
+gesetzt — die Liste aus MIGRATION.md §3.2 gilt damit für Defender und ist
+nicht umgesetzt.  Echtzeitscan auf `C:\rastatime\scheduler`, den Aufnahmen und
+Liquidsoap kann I/O-Spitzen verursachen; Operator-Entscheidung.
+
 **(Vorgeschichte:)** ERNEUT DEFER (Operator-Entscheid 2026-08-26 bei der Migration):
 die neue Maschine hat **keine zweite SSD/D:** — Medien bleiben unter
 `C:\RASTATIME\media`, MIGRATION.md §4.4/§4.5 wurden übersprungen (kein
