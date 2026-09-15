@@ -171,10 +171,9 @@ un compteur de trames vérifie la source toutes les deux secondes et
 reconnecte après deux vérifications muettes, sans aucun trafic
 d'interrogation entre la diffusion et le moteur (la version Windows
 de Liquidsoap perd de la mémoire à chaque interrogation de ce type).
-L'ancienne interrogation côté diffusion reste disponible en repli via
-le réglage machine `RASTATIME_WEBSTREAM_WATCHDOG=scheduler` ; le
-comportement et les délais sont identiques dans les deux cas. Depuis le
-2026-09-08, chaque créneau de webstream, et chaque reconnexion, ouvre
+L'ancienne interrogation côté diffusion a été retirée le 2026-09-15
+après une semaine calme. Depuis le 2026-09-08, chaque créneau de
+webstream, et chaque reconnexion, ouvre
 une connexion entièrement neuve avec son propre tampon au lieu de
 réutiliser une entrée permanente : sur la version Windows, une entrée
 réutilisée mettait parfois une minute ou plus à se reconnecter, et un

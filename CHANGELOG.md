@@ -73,6 +73,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+- **Scheduler-Poll-Rückfall des Webstream-Wächters entfernt (2026-09-15,
+  Operator-Go nach der ruhigen Woche seit 2026-09-09)** — Der Wächter läuft seit
+  2026-09-07 als Frame-Zähler in Liquidsoap; der Telnet-Poll von 2026-09-06
+  blieb als Rückfall (`RASTATIME_WEBSTREAM_WATCHDOG=scheduler`) und als
+  Notnagel für eine ältere geladene .liq.  Kriterien geprüft: kein `upstream
+  stalled`; ein regulärer Reap (14.09. 08:15 direkt nach dem Slot-Ende, der
+  Eingang hatte sich selbst neu verbunden); 15 Webstream-Starts, 14 in ≤ 3 s
+  dekodiert, einer in 8 s (11.09. 17:06: erster Verbindungsversuch zur Cloud
+  fehlgeschlagen, zweiter 3 s vor Slot-Beginn, pünktlich auf Sendung);
+  Nacht-Neustarts am 12./13.09. sauber, sonst wegen Instanzalter korrekt
+  ausgelassen.  Entfernt: die Maschinen-Einstellung und
+  `_webstream_watchdog_mode` in `__main__`; im Scheduler der Modus-Schalter,
+  der Timer-Poll (`_start/_stop/_arm_webstream_watchdog`,
+  `_webstream_watchdog_tick`, `_reconnect_stalled_webstream`) und die Probe
+  „hat die geladene .liq den internen Wächter"
+  (`_liquidsoap_has_internal_watchdog`,
+  `LiquidsoapPlayoutEngine.webstream_watchdog_present`); im Renderer der
+  Parameter `webstream_watchdog_in_liquidsoap` samt Reaper-only-Stub — der
+  Standard-Render bleibt byte-gleich (Vorher/Nachher-Vergleich).  Die
+  Telnet-Kommandos `webstream.ready` und `webstream.watchdog` bleiben als
+  Diagnose.  Tests: `test_scheduler_webstream_watchdog.py` gelöscht,
+  `test_webstream_watchdog_in_liquidsoap.py` auf Regressionsschutz umgebaut.
+  Handbuch WEBSTREAMS EN/DE/FR/ES, ARCHITECTURE 0.32 (§23.31).  Wirksam nach
+  PLAYOUT-Neustart, LIQUIDSOAP unberührt.
+
 - **Legacy-mpv-Engine gelöscht — Liquidsoap ist die einzige Playout-Engine
   (2026-09-10, Arbeitsreihenfolge Punkt 15, Operator-Go, `2590cf2`)** — Seit dem
   Phase-D-Cutover (2026-05-28) lief PLAYOUT ausschließlich mit

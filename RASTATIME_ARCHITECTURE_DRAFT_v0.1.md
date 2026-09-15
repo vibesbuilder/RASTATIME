@@ -1,10 +1,15 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.31
-Date: 2026-09-14
+Draft version: 0.32
+Date: 2026-09-15
 
 > **Revision history**
+> - **0.32 (2026-09-15)** — **Scheduler poll fallback removed** (§23.31):
+>   the webstream watchdog has one home, the frame counter inside
+>   Liquidsoap; the PLAYOUT telnet poll, its machine setting
+>   `RASTATIME_WEBSTREAM_WATCHDOG` and the "older render loaded" stop-gap
+>   are gone after a quiet week.
 > - **0.31 (2026-09-14)** — **Main Output kept open** (§23.30): the local
 >   `output.portaudio` never stops (`mksafe` behind the bridge,
 >   `fallible=false`), so a bridge underrun no longer re-opens the device
@@ -4464,7 +4469,8 @@ where the watchdog lives (the render and the scheduler read the same
 switch so both never run); in the default mode the scheduler probes
 once per Liquidsoap instance whether the loaded .liq answers
 `webstream.watchdog` and, if not (older render still loaded after a
-PLAYOUT-only restart), polls itself as a stop-gap.  End-to-end in the
+PLAYOUT-only restart), polls itself as a stop-gap *(switch and stop-gap
+removed on 2026-09-15 — §23.31)*.  End-to-end in the
 replica against a stalling server: two stalls, two reconnects after
 3–4 s, bus back on the stream after ~11 s (bridge refill included).
 The idle growth of the production instance (~150 MB/h, the
@@ -4796,3 +4802,39 @@ silence instead of a re-open.  Evidence: the evaluation in the BACKLOG item,
 the runtime probe `C:/Temp/optd/bridge_probe.py` (Realtek device, silence,
 forced underrun — both bridges start and run dry without stopping the output;
 without `mksafe` the engine refuses to start) and the render tests.
+
+
+### 23.31 Scheduler Poll Fallback of the Webstream Watchdog Removed (2026-09-15)
+
+**Context.**  The 2026-09-07 addendum of §23.27 moved the webstream
+watchdog into Liquidsoap (frame counter on `bus.on_frame`) and kept the
+scheduler's telnet poll of 2026-09-06 as an opt-in fallback
+(`RASTATIME_WEBSTREAM_WATCHDOG=scheduler`) plus a stop-gap: PLAYOUT
+probed once per Liquidsoap instance whether the loaded script answered
+`webstream.watchdog` and polled itself if not.  The operator's condition
+for removing both was a quiet week after Plan A (fresh `input.http` per
+slot, 2026-09-08).
+
+**Evidence (2026-09-09 → 2026-09-15).**  No `upstream stalled`; one reap
+(2026-09-14 08:15, right after a slot end — the dropped input had
+reconnected on its own, which is what the reaper is for); 15 webstream
+starts, 14 decoded within 3 s, one in 8 s (2026-09-11 17:06: the first
+connection attempt to the cloud encoder failed, the second succeeded 3 s
+before the slot, on air on time); nightly restarts clean on 09-12 and
+09-13 and correctly skipped otherwise (instance younger than a day).
+
+**Decision.**  Removed from PLAYOUT: the machine setting and
+`_webstream_watchdog_mode` (`__main__`); the scheduler's mode switch,
+timer poll (`_start/_stop/_arm_webstream_watchdog`,
+`_webstream_watchdog_tick`, `_reconnect_stalled_webstream`) and presence
+probe (`_liquidsoap_has_internal_watchdog`,
+`LiquidsoapPlayoutEngine.webstream_watchdog_present`); from the renderer
+the `webstream_watchdog_in_liquidsoap` parameter and its reaper-only
+stub.  The default render is byte-identical (before/after comparison).
+The telnet commands `webstream.ready` and `webstream.watchdog` stay as
+diagnostics.
+
+**Consequences.**  One watchdog, one code path.  A PLAYOUT restarted
+against an older loaded script no longer polls; the render warning already
+asks the operator to restart LIQUIDSOAP in that case.  Effective after a
+PLAYOUT restart; LIQUIDSOAP untouched.

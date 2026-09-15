@@ -498,8 +498,6 @@ class RenderOutcome(NamedTuple):
     main_output_mode: str
 
 
-WEBSTREAM_WATCHDOG_ENV = "RASTATIME_WEBSTREAM_WATCHDOG"
-
 # Where the internal HTTP listener binds (source_switcher.start_listener)
 # and, since option d (2026-09-09), where the harbor callbacks rendered
 # into rastatime.liq POST DJ connect/disconnect events.
@@ -531,27 +529,6 @@ def _harbor_timeout_seconds() -> float:
         logger.warning("%s=%r is below 1 s - using 1 s", HARBOR_TIMEOUT_ENV, raw)
         return 1.0
     return value
-
-
-def _webstream_watchdog_mode() -> str:
-    """
-    RASTATIME 2026-09-07 - where the webstream watchdog runs.
-
-    ``liquidsoap`` (default): a frame counter on the bus inside the
-    audio engine, rendered into rastatime.liq - no telnet traffic, and
-    measured flat on the leaking Windows build.  ``scheduler``: the
-    2026-09-06 telnet poll in PlayoutScheduler, kept as a fallback
-    (~87 KB leaked per poll, ~157 MB per webstream hour).  Both the
-    render and the scheduler read this so they never run both.
-    """
-    raw = os.environ.get(WEBSTREAM_WATCHDOG_ENV, "liquidsoap").strip().lower()
-    if raw in ("liquidsoap", "scheduler"):
-        return raw
-    logger.warning(
-        "%s=%r is neither 'liquidsoap' nor 'scheduler' - using 'liquidsoap'.",
-        WEBSTREAM_WATCHDOG_ENV, raw,
-    )
-    return "liquidsoap"
 
 
 def _render_rastatime_liq(stream_outputs: List[Dict]) -> bool:
@@ -777,7 +754,6 @@ def _render_rastatime_liq_outcome(stream_outputs: List[Dict]) -> RenderOutcome:
             hourly_recording_folder=hourly["folder"],
             hourly_recording_format=hourly["format"],
             hourly_recording_bitrate=hourly["bitrate"],
-            webstream_watchdog_in_liquidsoap=(_webstream_watchdog_mode() == "liquidsoap"),
             source_event_url=f"http://{_LISTENER_HOST}:{_LISTENER_PORT}/source-event",
             harbor_timeout_seconds=_harbor_timeout_seconds(),
             # RASTATIME 2026-09-10 - ports/mounts as shown in Settings -> Streams,
@@ -1103,18 +1079,11 @@ def main() -> None:
         render_liquidsoap=render_for_restart,
         nightly_restart=nightly_policy,
         input_transition_seconds=_resolve_crossfade_seconds(),
-        webstream_watchdog=_webstream_watchdog_mode(),
         # RASTATIME 2026-09-13 - Stream Label / Off Air Metadata / station
         # name re-read every refresh (ORM), pushed over telnet on change.
         read_icy_preferences=(read_icy_preferences_from_db if django_ok else None),
     )
-    logger.info(
-        "Webstream watchdog: %s (%s=%s).",
-        "inside Liquidsoap (frame counter, rendered into rastatime.liq)"
-        if _webstream_watchdog_mode() == "liquidsoap"
-        else "PLAYOUT telnet poll (fallback)",
-        WEBSTREAM_WATCHDOG_ENV, _webstream_watchdog_mode(),
-    )
+    logger.info("Webstream watchdog: inside Liquidsoap (frame counter, rendered into rastatime.liq).")
     # RASTATIME 2026-09-04 - a previous Pypo may have died mid-prepare
     # with a bus gate closed; open both before the first refresh.
     # RASTATIME 2026-09-06 - the constructor tried once (recording

@@ -226,11 +226,9 @@ annimmt, erzeugt weiter Stille, bis er wieder eine annimmt. Seit dem
 Frame-Zähler prüft die Quelle alle zwei Sekunden und verbindet nach
 zwei stillen Prüfungen neu, ganz ohne Abfrageverkehr zwischen Playout
 und Engine (der Windows-Build von Liquidsoap verliert bei jeder
-solchen Abfrage Speicher). Die frühere Abfrage aus dem Playout bleibt
-als Rückfall über die Maschinen-Einstellung
-`RASTATIME_WEBSTREAM_WATCHDOG=scheduler` verfügbar; Zeitverhalten und
-Wirkung sind in beiden Fällen gleich. Seit dem 2026-09-08 öffnet jeder
-Webstream-Slot und jede Neuverbindung eine ganz neue Verbindung mit
+solchen Abfrage Speicher). Die frühere Abfrage aus dem Playout wurde
+am 2026-09-15 nach einer ruhigen Woche entfernt. Seit dem 2026-09-08
+öffnet jeder Webstream-Slot und jede Neuverbindung eine ganz neue Verbindung mit
 eigenem Puffer, statt einen dauerhaften Eingang wiederzuverwenden: auf
 dem Windows-Build brauchte ein wiederverwendeter Eingang mitunter eine
 Minute und länger bis zur Neuverbindung, und ein Slot konnte mit ein

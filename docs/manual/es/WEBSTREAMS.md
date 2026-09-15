@@ -133,10 +133,8 @@ vigilante funciona dentro del propio motor de audio: un contador de
 fotogramas comprueba la fuente cada dos segundos y reconecta tras dos
 comprobaciones mudas, sin ningún tráfico de sondeo entre la emisión y
 el motor (la versión de Windows de Liquidsoap pierde memoria con cada
-sondeo de ese tipo). El sondeo anterior desde la emisión sigue
-disponible como respaldo mediante el ajuste de máquina
-`RASTATIME_WEBSTREAM_WATCHDOG=scheduler`; el comportamiento y los
-tiempos son iguales en ambos casos. Desde el 2026-09-08 cada slot de
+sondeo de ese tipo). El sondeo anterior desde la emisión se retiró el
+2026-09-15 tras una semana tranquila. Desde el 2026-09-08 cada slot de
 webstream, y cada reconexión, abre una conexión completamente nueva con
 su propio búfer en lugar de reutilizar una entrada permanente: en la
 versión de Windows una entrada reutilizada tardaba a veces un minuto o

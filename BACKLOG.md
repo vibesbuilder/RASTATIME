@@ -790,9 +790,14 @@ abgenommen:** Login über den Custom-Login der laufenden Show akzeptiert,
 Switcher `scheduled -> show` nach 22 ms, Audio nach dem 5-s-Puffer,
 Trennen → Timeout 5,0 s → `show off` + Resume an der richtigen Stelle.
 
-### 🟢 Scheduler-Poll-Rückfall entfernen (fällig ab 2026-09-15, Operator 2026-09-09)
+### ✅ Scheduler-Poll-Rückfall entfernen (fällig ab 2026-09-15, Operator 2026-09-09) — DONE 2026-09-15
 
-Nach einer ruhigen Woche mit Plan A + Reaper (live seit 2026-09-08
+**Erledigt 2026-09-15 (Operator-Go, Commit-Hash im CHANGELOG):** Kriterien
+erfüllt (kein Stall, ein regulärer Reap, 14 von 15 Starts ≤ 3 s, einer 8 s
+mit erfolgreichem zweiten Versuch vor Slot-Beginn, Nacht-Neustarts sauber),
+Umfang wie geplant umgesetzt, Standard-Render byte-gleich; Details CHANGELOG
+„Removed" und ARCHITECTURE §23.31.  Wirksam nach PLAYOUT-Neustart.
+**Ursprünglicher Plan:** Nach einer ruhigen Woche mit Plan A + Reaper (live seit 2026-09-08
 22:45) den Telnet-Poll-Rückfall aus PLAYOUT ausbauen: Modus-Schalter
 `RASTATIME_WEBSTREAM_WATCHDOG`, Poll/Reconnect-Pfad im Scheduler, Probe
 „hat die geladene .liq den internen Wächter", Scheduler-Modus-Stub des

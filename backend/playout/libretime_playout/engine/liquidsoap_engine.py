@@ -647,8 +647,9 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
         """
         Is the webstream source producing audio right now?
 
-        RASTATIME 2026-09-06 - polled by the scheduler's webstream
-        watchdog.  Returns the Liquidsoap-side
+        RASTATIME 2026-09-06 - once polled by the scheduler's webstream
+        watchdog (removed 2026-09-15); kept as a diagnostic.  Returns the
+        Liquidsoap-side
         ``source.is_ready(webstream)`` (registered as ``webstream.ready``
         by the .liq template) as a bool.  On any telnet error we report
         ``True`` (fail-safe: an unreachable probe must not trigger a
@@ -660,30 +661,6 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
             logger.debug("Liquidsoap webstream_ready telnet error: %s", exc)
             return True
         return "true" in (reply or "").strip().lower()
-
-    def webstream_watchdog_present(self) -> Optional[bool]:
-        """
-        Does the running Liquidsoap carry the in-process webstream
-        watchdog (RASTATIME 2026-09-07)?
-
-        ``True`` when ``webstream.watchdog`` answers with its counters,
-        ``False`` when Liquidsoap does not know the command (an older
-        rastatime.liq is still loaded - e.g. PLAYOUT was restarted with
-        the new render but LIQUIDSOAP not yet), ``None`` when telnet is
-        unreachable.  The scheduler falls back to its own poll only on
-        ``False``.
-        """
-        try:
-            reply = self._telnet.webstream_watchdog()
-        except Exception as exc:  # pylint: disable=broad-exception-caught
-            logger.debug("Liquidsoap webstream_watchdog telnet error: %s", exc)
-            return None
-        text = (reply or "").strip()
-        if "checks=" in text:
-            return True
-        if text.upper().startswith("ERROR"):
-            return False
-        return None
 
     def webstream_status(self) -> str:
         """

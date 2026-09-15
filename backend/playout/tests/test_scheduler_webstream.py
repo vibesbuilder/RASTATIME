@@ -261,11 +261,9 @@ def test_resume_webstream_rearms_the_source_instead_of_engine_play(
     sched._current_event = event
     sched._current_audio_path = event.uri
     sched._current_gain_db = event.input_gain_db
-    sched._start_webstream_watchdog = MagicMock()
 
     sched._resume_scheduled_locked()
 
     engine.webstream_start.assert_called_once_with(event.uri, gain_db=-2.0)
     engine.webstream_gate.assert_called_once_with(True)
     engine.play.assert_not_called()
-    sched._start_webstream_watchdog.assert_called_once_with()

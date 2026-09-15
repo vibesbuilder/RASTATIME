@@ -244,7 +244,6 @@ DEFAULT_WEBSTREAM_BRIDGE_MAX_SECONDS = 10.0
 # the frame counter costs nothing, a thread.run.recurrent timer ~31 KB
 # per tick and the scheduler's telnet poll 66-87 KB per command (the
 # Windows Unix.select leak) - ~157 MB per webstream hour in production.
-DEFAULT_WEBSTREAM_WATCHDOG_IN_LIQUIDSOAP = True
 DEFAULT_WEBSTREAM_WATCHDOG_CHECK_FRAMES = 100      # 2 s at 50 frames/s
 DEFAULT_WEBSTREAM_WATCHDOG_STARVE_CHECKS = 2       # -> reconnect after ~4 s
 
@@ -1355,7 +1354,6 @@ def _render_webstream_input_block(
 
 def _render_webstream_watchdog_block(
     *,
-    enabled: bool,
     webstream_enabled: bool,
     check_frames: int = DEFAULT_WEBSTREAM_WATCHDOG_CHECK_FRAMES,
     starve_checks: int = DEFAULT_WEBSTREAM_WATCHDOG_STARVE_CHECKS,
@@ -1383,9 +1381,9 @@ def _render_webstream_watchdog_block(
     from the bridge, which then stays full and ready - no false
     alarm.  ``webstream.watchdog`` (telnet) reports the counters.
 
-    Disabled (``enabled=False``, the PLAYOUT fallback
-    ``RASTATIME_WEBSTREAM_WATCHDOG=scheduler``) or without a webstream
-    input, a comment stub is rendered.
+    Without a webstream input a comment stub is rendered.  The PLAYOUT
+    fallback (``RASTATIME_WEBSTREAM_WATCHDOG=scheduler``, a reaper-only
+    hook here) was removed on 2026-09-15 after a quiet week.
     """
     if not webstream_enabled:
         return (
@@ -1393,21 +1391,6 @@ def _render_webstream_watchdog_block(
             "# RASTATIME 2026-09-07 - in-process webstream watchdog: disabled\n"
             "# (no webstream input is rendered)\n"
             "# ---------------------------------------------------------------------\n"
-        )
-    if not enabled:
-        check_frames = max(1, int(check_frames))
-        return (
-            "# ---------------------------------------------------------------------\n"
-            "# RASTATIME 2026-09-07 - in-process webstream watchdog: disabled\n"
-            "# (the scheduler-side telnet watchdog is selected:\n"
-            "#  RASTATIME_WEBSTREAM_WATCHDOG=scheduler).  Only the reaper for\n"
-            "# dropped inputs runs on the frame counter (RASTATIME 2026-09-08).\n"
-            "# ---------------------------------------------------------------------\n"
-            "webstream_wd_frames = ref(0)\n"
-            "bus.on_frame(synchronous=true, fun () -> begin\n"
-            "  webstream_wd_frames.set(webstream_wd_frames() + 1)\n"
-            f"  if webstream_wd_frames() mod {check_frames} == 0 then webstream_reap() end\n"
-            "end)\n"
         )
     check_frames = max(1, int(check_frames))
     starve_checks = max(1, int(starve_checks))
@@ -1907,7 +1890,6 @@ def render_rastatime_liq(
     webstream_max_buffer_seconds: float = DEFAULT_WEBSTREAM_MAX_BUFFER_SECONDS,
     webstream_timeout_seconds: float = DEFAULT_WEBSTREAM_TIMEOUT_SECONDS,
     webstream_poll_delay_seconds: float = DEFAULT_WEBSTREAM_POLL_DELAY_SECONDS,
-    webstream_watchdog_in_liquidsoap: bool = DEFAULT_WEBSTREAM_WATCHDOG_IN_LIQUIDSOAP,
     linein_enabled: bool = DEFAULT_LINEIN_ENABLED,
     linein_max_buffer_seconds: float = DEFAULT_LINEIN_MAX_BUFFER_SECONDS,
     linein_http_max_buffer_seconds: float = DEFAULT_LINEIN_HTTP_MAX_BUFFER_SECONDS,
@@ -1983,7 +1965,6 @@ def render_rastatime_liq(
         poll_delay_seconds=webstream_poll_delay_seconds,
     )
     webstream_watchdog_block = _render_webstream_watchdog_block(
-        enabled=webstream_watchdog_in_liquidsoap,
         webstream_enabled=webstream_enabled,
     )
     linein_block = _render_linein_input_block(
@@ -2072,7 +2053,6 @@ def write_rastatime_liq(
     webstream_max_buffer_seconds: float = DEFAULT_WEBSTREAM_MAX_BUFFER_SECONDS,
     webstream_timeout_seconds: float = DEFAULT_WEBSTREAM_TIMEOUT_SECONDS,
     webstream_poll_delay_seconds: float = DEFAULT_WEBSTREAM_POLL_DELAY_SECONDS,
-    webstream_watchdog_in_liquidsoap: bool = DEFAULT_WEBSTREAM_WATCHDOG_IN_LIQUIDSOAP,
     linein_enabled: bool = DEFAULT_LINEIN_ENABLED,
     linein_max_buffer_seconds: float = DEFAULT_LINEIN_MAX_BUFFER_SECONDS,
     linein_http_max_buffer_seconds: float = DEFAULT_LINEIN_HTTP_MAX_BUFFER_SECONDS,
@@ -2129,7 +2109,6 @@ def write_rastatime_liq(
         webstream_max_buffer_seconds=webstream_max_buffer_seconds,
         webstream_timeout_seconds=webstream_timeout_seconds,
         webstream_poll_delay_seconds=webstream_poll_delay_seconds,
-        webstream_watchdog_in_liquidsoap=webstream_watchdog_in_liquidsoap,
         linein_enabled=linein_enabled,
         linein_max_buffer_seconds=linein_max_buffer_seconds,
         linein_http_max_buffer_seconds=linein_http_max_buffer_seconds,

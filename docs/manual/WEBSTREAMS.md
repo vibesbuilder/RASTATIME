@@ -210,11 +210,9 @@ one again.  Since 2026-09-07 the watchdog runs inside the audio
 engine itself: a frame counter checks the source every two seconds
 and reconnects after two silent checks, without any polling traffic
 between playout and engine (the Windows build of Liquidsoap leaks
-memory on every such poll).  The earlier playout-side poll remains
-available as a fallback through the machine setting
-`RASTATIME_WEBSTREAM_WATCHDOG=scheduler`; timing and behaviour are
-the same either way.  Since 2026-09-08 every webstream slot, and every
-reconnect, opens a brand-new connection with its own buffer instead of
+memory on every such poll).  The playout-side poll of 2026-09-06 was
+removed on 2026-09-15 after a quiet week.  Since 2026-09-08 every
+webstream slot, and every reconnect, opens a brand-new connection with its own buffer instead of
 reusing one long-lived input: on the Windows build a reused input
 sometimes took a minute or more to reconnect, and a slot could start
 with a few seconds of the previous stream still in the buffer.  Both
