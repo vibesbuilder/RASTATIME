@@ -1656,6 +1656,34 @@ dieses Umbaus); (d) Cover-Ordner `artwork` liegt danach unter
 `D:\stor\imported\artwork` neben den Interpreten-Ordnern (wie heute unter
 `imported/2/`).
 
+**Neue Richtung (Operator 2026-09-15): Speicherort als Einstellung**
+Nicht nur einmal nach `D:\stor` umziehen: unter Settings → Local Machine
+soll der Speicherort der Bibliothek wählbar sein, wie der Import Folder.
+Evaluierung 2026-09-15, Empfehlung Go in drei Stufen (wartet auf Go):
+
+- *Machbarkeit:* ja.  Jeder Leser der Wurzel kann die Einstellung statt
+  `libretime.conf` fragen: PHP (`Config::getStoragePath`, pro Request), API
+  und Worker (`settings.CONFIG.storage.path` → Preference pro Aufruf), PLAYOUT
+  (bei jedem Refresh wie die ICY-Werte), Analyzer (Zielordner kommt je Import
+  aus PHP).  Vorbedingung: alle DB-Pfade relativ zur Wurzel (Stufe 1), sonst
+  bricht jeder Wechsel Show-Bilder und Auto-DJ-Logo.
+- *Eingriff:* neuer cc_pref-Schlüssel `local_storage_folder` (leer =
+  `libretime.conf`); Feld + Knopf „Verschieben" auf der Local-Machine-Seite
+  mit Fortschritt; API-Endpunkt Prüfen/Starten/Status; Umzugs-Job (kopieren →
+  zählen/prüfen → Wurzel umschalten → alte Kopie stehen lassen, Hinweis zum
+  Löschen), Importe während des Jobs gesperrt; Prüfungen: Pfad
+  erreichbar/beschreibbar, nicht innerhalb der alten Wurzel, genug Platz.
+- *Aufwand:* ~600–900 Zeilen (PHP/JS/Python) + Tests, Handbuch
+  LOCAL_MACHINE EN/DE/FR/ES, ARCHITECTURE (Minor).  *Dauer:* Stufe 1
+  (einmalige Bereinigung: owner-id-Ebene an vier Stellen, führende
+  Schrägstriche, `cc_files.artwork`, Show-Bilder und Logo relativ) ~½ Tag
+  inkl. ruhigem Moment für die DB-Transaktion; Stufe 2 (Einstellung + Job)
+  2–3 Tage; Stufe 3 = erster Umzug nach `D:\stor` über die UI als Abnahme.
+- *Sinn:* hoch für den Operator-Wunsch, keine Hand-Edits an
+  `libretime.conf` mehr, der Umzug wird wiederholbar (weitere Platte, Backup-
+  Rückspielung).  *Empfehlung:* Go; Stufe 1 ist auch für den reinen Umzug nötig
+  und kann sofort beginnen.
+
 *Nebenbefund (eigenes Thema):* Auf der Maschine läuft **Microsoft Defender**,
 nicht Bitdefender, und **keine einzige Pfad- oder Prozess-Ausnahme** ist
 gesetzt — die Liste aus MIGRATION.md §3.2 gilt damit für Defender und ist
