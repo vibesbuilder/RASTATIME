@@ -214,7 +214,10 @@ avertissements du tableau de bord le surveillent (depuis le
 - **Avertissement mémoire.** La bannière du tableau de bord affiche
   *Liquidsoap utilise N Mo* lorsque la mémoire du moteur dépasse
   2048 Mo (réglage machine `RASTATIME_LIQUIDSOAP_MEMORY_WARN_MB`).
-  Redémarrez la diffusion puis Liquidsoap dans un moment calme.
+  Redémarrez la diffusion puis Liquidsoap dans un moment calme. Depuis le 15/09/2026, le journal de la diffusion enregistre aussi
+  toutes les 15 minutes la mémoire du moteur avec sa croissance
+  depuis son démarrage ; cherchez `Liquidsoap memory` dans
+  `playout-stdout.log` pour voir la tendance.
 - **Avertissement Main Output.** La bannière affiche *Main Output :
   Liquidsoap joue sur … au lieu de …* lorsque le moteur ne détient
   aucune session audio sur le périphérique de sortie choisi alors

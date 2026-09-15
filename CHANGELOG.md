@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Speicherverlauf der Liquidsoap-Hauptinstanz im Playout-Log (2026-09-15,
+  Operator-Go „günstige Mitte")** — Die Speicherwoche 2026-09-08..15 hatte
+  keinen Verlauf: die Instanz lebte selten länger als einen Tag, und die
+  Messwerte des Preflight-Scans wurden nur gegen die Warnschwelle geprüft,
+  nie festgehalten.  Jetzt schreibt jeder Scan (alle 15 min) eine INFO-Zeile
+  `preflight: Liquidsoap memory: PID … MB, … h old, +… MB since the first
+  sample … h ago, … MB/h` (erste Messung einer Instanz: `first sample of
+  this instance`; Rate erst ab 30 min Spanne).  Neue PID oder jüngeres Alter
+  = neue Instanz, neue Basis; die Standby-Instanz wird wie bisher
+  ausgefiltert.  Auswertung: `grep "Liquidsoap memory" logs/playout-stdout.log`.
+  Tests `test_preflight_memory_log.py` (7).  Handbuch LOCAL_MACHINE
+  EN/DE/FR/ES.  Wirksam nach PLAYOUT-Neustart.
+
 - **Stream-Metadaten: Stream Label, Off Air Metadata und Show-Namen erreichen
   die Hörer (2026-09-13, Arbeitsreihenfolge Punkt 8, Operator-Go, `b997a7a`)** — Befund:
   die Werte aus Settings → Streams kamen nie im Liquidsoap-Skript an (PHP

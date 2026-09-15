@@ -232,7 +232,10 @@ and the third warning since 2026-09-07):
 - **Memory warning.** The dashboard banner shows *Liquidsoap uses
   N MB* when the engine's memory exceeds 2048 MB (machine setting
   `RASTATIME_LIQUIDSOAP_MEMORY_WARN_MB`). Restart the playout and
-  then Liquidsoap in a quiet moment.
+  then Liquidsoap in a quiet moment. Since 2026-09-15 the playout log
+  also records the engine's memory every 15 minutes, with the growth
+  since the engine started; search `playout-stdout.log` for
+  `Liquidsoap memory` to see the trend.
 - **Main Output warning.** The banner shows *Main Output: Liquidsoap
   plays to … instead of …* when the engine holds no audio session
   on the chosen output device although it has been running for a

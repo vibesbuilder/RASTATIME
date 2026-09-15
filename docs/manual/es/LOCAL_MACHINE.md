@@ -208,7 +208,10 @@ el tercer aviso desde el 2026-09-07):
 - **Aviso de memoria.** El banner del panel muestra *Liquidsoap usa
   N MB* cuando la memoria del motor supera 2048 MB (ajuste de
   máquina `RASTATIME_LIQUIDSOAP_MEMORY_WARN_MB`). Reinicie la
-  emisión y después Liquidsoap en un momento tranquilo.
+  emisión y después Liquidsoap en un momento tranquilo. Desde el 15/09/2026 el registro de la emisión anota además cada
+  15 minutos la memoria del motor con su crecimiento desde el
+  arranque; busque `Liquidsoap memory` en `playout-stdout.log` para
+  ver la tendencia.
 - **Aviso de Main Output.** El banner muestra *Main Output:
   Liquidsoap reproduce en … en lugar de …* cuando el motor no
   mantiene ninguna sesión de audio en el dispositivo de salida

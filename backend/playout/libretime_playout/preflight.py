@@ -97,6 +97,10 @@ class PreflightChecker:
         # (pid, age_seconds) of the youngest liquidsoap.exe seen on the
         # last few scans - a crash loop shows as a new young PID each time.
         self._liquidsoap_recent: list[tuple[int, float]] = []
+        # RASTATIME 2026-09-15 - first memory sample per main instance
+        # (pid -> (private_mb, age_seconds)); every scan logs the growth
+        # since then so the memory trend is in the playout log.
+        self._liquidsoap_memory_baseline: dict[int, tuple[float, float]] = {}
 
     def start(self) -> None:
         """
@@ -227,6 +231,7 @@ class PreflightChecker:
         if infos is None:
             logger.debug("preflight: Liquidsoap process probe unavailable.")
         else:
+            self._log_liquidsoap_memory(infos)
             threshold = liquidsoap_health.memory_warn_threshold_mb()
             for info in infos:
                 if info.private_mb >= threshold:
@@ -258,6 +263,46 @@ class PreflightChecker:
         self._submit_warnings(
             self.WARNING_TYPE_LIQUIDSOAP_UNAVAILABLE, str(uuid.uuid4()), unavailable_warnings,
         )
+
+    def _log_liquidsoap_memory(
+        self, infos: list["liquidsoap_health.ProcessInfo"],
+    ) -> None:
+        """
+        RASTATIME 2026-09-15 - one INFO line per scan and main instance:
+        private bytes, age, growth since the first sample of this
+        instance and the average rate.  The memory week of 2026-09-08..15
+        had no record of the trend (the instance rarely lived longer than
+        a day and nobody logged the readings); this line, every 15 min,
+        makes the next evaluation a grep instead of a measuring session.
+        A new PID or a younger age than the baseline is a fresh instance
+        and starts a new baseline; the standby instance is filtered out
+        by the caller.
+        """
+        seen: set[int] = set()
+        for info in infos:
+            seen.add(info.pid)
+            base = self._liquidsoap_memory_baseline.get(info.pid)
+            if base is None or info.age_seconds < base[1]:
+                self._liquidsoap_memory_baseline[info.pid] = (info.private_mb, info.age_seconds)
+                logger.info(
+                    "preflight: Liquidsoap memory: PID %d %d MB, %.1f h old "
+                    "(first sample of this instance).",
+                    info.pid, int(info.private_mb), info.age_seconds / 3600.0,
+                )
+                continue
+            base_mb, base_age = base
+            span_h = (info.age_seconds - base_age) / 3600.0
+            grown = info.private_mb - base_mb
+            rate = f", {grown / span_h:.1f} MB/h" if span_h >= 0.5 else ""
+            logger.info(
+                "preflight: Liquidsoap memory: PID %d %d MB, %.1f h old, "
+                "%+d MB since the first sample %.1f h ago%s.",
+                info.pid, int(info.private_mb), info.age_seconds / 3600.0,
+                int(round(grown)), span_h, rate,
+            )
+        for pid in list(self._liquidsoap_memory_baseline):
+            if pid not in seen:
+                del self._liquidsoap_memory_baseline[pid]
 
     def _liquidsoap_unavailable_warnings(
         self, infos: list["liquidsoap_health.ProcessInfo"],

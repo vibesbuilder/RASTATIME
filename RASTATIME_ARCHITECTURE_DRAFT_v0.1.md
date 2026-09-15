@@ -4344,6 +4344,9 @@ the Windows deployment, one investigation.
   when no Liquidsoap process older than 90 s holds a Core Audio
   session on the configured Main Output endpoint (pycaw/comtypes,
   Windows-only, guarded).  Both surface in the dashboard banner.
+  Since 2026-09-15 every scan also logs the main instance's memory
+  (`preflight: Liquidsoap memory: PID … MB, … h old, +… MB since the
+  first sample … h ago, … MB/h`), so the trend is in the playout log.
 - *Monitor clock.*  `clock.assign_new(id="portaudio_clock", sync="auto")`;
   the `buffer()` bridge absorbs the drift between device clock and
   main clock, which is what it was built for.  Correction 2026-09-14

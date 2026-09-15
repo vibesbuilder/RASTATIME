@@ -251,7 +251,10 @@ Sicherung und die dritte Warnung seit dem 2026-09-07):
   belegt N MB*, wenn der Speicher der Engine 2048 MB überschreitet
   (Maschinen-Einstellung `RASTATIME_LIQUIDSOAP_MEMORY_WARN_MB`).
   Starten Sie in einem ruhigen Moment das Playout und danach
-  Liquidsoap neu.
+  Liquidsoap neu. Seit dem 14.09.2026 hält das Playout-Log außerdem alle 15 Minuten
+  den Speicher der Engine samt Zuwachs seit ihrem Start fest; suchen
+  Sie in `playout-stdout.log` nach `Liquidsoap memory`, um den
+  Verlauf zu sehen.
 - **Main-Output-Warnung.** Das Banner zeigt *Main Output: Liquidsoap
   spielt auf … statt …*, wenn die Engine keine Audio-Sitzung auf
   dem gewählten Ausgabegerät hält, obwohl sie schon eine Weile
