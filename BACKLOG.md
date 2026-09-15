@@ -3165,10 +3165,12 @@ keine Main-Output-Warnung.  3-h-Dauertest beider Brücken auf dem
 Realtek-Ausgang (Stille, `C:/Temp/optd/bridge_probe.py soak`): kein Leerlauf,
 kein Stopp; dort ist die Drift klein und läuft in die Gegenrichtung (der
 Puffer wächst um ≈ 0,2 s in 3 h), `estimated()` blieb konstant bei 2,002 s —
-die Driftkorrektur selbst ist damit nicht belegt.  Maßgeblich ist die erste
-Nacht in Produktion (der Tascam leerte den Puffer bisher nach 10–12 h).
-Wirkt sie nicht, bleibt nur die kurze Stille am Tascam, ohne Absturz und ohne
-Fehlleitung.  Nicht durch die
+die Driftkorrektur selbst ist damit nicht belegt.  **Nachweis in Produktion
+2026-09-15 08:00:** 21 h nach der Aktivierung kein Leerlauf (nur die
+Umschaltung beim Start), kein Neustart, keine Gerätefehler, keine
+Main-Output-Warnung.  Bisher lief der Puffer spätestens 12 h nach dem Start
+leer (gemessen 5–12 h) — die Driftkorrektur wirkt
+(`C:/Temp/optd/bridge_night_check.py`).  Nicht durch die
 Stream-Metadaten verursacht: das Muster besteht seit 2026-09-07.
 
 **Befund:** Läuft der 2-s-Puffer vor `output.portaudio` leer
