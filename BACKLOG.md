@@ -3153,6 +3153,34 @@ heute: „Jetzt anwenden" in Local Machine) und Punkt 3 (Fade-In/Out).
 
 ---
 
+### 💡 Speicherzuwachs der Liquidsoap-Hauptinstanz eingrenzen (≈ 8 MB/h im Leerlauf, festgestellt 2026-09-15)
+
+**Status:** Idee / Untersuchung, kein Handlungsdruck — der geplante Neustart
+greift bei 1536 MB im 04:00-Fenster, beim heutigen Zuwachs etwa alle 6 Tage.
+**Vorbedingung:** Operator-Go; sinnvoll erst, wenn das Neustart-Intervall über
+etwa 6 Tage steigen soll.
+
+**Befund (Speicherwoche, Instanz seit 2026-09-14 10:43):** 103 MB nach dem
+Start, 155 MB nach 5,1 h, 301 MB nach 21,3 h, 333 MB nach 24,4 h.  Über Nacht
+(2026-09-14 15:50 bis 2026-09-15 08:00: ein Webstream-Slot, keine Titel, keine
+DJs, keine Telnet-Verbindungen) +146 MB in 16,2 h, also ≈ 8,5 MB/h im
+Leerlauf; dazu ≈ 7–12 MB je Webstream-Slot.  Gemessene Basis am 2026-09-10:
+≈ 5 MB/h.  Das Wachstum kommt vermutlich in Stufen (OCaml-Heap), kurze
+Messfenster streuen stark.
+
+**Ausgeschlossen:** die Main-Output-Brücke (Replikat 2,8 h auf dem
+Realtek-Ausgang: `buffer`, `buffer.adaptative` und `buffer.adaptative(
+resample=false)` jeweils flach, die adaptiven Varianten einmalig +38 MB) und
+das Telnet-Leck (keine Verbindungen über Nacht).
+
+**Kandidaten:** der Harbor-Accept-Loop (Unix.select-Leck des Windows-Builds),
+der `bus.on_frame`-Rückruf des Webstream-Wächters (50 Aufrufe/s), der
+ICY-Block (`metadata.map` auf dem Bus), Heap-Wachstum ohne Leck.
+
+**Vorgehen, falls gewünscht:** Replikat mit dem Produktionsskript (Test-Mounts,
+eigener Telnet-Port), Blöcke einzeln abschalten, Speicher alle 10 min messen;
+`C:/Temp/optd/bridge_mem_compare.py` als Vorlage.
+
 ### ✅ Liquidsoap stirbt beim Wiederöffnen des Tascam-Ausgangs nach Pufferleerlauf (festgestellt 2026-09-14, DONE 2026-09-14)
 
 **Status:** Erledigt 2026-09-14 (Operator-Go Variante B, `9b0aa3e`):
