@@ -3185,8 +3185,7 @@ ICY-Block (`metadata.map` auf dem Bus), Heap-Wachstum ohne Leck.
 **Vorgehen, falls gewünscht:** Replikat mit dem Produktionsskript (Test-Mounts,
 eigener Telnet-Port), Blöcke einzeln abschalten, Speicher alle 10 min messen;
 `C:/Temp/optd/bridge_mem_compare.py` als Vorlage.
-**Umgesetzt 2026-09-15 (Operator-Go „günstige Mitte", Commit-Hash im
-CHANGELOG):** der Preflight-Scan loggt alle 15 min den Speicher der
+**Umgesetzt 2026-09-15 (Operator-Go „günstige Mitte", `ac20f02`):** der Preflight-Scan loggt alle 15 min den Speicher der
 Hauptinstanz mit Zuwachs und Rate seit der ersten Messung (`grep "Liquidsoap
 memory" logs/playout-stdout.log`).  Die Ursachensuche selbst bleibt Idee.
 

@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Speicherverlauf der Liquidsoap-Hauptinstanz im Playout-Log (2026-09-15,
-  Operator-Go „günstige Mitte")** — Die Speicherwoche 2026-09-08..15 hatte
+  Operator-Go „günstige Mitte", `ac20f02`)** — Die Speicherwoche 2026-09-08..15 hatte
   keinen Verlauf: die Instanz lebte selten länger als einen Tag, und die
   Messwerte des Preflight-Scans wurden nur gegen die Warnschwelle geprüft,
   nie festgehalten.  Jetzt schreibt jeder Scan (alle 15 min) eine INFO-Zeile
