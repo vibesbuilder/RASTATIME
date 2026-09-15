@@ -74,7 +74,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 - **Scheduler-Poll-Rückfall des Webstream-Wächters entfernt (2026-09-15,
-  Operator-Go nach der ruhigen Woche seit 2026-09-09)** — Der Wächter läuft seit
+  Operator-Go nach der ruhigen Woche seit 2026-09-09, `de822e4`)** — Der Wächter läuft seit
   2026-09-07 als Frame-Zähler in Liquidsoap; der Telnet-Poll von 2026-09-06
   blieb als Rückfall (`RASTATIME_WEBSTREAM_WATCHDOG=scheduler`) und als
   Notnagel für eine ältere geladene .liq.  Kriterien geprüft: kein `upstream

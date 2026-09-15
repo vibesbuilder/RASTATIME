@@ -792,7 +792,7 @@ Trennen → Timeout 5,0 s → `show off` + Resume an der richtigen Stelle.
 
 ### ✅ Scheduler-Poll-Rückfall entfernen (fällig ab 2026-09-15, Operator 2026-09-09) — DONE 2026-09-15
 
-**Erledigt 2026-09-15 (Operator-Go, Commit-Hash im CHANGELOG):** Kriterien
+**Erledigt 2026-09-15 (Operator-Go, `de822e4`):** Kriterien
 erfüllt (kein Stall, ein regulärer Reap, 14 von 15 Starts ≤ 3 s, einer 8 s
 mit erfolgreichem zweiten Versuch vor Slot-Beginn, Nacht-Neustarts sauber),
 Umfang wie geplant umgesetzt, Standard-Render byte-gleich; Details CHANGELOG
