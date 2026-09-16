@@ -7,7 +7,7 @@ class FileDataHelper
      *
      * RASTATIME (Windows): cc_files.filepath is stored without a leading
      * slash for files imported via the analyzer (e.g. "imported/2/Foo.mp3"),
-     * but Config::getStoragePath() does not have a trailing slash either
+     * but Application_Common_Storage::root() does not have a trailing slash either
      * ("C:/rastatime/media").  Naive concatenation produced
      * "C:/rastatime/mediaimported/2/Foo.mp3", which then made setArtwork /
      * resetArtwork / removeArtwork silently fail because file_put_contents
@@ -146,7 +146,7 @@ class FileDataHelper
                 $get_file_content = file_get_contents($path);
             }
         } else {
-            $path = self::joinStoragePath(Config::getStoragePath(), $sizedFile);
+            $path = self::joinStoragePath(Application_Common_Storage::root(), $sizedFile);
             if (!file_exists($path)) {
                 $get_file_content = $default;
             } else {
@@ -231,7 +231,7 @@ class FileDataHelper
         $file = Application_Model_StoredFile::RecallById($trackid);
         $md = $file->getMetadata();
 
-        $fp = Config::getStoragePath();
+        $fp = Application_Common_Storage::root();
 
         $dbAudioPath = $md['MDATA_KEY_FILEPATH'];
         $fullpath = self::joinStoragePath($fp, $dbAudioPath);
@@ -294,7 +294,7 @@ class FileDataHelper
         $file = Application_Model_StoredFile::RecallById($trackid);
         $md = $file->getMetadata();
 
-        $fp = Config::getStoragePath();
+        $fp = Application_Common_Storage::root();
 
         $dbAudioPath = $md['MDATA_KEY_FILEPATH'];
         $fullpath = self::joinStoragePath($fp, $dbAudioPath);
@@ -345,7 +345,7 @@ class FileDataHelper
         $file = Application_Model_StoredFile::RecallById($trackid);
         $md = $file->getMetadata();
 
-        $fp = Config::getStoragePath();
+        $fp = Application_Common_Storage::root();
 
         $artworkBasePath = self::joinStoragePath($fp, $md['MDATA_KEY_ARTWORK']);
         $audioPath = self::joinStoragePath($fp, $md['MDATA_KEY_FILEPATH']);

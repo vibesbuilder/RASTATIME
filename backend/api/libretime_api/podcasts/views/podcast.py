@@ -62,7 +62,16 @@ class PodcastEpisodeViewSet(viewsets.ModelViewSet):
         except ImportedPodcast.DoesNotExist:
             pass
 
-        storage_path = str(settings.CONFIG.storage.path)
+        # RASTATIME 2026-09-16 - the root is a setting; downloads pause
+        # while the library is being moved.
+        from ...storage import move as storage_move  # noqa: PLC0415
+        from ...storage.root import get_storage_root  # noqa: PLC0415
+        if storage_move.JOB.is_locked():
+            return Response(
+                {"error": "The media library is being moved - podcast downloads are paused."},
+                status=status.HTTP_409_CONFLICT,
+            )
+        storage_path = get_storage_root()
         owner_id = podcast.owner_id  # cc_subjs.id — may be None
 
         result = download_episode(

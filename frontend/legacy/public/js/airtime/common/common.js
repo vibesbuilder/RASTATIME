@@ -516,6 +516,16 @@ function loadPreflightWarnings() {
               $.i18n._("Check liquidsoap.log (Main Output device?), then restart PLAYOUT, then LIQUIDSOAP.")
             )
           );
+        } else if (w.warning_type === "storage_root_unavailable") {
+          // RASTATIME 2026-09-16: the media library root (Settings -> Local
+          // Machine -> Media Library Location) is missing or read-only.
+          $li.append(
+            document.createTextNode(
+              " " + $.i18n._("Media library location") + " " + (detail.root || "?") + " "
+              + (detail.exists ? $.i18n._("is not writable") : $.i18n._("is missing")) + ". "
+              + $.i18n._("Check the drive, then Settings → Local Machine.")
+            )
+          );
         } else {
           // Unknown warning type — render a generic fallback so future
           // backend additions surface even before the JS catches up.

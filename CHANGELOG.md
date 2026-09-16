@@ -9,6 +9,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Speicherort der Medienbibliothek als Einstellung mit Umzugs-Job (2026-09-16,
+  Stufe 2 von Arbeitsreihenfolge Punkt 7, Operator-Go)** — Settings → Local
+  Machine → „Media Library Location": aktueller Ort mit Herkunft, Dateizahl
+  und Größe; neues Ziel eingeben, „Check" (absolut, lokales Laufwerk — keine
+  Netzpfade in v1 —, anlegbar/beschreibbar, nicht in der alten Wurzel und
+  umgekehrt, freier Platz ≥ Bibliothek + 10 %), „Move library" mit Rückfrage,
+  Fortschrittsbalken, „Cancel move".  Wahrheit ist der cc_pref-Schlüssel
+  `local_storage_folder` (leer = `storage.path` aus `libretime.conf`, das nur
+  noch Startwert ist).  Auflöser: PHP `Application_Common_Storage::root()`
+  (alle 19 bisherigen `Config::getStoragePath()`-Aufrufe), API
+  `libretime_api.storage.root.get_storage_root()` (Datei-Download/-Löschen,
+  Podcast-Download, `storage_flatten`), PLAYOUT holt die Wurzel bei jedem
+  Refresh von `GET /api/v2/storage/location`.  Umzugs-Job im API-Prozess
+  (`libretime_api.storage.move`, Zustand als JSON in `local_storage_move`):
+  robocopy `/E /COPY:DAT /R:2 /W:2` (wiederaufnehmbar), Prüfung jeder
+  Quelldatei am Ziel (Größe) und jedes `cc_files`-Pfads, dann Umschalten;
+  Fehler/Abbruch lassen das Ziel teilkopiert, ein neuer Start setzt fort; ein
+  API-Neustart während der Kopie → „interrupted" (Heartbeat/PID).  Während
+  `copying`/`verifying` pausieren Importe: Upload (`MediaService`),
+  Import-Ordner-Scan (`LocalImportScanTask`), Show-Bild- und Logo-Upload
+  (PHP, `assertNotMoving()`), Podcast-Download (API, 409).  Die alte Kopie
+  bleibt liegen — Löschen durch den Operator (Entscheidung 2026-09-16).
+  Zugriff: PHP-Actions `preference/storage-location-{status,validate,move,
+  cancel}` hinter Login + CSRF, Proxy zur API mit dem API-Key; die neuen
+  API-Endpunkte `storage/location`, `storage/move/{validate,start,cancel,
+  status}` verlangen den API-Key.  Preflight-Warnung `storage_root_unavailable`
+  (Wurzel fehlt/schreibgeschützt) im Dashboard-Banner.  Tests:
+  `test_storage_location.py` (21, Umzug mit echtem robocopy),
+  `test_storage_root_follow.py` (10); API 97, Backend 614.  Handbuch
+  LOCAL_MACHINE §6 EN/DE/FR/ES, INSTALL.md, MIGRATION.md, ARCHITECTURE 0.34
+  (§23.33).  Aktiv nach Neustart von RASTATIME-API und RASTATIME-PLAYOUT (PHP
+  sofort).
+
 - **Speicherverlauf der Liquidsoap-Hauptinstanz im Playout-Log (2026-09-15,
   Operator-Go „günstige Mitte", `ac20f02`)** — Die Speicherwoche 2026-09-08..15 hatte
   keinen Verlauf: die Instanz lebte selten länger als einen Tag, und die

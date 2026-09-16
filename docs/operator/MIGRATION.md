@@ -396,12 +396,12 @@ directories under `imported\` are stripped (`--owner-id N` names one
 whose directory is already gone), so a purely numeric artist folder is
 never mistaken for an owner id and the command may be re-run.
 
-**New root (`D:\stor`):** until the Local Machine setting exists (stage
-2), point `storage.path` in `libretime.conf` at the new root, copy the
-library there (`robocopy <old> <new> /MIR`), restart RASTATIME-API,
-RASTATIME-WORKER, RASTATIME-ANALYZER and RASTATIME-PLAYOUT, and verify
-three tracks, a cover and the show image in the UI.  No database change
-is needed any more: every stored path is relative to the root.
+**New root (`D:\stor`):** move the library over the UI - Settings → Local
+Machine → **Media Library Location** (Check, Move library; see the manual
+chapter LOCAL_MACHINE §6).  The job copies, verifies and switches the
+setting; no `libretime.conf` edit, no service restart and no database
+change is needed - every stored path is relative to the root.  The
+previous copy stays for the operator to delete.
 
 ### 4.5 Restore media library into the new flattened layout
 

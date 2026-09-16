@@ -170,7 +170,7 @@ class CcFiles extends BaseCcFiles
             $md5 = md5_file($filePath);
 
             // RASTATIME 2026-09-16 - artwork lives in imported/artwork/ (no owner-id level)
-            $importedStorageDir = rtrim(Config::getStoragePath(), '/\\') . '/imported/';
+            $importedStorageDir = rtrim(Application_Common_Storage::root(), '/\\') . '/imported/';
             $importedDbPath = 'imported/';
             $artwork = FileDataHelper::saveArtworkData($filePath, $originalFilename, $importedStorageDir, $importedDbPath);
             $trackTypeId = FileDataHelper::saveTrackType();
@@ -250,7 +250,7 @@ class CcFiles extends BaseCcFiles
                     // before comparing — otherwise strpos returns false on Windows and the
                     // filepath column never gets populated.
                     $fullPath = str_replace('\\', '/', $fileArray['full_path']);
-                    $storDir  = str_replace('\\', '/', Config::getStoragePath());
+                    $storDir  = str_replace('\\', '/', Application_Common_Storage::root());
                     $pos = strpos($fullPath, $storDir);
 
                     if ($pos !== false) {
@@ -478,7 +478,7 @@ class CcFiles extends BaseCcFiles
      */
     public function getAbsoluteFilePath()
     {
-        $directory = Config::getStoragePath();
+        $directory = Application_Common_Storage::root();
         $filepath = $this->getDbFilepath();
 
         return Application_Common_OsPath::join($directory, $filepath);
@@ -489,7 +489,7 @@ class CcFiles extends BaseCcFiles
      */
     public function getAbsoluteArtworkPath()
     {
-        $directory = Config::getStoragePath();
+        $directory = Application_Common_Storage::root();
         $filepath = $this->getDbArtwork();
 
         return Application_Common_OsPath::join($directory, $filepath);

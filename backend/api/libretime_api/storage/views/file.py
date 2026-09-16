@@ -4,7 +4,6 @@ import os
 from os import remove
 from pathlib import Path
 
-from django.conf import settings
 from django.http import FileResponse, Http404, HttpResponse
 from django.utils.encoding import filepath_to_uri
 from django_filters import rest_framework as filters
@@ -13,6 +12,7 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import APIException
 
 from ...schedule.models import Schedule
+from ..root import get_storage_root
 from ..models import File
 from ..serializers import FileSerializer
 
@@ -57,7 +57,8 @@ class FileViewSet(viewsets.ModelViewSet):
         # RASTATIME: Serve file directly (Waitress / Windows).
         # Strip leading "/" from filepath — on Windows, Path() / "/foo"
         # treats the right side as absolute and discards the base.
-        storage_root = str(settings.CONFIG.storage.path)
+        # RASTATIME 2026-09-16 - the root is a setting (Local Machine)
+        storage_root = get_storage_root()
         raw_filepath = instance.filepath or ""
         rel_path = raw_filepath.lstrip("/")
         file_path = Path(storage_root) / rel_path
@@ -91,7 +92,7 @@ class FileViewSet(viewsets.ModelViewSet):
                 return
 
             rel = instance.filepath.lstrip("/") if instance.filepath else ""
-            path = os.path.join(settings.CONFIG.storage.path, rel)
+            path = os.path.join(get_storage_root(), rel)
 
             if not os.path.isfile(path):
                 logger.warning("file does not exist in storage: %d", instance.id)

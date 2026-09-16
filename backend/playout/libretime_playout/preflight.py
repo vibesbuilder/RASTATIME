@@ -79,6 +79,9 @@ class PreflightChecker:
     # RASTATIME 2026-09-07: no liquidsoap.exe at all, or a fresh PID on
     # every scan (NSSM throttling a crash loop).
     WARNING_TYPE_LIQUIDSOAP_UNAVAILABLE = "liquidsoap_unavailable"
+    #: RASTATIME 2026-09-16 - the media library root (Local Machine setting)
+    #: is missing or not writable (drive gone, wrong path).
+    WARNING_TYPE_STORAGE_ROOT = "storage_root_unavailable"
 
     # ------------------------------------------------------------------
     # Construction & lifecycle
@@ -194,6 +197,7 @@ class PreflightChecker:
 
         self._scan_linein_devices()
         self._scan_liquidsoap_health()
+        self._scan_storage_root()
 
     # ------------------------------------------------------------------
     # Liquidsoap process health (RASTATIME 2026-09-05)
@@ -303,6 +307,47 @@ class PreflightChecker:
         for pid in list(self._liquidsoap_memory_baseline):
             if pid not in seen:
                 del self._liquidsoap_memory_baseline[pid]
+
+    def _scan_storage_root(self) -> None:
+        """
+        RASTATIME 2026-09-16 - ``storage_root_unavailable``: the effective
+        media library root (``GET /api/v2/storage/location``) does not exist
+        or is not writable.  An old API without the endpoint, or an
+        unreachable one, submits nothing (the type is left as it was).
+        """
+        getter = getattr(self._api_client, "get_storage_location", None)
+        if getter is None:
+            return
+        try:
+            data = getter().json()
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            logger.debug("preflight: storage location unavailable: %s", exc)
+            return
+        if not isinstance(data, dict) or "root" not in data:
+            return
+        warnings: list[dict] = []
+        root = str(data.get("root") or "")
+        exists = bool(data.get("exists"))
+        writable = bool(data.get("writable"))
+        if not exists or not writable:
+            problem = "is missing" if not exists else "is not writable"
+            warnings.append({
+                "severity": "error",
+                "show_id": None,
+                "show_instance_id": None,
+                "starts_at": None,
+                "detail": {
+                    "root": root,
+                    "source": data.get("source"),
+                    "exists": exists,
+                    "writable": writable,
+                    "message": (
+                        f"Media library location {root} {problem} - check the drive, "
+                        "then Settings -> Local Machine."
+                    ),
+                },
+            })
+        self._submit_warnings(self.WARNING_TYPE_STORAGE_ROOT, str(uuid.uuid4()), warnings)
 
     def _liquidsoap_unavailable_warnings(
         self, infos: list["liquidsoap_health.ProcessInfo"],

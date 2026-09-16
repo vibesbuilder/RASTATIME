@@ -169,6 +169,106 @@ class PreferenceController extends Zend_Controller_Action
         Application_Model_Preference::SetStationFavicon('');
     }
 
+    // ------------------------------------------------------------------
+    // RASTATIME 2026-09-16 - Media Library Location (stage 2).  The page
+    // talks to these actions (operator login + CSRF); they proxy to the
+    // API on localhost with the API key, which never reaches the browser.
+    // ------------------------------------------------------------------
+
+    private const RASTATIME_API_BASE = 'http://127.0.0.1:8765/';
+
+    private function storageApi(string $method, string $path, ?array $body = null): array
+    {
+        $headers = [
+            'Authorization: Api-Key ' . (string) Config::get('general.api_key'),
+            'Accept: application/json',
+        ];
+        $opts = [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT        => 20,
+            CURLOPT_CONNECTTIMEOUT => 3,
+            CURLOPT_CUSTOMREQUEST  => $method,
+        ];
+        if ($body !== null) {
+            $opts[CURLOPT_POSTFIELDS] = json_encode($body);
+            $headers[] = 'Content-Type: application/json';
+        }
+        $opts[CURLOPT_HTTPHEADER] = $headers;
+        $curl = curl_init(self::RASTATIME_API_BASE . $path);
+        curl_setopt_array($curl, $opts);
+        $resp   = curl_exec($curl);
+        $status = (int) curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        curl_close($curl);
+        $data = is_string($resp) ? (json_decode($resp, true) ?: []) : [];
+        if ($status === 0) {
+            $status = 502;
+            $data = ['errors' => ['The RASTATIME API is not reachable.']];
+        }
+        return [$status, $data];
+    }
+
+    private function storageReply(int $status, array $data): void
+    {
+        $this->view->layout()->disableLayout();
+        $this->_helper->viewRenderer->setNoRender(true);
+        $this->getResponse()->setHttpResponseCode($status);
+        $this->_helper->json->sendJson($data);
+    }
+
+    private function storageGuardPost(): bool
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->storageReply(405, ['errors' => ['method-not-allowed']]);
+            return false;
+        }
+        if (!SecurityHelper::verifyCSRFToken($this->_getParam('csrf_token'))) {
+            $this->storageReply(403, ['errors' => ['CSRF token did not match.']]);
+            return false;
+        }
+        return true;
+    }
+
+    /** GET /preference/storage-location-status */
+    public function storageLocationStatusAction(): void
+    {
+        [$status, $data] = $this->storageApi('GET', 'api/v2/storage/location');
+        $this->storageReply($status, $data);
+    }
+
+    /** POST /preference/storage-location-validate  folder=... */
+    public function storageLocationValidateAction(): void
+    {
+        if (!$this->storageGuardPost()) {
+            return;
+        }
+        $folder = trim((string) $this->_getParam('folder', ''));
+        [$status, $data] = $this->storageApi('POST', 'api/v2/storage/move/validate', ['path' => $folder]);
+        $this->storageReply($status, $data);
+    }
+
+    /** POST /preference/storage-location-move  folder=...  (starts or resumes the copy) */
+    public function storageLocationMoveAction(): void
+    {
+        if (!$this->storageGuardPost()) {
+            return;
+        }
+        $folder = trim((string) $this->_getParam('folder', ''));
+        Logging::info('Operator started a media library move to ' . $folder);
+        [$status, $data] = $this->storageApi('POST', 'api/v2/storage/move/start', ['path' => $folder]);
+        $this->storageReply($status, $data);
+    }
+
+    /** POST /preference/storage-location-cancel */
+    public function storageLocationCancelAction(): void
+    {
+        if (!$this->storageGuardPost()) {
+            return;
+        }
+        Logging::info('Operator cancelled the media library move');
+        [$status, $data] = $this->storageApi('POST', 'api/v2/storage/move/cancel');
+        $this->storageReply($status, $data);
+    }
+
     /**
      * RASTATIME 2026-05-16 - Save the Local Import Folder path.
      *
@@ -1036,6 +1136,7 @@ class PreferenceController extends Zend_Controller_Action
         }
 
         try {
+            Application_Common_Storage::assertNotMoving();   // RASTATIME 2026-09-16
             // MIME-typed extension (re-uses the same allow-list as
             // Rest_ShowImageController to stay consistent).
             $finfo = finfo_open();
@@ -1051,7 +1152,7 @@ class PreferenceController extends Zend_Controller_Action
             $ext = $extensions[$mime];
 
             // RASTATIME 2026-09-16 - no owner-id level, path stored root-relative.
-            $dir = rtrim(Config::getStoragePath(), '/\\') . '/imported/auto-dj-logos';
+            $dir = rtrim(Application_Common_Storage::root(), '/\\') . '/imported/auto-dj-logos';
             if (!is_dir($dir) && !mkdir($dir, 0777, true)) {
                 throw new Exception('Failed to create logo storage directory.');
             }

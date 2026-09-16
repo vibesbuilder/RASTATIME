@@ -416,7 +416,61 @@ Sie den Besitzer vor dem Auslösen des Imports.
 
 ---
 
-## 6. Aufnahme-Ordner (verwandt)
+## 6. Speicherort der Medienbibliothek
+
+Seit dem 16.09.2026 ist der Ordner, in dem die Medienbibliothek liegt
+(importierte Titel, Cover, Show-Bilder), eine Einstellung auf dieser
+Seite und keine Zeile in `libretime.conf` mehr. Die Konfigurationsdatei
+liefert nur den Anfangswert; sobald Sie die Bibliothek einmal verschoben
+haben, gilt die Einstellung.
+
+Der Abschnitt zeigt den **aktuellen Speicherort**, woher der Wert
+stammt (Einstellung oder Konfigurationsdatei), die Zahl der Dateien und
+die Größe der Bibliothek. So verschieben Sie sie:
+
+1. Geben Sie den **neuen Speicherort** ein - einen absoluten Pfad auf
+   einem lokalen Laufwerk dieses Rechners, zum Beispiel `D:\stor`. Der
+   Ordner wird bei Bedarf angelegt. Netzlaufwerke werden nicht
+   unterstützt.
+2. Klicken Sie auf **Prüfen**. RASTATIME bestätigt, dass es dort
+   schreiben kann und dass genug freier Platz vorhanden ist (die
+   Bibliothek plus zehn Prozent).
+3. Klicken Sie auf **Bibliothek verschieben** und bestätigen Sie. Ein
+   Fortschrittsbalken begleitet die Kopie.
+
+Was während des Verschiebens passiert:
+
+- Stream, Sendeplan, Aufnahmen und der lokale Monitor laufen weiter;
+  nichts sendet direkt aus dem Bibliotheksordner, das Playout spielt
+  aus seinem Cache.
+- Importe pausieren: Uploads, die Prüfung des lokalen Import-Ordners,
+  Podcast-Downloads und Bild-Uploads lehnen mit einer kurzen Meldung
+  ab, bis der Umzug fertig ist.
+- RASTATIME kopiert die Bibliothek mit robocopy, prüft dann, dass jede
+  Datei in der richtigen Größe angekommen ist und dass jeder Titel der
+  Datenbank am neuen Ort gefunden wird. Erst dann schaltet es die
+  Einstellung um. Web-Anwendung und API folgen sofort, das Playout beim
+  nächsten Aktualisieren des Sendeplans (innerhalb von zwei Minuten).
+- Die **bisherige Kopie bleibt auf der Platte**. Löschen Sie sie
+  selbst, sobald Sie zufrieden sind - und nur ihren Inhalt, nicht den
+  in `libretime.conf` genannten Ordner, weil die Web-Anwendung beim
+  Start prüft, dass dieser Ordner existiert.
+
+Startet der Dienst RASTATIME-API während einer laufenden Kopie neu,
+zeigt der Abschnitt den Umzug als *unterbrochen*. Geben Sie dasselbe
+Ziel erneut ein und verschieben Sie noch einmal: Die Kopie setzt dort
+fort, wo sie stehen blieb, bereits kopierte Dateien werden übersprungen.
+**Umzug abbrechen** stoppt eine laufende Kopie; das bisher Kopierte
+bleibt am Ziel, ein späterer Umzug setzt darauf auf.
+
+Sollte der eingestellte Speicherort einmal fehlen oder schreibgeschützt
+sein - eine nicht eingebundene Platte, ein umbenannter Ordner - zeigt
+das Dashboard-Banner *Media library location … is missing*, bis er
+wieder da ist.
+
+---
+
+## 7. Aufnahme-Ordner (verwandt)
 
 Einstellungen → Lokale Maschine hat **zwei** Aufnahme-Ausgabe-
 Ordner:
@@ -453,7 +507,7 @@ Import-Ordner.
 
 ---
 
-## 7. Häufig gestellte Fragen
+## 8. Häufig gestellte Fragen
 
 ### "Mein USB-Mikrofon erscheint in Windows, aber nicht in RASTATIME."
 

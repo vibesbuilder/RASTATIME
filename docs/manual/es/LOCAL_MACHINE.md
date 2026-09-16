@@ -331,7 +331,60 @@ Los archivos importados pertenecen al
 
 ---
 
-## 6. Carpetas de grabación (relacionadas)
+## 6. Ubicación de la biblioteca de medios
+
+Desde el 16/09/2026 la carpeta que contiene la biblioteca de medios
+(pistas importadas, carátulas, imágenes de programas) es un ajuste de
+esta página y ya no una línea de `libretime.conf`. El archivo de
+configuración solo aporta el valor inicial; en cuanto haya movido la
+biblioteca una vez, manda el ajuste.
+
+La sección muestra la **ubicación actual**, de dónde procede ese valor
+(el ajuste o el archivo de configuración), el número de archivos y el
+tamaño de la biblioteca. Para moverla:
+
+1. Escriba la **nueva ubicación**: una ruta absoluta en un disco local
+   de esta máquina, por ejemplo `D:\stor`. La carpeta se crea si hace
+   falta. No se admiten rutas de red.
+2. Pulse **Comprobar**. RASTATIME confirma que puede escribir allí y
+   que el disco tiene espacio libre suficiente (la biblioteca más un
+   diez por ciento).
+3. Pulse **Mover biblioteca** y confirme. Una barra de progreso sigue
+   la copia.
+
+Qué ocurre durante el traslado:
+
+- La emisión, la programación, las grabaciones y el monitor local
+  siguen funcionando; nada se emite directamente desde la carpeta de la
+  biblioteca, la reproducción usa su caché.
+- Las importaciones se pausan: las subidas, el rastreo de la carpeta de
+  importación local, las descargas de podcasts y las subidas de imágenes
+  se rechazan con un breve mensaje hasta que termina el traslado.
+- RASTATIME copia la biblioteca con robocopy, comprueba después que cada
+  archivo ha llegado con el tamaño correcto y que cada pista de la base
+  de datos se encuentra en el nuevo lugar. Solo entonces cambia el
+  ajuste. La aplicación web y la API lo siguen al instante; la
+  reproducción, en su siguiente actualización de la programación (en
+  menos de dos minutos).
+- La **copia anterior permanece en el disco**. Bórrela usted mismo
+  cuando esté conforme, y solo su contenido, no la carpeta indicada en
+  `libretime.conf`, porque la aplicación web comprueba al arrancar que
+  esa carpeta existe.
+
+Si el servicio RASTATIME-API se reinicia durante una copia, la sección
+muestra el traslado como *interrumpido*. Escriba el mismo destino y
+mueva de nuevo: la copia continúa donde se detuvo y omite los archivos
+ya copiados. **Cancelar traslado** detiene una copia en curso; lo ya
+copiado permanece en el destino y un traslado posterior parte de ahí.
+
+Si la ubicación configurada faltara o fuera de solo lectura (un disco
+no montado, una carpeta renombrada), el banner del panel muestra
+*Media library location … is missing* hasta que vuelva a estar
+disponible.
+
+---
+
+## 7. Carpetas de grabación (relacionadas)
 
 Configuración → Máquina local tiene **dos** carpetas de salida
 de grabación:
@@ -367,7 +420,7 @@ descarga / archivo.
 
 ---
 
-## 7. Preguntas frecuentes
+## 8. Preguntas frecuentes
 
 ### "Mi micro USB aparece en Windows, pero no en RASTATIME."
 

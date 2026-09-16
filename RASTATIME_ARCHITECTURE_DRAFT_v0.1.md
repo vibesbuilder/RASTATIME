@@ -1,10 +1,14 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.33
+Draft version: 0.34
 Date: 2026-09-16
 
 > **Revision history**
+> - **0.34 (2026-09-16)** — **Storage location as a setting** (§23.33):
+>   `local_storage_folder` overrides `storage.path`; PHP, API and playout
+>   resolve it at run time; a copy → verify → switch job behind Settings →
+>   Local Machine moves the library without restarts or database changes.
 > - **0.33 (2026-09-16)** — **Media library layout** (§23.32): no
 >   `imported/<owner-id>/` level, every stored path root-relative
 >   (`cc_files.filepath`/`artwork`, `cc_show.image_path`, the auto-dj
@@ -4891,3 +4895,53 @@ robocopy.  Effective for new imports as soon as the PHP files are live
 (no OpCache) and, for podcast downloads, after a RASTATIME-API restart; the
 migration itself is run once in a quiet moment with a database dump
 beforehand.
+
+
+### 23.33 Storage Location as a Setting — Copy, Verify, Switch (2026-09-16)
+
+**Context.**  With every stored path root-relative (§23.32) the root can
+move.  The operator wants to choose it under Settings → Local Machine
+like the Import Folder, with the move to the new `D:` RAID disk as the
+first use.
+
+**Decision.**
+- *Truth:* site preference `local_storage_folder`; empty means
+  `storage.path` from `libretime.conf`, which is thereby the initial
+  value only.  `conf.php` keeps checking at bootstrap that the configured
+  folder exists, so the old root directory stays (empty) after a move.
+- *Resolvers:* PHP `Application_Common_Storage::root()` (per request,
+  trailing slash like the config accessor had; all former
+  `Config::getStoragePath()` readers switched); API
+  `storage.root.get_storage_root()` (15 s cache; file download/destroy,
+  podcast download, `storage_flatten`); PLAYOUT `_refresh_storage_root()`
+  every refresh from `GET /api/v2/storage/location` (direct file access;
+  the API download remains the fallback); the analyzer gets its target
+  per import message from PHP.
+- *Job* (`storage.move.MoveJob`, one per API process, state persisted as
+  JSON in `local_storage_move` with pid + heartbeat): validate (absolute
+  local path, no UNC, not nested either way, creatable/writable probe,
+  free space ≥ library × 1.1 + 100 MB) → `copying` with robocopy
+  `/E /COPY:DAT /DCOPY:T /R:2 /W:2` (resumable) and a progress walk every
+  3 s → `verifying` (every source file present at the target with the
+  same size, every `cc_files` path resolvable) → `switched` (setting set,
+  `old_copy` recorded).  `failed`/`cancelled` leave the partial target for
+  a resume; a dead process (API restart) shows as `interrupted`.
+- *Import pause* while `copying`/`verifying`: PHP
+  `Application_Common_Storage::assertNotMoving()` in the upload path,
+  show-image and auto-dj logo uploads, `LocalImportScanTask::shouldBeRun`;
+  the API refuses podcast downloads with 409.
+- *Access:* the page calls PHP actions behind login + CSRF
+  (`preference/storage-location-*`) which proxy to the API on localhost
+  with the API key; the API endpoints use the default permission (API
+  key or session) — unlike the unauthenticated soundcard endpoints.
+- *Watchdog:* preflight `storage_root_unavailable` (error) when the
+  effective root is missing or read-only; dashboard banner branch.
+
+**Rejected.**  A delete button for the old copy (operator deletes by
+hand); network paths in v1; moving the recording and import folders
+along (separate settings, operator changes them by hand).
+
+**Consequences.**  A move needs no `libretime.conf` edit, no restart
+and no database change; the stream is unaffected, imports pause for
+the copy.  The first production move (C:\rastatime\media → D:\stor)
+is the acceptance test of this section.

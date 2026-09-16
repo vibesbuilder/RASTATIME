@@ -257,6 +257,153 @@ $rtTip = function ($text) {
     </fieldset>
 
     <?php
+    // RASTATIME 2026-09-16 - Media Library Location (stage 2 of the storage
+    // location work).  The library root is a setting (cc_pref
+    // local_storage_folder, empty = storage.path from libretime.conf).  The
+    // move job (copy -> verify -> switch) runs in the API; this section talks
+    // to PreferenceController proxies (login + CSRF).  The previous copy is
+    // left on disk for the operator to delete (decision 2026-09-16).
+    ?>
+    <h3><?php echo _("Media Library Location") ?><span class="help_icon" data-rt-tip="<?php echo $rtTip(_("Where the media library (imported tracks, covers, show images) lives on this machine.  Moving it copies everything to the new folder, verifies the copy, then switches all services over - the stream keeps running, only imports pause meanwhile.  The previous copy stays on disk until you delete it yourself.  Local drives only.")); ?>"></span></h3>
+
+    <fieldset class="padded stream-setting-global">
+        <dl class="zend_form">
+            <dt><?php echo _("Current location") ?></dt>
+            <dd>
+                <span id="storage_current" style="font-family: monospace;">…</span>
+                <div id="storage_current_meta" style="font-size: 0.9em; color: #555; padding-top: 0.2em;"></div>
+            </dd>
+
+            <dt><label for="storage_new_folder"><?php echo _("New location") ?></label></dt>
+            <dd>
+                <input id="storage_new_folder" type="text" class="input_text"
+                       style="width: 372px; max-width: 100%;" placeholder="D:\stor" /><span class="help_icon" data-rt-tip="<?php echo $rtTip(_("Absolute path on a local drive, for example D:\stor.  The folder is created if needed.  Check first: the check confirms free space and write access.")); ?>"></span>
+            </dd>
+
+            <dt></dt>
+            <dd style="padding-top: 0.5em;">
+                <button id="storage_check" type="button" class="btn"><?php echo _("Check") ?></button>
+                <button id="storage_move" type="button" class="btn" disabled><?php echo _("Move library") ?></button>
+                <button id="storage_cancel" type="button" class="btn" style="display: none;"><?php echo _("Cancel move") ?></button>
+                <span id="storage_status_msg" style="margin-left: 1em;"></span>
+            </dd>
+
+            <dt></dt>
+            <dd>
+                <div id="storage_progress" style="display: none; width: 372px; max-width: 100%; height: 10px; border: 1px solid #888; background: #eee;">
+                    <div id="storage_progress_bar" style="height: 100%; width: 0; background: #5cb85c;"></div>
+                </div>
+                <div id="storage_move_info" style="font-size: 0.9em; color: #555; padding-top: 0.3em;"></div>
+            </dd>
+        </dl>
+    </fieldset>
+
+    <script>
+    (function ($) {
+        var pollTimer = null;
+        var lastMove = null;
+
+        function mb(bytes) { return Math.round((bytes || 0) / 1048576).toLocaleString() + " MB"; }
+        function msg(text, ok) { $("#storage_status_msg").text(text).css("color", ok ? "#5cb85c" : "#d9534f"); }
+        function post(action, data, done, fail) {
+            data.csrf_token = $("#csrf").val();
+            $.post(baseUrl + "preference/" + action, data, done, "json").fail(function (xhr) {
+                var errs = (xhr.responseJSON && xhr.responseJSON.errors) || ["Request failed."];
+                fail(errs.join(" "));
+            });
+        }
+
+        function renderStatus(d) {
+            var src = d.source === "setting" ? "<?php echo addslashes(_('from the Local Machine setting')) ?>"
+                                              : "<?php echo addslashes(_('from libretime.conf')) ?>";
+            $("#storage_current").text(d.root || "?");
+            var meta = src + " · " + (d.library_files || 0) + " <?php echo addslashes(_('files')) ?>, " + mb(d.library_bytes);
+            if (d.exists === false) { meta += " · <?php echo addslashes(_('FOLDER MISSING')) ?>"; }
+            else if (d.writable === false) { meta += " · <?php echo addslashes(_('NOT WRITABLE')) ?>"; }
+            $("#storage_current_meta").text(meta);
+            renderMove(d.move || {state: "idle"});
+        }
+
+        function renderMove(m) {
+            lastMove = m;
+            var active = (m.state === "copying" || m.state === "verifying");
+            var info = "";
+            $("#storage_cancel").toggle(m.state === "copying");
+            $("#storage_check, #storage_new_folder").prop("disabled", active);
+            $("#storage_move").prop("disabled", active || !$("#storage_move").data("ok"));
+            $("#storage_progress").toggle(active);
+            if (active) {
+                var pct = m.total_bytes ? Math.min(100, Math.round(100 * (m.done_bytes || 0) / m.total_bytes)) : 0;
+                $("#storage_progress_bar").css("width", pct + "%");
+                info = (m.state === "copying"
+                        ? "<?php echo addslashes(_('Copying')) ?> " + mb(m.done_bytes) + " / " + mb(m.total_bytes) + " (" + pct + " %)"
+                        : "<?php echo addslashes(_('Verifying the copy …')) ?>")
+                     + " → " + m.target;
+                if (!pollTimer) { pollTimer = setInterval(load, 2000); }
+            } else {
+                if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+                if (m.state === "switched") {
+                    info = "<?php echo addslashes(_('The library is now at')) ?> " + m.target + ". "
+                         + "<?php echo addslashes(_('The previous copy at')) ?> " + m.old_copy + " <?php echo addslashes(_('is still on disk - delete it yourself once everything works.')) ?>";
+                } else if (m.state === "interrupted" || m.state === "failed" || m.state === "cancelled") {
+                    info = "<?php echo addslashes(_('Last move')) ?> (" + m.state + "): " + (m.error || "") + " "
+                         + "<?php echo addslashes(_('Enter the same target and move again to resume.')) ?>";
+                    if (m.target && !$("#storage_new_folder").val()) { $("#storage_new_folder").val(m.target); }
+                }
+            }
+            $("#storage_move_info").text(info);
+        }
+
+        function load() {
+            $.getJSON(baseUrl + "preference/storage-location-status", renderStatus).fail(function () {
+                $("#storage_current").text("?");
+                $("#storage_current_meta").text("<?php echo addslashes(_('The RASTATIME API is not reachable.')) ?>");
+            });
+        }
+
+        $("#storage_new_folder").on("input", function () {
+            $("#storage_move").data("ok", false).prop("disabled", true);
+            msg("", true);
+        });
+
+        $("#storage_check").on("click", function () {
+            msg("<?php echo addslashes(_('Checking …')) ?>", true);
+            post("storage-location-validate", {folder: $("#storage_new_folder").val()}, function (r) {
+                if (r.ok) {
+                    msg("✓ " + "<?php echo addslashes(_('OK')) ?> – " + mb(r.free_bytes) + " <?php echo addslashes(_('free')) ?>, " + mb(r.needed_bytes) + " <?php echo addslashes(_('needed')) ?>", true);
+                    $("#storage_move").data("ok", true).prop("disabled", false);
+                } else {
+                    msg("✗ " + (r.errors || []).join(" "), false);
+                    $("#storage_move").data("ok", false).prop("disabled", true);
+                }
+            }, function (e) { msg("✗ " + e, false); });
+        });
+
+        $("#storage_move").on("click", function () {
+            var target = $("#storage_new_folder").val();
+            if (!confirm("<?php echo addslashes(_('Move the media library to')) ?> " + target + "?\n"
+                       + "<?php echo addslashes(_('Imports pause while it copies; the stream keeps running. The previous copy stays on disk.')) ?>")) {
+                return;
+            }
+            msg("<?php echo addslashes(_('Starting …')) ?>", true);
+            post("storage-location-move", {folder: target}, function (r) {
+                msg("", true);
+                renderMove(r.move || {state: "copying"});
+                load();
+            }, function (e) { msg("✗ " + e, false); });
+        });
+
+        $("#storage_cancel").on("click", function () {
+            if (!confirm("<?php echo addslashes(_('Cancel the move? Files copied so far stay at the target.')) ?>")) { return; }
+            post("storage-location-cancel", {}, function (r) { renderMove(r.move || {state: "cancelled"}); load(); },
+                 function (e) { msg("✗ " + e, false); });
+        });
+
+        load();
+    })(jQuery);
+    </script>
+
+    <?php
     // RASTATIME 2026-06-05 - 24/7 Recording section (Record-per-Hour).
     // Continuous hourly archive recorder (a Liquidsoap output.file on the
     // bus, rotating on the hour), independent of shows.  The playout

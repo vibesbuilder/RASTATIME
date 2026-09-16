@@ -342,7 +342,60 @@ défaut). Par défaut `admin`.
 
 ---
 
-## 6. Dossiers d'enregistrement (lié)
+## 6. Emplacement de la médiathèque
+
+Depuis le 16/09/2026, le dossier qui contient la médiathèque (titres
+importés, pochettes, images d'émission) est un réglage de cette page et
+non plus une ligne de `libretime.conf`. Le fichier de configuration ne
+fournit que la valeur initiale ; dès que vous avez déplacé la
+médiathèque une fois, le réglage l'emporte.
+
+La section affiche l'**emplacement actuel**, l'origine de cette valeur
+(le réglage ou le fichier de configuration), le nombre de fichiers et
+la taille de la médiathèque. Pour la déplacer :
+
+1. Saisissez le **nouvel emplacement** - un chemin absolu sur un disque
+   local de cette machine, par exemple `D:\stor`. Le dossier est créé
+   si nécessaire. Les chemins réseau ne sont pas pris en charge.
+2. Cliquez sur **Vérifier**. RASTATIME confirme qu'il peut y écrire et
+   que le disque a assez d'espace libre (la médiathèque plus dix pour
+   cent).
+3. Cliquez sur **Déplacer la médiathèque** et confirmez. Une barre de
+   progression suit la copie.
+
+Ce qui se passe pendant le déplacement :
+
+- Le flux, la grille, les enregistrements et le moniteur local
+  continuent ; rien n'est diffusé directement depuis le dossier de la
+  médiathèque, la diffusion lit depuis son cache.
+- Les imports sont en pause : les envois, l'analyse du dossier d'import
+  local, les téléchargements de podcasts et les envois d'images refusent
+  avec un court message jusqu'à la fin du déplacement.
+- RASTATIME copie la médiathèque avec robocopy, vérifie ensuite que
+  chaque fichier est arrivé avec la bonne taille et que chaque titre de
+  la base de données se trouve au nouvel endroit. Alors seulement il
+  bascule le réglage. L'application web et l'API suivent aussitôt, la
+  diffusion à son prochain rafraîchissement de la grille (sous deux
+  minutes).
+- La **copie précédente reste sur le disque**. Supprimez-la vous-même
+  une fois satisfait - et seulement son contenu, pas le dossier nommé
+  dans `libretime.conf`, car l'application web vérifie au démarrage que
+  ce dossier existe.
+
+Si le service RASTATIME-API redémarre pendant une copie, la section
+affiche le déplacement comme *interrompu*. Saisissez la même cible et
+déplacez de nouveau : la copie reprend là où elle s'était arrêtée, les
+fichiers déjà copiés sont ignorés. **Annuler le déplacement** arrête une
+copie en cours ; ce qui a déjà été copié reste à la cible et un
+déplacement ultérieur en repart.
+
+Si l'emplacement configuré venait à manquer ou à être en lecture seule
+- un disque non monté, un dossier renommé - la bannière du tableau de
+bord affiche *Media library location … is missing* jusqu'à son retour.
+
+---
+
+## 7. Dossiers d'enregistrement (lié)
 
 Paramètres → Machine locale a **deux** dossiers de sortie
 d'enregistrement :
@@ -381,7 +434,7 @@ téléchargement / archive, non auto-importés.
 
 ---
 
-## 7. Foire aux questions
+## 8. Foire aux questions
 
 ### "Mon micro USB apparaît dans Windows, mais pas dans RASTATIME."
 

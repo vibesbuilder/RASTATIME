@@ -647,7 +647,7 @@ class ApiController extends Zend_Controller_Action
                 throw new ZendActionHttpException($this, 400, 'ERROR: No ID was given.');
             }
 
-            $fp = Config::getStoragePath();
+            $fp = Application_Common_Storage::root();
 
             // $this->view->type = $type;
             $file = Application_Model_StoredFile::RecallById($trackid);
@@ -916,7 +916,7 @@ class ApiController extends Zend_Controller_Action
 
     public function mediaMonitorSetupAction()
     {
-        $this->view->stor = Config::getStoragePath();
+        $this->view->stor = Application_Common_Storage::root();
 
         $watchedDirsPath = [];
         $this->view->watched_dirs = $watchedDirsPath;

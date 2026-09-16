@@ -986,7 +986,7 @@ SQL;
         $displayTimezone = new DateTimeZone(Application_Model_Preference::GetUserTimezone());
         $utcTimezone = new DateTimeZone('UTC');
 
-        $fp = Config::getStoragePath();
+        $fp = Application_Common_Storage::root();
 
         foreach ($results['aaData'] as &$row) {
             $row['id'] = intval($row['id']);
@@ -1104,7 +1104,7 @@ SQL;
     {
         $audio_file = $tempFilePath;
 
-        $stor = Config::getStoragePath();
+        $stor = Application_Common_Storage::root();
         // check if "organize" dir exists and if not create one
         if (!file_exists($stor . '/organize')) {
             if (!mkdir($stor . '/organize', 0777)) {

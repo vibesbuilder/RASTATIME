@@ -43,3 +43,7 @@ class ApiClient(AbstractApiClient):
 
     def get_stream_state(self, **kwargs) -> Response:
         return self._request("GET", "/api/v2/stream/state", **kwargs)
+
+    def get_storage_location(self, **kwargs) -> Response:
+        """RASTATIME 2026-09-16 - effective media library root + move state."""
+        return self._request("GET", "/api/v2/storage/location", **kwargs)

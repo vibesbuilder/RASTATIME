@@ -351,6 +351,8 @@ class PlayoutScheduler:
 
         # RASTATIME 2026-09-13 - ICY metadata settings + show on air.
         self._sync_icy_metadata(events, now)
+        # RASTATIME 2026-09-16 - the library root is a setting; follow it.
+        self._refresh_storage_root()
 
         with self._lock:
             self._cancel_all_timers()
@@ -2453,6 +2455,27 @@ class PlayoutScheduler:
     # ------------------------------------------------------------------
     # RASTATIME 2026-09-13 - ICY metadata (Settings -> Streams)
     # ------------------------------------------------------------------
+
+    def _refresh_storage_root(self) -> None:
+        """
+        RASTATIME 2026-09-16 - the media library root is a Local Machine
+        setting (``local_storage_folder``); the API reports the effective
+        value.  Direct file access follows it, so a move over the UI needs no
+        playout restart.  Anything odd (old API, unreachable, mocked client)
+        keeps the current value - the API download stays the fallback.
+        """
+        getter = getattr(self._api_client, "get_storage_location", None)
+        if getter is None:
+            return
+        try:
+            data = getter().json()
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            logger.debug("storage location fetch failed: %s", exc)
+            return
+        root = data.get("root") if isinstance(data, dict) else None
+        if isinstance(root, str) and root and root != self._storage_path:
+            logger.info("Storage root for direct file access: %s (was %s)", root, self._storage_path)
+            self._storage_path = root
 
     def _sync_icy_metadata(self, events: Dict[str, object], now: datetime) -> None:
         """

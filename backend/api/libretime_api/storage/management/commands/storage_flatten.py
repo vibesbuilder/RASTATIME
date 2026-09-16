@@ -28,7 +28,6 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import List, Optional, Tuple
 
-from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError, CommandParser
 from django.db import connection, transaction
 
@@ -189,7 +188,8 @@ class Command(BaseCommand):
                             help="Owner id to strip from rows even when its directory is gone (repeatable).")
 
     def handle(self, *args, **options):
-        root = Path(options.get("root") or str(settings.CONFIG.storage.path))
+        from ...root import get_storage_root  # noqa: PLC0415
+        root = Path(options.get("root") or get_storage_root(refresh=True))
         if not root.is_dir():
             raise CommandError(f"storage root does not exist: {root}")
         plan = build_plan(root, options.get("owner_id") or [])

@@ -384,7 +384,56 @@ specific DJ, change the owner before triggering the import.
 
 ---
 
-## 6. Recording folders (related)
+## 6. Media Library Location
+
+Since 2026-09-16 the folder that holds the media library (imported
+tracks, covers, show images) is a setting on this page, not a line in
+`libretime.conf`. The configuration file only supplies the initial
+value; once you have moved the library, the setting wins.
+
+The section shows the **current location**, where that value comes
+from (the setting or the configuration file), the number of files and
+the size of the library. To move it:
+
+1. Enter the **new location** - an absolute path on a local drive of
+   this machine, for example `D:\stor`. The folder is created if it
+   does not exist. Network paths are not supported.
+2. Click **Check**. RASTATIME confirms that it can write there and
+   that the drive has enough free space (the library plus ten percent).
+3. Click **Move library** and confirm. A progress bar follows the
+   copy.
+
+What happens during the move:
+
+- The stream, the schedule, recordings and the local monitor keep
+  running; nothing is on air from the library folder itself, the
+  playout plays from its cache.
+- Imports pause: uploads, the Local Import Folder scan, podcast
+  downloads and image uploads refuse with a short message until the
+  move is done.
+- RASTATIME copies the library with robocopy, then verifies that every
+  file arrived with the right size and that every track in the
+  database can be found at the new place. Only then does it switch
+  the setting. The web application and the API follow at once, the
+  playout at its next schedule refresh (within two minutes).
+- The **previous copy stays on disk**. Delete it yourself once you are
+  satisfied - and delete only its contents, not the folder named in
+  `libretime.conf`, because the web application checks at start that
+  this folder exists.
+
+If the RASTATIME-API service restarts while a copy is running, the
+section shows the move as *interrupted*. Enter the same target and
+move again: the copy resumes where it stopped, files already copied
+are skipped. **Cancel move** stops a running copy; what was copied so
+far stays at the target and a later move resumes from there.
+
+Should the configured location ever be missing or read-only - a drive
+that is not mounted, a renamed folder - the dashboard banner shows
+*Media library location … is missing* until it is back.
+
+---
+
+## 7. Recording folders (related)
 
 Settings → Local Machine has **two** recording-output folders:
 
@@ -419,7 +468,7 @@ it into the Local Import Folder.
 
 ---
 
-## 7. Frequently-asked
+## 8. Frequently-asked
 
 ### "My USB mic shows up in Windows but not in RASTATIME."
 

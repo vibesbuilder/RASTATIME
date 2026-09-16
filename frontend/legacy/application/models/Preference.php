@@ -1944,6 +1944,24 @@ class Application_Model_Preference
         self::setValue('local_import_folder', trim((string) $value));
     }
 
+    // RASTATIME 2026-09-16 - Media Library Location (Settings -> Local
+    // Machine).  Empty = storage.path from libretime.conf.  The move job
+    // state is JSON written by the API (libretime_api.storage.move).
+    public static function getLocalStorageFolder()
+    {
+        return self::getValue('local_storage_folder');
+    }
+
+    public static function setLocalStorageFolder($value)
+    {
+        self::setValue('local_storage_folder', trim((string) $value));
+    }
+
+    public static function getLocalStorageMoveState()
+    {
+        return self::getValue('local_storage_move');
+    }
+
     public static function getLocalImportLastRun()
     {
         return self::getValue('local_import_last_run');

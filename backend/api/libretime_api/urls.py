@@ -21,6 +21,13 @@ from .history.router import urls as history_urls
 from .podcasts.router import urls as podcasts_urls
 from .schedule.router import urls as schedule_urls
 from .storage.router import urls as storage_urls
+from .storage.views.location import (
+    StorageLocationView,
+    StorageMoveCancelView,
+    StorageMoveStartView,
+    StorageMoveStatusView,
+    StorageMoveValidateView,
+)
 
 api_urls = []
 api_urls += core_urls
@@ -45,6 +52,12 @@ urlpatterns = [
         preflight_warnings_replace,
         name="preflight-warnings-replace",
     ),
+    # RASTATIME 2026-09-16 - Media Library Location (Settings -> Local Machine)
+    path("api/v2/storage/location", StorageLocationView.as_view(), name="storage-location"),
+    path("api/v2/storage/move/validate", StorageMoveValidateView.as_view(), name="storage-move-validate"),
+    path("api/v2/storage/move/start", StorageMoveStartView.as_view(), name="storage-move-start"),
+    path("api/v2/storage/move/cancel", StorageMoveCancelView.as_view(), name="storage-move-cancel"),
+    path("api/v2/storage/move/status", StorageMoveStatusView.as_view(), name="storage-move-status"),
     path("api/v2/streams/outputs", stream_outputs, name="stream-outputs"),
     path(
         "api/v2/streams/outputs/<str:output_id>",

@@ -1695,7 +1695,14 @@ Evaluierung 2026-09-15, Empfehlung Go in drei Stufen (wartet auf Go):
   Rückspielung).  *Empfehlung:* Go; Stufe 1 ist auch für den reinen Umzug nötig
   und kann sofort beginnen.
 
-**Stufe 2 im Detail (Evaluierung 2026-09-16, wartet auf Go):**
+**Stufe 2 umgesetzt 2026-09-16 (Operator-Go; Entscheidungen: alte Kopie löscht
+der Operator selbst, keine Netzlaufwerke in v1, Aufnahme-/Import-Ordner bleiben
+eigene Einstellungen; Commit-Hash im CHANGELOG „Added"):** Einstellung,
+Auflöser in PHP/API/PLAYOUT, Umzugs-Job, Import-Sperre, Preflight-Warnung,
+Handbuch.  **Abnahme offen:** nach Neustart von RASTATIME-API und
+RASTATIME-PLAYOUT der Umzug nach `D:\\stor` über die Oberfläche.
+
+**Stufe 2 im Detail (Evaluierung 2026-09-16):**
 
 *Wahrheit und Leser:* neuer cc_pref-Schlüssel `local_storage_folder`
 (leer = `storage.path` aus `libretime.conf`, das damit nur noch Startwert

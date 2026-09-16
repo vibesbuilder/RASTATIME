@@ -407,6 +407,9 @@ class LocalImportScanTask implements AirtimeTask
         if (empty($folder)) {
             return false;  // disabled
         }
+        if (Application_Common_Storage::isMoving()) {
+            return false;  // RASTATIME 2026-09-16 - library move in progress
+        }
         $lastRun = Application_Model_Preference::getLocalImportLastRun();
         return empty($lastRun)
             || (microtime(true) > $lastRun + self::LOCAL_IMPORT_INTERVAL_SECONDS);

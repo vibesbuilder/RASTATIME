@@ -206,7 +206,7 @@ class Application_Model_Systemstatus
 
     public static function GetDiskInfo()
     {
-        $storagePath = Config::getStoragePath();
+        $storagePath = Application_Common_Storage::root();
         $totalSpace = disk_total_space($storagePath);
 
         $partitions = [];

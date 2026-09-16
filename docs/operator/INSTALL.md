@@ -347,6 +347,12 @@ rabbitmq:
   password: <your-rabbitmq-password>
 ```
 
+> `storage.path` is the **initial** location of the media library.  Since
+> 2026-09-16 Settings → Local Machine → **Media Library Location** overrides it
+> once the operator has moved the library; keep the configured folder in
+> place (it may be empty) because the web application checks at start that
+> it exists.
+
 > The API port is NOT set in this file — it defaults to **8765** via the
 > `-ApiPort` parameter of `install-api.ps1` and is injected into the
 > services as an environment variable.
