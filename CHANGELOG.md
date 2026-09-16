@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Cue-Sidecars kennen den Aufnahmebeginn der Audiodatei (2026-09-16,
-  Operator-Go nach dem Cue-Marker-Test 7a)** — Befund: bei einer
+  Operator-Go nach dem Cue-Marker-Test 7a, `642dd0c`)** — Befund: bei einer
   angebrochenen ersten Stunde (Aufnahme startet mitten in der Stunde, täglich
   nach dem 04:00-Neustart) beginnt die Audiodatei nicht am Stundenanfang, die
   Marker zählen aber ab `hour_start`.  `CueWriter` schreibt jetzt beim ersten

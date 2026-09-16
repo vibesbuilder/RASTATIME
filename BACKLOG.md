@@ -813,7 +813,7 @@ Die Wiedervereinigung nach dem LIQUIDSOAP-Neustart (PLAYOUT 09:55:05
 „restarted under PLAYOUT", `recording.stop` an die Show-Aufnahme) hat die
 Stunden-Aufnahme nicht berührt.
 
-**Befund umgesetzt (Operator-Go 2026-09-16, Commit-Hash im CHANGELOG „Added"):**
+**Befund umgesetzt (Operator-Go 2026-09-16, `642dd0c`):**
 `audio_start` + `audio_start_offset` im Sidecar, aktiv nach PLAYOUT-Neustart.
 **Ursprünglicher Befund:** Bei einer angebrochenen
 ersten Stunde (Aufnahme startet mitten in der Stunde — täglich nach dem
