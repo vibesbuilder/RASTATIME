@@ -1375,7 +1375,7 @@ Die Lücke von damals (Async-Job/Progress-Infra) existiert seit dem
 Storage-Umzugs-Job nicht mehr — Stufe 1 (Manual Backup: DB im
 pg_dump-Custom-Format + alle Config-Dateien + Manifest als ein ZIP,
 Backup-Ordner als Einstellung, Liste + Download, Job im API-Prozess nach
-dem MoveJob-Muster) **gebaut 2026-09-16** (Commit-Hash im CHANGELOG
+dem MoveJob-Muster) **gebaut 2026-09-16** (`df53122`; Details im CHANGELOG
 „Added"; Settings → Backup, 5 API-Routen, PHP-Proxies, Handbuch-Kapitel
 BACKUP in 4 Sprachen, ARCHITECTURE §23.35).  DB-Zugangsdaten aus
 libretime.conf (Operator-Entscheidung).  Grundsatzfragen beantwortet:

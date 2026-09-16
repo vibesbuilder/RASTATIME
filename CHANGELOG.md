@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Settings → Backup: Datenbank + Konfiguration per Klick sichern
-  (2026-09-16, Arbeitsreihenfolge Punkt 10 Stufe 1, Operator-Go)** — Neue
+  (2026-09-16, Arbeitsreihenfolge Punkt 10 Stufe 1, Operator-Go, `df53122`)** — Neue
   Settings-Seite nach dem Muster der Media Library Location: Backup-Ordner
   als Einstellung (cc_pref `local_backup_folder`, Validierung wie beim
   Umzugsziel), Backup-Job im API-Prozess (Zustand in `local_backup_state`
