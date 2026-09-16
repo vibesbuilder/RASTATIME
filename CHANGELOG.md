@@ -161,7 +161,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **24/7-Aufnahme: ein Neustart innerhalb der Stunde überschrieb die
-  laufende Stundendatei (2026-09-16)** — Beim ersten automatischen
+  laufende Stundendatei (2026-09-16, `bfa216e`)** — Beim ersten automatischen
   Einstellungs-Neustart um 10:32 öffnete `recording_hourly` die Datei
   `10-00.mp3` neu und kürzte sie auf null; 10:00–10:32 waren weg (Teststunde).
   `output.file` bekommt `append=true`: die Datei der laufenden Stunde wird
