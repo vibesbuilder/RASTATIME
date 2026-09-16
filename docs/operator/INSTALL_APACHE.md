@@ -156,6 +156,43 @@ max_input_time      = 300
 These match the file-upload limits used by RASTATIME's legacy uploader
 and the analyzer's expected input size.
 
+### 3.1 CA bundle for outbound HTTPS (podcast feeds)
+
+PHP on Windows ships **without** a CA bundle.  Every outbound HTTPS request
+from the legacy frontend - above all the podcast RSS feeds read with
+SimplePie - then fails with `cURL error 60: SSL certificate ... unable to
+get local issuer certificate`, and the podcast editor shows an empty
+episode list (plus a DataTables "Requested unknown parameter 'guid'"
+warning).  Found 2026-09-16 on the studio machine: no podcast episode had
+been fetched since the migration.
+
+Put a bundle next to PHP and point both cURL and the OpenSSL stream
+wrapper at it:
+
+```powershell
+# either the Mozilla bundle from curl.se ...
+Invoke-WebRequest https://curl.se/ca/cacert.pem -OutFile C:\Tools\PHP\cacert.pem
+# ... or the copy that ships with the RASTATIME venv (certifi)
+Copy-Item C:\RASTATIME\.venv\Lib\site-packages\certifi\cacert.pem C:\Tools\PHP\cacert.pem
+```
+
+`C:\Tools\PHP\php.ini` (both keys exist commented out):
+
+```ini
+curl.cainfo    = "C:\Tools\PHP\cacert.pem"
+openssl.cafile = "C:\Tools\PHP\cacert.pem"
+```
+
+Restart `RASTATIME-APACHE` (`nssm restart RASTATIME-APACHE`).  Verify with
+the same PHP binary Apache uses:
+
+```powershell
+C:\Tools\PHP\php.exe -r "var_dump((bool) file_get_contents('https://cba.media/'));"
+```
+
+must print `bool(true)`.  Refresh the bundle about once a year (curl.se
+and certifi publish new ones several times a year).
+
 ## 4. Verify Apache starts cleanly (without registering a service)
 
 Open an **elevated** PowerShell:

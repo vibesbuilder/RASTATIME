@@ -560,6 +560,9 @@ curl.exe -i http://127.0.0.1:8765/health
 - Settings → Streams shows configured outputs
 - Settings → Local Machine shows the three folders (show recordings,
   permanent recordings, import inbox)
+- Podcasts → open an imported podcast: the episode list fills.  A fresh
+  PHP has no CA bundle and reads no HTTPS feed - see INSTALL_APACHE.md
+  §3.1 (missed on the 2026-08 migration, noticed 2026-09-16)
 
 ### 5.3 Telnet sanity-check
 ```powershell

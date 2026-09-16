@@ -160,6 +160,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Podcast-Episoden seit der Migration leer — PHP ohne CA-Bundle
+  (2026-09-16, Doku + Maschinen-Konfiguration)** — Befund beim Podcast-Test
+  des Operators auf der neuen Bibliothekswurzel: Doppelklick auf einen
+  Podcast → Lade-Symbol dreht endlos, DataTables meldet „Requested unknown
+  parameter 'guid' for row 0".  Ursache: `/rest/podcast/<id>/episodes`
+  liefert `[]`, weil SimplePie den RSS-Feed nicht lesen kann — PHP unter
+  Windows bringt kein CA-Bundle mit (`cURL error 60: unable to get local
+  issuer certificate`); letzter erfolgreicher Episoden-Import war der
+  17.06.2026, also vor der Migration.  Mit `curl.cainfo` und
+  `openssl.cafile` auf ein Bundle (`C:\\Tools\\PHP\\cacert.pem`, certifi
+  oder curl.se) liefert der Feed 20 Episoden (Probe mit dem Apache-PHP).
+  Kein Code-Fix; Doku INSTALL_APACHE §3.1, INSTALL §5.7 + Checkliste,
+  MIGRATION §5.2.  Aktiv nach php.ini-Änderung + APACHE-Neustart.
+
 - **24/7-Aufnahme: ein Neustart innerhalb der Stunde überschrieb die
   laufende Stundendatei (2026-09-16, `bfa216e`)** — Beim ersten automatischen
   Einstellungs-Neustart um 10:32 öffnete `recording_hourly` die Datei

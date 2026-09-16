@@ -633,6 +633,18 @@ Get-Service RabbitMQ, RASTATIME-ANALYZER
 If the RabbitMQ service crashes on start, re-register it with an
 explicit `RABBITMQ_BASE` (see §2.4).
 
+### 5.7 Podcast episode list stays empty (DataTables `guid` warning)
+
+Opening an imported podcast shows a spinning loader, no episodes and a
+DataTables warning "Requested unknown parameter 'guid' for row 0".
+`/rest/podcast/<id>/episodes` answers `201` with an empty list because
+PHP cannot verify the feed's HTTPS certificate: PHP on Windows has no CA
+bundle.  Install one as described in
+[INSTALL_APACHE.md §3.1](INSTALL_APACHE.md#31-ca-bundle-for-outbound-https-podcast-feeds)
+and restart `RASTATIME-APACHE`.  Auto-ingest of new episodes is affected
+the same way (the feed is read by PHP, only the download runs in the
+analyzer).
+
 ---
 
 ## 6. Post-Installation Checklist
@@ -645,6 +657,7 @@ After completing §4, verify each item:
 - [ ] `http://127.0.0.1:8765/api/v2/schema/swagger-ui` loads the API docs
 - [ ] The web UI loads at `http://<host>/` (Apache) and login works
 - [ ] A test upload leaves "Pending Import" and becomes "Ready" (analyzer round-trip)
+- [ ] Podcasts → open an imported podcast: the episode list fills (needs the PHP CA bundle, INSTALL_APACHE.md §3.1)
 - [ ] `C:\rastatime\logs\` contains `api-stdout.log` (non-empty after first request)
 - [ ] `pg_isready -h 127.0.0.1 -p 5432` succeeds
 - [ ] All services survive a `Restart-Computer` (auto-start verified)
