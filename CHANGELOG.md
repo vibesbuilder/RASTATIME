@@ -161,7 +161,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **Einstellungs-Neustart: ein erfolgreicher Neustart hielt die nächste
-  Änderung 30 Minuten zurück (2026-09-16)** — Live: Ordner der 24/7-Aufnahme
+  Änderung 30 Minuten zurück (2026-09-16, `4edc6ec`)** — Live: Ordner der 24/7-Aufnahme
   um 16:53 geändert → sofort übernommen; Bitrate 192 → 128 um 16:59:45
   gespeichert → erst um 17:24:00 übernommen.  Die 30-Minuten-Sperre in
   `_maybe_settings_restart()` (gedacht für fehlgeschlagene Versuche) zählte
