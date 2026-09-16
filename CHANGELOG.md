@@ -173,6 +173,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (Datei, Erstellzeit, Offset je Teil), `audio_start` ist der erste Teil.
   Tests `test_liquidsoap_config.py`, `test_cue_writer.py` (`3cb5e33`).  Aktiv nach
   PLAYOUT-Neustart (der das geänderte Skript selbst übernimmt, siehe „Added").
+  Live bestätigt 2026-09-16 12:37: PLAYOUT-Start 12:37:30 → Skript geändert →
+  ruhiger Moment → LIQUIDSOAP wieder oben 12:37:34; `12-00.mp3` (12:00:00,
+  54 MB ≈ 37,5 min) blieb unangetastet, `12-00.2.mp3` ab 12:37:32, Rotation
+  13:00:00 normal.
 
 ### Security
 

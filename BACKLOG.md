@@ -807,6 +807,11 @@ und behoben: `output.file` kürzte die laufende Stundendatei — `append=true`
 (`bfa216e`) half nicht (ffmpeg-Muxer), daher Fortsetzung in `<Stunde>-00.2.mp3`
 + `parts` im Sidecar (`3cb5e33`); außerdem übernimmt der Pfad jetzt auch ein beim
 PLAYOUT-Start geändertes Skript (`render_restart_pending`).
+**Live 2026-09-16 12:37 (Fortsetzungsteile):** PLAYOUT-Start 12:37:30 mit
+geändertem Skript → Neustart im ruhigen Moment, LIQUIDSOAP wieder oben
+12:37:34; `12-00.mp3` (ab 12:00:00, 54 MB) unversehrt, `12-00.2.mp3` ab
+12:37:32, Rotation 13:00 normal.  `parts` im Sidecar erscheint erst mit der
+nächsten Marke der Stunde (in Stunde 12 kam nach 12:37 keine mehr).
 
 ### ✅ Cue-Marker-Test der 24/7-Aufnahme (Arbeitsreihenfolge 7a, DONE 2026-09-16)
 
