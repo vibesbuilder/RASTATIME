@@ -28,7 +28,7 @@ festgelegt.  Jeder Punkt bekommt vor Implementierung die
 | 7 | ✅ Storage-Umbau (Root → D:\stor) | **DONE 2026-09-16** — Stufe 1 flach/relativ (`6059dc4`), Stufe 2 Speicherort als Local-Machine-Einstellung mit Umzugs-Job (`c0b3c70`), Umzug nach D:\stor per UI abgenommen 09:43 |
 | 7a | ✅ Cue-Marker-Test: 24/7-Aufnahme einschalten (Settings → Local Machine), Cue-Datei prüfen | **DONE 2026-09-16** — zwei Test-Shows 09:55–10:05 über die Stundengrenze: Paare mit Item-Kennung, kein überzähliger End-Marker, Offsets stimmen (Belege im Item „Cue-Marker-Test") |
 | 8 | ✅ Stream-Metadaten (Stream Label, Off Air, Show-Namen) | **DONE 2026-09-13** — Off-Air-Text bei Stille, Stream Label wirkt, Webstream-Titel durchgereicht (`b997a7a`); live abgenommen 2026-09-13/14 (Datei-Show und Webstream-Show) |
-| 9 | Recording-Loss bei Latency-Catchup | Playout/Liquidsoap |
+| 9 | ✅ Recording-Loss bei Latency-Catchup | **CLOSED 2026-09-16** — Beobachtungsfrist bis 15.09. sauber: Catchups seit 06.09. einstellig pro Tag, seit 13.09. keine; 24/7-Stundendateien vom 16.09. exakt 3600 s (Belege im Item) |
 | 10 | Backup/Restore via UI | Aktive Items |
 | 11 | Pypo-NSSM-Resilience | Playout/Liquidsoap |
 | 12 | Widgets | Aktive Items (in Arbeit) |
@@ -3258,7 +3258,19 @@ Trade-off: lokales Monitor-Speaker laeuft 500 ms hinter Stream/Recording.
 
 ---
 
-### 🟡 Liquidsoap Latency-Catchup unter System-Last verliert Recording-Audio (Phase-D)
+### ✅ Liquidsoap Latency-Catchup unter System-Last verliert Recording-Audio (Phase-D) — CLOSED 2026-09-16
+
+**Geschlossen 2026-09-16 (Arbeitsreihenfolge Punkt 9, Bedingung vom
+09.09. erfüllt):** Catchups pro Tag aus allen Liquidsoap-Logs seit dem
+01.09.: 02.–05.09. 100.000–162.000 (die `sync="cpu"`-Uhr, behoben 05.09.),
+06.09. 6, 08.09. 10, 10.09. 4, 11./12.09. je 2, seit 13.09. keine.  Die
+24/7-Aufnahme vom 16.09. (erster voller Tag nach dem Storage-Umbau) hat
+Stundendateien von 3599,9–3600,1 s (11, 13, 14, 15 Uhr); die durch
+Einstellungs-Neustarts geteilten Stunden 12 und 16 summieren sich auf
+3599,2 bzw. 3599,0 s (≈ 1 s Neustart-Lücke, kein Catchup-Verlust).  Die
+Ursache von Mai/Juni (7 min Verlust bei 96 Catchups/h) war die alte
+Hardware plus die Uhr-Konfiguration; beides ist weg.  Wieder öffnen,
+wenn eine Stundendatei ohne Neustart unter 3595 s fällt.
 
 **Beobachtung bis 2026-09-15 (Operator-Go 2026-09-09):** die Catchups
 („We must catchup") liefen am 2026-09-04 81.222-mal, am 2026-09-08
