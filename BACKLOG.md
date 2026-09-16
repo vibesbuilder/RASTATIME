@@ -25,7 +25,7 @@ festgelegt.  Jeder Punkt bekommt vor Implementierung die
 | 4 | ✅ `getSqlTypes()`-Cast (DATETIME → PG) | **DONE 2026-09-10** — `datetime` → `timestamp` (`cdc8f0b`) |
 | 5 | Show-Shift bei Overbook | Aktive Items — **für später gemerkt (Operator 2026-09-10)**, Neubewertung im Item (Stufe A/B) |
 | 6 | ✅ Seamless Bus-Mix | **CLOSED 2026-09-11** — alle drei Symptome durch die Liquidsoap-Migration erledigt (Belege im Item) |
-| 7 | Storage-Umbau (Root → D:\stor) | **entblockt — Platte geliefert 2026-09-02** |
+| 7 | ✅ Storage-Umbau (Root → D:\stor) | **DONE 2026-09-16** — Stufe 1 flach/relativ (`6059dc4`), Stufe 2 Speicherort als Local-Machine-Einstellung mit Umzugs-Job (`c0b3c70`), Umzug nach D:\stor per UI abgenommen 09:43 |
 | 7a | Cue-Marker-Test: 24/7-Aufnahme einschalten (Settings → Local Machine), Cue-Datei prüfen | **neu 2026-09-10 (Operator), nach dem Storage-Umbau** |
 | 8 | ✅ Stream-Metadaten (Stream Label, Off Air, Show-Namen) | **DONE 2026-09-13** — Off-Air-Text bei Stille, Stream Label wirkt, Webstream-Titel durchgereicht (`b997a7a`); live abgenommen 2026-09-13/14 (Datei-Show und Webstream-Show) |
 | 9 | Recording-Loss bei Latency-Catchup | Playout/Liquidsoap |
@@ -1699,8 +1699,13 @@ Evaluierung 2026-09-15, Empfehlung Go in drei Stufen (wartet auf Go):
 der Operator selbst, keine Netzlaufwerke in v1, Aufnahme-/Import-Ordner bleiben
 eigene Einstellungen; `c0b3c70`):** Einstellung,
 Auflöser in PHP/API/PLAYOUT, Umzugs-Job, Import-Sperre, Preflight-Warnung,
-Handbuch.  **Abnahme offen:** nach Neustart von RASTATIME-API und
-RASTATIME-PLAYOUT der Umzug nach `D:\\stor` über die Oberfläche.
+Handbuch.  **Abnahme 2026-09-16 09:43 (Operator, über die Oberfläche):**
+„Check" OK (1,9 TB frei), „Move library" → 2.489 Dateien / 4,5 GB in 9 s
+kopiert, geprüft, umgeschaltet; Wurzel `D:/stor` (Quelle: Einstellung);
+PLAYOUT folgte beim nächsten Refresh, Preflight ohne Warnung; danach
+Show-Logo, Cover und drei API-Downloads von der neuen Wurzel geprüft.  Alte
+Kopie unter `C:\\rastatime\\media` liegt noch (Operator löscht sie selbst,
+Erinnerung ab ~2026-09-23).  Damit ist Arbeitsreihenfolge Punkt 7 erledigt.
 
 **Stufe 2 im Detail (Evaluierung 2026-09-16):**
 
