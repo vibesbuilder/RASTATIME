@@ -1695,6 +1695,66 @@ Evaluierung 2026-09-15, Empfehlung Go in drei Stufen (wartet auf Go):
   Rückspielung).  *Empfehlung:* Go; Stufe 1 ist auch für den reinen Umzug nötig
   und kann sofort beginnen.
 
+**Stufe 2 im Detail (Evaluierung 2026-09-16, wartet auf Go):**
+
+*Wahrheit und Leser:* neuer cc_pref-Schlüssel `local_storage_folder`
+(leer = `storage.path` aus `libretime.conf`, das damit nur noch Startwert
+ist).  Ein Auflöser je Seite: PHP `Config::getStoragePath()` fragt zuerst die
+Einstellung (pro Request, wie `local_import_folder`); API/Worker
+`libretime_api.storage.root.get_storage_root()` (Einstellung → Config, 15 s
+Cache) an den drei Stellen `storage/views/file.py` (2×),
+`podcasts/views/podcast.py` und als Standard von `storage_flatten`; PLAYOUT
+holt die Wurzel bei jedem Refresh von `GET /api/v2/storage/location` (fällt
+ohnehin auf den API-Download zurück, wenn der Direktzugriff fehlschlägt);
+Analyzer bekommt das Ziel je Import aus PHP.  `conf.php` prüft beim Start
+weiter, dass der Konfig-Pfad existiert — das alte Wurzelverzeichnis bleibt
+daher als leerer Ordner stehen (die Löschfunktion leert nur den Inhalt).
+
+*Umzugs-Job (im API-Prozess, Thread; Zustand als JSON in cc_pref
+`local_storage_move`, überlebt einen API-Neustart als „unterbrochen →
+fortsetzen"):* 1 Prüfen (absolut, lokales Laufwerk — kein UNC in v1,
+anlegbar/beschreibbar per Testdatei, nicht in der alten Wurzel und
+umgekehrt, freier Platz ≥ Bibliotheksgröße + 10 %) → 2 Importe sperren (eine
+Prüfung `Application_Common_Storage::assertWritable()` in MediaService,
+LocalImportScanTask, Show-Bild- und Logo-Upload; Podcast-Download in der
+API) → 3 Kopieren mit `robocopy <alt> <neu> /E /COPY:DAT /R:2 /W:2 /NP`
+(wiederaufnehmbar, Fortschritt = Bytes im Ziel gegen Ausgangsgröße alle 2 s)
+→ 4 Prüfen (Dateizahl und Bytes gleich, jede `cc_files.filepath` im Ziel
+vorhanden) → 5 Umschalten (Einstellung setzen; PHP/API sofort, PLAYOUT beim
+nächsten Refresh) → 6 alte Kopie bleibt; Knopf „Alte Kopie löschen" mit
+Rückfrage, nur wenn Schritt 4 grün war.  Abbruch während 3 erlaubt (Ziel
+bleibt teilkopiert, ein neuer Start setzt fort); nach 5 kein Rückweg per
+Knopf, Rückfall = Einstellung leeren (alte Kopie liegt noch).
+
+*Zugriffsschutz:* Start/Abbruch/Löschen nur über PHP-Actions hinter Login +
+CSRF (wie `restart-audio-chain`); PHP ruft die API auf localhost mit dem
+API-Key auf.  Die API-Endpunkte `storage/location`, `storage/move` (POST
+start/cancel/delete-old, GET status) verlangen den API-Key — anders als die
+Soundkarten-Endpunkte, die ohne Auth auf 0.0.0.0:8765 antworten.
+
+*Oberfläche (Local Machine, Abschnitt „Media Library Location"):* aktueller
+Pfad, Herkunft (Einstellung/Konfiguration), Bibliotheksgröße, freier Platz am
+Ziel; Feld + „Prüfen" + „Verschieben" (Rückfrage), Fortschrittsbalken
+(Poll alle 2 s), danach Hinweis auf die alte Kopie mit Löschknopf; bei
+„unterbrochen" ein „Fortsetzen".  Tooltips per rtTooltip.  Preflight-Warnung
+`storage_root_unavailable` (Wurzel fehlt/nicht beschreibbar, z. B. Platte
+weg) im Dashboard-Banner.
+
+*Eingriff:* API ~350 Zeilen + Tests ~250; PHP ~350 (Config/Storage,
+Controller-Actions, Sperren, Seite + JS); PLAYOUT ~40 + Tests; Handbuch
+LOCAL_MACHINE EN/DE/FR/ES, INSTALL.md/MIGRATION.md (Konfig-Pfad = Startwert),
+CHANGELOG, ARCHITECTURE Minor (0.34).  *Dauer:* ~2 Tage Bau, Abnahme = Umzug
+nach `D:\stor` über die Oberfläche (4,3 GB ≈ 1 min Kopie).  *Risiken:*
+API-Neustart während der Kopie (wiederaufnehmbar), Defender-Echtzeitscan
+auf dem Ziel (Ausnahme setzen), ACL: Zielordner erbt vom Laufwerk
+(Authentifizierte Benutzer: Ändern — Backups ohne Erhöhung möglich, anders
+als die Podcast-Dateien von 2026-06), lange Pfade (robocopy kann sie,
+Prüfschritt nutzt `\\?\`-Präfix).
+*Sinn:* hoch (Operator-Wunsch, wiederholbar, kein Hand-Edit).
+*Empfehlung:* Go.  Offene Entscheidungen: (a) Löschen der alten Kopie per
+Knopf oder nur manuell; (b) Netzlaufwerke (UNC) in v1 ausschließen; (c)
+Aufnahme-/Import-Ordner bleiben eigene Einstellungen.
+
 *Nebenbefund (eigenes Thema):* Auf der Maschine läuft **Microsoft Defender**,
 nicht Bitdefender, und **keine einzige Pfad- oder Prozess-Ausnahme** ist
 gesetzt — die Liste aus MIGRATION.md §3.2 gilt damit für Defender und ist
