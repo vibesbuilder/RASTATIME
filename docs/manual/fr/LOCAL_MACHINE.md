@@ -74,6 +74,15 @@ comme sortie audio par défaut.
 
 ### Appliquer un changement — « Appliquer maintenant »
 
+> **Depuis le 16/09/2026, cela se fait tout seul.** Après
+> l'enregistrement, la diffusion remarque le périphérique modifié à son
+> prochain rafraîchissement de la grille (sous deux minutes) et
+> redémarre la chaîne audio au prochain moment calme - ou, avec un
+> programme 24/7, entre deux pistes fichier. Les auditeurs restent
+> connectés via les montages de secours. Il en va de même pour
+> l'enregistrement 24/7, la durée de crossfade et les sorties de flux.
+> **Appliquer maintenant** reste le moyen de forcer immédiatement.
+
 Enregistrer mémorise le périphérique ; cela ne déplace **pas**
 encore le moniteur local. Le moteur de diffusion compile le
 périphérique choisi dans son script Liquidsoap au démarrage du

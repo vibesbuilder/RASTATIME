@@ -114,6 +114,15 @@ Nützlich, wenn:
 
 ### Änderung anwenden — "Jetzt anwenden"
 
+> **Seit dem 16.09.2026 geschieht das von selbst.** Nach dem Speichern
+> bemerkt das Playout das geänderte Gerät bei der nächsten
+> Aktualisierung des Sendeplans (innerhalb von zwei Minuten) und startet
+> die Audio-Kette im nächsten ruhigen Moment neu - bei einem
+> 24/7-Programm zwischen zwei Datei-Titeln. Hörer bleiben über die
+> Standby-Mounts verbunden. Dasselbe gilt für die 24/7-Aufnahme, die
+> Crossfade-Dauer und die Stream-Ausgänge. **Jetzt anwenden** bleibt
+> der Weg, es sofort zu erzwingen.
+
 Speichern legt das Gerät ab; der lokale Monitor wechselt
 dadurch **noch nicht**. Die Playout-Engine kompiliert das
 gewählte Gerät beim Dienststart in ihr Liquidsoap-Skript, und

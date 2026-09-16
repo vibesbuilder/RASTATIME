@@ -75,6 +75,15 @@ ha marcado como salida de audio por defecto.
 
 ### Aplicar un cambio — «Aplicar ahora»
 
+> **Desde el 16/09/2026 esto ocurre por sí solo.** Tras guardar, la
+> reproducción detecta el dispositivo cambiado en su siguiente
+> actualización de la programación (en menos de dos minutos) y reinicia
+> la cadena de audio en el siguiente momento tranquilo, o, con una
+> programación 24/7, entre dos pistas de archivo. Los oyentes siguen
+> conectados a través de los montajes de reserva. Lo mismo vale para la
+> grabación 24/7, la duración del crossfade y las salidas de emisión.
+> **Aplicar ahora** sigue siendo la forma de forzarlo de inmediato.
+
 Guardar almacena el dispositivo; **todavía no** mueve el
 monitor local. El motor de emisión compila el dispositivo
 elegido en su script de Liquidsoap al arrancar el servicio, y

@@ -790,6 +790,18 @@ abgenommen:** Login über den Custom-Login der laufenden Show akzeptiert,
 Switcher `scheduled -> show` nach 22 ms, Audio nach dem 5-s-Puffer,
 Trennen → Timeout 5,0 s → `show off` + Resume an der richtigen Stelle.
 
+### ✅ Gerenderte Einstellungen ohne manuellen Neustart (DONE 2026-09-16)
+
+**Operator-Frage 2026-09-16:** „Muss ich nach dem Aktivieren/Deaktivieren des
+24/7-Recordings immer den Dienst neu starten?  Kann man das automatisch
+durchführen?" — Evaluierung: Go, auch für den Main Output.  Umgesetzt
+(Commit-Hash im CHANGELOG „Added"): Fingerprint der gerenderten
+Einstellungen, Abgleich bei jedem Refresh, geplanter Neustart im ruhigen
+Moment oder an der Titelgrenze.  Nicht umgesetzt (💡 bei Bedarf): Ein/Aus
+der Aufnahme ganz ohne Neustart per Telnet (`recording_hourly.start/stop`,
+Ordner als interaktive Variable) — ~1 Tag, Format/Bitrate bräuchten den
+Neustart trotzdem.
+
 ### ✅ Cue-Marker-Test der 24/7-Aufnahme (Arbeitsreihenfolge 7a, DONE 2026-09-16)
 
 **Ablauf:** Operator schaltet 24/7-Aufnahme ein (MP3 128 kbit/s,

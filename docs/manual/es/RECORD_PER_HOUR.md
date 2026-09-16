@@ -160,6 +160,15 @@ tarde, y un reproductor se sitúa entonces en
 
 ## 5. Aplicar los cambios
 
+> **Desde el 16/09/2026 no hace falta ningún reinicio manual.** La
+> reproducción detecta un cambio guardado en su siguiente actualización
+> de la programación (en menos de dos minutos), vuelve a generar el
+> script y reinicia Liquidsoap en el siguiente momento tranquilo, o, con
+> una programación 24/7, entre dos pistas de archivo. Los oyentes siguen
+> conectados a través de los montajes de reserva; la primera hora tras
+> el reinicio es un archivo parcial (véase `audio_start` en §4.1). Los
+> pasos siguientes siguen siendo la vía manual.
+
 Los ajustes 24/7 se leen al arrancar el playout y se integran
 en el script Liquidsoap. Tras guardar un cambio (Enable,
 carpeta, formato, tasa de bits), **reinicie el servicio de

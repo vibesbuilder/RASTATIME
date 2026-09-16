@@ -552,6 +552,40 @@ def _local_output_adaptive_enabled() -> bool:
     return raw not in ("false", "0", "no", "off")
 
 
+def _render_settings_fingerprint() -> Optional[str]:
+    """
+    RASTATIME 2026-09-16 - a hash of the operator settings that are baked
+    into rastatime.liq: the 24/7 recording (enabled, folder, format,
+    bitrate), the Main Output device, the crossfade duration and the stream
+    outputs.  The scheduler compares it on every refresh with the value of
+    the last render and lets the planned-restart path re-render and restart
+    LIQUIDSOAP when it changed (quiet moment or next track boundary), so an
+    operator no longer restarts services by hand after Save.  Only cheap
+    database reads - no device probe.  None when the ORM is unavailable.
+    """
+    import hashlib  # noqa: PLC0415
+    import json  # noqa: PLC0415
+
+    try:
+        from libretime_api.soundcard.models import SoundcardSettings  # noqa: PLC0415
+        from libretime_playout.liquidsoap_config import (  # noqa: PLC0415
+            read_hourly_recording_config_from_db,
+        )
+        row = SoundcardSettings.get_settings()
+        payload = {
+            "hourly": read_hourly_recording_config_from_db(),
+            "main_output": [row.main_output_id or "", row.main_output_name or ""],
+            "crossfade": _resolve_crossfade_seconds(),
+            "streams": _read_stream_outputs(),
+        }
+    except Exception as exc:  # pylint: disable=broad-exception-caught
+        logger.debug("render settings fingerprint unavailable: %s", exc)
+        return None
+    return hashlib.sha1(  # noqa: S324 - not security, a change detector
+        json.dumps(payload, sort_keys=True, default=str).encode("utf-8")
+    ).hexdigest()
+
+
 def _render_rastatime_liq_outcome(stream_outputs: List[Dict]) -> RenderOutcome:
     """
     Render ``rastatime.liq`` from the operator-configured environment +
@@ -1077,6 +1111,9 @@ def main() -> None:
         api_client_v1=api_client_v1,
         storage_path=storage_path,
         render_liquidsoap=render_for_restart,
+        # RASTATIME 2026-09-16 - settings baked into the .liq are applied by
+        # the playout itself (re-render + LIQUIDSOAP restart in a quiet moment).
+        render_settings_fingerprint=(_render_settings_fingerprint if django_ok else None),
         nightly_restart=nightly_policy,
         input_transition_seconds=_resolve_crossfade_seconds(),
         # RASTATIME 2026-09-13 - Stream Label / Off Air Metadata / station

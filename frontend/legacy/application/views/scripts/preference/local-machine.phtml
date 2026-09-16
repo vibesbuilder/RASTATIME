@@ -168,7 +168,7 @@ $rtTip = function ($text) {
                         <?php endif; ?>
 
                         <p class="rt-output-hint">
-                            <?php echo _("Saving stores the device. It becomes active for the local monitor after the audio chain restarts.") ?>
+                            <?php echo _("Saving stores the device. The playout applies it by itself in the next quiet moment (or at the next track boundary) - listeners stay connected via the standby mounts. Apply now forces it immediately.") ?>
                         </p>
                         <button id="soundcard_restart_chain" type="button" class="btn">
                             <?php echo _("Apply now (restarts audio chain)") ?>
@@ -611,7 +611,7 @@ $rtTip = function ($text) {
                 },
                 function (resp) {
                     if (resp && resp.ok) {
-                        msg.text("✓ Saved.  Restart the playout service to apply.")
+                        msg.text("✓ Saved.  The playout applies it in the next quiet moment (or at the next track boundary).")
                            .css("color", "#5cb85c");
                     } else {
                         msg.text("✗ " + (resp.error || "Save failed."))

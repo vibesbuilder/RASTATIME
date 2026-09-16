@@ -159,6 +159,15 @@ ein Player springt dann in dieser Datei zu `t - audio_start_offset`.
 
 ## 5. Änderungen anwenden
 
+> **Seit dem 16.09.2026 ist kein manueller Neustart mehr nötig.** Das
+> Playout bemerkt eine gespeicherte Änderung bei der nächsten
+> Aktualisierung des Sendeplans (innerhalb von zwei Minuten), rendert
+> das Skript neu und startet Liquidsoap im nächsten ruhigen Moment neu
+> - bei einem 24/7-Programm zwischen zwei Datei-Titeln. Hörer bleiben
+> über die Standby-Mounts verbunden; die erste Stunde nach dem Neustart
+> ist eine angebrochene Datei (siehe `audio_start` in §4.1). Die Schritte
+> unten bleiben der manuelle Weg.
+
 Die 24/7-Einstellungen werden beim Playout-Start gelesen und in
 das Liquidsoap-Skript eingebacken. Nachdem Sie eine Änderung
 gespeichert haben (Enable, Ordner, Format, Bitrate), **starten

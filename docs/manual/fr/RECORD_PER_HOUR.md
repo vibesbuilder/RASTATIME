@@ -163,6 +163,15 @@ plus tard, et un lecteur se positionne alors à
 
 ## 5. Appliquer les modifications
 
+> **Depuis le 16/09/2026, aucun redémarrage manuel n'est nécessaire.**
+> La diffusion remarque une modification enregistrée à son prochain
+> rafraîchissement de la grille (sous deux minutes), régénère le script
+> et redémarre Liquidsoap au prochain moment calme - ou, avec un
+> programme 24/7, entre deux pistes fichier. Les auditeurs restent
+> connectés via les montages de secours ; la première heure après le
+> redémarrage est un fichier partiel (voir `audio_start` au §4.1). Les
+> étapes ci-dessous restent la voie manuelle.
+
 Les réglages 24/7 sont lus au démarrage du playout et intégrés
 au script Liquidsoap. Après avoir enregistré une modification
 (Enable, dossier, format, débit), **redémarrez le service de

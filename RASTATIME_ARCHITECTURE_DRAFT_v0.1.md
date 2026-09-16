@@ -1,10 +1,15 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.34
+Draft version: 0.35
 Date: 2026-09-16
 
 > **Revision history**
+> - **0.35 (2026-09-16)** — **Rendered settings applied by the playout**
+>   (§23.34): a fingerprint of the settings baked into `rastatime.liq`
+>   (24/7 recording, Main Output, crossfade, stream outputs) is compared
+>   every refresh; a change re-renders and restarts LIQUIDSOAP through the
+>   planned-restart path (quiet moment or track boundary).
 > - **0.34 (2026-09-16)** — **Storage location as a setting** (§23.33):
 >   `local_storage_folder` overrides `storage.path`; PHP, API and playout
 >   resolve it at run time; a copy → verify → switch job behind Settings →
@@ -4945,3 +4950,33 @@ along (separate settings, operator changes them by hand).
 and no database change; the stream is unaffected, imports pause for
 the copy.  The first production move (C:\rastatime\media → D:\stor)
 is the acceptance test of this section.
+
+### 23.34 Rendered Settings Applied by the Playout (2026-09-16)
+
+**Context.**  Four operator settings are compiled into `rastatime.liq`
+at render time: the 24/7 recording (enabled, folder, format, bitrate),
+the Main Output device, the crossfade duration and the stream outputs.
+A change therefore needed RASTATIME-PLAYOUT (re-render) and
+RASTATIME-LIQUIDSOAP (reload) restarted by hand; the UI said so after
+Save, and the Main Output had an explicit "Apply now" button that
+restarts the chain immediately.
+
+**Decision.**  `__main__._render_settings_fingerprint()` hashes those
+settings from cheap database reads (no PortAudio probe).
+`PlayoutScheduler._maybe_settings_restart()` runs after every schedule
+refresh: the first value after a start is the baseline (the start just
+rendered it); a different value arms the existing planned-restart path
+(§23.27): `_perform_planned_restart` at once when nothing is on air and
+nothing starts within the quiet margin, otherwise `_boundary_restart_pending`
+and the restart at the next file-to-file boundary in `_on_file_start`.
+The re-render happens in-process (`render_for_restart`), so only
+LIQUIDSOAP restarts; the standby source keeps the listeners.  A failed
+attempt is retried after 30 minutes; a successful restart records the
+current fingerprint as the new baseline.  "Apply now" stays for the
+immediate case.
+
+**Consequences.**  Save is enough for the four settings; the change is
+live within two minutes plus the wait for a quiet moment or track
+boundary (the same guarantees as the nightly restart: name-safe Main
+Output or no restart, verified service state).  The first 24/7 hour
+after such a restart is a partial file (`audio_start` in the sidecar).

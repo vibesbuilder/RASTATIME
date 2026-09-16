@@ -9,6 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Gerenderte Einstellungen übernimmt das Playout selbst — kein manueller
+  Neustart mehr nach 24/7-Aufnahme, Main Output, Crossfade oder
+  Stream-Ausgängen (2026-09-16, Operator-Go)** — Diese Werte werden beim
+  Rendern in `rastatime.liq` gebacken; bisher hieß es nach dem Speichern
+  „Restart the playout service to apply" bzw. „Apply now".  Jetzt bildet
+  `__main__._render_settings_fingerprint()` einen Hash aus 24/7-Konfiguration,
+  Main-Output-Gerät, Crossfade-Dauer und Stream-Ausgängen (nur DB-Lesezugriffe,
+  keine Gerätesonde); `PlayoutScheduler._maybe_settings_restart()` vergleicht
+  ihn bei jedem Refresh mit dem Stand des letzten Renders (Basis = erster
+  Refresh nach dem Start) und nutzt bei Abweichung den Pfad des geplanten
+  Neustarts: sofort im ruhigen Moment, sonst an der nächsten Datei→Datei-
+  Grenze (Hörer über die Standby-Mounts verbunden); PLAYOUT rendert dabei
+  im Prozess neu, nur LIQUIDSOAP startet.  Fehlgeschlagene Versuche werden
+  nach 30 min wiederholt; nach einem erfolgreichen Neustart gilt der neue
+  Hash als Basis.  „Apply now" bleibt für den Sofort-Fall.  UI-Texte auf der
+  Local-Machine-Seite angepasst.  Tests `test_settings_restart.py` (8),
+  Backend 626.  Handbuch LOCAL_MACHINE §2 und RECORD_PER_HOUR §5
+  EN/DE/FR/ES, ARCHITECTURE 0.35 (§23.34).  Aktiv nach PLAYOUT-Neustart.
+
 - **Cue-Sidecars kennen den Aufnahmebeginn der Audiodatei (2026-09-16,
   Operator-Go nach dem Cue-Marker-Test 7a, `642dd0c`)** — Befund: bei einer
   angebrochenen ersten Stunde (Aufnahme startet mitten in der Stunde, täglich

@@ -153,6 +153,14 @@ after the 04:00 restart - starts later, and a player then seeks to
 
 ## 5. Applying changes
 
+> **Since 2026-09-16 no manual restart is needed.** The playout
+> notices a saved change at its next schedule refresh (within two
+> minutes), re-renders the script and restarts Liquidsoap in the next
+> quiet moment - or, with a 24/7 programme, between two file tracks.
+> Listeners stay connected via the standby mounts; the first hour
+> after the restart is a partial file (see `audio_start` in §4.1).
+> The steps below remain the manual way.
+
 The 24/7 settings are read when the playout starts and baked
 into the Liquidsoap script. After you Save a change (enable,
 folder, format, bitrate), **restart the playout service** so
