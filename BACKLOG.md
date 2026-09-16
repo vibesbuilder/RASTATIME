@@ -30,7 +30,7 @@ festgelegt.  Jeder Punkt bekommt vor Implementierung die
 | 8 | ✅ Stream-Metadaten (Stream Label, Off Air, Show-Namen) | **DONE 2026-09-13** — Off-Air-Text bei Stille, Stream Label wirkt, Webstream-Titel durchgereicht (`b997a7a`); live abgenommen 2026-09-13/14 (Datei-Show und Webstream-Show) |
 | 9 | ✅ Recording-Loss bei Latency-Catchup | **CLOSED 2026-09-16** — Beobachtungsfrist bis 15.09. sauber: Catchups seit 06.09. einstellig pro Tag, seit 13.09. keine; 24/7-Stundendateien vom 16.09. exakt 3600 s (Belege im Item) |
 | 10 | Backup/Restore via UI | Aktive Items |
-| 11 | Pypo-NSSM-Resilience | Playout/Liquidsoap |
+| 11 | ✅ Pypo-NSSM-Resilience | **CLOSED 2026-09-16** — Beobachtungsfrist bis 15.09. sauber: seit 09.09. 20 PLAYOUT-Starts gegen 20 angeforderte Shutdowns, kein ungeplanter Neustart (Belege im Item) |
 | 12 | Widgets | Aktive Items (in Arbeit) |
 | 13 | JavaScript-Stack-Modernisierung | Technical Debt (in Arbeit) |
 | 14 | **Testplan erstellen** | neu 2026-09-02 — siehe unten |
@@ -3552,7 +3552,17 @@ Windows-Anwendungsprotokoll, Quelle `nssm`, Ereignisse 1013/1014 (Exit-Code 2,
 Aktion Restart).  PLAYOUT selbst lief durch; Item 11 (NSSM-Resilience)
 betrifft PLAYOUT und ist davon nicht berührt.
 
-### 🟡 Pypo-NSSM-Service-Resilience untersuchen (Phase-D-Beobachtung)
+### ✅ Pypo-NSSM-Service-Resilience untersuchen (Phase-D-Beobachtung) — CLOSED 2026-09-16
+
+**Geschlossen 2026-09-16 (Arbeitsreihenfolge Punkt 11, Bedingung vom
+09.09. erfüllt):** `playout-stdout.log` seit dem 09.09.: 20 Zeilen
+„RASTATIME-PLAYOUT: running" gegen 20 „shutdown requested", jede
+„running"-Zeile folgt auf einen angeforderten Shutdown (alle Neustarts
+waren Operator-Neustarts nach Commits); über das ganze Log 55 gegen 54
+(die Differenz ist der erste Start des Logs).  `playout-stderr.log` enthält
+nur die fünf `NameError`-Tracebacks der Entwicklung vom 10.09. (behoben
+in `fec9df9`), nichts Neues.  Die Untersuchungsschritte unten bleiben als
+Rezept, falls PLAYOUT je wieder ungeplant fehlt.
 
 **Beobachtung bis 2026-09-15 (Operator-Go 2026-09-09):** im gesamten
 `playout-stdout.log` stehen 39 Starts gegen 38 angeforderte Shutdowns,
