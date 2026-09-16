@@ -176,7 +176,7 @@ separate storage volume or NAS using robocopy or a dedicated backup tool.
 
 > ⚠️ **Run the media copy from an ELEVATED shell (Administrator).**
 > Verified 2026-06-17: the podcast-feature downloads
-> (`imported/2/podcast_ep*.mp3`, ~33 files in `cc_files`) carry a
+> (`imported/podcast_ep*.mp3` — `imported/2/…` before 2026-09-16, ~33 files in `cc_files`) carry a
 > restrictive ACL with **no** access for the `studio` user — a
 > non-elevated robocopy **silently skips them** (exit code >= 8,
 > "Zugriff verweigert" in the log).  Administrators have full access

@@ -78,7 +78,8 @@ class Rest_ShowImageController extends Zend_Rest_Controller
         try {
             $con->beginTransaction();
 
-            $show->setDbImagePath($path);
+            // RASTATIME 2026-09-16 - stored relative to the storage root
+            $show->setDbImagePath(Application_Common_Storage::toRelative($path));
             $show->save();
 
             $con->commit();
@@ -154,8 +155,6 @@ class Rest_ShowImageController extends Zend_Rest_Controller
      */
     private function processUploadedImage($showId, $tempFilePath)
     {
-        $ownerId = RestAuth::getOwnerId();
-
         // Only accept files with a file extension that we support.
         $fileExtension = $this->getFileExtension($tempFilePath);
 
@@ -165,7 +164,8 @@ class Rest_ShowImageController extends Zend_Rest_Controller
             throw new Exception('Bad file extension.');
         }
 
-        $importedStorageDirectory = Config::getStoragePath() . 'imported/' . $ownerId . '/show-images/' . $showId;
+        // RASTATIME 2026-09-16 - no owner-id level
+        $importedStorageDirectory = rtrim(Config::getStoragePath(), '/\\') . '/imported/show-images/' . $showId;
 
         try {
             $importedStorageDirectory = $this->copyFileToStor($tempFilePath, $importedStorageDirectory, $fileExtension);
@@ -287,9 +287,8 @@ class Rest_ShowImageController extends Zend_Rest_Controller
      */
     public static function deleteShowImagesFromStor($showId)
     {
-        $ownerId = RestAuth::getOwnerId();
-
-        $importedStorageDirectory = Config::getStoragePath() . 'imported/' . $ownerId . '/show-images/' . $showId;
+        // RASTATIME 2026-09-16 - no owner-id level
+        $importedStorageDirectory = rtrim(Config::getStoragePath(), '/\\') . '/imported/show-images/' . $showId;
 
         Logging::info('Deleting images from ' . $importedStorageDirectory);
 

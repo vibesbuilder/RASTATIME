@@ -588,7 +588,8 @@ class ApiController extends Zend_Controller_Action
                 throw new ZendActionHttpException($this, 400, "ERROR: No show with ID {$showId} exists.");
             }
 
-            $path = $show->getDbImagePath();
+            // RASTATIME 2026-09-16 - image_path is root-relative (legacy rows may be absolute)
+            $path = Application_Common_Storage::toAbsolute($show->getDbImagePath());
 
             try {
                 $mime_type = mime_content_type($path);

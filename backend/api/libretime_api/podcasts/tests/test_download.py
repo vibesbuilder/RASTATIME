@@ -73,7 +73,7 @@ def test_download_writes_temp_file_inside_import_dir(
     )
 
     assert result["status"] == 1, result.get("error")
-    import_dir = tmp_path / "imported" / "podcast"
+    import_dir = tmp_path / "imported"
 
     # The regression guard: the temp file was born in the destination
     # directory (ACL inheritance), not in the system temp directory.
@@ -90,7 +90,7 @@ def test_download_writes_temp_file_inside_import_dir(
     from libretime_api.storage.models import File
 
     db_file = File.objects.get(id=result["fileid"])
-    assert db_file.filepath == "/imported/podcast/podcast_ep99_episode.mp3"
+    assert db_file.filepath == "imported/podcast_ep99_episode.mp3"
 
 
 def test_download_failure_leaves_no_file(db, monkeypatch, tmp_path):
@@ -111,5 +111,5 @@ def test_download_failure_leaves_no_file(db, monkeypatch, tmp_path):
 
     assert result["status"] == 0
     assert "download failed" in result["error"]
-    import_dir = tmp_path / "imported" / "podcast"
+    import_dir = tmp_path / "imported"
     assert not import_dir.exists() or list(import_dir.iterdir()) == []

@@ -169,8 +169,9 @@ class CcFiles extends BaseCcFiles
             // Early md5dum processing
             $md5 = md5_file($filePath);
 
-            $importedStorageDir = Config::getStoragePath() . 'imported/' . self::getOwnerId() . '/';
-            $importedDbPath = 'imported/' . self::getOwnerId() . '/';
+            // RASTATIME 2026-09-16 - artwork lives in imported/artwork/ (no owner-id level)
+            $importedStorageDir = rtrim(Config::getStoragePath(), '/\\') . '/imported/';
+            $importedDbPath = 'imported/';
             $artwork = FileDataHelper::saveArtworkData($filePath, $originalFilename, $importedStorageDir, $importedDbPath);
             $trackTypeId = FileDataHelper::saveTrackType();
 

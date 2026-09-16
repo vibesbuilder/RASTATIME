@@ -369,127 +369,44 @@ Copy-Item C:\rastatime-migration\icecast.xml C:\rastatime\config\ -Force
 
 ### 4.4 Storage cleanup — new root + drop the owner-id subfolder
 
-> **2026-08 run:** §§4.4-4.5 were deliberately **skipped** — the machine
-> went live on a single SSD with media still at `C:\rastatime\media`.
-> They remain valid and pending for the future D:-disk window (see
-> BACKLOG storage cleanup).
+> **2026-09-16:** the owner-id level is gone from the code and the
+> live library (stage 1 of the selectable storage location, see
+> ARCHITECTURE §23.32).  New installs and restores follow the flat
+> layout `imported/<artist>/<album>/…` automatically.  The steps below
+> are only needed when restoring a backup bundle that still carries the
+> old `imported/<owner-id>/` layout.
 
-The migration is the right moment to clean up two storage warts that
-can't be changed safely on a live machine:
-
-1. **New root `D:\stor`** (SSD-B) instead of `C:\rastatime\media`
-   inside the project folder.  Keeps the media library off the system
-   drive and out of the repo tree.
-2. **Drop the `imported/<owner-id>/` level.**  On the old machine the
-   audio library lives under `media\imported\2\<artist>\<album>\...`
-   where `2` is the importing operator's user-id.  For a single-
-   operator station that level is pointless; the new layout is
-   `D:\stor\imported\<artist>\<album>\...`.
-
-This is a coordinated **code + data + DB** change.  Do all three in
-this maintenance window — never piecemeal on a live machine.
-
-**(a) Code patch — stop the importer re-creating the owner-id level.**
-On the new machine, in the restored repo, edit
-`frontend/legacy/application/services/MediaService.php` (the
-`importFileToLibrary` method):
-
-```php
-// OLD:
-$importedStorageDirectory = Config::getStoragePath() . '/imported/' . $fileOwnerId;
-// NEW (drop the owner-id segment):
-$importedStorageDirectory = Config::getStoragePath() . '/imported';
-```
-
-> Without this patch the importer would re-create `imported/<owner-id>/`
-> for every new upload on the new machine, undoing the cleanup.
-> (Show-images and auto-dj-logos keep their own `imported/<owner-id>/…`
-> subtrees — they're tiny and out of scope here; bereinige sie später
-> falls gewünscht.)
-
-**(b) Config — point the storage path at the new root.**
-Edit `C:\rastatime\config\libretime.conf`:
-
-```yaml
-storage:
-  path: D:/stor          # was C:/rastatime/media on the old machine
-```
-
-**(c) DB — flatten the owner-id level in every file path.**
-
-> **Corrected 2026-06-16 (dry-run).** Earlier drafts ran an
-> `UPDATE cc_music_dirs … -d libretime`.  That is wrong on three counts:
-> there is **no `cc_music_dirs` table** in this schema, there is **no
-> `cc_pref` `storage_path`** key, and the live data is in the **`rastatime`**
-> database, **not** `libretime` (the stale leftover — see §4.1).  Running it
-> against `libretime` would leave the **real** paths untouched and the media
-> would 404 after cutover.  The storage **root** is not in the DB at all — it
-> lives only in `libretime.conf` (already changed in step (b)).  So the only
-> DB change is the relative paths in `rastatime.cc_files`.
-
-`cc_files.filepath` holds each track's path **relative to the storage
-root** (e.g. `imported/2/Artist/Album/track.mp3`, where `2` is the
-importing operator's user-id).  Drop that owner-id segment:
+**Flat layout on a restored bundle — one command, no hand-written SQL:**
 
 ```powershell
-$psql = "C:\Program Files\PostgreSQL\17\bin\psql.exe"
-& $psql -U postgres -d rastatime -v ON_ERROR_STOP=1 -c @"
-BEGIN;
--- drop the 'imported/<digits>/' owner-id level from every file path
-UPDATE cc_files
-   SET filepath = regexp_replace(filepath, '^imported/[0-9]+/', 'imported/')
- WHERE filepath LIKE 'imported/%';
-COMMIT;
-"@
+# After 4.1 (database) and 4.3 (configuration) - the storage root of
+# libretime.conf must exist and hold the restored media\imported\<id>\...
+C:\rastatime\.venv\Scripts\python.exe -m libretime_api.manage storage_flatten          # dry run, prints the plan
+C:\rastatime\.venv\Scripts\python.exe -m libretime_api.manage storage_flatten --apply  # moves entries, rewrites rows
 ```
 
-> The `regexp_replace` only rewrites the leading `imported/<digits>/`
-> prefix — artist/album/file parts are untouched.  **Validated 2026-06-16**:
-> all 307 library paths rewrote correctly and a re-run matched nothing.
-> **Caveat (run it exactly once):** idempotency relies on no artist/album
-> folder being *purely numeric* — a path like `imported/2/2026/…` becomes
-> `imported/2026/…`, and a second run would wrongly strip the `2026/`.
-> Afterwards, confirm
-> `SELECT count(*) FROM cc_files WHERE filepath ~ '^imported/[0-9]+/';`
-> returns **0**.
+Run it from `C:\rastatime\backend\api` with the API service environment
+(`DJANGO_SETTINGS_MODULE=libretime_api.settings.prod`,
+`LIBRETIME_CONFIG_FILEPATH`).  The dry run lists the entries to move and
+the rows to rewrite (`cc_files.filepath`, `cc_files.artwork`,
+`cc_show.image_path`, the auto-dj logo preference) and how many file
+paths resolve on disk before and after; `--apply` does both in one
+transaction and undoes both on failure.  Only owner ids that exist as
+directories under `imported\` are stripped (`--owner-id N` names one
+whose directory is already gone), so a purely numeric artist folder is
+never mistaken for an owner id and the command may be re-run.
+
+**New root (`D:\stor`):** until the Local Machine setting exists (stage
+2), point `storage.path` in `libretime.conf` at the new root, copy the
+library there (`robocopy <old> <new> /MIR`), restart RASTATIME-API,
+RASTATIME-WORKER, RASTATIME-ANALYZER and RASTATIME-PLAYOUT, and verify
+three tracks, a cover and the show image in the UI.  No database change
+is needed any more: every stored path is relative to the root.
 
 ### 4.5 Restore media library into the new flattened layout
 
-```powershell
-# The backup bundle has the OLD layout: ...\media\imported\2\<artist>\...
-# Move the CONTENTS of imported\2\ up one level into D:\stor\imported\.
-mkdir D:\stor\imported -Force
-
-# Everything under the owner-id folder → D:\stor\imported\ (flattened)
-robocopy C:\rastatime-migration\media\imported\2 D:\stor\imported /MIR
-
-# Any non-owner-id entries that already sat directly under imported\
-# (rare, but copy them too if present):
-Get-ChildItem C:\rastatime-migration\media\imported -Directory |
-    Where-Object { $_.Name -notmatch '^\d+$' } |
-    ForEach-Object {
-        robocopy $_.FullName "D:\stor\imported\$($_.Name)" /MIR
-    }
-
-# Verify the track count matches the DB
-$psql = "C:\Program Files\PostgreSQL\17\bin\psql.exe"
-& $psql -U postgres -d rastatime -t -c "SELECT count(*) FROM cc_files WHERE filepath LIKE 'imported/%';"
-(Get-ChildItem D:\stor\imported -Recurse -File | Measure-Object).Count
-```
-
-> **Verification before go-live:** pick 3 tracks in the UI, hit play
-> on each.  If they play, the path rewrite + file move line up.  If a
-> track 404s, the `cc_files.filepath` and the on-disk path disagree —
-> re-check step 4.4(c) and the robocopy source/target.
-
-**Show-images / auto-dj-logos note:** these still live under
-`imported/<owner-id>/show-images/` and `imported/<owner-id>/auto-dj-logos/`.
-The robocopy in this step flattened `imported/2/` wholesale, so those
-subtrees moved to `D:\stor\imported\show-images\` etc. — but the DB
-columns that reference them (`cc_show.image_path`, the auto-dj-logo
-preference) still contain the `2/` segment.  Either leave those two
-features' images as-is (re-upload on demand) or extend step 4.4(c)
-with the matching `regexp_replace` on those columns.
+Superseded by the `storage_flatten` command in §4.4: restore the bundle
+as it is (`robocopy <bundle>\media <root> /MIR`), then run the command.
 
 ### 4.6 Restore recordings
 

@@ -58,6 +58,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   591 / Unit 105.  Handbuch STREAMS EN/DE/FR/ES.  Aktiv nach PLAYOUT- **und**
   LIQUIDSOAP-Neustart (neuer Skript-Block).
 
+### Changed
+
+- **Medienbibliothek ohne owner-id-Ebene, alle Pfade relativ zur
+  Speicherwurzel (2026-09-16, Stufe 1 von Arbeitsreihenfolge Punkt 7,
+  Operator-Go)** — Vorbereitung für den wählbaren Speicherort (Settings →
+  Local Machine, Stufe 2): `imported/<owner-id>/…` wird `imported/…`.  Die
+  owner-id-Ebene entstand an fünf Stellen, nicht nur im Upload:
+  `MediaService.php` (Import-Ziel), `CcFiles.php` (Cover unter
+  `artwork/`), `ShowImageController.php` (Show-Bilder, zweimal),
+  `PreferenceController.php` (Auto-DJ-Logo) und `podcasts/download.py`
+  (Podcast-Episoden; jetzt `imported/…` ohne führenden Schrägstrich wie der
+  Analyzer).  Show-Bilder und das Auto-DJ-Logo wurden bisher **absolut**
+  gespeichert (`C:/rastatime/media/imported/2/…`) und hätten jeden
+  Wurzelwechsel gebrochen; neu speichert PHP sie relativ
+  (`Application_Common_Storage::toRelative`) und löst sie beim Lesen auf
+  (`toAbsolute`: Show-Logo-Endpunkt, Vorschau im Show-Formular, Vorschau im
+  Auto-DJ-Dialog; alte absolute Werte bleiben lesbar).  Einmalige Migration:
+  Django-Befehl `storage_flatten` (Trockenlauf; `--apply` verschiebt die
+  Einträge von `imported/<id>/` eine Ebene hoch und schreibt
+  `cc_files.filepath`/`artwork`, `cc_show.image_path` und
+  `cc_pref.auto_dj_logo_path` in einer Transaktion um; Fehler → Zeilen
+  zurückgerollt, Einträge zurückgeschoben; nur bekannte owner-ids werden
+  entfernt, ein rein numerischer Interpreten-Ordner bleibt).  Trockenlauf in
+  Produktion: 80 Einträge, 343 + 216 + 29 + 1 Zeilen, alle 343 Datei-Pfade
+  vorher und nachher auflösbar.  Tests `test_storage_flatten.py` (17),
+  Podcast-Tests angepasst.  MIGRATION.md §4.4/§4.5 auf den Befehl
+  umgestellt, ARCHITECTURE 0.33 (§23.32).  Ausführung in Produktion: siehe
+  BACKLOG-Item.
+
 ### Security
 
 - **CSRF-Prüfung gehärtet, wirkungslose Token-Rotation entfernt (2026-09-10,

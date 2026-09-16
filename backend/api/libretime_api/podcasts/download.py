@@ -109,7 +109,7 @@ def download_episode(
 
     Steps:
       1. Fetch the audio file over HTTP into a temp file that lives
-         directly inside {storage_path}/imported/{owner_dir}/.
+         directly inside {storage_path}/imported/.
       2. Embed metadata tags via mutagen (non-fatal on failure).
       3. Rename the temp file to its final name (same directory).
       4. Create a cc_files record (storage.File) via Django ORM.
@@ -165,8 +165,9 @@ def download_episode(
         # which silently broke every non-elevated media backup.  Born in
         # import_dir, the file inherits the media-library ACL from creation.
         # ------------------------------------------------------------------
-        owner_dir = str(owner_id) if owner_id else "podcast"
-        import_dir = Path(storage_path) / "imported" / owner_dir
+        # RASTATIME 2026-09-16 - no owner-id level: episodes land directly
+        # under <root>/imported/ like the library's other podcast files.
+        import_dir = Path(storage_path) / "imported"
         import_dir.mkdir(parents=True, exist_ok=True)
 
         try:
@@ -257,10 +258,10 @@ def download_episode(
         os.replace(tmp_path, dest_path)
         tmp_path = None  # successfully renamed — nothing to clean up
 
-        # filepath stored in cc_files is relative to storage_path.
-        # Use a leading slash and forward slashes (LibreTime convention;
-        # PHP on Windows handles both slash styles).
-        relative_filepath = f"/imported/{owner_dir}/{dest_filename}"
+        # filepath stored in cc_files is relative to storage_path: forward
+        # slashes, no leading slash (RASTATIME 2026-09-16 - the same form the
+        # analyzer writes; PHP, the API and the playout join it with the root).
+        relative_filepath = f"imported/{dest_filename}"
 
         # ------------------------------------------------------------------
         # Step 5: Create a cc_files record via Django ORM

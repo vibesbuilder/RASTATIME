@@ -32,7 +32,8 @@ class Application_Service_MediaService
         $filePath,
         $copyFile
     ) {
-        $importedStorageDirectory = Config::getStoragePath() . '/imported/' . $fileOwnerId;
+        // RASTATIME 2026-09-16 - no owner-id level: <root>/imported/<artist>/...
+        $importedStorageDirectory = rtrim(Config::getStoragePath(), '/\\') . '/imported';
 
         // Copy the temporary file over to the "organize" folder so that it's off our webserver
         // and accessible by libretime-analyzer which could be running on a different machine.

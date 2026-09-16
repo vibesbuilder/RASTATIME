@@ -1656,6 +1656,14 @@ dieses Umbaus); (d) Cover-Ordner `artwork` liegt danach unter
 `D:\stor\imported\artwork` neben den Interpreten-Ordnern (wie heute unter
 `imported/2/`).
 
+**Stufe 1 umgesetzt 2026-09-16 (Operator-Go, Commit-Hash im CHANGELOG
+„Changed"):** fünf Code-Stellen ohne owner-id-Ebene, Show-Bilder und
+Auto-DJ-Logo relativ, Django-Befehl `storage_flatten` (Trockenlauf/`--apply`,
+eine Transaktion, Rückgängig bei Fehler).  Trockenlauf in Produktion: 80
+Einträge, 343 + 216 + 29 + 1 Zeilen, 343/343 Pfade auflösbar.
+**Ausführung (`--apply`) in Produktion:** offen — im ruhigen Moment nach
+DB-Dump, danach RASTATIME-API neu starten (Podcast-Pfad).
+
 **Neue Richtung (Operator 2026-09-15): Speicherort als Einstellung**
 Nicht nur einmal nach `D:\stor` umziehen: unter Settings → Local Machine
 soll der Speicherort der Bibliothek wählbar sein, wie der Import Folder.

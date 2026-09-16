@@ -1003,7 +1003,7 @@ class PreferenceController extends Zend_Controller_Action
         // ShowFormService::imagePathToDataUri().  Empty string when
         // no logo is configured or the file is unreadable.
         $this->view->autoDjLogoDataUri = '';
-        $logoPath = $this->view->autoDjLogoPath;
+        $logoPath = Application_Common_Storage::toAbsolute($this->view->autoDjLogoPath);
         if (!empty($logoPath) && @is_readable($logoPath)) {
             $bytes = @file_get_contents($logoPath);
             if ($bytes !== false && $bytes !== '') {
@@ -1017,7 +1017,7 @@ class PreferenceController extends Zend_Controller_Action
     /**
      * RASTATIME 2026-05-21 — Section 23.20.  Default-logo upload for
      * Auto-DJ shows.  Single global logo, stored under
-     * <storage>/imported/<owner-id>/auto-dj-logos/<basename>.<ext>
+     * <storage>/imported/auto-dj-logos/<basename>.<ext> (root-relative in cc_pref)
      * — analogous to {@see Rest_ShowImageController::postAction()} but
      * not per-show.  Triggered via multipart POST from the Auto-DJ
      * settings page; success writes the absolute path back to
@@ -1050,9 +1050,8 @@ class PreferenceController extends Zend_Controller_Action
             }
             $ext = $extensions[$mime];
 
-            // Owner-aware storage path identical to the per-show one.
-            $ownerId = (int) Zend_Auth::getInstance()->getStorage()->read()->id;
-            $dir = Config::getStoragePath() . 'imported/' . $ownerId . '/auto-dj-logos';
+            // RASTATIME 2026-09-16 - no owner-id level, path stored root-relative.
+            $dir = rtrim(Config::getStoragePath(), '/\\') . '/imported/auto-dj-logos';
             if (!is_dir($dir) && !mkdir($dir, 0777, true)) {
                 throw new Exception('Failed to create logo storage directory.');
             }
@@ -1068,7 +1067,7 @@ class PreferenceController extends Zend_Controller_Action
                 );
             }
 
-            Application_Model_Preference::SetAutoDjLogoPath($destination);
+            Application_Model_Preference::SetAutoDjLogoPath(Application_Common_Storage::toRelative($destination));
             $response->setHttpResponseCode(201)
                 ->appendBody($destination);
         } catch (Throwable $e) {

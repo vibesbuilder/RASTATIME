@@ -390,7 +390,7 @@ class Application_Service_ShowFormService
     private function populateFormStyle($form)
     {
         $src = $this->ccShow->getDbImagePath() ?
-            $this->imagePathToDataUri($this->ccShow->getDbImagePath()) : '';
+            $this->imagePathToDataUri(Application_Common_Storage::toAbsolute($this->ccShow->getDbImagePath())) : '';
 
         $form->populate(
             [

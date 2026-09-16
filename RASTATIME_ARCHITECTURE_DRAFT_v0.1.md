@@ -1,10 +1,15 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.32
-Date: 2026-09-15
+Draft version: 0.33
+Date: 2026-09-16
 
 > **Revision history**
+> - **0.33 (2026-09-16)** — **Media library layout** (§23.32): no
+>   `imported/<owner-id>/` level, every stored path root-relative
+>   (`cc_files.filepath`/`artwork`, `cc_show.image_path`, the auto-dj
+>   logo preference); one-time `storage_flatten` command.  Stage 1 of
+>   the operator-selectable storage location.
 > - **0.32 (2026-09-15)** — **Scheduler poll fallback removed** (§23.31):
 >   the webstream watchdog has one home, the frame counter inside
 >   Liquidsoap; the PLAYOUT telnet poll, its machine setting
@@ -4841,3 +4846,48 @@ diagnostics.
 against an older loaded script no longer polls; the render warning already
 asks the operator to restart LIQUIDSOAP in that case.  Effective after a
 PLAYOUT restart; LIQUIDSOAP untouched.
+
+
+### 23.32 Media Library Layout — No Owner-Id Level, Root-Relative Paths (2026-09-16)
+
+**Context.**  The operator wants the library's location to be a setting
+under Settings → Local Machine (like the Import Folder) rather than a
+hand-edited `storage.path` in `libretime.conf`, with the move to the new
+`D:` disk as the first use.  A movable root needs one invariant: every
+path the database holds is relative to the root.  It was not: show images
+(`cc_show.image_path`, 29 rows) and the auto-dj logo preference held
+absolute paths under `C:/rastatime/media`, 36 podcast rows carried a
+leading slash, and the upstream `imported/<owner-id>/` level (the
+importing user's id) was created in five places — the upload path
+(`MediaService.php`), the artwork writer (`CcFiles.php`), show-image
+uploads and deletes (`ShowImageController.php`), the auto-dj logo upload
+(`PreferenceController.php`) and podcast downloads
+(`podcasts/download.py`).
+
+**Decision.**
+- Layout `<root>/imported/<artist>/<album>/…`, `<root>/imported/artwork/…`,
+  `<root>/imported/show-images/<show-id>/…`,
+  `<root>/imported/auto-dj-logos/…`, podcast episodes directly under
+  `<root>/imported/`.  No owner-id level anywhere (single-operator station;
+  `cc_files.owner_id` keeps the ownership).
+- Stored paths are root-relative, forward slashes, no leading slash.  PHP
+  gets `Application_Common_Storage::toRelative()` / `toAbsolute()`; writers
+  store relative, readers (show-logo endpoint, show form preview, auto-dj
+  preview) resolve on read and still accept absolute legacy values.  The
+  API, the playout (`Path(root) / filepath.lstrip("/")`) and the analyzer
+  already joined relative paths with the root.
+- One-time migration: the Django management command `storage_flatten`
+  (dry run by default, `--apply` moves the entries of `imported/<id>/` one
+  level up and rewrites the four kinds of rows in a single transaction;
+  a failure rolls the rows back and moves the entries back).  Only owner
+  ids that exist as directories (or are named with `--owner-id`) are
+  stripped, so a purely numeric artist folder can never be mistaken for
+  an owner id and the command is safe to re-run.
+
+**Consequences.**  Stage 2 (the setting and a copy → verify → switch job)
+can move the root without touching a single row.  `MIGRATION.md`
+§4.4/§4.5 now point at the command instead of hand-written SQL and
+robocopy.  Effective for new imports as soon as the PHP files are live
+(no OpCache) and, for podcast downloads, after a RASTATIME-API restart; the
+migration itself is run once in a quiet moment with a database dump
+beforehand.

@@ -450,7 +450,7 @@ class Application_Model_Preference
     //   auto_dj_show_name       string             default name for auto-created shows
     //   auto_dj_playlist_id     integer            cc_playlist.id of the filler playlist
     //   auto_dj_fill_any_show   "true" / "false"   if on, fill incomplete shows after auto-build
-    //   auto_dj_logo_path       string             absolute path to default show logo image
+    //   auto_dj_logo_path       string             storage-root-relative path to default show logo image (2026-09-16)
     public static function GetAutoDjEnabled()
     {
         return self::getValue('auto_dj_enabled') === 'true';
