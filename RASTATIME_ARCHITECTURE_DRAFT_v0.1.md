@@ -1,10 +1,16 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.35
+Draft version: 0.36
 Date: 2026-09-16
 
 > **Revision history**
+> - **0.36 (2026-09-16)** — **Manual backup via the UI** (§23.35):
+>   Settings → Backup writes one self-contained ZIP (pg_dump custom
+>   format streamed into the archive + every config file + manifest)
+>   per run into an operator-chosen folder; job state in cc_pref with
+>   PID/heartbeat, download proxied through PHP, restore stays the
+>   documented offline procedure.
 > - **0.35 (2026-09-16)** — **Rendered settings applied by the playout**
 >   (§23.34): a fingerprint of the settings baked into `rastatime.liq`
 >   (24/7 recording, Main Output, crossfade, stream outputs) is compared
@@ -4992,3 +4998,49 @@ by the startup render outside the boot window is applied through the
 same path (`render_restart_pending` → reason "rastatime.liq changed at
 the playout start"), which closes the last manual restart case: a
 template or code update needs only the PLAYOUT restart.
+
+### 23.35 Manual Backup via the UI (2026-09-16)
+
+**Context.**  Backup was CLI-only (`docs/operator/BACKUP.md`): pg_dump,
+config copies and a Task-Scheduler recipe.  Work-order point 10 asked
+for a Settings page.  The 2026-05-31 evaluation stalled on the missing
+async-job infrastructure; the storage move job (§23.33) has since
+established exactly that pattern, so stage 1 (manual backup of
+database + configuration) reuses it wholesale.
+
+**Design.**  A `BackupJob` singleton in the API process (sibling of
+`MoveJob`, `storage/backup.py`): state JSON in the site preference
+`local_backup_state` with PID and heartbeat, so the page, a second
+API worker and a restarted API agree on what is running; a dead job
+surfaces as `interrupted`.  The backup folder is the site preference
+`local_backup_folder`, validated like the move target (absolute local
+path, created on demand, write-probed, refused inside the media
+library).  One run produces one self-contained
+`rastatime-backup-<YYYY-MM-DDTHHMM>.zip`:
+
+- `db.dump` — `pg_dump --format=custom`, **streamed straight into the
+  ZIP member** (no temp files).  Credentials come from Django's
+  database settings — production fills them from `libretime.conf`
+  (operator decision) — and the password travels only as `PGPASSWORD`
+  in the child environment.  The binary is found on `PATH` or under
+  `C:\Program Files\PostgreSQL\*\bin`.
+- `config/<files>` — every file directly inside the config folder.
+- `manifest.json` — creation time, database, pg_dump version, contents.
+
+A failed run deletes the partial ZIP, so the list never shows a
+half backup.  Five API routes under `/api/v2/storage/backup*`
+(status+list, validate, folder, run, download); the download endpoint
+only serves names matching the strict backup pattern inside the
+configured folder (traversal-safe by construction).  The legacy page
+(Settings → Backup, `preference/backup`) talks to PHP proxy actions
+(operator login + CSRF; API key server-side); the download is buffered
+through PHP — stage-1 archives are megabytes, and media backups
+(stage 2) will never travel through the browser.
+
+**Deliberately not built.**  No restore endpoint: restoring replaces
+the running database and stays the documented offline procedure
+(BACKUP.md §7, `pg_restore` reads `db.dump` as-is).  No scheduler:
+auto-backup (stage 3) will store its settings in cc_pref and run
+through a management command registered once in the Windows Task
+Scheduler — the worker service remains an idle stub and is not the
+place for a first scheduler.

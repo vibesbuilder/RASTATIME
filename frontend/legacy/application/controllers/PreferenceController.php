@@ -269,6 +269,100 @@ class PreferenceController extends Zend_Controller_Action
         $this->storageReply($status, $data);
     }
 
+    // ------------------------------------------------------------------
+    // RASTATIME 2026-09-16 - Settings -> Backup (work-order point 10,
+    // stage 1).  The page and its proxies follow the Media Library
+    // Location pattern above: operator login + CSRF here, API key only
+    // server-side.  The backup job itself runs in the API process.
+    // ------------------------------------------------------------------
+
+    /** GET /preference/backup - the Settings -> Backup page. */
+    public function backupAction(): void
+    {
+        Zend_Layout::getMvcInstance()->assign('parent_page', 'Settings');
+    }
+
+    /** GET /preference/backup-status */
+    public function backupStatusAction(): void
+    {
+        [$status, $data] = $this->storageApi('GET', 'api/v2/storage/backup');
+        $this->storageReply($status, $data);
+    }
+
+    /** POST /preference/backup-validate  folder=... */
+    public function backupValidateAction(): void
+    {
+        if (!$this->storageGuardPost()) {
+            return;
+        }
+        $folder = trim((string) $this->_getParam('folder', ''));
+        [$status, $data] = $this->storageApi('POST', 'api/v2/storage/backup/validate', ['path' => $folder]);
+        $this->storageReply($status, $data);
+    }
+
+    /** POST /preference/backup-folder  folder=...  (validates, then saves the setting) */
+    public function backupFolderAction(): void
+    {
+        if (!$this->storageGuardPost()) {
+            return;
+        }
+        $folder = trim((string) $this->_getParam('folder', ''));
+        [$status, $data] = $this->storageApi('POST', 'api/v2/storage/backup/folder', ['path' => $folder]);
+        $this->storageReply($status, $data);
+    }
+
+    /** POST /preference/backup-run */
+    public function backupRunAction(): void
+    {
+        if (!$this->storageGuardPost()) {
+            return;
+        }
+        Logging::info('Operator started a manual backup');
+        [$status, $data] = $this->storageApi('POST', 'api/v2/storage/backup/run');
+        $this->storageReply($status, $data);
+    }
+
+    /**
+     * GET /preference/backup-download?name=rastatime-backup-....zip
+     *
+     * Streams the ZIP through PHP so the API key never reaches the
+     * browser.  Stage-1 backups (database + config) are megabytes, so
+     * buffering the body is fine; media backups (stage 2) stay on the
+     * server and never travel this way.
+     */
+    public function backupDownloadAction(): void
+    {
+        $this->view->layout()->disableLayout();
+        $this->_helper->viewRenderer->setNoRender(true);
+        $resp = $this->getResponse();
+        $name = (string) $this->_getParam('name', '');
+        if (!preg_match('/^rastatime-backup-[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{4}(-[0-9]+)?\.zip$/', $name)) {
+            $resp->setHttpResponseCode(400)->setBody('Bad backup name.');
+            return;
+        }
+        $curl = curl_init(self::RASTATIME_API_BASE
+            . 'api/v2/storage/backup/download?name=' . rawurlencode($name));
+        curl_setopt_array($curl, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT        => 300,
+            CURLOPT_CONNECTTIMEOUT => 3,
+            CURLOPT_HTTPHEADER     => [
+                'Authorization: Api-Key ' . (string) Config::get('general.api_key'),
+            ],
+        ]);
+        $body   = curl_exec($curl);
+        $status = (int) curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        curl_close($curl);
+        if ($status !== 200 || !is_string($body)) {
+            $resp->setHttpResponseCode($status === 0 ? 502 : $status)->setBody('Download failed.');
+            return;
+        }
+        $resp->setHeader('Content-Type', 'application/zip', true)
+            ->setHeader('Content-Disposition', 'attachment; filename="' . $name . '"', true)
+            ->setHeader('Content-Length', (string) strlen($body), true)
+            ->setBody($body);
+    }
+
     /**
      * RASTATIME 2026-05-16 - Save the Local Import Folder path.
      *

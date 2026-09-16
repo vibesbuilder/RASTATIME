@@ -1,0 +1,215 @@
+"""
+RASTATIME 2026-09-16 - manual backup via the UI (work-order point 10,
+stage 1): folder validation, the backup job (stubbed pg_dump writing to
+stdout), the endpoints behind Settings -> Backup.
+"""
+from __future__ import annotations
+
+import json
+import os
+import sys
+import time
+import zipfile
+from datetime import datetime, timedelta, timezone
+
+import pytest
+from django.urls import reverse
+
+from libretime_api.core.models import Preference
+from libretime_api.storage import backup as sb
+from libretime_api.storage import root as sr
+
+WINDOWS = sys.platform == "win32"
+
+
+@pytest.fixture(autouse=True)
+def _fresh_caches(db):
+    # cc_pref is unmanaged - the transactional-test flush skips it, so the
+    # committed folder/state of a job test would leak into the next test.
+    def wipe():
+        sr.invalidate()
+        Preference.site.filter(key__in=[sb.BACKUP_FOLDER_KEY, sb.BACKUP_STATE_KEY]).delete()
+
+    wipe()
+    yield
+    wipe()
+
+
+@pytest.fixture
+def target(tmp_path):
+    d = tmp_path / "backups"
+    return str(d).replace("\\", "/")
+
+
+@pytest.fixture
+def fake_config(tmp_path, monkeypatch):
+    cfg = tmp_path / "config"
+    cfg.mkdir()
+    (cfg / "libretime.conf").write_text("general:\n  api_key: secret\n", encoding="utf-8")
+    (cfg / "icecast.xml").write_text("<icecast/>", encoding="utf-8")
+    monkeypatch.setattr(sb, "config_dir", lambda: str(cfg))
+    return cfg
+
+
+@pytest.fixture
+def fake_pg_dump(monkeypatch):
+    """pg_dump stand-in: a Python one-liner that writes bytes to stdout."""
+    argv = [
+        sys.executable, "-c",
+        "import sys; sys.stdout.buffer.write(b'PGDMP-fake' * 1000)",
+    ]
+    monkeypatch.setattr(sb, "_pg_dump_command", lambda: (argv, os.environ.copy()))
+    monkeypatch.setattr(sb, "_pg_dump_version", lambda _b: "pg_dump (fake) 17.0")
+    return argv
+
+
+def wait_state(*done_states, timeout=15.0):
+    end = time.monotonic() + timeout
+    while time.monotonic() < end:
+        state = sb.JOB.status()
+        if state.get("state") in done_states:
+            return state
+        time.sleep(0.05)
+    raise AssertionError(f"job did not reach {done_states}: {sb.JOB.status()}")
+
+
+# ---- validation -------------------------------------------------------------
+
+
+@pytest.mark.django_db
+def test_validate_rejects_relative_network_and_empty_paths():
+    assert not sb.validate_folder("")["ok"]
+    assert not sb.validate_folder("backups")["ok"]
+    assert not sb.validate_folder("//nas/backups")["ok"]
+
+
+@pytest.mark.django_db
+def test_validate_rejects_a_folder_inside_the_library(tmp_path, monkeypatch):
+    root = str(tmp_path / "stor").replace("\\", "/")
+    os.makedirs(root)
+    monkeypatch.setattr(sr, "get_storage_root", lambda refresh=False: root)
+    inside = sb.validate_folder(root + "/backups")
+    assert not inside["ok"]
+    assert "media library" in " ".join(inside["errors"])
+
+
+@pytest.mark.django_db
+@pytest.mark.skipif(not WINDOWS, reason="drive-letter validation")
+def test_validate_accepts_and_creates_a_good_folder(target):
+    check = sb.validate_folder(target)
+    assert check["ok"], check["errors"]
+    assert os.path.isdir(target)
+
+
+# ---- job --------------------------------------------------------------------
+
+
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.skipif(not WINDOWS, reason="windows paths")
+def test_backup_job_writes_a_complete_zip(target, fake_config, fake_pg_dump):
+    sb.set_backup_folder(target)
+    sb.JOB.start()
+    state = wait_state("done", "failed")
+    assert state["state"] == "done", state.get("error")
+    assert state["file"].startswith("rastatime-backup-") and state["bytes"] > 0
+    path = os.path.join(target, state["file"])
+    with zipfile.ZipFile(path) as zf:
+        names = set(zf.namelist())
+        assert names == {"db.dump", "config/libretime.conf", "config/icecast.xml", "manifest.json"}
+        assert zf.read("db.dump") == b"PGDMP-fake" * 1000
+        manifest = json.loads(zf.read("manifest.json"))
+        assert manifest["pg_dump"].startswith("pg_dump")
+        assert "config/libretime.conf" in manifest["contents"]
+    listed = sb.list_backups(target)
+    assert [e["name"] for e in listed] == [state["file"]]
+
+
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.skipif(not WINDOWS, reason="windows paths")
+def test_failed_pg_dump_leaves_no_half_zip(target, fake_config, monkeypatch):
+    argv = [sys.executable, "-c", "import sys; sys.stderr.write('boom'); sys.exit(1)"]
+    monkeypatch.setattr(sb, "_pg_dump_command", lambda: (argv, os.environ.copy()))
+    sb.set_backup_folder(target)
+    sb.JOB.start()
+    state = wait_state("done", "failed")
+    assert state["state"] == "failed"
+    assert "boom" in state["error"]
+    assert sb.list_backups(target) == []
+
+
+@pytest.mark.django_db
+def test_start_without_a_folder_is_refused():
+    with pytest.raises(sb.InvalidFolder):
+        sb.JOB.start()
+
+
+@pytest.mark.django_db
+def test_a_running_backup_blocks_a_second_start(target, monkeypatch):
+    sb.set_backup_folder(target)
+    os.makedirs(target, exist_ok=True)
+    sb.save_state({"state": "running", "pid": os.getpid(), "heartbeat": sb._now()})
+    monkeypatch.setattr(sb.JOB, "_alive", lambda _s: True)
+    with pytest.raises(sb.BackupInProgress):
+        sb.JOB.start()
+
+
+@pytest.mark.django_db
+def test_a_dead_job_shows_as_interrupted():
+    stale = (datetime.now(timezone.utc) - timedelta(minutes=10)).isoformat(timespec="seconds")
+    sb.save_state({"state": "running", "pid": 99999999, "heartbeat": stale})
+    assert sb.JOB.status()["state"] == "interrupted"
+
+
+# ---- name safety ------------------------------------------------------------
+
+
+@pytest.mark.django_db
+def test_download_names_are_traversal_safe(target):
+    sb.set_backup_folder(target)
+    os.makedirs(target, exist_ok=True)
+    good = "rastatime-backup-2026-09-16T1800.zip"
+    open(os.path.join(target, good), "wb").write(b"zip")
+    assert sb.backup_file_path(good) == os.path.join(target, good)
+    assert sb.backup_file_path("../../secret.zip") is None
+    assert sb.backup_file_path("rastatime-backup-..\\..\\x.zip") is None
+    assert sb.backup_file_path("other.zip") is None
+    assert sb.backup_file_path("") is None
+
+
+# ---- endpoints --------------------------------------------------------------
+
+
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.skipif(not WINDOWS, reason="windows paths")
+def test_endpoints_roundtrip(api_client, target, fake_config, fake_pg_dump):
+    url = reverse("storage-backup")
+    data = api_client.get(url).json()
+    assert data["configured"] is False and data["backups"] == []
+
+    check = api_client.post(reverse("storage-backup-validate"), {"path": "relative"}, format="json")
+    assert check.json()["ok"] is False
+
+    saved = api_client.post(reverse("storage-backup-folder"), {"path": target}, format="json")
+    assert saved.status_code == 200 and saved.json()["configured"] is True
+
+    bad = api_client.post(reverse("storage-backup-folder"), {"path": "nope"}, format="json")
+    assert bad.status_code == 400
+
+    run = api_client.post(reverse("storage-backup-run"))
+    assert run.status_code == 202
+    state = wait_state("done", "failed")
+    assert state["state"] == "done", state.get("error")
+
+    data = api_client.get(url).json()
+    assert data["job"]["state"] == "done"
+    assert len(data["backups"]) == 1
+
+    name = data["backups"][0]["name"]
+    dl = api_client.get(reverse("storage-backup-download"), {"name": name})
+    assert dl.status_code == 200
+    assert dl.headers["Content-Type"] == "application/zip"
+    assert name in dl.headers.get("Content-Disposition", "")
+    dl.close()
+
+    missing = api_client.get(reverse("storage-backup-download"), {"name": "rastatime-backup-2000-01-01T0000.zip"})
+    assert missing.status_code == 404

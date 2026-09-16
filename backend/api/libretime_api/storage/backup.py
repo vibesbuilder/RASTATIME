@@ -1,0 +1,333 @@
+"""
+RASTATIME 2026-09-16 - manual backup via the UI (work-order point 10,
+stage 1: database + configuration).
+
+The job writes one self-contained ZIP per run into the operator-chosen
+backup folder (site preference ``local_backup_folder``)::
+
+    rastatime-backup-<YYYY-MM-DDTHHMM>.zip
+        db.dump          pg_dump custom format (pg_restore reads it)
+        config/<files>   every file directly inside the config folder
+        manifest.json    created_at, database, pg_dump version, contents
+
+pg_dump streams straight into the ZIP (no temp files); the credentials
+come from Django's database settings, which production fills from
+``libretime.conf`` (operator decision 2026-09-16).  The password travels
+via ``PGPASSWORD`` in the child's environment, never on the command line
+and never in a log line.
+
+State lives in the site preference ``local_backup_state`` as JSON, the
+same pattern as the storage move job::
+
+    {"state": "idle|running|done|failed|interrupted", "started_at": ...,
+     "finished_at": ..., "file": ..., "bytes": n, "error": null|"...",
+     "pid": n, "heartbeat": iso}
+
+Restores stay a CLI/offline procedure (docs/operator/BACKUP.md section 7)
+- deliberately no restore endpoint.
+"""
+from __future__ import annotations
+
+import glob
+import json
+import logging
+import os
+import re
+import shutil
+import subprocess
+import threading
+import time
+import zipfile
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+from typing import List, Optional
+
+from django.conf import settings
+from django.db import connection
+
+from . import root as storage_root
+
+logger = logging.getLogger(__name__)
+
+BACKUP_FOLDER_KEY = "local_backup_folder"
+BACKUP_STATE_KEY = "local_backup_state"
+HEARTBEAT_STALE_SECONDS = 45
+FREE_BYTES_MIN = 500 * 1024 * 1024
+ZIP_NAME_RE = re.compile(r"^rastatime-backup-\d{4}-\d{2}-\d{2}T\d{4}(-\d+)?\.zip$")
+CHUNK = 1024 * 1024
+
+
+class BackupInProgress(Exception):
+    pass
+
+
+class InvalidFolder(ValueError):
+    def __init__(self, errors: List[str]):
+        super().__init__("; ".join(errors))
+        self.errors = errors
+
+
+def _now() -> str:
+    return datetime.now(timezone.utc).isoformat(timespec="seconds")
+
+
+def load_state() -> dict:
+    raw = storage_root.read_setting(BACKUP_STATE_KEY)
+    if not raw:
+        return {"state": "idle"}
+    try:
+        data = json.loads(raw)
+    except ValueError:
+        return {"state": "idle"}
+    return data if isinstance(data, dict) and data.get("state") else {"state": "idle"}
+
+
+def save_state(state: dict) -> None:
+    storage_root.write_setting(BACKUP_STATE_KEY, json.dumps(state))
+
+
+def get_backup_folder() -> Optional[str]:
+    value = storage_root.read_setting(BACKUP_FOLDER_KEY)
+    return storage_root.normalize(value) if value else None
+
+
+def set_backup_folder(path: str) -> None:
+    storage_root.write_setting(BACKUP_FOLDER_KEY, storage_root.normalize(path))
+
+
+def config_dir() -> str:
+    """The folder holding libretime.conf (and icecast.xml etc.)."""
+    filepath = os.environ.get("LIBRETIME_CONFIG_FILEPATH")
+    if filepath:
+        return str(Path(filepath).parent)
+    return "C:/RASTATIME/config"
+
+
+def validate_folder(target: str) -> dict:
+    """Checks a candidate backup folder; never raises."""
+    errors: List[str] = []
+    t = storage_root.normalize(target)
+    root = storage_root.normalize(storage_root.get_storage_root(refresh=True))
+    if not t:
+        errors.append("Enter a folder path.")
+    elif t.startswith("//"):
+        errors.append("Network paths are not supported - use a local drive.")
+    elif not re.match(r"^[A-Za-z]:/", t):
+        errors.append("Enter an absolute path on a local drive, for example D:/rastatime-backups.")
+    free = 0
+    if not errors:
+        drive = t[:3]
+        if not os.path.isdir(drive):
+            errors.append(f"Drive {t[:2]} does not exist.")
+        elif root and (t.lower() == root.lower()
+                       or t.lower().startswith(root.lower().rstrip("/") + "/")):
+            errors.append("The backup folder must not lie inside the media library.")
+        else:
+            try:
+                os.makedirs(t, exist_ok=True)
+                probe = os.path.join(t, ".rastatime-write-test")
+                with open(probe, "wb") as fh:
+                    fh.write(b"ok")
+                os.remove(probe)
+            except OSError as exc:
+                errors.append(f"Cannot create or write to {t}: {exc}")
+            try:
+                free = shutil.disk_usage(t if os.path.isdir(t) else drive).free
+            except OSError:
+                free = 0
+            if free and free < FREE_BYTES_MIN:
+                errors.append(f"Not enough free space: {free // 1048576} MB free.")
+    return {"ok": not errors, "errors": errors, "target": t, "free_bytes": free}
+
+
+def list_backups(folder: Optional[str] = None) -> List[dict]:
+    folder = folder or get_backup_folder()
+    if not folder or not os.path.isdir(folder):
+        return []
+    entries = []
+    for path in glob.glob(os.path.join(folder, "rastatime-backup-*.zip")):
+        name = os.path.basename(path)
+        if not ZIP_NAME_RE.match(name):
+            continue
+        try:
+            st = os.stat(path)
+        except OSError:
+            continue
+        entries.append({
+            "name": name, "bytes": st.st_size,
+            "created_at": datetime.fromtimestamp(st.st_mtime, timezone.utc).isoformat(timespec="seconds"),
+        })
+    entries.sort(key=lambda e: e["name"], reverse=True)
+    return entries
+
+
+def backup_file_path(name: str) -> Optional[str]:
+    """Absolute path of an existing backup by its bare name; traversal-safe."""
+    folder = get_backup_folder()
+    if not folder or not ZIP_NAME_RE.match(name or ""):
+        return None
+    path = os.path.join(folder, name)
+    return path if os.path.isfile(path) else None
+
+
+def _pg_dump_binary() -> str:
+    found = shutil.which("pg_dump")
+    if found:
+        return found
+    candidates = sorted(glob.glob(r"C:\Program Files\PostgreSQL\*\bin\pg_dump.exe"))
+    if candidates:
+        return candidates[-1]
+    raise RuntimeError("pg_dump not found (PATH or C:\\Program Files\\PostgreSQL\\*\\bin).")
+
+
+def _pg_dump_command() -> tuple:
+    """(argv, env) for a custom-format dump to stdout; password only in env."""
+    db = settings.DATABASES["default"]
+    binary = _pg_dump_binary()
+    argv = [
+        binary,
+        "--host", str(db.get("HOST") or "127.0.0.1"),
+        "--port", str(db.get("PORT") or "5432"),
+        "--username", str(db.get("USER") or ""),
+        "--dbname", str(db.get("NAME") or ""),
+        "--format", "custom",
+    ]
+    env = os.environ.copy()
+    env["PGPASSWORD"] = str(db.get("PASSWORD") or "")
+    return argv, env
+
+
+def _pg_dump_version(binary: str) -> str:
+    try:
+        out = subprocess.run(  # noqa: S603
+            [binary, "--version"], capture_output=True, timeout=10, check=False,
+        ).stdout.decode("utf-8", "replace").strip()
+        return out or "unknown"
+    except OSError:
+        return "unknown"
+
+
+class BackupJob:
+    """One job per API process; the persisted state is the truth."""
+
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self._thread: Optional[threading.Thread] = None
+
+    # ---- public --------------------------------------------------------
+
+    def status(self) -> dict:
+        state = load_state()
+        if state.get("state") == "running" and not self._alive(state):
+            state["state"] = "interrupted"
+            state["error"] = "The backup was interrupted (service restart) - run it again."
+            state["finished_at"] = _now()
+            save_state(state)
+        return state
+
+    def start(self) -> dict:
+        with self._lock:
+            if self.status().get("state") == "running":
+                raise BackupInProgress("a backup is already running")
+            folder = get_backup_folder()
+            if not folder:
+                raise InvalidFolder(["Choose a backup folder first."])
+            check = validate_folder(folder)
+            if not check["ok"]:
+                raise InvalidFolder(check["errors"])
+            state = {
+                "state": "running", "started_at": _now(), "finished_at": None,
+                "file": None, "bytes": 0, "error": None,
+                "pid": os.getpid(), "heartbeat": _now(),
+            }
+            save_state(state)
+            self._thread = threading.Thread(
+                target=self._run, args=(state, folder), name="backup", daemon=True,
+            )
+            self._thread.start()
+            return state
+
+    # ---- internals -----------------------------------------------------
+
+    def _alive(self, state: dict) -> bool:
+        if state.get("pid") == os.getpid():
+            return self._thread is not None and self._thread.is_alive()
+        try:
+            beat = datetime.fromisoformat(state.get("heartbeat") or "")
+        except ValueError:
+            return False
+        return datetime.now(timezone.utc) - beat < timedelta(seconds=HEARTBEAT_STALE_SECONDS)
+
+    def _zip_target(self, folder: str) -> str:
+        stamp = datetime.now().strftime("%Y-%m-%dT%H%M")
+        path = os.path.join(folder, f"rastatime-backup-{stamp}.zip")
+        n = 2
+        while os.path.exists(path):
+            path = os.path.join(folder, f"rastatime-backup-{stamp}-{n}.zip")
+            n += 1
+        return path
+
+    def _run(self, state: dict, folder: str) -> None:
+        target = self._zip_target(folder)
+        try:
+            argv, env = _pg_dump_command()
+            config_files = sorted(
+                p for p in Path(config_dir()).glob("*") if p.is_file()
+            ) if os.path.isdir(config_dir()) else []
+            with zipfile.ZipFile(target, "w", zipfile.ZIP_DEFLATED) as zf:
+                self._dump_database(zf, argv, env, state)
+                for cfg in config_files:
+                    zf.write(cfg, f"config/{cfg.name}")
+                manifest = {
+                    "created_at": _now(),
+                    "database": settings.DATABASES["default"].get("NAME"),
+                    "pg_dump": _pg_dump_version(argv[0]),
+                    "contents": ["db.dump"] + [f"config/{c.name}" for c in config_files],
+                }
+                zf.writestr("manifest.json", json.dumps(manifest, indent=2))
+            state.update(state="done", finished_at=_now(),
+                         file=os.path.basename(target), bytes=os.path.getsize(target))
+            save_state(state)
+            logger.info("backup done: %s (%d bytes)", target, state["bytes"])
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            logger.error("backup failed: %s", exc)
+            try:
+                if os.path.isfile(target):
+                    os.remove(target)              # no half backups in the list
+            except OSError:
+                pass
+            state.update(state="failed", finished_at=_now(), error=str(exc))
+            save_state(state)
+        finally:
+            connection.close()
+
+    def _dump_database(self, zf: zipfile.ZipFile, argv: list, env: dict, state: dict) -> None:
+        flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+        proc = subprocess.Popen(  # noqa: S603
+            argv, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            env=env, creationflags=flags,
+        )
+        try:
+            last_beat = 0.0
+            with zf.open("db.dump", "w") as member:
+                while True:
+                    chunk = proc.stdout.read(CHUNK)
+                    if not chunk:
+                        break
+                    member.write(chunk)
+                    now = time.monotonic()
+                    if now - last_beat > 2.0:      # heartbeat, not a write storm
+                        last_beat = now
+                        state.update(heartbeat=_now())
+                        save_state(state)
+            stderr = (proc.stderr.read() or b"").decode("utf-8", "replace")
+            rc = proc.wait(timeout=60)
+        finally:
+            if proc.poll() is None:
+                proc.kill()
+        if rc != 0:
+            tail = " | ".join(stderr.strip().splitlines()[-3:])
+            raise RuntimeError(f"pg_dump exit code {rc}: {tail}")
+
+
+JOB = BackupJob()

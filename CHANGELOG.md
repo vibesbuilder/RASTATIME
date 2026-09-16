@@ -9,6 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Settings → Backup: Datenbank + Konfiguration per Klick sichern
+  (2026-09-16, Arbeitsreihenfolge Punkt 10 Stufe 1, Operator-Go)** — Neue
+  Settings-Seite nach dem Muster der Media Library Location: Backup-Ordner
+  als Einstellung (cc_pref `local_backup_folder`, Validierung wie beim
+  Umzugsziel), Backup-Job im API-Prozess (Zustand in `local_backup_state`
+  mit PID/Heartbeat).  Ein Lauf schreibt ein in sich vollständiges ZIP
+  `rastatime-backup-<Zeit>.zip` mit `db.dump` (pg_dump Custom-Format,
+  direkt in das ZIP gestreamt, Zugangsdaten aus den Django-Settings =
+  libretime.conf, Passwort nur via PGPASSWORD), allen Konfigurationsdateien
+  und einem Manifest; ein Fehlschlag hinterlässt kein halbes ZIP.  UI:
+  Ordner prüfen/speichern, „Back up now", Liste vorhandener Backups mit
+  Download (ZIP über PHP gestreamt, API-Key bleibt serverseitig,
+  Namensmuster gegen Pfad-Tricks).  Restore bleibt bewusst der
+  dokumentierte Offline-Weg (docs/operator/BACKUP.md §7).  5 API-Routen
+  `/api/v2/storage/backup*`, PHP-Proxies `preference/backup-*`,
+  Nav-Eintrag Settings → Backup.  Tests `test_storage_backup.py` (10),
+  API-Suite 107.  Handbuch-Kapitel BACKUP EN/DE/FR/ES + TOC,
+  ARCHITECTURE 0.36 (§23.35).  Aktiv nach RASTATIME-API-Neustart.
+
 - **Gerenderte Einstellungen übernimmt das Playout selbst — kein manueller
   Neustart mehr nach 24/7-Aufnahme, Main Output, Crossfade oder
   Stream-Ausgängen (2026-09-16, Operator-Go, `6be216a`)** — Diese Werte werden beim

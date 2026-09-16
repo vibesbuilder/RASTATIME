@@ -1,0 +1,201 @@
+<?php
+/**
+ * RASTATIME 2026-09-16 — Settings -> Backup (work-order point 10, stage 1:
+ * manual backup of database + configuration).
+ *
+ * The page has no Zend_Form; it talks to PreferenceController proxy
+ * actions (operator login + CSRF), which reach the API on localhost with
+ * the server-side API key.  The backup job runs in the API process and
+ * writes one self-contained ZIP per run into the operator-chosen folder;
+ * restore stays a documented offline procedure (BACKUP.md).
+ */
+$rtTip = function ($text) {
+    return htmlspecialchars(htmlspecialchars($text, ENT_QUOTES), ENT_QUOTES);
+};
+?>
+
+<style>
+.backup-config .help_icon { margin-left: 0.5em; }
+.backup-config dd input[type="text"],
+.backup-config dd input[type="text"] + .help_icon { vertical-align: middle; }
+.backup-config table.backup-list { border-collapse: collapse; min-width: 480px; }
+.backup-config table.backup-list th,
+.backup-config table.backup-list td { padding: 0.25em 1.2em 0.25em 0; text-align: left; }
+.backup-config table.backup-list th { border-bottom: 1px solid #888; }
+</style>
+
+<div class="ui-widget prefpanel simple-formblock clearfix padded-strong backup-config">
+    <h2 style="float:left"><?php echo _("Backup") ?></h2>
+    <div style="clear:both"></div>
+
+    <h3><?php echo _("Manual Backup") ?><span class="help_icon" data-rt-tip="<?php echo $rtTip(_("One click writes a self-contained ZIP with the full database (pg_dump custom format) and every configuration file into the backup folder.  The media library is not included in this stage - see the user manual.  Restoring is a documented offline procedure, deliberately not a button.")); ?>"></span></h3>
+
+    <fieldset class="padded stream-setting-global">
+        <dl class="zend_form">
+            <dt><label for="backup_folder"><?php echo _("Backup folder") ?></label></dt>
+            <dd>
+                <input id="backup_folder" type="text" class="input_text"
+                       style="width: 372px; max-width: 100%;" placeholder="D:\rastatime-backups" /><span class="help_icon" data-rt-tip="<?php echo $rtTip(_("Absolute path on a local drive, for example D:\rastatime-backups.  The folder is created if needed and must not lie inside the media library.  Ideally a different drive than the database.")); ?>"></span>
+            </dd>
+
+            <dt></dt>
+            <dd style="padding-top: 0.5em;">
+                <button id="backup_check" type="button" class="btn"><?php echo _("Check") ?></button>
+                <button id="backup_save" type="button" class="btn"><?php echo _("Save folder") ?></button>
+                <button id="backup_run" type="button" class="btn" disabled><?php echo _("Back up now") ?></button>
+                <span id="backup_status_msg" style="margin-left: 1em;"></span>
+            </dd>
+
+            <dt></dt>
+            <dd>
+                <div id="backup_job_info" style="font-size: 0.9em; color: #555; padding-top: 0.3em;"></div>
+            </dd>
+        </dl>
+    </fieldset>
+
+    <h3><?php echo _("Existing backups") ?><span class="help_icon" data-rt-tip="<?php echo $rtTip(_("Every backup in the folder, newest first.  Download saves the ZIP through the browser; the files on disk stay untouched - delete old ones by hand or keep them all.")); ?>"></span></h3>
+
+    <fieldset class="padded stream-setting-global">
+        <table class="backup-list">
+            <thead>
+                <tr>
+                    <th><?php echo _("Backup") ?></th>
+                    <th><?php echo _("Size") ?></th>
+                    <th><?php echo _("Created") ?></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody id="backup_rows">
+                <tr><td colspan="4"><?php echo _("Loading …") ?></td></tr>
+            </tbody>
+        </table>
+    </fieldset>
+
+    <script>
+    (function ($) {
+        var pollTimer = null;
+
+        var TXT = {
+            saved:       "<?php echo addslashes(_('Backup folder saved.')) ?>",
+            checked:     "<?php echo addslashes(_('The folder is usable.')) ?>",
+            noFolder:    "<?php echo addslashes(_('Choose and save a backup folder first.')) ?>",
+            running:     "<?php echo addslashes(_('Backup running …')) ?>",
+            done:        "<?php echo addslashes(_('Backup finished:')) ?>",
+            failed:      "<?php echo addslashes(_('Backup failed:')) ?>",
+            interrupted: "<?php echo addslashes(_('The last backup was interrupted - run it again.')) ?>",
+            none:        "<?php echo addslashes(_('No backups yet.')) ?>",
+            download:    "<?php echo addslashes(_('Download')) ?>",
+            requestFail: "<?php echo addslashes(_('Request failed.')) ?>"
+        };
+
+        function mb(bytes) { return ((bytes || 0) / 1048576).toFixed(1) + " MB"; }
+        function msg(text, ok) { $("#backup_status_msg").text(text).css("color", ok ? "#5cb85c" : "#d9534f"); }
+        function post(action, data, done, fail) {
+            data.csrf_token = $("#csrf").val();
+            $.post(baseUrl + "preference/" + action, data, done, "json").fail(function (xhr) {
+                var errs = (xhr.responseJSON && xhr.responseJSON.errors) || [TXT.requestFail];
+                fail(errs.join(" "));
+            });
+        }
+
+        function renderJob(job) {
+            var info = $("#backup_job_info");
+            if (job.state === "running") {
+                info.text(TXT.running + " (" + (job.started_at || "") + ")");
+                startPolling();
+            } else if (job.state === "done") {
+                info.text(TXT.done + " " + (job.file || "") + ", " + mb(job.bytes));
+            } else if (job.state === "failed") {
+                info.text(TXT.failed + " " + (job.error || ""));
+            } else if (job.state === "interrupted") {
+                info.text(TXT.interrupted);
+            } else {
+                info.text("");
+            }
+        }
+
+        function renderList(backups) {
+            var rows = $("#backup_rows").empty();
+            if (!backups || !backups.length) {
+                rows.append($("<tr>").append($("<td>", {colspan: 4, text: TXT.none})));
+                return;
+            }
+            $.each(backups, function (_i, b) {
+                var link = $("<a>", {
+                    href: baseUrl + "preference/backup-download?name=" + encodeURIComponent(b.name),
+                    text: TXT.download
+                });
+                rows.append($("<tr>")
+                    .append($("<td>", {text: b.name, style: "font-family: monospace;"}))
+                    .append($("<td>", {text: mb(b.bytes)}))
+                    .append($("<td>", {text: (b.created_at || "").replace("T", " ").replace(/\+.*$/, "")}))
+                    .append($("<td>").append(link)));
+            });
+        }
+
+        function renderStatus(d) {
+            if (d.folder && !$("#backup_folder").is(":focus") && !$("#backup_folder").val()) {
+                $("#backup_folder").val(d.folder.replace(/\//g, "\\"));
+            }
+            $("#backup_run").prop("disabled", !d.configured || (d.job || {}).state === "running");
+            renderJob(d.job || {state: "idle"});
+            renderList(d.backups);
+        }
+
+        function refresh() {
+            $.getJSON(baseUrl + "preference/backup-status", renderStatus);
+        }
+
+        function startPolling() {
+            if (pollTimer) { return; }
+            pollTimer = setInterval(function () {
+                $.getJSON(baseUrl + "preference/backup-status", function (d) {
+                    if ((d.job || {}).state !== "running") {
+                        clearInterval(pollTimer);
+                        pollTimer = null;
+                    }
+                    renderStatus(d);
+                });
+            }, 2000);
+        }
+
+        $("#backup_check").on("click", function () {
+            post("backup-validate", {folder: $("#backup_folder").val()}, function (d) {
+                if (d.ok) { msg(TXT.checked, true); } else { msg((d.errors || []).join(" "), false); }
+            }, function (err) { msg(err, false); });
+        });
+
+        $("#backup_save").on("click", function () {
+            post("backup-folder", {folder: $("#backup_folder").val()}, function (d) {
+                msg(TXT.saved, true);
+                renderStatus(d);
+            }, function (err) { msg(err, false); });
+        });
+
+        $("#backup_run").on("click", function () {
+            msg("", true);
+            post("backup-run", {}, function (d) {
+                renderJob((d && d.job) || {state: "running"});
+                startPolling();
+            }, function (err) { msg(err, false); });
+        });
+
+        $(function () {
+            refresh();
+            $("[data-rt-tip]").each(function () {
+                $(this).rtTooltip({
+                    content: $(this).attr("data-rt-tip"),
+                    placement: "right",
+                    interactive: true,
+                });
+            });
+        });
+    })(jQuery);
+    </script>
+
+    <?php /* CSRF token used by the POSTs above. */ ?>
+    <input type="hidden" id="csrf" value="<?php
+        $csrfNs = new Zend_Session_Namespace('csrf_namespace');
+        echo htmlspecialchars($csrfNs->authtoken ?? '', ENT_QUOTES);
+    ?>" />
+</div><!-- .backup-config -->

@@ -29,7 +29,7 @@ festgelegt.  Jeder Punkt bekommt vor Implementierung die
 | 7a | ✅ Cue-Marker-Test: 24/7-Aufnahme einschalten (Settings → Local Machine), Cue-Datei prüfen | **DONE 2026-09-16** — zwei Test-Shows 09:55–10:05 über die Stundengrenze: Paare mit Item-Kennung, kein überzähliger End-Marker, Offsets stimmen (Belege im Item „Cue-Marker-Test") |
 | 8 | ✅ Stream-Metadaten (Stream Label, Off Air, Show-Namen) | **DONE 2026-09-13** — Off-Air-Text bei Stille, Stream Label wirkt, Webstream-Titel durchgereicht (`b997a7a`); live abgenommen 2026-09-13/14 (Datei-Show und Webstream-Show) |
 | 9 | ✅ Recording-Loss bei Latency-Catchup | **CLOSED 2026-09-16** — Beobachtungsfrist bis 15.09. sauber: Catchups seit 06.09. einstellig pro Tag, seit 13.09. keine; 24/7-Stundendateien vom 16.09. exakt 3600 s (Belege im Item) |
-| 10 | Backup/Restore via UI | Aktive Items |
+| 10 | Backup/Restore via UI | **Stufe 1 (Manual: DB + Config, Download) gebaut 2026-09-16**, Go nach Neu-Evaluierung; Stufen 2 (Media) und 3 (Auto via Task Scheduler + schlankes Restore) offen — Details im Item |
 | 11 | ✅ Pypo-NSSM-Resilience | **CLOSED 2026-09-16** — Beobachtungsfrist bis 15.09. sauber: seit 09.09. 20 PLAYOUT-Starts gegen 20 angeforderte Shutdowns, kein ungeplanter Neustart (Belege im Item) |
 | 12 | Widgets | Aktive Items (in Arbeit) |
 | 13 | JavaScript-Stack-Modernisierung | Technical Debt (in Arbeit) |
@@ -1368,9 +1368,25 @@ EN (+ DE/FR/ES falls Manual betroffen). **Vorbedingung:** Migration durch — di
 realen Schritte werden beim echten Install dieser Maschine ohnehin verifiziert,
 danach 1:1 in die Docs übernehmen.
 
-### 🟡 Backup/Restore via UI (Settings-Submenü)
+### 🟢 Backup/Restore via UI (Settings-Submenü)
 
-**Status:** Defer — A + B empfohlen & gut machbar (architektur-angepasst),
+**Neu-Evaluierung + Operator-Go 2026-09-16 (Arbeitsreihenfolge Punkt 10):**
+Die Lücke von damals (Async-Job/Progress-Infra) existiert seit dem
+Storage-Umzugs-Job nicht mehr — Stufe 1 (Manual Backup: DB im
+pg_dump-Custom-Format + alle Config-Dateien + Manifest als ein ZIP,
+Backup-Ordner als Einstellung, Liste + Download, Job im API-Prozess nach
+dem MoveJob-Muster) **gebaut 2026-09-16** (Commit-Hash im CHANGELOG
+„Added"; Settings → Backup, 5 API-Routen, PHP-Proxies, Handbuch-Kapitel
+BACKUP in 4 Sprachen, ARCHITECTURE §23.35).  DB-Zugangsdaten aus
+libretime.conf (Operator-Entscheidung).  Grundsatzfragen beantwortet:
+Scheduler = Windows-Aufgabenplaner + Management-Command (Worker bleibt
+Stub); Speicherort = serverseitiger Zielordner + Liste; Restore =
+schlank (Browser + Anleitung, kein 1-Klick-Restore).  **Offen: Stufe 2**
+(Media serverseitig per robocopy-Spiegel + Verify) **und Stufe 3**
+(Auto-Backup-Sektion + `backup_run`-Command + Aufbewahrung, Restore-
+Sektion als Backup-Browser).
+
+**Status (ursprünglich 2026-05-31):** Defer — A + B empfohlen & gut machbar (architektur-angepasst),
 C bewusst schlank.  Start erst nach Grundsatz-Entscheidung (Scheduler) +
 Operator-Go.  **Nicht für HW-Wechsel nötig** — das CLI-Backup aus
 `docs/operator/BACKUP.md` deckt die Migration vollständig ab.

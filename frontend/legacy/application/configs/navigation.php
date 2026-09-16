@@ -200,6 +200,16 @@ $pages[] = [
             'action' => 'local-machine',
             'resource' => 'preference',
         ],
+        [
+            // RASTATIME 2026-09-16 - manual backup of database + config
+            // (work-order point 10, stage 1).  Restore stays a documented
+            // offline procedure (docs/operator/BACKUP.md).
+            'label' => 'Backup',
+            'module' => 'default',
+            'controller' => 'preference',
+            'action' => 'backup',
+            'resource' => 'preference',
+        ],
         // RASTATIME 2026-05-12 - Phase A.4 cleanup.
         // The settings-side "Line-In" navigation entry was removed.
         // All line-in management is now done in the Media Library
