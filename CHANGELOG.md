@@ -161,7 +161,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **Podcast-Episoden seit der Migration leer — PHP ohne CA-Bundle
-  (2026-09-16, Doku + Maschinen-Konfiguration)** — Befund beim Podcast-Test
+  (2026-09-16, Doku + Maschinen-Konfiguration, `98dbded`)** — Befund beim Podcast-Test
   des Operators auf der neuen Bibliothekswurzel: Doppelklick auf einen
   Podcast → Lade-Symbol dreht endlos, DataTables meldet „Requested unknown
   parameter 'guid' for row 0".  Ursache: `/rest/podcast/<id>/episodes`
