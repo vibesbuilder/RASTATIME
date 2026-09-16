@@ -812,6 +812,11 @@ geändertem Skript → Neustart im ruhigen Moment, LIQUIDSOAP wieder oben
 12:37:34; `12-00.mp3` (ab 12:00:00, 54 MB) unversehrt, `12-00.2.mp3` ab
 12:37:32, Rotation 13:00 normal.  `parts` im Sidecar erscheint erst mit der
 nächsten Marke der Stunde (in Stunde 12 kam nach 12:37 keine mehr).
+**Live 2026-09-16 16:53 / 17:24 (Ordner + Bitrate):** Ordnerwechsel nach
+`D:\\recordings\\24-7` um 16:53 sofort übernommen; Bitrate 192 → 128 um
+16:59 erst um 17:24 — die 30-Minuten-Sperre galt auch nach Erfolg (behoben,
+Commit-Hash im CHANGELOG „Fixed").  ffprobe: 192 kbit/s bis 17:24:01, dann
+128 kbit/s in `17-00.2.mp3`.
 
 ### ✅ Cue-Marker-Test der 24/7-Aufnahme (Arbeitsreihenfolge 7a, DONE 2026-09-16)
 

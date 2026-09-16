@@ -95,6 +95,18 @@ def test_failed_attempt_is_retried_after_thirty_minutes(sched):
     assert sched._rendered_fingerprint == "b"
 
 
+def test_a_successful_restart_does_not_hold_the_next_change(sched):
+    # live 2026-09-16: folder change applied 16:53, the bitrate change saved
+    # 16:59 waited until 17:24 - the 30-minute hold is for failed attempts
+    sched._maybe_settings_restart(NOW)
+    sched._test["fingerprint"].return_value = "b"
+    assert sched._maybe_settings_restart(NOW + timedelta(minutes=2)) is True
+    sched._test["fingerprint"].return_value = "c"
+    assert sched._maybe_settings_restart(NOW + timedelta(minutes=8)) is True
+    assert sched._test["restart"].call_count == 2
+    assert sched._rendered_fingerprint == "c"
+
+
 def test_no_fingerprint_function_means_no_detection(monkeypatch):
     engine = MagicMock(spec=LiquidsoapPlayoutEngine)
     engine.get_state.return_value = PlayoutState.STOPPED

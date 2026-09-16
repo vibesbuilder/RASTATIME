@@ -160,6 +160,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Einstellungs-Neustart: ein erfolgreicher Neustart hielt die nächste
+  Änderung 30 Minuten zurück (2026-09-16)** — Live: Ordner der 24/7-Aufnahme
+  um 16:53 geändert → sofort übernommen; Bitrate 192 → 128 um 16:59:45
+  gespeichert → erst um 17:24:00 übernommen.  Die 30-Minuten-Sperre in
+  `_maybe_settings_restart()` (gedacht für fehlgeschlagene Versuche) zählte
+  ab jedem Versuch, auch dem erfolgreichen.  Nach einem erfolgreichen
+  Neustart wird der Zeitstempel jetzt gelöscht; Test
+  `test_a_successful_restart_does_not_hold_the_next_change`.  Bitrate der
+  Stundendateien per ffprobe bestätigt: `17-00.mp3` 192 kbit/s bis 17:24:01,
+  `17-00.2.mp3` 128 kbit/s danach.  Aktiv nach PLAYOUT-Neustart.
+
 - **Podcast-Episoden seit der Migration leer — PHP ohne CA-Bundle
   (2026-09-16, Doku + Maschinen-Konfiguration, `98dbded`)** — Befund beim Podcast-Test
   des Operators auf der neuen Bibliothekswurzel: Doppelklick auf einen

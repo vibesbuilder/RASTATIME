@@ -810,6 +810,10 @@ class PlayoutScheduler:
         # settings: new baseline for the settings change detector.
         self._rendered_fingerprint = self._current_settings_fingerprint() or self._rendered_fingerprint
         self._render_restart_pending = False
+        # The 30-minute hold is for FAILED attempts only - live 2026-09-16 the
+        # folder change (16:53) was applied at once, the bitrate change saved
+        # six minutes later waited until 17:24 behind it.
+        self._settings_restart_attempted_at = None
         if settle_async:
             t = threading.Thread(
                 target=self._confirm_liquidsoap_stays_up, daemon=True,
