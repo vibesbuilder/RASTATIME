@@ -26,7 +26,7 @@ festgelegt.  Jeder Punkt bekommt vor Implementierung die
 | 5 | Show-Shift bei Overbook | Aktive Items — **für später gemerkt (Operator 2026-09-10)**, Neubewertung im Item (Stufe A/B) |
 | 6 | ✅ Seamless Bus-Mix | **CLOSED 2026-09-11** — alle drei Symptome durch die Liquidsoap-Migration erledigt (Belege im Item) |
 | 7 | ✅ Storage-Umbau (Root → D:\stor) | **DONE 2026-09-16** — Stufe 1 flach/relativ (`6059dc4`), Stufe 2 Speicherort als Local-Machine-Einstellung mit Umzugs-Job (`c0b3c70`), Umzug nach D:\stor per UI abgenommen 09:43 |
-| 7a | Cue-Marker-Test: 24/7-Aufnahme einschalten (Settings → Local Machine), Cue-Datei prüfen | **neu 2026-09-10 (Operator), nach dem Storage-Umbau** |
+| 7a | ✅ Cue-Marker-Test: 24/7-Aufnahme einschalten (Settings → Local Machine), Cue-Datei prüfen | **DONE 2026-09-16** — zwei Test-Shows 09:55–10:05 über die Stundengrenze: Paare mit Item-Kennung, kein überzähliger End-Marker, Offsets stimmen (Belege im Item „Cue-Marker-Test") |
 | 8 | ✅ Stream-Metadaten (Stream Label, Off Air, Show-Namen) | **DONE 2026-09-13** — Off-Air-Text bei Stille, Stream Label wirkt, Webstream-Titel durchgereicht (`b997a7a`); live abgenommen 2026-09-13/14 (Datei-Show und Webstream-Show) |
 | 9 | Recording-Loss bei Latency-Catchup | Playout/Liquidsoap |
 | 10 | Backup/Restore via UI | Aktive Items |
@@ -789,6 +789,39 @@ alle Übergänge klangen gut.  **Show-Login 13:35/13:36 ebenfalls
 abgenommen:** Login über den Custom-Login der laufenden Show akzeptiert,
 Switcher `scheduled -> show` nach 22 ms, Audio nach dem 5-s-Puffer,
 Trennen → Timeout 5,0 s → `show off` + Resume an der richtigen Stelle.
+
+### ✅ Cue-Marker-Test der 24/7-Aufnahme (Arbeitsreihenfolge 7a, DONE 2026-09-16)
+
+**Ablauf:** Operator schaltet 24/7-Aufnahme ein (MP3 128 kbit/s,
+`C:\\Users\\studio\\Music\\Permanent Recordings`, Aufbewahrung 10 Tage — der
+Aufräum-Thread löschte beim PLAYOUT-Start 15 Tagesordner von Juni/August, wie
+vorgegeben), Neustart PLAYOUT (rendert `recording_hourly`) und LIQUIDSOAP
+09:53; zwei Test-Shows „testshow" 09:55–10:00 und „testshow2" 10:00–10:05, je
+ein Titel + Station-ID (Crossfade), Show-Wechsel genau auf der Stundengrenze.
+
+**Ergebnis (`C:/Temp/optd/cue_check.py 2026-09-16 09|10`):**
+
+| Stunde | Marker | Befund |
+|---|---|---|
+| 09 | show start 3300,18; track start 6162 (3300,18); track start 6163 (3587,11); track end 6163 (3598,08) | Paare konsistent, Item-Kennungen vorhanden; 6162 hat keinen eigenen End-Marker — der Start von 6163 impliziert ihn (Fix 2026-09-10 `2b208a0` wirkt: kein 30-ms-Nachzügler mehr) |
+| 10 | show end/start 0,09; track start 6164 (0,09); track start 6165 (287,12); track end 6165 (299,08) | Paare konsistent; Show-Grenze auf der Stundengrenze in die neue Datei geschrieben |
+
+Offsets gegen das Playout-Log: 09:55:00,162 → t=3300,18; 09:59:47,060 →
+3587,11; 10:00:00,064 → 0,09; Abweichung ≤ 0,1 s.  Audio: `09-00.mp3` 6,3 MB
+= 6,6 min (Start 09:53:24 bis Rotation exakt 10:00:00), `10-00.mp3` läuft.
+Die Wiedervereinigung nach dem LIQUIDSOAP-Neustart (PLAYOUT 09:55:05
+„restarted under PLAYOUT", `recording.stop` an die Show-Aufnahme) hat die
+Stunden-Aufnahme nicht berührt.
+
+**Befund für später (💡, kein Fehler im Test):** Bei einer angebrochenen
+ersten Stunde (Aufnahme startet mitten in der Stunde — täglich nach dem
+04:00-Neustart, sowie nach jedem manuellen Neustart) beginnt die Audiodatei
+nicht am Stundenanfang, die Marker zählen aber ab Stundenanfang.  Die
+Cue-Datei kennt nur `hour_start`, nicht den tatsächlichen Aufnahmebeginn; ein
+Catch-up-Player müsste ihn aus der Dateierstellzeit ableiten.  Vorschlag:
+Feld `audio_start` (Erstellzeit der Audiodatei) beim ersten Marker der Stunde
+in die Cue-Datei schreiben (~15 Zeilen in `cue_writer.py` + Test), Handbuch
+RECORD_PER_HOUR §4.1 ergänzen.  Vorbedingung: Operator-Go.
 
 ### ✅ Scheduler-Poll-Rückfall entfernen (fällig ab 2026-09-15, Operator 2026-09-09) — DONE 2026-09-15
 
