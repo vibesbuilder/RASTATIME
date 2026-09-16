@@ -183,6 +183,26 @@ def test_audio_start_is_written_once(tmp_path):
     assert _read(tmp_path)["audio_start"] == first
 
 
+def test_parts_list_every_file_of_the_hour(tmp_path):
+    import os
+    day = tmp_path / "2026-06-05"
+    day.mkdir()
+    first = day / "2026-06-05 14-00.mp3"
+    second = day / "2026-06-05 14-00.2.mp3"
+    other_hour = day / "2026-06-05 15-00.mp3"
+    for f in (first, second, other_hour):
+        f.write_bytes(b"x")
+    (day / "2026-06-05 14-00.cues.json").write_text("{}", encoding="utf-8")   # not a part
+    _cw(tmp_path, datetime(2026, 6, 5, 14, 40, 0)).item_start("track", show="A", title="t")
+    data = _read(tmp_path)
+    names = [p["file"] for p in data["parts"]]
+    assert names == ["2026-06-05 14-00.mp3", "2026-06-05 14-00.2.mp3"] or set(names) == {
+        "2026-06-05 14-00.mp3", "2026-06-05 14-00.2.mp3"}
+    assert all("start" in p and "offset" in p for p in data["parts"])
+    assert data["audio_start"] == min(p["start"] for p in data["parts"])
+    assert "15-00" not in json.dumps(data["parts"])
+
+
 def test_audio_start_respects_the_format_extension(tmp_path):
     (tmp_path / "2026-06-05").mkdir()
     (tmp_path / "2026-06-05" / "2026-06-05 14-00.ogg").write_bytes(b"x")

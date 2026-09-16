@@ -164,12 +164,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   laufende Stundendatei (2026-09-16, `bfa216e`)** — Beim ersten automatischen
   Einstellungs-Neustart um 10:32 öffnete `recording_hourly` die Datei
   `10-00.mp3` neu und kürzte sie auf null; 10:00–10:32 waren weg (Teststunde).
-  `output.file` bekommt `append=true`: die Datei der laufenden Stunde wird
-  fortgesetzt, es fehlen nur die Sekunden des Neustarts (`audio_start` bleibt
-  die ursprüngliche Erstellzeit).  Bei einer geänderten Bitrate folgen in
-  derselben Datei Frames mit der neuen Rate — für MP3 zulässig.  Test in
-  `test_liquidsoap_config.py`.  Aktiv nach PLAYOUT-Neustart (der das
-  geänderte Skript seit heute selbst übernimmt, siehe „Added").
+  Erster Versuch `append=true` (`bfa216e`) wirkte nicht: der ffmpeg-Muxer
+  kürzt die Datei trotzdem (Replikat `C:/Temp/optd/append_probe.py`, zweiter
+  Lauf 10:46 → 10:32–10:46 erneut weg), ein nativer `%mp3`-Encoder fehlt dem
+  Build.  Lösung: `rec247_path()` öffnet nie eine vorhandene Stundendatei,
+  sondern schreibt in `<Stunde>-00.2.<ext>`, `.3.` … weiter (Replikat: drei
+  Läufe → drei Teile, nichts gekürzt); das Cue-Sidecar bekommt `parts`
+  (Datei, Erstellzeit, Offset je Teil), `audio_start` ist der erste Teil.
+  Tests `test_liquidsoap_config.py`, `test_cue_writer.py`.  Aktiv nach
+  PLAYOUT-Neustart (der das geänderte Skript selbst übernimmt, siehe „Added").
 
 ### Security
 

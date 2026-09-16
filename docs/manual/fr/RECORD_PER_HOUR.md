@@ -170,7 +170,8 @@ plus tard, et un lecteur se positionne alors à
 > programme 24/7, entre deux pistes fichier. Les auditeurs restent
 > connectés via les montages de secours ; la première heure après le
 > redémarrage est un fichier partiel (voir `audio_start` au §4.1) ; un
-> redémarrage en cours d'heure ajoute au fichier de cette heure, seules
+> redémarrage en cours d'heure continue dans un second fichier de cette
+> heure (`… HH-00.2.mp3`, le fichier de repères liste les parties), seules
 > les quelques secondes du redémarrage manquent. Les
 > étapes ci-dessous restent la voie manuelle.
 

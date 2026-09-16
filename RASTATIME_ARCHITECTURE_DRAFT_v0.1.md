@@ -4983,8 +4983,11 @@ after such a restart is a partial file (`audio_start` in the sidecar).
 
 **Addendum (same day).**  The first live run (bitrate 128 → 192,
 restart 10:32:35–38) showed that `output.file` truncated the running
-hour file on reopen; the hourly recorder now uses `append=true`, so a
-restart inside an hour costs only the restart seconds.  A script changed
+hour file on reopen.  `append=true` does not help: the %ffmpeg muxer
+truncates regardless (measured), and the build has no native `%mp3`.  The
+recorder therefore never opens an existing hour file - it continues in
+`<hour>-00.2.<ext>` - and the cue sidecar lists the `parts` with their
+creation times.  A script changed
 by the startup render outside the boot window is applied through the
 same path (`render_restart_pending` → reason "rastatime.liq changed at
 the playout start"), which closes the last manual restart case: a

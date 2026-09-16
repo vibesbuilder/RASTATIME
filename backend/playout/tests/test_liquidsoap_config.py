@@ -421,8 +421,12 @@ def test_hourly_enabled_basic_shape():
     assert "  bus,\n" in out
     # per-day subfolder is created on reopen.
     assert "file.mkdir(" in out
-    # RASTATIME 2026-09-16: a restart inside the hour appends, never truncates.
-    assert "  append=true,\n" in out
+    # RASTATIME 2026-09-16: a restart inside the hour never truncates the
+    # running hour file - it continues in <hour>-00.2.<ext> (append=true
+    # does not append with the ffmpeg muxer on this build).
+    assert "append=true" not in out
+    assert "while file.exists(candidate(n())) do n := n() + 1 end" in out
+    assert 'else "#{base}.#{n}.mp3" end' in out
 
 
 def test_hourly_folder_backslashes_normalised_to_forward():
@@ -444,13 +448,13 @@ def test_hourly_bitrate_substituted():
 def test_hourly_format_aac_uses_adts():
     out = lc._render_hourly_recording_block(enabled=True, folder="C:/r", fmt="aac")
     assert 'format="adts"' in out
-    assert "-00.aac" in out
+    assert "#{base}.aac" in out
 
 
 def test_hourly_format_ogg_uses_vorbis():
     out = lc._render_hourly_recording_block(enabled=True, folder="C:/r", fmt="ogg")
     assert 'codec="libvorbis"' in out
-    assert "-00.ogg" in out
+    assert "#{base}.ogg" in out
 
 
 def test_hourly_format_opus_clamps_samplerate():
@@ -459,7 +463,7 @@ def test_hourly_format_opus_clamps_samplerate():
     )
     assert 'codec="libopus"' in out
     assert "samplerate=48000" in out
-    assert "-00.opus" in out
+    assert "#{base}.opus" in out
 
 
 def test_hourly_unknown_format_raises():

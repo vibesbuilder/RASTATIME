@@ -1673,20 +1673,25 @@ def _render_hourly_recording_block(
         "def rec247_path() =\n"
         '  day = time.string("%Y-%m-%d")\n'
         '  hh  = time.string("%H")\n'
-        f'  p = "{folder_liq}/#{{day}}/#{{day}} #{{hh}}-00.{ext}"\n'
-        "  d = path.dirname(p)\n"
+        f'  base = "{folder_liq}/#{{day}}/#{{day}} #{{hh}}-00"\n'
+        "  d = path.dirname(base)\n"
         "  if not file.exists(d) then ignore(file.mkdir(d)) end\n"
-        "  p\n"
+        "  # RASTATIME 2026-09-16: never open an existing hour file - the ffmpeg\n"
+        "  # muxer truncates it even in append mode (measured).  A restart\n"
+        "  # inside the hour continues in <hour>-00.2.<ext>, .3. ...; the cue\n"
+        "  # sidecar lists the parts.\n"
+        "  def candidate(n) =\n"
+        f'    if n == 1 then "#{{base}}.{ext}" else "#{{base}}.#{{n}}.{ext}" end\n'
+        "  end\n"
+        "  n = ref(1)\n"
+        "  while file.exists(candidate(n())) do n := n() + 1 end\n"
+        "  candidate(n())\n"
         "end\n"
         "output.file(\n"
         '  id="recording_hourly",\n'
         "  reopen_when=rec247_reopen,\n"
         "  reopen_delay={120.},\n"
         "  fallible=true,\n"
-        # RASTATIME 2026-09-16 - a restart inside the hour (settings applied,
-        # planned restart) reopens the running hour file: append instead of
-        # truncating it (the first settings restart erased 10:00-10:32).
-        "  append=true,\n"
         f"  {encoder},\n"
         "  {rec247_path()},\n"
         "  bus,\n"

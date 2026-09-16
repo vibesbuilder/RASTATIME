@@ -159,7 +159,8 @@ after the 04:00 restart - starts later, and a player then seeks to
 > quiet moment - or, with a 24/7 programme, between two file tracks.
 > Listeners stay connected via the standby mounts; the first hour
 > after the restart is a partial file (see `audio_start` in §4.1); a
-> restart inside an hour appends to that hour's file, so only the few
+> restart inside an hour continues in a second file of that hour
+> (`… HH-00.2.mp3`, the sidecar lists the parts), so only the few
 > seconds of the restart are missing.
 > The steps below remain the manual way.
 
