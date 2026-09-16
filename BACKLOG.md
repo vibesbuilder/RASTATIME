@@ -1656,8 +1656,7 @@ dieses Umbaus); (d) Cover-Ordner `artwork` liegt danach unter
 `D:\stor\imported\artwork` neben den Interpreten-Ordnern (wie heute unter
 `imported/2/`).
 
-**Stufe 1 umgesetzt 2026-09-16 (Operator-Go, Commit-Hash im CHANGELOG
-„Changed"):** fünf Code-Stellen ohne owner-id-Ebene, Show-Bilder und
+**Stufe 1 umgesetzt 2026-09-16 (Operator-Go, `6059dc4`):** fünf Code-Stellen ohne owner-id-Ebene, Show-Bilder und
 Auto-DJ-Logo relativ, Django-Befehl `storage_flatten` (Trockenlauf/`--apply`,
 eine Transaktion, Rückgängig bei Fehler).  Trockenlauf in Produktion: 80
 Einträge, 343 + 216 + 29 + 1 Zeilen, 343/343 Pfade auflösbar.

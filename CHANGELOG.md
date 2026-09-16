@@ -62,7 +62,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Medienbibliothek ohne owner-id-Ebene, alle Pfade relativ zur
   Speicherwurzel (2026-09-16, Stufe 1 von Arbeitsreihenfolge Punkt 7,
-  Operator-Go)** — Vorbereitung für den wählbaren Speicherort (Settings →
+  Operator-Go, `6059dc4`)** — Vorbereitung für den wählbaren Speicherort (Settings →
   Local Machine, Stufe 2): `imported/<owner-id>/…` wird `imported/…`.  Die
   owner-id-Ebene entstand an fünf Stellen, nicht nur im Upload:
   `MediaService.php` (Import-Ziel), `CcFiles.php` (Cover unter
