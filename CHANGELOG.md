@@ -84,8 +84,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Produktion: 80 Einträge, 343 + 216 + 29 + 1 Zeilen, alle 343 Datei-Pfade
   vorher und nachher auflösbar.  Tests `test_storage_flatten.py` (17),
   Podcast-Tests angepasst.  MIGRATION.md §4.4/§4.5 auf den Befehl
-  umgestellt, ARCHITECTURE 0.33 (§23.32).  Ausführung in Produktion: siehe
-  BACKLOG-Item.
+  umgestellt, ARCHITECTURE 0.33 (§23.32).  Ausgeführt in Produktion am
+  2026-09-16 09:10 (Operator, nach DB-Dump): 80 Einträge, 343 + 216 + 29 + 1
+  Zeilen, 343/343 Pfade auflösbar; Show-Logo, Cover und Downloads danach
+  live geprüft.
 
 ### Security
 

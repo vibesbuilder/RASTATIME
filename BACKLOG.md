@@ -1660,8 +1660,12 @@ dieses Umbaus); (d) Cover-Ordner `artwork` liegt danach unter
 Auto-DJ-Logo relativ, Django-Befehl `storage_flatten` (Trockenlauf/`--apply`,
 eine Transaktion, Rückgängig bei Fehler).  Trockenlauf in Produktion: 80
 Einträge, 343 + 216 + 29 + 1 Zeilen, 343/343 Pfade auflösbar.
-**Ausführung (`--apply`) in Produktion:** offen — im ruhigen Moment nach
-DB-Dump, danach RASTATIME-API neu starten (Podcast-Pfad).
+**Ausgeführt in Produktion 2026-09-16 09:10 (Operator, nach DB-Dump
+`C:\\Temp\\optd\\db_before_flatten_20260916_091032.dump`):** 80 Einträge
+verschoben, 343 + 216 + 29 + 1 Zeilen umgeschrieben, 343/343 Pfade
+auflösbar, `imported/2` entfernt.  Live geprüft: Show-Logo und Auto-DJ-Logo
+(HTTP 200), Cover-Endpunkt, drei Downloads über die API, Track-Metadaten.
+RASTATIME-API-Neustart für den Podcast-Pfad durch den Operator.
 
 **Neue Richtung (Operator 2026-09-15): Speicherort als Einstellung**
 Nicht nur einmal nach `D:\stor` umziehen: unter Settings → Local Machine
