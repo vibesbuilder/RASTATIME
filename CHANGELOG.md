@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Speicherort der Medienbibliothek als Einstellung mit Umzugs-Job (2026-09-16,
-  Stufe 2 von Arbeitsreihenfolge Punkt 7, Operator-Go)** — Settings → Local
+  Stufe 2 von Arbeitsreihenfolge Punkt 7, Operator-Go, `c0b3c70`)** — Settings → Local
   Machine → „Media Library Location": aktueller Ort mit Herkunft, Dateizahl
   und Größe; neues Ziel eingeben, „Check" (absolut, lokales Laufwerk — keine
   Netzpfade in v1 —, anlegbar/beschreibbar, nicht in der alten Wurzel und
