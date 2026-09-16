@@ -171,7 +171,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   sondern schreibt in `<Stunde>-00.2.<ext>`, `.3.` … weiter (Replikat: drei
   Läufe → drei Teile, nichts gekürzt); das Cue-Sidecar bekommt `parts`
   (Datei, Erstellzeit, Offset je Teil), `audio_start` ist der erste Teil.
-  Tests `test_liquidsoap_config.py`, `test_cue_writer.py`.  Aktiv nach
+  Tests `test_liquidsoap_config.py`, `test_cue_writer.py` (`3cb5e33`).  Aktiv nach
   PLAYOUT-Neustart (der das geänderte Skript selbst übernimmt, siehe „Added").
 
 ### Security

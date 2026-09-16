@@ -805,7 +805,7 @@ Neustart trotzdem.
 Änderung, Render, LIQUIDSOAP-Neustart, wieder oben 10:32:38 — dabei gefunden
 und behoben: `output.file` kürzte die laufende Stundendatei — `append=true`
 (`bfa216e`) half nicht (ffmpeg-Muxer), daher Fortsetzung in `<Stunde>-00.2.mp3`
-+ `parts` im Sidecar (Commit-Hash im CHANGELOG „Fixed"); außerdem übernimmt der Pfad jetzt auch ein beim
++ `parts` im Sidecar (`3cb5e33`); außerdem übernimmt der Pfad jetzt auch ein beim
 PLAYOUT-Start geändertes Skript (`render_restart_pending`).
 
 ### ✅ Cue-Marker-Test der 24/7-Aufnahme (Arbeitsreihenfolge 7a, DONE 2026-09-16)
