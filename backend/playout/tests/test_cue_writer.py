@@ -141,3 +141,50 @@ def test_item_end_without_meta_is_unchanged(tmp_path):
     cw.item_end("webstream")
     (mark,) = [m for m in _read(tmp_path)["marks"] if m["kind"] == "webstream"]
     assert mark == {"t": 5.0, "kind": "webstream", "event": "end"}
+
+
+# ---- audio_start (RASTATIME 2026-09-16) --------------------------------------
+
+def test_audio_start_is_taken_from_the_audio_file(tmp_path):
+    import os
+    day = tmp_path / "2026-06-05"
+    day.mkdir()
+    audio = day / "2026-06-05 14-00.mp3"
+    audio.write_bytes(b"x")
+    created = datetime(2026, 6, 5, 14, 7, 30).timestamp()
+    os.utime(audio, (created, created))          # mtime; birthtime is "now" on Windows
+    _cw(tmp_path, datetime(2026, 6, 5, 14, 10, 0)).item_start("track", show="A", title="t")
+    data = _read(tmp_path)
+    assert "audio_start" in data and "audio_start_offset" in data
+    start = datetime.fromisoformat(data["audio_start"])
+    assert (start - datetime(2026, 6, 5, 14, 0, 0)).total_seconds() == data["audio_start_offset"]
+    assert data["marks"][-1]["t"] == 600.0
+
+
+def test_audio_start_is_added_on_a_later_mark_when_the_file_appears(tmp_path):
+    cw = _cw(tmp_path, datetime(2026, 6, 5, 14, 0, 5))
+    cw.item_start("track", show="A", title="first")
+    data = _read(tmp_path)
+    assert "audio_start" not in data                 # no audio yet
+    (tmp_path / "2026-06-05" / "2026-06-05 14-00.mp3").write_bytes(b"x")
+    cw.item_end("track")
+    data = _read(tmp_path)
+    assert "audio_start" in data and data["audio_start_offset"] >= 0
+    assert len(data["marks"]) == 3                   # show start, track start, track end
+
+
+def test_audio_start_is_written_once(tmp_path):
+    (tmp_path / "2026-06-05").mkdir()
+    (tmp_path / "2026-06-05" / "2026-06-05 14-00.mp3").write_bytes(b"x")
+    cw = _cw(tmp_path, datetime(2026, 6, 5, 14, 1, 0))
+    cw.item_start("track", show="A", title="t")
+    first = _read(tmp_path)["audio_start"]
+    cw.item_end("track")
+    assert _read(tmp_path)["audio_start"] == first
+
+
+def test_audio_start_respects_the_format_extension(tmp_path):
+    (tmp_path / "2026-06-05").mkdir()
+    (tmp_path / "2026-06-05" / "2026-06-05 14-00.ogg").write_bytes(b"x")
+    _cw(tmp_path, datetime(2026, 6, 5, 14, 1, 0), fmt="ogg").item_start("track", show="A", title="t")
+    assert "audio_start" in _read(tmp_path)

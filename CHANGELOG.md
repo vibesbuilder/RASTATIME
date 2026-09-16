@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Cue-Sidecars kennen den Aufnahmebeginn der Audiodatei (2026-09-16,
+  Operator-Go nach dem Cue-Marker-Test 7a)** — Befund: bei einer
+  angebrochenen ersten Stunde (Aufnahme startet mitten in der Stunde, täglich
+  nach dem 04:00-Neustart) beginnt die Audiodatei nicht am Stundenanfang, die
+  Marker zählen aber ab `hour_start`.  `CueWriter` schreibt jetzt beim ersten
+  Marker, der die Audiodatei vorfindet, `audio_start` (Erstellzeit, `st_birthtime`
+  bzw. `st_ctime`) und `audio_start_offset` (Sekunden nach `hour_start`; volle
+  Stunde = 0); ein Player springt zu `t - audio_start_offset`.  Tests
+  `test_cue_writer.py` (+4).  Handbuch RECORD_PER_HOUR §4.1 EN/DE/FR/ES.
+  Aktiv nach PLAYOUT-Neustart.
+
 - **Speicherort der Medienbibliothek als Einstellung mit Umzugs-Job (2026-09-16,
   Stufe 2 von Arbeitsreihenfolge Punkt 7, Operator-Go, `c0b3c70`)** — Settings → Local
   Machine → „Media Library Location": aktueller Ort mit Herkunft, Dateizahl

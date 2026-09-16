@@ -131,6 +131,8 @@ heure, pour qu'un futur lecteur de rattrapage saute directement
   "version": 1,
   "recording": "2026-06-05 14-00.mp3",
   "hour_start": "2026-06-05T14:00:00",
+  "audio_start": "2026-06-05T14:00:00",
+  "audio_start_offset": 0.0,
   "marks": [
     {"t": 0.0,   "kind": "show",  "event": "start", "name": "Après-midi"},
     {"t": 0.0,   "kind": "track", "event": "start", "show": "Après-midi",
@@ -148,6 +150,14 @@ changement d'émission, donc elles couvrent toute émission ayant
 du contenu. Une piste qui chevauche le passage d'heure a son
 `start` dans le fichier de repères de l'heure précédente et son
 `end` dans le nouveau.
+
+Depuis le 16/09/2026, le fichier de repères note aussi quand le
+fichier audio de l'heure a été créé : `audio_start` (heure locale)
+et `audio_start_offset` (secondes après `hour_start`). Une heure
+complète a un décalage de 0 ; la première heure partielle après un
+redémarrage - chaque jour après le redémarrage de 04:00 - commence
+plus tard, et un lecteur se positionne alors à
+`t - audio_start_offset` dans ce fichier.
 
 ---
 

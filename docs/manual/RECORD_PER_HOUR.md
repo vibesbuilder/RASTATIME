@@ -123,6 +123,8 @@ player can seek straight to a show or track:
   "version": 1,
   "recording": "2026-06-05 14-00.mp3",
   "hour_start": "2026-06-05T14:00:00",
+  "audio_start": "2026-06-05T14:00:00",
+  "audio_start_offset": 0.0,
   "marks": [
     {"t": 0.0,   "kind": "show",  "event": "start", "name": "Afternoon Drive"},
     {"t": 0.0,   "kind": "track", "event": "start", "show": "Afternoon Drive",
@@ -139,6 +141,13 @@ player can seek straight to a show or track:
 show, so they cover every show with content. A track that
 spans the top of the hour has its `start` in the previous
 hour's sidecar and its `end` in the new one.
+
+Since 2026-09-16 the sidecar also records when the hour's audio
+file was created: `audio_start` (local time) and
+`audio_start_offset` (seconds after `hour_start`). A full hour
+has offset 0; the partial first hour after a restart - every day
+after the 04:00 restart - starts later, and a player then seeks to
+`t - audio_start_offset` inside that file.
 
 ---
 

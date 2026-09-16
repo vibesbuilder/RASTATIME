@@ -128,6 +128,8 @@ programa o pista:
   "version": 1,
   "recording": "2026-06-05 14-00.mp3",
   "hour_start": "2026-06-05T14:00:00",
+  "audio_start": "2026-06-05T14:00:00",
+  "audio_start_offset": 0.0,
   "marks": [
     {"t": 0.0,   "kind": "show",  "event": "start", "name": "Tarde"},
     {"t": 0.0,   "kind": "track", "event": "start", "show": "Tarde",
@@ -145,6 +147,14 @@ de un cambio de programa, así que cubren todo programa con
 contenido. Una pista que cruza el cambio de hora tiene su
 `start` en el archivo de marcas de la hora anterior y su `end`
 en el nuevo.
+
+Desde el 16/09/2026 el archivo de marcas anota también cuándo se
+creó el archivo de audio de la hora: `audio_start` (hora local) y
+`audio_start_offset` (segundos después de `hour_start`). Una hora
+completa tiene desplazamiento 0; la primera hora parcial tras un
+reinicio - cada día tras el reinicio de las 04:00 - empieza más
+tarde, y un reproductor se sitúa entonces en
+`t - audio_start_offset` dentro de ese archivo.
 
 ---
 

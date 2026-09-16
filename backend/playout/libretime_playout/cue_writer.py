@@ -11,6 +11,8 @@ HH>-00.<ext>``, this writes a JSON sidecar next to it::
       "version": 1,
       "recording": "2026-06-05 14-00.mp3",
       "hour_start": "2026-06-05T14:00:00",
+      "audio_start": "2026-06-05T14:00:00",       # creation time of the audio file
+      "audio_start_offset": 0.0,                   # seconds after hour_start
       "marks": [
         {"t": 0.0,   "kind": "track", "event": "start", "show": "...",
                      "title": "...", "artist": "..."},
@@ -20,7 +22,13 @@ HH>-00.<ext>``, this writes a JSON sidecar next to it::
     }
 
 ``t`` is the offset in seconds from the top of the hour, so the future
-catch-up player seeks straight to it.
+catch-up player seeks straight to it.  RASTATIME 2026-09-16: the audio
+file of a partial first hour (recorder started mid-hour - daily after the
+04:00 restart) does not begin at the top of the hour; ``audio_start`` is
+the creation time of the audio file and ``audio_start_offset`` its
+distance from ``hour_start`` in seconds, so a player seeks to
+``t - audio_start_offset`` inside that file.  Filled in at the first
+mark that finds the audio file; a full hour has offset 0.
 
 Design
 ------
@@ -154,6 +162,7 @@ class CueWriter:
         sidecar = day_dir / f"{base}.cues.json"
 
         data = self._load(sidecar, f"{base}.{ext}", hour_start)
+        self._note_audio_start(data, day_dir / f"{base}.{ext}", hour_start)
         for mark in marks:
             entry = {"t": offset}
             entry.update(mark)
@@ -165,6 +174,23 @@ class CueWriter:
             json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8"
         )
         os.replace(tmp, sidecar)
+
+    @staticmethod
+    def _note_audio_start(data: Dict, audio: Path, hour_start: datetime) -> None:
+        """
+        RASTATIME 2026-09-16 - record when the hour's audio file was created
+        (once, as soon as the file exists).  ``st_birthtime`` where the
+        platform has it (Windows), else ``st_ctime``.
+        """
+        if data.get("audio_start"):
+            return
+        try:
+            st = audio.stat()
+        except OSError:
+            return                                  # not rotated yet - next mark
+        created = datetime.fromtimestamp(getattr(st, "st_birthtime", st.st_ctime)).replace(microsecond=0)
+        data["audio_start"] = created.isoformat(timespec="seconds")
+        data["audio_start_offset"] = round((created - hour_start).total_seconds(), 2)
 
     def _load(self, sidecar: Path, audio_name: str, hour_start: datetime) -> Dict:
         if sidecar.exists():

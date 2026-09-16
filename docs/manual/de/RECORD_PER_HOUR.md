@@ -128,6 +128,8 @@ Track springen kann:
   "version": 1,
   "recording": "2026-06-05 14-00.mp3",
   "hour_start": "2026-06-05T14:00:00",
+  "audio_start": "2026-06-05T14:00:00",
+  "audio_start_offset": 0.0,
   "marks": [
     {"t": 0.0,   "kind": "show",  "event": "start", "name": "Nachmittagsfahrt"},
     {"t": 0.0,   "kind": "track", "event": "start", "show": "Nachmittagsfahrt",
@@ -145,6 +147,13 @@ abgeleitet und decken daher jede Sendung mit Inhalt ab. Ein
 Track, der über die volle Stunde hinausreicht, hat seinen
 `start` im Sidecar der vorherigen Stunde und sein `end` in der
 neuen.
+
+Seit dem 16.09.2026 hält das Sidecar auch fest, wann die
+Audiodatei der Stunde angelegt wurde: `audio_start` (Ortszeit) und
+`audio_start_offset` (Sekunden nach `hour_start`). Eine volle
+Stunde hat den Offset 0; die angebrochene erste Stunde nach einem
+Neustart - täglich nach dem Neustart um 04:00 - beginnt später, und
+ein Player springt dann in dieser Datei zu `t - audio_start_offset`.
 
 ---
 
