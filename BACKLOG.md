@@ -795,7 +795,7 @@ Trennen → Timeout 5,0 s → `show off` + Resume an der richtigen Stelle.
 **Operator-Frage 2026-09-16:** „Muss ich nach dem Aktivieren/Deaktivieren des
 24/7-Recordings immer den Dienst neu starten?  Kann man das automatisch
 durchführen?" — Evaluierung: Go, auch für den Main Output.  Umgesetzt
-(Commit-Hash im CHANGELOG „Added"): Fingerprint der gerenderten
+(`6be216a`): Fingerprint der gerenderten
 Einstellungen, Abgleich bei jedem Refresh, geplanter Neustart im ruhigen
 Moment oder an der Titelgrenze.  Nicht umgesetzt (💡 bei Bedarf): Ein/Aus
 der Aufnahme ganz ohne Neustart per Telnet (`recording_hourly.start/stop`,

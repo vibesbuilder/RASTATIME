@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Gerenderte Einstellungen übernimmt das Playout selbst — kein manueller
   Neustart mehr nach 24/7-Aufnahme, Main Output, Crossfade oder
-  Stream-Ausgängen (2026-09-16, Operator-Go)** — Diese Werte werden beim
+  Stream-Ausgängen (2026-09-16, Operator-Go, `6be216a`)** — Diese Werte werden beim
   Rendern in `rastatime.liq` gebacken; bisher hieß es nach dem Speichern
   „Restart the playout service to apply" bzw. „Apply now".  Jetzt bildet
   `__main__._render_settings_fingerprint()` einen Hash aus 24/7-Konfiguration,
