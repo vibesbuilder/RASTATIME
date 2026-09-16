@@ -4980,3 +4980,12 @@ live within two minutes plus the wait for a quiet moment or track
 boundary (the same guarantees as the nightly restart: name-safe Main
 Output or no restart, verified service state).  The first 24/7 hour
 after such a restart is a partial file (`audio_start` in the sidecar).
+
+**Addendum (same day).**  The first live run (bitrate 128 → 192,
+restart 10:32:35–38) showed that `output.file` truncated the running
+hour file on reopen; the hourly recorder now uses `append=true`, so a
+restart inside an hour costs only the restart seconds.  A script changed
+by the startup render outside the boot window is applied through the
+same path (`render_restart_pending` → reason "rastatime.liq changed at
+the playout start"), which closes the last manual restart case: a
+template or code update needs only the PLAYOUT restart.

@@ -124,6 +124,7 @@ class PlayoutScheduler:
         render_liquidsoap: Optional[Callable[[], object]] = None,
         nightly_restart: Optional[NightlyRestartPolicy] = None,
         render_settings_fingerprint: Optional[Callable[[], Optional[str]]] = None,
+        render_restart_pending: bool = False,
     ) -> None:
         self._engine = engine
         self._api_client = api_client
@@ -166,6 +167,9 @@ class PlayoutScheduler:
         self._render_settings_fingerprint = render_settings_fingerprint
         self._rendered_fingerprint: Optional[str] = None
         self._settings_restart_attempted_at: Optional[datetime] = None
+        # RASTATIME 2026-09-16 - the startup render changed rastatime.liq
+        # outside the boot window: apply it like a settings change.
+        self._render_restart_pending = render_restart_pending
         self._planned_restart_attempted_at: Optional[datetime] = None
         # RASTATIME 2026-09-06 - did the constructor's recording.stop +
         # gate reset reach Liquidsoap?  False means telnet was not up yet
@@ -592,6 +596,7 @@ class PlayoutScheduler:
     SETTINGS_RESTART_REASON = (
         "settings changed (24/7 recording, Main Output, crossfade or stream outputs)"
     )
+    RENDER_RESTART_REASON = "rastatime.liq changed at the playout start"
 
     def _current_settings_fingerprint(self) -> Optional[str]:
         fn = self._render_settings_fingerprint
@@ -622,8 +627,9 @@ class PlayoutScheduler:
             return False
         if self._rendered_fingerprint is None:
             self._rendered_fingerprint = current
-            return False
-        if current == self._rendered_fingerprint:
+            if not self._render_restart_pending:
+                return False
+        elif current == self._rendered_fingerprint and not self._render_restart_pending:
             return False
         now_local = now_local or datetime.now()
         if self._boundary_restart_pending:
@@ -637,12 +643,11 @@ class PlayoutScheduler:
         margin = policy.quiet_margin_seconds if policy is not None else 300.0
         with self._lock:
             quiet, why = self._quiet_for_restart_locked(margin)
+        reason = self.RENDER_RESTART_REASON if self._render_restart_pending else self.SETTINGS_RESTART_REASON
         if quiet:
             self._settings_restart_attempted_at = now_local
-            return self._perform_planned_restart(
-                f"quiet moment: {self.SETTINGS_RESTART_REASON}", now_local,
-            )
-        self._boundary_restart_pending = self.SETTINGS_RESTART_REASON
+            return self._perform_planned_restart(f"quiet moment: {reason}", now_local)
+        self._boundary_restart_pending = reason
         logger.warning(
             "Settings changed (24/7 recording / Main Output / crossfade / stream "
             "outputs) but %s - applying at the next file-to-file track boundary.", why,
@@ -804,6 +809,7 @@ class PlayoutScheduler:
         # RASTATIME 2026-09-16 - the fresh instance carries the current
         # settings: new baseline for the settings change detector.
         self._rendered_fingerprint = self._current_settings_fingerprint() or self._rendered_fingerprint
+        self._render_restart_pending = False
         if settle_async:
             t = threading.Thread(
                 target=self._confirm_liquidsoap_stays_up, daemon=True,

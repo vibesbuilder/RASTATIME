@@ -421,6 +421,8 @@ def test_hourly_enabled_basic_shape():
     assert "  bus,\n" in out
     # per-day subfolder is created on reopen.
     assert "file.mkdir(" in out
+    # RASTATIME 2026-09-16: a restart inside the hour appends, never truncates.
+    assert "  append=true,\n" in out
 
 
 def test_hourly_folder_backslashes_normalised_to_forward():

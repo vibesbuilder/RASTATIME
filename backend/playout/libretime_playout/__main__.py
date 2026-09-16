@@ -860,7 +860,7 @@ def _render_rastatime_liq_outcome(stream_outputs: List[Dict]) -> RenderOutcome:
     return RenderOutcome(changed=changed, main_output_mode=main_output_mode)
 
 
-def _render_rastatime_liq_at_startup(stream_outputs: List[Dict]) -> None:
+def _render_rastatime_liq_at_startup(stream_outputs: List[Dict]) -> bool:
     """
     Startup wrapper around :func:`_render_rastatime_liq`.
 
@@ -880,7 +880,7 @@ def _render_rastatime_liq_at_startup(stream_outputs: List[Dict]) -> None:
     except _LiquidsoapRenderError:
         sys.exit(1)
     if not outcome.changed:
-        return
+        return False
 
     from libretime_playout.liquidsoap_service import (  # noqa: PLC0415
         MAIN_OUTPUT_BY_INDEX,
@@ -906,7 +906,7 @@ def _render_rastatime_liq_at_startup(stream_outputs: List[Dict]) -> None:
                 "PLAYOUT and LIQUIDSOAP manually in a quiet moment.",
                 uptime or 0.0,
             )
-            return
+            return True
         logger.warning(
             "rastatime.liq changed %.0f s after boot — restarting "
             "RASTATIME-LIQUIDSOAP so it loads this render instead of the "
@@ -918,13 +918,17 @@ def _render_rastatime_liq_at_startup(stream_outputs: List[Dict]) -> None:
                 "Automatic restart failed.  RESTART the RASTATIME-LIQUIDSOAP "
                 "NSSM service manually:   nssm restart RASTATIME-LIQUIDSOAP"
             )
-        return
+            return True
+        return False
 
+    # RASTATIME 2026-09-16 - outside the boot window the scheduler applies
+    # the fresh render itself (quiet moment or next track boundary).
     logger.warning(
-        "Rendered rastatime.liq (content changed).  RESTART the "
-        "RASTATIME-LIQUIDSOAP NSSM service so it picks up the new "
-        ".liq:   nssm restart RASTATIME-LIQUIDSOAP"
+        "Rendered rastatime.liq (content changed).  The playout will restart "
+        "RASTATIME-LIQUIDSOAP in the next quiet moment (or at the next track "
+        "boundary); to force it now:   nssm restart RASTATIME-LIQUIDSOAP"
     )
+    return True
 
 
 PLAYOUT_ENGINE_ENV = "RASTATIME_PLAYOUT_ENGINE"
@@ -969,6 +973,7 @@ def main() -> None:
 
     # 4. Read Icecast stream settings from cc_pref
     stream_outputs: List[Dict] = []
+    render_restart_pending = False
     if django_ok:
         stream_outputs = _read_stream_outputs()
         if stream_outputs:
@@ -998,13 +1003,10 @@ def main() -> None:
         # RASTATIME 2026-05-26 — Phase C7.  Render the production
         # rastatime.liq from the cc_pref stream-output rows + the
         # operator-configured paths.  Idempotent (rewrites only
-        # when content actually changed); operator must restart
-        # the RASTATIME-LIQUIDSOAP NSSM service to pick up changes
-        # — we deliberately do NOT bounce the service ourselves
-        # because doing so silently would mask configuration bugs
-        # (the operator wants the dry-run-then-confirm cycle on
-        # production-credential changes).
-        _render_rastatime_liq_at_startup(stream_outputs)
+        # when content actually changed).  RASTATIME 2026-09-16: a
+        # changed render is applied by the scheduler in the next quiet
+        # moment (boot window: at once), see _maybe_settings_restart.
+        render_restart_pending = _render_rastatime_liq_at_startup(stream_outputs)
 
         engine = LiquidsoapPlayoutEngine()
         logger.info(
@@ -1114,6 +1116,7 @@ def main() -> None:
         # RASTATIME 2026-09-16 - settings baked into the .liq are applied by
         # the playout itself (re-render + LIQUIDSOAP restart in a quiet moment).
         render_settings_fingerprint=(_render_settings_fingerprint if django_ok else None),
+        render_restart_pending=render_restart_pending,
         nightly_restart=nightly_policy,
         input_transition_seconds=_resolve_crossfade_seconds(),
         # RASTATIME 2026-09-13 - Stream Label / Off Air Metadata / station

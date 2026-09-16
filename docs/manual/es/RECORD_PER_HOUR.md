@@ -166,7 +166,9 @@ tarde, y un reproductor se sitúa entonces en
 > script y reinicia Liquidsoap en el siguiente momento tranquilo, o, con
 > una programación 24/7, entre dos pistas de archivo. Los oyentes siguen
 > conectados a través de los montajes de reserva; la primera hora tras
-> el reinicio es un archivo parcial (véase `audio_start` en §4.1). Los
+> el reinicio es un archivo parcial (véase `audio_start` en §4.1); un
+> reinicio dentro de una hora añade al archivo de esa hora, solo faltan
+> los pocos segundos del reinicio. Los
 > pasos siguientes siguen siendo la vía manual.
 
 Los ajustes 24/7 se leen al arrancar el playout y se integran

@@ -158,7 +158,9 @@ after the 04:00 restart - starts later, and a player then seeks to
 > minutes), re-renders the script and restarts Liquidsoap in the next
 > quiet moment - or, with a 24/7 programme, between two file tracks.
 > Listeners stay connected via the standby mounts; the first hour
-> after the restart is a partial file (see `audio_start` in §4.1).
+> after the restart is a partial file (see `audio_start` in §4.1); a
+> restart inside an hour appends to that hour's file, so only the few
+> seconds of the restart are missing.
 > The steps below remain the manual way.
 
 The 24/7 settings are read when the playout starts and baked

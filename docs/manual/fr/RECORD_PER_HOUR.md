@@ -169,7 +169,9 @@ plus tard, et un lecteur se positionne alors à
 > et redémarre Liquidsoap au prochain moment calme - ou, avec un
 > programme 24/7, entre deux pistes fichier. Les auditeurs restent
 > connectés via les montages de secours ; la première heure après le
-> redémarrage est un fichier partiel (voir `audio_start` au §4.1). Les
+> redémarrage est un fichier partiel (voir `audio_start` au §4.1) ; un
+> redémarrage en cours d'heure ajoute au fichier de cette heure, seules
+> les quelques secondes du redémarrage manquent. Les
 > étapes ci-dessous restent la voie manuelle.
 
 Les réglages 24/7 sont lus au démarrage du playout et intégrés

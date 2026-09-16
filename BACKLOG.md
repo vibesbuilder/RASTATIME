@@ -801,6 +801,11 @@ Moment oder an der Titelgrenze.  Nicht umgesetzt (💡 bei Bedarf): Ein/Aus
 der Aufnahme ganz ohne Neustart per Telnet (`recording_hourly.start/stop`,
 Ordner als interaktive Variable) — ~1 Tag, Format/Bitrate bräuchten den
 Neustart trotzdem.
+**Live 2026-09-16 10:32 (Bitrate 128 → 192):** Refresh 10:32:35 erkannte die
+Änderung, Render, LIQUIDSOAP-Neustart, wieder oben 10:32:38 — dabei gefunden
+und behoben: `output.file` kürzte die laufende Stundendatei (`append=true`,
+CHANGELOG „Fixed"); außerdem übernimmt der Pfad jetzt auch ein beim
+PLAYOUT-Start geändertes Skript (`render_restart_pending`).
 
 ### ✅ Cue-Marker-Test der 24/7-Aufnahme (Arbeitsreihenfolge 7a, DONE 2026-09-16)
 

@@ -165,7 +165,9 @@ ein Player springt dann in dieser Datei zu `t - audio_start_offset`.
 > das Skript neu und startet Liquidsoap im nächsten ruhigen Moment neu
 > - bei einem 24/7-Programm zwischen zwei Datei-Titeln. Hörer bleiben
 > über die Standby-Mounts verbunden; die erste Stunde nach dem Neustart
-> ist eine angebrochene Datei (siehe `audio_start` in §4.1). Die Schritte
+> ist eine angebrochene Datei (siehe `audio_start` in §4.1); ein Neustart
+> innerhalb einer Stunde hängt an die Datei dieser Stunde an, es fehlen
+> nur die wenigen Sekunden des Neustarts. Die Schritte
 > unten bleiben der manuelle Weg.
 
 Die 24/7-Einstellungen werden beim Playout-Start gelesen und in

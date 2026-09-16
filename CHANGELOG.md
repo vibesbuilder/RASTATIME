@@ -27,6 +27,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Local-Machine-Seite angepasst.  Tests `test_settings_restart.py` (8),
   Backend 626.  Handbuch LOCAL_MACHINE §2 und RECORD_PER_HOUR §5
   EN/DE/FR/ES, ARCHITECTURE 0.35 (§23.34).  Aktiv nach PLAYOUT-Neustart.
+  **Live 2026-09-16 10:32:** Bitrate 128 → 192 gespeichert 10:31, Refresh
+  10:32:35 → Render → LIQUIDSOAP-Neustart → wieder oben 10:32:38, Skript
+  mit 192k.  **Nachtrag:** auch ein beim PLAYOUT-Start geändertes Skript
+  (Vorlagen- oder Code-Update) wird jetzt so übernommen
+  (`render_restart_pending`, Grund „rastatime.liq changed at the playout
+  start"); die Startmeldung verlangt keinen manuellen Neustart mehr.
 
 - **Cue-Sidecars kennen den Aufnahmebeginn der Audiodatei (2026-09-16,
   Operator-Go nach dem Cue-Marker-Test 7a, `642dd0c`)** — Befund: bei einer
@@ -151,6 +157,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   2026-09-16 09:10 (Operator, nach DB-Dump): 80 Einträge, 343 + 216 + 29 + 1
   Zeilen, 343/343 Pfade auflösbar; Show-Logo, Cover und Downloads danach
   live geprüft.
+
+### Fixed
+
+- **24/7-Aufnahme: ein Neustart innerhalb der Stunde überschrieb die
+  laufende Stundendatei (2026-09-16)** — Beim ersten automatischen
+  Einstellungs-Neustart um 10:32 öffnete `recording_hourly` die Datei
+  `10-00.mp3` neu und kürzte sie auf null; 10:00–10:32 waren weg (Teststunde).
+  `output.file` bekommt `append=true`: die Datei der laufenden Stunde wird
+  fortgesetzt, es fehlen nur die Sekunden des Neustarts (`audio_start` bleibt
+  die ursprüngliche Erstellzeit).  Bei einer geänderten Bitrate folgen in
+  derselben Datei Frames mit der neuen Rate — für MP3 zulässig.  Test in
+  `test_liquidsoap_config.py`.  Aktiv nach PLAYOUT-Neustart (der das
+  geänderte Skript seit heute selbst übernimmt, siehe „Added").
 
 ### Security
 

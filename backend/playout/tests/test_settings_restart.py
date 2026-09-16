@@ -132,3 +132,54 @@ def test_main_fingerprint_hashes_the_rendered_settings(monkeypatch):
     assert main._render_settings_fingerprint() == first
     monkeypatch.setattr(lc, "read_hourly_recording_config_from_db", MagicMock(side_effect=RuntimeError("x")))
     assert main._render_settings_fingerprint() is None
+
+
+# ---- startup render pending (RASTATIME 2026-09-16) --------------------------
+
+def _pending_sched(monkeypatch, fingerprint="a"):
+    engine = MagicMock(spec=LiquidsoapPlayoutEngine)
+    engine.get_state.return_value = PlayoutState.STOPPED
+    engine.liquidsoap_uptime_seconds.return_value = 5.0
+    restart = MagicMock(return_value=True)
+    monkeypatch.setattr(ps, "restart_liquidsoap_service", restart)
+    monkeypatch.setattr(ps.time, "sleep", lambda _s: None)
+    monkeypatch.setattr(ps.liquidsoap_health, "liquidsoap_process_info",
+                        MagicMock(return_value=[SimpleNamespace(pid=1, private_mb=300.0, age_seconds=3600.0)]))
+    s = ps.PlayoutScheduler(
+        engine=engine, api_client=MagicMock(),
+        render_liquidsoap=MagicMock(return_value=True),
+        render_settings_fingerprint=MagicMock(return_value=fingerprint),
+        render_restart_pending=True,
+        nightly_restart=NightlyRestartPolicy(start=dtime(4, 0), quiet_margin_seconds=300),
+    )
+    s.reset_gates = MagicMock()
+    s._confirm_liquidsoap_stays_up = MagicMock(return_value=True)
+    s._after_liquidsoap_restart = MagicMock()
+    return s, restart
+
+
+def test_startup_render_change_restarts_in_the_first_quiet_refresh(monkeypatch):
+    s, restart = _pending_sched(monkeypatch)
+    assert s._maybe_settings_restart(NOW) is True
+    restart.assert_called_once()
+    assert "rastatime.liq changed at the playout start" in restart.call_args[0][0]
+    assert s._render_restart_pending is False
+    assert s._maybe_settings_restart(NOW + timedelta(minutes=2)) is False
+    assert restart.call_count == 1
+
+
+def test_startup_render_change_waits_for_the_boundary_when_on_air(monkeypatch):
+    s, restart = _pending_sched(monkeypatch)
+    s._current_event = SimpleNamespace(start=NOW)
+    s._playing_key = "k"
+    assert s._maybe_settings_restart(NOW) is False
+    restart.assert_not_called()
+    assert s._boundary_restart_pending == ps.PlayoutScheduler.RENDER_RESTART_REASON
+
+
+def test_startup_render_pending_without_fingerprint_still_restarts(monkeypatch):
+    s, restart = _pending_sched(monkeypatch, fingerprint=None)
+    # no fingerprint available (ORM down): the pending render is not applied
+    # by this path - the operator rule stays; nothing crashes
+    assert s._maybe_settings_restart(NOW) is False
+    restart.assert_not_called()

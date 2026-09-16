@@ -1683,6 +1683,10 @@ def _render_hourly_recording_block(
         "  reopen_when=rec247_reopen,\n"
         "  reopen_delay={120.},\n"
         "  fallible=true,\n"
+        # RASTATIME 2026-09-16 - a restart inside the hour (settings applied,
+        # planned restart) reopens the running hour file: append instead of
+        # truncating it (the first settings restart erased 10:00-10:32).
+        "  append=true,\n"
         f"  {encoder},\n"
         "  {rec247_path()},\n"
         "  bus,\n"
