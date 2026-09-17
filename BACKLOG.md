@@ -1445,8 +1445,7 @@ Erreichbarkeit von außen (Portfreigabe, Härtung).
 
 ### ✅ Backup/Restore via UI (Settings-Submenü) — DONE 2026-09-17
 
-**Stufe 3 gebaut 2026-09-17 (Operator-Go; Commit-Hash im CHANGELOG
-„Added“ Stufe 3):** Auto-Sektion (alle N Tage, Aufbewahrung, cc_pref
+**Stufe 3 gebaut 2026-09-17 (Operator-Go; `a522ede`):** Auto-Sektion (alle N Tage, Aufbewahrung, cc_pref
 `local_backup_auto`), Kommando `backup_auto` (Fälligkeit selbst geprüft,
 derselbe BackupJob, Aufräumen mit Überlebensgarantie fürs neueste ZIP),
 Runner `scripts/backup-auto.ps1` für die einmalige Aufgabenplaner-

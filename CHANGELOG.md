@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Settings → Backup: automatische Sicherungen + Restore-Hinweis
   (2026-09-17, Arbeitsreihenfolge Punkt 10 Stufe 3, Operator-Go — Punkt 10
-  damit komplett)** — Neue Sektion „Automatic backups": Häufigkeit alle
+  damit komplett, `a522ede`)** — Neue Sektion „Automatic backups": Häufigkeit alle
   N Tage, Aufbewahrung N Tage (0 = alles behalten), Einstellungen in
   cc_pref `local_backup_auto`.  Uhrwerk = Windows-Aufgabenplaner: der
   Operator registriert einmalig `scripts/backup-auto.ps1` (täglich, Log
