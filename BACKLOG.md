@@ -1465,6 +1465,8 @@ schlank (Browser + Anleitung, kein 1-Klick-Restore).  **Live abgenommen
 Sektion als Backup-Browser).  **Stufe 2 gebaut 2026-09-17** (`72e13c7`): Option „Include media library",
 robocopy-/MIR-Spiegel nach `<Ordner>/media` mit Verify, Phasen +
 Fortschritt + Cancel; Tests mit echtem robocopy inkl. Purge-Nachweis.
+**Live abgenommen 2026-09-17 15:31** (nach dem Checkbox-Proxy-Fix
+`3a31f5b`): 2512 Dateien / 6,7 GB in 24 s, Spiegel deckungsgleich.
 
 **Status (ursprünglich 2026-05-31):** Defer — A + B empfohlen & gut machbar (architektur-angepasst),
 C bewusst schlank.  Start erst nach Grundsatz-Entscheidung (Scheduler) +

@@ -45,6 +45,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   UI: Checkbox, Fortschrittsbalken, Phasen-Text, Cancel-Knopf; neue Route
   `/api/v2/storage/backup/cancel`, Proxy `preference/backup-cancel`.
   Tests `test_storage_backup.py` +4 (echtes robocopy, Purge-Nachweis).
+  Live abgenommen 2026-09-17 15:31 (nach dem Proxy-Fix `3a31f5b`):
+  2512 Dateien / 6,7 GB in 24 s nach `D:\backups\media` gespiegelt,
+  Datei-für-Datei-Vergleich ohne Abweichung.
   Handbuch BACKUP §3 EN/DE/FR/ES, ARCHITECTURE 0.37 (§23.35-Nachtrag).
   Aktiv nach RASTATIME-API-Neustart.
 
