@@ -413,6 +413,35 @@ ersten Administrator-Konto.
 > und `local_import_last_status` (die Statuszeile auf dieser Seite).
 > Siehe ARCHITECTURE §23.12.
 
+### Import vom FTP-Server
+
+Unter dem Import-Ordner sitzt eine zweite Import-Quelle (seit
+17.09.2026): RASTATIME holt alle 5 Minuten (oder sofort mit **Fetch
+now**) Audiodateien von einem FTP-, FTPS- oder SFTP-Server und führt
+sie durch den Import-Ordner oben — der dafür konfiguriert sein muss.
+Aktivieren Sie die Checkbox, tragen Sie Server, Port (leer =
+Protokoll-Standard), Konto und den **absoluten** entfernten Ordner
+ein, dann **Save FTP import**.
+
+- **Briefkasten-Semantik.**  Nach einem verifizierten Download wird
+  die entfernte Datei gelöscht — das Konto braucht Löschrecht.
+  Scheitert das Löschen, wird die Datei trotzdem importiert und der
+  Status warnt, weil der nächste Zyklus sonst ein Duplikat holt.
+- **Laufende Uploads sind sicher.**  Eine Datei wird erst geholt,
+  wenn ihre Größe über zwei Prüfungen hinweg mindestens eine Minute
+  unverändert war, und nach dem Download wird die Größe erneut
+  verglichen.  Bis dahin zählt der Status sie als „settling".
+- **Nicht-Audio-Dateien bleiben auf dem Server.**  Geholt werden nur
+  die Audio-Endungen des Import-Ordners.
+- **Bevorzugen Sie FTPS oder SFTP** — Klartext-FTP überträgt das
+  Passwort unverschlüsselt.  Das Passwort liegt wie die anderen
+  Dienst-Passwörter in der Einstellungs-Datenbank, damit die
+  Abholung unbeaufsichtigt anmelden kann; die Seite zeigt es nie
+  wieder an.
+- Jeder Zyklus startet höchstens eine Minute lang neue Downloads;
+  was darüber hinausgeht, nimmt der nächste Zyklus mit („left for
+  the next run" im Status).
+
 ---
 
 ## 6. Speicherort der Medienbibliothek

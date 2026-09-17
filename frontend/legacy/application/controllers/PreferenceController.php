@@ -169,6 +169,86 @@ class PreferenceController extends Zend_Controller_Action
         Application_Model_Preference::SetStationFavicon('');
     }
 
+    /**
+     * POST /preference/ftp-import-save - RASTATIME 2026-09-17.
+     *
+     * Saves the "Import from FTP Server" configuration.  An empty
+     * password field keeps the stored password; the password is never
+     * echoed back.
+     */
+    public function ftpImportSaveAction(): void
+    {
+        $this->view->layout()->disableLayout();
+        $this->_helper->viewRenderer->setNoRender(true);
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->getResponse()->setHttpResponseCode(405);
+            $this->_helper->json->sendJson(['ok' => false, 'error' => 'method-not-allowed']);
+            return;
+        }
+        if (!SecurityHelper::verifyCSRFToken($this->_getParam('csrf_token'))) {
+            $this->_helper->json->sendJson(['ok' => false, 'error' => 'csrf']);
+            return;
+        }
+        $old = Application_Model_Preference::getFtpImportConfig();
+        $protocol = strtolower(trim((string) $this->_getParam('protocol', 'ftp')));
+        if (!in_array($protocol, FtpImportScanTask::PROTOCOLS, true)) {
+            $this->_helper->json->sendJson(['ok' => false, 'error' => 'Unknown protocol.']);
+            return;
+        }
+        $port = trim((string) $this->_getParam('port', ''));
+        if ($port !== '' && (!ctype_digit($port) || (int) $port < 1 || (int) $port > 65535)) {
+            $this->_helper->json->sendJson(['ok' => false, 'error' => 'Port must be a number (1-65535).']);
+            return;
+        }
+        $password = (string) $this->_getParam('password', '');
+        $config = [
+            'enabled'  => $this->_getParam('enabled', '') === 'true',
+            'protocol' => $protocol,
+            'host'     => trim((string) $this->_getParam('host', '')),
+            'port'     => $port,
+            'username' => trim((string) $this->_getParam('username', '')),
+            'password' => $password !== '' ? $password : (string) $old['password'],
+            'path'     => trim((string) $this->_getParam('path', '/')),
+        ];
+        if ($config['enabled'] && $config['host'] === '') {
+            $this->_helper->json->sendJson(['ok' => false, 'error' => 'Enter a server host name.']);
+            return;
+        }
+        Application_Model_Preference::setFtpImportConfig($config);
+        Logging::info('FTP import config saved: ' . ($config['enabled'] ? 'enabled' : 'disabled')
+            . ' ' . $config['protocol'] . '://' . $config['host'] . ' ' . $config['path']);
+        $public = $config;
+        unset($public['password']);
+        $public['has_password'] = $config['password'] !== '';
+        $this->_helper->json->sendJson(['ok' => true, 'config' => $public]);
+    }
+
+    /**
+     * POST /preference/ftp-import-fetch-now - RASTATIME 2026-09-17.
+     * Same code path as the 5-minute task, without the throttle.
+     */
+    public function ftpImportFetchNowAction(): void
+    {
+        $this->view->layout()->disableLayout();
+        $this->_helper->viewRenderer->setNoRender(true);
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->getResponse()->setHttpResponseCode(405);
+            $this->_helper->json->sendJson(['ok' => false, 'error' => 'method-not-allowed']);
+            return;
+        }
+        if (!SecurityHelper::verifyCSRFToken($this->_getParam('csrf_token'))) {
+            $this->_helper->json->sendJson(['ok' => false, 'error' => 'csrf']);
+            return;
+        }
+        set_time_limit(330);
+        $result = FtpImportScanTask::fetchOnce();
+        $this->_helper->json->sendJson([
+            'ok' => !isset($result['error']),
+            'result' => array_diff_key($result, ['log' => 1]),
+            'status' => Application_Model_Preference::getFtpImportLastStatus(),
+        ]);
+    }
+
     // ------------------------------------------------------------------
     // RASTATIME 2026-09-16 - Media Library Location (stage 2).  The page
     // talks to these actions (operator login + CSRF); they proxy to the

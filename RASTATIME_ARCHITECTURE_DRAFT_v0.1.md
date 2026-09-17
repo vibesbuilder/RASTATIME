@@ -1,10 +1,15 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.37
+Draft version: 0.38
 Date: 2026-09-17
 
 > **Revision history**
+> - **0.38 (2026-09-17)** — **Import from FTP server** (§23.36): a
+>   second import source; a PHP task fetches audio from an
+>   FTP/FTPS/SFTP server into the local Import Folder (mailbox
+>   semantics, remote quiet rule), the existing import chain does the
+>   rest.
 > - **0.37 (2026-09-17)** — **Backup stage 2: media mirror** (§23.35
 >   addendum): opt-in robocopy /MIR of the library into
 >   `<backup folder>/media`, incremental with purge, verified
@@ -5068,3 +5073,40 @@ auto-backup (stage 3) will store its settings in cc_pref and run
 through a management command registered once in the Windows Task
 Scheduler — the worker service remains an idle stub and is not the
 place for a first scheduler.
+
+### 23.36 Import from FTP Server (2026-09-17)
+
+**Context.**  Operator wish: a second import source next to the drop
+folder, remote suppliers deliver to an FTP server.  FTP has no push,
+so RASTATIME polls: `FtpImportScanTask` (legacy PHP task manager, the
+same 5-minute piggy-back as the drop-folder scan, plus "Fetch now").
+
+**Design.**  The task downloads audio files from the configured
+remote folder **into the local Import Folder** and lets the existing
+chain (quiet period, organize, analyzer) do everything else - one
+import path, not two.  Transfers run through PHP-curl, which on this
+build speaks `ftp`, explicit-TLS `ftps` (AUTH TLS via
+`CURLOPT_USE_SSL`, verified against the CA bundle from §INSTALL_APACHE
+3.1) and `sftp`.  Config is one JSON site preference
+(`local_ftp_import_config`: enabled, protocol, host, port, username,
+password, absolute remote path); the password is write-only in the UI
+and never logged.
+
+**Mailbox semantics.**  After a download whose byte count matches a
+size probe, the remote original is deleted (QUOTE `DELE`/`rm` with
+the absolute path); the account therefore needs delete permission - a
+failed delete keeps the local copy and warns about the coming
+duplicate.  Non-audio files stay on the server.
+
+**Remote quiet rule.**  The replica with a growing file showed that a
+post-download size probe alone misses bursty uploads (the probe can
+land between two appends).  A file is therefore only fetched when its
+size matches a sighting recorded at least 60 s earlier
+(`local_ftp_import_pending`, {name: {size, seen_at}}); the
+post-download probe stays as the second layer.  Servers that cannot
+report sizes fall back to the probe layer alone.
+
+**Bounds.**  Each cycle starts new downloads for at most 60 s
+(RUN_BUDGET_SECONDS) so a piggy-backed web request is not held for
+long; per-file timeout 240 s with a low-speed abort; the rest is
+counted as "left for the next run".

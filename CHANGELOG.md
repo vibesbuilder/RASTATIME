@@ -9,6 +9,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Import vom FTP-Server — zweite Import-Quelle neben dem Import-Ordner
+  (2026-09-17, Operator-Go)** — Neue Sektion Settings → Local Machine →
+  „Import from FTP Server": `FtpImportScanTask` holt alle 5 Minuten (oder
+  per „Fetch now") Audiodateien per PHP-curl von einem FTP-, FTPS-
+  (explizites TLS) oder SFTP-Server in den lokalen Import-Ordner — ab dort
+  übernimmt die bestehende Kette (Ruhe-Prüfung, organize, Analyzer),
+  bewusst kein zweiter Import-Pfad.  Briefkasten-Semantik: nach
+  verifiziertem Download wird das Original gelöscht (Konto braucht
+  Löschrecht; scheitert das Löschen, warnt der Status vor Duplikaten).
+  Entfernte Ruhe-Regel: geholt wird nur, was über zwei Sichtungen ≥ 60 s
+  größenstabil ist (Zustand in `local_ftp_import_pending`), plus
+  Größenvergleich nach dem Download — das Replikat mit wachsender Datei
+  zeigte, dass die Nach-Download-Probe allein stoßweise Uploads verpasst.
+  Nicht-Audio bleibt auf dem Server; Lauf-Budget 60 s je Zyklus;
+  Zugangsdaten in cc_pref `local_ftp_import_config` (Passwort write-only
+  in der UI, nie geloggt).  Live getestet gegen einen Wegwerf-FTP-Server
+  (pyftpdlib: Abholen + Löschen + wachsende Datei bleibt liegen) und per
+  SFTP gegen test.rebex.net (Auth + Listing).  Handbuch LOCAL_MACHINE
+  §5 EN/DE/FR/ES, ARCHITECTURE 0.38 (§23.36).  PHP live (kein OpCache).
+
 - **Settings → Backup: Medienbibliothek als inkrementeller Spiegel
   (2026-09-17, Arbeitsreihenfolge Punkt 10 Stufe 2, Operator-Go, `72e13c7`)** — Neue
   Option „Include media library" (cc_pref `local_backup_include_media`):

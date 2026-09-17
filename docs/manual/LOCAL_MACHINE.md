@@ -382,6 +382,34 @@ the first administrator account.
 > `local_import_last_status` (the status line on this page).  See
 > ARCHITECTURE §23.12.
 
+### Import from FTP server
+
+Below the Import Folder sits a second import source (since
+2026-09-17): RASTATIME fetches audio files from an FTP, FTPS or SFTP
+server every 5 minutes (or immediately with **Fetch now**) and feeds
+them through the Import Folder above — which must therefore be
+configured.  Enable it with the checkbox, fill in server, port
+(empty = protocol default), account and the **absolute** remote
+folder, then **Save FTP import**.
+
+- **Mailbox semantics.**  After a verified download the remote file
+  is deleted — the account needs delete permission.  If the delete
+  fails, the file is imported anyway and the status warns, because
+  the next cycle would fetch a duplicate.
+- **Uploads in progress are safe.**  A file is only fetched when its
+  size has been unchanged for at least a minute across two checks,
+  and the size is verified again after the download.  Until then the
+  status counts it as "settling".
+- **Non-audio files stay on the server.**  Only the audio extensions
+  of the Import Folder are fetched.
+- **Prefer FTPS or SFTP** — plain FTP sends the password
+  unencrypted.  The password is stored in the settings database like
+  the other service passwords, so the fetch can log in unattended;
+  the page never shows it again.
+- Each cycle starts new downloads for at most one minute; anything
+  beyond that is picked up by the next cycle ("left for the next
+  run" in the status).
+
 ---
 
 ## 6. Media Library Location

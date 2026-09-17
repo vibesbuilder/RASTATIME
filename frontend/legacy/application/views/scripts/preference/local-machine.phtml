@@ -256,6 +256,150 @@ $rtTip = function ($text) {
         </dl>
     </fieldset>
 
+
+    <?php
+    // RASTATIME 2026-09-17 - Import from FTP Server (operator go): a
+    // second import source.  The FtpImportScanTask fetches audio files
+    // from the remote folder into the Import Folder above (which must
+    // therefore be configured) and deletes the remote original after a
+    // verified download.  The password is write-only on this page.
+    $ftpCfg = Application_Model_Preference::getFtpImportConfig();
+    $ftpLastRun = Application_Model_Preference::getFtpImportLastRun();
+    $ftpLastStatus = Application_Model_Preference::getFtpImportLastStatus();
+    ?>
+    <h3><?php echo _("Import from FTP Server") ?><span class="help_icon" data-rt-tip="<?php echo $rtTip(_("Fetches audio files from an FTP, FTPS or SFTP server every 5 minutes and imports them through the Import Folder above - the folder must be configured for this to work.  Remote files are deleted after a verified download (the account needs delete permission); a file still being uploaded is left for the next cycle.  Non-audio files stay on the server.")); ?>"></span></h3>
+
+    <fieldset class="padded stream-setting-global">
+        <dl class="zend_form">
+            <dt></dt>
+            <dd>
+                <label style="cursor: pointer;">
+                    <input id="ftp_import_enabled" type="checkbox"
+                           <?php echo !empty($ftpCfg['enabled']) ? 'checked' : ''; ?> />
+                    <?php echo _("Enable FTP import") ?>
+                </label>
+            </dd>
+
+            <dt><label for="ftp_import_protocol"><?php echo _("Protocol") ?></label></dt>
+            <dd>
+                <select id="ftp_import_protocol">
+                    <?php foreach (['ftp' => 'FTP', 'ftps' => 'FTPS (explicit TLS)', 'sftp' => 'SFTP (SSH)'] as $value => $label): ?>
+                        <option value="<?php echo $value; ?>" <?php echo ($ftpCfg['protocol'] ?? 'ftp') === $value ? 'selected' : ''; ?>><?php echo $label; ?></option>
+                    <?php endforeach; ?>
+                </select><span class="help_icon" data-rt-tip="<?php echo $rtTip(_("Plain FTP sends the password unencrypted - prefer FTPS or SFTP when the server offers it.")); ?>"></span>
+            </dd>
+
+            <dt><label for="ftp_import_host"><?php echo _("Server") ?></label></dt>
+            <dd>
+                <input id="ftp_import_host" type="text" class="input_text"
+                       style="width: 260px;" placeholder="ftp.example.org"
+                       value="<?php echo htmlspecialchars((string) $ftpCfg['host'], ENT_QUOTES); ?>" />
+                :
+                <input id="ftp_import_port" type="text" class="input_text"
+                       style="width: 60px;" placeholder="<?php echo ($ftpCfg['protocol'] ?? '') === 'sftp' ? '22' : '21'; ?>"
+                       value="<?php echo htmlspecialchars((string) $ftpCfg['port'], ENT_QUOTES); ?>" /><span class="help_icon" data-rt-tip="<?php echo $rtTip(_("Leave the port empty for the protocol default (FTP/FTPS: 21, SFTP: 22).")); ?>"></span>
+            </dd>
+
+            <dt><label for="ftp_import_username"><?php echo _("Username") ?></label></dt>
+            <dd>
+                <input id="ftp_import_username" type="text" class="input_text"
+                       style="width: 260px;" autocomplete="off"
+                       value="<?php echo htmlspecialchars((string) $ftpCfg['username'], ENT_QUOTES); ?>" />
+            </dd>
+
+            <dt><label for="ftp_import_password"><?php echo _("Password") ?></label></dt>
+            <dd>
+                <input id="ftp_import_password" type="password" class="input_text"
+                       style="width: 260px;" autocomplete="new-password"
+                       placeholder="<?php echo $ftpCfg['password'] !== '' ? '••••• (' . _("unchanged") . ')' : ''; ?>" /><span class="help_icon" data-rt-tip="<?php echo $rtTip(_("Stored in the settings database like the other service passwords, so the fetch can log in unattended.  Leave empty to keep the stored password.")); ?>"></span>
+            </dd>
+
+            <dt><label for="ftp_import_path"><?php echo _("Remote folder") ?></label></dt>
+            <dd>
+                <input id="ftp_import_path" type="text" class="input_text"
+                       style="width: 260px;" placeholder="/upload"
+                       value="<?php echo htmlspecialchars((string) $ftpCfg['path'], ENT_QUOTES); ?>" /><span class="help_icon" data-rt-tip="<?php echo $rtTip(_("Absolute path on the server, for example /upload.  Every audio file in it is fetched and then deleted there.")); ?>"></span>
+            </dd>
+
+            <dt></dt>
+            <dd style="padding-top: 0.5em;">
+                <button id="ftp_import_save" type="button" class="btn"><?php echo _("Save FTP import") ?></button>
+                <button id="ftp_import_fetch_now" type="button" class="btn"
+                        <?php echo empty($ftpCfg['enabled']) ? 'disabled' : ''; ?>><?php echo _("Fetch now") ?></button>
+                <span id="ftp_import_status_msg" style="margin-left: 1em;"></span>
+            </dd>
+
+            <dt></dt>
+            <dd style="padding-top: 0.5em; font-size: 0.9em; color: #555;">
+                <?php if (empty($localImportFolder)): ?>
+                    <span style="color: #d9534f;"><?php echo _("The Import Folder above is not configured - the FTP import needs it as its landing area.") ?></span><br/>
+                <?php endif; ?>
+                <?php if ($ftpLastRun): ?>
+                    <strong><?php echo _("Last fetch:") ?></strong>
+                    <?php echo htmlspecialchars(date('Y-m-d H:i:s', (int) $ftpLastRun)); ?><br/>
+                <?php endif; ?>
+                <?php if ($ftpLastStatus): ?>
+                    <strong><?php echo _("Last status:") ?></strong>
+                    <span id="ftp_import_last_status"><?php echo htmlspecialchars((string) $ftpLastStatus); ?></span>
+                <?php else: ?>
+                    <span id="ftp_import_last_status"></span>
+                <?php endif; ?>
+            </dd>
+        </dl>
+    </fieldset>
+
+    <script>
+    (function ($) {
+        function ftpMsg(text, ok) {
+            $("#ftp_import_status_msg").text(text).css("color", ok ? "#5cb85c" : "#d9534f");
+        }
+
+        $("#ftp_import_save").on("click", function () {
+            $.post(baseUrl + "preference/ftp-import-save", {
+                csrf_token: $("#csrf").val(),
+                enabled: $("#ftp_import_enabled").is(":checked") ? "true" : "false",
+                protocol: $("#ftp_import_protocol").val(),
+                host: $("#ftp_import_host").val(),
+                port: $("#ftp_import_port").val(),
+                username: $("#ftp_import_username").val(),
+                password: $("#ftp_import_password").val(),
+                path: $("#ftp_import_path").val()
+            }, function (resp) {
+                if (resp && resp.ok) {
+                    ftpMsg("\u2713 " + "<?php echo addslashes(_('Saved.')) ?>", true);
+                    $("#ftp_import_password").val("");
+                    if (resp.config && resp.config.has_password) {
+                        $("#ftp_import_password").attr("placeholder", "\u2022\u2022\u2022\u2022\u2022 (<?php echo addslashes(_('unchanged')) ?>)");
+                    }
+                    $("#ftp_import_fetch_now").prop("disabled", !(resp.config && resp.config.enabled));
+                } else {
+                    ftpMsg("\u2717 " + ((resp && resp.error) || "<?php echo addslashes(_('Save failed.')) ?>"), false);
+                }
+            }, "json").fail(function () { ftpMsg("\u2717 <?php echo addslashes(_('Network error.')) ?>", false); });
+        });
+
+        $("#ftp_import_fetch_now").on("click", function () {
+            var btn = $(this);
+            btn.prop("disabled", true);
+            ftpMsg("<?php echo addslashes(_('Fetching …')) ?>", true);
+            $.post(baseUrl + "preference/ftp-import-fetch-now", {
+                csrf_token: $("#csrf").val()
+            }, function (resp) {
+                btn.prop("disabled", false);
+                if (resp && resp.ok) {
+                    ftpMsg("\u2713 " + (resp.status || "done"), true);
+                } else {
+                    ftpMsg("\u2717 " + ((resp && resp.status) || (resp && resp.error) || "<?php echo addslashes(_('Fetch failed.')) ?>"), false);
+                }
+                if (resp && resp.status) { $("#ftp_import_last_status").text(resp.status); }
+            }, "json").fail(function () {
+                btn.prop("disabled", false);
+                ftpMsg("\u2717 <?php echo addslashes(_('Network error.')) ?>", false);
+            });
+        });
+    })(jQuery);
+    </script>
+
     <?php
     // RASTATIME 2026-09-16 - Media Library Location (stage 2 of the storage
     // location work).  The library root is a setting (cc_pref

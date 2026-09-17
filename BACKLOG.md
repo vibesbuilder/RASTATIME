@@ -1408,7 +1408,16 @@ LOCAL_MACHINE (4 Sprachen).  Vorbedingung für jede Netz-/FTP-Quelle.
 - 💡 Aktives FTP-Polling durch RASTATIME: zum vollen Item aufgewertet,
   siehe „Import from FTP Server" direkt darunter (2026-09-17).
 
-### 🟢 „Import from FTP Server“ als zweite Import-Quelle (evaluiert 2026-09-17, wartet auf Go)
+### ✅ „Import from FTP Server“ als zweite Import-Quelle (evaluiert + umgesetzt 2026-09-17)
+
+**Umgesetzt 2026-09-17 (Operator-Go mit Antworten: löschen nach
+Abholung ja, FTP+SFTP — geliefert FTP/FTPS/SFTP via PHP-curl —,
+Zugangsdaten in cc_pref, 5-min-Takt, Import-Ordner-Abhängigkeit in UI +
+Handbuch; Commit-Hash im CHANGELOG „Added“).**  Entfernte Ruhe-Regel
+nach Replikat-Befund (wachsende Datei schlüpfte durch die reine
+Nach-Download-Probe): zwei größenstabile Sichtungen ≥ 60 s.  Live-Test:
+pyftpdlib (Abholen+Löschen+wachsende Datei bleibt) + SFTP-Listing gegen
+test.rebex.net.  ARCHITECTURE 0.38 (§23.36).
 
 **Operator-Wunsch 2026-09-17:** zusätzlich zum Import-Ordner einen
 entfernten FTP-Server als Quelle, manuell aktivierbar/deaktivierbar.

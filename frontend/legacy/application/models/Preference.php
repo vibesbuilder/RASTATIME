@@ -1982,6 +1982,61 @@ class Application_Model_Preference
         self::setValue('local_import_last_status', $value);
     }
 
+    // RASTATIME 2026-09-17 - Import from FTP Server (Settings -> Local
+    // Machine).  One JSON config in cc_pref: enabled, protocol
+    // (ftp|ftps|sftp), host, port, username, password, path.  The
+    // password lives here like the other service passwords and is never
+    // sent back to the browser (the save action keeps it when the field
+    // comes back empty).
+    public static function getFtpImportConfig()
+    {
+        $defaults = [
+            'enabled' => false, 'protocol' => 'ftp', 'host' => '',
+            'port' => '', 'username' => '', 'password' => '', 'path' => '/',
+        ];
+        $raw = self::getValue('local_ftp_import_config');
+        $data = $raw ? json_decode($raw, true) : null;
+        return is_array($data) ? array_merge($defaults, $data) : $defaults;
+    }
+
+    public static function setFtpImportConfig(array $config)
+    {
+        self::setValue('local_ftp_import_config', json_encode($config));
+    }
+
+    public static function getFtpImportLastRun()
+    {
+        return self::getValue('local_ftp_import_last_run');
+    }
+
+    public static function setFtpImportLastRun($value)
+    {
+        self::setValue('local_ftp_import_last_run', $value);
+    }
+
+    public static function getFtpImportLastStatus()
+    {
+        return self::getValue('local_ftp_import_last_status');
+    }
+
+    public static function setFtpImportLastStatus($value)
+    {
+        self::setValue('local_ftp_import_last_status', $value);
+    }
+
+    /** Remote quiet rule: {name: {size, seen_at}} between fetch cycles. */
+    public static function getFtpImportPending()
+    {
+        $raw = self::getValue('local_ftp_import_pending');
+        $data = $raw ? json_decode($raw, true) : null;
+        return is_array($data) ? $data : [];
+    }
+
+    public static function setFtpImportPending(array $pending)
+    {
+        self::setValue('local_ftp_import_pending', json_encode($pending));
+    }
+
     // RASTATIME 2026-05-17 - Local Recording Folder (Section 23.13).
     // Operator-configured absolute path on the RASTATIME host (Settings ->
     // Local Machine).  The playout PlayoutScheduler reads this via the

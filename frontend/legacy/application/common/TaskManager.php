@@ -537,6 +537,333 @@ class LocalImportScanTask implements AirtimeTask
 }
 
 /**
+ * Class FtpImportScanTask.
+ *
+ * RASTATIME 2026-09-17 - "Import from FTP Server" (operator go).  Every
+ * 5 minutes (and on-demand via Settings -> Local Machine -> "Fetch now")
+ * connects to an operator-configured FTP / FTPS / SFTP server, downloads
+ * every audio file from the remote folder into the LOCAL Import Folder
+ * and deletes the remote original after a verified download (mailbox
+ * semantics, operator decision 2026-09-17).  From the import folder on,
+ * the LocalImportScanTask chain takes over unchanged (quiet period,
+ * organize, analyzer) - deliberately no second import path.
+ *
+ * Safety: a file is only accepted when the remote size probed AFTER the
+ * download matches the local byte count - a file still being uploaded
+ * changes size, the partial download is discarded and the remote file
+ * stays for the next cycle.  Non-audio files are left on the server.
+ * The Import Folder must be configured; without it the task refuses
+ * with a clear status.  Remote deletes need delete permission on the
+ * FTP account; a failed delete keeps the local copy and warns (the
+ * next cycle would fetch a duplicate otherwise).
+ *
+ * Transfers run through PHP-curl (this build speaks ftp, ftps and
+ * sftp).  "ftps" means explicit TLS on the ftp port (AUTH TLS), the
+ * hoster standard.  Credentials live in the cc_pref JSON
+ * local_ftp_import_config like other service passwords; they are never
+ * logged and never sent back to the browser.
+ */
+class FtpImportScanTask implements AirtimeTask
+{
+    public const FTP_IMPORT_INTERVAL_SECONDS = 300;  // 5 minutes
+    public const CONNECT_TIMEOUT_SECONDS = 10;
+    public const TRANSFER_TIMEOUT_SECONDS = 240;     // per file
+    public const RUN_BUDGET_SECONDS = 60;            // start no new download after this
+    public const PROTOCOLS = ['ftp', 'ftps', 'sftp'];
+
+    public function shouldBeRun()
+    {
+        $cfg = Application_Model_Preference::getFtpImportConfig();
+        if (empty($cfg['enabled']) || empty($cfg['host'])) {
+            return false;
+        }
+        if (Application_Common_Storage::isMoving()) {
+            return false;
+        }
+        $lastRun = Application_Model_Preference::getFtpImportLastRun();
+        return empty($lastRun)
+            || (microtime(true) > $lastRun + self::FTP_IMPORT_INTERVAL_SECONDS);
+    }
+
+    public function run()
+    {
+        self::fetchOnce();
+    }
+
+    /**
+     * One fetch cycle: read the config, guard the landing area, fetch,
+     * persist last-run + status.  Shared by the task and "Fetch now".
+     *
+     * @return array result counts (see fetchFromServer) or ['error' => msg]
+     */
+    public static function fetchOnce()
+    {
+        Application_Model_Preference::setFtpImportLastRun(time());
+        $cfg = Application_Model_Preference::getFtpImportConfig();
+        $importFolder = Application_Model_Preference::getLocalImportFolder();
+        if (empty($importFolder) || !is_dir($importFolder)) {
+            $msg = 'Import Folder not configured - the FTP import needs it as its landing area.';
+            Logging::warn('FtpImportScanTask: ' . $msg);
+            Application_Model_Preference::setFtpImportLastStatus($msg);
+            return ['error' => $msg];
+        }
+        $pending = Application_Model_Preference::getFtpImportPending();
+        $r = self::fetchFromServer($cfg, $importFolder, $pending);
+        Application_Model_Preference::setFtpImportPending($r['pending']);
+        foreach ($r['log'] as $line) {
+            Logging::info('FtpImportScanTask: ' . $line);
+        }
+        if (isset($r['error'])) {
+            $status = 'ERROR: ' . $r['error'];
+        } else {
+            $status = sprintf(
+                'fetched %d, settling %d, failed %d, non-audio left %d',
+                $r['fetched'], $r['unstable'], $r['failed'], $r['non_audio']
+            );
+            if ($r['left'] > 0) {
+                $status .= sprintf(', %d left for the next run', $r['left']);
+            }
+        }
+        Application_Model_Preference::setFtpImportLastStatus($status);
+        return $r;
+    }
+
+    /**
+     * Pure worker: no Preference access, so it can be exercised from a
+     * CLI test against a throwaway server.
+     */
+    public static function fetchFromServer(
+        array $cfg,
+        $importFolder,
+        array $pending = [],
+        $quietSeconds = LocalImportScanTask::QUIET_SECONDS
+    ) {
+        $fetched = 0;
+        $unstable = 0;
+        $failed = 0;
+        $nonAudio = 0;
+        $left = 0;
+        $log = [];
+        $newPending = [];
+        $started = microtime(true);
+
+        [$ok, $names, $err] = self::listNames($cfg);
+        if (!$ok) {
+            return [
+                'error' => 'listing failed: ' . $err,
+                'fetched' => 0, 'unstable' => 0, 'failed' => 0,
+                'non_audio' => 0, 'left' => 0, 'pending' => $pending,
+                'log' => ['listing failed for ' . self::describe($cfg) . ': ' . $err],
+            ];
+        }
+        foreach ($names as $name) {
+            $name = basename(trim($name));
+            if ($name === '' || $name === '.' || $name === '..') {
+                continue;
+            }
+            $ext = strtolower(pathinfo($name, PATHINFO_EXTENSION));
+            if (!in_array($ext, LocalImportScanTask::AUDIO_EXTENSIONS, true)) {
+                $nonAudio++;
+                continue;
+            }
+            if (microtime(true) - $started > self::RUN_BUDGET_SECONDS) {
+                $left++;                       // budget spent - next cycle
+                continue;
+            }
+
+            // RASTATIME 2026-09-17 - remote quiet rule (the FTP twin of the
+            // local 60-s guard, added after the growing-file replica showed
+            // that the post-download probe alone misses bursty uploads): a
+            // file is only fetched when its size matches a sighting at
+            // least $quietSeconds ago.  Everything younger stays remote and
+            // is counted as "still uploading".
+            $size = self::probeSize($cfg, $name);
+            if ($size >= 0) {
+                $seen = $pending[$name] ?? null;
+                $stable = is_array($seen)
+                    && (int) $seen['size'] === $size
+                    && (time() - (int) $seen['seen_at']) >= $quietSeconds;
+                if (!$stable) {
+                    $keep = (is_array($seen) && (int) $seen['size'] === $size)
+                        ? $seen : ['size' => $size, 'seen_at' => time()];
+                    $newPending[$name] = $keep;
+                    $unstable++;
+                    continue;
+                }
+            }
+            $tmp = $importFolder . DIRECTORY_SEPARATOR . '.ftp-' . $name . '.part';
+            [$ok, $err] = self::downloadTo($cfg, $name, $tmp);
+            if (!$ok) {
+                $failed++;
+                $log[] = 'download failed for ' . $name . ': ' . $err;
+                @unlink($tmp);
+                continue;
+            }
+            $localBytes = (int) @filesize($tmp);
+            $remoteBytes = self::probeSize($cfg, $name);
+            if ($remoteBytes >= 0 && $remoteBytes !== $localBytes) {
+                $unstable++;                   // still being uploaded
+                $newPending[$name] = ['size' => $remoteBytes, 'seen_at' => time()];
+                $log[] = $name . ' is still changing on the server ('
+                    . $remoteBytes . ' vs ' . $localBytes . ' bytes) - left for the next cycle';
+                @unlink($tmp);
+                continue;
+            }
+            $target = $importFolder . DIRECTORY_SEPARATOR . $name;
+            if (file_exists($target)) {
+                $target = $importFolder . DIRECTORY_SEPARATOR
+                    . 'ftp-' . date('Ymd-His') . ' ' . $name;
+            }
+            if (!@rename($tmp, $target)) {
+                $failed++;
+                $log[] = 'could not place ' . $name . ' into the import folder';
+                @unlink($tmp);
+                continue;
+            }
+            $fetched++;
+            [$ok, $err] = self::deleteRemote($cfg, $name);
+            if ($ok) {
+                $log[] = 'fetched ' . $name . ' (' . $localBytes . ' bytes), remote deleted';
+            } else {
+                $log[] = 'fetched ' . $name . ' but the REMOTE DELETE failed (' . $err
+                    . ') - the next cycle will fetch a duplicate; give the account delete permission';
+            }
+        }
+
+        return compact('fetched', 'unstable', 'failed', 'left', 'log')
+            + ['non_audio' => $nonAudio, 'pending' => $newPending];
+    }
+
+    // ---- curl helpers ----------------------------------------------------
+
+    /** Loggable server description - never contains credentials. */
+    private static function describe(array $cfg)
+    {
+        return ($cfg['protocol'] ?? 'ftp') . '://' . ($cfg['host'] ?? '')
+            . self::remoteDir($cfg);
+    }
+
+    /** Remote folder with leading + trailing slash ('/' stays '/'). */
+    private static function remoteDir(array $cfg)
+    {
+        $path = trim((string) ($cfg['path'] ?? ''));
+        $path = '/' . trim(str_replace('\\', '/', $path), '/');
+        return $path === '/' ? '/' : $path . '/';
+    }
+
+    /**
+     * A curl handle for the given remote path (already URL-encoded by
+     * the caller where needed).  "ftps" = explicit TLS on the ftp port.
+     */
+    private static function handle(array $cfg, $remotePath)
+    {
+        $protocol = in_array($cfg['protocol'] ?? '', self::PROTOCOLS, true)
+            ? $cfg['protocol'] : 'ftp';
+        $scheme = $protocol === 'sftp' ? 'sftp' : 'ftp';
+        $curl = curl_init($scheme . '://' . $cfg['host'] . $remotePath);
+        $opts = [
+            CURLOPT_USERNAME       => (string) ($cfg['username'] ?? ''),
+            CURLOPT_PASSWORD       => (string) ($cfg['password'] ?? ''),
+            CURLOPT_CONNECTTIMEOUT => self::CONNECT_TIMEOUT_SECONDS,
+            CURLOPT_PROTOCOLS      => CURLPROTO_FTP | CURLPROTO_FTPS | CURLPROTO_SFTP,
+        ];
+        if (!empty($cfg['port'])) {
+            $opts[CURLOPT_PORT] = (int) $cfg['port'];
+        }
+        if ($protocol === 'ftps') {
+            $opts[CURLOPT_USE_SSL] = CURLUSESSL_ALL;   // AUTH TLS, verified via curl.cainfo
+        }
+        curl_setopt_array($curl, $opts);
+        return $curl;
+    }
+
+    private static function exec($curl)
+    {
+        $out = curl_exec($curl);
+        $err = curl_errno($curl) ? curl_error($curl) : null;
+        return [$out, $err];
+    }
+
+    /** @return array [ok, names[], err] */
+    private static function listNames(array $cfg)
+    {
+        $curl = self::handle($cfg, self::remoteDir($cfg));
+        curl_setopt_array($curl, [
+            CURLOPT_DIRLISTONLY    => true,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT        => 30,
+        ]);
+        [$out, $err] = self::exec($curl);
+        curl_close($curl);
+        if ($err !== null || !is_string($out)) {
+            return [false, [], $err ?: 'no listing'];
+        }
+        return [true, preg_split('/\r\n|\n|\r/', $out, -1, PREG_SPLIT_NO_EMPTY), null];
+    }
+
+    /** @return array [ok, err] */
+    private static function downloadTo(array $cfg, $name, $localPath)
+    {
+        $fh = @fopen($localPath, 'wb');
+        if ($fh === false) {
+            return [false, 'cannot write ' . $localPath];
+        }
+        $curl = self::handle($cfg, self::remoteDir($cfg) . rawurlencode($name));
+        curl_setopt_array($curl, [
+            CURLOPT_FILE            => $fh,
+            CURLOPT_TIMEOUT         => self::TRANSFER_TIMEOUT_SECONDS,
+            CURLOPT_LOW_SPEED_LIMIT => 500,     // abort a stalled transfer
+            CURLOPT_LOW_SPEED_TIME  => 30,
+        ]);
+        [, $err] = self::exec($curl);
+        curl_close($curl);
+        fclose($fh);
+        return [$err === null, $err];
+    }
+
+    /** Remote size, or -1 when the server cannot report it (accept then). */
+    private static function probeSize(array $cfg, $name)
+    {
+        $curl = self::handle($cfg, self::remoteDir($cfg) . rawurlencode($name));
+        curl_setopt_array($curl, [
+            CURLOPT_NOBODY         => true,
+            CURLOPT_RETURNTRANSFER => true,   // keep headers off stdout
+            CURLOPT_TIMEOUT        => 30,
+        ]);
+        [, $err] = self::exec($curl);
+        $len = curl_getinfo($curl, CURLINFO_CONTENT_LENGTH_DOWNLOAD);
+        curl_close($curl);
+        if ($err !== null || $len === false || $len < 0) {
+            return -1;
+        }
+        return (int) $len;
+    }
+
+    /**
+     * Delete the remote original via a QUOTE command with the absolute
+     * remote path (works from any directory; the remote folder must be
+     * configured as an absolute path).  @return array [ok, err]
+     */
+    private static function deleteRemote(array $cfg, $name)
+    {
+        $absolute = self::remoteDir($cfg) . $name;
+        $command = ($cfg['protocol'] ?? '') === 'sftp'
+            ? 'rm ' . $absolute
+            : 'DELE ' . $absolute;
+        $curl = self::handle($cfg, self::remoteDir($cfg));
+        curl_setopt_array($curl, [
+            CURLOPT_DIRLISTONLY    => true,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT        => 30,
+            CURLOPT_QUOTE          => [$command],
+        ]);
+        [, $err] = self::exec($curl);
+        curl_close($curl);
+        return [$err === null, $err];
+    }
+}
+
+/**
  * Class RequestablePoolSyncTask.
  *
  * RASTATIME 2026-06-07 - Song Requests.  Keeps cc_files.requestable in

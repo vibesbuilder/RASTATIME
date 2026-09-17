@@ -361,6 +361,36 @@ plan appartiennent au premier compte administrateur.
 > `local_import_last_status` (la ligne d'état de cette page).  Voir
 > ARCHITECTURE §23.12.
 
+### Import depuis un serveur FTP
+
+Sous le dossier d'import se trouve une seconde source d'import
+(depuis le 17/09/2026) : RASTATIME va chercher toutes les 5 minutes
+(ou immédiatement avec **Fetch now**) les fichiers audio d'un serveur
+FTP, FTPS ou SFTP et les fait passer par le dossier d'import
+ci-dessus — qui doit donc être configuré.  Activez la case, saisissez
+serveur, port (vide = défaut du protocole), compte et le dossier
+distant **absolu**, puis **Save FTP import**.
+
+- **Sémantique de boîte aux lettres.**  Après un téléchargement
+  vérifié, le fichier distant est supprimé — le compte a besoin du
+  droit de suppression.  Si la suppression échoue, le fichier est
+  tout de même importé et l'état avertit, car le cycle suivant irait
+  chercher un doublon.
+- **Les envois en cours sont sans risque.**  Un fichier n'est
+  récupéré que lorsque sa taille est restée inchangée au moins une
+  minute entre deux contrôles, et la taille est revérifiée après le
+  téléchargement.  D'ici là, l'état le compte comme « settling ».
+- **Les fichiers non audio restent sur le serveur.**  Seules les
+  extensions audio du dossier d'import sont récupérées.
+- **Préférez FTPS ou SFTP** — le FTP en clair transmet le mot de
+  passe non chiffré.  Le mot de passe est stocké dans la base des
+  réglages comme les autres mots de passe de services, pour que la
+  récupération se connecte sans surveillance ; la page ne l'affiche
+  plus jamais.
+- Chaque cycle lance de nouveaux téléchargements pendant une minute
+  au plus ; le reste est repris au cycle suivant (« left for the
+  next run » dans l'état).
+
 ---
 
 ## 6. Emplacement de la médiathèque

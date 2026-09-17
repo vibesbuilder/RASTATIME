@@ -352,6 +352,36 @@ plano pertenecen a la primera cuenta de administrador.
 > `local_import_last_status` (la línea de estado de esta página).
 > Vea ARCHITECTURE §23.12.
 
+### Importar desde un servidor FTP
+
+Bajo la carpeta de importación hay una segunda fuente de importación
+(desde el 17/09/2026): RASTATIME recoge cada 5 minutos (o
+inmediatamente con **Fetch now**) los archivos de audio de un
+servidor FTP, FTPS o SFTP y los hace pasar por la carpeta de
+importación de arriba — que por tanto debe estar configurada.
+Active la casilla, rellene servidor, puerto (vacío = valor por
+defecto del protocolo), cuenta y la carpeta remota **absoluta**, y
+pulse **Save FTP import**.
+
+- **Semántica de buzón.**  Tras una descarga verificada, el archivo
+  remoto se borra — la cuenta necesita permiso de borrado.  Si el
+  borrado falla, el archivo se importa igualmente y el estado
+  avisa, porque el siguiente ciclo traería un duplicado.
+- **Las subidas en curso son seguras.**  Un archivo solo se recoge
+  cuando su tamaño lleva al menos un minuto sin cambiar entre dos
+  comprobaciones, y el tamaño se verifica de nuevo tras la
+  descarga.  Hasta entonces el estado lo cuenta como «settling».
+- **Los archivos no de audio permanecen en el servidor.**  Solo se
+  recogen las extensiones de audio de la carpeta de importación.
+- **Prefiera FTPS o SFTP** — el FTP en claro transmite la
+  contraseña sin cifrar.  La contraseña se guarda en la base de
+  datos de ajustes como las demás contraseñas de servicios, para
+  que la recogida pueda conectarse sin supervisión; la página no la
+  muestra nunca más.
+- Cada ciclo inicia descargas nuevas durante un minuto como máximo;
+  lo demás lo recoge el ciclo siguiente («left for the next run» en
+  el estado).
+
 ---
 
 ## 6. Ubicación de la biblioteca de medios
