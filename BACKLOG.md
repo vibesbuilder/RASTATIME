@@ -1381,7 +1381,10 @@ BACKUP in 4 Sprachen, ARCHITECTURE §23.35).  DB-Zugangsdaten aus
 libretime.conf (Operator-Entscheidung).  Grundsatzfragen beantwortet:
 Scheduler = Windows-Aufgabenplaner + Management-Command (Worker bleibt
 Stub); Speicherort = serverseitiger Zielordner + Liste; Restore =
-schlank (Browser + Anleitung, kein 1-Klick-Restore).  **Offen: Stufe 2**
+schlank (Browser + Anleitung, kein 1-Klick-Restore).  **Live abgenommen
+2026-09-17 10:20:** erstes Operator-Backup über die UI, ZIP-Integrität OK,
+`db.dump` per `pg_restore --list` gelesen (47 Tabellen mit Daten), Config
++ Manifest vollständig.  **Offen: Stufe 2**
 (Media serverseitig per robocopy-Spiegel + Verify) **und Stufe 3**
 (Auto-Backup-Sektion + `backup_run`-Command + Aufbewahrung, Restore-
 Sektion als Backup-Browser).

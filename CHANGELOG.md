@@ -27,6 +27,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Nav-Eintrag Settings → Backup.  Tests `test_storage_backup.py` (10),
   API-Suite 107.  Handbuch-Kapitel BACKUP EN/DE/FR/ES + TOC,
   ARCHITECTURE 0.36 (§23.35).  Aktiv nach RASTATIME-API-Neustart.
+  Live abgenommen 2026-09-17 10:20: erstes Operator-Backup über die UI —
+  ZIP 453 KB, Integrität OK, `db.dump` 764 KB mit `pg_restore --list`
+  gelesen (394 Einträge, 47 Tabellen mit Daten, cc_files/cc_show/cc_pref/
+  podcast vorhanden), 3 Konfigurationsdateien + Manifest (pg_dump 17.7).
 
 - **Gerenderte Einstellungen übernimmt das Playout selbst — kein manueller
   Neustart mehr nach 24/7-Aufnahme, Main Output, Crossfade oder
