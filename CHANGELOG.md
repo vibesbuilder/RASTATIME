@@ -9,6 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Settings → Backup: Medienbibliothek als inkrementeller Spiegel
+  (2026-09-17, Arbeitsreihenfolge Punkt 10 Stufe 2, Operator-Go)** — Neue
+  Option „Include media library" (cc_pref `local_backup_include_media`):
+  jeder Lauf spiegelt die Bibliothek zusätzlich per robocopy /MIR nach
+  `<Backup-Ordner>/media` — inkrementell (nur Geändertes kopiert,
+  Gelöschtes verschwindet auch aus dem Spiegel), danach Datei-für-Datei
+  verifiziert (Existenz + Größe, Wiederverwendung von
+  `move.verify_copy`); nie gezippt, nie durch den Browser.  Job-Zustand
+  mit Phasen (database → media → verifying), Fortschritt per walk_size
+  alle 3 s, Platz-Prüfung vor dem Lauf (Bibliothek × 1,1 minus schon
+  Gespiegeltes).  „Cancel" stoppt nur den Spiegel (das ZIP ist dann schon
+  vollständig), der nächste Lauf setzt fort; ein Fehlschlag lässt den
+  Teil-Spiegel liegen (inkrementell), löscht aber weiterhin halbe ZIPs.
+  UI: Checkbox, Fortschrittsbalken, Phasen-Text, Cancel-Knopf; neue Route
+  `/api/v2/storage/backup/cancel`, Proxy `preference/backup-cancel`.
+  Tests `test_storage_backup.py` +4 (echtes robocopy, Purge-Nachweis).
+  Handbuch BACKUP §3 EN/DE/FR/ES, ARCHITECTURE 0.37 (§23.35-Nachtrag).
+  Aktiv nach RASTATIME-API-Neustart.
+
 - **Settings → Backup: Datenbank + Konfiguration per Klick sichern
   (2026-09-16, Arbeitsreihenfolge Punkt 10 Stufe 1, Operator-Go, `df53122`)** — Neue
   Settings-Seite nach dem Muster der Media Library Location: Backup-Ordner

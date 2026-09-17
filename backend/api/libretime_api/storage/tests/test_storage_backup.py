@@ -160,6 +160,76 @@ def test_a_dead_job_shows_as_interrupted():
     assert sb.JOB.status()["state"] == "interrupted"
 
 
+# ---- stage 2: media mirror (RASTATIME 2026-09-17) ---------------------------
+
+
+@pytest.fixture
+def library(tmp_path, monkeypatch):
+    src = tmp_path / "stor"
+    for rel in ("imported/Artist/a.mp3", "imported/artwork/a", "imported/b.mp3"):
+        p = src / rel
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_bytes(b"x" * (1024 + len(rel)))
+    root = str(src).replace("\\", "/")
+    monkeypatch.setattr(sr, "get_storage_root", lambda refresh=False: root)
+    return src
+
+
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.skipif(not WINDOWS, reason="real robocopy")
+def test_media_mirror_is_copied_and_verified(target, fake_config, fake_pg_dump, library):
+    sb.set_backup_folder(target)
+    sb.set_include_media(True)
+    sb.JOB.start()
+    state = wait_state("done", "failed", timeout=60.0)
+    assert state["state"] == "done", state.get("error")
+    assert state["media_synced_at"]
+    mirror = os.path.join(target, "media")
+    copied = sorted(
+        os.path.relpath(os.path.join(d, f), mirror).replace("\\", "/")
+        for d, _dirs, files in os.walk(mirror) for f in files
+    )
+    assert copied == ["imported/Artist/a.mp3", "imported/artwork/a", "imported/b.mp3"]
+    assert state["media_done_files"] == 3
+    # the ZIP is still complete alongside the mirror
+    assert sb.list_backups(target)[0]["name"] == state["file"]
+
+
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.skipif(not WINDOWS, reason="real robocopy")
+def test_second_run_mirrors_deletions(target, fake_config, fake_pg_dump, library):
+    sb.set_backup_folder(target)
+    sb.set_include_media(True)
+    sb.JOB.start()
+    assert wait_state("done", "failed", timeout=60.0)["state"] == "done"
+    (library / "imported" / "b.mp3").unlink()
+    (library / "imported" / "c.mp3").write_bytes(b"y" * 2048)
+    sb.JOB.start()
+    state = wait_state("done", "failed", timeout=60.0)
+    assert state["state"] == "done", state.get("error")
+    mirror = os.path.join(target, "media", "imported")
+    assert not os.path.exists(os.path.join(mirror, "b.mp3"))       # /MIR purged it
+    assert os.path.isfile(os.path.join(mirror, "c.mp3"))
+
+
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.skipif(not WINDOWS, reason="windows paths")
+def test_media_flag_off_leaves_the_library_alone(target, fake_config, fake_pg_dump, library):
+    sb.set_backup_folder(target)
+    sb.set_include_media(False)
+    sb.JOB.start()
+    state = wait_state("done", "failed", timeout=60.0)
+    assert state["state"] == "done", state.get("error")
+    assert not os.path.exists(os.path.join(target, "media"))
+    assert "media_synced_at" not in state
+
+
+@pytest.mark.django_db
+def test_cancel_outside_the_media_phase_is_a_no_op(target):
+    sb.save_state({"state": "done", "file": "x"})
+    assert sb.JOB.cancel()["state"] == "done"
+
+
 # ---- name safety ------------------------------------------------------------
 
 

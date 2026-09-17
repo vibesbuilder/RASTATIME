@@ -13,16 +13,16 @@ Dienst-Passwörter und Ports liegen in einigen Konfigurationsdateien.
 Die Seite **Backup** schreibt beides in ein einzelnes, in sich
 vollständiges ZIP pro Lauf.
 
-Die Medienbibliothek (die Audiodateien selbst) ist in dieser Stufe
-**nicht** enthalten.  Sie umfasst viele Gigabyte und wird serverseitig
-gesichert; wo die Bibliothek liegt, beschreibt
-[Lokale Maschine](./LOCAL_MACHINE.md).
+Die Medienbibliothek (die Audiodateien selbst) wird nie gezippt — sie
+umfasst viele Gigabyte.  Aktivieren Sie stattdessen **Include media
+library**, dann wird sie serverseitig neben den ZIPs gespiegelt;
+siehe Abschnitt 3.
 
 ## 1. Der Backup-Ordner
 
 Geben Sie einen absoluten Pfad auf einem lokalen Laufwerk ein, zum
 Beispiel `D:\rastatime-backups`, und klicken Sie **Check** und **Save
-folder**.
+settings**.
 
 - Der Ordner wird angelegt, falls er nicht existiert.
 - Er darf nicht innerhalb der Medienbibliothek liegen.
@@ -50,7 +50,30 @@ Knöpfen nennt den Grund.  Eine durch einen Dienst-Neustart
 unterbrochene Sicherung wird als unterbrochen angezeigt — starten Sie
 sie einfach erneut.
 
-## 3. Vorhandene Sicherungen
+## 3. Die Medienbibliothek einbeziehen
+
+Setzen Sie das Häkchen **Include media library** und klicken Sie
+**Save settings**.  Von da an synchronisiert jeder Lauf zusätzlich die
+Bibliothek in den Unterordner `media` neben den ZIPs:
+
+- **Inkrementell.**  Nur neue und geänderte Dateien werden kopiert;
+  Dateien, die Sie aus der Bibliothek gelöscht haben, verschwinden
+  auch aus dem Spiegel.  Der Spiegel ist immer *die aktuelle*
+  Bibliothek, keine Historie.
+- **Verifiziert.**  Nach jedem Lauf wird jede Bibliotheksdatei gegen
+  den Spiegel geprüft (Existenz und Größe); eine Abweichung lässt die
+  Sicherung fehlschlagen.
+- **Erster Lauf.**  Kopiert alles und kann dauern — der
+  Fortschrittsbalken zeigt den Stand.  **Cancel** stoppt den Spiegel
+  (das Datenbank-ZIP ist zu dem Zeitpunkt bereits vollständig); der
+  nächste Lauf setzt einfach dort fort.
+
+Der Spiegel wandert nie durch den Browser.  Zum Wiederherstellen der
+Medien kopieren Sie den Inhalt von `media` zurück in die
+Bibliotheks-Wurzel, die unter [Lokale Maschine](./LOCAL_MACHINE.md)
+angezeigt wird.
+
+## 4. Vorhandene Sicherungen
 
 Die Tabelle listet jede Sicherung im Ordner, neueste zuerst, mit Größe
 und Erstellzeit.  **Download** speichert das ZIP über den Browser —
@@ -58,7 +81,7 @@ nützlich für eine Kopie außerhalb der Maschine.  Die Dateien auf der
 Platte bleiben unangetastet; löschen Sie alte von Hand, wenn Sie sie
 nicht mehr brauchen.
 
-## 4. Wiederherstellen
+## 5. Wiederherstellen
 
 Das Wiederherstellen ersetzt die laufende Datenbank und ist deshalb
 ein bewusster, dokumentierter Offline-Vorgang — Dienste stoppen,
@@ -66,7 +89,7 @@ Datenbank mit `pg_restore` wiederherstellen, Dienste starten.  Folgen
 Sie `docs/operator/BACKUP.md`, Abschnitt 7.  Die `db.dump` im ZIP ist
 genau das, was `pg_restore` erwartet.
 
-## 5. Bewährte Praxis
+## 6. Bewährte Praxis
 
 - Sichern Sie vor allem, was Sie ungern noch einmal machen würden:
   Massenlöschungen, große Sendeplan-Änderungen, Versions-Updates.

@@ -1,6 +1,9 @@
 """
 RASTATIME 2026-09-16 - manual backup via the UI (work-order point 10,
-stage 1: database + configuration).
+stage 1: database + configuration; stage 2 (2026-09-17): media library
+as an incremental robocopy mirror in <backup folder>/media, verified
+file-by-file after every run - never zipped and never sent through the
+browser).
 
 The job writes one self-contained ZIP per run into the operator-chosen
 backup folder (site preference ``local_backup_folder``)::
@@ -51,10 +54,19 @@ logger = logging.getLogger(__name__)
 
 BACKUP_FOLDER_KEY = "local_backup_folder"
 BACKUP_STATE_KEY = "local_backup_state"
+INCLUDE_MEDIA_KEY = "local_backup_include_media"
 HEARTBEAT_STALE_SECONDS = 45
 FREE_BYTES_MIN = 500 * 1024 * 1024
 ZIP_NAME_RE = re.compile(r"^rastatime-backup-\d{4}-\d{2}-\d{2}T\d{4}(-\d+)?\.zip$")
 CHUNK = 1024 * 1024
+# RASTATIME 2026-09-17 - stage 2: the media library is mirrored (not
+# zipped - it is many gigabytes) into <backup folder>/media with robocopy
+# /MIR, so a second run only copies what changed.  Same flags as the
+# storage move job, plus /PURGE semantics from /MIR: files deleted from
+# the library disappear from the mirror.
+MEDIA_DIRNAME = "media"
+ROBOCOPY = os.path.join(os.environ.get("SystemRoot", r"C:\Windows"), "System32", "Robocopy.exe")
+PROGRESS_INTERVAL_SECONDS = 3.0
 
 
 class BackupInProgress(Exception):
@@ -93,6 +105,19 @@ def get_backup_folder() -> Optional[str]:
 
 def set_backup_folder(path: str) -> None:
     storage_root.write_setting(BACKUP_FOLDER_KEY, storage_root.normalize(path))
+
+
+def get_include_media() -> bool:
+    return (storage_root.read_setting(INCLUDE_MEDIA_KEY) or "").lower() == "true"
+
+
+def set_include_media(value: bool) -> None:
+    storage_root.write_setting(INCLUDE_MEDIA_KEY, "true" if value else "false")
+
+
+def media_mirror_dir(folder: Optional[str] = None) -> Optional[str]:
+    folder = folder or get_backup_folder()
+    return os.path.join(folder, MEDIA_DIRNAME) if folder else None
 
 
 def config_dir() -> str:
@@ -213,6 +238,8 @@ class BackupJob:
     def __init__(self) -> None:
         self._lock = threading.Lock()
         self._thread: Optional[threading.Thread] = None
+        self._proc: Optional[subprocess.Popen] = None
+        self._cancel = threading.Event()
 
     # ---- public --------------------------------------------------------
 
@@ -235,16 +262,51 @@ class BackupJob:
             check = validate_folder(folder)
             if not check["ok"]:
                 raise InvalidFolder(check["errors"])
+            include_media = get_include_media()
             state = {
-                "state": "running", "started_at": _now(), "finished_at": None,
+                "state": "running", "phase": "database",
+                "started_at": _now(), "finished_at": None,
                 "file": None, "bytes": 0, "error": None,
+                "include_media": include_media,
                 "pid": os.getpid(), "heartbeat": _now(),
             }
+            if include_media:
+                source = storage_root.get_storage_root(refresh=True)
+                files, total = storage_root.library_size(source, refresh=True)
+                mirror = media_mirror_dir(folder)
+                done_files, done_bytes = (
+                    storage_root.walk_size(mirror) if os.path.isdir(mirror) else (0, 0)
+                )
+                needed = max(int(total * 1.1) - done_bytes, 0) + FREE_BYTES_MIN
+                if check["free_bytes"] and check["free_bytes"] < needed:
+                    raise InvalidFolder([
+                        f"Not enough free space for the media mirror: "
+                        f"{check['free_bytes'] // 1048576} MB free, "
+                        f"{needed // 1048576} MB needed."
+                    ])
+                state.update(media_source=source, media_total_files=files,
+                             media_total_bytes=total, media_done_files=done_files,
+                             media_done_bytes=done_bytes)
             save_state(state)
+            self._cancel.clear()
             self._thread = threading.Thread(
                 target=self._run, args=(state, folder), name="backup", daemon=True,
             )
             self._thread.start()
+            return state
+
+    def cancel(self) -> dict:
+        """Stops the media mirror (the ZIP part is seconds and finishes).
+        The mirror keeps what was copied; the next run resumes there."""
+        with self._lock:
+            state = self.status()
+            if state.get("state") == "running" and state.get("phase") == "media":
+                self._cancel.set()
+                if self._proc is not None and self._proc.poll() is None:
+                    try:
+                        self._proc.terminate()
+                    except OSError:
+                        pass
             return state
 
     # ---- internals -----------------------------------------------------
@@ -285,21 +347,77 @@ class BackupJob:
                     "contents": ["db.dump"] + [f"config/{c.name}" for c in config_files],
                 }
                 zf.writestr("manifest.json", json.dumps(manifest, indent=2))
-            state.update(state="done", finished_at=_now(),
-                         file=os.path.basename(target), bytes=os.path.getsize(target))
+            state.update(file=os.path.basename(target), bytes=os.path.getsize(target))
+            save_state(state)
+            if state.get("include_media"):
+                self._mirror_media(state, folder)
+                if self._cancel.is_set():
+                    state.update(state="cancelled", finished_at=_now(),
+                                 error="Cancelled by the operator - the database ZIP is "
+                                       "complete, the media mirror keeps what was copied "
+                                       "so far and the next run resumes there.")
+                    save_state(state)
+                    return
+            state.update(state="done", phase=None, finished_at=_now())
+            if state.get("include_media"):
+                state["media_synced_at"] = _now()
             save_state(state)
             logger.info("backup done: %s (%d bytes)", target, state["bytes"])
         except Exception as exc:  # pylint: disable=broad-exception-caught
             logger.error("backup failed: %s", exc)
             try:
-                if os.path.isfile(target):
-                    os.remove(target)              # no half backups in the list
+                # No half ZIPs in the list; a partial media MIRROR stays -
+                # it is incremental by design and the next run resumes it.
+                if state.get("phase") == "database" and os.path.isfile(target):
+                    os.remove(target)
             except OSError:
                 pass
             state.update(state="failed", finished_at=_now(), error=str(exc))
             save_state(state)
         finally:
             connection.close()
+
+    def _mirror_media(self, state: dict, folder: str) -> None:
+        """robocopy /MIR the library into <folder>/media, then verify."""
+        from . import move as storage_move  # noqa: PLC0415 (sibling, no cycle)
+
+        source = state.get("media_source") or storage_root.get_storage_root(refresh=True)
+        mirror = media_mirror_dir(folder)
+        state.update(phase="media", heartbeat=_now())
+        save_state(state)
+        cmd = [
+            ROBOCOPY, str(Path(source)), str(Path(mirror)),
+            "/MIR", "/COPY:DAT", "/DCOPY:T", "/R:2", "/W:2",
+            "/NP", "/NJH", "/NJS", "/NDL", "/NFL",
+            "/XD", "$RECYCLE.BIN", "System Volume Information",
+        ]
+        flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+        self._proc = subprocess.Popen(  # noqa: S603
+            cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, creationflags=flags,
+        )
+        try:
+            while self._proc.poll() is None:
+                time.sleep(PROGRESS_INTERVAL_SECONDS)
+                files, done = storage_root.walk_size(mirror)
+                state.update(media_done_files=files, media_done_bytes=done, heartbeat=_now())
+                save_state(state)
+            output = (self._proc.stdout.read() or b"").decode("utf-8", "replace") if self._proc.stdout else ""
+            rc = self._proc.returncode
+        finally:
+            self._proc = None
+        if self._cancel.is_set():
+            return
+        if rc is None or rc >= 8:
+            tail = output.strip().splitlines()[-3:]
+            raise RuntimeError(f"robocopy exit code {rc}: {' | '.join(tail)}")
+        state.update(phase="verifying", heartbeat=_now())
+        save_state(state)
+        problems = storage_move.verify_copy(source, mirror)
+        if problems:
+            raise RuntimeError("media mirror incomplete: " + ", ".join(problems[:5]))
+        files, done = storage_root.walk_size(mirror)
+        state.update(media_done_files=files, media_done_bytes=done, heartbeat=_now())
+        save_state(state)
 
     def _dump_database(self, zf: zipfile.ZipFile, argv: list, env: dict, state: dict) -> None:
         flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)

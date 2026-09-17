@@ -1,10 +1,15 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.36
-Date: 2026-09-16
+Draft version: 0.37
+Date: 2026-09-17
 
 > **Revision history**
+> - **0.37 (2026-09-17)** — **Backup stage 2: media mirror** (§23.35
+>   addendum): opt-in robocopy /MIR of the library into
+>   `<backup folder>/media`, incremental with purge, verified
+>   file-by-file after every run, cancellable and resumable; job
+>   phases database → media → verifying with progress in the state.
 > - **0.36 (2026-09-16)** — **Manual backup via the UI** (§23.35):
 >   Settings → Backup writes one self-contained ZIP (pg_dump custom
 >   format streamed into the archive + every config file + manifest)
@@ -5036,6 +5041,19 @@ configured folder (traversal-safe by construction).  The legacy page
 (operator login + CSRF; API key server-side); the download is buffered
 through PHP — stage-1 archives are megabytes, and media backups
 (stage 2) will never travel through the browser.
+
+**Stage 2 addendum (2026-09-17).**  The opt-in **media mirror**
+(`local_backup_include_media`): after the ZIP, the job mirrors the
+library into `<backup folder>/media` with robocopy `/MIR` (same flags
+as the storage move job) — incremental by construction, deletions
+purged, so the mirror is always the current library, not a history.
+Then it verifies file-by-file (reusing `move.verify_copy`; a mismatch
+fails the run).  The job state carries phases (`database` → `media` →
+`verifying`) and mirror progress sampled every 3 s; a free-space check
+before the run demands library × 1.1 minus what is already mirrored.
+Cancel terminates only the mirror (the ZIP is complete by then) and
+the next run resumes; a failed run keeps the partial mirror but still
+deletes half ZIPs.  The mirror never travels through the browser.
 
 **Deliberately not built.**  No restore endpoint: restoring replaces
 the running database and stays the documented offline procedure

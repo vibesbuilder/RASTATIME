@@ -322,6 +322,17 @@ class PreferenceController extends Zend_Controller_Action
         $this->storageReply($status, $data);
     }
 
+    /** POST /preference/backup-cancel  (stops the media mirror; the ZIP finishes) */
+    public function backupCancelAction(): void
+    {
+        if (!$this->storageGuardPost()) {
+            return;
+        }
+        Logging::info('Operator cancelled the running backup');
+        [$status, $data] = $this->storageApi('POST', 'api/v2/storage/backup/cancel');
+        $this->storageReply($status, $data);
+    }
+
     /**
      * GET /preference/backup-download?name=rastatime-backup-....zip
      *

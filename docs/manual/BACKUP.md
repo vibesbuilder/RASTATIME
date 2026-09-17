@@ -12,14 +12,14 @@ settings — lives in the PostgreSQL database; the service passwords and
 ports live in a handful of configuration files.  The **Backup** page
 writes both into a single self-contained ZIP per run.
 
-The media library (the audio files themselves) is **not** included in
-this stage.  It is many gigabytes and is backed up server-side; see
-[Local Machine](./LOCAL_MACHINE.md) for where the library lives.
+The media library (the audio files themselves) is never zipped — it
+is many gigabytes.  Instead, enable **Include media library** and it
+is mirrored server-side next to the ZIPs; see section 3.
 
 ## 1. The backup folder
 
 Enter an absolute path on a local drive, for example
-`D:\rastatime-backups`, then click **Check** and **Save folder**.
+`D:\rastatime-backups`, then click **Check** and **Save settings**.
 
 - The folder is created if it does not exist.
 - It must not lie inside the media library.
@@ -45,14 +45,34 @@ leaves **no** half-written ZIP behind; the message under the buttons
 shows the reason.  A backup interrupted by a service restart shows as
 interrupted — simply run it again.
 
-## 3. Existing backups
+## 3. Including the media library
+
+Tick **Include media library** and click **Save settings**.  From then
+on every run also synchronises the library into the subfolder `media`
+next to the ZIPs:
+
+- **Incremental.**  Only new and changed files are copied; files you
+  deleted from the library disappear from the mirror too.  The mirror
+  is always *the current* library, not a history.
+- **Verified.**  After every run each library file is checked against
+  the mirror (existence and size); a mismatch fails the backup.
+- **First run.**  Copies everything and can take a while — the
+  progress bar shows how far it is.  **Cancel** stops the mirror (the
+  database ZIP is already complete at that point); the next run simply
+  resumes where it stopped.
+
+The mirror never travels through the browser.  To restore media, copy
+the contents of `media` back into the library root shown under
+[Local Machine](./LOCAL_MACHINE.md).
+
+## 4. Existing backups
 
 The table lists every backup in the folder, newest first, with size
 and creation time.  **Download** saves the ZIP through the browser —
 useful for keeping an off-machine copy.  The files on disk stay
 untouched; delete old ones by hand when you no longer need them.
 
-## 4. Restoring
+## 5. Restoring
 
 Restoring replaces the running database and is therefore a deliberate,
 documented offline procedure — services stopped, database restored
@@ -60,7 +80,7 @@ with `pg_restore`, services started.  Follow
 `docs/operator/BACKUP.md`, section 7.  The `db.dump` inside the ZIP is
 exactly what `pg_restore` expects.
 
-## 5. Good practice
+## 6. Good practice
 
 - Back up before anything you would hate to redo: bulk deletions,
   big schedule changes, version updates.

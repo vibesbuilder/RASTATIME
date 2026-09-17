@@ -22,6 +22,7 @@ from .podcasts.router import urls as podcasts_urls
 from .schedule.router import urls as schedule_urls
 from .storage.router import urls as storage_urls
 from .storage.views.backup import (
+    BackupCancelView,
     BackupDownloadView,
     BackupFolderView,
     BackupRunView,
@@ -70,6 +71,7 @@ urlpatterns = [
     path("api/v2/storage/backup/validate", BackupValidateView.as_view(), name="storage-backup-validate"),
     path("api/v2/storage/backup/folder", BackupFolderView.as_view(), name="storage-backup-folder"),
     path("api/v2/storage/backup/run", BackupRunView.as_view(), name="storage-backup-run"),
+    path("api/v2/storage/backup/cancel", BackupCancelView.as_view(), name="storage-backup-cancel"),
     path("api/v2/storage/backup/download", BackupDownloadView.as_view(), name="storage-backup-download"),
     path("api/v2/streams/outputs", stream_outputs, name="stream-outputs"),
     path(

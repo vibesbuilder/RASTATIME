@@ -38,16 +38,33 @@ $rtTip = function ($text) {
                        style="width: 372px; max-width: 100%;" placeholder="D:\rastatime-backups" /><span class="help_icon" data-rt-tip="<?php echo $rtTip(_("Absolute path on a local drive, for example D:\rastatime-backups.  The folder is created if needed and must not lie inside the media library.  Ideally a different drive than the database.")); ?>"></span>
             </dd>
 
+            <?php
+            // RASTATIME 2026-09-17 - stage 2: the media library is mirrored
+            // server-side (robocopy /MIR into <folder>/media, verified after
+            // every run) - never zipped, never sent through the browser.
+            ?>
+            <dt></dt>
+            <dd style="padding-top: 0.3em;">
+                <label style="cursor: pointer;">
+                    <input id="backup_include_media" type="checkbox" />
+                    <?php echo _("Include media library") ?>
+                </label><span class="help_icon" data-rt-tip="<?php echo $rtTip(_("Mirrors the media library into the subfolder 'media' next to the ZIPs.  The mirror is incremental: only changed files are copied, files deleted from the library disappear from the mirror.  Verified file-by-file after every run.  The first run copies everything and can take a while - Cancel stops it, the next run resumes.")); ?>"></span>
+            </dd>
+
             <dt></dt>
             <dd style="padding-top: 0.5em;">
                 <button id="backup_check" type="button" class="btn"><?php echo _("Check") ?></button>
-                <button id="backup_save" type="button" class="btn"><?php echo _("Save folder") ?></button>
+                <button id="backup_save" type="button" class="btn"><?php echo _("Save settings") ?></button>
                 <button id="backup_run" type="button" class="btn" disabled><?php echo _("Back up now") ?></button>
+                <button id="backup_cancel" type="button" class="btn" style="display: none;"><?php echo _("Cancel") ?></button>
                 <span id="backup_status_msg" style="margin-left: 1em;"></span>
             </dd>
 
             <dt></dt>
             <dd>
+                <div id="backup_progress" style="display: none; width: 372px; max-width: 100%; height: 10px; border: 1px solid #888; background: #eee;">
+                    <div id="backup_progress_bar" style="height: 100%; width: 0; background: #5cb85c;"></div>
+                </div>
                 <div id="backup_job_info" style="font-size: 0.9em; color: #555; padding-top: 0.3em;"></div>
             </dd>
         </dl>
@@ -76,11 +93,16 @@ $rtTip = function ($text) {
         var pollTimer = null;
 
         var TXT = {
-            saved:       "<?php echo addslashes(_('Backup folder saved.')) ?>",
+            saved:       "<?php echo addslashes(_('Backup settings saved.')) ?>",
             checked:     "<?php echo addslashes(_('The folder is usable.')) ?>",
             noFolder:    "<?php echo addslashes(_('Choose and save a backup folder first.')) ?>",
             running:     "<?php echo addslashes(_('Backup running …')) ?>",
+            phaseDb:     "<?php echo addslashes(_('Backing up database + configuration …')) ?>",
+            phaseMedia:  "<?php echo addslashes(_('Mirroring media library …')) ?>",
+            phaseVerify: "<?php echo addslashes(_('Verifying media mirror …')) ?>",
+            cancelled:   "<?php echo addslashes(_('Cancelled - the ZIP is complete, the media mirror resumes on the next run.')) ?>",
             done:        "<?php echo addslashes(_('Backup finished:')) ?>",
+            doneMedia:   "<?php echo addslashes(_('media mirror synced')) ?>",
             failed:      "<?php echo addslashes(_('Backup failed:')) ?>",
             interrupted: "<?php echo addslashes(_('The last backup was interrupted - run it again.')) ?>",
             none:        "<?php echo addslashes(_('No backups yet.')) ?>",
@@ -100,11 +122,31 @@ $rtTip = function ($text) {
 
         function renderJob(job) {
             var info = $("#backup_job_info");
+            var mediaRunning = job.state === "running" && job.phase === "media";
+            $("#backup_cancel").toggle(mediaRunning);
+            if (job.state === "running" && job.include_media && job.media_total_bytes) {
+                var pct = Math.min(100, Math.round(100 * (job.media_done_bytes || 0) / job.media_total_bytes));
+                $("#backup_progress").show();
+                $("#backup_progress_bar").css("width", pct + "%");
+            } else {
+                $("#backup_progress").hide();
+            }
             if (job.state === "running") {
-                info.text(TXT.running + " (" + (job.started_at || "") + ")");
+                var phase = job.phase === "media" ? TXT.phaseMedia +
+                        " " + mb(job.media_done_bytes) + " / " + mb(job.media_total_bytes)
+                    : job.phase === "verifying" ? TXT.phaseVerify
+                    : TXT.phaseDb;
+                info.text(TXT.running + " " + phase);
                 startPolling();
             } else if (job.state === "done") {
-                info.text(TXT.done + " " + (job.file || "") + ", " + mb(job.bytes));
+                var text = TXT.done + " " + (job.file || "") + ", " + mb(job.bytes);
+                if (job.media_synced_at) {
+                    text += " · " + TXT.doneMedia + " (" + (job.media_done_files || 0) +
+                            " files, " + mb(job.media_done_bytes) + ")";
+                }
+                info.text(text);
+            } else if (job.state === "cancelled") {
+                info.text(TXT.cancelled);
             } else if (job.state === "failed") {
                 info.text(TXT.failed + " " + (job.error || ""));
             } else if (job.state === "interrupted") {
@@ -133,9 +175,14 @@ $rtTip = function ($text) {
             });
         }
 
+        var mediaTouched = false;
+
         function renderStatus(d) {
             if (d.folder && !$("#backup_folder").is(":focus") && !$("#backup_folder").val()) {
                 $("#backup_folder").val(d.folder.replace(/\//g, "\\"));
+            }
+            if (!mediaTouched) {
+                $("#backup_include_media").prop("checked", !!d.include_media);
             }
             $("#backup_run").prop("disabled", !d.configured || (d.job || {}).state === "running");
             renderJob(d.job || {state: "idle"});
@@ -165,9 +212,15 @@ $rtTip = function ($text) {
             }, function (err) { msg(err, false); });
         });
 
+        $("#backup_include_media").on("change", function () { mediaTouched = true; });
+
         $("#backup_save").on("click", function () {
-            post("backup-folder", {folder: $("#backup_folder").val()}, function (d) {
+            post("backup-folder", {
+                folder: $("#backup_folder").val(),
+                include_media: $("#backup_include_media").is(":checked") ? "true" : "false"
+            }, function (d) {
                 msg(TXT.saved, true);
+                mediaTouched = false;
                 renderStatus(d);
             }, function (err) { msg(err, false); });
         });
@@ -178,6 +231,11 @@ $rtTip = function ($text) {
                 renderJob((d && d.job) || {state: "running"});
                 startPolling();
             }, function (err) { msg(err, false); });
+        });
+
+        $("#backup_cancel").on("click", function () {
+            post("backup-cancel", {}, function () { refresh(); },
+                 function (err) { msg(err, false); });
         });
 
         $(function () {
