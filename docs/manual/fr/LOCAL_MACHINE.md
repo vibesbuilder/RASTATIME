@@ -314,6 +314,12 @@ immédiat sans attendre le poll de 60 s.
 
 ### Comment les fichiers sont traités
 
+> **Les fichiers doivent être au repos (depuis le 17/09/2026).**  Un
+> fichier n'est importé qu'après 60 secondes sans modification.  Une
+> copie lente ou un envoi FTP est donc sans risque : le scanner le
+> compte comme « settling » dans la ligne d'état et le reprend lors
+> d'un passage ultérieur.
+
 Pour chaque nouveau fichier que l'analyzer trouve :
 
 1. Le fichier est déplacé (pas copié) dans une zone de

@@ -202,6 +202,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Import-Ordner: halb geschriebene Dateien werden nicht mehr importiert
+  (2026-09-17, Operator-Go nach der Netz-/FTP-Quellen-Evaluierung)** —
+  Der 5-Minuten-Scan importierte, was gerade da war; eine Datei mitten
+  in einer langsamen Kopie oder einem FTP-Upload wäre abgeschnitten
+  verschoben und bei einem Fehlschlag samt Quelle GELÖSCHT worden.
+  Ruhe-Prüfung in `LocalImportScanTask::scanOnce`: importiert wird nur,
+  wessen mtime älter als 60 s ist (`QUIET_SECONDS`); jüngere Dateien
+  zählt die Statuszeile als „settling" und der nächste Durchlauf nimmt
+  sie mit.  Gilt auch für „Scan Now".  Handbuch LOCAL_MACHINE §5
+  EN/DE/FR/ES, ARCHITECTURE §23.12-Hinweis.  PHP live (kein OpCache).
+
 - **Einstellungs-Neustart: ein erfolgreicher Neustart hielt die nächste
   Änderung 30 Minuten zurück (2026-09-16, `4edc6ec`)** — Live: Ordner der 24/7-Aufnahme
   um 16:53 geändert → sofort übernommen; Bitrate 192 → 128 um 16:59:45

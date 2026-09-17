@@ -367,6 +367,12 @@ Verzögerung zu importieren.
 
 ### Wie Dateien verarbeitet werden
 
+> **Dateien müssen zur Ruhe gekommen sein (seit 17.09.2026).**  Eine
+> Datei wird erst importiert, wenn sie 60 Sekunden lang nicht mehr
+> verändert wurde.  Eine langsame Kopie oder ein FTP-Upload ist damit
+> sicher: Der Scanner zählt sie in der Statuszeile als „settling" und
+> nimmt sie bei einem späteren Durchlauf mit.
+
 Für jede neue Datei, die der Analyzer findet:
 
 1. Die Datei wird verschoben (nicht kopiert) in einen

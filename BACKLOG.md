@@ -1368,7 +1368,17 @@ EN (+ DE/FR/ES falls Manual betroffen). **Vorbedingung:** Migration durch — di
 realen Schritte werden beim echten Install dieser Maschine ohnehin verifiziert,
 danach 1:1 in die Docs übernehmen.
 
-### 🟢 Import-Ordner: Ruhe-Prüfung vor dem Import (evaluiert 2026-09-17, wartet auf Go)
+### ✅ Import-Ordner: Ruhe-Prüfung vor dem Import (evaluiert + umgesetzt 2026-09-17)
+
+**Umgesetzt 2026-09-17 (Operator-Go; Commit-Hash im CHANGELOG „Fixed"):**
+`QUIET_SECONDS = 60` in `LocalImportScanTask` — importiert wird nur, was
+60 s unverändert ist; Statuszeile zählt „settling".  FTP-Server und
+FTP-Polling: Operator 2026-09-17 „eventuell später" (💡 unten bleibt).
+**Nebenbefund:** Manual LOCAL_MACHINE „How files are processed" beschreibt
+einen nie gebauten Ablauf (Staging-/.failed-Ordner, rekursive Unterordner
+mit Album-Zuordnung) — der Code verschiebt nach organize, löscht
+Fehlschläge und ignoriert Unterordner; Doku-Drift, Korrektur in 4 Sprachen
+steht aus (🟡).
 
 **Anlass (Operator-Fragen 2026-09-17):** Was passiert nach dem Import
 (Antwort: Audio wird in die Bibliothek VERSCHOBEN, fehlgeschlagene

@@ -306,6 +306,12 @@ sin esperar el poll de 60 s.
 
 ### Cómo se procesan los archivos
 
+> **Los archivos deben estar en reposo (desde el 17/09/2026).**  Un
+> archivo solo se importa cuando lleva 60 segundos sin modificarse.
+> Una copia lenta o una subida FTP es por tanto segura: el escáner lo
+> cuenta como «settling» en la línea de estado y lo recoge en una
+> pasada posterior.
+
 Para cada nuevo archivo que el analyzer encuentra:
 
 1. El archivo se mueve (no se copia) a un área de staging

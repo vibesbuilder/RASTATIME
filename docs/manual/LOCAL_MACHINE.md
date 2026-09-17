@@ -339,6 +339,11 @@ into the folder to import without delay.
 
 ### How files are processed
 
+> **Files must be at rest (since 2026-09-17).**  A file is only
+> imported once it has not been modified for 60 seconds.  A slow
+> copy or FTP upload is therefore safe: the scanner counts it as
+> "settling" in the status line and picks it up on a later scan.
+
 For each new file the analyzer finds:
 
 1. The file is moved (not copied) into a staging area

@@ -2056,6 +2056,12 @@ edits a track's expiry — backwards-compatible.
 
 ### 23.12 Local Import Folder
 
+> **2026-09-17 — quiet-period guard.**  `scanOnce` only imports files
+> whose mtime is at least `QUIET_SECONDS` (60 s) old; younger files are
+> counted as "settling" and picked up by a later scan.  Precondition
+> for network or FTP delivery into the folder: without it a slow upload
+> could be moved away mid-write and a failed attempt deletes the source.
+
 **Context.**  RASTATIME operators frequently produce or receive audio
 on the same Windows host where the station runs — recordings from
 external software, files downloaded by hand, conversion outputs from

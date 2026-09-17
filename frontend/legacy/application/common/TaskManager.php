@@ -399,6 +399,11 @@ class TrackExpiryTask implements AirtimeTask
 class LocalImportScanTask implements AirtimeTask
 {
     public const LOCAL_IMPORT_INTERVAL_SECONDS = 300;  // 5 minutes
+    // RASTATIME 2026-09-17 - quiet-period guard: only import files
+    // untouched for this long.  A file still being written (slow
+    // network copy, FTP upload) must not be grabbed mid-write - the
+    // move would truncate it and a failed attempt DELETES the source.
+    public const QUIET_SECONDS = 60;
     public const AUDIO_EXTENSIONS = ['mp3', 'wav', 'm4a', 'flac', 'ogg', 'oga', 'aac', 'opus'];
 
     public function shouldBeRun()
@@ -434,13 +439,14 @@ class LocalImportScanTask implements AirtimeTask
      * importer logic.
      *
      * @param  string $folder absolute path on the RASTATIME host
-     * @return array  ['imported' => int, 'failed' => int, 'skipped' => int]
+     * @return array  ['imported' => int, 'failed' => int, 'skipped' => int, 'settling' => int]
      */
     public static function scanOnce($folder)
     {
         $imported = 0;
         $failed = 0;
         $skipped = 0;
+        $settling = 0;
 
         Application_Model_Preference::setLocalImportLastRun(time());
 
@@ -448,7 +454,7 @@ class LocalImportScanTask implements AirtimeTask
             $msg = 'Folder missing or unreadable: ' . $folder;
             Logging::warn('LocalImportScanTask: ' . $msg);
             Application_Model_Preference::setLocalImportLastStatus($msg);
-            return compact('imported', 'failed', 'skipped');
+            return compact('imported', 'failed', 'skipped', 'settling');
         }
 
         $entries = @scandir($folder);
@@ -456,7 +462,7 @@ class LocalImportScanTask implements AirtimeTask
             $msg = 'scandir failed for: ' . $folder;
             Logging::warn('LocalImportScanTask: ' . $msg);
             Application_Model_Preference::setLocalImportLastStatus($msg);
-            return compact('imported', 'failed', 'skipped');
+            return compact('imported', 'failed', 'skipped', 'settling');
         }
 
         foreach ($entries as $name) {
@@ -472,6 +478,17 @@ class LocalImportScanTask implements AirtimeTask
                 // Non-audio: leave it (operator may have placed
                 // intentionally; we don't own arbitrary files).
                 $skipped++;
+                continue;
+            }
+
+            // RASTATIME 2026-09-17 - quiet-period guard (operator go
+            // after the network/FTP-source evaluation): a file whose
+            // mtime is younger than QUIET_SECONDS may still be being
+            // written - leave it for the next scan.  filemtime failure
+            // counts as settling too (transient share hiccup).
+            $mtime = @filemtime($fullPath);
+            if ($mtime === false || (time() - $mtime) < self::QUIET_SECONDS) {
+                $settling++;
                 continue;
             }
 
@@ -507,15 +524,15 @@ class LocalImportScanTask implements AirtimeTask
         }
 
         $status = sprintf(
-            'imported %d, failed %d, skipped %d',
-            $imported, $failed, $skipped
+            'imported %d, failed %d, skipped %d, settling %d',
+            $imported, $failed, $skipped, $settling
         );
         Application_Model_Preference::setLocalImportLastStatus($status);
         if ($imported > 0 || $failed > 0) {
             Logging::info('LocalImportScanTask: ' . $status);
         }
 
-        return compact('imported', 'failed', 'skipped');
+        return compact('imported', 'failed', 'skipped', 'settling');
     }
 }
 
