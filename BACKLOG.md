@@ -2599,8 +2599,18 @@ MD5-Cache-Buster.
            Quelle, wie bei FC6).
   - 🟡 **DataTables 1.13 → 2.0** (eigener späterer Schritt nach jQuery 3):
     server-side-Format (sEcho/aaData → draw/data) + Init auf neue API umstellen.
-    Modernitäts-Wette, nicht jQuery-3-blockierend.  **Operator 2026-09-17:
-    Entscheidung später** — vor einem Go neu evaluieren.
+    Modernitäts-Wette, nicht jQuery-3-blockierend.  **Evaluiert 2026-09-17:
+    Defer** — DT 2 kappt die 1.9-Kompatibilität, auf der der gesamte Bestand
+    fährt (Hungarian-Init inkl. der Juni-sDom-Kniffe von Library/Builder,
+    Legacy-Server-Protokoll in Datatables.php + 4 weiteren PHP-Stellen);
+    ~11 JS-Init-Stellen + 5 PHP-Dateien, Buttons 3/ColReorder 2, kein
+    DT2-Pendant für die 2012er FixedColumns/FixedHeader-Forks, State-Format
+    wandert erneut.  ~1,5-3 Wochen für null sichtbaren Betriebsnutzen;
+    konkurriert strategisch mit der Grundsatzfrage Legacy-Frontend.
+    **Wiedervorlage-Trigger:** (a) Sicherheitslücke/EOL der 1.x-Linie, die
+    uns trifft; (b) konkretes DT2-only-Bedürfnis (Barrierefreiheit,
+    Extension); (c) Entscheidung „Legacy-Frontend bleibt auf Jahre".
+    Bis dahin 1.13 vendored + gepinnt.
 - **(Optional) Build-Pipeline:** nur bei Trigger (s. Strategie), eigener ADR.
 
 **Hauptrisiken (Stufe 2 absichern):**
