@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Podcast-Episoden landen in einem Ordner pro Podcast (2026-09-17,
-  Operator-Go)** — Downloads schrieben flach nach `imported/`; jetzt
+  Operator-Go, `b4d3b0a`)** — Downloads schrieben flach nach `imported/`; jetzt
   `imported/<Podcast-Name>/<Datei>` (Name Windows-sicher gesäubert:
   verbotene Zeichen → Leerzeichen, Länge gedeckelt, Rückfall „Podcast").
   Gilt für neue Downloads; Bestandsdateien bleiben flach (Nachzug auf
