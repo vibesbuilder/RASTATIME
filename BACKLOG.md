@@ -1379,7 +1379,7 @@ einen nie gebauten Ablauf (Staging-/.failed-Ordner, rekursive Unterordner
 mit Album-Zuordnung) — der Code verschiebt nach organize, löscht
 Fehlschläge und ignoriert Unterordner; Doku-Drift, Korrektur in 4 Sprachen
 steht aus (🟡).  **Korrigiert 2026-09-17** in allen vier Sprachen
-(Abschnitte + Fehlersuche; Commit-Hash im CHANGELOG „Fixed“).
+(Abschnitte + Fehlersuche; `46c0ce3`).
 
 **Anlass (Operator-Fragen 2026-09-17):** Was passiert nach dem Import
 (Antwort: Audio wird in die Bibliothek VERSCHOBEN, fehlgeschlagene

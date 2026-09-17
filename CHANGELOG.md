@@ -203,7 +203,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **Handbuch: das Import-Ordner-Kapitel beschrieb einen nie gebauten Ablauf
-  (2026-09-17)** — LOCAL_MACHINE §5 (EN/DE/FR/ES) erzählte von Staging-
+  (2026-09-17, `46c0ce3`)** — LOCAL_MACHINE §5 (EN/DE/FR/ES) erzählte von Staging-
   und `.failed`-Ordnern mit `.err`-Sidecars, rekursiven Unterordnern mit
   Album-Zuordnung und einem `LocalImportJob` im Worker-Dienst — nichts
   davon existiert.  Abschnitte und Fehlersuche neu geschrieben nach dem
