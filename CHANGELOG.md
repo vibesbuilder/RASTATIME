@@ -285,7 +285,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **Logging: 530-MB/Tag-Warnungsflut gestoppt, eine Log-Senke, nächtlicher
-  Log-Hausmeister (2026-09-18, Operator-Auftrag LOGGING)** — Befund der
+  Log-Hausmeister (2026-09-18, Operator-Auftrag LOGGING, `8677c47`)** — Befund der
   Inventur: 2 GB im Log-Ordner, ~99 % Liquidsoap, doppelt geschrieben
   (eigene Datei + NSSM-stdout).  Seit 16.09. flutete der 24/7-Recorder
   beide Senken: `rec247_reopen()` läuft pro Frame und rief zweimal das
