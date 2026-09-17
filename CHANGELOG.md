@@ -247,7 +247,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **jQuery-UI-1.13-Politur: sichtbarer Dialog-Schließen-Knopf, dunkler
-  Datepicker, blaue Ränder weg (2026-09-17)** — Der 1.13-Dialog lässt den
+  Datepicker, blaue Ränder weg (2026-09-17, `707538d`)** — Der 1.13-Dialog lässt den
   Schließen-Knopf auf diesem Stack als nacktes `<button>` ohne
   Icon-Markup zurück (heller leerer Kasten) → direkt gestylt: dunkler
   runder Knopf mit weißem ✕, für jeden Dialog.  Der Datepicker war der
@@ -363,7 +363,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **jQuery-Migrate-Netz + Legacy-JS-Assets entfernt — der ?jq3-Schalter ist
   Geschichte (2026-09-17, Bewährungs-Signal des Operators nach drei ruhigen
-  Monaten auf dem jQuery-3-Standard)** — Raus: jquery-migrate 3.5.2,
+  Monaten auf dem jQuery-3-Standard, `3d02d50`)** — Raus: jquery-migrate 3.5.2,
   jQuery 1.8.3, jQuery UI 1.8.24 (+ totes 1.8.18-Custom), redmond-1.8-Theme
   (images/ bleibt — zwei Stylesheets nutzen die Icon-Sprites), DataTables-
   1.9-Kern, 2012er ColVis/ColReorder samt css/datatables-Baum, 16
@@ -377,7 +377,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Migrate und ohne Konsolen-Fehler.
 
 - **FullCalendar-1.5-Fork entfernt — FC6 ist die einzige Kalender-Engine
-  (2026-09-17, Bewährungs-Signal; FC6 Standard seit 2026-06-01)** — Raus:
+  (2026-09-17, Bewährungs-Signal; FC6 Standard seit 2026-06-01, `ce36765`)** — Raus:
   der handgepatchte 2012er Fork (`js/fullcalendar/` samt Zeitzonen-Patches),
   `css/fullcalendar.css`, der `?fc6`-Rückfall, der FC1.5-Zweig in
   `createFullCalendar()` (jetzt lauter Wächter) und die fünf FC1.5-
