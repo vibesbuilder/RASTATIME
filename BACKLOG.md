@@ -1405,9 +1405,34 @@ LOCAL_MACHINE (4 Sprachen).  Vorbedingung für jede Netz-/FTP-Quelle.
   Freigabe müsste für das Computerkonto/Gast erreichbar sein oder das
   Dienstkonto von RASTATIME-APACHE umgestellt werden (Betriebsarbeit);
   gemappte Buchstaben (Z:) gehen prinzipiell nicht (Session-gebunden).
-- 💡 Aktives FTP-Polling durch RASTATIME (entfernter FTP-Server als
-  Quelle): neues Feature mit Zugangsdaten-Verwaltung, Polling-Task,
-  Fehlerbehandlung; ~1-2 Tage; nur bei Bedarf.
+- 💡 Aktives FTP-Polling durch RASTATIME: zum vollen Item aufgewertet,
+  siehe „Import from FTP Server" direkt darunter (2026-09-17).
+
+### 🟢 „Import from FTP Server“ als zweite Import-Quelle (evaluiert 2026-09-17, wartet auf Go)
+
+**Operator-Wunsch 2026-09-17:** zusätzlich zum Import-Ordner einen
+entfernten FTP-Server als Quelle, manuell aktivierbar/deaktivierbar.
+Klarstellung: genau das IST das FTP-Polling — FTP kennt kein Push,
+RASTATIME muss regelmäßig nachsehen und abholen.
+
+**Design (Evaluierung):** Abhol-Task im PHP-Task-Manager (5-min-Takt
+wie der Ordner-Scan + „Fetch now"), lädt per PHP-curl (FTP/FTPS) in den
+lokalen Import-Ordner herunter — ab dort übernimmt die bestehende Kette
+inkl. Ruhe-Prüfung, kein zweiter Import-Pfad.  Einstellungen in cc_pref
+(enabled, host, port, user, password, remote path, FTPS); UI-Sektion
+unter dem Import-Ordner.  Aufwand ~1 Tag inkl. Live-Test mit
+Wegwerf-FTP-Server (pyftpdlib aus der venv) und Handbuch ×4.
+
+**Klärfragen vor dem Go:** (a) nach Abholung entfernt löschen?
+(empfohlen: ja = Briefkasten-Semantik, braucht Löschrecht; sonst
+Merkliste nötig); (b) FTP oder FTPS — was kann der Ziel-Server?
+(Klartext-FTP überträgt das Passwort offen); (c) Zugangsdaten in
+cc_pref wie andere Dienst-Passwörter ok?; (d) 5-Minuten-Takt
+ausreichend?  Voraussetzung: Import-Ordner bleibt konfiguriert.
+
+**Alternative ohne Code** (Operator 2026-09-17 „eventuell später"):
+FTP-Server AUF der Studiomaschine mit Wurzel = Import-Ordner; braucht
+Erreichbarkeit von außen (Portfreigabe, Härtung).
 
 ### 🟢 Backup/Restore via UI (Settings-Submenü)
 
