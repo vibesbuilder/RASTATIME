@@ -306,43 +306,51 @@ sin esperar el poll de 60 s.
 
 ### Cómo se procesan los archivos
 
-> **Los archivos deben estar en reposo (desde el 17/09/2026).**  Un
-> archivo solo se importa cuando lleva 60 segundos sin modificarse.
-> Una copia lenta o una subida FTP es por tanto segura: el escáner lo
-> cuenta como «settling» en la línea de estado y lo recoge en una
-> pasada posterior.
+El escáner se ejecuta cada 5 minutos (e inmediatamente con **Scan
+Now**).  Para cada archivo situado directamente en la carpeta:
 
-Para cada nuevo archivo que el analyzer encuentra:
+1. **Los archivos no de audio se omiten** y se dejan en su sitio —
+   el escáner solo toma archivos de audio (`mp3`, `wav`, `m4a`,
+   `flac`, `ogg`, `oga`, `aac`, `opus`).  La línea de estado los
+   cuenta como «skipped».
+2. **Los archivos aún sin reposo esperan (desde el 17/09/2026).**
+   Un archivo modificado en los últimos 60 segundos puede estar
+   todavía escribiéndose (copia lenta, subida FTP); la línea de
+   estado lo cuenta como «settling» y una pasada posterior lo
+   recoge.
+3. Cada archivo de audio en reposo pasa al **circuito estándar de
+   subida**: se crea una entrada de biblioteca, el archivo se
+   **mueve** (no se copia) a la zona `organize` de la biblioteca, y
+   el analizador continúa — lectura de metadatos, comprobación de
+   reproducibilidad, lugar definitivo en la biblioteca.  Desde
+   entonces se comporta exactamente como un archivo subido por la
+   interfaz web.
+4. **Si la entrega falla, el archivo de origen se borra** — en el
+   primer intento y a propósito: un archivo permanentemente roto no
+   debe acumularse en la carpeta y reintentarse en cada pasada.
 
-1. El archivo se mueve (no se copia) a un área de staging
-   (`C:\rastatime\import\.staging\`).
-2. El analyzer ejecuta ffprobe + verificación de
-   reproducibilidad ffmpeg.
-3. En éxito, el archivo se mueve a
-   `C:\rastatime\media\<owner>\<year>\<month>\<filename>`.
-4. En fallo duro, el archivo se mueve a
-   `C:\rastatime\import\.failed\` con un archivo `.err`
-   al lado.
-5. En fallo suave, el archivo se importa con una insignia
-   de advertencia amarilla.
+La carpeta se vacía por tanto de archivos de audio tras cada pasada —
+movidos a la biblioteca si hay éxito, borrados si hay fallo.  Los
+archivos no de audio permanecen.
 
 ### Subcarpetas
 
-Las subcarpetas se escanean recursivamente. Los archivos
-en subcarpetas se importan, y el **nombre de la
-subcarpeta** se convierte en el campo de metadatos
-`album` de la pista importada si el propio tag ID3 album
-del archivo está vacío.
+Las subcarpetas se **ignoran** — el escáner solo mira los archivos
+situados directamente en la carpeta de importación.  Los archivos
+dentro de subcarpetas se quedan exactamente donde están.
 
 ### Propiedad
 
-Los archivos importados pertenecen al
-**propietario-importación-por-defecto** configurado.
+Con **Scan Now**, los archivos importados pertenecen al operador que
+pulsó el botón.  Los archivos recogidos por la pasada en segundo
+plano pertenecen a la primera cuenta de administrador.
 
-> **Cómo funciona bajo el capó.** El poller del Carpeta
-> de importación local es uno de los jobs en segundo
-> plano del servicio `RASTATIME-WORKER` (el
-> `LocalImportJob`). Vea ARCHITECTURE §16.
+> **Bajo el capó.**  El escáner es la `LocalImportScanTask` del
+> gestor de tareas del frontend PHP legacy: se ejecuta con las
+> peticiones web normales, como mucho cada 300 s, y actualiza las
+> claves `cc_pref` `local_import_last_run` y
+> `local_import_last_status` (la línea de estado de esta página).
+> Vea ARCHITECTURE §23.12.
 
 ---
 
@@ -450,10 +458,17 @@ Tres cosas a verificar:
 
 Orden de diagnóstico:
 1. La ruta de la carpeta es correcta y existe.
-2. El servicio `RASTATIME-ANALYZER` corre.
-3. El servicio `RASTATIME-WORKER` corre.
-4. Verifique **Último escaneo** — si muestra "N archivos
-   fallidos", mire en `.failed\`.
+2. El frontend web corre (`RASTATIME-APACHE`) — el escáner se
+   ejecuta con las peticiones web, así que **Último escaneo**
+   solo avanza mientras la interfaz ve tráfico.  **Scan Now**
+   fuerza una pasada.
+3. Un archivo modificado en los últimos 60 segundos cuenta como
+   «settling» — espere un minuto y escanee de nuevo.
+4. «failed N» en la línea de estado significa que la entrega
+   falló y el origen fue borrado (a propósito).  Pruebe el
+   archivo en otro reproductor y busque el motivo en
+   `logs\legacy.log`; el servicio `RASTATIME-ANALYZER` debe
+   correr para terminar la importación.
 
 ### "¿Por qué mover y no copiar en la Carpeta de importación local?"
 

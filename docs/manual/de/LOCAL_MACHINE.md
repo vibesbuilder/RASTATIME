@@ -367,67 +367,51 @@ Verzögerung zu importieren.
 
 ### Wie Dateien verarbeitet werden
 
-> **Dateien müssen zur Ruhe gekommen sein (seit 17.09.2026).**  Eine
-> Datei wird erst importiert, wenn sie 60 Sekunden lang nicht mehr
-> verändert wurde.  Eine langsame Kopie oder ein FTP-Upload ist damit
-> sicher: Der Scanner zählt sie in der Statuszeile als „settling" und
-> nimmt sie bei einem späteren Durchlauf mit.
+Der Scanner läuft alle 5 Minuten (und sofort bei **Scan Now**).  Für
+jede Datei, die direkt im Ordner liegt:
 
-Für jede neue Datei, die der Analyzer findet:
+1. **Nicht-Audio-Dateien werden übersprungen** und bleiben liegen —
+   der Scanner nimmt nur Audiodateien (`mp3`, `wav`, `m4a`, `flac`,
+   `ogg`, `oga`, `aac`, `opus`).  Die Statuszeile zählt sie als
+   „skipped".
+2. **Noch nicht zur Ruhe gekommene Dateien bleiben für später (seit
+   17.09.2026).**  Eine in den letzten 60 Sekunden veränderte Datei
+   wird womöglich noch geschrieben (langsame Kopie, FTP-Upload); die
+   Statuszeile zählt sie als „settling", ein späterer Durchlauf nimmt
+   sie mit.
+3. Jede ruhende Audiodatei geht an die **Standard-Upload-Pipeline**:
+   ein Bibliothekseintrag wird angelegt, die Datei wird in den
+   `organize`-Bereich der Bibliothek **verschoben** (nicht kopiert),
+   und der Analyzer übernimmt — Metadaten lesen, Abspielbarkeits-
+   Prüfung, endgültiger Platz in der Bibliothek.  Ab da verhält sie
+   sich genau wie eine über die Web-Oberfläche hochgeladene Datei.
+4. **Schlägt die Übergabe fehl, wird die Quelldatei gelöscht** —
+   beim ersten Versuch und mit Absicht: Eine dauerhaft kaputte Datei
+   darf sich nicht im Ordner stauen und bei jedem Scan erneut
+   versucht werden.
 
-1. Die Datei wird verschoben (nicht kopiert) in einen
-   Staging-Bereich (`C:\rastatime\import\.staging\`).
-2. Der Analyzer führt ffprobe (Metadaten) +
-   ffmpeg-Abspielbarkeits-Prüfung aus.
-3. Bei Erfolg wird die Datei verschoben nach
-   `C:\rastatime\media\<owner>\<year>\<month>\<filename>`,
-   und eine `cc_files`-Zeile wird eingefügt.
-4. Bei hartem Fehler wird die Datei verschoben nach
-   `C:\rastatime\import\.failed\` mit einer Sidecar-
-   `.err`-Textdatei, die den Fehler erklärt.
-5. Bei weichem Fehler (Dekoder-Warnungen, aber vollständige
-   Dekodierung) wird die Datei mit einem gelben
-   Warning-Badge importiert.
-
-Der eigene Import-Ordner des Operators wird nach jedem Poll
-leer gelassen — jede Datei ist entweder importiert oder
-nach `.failed` verschoben.
+Der Ordner leert sich also nach jedem Durchlauf von Audiodateien —
+bei Erfolg in die Bibliothek verschoben, bei Fehlschlag gelöscht.
+Nicht-Audio-Dateien bleiben.
 
 ### Unterordner
 
-Unterordner werden rekursiv gescannt. Dateien in
-Unterordnern werden importiert, und der **Unterordnername**
-wird zum `album`-Metadaten-Feld des importierten Tracks,
-wenn der eigene ID3-Album-Tag der Datei leer ist. Dies ist
-das übliche Operator-Muster:
-
-```
-   C:\rastatime\import\
-     ├─ 2026-05-21 Morgensendung/
-     │   ├─ intro-jingle.mp3       → album = "2026-05-21 Morgensendung"
-     │   ├─ track1.mp3              → album = ditto
-     │   └─ outro.mp3               → album = ditto
-     └─ stings/
-         ├─ news-bumper.mp3         → album = "stings"
-         └─ weather-bumper.mp3      → album = ditto
-```
+Unterordner werden **ignoriert** — der Scanner betrachtet nur
+Dateien direkt im Import-Ordner.  Dateien in Unterordnern bleiben
+unangetastet, wo sie sind.
 
 ### Besitz
 
-Importierte Dateien sind im Besitz des konfigurierten
-**Standard-Import-Besitzers** (gesetzt unter Allgemeine
-Einstellungen → Standard-Import-Besitzer). Standardmäßig
-`admin`. Um Importe einem bestimmten DJ zuzuweisen, ändern
-Sie den Besitzer vor dem Auslösen des Imports.
+Bei **Scan Now** gehören die importierten Dateien dem Operator, der
+den Knopf gedrückt hat.  Dateien aus dem Hintergrund-Scan gehören dem
+ersten Administrator-Konto.
 
-> **Wie es unter der Haube funktioniert.** Der lokale
-> Import-Ordner-Poller ist einer der Hintergrund-Jobs des
-> Dienstes `RASTATIME-WORKER` (der `LocalImportJob`). Er
-> läuft alle 60 s über das `BackgroundRunner`-Framework,
-> scannt das konfigurierte Verzeichnis, reiht Dateien in
-> die Analyzer-Pipeline ein und aktualisiert die
-> `cc_pref`-Schlüssel `local_import_last_run` und
-> `local_import_last_status`. Siehe ARCHITECTURE §16.
+> **Wie es unter der Haube funktioniert.**  Der Scanner ist der
+> `LocalImportScanTask` im Task-Manager des Legacy-PHP-Frontends: Er
+> reitet auf normalen Web-Anfragen mit, läuft höchstens alle 300 s
+> und aktualisiert die `cc_pref`-Schlüssel `local_import_last_run`
+> und `local_import_last_status` (die Statuszeile auf dieser Seite).
+> Siehe ARCHITECTURE §23.12.
 
 ---
 
@@ -544,14 +528,17 @@ Drei Dinge zu prüfen:
 Diagnose-Reihenfolge:
 
 1. Der Ordnerpfad ist korrekt und existiert.
-2. Der `RASTATIME-ANALYZER`-Dienst läuft.
-3. Der `RASTATIME-WORKER`-Dienst läuft (er besitzt den
-   Poller).
-4. Prüfen Sie **Zuletzt gescannt** — wenn es "N neue
-   Dateien gefunden, N fehlgeschlagen" zeigt, werden die
-   Dateien verarbeitet und scheitern an der
-   Abspielbarkeits-Prüfung. Schauen Sie in
-   `C:\rastatime\import\.failed\` für die `.err`-Dateien.
+2. Das Web-Frontend läuft (`RASTATIME-APACHE`) — der Scanner
+   reitet auf Web-Anfragen mit, **Zuletzt gescannt** rückt also
+   nur vor, solange die Oberfläche Verkehr sieht.  **Scan Now**
+   erzwingt einen Durchlauf.
+3. Eine in den letzten 60 Sekunden veränderte Datei zählt als
+   „settling" — eine Minute warten und erneut scannen.
+4. „failed N" in der Statuszeile heißt: die Übergabe schlug fehl
+   und die Quelle wurde gelöscht (Absicht).  Prüfen Sie die Datei
+   in einem anderen Player und suchen Sie den Grund in
+   `logs\legacy.log`; für den fertigen Import muss der Dienst
+   `RASTATIME-ANALYZER` laufen.
 
 ### "Warum verschieben und nicht kopieren im lokalen Import-Ordner?"
 

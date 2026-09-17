@@ -339,61 +339,48 @@ into the folder to import without delay.
 
 ### How files are processed
 
-> **Files must be at rest (since 2026-09-17).**  A file is only
-> imported once it has not been modified for 60 seconds.  A slow
-> copy or FTP upload is therefore safe: the scanner counts it as
-> "settling" in the status line and picks it up on a later scan.
+The scanner runs every 5 minutes (and immediately on **Scan Now**).
+For every file lying directly in the folder:
 
-For each new file the analyzer finds:
+1. **Non-audio files are skipped** and left in place — the scanner
+   only owns audio files (`mp3`, `wav`, `m4a`, `flac`, `ogg`, `oga`,
+   `aac`, `opus`).  The status line counts them as "skipped".
+2. **Files still settling are left for later (since 2026-09-17).**
+   A file modified within the last 60 seconds may still be being
+   written (slow copy, FTP upload); the status line counts it as
+   "settling" and a later scan picks it up.
+3. Every audio file at rest is handed to the **standard upload
+   pipeline**: a library row is created, the file is **moved** (not
+   copied) into the library's `organize` area, and the analyzer takes
+   it from there — metadata read, playability check, final place in
+   the library.  From then on it behaves exactly like a file uploaded
+   through the web UI.
+4. **If the hand-over fails, the source file is deleted** on that
+   first attempt.  This is deliberate: a permanently broken file must
+   not pile up in the folder and be retried on every scan.
 
-1. The file is moved (not copied) into a staging area
-   (`C:\rastatime\import\.staging\`).
-2. The analyzer runs ffprobe (metadata) + ffmpeg playability
-   check.
-3. On success, the file is moved to
-   `C:\rastatime\media\<owner>\<year>\<month>\<filename>` and
-   a `cc_files` row is inserted.
-4. On hard failure, the file is moved to
-   `C:\rastatime\import\.failed\` with a sidecar `.err`
-   text file explaining the error.
-5. On soft failure (decoder warnings but full decode), the
-   file is imported with a yellow warning badge.
-
-The operator's import folder itself is left empty after each
-poll — every file is either imported or moved to `.failed`.
+The folder therefore empties itself of audio files after each scan —
+moved into the library on success, deleted on failure.  Non-audio
+files stay.
 
 ### Subfolders
 
-Subfolders are scanned recursively. Files in subfolders are
-imported, and the **subfolder name** becomes the imported
-track's `album` metadata field if the file's own ID3 album
-tag is empty. This is the common operator pattern:
-
-```
-   C:\rastatime\import\
-     ├─ 2026-05-21 morning show/
-     │   ├─ intro-jingle.mp3       → album = "2026-05-21 morning show"
-     │   ├─ track1.mp3              → album = ditto
-     │   └─ outro.mp3               → album = ditto
-     └─ stings/
-         ├─ news-bumper.mp3         → album = "stings"
-         └─ weather-bumper.mp3      → album = ditto
-```
+Subfolders are **ignored** — the scanner only looks at files lying
+directly in the import folder.  Files inside subfolders are left
+exactly where they are.
 
 ### Ownership
 
-Imported files are owned by the configured **default import
-owner** (set under General Preferences → Default Import
-Owner). Defaults to `admin`. To attribute imports to a
-specific DJ, change the owner before triggering the import.
+With **Scan Now** the imported files belong to the operator who
+clicked the button.  Files picked up by the background scan belong to
+the first administrator account.
 
-> **How it works under the hood.** The Local Import Folder
-> poller is one of the `RASTATIME-WORKER` service's
-> background jobs (the `LocalImportJob`). It runs every
-> 60 s via the `BackgroundRunner` framework, scans the
-> configured directory, queues files into the analyzer
-> pipeline, and updates `cc_pref` keys `local_import_last_run`
-> and `local_import_last_status`. See ARCHITECTURE §16.
+> **How it works under the hood.**  The scanner is the
+> `LocalImportScanTask` in the legacy PHP frontend's task manager: it
+> piggy-backs on normal web requests, runs at most every 300 s, and
+> updates the `cc_pref` keys `local_import_last_run` and
+> `local_import_last_status` (the status line on this page).  See
+> ARCHITECTURE §23.12.
 
 ---
 
@@ -501,13 +488,16 @@ Three things to check:
 Diagnostic order:
 
 1. The folder path is correct and exists.
-2. The `RASTATIME-ANALYZER` service is running.
-3. The `RASTATIME-WORKER` service is running (it owns the
-   poller).
-4. Check **Last scanned** — if it shows "found N new files,
-   N failed", the files are being processed and failing the
-   playability check. Look in
-   `C:\rastatime\import\.failed\` for the `.err` files.
+2. The web frontend is running (`RASTATIME-APACHE`) — the scanner
+   piggy-backs on web requests, so **Last scanned** only advances
+   while the UI sees traffic.  **Scan Now** forces a run.
+3. A file modified within the last 60 seconds counts as
+   "settling" — wait a minute and scan again.
+4. "failed N" in the status line means the hand-over failed and
+   the source was deleted (by design).  Check the file in another
+   player and look into `logs\legacy.log` for the reason; the
+   `RASTATIME-ANALYZER` service must be running for the import to
+   finish.
 
 ### "Why move and not copy in the Local Import Folder?"
 

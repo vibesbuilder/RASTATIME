@@ -314,46 +314,52 @@ immédiat sans attendre le poll de 60 s.
 
 ### Comment les fichiers sont traités
 
-> **Les fichiers doivent être au repos (depuis le 17/09/2026).**  Un
-> fichier n'est importé qu'après 60 secondes sans modification.  Une
-> copie lente ou un envoi FTP est donc sans risque : le scanner le
-> compte comme « settling » dans la ligne d'état et le reprend lors
-> d'un passage ultérieur.
+Le scanner s'exécute toutes les 5 minutes (et immédiatement avec
+**Scan Now**).  Pour chaque fichier posé directement dans le dossier :
 
-Pour chaque nouveau fichier que l'analyzer trouve :
+1. **Les fichiers non audio sont ignorés** et laissés en place — le
+   scanner ne prend que les fichiers audio (`mp3`, `wav`, `m4a`,
+   `flac`, `ogg`, `oga`, `aac`, `opus`).  La ligne d'état les compte
+   comme « skipped ».
+2. **Les fichiers pas encore au repos attendent (depuis le
+   17/09/2026).**  Un fichier modifié dans les 60 dernières secondes
+   est peut-être encore en cours d'écriture (copie lente, envoi FTP) ;
+   la ligne d'état le compte comme « settling » et un passage
+   ultérieur le reprend.
+3. Chaque fichier audio au repos est confié au **circuit d'envoi
+   standard** : une entrée de bibliothèque est créée, le fichier est
+   **déplacé** (pas copié) vers la zone `organize` de la
+   bibliothèque, et l'analyseur prend le relais — lecture des
+   métadonnées, contrôle de lisibilité, place définitive dans la
+   bibliothèque.  Il se comporte ensuite exactement comme un fichier
+   téléversé par l'interface web.
+4. **Si la remise échoue, le fichier source est supprimé** — dès la
+   première tentative, et c'est voulu : un fichier durablement cassé
+   ne doit pas s'accumuler dans le dossier et être retenté à chaque
+   passage.
 
-1. Le fichier est déplacé (pas copié) dans une zone de
-   staging (`C:\rastatime\import\.staging\`).
-2. L'analyzer exécute ffprobe + vérification de
-   jouabilité ffmpeg.
-3. En cas de succès, le fichier est déplacé vers
-   `C:\rastatime\media\<owner>\<year>\<month>\<filename>`
-   et une ligne `cc_files` est insérée.
-4. En cas d'échec dur, le fichier est déplacé vers
-   `C:\rastatime\import\.failed\` avec un fichier
-   `.err` à côté.
-5. En cas d'échec mou, le fichier est importé avec un
-   badge d'avertissement jaune.
+Le dossier se vide donc de ses fichiers audio après chaque passage —
+déplacés dans la bibliothèque en cas de succès, supprimés en cas
+d'échec.  Les fichiers non audio restent.
 
 ### Sous-dossiers
 
-Les sous-dossiers sont scannés récursivement. Les
-fichiers dans des sous-dossiers sont importés, et le
-**nom du sous-dossier** devient le champ de métadonnées
-`album` de la piste importée si le propre tag album ID3
-du fichier est vide.
+Les sous-dossiers sont **ignorés** — le scanner ne regarde que les
+fichiers posés directement dans le dossier d'import.  Les fichiers
+dans les sous-dossiers restent exactement où ils sont.
 
 ### Propriété
 
-Les fichiers importés appartiennent au
-**propriétaire-d'import par défaut** configuré (défini
-sous Préférences générales → Propriétaire d'import par
-défaut). Par défaut `admin`.
+Avec **Scan Now**, les fichiers importés appartiennent à l'opérateur
+qui a cliqué sur le bouton.  Les fichiers pris par le scan d'arrière-
+plan appartiennent au premier compte administrateur.
 
-> **Comment ça marche sous le capot.** Le poller du
-> Dossier d'import local est l'un des jobs d'arrière-plan
-> du service `RASTATIME-WORKER` (le `LocalImportJob`).
-> Voir ARCHITECTURE §16.
+> **Sous le capot.**  Le scanner est la `LocalImportScanTask` du
+> gestionnaire de tâches du frontend PHP legacy : elle s'exécute à
+> l'occasion des requêtes web normales, au plus toutes les 300 s, et
+> met à jour les clés `cc_pref` `local_import_last_run` et
+> `local_import_last_status` (la ligne d'état de cette page).  Voir
+> ARCHITECTURE §23.12.
 
 ---
 
@@ -467,12 +473,17 @@ Trois choses à vérifier :
 Ordre de diagnostic :
 
 1. Le chemin du dossier est correct et existe.
-2. Le service `RASTATIME-ANALYZER` tourne.
-3. Le service `RASTATIME-WORKER` tourne (il possède le
-   poller).
-4. Vérifiez **Dernier scan** — s'il montre "N fichiers
-   échoués", regardez dans `.failed\` pour les fichiers
-   `.err`.
+2. Le frontend web tourne (`RASTATIME-APACHE`) — le scanner
+   s'exécute à l'occasion des requêtes web, **Dernier scan**
+   n'avance donc que si l'interface voit du trafic.  **Scan Now**
+   force un passage.
+3. Un fichier modifié dans les 60 dernières secondes compte comme
+   « settling » — attendez une minute et relancez.
+4. « failed N » dans la ligne d'état signifie que la remise a
+   échoué et que la source a été supprimée (voulu).  Testez le
+   fichier dans un autre lecteur et cherchez la raison dans
+   `logs\legacy.log` ; le service `RASTATIME-ANALYZER` doit
+   tourner pour finir l'import.
 
 ### "Pourquoi déplacer et pas copier dans le Dossier d'import local ?"
 
