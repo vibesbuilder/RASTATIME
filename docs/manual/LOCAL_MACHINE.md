@@ -263,7 +263,8 @@ and the third warning since 2026-09-07):
 - **Engine-down warning.** The banner shows *Liquidsoap is not
   running* or *Liquidsoap keeps restarting (crash loop)* when no
   engine process exists or a new one appears on every scan. Read
-  `liquidsoap.log` (usually the Main Output device), fix the cause,
+  the newest `logs/liquidsoap-stdout-*.log` slice (usually the
+  Main Output device), fix the cause,
   then restart the playout and then Liquidsoap.
 
 ---

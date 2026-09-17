@@ -226,8 +226,9 @@ Le log Liquidsoap capture chaque tentative de connexion
 Symptôme visible pour l'opérateur : l'émission joue du
 silence pendant toute sa durée. Aucun popup
 d'avertissement dans le dashboard ; consultez le log
-Liquidsoap (`C:/rastatime/logs/liquidsoap.log` sur
-Windows) si un webstream planifié est resté silencieux.
+Liquidsoap — depuis le 18/09/2026 la tranche la plus récente
+`C:/rastatime/logs/liquidsoap-stdout-*.log` — si un
+webstream planifié est resté silencieux.
 
 > **Conseil opérateur.** Un webstream qui "parfois ne
 > joue rien" signifie généralement que l'URL de la source

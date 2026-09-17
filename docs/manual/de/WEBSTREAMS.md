@@ -275,9 +275,9 @@ Verbindungsversuch:
 
 Operator-sichtbares Symptom: die Show spielt Stille für
 ihre volle Dauer. Keine Warnung im Dashboard-Popup; prüfen
-Sie den Liquidsoap-Log
-(`C:/rastatime/logs/liquidsoap.log` auf Windows), wenn ein
-geplanter Webstream still blieb.
+Sie den Liquidsoap-Log — seit dem 18.09.2026 die neueste
+`C:/rastatime/logs/liquidsoap-stdout-*.log`-Scheibe —, wenn
+ein geplanter Webstream still blieb.
 
 > **Operator-Tipp.** Ein Webstream, der "manchmal nichts
 > spielt", bedeutet normalerweise, dass sich die URL der

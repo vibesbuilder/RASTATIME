@@ -247,7 +247,8 @@ avertissements du tableau de bord le surveillent (depuis le
 - **Avertissement moteur arrêté.** La bannière affiche *Liquidsoap
   ne tourne pas* ou *Liquidsoap redémarre sans cesse (boucle de
   plantage)* lorsqu'aucun processus du moteur n'existe ou qu'un
-  nouveau apparaît à chaque analyse. Lisez `liquidsoap.log` (en
+  nouveau apparaît à chaque analyse. Lisez la tranche la plus récente
+  `logs/liquidsoap-stdout-*.log` (en
   général le périphérique Main Output), corrigez la cause, puis
   redémarrez la diffusion puis Liquidsoap.
 

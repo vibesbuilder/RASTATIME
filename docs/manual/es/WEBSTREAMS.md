@@ -185,7 +185,8 @@ fallido:
 Síntoma visible para el operador: el show reproduce
 silencio durante toda su duración. Sin popup de
 advertencia en el dashboard; revisa el log de Liquidsoap
-(`C:/rastatime/logs/liquidsoap.log` en Windows) si un
+— desde el 18/09/2026 la rebanada más reciente
+`C:/rastatime/logs/liquidsoap-stdout-*.log` — si un
 webstream planificado quedó en silencio.
 
 ---

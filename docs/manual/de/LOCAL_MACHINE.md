@@ -284,7 +284,8 @@ Sicherung und die dritte Warnung seit dem 2026-09-07):
 - **Engine-läuft-nicht-Warnung.** Das Banner zeigt *Liquidsoap läuft
   nicht* oder *Liquidsoap startet ständig neu (Absturzschleife)*,
   wenn kein Engine-Prozess existiert oder bei jedem Scan ein neuer
-  auftaucht. Lesen Sie `liquidsoap.log` (meist das Main-Output-
+  auftaucht. Lesen Sie die neueste
+  `logs/liquidsoap-stdout-*.log`-Scheibe (meist das Main-Output-
   Gerät), beheben Sie die Ursache und starten Sie dann das Playout
   und danach Liquidsoap neu.
 

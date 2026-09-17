@@ -888,8 +888,9 @@ class PlayoutScheduler:
         logger.error(
             "Nightly restart: Liquidsoap is DOWN again %.0f s after the restart "
             "- a crash loop (NSSM throttling)?  Most likely the Main Output "
-            "device: read liquidsoap.log, then restart PLAYOUT and LIQUIDSOAP "
-            "manually once the cause is fixed.", settle_seconds,
+            "device: read the newest logs/liquidsoap-stdout-*.log, then "
+            "restart PLAYOUT and LIQUIDSOAP manually once the cause is "
+            "fixed.", settle_seconds,
         )
         return False
 

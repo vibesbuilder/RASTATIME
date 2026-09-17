@@ -379,8 +379,9 @@ class PreflightChecker:
                     "pids": recent_pids,
                     "message": (
                         "Liquidsoap is not running (no liquidsoap.exe process).  If "
-                        "NSSM is throttling a crash loop, liquidsoap.log says why "
-                        "(Main Output device?).  Fix the cause, then restart PLAYOUT, "
+                        "NSSM is throttling a crash loop, the newest "
+                        "logs/liquidsoap-stdout-*.log says why (Main Output "
+                        "device?).  Fix the cause, then restart PLAYOUT, "
                         "then LIQUIDSOAP."
                     ),
                 },
@@ -400,8 +401,8 @@ class PreflightChecker:
                         f"Liquidsoap keeps restarting (PIDs "
                         f"{', '.join(str(p) for p in young_pids)} within the last "
                         "scans) - a crash loop, most likely the Main Output device.  "
-                        "Read liquidsoap.log, fix the cause, then restart PLAYOUT, "
-                        "then LIQUIDSOAP."
+                        "Read the newest logs/liquidsoap-stdout-*.log, fix the "
+                        "cause, then restart PLAYOUT, then LIQUIDSOAP."
                     ),
                 },
             }]

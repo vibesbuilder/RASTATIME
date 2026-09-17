@@ -284,6 +284,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Logging: 530-MB/Tag-Warnungsflut gestoppt, eine Log-Senke, nächtlicher
+  Log-Hausmeister (2026-09-18, Operator-Auftrag LOGGING)** — Befund der
+  Inventur: 2 GB im Log-Ordner, ~99 % Liquidsoap, doppelt geschrieben
+  (eigene Datei + NSSM-stdout).  Seit 16.09. flutete der 24/7-Recorder
+  beide Senken: `rec247_reopen()` läuft pro Frame und rief zweimal das
+  in Liquidsoap 2.4 deprecatete `gettimeofday()` auf — je Aufruf eine
+  WARNING-Zeile, 53 × 10-MB-Scheiben allein am 17.09.  Fixes: (1)
+  `gettimeofday()` → `time()` im Generator (Test angepasst, 81 grün);
+  (2) eine Senke — `settings.log.file.set(false)` im Template, stdout +
+  NSSM-Rotation (10 MB) bleibt; der Pfad bleibt gerendert, damit eine
+  Debug-Session den Schalter nur zurückdrehen muss; Operator-Hinweise
+  (Preflight, Scheduler, Handbuch LOCAL_MACHINE + WEBSTREAMS ×4) zeigen
+  auf die neueste stdout-Scheibe; (3) `scripts/log-janitor.ps1` +
+  Task RASTATIME-LogJanitor (täglich 03:50, SYSTEM): rotierte Scheiben
+  älter 7 Tage und unrotierte Singles über 50 MB wandern in
+  `logs/archive/logs-YYYY-MM.zip` (gesperrte Dateien werden still
+  übersprungen), Archive älter ~6 Monate gelöscht.  Sofort-Aufräumung:
+  103 Dateien / ~1 GB → 6,2-MB-Archiv (Faktor ~160 — die Flut ist
+  repetitiv).  Verbleibt: das gesperrte 1-GB-`liquidsoap.log`, das der
+  Hausmeister nach dem nächsten PLAYOUT/LIQUIDSOAP-Neustart einsammelt.
+  Restliche Schreiber sind Rundungsfehler (Apache access 0,3 MB/Tag,
+  legacy 1 MB gesamt, Postgres 3 MB gesamt, Icecast 0).  **Wirksam nach
+  PLAYOUT- und LIQUIDSOAP-Neustart** (regeneriert rastatime.liq); bis
+  dahin flutet die Warnung weiter.
+
 - **Audio-Vorschau: geplante Line-In-Slots erscheinen als Live-Eingang
   statt als kaputter Eintrag (2026-09-17, vermerkte Feature-Lücke,
   Operator-Go, `c65d0ca`)** — Der Popup-Player baute aus einem Line-In-Slot eine

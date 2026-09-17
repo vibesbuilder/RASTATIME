@@ -255,8 +255,9 @@ The Liquidsoap log captures every failed connection attempt:
 
 Operator-visible symptom: the show plays silence for its
 full duration. No warning popup in the dashboard; check the
-Liquidsoap log (`C:/rastatime/logs/liquidsoap.log` on Windows)
-if a scheduled webstream stayed silent.
+Liquidsoap log — since 2026-09-18 the newest
+`C:/rastatime/logs/liquidsoap-stdout-*.log` slice — if a
+scheduled webstream stayed silent.
 
 > **Operator tip.** A webstream that "sometimes plays
 > nothing" usually means the source's URL changed and the

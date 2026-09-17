@@ -241,7 +241,8 @@ el tercer aviso desde el 2026-09-07):
 - **Aviso de motor parado.** El banner muestra *Liquidsoap no está
   en marcha* o *Liquidsoap se reinicia sin parar (bucle de fallos)*
   cuando no existe ningún proceso del motor o aparece uno nuevo en
-  cada exploración. Lea `liquidsoap.log` (normalmente el dispositivo
+  cada exploración. Lea la rebanada más reciente
+  `logs/liquidsoap-stdout-*.log` (normalmente el dispositivo
   Main Output), corrija la causa y reinicie la emisión y después
   Liquidsoap.
 

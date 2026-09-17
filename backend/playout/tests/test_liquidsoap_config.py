@@ -413,7 +413,7 @@ def test_hourly_enabled_basic_shape():
     assert "reopen_when=rec247_reopen" in out
     # seg seeded with the CURRENT hour (not -1) so there is no spurious
     # reopen at boot that would split the first hour into two files.
-    assert "rec247_seg = ref(int(gettimeofday() / 3600.))" in out
+    assert "rec247_seg = ref(int(time() / 3600.))" in out
     # default 192 kbps MP3 (operator-chosen archive default).
     assert 'codec="libmp3lame"' in out
     assert 'b="192k"' in out

@@ -31,8 +31,12 @@ Environment variables (all optional — defaults match the standard install):
                                : where to render rastatime.liq
                                  (default C:/Tools/liquidsoap/rastatime.liq)
   RASTATIME_LIQUIDSOAP_LOG_PATH
-                               : where Liquidsoap writes its log
-                                 (default C:/rastatime/logs/liquidsoap.log)
+                               : the rendered log.file.path (default
+                                 C:/rastatime/logs/liquidsoap.log).  The
+                                 file sink is OFF since 2026-09-18 (stdout
+                                 + NSSM rotation is the one sink); the
+                                 path only matters when an operator flips
+                                 log.file.set(true) for a debug session.
   RASTATIME_LIQUIDSOAP_CROSSFADE_SECONDS
                                : FALLBACK crossfade duration for the .liq
                                  (since 2026-09-04 the primary source is

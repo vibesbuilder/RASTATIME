@@ -77,10 +77,15 @@ settings.server.telnet.port.set(${TELNET_PORT})
 # event-driven source switcher).  Only loopback clients exist.
 settings.server.timeout.set(-1.)
 
-# Log to file so the operator can debug after-the-fact.  Path matches
-# Pypo's logs/ convention.  Log level 3 (= info) for production; bump
-# to 4 (= debug) when chasing weird Icecast / harbor issues.
+# Single log sink (RASTATIME 2026-09-18): stdout only - NSSM rotates
+# it into 10-MB liquidsoap-stdout-<timestamp>.log slices and the
+# nightly log janitor archives them.  The file sink is OFF: it
+# duplicated every line into an unrotated liquidsoap.log (1 GB in
+# 23 days).  The path stays set so flipping file.set(true) is all a
+# debugging session needs.  Log level 3 (= info) for production;
+# bump to 4 (= debug) when chasing weird Icecast / harbor issues.
 settings.log.file.path.set("${LOG_FILE}")
+settings.log.file.set(false)
 settings.log.stdout.set(true)
 settings.log.level.set(3)
 
