@@ -2390,7 +2390,7 @@ MD5-Cache-Buster.
     an natives `<audio>` gebunden, ohne jQuery-UI/Bootstrap/Sprite). Radio-Page
     behielt ihr Skin bereits (Teil 3/3).
   - ✅ **Preview für „Scheduled Line-Input" — ehrliche Behandlung DONE
-    2026-09-17 (Operator-Go; Commit-Hash im CHANGELOG „Fixed")** — der
+    2026-09-17 (Operator-Go; `c65d0ca`)** — der
     Player kennt Typ 2 jetzt: Zeile „[live input]" (gedimmt), nichts wird
     geladen, Auto-Weiter überspringt sie (vorher kaputter null-Eintrag,
     der die Kette stoppte).  💡 **Echtes Reinhören** in den Eingang wäre

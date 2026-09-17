@@ -248,7 +248,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Audio-Vorschau: geplante Line-In-Slots erscheinen als Live-Eingang
   statt als kaputter Eintrag (2026-09-17, vermerkte Feature-Lücke,
-  Operator-Go)** — Der Popup-Player baute aus einem Line-In-Slot eine
+  Operator-Go, `c65d0ca`)** — Der Popup-Player baute aus einem Line-In-Slot eine
   Zeile mit leerer Quelle: Klick lud `null` ins Audio-Element, und die
   Auto-Weiter-Kette blieb an der Zeile hängen.  Jetzt trägt die Zeile
   die Markierung „[live input]" (gedimmt, kursiv), die Infozeile erklärt
