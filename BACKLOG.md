@@ -1413,7 +1413,7 @@ LOCAL_MACHINE (4 Sprachen).  Vorbedingung für jede Netz-/FTP-Quelle.
 **Umgesetzt 2026-09-17 (Operator-Go mit Antworten: löschen nach
 Abholung ja, FTP+SFTP — geliefert FTP/FTPS/SFTP via PHP-curl —,
 Zugangsdaten in cc_pref, 5-min-Takt, Import-Ordner-Abhängigkeit in UI +
-Handbuch; Commit-Hash im CHANGELOG „Added“).**  Entfernte Ruhe-Regel
+Handbuch; `75d52f8`; Details im CHANGELOG „Added“).**  Entfernte Ruhe-Regel
 nach Replikat-Befund (wachsende Datei schlüpfte durch die reine
 Nach-Download-Probe): zwei größenstabile Sichtungen ≥ 60 s.  Live-Test:
 pyftpdlib (Abholen+Löschen+wachsende Datei bleibt) + SFTP-Listing gegen

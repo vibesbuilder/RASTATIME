@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Import vom FTP-Server — zweite Import-Quelle neben dem Import-Ordner
-  (2026-09-17, Operator-Go)** — Neue Sektion Settings → Local Machine →
+  (2026-09-17, Operator-Go, `75d52f8`)** — Neue Sektion Settings → Local Machine →
   „Import from FTP Server": `FtpImportScanTask` holt alle 5 Minuten (oder
   per „Fetch now") Audiodateien per PHP-curl von einem FTP-, FTPS-
   (explizites TLS) oder SFTP-Server in den lokalen Import-Ordner — ab dort
