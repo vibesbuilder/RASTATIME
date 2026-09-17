@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Settings → Backup: Medienbibliothek als inkrementeller Spiegel
-  (2026-09-17, Arbeitsreihenfolge Punkt 10 Stufe 2, Operator-Go)** — Neue
+  (2026-09-17, Arbeitsreihenfolge Punkt 10 Stufe 2, Operator-Go, `72e13c7`)** — Neue
   Option „Include media library" (cc_pref `local_backup_include_media`):
   jeder Lauf spiegelt die Bibliothek zusätzlich per robocopy /MIR nach
   `<Backup-Ordner>/media` — inkrementell (nur Geändertes kopiert,
