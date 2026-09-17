@@ -15,15 +15,11 @@ class IndexController extends Zend_Controller_Action
         }
 
         $this->view->headTitle(Application_Model_Preference::GetHeadTitle());
-        // RASTATIME 2026-06-01 (JS-modernization stage 2): jQuery 1.8 vs 3.7 +
-        // migrate behind the ?jq3 flag (radio page loads no jQuery-UI JS).
-        if (PageLayoutInitPlugin::rtUseJquery3()) {
-            $this->view->headScript()->appendFile(Assets::url('js/libs/jquery-3.7.1.min.js'), 'text/javascript')
-                ->appendFile(Assets::url('js/libs/jquery-migrate-3.5.2.min.js'), 'text/javascript')
-                ->appendFile(Assets::url('js/libs/jquery-browser-shim.js'), 'text/javascript');
-        } else {
-            $this->view->headScript()->appendFile(Assets::url('js/libs/jquery-1.8.3.min.js'), 'text/javascript');
-        }
+        // RASTATIME 2026-09-17 (JS-modernization 5b): jQuery 3.7.1 is the
+        // only path; migrate + the ?jq3 flag are retired (radio page loads
+        // no jQuery-UI JS).
+        $this->view->headScript()->appendFile(Assets::url('js/libs/jquery-3.7.1.min.js'), 'text/javascript')
+            ->appendFile(Assets::url('js/libs/jquery-browser-shim.js'), 'text/javascript');
 
         $this->view->headScript()->appendFile(Assets::url('js/i18n/jquery.i18n.js'), 'text/javascript');
         $this->view->headScript()->appendFile($baseUrl . 'locale/general-translation-table', 'text/javascript');
@@ -39,7 +35,7 @@ class IndexController extends Zend_Controller_Action
         $this->view->headLink()->appendStylesheet(Assets::url('css/bootstrap.css'));
 
         // player control buttons (jQuery-UI corner/icon classes used in the GUI)
-        $this->view->headLink()->appendStylesheet(Assets::url(PageLayoutInitPlugin::rtJqueryUiThemeCss()));
+        $this->view->headLink()->appendStylesheet(Assets::url('css/redmond-1.13/jquery-ui.min.css'));
 
         $this->_helper->layout->setLayout('radio-page');
 

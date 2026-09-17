@@ -2570,7 +2570,9 @@ $(document).ready(function () {
   });
 
   // image upload by dragging onto the artwork container
-  $.event.props.push("dataTransfer");
+  // RASTATIME 2026-09-17 - jQuery 3 removed $.event.props (the push threw
+  // once jquery-migrate is gone and broke this whole file); the drop
+  // handler reads event.originalEvent.dataTransfer instead.
   (function () {
     var s;
     var Artwork = {
@@ -2601,7 +2603,7 @@ $(document).ready(function () {
           event.preventDefault();
           event.stopPropagation();
           var id = $(this).attr("data-id");
-          Artwork.handleDrop(event.dataTransfer.files, id);
+          Artwork.handleDrop(event.originalEvent.dataTransfer.files, id);
         });
       },
       showDroppableArea: function () {

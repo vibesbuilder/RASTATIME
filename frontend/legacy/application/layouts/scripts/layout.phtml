@@ -9,7 +9,9 @@
     <?php $baseUrl = Config::getBasePath(); ?>
 </head>
 
-<body class="<?php echo PageLayoutInitPlugin::rtUseJquery3() ? 'rt-jq3' : '' ?>">
+<?php /* RASTATIME 2026-09-17 (5b): the rt-jq3 marker is permanent -
+   CSS and the table code branch on it since the jQuery-3 migration. */ ?>
+<body class="rt-jq3">
     <div id="Panel" class="sticky">
         <?php
         /*

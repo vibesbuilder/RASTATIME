@@ -24,7 +24,7 @@ class UserController extends Zend_Controller_Action
         Zend_Layout::getMvcInstance()->assign('parent_page', 'Settings');
 
         foreach ([
-            'js/datatables/js/jquery.dataTables.js',
+            'js/datatables-1.13/js/jquery.dataTables.min.js',
             'js/datatables/plugin/dataTables.pluginAPI.js',
             'js/airtime/user/user.js',
         ] as $file) {

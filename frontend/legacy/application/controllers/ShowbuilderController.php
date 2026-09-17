@@ -23,7 +23,7 @@ class ShowbuilderController extends Zend_Controller_Action
 
         $this->view->headScript()->appendScript("localStorage.setItem( 'user-type', '{$userType}' );");
 
-        $this->view->headLink()->appendStylesheet(Assets::url(PageLayoutInitPlugin::rtJqueryUiThemeCss()));
+        $this->view->headLink()->appendStylesheet(Assets::url('css/redmond-1.13/jquery-ui.min.css'));
 
         $this->view->headScript()->appendFile(Assets::url('js/contextmenu/jquery.contextMenu.js'), 'text/javascript');
 

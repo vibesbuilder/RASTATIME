@@ -164,7 +164,7 @@ class PageLayoutInitPlugin extends Zend_Controller_Plugin_Abstract
         $faviconMime = $customFavicon !== null ? Application_Model_Preference::GetStationFaviconMime() : 'image/x-icon';
         $view->headLink(['rel' => 'icon', 'href' => $faviconHref, 'type' => $faviconMime], 'PREPEND')
             ->appendStylesheet(Assets::url('css/bootstrap.css'))
-            ->appendStylesheet(Assets::url(self::rtJqueryUiThemeCss()))
+            ->appendStylesheet(Assets::url('css/redmond-1.13/jquery-ui.min.css'))
             ->appendStylesheet(Assets::url('css/pro_dropdown_3.css'))
             // RASTATIME 2026-06-01 (JS-modernization stage 1): rtTooltip (Floating
             // UI) styling replaces the removed qtip2 CSS.
@@ -173,67 +173,12 @@ class PageLayoutInitPlugin extends Zend_Controller_Plugin_Abstract
             ->appendStylesheet(Assets::url('css/masterpanel.css'));
     }
 
-    /**
-     * RASTATIME 2026-06-01 (JS-modernization stage 2): jQuery 1.8 -> 3.7
-     * migration flag.  When on, jQuery 3.7 + jquery-migrate + jQuery UI 1.13 are
-     * loaded instead of jQuery 1.8 + UI 1.8.  ?jq3=1 turns it on, ?jq3=0 off,
-     * each persisted in a session cookie so page navigation keeps the choice.
-     *
-     * RASTATIME 2026-06-05 (stage 5a): the default flipped to ON -- with no
-     * flag/cookie, jQuery 3.7 + DataTables 1.13 now load by default after the
-     * app-wide verification sweep (stage 4) passed.  ?jq3=0 is the instant
-     * per-session rollback (cookie-persisted); reverting this commit is the
-     * global rollback.  jquery-migrate stays as the safety net until the
-     * JQMIGRATE console warnings are confirmed clean app-wide (stage 5b).
-     * Shared by the main app layout (here) and the radio page (IndexController).
-     */
-    public static function rtUseJquery3()
-    {
-        if (isset($_GET['jq3'])) {
-            $on = ($_GET['jq3'] === '1');
-            if (!headers_sent()) {
-                setcookie('rt_jq3', $on ? '1' : '0', 0, '/');
-            }
-            $_COOKIE['rt_jq3'] = $on ? '1' : '0';
-
-            return $on;
-        }
-        if (isset($_COOKIE['rt_jq3'])) {
-            return $_COOKIE['rt_jq3'] === '1';
-        }
-
-        // RASTATIME 2026-06-05 (stage 5a): default flipped to ON (was `false`).
-        return true;
-    }
-
-    /**
-     * RASTATIME 2026-06-01 (JS-modernization stage 2): jQuery-UI theme CSS that
-     * matches the active jQuery-UI version.  jQuery UI 1.13's widget markup
-     * differs from 1.8, so the old redmond 1.8.8 theme renders 1.13 dialogs
-     * broken (transparent overlay, missing chrome).  redmond-1.13 is the same
-     * redmond palette regenerated for 1.13.
-     */
-    public static function rtJqueryUiThemeCss()
-    {
-        return self::rtUseJquery3()
-            ? 'css/redmond-1.13/jquery-ui.min.css'
-            : 'css/redmond/jquery-ui-1.8.8.custom.css';
-    }
-
-    /**
-     * RASTATIME 2026-06-01 (JS-modernization stage 2): DataTables core path.
-     * DataTables 1.9.3 is not jQuery-3 compatible; 1.13 is, and keeps the legacy
-     * Hungarian options + server-side format, so the init code and the backend
-     * response are unchanged.  Follows the rtUseJquery3() flag, so since the
-     * stage-5a flip (2026-06-05) 1.13 is the default and 1.9 the ?jq3=0 rollback.
-     * (DataTables 2.0 is a separate future step — see BACKLOG.)
-     */
-    public static function rtDataTablesCore()
-    {
-        return self::rtUseJquery3()
-            ? 'js/datatables-1.13/js/jquery.dataTables.min.js'
-            : 'js/datatables/js/jquery.dataTables.js';
-    }
+    // RASTATIME 2026-09-17 (JS-modernization 5b) - the ?jq3 migration
+    // flag retired 2026-09-17 after the operator's maturity signal
+    // (default since 2026-06-05, three quiet months): jQuery 3.7.1 +
+    // UI 1.13.3 + DataTables 1.13 + redmond-1.13 are the only path,
+    // jquery-migrate and the legacy assets are gone.  The rt-jq3 body
+    // marker stays hardcoded - CSS and table code branch on it.
 
     protected function _initHeadScript()
     {
@@ -248,15 +193,9 @@ class PageLayoutInitPlugin extends Zend_Controller_Plugin_Abstract
         // RASTATIME 2026-06-01 (JS-modernization stage 2): jQuery 1.8 (+ UI 1.8)
         // vs jQuery 3.7 + migrate + UI 1.13, behind the ?jq3 flag.
         $hs = $view->headScript();
-        if (self::rtUseJquery3()) {
-            $hs->appendFile(Assets::url('js/libs/jquery-3.7.1.min.js'), 'text/javascript')
-                ->appendFile(Assets::url('js/libs/jquery-migrate-3.5.2.min.js'), 'text/javascript')
-                ->appendFile(Assets::url('js/libs/jquery-browser-shim.js'), 'text/javascript')
-                ->appendFile(Assets::url('js/libs/jquery-ui-1.13.3.min.js'), 'text/javascript');
-        } else {
-            $hs->appendFile(Assets::url('js/libs/jquery-1.8.3.min.js'), 'text/javascript')
-                ->appendFile(Assets::url('js/libs/jquery-ui-1.8.24.min.js'), 'text/javascript');
-        }
+        $hs->appendFile(Assets::url('js/libs/jquery-3.7.1.min.js'), 'text/javascript')
+            ->appendFile(Assets::url('js/libs/jquery-browser-shim.js'), 'text/javascript')
+            ->appendFile(Assets::url('js/libs/jquery-ui-1.13.3.min.js'), 'text/javascript');
         $hs
             // RASTATIME 2026-06-01 (JS-modernization stage 1): AngularJS 1.4.5
             // (EOL 2022) has been fully removed — the Podcast / Publish views

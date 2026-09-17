@@ -14,7 +14,7 @@ class PluploadController extends Zend_Controller_Action
     {
         $locale = Application_Model_Preference::GetLocale();
 
-        $this->view->headScript()->appendFile(Assets::url('js/datatables/js/jquery.dataTables.js'), 'text/javascript');
+        $this->view->headScript()->appendFile(Assets::url('js/datatables-1.13/js/jquery.dataTables.min.js'), 'text/javascript');
         $this->view->headScript()->appendFile(Assets::url('js/plupload/plupload.full.min.js'), 'text/javascript');
         $this->view->headScript()->appendFile(Assets::url('js/plupload/jquery.plupload.queue.min.js'), 'text/javascript');
         // RASTATIME 2026-08-30: dropzone.min.js must load BEFORE
