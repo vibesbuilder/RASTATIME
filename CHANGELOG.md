@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Podcast-Episoden landen in einem Ordner pro Podcast (2026-09-17,
+  Operator-Go)** — Downloads schrieben flach nach `imported/`; jetzt
+  `imported/<Podcast-Name>/<Datei>` (Name Windows-sicher gesäubert:
+  verbotene Zeichen → Leerzeichen, Länge gedeckelt, Rückfall „Podcast").
+  Gilt für neue Downloads; Bestandsdateien bleiben flach (Nachzug auf
+  Wunsch).  Umbenannter Podcast = neuer Ordner für künftige Episoden.
+  Tests +1 (Sanitizer), bestehende Download-Tests angepasst.  Handbuch
+  LIBRARY §2.3 EN/DE/FR/ES (dabei die veraltete Worker-PodcastFetchJob-
+  Notiz korrigiert — der Download läuft synchron in der API).  Aktiv nach
+  RASTATIME-API-Neustart.
+
 - **Settings → Backup: automatische Sicherungen + Restore-Hinweis
   (2026-09-17, Arbeitsreihenfolge Punkt 10 Stufe 3, Operator-Go — Punkt 10
   damit komplett, `a522ede`)** — Neue Sektion „Automatic backups": Häufigkeit alle

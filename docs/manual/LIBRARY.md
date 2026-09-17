@@ -126,11 +126,15 @@ optionally a default track type, an auto-expiry policy
 downloaded by the worker job runner and imported as tracks
 exactly like a manual upload.
 
-> **How it works under the hood.** Podcast fetching used to
-> rely on Celery; on RASTATIME (Windows) it runs in the
-> `RASTATIME-WORKER` service's `PodcastFetchJob`, polled at
-> the configured interval (default 30 min). See
-> ARCHITECTURE §16 for the new threading-based runner.
+> **Episode files (since 2026-09-17)** land in one folder per
+> podcast inside the media library: `imported/<podcast name>/`.
+> Renaming a podcast starts a new folder for future episodes;
+> existing files stay where they are.
+>
+> **How it works under the hood.** Podcast fetching used to rely
+> on Celery; on RASTATIME (Windows) the download runs
+> synchronously in the API (triggered from the web UI or the
+> feed check) and writes the file plus its library row directly.
 
 ### Editing track metadata
 

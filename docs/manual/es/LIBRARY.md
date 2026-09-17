@@ -93,9 +93,15 @@ defecto, una política de auto-expiración.
 
 > **Cómo funciona bajo el capó.** La obtención de podcasts
 > dependía antes de Celery; en RASTATIME (Windows) corre
-> en el `PodcastFetchJob` del servicio
-> `RASTATIME-WORKER`, sondeado al intervalo configurado
-> (por defecto 30 min). Vea ARCHITECTURE §16.
+> de forma síncrona en la API (disparada desde la interfaz web
+> o la comprobación del feed), que escribe directamente el
+> archivo y su entrada de biblioteca.
+>
+> **Los archivos de episodios (desde el 17/09/2026)** llegan a
+> una carpeta por podcast dentro de la biblioteca:
+> `imported/<nombre del podcast>/`.  Renombrar un podcast abre
+> una carpeta nueva para episodios futuros; los archivos
+> existentes se quedan donde están.
 
 ### Editar metadatos de pista
 

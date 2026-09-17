@@ -139,10 +139,14 @@ importiert.
 
 > **Wie es unter der Haube funktioniert.** Podcast-Fetching
 > basierte früher auf Celery; auf RASTATIME (Windows) läuft
-> es im `PodcastFetchJob` des Dienstes `RASTATIME-WORKER`,
-> der im konfigurierten Intervall (standardmäßig 30 Min)
-> abgefragt wird. Siehe ARCHITECTURE §16 für den neuen
-> Threading-basierten Runner.
+> die Episode synchron in der API (ausgelöst aus der
+> Web-Oberfläche oder der Feed-Prüfung), die Datei und ihren
+> Bibliothekseintrag direkt schreibt.
+>
+> **Episoden-Dateien (seit 17.09.2026)** landen in einem Ordner
+> pro Podcast innerhalb der Bibliothek: `imported/<Podcast-Name>/`.
+> Wird ein Podcast umbenannt, beginnt für künftige Episoden ein
+> neuer Ordner; vorhandene Dateien bleiben, wo sie sind.
 
 ### Track-Metadaten bearbeiten
 

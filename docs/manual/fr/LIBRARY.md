@@ -140,10 +140,16 @@ comme pistes exactement comme un téléversement manuel.
 
 > **Comment ça marche sous le capot.** La récupération de
 > podcast reposait avant sur Celery ; sur RASTATIME
-> (Windows) elle tourne dans le `PodcastFetchJob` du
-> service `RASTATIME-WORKER`, interrogé à l'intervalle
-> configuré (par défaut 30 min). Voir ARCHITECTURE §16
-> pour le nouveau runner basé sur threading.
+> (Windows) le téléchargement s'exécute de manière synchrone
+> dans l'API (déclenché depuis l'interface web ou la
+> vérification du flux) et écrit directement le fichier et son
+> entrée de bibliothèque.
+>
+> **Les fichiers d'épisodes (depuis le 17/09/2026)** arrivent
+> dans un dossier par podcast au sein de la médiathèque :
+> `imported/<nom du podcast>/`.  Renommer un podcast ouvre un
+> nouveau dossier pour les épisodes futurs ; les fichiers
+> existants restent en place.
 
 ### Modifier les métadonnées de piste
 

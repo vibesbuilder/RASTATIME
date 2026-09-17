@@ -77,6 +77,21 @@ def _get_mime(tags: Any, suffix: str) -> str:
     return ext_map.get(suffix.lower(), "audio/mpeg")
 
 
+def _podcast_folder(podcast_name: str) -> str:
+    """
+    RASTATIME 2026-09-17 (operator go) - episodes land in one folder per
+    podcast under imported/.  Windows-safe: forbidden characters and
+    control chars become spaces, whitespace collapses, trailing dots and
+    spaces are stripped (NTFS refuses them), length capped.  An empty
+    or unusable name falls back to "Podcast".
+    """
+    cleaned = "".join(
+        " " if (c in r'\/:*?"<>|' or ord(c) < 32) else c for c in podcast_name or ""
+    )
+    cleaned = " ".join(cleaned.split())[:80].rstrip(". ")
+    return cleaned or "Podcast"
+
+
 def _safe_filename(episode_id: int, original: str) -> str:
     """
     Build a storage filename unique per episode and safe for most filesystems.
@@ -165,9 +180,12 @@ def download_episode(
         # which silently broke every non-elevated media backup.  Born in
         # import_dir, the file inherits the media-library ACL from creation.
         # ------------------------------------------------------------------
-        # RASTATIME 2026-09-16 - no owner-id level: episodes land directly
-        # under <root>/imported/ like the library's other podcast files.
-        import_dir = Path(storage_path) / "imported"
+        # RASTATIME 2026-09-17 (operator go) - one folder per podcast under
+        # <root>/imported/, named after the (sanitized) podcast title.  A
+        # renamed podcast gets a new folder for FUTURE episodes; existing
+        # files stay where they are.  (2026-09-16: no owner-id level.)
+        podcast_folder = _podcast_folder(podcast_name)
+        import_dir = Path(storage_path) / "imported" / podcast_folder
         import_dir.mkdir(parents=True, exist_ok=True)
 
         try:
@@ -261,7 +279,7 @@ def download_episode(
         # filepath stored in cc_files is relative to storage_path: forward
         # slashes, no leading slash (RASTATIME 2026-09-16 - the same form the
         # analyzer writes; PHP, the API and the playout join it with the root).
-        relative_filepath = f"imported/{dest_filename}"
+        relative_filepath = f"imported/{podcast_folder}/{dest_filename}"
 
         # ------------------------------------------------------------------
         # Step 5: Create a cc_files record via Django ORM

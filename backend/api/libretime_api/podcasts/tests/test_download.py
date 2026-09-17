@@ -73,7 +73,8 @@ def test_download_writes_temp_file_inside_import_dir(
     )
 
     assert result["status"] == 1, result.get("error")
-    import_dir = tmp_path / "imported"
+    # RASTATIME 2026-09-17 - one folder per podcast under imported/.
+    import_dir = tmp_path / "imported" / "Test Podcast"
 
     # The regression guard: the temp file was born in the destination
     # directory (ACL inheritance), not in the system temp directory.
@@ -90,7 +91,7 @@ def test_download_writes_temp_file_inside_import_dir(
     from libretime_api.storage.models import File
 
     db_file = File.objects.get(id=result["fileid"])
-    assert db_file.filepath == "imported/podcast_ep99_episode.mp3"
+    assert db_file.filepath == "imported/Test Podcast/podcast_ep99_episode.mp3"
 
 
 def test_download_failure_leaves_no_file(db, monkeypatch, tmp_path):
@@ -111,5 +112,21 @@ def test_download_failure_leaves_no_file(db, monkeypatch, tmp_path):
 
     assert result["status"] == 0
     assert "download failed" in result["error"]
-    import_dir = tmp_path / "imported"
+    import_dir = tmp_path / "imported" / "Test Podcast"
     assert not import_dir.exists() or list(import_dir.iterdir()) == []
+
+
+# ---- per-podcast folder names (RASTATIME 2026-09-17) ------------------------
+
+
+def test_podcast_folder_is_windows_safe():
+    from libretime_api.podcasts.download import _podcast_folder
+
+    assert _podcast_folder("Reading Hour") == "Reading Hour"
+    assert _podcast_folder('Radio: "Nacht" <live>?') == "Radio Nacht live"
+    assert _podcast_folder(r"a/b\c|d") == "a b c d"
+    assert _podcast_folder("  spaced   out  ") == "spaced out"
+    assert _podcast_folder("Dots and spaces . . ") == "Dots and spaces"
+    assert _podcast_folder("") == "Podcast"
+    assert _podcast_folder("???") == "Podcast"
+    assert len(_podcast_folder("x" * 300)) <= 80
