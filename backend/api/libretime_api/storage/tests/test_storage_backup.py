@@ -28,7 +28,7 @@ def _fresh_caches(db):
     # committed folder/state of a job test would leak into the next test.
     def wipe():
         sr.invalidate()
-        Preference.site.filter(key__in=[sb.BACKUP_FOLDER_KEY, sb.BACKUP_STATE_KEY, sb.INCLUDE_MEDIA_KEY]).delete()
+        Preference.site.filter(key__in=[sb.BACKUP_FOLDER_KEY, sb.BACKUP_STATE_KEY, sb.INCLUDE_MEDIA_KEY, sb.AUTO_KEY]).delete()
 
     wipe()
     yield
@@ -291,3 +291,111 @@ def test_endpoints_roundtrip(api_client, target, fake_config, fake_pg_dump):
 
     missing = api_client.get(reverse("storage-backup-download"), {"name": "rastatime-backup-2000-01-01T0000.zip"})
     assert missing.status_code == 404
+
+
+# ---- stage 3: automatic backups (RASTATIME 2026-09-17) ----------------------
+
+
+@pytest.mark.django_db
+def test_auto_config_roundtrip_and_defaults():
+    cfg = sb.get_auto_config()
+    assert cfg == {"enabled": False, "every_days": 1, "retention_days": 30}
+    sb.set_auto_config({"enabled": True, "every_days": 0, "retention_days": -5})
+    cfg = sb.get_auto_config()
+    assert cfg["enabled"] is True
+    assert cfg["every_days"] == 1          # clamped
+    assert cfg["retention_days"] == 0      # clamped
+
+
+@pytest.mark.django_db
+@pytest.mark.skipif(not WINDOWS, reason="windows paths")
+def test_auto_due_logic(target):
+    sb.set_backup_folder(target)
+    os.makedirs(target, exist_ok=True)
+    sb.set_auto_config({"enabled": False, "every_days": 1, "retention_days": 0})
+    assert sb.auto_backup_due()[0] is False            # disabled
+    sb.set_auto_config({"enabled": True, "every_days": 1, "retention_days": 0})
+    assert sb.auto_backup_due() == (True, "no backup yet")
+    fresh = os.path.join(target, "rastatime-backup-2026-09-17T1200.zip")
+    open(fresh, "wb").write(b"zip")
+    assert sb.auto_backup_due()[0] is False            # just created
+    two_days_ago = time.time() - 2 * 86400
+    os.utime(fresh, (two_days_ago, two_days_ago))
+    assert sb.auto_backup_due()[0] is True
+
+
+@pytest.mark.django_db
+@pytest.mark.skipif(not WINDOWS, reason="windows paths")
+def test_retention_prunes_old_zips_but_keeps_the_newest(target):
+    sb.set_backup_folder(target)
+    os.makedirs(target, exist_ok=True)
+    old_days = time.time() - 40 * 86400
+    for name in ("rastatime-backup-2026-08-01T0300.zip",
+                 "rastatime-backup-2026-08-02T0300.zip"):
+        path = os.path.join(target, name)
+        open(path, "wb").write(b"zip")
+        os.utime(path, (old_days, old_days))
+    newest = os.path.join(target, "rastatime-backup-2026-09-17T0300.zip")
+    open(newest, "wb").write(b"zip")
+    deleted = sb.prune_old_backups(target, 30)
+    assert sorted(deleted) == ["rastatime-backup-2026-08-01T0300.zip",
+                               "rastatime-backup-2026-08-02T0300.zip"]
+    assert [e["name"] for e in sb.list_backups(target)] == ["rastatime-backup-2026-09-17T0300.zip"]
+    # retention 0 = keep everything; the newest always survives even when old
+    os.utime(newest, (old_days, old_days))
+    assert sb.prune_old_backups(target, 0) == []
+    assert sb.prune_old_backups(target, 30) == []
+
+
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.skipif(not WINDOWS, reason="windows paths")
+def test_backup_auto_command_runs_when_due_and_prunes(target, fake_config, fake_pg_dump):
+    from io import StringIO
+
+    from django.core.management import call_command
+
+    sb.set_backup_folder(target)
+    os.makedirs(target, exist_ok=True)
+    sb.set_auto_config({"enabled": True, "every_days": 1, "retention_days": 30})
+    stale = os.path.join(target, "rastatime-backup-2026-08-01T0300.zip")
+    open(stale, "wb").write(b"zip")
+    old_days = time.time() - 40 * 86400
+    os.utime(stale, (old_days, old_days))
+
+    out = StringIO()
+    call_command("backup_auto", stdout=out)
+    text = out.getvalue()
+    assert "backup done" in text
+    assert "retention: deleted rastatime-backup-2026-08-01T0300.zip" in text
+    names = [e["name"] for e in sb.list_backups(target)]
+    assert len(names) == 1 and names[0] != "rastatime-backup-2026-08-01T0300.zip"
+
+    out = StringIO()
+    call_command("backup_auto", stdout=out)
+    assert "nothing to do" in out.getvalue()           # fresh backup exists
+
+
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.skipif(not WINDOWS, reason="windows paths")
+def test_backup_auto_command_reports_failure(target, fake_config, monkeypatch):
+    from django.core.management import call_command
+
+    argv = [sys.executable, "-c", "import sys; sys.stderr.write('kaput'); sys.exit(1)"]
+    monkeypatch.setattr(sb, "_pg_dump_command", lambda: (argv, os.environ.copy()))
+    sb.set_backup_folder(target)
+    sb.set_auto_config({"enabled": True, "every_days": 1, "retention_days": 0})
+    with pytest.raises(SystemExit):
+        call_command("backup_auto")
+
+
+@pytest.mark.django_db
+@pytest.mark.skipif(not WINDOWS, reason="windows paths")
+def test_auto_endpoint_saves_and_reports(api_client, target):
+    saved = api_client.post(reverse("storage-backup-auto"),
+                            {"enabled": True, "every_days": 7, "retention_days": 60},
+                            format="json")
+    assert saved.status_code == 200
+    assert saved.json()["auto"] == {"enabled": True, "every_days": 7, "retention_days": 60}
+    bad = api_client.post(reverse("storage-backup-auto"),
+                          {"enabled": True, "every_days": "week"}, format="json")
+    assert bad.status_code == 400

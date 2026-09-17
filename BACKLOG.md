@@ -29,7 +29,7 @@ festgelegt.  Jeder Punkt bekommt vor Implementierung die
 | 7a | ✅ Cue-Marker-Test: 24/7-Aufnahme einschalten (Settings → Local Machine), Cue-Datei prüfen | **DONE 2026-09-16** — zwei Test-Shows 09:55–10:05 über die Stundengrenze: Paare mit Item-Kennung, kein überzähliger End-Marker, Offsets stimmen (Belege im Item „Cue-Marker-Test") |
 | 8 | ✅ Stream-Metadaten (Stream Label, Off Air, Show-Namen) | **DONE 2026-09-13** — Off-Air-Text bei Stille, Stream Label wirkt, Webstream-Titel durchgereicht (`b997a7a`); live abgenommen 2026-09-13/14 (Datei-Show und Webstream-Show) |
 | 9 | ✅ Recording-Loss bei Latency-Catchup | **CLOSED 2026-09-16** — Beobachtungsfrist bis 15.09. sauber: Catchups seit 06.09. einstellig pro Tag, seit 13.09. keine; 24/7-Stundendateien vom 16.09. exakt 3600 s (Belege im Item) |
-| 10 | Backup/Restore via UI | **Stufe 1 gebaut + live abgenommen 2026-09-17 10:20; Stufe 2 (Media-Spiegel) gebaut 2026-09-17**; offen: Stufe 3 (Auto via Task Scheduler + schlankes Restore) — Details im Item |
+| 10 | ✅ Backup/Restore via UI | **DONE 2026-09-17** — Stufe 1 (Manual, abgenommen 10:20), Stufe 2 (Media-Spiegel, abgenommen 15:31), Stufe 3 (Auto via Task Scheduler + Restore-Hinweis); Aufgaben-Registrierung durch den Operator offen — Details im Item |
 | 11 | ✅ Pypo-NSSM-Resilience | **CLOSED 2026-09-16** — Beobachtungsfrist bis 15.09. sauber: seit 09.09. 20 PLAYOUT-Starts gegen 20 angeforderte Shutdowns, kein ungeplanter Neustart (Belege im Item) |
 | 12 | Widgets | Aktive Items (in Arbeit) |
 | 13 | JavaScript-Stack-Modernisierung | Technical Debt (in Arbeit) |
@@ -1443,7 +1443,18 @@ ausreichend?  Voraussetzung: Import-Ordner bleibt konfiguriert.
 FTP-Server AUF der Studiomaschine mit Wurzel = Import-Ordner; braucht
 Erreichbarkeit von außen (Portfreigabe, Härtung).
 
-### 🟢 Backup/Restore via UI (Settings-Submenü)
+### ✅ Backup/Restore via UI (Settings-Submenü) — DONE 2026-09-17
+
+**Stufe 3 gebaut 2026-09-17 (Operator-Go; Commit-Hash im CHANGELOG
+„Added“ Stufe 3):** Auto-Sektion (alle N Tage, Aufbewahrung, cc_pref
+`local_backup_auto`), Kommando `backup_auto` (Fälligkeit selbst geprüft,
+derselbe BackupJob, Aufräumen mit Überlebensgarantie fürs neueste ZIP),
+Runner `scripts/backup-auto.ps1` für die einmalige Aufgabenplaner-
+Registrierung (Befehl im Skriptkopf + Handbuch), schlanke
+Restore-Sektion.  **Inbetriebnahme durch den Operator offen:**
+RASTATIME-API neu starten, Auto-Sektion konfigurieren, Aufgabe
+registrieren.
+
 
 **Neu-Evaluierung + Operator-Go 2026-09-16 (Arbeitsreihenfolge Punkt 10):**
 Die Lücke von damals (Async-Job/Progress-Infra) existiert seit dem

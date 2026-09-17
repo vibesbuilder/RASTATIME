@@ -70,6 +70,54 @@ $rtTip = function ($text) {
         </dl>
     </fieldset>
 
+
+    <?php
+    // RASTATIME 2026-09-17 - stage 3: automatic backups.  The schedule
+    // fires from the Windows Task Scheduler (scripts/backup-auto.ps1,
+    // registered once); the backup_auto command checks the due-ness
+    // configured here, so the task can run daily while the operator
+    // chooses "every N days".  Retention prunes old ZIPs, the newest
+    // always survives; the media mirror is one mirror and never pruned.
+    ?>
+    <h3><?php echo _("Automatic backups") ?><span class="help_icon" data-rt-tip="<?php echo $rtTip(_("A Windows scheduled task (registered once, see the manual) runs the backup when due: every N days, same folder and media setting as above.  Old ZIPs are deleted after the retention period - the newest backup always survives.  0 days retention keeps everything.")); ?>"></span></h3>
+
+    <fieldset class="padded stream-setting-global">
+        <dl class="zend_form">
+            <dt></dt>
+            <dd>
+                <label style="cursor: pointer;">
+                    <input id="backup_auto_enabled" type="checkbox" />
+                    <?php echo _("Enable automatic backups") ?>
+                </label>
+            </dd>
+
+            <dt><label for="backup_auto_every"><?php echo _("Run every") ?></label></dt>
+            <dd>
+                <input id="backup_auto_every" type="number" min="1" max="365"
+                       class="input_text" style="width: 60px;" value="1" />
+                <?php echo _("day(s)") ?>
+            </dd>
+
+            <dt><label for="backup_auto_retention"><?php echo _("Keep backups for") ?></label></dt>
+            <dd>
+                <input id="backup_auto_retention" type="number" min="0" max="3650"
+                       class="input_text" style="width: 60px;" value="30" />
+                <?php echo _("day(s), 0 = keep everything") ?>
+            </dd>
+
+            <dt></dt>
+            <dd style="padding-top: 0.5em;">
+                <button id="backup_auto_save" type="button" class="btn"><?php echo _("Save automatic backups") ?></button>
+                <span id="backup_auto_msg" style="margin-left: 1em;"></span>
+            </dd>
+
+            <dt></dt>
+            <dd style="font-size: 0.9em; color: #555;">
+                <?php echo _("Requires the one-time task registration described in the Backup chapter of the manual (scripts\\backup-auto.ps1).") ?>
+            </dd>
+        </dl>
+    </fieldset>
+
     <h3><?php echo _("Existing backups") ?><span class="help_icon" data-rt-tip="<?php echo $rtTip(_("Every backup in the folder, newest first.  Download saves the ZIP through the browser; the files on disk stay untouched - delete old ones by hand or keep them all.")); ?>"></span></h3>
 
     <fieldset class="padded stream-setting-global">
@@ -86,6 +134,19 @@ $rtTip = function ($text) {
                 <tr><td colspan="4"><?php echo _("Loading …") ?></td></tr>
             </tbody>
         </table>
+    </fieldset>
+
+
+    <?php
+    // RASTATIME 2026-09-17 - stage 3, deliberately slim restore section:
+    // restoring replaces the running database, so it stays a documented
+    // offline procedure instead of a button.
+    ?>
+    <h3><?php echo _("Restoring") ?></h3>
+    <fieldset class="padded stream-setting-global">
+        <p style="margin: 0.3em 0;">
+            <?php echo _("Restoring replaces the running database and is a deliberate offline procedure, not a button: stop the services, restore db.dump from the ZIP with pg_restore, start the services.  The exact steps are in the Backup chapter of the user manual and in docs/operator/BACKUP.md, section 7.  To restore media, copy the contents of the 'media' subfolder back into the library root.") ?>
+        </p>
     </fieldset>
 
     <script>
@@ -176,6 +237,7 @@ $rtTip = function ($text) {
         }
 
         var mediaTouched = false;
+        var autoTouched = false;
 
         function renderStatus(d) {
             if (d.folder && !$("#backup_folder").is(":focus") && !$("#backup_folder").val()) {
@@ -183,6 +245,11 @@ $rtTip = function ($text) {
             }
             if (!mediaTouched) {
                 $("#backup_include_media").prop("checked", !!d.include_media);
+            }
+            if (!autoTouched && d.auto) {
+                $("#backup_auto_enabled").prop("checked", !!d.auto.enabled);
+                $("#backup_auto_every").val(d.auto.every_days);
+                $("#backup_auto_retention").val(d.auto.retention_days);
             }
             $("#backup_run").prop("disabled", !d.configured || (d.job || {}).state === "running");
             renderJob(d.job || {state: "idle"});
@@ -213,6 +280,24 @@ $rtTip = function ($text) {
         });
 
         $("#backup_include_media").on("change", function () { mediaTouched = true; });
+        $("#backup_auto_enabled, #backup_auto_every, #backup_auto_retention")
+            .on("change input", function () { autoTouched = true; });
+
+        $("#backup_auto_save").on("click", function () {
+            $.post(baseUrl + "preference/backup-auto", {
+                csrf_token: $("#csrf").val(),
+                enabled: $("#backup_auto_enabled").is(":checked") ? "true" : "false",
+                every_days: $("#backup_auto_every").val(),
+                retention_days: $("#backup_auto_retention").val()
+            }, function (d) {
+                $("#backup_auto_msg").text("<?php echo addslashes(_('Saved.')) ?>").css("color", "#5cb85c");
+                autoTouched = false;
+                renderStatus(d);
+            }, "json").fail(function (xhr) {
+                var errs = (xhr.responseJSON && xhr.responseJSON.errors) || ["<?php echo addslashes(_('Save failed.')) ?>"];
+                $("#backup_auto_msg").text(errs.join(" ")).css("color", "#d9534f");
+            });
+        });
 
         $("#backup_save").on("click", function () {
             post("backup-folder", {

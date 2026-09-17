@@ -408,6 +408,20 @@ class PreferenceController extends Zend_Controller_Action
         $this->storageReply($status, $data);
     }
 
+    /** POST /preference/backup-auto  enabled=...&every_days=...&retention_days=... */
+    public function backupAutoAction(): void
+    {
+        if (!$this->storageGuardPost()) {
+            return;
+        }
+        [$status, $data] = $this->storageApi('POST', 'api/v2/storage/backup/auto', [
+            'enabled' => $this->_getParam('enabled', 'false') === 'true',
+            'every_days' => (int) $this->_getParam('every_days', 1),
+            'retention_days' => (int) $this->_getParam('retention_days', 0),
+        ]);
+        $this->storageReply($status, $data);
+    }
+
     /** POST /preference/backup-cancel  (stops the media mirror; the ZIP finishes) */
     public function backupCancelAction(): void
     {

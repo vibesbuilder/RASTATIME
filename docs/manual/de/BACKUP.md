@@ -81,7 +81,33 @@ nützlich für eine Kopie außerhalb der Maschine.  Die Dateien auf der
 Platte bleiben unangetastet; löschen Sie alte von Hand, wenn Sie sie
 nicht mehr brauchen.
 
-## 5. Wiederherstellen
+## 5. Automatische Sicherungen
+
+Setzen Sie **Enable automatic backups**, wählen Sie die Häufigkeit
+(**Run every** N Tage) und die Aufbewahrung (**Keep backups for** N
+Tage, 0 = alles behalten), dann **Save automatic backups**.
+
+Das Uhrwerk ist eine Windows-Aufgabe, die ein Administrator **einmal**
+registriert (erhöhte PowerShell):
+
+```powershell
+$action  = New-ScheduledTaskAction -Execute "powershell.exe" `
+    -Argument "-NoProfile -ExecutionPolicy Bypass -File C:\RASTATIME\scripts\backup-auto.ps1"
+$trigger = New-ScheduledTaskTrigger -Daily -At 03:30
+Register-ScheduledTask -TaskName "RASTATIME-Backup" -Action $action `
+    -Trigger $trigger -User "SYSTEM" -RunLevel Highest
+```
+
+Die Aufgabe feuert täglich, aber der Lauf entscheidet anhand der
+Einstellungen dieser Seite selbst, ob eine Sicherung fällig ist — „alle
+7 Tage" funktioniert also mit einer täglichen Aufgabe.  Jeder Lauf
+nutzt denselben Ordner und dieselbe Medien-Einstellung wie die manuelle
+Sicherung, protokolliert sein Ergebnis in `logs\backup-auto.log` und
+löscht danach ZIPs, die älter als die Aufbewahrung sind.  Die neueste
+Sicherung überlebt immer, egal wie alt; der Medien-Spiegel ist ein
+einzelner Spiegel und wird nie aufgeräumt.
+
+## 6. Wiederherstellen
 
 Das Wiederherstellen ersetzt die laufende Datenbank und ist deshalb
 ein bewusster, dokumentierter Offline-Vorgang — Dienste stoppen,
@@ -89,7 +115,7 @@ Datenbank mit `pg_restore` wiederherstellen, Dienste starten.  Folgen
 Sie `docs/operator/BACKUP.md`, Abschnitt 7.  Die `db.dump` im ZIP ist
 genau das, was `pg_restore` erwartet.
 
-## 6. Bewährte Praxis
+## 7. Bewährte Praxis
 
 - Sichern Sie vor allem, was Sie ungern noch einmal machen würden:
   Massenlöschungen, große Sendeplan-Änderungen, Versions-Updates.

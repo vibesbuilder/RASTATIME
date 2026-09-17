@@ -8,6 +8,7 @@ RASTATIME 2026-09-16 - backup endpoints (Settings -> Backup; stage 2
     POST /api/v2/storage/backup/folder    {"path": ..., "include_media": ...}
     POST /api/v2/storage/backup/run       -> 202 + job status
     POST /api/v2/storage/backup/cancel    -> job status (stops the mirror)
+    POST /api/v2/storage/backup/auto      {"enabled","every_days","retention_days"}
     GET  /api/v2/storage/backup/download?name=rastatime-backup-....zip
 
 All of them use the API's default permission (API key or logged-in user);
@@ -34,6 +35,7 @@ def _payload() -> dict:
         "configured": bool(folder),
         "folder_ok": bool(folder) and os.path.isdir(folder),
         "include_media": storage_backup.get_include_media(),
+        "auto": storage_backup.get_auto_config(),
         "media_mirror_exists": bool(mirror) and os.path.isdir(mirror),
         "backups": storage_backup.list_backups(folder),
         "job": storage_backup.JOB.status(),
@@ -81,6 +83,22 @@ class BackupRunView(APIView):
         except RuntimeError as exc:                  # pg_dump missing
             return Response({"errors": [str(exc)]}, status=status.HTTP_400_BAD_REQUEST)
         return Response({"job": job}, status=status.HTTP_202_ACCEPTED)
+
+
+class BackupAutoView(APIView):
+    def post(self, request):
+        data = request.data or {}
+        try:
+            cfg = {
+                "enabled": str(data.get("enabled", "false")).lower() in ("true", "1", "on"),
+                "every_days": max(1, int(data.get("every_days", 1))),
+                "retention_days": max(0, int(data.get("retention_days", 0))),
+            }
+        except (TypeError, ValueError):
+            return Response({"errors": ["Days must be whole numbers."]},
+                            status=status.HTTP_400_BAD_REQUEST)
+        storage_backup.set_auto_config(cfg)
+        return Response(_payload())
 
 
 class BackupCancelView(APIView):

@@ -72,7 +72,32 @@ and creation time.  **Download** saves the ZIP through the browser —
 useful for keeping an off-machine copy.  The files on disk stay
 untouched; delete old ones by hand when you no longer need them.
 
-## 5. Restoring
+## 5. Automatic backups
+
+Tick **Enable automatic backups**, choose how often (**Run every** N
+days) and how long to keep old ZIPs (**Keep backups for** N days,
+0 = keep everything), then **Save automatic backups**.
+
+The clockwork is a Windows scheduled task that an administrator
+registers **once** (elevated PowerShell):
+
+```powershell
+$action  = New-ScheduledTaskAction -Execute "powershell.exe" `
+    -Argument "-NoProfile -ExecutionPolicy Bypass -File C:\RASTATIME\scripts\backup-auto.ps1"
+$trigger = New-ScheduledTaskTrigger -Daily -At 03:30
+Register-ScheduledTask -TaskName "RASTATIME-Backup" -Action $action `
+    -Trigger $trigger -User "SYSTEM" -RunLevel Highest
+```
+
+The task fires daily, but the run itself decides whether a backup is
+due from the settings on this page - so "every 7 days" works with a
+daily task.  Each run uses the same folder and media setting as the
+manual backup, appends its outcome to `logs\backup-auto.log`, and
+afterwards deletes ZIPs older than the retention period.  The newest
+backup always survives, whatever its age; the media mirror is a single
+mirror and is never pruned.
+
+## 6. Restoring
 
 Restoring replaces the running database and is therefore a deliberate,
 documented offline procedure — services stopped, database restored
@@ -80,7 +105,7 @@ with `pg_restore`, services started.  Follow
 `docs/operator/BACKUP.md`, section 7.  The `db.dump` inside the ZIP is
 exactly what `pg_restore` expects.
 
-## 6. Good practice
+## 7. Good practice
 
 - Back up before anything you would hate to redo: bulk deletions,
   big schedule changes, version updates.

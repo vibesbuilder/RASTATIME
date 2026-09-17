@@ -9,6 +9,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Settings → Backup: automatische Sicherungen + Restore-Hinweis
+  (2026-09-17, Arbeitsreihenfolge Punkt 10 Stufe 3, Operator-Go — Punkt 10
+  damit komplett)** — Neue Sektion „Automatic backups": Häufigkeit alle
+  N Tage, Aufbewahrung N Tage (0 = alles behalten), Einstellungen in
+  cc_pref `local_backup_auto`.  Uhrwerk = Windows-Aufgabenplaner: der
+  Operator registriert einmalig `scripts/backup-auto.ps1` (täglich, Log
+  nach `logs/backup-auto.log`); das neue Management-Kommando
+  `backup_auto` prüft die Fälligkeit selbst (jüngstes ZIP + Intervall,
+  1 h Kulanz), nutzt denselben BackupJob wie „Back up now" (inkl.
+  Medien-Spiegel je nach Schalter) und räumt danach ZIPs älter als die
+  Aufbewahrung ab — das neueste überlebt immer, der Spiegel wird nie
+  aufgeräumt.  Bewusst kein Scheduler im Code (Worker bleibt Stub).
+  Restore-Sektion schlank: Hinweiskasten auf den dokumentierten
+  Offline-Weg.  Route `/api/v2/storage/backup/auto`, Proxy
+  `preference/backup-auto`.  Tests +6 (Fälligkeit, Aufräumen, Kommando
+  fällig/nicht fällig/Fehlschlag, Endpoint); Backup-Tests 20, API-Suite
+  grün.  Handbuch BACKUP §5 EN/DE/FR/ES (Neu-Nummerierung), operator
+  BACKUP.md §3.3-Hinweis, ARCHITECTURE 0.39 (§23.35-Nachtrag).  Aktiv
+  nach RASTATIME-API-Neustart; die Aufgaben-Registrierung macht der
+  Operator.
+
 - **Import vom FTP-Server — zweite Import-Quelle neben dem Import-Ordner
   (2026-09-17, Operator-Go, `75d52f8`)** — Neue Sektion Settings → Local Machine →
   „Import from FTP Server": `FtpImportScanTask` holt alle 5 Minuten (oder

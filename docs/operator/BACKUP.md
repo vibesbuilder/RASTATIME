@@ -95,6 +95,16 @@ Restore with `pg_restore` (see §4.1).
 
 ### 3.3 Scheduled nightly backup (Task Scheduler)
 
+> **Since 2026-09-17 the recommended path is the built-in automatic
+> backup**: configure it under Settings → Backup (frequency,
+> retention, optional media mirror) and register the ready-made
+> runner `scripts\backup-auto.ps1` once as a daily task (the exact
+> command is in the script header and in the user manual's Backup
+> chapter).  It produces the same self-contained ZIPs as the Backup
+> page and prunes old ones itself.  The recipe below remains for a
+> plain pg_dump without the UI.
+
+
 Create a PowerShell script at `C:\rastatime\scripts\backup-db.ps1`:
 
 ```powershell

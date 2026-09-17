@@ -1,10 +1,16 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.38
+Draft version: 0.39
 Date: 2026-09-17
 
 > **Revision history**
+> - **0.39 (2026-09-17)** — **Backup stage 3: automatic backups**
+>   (§23.35 addendum): a once-registered Windows scheduled task runs
+>   `manage.py backup_auto` daily; the command checks due-ness from
+>   the UI settings (every N days), reuses the BackupJob and prunes
+>   ZIPs past the retention (newest survives).  Slim restore hint on
+>   the page; still no scheduler in the code.
 > - **0.38 (2026-09-17)** — **Import from FTP server** (§23.36): a
 >   second import source; a PHP task fetches audio from an
 >   FTP/FTPS/SFTP server into the local Import Folder (mailbox
@@ -5065,6 +5071,18 @@ before the run demands library × 1.1 minus what is already mirrored.
 Cancel terminates only the mirror (the ZIP is complete by then) and
 the next run resumes; a failed run keeps the partial mirror but still
 deletes half ZIPs.  The mirror never travels through the browser.
+
+**Stage 3 addendum (2026-09-17).**  Automatic backups follow the
+plan above verbatim: the UI stores `local_backup_auto` (enabled,
+every_days, retention_days); a **Windows scheduled task** registered
+once by the operator runs `scripts/backup-auto.ps1` daily, which
+calls the management command `backup_auto`.  The command decides
+due-ness itself (newest ZIP older than the interval, one hour of
+slack for early task fires), runs the very same `BackupJob` (waiting
+for the daemon thread) and then prunes ZIPs older than the retention
+- the newest backup always survives and the media mirror is never
+pruned.  The page gained a slim Restoring box pointing at the
+offline procedure.
 
 **Deliberately not built.**  No restore endpoint: restoring replaces
 the running database and stays the documented offline procedure

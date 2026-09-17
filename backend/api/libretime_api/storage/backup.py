@@ -111,6 +111,88 @@ def get_include_media() -> bool:
     return (storage_root.read_setting(INCLUDE_MEDIA_KEY) or "").lower() == "true"
 
 
+# ---- stage 3 (2026-09-17): automatic backups --------------------------------
+#
+# The schedule itself lives in the Windows Task Scheduler (a daily run of
+# ``manage.py backup_auto`` via scripts/backup-auto.ps1, registered once
+# by the operator) - the command checks the due-ness below, so the task
+# can fire daily while the operator chooses "every N days" here.
+
+AUTO_KEY = "local_backup_auto"
+AUTO_DEFAULTS = {"enabled": False, "every_days": 1, "retention_days": 30}
+
+
+def get_auto_config() -> dict:
+    raw = storage_root.read_setting(AUTO_KEY)
+    try:
+        data = json.loads(raw) if raw else None
+    except ValueError:
+        data = None
+    cfg = dict(AUTO_DEFAULTS)
+    if isinstance(data, dict):
+        cfg.update({k: data[k] for k in AUTO_DEFAULTS if k in data})
+    cfg["enabled"] = bool(cfg["enabled"])
+    cfg["every_days"] = max(1, int(cfg["every_days"] or 1))
+    cfg["retention_days"] = max(0, int(cfg["retention_days"] or 0))
+    return cfg
+
+
+def set_auto_config(cfg: dict) -> None:
+    storage_root.write_setting(AUTO_KEY, json.dumps(cfg))
+
+
+def newest_backup_at(folder: Optional[str] = None) -> Optional[datetime]:
+    backups = list_backups(folder)
+    if not backups:
+        return None
+    return max(datetime.fromisoformat(b["created_at"]) for b in backups)
+
+
+def auto_backup_due(cfg: Optional[dict] = None, folder: Optional[str] = None):
+    """(due: bool, reason: str) - due when no backup exists or the newest
+    is at least ``every_days`` old (minus one hour of slack, so a daily
+    task firing a few minutes early still runs)."""
+    cfg = cfg or get_auto_config()
+    if not cfg["enabled"]:
+        return False, "automatic backups are disabled"
+    folder = folder or get_backup_folder()
+    if not folder:
+        return False, "no backup folder configured"
+    newest = newest_backup_at(folder)
+    if newest is None:
+        return True, "no backup yet"
+    age = datetime.now(timezone.utc) - newest
+    threshold = timedelta(days=cfg["every_days"]) - timedelta(hours=1)
+    if age >= threshold:
+        return True, f"newest backup is {age.days} day(s) old"
+    return False, f"newest backup is recent ({newest.isoformat(timespec='seconds')})"
+
+
+def prune_old_backups(folder: Optional[str] = None, retention_days: Optional[int] = None) -> List[str]:
+    """Deletes ZIPs older than ``retention_days`` (0 = keep everything).
+    The newest backup always survives.  Returns the deleted names."""
+    cfg_days = get_auto_config()["retention_days"] if retention_days is None else retention_days
+    if cfg_days <= 0:
+        return []
+    folder = folder or get_backup_folder()
+    backups = list_backups(folder)
+    if len(backups) <= 1:
+        return []
+    cutoff = datetime.now(timezone.utc) - timedelta(days=cfg_days)
+    deleted = []
+    for entry in backups[1:]:                      # newest first - keep [0]
+        if datetime.fromisoformat(entry["created_at"]) < cutoff:
+            try:
+                os.remove(os.path.join(folder, entry["name"]))
+                deleted.append(entry["name"])
+            except OSError as exc:
+                logger.warning("retention: could not delete %s: %s", entry["name"], exc)
+    if deleted:
+        logger.info("retention: deleted %d backup(s) older than %d day(s): %s",
+                    len(deleted), cfg_days, ", ".join(deleted))
+    return deleted
+
+
 def set_include_media(value: bool) -> None:
     storage_root.write_setting(INCLUDE_MEDIA_KEY, "true" if value else "false")
 

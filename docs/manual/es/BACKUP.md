@@ -78,7 +78,33 @@ navegador — útil para conservar una copia fuera de la máquina.  Los
 archivos en disco quedan intactos; borre las antiguas a mano cuando ya
 no las necesite.
 
-## 5. Restaurar
+## 5. Copias automáticas
+
+Marque **Enable automatic backups**, elija la frecuencia (**Run
+every** N días) y la conservación (**Keep backups for** N días,
+0 = conservar todo), y pulse **Save automatic backups**.
+
+El mecanismo de relojería es una tarea programada de Windows que un
+administrador registra **una sola vez** (PowerShell elevado):
+
+```powershell
+$action  = New-ScheduledTaskAction -Execute "powershell.exe" `
+    -Argument "-NoProfile -ExecutionPolicy Bypass -File C:\RASTATIME\scripts\backup-auto.ps1"
+$trigger = New-ScheduledTaskTrigger -Daily -At 03:30
+Register-ScheduledTask -TaskName "RASTATIME-Backup" -Action $action `
+    -Trigger $trigger -User "SYSTEM" -RunLevel Highest
+```
+
+La tarea se dispara a diario, pero la ejecución decide por sí misma,
+según los ajustes de esta página, si toca una copia — «cada 7 días»
+funciona por tanto con una tarea diaria.  Cada ejecución usa la misma
+carpeta y el mismo ajuste de medios que la copia manual, registra su
+resultado en `logs\backup-auto.log` y después borra los ZIP más
+antiguos que el periodo de conservación.  La copia más reciente
+sobrevive siempre, tenga la edad que tenga; el espejo de medios es un
+único espejo y nunca se purga.
+
+## 6. Restaurar
 
 Restaurar reemplaza la base de datos en servicio y por eso es un
 procedimiento deliberado y documentado fuera de línea — servicios
@@ -86,7 +112,7 @@ parados, base restaurada con `pg_restore`, servicios arrancados.  Siga
 `docs/operator/BACKUP.md`, sección 7.  El `db.dump` del ZIP es
 exactamente lo que `pg_restore` espera.
 
-## 6. Buenas prácticas
+## 7. Buenas prácticas
 
 - Haga copia antes de todo lo que odiaría rehacer: borrados masivos,
   grandes cambios de parrilla, actualizaciones de versión.

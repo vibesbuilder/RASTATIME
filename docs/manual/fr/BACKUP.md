@@ -80,7 +80,34 @@ ZIP via le navigateur — utile pour garder une copie hors machine.  Les
 fichiers sur le disque restent intacts ; supprimez les anciens à la
 main quand vous n'en avez plus besoin.
 
-## 5. Restaurer
+## 5. Sauvegardes automatiques
+
+Cochez **Enable automatic backups**, choisissez la fréquence (**Run
+every** N jours) et la durée de conservation (**Keep backups for** N
+jours, 0 = tout garder), puis **Save automatic backups**.
+
+Le mécanisme d'horlogerie est une tâche planifiée Windows qu'un
+administrateur enregistre **une seule fois** (PowerShell élevé) :
+
+```powershell
+$action  = New-ScheduledTaskAction -Execute "powershell.exe" `
+    -Argument "-NoProfile -ExecutionPolicy Bypass -File C:\RASTATIME\scripts\backup-auto.ps1"
+$trigger = New-ScheduledTaskTrigger -Daily -At 03:30
+Register-ScheduledTask -TaskName "RASTATIME-Backup" -Action $action `
+    -Trigger $trigger -User "SYSTEM" -RunLevel Highest
+```
+
+La tâche se déclenche chaque jour, mais l'exécution décide elle-même,
+d'après les réglages de cette page, si une sauvegarde est due — « tous
+les 7 jours » fonctionne donc avec une tâche quotidienne.  Chaque
+exécution utilise le même dossier et le même réglage média que la
+sauvegarde manuelle, consigne son résultat dans
+`logs\backup-auto.log`, puis supprime les ZIP plus anciens que la
+durée de conservation.  La sauvegarde la plus récente survit toujours,
+quel que soit son âge ; le miroir média est un miroir unique et n'est
+jamais purgé.
+
+## 6. Restaurer
 
 La restauration remplace la base en service et reste donc une
 procédure hors ligne délibérée et documentée — services arrêtés, base
@@ -88,7 +115,7 @@ restaurée avec `pg_restore`, services relancés.  Suivez
 `docs/operator/BACKUP.md`, section 7.  Le `db.dump` du ZIP est
 exactement ce que `pg_restore` attend.
 
-## 6. Bonnes pratiques
+## 7. Bonnes pratiques
 
 - Sauvegardez avant tout ce que vous détesteriez refaire :
   suppressions en masse, gros changements de grille, mises à jour.
