@@ -1368,6 +1368,36 @@ EN (+ DE/FR/ES falls Manual betroffen). **Vorbedingung:** Migration durch — di
 realen Schritte werden beim echten Install dieser Maschine ohnehin verifiziert,
 danach 1:1 in die Docs übernehmen.
 
+### 🟢 Import-Ordner: Ruhe-Prüfung vor dem Import (evaluiert 2026-09-17, wartet auf Go)
+
+**Anlass (Operator-Fragen 2026-09-17):** Was passiert nach dem Import
+(Antwort: Audio wird in die Bibliothek VERSCHOBEN, fehlgeschlagene
+Importe werden absichtlich gelöscht - Design 2026-05-16 gegen
+Dauerwiederholung; Nicht-Audio und Unterordner bleiben liegen)?  Gehen
+Netzlaufwerke oder FTP als Quelle?
+
+**Befund:** `LocalImportScanTask::scanOnce` hat KEINEN Schutz gegen halb
+geschriebene Dateien - der 5-Minuten-Scan kann eine Datei mitten im
+langsamen Upload wegziehen (kaputter Import + Quelle gelöscht =
+Verlust).  Lokal nie aufgefallen, bei Netz-/FTP-Zulieferung real.
+
+**Empfehlung (Go ausstehend):** Ruhe-Prüfung - nur Dateien importieren,
+deren mtime älter als ~60 s ist; ~1-2 h inkl. Test + Manual-Hinweis
+LOCAL_MACHINE (4 Sprachen).  Vorbedingung für jede Netz-/FTP-Quelle.
+
+**Quellen-Varianten:**
+- FTP-Server AUF der Studiomaschine mit Wurzel = Import-Ordner: kein
+  RASTATIME-Code, Operator installiert/verwaltet (z. B. FileZilla
+  Server); empfohlen für Zulieferung von Vorproduktionen.
+- NAS per UNC-Pfad: Validierung akzeptiert UNC heute schon (nur
+  is_dir/is_writable), Scan läuft aber als LocalSystem im Apache-PHP →
+  Freigabe müsste für das Computerkonto/Gast erreichbar sein oder das
+  Dienstkonto von RASTATIME-APACHE umgestellt werden (Betriebsarbeit);
+  gemappte Buchstaben (Z:) gehen prinzipiell nicht (Session-gebunden).
+- 💡 Aktives FTP-Polling durch RASTATIME (entfernter FTP-Server als
+  Quelle): neues Feature mit Zugangsdaten-Verwaltung, Polling-Task,
+  Fehlerbehandlung; ~1-2 Tage; nur bei Bedarf.
+
 ### 🟢 Backup/Restore via UI (Settings-Submenü)
 
 **Neu-Evaluierung + Operator-Go 2026-09-16 (Arbeitsreihenfolge Punkt 10):**
