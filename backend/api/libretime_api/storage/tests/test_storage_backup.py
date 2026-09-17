@@ -28,7 +28,7 @@ def _fresh_caches(db):
     # committed folder/state of a job test would leak into the next test.
     def wipe():
         sr.invalidate()
-        Preference.site.filter(key__in=[sb.BACKUP_FOLDER_KEY, sb.BACKUP_STATE_KEY]).delete()
+        Preference.site.filter(key__in=[sb.BACKUP_FOLDER_KEY, sb.BACKUP_STATE_KEY, sb.INCLUDE_MEDIA_KEY]).delete()
 
     wipe()
     yield
@@ -261,6 +261,14 @@ def test_endpoints_roundtrip(api_client, target, fake_config, fake_pg_dump):
 
     saved = api_client.post(reverse("storage-backup-folder"), {"path": target}, format="json")
     assert saved.status_code == 200 and saved.json()["configured"] is True
+    # include_media travels through the folder endpoint (2026-09-17: the PHP
+    # proxy dropped it and no test caught that - the API side is covered now)
+    on = api_client.post(reverse("storage-backup-folder"),
+                         {"path": target, "include_media": True}, format="json")
+    assert on.json()["include_media"] is True
+    off = api_client.post(reverse("storage-backup-folder"),
+                          {"path": target, "include_media": "false"}, format="json")
+    assert off.json()["include_media"] is False
 
     bad = api_client.post(reverse("storage-backup-folder"), {"path": "nope"}, format="json")
     assert bad.status_code == 400

@@ -222,6 +222,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Backup Stufe 2: „Include media library“ kam nie bei der API an
+  (2026-09-17, Operator-Befund beim Stufe-2-Test)** — Die Seite schickte
+  das Häkchen mit, aber die PHP-Proxy-Action `backup-folder` reichte nur
+  den Ordner weiter; `local_backup_include_media` wurde nie gespeichert,
+  der Lauf schrieb nur das ZIP (und die Checkbox sprang nach dem
+  Speichern zurück).  Proxy reicht `include_media` jetzt durch; neue
+  Endpoint-Tests decken den Schalter ab (14 Backup-Tests grün).  PHP
+  live (kein OpCache).
+
 - **Handbuch: das Import-Ordner-Kapitel beschrieb einen nie gebauten Ablauf
   (2026-09-17, `46c0ce3`)** — LOCAL_MACHINE §5 (EN/DE/FR/ES) erzählte von Staging-
   und `.failed`-Ordnern mit `.err`-Sidecars, rekursiven Unterordnern mit

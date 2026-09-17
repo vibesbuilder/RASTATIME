@@ -387,7 +387,13 @@ class PreferenceController extends Zend_Controller_Action
             return;
         }
         $folder = trim((string) $this->_getParam('folder', ''));
-        [$status, $data] = $this->storageApi('POST', 'api/v2/storage/backup/folder', ['path' => $folder]);
+        // RASTATIME 2026-09-17 - stage 2 bugfix: the page sends the
+        // "Include media library" checkbox, but this proxy dropped it -
+        // the API never saw include_media and the mirror never ran.
+        [$status, $data] = $this->storageApi('POST', 'api/v2/storage/backup/folder', [
+            'path' => $folder,
+            'include_media' => $this->_getParam('include_media', 'false') === 'true',
+        ]);
         $this->storageReply($status, $data);
     }
 
