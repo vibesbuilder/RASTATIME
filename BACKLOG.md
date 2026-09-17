@@ -2389,10 +2389,15 @@ MD5-Cache-Buster.
     custom jPlayer/LibreTime-Skin (dunkle Leiste, orange Balken, CSS-Buttons,
     an natives `<audio>` gebunden, ohne jQuery-UI/Bootstrap/Sprite). Radio-Page
     behielt ihr Skin bereits (Teil 3/3).
-  - 🟡 **Preview für „Scheduled Line-Input" hinzufügen (als Feature-Lücke
-    vermerkt, Operator 2026-09-17)** — der neue
-    `preview_audio.js`/`AudiopreviewController` kennt bisher nur audioclip +
-    stream; ein geplanter Line-Input-Slot hat noch keine Preview-Quelle.
+  - ✅ **Preview für „Scheduled Line-Input" — ehrliche Behandlung DONE
+    2026-09-17 (Operator-Go; Commit-Hash im CHANGELOG „Fixed")** — der
+    Player kennt Typ 2 jetzt: Zeile „[live input]" (gedimmt), nichts wird
+    geladen, Auto-Weiter überspringt sie (vorher kaputter null-Eintrag,
+    der die Kette stoppte).  💡 **Echtes Reinhören** in den Eingang wäre
+    ein eigenes Feature: ein zweiter, on-demand Vorschau-Feeder auf dem
+    MME-Gerät (Shared Mode), der WAV über HTTP an den Browser streamt —
+    ~1-2 Tage, Fragen: Gerätekonkurrenz zum Sende-Feeder während einer
+    laufenden Line-In-Show, Aufräumen nach dem Schließen des Popups.
 - **✅ Stufe 1 — isolierte EOL ABGESCHLOSSEN (2026-06-01):**
   - ✅ **AngularJS 1.4.5 → Vanilla/jQuery KOMPLETT** — die einzigen 3 Controller
     (Publish, Podcast, StationPodcast) / 4 Views auf vanilla migriert, dann die

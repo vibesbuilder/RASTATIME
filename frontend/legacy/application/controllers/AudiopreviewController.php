@@ -269,6 +269,10 @@ class AudiopreviewController extends Zend_Controller_Action
                 'mime' => isset($track['mime']) ? $track['mime'] : '',
             ];
 
+            // RASTATIME 2026-09-17 - type reaches the popup player:
+            // 0 = file, 1 = webstream, 2 = scheduled line-in.  For
+            // type 2 filepath/mime are NULL by design - the player
+            // renders the row as a live input without a source.
             $elementMap['type'] = $track['type'];
             if ($track['type'] == 0) {
                 $mime = trim(strtolower($track['mime']));

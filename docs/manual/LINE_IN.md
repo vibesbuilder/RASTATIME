@@ -172,6 +172,12 @@ show-builder; the Default Length is just the starting value.
 
 ## 4. Using a Line-In in a show
 
+> **In the show audio preview (since 2026-09-17)** a scheduled
+> Line-In appears as a dimmed row marked *live input* - a hardware
+> input has no source the browser could play, so the row is shown
+> for completeness and the preview simply continues with the next
+> playable track.
+
 Two paths:
 
 ### 4.1 Direct drag onto a show

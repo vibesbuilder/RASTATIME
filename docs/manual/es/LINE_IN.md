@@ -137,6 +137,12 @@ límite del programa.
 
 ## 4. Usar un Line-In en un programa
 
+> **En la vista previa de audio del programa (desde el 17/09/2026)**,
+> un Line-In programado aparece como una fila atenuada marcada *live
+> input* — una entrada de hardware no tiene fuente que el navegador
+> pueda reproducir; la fila está por completitud y la vista previa
+> continúa con la siguiente pista reproducible.
+
 Dos caminos:
 
 ### 4.1 Arrastre directo a un programa

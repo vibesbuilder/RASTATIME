@@ -181,6 +181,13 @@ Anfangswert.
 
 ## 4. Einen Line-In in einer Sendung verwenden
 
+> **In der Audio-Vorschau der Sendung (seit 17.09.2026)** erscheint
+> ein geplanter Line-In als gedimmte Zeile mit der Markierung *live
+> input* — ein Hardware-Eingang hat keine Quelle, die der Browser
+> abspielen könnte; die Zeile steht der Vollständigkeit halber da,
+> und die Vorschau fährt einfach mit dem nächsten abspielbaren
+> Titel fort.
+
 Zwei Pfade:
 
 ### 4.1 Direkter Drag auf eine Sendung

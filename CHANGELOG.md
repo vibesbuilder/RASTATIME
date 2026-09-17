@@ -246,6 +246,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Audio-Vorschau: geplante Line-In-Slots erscheinen als Live-Eingang
+  statt als kaputter Eintrag (2026-09-17, vermerkte Feature-Lücke,
+  Operator-Go)** — Der Popup-Player baute aus einem Line-In-Slot eine
+  Zeile mit leerer Quelle: Klick lud `null` ins Audio-Element, und die
+  Auto-Weiter-Kette blieb an der Zeile hängen.  Jetzt trägt die Zeile
+  die Markierung „[live input]" (gedimmt, kursiv), die Infozeile erklärt
+  „live input, no browser preview", ins Audio-Element wird nichts
+  geladen, und Weiter/Zurück sowie das automatische Weiterschalten
+  überspringen die Zeile.  Server unverändert (Typ 2 + leere Quelle
+  waren schon da).  Live verifiziert an Instanz 1976 („Tascam 1-2").
+  Handbuch LINE_IN §4 EN/DE/FR/ES.  Echtes Reinhören in den Eingang
+  bräuchte einen eigenen Vorschau-Feeder — als 💡 im BACKLOG.
+
 - **jQuery-UI-1.13-Politur: sichtbarer Dialog-Schließen-Knopf, dunkler
   Datepicker, blaue Ränder weg (2026-09-17, `707538d`)** — Der 1.13-Dialog lässt den
   Schließen-Knopf auf diesem Stack als nacktes `<button>` ohne

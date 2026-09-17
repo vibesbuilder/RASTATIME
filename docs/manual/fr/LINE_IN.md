@@ -149,6 +149,12 @@ n'est que la valeur de départ.
 
 ## 4. Utiliser un Line-In dans une émission
 
+> **Dans l'aperçu audio de l'émission (depuis le 17/09/2026)**, un
+> Line-In planifié apparaît comme une ligne estompée marquée *live
+> input* — une entrée matérielle n'a pas de source lisible par le
+> navigateur ; la ligne figure pour être complet, et l'aperçu passe
+> simplement à la piste lisible suivante.
+
 Deux chemins :
 
 ### 4.1 Glisser direct sur une émission

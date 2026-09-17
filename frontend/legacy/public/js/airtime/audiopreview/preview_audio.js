@@ -59,9 +59,13 @@
       info.textContent = "";
       return;
     }
-    info.textContent = item.artist
+    var label = item.artist
       ? item.title + " — " + item.artist
       : item.title || "";
+    if (item.live) {
+      label += " — live input, no browser preview";
+    }
+    info.textContent = label;
   }
 
   function renderPlaylistUi() {
@@ -84,8 +88,12 @@
     playlist.forEach(function (item, i) {
       var li = document.createElement("li");
       li.textContent =
-        (item.title || "(untitled)") + (item.artist ? " — " + item.artist : "");
-      li.className = i === current ? "preview-current" : "";
+        (item.title || "(untitled)") +
+        (item.artist ? " — " + item.artist : "") +
+        (item.live ? "  [live input]" : "");
+      li.className =
+        (i === current ? "preview-current" : "") +
+        (item.live ? " preview-live" : "");
       li.addEventListener("click", function () {
         playAt(i);
       });
@@ -96,6 +104,16 @@
   function playAt(i) {
     var a = getAudio();
     if (!a || i < 0 || i >= playlist.length) {
+      return;
+    }
+    // RASTATIME 2026-09-17 - a live line-in row is selectable (the info
+    // line explains it) but never loaded into the <audio> element.
+    if (playlist[i].live || !playlist[i].uri) {
+      current = i;
+      a.pause();
+      a.removeAttribute("src");
+      updateNowPlaying();
+      renderPlaylistUi();
       return;
     }
     current = i;
@@ -110,15 +128,27 @@
     renderPlaylistUi();
   }
 
+  function isPlayable(item) {
+    return !!(item && item.uri && !item.live);
+  }
+
+  // RASTATIME 2026-09-17 - auto-advance (track ended) and the prev/next
+  // buttons flow PAST live line-in rows instead of stalling on them.
   function next() {
-    if (current + 1 < playlist.length) {
-      playAt(current + 1);
+    for (var i = current + 1; i < playlist.length; i++) {
+      if (isPlayable(playlist[i])) {
+        playAt(i);
+        return;
+      }
     }
   }
 
   function prev() {
-    if (current - 1 >= 0) {
-      playAt(current - 1);
+    for (var i = current - 1; i >= 0; i--) {
+      if (isPlayable(playlist[i])) {
+        playAt(i);
+        return;
+      }
     }
   }
 
@@ -162,14 +192,20 @@
         Object.keys(data).forEach(function (k) {
           var d = data[k];
           var mime = d.mime || "";
-          if (typeof isAudioSupported === "function" && mime && !isAudioSupported(mime)) {
+          // RASTATIME 2026-09-17 - type 2 = scheduled line-in.  A live
+          // hardware input has no browser-playable source; keep the row
+          // (the show content stays complete) but mark it, instead of the
+          // previous broken null-src entry that also stalled auto-advance.
+          var live = d.type === 2 || d.type === "2";
+          if (!live && typeof isAudioSupported === "function" && mime && !isAudioSupported(mime)) {
             return; // skip browser-unsupported track
           }
           items.push({
             title: d.element_title,
             artist: d.element_artist,
-            uri: d.uri,
+            uri: live ? null : d.uri,
             mime: mime,
+            live: live,
           });
           idToPosition[d.element_id] = pos;
           pos++;
