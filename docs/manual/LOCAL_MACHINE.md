@@ -293,8 +293,8 @@ the Line-In creation dropdown.
 
 To use a device as a scheduling source, create a named Line-In
 in the Library under **Line Inputs → + New** — since 2026-09-17
-that dialog is the one complete editor (name, device, channels,
-enabled); the former Line-In Sources section on this page is
+that dialog is the one complete editor (name, device,
+channels); the former Line-In Sources section on this page is
 gone.  See [Line-In](./LINE_IN.md).
 
 > **Operator tip.** A device must be ticked here *before* it

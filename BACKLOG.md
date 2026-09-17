@@ -50,8 +50,9 @@ Features.  Zu klären, je Rolle (Admin / Programm-Manager / DJ / Gast):
   Settings-Seiten.
 - Import vom FTP-Server (Zugangsdaten!) + Import-Ordner-Pfad.
 - Media Library Location (Umzugs-Job!).
-- Line-In-Editor nach der Konsolidierung 2026-09-17: Kanäle/Aktiv kann
-  jetzt jeder mit Line-Inputs-Zugriff ändern (vorher Admin-Sektion) —
+- Line-In-Editor nach der Konsolidierung 2026-09-17: Kanäle kann
+  jetzt jeder mit Line-Inputs-Zugriff ändern (vorher Admin-Sektion;
+  der Aktiv-Schalter wurde am selben Tag ganz entfernt) —
   bewusste Entscheidung auf der Ein-Personen-Instanz, beim Audit
   wieder anfassen.
 - Podcasts, Widgets-Konfiguration, Restart-Aktionen.

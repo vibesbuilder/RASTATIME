@@ -65,8 +65,11 @@
             <?php
             // RASTATIME 2026-09-17 (operator go: consolidation) — this
             // dialog is the ONE line-in editor now.  The channel picker
-            // and the enabled toggle moved here from the former Settings →
-            // Local Machine → Line-In Sources section, which is gone.
+            // moved here from the former Settings → Local Machine →
+            // Line-In Sources section, which is gone.  The enabled
+            // toggle was dropped the same day (operator: a line-in that
+            // exists may be used); the DB column stays true for the
+            // API/playout contract.
             ?>
             <input class="obj_channel_mapping" type="hidden"
                    value="<?php echo $this->escape(implode(',', $this->obj->getChannelMapping())); ?>" />
@@ -79,17 +82,6 @@
                 <p style="margin:0.4em 0 0 0; font-size:0.9em; color:#888;">
                     <?php echo _("A stereo pair or a mono channel of the picked device — a multichannel interface can serve one studio per pair."); ?>
                 </p>
-            </dd>
-
-            <dt id="lineinenabled-label">
-                <label for="linein-enabled"><?php echo _("Enabled:"); ?></label>
-            </dt>
-            <dd id="lineinenabled-element" style="padding-top:0.3em;">
-                <input id="linein-enabled" type="checkbox"
-                       <?php echo $this->obj->getEnabled() ? 'checked' : ''; ?> />
-                <span style="font-size:0.9em; color:#888;">
-                    <?php echo _("Disabled line-ins stay in the Library but are skipped by the playout."); ?>
-                </span>
             </dd>
 
             <div id="length-error" class="errors" style="display:none;"></div>

@@ -1038,10 +1038,10 @@ var AIRTIME = (function (AIRTIME) {
       // decoration applied to missing-device option text).
       var deviceName  = $pl.find("#linein-device option:selected").attr("data-name") || "";
       var length      = $pl.find("#streamlength-element input").val();
-      // RASTATIME 2026-09-17 (consolidation) — channels + enabled travel
-      // with every save now (the Local-Machine editor is gone).
+      // RASTATIME 2026-09-17 (consolidation) — channels travel with
+      // every save now (the Local-Machine editor is gone; the enabled
+      // toggle was dropped — an existing line-in may always be used).
       var channels    = $pl.find("#linein-channels").val() || "0,1";
-      var enabled     = $pl.find("#linein-enabled").is(":checked");
 
       // Hide any previous errors.
       $(".side_playlist.active-tab .errors").empty().hide();
@@ -1057,7 +1057,6 @@ var AIRTIME = (function (AIRTIME) {
           device_name: deviceName,
           length:      length,
           channels:    channels,
-          enabled:     enabled ? "true" : "false",
         },
         function (json) {
           var $status = $(".side_playlist.active-tab .status");

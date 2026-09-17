@@ -69,7 +69,6 @@ The toolbar:
 |---|---|
 | **+ New** | Open the new-Line-In dialog. |
 | **Edit** (row context menu) | Open the edit dialog for that Line-In. |
-| **Enable / Disable** | Toggle the Line-In's available state without deleting. Disabled Line-Ins do not appear in the drag library. |
 | **Delete** | Remove the Line-In. Schedule rows referencing it are removed too. |
 
 > **How it works under the hood.** All mutating actions are
@@ -95,7 +94,6 @@ Line-In Library → **+ New**.
    │   Device:         [Select a device... ▾]                     │
    │   Channels:       [Stereo 1/2 ▾]                             │
    │   Default Length: [10m 00s   ]    (use 00s for infinite)     │
-   │  ☑  Enabled                                                  │
    ├──────────────────────────────────────────────────────────────┤
    │                                       [Cancel ]  [ Save  ]   │
    └──────────────────────────────────────────────────────────────┘
@@ -106,13 +104,13 @@ Line-In Library → **+ New**.
 | **Name** | Required. Unique. The visible label everywhere. |
 | **Device** | Required. Dropdown lists every input device the OS sees right now. If your device is missing from the dropdown, see [Local Machine](./LOCAL_MACHINE.md) → device probing. |
 | **Default Length** | Required. Format `HHh MMm SSs` (the same parser as Webstreams). For "play until told to stop" use `0h 0m 0s` (displays as `∞`). |
-| **Enabled** | Defaults to on. Untick to create the Line-In but suppress it from the drag library. |
 
 > **One editor since 2026-09-17.** This dialog is the complete
 > Line-In editor: it also picks the **Channels** (one option per
-> stereo pair of the device, then every mono channel) and carries
-> the **Enabled** toggle.  The former section under Settings →
-> Local Machine is gone.
+> stereo pair of the device, then every mono channel).  The former
+> section under Settings → Local Machine is gone.  There is no
+> enable/disable switch (dropped 2026-09-17): a Line-In that exists
+> may be used; take one out of circulation by deleting it.
 
 ### Multichannel interfaces: one Line-In per studio
 
@@ -308,17 +306,6 @@ Effects:
   including schedule items already in upcoming shows.
 - **Default Length change** affects only *new* uses; existing
   schedule items keep their configured duration.
-- **Enabled = off** removes the Line-In from the drag library
-  immediately. Already-scheduled uses still play (use Delete
-  if you want to remove them too).
-
-### Disable
-
-The fastest way to "stop using this Line-In for now":
-
-Row context menu → **Disable**. The Line-In stays in the
-library page (you can re-enable later) but disappears from
-the drag-source library.
 
 ### Delete
 
@@ -326,10 +313,9 @@ Row context menu → **Delete**. Confirm. The Line-In is
 removed *and* every `cc_playlistcontents` and `cc_schedule`
 row referencing it is removed (CASCADE).
 
-> **Operator tip.** Prefer **Disable** over **Delete** unless
-> you are sure you will never use the Line-In again. Disable
-> is reversible; Delete cascades into shows you may not have
-> noticed.
+> **Operator tip.** Delete cascades into shows you may not
+> have noticed — check the calendar before deleting a Line-In
+> that has been in use.
 
 ---
 

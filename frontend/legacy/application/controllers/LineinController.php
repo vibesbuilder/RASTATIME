@@ -256,15 +256,16 @@ class LineinController extends Zend_Controller_Action
         $dev     = trim($request->getParam('device_id', ''));
         $devName = trim($request->getParam('device_name', ''));
         $lenStr  = trim($request->getParam('length', '00:30:00'));
-        // RASTATIME 2026-09-17 (consolidation) - channels + enabled come
-        // from the dialog now.  channels = comma-separated 0-based ints
-        // ("0,1"); anything malformed falls back to stereo 1/2.
+        // RASTATIME 2026-09-17 (consolidation) - channels come from the
+        // dialog now: comma-separated 0-based ints ("0,1"); anything
+        // malformed falls back to stereo 1/2.  No enabled field - the
+        // operator dropped the toggle (an existing line-in may always
+        // be used); creates pin enabled=true, updates leave it alone.
         $chanStr = trim($request->getParam('channels', ''));
         $mapping = [0, 1];
         if ($chanStr !== '' && preg_match('/^\d+(,\d+)*$/', $chanStr)) {
             $mapping = array_map('intval', explode(',', $chanStr));
         }
-        $enabled = $request->getParam('enabled', 'true') !== 'false';
 
         // Parse HH:MM:SS into seconds.  Empty / malformed → null
         // (= "use default at consumption time").
@@ -287,11 +288,11 @@ class LineinController extends Zend_Controller_Action
             'description'     => $desc,
             'length_seconds'  => $lenSec,
             'channel_mapping' => $mapping,
-            'enabled'         => $enabled,
         ];
 
         if ($id === '') {
             // CREATE
+            $payload['enabled']         = true;
             $payload['priority']        = 0;
             $method = 'POST';
             $url    = self::API_BASE . 'api/v2/audio/linein';

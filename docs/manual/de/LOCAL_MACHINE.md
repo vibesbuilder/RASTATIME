@@ -317,7 +317,7 @@ entfernt es nur aus dem Line-In-Erstellungs-Dropdown.
 Um ein Gerät als Scheduling-Quelle zu verwenden, erstellen
 Sie einen benannten Line-In in der Bibliothek unter **Line
 Inputs → + Neu** — seit dem 17.09.2026 ist dieser Dialog der
-eine vollständige Editor (Name, Gerät, Kanäle, Aktiv); die
+eine vollständige Editor (Name, Gerät, Kanäle); die
 frühere Line-In-Sources-Sektion auf dieser Seite gibt es
 nicht mehr.  Siehe [Line-In](./LINE_IN.md).
 

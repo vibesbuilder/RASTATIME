@@ -280,7 +280,7 @@ Pour utiliser un périphérique comme source de
 planification, créez un Line-In nommé dans la bibliothèque
 sous **Line Inputs → + Nouveau** — depuis le 17/09/2026 ce
 dialogue est l'unique éditeur complet (nom, périphérique,
-canaux, activé) ; l'ancienne section Line-In Sources de cette
+canaux) ; l'ancienne section Line-In Sources de cette
 page n'existe plus.  Voir [Line-In](./LINE_IN.md).
 
 ---

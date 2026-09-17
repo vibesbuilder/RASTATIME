@@ -74,7 +74,6 @@ Die Symbolleiste:
 |---|---|
 | **+ Neu** | Den Neuer-Line-In-Dialog öffnen. |
 | **Bearbeiten** (Zeilen-Kontextmenü) | Den Bearbeitungs-Dialog für diesen Line-In öffnen. |
-| **Aktivieren / Deaktivieren** | Den verfügbaren Zustand des Line-Ins umschalten, ohne zu löschen. Deaktivierte Line-Ins erscheinen nicht in der Drag-Bibliothek. |
 | **Löschen** | Den Line-In entfernen. Schedule-Zeilen, die ihn referenzieren, werden ebenfalls entfernt. |
 
 > **Wie es unter der Haube funktioniert.** Alle mutierenden
@@ -100,7 +99,6 @@ Line-In-Bibliothek → **+ Neu**.
    │   Gerät:          [Gerät auswählen... ▾]                     │
    │   Channels:       [Stereo 1/2 ▾]                             │
    │   Standardlänge:  [10m 00s   ]   (00s für unendlich)         │
-   │  ☑  Aktiviert                                                │
    ├──────────────────────────────────────────────────────────────┤
    │                                       [Abbrechen][Speichern] │
    └──────────────────────────────────────────────────────────────┘
@@ -111,13 +109,14 @@ Line-In-Bibliothek → **+ Neu**.
 | **Name** | Erforderlich. Eindeutig. Das sichtbare Label überall. |
 | **Gerät** | Erforderlich. Dropdown listet jedes Eingabegerät, das das OS gerade sieht. Wenn Ihr Gerät im Dropdown fehlt, siehe [Lokale Maschine](./LOCAL_MACHINE.md) → Geräte-Probing. |
 | **Standardlänge** | Erforderlich. Format `HHh MMm SSs` (derselbe Parser wie Webstreams). Für "spielt bis gestoppt" verwenden Sie `0h 0m 0s` (zeigt als `∞`). |
-| **Aktiviert** | Standardmäßig an. Abwählen, um den Line-In zu erstellen, aber von der Drag-Bibliothek zu unterdrücken. |
 
 > **Ein Editor seit dem 17.09.2026.** Dieser Dialog ist der
 > vollständige Line-In-Editor: Er wählt auch die **Channels** (eine
-> Option je Stereo-Paar des Geräts, danach jeder Mono-Kanal) und
-> trägt den **Enabled**-Schalter.  Die frühere Sektion unter
-> Settings → Local Machine gibt es nicht mehr.
+> Option je Stereo-Paar des Geräts, danach jeder Mono-Kanal).
+> Die frühere Sektion unter Settings → Local Machine gibt es
+> nicht mehr.  Einen Aktiv-Schalter gibt es nicht (entfernt am
+> 17.09.2026): Ein vorhandener Line-In darf verwendet werden;
+> aus dem Verkehr zieht man ihn per Löschen.
 
 ### Mehrkanal-Interfaces: ein Line-In pro Studio
 
@@ -313,7 +312,7 @@ Sendeplan zurück.
 ### Bearbeiten
 
 Line-In-Bibliothek → Zeile klicken → **Bearbeiten**. Ändern
-Sie Name, Gerät, Standardlänge oder Aktiviert-Zustand.
+Sie Name, Gerät, Kanäle oder Standardlänge.
 Klicken Sie **Speichern**.
 
 Effekte:
@@ -328,19 +327,6 @@ Effekte:
 - **Standardlängen-Änderung** beeinflusst nur *neue*
   Verwendungen; bestehende Schedule-Items behalten ihre
   konfigurierte Dauer.
-- **Aktiviert = aus** entfernt den Line-In sofort aus der
-  Drag-Bibliothek. Bereits geplante Verwendungen spielen
-  weiterhin (verwenden Sie Löschen, wenn Sie sie ebenfalls
-  entfernen möchten).
-
-### Deaktivieren
-
-Der schnellste Weg, "diesen Line-In vorerst nicht mehr zu
-verwenden":
-
-Zeilen-Kontextmenü → **Deaktivieren**. Der Line-In bleibt
-in der Bibliotheks-Seite (Sie können später reaktivieren),
-verschwindet aber aus der Drag-Quelle-Bibliothek.
 
 ### Löschen
 
@@ -349,11 +335,9 @@ wird entfernt *und* jede `cc_playlistcontents`- und
 `cc_schedule`-Zeile, die ihn referenziert, wird entfernt
 (CASCADE).
 
-> **Operator-Tipp.** Bevorzugen Sie **Deaktivieren** über
-> **Löschen**, es sei denn, Sie sind sicher, dass Sie den
-> Line-In nie wieder verwenden werden. Deaktivieren ist
-> reversibel; Löschen kaskadiert in Sendungen, die Sie
-> möglicherweise nicht bemerkt haben.
+> **Operator-Tipp.** Löschen kaskadiert in Sendungen, die Sie
+> möglicherweise nicht bemerkt haben — prüfen Sie den Kalender,
+> bevor Sie einen genutzten Line-In löschen.
 
 ---
 

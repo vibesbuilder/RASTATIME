@@ -271,7 +271,7 @@ OS — Windows lo sigue viendo.
 Para usar un dispositivo como fuente de planificación, cree
 un Line-In nombrado en la biblioteca bajo **Line Inputs → +
 Nuevo** — desde el 17/09/2026 ese diálogo es el único editor
-completo (nombre, dispositivo, canales, habilitado); la
+completo (nombre, dispositivo, canales); la
 antigua sección Line-In Sources de esta página ya no existe.
 Vea [Line-In](./LINE_IN.md).
 

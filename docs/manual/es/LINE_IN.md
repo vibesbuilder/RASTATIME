@@ -55,7 +55,6 @@ La barra de herramientas:
 |---|---|
 | **+ Nuevo** | Abrir el diálogo nuevo-Line-In. |
 | **Editar** | Abrir el diálogo de edición. |
-| **Habilitar / Deshabilitar** | Alternar el estado disponible sin eliminar. |
 | **Eliminar** | Retirar el Line-In. |
 
 > **Cómo funciona bajo el capó.** Todas las acciones
@@ -78,13 +77,14 @@ Line-In Library → **+ Nuevo**.
 | **Nombre** | Requerido. Único. La etiqueta visible en todas partes. |
 | **Dispositivo** | Requerido. El menú desplegable lista cada dispositivo de entrada que el OS ve ahora. Si su dispositivo falta, vea [Máquina local](./LOCAL_MACHINE.md). |
 | **Longitud por defecto** | Requerida. Formato `HHh MMm SSs` (mismo parser que Webstreams). Para "se reproduce hasta que se le diga que pare" use `0h 0m 0s`. |
-| **Habilitado** | Por defecto activado. |
 
 > **Un solo editor desde el 17/09/2026.** Este diálogo es el editor
 > Line-In completo: elige también los **Channels** (una opción por
-> par estéreo del dispositivo, después cada canal mono) y lleva el
-> interruptor **Enabled**.  La antigua sección bajo Settings →
-> Local Machine ya no existe.
+> par estéreo del dispositivo, después cada canal mono).  La
+> antigua sección bajo Settings → Local Machine ya no existe.
+> No hay interruptor habilitar/deshabilitar (retirado el
+> 17/09/2026): un Line-In existente puede usarse; para sacarlo
+> de circulación, elimínelo.
 
 ### Interfaces multicanal: un Line-In por estudio
 
@@ -265,12 +265,6 @@ habilitado. **Guardar**.
   futuro.
 - **Cambio de longitud por defecto** afecta solo *nuevos*
   usos.
-- **Habilitado = apagado** retira el Line-In
-  inmediatamente de la biblioteca de arrastre.
-
-### Deshabilitar
-
-Menú contextual de fila → **Deshabilitar**.
 
 ### Eliminar
 
@@ -278,9 +272,9 @@ Menú contextual de fila → **Eliminar**. Confirme. El
 Line-In se retira *y* cada fila `cc_playlistcontents` y
 `cc_schedule` que lo referencia se retira (CASCADE).
 
-> **Consejo del operador.** Prefiera **Deshabilitar**
-> sobre **Eliminar** a menos que esté seguro de que nunca
-> usará el Line-In de nuevo.
+> **Consejo del operador.** Eliminar se propaga a programas
+> que quizá no haya notado — revise el calendario antes de
+> eliminar un Line-In en uso.
 
 ---
 

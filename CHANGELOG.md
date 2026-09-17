@@ -226,6 +226,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Line-In-Dialog: Enabled-Schalter entfernt (2026-09-17, Operator-
+  Nachschärfung zur Konsolidierung)** — „Wenn es einen Line-Input gibt,
+  darf man ihn auch verwenden."  Checkbox samt Beschreibung raus
+  (Dialog, spl.js, Modell-Getter); Neuanlagen pinnen enabled=true,
+  Updates lassen das Feld unangetastet (DB-Spalte bleibt — API/Playout-
+  Vertrag; alle 6 Bestandszeilen stehen auf true).  Im Handbuch starben
+  dabei auch die „Disable"-Abschnitte, die eine nie existierende
+  Kontextmenü-Aktion beschrieben (Doku-Drift), EN/DE/FR/ES.
+
 - **Line-In komplett im Library-Dialog — die Local-Machine-Sektion ist weg
   (2026-09-17, Operator-Go, `e836c26`)** — Es gab EINE Datenhaltung, aber zwei
   Editoren: schlanker Dialog unter Line Inputs (Name, Gerät) und voller

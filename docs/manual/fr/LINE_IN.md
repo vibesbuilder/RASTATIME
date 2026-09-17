@@ -59,7 +59,6 @@ La barre d'outils :
 |---|---|
 | **+ Nouveau** | Ouvrir le dialogue nouveau-Line-In. |
 | **Modifier** (menu contextuel ligne) | Ouvrir le dialogue d'édition. |
-| **Activer / Désactiver** | Basculer l'état disponible sans supprimer. Les Line-Ins désactivés n'apparaissent pas dans la bibliothèque de glisser. |
 | **Supprimer** | Retirer le Line-In. Les lignes de planning qui le référencent sont aussi retirées. |
 
 > **Comment ça marche sous le capot.** Toutes les actions
@@ -83,13 +82,14 @@ Line-In Library → **+ Nouveau**.
 | **Nom** | Requis. Unique. Le libellé visible partout. |
 | **Périphérique** | Requis. Menu déroulant liste chaque périphérique d'entrée que l'OS voit. Si votre périphérique manque, voir [Machine locale](./LOCAL_MACHINE.md). |
 | **Longueur par défaut** | Requise. Format `HHh MMm SSs` (même parseur que Webstreams). Pour "joue jusqu'à être dit de s'arrêter" utilisez `0h 0m 0s` (affiche comme `∞`). |
-| **Activé** | Par défaut activé. Décocher pour créer le Line-In mais le supprimer de la bibliothèque de glisser. |
 
 > **Un seul éditeur depuis le 17/09/2026.** Ce dialogue est
 > l'éditeur Line-In complet : il choisit aussi les **Channels**
 > (une option par paire stéréo du périphérique, puis chaque canal
-> mono) et porte l'interrupteur **Enabled**.  L'ancienne section
-> sous Settings → Local Machine n'existe plus.
+> mono).  L'ancienne section sous Settings → Local Machine
+> n'existe plus.  Il n'y a pas d'interrupteur activer/désactiver
+> (supprimé le 17/09/2026) : un Line-In existant peut être
+> utilisé ; pour le retirer de la circulation, supprimez-le.
 
 ### Interfaces multicanal : un Line-In par studio
 
@@ -279,14 +279,6 @@ activé. **Enregistrer**.
   utilisation future.
 - **Changement de Longueur par défaut** affecte seulement
   les *nouvelles* utilisations.
-- **Activé = désactivé** retire le Line-In immédiatement
-  de la bibliothèque de glisser.
-
-### Désactiver
-
-Menu contextuel ligne → **Désactiver**. Le Line-In reste
-dans la page bibliothèque mais disparaît de la
-bibliothèque source de glisser.
 
 ### Supprimer
 
@@ -295,9 +287,9 @@ Line-In est retiré *et* chaque ligne
 `cc_playlistcontents` et `cc_schedule` qui le référence
 est retirée (CASCADE).
 
-> **Conseil opérateur.** Préférez **Désactiver** plutôt
-> que **Supprimer** sauf si vous êtes sûr que vous
-> n'utiliserez plus jamais le Line-In.
+> **Conseil opérateur.** Supprimer se propage aux émissions
+> que vous n'avez peut-être pas remarquées — vérifiez le
+> calendrier avant de supprimer un Line-In utilisé.
 
 ---
 
