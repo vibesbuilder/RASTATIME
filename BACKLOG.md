@@ -1450,9 +1450,13 @@ Erreichbarkeit von außen (Portfreigabe, Härtung).
 derselbe BackupJob, Aufräumen mit Überlebensgarantie fürs neueste ZIP),
 Runner `scripts/backup-auto.ps1` für die einmalige Aufgabenplaner-
 Registrierung (Befehl im Skriptkopf + Handbuch), schlanke
-Restore-Sektion.  **Inbetriebnahme durch den Operator offen:**
-RASTATIME-API neu starten, Auto-Sektion konfigurieren, Aufgabe
-registrieren.
+Restore-Sektion.  **In Betrieb seit 2026-09-17 15:48:** API neu
+gestartet (Operator), Aufgabe „RASTATIME-Backup" registriert (täglich
+03:30, SYSTEM; nach PowerShell-Quoting-Stolperer des Operators in der
+erhöhten Sitzung übernommen), zwei Probeläufe mit Exit 0 und korrektem
+„nothing to do: disabled"; Log `logs/backup-auto.log` sauber
+(PYTHONPATH-Nachtrag im Runner).  **Offen nur noch:** Auto-Sektion in
+der UI aktivieren + ersten Nachtlauf im Log prüfen.
 
 
 **Neu-Evaluierung + Operator-Go 2026-09-16 (Arbeitsreihenfolge Punkt 10):**

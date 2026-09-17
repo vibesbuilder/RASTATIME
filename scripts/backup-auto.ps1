@@ -14,6 +14,10 @@
 
 $ErrorActionPreference = "Continue"
 $env:LIBRETIME_CONFIG_FILEPATH = "C:\RASTATIME\config\libretime.conf"
+$env:DJANGO_SETTINGS_MODULE = "libretime_api.settings.prod"
+# Repo root on the module path so the soundcard app finds the shared
+# "audio" package (cosmetic for backups, but keeps the log clean).
+$env:PYTHONPATH = "C:\RASTATIME"
 $python = "C:\RASTATIME\.venv\Scripts\python.exe"
 $manage = "C:\RASTATIME\backend\api\libretime_api\manage.py"
 $log    = "C:\RASTATIME\logs\backup-auto.log"
