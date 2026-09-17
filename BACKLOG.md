@@ -32,7 +32,7 @@ festgelegt.  Jeder Punkt bekommt vor Implementierung die
 | 10 | ✅ Backup/Restore via UI | **DONE 2026-09-17** — Stufe 1 (Manual, abgenommen 10:20), Stufe 2 (Media-Spiegel, abgenommen 15:31), Stufe 3 (Auto via Task Scheduler + Restore-Hinweis); Aufgaben-Registrierung durch den Operator offen — Details im Item |
 | 11 | ✅ Pypo-NSSM-Resilience | **CLOSED 2026-09-16** — Beobachtungsfrist bis 15.09. sauber: seit 09.09. 20 PLAYOUT-Starts gegen 20 angeforderte Shutdowns, kein ungeplanter Neustart (Belege im Item) |
 | 12 | Widgets | Aktive Items (in Arbeit) |
-| 13 | JavaScript-Stack-Modernisierung | Technical Debt (in Arbeit) |
+| 13 | ✅ JavaScript-Stack-Modernisierung | **Kern DONE 2026-09-17** — Stufen 0-2 komplett, Migrate-Netz + FC1.5-Fork entfernt, UI-Politur; offen nur DataTables 2.0 (Entscheidung später, Operator 2026-09-17) + optionale Build-Pipeline — Details im Item |
 | 14 | **Testplan erstellen** | neu 2026-09-02 — siehe unten |
 | 15 | ✅ Legacy-mpv-Code löschen | **DONE 2026-09-10** — Liquidsoap ist die einzige Engine, DJ-Kick per Harbor-Telnet (`2590cf2`) |
 | 16 | Internet-Erreichbarkeit | Ideen |
@@ -2312,7 +2312,12 @@ keine Migration nötig — nur ein Konstanten-Bump.
 
 ### 🟡 JavaScript-Stack-Modernisierung (Hybrid/Vanilla-First — Re-Eval 2026-05-31)
 
-**Status:** In Arbeit — Strategie geklärt (Operator 2026-05-31: **Hybrid,
+**Status: Kern ABGESCHLOSSEN 2026-09-17** (Bewährungs-Signal des Operators
+für jq3 + FC6 nach drei ruhigen Monaten; Abschluss-Block: dataTransfer-Fix
++ 5b + FC1.5-Fork-Entfernung + UI-Politur, Commit-Hashes im CHANGELOG
+„Removed"/„Fixed" 2026-09-17).  Verbleibend: DataTables 2.0 (eigene
+Entscheidung später) + optionale Build-Pipeline.  Ursprünglicher Status:
+In Arbeit — Strategie geklärt (Operator 2026-05-31: **Hybrid,
 Vanilla-First**), **Stufe 0 (Quick Wins) gestartet**.  Ersetzt die grobe
 Erst-Eval 2026-05-22, deren Bestandsaufnahme an mehreren Stellen falsch war
 (s. Korrekturen).
@@ -2384,7 +2389,8 @@ MD5-Cache-Buster.
     custom jPlayer/LibreTime-Skin (dunkle Leiste, orange Balken, CSS-Buttons,
     an natives `<audio>` gebunden, ohne jQuery-UI/Bootstrap/Sprite). Radio-Page
     behielt ihr Skin bereits (Teil 3/3).
-  - ⬜ **Preview für „Scheduled Line-Input" hinzufügen** — der neue
+  - 🟡 **Preview für „Scheduled Line-Input" hinzufügen (als Feature-Lücke
+    vermerkt, Operator 2026-09-17)** — der neue
     `preview_audio.js`/`AudiopreviewController` kennt bisher nur audioclip +
     stream; ein geplanter Line-Input-Slot hat noch keine Preview-Quelle.
 - **✅ Stufe 1 — isolierte EOL ABGESCHLOSSEN (2026-06-01):**
@@ -2411,7 +2417,10 @@ MD5-Cache-Buster.
     Recurrence-Rhythmen** (weekly+Wochentage, every 2/3/4 weeks, monthly day-of-
     month, monthly day-of-week, 5. Donnerstag), ContextMenu, Drag/Resize,
     Sperrlogik.  FC1.5-Fork bleibt als Rollback (`?fc6=0`) + Safety-Net.
-    - ⬜ **🟡 DEFER — FC1.5-Fork entfernen** (`js/fullcalendar/` inkl. Fork-
+    - ✅ **FC1.5-Fork entfernt (DONE 2026-09-17)** — Bewährungs-Signal des
+      Operators; Fork, css/fullcalendar.css, ?fc6-Flag, FC1.5-Zweig und die
+      fünf toten Callbacks raus (dayClick/windowResize/addQtipsToIcons
+      bleiben — FC6 ruft sie).  Ursprünglicher Plan: (`js/fullcalendar/` inkl. Fork-
       Zeitzonen-Patches, `css/fullcalendar.css`, FC1.5-Branch in
       `createFullCalendar()`, toter Code `viewDisplay`/`eventRender`/
       `eventAfterRender`/`dayClick`/`eventDrop`/`eventResize`, ScheduleController-
@@ -2424,11 +2433,15 @@ MD5-Cache-Buster.
       gelber Today-Tint, dezente Event-Kanten, Fill-Bar-Fix für Kurz-Events) +
       No-Leading-Zero-Uhrzeiten ("8:00").  Scoped auf `#schedule_calendar` →
       Rollback/Embed unberührt.  Operator-verifiziert.
-    - ⬜ **💡 User-Manual-Screenshots** (Schedule-Kapitel, alle 4 Sprachen)
+    - ✅ **ENTFÄLLT (2026-09-17): User-Manual-Screenshots** — das Kalender-
+      Kapitel ist reiner Text, es gibt keine Screenshots zu aktualisieren.
+      Ursprüngliche Notiz: (Schedule-Kapitel, alle 4 Sprachen)
       auf den FC6-Look aktualisieren — Bedienung unverändert, daher niedrige
       Prio; sinnvoll gebündelt mit der FC1.5-Fork-Entfernung.
-  - 🔄 **jQuery 1.8 → 3.7 — jq3 ist Default seit 2026-06-05 (Stufe 5a); nur noch
-    5b-Cleanup offen.** `?jq3=0` bleibt der Rollback (wie FC6). Resume-Details:
+  - ✅ **jQuery 1.8 → 3.7 KOMPLETT (5b DONE 2026-09-17)** — Migrate-Netz +
+    Legacy-Assets + Flag-Logik entfernt (Details im CHANGELOG „Removed");
+    vorher der dataTransfer-Fix in library.js ($.event.props ist in jQuery 3
+    weg).  Historie: `?jq3=0` bleibt der Rollback (wie FC6). Resume-Details:
     - **Flag:** `?jq3=1` setzt Session-Cookie `rt_jq3`, `?jq3=0` löscht; Helper
       `PageLayoutInitPlugin::rtUseJquery3()`. Weitere Helfer: `rtJqueryUiThemeCss()`
       (redmond 1.8.8 vs `css/redmond-1.13/`) + `rtDataTablesCore()` (DT 1.9 vs
@@ -2545,9 +2558,17 @@ MD5-Cache-Buster.
          in den gespeicherten State (Tabelle kam gefiltert zurück, Panel leer +
          zu).  Jetzt auch die 1.13-Form gestrippt, beim Speichern **und** Laden;
          Library **+** rechtes Showbuilder-Panel (`builder.js`, gleicher Bug).
-      3. **Buttons/ColReorder-CSS** — für die Library erledigt (`body.rt-jq3`-Block
-         in styles.css); für die übrigen Tabellen noch angleichen.
-      4. **Kosmetik-Politur** (zurückgestellte jQuery-UI-1.13-Punkte): Scheduled-
+      3. ✅ **Buttons/ColReorder-CSS — OBSOLET (2026-09-17):** Buttons lädt
+         nur auf Library, Showbuilder und Podcasts, und alle drei wurden im
+         Juni gestylt; die übrigen Tabellen-Seiten laden die Extension gar
+         nicht — es gibt nichts mehr anzugleichen.
+      4. ✅ **Kosmetik-Politur DONE 2026-09-17** (Commit im CHANGELOG „Fixed"):
+         Schließen-✕ für alle Dialoge (1.13 ließ den Knopf als nacktes
+         <button> ohne Icon zurück), Datepicker dunkel (letzter Blau-Rest),
+         `.ui-widget-content`-Rand entblaut.  Nicht reproduzierbar, geparkt
+         bis zu einem Operator-Zeigefinger: „Scheduled-Tracks-Dialog zu
+         hoch" + „Add/Edit-Show zu hell" (Notizen von vor dem dunklen
+         Dialog-Theme vom 31.08.).  Ursprüngliche Liste: Scheduled-
          Tracks-Dialog sitzt zu weit oben; View-Dialog-Schließen-Icon unsichtbar;
          Add/Edit-Show-Hintergrund zu hell; restliche blaue Reste (Borders/
          Datepicker-Tage/Icons).
@@ -2576,9 +2597,10 @@ MD5-Cache-Buster.
            Bis dahin Legacy + Migrate als Sofort-Rollback behalten.  Abschluss:
            CHANGELOG-Eintrag (ARCHITECTURE.md existiert nicht → CHANGELOG ist die
            Quelle, wie bei FC6).
-  - ⬜ **DataTables 1.13 → 2.0** (eigener späterer Schritt nach jQuery 3):
+  - 🟡 **DataTables 1.13 → 2.0** (eigener späterer Schritt nach jQuery 3):
     server-side-Format (sEcho/aaData → draw/data) + Init auf neue API umstellen.
-    Modernitäts-Wette, nicht jQuery-3-blockierend.
+    Modernitäts-Wette, nicht jQuery-3-blockierend.  **Operator 2026-09-17:
+    Entscheidung später** — vor einem Go neu evaluieren.
 - **(Optional) Build-Pipeline:** nur bei Trigger (s. Strategie), eigener ADR.
 
 **Hauptrisiken (Stufe 2 absichern):**

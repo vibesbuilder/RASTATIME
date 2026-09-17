@@ -246,6 +246,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **jQuery-UI-1.13-Politur: sichtbarer Dialog-Schließen-Knopf, dunkler
+  Datepicker, blaue Ränder weg (2026-09-17)** — Der 1.13-Dialog lässt den
+  Schließen-Knopf auf diesem Stack als nacktes `<button>` ohne
+  Icon-Markup zurück (heller leerer Kasten) → direkt gestylt: dunkler
+  runder Knopf mit weißem ✕, für jeden Dialog.  Der Datepicker war der
+  letzte redmond-blaue Rest (die Juni-Umfärbung ließ die Tageszellen
+  bewusst aus): dunkles Panel, dunkle Zellen, Auswahl in Brand-Orange,
+  Heute in Bernstein.  `.ui-widget-content`-Rand entblaut.  Live
+  verifiziert (Probe-Dialog + Add-Show-Datepicker).  Nicht reproduzierbar
+  und geparkt: „Scheduled-Tracks-Dialog zu hoch" und „Add/Edit-Show zu
+  hell" — beide Notizen stammen von vor dem dunklen Dialog-Theme vom
+  31.08.
+
 - **Backup Stufe 2: „Include media library“ kam nie bei der API an
   (2026-09-17, Operator-Befund beim Stufe-2-Test, `3a31f5b`)** — Die Seite schickte
   das Häkchen mit, aber die PHP-Proxy-Action `backup-folder` reichte nur
@@ -347,6 +360,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Neustart nötig (PHP ohne OpCache, sofort live).
 
 ### Removed
+
+- **jQuery-Migrate-Netz + Legacy-JS-Assets entfernt — der ?jq3-Schalter ist
+  Geschichte (2026-09-17, Bewährungs-Signal des Operators nach drei ruhigen
+  Monaten auf dem jQuery-3-Standard)** — Raus: jquery-migrate 3.5.2,
+  jQuery 1.8.3, jQuery UI 1.8.24 (+ totes 1.8.18-Custom), redmond-1.8-Theme
+  (images/ bleibt — zwei Stylesheets nutzen die Icon-Sprites), DataTables-
+  1.9-Kern, 2012er ColVis/ColReorder samt css/datatables-Baum, 16
+  assets.json-Einträge und die gesamte Flag-Logik.  Vorher behoben: das
+  Artwork-Drag-and-drop der Library nutzte das in jQuery 3 entfernte
+  `$.event.props` (ohne Migrate wäre library.js komplett gebrochen) —
+  jetzt `event.originalEvent.dataTransfer`.  Drei Seiten, die den
+  1.9-Kern noch direkt luden (Upload, Tracktypes, Users), laden 1.13.
+  Der `rt-jq3`-Body-Marker bleibt fest (CSS/Tabellen-Code hängen daran).
+  Live verifiziert: Showbuilder, Kalender, Users, Upload, Tracktypes ohne
+  Migrate und ohne Konsolen-Fehler.
+
+- **FullCalendar-1.5-Fork entfernt — FC6 ist die einzige Kalender-Engine
+  (2026-09-17, Bewährungs-Signal; FC6 Standard seit 2026-06-01)** — Raus:
+  der handgepatchte 2012er Fork (`js/fullcalendar/` samt Zeitzonen-Patches),
+  `css/fullcalendar.css`, der `?fc6`-Rückfall, der FC1.5-Zweig in
+  `createFullCalendar()` (jetzt lauter Wächter) und die fünf FC1.5-
+  Callbacks in full-calendar-functions.js; dayClick/windowResize/
+  addQtipsToIcons bleiben (FC6 ruft sie direkt).  Kalender live
+  verifiziert (31 Events, FC6-Toolbar, keine Fehler).  Die zurückgestellte
+  Screenshot-Aktualisierung des Handbuchs entfällt: das Kalender-Kapitel
+  enthält keine Screenshots.
 
 - **Scheduler-Poll-Rückfall des Webstream-Wächters entfernt (2026-09-15,
   Operator-Go nach der ruhigen Woche seit 2026-09-09, `de822e4`)** — Der Wächter läuft seit
