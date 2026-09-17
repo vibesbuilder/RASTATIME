@@ -60,20 +60,36 @@
                 <select id="linein-device" name="device_id" style="width:100%">
                     <option value=""><?php echo _("— Loading devices …") ?></option>
                 </select>
-                <?php
-                // RASTATIME 2026-08-31 (operator decision: option B) — this
-                // quick editor deliberately stays lean; the channel picker
-                // (stereo pair / mono on multichannel interfaces) lives in
-                // the full editor on Settings → Local Machine.  Saving here
-                // keeps an existing mapping and defaults new entries to
-                // stereo 1/2 (see LineinController::saveAction).
-                ?>
+            </dd>
+
+            <?php
+            // RASTATIME 2026-09-17 (operator go: consolidation) — this
+            // dialog is the ONE line-in editor now.  The channel picker
+            // and the enabled toggle moved here from the former Settings →
+            // Local Machine → Line-In Sources section, which is gone.
+            ?>
+            <input class="obj_channel_mapping" type="hidden"
+                   value="<?php echo $this->escape(implode(',', $this->obj->getChannelMapping())); ?>" />
+            <div id="channels-error" class="errors" style="display:none;"></div>
+            <dt id="lineinchannels-label">
+                <label for="linein-channels"><?php echo _("Channels:"); ?></label>
+            </dt>
+            <dd id="lineinchannels-element">
+                <select id="linein-channels" style="width:100%"></select>
                 <p style="margin:0.4em 0 0 0; font-size:0.9em; color:#888;">
-                    <?php echo _("Input channels (stereo pair or mono) are chosen in"); ?>
-                    <a href="<?php echo Config::getBasePath(); ?>preference/local-machine"
-                       target="_blank" style="color:#ff5d1a;">
-                        <?php echo _("Settings → Local Machine → Line-In Sources"); ?></a>.
+                    <?php echo _("A stereo pair or a mono channel of the picked device — a multichannel interface can serve one studio per pair."); ?>
                 </p>
+            </dd>
+
+            <dt id="lineinenabled-label">
+                <label for="linein-enabled"><?php echo _("Enabled:"); ?></label>
+            </dt>
+            <dd id="lineinenabled-element" style="padding-top:0.3em;">
+                <input id="linein-enabled" type="checkbox"
+                       <?php echo $this->obj->getEnabled() ? 'checked' : ''; ?> />
+                <span style="font-size:0.9em; color:#888;">
+                    <?php echo _("Disabled line-ins stay in the Library but are skipped by the playout."); ?>
+                </span>
             </dd>
 
             <div id="length-error" class="errors" style="display:none;"></div>

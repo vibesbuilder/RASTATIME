@@ -98,7 +98,7 @@ Line-In-Bibliothek → **+ Neu**.
    ├──────────────────────────────────────────────────────────────┤
    │   Name:           [                       ]                  │
    │   Gerät:          [Gerät auswählen... ▾]                     │
-   │     Eingangskanäle wählen Sie unter Settings → Local Machine │
+   │   Channels:       [Stereo 1/2 ▾]                             │
    │   Standardlänge:  [10m 00s   ]   (00s für unendlich)         │
    │  ☑  Aktiviert                                                │
    ├──────────────────────────────────────────────────────────────┤
@@ -113,12 +113,11 @@ Line-In-Bibliothek → **+ Neu**.
 | **Standardlänge** | Erforderlich. Format `HHh MMm SSs` (derselbe Parser wie Webstreams). Für "spielt bis gestoppt" verwenden Sie `0h 0m 0s` (zeigt als `∞`). |
 | **Aktiviert** | Standardmäßig an. Abwählen, um den Line-In zu erstellen, aber von der Drag-Bibliothek zu unterdrücken. |
 
-> **Wo sind die Eingangskanäle?** Dieser Schnell-Editor bleibt
-> bewusst schlank — die **Eingangskanäle**-Auswahl (und Priorität /
-> die vollständige Verwaltungstabelle) liegt im vollen Editor unter
-> **Settings → Local Machine → Line-In Sources**; der Dialog
-> verlinkt dorthin. Ein hier angelegter Line-In nimmt die Kanäle
-> 1/2 auf, bis Sie im vollen Editor ein anderes Paar wählen.
+> **Ein Editor seit dem 17.09.2026.** Dieser Dialog ist der
+> vollständige Line-In-Editor: Er wählt auch die **Channels** (eine
+> Option je Stereo-Paar des Geräts, danach jeder Mono-Kanal) und
+> trägt den **Enabled**-Schalter.  Die frühere Sektion unter
+> Settings → Local Machine gibt es nicht mehr.
 
 ### Mehrkanal-Interfaces: ein Line-In pro Studio
 
@@ -126,7 +125,7 @@ Hat das Audio-Interface der Station mehr als zwei Eingänge (z.B.
 ein Tascam US-16x08 mit 16 Eingängen und mehreren angeschlossenen
 Studios), legen Sie **einen Line-In pro Studio** an — gleiches
 **Gerät**, unterschiedliche **Eingangskanäle** (Auswahl unter
-**Settings → Local Machine → Line-In Sources**):
+dem Feld **Channels** direkt im Dialog):
 
 - `Studio A` → Gerät `US-16x08`, Eingangskanäle `Stereo 1/2`
 - `Studio B` → Gerät `US-16x08`, Eingangskanäle `Stereo 5/6`

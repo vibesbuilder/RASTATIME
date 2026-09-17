@@ -192,16 +192,13 @@ $rtTip = function ($text) {
     </div><!-- .soundcard-columns -->
 
     <?php
-    // RASTATIME 2026-08-31 — Line-In sources management (operator
-    // request).  The Phase-A.4 cleanup (2026-05-12) had moved this
-    // CRUD list to the standalone /linein page, but that page never
-    // got a Settings menu entry and was effectively undiscoverable.
-    // It now lives here as a section (above Import Folder); /linein
-    // redirects to this page.  Markup + dialog come from the shared
-    // partial; linein.js is appended by localMachineAction.
+    // RASTATIME 2026-09-17 (operator go) — the Line-In Sources section
+    // moved OUT of this page: the Library's Line-Input dialog is the one
+    // editor now (name, device, channels, enabled).  History: standalone
+    // /linein page (2026-05-12) → section here (2026-08-31, because the
+    // standalone page was undiscoverable) → consolidated into the
+    // Library dialog (2026-09-17).
     ?>
-    <h3><?php echo _("Line-In Sources") ?><span class="help_icon" data-rt-tip="<?php echo $rtTip(_("Named live inputs for shows — each entry picks an input device AND which of its channels to capture (a stereo pair or a mono channel), so a multichannel interface can serve one studio per pair.  Entries appear in the Library under Line Inputs and can be scheduled like any other content.")); ?>"></span></h3>
-    <?php echo $this->render('linein/_sources.phtml'); ?>
 
     <?php
     // RASTATIME 2026-05-16 - Local Import Folder section.

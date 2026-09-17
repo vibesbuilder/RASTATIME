@@ -226,6 +226,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Line-In komplett im Library-Dialog — die Local-Machine-Sektion ist weg
+  (2026-09-17, Operator-Go)** — Es gab EINE Datenhaltung, aber zwei
+  Editoren: schlanker Dialog unter Line Inputs (Name, Gerät) und voller
+  Editor unter Settings → Local Machine (zusätzlich Kanalwahl, Aktiv).
+  Jetzt ist der Library-Dialog der eine vollständige Editor: Kanal-Picker
+  (eine Option je Stereo-Paar des Geräts, dann jeder Mono-Kanal; alte
+  freie Mappings bleiben als Custom-Eintrag wählbar) und Aktiv-Schalter
+  wandern hinein, jede Speicherung überträgt beide Felder.  Die Sektion
+  „Line-In Sources" samt `_sources.phtml` und `linein.js` ist entfernt;
+  `/linein` leitet auf das Dashboard.  Historie: eigenständige Seite
+  (05/2026) → Sektion in Local Machine (08/2026, weil unauffindbar) →
+  konsolidiert (09/2026).  Bewusste Rechte-Folge: Wer Line Inputs
+  verwalten darf, wählt jetzt auch Kanäle/Aktiv (vorher Admin-Seite) —
+  auf dieser Ein-Personen-Instanz gewollt, siehe Backlog-Item
+  „Benutzergruppen-Audit".  Handbuch LINE_IN + LOCAL_MACHINE EN/DE/FR/ES.
+  Live verifiziert: Sektion weg, Dialog trägt Kanäle/Aktiv, Redirect
+  greift, keine Konsolen-Fehler.  PHP/JS live (kein OpCache).
+
 - **Medienbibliothek ohne owner-id-Ebene, alle Pfade relativ zur
   Speicherwurzel (2026-09-16, Stufe 1 von Arbeitsreihenfolge Punkt 7,
   Operator-Go, `6059dc4`)** — Vorbereitung für den wählbaren Speicherort (Settings →

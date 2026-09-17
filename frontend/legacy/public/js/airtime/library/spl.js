@@ -938,11 +938,14 @@ var AIRTIME = (function (AIRTIME) {
             // so the save handler can persist it as device_name (used
             // by the playout's resolver as a fallback when device_id
             // doesn't resolve after a USB-GUID rebt-reshuffle).
+            // RASTATIME 2026-09-17 — plus the input-channel count for
+            // the channel picker (consolidated from Local Machine).
             $lineinDevice.append(
               $("<option>")
                 .val(dev.stable_id)
                 .text(dev.name)
-                .attr("data-name", dev.name),
+                .attr("data-name", dev.name)
+                .attr("data-channels", parseInt(dev.channels, 10) || 2),
             );
           });
           if (preselectId) {
@@ -970,6 +973,61 @@ var AIRTIME = (function (AIRTIME) {
       });
     }
 
+    // RASTATIME 2026-09-17 (line-in consolidation) — channel picker in
+    // the library dialog, ported from the former Local-Machine section:
+    // one option per stereo pair of the picked device, then every mono
+    // channel; a persisted mapping outside those options stays
+    // selectable as a custom entry.  Values keep the comma-separated
+    // 0-based wire format ("2,3").
+    function lineinPopulateChannels($pl) {
+      var $sel = $pl.find("#linein-channels");
+      if ($sel.length === 0) {
+        return;
+      }
+      var $opt = $pl.find("#linein-device option:selected");
+      var n = Math.max(1, parseInt($opt.attr("data-channels"), 10) || 2);
+      var wanted = String($pl.find(".obj_channel_mapping").val() || "0,1");
+      $sel.empty();
+      var i;
+      for (i = 0; i + 1 < n; i += 2) {
+        $sel.append(
+          $("<option>")
+            .val(i + "," + (i + 1))
+            .text($.i18n._("Stereo") + " " + (i + 1) + "/" + (i + 2)),
+        );
+      }
+      for (i = 0; i < n; i++) {
+        $sel.append(
+          $("<option>").val(String(i)).text($.i18n._("Mono") + " " + (i + 1)),
+        );
+      }
+      if ($sel.find('option[value="' + wanted + '"]').length === 0) {
+        $sel.append(
+          $("<option>")
+            .val(wanted)
+            .text($.i18n._("Custom mapping") + " (" + wanted + ")"),
+        );
+      }
+      $sel.val(wanted);
+    }
+
+    if ($pl.find("#linein-channels").length > 0) {
+      // Initial fill happens after the device list loads; a change of
+      // device rebuilds the options for that device's channel count.
+      var lineinChannelsTimer = setInterval(function () {
+        if ($pl.find("#linein-device option[data-channels]").length > 0) {
+          clearInterval(lineinChannelsTimer);
+          lineinPopulateChannels($pl);
+        }
+      }, 150);
+      setTimeout(function () { clearInterval(lineinChannelsTimer); }, 6000);
+      $pl.find("#linein-device").on("change", function () {
+        // Keep the current selection only while it fits the new device.
+        $pl.find(".obj_channel_mapping").val($pl.find("#linein-channels").val() || "0,1");
+        lineinPopulateChannels($pl);
+      });
+    }
+
     $pl.find("#linein_save").on("click", function () {
       var id          = $pl.find(".obj_id").attr("value");
       var name        = $pl.find(".playlist_name_display").val();
@@ -980,6 +1038,10 @@ var AIRTIME = (function (AIRTIME) {
       // decoration applied to missing-device option text).
       var deviceName  = $pl.find("#linein-device option:selected").attr("data-name") || "";
       var length      = $pl.find("#streamlength-element input").val();
+      // RASTATIME 2026-09-17 (consolidation) — channels + enabled travel
+      // with every save now (the Local-Machine editor is gone).
+      var channels    = $pl.find("#linein-channels").val() || "0,1";
+      var enabled     = $pl.find("#linein-enabled").is(":checked");
 
       // Hide any previous errors.
       $(".side_playlist.active-tab .errors").empty().hide();
@@ -994,6 +1056,8 @@ var AIRTIME = (function (AIRTIME) {
           device_id:   deviceId,
           device_name: deviceName,
           length:      length,
+          channels:    channels,
+          enabled:     enabled ? "true" : "false",
         },
         function (json) {
           var $status = $(".side_playlist.active-tab .status");

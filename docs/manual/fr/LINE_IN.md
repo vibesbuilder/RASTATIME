@@ -85,13 +85,11 @@ Line-In Library → **+ Nouveau**.
 | **Longueur par défaut** | Requise. Format `HHh MMm SSs` (même parseur que Webstreams). Pour "joue jusqu'à être dit de s'arrêter" utilisez `0h 0m 0s` (affiche comme `∞`). |
 | **Activé** | Par défaut activé. Décocher pour créer le Line-In mais le supprimer de la bibliothèque de glisser. |
 
-> **Où sont les canaux d'entrée ?** Cet éditeur rapide reste
-> volontairement épuré — le sélecteur **Canaux d'entrée** (et la
-> priorité / le tableau de gestion complet) vit dans l'éditeur
-> complet sous **Settings → Local Machine → Line-In Sources** ; le
-> dialogue y renvoie. Un Line-In créé ici capture les canaux 1/2
-> jusqu'à ce que vous choisissiez une autre paire dans l'éditeur
-> complet.
+> **Un seul éditeur depuis le 17/09/2026.** Ce dialogue est
+> l'éditeur Line-In complet : il choisit aussi les **Channels**
+> (une option par paire stéréo du périphérique, puis chaque canal
+> mono) et porte l'interrupteur **Enabled**.  L'ancienne section
+> sous Settings → Local Machine n'existe plus.
 
 ### Interfaces multicanal : un Line-In par studio
 
@@ -99,7 +97,7 @@ Si l'interface audio de la station a plus de deux entrées (p. ex.
 un Tascam US-16x08 à 16 entrées avec plusieurs studios câblés),
 créez **un Line-In par studio** — même **Périphérique**, mais des
 **Canaux d'entrée** différents (choisis sous **Settings → Local
-Machine → Line-In Sources**) :
+champ **Channels** du dialogue) :
 
 - `Studio A` → Périphérique `US-16x08`, Canaux `Stereo 1/2`
 - `Studio B` → Périphérique `US-16x08`, Canaux `Stereo 5/6`

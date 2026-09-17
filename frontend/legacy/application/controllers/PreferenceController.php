@@ -845,13 +845,9 @@ class PreferenceController extends Zend_Controller_Action
             Assets::url('js/airtime/preferences/soundcardsetting.js'),
             'text/javascript'
         );
-        // RASTATIME 2026-08-31 — the Line-In sources section (shared
-        // partial linein/_sources.phtml) is embedded on this page now;
-        // its table + dialog logic lives in linein.js.
-        $this->view->headScript()->appendFile(
-            Assets::url('js/airtime/linein/linein.js'),
-            'text/javascript'
-        );
+        // RASTATIME 2026-09-17 — the Line-In sources section (and its
+        // linein.js) left this page; the Library dialog is the one
+        // line-in editor now.
     }
 
     /**

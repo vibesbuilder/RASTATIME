@@ -93,7 +93,7 @@ Line-In Library → **+ New**.
    ├──────────────────────────────────────────────────────────────┤
    │   Name:           [                       ]                  │
    │   Device:         [Select a device... ▾]                     │
-   │     Input channels are chosen in Settings → Local Machine    │
+   │   Channels:       [Stereo 1/2 ▾]                             │
    │   Default Length: [10m 00s   ]    (use 00s for infinite)     │
    │  ☑  Enabled                                                  │
    ├──────────────────────────────────────────────────────────────┤
@@ -108,20 +108,18 @@ Line-In Library → **+ New**.
 | **Default Length** | Required. Format `HHh MMm SSs` (the same parser as Webstreams). For "play until told to stop" use `0h 0m 0s` (displays as `∞`). |
 | **Enabled** | Defaults to on. Untick to create the Line-In but suppress it from the drag library. |
 
-> **Where are the input channels?** This quick editor deliberately
-> stays lean — the **Input Channels** picker (and the Priority /
-> full management table) lives in the full editor under
-> **Settings → Local Machine → Line-In Sources**; the dialog links
-> there. A Line-In created here captures channels 1/2 until you pick
-> a different pair in the full editor.
+> **One editor since 2026-09-17.** This dialog is the complete
+> Line-In editor: it also picks the **Channels** (one option per
+> stereo pair of the device, then every mono channel) and carries
+> the **Enabled** toggle.  The former section under Settings →
+> Local Machine is gone.
 
 ### Multichannel interfaces: one Line-In per studio
 
 If the station's audio interface has more than two inputs (e.g. a
 16-input Tascam US-16x08 with several studios wired to it), create
-**one Line-In per studio** — same **Device**, different **Input
-Channels** (picked in **Settings → Local Machine → Line-In
-Sources**):
+**one Line-In per studio** — same **Device**, different
+**Channels** (picked right in the dialog):
 
 - `Studio A` → Device `US-16x08`, Input Channels `Stereo 1/2`
 - `Studio B` → Device `US-16x08`, Input Channels `Stereo 5/6`

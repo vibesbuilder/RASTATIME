@@ -269,13 +269,11 @@ OS — Windows lo sigue viendo.
 ### Del dispositivo de entrada al Line-In nombrado
 
 Para usar un dispositivo como fuente de planificación, cree
-un Line-In nombrado en la sección **Line-In Sources** de
-esta misma página (encima de Import Folder desde el
-2026-08-31) — ese editor completo también elige los
-**canales de entrada** (par estéreo o mono) en interfaces
-multicanal. Además existe una creación rápida sencilla en la
-biblioteca bajo **Line Inputs → + Nuevo** (canales 1/2 por
-defecto). Vea [Line-In](./LINE_IN.md).
+un Line-In nombrado en la biblioteca bajo **Line Inputs → +
+Nuevo** — desde el 17/09/2026 ese diálogo es el único editor
+completo (nombre, dispositivo, canales, habilitado); la
+antigua sección Line-In Sources de esta página ya no existe.
+Vea [Line-In](./LINE_IN.md).
 
 ---
 

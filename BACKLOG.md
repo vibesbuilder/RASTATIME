@@ -41,6 +41,24 @@ festgelegt.  Jeder Punkt bekommt vor Implementierung die
 
 ## 🎯 Aktive Backlog-Items (warten auf Operator-Go)
 
+### 🟡 Benutzergruppen-Audit: Wer darf was? (Operator 2026-09-17)
+
+**Anlass:** Die Rechte-Prüfung steht aus — vor allem für die neuen
+Features.  Zu klären, je Rolle (Admin / Programm-Manager / DJ / Gast):
+- Settings → Backup (Ordner, Auto-Backup, Download der ZIPs mit
+  Config-Passwörtern!) — heute Controller-ACL `preference` wie alle
+  Settings-Seiten.
+- Import vom FTP-Server (Zugangsdaten!) + Import-Ordner-Pfad.
+- Media Library Location (Umzugs-Job!).
+- Line-In-Editor nach der Konsolidierung 2026-09-17: Kanäle/Aktiv kann
+  jetzt jeder mit Line-Inputs-Zugriff ändern (vorher Admin-Sektion) —
+  bewusste Entscheidung auf der Ein-Personen-Instanz, beim Audit
+  wieder anfassen.
+- Podcasts, Widgets-Konfiguration, Restart-Aktionen.
+**Vorgehen bei Go:** Ist-Matrix aus ACL/Controller-Ressourcen erheben,
+Soll-Matrix mit dem Operator festlegen, Lücken schließen, Manual
+USERS_AND_ROLES aktualisieren.  Aufwand grob 1-2 Tage.
+
 > **Leitlinie (Operator, 2026-09-04):** *„Ich möchte so weit wie möglich
 > einen Seamless-Mix beim Wechseln zwischen verschiedenen Inputs
 > erreichen."*  Gilt für alle Übergänge File ↔ Webstream ↔ Line-In.

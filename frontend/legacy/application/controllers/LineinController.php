@@ -49,14 +49,15 @@ class LineinController extends Zend_Controller_Action
     // -------------------------------------------------------------------------
 
     /**
-     * GET /linein — redirects to Settings → Local Machine, where the
-     * Line-In sources section lives since 2026-08-31 (the standalone
-     * page had no Settings menu entry and was undiscoverable; operator
-     * request).  Kept as a route so old deep links stay functional.
+     * GET /linein — redirects to the Dashboard, where the Library's
+     * Line Inputs view and its dialog are the one line-in editor since
+     * 2026-09-17 (before that: Settings → Local Machine section since
+     * 2026-08-31; standalone page before).  Kept as a route so old
+     * deep links stay functional.
      */
     public function indexAction(): void
     {
-        $this->_redirect('preference/local-machine');
+        $this->_redirect('showbuilder');
     }
 
     // -------------------------------------------------------------------------
@@ -255,6 +256,15 @@ class LineinController extends Zend_Controller_Action
         $dev     = trim($request->getParam('device_id', ''));
         $devName = trim($request->getParam('device_name', ''));
         $lenStr  = trim($request->getParam('length', '00:30:00'));
+        // RASTATIME 2026-09-17 (consolidation) - channels + enabled come
+        // from the dialog now.  channels = comma-separated 0-based ints
+        // ("0,1"); anything malformed falls back to stereo 1/2.
+        $chanStr = trim($request->getParam('channels', ''));
+        $mapping = [0, 1];
+        if ($chanStr !== '' && preg_match('/^\d+(,\d+)*$/', $chanStr)) {
+            $mapping = array_map('intval', explode(',', $chanStr));
+        }
+        $enabled = $request->getParam('enabled', 'true') !== 'false';
 
         // Parse HH:MM:SS into seconds.  Empty / malformed → null
         // (= "use default at consumption time").
@@ -271,17 +281,17 @@ class LineinController extends Zend_Controller_Action
         // a reboot.  Older clients that don't send it pass "" which
         // makes the fallback a no-op (preflight behaves as before).
         $payload = [
-            'name'           => $name,
-            'device_id'      => $dev,
-            'device_name'    => $devName,
-            'description'    => $desc,
-            'length_seconds' => $lenSec,
+            'name'            => $name,
+            'device_id'       => $dev,
+            'device_name'     => $devName,
+            'description'     => $desc,
+            'length_seconds'  => $lenSec,
+            'channel_mapping' => $mapping,
+            'enabled'         => $enabled,
         ];
 
         if ($id === '') {
             // CREATE
-            $payload['channel_mapping'] = [0, 1];
-            $payload['enabled']         = true;
             $payload['priority']        = 0;
             $method = 'POST';
             $url    = self::API_BASE . 'api/v2/audio/linein';

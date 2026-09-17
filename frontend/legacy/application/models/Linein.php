@@ -100,4 +100,11 @@ class Application_Model_Linein
         $m = $this->data['channel_mapping'] ?? [0, 1];
         return is_array($m) ? $m : [0, 1];
     }
+
+    // RASTATIME 2026-09-17 (line-in consolidation) - the library dialog
+    // is the one editor now and needs the enabled flag.
+    public function getEnabled(): bool
+    {
+        return (bool) ($this->data['enabled'] ?? true);
+    }
 }
