@@ -72,10 +72,10 @@ class ScheduleController extends Zend_Controller_Action
         // set offset to ensure it loads last
         $this->view->headScript()->offsetSetFile(90, Assets::url('js/airtime/schedule/full-calendar-functions.js'), 'text/javascript');
 
-        $this->view->headScript()->appendFile(Assets::url('js/fullcalendar/fullcalendar.js'), 'text/javascript');
-        // RASTATIME 2026-06-01 (JS-modernization stage 2): FullCalendar 6 (vendored,
-        // vanilla) + the FC6 Schedule integration, enabled with ?fc6=1.  FC1.5
-        // above stays the default fallback until FC6 is fully verified.
+        // RASTATIME 2026-09-17 (JS-modernization): FullCalendar 6 (vendored,
+        // vanilla) is the only Schedule calendar - the patched FC1.5 fork and
+        // its ?fc6 rollback flag were removed after the operator's maturity
+        // signal (FC6 default since 2026-06-01; fork removed 2026-09-17).
         $this->view->headScript()->appendFile(Assets::url('js/libs/fullcalendar/index.global.min.js'), 'text/javascript');
         $this->view->headScript()->appendFile(Assets::url('js/libs/fullcalendar/locales-all.global.min.js'), 'text/javascript');
         $this->view->headScript()->offsetSetFile(110, Assets::url('js/airtime/schedule/schedule-fc6.js'), 'text/javascript');
@@ -92,11 +92,8 @@ class ScheduleController extends Zend_Controller_Action
         $this->view->headScript()->appendFile(Assets::url('js/blockui/jquery.blockUI.js'), 'text/javascript');
 
         $this->view->headLink()->appendStylesheet(Assets::url('css/jquery.ui.timepicker.css'));
-        $this->view->headLink()->appendStylesheet(Assets::url('css/fullcalendar.css'));
-        // RASTATIME 2026-06-01 (JS-modernization stage 2): FullCalendar 6 dark
-        // theme for the Schedule calendar.  Loaded after fullcalendar.css so it
-        // wins any shared-class bleed; scoped to FC6-specific classes, so it is
-        // a no-op for the FC1.5 rollback (?fc6=0).
+        // RASTATIME 2026-09-17: schedule-fc6.css is the FC6 dark theme; the
+        // FC1.5 fullcalendar.css went with the fork.
         $this->view->headLink()->appendStylesheet(Assets::url('css/schedule-fc6.css'));
         $this->view->headLink()->appendStylesheet(Assets::url('css/colorpicker/css/colorpicker.css'));
         $this->view->headLink()->appendStylesheet(Assets::url('css/add-show.css'));

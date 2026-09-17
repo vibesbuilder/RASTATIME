@@ -298,90 +298,17 @@ function getTimeIntervalPreference(data) {
 function createFullCalendar(data) {
   serverTimezoneOffset = data.calendarInit.timezoneOffset;
 
-  // RASTATIME 2026-06-01 (JS-modernization stage 2): FullCalendar 6 is the
-  // DEFAULT Schedule calendar (buildScheduleFc6() in schedule-fc6.js).  The
-  // FC1.5 path below is the rollback (?fc6=0) and the safety net if
-  // schedule-fc6.js failed to load, until the fork is removed (see BACKLOG).
-  if (window.SCHEDULE_USE_FC6 && typeof buildScheduleFc6 === "function") {
-    buildScheduleFc6(data);
+  // RASTATIME 2026-09-17 (JS-modernization): the FC1.5 fork is gone -
+  // FullCalendar 6 (buildScheduleFc6() in schedule-fc6.js) is the only
+  // Schedule calendar.  The guard only reports a broken deployment
+  // (schedule-fc6.js failed to load) instead of silently doing nothing.
+  if (typeof buildScheduleFc6 !== "function") {
+    console.error(
+      "schedule-fc6.js did not load - the Schedule calendar cannot start.",
+    );
     return;
   }
-
-  var mainHeight = $(window).height() - 200 - 35;
-
-  $("#schedule_calendar").fullCalendar({
-    header: {
-      left: "prev, next, today",
-      center: "title",
-      right: "agendaDay, agendaWeek, month",
-    },
-    defaultView: getTimeScalePreference(data),
-    slotMinutes: getTimeIntervalPreference(data),
-    firstDay: data.calendarInit.weekStartDay,
-    editable: false,
-    allDaySlot: false,
-    axisFormat: "H:mm",
-    timeFormat: {
-      agenda: "H:mm{ - H:mm}",
-      month: "H:mm{ - H:mm}",
-    },
-    //i18n_months is in common.js
-    monthNames: i18n_months,
-    monthNamesShort: [
-      $.i18n._("Jan"),
-      $.i18n._("Feb"),
-      $.i18n._("Mar"),
-      $.i18n._("Apr"),
-      $.i18n._("May"),
-      $.i18n._("Jun"),
-      $.i18n._("Jul"),
-      $.i18n._("Aug"),
-      $.i18n._("Sep"),
-      $.i18n._("Oct"),
-      $.i18n._("Nov"),
-      $.i18n._("Dec"),
-    ],
-    buttonText: {
-      today: $.i18n._("Today"),
-      month: $.i18n._("Month"),
-      week: $.i18n._("Week"),
-      day: $.i18n._("Day"),
-    },
-    dayNames: [
-      $.i18n._("Sunday"),
-      $.i18n._("Monday"),
-      $.i18n._("Tuesday"),
-      $.i18n._("Wednesday"),
-      $.i18n._("Thursday"),
-      $.i18n._("Friday"),
-      $.i18n._("Saturday"),
-    ],
-    dayNamesShort: [
-      $.i18n._("Sun"),
-      $.i18n._("Mon"),
-      $.i18n._("Tue"),
-      $.i18n._("Wed"),
-      $.i18n._("Thu"),
-      $.i18n._("Fri"),
-      $.i18n._("Sat"),
-    ],
-    contentHeight: mainHeight,
-    theme: true,
-    lazyFetching: true,
-    serverTimestamp: parseInt(data.calendarInit.timestamp, 10),
-    serverTimezoneOffset: parseInt(data.calendarInit.timezoneOffset, 10),
-
-    events: getFullCalendarEvents,
-
-    //callbacks (in full-calendar-functions.js)
-    viewDisplay: viewDisplay,
-    dayClick: dayClick,
-    eventRender: eventRender,
-    eventAfterRender: eventAfterRender,
-    eventDrop: eventDrop,
-    eventResize: eventResize,
-    windowResize: windowResize,
-  });
+  buildScheduleFc6(data);
 }
 
 //Alert the error and reload the page

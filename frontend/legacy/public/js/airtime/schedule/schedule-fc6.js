@@ -503,8 +503,7 @@ function buildScheduleFc6(data) {
   scheduleFc6.render();
 }
 
-// RASTATIME 2026-06-01 (JS-modernization stage 2): FullCalendar 6 is now the
-// DEFAULT Schedule calendar.  FC1.5 stays reachable as a rollback via ?fc6=0
-// (and is the safety net in createFullCalendar() if this file fails to load),
-// until the fork is removed after a bedding-in period in live (see BACKLOG).
-window.SCHEDULE_USE_FC6 = !/[?&]fc6=0/.test(window.location.search);
+// RASTATIME 2026-09-17 (JS-modernization): the FC1.5 fork and its ?fc6
+// rollback are gone - FC6 is the only engine.  The marker stays because
+// shared helpers (windowResize, scheduleCalRefetch, add-show) branch on it.
+window.SCHEDULE_USE_FC6 = true;
