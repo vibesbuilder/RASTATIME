@@ -203,7 +203,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **Import-Ordner: halb geschriebene Dateien werden nicht mehr importiert
-  (2026-09-17, Operator-Go nach der Netz-/FTP-Quellen-Evaluierung)** —
+  (2026-09-17, Operator-Go nach der Netz-/FTP-Quellen-Evaluierung,
+  `67db437`)** —
   Der 5-Minuten-Scan importierte, was gerade da war; eine Datei mitten
   in einer langsamen Kopie oder einem FTP-Upload wäre abgeschnitten
   verschoben und bei einem Fehlschlag samt Quelle GELÖSCHT worden.

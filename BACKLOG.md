@@ -1370,7 +1370,7 @@ danach 1:1 in die Docs übernehmen.
 
 ### ✅ Import-Ordner: Ruhe-Prüfung vor dem Import (evaluiert + umgesetzt 2026-09-17)
 
-**Umgesetzt 2026-09-17 (Operator-Go; Commit-Hash im CHANGELOG „Fixed"):**
+**Umgesetzt 2026-09-17 (Operator-Go; `67db437`; Details im CHANGELOG „Fixed"):**
 `QUIET_SECONDS = 60` in `LocalImportScanTask` — importiert wird nur, was
 60 s unverändert ist; Statuszeile zählt „settling".  FTP-Server und
 FTP-Polling: Operator 2026-09-17 „eventuell später" (💡 unten bleibt).
