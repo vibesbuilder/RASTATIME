@@ -227,7 +227,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **Line-In komplett im Library-Dialog — die Local-Machine-Sektion ist weg
-  (2026-09-17, Operator-Go)** — Es gab EINE Datenhaltung, aber zwei
+  (2026-09-17, Operator-Go, `e836c26`)** — Es gab EINE Datenhaltung, aber zwei
   Editoren: schlanker Dialog unter Line Inputs (Name, Gerät) und voller
   Editor unter Settings → Local Machine (zusätzlich Kanalwahl, Aktiv).
   Jetzt ist der Library-Dialog der eine vollständige Editor: Kanal-Picker
