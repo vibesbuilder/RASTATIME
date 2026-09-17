@@ -11,11 +11,26 @@
  * styles.css overriding it, but jQuery UI 1.13 exposes more of the raw redmond
  * blue (dialog titlebars, DataTables toolbars, buttons).  Recolor the headers +
  * buttons to the LibreTime gray (flat colors, dropping the blue gloss-wave /
- * glass gradient images).  Datepicker day cells (.ui-state-default, not
- * .ui-button) are left to the theme.  Appended here so it wins by cascade order.
+ * glass gradient images).  Appended here so it wins by cascade order.
+ * 2026-09-17 polish: the datepicker joins the dark recolor (its day
+ * cells were the last redmond-blue remnant), the widget-content border
+ * loses the blue, and the dialog close button gets a visible white X -
+ * the 1.13 dialog leaves it as a bare unstyled <button> here.
  * ==========================================================================*/
 .ui-widget-header{background:#5a5a5a none;border:1px solid #3a3a3a;color:#fff}
 .ui-widget-header a{color:#fff}
 .ui-button,.ui-widget-content .ui-button,.ui-widget-header .ui-button{background:#565656 none;border:1px solid #2f2f2f;color:#fff}
 .ui-button:hover,.ui-button:focus,.ui-widget-content .ui-button:hover,.ui-widget-header .ui-button:hover{background:#6a6a6a none;border:1px solid #3a3a3a;color:#fff}
 .ui-button:active,.ui-button.ui-state-active{background:#454545 none;border:1px solid #2a2a2a;color:#fff}
+.ui-widget-content{border-color:#4a4a4a}
+.ui-dialog .ui-dialog-titlebar-close{position:absolute;right:.4em;top:50%;width:21px;height:21px;margin:-10px 0 0;padding:0;background:#565656;border:1px solid #2f2f2f;border-radius:3px;cursor:pointer;overflow:hidden}
+.ui-dialog .ui-dialog-titlebar-close::before{content:"✕";color:#fff;font-size:11px;line-height:19px;display:block;text-align:center}
+.ui-dialog .ui-dialog-titlebar-close:hover{background:#6a6a6a}
+.ui-dialog .ui-dialog-titlebar-close .ui-icon,.ui-dialog .ui-dialog-titlebar-close .ui-button-icon-space{display:none}
+.ui-datepicker{background:#3a3a3a;border:1px solid #2a2a2a;color:#ddd}
+.ui-datepicker th{color:#ddd}
+.ui-datepicker td span.ui-state-default,.ui-datepicker td a.ui-state-default{background:#565656 none;border:1px solid #2f2f2f;color:#eee;text-align:center}
+.ui-datepicker td a.ui-state-hover{background:#6a6a6a none;border:1px solid #3a3a3a;color:#fff}
+.ui-datepicker td a.ui-state-highlight{background:#7a6432 none;border:1px solid #96793a;color:#fff}
+.ui-datepicker td a.ui-state-active{background:#ff5d1a none;border:1px solid #c74812;color:#fff}
+.ui-datepicker .ui-datepicker-unselectable .ui-state-default{background:#454545 none;border:1px solid #383838;color:#888}
