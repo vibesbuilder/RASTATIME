@@ -1387,8 +1387,7 @@ schlank (Browser + Anleitung, kein 1-Klick-Restore).  **Live abgenommen
 + Manifest vollständig.  **Offen: Stufe 2**
 (Media serverseitig per robocopy-Spiegel + Verify) **und Stufe 3**
 (Auto-Backup-Sektion + `backup_run`-Command + Aufbewahrung, Restore-
-Sektion als Backup-Browser).  **Stufe 2 gebaut 2026-09-17** (Commit-Hash
-im CHANGELOG „Added" 2026-09-17): Option „Include media library",
+Sektion als Backup-Browser).  **Stufe 2 gebaut 2026-09-17** (`72e13c7`): Option „Include media library",
 robocopy-/MIR-Spiegel nach `<Ordner>/media` mit Verify, Phasen +
 Fortschritt + Cancel; Tests mit echtem robocopy inkl. Purge-Nachweis.
 
