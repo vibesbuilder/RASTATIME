@@ -31,7 +31,7 @@ festgelegt.  Jeder Punkt bekommt vor Implementierung die
 | 9 | ✅ Recording-Loss bei Latency-Catchup | **CLOSED 2026-09-16** — Beobachtungsfrist bis 15.09. sauber: Catchups seit 06.09. einstellig pro Tag, seit 13.09. keine; 24/7-Stundendateien vom 16.09. exakt 3600 s (Belege im Item) |
 | 10 | ✅ Backup/Restore via UI | **DONE 2026-09-17** — Stufe 1 (Manual, abgenommen 10:20), Stufe 2 (Media-Spiegel, abgenommen 15:31), Stufe 3 (Auto via Task Scheduler + Restore-Hinweis); Aufgaben-Registrierung durch den Operator offen — Details im Item |
 | 11 | ✅ Pypo-NSSM-Resilience | **CLOSED 2026-09-16** — Beobachtungsfrist bis 15.09. sauber: seit 09.09. 20 PLAYOUT-Starts gegen 20 angeforderte Shutdowns, kein ungeplanter Neustart (Belege im Item) |
-| 12 | Widgets | Aktive Items (in Arbeit) |
+| 12 | ✅ Widgets | **DONE 2026-09-18** — drei Wellen + Player v2 (letztes Upstream-Widget, Wellen-Stil); alle 15 Embed-Endpoints live verifiziert; Hör-Abnahme Player beim Operator |
 | 13 | ✅ JavaScript-Stack-Modernisierung | **Kern DONE 2026-09-17** — Stufen 0-2 komplett, Migrate-Netz + FC1.5-Fork entfernt, UI-Politur; offen nur DataTables 2.0 (Entscheidung später, Operator 2026-09-17) + optionale Build-Pipeline — Details im Item |
 | 14 | **Testplan erstellen** | neu 2026-09-02 — siehe unten |
 | 15 | ✅ Legacy-mpv-Code löschen | **DONE 2026-09-10** — Liquidsoap ist die einzige Engine, DJ-Kick per Harbor-Telnet (`2590cf2`) |
@@ -2234,7 +2234,18 @@ in Bus-metadata gepumpt werden. Aufwand: ~50-100 LoC Template + Test.
 **Welle 3 (~1 Woche):**
 - ✅ **DONE** Track History Widget (`/embed/track-history`) für letzte 7 Tage mit HTML5-Date-Picker + Now-Button + Pagesize-Dropdown (10/20/50/100), Time-Filter, Load-More-Pagination, Klick → Modal mit Show-Kontext + "Played in the show:"-Label. Webstream-Inklusion via LEFT JOIN + Metadata-COALESCE. Source: `cc_playout_history` LEFT JOIN `cc_files` LEFT JOIN `cc_show_instances → cc_show` mit Fallback auf `cc_playout_history_metadata`. Exclude-Short-Tracks Filter (Preference + URL-Override). Settings-Submenu **Widgets → Track History**.
 
-**Aufwand gesamt:** ~1700 LoC + ~400 LoC Doku.
+**Nachwelle (2026-09-18, Operator-Go Option A):**
+- ✅ **DONE** Stream-Player-Widget v2 — das letzte Upstream-Widget
+  (2015er jQuery-Player) im Wellen-Stil neu gebaut; Details im
+  CHANGELOG „Changed" 2026-09-18.  Damit ist der öffentliche Bereich
+  jQuery-frei und Punkt 12 der Arbeitsreihenfolge komplett.
+- 💡 Falls der Stations-Podcast öffentlich geschaltet wird
+  (displayRssTab): Radio-Page braucht einen seiteneigenen Podcast-
+  Tab-Link — der alte In-Player-Knopf (iframe-Injektion) wurde mit
+  dem v2-Player entfernt.
+
+**Aufwand gesamt:** ~1700 LoC + ~400 LoC Doku (Wellen 1-3) + ~700 LoC
+Player v2.
 
 ---
 

@@ -1,12 +1,70 @@
-<div id="player-widget" class="ui-widget prefpanel simple-formblock embed-player-form clearfix padded-strong ">
+<?php
+// RASTATIME 2026-09-18 — Settings page for the Stream Player Widget v2
+// (work-order point 12).  Same shape as the other widget settings
+// pages: description, live preview, ready-made embed-code snippets.
+// No form: the player has no server-side preference — everything is a
+// URL parameter, and the metadata labels are shared with the
+// Now-Playing widgets (Widgets → Current Show/Track).
+$publicUrl = rtrim($this->publicUrl, '/');
+$previewUrl = $publicUrl . '/embed/player?theme=dark&title=' . rawurlencode($this->stationName);
+$embedCard = $publicUrl . '/embed/player?title=' . rawurlencode($this->stationName);
+$embedBar  = $publicUrl . '/embed/player?layout=bar';
+?>
+<div id="widget-player"
+     class="prefpanel ui-widget simple-formblock clearfix padded-strong"
+     style="max-width: 800px;">
 
-    <?php $baseUrl = Config::getBasePath(); ?>
+    <h2 style="text-align:center"><?php echo _("Stream Player Widget"); ?></h2>
+    <div style="clear:both"></div>
 
-    <form method="post" id="player_form" enctype="multipart/form-data">
-        <h2 style="text-align:center"><?php echo _("Player") ?></h2>
-        <div style="clear:both"></div>
-        <?php echo $this->player_error_msg; ?>
-        <?php echo $this->player_form; ?>
+    <p style="margin-bottom: 1.5em; color: #666;">
+        <?php echo _("Listen-live button for your station's public "
+            . "homepage.  Plays the streams enabled under Settings "
+            . "&rarr; Streams: the widget picks the first stream the "
+            . "visitor's browser can decode (mobile streams first on "
+            . "small screens) and falls back to the next one if a "
+            . "stream is down.  The now-playing line and the Next line "
+            . "update themselves; their empty-state wording is shared "
+            . "with the Now-Playing widgets (Widgets &rarr; Current "
+            . "Show/Track).");
+        ?>
+    </p>
 
-    </form>
+    <!-- ───── Preview (dark backdrop to match the admin theme) ───── -->
+    <h3 style="margin-top: 1.5em;"><?php echo _("Preview"); ?></h3>
+    <fieldset class="padded">
+        <iframe src="<?php echo htmlspecialchars($previewUrl, ENT_QUOTES, 'UTF-8'); ?>"
+                width="340" height="170" frameborder="0" scrolling="no"
+                style="border: 1px solid #444; background: #222; padding: 10px;"></iframe>
+    </fieldset>
+
+    <!-- ───── Embed-code block ───── -->
+    <h3 style="margin-top: 1.5em;"><?php echo _("Embeddable code"); ?></h3>
+    <fieldset class="padded">
+
+        <label style="display: block; margin-top: 0.8em;"><strong>
+            <?php echo _("Card (default)"); ?>:
+        </strong></label>
+        <textarea style="width: 98%; font-family: monospace;" rows="2" readonly="readonly"
+        ><iframe src="<?php echo htmlspecialchars($embedCard, ENT_QUOTES, 'UTF-8'); ?>" width="320" height="170" frameborder="0" scrolling="no" style="border: 0; background: transparent;"></iframe></textarea>
+
+        <label style="display: block; margin-top: 0.8em;"><strong>
+            <?php echo _("Bottom bar (full width, e.g. fixed at the page bottom)"); ?>:
+        </strong></label>
+        <textarea style="width: 98%; font-family: monospace;" rows="2" readonly="readonly"
+        ><iframe src="<?php echo htmlspecialchars($embedBar, ENT_QUOTES, 'UTF-8'); ?>" width="100%" height="56" frameborder="0" scrolling="no" style="border: 0; bottom: 0; left: 0; right: 0; position: fixed;"></iframe></textarea>
+
+        <p style="margin-top: 1em; color: #666;">
+            <?php echo _("Optional URL parameters (first one starts "
+                . "with <code>?</code>, every additional one is joined "
+                . "with <code>&amp;</code>): "); ?>
+            <code>title=Station&#8288;name</code> (<?php echo _("header text; without it the header row is hidden"); ?>),
+            <code>theme=auto|dark|light</code>,
+            <code>layout=card|bar</code>,
+            <code>stream=auto|&lt;name&gt;</code> (<?php echo _("pin one configured stream instead of the automatic pick"); ?>),
+            <code>cache=10..3600</code> (<?php echo _("metadata poll cache in seconds"); ?>).
+            <?php echo _("The old <code>style=premium</code> parameter keeps working and maps to the bottom bar."); ?>
+        </p>
+    </fieldset>
+
 </div>

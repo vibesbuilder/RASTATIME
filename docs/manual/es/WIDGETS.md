@@ -32,7 +32,7 @@ un sitio externo.
 | **Weekly Schedule** | `/embed/weekly-program` | Widget de pestañas de siete días. Cabecera con ◀ / ▶ navegación semanal + etiqueta de rango de fechas; pestañas de día; lista de filas por pestaña con HH:MM – HH:MM + nombre del programa (enlace). Imagen de fondo opcional vía `?bg=URL`. |
 | **Multi-View Schedule** | `/embed/multi-view-schedule` | Widget calendario basado en FullCalendar 6 (alojado localmente). Vistas Day / 2-Day / Week conmutables vía botones in-widget o `?view=`. Slots de programa coloreados desde `cc_show.background_color`. Clic → modal con descripción + botón URL. Auto-scroll a la línea now. |
 | **Track History** | `/embed/track-history` | Registro de reproducción de pistas (últimos 7 días). Date-picker HTML5 + time-picker + botón Now + dropdown pagesize (10/20/50/100). Filas "HH:MM - HH:MM Artista - Título"; clic → modal con contexto de programa + enlace URL. Botón Load-more con tope duro a 1000 filas. |
-| **Audio Player** | `/embed/player` | (Existente) Reproductor de audio HTML5 integrado para el stream público. |
+| **Stream Player** | `/embed/player` | Botón de escucha en directo con líneas now-playing / next y control de volumen. Layouts tarjeta y barra inferior a ancho completo. Elige el primer stream decodificable por el navegador y cae al siguiente si uno falla. |
 
 Más widgets están planificados (vea [BACKLOG.md](../../../BACKLOG.md)).
 
@@ -535,6 +535,44 @@ de contexto se oculta.
 **Configuración → Widgets → Track History** aloja la
 etiqueta de estado vacío, vista previa en vivo, y dos
 snippets listos-para-usar (pagesize 10 + 50).
+
+---
+
+## Widget Stream Player (`/embed/player`)
+
+> Reconstruido el 18/09/2026 en el estilo de las olas — el
+> reproductor jQuery de 2015 desapareció.  Las URL de inserción
+> antiguas siguen funcionando sin cambios.
+
+Botón de escucha en directo para la página pública.  Reproduce los
+streams habilitados en **Settings → Streams**: el widget prefiere
+streams móviles en pantallas pequeñas, conserva solo los formatos
+decodificables por el navegador del visitante y cae automáticamente
+al siguiente stream si uno falla.  Las líneas now-playing, programa
+y **Next** se refrescan por el endpoint de datos de los widgets; un
+host Icecast configurado como localhost se reescribe al host de la
+página para oyentes remotos.
+
+Dos layouts:
+
+* **card** (por defecto) — panel compacto, con control de volumen
+  (recordado por navegador).
+* **bar** — barra de 56 px a ancho completo, pensada fija al pie de
+  la página (la portada de la emisora la usa).
+
+Parámetros de URL (todos opcionales):
+
+| Parámetro | Valores | Significado |
+|---|---|---|
+| `title` | texto | Texto de cabecera; sin él, la cabecera se oculta. |
+| `theme` | `auto` / `dark` / `light` | El mismo theming de todos los widgets. |
+| `layout` | `card` / `bar` | Layout; el antiguo `style=premium` sigue mapeando a `bar`. |
+| `stream` | `auto` / nombre | Fijar un stream configurado en lugar de la elección automática. |
+| `cache` | `10`..`3600` | Caché del poll de metadatos en segundos. |
+
+Los códigos de inserción con vista previa están en **Settings →
+Widgets → Player**.  Los textos de estado vacío se comparten con
+los widgets Now-Playing (sección 9).
 
 ---
 

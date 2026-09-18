@@ -384,42 +384,16 @@
 
 
 
-        $("#player_iframe").load(function() {
-
-            $("#player_iframe").contents().find('.bottom_bar').append("<div class='flex_spacer' data-tab='tab-1'></div>");
-            $("#player_iframe").contents().find('.bottom_bar').append("<div class='schedule_btn button current' data-tab='tab-1'></div>");
-            // RASTATIME 2026-05-24 — "About" button removed per
-            // operator request.  The matching <div id="tab-2"
-            // class="about_us tab_content"> block is also gone
-            // (see further up in this file).
-
-            <?php
-            // Is there a better way to do this?
-            if ($this->displayRssTab) { ?>
-                $("#player_iframe").contents().find('.bottom_bar').append("<div class='station_rss_btn button' data-tab='tab-4'></div>");
-            <?php
-            }
-            ?>
-
-
-            $("#player_iframe").contents().find('.bottom_bar .button').click(function() {
-                var tab_id = $(this).attr('data-tab');
-
-                $("#player_iframe").contents().find('.bottom_bar .button').removeClass('current');
-                $('.tab_content').removeClass('current');
-
-                window.scrollTo(0, 0);
-                $(this).addClass('current');
-                $("#" + tab_id).addClass('current');
-            });
-
-            //turn off jplayer if it's playing and someone clicks to play the player bar
-            $("#player_iframe").contents().find('.play').click(function() {
-                if ($('.jp-play').is(':hidden')) {
-                    $('.jp-pause').click();
-                }
-            });
-        });
+        // RASTATIME 2026-09-18 (player widget v2) — the old block here
+        // reached INTO the player iframe (.contents().find('.bottom_bar'))
+        // to inject page-tab buttons (schedule / optional RSS) and to
+        // stop a jPlayer on bar-play.  Removed: jQuery 3 dropped
+        // .load(fn) (the block has been throwing since the migrate net
+        // left, 2026-09-17), the v2 player has no .bottom_bar to inject
+        // into, and the jPlayer is long gone.  If the station podcast
+        // ever goes public again (displayRssTab), the podcast tab needs
+        // a PAGE-level nav link instead of an in-player button — see
+        // BACKLOG.
 
         // schedule widget tabs
         $('.tabs li').click(function() {

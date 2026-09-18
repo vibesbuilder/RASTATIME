@@ -21,12 +21,21 @@ class EmbedController extends Zend_Controller_Action
     }
 
     /**
-     * This is the action that is called to insert the player onto a web page.
-     * It passes all the js and css files to the view, as well as all the
-     * stream customization information.
+     * RASTATIME 2026-09-18 — Stream Player Widget v2 (work-order point
+     * 12, operator go): the last upstream widget rebuilt in the wave
+     * style.  The view (embed/player.phtml) is a self-contained vanilla
+     * iframe; this action only resolves the URL parameters into one
+     * JSON config blob.
      *
-     * The view for this action contains all the inline javascript needed to
-     * create the player.
+     * URL parameters (all optional; old embeds keep working):
+     *   stream = auto (default) | <name from Settings→Streams> | file
+     *   file_url / file_codec   - only with stream=file
+     *   title                   - header text; absent → header hidden
+     *   theme  = auto|dark|light   (np-theme-* pattern like all widgets)
+     *   layout = card|bar          (bar = the station-homepage bottom
+     *                               bar; the legacy style=premium
+     *                               parameter maps to it)
+     *   cache  = 10..3600          - forwarded to the metadata poll
      */
     public function playerAction()
     {
@@ -34,71 +43,84 @@ class EmbedController extends Zend_Controller_Action
 
         $request = $this->getRequest();
 
-        $this->view->playerhtml5_js = Assets::url('js/airtime/player/playerhtml5.js');
-        $this->view->jquery = Assets::url('js/libs/jquery-1.10.2.min.js');
-        $this->view->metadata_api_url = '/api/live-info';
-        $this->view->player_title = json_encode($this->view->escape($request->getParam('title')));
-        $this->view->jquery_i18n = Assets::url('js/i18n/jquery.i18n.js');
-
-        $styleParam = $request->getParam('style');
-        $player_style = isset($styleParam) ? $styleParam : 'basic';
-        if ($player_style == 'premium') {
-            $this->view->css = Assets::url('css/radio-page/premium_player.css');
-        } else {
-            $this->view->css = Assets::url('css/player.css');
+        // Theme, same validation as every other widget.
+        $theme = $request->getParam('theme', 'auto');
+        if (!in_array($theme, ['auto', 'dark', 'light'], true)) {
+            $theme = 'auto';
         }
-        $this->view->player_style = $player_style;
+        $this->view->themeClass = 'np-theme-' . $theme;
 
-        // RASTATIME 2026-09-18 (work-order point 12) - a bare /embed/player
-        // defaulted to NO mode at all: playerMode stayed empty and the
-        // template rendered `this.settings.url = ;` - a SyntaxError that
-        // killed the whole inline Html5Player definition.  Default to the
-        // auto queue, same as the Settings page's generated embed code.
+        // Layout; legacy ?style=premium (the pre-v2 bottom-bar skin,
+        // still embedded by the station homepage) maps to 'bar'.
+        $layout = $request->getParam('layout', '');
+        if (!in_array($layout, ['card', 'bar'], true)) {
+            $layout = $request->getParam('style') === 'premium' ? 'bar' : 'card';
+        }
+        $this->view->layout = $layout;
+
+        $title = $request->getParam('title');
+        $this->view->playerTitle = ($title === null || $title === '') ? null : $title;
+
+        // Metadata poll target — the widget-family JSON endpoint (no
+        // JSONP, no public-API gate).  ?cache=N is forwarded so the
+        // browser cache absorbs part of the poll traffic.
+        $dataUrl = Config::getBasePath() . 'embed/now-playing-data';
+        $cache = (int) $request->getParam('cache', 0);
+        if ($cache >= 10 && $cache <= 3600) {
+            $dataUrl .= '?cache=' . $cache;
+        }
+
         $stream = $request->getParam('stream', 'auto');
         $streamData = Application_Model_StreamSetting::getEnabledStreamData();
 
         // RASTATIME 2026-05-20 — normalise the stream-data ``mobile``
         // flag to a real bool.  Upstream stores it as the literal
-        // STRING `"false"` (because the cc_pref persistence layer
-        // serialises everything as strings), which is truthy in PHP
-        // — so the `if ($s['mobile']) { mobile-queue } else { desktop-
-        // queue }` branch below would silently route every stream
-        // into the mobile-only queue and leave the desktop player
-        // with an empty queue.  No URL rewriting here: the operator
-        // is expected to configure a publicly-reachable host in
-        // Settings → Streams (Icecast `host` field) for LAN /
-        // external embedding to work.
+        // STRING `"false"` (cc_pref serialises everything as strings),
+        // which is truthy in PHP and would route every stream into the
+        // mobile queue.  No URL rewriting here: a localhost host is
+        // rewritten client-side to the page host (embed/player.phtml).
         foreach ($streamData as &$_s) {
             $m = $_s['mobile'] ?? false;
             $_s['mobile'] = ($m === true || $m === 'true' || $m === '1' || $m === 1);
         }
         unset($_s);
 
-        $availableMobileStreams = [];
-        $availableDesktopStreams = [];
+        $cfg = [
+            'mode' => 'auto',
+            'streams' => ['desktop' => [], 'mobile' => []],
+            'url' => null,
+            'codec' => null,
+            'dataUrl' => $dataUrl,
+            'labels' => [
+                'next' => _('Next'),
+                'onAir' => _('On Air'),
+                'offAir' => _('Off Air'),
+                'offline' => _('Stream unavailable'),
+            ],
+        ];
 
-        if ($stream == 'auto') {
-            $this->view->playerMode = 'auto';
-            $this->view->streamURL = json_encode('');
+        if ($stream === 'file') {
+            $cfg['mode'] = 'file';
+            $cfg['url'] = (string) $request->getParam('file_url', '');
+            $cfg['codec'] = (string) $request->getParam('file_codec', '');
+        } elseif ($stream !== 'auto' && isset($streamData[$stream])) {
+            $cfg['mode'] = 'manual';
+            $cfg['url'] = $streamData[$stream]['url'];
+            $cfg['codec'] = $streamData[$stream]['codec'];
+        } else {
+            // auto (also the fallback for an unknown stream name — the
+            // pre-v2 player crashed on that; 2026-09-18 bare-URL fix
+            // folded in here).
             foreach ($streamData as $s) {
-                if ($s['mobile']) {
-                    array_push($availableMobileStreams, $s);
-                } else {
-                    array_push($availableDesktopStreams, $s);
-                }
+                $bucket = $s['mobile'] ? 'mobile' : 'desktop';
+                $cfg['streams'][$bucket][] = [
+                    'url' => $s['url'],
+                    'codec' => $s['codec'],
+                ];
             }
-        } elseif ($stream == 'file') {
-            $this->view->playerMode = 'file';
-            $this->view->streamURL = json_encode($request->getParam('file_url'));
-            $this->view->codec = $request->getParam('file_codec');
-        } elseif (!empty($stream)) {
-            $this->view->playerMode = 'manual';
-            $selectedStreamData = $streamData[$stream];
-            $this->view->streamURL = json_encode($selectedStreamData['url']);
-            $this->view->codec = $selectedStreamData['codec'];
         }
-        $this->view->availableMobileStreams = json_encode($availableMobileStreams);
-        $this->view->availableDesktopStreams = json_encode($availableDesktopStreams);
+
+        $this->view->playerConfigJson = json_encode($cfg, JSON_UNESCAPED_SLASHES);
     }
 
     /**

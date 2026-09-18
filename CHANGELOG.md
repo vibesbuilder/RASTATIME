@@ -226,6 +226,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Stream-Player-Widget v2 — das letzte Upstream-Widget im Wellen-Stil
+  neu gebaut (2026-09-18, Punkt 12, Operator-Go Option A)** — Der 2015er
+  jQuery-1.10.2/JSONP-Player ist ersetzt: selbstenthaltenes Vanilla-
+  iframe wie alle Wellen-Widgets.  Metadaten über den Widget-Endpoint
+  /embed/now-playing-data (kein JSONP, kein Public-API-Gate mehr — auch
+  die Settings-Seite gated nicht mehr), Stream-Wahl clientseitig per
+  Audio.canPlayType (Mobile-Streams zuerst auf kleinen Schirmen) mit
+  Fehler-Fallback auf den nächsten Stream, localhost-Icecast-Host wird
+  für entfernte Hörer auf den Seiten-Host umgeschrieben, Play/Stop
+  trennt beim Stopp die Verbindung (kein stiller Hörer-Slot), neuer
+  Lautstärkeregler (localStorage), Layouts card (Standard) + bar
+  (Seitenfuß; Legacy-`style=premium` mappt darauf, die Radio-Page-
+  Einbettung läuft unverändert), `?theme=auto|dark|light`, kein
+  LibreTime-Branding.  Settings → Widgets → Player im Wellen-Stil
+  (Vorschau + Embed-Codes, kein Formular).  Raus: playerhtml5.js,
+  player.js, jquery-1.10.2 (letztes jQuery im öffentlichen Bereich),
+  player.css, premium_player.css, player-form.css, Form_Player.
+  Dabei entdeckt + entfernt: die Radio-Page griff per
+  `$("#player_iframe").load(...)` in den Player-iframe (in jQuery 3
+  entferntes .load(fn) — seit dem Migrate-Aus vom 17.09. fatal für den
+  Block) und injizierte Tab-Knöpfe in die alte bottom_bar; Block
+  gestrichen (jPlayer-Teil tot, RSS-Tab auf dieser Station aus).
+  Falls der Stations-Podcast je öffentlich wird: Podcast-Tab braucht
+  dann einen SEITEN-Link statt In-Player-Knopf.  Handbuch WIDGETS
+  (Tabellenzeile + eigener Abschnitt) EN/DE/FR/ES.  Live verifiziert:
+  card + bar rendern themenkorrekt ohne Konsolen-Fehler, Radio-Page
+  sauber; Hör-Abnahme durch den Operator offen (Chrome lädt in nie
+  sichtbaren Automations-Hintergrund-Tabs keinerlei Medien — auch die
+  native Player-Seite nicht; kein Player-Defekt).
+
 - **Line-In-Dialog: Enabled-Schalter entfernt (2026-09-17, Operator-
   Nachschärfung zur Konsolidierung, `d21cc94`)** — „Wenn es einen Line-Input gibt,
   darf man ihn auch verwenden."  Checkbox samt Beschreibung raus

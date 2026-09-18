@@ -4,25 +4,19 @@ class EmbeddableWidgetsController extends Zend_Controller_Action
 {
     public function init() {}
 
+    /**
+     * RASTATIME 2026-09-18 — Settings page for the Stream Player
+     * Widget v2 (work-order point 12).  Wave style: preview + embed
+     * code, no form.  The old page gated on the public LibreTime API
+     * because the pre-v2 player polled /api/live-info via JSONP; the
+     * v2 player uses the widget-family endpoint, so the gate is gone.
+     */
     public function playerAction()
     {
         Zend_Layout::getMvcInstance()->assign('parent_page', 'Widgets');
 
-        $this->view->headLink()->appendStylesheet(Assets::url('css/player-form.css'));
-        $this->view->headScript()->appendFile(Assets::url('js/airtime/player/player.js'));
-
-        $form = new Application_Form_Player();
-
-        $apiEnabled = Application_Model_Preference::GetAllow3rdPartyApi();
-        $numEnabledStreams = $form->getElement('player_stream_url')->getAttrib('numberOfEnabledStreams');
-
-        if ($numEnabledStreams > 0 && $apiEnabled) {
-            $this->view->player_form = $form;
-        } else {
-            $this->view->player_error_msg = _('To configure and use the embeddable player you must:<br><br>
-            1. Enable at least one MP3, AAC, or OGG stream under Settings -> Streams<br>
-            2. Enable the Public LibreTime API under Settings -> Preferences');
-        }
+        $this->view->publicUrl = Config::getPublicUrl();
+        $this->view->stationName = Application_Model_Preference::GetStationName();
     }
 
     /**

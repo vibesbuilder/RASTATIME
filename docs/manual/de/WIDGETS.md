@@ -32,7 +32,7 @@ Sie sie auf einer externen Seite einbetten.
 | **Weekly Schedule** | `/embed/weekly-program` | Sieben-Tage-Tab-Widget. Header mit ◀ / ▶ Wochen-Navigation + Datums-Range-Label; Tagestabs; Zeilenliste pro Tab mit HH:MM – HH:MM + Sendungsname (Link). Optionales Hintergrundbild via `?bg=URL`. |
 | **Multi-View Schedule** | `/embed/multi-view-schedule` | Kalender-Widget basierend auf FullCalendar 6 (lokal gehostet). Operator-umschaltbare Day / 2-Day / Week Views via In-Widget-Buttons oder `?view=`. Show-Slots eingefärbt aus `cc_show.background_color`. Klick → Modal mit Sendungs-Beschreibung + URL-Button. Auto-Scroll zur Now-Linie. |
 | **Track History** | `/embed/track-history` | Tracker-History-Log (letzte 7 Tage). HTML5 Date-Picker + Time-Picker + Now-Button + Pagesize-Dropdown (10/20/50/100). Zeilen "HH:MM - HH:MM Künstler - Titel"; Klick → Modal mit Show-Kontext + URL-Link. Load-More-Button, hart-gecappt bei 1000 Zeilen. |
-| **Audio Player** | `/embed/player` | (Bestehend) Eingebetteter HTML5-Audio-Player für den öffentlichen Stream. |
+| **Stream Player** | `/embed/player` | Listen-Live-Knopf mit Now-Playing-/Next-Zeile und Lautstärkeregler. Karten- und Bottom-Bar-Layout. Wählt den ersten im Browser dekodierbaren Stream, fällt bei Ausfall auf den nächsten zurück. |
 
 Weitere Widgets sind geplant (siehe [BACKLOG.md](../../../BACKLOG.md)).
 
@@ -571,6 +571,44 @@ Instance-Bindung wird der Show-Kontext-Block ausgeblendet.
 - Operator-konfigurierbares Empty-State-Label,
 - Live-Vorschau-iframe auf dunklem Backdrop,
 - Zwei vorgefertigte Embed-Code-Snippets (Pagesize 10 + 50).
+
+---
+
+## Stream-Player-Widget (`/embed/player`)
+
+> Neu gebaut am 18.09.2026 im Wellen-Stil — der jQuery-Player von
+> 2015 ist Geschichte.  Alte Embed-URLs funktionieren unverändert.
+
+Listen-Live-Knopf für die öffentliche Homepage.  Spielt die unter
+**Settings → Streams** aktivierten Streams: Das Widget bevorzugt
+Mobile-Streams auf kleinen Bildschirmen, behält nur Formate, die
+der Browser des Besuchers dekodieren kann, und fällt bei Ausfall
+automatisch auf den nächsten Stream zurück.  Now-Playing-Zeile,
+Sendungs-Zeile und die **Next**-Zeile aktualisieren sich über den
+Widget-Datenendpunkt (kein Public-API-Schalter nötig); ein als
+localhost konfigurierter Icecast-Host wird für entfernte Hörer auf
+den Seiten-Host umgeschrieben.
+
+Zwei Layouts:
+
+* **card** (Standard) — kompaktes Panel in der Größenfamilie der
+  Now-Playing-Widgets; mit Lautstärkeregler (pro Browser gemerkt).
+* **bar** — 56 px hohe Leiste über die volle Breite, gedacht fix am
+  Seitenfuß (die Stations-Homepage nutzt sie).
+
+URL-Parameter (alle optional):
+
+| Parameter | Werte | Bedeutung |
+|---|---|---|
+| `title` | Text | Kopfzeile; ohne ihn wird die Kopfzeile ausgeblendet. |
+| `theme` | `auto` / `dark` / `light` | Theming wie bei jedem Widget. |
+| `layout` | `card` / `bar` | Layout; das alte `style=premium` mappt weiter auf `bar`. |
+| `stream` | `auto` / Stream-Name | Einen konfigurierten Stream festnageln statt der Automatik. |
+| `cache` | `10`..`3600` | Metadaten-Poll-Cache in Sekunden. |
+
+Embed-Codes mit Live-Vorschau stehen unter **Settings → Widgets →
+Player**.  Die Empty-State-Texte der Metadaten-Zeilen teilen sich
+das Widget mit den Now-Playing-Widgets (Abschnitt 9).
 
 ---
 

@@ -1,299 +1,340 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
-
+<?php
+// RASTATIME 2026-09-18 — Stream Player Widget v2 (work-order point 12,
+// operator go: wave-style modernisation of the last upstream widget).
+//
+// Replaces the 2015 jQuery-1.10.2/JSONP player: self-contained vanilla
+// iframe like every other wave widget.  Metadata comes from the
+// widget-family JSON endpoint /embed/now-playing-data (no JSONP, no
+// public-API gate), the stream queue is codec-filtered client-side via
+// Audio.canPlayType with error-fallback to the next stream, and a
+// localhost-configured Icecast host is rewritten to the page host for
+// remote listeners (same rule the Dashboard player uses).
+//
+// Layouts: 'card' (default; compact 300px panel like the Now-Playing
+// widgets) and 'bar' (full-width bottom bar — the station homepage
+// embeds this via the legacy ?style=premium mapping).
+$cfg = $this->playerConfigJson;   // pre-encoded JSON (controller)
+?>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-    <link rel="stylesheet" href="<?php echo $this->css ?>" type="text/css">
-    <script src="<?php echo $this->playerhtml5_js ?>" type="text/javascript"></script>
-    <script src="<?php echo $this->jquery ?>" type="text/javascript"></script>
-
-    <script src="<?php echo $this->jquery_i18n ?>" type="text/javascript"></script>
-    <script src="/locale/general-translation-table" type="text/javascript"></script>
-    <link href='https://fonts.googleapis.com/css?family=Roboto:400,100,300,700' rel='stylesheet' type='text/css'>
-    <script type="text/javascript">
-        $.i18n.setDictionary(general_dict);
-
-        var MAX_MOBILE_SCREEN_WIDTH = 760;
-
-        // RASTATIME 2026-06-01 (JS-modernization, jPlayer part 3/3): the stream
-        // host may be configured as "localhost", which only resolves on the
-        // server itself. For a remote listener, rewrite localhost / 127.0.0.1 to
-        // the host this page is served from so the stream is reachable. An
-        // explicit host (a domain or a dedicated Icecast box, e.g. for external
-        // embedding) is left untouched. Mirrors the Dashboard stream player.
-        function reachableStreamUrl(url) {
-            if (!url) { return url; }
-            return url.replace(
-                /^(https?:\/\/)(?:localhost|127\.0\.0\.1)\b/i,
-                "$1" + window.location.hostname
-            );
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title><?php echo _('Stream Player'); ?></title>
+    <style>
+    :root {
+        --pl-fg: #1a1a1a; --pl-muted: #666; --pl-border: #ddd;
+        --pl-panel: #f7f7f7; --pl-accent: #ff5d1a; --pl-accent-fg: #fff;
+        --pl-bar-bg: #23211f; --pl-bar-fg: #f0f0f0; --pl-bar-muted: #a8a49f;
+    }
+    .np-theme-dark {
+        --pl-fg: #f0f0f0; --pl-muted: #aaa; --pl-border: #444;
+        --pl-panel: #2b2b2b;
+    }
+    @media (prefers-color-scheme: dark) {
+        .np-theme-auto {
+            --pl-fg: #f0f0f0; --pl-muted: #aaa; --pl-border: #444;
+            --pl-panel: #2b2b2b;
         }
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+        font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+        color: var(--pl-fg); background: transparent; font-size: 14px;
+    }
 
-        var Html5Player = function() {
-            var id_element = getRandomIdPlayer(3000);
-            this.mobileDetect = this.mobileDetect();
-            this.playerMode = "<?php echo $this->playerMode ?>";
-            this.settings = {
-                'elementId': id_element, // leave alone
-                'autoplay': false, // or true (only works on some browsers)
-                'forceHTTPS': false, // or true if the stream is in SSL (beware of the listening port, usually 8000)
-                'replacePort': false, // false for disabled or '8000' as the usual start port, forces to specify replacePortTo.
-                'replacePortTo': '' // either '' to use the default port of the browser (80/http, 443/https) or '8443' to force the port of the stream.
-            };
+    /* ───── shared: the play/stop toggle ───── */
+    .pl-btn {
+        flex: 0 0 auto; width: 44px; height: 44px; border-radius: 50%;
+        border: 0; background: var(--pl-accent); cursor: pointer;
+        position: relative; padding: 0;
+    }
+    .pl-btn:focus-visible { outline: 2px solid var(--pl-fg); outline-offset: 2px; }
+    .pl-btn .pl-ico-play, .pl-btn .pl-ico-stop {
+        position: absolute; top: 50%; left: 50%; content: "";
+    }
+    .pl-btn .pl-ico-play {
+        margin: -9px 0 0 -5px; width: 0; height: 0;
+        border-style: solid; border-width: 9px 0 9px 14px;
+        border-color: transparent transparent transparent var(--pl-accent-fg);
+    }
+    .pl-btn .pl-ico-stop {
+        margin: -7px 0 0 -7px; width: 14px; height: 14px;
+        background: var(--pl-accent-fg); display: none;
+    }
+    .pl-playing .pl-btn .pl-ico-play { display: none; }
+    .pl-playing .pl-btn .pl-ico-stop { display: block; }
+    .pl-btn.pl-busy { opacity: 0.6; }
 
-            if (this.playerMode == "manual") {
-                this.settings.url = <?php echo $this->streamURL ?>;
-                this.settings.codec = "<?php echo $this->codec ?>";
-            } else if (this.playerMode == "file") {
-                this.settings.url = <?php echo $this->streamURL ?>;
-                this.settings.codec = "<?php echo $this->codec ?>";
-            } else if (this.playerMode == "auto") {
-                this.availableMobileStreamQueue = <?php echo $this->availableMobileStreams ?>;
-                this.availableDesktopStreamQueue = <?php echo $this->availableDesktopStreams ?>;
-                var stream = this.getNextAvailableStream();
-                this.settings.url = stream["url"];
-                this.settings.codec = stream["codec"];
-            }
+    .pl-now-track { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pl-now-show, .pl-next { color: var(--pl-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pl-vol { accent-color: var(--pl-accent); }
+    .pl-err { color: #d9534f; }
 
-            // RASTATIME 2026-06-01: make a localhost-configured stream reachable
-            // for remote listeners (see reachableStreamUrl above). No-op for an
-            // explicitly configured host.
-            this.settings.url = reachableStreamUrl(this.settings.url);
+    /* ───── card layout ───── */
+    .pl-card {
+        max-width: 300px; padding: 12px; border: 1px solid var(--pl-border);
+        border-radius: 6px; background: var(--pl-panel);
+    }
+    .pl-card .pl-title {
+        font-weight: 700; margin: 0 0 10px; padding-bottom: 8px;
+        border-bottom: 1px solid var(--pl-border);
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .pl-card.pl-untitled .pl-title { display: none; }
+    .pl-card .pl-main { display: flex; align-items: center; gap: 12px; }
+    .pl-card .pl-lines { min-width: 0; flex: 1 1 auto; }
+    .pl-card .pl-foot {
+        display: flex; align-items: center; gap: 8px; margin-top: 10px;
+        padding-top: 8px; border-top: 1px solid var(--pl-border);
+        font-size: 0.9em; color: var(--pl-muted);
+    }
+    .pl-card .pl-next { flex: 1 1 auto; }
+    .pl-card .pl-vol { flex: 0 0 90px; width: 90px; }
 
-            // Create the Muses player object
-            playerhtml5_insert(this.settings);
-            playerhtml5_audio = document.getElementById(id_element);
-            if (playerhtml5_audio.played == true) togglePlayStopButton();
-
-            // Configure player title
-            var player_title = <?php echo $this->player_title ?>;
-            if (player_title === null) {
-                $(".airtime_header").hide();
-                $(".airtime_player").css('height', '150px');
-            } else {
-                $("p.station_name").html(player_title);
-            }
-
-            attachStreamMetadataToPlayer();
-
-            // detects events in HTML5 mode
-
-        };
-        Html5Player.prototype.mobileDetect = function() {
-            return (screen.width <= MAX_MOBILE_SCREEN_WIDTH);
-        }
-
-        // This function is called if an error occurs while a client is
-        // attempting to connect to a stream (An error would occur if
-        // the streams listener count has been maxed out or if the stream is down).
-        // It checks if the client is a mobile device or not and returns the next
-        // best available stream.
-        Html5Player.prototype.getNextAvailableStream = function() {
-            if (this.mobileDetect && this.availableMobileStreamQueue.length > 0) {
-                return this.getNextAvailableMobileStream();
-            }
-
-            if (!this.mobileDetect && this.availableDesktopStreamQueue.length > 0) {
-                return this.getNextAvailableDesktopStream();
-            }
-
-            // If we get to this point there are no available streams for the
-            // type of device the client has connected with so just return
-            // the next available stream - first we'll try the desktop streams
-            var desktopStream = this.getNextAvailableDesktopStream();
-            if (desktopStream) {
-                return desktopStream;
-            } else {
-                return this.getNextAvailableMobileStream();
-            }
-
-        }
-
-        // Gets and returns the next available mobile stream from the queue,
-        // but adds it back to the end of the queue to be recycled.
-        Html5Player.prototype.getNextAvailableMobileStream = function() {
-            var stream = this.availableMobileStreamQueue.shift();
-            //add to end of queue
-            this.availableMobileStreamQueue.push(stream);
-            return stream;
-        }
-
-        // Gets and returns the next available desktop stream from the queue,
-        // but adds it back to the end of the queue to be recycled.
-        Html5Player.prototype.getNextAvailableDesktopStream = function() {
-            var stream = this.availableDesktopStreamQueue.shift();
-            //add to end of queue
-            this.availableDesktopStreamQueue.push(stream);
-            return stream;
-        }
-
-        Html5Player.prototype.play = function() {
-            console.log('play');
-            playerhtml5_audio.src = this.settings.url;
-            playerhtml5_audio.play();
-            togglePlayStopButton();
-        };
-
-        Html5Player.prototype.stop = function() {
-            console.log('stop');
-            playerhtml5_audio.pause();
-            togglePlayStopButton();
-        };
-
-        function togglePlayStopButton() {
-            document.getElementById("play_button").classList.toggle("hide_button");
-            document.getElementById("stop_button").classList.toggle("hide_button");
-        }
-
-        $(document).ready(function() {
-            $(".play").click(function() {
-                if ($(this).hasClass("pause")) {
-                    html5Player.stop();
-                } else {
-                    html5Player.play();
-                }
-
-                $(this).toggleClass("pause");
-            });
-        });
-
-        // variables for updating the player's metadata
-        var time_to_next_track_starts = 0;
-        var metadataTimer = null;
-
-        // Fetches the streams metadata from the Airtime live-info API
-        // and attaches it to the player UI.
-        //
-        // The metadata is fetched when the current track is about to end.
-        function attachStreamMetadataToPlayer() {
-            $.ajax({
-                url: "<?php echo $this->metadata_api_url ?>",
-                data: {
-                    type: "interval",
-                    limit: "5"
-                },
-                dataType: "jsonp",
-                success: function(data) {
-
-                    if (data.current === null) {
-                        if (data.currentShow != null && data.currentShow.length > 0) {
-                            //Master/show source have no current track but they do have a current show.
-                            $("p.now_playing").html($.i18n._("On Air") + "<span>" + data.currentShow[0].name + "</span>");
-                        } else {
-                            $("p.now_playing").html($.i18n._("Off Air") + "<span>" + $.i18n._("Offline") + "</span>");
-                        }
-                        time_to_next_track_starts = 20000;
-                    } else {
-                        var artist = data.current.name.split(" - ")[0];
-                        var track = data.current.name.split(" - ")[1];
-                        var nowPlayingHtml = "";
-                        if (artist) {
-                            nowPlayingHtml += artist;
-                        }
-                        if (track) {
-                            nowPlayingHtml += "<span>" + track + "</span>";
-                        }
-                        $("p.now_playing").html(nowPlayingHtml);
-
-                        var current_track_end_time = new Date(data.current.ends);
-                        if (current_track_end_time == "Invalid Date" || isNaN(current_track_end_time)) {
-                            // If the conversion didn't work (since the String is not in ISO format)
-                            // then change it to be ISO-compliant. This is somewhat hacky and may break
-                            // if the date string format in live-info changes!
-                            current_track_end_time = new Date((data.current.ends).replace(" ", "T"));
-                        }
-                        var current_time = new Date();
-                        //convert current_time to UTC to match the timezone of time_to_next_track_starts
-                        current_time = new Date(current_time.getTime() + current_time.getTimezoneOffset() * 60 * 1000);
-                        time_to_next_track_starts = current_track_end_time - current_time;
-                    }
-
-                    if (data.next === null) {
-                        $("ul.schedule_list").find("li").html($.i18n._("Nothing scheduled"));
-                    } else {
-                        $("ul.schedule_list").find("li").html(data.next.name);
-                    }
-                }
-            });
-
-            //Preventative code if the local and remote clocks are out of sync.
-            if (isNaN(time_to_next_track_starts) || time_to_next_track_starts < 0) {
-                time_to_next_track_starts = 0;
-            }
-
-            // Add 3 seconds to the timeout so Airtime has time to update the metadata before we fetch it
-            metadataTimer = setTimeout(attachStreamMetadataToPlayer, time_to_next_track_starts + 3000);
-
-
-        }
-    </script>
-
-    <style type="text/css">
-        /*
-        We have to have the default Muses skin displayed on the page or else
-        the player will not work. Setting the display to none and hidden does
-        not work. It has to be "visible" on the page. As a hacky work around we
-        set the height and width to 1px so users will not see it.
-        */
-        #html5player_skin {
-            width: 0;
-            height: 0;
-            overflow: hidden;
-        }
+    /* ───── bar layout (station homepage bottom bar) ───── */
+    body.pl-layout-bar { background: var(--pl-bar-bg); color: var(--pl-bar-fg); }
+    .pl-bar {
+        display: flex; align-items: center; gap: 14px;
+        width: 100%; height: 56px; padding: 0 14px;
+    }
+    .pl-bar .pl-btn { width: 38px; height: 38px; }
+    .pl-bar .pl-lines { min-width: 0; flex: 1 1 auto; }
+    .pl-bar .pl-now-show, .pl-bar .pl-next { color: var(--pl-bar-muted); }
+    .pl-bar .pl-title {
+        font-weight: 700; flex: 0 0 auto; max-width: 25%;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .pl-bar.pl-untitled .pl-title { display: none; }
+    .pl-bar .pl-next-wrap { flex: 0 1 30%; min-width: 0; font-size: 0.9em; }
+    .pl-bar .pl-vol { flex: 0 0 90px; width: 90px; }
+    @media (max-width: 560px) {
+        .pl-bar .pl-next-wrap, .pl-bar .pl-vol { display: none; }
+    }
     </style>
-
 </head>
+<body class="<?php echo htmlspecialchars($this->themeClass, ENT_QUOTES, 'UTF-8'); ?> pl-layout-<?php echo htmlspecialchars($this->layout, ENT_QUOTES, 'UTF-8'); ?>">
 
-<body>
-
-    <div id="player" <?php if ($this->player_style == "basic") echo "style='display:block;'";
-                        else echo "style='display:none'"; ?>>
-        <div class="airtime_player">
-
-            <div class="airtime_header">
-                <p class="station_name">fff</p>
-            </div>
-
-            <div class="airtime_box">
-
-                <div class="airtime_button">
-                    <span id="play_button" class="play_button" onclick="html5Player.play()"></span>
-                    <span id="stop_button" class="stop_button hide_button" onclick="html5Player.stop()"></span>
-                </div>
-                <p class="now_playing"></p>
-
-            </div>
-
-            <div style="clear:both"></div>
-
-            <div class="airtime_schedule">
-                <p class="airtime_next"><?php echo _("Next") ?></p>
-                <ul class="schedule_list">
-                    <li></li>
-                </ul>
-            </div>
-            <a class="airtime_pro" target="_blank" href="<?php echo PRODUCT_SITE_URL; ?>"><?php printf(_('Powered by %s'), PRODUCT_NAME); ?></a>
-
+<?php if ($this->layout === 'bar'): ?>
+    <div class="pl-bar<?php echo $this->playerTitle === null ? ' pl-untitled' : ''; ?>" id="pl_root">
+        <button class="pl-btn" id="pl_btn" type="button" aria-label="<?php echo _('Play / Stop'); ?>">
+            <span class="pl-ico-play"></span><span class="pl-ico-stop"></span>
+        </button>
+        <span class="pl-title"><?php echo htmlspecialchars((string) $this->playerTitle, ENT_QUOTES, 'UTF-8'); ?></span>
+        <div class="pl-lines">
+            <div class="pl-now-track" id="pl_now_track"></div>
+            <div class="pl-now-show" id="pl_now_show"></div>
         </div>
+        <div class="pl-next-wrap"><span class="pl-next" id="pl_next"></span></div>
+        <input class="pl-vol" id="pl_vol" type="range" min="0" max="100" value="100"
+               aria-label="<?php echo _('Volume'); ?>" />
     </div>
-
-    <div id="premium_player" <?php if ($this->player_style == "premium") echo "style='display:block;'";
-                                else echo "style='display:none'"; ?>>
-        <div class="bottom_bar">
-            <div class="play cont_btn"></div>
-
-            <div class="on_air">
-                <p class="now_playing"></p>
+<?php else: ?>
+    <div class="pl-card<?php echo $this->playerTitle === null ? ' pl-untitled' : ''; ?>" id="pl_root">
+        <p class="pl-title"><?php echo htmlspecialchars((string) $this->playerTitle, ENT_QUOTES, 'UTF-8'); ?></p>
+        <div class="pl-main">
+            <button class="pl-btn" id="pl_btn" type="button" aria-label="<?php echo _('Play / Stop'); ?>">
+                <span class="pl-ico-play"></span><span class="pl-ico-stop"></span>
+            </button>
+            <div class="pl-lines">
+                <div class="pl-now-track" id="pl_now_track"></div>
+                <div class="pl-now-show" id="pl_now_show"></div>
             </div>
         </div>
-
+        <div class="pl-foot">
+            <span class="pl-next" id="pl_next"></span>
+            <input class="pl-vol" id="pl_vol" type="range" min="0" max="100" value="100"
+                   aria-label="<?php echo _('Volume'); ?>" />
+        </div>
     </div>
+<?php endif; ?>
 
-    <div id="html5player_skin">
-        <script type="text/javascript">
-            var html5Player = new Html5Player();
-        </script>
-    </div>
+<script>
+(function () {
+    "use strict";
+    var CFG = <?php echo $cfg; ?>;
+
+    var root = document.getElementById("pl_root");
+    var btn = document.getElementById("pl_btn");
+    var elTrack = document.getElementById("pl_now_track");
+    var elShow = document.getElementById("pl_now_show");
+    var elNext = document.getElementById("pl_next");
+    var elVol = document.getElementById("pl_vol");
+
+    // A "localhost" Icecast host only resolves on the server itself —
+    // rewrite it to the host this page is served from so a remote
+    // listener reaches the stream.  Explicit hosts stay untouched.
+    function reachableUrl(url) {
+        if (!url) { return url; }
+        return url.replace(/^(https?:\/\/)(?:localhost|127\.0\.0\.1)\b/i,
+            "$1" + window.location.hostname);
+    }
+
+    var MIME = {
+        mp3: "audio/mpeg", aac: "audio/aac", aacplus: "audio/aac",
+        mp4: "audio/mp4", ogg: "audio/ogg", vorbis: "audio/ogg",
+        opus: 'audio/ogg; codecs="opus"'
+    };
+
+    // Build the try-order: preferred device class first, the other one
+    // appended; browser-playable codecs first within each class.  The
+    // probe element is throwaway.
+    function buildQueue() {
+        if (CFG.mode !== "auto") {
+            return CFG.url ? [{ url: CFG.url, codec: CFG.codec || "" }] : [];
+        }
+        var mobile = window.matchMedia
+            ? window.matchMedia("(max-width: 760px)").matches
+            : (screen.width <= 760);
+        var pref = mobile ? CFG.streams.mobile : CFG.streams.desktop;
+        var rest = mobile ? CFG.streams.desktop : CFG.streams.mobile;
+        var all = (pref || []).concat(rest || []);
+        var probe = document.createElement("audio");
+        var playable = [], fallback = [];
+        all.forEach(function (s) {
+            var mime = MIME[(s.codec || "").toLowerCase()] || "";
+            if (mime && probe.canPlayType && probe.canPlayType(mime) !== "") {
+                playable.push(s);
+            } else {
+                fallback.push(s);
+            }
+        });
+        return playable.concat(fallback);
+    }
+
+    var queue = buildQueue().map(function (s) {
+        return { url: reachableUrl(s.url), codec: s.codec };
+    });
+    var qIndex = 0;
+    var attempts = 0;
+    var wantPlaying = false;
+
+    var audio = new Audio();
+    audio.preload = "none";
+
+    function setState(playing) {
+        root.classList.toggle("pl-playing", playing);
+        btn.classList.remove("pl-busy");
+    }
+
+    function startCurrent() {
+        if (queue.length === 0) {
+            elTrack.textContent = CFG.labels.offline;
+            elTrack.classList.add("pl-err");
+            return;
+        }
+        btn.classList.add("pl-busy");
+        // A fresh src per start reconnects at the live edge instead of
+        // resuming a stale buffer.
+        audio.src = queue[qIndex].url;
+        var p = audio.play();
+        if (p && typeof p.catch === "function") {
+            p.catch(function () { tryNext(); });
+        }
+    }
+
+    function tryNext() {
+        if (!wantPlaying) { return; }
+        attempts += 1;
+        if (attempts >= queue.length) {
+            wantPlaying = false;
+            setState(false);
+            elTrack.textContent = CFG.labels.offline;
+            elTrack.classList.add("pl-err");
+            return;
+        }
+        qIndex = (qIndex + 1) % queue.length;
+        startCurrent();
+    }
+
+    audio.addEventListener("playing", function () {
+        attempts = 0;
+        elTrack.classList.remove("pl-err");
+        setState(true);
+    });
+    audio.addEventListener("error", function () { tryNext(); });
+
+    function play() {
+        wantPlaying = true;
+        attempts = 0;
+        startCurrent();
+    }
+
+    function stop() {
+        wantPlaying = false;
+        audio.pause();
+        // Drop the connection entirely — a paused live stream would
+        // otherwise keep buffering (and keep a listener slot busy).
+        audio.removeAttribute("src");
+        try { audio.load(); } catch (e) { /* ignore */ }
+        setState(false);
+    }
+
+    btn.addEventListener("click", function () {
+        if (wantPlaying) { stop(); } else { play(); }
+    });
+
+    if (elVol) {
+        try {
+            var saved = localStorage.getItem("rt_player_vol");
+            if (saved !== null) {
+                elVol.value = saved;
+                audio.volume = Math.min(1, Math.max(0, saved / 100));
+            }
+        } catch (e) { /* private mode etc. */ }
+        elVol.addEventListener("input", function () {
+            audio.volume = Math.min(1, Math.max(0, elVol.value / 100));
+            try { localStorage.setItem("rt_player_vol", elVol.value); } catch (e) { /* ignore */ }
+        });
+    }
+
+    // ───── metadata: widget-family JSON endpoint, smart refresh ─────
+    var metaTimer = null;
+
+    function scheduleMeta(ms) {
+        if (metaTimer) { clearTimeout(metaTimer); }
+        metaTimer = setTimeout(refreshMeta, ms);
+    }
+
+    function refreshMeta() {
+        fetch(CFG.dataUrl, { cache: "default" })
+            .then(function (r) { return r.json(); })
+            .then(function (d) {
+                var nextPollMs = 20000;
+                var track = d.track || {};
+                var show = d.show || {};
+                if (!elTrack.classList.contains("pl-err")) {
+                    if (track.current) {
+                        elTrack.textContent = track.current.artist
+                            ? track.current.artist + " — " + track.current.title
+                            : track.current.title;
+                        var ends = Date.parse(track.current.ends);
+                        if (!isNaN(ends)) {
+                            // Re-poll just after the running track ends
+                            // (+3 s so the server has updated), clamped.
+                            nextPollMs = Math.min(120000,
+                                Math.max(5000, ends - Date.now() + 3000));
+                        }
+                    } else if (show.current) {
+                        elTrack.textContent = CFG.labels.onAir;
+                    } else {
+                        elTrack.textContent = CFG.labels.offAir;
+                    }
+                }
+                elShow.textContent = show.current ? show.current.name : "";
+                var next = (track.next && track.next.title)
+                    || (show.next && show.next.name) || "";
+                elNext.textContent = next
+                    ? CFG.labels.next + ": " + next : "";
+                scheduleMeta(nextPollMs);
+            })
+            .catch(function () { scheduleMeta(30000); });
+    }
+
+    refreshMeta();
+}());
+</script>
 
 </body>
-
 </html>

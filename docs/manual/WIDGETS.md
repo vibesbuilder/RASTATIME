@@ -31,7 +31,7 @@ them on an external site.
 | **Weekly Schedule** | `/embed/weekly-program` | Seven-day tab widget. Header with ◀ / ▶ week-navigation + date-range label; day tabs; per-tab row list with HH:MM – HH:MM + show name (link). Optional background-image via `?bg=URL`. |
 | **Multi-View Schedule** | `/embed/multi-view-schedule` | Calendar-style widget powered by FullCalendar 6 (locally hosted). Operator-switchable Day / 2-Day / Week views via in-widget buttons or `?view=`. Show slots coloured from `cc_show.background_color`. Click → modal with show description + URL button. Auto-scrolls to the now-line. |
 | **Track History** | `/embed/track-history` | Recent-track playout log (last 7 days). HTML5 date-picker + time-picker + Now button + pagesize dropdown (10/20/50/100). Rows show "HH:MM - HH:MM Artist - Title"; click → modal with show context + URL link. Load-more button capped at 1000 rows total. |
-| **Audio Player** | `/embed/player` | (Existing) Inline HTML5 audio player for the public stream. |
+| **Stream Player** | `/embed/player` | Listen-live button with now-playing / next lines and a volume slider. Card and full-width bottom-bar layouts. Picks the first browser-decodable stream, falls back if one is down. |
 
 More widgets are planned (see [BACKLOG.md](../../BACKLOG.md)).
 
@@ -694,6 +694,44 @@ which the operator sets in the Line-In Library.
 Per-embed `?exclude_short=` and `?min_sec=` URL parameters
 override the Preference for a specific iframe without
 changing the global setting.
+
+---
+
+## Stream Player widget (`/embed/player`)
+
+> Rebuilt 2026-09-18 in the wave style — the 2015 jQuery player is
+> gone.  Old embed URLs keep working unchanged.
+
+Listen-live button for the public homepage.  Plays the streams
+enabled under **Settings → Streams**: the widget prefers mobile
+streams on small screens, keeps only formats the visitor's browser
+can decode, and automatically falls back to the next stream when
+one is down.  The now-playing line, the current-show line and the
+**Next** line refresh themselves from the widget data endpoint
+(no public-API toggle needed); a localhost-configured Icecast host
+is rewritten to the page host for remote listeners.
+
+Two layouts:
+
+* **card** (default) — compact panel, same footprint family as the
+  Now-Playing widgets; includes a volume slider (remembered per
+  browser).
+* **bar** — full-width 56-px bar, meant to sit fixed at the bottom
+  of the page (the station homepage uses it).
+
+URL parameters (all optional):
+
+| Parameter | Values | Meaning |
+|---|---|---|
+| `title` | text | Header text; without it the header row is hidden. |
+| `theme` | `auto` / `dark` / `light` | Same theming as every widget. |
+| `layout` | `card` / `bar` | Layout; the legacy `style=premium` still maps to `bar`. |
+| `stream` | `auto` / stream name | Pin one configured stream instead of the automatic pick. |
+| `cache` | `10`..`3600` | Metadata-poll cache in seconds. |
+
+Embed codes with a live preview are on **Settings → Widgets →
+Player**.  The empty-state wording of the metadata lines is shared
+with the Now-Playing widgets (section 9).
 
 ---
 
