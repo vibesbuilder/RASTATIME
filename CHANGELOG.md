@@ -315,7 +315,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **Kontextmenüs wieder da — Kalender-Slots und Library-Rechtsklick
-  (2026-09-18, Operator-Fund)** — Das vendored contextMenu-Plugin (2012)
+  (2026-09-18, Operator-Fund, `b9a7e7a`)** — Das vendored contextMenu-Plugin (2012)
   ruft zweimal `.andSelf()`, das jQuery 3 entfernt hat; bis zum
   Migrate-Aus (5b, 17.09.) polierte das Netz den Alias drüber.  Seitdem
   starb JEDES Kontextmenü still im `update()` des Plugins — Kalender
