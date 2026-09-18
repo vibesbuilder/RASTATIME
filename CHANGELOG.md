@@ -314,6 +314,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Kontextmenüs wieder da — Kalender-Slots und Library-Rechtsklick
+  (2026-09-18, Operator-Fund)** — Das vendored contextMenu-Plugin (2012)
+  ruft zweimal `.andSelf()`, das jQuery 3 entfernt hat; bis zum
+  Migrate-Aus (5b, 17.09.) polierte das Netz den Alias drüber.  Seitdem
+  starb JEDES Kontextmenü still im `update()` des Plugins — Kalender
+  (Linksklick auf Show-Slots) wie Library (Rechtsklick: Preview/Delete/
+  Edit/…).  Fix: `.andSelf()` → `.addBack()` (Alias seit jQuery 1.8).
+  Der Fall war der 5b-Verifikation entgangen: Seiten luden fehlerfrei,
+  Menüs wurden nicht geklickt — und die Automations-Klicks des
+  Browser-Werkzeugs erreichen Hintergrund-Tabs unzuverlässig, weshalb
+  das Symptom gestern wie eine Test-Eigenheit aussah.  Begleitender
+  Sweep aller vendored Plugins nach weiteren entfernten jQuery-APIs:
+  `$.browser`-Nutzer (blockUI, FixedColumns/Header, timepicker) deckt
+  der seitenweite jquery-browser-shim ab, das `.live()` in
+  preferences.js liegt in einem Kommentarblock, das in
+  plupload.queue.min.js in einem nie betretenen rename-Zweig.  Live
+  verifiziert: Kalender-Menü öffnet und bleibt offen („View"),
+  Library-Menü zeigt Preview/Delete/Edit/Publish/Download.
+
 - **Widgets: parameterloser /embed/player spielt wieder (2026-09-18,
   Punkt-12-Verifikation, `cd5ad1d`)** — Ohne `?stream=` blieb der
   Player-Modus leer und das Template renderte `this.settings.url = ;`

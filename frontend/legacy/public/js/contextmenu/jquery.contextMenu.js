@@ -10,6 +10,9 @@
  *   MIT License http://www.opensource.org/licenses/mit-license
  *   GPL v3 http://opensource.org/licenses/GPL-3.0
  *
+ * RASTATIME 2026-09-18: .andSelf() -> .addBack() (2x) - jQuery 3 removed
+ * the andSelf alias; the migrate net that papered over it left on 09-17,
+ * which silently killed every left-click context menu (calendar slots).
  */
 
 (function($, undefined){
@@ -86,7 +89,7 @@ var // currently active contextMenu trigger
                 offset = opt.$menu.position();
             } else {
                 // x and y are given (by mouse event)
-                var triggerIsFixed = opt.$trigger.parents().andSelf()
+                var triggerIsFixed = opt.$trigger.parents().addBack()
                     .filter(function() {
                         return $(this).css('position') == "fixed";
                     }).length;
@@ -982,7 +985,7 @@ var // currently active contextMenu trigger
                 // determine widths of submenus, as CSS won't grow them automatically
                 // position:absolute > position:absolute; min-width:100; max-width:200; results in width: 100;
                 // kinda sucks hard...
-                opt.$menu.find('ul').andSelf().css({position: 'static', display: 'block'}).each(function(){
+                opt.$menu.find('ul').addBack().css({position: 'static', display: 'block'}).each(function(){
                     var $this = $(this);
                     $this.width($this.css('position', 'absolute').width())
                         .css('position', 'static');
