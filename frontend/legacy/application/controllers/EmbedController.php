@@ -49,7 +49,12 @@ class EmbedController extends Zend_Controller_Action
         }
         $this->view->player_style = $player_style;
 
-        $stream = $request->getParam('stream');
+        // RASTATIME 2026-09-18 (work-order point 12) - a bare /embed/player
+        // defaulted to NO mode at all: playerMode stayed empty and the
+        // template rendered `this.settings.url = ;` - a SyntaxError that
+        // killed the whole inline Html5Player definition.  Default to the
+        // auto queue, same as the Settings page's generated embed code.
+        $stream = $request->getParam('stream', 'auto');
         $streamData = Application_Model_StreamSetting::getEnabledStreamData();
 
         // RASTATIME 2026-05-20 — normalise the stream-data ``mobile``
