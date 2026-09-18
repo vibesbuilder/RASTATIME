@@ -227,7 +227,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **Stream-Player-Widget v2 — das letzte Upstream-Widget im Wellen-Stil
-  neu gebaut (2026-09-18, Punkt 12, Operator-Go Option A)** — Der 2015er
+  neu gebaut (2026-09-18, Punkt 12, Operator-Go Option A, `4178007`)** — Der 2015er
   jQuery-1.10.2/JSONP-Player ist ersetzt: selbstenthaltenes Vanilla-
   iframe wie alle Wellen-Widgets.  Metadaten über den Widget-Endpoint
   /embed/now-playing-data (kein JSONP, kein Public-API-Gate mehr — auch
