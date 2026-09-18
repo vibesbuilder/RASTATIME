@@ -2252,7 +2252,8 @@ andere Stationen, das uns fehlt?").  Noch KEIN Go — Bestandsaufnahme
 der Datenlage + Priorisierung.  ENTSCHIEDEN am 2026-09-18: nur W4.1
 gebaut, alles Übrige vom Operator abgelehnt.**
 
-- ✅ **W4.1 Cover-Artwork in den Widgets — DONE 2026-09-18** (Operator-Go;
+- ✅ **W4.1 Cover-Artwork in den Widgets — DONE + abgenommen 2026-09-18** (Operator-Go;
+  Nachschärfung: Player per gespeicherter Checkbox, Track History ohne Cover;
   Details im CHANGELOG „Added").  Player + Track History default AN, Now
   Playing opt-in per `?art=on` (height="50"-Einbettungen).  **Offen als
   Betriebs-Aufgabe, kein Code:** nur 13 von 64 Musiktiteln haben Artwork
