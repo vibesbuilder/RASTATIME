@@ -15,6 +15,21 @@ class EmbeddableWidgetsController extends Zend_Controller_Action
     {
         Zend_Layout::getMvcInstance()->assign('parent_page', 'Widgets');
 
+        $request = $this->getRequest();
+        $form = new Application_Form_WidgetPlayer();
+
+        if ($request->isPost() && $form->isValid($request->getPost())) {
+            Application_Model_Preference::SetWidgetPlayerShowArt(
+                (bool) $form->getValue('widget_player_show_art')
+            );
+            $this->view->saved = true;
+        } else {
+            $form->populate([
+                'widget_player_show_art' => Application_Model_Preference::GetWidgetPlayerShowArt(),
+            ]);
+        }
+
+        $this->view->form = $form;
         $this->view->publicUrl = Config::getPublicUrl();
         $this->view->stationName = Application_Model_Preference::GetStationName();
     }

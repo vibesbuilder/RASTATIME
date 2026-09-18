@@ -701,37 +701,40 @@ Empfohlene Werte:
 
 > Neu am 18.09.2026.
 
-Drei Widgets können das Cover des Titels zeigen, über den sie
-sprechen: der **Stream Player** (beide Layouts), die Zeilen der
-**Track History** und das Widget **Now Playing — Track**.
+Zwei Widgets können das Cover des laufenden Titels zeigen:
 
-| Widget | Standard | Aus- / einschalten |
+| Widget | Standard | So ändern Sie es |
 |---|---|---|
-| Stream Player | **an** | `?art=off` |
-| Track History | **an** | `?art=off` |
-| Now Playing — Track | **aus** | `?art=on` |
+| Stream Player | per Checkbox **Show cover artwork** unter Settings → Widgets → Player (ab Werk an) | je Einbettung: `?art=on` / `?art=off` |
+| Now Playing — Track | **aus** | je Einbettung: `?art=on` |
 
-Now Playing steht bewusst auf *aus*: Dieses Widget ist mit
-`height="50"` dokumentiert, und Cover sind deshalb opt-in, damit
-sich keine bestehende Einbettung von selbst ändert. Mit `?art=on`
-wächst die Box auf rund 48 px — geben Sie dem iframe dann
-`height="56"` oder mehr.
+Die Player-Checkbox ist eine gespeicherte Einstellung und gilt damit
+auch für Einbettungen ohne `art`-Parameter — einschließlich der
+Leiste auf der Stations-Homepage.  Ein ausdrückliches `?art=` in der
+Einbettungs-URL hat immer Vorrang.
 
-Zwei Dinge sind wissenswert:
+Now Playing bleibt bewusst standardmäßig *aus*: Dieses Widget ist
+mit `height="50"` dokumentiert, Cover sind daher opt-in, damit sich
+keine bestehende Einbettung von selbst ändert.  Mit `?art=on` wächst
+die Box auf rund 48 px — geben Sie dem iframe dann `height="56"`
+oder mehr.
 
-* **Nur Titel, die wirklich ein Cover haben, zeigen eines.** Alle
-  anderen behalten ihr reines Textbild — eine Track-History-Zeile
-  ohne Cover behält einen leeren Platzhalter, damit die Spalten
-  bündig bleiben, und der Player blendet das Bild einfach aus.
-  Webstreams und Line-Ins haben nie ein Cover.
-* **Cover brauchen die öffentliche API.** Sie kommen von demselben
-  Endpunkt wie beim Song-Request-Widget, der über Settings →
-  Preferences → *Public API* freigeschaltet wird. Ist der Schalter
-  aus, funktionieren die Widgets weiter, nur ohne Bilder.
+Die Track History zeigt keine Cover.
+
+Was Sie erwarten können:
+
+* **Nur Titel, die wirklich ein Cover haben, zeigen eines.**  Bei
+  allem anderen — Titel ohne Artwork, Webstreams, Line-Ins — fällt
+  das Bild einfach weg und der Text rückt nach.  Ein Platzhalterbild
+  gibt es nicht.
+* **Cover brauchen die öffentliche API.**  Sie kommen vom selben
+  Endpunkt wie beim Song-Request-Widget, freigeschaltet über
+  Settings → Preferences → *Public API*.  Ist der Schalter aus,
+  funktionieren die Widgets weiter, nur ohne Bilder.
 
 Erscheinen selten Cover, liegt es fast immer an der Bibliothek und
 nicht am Widget: Nur Dateien, deren Artwork mitimportiert wurde,
-haben eines. Settings → Library zeigt das Artwork je Titel.
+haben eines.
 
 ---
 

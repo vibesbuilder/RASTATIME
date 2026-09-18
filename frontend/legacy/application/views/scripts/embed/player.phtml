@@ -70,8 +70,8 @@ $cfg = $this->playerConfigJson;   // pre-encoded JSON (controller)
     /* RASTATIME 2026-09-18 (W4.1) — cover art.  Hidden by default and
        only revealed for a track that actually HAS artwork: the artwork
        endpoint answers a cover-less track with a 0-byte 200, which would
-       leave the <img> hanging forever.  Hiding instead of removing keeps
-       the layout from jumping on every track change. */
+       leave the <img> hanging forever.  Hidden = display:none, so the
+       text lines move left while a cover-less track plays. */
     .pl-cover { flex: 0 0 auto; display: none; }
     .pl-cover.pl-cover-on { display: block; }
     .pl-cover img { display: block; object-fit: cover; border-radius: 4px; }

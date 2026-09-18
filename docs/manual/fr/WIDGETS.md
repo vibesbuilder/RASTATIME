@@ -668,37 +668,39 @@ Valeurs recommandées :
 
 > Ajouté le 18/09/2026.
 
-Trois widgets peuvent afficher la pochette du titre concerné : le
-**Stream Player** (les deux layouts), les lignes de la **Track
-History** et le widget **Now Playing — Track**.
+Deux widgets peuvent afficher la pochette du titre en cours :
 
-| Widget | Défaut | Désactiver / activer |
+| Widget | Défaut | Comment le changer |
 |---|---|---|
-| Stream Player | **activé** | `?art=off` |
-| Track History | **activé** | `?art=off` |
-| Now Playing — Track | **désactivé** | `?art=on` |
+| Stream Player | case **Show cover artwork** sous Settings → Widgets → Player (activée d'usine) | par intégration : `?art=on` / `?art=off` |
+| Now Playing — Track | **désactivé** | par intégration : `?art=on` |
 
-Now Playing est volontairement *désactivé* : ce widget est
-documenté avec `height="50"`, les pochettes sont donc en opt-in
-pour qu'aucune intégration existante ne change d'elle-même. Avec
-`?art=on` la boîte atteint environ 48 px — donnez alors
+La case du lecteur est un réglage enregistré : elle s'applique aussi
+aux intégrations sans paramètre `art` — y compris la barre de la
+page d'accueil de la station.  Un `?art=` explicite dans l'URL
+d'intégration l'emporte toujours.
+
+Now Playing reste volontairement *désactivé* par défaut : ce widget
+est documenté avec `height="50"`, les pochettes sont donc en opt-in.
+Avec `?art=on` la boîte atteint environ 48 px — donnez alors
 `height="56"` ou plus à l'iframe.
 
-Deux points à connaître :
+La Track History n'affiche pas de pochettes.
+
+À quoi s'attendre :
 
 * **Seuls les titres qui ont réellement une pochette en affichent
-  une.** Les autres gardent leur rendu texte — une ligne de Track
-  History sans pochette conserve un emplacement vide pour garder
-  les colonnes alignées, et le lecteur masque simplement l'image.
-  Les webstreams et Line-Ins n'ont jamais de pochette.
-* **Les pochettes nécessitent l'API publique.** Elles viennent du
+  une.**  Pour tout le reste — titres sans pochette, webstreams,
+  Line-Ins — l'image est simplement omise et le texte prend sa
+  place.  Il n'y a pas d'image de remplacement.
+* **Les pochettes nécessitent l'API publique.**  Elles viennent du
   même endpoint que le widget Song Request, soumis à Settings →
-  Preferences → *Public API*. Interrupteur éteint : les widgets
+  Preferences → *Public API*.  Interrupteur éteint : les widgets
   fonctionnent toujours, sans images.
 
-Si les pochettes apparaissent rarement, la cause est presque
-toujours la médiathèque et non le widget : seuls les fichiers dont
-la pochette a été importée en ont une.
+Si les pochettes apparaissent rarement, la cause est presque toujours
+la médiathèque et non le widget : seuls les fichiers dont la pochette
+a été importée en ont une.
 
 ---
 

@@ -2,9 +2,9 @@
 // RASTATIME 2026-09-18 — Settings page for the Stream Player Widget v2
 // (work-order point 12).  Same shape as the other widget settings
 // pages: description, live preview, ready-made embed-code snippets.
-// No form: the player has no server-side preference — everything is a
-// URL parameter, and the metadata labels are shared with the
-// Now-Playing widgets (Widgets → Current Show/Track).
+// One saved setting (2026-09-18): the cover-artwork checkbox; every
+// other knob is a URL parameter, and the metadata labels are shared
+// with the Now-Playing widgets (Widgets → Current Show/Track).
 $publicUrl = rtrim($this->publicUrl, '/');
 $previewUrl = $publicUrl . '/embed/player?theme=dark&title=' . rawurlencode($this->stationName);
 $embedCard = $publicUrl . '/embed/player?title=' . rawurlencode($this->stationName);
@@ -29,6 +29,27 @@ $embedBar  = $publicUrl . '/embed/player?layout=bar';
             . "Show/Track).");
         ?>
     </p>
+
+    <?php if (!empty($this->saved)): ?>
+        <div class="success" style="margin-bottom: 1em; padding: 0.6em 1em;
+             background: #2a4a2a; color: #cdc; border-radius: 4px;">
+            <?php echo _("Saved.  Refresh the preview to see the change."); ?>
+        </div>
+    <?php endif; ?>
+
+    <!-- ───── Cover artwork (saved setting) ───── -->
+    <h3 style="margin-top: 1.5em;"><?php echo _("Cover artwork"); ?></h3>
+    <fieldset class="padded">
+        <p style="margin-bottom: 1em; color: #666;">
+            <?php echo _("Shows the cover of the running track next to the "
+                . "play button.  Tracks without a cover, webstreams and "
+                . "line-ins simply show no picture.  This setting applies "
+                . "to every embed of the player, including the one on the "
+                . "station homepage; an embed URL can still override it "
+                . "with <code>art=on</code> or <code>art=off</code>."); ?>
+        </p>
+        <?php echo $this->form; ?>
+    </fieldset>
 
     <!-- ───── Preview (dark backdrop to match the admin theme) ───── -->
     <h3 style="margin-top: 1.5em;"><?php echo _("Preview"); ?></h3>
@@ -62,6 +83,7 @@ $embedBar  = $publicUrl . '/embed/player?layout=bar';
             <code>theme=auto|dark|light</code>,
             <code>layout=card|bar</code>,
             <code>stream=auto|&lt;name&gt;</code> (<?php echo _("pin one configured stream instead of the automatic pick"); ?>),
+            <code>art=on|off</code> (<?php echo _("override the cover-artwork setting above"); ?>),
             <code>cache=10..3600</code> (<?php echo _("metadata poll cache in seconds"); ?>).
             <?php echo _("The old <code>style=premium</code> parameter keeps working and maps to the bottom bar."); ?>
         </p>

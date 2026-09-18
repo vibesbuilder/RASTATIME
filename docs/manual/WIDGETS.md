@@ -819,36 +819,37 @@ Recommended values:
 
 > Added 2026-09-18.
 
-Three widgets can show the cover of the track they are talking
-about: the **Stream Player** (both layouts), the **Track History**
-rows, and the **Now Playing — Track** widget.
+Two widgets can show the cover of the running track:
 
-| Widget | Default | Turn it off / on |
+| Widget | Default | How to change it |
 |---|---|---|
-| Stream Player | **on** | `?art=off` |
-| Track History | **on** | `?art=off` |
-| Now Playing — Track | **off** | `?art=on` |
+| Stream Player | set by the checkbox **Show cover artwork** on Settings → Widgets → Player (on out of the box) | per embed: `?art=on` / `?art=off` |
+| Now Playing — Track | **off** | per embed: `?art=on` |
 
-Now Playing defaults to *off* on purpose: that widget is documented
-with `height="50"`, and covers are opt-in so no existing embed
-changes on its own. With `?art=on` the box grows to about 48 px, so
-give the iframe `height="56"` or more.
+The player checkbox is a saved setting, so it also governs embeds
+that carry no `art` parameter — including the bottom bar on the
+station homepage.  An explicit `?art=` in an embed URL always wins.
 
-Two things are worth knowing:
+Now Playing stays *off* by default on purpose: that widget is
+documented with `height="50"`, so covers are opt-in and no existing
+embed changes on its own.  With `?art=on` the box grows to about
+48 px — give the iframe `height="56"` or more.
 
-* **Only tracks that actually have a cover show one.** Everything
-  else keeps its text-only look — a Track-History row without a
-  cover keeps an empty slot so the columns stay aligned, and the
-  player simply hides the image. Webstreams and Line-Ins never have
-  a cover.
-* **Covers need the public API.** They are served by the same
-  endpoint the Song-Request widget uses, which is gated by
-  Settings → Preferences → *Public API*. With that toggle off the
-  widgets still work, just without pictures.
+The Track History shows no covers.
 
-If covers rarely appear, the cause is almost always the library
-rather than the widget: only files whose artwork was imported have
-one. Settings → Library shows the artwork per track.
+What to expect:
+
+* **Only tracks that actually have a cover show one.**  For anything
+  else — tracks without artwork, webstreams, Line-Ins — the picture
+  is simply left out and the text moves into its place.  There is no
+  placeholder image.
+* **Covers need the public API.**  They are served by the same
+  endpoint the Song-Request widget uses, gated by Settings →
+  Preferences → *Public API*.  With that toggle off the widgets keep
+  working, just without pictures.
+
+If covers rarely appear, the cause is almost always the library, not
+the widget: only files whose artwork was imported have one.
 
 ---
 

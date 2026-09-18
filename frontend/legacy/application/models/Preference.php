@@ -624,6 +624,18 @@ class Application_Model_Preference
     // 60 seconds" which catches most filler material without
     // hiding legitimate short tracks like news jingles or
     // station IDs that an operator might actually want listed.
+    // RASTATIME 2026-09-18 — Stream Player widget: show cover artwork.
+    public static function GetWidgetPlayerShowArt()
+    {
+        $v = self::getValue('widget_player_show_art');
+        if ($v === '' || $v === null) { return true; }   // default on
+        return ($v === '1' || $v === 1 || $v === true || $v === 'true');
+    }
+    public static function SetWidgetPlayerShowArt($v)
+    {
+        self::setValue('widget_player_show_art', $v ? '1' : '0');
+    }
+
     public static function GetWidgetTrackHistoryExcludeShort()
     {
         $v = self::getValue('widget_track_history_exclude_short');

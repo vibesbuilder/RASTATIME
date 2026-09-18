@@ -143,10 +143,6 @@
      * List rendering
      * ---------------------------------------------------------- */
 
-    // W4.1 — cover settings from the body data attributes.
-    var artEnabled = body.getAttribute('data-art') === '1';
-    var artUrlPrefix = body.getAttribute('data-art-url') || '';
-
     function renderRows(tracks, append) {
         if (!el.list) { return; }
         if (!append) {
@@ -162,27 +158,6 @@
         tracks.forEach(function (track) {
             var li = document.createElement('li');
             li.className = 'np-th-row';
-
-            // RASTATIME 2026-09-18 (W4.1) — cover cell.  Only built when
-            // the row actually HAS artwork: the endpoint answers a
-            // cover-less track with a 0-byte 200 (text/html), which
-            // leaves an <img> hanging forever (neither load nor error
-            // fires).  Rows without a cover get an empty spacer so the
-            // time/title columns stay aligned down the list.
-            if (artEnabled) {
-                var coverCell = document.createElement('span');
-                coverCell.className = 'np-th-row-cover';
-                if (track.hasArtwork && track.fileId) {
-                    var img = document.createElement('img');
-                    img.src = artUrlPrefix + encodeURIComponent(track.fileId);
-                    img.alt = '';
-                    img.loading = 'lazy';
-                    coverCell.appendChild(img);
-                } else {
-                    coverCell.classList.add('np-th-row-cover-empty');
-                }
-                li.appendChild(coverCell);
-            }
 
             var timeSpan = document.createElement('span');
             timeSpan.className = 'np-th-row-time';

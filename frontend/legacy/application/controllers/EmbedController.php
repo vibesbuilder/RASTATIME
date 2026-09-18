@@ -91,10 +91,14 @@ class EmbedController extends Zend_Controller_Action
             'url' => null,
             'codec' => null,
             'dataUrl' => $dataUrl,
-            // RASTATIME 2026-09-18 (W4.1) — cover art defaults ON for
-            // the player (it is the flagship listen widget and both
-            // layouts have room; the bar cover is sized to fit 56 px).
-            'art' => $this->_resolveArtFlag($request, true),
+            // RASTATIME 2026-09-18 (W4.1) — cover art: the default is
+            // the operator's checkbox on Settings → Widgets → Player
+            // (so it also governs the homepage bar, which carries no
+            // ?art=); an explicit ?art=on|off in the embed URL wins.
+            'art' => $this->_resolveArtFlag(
+                $request,
+                Application_Model_Preference::GetWidgetPlayerShowArt()
+            ),
             'artUrlPrefix' => $this->_artworkUrlPrefix(128),
             'labels' => [
                 'next' => _('Next'),
@@ -366,11 +370,9 @@ class EmbedController extends Zend_Controller_Action
     /**
      * RASTATIME 2026-09-18 (W4.1 cover artwork) — resolve ?art=on|off.
      *
-     * Default differs per widget and that is deliberate: the two-line
-     * Now-Playing widgets are documented with height="50", so a cover
-     * would break every existing embed — they default OFF and opt in.
-     * The player and the track-history list have room, so they default
-     * ON.
+     * The caller passes the default: OFF for the two-line Now-Playing
+     * widget (documented with height="50" — a cover would change every
+     * existing embed), the operator's Settings checkbox for the player.
      */
     private function _resolveArtFlag($request, $default)
     {
@@ -1590,12 +1592,6 @@ class EmbedController extends Zend_Controller_Action
         }
         $this->view->themeClass = 'np-theme-' . $theme;
 
-        // RASTATIME 2026-09-18 (W4.1) — covers default ON here: the
-        // rows live in a scroll container, so a taller row shows fewer
-        // entries but breaks no embed.  ?art=off opts out.
-        $this->view->artEnabled = $this->_resolveArtFlag($request, true);
-        $this->view->artUrlPrefix = $this->_artworkUrlPrefix(64);
-
         $cacheTtl = $this->_resolveCacheTtl(60);
         $this->view->cacheTtl = $cacheTtl;
         $this->_emitCacheHeaders($cacheTtl);
@@ -1956,8 +1952,6 @@ class EmbedController extends Zend_Controller_Action
                              LIMIT 1)
                        ) AS artist_name,
                        (ph.file_id IS NULL) AS is_webstream,
-                       ph.file_id   AS file_id,
-                       f.artwork    AS artwork,
                        s.id         AS show_id,
                        s.name       AS show_name,
                        s.url        AS show_url,
@@ -2000,16 +1994,8 @@ class EmbedController extends Zend_Controller_Action
             if ($title === '' && $artist === '') {
                 continue;
             }
-            // RASTATIME 2026-09-18 (W4.1) — cover data.  Webstream /
-            // line-in rows have no file_id, so they stay flagged false
-            // and the JS renders them without an <img> (the artwork
-            // endpoint would answer 0-byte 200 and hang the image).
-            $rowFileId = $r['file_id'] !== null ? (int) $r['file_id'] : null;
             $out[] = [
                 'id'           => (int) $r['history_id'],
-                'fileId'       => $rowFileId,
-                'hasArtwork'   => $rowFileId !== null
-                    && trim((string) ($r['artwork'] ?? '')) !== '',
                 'title'        => $title,
                 'artist'       => $artist,
                 'starts'       => $this->_formatTimestamp($r['starts_utc'], $timezone),

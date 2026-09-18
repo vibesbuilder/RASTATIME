@@ -246,6 +246,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Player-Cover per Checkbox, Track History ohne Cover (2026-09-18,
+  Operator-Nachschärfung zu W4.1)** — Settings → Widgets → Player hat
+  jetzt die gespeicherte Checkbox „Show cover artwork" (Preference
+  `widget_player_show_art`, ab Werk an).  Sie bestimmt den Standard
+  jeder Player-Einbettung ohne `art`-Parameter, also auch die Leiste
+  der Stations-Homepage; ein ausdrückliches `?art=on|off` gewinnt.  Die
+  Track History zeigt keine Cover mehr (Operator: nicht benötigt) —
+  Zelle, Datenfelder, SQL-Spalten und CSS wieder entfernt; der
+  Parameter-Fix für `exclude_short`/`min_seconds` bleibt.  Nebenbei
+  einen falschen Code-Kommentar im Player korrigiert: Ausgeblendete
+  Cover (display:none) lassen den Text nachrücken, das Layout springt
+  also bei Titeln ohne Bild — es gibt bewusst keinen Platzhalter.
+  Handbuch WIDGETS EN/DE/FR/ES.
+
 - **Stream-Player-Widget v2 — das letzte Upstream-Widget im Wellen-Stil
   neu gebaut (2026-09-18, Punkt 12, Operator-Go Option A, `4178007`)** — Der 2015er
   jQuery-1.10.2/JSONP-Player ist ersetzt: selbstenthaltenes Vanilla-

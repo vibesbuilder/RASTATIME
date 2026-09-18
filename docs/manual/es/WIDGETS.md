@@ -661,36 +661,39 @@ Valores recomendados:
 
 > Añadido el 18/09/2026.
 
-Tres widgets pueden mostrar la carátula del tema del que hablan: el
-**Stream Player** (ambos layouts), las filas del **Track History** y
-el widget **Now Playing — Track**.
+Dos widgets pueden mostrar la carátula del tema en curso:
 
-| Widget | Por defecto | Desactivar / activar |
+| Widget | Por defecto | Cómo cambiarlo |
 |---|---|---|
-| Stream Player | **activado** | `?art=off` |
-| Track History | **activado** | `?art=off` |
-| Now Playing — Track | **desactivado** | `?art=on` |
+| Stream Player | casilla **Show cover artwork** en Settings → Widgets → Player (activada de fábrica) | por inserción: `?art=on` / `?art=off` |
+| Now Playing — Track | **desactivado** | por inserción: `?art=on` |
 
-Now Playing está *desactivado* a propósito: ese widget está
-documentado con `height="50"`, así que las carátulas son opt-in para
-que ninguna inserción existente cambie sola. Con `?art=on` la caja
-crece a unos 48 px — dé al iframe `height="56"` o más.
+La casilla del reproductor es un ajuste guardado: también rige las
+inserciones sin parámetro `art` — incluida la barra de la portada de
+la emisora.  Un `?art=` explícito en la URL de inserción siempre
+tiene prioridad.
 
-Dos cosas que conviene saber:
+Now Playing queda *desactivado* por defecto a propósito: ese widget
+está documentado con `height="50"`, así que las carátulas son
+opt-in.  Con `?art=on` la caja crece a unos 48 px — dé al iframe
+`height="56"` o más.
 
-* **Solo los temas que realmente tienen carátula muestran una.** El
-  resto mantiene su aspecto de texto — una fila de Track History sin
-  carátula conserva un hueco vacío para que las columnas sigan
-  alineadas, y el reproductor simplemente oculta la imagen. Los
-  webstreams y Line-Ins nunca tienen carátula.
-* **Las carátulas necesitan la API pública.** Vienen del mismo
+El Track History no muestra carátulas.
+
+Qué esperar:
+
+* **Solo los temas que realmente tienen carátula muestran una.**  En
+  todo lo demás — temas sin carátula, webstreams, Line-Ins — la
+  imagen simplemente se omite y el texto ocupa su lugar.  No hay
+  imagen de reemplazo.
+* **Las carátulas necesitan la API pública.**  Vienen del mismo
   endpoint que usa el widget Song Request, sujeto a Settings →
-  Preferences → *Public API*. Con el interruptor apagado los widgets
+  Preferences → *Public API*.  Con el interruptor apagado los widgets
   siguen funcionando, solo que sin imágenes.
 
 Si las carátulas aparecen pocas veces, la causa casi siempre es la
-biblioteca y no el widget: solo los archivos cuya carátula se
-importó tienen una.
+biblioteca y no el widget: solo los archivos cuya carátula se importó
+tienen una.
 
 ---
 
