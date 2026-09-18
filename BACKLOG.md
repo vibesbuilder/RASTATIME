@@ -2247,6 +2247,53 @@ in Bus-metadata gepumpt werden. Aufwand: ~50-100 LoC Template + Test.
 **Aufwand gesamt:** ~1700 LoC + ~400 LoC Doku (Wellen 1-3) + ~700 LoC
 Player v2.
 
+**💡 Welle 4 — Ideen-Sammlung (2026-09-18, Operator-Frage „was haben
+andere Stationen, das uns fehlt?").  Noch KEIN Go — Bestandsaufnahme
+der Datenlage + Priorisierung.**
+
+- 💡 **W4.1 Cover-Artwork in den Widgets** (empfohlen zuerst) — der
+  verbreitetste Baustein auf Sender-Seiten, bei uns überall Text-only.
+  Datenlage GUT: 216 von 372 Dateien haben `cc_files.artwork`, der
+  Endpoint `/api/track?id=N&return=artwork` existiert und wird vom
+  Song-Request-Widget schon genutzt.  Betrifft Now-Playing-Track,
+  Player v2 und Track-History-Zeilen; überall mit Platzhalter für die
+  42 % ohne Bild.  Aufwand ~0,5-1 Tag.
+- 💡 **W4.2 Podcast-/On-Demand-Widget** (`/embed/podcasts`) — Liste der
+  letzten Episoden mit Abspiel-Knopf; bei Sendern mit Nachhör-Angebot
+  Standard, bei uns gar nicht vorhanden.  Datenlage GUT: 5 Podcasts,
+  95 Episoden, 1 Stations-Podcast.  Aufwand ~1-1,5 Tage.  Vorfrage an
+  den Operator: nur Stations-Podcast oder auch importierte Feeds?
+- 💡 **W4.3 „Zum Kalender hinzufügen" (.ics)** — pro Show-Slot eine
+  Termindatei; kleine, praktische Ergänzung für On-Air-Today /
+  Weekly / Multi-View.  Datenlage vorhanden (Schedule).  Aufwand
+  ~0,5 Tag.
+- 💡 **W4.4 Hörerzähler** (`/embed/listeners`) — „N Hörer gerade".
+  Datenlage GUT: Icecast-status-json live + 39.072 Zeilen
+  `cc_listener_count`.  ZWEISCHNEIDIG: bei kleinen Zahlen öffentlich
+  eher kontraproduktiv; falls gebaut, per Default AUS und optional als
+  Tages-/Wochen-Höchstwert statt Momentanwert.
+- 💡 **W4.5 Meistgespielt-Charts** (`/embed/top-tracks`) — Klassiker
+  („Top 10 der Woche").  Technisch machbar: `cc_playout_history`
+  (2.617 Zeilen) gefiltert auf `cc_track_types.code='music'`.
+  ABER dünn: nur 64 Musik-Dateien im Bestand, Spitzenreiter 22 Plays
+  in 90 Tagen — die Liste zeigt faktisch die kleine Rotation.  Ohne
+  Track-Type-Filter dominieren Jingles/Teaser (241 Jingle-Dateien).
+  Erst sinnvoll, wenn die Musik-Bibliothek deutlich wächst.
+- 🔴 **W4.6 Show-/DJ-Profil-Widget — BLOCKIERT durch leere Metadaten.**
+  Auf Sender-Seiten üblich (Sendungsbild, Beschreibung, Moderation,
+  nächste Termine), bei uns NICHT baubar: von 489 Shows haben nur 29
+  ein `image_path`, 2 eine `description` und 9 eine `url`.  Das Widget
+  wäre zu ~99 % leer.  **Vorbedingung:** Sendungs-Metadaten pflegen
+  (Operator-Aufgabe, kein Code) — lohnt sich unabhängig davon, weil
+  Multi-View-Modal und On-Air-Today dieselben Felder anzeigen.
+- 💡 **W4.7 Grüße/Widmung im Song-Request** — freier Nachrichtentext
+  zusätzlich zum Titelwunsch.  Erweiterung des bestehenden Widgets,
+  kein neues.  Braucht Moderations-/Missbrauchs-Überlegung, bevor
+  öffentlich freitext-Eingaben ins Haus kommen.
+- ❌ **Bewusst NICHT vorgeschlagen:** Live-Chat (Moderationslast),
+  Sleep-Timer/Wecker (Nischenfunktion, Browser-untauglich),
+  „Listen on TuneIn/Alexa"-Kacheln (bloße Links, kein Widget).
+
 ---
 
 ### ✅ Line-In Metadaten in Track History (DONE 2026-05-22 v17)
