@@ -284,6 +284,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Widgets: parameterloser /embed/player spielt wieder (2026-09-18,
+  Punkt-12-Verifikation, `cd5ad1d`)** — Ohne `?stream=` blieb der
+  Player-Modus leer und das Template renderte `this.settings.url = ;`
+  (SyntaxError, tote Player-Hülle).  `stream` defaultet jetzt auf
+  `auto` (derselbe Modus wie der generierte Embed-Code der Settings-
+  Seite).  Begleitender Widget-Sweep: alle 15 Embed-Endpoints 200 ohne
+  PHP-Fehler, alle Assets auflösbar, die vier JS-schweren Widgets ohne
+  Konsolen-Fehler.
+
 - **Logging: 530-MB/Tag-Warnungsflut gestoppt, eine Log-Senke, nächtlicher
   Log-Hausmeister (2026-09-18, Operator-Auftrag LOGGING, `8677c47`)** — Befund der
   Inventur: 2 GB im Log-Ordner, ~99 % Liquidsoap, doppelt geschrieben
