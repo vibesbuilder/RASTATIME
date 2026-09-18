@@ -815,6 +815,43 @@ Recommended values:
 
 ---
 
+## Cover artwork (`?art=`)
+
+> Added 2026-09-18.
+
+Three widgets can show the cover of the track they are talking
+about: the **Stream Player** (both layouts), the **Track History**
+rows, and the **Now Playing — Track** widget.
+
+| Widget | Default | Turn it off / on |
+|---|---|---|
+| Stream Player | **on** | `?art=off` |
+| Track History | **on** | `?art=off` |
+| Now Playing — Track | **off** | `?art=on` |
+
+Now Playing defaults to *off* on purpose: that widget is documented
+with `height="50"`, and covers are opt-in so no existing embed
+changes on its own. With `?art=on` the box grows to about 48 px, so
+give the iframe `height="56"` or more.
+
+Two things are worth knowing:
+
+* **Only tracks that actually have a cover show one.** Everything
+  else keeps its text-only look — a Track-History row without a
+  cover keeps an empty slot so the columns stay aligned, and the
+  player simply hides the image. Webstreams and Line-Ins never have
+  a cover.
+* **Covers need the public API.** They are served by the same
+  endpoint the Song-Request widget uses, which is gated by
+  Settings → Preferences → *Public API*. With that toggle off the
+  widgets still work, just without pictures.
+
+If covers rarely appear, the cause is almost always the library
+rather than the widget: only files whose artwork was imported have
+one. Settings → Library shows the artwork per track.
+
+---
+
 ## 11. Theming
 
 Three modes, controlled via the `theme` URL parameter:

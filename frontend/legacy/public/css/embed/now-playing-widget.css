@@ -1186,6 +1186,62 @@ html, body {
     background: var(--np-accent-hover);
 }
 
+/*  RASTATIME 2026-09-18 (W4.1) — cover cell.  Fixed box so rows
+    with and without artwork keep the same column grid; the empty
+    variant is an invisible spacer, not a grey placeholder, which
+    reads calmer in a list where many rows have no cover.  */
+/*  W4.1 — opt-in cover for the Now-Playing Track widget (?art=on).
+    The wrapper only exists when covers are enabled, so a default
+    embed keeps its exact previous two-line box.  */
+.np-widget.np-now-playing .np-art-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.np-widget.np-now-playing .np-art-rows {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.np-widget.np-now-playing .np-cover {
+    flex: 0 0 auto;
+    width: 40px;
+    height: 40px;
+    display: none;
+}
+
+.np-widget.np-now-playing .np-cover.np-cover-on {
+    display: block;
+}
+
+.np-widget.np-now-playing .np-cover img {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 3px;
+    display: block;
+}
+
+.np-widget.np-track-history .np-th-row-cover {
+    flex: 0 0 auto;
+    width: 32px;
+    height: 32px;
+    align-self: center;
+}
+
+.np-widget.np-track-history .np-th-row-cover img {
+    width: 32px;
+    height: 32px;
+    object-fit: cover;
+    border-radius: 3px;
+    display: block;
+}
+
+.np-widget.np-track-history .np-th-row {
+    align-items: center;
+}
+
 .np-widget.np-track-history .np-th-row-time {
     /*  Wide enough to hold "HH:MM - HH:MM" (operator request
         2026-05-22 v14 — show both start AND end time on each

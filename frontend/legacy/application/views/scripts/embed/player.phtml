@@ -67,6 +67,17 @@ $cfg = $this->playerConfigJson;   // pre-encoded JSON (controller)
     .pl-playing .pl-btn .pl-ico-stop { display: block; }
     .pl-btn.pl-busy { opacity: 0.6; }
 
+    /* RASTATIME 2026-09-18 (W4.1) — cover art.  Hidden by default and
+       only revealed for a track that actually HAS artwork: the artwork
+       endpoint answers a cover-less track with a 0-byte 200, which would
+       leave the <img> hanging forever.  Hiding instead of removing keeps
+       the layout from jumping on every track change. */
+    .pl-cover { flex: 0 0 auto; display: none; }
+    .pl-cover.pl-cover-on { display: block; }
+    .pl-cover img { display: block; object-fit: cover; border-radius: 4px; }
+    .pl-card .pl-cover img { width: 48px; height: 48px; }
+    .pl-bar .pl-cover img { width: 40px; height: 40px; }
+
     .pl-now-track { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .pl-now-show, .pl-next { color: var(--pl-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .pl-vol { accent-color: var(--pl-accent); }
@@ -122,6 +133,7 @@ $cfg = $this->playerConfigJson;   // pre-encoded JSON (controller)
             <span class="pl-ico-play"></span><span class="pl-ico-stop"></span>
         </button>
         <span class="pl-title"><?php echo htmlspecialchars((string) $this->playerTitle, ENT_QUOTES, 'UTF-8'); ?></span>
+        <span class="pl-cover" id="pl_cover"><img alt="" /></span>
         <div class="pl-lines">
             <div class="pl-now-track" id="pl_now_track"></div>
             <div class="pl-now-show" id="pl_now_show"></div>
@@ -137,6 +149,7 @@ $cfg = $this->playerConfigJson;   // pre-encoded JSON (controller)
             <button class="pl-btn" id="pl_btn" type="button" aria-label="<?php echo _('Play / Stop'); ?>">
                 <span class="pl-ico-play"></span><span class="pl-ico-stop"></span>
             </button>
+            <span class="pl-cover" id="pl_cover"><img alt="" /></span>
             <div class="pl-lines">
                 <div class="pl-now-track" id="pl_now_track"></div>
                 <div class="pl-now-show" id="pl_now_show"></div>
@@ -161,6 +174,8 @@ $cfg = $this->playerConfigJson;   // pre-encoded JSON (controller)
     var elShow = document.getElementById("pl_now_show");
     var elNext = document.getElementById("pl_next");
     var elVol = document.getElementById("pl_vol");
+    var elCover = document.getElementById("pl_cover");
+    var elCoverImg = elCover ? elCover.querySelector("img") : null;
 
     // A "localhost" Icecast host only resolves on the server itself —
     // rewrite it to the host this page is served from so a remote
@@ -297,6 +312,25 @@ $cfg = $this->playerConfigJson;   // pre-encoded JSON (controller)
         metaTimer = setTimeout(refreshMeta, ms);
     }
 
+    // W4.1 — show the cover only for a track that has one; never point
+    // the <img> at a cover-less id (0-byte 200 = hanging image).
+    function paintCover(track) {
+        if (!elCover || !elCoverImg || !CFG.art) { return; }
+        if (track && track.hasArtwork && track.fileId) {
+            var url = CFG.artUrlPrefix + encodeURIComponent(track.fileId);
+            if (elCoverImg.getAttribute("src") !== url) {
+                elCoverImg.setAttribute("src", url);
+            }
+            // Class, not style.display="" — the base rule is
+            // display:none, so clearing the inline style would just
+            // fall back to hidden.
+            elCover.classList.add("pl-cover-on");
+        } else {
+            elCover.classList.remove("pl-cover-on");
+            elCoverImg.removeAttribute("src");
+        }
+    }
+
     function refreshMeta() {
         fetch(CFG.dataUrl, { cache: "default" })
             .then(function (r) { return r.json(); })
@@ -322,6 +356,7 @@ $cfg = $this->playerConfigJson;   // pre-encoded JSON (controller)
                         elTrack.textContent = CFG.labels.offAir;
                     }
                 }
+                paintCover(track.current);
                 elShow.textContent = show.current ? show.current.name : "";
                 var next = (track.next && track.next.title)
                     || (show.next && show.next.name) || "";

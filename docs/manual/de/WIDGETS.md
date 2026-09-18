@@ -697,6 +697,44 @@ Empfohlene Werte:
 
 ---
 
+## Cover-Artwork (`?art=`)
+
+> Neu am 18.09.2026.
+
+Drei Widgets können das Cover des Titels zeigen, über den sie
+sprechen: der **Stream Player** (beide Layouts), die Zeilen der
+**Track History** und das Widget **Now Playing — Track**.
+
+| Widget | Standard | Aus- / einschalten |
+|---|---|---|
+| Stream Player | **an** | `?art=off` |
+| Track History | **an** | `?art=off` |
+| Now Playing — Track | **aus** | `?art=on` |
+
+Now Playing steht bewusst auf *aus*: Dieses Widget ist mit
+`height="50"` dokumentiert, und Cover sind deshalb opt-in, damit
+sich keine bestehende Einbettung von selbst ändert. Mit `?art=on`
+wächst die Box auf rund 48 px — geben Sie dem iframe dann
+`height="56"` oder mehr.
+
+Zwei Dinge sind wissenswert:
+
+* **Nur Titel, die wirklich ein Cover haben, zeigen eines.** Alle
+  anderen behalten ihr reines Textbild — eine Track-History-Zeile
+  ohne Cover behält einen leeren Platzhalter, damit die Spalten
+  bündig bleiben, und der Player blendet das Bild einfach aus.
+  Webstreams und Line-Ins haben nie ein Cover.
+* **Cover brauchen die öffentliche API.** Sie kommen von demselben
+  Endpunkt wie beim Song-Request-Widget, der über Settings →
+  Preferences → *Public API* freigeschaltet wird. Ist der Schalter
+  aus, funktionieren die Widgets weiter, nur ohne Bilder.
+
+Erscheinen selten Cover, liegt es fast immer an der Bibliothek und
+nicht am Widget: Nur Dateien, deren Artwork mitimportiert wurde,
+haben eines. Settings → Library zeigt das Artwork je Titel.
+
+---
+
 ## 11. Themes
 
 Drei Modi, gesteuert über den `theme`-URL-Parameter:

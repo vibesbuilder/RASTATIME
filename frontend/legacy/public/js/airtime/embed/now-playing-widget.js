@@ -142,8 +142,14 @@
             if (!title)  { return artist; }
             return artist + ' - ' + title;
         };
+        // W4.1 — fileId/hasArtwork ride along so paint() can show a
+        // cover.  Both are absent for show entries and for webstream /
+        // line-in tracks, which is exactly when no cover must be built.
         return {
-            current: ct ? { label: labelFor(ct), starts: ct.starts, ends: ct.ends } : null,
+            current: ct ? {
+                label: labelFor(ct), starts: ct.starts, ends: ct.ends,
+                fileId: ct.fileId, hasArtwork: ct.hasArtwork
+            } : null,
             next:    nt ? { label: labelFor(nt), starts: nt.starts, ends: nt.ends } : null
         };
     }
@@ -151,7 +157,30 @@
     /*
      * Repaint the DOM from a fresh entries object.
      */
+    // W4.1 — cover settings + painter.  Never points the <img> at a
+    // track without artwork: that endpoint answers 0-byte 200 and the
+    // image would hang forever (neither load nor error fires).
+    var artEnabled = body.getAttribute('data-art') === '1';
+    var artUrlPrefix = body.getAttribute('data-art-url') || '';
+
+    function paintCover(entry) {
+        if (!artEnabled) { return; }
+        var cover = document.querySelector('[data-np="cover"]');
+        if (!cover) { return; }
+        var img = cover.querySelector('img');
+        if (!img) { return; }
+        if (entry && entry.hasArtwork && entry.fileId) {
+            var url = artUrlPrefix + encodeURIComponent(entry.fileId);
+            if (img.getAttribute('src') !== url) { img.setAttribute('src', url); }
+            cover.classList.add('np-cover-on');
+        } else {
+            cover.classList.remove('np-cover-on');
+            img.removeAttribute('src');
+        }
+    }
+
     function paint(entries) {
+        paintCover(entries.current);
         var currentName = document.querySelector('[data-np="current-name"]');
         var currentTime = document.querySelector('[data-np="current-time"]');
         var nextName    = document.querySelector('[data-np="next-name"]');

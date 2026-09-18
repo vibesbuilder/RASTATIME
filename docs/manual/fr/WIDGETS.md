@@ -664,6 +664,44 @@ Valeurs recommandées :
 
 ---
 
+## Pochettes (`?art=`)
+
+> Ajouté le 18/09/2026.
+
+Trois widgets peuvent afficher la pochette du titre concerné : le
+**Stream Player** (les deux layouts), les lignes de la **Track
+History** et le widget **Now Playing — Track**.
+
+| Widget | Défaut | Désactiver / activer |
+|---|---|---|
+| Stream Player | **activé** | `?art=off` |
+| Track History | **activé** | `?art=off` |
+| Now Playing — Track | **désactivé** | `?art=on` |
+
+Now Playing est volontairement *désactivé* : ce widget est
+documenté avec `height="50"`, les pochettes sont donc en opt-in
+pour qu'aucune intégration existante ne change d'elle-même. Avec
+`?art=on` la boîte atteint environ 48 px — donnez alors
+`height="56"` ou plus à l'iframe.
+
+Deux points à connaître :
+
+* **Seuls les titres qui ont réellement une pochette en affichent
+  une.** Les autres gardent leur rendu texte — une ligne de Track
+  History sans pochette conserve un emplacement vide pour garder
+  les colonnes alignées, et le lecteur masque simplement l'image.
+  Les webstreams et Line-Ins n'ont jamais de pochette.
+* **Les pochettes nécessitent l'API publique.** Elles viennent du
+  même endpoint que le widget Song Request, soumis à Settings →
+  Preferences → *Public API*. Interrupteur éteint : les widgets
+  fonctionnent toujours, sans images.
+
+Si les pochettes apparaissent rarement, la cause est presque
+toujours la médiathèque et non le widget : seuls les fichiers dont
+la pochette a été importée en ont une.
+
+---
+
 ## 11. Thèmes
 
 Trois modes, contrôlés via le paramètre `theme` :

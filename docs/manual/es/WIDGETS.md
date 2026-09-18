@@ -657,6 +657,43 @@ Valores recomendados:
 
 ---
 
+## Carátulas (`?art=`)
+
+> Añadido el 18/09/2026.
+
+Tres widgets pueden mostrar la carátula del tema del que hablan: el
+**Stream Player** (ambos layouts), las filas del **Track History** y
+el widget **Now Playing — Track**.
+
+| Widget | Por defecto | Desactivar / activar |
+|---|---|---|
+| Stream Player | **activado** | `?art=off` |
+| Track History | **activado** | `?art=off` |
+| Now Playing — Track | **desactivado** | `?art=on` |
+
+Now Playing está *desactivado* a propósito: ese widget está
+documentado con `height="50"`, así que las carátulas son opt-in para
+que ninguna inserción existente cambie sola. Con `?art=on` la caja
+crece a unos 48 px — dé al iframe `height="56"` o más.
+
+Dos cosas que conviene saber:
+
+* **Solo los temas que realmente tienen carátula muestran una.** El
+  resto mantiene su aspecto de texto — una fila de Track History sin
+  carátula conserva un hueco vacío para que las columnas sigan
+  alineadas, y el reproductor simplemente oculta la imagen. Los
+  webstreams y Line-Ins nunca tienen carátula.
+* **Las carátulas necesitan la API pública.** Vienen del mismo
+  endpoint que usa el widget Song Request, sujeto a Settings →
+  Preferences → *Public API*. Con el interruptor apagado los widgets
+  siguen funcionando, solo que sin imágenes.
+
+Si las carátulas aparecen pocas veces, la causa casi siempre es la
+biblioteca y no el widget: solo los archivos cuya carátula se
+importó tienen una.
+
+---
+
 ## 11. Temas
 
 Tres modos, controlados vía el parámetro `theme`:

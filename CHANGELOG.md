@@ -9,6 +9,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Cover-Artwork in den Widgets (2026-09-18, Operator-Go W4.1)** — Drei
+  Widgets zeigen jetzt das Cover des Titels: Stream Player (beide
+  Layouts), Track-History-Zeilen und Now Playing — Track.  Neuer
+  Parameter `?art=on|off`; Default AN bei Player und Track History, AUS
+  bei Now Playing — dieses Widget ist mit `height="50"` dokumentiert, ein
+  Cover hätte jede bestehende Einbettung verändert (mit `?art=on` wächst
+  es auf ~48 px).  Beide Payloads führen jetzt `fileId` + `hasArtwork`;
+  ein `<img>` entsteht NUR bei vorhandenem Cover — der Artwork-Endpoint
+  beantwortet einen Titel ohne Bild mit 0-Byte-200, was ein `<img>` ewig
+  hängen ließe (weder load noch error).  Track-History-Zeilen ohne Cover
+  behalten einen leeren Platzhalter (Spalten bleiben bündig), Webstream-
+  und Line-In-Zeilen haben systembedingt nie eines.  Bilder kommen vom
+  gleichen Endpunkt wie beim Song-Request-Widget (64 px für Zeilen/Bar,
+  128 px für die Player-Karte, `loading=lazy`) und hängen damit am
+  Public-API-Schalter: ist er aus, bleiben die Widgets funktionsfähig,
+  nur ohne Bilder.  Handbuch WIDGETS EN/DE/FR/ES.  **Datenlage-Hinweis
+  für den Betrieb:** von 216 Dateien mit Cover sind 202 Jingles und nur
+  13 von 64 Musiktiteln haben eines — sichtbar werden Cover also erst,
+  wenn die Musikdateien Artwork bekommen.
+
 - **Podcast-Episoden landen in einem Ordner pro Podcast (2026-09-17,
   Operator-Go, `b4d3b0a`)** — Downloads schrieben flach nach `imported/`; jetzt
   `imported/<Podcast-Name>/<Datei>` (Name Windows-sicher gesäubert:
@@ -313,6 +333,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   live geprüft.
 
 ### Fixed
+
+- **Track History: `?exclude_short=` / `?min_seconds=` wirken wieder
+  (2026-09-18, Nebenfund bei W4.1)** — Das Widget-JS baute seine
+  Nachlade-URL aus Datum, Zeit, Seitengröße und Zeitzone und ließ die
+  beiden Filter-Parameter weg.  Da die Liste IMMER per JS geholt wird,
+  hatten die dokumentierten Overrides faktisch keine Wirkung — es galt
+  stumm die Operator-Voreinstellung.  Die Parameter der Seiten-URL
+  werden jetzt an jeden Abruf durchgereicht.
 
 - **Kontextmenüs wieder da — Kalender-Slots und Library-Rechtsklick
   (2026-09-18, Operator-Fund, `b9a7e7a`)** — Das vendored contextMenu-Plugin (2012)
