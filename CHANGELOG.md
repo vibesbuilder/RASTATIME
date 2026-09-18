@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Cover-Artwork in den Widgets (2026-09-18, Operator-Go W4.1)** — Drei
+- **Cover-Artwork in den Widgets (2026-09-18, Operator-Go W4.1, `fb17949`)** — Drei
   Widgets zeigen jetzt das Cover des Titels: Stream Player (beide
   Layouts), Track-History-Zeilen und Now Playing — Track.  Neuer
   Parameter `?art=on|off`; Default AN bei Player und Track History, AUS
