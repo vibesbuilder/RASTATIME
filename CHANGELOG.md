@@ -247,7 +247,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **Player-Cover per Checkbox, Track History ohne Cover (2026-09-18,
-  Operator-Nachschärfung zu W4.1)** — Settings → Widgets → Player hat
+  Operator-Nachschärfung zu W4.1, `eea2038`)** — Settings → Widgets → Player hat
   jetzt die gespeicherte Checkbox „Show cover artwork" (Preference
   `widget_player_show_art`, ab Werk an).  Sie bestimmt den Standard
   jeder Player-Einbettung ohne `art`-Parameter, also auch die Leiste
