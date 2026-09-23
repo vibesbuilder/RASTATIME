@@ -23,7 +23,7 @@ festgelegt.  Jeder Punkt bekommt vor Implementierung die
 | 2 | Crossfade-Paket | **kein Go (Operator 2026-09-10)** — neue Richtung „Show-Grenzen mit eigener Crossfade-Dauer" als 💡 notiert (Future Feature Ideas); die Items „Per-Track Crossfade" + „Frontend-Settings Fade" bleiben 🟡 |
 | 3 | ✅ CSRF-Token-Rotation entschärfen | **DONE 2026-09-10** — Rotation war wirkungslos (Session bereits schreibend geschlossen), Prüfung gehärtet (`7f51156`) |
 | 4 | ✅ `getSqlTypes()`-Cast (DATETIME → PG) | **DONE 2026-09-10** — `datetime` → `timestamp` (`cdc8f0b`) |
-| 5 | Show-Shift bei Overbook | Aktive Items — **für später gemerkt (Operator 2026-09-10)**, Neubewertung im Item (Stufe A/B) |
+| 5 | Show-Shift bei Overbook | **GEBAUT + LIVE seit 2026-06-15 (Buchung berichtigt 2026-09-23)** — nie im Betrieb ausgelöst, keine Service-Tests; Live-Abnahme = Operator-Entscheid |
 | 6 | ✅ Seamless Bus-Mix | **CLOSED 2026-09-11** — alle drei Symptome durch die Liquidsoap-Migration erledigt (Belege im Item) |
 | 7 | ✅ Storage-Umbau (Root → D:\stor) | **DONE 2026-09-16** — Stufe 1 flach/relativ (`6059dc4`), Stufe 2 Speicherort als Local-Machine-Einstellung mit Umzugs-Job (`c0b3c70`), Umzug nach D:\stor per UI abgenommen 09:43 |
 | 7a | ✅ Cue-Marker-Test: 24/7-Aufnahme einschalten (Settings → Local Machine), Cue-Datei prüfen | **DONE 2026-09-16** — zwei Test-Shows 09:55–10:05 über die Stundengrenze: Paare mit Item-Kennung, kein überzähliger End-Marker, Offsets stimmen (Belege im Item „Cue-Marker-Test") |
@@ -1569,7 +1569,23 @@ kann mit dem Storage-Cleanup mitentfernt werden.
 
 ### 🟢 Show-Shift: nachfolgende Show schiebt sich bei Overbook
 
-**Status:** Go vom 2026-05-22; Operator 2026-09-10: „für später gemerkt".
+**Statusberichtigung 2026-09-23 (Punkt-5-Aufnahme):** Die Funktion ist seit
+2026-06-15 KOMPLETT GEBAUT und LIVE — Stufe B: `ShowShiftService` (Kaskade
+Anchor/Clearing/Shift, forward-only), `ShowShiftTask` alle 2 min (letzter
+Lauf heute 23:06), Checkbox „Allow delayed start?" im Show-Formular,
+Handbuch `DELAYED_START.md` EN/DE/FR/ES, CHANGELOG (Commits fe630ec →
+53788ba).  Die Neubewertung vom 2026-09-10 unten war ein Buchungsfehler
+(ging von ungebaut aus).  **Was wirklich offen ist:** 0 von 489 Shows haben
+die Checkbox gesetzt, 0 verschobene Instanzen in 90 Tagen, 0 Log-Zeilen —
+die Funktion hat im Betrieb noch nie gearbeitet und wurde nie mit einem
+echten Overrun live verifiziert; der PHP-Service hat KEINE automatischen
+Tests (die „zehn Scheduler-Testdateien" sind Playout-Tests, nicht dieser
+Service).  Design-Entscheide (Stufe, Ende der verschobenen Show, Kaskade,
+Obergrenze über 15-min-Lead) sind im Service-Docblock festgehalten.
+Nächster Schritt = Operator-Entscheid: kontrollierte Live-Abnahme mit
+Testshow-Overrun oder dunkel lassen bis zum ersten Opt-in.
+
+**Status (alt, überholt):** Go vom 2026-05-22; Operator 2026-09-10: „für später gemerkt".
 Die Vorbedingung ist inzwischen erfüllt (zehn Scheduler-Testdateien,
 ~2.900 Zeilen).  **Neubewertung 2026-09-10:** Stufe A nur im Playout
 (Checkbox pro Show, die Timer der Folgeshow werden um den Überhang des
