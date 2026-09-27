@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Show-Grenzen-Crossfade + „Exclude from Crossover" (2026-09-27,
-  Operator-Go, Arbeitsreihenfolge Punkt 2)** — Zwei Crossfade-Werte unter
+  Operator-Go, Arbeitsreihenfolge Punkt 2, `07e6e1f`)** — Zwei Crossfade-Werte unter
   Settings → General: **Default Track Crossfade Duration** (bisher „Default
   Crossfade Duration", `default_crossfade_duration`) ist jetzt ein echter
   Crossfade zwischen zwei Titeln derselben Sendung (alter Titel blendet aus,
@@ -301,7 +301,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **Settings → General: Fade-In/Fade-Out-Felder ausgeblendet, Crossfade-Feld
-  umbenannt (2026-09-27)** — „Default Fade In (s)" / „Default Fade Out (s)"
+  umbenannt (2026-09-27, `07e6e1f`)** — „Default Fade In (s)" / „Default Fade Out (s)"
   (LibreTime-Erbe, seit der Liquidsoap-Migration ohne Wirkung — die Werte
   landen nur noch in `cc_schedule.fade_in/fade_out`) werden nicht mehr
   angezeigt; die Preference-Schlüssel bleiben.  „Default Crossfade Duration
@@ -416,7 +416,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- **Der bisherige Titel-Crossfade war ein Butt-Splice (2026-09-27)** —
+- **Der bisherige Titel-Crossfade war ein Butt-Splice (2026-09-27, `07e6e1f`)** —
   PLAYOUT skippte den laufenden Titel und pushte erst danach; Liquidsoaps
   `cross` fiel für einen Frame auf den Stille-Arm (Produktions-Log:
   `Analysis … / -infdB` gefolgt von `-infdB / …` eine Sekunde später), der
