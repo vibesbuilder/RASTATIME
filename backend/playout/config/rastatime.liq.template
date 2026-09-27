@@ -375,6 +375,17 @@ server.register(
   "flush", fun (_) -> begin scheduled_q.set_queue([]); "Done" end
 )
 
+# RASTATIME 2026-09-27 - `scheduled.remaining`: seconds of audio left in
+# the playing request (cue-based; -1 = unknown / idle).  PLAYOUT asks at a
+# successor's start whether the predecessor would run on (overbook -> cut)
+# or is inside its crossfade tail; measured here, because a track that
+# started late (or a clipped row) makes the computed value wrong.
+server.register(
+  namespace="scheduled",
+  description="Seconds of audio left in the playing request (-1 = unknown)",
+  "remaining", fun (_) -> string(source.remaining(scheduled_q))
+)
+
 # ---------------------------------------------------------------------
 # Phase-C4 — DJ-Source Bus via input.harbor (optional)
 # ---------------------------------------------------------------------

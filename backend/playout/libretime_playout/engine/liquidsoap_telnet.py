@@ -220,6 +220,13 @@ class LiquidsoapTelnetClient:
         """
         return self.send_command(f"{self._queue_id}.skip")
 
+    def request_queue_remaining(self) -> str:
+        """
+        RASTATIME 2026-09-27 - seconds of audio left in the playing
+        request (``<queue_id>.remaining``, a float; ``-1`` = unknown).
+        """
+        return self.send_command(f"{self._queue_id}.remaining")
+
     def request_queue_flush(self) -> str:
         """
         Drop every PENDING request from the queue; the item currently

@@ -117,6 +117,13 @@ class PlayoutEngine(ABC):
     def flush_queued(self) -> None:
         """RASTATIME 2026-09-27 - drop items queued ahead that will not play."""
 
+    def playing_remaining_seconds(self) -> Optional[float]:
+        """
+        RASTATIME 2026-09-27 - seconds of audio left in the playing item as
+        the engine measures it (cue-based), or None when unknown.
+        """
+        return None
+
     @abstractmethod
     def stop(self) -> None:
         """Hard-stop any currently playing content immediately."""

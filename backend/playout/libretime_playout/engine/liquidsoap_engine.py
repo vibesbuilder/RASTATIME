@@ -405,6 +405,21 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
         self._queued_uri = None
         self._queued_request_id = None
 
+    def playing_remaining_seconds(self) -> Optional[float]:
+        """``scheduled.remaining`` over telnet; None on error or unknown (-1)."""
+        try:
+            raw = self._telnet.request_queue_remaining().strip().splitlines()
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            logger.warning("Liquidsoap remaining could not be read: %s", exc)
+            return None
+        for line in raw:
+            try:
+                value = float(line.strip())
+            except ValueError:
+                continue
+            return value if value >= 0 else None
+        return None
+
     def _set_cross_mode(self, mode: str) -> None:
         """``var.set rt_cross = <mode>`` - the shape of the next queue transition."""
         try:

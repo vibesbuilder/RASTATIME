@@ -1809,6 +1809,19 @@ class PlayoutScheduler:
             (self._natural_end(prev_event) - now).total_seconds()
             if isinstance(prev_event, FileEvent) else 0.0
         )
+        # RASTATIME 2026-09-27 - prefer the engine's own measurement: a
+        # predecessor that started late (second rehearsal: 45 s, after a
+        # clipped cue_out was not applied) has more audio left than the
+        # row says.  The computed value stays the fallback.
+        if isinstance(prev_event, FileEvent):
+            measured = self._engine.playing_remaining_seconds()
+            if isinstance(measured, (int, float)) and not isinstance(measured, bool):
+                if abs(measured - prev_remaining) > 1.0:
+                    logger.info(
+                        "PLAY  %s: predecessor has %.1f s of audio left (engine), "
+                        "rows said %.1f s.", key, measured, prev_remaining,
+                    )
+                prev_remaining = float(measured)
         if queued is not None and self._same_scheduled_item(queued[1], event):
             # Queued ahead: cross already has this track as the partner.
             self._queued_ahead = None

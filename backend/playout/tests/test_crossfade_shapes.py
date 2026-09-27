@@ -148,6 +148,7 @@ def sched(monkeypatch):
     engine.recording_stop.return_value = None
     engine.liquidsoap_uptime_seconds.return_value = 1000.0
     engine.enqueue.return_value = True
+    engine.playing_remaining_seconds.return_value = None
     s = ps.PlayoutScheduler(
         engine=engine, api_client=MagicMock(),
         input_transition_seconds=1.0, track_crossfade_seconds=2.0,
@@ -318,6 +319,39 @@ def test_stop_leaves_the_queue_alone_when_a_successor_is_queued(sched):
     s._queued_ahead, s._queued_ahead_prev = None, None
     s._on_stop("p")
     engine.stop.assert_called_once()
+
+
+def test_file_start_prefers_the_engines_measured_remaining(sched):
+    """A predecessor that started late has more audio left than its row
+    says: the engine's measurement decides the skip."""
+    s, engine = sched
+    now = datetime.utcnow()
+    prev = _file(now - timedelta(seconds=178), 1, instance=1, seconds=180)   # rows: 2 s left
+    nxt = _file(now, 2, instance=2)
+    s._current_event, s._playing_key = prev, "p"
+    s._queued_ahead, s._queued_ahead_prev = ("n", nxt), prev
+    engine.playing_remaining_seconds.return_value = 47.0                     # engine: 47 s left
+    s._on_file_start("n", nxt)
+    assert engine.adopt_queued.call_args.kwargs == {"skip_current": True, "transition": "show_skip"}
+    # and the other way round: rows say overbook, the engine says the tail window is open
+    engine.adopt_queued.reset_mock()
+    prev2 = _file(now - timedelta(seconds=60), 3, instance=2, seconds=180)
+    nxt2 = _file(now, 4, instance=2)
+    s._current_event, s._playing_key = prev2, "p2"
+    s._queued_ahead, s._queued_ahead_prev = ("n2", nxt2), prev2
+    engine.playing_remaining_seconds.return_value = 1.8
+    s._on_file_start("n2", nxt2)
+    assert engine.adopt_queued.call_args.kwargs == {"skip_current": False, "transition": None}
+
+
+def test_engine_reads_the_measured_remaining():
+    eng, telnet = _engine()
+    telnet.request_queue_remaining.return_value = "47.31\nEND"
+    assert eng.playing_remaining_seconds() == pytest.approx(47.31)
+    telnet.request_queue_remaining.return_value = "-1.\nEND"
+    assert eng.playing_remaining_seconds() is None
+    telnet.request_queue_remaining.side_effect = RuntimeError("down")
+    assert eng.playing_remaining_seconds() is None
 
 
 def test_file_start_drops_a_stale_queued_track_before_the_normal_path(sched):
