@@ -286,17 +286,18 @@ class Application_Form_EditAudioMD extends Zend_Form
         ]);
         $this->addElement($expiresAt);
 
-        // RASTATIME 2026-09-27 - "Exclude from Crossover" (cc_files.
-        // exclude_crossfade, migration 0059, raw SQL in StoredFile).  A
-        // flagged track is never faded: it plays to its end and the next
-        // track follows without overlap.  Zend renders the unchecked value
-        // as a hidden input, so the form POST always carries the key.
-        $excludeCrossfade = new Zend_Form_Element_Checkbox('exclude_crossfade');
-        $excludeCrossfade->setLabel(_('Exclude from Crossover:'));
-        $excludeCrossfade->setDescription(_('This track is never faded: it plays to its end and the next track follows without overlap.'));
-        $excludeCrossfade->setCheckedValue('1');
-        $excludeCrossfade->setUncheckedValue('0');
-        $this->addElement($excludeCrossfade);
+        // RASTATIME 2026-09-27 - "No Fade during Crossover" (cc_files.
+        // no_fade_crossfade, migrations 0059/0060, raw SQL in StoredFile).
+        // A flagged track keeps the crossfade overlap but is not faded
+        // itself: it stays at full level while the other track fades in
+        // or out.  Zend renders the unchecked value as a hidden input, so
+        // the form POST always carries the key.
+        $noFadeCrossfade = new Zend_Form_Element_Checkbox('no_fade_crossfade');
+        $noFadeCrossfade->setLabel(_('No Fade during Crossover:'));
+        $noFadeCrossfade->setDescription(_('This track is not faded in or out during a crossover: it keeps its full level while the other track fades. The overlap stays.'));
+        $noFadeCrossfade->setCheckedValue('1');
+        $noFadeCrossfade->setUncheckedValue('0');
+        $this->addElement($noFadeCrossfade);
 
         // Add the cancel button
         $this->addElement('button', 'editmdcancel', [

@@ -9,7 +9,8 @@ Date: 2026-09-27
 >   operator values (track crossfade = real crossfade inside a show,
 >   show crossfade = old show fades out while the new show's first
 >   track starts at full level; the show value also shapes every input
->   switch), a per-track "Exclude from Crossover" flag (migration 0059),
+>   switch), a per-track "No Fade during Crossover" flag (migrations
+>   0059/0060: the flagged track keeps the overlap but is not faded),
 >   `cross()` around the request queue with a shape variable set by the
 >   playout, queue-ahead pushes; the old skip-then-push order (a butt
 >   splice in practice) is gone.
@@ -5142,7 +5143,7 @@ report sizes fall back to the probe layer alone.
 long; per-file timeout 240 s with a low-speed abort; the rest is
 counted as "left for the next run".
 
-### 23.37 Show-Boundary Crossfade and "Exclude from Crossover" (2026-09-27)
+### 23.37 Show-Boundary Crossfade and "No Fade during Crossover" (2026-09-27)
 
 **Context.**  One crossfade value shaped every transition, and — as the
 production log showed — the queue "crossfade" was a butt splice: PLAYOUT
@@ -5153,15 +5154,17 @@ tracks never overlapped.  Operator decisions (2026-09-27): a real
 crossfade inside a show; at a show boundary the old show fades out
 while the new show's first track starts at full level at once; the show
 value also governs Line-In / webstream switches (the same stream in both
-shows stays seamless); start value 1 s; a per-track "Exclude from
-Crossover" instead of the never-active 8-second rule; the LibreTime
-Fade-In / Fade-Out fields disappear.
+shows stays seamless); start value 1 s; a per-track flag instead of the
+never-active 8-second rule - first "Exclude from Crossover", the same
+evening refined to "No Fade during Crossover" (the flagged track keeps
+the overlap but is not faded itself); the LibreTime Fade-In / Fade-Out
+fields disappear.
 
 **Settings.**  `default_crossfade_duration` = Default TRACK Crossfade
 Duration (renamed), `default_show_crossfade_duration` = Default SHOW
 Crossfade Duration (new, `'1'`).  Both are in the render fingerprint
 (§23.34), so a save is applied by the planned-restart path.
-`cc_files.exclude_crossfade` (legacy migration 0059, raw SQL in
+`cc_files.no_fade_crossfade` (legacy migrations 0059 + 0060, raw SQL in
 `StoredFile`, checkbox in the metadata editor, exposed through the
 Django `File` model to the playout).
 
@@ -5171,16 +5174,25 @@ outside (`fallback([scheduled_x, silence_fallback])`), so a track that
 ends into silence plays out and a track out of silence starts at once.
 BUFFER = max(track, show, 0.5 s) is the tail `cross` buffers from every
 track.  The transition function reads the shape from the interactive
-string `rt_cross`, set by PLAYOUT over telnet before each push / skip:
+string `rt_cross` and the flagged side from `rt_nofade` (old | new |
+both | -), both set by PLAYOUT over telnet before each push / skip:
 
 | shape | when | old track | new track |
 |---|---|---|---|
 | `track` | in-show, natural end | `fade.out(duration=T, delay=BUFFER-T)` — its last T seconds | waits `BUFFER-T`, then `fade.in(T)` — starts at its row start |
 | `show` | show boundary, natural end | fades over its last S seconds | follows at the old track's end (`sequence`) |
-| `cut` | one side excluded | plays its tail out | follows |
 | `show_skip` | overbook at a show boundary | `fade.out(S, max_duration(S, tail))` from now | `fade.in(0.05)` — at once |
 | `track_skip` | in-show skip (layout off) | `fade.out(T, max_duration(T, tail))` | `fade.in(T)` |
-| `instant` | cut on a skip, silent or empty partner | 50 ms | 50 ms |
+| `instant` | silent or empty partner, or asked for | 50 ms | 50 ms |
+
+"No Fade during Crossover" keeps the shape and the overlap: a flagged
+NEW track comes in at full level (50 ms ramp) while the old one fades;
+a flagged OLD track keeps its level to its end in the natural shapes (a
+1 ms `fade.out` with a delay the tail never reaches - `fade.out` fades
+whenever its delay is reached OR the remaining time is down to its
+duration, and stays silent afterwards) and is cut with a 50 ms ramp in
+the skip shapes, where it has to end now.  Both flagged = a plain
+overlap.
 
 Bench findings that shaped this (four test tones, left/right channel
 separated, 100-ms RMS envelope of the recorded output): (a) a per-track
@@ -5214,9 +5226,9 @@ clips to the show end) is the fallback when the engine cannot answer.
 queued ahead (its `engine.stop()` would flush the successor; on clipped
 rows STOP and PLAY fire at the same instant).  Without a queued track
 the normal path pushes FIRST and skips only on overbook - a skip on an
-idle queue would hit the new track.  Shape decision `_cross_mode`:
-excluded on either side → cut/instant; different
-`FileEvent.instance_id` → show/show_skip; else track/track_skip.
+idle queue would hit the new track.  Shape decision `_cross_mode` returns `<shape>/<nofade>`: different
+`FileEvent.instance_id` → show/show_skip, else track/track_skip;
+`nofade` = old | new | both | - from the tracks' flags.
 `input_transition_seconds` (drain, bus) is the show value.
 
 **Cue points.**  Found in the rehearsals: Liquidsoap 2.4 applies cue
@@ -5229,12 +5241,10 @@ boundary and the natural `show` shape runs (old fades over its last S
 seconds, new on time) - the `show_skip` path is for tracks whose rows
 were not clipped (manual layouts, late starts).
 
-**Legacy scheduler.**  `Scheduler::calculateCrossfades`, `removeGaps2`
-and the linked-show copy (`SchedulerService`) lay rows next to an
-excluded track out WITHOUT the crossfade offset
-(`crossfadeOffsetBetween`); inserts re-run `calculateCrossfades` only
-for instances that hold an excluded track, so ordinary shows keep the
-upstream insert path.
+**Legacy scheduler.**  Unchanged: rows keep overlapping by the track
+crossfade next to a flagged track as well (the flag changes the fade,
+not the timing).  The interim "no offset next to an excluded track"
+layout rule of the first version was withdrawn the same evening.
 
 **Known edges.**  A track skipped within its first BUFFER seconds has
 no tail to fade; foreign row producers that lay rows adjacent (no
@@ -5247,10 +5257,14 @@ tolerance.
 
 **Rehearsals 2026-09-27.**  Four runs with two test shows (three tracks
 overlapping by the track crossfade, an overbooked boundary, a jingle
-flagged "Exclude from Crossover" between adjacent rows).  Run 1 found
+flagged for the crossover between adjacent rows).  Run 1 found
 the clipped-row STOP/PLAY race and the queue flush; run 2 the ignored
 cue points and the 1 s start rounding; run 3 the ambiguous remaining
 (the measurement belonged to the successor cross had already pulled -
 the skip hit it); run 4 passed: `track` at the true end of each track,
 `show` with the old track fading over its last second and the new show
-on time, `cut` around the jingle, `track` at the last change.
+on time, the flagged jingle played out in full, `track` at the last
+change.  The no-fade shapes were then verified in the bench (four
+tones, left/right separated): flagged old track full to its end while
+the new one fades in, flagged new track at full level at once while the
+old fades, both flagged = plain overlap, overbook = hard cut.

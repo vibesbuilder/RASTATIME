@@ -4822,9 +4822,9 @@ msgid "At a show boundary the old show fades out over this many seconds while th
 msgstr "An einer Sendungsgrenze blendet die alte Sendung über so viele Sekunden aus, während der erste Titel der neuen Sendung sofort in voller Lautstärke startet. Prägt auch jeden Wechsel zwischen Titeln, Webstreams und Line-Ins."
 
 #: RASTATIME 2026-09-27 crossfade
-msgid "Exclude from Crossover:"
-msgstr "Vom Crossover ausnehmen:"
+msgid "No Fade during Crossover:"
+msgstr "Kein Fade beim Crossover:"
 
 #: RASTATIME 2026-09-27 crossfade
-msgid "This track is never faded: it plays to its end and the next track follows without overlap."
-msgstr "Dieser Titel wird nie ein- oder ausgeblendet: er spielt bis zum Ende, der nächste Titel folgt ohne Überlappung."
+msgid "This track is not faded in or out during a crossover: it keeps its full level while the other track fades. The overlap stays."
+msgstr "Dieser Titel wird beim Crossover nicht ein- oder ausgeblendet: er behält seine volle Lautstärke, während der andere Titel blendet. Die Überlappung bleibt."

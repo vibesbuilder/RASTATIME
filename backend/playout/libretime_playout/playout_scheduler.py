@@ -1552,22 +1552,27 @@ class PlayoutScheduler:
 
     def _cross_mode(self, prev: object, nxt: FileEvent, *, skip: bool) -> str:
         """
-        Shape of the queue transition prev -> nxt (see
-        liquidsoap_config._render_crossfade_block).  ``skip`` = the
-        predecessor is cut at nxt's start (overbook) instead of ending
-        by itself.
+        Shape of the queue transition prev -> nxt as ``<shape>/<nofade>``
+        (see liquidsoap_config._render_crossfade_block; the engine sets
+        ``rt_cross`` and ``rt_nofade`` from it).  ``skip`` = the
+        predecessor is cut at nxt's start (overbook) instead of ending by
+        itself.  ``nofade`` names the side(s) flagged "No Fade during
+        Crossover": old | new | both | - .
         """
+        old_nf = isinstance(prev, FileEvent) and prev.no_fade_crossfade
+        new_nf = nxt.no_fade_crossfade
+        nofade = "both" if (old_nf and new_nf) else "old" if old_nf else "new" if new_nf else "-"
         if not isinstance(prev, FileEvent):
-            return "instant" if skip else "track"
-        if prev.exclude_crossfade or nxt.exclude_crossfade:
-            return "instant" if skip else "cut"
-        if (
+            shape = "instant" if skip else "track"
+        elif (
             prev.instance_id is not None
             and nxt.instance_id is not None
             and prev.instance_id != nxt.instance_id
         ):
-            return "show_skip" if skip else "show"
-        return "track_skip" if skip else "track"
+            shape = "show_skip" if skip else "show"
+        else:
+            shape = "track_skip" if skip else "track"
+        return f"{shape}/{nofade}"
 
     @staticmethod
     def _track_metadata(event: FileEvent) -> Dict[str, str]:

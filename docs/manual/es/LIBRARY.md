@@ -120,7 +120,7 @@ el menú de acción de la fila.
 | **Cue In / Out** | `cc_files.cuein` / `cueout` — recortar el inicio / fin sin re-encodificar |
 | **Fade In / Out** | `cc_files.fadein` / `fadeout` |
 | **Replay Gain** | `cc_files.replay_gain` — usado por el motor de playout para normalización de nivel |
-| **Exclude from Crossover** (excluir del crossover) | `cc_files.exclude_crossfade` (desde el 2026-09-27) — márquelo en jingles, identificaciones y otras pistas que deben oírse completas: la pista nunca se funde, se reproduce hasta el final y la pista vecina continúa sin solapamiento (la parrilla coloca las filas vecinas sin desfase de crossfade). Sustituye la antigua regla «pistas de menos de 8 segundos». |
+| **No Fade during Crossover** (sin fundido durante el crossover) | `cc_files.no_fade_crossfade` (desde el 2026-09-27) — márquelo en jingles, identificaciones y otras pistas que deben oírse a volumen completo: la pista no se funde ni al entrar ni al salir durante el crossover, mantiene su volumen mientras la otra pista se funde. El solapamiento se mantiene tan largo como el crossfade entre pistas. En un límite de programa sobrepasado, una pista saliente marcada se corta en vez de fundirse. Sustituye la antigua regla «pistas de menos de 8 segundos». |
 
 ### Eliminar una pista
 

@@ -168,7 +168,7 @@ métadonnées** dans le menu d'action de la ligne.
 | **Cue In / Out** | `cc_files.cuein` / `cueout` — couper le début / la fin sans re-encodage |
 | **Fade In / Out** | `cc_files.fadein` / `fadeout` |
 | **Replay Gain** | `cc_files.replay_gain` — utilisé par le moteur de playout pour la normalisation de niveau |
-| **Exclude from Crossover** (exclure du fondu enchaîné) | `cc_files.exclude_crossfade` (depuis le 2026-09-27) — à cocher pour les jingles, indicatifs et autres titres qui doivent être entendus en entier : le titre n'est jamais fondu, il est joué jusqu'à la fin et le titre voisin s'enchaîne sans chevauchement (la grille place les lignes voisines sans décalage de crossfade). Remplace l'ancienne règle « titres de moins de 8 secondes ». |
+| **No Fade during Crossover** (pas de fondu pendant le fondu enchaîné) | `cc_files.no_fade_crossfade` (depuis le 2026-09-27) — à cocher pour les jingles, indicatifs et autres titres qui doivent être entendus à plein niveau : le titre n'est ni monté ni baissé pendant le fondu enchaîné, il garde son niveau tandis que l'autre titre fond. Le chevauchement reste aussi long que le fondu enchaîné entre titres. À une limite d'émission dépassée, un titre sortant marqué est coupé au lieu d'être fondu. Remplace l'ancienne règle « titres de moins de 8 secondes ». |
 
 > **Conseil opérateur.** Définissez **Cue In** sur les
 > promos radio / stings qui ont quelques secondes de

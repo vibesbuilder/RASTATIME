@@ -436,9 +436,16 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
         return None
 
     def _set_cross_mode(self, mode: str) -> None:
-        """``var.set rt_cross = <mode>`` - the shape of the next queue transition."""
+        """
+        ``var.set rt_cross = <shape>`` and ``var.set rt_nofade = <side>`` -
+        the shape of the next queue transition and which side is flagged
+        "No Fade during Crossover".  ``mode`` is ``<shape>/<side>``; a
+        bare shape means no flag.
+        """
+        shape, _, nofade = mode.partition("/")
         try:
-            self._telnet.var_set("rt_cross", mode)
+            self._telnet.var_set("rt_cross", shape)
+            self._telnet.var_set("rt_nofade", nofade or "-")
             self._cross_mode = mode
         except Exception as exc:  # pylint: disable=broad-exception-caught
             logger.warning("Liquidsoap rt_cross=%s could not be set: %s", mode, exc)

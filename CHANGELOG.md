@@ -310,6 +310,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **„Exclude from Crossover" → „No Fade during Crossover" (2026-09-27, Operator
+  nach der Abnahme)** — Der markierte Titel bleibt im Crossover (Überlappung
+  wie eingestellt), wird aber selbst nicht ein- oder ausgeblendet: er behält
+  seine volle Lautstärke, während der andere Titel blendet (beide markiert =
+  reine Überlappung; an einer überzogenen Sendungsgrenze wird ein markierter
+  abgehender Titel geschnitten statt ausgeblendet).  Spalte umbenannt
+  (`cc_files.no_fade_crossfade`, Migration 0060), Checkbox, API-Feld,
+  FileEvent, Handbuch ×4.  Liquidsoap: zweite Variable `rt_nofade`
+  (old/new/both/-), der Playout sendet `<form>/<seite>`; „kein Fade" ist ein
+  1-ms-`fade.out` mit unerreichbarer Verzögerung — `fade.out` blendet, sobald
+  die Verzögerung erreicht ist ODER der Rest auf die Dauer sinkt, und bleibt
+  danach stumm (Bench).  Die Sonderregel „keine Überlappung neben einem
+  markierten Titel" im PHP-Scheduler entfällt wieder (Zeilen überlappen
+  normal).  Bench mit vier Formen bestanden.
+
 - **Settings → General: Fade-In/Fade-Out-Felder ausgeblendet, Crossfade-Feld
   umbenannt (2026-09-27, `07e6e1f`)** — „Default Fade In (s)" / „Default Fade Out (s)"
   (LibreTime-Erbe, seit der Liquidsoap-Migration ohne Wirkung — die Werte

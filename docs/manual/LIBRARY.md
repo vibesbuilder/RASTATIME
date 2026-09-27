@@ -152,7 +152,7 @@ Click a track row → **Edit Metadata** in the row's action menu.
 | **Cue In / Out** | `cc_files.cuein` / `cuein` — trim the start / end without re-encoding |
 | **Fade In / Out** | `cc_files.fadein` / `fadeout` |
 | **Replay Gain** | `cc_files.replay_gain` — used by the playout engine for level normalisation |
-| **Exclude from Crossover** | `cc_files.exclude_crossfade` (since 2026-09-27) — tick it for jingles, IDs and other tracks that must be heard in full: the track is never faded in or out, it plays to its end and the neighbouring track follows without overlap (the schedule lays the rows next to it out without the crossfade offset). Replaces the old "tracks under 8 seconds" rule. |
+| **No Fade during Crossover** | `cc_files.no_fade_crossfade` (since 2026-09-27) — tick it for jingles, IDs and other tracks that must be heard at full level: the track is not faded in or out during a crossover, it keeps its level while the other track fades. The overlap stays exactly as long as the track crossfade. At an overbooked show boundary a flagged outgoing track is cut instead of faded. Replaces the old "tracks under 8 seconds" rule. |
 
 > **Operator tip.** Set **Cue In** on radio promos / stings that
 > have a few seconds of silence at the head. The cue point is

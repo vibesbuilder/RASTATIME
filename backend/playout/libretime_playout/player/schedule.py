@@ -232,9 +232,9 @@ def generate_file_events(
         mime=file["mime"],
         replay_gain=file["replay_gain"],
         filesize=file["size"],
-        # RASTATIME 2026-09-27 - show boundary + "Exclude from Crossover"
+        # RASTATIME 2026-09-27 - show boundary + "No Fade during Crossover"
         instance_id=schedule.get("instance"),
-        exclude_crossfade=bool(file.get("exclude_crossfade") or False),
+        no_fade_crossfade=bool(file.get("no_fade_crossfade") or False),
     )
 
     if event.replay_gain is None:

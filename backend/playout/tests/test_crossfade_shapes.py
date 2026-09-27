@@ -7,7 +7,7 @@ RASTATIME 2026-09-27 - show-boundary crossfade: the playout side.
     variants), queue-ahead behind a playing file track, adopt at the
     row start with a skip only on overbook, the normal path skips only
     while the predecessor still has audio
-  * schedule.py: FileEvent carries instance_id + exclude_crossfade
+  * schedule.py: FileEvent carries instance_id + no_fade_crossfade
   * __main__: the show crossfade preference
 """
 from __future__ import annotations
@@ -46,8 +46,8 @@ def test_play_sets_the_shape_pushes_and_skips_afterwards():
     eng._state = PlayoutState.PLAYING
     eng.play("C:/m/a.mp3", transition="show_skip", skip_current=True)
     names = _names(telnet)
-    assert names == ["var_set", "request_queue_push", "request_queue_skip"]
-    telnet.var_set.assert_called_once_with("rt_cross", "show_skip")
+    assert names == ["var_set", "var_set", "request_queue_push", "request_queue_skip"]
+    assert [c.args for c in telnet.var_set.call_args_list] == [("rt_cross", "show_skip"), ("rt_nofade", "-")]
 
 
 def test_play_without_skip_current_never_skips():
@@ -72,9 +72,9 @@ def test_enqueue_pushes_behind_the_playing_track():
     eng, telnet = _engine()
     eng._state = PlayoutState.PLAYING
     eng._current_uri = "C:/m/a.mp3"
-    assert eng.enqueue("C:/m/b.mp3", cue_in=1.0, cue_out=30.0, transition="show") is True
-    assert _names(telnet) == ["var_set", "request_queue_push"]
-    telnet.var_set.assert_called_once_with("rt_cross", "show")
+    assert eng.enqueue("C:/m/b.mp3", cue_in=1.0, cue_out=30.0, transition="show/old") is True
+    assert _names(telnet) == ["var_set", "var_set", "request_queue_push"]
+    assert [c.args for c in telnet.var_set.call_args_list] == [("rt_cross", "show"), ("rt_nofade", "old")]
     assert eng._queued_uri == "C:/m/b.mp3" and eng._queued_request_id == "42"
     assert eng._current_uri == "C:/m/a.mp3"          # untouched
     assert eng.get_state() == PlayoutState.PLAYING
@@ -99,8 +99,8 @@ def test_adopt_queued_cancels_the_deferred_stop_and_skips_on_overbook():
     eng.adopt_queued("C:/m/b.mp3", skip_current=True, transition="show_skip")
     assert eng._stop_timer is None and eng._stop_requested is False
     assert pending.finished.is_set()             # cancelled
-    assert _names(telnet)[-2:] == ["var_set", "request_queue_skip"]
-    assert telnet.var_set.call_args_list[-1].args == ("rt_cross", "show_skip")
+    assert _names(telnet)[-3:] == ["var_set", "var_set", "request_queue_skip"]
+    assert telnet.var_set.call_args_list[-2].args == ("rt_cross", "show_skip")
     assert eng._current_uri == "C:/m/b.mp3" and eng._current_request_id == "42"
     assert eng._queued_uri is None
     assert eng.get_state() == PlayoutState.PLAYING
@@ -136,7 +136,7 @@ def _file(start: datetime, row_id: int, *, instance: int = 1, exclude: bool = Fa
         row_id=row_id, id=row_id, uri="C:/media/a.mp3", show_name="night",
         cue_in=0.0, cue_out=float(seconds), track_title=f"t{row_id}", artist_name="a",
         replay_gain=None, fade_in=0.0, fade_out=0.0, mime="audio/mpeg",
-        filesize=1000, instance_id=instance, exclude_crossfade=exclude,
+        filesize=1000, instance_id=instance, no_fade_crossfade=exclude,
     )
 
 
@@ -168,15 +168,17 @@ def test_cross_mode_matrix(sched):
     b = _file(now, 2, instance=1)
     c = _file(now, 3, instance=2)
     x = _file(now, 4, instance=1, exclude=True)
-    assert s._cross_mode(None, b, skip=False) == "track"
-    assert s._cross_mode(None, b, skip=True) == "instant"
-    assert s._cross_mode(a, b, skip=False) == "track"
-    assert s._cross_mode(a, b, skip=True) == "track_skip"
-    assert s._cross_mode(a, c, skip=False) == "show"
-    assert s._cross_mode(a, c, skip=True) == "show_skip"
-    assert s._cross_mode(a, x, skip=False) == "cut"
-    assert s._cross_mode(x, c, skip=False) == "cut"
-    assert s._cross_mode(x, c, skip=True) == "instant"
+    assert s._cross_mode(None, b, skip=False) == "track/-"
+    assert s._cross_mode(None, b, skip=True) == "instant/-"
+    assert s._cross_mode(a, b, skip=False) == "track/-"
+    assert s._cross_mode(a, b, skip=True) == "track_skip/-"
+    assert s._cross_mode(a, c, skip=False) == "show/-"
+    assert s._cross_mode(a, c, skip=True) == "show_skip/-"
+    # "No Fade during Crossover" keeps the shape and names the flagged side
+    assert s._cross_mode(a, x, skip=False) == "track/new"
+    assert s._cross_mode(x, c, skip=False) == "show/old"
+    assert s._cross_mode(x, c, skip=True) == "show_skip/old"
+    assert s._cross_mode(x, x, skip=False) == "track/both"
 
 
 def test_buffer_is_the_larger_crossfade(sched):
@@ -192,7 +194,7 @@ def test_queue_ahead_enqueues_behind_a_playing_file(sched):
     s._current_event, s._playing_key = prev, "p"
     s._on_file_queue_ahead("n", nxt)
     engine.enqueue.assert_called_once()
-    assert engine.enqueue.call_args.kwargs["transition"] == "show"
+    assert engine.enqueue.call_args.kwargs["transition"] == "show/-"
     assert s._queued_ahead == ("n", nxt)
 
 
@@ -245,7 +247,7 @@ def test_file_start_adopts_the_queued_track_with_skip_on_overbook(sched):
     s._current_event, s._playing_key = prev, "p"
     s._queued_ahead = ("n", nxt)
     s._on_file_start("n", nxt)
-    assert engine.adopt_queued.call_args.kwargs == {"skip_current": True, "transition": "show_skip"}
+    assert engine.adopt_queued.call_args.kwargs == {"skip_current": True, "transition": "show_skip/-"}
     engine.play.assert_not_called()
 
 
@@ -257,14 +259,14 @@ def test_file_start_normal_path_skips_only_while_the_predecessor_has_audio(sched
     s._current_event, s._playing_key = None, None
     s._on_file_start("n", nxt)
     kw = engine.play.call_args.kwargs
-    assert kw["skip_current"] is False and kw["transition"] == "track"
+    assert kw["skip_current"] is False and kw["transition"] == "track/-"
     # (b) the predecessor runs on into the slot (same show): push, then skip
     engine.play.reset_mock()
     prev = _file(now - timedelta(seconds=60), 1, instance=1, seconds=180)
     s._current_event, s._playing_key = prev, "p"
     s._on_file_start("n2", _file(now, 3, instance=1))
     kw = engine.play.call_args.kwargs
-    assert kw["skip_current"] is True and kw["transition"] == "track_skip"
+    assert kw["skip_current"] is True and kw["transition"] == "track_skip/-"
     engine.adopt_queued.assert_not_called()
     # (c) the predecessor is inside its tail window (rows overlap by the
     # track crossfade): push only - cross already holds the tail, a skip
@@ -274,7 +276,7 @@ def test_file_start_normal_path_skips_only_while_the_predecessor_has_audio(sched
     s._current_event, s._playing_key = prev, "p"
     s._on_file_start("n3", _file(now, 4, instance=1))
     kw = engine.play.call_args.kwargs
-    assert kw["skip_current"] is False and kw["transition"] == "track"
+    assert kw["skip_current"] is False and kw["transition"] == "track/-"
 
 
 def test_file_start_uses_the_natural_end_not_the_clipped_row_end(sched):
@@ -288,7 +290,7 @@ def test_file_start_uses_the_natural_end_not_the_clipped_row_end(sched):
     s._current_event, s._playing_key = prev, "p"
     s._queued_ahead, s._queued_ahead_prev = ("n", nxt), prev
     s._on_file_start("n", nxt)
-    assert engine.adopt_queued.call_args.kwargs == {"skip_current": True, "transition": "show_skip"}
+    assert engine.adopt_queued.call_args.kwargs == {"skip_current": True, "transition": "show_skip/-"}
 
 
 def test_file_start_after_the_predecessors_stop_still_knows_the_predecessor(sched):
@@ -301,7 +303,7 @@ def test_file_start_after_the_predecessors_stop_still_knows_the_predecessor(sche
     s._current_event, s._playing_key = None, None
     s._queued_ahead, s._queued_ahead_prev = ("n", nxt), prev
     s._on_file_start("n", nxt)
-    assert engine.adopt_queued.call_args.kwargs == {"skip_current": True, "transition": "show_skip"}
+    assert engine.adopt_queued.call_args.kwargs == {"skip_current": True, "transition": "show_skip/-"}
     engine.play.assert_not_called()
 
 
@@ -332,7 +334,7 @@ def test_file_start_prefers_the_engines_measured_remaining(sched):
     s._queued_ahead, s._queued_ahead_prev = ("n", nxt), prev
     engine.playing_remaining_seconds.return_value = 47.0                     # engine: 47 s left
     s._on_file_start("n", nxt)
-    assert engine.adopt_queued.call_args.kwargs == {"skip_current": True, "transition": "show_skip"}
+    assert engine.adopt_queued.call_args.kwargs == {"skip_current": True, "transition": "show_skip/-"}
     # and the other way round: rows say overbook, the engine says the tail window is open
     engine.adopt_queued.reset_mock()
     prev2 = _file(now - timedelta(seconds=60), 3, instance=2, seconds=180)
@@ -411,13 +413,13 @@ def test_generate_file_events_carries_instance_and_exclusion():
         "fade_out": "00:00:00.500000", "cue_in": "00:00:00", "cue_out": "00:03:00",
     }
     file = {"url": "x", "id": 5, "mime": "audio/mpeg", "replay_gain": 0.0,
-            "size": 1, "exclude_crossfade": True}
+            "size": 1, "no_fade_crossfade": True}
     prefs = StreamPreferences(input_fade_transition=0.0, message_format=0,
                               message_offline="off", replay_gain_enabled=False,
                               replay_gain_offset=0.0)
     generate_file_events(events, schedule, file, {"name": "s"}, prefs)
     (ev,) = events.values()
-    assert ev.instance_id == 33 and ev.exclude_crossfade is True
+    assert ev.instance_id == 33 and ev.no_fade_crossfade is True
 
 
 def test_resolve_show_crossfade_prefers_the_preference(monkeypatch):

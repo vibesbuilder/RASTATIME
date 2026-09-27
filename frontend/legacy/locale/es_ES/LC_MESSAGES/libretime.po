@@ -4983,9 +4983,9 @@ msgid "At a show boundary the old show fades out over this many seconds while th
 msgstr "En el límite de un programa, el programa anterior se desvanece durante estos segundos mientras la primera pista del nuevo empieza de inmediato a volumen completo. También da forma a cada cambio entre pistas, webstreams y entradas de línea."
 
 #: RASTATIME 2026-09-27 crossfade
-msgid "Exclude from Crossover:"
-msgstr "Excluir del Crossover:"
+msgid "No Fade during Crossover:"
+msgstr "Sin fundido durante el Crossover:"
 
 #: RASTATIME 2026-09-27 crossfade
-msgid "This track is never faded: it plays to its end and the next track follows without overlap."
-msgstr "Esta pista nunca se funde: se reproduce hasta el final y la siguiente pista continúa sin solapamiento."
+msgid "This track is not faded in or out during a crossover: it keeps its full level while the other track fades. The overlap stays."
+msgstr "Esta pista no se funde ni al entrar ni al salir durante el crossover: mantiene su volumen completo mientras la otra pista se funde. El solapamiento se mantiene."

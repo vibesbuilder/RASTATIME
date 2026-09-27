@@ -4566,9 +4566,9 @@ msgid "At a show boundary the old show fades out over this many seconds while th
 msgstr ""
 
 #: RASTATIME 2026-09-27 crossfade
-msgid "Exclude from Crossover:"
+msgid "No Fade during Crossover:"
 msgstr ""
 
 #: RASTATIME 2026-09-27 crossfade
-msgid "This track is never faded: it plays to its end and the next track follows without overlap."
+msgid "This track is not faded in or out during a crossover: it keeps its full level while the other track fades. The overlap stays."
 msgstr ""

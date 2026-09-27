@@ -284,14 +284,14 @@ class Application_Model_StoredFile
             }
         }
 
-        // RASTATIME 2026-09-27 - "Exclude from Crossover" (migration 0059):
+        // RASTATIME 2026-09-27 - "No Fade during Crossover" (migrations 0059/0060):
         // the checkbox posts '1' / '0'; only touched when the key is present
         // (the analyzer's metadata import never sends it).
-        if (is_array($p_md) && array_key_exists('exclude_crossfade', $p_md)) {
-            $raw = $p_md['exclude_crossfade'];
+        if (is_array($p_md) && array_key_exists('no_fade_crossfade', $p_md)) {
+            $raw = $p_md['no_fade_crossfade'];
             $flag = ($raw === true || $raw === 1 || $raw === '1' || $raw === 'true' || $raw === 'on');
             $stmt = $this->_con->prepare(
-                'UPDATE cc_files SET exclude_crossfade = :flag WHERE id = :id'
+                'UPDATE cc_files SET no_fade_crossfade = :flag WHERE id = :id'
             );
             $stmt->bindValue(':flag', $flag, PDO::PARAM_BOOL);
             $stmt->bindValue(':id', $this->_file->getDbId(), PDO::PARAM_INT);
@@ -363,19 +363,19 @@ class Application_Model_StoredFile
             $md['expires_at'] = '';
         }
 
-        // RASTATIME 2026-09-27 - "Exclude from Crossover" (migration 0059),
+        // RASTATIME 2026-09-27 - "No Fade during Crossover" (migrations 0059/0060),
         // raw SQL like expires_at; '1' / '0' for the form checkbox.
         try {
             $stmt = $this->_con->prepare(
-                'SELECT exclude_crossfade FROM cc_files WHERE id = :id'
+                'SELECT no_fade_crossfade FROM cc_files WHERE id = :id'
             );
             $stmt->bindValue(':id', $this->_file->getDbId(), PDO::PARAM_INT);
             $stmt->execute();
             $flag = $stmt->fetchColumn();
-            $md['exclude_crossfade'] = ($flag === true || $flag === 't' || $flag === 1 || $flag === '1') ? '1' : '0';
+            $md['no_fade_crossfade'] = ($flag === true || $flag === 't' || $flag === 1 || $flag === '1') ? '1' : '0';
         } catch (Exception $exc) {
-            Logging::warn('getDbColMetadata: could not read exclude_crossfade: ' . $exc->getMessage());
-            $md['exclude_crossfade'] = '0';
+            Logging::warn('getDbColMetadata: could not read no_fade_crossfade: ' . $exc->getMessage());
+            $md['no_fade_crossfade'] = '0';
         }
 
         return $md;

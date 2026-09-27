@@ -20,7 +20,7 @@ festgelegt.  Jeder Punkt bekommt vor Implementierung die
 | # | Punkt | Sektion |
 |---|-------|---------|
 | 1 | ✅ Tascam-Ausgänge als lokales Monitoring | **DONE 2026-09-03** (`6464b17`) — Main-Output-Setting wirkt jetzt |
-| 2 | ✅ Crossfade-Paket | **DONE 2026-09-27** — als „Show-Grenzen-Crossfade" gebaut (Operator-Go 2026-09-27): Track- und Show-Crossfade getrennt einstellbar, Show-Wert prägt Eingangswechsel, Titel-Attribut „Exclude from Crossover" (Migration 0059) ersetzt die 8-s-Regel, Fade-In/Out-Felder ausgeblendet; dabei den Butt-Splice des bisherigen Crossfades gefunden und behoben (Push vor Skip, Queue-Ahead).  Details CHANGELOG 27.09.; die 🟡-Items „Per-Track Crossfade" + „Frontend-Settings Fade" damit erledigt |
+| 2 | ✅ Crossfade-Paket | **DONE 2026-09-27** — als „Show-Grenzen-Crossfade" gebaut (Operator-Go 2026-09-27): Track- und Show-Crossfade getrennt einstellbar, Show-Wert prägt Eingangswechsel, Titel-Attribut „No Fade during Crossover" (Migrationen 0059/0060; erst „Exclude from Crossover", gleicher Abend verfeinert: Überlapp bleibt, markierter Titel blendet nicht) ersetzt die 8-s-Regel, Fade-In/Out-Felder ausgeblendet; dabei den Butt-Splice des bisherigen Crossfades gefunden und behoben (Push vor Skip, Queue-Ahead).  Details CHANGELOG 27.09.; die 🟡-Items „Per-Track Crossfade" + „Frontend-Settings Fade" damit erledigt |
 | 3 | ✅ CSRF-Token-Rotation entschärfen | **DONE 2026-09-10** — Rotation war wirkungslos (Session bereits schreibend geschlossen), Prüfung gehärtet (`7f51156`) |
 | 4 | ✅ `getSqlTypes()`-Cast (DATETIME → PG) | **DONE 2026-09-10** — `datetime` → `timestamp` (`cdc8f0b`) |
 | 5 | ✅ Show-Shift bei Overbook | **DONE 2026-09-27** — Filler-Erweiterung gebaut, zwei Live-Proben bestanden, zwei Juni-Bugs dabei gefunden und behoben (Marker `delayed_start_from` via Migration 0058, ganze Sekunden); Details CHANGELOG 27.09. |
@@ -2799,7 +2799,7 @@ Sowohl Menü-Ebene als auch Einzelfeld-Ebene gewünscht.
 **Status:** ✅ Umgesetzt 2026-09-27 (Operator-Go; Antworten auf die vier
 offenen Fragen: (1) alte Sendung blendet aus, neuer Titel sofort voll; (2)
 innerhalb der Sendung ein echter Crossfade, 8-s-Regel entfällt — Ersatz ist
-das Titel-Attribut „Exclude from Crossover"; (3) ja, der Show-Wert steuert
+das Titel-Attribut „No Fade during Crossover" (Überlapp bleibt, der markierte Titel blendet nicht); (3) ja, der Show-Wert steuert
 auch Line-In/Webstream-Wechsel, gleicher Stream in beiden Sendungen bleibt
 nahtlos; (4) Startwert 1 s).  Abweichung von der Skizze: nicht
 `liq_cross_duration`/`liq_fade_out` je Titel — in Liquidsoap 2.4 setzt der
