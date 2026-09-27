@@ -70,15 +70,18 @@ def test_transition_list_is_aligned_with_the_arms():
     a = [x.strip() for x in arms.splitlines()]
     assert len(t) == len(a) == 5
     # RASTATIME 2026-09-13: per-arm wrappers (ICY show_name insert / off-air mark)
-    # around the two shared shapes bus_instant / bus_transition.
+    # around the shared shapes; 2026-09-28: DJ arms use bus_dj, programme
+    # arms pick bus_dj when the outgoing source is a DJ.
     assert t == ["bus_arm_master", "bus_arm_show", "bus_arm_webstream", "bus_arm_linein", "bus_arm_scheduled"]
-    assert block.count("s = bus_instant(old, new)") == 2 and block.count("s = bus_transition(old, new)") == 3
+    assert block.count("s = bus_dj(old, new)") == 2 and block.count("else bus_transition(old, new) end") == 3
 
 
 def test_transition_length_bounds_the_fade():
     assert "transition_length=1.5," in _bus(transition_seconds=1.0)
     assert "transition_length=2.5," in _bus(transition_seconds=2.0)
-    assert "transition_length=0.55," in _bus(transition_seconds=0.0)
+    assert "transition_length=0.55," in _bus(transition_seconds=0.0, dj_fade_seconds=0.0)
+    # the DJ fade counts as well (2026-09-28): the longer of the two + 0.5 s
+    assert "transition_length=1.5," in _bus(transition_seconds=0.0, dj_fade_seconds=1.0)
 
 
 @pytest.mark.parametrize("duration", [0.0, 1.0, 2.5])
@@ -93,12 +96,30 @@ def test_full_render_threads_the_show_crossfade_into_the_bus(duration):
     assert "fade.out(duration=7.0, old)" not in liq
 
 
-def test_dj_arms_use_a_same_typed_instant_transition():
-    """Live outage 2026-09-04 19:26: `def bus_instant(_, new) = new` in a
-    transition list next to bus_transition is a type error in 2.4.4
-    (the list must be homogeneous).  The DJ hand-over must be the same
-    add-of-fades shape, just 50 ms long."""
-    block = _bus(transition_seconds=1.0)
-    assert "def bus_instant(old, new) =" in block
-    assert "fade.out(duration=0.05, old), fade.in(duration=0.05, new)" in block
+def test_dj_arms_use_the_switch_transition_fade():
+    """2026-09-28: Settings -> Streams "Switch Transition Fade" shapes the DJ
+    hand-over - DJ at once, programme fades out under it; the same
+    add-of-fades shape as the other arms (the 2.4.4 typer wants a
+    homogeneous transition list - live outage 2026-09-04 19:26)."""
+    block = _bus(transition_seconds=1.0, dj_fade_seconds=2.5)
+    assert "def bus_dj(old, new) =" in block
+    assert "fade.out(duration=2.5, old),\n                        fade.in(duration=0.05, new)" in block
+    assert "def bus_arm_master(old, new) =  # master_dj\n  s = bus_dj(old, new)" in block
+    assert "def bus_arm_show(old, new) =  # show_dj\n  s = bus_dj(old, new)" in block
     assert "= new end" not in block
+    # transition_length covers the longer of the two fades
+    assert "transition_length=3.0," in block
+
+
+def test_programme_arms_fade_a_leaving_dj_with_the_dj_fade():
+    """Hand-back: a programme arm taking over FROM a DJ uses bus_dj (the DJ
+    fades out over the Switch Transition Fade), otherwise bus_transition."""
+    block = _bus(transition_seconds=1.0, dj_fade_seconds=2.5)
+    cond = 'if source.id(old) == "master_dj" or source.id(old) == "show_dj" then bus_dj(old, new) else bus_transition(old, new) end'
+    assert block.count(cond) == 3          # webstream, linein, scheduled
+    assert "bus_instant" not in block.split("def bus_instant(old, new) =")[1].split("end", 1)[1]
+
+
+def test_dj_fade_zero_is_a_click_free_cut():
+    block = _bus(transition_seconds=1.0, dj_fade_seconds=0.0)
+    assert "def bus_dj(old, new) =\n  add(normalize=false, [fade.out(duration=0.05, old)," in block

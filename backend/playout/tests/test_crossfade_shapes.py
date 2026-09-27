@@ -422,6 +422,25 @@ def test_generate_file_events_carries_instance_and_exclusion():
     assert ev.instance_id == 33 and ev.no_fade_crossfade is True
 
 
+def test_resolve_dj_fade_prefers_the_preference(monkeypatch):
+    from libretime_playout import __main__ as main
+
+    monkeypatch.setattr(main, "_read_pref_seconds", lambda key: 2.0 if key == "default_transition_fade" else None)
+    assert main._resolve_dj_fade_seconds() == 2.0
+    monkeypatch.setattr(main, "_read_pref_seconds", lambda key: None)
+    monkeypatch.delenv("RASTATIME_LIQUIDSOAP_DJ_FADE_SECONDS", raising=False)
+    assert main._resolve_dj_fade_seconds() == main._LIQUIDSOAP_DEFAULT_DJ_FADE == 1.0
+
+
+def test_full_render_threads_the_dj_fade_into_the_bus():
+    from libretime_playout import liquidsoap_config as lc
+    out = lc.render_rastatime_liq(
+        [{"type": "mp3", "host": "h", "port": 8000, "mount": "m", "pass": "x", "bitrate": 128}],
+        harbor_main_password="a", harbor_show_password="b", dj_fade_seconds=1.5,
+    )
+    assert "def bus_dj(old, new) =\n  add(normalize=false, [fade.out(duration=1.5, old)," in out
+
+
 def test_resolve_show_crossfade_prefers_the_preference(monkeypatch):
     from libretime_playout import __main__ as main
 

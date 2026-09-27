@@ -115,6 +115,12 @@ DEFAULT_CROSSFADE_FADE_SECONDS = 0.0  # kept for older callers; no longer render
 # `cross` buffers BUFFER = max(track, show, floor) seconds of the ending
 # track; the transition function trims that tail per shape.
 DEFAULT_SHOW_CROSSFADE_DURATION = 1.0
+# RASTATIME 2026-09-28 - Settings -> Streams "Switch Transition Fade"
+# (cc_pref default_transition_fade, start value 1 s): the DJ hand-over.
+# A connecting DJ is on air at once, the programme fades out under it
+# over this many seconds; when the DJ hands back, the DJ fades out
+# over the same time and the programme is at full level at once.
+DEFAULT_DJ_FADE_SECONDS = 1.0
 CROSSFADE_BUFFER_FLOOR_SECONDS = 0.5
 
 
@@ -1860,6 +1866,7 @@ def _render_bus_source_block(
     linein_enabled: bool = DEFAULT_LINEIN_ENABLED,
     transition_seconds: float = DEFAULT_CROSSFADE_DURATION,
     duck_fade_seconds: float = DEFAULT_INPUT_DUCK_FADE_SECONDS,
+    dj_fade_seconds: float = DEFAULT_DJ_FADE_SECONDS,
 ) -> str:
     """
     Render the ``bus = ...`` assignment that picks the active source.
@@ -1907,7 +1914,15 @@ def _render_bus_source_block(
     # arm list, so both are built together.  DJ arms hand over instantly;
     # the programme arms go through bus_transition (see the module
     # comment at DEFAULT_INPUT_DUCK_FADE_SECONDS).
-    instant, faded = "bus_instant", "bus_transition"
+    # RASTATIME 2026-09-28 - three shapes, all "new at once, old fades out
+    # under it" and therefore the same source type (the 2.4.4 typer wants
+    # a homogeneous transition list): bus_dj (Switch Transition Fade) for
+    # a DJ taking over, bus_transition (Show Crossfade) for the programme
+    # arms.  A programme arm that takes over FROM a DJ (hand-back) also
+    # uses bus_dj - the wrapper looks at the outgoing source's id.
+    dj_shape, faded = "bus_dj", "bus_transition"
+    from_dj = 'source.id(old) == "master_dj" or source.id(old) == "show_dj"'
+    has_dj = bool(main_enabled or show_enabled)  # no DJ arms: plain shapes, no DJ ids in the script
     transitions: List[str] = []
     # RASTATIME 2026-09-13 - every arm gets a thin wrapper around the
     # shared shape: live arms insert one metadata packet with the show on
@@ -1920,10 +1935,14 @@ def _render_bus_source_block(
     wrappers: List[str] = []
 
     def _arm(name: str, source: str, shape: str) -> str:
+        pick = (
+            f"  s = {shape}(old, new)\n" if shape == dj_shape or not has_dj
+            else f"  s = if {from_dj} then bus_dj(old, new) else {shape}(old, new) end\n"
+        )
         return (
             f"def {name}(old, new) =  # {source}\n"
-            f"  s = {shape}(old, new)\n"
-            '  s.insert_metadata([("show_name", bus_show())])\n'
+            + pick
+            + '  s.insert_metadata([("show_name", bus_show())])\n'
             "  s\n"
             "end\n"
         )
@@ -1931,11 +1950,11 @@ def _render_bus_source_block(
     if main_enabled:
         arms.append("({source.is_ready(master_dj)}, master_dj)")
         transitions.append("bus_arm_master")
-        wrappers.append(_arm("bus_arm_master", "master_dj", instant))
+        wrappers.append(_arm("bus_arm_master", "master_dj", dj_shape))
     if show_enabled:
         arms.append("({source.is_ready(show_dj)}, show_dj)")
         transitions.append("bus_arm_show")
-        wrappers.append(_arm("bus_arm_show", "show_dj", instant))
+        wrappers.append(_arm("bus_arm_show", "show_dj", dj_shape))
     if webstream_enabled:
         arms.append("({webstream_live() and source.is_ready(webstream)}, webstream)")
         transitions.append("bus_arm_webstream")
@@ -1948,8 +1967,9 @@ def _render_bus_source_block(
     transitions.append("bus_arm_scheduled")
     wrappers.append(
         "def bus_arm_scheduled(old, new) =\n"
-        f"  s = {faded}(old, new)\n"
-        "  # queue empty: the silence arm goes on air -> Off Air Metadata\n"
+        + (f"  s = if {from_dj} then bus_dj(old, new) else {faded}(old, new) end\n" if has_dj
+           else f"  s = {faded}(old, new)\n")
+        + "  # queue empty: the silence arm goes on air -> Off Air Metadata\n"
         "  if not source.is_ready(scheduled_q) then\n"
         '    s.insert_metadata([("off_air", "true"), ("title", offair_text())])\n'
         "  end\n"
@@ -1976,6 +1996,8 @@ def _render_bus_source_block(
     # operator wants the new source audible immediately at a boundary.
     d = max(0.0, float(transition_seconds))
     fade_len = d if d >= 0.05 else 0.05
+    dj = max(0.0, float(dj_fade_seconds))
+    dj_len = dj if dj >= 0.05 else 0.05
     del duck_fade_seconds  # accepted for older callers, no longer shapes anything
     transition_fn = (
         "# input switch (Default Show Crossfade Duration): new source at\n"
@@ -1984,8 +2006,18 @@ def _render_bus_source_block(
         f"  add(normalize=false, [fade.out(duration={_format_crossfade_duration(fade_len)}, old),\n"
         "                        fade.in(duration=0.05, new)])\n"
         "end\n"
+        "# DJ hand-over / hand-back (Settings -> Streams, Switch Transition Fade):\n"
+        "# the DJ is on air at once and the programme fades out under it; when the\n"
+        "# DJ leaves, the DJ fades out and the programme is at full level at once\n"
+        "def bus_dj(old, new) =\n"
+        f"  add(normalize=false, [fade.out(duration={_format_crossfade_duration(dj_len)}, old),\n"
+        "                        fade.in(duration=0.05, new)])\n"
+        "end\n"
     )
-    shape = f"new at once, old fades out over {_format_crossfade_duration(fade_len)} s"
+    shape = (
+        f"new at once, old fades out over {_format_crossfade_duration(fade_len)} s; "
+        f"DJ hand-over {_format_crossfade_duration(dj_len)} s"
+    )
     return (
         "# RASTATIME 2026-09-04 - gates: Pypo pre-connects a source with its\n"
         "# gate closed (no early on-air) and flips it at the slot start /\n"
@@ -2009,7 +2041,7 @@ def _render_bus_source_block(
         + "\n"
         "bus = switch(\n"
         "  track_sensitive=false,\n"
-        f"  transition_length={_format_crossfade_duration(fade_len + 0.5)},\n"
+        f"  transition_length={_format_crossfade_duration(max(fade_len, dj_len) + 0.5)},\n"
         "  transitions=[\n"
         + "".join(f"    {t},\n" for t in transitions)
         + "  ],\n"
@@ -2028,6 +2060,7 @@ def render_rastatime_liq(
     log_file: str = DEFAULT_LOG_FILE,
     crossfade_duration: float = DEFAULT_CROSSFADE_DURATION,
     show_crossfade_duration: float = DEFAULT_SHOW_CROSSFADE_DURATION,
+    dj_fade_seconds: float = DEFAULT_DJ_FADE_SECONDS,
     crossfade_fade_seconds: float = DEFAULT_CROSSFADE_FADE_SECONDS,  # ignored since 2026-09-27
     local_output_enabled: bool = DEFAULT_LOCAL_OUTPUT_ENABLED,
     local_output_device_id: Optional[int] = None,
@@ -2139,6 +2172,8 @@ def render_rastatime_liq(
         linein_enabled=linein_enabled,
         # RASTATIME 2026-09-27 - input switches follow the SHOW crossfade
         transition_seconds=show_crossfade_duration,
+        # RASTATIME 2026-09-28 - DJ hand-over follows Settings -> Streams
+        dj_fade_seconds=dj_fade_seconds,
     )
     hourly_block = _render_hourly_recording_block(
         enabled=hourly_recording_enabled,
@@ -2189,6 +2224,7 @@ def write_rastatime_liq(
     log_file: str = DEFAULT_LOG_FILE,
     crossfade_duration: float = DEFAULT_CROSSFADE_DURATION,
     show_crossfade_duration: float = DEFAULT_SHOW_CROSSFADE_DURATION,
+    dj_fade_seconds: float = DEFAULT_DJ_FADE_SECONDS,
     crossfade_fade_seconds: float = DEFAULT_CROSSFADE_FADE_SECONDS,  # ignored since 2026-09-27
     local_output_enabled: bool = DEFAULT_LOCAL_OUTPUT_ENABLED,
     local_output_device_id: Optional[int] = None,
@@ -2246,6 +2282,7 @@ def write_rastatime_liq(
         log_file=log_file,
         crossfade_duration=crossfade_duration,
         show_crossfade_duration=show_crossfade_duration,
+        dj_fade_seconds=dj_fade_seconds,
         crossfade_fade_seconds=crossfade_fade_seconds,
         local_output_enabled=local_output_enabled,
         local_output_device_id=local_output_device_id,

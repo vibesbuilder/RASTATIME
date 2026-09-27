@@ -127,6 +127,16 @@ Desconectar a un DJ desde el panel es inmediato.
 > **Consejo del operador.** Master DJ tiene precedencia
 > sobre Show DJ.
 
+**Switch Transition Fade (s)** (Settings → Streams, desde el 2026-09-28,
+valor inicial 1 s) da forma al relevo: cuando un DJ se conecta, entra en
+antena de inmediato y la programación se desvanece por debajo durante
+estos segundos; cuando el DJ se desconecta, el DJ se desvanece durante el
+mismo tiempo y la programación vuelve al instante a volumen completo. 0 =
+cambio seco. La cadena de audio aplica el valor unos segundos después de
+guardar (reinicio planificado en un momento tranquilo o en un límite de
+pista). Antes del 2026-09-28 el campo no tenía efecto; ambos sentidos
+eran un cambio de 50 ms.
+
 ### Conectarse como Fuente en vivo
 
 Los presentadores usan cualquier software de difusión de

@@ -219,6 +219,41 @@ def _read_pref_seconds(key: str) -> Optional[float]:
         return None
 
 
+def _resolve_dj_fade_seconds() -> float:
+    """
+    RASTATIME 2026-09-28 - Settings -> Streams "Switch Transition Fade (s)"
+    (cc_pref ``default_transition_fade``, start value 1 s); env
+    RASTATIME_LIQUIDSOAP_DJ_FADE_SECONDS is the fallback for a missing key.
+    Shapes the DJ hand-over in the bus: a connecting DJ is on air at once
+    while the programme fades out under it over this many seconds; when
+    the DJ hands back, the DJ fades out over the same time and the
+    programme is at full level at once.  Until 2026-09-28 the field had
+    no effect (both DJ arms were a 50 ms hand-over).
+    """
+    try:
+        fallback = float(
+            os.environ.get(
+                "RASTATIME_LIQUIDSOAP_DJ_FADE_SECONDS",
+                str(_LIQUIDSOAP_DEFAULT_DJ_FADE),
+            )
+        )
+    except ValueError as exc:
+        logger.critical("RASTATIME_LIQUIDSOAP_DJ_FADE_SECONDS must be a float: %s", exc)
+        sys.exit(1)
+    pref = _read_pref_seconds("default_transition_fade")
+    if pref is not None:
+        logger.info(
+            "DJ hand-over fade %.2f s from Settings -> Streams "
+            "(cc_pref default_transition_fade)", pref,
+        )
+        return pref
+    logger.info(
+        "DJ hand-over fade %.2f s from env/default (cc_pref key missing or invalid)",
+        fallback,
+    )
+    return fallback
+
+
 def _resolve_show_crossfade_seconds() -> float:
     """
     RASTATIME 2026-09-27 - Settings -> General "Default Show Crossfade
@@ -325,6 +360,8 @@ _ICECAST_DEFAULT_CONFIG_PATH = "C:/rastatime/config/icecast.xml"
 _LIQUIDSOAP_DEFAULT_CROSSFADE = 2.0
 # RASTATIME 2026-09-27 - Default Show Crossfade Duration (Settings -> General)
 _LIQUIDSOAP_DEFAULT_SHOW_CROSSFADE = 1.0
+# RASTATIME 2026-09-28 - Settings -> Streams "Switch Transition Fade" (DJ hand-over)
+_LIQUIDSOAP_DEFAULT_DJ_FADE = 1.0
 
 
 def _read_harbor_credentials() -> tuple:
@@ -621,6 +658,7 @@ def _render_settings_fingerprint() -> Optional[str]:
             "main_output": [row.main_output_id or "", row.main_output_name or ""],
             "crossfade": _resolve_crossfade_seconds(),
             "show_crossfade": _resolve_show_crossfade_seconds(),
+            "dj_fade": _resolve_dj_fade_seconds(),
             "streams": _read_stream_outputs(),
         }
     except Exception as exc:  # pylint: disable=broad-exception-caught
@@ -678,6 +716,7 @@ def _render_rastatime_liq_outcome(stream_outputs: List[Dict]) -> RenderOutcome:
         raise _LiquidsoapRenderError(str(exc)) from exc
     crossfade = _resolve_crossfade_seconds()
     show_crossfade = _resolve_show_crossfade_seconds()
+    dj_fade = _resolve_dj_fade_seconds()
     # RASTATIME 2026-09-03 - linein_http start-up buffer, env-overridable
     # so it can be tuned against the 1.0 default (start gap + end-of-slot
     # latency vs.
@@ -809,6 +848,7 @@ def _render_rastatime_liq_outcome(stream_outputs: List[Dict]) -> RenderOutcome:
             log_file=log_path,
             crossfade_duration=crossfade,
             show_crossfade_duration=show_crossfade,
+            dj_fade_seconds=dj_fade,
             local_output_enabled=local_output_enabled,
             local_output_device_id=local_output_device_id,
             local_output_device_label=local_output_device_label,

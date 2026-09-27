@@ -201,6 +201,16 @@ Das Trennen eines DJs über das Dashboard wirkt sofort.
 > stummgeschaltet (immer noch verbunden, nur nicht auf
 > Sendung), bis der Master die Verbindung trennt.
 
+**Switch Transition Fade (s)** (Settings → Streams, seit 2026-09-28,
+Startwert 1 s) prägt die Übergabe: Verbindet sich ein DJ, ist er sofort
+auf Sendung und das Programm blendet über so viele Sekunden darunter
+aus; trennt der DJ die Verbindung, blendet der DJ über dieselbe Zeit aus
+und das Programm kommt sofort in voller Lautstärke zurück. 0 = harter
+Wechsel. Die Audiokette übernimmt den Wert wenige Sekunden nach dem
+Speichern (geplanter Neustart in einem ruhigen Moment oder an einer
+Titelgrenze). Vor dem 2026-09-28 hatte das Feld keine Wirkung; beide
+Richtungen waren ein 50-ms-Wechsel.
+
 ### Verbindung als Live-Quelle
 
 Hosts verwenden jede Audio-Broadcasting-Software (BUTT,

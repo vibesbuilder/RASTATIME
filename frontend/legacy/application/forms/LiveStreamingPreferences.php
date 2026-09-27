@@ -22,8 +22,11 @@ class Application_Form_LiveStreamingPreferences extends Zend_Form_SubForm
         // the removal rationale.
 
         // Default transition fade
+        // RASTATIME 2026-09-28 - shapes the DJ hand-over in the Liquidsoap bus
+        // (rendered into rastatime.liq, applied by the settings restart).
         $transition_fade = new Zend_Form_Element_Text('transition_fade');
         $transition_fade->setLabel(_('Switch Transition Fade (s):'))
+            ->setDescription(_('When a DJ connects, the DJ is on air at once and the programme fades out underneath over this many seconds; when the DJ disconnects, the DJ fades out and the programme returns at full level at once.'))
             ->setFilters(['StringTrim'])
             ->addValidator('regex', false, [
                 '/^\d*(\.\d+)?$/',

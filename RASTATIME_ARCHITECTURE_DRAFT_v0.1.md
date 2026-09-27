@@ -1,10 +1,15 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.40
-Date: 2026-09-27
+Draft version: 0.41
+Date: 2026-09-28
 
 > **Revision history**
+> - **0.41 (2026-09-28)** — **DJ hand-over fade** (§23.20 transitions):
+>   Settings → Streams "Switch Transition Fade" shapes the DJ arms of the
+>   bus switch (`bus_dj`: DJ at once, programme fades out under it) and
+>   the hand-back (programme arms use `bus_dj` when the outgoing source
+>   is a DJ); the field had no effect before.
 > - **0.40 (2026-09-27)** — **Show-boundary crossfade** (§23.37): two
 >   operator values (track crossfade = real crossfade inside a show,
 >   show crossfade = old show fades out while the new show's first
@@ -4280,8 +4285,14 @@ with a fallback that reproduces the previous behaviour:
    both `add` elements the same source type, which the 2.4.4 typer
    demands), the old source fading out underneath over D seconds
    (D = 0 → a 50 ms cut).  The earlier "crossfade when D > 0" branch
-   (both sources fading over D) is gone.  `transition_length` is the
-   fade length + 0.5 s.  Verified in
+   (both sources fading over D) is gone.  Since 2026-09-28 the DJ arms
+   are not instant any more: `bus_dj` has the same shape with Settings
+   → Streams "Switch Transition Fade" as its length (DJ at once, the
+   programme fades out under it), and a programme arm taking over FROM
+   a DJ (`source.id(old)` is `master_dj` / `show_dj`) uses `bus_dj` as
+   well, so a leaving DJ fades out over the same value while the
+   programme is back at once.  `transition_length` is the longer of the
+   two fades + 0.5 s.  Verified in
    isolation on the exact rendered block: two sines, gate flipped over
    telnet, spectral analysis of the recording — both shapes act at the
    flip, not at `transition_length`.

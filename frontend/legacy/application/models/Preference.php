@@ -354,7 +354,8 @@ class Application_Model_Preference
     {
         $transition_fade = self::getValue('default_transition_fade');
 
-        return ($transition_fade == '') ? '0.000' : $transition_fade;
+        // RASTATIME 2026-09-28 - the field shapes the DJ hand-over now; 1 s start value.
+        return ($transition_fade == '') ? '1' : $transition_fade;
     }
 
     public static function SetStreamLabelFormat($type)

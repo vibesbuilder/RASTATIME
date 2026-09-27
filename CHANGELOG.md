@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Settings → Streams „Switch Transition Fade" wirkt jetzt: DJ-Übergabe mit
+  Fade (2026-09-28, Operator-Go Option 2, Startwert 1 s)** — Das
+  LibreTime-Feld (`cc_pref default_transition_fade`) hatte in RASTATIME
+  keine Wirkung: der Playout legte damit nur ein `switch_off`-Ereignis an,
+  das der Scheduler nie behandelt, der RabbitMQ-Pfad `update_transition_fade`
+  läuft nicht mehr, und beide DJ-Arme im Bus-Switch waren fest 50 ms.  Jetzt
+  eigene Form `bus_dj` für Master- und Show-Arm: der DJ ist sofort auf
+  Sendung, das Programm blendet über den Wert darunter aus; die Programm-Arme
+  (Webstream, Line-In, Scheduled) nutzen dieselbe Form, wenn die abgehende
+  Quelle ein DJ ist (`source.id(old)`), d. h. beim Auflegen blendet der DJ
+  über den Wert aus und das Programm kommt sofort voll.  Wert kommt aus
+  cc_pref (Fallback `RASTATIME_LIQUIDSOAP_DJ_FADE_SECONDS`), ist Teil des
+  Einstellungs-Fingerprints; `transition_length` deckt den längeren der
+  beiden Fades.  Getter-Default und DB-Wert auf 1 s gesetzt, Beschreibung am
+  Feld (EN/DE/FR/ES), Handbuch STREAMS §3 ×4.
+
 - **Show-Grenzen-Crossfade + „Exclude from Crossover" (2026-09-27,
   Operator-Go, Arbeitsreihenfolge Punkt 2, `07e6e1f`)** — Zwei Crossfade-Werte unter
   Settings → General: **Default Track Crossfade Duration** (bisher „Default

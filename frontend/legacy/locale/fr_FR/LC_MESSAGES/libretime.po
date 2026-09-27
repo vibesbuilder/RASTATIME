@@ -5157,3 +5157,7 @@ msgstr "Pas de fondu pendant le fondu enchaîné :"
 #: RASTATIME 2026-09-27 crossfade
 msgid "This track is not faded in or out during a crossover: it keeps its full level while the other track fades. The overlap stays."
 msgstr "Ce titre n'est ni monté ni baissé pendant le fondu enchaîné : il garde son plein niveau tandis que l'autre titre fond. Le chevauchement reste."
+
+#: RASTATIME 2026-09-28 dj fade
+msgid "When a DJ connects, the DJ is on air at once and the programme fades out underneath over this many seconds; when the DJ disconnects, the DJ fades out and the programme returns at full level at once."
+msgstr "Quand un DJ se connecte, il est aussitôt à l'antenne et le programme s'estompe en dessous sur ce nombre de secondes ; quand le DJ se déconnecte, le DJ s'estompe et le programme revient aussitôt à plein niveau."

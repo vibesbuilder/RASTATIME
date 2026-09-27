@@ -149,6 +149,16 @@ tableau de bord est immédiat.
 > **Conseil opérateur.** Master DJ a préséance sur Show
 > DJ.
 
+**Switch Transition Fade (s)** (Settings → Streams, depuis le
+2026-09-28, valeur de départ 1 s) façonne le passage de relais : quand un
+DJ se connecte, il est aussitôt à l'antenne et le programme s'estompe en
+dessous sur ce nombre de secondes ; quand le DJ se déconnecte, le DJ
+s'estompe sur la même durée et le programme revient aussitôt à plein
+niveau. 0 = bascule sèche. La chaîne audio applique la valeur quelques
+secondes après l'enregistrement (redémarrage planifié à un moment calme
+ou à une limite de titre). Avant le 2026-09-28 le champ n'avait aucun
+effet ; les deux sens étaient une bascule de 50 ms.
+
 ### Se connecter comme Source Live
 
 Les animateurs utilisent n'importe quel logiciel de

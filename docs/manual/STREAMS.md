@@ -189,6 +189,15 @@ Disconnecting a DJ from the Dashboard takes effect immediately.
 > source and the Show DJ is muted (still connected, just not
 > on air) until the Master disconnects.
 
+**Switch Transition Fade (s)** (Settings → Streams, since 2026-09-28,
+start value 1 s) shapes the hand-over: when a DJ connects, the DJ is on
+air at once and the programme fades out underneath over this many
+seconds; when the DJ disconnects, the DJ fades out over the same time
+and the programme returns at full level at once. 0 = a hard switch. The
+value is applied by the audio chain a few seconds after saving (planned
+restart at a quiet moment or track boundary). Before 2026-09-28 the
+field had no effect; both directions were a 50 ms switch.
+
 ### Connecting as a Live Source
 
 Hosts use any audio-broadcasting software (BUTT, Mixxx, RadioDJ,

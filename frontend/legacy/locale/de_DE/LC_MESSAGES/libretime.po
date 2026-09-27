@@ -4828,3 +4828,7 @@ msgstr "Kein Fade beim Crossover:"
 #: RASTATIME 2026-09-27 crossfade
 msgid "This track is not faded in or out during a crossover: it keeps its full level while the other track fades. The overlap stays."
 msgstr "Dieser Titel wird beim Crossover nicht ein- oder ausgeblendet: er behält seine volle Lautstärke, während der andere Titel blendet. Die Überlappung bleibt."
+
+#: RASTATIME 2026-09-28 dj fade
+msgid "When a DJ connects, the DJ is on air at once and the programme fades out underneath over this many seconds; when the DJ disconnects, the DJ fades out and the programme returns at full level at once."
+msgstr "Verbindet sich ein DJ, ist er sofort auf Sendung und das Programm blendet über so viele Sekunden darunter aus; trennt der DJ die Verbindung, blendet der DJ aus und das Programm kommt sofort in voller Lautstärke zurück."
