@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Show-Shift: Filler statt Kürzung (2026-09-27, Operator-Go mit
-  Design-Entscheiden D1–D4)** — Neue Einstellung Settings → General →
+  Design-Entscheiden D1–D4, `b7d2890`)** — Neue Einstellung Settings → General →
   „Show-Shift Filler Playlist" (Picker wie Traffic-Alert, Preference
   `show_shift_filler_playlist_id`, 0 = aus).  Im SHIFT-Fall des
   `ShowShiftService` ersetzt `fillShiftedTail()` das bisherige Abschneiden
