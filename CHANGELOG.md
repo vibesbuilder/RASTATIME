@@ -376,6 +376,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Show-Shift Live-Probe 2026-09-27 11:20–11:50 — Basis-Shift + Filler auf
+  Sendung bestätigt, ein Design-Fehler aufgedeckt** — Zwei Testshows im
+  freien Fenster (A 10 min mit 15:58 Inhalt, B 20 min angehakt mit
+  Outro-Playlist).  Der Task griff um 11:13:33, sieben Minuten vor A: B auf
+  As Inhaltsende 11:35:58 gerückt, zwei Schluss-Titel entfernt, 210-s-Lücke
+  mit drei Fillern (179+26+5 s) SEKUNDENGENAU gefüllt, Outro ans Slot-Ende
+  gepinnt.  Playout: A lief bis 11:35:58 ungekürzt (nichts um 11:30), B
+  startete 11:35:58,064, Filler 11:45:35/11:48:33/11:48:59, Outro 11:49:05
+  + 11:49:55, Ende 11:50:00,060 — jeder Zeitstempel auf <200 ms am Plan.
+  Filler-Zeilen tragen jetzt `playout_status = 1` (im Slot; vorher 0 =
+  „überbucht"-Marker).  **AUFGEDECKT:** der Juni-Shift setzt
+  `cc_show_instances.modified_instance = true` als „verschoben"-Marker —
+  im Upstream bedeutet dieses Flag „Instanz gelöscht" (ShowInstance::delete).
+  Folge, live beobachtet: Die verschobene Show ist für Dashboard-Header,
+  Live-Info, Now-Playing-Widgets, Kalender (`Show::getShows`), Showbuilder
+  und die Überlappungsprüfung UNSICHTBAR, während das Playout sie spielt.
+  Fix = eigener Marker (Migration 0058, `delayed_start_applied`) statt des
+  Lösch-Flags; wartet auf Operator-Go.  Testshows wieder entfernt.
+
 - **Track History: `?exclude_short=` / `?min_seconds=` wirken wieder
   (2026-09-18, Nebenfund bei W4.1)** — Das Widget-JS baute seine
   Nachlade-URL aus Datum, Zeit, Seitengröße und Zeitzone und ließ die

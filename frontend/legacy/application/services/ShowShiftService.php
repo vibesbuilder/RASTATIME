@@ -371,7 +371,7 @@ class Application_Service_ShowShiftService
                      clip_length, position, instance_id, file_id, playout_status)
                  VALUES
                     (:starts, :ends, :cue_in, :cue_out, :fade_in, :fade_out,
-                     :clip, 0, :inst, :file, 0)',
+                     :clip, 0, :inst, :file, 1)',
                 [
                     ':starts'   => self::tsToUtc($cursor),
                     ':ends'     => self::tsToUtc($cursor + $len),
