@@ -276,6 +276,50 @@ def test_file_start_normal_path_skips_only_while_the_predecessor_has_audio(sched
     assert kw["skip_current"] is False and kw["transition"] == "track"
 
 
+def test_file_start_uses_the_natural_end_not_the_clipped_row_end(sched):
+    """Rehearsal 2026-09-27: a track running past its show has its row end
+    clipped to the show end by the API; the audio still has 45 s left."""
+    s, engine = sched
+    now = datetime.utcnow()
+    prev = _file(now - timedelta(seconds=135), 1, instance=1, seconds=180)   # 45 s of audio left
+    prev.end = now                                                           # row clipped to the show end
+    nxt = _file(now, 2, instance=2)
+    s._current_event, s._playing_key = prev, "p"
+    s._queued_ahead, s._queued_ahead_prev = ("n", nxt), prev
+    s._on_file_start("n", nxt)
+    assert engine.adopt_queued.call_args.kwargs == {"skip_current": True, "transition": "show_skip"}
+
+
+def test_file_start_after_the_predecessors_stop_still_knows_the_predecessor(sched):
+    """STOP(prev) and PLAY(next) fire at the same instant on clipped rows;
+    STOP may clear _current_event first."""
+    s, engine = sched
+    now = datetime.utcnow()
+    prev = _file(now - timedelta(seconds=135), 1, instance=1, seconds=180)
+    nxt = _file(now, 2, instance=2)
+    s._current_event, s._playing_key = None, None
+    s._queued_ahead, s._queued_ahead_prev = ("n", nxt), prev
+    s._on_file_start("n", nxt)
+    assert engine.adopt_queued.call_args.kwargs == {"skip_current": True, "transition": "show_skip"}
+    engine.play.assert_not_called()
+
+
+def test_stop_leaves_the_queue_alone_when_a_successor_is_queued(sched):
+    s, engine = sched
+    now = datetime.utcnow()
+    prev = _file(now - timedelta(seconds=180), 1, seconds=180)
+    s._current_event, s._playing_key = prev, "p"
+    s._queued_ahead, s._queued_ahead_prev = ("n", _file(now, 2)), prev
+    s._on_stop("p")
+    engine.stop.assert_not_called()
+    engine.flush_queued.assert_not_called()
+    assert s._current_event is prev          # bookkeeping left to the successor
+    # without a queued successor the normal teardown runs
+    s._queued_ahead, s._queued_ahead_prev = None, None
+    s._on_stop("p")
+    engine.stop.assert_called_once()
+
+
 def test_file_start_drops_a_stale_queued_track_before_the_normal_path(sched):
     s, engine = sched
     now = datetime.utcnow()
@@ -304,7 +348,7 @@ def test_arm_queue_ahead_lead_is_buffer_plus_margin(sched, monkeypatch):
     ev = _file(datetime.utcnow(), 2)
     s._arm_queue_ahead("k", ev, 10.0)
     assert delays == [pytest.approx(10.0 - (2.0 + ps.QUEUE_AHEAD_MARGIN_SECONDS))]
-    s._arm_queue_ahead("k2", ev, 2.0)      # inside the lead window: queue now
+    s._arm_queue_ahead("k2", ev, 6.0)      # inside the lead window: queue now
     assert delays[-1] == 0.0
     s._arm_queue_ahead("k3", ev, 0.2)      # too close: normal start only
     assert len(delays) == 2

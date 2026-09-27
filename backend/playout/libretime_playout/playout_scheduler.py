@@ -96,7 +96,11 @@ WEBSTREAM_PREPARE_LEAD_SECONDS = 10.0
 # track's end).  Cross needs the partner on the queue before that moment,
 # otherwise it runs the end-of-track transition alone and the next track
 # follows without a crossfade (bench 2026-09-27).
-QUEUE_AHEAD_MARGIN_SECONDS = 1.5
+# The margin also covers copying the file into the cache (~2 s for an
+# 8 MB track, seen in the 2026-09-27 rehearsal) and row layouts whose
+# overlap is shorter than the buffer (the window then opens before the
+# row start).  Queued requests wait on the queue, so being early is free.
+QUEUE_AHEAD_MARGIN_SECONDS = 5.0
 
 # RASTATIME 2026-09-07 - the webstream watchdog lives inside Liquidsoap
 # (frame counter on the bus, rendered by liquidsoap_config).  The
@@ -245,8 +249,12 @@ class PlayoutScheduler:
         self._cross_buffer_seconds = crossfade_buffer_seconds(
             self._track_crossfade_seconds, self._input_transition_seconds,
         )
-        # (key, FileEvent) queued behind the playing track, or None
+        # (key, FileEvent) queued behind the playing track, or None; and the
+        # track it was queued behind (the predecessor's STOP may clear
+        # _current_event before the successor's start runs - same instant
+        # when rows are clipped at a show boundary, rehearsal 2026-09-27)
         self._queued_ahead: Optional[Tuple[str, FileEvent]] = None
+        self._queued_ahead_prev: Optional[FileEvent] = None
 
         # RASTATIME 2026-05-16 — cached effective dB gain for the
         # currently-playing event.  Source of the value depends on the
@@ -1471,6 +1479,20 @@ class PlayoutScheduler:
         t.start()
         self._prepare_timers[f"{key}/queue"] = t
 
+    @staticmethod
+    def _natural_end(event: FileEvent) -> datetime:
+        """
+        When the track's audio really ends: start + (cue_out - cue_in).
+        The row end (``event.end``) is clipped to the show end for a track
+        that runs past its show (the API cuts ``ends_at`` there), so it
+        says nothing about how much audio is left - the 2026-09-27
+        rehearsal saw "0.0 s left" for a track with 45 s to go.
+        """
+        clip = float(event.cue_out or 0.0) - float(event.cue_in or 0.0)
+        if clip <= 0:
+            return event.end
+        return event.start + timedelta(seconds=clip)
+
     def _on_file_queue_ahead(self, key: str, event: FileEvent) -> None:
         """
         T - (BUFFER + margin): put the next file track on the queue behind
@@ -1497,7 +1519,7 @@ class PlayoutScheduler:
             )
             self._engine.flush_queued()
             self._queued_ahead = None
-        remaining = (prev.end - datetime.utcnow()).total_seconds()
+        remaining = (self._natural_end(prev) - datetime.utcnow()).total_seconds()
         if remaining < 0.5:
             return  # the predecessor is over: a gap follows, normal start
         local = self._ensure_file_cached(event)
@@ -1514,6 +1536,7 @@ class PlayoutScheduler:
         )
         if ok:
             self._queued_ahead = (key, event)
+            self._queued_ahead_prev = prev
             logger.info(
                 "Queue-ahead %s | %r follows %r in %.1f s (%s)",
                 key, event.track_title or event.id, prev.track_title or prev.id,
@@ -1765,14 +1788,24 @@ class PlayoutScheduler:
         # predecessor is over) and "cut it now" (overbook: the predecessor
         # would run on into this slot).
         now = datetime.utcnow()
+        queued = self._queued_ahead
+        if (
+            prev_event is None and queued is not None
+            and self._same_scheduled_item(queued[1], event)
+        ):
+            # The predecessor's STOP ran a moment ago (rows clipped at the
+            # show end fire STOP and this PLAY at the same instant) and
+            # cleared _current_event; the track it was queued behind is
+            # the one still on the queue.
+            prev_event = self._queued_ahead_prev
         prev_remaining = (
-            (prev_event.end - now).total_seconds()
+            (self._natural_end(prev_event) - now).total_seconds()
             if isinstance(prev_event, FileEvent) else 0.0
         )
-        queued = self._queued_ahead
         if queued is not None and self._same_scheduled_item(queued[1], event):
             # Queued ahead: cross already has this track as the partner.
             self._queued_ahead = None
+            self._queued_ahead_prev = None
             skip = prev_remaining > self._cross_buffer_seconds + 0.3
             mode = self._cross_mode(prev_event, event, skip=skip)
             self._engine.adopt_queued(
@@ -1791,6 +1824,7 @@ class PlayoutScheduler:
             )
             self._engine.flush_queued()
             self._queued_ahead = None
+            self._queued_ahead_prev = None
 
         # RASTATIME 2026-05-25 — Seamless-Bus-Mix Phase 1.  Let the
         # engine flush the previous track's last frames before the hard
@@ -2439,6 +2473,21 @@ class PlayoutScheduler:
         # any audio-layer teardown would silently kill B's freshly
         # spawned pipeline.
         if self._playing_key != key:
+            return
+
+        # RASTATIME 2026-09-27 - a file successor is queued behind this
+        # track: its own start (the same instant when the rows are clipped
+        # at a show boundary, or a few seconds later) decides the
+        # hand-over - adopt, and skip only on overbook.  engine.stop()
+        # here would FLUSH the queued successor and start a deferred skip
+        # (rehearsal 2026-09-27: the new show's first track vanished from
+        # the queue, the old track played on for 43 s).  Bookkeeping stays
+        # with the successor's _on_file_start.
+        if isinstance(self._current_event, FileEvent) and self._queued_ahead is not None:
+            logger.info(
+                "STOP  %s: successor %s is queued ahead - leaving the queue to its start.",
+                key, self._queued_ahead[0],
+            )
             return
 
         # Race fix #3 (line-in device-switch) — snapshot the line-in

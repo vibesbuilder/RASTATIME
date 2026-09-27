@@ -423,7 +423,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   alte Titel spielte seinen Rest aus, der neue folgte hart.  Jetzt Push vor
   Skip (die synchrone Queue löst den Request sofort auf) bzw. Queue-Ahead,
   ein Skip nur, wenn der Vorgänger noch Audio hat — sonst hätte er den neuen
-  Titel getroffen.
+  Titel getroffen.  Erste Live-Probe 2026-09-27 16:46–17:05 (zwei
+  Test-Sendungen, Track 3 s / Show 1 s): Titelwechsel in der Sendung
+  sauber (Queue-Ahead, `track`), die Sendungsgrenze aber nicht — die API
+  kappt `ends_at` eines überziehenden Titels auf das Sendungsende, der
+  STOP-Timer des Vorgängers feuerte im selben Augenblick wie der PLAY des
+  Nachfolgers, sein `engine.stop()` spülte den vorgelegten Titel aus der
+  Queue, „Rest 0,0 s" statt 45 s → kein Skip, B startete 43 s zu spät.
+  Fix (`STOP`-Fall): Rest-Audio aus `start + (cue_out − cue_in)` statt aus
+  dem Zeilenende, STOP lässt die Queue in Ruhe, wenn ein Nachfolger
+  vorgelegt ist, der Vorgänger wird beim Vorlegen gemerkt; Vorlauf
+  BUFFER + 5 s (Datei-Kopie in den Cache dauert ~2 s).
 
 - **Show-Shift: zweite Live-Probe 2026-09-27 12:26–12:56 — Sichtbarkeit
   bestätigt, Punkt 5 der Arbeitsreihenfolge abgeschlossen** — Gleiches
