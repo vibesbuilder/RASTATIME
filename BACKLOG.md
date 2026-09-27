@@ -23,7 +23,7 @@ festgelegt.  Jeder Punkt bekommt vor Implementierung die
 | 2 | Crossfade-Paket | **kein Go (Operator 2026-09-10)** — neue Richtung „Show-Grenzen mit eigener Crossfade-Dauer" als 💡 notiert (Future Feature Ideas); die Items „Per-Track Crossfade" + „Frontend-Settings Fade" bleiben 🟡 |
 | 3 | ✅ CSRF-Token-Rotation entschärfen | **DONE 2026-09-10** — Rotation war wirkungslos (Session bereits schreibend geschlossen), Prüfung gehärtet (`7f51156`) |
 | 4 | ✅ `getSqlTypes()`-Cast (DATETIME → PG) | **DONE 2026-09-10** — `datetime` → `timestamp` (`cdc8f0b`) |
-| 5 | Show-Shift bei Overbook | **GEBAUT + LIVE seit 2026-06-15 (Buchung berichtigt 2026-09-23)** — nie im Betrieb ausgelöst, keine Service-Tests; Live-Abnahme = Operator-Entscheid |
+| 5 | ✅ Show-Shift bei Overbook | **DONE 2026-09-27** — Filler-Erweiterung gebaut, zwei Live-Proben bestanden, zwei Juni-Bugs dabei gefunden und behoben (Marker `delayed_start_from` via Migration 0058, ganze Sekunden); Details CHANGELOG 27.09. |
 | 6 | ✅ Seamless Bus-Mix | **CLOSED 2026-09-11** — alle drei Symptome durch die Liquidsoap-Migration erledigt (Belege im Item) |
 | 7 | ✅ Storage-Umbau (Root → D:\stor) | **DONE 2026-09-16** — Stufe 1 flach/relativ (`6059dc4`), Stufe 2 Speicherort als Local-Machine-Einstellung mit Umzugs-Job (`c0b3c70`), Umzug nach D:\stor per UI abgenommen 09:43 |
 | 7a | ✅ Cue-Marker-Test: 24/7-Aufnahme einschalten (Settings → Local Machine), Cue-Datei prüfen | **DONE 2026-09-16** — zwei Test-Shows 09:55–10:05 über die Stundengrenze: Paare mit Item-Kennung, kein überzähliger End-Marker, Offsets stimmen (Belege im Item „Cue-Marker-Test") |

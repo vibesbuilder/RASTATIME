@@ -376,6 +376,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Show-Shift: zweite Live-Probe 2026-09-27 12:26–12:56 — Sichtbarkeit
+  bestätigt, Punkt 5 der Arbeitsreihenfolge abgeschlossen** — Gleiches
+  Szenario wie um 11:20.  Task griff 12:19:33: B trägt
+  `delayed_start_from = 12:36:00`, `modified_instance = false`; Filler
+  erneut sekundengenau (179+26+5 s), Outro gepinnt.  Sichtbarkeit, die in
+  der ersten Probe fehlte: On-Air-Today-Widget listet B 12:41:58–12:56:00,
+  Kalender-Feed 200 mit A (12:26–12:41:59) und B, und um 12:43:31 melden
+  `now-playing-data` und `/api/live-info` „RT-Probe B" mit „Sweetlove" als
+  laufende Sendung/Titel; Playout-Start 12:41:58,055.  Testshows nach
+  Sendungsende entfernt.  Werkzeug `C:/Temp/optd/shift_rehearsal.py`
+  (setup|status|cleanup) bleibt für künftige Proben.
+
 - **Show-Shift: Kalender-Feed 500 durch Mikrosekunden im verlängerten
   A-Ende (2026-09-27, zweiter Fund der Live-Probe, `a842747`)** — Der Shift schrieb
   `cc_show_instances.ends` von Show A als `MAX(cc_schedule.ends)` samt
