@@ -104,7 +104,27 @@ DEFAULT_CROSSFADE_DURATION = 2.0
 # Operator can tune via RASTATIME_LIQUIDSOAP_CROSSFADE_FADE_SECONDS
 # env-var (e.g. 0.3 or 0.5 for a softer music transition, at the
 # cost of shorter jingles).
-DEFAULT_CROSSFADE_FADE_SECONDS = 0.0
+DEFAULT_CROSSFADE_FADE_SECONDS = 0.0  # kept for older callers; no longer rendered
+
+# RASTATIME 2026-09-27 - Show-boundary crossfade.  Two operator values
+# (Settings -> General): the TRACK crossfade (between tracks of one show,
+# a real crossfade: old fades out while new fades in over D seconds) and
+# the SHOW crossfade (at a show boundary: the old show fades out over D
+# seconds while the first track of the new show starts at full level at
+# once; the same value shapes every input switch in the bus block).
+# `cross` buffers BUFFER = max(track, show, floor) seconds of the ending
+# track; the transition function trims that tail per shape.
+DEFAULT_SHOW_CROSSFADE_DURATION = 1.0
+CROSSFADE_BUFFER_FLOOR_SECONDS = 0.5
+
+
+def crossfade_buffer_seconds(track_seconds: float, show_seconds: float) -> float:
+    """Seconds the cross operator buffers from the end of every track."""
+    return max(
+        CROSSFADE_BUFFER_FLOOR_SECONDS,
+        float(track_seconds or 0.0),
+        float(show_seconds or 0.0),
+    )
 
 # Whether to emit a Liquidsoap output to the local soundcard.  On the
 # Windows-only RASTATIME deployment this is `output.wasapi`, defaulting
@@ -1702,6 +1722,110 @@ def _render_hourly_recording_block(
     )
 
 
+def _render_crossfade_block(
+    track_seconds: float = DEFAULT_CROSSFADE_DURATION,
+    show_seconds: float = DEFAULT_SHOW_CROSSFADE_DURATION,
+) -> str:
+    """
+    RASTATIME 2026-09-27 - render ``scheduled_x = cross(...)`` around the
+    request queue plus the transition function.
+
+    Shapes, selected by the interactive string ``rt_cross`` that PLAYOUT
+    sets right before it pushes (natural end) or skips (overbook):
+
+      track       in-show, natural end: old fades out over its LAST
+                  TRACK seconds, new fades in over TRACK - the rows
+                  overlap by TRACK in the schedule, so the new track
+                  starts at its row start.  With TRACK = 0 the tail
+                  plays out and the new track follows (sequence).
+      show        show boundary, natural end: the old show's last track
+                  fades out over its last SHOW seconds, the new show's
+                  first track follows at the old track's end.
+      cut         one side is "Exclude from Crossover": the tail plays
+                  out unfaded, the next track follows.
+      track_skip  in-show skip (rare - the row layout was off): old
+                  fades from NOW over TRACK, new fades in over TRACK.
+      show_skip   overbook at a show boundary (the usual case): the new
+                  show's first track starts at full level at once, the
+                  old track fades out UNDER it over SHOW seconds.
+      instant     cut on a skip: 50 ms hand-over.
+
+    The ending track's tail is BUFFER = max(TRACK, SHOW, floor) seconds
+    (cross pre-buffers it, so a skip also has a tail - as long as the
+    track has played longer than BUFFER; measured 2026-09-27).  Natural
+    shapes wait ``BUFFER - D`` before fading (fade.out delay + a blank in
+    front of the new track); skip shapes trim the tail with
+    max_duration.  A silent or empty partner always hands over at once.
+    """
+    track = max(0.0, float(track_seconds))
+    show = max(0.0, float(show_seconds))
+    buf = crossfade_buffer_seconds(track, show)
+    f = _format_crossfade_duration
+
+    def natural(d: float, fade_in: str) -> str:
+        if d < 0.05:
+            return "    sequence([old.source, new.source])\n"
+        wait = buf - d
+        if wait < 0.01:
+            return (
+                f"    add(normalize=false, [fade.out(duration={f(d)}, old.source),\n"
+                f"                          {fade_in}])\n"
+            )
+        return (
+            f"    add(normalize=false, [fade.out(duration={f(d)}, delay={f(wait)}, old.source),\n"
+            f"                          sequence([blank(duration={f(wait)}), {fade_in}])])\n"
+        )
+
+    def skip(d: float, fade_in: str) -> str:
+        if d < 0.05:
+            return "    rt_instant(old, new)\n"
+        tail = "old.source" if buf - d < 0.01 else f"max_duration({f(d)}, old.source)"
+        return (
+            f"    add(normalize=false, [fade.out(duration={f(d)}, {tail}),\n"
+            f"                          {fade_in}])\n"
+        )
+
+    # "show" at a natural end: the old track fades over its last SHOW
+    # seconds and the new one FOLLOWS (no overlap - the boundary is the
+    # old track's end); a sequence keeps the new track on time.
+    if show < 0.05:
+        show_natural = "    sequence([old.source, new.source])\n"
+    else:
+        show_natural = (
+            f"    sequence([fade.out(duration={f(show)}, delay={f(buf - show)}, old.source), new.source])\n"
+        )
+    track_in = f"fade.in(duration={f(max(track, 0.05))}, new.source)"
+    return (
+        "# rt_cross: shape of the NEXT queue transition, set by PLAYOUT over telnet\n"
+        "#   var.set rt_cross = track | show | cut | track_skip | show_skip | instant\n"
+        'rt_cross = interactive.string("rt_cross", "track")\n'
+        f"# track crossfade {f(track)} s, show crossfade {f(show)} s, tail buffer {f(buf)} s\n"
+        "def rt_instant(old, new) =\n"
+        "  add(normalize=false, [fade.out(duration=0.05, old.source), fade.in(duration=0.05, new.source)])\n"
+        "end\n"
+        "def rt_transition(old, new) =\n"
+        "  mode = rt_cross()\n"
+        "  rem = source.remaining(old.source)\n"
+        '  log(level=3, label="rt_cross", "#{mode}: #{old.metadata[\\"title\\"]} -> '
+        '#{new.metadata[\\"title\\"]} (tail #{rem} s)")\n'
+        '  if mode == "instant" or rem < 0.15 or old.db_level < -50. then\n'
+        "    rt_instant(old, new)\n"
+        '  elsif mode == "show_skip" then\n'
+        + skip(show, "fade.in(duration=0.05, new.source)")
+        + '  elsif mode == "track_skip" then\n'
+        + skip(track, track_in)
+        + '  elsif mode == "cut" then\n'
+        + "    sequence([old.source, new.source])\n"
+        + '  elsif mode == "show" then\n'
+        + show_natural
+        + "  else\n"
+        + natural(track, track_in)
+        + "  end\n"
+        + "end\n"
+        + f'scheduled_x = cross(id="scheduled_x", duration={f(buf)}, rt_transition, scheduled_q)\n'
+    )
+
+
 def _render_bus_source_block(
     *,
     main_enabled: bool,
@@ -1817,29 +1941,25 @@ def _render_bus_source_block(
         # identical for legacy single-source users.
         return "bus = scheduled\n"
 
+    # RASTATIME 2026-09-27 - `transition_seconds` is the Default SHOW
+    # Crossfade Duration.  One shape for every input switch: the incoming
+    # source is at full level at once (50 ms click-free ramp, which also
+    # keeps both add() elements the same source type), the outgoing one
+    # fades out UNDER it over D seconds (0 -> a 50 ms cut).  The old
+    # "crossfade when D > 0" branch (both fade over D) is gone: the
+    # operator wants the new source audible immediately at a boundary.
     d = max(0.0, float(transition_seconds))
-    duck = max(0.1, float(duck_fade_seconds))
-    fade_len = d if d > 0 else duck
-    if d > 0:
-        transition_fn = (
-            "# crossfade: old fades out over D while new fades in over D\n"
-            "def bus_transition(old, new) =\n"
-            f"  add(normalize=false, [fade.out(duration={_format_crossfade_duration(d)}, old),\n"
-            f"                        fade.in(duration={_format_crossfade_duration(d)}, new)])\n"
-            "end\n"
-        )
-        shape = f"crossfade {_format_crossfade_duration(d)} s"
-    else:
-        transition_fn = (
-            "# ducking (Default Crossfade Duration = 0): new source at full\n"
-            "# level at once (50 ms click-free ramp, which also keeps both\n"
-            "# add() elements the same source type), old fades out UNDER it\n"
-            "def bus_transition(old, new) =\n"
-            f"  add(normalize=false, [fade.out(duration={_format_crossfade_duration(duck)}, old),\n"
-            "                        fade.in(duration=0.05, new)])\n"
-            "end\n"
-        )
-        shape = f"ducking, old fades over {_format_crossfade_duration(duck)} s"
+    fade_len = d if d >= 0.05 else 0.05
+    del duck_fade_seconds  # accepted for older callers, no longer shapes anything
+    transition_fn = (
+        "# input switch (Default Show Crossfade Duration): new source at\n"
+        "# full level at once, old fades out UNDER it\n"
+        "def bus_transition(old, new) =\n"
+        f"  add(normalize=false, [fade.out(duration={_format_crossfade_duration(fade_len)}, old),\n"
+        "                        fade.in(duration=0.05, new)])\n"
+        "end\n"
+    )
+    shape = f"new at once, old fades out over {_format_crossfade_duration(fade_len)} s"
     return (
         "# RASTATIME 2026-09-04 - gates: Pypo pre-connects a source with its\n"
         "# gate closed (no early on-air) and flips it at the slot start /\n"
@@ -1881,7 +2001,8 @@ def render_rastatime_liq(
     telnet_port: int = DEFAULT_TELNET_PORT,
     log_file: str = DEFAULT_LOG_FILE,
     crossfade_duration: float = DEFAULT_CROSSFADE_DURATION,
-    crossfade_fade_seconds: float = DEFAULT_CROSSFADE_FADE_SECONDS,
+    show_crossfade_duration: float = DEFAULT_SHOW_CROSSFADE_DURATION,
+    crossfade_fade_seconds: float = DEFAULT_CROSSFADE_FADE_SECONDS,  # ignored since 2026-09-27
     local_output_enabled: bool = DEFAULT_LOCAL_OUTPUT_ENABLED,
     local_output_device_id: Optional[int] = None,
     local_output_device_label: str = "",
@@ -1990,7 +2111,8 @@ def render_rastatime_liq(
         show_enabled=bool(harbor_show_password),
         webstream_enabled=webstream_enabled,
         linein_enabled=linein_enabled,
-        transition_seconds=crossfade_duration,
+        # RASTATIME 2026-09-27 - input switches follow the SHOW crossfade
+        transition_seconds=show_crossfade_duration,
     )
     hourly_block = _render_hourly_recording_block(
         enabled=hourly_recording_enabled,
@@ -2006,12 +2128,8 @@ def render_rastatime_liq(
         .replace("${TELNET_PORT}", str(int(telnet_port)))
         .replace("${LOG_FILE}", _escape_liq_string(log_file))
         .replace(
-            "${CROSSFADE_DURATION}",
-            _format_crossfade_duration(crossfade_duration),
-        )
-        .replace(
-            "${CROSSFADE_FADE_SECONDS}",
-            _format_crossfade_duration(crossfade_fade_seconds),
+            "${CROSSFADE_BLOCK}",
+            _render_crossfade_block(crossfade_duration, show_crossfade_duration),
         )
         .replace(
             "${LOCAL_OUTPUT_BLOCK}",
@@ -2044,7 +2162,8 @@ def write_rastatime_liq(
     telnet_port: int = DEFAULT_TELNET_PORT,
     log_file: str = DEFAULT_LOG_FILE,
     crossfade_duration: float = DEFAULT_CROSSFADE_DURATION,
-    crossfade_fade_seconds: float = DEFAULT_CROSSFADE_FADE_SECONDS,
+    show_crossfade_duration: float = DEFAULT_SHOW_CROSSFADE_DURATION,
+    crossfade_fade_seconds: float = DEFAULT_CROSSFADE_FADE_SECONDS,  # ignored since 2026-09-27
     local_output_enabled: bool = DEFAULT_LOCAL_OUTPUT_ENABLED,
     local_output_device_id: Optional[int] = None,
     local_output_device_label: str = "",
@@ -2100,6 +2219,7 @@ def write_rastatime_liq(
         telnet_port=telnet_port,
         log_file=log_file,
         crossfade_duration=crossfade_duration,
+        show_crossfade_duration=show_crossfade_duration,
         crossfade_fade_seconds=crossfade_fade_seconds,
         local_output_enabled=local_output_enabled,
         local_output_device_id=local_output_device_id,

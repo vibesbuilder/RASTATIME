@@ -40,8 +40,7 @@ class PreferenceController extends Zend_Controller_Action
                 Application_Model_Preference::SetStationDescription($values['stationDescription']);
                 Application_Model_Preference::SetTrackTypeDefault($values['tracktypeDefault']);
                 Application_Model_Preference::SetDefaultCrossfadeDuration($values['stationDefaultCrossfadeDuration']);
-                Application_Model_Preference::SetDefaultFadeIn($values['stationDefaultFadeIn']);
-                Application_Model_Preference::SetDefaultFadeOut($values['stationDefaultFadeOut']);
+                Application_Model_Preference::SetDefaultShowCrossfadeDuration($values['stationDefaultShowCrossfadeDuration']);
                 Application_Model_Preference::SetPodcastAlbumOverride($values['podcastAlbumOverride']);
                 Application_Model_Preference::SetPodcastAutoSmartblock($values['podcastAutoSmartblock']);
                 Application_Model_Preference::SetIntroPlaylist($values['introPlaylistSelect']);

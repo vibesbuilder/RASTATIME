@@ -286,6 +286,18 @@ class Application_Form_EditAudioMD extends Zend_Form
         ]);
         $this->addElement($expiresAt);
 
+        // RASTATIME 2026-09-27 - "Exclude from Crossover" (cc_files.
+        // exclude_crossfade, migration 0059, raw SQL in StoredFile).  A
+        // flagged track is never faded: it plays to its end and the next
+        // track follows without overlap.  Zend renders the unchecked value
+        // as a hidden input, so the form POST always carries the key.
+        $excludeCrossfade = new Zend_Form_Element_Checkbox('exclude_crossfade');
+        $excludeCrossfade->setLabel(_('Exclude from Crossover:'));
+        $excludeCrossfade->setDescription(_('This track is never faded: it plays to its end and the next track follows without overlap.'));
+        $excludeCrossfade->setCheckedValue('1');
+        $excludeCrossfade->setUncheckedValue('0');
+        $this->addElement($excludeCrossfade);
+
         // Add the cancel button
         $this->addElement('button', 'editmdcancel', [
             'ignore' => true,

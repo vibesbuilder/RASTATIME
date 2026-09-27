@@ -165,6 +165,7 @@ im Aktionsmenü der Zeile.
 | **Cue In / Out** | `cc_files.cuein` / `cueout` — Anfang / Ende ohne Neu-Kodierung trimmen |
 | **Fade In / Out** | `cc_files.fadein` / `fadeout` |
 | **Replay Gain** | `cc_files.replay_gain` — von der Playout-Engine zur Pegel-Normalisierung verwendet |
+| **Exclude from Crossover** (Vom Crossover ausnehmen) | `cc_files.exclude_crossfade` (seit 2026-09-27) — für Jingles, IDs und andere Titel, die vollständig zu hören sein müssen: der Titel wird nie ein- oder ausgeblendet, spielt bis zum Ende, der Nachbartitel folgt ohne Überlappung (der Kalender legt die Zeilen daneben ohne Crossfade-Versatz an). Ersetzt die alte Regel „Titel unter 8 Sekunden". |
 
 > **Operator-Tipp.** Setzen Sie **Cue In** auf
 > Radio-Promos / Stings, die ein paar Sekunden Stille am

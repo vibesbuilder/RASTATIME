@@ -120,7 +120,7 @@ Nützlich, wenn:
 > die Audio-Kette im nächsten ruhigen Moment neu - bei einem
 > 24/7-Programm zwischen zwei Datei-Titeln. Hörer bleiben über die
 > Standby-Mounts verbunden. Dasselbe gilt für die 24/7-Aufnahme, die
-> Crossfade-Dauer und die Stream-Ausgänge. **Jetzt anwenden** bleibt
+> Track- und Show-Crossfade-Dauer und die Stream-Ausgänge. **Jetzt anwenden** bleibt
 > der Weg, es sofort zu erzwingen.
 
 Speichern legt das Gerät ab; der lokale Monitor wechselt

@@ -20,10 +20,15 @@
 #   {TELNET_HOST}                   default 127.0.0.1
 #   {TELNET_PORT}                   default 1234
 #   {LOG_FILE}                      default C:/rastatime/logs/liquidsoap.log
-#   {CROSSFADE_DURATION}            default 2.0 (seconds) — used in
-#                                   crossfade(duration=..., bus).
-#                                   Operator can set this from
-#                                   cc_pref.default_crossfade_seconds.
+#   {CROSSFADE_BLOCK}               RASTATIME 2026-09-27: the queue
+#                                   crossfade - `cross(...)` around the
+#                                   request queue with a transition
+#                                   function that reads the shape from
+#                                   the interactive string `rt_cross`
+#                                   (set by PLAYOUT before each push /
+#                                   skip).  Track and Show crossfade
+#                                   durations come from Settings ->
+#                                   General (cc_pref).
 #   {LOCAL_OUTPUT_BLOCK}            either output.portaudio(fallible=false,
 #                                   mksafe(bridge)) for soundcard
 #                                   monitoring (bridge = buffer.adaptative,
@@ -333,13 +338,23 @@ def scheduled_offair(_, new) =
   offair_mark()
   new
 end
+
+# RASTATIME 2026-09-27 - track / show crossfade (rendered block).  `cross`
+# wraps the request queue ONLY: the silence arm stays outside, so a track
+# that ends into silence just plays out and a track that starts out of
+# silence starts at once - no transition is computed against blank().
+# PLAYOUT queues the next track a few seconds ahead (cross needs the
+# partner before the old track enters its last BUFFER seconds) and tells
+# the transition function which shape to use via `var.set rt_cross`.
+${CROSSFADE_BLOCK}
+
 scheduled   = fallback(
                 track_sensitive=false,
                 # no replay of an old packet when the arm changes: the queue's
                 # next track and the silence mark bring their own (2026-09-13)
                 replay_metadata=false,
                 transitions=[scheduled_keep, scheduled_offair],
-                [scheduled_q, silence_fallback]
+                [scheduled_x, silence_fallback]
               )
 # Transitions do not fire for the very first selection: mark the silence
 # once at startup, so Icecast shows the Off Air text from the first frame
@@ -442,32 +457,16 @@ ${WEBSTREAM_INPUT_BLOCK}
 ${LINEIN_INPUT_BLOCK}
 
 # ---------------------------------------------------------------------
-# Phase-C6 — Crossfade between scheduled tracks
+# Crossfade between scheduled tracks
 # ---------------------------------------------------------------------
 #
-# Crossfade ONLY around the scheduled source — NOT around the whole
-# bus.  DJ-Sources (input.harbor) and Webstreams (input.http) are
-# continuous live audio: they don't need track-level crossfades, just
-# instant switch-in / switch-out.  Wrapping crossfade around the
-# switch-output crashes Liquidsoap with "Error 7: Invalid value: This
-# source may control its own latency and cannot be used with this
-# operator." — the crossfade operator rejects self-syncing sources.
-# Phase E reality-test 2026-05-29 caught this in liquidsoap-stdout.log
-# after adding input.http to the switch (input.harbor alone slipped
-# through, possibly because of its internal buffer=N parameter, but
-# the two together tripped the source-graph latency check).
-#
-# Duration in seconds substituted from cc_pref.default_crossfade_seconds
-# (operator-set, defaults to 2.0 s if unset).  Set duration=0. to
-# disable crossfades.  fade_in / fade_out control the fade-zone length;
-# 0.0 = hard cuts between ALL tracks (Phase-D Stück-B default — short
-# jingles play at full length).
-scheduled = crossfade(
-  duration=${CROSSFADE_DURATION},
-  fade_in=${CROSSFADE_FADE_SECONDS},
-  fade_out=${CROSSFADE_FADE_SECONDS},
-  scheduled,
-)
+# Since 2026-09-27 the crossfade lives in the rendered CROSSFADE_BLOCK
+# above (`scheduled_x = cross(...)` around the request queue).  It still
+# wraps the scheduled source ONLY - never the bus: DJ sources
+# (input.harbor) and webstreams (input.http) are continuous live audio
+# and the cross operator rejects self-syncing sources ("Error 7",
+# Phase E reality-test 2026-05-29).  Input switches get their own
+# transition in the bus block (Default Show Crossfade Duration).
 
 # Bus-Auswahl: switch über Master/Show/Webstream/Scheduled wenn aktiv,
 # sonst direkt ``bus = scheduled``.  Renderer-Verhalten siehe oben.

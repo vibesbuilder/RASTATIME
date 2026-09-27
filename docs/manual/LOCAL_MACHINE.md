@@ -109,7 +109,7 @@ the default audio output. Useful when:
 > minutes) and restarts the audio chain in the next quiet moment - or,
 > with a 24/7 programme, between two file tracks. Listeners stay
 > connected via the standby mounts. The same applies to the 24/7
-> recording, the crossfade duration and the stream outputs. **Apply
+> recording, the track and show crossfade durations and the stream outputs. **Apply
 > now** remains the way to force it immediately.
 
 Saving stores the device; it does **not** move the local

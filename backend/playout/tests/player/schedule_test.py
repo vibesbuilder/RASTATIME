@@ -335,6 +335,7 @@ def test_generate_file_events(stream_preferences):
             mime="audio/flac",
             replay_gain=11.46 - 3.5,
             filesize=10000,
+            instance_id=1,
             file_ready=False,
         )
     }
@@ -360,6 +361,7 @@ def test_generate_file_events(stream_preferences):
             mime="audio/flac",
             replay_gain=None,
             filesize=10000,
+            instance_id=1,
             file_ready=False,
         )
     }
@@ -468,6 +470,7 @@ def test_get_schedule(schedule, requests_mock, api_client: ApiClient):
             mime="audio/flac",
             replay_gain=11.46 - 3.5,
             filesize=10000,
+            instance_id=1,
             file_ready=False,
         ),
         "2022-09-05-11-05-02#file-2": FileEvent(
@@ -487,6 +490,7 @@ def test_get_schedule(schedule, requests_mock, api_client: ApiClient):
             mime="audio/flac",
             replay_gain=-1.65 - 3.5,
             filesize=10000,
+            instance_id=1,
             file_ready=False,
         ),
         "2022-09-05-11-10-00#file-3": FileEvent(
@@ -506,6 +510,7 @@ def test_get_schedule(schedule, requests_mock, api_client: ApiClient):
             mime="audio/mp3",
             replay_gain=-1.39 - 3.5,
             filesize=10000,
+            instance_id=2,
             file_ready=False,
         ),
         "2022-09-05-12-08-59#file-4": FileEvent(
@@ -525,6 +530,7 @@ def test_get_schedule(schedule, requests_mock, api_client: ApiClient):
             mime="audio/flac",
             replay_gain=-1.65 - 3.5,
             filesize=10000,
+            instance_id=2,
             file_ready=False,
         ),
         "2022-09-05-12-10-00#ws-buffer-5": WebStreamEvent(
@@ -580,6 +586,7 @@ def test_get_schedule(schedule, requests_mock, api_client: ApiClient):
             mime="audio/flac",
             replay_gain=-2.13 - 3.5,
             filesize=10000,
+            instance_id=3,
             file_ready=False,
         ),
         "2022-09-05-12-53-23#file-7": FileEvent(
@@ -599,6 +606,7 @@ def test_get_schedule(schedule, requests_mock, api_client: ApiClient):
             mime="audio/flac",
             replay_gain=11.46 - 3.5,
             filesize=10000,
+            instance_id=3,
             file_ready=False,
         ),
         "2022-09-05-12-58-25#file-8": FileEvent(
@@ -618,6 +626,7 @@ def test_get_schedule(schedule, requests_mock, api_client: ApiClient):
             mime="audio/flac",
             replay_gain=4.52 - 3.5,
             filesize=10000,
+            instance_id=3,
             file_ready=False,
         ),
         "2022-09-05-12-59-58#switch_off-3": ActionEvent(
@@ -649,6 +658,7 @@ def test_get_schedule(schedule, requests_mock, api_client: ApiClient):
             mime="audio/flac",
             replay_gain=11.46 - 3.5,
             filesize=10000,
+            instance_id=4,
             file_ready=False,
         ),
         "2022-09-05-13-05-02#file-10": FileEvent(
@@ -668,6 +678,7 @@ def test_get_schedule(schedule, requests_mock, api_client: ApiClient):
             mime="audio/flac",
             replay_gain=-1.65 - 3.5,
             filesize=10000,
+            instance_id=4,
             file_ready=False,
         ),
     }

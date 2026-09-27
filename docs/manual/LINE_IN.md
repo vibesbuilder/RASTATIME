@@ -224,9 +224,10 @@ becomes a schedule item exactly as in path 4.1.
    scheduled.  Since 2026-09-04 the hand-over is a **mix, not a
    cut**: the Line-In is taken off air through a *gate* in the
    Liquidsoap bus, the bus fades it out under the successor over
-   the Default Crossfade Duration (Settings → General; 0 = the
+   the Default Show Crossfade Duration (Settings → General; the
    successor starts at full level at once and the Line-In fades
-   out underneath, "ducking"), and only then are the capture and
+   out underneath over that many seconds, 0 = a hard switch — since
+   2026-09-27 this is the only shape), and only then are the capture and
    the source stopped — so the presenter's last words, which are
    still in the pipeline, are heard instead of lost.  Whatever
    follows — a jingle, a webstream — releases the Line-In the same

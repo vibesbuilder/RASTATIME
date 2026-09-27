@@ -283,6 +283,20 @@ class Application_Model_StoredFile
                 $stmt->execute();
             }
         }
+
+        // RASTATIME 2026-09-27 - "Exclude from Crossover" (migration 0059):
+        // the checkbox posts '1' / '0'; only touched when the key is present
+        // (the analyzer's metadata import never sends it).
+        if (is_array($p_md) && array_key_exists('exclude_crossfade', $p_md)) {
+            $raw = $p_md['exclude_crossfade'];
+            $flag = ($raw === true || $raw === 1 || $raw === '1' || $raw === 'true' || $raw === 'on');
+            $stmt = $this->_con->prepare(
+                'UPDATE cc_files SET exclude_crossfade = :flag WHERE id = :id'
+            );
+            $stmt->bindValue(':flag', $flag, PDO::PARAM_BOOL);
+            $stmt->bindValue(':id', $this->_file->getDbId(), PDO::PARAM_INT);
+            $stmt->execute();
+        }
     }
 
     /**
@@ -347,6 +361,21 @@ class Application_Model_StoredFile
         } catch (Exception $exc) {
             Logging::warn('getDbColMetadata: could not read expires_at: ' . $exc->getMessage());
             $md['expires_at'] = '';
+        }
+
+        // RASTATIME 2026-09-27 - "Exclude from Crossover" (migration 0059),
+        // raw SQL like expires_at; '1' / '0' for the form checkbox.
+        try {
+            $stmt = $this->_con->prepare(
+                'SELECT exclude_crossfade FROM cc_files WHERE id = :id'
+            );
+            $stmt->bindValue(':id', $this->_file->getDbId(), PDO::PARAM_INT);
+            $stmt->execute();
+            $flag = $stmt->fetchColumn();
+            $md['exclude_crossfade'] = ($flag === true || $flag === 't' || $flag === 1 || $flag === '1') ? '1' : '0';
+        } catch (Exception $exc) {
+            Logging::warn('getDbColMetadata: could not read exclude_crossfade: ' . $exc->getMessage());
+            $md['exclude_crossfade'] = '0';
         }
 
         return $md;

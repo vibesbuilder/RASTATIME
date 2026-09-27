@@ -17,8 +17,6 @@ class Application_Form_GeneralPreferences extends Zend_Form_SubForm
             ['ViewScript', ['viewScript' => 'form/preferences_general.phtml']],
         ]);
 
-        $defaultFadeIn = Application_Model_Preference::GetDefaultFadeIn();
-        $defaultFadeOut = Application_Model_Preference::GetDefaultFadeOut();
 
         // Station name
         $this->addElement('text', 'stationName', [
@@ -78,10 +76,13 @@ class Application_Form_GeneralPreferences extends Zend_Form_SubForm
         $stationFaviconRemove->setAttrib('onclick', 'removeFavicon();');
         $this->addElement($stationFaviconRemove);
 
-        // Default station crossfade duration
+        // Default track crossfade duration (between two tracks of one show).
+        // RASTATIME 2026-09-27 - renamed from "Default Crossfade Duration";
+        // a real crossfade since then (old fades out while new fades in).
         $this->addElement('text', 'stationDefaultCrossfadeDuration', [
             'class' => 'input_text',
-            'label' => _('Default Crossfade Duration (s):'),
+            'label' => _('Default Track Crossfade Duration (s):'),
+            'description' => _('Between two tracks of the same show: the old track fades out while the new one fades in over this many seconds (0 = no overlap).'),
             'required' => true,
             'filters' => ['StringTrim'],
             'validators' => [
@@ -92,10 +93,14 @@ class Application_Form_GeneralPreferences extends Zend_Form_SubForm
             'value' => Application_Model_Preference::GetDefaultCrossfadeDuration(),
         ]);
 
-        // Default station fade in
-        $this->addElement('text', 'stationDefaultFadeIn', [
+        // RASTATIME 2026-09-27 - Default show crossfade duration.  The old
+        // "Default Fade In / Fade Out" fields (LibreTime, cc_schedule
+        // fade_in/fade_out) had no effect since the Liquidsoap migration
+        // and are no longer shown; their preference keys stay in cc_pref.
+        $this->addElement('text', 'stationDefaultShowCrossfadeDuration', [
             'class' => 'input_text',
-            'label' => _('Default Fade In (s):'),
+            'label' => _('Default Show Crossfade Duration (s):'),
+            'description' => _('At a show boundary the old show fades out over this many seconds while the first track of the new show starts at full level at once. Also shapes every switch between tracks, webstreams and Line-Ins.'),
             'required' => true,
             'filters' => ['StringTrim'],
             'validators' => [
@@ -103,21 +108,7 @@ class Application_Form_GeneralPreferences extends Zend_Form_SubForm
                 $notEmptyValidator,
                 ['regex', false, ['/^[0-9]+(\.\d+)?$/', 'messages' => _('Please enter a time in seconds (eg. 0.5)')]],
             ],
-            'value' => $defaultFadeIn,
-        ]);
-
-        // Default station fade out
-        $this->addElement('text', 'stationDefaultFadeOut', [
-            'class' => 'input_text',
-            'label' => _('Default Fade Out (s):'),
-            'required' => true,
-            'filters' => ['StringTrim'],
-            'validators' => [
-                $rangeValidator,
-                $notEmptyValidator,
-                ['regex', false, ['/^[0-9]+(\.\d+)?$/', 'messages' => _('Please enter a time in seconds (eg. 0.5)')]],
-            ],
-            'value' => $defaultFadeOut,
+            'value' => Application_Model_Preference::GetDefaultShowCrossfadeDuration(),
         ]);
 
         $tracktypeDefault = new Zend_Form_Element_Select('tracktypeDefault');

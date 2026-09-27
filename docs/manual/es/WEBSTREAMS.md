@@ -108,8 +108,9 @@ Igual que cualquier item de biblioteca.
    ocurre ya **10 s antes del slot** («precalentamiento») con la
    *puerta* del bus cerrada, así que el búfer está lleno al inicio
    del slot. Al final del slot Pypo cierra la puerta: el bus funde
-   el webstream bajo el siguiente elemento durante la duración de
-   crossfade por defecto (Settings → General; 0 = «ducking») y
+   el webstream bajo el siguiente elemento durante la duración del
+   crossfade entre programas (Settings → General; el siguiente
+   elemento suena de inmediato a nivel completo, 0 = cambio seco) y
    luego envía `webstream.stop` — el siguiente elemento arranca a
    su hora.
 3. Al inicio del slot Pypo abre la puerta; el bus-switch enruta

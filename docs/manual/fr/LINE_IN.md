@@ -199,9 +199,11 @@ Line-In + sa Longueur par défaut.
    scheduled.  Depuis le 2026-09-04 la passation est un **mixage,
    pas une coupure** : le Line-In est retiré de l'antenne par une
    *porte* (gate) dans le bus Liquidsoap, le bus le fond sous le
-   successeur pendant la durée de crossfade par défaut (Settings →
-   General ; 0 = le successeur démarre aussitôt à plein niveau et le
-   Line-In s'efface en dessous, « ducking »), et ce n'est qu'ensuite
+   successeur pendant la durée du fondu enchaîné entre émissions
+   (Settings → General ; le successeur démarre aussitôt à plein niveau
+   et le Line-In s'efface en dessous sur ce nombre de secondes, 0 =
+   bascule sèche — depuis le 2026-09-27 c'est la seule forme), et ce
+   n'est qu'ensuite
    que la capture et la source sont arrêtées — les derniers mots de
    l'animateur, encore dans la chaîne, sont entendus au lieu d'être
    perdus.  Ce qui suit — jingle, webstream — libère le Line-In de

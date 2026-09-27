@@ -222,10 +222,12 @@ def test_full_render_defaults():
     # request.queue tracks (the only place track-level fades make
     # semantic sense); DJ + Webstream are continuous live audio and
     # don't need crossfading.
-    assert "scheduled = crossfade(" in out
-    assert "duration=2.0" in out
-    assert "fade_in=0.0" in out
-    assert "fade_out=0.0" in out
+    # 2026-09-27: cross() around the request queue with the rt_cross
+    # transition function; the silence arm stays outside.
+    assert 'scheduled_x = cross(id="scheduled_x", duration=2.0, rt_transition, scheduled_q)' in out
+    assert 'rt_cross = interactive.string("rt_cross", "track")' in out
+    assert "[scheduled_x, silence_fallback]" in out
+    assert "scheduled = crossfade(" not in out
     # Replay-gain still applies to the whole bus (post-switch).
     assert 'amplify(override="replaygain_track_gain", 1., bus)' in out
     # Regression guard: no `bus = crossfade(` anywhere in the active
@@ -684,24 +686,50 @@ def test_full_render_crossfade_disabled():
     assert "duration=0.0" in out
 
 
-def test_full_render_custom_crossfade_fade_seconds():
-    """RASTATIME_LIQUIDSOAP_CROSSFADE_FADE_SECONDS controls fade_in/fade_out."""
-    out = lc.render_rastatime_liq(
-        [_stream()],
-        crossfade_fade_seconds=0.5,
-    )
-    assert "fade_in=0.5" in out
-    assert "fade_out=0.5" in out
+def test_crossfade_block_track_and_show_shapes():
+    """2026-09-27: track 1 s / show 2.5 s -> buffer 2.5 s, shapes per mode."""
+    block = lc._render_crossfade_block(1.0, 2.5)
+    assert "duration=2.5, rt_transition, scheduled_q" in block
+    # natural in-show: fade the LAST second of the 2.5 s tail, new track
+    # waits 1.5 s then fades in over 1 s
+    assert "fade.out(duration=1.0, delay=1.5, old.source)" in block
+    assert "sequence([blank(duration=1.5), fade.in(duration=1.0, new.source)])" in block
+    # natural show boundary: old fades over its last 2.5 s, new follows
+    assert "sequence([fade.out(duration=2.5, delay=0.0, old.source), new.source])" in block
+    # overbook at a show boundary: new at once, old fades under it
+    assert 'elsif mode == "show_skip" then\n    add(normalize=false, [fade.out(duration=2.5, old.source),\n                          fade.in(duration=0.05, new.source)])' in block
+    # in-show skip trims the tail to the track crossfade
+    assert "fade.out(duration=1.0, max_duration(1.0, old.source))" in block
+    # excluded track: tail plays out, next follows
+    assert 'elsif mode == "cut" then\n    sequence([old.source, new.source])' in block
+    # silent / empty partner or explicit instant: 50 ms hand-over
+    assert 'if mode == "instant" or rem < 0.15 or old.db_level < -50. then' in block
 
 
-def test_full_render_crossfade_fade_zero_hard_cuts():
-    """fade_seconds=0 produces hard cuts between ALL tracks."""
+def test_crossfade_block_zero_durations_never_fade():
+    block = lc._render_crossfade_block(0.0, 0.0)
+    assert lc.crossfade_buffer_seconds(0.0, 0.0) == lc.CROSSFADE_BUFFER_FLOOR_SECONDS
+    assert "duration=0.5, rt_transition, scheduled_q" in block
+    # track natural + show natural degrade to a plain sequence, skips to instant
+    assert block.count("sequence([old.source, new.source])") == 3
+    assert block.count("rt_instant(old, new)") >= 3
+    assert "fade.in(duration=0.0," not in block and "fade.in(duration=0.0)" not in block
+
+
+def test_crossfade_block_equal_durations_have_no_wait():
+    block = lc._render_crossfade_block(1.0, 1.0)
+    assert "delay=" not in block.split('elsif mode == "show" then')[0]
+    assert "fade.out(duration=1.0, old.source),\n                          fade.in(duration=1.0, new.source)" in block
+    assert "max_duration(" not in block
+
+
+def test_full_render_show_crossfade_reaches_block_and_bus():
     out = lc.render_rastatime_liq(
-        [_stream()],
-        crossfade_fade_seconds=0.0,
+        [_stream()], crossfade_duration=1.0, show_crossfade_duration=3.0,
     )
-    assert "fade_in=0.0" in out
-    assert "fade_out=0.0" in out
+    assert "# track crossfade 1.0 s, show crossfade 3.0 s, tail buffer 3.0 s" in out
+    assert "fade.out(duration=3.0, old)," in out          # bus input switches
+    assert "${CROSSFADE_BLOCK}" not in out
 
 
 def test_full_render_crossfade_fractional():
@@ -824,7 +852,7 @@ def test_template_has_all_expected_placeholders():
         "${TELNET_HOST}",
         "${TELNET_PORT}",
         "${LOG_FILE}",
-        "${CROSSFADE_DURATION}",
+        "${CROSSFADE_BLOCK}",
         "${LOCAL_OUTPUT_BLOCK}",
         "${HARBOR_INPUTS_BLOCK}",
         "${WEBSTREAM_INPUT_BLOCK}",

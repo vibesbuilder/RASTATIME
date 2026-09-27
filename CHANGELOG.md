@@ -9,6 +9,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Show-Grenzen-Crossfade + „Exclude from Crossover" (2026-09-27,
+  Operator-Go, Arbeitsreihenfolge Punkt 2)** — Zwei Crossfade-Werte unter
+  Settings → General: **Default Track Crossfade Duration** (bisher „Default
+  Crossfade Duration", `default_crossfade_duration`) ist jetzt ein echter
+  Crossfade zwischen zwei Titeln derselben Sendung (alter Titel blendet aus,
+  während der neue einblendet); **Default Show Crossfade Duration** (neu,
+  `default_show_crossfade_duration`, Startwert 1 s) gilt an Sendungsgrenzen
+  — die alte Sendung blendet über diesen Wert aus, der erste Titel der neuen
+  Sendung startet sofort voll — und prägt jeden Eingangswechsel (Titel ↔
+  Webstream ↔ Line-In, gleiche Form).  Gleicher Webstream / Line-In in
+  beiden Sendungen bleibt nahtlos (unverändert).  Neues Titel-Attribut
+  **Exclude from Crossover** (Edit Metadata, `cc_files.exclude_crossfade`,
+  Migration 0059): ein markierter Titel wird nie ein- oder ausgeblendet,
+  spielt bis zum Ende, der Nachbar folgt ohne Überlappung; der PHP-Scheduler
+  legt Nachbarzeilen ohne Crossfade-Versatz an (`calculateCrossfades`,
+  `removeGaps2`, verknüpfte Sendungen).  Technik: `cross()` um die
+  Request-Queue (Stille-Arm bleibt außen) mit Übergangsfunktion, die die
+  Form aus der interaktiven Variable `rt_cross` liest (track / show / cut,
+  `_skip`-Varianten bei Overbook, instant); PLAYOUT legt den nächsten
+  Datei-Titel `BUFFER + 1,5 s` vor Zeilenstart in die Queue („Queue-Ahead",
+  `enqueue` / `adopt_queued`) und skippt nur bei Overbook.  Bench mit vier
+  Testtönen (L/R getrennt, Hüllkurve je 100 ms) für alle Formen; gerenderte
+  Skripte per `liquidsoap --check`.  Handbuch SETTINGS / LIBRARY / LINE_IN
+  / WEBSTREAMS in EN/DE/FR/ES.  Wirksam nach PLAYOUT-Neustart (Render +
+  Einstellungs-Fingerprint enthält beide Werte).
+
 - **Show-Shift: Filler statt Kürzung (2026-09-27, Operator-Go mit
   Design-Entscheiden D1–D4, `b7d2890`)** — Neue Einstellung Settings → General →
   „Show-Shift Filler Playlist" (Picker wie Traffic-Alert, Preference
@@ -274,6 +300,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Settings → General: Fade-In/Fade-Out-Felder ausgeblendet, Crossfade-Feld
+  umbenannt (2026-09-27)** — „Default Fade In (s)" / „Default Fade Out (s)"
+  (LibreTime-Erbe, seit der Liquidsoap-Migration ohne Wirkung — die Werte
+  landen nur noch in `cc_schedule.fade_in/fade_out`) werden nicht mehr
+  angezeigt; die Preference-Schlüssel bleiben.  „Default Crossfade Duration
+  (s)" heißt „Default Track Crossfade Duration (s)".  Die 8-Sekunden-Regel
+  („Titel unter 8 s ohne Crossfade") war seit Mai 2026 nicht aktiv (Revert,
+  weil `liq_cross_duration=0` kurze Titel stumm schaltete); der Rest
+  (Konstante, Kommentar) ist entfernt, Ersatz ist das Titel-Attribut.  Die
+  Umgebungsvariable `RASTATIME_LIQUIDSOAP_CROSSFADE_FADE_SECONDS` ist
+  außer Dienst (Warnung, wenn gesetzt).  Bus-Übergänge haben nur noch eine
+  Form (neu sofort voll, alt blendet darunter aus, Dauer = Show-Wert; 0 =
+  50-ms-Schnitt).
+
 - **Player-Cover per Checkbox, Track History ohne Cover (2026-09-18,
   Operator-Nachschärfung zu W4.1, `eea2038`)** — Settings → Widgets → Player hat
   jetzt die gespeicherte Checkbox „Show cover artwork" (Preference
@@ -375,6 +415,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   live geprüft.
 
 ### Fixed
+
+- **Der bisherige Titel-Crossfade war ein Butt-Splice (2026-09-27)** —
+  PLAYOUT skippte den laufenden Titel und pushte erst danach; Liquidsoaps
+  `cross` fiel für einen Frame auf den Stille-Arm (Produktions-Log:
+  `Analysis … / -infdB` gefolgt von `-infdB / …` eine Sekunde später), der
+  alte Titel spielte seinen Rest aus, der neue folgte hart.  Jetzt Push vor
+  Skip (die synchrone Queue löst den Request sofort auf) bzw. Queue-Ahead,
+  ein Skip nur, wenn der Vorgänger noch Audio hat — sonst hätte er den neuen
+  Titel getroffen.
 
 - **Show-Shift: zweite Live-Probe 2026-09-27 12:26–12:56 — Sichtbarkeit
   bestätigt, Punkt 5 der Arbeitsreihenfolge abgeschlossen** — Gleiches

@@ -187,9 +187,10 @@ Biblioteca.
    Desde el 2026-09-04 el relevo es una **mezcla, no un corte**: el
    Line-In se retira de antena mediante una *puerta* (gate) en el
    bus de Liquidsoap, el bus lo funde bajo el sucesor durante la
-   duración de crossfade por defecto (Settings → General; 0 = el
+   duración del crossfade entre programas (Settings → General; el
    sucesor arranca de inmediato a nivel completo y el Line-In se
-   desvanece por debajo, «ducking»), y solo después se detienen la
+   desvanece por debajo durante esos segundos, 0 = cambio seco —
+   desde el 2026-09-27 es la única forma), y solo después se detienen la
    captura y la fuente — así las últimas palabras del presentador,
    aún en la cadena, se oyen en vez de perderse.  Lo que sigue — un
    jingle, un webstream — libera el Line-In del mismo modo al

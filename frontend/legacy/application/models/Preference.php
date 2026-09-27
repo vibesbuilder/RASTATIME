@@ -282,6 +282,26 @@ class Application_Model_Preference
         return $duration;
     }
 
+    // RASTATIME 2026-09-27 - Default Show Crossfade Duration: at a show
+    // boundary the old show fades out over this many seconds while the
+    // new show's first track starts at full level at once; the same value
+    // shapes every input switch (track <-> webstream <-> line-in).
+    public static function SetDefaultShowCrossfadeDuration($duration)
+    {
+        self::setValue('default_show_crossfade_duration', $duration);
+    }
+
+    public static function GetDefaultShowCrossfadeDuration()
+    {
+        $duration = self::getValue('default_show_crossfade_duration');
+
+        if ($duration === '') {
+            return '1';
+        }
+
+        return $duration;
+    }
+
     public static function SetDefaultFadeIn($fade)
     {
         self::setValue('default_fade_in', $fade);

@@ -80,7 +80,8 @@ comme sortie audio par défaut.
 > redémarre la chaîne audio au prochain moment calme - ou, avec un
 > programme 24/7, entre deux pistes fichier. Les auditeurs restent
 > connectés via les montages de secours. Il en va de même pour
-> l'enregistrement 24/7, la durée de crossfade et les sorties de flux.
+> l'enregistrement 24/7, les durées de fondu enchaîné (titres et
+> émissions) et les sorties de flux.
 > **Appliquer maintenant** reste le moyen de forcer immédiatement.
 
 Enregistrer mémorise le périphérique ; cela ne déplace **pas**

@@ -81,7 +81,8 @@ Einstellungen → **Allgemeine Einstellungen**.
    │                                                                 │
    │  Standards                                                      │
    │    Standardsprache:     [ Deutsch (de_DE) ▾ ]                   │
-   │    Standard-Crossfade:  [ 1.0 ] Sekunden                        │
+   │    Standard Track-Crossfade: [ 1.0 ] Sekunden                   │
+   │    Standard Show-Crossfade:  [ 1.0 ] Sekunden                   │
    │    Standard-Track-Typ:  [ Musik ▾ ]                             │
    │    Standard-Import-Bes.:[ admin ▾ ]                             │
    │    Standard-Aufnahme:   [ ☐ Alle neuen Sendungen aufzeichnen ]  │
@@ -114,7 +115,8 @@ Einstellungen → **Allgemeine Einstellungen**.
 | Feld | Hinweise |
 |---|---|
 | **Standardsprache** | UI-Sprache für neue Benutzer + den Anmeldebildschirm. Bestehende Benutzer behalten ihre per-user Spracheinstellung (über das Benutzer-Dropdown gesetzt). |
-| **Standard-Crossfade** | Der *Haus-Crossfade* der Station. Zwischen aufeinanderfolgenden Tracks derselben Sendung ist es die Crossfade-Länge (1 Sekunde ist typisch; 0 = harte Schnitte; bis zu 10 Sekunden für weiche Übergänge). Seit 2026-09-04 prägt der Wert auch jeden Wechsel zwischen **Eingängen** (Track ↔ Webstream ↔ Line-In): ein Wert über 0 blendet die abgehende Quelle über so viele Sekunden in die ankommende über; **0 bedeutet „Ducking"** — die ankommende Quelle startet sofort in voller Lautstärke, die abgehende blendet darunter über 1 s aus. In beiden Fällen ist der gepufferte Rest der abgehenden Quelle hörbar, nicht abgeschnitten. Wirksam nach Neustart der Audiokette („Jetzt anwenden" in Settings → Local Machine). |
+| **Default Track Crossfade Duration** (Standard Track-Crossfade Dauer) | Der Crossfade zwischen zwei aufeinanderfolgenden Titeln **derselben Sendung**: der abgehende Titel blendet aus, während der ankommende über so viele Sekunden einblendet (1 Sekunde ist typisch; 0 = die Titel folgen ohne Überlappung; bis zu 10 Sekunden für weiche Übergänge). Der Kalender legt aufeinanderfolgende Zeilen mit genau dieser Überlappung an. |
+| **Default Show Crossfade Duration** (Standard Show-Crossfade Dauer) | Der Übergang **an einer Sendungsgrenze** (seit 2026-09-27): die alte Sendung blendet über so viele Sekunden aus, während der erste Titel der neuen Sendung sofort in voller Lautstärke startet — eine Sendung, die mit Jingle oder ID beginnt, ist vom ersten Schlag an zu hören. Dieselbe Form und derselbe Wert gelten für jeden Wechsel zwischen **Eingängen** (Titel ↔ Webstream ↔ Line-In): die ankommende Quelle ist sofort voll da, die abgehende blendet darunter aus; 0 = harter Wechsel. Ein Webstream oder Line-In, der in beiden Sendungen eingeplant ist, läuft nahtlos weiter. Startwert 1 s. Beide Crossfade-Werte übernimmt die Audiokette wenige Sekunden nach dem Speichern (geplanter Neustart in einem ruhigen Moment oder an einer Titelgrenze); „Jetzt anwenden" in Settings → Local Machine erzwingt es. |
 | **Standard-Track-Typ** | Der Track-Typ, der neuen Uploads zugewiesen wird, wenn der Operator nicht explizit einen setzt. Beeinflusst Smart-Block-Filter. |
 | **Standard-Import-Besitzer** | Das Benutzerkonto, dem als Besitzer für Dateien, die über den lokalen Import-Ordner importiert werden, gutgeschrieben wird. Standardmäßig `admin`. |
 | **Standard-Aufnahme** | Wenn angekreuzt, haben neue Sendungen **Diese Sendung aufzeichnen:** vor-angekreuzt. Siehe [Aufnahme pro Sendung](./RECORD_PER_SHOW.md). |

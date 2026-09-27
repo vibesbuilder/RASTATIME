@@ -145,8 +145,9 @@ playlist.
    se fait déjà **10 s avant le créneau** (« préchauffage »), la
    *porte* du bus fermée, si bien que le tampon est plein au début
    du créneau. En fin de créneau, Pypo ferme la porte : le bus fond
-   le webstream sous l'élément suivant pendant la durée de crossfade
-   par défaut (Settings → General ; 0 = « ducking »), puis envoie
+   le webstream sous l'élément suivant pendant la durée du fondu
+   enchaîné entre émissions (Settings → General ; l'élément suivant
+   est aussitôt à plein niveau, 0 = bascule sèche), puis envoie
    `webstream.stop` — l'élément suivant démarre à l'heure.
 3. Au début du créneau Pypo ouvre la porte ; le bus-switch route
    l'audio vers la source webstream en une trame — les auditeurs

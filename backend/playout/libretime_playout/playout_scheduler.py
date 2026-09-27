@@ -40,7 +40,11 @@ from .config import CACHE_DIR
 from .engine.ffmpeg_linein_capture import FfmpegLineinCapture
 from .recording_path import build_output_path
 from .engine.interface import PlayoutEngine, PlayoutState
-from .liquidsoap_config import DEFAULT_INPUT_DUCK_FADE_SECONDS
+from .liquidsoap_config import (
+    DEFAULT_CROSSFADE_DURATION,
+    DEFAULT_INPUT_DUCK_FADE_SECONDS,
+    crossfade_buffer_seconds,
+)
 from . import liquidsoap_health
 from .liquidsoap_service import (
     MAIN_OUTPUT_BY_INDEX,
@@ -86,6 +90,13 @@ PREPARE_LEAD_SECONDS = 10.0
 # 10 s.  A stalled upstream is handled by the watchdog inside
 # Liquidsoap, not by pre-warming earlier.
 WEBSTREAM_PREPARE_LEAD_SECONDS = 10.0
+# RASTATIME 2026-09-27 - a file track is queued behind the playing one
+# this many seconds BEFORE the cross operator opens its tail window
+# (BUFFER = max(track, show crossfade) seconds before the playing
+# track's end).  Cross needs the partner on the queue before that moment,
+# otherwise it runs the end-of-track transition alone and the next track
+# follows without a crossfade (bench 2026-09-27).
+QUEUE_AHEAD_MARGIN_SECONDS = 1.5
 
 # RASTATIME 2026-09-07 - the webstream watchdog lives inside Liquidsoap
 # (frame counter on the bus, rendered by liquidsoap_config).  The
@@ -121,6 +132,7 @@ class PlayoutScheduler:
         api_client_v1: Optional["object"] = None,
         read_icy_preferences: Optional[Callable[[], Optional[object]]] = None,
         input_transition_seconds: float = 2.0,
+        track_crossfade_seconds: float = DEFAULT_CROSSFADE_DURATION,
         render_liquidsoap: Optional[Callable[[], object]] = None,
         nightly_restart: Optional[NightlyRestartPolicy] = None,
         render_settings_fingerprint: Optional[Callable[[], Optional[str]]] = None,
@@ -221,11 +233,20 @@ class PlayoutScheduler:
         self._webstream_generation: int = 0
         self._prepare_timers: Dict[str, threading.Timer] = {}
         self._prepared: Optional[Tuple[str, object]] = None
+        # RASTATIME 2026-09-27 - input_transition_seconds is the Default
+        # SHOW Crossfade Duration (every input switch: new source at once,
+        # old fades out under it over this many seconds); the drain keeps
+        # the old source pulled until that fade is over.  The track
+        # crossfade only shapes queue transitions; both define the tail
+        # buffer of the cross operator (queue-ahead lead + skip decision).
         self._input_transition_seconds = max(0.0, float(input_transition_seconds))
-        fade = (self._input_transition_seconds
-                if self._input_transition_seconds > 0
-                else DEFAULT_INPUT_DUCK_FADE_SECONDS)
-        self._drain_seconds = fade + 0.5
+        self._drain_seconds = self._input_transition_seconds + 0.5
+        self._track_crossfade_seconds = max(0.0, float(track_crossfade_seconds))
+        self._cross_buffer_seconds = crossfade_buffer_seconds(
+            self._track_crossfade_seconds, self._input_transition_seconds,
+        )
+        # (key, FileEvent) queued behind the playing track, or None
+        self._queued_ahead: Optional[Tuple[str, FileEvent]] = None
 
         # RASTATIME 2026-05-16 — cached effective dB gain for the
         # currently-playing event.  Source of the value depends on the
@@ -1140,6 +1161,7 @@ class PlayoutScheduler:
                 "Armed FileEvent %s: starts in %.1fs  track=%r",
                 key, start_delay, event.track_title,
             )
+            self._arm_queue_ahead(key, event, start_delay)
 
         elif key != self._playing_key and self._same_scheduled_item(
             self._current_event, event
@@ -1433,6 +1455,98 @@ class PlayoutScheduler:
     # RASTATIME 2026-09-04 - Paket 2: pre-warm + gates + drained stop
     # ------------------------------------------------------------------
 
+    # ------------------------------------------------------------------
+    # RASTATIME 2026-09-27 - crossfade: queue-ahead + shape decision
+    # ------------------------------------------------------------------
+
+    def _arm_queue_ahead(self, key: str, event: FileEvent, start_delay: float) -> None:
+        """Arm the queue-ahead timer at start - (BUFFER + margin)."""
+        lead = start_delay - (self._cross_buffer_seconds + QUEUE_AHEAD_MARGIN_SECONDS)
+        if lead < 0:
+            if start_delay < 0.5:
+                return  # too close: the track starts the normal way
+            lead = 0.0  # a refresh landed inside the lead window: queue now
+        t = threading.Timer(lead, self._on_file_queue_ahead, args=(key, event))
+        t.daemon = True
+        t.start()
+        self._prepare_timers[f"{key}/queue"] = t
+
+    def _on_file_queue_ahead(self, key: str, event: FileEvent) -> None:
+        """
+        T - (BUFFER + margin): put the next file track on the queue behind
+        the playing file track, so cross has its partner when the playing
+        track enters its last BUFFER seconds.  Only when a file track is
+        on air and still has audio left: after a webstream / line-in /
+        silence the track starts the normal way at its row start (a
+        queued request would start playing at once on an idle queue).
+        """
+        prev = self._current_event
+        if not isinstance(prev, FileEvent) or self._playing_key is None:
+            return
+        if self._switcher and self._switcher.current_state != SourceState.SCHEDULED:
+            return
+        if self._engine.get_state() != PlayoutState.PLAYING:
+            return
+        if self._queued_ahead is not None:
+            if self._same_scheduled_item(self._queued_ahead[1], event):
+                self._queued_ahead = (key, event)  # key shifted across a refresh
+                return
+            logger.info(
+                "Queue-ahead: %s replaces the stale queued track %s.",
+                key, self._queued_ahead[0],
+            )
+            self._engine.flush_queued()
+            self._queued_ahead = None
+        remaining = (prev.end - datetime.utcnow()).total_seconds()
+        if remaining < 0.5:
+            return  # the predecessor is over: a gap follows, normal start
+        local = self._ensure_file_cached(event)
+        if local is None:
+            return
+        mode = self._cross_mode(prev, event, skip=False)
+        ok = self._engine.enqueue(
+            str(local),
+            cue_in=event.cue_in or 0.0,
+            cue_out=event.cue_out,
+            gain_db=event.replay_gain,
+            metadata=self._track_metadata(event),
+            transition=mode,
+        )
+        if ok:
+            self._queued_ahead = (key, event)
+            logger.info(
+                "Queue-ahead %s | %r follows %r in %.1f s (%s)",
+                key, event.track_title or event.id, prev.track_title or prev.id,
+                remaining, mode,
+            )
+
+    def _cross_mode(self, prev: object, nxt: FileEvent, *, skip: bool) -> str:
+        """
+        Shape of the queue transition prev -> nxt (see
+        liquidsoap_config._render_crossfade_block).  ``skip`` = the
+        predecessor is cut at nxt's start (overbook) instead of ending
+        by itself.
+        """
+        if not isinstance(prev, FileEvent):
+            return "instant" if skip else "track"
+        if prev.exclude_crossfade or nxt.exclude_crossfade:
+            return "instant" if skip else "cut"
+        if (
+            prev.instance_id is not None
+            and nxt.instance_id is not None
+            and prev.instance_id != nxt.instance_id
+        ):
+            return "show_skip" if skip else "show"
+        return "track_skip" if skip else "track"
+
+    @staticmethod
+    def _track_metadata(event: FileEvent) -> Dict[str, str]:
+        return {
+            "title":     event.track_title or "",
+            "artist":    event.artist_name or "",
+            "show_name": event.show_name or "",
+        }
+
     def _arm_prepare(self, key: str, event: object, start_delay: float,
                      handler: Callable[[str, object], None]) -> None:
         """Arm the prepare timer at start - PREPARE_LEAD_SECONDS (an item
@@ -1645,6 +1759,39 @@ class PlayoutScheduler:
             self._notify_media_started(event.row_id)
             return
 
+        # RASTATIME 2026-09-27 - crossfade.  Remaining audio of a file
+        # predecessor decides between "cross does the hand-over at the
+        # natural end" (rows overlap by the track crossfade, or the
+        # predecessor is over) and "cut it now" (overbook: the predecessor
+        # would run on into this slot).
+        now = datetime.utcnow()
+        prev_remaining = (
+            (prev_event.end - now).total_seconds()
+            if isinstance(prev_event, FileEvent) else 0.0
+        )
+        queued = self._queued_ahead
+        if queued is not None and self._same_scheduled_item(queued[1], event):
+            # Queued ahead: cross already has this track as the partner.
+            self._queued_ahead = None
+            skip = prev_remaining > self._cross_buffer_seconds + 0.3
+            mode = self._cross_mode(prev_event, event, skip=skip)
+            self._engine.adopt_queued(
+                str(local), skip_current=skip, transition=mode if skip else None,
+            )
+            logger.info(
+                "PLAY  %s takes over from %r: %s (predecessor has %.1f s left)",
+                key, getattr(prev_event, "track_title", None) or "-",
+                mode, max(0.0, prev_remaining),
+            )
+            self._notify_media_started(event.row_id)
+            return
+        if queued is not None:
+            logger.info(
+                "PLAY  %s: dropping the stale queued track %s.", key, queued[0],
+            )
+            self._engine.flush_queued()
+            self._queued_ahead = None
+
         # RASTATIME 2026-05-25 — Seamless-Bus-Mix Phase 1.  Let the
         # engine flush the previous track's last frames before the hard
         # stop (the Liquidsoap engine returns at once: its queue is
@@ -1662,25 +1809,21 @@ class PlayoutScheduler:
         # Forward track metadata to the engine so the Liquidsoap
         # backend can attach it via annotate: + propagate to the
         # output.icecast blocks for live ICY metadata in listener
-        # clients.
-        track_metadata = {
-            "title":     event.track_title or "",
-            "artist":    event.artist_name or "",
-            "show_name": event.show_name or "",
-        }
-        # RASTATIME 2026-05-28 — Phase-D Stück-B: pass cue_out so the
-        # Liquidsoap engine's _build_annotate_uri can detect short
-        # tracks (jingles, StationIDs under 8 s) and add the
-        # ``liq_cross_duration="0.0"`` metadata override that disables
-        # the crossfade fade-in/fade-out zones for that track only.
-        # Without cue_out, short tracks get eaten by the 1-s fade
-        # zones and are barely audible.
+        # clients.  2026-09-27: the engine pushes first and skips the
+        # predecessor afterwards - only when it would run on past this
+        # slot (overbook).  Inside its last BUFFER seconds the predecessor
+        # is already in the cross operator's tail (the queue has consumed
+        # it): a skip there is a no-op at best and could hit the pushed
+        # track; the tail plays out and this track follows at once.
+        skip = prev_remaining > self._cross_buffer_seconds + 0.3
         self._engine.play(
             str(local),
             cue_in=event.cue_in or 0.0,
             cue_out=event.cue_out,
             gain_db=event.replay_gain,
-            metadata=track_metadata,
+            metadata=self._track_metadata(event),
+            transition=self._cross_mode(prev_event, event, skip=skip),
+            skip_current=skip,
         )
 
         # Notify the legacy v1 API that this schedule row started playing.

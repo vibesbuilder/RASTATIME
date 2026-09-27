@@ -4965,3 +4965,27 @@ msgstr "(ninguna — cortar el último tema)"
 
 msgid "When a delayed start pushes a show past its slot, the tracks that no longer fit are replaced by tracks from this playlist so only a filler gets cut, never a show track. A show that ends with its outro playlist keeps the outro; the tracks before it are replaced."
 msgstr "Cuando un inicio diferido empuja un programa más allá de su slot, los temas que ya no caben se sustituyen por temas de esta playlist: solo se corta un relleno, nunca un tema del programa. Un programa que termina con su playlist de outro conserva el outro; se sustituyen los temas anteriores."
+
+#: RASTATIME 2026-09-27 crossfade
+msgid "Default Track Crossfade Duration (s):"
+msgstr "Duración predeterminada del Crossfade entre pistas (s):"
+
+#: RASTATIME 2026-09-27 crossfade
+msgid "Between two tracks of the same show: the old track fades out while the new one fades in over this many seconds (0 = no overlap)."
+msgstr "Entre dos pistas del mismo programa: la pista anterior se desvanece mientras la nueva sube durante estos segundos (0 = sin solapamiento)."
+
+#: RASTATIME 2026-09-27 crossfade
+msgid "Default Show Crossfade Duration (s):"
+msgstr "Duración predeterminada del Crossfade entre programas (s):"
+
+#: RASTATIME 2026-09-27 crossfade
+msgid "At a show boundary the old show fades out over this many seconds while the first track of the new show starts at full level at once. Also shapes every switch between tracks, webstreams and Line-Ins."
+msgstr "En el límite de un programa, el programa anterior se desvanece durante estos segundos mientras la primera pista del nuevo empieza de inmediato a volumen completo. También da forma a cada cambio entre pistas, webstreams y entradas de línea."
+
+#: RASTATIME 2026-09-27 crossfade
+msgid "Exclude from Crossover:"
+msgstr "Excluir del Crossover:"
+
+#: RASTATIME 2026-09-27 crossfade
+msgid "This track is never faded: it plays to its end and the next track follows without overlap."
+msgstr "Esta pista nunca se funde: se reproduce hasta el final y la siguiente pista continúa sin solapamiento."

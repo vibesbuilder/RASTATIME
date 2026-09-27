@@ -29,9 +29,19 @@ class PlayoutEngine(ABC):
         media_options: Optional[List[str]] = None,
         gain_db: Optional[float] = None,
         metadata: Optional[Dict[str, str]] = None,
+        transition: Optional[str] = None,
+        skip_current: bool = True,
     ) -> None:
         """
         Start playing a URI.
+
+        RASTATIME 2026-09-27 - ``transition`` names the crossfade shape
+        the engine should use for the hand-over from the playing item
+        (``track``/``show``/``cut`` and their ``_skip`` variants, or
+        ``instant``; see liquidsoap_config._render_crossfade_block);
+        ``skip_current`` says whether the playing item must be cut for
+        this one (False when nothing is playing or the previous item is
+        about to end by itself - a skip would then hit the NEW item).
 
         uri              : local file path or HTTP URL
         cue_in           : seconds from the start of the file to begin
@@ -70,6 +80,42 @@ class PlayoutEngine(ABC):
                             Liquidsoap then propagates the metadata to
                             all output.icecast blocks natively.
         """
+
+    def enqueue(
+        self,
+        uri: str,
+        *,
+        cue_in: float = 0.0,
+        cue_out: Optional[float] = None,
+        gain_db: Optional[float] = None,
+        metadata: Optional[Dict[str, str]] = None,
+        transition: Optional[str] = None,
+    ) -> bool:
+        """
+        RASTATIME 2026-09-27 - queue ``uri`` BEHIND the playing item
+        without touching it, so the engine's crossfade operator finds the
+        partner when the playing item enters its last seconds.  Returns
+        False when the engine cannot queue ahead; the scheduler then
+        starts the item the normal way with :meth:`play` at its start.
+        """
+        return False
+
+    def adopt_queued(
+        self,
+        uri: str,
+        *,
+        skip_current: bool = False,
+        transition: Optional[str] = None,
+    ) -> None:
+        """
+        RASTATIME 2026-09-27 - the item queued with :meth:`enqueue` is the
+        current one now.  ``skip_current`` cuts the playing item so the
+        queued one takes over at once (overbook); otherwise the engine's
+        crossfade does the hand-over at the playing item's natural end.
+        """
+
+    def flush_queued(self) -> None:
+        """RASTATIME 2026-09-27 - drop items queued ahead that will not play."""
 
     @abstractmethod
     def stop(self) -> None:

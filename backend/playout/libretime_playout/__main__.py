@@ -159,10 +159,11 @@ def _resolve_crossfade_seconds() -> float:
     is Settings -> General "Default Crossfade Duration (s)" (cc_pref
     ``default_crossfade_duration``); the env var
     RASTATIME_LIQUIDSOAP_CROSSFADE_SECONDS is the fallback for a
-    missing/invalid key.  Drives the queue's track crossfade, the bus
-    input transitions (0 = ducking) and the scheduler's drain time.  A
-    UI change takes effect at the next PLAYOUT + LIQUIDSOAP restart
-    ("Apply now" in Settings -> Local Machine).
+    missing/invalid key.  Since 2026-09-27 this is the TRACK crossfade
+    (between two tracks of one show); input switches and show boundaries
+    follow :func:`_resolve_show_crossfade_seconds`.  A UI change is
+    applied by the settings restart (fingerprint) or the next PLAYOUT +
+    LIQUIDSOAP restart.
     """
     try:
         crossfade = float(
@@ -194,27 +195,64 @@ def _resolve_crossfade_seconds() -> float:
 def _read_pref_crossfade_duration() -> Optional[float]:
     """
     RASTATIME 2026-09-04 - ``cc_pref.default_crossfade_duration`` (the
-    Settings -> General field) as a float, or None when the key is
-    missing, empty, negative or not a number -- the caller then keeps
-    the env/default value.  Same ORM path as :func:`_read_stream_outputs`.
+    Settings -> General field "Default Track Crossfade Duration") as a
+    float, or None when the key is missing, empty, negative or not a
+    number -- the caller then keeps the env/default value.  Same ORM path
+    as :func:`_read_stream_outputs`.
     """
+    return _read_pref_seconds("default_crossfade_duration")
+
+
+def _read_pref_seconds(key: str) -> Optional[float]:
     try:
         from libretime_api.core.models import Preference  # type: ignore[import-untyped]
-        raw = dict(Preference.site.values_list("key", "value")).get(
-            "default_crossfade_duration"
-        )
+        raw = dict(Preference.site.values_list("key", "value")).get(key)
         if raw is None or str(raw).strip() == "":
             return None
         value = float(str(raw).strip())
         if value < 0:
-            logger.warning(
-                "cc_pref default_crossfade_duration=%r is negative - ignored", raw
-            )
+            logger.warning("cc_pref %s=%r is negative - ignored", key, raw)
             return None
         return value
     except Exception as exc:  # pylint: disable=broad-exception-caught
-        logger.warning("Could not read default_crossfade_duration from DB: %s", exc)
+        logger.warning("Could not read %s from DB: %s", key, exc)
         return None
+
+
+def _resolve_show_crossfade_seconds() -> float:
+    """
+    RASTATIME 2026-09-27 - Settings -> General "Default Show Crossfade
+    Duration (s)" (cc_pref ``default_show_crossfade_duration``, start
+    value 1 s); env RASTATIME_LIQUIDSOAP_SHOW_CROSSFADE_SECONDS is the
+    fallback for a missing key.  At a show boundary the old show's last
+    track fades out over this many seconds while the new show's first
+    track starts at full level at once; every input switch (track <->
+    webstream <-> line-in) uses the same shape and value.
+    """
+    try:
+        fallback = float(
+            os.environ.get(
+                "RASTATIME_LIQUIDSOAP_SHOW_CROSSFADE_SECONDS",
+                str(_LIQUIDSOAP_DEFAULT_SHOW_CROSSFADE),
+            )
+        )
+    except ValueError as exc:
+        logger.critical(
+            "RASTATIME_LIQUIDSOAP_SHOW_CROSSFADE_SECONDS must be a float: %s", exc,
+        )
+        sys.exit(1)
+    pref = _read_pref_seconds("default_show_crossfade_duration")
+    if pref is not None:
+        logger.info(
+            "Show crossfade duration %.2f s from Settings -> General "
+            "(cc_pref default_show_crossfade_duration)", pref,
+        )
+        return pref
+    logger.info(
+        "Show crossfade duration %.2f s from env/default (cc_pref key missing "
+        "or invalid)", fallback,
+    )
+    return fallback
 
 
 def _read_stream_outputs() -> List[Dict]:
@@ -285,6 +323,8 @@ _LIQUIDSOAP_DEFAULT_LOG_PATH = "C:/rastatime/logs/liquidsoap.log"
 _LIQUIDSOAP_DEFAULT_STANDBY_PATH = "C:/Tools/liquidsoap/standby.liq"
 _ICECAST_DEFAULT_CONFIG_PATH = "C:/rastatime/config/icecast.xml"
 _LIQUIDSOAP_DEFAULT_CROSSFADE = 2.0
+# RASTATIME 2026-09-27 - Default Show Crossfade Duration (Settings -> General)
+_LIQUIDSOAP_DEFAULT_SHOW_CROSSFADE = 1.0
 
 
 def _read_harbor_credentials() -> tuple:
@@ -580,6 +620,7 @@ def _render_settings_fingerprint() -> Optional[str]:
             "hourly": read_hourly_recording_config_from_db(),
             "main_output": [row.main_output_id or "", row.main_output_name or ""],
             "crossfade": _resolve_crossfade_seconds(),
+            "show_crossfade": _resolve_show_crossfade_seconds(),
             "streams": _read_stream_outputs(),
         }
     except Exception as exc:  # pylint: disable=broad-exception-caught
@@ -636,6 +677,7 @@ def _render_rastatime_liq_outcome(stream_outputs: List[Dict]) -> RenderOutcome:
         )
         raise _LiquidsoapRenderError(str(exc)) from exc
     crossfade = _resolve_crossfade_seconds()
+    show_crossfade = _resolve_show_crossfade_seconds()
     # RASTATIME 2026-09-03 - linein_http start-up buffer, env-overridable
     # so it can be tuned against the 1.0 default (start gap + end-of-slot
     # latency vs.
@@ -660,27 +702,15 @@ def _render_rastatime_liq_outcome(stream_outputs: List[Dict]) -> RenderOutcome:
             "below the 0.2 s floor; using 0.2 s.", linein_http_max_buffer,
         )
         linein_http_max_buffer = 0.2
-    # Phase-D Stück-B (2026-05-28): fade_in / fade_out inside crossfade,
-    # configurable so the operator can tune short-track audibility vs.
-    # music-transition smoothness without a code-change.  Default 0.3 s
-    # is short enough to give 3-5 s jingles most of their audio back
-    # while still being noticeable as a smooth music-to-music transition.
-    from libretime_playout.liquidsoap_config import (  # noqa: PLC0415
-        DEFAULT_CROSSFADE_FADE_SECONDS as _DEFAULT_CROSSFADE_FADE,
-    )
-    try:
-        crossfade_fade = float(
-            os.environ.get(
-                "RASTATIME_LIQUIDSOAP_CROSSFADE_FADE_SECONDS",
-                str(_DEFAULT_CROSSFADE_FADE),
-            )
+    # 2026-09-27: RASTATIME_LIQUIDSOAP_CROSSFADE_FADE_SECONDS (Phase-D
+    # fade zones inside crossfade()) is retired - the track crossfade is
+    # now a real crossfade of the operator's duration, the show crossfade
+    # has its own value; see liquidsoap_config._render_crossfade_block.
+    if os.environ.get("RASTATIME_LIQUIDSOAP_CROSSFADE_FADE_SECONDS"):
+        logger.warning(
+            "RASTATIME_LIQUIDSOAP_CROSSFADE_FADE_SECONDS is set but no longer "
+            "used (track/show crossfade come from Settings -> General)."
         )
-    except ValueError as exc:
-        logger.critical(
-            "RASTATIME_LIQUIDSOAP_CROSSFADE_FADE_SECONDS must be a float: %s",
-            exc,
-        )
-        raise _LiquidsoapRenderError(str(exc)) from exc
     local_output_enabled = (
         os.environ.get("RASTATIME_LIQUIDSOAP_LOCAL_OUTPUT", "true").lower()
         not in ("false", "0", "no", "off")
@@ -778,7 +808,7 @@ def _render_rastatime_liq_outcome(stream_outputs: List[Dict]) -> RenderOutcome:
             telnet_port=telnet_port,
             log_file=log_path,
             crossfade_duration=crossfade,
-            crossfade_fade_seconds=crossfade_fade,
+            show_crossfade_duration=show_crossfade,
             local_output_enabled=local_output_enabled,
             local_output_device_id=local_output_device_id,
             local_output_device_label=local_output_device_label,
@@ -1122,7 +1152,10 @@ def main() -> None:
         render_settings_fingerprint=(_render_settings_fingerprint if django_ok else None),
         render_restart_pending=render_restart_pending,
         nightly_restart=nightly_policy,
-        input_transition_seconds=_resolve_crossfade_seconds(),
+        # RASTATIME 2026-09-27 - input switches + show boundaries follow the
+        # SHOW crossfade; the track crossfade shapes in-show transitions.
+        input_transition_seconds=_resolve_show_crossfade_seconds(),
+        track_crossfade_seconds=_resolve_crossfade_seconds(),
         # RASTATIME 2026-09-13 - Stream Label / Off Air Metadata / station
         # name re-read every refresh (ORM), pushed over telnet on change.
         read_icy_preferences=(read_icy_preferences_from_db if django_ok else None),

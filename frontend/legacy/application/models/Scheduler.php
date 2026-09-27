@@ -605,10 +605,31 @@ final class Application_Model_Scheduler
             ->orderByDbStarts()
             ->find($this->con);
 
+        // RASTATIME 2026-09-27 - rows next to an "Exclude from Crossover"
+        // track are laid out WITHOUT the crossfade overlap (the playout
+        // uses the "cut" shape there: the track plays to its end, the next
+        // one follows).  Look-ahead over the ordered rows.
+        $items = iterator_to_array($schedule, false);
+        $fileIds = [];
+        foreach ($items as $item) {
+            if ($item->getDbFileId()) {
+                $fileIds[] = (int) $item->getDbFileId();
+            }
+        }
+        $excluded = self::crossfadeExcludedFileIds($fileIds);
+
         $now = new DateTime('now', new DateTimeZone('UTC'));
         $itemStartDT = $instance->getDbStarts(null);
-        foreach ($schedule as $item) {
+        $count = count($items);
+        for ($i = 0; $i < $count; ++$i) {
+            $item = $items[$i];
             $itemEndDT = $this->findEndTime($itemStartDT, $item->getDbClipLength());
+            $offset = self::crossfadeOffsetBetween(
+                $item->getDbFileId(),
+                ($i + 1 < $count) ? $items[$i + 1]->getDbFileId() : null,
+                $excluded,
+                $this->crossfadeDuration
+            );
             // If the track has already ended, don't change it.
             if ($itemEndDT < $now) {
                 $itemStartDT = $itemEndDT;
@@ -618,8 +639,75 @@ final class Application_Model_Scheduler
             $item->setDbStarts($itemStartDT)
                 ->setDbEnds($itemEndDT)
                 ->save($this->con);
-            $itemStartDT = $this->findTimeDifference($itemEndDT, $this->crossfadeDuration);
+            $itemStartDT = $this->findTimeDifference($itemEndDT, $offset);
         }
+    }
+
+    /**
+     * RASTATIME 2026-09-27 - ids (as keys) of the given cc_files rows that
+     * carry "Exclude from Crossover".  Raw SQL: the column has no Propel
+     * accessor (migration 0059).
+     *
+     * @param int[] $fileIds
+     *
+     * @return array<int, true>
+     */
+    public static function crossfadeExcludedFileIds(array $fileIds)
+    {
+        $ids = array_values(array_unique(array_filter(array_map('intval', $fileIds))));
+        if (empty($ids)) {
+            return [];
+        }
+        $rows = Application_Common_Database::prepareAndExecute(
+            'SELECT id FROM cc_files WHERE exclude_crossfade = true AND id IN (' . implode(',', $ids) . ')',
+            [],
+            Application_Common_Database::ALL
+        );
+        $excluded = [];
+        foreach ($rows as $row) {
+            $excluded[(int) $row['id']] = true;
+        }
+
+        return $excluded;
+    }
+
+    /**
+     * RASTATIME 2026-09-27 - crossfade overlap (seconds) between a row and
+     * its successor: 0 when either side is an excluded track, else the
+     * house track crossfade.
+     *
+     * @param null|int         $fileId
+     * @param null|int         $nextFileId
+     * @param array<int, true> $excluded
+     * @param float|string     $duration
+     *
+     * @return float|string
+     */
+    public static function crossfadeOffsetBetween($fileId, $nextFileId, array $excluded, $duration)
+    {
+        if (($fileId && isset($excluded[(int) $fileId]))
+            || ($nextFileId && isset($excluded[(int) $nextFileId]))) {
+            return 0;
+        }
+
+        return $duration;
+    }
+
+    /**
+     * RASTATIME 2026-09-27 - does the instance schedule any excluded track?
+     * (Inserts re-run calculateCrossfades only then, so ordinary shows keep
+     * the upstream insert path unchanged.)
+     */
+    private function instanceHasCrossfadeExclusions($instanceId)
+    {
+        $row = Application_Common_Database::prepareAndExecute(
+            'SELECT 1 FROM cc_schedule s JOIN cc_files f ON f.id = s.file_id
+              WHERE s.instance_id = :iid AND f.exclude_crossfade = true LIMIT 1',
+            [':iid' => (int) $instanceId],
+            Application_Common_Database::SINGLE
+        );
+
+        return !empty($row);
     }
 
     /*
@@ -685,7 +773,25 @@ final class Application_Model_Scheduler
             ->orderByDbStarts()
             ->find($this->con);
 
-        foreach ($schedule as $item) {
+        // RASTATIME 2026-09-27 - no crossfade offset next to an excluded track
+        $items = iterator_to_array($schedule, false);
+        $fileIds = [];
+        foreach ($items as $it) {
+            if ($it->getDbFileId()) {
+                $fileIds[] = (int) $it->getDbFileId();
+            }
+        }
+        $excluded = self::crossfadeExcludedFileIds($fileIds);
+        $count = count($items);
+
+        for ($i = 0; $i < $count; ++$i) {
+            $item = $items[$i];
+            $offset = self::crossfadeOffsetBetween(
+                $item->getDbFileId(),
+                ($i + 1 < $count) ? $items[$i + 1]->getDbFileId() : null,
+                $excluded,
+                $this->crossfadeDuration
+            );
             // START OF TIME RECALC HACK
 
             // TODO: Copy the cue in, cue out, and track length from the cc_files table
@@ -712,7 +818,7 @@ final class Application_Model_Scheduler
             $item->setDbStarts($itemStartDT)
                 ->setDbEnds($itemEndDT)
                 ->save($this->con);
-            $itemStartDT = $this->findTimeDifference($itemEndDT, $this->crossfadeDuration);
+            $itemStartDT = $this->findTimeDifference($itemEndDT, $offset);
         }
 
         $instance->updateDbTimeFilled($this->con); // FIXME: TIME RECALC HACK (Albert)
@@ -1163,7 +1269,10 @@ final class Application_Model_Scheduler
                         Logging::debug('adjusting all following items.');
                         Logging::debug(floatval($pend) - floatval($pstart));
                     }
-                    if ($moveAction) {
+                    // RASTATIME 2026-09-27 - also after an insert when the
+                    // instance holds an "Exclude from Crossover" track: the
+                    // inline offsets above always use the house crossfade.
+                    if ($moveAction || $this->instanceHasCrossfadeExclusions($instanceId)) {
                         $this->calculateCrossfades($instanceId);
                     }
                 } // for each instance

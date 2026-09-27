@@ -240,9 +240,10 @@ der Line-In zu einem Schedule-Item genau wie in Pfad 4.1.
    zurück auf scheduled.  Seit 2026-09-04 ist die Übergabe ein
    **Mix, kein Schnitt**: Der Line-In wird über ein *Gate* im
    Liquidsoap-Bus von der Sendung genommen, der Bus blendet ihn über
-   die Standard-Crossfade-Dauer (Settings → General; 0 = der
+   die Standard Show-Crossfade-Dauer (Settings → General; der
    Nachfolger startet sofort in voller Lautstärke und der Line-In
-   blendet darunter aus, „Ducking") unter dem Nachfolger aus, und
+   blendet darunter über so viele Sekunden aus, 0 = harter Wechsel —
+   seit 2026-09-27 die einzige Form) unter dem Nachfolger aus, und
    erst danach werden Capture und Quelle gestoppt — die letzten
    Worte des Moderators, die noch in der Kette stecken, sind so
    hörbar statt verloren.  Was danach kommt — Jingle, Webstream —

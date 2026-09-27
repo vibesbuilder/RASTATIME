@@ -20,7 +20,7 @@ festgelegt.  Jeder Punkt bekommt vor Implementierung die
 | # | Punkt | Sektion |
 |---|-------|---------|
 | 1 | ✅ Tascam-Ausgänge als lokales Monitoring | **DONE 2026-09-03** (`6464b17`) — Main-Output-Setting wirkt jetzt |
-| 2 | Crossfade-Paket | **kein Go (Operator 2026-09-10)** — neue Richtung „Show-Grenzen mit eigener Crossfade-Dauer" als 💡 notiert (Future Feature Ideas); die Items „Per-Track Crossfade" + „Frontend-Settings Fade" bleiben 🟡 |
+| 2 | ✅ Crossfade-Paket | **DONE 2026-09-27** — als „Show-Grenzen-Crossfade" gebaut (Operator-Go 2026-09-27): Track- und Show-Crossfade getrennt einstellbar, Show-Wert prägt Eingangswechsel, Titel-Attribut „Exclude from Crossover" (Migration 0059) ersetzt die 8-s-Regel, Fade-In/Out-Felder ausgeblendet; dabei den Butt-Splice des bisherigen Crossfades gefunden und behoben (Push vor Skip, Queue-Ahead).  Details CHANGELOG 27.09.; die 🟡-Items „Per-Track Crossfade" + „Frontend-Settings Fade" damit erledigt |
 | 3 | ✅ CSRF-Token-Rotation entschärfen | **DONE 2026-09-10** — Rotation war wirkungslos (Session bereits schreibend geschlossen), Prüfung gehärtet (`7f51156`) |
 | 4 | ✅ `getSqlTypes()`-Cast (DATETIME → PG) | **DONE 2026-09-10** — `datetime` → `timestamp` (`cdc8f0b`) |
 | 5 | ✅ Show-Shift bei Overbook | **DONE 2026-09-27** — Filler-Erweiterung gebaut, zwei Live-Proben bestanden, zwei Juni-Bugs dabei gefunden und behoben (Marker `delayed_start_from` via Migration 0058, ganze Sekunden); Details CHANGELOG 27.09. |
@@ -2794,11 +2794,24 @@ Sowohl Menü-Ebene als auch Einzelfeld-Ebene gewünscht.
 
 ## 💡 Future Feature Ideas (nicht evaluiert, nur notiert)
 
-### 💡 Show-Grenzen mit eigener Crossfade-Dauer (Operator-Wunsch 2026-09-10, kein Go)
+### ✅ Show-Grenzen mit eigener Crossfade-Dauer (Operator-Wunsch 2026-09-10) — GEBAUT 2026-09-27
 
-**Status:** 💡 Idee, evaluiert 2026-09-10, Operator: „kein Go, merken wir uns
-für später".  Ersetzt als Richtung die Per-Track-Idee (kurze Titel ohne
-Fade) aus dem Mai.
+**Status:** ✅ Umgesetzt 2026-09-27 (Operator-Go; Antworten auf die vier
+offenen Fragen: (1) alte Sendung blendet aus, neuer Titel sofort voll; (2)
+innerhalb der Sendung ein echter Crossfade, 8-s-Regel entfällt — Ersatz ist
+das Titel-Attribut „Exclude from Crossover"; (3) ja, der Show-Wert steuert
+auch Line-In/Webstream-Wechsel, gleicher Stream in beiden Sendungen bleibt
+nahtlos; (4) Startwert 1 s).  Abweichung von der Skizze: nicht
+`liq_cross_duration`/`liq_fade_out` je Titel — in Liquidsoap 2.4 setzt der
+Override am NEUEN Titel dessen Kopf-Puffer, nicht den Schwanz des alten
+(Bench 2026-09-27) —, sondern eine eigene Übergangsfunktion mit
+`rt_cross`-Variable und fester Pufferlänge; Titel werden vorab in die Queue
+gelegt (Queue-Ahead).  Details CHANGELOG 27.09.  Ursprüngliche Skizze
+darunter zur Historie.
+
+**Ursprünglicher Status (2026-09-10):** 💡 Idee, evaluiert 2026-09-10,
+Operator: „kein Go, merken wir uns für später".  Ersetzt als Richtung die
+Per-Track-Idee (kurze Titel ohne Fade) aus dem Mai.
 **Wunsch:** Der heutige Crossfade (Überlapp aus Settings → General „Default
 Crossfade Duration", derzeit 1,0 s, keine Ein-/Ausblendung) funktioniert gut,
 gilt aber für alle Übergänge.  An Show-Grenzen (Show-Start/-Ende) sollen
@@ -3603,9 +3616,14 @@ selbe vermutete Ursache (Catchup unter Last).  Nach HW-Tausch erneut prüfen.
 
 ---
 
-### 🟡 Per-Track Crossfade-Entscheidung basierend auf Track-Länge
+### ✅ Per-Track Crossfade-Entscheidung basierend auf Track-Länge — ERSETZT 2026-09-27
 
-**Status:** Defer — Phase-D-Polish.
+**Status:** ✅ Erledigt 2026-09-27 durch das Titel-Attribut „Exclude from
+Crossover" (Edit Metadata; Operator-Entscheid: kein Längen-Schwellwert,
+sondern eine Markierung je Titel).  Der markierte Titel spielt vollständig,
+Nachbarzeilen ohne Crossfade-Versatz.  Historie darunter.
+
+**Ursprünglicher Status:** Defer — Phase-D-Polish.
 **Evaluiert:** 2026-05-28 (Phase-D Stück-B Operator-Wunsch).
 **Operator-Vision (klare Spezifikation):**
 
@@ -3662,9 +3680,14 @@ gap, nur kein smooth fade).
 
 ---
 
-### 🟡 Frontend-Settings "Default Fade In / Out / Crossfade Duration" wieder funktional machen
+### ✅ Frontend-Settings "Default Fade In / Out / Crossfade Duration" wieder funktional machen — ERLEDIGT 2026-09-27
 
-**Status:** Defer — Operator-Wunsch 2026-05-28, kein akuter Blocker.
+**Status:** ✅ Erledigt 2026-09-27: „Default Track Crossfade Duration" und
+„Default Show Crossfade Duration" wirken (cc_pref primär, env-Fallback,
+Einstellungs-Neustart per Fingerprint); die wirkungslosen Fade-In/Out-Felder
+sind ausgeblendet statt reanimiert (Operator-Entscheid).  Historie darunter.
+
+**Ursprünglicher Status:** Defer — Operator-Wunsch 2026-05-28, kein akuter Blocker.
 **Evaluiert:** 2026-05-28 (Phase-D Stück-B-Iteration).
 **Operator-Wert:** Mittel — bessere UX (Settings statt env-var-Bearbeitung).
 

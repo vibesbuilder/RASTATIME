@@ -193,7 +193,8 @@ behaves like any other playlist item.
    and is on air once its buffer is full, ~5 s.
 4. At the configured duration Pypo closes the gate: the bus
    fades the webstream out under the next item over the Default
-   Crossfade Duration (Settings → General; 0 = "ducking"), then
+   Show Crossfade Duration (Settings → General; the next item is at
+   full level at once, 0 = a hard switch), then
    sends `webstream.stop`.  The next item starts on time instead
    of waiting for the buffer to drain.
 

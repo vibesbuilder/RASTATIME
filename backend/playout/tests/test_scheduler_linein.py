@@ -925,8 +925,9 @@ def test_successor_releases_a_line_in_through_the_gate(liquidsoap_scheduler, fak
     assert names.index("linein_gate") < names.index("stop") < names.index("play")
 
 
-def test_drain_seconds_follow_the_house_crossfade():
-    from libretime_playout.liquidsoap_config import DEFAULT_INPUT_DUCK_FADE_SECONDS
+def test_drain_seconds_follow_the_show_crossfade():
+    """2026-09-27: input_transition_seconds is the SHOW crossfade; the
+    drain is that fade plus a margin (0 -> a 50 ms cut, drain 0.5 s)."""
     s1, _, _ = _patched_scheduler()
     assert s1._drain_seconds == 2.0 + 0.5      # default input_transition_seconds
     from libretime_playout.playout_scheduler import PlayoutScheduler
@@ -934,9 +935,10 @@ def test_drain_seconds_follow_the_house_crossfade():
         s2 = PlayoutScheduler(engine=MagicMock(), api_client=MagicMock(),
                               input_transition_seconds=0.0)
         s3 = PlayoutScheduler(engine=MagicMock(), api_client=MagicMock(),
-                              input_transition_seconds=1.0)
-    assert s2._drain_seconds == DEFAULT_INPUT_DUCK_FADE_SECONDS + 0.5
+                              input_transition_seconds=1.0, track_crossfade_seconds=2.5)
+    assert s2._drain_seconds == 0.5
     assert s3._drain_seconds == 1.5
+    assert s3._cross_buffer_seconds == 2.5     # max(track, show, floor)
 
 
 def test_webstream_prepare_start_and_release(liquidsoap_scheduler, fake_timer):

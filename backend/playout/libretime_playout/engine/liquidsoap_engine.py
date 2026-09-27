@@ -151,6 +151,11 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
         self._stop_lock = threading.Lock()
         self._stop_requested = False
         self._stop_timer: Optional[threading.Timer] = None
+        # RASTATIME 2026-09-27 - the item queued ahead of the playing one
+        # (see enqueue / adopt_queued) and the last rt_cross shape sent.
+        self._queued_uri: Optional[str] = None
+        self._queued_request_id: Optional[str] = None
+        self._cross_mode: Optional[str] = None
 
         # Telnet client to Liquidsoap.  Connection is lazy — first
         # send_command opens the socket.  Allows the scheduler to
@@ -187,9 +192,21 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
         media_options: Optional[List[str]] = None,
         gain_db: Optional[float] = None,
         metadata: Optional[Dict[str, str]] = None,
+        transition: Optional[str] = None,
+        skip_current: bool = True,
     ) -> None:
         """
         Push ``uri`` onto Liquidsoap's request queue.
+
+        RASTATIME 2026-09-27 - order is PUSH, then SKIP.  The queue
+        resolves a pushed request synchronously (request.queue_sync), so
+        the cross operator finds the next track ready when the playing
+        one is skipped and can run a real transition.  The old
+        skip-then-push order made cross fall into the silence arm for a
+        frame and every "crossfade" was a butt splice (production log
+        2026-09-27: "Analysis ... / -infdB").  ``transition`` is sent as
+        ``var.set rt_cross`` BEFORE the push; ``skip_current=False`` when
+        nothing is on the queue (a skip would hit the new track).
 
         ``cue_in`` / ``cue_out`` / ``gain_db`` / ``metadata`` are all
         encoded as Liquidsoap ``annotate:`` attributes — the .liq
@@ -237,16 +254,10 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
                     self._redact(uri),
                 )
                 return
-            # Different URI (or first play): flush any pending stop NOW
-            # so Liquidsoap can switch cleanly.
-            if self._stop_requested:
-                self._stop_requested = False
-                try:
-                    self._telnet.request_queue_skip()
-                except Exception as exc:  # pylint: disable=broad-exception-caught
-                    logger.warning(
-                        "Liquidsoap deferred-stop skip failed: %s", exc,
-                    )
+            # Different URI (or first play): a pending deferred stop is
+            # folded into the skip AFTER the push (2026-09-27); nothing is
+            # skipped before the new track sits on the queue.
+            self._stop_requested = False
 
         logger.info(
             "Liquidsoap play: uri=%s cue_in=%.2fs cue_out=%s gain=%s meta=%s",
@@ -259,6 +270,8 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
 
         self._current_uri = uri
         self._current_request_id = None
+        self._queued_uri = None
+        self._queued_request_id = None
 
         try:
             wrapped = self._build_annotate_uri(
@@ -268,6 +281,8 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
                 gain_db=gain_db,
                 metadata=metadata,
             )
+            if transition:
+                self._set_cross_mode(transition)
             response = self._telnet.request_queue_push(wrapped)
             # Liquidsoap signals push-failure either as "ERROR: …" or
             # by replying with a non-numeric, non-empty string.  The
@@ -289,6 +304,10 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
                 "Liquidsoap accepted request_id=%s for %s",
                 self._current_request_id, self._redact(uri),
             )
+            if skip_current:
+                # the pushed track is ready (synchronous queue): cut the
+                # playing item now, cross runs the transition
+                self._telnet.request_queue_skip()
         except Exception as exc:  # pylint: disable=broad-exception-caught
             # Telnet errors (ConnectionError) and any other surprise
             # from the wire layer end up here.  Set ERROR state, log,
@@ -299,6 +318,100 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
                 self._redact(uri), exc,
             )
             self._state = PlayoutState.ERROR
+
+    def enqueue(
+        self,
+        uri: str,
+        *,
+        cue_in: float = 0.0,
+        cue_out: Optional[float] = None,
+        gain_db: Optional[float] = None,
+        metadata: Optional[Dict[str, str]] = None,
+        transition: Optional[str] = None,
+    ) -> bool:
+        """
+        RASTATIME 2026-09-27 - push ``uri`` behind the playing track
+        without skipping anything.  The cross operator buffers the last
+        BUFFER seconds of the playing track and needs its partner on the
+        queue BEFORE that window opens; the scheduler calls this a few
+        seconds ahead of the row start and :meth:`adopt_queued` at the
+        row start.  The shape (``rt_cross``) is set first so it is in
+        place when the natural transition fires.
+        """
+        wrapped = self._build_annotate_uri(
+            uri, cue_in=cue_in, cue_out=cue_out, gain_db=gain_db, metadata=metadata,
+        )
+        try:
+            if transition:
+                self._set_cross_mode(transition)
+            response = self._telnet.request_queue_push(wrapped)
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            logger.warning("Liquidsoap enqueue failed for %s: %s", self._redact(uri), exc)
+            return False
+        if response.startswith("ERROR"):
+            logger.warning(
+                "Liquidsoap rejected the queued-ahead push for %s: %s",
+                self._redact(uri), response.strip(),
+            )
+            return False
+        self._queued_uri = uri
+        self._queued_request_id = self._extract_request_id(response)
+        logger.info(
+            "Liquidsoap queued ahead: uri=%s cue_in=%.2fs cue_out=%s shape=%s rid=%s",
+            self._redact(uri), cue_in,
+            f"{cue_out:.2f}s" if cue_out is not None else "natural",
+            transition or "-", self._queued_request_id,
+        )
+        return True
+
+    def adopt_queued(
+        self,
+        uri: str,
+        *,
+        skip_current: bool = False,
+        transition: Optional[str] = None,
+    ) -> None:
+        """
+        RASTATIME 2026-09-27 - the queued-ahead item is the current one.
+        A pending deferred stop is cancelled (it belonged to the
+        predecessor, which cross is fading right now); with
+        ``skip_current`` the predecessor is cut so the queued track takes
+        over at once (overbook at a show boundary).
+        """
+        with self._stop_lock:
+            if self._stop_timer is not None:
+                self._stop_timer.cancel()
+                self._stop_timer = None
+            self._stop_requested = False
+        if skip_current:
+            try:
+                if transition:
+                    self._set_cross_mode(transition)
+                self._telnet.request_queue_skip()
+            except Exception as exc:  # pylint: disable=broad-exception-caught
+                logger.warning("Liquidsoap skip to the queued track failed: %s", exc)
+        self._current_uri = uri
+        self._current_request_id = self._queued_request_id
+        self._queued_uri = None
+        self._queued_request_id = None
+        self._state = PlayoutState.PLAYING
+
+    def flush_queued(self) -> None:
+        """RASTATIME 2026-09-27 - drop pending requests (the playing one is untouched)."""
+        try:
+            self._telnet.request_queue_flush()
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            logger.warning("Liquidsoap queue flush failed: %s", exc)
+        self._queued_uri = None
+        self._queued_request_id = None
+
+    def _set_cross_mode(self, mode: str) -> None:
+        """``var.set rt_cross = <mode>`` - the shape of the next queue transition."""
+        try:
+            self._telnet.var_set("rt_cross", mode)
+            self._cross_mode = mode
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            logger.warning("Liquidsoap rt_cross=%s could not be set: %s", mode, exc)
 
     def stop(self) -> None:
         """
@@ -328,6 +441,8 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
             self._telnet.request_queue_flush()
         except Exception as exc:  # pylint: disable=broad-exception-caught
             logger.warning("Liquidsoap queue flush failed: %s", exc)
+        self._queued_uri = None
+        self._queued_request_id = None
         with self._stop_lock:
             self._stop_requested = True
             if self._stop_timer is not None:

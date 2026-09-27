@@ -1,10 +1,18 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.39
-Date: 2026-09-17
+Draft version: 0.40
+Date: 2026-09-27
 
 > **Revision history**
+> - **0.40 (2026-09-27)** — **Show-boundary crossfade** (§23.37): two
+>   operator values (track crossfade = real crossfade inside a show,
+>   show crossfade = old show fades out while the new show's first
+>   track starts at full level; the show value also shapes every input
+>   switch), a per-track "Exclude from Crossover" flag (migration 0059),
+>   `cross()` around the request queue with a shape variable set by the
+>   playout, queue-ahead pushes; the old skip-then-push order (a butt
+>   splice in practice) is gone.
 > - **0.39 (2026-09-17)** — **Backup stage 3: automatic backups**
 >   (§23.35 addendum): a once-registered Windows scheduled task runs
 >   `manage.py backup_auto` daily; the command checks due-ness from
@@ -4265,13 +4273,14 @@ with a fallback that reproduces the previous behaviour:
 2. *Transitions.*  The bus `switch` carries `transitions=[...]`,
    index-aligned with its arms: DJ arms hand over instantly
    (`bus_instant`), the programme arms (webstream, line-in, scheduled)
-   go through `bus_transition`.  With the house crossfade D > 0 that is
-   `add(normalize=false, [fade.out(duration=D, old), fade.in(duration=D, new)])`;
-   with D = 0 it is "ducking": the new source at full level after a
-   50 ms ramp (click-free; also keeps both `add` elements the same
-   source type, which the 2.4.4 typer demands), the old source fading
-   out underneath over `DEFAULT_INPUT_DUCK_FADE_SECONDS` (1 s).
-   `transition_length` is the fade length + 0.5 s.  Verified in
+   go through `bus_transition`.  Since 2026-09-27 (§23.37) there is
+   one shape, driven by the Default SHOW Crossfade Duration D: the new
+   source at full level after a 50 ms ramp (click-free; also keeps
+   both `add` elements the same source type, which the 2.4.4 typer
+   demands), the old source fading out underneath over D seconds
+   (D = 0 → a 50 ms cut).  The earlier "crossfade when D > 0" branch
+   (both sources fading over D) is gone.  `transition_length` is the
+   fade length + 0.5 s.  Verified in
    isolation on the exact rendered block: two sines, gate flipped over
    telnet, spectral analysis of the recording — both shapes act at the
    flip, not at `transition_length`.
@@ -4287,12 +4296,16 @@ with a fallback that reproduces the previous behaviour:
    whose item leaves the schedule is undone at the next refresh;
    startup opens both gates.
 
-**House crossfade.**  Settings → General "Default Crossfade Duration"
-(cc_pref `default_crossfade_duration`) is read via the Django ORM at
-render time and drives the queue's track crossfade, the bus transitions
-and the scheduler's drain.  `RASTATIME_LIQUIDSOAP_CROSSFADE_SECONDS`
-remains the fallback for a missing/invalid key.  A change takes effect
-at the next PLAYOUT + LIQUIDSOAP restart.
+**House crossfade.**  Settings → General "Default Track Crossfade
+Duration" (cc_pref `default_crossfade_duration`) and "Default Show
+Crossfade Duration" (`default_show_crossfade_duration`, since
+2026-09-27) are read via the Django ORM at render time; the track value
+shapes in-show queue transitions, the show value the show boundaries,
+the bus transitions and the scheduler's drain (§23.37).
+`RASTATIME_LIQUIDSOAP_CROSSFADE_SECONDS` /
+`RASTATIME_LIQUIDSOAP_SHOW_CROSSFADE_SECONDS` remain the fallbacks for a
+missing/invalid key.  A change is applied by the settings fingerprint
+(§23.34) or the next PLAYOUT + LIQUIDSOAP restart.
 
 **Rejected.**  Delaying the successor by the latency ("drain without
 mixing"): every following item would start late, jingles and
@@ -5128,3 +5141,84 @@ report sizes fall back to the probe layer alone.
 (RUN_BUDGET_SECONDS) so a piggy-backed web request is not held for
 long; per-file timeout 240 s with a low-speed abort; the rest is
 counted as "left for the next run".
+
+### 23.37 Show-Boundary Crossfade and "Exclude from Crossover" (2026-09-27)
+
+**Context.**  One crossfade value shaped every transition, and — as the
+production log showed — the queue "crossfade" was a butt splice: PLAYOUT
+skipped the playing track and pushed the next one afterwards, so
+Liquidsoap's `cross` fell into the silence arm for a frame
+(`Analysis … / -infdB`, then `-infdB / …` one second later) and the two
+tracks never overlapped.  Operator decisions (2026-09-27): a real
+crossfade inside a show; at a show boundary the old show fades out
+while the new show's first track starts at full level at once; the show
+value also governs Line-In / webstream switches (the same stream in both
+shows stays seamless); start value 1 s; a per-track "Exclude from
+Crossover" instead of the never-active 8-second rule; the LibreTime
+Fade-In / Fade-Out fields disappear.
+
+**Settings.**  `default_crossfade_duration` = Default TRACK Crossfade
+Duration (renamed), `default_show_crossfade_duration` = Default SHOW
+Crossfade Duration (new, `'1'`).  Both are in the render fingerprint
+(§23.34), so a save is applied by the planned-restart path.
+`cc_files.exclude_crossfade` (legacy migration 0059, raw SQL in
+`StoredFile`, checkbox in the metadata editor, exposed through the
+Django `File` model to the playout).
+
+**Liquidsoap.**  `scheduled_x = cross(duration=BUFFER, rt_transition,
+scheduled_q)` wraps the request queue ONLY; the silence arm stays
+outside (`fallback([scheduled_x, silence_fallback])`), so a track that
+ends into silence plays out and a track out of silence starts at once.
+BUFFER = max(track, show, 0.5 s) is the tail `cross` buffers from every
+track.  The transition function reads the shape from the interactive
+string `rt_cross`, set by PLAYOUT over telnet before each push / skip:
+
+| shape | when | old track | new track |
+|---|---|---|---|
+| `track` | in-show, natural end | `fade.out(duration=T, delay=BUFFER-T)` — its last T seconds | waits `BUFFER-T`, then `fade.in(T)` — starts at its row start |
+| `show` | show boundary, natural end | fades over its last S seconds | follows at the old track's end (`sequence`) |
+| `cut` | one side excluded | plays its tail out | follows |
+| `show_skip` | overbook at a show boundary | `fade.out(S, max_duration(S, tail))` from now | `fade.in(0.05)` — at once |
+| `track_skip` | in-show skip (layout off) | `fade.out(T, max_duration(T, tail))` | `fade.in(T)` |
+| `instant` | cut on a skip, silent or empty partner | 50 ms | 50 ms |
+
+Bench findings that shaped this (four test tones, left/right channel
+separated, 100-ms RMS envelope of the recorded output): (a) a per-track
+`liq_cross_duration` on the NEW track sets its head buffer in 2.4, not
+the old track's tail — hence the fixed BUFFER and shape variable; (b)
+`cross` pre-buffers the tail, so a skip also has a tail — as long as the
+track has played longer than BUFFER (a track skipped within its first
+seconds is cut hard); (c) `fade.out` on the buffered tail fades from the
+tail's start, so the natural shapes use `delay=` (and a `blank` in front
+of the new track) to fade the LAST T seconds; (d) `cross` runs its
+end-of-track transition alone when the next request is not on the queue
+when the tail window opens — the partner must be queued BEFORE
+`end - BUFFER`.
+
+**PLAYOUT.**  (d) leads to queue-ahead: `_arm_queue_ahead` fires
+`BUFFER + 1.5 s` before a file row's start; when a file track is on air
+with audio left, `engine.enqueue()` sets `rt_cross` and pushes the next
+track without skipping (`_queued_ahead`).  At the row start
+`_on_file_start` adopts it: no skip when the predecessor ends within
+`BUFFER + 0.3 s` (rows overlap by T, the natural shape runs), a skip
+with the `_skip` shape when the predecessor would run on (overbook).
+Without a queued track the normal path pushes FIRST and skips only
+while the predecessor still has audio (`skip_current`) — a skip on an
+idle queue would hit the new track.  Shape decision `_cross_mode`:
+excluded on either side → cut/instant; different `FileEvent.instance_id`
+→ show/show_skip; else track/track_skip.  `input_transition_seconds`
+(drain, bus) is the show value.
+
+**Legacy scheduler.**  `Scheduler::calculateCrossfades`, `removeGaps2`
+and the linked-show copy (`SchedulerService`) lay rows next to an
+excluded track out WITHOUT the crossfade offset
+(`crossfadeOffsetBetween`); inserts re-run `calculateCrossfades` only
+for instances that hold an excluded track, so ordinary shows keep the
+upstream insert path.
+
+**Known edges.**  A show whose last track ends exactly at the boundary
+with the next show's first track queued ahead gets the natural `show`
+shape (old fades over its last S seconds, new follows at the old
+track's end); a track skipped within its first BUFFER seconds has no
+tail to fade; foreign row producers that lay rows adjacent (no overlap)
+get the crossfade T seconds early with a bounded, non-cumulative drift.

@@ -48,7 +48,7 @@ Top-bar Settings → opens the sub-menu:
 
 | Page | Purpose | Manual chapter |
 |---|---|---|
-| **General Preferences** | Station name, default language, default colours, dashboard look-ahead, default import owner, default crossfade duration, favicon, station logo. | This chapter §2 |
+| **General Preferences** | Station name, default language, default colours, dashboard look-ahead, default import owner, track and show crossfade durations, favicon, station logo. | This chapter §2 |
 | **Local Machine** | Sound-card output / input devices, Local Import Folder, Local Recording Folder. | [Local Machine](./LOCAL_MACHINE.md) |
 | **Streams** | Up to four output streams, per-stream bitrate / mountpoint / codec, source authentication. | [Streams](./STREAMS.md) |
 | **Line-In Library** | Named live audio inputs from sound-card devices. | [Line-In](./LINE_IN.md) |
@@ -79,7 +79,8 @@ Settings → **General Preferences**.
    │                                                                 │
    │  Defaults                                                       │
    │    Default Language:    [ English (en_US) ▾ ]                   │
-   │    Default Crossfade:   [ 1.0 ] seconds                         │
+   │    Default Track Crossfade: [ 1.0 ] seconds                     │
+   │    Default Show Crossfade:  [ 1.0 ] seconds                     │
    │    Default Track Type:  [ Music ▾ ]                             │
    │    Default Import Owner:[ admin ▾ ]                             │
    │    Default Recording:   [ ☐ Record all new shows by default ]   │
@@ -112,7 +113,8 @@ Settings → **General Preferences**.
 | Field | Notes |
 |---|---|
 | **Default Language** | UI language for new users + the login screen. Existing users keep their per-user language preference (set via the user dropdown). |
-| **Default Crossfade** | The station's *house crossfade*. Between consecutive tracks in the same show it is the crossfade length (1 second is typical; 0 = hard cuts; up to 10 seconds for soft transitions). Since 2026-09-04 it also shapes every switch between **inputs** (track ↔ webstream ↔ Line-In): a value above 0 cross-fades the outgoing source into the incoming one over that many seconds; **0 means "ducking"** — the incoming source starts at full level at once and the outgoing one fades out underneath over 1 s. Either way the outgoing source's buffered tail is heard, not cut. Takes effect after the audio chain restarts ("Apply now" in Settings → Local Machine). |
+| **Default Track Crossfade Duration** | The crossfade between two consecutive tracks **of the same show**: the outgoing track fades out while the incoming one fades in over this many seconds (1 second is typical; 0 = the tracks follow each other without overlap; up to 10 seconds for soft transitions). The schedule lays consecutive rows out with exactly this overlap. |
+| **Default Show Crossfade Duration** | The transition **at a show boundary** (since 2026-09-27): the old show fades out over this many seconds while the first track of the new show starts at full level at once — so a show that begins with a jingle or ID is heard from its first beat. The same shape and value apply to every switch between **inputs** (track ↔ webstream ↔ Line-In): the incoming source is at full level immediately, the outgoing one fades out underneath; 0 = a hard switch. A webstream or Line-In that is scheduled in both shows keeps playing seamlessly. Start value 1 s. Both crossfade values are applied by the audio chain a few seconds after saving (planned restart at a quiet moment or track boundary); "Apply now" in Settings → Local Machine forces it. |
 | **Default Track Type** | The track-type assigned to new uploads when the operator does not explicitly set one. Affects smart-block filters. |
 | **Default Import Owner** | The user account credited as owner for files imported via the Local Import Folder. Defaults to `admin`. |
 | **Default Recording** | When ticked, new shows have **Record this show:** pre-ticked. See [Record-per-Show](./RECORD_PER_SHOW.md). |

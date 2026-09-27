@@ -37,6 +37,8 @@ class File(models.Model):
     # RASTATIME 2026-05-16 - Track Expiry feature.
     expires_at = models.DateTimeField(blank=True, null=True)
     disabled = models.BooleanField(default=False)
+    # RASTATIME 2026-09-27 - "Exclude from Crossover" (legacy migration 0059)
+    exclude_crossfade = models.BooleanField(default=False)
     accessed = models.IntegerField(db_column="currentlyaccessing")
     scheduled = models.BooleanField(blank=True, null=True, db_column="is_scheduled")
     part_of_list = models.BooleanField(blank=True, null=True, db_column="is_playlist")

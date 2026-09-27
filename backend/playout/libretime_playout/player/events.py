@@ -115,6 +115,13 @@ class FileEvent(BaseEvent):
     replay_gain: Optional[float] = None
     filesize: int
 
+    # RASTATIME 2026-09-27 - crossfade shape decisions: the show instance
+    # (a change of instance between two tracks = a show boundary) and the
+    # track's "Exclude from Crossover" flag.  Optional so older fixtures
+    # and cached schedules still parse.
+    instance_id: Optional[int] = None
+    exclude_crossfade: bool = False
+
     file_ready: bool = False
 
     @property

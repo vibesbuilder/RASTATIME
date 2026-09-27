@@ -204,8 +204,9 @@ Playlist-Item.
    vorgewärmt werden (eine Stream-Quelle): Er verbindet beim
    Slot-Start und ist nach vollem Puffer, ~5 s, auf Sendung.
    Am Slot-Ende schließt Pypo das Gate: Der Bus blendet den
-   Webstream über die Standard-Crossfade-Dauer (Settings → General;
-   0 = „Ducking") unter dem nächsten Element aus und sendet dann
+   Webstream über die Standard Show-Crossfade-Dauer (Settings →
+   General; das nächste Element ist sofort voll da, 0 = harter
+   Wechsel) unter dem nächsten Element aus und sendet dann
    `webstream.stop`. Das nächste Element startet pünktlich, statt
    auf das Leerlaufen des Puffers zu warten.
 4. Bei der konfigurierten Dauer sendet Pypo `webstream.stop`;

@@ -260,9 +260,26 @@ class Application_Service_SchedulerService
                     );
 
                     $defaultCrossfadeDuration = Application_Model_Preference::GetDefaultCrossfadeDuration();
+                    // RASTATIME 2026-09-27 - no crossfade offset next to an
+                    // "Exclude from Crossover" track (see Scheduler::calculateCrossfades)
+                    $linkedItems = array_values($linkedShowSchedule);
+                    $linkedFileIds = [];
+                    foreach ($linkedItems as $li) {
+                        if (!empty($li['file_id'])) {
+                            $linkedFileIds[] = (int) $li['file_id'];
+                        }
+                    }
+                    $excludedFileIds = Application_Model_Scheduler::crossfadeExcludedFileIds($linkedFileIds);
+                    $linkedCount = count($linkedItems);
                     unset($values);
                     $values = [];
-                    foreach ($linkedShowSchedule as $item) {
+                    foreach ($linkedItems as $li => $item) {
+                        $crossfadeOffset = Application_Model_Scheduler::crossfadeOffsetBetween(
+                            $item['file_id'],
+                            ($li + 1 < $linkedCount) ? $linkedItems[$li + 1]['file_id'] : null,
+                            $excludedFileIds,
+                            $defaultCrossfadeDuration
+                        );
                         $endTimeDT = self::findEndTime(
                             $nextStartDT,
                             $item['clip_length']
@@ -285,7 +302,7 @@ class Application_Service_SchedulerService
 
                         $nextStartDT = self::findTimeDifference(
                             $endTimeDT,
-                            $defaultCrossfadeDuration
+                            $crossfadeOffset
                         );
                     } // foreach show item
 

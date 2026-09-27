@@ -4804,3 +4804,27 @@ msgstr "(keine — letzten Titel kürzen)"
 
 msgid "When a delayed start pushes a show past its slot, the tracks that no longer fit are replaced by tracks from this playlist so only a filler gets cut, never a show track. A show that ends with its outro playlist keeps the outro; the tracks before it are replaced."
 msgstr "Schiebt ein verzögerter Start eine Sendung über ihren Slot hinaus, werden die Titel, die nicht mehr passen, durch Titel aus dieser Playlist ersetzt — gekürzt wird nur ein Filler, nie ein Sendungs-Titel. Endet eine Sendung mit ihrer Outro-Playlist, bleibt das Outro; ersetzt werden die Titel davor."
+
+#: RASTATIME 2026-09-27 crossfade
+msgid "Default Track Crossfade Duration (s):"
+msgstr "Standard Track-Crossfade Dauer (s):"
+
+#: RASTATIME 2026-09-27 crossfade
+msgid "Between two tracks of the same show: the old track fades out while the new one fades in over this many seconds (0 = no overlap)."
+msgstr "Zwischen zwei Titeln derselben Sendung: der alte Titel blendet aus, während der neue über so viele Sekunden einblendet (0 = keine Überlappung)."
+
+#: RASTATIME 2026-09-27 crossfade
+msgid "Default Show Crossfade Duration (s):"
+msgstr "Standard Show-Crossfade Dauer (s):"
+
+#: RASTATIME 2026-09-27 crossfade
+msgid "At a show boundary the old show fades out over this many seconds while the first track of the new show starts at full level at once. Also shapes every switch between tracks, webstreams and Line-Ins."
+msgstr "An einer Sendungsgrenze blendet die alte Sendung über so viele Sekunden aus, während der erste Titel der neuen Sendung sofort in voller Lautstärke startet. Prägt auch jeden Wechsel zwischen Titeln, Webstreams und Line-Ins."
+
+#: RASTATIME 2026-09-27 crossfade
+msgid "Exclude from Crossover:"
+msgstr "Vom Crossover ausnehmen:"
+
+#: RASTATIME 2026-09-27 crossfade
+msgid "This track is never faded: it plays to its end and the next track follows without overlap."
+msgstr "Dieser Titel wird nie ein- oder ausgeblendet: er spielt bis zum Ende, der nächste Titel folgt ohne Überlappung."
