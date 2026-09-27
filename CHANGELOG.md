@@ -34,6 +34,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Skripte per `liquidsoap --check`.  Handbuch SETTINGS / LIBRARY / LINE_IN
   / WEBSTREAMS in EN/DE/FR/ES.  Wirksam nach PLAYOUT-Neustart (Render +
   Einstellungs-Fingerprint enthält beide Werte).
+  **Live abgenommen 2026-09-27 in der vierten Probe (22:45–23:04, Track
+  3 s / Show 1 s, zwei Test-Sendungen mit Overbook und Jingle-Ausnahme):**
+  Titelwechsel in der Sendung als 3-s-Crossfade am wahren Titelende
+  (`track`, Queue-Ahead 8–11 s vorher, Übergabe ohne Skip), Sendungsgrenze
+  mit Ausblenden des alten Titels über die letzte Sekunde und pünktlichem
+  Start der neuen Sendung (`show`, Playout erkannte „already on the queued
+  track" und skippte nicht), Jingle ohne Überlappung vollständig gespielt
+  (`cut` auf beiden Seiten), Ende in Stille ohne Fade.  Proben 1–3 hatten
+  jeweils einen Fehler aufgedeckt (siehe Fixed).  Werkzeug
+  `C:/Temp/optd/crossfade_rehearsal.py setup|status|cleanup`.
 
 - **Show-Shift: Filler statt Kürzung (2026-09-27, Operator-Go mit
   Design-Entscheiden D1–D4, `b7d2890`)** — Neue Einstellung Settings → General →

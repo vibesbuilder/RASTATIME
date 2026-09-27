@@ -5196,18 +5196,38 @@ when the tail window opens — the partner must be queued BEFORE
 `end - BUFFER`.
 
 **PLAYOUT.**  (d) leads to queue-ahead: `_arm_queue_ahead` fires
-`BUFFER + 1.5 s` before a file row's start; when a file track is on air
-with audio left, `engine.enqueue()` sets `rt_cross` and pushes the next
-track without skipping (`_queued_ahead`).  At the row start
-`_on_file_start` adopts it: no skip when the predecessor ends within
-`BUFFER + 0.3 s` (rows overlap by T, the natural shape runs), a skip
-with the `_skip` shape when the predecessor would run on (overbook).
-Without a queued track the normal path pushes FIRST and skips only
-while the predecessor still has audio (`skip_current`) — a skip on an
+`BUFFER + 5 s` before a file row's start (the margin covers copying the
+file into the cache, ~2 s, and row layouts whose overlap is shorter than
+the buffer); when a file track is on air with audio left,
+`engine.enqueue()` sets `rt_cross` and pushes the next track without
+skipping (`_queued_ahead`, plus the predecessor it was queued behind).
+At the row start `_on_file_start` adopts it.  Whether the predecessor is
+cut is decided from the ENGINE's measurement: telnet
+`scheduled.remaining` answers `"<rid> <seconds>"` for the request the
+queue is on (rid tracked with `on_track`).  If that rid is the queued
+successor, cross has already pulled it - the hand-over has happened and
+nothing is skipped; otherwise a predecessor with more than
+`BUFFER + 1.5 s` left is cut (overbook, `_skip` shape).  The row-based
+estimate (`start + cue_out - cue_in`; never the row end, which the API
+clips to the show end) is the fallback when the engine cannot answer.
+`_on_stop` of the predecessor leaves the queue alone when a successor is
+queued ahead (its `engine.stop()` would flush the successor; on clipped
+rows STOP and PLAY fire at the same instant).  Without a queued track
+the normal path pushes FIRST and skips only on overbook - a skip on an
 idle queue would hit the new track.  Shape decision `_cross_mode`:
-excluded on either side → cut/instant; different `FileEvent.instance_id`
-→ show/show_skip; else track/track_skip.  `input_transition_seconds`
-(drain, bus) is the show value.
+excluded on either side → cut/instant; different
+`FileEvent.instance_id` → show/show_skip; else track/track_skip.
+`input_transition_seconds` (drain, bus) is the show value.
+
+**Cue points.**  Found in the rehearsals: Liquidsoap 2.4 applies cue
+points during request resolution from `liq_cue_in` / `liq_cue_out`
+only; the LibreTime names `cue_in` / `cue_out` the engine annotated
+since the migration were ignored (every track played from 0 to its end).
+Now native keys.  Because the API clips `cue_out` of a track that runs
+past its show to the show end, such a track ends by itself at the
+boundary and the natural `show` shape runs (old fades over its last S
+seconds, new on time) - the `show_skip` path is for tracks whose rows
+were not clipped (manual layouts, late starts).
 
 **Legacy scheduler.**  `Scheduler::calculateCrossfades`, `removeGaps2`
 and the linked-show copy (`SchedulerService`) lay rows next to an
@@ -5216,9 +5236,21 @@ excluded track out WITHOUT the crossfade offset
 for instances that hold an excluded track, so ordinary shows keep the
 upstream insert path.
 
-**Known edges.**  A show whose last track ends exactly at the boundary
-with the next show's first track queued ahead gets the natural `show`
-shape (old fades over its last S seconds, new follows at the old
-track's end); a track skipped within its first BUFFER seconds has no
-tail to fade; foreign row producers that lay rows adjacent (no overlap)
-get the crossfade T seconds early with a bounded, non-cumulative drift.
+**Known edges.**  A track skipped within its first BUFFER seconds has
+no tail to fade; foreign row producers that lay rows adjacent (no
+overlap) get the crossfade T seconds early with a bounded,
+non-cumulative drift; after an anomaly that leaves the queue idle (a
+track shorter than its row) the queued-ahead successor starts up to
+`BUFFER + 5 s` early.  Event starts are whole seconds
+(`event_isoparse`) while rows carry microseconds, hence the 1.5 s skip
+tolerance.
+
+**Rehearsals 2026-09-27.**  Four runs with two test shows (three tracks
+overlapping by the track crossfade, an overbooked boundary, a jingle
+flagged "Exclude from Crossover" between adjacent rows).  Run 1 found
+the clipped-row STOP/PLAY race and the queue flush; run 2 the ignored
+cue points and the 1 s start rounding; run 3 the ambiguous remaining
+(the measurement belonged to the successor cross had already pulled -
+the skip hit it); run 4 passed: `track` at the true end of each track,
+`show` with the old track fading over its last second and the new show
+on time, `cut` around the jingle, `track` at the last change.
