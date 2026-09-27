@@ -1586,6 +1586,26 @@ Nächster Schritt = Operator-Entscheid: kontrollierte Live-Abnahme mit
 Testshow-Overrun oder dunkel lassen bis zum ersten Opt-in.
 
 **Status (alt, überholt):** Go vom 2026-05-22; Operator 2026-09-10: „für später gemerkt".
+
+**🟡 Erweiterung „Filler statt Kürzung" (Operator-Wunsch 2026-09-27, evaluiert,
+wartet auf Design-Entscheide + Go):** Im SHIFT-Fall wird der überstehende
+Schluss von Show B nicht gekürzt, sondern die nicht mehr passenden
+Schluss-Titel werden entfernt und die Lücke bis B.ends aus einer unter
+Settings → General wählbaren **Filler-Playlist** (Picker wie
+„Traffic-Alert Smart Block", aber `getPlaylistNames`) mit passend langen
+Titeln gefüllt.  Datenlage komplett: `cc_playlistcontents.cliplength`
+liefert Dauern, der Shift läuft in einer Transaktion mit anschließendem
+PushSchedule, Insert-Form für cc_schedule ist bekannt (Scheduler.php).
+Kein Schema-, kein Playout-Eingriff.  Aufwand ~400-500 LoC PHP + Manual
+×4, 1,5-2,5 Tage inkl. Live-Probe mit Testshows (die auch den bisher nie
+ausgelösten Basis-Shift abnimmt).  Offene Entscheide: (D1) letzten Titel
+oder letzten Titel VOR dem Outro-Jingle ersetzen; (D2) Rest-Politik —
+Empfehlung: bis ≥ Lücke füllen, der letzte Filler wird gekürzt (nie
+Stille, nie ein Show-Titel gekürzt); (D3) mehrere Schluss-Titel entfernen,
+wenn der Überhang länger als einer ist; (D4) Geltung auch für As eigene
+Kürzung im ANCHOR-Fall; (D5) Wiederholungs-Vermeidung der Filler (v2).
+Hinweis: Legacy-PHP hat keine Test-Infrastruktur — Auswahl-Logik als
+reine Funktion bauen, Abnahme per Probe-Protokoll.
 Die Vorbedingung ist inzwischen erfüllt (zehn Scheduler-Testdateien,
 ~2.900 Zeilen).  **Neubewertung 2026-09-10:** Stufe A nur im Playout
 (Checkbox pro Show, die Timer der Folgeshow werden um den Überhang des
