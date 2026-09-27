@@ -406,17 +406,32 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
         self._queued_request_id = None
 
     def playing_remaining_seconds(self) -> Optional[float]:
-        """``scheduled.remaining`` over telnet; None on error or unknown (-1)."""
+        """
+        ``scheduled.remaining`` over telnet, ``"<rid> <seconds>"``.  None on
+        error or unknown (-1); 0.0 when the RID is the one queued ahead -
+        cross has already pulled the successor, the predecessor is in the
+        tail (a skip now would hit the successor).
+        """
         try:
             raw = self._telnet.request_queue_remaining().strip().splitlines()
         except Exception as exc:  # pylint: disable=broad-exception-caught
             logger.warning("Liquidsoap remaining could not be read: %s", exc)
             return None
         for line in raw:
+            parts = line.strip().split()
+            if not parts:
+                continue
             try:
-                value = float(line.strip())
+                value = float(parts[-1])
             except ValueError:
                 continue
+            rid = parts[0] if len(parts) > 1 else None
+            if rid is not None and self._queued_request_id is not None and rid == self._queued_request_id:
+                logger.info(
+                    "Liquidsoap is already on the queued track (rid %s, %.1f s left) - "
+                    "the hand-over has happened.", rid, value,
+                )
+                return 0.0
             return value if value >= 0 else None
         return None
 

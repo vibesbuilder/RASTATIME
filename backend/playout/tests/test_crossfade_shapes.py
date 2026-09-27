@@ -346,10 +346,18 @@ def test_file_start_prefers_the_engines_measured_remaining(sched):
 
 def test_engine_reads_the_measured_remaining():
     eng, telnet = _engine()
-    telnet.request_queue_remaining.return_value = "47.31\nEND"
+    telnet.request_queue_remaining.return_value = "7 47.31\nEND"
     assert eng.playing_remaining_seconds() == pytest.approx(47.31)
-    telnet.request_queue_remaining.return_value = "-1.\nEND"
+    telnet.request_queue_remaining.return_value = "7 -1.\nEND"
     assert eng.playing_remaining_seconds() is None
+    # the queue is already on the successor queued ahead: nothing to skip
+    eng._state = PlayoutState.PLAYING
+    telnet.request_queue_push.return_value = "9"
+    eng.enqueue("C:/m/b.mp3")
+    telnet.request_queue_remaining.return_value = "9 162.8\nEND"
+    assert eng.playing_remaining_seconds() == 0.0
+    telnet.request_queue_remaining.return_value = "8 40.0\nEND"
+    assert eng.playing_remaining_seconds() == pytest.approx(40.0)
     telnet.request_queue_remaining.side_effect = RuntimeError("down")
     assert eng.playing_remaining_seconds() is None
 

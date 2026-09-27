@@ -119,8 +119,10 @@ class PlayoutEngine(ABC):
 
     def playing_remaining_seconds(self) -> Optional[float]:
         """
-        RASTATIME 2026-09-27 - seconds of audio left in the playing item as
-        the engine measures it (cue-based), or None when unknown.
+        RASTATIME 2026-09-27 - seconds of audio left in the PREDECESSOR as
+        the engine measures it (cue-based): None when unknown, 0.0 when
+        the item queued with :meth:`enqueue` is already the one playing
+        (the hand-over has happened - nothing must be skipped).
         """
         return None
 

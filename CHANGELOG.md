@@ -451,7 +451,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   misst der Playout das Rest-Audio des Vorgängers jetzt in Liquidsoap
   (Telnet `scheduled.remaining`, cue-basiert) statt es aus der Zeile zu
   rechnen — ein verspätet gestarteter Titel hat mehr Rest als die Zeile
-  sagt; der gerechnete Wert bleibt Rückfall — `7618c4e`.
+  sagt; der gerechnete Wert bleibt Rückfall — `7618c4e`.  Dritte Probe
+  22:12–22:31: die Sendungsgrenze selbst stimmte (Liquidsoap blendete A's
+  Titel am gekappten Cue-Ende über 1 s aus, B startete pünktlich), doch die
+  Messung meldete den Rest des bereits gezogenen NEUEN Titels (162,8 s) →
+  Skip traf B's ersten Titel, Stille und Folgeskips.  `scheduled.remaining`
+  liefert jetzt `<rid> <sekunden>`; gehört die RID dem vorgelegten Titel,
+  ist die Übergabe schon passiert und es wird nicht geskippt.
 
 - **Show-Shift: zweite Live-Probe 2026-09-27 12:26–12:56 — Sichtbarkeit
   bestätigt, Punkt 5 der Arbeitsreihenfolge abgeschlossen** — Gleiches
