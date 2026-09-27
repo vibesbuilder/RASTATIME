@@ -457,7 +457,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Messung meldete den Rest des bereits gezogenen NEUEN Titels (162,8 s) →
   Skip traf B's ersten Titel, Stille und Folgeskips.  `scheduled.remaining`
   liefert jetzt `<rid> <sekunden>`; gehört die RID dem vorgelegten Titel,
-  ist die Übergabe schon passiert und es wird nicht geskippt.
+  ist die Übergabe schon passiert und es wird nicht geskippt — `aae5b4c`.
 
 - **Show-Shift: zweite Live-Probe 2026-09-27 12:26–12:56 — Sichtbarkeit
   bestätigt, Punkt 5 der Arbeitsreihenfolge abgeschlossen** — Gleiches
