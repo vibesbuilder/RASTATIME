@@ -451,7 +451,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   misst der Playout das Rest-Audio des Vorgängers jetzt in Liquidsoap
   (Telnet `scheduled.remaining`, cue-basiert) statt es aus der Zeile zu
   rechnen — ein verspätet gestarteter Titel hat mehr Rest als die Zeile
-  sagt; der gerechnete Wert bleibt Rückfall.
+  sagt; der gerechnete Wert bleibt Rückfall — `7618c4e`.
 
 - **Show-Shift: zweite Live-Probe 2026-09-27 12:26–12:56 — Sichtbarkeit
   bestätigt, Punkt 5 der Arbeitsreihenfolge abgeschlossen** — Gleiches
