@@ -124,7 +124,7 @@ def test_annotate_cue_in_only():
     out = LiquidsoapPlayoutEngine._build_annotate_uri(
         "file:///x.mp3", cue_in=2.5, cue_out=None, gain_db=None,
     )
-    assert out == 'annotate:cue_in="2.50":file:///x.mp3'
+    assert out == 'annotate:liq_cue_in="2.50":file:///x.mp3'
 
 
 def test_annotate_cue_out_only():
@@ -132,7 +132,7 @@ def test_annotate_cue_out_only():
     out = LiquidsoapPlayoutEngine._build_annotate_uri(
         "file:///x.mp3", cue_in=0.0, cue_out=180.0, gain_db=None,
     )
-    assert out == 'annotate:cue_out="180.00":file:///x.mp3'
+    assert out == 'annotate:liq_cue_out="180.00":file:///x.mp3'
 
 
 def test_annotate_gain_negative():
@@ -157,7 +157,7 @@ def test_annotate_all_three_attrs():
         "file:///x.mp3", cue_in=0.5, cue_out=180.0, gain_db=-5.95,
     )
     assert out == (
-        'annotate:cue_in="0.50",cue_out="180.00",'
+        'annotate:liq_cue_in="0.50",liq_cue_out="180.00",'
         'replaygain_track_gain="-5.95 dB":file:///x.mp3'
     )
 
@@ -258,7 +258,7 @@ def test_annotate_all_three_attrs_plus_metadata():
         metadata={"title": "Song", "artist": "Band"},
     )
     assert out == (
-        'annotate:cue_in="0.50",cue_out="180.00",'
+        'annotate:liq_cue_in="0.50",liq_cue_out="180.00",'
         'replaygain_track_gain="-5.95 dB",'
         'title="Song",artist="Band":file:///x.mp3'
     )
@@ -295,7 +295,7 @@ def test_play_pushes_to_request_queue():
     eng.play(r"C:\rastatime\foo.mp3", cue_in=0.5,
              cue_out=120.0, gain_db=-3.0)
     expected_uri = (
-        'annotate:cue_in="0.50",cue_out="120.00",'
+        'annotate:liq_cue_in="0.50",liq_cue_out="120.00",'
         'replaygain_track_gain="-3.00 dB":'
         'file://C:/rastatime/foo.mp3'
     )

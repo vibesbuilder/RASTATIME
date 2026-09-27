@@ -416,6 +416,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Cue-Punkte wurden seit der Liquidsoap-Migration nie angewendet
+  (2026-09-27, gefunden in der zweiten Crossfade-Probe)** — Der Playout
+  annotierte Requests mit den LibreTime-Schlüsseln `cue_in`/`cue_out`;
+  Liquidsoap 2.4 wertet bei der Request-Auflösung nur `liq_cue_in` /
+  `liq_cue_out` aus (`cue_cut` ist deprecated, das Template hatte keinen).
+  Jeder Titel lief von 0 bis zum Dateiende — Bibliotheks-Cue-Punkte,
+  Filler-Kürzungen und das von der API auf das Sendungsende gekappte
+  `cue_out` eines überziehenden Titels blieben wirkungslos (der Titel lief
+  45 s in die nächste Sendung).  Bench: `liq_cue_in=1,liq_cue_out=4` →
+  exakt 3 s hörbar, die alten Namen ignoriert.  Jetzt native Schlüssel.
+  Zweite Probe außerdem: Skip-Toleranz 0,3 → 1,5 s, weil Event-Starts auf
+  ganze Sekunden gerundet sind (Zeilenstart 17:43:00,56 → PLAY 17:43:00,0,
+  „3,56 s Rest" bei 3 s Überlapp wurde als Overbook geskippt).
+
 - **Der bisherige Titel-Crossfade war ein Butt-Splice (2026-09-27, `07e6e1f`)** —
   PLAYOUT skippte den laufenden Titel und pushte erst danach; Liquidsoaps
   `cross` fiel für einen Frame auf den Stille-Arm (Produktions-Log:

@@ -38,7 +38,7 @@ with operators like ``amplify(override="replaygain_track_gain",
 
 Example URI we send to Liquidsoap::
 
-    annotate:cue_in="0.5",cue_out="180.0",
+    annotate:liq_cue_in="0.5",liq_cue_out="180.0",
              replaygain_track_gain="-5.95 dB"
              :file:///C:/rastatime/scheduler/580.mp3
 
@@ -1024,15 +1024,22 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
             ...   "file:///x.mp3", cue_in=0.5, cue_out=180.0,
             ...   gain_db=-5.95,
             ...   metadata={"title": "Song", "artist": "Band"})
-            'annotate:cue_in="0.50",cue_out="180.00",replaygain_track_gain="-5.95 dB",title="Song",artist="Band":file:///x.mp3'
+            'annotate:liq_cue_in="0.50",liq_cue_out="180.00",replaygain_track_gain="-5.95 dB",title="Song",artist="Band":file:///x.mp3'
         """
         normalised = cls._normalise_uri(uri)
 
         annotations = []
+        # RASTATIME 2026-09-27 - Liquidsoap 2.4 applies cue points during
+        # request resolution from the metadata ``liq_cue_in`` /
+        # ``liq_cue_out`` (cue_cut is deprecated).  The LibreTime names
+        # ``cue_in`` / ``cue_out`` used until today were ignored: every
+        # track played from 0 to its end (found in the crossfade
+        # rehearsal: a track whose cue_out the API had clipped to the
+        # show end ran 45 s into the next show).
         if cue_in and cue_in > 0:
-            annotations.append(f'cue_in="{cue_in:.2f}"')
+            annotations.append(f'liq_cue_in="{cue_in:.2f}"')
         if cue_out is not None and cue_out > 0:
-            annotations.append(f'cue_out="{cue_out:.2f}"')
+            annotations.append(f'liq_cue_out="{cue_out:.2f}"')
         if gain_db is not None and abs(gain_db) > 0.001:
             # Liquidsoap's amplify(override="replaygain_track_gain", …)
             # parses the value as a "<float> dB" string — sign is

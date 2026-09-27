@@ -101,6 +101,13 @@ WEBSTREAM_PREPARE_LEAD_SECONDS = 10.0
 # overlap is shorter than the buffer (the window then opens before the
 # row start).  Queued requests wait on the queue, so being early is free.
 QUEUE_AHEAD_MARGIN_SECONDS = 5.0
+# A predecessor with more than BUFFER + this many seconds of audio left at
+# the successor's start is cut (overbook); less means the rows overlap by
+# the crossfade and cross does the hand-over.  Event starts are whole
+# seconds (event_isoparse drops microseconds) while the rows carry them,
+# so a start can run up to 1 s early - the rehearsal measured 3.56 s left
+# for a 3 s overlap; 0.3 s tolerance turned that into a skip.
+SKIP_TOLERANCE_SECONDS = 1.5
 
 # RASTATIME 2026-09-07 - the webstream watchdog lives inside Liquidsoap
 # (frame counter on the bus, rendered by liquidsoap_config).  The
@@ -1806,7 +1813,7 @@ class PlayoutScheduler:
             # Queued ahead: cross already has this track as the partner.
             self._queued_ahead = None
             self._queued_ahead_prev = None
-            skip = prev_remaining > self._cross_buffer_seconds + 0.3
+            skip = prev_remaining > self._cross_buffer_seconds + SKIP_TOLERANCE_SECONDS
             mode = self._cross_mode(prev_event, event, skip=skip)
             self._engine.adopt_queued(
                 str(local), skip_current=skip, transition=mode if skip else None,
@@ -1849,7 +1856,7 @@ class PlayoutScheduler:
         # is already in the cross operator's tail (the queue has consumed
         # it): a skip there is a no-op at best and could hit the pushed
         # track; the tail plays out and this track follows at once.
-        skip = prev_remaining > self._cross_buffer_seconds + 0.3
+        skip = prev_remaining > self._cross_buffer_seconds + SKIP_TOLERANCE_SECONDS
         self._engine.play(
             str(local),
             cue_in=event.cue_in or 0.0,
