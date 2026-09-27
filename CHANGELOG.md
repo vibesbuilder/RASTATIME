@@ -428,7 +428,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   exakt 3 s hörbar, die alten Namen ignoriert.  Jetzt native Schlüssel.
   Zweite Probe außerdem: Skip-Toleranz 0,3 → 1,5 s, weil Event-Starts auf
   ganze Sekunden gerundet sind (Zeilenstart 17:43:00,56 → PLAY 17:43:00,0,
-  „3,56 s Rest" bei 3 s Überlapp wurde als Overbook geskippt).
+  „3,56 s Rest" bei 3 s Überlapp wurde als Overbook geskippt) — `45634cc`.
 
 - **Der bisherige Titel-Crossfade war ein Butt-Splice (2026-09-27, `07e6e1f`)** —
   PLAYOUT skippte den laufenden Titel und pushte erst danach; Liquidsoaps
