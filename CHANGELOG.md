@@ -376,6 +376,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Show-Shift: verschobene Sendungen sind wieder sichtbar — Marker
+  delayed_start_from statt modified_instance (2026-09-27, Operator-Go,
+  Migration 0058)** — Der Juni-Shift markierte verschobene Instanzen mit
+  `modified_instance = true`, Upstreams „Folge gelöscht"-Flag, das jede
+  Was-läuft-Abfrage (Dashboard, Live-Info, Widgets, Kalender, Showbuilder,
+  Überlappungsprüfung) herausfiltert.  Neue Spalte
+  `cc_show_instances.delayed_start_from` (TIMESTAMP NULL) = der Slot-Start,
+  von dem die Folge weggerückt wurde.  SHIFT setzt nur diesen Marker;
+  CLEARING behält zusätzlich `modified_instance = true` (ein geleerter,
+  nie sendender Slot IST eine gelöschte Folge — und zwei gleichzeitige
+  „aktuelle" Sendungen werden vermieden).  Trigger filtern
+  `delayed_start_from IS NULL` (Idempotenz) und `modified_instance =
+  false`; die Nachfolger-Suche überspringt gelöschte Folgen (vorher
+  konnte eine gelöschte Folge als „nächste Show" gelten).
+  `ShowService::getInstance()` findet eine verschobene Folge zusätzlich
+  über `delayed_start_from`, damit das Bearbeiten der Serie kein Duplikat
+  zur Serienzeit anlegt.  Handbuch DELAYED_START EN/DE/FR/ES (dabei die
+  falsche Aussage korrigiert, Kalender-Ziehen setze `modified_instance`
+  — `CalendarService::moveShow` tut das nicht).  Zweite Live-Probe: siehe
+  Folgeeintrag.
+
 - **Show-Shift Live-Probe 2026-09-27 11:20–11:50 — Basis-Shift + Filler auf
   Sendung bestätigt, ein Design-Fehler aufgedeckt** — Zwei Testshows im
   freien Fenster (A 10 min mit 15:58 Inhalt, B 20 min angehakt mit

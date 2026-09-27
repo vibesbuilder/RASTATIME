@@ -1631,6 +1631,25 @@ SQL;
             ->limit(1)
             ->find();
 
+        // RASTATIME 2026-09-27 — a delayed start moved this occurrence
+        // away from its series slot (ShowShiftService, migration 0058):
+        // match it by the slot it was moved FROM, so editing the show
+        // updates that occurrence instead of creating a duplicate at the
+        // series time.  Raw SQL: the column has no Propel accessor.
+        if ($ccShowInstance->isEmpty()) {
+            $shifted = Application_Common_Database::prepareAndExecute(
+                'SELECT id FROM cc_show_instances
+                  WHERE show_id = :sid AND rebroadcast = 0
+                    AND delayed_start_from = :starts
+                  LIMIT 1',
+                [':sid' => $showIdLookup, ':starts' => $startsLookup],
+                Application_Common_Database::SINGLE
+            );
+            if (!empty($shifted)) {
+                return CcShowInstancesQuery::create()->findPK((int) $shifted['id']);
+            }
+        }
+
         // RASTATIME 2026-05-17 — when the lookup misses, dump every
         // cc_show_instances row that DOES exist for this show so the
         // operator log shows WHY we're missing (wrong show_id?

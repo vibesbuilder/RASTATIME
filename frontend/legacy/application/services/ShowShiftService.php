@@ -21,11 +21,12 @@
  *     the empty slot stays as a "skipped" marker, and the cascade continues
  *     with the SAME content end (A plays through the emptied slot).
  *   - SHIFT — the next show is opted in and only PARTIALLY overrun: it is
- *     moved to A's content end (its END stays fixed, its items move with it,
- *     its last track is clamped at the slot end = the accepted cut-off) and
+ *     moved to A's content end (its END stays fixed, its items move with it;
+ *     what no longer fits is clamped by the playout — or, with a filler
+ *     playlist configured, swapped for fillers, see fillShiftedTail()) and
  *     the cascade ends — that show absorbs the rest, its successor starts on
- *     time.  A repeated show changes only the affected episode
- *     (modified_instance = true).
+ *     time.  A repeated show changes only the affected episode (marked
+ *     delayed_start_from, see MARKER below).
  *
  * Finally A.ends is extended to where its content settled, so A's last item is
  * "inside" its instance and the backend playout serializer stops clamping it —
@@ -34,16 +35,31 @@
  * a gap or a non-flagged anchor keeps the current clamp behaviour.
  *
  * Forward-only per operator decision (2026-06-15): a shift is never walked back
- * automatically, so no "original slot" column / migration is needed.  Trigger
- * shows are filtered modified_instance = false, which (a) keeps the engine
- * idempotent — an already-shifted show sits at modified_instance = true and is
- * not re-triggered as a new overrun origin — and (b) leaves operator-moved
- * instances alone as cascade origins (they are still shifted/cleared when an
- * earlier show overruns INTO them).  Deltas are whole seconds (strtotime), so a
- * re-evaluated chain computes sub-second deltas that floor to no-ops.
+ * automatically.  Deltas are whole seconds (strtotime), so a re-evaluated chain
+ * computes sub-second deltas that floor to no-ops.
  *
- * cc_show.allow_delayed_start has no Propel accessor (raw-SQL migration 0056),
- * so it is read via raw SQL here, matching the rest of the feature.
+ * MARKER (RASTATIME 2026-09-27, migration 0058): a shifted or cleared instance
+ * carries cc_show_instances.delayed_start_from = the slot start it was moved
+ * away from (NULL otherwise).  The June design used modified_instance = true
+ * instead — upstream's "this occurrence was deleted" flag, which every
+ * what's-on query (dashboard, live-info, widgets, calendar, show builder,
+ * overlap check) filters out; the first live run showed the shifted show
+ * vanish from all of them while the playout played it.  Now:
+ *   - SHIFT sets delayed_start_from only, so the moved show stays visible
+ *     everywhere at its new time;
+ *   - CLEARING additionally keeps modified_instance = true: an emptied,
+ *     never-airing occurrence IS a deleted one in upstream terms, and hiding
+ *     it avoids two "current" shows (the extended A and the empty slot);
+ *   - trigger shows are filtered delayed_start_from IS NULL (idempotency —
+ *     an already-shifted show is not re-triggered as a new overrun origin)
+ *     and modified_instance = false (deleted occurrences never trigger).
+ *   ShowService::getInstance() also matches on delayed_start_from, so editing
+ *   the show while an occurrence is shifted updates that occurrence instead of
+ *   creating a duplicate at the series time.
+ *
+ * cc_show.allow_delayed_start / cc_show_instances.delayed_start_from have no
+ * Propel accessors (raw-SQL migrations 0056 / 0058), so they are read and
+ * written via raw SQL here, matching the rest of the feature.
  */
 class Application_Service_ShowShiftService
 {
@@ -89,7 +105,8 @@ class Application_Service_ShowShiftService
                    SELECT MAX(ends) AS content_end
                      FROM cc_schedule WHERE instance_id = a.id
                ) ce ON true
-              WHERE a.modified_instance = false
+              WHERE a.delayed_start_from IS NULL
+                AND a.modified_instance = false
                 AND a.starts >= :lower
                 AND a.starts <= :horizon
                 AND ce.content_end IS NOT NULL
@@ -140,6 +157,7 @@ class Application_Service_ShowShiftService
                        FROM cc_show_instances i
                        JOIN cc_show s ON s.id = i.show_id
                       WHERE i.starts > :cs
+                        AND i.modified_instance = false
                       ORDER BY i.starts ASC LIMIT 1',
                     [':cs' => $curStarts],
                     Application_Common_Database::SINGLE
@@ -177,7 +195,7 @@ class Application_Service_ShowShiftService
                 $newStarts = gmdate('Y-m-d H:i:s', $nextStartsTs + $diff);  // = content end (whole sec)
                 Application_Common_Database::prepareAndExecute(
                     'UPDATE cc_show_instances
-                        SET starts = :ns, modified_instance = true
+                        SET delayed_start_from = starts, starts = :ns
                       WHERE id = :id',
                     [':ns' => $newStarts, ':id' => (int) $next['id']],
                     Application_Common_Database::EXECUTE
@@ -648,11 +666,14 @@ class Application_Service_ShowShiftService
         );
 
         if ($deleted > 0) {
-            // Empty-slot marker: zero the fill, mark the episode as modified so
-            // the repeat regenerator leaves the skipped slot alone.
+            // Empty-slot marker: zero the fill; modified_instance = true is
+            // upstream's "deleted occurrence" (the slot never airs — A plays
+            // through it), delayed_start_from records why (see class doc).
             Application_Common_Database::prepareAndExecute(
                 "UPDATE cc_show_instances
-                    SET time_filled = '00:00:00', modified_instance = true
+                    SET time_filled = '00:00:00',
+                        modified_instance = true,
+                        delayed_start_from = starts
                   WHERE id = :id",
                 [':id' => $instanceId],
                 Application_Common_Database::EXECUTE

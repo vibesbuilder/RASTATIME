@@ -266,9 +266,11 @@ ou pour resserrer l'émission surbookée la prochaine fois.
 > ensevelie reflète l'action **Vider le planning** pour une
 > instance : ses lignes `cc_schedule` sont supprimées,
 > `time_filled` est remis à zéro, l'instance est marquée
-> `modified_instance` (pour que le régénérateur de répétitions
-> laisse le trou tranquille), et `cc_files.is_scheduled` est
-> retiré pour toute piste qui n'est plus planifiée nulle part.
+> `modified_instance` — la marque « occurrence supprimée » de
+> l'upstream, adaptée à un créneau qui ne passe jamais à l'antenne —
+> plus `delayed_start_from` (depuis le 27/09/2026, voir plus bas), et
+> `cc_files.is_scheduled` est retiré pour toute piste qui n'est plus
+> planifiée nulle part.
 
 ---
 
@@ -310,15 +312,29 @@ La tâche est **idempotente et à sens unique** :
 
 > **Comment ça marche sous le capot.**
 > `Application_Service_ShowShiftService::applyDelayedStarts()`
-> sélectionne les instances en surbooking, non
-> `modified_instance`, dont la fin de créneau est dans la fenêtre
+> sélectionne les instances en surbooking qui ne sont ni des
+> occurrences supprimées (`modified_instance`) ni déjà décalées
+> (`delayed_start_from`), dont la fin de créneau est dans la fenêtre
 > de lead, puis parcourt chacune vers l'avant : vidant les
 > émissions cochées entièrement dépassées, faisant glisser la
 > première émission cochée partiellement dépassée (début → fin du
 > contenu, fin fixe, items décalés via
 > `SchedulerService::updateScheduleStartTime`, marquée
-> `modified_instance`), et s'arrêtant à la première ancre non
-> cochée. La fin propre de l'émission en surbooking est étendue
+> `delayed_start_from` = le début de créneau qu'elle a quitté), et
+> s'arrêtant à la première ancre non cochée.
+>
+> **Pourquoi un marqueur dédié (27/09/2026).**  La première répétition
+> en direct a montré que le marqueur de juin — `modified_instance`, le
+> drapeau « cette occurrence a été supprimée » de l'upstream — cachait
+> l'émission décalée au tableau de bord, au live-info, à tous les
+> widgets, au calendrier, au show builder et au contrôle de
+> chevauchement, pendant que le playout la diffusait.  La migration
+> 0058 a ajouté `cc_show_instances.delayed_start_from` ; une émission
+> décalée reste désormais visible partout à sa nouvelle heure.
+> Conserver le créneau d'origine (et pas seulement un drapeau) permet
+> aussi au régénérateur de répétitions de retrouver l'occurrence
+> déplacée quand vous modifiez l'émission, au lieu de créer un doublon
+> à l'heure de la série. La fin propre de l'émission en surbooking est étendue
 > jusqu'à l'endroit où son contenu s'est posé. L'intervalle et le
 > lead sont surchargeables avec
 > `RASTATIME_SHOW_SHIFT_INTERVAL_SECONDS` (défaut 120) et
@@ -331,12 +347,13 @@ La tâche est **idempotente et à sens unique** :
 
 - **Une émission que vous avez déplacée à la main n'est pas
   elle-même une origine de glissement.** Si vous glissez une
-  émission sur le calendrier, elle devient une surcharge par
-  occurrence (`modified_instance`). La tâche ne traitera pas une
-  telle émission comme la *source* d'une nouvelle propagation —
-  mais elle la fera **quand même** glisser ou la videra lorsqu'une
-  émission antérieure déborde dedans. Cela empêche le glissement
-  automatique de contrarier vos modifications manuelles, en
+  émission déjà décalée par la tâche (`delayed_start_from` posé)
+  n'est jamais traitée comme la *source* d'une nouvelle propagation,
+  et une occurrence supprimée (`modified_instance`) est ignorée —
+  tandis qu'une émission simplement glissée sur le calendrier reste
+  une instance ordinaire qui peut encore glisser, être vidée ou (si
+  elle déborde) déclencher elle-même une propagation. Cela garde le
+  mécanisme idempotent sans contrarier vos modifications manuelles, en
   cohérence avec la façon dont les instances éditées à la main
   sont laissées tranquilles par les autres passages automatiques.
 - **Seule la case de l'émission suivante compte à chaque étape.**

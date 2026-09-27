@@ -253,9 +253,11 @@ sobrepasado la próxima vez.
 > **Cómo funciona bajo el capó.** Vaciar una instancia enterrada
 > refleja la acción **Vaciar planning** para una instancia: sus filas
 > `cc_schedule` se eliminan, `time_filled` se pone a cero, la instancia
-> se marca `modified_instance` (para que el regenerador de
-> repeticiones deje el hueco en paz), y `cc_files.is_scheduled` se
-> retira para toda pista que ya no esté planificada en ningún sitio.
+> se marca `modified_instance` — la marca « ocurrencia eliminada » del
+> upstream, adecuada para un slot que nunca sale al aire — más
+> `delayed_start_from` (desde el 27/09/2026, véase abajo), y
+> `cc_files.is_scheduled` se retira para toda pista que ya no esté
+> planificada en ningún sitio.
 
 ---
 
@@ -294,13 +296,28 @@ La tarea es **idempotente y solo hacia adelante**:
 
 > **Cómo funciona bajo el capó.**
 > `Application_Service_ShowShiftService::applyDelayedStarts()`
-> selecciona las instancias sobrepasadas, no-`modified_instance`,
-> cuyo fin de slot cae dentro de la ventana de lead, y luego recorre
+> selecciona las instancias sobrepasadas que no son ocurrencias
+> eliminadas (`modified_instance`) ni ya desplazadas
+> (`delayed_start_from`), cuyo fin de slot cae dentro de la ventana de
+> lead, y luego recorre
 > cada una hacia adelante: vaciando los programas marcados enterrados
 > por completo, deslizando el primer programa marcado enterrado en
 > parte (inicio → fin del contenido, fin fijo, items desplazados vía
-> `SchedulerService::updateScheduleStartTime`, marcado
-> `modified_instance`), y deteniéndose en la primera ancla sin marcar.
+> `SchedulerService::updateScheduleStartTime`, marcado con
+> `delayed_start_from` = el inicio de slot del que se movió), y
+> deteniéndose en la primera ancla sin marcar.
+>
+> **Por qué un marcador propio (27/09/2026).**  El primer ensayo en
+> directo mostró que el marcador de junio — `modified_instance`, la
+> bandera « esta ocurrencia fue eliminada » del upstream — ocultaba el
+> programa desplazado al panel, al live-info, a todos los widgets, al
+> calendario, al show builder y a la comprobación de solapamiento,
+> mientras el playout lo emitía.  La migración 0058 añadió
+> `cc_show_instances.delayed_start_from`; un programa desplazado ahora
+> sigue visible en todas partes a su nueva hora.  Guardar el slot
+> original (y no solo una bandera) permite además al regenerador de
+> repeticiones encontrar la ocurrencia movida al editar el programa,
+> en lugar de crear un duplicado a la hora de la serie.
 > El propio fin del programa sobrepasado se extiende hasta donde se
 > asentó su contenido. El intervalo y el lead son anulables con
 > `RASTATIME_SHOW_SHIFT_INTERVAL_SECONDS` (por defecto 120) y
@@ -312,12 +329,14 @@ La tarea es **idempotente y solo hacia adelante**:
 ## 7. Cosas que conviene saber
 
 - **Un programa que movió a mano no es por sí mismo un origen de
-  deslizamiento.** Si arrastra un programa en el calendario se
-  convierte en una anulación por-ocurrencia (`modified_instance`). La
-  tarea no tratará ese programa como la *fuente* de una nueva
-  propagación — pero **sí** lo deslizará o vaciará cuando un programa
-  anterior se sobrepase sobre él. Esto evita que el deslizamiento
-  automático luche contra sus ediciones manuales, en consonancia con
+  deslizamiento.** Un programa ya desplazado por la tarea
+  (`delayed_start_from` puesto) nunca se trata como la *fuente* de una
+  nueva propagación, y una ocurrencia eliminada (`modified_instance`)
+  se omite por completo — mientras que un programa que simplemente
+  arrastró en el calendario es una instancia normal que aún puede
+  deslizarse, vaciarse o (si se sobrepasa) provocar él mismo una
+  propagación. Así el mecanismo se mantiene idempotente sin luchar
+  contra sus ediciones manuales, en consonancia con
   cómo otras pasadas automáticas dejan en paz las instancias editadas a
   mano.
 - **En cada paso solo importa la casilla del programa siguiente.** Que

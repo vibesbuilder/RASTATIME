@@ -238,9 +238,10 @@ on air, or to tighten the overbooked show next time.
 > **How it works under the hood.** Clearing a buried instance mirrors
 > the **Clear Schedule** action for one instance: its `cc_schedule`
 > rows are deleted, `time_filled` is zeroed, the instance is flagged
-> `modified_instance` (so the repeat regenerator leaves the gap
-> alone), and `cc_files.is_scheduled` is dropped for any track no
-> longer scheduled anywhere.
+> `modified_instance` — upstream's "deleted occurrence" mark, fitting
+> for a slot that never airs — plus `delayed_start_from` (since
+> 2026-09-27, see below), and `cc_files.is_scheduled` is dropped for
+> any track no longer scheduled anywhere.
 
 ---
 
@@ -276,12 +277,26 @@ The task is **idempotent and forward-only**:
 
 > **How it works under the hood.**
 > `Application_Service_ShowShiftService::applyDelayedStarts()` selects
-> overbooking, non-`modified_instance` instances whose slot end is
-> within the lead window, then walks each one forward: clearing
+> overbooking instances that are neither deleted occurrences
+> (`modified_instance`) nor already shifted (`delayed_start_from`),
+> whose slot end is within the lead window, then walks each one
+> forward: clearing
 > completely-overrun ticked shows, sliding the first partly-overrun
 > ticked show (start → content end, end fixed, items shifted via
 > `SchedulerService::updateScheduleStartTime`, marked
-> `modified_instance`), and stopping at the first un-ticked anchor.
+> `delayed_start_from` = the slot start it was moved away from), and
+> stopping at the first un-ticked anchor.
+>
+> **Why its own marker (2026-09-27).**  The first live run showed the
+> June design's marker — `modified_instance`, upstream's "this
+> occurrence was deleted" flag — hiding the shifted show from the
+> dashboard, live-info, every widget, the calendar, the show builder
+> and the overlap check while the playout played it.  Migration 0058
+> added `cc_show_instances.delayed_start_from`; a shifted show now stays
+> visible everywhere at its new time.  Storing the original slot (not
+> just a flag) also lets the repeat regenerator find the moved
+> occurrence when you edit the show, instead of creating a duplicate
+> at the series time.
 > The overbooking show's own end is extended to where its content
 > settled. Interval and lead are overridable with
 > `RASTATIME_SHOW_SHIFT_INTERVAL_SECONDS` (default 120) and
@@ -292,12 +307,14 @@ The task is **idempotent and forward-only**:
 
 ## 7. Things to know
 
-- **A show you moved by hand is not itself a slide origin.** If you
-  drag a show on the calendar it becomes a per-occurrence override
-  (`modified_instance`). The task will not treat such a show as the
-  *source* of a new ripple — but it **will** still slide or clear it
-  when an earlier show overruns into it. This keeps the automatic
-  slide from fighting your manual edits, consistent with how
+- **An already-shifted show is not itself a slide origin.** A show
+  the task has moved (`delayed_start_from` set) is never treated as
+  the *source* of a new ripple, and a deleted occurrence
+  (`modified_instance`) is skipped entirely — but a show you simply
+  dragged on the calendar is an ordinary instance and can still slide,
+  be cleared, or (if it overruns) trigger a slide itself. This keeps
+  the engine idempotent without fighting your manual edits, consistent
+  with how
   hand-edited instances are left alone by other automatic passes.
 - **Only the next show's box matters at each step.** Whether show A
   itself is ticked is irrelevant to whether A's overrun pushes B —
