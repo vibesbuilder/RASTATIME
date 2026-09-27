@@ -323,7 +323,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   die Verzögerung erreicht ist ODER der Rest auf die Dauer sinkt, und bleibt
   danach stumm (Bench).  Die Sonderregel „keine Überlappung neben einem
   markierten Titel" im PHP-Scheduler entfällt wieder (Zeilen überlappen
-  normal).  Bench mit vier Formen bestanden — `336e86e`.
+  normal).  Bench mit vier Formen bestanden — `336e86e`.  **Live abgenommen
+  2026-09-28 00:22–00:38 (fünfte Probe):** Sweetlove → Jingle `track/new`
+  (Jingle sofort voll, Sweetlove blendet aus), Jingle → Bam `track/old`
+  (Jingle voll bis zum Ende, Bam blendet ein), Bam → Komm Baby `track/new`;
+  Sendungsgrenze und normaler Titelwechsel unverändert korrekt, Icecast
+  ohne Fehler.
 
 - **Settings → General: Fade-In/Fade-Out-Felder ausgeblendet, Crossfade-Feld
   umbenannt (2026-09-27, `07e6e1f`)** — „Default Fade In (s)" / „Default Fade Out (s)"
