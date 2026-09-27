@@ -23,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   cc_pref (Fallback `RASTATIME_LIQUIDSOAP_DJ_FADE_SECONDS`), ist Teil des
   Einstellungs-Fingerprints; `transition_length` deckt den längeren der
   beiden Fades.  Getter-Default und DB-Wert auf 1 s gesetzt, Beschreibung am
-  Feld (EN/DE/FR/ES), Handbuch STREAMS §3 ×4.
+  Feld (EN/DE/FR/ES), Handbuch STREAMS §3 ×4 — `7a93633`.
 
 - **Show-Grenzen-Crossfade + „Exclude from Crossover" (2026-09-27,
   Operator-Go, Arbeitsreihenfolge Punkt 2, `07e6e1f`)** — Zwei Crossfade-Werte unter
