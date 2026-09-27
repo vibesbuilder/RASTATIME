@@ -144,8 +144,14 @@ class Application_Service_ShowShiftService
 
         try {
             $aId = (int) $a['id'];
-            $contentEnd = $a['content_end'];
-            $contentEndTs = strtotime($contentEnd . ' UTC');
+            // RASTATIME 2026-09-27 - whole seconds, rounded UP: cc_schedule.ends
+            // carries microseconds, but Show::getFullCalendarEvents parses
+            // instance times with createFromFormat('Y-m-d H:i:s') - a
+            // fractional A.ends made the calendar feed answer 500 for the
+            // whole visible range (seen in the first live rehearsal).  Ceil
+            // keeps A's last item inside the extended instance.
+            $contentEndTs = (int) ceil(self::utcToTs($a['content_end']));
+            $contentEnd = gmdate('Y-m-d H:i:s', $contentEndTs);
 
             $curStarts = $a['starts'];   // walk pointer
             $finalEnd = $contentEnd;     // where A's content ultimately settles

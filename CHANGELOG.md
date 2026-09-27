@@ -376,6 +376,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Show-Shift: Kalender-Feed 500 durch Mikrosekunden im verlängerten
+  A-Ende (2026-09-27, zweiter Fund der Live-Probe)** — Der Shift schrieb
+  `cc_show_instances.ends` von Show A als `MAX(cc_schedule.ends)` samt
+  Mikrosekunden (…:58.186074).  `Show::getFullCalendarEvents` parst
+  Instanzzeiten mit `createFromFormat('Y-m-d H:i:s')` → `false` →
+  „Call to a member function setTimezone() on false" → HTTP 500 für den
+  gesamten sichtbaren Kalenderbereich, solange eine solche Instanz darin
+  liegt.  Genau das zeigte der Kalender während der ersten Probe (0 Events).
+  Fix: Inhaltsende auf ganze Sekunden AUFgerundet (As letzter Titel bleibt
+  innerhalb der Instanz; B startet auf derselben ganzen Sekunde).
+  Kalender-Feed nach dem Fix live geprüft: 200, A 12:26–12:41:59 und die
+  verschobene B 12:41:58–12:56:00 beide sichtbar.
+
 - **Show-Shift: verschobene Sendungen sind wieder sichtbar — Marker
   delayed_start_from statt modified_instance (2026-09-27, Operator-Go,
   Migration 0058)** — Der Juni-Shift markierte verschobene Instanzen mit
