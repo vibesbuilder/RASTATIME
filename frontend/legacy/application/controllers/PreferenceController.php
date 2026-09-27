@@ -67,6 +67,10 @@ class PreferenceController extends Zend_Controller_Action
                 Application_Model_Locale::configureLocalization($values['locale']);
                 Application_Model_Preference::SetWeekStartDay($values['weekStartDay']);
                 Application_Model_Preference::setScheduleTrimOverbooked($values['scheduleTrimOverbooked']);
+                // RASTATIME 2026-09-27 — Show-Shift filler playlist.
+                Application_Model_Preference::setShowShiftFillerPlaylistId(
+                    $values['showShiftFillerPlaylistSelect'] ?? 0
+                );
                 Application_Model_Preference::setRadioPageDisplayLoginButton($values['radioPageLoginButton']);
                 Application_Model_Preference::setRadioPageDisabled($values['radioPageDisabled']);
                 // RASTATIME 2026-05-15 - SetFeaturePreviewMode removed (phantom setting).

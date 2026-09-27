@@ -104,6 +104,17 @@ behalten ihren normalen Slot.
 > sich an der Sendung nichts, wenn Sie es ankreuzen; das Kästchen ist
 > nur für den Hintergrund-Task aus §6 relevant.
 
+### Die Filler-Playlist (Settings → General)
+
+Seit dem 27.09.2026 gibt es einen zweiten, optionalen Schalter für
+die ganze Station: **Settings → General → Show-Shift Filler
+Playlist**.  Wählen Sie eine Ihrer Playlists — idealerweise Musik in
+verschiedenen Längen — und der verzögerte Start kürzt keine
+Sendungs-Titel mehr: Die Titel, die nicht mehr passen, werden
+stattdessen gegen Filler-Titel getauscht.  §3 erklärt genau, was
+dabei passiert.  Bei *(keine — letzten Titel kürzen)* bleibt das
+bisherige Verhalten.
+
 ---
 
 ## 3. Was passiert, wenn eine Sendung überzieht
@@ -132,6 +143,47 @@ freigeschaltet hat, ihn aufzufangen.
 > was folgt. Dies war eine bewusste Entscheidung gegen „auch das Ende
 > von B nach hinten schieben" (was jede spätere Sendung verschieben
 > würde). Siehe ARCHITECTURE §23.24.
+
+### Filler statt Kürzung (seit 27.09.2026)
+
+Mit konfigurierter Filler-Playlist wird die verschobene Sendung B
+nicht einfach abgeschnitten.  Sobald B auf das Inhaltsende von A
+gerückt ist, schaut der Task, was jetzt über Bs Ende hinausragt, und
+tut drei Dinge:
+
+1. **Das Outro bleibt, wo es hingehört.**  Endet B mit seiner
+   Outro-Playlist — der sendungseigenen *Select Outro Playlist* oder
+   dem Stations-Standard aus Settings → General —, werden diese
+   Outro-Titel am Ende von B festgenagelt und nie angerührt.  Ersetzt
+   werden die Titel *davor*, also der vorletzte Titel (oder mehrere).
+   (Ob die letzten Zeilen wirklich das Outro sind, wird gegen die
+   Titel der Playlist geprüft, nie angenommen: Eine von Hand befüllte
+   Sendung ohne Outro hat schlicht keinen geschützten Schluss.)
+2. **Jeder Titel, der nicht mehr passt, fliegt raus** — einer oder
+   mehrere, vom Ende des Hauptteils rückwärts —, bis der Rest vor dem
+   Outro (oder vor Bs Ende, wenn es kein Outro gibt) Platz hat.
+3. **Die Lücke wird aus der Filler-Playlist gefüllt**, mit der
+   Kombination von Titeln, deren Gesamtlänge die Lücke mit dem
+   geringsten Überschuss abdeckt.  Der *letzte* Filler wird am Ende
+   der Lücke gekürzt.  So entsteht nie Stille, und gekürzt wird
+   immer nur ein Filler — nie ein Titel von B.  Das gilt auch, wenn
+   die Lücke kürzer ist als der kürzeste Filler: Dann läuft der
+   kürzeste und wird gekürzt.
+
+Der Tausch passiert in derselben Datenbank-Transaktion wie die
+Verschiebung — entweder landet alles oder nichts.  Playout,
+Dashboard, Widgets und Track History sehen das Ergebnis als ganz
+normale Schedule-Zeilen.  Nur die verschobene Sendung B wird so
+behandelt; der Schluss von Sendung A wird an einem nicht
+freigegebenen Anker weiterhin abgeschnitten (§4).
+
+> **Beispiel.**  B läuft 10:00–11:00, endet mit einem 30-Sekunden-
+> Outro-Jingle, und A überzieht um vier Minuten.  B beginnt jetzt um
+> 10:04.  Ihr letzter Musiktitel würde um 11:03:30 enden — er fliegt
+> raus.  Der verbleibende Hauptteil endet um 10:59:10, die Lücke bis
+> zum Outro (das um 10:59:30 beginnen muss) beträgt also 20 Sekunden:
+> Der kürzeste Filler läuft und wird um 10:59:30 ausgeblendet, das
+> Outro läuft vollständig, und was folgt, beginnt pünktlich um 11:00.
 
 ---
 

@@ -168,6 +168,19 @@ class Application_Form_GeneralPreferences extends Zend_Form_SubForm
         $trafficAlertSelect->setDescription(_('New tracks added to this smart block air in the running show at its next traffic slot, within ~10 minutes. Add this block at several points in a show so alerts interrupt promptly.'));
         $this->addElement($trafficAlertSelect);
 
+        // RASTATIME 2026-09-27 — Show-Shift filler playlist.  When a delayed
+        // start pushes a show's tail past its slot, the tracks that no longer
+        // fit are replaced by tracks from this playlist instead of the last
+        // track being cut.  "(none)" keeps the plain clamp.
+        $fillerSelect = new Zend_Form_Element_Select('showShiftFillerPlaylistSelect');
+        $fillerSelect->setLabel(_('Show-Shift Filler Playlist'));
+        $fillerSelect->setMultiOptions(
+            [0 => _('(none — cut the last track)')] + Application_Model_Library::getPlaylistNames(true)
+        );
+        $fillerSelect->setValue(Application_Model_Preference::getShowShiftFillerPlaylistId());
+        $fillerSelect->setDescription(_('When a delayed start pushes a show past its slot, the tracks that no longer fit are replaced by tracks from this playlist so only a filler gets cut, never a show track. A show that ends with its outro playlist keeps the outro; the tracks before it are replaced.'));
+        $this->addElement($fillerSelect);
+
         $podcast_album_override = new Zend_Form_Element_Radio('podcastAlbumOverride');
         $podcast_album_override->setLabel(_('Overwrite Podcast Episode Metatags'));
         $podcast_album_override->setMultiOptions([

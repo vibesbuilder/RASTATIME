@@ -101,6 +101,16 @@ conservan su slot normal.
 > del programa cambia cuando la marca; la casilla solo importa a la
 > tarea en segundo plano de §6.
 
+### La playlist de relleno (Settings → General)
+
+Desde el 27/09/2026 existe un segundo ajuste opcional para toda la
+emisora: **Settings → General → Show-Shift Filler Playlist**.  Elija
+una de sus playlists — idealmente música de duraciones variadas — y
+el inicio diferido deja de cortar temas del programa: los temas que
+ya no caben se sustituyen por temas de relleno.  El §3 explica
+exactamente qué ocurre.  Deje *(ninguna — cortar el último tema)*
+para conservar el comportamiento básico.
+
 ---
 
 ## 3. Qué ocurre cuando un programa se sobrepasa
@@ -128,6 +138,46 @@ por absorberlo.
 > diez minutos pero aun así entrega a lo que siga a las 10:00. Esta fue
 > una elección deliberada frente a «empujar también el fin de B» (que
 > desplazaría cada programa posterior). Vea ARCHITECTURE §23.24.
+
+### Relleno en lugar de corte (desde el 27/09/2026)
+
+Con una playlist de relleno configurada, el programa desplazado B ya
+no se recorta sin más.  Una vez que B se ha movido al final del
+contenido de A, la tarea mira qué sobresale ahora del final de B y
+hace tres cosas:
+
+1. **El outro se queda en su sitio.**  Si B termina con su playlist
+   de outro — el *Select Outro Playlist* propio del programa, o el
+   valor por defecto de la emisora en Settings → General —, esos temas
+   de outro quedan fijados al final de B y nunca se tocan.  Se
+   sustituyen los temas *anteriores* al outro, es decir el penúltimo
+   (o varios).  (Que las últimas filas sean realmente el outro se
+   comprueba contra los temas de la playlist, nunca se supone: un
+   programa rellenado a mano sin outro simplemente no tiene cola
+   protegida.)
+2. **Todo tema que ya no cabe se va** — uno o varios, desde el final
+   del cuerpo de B hacia atrás — hasta que el resto cabe antes del
+   outro (o antes del final de B si no hay outro).
+3. **El hueco se rellena desde la playlist de relleno** con la
+   combinación de temas cuya duración total cubre el hueco con el
+   menor exceso.  El *último* relleno se corta al final del hueco.
+   Así el aire nunca queda en silencio y el único tema que se acorta
+   es un relleno — nunca uno de B.  Vale incluso cuando el hueco es
+   más corto que el relleno más corto: suena el más corto y se corta.
+
+El cambio ocurre en la misma transacción de base de datos que el
+desplazamiento: o se aplica todo, o nada.  El playout, el Dashboard,
+los widgets y el historial ven el resultado como filas normales de la
+parrilla.  Solo el programa desplazado B se trata así; el final del
+programa A sigue recortándose ante un ancla no habilitada (§4).
+
+> **Ejemplo.**  B va de 10:00 a 11:00, termina con un jingle de outro
+> de 30 segundos, y A se sobrepasa cuatro minutos.  B empieza ahora a
+> las 10:04.  Su último tema musical terminaría a las 11:03:30 — se
+> va.  El cuerpo restante termina a las 10:59:10; el hueco hasta el
+> outro (que debe empezar a las 10:59:30) es de 20 segundos: suena el
+> relleno más corto y se funde a las 10:59:30, el outro suena entero y
+> lo que sigue empieza a las 11:00 en punto.
 
 ---
 

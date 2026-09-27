@@ -106,6 +106,17 @@ est modifié (il devient une surcharge par occurrence) ; les autres
 > vous la cochez ; la case ne compte que pour la tâche
 > d'arrière-plan du §6.
 
+### La playlist de remplissage (Settings → General)
+
+Depuis le 27/09/2026, un second réglage optionnel existe pour toute
+la station : **Settings → General → Show-Shift Filler Playlist**.
+Choisissez une de vos playlists — idéalement de la musique de
+longueurs variées — et le démarrage différé ne coupe plus de titres
+d'émission : les titres qui ne tiennent plus sont remplacés par des
+titres de remplissage.  Le §3 explique précisément ce qui se passe.
+Laissez *(aucune — couper le dernier titre)* pour garder le
+comportement de base.
+
 ---
 
 ## 3. Ce qui se passe quand une émission dépasse
@@ -135,6 +146,47 @@ pour l'absorber.
 > même le relais à ce qui suit à 10:00. C'était un choix délibéré
 > plutôt que « repousser aussi la fin de B » (ce qui décalerait
 > chaque émission ultérieure). Voir ARCHITECTURE §23.24.
+
+### Remplissage au lieu de coupure (depuis le 27/09/2026)
+
+Avec une playlist de remplissage configurée, l'émission décalée B
+n'est plus simplement tronquée.  Une fois B déplacée à la fin du
+contenu de A, la tâche regarde ce qui dépasse maintenant la fin de B
+et fait trois choses :
+
+1. **L'outro reste à sa place.**  Si B se termine par sa playlist
+   d'outro — le *Select Outro Playlist* propre à l'émission, ou la
+   valeur par défaut de la station dans Settings → General —, ces
+   titres d'outro sont épinglés à la fin de B et jamais touchés.  Ce
+   sont les titres *avant* l'outro qui sont remplacés, donc
+   l'avant-dernier (ou plusieurs).  (Que les dernières lignes soient
+   bien l'outro est vérifié contre les titres de la playlist, jamais
+   supposé : une émission remplie à la main sans outro n'a simplement
+   pas de fin protégée.)
+2. **Chaque titre qui ne tient plus s'en va** — un ou plusieurs, en
+   remontant depuis la fin du corps de B — jusqu'à ce que le reste
+   tienne avant l'outro (ou avant la fin de B s'il n'y a pas d'outro).
+3. **Le trou est comblé depuis la playlist de remplissage** avec la
+   combinaison de titres dont la durée totale couvre le trou avec le
+   moindre dépassement.  Le *dernier* titre de remplissage est coupé à
+   la fin du trou.  Ainsi l'antenne n'est jamais silencieuse, et le
+   seul titre jamais écourté est un titre de remplissage — jamais un
+   titre de B.  Cela vaut même si le trou est plus court que le plus
+   court des titres de remplissage : le plus court passe et est coupé.
+
+L'échange se fait dans la même transaction que le décalage : soit
+tout est appliqué, soit rien.  Le playout, le Dashboard, les widgets
+et l'historique voient le résultat comme des lignes de grille
+ordinaires.  Seule l'émission décalée B est traitée ainsi ; la fin de
+l'émission A reste tronquée devant une ancre non activée (§4).
+
+> **Exemple.**  B va de 10:00 à 11:00, se termine par un jingle
+> d'outro de 30 secondes, et A dépasse de quatre minutes.  B commence
+> maintenant à 10:04.  Son dernier titre musical finirait à 11:03:30 —
+> il s'en va.  Le corps restant se termine à 10:59:10 ; le trou jusqu'à
+> l'outro (qui doit commencer à 10:59:30) fait donc 20 secondes : le
+> titre de remplissage le plus court passe et est fondu à 10:59:30,
+> l'outro passe en entier, et ce qui suit démarre à 11:00 pile.
 
 ---
 

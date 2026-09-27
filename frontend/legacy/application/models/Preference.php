@@ -2179,6 +2179,18 @@ class Application_Model_Preference
     // RASTATIME 2026-06-16 - Traffic Alerts: the single smart block whose
     // newly-imported tracks are auto-inserted into the running show after the
     // current track (within the SLA).  0 / empty = traffic alerts disabled.
+    // RASTATIME 2026-09-27 — Show-Shift filler playlist (0 = disabled).
+    // See Application_Service_ShowShiftService::fillShiftedTail().
+    public static function getShowShiftFillerPlaylistId()
+    {
+        return (int) self::getValue('show_shift_filler_playlist_id');
+    }
+
+    public static function setShowShiftFillerPlaylistId($value)
+    {
+        self::setValue('show_shift_filler_playlist_id', (int) $value);
+    }
+
     public static function getTrafficAlertBlockId()
     {
         return (int) self::getValue('traffic_alert_block_id');

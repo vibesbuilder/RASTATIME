@@ -186,6 +186,10 @@ class Application_Service_ShowShiftService
                     [(int) $next['id']],
                     $diff
                 );
+                // RASTATIME 2026-09-27 — instead of leaving the shifted show's
+                // tail to the playout clamp, swap the tracks that no longer
+                // fit for filler tracks (operator decisions, see method doc).
+                self::fillShiftedTail((int) $next['id'], $newStarts, $next['ends']);
                 $acted = true;
                 $finalEnd = $contentEnd;
                 break;
@@ -237,6 +241,397 @@ class Application_Service_ShowShiftService
      *
      * @return int number of cc_schedule rows deleted
      */
+    // ------------------------------------------------------------------
+    // RASTATIME 2026-09-27 — Filler instead of cut (Show-Shift extension)
+    // ------------------------------------------------------------------
+
+    /**
+     * After a SHIFT moved show B later by the overrun, B's content now sticks
+     * out past B.ends.  The plain behaviour leaves that to the playout clamp,
+     * which cuts B's last track mid-word.  With a filler playlist configured
+     * (Settings → General → "Show-Shift Filler Playlist") this method instead:
+     *
+     *   1. keeps B's OUTRO pinned to the slot end, if B ends with its outro
+     *      playlist (the show's own "Select Outro Playlist" or the global
+     *      default) — verified by matching the outro's tracks as a suffix of
+     *      B's rows, never assumed;
+     *   2. removes, from the end of the remaining body, every row that no
+     *      longer fits before the outro (or before B.ends) — one or several
+     *      (operator decision D3);
+     *   3. fills the resulting gap with filler tracks whose combined length
+     *      is >= the gap with the smallest overshoot; the LAST filler is
+     *      clamped at the gap end.  So the air never goes silent and only a
+     *      filler is ever cut, never a show track (D2).  Applies even when the
+     *      gap is shorter than the shortest filler.
+     *
+     * Only the SHIFT case is touched (D4: A's own clamp in the ANCHOR case is
+     * left as is).  Runs inside the cascade's transaction; on any problem it
+     * throws and the whole cascade rolls back to the untouched schedule.
+     * With no playlist configured, an empty playlist or nothing sticking out
+     * it is a no-op.
+     *
+     * @param int    $instanceId B's instance id (already shifted)
+     * @param string $startsUtc  B's new start (UTC, whole seconds)
+     * @param string $endsUtc    B's slot end (UTC) — unchanged by the shift
+     *
+     * @return int number of filler rows inserted (0 = nothing done)
+     */
+    private static function fillShiftedTail($instanceId, $startsUtc, $endsUtc)
+    {
+        $playlistId = Application_Model_Preference::getShowShiftFillerPlaylistId();
+        if ($playlistId <= 0) {
+            return 0;
+        }
+
+        $rows = Application_Common_Database::prepareAndExecute(
+            'SELECT id, starts, ends, file_id
+               FROM cc_schedule
+              WHERE instance_id = :id
+              ORDER BY starts ASC, id ASC',
+            [':id' => $instanceId],
+            Application_Common_Database::ALL
+        );
+        if (empty($rows)) {
+            return 0;
+        }
+
+        $endsTs = self::utcToTs($endsUtc);
+        $contentEndTs = 0.0;
+        foreach ($rows as $r) {
+            $contentEndTs = max($contentEndTs, self::utcToTs($r['ends']));
+        }
+        if ($contentEndTs - $endsTs < self::MIN_OVERRUN_SECONDS) {
+            return 0;   // fits after all
+        }
+
+        $pool = self::fillerPool($playlistId);
+        if (empty($pool)) {
+            Logging::warn(
+                "ShowShiftService: filler playlist {$playlistId} has no playable "
+                . "tracks — instance {$instanceId} keeps the plain clamp"
+            );
+            return 0;
+        }
+
+        // 1. outro protection
+        $protected = self::matchOutroSuffix($rows, self::effectiveOutroFileIds($instanceId));
+        $tail = $protected > 0 ? array_slice($rows, -$protected) : [];
+        $body = array_slice($rows, 0, count($rows) - $protected);
+        $tailLen = 0.0;
+        if ($protected > 0) {
+            $tailLen = self::utcToTs($tail[$protected - 1]['ends'])
+                - self::utcToTs($tail[0]['starts']);
+        }
+        $bodyTargetTs = $endsTs - $tailLen;   // where the body must end
+
+        // 2. rows that no longer fit
+        $keep = [];
+        $remove = [];
+        foreach ($body as $r) {
+            if (self::utcToTs($r['ends']) > $bodyTargetTs + 0.5) {
+                $remove[] = $r;
+            } else {
+                $keep[] = $r;
+            }
+        }
+        $gapStartTs = !empty($keep)
+            ? self::utcToTs($keep[count($keep) - 1]['ends'])
+            : self::utcToTs($startsUtc);
+        $gap = $bodyTargetTs - $gapStartTs;
+
+        // 3. pick fillers (sum >= gap, minimal overshoot; the last one is cut)
+        $picked = $gap >= 1.0 ? self::pickFillers($pool, $gap) : [];
+
+        // ---- apply ---------------------------------------------------------
+        $removedFileIds = [];
+        foreach ($remove as $r) {
+            Application_Common_Database::prepareAndExecute(
+                'DELETE FROM cc_schedule WHERE id = :id',
+                [':id' => (int) $r['id']],
+                Application_Common_Database::EXECUTE
+            );
+            if ($r['file_id'] !== null) {
+                $removedFileIds[(int) $r['file_id']] = true;
+            }
+        }
+
+        $inserted = 0;
+        $cursor = $gapStartTs;
+        $n = count($picked);
+        foreach ($picked as $i => $f) {
+            $isLast = ($i === $n - 1);
+            $len = (float) $f['seconds'];
+            if ($isLast || $cursor + $len > $bodyTargetTs) {
+                $len = max(1.0, $bodyTargetTs - $cursor);   // clamp at the gap end
+            }
+            $cueIn = (float) $f['cuein'];
+            Application_Common_Database::prepareAndExecute(
+                'INSERT INTO cc_schedule
+                    (starts, ends, cue_in, cue_out, fade_in, fade_out,
+                     clip_length, position, instance_id, file_id, playout_status)
+                 VALUES
+                    (:starts, :ends, :cue_in, :cue_out, :fade_in, :fade_out,
+                     :clip, 0, :inst, :file, 0)',
+                [
+                    ':starts'   => self::tsToUtc($cursor),
+                    ':ends'     => self::tsToUtc($cursor + $len),
+                    ':cue_in'   => Application_Common_DateHelper::secondsToPlaylistTime($cueIn),
+                    ':cue_out'  => Application_Common_DateHelper::secondsToPlaylistTime($cueIn + $len),
+                    ':fade_in'  => (string) $f['fadein'],
+                    ':fade_out' => (string) $f['fadeout'],
+                    ':clip'     => Application_Common_DateHelper::secondsToPlaylistTime($len),
+                    ':inst'     => $instanceId,
+                    ':file'     => (int) $f['file_id'],
+                ],
+                Application_Common_Database::EXECUTE
+            );
+            $cursor += $len;
+            $inserted++;
+            unset($removedFileIds[(int) $f['file_id']]);
+            if ($cursor >= $bodyTargetTs - 0.5) {
+                break;   // gap closed (the DP may over-provision by design)
+            }
+        }
+
+        // 1b. pin the outro back to the slot end
+        if ($protected > 0) {
+            $back = self::utcToTs($tail[0]['starts']) - $bodyTargetTs;
+            if (abs($back) >= 0.5) {
+                foreach ($tail as $r) {
+                    Application_Common_Database::prepareAndExecute(
+                        'UPDATE cc_schedule SET starts = :s, ends = :e WHERE id = :id',
+                        [
+                            ':s'  => self::tsToUtc(self::utcToTs($r['starts']) - $back),
+                            ':e'  => self::tsToUtc(self::utcToTs($r['ends']) - $back),
+                            ':id' => (int) $r['id'],
+                        ],
+                        Application_Common_Database::EXECUTE
+                    );
+                }
+            }
+        }
+
+        // housekeeping: positions, time_filled, is_scheduled
+        $ordered = Application_Common_Database::prepareAndExecute(
+            'SELECT id FROM cc_schedule WHERE instance_id = :id ORDER BY starts ASC, id ASC',
+            [':id' => $instanceId],
+            Application_Common_Database::ALL
+        );
+        foreach ($ordered as $pos => $r) {
+            Application_Common_Database::prepareAndExecute(
+                'UPDATE cc_schedule SET position = :p WHERE id = :id',
+                [':p' => $pos, ':id' => (int) $r['id']],
+                Application_Common_Database::EXECUTE
+            );
+        }
+        Application_Common_Database::prepareAndExecute(
+            "UPDATE cc_show_instances
+                SET time_filled = COALESCE(
+                    (SELECT SUM(clip_length) FROM cc_schedule WHERE instance_id = :id),
+                    '00:00:00'::interval)
+              WHERE id = :id",
+            [':id' => $instanceId],
+            Application_Common_Database::EXECUTE
+        );
+        $fillerIds = array_map(function ($f) { return (int) $f['file_id']; }, array_slice($picked, 0, $inserted));
+        if (!empty($fillerIds)) {
+            Application_Common_Database::prepareAndExecute(
+                'UPDATE cc_files SET is_scheduled = true WHERE id IN (' . implode(',', $fillerIds) . ')',
+                [],
+                Application_Common_Database::EXECUTE
+            );
+        }
+        if (!empty($removedFileIds)) {
+            Application_Common_Database::prepareAndExecute(
+                'UPDATE cc_files SET is_scheduled = false
+                  WHERE id IN (' . implode(',', array_keys($removedFileIds)) . ')
+                    AND NOT EXISTS (SELECT 1 FROM cc_schedule s WHERE s.file_id = cc_files.id)',
+                [],
+                Application_Common_Database::EXECUTE
+            );
+        }
+
+        Logging::info(sprintf(
+            'ShowShiftService: filler for instance %d — removed %d row(s), gap %.1f s, '
+            . 'inserted %d filler(s) from playlist %d, outro rows pinned: %d',
+            $instanceId, count($remove), $gap, $inserted, $playlistId, $protected
+        ));
+
+        return $inserted;
+    }
+
+    /**
+     * Playable file rows of the filler playlist: file_id, effective length in
+     * seconds (cue-aware cliplength), cue-in seconds and the fade strings.
+     * Blocks / streams / missing files are skipped.
+     */
+    private static function fillerPool($playlistId)
+    {
+        $rows = Application_Common_Database::prepareAndExecute(
+            "SELECT c.file_id,
+                    EXTRACT(EPOCH FROM c.cliplength) AS seconds,
+                    EXTRACT(EPOCH FROM c.cuein)      AS cuein,
+                    c.fadein::text  AS fadein,
+                    c.fadeout::text AS fadeout
+               FROM cc_playlistcontents c
+               JOIN cc_files f ON f.id = c.file_id
+              WHERE c.playlist_id = :pid
+                AND c.type = 0
+                AND f.file_exists = true
+                AND f.hidden = false
+              ORDER BY c.position",
+            [':pid' => (int) $playlistId],
+            Application_Common_Database::ALL
+        );
+        $pool = [];
+        foreach ($rows as $r) {
+            if ((float) $r['seconds'] >= 1.0) {
+                $pool[] = $r;
+            }
+        }
+        return $pool;
+    }
+
+    /**
+     * Effective outro playlist of the instance's show: the show's own
+     * "Select Outro Playlist" when overridden, else the global default
+     * (Settings → General).  Returns the playlist's file ids in order, or [].
+     */
+    private static function effectiveOutroFileIds($instanceId)
+    {
+        $show = Application_Common_Database::prepareAndExecute(
+            'SELECT s.override_outro_playlist::int AS ovr, s.outro_playlist_id
+               FROM cc_show_instances i JOIN cc_show s ON s.id = i.show_id
+              WHERE i.id = :id',
+            [':id' => $instanceId],
+            Application_Common_Database::SINGLE
+        );
+        $pid = 0;
+        if (!empty($show)) {
+            $pid = ((int) $show['ovr'] === 1)
+                ? (int) $show['outro_playlist_id']
+                : (int) Application_Model_Preference::GetOutroPlaylist();
+        }
+        if ($pid <= 0) {
+            return [];
+        }
+        $rows = Application_Common_Database::prepareAndExecute(
+            'SELECT file_id FROM cc_playlistcontents
+              WHERE playlist_id = :pid AND type = 0 ORDER BY position',
+            [':pid' => $pid],
+            Application_Common_Database::ALL
+        );
+        return array_map(function ($r) { return (int) $r['file_id']; }, $rows);
+    }
+
+    /**
+     * Number of trailing schedule rows that ARE the outro (file ids match the
+     * outro playlist as a suffix, in order).  0 when they don't — then nothing
+     * is protected and the literal last track goes (D1).
+     */
+    public static function matchOutroSuffix(array $rows, array $outroFileIds)
+    {
+        $k = count($outroFileIds);
+        if ($k === 0 || $k > count($rows)) {
+            return 0;
+        }
+        $tail = array_slice($rows, -$k);
+        foreach ($tail as $i => $r) {
+            if ((int) $r['file_id'] !== $outroFileIds[$i]) {
+                return 0;
+            }
+        }
+        return $k;
+    }
+
+    /**
+     * Choose filler tracks whose total length is >= $gap with the smallest
+     * overshoot (ties: fewer tracks); the caller clamps the last one.  Pure
+     * function — 0/1 knapsack over whole seconds on a shuffled pool (the
+     * shuffle is the only source of variety for now).  When the whole pool is
+     * shorter than the gap, every track is used once and the longest ones are
+     * repeated until the gap is covered.
+     *
+     * @param array $pool items with 'seconds' (float) — extra keys pass through
+     * @param float $gap  seconds to cover
+     *
+     * @return array chosen items in play order
+     */
+    public static function pickFillers(array $pool, $gap)
+    {
+        $need = (int) ceil($gap);
+        if ($need <= 0 || empty($pool)) {
+            return [];
+        }
+        $items = array_values($pool);
+        shuffle($items);
+        $lens = array_map(function ($f) { return max(1, (int) round((float) $f['seconds'])); }, $items);
+        $total = array_sum($lens);
+
+        if ($total < $need) {
+            // shortfall: everything once, then repeat the longest
+            $out = $items;
+            $sum = $total;
+            usort($items, function ($a, $b) { return (float) $b['seconds'] <=> (float) $a['seconds']; });
+            while ($sum < $need) {
+                $out[] = $items[0];
+                $sum += max(1, (int) round((float) $items[0]['seconds']));
+            }
+            return $out;
+        }
+
+        // dp[s] = [count, lastIndex, prevSum] for exactly-reachable sums s
+        $maxSum = $need + max($lens);
+        $dp = [0 => [0, -1, -1]];
+        foreach ($lens as $idx => $len) {
+            $next = $dp;
+            foreach ($dp as $s => $info) {
+                $ns = $s + $len;
+                if ($ns > $maxSum) {
+                    continue;
+                }
+                $cnt = $info[0] + 1;
+                if (!isset($next[$ns]) || $next[$ns][0] > $cnt) {
+                    $next[$ns] = [$cnt, $idx, $s];
+                }
+            }
+            $dp = $next;
+        }
+        $best = null;
+        foreach ($dp as $s => $info) {
+            if ($s < $need) {
+                continue;
+            }
+            if ($best === null || $s < $best || ($s === $best && $info[0] < $dp[$best][0])) {
+                $best = $s;
+            }
+        }
+        $chosen = [];
+        for ($s = $best; $s > 0; $s = $dp[$s][2]) {
+            $chosen[] = $items[$dp[$s][1]];
+        }
+        return array_reverse($chosen);
+    }
+
+    private static function utcToTs($utc)
+    {
+        // cc_schedule keeps microseconds; strtotime drops them, so parse by hand.
+        $sec = strtotime(substr($utc, 0, 19) . ' UTC');
+        $frac = (strlen($utc) > 20) ? (float) ('0' . substr($utc, 19)) : 0.0;
+        return $sec + $frac;
+    }
+
+    private static function tsToUtc($ts)
+    {
+        $whole = (int) floor($ts);
+        $micro = (int) round(($ts - $whole) * 1000000);
+        if ($micro >= 1000000) {
+            $whole++;
+            $micro -= 1000000;
+        }
+        return gmdate('Y-m-d H:i:s', $whole) . sprintf('.%06d', $micro);
+    }
+
     private static function clearInstance($instanceId)
     {
         $fileRows = Application_Common_Database::prepareAndExecute(

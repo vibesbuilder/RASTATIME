@@ -95,6 +95,16 @@ override); the other episodes keep their normal slot.
 > the show changes when you tick it; the box only matters to the
 > background task in §6.
 
+### The filler playlist (Settings → General)
+
+Since 2026-09-27 there is a second, optional switch for the whole
+station: **Settings → General → Show-Shift Filler Playlist**.  Pick
+one of your playlists — ideally music of assorted lengths — and the
+delayed start stops cutting show tracks: the tracks that no longer
+fit are swapped for filler tracks instead.  §3 explains exactly what
+that does.  Leave it at *(none — cut the last track)* to keep the
+plain behaviour.
+
 ---
 
 ## 3. What happens when a show overruns
@@ -122,6 +132,44 @@ it.
 > minutes but still hands over to whatever follows at 10:00. This was
 > a deliberate choice over "push B's end out too" (which would shift
 > every later show). See ARCHITECTURE §23.24.
+
+### Filler instead of a cut (since 2026-09-27)
+
+With a filler playlist configured, the shifted show B is not simply
+clamped.  Once B has moved to A's content end, the task looks at what
+now sticks out past B's end and does three things:
+
+1. **The outro stays where it belongs.**  If B ends with its outro
+   playlist — the show's own *Select Outro Playlist*, or the station
+   default from Settings → General — those outro tracks are pinned to
+   B's end and are never touched.  The tracks *before* the outro are
+   what gets replaced.  (Whether the last rows really are the outro is
+   verified against the playlist's tracks, never assumed: a manually
+   filled show without an outro simply has no protected tail.)
+2. **Every track that no longer fits goes** — one or several, from the
+   end of B's body backwards — until the remaining content fits before
+   the outro (or before B's end when there is no outro).
+3. **The gap is filled from the filler playlist** with the combination
+   of tracks whose total length covers the gap with the least
+   overshoot.  The *last* filler is clamped at the gap end.  So the
+   air never falls silent, and the only track ever cut short is a
+   filler — never one of B's own.  That holds even when the gap is
+   shorter than the shortest filler: the shortest one plays and is
+   cut.
+
+The swap happens inside the same database transaction as the shift,
+so either everything lands or nothing does.  The playout, the
+Dashboard, the widgets and the track history all see the result as
+ordinary schedule rows.  Only the shifted show B is treated this way;
+show A's own tail is still clamped at a non-opted-in anchor (§4).
+
+> **Example.**  B is 10:00–11:00, ends with a 30-second outro jingle,
+> and A overruns by four minutes.  B now starts at 10:04.  Its last
+> music track would end at 11:03:30 — it goes.  The remaining body
+> ends at 10:59:10, so the gap to the outro (which must start at
+> 10:59:30) is 20 seconds: the shortest filler plays and is faded out
+> at 10:59:30, the outro runs in full, and whatever follows starts at
+> 11:00 on the dot.
 
 ---
 

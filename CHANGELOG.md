@@ -9,6 +9,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Show-Shift: Filler statt Kürzung (2026-09-27, Operator-Go mit
+  Design-Entscheiden D1–D4)** — Neue Einstellung Settings → General →
+  „Show-Shift Filler Playlist" (Picker wie Traffic-Alert, Preference
+  `show_shift_filler_playlist_id`, 0 = aus).  Im SHIFT-Fall des
+  `ShowShiftService` ersetzt `fillShiftedTail()` das bisherige Abschneiden
+  von Bs letztem Titel: (D1) Endet B mit seiner Outro-Playlist
+  (sendungseigenes „Select Outro Playlist" oder Stations-Standard), bleibt
+  das Outro ans Slot-Ende gepinnt — geprüft als Suffix-Abgleich der
+  Playlist-Titel, nie angenommen — und ersetzt wird davor; (D3) alle
+  Schluss-Titel, die nicht mehr passen, fliegen raus; (D2) die Lücke wird
+  per 0/1-Knapsack mit minimalem Überschuss aus der Filler-Playlist
+  gefüllt, der letzte Filler wird gekürzt — nie Stille, nie ein
+  Sendungs-Titel gekürzt, auch bei Lücken kürzer als der kürzeste Filler;
+  (D4) nur B, As eigene Kürzung am Anker bleibt.  Läuft in der
+  Shift-Transaktion (alles oder nichts), pflegt position/time_filled/
+  is_scheduled, loggt Zusammenfassung.  Reine Funktionen `pickFillers` +
+  `matchOutroSuffix` per PHP-CLI gegengerechnet (exakte Treffer, minimaler
+  Überschuss, Kürzeste-Filler-Fall, Shortfall mit Wiederholung, Suffix-
+  Fälle).  Settings-Seite live verifiziert (Picker nach Traffic-Alert, 24
+  Optionen, keine PHP-Fehler).  Handbuch DELAYED_START §2 + §3
+  EN/DE/FR/ES, Labels de/fr/es übersetzt.  **Live-Probe mit Testshows
+  (deckt auch den nie ausgelösten Basis-Shift ab) steht aus — Operator-
+  Termin.**  Nebenbefund: Kein `msgfmt` auf dem neuen Studio-Rechner
+  (C:\Tools\gettext-iconv fehlt) → `frontend/legacy/scripts/po2mo.py` als
+  eigenständiger .po→.mo-Compiler (gegen die drei getrackten Kataloge
+  gegengerechnet: 989/946/946 Einträge, byte-für-Wert identisch).
+  Übersetzungen greifen nach Apache-Neustart (gettext-Cache je Prozess).
+
 - **Cover-Artwork in den Widgets (2026-09-18, Operator-Go W4.1, `fb17949`)** — Drei
   Widgets zeigen jetzt das Cover des Titels: Stream Player (beide
   Layouts), Track-History-Zeilen und Now Playing — Track.  Neuer

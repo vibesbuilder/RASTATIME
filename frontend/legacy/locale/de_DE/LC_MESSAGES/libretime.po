@@ -4795,3 +4795,12 @@ msgstr "(keiner — deaktiviert)"
 
 msgid "New tracks added to this smart block air in the running show at its next traffic slot, within ~10 minutes. Add this block at several points in a show so alerts interrupt promptly."
 msgstr "Neue Titel in diesem Smart-Block laufen in der aktiven Sendung am nächsten Verkehrsmeldungs-Slot, innerhalb von ~10 Minuten. Fügen Sie diesen Block an mehreren Stellen einer Sendung ein, damit Meldungen zügig dazwischenkommen."
+
+msgid "Show-Shift Filler Playlist"
+msgstr "Show-Shift-Filler-Playlist"
+
+msgid "(none — cut the last track)"
+msgstr "(keine — letzten Titel kürzen)"
+
+msgid "When a delayed start pushes a show past its slot, the tracks that no longer fit are replaced by tracks from this playlist so only a filler gets cut, never a show track. A show that ends with its outro playlist keeps the outro; the tracks before it are replaced."
+msgstr "Schiebt ein verzögerter Start eine Sendung über ihren Slot hinaus, werden die Titel, die nicht mehr passen, durch Titel aus dieser Playlist ersetzt — gekürzt wird nur ein Filler, nie ein Sendungs-Titel. Endet eine Sendung mit ihrer Outro-Playlist, bleibt das Outro; ersetzt werden die Titel davor."

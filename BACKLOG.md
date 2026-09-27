@@ -1587,8 +1587,11 @@ Testshow-Overrun oder dunkel lassen bis zum ersten Opt-in.
 
 **Status (alt, überholt):** Go vom 2026-05-22; Operator 2026-09-10: „für später gemerkt".
 
-**🟡 Erweiterung „Filler statt Kürzung" (Operator-Wunsch 2026-09-27, evaluiert,
-wartet auf Design-Entscheide + Go):** Im SHIFT-Fall wird der überstehende
+**🟢 Erweiterung „Filler statt Kürzung" — GEBAUT 2026-09-27 (Operator-Go,
+Entscheide D1: Outro bleibt, davor ersetzen · D2: bis ≥ Lücke füllen, letzter
+Filler gekürzt · D3: mehrere Titel · D4: nur B; Details CHANGELOG „Added").
+OFFEN: Live-Probe mit Testshows + Apache-Neustart für die Labels.  Ursprüngliche
+Evaluierung:** Im SHIFT-Fall wird der überstehende
 Schluss von Show B nicht gekürzt, sondern die nicht mehr passenden
 Schluss-Titel werden entfernt und die Lücke bis B.ends aus einer unter
 Settings → General wählbaren **Filler-Playlist** (Picker wie
