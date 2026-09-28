@@ -4596,3 +4596,7 @@ msgstr ""
 #: RASTATIME 2026-09-28 track expiry (May 2026 feature, untranslated until now)
 msgid "Expiry date must be in YYYY-MM-DD format or empty."
 msgstr ""
+
+#: RASTATIME 2026-09-28 library column
+msgid "Cover"
+msgstr ""

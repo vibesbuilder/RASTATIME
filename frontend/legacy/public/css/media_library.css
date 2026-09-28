@@ -49,6 +49,25 @@
     text-align: left;
 }
 
+/* RASTATIME 2026-09-28 - library table on the dark theme (operator report:
+   preview icon and checkboxes hard to see): the icon-only columns carry a
+   title and are centred, the dark speaker / playlist / block icons are
+   inverted to light grey on the #282828 rows, native checkboxes are drawn
+   for a dark background with the RASTATIME accent. */
+#library_display th.library_type,
+#library_display th.library_artwork,
+#library_display th.library_actions,
+#library_display td.library_artwork {
+    text-align: center;
+}
+#library_display td.library_type img {
+    filter: invert(0.85);
+}
+#library_display input[type="checkbox"] {
+    color-scheme: dark;
+    accent-color: #ff5d1a;
+}
+
 #library_content #library_display {
 	width:100%;
 }

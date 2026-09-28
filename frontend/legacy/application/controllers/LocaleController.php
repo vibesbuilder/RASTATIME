@@ -293,6 +293,7 @@ final class LocaleController extends Zend_Controller_Action
             'Show Empty' => _('Show Empty'),
             'Recording From Line In' => _('Recording From Line In'),
             'Track preview' => _('Track preview'),
+            'Cover' => _('Cover'),  // RASTATIME 2026-09-28 library column title
             // already in library/spl.js
             // "Airtime is unsure about the status of this file. This can happen when the file is on a remote drive that is unaccessible or the file is in a directory that isn"t "watched" anymore."
             // => _("Airtime is unsure about the status of this file. This can happen when the file is on a remote drive that is unaccessible or the file is in a directory that isn"t "watched" anymore."),

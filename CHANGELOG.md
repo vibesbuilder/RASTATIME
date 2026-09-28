@@ -326,6 +326,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Dashboard → Tracks: Spaltentitel und Dunkel-Kontrast (2026-09-28,
+  Operator-Wunsch)** — Die drei Icon-Spalten der Bibliothek tragen jetzt
+  Titel („Preview", „Cover", „Actions"; DE „Vorschau", „Cover",
+  „Aktionen"; „Cover" neu in der JS-Übersetzungstabelle und in DE/FR/ES) und
+  sind breiter (60/50/60 px) und zentriert.  Das dunkle Vorhör-Icon
+  (Lautsprecher, Playlist, Block) war auf den #282828-Zeilen kaum zu sehen
+  und wird per CSS-Filter hell dargestellt; die Zeilen-Checkboxen werden mit
+  `color-scheme: dark` und dem RASTATIME-Akzent gezeichnet, damit sie in
+  jedem Browser auf dem dunklen Grund sichtbar sind.  Im Browser geprüft.
+
 - **Settings → General und → Streams: Erklärungstexte als Tooltips, DJ-Übergabe
   als eigener Block (2026-09-28, Operator-Wunsch)** — Gemeinsamer Helfer
   `$.rtDescriptionTooltips(root, {where, only})` in `common/tooltip.js`

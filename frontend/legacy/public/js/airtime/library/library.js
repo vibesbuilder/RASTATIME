@@ -633,20 +633,22 @@ var AIRTIME = (function (AIRTIME) {
         sClass: "library_checkbox",
       },
       /* Type */ {
-        sTitle: "",
+        // RASTATIME 2026-09-28 - labelled (operator wish): the column holds
+        // the preview button (speaker / playlist / block icon)
+        sTitle: $.i18n._("Preview"),
         mDataProp: "image",
         bSortable: false,
         bSearchable: false,
-        sWidth: "16px",
+        sWidth: "60px",
         sClass: "library_type",
         iDataSort: 0,
       },
       /* Artwork */ {
-        sTitle: "",
+        sTitle: $.i18n._("Cover"),
         mDataProp: "artwork",
         bSortable: false,
         bSearchable: false,
-        sWidth: "28px",
+        sWidth: "50px",
         sClass: "library_artwork",
         iDataSort: 0,
       },
@@ -890,11 +892,11 @@ var AIRTIME = (function (AIRTIME) {
     if (onDashboard) {
       cols.push(
         /* Context Menu */ {
-          sTitle: "",
+          sTitle: $.i18n._("Actions"),
           mDataProp: "options",
           bSortable: false,
           bSearchable: false,
-          sWidth: "20px",
+          sWidth: "60px",
           sClass: "library_actions",
         },
       );
