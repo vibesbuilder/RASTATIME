@@ -18,6 +18,9 @@ def test_preference_get_stream_preferences(db):
         "message_offline": "LibreTime - offline",
         "replay_gain_enabled": True,
         "replay_gain_offset": 0.0,
+        "loudness_mode": "replaygain",
+        "loudness_target_lufs": -23.0,
+        "loudness_true_peak_dbtp": -1.0,
     }
 
 

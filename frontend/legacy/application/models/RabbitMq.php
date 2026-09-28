@@ -204,21 +204,6 @@ class Application_Model_RabbitMq
         $fileId,
         $fileTrackTypeId
     ) {
-        $config = Config::getConfig();
-
-        $conn = new AMQPStreamConnection(
-            $config['rabbitmq']['host'],
-            $config['rabbitmq']['port'],
-            $config['rabbitmq']['user'],
-            $config['rabbitmq']['password'],
-            $config['rabbitmq']['vhost']
-        );
-
-        $exchange = 'airtime-uploads';
-        $exchangeType = 'topic';
-        $queue = 'airtime-uploads';
-        $autoDeleteExchange = false;
-
         $data['file_id'] = $fileId;
         $data['tmp_file_path'] = $tmpFilePath;
         $data['import_directory'] = $importedStorageDirectory;
@@ -233,8 +218,46 @@ class Application_Model_RabbitMq
 
         $data['options'] = $options;
 
+        self::publishAnalyzerMessage($data);
+    }
+
+    /**
+     * RASTATIME 2026-09-28 - EBU R128 stage 1: ask the analyzer to measure
+     * an ALREADY IMPORTED file (options.loudness_only).  The analyzer reads
+     * the file in place, moves nothing, and PUTs only the three loudness
+     * columns back; a failed measurement reports nothing.
+     */
+    public static function SendLoudnessMeasurementToAnalyzer($fileId, $absolutePath)
+    {
+        $data = [];
+        $data['file_id'] = $fileId;
+        $data['tmp_file_path'] = $absolutePath;
+        $data['import_directory'] = '';
+        $data['original_filename'] = basename($absolutePath);
+        $options = new stdClass();
+        $options->loudness_only = true;
+        $data['options'] = $options;
+
+        self::publishAnalyzerMessage($data);
+    }
+
+    private static function publishAnalyzerMessage(array $data)
+    {
+        $config = Config::getConfig();
+
+        $conn = new AMQPStreamConnection(
+            $config['rabbitmq']['host'],
+            $config['rabbitmq']['port'],
+            $config['rabbitmq']['user'],
+            $config['rabbitmq']['password'],
+            $config['rabbitmq']['vhost']
+        );
+
+        $exchange = 'airtime-uploads';
+        $exchangeType = 'topic';
+        $autoDeleteExchange = false;
+
         $jsonData = json_encode($data);
-        // self::sendMessage($exchange, 'topic', false, $jsonData, 'airtime-uploads');
 
         if (!isset($conn)) {
             throw new Exception('Cannot connect to RabbitMQ server');

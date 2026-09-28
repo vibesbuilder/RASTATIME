@@ -203,6 +203,23 @@ def _read_pref_crossfade_duration() -> Optional[float]:
     return _read_pref_seconds("default_crossfade_duration")
 
 
+def _resolve_loudness_limiter() -> Tuple[str, Optional[float]]:
+    """
+    RASTATIME 2026-09-28 - Settings -> Streams -> Loudness Normalization:
+    ``(mode, ceiling)`` where ``ceiling`` is the true-peak ceiling (dBTP)
+    when the mode is EBU R128 and None otherwise (no limiter rendered).
+    """
+    try:
+        from libretime_api.core.models import Preference  # type: ignore[import-untyped]
+        prefs = Preference.get_stream_preferences()
+        mode = str(getattr(prefs, "loudness_mode", "off") or "off")
+        ceiling = float(getattr(prefs, "loudness_true_peak_dbtp", -1.0))
+    except Exception as exc:  # pylint: disable=broad-exception-caught
+        logger.warning("Could not read the loudness settings from DB: %s", exc)
+        return "off", None
+    return mode, (ceiling if mode == "r128" else None)
+
+
 def _read_pref_seconds(key: str) -> Optional[float]:
     try:
         from libretime_api.core.models import Preference  # type: ignore[import-untyped]
@@ -700,6 +717,7 @@ def _render_settings_fingerprint() -> Optional[str]:
             "show_crossfade": _resolve_show_crossfade_seconds(),
             "dj_fade": _resolve_dj_fade_seconds(),
             "streams": _read_stream_outputs(),
+            "loudness": list(_resolve_loudness_limiter()),
         }
     except Exception as exc:  # pylint: disable=broad-exception-caught
         logger.debug("render settings fingerprint unavailable: %s", exc)
@@ -873,6 +891,14 @@ def _render_rastatime_liq_outcome(stream_outputs: List[Dict]) -> RenderOutcome:
         IcyPreferences, read_icy_preferences_from_db,
     )
     icy = read_icy_preferences_from_db() or IcyPreferences()
+    # RASTATIME 2026-09-28 - EBU R128 stage 1: the bus limiter only in R128 mode
+    loudness_mode, loudness_ceiling = _resolve_loudness_limiter()
+    logger.info(
+        "Loudness Normalization: %s%s (Settings -> Streams).",
+        loudness_mode,
+        f", true-peak ceiling {loudness_ceiling:.1f} dBTP (bus limiter)"
+        if loudness_ceiling is not None else "",
+    )
     logger.info(
         "ICY metadata: Stream Label format %d, off-air text %r, station %r "
         "(Settings -> Streams / General).",
@@ -916,6 +942,8 @@ def _render_rastatime_liq_outcome(stream_outputs: List[Dict]) -> RenderOutcome:
             icy_label_format=icy.label_format,
             icy_offair_text=icy.offair_text,
             icy_station_name=icy.station_name,
+            # RASTATIME 2026-09-28 - EBU R128 stage 1: limiter when the mode is R128
+            loudness_limiter_ceiling=loudness_ceiling,
         )
     except Exception as exc:  # pylint: disable=broad-exception-caught
         logger.critical(

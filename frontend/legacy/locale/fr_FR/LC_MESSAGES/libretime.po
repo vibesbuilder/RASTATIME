@@ -5249,3 +5249,75 @@ msgstr "Le playout écrit la ligne « now playing » à chaque changement de tit
 #: RASTATIME 2026-09-28 live text info
 msgid "Web address:"
 msgstr "Adresse web :"
+
+#: RASTATIME 2026-09-28 loudness normalization (EBU R128)
+msgid "Loudness Normalization"
+msgstr "Normalisation de la sonie"
+
+#: RASTATIME 2026-09-28 loudness normalization (EBU R128)
+msgid "Off"
+msgstr "Désactivé"
+
+#: RASTATIME 2026-09-28 loudness normalization (EBU R128)
+msgid "ReplayGain"
+msgstr "ReplayGain"
+
+#: RASTATIME 2026-09-28 loudness normalization (EBU R128)
+msgid "EBU R128"
+msgstr "EBU R128"
+
+#: RASTATIME 2026-09-28 loudness normalization (EBU R128)
+msgid "How the level of scheduled tracks is evened out. ReplayGain applies the value measured at import plus the modifier. EBU R128 measures every track by the broadcast loudness standard (ITU BS.1770) and plays it at the target loudness below; a peak limiter on the bus keeps the true-peak ceiling. Live sources (DJ, webstream, Line-In) are not affected in this stage."
+msgstr "Comment le niveau des titres programmés est égalisé. ReplayGain applique la valeur mesurée à l'import plus le modificateur. EBU R128 mesure chaque titre selon la norme de sonie broadcast (ITU BS.1770) et le diffuse à la sonie cible ci-dessous ; un limiteur de crête sur le bus respecte le plafond de crête vraie. Les sources en direct (DJ, flux web, entrée ligne) ne sont pas concernées à cette étape."
+
+#: RASTATIME 2026-09-28 loudness normalization (EBU R128)
+msgid "Target Loudness (LUFS)"
+msgstr "Sonie cible (LUFS)"
+
+#: RASTATIME 2026-09-28 loudness normalization (EBU R128)
+msgid "The integrated loudness every track is played at. EBU R128 specifies -23 LUFS (broadcast); web streams commonly use louder targets between -18 and -16 LUFS. A change re-computes the gain of every track at the next schedule refresh."
+msgstr "La sonie intégrée à laquelle chaque titre est diffusé. EBU R128 prescrit -23 LUFS (broadcast) ; les flux web utilisent souvent des cibles plus fortes entre -18 et -16 LUFS. Un changement recalcule le gain de chaque titre au prochain rafraîchissement de la grille."
+
+#: RASTATIME 2026-09-28 loudness normalization (EBU R128)
+msgid "True Peak Ceiling (dBTP)"
+msgstr "Plafond de crête vraie (dBTP)"
+
+#: RASTATIME 2026-09-28 loudness normalization (EBU R128)
+msgid "The level no peak may exceed. A quiet track is boosted only as far as its measured true peak allows, and the peak limiter on the bus catches the rest. EBU R128 specifies -1 dBTP."
+msgstr "Le niveau qu'aucune crête ne doit dépasser. Un titre faible n'est amplifié que dans la limite de sa crête vraie mesurée ; le limiteur de crête sur le bus se charge du reste. EBU R128 prescrit -1 dBTP."
+
+#: RASTATIME 2026-09-28 loudness normalization (EBU R128)
+msgid "Loudness measurement"
+msgstr "Mesure de la sonie"
+
+#: RASTATIME 2026-09-28 loudness normalization (EBU R128)
+msgid "Measured: %1$s of %2$s files"
+msgstr "Mesurés : %1$s fichiers sur %2$s"
+
+#: RASTATIME 2026-09-28 loudness normalization (EBU R128)
+msgid "Measure missing files now"
+msgstr "Mesurer les fichiers manquants maintenant"
+
+#: RASTATIME 2026-09-28 loudness normalization (EBU R128)
+msgid "Re-measure all"
+msgstr "Tout remesurer"
+
+#: RASTATIME 2026-09-28 loudness normalization (EBU R128)
+msgid "Files imported from now on are measured automatically. The buttons queue the existing library for the analyzer (a few seconds per file, in the background); an unmeasured track plays with its ReplayGain value shifted to the target until then."
+msgstr "Les fichiers importés à partir de maintenant sont mesurés automatiquement. Les boutons mettent la bibliothèque existante en file d'attente pour l'analyseur (quelques secondes par fichier, en arrière-plan) ; un titre non mesuré est diffusé d'ici là avec sa valeur ReplayGain décalée vers la cible."
+
+#: RASTATIME 2026-09-28 loudness normalization (EBU R128)
+msgid "Re-measure every file in the library? This queues all files for the analyzer."
+msgstr "Remesurer tous les fichiers de la bibliothèque ? Cela met tous les fichiers en file d'attente pour l'analyseur."
+
+#: RASTATIME 2026-09-28 loudness normalization (EBU R128)
+msgid "Queuing..."
+msgstr "Mise en file d'attente..."
+
+#: RASTATIME 2026-09-28 loudness normalization (EBU R128)
+msgid "Queued %s files for measurement; reload the page to see the count."
+msgstr "%s fichiers mis en file d'attente pour la mesure ; rechargez la page pour voir le compte."
+
+#: RASTATIME 2026-09-28 loudness normalization (EBU R128)
+msgid "Could not queue the measurement."
+msgstr "Impossible de mettre la mesure en file d'attente."

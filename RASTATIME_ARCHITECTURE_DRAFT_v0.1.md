@@ -1,10 +1,15 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.45
+Draft version: 0.46
 Date: 2026-09-28
 
 > **Revision history**
+> - **0.46 (2026-09-28)** — **Loudness Normalization, EBU R128 stage 1**
+>   (§23.41): per-file R128 measurement in the analyzer (ebur128), a
+>   three-way mode with target loudness and true-peak ceiling in Settings
+>   → Streams, gain = target − loudness in the playout, a bus limiter in
+>   R128 mode, a re-measurement job for the existing library.
 > - **0.45 (2026-09-28)** — **Catch-up at the offset, re-timed running
 >   rows** (§23.40): the catch-up enters an in-progress track at its
 >   offset; a schedule item's identity is row id + medium (no start), a
@@ -5398,3 +5403,61 @@ the same row (the queued request carries the old cues).
 live: PLAYOUT restart mid-track ("Catch-up … entering at +N s",
 Liquidsoap seeks) and a show-builder removal on the running show
 ("rebinding, no teardown" instead of "removed from schedule").
+
+### 23.41 Loudness Normalization — EBU R128, Stage 1 (2026-09-28)
+
+**Context.**  The only level processing was ReplayGain per file, and
+the analyzer measured it with ffmpeg's `replaygain` filter — the
+ReplayGain **1.0** algorithm (RMS, 89 dB reference), not the BS.1770
+measurement behind EBU R128.  Live sources ran unregulated and the bus
+had no limiter.  The operator asked for R128 as an option; the
+evaluation (BACKLOG) proposed three stages, stage 1 got the Go with a
+freely settable target (−23 LUFS as the R128 default).
+
+**Measurement.**  `analyze_loudness` runs after the ReplayGain step:
+`ffmpeg -filter ebur128=peak=true` and the summary's integrated
+loudness (LUFS), true peak (dBFS, used as dBTP) and loudness range (LU)
+land in `cc_files.loudness_lufs / true_peak_dbtp / loudness_range_lu`
+(legacy migration 0061; Propel is not regenerated, so
+`CcFiles::updateFromArray` persists the three keys via raw SQL, the
+Django `File` model carries matching fields for the API).  A silent or
+undecodable file keeps the keys absent (NULL = not measured).  The
+existing library is measured on demand: Settings → Streams "Measure
+missing files now" / "Re-measure all" publish one analyzer message per
+file with `options.loudness_only = true` and the file's absolute path;
+the analyzer's `Pipeline.run_loudness` measures in place — no metadata
+extraction, no move, no import status — and PUTs only the three keys
+back (a failure reports nothing).  The ReplayGain 1.0 value stays as it
+was; both live side by side.
+
+**Settings and gain.**  cc_pref `loudness_mode` (off | replaygain |
+r128; an old database derives it from `enable_replay_gain`, and setting
+the mode keeps that switch in step for the legacy readers),
+`loudness_target_lufs`, `loudness_true_peak_dbtp`.  `StreamPreferences`
+(API `/stream/preferences`) exposes them; `loudness_mode` may be null
+for a payload from before the setting.  The playout's
+`file_gain_db(file, prefs)` computes the annotate
+`replaygain_track_gain`: off → unity; replaygain → value + modifier (as
+before); r128 → target − loudness, capped so that the file's measured
+true peak never exceeds the ceiling; a file without a measurement uses
+its ReplayGain value shifted by (target + 18), the 1.0 reference sitting
+around −18 LUFS.  A settings change re-fills the schedule (legacy
+`getSchedule()` + `update_schedule` to the playout) like the ReplayGain
+modifier did.
+
+**Liquidsoap.**  `${LOUDNESS_BLOCK}` after the replay-gain `amplify`:
+in R128 mode `bus = limit(threshold=loudness_ceiling, attack=5.,
+release=80., ratio=20., bus)` with `loudness_ceiling` an interactive
+float — a sample-peak safety net (true-peak proper needs oversampling;
+at a −23 LUFS target the headroom is large).  Mode and ceiling are part
+of the settings fingerprint (§23.34), so a change is applied by the
+planned restart.  Bench on the installed Windows build
+(`xbench/bench_r128.liq`): `lufs()` metering, `normalize(lufs=true)` and
+the ffmpeg `loudnorm` filter graph all run; the latter two are reserved
+for stage 2 (live sources) and deliberately not on the bus.
+
+**Rejected for stage 1.**  Real-time `loudnorm` over the whole bus
+(dynamic single-pass mode pumps on music, adds an ffmpeg clock to the
+air chain, makes the per-file measurement pointless); replacing
+ReplayGain with the R128 value (the two modes coexist so the operator
+can switch back).

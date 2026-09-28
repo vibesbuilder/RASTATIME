@@ -1673,6 +1673,57 @@ class Application_Model_Preference
         self::setValue('replay_gain_modifier', $rg_modifier, false);
     }
 
+    // RASTATIME 2026-09-28 - Loudness Normalization (EBU R128, stage 1).
+    // loudness_mode: off | replaygain | r128.  A database from before the
+    // setting derives the mode from the ReplayGain switch; setting the
+    // mode keeps enable_replay_gain in step for the legacy readers.
+    public static function getLoudnessMode()
+    {
+        $mode = self::getValue('loudness_mode');
+        if (in_array($mode, ['off', 'replaygain', 'r128'], true)) {
+            return $mode;
+        }
+
+        return self::GetEnableReplayGain() ? 'replaygain' : 'off';
+    }
+
+    public static function setLoudnessMode($mode)
+    {
+        if (!in_array($mode, ['off', 'replaygain', 'r128'], true)) {
+            $mode = 'off';
+        }
+        self::setValue('loudness_mode', $mode, false);
+        self::SetEnableReplayGain($mode === 'replaygain' ? 1 : 0);
+    }
+
+    public static function getLoudnessTargetLufs()
+    {
+        $v = self::getValue('loudness_target_lufs');
+
+        return ($v === '' || $v === null) ? '-23' : $v;
+    }
+
+    public static function setLoudnessTargetLufs($value)
+    {
+        $v = (float) str_replace(',', '.', (string) $value);
+        $v = max(-40.0, min(-5.0, $v));
+        self::setValue('loudness_target_lufs', (string) $v, false);
+    }
+
+    public static function getLoudnessTruePeakDbtp()
+    {
+        $v = self::getValue('loudness_true_peak_dbtp');
+
+        return ($v === '' || $v === null) ? '-1' : $v;
+    }
+
+    public static function setLoudnessTruePeakDbtp($value)
+    {
+        $v = (float) str_replace(',', '.', (string) $value);
+        $v = max(-12.0, min(0.0, $v));
+        self::setValue('loudness_true_peak_dbtp', (string) $v, false);
+    }
+
     public static function SetHistoryItemTemplate($value)
     {
         self::setValue('history_item_template', $value);

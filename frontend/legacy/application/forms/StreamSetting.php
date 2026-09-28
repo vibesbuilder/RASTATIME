@@ -4,11 +4,21 @@ class Application_Form_StreamSetting extends Zend_Form
 {
     private $setting;
 
+    // RASTATIME 2026-09-28 - "Measured: N of M files" for the EBU R128 block
+    public $loudnessMeasured = 0;
+    public $loudnessTotal = 0;
+
     public function init() {}
 
     public function setSetting($setting)
     {
         $this->setting = $setting;
+    }
+
+    public function setLoudnessStats($measured, $total)
+    {
+        $this->loudnessMeasured = (int) $measured;
+        $this->loudnessTotal = (int) $total;
     }
 
     public function startFrom()
@@ -38,12 +48,38 @@ class Application_Form_StreamSetting extends Zend_Form
             ->setDecorators(['ViewHelper']);
         $this->addElement($offAirMeta);
 
-        $enable_replay_gain = new Zend_Form_Element_Checkbox('enableReplayGain');
-        $enable_replay_gain
-            ->setLabel(_('Enable Replay Gain'))
-            ->setValue(Application_Model_Preference::GetEnableReplayGain())
+        // RASTATIME 2026-09-28 - Loudness Normalization (EBU R128, stage 1):
+        // the "Enable Replay Gain" checkbox became a three-way mode.
+        $loudness_mode = new Zend_Form_Element_Select('loudnessMode');
+        $loudness_mode
+            ->setLabel(_('Loudness Normalization'))
+            ->setMultiOptions([
+                'off' => _('Off'),
+                'replaygain' => _('ReplayGain'),
+                'r128' => _('EBU R128'),
+            ])
+            ->setValue(Application_Model_Preference::getLoudnessMode())
+            ->setDescription(_('How the level of scheduled tracks is evened out. ReplayGain applies the value measured at import plus the modifier. EBU R128 measures every track by the broadcast loudness standard (ITU BS.1770) and plays it at the target loudness below; a peak limiter on the bus keeps the true-peak ceiling. Live sources (DJ, webstream, Line-In) are not affected in this stage.'))
             ->setDecorators(['ViewHelper']);
-        $this->addElement($enable_replay_gain);
+        $this->addElement($loudness_mode);
+
+        $loudness_target = new Zend_Form_Element_Text('loudnessTarget');
+        $loudness_target
+            ->setLabel(_('Target Loudness (LUFS)'))
+            ->setValue(Application_Model_Preference::getLoudnessTargetLufs())
+            ->setAttribs(['type' => 'number', 'step' => '0.5', 'min' => '-40', 'max' => '-5', 'class' => 'input_text', 'style' => 'width: 90px'])
+            ->setDescription(_('The integrated loudness every track is played at. EBU R128 specifies -23 LUFS (broadcast); web streams commonly use louder targets between -18 and -16 LUFS. A change re-computes the gain of every track at the next schedule refresh.'))
+            ->setDecorators(['ViewHelper']);
+        $this->addElement($loudness_target);
+
+        $loudness_true_peak = new Zend_Form_Element_Text('loudnessTruePeak');
+        $loudness_true_peak
+            ->setLabel(_('True Peak Ceiling (dBTP)'))
+            ->setValue(Application_Model_Preference::getLoudnessTruePeakDbtp())
+            ->setAttribs(['type' => 'number', 'step' => '0.1', 'min' => '-12', 'max' => '0', 'class' => 'input_text', 'style' => 'width: 90px'])
+            ->setDescription(_('The level no peak may exceed. A quiet track is boosted only as far as its measured true peak allows, and the peak limiter on the bus catches the rest. EBU R128 specifies -1 dBTP.'))
+            ->setDecorators(['ViewHelper']);
+        $this->addElement($loudness_true_peak);
 
         $replay_gain = new Zend_Form_Element_Hidden('replayGainModifier');
         $replay_gain

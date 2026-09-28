@@ -69,6 +69,49 @@ stream ; le nom de la station vient de Paramètres → General.
 - Le label est écrit dans les métadonnées de titre du flux : il s'applique
   au MP3/AAC (ICY), à l'OGG (in-band) et aux enregistrements.
 
+### Normalisation de la sonie (ReplayGain / EBU R128)
+
+Égalise le niveau des titres programmés pour qu'un enregistrement folk
+discret et un mix club puissant parviennent aux auditeurs à la même
+sonie.  Trois modes, choisis sur la page Streams ; chaque description
+est disponible sous forme d'icône d'aide à côté de son champ.
+
+| Mode | Ce qu'il fait |
+|---|---|
+| **Désactivé** | Chaque titre est diffusé à son propre niveau. |
+| **ReplayGain** | La valeur ReplayGain mesurée à l'import plus le curseur *Replay Gain Modifier* (le comportement des versions précédentes). |
+| **EBU R128** | Chaque titre est mesuré selon la norme de sonie broadcast (ITU BS.1770 / EBU R128) et diffusé à la **Sonie cible** ; un limiteur de crête sur le bus de sortie respecte le **Plafond de crête vraie**. |
+
+Réglages pour EBU R128 :
+
+- **Sonie cible (LUFS)** — la sonie intégrée à laquelle chaque titre est
+  diffusé.  EBU R128 prescrit −23 LUFS pour le broadcast ; les flux web
+  utilisent souvent des cibles plus fortes entre −18 et −16 LUFS.  La
+  valeur est libre ; −23 est la valeur par défaut.
+- **Plafond de crête vraie (dBTP)** — le niveau qu'aucune crête ne doit
+  dépasser (par défaut −1 dBTP).  Un titre faible n'est amplifié que
+  dans la limite de sa crête vraie mesurée ; le limiteur sur le bus se
+  charge du reste.
+- **Mesure de la sonie** — les fichiers importés à partir de maintenant
+  sont mesurés automatiquement.  *Mesurer les fichiers manquants
+  maintenant* met en file d'attente chaque fichier sans mesure pour
+  l'analyseur ; *Tout remesurer* toute la bibliothèque.  La mesure
+  s'exécute en arrière-plan, quelques secondes par fichier ; la ligne
+  « Mesurés : N fichiers sur M » indique l'état après rechargement de la
+  page.  Tant qu'un titre n'est pas mesuré, il est diffusé avec sa valeur
+  ReplayGain décalée vers la cible.
+
+Remarques :
+
+- Un changement de mode, de cible ou de plafond prend effet au prochain
+  rafraîchissement de la grille (environ deux minutes) pour les gains
+  des titres ; le limiteur du bus est appliqué par le redémarrage
+  planifié du playout à la prochaine frontière de titre.
+- Les sources en direct (DJ, flux web, entrée ligne) ne sont pas
+  concernées par cette étape ; leur niveau est celui que livre la source.
+- Les valeurs mesurées sont stockées par fichier (sonie intégrée, crête
+  vraie, plage de sonie) et survivent aux changements de réglages.
+
 ### Badge d'état du stream
 
 | Badge | Signification |

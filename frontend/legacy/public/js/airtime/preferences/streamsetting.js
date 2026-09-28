@@ -322,6 +322,44 @@ function setSliderForReplayGain() {
   $("#replayGainModifier").val($("#slider-range-max").slider("value"));
 }
 
+// RASTATIME 2026-09-28 - Loudness Normalization (EBU R128, stage 1): show
+// the fields of the chosen mode, and queue the library for measurement.
+function setLoudnessModeFields() {
+  var mode = $("#loudnessMode").val();
+  $(".loudness-replaygain-field").toggle(mode === "replaygain");
+  $(".loudness-r128-field").toggle(mode === "r128");
+}
+
+function setupLoudnessListeners() {
+  $("#loudnessMode").off("change.loudness").on("change.loudness", setLoudnessModeFields);
+  $(document)
+    .off("click.loudness", "#loudness_measure_btn, #loudness_remeasure_btn")
+    .on("click.loudness", "#loudness_measure_btn, #loudness_remeasure_btn", function () {
+      var force = this.id === "loudness_remeasure_btn" ? 1 : 0;
+      if (force && !confirm($.i18n._("Re-measure every file in the library? This queues all files for the analyzer."))) {
+        return;
+      }
+      var $status = $("#loudness_measured_status");
+      $status.text($.i18n._("Queuing..."));
+      $.post(
+        baseUrl + "Preference/remeasure-loudness",
+        { csrf_token: $("#csrf").val(), force: force },
+        function (json) {
+          if (json && json.queued !== undefined) {
+            $status.text(
+              $.i18n._("Queued %s files for measurement; reload the page to see the count.").replace("%s", json.queued),
+            );
+          } else {
+            $status.text($.i18n._("Could not queue the measurement."));
+          }
+        },
+        "json",
+      ).fail(function () {
+        $status.text($.i18n._("Could not queue the measurement."));
+      });
+    });
+}
+
 function setPseudoAdminPassword(s1, s2, s3, s4) {
   if (s1) {
     $("#s1_data-admin_pass").val("xxxxxx");
@@ -356,8 +394,10 @@ $(document).ready(function () {
   // icon next to the field, like the Master Source username below it.
   $.rtDescriptionTooltips($(".stream-setting-global"), {
     where: "field",
-    only: ["transition_fade"],
+    only: ["transition_fade", "loudnessMode", "loudnessTarget", "loudnessTruePeak", "loudnessMeasure"],
   });
+  setLoudnessModeFields();
+  setupLoudnessListeners();
   var s = $("[name^='customStreamSettings']:checked");
 
   $(document).on(
@@ -379,6 +419,8 @@ $(document).ready(function () {
         setupEventListeners();
         setSliderForReplayGain();
         getAdminPasswordStatus();
+        setLoudnessModeFields();
+        setupLoudnessListeners();
       });
     },
   );

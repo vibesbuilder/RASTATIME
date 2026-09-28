@@ -93,6 +93,46 @@ name comes from Settings → General.
 - The label is written into the stream's title metadata, so it applies
   to MP3/AAC (ICY), to OGG (in-band comments) and to the recordings.
 
+### Loudness Normalization (ReplayGain / EBU R128)
+
+Evens out the level of scheduled tracks so that a quiet folk recording
+and a loud club mix reach listeners at the same loudness.  Three modes,
+selected on the Streams page; every description is available as a help
+icon next to its field.
+
+| Mode | What it does |
+|---|---|
+| **Off** | Every track plays at its own level. |
+| **ReplayGain** | The ReplayGain value measured at import plus the *Replay Gain Modifier* slider (the behaviour of earlier versions). |
+| **EBU R128** | Every track is measured by the broadcast loudness standard (ITU BS.1770 / EBU R128) and played at the **Target Loudness**; a peak limiter on the output bus keeps the **True Peak Ceiling**. |
+
+Settings for EBU R128:
+
+- **Target Loudness (LUFS)** — the integrated loudness every track is
+  played at.  EBU R128 specifies −23 LUFS for broadcast; web streams
+  commonly use louder targets between −18 and −16 LUFS.  The value is
+  free; −23 is the default.
+- **True Peak Ceiling (dBTP)** — the level no peak may exceed (default
+  −1 dBTP).  A quiet track is boosted only as far as its measured true
+  peak allows; the limiter on the bus catches the rest.
+- **Loudness measurement** — files imported from now on are measured
+  automatically.  *Measure missing files now* queues every file without
+  a measurement for the analyzer; *Re-measure all* queues the whole
+  library.  Measurement runs in the background, a few seconds per file;
+  the line "Measured: N of M files" shows the state after a page reload.
+  Until a track is measured it plays with its ReplayGain value shifted
+  to the target.
+
+Notes:
+
+- A change of mode, target or ceiling takes effect at the next schedule
+  refresh (about two minutes) for the track gains; the bus limiter is
+  applied by the playout's planned restart at the next track boundary.
+- Live sources (DJ, webstream, Line-In) are not affected by this stage;
+  their level is what the source delivers.
+- The measured values are stored per file (integrated loudness, true
+  peak, loudness range) and survive re-imports of the settings.
+
 ### Stream status badge
 
 The badge to the right of each enabled stream's name:

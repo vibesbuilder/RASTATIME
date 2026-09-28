@@ -21,6 +21,9 @@ class StreamPreferencesView(views.APIView):
                     "message_offline",
                     "replay_gain_enabled",
                     "replay_gain_offset",
+                    "loudness_mode",
+                    "loudness_target_lufs",
+                    "loudness_true_peak_dbtp",
                 }
             )
         )

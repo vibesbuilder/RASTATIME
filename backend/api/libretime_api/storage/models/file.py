@@ -72,6 +72,12 @@ class File(models.Model):
     )
     cue_in = models.DurationField(blank=True, null=True, db_column="cuein")
     cue_out = models.DurationField(blank=True, null=True, db_column="cueout")
+    # RASTATIME 2026-09-28 - EBU R128 measurement (legacy migration 0061);
+    # NULL = not measured yet.  The playout derives the per-track gain
+    # from these when Loudness Normalization is "EBU R128".
+    loudness_lufs = models.DecimalField(max_digits=6, decimal_places=2, blank=True, null=True)
+    true_peak_dbtp = models.DecimalField(max_digits=6, decimal_places=2, blank=True, null=True)
+    loudness_range_lu = models.DecimalField(max_digits=6, decimal_places=2, blank=True, null=True)
 
     # Metadata
     name = models.CharField(max_length=255)  # ?

@@ -294,6 +294,11 @@ final class LocaleController extends Zend_Controller_Action
             'Recording From Line In' => _('Recording From Line In'),
             'Track preview' => _('Track preview'),
             'Cover' => _('Cover'),  // RASTATIME 2026-09-28 library column title
+            // RASTATIME 2026-09-28 - Loudness Normalization (EBU R128), Settings -> Streams
+            'Re-measure every file in the library? This queues all files for the analyzer.' => _('Re-measure every file in the library? This queues all files for the analyzer.'),
+            'Queuing...' => _('Queuing...'),
+            'Queued %s files for measurement; reload the page to see the count.' => _('Queued %s files for measurement; reload the page to see the count.'),
+            'Could not queue the measurement.' => _('Could not queue the measurement.'),
             // already in library/spl.js
             // "Airtime is unsure about the status of this file. This can happen when the file is on a remote drive that is unaccessible or the file is in a directory that isn"t "watched" anymore."
             // => _("Airtime is unsure about the status of this file. This can happen when the file is on a remote drive that is unaccessible or the file is in a directory that isn"t "watched" anymore."),

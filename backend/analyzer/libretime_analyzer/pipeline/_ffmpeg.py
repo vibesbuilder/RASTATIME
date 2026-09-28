@@ -70,6 +70,63 @@ def compute_replaygain(filepath: Path) -> Optional[float]:
     return None
 
 
+# RASTATIME 2026-09-28 - EBU R128 measurement with ffmpeg's ebur128 filter.
+# The summary at the end of stderr looks like:
+#
+#   Integrated loudness:
+#     I:         -14.2 LUFS
+#     Threshold: -24.5 LUFS
+#   Loudness range:
+#     LRA:         5.3 LU
+#     ...
+#   True peak:
+#     Peak:       -0.4 dBFS
+#
+# A silent file prints "-inf" / "-70.0" - reported as "not measurable".
+_LOUDNESS_I_RE = re.compile(r"^\s*I:\s+(-?[0-9]+\.[0-9]+|-inf)\s+LUFS", re.MULTILINE)
+_LOUDNESS_LRA_RE = re.compile(r"^\s*LRA:\s+(-?[0-9]+\.[0-9]+|-inf)\s+LU", re.MULTILINE)
+_LOUDNESS_PEAK_RE = re.compile(r"^\s*Peak:\s+(-?[0-9]+\.[0-9]+|-inf)\s+dBFS", re.MULTILINE)
+LOUDNESS_SILENCE_FLOOR_LUFS = -60.0
+
+
+def _loudness_value(match: Optional[re.Match]) -> Optional[float]:
+    if match is None:
+        return None
+    raw = match.group(1)
+    if raw == "-inf":
+        return None
+    return float(raw)
+
+
+def compute_loudness(filepath: Path) -> Optional[dict]:
+    """
+    EBU R128 measurement of a file: integrated loudness (LUFS), true peak
+    (dBTP) and loudness range (LU) as ``{"loudness_lufs", "true_peak_dbtp",
+    "loudness_range_lu"}``.  ``None`` when the file is silent or the summary
+    could not be read.
+    """
+    cmd = _ffmpeg("-i", filepath, "-vn", "-filter", "ebur128=peak=true")
+    text = cmd.stderr or ""
+    summary_pos = text.rfind("Summary:")
+    if summary_pos >= 0:
+        text = text[summary_pos:]
+    integrated = _loudness_value(_LOUDNESS_I_RE.search(text))
+    if integrated is None or integrated <= LOUDNESS_SILENCE_FLOOR_LUFS:
+        return None
+    result = {
+        "loudness_lufs": round(integrated, 2),
+        "true_peak_dbtp": None,
+        "loudness_range_lu": None,
+    }
+    peak = _loudness_value(_LOUDNESS_PEAK_RE.search(text))
+    if peak is not None:
+        result["true_peak_dbtp"] = round(peak, 2)
+    lra = _loudness_value(_LOUDNESS_LRA_RE.search(text))
+    if lra is not None:
+        result["loudness_range_lu"] = round(lra, 2)
+    return result
+
+
 _SILENCE_DETECT_RE = re.compile(
     r"\[silencedetect.*\] silence_(start|end): (-?\d+(?:\.\d+)?)(?: \| silence_duration: (\d+(?:\.\d+)?))?"
 )

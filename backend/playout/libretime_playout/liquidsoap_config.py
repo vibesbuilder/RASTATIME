@@ -1765,6 +1765,28 @@ def _render_hourly_recording_block(
     )
 
 
+def _render_loudness_block(ceiling_dbtp: Optional[float]) -> str:
+    """
+    RASTATIME 2026-09-28 - EBU R128 stage 1: the peak safety after the
+    per-track gain.  Rendered only when Settings -> Streams -> Loudness
+    Normalization is "EBU R128" (``ceiling_dbtp`` = the true-peak ceiling);
+    otherwise the bus is untouched, exactly as before.  ``limit`` is
+    Liquidsoap's compressor at ratio 20 with a 5 ms attack - a sample-peak
+    limiter, which with a -23 LUFS target leaves ample headroom; the ceiling
+    is an interactive float so the scheduler can move it over telnet.
+    """
+    if ceiling_dbtp is None:
+        return "# loudness limiter: off (Loudness Normalization is not EBU R128)\n"
+    ceiling = max(-20.0, min(0.0, float(ceiling_dbtp)))
+    return (
+        "# RASTATIME 2026-09-28 - EBU R128: peak safety after the per-track gain.\n"
+        "# The ceiling follows Settings -> Streams (True Peak Ceiling); a change\n"
+        "# is applied by the settings restart or `var.set loudness_ceiling`.\n"
+        f'loudness_ceiling = interactive.float("loudness_ceiling", {ceiling:.1f})\n'
+        'bus = limit(id="loudness_limit", threshold=loudness_ceiling, attack=5., release=80., ratio=20., bus)\n'
+    )
+
+
 def _render_crossfade_block(
     track_seconds: float = DEFAULT_CROSSFADE_DURATION,
     show_seconds: float = DEFAULT_SHOW_CROSSFADE_DURATION,
@@ -2144,6 +2166,7 @@ def render_rastatime_liq(
     icy_offair_text: str = DEFAULT_OFFAIR_TEXT,
     icy_station_name: str = DEFAULT_STATION_NAME,
     live_text_url: Optional[str] = DEFAULT_LIVE_TEXT_URL,
+    loudness_limiter_ceiling: Optional[float] = None,
     template_path: Optional[Path] = None,
 ) -> str:
     """
@@ -2260,6 +2283,7 @@ def render_rastatime_liq(
         .replace("${BUS_SOURCE_BLOCK}", bus_block)
         .replace("${WEBSTREAM_WATCHDOG_BLOCK}", webstream_watchdog_block)
         .replace("${ICY_METADATA_BLOCK}", icy_block)
+        .replace("${LOUDNESS_BLOCK}", _render_loudness_block(loudness_limiter_ceiling))
         .replace("${ICECAST_OUTPUTS}", icecast_blocks)
         .replace("${HOURLY_RECORDING_BLOCK}", hourly_block)
     )

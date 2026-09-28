@@ -8,6 +8,9 @@ class StreamPreferencesSerializer(serializers.Serializer):
     message_offline = serializers.CharField(read_only=True)
     replay_gain_enabled = serializers.BooleanField(read_only=True)
     replay_gain_offset = serializers.FloatField(read_only=True)
+    loudness_mode = serializers.CharField(read_only=True, allow_null=True)
+    loudness_target_lufs = serializers.FloatField(read_only=True)
+    loudness_true_peak_dbtp = serializers.FloatField(read_only=True)
 
 
 # pylint: disable=abstract-method

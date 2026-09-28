@@ -41,7 +41,7 @@ festgelegt.  Jeder Punkt bekommt vor Implementierung die
 
 ## 🎯 Aktive Backlog-Items (warten auf Operator-Go)
 
-### 🟡 Loudness nach EBU R128 im Processing (Operator-Frage 2026-09-28, evaluiert: Go in Stufen empfohlen)
+### 🟢 Loudness nach EBU R128 im Processing (Operator-Frage 2026-09-28, Go für Stufe 1 am 2026-09-28 — gebaut, Inbetriebnahme offen)
 
 **Ist-Stand (geprüft 2026-09-28):**
 - Einzige Lautheits-Verarbeitung heute: ReplayGain je Datei.  Der Analyzer
@@ -60,6 +60,14 @@ festgelegt.  Jeder Punkt bekommt vor Implementierung die
   `alimiter` (Filtergraph über die Tracks-API, eigener Clock; im Bench
   regelte `loudnorm` einen −9,7-LUFS-Ton sofort auf −23,0).  ffmpeg 9.0
   (C:\ffmpeg) hat `ebur128` + `loudnorm` für die Offline-Messung.
+
+**Stand 2026-09-28 abends:** Stufe 1 gebaut (Commit folgt im CHANGELOG),
+Zielwert frei mit Vorgabe −23 LUFS (Operator-Entscheidung).  Stufe 0 (Meter)
+vom Operator vorerst abgelehnt.  Stufe 2 (Live-Regler) offen, Operator will
+erst verstehen, was der Regler tut.  **Inbetriebnahme Stufe 1:**
+ANALYZER-, API- und PLAYOUT-Neustart durch den Operator, dann Settings →
+Streams → Loudness Normalization = EBU R128, Save, „Measure missing files
+now" (≈ 377 Dateien, wenige Minuten), Hörprobe.
 
 **Plan in Stufen (jede einzeln abnehmbar):**
 - **Stufe 1 — R128-Messung + Zielwert + Limiter (~1,5–2 Tage):**

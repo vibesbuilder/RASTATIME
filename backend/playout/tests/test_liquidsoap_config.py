@@ -1157,3 +1157,18 @@ def test_render_block_normalizes_localhost_host():
 def test_render_block_keeps_remote_host():
     out = lc._render_icecast_block(_stream(host="stream.example.org"))
     assert 'host="stream.example.org"' in out
+
+
+def test_loudness_block_renders_the_limiter_only_for_r128():
+    """2026-09-28 - EBU R128 stage 1: peak safety after the per-track gain."""
+    off = lc.render_rastatime_liq([_stream()])
+    assert "loudness limiter: off" in off
+    assert "limit(id=\"loudness_limit\"" not in off
+    on = lc.render_rastatime_liq([_stream()], loudness_limiter_ceiling=-1.0)
+    assert 'loudness_ceiling = interactive.float("loudness_ceiling", -1.0)' in on
+    assert 'bus = limit(id="loudness_limit", threshold=loudness_ceiling, attack=5., release=80., ratio=20., bus)' in on
+    # after the replay-gain amplify, before the ICY rewrite
+    assert on.index('amplify(override="replaygain_track_gain"') < on.index('limit(id="loudness_limit"')
+    assert on.index('limit(id="loudness_limit"') < on.index('metadata.map(id="icy_rewrite"')
+    # the ceiling is clamped to a sane range
+    assert 'interactive.float("loudness_ceiling", 0.0)' in lc.render_rastatime_liq([_stream()], loudness_limiter_ceiling=3.0)

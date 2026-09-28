@@ -9,6 +9,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Loudness-Normalisierung nach EBU R128, Stufe 1 (2026-09-28,
+  Operator-Go)** — Settings → Streams: „Loudness Normalization" als
+  Dreiwege-Modus Off / ReplayGain / EBU R128 (ersetzt die Checkbox „Enable
+  Replay Gain"; ein Altbestand leitet den Modus aus dem bisherigen Schalter
+  ab), dazu „Target Loudness" (frei, Vorgabe −23 LUFS) und „True Peak
+  Ceiling" (Vorgabe −1 dBTP), Beschreibungen als Tooltips, Felder je Modus
+  ein-/ausgeblendet.  Analyzer: neuer Schritt `analyze_loudness` misst mit
+  ffmpegs `ebur128`-Filter integrierte Lautheit, True Peak und Loudness
+  Range (`cc_files.loudness_lufs` / `true_peak_dbtp` / `loudness_range_lu`,
+  Migration 0061, Raw-SQL im Legacy-REST, Django-Feld für die API); die
+  bisherige ReplayGain-1.0-Messung bleibt für den ReplayGain-Modus.
+  Bestand: „Measure missing files now" / „Re-measure all" stellen die
+  Bibliothek per RabbitMQ (`options.loudness_only`) dem Analyzer ein, der
+  die Datei an Ort und Stelle misst und nur die drei Spalten zurückschreibt
+  (keine Bewegung, kein Import-Status); Stand „Measured: N of M files".
+  Playout: `file_gain_db()` — R128 = Ziel − Lautheit, gekappt, damit der
+  True Peak die Grenze nicht überschreitet; ungemessene Titel bis zur
+  Messung mit ReplayGain-Wert um (Ziel + 18) verschoben; API
+  `/stream/preferences` liefert `loudness_mode` / `loudness_target_lufs` /
+  `loudness_true_peak_dbtp`.  Liquidsoap: im R128-Modus `limit()` (Ratio
+  20, 5 ms Attack) hinter dem Titel-Gain als Peak-Sicherung, Grenze als
+  `interactive.float("loudness_ceiling")`; Modus und Grenze im
+  Settings-Fingerprint (geplanter Neustart).  Bench auf dem Windows-Build
+  (`xbench/bench_r128.liq`).  Tests (Analyzer-Parser + echte Messung, API,
+  Playout-Gain-Matrix, Render), Handbuch STREAMS ×4, Architektur §23.41.
+  Inbetriebnahme: ANALYZER-, API- und PLAYOUT-Neustart, dann Modus wählen
+  und „Measure missing files now".
+
 - **Live Text Info: die „Now playing"-Zeile als Textdatei (2026-09-28,
   Operator-Go)** — Neuer Bereich Settings → General → „Live Text Info"
   (oberhalb TuneIn): Hauptschalter, eigenes Live-Text-Format (dieselben drei

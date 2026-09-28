@@ -172,6 +172,78 @@ class PreferenceController extends Zend_Controller_Action
         Application_Model_Preference::SetStationLogo('');
     }
 
+    /**
+     * RASTATIME 2026-09-28 - EBU R128 stage 1: how many playable library
+     * files carry a loudness measurement.  Returns [measured, total].
+     */
+    private static function loudnessMeasurementStats()
+    {
+        try {
+            $con = Propel::getConnection();
+            $stmt = $con->query(
+                'SELECT COUNT(*) FILTER (WHERE loudness_lufs IS NOT NULL) AS measured, COUNT(*) AS total '
+                . 'FROM cc_files WHERE file_exists = true AND import_status = 0'
+            );
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            return [(int) ($row['measured'] ?? 0), (int) ($row['total'] ?? 0)];
+        } catch (Exception $e) {
+            Logging::warn('loudnessMeasurementStats: ' . $e->getMessage());
+
+            return [0, 0];
+        }
+    }
+
+    /**
+     * RASTATIME 2026-09-28 - EBU R128 stage 1: queue the library for the
+     * analyzer's loudness measurement (POST, CSRF).  Without force only
+     * files that have no measurement yet; with force=1 every file.
+     * Answers {"queued": N}.
+     */
+    public function remeasureLoudnessAction()
+    {
+        SessionHelper::reopenSessionForWriting();
+
+        $this->view->layout()->disableLayout();
+        $this->_helper->viewRenderer->setNoRender(true);
+
+        if (!SecurityHelper::verifyCSRFToken($this->_getParam('csrf_token'))) {
+            Logging::error(__FILE__ . ': Invalid CSRF token');
+            $this->_helper->json->sendJson(['jsonrpc' => '2.0', 'valid' => false, 'error' => 'CSRF token did not match.']);
+
+            return;
+        }
+
+        $force = (string) $this->_getParam('force', '0') === '1';
+        $con = Propel::getConnection();
+        $sql = 'SELECT id FROM cc_files WHERE file_exists = true AND import_status = 0'
+            . ($force ? '' : ' AND loudness_lufs IS NULL')
+            . ' ORDER BY id';
+        $ids = $con->query($sql)->fetchAll(PDO::FETCH_COLUMN, 0);
+
+        $queued = 0;
+        foreach ($ids as $id) {
+            $file = CcFilesQuery::create()->findPk((int) $id);
+            if (!$file) {
+                continue;
+            }
+            $path = $file->getAbsoluteFilePath();
+            if (!is_file($path)) {
+                continue;
+            }
+            try {
+                Application_Model_RabbitMq::SendLoudnessMeasurementToAnalyzer((int) $id, $path);
+                ++$queued;
+            } catch (Exception $e) {
+                Logging::error('remeasureLoudness: file ' . $id . ': ' . $e->getMessage());
+                break;
+            }
+        }
+        Logging::info('Loudness measurement queued for ' . $queued . ' file(s)' . ($force ? ' (force)' : ''));
+
+        $this->_helper->json->sendJson(['jsonrpc' => '2.0', 'valid' => true, 'queued' => $queued]);
+    }
+
     // RASTATIME 2026-05-15 - Counterpart to removeLogoAction for the favicon.
     public function removeFaviconAction()
     {
@@ -791,6 +863,8 @@ class PreferenceController extends Zend_Controller_Action
         }
 
         $live_stream_subform->updateVariables();
+        // RASTATIME 2026-09-28 - "Measured: N of M files" for the EBU R128 block
+        $form->setLoudnessStats(...self::loudnessMeasurementStats());
         $form->startFrom();
 
         if ($request->isPost()) {
@@ -811,10 +885,20 @@ class PreferenceController extends Zend_Controller_Action
                 $this->setStreamPreferences($values);
 
                 // compare new values with current value
-                $changeRGenabled = Application_Model_Preference::GetEnableReplayGain() != $values['enableReplayGain'];
-                $changeRGmodifier = Application_Model_Preference::getReplayGainModifier() != $values['replayGainModifier'];
+                // RASTATIME 2026-09-28 - Loudness Normalization: mode + target +
+                // ceiling next to the ReplayGain modifier; any change re-fills
+                // the schedule (the gain per track is computed there).
+                $newMode = $values['loudnessMode'] ?? Application_Model_Preference::getLoudnessMode();
+                $newTarget = $values['loudnessTarget'] ?? Application_Model_Preference::getLoudnessTargetLufs();
+                $newTruePeak = $values['loudnessTruePeak'] ?? Application_Model_Preference::getLoudnessTruePeakDbtp();
+                $changeRGenabled = Application_Model_Preference::getLoudnessMode() != $newMode;
+                $changeRGmodifier = Application_Model_Preference::getReplayGainModifier() != $values['replayGainModifier']
+                    || (float) Application_Model_Preference::getLoudnessTargetLufs() != (float) $newTarget
+                    || (float) Application_Model_Preference::getLoudnessTruePeakDbtp() != (float) $newTruePeak;
                 if ($changeRGenabled || $changeRGmodifier) {
-                    Application_Model_Preference::SetEnableReplayGain($values['enableReplayGain']);
+                    Application_Model_Preference::setLoudnessMode($newMode);
+                    Application_Model_Preference::setLoudnessTargetLufs($newTarget);
+                    Application_Model_Preference::setLoudnessTruePeakDbtp($newTruePeak);
                     Application_Model_Preference::setReplayGainModifier($values['replayGainModifier']);
                     // The side effects of this function are still required to fill the schedule, we
                     // don't use the returned schedule.

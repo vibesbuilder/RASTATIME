@@ -22,6 +22,9 @@ except ImportError:
         message_offline: str = "Offline"
         replay_gain_enabled: bool = False
         replay_gain_offset: float = 0.0
+        loudness_mode: Optional[str] = None
+        loudness_target_lufs: float = -23.0
+        loudness_true_peak_dbtp: float = -1.0
 
 from .events import (
     ActionEvent,
@@ -237,15 +240,55 @@ def generate_file_events(
         no_fade_crossfade=bool(file.get("no_fade_crossfade") or False),
     )
 
-    if event.replay_gain is None:
-        event.replay_gain = 0.0
-
-    if stream_preferences.replay_gain_enabled:
-        event.replay_gain += stream_preferences.replay_gain_offset
-    else:
-        event.replay_gain = None
+    event.replay_gain = file_gain_db(file, stream_preferences)
 
     insert_event(events, make_event_key(event.start, f"file-{event.row_id}"), event)
+
+
+# RASTATIME 2026-09-28 - ReplayGain 1.0 measures against a reference that
+# sits around -18 LUFS; a file without an R128 measurement yet uses it as
+# an approximation in R128 mode until "Measure loudness now" has run.
+REPLAYGAIN_REFERENCE_LUFS = -18.0
+
+
+def _float_or_none(raw) -> Optional[float]:
+    try:
+        return float(raw) if raw is not None and raw != "" else None
+    except (TypeError, ValueError):
+        return None
+
+
+def file_gain_db(file: dict, stream_preferences) -> Optional[float]:
+    """
+    RASTATIME 2026-09-28 - the per-track gain (dB) for the annotate
+    ``replaygain_track_gain`` field, by Settings -> Streams -> Loudness
+    Normalization:
+
+      off         None (unity gain)
+      replaygain  ReplayGain value + modifier (as before)
+      r128        target - integrated loudness, capped so the file's true
+                  peak never exceeds the ceiling (the bus limiter stays the
+                  safety net); an unmeasured file falls back to the
+                  ReplayGain value shifted to the target.
+    """
+    mode = getattr(stream_preferences, "loudness_mode", None) or (
+        "replaygain" if stream_preferences.replay_gain_enabled else "off"
+    )
+    replay_gain = _float_or_none(file.get("replay_gain")) or 0.0
+    if mode == "r128":
+        target = float(getattr(stream_preferences, "loudness_target_lufs", -23.0))
+        ceiling = float(getattr(stream_preferences, "loudness_true_peak_dbtp", -1.0))
+        loudness = _float_or_none(file.get("loudness_lufs"))
+        if loudness is None:
+            return round(replay_gain + (target - REPLAYGAIN_REFERENCE_LUFS), 2)
+        gain = target - loudness
+        true_peak = _float_or_none(file.get("true_peak_dbtp"))
+        if true_peak is not None and true_peak + gain > ceiling:
+            gain = ceiling - true_peak
+        return round(gain, 2)
+    if mode == "replaygain":
+        return replay_gain + float(stream_preferences.replay_gain_offset or 0.0)
+    return None
 
 
 def generate_show_record_events(

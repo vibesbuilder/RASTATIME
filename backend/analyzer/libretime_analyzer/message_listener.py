@@ -131,7 +131,8 @@ class MessageListener:
             callback_url = f"{self.config.general.public_url}/rest/media/{file_id}"
             callback_api_key = self.config.general.api_key
 
-            StatusReporter.report_success(callback_url, callback_api_key, metadata)
+            if metadata:  # a failed loudness-only measurement reports nothing
+                StatusReporter.report_success(callback_url, callback_api_key, metadata)
 
         except KeyError:
             logger.exception("A mandatory field was missing from the message.")
@@ -170,18 +171,26 @@ class MessageListener:
         metadata = {}
 
         queue = Queue()
+        # RASTATIME 2026-09-28 - "loudness_only": re-measure an already
+        # imported file (EBU R128); nothing is moved and a failure must not
+        # mark the file as a failed import - the result stays empty.
+        loudness_only = bool(options.get("loudness_only"))
         try:
-            Pipeline.run_analysis(
-                queue,
-                audio_file_path,
-                import_directory,
-                original_filename,
-                PipelineOptions(**options),
-            )
+            if loudness_only:
+                Pipeline.run_loudness(queue, audio_file_path)
+            else:
+                Pipeline.run_analysis(
+                    queue,
+                    audio_file_path,
+                    import_directory,
+                    original_filename,
+                    PipelineOptions(**{k: v for k, v in options.items() if k != "loudness_only"}),
+                )
             metadata = queue.get()
         except Exception as exception:
             logger.exception("Analyzer pipeline exception: %s", exception)
-            metadata["import_status"] = PipelineStatus.FAILED
+            if not loudness_only:
+                metadata["import_status"] = PipelineStatus.FAILED
 
         # Ensure our queue doesn't fill up and block due to unexpected behavior. Defensive code.
         while not queue.empty():

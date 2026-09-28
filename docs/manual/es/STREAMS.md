@@ -60,6 +60,48 @@ nombre de la emisora viene de Configuración → General.
 - La etiqueta se escribe en los metadatos de título del flujo: aplica a
   MP3/AAC (ICY), a OGG (in-band) y a las grabaciones.
 
+### Normalización de sonoridad (ReplayGain / EBU R128)
+
+Iguala el nivel de las pistas programadas para que una grabación folk
+suave y una mezcla de club potente lleguen a los oyentes con la misma
+sonoridad.  Tres modos, elegidos en la página Streams; cada descripción
+está disponible como icono de ayuda junto a su campo.
+
+| Modo | Qué hace |
+|---|---|
+| **Desactivado** | Cada pista se reproduce a su propio nivel. |
+| **ReplayGain** | El valor ReplayGain medido al importar más el control *Replay Gain Modifier* (el comportamiento de versiones anteriores). |
+| **EBU R128** | Cada pista se mide según la norma de sonoridad de radiodifusión (ITU BS.1770 / EBU R128) y se reproduce a la **Sonoridad objetivo**; un limitador de picos en el bus de salida respeta el **Techo de pico real**. |
+
+Ajustes para EBU R128:
+
+- **Sonoridad objetivo (LUFS)** — la sonoridad integrada a la que se
+  reproduce cada pista.  EBU R128 establece −23 LUFS para radiodifusión;
+  los flujos web suelen usar objetivos más altos entre −18 y −16 LUFS.
+  El valor es libre; −23 es el valor predeterminado.
+- **Techo de pico real (dBTP)** — el nivel que ningún pico puede superar
+  (predeterminado −1 dBTP).  Una pista silenciosa se amplifica solo hasta
+  donde lo permite su pico real medido; el limitador del bus se encarga
+  del resto.
+- **Medición de sonoridad** — los archivos importados a partir de ahora
+  se miden automáticamente.  *Medir ahora los archivos que faltan* pone
+  en cola cada archivo sin medición para el analizador; *Volver a medir
+  todo* toda la biblioteca.  La medición se ejecuta en segundo plano,
+  unos segundos por archivo; la línea «Medidos: N de M archivos» muestra
+  el estado tras recargar la página.  Hasta que una pista esté medida,
+  se reproduce con su valor ReplayGain desplazado al objetivo.
+
+Notas:
+
+- Un cambio de modo, objetivo o techo surte efecto en la siguiente
+  actualización de la programación (unos dos minutos) para las ganancias
+  de las pistas; el limitador del bus lo aplica el reinicio planificado
+  del playout en el siguiente límite de pista.
+- Las fuentes en directo (DJ, flujo web, entrada de línea) no se ven
+  afectadas por esta etapa; su nivel es el que entrega la fuente.
+- Los valores medidos se guardan por archivo (sonoridad integrada, pico
+  real, rango de sonoridad) y se conservan al cambiar los ajustes.
+
 ### Insignia de estado del stream
 
 | Insignia | Significado |

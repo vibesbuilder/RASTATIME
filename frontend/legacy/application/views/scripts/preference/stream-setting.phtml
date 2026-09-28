@@ -47,15 +47,46 @@
                         <?php echo $this->form->getElement('offAirMeta') ?>
                     </dd>
 
-                    <dt id="enableReplayGain-label">
+                    <?php /* RASTATIME 2026-09-28 - Loudness Normalization (EBU R128, stage 1) */ ?>
+                    <dt id="loudnessMode-label">
                         <label>
-                            <?php echo $this->form->getElement('enableReplayGain')->getLabel() ?> :
+                            <?php echo $this->form->getElement('loudnessMode')->getLabel() ?> :
                         </label>
                     </dt>
-                    <dd id="enableReplayGain-element">
-                        <?php echo $this->form->getElement('enableReplayGain') ?>
+                    <dd id="loudnessMode-element">
+                        <?php echo $this->form->getElement('loudnessMode') ?>
+                        <p class="description"><?php echo $this->form->getElement('loudnessMode')->getDescription() ?></p>
                     </dd>
-                    <dt id="replayGainModifier-label" class="block-display">
+                    <dt id="loudnessTarget-label" class="loudness-r128-field">
+                        <label>
+                            <?php echo $this->form->getElement('loudnessTarget')->getLabel() ?> :
+                        </label>
+                    </dt>
+                    <dd id="loudnessTarget-element" class="loudness-r128-field">
+                        <?php echo $this->form->getElement('loudnessTarget') ?>
+                        <p class="description"><?php echo $this->form->getElement('loudnessTarget')->getDescription() ?></p>
+                    </dd>
+                    <dt id="loudnessTruePeak-label" class="loudness-r128-field">
+                        <label>
+                            <?php echo $this->form->getElement('loudnessTruePeak')->getLabel() ?> :
+                        </label>
+                    </dt>
+                    <dd id="loudnessTruePeak-element" class="loudness-r128-field">
+                        <?php echo $this->form->getElement('loudnessTruePeak') ?>
+                        <p class="description"><?php echo $this->form->getElement('loudnessTruePeak')->getDescription() ?></p>
+                    </dd>
+                    <dt id="loudnessMeasure-label" class="loudness-r128-field">
+                        <label><?php echo _('Loudness measurement') ?> :</label>
+                    </dt>
+                    <dd id="loudnessMeasure-element" class="loudness-r128-field">
+                        <span id="loudness_measured_status">
+                            <?php echo sprintf(_('Measured: %1$s of %2$s files'), $this->form->loudnessMeasured, $this->form->loudnessTotal) ?>
+                        </span>
+                        <button type="button" id="loudness_measure_btn" class="btn btn-small" style="margin-left: 8px"><?php echo _('Measure missing files now') ?></button>
+                        <button type="button" id="loudness_remeasure_btn" class="btn btn-small" style="margin-left: 4px"><?php echo _('Re-measure all') ?></button>
+                        <p class="description"><?php echo _('Files imported from now on are measured automatically. The buttons queue the existing library for the analyzer (a few seconds per file, in the background); an unmeasured track plays with its ReplayGain value shifted to the target until then.') ?></p>
+                    </dd>
+                    <dt id="replayGainModifier-label" class="block-display loudness-replaygain-field">
                         <label><?php echo $this->form->getElement('replayGainModifier')->getLabel() ?>:
                         </label>
                         <span id="rg_modifier_value" style="border: 0; color: #f6931f; font-weight: bold;">
@@ -63,7 +94,7 @@
                         </span>
                         <?php echo _("dB") ?>
                     </dt>
-                    <dd id="replayGainModifier-element" class="block-display">
+                    <dd id="replayGainModifier-element" class="block-display loudness-replaygain-field">
                         <?php echo $this->form->getElement('replayGainModifier') ?>
                         <?php if ($this->form->getElement('replayGainModifier')->hasErrors()) : ?>
                             <ul class='errors'>

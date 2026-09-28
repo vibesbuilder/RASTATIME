@@ -6,6 +6,7 @@ from typing import Any, Dict, Protocol
 from pydantic import BaseModel
 
 from .analyze_cuepoint import analyze_cuepoint, analyze_duration
+from .analyze_loudness import analyze_loudness
 from .analyze_metadata import analyze_metadata
 from .analyze_playability import UnplayableFileError, analyze_playability
 from .analyze_replaygain import analyze_replaygain
@@ -88,6 +89,7 @@ class Pipeline:
             if options.analyze_cue_points:
                 metadata = analyze_cuepoint(audio_file_path, metadata)
             metadata = analyze_replaygain(audio_file_path, metadata)
+            metadata = analyze_loudness(audio_file_path, metadata)
             metadata = analyze_playability(audio_file_path, metadata)
 
             metadata = organise_file(
@@ -106,6 +108,22 @@ class Pipeline:
             metadata["import_status"] = PipelineStatus.FAILED
             metadata["reason"] = "The file could not be played."
             raise exception
+        except Exception as exception:
+            logger.exception(exception)
+            raise exception
+
+    @staticmethod
+    def run_loudness(queue: Queue, audio_file_path: str):
+        """
+        RASTATIME 2026-09-28 - re-measure an ALREADY IMPORTED file (EBU
+        R128 only): no metadata extraction, no move, no import status.
+        The result carries just the three loudness keys, so the callback
+        PUT touches nothing else in cc_files.
+        """
+        metadata: Dict[str, Any] = {}
+        try:
+            metadata = analyze_loudness(audio_file_path, metadata)
+            queue.put(metadata)
         except Exception as exception:
             logger.exception(exception)
             raise exception

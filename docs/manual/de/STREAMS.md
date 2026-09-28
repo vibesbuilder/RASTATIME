@@ -96,6 +96,49 @@ kommt aus Einstellungen → General.
 - Das Label wird in die Titel-Metadaten des Streams geschrieben und gilt
   damit für MP3/AAC (ICY), für OGG (in-band) und für die Aufnahmen.
 
+### Lautheitsnormalisierung (ReplayGain / EBU R128)
+
+Gleicht den Pegel geplanter Titel an, damit eine leise Folk-Aufnahme
+und ein lauter Club-Mix die Hörer mit derselben Lautheit erreichen.
+Drei Modi, wählbar auf der Streams-Seite; jede Beschreibung steht als
+Hilfesymbol neben ihrem Feld bereit.
+
+| Modus | Was er tut |
+|---|---|
+| **Aus** | Jeder Titel spielt mit seinem eigenen Pegel. |
+| **ReplayGain** | Der beim Import gemessene ReplayGain-Wert plus der Schieberegler *Replay Gain Modifier* (das Verhalten früherer Versionen). |
+| **EBU R128** | Jeder Titel wird nach dem Rundfunk-Lautheitsstandard (ITU BS.1770 / EBU R128) gemessen und mit der **Ziel-Lautheit** gespielt; ein Peak-Limiter auf dem Ausgangsbus hält die **True-Peak-Grenze** ein. |
+
+Einstellungen für EBU R128:
+
+- **Ziel-Lautheit (LUFS)** — die integrierte Lautheit, mit der jeder
+  Titel gespielt wird.  EBU R128 sieht −23 LUFS für Rundfunk vor;
+  Webstreams verwenden häufig lautere Ziele zwischen −18 und −16 LUFS.
+  Der Wert ist frei wählbar; −23 ist die Vorgabe.
+- **True-Peak-Grenze (dBTP)** — der Pegel, den kein Spitzenwert
+  überschreiten darf (Vorgabe −1 dBTP).  Ein leiser Titel wird nur so
+  weit angehoben, wie sein gemessener True Peak es zulässt; den Rest
+  fängt der Limiter auf dem Bus ab.
+- **Lautheitsmessung** — ab jetzt importierte Dateien werden
+  automatisch gemessen.  *Fehlende Dateien jetzt messen* reiht jede
+  Datei ohne Messung beim Analyzer ein; *Alle neu messen* die gesamte
+  Bibliothek.  Die Messung läuft im Hintergrund, wenige Sekunden je
+  Datei; die Zeile „Gemessen: N von M Dateien" zeigt den Stand nach dem
+  Neuladen der Seite.  Bis ein Titel gemessen ist, spielt er mit seinem
+  auf das Ziel verschobenen ReplayGain-Wert.
+
+Hinweise:
+
+- Eine Änderung von Modus, Ziel oder Grenze wirkt beim nächsten
+  Schedule-Refresh (etwa zwei Minuten) auf die Titel-Verstärkung; den
+  Bus-Limiter übernimmt der geplante Neustart des Playouts an der
+  nächsten Titelgrenze.
+- Live-Quellen (DJ, Webstream, Line-In) sind von dieser Stufe nicht
+  betroffen; ihr Pegel ist der, den die Quelle liefert.
+- Die Messwerte werden je Datei gespeichert (integrierte Lautheit, True
+  Peak, Loudness Range) und bleiben bei Änderungen der Einstellungen
+  erhalten.
+
 ### Stream-Status-Badge
 
 Der Badge rechts neben dem Namen jedes aktivierten Streams:

@@ -281,6 +281,37 @@ class CcFiles extends BaseCcFiles
             $file->setDbMtime($now);
             $file->save();
 
+            // RASTATIME 2026-09-28 - EBU R128 measurement (migration 0061):
+            // loudness_lufs / true_peak_dbtp / loudness_range_lu arrive from
+            // the analyzer (import and "Measure loudness now").  Propel does
+            // not know the columns, so persist them via raw SQL; a key that
+            // is absent leaves the stored value untouched, null clears it.
+            $loudnessKeys = ['loudness_lufs', 'true_peak_dbtp', 'loudness_range_lu'];
+            $loudnessSet = [];
+            foreach ($loudnessKeys as $lk) {
+                if (array_key_exists($lk, $fileArray)) {
+                    $lv = $fileArray[$lk];
+                    $loudnessSet[$lk] = ($lv === null || $lv === '') ? null : (float) $lv;
+                }
+            }
+            if (!empty($loudnessSet)) {
+                $con = Propel::getConnection();
+                $assign = [];
+                foreach ($loudnessSet as $lk => $lv) {
+                    $assign[] = "{$lk} = :{$lk}";
+                }
+                $stmt = $con->prepare('UPDATE cc_files SET ' . implode(', ', $assign) . ' WHERE id = :id');
+                foreach ($loudnessSet as $lk => $lv) {
+                    if ($lv === null) {
+                        $stmt->bindValue(":{$lk}", null, PDO::PARAM_NULL);
+                    } else {
+                        $stmt->bindValue(":{$lk}", $lv);
+                    }
+                }
+                $stmt->bindValue(':id', (int) $fileId, PDO::PARAM_INT);
+                $stmt->execute();
+            }
+
             // RASTATIME 2026-05-16 - Track Expiry: persist expires_at via
             // raw SQL.  Propel CcFiles class is not regenerated for this
             // column (see schema.xml note), so $file->fromArray() above

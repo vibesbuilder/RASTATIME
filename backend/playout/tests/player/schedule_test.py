@@ -682,3 +682,55 @@ def test_get_schedule(schedule, requests_mock, api_client: ApiClient):
             file_ready=False,
         ),
     }
+
+
+# ---------------------------------------------------------------------------
+# RASTATIME 2026-09-28 - Loudness Normalization (EBU R128 stage 1)
+# ---------------------------------------------------------------------------
+
+def test_file_gain_db_by_mode():
+    from types import SimpleNamespace
+
+    from libretime_playout.player.schedule import file_gain_db
+
+    stream_preferences = SimpleNamespace(
+        input_fade_transition=0.0, message_format=0, message_offline="",
+        replay_gain_enabled=True, replay_gain_offset=0.0, loudness_mode=None,
+        loudness_target_lufs=-23.0, loudness_true_peak_dbtp=-1.0,
+    )
+    measured = {"replay_gain": "4.52", "loudness_lufs": "-14.2", "true_peak_dbtp": "-0.4"}
+    stream_preferences.replay_gain_enabled = True
+    stream_preferences.replay_gain_offset = -3.5
+    stream_preferences.loudness_mode = "replaygain"
+    assert file_gain_db(measured, stream_preferences) == pytest.approx(4.52 - 3.5)
+
+    stream_preferences.loudness_mode = "off"
+    assert file_gain_db(measured, stream_preferences) is None
+
+    stream_preferences.loudness_mode = "r128"
+    stream_preferences.loudness_target_lufs = -23.0
+    stream_preferences.loudness_true_peak_dbtp = -1.0
+    assert file_gain_db(measured, stream_preferences) == pytest.approx(-8.8)   # -23 - (-14.2)
+    # a quiet file is boosted, but never past the true-peak ceiling
+    quiet = {"replay_gain": "0", "loudness_lufs": "-30.0", "true_peak_dbtp": "-3.0"}
+    assert file_gain_db(quiet, stream_preferences) == pytest.approx(2.0)       # 7 dB wanted, 2 dB allowed
+    quiet_soft = {"replay_gain": "0", "loudness_lufs": "-30.0", "true_peak_dbtp": "-12.0"}
+    assert file_gain_db(quiet_soft, stream_preferences) == pytest.approx(7.0)
+    # not measured yet: ReplayGain shifted from its ~-18 LUFS reference to the target
+    unmeasured = {"replay_gain": "4.52"}
+    assert file_gain_db(unmeasured, stream_preferences) == pytest.approx(4.52 - 5.0)
+    # the target is free: a louder streaming target
+    stream_preferences.loudness_target_lufs = -16.0
+    assert file_gain_db(measured, stream_preferences) == pytest.approx(-1.8)
+
+
+def test_file_gain_db_without_loudness_fields_follows_the_replaygain_switch():
+    from libretime_playout.player.schedule import file_gain_db
+
+    class OldPrefs:      # a StreamPreferences from before the loudness fields
+        replay_gain_enabled = True
+        replay_gain_offset = 1.0
+
+    assert file_gain_db({"replay_gain": "2.0"}, OldPrefs()) == pytest.approx(3.0)
+    OldPrefs.replay_gain_enabled = False
+    assert file_gain_db({"replay_gain": "2.0"}, OldPrefs()) is None
