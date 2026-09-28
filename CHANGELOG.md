@@ -30,7 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Nachbesserung: der Schreiber muss `start_listener()` übergeben werden — die
   vorab gesetzte Handler-Eigenschaft wurde vom Listener-Start mit dem
   Standardwert überschrieben, `/live-text` antwortete 503 und keine Datei
-  entstand (erster Live-Versuch 14:35); Regressionstest.
+  entstand (erster Live-Versuch 14:35); Regressionstest — `716f28f`.
 
 - **TuneIn „Now playing" aus dem Playout (2026-09-28, Operator-Go Option 2)** —
   Die Einstellungen unter Settings → TuneIn waren nur halb verdrahtet: der
