@@ -2514,6 +2514,12 @@ dd.radio-inline-list, .preferences dd.radio-inline-list, .stream-config dd.radio
 /*padding: .4em 1em;*/
 /*}*/
 
+/* RASTATIME 2026-09-28 - help icons next to track editor fields (descriptions
+   turned into tooltips by _initFileMdEvents) */
+.edit-md-dialog dd .help_icon {
+  margin-left: 6px;
+  vertical-align: middle;
+}
 .edit-md-dialog #submitButtons-element {
     display: -webkit-box;
     display: -moz-box;

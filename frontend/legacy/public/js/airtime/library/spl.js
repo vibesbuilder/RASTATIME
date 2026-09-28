@@ -1337,6 +1337,31 @@ var AIRTIME = (function (AIRTIME) {
   mod._initFileMdEvents = function (newTab) {
     var fileId = newTab.wrapper.find("#file_id").val();
 
+    // RASTATIME 2026-09-28 - field explanations as tooltips (help_icon +
+    // rtTooltip, the /preference/stream-setting look): the Zend description
+    // paragraph under a field (Expiry Date, No Fade during Crossover, ...)
+    // becomes a help icon next to the input.  Text is already translated
+    // server-side; escaped because rtTooltip renders HTML.
+    newTab.wrapper.find(".edit-md-dialog form dd").each(function () {
+      var dd = $(this);
+      var desc = dd.children("p.description").first();
+      if (!desc.length) {
+        return;
+      }
+      var text = $.trim(desc.text());
+      desc.remove();
+      if (!text) {
+        return;
+      }
+      var icon = $('<span class="help_icon"></span>');
+      dd.append(icon);
+      icon.rtTooltip({
+        content: { text: $("<div>").text(text).html() },
+        placement: "right",
+        interactive: true,
+      });
+    });
+
     newTab.contents.find(".md-cancel").on("click", function () {
       newTab.close();
     });

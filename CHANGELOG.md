@@ -326,6 +326,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Track-Editor: Erklärungstexte als Tooltips (2026-09-28, Operator-Wunsch)** —
+  Die Beschreibungen unter „Expiry Date" und „No Fade during Crossover"
+  (Zend `description`-Absatz) werden beim Öffnen des Editors in das
+  Standard-Hilfe-Icon mit rtTooltip umgewandelt (`_initFileMdEvents` in
+  `spl.js`, generisch für jedes Feld mit Beschreibung; Text bleibt
+  serverseitig übersetzt, wird HTML-escaped).  Gleiche Optik wie unter
+  Settings → Streams.  Im Browser geprüft: zwei Icons 14×14 mit Tooltip-API,
+  keine Absätze mehr.
+
 - **„Exclude from Crossover" → „No Fade during Crossover" (2026-09-27, Operator
   nach der Abnahme)** — Der markierte Titel bleibt im Crossover (Überlappung
   wie eingestellt), wird aber selbst nicht ein- oder ausgeblendet: er behält
