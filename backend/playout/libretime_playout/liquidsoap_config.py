@@ -191,6 +191,9 @@ DEFAULT_HARBOR_BUFFER_SECONDS = 5.0
 # ~87 KB on the Windows build; the poll alone was ~150 MB/h).  None
 # renders no callbacks (PLAYOUT then relies on its periodic reconcile).
 DEFAULT_SOURCE_EVENT_URL = "http://127.0.0.1:8770/source-event"
+# RASTATIME 2026-09-28 - Live Text Info: Liquidsoap POSTs the "now playing"
+# line (Live Text Format) to the playout listener on every metadata packet.
+DEFAULT_LIVE_TEXT_URL = "http://127.0.0.1:8770/live-text"
 DEFAULT_SOURCE_EVENT_TIMEOUT_SECONDS = 2.0
 
 # RASTATIME 2026-09-09 - input.harbor network timeout.  The Windows build
@@ -491,10 +494,33 @@ def _normalize_loopback_host(host: str) -> str:
     return "127.0.0.1" if host.strip().lower() == "localhost" else host
 
 
+def _live_text_report_lines(live_text_url: Optional[str]) -> List[str]:
+    """``livetext_report(m)``: POST the Live Text line to PLAYOUT (or a no-op)."""
+    if not live_text_url:
+        return ["def livetext_report(_) = () end"]
+    url = _escape_liq_string(live_text_url)
+    return [
+        "def livetext_report(m) =",
+        "  if livetext_enabled() then",
+        "    label = label_for(livetext_format(), m)",
+        '    if label != "" then',
+        "      thread.run(fun () ->",
+        "        try",
+        f'          ignore(http.post(timeout=2.0, data=label, "{url}"))',
+        "        catch err do",
+        '          log(level=3, label="rastatime.livetext", "POST failed: #{err}")',
+        "        end)",
+        "    end",
+        "  end",
+        "end",
+    ]
+
+
 def _render_icy_metadata_block(
     label_format: int = DEFAULT_ICY_FORMAT,
     offair_text: str = DEFAULT_OFFAIR_TEXT,
     station_name: str = DEFAULT_STATION_NAME,
+    live_text_url: Optional[str] = DEFAULT_LIVE_TEXT_URL,
 ) -> str:
     """
     RASTATIME 2026-09-13 - the ``${ICY_METADATA_BLOCK}``: four telnet-
@@ -526,17 +552,19 @@ def _render_icy_metadata_block(
         f'station_name = interactive.string("station_name", "{_escape_liq_string(station_name)}")',
         'bus_show = interactive.string("bus_show", "")',
         "",
-        "# icy_label: the Stream Label for one metadata packet (\"\" = leave the",
-        "# packet alone).  Only the fields of THAT",
+        "# label_for: the label for one metadata packet in format fmt (\"\" = leave",
+        "# the packet alone).  Only the fields of THAT",
         "# packet are known - a harbor packet with just a title takes the show",
         "# from bus_show().  Formats: 0 Artist - Title, 1 Show - Artist - Title,",
         "# 2 Station name - Show name; an off_air packet always shows the text;",
         "# a packet without any of these fields leaves the title alone (null).",
-        "def icy_label(m) =",
+        "# 2026-09-28: a live source without artist/title (DJ sending no metadata,",
+        "# webstream without titles, line-in) shows 'Station name - Show name' in",
+        "# every format (operator decision; before: the bare show name).",
+        "def label_for(fmt, m) =",
         '  title = m["title"]',
         '  artist = m["artist"]',
         '  show = if m["show_name"] != "" then m["show_name"] else bus_show() end',
-        "  fmt = icy_format()",
         "  # packets without any of our fields (blank's empty track start,",
         "  # transition internals, replays) must not touch the title -> null",
         '  known = title != "" or artist != "" or m["show_name"] != "" or m["off_air"] == "true"',
@@ -552,14 +580,23 @@ def _render_icy_metadata_block(
         '      parts = list.filter(fun (p) -> p != "", parts)',
         "      if list.length(parts) > 0 then",
         '        string.concat(separator=" - ", parts)',
-        '      elsif show != "" then',
-        "        show",
         "      else",
-        "        station_name()",
+        '        if show != "" then "#{station_name()} - #{show}" else station_name() end',
         "      end",
         "    end",
         "  label",
         "end",
+        "# icy_label: the Stream Label (Settings -> Streams) for the outputs",
+        "def icy_label(m) =",
+        "  label_for(icy_format(), m)",
+        "end",
+        "",
+        "# RASTATIME 2026-09-28 - Live Text Info (Settings -> General): the same",
+        "# line in its own format, POSTed to PLAYOUT on every metadata packet",
+        "# (dedup happens there).  var.set livetext_enabled / livetext_format.",
+        'livetext_enabled = interactive.bool("livetext_enabled", false)',
+        'livetext_format = interactive.int("livetext_format", 0)',
+        *_live_text_report_lines(live_text_url),
         "",
         "# icy_rewrite: applied to the bus (metadata.map, see the template).  The",
         "# label replaces the packet's title and the artist is cleared, so every",
@@ -2094,6 +2131,7 @@ def render_rastatime_liq(
     icy_label_format: int = DEFAULT_ICY_FORMAT,
     icy_offair_text: str = DEFAULT_OFFAIR_TEXT,
     icy_station_name: str = DEFAULT_STATION_NAME,
+    live_text_url: Optional[str] = DEFAULT_LIVE_TEXT_URL,
     template_path: Optional[Path] = None,
 ) -> str:
     """
@@ -2136,6 +2174,7 @@ def render_rastatime_liq(
     )
     icy_block = _render_icy_metadata_block(
         icy_label_format, icy_offair_text, icy_station_name,
+        live_text_url=live_text_url,
     )
 
     harbor_block = _render_harbor_inputs_block(
@@ -2258,6 +2297,7 @@ def write_rastatime_liq(
     icy_label_format: int = DEFAULT_ICY_FORMAT,
     icy_offair_text: str = DEFAULT_OFFAIR_TEXT,
     icy_station_name: str = DEFAULT_STATION_NAME,
+    live_text_url: Optional[str] = DEFAULT_LIVE_TEXT_URL,
     template_path: Optional[Path] = None,
 ) -> bool:
     """
@@ -2316,6 +2356,7 @@ def write_rastatime_liq(
         icy_label_format=icy_label_format,
         icy_offair_text=icy_offair_text,
         icy_station_name=icy_station_name,
+        live_text_url=live_text_url,
         template_path=template_path,
     )
 

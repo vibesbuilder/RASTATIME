@@ -62,6 +62,26 @@ Paramètres → **Préférences générales**.
 | **Vue d'avance** | Combien d'émissions à venir le panneau "Vient ensuite" affiche. 3-5 est typique. |
 | **Intervalle de rafraîchissement** | À quelle fréquence le Tableau de bord interroge. 5 s par défaut. |
 
+### Info texte en direct
+
+Section repliable sous les Préférences générales (depuis le 2026-09-28).
+La ligne « now playing » sous forme de fichier texte pour d'autres
+systèmes (site web, afficheurs, agrégateurs) : une ligne UTF-8, toujours
+remplacée, écrite par le playout à chaque changement de titre, webstream,
+entrée ligne ou DJ.
+
+| Champ | Notes |
+|---|---|
+| **Écrire la ligne « now playing » dans un fichier texte ?** | Interrupteur principal. |
+| **Format du texte en direct** | Les trois mêmes variantes que le Stream Label (Artist - Title / Show - Artist - Title / Station name - Show name) avec les mêmes replis : une source en direct sans artiste ni titre affiche *Station name - Show name*, le silence affiche le texte Off Air. Indépendant du Stream Label. |
+| **Publier sur le web** | Le fichier est servi sous `http://<hôte>/live/now-playing.txt` (fichier statique, sans connexion, indépendant de l'interrupteur Public API). Accessible depuis Internet dès que le serveur web l'est, comme les widgets. |
+| **Écrire aussi dans un fichier** | Chemin absolu facultatif (cette machine ou un partage réseau). |
+| **Envoyer sur un serveur FTP** | À chaque changement le fichier est envoyé via FTP, FTPS (TLS explicite) ou SFTP vers le chemin distant ; identifiants propres, distincts de l'import FTP. SFTP exige un `curl` avec libssh2 (celui livré avec Git pour Windows ; le curl intégré à Windows ne le peut pas). Les échecs sont journalisés ; le changement suivant réessaie. |
+
+La ligne est construite par le moteur audio à partir des métadonnées
+qu'il envoie réellement au flux, titres DJ et titres de webstream compris.
+Un paramètre modifié s'applique au prochain changement, sans redémarrage.
+
 ### Paramètres TuneIn
 
 Section repliable sous les Préférences générales. Depuis le 2026-09-28,

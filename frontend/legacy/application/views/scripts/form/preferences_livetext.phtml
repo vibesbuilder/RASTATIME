@@ -1,0 +1,39 @@
+<?php
+/* RASTATIME 2026-09-28 - Live Text Info section (Settings -> General, above TuneIn). */
+$publicUrl = rtrim(Config::getPublicUrl(), '/') . '/live/now-playing.txt';
+?>
+<fieldset class="padded live-text-settings">
+    <p class="input-settings-inline-p">
+        <?php echo _("The playout writes the \"now playing\" line at every change of track, webstream, Line-In or DJ - one line, always replaced. Other systems (website, displays, aggregators) read it from the web address below, from the optional file or from your FTP server.") ?>
+    </p>
+    <dl class="zend_form">
+        <?php if ($this->element->getElement("enable_live_text")->hasErrors()) {
+            echo $this->element->getElement('enable_live_text')->renderErrors();
+        } ?>
+        <?php echo $this->element->getElement('enable_live_text')->renderViewHelper() ?>
+        <?php echo $this->element->getElement('enable_live_text')->renderLabel() ?>
+
+        <dt id="live_text_format-label"><label><?php echo _("Live Text Format:") ?></label></dt>
+        <dd id="live_text_format-element" class="block-display">
+            <?php echo $this->element->getElement('live_text_format')->render() ?>
+        </dd>
+
+        <?php echo $this->element->getElement('live_text_web_enabled')->renderViewHelper() ?>
+        <?php echo $this->element->getElement('live_text_web_enabled')->renderLabel() ?>
+        <p class="input-settings-inline-p">
+            <?php echo _("Web address:") ?> <a href="<?php echo htmlspecialchars($publicUrl, ENT_QUOTES); ?>" target="_blank"><?php echo htmlspecialchars($publicUrl); ?></a>
+        </p>
+
+        <?php echo $this->element->getElement('live_text_file_path')->render() ?>
+
+        <?php echo $this->element->getElement('live_text_ftp_enabled')->renderViewHelper() ?>
+        <?php echo $this->element->getElement('live_text_ftp_enabled')->renderLabel() ?>
+
+        <?php echo $this->element->getElement('live_text_ftp_protocol')->render() ?>
+        <?php echo $this->element->getElement('live_text_ftp_host')->render() ?>
+        <?php echo $this->element->getElement('live_text_ftp_port')->render() ?>
+        <?php echo $this->element->getElement('live_text_ftp_username')->render() ?>
+        <?php echo $this->element->getElement('live_text_ftp_password')->render() ?>
+        <?php echo $this->element->getElement('live_text_ftp_path')->render() ?>
+    </dl>
+</fieldset>

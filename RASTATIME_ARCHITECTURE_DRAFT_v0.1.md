@@ -1,10 +1,16 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.42
+Draft version: 0.43
 Date: 2026-09-28
 
 > **Revision history**
+> - **0.43 (2026-09-28)** — **Live Text Info** (§23.39): the "now playing"
+>   line as a text file, built by Liquidsoap (`label_for` with its own
+>   format, POSTed to `/live-text`), written by the playout into the
+>   public web folder, an optional file and an FTP/FTPS/SFTP server; the
+>   Stream Label fallback for live sources without metadata is
+>   "Station name - Show name" in every format.
 > - **0.42 (2026-09-28)** — **TuneIn now-playing from the playout**
 >   (§23.38): `TuneInPusher` sends title/artist at every track start,
 >   the show name for live inputs and a keep-alive every refresh; the
@@ -5305,3 +5311,32 @@ are logged without the partner key and back off until the next
 keep-alive.  The legacy PHP push is removed; `update-metadata-on-tunein`
 stays as a no-op for older clients.  A live DJ is not announced (the
 switcher knows no title); the last item stays on the display.
+
+### 23.39 Live Text Info (2026-09-28)
+
+**Context.**  Other systems (website, displays, aggregators) want the
+"now playing" line as a plain text file that is always current.  The
+playout only knows title/artist of scheduled files; DJ titles (harbor
+ICY) and webstream titles exist in Liquidsoap alone, and the operator
+wants the file to match what listeners hear.
+
+**Design.**  Liquidsoap builds the line: the ICY label function is
+generalised to `label_for(fmt, m)` (formats 0/1/2, Off Air text, and -
+new - "Station name - Show name" for a live source without artist and
+title in every format), `icy_label` is `label_for(icy_format(), m)`, and
+`livetext_report(m)` = `label_for(livetext_format(), m)` POSTed to the
+playout listener `/live-text` for every metadata packet on the bus
+(`bus.on_metadata`, hooked before the ICY rewrite so the raw fields are
+seen).  `livetext_enabled` / `livetext_format` are interactive variables
+the scheduler sets over telnet when the settings change (same refresh
+hook as the ICY preferences).  `LiveTextWriter` (playout) dedups
+identical lines, writes atomically (tmp + replace) into the public web
+folder (`/live/now-playing.txt`, served statically by Apache: the
+DocumentRoot is the legacy public folder and the rewrite rule skips
+existing files), into an optional local file, and uploads to FTP / FTPS
+(`ftplib`, PROT P) or SFTP (a curl with libssh2 - the Windows built-in
+curl is Schannel-only) on a worker thread; a stale upload is skipped when
+a newer line arrived.  Settings live in `cc_pref` (`live_text_*`, the FTP
+block as one JSON row like the FTP import), edited in a new subform on
+Settings → General above TuneIn; the FTP password never returns to the
+browser.

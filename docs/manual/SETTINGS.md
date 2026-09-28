@@ -126,6 +126,25 @@ Settings → **General Preferences**.
 | **Lookahead** | How many upcoming shows the Dashboard's "Coming Up Next" panel displays. 3-5 is typical. |
 | **Refresh interval** | How often the Dashboard polls for updated state. 5 s is the default. 1 s is responsive but expensive on slow networks. 30 s is light but laggy. |
 
+### Live Text Info
+
+Collapsible section below General Preferences (since 2026-09-28). The
+"now playing" line as a text file for other systems (website, displays,
+aggregators): one UTF-8 line, always replaced, written by the playout at
+every change of track, webstream, Line-In or DJ.
+
+| Field | Notes |
+|---|---|
+| **Write the "now playing" line to a text file?** | Master switch. |
+| **Live Text Format** | Same three variants as the Stream Label (Artist - Title / Show - Artist - Title / Station name - Show name) with the same fallbacks: a live source without artist and title shows *Station name - Show name*, silence shows the Off Air Metadata text. Independent of the Stream Label. |
+| **Publish on the web** | The file is served at `http://<host>/live/now-playing.txt` (static file, no login, independent of the Public API switch). Reachable from the internet as soon as the web server is, like the widgets. |
+| **Also write to file** | Optional absolute path (this machine or a network share). |
+| **Push to an FTP server** | On every change the file is uploaded via FTP, FTPS (explicit TLS) or SFTP to the remote path; own credentials, separate from the FTP import. SFTP needs a `curl` with libssh2 (the one shipped with Git for Windows; the Windows built-in curl cannot). Failures are logged; the next change retries. |
+
+The line is built by the audio engine from the metadata it actually
+sends to the stream, so DJ titles and webstream titles are included. A
+changed setting takes effect at the next change, no restart.
+
 ### TuneIn Settings
 
 Collapsible section below General Preferences. Since 2026-09-28 the

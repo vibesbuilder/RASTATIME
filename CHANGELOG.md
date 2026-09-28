@@ -9,6 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Live Text Info: die „Now playing"-Zeile als Textdatei (2026-09-28,
+  Operator-Go)** — Neuer Bereich Settings → General → „Live Text Info"
+  (oberhalb TuneIn): Hauptschalter, eigenes Live-Text-Format (dieselben drei
+  Varianten wie das Stream Label, unabhängig davon), Web-Veröffentlichung
+  unter `/live/now-playing.txt` (statische Datei im Public-Ordner, ohne Login,
+  unabhängig vom Public-API-Schalter), optionale lokale Datei, FTP-Push bei
+  jeder Änderung (FTP / FTPS per `ftplib`, SFTP per curl mit libssh2; eigene
+  Zugangsdaten, Passwort bleibt in cc_pref).  Damit DJ-Titel und
+  Webstream-Titel enthalten sind, bildet Liquidsoap die Zeile selbst: das
+  ICY-Label ist zu `label_for(fmt, m)` verallgemeinert, `livetext_report`
+  hängt per `bus.on_metadata` vor dem ICY-Rewrite und POSTet die Zeile an den
+  Playout-Listener `/live-text`; `LiveTextWriter` dedupliziert, schreibt
+  atomar (tmp + replace) und lädt auf einem Worker-Thread hoch.  Schalter
+  und Format werden bei Änderung per Telnet in die laufende Instanz gesetzt
+  (`livetext_enabled` / `livetext_format`), ein Save wirkt ohne Neustart.
+  Handbuch SETTINGS ×4, Tests (Konfiguration, Schreiben, Dedup, FTP-Push und
+  Fehler, SFTP-Voraussetzung, Render, Listener, Scheduler-Sync).
+  Live-Prüfung (Web-Abruf, FTP-Upload) nach dem PLAYOUT-Neustart.
+
 - **TuneIn „Now playing" aus dem Playout (2026-09-28, Operator-Go Option 2)** —
   Die Einstellungen unter Settings → TuneIn waren nur halb verdrahtet: der
   Legacy-Notify meldete Datei-Starts, das Keep-alive aus dem alten
@@ -342,6 +361,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   LIQUIDSOAP-Neustart (neuer Skript-Block).
 
 ### Changed
+
+- **Stream Label: Live-Quelle ohne Metadaten zeigt „Station - Sendung"
+  (2026-09-28, Operator-Entscheid)** — Ein DJ, der keine Metadaten sendet,
+  ein Webstream ohne eigene Titel und ein Line-In zeigten in den Formaten
+  „Artist - Title" und „Show - Artist - Title" bisher nur den Sendungsnamen;
+  jetzt in allen drei Formaten „Stationsname - Sendungsname" (bei fehlendem
+  Sendungsnamen der Stationsname).  Gilt für Stream und Live Text Info
+  gleichermaßen.  Handbuch STREAMS ×4.
 
 - **Dashboard → Tracks: Spaltentitel und Dunkel-Kontrast (2026-09-28,
   Operator-Wunsch)** — Die drei Icon-Spalten der Bibliothek tragen jetzt

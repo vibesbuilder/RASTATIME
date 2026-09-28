@@ -47,6 +47,7 @@ from .liquidsoap_config import (
 )
 from . import liquidsoap_health
 from .tunein import TuneInPusher
+from .live_text import LiveTextWriter
 from .liquidsoap_service import (
     MAIN_OUTPUT_BY_INDEX,
     NightlyRestartPolicy,
@@ -150,6 +151,7 @@ class PlayoutScheduler:
         render_settings_fingerprint: Optional[Callable[[], Optional[str]]] = None,
         render_restart_pending: bool = False,
         tunein: Optional[TuneInPusher] = None,
+        live_text: Optional[LiveTextWriter] = None,
     ) -> None:
         self._engine = engine
         self._api_client = api_client
@@ -292,6 +294,11 @@ class PlayoutScheduler:
         # RASTATIME 2026-09-28 - TuneIn now-playing pushes (title/artist at
         # every start, show name for live inputs, keep-alive every refresh).
         self._tunein = tunein
+        # RASTATIME 2026-09-28 - Live Text Info: Liquidsoap needs the switch +
+        # format (pushed on refresh when they change); the writer itself is
+        # fed by the /live-text listener endpoint.
+        self._live_text = live_text
+        self._live_text_pushed: Optional[Tuple[bool, int]] = None
         self._icy_pushed: Optional[object] = None
         self._bus_show_pushed: Optional[str] = None
 
@@ -2836,7 +2843,22 @@ class PlayoutScheduler:
                     prefs.label_format, prefs.offair_text, prefs.station_name,
                 )
                 self._icy_pushed = prefs
+        self._sync_live_text_settings()
         self._set_bus_show(self._show_on_air(events, now))
+
+    def _sync_live_text_settings(self) -> None:
+        """RASTATIME 2026-09-28 - push the Live Text switch + format when changed."""
+        if self._live_text is None or not hasattr(self._engine, "live_text_settings"):
+            return
+        try:
+            current = self._live_text.liquidsoap_settings()
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            logger.warning("Live Text settings could not be read: %s", exc)
+            return
+        if current is None or current == self._live_text_pushed:
+            return
+        self._engine.live_text_settings(current[0], current[1])
+        self._live_text_pushed = current
 
     @staticmethod
     def _show_on_air(events: Dict[str, object], now: datetime) -> str:

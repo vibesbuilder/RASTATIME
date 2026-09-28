@@ -128,6 +128,25 @@ Einstellungen → **Allgemeine Einstellungen**.
 | **Vorausschau** | Wie viele kommende Sendungen das "Kommt als Nächstes"-Panel des Dashboards anzeigt. 3-5 ist typisch. |
 | **Aktualisierungsintervall** | Wie oft das Dashboard nach aktualisiertem Zustand pollt. 5 s ist der Standard. 1 s ist reaktionsschnell, aber teuer auf langsamen Netzwerken. 30 s ist leicht, aber verzögert. |
 
+### Live-Text-Info
+
+Aufklappbarer Bereich unter den Allgemeinen Einstellungen (seit
+2026-09-28). Die „Now playing"-Zeile als Textdatei für andere Systeme
+(Website, Displays, Aggregatoren): eine UTF-8-Zeile, immer ersetzt, vom
+Playout bei jedem Wechsel von Titel, Webstream, Line-In oder DJ geschrieben.
+
+| Feld | Hinweise |
+|---|---|
+| **Die „Now playing"-Zeile in eine Textdatei schreiben?** | Hauptschalter. |
+| **Live-Text-Format** | Dieselben drei Varianten wie das Stream Label (Artist - Title / Show - Artist - Title / Station name - Show name) mit denselben Rückfällen: eine Live-Quelle ohne Interpret und Titel zeigt *Station name - Show name*, Stille den Off-Air-Text. Unabhängig vom Stream Label. |
+| **Im Web veröffentlichen** | Die Datei wird unter `http://<host>/live/now-playing.txt` ausgeliefert (statische Datei, ohne Login, unabhängig vom Public-API-Schalter). Aus dem Internet erreichbar, sobald der Webserver es ist, wie die Widgets. |
+| **Zusätzlich in Datei schreiben** | Optionaler absoluter Pfad (dieser Rechner oder Netzwerkfreigabe). |
+| **Auf einen FTP-Server hochladen** | Bei jeder Änderung wird die Datei per FTP, FTPS (explizites TLS) oder SFTP auf den Zielpfad hochgeladen; eigene Zugangsdaten, getrennt vom FTP-Import. SFTP braucht ein `curl` mit libssh2 (das von Git für Windows; das in Windows eingebaute kann es nicht). Fehler werden geloggt, die nächste Änderung versucht es erneut. |
+
+Die Zeile bildet die Audio-Engine aus den Metadaten, die sie tatsächlich
+in den Stream sendet, DJ-Titel und Webstream-Titel eingeschlossen. Eine
+geänderte Einstellung greift beim nächsten Wechsel, kein Neustart.
+
 ### TuneIn-Einstellungen
 
 Aufklappbarer Bereich unter den Allgemeinen Einstellungen. Seit

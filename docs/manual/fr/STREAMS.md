@@ -58,8 +58,8 @@ stream ; le nom de la station vient de Paramètres → General.
 |---|---|---|---|
 | Piste planifiée | Artiste - Titre | Émission - Artiste - Titre | RASTATIME - Émission |
 | Webstream avec ses propres titres | titre du flux source | Émission - titre du flux source | RASTATIME - Émission |
-| Webstream sans titres, Line-In | Émission | Émission | RASTATIME - Émission |
-| DJ (BUTT / Mixxx) | titre envoyé par le logiciel DJ, sinon Émission | Émission - titre envoyé par le logiciel DJ | RASTATIME - Émission |
+| Webstream sans titres, Line-In | RASTATIME - Émission | RASTATIME - Émission | RASTATIME - Émission |
+| DJ (BUTT / Mixxx) | titre envoyé par le logiciel DJ, sinon RASTATIME - Émission | Émission - titre envoyé par le logiciel DJ, sinon RASTATIME - Émission | RASTATIME - Émission |
 | Rien de planifié | texte Off Air Metadata | texte Off Air Metadata | texte Off Air Metadata |
 
 - **Off Air Metadata** remplace le titre de la dernière piste dès que rien

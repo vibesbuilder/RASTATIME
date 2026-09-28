@@ -264,6 +264,8 @@ class _EventHandler(BaseHTTPRequestHandler):
     # RASTATIME 2026-09-10 - DJ login check for the harbors (dj_auth.py):
     # /dj-auth is called by the auth callback rendered into rastatime.liq.
     dj_auth: Optional[object] = None
+    # RASTATIME 2026-09-28 - Live Text Info writer (live_text.py): /live-text
+    live_text: Optional[object] = None
 
     # Silence the default access log line on stderr; route via our logger.
     def log_message(self, format: str, *args) -> None:  # noqa: A002
@@ -284,6 +286,8 @@ class _EventHandler(BaseHTTPRequestHandler):
                 self._handle_set_audio_output(parsed)
             elif parsed.path == "/dj-auth":
                 self._handle_dj_auth(parsed)
+            elif parsed.path == "/live-text":
+                self._handle_live_text()
             else:
                 self._send(404, "not found")
         except Exception as exc:  # pylint: disable=broad-exception-caught
@@ -483,6 +487,29 @@ class _EventHandler(BaseHTTPRequestHandler):
         except Exception as exc:  # pylint: disable=broad-exception-caught
             logger.exception("set-audio-output failed: %s", exc)
             self._send(500, "internal error")
+
+    def _handle_live_text(self) -> None:
+        """
+        RASTATIME 2026-09-28 - Liquidsoap POSTs the "now playing" line (the
+        body, UTF-8) on every metadata packet; the writer dedups and writes
+        the targets.  Replies ``ok`` (200) or ``error`` (503, not wired).
+        """
+        try:
+            length = int(self.headers.get("Content-Length") or 0)
+        except ValueError:
+            length = 0
+        body = self.rfile.read(min(length, 65536)).decode("utf-8", "replace") if length > 0 else ""
+        writer = _EventHandler.live_text
+        if writer is None:
+            self._send(503, "error")
+            return
+        try:
+            writer.update(body)
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            logger.warning("live-text: update failed: %s", exc)
+            self._send(500, "error")
+            return
+        self._send(200, "ok")
 
     def _handle_reload_schedule(self) -> None:
         """
@@ -734,6 +761,7 @@ def start_listener(
     port: int = 8770,
     reconcile_interval_s: float = DEFAULT_RECONCILE_INTERVAL_S,
     dj_auth: Optional[object] = None,
+    live_text: Optional[object] = None,
 ) -> ThreadingHTTPServer:
     """
     Start the HTTP listener for the internal RASTATIME endpoints:
@@ -762,6 +790,7 @@ def start_listener(
     _EventHandler.scheduler = scheduler
     _EventHandler.preflight = preflight
     _EventHandler.dj_auth = dj_auth      # /dj-auth (RASTATIME 2026-09-10)
+    _EventHandler.live_text = live_text  # /live-text (RASTATIME 2026-09-28)
     server = ThreadingHTTPServer((host, port), _EventHandler)
     thread = threading.Thread(
         target=server.serve_forever,

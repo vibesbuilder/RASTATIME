@@ -62,6 +62,25 @@ Configuración → **Preferencias generales**.
 | **Vista anticipada** | Cuántos programas próximos el panel "Viene después" muestra. 3-5 es típico. |
 | **Intervalo de refresco** | Con qué frecuencia el Panel sondea. 5 s es el por defecto. |
 
+### Info de texto en vivo
+
+Sección plegable bajo las Preferencias generales (desde el 2026-09-28). La
+línea «now playing» como archivo de texto para otros sistemas (web,
+pantallas, agregadores): una línea UTF-8, siempre reemplazada, escrita por
+el playout en cada cambio de pista, webstream, entrada de línea o DJ.
+
+| Campo | Notas |
+|---|---|
+| **¿Escribir la línea «now playing» en un archivo de texto?** | Interruptor principal. |
+| **Formato del texto en vivo** | Las mismas tres variantes que el Stream Label (Artist - Title / Show - Artist - Title / Station name - Show name) con los mismos respaldos: una fuente en vivo sin intérprete ni título muestra *Station name - Show name*, el silencio muestra el texto Off Air. Independiente del Stream Label. |
+| **Publicar en la web** | El archivo se sirve en `http://<host>/live/now-playing.txt` (archivo estático, sin inicio de sesión, independiente del interruptor Public API). Accesible desde Internet en cuanto lo sea el servidor web, como los widgets. |
+| **Escribir también en un archivo** | Ruta absoluta opcional (este equipo o un recurso compartido de red). |
+| **Subir a un servidor FTP** | En cada cambio el archivo se sube por FTP, FTPS (TLS explícito) o SFTP a la ruta remota; credenciales propias, separadas de la importación FTP. SFTP necesita un `curl` con libssh2 (el que trae Git para Windows; el curl integrado de Windows no puede). Los fallos se registran; el siguiente cambio lo reintenta. |
+
+La línea la construye el motor de audio a partir de los metadatos que
+realmente envía al stream, incluidos títulos de DJ y de webstream. Un
+ajuste modificado se aplica en el siguiente cambio, sin reinicio.
+
 ### Ajustes de TuneIn
 
 Sección plegable bajo las Preferencias generales. Desde el 2026-09-28 el

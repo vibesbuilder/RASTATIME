@@ -91,6 +91,24 @@ class PreferenceController extends Zend_Controller_Action
                     Application_Model_Preference::SetStationFavicon($faviconPath);
                 }
 
+                // RASTATIME 2026-09-28 - Live Text Info
+                Application_Model_Preference::setLiveTextEnabled(!empty($values['enable_live_text']));
+                Application_Model_Preference::setLiveTextFormat($values['live_text_format'] ?? 0);
+                Application_Model_Preference::setLiveTextWebEnabled(!empty($values['live_text_web_enabled']));
+                Application_Model_Preference::setLiveTextFilePath($values['live_text_file_path'] ?? '');
+                $liveTextFtp = Application_Model_Preference::getLiveTextFtpConfig();
+                $liveTextFtp['enabled'] = !empty($values['live_text_ftp_enabled']);
+                $liveTextFtp['protocol'] = in_array($values['live_text_ftp_protocol'] ?? 'ftp', ['ftp', 'ftps', 'sftp'], true)
+                    ? $values['live_text_ftp_protocol'] : 'ftp';
+                $liveTextFtp['host'] = trim((string) ($values['live_text_ftp_host'] ?? ''));
+                $liveTextFtp['port'] = trim((string) ($values['live_text_ftp_port'] ?? ''));
+                $liveTextFtp['username'] = trim((string) ($values['live_text_ftp_username'] ?? ''));
+                if (($values['live_text_ftp_password'] ?? '') !== '') {
+                    $liveTextFtp['password'] = (string) $values['live_text_ftp_password'];
+                }
+                $liveTextFtp['path'] = trim((string) ($values['live_text_ftp_path'] ?? '')) ?: '/';
+                Application_Model_Preference::setLiveTextFtpConfig($liveTextFtp);
+
                 Application_Model_Preference::setTuneinEnabled($values['enable_tunein']);
                 Application_Model_Preference::setTuneinStationId($values['tunein_station_id']);
                 Application_Model_Preference::setTuneinPartnerKey($values['tunein_partner_key']);

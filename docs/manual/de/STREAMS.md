@@ -85,8 +85,8 @@ kommt aus Einstellungen → General.
 |---|---|---|---|
 | Geplanter Titel | Interpret - Titel | Show - Interpret - Titel | RASTATIME - Show |
 | Webstream mit eigenen Titeln | Titel des Quellstreams | Show - Titel des Quellstreams | RASTATIME - Show |
-| Webstream ohne Titel, Line-In | Show | Show | RASTATIME - Show |
-| DJ (BUTT / Mixxx) | Titel der DJ-Software, sonst Show | Show - Titel der DJ-Software | RASTATIME - Show |
+| Webstream ohne Titel, Line-In | RASTATIME - Show | RASTATIME - Show | RASTATIME - Show |
+| DJ (BUTT / Mixxx) | Titel der DJ-Software, sonst RASTATIME - Show | Show - Titel der DJ-Software, sonst RASTATIME - Show | RASTATIME - Show |
 | Nichts geplant | Off-Air-Text | Off-Air-Text | Off-Air-Text |
 
 - **Off Air Metadata** ersetzt den letzten Titel, sobald nichts auf

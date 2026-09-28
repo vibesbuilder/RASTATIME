@@ -82,7 +82,9 @@ def test_probe_command_is_registered_with_the_callbacks():
 def test_no_harbor_renders_no_callbacks_and_no_probe():
     out = _active(lc.render_rastatime_liq([_stream()]))
     assert "rastatime_source_event" not in out
-    assert "http.post" not in out
+    # 2026-09-28: the Live Text hook has its own http.post (/live-text);
+    # only the harbor callbacks must be absent here
+    assert "/source-event" not in out
     assert PROBE not in out
 
 

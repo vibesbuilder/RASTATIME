@@ -5021,3 +5021,63 @@ msgstr "Carátula"
 #: RASTATIME 2026-09-28 tunein
 msgid "When enabled, the playout sends title and artist to TuneIn at every start of a track, webstream or Line-In and refreshes the display every four minutes. Saving tests the credentials against TuneIn."
 msgstr "Si está activado, el playout envía título e intérprete a TuneIn en cada inicio de una pista, un webstream o una entrada de línea y refresca la visualización cada cuatro minutos. Al guardar se comprueban las credenciales con TuneIn."
+
+#: RASTATIME 2026-09-28 live text info
+msgid "Live Text Info"
+msgstr "Info de texto en vivo"
+
+#: RASTATIME 2026-09-28 live text info
+msgid "Write the \"now playing\" line to a text file (Live Text Info)?"
+msgstr "¿Escribir la línea «now playing» en un archivo de texto (Info de texto en vivo)?"
+
+#: RASTATIME 2026-09-28 live text info
+msgid "Live Text Format:"
+msgstr "Formato del texto en vivo:"
+
+#: RASTATIME 2026-09-28 live text info
+msgid "Publish on the web at /live/now-playing.txt"
+msgstr "Publicar en la web en /live/now-playing.txt"
+
+#: RASTATIME 2026-09-28 live text info
+msgid "Also write to file (optional):"
+msgstr "Escribir también en un archivo (opcional):"
+
+#: RASTATIME 2026-09-28 live text info
+msgid "Absolute path on this machine or a network share, e.g. D:\\share\\now-playing.txt. Empty = no extra file."
+msgstr "Ruta absoluta en este equipo o un recurso compartido de red, p. ej. D:\\share\\now-playing.txt. Vacío = sin archivo adicional."
+
+#: RASTATIME 2026-09-28 live text info
+msgid "Push the file to an FTP server on every change"
+msgstr "Subir el archivo a un servidor FTP en cada cambio"
+
+#: RASTATIME 2026-09-28 live text info
+msgid "Protocol:"
+msgstr "Protocolo:"
+
+#: RASTATIME 2026-09-28 live text info
+msgid "Empty = the protocol default (21 / 22)."
+msgstr "Vacío = valor por defecto del protocolo (21 / 22)."
+
+#: RASTATIME 2026-09-28 live text info
+msgid "Please enter a port number."
+msgstr "Introduzca un número de puerto."
+
+#: RASTATIME 2026-09-28 live text info
+msgid "Leave empty to keep the stored password."
+msgstr "Dejar vacío para conservar la contraseña guardada."
+
+#: RASTATIME 2026-09-28 live text info
+msgid "Remote path:"
+msgstr "Ruta remota:"
+
+#: RASTATIME 2026-09-28 live text info
+msgid "Target file on the server, e.g. /web/now-playing.txt. A path ending in / gets the file name now-playing.txt."
+msgstr "Archivo de destino en el servidor, p. ej. /web/now-playing.txt. Una ruta que termina en / recibe el nombre now-playing.txt."
+
+#: RASTATIME 2026-09-28 live text info
+msgid "The playout writes the \"now playing\" line at every change of track, webstream, Line-In or DJ - one line, always replaced. Other systems (website, displays, aggregators) read it from the web address below, from the optional file or from your FTP server."
+msgstr "El playout escribe la línea «now playing» en cada cambio de pista, webstream, entrada de línea o DJ: una línea, siempre reemplazada. Otros sistemas (web, pantallas, agregadores) la leen en la dirección web de abajo, en el archivo opcional o en su servidor FTP."
+
+#: RASTATIME 2026-09-28 live text info
+msgid "Web address:"
+msgstr "Dirección web:"

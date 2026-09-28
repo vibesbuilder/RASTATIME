@@ -82,8 +82,8 @@ name comes from Settings → General.
 |---|---|---|---|
 | Scheduled track | Artist - Title | Show - Artist - Title | RASTATIME - Show |
 | Webstream with its own titles | title of the source stream | Show - title of the source stream | RASTATIME - Show |
-| Webstream without titles, Line-In | Show | Show | RASTATIME - Show |
-| DJ (BUTT / Mixxx) | title sent by the DJ software, else Show | Show - title sent by the DJ software | RASTATIME - Show |
+| Webstream without titles, Line-In | RASTATIME - Show | RASTATIME - Show | RASTATIME - Show |
+| DJ (BUTT / Mixxx) | title sent by the DJ software, else RASTATIME - Show | Show - title sent by the DJ software, else RASTATIME - Show | RASTATIME - Show |
 | Nothing scheduled | Off Air Metadata text | Off Air Metadata text | Off Air Metadata text |
 
 - **Off Air Metadata** replaces the last track's title as soon as

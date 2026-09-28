@@ -1014,6 +1014,15 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
         except Exception as exc:  # pylint: disable=broad-exception-caught
             logger.warning("Liquidsoap ICY settings telnet error: %s", exc)
 
+    def live_text_settings(self, enabled: bool, label_format: int) -> None:
+        """RASTATIME 2026-09-28 - Live Text Info switch + format (``livetext_*``)."""
+        try:
+            self._telnet.var_set("livetext_enabled", "true" if enabled else "false")
+            self._telnet.var_set_int("livetext_format", int(label_format))
+            logger.info("Liquidsoap Live Text: enabled=%s format=%d", enabled, int(label_format))
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            logger.warning("Liquidsoap Live Text settings telnet error: %s", exc)
+
     def bus_show_set(self, show_name: str) -> None:
         """
         Tell the script which show is on air (``bus_show``): the ICY

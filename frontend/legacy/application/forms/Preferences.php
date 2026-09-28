@@ -24,6 +24,10 @@ class Application_Form_Preferences extends Zend_Form
 
         $this->addSubForm($general_pref, 'preferences_general');
 
+        // RASTATIME 2026-09-28 - Live Text Info (above TuneIn)
+        $liveTextPreferences = new Application_Form_LiveTextPreferences();
+        $this->addSubForm($liveTextPreferences, 'preferences_livetext');
+
         // tunein form
         $tuneinPreferences = new Application_Form_TuneInPreferences();
         $this->addSubForm($tuneinPreferences, 'preferences_tunein');

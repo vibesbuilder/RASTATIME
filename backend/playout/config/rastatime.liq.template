@@ -505,6 +505,10 @@ bus = amplify(override="replaygain_track_gain", 1., bus)
 # RASTATIME 2026-09-13 - Stream Label / Off Air text: rewrite every packet
 # that carries title, artist, show_name or off_air so its title IS the
 # label (icy_rewrite, ICY block above); other packets pass untouched.
+# RASTATIME 2026-09-28 - Live Text Info: every metadata packet (before the ICY
+# rewrite, so the raw fields are seen) becomes one POST to PLAYOUT when the
+# feature is on (livetext_report in the ICY block above).
+bus.on_metadata(synchronous=true, livetext_report)
 bus = metadata.map(id="icy_rewrite", update=true, strip=false, insert_missing=false, icy_rewrite, bus)
 
 ${WEBSTREAM_WATCHDOG_BLOCK}

@@ -49,8 +49,8 @@ nombre de la emisora viene de Configuración → General.
 |---|---|---|---|
 | Pista programada | Artista - Título | Programa - Artista - Título | RASTATIME - Programa |
 | Webstream con títulos propios | título del flujo fuente | Programa - título del flujo fuente | RASTATIME - Programa |
-| Webstream sin títulos, Line-In | Programa | Programa | RASTATIME - Programa |
-| DJ (BUTT / Mixxx) | título enviado por el software DJ, si no Programa | Programa - título enviado por el software DJ | RASTATIME - Programa |
+| Webstream sin títulos, Line-In | RASTATIME - Programa | RASTATIME - Programa | RASTATIME - Programa |
+| DJ (BUTT / Mixxx) | título enviado por el software DJ, si no RASTATIME - Programa | Programa - título enviado por el software DJ, si no RASTATIME - Programa | RASTATIME - Programa |
 | Nada programado | texto Off Air Metadata | texto Off Air Metadata | texto Off Air Metadata |
 
 - **Off Air Metadata** sustituye el título de la última pista en cuanto no

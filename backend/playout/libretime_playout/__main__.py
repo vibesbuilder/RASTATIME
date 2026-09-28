@@ -219,6 +219,27 @@ def _read_pref_seconds(key: str) -> Optional[float]:
         return None
 
 
+def _build_live_text_writer():
+    """RASTATIME 2026-09-28 - the Live Text Info writer (Settings -> General)."""
+    from libretime_playout.live_text import (  # noqa: PLC0415
+        LiveTextWriter,
+        default_web_dir,
+        read_live_text_config_from_db,
+    )
+
+    writer = LiveTextWriter(read_live_text_config_from_db, web_dir=default_web_dir())
+    cfg = read_live_text_config_from_db()
+    if cfg is not None and cfg.enabled:
+        logger.info(
+            "Live Text Info: enabled (format %d, web %s, file %r, ftp %s) -> %s",
+            cfg.label_format, "on" if cfg.web_enabled else "off", cfg.file_path or "-",
+            "on" if cfg.ftp.enabled else "off", writer.web_file,
+        )
+    else:
+        logger.info("Live Text Info: disabled (Settings -> General).")
+    return writer
+
+
 def _build_tunein_pusher():
     """RASTATIME 2026-09-28 - the TuneIn pusher (Settings -> TuneIn Settings)."""
     from libretime_playout.tunein import (  # noqa: PLC0415
@@ -1200,6 +1221,7 @@ def main() -> None:
             "RASTATIME_LIQUIDSOAP_NIGHTLY_RESTART",
         )
 
+    live_text_writer = _build_live_text_writer() if django_ok else None
     scheduler = PlayoutScheduler(
         engine=engine,
         api_client=api_client,
@@ -1221,6 +1243,8 @@ def main() -> None:
         # RASTATIME 2026-09-28 - TuneIn now-playing pushes owned by the playout
         # (settings re-read from cc_pref before every push).
         tunein=(_build_tunein_pusher() if django_ok else None),
+        # RASTATIME 2026-09-28 - Live Text Info (now-playing text file)
+        live_text=live_text_writer,
     )
     logger.info("Webstream watchdog: inside Liquidsoap (frame counter, rendered into rastatime.liq).")
     # RASTATIME 2026-09-04 - a previous Pypo may have died mid-prepare
@@ -1329,6 +1353,9 @@ def main() -> None:
         start_listener,
     )
     switcher = SourceSwitcher(switch_callback=scheduler.switch_audio_source)
+    # RASTATIME 2026-09-28 - /live-text feeds the Live Text writer
+    from libretime_playout.source_switcher import _EventHandler  # noqa: PLC0415
+    _EventHandler.live_text = live_text_writer
     scheduler.set_source_switcher(switcher)
     switcher_server = start_listener(
         switcher,

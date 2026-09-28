@@ -1715,6 +1715,71 @@ class Application_Model_Preference
         self::setDiskUsage($currentDiskUsage + $filesize);
     }
 
+    // RASTATIME 2026-09-28 - Live Text Info (Settings -> General): the "now
+    // playing" line as a text file, written by the playout.
+    public static function getLiveTextEnabled()
+    {
+        return self::getValue('live_text_enabled') === '1';
+    }
+
+    public static function setLiveTextEnabled($value)
+    {
+        self::setValue('live_text_enabled', $value ? '1' : '0');
+    }
+
+    public static function getLiveTextFormat()
+    {
+        $v = (int) self::getValue('live_text_format');
+
+        return in_array($v, [0, 1, 2], true) ? $v : 0;
+    }
+
+    public static function setLiveTextFormat($value)
+    {
+        self::setValue('live_text_format', (string) (in_array((int) $value, [0, 1, 2], true) ? (int) $value : 0));
+    }
+
+    public static function getLiveTextWebEnabled()
+    {
+        $v = self::getValue('live_text_web_enabled');
+
+        return $v === '' ? true : $v === '1';
+    }
+
+    public static function setLiveTextWebEnabled($value)
+    {
+        self::setValue('live_text_web_enabled', $value ? '1' : '0');
+    }
+
+    public static function getLiveTextFilePath()
+    {
+        return self::getValue('live_text_file_path');
+    }
+
+    public static function setLiveTextFilePath($value)
+    {
+        self::setValue('live_text_file_path', trim((string) $value));
+    }
+
+    // FTP push settings as one JSON row (like the FTP import); the password
+    // stays here and is never sent back to the browser.
+    public static function getLiveTextFtpConfig()
+    {
+        $defaults = [
+            'enabled' => false, 'protocol' => 'ftp', 'host' => '',
+            'port' => '', 'username' => '', 'password' => '', 'path' => '/',
+        ];
+        $raw = self::getValue('live_text_ftp_config');
+        $data = $raw ? json_decode($raw, true) : null;
+
+        return is_array($data) ? array_merge($defaults, $data) : $defaults;
+    }
+
+    public static function setLiveTextFtpConfig(array $config)
+    {
+        self::setValue('live_text_ftp_config', json_encode($config));
+    }
+
     public static function setTuneinEnabled($value)
     {
         self::setValue('tunein_enabled', $value);

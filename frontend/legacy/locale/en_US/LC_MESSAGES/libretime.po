@@ -4604,3 +4604,63 @@ msgstr ""
 #: RASTATIME 2026-09-28 tunein
 msgid "When enabled, the playout sends title and artist to TuneIn at every start of a track, webstream or Line-In and refreshes the display every four minutes. Saving tests the credentials against TuneIn."
 msgstr ""
+
+#: RASTATIME 2026-09-28 live text info
+msgid "Live Text Info"
+msgstr ""
+
+#: RASTATIME 2026-09-28 live text info
+msgid "Write the \"now playing\" line to a text file (Live Text Info)?"
+msgstr ""
+
+#: RASTATIME 2026-09-28 live text info
+msgid "Live Text Format:"
+msgstr ""
+
+#: RASTATIME 2026-09-28 live text info
+msgid "Publish on the web at /live/now-playing.txt"
+msgstr ""
+
+#: RASTATIME 2026-09-28 live text info
+msgid "Also write to file (optional):"
+msgstr ""
+
+#: RASTATIME 2026-09-28 live text info
+msgid "Absolute path on this machine or a network share, e.g. D:\\share\\now-playing.txt. Empty = no extra file."
+msgstr ""
+
+#: RASTATIME 2026-09-28 live text info
+msgid "Push the file to an FTP server on every change"
+msgstr ""
+
+#: RASTATIME 2026-09-28 live text info
+msgid "Protocol:"
+msgstr ""
+
+#: RASTATIME 2026-09-28 live text info
+msgid "Empty = the protocol default (21 / 22)."
+msgstr ""
+
+#: RASTATIME 2026-09-28 live text info
+msgid "Please enter a port number."
+msgstr ""
+
+#: RASTATIME 2026-09-28 live text info
+msgid "Leave empty to keep the stored password."
+msgstr ""
+
+#: RASTATIME 2026-09-28 live text info
+msgid "Remote path:"
+msgstr ""
+
+#: RASTATIME 2026-09-28 live text info
+msgid "Target file on the server, e.g. /web/now-playing.txt. A path ending in / gets the file name now-playing.txt."
+msgstr ""
+
+#: RASTATIME 2026-09-28 live text info
+msgid "The playout writes the \"now playing\" line at every change of track, webstream, Line-In or DJ - one line, always replaced. Other systems (website, displays, aggregators) read it from the web address below, from the optional file or from your FTP server."
+msgstr ""
+
+#: RASTATIME 2026-09-28 live text info
+msgid "Web address:"
+msgstr ""
