@@ -27,6 +27,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Handbuch SETTINGS ×4, Tests (Konfiguration, Schreiben, Dedup, FTP-Push und
   Fehler, SFTP-Voraussetzung, Render, Listener, Scheduler-Sync).
   Live-Prüfung (Web-Abruf, FTP-Upload) nach dem PLAYOUT-Neustart — `d70f2db`.
+  Nachbesserung: der Schreiber muss `start_listener()` übergeben werden — die
+  vorab gesetzte Handler-Eigenschaft wurde vom Listener-Start mit dem
+  Standardwert überschrieben, `/live-text` antwortete 503 und keine Datei
+  entstand (erster Live-Versuch 14:35); Regressionstest.
 
 - **TuneIn „Now playing" aus dem Playout (2026-09-28, Operator-Go Option 2)** —
   Die Einstellungen unter Settings → TuneIn waren nur halb verdrahtet: der

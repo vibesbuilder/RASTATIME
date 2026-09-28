@@ -162,3 +162,26 @@ def test_scheduler_pushes_live_text_settings_on_change(monkeypatch):
     writer.liquidsoap_settings.return_value = (False, 2)
     s._sync_live_text_settings()
     assert engine.live_text_settings.call_count == 2
+
+
+def test_start_listener_wires_the_live_text_writer(monkeypatch):
+    """Regression 2026-09-28: the attribute set before start_listener() was
+    overwritten by its own default - /live-text answered 503 in production."""
+    from libretime_playout import source_switcher as ss
+
+    started = {}
+
+    class FakeServer:
+        def __init__(self, addr, handler):
+            started["addr"] = addr
+        def serve_forever(self):
+            pass
+        def shutdown(self):
+            pass
+
+    monkeypatch.setattr(ss, "ThreadingHTTPServer", FakeServer)
+    monkeypatch.setattr(ss.threading, "Thread", lambda **kw: MagicMock())
+    writer = MagicMock(spec=LiveTextWriter)
+    ss.start_listener(MagicMock(), host="127.0.0.1", port=0, live_text=writer)
+    assert ss._EventHandler.live_text is writer
+    ss._EventHandler.live_text = None

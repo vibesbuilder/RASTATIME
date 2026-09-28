@@ -1353,9 +1353,6 @@ def main() -> None:
         start_listener,
     )
     switcher = SourceSwitcher(switch_callback=scheduler.switch_audio_source)
-    # RASTATIME 2026-09-28 - /live-text feeds the Live Text writer
-    from libretime_playout.source_switcher import _EventHandler  # noqa: PLC0415
-    _EventHandler.live_text = live_text_writer
     scheduler.set_source_switcher(switcher)
     switcher_server = start_listener(
         switcher,
@@ -1369,6 +1366,9 @@ def main() -> None:
         # RASTATIME 2026-09-10 - /dj-auth: the harbors ask PLAYOUT, PLAYOUT
         # asks the web application (Settings / show Live Stream Input).
         dj_auth=DjAuthenticator(_dj_auth_web_url()),
+        # RASTATIME 2026-09-28 - /live-text feeds the Live Text writer (must be
+        # passed here: start_listener sets every handler attribute itself)
+        live_text=live_text_writer,
     )
     logger.info(
         "DJ logins are checked against the web application at %s.",
