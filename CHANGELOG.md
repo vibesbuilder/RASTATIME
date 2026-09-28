@@ -492,7 +492,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Track-Editor: „Expiry Date" war seit Mai 2026 unübersetzt (2026-09-28)** —
   Label, Beschreibung und Validierungsmeldung des Ablaufdatums fehlten in den
   DE/FR/ES-Katalogen (aufgefallen bei der Tooltip-Prüfung auf Deutsch);
-  nachgetragen.
+  nachgetragen — `0f377f1`.
 
 - **Cue-Punkte wurden seit der Liquidsoap-Migration nie angewendet
   (2026-09-27, gefunden in der zweiten Crossfade-Probe)** — Der Playout
