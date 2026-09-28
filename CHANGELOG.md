@@ -573,7 +573,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Queue-Ahead legt einen umgecueten Nachfolger neu vor.  Tests
   `test_catchup_offset.py` (10) + Identitätstest angepasst; Architektur
   §23.40; wirksam nach PLAYOUT-Neustart, Live-Probe (Neustart im Titel,
-  Zeile aus laufender Sendung entfernen) offen.
+  Zeile aus laufender Sendung entfernen) offen — `0f62b14`.
 
 - **Stream-Titel und Live Text hingen einen Titel hinterher (2026-09-28)** —
   Seit den Crossfade-Formen vom 27.09. zeigten ICY-Titel und die

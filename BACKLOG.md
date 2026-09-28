@@ -43,8 +43,9 @@ festgelegt.  Jeder Punkt bekommt vor Implementierung die
 
 ### 🟢 Catch-up steigt am Offset ein, Zeilenverschiebung der laufenden Zeile ohne Neustart (Operator-Go 2026-09-28, gebaut — Live-Probe offen)
 
-**Status 2026-09-28:** Teile A und B gebaut und getestet (699 Tests grün,
-CHANGELOG „Fixed", Architektur §23.40).  Wirksam nach PLAYOUT-Neustart.
+**Status 2026-09-28:** Teile A und B gebaut und getestet (`0f62b14`, 699
+Tests grün, CHANGELOG „Fixed", Architektur §23.40).  Wirksam nach
+PLAYOUT-Neustart.
 **Offen:** Live-Probe — (A) PLAYOUT-Neustart mitten im Titel → Log
 „Catch-up … entering at +N s", Liquidsoap `liq_cue_in` = Cue-In + N;
 (B) Zeile im Show-Builder aus der laufenden Sendung entfernen → Log
