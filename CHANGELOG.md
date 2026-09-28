@@ -558,8 +558,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`_forget_queued_ahead()`) verwerfen die Queue-Ahead-Buchführung samt
   Push-Zeitpunkt; `_on_file_start()` tut es direkt nach einem
   durchgeführten Grenz-Neustart und pusht den Titel frisch.  Drei Tests;
-  wirksam nach PLAYOUT-Neustart — `29236a9` (Grenz-Neustart) und
-  Folge-Commit (Neustart-Erkennung).
+  wirksam nach PLAYOUT-Neustart — `29236a9` (Grenz-Neustart), `d098f1a`
+  (Neustart-Erkennung).
 
 - **19 s Sendepause an einer Titelgrenze während eines Schedule-Refreshs
   (2026-09-28, 20:05:35–20:05:57)** — Zwei vorbestehende Fehler, die
