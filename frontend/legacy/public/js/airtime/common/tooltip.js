@@ -323,4 +323,54 @@
       }
     });
   };
+
+  /**
+   * RASTATIME 2026-09-28 - turn Zend "description" paragraphs of a form into
+   * help-icon tooltips (the /preference/stream-setting look: an empty
+   * <span class="help_icon"> + rtTooltip).  The text is already translated
+   * server-side; it is HTML-escaped because rtTooltip renders HTML.
+   *
+   *   $.rtDescriptionTooltips(root, {
+   *     where: "field" | "label",   // icon after the input (dd) or after the
+   *                                 // label text (dt); default "field"
+   *     only: ["elementId", ...],   // limit to these Zend element ids
+   *   });
+   *
+   * Every converted dd gets the class "with-help-icon" for page CSS.
+   */
+  $.rtDescriptionTooltips = function (root, options) {
+    var opts = $.extend({ where: "field", only: null }, options || {});
+    $(root)
+      .find("dd")
+      .each(function () {
+        var dd = $(this);
+        var desc = dd.children("p.description").first();
+        if (!desc.length) {
+          return;
+        }
+        var id = (dd.attr("id") || "").replace(/-element$/, "");
+        if (opts.only && $.inArray(id, opts.only) === -1) {
+          return;
+        }
+        var text = $.trim(desc.text());
+        desc.remove();
+        if (!text) {
+          return;
+        }
+        var icon = $('<span class="help_icon"></span>');
+        dd.addClass("with-help-icon");
+        var dt = dd.prev("dt");
+        if (opts.where === "label" && dt.length) {
+          var label = dt.find("label").first();
+          (label.length ? label : dt).after(icon);
+        } else {
+          dd.append(icon);
+        }
+        icon.rtTooltip({
+          content: { text: $("<div>").text(text).html() },
+          placement: "right",
+          interactive: true,
+        });
+      });
+  };
 })(jQuery);

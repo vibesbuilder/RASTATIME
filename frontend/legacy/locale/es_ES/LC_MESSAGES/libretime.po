@@ -4993,3 +4993,11 @@ msgstr "Esta pista no se funde ni al entrar ni al salir durante el crossover: ma
 #: RASTATIME 2026-09-28 dj fade
 msgid "When a DJ connects, the DJ is on air at once and the programme fades out underneath over this many seconds; when the DJ disconnects, the DJ fades out and the programme returns at full level at once."
 msgstr "Cuando un DJ se conecta, entra en antena de inmediato y la programación se desvanece por debajo durante estos segundos; cuando el DJ se desconecta, el DJ se desvanece y la programación vuelve al instante a volumen completo."
+
+#: RASTATIME 2026-09-28 dj fade block
+msgid "DJ Hand-over"
+msgstr "Relevo del DJ"
+
+#: RASTATIME 2026-09-28 dj fade block
+msgid "How the programme and a connecting or disconnecting DJ are blended."
+msgstr "Cómo se mezclan la programación y un DJ que se conecta o se desconecta."

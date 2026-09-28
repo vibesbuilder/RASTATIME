@@ -4576,3 +4576,11 @@ msgstr ""
 #: RASTATIME 2026-09-28 dj fade
 msgid "When a DJ connects, the DJ is on air at once and the programme fades out underneath over this many seconds; when the DJ disconnects, the DJ fades out and the programme returns at full level at once."
 msgstr ""
+
+#: RASTATIME 2026-09-28 dj fade block
+msgid "DJ Hand-over"
+msgstr ""
+
+#: RASTATIME 2026-09-28 dj fade block
+msgid "How the programme and a connecting or disconnecting DJ are blended."
+msgstr ""

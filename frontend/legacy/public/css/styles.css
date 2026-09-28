@@ -2531,6 +2531,18 @@ dd.radio-inline-list, .preferences dd.radio-inline-list, .stream-config dd.radio
   margin-top: 0;
   margin-bottom: 0;
 }
+/* help icon right of a label text (Settings -> General, $.rtDescriptionTooltips
+   with where: "label") and next to a field on the streams page */
+dl.zend_form dt > .help_icon {
+  margin-left: 6px;
+  vertical-align: middle;
+  top: 0;
+}
+.stream-setting-global dd.with-help-icon .help_icon {
+  margin-left: 6px;
+  vertical-align: middle;
+  top: 0;
+}
 .edit-md-dialog #submitButtons-element {
     display: -webkit-box;
     display: -moz-box;

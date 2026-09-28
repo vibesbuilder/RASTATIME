@@ -4832,3 +4832,11 @@ msgstr "Dieser Titel wird beim Crossover nicht ein- oder ausgeblendet: er behäl
 #: RASTATIME 2026-09-28 dj fade
 msgid "When a DJ connects, the DJ is on air at once and the programme fades out underneath over this many seconds; when the DJ disconnects, the DJ fades out and the programme returns at full level at once."
 msgstr "Verbindet sich ein DJ, ist er sofort auf Sendung und das Programm blendet über so viele Sekunden darunter aus; trennt der DJ die Verbindung, blendet der DJ aus und das Programm kommt sofort in voller Lautstärke zurück."
+
+#: RASTATIME 2026-09-28 dj fade block
+msgid "DJ Hand-over"
+msgstr "DJ-Übergabe"
+
+#: RASTATIME 2026-09-28 dj fade block
+msgid "How the programme and a connecting or disconnecting DJ are blended."
+msgstr "Wie Programm und ein sich verbindender oder trennender DJ überblendet werden."

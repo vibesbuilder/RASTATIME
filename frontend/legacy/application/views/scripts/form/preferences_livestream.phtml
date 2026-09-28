@@ -3,7 +3,16 @@
     <dl class="zend_form">
         <?php /* RASTATIME 2026-05-14: auto_transition / auto_switch fields
                 removed — see LiveStreamingPreferences.php for rationale. */ ?>
-        <?php echo $this->element->getElement('transition_fade')->render() ?>
+        <?php /* RASTATIME 2026-09-28: the fade sits in its own block like the
+                two source blocks below; its description becomes a help icon
+                (streamsetting.js -> $.rtDescriptionTooltips). */ ?>
+        <fieldset class="padded stream-setting-global" style="margin-top: 15px">
+            <legend><?php echo _("DJ Hand-over") ?></legend>
+            <p class="input-settings-inline-p">
+                <?php echo _("How the programme and a connecting or disconnecting DJ are blended.") ?>
+            </p>
+            <?php echo $this->element->getElement('transition_fade')->render() ?>
+        </fieldset>
 
         <fieldset class="padded stream-setting-global" style="margin-top: 15px">
             <legend><?php echo _("Master Source") ?></legend>

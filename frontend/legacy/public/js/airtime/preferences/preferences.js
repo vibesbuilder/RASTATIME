@@ -177,6 +177,22 @@ function setupRequestablePoolDropdown() {
 
 $(document).ready(function () {
   setupRequestablePoolDropdown();
+
+  // RASTATIME 2026-09-28 - the long explanations under these General
+  // fields become help-icon tooltips right of the label (operator wish);
+  // the short notes under Station Logo / Favicon stay as text.
+  $.rtDescriptionTooltips($("#general-settings, form"), {
+    where: "label",
+    only: [
+      "stationDefaultCrossfadeDuration",
+      "stationDefaultShowCrossfadeDuration",
+      "trafficAlertBlockSelect",
+      "showShiftFillerPlaylistSelect",
+      "podcastAlbumOverride",
+      "podcastAutoSmartblock",
+      "thirdPartyApi",
+    ],
+  });
   $(document).on("click", ".collapsible-header", function () {
     $(this).next().toggle("fast");
     $(this).toggleClass("closed");

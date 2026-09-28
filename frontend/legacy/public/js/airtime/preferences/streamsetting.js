@@ -351,6 +351,13 @@ $(document).ready(function () {
   setupEventListeners();
   setSliderForReplayGain();
   getAdminPasswordStatus();
+
+  // RASTATIME 2026-09-28 - Switch Transition Fade: explanation as a help
+  // icon next to the field, like the Master Source username below it.
+  $.rtDescriptionTooltips($(".stream-setting-global"), {
+    where: "field",
+    only: ["transition_fade"],
+  });
   var s = $("[name^='customStreamSettings']:checked");
 
   $(document).on(

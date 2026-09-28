@@ -326,6 +326,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Settings → General und → Streams: Erklärungstexte als Tooltips, DJ-Übergabe
+  als eigener Block (2026-09-28, Operator-Wunsch)** — Gemeinsamer Helfer
+  `$.rtDescriptionTooltips(root, {where, only})` in `common/tooltip.js`
+  wandelt Zend-Beschreibungsabsätze in das Standard-Hilfe-Icon mit rtTooltip
+  um (Text bleibt serverseitig übersetzt, HTML-escaped; der Track-Editor nutzt
+  ihn jetzt auch).  General: die sieben langen Erklärungen (Track-/Show-
+  Crossfade, Traffic-Alert Smart Block, Show-Shift Filler Playlist, Podcast
+  Metatags, Podcast Smartblock, Public API) sitzen als Icon rechts neben dem
+  Feldtitel; die kurzen Hinweise unter Logo/Favicon bleiben Text.  Streams:
+  „Switch Transition Fade" steht in einem eigenen Block „DJ Hand-over" mit
+  Einleitungssatz, gestaltet wie Master Source / Show Source, das Icon rechts
+  neben dem Eingabefeld.  Neue Strings in EN/DE/FR/ES.  Im DOM nachgemessen:
+  alle Icons 14×14 auf der Zeile ihres Labels bzw. Feldes, Tooltip-API
+  gebunden, keine Absätze mehr außer Logo/Favicon.
+
 - **Track-Editor: Erklärungstexte als Tooltips (2026-09-28, Operator-Wunsch)** —
   Die Beschreibungen unter „Expiry Date" und „No Fade during Crossover"
   (Zend `description`-Absatz) werden beim Öffnen des Editors in das
