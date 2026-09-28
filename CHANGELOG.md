@@ -510,7 +510,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Ausgabe.  Einmalige Bereinigung der bestehenden Zeilen (Titel, Interpret,
   Album, Episodentitel) mit derselben Dekodierung: 44 Aktualisierungen, keine
   kodierten Reste.  Die ID3-Titel der bereits geladenen Dateien bleiben wie
-  sie sind (nur der Bibliothekseintrag zählt für Sendeplan und Stream).
+  sie sind (nur der Bibliothekseintrag zählt für Sendeplan und Stream) — `56fa348`.
 
 - **Track-Editor: „Expiry Date" war seit Mai 2026 unübersetzt (2026-09-28)** —
   Label, Beschreibung und Validierungsmeldung des Ablaufdatums fehlten in den
