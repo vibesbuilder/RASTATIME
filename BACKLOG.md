@@ -41,6 +41,62 @@ festgelegt.  Jeder Punkt bekommt vor Implementierung die
 
 ## 🎯 Aktive Backlog-Items (warten auf Operator-Go)
 
+### 🟡 Loudness nach EBU R128 im Processing (Operator-Frage 2026-09-28, evaluiert: Go in Stufen empfohlen)
+
+**Ist-Stand (geprüft 2026-09-28):**
+- Einzige Lautheits-Verarbeitung heute: ReplayGain je Datei.  Der Analyzer
+  misst mit ffmpegs `replaygain`-Filter — das ist **ReplayGain 1.0**
+  (RMS-basiert, 89-dB-Referenz), NICHT die BS.1770/R128-Messung; 308 von
+  377 Dateien haben einen Wert (Ø −4,8 dB, −14,9 … +16,7).  Angewendet als
+  `replaygain_track_gain` im annotate → `amplify(override=…)` auf dem Bus;
+  Schalter „Enable Replay Gain" + Modifier-Slider unter Settings → Streams
+  (`enable_replay_gain` = 1).  Webstreams haben ein manuelles Input-Gain.
+- Live-Quellen (DJ-Harbor, Webstream, Line-In) laufen ohne jede Regelung;
+  kein Limiter am Bus-Ende.
+- Werkzeuge vorhanden (Bench `xbench/bench_r128.liq` auf dem installierten
+  Build): Liquidsoap 2.4.4 hat `lufs()` (Momentary/Short-term/Integrated
+  nach R128), `normalize(lufs=true, target=…)` (LUFS-AGC, reines
+  Liquidsoap), `limit()`, und die ffmpeg-Filter `loudnorm`, `ebur128`,
+  `alimiter` (Filtergraph über die Tracks-API, eigener Clock; im Bench
+  regelte `loudnorm` einen −9,7-LUFS-Ton sofort auf −23,0).  ffmpeg 9.0
+  (C:\ffmpeg) hat `ebur128` + `loudnorm` für die Offline-Messung.
+
+**Plan in Stufen (jede einzeln abnehmbar):**
+- **Stufe 1 — R128-Messung + Zielwert + Limiter (~1,5–2 Tage):**
+  Analyzer misst mit `ebur128` statt `replaygain`: integrierte Lautheit
+  (LUFS), True Peak (dBTP), Loudness Range (LU) → neue Spalten in
+  `cc_files` (Migration 0061), `replay_gain` bleibt als abgeleiteter Wert.
+  Settings → Streams: Modus „Off / ReplayGain (bisher) / EBU R128",
+  Ziel-Lautheit (Vorgabe −23 LUFS; Streaming-Praxis liegt bei −16 … −18,
+  frei wählbar), True-Peak-Grenze (−1 dBTP).  `schedule.py` rechnet die
+  Titel-Verstärkung = Ziel − gemessene Lautheit (statt RG + Modifier), über
+  das bestehende annotate-Feld → keine Liquidsoap-Änderung für Dateien.
+  Am Bus-Ende `limit()` als Peak-Sicherung (Sample-Peak; echtes True-Peak
+  braucht Oversampling — bei −23 LUFS Ziel ist der Headroom groß).
+  Neu-Messung des Bestands als Job (Analyzer-Queue; ~377 Dateien ≈ 20 min).
+  Tests, Handbuch ×4.
+- **Stufe 0 (optional, in Stufe 1 integrierbar, ~0,5 Tag) — Meter:**
+  `lufs()` am Bus, Werte per Telnet/HTTP → Anzeige „Lautheit jetzt /
+  letzte Stunde" (Settings oder Dashboard) zur Kontrolle der Einhaltung.
+- **Stufe 2 — Live-Quellen (~1 Tag):** `normalize(lufs=true,
+  target=Ziel, window=3, gain ±12 dB)` auf den Live-Armen (DJ, Webstream,
+  Line-In), per `interactive.bool` schaltbar, Ziel per Telnet; Hörprobe
+  mit BUTT und einem Webstream.  Reines Liquidsoap, kein ffmpeg-Graph im
+  Sendeweg (Speicher-/Thread-Disziplin auf dem Windows-Build, vgl.
+  Select-Leck).
+- **Nicht empfohlen als Standard:** `loudnorm` in Echtzeit über den ganzen
+  Bus.  Der Filter regelt im Einpass-Modus dynamisch (hörbares Pumpen bei
+  Musik), legt einen eigenen ffmpeg-Clock in den Sendeweg und macht die
+  Titel-Messung überflüssig — als Option für reine Sprachsender denkbar.
+
+**Sinn:** Gleichmäßige Lautheit zwischen Titeln, DJs und Zuspielern ist
+für Hörer das spürbarste Qualitätsmerkmal; R128 ist die Norm dafür, die
+heutige RG-1.0-Messung ist ein Näherungswert.  **Aufwand gesamt:** ~3–4
+Tage inkl. Proben.  **Vorbedingungen:** Operator-Go je Stufe;
+Zielwert-Entscheidung (−23 LUFS Norm vs. lauteres Streaming-Ziel);
+Neu-Messung läuft im Hintergrund, Sendebetrieb bleibt unberührt, bis der
+Modus umgeschaltet wird.
+
 ### ✅ Catch-up steigt am Offset ein, Zeilenverschiebung der laufenden Zeile ohne Neustart (Operator-Go 2026-09-28, DONE 2026-09-28 — beide Proben bestanden)
 
 **Status 2026-09-28:** Teile A und B gebaut und getestet (`0f62b14`, 699
