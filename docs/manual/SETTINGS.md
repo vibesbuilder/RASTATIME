@@ -126,6 +126,22 @@ Settings → **General Preferences**.
 | **Lookahead** | How many upcoming shows the Dashboard's "Coming Up Next" panel displays. 3-5 is typical. |
 | **Refresh interval** | How often the Dashboard polls for updated state. 5 s is the default. 1 s is responsive but expensive on slow networks. 30 s is light but laggy. |
 
+### TuneIn Settings
+
+Collapsible section below General Preferences. Since 2026-09-28 the
+playout sends the "now playing" information to TuneIn itself; before,
+only file starts were pushed and the display went blank after five
+minutes.
+
+| Field | Notes |
+|---|---|
+| **Push metadata to your station on TuneIn?** | Master switch. When on, the playout sends title and artist at every start of a track and the show name at the start of a webstream or Line-In, and repeats the last update every four minutes (TuneIn removes a display that stays quiet for five minutes). Saving with the switch on tests the credentials against TuneIn and refuses invalid ones. |
+| **Station ID**, **Partner Id**, **Partner Key** | From your TuneIn partner account (AIR API). The key never appears in a log. |
+
+A changed setting is picked up at the next push; no restart. A live DJ
+(Master / Show Source) is not announced; the last track stays on the
+display until the next scheduled item.
+
 ### Email (password reset)
 
 If configured, the Manage Users → Reset Password → Send Email

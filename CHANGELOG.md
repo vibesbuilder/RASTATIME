@@ -9,6 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **TuneIn „Now playing" aus dem Playout (2026-09-28, Operator-Go Option 2)** —
+  Die Einstellungen unter Settings → TuneIn waren nur halb verdrahtet: der
+  Legacy-Notify meldete Datei-Starts, das Keep-alive aus dem alten
+  Pypo-Fetcher lief nicht mehr (TuneIn löscht die Anzeige nach fünf Minuten),
+  Webstreams und Line-Ins wurden nie gemeldet, und ein nicht erreichbares
+  TuneIn warf mitten im Notify eine Exception.  Neues Modul
+  `libretime_playout/tunein.py` (`TuneInPusher`): Titel + Interpret bei jedem
+  Titelstart, Sendungsname bei Webstream- und Line-In-Start, Keep-alive im
+  Schedule-Refresh (alle ~2 min, sendet erneut nach 240 s), Einstellungen vor
+  jedem Push frisch aus cc_pref (Save wirkt ohne Neustart), HTTP auf einem
+  Daemon-Thread mit 10-s-Timeout, XML-Antwort geprüft, Partner-Key nie im
+  Log.  Legacy-Push und `update-metadata-on-tunein` stillgelegt,
+  `common/TuneIn.php` entfernt; Hinweistext auf der Settings-Seite
+  (EN/DE/FR/ES), Handbuch SETTINGS ×4.  Tests: Push, deaktiviert/unvollständig,
+  Ablehnung/Netzfehler ohne Key im Log, Keep-alive-Intervall, Scheduler-Hooks.
+  Live-Verifikation gegen TuneIn steht aus, bis die Zugangsdaten vorliegen.
+
 - **Settings → Streams „Switch Transition Fade" wirkt jetzt: DJ-Übergabe mit
   Fade (2026-09-28, Operator-Go Option 2, Startwert 1 s)** — Das
   LibreTime-Feld (`cc_pref default_transition_fade`) hatte in RASTATIME

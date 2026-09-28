@@ -62,6 +62,22 @@ Configuración → **Preferencias generales**.
 | **Vista anticipada** | Cuántos programas próximos el panel "Viene después" muestra. 3-5 es típico. |
 | **Intervalo de refresco** | Con qué frecuencia el Panel sondea. 5 s es el por defecto. |
 
+### Ajustes de TuneIn
+
+Sección plegable bajo las Preferencias generales. Desde el 2026-09-28 el
+playout envía por sí mismo la información «now playing» a TuneIn; antes
+solo se notificaban los inicios de archivo y la visualización
+desaparecía a los cinco minutos.
+
+| Campo | Notas |
+|---|---|
+| **Push metadata to your station on TuneIn?** (enviar metadatos a TuneIn) | Interruptor principal. Activado, el playout envía título e intérprete en cada inicio de pista, el nombre del programa al iniciar un webstream o una entrada de línea, y repite la última actualización cada cuatro minutos (TuneIn borra una visualización que lleva cinco minutos en silencio). Guardar con el interruptor activado comprueba las credenciales con TuneIn y rechaza las no válidas. |
+| **Station ID**, **Partner Id**, **Partner Key** | De su cuenta de socio de TuneIn (AIR API). La clave no aparece en ningún registro. |
+
+Un ajuste modificado se aplica en el siguiente envío; sin reinicio. Un DJ
+en directo (Master / Show Source) no se anuncia; la última pista permanece
+en la visualización hasta el siguiente elemento programado.
+
 ### Email (restablecimiento de contraseña)
 
 | Campo | Notas |

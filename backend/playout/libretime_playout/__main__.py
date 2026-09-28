@@ -219,6 +219,25 @@ def _read_pref_seconds(key: str) -> Optional[float]:
         return None
 
 
+def _build_tunein_pusher():
+    """RASTATIME 2026-09-28 - the TuneIn pusher (Settings -> TuneIn Settings)."""
+    from libretime_playout.tunein import (  # noqa: PLC0415
+        TuneInPusher,
+        read_tunein_config_from_db,
+    )
+
+    pusher = TuneInPusher(read_tunein_config_from_db)
+    cfg = read_tunein_config_from_db()
+    if cfg is not None and cfg.enabled:
+        logger.info(
+            "TuneIn now-playing pushes: enabled for station %s (%s).",
+            cfg.station_id or "?", "credentials complete" if cfg.complete() else "credentials INCOMPLETE",
+        )
+    else:
+        logger.info("TuneIn now-playing pushes: disabled (Settings -> TuneIn Settings).")
+    return pusher
+
+
 def _resolve_dj_fade_seconds() -> float:
     """
     RASTATIME 2026-09-28 - Settings -> Streams "Switch Transition Fade (s)"
@@ -1199,6 +1218,9 @@ def main() -> None:
         # RASTATIME 2026-09-13 - Stream Label / Off Air Metadata / station
         # name re-read every refresh (ORM), pushed over telnet on change.
         read_icy_preferences=(read_icy_preferences_from_db if django_ok else None),
+        # RASTATIME 2026-09-28 - TuneIn now-playing pushes owned by the playout
+        # (settings re-read from cc_pref before every push).
+        tunein=(_build_tunein_pusher() if django_ok else None),
     )
     logger.info("Webstream watchdog: inside Liquidsoap (frame counter, rendered into rastatime.liq).")
     # RASTATIME 2026-09-04 - a previous Pypo may have died mid-prepare

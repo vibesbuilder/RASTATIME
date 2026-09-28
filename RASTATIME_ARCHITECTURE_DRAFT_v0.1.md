@@ -1,10 +1,14 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.41
+Draft version: 0.42
 Date: 2026-09-28
 
 > **Revision history**
+> - **0.42 (2026-09-28)** — **TuneIn now-playing from the playout**
+>   (§23.38): `TuneInPusher` sends title/artist at every track start,
+>   the show name for live inputs and a keep-alive every refresh; the
+>   legacy notify push and the Pypo keep-alive are retired.
 > - **0.41 (2026-09-28)** — **DJ hand-over fade** (§23.20 transitions):
 >   Settings → Streams "Switch Transition Fade" shapes the DJ arms of the
 >   bus switch (`bus_dj`: DJ at once, programme fades out under it) and
@@ -5279,3 +5283,25 @@ change.  The no-fade shapes were then verified in the bench (four
 tones, left/right separated): flagged old track full to its end while
 the new one fades in, flagged new track at full level at once while the
 old fades, both flagged = plain overlap, overbook = hard cut.
+
+### 23.38 TuneIn Now-Playing from the Playout (2026-09-28)
+
+**Context.**  Settings → TuneIn Settings existed from LibreTime but was
+only half wired in RASTATIME: the legacy `notify-media-item-start-play`
+pushed file starts, the four-minute keep-alive lived in the old Pypo
+fetcher (no longer running - TuneIn drops a display that stays quiet
+for five minutes), webstreams and line-ins were never announced, and an
+unreachable TuneIn threw inside the notify request.
+
+**Design.**  `libretime_playout/tunein.py` owns the push.  The scheduler
+calls `TuneInPusher.now_playing()` where it writes the cue marker for a
+new item (track: title + artist; webstream / line-in: the show name) and
+`keepalive()` from the schedule refresh (re-sends the last payload when
+the previous push is older than 240 s).  Settings are re-read from
+`cc_pref` before every push (a save takes effect at the next item), the
+HTTP GET to `air.radiotime.com/Playing.ashx` runs on a daemon thread with
+a 10 s timeout, the XML answer's `head/status` decides success, failures
+are logged without the partner key and back off until the next
+keep-alive.  The legacy PHP push is removed; `update-metadata-on-tunein`
+stays as a no-op for older clients.  A live DJ is not announced (the
+switcher knows no title); the last item stays on the display.

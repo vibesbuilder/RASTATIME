@@ -5185,3 +5185,7 @@ msgstr "La date d'expiration doit être au format AAAA-MM-JJ ou vide."
 #: RASTATIME 2026-09-28 library column
 msgid "Cover"
 msgstr "Pochette"
+
+#: RASTATIME 2026-09-28 tunein
+msgid "When enabled, the playout sends title and artist to TuneIn at every start of a track, webstream or Line-In and refreshes the display every four minutes. Saving tests the credentials against TuneIn."
+msgstr "Si activé, le playout envoie le titre et l'artiste à TuneIn à chaque démarrage d'un titre, d'un webstream ou d'une entrée ligne et rafraîchit l'affichage toutes les quatre minutes. L'enregistrement vérifie les identifiants auprès de TuneIn."

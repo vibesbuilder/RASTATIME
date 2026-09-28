@@ -1,4 +1,9 @@
 <fieldset class="padded">
+    <?php /* RASTATIME 2026-09-28 - what the switch does now that the playout
+            sends the updates (tracks, webstreams, line-ins, keep-alive). */ ?>
+    <p class="input-settings-inline-p">
+        <?php echo _("When enabled, the playout sends title and artist to TuneIn at every start of a track, webstream or Line-In and refreshes the display every four minutes. Saving tests the credentials against TuneIn.") ?>
+    </p>
     <dl class="zend_form">
 
         <?php if ($this->element->getElement("enable_tunein")->hasErrors()) {

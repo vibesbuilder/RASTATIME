@@ -62,6 +62,22 @@ Paramètres → **Préférences générales**.
 | **Vue d'avance** | Combien d'émissions à venir le panneau "Vient ensuite" affiche. 3-5 est typique. |
 | **Intervalle de rafraîchissement** | À quelle fréquence le Tableau de bord interroge. 5 s par défaut. |
 
+### Paramètres TuneIn
+
+Section repliable sous les Préférences générales. Depuis le 2026-09-28,
+le playout envoie lui-même l'information « now playing » à TuneIn ;
+auparavant seuls les démarrages de fichiers étaient transmis et
+l'affichage disparaissait après cinq minutes.
+
+| Champ | Notes |
+|---|---|
+| **Push metadata to your station on TuneIn?** (envoyer les métadonnées à TuneIn) | Interrupteur principal. Activé, le playout envoie titre et artiste à chaque démarrage de piste, le nom de l'émission au démarrage d'un webstream ou d'une entrée ligne, et répète la dernière mise à jour toutes les quatre minutes (TuneIn efface un affichage silencieux depuis cinq minutes). Enregistrer avec l'interrupteur activé vérifie les identifiants auprès de TuneIn et refuse les identifiants invalides. |
+| **Station ID**, **Partner Id**, **Partner Key** | Depuis votre compte partenaire TuneIn (AIR API). La clé n'apparaît dans aucun journal. |
+
+Un paramètre modifié est pris en compte au prochain envoi ; pas de
+redémarrage. Un DJ en direct (Master / Show Source) n'est pas annoncé ;
+la dernière piste reste affichée jusqu'au prochain élément programmé.
+
 ### Email (réinitialisation mot de passe)
 
 | Champ | Notes |

@@ -830,13 +830,11 @@ class ApiController extends Zend_Controller_Action
                     $now = new DateTime('now', new DateTimeZone('UTC'));
                     $file->setLastPlayedTime($now);
 
-                    // Push metadata to TuneIn
-                    if (Application_Model_Preference::getTuneinEnabled()) {
-                        $filePropelOrm = $file->getPropelOrm();
-                        $title = urlencode($filePropelOrm->getDbTrackTitle());
-                        $artist = urlencode($filePropelOrm->getDbArtistName());
-                        Application_Common_TuneIn::sendMetadataToTunein($title, $artist);
-                    }
+                    // RASTATIME 2026-09-28 - the TuneIn push moved to the
+                    // playout (libretime_playout/tunein.py): every track,
+                    // webstream and line-in start plus a keep-alive.  The
+                    // push here double-URL-encoded the title and threw on an
+                    // unreachable TuneIn in the middle of this notify.
                 }
             } else {
                 // webstream
@@ -1752,20 +1750,8 @@ class ApiController extends Zend_Controller_Action
      */
     public function updateMetadataOnTuneinAction()
     {
-        if (!Application_Model_Preference::getTuneinEnabled()) {
-            $this->_helper->json->sendJson([0]);
-        }
-
-        $lastTuneInMetadataUpdate = Application_Model_Preference::geLastTuneinMetadataUpdate();
-        if (time() - $lastTuneInMetadataUpdate >= 240) {
-            $metadata = $metadata = Application_Model_Schedule::getCurrentPlayingTrack();
-            if (!is_null($metadata)) {
-                Application_Common_TuneIn::sendMetadataToTunein(
-                    $metadata['title'],
-                    $metadata['artist']
-                );
-            }
-        }
+        // RASTATIME 2026-09-28 - kept for older clients; the keep-alive is
+        // sent by the playout itself now (libretime_playout/tunein.py).
         $this->_helper->json->sendJson([1]);
     }
 

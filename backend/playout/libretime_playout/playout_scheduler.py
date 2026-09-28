@@ -46,6 +46,7 @@ from .liquidsoap_config import (
     crossfade_buffer_seconds,
 )
 from . import liquidsoap_health
+from .tunein import TuneInPusher
 from .liquidsoap_service import (
     MAIN_OUTPUT_BY_INDEX,
     NightlyRestartPolicy,
@@ -148,6 +149,7 @@ class PlayoutScheduler:
         nightly_restart: Optional[NightlyRestartPolicy] = None,
         render_settings_fingerprint: Optional[Callable[[], Optional[str]]] = None,
         render_restart_pending: bool = False,
+        tunein: Optional[TuneInPusher] = None,
     ) -> None:
         self._engine = engine
         self._api_client = api_client
@@ -287,6 +289,9 @@ class PlayoutScheduler:
         # refresh and pushed over telnet only when they changed; bus_show
         # follows the show on air (see _sync_icy_metadata).
         self._read_icy_preferences = read_icy_preferences
+        # RASTATIME 2026-09-28 - TuneIn now-playing pushes (title/artist at
+        # every start, show name for live inputs, keep-alive every refresh).
+        self._tunein = tunein
         self._icy_pushed: Optional[object] = None
         self._bus_show_pushed: Optional[str] = None
 
@@ -596,6 +601,8 @@ class PlayoutScheduler:
         # exactly what is on air and what comes next: the right moment
         # to decide about the nightly quiet-window restart.
         self._maybe_nightly_restart()
+        # RASTATIME 2026-09-28 - TuneIn forgets a quiet station after 5 min
+        self._tunein_keepalive()
         # RASTATIME 2026-09-16 - a changed 24/7 / Main Output / crossfade /
         # stream-output setting gets the same quiet-moment restart.
         self._maybe_settings_restart()
@@ -1773,6 +1780,9 @@ class PlayoutScheduler:
             "track", show=event.show_name, item=event.row_id,
             title=event.track_title, artist=event.artist_name,
         )
+        self._tunein_now_playing(
+            "track", title=event.track_title, artist=event.artist_name, show=event.show_name,
+        )
         # RASTATIME 2026-05-16 — cache the effective gain for the
         # resume path.  For file events the value is the precomputed
         # ReplayGain sum of ``cc_files.replay_gain`` and
@@ -1919,6 +1929,7 @@ class PlayoutScheduler:
         self._cue_item_start(
             "webstream", show=event.show_name, item=event.row_id, uri=event.uri,
         )
+        self._tunein_now_playing("webstream", title=None, artist=None, show=event.show_name)
         # RASTATIME 2026-05-16 — cache the webstream's input-gain so the
         # resume path (DJ disconnect, hot-reload) reapplies it after the
         # stop/restart, instead of falling back to "no gain".
@@ -2138,6 +2149,7 @@ class PlayoutScheduler:
         self._cue_item_start(
             "linein", show=event.show_name, item=event.row_id, name=event.name,
         )
+        self._tunein_now_playing("linein", title=None, artist=None, show=event.show_name)
         self._set_bus_show(event.show_name)   # ICY show for the line-in packets (2026-09-13)
 
         # Drive the dashboard "On Air" light for the new row.
@@ -2742,6 +2754,32 @@ class PlayoutScheduler:
         live on-air callback.
         """
         self._cue_writer = cue_writer
+
+    # ------------------------------------------------------------------
+    # RASTATIME 2026-09-28 - TuneIn now-playing (Settings -> TuneIn)
+    # ------------------------------------------------------------------
+
+    def _tunein_now_playing(
+        self, kind: str, *, title: Optional[str], artist: Optional[str], show: Optional[str],
+    ) -> None:
+        """A track pushes title + artist; a webstream or line-in the show name."""
+        if self._tunein is None:
+            return
+        try:
+            if kind == "track":
+                self._tunein.now_playing(title or show or "", artist or "", kind=kind)
+            else:
+                self._tunein.now_playing(show or "", "", kind=kind)
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            logger.warning("TuneIn now-playing (%s) failed: %s", kind, exc)
+
+    def _tunein_keepalive(self) -> None:
+        if self._tunein is None:
+            return
+        try:
+            self._tunein.keepalive()
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            logger.warning("TuneIn keep-alive failed: %s", exc)
 
     def _cue_item_start(self, kind: str, **meta) -> None:
         cw = self._cue_writer

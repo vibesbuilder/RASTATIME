@@ -128,6 +128,22 @@ Einstellungen → **Allgemeine Einstellungen**.
 | **Vorausschau** | Wie viele kommende Sendungen das "Kommt als Nächstes"-Panel des Dashboards anzeigt. 3-5 ist typisch. |
 | **Aktualisierungsintervall** | Wie oft das Dashboard nach aktualisiertem Zustand pollt. 5 s ist der Standard. 1 s ist reaktionsschnell, aber teuer auf langsamen Netzwerken. 30 s ist leicht, aber verzögert. |
 
+### TuneIn-Einstellungen
+
+Aufklappbarer Bereich unter den Allgemeinen Einstellungen. Seit
+2026-09-28 sendet der Playout die „Now playing"-Information selbst an
+TuneIn; vorher wurden nur Datei-Starts gemeldet, und die Anzeige verschwand
+nach fünf Minuten.
+
+| Feld | Hinweise |
+|---|---|
+| **Push metadata to your station on TuneIn?** (Metadaten an TuneIn senden) | Hauptschalter. Wenn an, sendet der Playout bei jedem Titelstart Titel und Interpret, beim Start eines Webstreams oder Line-Ins den Sendungsnamen, und wiederholt die letzte Meldung alle vier Minuten (TuneIn entfernt eine Anzeige, die fünf Minuten still bleibt). Speichern mit aktivem Schalter prüft die Zugangsdaten gegen TuneIn und lehnt ungültige ab. |
+| **Station ID**, **Partner Id**, **Partner Key** | Aus Ihrem TuneIn-Partnerkonto (AIR API). Der Key erscheint in keinem Log. |
+
+Eine geänderte Einstellung greift beim nächsten Push; kein Neustart. Ein
+Live-DJ (Master / Show Source) wird nicht gemeldet; der letzte Titel
+bleibt bis zum nächsten geplanten Element in der Anzeige.
+
 ### E-Mail (Passwort-Zurücksetzung)
 
 Falls konfiguriert, sendet der Flow Benutzer verwalten →
