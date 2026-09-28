@@ -1,0 +1,7 @@
+# RASTATIME 2026-09-28 - Live Text Info: the now-playing text file is UTF-8
+# (browsers would assume ISO-8859-1 for text/plain) and must never be cached.
+AddCharset UTF-8 .txt
+<IfModule mod_headers.c>
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+    Header set Access-Control-Allow-Origin "*"
+</IfModule>

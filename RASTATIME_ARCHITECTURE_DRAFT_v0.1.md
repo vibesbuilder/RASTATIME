@@ -1,10 +1,15 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.43
+Draft version: 0.44
 Date: 2026-09-28
 
 > **Revision history**
+> - **0.44 (2026-09-28)** — **Crossfade metadata** (§23.37): `add()` forwards
+>   only the first source's metadata and `cross` replays the ending
+>   track's metadata on its tail; the new track now leads every `add`
+>   shape and the tail carries no metadata (stream title and Live Text
+>   lagged one track).  Patch bump: rendering detail, no new component.
 > - **0.43 (2026-09-28)** — **Live Text Info** (§23.39): the "now playing"
 >   line as a text file, built by Liquidsoap (`label_for` with its own
 >   format, POSTed to `/live-text`), written by the playout into the
@@ -5188,6 +5193,17 @@ Crossfade Duration (new, `'1'`).  Both are in the render fingerprint
 `cc_files.no_fade_crossfade` (legacy migrations 0059 + 0060, raw SQL in
 `StoredFile`, checkbox in the metadata editor, exposed through the
 Django `File` model to the playout).
+
+**Metadata in the transition (2026-09-28).**  `add()` forwards the
+metadata of the FIRST source in its list only, and `cross` replays the
+ending track's metadata on its buffered tail.  With the tail in front
+the new track's packet was lost and the replayed old one passed, so the
+ICY title and the Live Text showed the previous track until the next
+transition.  Every `add` shape therefore lists the new track first and
+the tail is wrapped in `drop_metadata`; the `sequence` shape (show) was
+never affected.  Bench (`on_metadata` on the bus, three tones): the
+packet now arrives at the audible start of the new track in all five
+shapes.
 
 **Liquidsoap.**  `scheduled_x = cross(duration=BUFFER, rt_transition,
 scheduled_q)` wraps the request queue ONLY; the silence arm stays

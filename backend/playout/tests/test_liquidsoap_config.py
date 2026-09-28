@@ -16,6 +16,8 @@ Liquidsoap against a rendered .liq.
 """
 from __future__ import annotations
 
+import re
+
 from pathlib import Path
 
 import pytest
@@ -692,17 +694,17 @@ def test_crossfade_block_track_and_show_shapes():
     assert "duration=2.5, rt_transition, scheduled_q" in block
     # natural in-show: fade the LAST second of the 2.5 s tail, new track
     # waits 1.5 s then fades in over 1 s
-    assert "fade.out(duration=t_out, delay=t_delay, old.source)" in block
+    assert "fade.out(duration=t_out, delay=t_delay, old_s)" in block
     assert "sequence([blank(duration=1.5), fade.in(duration=t_in, new.source)])" in block
     # natural show boundary: old fades over its last 2.5 s, new follows
-    assert "sequence([fade.out(duration=s_out, delay=s_delay, old.source), new.source])" in block
+    assert "sequence([fade.out(duration=s_out, delay=s_delay, old_s), new.source])" in block
     assert "s_out = if old_nf then 0.001 else 2.5 end" in block
     assert "s_delay = if old_nf then 999999.0 else 0.0 end" in block
     # overbook at a show boundary: new at once, old fades under it
-    assert 'elsif mode == "show_skip" then\n    add(normalize=false, [fade.out(duration=s_cut, max_duration(s_cut, old.source)),\n                          fade.in(duration=0.05, new.source)])' in block
+    assert 'elsif mode == "show_skip" then\n    add(normalize=false, [fade.in(duration=0.05, new.source),\n                          fade.out(duration=s_cut, max_duration(s_cut, old_s))])' in block
     assert "s_cut = if old_nf then 0.05 else 2.5 end" in block
     # in-show skip trims the tail to the track crossfade
-    assert "fade.out(duration=t_cut, max_duration(t_cut, old.source))" in block
+    assert "fade.out(duration=t_cut, max_duration(t_cut, old_s))" in block
     assert "t_cut = if old_nf then 0.05 else 1.0 end" in block
     # "No Fade during Crossover": the flagged side keeps its level
     assert 'rt_nofade = interactive.string("rt_nofade", "-")' in block
@@ -714,13 +716,29 @@ def test_crossfade_block_track_and_show_shapes():
     assert 'if mode == "instant" or rem < 0.15 or old.db_level < -50. then' in block
 
 
+def test_crossfade_block_new_track_metadata_wins():
+    """2026-09-28: add() forwards only the first source's metadata and cross
+    replays the ending track's metadata on its tail -> the stream title and
+    the Live Text lagged one track.  New track first, tail without metadata."""
+    for track, show in ((1.0, 2.5), (3.0, 1.0), (1.0, 1.0)):
+        block = lc._render_crossfade_block(track, show)
+        assert "old_s = drop_metadata(old.source)" in block
+        # an add list ends with "])" at a line end; the inner sequence ends with "]),"
+        for add_list in re.findall(r"add\(normalize=false, \[(.*?)\]\)\n", block, re.S):
+            # the new track (fade.in / blank + fade.in) is the first element,
+            # the old tail (old_s) comes second
+            assert add_list.lstrip().startswith(("fade.in(", "sequence([blank(")), add_list
+            assert add_list.index("new") < add_list.index("old_s"), add_list
+        assert "old.source" not in block.replace("source.remaining(old.source)", "").replace("drop_metadata(old.source)", "")
+
+
 def test_crossfade_block_zero_durations_never_fade():
     block = lc._render_crossfade_block(0.0, 0.0)
     assert lc.crossfade_buffer_seconds(0.0, 0.0) == lc.CROSSFADE_BUFFER_FLOOR_SECONDS
     assert "duration=0.5, rt_transition, scheduled_q" in block
     # track natural + show natural degrade to a plain sequence, skips to instant
-    assert block.count("sequence([old.source, new.source])") == 2
-    assert block.count("rt_instant(old, new)") >= 3
+    assert block.count("sequence([old_s, new.source])") == 2
+    assert block.count("rt_instant(old_s, new.source)") >= 3
     assert "fade.in(duration=0.0," not in block and "fade.in(duration=0.0)" not in block
 
 
@@ -728,7 +746,7 @@ def test_crossfade_block_equal_durations_have_no_wait():
     block = lc._render_crossfade_block(1.0, 1.0)
     assert "blank(" not in block
     assert "t_delay = if old_nf then 999999.0 else 0.0 end" in block
-    assert "fade.out(duration=t_out, delay=t_delay, old.source),\n                          fade.in(duration=t_in, new.source)" in block
+    assert "fade.in(duration=t_in, new.source),\n                          fade.out(duration=t_out, delay=t_delay, old_s)" in block
 
 
 def test_full_render_show_crossfade_reaches_block_and_bus():

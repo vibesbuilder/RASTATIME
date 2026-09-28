@@ -155,3 +155,6 @@ recordings/
 # -----------------------------------------------------------------------------
 _assistant-state/
 _migration/
+
+# Live Text Info: written by the playout at runtime
+frontend/legacy/public/live/now-playing.txt*

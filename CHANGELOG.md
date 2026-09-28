@@ -547,6 +547,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Stream-Titel und Live Text hingen einen Titel hinterher (2026-09-28)** —
+  Seit den Crossfade-Formen vom 27.09. zeigten ICY-Titel und die
+  Live-Text-Datei während eines Titels noch den vorherigen; der richtige
+  erschien erst beim nächsten Übergang.  Bench (drei Töne, `on_metadata` am
+  Bus): `add()` reicht nur die Metadaten der ERSTEN Quelle in der Liste
+  durch, und `cross` spielt die Metadaten des endenden Titels auf dessen
+  gepuffertem Schwanz noch einmal aus — mit dem Schwanz vorn ging das Paket
+  des neuen Titels verloren, das wiederholte alte kam durch.  Jetzt steht in
+  jeder `add`-Form (track, track_skip, show_skip, instant) der neue Titel an
+  erster Stelle und der Schwanz läuft durch `drop_metadata`; die
+  `sequence`-Form (show) war nicht betroffen.  Bench danach: das Paket kommt
+  in allen fünf Formen genau zum hörbaren Start des neuen Titels.  Dazu:
+  `/live/now-playing.txt` wird per `.htaccess` als `text/plain;
+  charset=utf-8` und ohne Cache ausgeliefert (Browser zeigten „KÃ¼nstler"),
+  die Laufzeitdatei ist git-ignoriert.  Render-Regressionstest; wirksam nach
+  PLAYOUT-Neustart (gerendertes `rastatime.liq`).
+
 - **Podcast-Episodentitel doppelt HTML-kodiert (2026-09-28, Operator-Go)** —
   WordPress-Feeds liefern typografische Anführungszeichen als HTML-Entities
   in CDATA (`&#8222;…&#8220;`), SimplePie escapt beim Sanitizen das `&` noch

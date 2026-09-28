@@ -1807,6 +1807,13 @@ def _render_crossfade_block(
     shapes wait ``BUFFER - D`` before fading (fade.out delay + a blank in
     front of the new track); skip shapes trim the tail with
     max_duration.  A silent or empty partner always hands over at once.
+
+    Metadata (bench 2026-09-28): ``add`` forwards only the FIRST source's
+    metadata and ``cross`` replays the ending track's metadata on its
+    buffered tail.  The new track is therefore the first element of every
+    ``add`` and the tail is wrapped in ``drop_metadata`` - otherwise the
+    stream title and the Live Text showed the previous track until the
+    next transition (regression of the 2026-09-27 shapes).
     """
     track = max(0.0, float(track_seconds))
     show = max(0.0, float(show_seconds))
@@ -1817,41 +1824,41 @@ def _render_crossfade_block(
 
     # natural in-show shape (variables: t_in, t_out)
     if track < 0.05:
-        track_natural = "    sequence([old.source, new.source])\n"
+        track_natural = "    sequence([old_s, new.source])\n"
     else:
         wait = buf - track
         if wait < 0.01:
             track_natural = (
-                "    add(normalize=false, [fade.out(duration=t_out, delay=t_delay, old.source),\n"
-                "                          fade.in(duration=t_in, new.source)])\n"
+                "    add(normalize=false, [fade.in(duration=t_in, new.source),\n"
+                "                          fade.out(duration=t_out, delay=t_delay, old_s)])\n"
             )
         else:
             track_natural = (
-                "    add(normalize=false, [fade.out(duration=t_out, delay=t_delay, old.source),\n"
-                f"                          sequence([blank(duration={f(wait)}), fade.in(duration=t_in, new.source)])])\n"
+                f"    add(normalize=false, [sequence([blank(duration={f(wait)}), fade.in(duration=t_in, new.source)]),\n"
+                "                          fade.out(duration=t_out, delay=t_delay, old_s)])\n"
             )
     # natural show shape: the old track fades over its last SHOW seconds and
     # the new one FOLLOWS (no overlap - the boundary is the old track's end)
     if show < 0.05:
-        show_natural = "    sequence([old.source, new.source])\n"
+        show_natural = "    sequence([old_s, new.source])\n"
     else:
         show_natural = (
-            "    sequence([fade.out(duration=s_out, delay=s_delay, old.source), new.source])\n"
+            "    sequence([fade.out(duration=s_out, delay=s_delay, old_s), new.source])\n"
         )
     # skip shapes (variables: t_cut / s_cut = tail length and fade of the old track)
     if track < 0.05:
-        track_skip = "    rt_instant(old, new)\n"
+        track_skip = "    rt_instant(old_s, new.source)\n"
     else:
         track_skip = (
-            "    add(normalize=false, [fade.out(duration=t_cut, max_duration(t_cut, old.source)),\n"
-            "                          fade.in(duration=t_in, new.source)])\n"
+            "    add(normalize=false, [fade.in(duration=t_in, new.source),\n"
+            "                          fade.out(duration=t_cut, max_duration(t_cut, old_s))])\n"
         )
     if show < 0.05:
-        show_skip = "    rt_instant(old, new)\n"
+        show_skip = "    rt_instant(old_s, new.source)\n"
     else:
         show_skip = (
-            "    add(normalize=false, [fade.out(duration=s_cut, max_duration(s_cut, old.source)),\n"
-            "                          fade.in(duration=0.05, new.source)])\n"
+            "    add(normalize=false, [fade.in(duration=0.05, new.source),\n"
+            "                          fade.out(duration=s_cut, max_duration(s_cut, old_s))])\n"
         )
     return (
         "# rt_cross: shape of the NEXT queue transition, set by PLAYOUT over telnet\n"
@@ -1860,8 +1867,8 @@ def _render_crossfade_block(
         'rt_cross = interactive.string("rt_cross", "track")\n'
         'rt_nofade = interactive.string("rt_nofade", "-")\n'
         f"# track crossfade {f(track)} s, show crossfade {f(show)} s, tail buffer {f(buf)} s\n"
-        "def rt_instant(old, new) =\n"
-        "  add(normalize=false, [fade.out(duration=0.05, old.source), fade.in(duration=0.05, new.source)])\n"
+        "def rt_instant(old_s, new_s) =\n"
+        "  add(normalize=false, [fade.in(duration=0.05, new_s), fade.out(duration=0.05, old_s)])\n"
         "end\n"
         "def rt_transition(old, new) =\n"
         "  mode = rt_cross()\n"
@@ -1869,6 +1876,11 @@ def _render_crossfade_block(
         '  old_nf = nofade == "old" or nofade == "both"\n'
         '  new_nf = nofade == "new" or nofade == "both"\n'
         "  rem = source.remaining(old.source)\n"
+        "  # 2026-09-28: add() forwards the metadata of the FIRST source only, and\n"
+        "  # cross replays the ending track's metadata on its buffered tail - with\n"
+        "  # the tail in front the stream title and the Live Text lagged one track.\n"
+        "  # The new track goes first in every add, the tail carries no metadata.\n"
+        "  old_s = drop_metadata(old.source)\n"
         '  log(level=3, label="rt_cross", "#{mode}/#{nofade}: #{old.metadata[\\"title\\"]} -> '
         '#{new.metadata[\\"title\\"]} (tail #{rem} s)")\n'
         f"  t_in = if new_nf then 0.05 else {f(max(track, 0.05))} end\n"
@@ -1880,7 +1892,7 @@ def _render_crossfade_block(
         f"  s_delay = if old_nf then {never} else {f(max(0.0, buf - show))} end\n"
         "  ignore(t_in) ignore(t_out) ignore(s_out) ignore(t_cut) ignore(s_cut) ignore(t_delay) ignore(s_delay)\n"
         '  if mode == "instant" or rem < 0.15 or old.db_level < -50. then\n'
-        "    rt_instant(old, new)\n"
+        "    rt_instant(old_s, new.source)\n"
         '  elsif mode == "show_skip" then\n'
         + show_skip
         + '  elsif mode == "track_skip" then\n'
