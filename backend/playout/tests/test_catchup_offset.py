@@ -297,3 +297,45 @@ def test_file_start_records_push_time_and_clip_after_seek(sched):
     s._on_file_start("K", _file(before, cue_in=0.5, seconds=200.0), seek=41.0)
     assert s._current_started_at >= before
     assert s._current_clip_seconds == pytest.approx(158.5)
+
+
+# ---------------------------------------------------------------------------
+# D - 20:27:08 incident: a planned Liquidsoap restart at the boundary
+# emptied the queue, the successor's PLAY adopted nothing -> dead air
+# ---------------------------------------------------------------------------
+
+def test_fresh_liquidsoap_instance_forgets_the_queued_successor(sched):
+    s, _ = sched
+    now = datetime.utcnow()
+    s._queued_ahead = ("n", _file(now, row_id=2, file_id=2))
+    s._queued_ahead_prev = _file(now - timedelta(seconds=100), row_id=1, file_id=1)
+    s._current_started_at, s._current_clip_seconds = now, 200.0
+    with patch.object(s, "_retry_initial_liquidsoap_state", return_value=True), \
+         patch.object(s, "_request_source_reconcile"):
+        s._after_liquidsoap_restart(attempts=1, delay=0.0)
+    assert s._queued_ahead is None and s._queued_ahead_prev is None
+    assert s._current_started_at is None and s._current_clip_seconds is None
+
+
+def test_boundary_restart_pushes_the_successor_afresh(sched):
+    s, engine = sched
+    now = datetime.utcnow()
+    prev = _file(now - timedelta(seconds=198), row_id=1, file_id=1, seconds=200.0)
+    nxt = _file(now, row_id=2, file_id=2)
+    s._current_event, s._playing_key = prev, "p"
+    s._queued_ahead = ("n", nxt)
+    s._boundary_restart_pending = "rastatime.liq changed"
+
+    def restart(reason, settle_async=False):
+        with patch.object(s, "_retry_initial_liquidsoap_state", return_value=True), \
+             patch.object(s, "_request_source_reconcile"):
+            s._after_liquidsoap_restart(attempts=1, delay=0.0)
+        return True
+
+    with patch.object(s, "_boundary_allows_restart", return_value=True), \
+         patch.object(s, "_perform_planned_restart", side_effect=restart):
+        s._on_file_start("n", nxt)
+    engine.adopt_queued.assert_not_called()
+    engine.play.assert_called_once()
+    assert engine.play.call_args.kwargs["cue_in"] == 0.0
+    assert s._playing_key == "n" and s._current_event is nxt

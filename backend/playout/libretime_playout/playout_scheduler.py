@@ -977,6 +977,15 @@ class PlayoutScheduler:
             self._prepared = None
             self._playing_key = None
             self._current_event = None
+            # RASTATIME 2026-09-28 - the fresh instance has an empty queue:
+            # a successor queued ahead in the old one is gone with it.  The
+            # planned boundary restart at 20:27:08 kept the bookkeeping,
+            # the successor's PLAY "adopted" a queue with nothing on it and
+            # the station was silent until the next row.
+            self._queued_ahead = None
+            self._queued_ahead_prev = None
+            self._current_started_at = None
+            self._current_clip_seconds = None
         if self._retry_initial_liquidsoap_state(attempts, delay, sleep=time.sleep):
             logger.info("Nightly restart: Liquidsoap is back, sentinel stopped, gates reset.")
             self._request_source_reconcile()
@@ -1874,10 +1883,15 @@ class PlayoutScheduler:
         ):
             reason = self._boundary_restart_pending
             self._boundary_restart_pending = None
-            self._perform_planned_restart(
+            if self._perform_planned_restart(
                 f"at the track boundary before {key}: {reason}",
                 settle_async=True,
-            )
+            ):
+                # 2026-09-28 - whatever was queued ahead lived in the old
+                # instance; this track needs a fresh push (see
+                # _after_liquidsoap_restart, which clears the same state).
+                self._queued_ahead = None
+                self._queued_ahead_prev = None
 
         # Track which event is "current" regardless of whether a DJ is
         # overriding right now — this is what we resume to once the DJ
