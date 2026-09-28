@@ -547,7 +547,14 @@ class Application_Service_PodcastEpisodeService extends Application_Service_Thir
                 'podcast_id' => $podcast->getDbId(),
                 'guid' => $itemId,
                 'ingested' => $ingested,
-                'title' => $item->get_title(),
+                // RASTATIME 2026-09-28 - plain text, not SimplePie's HTML-safe
+                // output: WordPress feeds carry typographic quotes as
+                // HTML entities inside CDATA (&#8222;...&#8220;) and
+                // SimplePie's sanitizer escapes the ampersand once more, so
+                // "&amp;#8222;" reached episode_title, the track title and
+                // the ID3 tag of 20 episodes (seen 2026-09-28).  The library
+                // escapes on output, so the stored value must be the text.
+                'title' => self::feedPlainText($item->get_title()),
                 // From the RSS spec best practices:
                 // 'An item's author element provides the e-mail address of the person who wrote the item'
                 'author' => $this->_buildAuthorString($item),
@@ -560,6 +567,30 @@ class Application_Service_PodcastEpisodeService extends Application_Service_Thir
         }
 
         return $episodesArray;
+    }
+
+    /**
+     * RASTATIME 2026-09-28 - turn a SimplePie text value into plain UTF-8.
+     * SimplePie returns HTML-safe text (ampersands escaped) and feeds may
+     * carry HTML entities in the text itself, so the value is decoded
+     * until it no longer changes (at most three rounds).
+     *
+     * @param null|string $text
+     *
+     * @return string
+     */
+    public static function feedPlainText($text)
+    {
+        $value = (string) ($text ?? '');
+        for ($round = 0; $round < 3; ++$round) {
+            $decoded = html_entity_decode($value, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            if ($decoded === $value) {
+                break;
+            }
+            $value = $decoded;
+        }
+
+        return trim($value);
     }
 
     /**

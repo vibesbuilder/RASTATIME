@@ -499,6 +499,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Podcast-Episodentitel doppelt HTML-kodiert (2026-09-28, Operator-Go)** —
+  WordPress-Feeds liefern typografische Anführungszeichen als HTML-Entities
+  in CDATA (`&#8222;…&#8220;`), SimplePie escapt beim Sanitizen das `&` noch
+  einmal, und RASTATIME übernahm die Ausgabe ungeprüft: `&amp;#8222;` stand
+  in `podcast_episodes.episode_title`, im Bibliothekstitel und im ID3-Tag
+  (20 Titel, 24 Episoden — „Reading Hour", „Newsmag", „The Talk Show").
+  Fix: `PodcastEpisodeService::feedPlainText()` dekodiert Feed-Text bis zur
+  Ruhe (max. drei Runden) zu Klartext, die Bibliothek escapt ohnehin bei der
+  Ausgabe.  Einmalige Bereinigung der bestehenden Zeilen (Titel, Interpret,
+  Album, Episodentitel) mit derselben Dekodierung: 44 Aktualisierungen, keine
+  kodierten Reste.  Die ID3-Titel der bereits geladenen Dateien bleiben wie
+  sie sind (nur der Bibliothekseintrag zählt für Sendeplan und Stream).
+
 - **Track-Editor: „Expiry Date" war seit Mai 2026 unübersetzt (2026-09-28)** —
   Label, Beschreibung und Validierungsmeldung des Ablaufdatums fehlten in den
   DE/FR/ES-Katalogen (aufgefallen bei der Tooltip-Prüfung auf Deutsch);
