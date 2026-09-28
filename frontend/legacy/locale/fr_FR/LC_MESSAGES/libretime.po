@@ -5169,3 +5169,15 @@ msgstr "Passage de relais DJ"
 #: RASTATIME 2026-09-28 dj fade block
 msgid "How the programme and a connecting or disconnecting DJ are blended."
 msgstr "Comment le programme et un DJ qui se connecte ou se déconnecte sont fondus."
+
+#: RASTATIME 2026-09-28 track expiry (May 2026 feature, untranslated until now)
+msgid "Expiry Date:"
+msgstr "Date d'expiration :"
+
+#: RASTATIME 2026-09-28 track expiry (May 2026 feature, untranslated until now)
+msgid "Format: YYYY-MM-DD.  Empty = no expiry."
+msgstr "Format : AAAA-MM-JJ.  Vide = pas d'expiration."
+
+#: RASTATIME 2026-09-28 track expiry (May 2026 feature, untranslated until now)
+msgid "Expiry date must be in YYYY-MM-DD format or empty."
+msgstr "La date d'expiration doit être au format AAAA-MM-JJ ou vide."

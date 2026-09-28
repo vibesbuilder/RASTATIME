@@ -4584,3 +4584,15 @@ msgstr ""
 #: RASTATIME 2026-09-28 dj fade block
 msgid "How the programme and a connecting or disconnecting DJ are blended."
 msgstr ""
+
+#: RASTATIME 2026-09-28 track expiry (May 2026 feature, untranslated until now)
+msgid "Expiry Date:"
+msgstr ""
+
+#: RASTATIME 2026-09-28 track expiry (May 2026 feature, untranslated until now)
+msgid "Format: YYYY-MM-DD.  Empty = no expiry."
+msgstr ""
+
+#: RASTATIME 2026-09-28 track expiry (May 2026 feature, untranslated until now)
+msgid "Expiry date must be in YYYY-MM-DD format or empty."
+msgstr ""
