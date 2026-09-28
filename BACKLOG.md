@@ -41,6 +41,55 @@ festgelegt.  Jeder Punkt bekommt vor Implementierung die
 
 ## 🎯 Aktive Backlog-Items (warten auf Operator-Go)
 
+### 🟡 Catch-up steigt am Offset ein, Zeilenverschiebung der laufenden Zeile ohne Neustart (Operator 2026-09-28, evaluiert: Go empfohlen)
+
+**Befund (Playout-Log 2026-09-28):**
+- **Neustart mitten im Titel (18:21):** Catch-up spielt den laufenden
+  Titel von vorn (`PLAY 'Fade'` obwohl 141 s gelaufen; beim nächsten
+  Titel „predecessor has 140.3 s of audio left, rows said 2.3 s").  Der
+  Hörer hört den Anfang noch einmal, am Zeilenende schneidet der
+  STOP-Timer hart ab.  Die Resume-Pfad nach DJ-Auflegen (`Resume
+  scheduled: … at +N s`) seekt bereits per `liq_cue_in`; der Catch-up in
+  `_arm_file_event` reicht den Versatz nur nicht weiter.
+- **Show-Builder-Änderung an der laufenden Sendung (18:30:16, `POST
+  /showbuilder/schedule-remove`):** LibreTime terminiert die Folgezeilen
+  neu, auch die laufende (Row 6252: Start 16:26:41 → 16:26:50, Cue-In
+  0 → 2,18 s, gleiche Row-ID).  `_same_scheduled_item` vergleicht
+  Row-ID **und Start** → „removed from schedule", Stop, Catch-up startet
+  denselben Titel von vorn, eine Sekunde später übernimmt der Nachfolger
+  per `track_skip`.  Hörbar: kurzer Neuansatz von „Lovemachine".
+  Derselbe Identitätsvergleich lässt auch einen vorgelegten Nachfolger
+  (`_queued_ahead`) nach einer Verschiebung als „stale" verwerfen →
+  harter Schnitt statt Crossfade.
+
+**Plan (zwei Teile, je ein Commit):**
+- **A — Catch-up am Offset (≈ 20 Zeilen + Test):** Catch-up-Zweig in
+  `_arm_file_event` übergibt `seek = now - event.start`;
+  `_on_file_start(key, event, seek=0.0)` addiert ihn auf `cue_in`
+  (Muster des Resume-Pfads, Zeile ≈ 3123); liegt der Versatz hinter
+  `cue_out`, kein Start (Zeile ist vorbei, STOP-Timer läuft ohnehin).
+  Log „Catch-up … at +N s".
+- **B — Zeilenverschiebung ohne Neustart (≈ 30 Zeilen + Tests):**
+  Identität für Datei-/Webstream-Zeilen = Row-ID + Medium (Datei-ID /
+  URL), Start nicht mehr Teil der Identität (Line-In behält Gerät +
+  Kanal-Mapping).  Im Refresh-Block: gleiche Zeile, neuer Start ≤ jetzt →
+  nur Key rebinden, kein Teardown; neuer Start in der Zukunft → wie
+  bisher stoppen und zum neuen Start regulär starten.  Vorgelegter
+  Nachfolger überlebt die Verschiebung (Zeile 1534 nutzt dieselbe
+  Identität).
+- **Live-Probe:** PLAYOUT-Neustart mitten im Titel (A); Zeile im
+  Show-Builder aus der laufenden Sendung entfernen (B), Log auf
+  „rebinding" statt „removed from schedule" prüfen.
+
+**Aufwand:** ~50 Zeilen in `playout_scheduler.py`, ~80 Zeilen Tests in
+`test_scheduler_linein.py`; keine Migration, keine UI, keine neue
+Abhängigkeit.  **Dauer:** A 1–2 h, B 2–3 h inkl. Live-Proben, zusammen
+ein halber Tag.  **Risiko:** gering — A nutzt den bestehenden
+Resume-Mechanismus, B entschärft einen Vergleich, der 2026-09-04 gegen
+Key-Instabilität eingeführt wurde (Row-IDs sind serial, werden nie
+wiederverwendet).  **Vorbedingung:** Operator-Go; PLAYOUT-Neustart nach
+dem Commit.
+
 ### 🟡 Benutzergruppen-Audit: Wer darf was? (Operator 2026-09-17)
 
 **Anlass:** Die Rechte-Prüfung steht aus — vor allem für die neuen
