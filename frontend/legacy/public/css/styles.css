@@ -2516,9 +2516,20 @@ dd.radio-inline-list, .preferences dd.radio-inline-list, .stream-config dd.radio
 
 /* RASTATIME 2026-09-28 - help icons next to track editor fields (descriptions
    turned into tooltips by _initFileMdEvents) */
-.edit-md-dialog dd .help_icon {
+.edit-md-dialog dd.with-help-icon .help_icon {
   margin-left: 6px;
   vertical-align: middle;
+  top: 0;
+}
+/* the field keeps room for the icon on its own line (the simple-formblock
+   input is 100% wide otherwise, which pushed the icon below the field) */
+.edit-md-dialog dd.with-help-icon .input_text {
+  width: calc(100% - 26px);
+}
+.edit-md-dialog dd.with-help-icon input[type="checkbox"] {
+  vertical-align: middle;
+  margin-top: 0;
+  margin-bottom: 0;
 }
 .edit-md-dialog #submitButtons-element {
     display: -webkit-box;

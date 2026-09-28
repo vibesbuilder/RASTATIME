@@ -1354,7 +1354,7 @@ var AIRTIME = (function (AIRTIME) {
         return;
       }
       var icon = $('<span class="help_icon"></span>');
-      dd.append(icon);
+      dd.addClass("with-help-icon").append(icon); // CSS keeps the icon on the field's line
       icon.rtTooltip({
         content: { text: $("<div>").text(text).html() },
         placement: "right",
