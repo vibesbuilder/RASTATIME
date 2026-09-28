@@ -61,7 +61,7 @@ festgelegt.  Jeder Punkt bekommt vor Implementierung die
   regelte `loudnorm` einen −9,7-LUFS-Ton sofort auf −23,0).  ffmpeg 9.0
   (C:\ffmpeg) hat `ebur128` + `loudnorm` für die Offline-Messung.
 
-**Stand 2026-09-28 abends:** Stufe 1 gebaut (Commit folgt im CHANGELOG),
+**Stand 2026-09-28 abends:** Stufe 1 gebaut (`b258e44`),
 Zielwert frei mit Vorgabe −23 LUFS (Operator-Entscheidung).  Stufe 0 (Meter)
 vom Operator vorerst abgelehnt.  Stufe 2 (Live-Regler) offen, Operator will
 erst verstehen, was der Regler tut.  **Inbetriebnahme Stufe 1:**

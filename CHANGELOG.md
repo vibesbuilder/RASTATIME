@@ -35,7 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`xbench/bench_r128.liq`).  Tests (Analyzer-Parser + echte Messung, API,
   Playout-Gain-Matrix, Render), Handbuch STREAMS ×4, Architektur §23.41.
   Inbetriebnahme: ANALYZER-, API- und PLAYOUT-Neustart, dann Modus wählen
-  und „Measure missing files now".
+  und „Measure missing files now" — `b258e44`.
 
 - **Live Text Info: die „Now playing"-Zeile als Textdatei (2026-09-28,
   Operator-Go)** — Neuer Bereich Settings → General → „Live Text Info"
