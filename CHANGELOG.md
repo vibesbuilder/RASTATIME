@@ -334,7 +334,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (Lautsprecher, Playlist, Block) war auf den #282828-Zeilen kaum zu sehen
   und wird per CSS-Filter hell dargestellt; die Zeilen-Checkboxen werden mit
   `color-scheme: dark` und dem RASTATIME-Akzent gezeichnet, damit sie in
-  jedem Browser auf dem dunklen Grund sichtbar sind.  Im Browser geprüft.
+  jedem Browser auf dem dunklen Grund sichtbar sind.  Im Browser geprüft — `2f6d3d8`.
 
 - **Settings → General und → Streams: Erklärungstexte als Tooltips, DJ-Übergabe
   als eigener Block (2026-09-28, Operator-Wunsch)** — Gemeinsamer Helfer
