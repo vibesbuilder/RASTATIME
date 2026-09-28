@@ -336,7 +336,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   keine Absätze mehr — `720e479`.  Nachschärfung: das Icon sitzt rechts auf
   der Zeile des Feldes (Eingabefeld lässt 26 px Platz statt 100 % Breite,
   Checkbox und Icon vertikal zentriert), wie bei Settings → Streams →
-  Stream Type; nachgemessen im DOM.
+  Stream Type; nachgemessen im DOM — `07c58ac`.
 
 - **„Exclude from Crossover" → „No Fade during Crossover" (2026-09-27, Operator
   nach der Abnahme)** — Der markierte Titel bleibt im Crossover (Überlappung
