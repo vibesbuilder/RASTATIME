@@ -339,3 +339,15 @@ def test_boundary_restart_pushes_the_successor_afresh(sched):
     engine.play.assert_called_once()
     assert engine.play.call_args.kwargs["cue_in"] == 0.0
     assert s._playing_key == "n" and s._current_event is nxt
+
+
+def test_crash_detected_restart_forgets_the_queued_successor(sched):
+    s, engine = sched
+    now = datetime.utcnow()
+    s._queued_ahead = ("n", _file(now, row_id=2, file_id=2))
+    s._last_liquidsoap_process = (100, 500.0)
+    with patch.object(s, "_liquidsoap_process_identity", return_value=(200, 3.0)), \
+         patch.object(s, "_apply_initial_liquidsoap_state", return_value=(True, None)), \
+         patch.object(s, "_request_source_reconcile"):
+        s._maybe_reinit_after_liquidsoap_restart()
+    assert s._queued_ahead is None

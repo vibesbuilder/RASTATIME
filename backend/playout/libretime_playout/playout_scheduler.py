@@ -1046,6 +1046,21 @@ class PlayoutScheduler:
                 sleep(delay)
         return False
 
+    def _forget_queued_ahead(self, why: str) -> None:
+        """
+        RASTATIME 2026-09-28 - a fresh Liquidsoap instance has an empty
+        queue: a successor queued ahead in the old one is gone with it,
+        and its PLAY must push afresh instead of adopting nothing (the
+        20:27:08 boundary restart left the station silent).
+        """
+        if self._queued_ahead is not None:
+            logger.info(
+                "%s: forgetting the queued-ahead successor %s (the fresh "
+                "instance's queue is empty).", why, self._queued_ahead[0],
+            )
+        self._queued_ahead = None
+        self._queued_ahead_prev = None
+
     def _maybe_reinit_after_liquidsoap_restart(self) -> None:
         """
         Detect a Liquidsoap restart and re-apply the initial state
@@ -1084,6 +1099,7 @@ class PlayoutScheduler:
                     "retrying next poll.", exc,
                 )
                 return
+            self._forget_queued_ahead("Liquidsoap restarted")
             self._request_source_reconcile()
         else:
             self._last_liquidsoap_uptime = uptime
@@ -1116,6 +1132,7 @@ class PlayoutScheduler:
             )
             return                      # baseline kept -> detected again next cycle
         self._last_liquidsoap_process = ident
+        self._forget_queued_ahead("Liquidsoap restarted")
         self._request_source_reconcile()
 
     def ensure_liquidsoap_initial_state(
