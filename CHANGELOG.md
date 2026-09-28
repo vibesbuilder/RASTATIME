@@ -568,7 +568,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   gestarteter Vorgänger (Probe 2 vom 27.09.) bleibt plausibel, weil der
   Push-Zeitpunkt die tatsächliche Startzeit ist.  Dazu: `drop_metadata` →
   `source.drop.metadata` (in 2.4 als veraltet gemeldet, eine Warnung je
-  Übergang).  Vier Tests; wirksam nach PLAYOUT-Neustart.
+  Übergang).  Vier Tests; wirksam nach PLAYOUT-Neustart — `5b34d71`.
 
 - **Catch-up steigt am Offset ein, Zeilenverschiebung der laufenden Zeile
   ohne Neustart (2026-09-28, Operator-Go)** — Zwei hörbare Neuansätze des
