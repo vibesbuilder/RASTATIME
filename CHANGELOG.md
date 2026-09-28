@@ -339,7 +339,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Einleitungssatz, gestaltet wie Master Source / Show Source, das Icon rechts
   neben dem Eingabefeld.  Neue Strings in EN/DE/FR/ES.  Im DOM nachgemessen:
   alle Icons 14×14 auf der Zeile ihres Labels bzw. Feldes, Tooltip-API
-  gebunden, keine Absätze mehr außer Logo/Favicon.
+  gebunden, keine Absätze mehr außer Logo/Favicon — `a884207`.
 
 - **Track-Editor: Erklärungstexte als Tooltips (2026-09-28, Operator-Wunsch)** —
   Die Beschreibungen unter „Expiry Date" und „No Fade during Crossover"
