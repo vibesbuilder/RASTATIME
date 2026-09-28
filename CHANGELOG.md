@@ -547,6 +547,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Catch-up steigt am Offset ein, Zeilenverschiebung der laufenden Zeile
+  ohne Neustart (2026-09-28, Operator-Go)** — Zwei hörbare Neuansätze des
+  laufenden Titels aus dem Log vom 28.09.: (a) Nach einem PLAYOUT-Neustart
+  spielte der Catch-up den laufenden Titel von vorn („Fade" 141 s
+  gelaufen; der Folgetitel maß 140 s Restaudio, wo die Zeilen 2 s sagten,
+  und schnitt per `track_skip`).  Der Catch-up übergibt jetzt den Versatz
+  (`now - start`) an `_on_file_start(key, event, seek)`, der ihn auf den
+  Cue-In addiert — derselbe `liq_cue_in`-Seek, den der Resume-Pfad nach
+  DJ-Auflegen schon immer nutzte; Versatz hinter dem Audio-Ende → nichts
+  spielen; eine vorgelegte Kopie desselben Titels wird ab 1 s Versatz
+  verworfen (sie startete am Anfang).  (b) Eine Show-Builder-Änderung an der
+  laufenden Sendung (`schedule-remove`, 18:30:16) terminiert die Folgezeilen
+  neu, auch die laufende (Row 6252: Start +9 s, Cue-In 2,18 s, gleiche
+  Row-ID); `_same_scheduled_item` verglich Row-ID UND Start → „removed from
+  schedule", Stop, Catch-up desselben Titels von vorn, eine Sekunde später
+  Skip auf den Nachfolger.  Identität ist jetzt Row-ID + Medium (Datei-,
+  Stream- bzw. Line-In-ID; Line-In zusätzlich Gerät + Kanal-Mapping), der
+  Start nicht mehr (Row-IDs sind serial, nie wiederverwendet); der Refresh
+  rebindet eine neu terminierte laufende Zeile ohne Teardown (das Event auf
+  Sendung behält seine Zeiten — die Audio-Wahrheit für die Crossfade-
+  Rechnung), eine in die Zukunft verschobene laufende Zeile gilt als weg
+  (Stop, Neustart zum neuen Start); ein Stop aus dem Refresh räumt auch
+  die Queue-Ahead-Buchführung (engine.stop() flusht die Queue); der
+  Queue-Ahead legt einen umgecueten Nachfolger neu vor.  Tests
+  `test_catchup_offset.py` (10) + Identitätstest angepasst; Architektur
+  §23.40; wirksam nach PLAYOUT-Neustart, Live-Probe (Neustart im Titel,
+  Zeile aus laufender Sendung entfernen) offen.
+
 - **Stream-Titel und Live Text hingen einen Titel hinterher (2026-09-28)** —
   Seit den Crossfade-Formen vom 27.09. zeigten ICY-Titel und die
   Live-Text-Datei während eines Titels noch den vorherigen; der richtige

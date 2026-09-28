@@ -1,10 +1,15 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.44
+Draft version: 0.45
 Date: 2026-09-28
 
 > **Revision history**
+> - **0.45 (2026-09-28)** — **Catch-up at the offset, re-timed running
+>   rows** (§23.40): the catch-up enters an in-progress track at its
+>   offset; a schedule item's identity is row id + medium (no start), a
+>   re-timed running row is rebound instead of restarted, one moved into
+>   the future stops and starts again at its new start.
 > - **0.44 (2026-09-28)** — **Crossfade metadata** (§23.37): `add()` forwards
 >   only the first source's metadata and `cross` replays the ending
 >   track's metadata on its tail; the new track now leads every `add`
@@ -5356,3 +5361,40 @@ a newer line arrived.  Settings live in `cc_pref` (`live_text_*`, the FTP
 block as one JSON row like the FTP import), edited in a new subform on
 Settings → General above TuneIn; the FTP password never returns to the
 browser.
+
+### 23.40 Catch-up at the Offset, Re-timed Running Rows (2026-09-28)
+
+**Context.**  Two audible restarts of the running track were traced in
+the 2026-09-28 log.  (a) After a PLAYOUT restart the catch-up branch of
+`_arm_file_event` started the in-progress track from its top ('Fade',
+141 s in; the next track then measured 140 s of audio left where the
+rows said 2 s and cut it with `track_skip`).  (b) A show-builder edit
+of the running show (`POST /showbuilder/schedule-remove`) re-times the
+rows that follow, including the running one: row 6252 kept its id but
+moved 9 s and got a 2.18 s cue-in.  `_same_scheduled_item` compared row
+id AND start, so the refresh declared the row "removed from schedule",
+stopped it, and the catch-up restarted the same track from the top one
+second before the successor took over.
+
+**Decision.**  (a) The catch-up passes the offset (`now - start`) to
+`_on_file_start(key, event, seek)`, which adds it to the cue-in - the
+same `liq_cue_in` seek the DJ hand-back resume used all along.  An
+offset past the audio plays nothing (the next row follows on its own
+timer); a queued-ahead copy of the same track is dropped when the
+offset exceeds 1 s, since it would start at the top.  (b) The identity
+of a schedule item is row id + medium (`id`: file, webstream or line-in
+configuration; line-ins additionally device + channel mapping); the
+start is no longer part of it - row ids are serial and never reused.
+`refresh()` rebinds a re-timed running row to its new key without a
+teardown and keeps the event object that is actually on air (its
+timing is the audio truth for the crossfade maths); a running row moved
+INTO the future is treated as gone (stop now, it starts again at its
+new start).  A stop from the refresh also clears the queued-ahead
+bookkeeping, because `engine.stop()` flushes pending requests.  The
+queue-ahead re-enqueues a successor whose cues or uri changed under
+the same row (the queued request carries the old cues).
+
+**Verification.**  Render/scheduler tests (`test_catchup_offset.py`);
+live: PLAYOUT restart mid-track ("Catch-up … entering at +N s",
+Liquidsoap seeks) and a show-builder removal on the running show
+("rebinding, no teardown" instead of "removed from schedule").

@@ -618,7 +618,10 @@ def test_same_scheduled_item_identity():
     assert not S._same_scheduled_item(a, a.model_copy(update={"channel_mapping": [2, 3]}))
     f = _file_event(now)
     assert S._same_scheduled_item(f, f.model_copy())
-    assert not S._same_scheduled_item(f, f.model_copy(update={"start": now + timedelta(seconds=1)}))
+    # 2026-09-28: the start is no longer part of the identity (a show-builder
+    # edit re-times the running row); the medium (file id) is
+    assert S._same_scheduled_item(f, f.model_copy(update={"start": now + timedelta(seconds=1)}))
+    assert not S._same_scheduled_item(f, f.model_copy(update={"id": 99}))
     assert not S._same_scheduled_item(f, a)
     assert not S._same_scheduled_item(None, f)
     w = _webstream_event(now)

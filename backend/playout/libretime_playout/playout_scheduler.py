@@ -469,16 +469,25 @@ class PlayoutScheduler:
                 # that is still present under any key is simply rebound;
                 # only an item present under NO key is really gone.
                 cur = self._current_event
+                moved_ahead: Optional[float] = None
                 if cur is not None and not self._same_scheduled_item(current_evt, cur):
                     match = next(
                         (k for k, e in events.items() if self._same_scheduled_item(e, cur)),
                         None,
                     )
-                    if match is not None:
+                    if match is not None and events[match].start > now:
+                        # RASTATIME 2026-09-28 - the running row was moved
+                        # into the future (show-builder edit): it is not
+                        # on air any more and starts again at its new
+                        # start, which the arming loop below handles.
+                        moved_ahead = (events[match].start - now).total_seconds()
+                        current_evt = None
+                    elif match is not None:
                         logger.info(
                             "Playing event %s is keyed %s in the refreshed "
-                            "schedule (same item) - rebinding, no teardown.",
+                            "schedule (same item%s) - rebinding, no teardown.",
                             self._playing_key, match,
+                            ", re-timed" if events[match].start != cur.start else "",
                         )
                         self._playing_key = match
                         current_evt = events[match]
@@ -492,7 +501,9 @@ class PlayoutScheduler:
                 if event_gone_or_truncated:
                     stale_key = self._playing_key
                     reason = (
-                        "removed from schedule"
+                        f"moved to the future (starts again in {moved_ahead:.0f} s)"
+                        if moved_ahead is not None
+                        else "removed from schedule"
                         if current_evt is None
                         else "truncated to past (show cancelled?)"
                     )
@@ -527,6 +538,11 @@ class PlayoutScheduler:
                             stale_key, reason,
                         )
                         self._engine.stop()
+                        # engine.stop() flushes pending requests: a
+                        # successor queued ahead is gone with them and
+                        # starts the normal way at its row start.
+                        self._queued_ahead = None
+                        self._queued_ahead_prev = None
 
                     # Phase B — if the now-stale event was a Line-In,
                     # also tear down the dshow capture; otherwise the
@@ -1209,11 +1225,18 @@ class PlayoutScheduler:
             # (b) first schedule refresh that discovers an in-progress track,
             # (c) late schedule detection.
             # Start playback immediately (delay=0).
+            # RASTATIME 2026-09-28 - enter the track at the offset it
+            # would be at (the resume path after a DJ hand-back did this
+            # all along; the catch-up replayed the track from the top -
+            # 2026-09-28 18:21: 'Fade' restarted 141 s in, the next track
+            # then found 140 s of audio left where the rows said 2 s).
+            seek = -start_delay
             logger.info(
-                "Catch-up: in-progress event %s (started %.0fs ago)  track=%r",
-                key, -start_delay, event.track_title,
+                "Catch-up: in-progress event %s (started %.0fs ago)  track=%r "
+                "- entering at +%.1f s",
+                key, seek, event.track_title, seek,
             )
-            start_t = threading.Timer(0, self._on_file_start, args=(key, event))
+            start_t = threading.Timer(0, self._on_file_start, args=(key, event, seek))
             start_t.daemon = True
             start_t.start()
 
@@ -1416,10 +1439,21 @@ class PlayoutScheduler:
         refresh therefore has to compare by identity instead:
 
           * same event class and kind,
-          * same schedule row (``row_id``) and start,
+          * same schedule row (``row_id``) and the same medium (``id``:
+            the file, the webstream or the line-in configuration),
           * for line-ins additionally the same device + channel
             mapping, so an edited row is NOT mistaken for the running
             one (the capture would keep the old device).
+
+        The START is deliberately NOT part of the identity (2026-09-28):
+        a show-builder edit of the running show re-times the rows that
+        follow, including the running one (18:30:16: ``schedule-remove``
+        moved the playing row 9 s and its cue-in 2 s, same row id).  With
+        the start in the comparison that row counted as "removed from
+        schedule" and the catch-up restarted the same track from its
+        top.  Row ids are serial and never reused, so row + medium is
+        identity enough; ``refresh()`` treats a row moved into the
+        future as gone (it starts again at its new start).
 
         Show-record events carry no row_id; they never occupy the
         playing slot, so they simply never match.
@@ -1430,7 +1464,9 @@ class PlayoutScheduler:
             return False
         if getattr(a, "row_id", None) is None:
             return False
-        if a.row_id != b.row_id or a.start != b.start:  # type: ignore[attr-defined]
+        if a.row_id != b.row_id:  # type: ignore[attr-defined]
+            return False
+        if getattr(a, "id", None) != getattr(b, "id", None):
             return False
         if isinstance(a, LineinEvent):
             return (
@@ -1531,9 +1567,15 @@ class PlayoutScheduler:
         if self._engine.get_state() != PlayoutState.PLAYING:
             return
         if self._queued_ahead is not None:
-            if self._same_scheduled_item(self._queued_ahead[1], event):
+            queued_evt = self._queued_ahead[1]
+            if self._same_scheduled_item(queued_evt, event) and (
+                (queued_evt.cue_in, queued_evt.cue_out, queued_evt.uri)
+                == (event.cue_in, event.cue_out, event.uri)
+            ):
                 self._queued_ahead = (key, event)  # key shifted across a refresh
                 return
+            # a different row, or the same row re-cued by a show-builder
+            # edit (2026-09-28): the queued request carries the old cues
             logger.info(
                 "Queue-ahead: %s replaces the stale queued track %s.",
                 key, self._queued_ahead[0],
@@ -1745,12 +1787,20 @@ class PlayoutScheduler:
             return
         self._engine.webstream_stop()
 
-    def _on_file_start(self, key: str, event: FileEvent) -> None:
+    def _on_file_start(self, key: str, event: FileEvent, seek: float = 0.0) -> None:
+        """
+        Start ``event`` now.  ``seek`` (seconds, catch-up only) is how far
+        into the track the schedule already is: a service restart or a
+        refresh that discovers an in-progress row enters the audio there
+        instead of at its top (2026-09-28).
+        """
+        seek = max(0.0, float(seek or 0.0))
         logger.info(
-            "PLAY  %s  |  %r  |  show: %s",
+            "PLAY  %s  |  %r  |  show: %s%s",
             key,
             event.track_title or event.id,
             event.show_name,
+            f"  (catch-up at +{seek:.1f} s)" if seek > 0 else "",
         )
         local = self._ensure_file_cached(event)
         if local is None:
@@ -1811,6 +1861,17 @@ class PlayoutScheduler:
             self._notify_media_started(event.row_id)
             return
 
+        # RASTATIME 2026-09-28 - a catch-up past the track's audio: nothing
+        # left to play, the next row follows on its own timer.
+        clip = float(event.cue_out or 0.0) - float(event.cue_in or 0.0)
+        if seek > 0 and clip > 0 and seek >= clip - 0.5:
+            logger.info(
+                "PLAY  %s: the catch-up offset +%.1f s is past the track's %.1f s "
+                "of audio - nothing to play.", key, seek, clip,
+            )
+            self._notify_media_started(event.row_id)
+            return
+
         # RASTATIME 2026-09-27 - crossfade.  Remaining audio of a file
         # predecessor decides between "cross does the hand-over at the
         # natural end" (rows overlap by the track crossfade, or the
@@ -1818,6 +1879,17 @@ class PlayoutScheduler:
         # would run on into this slot).
         now = datetime.utcnow()
         queued = self._queued_ahead
+        if queued is not None and seek > 1.0 and self._same_scheduled_item(queued[1], event):
+            # The queued copy would start at the top; a catch-up this far
+            # in needs a fresh request with the offset.
+            logger.info(
+                "PLAY  %s: catch-up at +%.1f s - dropping the queued copy, "
+                "which starts at the top.", key, seek,
+            )
+            self._engine.flush_queued()
+            self._queued_ahead = None
+            self._queued_ahead_prev = None
+            queued = None
         if (
             prev_event is None and queued is not None
             and self._same_scheduled_item(queued[1], event)
@@ -1894,7 +1966,7 @@ class PlayoutScheduler:
         skip = prev_remaining > self._cross_buffer_seconds + SKIP_TOLERANCE_SECONDS
         self._engine.play(
             str(local),
-            cue_in=event.cue_in or 0.0,
+            cue_in=(event.cue_in or 0.0) + seek,
             cue_out=event.cue_out,
             gain_db=event.replay_gain,
             metadata=self._track_metadata(event),

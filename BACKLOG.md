@@ -41,7 +41,14 @@ festgelegt.  Jeder Punkt bekommt vor Implementierung die
 
 ## 🎯 Aktive Backlog-Items (warten auf Operator-Go)
 
-### 🟡 Catch-up steigt am Offset ein, Zeilenverschiebung der laufenden Zeile ohne Neustart (Operator 2026-09-28, evaluiert: Go empfohlen)
+### 🟢 Catch-up steigt am Offset ein, Zeilenverschiebung der laufenden Zeile ohne Neustart (Operator-Go 2026-09-28, gebaut — Live-Probe offen)
+
+**Status 2026-09-28:** Teile A und B gebaut und getestet (699 Tests grün,
+CHANGELOG „Fixed", Architektur §23.40).  Wirksam nach PLAYOUT-Neustart.
+**Offen:** Live-Probe — (A) PLAYOUT-Neustart mitten im Titel → Log
+„Catch-up … entering at +N s", Liquidsoap `liq_cue_in` = Cue-In + N;
+(B) Zeile im Show-Builder aus der laufenden Sendung entfernen → Log
+„rebinding, no teardown" statt „removed from schedule", kein Neuansatz.
 
 **Befund (Playout-Log 2026-09-28):**
 - **Neustart mitten im Titel (18:21):** Catch-up spielt den laufenden
