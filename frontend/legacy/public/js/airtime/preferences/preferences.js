@@ -191,6 +191,11 @@ $(document).ready(function () {
       "podcastAlbumOverride",
       "podcastAutoSmartblock",
       "thirdPartyApi",
+      // Live Text Info (2026-09-28)
+      "live_text_file_path",
+      "live_text_ftp_port",
+      "live_text_ftp_password",
+      "live_text_ftp_path",
     ],
   });
   $(document).on("click", ".collapsible-header", function () {

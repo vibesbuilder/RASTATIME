@@ -26,7 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`livetext_enabled` / `livetext_format`), ein Save wirkt ohne Neustart.
   Handbuch SETTINGS ×4, Tests (Konfiguration, Schreiben, Dedup, FTP-Push und
   Fehler, SFTP-Voraussetzung, Render, Listener, Scheduler-Sync).
-  Live-Prüfung (Web-Abruf, FTP-Upload) nach dem PLAYOUT-Neustart.
+  Live-Prüfung (Web-Abruf, FTP-Upload) nach dem PLAYOUT-Neustart — `d70f2db`.
 
 - **TuneIn „Now playing" aus dem Playout (2026-09-28, Operator-Go Option 2)** —
   Die Einstellungen unter Settings → TuneIn waren nur halb verdrahtet: der
