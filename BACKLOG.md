@@ -41,7 +41,7 @@ festgelegt.  Jeder Punkt bekommt vor Implementierung die
 
 ## 🎯 Aktive Backlog-Items (warten auf Operator-Go)
 
-### 🟢 Catch-up steigt am Offset ein, Zeilenverschiebung der laufenden Zeile ohne Neustart (Operator-Go 2026-09-28, gebaut — Live-Probe offen)
+### ✅ Catch-up steigt am Offset ein, Zeilenverschiebung der laufenden Zeile ohne Neustart (Operator-Go 2026-09-28, DONE 2026-09-28 — beide Proben bestanden)
 
 **Status 2026-09-28:** Teile A und B gebaut und getestet (`0f62b14`, 699
 Tests grün, CHANGELOG „Fixed", Architektur §23.40).  Wirksam nach
@@ -49,7 +49,18 @@ PLAYOUT-Neustart.
 **Probe A bestanden 2026-09-28 19:59:** Neustart im Titel → „Catch-up …
 entering at +36.2 s", `cue_in=36.63s` (0,40 + 36,2), Titel lief an der
 richtigen Stelle weiter.
-**Probe B offen:** 20:00:08 und 20:05:53 wurde jeweils der LAUFENDE Titel
+**Probe B bestanden 2026-09-28 20:27:23:** spätere Zeile der laufenden Sendung
+entfernt → „Playing event …file-6272 is keyed …18-27-20#file-6272 (same item,
+re-timed) - rebinding, no teardown“, kein Stop, kein PLAY-Neuansatz; zusätzlich
+„Catch-up skipped: … precedes the playing item“ für die ebenfalls neu
+terminierte Vorgängerzeile.  Die Probe deckte einen dritten Fehler auf: der
+geplante Liquidsoap-Grenz-Neustart (Skript geändert) leerte die Queue, der
+Scheduler adoptierte den vorgelegten Nachfolger aus der alten Instanz →
+Stille bis zur nächsten Zeile; behoben `29236a9` + `d098f1a` (Queue-Ahead-
+Buchführung nach jedem erkannten Liquidsoap-Neustart verworfen).  Live um
+20:44:54 zusätzlich bestätigt: Plausibilitätsgrenze („50.4 s left cannot
+belong to …, no skip“) und Grenz-Refresh-Schutz griffen ohne Aussetzer.
+**Historie Probe B:** 20:00:08 und 20:05:53 wurde jeweils der LAUFENDE Titel
 entfernt — LibreTime kürzt den auf „jetzt" (Truncate), der Scheduler stoppt
 zu Recht und der Nachfolger steigt am Offset ein.  Der Fall von 18:30
 (laufende Zeile neu terminiert, gleiche Row-ID) braucht das Entfernen
