@@ -24,7 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `common/TuneIn.php` entfernt; Hinweistext auf der Settings-Seite
   (EN/DE/FR/ES), Handbuch SETTINGS ×4.  Tests: Push, deaktiviert/unvollständig,
   Ablehnung/Netzfehler ohne Key im Log, Keep-alive-Intervall, Scheduler-Hooks.
-  Live-Verifikation gegen TuneIn steht aus, bis die Zugangsdaten vorliegen.
+  Live-Verifikation gegen TuneIn steht aus, bis die Zugangsdaten vorliegen — `4417320`.
 
 - **Settings → Streams „Switch Transition Fade" wirkt jetzt: DJ-Übergabe mit
   Fade (2026-09-28, Operator-Go Option 2, Startwert 1 s)** — Das
