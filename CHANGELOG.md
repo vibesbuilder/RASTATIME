@@ -562,7 +562,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `/live/now-playing.txt` wird per `.htaccess` als `text/plain;
   charset=utf-8` und ohne Cache ausgeliefert (Browser zeigten „KÃ¼nstler"),
   die Laufzeitdatei ist git-ignoriert.  Render-Regressionstest; wirksam nach
-  PLAYOUT-Neustart (gerendertes `rastatime.liq`).
+  PLAYOUT-Neustart (gerendertes `rastatime.liq`) — `e767c0f`.
 
 - **Podcast-Episodentitel doppelt HTML-kodiert (2026-09-28, Operator-Go)** —
   WordPress-Feeds liefern typografische Anführungszeichen als HTML-Entities
