@@ -46,10 +46,18 @@ festgelegt.  Jeder Punkt bekommt vor Implementierung die
 **Status 2026-09-28:** Teile A und B gebaut und getestet (`0f62b14`, 699
 Tests grün, CHANGELOG „Fixed", Architektur §23.40).  Wirksam nach
 PLAYOUT-Neustart.
-**Offen:** Live-Probe — (A) PLAYOUT-Neustart mitten im Titel → Log
-„Catch-up … entering at +N s", Liquidsoap `liq_cue_in` = Cue-In + N;
-(B) Zeile im Show-Builder aus der laufenden Sendung entfernen → Log
-„rebinding, no teardown" statt „removed from schedule", kein Neuansatz.
+**Probe A bestanden 2026-09-28 19:59:** Neustart im Titel → „Catch-up …
+entering at +36.2 s", `cue_in=36.63s` (0,40 + 36,2), Titel lief an der
+richtigen Stelle weiter.
+**Probe B offen:** 20:00:08 und 20:05:53 wurde jeweils der LAUFENDE Titel
+entfernt — LibreTime kürzt den auf „jetzt" (Truncate), der Scheduler stoppt
+zu Recht und der Nachfolger steigt am Offset ein.  Der Fall von 18:30
+(laufende Zeile neu terminiert, gleiche Row-ID) braucht das Entfernen
+einer SPÄTEREN Zeile der laufenden Sendung.  Erfolgskriterium: kein
+„removed from schedule" für die laufende Zeile, kein PLAY-Neuansatz.
+**Nebenbefund 20:05:35 (behoben, eigener Changelog-Eintrag):** Refresh über
+eine Titelgrenze holte den Vorgänger nach + implausibles Engine-„remaining"
+→ 19 s Stille; Fixes `_precedes_playing()` und Plausibilitätsgrenze.
 
 **Befund (Playout-Log 2026-09-28):**
 - **Neustart mitten im Titel (18:21):** Catch-up spielt den laufenden

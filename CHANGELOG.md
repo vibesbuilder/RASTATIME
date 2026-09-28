@@ -547,6 +547,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **19 s Sendepause an einer Titelgrenze während eines Schedule-Refreshs
+  (2026-09-28, 20:05:35–20:05:57)** — Zwei vorbestehende Fehler, die
+  zusammen den Nachfolger abschnitten und danach Stille ließen: (1) Der
+  Schedule-Abruf dauert ~4 s; fällt eine Titelgrenze in dieses Fenster,
+  feuert der PLAY des Nachfolgers während des Abrufs, und das anschließende
+  Neu-Armen sah den Vorgänger als „in progress" (seine Zeile überlappt um
+  den Crossfade) → Catch-up des Vorgängers, der den Nachfolger per Skip
+  abschnitt.  Neu: `_precedes_playing()` — eine Zeile, die in der
+  Reihenfolge vor dem laufenden Item liegt, wird nie nachgeholt (Datei,
+  Webstream, Line-In); ohne laufendes Item bleibt jede laufende Zeile ein
+  Catch-up.  (2) `scheduled.remaining` meldete 214,9 s Rest für einen Titel
+  mit 3 s Audio: sobald `cross` den Nachfolger gezogen hat, gehört das
+  „remaining" der Queue dem Nachfolger, und die gemeldete RID hinkt kurz
+  hinterher → Skip traf den Nachfolger.  Neu: der Scheduler merkt sich
+  Push-Zeitpunkt und Audiolänge des laufenden Titels
+  (`_current_started_at` / `_current_clip_seconds`); meldet die Engine mehr
+  Rest, als der Titel noch haben kann (Länge − verstrichene Zeit + BUFFER +
+  2 s), gilt die Übergabe als geschehen (kein Skip).  Ein verspätet
+  gestarteter Vorgänger (Probe 2 vom 27.09.) bleibt plausibel, weil der
+  Push-Zeitpunkt die tatsächliche Startzeit ist.  Dazu: `drop_metadata` →
+  `source.drop.metadata` (in 2.4 als veraltet gemeldet, eine Warnung je
+  Übergang).  Vier Tests; wirksam nach PLAYOUT-Neustart.
+
 - **Catch-up steigt am Offset ein, Zeilenverschiebung der laufenden Zeile
   ohne Neustart (2026-09-28, Operator-Go)** — Zwei hörbare Neuansätze des
   laufenden Titels aus dem Log vom 28.09.: (a) Nach einem PLAYOUT-Neustart

@@ -224,3 +224,76 @@ def test_queue_ahead_re_enqueues_a_re_cued_successor(sched):
     engine.flush_queued.assert_called_once()
     engine.enqueue.assert_called_once()
     assert engine.enqueue.call_args.kwargs["cue_in"] == 3.0
+
+
+# ---------------------------------------------------------------------------
+# C - 20:05:35 incident: a refresh straddling a boundary, and the engine's
+# "remaining" that belonged to the successor
+# ---------------------------------------------------------------------------
+
+def test_refresh_does_not_catch_up_a_predecessor_of_the_playing_item(sched):
+    """The successor's PLAY fired while the refresh was fetching; the
+    re-arm saw the predecessor 'in progress' (its row overlaps by the
+    crossfade) and caught it up - cutting the successor."""
+    s, _ = sched
+    now = datetime.utcnow()
+    prev = _file(now - timedelta(seconds=325), row_id=1, file_id=1, seconds=328.0)   # 3 s left
+    cur = _file(now - timedelta(seconds=1), row_id=2, file_id=2)
+    s._playing_key, s._current_event = "cur", cur
+    with patch.object(s, "_on_file_start") as on_start:
+        s._arm_file_event("prev", prev, now)
+        start_t, stop_t = s._timers["prev"]
+        stop_t.cancel()
+    on_start.assert_not_called()
+    assert start_t is None
+    assert s._playing_key == "cur"
+    # nothing on air: an in-progress row IS a catch-up
+    s._playing_key, s._current_event = None, None
+    with patch.object(s, "_on_file_start"):
+        s._arm_file_event("prev", prev, now)
+        start_t, stop_t = s._timers["prev"]
+        start_t.cancel()
+        stop_t.cancel()
+    assert start_t is not None
+
+
+def test_implausible_engine_remaining_means_the_hand_over_happened(sched):
+    """'predecessor has 214.9 s of audio left' for a track with 3 s to go:
+    the queue's remaining was the successor's.  No skip."""
+    s, engine = sched
+    now = datetime.utcnow()
+    prev = _file(now - timedelta(seconds=322), row_id=1, file_id=1, seconds=325.0)
+    nxt = _file(now, row_id=2, file_id=2)
+    s._current_event, s._playing_key = prev, "p"
+    s._current_started_at = now - timedelta(seconds=322)
+    s._current_clip_seconds = 325.0
+    s._queued_ahead = ("n", nxt)
+    engine.playing_remaining_seconds.return_value = 214.9
+    s._on_file_start("n", nxt)
+    engine.adopt_queued.assert_called_once()
+    assert engine.adopt_queued.call_args.kwargs["skip_current"] is False
+    assert s._current_started_at >= now and s._current_clip_seconds == 200.0
+
+
+def test_plausible_engine_remaining_still_skips_a_late_predecessor(sched):
+    """Rehearsal 2 (2026-09-27): a predecessor that started 45 s late
+    really has more audio left than its row says - the skip stays."""
+    s, engine = sched
+    now = datetime.utcnow()
+    prev = _file(now - timedelta(seconds=145), row_id=1, file_id=1, seconds=300.0)
+    nxt = _file(now, row_id=2, file_id=2)
+    s._current_event, s._playing_key = prev, "p"
+    s._current_started_at = now - timedelta(seconds=100)      # pushed 45 s late
+    s._current_clip_seconds = 300.0
+    s._queued_ahead = ("n", nxt)
+    engine.playing_remaining_seconds.return_value = 200.0
+    s._on_file_start("n", nxt)
+    assert engine.adopt_queued.call_args.kwargs["skip_current"] is True
+
+
+def test_file_start_records_push_time_and_clip_after_seek(sched):
+    s, _ = sched
+    before = datetime.utcnow()
+    s._on_file_start("K", _file(before, cue_in=0.5, seconds=200.0), seek=41.0)
+    assert s._current_started_at >= before
+    assert s._current_clip_seconds == pytest.approx(158.5)

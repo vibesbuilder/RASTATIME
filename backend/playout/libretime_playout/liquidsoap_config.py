@@ -1811,7 +1811,7 @@ def _render_crossfade_block(
     Metadata (bench 2026-09-28): ``add`` forwards only the FIRST source's
     metadata and ``cross`` replays the ending track's metadata on its
     buffered tail.  The new track is therefore the first element of every
-    ``add`` and the tail is wrapped in ``drop_metadata`` - otherwise the
+    ``add`` and the tail is wrapped in ``source.drop.metadata`` - otherwise the
     stream title and the Live Text showed the previous track until the
     next transition (regression of the 2026-09-27 shapes).
     """
@@ -1880,7 +1880,7 @@ def _render_crossfade_block(
         "  # cross replays the ending track's metadata on its buffered tail - with\n"
         "  # the tail in front the stream title and the Live Text lagged one track.\n"
         "  # The new track goes first in every add, the tail carries no metadata.\n"
-        "  old_s = drop_metadata(old.source)\n"
+        "  old_s = source.drop.metadata(old.source)\n"
         '  log(level=3, label="rt_cross", "#{mode}/#{nofade}: #{old.metadata[\\"title\\"]} -> '
         '#{new.metadata[\\"title\\"]} (tail #{rem} s)")\n'
         f"  t_in = if new_nf then 0.05 else {f(max(track, 0.05))} end\n"

@@ -722,14 +722,14 @@ def test_crossfade_block_new_track_metadata_wins():
     the Live Text lagged one track.  New track first, tail without metadata."""
     for track, show in ((1.0, 2.5), (3.0, 1.0), (1.0, 1.0)):
         block = lc._render_crossfade_block(track, show)
-        assert "old_s = drop_metadata(old.source)" in block
+        assert "old_s = source.drop.metadata(old.source)" in block   # drop_metadata is deprecated in 2.4
         # an add list ends with "])" at a line end; the inner sequence ends with "]),"
         for add_list in re.findall(r"add\(normalize=false, \[(.*?)\]\)\n", block, re.S):
             # the new track (fade.in / blank + fade.in) is the first element,
             # the old tail (old_s) comes second
             assert add_list.lstrip().startswith(("fade.in(", "sequence([blank(")), add_list
             assert add_list.index("new") < add_list.index("old_s"), add_list
-        assert "old.source" not in block.replace("source.remaining(old.source)", "").replace("drop_metadata(old.source)", "")
+        assert "old.source" not in block.replace("source.remaining(old.source)", "").replace("source.drop.metadata(old.source)", "")
 
 
 def test_crossfade_block_zero_durations_never_fade():

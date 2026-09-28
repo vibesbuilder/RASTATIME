@@ -266,6 +266,12 @@ class PlayoutScheduler:
         # when rows are clipped at a show boundary, rehearsal 2026-09-27)
         self._queued_ahead: Optional[Tuple[str, FileEvent]] = None
         self._queued_ahead_prev: Optional[FileEvent] = None
+        # RASTATIME 2026-09-28 - when the current file track was pushed and
+        # how much audio it had then: the upper bound for what the engine
+        # may report as "left" (the queue's remaining belongs to the
+        # successor once cross has pulled it - 20:05:35 incident).
+        self._current_started_at: Optional[datetime] = None
+        self._current_clip_seconds: Optional[float] = None
 
         # RASTATIME 2026-05-16 — cached effective dB gain for the
         # currently-playing event.  Source of the value depends on the
@@ -1219,6 +1225,17 @@ class PlayoutScheduler:
             )
             self._playing_key = key
 
+        elif key != self._playing_key and self._precedes_playing(event):
+            # RASTATIME 2026-09-28 - a refresh that spans a track boundary
+            # (the API fetch takes ~4 s) re-arms the predecessor whose row
+            # still overlaps by the crossfade: it is in progress by the
+            # clock but the scheduler has moved on.  Catching it up cut
+            # the successor and left dead air (20:05:36 incident).
+            logger.info(
+                "Catch-up skipped: %s (%r) precedes the playing item %s.",
+                key, event.track_title, self._playing_key,
+            )
+
         elif key != self._playing_key:
             # Event has already started but we are NOT playing it.
             # This covers: (a) service restart during a running show,
@@ -1279,6 +1296,11 @@ class PlayoutScheduler:
                 "key (%s -> %s); rebinding.", self._playing_key, key,
             )
             self._playing_key = key
+        elif key != self._playing_key and self._precedes_playing(event):
+            logger.info(
+                "Catch-up skipped: web stream %s precedes the playing item %s.",
+                key, self._playing_key,
+            )
         elif key != self._playing_key:
             logger.info(
                 "Catch-up: in-progress web stream %s (started %.0fs ago)",
@@ -1327,6 +1349,11 @@ class PlayoutScheduler:
             )
             start_t.daemon = True
             start_t.start()
+        elif key != self._playing_key and self._precedes_playing(event):
+            logger.info(
+                "Catch-up skipped: line-in %s precedes the playing item %s.",
+                key, self._playing_key,
+            )
         elif key != self._playing_key:
             # RASTATIME 2026-09-03 - a schedule refresh can hand the SAME
             # in-progress line-in back under a DIFFERENT key (seen live:
@@ -1421,6 +1448,35 @@ class PlayoutScheduler:
     # ------------------------------------------------------------------
     # Timer callbacks (run in daemon threads)
     # ------------------------------------------------------------------
+
+    def _precedes_playing(self, event: object) -> bool:
+        """
+        RASTATIME 2026-09-28 - ``event`` sits at or before the item on
+        air in schedule order.  Such a row is never caught up: the
+        scheduler has already moved past it (its row merely overlaps the
+        successor by the crossfade, or the refresh straddled the
+        boundary).  With nothing on air every in-progress row is a
+        legitimate catch-up.
+        """
+        cur = self._current_event
+        if cur is None or self._playing_key is None:
+            return False
+        return getattr(event, "start", None) is not None and event.start <= cur.start  # type: ignore[attr-defined]
+
+    def _plausible_remaining(
+        self, now: datetime, started_at: Optional[datetime], clip_seconds: Optional[float],
+    ) -> Optional[float]:
+        """
+        RASTATIME 2026-09-28 - the most audio a file track pushed at
+        ``started_at`` with ``clip_seconds`` of audio can still have: that
+        minus the time since, plus the cross buffer (an adopted track's
+        audio starts up to BUFFER after its PLAY) and 2 s of slack.
+        ``None`` when unknown.
+        """
+        if started_at is None or clip_seconds is None:
+            return None
+        elapsed = (now - started_at).total_seconds()
+        return max(0.0, clip_seconds - elapsed) + self._cross_buffer_seconds + 2.0
 
     @staticmethod
     def _same_scheduled_item(a: object, b: object) -> bool:
@@ -1829,9 +1885,15 @@ class PlayoutScheduler:
         # short-circuit below, otherwise switch_audio_source(SCHEDULED)
         # at disconnect time would not know what to fall back to.
         prev_event = self._current_event  # for _close_predecessor_source
+        prev_started_at = self._current_started_at
+        prev_clip = self._current_clip_seconds
         self._playing_key = key
         self._current_event = event
         self._current_audio_path = str(local)
+        self._current_started_at = datetime.utcnow()
+        self._current_clip_seconds = max(
+            0.0, float(event.cue_out or 0.0) - float(event.cue_in or 0.0) - seek,
+        )
         # RASTATIME 2026-06-05 — cue mark for the 24/7 recording sidecar.
         self._cue_item_start(
             "track", show=event.show_name, item=event.row_id,
@@ -1910,6 +1972,21 @@ class PlayoutScheduler:
         if isinstance(prev_event, FileEvent):
             measured = self._engine.playing_remaining_seconds()
             if isinstance(measured, (int, float)) and not isinstance(measured, bool):
+                # RASTATIME 2026-09-28 - the queue's "remaining" belongs to
+                # the successor once cross has pulled it, and the RID it
+                # reports can lag a moment behind (20:05:35: "214.9 s left"
+                # for a track with 3 s of audio; the skip then hit the
+                # successor and left dead air).  More audio than the
+                # predecessor can possibly have = the hand-over happened.
+                bound = self._plausible_remaining(now, prev_started_at, prev_clip)
+                if bound is not None and measured > bound:
+                    logger.info(
+                        "PLAY  %s: the engine's %.1f s left cannot belong to %r "
+                        "(at most %.1f s of its audio is left) - the queue is on "
+                        "the successor, no skip.",
+                        key, measured, getattr(prev_event, "track_title", None) or "-", bound,
+                    )
+                    measured = 0.0
                 if abs(measured - prev_remaining) > 1.0:
                     logger.info(
                         "PLAY  %s: predecessor has %.1f s of audio left (engine), "
