@@ -41,6 +41,21 @@ festgelegt.  Jeder Punkt bekommt vor Implementierung die
 
 ## 🎯 Aktive Backlog-Items (warten auf Operator-Go)
 
+### 💡 Crossfade-Länge und Zeilen-Layout passen nicht zusammen: 5 s Stille vor dem BBC-Webstream (beobachtet 2026-09-29 10:01)
+
+**Befund:** Die stündliche Folge TOH-Jingle → Dayteaser → Intro BBC News →
+BBC-Webstream ist im Kalender Stoß an Stoß gelegt (Zeilenlänge ≈ Cliplänge,
+Überlapp ≤ 1 s), der Track-Crossfade steht aber auf 3 s.  Liquidsoap
+beginnt jeden Übergang 3 s vor dem Ende des alten Titels, der Nachfolger
+startet also ~2–3 s vor seiner Zeile; nach zwei Übergängen endet das Intro
+um 10:01:00,9, der Webstream beginnt planmäßig 10:01:06 → 5 s Stille
+(24/7-Aufnahme: −70 LUFS von 10:01:01 bis 10:01:05, jede Stunde).
+**Optionen (nicht evaluiert):** (a) Zeilen beim Ändern des Track-Crossfades
+neu auslegen (Legacy-Scheduler, auch für bestehende Sendungen); (b) der
+Playout begrenzt die Überblendung je Übergang auf den tatsächlichen
+Zeilen-Überlapp; (c) kurze Elemente (Jingles unter N Sekunden) per
+„No Fade during Crossover" kennzeichnen.  Vorbedingung: Evaluierung.
+
 ### 🟢 Loudness nach EBU R128 im Processing (Stufe 1 in Betrieb seit 2026-09-29 — Pegel-Abnahme an der Aufnahme offen; Stufe 2 unentschieden)
 
 **Ist-Stand (geprüft 2026-09-28):**
@@ -76,8 +91,11 @@ True-Peak-Kappung nur für Anhebungen (`83b5749`), Titel-Verstärkung auf der
 Queue statt auf dem Bus (`60b3f56` — seit dem Crossfade-Umbau galt die
 Verstärkung des ersten Titels für die ganze Strecke), tolerantes Lesen der
 ffmpeg-Ausgabe (`a361002`).  Skript mit Queue-Gain aktiv seit 09:08.
-**Offen:** (1) Pegel-Abnahme: Titel in der 24/7-Aufnahme nachmessen (Soll
-−23 LUFS); (2) Operator-Entscheidung zum Pegelsprung Datei ↔ Live-Quelle —
+**Pegel-Abnahme bestanden 2026-09-29 10:00** (24/7-Aufnahme, ffmpeg ebur128):
+TOH-Jingle −23,6 / Dayteaser −23,3 (nach Crossfade) / Intro −24,1 (3 s) /
+Dayteaser −23,5 LUFS, Spitzen −8,4 … −10,5 dBFS; BBC-Webstream −17,1 LUFS
+(Input-Gain +3 dB), Cloud-Webstream −17,2 LUFS (Gain 0).
+**Offen:** (2) Operator-Entscheidung zum Pegelsprung Datei ↔ Live-Quelle —
 der Cloud-Webstream kommt mit −17,2 LUFS an (gemessen), also 6 dB über dem
 Ziel: Zielwert anheben, Webstream-Gain senken oder Stufe 2.
 
