@@ -582,7 +582,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Subprozesses mit einer Ausnahme sterben, das Ergebnis ging verloren.
   `compute_loudness` und `compute_replaygain` übergeben jetzt
   `errors="backslashreplace"` (wie `probe_replaygain` schon immer); Test.
-  Wirksam nach ANALYZER-Neustart, danach „Measure missing files now".
+  Wirksam nach ANALYZER-Neustart, danach „Measure missing files now" — `a361002`.
 
 - **Titel-Verstärkung galt seit dem Crossfade-Umbau nur für den ersten Titel
   einer Strecke (2026-09-29)** — Beim Abgleich der 24/7-Aufnahme mit den
