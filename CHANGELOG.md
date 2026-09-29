@@ -30,7 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Installer, die eigenen Akzente der Widgets Now Playing/Wochenprogramm und
   Song Request.  Texte DE/FR/ES (`.mo` neu, wirksam nach Apache-Neustart),
   Handbuch SETTINGS ×4, Architektur §23.43.  Live verifiziert mit
-  Standard- und simulierter Palette.
+  Standard- und simulierter Palette — `4ef9cfd`.
 
 - **Loudness-Normalisierung nach EBU R128, Stufe 1 (2026-09-28,
   Operator-Go)** — Settings → Streams: „Loudness Normalization" als
