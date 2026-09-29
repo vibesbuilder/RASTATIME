@@ -593,7 +593,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Scroll-Tabellen bleiben beim Scrollen stehen (`position: sticky`,
   dashboard.css; vorher scrollten sie mit).  Live verifiziert (Dashboard
   mit gespeichertem, umsortiertem Layout, Spalte ziehen, Tracks/Playlists
-  scrollen, Dialog); Handbuch LIBRARY ×4, Architektur §23.42.
+  scrollen, Dialog); Handbuch LIBRARY ×4, Architektur §23.42 — `4889619`.
 
 - **Tabellen-Layout pro Benutzer; Type/Cover/Preview nach Spalten-Einblenden
   (2026-09-29, Operator-Meldung)** — Dashboard → Tracks und Kalender →
