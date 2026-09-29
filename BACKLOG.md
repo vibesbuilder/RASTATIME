@@ -41,7 +41,7 @@ festgelegt.  Jeder Punkt bekommt vor Implementierung die
 
 ## 🎯 Aktive Backlog-Items (warten auf Operator-Go)
 
-### 🟢 Loudness nach EBU R128 im Processing (Operator-Frage 2026-09-28, Go für Stufe 1 am 2026-09-28 — gebaut, Inbetriebnahme offen)
+### 🟢 Loudness nach EBU R128 im Processing (Stufe 1 in Betrieb seit 2026-09-29 — Pegel-Abnahme an der Aufnahme offen; Stufe 2 unentschieden)
 
 **Ist-Stand (geprüft 2026-09-28):**
 - Einzige Lautheits-Verarbeitung heute: ReplayGain je Datei.  Der Analyzer
@@ -68,6 +68,18 @@ erst verstehen, was der Regler tut.  **Inbetriebnahme Stufe 1:**
 ANALYZER-, API- und PLAYOUT-Neustart durch den Operator, dann Settings →
 Streams → Loudness Normalization = EBU R128, Save, „Measure missing files
 now" (≈ 377 Dateien, wenige Minuten), Hörprobe.
+
+**Inbetriebnahme 2026-09-29:** Modus r128 / −23 LUFS / −1 dBTP seit 08:51,
+Bibliothek 373 von 373 gemessen (Ø −14,7 LUFS, −35,8 … −4,9).  Dabei
+behoben: Wrapper-Parameter (`c41e27c`, PLAYOUT startete nicht),
+True-Peak-Kappung nur für Anhebungen (`83b5749`), Titel-Verstärkung auf der
+Queue statt auf dem Bus (`60b3f56` — seit dem Crossfade-Umbau galt die
+Verstärkung des ersten Titels für die ganze Strecke), tolerantes Lesen der
+ffmpeg-Ausgabe (`a361002`).  Skript mit Queue-Gain aktiv seit 09:08.
+**Offen:** (1) Pegel-Abnahme: Titel in der 24/7-Aufnahme nachmessen (Soll
+−23 LUFS); (2) Operator-Entscheidung zum Pegelsprung Datei ↔ Live-Quelle —
+der Cloud-Webstream kommt mit −17,2 LUFS an (gemessen), also 6 dB über dem
+Ziel: Zielwert anheben, Webstream-Gain senken oder Stufe 2.
 
 **Plan in Stufen (jede einzeln abnehmbar):**
 - **Stufe 1 — R128-Messung + Zielwert + Limiter (~1,5–2 Tage):**
