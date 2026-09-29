@@ -459,7 +459,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   den Farbblock aus.  Sichtbare Änderung beim Standard: Petrol/Blau werden
   Orange.  Live verifiziert (alle Widget-Routen 200 mit Farbblock,
   Standard- und simulierte Palette); Handbuch SETTINGS ×4, Architektur
-  §23.43.
+  §23.43 — `3697948`.
 
 - **Dashboard: Hand-Cursor über den Spaltenüberschriften (2026-09-29,
   Operator-Wunsch)** — Über den Kopfzellen der Library-, Podcasts- und
