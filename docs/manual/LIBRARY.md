@@ -94,7 +94,9 @@ the one in the calendar's **Schedule Tracks** dialog each keep a
 layout of their own (the dialog has no *Actions* column); the
 *Scheduled Shows* table next to them shares one layout between
 both places. Searches and the current page are not remembered —
-the table always opens on page 1.
+the table always opens on page 1. While you scroll through the
+rows, the search line, the column headers and the pager stay in
+view.
 
 ---
 

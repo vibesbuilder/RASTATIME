@@ -68,7 +68,8 @@ su propia disposición (el diálogo no tiene columna
 *Actions*); la tabla *Scheduled Shows* de al lado comparte
 una sola disposición entre ambos lugares. Las búsquedas y la
 página actual no se recuerdan — la tabla siempre abre en la
-página 1.
+página 1. Al desplazarse por las filas, la línea de búsqueda,
+los encabezados de columna y el paginador permanecen visibles.
 
 ---
 

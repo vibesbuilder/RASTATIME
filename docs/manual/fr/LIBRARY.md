@@ -105,7 +105,9 @@ dialogue n'a pas de colonne *Actions*) ; le tableau
 *Scheduled Shows* à côté partage une seule disposition entre
 les deux endroits. Les recherches et la page courante ne
 sont pas mémorisées — le tableau s'ouvre toujours à la
-page 1.
+page 1. Pendant le défilement des lignes, la ligne de
+recherche, les en-têtes de colonnes et la pagination restent
+visibles.
 
 ---
 

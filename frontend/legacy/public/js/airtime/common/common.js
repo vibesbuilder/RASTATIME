@@ -126,6 +126,12 @@ function getDatatablesStrings(overrideDict) {
  * merge into a table's settings.  DataTables saves on every draw (the
  * timeline redraws on its refresh timer), so only a changed layout is
  * posted.  params are sent along on both calls (e.g. {table: "builder"}).
+ *
+ * The load is synchronous on purpose: with an asynchronous state load
+ * DataTables builds the table only after the response, while the code
+ * right after $(...).dataTable() expects it built - the library's scroll
+ * wrapper then enclosed the whole table with its header and footer (they
+ * scrolled away) and the column pickers found no toolbar to sit in.
  */
 function rtDatatableServerState(getUrl, setUrl, params) {
   var lastSaved = null;
@@ -137,19 +143,16 @@ function rtDatatableServerState(getUrl, setUrl, params) {
 
   return {
     iStateDuration: 0, // never expire (the DataTables default is 2 hours)
-    fnStateLoadCallback: function (settings, callback) {
-      $.ajax({ url: getUrl, data: params, dataType: "json" })
+    fnStateLoadCallback: function () {
+      var loaded = null;
+      $.ajax({ url: getUrl, data: params, dataType: "json", async: false })
         .done(function (state) {
           if (state && state.time) {
             lastSaved = layoutOf(state);
-            callback(state);
-          } else {
-            callback(null);
+            loaded = state;
           }
-        })
-        .fail(function () {
-          callback(null);
         });
+      return loaded;
     },
     fnStateSaveCallback: function (settings, state) {
       var layout = layoutOf(state);

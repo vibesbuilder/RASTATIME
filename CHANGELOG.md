@@ -575,6 +575,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Library: Type-Ziffer nach Umsortieren, Kopf-/Fußleiste scrollten mit
+  (2026-09-29, Operator-Meldung, Nachbesserung zu `c3960c3`)** — (1) Mit
+  gespeicherter Spaltenreihenfolge zeigte Dashboard → Tracks in „Type" die
+  Ziffer (und leere Preview-/Cover-Zellen): ColReorder schreibt nach jedem
+  Umsortieren — Ziehen oder gespeichertes Layout nach dem ersten Zeichnen —
+  alle Zellen aus den Rohdaten neu (`rows().invalidate("data")`).  Checkbox,
+  Preview-Icon, Cover, Type-Code, Scheduled-Icon und Actions sind jetzt
+  Spalten-Renderer (`mRender`), `fnCreatedRow` bindet nur noch die
+  Klick-Handler; ein ausgeblendeter Track-Type wirft nicht mehr, er bleibt
+  leer.  (2) Das Layout wurde asynchron geladen, DataTables baute die
+  Tabelle dadurch erst nach dem Code, der sie in den Scroll-Container
+  packt: Überschrift, Suchzeile und Pager lagen im Scroll-Bereich (Tracks,
+  Playlists, Smart Blocks, Webstreams, Line Inputs; Podcasts nicht
+  betroffen), die Spalten-Auswahl-Buttons fehlten.  Das Laden ist wieder
+  synchron (wie Upstream).  Neu: die Spaltenüberschriften der
+  Scroll-Tabellen bleiben beim Scrollen stehen (`position: sticky`,
+  dashboard.css; vorher scrollten sie mit).  Live verifiziert (Dashboard
+  mit gespeichertem, umsortiertem Layout, Spalte ziehen, Tracks/Playlists
+  scrollen, Dialog); Handbuch LIBRARY ×4, Architektur §23.42.
+
 - **Tabellen-Layout pro Benutzer; Type/Cover/Preview nach Spalten-Einblenden
   (2026-09-29, Operator-Meldung)** — Dashboard → Tracks und Kalender →
   Schedule Tracks vergaßen Spaltenreihenfolge, sichtbare Spalten und Zeilen

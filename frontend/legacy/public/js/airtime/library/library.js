@@ -612,6 +612,80 @@ var AIRTIME = (function (AIRTIME) {
 
     $libTable = $("#library_display");
 
+    // RASTATIME 2026-09-29: the decorated cells are column renderers, not
+    // fnCreatedRow edits.  ColReorder rewrites every cell from the row data
+    // (rows().invalidate("data")) whenever the columns are reordered - by a
+    // drag or by the saved layout on load - and only a renderer runs again
+    // then; the fnCreatedRow edits fell back to the raw values (track type
+    // id, artwork path, an empty but clickable preview cell).
+    var previewIcons = {
+      audioclip: [$.i18n._("Track preview"), "icon_audioclip.png"],
+      playlist: [$.i18n._("Playlist preview"), "icon_playlist.png"],
+      block: [$.i18n._("Smart Block"), "icon_smart-block.png"],
+      stream: [$.i18n._("Webstream preview"), "icon_webstream.png"],
+    };
+
+    function renderCheckbox(data, type, row) {
+      return "<input type='checkbox' name='cb_" + row.id + "'>";
+    }
+
+    // image is empty from the backend; the showbuilder's fnRowCallback
+    // stores the lock icon there for audio the browser cannot play.
+    function renderPreview(data, type, row) {
+      if (data) {
+        return data;
+      }
+      var icon = previewIcons[row.ftype];
+      return icon
+        ? '<img title="' +
+            icon[0] +
+            '" src="' +
+            baseUrl +
+            "css/images/" +
+            icon[1] +
+            '">'
+        : "";
+    }
+
+    function renderArtwork(data, type, row) {
+      if (row.ftype !== "audioclip") {
+        return "";
+      }
+      if (row.artwork_data) {
+        return (
+          '<img class="img_small" id="' +
+          row.id +
+          '" width="28" height="28" src="' +
+          row.artwork_data +
+          '">'
+        );
+      }
+      return (
+        '<img class="img_small" width="28" height="28" src="' +
+        baseUrl +
+        'css/images/no-cover.jpg">'
+      );
+    }
+
+    function renderIsScheduled(data) {
+      return data ? '<span class="small-icon is_scheduled"></span>' : "";
+    }
+
+    // TRACKTYPES lists the visible types only; a hidden one shows no code.
+    function renderTrackType(data) {
+      var tt = data ? TRACKTYPES[data] : null;
+      if (!tt) {
+        return "";
+      }
+      return onDashboard
+        ? "<div class='library_track_type_btn'>" + tt.code + "</div>"
+        : tt.code;
+    }
+
+    function renderActions() {
+      return "<div class='library_actions_btn'>...</div>";
+    }
+
     // put hidden columns at the top to insure they can never be visible
     // on the table through column reordering.
 
@@ -627,6 +701,7 @@ var AIRTIME = (function (AIRTIME) {
       /* Checkbox */ {
         sTitle: "",
         mDataProp: "checkbox",
+        mRender: renderCheckbox,
         bSortable: false,
         bSearchable: false,
         sWidth: "16px",
@@ -637,6 +712,7 @@ var AIRTIME = (function (AIRTIME) {
         // the preview button (speaker / playlist / block icon)
         sTitle: $.i18n._("Preview"),
         mDataProp: "image",
+        mRender: renderPreview,
         bSortable: false,
         bSearchable: false,
         sWidth: "60px",
@@ -646,6 +722,7 @@ var AIRTIME = (function (AIRTIME) {
       /* Artwork */ {
         sTitle: $.i18n._("Cover"),
         mDataProp: "artwork",
+        mRender: renderArtwork,
         bSortable: false,
         bSearchable: false,
         sWidth: "50px",
@@ -655,6 +732,7 @@ var AIRTIME = (function (AIRTIME) {
       /* Is Scheduled */ {
         sTitle: $.i18n._("Scheduled"),
         mDataProp: "is_scheduled",
+        mRender: renderIsScheduled,
         bVisible: false,
         bSearchable: false,
         sWidth: "90px",
@@ -746,6 +824,7 @@ var AIRTIME = (function (AIRTIME) {
       /* Track Type */ {
         sTitle: $.i18n._("Type"),
         mDataProp: "track_type_id",
+        mRender: renderTrackType,
         sClass: "library_track_type",
         sWidth: "60px",
       },
@@ -894,6 +973,7 @@ var AIRTIME = (function (AIRTIME) {
         /* Context Menu */ {
           sTitle: $.i18n._("Actions"),
           mDataProp: "options",
+          mRender: renderActions,
           bSortable: false,
           bSearchable: false,
           sWidth: "60px",
@@ -1030,44 +1110,26 @@ var AIRTIME = (function (AIRTIME) {
       },
       fnRowCallback: AIRTIME.library.fnRowCallback,
       fnCreatedRow: function (nRow, aData, iDataIndex, aCells) {
-        // RASTATIME 2026-09-29: aCells holds every cell of the row, also those
-        // of columns hidden right now - nRow only carries the visible ones.  A
-        // column shown later (column picker, saved layout) otherwise came up
-        // with the raw data: the track type id, the artwork path, an empty
-        // (but clickable) preview cell.
+        // RASTATIME 2026-09-29: the cell contents come from the column
+        // renderers (see previewIcons); only the click handlers are bound
+        // here.  aCells holds every cell of the row, also those of columns
+        // hidden right now (nRow only carries the visible ones); the td
+        // elements survive a ColReorder invalidate, their handlers with them.
         var $cells = $(aCells);
 
-        // add checkbox
-        $cells
-          .filter("td.library_checkbox")
-          .html("<input type='checkbox' name='cb_" + aData.id + "'>");
-
         if (onDashboard) {
-          $cells
-            .filter("td.library_actions")
-            .text("...")
-            .on("click", function (e) {
-              $(this).contextMenu({
-                x: $(e.target).offset().left,
-                y: $(e.target).offset().top,
-              });
-            })
-            .html("<div class='library_actions_btn'>...</div>");
+          $cells.filter("td.library_actions").on("click", function (e) {
+            $(this).contextMenu({
+              x: $(e.target).offset().left,
+              y: $(e.target).offset().top,
+            });
+          });
 
-          if (
+          var has_type = !(
             aData.track_type_id == null ||
             aData.track_type_id == undefined ||
             aData.track_type_id == 0
-          ) {
-            var has_type = false;
-            var type_button = "";
-          } else {
-            var has_type = true;
-            var type_button =
-              "<div class='library_track_type_btn'>" +
-              TRACKTYPES[aData.track_type_id].code +
-              "</div>";
-          }
+          );
 
           $cells
             .filter("td.library_track_type")
@@ -1123,97 +1185,7 @@ var AIRTIME = (function (AIRTIME) {
                   alert("This type is disabled.");
                 }
               });
-            })
-            .html(type_button);
-        } else {
-          // Not on dashboard (show builder)
-          if (
-            aData.track_type_id == null ||
-            aData.track_type_id == undefined ||
-            aData.track_type_id == 0
-          ) {
-            var track_type_code = "";
-          } else {
-            var track_type_code = TRACKTYPES[aData.track_type_id].code;
-          }
-          $cells.filter("td.library_track_type").html(track_type_code);
-        }
-
-        // add audio preview image/button
-        if (aData.ftype === "audioclip") {
-          $cells
-            .filter("td.library_type")
-            .html(
-              '<img title="' +
-                $.i18n._("Track preview") +
-                '" src="' +
-                baseUrl +
-                'css/images/icon_audioclip.png">',
-            );
-          if (aData.artwork_data) {
-            $cells
-              .filter("td.library_artwork")
-              .html(
-                '<img class="img_small" id="' +
-                  aData.id +
-                  '" width="28" height="28" src="' +
-                  aData.artwork_data +
-                  '">',
-              );
-          } else {
-            $cells
-              .filter("td.library_artwork")
-              .html(
-                '<img class="img_small" width="28" height="28" src="' +
-                  baseUrl +
-                  'css/images/no-cover.jpg">',
-              );
-          }
-        } else if (aData.ftype === "playlist") {
-          $cells
-            .filter("td.library_type")
-            .html(
-              '<img title="' +
-                $.i18n._("Playlist preview") +
-                '" src="' +
-                baseUrl +
-                'css/images/icon_playlist.png">',
-            );
-        } else if (aData.ftype === "block") {
-          $cells
-            .filter("td.library_type")
-            .html(
-              '<img title="' +
-                $.i18n._("Smart Block") +
-                '" src="' +
-                baseUrl +
-                'css/images/icon_smart-block.png">',
-            );
-        } else if (aData.ftype === "stream") {
-          $cells
-            .filter("td.library_type")
-            .html(
-              '<img title="' +
-                $.i18n._("Webstream preview") +
-                '" src="' +
-                baseUrl +
-                'css/images/icon_webstream.png">',
-            );
-        }
-
-        if (aData.is_scheduled) {
-          $cells
-            .filter("td.library_is_scheduled")
-            .html('<span class="small-icon is_scheduled"></span>');
-        } else if (!aData.is_scheduled) {
-          $cells.filter("td.library_is_scheduled").html("");
-        }
-        if (aData.is_playlist) {
-          $cells
-            .filter("td.library_is_playlist")
-            .html('<span class="small-icon is_playlist"></span>');
-        } else if (!aData.is_playlist) {
-          $cells.filter("td.library_is_playlist").html("");
+            });
         }
       },
       // remove any selected nodes before the draw.

@@ -9,7 +9,10 @@ Date: 2026-09-29
 >   library and timeline layouts (column order and visibility, rows per
 >   page, sort) are a per-user preference on the server again - the 1.9
 >   state callbacks were dead on DataTables 1.13; the advanced search no
->   longer detours over the saved ColReorder map.
+>   longer detours over the saved ColReorder map.  Same day: the state
+>   load is synchronous (an async load broke the post-init layout), the
+>   library's decorated cells are column renderers (ColReorder rewrites
+>   cells from the data), sticky column headers.
 > - **0.47 (2026-09-29)** — **Per-track gain on the queue** (§23.41): the
 >   gain is applied in front of the crossfade; a bus-level
 >   `amplify(override=...)` kept the first track's gain across
@@ -5501,8 +5504,14 @@ per page came back as defaults (operator report).  The server copy
 
 **Decision.**  The layout is a per-user preference on the server, the
 single source of truth: `rtDatatableServerState()` (common.js) loads it
-asynchronously before the first draw and posts it as the DataTables
-state JSON; `iStateDuration: 0` (no expiry).  DataTables saves on every
+before the first draw and posts it as the DataTables state JSON;
+`iStateDuration: 0` (no expiry).  The load is a SYNCHRONOUS request, as
+in upstream: with an asynchronous `fnStateLoadCallback` DataTables builds
+the table only after the response, while the code right after
+`$(...).dataTable()` expects it built - the library's post-init scroll
+wrapper then enclosed the whole table with toolbar and pager (they
+scrolled away) and the Buttons column pickers found no toolbar (seen
+live the same day, fixed the same day).  DataTables saves on every
 draw (the timeline redraws on its refresh timer), so only a changed
 layout is posted.  Three `cc_pref` user values (JSON; the old
 PHP-serialized 1.9 values do not decode and read as "no layout"):
@@ -5520,16 +5529,22 @@ a column's ORIGINAL position; the 1.13 filter (`liveColIndex`) searches
 its current position, so with a real column order saved again the map
 would pair a term with the wrong column.  `getOrderingMap()` is gone.
 
-The row decoration in the library's `fnCreatedRow` (preview icon, cover
-image, track type code, scheduled icon, actions) works on the `cells`
-argument - every cell of the row, including those of columns hidden at
-creation, which are not in `nRow`.  A column shown later otherwise
-displayed the raw data: the track type id, the artwork path, an empty
-but clickable preview cell.
+The library's decorated cells (checkbox, preview icon, cover image,
+track type code, scheduled icon, actions) are column renderers
+(`mRender`), no longer `fnCreatedRow` edits.  ColReorder rewrites every
+cell from the row data (`rows().invalidate("data")`) after a reorder -
+a drag, or the saved layout applied after the first draw - and a column
+hidden while the rows were created is not in `nRow`; both showed the raw
+data (track type id, artwork path, an empty but clickable preview cell).
+`fnCreatedRow` only binds the click handlers, on its `cells` argument
+(every cell, hidden ones included); the td elements survive an
+invalidate.  The column headers of the scrolled tables are
+`position: sticky` (dashboard.css).
 
 **Verification.**  Live on the studio machine: dashboard and dialog load
 their layout from the server after a reload (`oLoadedState`), no post
 for an unchanged layout, the dialog keeps its own 37-column layout; a
-hidden-then-shown column renders decorated; the advanced search finds
-the 241 jingles by track type in the default and in a reordered column
-order.
+hidden-then-shown column and a reordered layout (saved and dragged)
+render decorated; toolbar, column headers and pager stay in place while
+the rows scroll; the advanced search finds the 241 jingles by track type
+in the default and in a reordered column order.

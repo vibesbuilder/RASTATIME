@@ -103,7 +103,9 @@ im Kalender-Dialog **Sendungsinhalte verwalten** haben je ein
 eigenes Layout (der Dialog hat keine Spalte *Actions*); die
 Tabelle *Scheduled Shows* daneben teilt ein Layout zwischen
 beiden Orten. Suchen und die aktuelle Seite werden nicht
-gemerkt — die Tabelle öffnet immer auf Seite 1.
+gemerkt — die Tabelle öffnet immer auf Seite 1. Beim Scrollen
+durch die Zeilen bleiben Suchzeile, Spaltenüberschriften und
+Seitenleiste sichtbar.
 
 ---
 

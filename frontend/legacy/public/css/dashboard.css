@@ -163,6 +163,15 @@ div.btn > span {
     border: 1px solid #5b5b5b;
 }
 
+/* RASTATIME 2026-09-29 - the column headers stay in view while the rows
+   scroll (operator wish); the scroll container only holds the table, the
+   toolbar above and the pager below sit outside it. */
+.dataTables_wrapper > .dataTables_scrolling > table.dataTable > thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+
 .empty_placeholder_image {
     opacity: .3;
 
