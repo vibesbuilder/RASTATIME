@@ -38,6 +38,7 @@ from .events import (
     datetime_to_event_key,
     make_event_key,
     event_isoparse,
+    event_isoparse_exact,
 )
 
 
@@ -80,6 +81,9 @@ def get_schedule(api_client: ApiClient) -> Events:
 
     events: Dict[str, AnyEvent] = {}
     for item in sorted(schedule, key=itemgetter("starts_at")):
+        # 2026-09-29: keep the exact row times next to the whole seconds
+        item["starts_at_exact"] = event_isoparse_exact(item["starts_at"])
+        item["ends_at_exact"] = event_isoparse_exact(item["ends_at"])
         item["starts_at"] = event_isoparse(item["starts_at"])
         item["ends_at"] = event_isoparse(item["ends_at"])
 
@@ -220,6 +224,8 @@ def generate_file_events(
         row_id=schedule["id"],
         start=schedule["starts_at"],
         end=schedule["ends_at"],
+        start_exact=schedule.get("starts_at_exact"),
+        end_exact=schedule.get("ends_at_exact"),
         uri=file["url"],
         id=file["id"],
         # Show data
@@ -395,6 +401,8 @@ def generate_webstream_events(
         row_id=schedule["id"],
         start=schedule["starts_at"],
         end=schedule["ends_at"],
+        start_exact=schedule.get("starts_at_exact"),
+        end_exact=schedule.get("ends_at_exact"),
         uri=webstream["url"],
         id=webstream["id"],
         # Show data
@@ -463,6 +471,8 @@ def generate_linein_events(
         row_id=schedule["id"],
         start=schedule["starts_at"],
         end=schedule["ends_at"],
+        start_exact=schedule.get("starts_at_exact"),
+        end_exact=schedule.get("ends_at_exact"),
         id=linein_pk,
         # show / display data
         show_name=show["name"],

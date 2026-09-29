@@ -452,7 +452,23 @@ def test_get_schedule(schedule, requests_mock, api_client: ApiClient):
     requests_mock.get(f"{base_url}/api/v2/files/5", json=FILE_5)
     requests_mock.get(f"{base_url}/api/v2/webstreams/1", json=WEBSTREAM_1)
 
-    assert get_schedule(api_client) == {
+    result = get_schedule(api_client)
+    # RASTATIME 2026-09-29 - the events also carry the rows' exact times
+    # (microseconds), next to the whole seconds of start / end.
+    assert result["2022-09-05-11-00-00#file-1"].end_exact == datetime(
+        2022, 9, 5, 11, 5, 2, 144200
+    )
+    assert result["2022-09-05-11-05-02#file-2"].start_exact == datetime(
+        2022, 9, 5, 11, 5, 2, 144200
+    )
+    assert result["2022-09-05-12-10-00#ws-play-5"].start_exact == datetime(
+        2022, 9, 5, 12, 10
+    )
+    for event in result.values():
+        event.start_exact = None
+        event.end_exact = None
+
+    assert result == {
         "2022-09-05-11-00-00#file-1": FileEvent(
             start=datetime(2022, 9, 5, 11, 0),
             end=datetime(2022, 9, 5, 11, 5, 2),

@@ -662,6 +662,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **A relay or line-in after a jingle came in about one second early
+  (2026-09-29, found while checking the logs after the crossfade per track
+  type went live)** - the rows carry microseconds now (a jingle sequence ends
+  at 08:01:06.78), but the playout's timers fire on the whole second
+  (`event_isoparse` drops the microseconds) and the file chain runs a moment
+  behind the rows (push + request resolution, about 0.2 s): the gate of the
+  pre-warmed BBC relay would have opened at 08:01:06.0 and the switch would
+  have faded the intro's last second away.  Events carry the exact row times
+  (`start_exact`, `end_exact`), the scheduler measures the lag of the file
+  chain at the push that starts it, and a pre-warmed webstream or line-in that
+  follows a file track opens its gate when the track's audio is over, minus
+  the overlap of the pair (at most `FILE_TAIL_HOLD_MAX_SECONDS` = 4 s; more is
+  an overbook and the live item starts at once).  The stop of a file track
+  waits the same way, so neither the deferred skip nor the bookkeeping reset
+  comes before the last moments are out.  The engine cannot be asked: inside
+  its last BUFFER seconds a track sits in the cross operator's tail.  21 tests
+  (`test_live_after_file_hold.py`).  Active after a restart of
+  RASTATIME-PLAYOUT - `<hash-live-after-file>`.
+
 - **Upload-Seite: weißer Streifen, unlesbare Texte (2026-09-29,
   Operator-Meldung)** — Unter beiden Panels (Upload, Recent Uploads) lag ein
   weißer Streifen: `.content-pane` überschreibt die Farbe des

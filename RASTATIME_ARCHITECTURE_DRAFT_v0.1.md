@@ -1,10 +1,14 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.50
+Draft version: 0.51
 Date: 2026-09-29
 
 > **Revision history**
+> - **0.51 (2026-09-29)** — **Live item after a file track** (§23.44,
+>   addendum): events carry the rows' exact times; a pre-warmed
+>   webstream / line-in opens its gate when the file track's audio is
+>   over, the stop of a file track lets it run out.
 > - **0.50 (2026-09-29)** — **Crossfade per track type, "Exclude from
 >   Crossover"** (§23.44): the overlap is decided per transition by one
 >   pair rule shared by the row layout and the playout; rows are stored
@@ -5670,3 +5674,21 @@ starts exactly at the predecessor's end, no gap and no level dip; with
 database; the layout of given instances or of a synthetic mix inside a
 transaction that is rolled back) and `xf_relayout.php` (dry run or
 `--apply` for all upcoming instances).
+
+**Addendum (2026-09-29): a live item after a file track.**  Event
+`start` / `end` stay whole seconds (keys, timers, identity), the rows'
+exact times travel next to them as `start_exact` / `end_exact`.  The
+audio of a file track leaves the air at *exact row start + clip + chain
+lag*; the lag (audio position against the rows) is measured at the push
+that starts a chain - onto an idle queue, after a cut, or a catch-up,
+where the offset counts - and tracks queued behind it follow
+sample-accurately.  The engine is not asked: inside its last BUFFER
+seconds a track sits in the cross operator's tail and
+`scheduled.remaining` reports nothing for it.  `_hold_for_file_tail()`
+delays the gate of a pre-warmed webstream / line-in until that end minus
+the overlap of the pair (file to live: the smaller of the track's value
+and the show value); `_let_file_run_out()` does the same for the stop of
+a file track.  Both give up above `FILE_TAIL_HOLD_MAX_SECONDS` (4 s,
+overbook: cut now), while a DJ is on air, and for a cold start (which
+has its own start-up time); after the wait they check that no other
+item has taken the spotlight.

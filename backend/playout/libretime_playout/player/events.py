@@ -48,6 +48,13 @@ def event_isoparse(value: str) -> datetime:
     return isoparse(value).replace(tzinfo=None).replace(microsecond=0)
 
 
+def event_isoparse_exact(value: Union[str, datetime]) -> datetime:
+    """The row time as the schedule stores it, microseconds included."""
+    if isinstance(value, datetime):
+        return value.replace(tzinfo=None)
+    return isoparse(value).replace(tzinfo=None)
+
+
 class EventKind(str, Enum):
     FILE = "file"
     ACTION = "event"
@@ -78,6 +85,12 @@ EventKeyDatetime = Annotated[datetime, BeforeValidator(event_key_to_datetime)]
 class BaseEvent(BaseModel):
     start: EventKeyDatetime
     end: EventKeyDatetime
+    # RASTATIME 2026-09-29 - ``start`` / ``end`` are whole seconds (keys,
+    # timers); the rows carry microseconds since the crossfade per track
+    # type lays them out exactly.  The hand-over from a file track to a
+    # live item is timed with these (None: unknown, use start / end).
+    start_exact: Optional[datetime] = None
+    end_exact: Optional[datetime] = None
 
     @property
     def start_key(self) -> str:

@@ -110,6 +110,16 @@ QUEUE_AHEAD_MARGIN_SECONDS = 5.0
 # so a start can run up to 1 s early - the rehearsal measured 3.56 s left
 # for a 3 s overlap; 0.3 s tolerance turned that into a skip.
 SKIP_TOLERANCE_SECONDS = 1.5
+# RASTATIME 2026-09-29 - a pre-warmed webstream / line-in that follows a
+# file track opens its gate when the track's audio is over (minus the
+# overlap of the pair), not on the whole second its timer fires at: the
+# rows carry microseconds and the file chain runs a moment behind the
+# schedule (push + request resolution), so the timer is up to ~1.3 s
+# early and the switch would fade the track's last second away.  More
+# audio left than this is an overbook - the live item starts at once.
+FILE_TAIL_HOLD_MAX_SECONDS = 4.0
+# How far the file chain runs behind the rows until a push has measured it.
+FILE_CHAIN_LAG_DEFAULT_SECONDS = 0.25
 
 # RASTATIME 2026-09-07 - the webstream watchdog lives inside Liquidsoap
 # (frame counter on the bus, rendered by liquidsoap_config).  The
@@ -272,6 +282,10 @@ class PlayoutScheduler:
         # successor once cross has pulled it - 20:05:35 incident).
         self._current_started_at: Optional[datetime] = None
         self._current_clip_seconds: Optional[float] = None
+        # RASTATIME 2026-09-29 - how far the audio of the running file
+        # chain is behind its rows (measured at the push that started the
+        # chain; tracks queued behind it follow sample-accurately).
+        self._file_chain_lag: Optional[float] = None
 
         # RASTATIME 2026-05-16 — cached effective dB gain for the
         # currently-playing event.  Source of the value depends on the
@@ -1504,6 +1518,85 @@ class PlayoutScheduler:
         elapsed = (now - started_at).total_seconds()
         return max(0.0, clip_seconds - elapsed) + self._cross_buffer_seconds + 2.0
 
+    def _file_audio_end(self, event: FileEvent) -> datetime:
+        """
+        RASTATIME 2026-09-29 - when the audio of a file track leaves the
+        air: exact row start + clip + the lag of the file chain.  The
+        engine cannot be asked: inside the last BUFFER seconds the queue
+        has handed the track to the cross operator's tail and reports
+        nothing for it.
+        """
+        start = event.start_exact or event.start
+        clip = float(event.cue_out or 0.0) - float(event.cue_in or 0.0)
+        end = start + timedelta(seconds=clip) if clip > 0 else (event.end_exact or event.end)
+        lag = self._file_chain_lag
+        if lag is None:
+            lag = FILE_CHAIN_LAG_DEFAULT_SECONDS
+        return end + timedelta(seconds=lag)
+
+    def _note_file_chain_lag(self, event: FileEvent, seek: float) -> None:
+        """A push onto an idle queue starts a chain: audio position vs. rows."""
+        start = event.start_exact or event.start
+        lag = (datetime.utcnow() - start).total_seconds() - seek
+        self._file_chain_lag = max(-1.0, min(lag, 10.0))
+
+    def _dj_on_air(self) -> bool:
+        return bool(
+            self._switcher and self._switcher.current_state != SourceState.SCHEDULED
+        )
+
+    def _hold_for_file_tail(self, key: str, prev_event: object, event: object) -> bool:
+        """
+        RASTATIME 2026-09-29 - a pre-warmed live item after a file track:
+        wait until the track's audio is over (minus the overlap of the
+        pair) before the gate opens.  False when another item took the
+        spotlight during the wait - the caller then leaves the engine alone.
+        """
+        if not isinstance(prev_event, FileEvent) or self._dj_on_air():
+            return True
+        if self._prepared is None or not self._same_scheduled_item(self._prepared[1], event):
+            return True   # a cold start has its own start-up time
+        overlap = min(self._track_crossfade(prev_event), self._input_transition_seconds)
+        left = (self._file_audio_end(prev_event) - datetime.utcnow()).total_seconds()
+        hold = left - overlap
+        if hold <= 0.05:
+            return True
+        if hold > FILE_TAIL_HOLD_MAX_SECONDS:
+            logger.info(
+                "PLAY  %s: %r has %.1f s of audio left - overbook, the live item "
+                "starts now.", key, prev_event.track_title or prev_event.id, left,
+            )
+            return True
+        logger.info(
+            "PLAY  %s: %r has %.2f s of audio left (overlap %.2f s) - the gate "
+            "opens in %.2f s.", key, prev_event.track_title or prev_event.id,
+            left, overlap, hold,
+        )
+        time.sleep(hold)
+        if self._playing_key != key:
+            logger.info(
+                "PLAY  %s: superseded by %s during the wait - leaving the engine "
+                "alone.", key, self._playing_key,
+            )
+            return False
+        return True
+
+    def _let_file_run_out(self, key: str, event: object) -> None:
+        """
+        RASTATIME 2026-09-29 - the stop timer of a file track fires on the
+        whole second before its row end: wait for the audio to be over, so
+        neither the deferred skip nor the bookkeeping reset comes early.
+        """
+        if not isinstance(event, FileEvent) or self._dj_on_air():
+            return
+        left = (self._file_audio_end(event) - datetime.utcnow()).total_seconds()
+        if left <= 0.05 or left > FILE_TAIL_HOLD_MAX_SECONDS:
+            return
+        logger.info(
+            "STOP  %s: %.2f s of audio left - letting the track run out.", key, left,
+        )
+        time.sleep(left)
+
     @staticmethod
     def _same_scheduled_item(a: object, b: object) -> bool:
         """
@@ -2061,6 +2154,9 @@ class PlayoutScheduler:
             self._engine.adopt_queued(
                 str(local), skip_current=skip, transition=mode if skip else None,
             )
+            if skip:
+                # 2026-09-29: the cut starts a new chain at this instant
+                self._note_file_chain_lag(event, 0.0)
             logger.info(
                 "PLAY  %s takes over from %r: %s (predecessor has %.1f s left)",
                 key, getattr(prev_event, "track_title", None) or "-",
@@ -2109,6 +2205,10 @@ class PlayoutScheduler:
             transition=self._cross_mode(prev_event, event, skip=skip),
             skip_current=skip,
         )
+        # 2026-09-29: this push starts a new chain unless the track waits
+        # behind a file predecessor that is still playing out.
+        if skip or not isinstance(prev_event, FileEvent) or prev_remaining <= 0.0:
+            self._note_file_chain_lag(event, seek)
 
         # Notify the legacy v1 API that this schedule row started playing.
         # This sets cc_schedule.media_item_played = true, which the
@@ -2166,6 +2266,11 @@ class PlayoutScheduler:
                 "scheduled audio held back",
                 key, self._switcher.current_state.value,
             )
+            return
+
+        # RASTATIME 2026-09-29 - after a file track the gate opens when
+        # its audio is over, not on the whole second this timer fired at.
+        if not self._hold_for_file_tail(key, prev_event, event):
             return
 
         # RASTATIME 2026-05-29 — Phase E: Liquidsoap webstream handling.
@@ -2385,6 +2490,13 @@ class PlayoutScheduler:
         # and http source are up with the gate closed; open it.  The
         # webstream predecessor (if any) is released by the same call
         # that would run below, the queue is cleared, and we are done.
+        # 2026-09-29: after a file track the gate opens when its audio is
+        # over (the wait only happens for the pre-warmed item).
+        if (
+            self._linein_capture.is_running
+            and not self._hold_for_file_tail(key, prev_event, event)
+        ):
+            return
         if (
             self._linein_capture is not None
             and self._linein_capture.is_running
@@ -2739,6 +2851,15 @@ class PlayoutScheduler:
             logger.info(
                 "STOP  %s: successor %s is queued ahead - leaving the queue to its start.",
                 key, self._queued_ahead[0],
+            )
+            return
+
+        # RASTATIME 2026-09-29 - the timer fired on the whole second before
+        # the row end; the track's last moments are still on air.
+        self._let_file_run_out(key, self._current_event)
+        if self._playing_key != key:
+            logger.info(
+                "STOP  %s: %s took over while the track ran out.", key, self._playing_key,
             )
             return
 
