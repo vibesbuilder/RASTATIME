@@ -575,6 +575,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **R128: True-Peak-Kappung nur noch für Anhebungen (2026-09-29)** — Die
+  erste Bibliotheksmessung (352 von 373 Dateien: Ø −14,7 LUFS, −35,8 …
+  −4,9; True Peak Ø −0,3 dBFS, 172 Dateien über 0 dBFS, ein Ausreißer mit
+  +15,2) zeigte: `file_gain_db()` zog auch ABSENKUNGEN weiter herunter, wenn
+  True Peak + Gain über der Grenze lag — bei −23 LUFS Ziel 9 Dateien, bei
+  einem −16-Ziel wären es 133 gewesen (MP3s messen routinemäßig +1 … +2
+  dBTP), die dann unter dem Ziel gespielt hätten.  Jetzt wird nur eine
+  Anhebung gekappt (nie unter 0 dB); laute Dateien gehen auf das Ziel, die
+  Spitzen nimmt der Bus-Limiter.  Tests erweitert; wirksam nach
+  PLAYOUT-Neustart.
+
 - **PLAYOUT startete nach dem R128-Commit nicht (2026-09-29 07:53)** —
   `write_rastatime_liq()` (der Datei-Wrapper um das Rendern) kannte den
   neuen Parameter `loudness_limiter_ceiling` nicht: „unexpected keyword

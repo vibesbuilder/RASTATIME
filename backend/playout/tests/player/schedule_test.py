@@ -716,6 +716,13 @@ def test_file_gain_db_by_mode():
     assert file_gain_db(quiet, stream_preferences) == pytest.approx(2.0)       # 7 dB wanted, 2 dB allowed
     quiet_soft = {"replay_gain": "0", "loudness_lufs": "-30.0", "true_peak_dbtp": "-12.0"}
     assert file_gain_db(quiet_soft, stream_preferences) == pytest.approx(7.0)
+    # a quiet file whose peak is already over the ceiling is not boosted at all
+    quiet_hot = {"replay_gain": "0", "loudness_lufs": "-30.0", "true_peak_dbtp": "0.5"}
+    assert file_gain_db(quiet_hot, stream_preferences) == 0.0
+    # only a boost is capped: a loud file goes to the target whatever its peaks
+    # are (MP3 overs, a +15 dBTP decoder glitch in the library 2026-09-29)
+    glitch = {"replay_gain": "0", "loudness_lufs": "-12.7", "true_peak_dbtp": "15.2"}
+    assert file_gain_db(glitch, stream_preferences) == pytest.approx(-10.3)
     # not measured yet: ReplayGain shifted from its ~-18 LUFS reference to the target
     unmeasured = {"replay_gain": "4.52"}
     assert file_gain_db(unmeasured, stream_preferences) == pytest.approx(4.52 - 5.0)

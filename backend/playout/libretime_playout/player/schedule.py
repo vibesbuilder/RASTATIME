@@ -283,8 +283,13 @@ def file_gain_db(file: dict, stream_preferences) -> Optional[float]:
             return round(replay_gain + (target - REPLAYGAIN_REFERENCE_LUFS), 2)
         gain = target - loudness
         true_peak = _float_or_none(file.get("true_peak_dbtp"))
-        if true_peak is not None and true_peak + gain > ceiling:
-            gain = ceiling - true_peak
+        # Only a BOOST is capped by the file's true peak.  A loud file is
+        # attenuated to the target whatever its peaks are: MP3s routinely
+        # measure +1..+2 dBTP and a decoder glitch can read +15 (library
+        # 2026-09-29) - pulling the whole track down for that would play it
+        # below the target; the bus limiter takes the peaks.
+        if gain > 0 and true_peak is not None and true_peak + gain > ceiling:
+            gain = max(0.0, ceiling - true_peak)
         return round(gain, 2)
     if mode == "replaygain":
         return replay_gain + float(stream_preferences.replay_gain_offset or 0.0)
