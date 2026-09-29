@@ -399,7 +399,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Scheduled-Shows-Tabelle zeigte der Browser den Text-Cursor; sie sortieren
   per Klick und lassen sich ziehen (ColReorder), daher jetzt
   `cursor: pointer` (dashboard.css, gilt auch im Schedule-Tracks-Dialog).
-  Live verifiziert.
+  Live verifiziert — `39be557`.
 
 - **Library: Spalte „Type" zeigt den vollen Namen (2026-09-29,
   Operator-Wunsch)** — Dashboard → Tracks und der Schedule-Tracks-Dialog
