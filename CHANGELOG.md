@@ -597,7 +597,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   sichtbaren.  Das Preview-Icon der Scheduled-Shows-Tabelle ist wie das der
   Library auf hellgrau invertiert.  Live verifiziert (Laden/Neuladen,
   Dialog-Layout getrennt, Spalte einblenden, erweiterte Suche bei
-  umsortierten Spalten); Handbuch LIBRARY ×4, Architektur §23.42.
+  umsortierten Spalten); Handbuch LIBRARY ×4, Architektur §23.42 — `c3960c3`.
 
 - **Analyzer: ffmpeg-Ausgabe tolerant lesen (2026-09-29)** — Eine von 373
   Dateien blieb bei der R128-Bestandsmessung ungemessen (und hatte seit dem
