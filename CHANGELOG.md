@@ -591,7 +591,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   „Drop files here or click to browse your computer.", die Filter „All /
   Failed / Pending" und die Links „Delete from Library" erbten die
   Grundfarbe #222 (dunkel auf dunkel) und sind jetzt hellgrau (#ccc, Hover
-  weiß; addmedia.css).  Live verifiziert, Dashboard unberührt.
+  weiß; addmedia.css).  Live verifiziert, Dashboard unberührt — `38f41f2`.
 
 - **Library: Type-Ziffer nach Umsortieren, Kopf-/Fußleiste scrollten mit
   (2026-09-29, Operator-Meldung, Nachbesserung zu `c3960c3`)** — (1) Mit
