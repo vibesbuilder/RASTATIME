@@ -5593,7 +5593,8 @@ icon's position).  The progress strip PNG is a gradient over the accent.
 
 **Out of scope.**  Signal and category colours (Bootstrap warning
 orange, the stream-status info box, the static-smart-block legend, the
-soundcard mismatch hint, the per-show calendar colours); multi-colour
+soundcard mismatch hint, the per-show calendar colours, the show slots'
+fill bar in the calendar - fixed orange by operator decision); multi-colour
 icons with orange parts (crossfade / fade / cue graphics, operator
 decision); the installer's `setup-config.css` (runs before the database
 exists).  The widgets' own accents (Now Playing / Weekly Programme /

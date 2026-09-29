@@ -1688,7 +1688,9 @@ h2#scheduled_playlist_name span {
     border-bottom-color:#cfcfcf;
 }
 #schedule_calendar .ui-progressbar .ui-progressbar-value {
-    background: var(--rt-accent);
+    /* RASTATIME 2026-09-29: the show slots' fill bar stays a fixed orange
+       and does NOT follow the UI primary colour (operator decision). */
+    background: #ff5d1a;
     border-color:#343434;
     border-width: 1px 0 0 1px;
 }
