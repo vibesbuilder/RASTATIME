@@ -41,7 +41,7 @@ festgelegt.  Jeder Punkt bekommt vor Implementierung die
 
 ## 🎯 Aktive Backlog-Items (warten auf Operator-Go)
 
-### 💡 Crossfade-Länge und Zeilen-Layout passen nicht zusammen: 5 s Stille vor dem BBC-Webstream (beobachtet 2026-09-29 10:01)
+### 🟡 Crossfade je Track-Typ und/oder „Exclude from Crossover" — 5 s Stille vor dem BBC-Webstream (beobachtet 2026-09-29, evaluiert 2026-09-29, Entscheidung offen)
 
 **Befund:** Die stündliche Folge TOH-Jingle → Dayteaser → Intro BBC News →
 BBC-Webstream ist im Kalender Stoß an Stoß gelegt (Zeilenlänge ≈ Cliplänge,
@@ -55,6 +55,37 @@ neu auslegen (Legacy-Scheduler, auch für bestehende Sendungen); (b) der
 Playout begrenzt die Überblendung je Übergang auf den tatsächlichen
 Zeilen-Überlapp; (c) kurze Elemente (Jingles unter N Sekunden) per
 „No Fade during Crossover" kennzeichnen.  Vorbedingung: Evaluierung.
+
+**Evaluierung 2026-09-29 (Operator-Frage: Track-Typ, Exclude-Flag oder beides?):**
+- *Fakten:* Track-Typen Shows 31 / Music 64 / Jingles 241 (3–50 s, Ø 20 s) /
+  News 0 / Ads 0, 42 Dateien ohne Typ; 100 der 241 Jingles tragen „No Fade
+  during Crossover"; 312 künftige Jingle-Zeilen in 639 Instanzen.  Die
+  bestehenden Zeilen der Stunden-Folge liegen Stoß an Stoß — bei Überlapp 0
+  für Jingles passen sie OHNE Neu-Befüllen.  „Exclude" war am 27.09. schon
+  gebaut (`07e6e1f`: Layout-Regel + „cut"-Form) und wurde am selben Abend
+  zugunsten „No Fade" zurückgenommen (`336e86e`) — der Code liegt im Verlauf.
+- *Gemeinsamer Kern beider Wege:* Überlapp D je ÜBERGANG statt global:
+  (1) Liquidsoap-Form mit D als Variable (0 … BUFFER; D = 0 = Titel spielt
+  aus, Nachfolger folgt), (2) Playout sendet D mit der Form, (3)
+  Legacy-Layout legt das Zeilenpaar mit demselben D, (4) Job „künftige
+  Zeilen neu auslegen" bei Änderung.
+- *Option A — Crossfade je Track-Typ:* Feld „Crossfade Duration" am
+  Track-Typ (leer = globaler Wert); Paar-Regel D = min(Typ links, Typ
+  rechts).  + einmal einstellen, neue Importe erben; − Ausnahmen brauchen
+  doch einen Schalter, 42 Dateien ohne Typ.
+- *Option B — „Exclude from Crossover" je Titel:* Flag, schließt „No Fade"
+  aus (UI sperrt wechselseitig).  + einfach, präzise, Code bekannt; − je
+  Titel zu setzen (241 Jingles), neue Importe vergisst man, nur 0 oder
+  global.
+- *Option C — beides:* Typ liefert die Vorgabe, am Titel ein Dreiwege-Feld
+  „Crossover: wie Track-Typ / No Fade / Exclude".  Aufwand: Kern ~1,5 Tage,
+  A +0,5, B +0,5, Handbuch ×4 + Tests → ~2,5–3 Tage.
+- *Empfehlung:* C in zwei Schritten — zuerst Kern + A (löst die Stille für
+  alle Jingles auf einen Schlag, ohne Kalender-Eingriff), dann B als
+  Ausnahme-Schalter.  Offene Operator-Entscheidungen: Paar-Regel (min),
+  Wert für Jingles (0 oder 0,5 s), was mit den 100 „No Fade"-Jingles
+  geschieht, Quellenwechsel Datei ↔ Webstream/Line-In (Layout nutzt heute
+  den TRACK-Wert, der Playout blendet mit dem SHOW-Wert).
 
 **Nachtrag 2026-09-29 (Frage „hilft Neu-Befüllen?"):** Nur teilweise.  Der
 Legacy-Scheduler legt beim Befüllen JEDE Folgezeile um den Track-Crossfade
