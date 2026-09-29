@@ -679,7 +679,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   comes before the last moments are out.  The engine cannot be asked: inside
   its last BUFFER seconds a track sits in the cross operator's tail.  21 tests
   (`test_live_after_file_hold.py`).  Active after a restart of
-  RASTATIME-PLAYOUT - `<hash-live-after-file>`.
+  RASTATIME-PLAYOUT - `8c8d1c5`.
 
 - **Upload-Seite: weißer Streifen, unlesbare Texte (2026-09-29,
   Operator-Meldung)** — Unter beiden Panels (Upload, Recent Uploads) lag ein
