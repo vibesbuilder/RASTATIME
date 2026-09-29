@@ -590,7 +590,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Verstärkung.  Das Bus-`amplify` entfällt (Webstreams haben ihr eigenes
   Gain am Arm).  Bench danach: A −19,7 / B −29,6 / C −13,7 LUFS in den
   Formen track, show und track_skip.  Render-Regressionstest; wirksam nach
-  PLAYOUT-Neustart (Skript ändert sich → geplanter Liquidsoap-Neustart).
+  PLAYOUT-Neustart (Skript ändert sich → geplanter Liquidsoap-Neustart) — `60b3f56`.
 
 - **R128: True-Peak-Kappung nur noch für Anhebungen (2026-09-29)** — Die
   erste Bibliotheksmessung (352 von 373 Dateien: Ø −14,7 LUFS, −35,8 …
