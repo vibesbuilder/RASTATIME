@@ -56,6 +56,16 @@ Playout begrenzt die Überblendung je Übergang auf den tatsächlichen
 Zeilen-Überlapp; (c) kurze Elemente (Jingles unter N Sekunden) per
 „No Fade during Crossover" kennzeichnen.  Vorbedingung: Evaluierung.
 
+**Nachtrag 2026-09-29 (Frage „hilft Neu-Befüllen?"):** Nur teilweise.  Der
+Legacy-Scheduler legt beim Befüllen JEDE Folgezeile um den Track-Crossfade
+überlappend (`nextStart = end − crossfade`, ohne Typprüfung, auch vor einem
+Webstream).  Bei 3 s: keine Stille mehr, aber der Block wird 9 s kürzer
+(BBC-Relais beginnt ~10:00:58 statt 10:01:06), der Webstream startet 3 s
+vor dem Ende des Intros und blendet es per Show-Crossfade (1 s) weg, und
+das 6,9-s-Intro besteht fast nur aus Ein- und Ausblende.  Kern: 3 s
+Crossfade passt nicht zu kurzen Jingles → Option (b) oder ein Crossfade je
+Track-Typ (Jingle 0–0,5 s) ist der eigentliche Fix.
+
 ### 🟢 Loudness nach EBU R128 im Processing (Stufe 1 in Betrieb seit 2026-09-29 — Pegel-Abnahme an der Aufnahme offen; Stufe 2 unentschieden)
 
 **Ist-Stand (geprüft 2026-09-28):**
