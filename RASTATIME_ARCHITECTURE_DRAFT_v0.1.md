@@ -1,10 +1,14 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.46
+Draft version: 0.47
 Date: 2026-09-28
 
 > **Revision history**
+> - **0.47 (2026-09-29)** — **Per-track gain on the queue** (§23.41): the
+>   gain is applied in front of the crossfade; a bus-level
+>   `amplify(override=...)` kept the first track's gain across
+>   crossfade transitions (no track marks).  True-peak cap for boosts only.
 > - **0.46 (2026-09-28)** — **Loudness Normalization, EBU R128 stage 1**
 >   (§23.41): per-file R128 measurement in the analyzer (ebur128), a
 >   three-way mode with target loudness and true-peak ceiling in Settings
@@ -5455,6 +5459,23 @@ planned restart.  Bench on the installed Windows build
 (`xbench/bench_r128.liq`): `lufs()` metering, `normalize(lufs=true)` and
 the ffmpeg `loudnorm` filter graph all run; the latter two are reserved
 for stage 2 (live sources) and deliberately not on the bus.
+
+**Where the gain is applied (2026-09-29).**  The per-track gain sits on
+the request queue in front of the crossfade: `scheduled_g =
+amplify(id="track_gain", override="replaygain_track_gain", 1.,
+scheduled_q)` and `cross(..., scheduled_g)`.  `amplify(override=...)`
+takes the value at a TRACK START; the bus-level amplify of the earlier
+layout saw metadata without track marks at the crossfade transitions
+(§23.37), so every track of a continuous run played with the gain of
+the first one - for ReplayGain since 2026-09-27 and for R128 alike
+(bench `xbench/bench_gain.py`: C annotated −4 dB played at A's −10 dB;
+with the gain on the queue A −19.7 / B −29.6 / C −13.7 LUFS).  On the
+queue each side of a crossfade carries its own gain.  Side effect: the
+transition's silence test (`old.db_level < -50`) sees post-gain audio.
+The true-peak cap of `file_gain_db` applies to BOOSTS only: MP3s
+routinely measure +1..+2 dBTP and a decoder glitch read +15.2 in the
+library; attenuating further for that would play the track below the
+target, the bus limiter takes the peaks.
 
 **Rejected for stage 1.**  Real-time `loudnorm` over the whole bus
 (dynamic single-pass mode pumps on music, adds an ffmpeg clock to the

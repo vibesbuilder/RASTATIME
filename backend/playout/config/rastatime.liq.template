@@ -493,14 +493,13 @@ ${BUS_SOURCE_BLOCK}
 # Phase-C6 — ReplayGain on the bus
 # ---------------------------------------------------------------------
 
-# Replay-gain via amplify(override=...) — Liquidsoap multiplies the
-# bus by the "replaygain_track_gain" metadata field when present.
-# The LiquidsoapPlayoutEngine sets this field in the annotate:
-# envelope (from cc_files.replay_gain + cc_pref.replay_gain_modifier
-# for files, or cc_webstream.input_gain_db for webstreams).  Tracks
-# without the metadata field play at unity gain (gain_db None on the
-# Python side).
-bus = amplify(override="replaygain_track_gain", 1., bus)
+# Per-track gain (ReplayGain / EBU R128): since 2026-09-29 applied on the
+# request queue in front of the crossfade (CROSSFADE_BLOCK, scheduled_g) -
+# amplify(override=...) takes the annotate value replaygain_track_gain at a
+# TRACK START, and the bus sees metadata without track marks at crossfade
+# transitions, so a bus-level amplify kept the gain of the first track of
+# a run.  Webstreams have their own gain on their arm (webstream.gain);
+# Line-In and DJ sources play at the level they deliver.
 
 ${LOUDNESS_BLOCK}
 

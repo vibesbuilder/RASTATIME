@@ -44,7 +44,7 @@ def test_default_render_carries_the_in_process_watchdog():
     assert '"watchdog", fun (_) ->' in liq                 # telnet webstream.watchdog (diagnostic)
     assert '"ready", fun (_) -> string(source.is_ready(webstream))' in liq   # diagnostic kept
     # the block must come after the final bus definition (bus.on_frame needs it)
-    assert liq.index('bus = amplify(override="replaygain_track_gain", 1., bus)') < liq.index("bus.on_frame(")
+    assert liq.index("${LOUDNESS_BLOCK}" if "${LOUDNESS_BLOCK}" in liq else "loudness limiter") < liq.index("bus.on_frame(")
     # ... and before the outputs that consume the bus (line start: the
     # template's header comment also mentions output.icecast)
     assert liq.index("bus.on_frame(") < liq.index("\noutput.icecast(")

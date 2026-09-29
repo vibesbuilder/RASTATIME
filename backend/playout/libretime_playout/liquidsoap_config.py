@@ -1925,7 +1925,17 @@ def _render_crossfade_block(
         + track_natural
         + "  end\n"
         + "end\n"
-        + f'scheduled_x = cross(id="scheduled_x", duration={f(buf)}, rt_transition, scheduled_q)\n'
+        # RASTATIME 2026-09-29 - the per-track gain (ReplayGain / EBU R128,
+        # annotate replaygain_track_gain) is applied HERE, on the queue, in
+        # front of cross.  amplify(override=...) takes the value at a track
+        # start; on the bus the transitions deliver metadata but no track
+        # mark, so every track of a continuous run played with the gain of
+        # the FIRST one (bench 2026-09-29: C annotated -4 dB played at A's
+        # -10 dB).  On the queue every request starts a track, and the two
+        # sides of a crossfade each carry their own gain.
+        + "# per-track gain (ReplayGain / EBU R128) on the queue, before the crossfade\n"
+        + 'scheduled_g = amplify(id="track_gain", override="replaygain_track_gain", 1., scheduled_q)\n'
+        + f'scheduled_x = cross(id="scheduled_x", duration={f(buf)}, rt_transition, scheduled_g)\n'
     )
 
 

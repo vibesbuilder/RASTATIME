@@ -575,6 +575,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Titel-Verstärkung galt seit dem Crossfade-Umbau nur für den ersten Titel
+  einer Strecke (2026-09-29)** — Beim Abgleich der 24/7-Aufnahme mit den
+  Messwerten fiel ein Titel mit unveränderter Spitze auf.  Bench (drei Töne
+  mit −10 / −20 / −4 dB): `amplify(override="replaygain_track_gain")`
+  übernimmt den Wert am TRACK-ANFANG; auf dem Bus liefern die
+  Crossfade-Übergänge seit 27.09. Metadaten, aber keine Track-Marke — jeder
+  Titel einer durchgehenden Strecke spielte mit der Verstärkung des ERSTEN
+  (Ton C mit −4 dB lief mit den −10 dB von A).  Betroffen: ReplayGain seit
+  2026-09-27 und R128 gleichermaßen.  Die Verstärkung sitzt jetzt auf der
+  Queue vor dem Crossfade (`scheduled_g = amplify(id="track_gain", …,
+  scheduled_q)`, `cross(…, scheduled_g)`): jede Anforderung beginnt dort
+  einen Track, und die beiden Seiten eines Crossfades tragen je ihre eigene
+  Verstärkung.  Das Bus-`amplify` entfällt (Webstreams haben ihr eigenes
+  Gain am Arm).  Bench danach: A −19,7 / B −29,6 / C −13,7 LUFS in den
+  Formen track, show und track_skip.  Render-Regressionstest; wirksam nach
+  PLAYOUT-Neustart (Skript ändert sich → geplanter Liquidsoap-Neustart).
+
 - **R128: True-Peak-Kappung nur noch für Anhebungen (2026-09-29)** — Die
   erste Bibliotheksmessung (352 von 373 Dateien: Ø −14,7 LUFS, −35,8 …
   −4,9; True Peak Ø −0,3 dBFS, 172 Dateien über 0 dBFS, ein Ausreißer mit

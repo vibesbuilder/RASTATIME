@@ -226,12 +226,14 @@ def test_full_render_defaults():
     # don't need crossfading.
     # 2026-09-27: cross() around the request queue with the rt_cross
     # transition function; the silence arm stays outside.
-    assert 'scheduled_x = cross(id="scheduled_x", duration=2.0, rt_transition, scheduled_q)' in out
+    assert 'scheduled_x = cross(id="scheduled_x", duration=2.0, rt_transition, scheduled_g)' in out
     assert 'rt_cross = interactive.string("rt_cross", "track")' in out
     assert "[scheduled_x, silence_fallback]" in out
     assert "scheduled = crossfade(" not in out
-    # Replay-gain still applies to the whole bus (post-switch).
-    assert 'amplify(override="replaygain_track_gain", 1., bus)' in out
+    # 2026-09-29: the per-track gain sits on the queue, in front of cross
+    # (a bus-level amplify kept the first track's gain across crossfades)
+    assert 'scheduled_g = amplify(id="track_gain", override="replaygain_track_gain", 1., scheduled_q)' in out
+    assert 'amplify(override="replaygain_track_gain", 1., bus)' not in out
     # Regression guard: no `bus = crossfade(` anywhere in the active
     # script — that was the broken Phase-D-era pattern.
     active = "\n".join(_active_lines(out))
@@ -691,7 +693,7 @@ def test_full_render_crossfade_disabled():
 def test_crossfade_block_track_and_show_shapes():
     """2026-09-27: track 1 s / show 2.5 s -> buffer 2.5 s, shapes per mode."""
     block = lc._render_crossfade_block(1.0, 2.5)
-    assert "duration=2.5, rt_transition, scheduled_q" in block
+    assert "duration=2.5, rt_transition, scheduled_g" in block
     # natural in-show: fade the LAST second of the 2.5 s tail, new track
     # waits 1.5 s then fades in over 1 s
     assert "fade.out(duration=t_out, delay=t_delay, old_s)" in block
@@ -735,7 +737,7 @@ def test_crossfade_block_new_track_metadata_wins():
 def test_crossfade_block_zero_durations_never_fade():
     block = lc._render_crossfade_block(0.0, 0.0)
     assert lc.crossfade_buffer_seconds(0.0, 0.0) == lc.CROSSFADE_BUFFER_FLOOR_SECONDS
-    assert "duration=0.5, rt_transition, scheduled_q" in block
+    assert "duration=0.5, rt_transition, scheduled_g" in block
     # track natural + show natural degrade to a plain sequence, skips to instant
     assert block.count("sequence([old_s, new.source])") == 2
     assert block.count("rt_instant(old_s, new.source)") >= 3
@@ -1167,8 +1169,8 @@ def test_loudness_block_renders_the_limiter_only_for_r128():
     on = lc.render_rastatime_liq([_stream()], loudness_limiter_ceiling=-1.0)
     assert 'loudness_ceiling = interactive.float("loudness_ceiling", -1.0)' in on
     assert 'bus = limit(id="loudness_limit", threshold=loudness_ceiling, attack=5., release=80., ratio=20., bus)' in on
-    # after the replay-gain amplify, before the ICY rewrite
-    assert on.index('amplify(override="replaygain_track_gain"') < on.index('limit(id="loudness_limit"')
+    # after the per-track gain (on the queue), before the ICY rewrite
+    assert on.index('amplify(id="track_gain", override="replaygain_track_gain"') < on.index('limit(id="loudness_limit"')
     assert on.index('limit(id="loudness_limit"') < on.index('metadata.map(id="icy_rewrite"')
     # the ceiling is clamped to a sane range
     assert 'interactive.float("loudness_ceiling", 0.0)' in lc.render_rastatime_liq([_stream()], loudness_limiter_ceiling=3.0)
@@ -1182,3 +1184,18 @@ def test_write_wrapper_forwards_the_loudness_ceiling(tmp_path):
     assert 'limit(id="loudness_limit"' in target.read_text(encoding="utf-8")
     lc.write_rastatime_liq(target, [_stream()])
     assert "loudness limiter: off" in target.read_text(encoding="utf-8")
+
+
+def test_track_gain_is_applied_on_the_queue_before_the_crossfade():
+    """2026-09-29: amplify(override=...) reads the gain at a track start; on
+    the bus the crossfade transitions deliver metadata without a track mark,
+    so every track of a run played with the FIRST track's gain (bench: C
+    annotated -4 dB played at A's -10 dB)."""
+    block = lc._render_crossfade_block(3.0, 1.0)
+    gain = 'scheduled_g = amplify(id="track_gain", override="replaygain_track_gain", 1., scheduled_q)'
+    assert gain in block
+    assert block.index(gain) < block.index('scheduled_x = cross(id="scheduled_x"')
+    assert "rt_transition, scheduled_g)" in block
+    out = lc.render_rastatime_liq([_stream()])
+    active = "\n".join(ln for ln in out.splitlines() if not ln.lstrip().startswith("#"))
+    assert active.count("replaygain_track_gain") == 1          # one amplify, on the queue
