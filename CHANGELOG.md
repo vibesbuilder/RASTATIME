@@ -575,6 +575,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **PLAYOUT startete nach dem R128-Commit nicht (2026-09-29 07:53)** —
+  `write_rastatime_liq()` (der Datei-Wrapper um das Rendern) kannte den
+  neuen Parameter `loudness_limiter_ceiling` nicht: „unexpected keyword
+  argument", Render-Abbruch, nssm pausierte den Dienst nach drei Versuchen;
+  Liquidsoap lief mit dem alten Skript weiter (Sender auf Sendung, aber ohne
+  Scheduler).  Parameter im Wrapper ergänzt, Regressionstest für den
+  Wrapper.
+
 - **Sendepause nach einem geplanten Liquidsoap-Neustart an der Titelgrenze
   (2026-09-28, 20:27:11 bis zum nächsten Titel)** — Der geplante Neustart
   an der Titelgrenze (gerendertes Skript geändert, §23.34) leert die

@@ -2334,6 +2334,7 @@ def write_rastatime_liq(
     icy_offair_text: str = DEFAULT_OFFAIR_TEXT,
     icy_station_name: str = DEFAULT_STATION_NAME,
     live_text_url: Optional[str] = DEFAULT_LIVE_TEXT_URL,
+    loudness_limiter_ceiling: Optional[float] = None,
     template_path: Optional[Path] = None,
 ) -> bool:
     """
@@ -2393,6 +2394,7 @@ def write_rastatime_liq(
         icy_offair_text=icy_offair_text,
         icy_station_name=icy_station_name,
         live_text_url=live_text_url,
+        loudness_limiter_ceiling=loudness_limiter_ceiling,
         template_path=template_path,
     )
 

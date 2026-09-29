@@ -1172,3 +1172,13 @@ def test_loudness_block_renders_the_limiter_only_for_r128():
     assert on.index('limit(id="loudness_limit"') < on.index('metadata.map(id="icy_rewrite"')
     # the ceiling is clamped to a sane range
     assert 'interactive.float("loudness_ceiling", 0.0)' in lc.render_rastatime_liq([_stream()], loudness_limiter_ceiling=3.0)
+
+
+def test_write_wrapper_forwards_the_loudness_ceiling(tmp_path):
+    """2026-09-29: the wrapper lacked the kwarg - PLAYOUT failed to render at
+    start ('unexpected keyword argument') and nssm paused the service."""
+    target = tmp_path / "rastatime.liq"
+    lc.write_rastatime_liq(target, [_stream()], loudness_limiter_ceiling=-1.0)
+    assert 'limit(id="loudness_limit"' in target.read_text(encoding="utf-8")
+    lc.write_rastatime_liq(target, [_stream()])
+    assert "loudness limiter: off" in target.read_text(encoding="utf-8")
