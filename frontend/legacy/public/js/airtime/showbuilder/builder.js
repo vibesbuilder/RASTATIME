@@ -447,6 +447,12 @@ var AIRTIME = (function (AIRTIME) {
     previewIcon.setAttribute("src", baseUrl + "css/images/icon_audioclip.png");
     previewIcon.setAttribute("title", $.i18n._("Track preview"));
 
+    var sbState = rtDatatableServerState(
+      baseUrl + "usersettings/get-timeline-datatable",
+      baseUrl + "usersettings/set-timeline-datatable",
+      {},
+    );
+
     oSchedTable = $sbTable.dataTable({
       aoColumns: [
         /* checkbox */ {
@@ -553,38 +559,13 @@ var AIRTIME = (function (AIRTIME) {
           });
         }
       },
-      fnStateSave: function fnStateSave(oSettings, oData) {
-        localStorage.setItem("datatables-timeline", JSON.stringify(oData));
-      },
-      fnStateLoad: function fnBuilderStateLoad(oSettings) {
-        var settings = localStorage.getItem("datatables-timeline");
-
-        if (settings !== "") {
-          return JSON.parse(settings);
-        }
-      },
+      // RASTATIME 2026-09-29: the layout is saved per user on the server (see
+      // rtDatatableServerState() in common.js) - the 1.9 fnStateSave /
+      // fnStateLoad pair is ignored by DataTables 1.13.
+      iStateDuration: sbState.iStateDuration,
+      fnStateLoadCallback: sbState.fnStateLoadCallback,
+      fnStateSaveCallback: sbState.fnStateSaveCallback,
       fnStateLoadParams: function (oSettings, oData) {
-        var i,
-          length,
-          a = oData.abVisCols;
-
-        // RASTATIME 2026-06-01 (JS-modernization stage 2): guard abVisCols.
-        // DataTables 1.13 changed the saved-state format (columns[].visible
-        // instead of abVisCols), so oData.abVisCols is undefined on 1.13 and the
-        // loop crashed the whole table init.  Same guard library.js already has;
-        // 1.9 still has abVisCols, so its behaviour is unchanged.
-        if (a) {
-          //putting serialized data back into the correct js type to make
-          //sure everything works properly.
-          for (i = 0, length = a.length; i < length; i++) {
-            if (typeof a[i] === "string") {
-              a[i] = a[i] === "true";
-            }
-          }
-        }
-
-        oData.iCreate = parseInt(oData.iCreate, 10);
-
         // RASTATIME 2026-06-04 (?jq3): never restore a persisted search (see
         // fnStateSaveParams); also clears any search left in older saved state.
         delete oData.oSearch;

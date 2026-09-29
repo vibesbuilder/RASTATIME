@@ -1,10 +1,15 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.47
-Date: 2026-09-28
+Draft version: 0.48
+Date: 2026-09-29
 
 > **Revision history**
+> - **0.48 (2026-09-29)** — **Per-user table layouts** (§23.42): the
+>   library and timeline layouts (column order and visibility, rows per
+>   page, sort) are a per-user preference on the server again - the 1.9
+>   state callbacks were dead on DataTables 1.13; the advanced search no
+>   longer detours over the saved ColReorder map.
 > - **0.47 (2026-09-29)** — **Per-track gain on the queue** (§23.41): the
 >   gain is applied in front of the crossfade; a bus-level
 >   `amplify(override=...)` kept the first track's gain across
@@ -5482,3 +5487,49 @@ target, the bus limiter takes the peaks.
 air chain, makes the per-file measurement pointless); replacing
 ReplayGain with the R128 value (the two modes coexist so the operator
 can switch back).
+
+### 23.42 Per-User Table Layouts for the Library and the Timeline (2026-09-29)
+
+**Context.**  Since the DataTables 1.13 switch (?jq3, retired as a flag
+in 3d02d50) the library and timeline tables ignored their state
+callbacks: 1.13 knows `fnStateSaveCallback` / `fnStateLoadCallback`,
+not the 1.9 names `fnStateSave` / `fnStateLoad`.  DataTables fell back
+to its built-in state - browser localStorage per page, dropped after
+`iStateDuration` = 2 hours - so column order, visible columns and rows
+per page came back as defaults (operator report).  The server copy
+(`usersettings/set-library-datatable`) was no longer written.
+
+**Decision.**  The layout is a per-user preference on the server, the
+single source of truth: `rtDatatableServerState()` (common.js) loads it
+asynchronously before the first draw and posts it as the DataTables
+state JSON; `iStateDuration: 0` (no expiry).  DataTables saves on every
+draw (the timeline redraws on its refresh timer), so only a changed
+layout is posted.  Three `cc_pref` user values (JSON; the old
+PHP-serialized 1.9 values do not decode and read as "no layout"):
+`library_datatable` (dashboard, 38 columns), `library_builder_datatable`
+(Schedule Tracks dialog, 37 columns - no Actions column, DataTables
+rejects a state with a different column count) and `timeline_datatable`
+(the same table on the dashboard and in the dialog).  Searches and the
+current page are stripped: a page saved days ago can lie beyond today's
+result set.
+
+The advanced search pairs `sSearch_{i}` with `mDataProp_{i}` directly
+(`Application_Model_Datatables::findEntries`).  The detour over the saved
+`ColReorder` map existed for the 1.9 columnFilter plugin, which searched
+a column's ORIGINAL position; the 1.13 filter (`liveColIndex`) searches
+its current position, so with a real column order saved again the map
+would pair a term with the wrong column.  `getOrderingMap()` is gone.
+
+The row decoration in the library's `fnCreatedRow` (preview icon, cover
+image, track type code, scheduled icon, actions) works on the `cells`
+argument - every cell of the row, including those of columns hidden at
+creation, which are not in `nRow`.  A column shown later otherwise
+displayed the raw data: the track type id, the artwork path, an empty
+but clickable preview cell.
+
+**Verification.**  Live on the studio machine: dashboard and dialog load
+their layout from the server after a reload (`oLoadedState`), no post
+for an unchanged layout, the dialog keeps its own 37-column layout; a
+hidden-then-shown column renders decorated; the advanced search finds
+the 241 jingles by track type in the default and in a reordered column
+order.

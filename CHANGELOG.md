@@ -575,6 +575,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Tabellen-Layout pro Benutzer; Type/Cover/Preview nach Spalten-Einblenden
+  (2026-09-29, Operator-Meldung)** — Dashboard → Tracks und Kalender →
+  Schedule Tracks vergaßen Spaltenreihenfolge, sichtbare Spalten und Zeilen
+  pro Seite: DataTables 1.13 kennt die 1.9-Optionen `fnStateSave` /
+  `fnStateLoad` nicht, seit der jq3-Umstellung lag der Stand nur im
+  localStorage des Browsers und verfiel nach 2 Stunden.  Neu:
+  `rtDatatableServerState()` (common.js) lädt das Layout vor dem ersten
+  Zeichnen vom Server und speichert es als DataTables-State-JSON pro
+  Benutzer (`cc_pref`: `library_datatable`, `library_builder_datatable` für
+  den Dialog ohne Actions-Spalte, `timeline_datatable` für Scheduled Shows),
+  ohne Ablauf; gepostet wird nur ein geändertes Layout (die Timeline zeichnet
+  periodisch neu).  Suchen und aktuelle Seite werden nicht gemerkt.  Die
+  erweiterte Suche paart `sSearch_i` jetzt direkt mit `mDataProp_i` — der
+  Umweg über die gespeicherte ColReorder-Map (für das 1.9-columnFilter-Plugin)
+  hätte mit gespeicherter Reihenfolge Suchbegriff und Spalte vertauscht.
+  Außerdem: Spalten, die beim Zeichnen versteckt waren und danach
+  eingeblendet wurden, zeigten die Rohdaten — Type als Ziffer, Cover als
+  Pfad (`imported/artwork/…`), Preview leer, aber klickbar; `fnCreatedRow`
+  dekoriert jetzt alle Zellen der Zeile (`cells`-Argument) statt nur der
+  sichtbaren.  Das Preview-Icon der Scheduled-Shows-Tabelle ist wie das der
+  Library auf hellgrau invertiert.  Live verifiziert (Laden/Neuladen,
+  Dialog-Layout getrennt, Spalte einblenden, erweiterte Suche bei
+  umsortierten Spalten); Handbuch LIBRARY ×4, Architektur §23.42.
+
 - **Analyzer: ffmpeg-Ausgabe tolerant lesen (2026-09-29)** — Eine von 373
   Dateien blieb bei der R128-Bestandsmessung ungemessen (und hatte seit dem
   Import auch keinen ReplayGain-Wert): ffmpeg gibt die Tags der Datei aus,

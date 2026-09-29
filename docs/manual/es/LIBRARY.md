@@ -54,6 +54,22 @@ correspondencia de subcadena.
 > estado actual de chips como parámetros URL; el
 > controlador ensambla una consulta PostgreSQL `ILIKE`.
 
+### Disposición de la tabla
+
+Arrastre una columna por su encabezado para moverla; el
+botón **Columnas** (icono de lista) sobre la tabla muestra u
+oculta columnas, y el selector **Mostrar** debajo fija las
+filas por página. RASTATIME recuerda esta disposición — orden
+de columnas, columnas visibles, filas por página y orden —
+**por usuario en el servidor**, así que le sigue a cualquier
+navegador y equipo. La tabla de pistas del panel y la del
+diálogo **Programar pistas** del calendario tienen cada una
+su propia disposición (el diálogo no tiene columna
+*Actions*); la tabla *Scheduled Shows* de al lado comparte
+una sola disposición entre ambos lugares. Las búsquedas y la
+página actual no se recuerdan — la tabla siempre abre en la
+página 1.
+
 ---
 
 ## 2. Pistas

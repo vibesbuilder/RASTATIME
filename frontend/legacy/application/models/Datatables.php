@@ -78,41 +78,30 @@ class Application_Model_Datatables
         $params = [];
 
         if (isset($data['advSearch']) && $data['advSearch'] === 'true') {
-            $librarySetting = Application_Model_Preference::getCurrentLibraryTableColumnMap();
-            // $displayColumns[] = 'owner';
-
-            // map that maps original column position to db name
+            // RASTATIME 2026-09-29: sSearch_{i} belongs to mDataProp_{i}.
+            // The DataTables 1.13 column filter searches the column's current
+            // position (liveColIndex in library.js), so the old detour over
+            // the saved ColReorder map (built for the 1.9 columnFilter plugin,
+            // which searched the original position) is gone - with a real
+            // per-user column order saved again it would pair a search term
+            // with the wrong column.
             $current2dbname = [];
-            // array of search terms
-            $orig2searchTerm = [];
+            $current2searchTerm = [];
             foreach ($data as $key => $d) {
                 if (strstr($key, 'mDataProp_')) {
                     [$dump, $index] = explode('_', $key);
                     $current2dbname[$index] = $d;
                 } elseif (strstr($key, 'sSearch_')) {
                     [$dump, $index] = explode('_', $key);
-                    $orig2searchTerm[$index] = $d;
+                    $current2searchTerm[$index] = $d;
                 }
             }
 
             // map that maps dbname to searchTerm
             $dbname2searchTerm = [];
             foreach ($current2dbname as $currentPos => $dbname) {
-                $new_index = $librarySetting($currentPos);
-                // TODO : Fix this retarded hack later. Just a band aid for
-                // now at least we print some warnings so that we don't
-                // forget about this -- cc-4462
-                if (array_key_exists($new_index, $orig2searchTerm)) {
-                    $dbname2searchTerm[$dbname] = $orig2searchTerm[$new_index];
-                } else {
-                    Logging::warn('Trying to reorder to unknown index
-                            printing as much debugging as possible...');
-                    $debug = [
-                        '$new_index' => $new_index,
-                        '$currentPos' => $currentPos,
-                        '$orig2searchTerm' => $orig2searchTerm,
-                    ];
-                    Logging::warn($debug);
+                if (array_key_exists($currentPos, $current2searchTerm)) {
+                    $dbname2searchTerm[$dbname] = $current2searchTerm[$currentPos];
                 }
             }
 

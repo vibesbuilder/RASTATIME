@@ -89,6 +89,22 @@ Klicken Sie auf eine Spaltenüberschrift zum aufsteigenden
 Sortieren; klicken Sie erneut für absteigend. Die
 Standard-Sortierung ist **Titel, aufsteigend**.
 
+### Tabellen-Layout
+
+Ziehen Sie eine Spalte an ihrer Überschrift, um sie zu
+verschieben; die Schaltfläche **Spalten** (Listen-Symbol) über
+der Tabelle blendet Spalten ein und aus, die Auswahl
+**… anzeigen** darunter legt die Zeilen pro Seite fest.
+RASTATIME merkt sich dieses Layout — Spaltenreihenfolge,
+sichtbare Spalten, Zeilen pro Seite und Sortierung — **pro
+Benutzer auf dem Server**; es folgt Ihnen also in jeden Browser
+und auf jeden Rechner. Die Track-Tabelle des Dashboards und die
+im Kalender-Dialog **Sendungsinhalte verwalten** haben je ein
+eigenes Layout (der Dialog hat keine Spalte *Actions*); die
+Tabelle *Scheduled Shows* daneben teilt ein Layout zwischen
+beiden Orten. Suchen und die aktuelle Seite werden nicht
+gemerkt — die Tabelle öffnet immer auf Seite 1.
+
 ---
 
 ## 2. Tracks

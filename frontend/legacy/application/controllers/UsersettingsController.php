@@ -35,38 +35,36 @@ class UsersettingsController extends Zend_Controller_Action
         }
     }
 
+    // RASTATIME 2026-09-29 - the table layouts arrive as the DataTables state
+    // JSON (see rtDatatableServerState() in common.js); table=builder selects
+    // the library layout of the Schedule Tracks dialog.
+    private function libraryDatatableKey()
+    {
+        return $this->getRequest()->getParam('table') === 'builder' ? 'library_builder' : 'library';
+    }
+
     public function setLibraryDatatableAction()
     {
-        $request = $this->getRequest();
-        $settings = $request->getParam('settings');
+        $settings = $this->getRequest()->getParam('settings');
 
-        Application_Model_Preference::setCurrentLibraryTableSetting($settings);
+        $this->_helper->json(Application_Model_Preference::setDatatableSetting($this->libraryDatatableKey(), $settings));
     }
 
     public function getLibraryDatatableAction()
     {
-        $data = Application_Model_Preference::getCurrentLibraryTableSetting();
-        if (!is_null($data)) {
-            $this->_helper->json($data);
-        } else {
-            $this->_helper->json(false);
-        }
+        $this->_helper->json(Application_Model_Preference::getDatatableSetting($this->libraryDatatableKey()));
     }
 
     public function setTimelineDatatableAction()
     {
-        $request = $this->getRequest();
-        $settings = $request->getParam('settings');
+        $settings = $this->getRequest()->getParam('settings');
 
-        Application_Model_Preference::setTimelineDatatableSetting($settings);
+        $this->_helper->json(Application_Model_Preference::setDatatableSetting('timeline', $settings));
     }
 
     public function getTimelineDatatableAction()
     {
-        $data = Application_Model_Preference::getTimelineDatatableSetting();
-        if (!is_null($data)) {
-            $this->view->settings = $data;
-        }
+        $this->_helper->json(Application_Model_Preference::getDatatableSetting('timeline'));
     }
 
     public function remindmeAction()

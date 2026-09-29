@@ -908,12 +908,6 @@ var AIRTIME = (function (AIRTIME) {
                             DATATABLES
             ############################################ */
 
-    if (onDashboard) {
-      var dataTableLocalStorageKey = "datatables-library-dashboard";
-    } else {
-      var dataTableLocalStorageKey = "datatables-library-builder";
-    }
-
     // RASTATIME 2026-06-01 (JS-modernization stage 2): on ?jq3 the modern
     // DataTables Buttons extension is loaded, which we use to detect the 1.13
     // stack.  The fork-specific options (ColVis/ColReorder) are set after this
@@ -949,78 +943,11 @@ var AIRTIME = (function (AIRTIME) {
             }
           });
         }
-      },
-      fnStateSave: function (oSettings, oData) {
-        localStorage.setItem(dataTableLocalStorageKey, JSON.stringify(oData));
-
-        // Sadly, this is necessary because we need to unscramble the colReorder map on the backend
-        $.ajax({
-          url: baseUrl + "usersettings/set-library-datatable",
-          type: "POST",
-          data: { settings: oData, format: "json" },
-          dataType: "json",
-        });
-
-        colReorderMap = oData.ColReorder;
-      },
-      fnStateLoad: function fnLibStateLoad(oSettings) {
-        var settings = JSON.parse(
-          localStorage.getItem(dataTableLocalStorageKey),
-        );
-
-        // local storage was empty lets get something from the backend
-        if (settings === null) {
-          // we have a datatables implementation that is so old we need to async:false ;(
-          // see http://legacy.datatables.net/usage/callbacks#fnStateLoad for info and
-          // feel free to start trying to port this to a modern version ;)
-          $.ajax({
-            url: baseUrl + "usersettings/get-library-datatable",
-            async: false, // <<< every sane browser will warn that this is not nice
-            dataType: "json",
-            success: function (oData) {
-              localStorage.setItem(
-                dataTableLocalStorageKey,
-                JSON.stringify(oData),
-              );
-              settings = oData;
-            },
-          });
-        }
-        // Hacky; always set the visibility of the last column (actions buttons) to true
-        if (settings && settings.abVisCols)
-          settings.abVisCols[settings.abVisCols.length - 1] = true;
-
-        return settings;
+        // RASTATIME 2026-09-29: the layout is kept, not the page - a page
+        // saved days ago can lie beyond the end of today's result set.
+        delete oData.start;
       },
       fnStateLoadParams: function (oSettings, oData) {
-        var i,
-          length,
-          a = oData.abVisCols;
-
-        if (a) {
-          // putting serialized data back into the correct js type to make
-          // sure everything works properly.
-          for (i = 0, length = a.length; i < length; i++) {
-            if (typeof a[i] === "string") {
-              a[i] = a[i] === "true";
-            }
-          }
-        }
-
-        a = oData.ColReorder;
-        if (a) {
-          for (i = 0, length = a.length; i < length; i++) {
-            if (typeof a[i] === "string") {
-              a[i] = parseInt(a[i], 10);
-            }
-          }
-        }
-
-        oData.iEnd = parseInt(oData.iEnd, 10);
-        oData.iLength = parseInt(oData.iLength, 10);
-        oData.iStart = parseInt(oData.iStart, 10);
-        oData.iCreate = parseInt(oData.iCreate, 10);
-
         // RASTATIME 2026-06-04 (?jq3): never restore a persisted search (see
         // fnStateSaveParams).  Stripping on load as well neutralises any search
         // already left in an older saved state, so the very first page load
@@ -1028,12 +955,18 @@ var AIRTIME = (function (AIRTIME) {
         delete oData.oSearch;
         delete oData.aoSearchCols;
         delete oData.search;
+        delete oData.start;
         if (oData.columns) {
           $.each(oData.columns, function (i, c) {
             if (c && c.search) {
               c.search.search = "";
             }
           });
+          // The Actions column (last in original order, which is how
+          // ColReorder saves the columns) always stays visible.
+          if (onDashboard && oData.columns.length) {
+            oData.columns[oData.columns.length - 1].visible = true;
+          }
         }
       },
 
@@ -1096,15 +1029,22 @@ var AIRTIME = (function (AIRTIME) {
         });
       },
       fnRowCallback: AIRTIME.library.fnRowCallback,
-      fnCreatedRow: function (nRow, aData, iDataIndex) {
+      fnCreatedRow: function (nRow, aData, iDataIndex, aCells) {
+        // RASTATIME 2026-09-29: aCells holds every cell of the row, also those
+        // of columns hidden right now - nRow only carries the visible ones.  A
+        // column shown later (column picker, saved layout) otherwise came up
+        // with the raw data: the track type id, the artwork path, an empty
+        // (but clickable) preview cell.
+        var $cells = $(aCells);
+
         // add checkbox
-        $(nRow)
-          .find("td.library_checkbox")
+        $cells
+          .filter("td.library_checkbox")
           .html("<input type='checkbox' name='cb_" + aData.id + "'>");
 
         if (onDashboard) {
-          $(nRow)
-            .find("td.library_actions")
+          $cells
+            .filter("td.library_actions")
             .text("...")
             .on("click", function (e) {
               $(this).contextMenu({
@@ -1129,8 +1069,8 @@ var AIRTIME = (function (AIRTIME) {
               "</div>";
           }
 
-          $(nRow)
-            .find("td.library_track_type")
+          $cells
+            .filter("td.library_track_type")
             .on("click", function (e) {
               $.getJSON(baseUrl + "api/track-types", function (json) {
                 var type_enabled = false;
@@ -1196,13 +1136,13 @@ var AIRTIME = (function (AIRTIME) {
           } else {
             var track_type_code = TRACKTYPES[aData.track_type_id].code;
           }
-          $(nRow).find("td.library_track_type").html(track_type_code);
+          $cells.filter("td.library_track_type").html(track_type_code);
         }
 
         // add audio preview image/button
         if (aData.ftype === "audioclip") {
-          $(nRow)
-            .find("td.library_type")
+          $cells
+            .filter("td.library_type")
             .html(
               '<img title="' +
                 $.i18n._("Track preview") +
@@ -1211,8 +1151,8 @@ var AIRTIME = (function (AIRTIME) {
                 'css/images/icon_audioclip.png">',
             );
           if (aData.artwork_data) {
-            $(nRow)
-              .find("td.library_artwork")
+            $cells
+              .filter("td.library_artwork")
               .html(
                 '<img class="img_small" id="' +
                   aData.id +
@@ -1221,8 +1161,8 @@ var AIRTIME = (function (AIRTIME) {
                   '">',
               );
           } else {
-            $(nRow)
-              .find("td.library_artwork")
+            $cells
+              .filter("td.library_artwork")
               .html(
                 '<img class="img_small" width="28" height="28" src="' +
                   baseUrl +
@@ -1230,8 +1170,8 @@ var AIRTIME = (function (AIRTIME) {
               );
           }
         } else if (aData.ftype === "playlist") {
-          $(nRow)
-            .find("td.library_type")
+          $cells
+            .filter("td.library_type")
             .html(
               '<img title="' +
                 $.i18n._("Playlist preview") +
@@ -1240,8 +1180,8 @@ var AIRTIME = (function (AIRTIME) {
                 'css/images/icon_playlist.png">',
             );
         } else if (aData.ftype === "block") {
-          $(nRow)
-            .find("td.library_type")
+          $cells
+            .filter("td.library_type")
             .html(
               '<img title="' +
                 $.i18n._("Smart Block") +
@@ -1250,8 +1190,8 @@ var AIRTIME = (function (AIRTIME) {
                 'css/images/icon_smart-block.png">',
             );
         } else if (aData.ftype === "stream") {
-          $(nRow)
-            .find("td.library_type")
+          $cells
+            .filter("td.library_type")
             .html(
               '<img title="' +
                 $.i18n._("Webstream preview") +
@@ -1262,18 +1202,18 @@ var AIRTIME = (function (AIRTIME) {
         }
 
         if (aData.is_scheduled) {
-          $(nRow)
-            .find("td.library_is_scheduled")
+          $cells
+            .filter("td.library_is_scheduled")
             .html('<span class="small-icon is_scheduled"></span>');
         } else if (!aData.is_scheduled) {
-          $(nRow).find("td.library_is_scheduled").html("");
+          $cells.filter("td.library_is_scheduled").html("");
         }
         if (aData.is_playlist) {
-          $(nRow)
-            .find("td.library_is_playlist")
+          $cells
+            .filter("td.library_is_playlist")
             .html('<span class="small-icon is_playlist"></span>');
         } else if (!aData.is_playlist) {
-          $(nRow).find("td.library_is_playlist").html("");
+          $cells.filter("td.library_is_playlist").html("");
         }
       },
       // remove any selected nodes before the draw.
@@ -1325,6 +1265,17 @@ var AIRTIME = (function (AIRTIME) {
         iFixedColumns: 3,
       };
     }
+
+    // RASTATIME 2026-09-29: the layout is saved per user on the server; the
+    // Schedule Tracks dialog (no Actions column) has a layout of its own.
+    $.extend(
+      libDtOpts,
+      rtDatatableServerState(
+        baseUrl + "usersettings/get-library-datatable",
+        baseUrl + "usersettings/set-library-datatable",
+        onDashboard ? {} : { table: "builder" },
+      ),
+    );
 
     mod.libraryDataTable = $libTable.dataTable(libDtOpts);
 

@@ -200,6 +200,13 @@ table.dataTable td.sb-image {
 	cursor: pointer;
 }
 
+/* RASTATIME 2026-09-29 - the timeline's dark speaker icon was barely visible
+   on the dark rows (Schedule Tracks dialog, dashboard); inverted to light grey
+   like the library's preview icons (media_library.css). */
+table.dataTable td.sb-image img {
+	filter: invert(0.85);
+}
+
 table.datatable tr.sb-header.odd td, table.datatable tr.sb-header.even td,
 table.datatable tr.sb-header.odd:hover td, table.datatable tr.sb-header.even:hover td{
     background: #555;

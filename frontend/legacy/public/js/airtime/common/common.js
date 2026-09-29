@@ -117,6 +117,56 @@ function getDatatablesStrings(overrideDict) {
   return $.extend({}, dict, overrideDict);
 }
 
+/*
+ * RASTATIME 2026-09-29 - per-user DataTables layout (column order and
+ * visibility, rows per page, sort) kept on the server as a user preference.
+ * DataTables 1.13 ignores the 1.9 fnStateSave / fnStateLoad options, so the
+ * library and timeline tables had fallen back to the built-in localStorage
+ * state: per browser, and dropped after two hours.  Returns the options to
+ * merge into a table's settings.  DataTables saves on every draw (the
+ * timeline redraws on its refresh timer), so only a changed layout is
+ * posted.  params are sent along on both calls (e.g. {table: "builder"}).
+ */
+function rtDatatableServerState(getUrl, setUrl, params) {
+  var lastSaved = null;
+
+  // The layout without its timestamp, to recognise an unchanged save.
+  function layoutOf(state) {
+    return JSON.stringify($.extend({}, state, { time: 0 }));
+  }
+
+  return {
+    iStateDuration: 0, // never expire (the DataTables default is 2 hours)
+    fnStateLoadCallback: function (settings, callback) {
+      $.ajax({ url: getUrl, data: params, dataType: "json" })
+        .done(function (state) {
+          if (state && state.time) {
+            lastSaved = layoutOf(state);
+            callback(state);
+          } else {
+            callback(null);
+          }
+        })
+        .fail(function () {
+          callback(null);
+        });
+    },
+    fnStateSaveCallback: function (settings, state) {
+      var layout = layoutOf(state);
+      if (layout === lastSaved) {
+        return;
+      }
+      lastSaved = layout;
+      $.ajax({
+        url: setUrl,
+        type: "POST",
+        data: $.extend({ settings: JSON.stringify(state), format: "json" }, params),
+        dataType: "json",
+      });
+    },
+  };
+}
+
 function adjustDateToServerDate(date, serverTimezoneOffset) {
   //date object stores time in the browser's localtime. We need to artificially shift
   //it to

@@ -89,6 +89,24 @@ Cliquez sur n'importe quel en-tête de colonne pour trier
 en ordre ascendant ; cliquez à nouveau pour descendant.
 Le tri par défaut est **titre, ascendant**.
 
+### Disposition du tableau
+
+Faites glisser une colonne par son en-tête pour la déplacer ;
+le bouton **Colonnes** (icône de liste) au-dessus du tableau
+affiche ou masque les colonnes, et le sélecteur **Afficher**
+en dessous fixe le nombre de lignes par page. RASTATIME
+mémorise cette disposition — ordre des colonnes, colonnes
+visibles, lignes par page et tri — **par utilisateur sur le
+serveur** ; elle vous suit donc dans chaque navigateur et sur
+chaque poste. Le tableau des pistes du tableau de bord et
+celui de la boîte de dialogue **Ajouter des pistes** du
+calendrier ont chacun leur propre disposition (la boîte de
+dialogue n'a pas de colonne *Actions*) ; le tableau
+*Scheduled Shows* à côté partage une seule disposition entre
+les deux endroits. Les recherches et la page courante ne
+sont pas mémorisées — le tableau s'ouvre toujours à la
+page 1.
+
 ---
 
 ## 2. Pistes

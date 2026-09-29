@@ -82,6 +82,20 @@ webstreams / line-ins. It uses a substring match — typing
 Click any column header to sort ascending; click again for
 descending. The default sort is **title, ascending**.
 
+### Table layout
+
+Drag a column by its header to move it; the **Columns** button
+(list icon) above the table shows or hides columns, and the
+**Show** selector below it sets the rows per page. RASTATIME
+remembers this layout — column order, visible columns, rows per
+page and sort — **per user on the server**, so it follows you to
+any browser and computer. The track table on the dashboard and
+the one in the calendar's **Schedule Tracks** dialog each keep a
+layout of their own (the dialog has no *Actions* column); the
+*Scheduled Shows* table next to them shares one layout between
+both places. Searches and the current page are not remembered —
+the table always opens on page 1.
+
 ---
 
 ## 2. Tracks

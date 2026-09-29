@@ -1554,71 +1554,55 @@ class Application_Model_Preference
         return $retVal;
     }
 
-    public static function getOrderingMap($pref_param)
+    /*
+     * RASTATIME 2026-09-29 - per-user DataTables layouts (column order and
+     * visibility, rows per page, sort) as the DataTables 1.13 state JSON,
+     * one user value per table.  The library table of the Schedule Tracks
+     * dialog has no Actions column, so it keeps a layout of its own next to
+     * the dashboard's; the timeline is the same table in both places.
+     * Values written by the DataTables 1.9 stack (PHP-serialized) do not
+     * decode and read as "no layout".
+     */
+    private const DATATABLE_SETTING_KEYS = [
+        'library' => 'library_datatable',
+        'library_builder' => 'library_builder_datatable',
+        'timeline' => 'timeline_datatable',
+    ];
+
+    /**
+     * @param string $table key of DATATABLE_SETTING_KEYS
+     * @param string $json  the DataTables state object as JSON
+     *
+     * @return bool false when the table or the state is not accepted
+     */
+    public static function setDatatableSetting($table, $json)
     {
-        $v = self::getValue($pref_param, true);
-
-        $id = function ($x) {
-            return $x;
-        };
-
-        if ($v === '') {
-            return $id;
+        if (!isset(self::DATATABLE_SETTING_KEYS[$table])
+            || !is_string($json) || strlen($json) > 65536) {
+            return false;
         }
-
-        $ds = unserialize($v);
-
-        if (is_null($ds) || !is_array($ds)) {
-            return $id;
+        $state = json_decode($json);
+        if (!is_object($state)) {
+            return false;
         }
+        self::setValue(self::DATATABLE_SETTING_KEYS[$table], json_encode($state), true);
 
-        if (!array_key_exists('ColReorder', $ds)) {
-            return $id;
+        return true;
+    }
+
+    /**
+     * @param string $table key of DATATABLE_SETTING_KEYS
+     *
+     * @return null|object the saved DataTables state
+     */
+    public static function getDatatableSetting($table)
+    {
+        if (!isset(self::DATATABLE_SETTING_KEYS[$table])) {
+            return null;
         }
+        $state = json_decode(self::getValue(self::DATATABLE_SETTING_KEYS[$table], true));
 
-        return function ($x) use ($ds) {
-            if (array_key_exists($x, $ds['ColReorder'])) {
-                return $ds['ColReorder'][$x];
-            }
-            /*For now we just have this hack for debugging. We should not
-                rely on this behaviour in case of failure*/
-            Logging::warn("Index {$x} does not exist preferences");
-            Logging::warn('Defaulting to identity and printing preferences');
-            Logging::warn($ds);
-
-            return $x;
-        };
-    }
-
-    public static function getCurrentLibraryTableColumnMap()
-    {
-        return self::getOrderingMap('library_datatable');
-    }
-
-    public static function setCurrentLibraryTableSetting($settings)
-    {
-        $data = serialize($settings);
-        self::setValue('library_datatable', $data, true);
-    }
-
-    public static function getCurrentLibraryTableSetting()
-    {
-        $data = self::getValue('library_datatable', true);
-
-        return ($data != '') ? unserialize($data) : null;
-    }
-
-    public static function setTimelineDatatableSetting($settings)
-    {
-        $data = serialize($settings);
-        self::setValue('timeline_datatable', $data, true);
-    }
-
-    public static function getTimelineDatatableSetting()
-    {
-        $data = self::getValue('timeline_datatable', true);
-
-        return ($data != '') ? unserialize($data) : null;
+        return is_object($state) ? $state : null;
     }
 
     public static function setNowPlayingScreenSettings($settings)
