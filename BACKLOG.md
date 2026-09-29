@@ -41,7 +41,14 @@ festgelegt.  Jeder Punkt bekommt vor Implementierung die
 
 ## 🎯 Aktive Backlog-Items (warten auf Operator-Go)
 
-### 🟡 Crossfade je Track-Typ und/oder „Exclude from Crossover" — 5 s Stille vor dem BBC-Webstream (beobachtet 2026-09-29, evaluiert 2026-09-29, Entscheidung offen)
+### 🟢 Crossfade je Track-Typ und „Exclude from Crossover" — 5 s Stille vor dem BBC-Webstream (Operator-Go 2026-09-29, gebaut — Live-Abnahme offen)
+
+**Stand 2026-09-29 abends:** gebaut (Option C, beide Wege).  Operator-Entscheidungen: Paar-Regel = kleinerer Wert;
+Jingles 0 s; die 100 „No Fade"-Jingles auf „wie Track-Typ" zurückgesetzt (Sicherung
+`C:/Temp/optd/no_fade_flags_backup_20260929.txt`); Quellenwechsel Datei ↔ Webstream/Line-In im Layout auf den
+Show-Wert angeglichen.  639 kommende Instanzen neu ausgelegt.  **Offen:** API- und PLAYOUT-Neustart durch den
+Operator, Apache-Neustart für die Übersetzungen, dann Abnahme an der nächsten Jingle-Folge (kein Vorlauf, keine
+Stille vor dem Relais; nächste BBC-Instanz 2026-10-06) oder an einer Testsendung.
 
 **Befund:** Die stündliche Folge TOH-Jingle → Dayteaser → Intro BBC News →
 BBC-Webstream ist im Kalender Stoß an Stoß gelegt (Zeilenlänge ≈ Cliplänge,

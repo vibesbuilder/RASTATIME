@@ -15,6 +15,18 @@ function populateForm(entries) {
   $("#visibility").val(visibility_value);
 
   $("#analyze_cue_points").prop("checked", entries.analyze_cue_points);
+  // RASTATIME 2026-09-29 - crossfade per track type (empty = house value)
+  $("#crossfade_duration").val(
+    entries.crossfade_duration === null || entries.crossfade_duration === undefined
+      ? ""
+      : entries.crossfade_duration,
+  );
+  if ($.rtDescriptionTooltips) {
+    $.rtDescriptionTooltips($("#tracktype_details"), {
+      where: "field",
+      only: ["crossfade_duration"],
+    });
+  }
 }
 
 function rowClickCallback(row_id) {

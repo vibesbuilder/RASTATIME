@@ -297,6 +297,63 @@ class Application_Model_StoredFile
             $stmt->bindValue(':id', $this->_file->getDbId(), PDO::PARAM_INT);
             $stmt->execute();
         }
+
+        // RASTATIME 2026-09-29 - the track editor's three-way "Crossover"
+        // field (type | nofade | exclude) sets both flags at once, so they
+        // can never be on together.  A change re-lays the rows of the
+        // upcoming shows that schedule this track.
+        if (is_array($p_md) && array_key_exists('crossover_mode', $p_md)) {
+            $mode = in_array($p_md['crossover_mode'], ['type', 'nofade', 'exclude'], true)
+                ? $p_md['crossover_mode'] : 'type';
+            $before = self::crossoverModeOf($this->_con, $this->_file->getDbId());
+            $stmt = $this->_con->prepare(
+                'UPDATE cc_files SET no_fade_crossfade = :nofade, exclude_crossfade = :exclude WHERE id = :id'
+            );
+            $stmt->bindValue(':nofade', $mode === 'nofade', PDO::PARAM_BOOL);
+            $stmt->bindValue(':exclude', $mode === 'exclude', PDO::PARAM_BOOL);
+            $stmt->bindValue(':id', $this->_file->getDbId(), PDO::PARAM_INT);
+            $stmt->execute();
+            if (($before === 'exclude') !== ($mode === 'exclude')) {
+                // only "exclude" changes the row layout; "no fade" keeps the overlap
+                try {
+                    Application_Model_Scheduler::relayoutFutureInstances($this->_file->getDbId());
+                    Application_Model_RabbitMq::PushSchedule();
+                } catch (Exception $exc) {
+                    Logging::warn('crossover_mode: re-layout failed: ' . $exc->getMessage());
+                }
+            }
+        }
+    }
+
+    /**
+     * RASTATIME 2026-09-29 - the crossover mode of a file: type | nofade | exclude.
+     *
+     * @param mixed $con
+     * @param mixed $fileId
+     */
+    public static function crossoverModeOf($con, $fileId)
+    {
+        try {
+            $stmt = $con->prepare(
+                'SELECT no_fade_crossfade, exclude_crossfade FROM cc_files WHERE id = :id'
+            );
+            $stmt->bindValue(':id', (int) $fileId, PDO::PARAM_INT);
+            $stmt->execute();
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            $on = function ($v) {
+                return $v === true || $v === 't' || $v === 1 || $v === '1';
+            };
+            if ($row && $on($row['exclude_crossfade'])) {
+                return 'exclude';
+            }
+            if ($row && $on($row['no_fade_crossfade'])) {
+                return 'nofade';
+            }
+        } catch (Exception $exc) {
+            Logging::warn('crossoverModeOf: ' . $exc->getMessage());
+        }
+
+        return 'type';
     }
 
     /**
@@ -377,6 +434,8 @@ class Application_Model_StoredFile
             Logging::warn('getDbColMetadata: could not read no_fade_crossfade: ' . $exc->getMessage());
             $md['no_fade_crossfade'] = '0';
         }
+        // RASTATIME 2026-09-29 - the three-way "Crossover" field of the track editor
+        $md['crossover_mode'] = self::crossoverModeOf($this->_con, $this->_file->getDbId());
 
         return $md;
     }

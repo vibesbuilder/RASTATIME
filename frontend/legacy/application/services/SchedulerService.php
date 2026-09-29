@@ -260,9 +260,30 @@ class Application_Service_SchedulerService
                     );
 
                     $defaultCrossfadeDuration = Application_Model_Preference::GetDefaultCrossfadeDuration();
+                    // RASTATIME 2026-09-29 - overlap per pair of rows (crossfade per
+                    // track type / Exclude from Crossover, see Scheduler::calculateCrossfades)
+                    $linkedItems = array_values($linkedShowSchedule);
+                    $linkedFileIds = [];
+                    foreach ($linkedItems as $li) {
+                        if (!empty($li['file_id'])) {
+                            $linkedFileIds[] = (int) $li['file_id'];
+                        }
+                    }
+                    $crossfadeInfo = Application_Model_Scheduler::crossfadeInfoForFiles($linkedFileIds);
+                    $showCrossfadeDuration = Application_Model_Preference::GetDefaultShowCrossfadeDuration();
+                    $linkedCount = count($linkedItems);
                     unset($values);
                     $values = [];
-                    foreach ($linkedShowSchedule as $item) {
+                    foreach ($linkedItems as $linkedIndex => $item) {
+                        $crossfadeOverlap = ($linkedIndex + 1 < $linkedCount)
+                            ? Application_Model_Scheduler::crossfadeOverlapBetween(
+                                $item['file_id'],
+                                $linkedItems[$linkedIndex + 1]['file_id'],
+                                $crossfadeInfo,
+                                $defaultCrossfadeDuration,
+                                $showCrossfadeDuration
+                            )
+                            : 0;
                         $endTimeDT = self::findEndTime(
                             $nextStartDT,
                             $item['clip_length']
@@ -285,7 +306,7 @@ class Application_Service_SchedulerService
 
                         $nextStartDT = self::findTimeDifference(
                             $endTimeDT,
-                            $defaultCrossfadeDuration
+                            $crossfadeOverlap
                         );
                     } // foreach show item
 

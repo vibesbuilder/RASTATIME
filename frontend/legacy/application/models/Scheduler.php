@@ -586,12 +586,181 @@ final class Application_Model_Scheduler
         return $nextDT;
     }
 
+    /**
+     * RASTATIME 2026-09-29 - crossfade per track type + "Exclude from
+     * Crossover" (migration 0062).  For the given cc_files ids: is the
+     * track excluded, and what is its track type's crossfade (null = house
+     * value).  Raw SQL: neither column has a Propel accessor.
+     *
+     * @param int[] $fileIds
+     *
+     * @return array<int, array{exclude: bool, d: null|float}>
+     */
+    public static function crossfadeInfoForFiles(array $fileIds)
+    {
+        $ids = array_values(array_unique(array_filter(array_map('intval', $fileIds))));
+        if (empty($ids)) {
+            return [];
+        }
+        $rows = Application_Common_Database::prepareAndExecute(
+            'SELECT f.id, f.exclude_crossfade, t.crossfade_duration
+               FROM cc_files f LEFT JOIN cc_track_types t ON t.id = f.track_type_id
+              WHERE f.id IN (' . implode(',', $ids) . ')',
+            [],
+            Application_Common_Database::ALL
+        );
+        $info = [];
+        foreach ($rows as $row) {
+            $ex = $row['exclude_crossfade'];
+            $d = $row['crossfade_duration'];
+            $info[(int) $row['id']] = [
+                'exclude' => ($ex === true || $ex === 't' || $ex === 1 || $ex === '1'),
+                'd' => ($d === null || $d === '') ? null : (float) $d,
+            ];
+        }
+
+        return $info;
+    }
+
+    /**
+     * RASTATIME 2026-09-29 - seconds a row and its successor overlap.  The
+     * playout uses the very same rule (PlayoutScheduler._pair_crossfade),
+     * so a track starts at its row start:
+     *
+     *   file -> file   the SMALLER of the two tracks' values (track type
+     *                  value, else the house track crossfade; 0 for an
+     *                  excluded track) - a type with 0 always butts
+     *   file <-> live  (webstream, line-in) the bus switch fades with the
+     *                  SHOW crossfade: the smaller of the file's value and
+     *                  the show value
+     *   live -> live   the show value
+     *
+     * Never more than the playout's crossfade buffer (max of the house
+     * track and show values, at least 0.5 s).
+     *
+     * @param null|int                                         $fileId     null = a live item
+     * @param null|int                                         $nextFileId null = a live item
+     * @param array<int, array{exclude: bool, d: null|float}> $info
+     * @param float|string                                     $trackSeconds
+     * @param float|string                                     $showSeconds
+     *
+     * @return float
+     */
+    public static function crossfadeOverlapBetween($fileId, $nextFileId, array $info, $trackSeconds, $showSeconds)
+    {
+        $track = max(0.0, (float) $trackSeconds);
+        $show = max(0.0, (float) $showSeconds);
+        $cap = max($track, $show, 0.5);
+
+        $side = function ($id) use ($info, $track) {
+            if (!$id) {
+                return null;
+            }
+            $i = $info[(int) $id] ?? ['exclude' => false, 'd' => null];
+            if ($i['exclude']) {
+                return 0.0;
+            }
+
+            return $i['d'] === null ? $track : max(0.0, (float) $i['d']);
+        };
+        $left = $side($fileId);
+        $right = $side($nextFileId);
+
+        if ($left !== null && $right !== null) {
+            $overlap = min($left, $right);
+        } elseif ($left === null && $right === null) {
+            $overlap = $show;
+        } else {
+            $overlap = min($left === null ? $right : $left, $show);
+        }
+
+        return min($overlap, $cap);
+    }
+
+    /**
+     * RASTATIME 2026-09-29 - the overlaps between the ordered rows of one
+     * instance: element i is the overlap between row i and row i + 1.
+     *
+     * @param CcSchedule[] $items
+     *
+     * @return float[]
+     */
+    private function crossfadeOverlaps(array $items)
+    {
+        $fileIds = [];
+        foreach ($items as $item) {
+            if ($item->getDbFileId()) {
+                $fileIds[] = (int) $item->getDbFileId();
+            }
+        }
+        $info = self::crossfadeInfoForFiles($fileIds);
+        $show = Application_Model_Preference::GetDefaultShowCrossfadeDuration();
+        $count = count($items);
+        $overlaps = [];
+        for ($i = 0; $i < $count; ++$i) {
+            $overlaps[$i] = ($i + 1 < $count)
+                ? self::crossfadeOverlapBetween(
+                    $items[$i]->getDbFileId(),
+                    $items[$i + 1]->getDbFileId(),
+                    $info,
+                    $this->crossfadeDuration,
+                    $show
+                )
+                : 0.0;
+        }
+
+        return $overlaps;
+    }
+
+    /**
+     * RASTATIME 2026-09-29 - lay out the rows of every instance that has not
+     * ended yet (optionally only those that schedule the given file) with
+     * the current crossfade rules.  Rows that have already started are left
+     * alone.  Called after a change of a track type's crossfade, a track's
+     * crossover mode or the house crossfade values.
+     *
+     * @param null|int $fileId
+     *
+     * @return int number of instances visited
+     */
+    public static function relayoutFutureInstances($fileId = null)
+    {
+        $sql = 'SELECT DISTINCT i.id FROM cc_show_instances i JOIN cc_schedule s ON s.instance_id = i.id'
+            . " WHERE i.ends > (now() at time zone 'utc') AND i.modified_instance = false";
+        $params = [];
+        if ($fileId) {
+            $sql .= ' AND s.file_id = :fid';
+            $params[':fid'] = (int) $fileId;
+        }
+        $rows = Application_Common_Database::prepareAndExecute($sql, $params, Application_Common_Database::ALL);
+        $scheduler = new Application_Model_Scheduler(false);
+        $visited = 0;
+        foreach ($rows as $row) {
+            try {
+                $scheduler->calculateCrossfades((int) $row['id']);
+                ++$visited;
+            } catch (Exception $e) {
+                Logging::warn('relayoutFutureInstances: instance ' . $row['id'] . ': ' . $e->getMessage());
+            }
+        }
+        Logging::info('Crossfade layout refreshed for ' . $visited . ' instance(s)'
+            . ($fileId ? ' scheduling file ' . (int) $fileId : ''));
+
+        return $visited;
+    }
+
     /*
      * @param int $showInstance
      *   This function recalculates the start/end times of items in a gapless show to
      *   account for crossfade durations.
+     *
+     *   RASTATIME 2026-09-29 - the overlap is per PAIR of rows (crossfade per
+     *   track type, "Exclude from Crossover", show value at a switch to or
+     *   from a live item), and a row that has already STARTED keeps its
+     *   times: the playout is playing from them, and re-timing the running
+     *   row restarted or shifted it (2026-09-28).
      */
-    private function calculateCrossfades($instanceId)
+    public function calculateCrossfades($instanceId)
     {
         Logging::info('adjusting start, end times of scheduled items to account for crossfades show instance #' . $instanceId);
         $instance = CcShowInstancesQuery::create()->findPk($instanceId);
@@ -607,18 +776,36 @@ final class Application_Model_Scheduler
 
         $now = new DateTime('now', new DateTimeZone('UTC'));
         $itemStartDT = $instance->getDbStarts(null);
-        foreach ($schedule as $item) {
-            $itemEndDT = $this->findEndTime($itemStartDT, $item->getDbClipLength());
-            // If the track has already ended, don't change it.
-            if ($itemEndDT < $now) {
-                $itemStartDT = $itemEndDT;
+        $items = iterator_to_array($schedule, false);
+        $overlaps = $this->crossfadeOverlaps($items);
+        $changed = false;
+        foreach ($items as $i => $item) {
+            if ($item->getDbStarts(null) <= $now) {
+                // already started (or over): keep it, continue from its real end
+                $itemStartDT = $this->findTimeDifference($item->getDbEnds(null), $overlaps[$i]);
 
                 continue;
             }
-            $item->setDbStarts($itemStartDT)
-                ->setDbEnds($itemEndDT)
-                ->save($this->con);
-            $itemStartDT = $this->findTimeDifference($itemEndDT, $this->crossfadeDuration);
+            $itemEndDT = $this->findEndTime($itemStartDT, $item->getDbClipLength());
+            // Raw SQL with microseconds: the Propel setters store whole
+            // seconds, and a row that loses its fraction starts up to a
+            // second before its audio - over a long show the rows drift
+            // ahead of the playout.
+            $newStarts = $itemStartDT->format(DEFAULT_MICROTIME_FORMAT);
+            $newEnds = $itemEndDT->format(DEFAULT_MICROTIME_FORMAT);
+            if ($item->getDbStarts(DEFAULT_MICROTIME_FORMAT) !== $newStarts
+                || $item->getDbEnds(DEFAULT_MICROTIME_FORMAT) !== $newEnds) {
+                Application_Common_Database::prepareAndExecute(
+                    'UPDATE cc_schedule SET starts = :starts, ends = :ends WHERE id = :id',
+                    [':starts' => $newStarts, ':ends' => $newEnds, ':id' => (int) $item->getDbId()],
+                    Application_Common_Database::EXECUTE
+                );
+                $changed = true;
+            }
+            $itemStartDT = $this->findTimeDifference($itemEndDT, $overlaps[$i]);
+        }
+        if ($changed) {
+            CcSchedulePeer::clearInstancePool();
         }
     }
 
@@ -647,13 +834,14 @@ final class Application_Model_Scheduler
         $now = new DateTime('now', new DateTimeZone('UTC'));
         $itemStartDT = $instance->getDbStarts(null);
         foreach ($schedule as $item) {
-            $itemEndDT = $this->findEndTime($itemStartDT, $item->getDbClipLength());
-            // If the track has already ended, don't change it.
-            if ($itemEndDT < $now) {
-                $itemStartDT = $itemEndDT;
+            // RASTATIME 2026-09-29 - a row that has already started keeps its
+            // times (see calculateCrossfades); the chain continues at its end.
+            if ($item->getDbStarts(null) <= $now) {
+                $itemStartDT = $item->getDbEnds(null);
 
                 continue;
             }
+            $itemEndDT = $this->findEndTime($itemStartDT, $item->getDbClipLength());
 
             $item->setDbStarts($itemStartDT)
                 ->setDbEnds($itemEndDT);
@@ -685,7 +873,10 @@ final class Application_Model_Scheduler
             ->orderByDbStarts()
             ->find($this->con);
 
-        foreach ($schedule as $item) {
+        // RASTATIME 2026-09-29 - overlap per pair of rows (see calculateCrossfades)
+        $gapItems = iterator_to_array($schedule, false);
+        $gapOverlaps = $this->crossfadeOverlaps($gapItems);
+        foreach ($gapItems as $gapIndex => $item) {
             // START OF TIME RECALC HACK
 
             // TODO: Copy the cue in, cue out, and track length from the cc_files table
@@ -712,7 +903,7 @@ final class Application_Model_Scheduler
             $item->setDbStarts($itemStartDT)
                 ->setDbEnds($itemEndDT)
                 ->save($this->con);
-            $itemStartDT = $this->findTimeDifference($itemEndDT, $this->crossfadeDuration);
+            $itemStartDT = $this->findTimeDifference($itemEndDT, $gapOverlaps[$gapIndex]);
         }
 
         $instance->updateDbTimeFilled($this->con); // FIXME: TIME RECALC HACK (Albert)
@@ -1163,9 +1354,10 @@ final class Application_Model_Scheduler
                         Logging::debug('adjusting all following items.');
                         Logging::debug(floatval($pend) - floatval($pstart));
                     }
-                    if ($moveAction) {
-                        $this->calculateCrossfades($instanceId);
-                    }
+                    // RASTATIME 2026-09-29 - after an insert as well: the inline
+                    // offsets above use the house crossfade for every row, the
+                    // final layout is per pair (track type / Exclude from Crossover)
+                    $this->calculateCrossfades($instanceId);
                 } // for each instance
             } // for each schedule location
 

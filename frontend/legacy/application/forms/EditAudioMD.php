@@ -292,12 +292,18 @@ class Application_Form_EditAudioMD extends Zend_Form
         // itself: it stays at full level while the other track fades in
         // or out.  Zend renders the unchecked value as a hidden input, so
         // the form POST always carries the key.
-        $noFadeCrossfade = new Zend_Form_Element_Checkbox('no_fade_crossfade');
-        $noFadeCrossfade->setLabel(_('No Fade during Crossover:'));
-        $noFadeCrossfade->setDescription(_('This track is not faded in or out during a crossover: it keeps its full level while the other track fades. The overlap stays.'));
-        $noFadeCrossfade->setCheckedValue('1');
-        $noFadeCrossfade->setUncheckedValue('0');
-        $this->addElement($noFadeCrossfade);
+        // RASTATIME 2026-09-29 - one three-way field: the two per-track
+        // exceptions exclude each other (cc_files.no_fade_crossfade and
+        // cc_files.exclude_crossfade, migration 0062).
+        $crossoverMode = new Zend_Form_Element_Select('crossover_mode');
+        $crossoverMode->setLabel(_('Crossover:'));
+        $crossoverMode->setMultiOptions([
+            'type' => _('As the track type'),
+            'nofade' => _('No Fade during Crossover'),
+            'exclude' => _('Exclude from Crossover'),
+        ]);
+        $crossoverMode->setDescription(_('As the track type: the track overlaps and fades with its neighbours as its track type says (or the house value). No Fade during Crossover: the overlap stays, but this track keeps its full level while the other one fades. Exclude from Crossover: this track never overlaps a neighbour - it starts at the end of the previous track and the next one starts at its end.'));
+        $this->addElement($crossoverMode);
 
         // Add the cancel button
         $this->addElement('button', 'editmdcancel', [

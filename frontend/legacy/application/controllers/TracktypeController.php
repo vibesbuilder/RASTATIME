@@ -51,7 +51,13 @@ class TracktypeController extends Zend_Controller_Action
                 $tracktype->setDescription($formData['description']);
                 $tracktype->setVisibility($formData['visibility']);
                 $tracktype->setAnalyzeCuePoints($formData['analyze_cue_points']);
-                $tracktype->save();
+                // RASTATIME 2026-09-29 - crossfade per track type: a changed value
+                // re-lays the rows of all upcoming shows and tells the playout
+                $tracktype->setCrossfadeDuration($formData['crossfade_duration'] ?? '');
+                if ($tracktype->save()) {
+                    Application_Model_Scheduler::relayoutFutureInstances();
+                    Application_Model_RabbitMq::PushSchedule();
+                }
 
                 $form->reset();
                 $this->view->form = $form;

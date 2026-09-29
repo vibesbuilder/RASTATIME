@@ -1,10 +1,14 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.49
+Draft version: 0.50
 Date: 2026-09-29
 
 > **Revision history**
+> - **0.50 (2026-09-29)** — **Crossfade per track type, "Exclude from
+>   Crossover"** (§23.44): the overlap is decided per transition by one
+>   pair rule shared by the row layout and the playout; rows are stored
+>   with microseconds and started rows are never re-timed.
 > - **0.49 (2026-09-29)** — **UI primary colour as a setting** (§23.43):
 >   the hard-coded accent oranges are CSS custom properties fed from
 >   Settings → General; PHP derives the shades and the text colours on
@@ -5599,3 +5603,65 @@ Programme teal, Song Request blue).
 dashboard, library selection, pager, storage bar, scrollbars, Upload
 heading, New Show form (focus border, arrows), radio page player; a
 substituted palette (blue) in the browser switched all of them.
+
+### 23.44 Crossfade per Track Type and "Exclude from Crossover" (2026-09-29)
+
+**Context.**  One house value (Default Track Crossfade Duration, 3 s)
+shaped every in-show transition.  The hourly block TOH jingle → day
+teaser → news intro → BBC relay is laid out butt to butt; Liquidsoap
+started each transition 3 s before the end of the old track, so every
+successor ran 2–3 s ahead of its row, and after two transitions the
+intro ended 5 s before the relay's row started: silence, every hour
+(24/7 recording, 2026-09-29 10:01).  Re-filling the show would have
+overlapped the rows by 3 s instead - no silence, but the block 9 s
+shorter, the intro cut by the relay and the short jingles all fade.
+The operator chose both remedies: a crossfade per track type as the
+default and a per-track exception.
+
+**Data.**  `cc_track_types.crossfade_duration` (NULL = house value; the
+stock Jingles type starts with 0) and `cc_files.exclude_crossfade`
+(legacy migration 0062).  The track editor offers ONE three-way field
+"Crossover" - as the track type / No Fade during Crossover / Exclude
+from Crossover - that writes `no_fade_crossfade` and
+`exclude_crossfade` together, so the two exceptions exclude each other.
+
+**The pair rule** (one rule, two implementations that must agree:
+`Application_Model_Scheduler::crossfadeOverlapBetween` and
+`PlayoutScheduler._pair_crossfade`):
+
+| Pair | Overlap |
+|---|---|
+| file → file | the smaller of the two tracks' values (type value, else house track value; 0 for an excluded track) |
+| file ↔ webstream / line-in | the smaller of the file's value and the house SHOW value (the bus switch fades with the show value) |
+| live → live | the show value |
+
+Never more than the crossfade buffer (max of the house track and show
+values, at least 0.5 s) - that is all the tail `cross` holds.
+
+**Row layout (legacy).**  `calculateCrossfades()` lays an instance out
+pair by pair and runs after every insert, move and removal.  It stores
+the times with raw SQL and microseconds (the Propel setters store whole
+seconds; a row that loses its fraction starts before its audio and the
+rows drift ahead over a long show), writes only rows that change, and
+leaves every row that has already STARTED alone - the playout plays
+from those times (`removeGaps()` follows the same rule).
+`relayoutFutureInstances([fileId])` runs it for every instance that has
+not ended: after a change of a track type's value, of a track's Exclude
+mode, or of the house values (which never re-laid anything before - the
+origin of the mismatch).
+
+**Playout and Liquidsoap.**  The transition mode grows a third field
+when the overlap differs from the house value (`track/-/0.00`); the
+engine sends it as `rt_dur` (−1 = house value) next to `rt_cross` and
+`rt_nofade`.  The in-show shapes read `d = rt_dur()` at run time:
+d < 0.05 → `sequence([old, new])` (the old track plays out, the new one
+follows at its end), else the known overlap shape with
+`wait = buffer − d`.  A track that takes no crossfade is not faded at a
+show boundary either.  Bench (three tones): with d = 0 the successor
+starts exactly at the predecessor's end, no gap and no level dip; with
+1 s and with the house value it starts that much earlier.
+
+**Tools.**  `C:/Temp/optd/xf_layout_dryrun.php` (the pair rule without a
+database; the layout of given instances or of a synthetic mix inside a
+transaction that is rolled back) and `xf_relayout.php` (dry run or
+`--apply` for all upcoming instances).

@@ -5337,3 +5337,39 @@ msgstr "Veuillez saisir une couleur au format #rrggbb (p. ex. #ff5d1a)."
 #: RASTATIME 2026-09-29 UI primary color
 msgid "Reset to default"
 msgstr "Rétablir la valeur par défaut"
+
+#: RASTATIME 2026-09-29 crossfade per track type / crossover mode
+msgid "Crossfade Duration (s):"
+msgstr "Durée du fondu enchaîné (s) :"
+
+#: RASTATIME 2026-09-29 crossfade per track type / crossover mode
+msgid "house value"
+msgstr "valeur par défaut"
+
+#: RASTATIME 2026-09-29 crossfade per track type / crossover mode
+msgid "Please enter seconds between 0 and 30, e.g. 0 or 1.5."
+msgstr "Veuillez saisir des secondes entre 0 et 30, p. ex. 0 ou 1.5."
+
+#: RASTATIME 2026-09-29 crossfade per track type / crossover mode
+msgid "How long two neighbouring tracks of this type overlap and fade. Empty = the Default Track Crossfade Duration from Settings - General. Between two tracks the smaller of the two values applies, so 0 makes every track of this type start exactly at the end of the previous one (jingles, exactly timed elements). A change re-lays the rows of all upcoming shows."
+msgstr "Durée pendant laquelle deux titres voisins de ce type se chevauchent et s'enchaînent. Vide = la Default Track Crossfade Duration de Settings - General. Entre deux titres, la plus petite des deux valeurs s'applique ; avec 0, chaque titre de ce type démarre exactement à la fin du précédent (jingles, éléments calés à la seconde). Un changement recalcule les lignes de toutes les émissions à venir."
+
+#: RASTATIME 2026-09-29 crossfade per track type / crossover mode
+msgid "Crossover:"
+msgstr "Crossover :"
+
+#: RASTATIME 2026-09-29 crossfade per track type / crossover mode
+msgid "As the track type"
+msgstr "Comme le type de piste"
+
+#: RASTATIME 2026-09-29 crossfade per track type / crossover mode
+msgid "No Fade during Crossover"
+msgstr "Pas de fondu pendant le crossover"
+
+#: RASTATIME 2026-09-29 crossfade per track type / crossover mode
+msgid "Exclude from Crossover"
+msgstr "Exclure du crossover"
+
+#: RASTATIME 2026-09-29 crossfade per track type / crossover mode
+msgid "As the track type: the track overlaps and fades with its neighbours as its track type says (or the house value). No Fade during Crossover: the overlap stays, but this track keeps its full level while the other one fades. Exclude from Crossover: this track never overlaps a neighbour - it starts at the end of the previous track and the next one starts at its end."
+msgstr "Comme le type de piste : le titre se chevauche et s'enchaîne avec ses voisins selon son type de piste (ou la valeur par défaut). Pas de fondu pendant le crossover : le chevauchement reste, mais ce titre garde son niveau plein pendant que l'autre s'estompe. Exclure du crossover : ce titre ne chevauche jamais un voisin - il démarre à la fin du titre précédent et le suivant démarre à sa fin."

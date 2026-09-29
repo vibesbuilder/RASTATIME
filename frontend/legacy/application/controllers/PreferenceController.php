@@ -39,8 +39,27 @@ class PreferenceController extends Zend_Controller_Action
                 Application_Model_Preference::SetHeadTitle($values['stationName'], $this->view);
                 Application_Model_Preference::SetStationDescription($values['stationDescription']);
                 Application_Model_Preference::SetTrackTypeDefault($values['tracktypeDefault']);
+                // RASTATIME 2026-09-29 - a changed house crossfade re-lays the rows of
+                // all upcoming shows (the layout was never refreshed before: rows laid
+                // out with 1 s ran ahead of the playout after the change to 3 s)
+                $crossfadeBefore = [
+                    (float) Application_Model_Preference::GetDefaultCrossfadeDuration(),
+                    (float) Application_Model_Preference::GetDefaultShowCrossfadeDuration(),
+                ];
                 Application_Model_Preference::SetDefaultCrossfadeDuration($values['stationDefaultCrossfadeDuration']);
                 Application_Model_Preference::SetDefaultShowCrossfadeDuration($values['stationDefaultShowCrossfadeDuration']);
+                $crossfadeAfter = [
+                    (float) Application_Model_Preference::GetDefaultCrossfadeDuration(),
+                    (float) Application_Model_Preference::GetDefaultShowCrossfadeDuration(),
+                ];
+                if ($crossfadeBefore !== $crossfadeAfter) {
+                    try {
+                        Application_Model_Scheduler::relayoutFutureInstances();
+                        Application_Model_RabbitMq::PushSchedule();
+                    } catch (Exception $e) {
+                        Logging::warn('crossfade re-layout after the settings change failed: ' . $e->getMessage());
+                    }
+                }
                 Application_Model_Preference::SetPodcastAlbumOverride($values['podcastAlbumOverride']);
                 Application_Model_Preference::SetPodcastAutoSmartblock($values['podcastAutoSmartblock']);
                 Application_Model_Preference::SetIntroPlaylist($values['introPlaylistSelect']);

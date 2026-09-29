@@ -9,6 +9,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Crossfade je Track-Typ und „Exclude from Crossover" (2026-09-29,
+  Operator-Go)** — Auslöser: die stündliche Jingle-Folge lief dem Kalender
+  5 s voraus und ließ vor dem BBC-Relais Stille (Zeilen Stoß an Stoß, Track-
+  Crossfade 3 s).  Die Überlappung wird jetzt je ÜBERGANG bestimmt:
+  `cc_track_types.crossfade_duration` (Settings → Track Types → „Crossfade
+  Duration (s)", leer = Hauswert; der Typ Jingles beginnt mit 0) und
+  `cc_files.exclude_crossfade` (Migration 0062).  Paar-Regel: zwischen zwei
+  Titeln der KLEINERE Wert, 0 bei „Exclude"; an einem Wechsel Titel ↔
+  Webstream/Line-In der kleinere aus Titel-Wert und Show-Crossfade (das
+  Layout nutzte dort bisher den Track-Wert, der Playout blendete mit dem
+  Show-Wert); nie mehr als der Crossfade-Puffer.  Titel-Editor: ein
+  Dreiwege-Feld „Crossover" (As the track type / No Fade during Crossover /
+  Exclude from Crossover) ersetzt die Checkbox — die beiden Ausnahmen
+  schließen einander aus.  Kalender: `calculateCrossfades()` legt je
+  Zeilenpaar aus, speichert mit Mikrosekunden (die Propel-Setter kürzten auf
+  ganze Sekunden), läuft nach jedem Insert/Move/Remove und lässt Zeilen in
+  Ruhe, die schon gestartet sind (`removeGaps()` ebenso);
+  `relayoutFutureInstances()` legt kommende Sendungen neu aus — automatisch
+  bei Änderung eines Track-Typs, eines Titel-Modus (Exclude) oder der
+  Hauswerte.  Playout: `_pair_crossfade()` nach derselben Regel, der Modus
+  trägt die Überlappung als drittes Feld (`track/-/0.00`), die Engine setzt
+  `rt_dur`; Liquidsoap liest die Überlappung je Übergang (0 = Titel spielt
+  aus, Nachfolger folgt; −1 = Hauswert).  Bench: bei 0 startet der
+  Nachfolger exakt am Ende des Vorgängers ohne Lücke und ohne Pegeleinbruch,
+  bei 1 s / 3 s entsprechend früher.  Daten: die 100 „No Fade"-Jingles auf
+  „wie Track-Typ" zurückgesetzt (Liste gesichert), 639 kommende Instanzen
+  neu ausgelegt (390 von 951 Zeilen, Sekundenbruchteile).  Tests (Paar-Regel,
+  Modus, Engine, Render), Trockenlauf-Werkzeuge `xf_layout_dryrun.php` /
+  `xf_relayout.php`, Handbuch LIBRARY + SETTINGS ×4, Architektur §23.44.
+  Inbetriebnahme: API- und PLAYOUT-Neustart, Apache-Neustart für die
+  Übersetzungen.
+
 - **Primärfarbe der Oberfläche als Einstellung (2026-09-29, Operator-Wunsch,
   Operator-Go Option A)** — Settings → General → „Primary Color": Hex-Feld
   mit Farbwähler und „Reset to default", stationsweit (`cc_pref`

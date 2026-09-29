@@ -87,9 +87,69 @@ class Application_Model_Tracktype
         return $tracktype->getDbAnalyzeCuePoints();
     }
 
+    /**
+     * RASTATIME 2026-09-29 - crossfade per track type (migration 0062):
+     * seconds two neighbouring tracks of this type overlap; null / '' =
+     * the house value (Settings -> General).  Raw SQL, stored by save().
+     *
+     * @param mixed $value
+     */
+    public function setCrossfadeDuration($value)
+    {
+        $value = is_string($value) ? trim(str_replace(',', '.', $value)) : $value;
+        if ($value === null || $value === '' || !is_numeric($value)) {
+            $this->_crossfadeDuration = null;
+        } else {
+            $this->_crossfadeDuration = max(0.0, min(30.0, (float) $value));
+        }
+        $this->_crossfadeDirty = true;
+    }
+
+    /** @return null|float */
+    public function getCrossfadeDuration()
+    {
+        if ($this->_crossfadeDirty) {
+            return $this->_crossfadeDuration;
+        }
+        $id = $this->_tracktypeInstance->getDbId();
+        if (!$id) {
+            return null;
+        }
+        $value = Application_Common_Database::prepareAndExecute(
+            'SELECT crossfade_duration FROM cc_track_types WHERE id = :id',
+            [':id' => $id],
+            Application_Common_Database::COLUMN
+        );
+
+        return ($value === null || $value === false || $value === '') ? null : (float) $value;
+    }
+
+    private $_crossfadeDuration;
+    private $_crossfadeDirty = false;
+
+    /**
+     * @return bool true when the crossfade of an existing or new type changed
+     */
     public function save()
     {
+        $changed = false;
+        if ($this->_crossfadeDirty) {
+            $this->_crossfadeDirty = false;
+            $before = $this->getCrossfadeDuration();
+            $this->_crossfadeDirty = true;
+            $changed = ($before !== $this->_crossfadeDuration);
+        }
         $this->_tracktypeInstance->save();
+        if ($this->_crossfadeDirty) {
+            Application_Common_Database::prepareAndExecute(
+                'UPDATE cc_track_types SET crossfade_duration = :d WHERE id = :id',
+                [':d' => $this->_crossfadeDuration, ':id' => $this->_tracktypeInstance->getDbId()],
+                Application_Common_Database::EXECUTE
+            );
+            $this->_crossfadeDirty = false;
+        }
+
+        return $changed;
     }
 
     public function delete()
@@ -175,7 +235,7 @@ class Application_Model_Tracktype
     public static function getTracktypeData($id)
     {
         $sql = <<<'SQL'
-SELECT code, type_name, description, visibility, id, analyze_cue_points
+SELECT code, type_name, description, visibility, id, analyze_cue_points, crossfade_duration
 FROM cc_track_types
 WHERE id = :id
 SQL;

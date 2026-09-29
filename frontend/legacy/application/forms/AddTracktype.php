@@ -69,6 +69,22 @@ class Application_Form_AddTracktype extends Zend_Form
         $analyze_cue_points->setRequired(true);
         $this->addElement($analyze_cue_points);
 
+        // RASTATIME 2026-09-29 - crossfade per track type (migration 0062)
+        $crossfade = new Zend_Form_Element_Text('crossfade_duration');
+        $crossfade->setLabel(_('Crossfade Duration (s):'));
+        $crossfade->setAttrib('class', 'input_text');
+        $crossfade->setAttrib('style', 'width: 40%');
+        $crossfade->setAttrib('placeholder', _('house value'));
+        $crossfade->setRequired(false);
+        $crossfade->setAllowEmpty(true);
+        $crossfade->addFilter('StringTrim');
+        $crossfade->addValidator('Regex', false, [
+            'pattern' => '/^[0-9]{1,2}([.,][0-9]{1,2})?$/',
+            'messages' => ['regexNotMatch' => _('Please enter seconds between 0 and 30, e.g. 0 or 1.5.')],
+        ]);
+        $crossfade->setDescription(_('How long two neighbouring tracks of this type overlap and fade. Empty = the Default Track Crossfade Duration from Settings - General. Between two tracks the smaller of the two values applies, so 0 makes every track of this type start exactly at the end of the previous one (jingles, exactly timed elements). A change re-lays the rows of all upcoming shows.'));
+        $this->addElement($crossfade);
+
         $saveBtn = new Zend_Form_Element_Button('save_tracktype');
         $saveBtn->setAttrib('class', 'btn right-floated');
         $saveBtn->setIgnore(true);
