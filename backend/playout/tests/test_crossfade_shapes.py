@@ -46,8 +46,10 @@ def test_play_sets_the_shape_pushes_and_skips_afterwards():
     eng._state = PlayoutState.PLAYING
     eng.play("C:/m/a.mp3", transition="show_skip", skip_current=True)
     names = _names(telnet)
-    assert names == ["var_set", "var_set", "request_queue_push", "request_queue_skip"]
-    assert [c.args for c in telnet.var_set.call_args_list] == [("rt_cross", "show_skip"), ("rt_nofade", "-")]
+    assert names == ["var_set", "var_set", "var_set", "request_queue_push", "request_queue_skip"]
+    assert [c.args for c in telnet.var_set.call_args_list] == [
+        ("rt_cross", "show_skip"), ("rt_nofade", "-"), ("rt_dur", "-1.00"),
+    ]
 
 
 def test_play_without_skip_current_never_skips():
@@ -73,8 +75,10 @@ def test_enqueue_pushes_behind_the_playing_track():
     eng._state = PlayoutState.PLAYING
     eng._current_uri = "C:/m/a.mp3"
     assert eng.enqueue("C:/m/b.mp3", cue_in=1.0, cue_out=30.0, transition="show/old") is True
-    assert _names(telnet) == ["var_set", "var_set", "request_queue_push"]
-    assert [c.args for c in telnet.var_set.call_args_list] == [("rt_cross", "show"), ("rt_nofade", "old")]
+    assert _names(telnet) == ["var_set", "var_set", "var_set", "request_queue_push"]
+    assert [c.args for c in telnet.var_set.call_args_list] == [
+        ("rt_cross", "show"), ("rt_nofade", "old"), ("rt_dur", "-1.00"),
+    ]
     assert eng._queued_uri == "C:/m/b.mp3" and eng._queued_request_id == "42"
     assert eng._current_uri == "C:/m/a.mp3"          # untouched
     assert eng.get_state() == PlayoutState.PLAYING
@@ -99,8 +103,8 @@ def test_adopt_queued_cancels_the_deferred_stop_and_skips_on_overbook():
     eng.adopt_queued("C:/m/b.mp3", skip_current=True, transition="show_skip")
     assert eng._stop_timer is None and eng._stop_requested is False
     assert pending.finished.is_set()             # cancelled
-    assert _names(telnet)[-3:] == ["var_set", "var_set", "request_queue_skip"]
-    assert telnet.var_set.call_args_list[-2].args == ("rt_cross", "show_skip")
+    assert _names(telnet)[-4:] == ["var_set", "var_set", "var_set", "request_queue_skip"]
+    assert telnet.var_set.call_args_list[-3].args == ("rt_cross", "show_skip")
     assert eng._current_uri == "C:/m/b.mp3" and eng._current_request_id == "42"
     assert eng._queued_uri is None
     assert eng.get_state() == PlayoutState.PLAYING
@@ -451,3 +455,72 @@ def test_resolve_show_crossfade_prefers_the_preference(monkeypatch):
     assert main._resolve_show_crossfade_seconds() == 0.75
     monkeypatch.delenv("RASTATIME_LIQUIDSOAP_SHOW_CROSSFADE_SECONDS")
     assert main._resolve_show_crossfade_seconds() == main._LIQUIDSOAP_DEFAULT_SHOW_CROSSFADE
+
+
+# ---------------------------------------------------------------------------
+# RASTATIME 2026-09-29 - crossfade per track type + "Exclude from Crossover"
+# ---------------------------------------------------------------------------
+
+def _typed(start, row_id, instance=1, crossfade=None, exclude=False, no_fade=False):
+    ev = _file(start, row_id, instance=instance)
+    return ev.model_copy(update={
+        "crossfade_seconds": crossfade, "exclude_crossfade": exclude, "no_fade_crossfade": no_fade,
+    })
+
+
+def test_pair_crossfade_is_the_smaller_value(sched):
+    s, _ = sched                                   # house track crossfade 2.0 s, buffer 2.0 s
+    now = datetime.utcnow()
+    music = _typed(now, 1)                         # no type value -> house
+    jingle = _typed(now, 2, crossfade=0.0)
+    short = _typed(now, 3, crossfade=0.5)
+    excluded = _typed(now, 4, crossfade=1.5, exclude=True)
+    long_ = _typed(now, 5, crossfade=9.0)          # capped at the cross buffer
+    assert s._pair_crossfade(music, music) == 2.0
+    assert s._pair_crossfade(music, jingle) == 0.0
+    assert s._pair_crossfade(jingle, music) == 0.0
+    assert s._pair_crossfade(music, short) == 0.5
+    assert s._pair_crossfade(short, excluded) == 0.0
+    assert s._pair_crossfade(long_, long_) == 2.0
+    assert s._pair_crossfade(None, short) == 0.5
+
+
+def test_cross_mode_carries_the_overlap_only_when_it_differs(sched):
+    s, _ = sched
+    now = datetime.utcnow()
+    music = _typed(now, 1)
+    jingle = _typed(now, 2, crossfade=0.0)
+    short = _typed(now, 3, crossfade=0.5)
+    other_show = _typed(now, 4, instance=2)
+    assert s._cross_mode(music, music, skip=False) == "track/-"
+    assert s._cross_mode(music, jingle, skip=False) == "track/-/0.00"
+    assert s._cross_mode(jingle, music, skip=True) == "track_skip/-/0.00"
+    assert s._cross_mode(music, short, skip=False) == "track/-/0.50"
+    # "No Fade" keeps its meaning next to a type value
+    assert s._cross_mode(_typed(now, 5, no_fade=True), short, skip=False) == "track/old/0.50"
+    # show boundary: the show value rules; a track that takes no crossfade is not faded
+    assert s._cross_mode(music, other_show, skip=False) == "show/-"
+    assert s._cross_mode(jingle, other_show, skip=False) == "show/old"
+    assert s._cross_mode(_typed(now, 6, exclude=True), other_show, skip=True) == "show_skip/old"
+
+
+def test_engine_sends_the_overlap_of_the_transition():
+    eng, telnet = _engine()
+    eng._state = PlayoutState.PLAYING
+    eng.enqueue("C:/m/b.mp3", transition="track/-/0.00")
+    assert [c.args for c in telnet.var_set.call_args_list] == [
+        ("rt_cross", "track"), ("rt_nofade", "-"), ("rt_dur", "0.00"),
+    ]
+    telnet.var_set.reset_mock()
+    eng.enqueue("C:/m/c.mp3", transition="track/new")      # back to the house value
+    assert telnet.var_set.call_args_list[-1].args == ("rt_dur", "-1.00")
+
+
+def test_queue_ahead_sends_the_pair_overlap(sched):
+    s, engine = sched
+    now = datetime.utcnow()
+    prev = _file(now - timedelta(seconds=170), 1, instance=1, seconds=180)
+    jingle = _typed(now + timedelta(seconds=8), 2, crossfade=0.0)
+    s._current_event, s._playing_key = prev, "p"
+    s._on_file_queue_ahead("n", jingle)
+    assert engine.enqueue.call_args.kwargs["transition"] == "track/-/0.00"

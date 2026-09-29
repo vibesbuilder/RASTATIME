@@ -238,6 +238,9 @@ def generate_file_events(
         # RASTATIME 2026-09-27 - show boundary + "No Fade during Crossover"
         instance_id=schedule.get("instance"),
         no_fade_crossfade=bool(file.get("no_fade_crossfade") or False),
+        # RASTATIME 2026-09-29 - crossfade per track type / Exclude from Crossover
+        crossfade_seconds=_float_or_none(file.get("track_type_crossfade")),
+        exclude_crossfade=bool(file.get("exclude_crossfade") or False),
     )
 
     event.replay_gain = file_gain_db(file, stream_preferences)

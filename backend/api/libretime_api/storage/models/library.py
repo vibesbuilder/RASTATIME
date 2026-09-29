@@ -22,6 +22,12 @@ class Library(models.Model):
         db_column="analyze_cue_points",
     )
 
+    # RASTATIME 2026-09-29 - crossfade per track type (legacy migration
+    # 0062): seconds two neighbouring tracks overlap; NULL = house value.
+    crossfade_duration = models.DecimalField(
+        max_digits=5, decimal_places=2, blank=True, null=True,
+    )
+
     class Meta:
         managed = False
         db_table = "cc_track_types"

@@ -122,6 +122,11 @@ class FileEvent(BaseEvent):
     # schedules still parse.
     instance_id: Optional[int] = None
     no_fade_crossfade: bool = False
+    # RASTATIME 2026-09-29 - crossfade per track type + "Exclude from
+    # Crossover": the type's overlap in seconds (None = house value) and
+    # the per-track exception (never overlaps a neighbour).
+    crossfade_seconds: Optional[float] = None
+    exclude_crossfade: bool = False
 
     file_ready: bool = False
 

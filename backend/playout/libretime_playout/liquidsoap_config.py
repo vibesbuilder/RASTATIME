@@ -1830,6 +1830,14 @@ def _render_crossfade_block(
     front of the new track); skip shapes trim the tail with
     max_duration.  A silent or empty partner always hands over at once.
 
+    Overlap per transition (2026-09-29): the in-show shapes read the
+    overlap ``d`` from the interactive float ``rt_dur`` (seconds; 0 = the
+    old track plays out and the new one follows at its end; -1 = the house
+    track crossfade rendered here).  PLAYOUT sends the smaller of the two
+    tracks' values (crossfade per track type, 0 for "Exclude from
+    Crossover"); the legacy scheduler lays the rows out with the same
+    overlap, so a track starts at its row start.
+
     Metadata (bench 2026-09-28): ``add`` forwards only the FIRST source's
     metadata and ``cross`` replays the ending track's metadata on its
     buffered tail.  The new track is therefore the first element of every
@@ -1844,21 +1852,6 @@ def _render_crossfade_block(
     nofade = "0.001"  # a 1 ms fade.out = the track keeps its level to the end
     never = "999999.0"  # a fade.out delay the tail never reaches; the remaining-based start still fades the last ms
 
-    # natural in-show shape (variables: t_in, t_out)
-    if track < 0.05:
-        track_natural = "    sequence([old_s, new.source])\n"
-    else:
-        wait = buf - track
-        if wait < 0.01:
-            track_natural = (
-                "    add(normalize=false, [fade.in(duration=t_in, new.source),\n"
-                "                          fade.out(duration=t_out, delay=t_delay, old_s)])\n"
-            )
-        else:
-            track_natural = (
-                f"    add(normalize=false, [sequence([blank(duration={f(wait)}), fade.in(duration=t_in, new.source)]),\n"
-                "                          fade.out(duration=t_out, delay=t_delay, old_s)])\n"
-            )
     # natural show shape: the old track fades over its last SHOW seconds and
     # the new one FOLLOWS (no overlap - the boundary is the old track's end)
     if show < 0.05:
@@ -1867,14 +1860,6 @@ def _render_crossfade_block(
         show_natural = (
             "    sequence([fade.out(duration=s_out, delay=s_delay, old_s), new.source])\n"
         )
-    # skip shapes (variables: t_cut / s_cut = tail length and fade of the old track)
-    if track < 0.05:
-        track_skip = "    rt_instant(old_s, new.source)\n"
-    else:
-        track_skip = (
-            "    add(normalize=false, [fade.in(duration=t_in, new.source),\n"
-            "                          fade.out(duration=t_cut, max_duration(t_cut, old_s))])\n"
-        )
     if show < 0.05:
         show_skip = "    rt_instant(old_s, new.source)\n"
     else:
@@ -1882,12 +1867,37 @@ def _render_crossfade_block(
             "    add(normalize=false, [fade.in(duration=0.05, new.source),\n"
             "                          fade.out(duration=s_cut, max_duration(s_cut, old_s))])\n"
         )
+    # RASTATIME 2026-09-29 - the in-show shapes take the overlap of THIS
+    # transition from rt_dur (crossfade per track type / Exclude from
+    # Crossover): d seconds, 0 = the old track plays out and the new one
+    # follows, -1 = the house value rendered here.
+    track_natural = (
+        "    if d < 0.05 then\n"
+        "      sequence([old_s, new.source])\n"
+        "    elsif wait < 0.01 then\n"
+        "      add(normalize=false, [fade.in(duration=t_in, new.source),\n"
+        "                            fade.out(duration=t_out, delay=t_delay, old_s)])\n"
+        "    else\n"
+        "      add(normalize=false, [sequence([blank(duration=wait), fade.in(duration=t_in, new.source)]),\n"
+        "                            fade.out(duration=t_out, delay=t_delay, old_s)])\n"
+        "    end\n"
+    )
+    track_skip = (
+        "    if d < 0.05 then\n"
+        "      rt_instant(old_s, new.source)\n"
+        "    else\n"
+        "      add(normalize=false, [fade.in(duration=t_in, new.source),\n"
+        "                            fade.out(duration=t_cut, max_duration(t_cut, old_s))])\n"
+        "    end\n"
+    )
     return (
         "# rt_cross: shape of the NEXT queue transition, set by PLAYOUT over telnet\n"
         "#   var.set rt_cross = track | show | track_skip | show_skip | instant\n"
         "# rt_nofade: which side is flagged 'No Fade during Crossover' (old | new | both | -)\n"
+        "# rt_dur: overlap of the NEXT in-show transition in seconds (0 = none, -1 = house value)\n"
         'rt_cross = interactive.string("rt_cross", "track")\n'
         'rt_nofade = interactive.string("rt_nofade", "-")\n'
+        'rt_dur = interactive.float("rt_dur", -1.0)\n'
         f"# track crossfade {f(track)} s, show crossfade {f(show)} s, tail buffer {f(buf)} s\n"
         "def rt_instant(old_s, new_s) =\n"
         "  add(normalize=false, [fade.in(duration=0.05, new_s), fade.out(duration=0.05, old_s)])\n"
@@ -1903,16 +1913,22 @@ def _render_crossfade_block(
         "  # the tail in front the stream title and the Live Text lagged one track.\n"
         "  # The new track goes first in every add, the tail carries no metadata.\n"
         "  old_s = source.drop.metadata(old.source)\n"
-        '  log(level=3, label="rt_cross", "#{mode}/#{nofade}: #{old.metadata[\\"title\\"]} -> '
+        f"  buf = {f(buf)}\n"
+        "  d0 = rt_dur()\n"
+        f"  d1 = if d0 < 0. then {f(track)} else d0 end\n"
+        "  d = if d1 > buf then buf else d1 end\n"
+        "  wait = buf - d\n"
+        "  fd = if d < 0.05 then 0.05 else d end\n"
+        '  log(level=3, label="rt_cross", "#{mode}/#{nofade}/#{d}: #{old.metadata[\\"title\\"]} -> '
         '#{new.metadata[\\"title\\"]} (tail #{rem} s)")\n'
-        f"  t_in = if new_nf then 0.05 else {f(max(track, 0.05))} end\n"
-        f"  t_out = if old_nf then {nofade} else {f(max(track, 0.05))} end\n"
+        "  t_in = if new_nf then 0.05 else fd end\n"
+        f"  t_out = if old_nf then {nofade} else fd end\n"
         f"  s_out = if old_nf then {nofade} else {f(max(show, 0.05))} end\n"
-        f"  t_cut = if old_nf then 0.05 else {f(max(track, 0.05))} end\n"
+        "  t_cut = if old_nf then 0.05 else fd end\n"
         f"  s_cut = if old_nf then 0.05 else {f(max(show, 0.05))} end\n"
-        f"  t_delay = if old_nf then {never} else {f(max(0.0, buf - track))} end\n"
+        f"  t_delay = if old_nf then {never} else wait end\n"
         f"  s_delay = if old_nf then {never} else {f(max(0.0, buf - show))} end\n"
-        "  ignore(t_in) ignore(t_out) ignore(s_out) ignore(t_cut) ignore(s_cut) ignore(t_delay) ignore(s_delay)\n"
+        "  ignore(t_in) ignore(t_out) ignore(s_out) ignore(t_cut) ignore(s_cut) ignore(t_delay) ignore(s_delay) ignore(wait)\n"
         '  if mode == "instant" or rem < 0.15 or old.db_level < -50. then\n'
         "    rt_instant(old_s, new.source)\n"
         '  elsif mode == "show_skip" then\n'

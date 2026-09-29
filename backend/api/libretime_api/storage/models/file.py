@@ -39,6 +39,9 @@ class File(models.Model):
     disabled = models.BooleanField(default=False)
     # RASTATIME 2026-09-27 - "No Fade during Crossover" (legacy migrations 0059 + 0060)
     no_fade_crossfade = models.BooleanField(default=False)
+    # RASTATIME 2026-09-29 - "Exclude from Crossover" (legacy migration 0062):
+    # the track never overlaps a neighbour, whatever its type says
+    exclude_crossfade = models.BooleanField(default=False)
     accessed = models.IntegerField(db_column="currentlyaccessing")
     scheduled = models.BooleanField(blank=True, null=True, db_column="is_scheduled")
     part_of_list = models.BooleanField(blank=True, null=True, db_column="is_playlist")

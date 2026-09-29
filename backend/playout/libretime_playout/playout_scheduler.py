@@ -1699,7 +1699,6 @@ class PlayoutScheduler:
         """
         old_nf = isinstance(prev, FileEvent) and prev.no_fade_crossfade
         new_nf = nxt.no_fade_crossfade
-        nofade = "both" if (old_nf and new_nf) else "old" if old_nf else "new" if new_nf else "-"
         if not isinstance(prev, FileEvent):
             shape = "instant" if skip else "track"
         elif (
@@ -1708,9 +1707,38 @@ class PlayoutScheduler:
             and prev.instance_id != nxt.instance_id
         ):
             shape = "show_skip" if skip else "show"
+            # 2026-09-29: a track that takes no crossfade at all (type value
+            # 0 or "Exclude from Crossover") is not faded at a show boundary
+            old_nf = old_nf or self._track_crossfade(prev) < 0.05
         else:
             shape = "track_skip" if skip else "track"
+        nofade = "both" if (old_nf and new_nf) else "old" if old_nf else "new" if new_nf else "-"
+        overlap = self._pair_crossfade(prev, nxt)
+        if shape.startswith("track") and abs(overlap - self._track_crossfade_seconds) > 0.005:
+            # the overlap of THIS transition differs from the house value
+            return f"{shape}/{nofade}/{overlap:.2f}"
         return f"{shape}/{nofade}"
+
+    def _track_crossfade(self, event: object) -> float:
+        """
+        RASTATIME 2026-09-29 - seconds ``event`` overlaps a neighbour: 0
+        for "Exclude from Crossover", else its track type's value, else the
+        house track crossfade.  Never more than the cross buffer.
+        """
+        if not isinstance(event, FileEvent):
+            return self._track_crossfade_seconds
+        if event.exclude_crossfade:
+            return 0.0
+        value = event.crossfade_seconds
+        if value is None:
+            return self._track_crossfade_seconds
+        return max(0.0, min(float(value), self._cross_buffer_seconds))
+
+    def _pair_crossfade(self, prev: object, nxt: FileEvent) -> float:
+        """The SMALLER of the two tracks' values: a type with 0 always butts."""
+        if not isinstance(prev, FileEvent):
+            return self._track_crossfade(nxt)
+        return min(self._track_crossfade(prev), self._track_crossfade(nxt))
 
     @staticmethod
     def _track_metadata(event: FileEvent) -> Dict[str, str]:
