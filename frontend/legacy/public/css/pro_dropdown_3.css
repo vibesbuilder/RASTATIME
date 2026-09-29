@@ -61,7 +61,7 @@ way to fit your requirements.
 {
 	color: #fff;
 	background-color: #444;
-	border-right: 2px solid #FF5D1A;
+	border-right: 2px solid var(--rt-accent);
 }
 
 #nav li:hover {
@@ -148,7 +148,7 @@ way to fit your requirements.
 	line-height:20px;
 	margin-bottom:3px;
 	text-indent:6px;
-	color:#ff5d1a;
+	color: var(--rt-accent);
 	border-bottom:1px solid #414141;
 	cursor:default;
 	font-weight:bold;

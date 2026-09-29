@@ -13,10 +13,10 @@
 }
 
 .sb-selected.even {
-    background-color: rgba(240, 109, 53, 1);
+    background-color: var(--rt-accent-soft);
 }
 .sb-selected.odd {
-    background-color: rgba(255, 136, 56, 1);
+    background-color: var(--rt-accent-light);
 }
 
 .sb-content .fg-toolbar ul {
@@ -164,7 +164,7 @@ table.datatable tr.cursor-selected-row td, table.datatable tr.cursor-selected-ro
 .sb-boundry td.sb-cue-out,
 .sb-boundry td.sb-fade-in,
 .sb-boundry td.sb-fade-out {
-    background-color: rgba(230, 106, 49, 0.5);
+    background-color: rgba(var(--rt-accent-rgb), 0.5);
 }
 
 .sb-over td.sb-image,

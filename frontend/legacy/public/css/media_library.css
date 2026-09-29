@@ -29,10 +29,10 @@
 			padding-left: 20px;
 			}
 .lib-selected.even {
-	background-color: rgba(240, 109, 53, 1);
+	background-color: var(--rt-accent-soft);
 }
 .lib-selected.odd {
-    background-color: rgba(255, 136, 56, 1);
+    background-color: var(--rt-accent-light);
 }
 
 #library_content {
@@ -65,7 +65,7 @@
 }
 #library_display input[type="checkbox"] {
     color-scheme: dark;
-    accent-color: #ff5d1a;
+    accent-color: var(--rt-accent);
 }
 
 #library_content #library_display {

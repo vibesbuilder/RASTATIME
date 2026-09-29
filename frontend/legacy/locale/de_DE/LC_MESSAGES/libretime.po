@@ -4992,3 +4992,19 @@ msgstr "%s Dateien zur Messung eingereiht; Seite neu laden, um den Stand zu sehe
 #: RASTATIME 2026-09-28 loudness normalization (EBU R128)
 msgid "Could not queue the measurement."
 msgstr "Die Messung konnte nicht eingereiht werden."
+
+#: RASTATIME 2026-09-29 UI primary color
+msgid "Primary Color:"
+msgstr "Primärfarbe:"
+
+#: RASTATIME 2026-09-29 UI primary color
+msgid "The accent color of the whole interface, the radio page and the widgets: links, highlights, selected rows, progress bars, the player. Choose a color that stands out against the dark gray background; text on it switches between white and black by itself. Empty resets to the default orange."
+msgstr "Die Akzentfarbe der gesamten Oberfläche, der Radio-Seite und der Widgets: Links, Hervorhebungen, ausgewählte Zeilen, Fortschrittsbalken, der Player. Wählen Sie eine Farbe, die sich vom dunkelgrauen Hintergrund abhebt; Text darauf wechselt von selbst zwischen Weiß und Schwarz. Leer setzt auf das Standard-Orange zurück."
+
+#: RASTATIME 2026-09-29 UI primary color
+msgid "Please enter a color as #rrggbb (e.g. #ff5d1a)."
+msgstr "Bitte eine Farbe im Format #rrggbb eingeben (z. B. #ff5d1a)."
+
+#: RASTATIME 2026-09-29 UI primary color
+msgid "Reset to default"
+msgstr "Auf Standard zurücksetzen"

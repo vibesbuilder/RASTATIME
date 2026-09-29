@@ -76,6 +76,21 @@ class Application_Form_GeneralPreferences extends Zend_Form_SubForm
         $stationFaviconRemove->setAttrib('onclick', 'removeFavicon();');
         $this->addElement($stationFaviconRemove);
 
+        // RASTATIME 2026-09-29 - the UI's primary colour (was a fixed orange).
+        // A hex text field; preferences.js adds a colour picker and a reset
+        // button next to it.  Empty = the default orange.
+        $this->addElement('text', 'uiAccentColor', [
+            'class' => 'input_text',
+            'label' => _('Primary Color:'),
+            'description' => _('The accent color of the whole interface, the radio page and the widgets: links, highlights, selected rows, progress bars, the player. Choose a color that stands out against the dark gray background; text on it switches between white and black by itself. Empty resets to the default orange.'),
+            'required' => false,
+            'filters' => ['StringTrim'],
+            'validators' => [
+                ['regex', false, ['/^#[0-9a-fA-F]{6}$/', 'messages' => _('Please enter a color as #rrggbb (e.g. #ff5d1a).')]],
+            ],
+            'value' => Application_Model_AccentColor::current(),
+        ]);
+
         // Default track crossfade duration (between two tracks of one show).
         // RASTATIME 2026-09-27 - renamed from "Default Crossfade Duration";
         // a real crossfade since then (old fades out while new fades in).

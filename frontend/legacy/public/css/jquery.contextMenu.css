@@ -78,7 +78,8 @@
 
 .context-menu-item.hover {
     cursor: pointer;
-    background-color: #ff5d1a;
+    background-color: var(--rt-accent);
+    color: var(--rt-accent-fg-dark);
 }
 
 .context-menu-item.disabled {

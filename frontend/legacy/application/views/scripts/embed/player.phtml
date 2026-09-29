@@ -21,10 +21,11 @@ $cfg = $this->playerConfigJson;   // pre-encoded JSON (controller)
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?php echo _('Stream Player'); ?></title>
+    <?php /* RASTATIME 2026-09-29 - the station's primary colour (Settings -> General) */ echo Application_Model_AccentColor::styleTag() ?>
     <style>
     :root {
         --pl-fg: #1a1a1a; --pl-muted: #666; --pl-border: #ddd;
-        --pl-panel: #f7f7f7; --pl-accent: #ff5d1a; --pl-accent-fg: #fff;
+        --pl-panel: #f7f7f7; --pl-accent: var(--rt-accent, #ff5d1a); --pl-accent-fg: var(--rt-accent-fg, #fff);
         --pl-bar-bg: #23211f; --pl-bar-fg: #f0f0f0; --pl-bar-muted: #a8a49f;
     }
     .np-theme-dark {

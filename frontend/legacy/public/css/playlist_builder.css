@@ -113,7 +113,7 @@
 }
 
 .spl_block_expand:hover,.spl_block_expand.close:hover {
-    color: #FF611F;
+    color: var(--rt-accent);
     text-shadow: none;
     opacity: 1;
 }
@@ -238,9 +238,17 @@
     margin: 17px 0 0 1px;
 }
 
-.spl_sortable div.big_play:hover .ui-icon-play,.spl_sortable div.big_play:hover .ui-icon-pause
-    {
-    background-image: url(redmond/images/ui-icons_ff5d1a_256x240.png);
+.spl_sortable div.big_play:hover .ui-icon-play {
+    background-image: none;
+    background-color: var(--rt-accent);
+    -webkit-mask: url(redmond/images/ui-icons_ffffff_256x240.png) no-repeat 0 -160px;
+    mask: url(redmond/images/ui-icons_ffffff_256x240.png) no-repeat 0 -160px;
+}
+.spl_sortable div.big_play:hover .ui-icon-pause {
+    background-image: none;
+    background-color: var(--rt-accent);
+    -webkit-mask: url(redmond/images/ui-icons_ffffff_256x240.png) no-repeat -16px -160px;
+    mask: url(redmond/images/ui-icons_ffffff_256x240.png) no-repeat -16px -160px;
 }
 
 .spl_sortable .ui-icon-closethick {
@@ -251,7 +259,10 @@
 }
 
 .spl_sortable .ui-icon-closethick:hover {
-    background-image: url(redmond/images/ui-icons_ff5d1a_256x240.png)
+    background-image: none;
+    background-color: var(--rt-accent);
+    -webkit-mask: url(redmond/images/ui-icons_ffffff_256x240.png) no-repeat -96px -128px;
+    mask: url(redmond/images/ui-icons_ffffff_256x240.png) no-repeat -96px -128px;
 }
 
 .spl_sortable .spl_fade_control {

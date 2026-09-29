@@ -72,6 +72,8 @@ class PreferenceController extends Zend_Controller_Action
                 );
                 Application_Model_Preference::setRadioPageDisplayLoginButton($values['radioPageLoginButton']);
                 Application_Model_Preference::setRadioPageDisabled($values['radioPageDisabled']);
+                // RASTATIME 2026-09-29 - UI primary colour ('' = default).
+                Application_Model_Preference::SetUiAccentColor($values['uiAccentColor'] ?? '');
                 // RASTATIME 2026-05-15 - SetFeaturePreviewMode removed (phantom setting).
 
                 $logoUploadElement = $form->getSubForm('preferences_general')->getElement('stationLogo');

@@ -1,6 +1,41 @@
 @charset "utf-8";
 /* CSS Document */
 
+/* RASTATIME 2026-09-29 - the UI primary colour (Settings -> General) as CSS
+   custom properties.  Every page head carries the configured palette
+   (Application_Model_AccentColor::styleTag(), selector :root:root); this is
+   the default palette as the fallback - keep it in step with the PHP class. */
+:root {
+    --rt-accent: #ff5d1a;
+    --rt-accent-rgb: 255, 93, 26;
+    --rt-accent-soft: #ff7035;
+    --rt-accent-light: #ff8653;
+    --rt-accent-dark: #d14c15;
+    --rt-accent-darker: #a63c11;
+    --rt-accent-fg: #fff;
+    --rt-accent-fg-dark: #000;
+}
+
+/* Settings -> General "Primary Color": hex field + picker + reset
+   (preferences.js setupAccentColorPicker) */
+#uiAccentColor {
+    width: 90px;
+    font-family: monospace;
+}
+.rt-accent-picker {
+    width: 44px;
+    height: 26px;
+    margin: 0 6px;
+    padding: 0 2px;
+    border: 1px solid #5b5b5b;
+    background: #2f2f2f;
+    vertical-align: middle;
+    cursor: pointer;
+}
+.rt-accent-reset {
+    vertical-align: middle;
+}
+
 body {
     font-size: 62.5%;
     font-family:Arial, Helvetica, sans-serif;
@@ -73,13 +108,13 @@ select {
 }
 
 .wrapper::-webkit-scrollbar-track {
-    background-color: rgba(255, 93, 26, .2);
+    background-color: rgba(var(--rt-accent-rgb), .2);
     border-radius: 10px;
     -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.75);
 }
 
 ::-webkit-scrollbar-thumb {
-    background-color: #ff5d1a;
+    background-color: var(--rt-accent);
     border-radius: 10px;
     -webkit-box-shadow: inset 0 0 3px rgba(0,0,0,0.75);
 }
@@ -131,7 +166,7 @@ img.logo
 }
 
 #ui-tooltip-version a {
-    color:#ff5d1a;
+    color: var(--rt-accent);
     text-decoration:none;
 }
 
@@ -370,7 +405,7 @@ img.artwork
     padding-right:6px;
 }
 .time-remaining {
-    color:#ff6f01;
+    color: var(--rt-accent);
 }
 .progressbar {
     height:6px;
@@ -381,7 +416,8 @@ img.artwork
 .progressbar .progress-song, .progressbar .progress-show, .progressbar .progress-show-error {
     height:4px;
     width:0%;
-    background:#f97202 url(images/progressbar_song.png) repeat-x 0 0;
+    /* RASTATIME 2026-09-29: accent with a light sheen (was an orange PNG strip) */
+    background: var(--rt-accent) linear-gradient(to bottom, rgba(255, 255, 255, .3), rgba(255, 255, 255, 0));
 }
 .progressbar .progress-show {
     background:#02cef9 url(images/progressbar_show.png) repeat-x 0 0;
@@ -543,7 +579,7 @@ input[readonly], textarea[readonly] {
 }
 
 input[type="text"]:focus, input[type="password"]:focus, textarea:focus, .input_text_area:focus {
-    border: 1px solid #FF5D1A;
+    border: 1px solid var(--rt-accent);
     outline: none;
 }
 .auto-search {
@@ -764,8 +800,17 @@ table.library-get-file-md.table-small{
     margin-left: 5px;
 }
 
-.sp-ui-button-icon-only .ui-icon-closethick:hover, .sp-ui-button-icon-only .ui-icon-plusthick:hover {
-    background-image:url(redmond/images/ui-icons_ff5d1a_256x240.png)
+.sp-ui-button-icon-only .ui-icon-closethick:hover {
+    background-image: none;
+    background-color: var(--rt-accent);
+    -webkit-mask: url(redmond/images/ui-icons_ffffff_256x240.png) no-repeat -96px -128px;
+    mask: url(redmond/images/ui-icons_ffffff_256x240.png) no-repeat -96px -128px;
+}
+.sp-ui-button-icon-only .ui-icon-plusthick:hover {
+    background-image: none;
+    background-color: var(--rt-accent);
+    -webkit-mask: url(redmond/images/ui-icons_ffffff_256x240.png) no-repeat -32px -128px;
+    mask: url(redmond/images/ui-icons_ffffff_256x240.png) no-repeat -32px -128px;
 }
 
 .sp-button{
@@ -783,9 +828,10 @@ table.library-get-file-md.table-small{
 
 .sp-warning-icon{
     margin: 0;
-    background-image: url(redmond/images/ui-icons_ff5d1a_256x240.png);
-    background-repeat: no-repeat;
-    background-position: 0px -140px;
+    background-image: none;
+    background-color: var(--rt-accent);
+    -webkit-mask: url(redmond/images/ui-icons_ffffff_256x240.png) no-repeat 0 -140px;
+    mask: url(redmond/images/ui-icons_ffffff_256x240.png) no-repeat 0 -140px;
     height:16px;
     width: 16px;
     display: inline-block;
@@ -906,13 +952,15 @@ dl.inline-list dd {
 }
 
 .selected.even {
-    background-color: rgba(240, 109, 53, 1);
+    background-color: var(--rt-accent-soft);
 }
 .selected.odd {
-    background-color: rgba(255, 136, 56, 1);
+    background-color: var(--rt-accent-light);
 }
 
-.datatable tr[class*='selected'] td,
+.datatable tr[class*='selected'] td {
+    color: var(--rt-accent-fg-dark);
+}
 .datatable tr.sb-now-playing td {
     color: #000;
 }
@@ -1289,7 +1337,7 @@ input[type="checkbox"] {
     text-align:right;
 }
 .login-content a {
-    color:#FF5D1A;
+    color: var(--rt-accent);
     text-decoration:none;
 }
 .login-content a:hover {
@@ -1317,14 +1365,14 @@ input[type="checkbox"] {
 }
 
 .footer a {
-    color:#ff5d1a;
+    color: var(--rt-accent);
     text-decoration:none;
 }
 #login-page .footer {
     color:#6d6d6d;
 }
 .footer a:hover {
-    color:#ff5d1a;
+    color: var(--rt-accent);
     text-decoration:underline;
 }
 /*---//////////////////// END FOOTER ////////////////////---*/
@@ -1590,7 +1638,7 @@ div.ui-datepicker {
 }
 
 #show_progressbar .ui-progressbar-value {
-    background: #ff5d1a;
+    background: var(--rt-accent);
     border-color:#343434;
     border-width: 1px 0 0 1px;
 }
@@ -1640,7 +1688,7 @@ h2#scheduled_playlist_name span {
     border-bottom-color:#cfcfcf;
 }
 #schedule_calendar .ui-progressbar .ui-progressbar-value {
-    background: #ff5d1a;
+    background: var(--rt-accent);
     border-color:#343434;
     border-width: 1px 0 0 1px;
 }
@@ -1932,7 +1980,10 @@ button, input {
 }
 .ui-widget-content .user-list-wrapper .ui-icon.ui-icon-closethick:hover,
 .ui-widget-content .tracktype-list-wrapper .ui-icon.ui-icon-closethick:hover {
-    background-image:url(redmond/images/ui-icons_ff5d1a_256x240.png);
+    background-image: none;
+    background-color: var(--rt-accent);
+    -webkit-mask: url(redmond/images/ui-icons_ffffff_256x240.png) no-repeat -96px -128px;
+    mask: url(redmond/images/ui-icons_ffffff_256x240.png) no-repeat -96px -128px;
 }
 
 .button-bar-top {
@@ -2076,7 +2127,10 @@ span.errors.sp-errors{
 }
 .collapsible-header .arrow-icon, .collapsible-header-disabled  .arrow-icon {
     display:block;
-    background:url(images/arrows_collapse.png) no-repeat 0 -11px;
+    /* RASTATIME 2026-09-29: the arrow PNG as a mask, filled with the accent */
+    background-color: var(--rt-accent);
+    -webkit-mask: url(images/arrows_collapse.png) no-repeat 0 -11px;
+    mask: url(images/arrows_collapse.png) no-repeat 0 -11px;
     height:11px;
     width:11px;
     position:absolute;
@@ -2085,7 +2139,8 @@ span.errors.sp-errors{
 
 }
 .collapsible-header.closed .arrow-icon, .collapsible-header-disabled.close  .arrow-icon {
-    background-position: 0 0 !important;
+    -webkit-mask-position: 0 0 !important;
+    mask-position: 0 0 !important;
 }
 #schedule-add-show .button-bar {
     height: 28px;
@@ -2102,7 +2157,7 @@ span.errors.sp-errors{
 
 /*---//////////////////// NOW PLAYING COLORS ////////////////////---*/
 .playing-song, .datatable tr.playing-song:hover td {
-    background-color:#ff753c !important;
+    background-color: var(--rt-accent-light) !important;
 }
 .playing-list {
     background-color:#b0dcf2;
@@ -2732,7 +2787,7 @@ label span {
 
 #watched-folder-section a:hover {
     text-decoration:none;
-    color:#FF5D1A;
+    color: var(--rt-accent);
     cursor:pointer;
 }
 
@@ -2779,8 +2834,17 @@ label span {
     background-position: -128px -63px;
 }
 
-#watched-folder-section dd.block-display.selected-item .ui-icon:hover {
-    background-image:url(redmond/images/ui-icons_ff5d1a_256x240.png)
+#watched-folder-section dd.block-display.selected-item .ui-icon.ui-icon-closethick:hover {
+    background-image: none;
+    background-color: var(--rt-accent);
+    -webkit-mask: url(redmond/images/ui-icons_ffffff_256x240.png) no-repeat -96px -128px;
+    mask: url(redmond/images/ui-icons_ffffff_256x240.png) no-repeat -96px -128px;
+}
+#watched-folder-section dd.block-display.selected-item .ui-icon.ui-icon-refresh:hover {
+    background-image: none;
+    background-color: var(--rt-accent);
+    -webkit-mask: url(redmond/images/ui-icons_ffffff_256x240.png) no-repeat -128px -63px;
+    mask: url(redmond/images/ui-icons_ffffff_256x240.png) no-repeat -128px -63px;
 }
 #watched-folder-section dd.block-display input {
     float:left;
@@ -3009,7 +3073,7 @@ dt.block-display.info-block {
     background-color: #353535;
     background: -moz-linear-gradient(top, #393939 0, #000000 100%);
     background: -webkit-gradient(linear, left top, left bottom, color-stop(0, #393939), color-stop(100%, #000000));
-    color: #ff5d1a;
+    color: var(--rt-accent);
     text-shadow:none;
     box-shadow: rgba(248,248,248,.3) 0px 1px 0px, rgba(0, 0, 0, 0.6) 0 2px 2px inset;
     -moz-box-shadow: rgba(248,248,248,.3) 0px 1px 0px, rgba(0, 0, 0, 0.6) 0 2px 2px inset;
@@ -3137,7 +3201,7 @@ tfoot tr th    {
     text-decoration: underline;
 }
 .statustable a:hover        {
-        color: #e76400;
+        color: var(--rt-accent-dark);
         text-decoration: underline;
 }
 .strong    {
@@ -3422,7 +3486,7 @@ dd .stream-status {
     right: 16px;
     position: absolute;
     top: 40px;
-    color: #FF5D1A
+    color: var(--rt-accent)
 }
 
 #popup-share {
@@ -3644,7 +3708,7 @@ button.btn-icon-text > i.icon-white {
 .ui-dialog-content .media_type_selector.selected,
 .ui-dialog-content .media_type_selector.selected a {
     border: none;
-    border-bottom: 1px solid #FF5D1A;
+    border-bottom: 1px solid var(--rt-accent);
 }
 
 #nav i, .media_type_selector i {
@@ -3655,7 +3719,7 @@ button.btn-icon-text > i.icon-white {
 .media_type_selector.highlight a {
     color: #fff;
     background-color: #444;
-    border-right: 1px solid #FF5D1A;
+    border-right: 1px solid var(--rt-accent);
 }
 
 .media_type_selector.selected, .media_type_selector.selected a {
@@ -3741,9 +3805,9 @@ button.btn-icon-text > i.icon-white {
     box-sizing: border-box;
 
     padding: 5px 10px 5px 10px;
-    border: 1px solid #ff611f;
-    background-color: #ff611f;
-    color: white;
+    border: 1px solid var(--rt-accent);
+    background-color: var(--rt-accent);
+    color: var(--rt-accent-fg);
     font-size: 14px;
     text-shadow: 0px 0px 1px rgba(0, 0, 0, 0.1);
 
@@ -3993,9 +4057,8 @@ hr {
 }
 
 .disk_usage_used {
-    background-color:#e76400;
-    background: -moz-linear-gradient(top, #ff6f01 0, #bc5200 100%);
-    background: -webkit-gradient(linear, left top, left bottom, color-stop(0, #ff6f01), color-stop(100%, #bc5200));
+    background-color: var(--rt-accent-dark);
+    background: linear-gradient(to bottom, var(--rt-accent) 0, var(--rt-accent-darker) 100%);
     height:13px;
     z-index: 2;
     position: relative;
@@ -4012,8 +4075,8 @@ hr {
 
 .dropdown-menu li > a:hover, .dropdown-menu li > a:focus, .dropdown-submenu:hover > a
 {
-    background: #ff5d1a;
-    color: #333;
+    background: var(--rt-accent);
+    color: var(--rt-accent-fg-dark);
     border: 0px;
 }
 
@@ -4368,7 +4431,7 @@ li .ui-state-hover {
 }
 
 .upgrade-cta-button {
-    background-color:#e76400;
+    background-color: var(--rt-accent-dark);
     margin: 0 auto;
     padding: 20px;
     border-radius: 3px;
@@ -4632,7 +4695,7 @@ body.droppable .artwork-upload .artwork-preview {
 .rt-jq3 .dataTables_paginate .paginate_button.current,
 .rt-jq3 .dataTables_paginate .paginate_button.current:hover {
     background: #6a6a6a;
-    border-color: #ff5d1a;
+    border-color: var(--rt-accent);
     color: #fff !important;
 }
 .rt-jq3 .dataTables_paginate .paginate_button.disabled,
@@ -4708,8 +4771,8 @@ div.dt-button-collection .dt-button.dt-button-active {
 }
 div.dt-button-collection .dt-button.dt-button-active::before {
     content: "\2713";
-    background: #ff5d1a;
-    border-color: #ff5d1a;
+    background: var(--rt-accent);
+    border-color: var(--rt-accent);
 }
 div.dt-button-collection .dt-button.dt-button-active::after {
     display: none !important;
@@ -4987,7 +5050,7 @@ div.dt-button-collection .dt-button > span {
 .rt-sbdd-panel input[type="checkbox"] {
     margin-right: 9px;
     vertical-align: -2px;
-    accent-color: #ff5d1a;
+    accent-color: var(--rt-accent);
 }
 .rt-sbdd-panel br {
     display: none;  /* labels are block-level now */

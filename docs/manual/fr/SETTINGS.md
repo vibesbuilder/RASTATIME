@@ -40,6 +40,7 @@ Paramètres → **Préférences générales**.
 | **Description de station** | Description en texte libre. |
 | **Logo de station** | Image en haut à gauche de chaque page. Max 200 KB, JPG / PNG / GIF. |
 | **Favicon de station** | Image dans l'onglet du navigateur. Max 200 KB. Rendue comme URI data:. |
+| **Couleur principale** | La couleur d'accent de toute l'interface et de la page radio — liens, surbrillances, lignes sélectionnées, entrée de menu active, barres de progression et de stockage, barres de défilement, flèches de section, bouton lecture et volume du lecteur. Saisissez `#rrggbb` ou utilisez le sélecteur à côté du champ ; **Rétablir la valeur par défaut** remet l'orange (`#ff5d1a`). Effectif au prochain chargement de page. Choisissez une couleur qui se détache du fond gris foncé ; le texte posé dessus passe de lui-même du blanc au noir. Les couleurs de signalisation (erreurs, avertissements, couleurs des émissions dans le calendrier) et les accents propres des widgets Now Playing / Programme hebdomadaire (sarcelle) et Song Request (bleu) ne changent pas. |
 | **Fuseau horaire** | Fuseau horaire opérateur pour tous affichages calendrier / planning. Stocké par-émission dans `cc_show_days.timezone`. |
 | **La semaine commence le** | Lundi / Dimanche. |
 

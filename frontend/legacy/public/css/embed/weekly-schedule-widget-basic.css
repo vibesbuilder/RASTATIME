@@ -160,7 +160,7 @@ background: rgba(53, 53, 53, 1.0);
 }
 
 .weekly-schedule-widget-footer span {
-    color: #ff5d1a;
+    color: var(--rt-accent, #ff5d1a);
 }
 
 @media (max-width: 730px) {

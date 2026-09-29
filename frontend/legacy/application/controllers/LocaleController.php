@@ -294,6 +294,7 @@ final class LocaleController extends Zend_Controller_Action
             'Recording From Line In' => _('Recording From Line In'),
             'Track preview' => _('Track preview'),
             'Cover' => _('Cover'),  // RASTATIME 2026-09-28 library column title
+            'Reset to default' => _('Reset to default'),  // RASTATIME 2026-09-29 Settings -> General primary color
             // RASTATIME 2026-09-28 - Loudness Normalization (EBU R128), Settings -> Streams
             'Re-measure every file in the library? This queues all files for the analyzer.' => _('Re-measure every file in the library? This queues all files for the analyzer.'),
             'Queuing...' => _('Queuing...'),

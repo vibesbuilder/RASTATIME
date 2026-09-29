@@ -29,7 +29,7 @@
   --fc-page-bg-color: #3a3a3a; /* grid surface behind the (transparent) slots */
   --fc-border-color: #2b2b2b; /* grid lines */
   --fc-today-bg-color: transparent; /* kill FC6's yellow "today" column tint */
-  --fc-now-indicator-color: #ff5d1a; /* brand-orange now line (as in FC1.5) */
+  --fc-now-indicator-color: var(--rt-accent); /* brand-orange now line (as in FC1.5) */
   --fc-neutral-bg-color: #565656;
 
   /* toolbar buttons (Day/Week/Month, prev/next, Today) */

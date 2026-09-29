@@ -76,7 +76,7 @@
 					background:url(images/source_to_switch_lines.png) repeat-x 0 0;
 					}
 				.status-info-block li .line-to-switch.on {
-					border-color:#ff611f;
+					border-color: var(--rt-accent);
 					background:url(images/source_to_switch_lines.png) repeat-x 0 -15px;
 					}
 			.status-info-block li .line-to-on-air, .status-info-block li .line-to-on-air.off {
@@ -157,10 +157,8 @@
 }
 
 .source-switch-button.active {
-    background-color: #ff611f;
-    background: -moz-linear-gradient(top, #ff8451 0, #ff611f 100%);
-    background: -webkit-gradient(linear, left top, left bottom, color-stop(0, #ff8451), color-stop(100%, #ff611f));
-	background: linear-gradient(top, #ff8451 0, #ff611f 100%);
+    background-color: var(--rt-accent);
+    background: linear-gradient(to bottom, var(--rt-accent-light) 0, var(--rt-accent) 100%);
 	-webkit-box-shadow:inset 0 1px 2px rgba(0, 0, 0, 0.5);
 	-moz-box-shadow:inset 0 1px 2px rgba(0, 0, 0, 0.5);
 	box-shadow:inset 0 1px 2px rgba(0, 0, 0, 0.5);
@@ -428,7 +426,7 @@
 	text-decoration:underline;
 }
 .personal-block a:hover {
-    color:#ff5d1a;
+    color: var(--rt-accent);
 }
 /*.line-to-switch {
 	float: right;

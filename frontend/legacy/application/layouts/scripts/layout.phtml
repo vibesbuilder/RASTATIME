@@ -5,6 +5,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <?php echo $this->headTitle() ?>
     <?php echo $this->headLink() ?>
+    <?php /* RASTATIME 2026-09-29 - UI primary colour as CSS variables (Settings -> General) */ echo Application_Model_AccentColor::styleTag() ?>
     <?php echo $this->headScript() ?>
     <?php $baseUrl = Config::getBasePath(); ?>
 </head>

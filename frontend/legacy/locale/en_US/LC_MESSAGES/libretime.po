@@ -4664,3 +4664,19 @@ msgstr ""
 #: RASTATIME 2026-09-28 live text info
 msgid "Web address:"
 msgstr ""
+
+#: RASTATIME 2026-09-29 UI primary color
+msgid "Primary Color:"
+msgstr ""
+
+#: RASTATIME 2026-09-29 UI primary color
+msgid "The accent color of the whole interface, the radio page and the widgets: links, highlights, selected rows, progress bars, the player. Choose a color that stands out against the dark gray background; text on it switches between white and black by itself. Empty resets to the default orange."
+msgstr ""
+
+#: RASTATIME 2026-09-29 UI primary color
+msgid "Please enter a color as #rrggbb (e.g. #ff5d1a)."
+msgstr ""
+
+#: RASTATIME 2026-09-29 UI primary color
+msgid "Reset to default"
+msgstr ""

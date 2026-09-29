@@ -74,6 +74,7 @@ Settings → **General Preferences**.
    │    Station Description: [ A community radio station for ...    ]│
    │    Station Logo:        [ Choose File ▾ ] (currently set)       │
    │    Station Favicon:     [ Choose File ▾ ] (currently set)       │
+   │    Primary Color:       [ #ff5d1a ] [■] [ Reset to default ]    │
    │    Time Zone:           [ Europe/Berlin ▾ ]                     │
    │    Week Starts On:      [ Monday ▾ ]                            │
    │                                                                 │
@@ -105,6 +106,7 @@ Settings → **General Preferences**.
 | **Station Description** | Free-text description. Used in podcast feeds and the ICY metadata. |
 | **Station Logo** | Image shown in the top-left of every page. Max 200 KB, JPG / PNG / GIF. |
 | **Station Favicon** | Image shown in the browser tab. Max 200 KB, JPG / PNG / GIF / ICO. Rendered as a data: URI; no file writes to public/. |
+| **Primary Color** | The accent colour of the whole interface and the radio page — links, highlights, selected rows, the active menu entry, progress and storage bars, scrollbars, section arrows, the stream player's play button and volume slider. Enter `#rrggbb` or use the colour picker next to the field; **Reset to default** restores the orange (`#ff5d1a`). Takes effect on the next page load. Choose a colour that stands out against the dark grey background; text on the colour switches between white and black by itself. Signal colours (errors, warnings, the show colours in the calendar) and the own accents of the Now Playing / Weekly Programme widgets (teal) and the Song Request widget (blue) stay as they are. |
 | **Time Zone** | The operator timezone for all calendar / schedule display. Stored per-show in `cc_show_days.timezone` so changing this here does not retroactively affect existing shows. |
 | **Week Starts On** | Monday / Sunday. Affects the Calendar's week view layout. |
 

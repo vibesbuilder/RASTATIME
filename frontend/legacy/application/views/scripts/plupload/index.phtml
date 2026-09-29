@@ -70,7 +70,7 @@
             }
         }
         ?>
-        <H2><?php echo _("Upload") ?> <span id="upload_type" <?php echo ($showTracktypesDropdown && $ttTitle != "") ? 'style="color:#ff611f"' : "" ?>>
+        <H2><?php echo _("Upload") ?> <span id="upload_type" <?php echo ($showTracktypesDropdown && $ttTitle != "") ? 'style="color:var(--rt-accent)"' : "" ?>>
                 <?php echo ($showTracktypesDropdown && $ttTitle != "") ? $ttTitle : "Tracks"; ?></span></H2>
         <form action="/rest/media" method="post" id="add-media-dropzone" class="dropzone dz-clickable">
             <?php echo $this->form->getElement('csrf') ?>

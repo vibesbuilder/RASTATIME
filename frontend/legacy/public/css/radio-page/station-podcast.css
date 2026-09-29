@@ -26,7 +26,7 @@ span.showIndex {
 /* End of non-ui fields **/
 
 .jp-playlist-current .podcast_title {
-	color: #FF6F01;
+	color: var(--rt-accent);
 }
 
 .current-track {
@@ -182,7 +182,7 @@ div.jp-seek-bar {
 	cursor: pointer;
 }
 div.jp-play-bar {
-	background-color: #FF6F01;
+	background-color: var(--rt-accent);
 	width:0px;
 	height:100%;
 }
@@ -249,7 +249,7 @@ div.jp-audio div.jp-volume-bar {
 }
 
 div.jp-volume-bar-value {
-	background-color: #FF6F01;
+	background-color: var(--rt-accent);
 	width:0px;
 	height:5px;
 }
@@ -271,7 +271,7 @@ div.jp-current-time {
 	/*float: left;*/
 	display: inline;
 	padding-top: 3px;
-	color: #FF6F01;
+	color: var(--rt-accent);
 }
 div.jp-duration {
 	float: right;
@@ -320,7 +320,7 @@ div.jp-title,
 }
 
 .podcast .jp-playlist ul li:hover {
-	border-bottom: 1px solid rgba(253,137,19,0.4);
+	border-bottom: 1px solid rgba(var(--rt-accent-rgb), 0.4);
 }
 
 .podcast .jp-playlist ul li a {
@@ -358,7 +358,7 @@ div.jp-title,
 }
 
 .podcast ul li:hover, .playlist-item-no-preview:hover {
-	border-bottom: 1px solid rgba(253,137,19,0.4);
+	border-bottom: 1px solid rgba(var(--rt-accent-rgb), 0.4);
 }
 
 .podcast ul li a, .podcast_title, .current-track span {
@@ -377,7 +377,7 @@ div.jp-title,
 .current-track span {
 	display: inline;
 	margin-left:10px;
-	color: #FF6F01;
+	color: var(--rt-accent);
 	width: 90%;
 }
 
@@ -457,7 +457,7 @@ ul.pagination li {
 }
 
 ul.pagination li.current {
-	border-bottom: 1px solid #FD8913;
+	border-bottom: 1px solid var(--rt-accent-light);
 }
 
 .current-track {
@@ -508,7 +508,7 @@ div.jp-type-playlist div.jp-playlist a:hover {
 	color:#9B9B9B;
 }
 div.jp-type-playlist div.jp-playlist a.jp-playlist-current {
-	color: #FF6F01;
+	color: var(--rt-accent);
 }*/
 span.jp-artist {
 	font-size: 90%;

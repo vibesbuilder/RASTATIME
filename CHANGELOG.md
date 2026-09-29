@@ -9,6 +9,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Primärfarbe der Oberfläche als Einstellung (2026-09-29, Operator-Wunsch,
+  Operator-Go Option A)** — Settings → General → „Primary Color": Hex-Feld
+  mit Farbwähler und „Reset to default", stationsweit (`cc_pref`
+  `ui_accent_color`, leer = Standard `#ff5d1a`).  Das bisher fest codierte
+  Orange (~90 Stellen: `#ff5d1a`, `#ff6f01`, `#ff611f` und ein Dutzend
+  Abstufungen) ist jetzt eine CSS-Variablen-Palette:
+  `Application_Model_AccentColor` leitet Akzent, rgb-Tripel, zwei helle und
+  zwei dunkle Abstufungen sowie zwei Textfarben für Flächen in der
+  Akzentfarbe ab (weiß bzw. schwarz bevorzugt, kippt nur bei zu hellen bzw.
+  zu dunklen Farben — das Standard-Orange sieht aus wie bisher) und gibt sie
+  in allen sechs Layouts sowie im Player- und Wochenprogramm-Widget als
+  `<style id="rt-accent">` aus; `styles.css` hält die Standardpalette als
+  Rückfall.  Umgestellt: Links/Hover, Menü-Markierung, Seitennummern,
+  Scrollbalken, Speicher- und Fortschrittsbalken, ausgewählte Zeilen,
+  Kontextmenü, Checkboxen, Fokus-Rahmen, Upload-Überschrift, Datepicker,
+  Radio-Seite, Vorschau-/Stream-Player, Player-Widget, Waveform-Zeitleiste;
+  einfarbige Bilder (Abschnittspfeile, orange Icon-Hover) als CSS-Masken.
+  Bleiben: Signal-/Kategoriefarben, mehrfarbige Icons (Operator-Entscheid),
+  Installer, die eigenen Akzente der Widgets Now Playing/Wochenprogramm und
+  Song Request.  Texte DE/FR/ES (`.mo` neu, wirksam nach Apache-Neustart),
+  Handbuch SETTINGS ×4, Architektur §23.43.  Live verifiziert mit
+  Standard- und simulierter Palette.
+
 - **Loudness-Normalisierung nach EBU R128, Stufe 1 (2026-09-28,
   Operator-Go)** — Settings → Streams: „Loudness Normalization" als
   Dreiwege-Modus Off / ReplayGain / EBU R128 (ersetzt die Checkbox „Enable

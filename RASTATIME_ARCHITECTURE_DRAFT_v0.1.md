@@ -1,10 +1,14 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.48
+Draft version: 0.49
 Date: 2026-09-29
 
 > **Revision history**
+> - **0.49 (2026-09-29)** — **UI primary colour as a setting** (§23.43):
+>   the hard-coded accent oranges are CSS custom properties fed from
+>   Settings → General; PHP derives the shades and the text colours on
+>   the accent; single-colour icon images become CSS masks.
 > - **0.48 (2026-09-29)** — **Per-user table layouts** (§23.42): the
 >   library and timeline layouts (column order and visibility, rows per
 >   page, sort) are a per-user preference on the server again - the 1.9
@@ -5548,3 +5552,50 @@ hidden-then-shown column and a reordered layout (saved and dragged)
 render decorated; toolbar, column headers and pager stay in place while
 the rows scroll; the advanced search finds the 241 jingles by track type
 in the default and in a reordered column order.
+
+### 23.43 UI Primary Colour as a Setting (2026-09-29)
+
+**Context.**  The interface accent was a hard-coded orange in some 90
+places: `#ff5d1a` (RASTATIME), `#ff6f01` (LibreTime, radio page and
+preview players), `#ff611f`, a dozen hand-picked shades for hovers,
+gradients and the two selected-row tones, a jQuery-UI icon sprite in
+orange for icon hovers, and orange PNGs (section arrows, the master
+panel's progress strip).  The operator wants a station colour
+(Settings → General), everywhere including the radio page and the
+player widget.
+
+**Decision.**  CSS custom properties.  `Application_Model_AccentColor`
+reads `cc_pref.ui_accent_color` (station-wide, `#rrggbb`, empty =
+default `#ff5d1a`) and derives the palette: `--rt-accent`,
+`--rt-accent-rgb` (for `rgba()`), `--rt-accent-soft` / `-light` (12 % /
+25 % white: the selected-row tones, light gradient tops),
+`--rt-accent-dark` / `-darker` (18 % / 35 % black: visited links,
+gradient bottoms, borders), and two text colours for use ON the
+accent - `--rt-accent-fg` where the orange design had white text,
+`--rt-accent-fg-dark` where it had black; each flips only when the
+colour's relative luminance makes it unreadable (> 0.45 resp. < 0.18),
+so the default orange (0.29) keeps both.  `styleTag()` prints the
+palette as `<style id="rt-accent">:root:root{...}</style>` in all six
+layouts and in the stand-alone embed views (player, weekly programme);
+`:root:root` outranks the default palette that `styles.css` keeps in
+`:root` as the fallback, wherever the block lands.  PHP computes the
+shades, so no `color-mix()` dependency; the canvas-drawn waveform
+timeline reads the variable via `getComputedStyle`.
+
+Single-colour images become CSS masks filled with the accent: the
+section arrow sprite (`arrows_collapse.png`) and the icon hovers that
+swapped to the orange jQuery-UI sprite (mask = the white sprite at the
+icon's position).  The progress strip PNG is a gradient over the accent.
+
+**Out of scope.**  Signal and category colours (Bootstrap warning
+orange, the stream-status info box, the static-smart-block legend, the
+soundcard mismatch hint, the per-show calendar colours); multi-colour
+icons with orange parts (crossfade / fade / cue graphics, operator
+decision); the installer's `setup-config.css` (runs before the database
+exists); the widgets' own non-orange accents (Now Playing / Weekly
+Programme teal, Song Request blue).
+
+**Verification.**  Default palette renders the previous orange on the
+dashboard, library selection, pager, storage bar, scrollbars, Upload
+heading, New Show form (focus border, arrows), radio page player; a
+substituted palette (blue) in the browser switched all of them.

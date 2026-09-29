@@ -206,11 +206,11 @@ div.btn > span {
     font-size: 0.9em;
     line-height: 37px;
     text-decoration: none;
-    color: #FF5D1A;
+    color: var(--rt-accent);
 }
 
 .empty_placeholder a:visited {
-    color: #CE3C01;
+    color: var(--rt-accent-dark);
 }
 
 thead th.ui-state-default {
@@ -409,7 +409,7 @@ thead th.ui-state-default:focus {
 }
 
 .nav-tabs :not(.active) a:hover {
-    background-color: rgba(239, 76, 10, .5) !important;
+    background-color: rgba(var(--rt-accent-rgb), .5) !important;
     border: 1px solid transparent !important;
     border-bottom: 1px solid transparent !important;
 }
@@ -540,11 +540,11 @@ li.ui-state-default {
 }
 
 .angular_wrapper a {
-    color: #FF5D1A;
+    color: var(--rt-accent);
 }
 
 .angular_wrapper a:visited {
-    color: #CE3C01;
+    color: var(--rt-accent-dark);
 }
 
 .tab-name {
@@ -824,7 +824,7 @@ th.library_checkbox {
 }
 
 .datatable .ui-state-highlight, .spl_sortable .ui-state-highlight {
-    background: rgba(255, 93, 26, .6);
+    background: rgba(var(--rt-accent-rgb), .6);
     border: none;
 }
 
@@ -837,7 +837,7 @@ th.library_checkbox {
 }
 
 .DTCR_pointer {
-    background-color: #FF5D1A !important;
+    background-color: var(--rt-accent) !important;
     height: 38px !important;
 }
 

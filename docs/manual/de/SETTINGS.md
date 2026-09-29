@@ -76,6 +76,7 @@ Einstellungen → **Allgemeine Einstellungen**.
    │    Stationsbeschreibung:[ Ein Community-Radio für ...         ]│
    │    Stationslogo:        [ Datei wählen ▾ ] (derzeit gesetzt)    │
    │    Stations-Favicon:    [ Datei wählen ▾ ] (derzeit gesetzt)    │
+   │    Primärfarbe:         [ #ff5d1a ] [■] [ Zurücksetzen ]        │
    │    Zeitzone:            [ Europe/Berlin ▾ ]                     │
    │    Woche beginnt am:    [ Montag ▾ ]                            │
    │                                                                 │
@@ -107,6 +108,7 @@ Einstellungen → **Allgemeine Einstellungen**.
 | **Stationsbeschreibung** | Freitext-Beschreibung. Verwendet in Podcast-Feeds und ICY-Metadaten. |
 | **Stationslogo** | Bild oben links auf jeder Seite. Max 200 KB, JPG / PNG / GIF. |
 | **Stations-Favicon** | Bild im Browser-Tab. Max 200 KB, JPG / PNG / GIF / ICO. Als data: URI gerendert; keine Datei-Schreibvorgänge nach public/. |
+| **Primärfarbe** | Die Akzentfarbe der gesamten Oberfläche und der Radio-Seite — Links, Hervorhebungen, ausgewählte Zeilen, der aktive Menüpunkt, Fortschritts- und Speicherbalken, Scrollbalken, Abschnittspfeile, Play-Knopf und Lautstärkeregler des Stream-Players. Geben Sie `#rrggbb` ein oder nutzen Sie den Farbwähler neben dem Feld; **Auf Standard zurücksetzen** stellt das Orange (`#ff5d1a`) wieder her. Wirkt beim nächsten Seitenaufruf. Wählen Sie eine Farbe, die sich vom dunkelgrauen Hintergrund abhebt; Text auf der Farbe wechselt von selbst zwischen Weiß und Schwarz. Signalfarben (Fehler, Warnungen, die Sendungsfarben im Kalender) sowie die eigenen Akzente der Widgets Now Playing / Wochenprogramm (Petrol) und Song Request (Blau) bleiben unverändert. |
 | **Zeitzone** | Die Operator-Zeitzone für alle Kalender- / Sendeplan-Anzeigen. Pro Sendung in `cc_show_days.timezone` gespeichert, sodass das Ändern hier bestehende Sendungen nicht rückwirkend beeinflusst. |
 | **Woche beginnt am** | Montag / Sonntag. Beeinflusst das Wochenansichts-Layout des Kalenders. |
 

@@ -1924,6 +1924,18 @@ class Application_Model_Preference
         self::setValue('radio_page_disabled', $value);
     }
 
+    // RASTATIME 2026-09-29 - the UI's primary colour, '#rrggbb' or '' for
+    // the default (see Application_Model_AccentColor).
+    public static function GetUiAccentColor()
+    {
+        return self::getValue('ui_accent_color');
+    }
+
+    public static function SetUiAccentColor($hex)
+    {
+        self::setValue('ui_accent_color', Application_Model_AccentColor::normalize($hex) ?? '');
+    }
+
     public static function getLangTimezoneSetupComplete()
     {
         return self::getValue('lang_tz_setup_complete');

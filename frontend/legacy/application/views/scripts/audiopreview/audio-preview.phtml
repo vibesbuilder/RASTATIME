@@ -28,10 +28,10 @@
   .lt-btn:hover::before, .lt-btn:hover::after { filter: brightness(1.4); }
 
   /* play = right-pointing triangle */
-  .lt-play::before { top: 4px; left: 6px; border-style: solid; border-width: 7px 0 7px 12px; border-color: transparent transparent transparent #FF6F01; }
+  .lt-play::before { top: 4px; left: 6px; border-style: solid; border-width: 7px 0 7px 12px; border-color: transparent transparent transparent var(--rt-accent); }
   /* pause = two bars */
-  .lt-pause::before { top: 4px; left: 5px; width: 4px; height: 14px; background: #FF6F01; }
-  .lt-pause::after  { top: 4px; left: 13px; width: 4px; height: 14px; background: #FF6F01; }
+  .lt-pause::before { top: 4px; left: 5px; width: 4px; height: 14px; background: var(--rt-accent); }
+  .lt-pause::after  { top: 4px; left: 13px; width: 4px; height: 14px; background: var(--rt-accent); }
   /* stop = square */
   .lt-stop::before { top: 5px; left: 5px; width: 12px; height: 12px; background: #d0d0d0; }
   /* prev = bar + left triangle */
@@ -44,7 +44,7 @@
   /* progress / seek */
   .lt-progress { flex: 1 1 auto; min-width: 80px; }
   .lt-seek { background: #393939; border: 1px solid #262526; height: 10px; cursor: pointer; overflow: hidden; }
-  .lt-played { background: #FF6F01; height: 100%; width: 0; }
+  .lt-played { background: var(--rt-accent); height: 100%; width: 0; }
   .lt-time { font-size: 11px; color: #cfcfcf; margin-top: 3px; }
 
   /* volume */
@@ -54,7 +54,7 @@
   .lt-mute::after  { top: 3px; left: 4px; border-style: solid; border-width: 6px 7px 6px 0; border-color: transparent #d0d0d0 transparent transparent; }
   .lt-player.lt-muted .lt-mute::before, .lt-player.lt-muted .lt-mute::after { background: #777; border-right-color: #777; }
   .lt-vol-bar { width: 70px; height: 8px; background: #393939; border: 1px solid #262526; cursor: pointer; overflow: hidden; }
-  .lt-vol-val { background: #FF6F01; height: 100%; width: 80%; }
+  .lt-vol-val { background: var(--rt-accent); height: 100%; width: 80%; }
 
   /* playlist */
   .lt-playlist { list-style: none; margin: 0; padding: 0; max-height: 220px; overflow-y: auto; background: #2b2b2b; }
@@ -62,7 +62,7 @@
   .lt-playlist li.preview-live { opacity: 0.55; font-style: italic; cursor: default; }
   .lt-playlist li { padding: 5px 10px; cursor: pointer; border-bottom: 1px solid #1f1f1f; color: #c9c9c9; font-size: 12px; }
   .lt-playlist li:hover { background: #363636; }
-  .lt-playlist li.preview-current { color: #FF6F01; font-weight: bold; }
+  .lt-playlist li.preview-current { color: var(--rt-accent); font-weight: bold; }
 </style>
 <div id="jp_container_1" class="lt-player">
     <?php if (isset($this->playlistID)) : ?>

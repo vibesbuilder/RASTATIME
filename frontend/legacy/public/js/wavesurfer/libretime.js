@@ -357,6 +357,10 @@ function secondaryLabelInterval(pxPerSec) {
 function renderWaveform(track_id, selector_id, url, cuein, cueout) {
 
     var trackid = "t"+track_id;
+    // RASTATIME 2026-09-29: the timeline draws on a canvas, which cannot use
+    // CSS variables - read the UI primary colour (Settings -> General) once.
+    var accentColor = getComputedStyle(document.documentElement)
+        .getPropertyValue('--rt-accent').trim() || '#ff5d1a';
     var a = cuein.split(':'); // split it at the colons
     var b = cueout.split(':'); // split it at the colons
     var startseconds = (+a[0]) * 60 * 60 + (+a[1]) * 60 + (+a[2]);
@@ -407,9 +411,9 @@ function renderWaveform(track_id, selector_id, url, cuein, cueout) {
                 timeInterval: timeInterval,
                 primaryLabelInterval: primaryLabelInterval,
                 secondaryLabelInterval: secondaryLabelInterval,
-                primaryColor: '#ff611f',
+                primaryColor: accentColor,
                 secondaryColor: '#cccccc',
-                primaryFontColor: '#ff611f',
+                primaryFontColor: accentColor,
                 secondaryFontColor: '#cccccc'
             })
         ]

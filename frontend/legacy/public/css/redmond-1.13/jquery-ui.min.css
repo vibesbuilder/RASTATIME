@@ -32,5 +32,5 @@
 .ui-datepicker td span.ui-state-default,.ui-datepicker td a.ui-state-default{background:#565656 none;border:1px solid #2f2f2f;color:#eee;text-align:center}
 .ui-datepicker td a.ui-state-hover{background:#6a6a6a none;border:1px solid #3a3a3a;color:#fff}
 .ui-datepicker td a.ui-state-highlight{background:#7a6432 none;border:1px solid #96793a;color:#fff}
-.ui-datepicker td a.ui-state-active{background:#ff5d1a none;border:1px solid #c74812;color:#fff}
+.ui-datepicker td a.ui-state-active{background:var(--rt-accent) none;border:1px solid var(--rt-accent-darker);color:var(--rt-accent-fg)}
 .ui-datepicker .ui-datepicker-unselectable .ui-state-default{background:#454545 none;border:1px solid #383838;color:#888}

@@ -242,7 +242,7 @@ $(document).ready(function () {
     var ttText = $('#select_type option[value="' + ttValue + '"]').text();
     if (ttValue != "") {
       $("#upload_type").text(" " + ttText);
-      $("#upload_type").css("color", "#ff611f");
+      $("#upload_type").css("color", "var(--rt-accent)");
     } else {
       $("#upload_type").text(" Tracks");
       $("#upload_type").css("color", "#ffffff");
