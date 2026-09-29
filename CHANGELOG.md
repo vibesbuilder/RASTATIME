@@ -584,7 +584,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   dBTP), die dann unter dem Ziel gespielt hätten.  Jetzt wird nur eine
   Anhebung gekappt (nie unter 0 dB); laute Dateien gehen auf das Ziel, die
   Spitzen nimmt der Bus-Limiter.  Tests erweitert; wirksam nach
-  PLAYOUT-Neustart.
+  PLAYOUT-Neustart — `83b5749`.
 
 - **PLAYOUT startete nach dem R128-Commit nicht (2026-09-29 07:53)** —
   `write_rastatime_liq()` (der Datei-Wrapper um das Rendern) kannte den
