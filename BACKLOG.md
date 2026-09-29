@@ -43,7 +43,7 @@ festgelegt.  Jeder Punkt bekommt vor Implementierung die
 
 ### 🟢 Crossfade je Track-Typ und „Exclude from Crossover" — 5 s Stille vor dem BBC-Webstream (Operator-Go 2026-09-29, gebaut — Live-Abnahme offen)
 
-**Stand 2026-09-29 abends:** gebaut (Option C, beide Wege).  Operator-Entscheidungen: Paar-Regel = kleinerer Wert;
+**Stand 2026-09-29 abends:** gebaut (Option C, beide Wege; `b28bc98`, `f36de90`).  Operator-Entscheidungen: Paar-Regel = kleinerer Wert;
 Jingles 0 s; die 100 „No Fade"-Jingles auf „wie Track-Typ" zurückgesetzt (Sicherung
 `C:/Temp/optd/no_fade_flags_backup_20260929.txt`); Quellenwechsel Datei ↔ Webstream/Line-In im Layout auf den
 Show-Wert angeglichen.  639 kommende Instanzen neu ausgelegt.  **Offen:** API- und PLAYOUT-Neustart durch den

@@ -39,7 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Modus, Engine, Render), Trockenlauf-Werkzeuge `xf_layout_dryrun.php` /
   `xf_relayout.php`, Handbuch LIBRARY + SETTINGS ×4, Architektur §23.44.
   Inbetriebnahme: API- und PLAYOUT-Neustart, Apache-Neustart für die
-  Übersetzungen.
+  Übersetzungen — `b28bc98` (Kern), `f36de90` (Kalender, UI).
 
 - **Primärfarbe der Oberfläche als Einstellung (2026-09-29, Operator-Wunsch,
   Operator-Go Option A)** — Settings → General → „Primary Color": Hex-Feld
