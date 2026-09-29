@@ -172,6 +172,15 @@ div.btn > span {
     z-index: 2;
 }
 
+/* RASTATIME 2026-09-29 - a hand over the column headers (operator wish;
+   the browser showed the text cursor): they sort on click and move by
+   drag (ColReorder) - the timeline's only move. */
+#library_display thead th,
+#podcast_table thead th,
+#show_builder_table thead th {
+    cursor: pointer;
+}
+
 .empty_placeholder_image {
     opacity: .3;
 
