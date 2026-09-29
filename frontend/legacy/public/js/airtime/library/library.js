@@ -671,15 +671,18 @@ var AIRTIME = (function (AIRTIME) {
       return data ? '<span class="small-icon is_scheduled"></span>' : "";
     }
 
-    // TRACKTYPES lists the visible types only; a hidden one shows no code.
+    // TRACKTYPES lists the visible types only; a hidden one shows nothing.
+    // RASTATIME 2026-09-29 (operator wish): the full type name ("Music",
+    // "Jingles"), not the code.
     function renderTrackType(data) {
       var tt = data ? TRACKTYPES[data] : null;
       if (!tt) {
         return "";
       }
+      var name = $("<div>").text(tt.name).html();
       return onDashboard
-        ? "<div class='library_track_type_btn'>" + tt.code + "</div>"
-        : tt.code;
+        ? "<div class='library_track_type_btn'>" + name + "</div>"
+        : name;
     }
 
     function renderActions() {
@@ -826,7 +829,7 @@ var AIRTIME = (function (AIRTIME) {
         mDataProp: "track_type_id",
         mRender: renderTrackType,
         sClass: "library_track_type",
-        sWidth: "60px",
+        sWidth: "80px",
       },
       /* Genre */ {
         sTitle: $.i18n._("Genre"),

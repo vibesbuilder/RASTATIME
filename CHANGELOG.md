@@ -394,6 +394,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Library: Spalte „Type" zeigt den vollen Namen (2026-09-29,
+  Operator-Wunsch)** — Dashboard → Tracks und der Schedule-Tracks-Dialog
+  zeigen den Namen des Track-Types („Music", „Jingles", „Shows") statt des
+  Codes (`music`, `jngl`, `show`); Spalte von 60 auf 80 px verbreitert, damit
+  der Name im Dashboard-Button nicht abgeschnitten wird.  Live verifiziert.
+
 - **Stream Label: Live-Quelle ohne Metadaten zeigt „Station - Sendung"
   (2026-09-28, Operator-Entscheid)** — Ein DJ, der keine Metadaten sendet,
   ein Webstream ohne eigene Titel und ein Line-In zeigten in den Formaten
