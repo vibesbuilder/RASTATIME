@@ -61,7 +61,10 @@ def compute_replaygain(filepath: Path) -> Optional[float]:
     """
     Compute replaygain will analyse the given audio file and return the replaygain if available.
     """
-    cmd = _ffmpeg("-i", filepath, "-vn", "-filter", "replaygain")
+    # errors=: ffmpeg echoes the file's tags; a byte that is not valid in the
+    # console code page killed the reader thread and the result was lost
+    # (library file 648, 2026-09-29)
+    cmd = _ffmpeg("-i", filepath, "-vn", "-filter", "replaygain", errors="backslashreplace")
 
     track_gain_match = _COMPUTE_REPLAYGAIN_RE.search(cmd.stderr)
 
@@ -105,7 +108,7 @@ def compute_loudness(filepath: Path) -> Optional[dict]:
     "loudness_range_lu"}``.  ``None`` when the file is silent or the summary
     could not be read.
     """
-    cmd = _ffmpeg("-i", filepath, "-vn", "-filter", "ebur128=peak=true")
+    cmd = _ffmpeg("-i", filepath, "-vn", "-filter", "ebur128=peak=true", errors="backslashreplace")
     text = cmd.stderr or ""
     summary_pos = text.rfind("Summary:")
     if summary_pos >= 0:

@@ -42,6 +42,21 @@ def test_summary_is_parsed(monkeypatch):
     assert metadata["loudness_lufs"] == -14.2 and metadata["track_title"] == "t"
 
 
+def test_ffmpeg_output_is_read_tolerantly(monkeypatch):
+    """2026-09-29: a tag byte outside the console code page killed the reader
+    thread (library file 648) - both measurements pass errors=backslashreplace."""
+    seen = []
+
+    def run(*args, **kwargs):
+        seen.append(kwargs)
+        return CompletedProcess(args, 0, stdout="", stderr=SUMMARY + " track_gain = -5.10 dB\n")
+
+    monkeypatch.setattr(_ffmpeg, "_ffmpeg", run)
+    assert _ffmpeg.compute_loudness("x.mp3")["loudness_lufs"] == -14.2
+    assert _ffmpeg.compute_replaygain("x.mp3") == -5.1
+    assert [k.get("errors") for k in seen] == ["backslashreplace", "backslashreplace"]
+
+
 def test_silence_and_garbage_are_not_measurable(monkeypatch):
     monkeypatch.setattr(_ffmpeg, "_ffmpeg", _fake_ffmpeg(SUMMARY.replace("-14.2 LUFS", "-inf LUFS")))
     assert _ffmpeg.compute_loudness("x.mp3") is None

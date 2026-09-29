@@ -575,6 +575,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Analyzer: ffmpeg-Ausgabe tolerant lesen (2026-09-29)** — Eine von 373
+  Dateien blieb bei der R128-Bestandsmessung ungemessen (und hatte seit dem
+  Import auch keinen ReplayGain-Wert): ffmpeg gibt die Tags der Datei aus,
+  ein Byte außerhalb der Konsolen-Codepage ließ den Lese-Thread des
+  Subprozesses mit einer Ausnahme sterben, das Ergebnis ging verloren.
+  `compute_loudness` und `compute_replaygain` übergeben jetzt
+  `errors="backslashreplace"` (wie `probe_replaygain` schon immer); Test.
+  Wirksam nach ANALYZER-Neustart, danach „Measure missing files now".
+
 - **Titel-Verstärkung galt seit dem Crossfade-Umbau nur für den ersten Titel
   einer Strecke (2026-09-29)** — Beim Abgleich der 24/7-Aufnahme mit den
   Messwerten fiel ein Titel mit unveränderter Spitze auf.  Bench (drei Töne
