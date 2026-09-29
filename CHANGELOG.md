@@ -581,7 +581,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   argument", Render-Abbruch, nssm pausierte den Dienst nach drei Versuchen;
   Liquidsoap lief mit dem alten Skript weiter (Sender auf Sendung, aber ohne
   Scheduler).  Parameter im Wrapper ergänzt, Regressionstest für den
-  Wrapper.
+  Wrapper — `c41e27c`.
 
 - **Sendepause nach einem geplanten Liquidsoap-Neustart an der Titelgrenze
   (2026-09-28, 20:27:11 bis zum nächsten Titel)** — Der geplante Neustart
