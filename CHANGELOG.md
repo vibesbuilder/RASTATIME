@@ -581,6 +581,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Upload-Seite: weißer Streifen, unlesbare Texte (2026-09-29,
+  Operator-Meldung)** — Unter beiden Panels (Upload, Recent Uploads) lag ein
+  weißer Streifen: `.content-pane` überschreibt die Farbe des
+  jQuery-UI-Themes (`.ui-widget-content`, #fcfdfd), aber nicht dessen
+  100-px-Verlaufsbild an der Panel-Unterkante.  Die Regel
+  `.rt-jq3 .content-pane.ui-widget-content { background-image: none }`
+  (styles.css) gilt jetzt für alle Content-Panels statt Seite für Seite.
+  „Drop files here or click to browse your computer.", die Filter „All /
+  Failed / Pending" und die Links „Delete from Library" erbten die
+  Grundfarbe #222 (dunkel auf dunkel) und sind jetzt hellgrau (#ccc, Hover
+  weiß; addmedia.css).  Live verifiziert, Dashboard unberührt.
+
 - **Library: Type-Ziffer nach Umsortieren, Kopf-/Fußleiste scrollten mit
   (2026-09-29, Operator-Meldung, Nachbesserung zu `c3960c3`)** — (1) Mit
   gespeicherter Spaltenreihenfolge zeigte Dashboard → Tracks in „Type" die

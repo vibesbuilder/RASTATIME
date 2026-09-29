@@ -67,14 +67,22 @@ table#recent_uploads_table td
     margin-top: -3px;
 }
 
+/* RASTATIME 2026-09-29 - the filter labels and the delete links inherited
+   the #222 base text colour, invisible on the dark panel (operator report). */
 #recent_uploads_filter label {
 	padding: 0px;
+	color: #ccc;
 }
 
 #recent_uploads_table .deleteFileAction
 {
 	text-decoration: underline;
 	cursor: pointer;
+	color: #ccc;
+}
+
+#recent_uploads_table .deleteFileAction:hover {
+	color: #fff;
 }
 
 @-webkit-keyframes passing-through {
@@ -352,6 +360,9 @@ table#recent_uploads_table td
 	display: block;
 	position: relative;
 	background-color: rgba(0, 0, 0, 0.1);
+	/* RASTATIME 2026-09-29: light grey (was the #222 base colour, dark on
+	   dark until hovered); hover stays white. */
+	color: #ccc;
 
 	-webkit-box-shadow: inset 0px -7px 27px -4px rgba(0,0,0,0.55);
 	-moz-box-shadow: inset 0px -7px 27px -4px rgba(0,0,0,0.55);

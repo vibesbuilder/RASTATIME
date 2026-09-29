@@ -4734,6 +4734,14 @@ div.dt-button-collection .dt-button > span {
 .rt-jq3 .ui-widget.ui-widget-content {
     border: 0;
 }
+/* RASTATIME 2026-09-29 - the dark content panels are .ui-widget-content
+   too.  .content-pane replaces redmond's #fcfdfd colour but not its 100px
+   inset gradient IMAGE at the panel bottom, which showed as a white strip
+   under the Upload page's panels (operator report).  Covers every
+   content pane, not one page at a time. */
+.rt-jq3 .content-pane.ui-widget-content {
+    background-image: none;
+}
 /* collapse the colvis "Columns" button to icon-only at the same breakpoint as
    the other toolbar buttons.  The base @media(max-width:1600px) rule excludes
    dropdown-toggles (so dropdowns keep their label); the colvis button is one,
