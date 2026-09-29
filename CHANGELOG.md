@@ -454,7 +454,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   nicht der Primärfarbe, sondern bleibt `#ff5d1a` wie bisher
   (`#schedule_calendar .ui-progressbar .ui-progressbar-value`).  Live
   verifiziert mit der gespeicherten Primärfarbe `#ffd900`: alle 31
-  Balken orange.  Handbuch SETTINGS ×4, Architektur §23.43.
+  Balken orange.  Handbuch SETTINGS ×4, Architektur §23.43 — `b368a24`.
 
 - **Widgets folgen der Primärfarbe (2026-09-29, Operator-Entscheid)** — Die
   eigenen Akzente der Widgets — Petrol `#459B8F` in Now Playing,
