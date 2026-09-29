@@ -449,6 +449,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Widgets folgen der Primärfarbe (2026-09-29, Operator-Entscheid)** — Die
+  eigenen Akzente der Widgets — Petrol `#459B8F` in Now Playing,
+  Wochenprogramm (inkl. „heute"-Kästchen auf der Startseite), Multi-View,
+  Track History, On Air Today, Shows-Listen; Blau `#2b7de9` im Song Request
+  — sowie der Petrol-Login-Knopf und die Wochen-Tabs der Radio-Seite lesen
+  jetzt `--rt-accent` (Rückfall: Standard-Orange); weißer Text auf vollen
+  Akzentflächen nutzt die automatische Textfarbe.  Alle Widget-Views geben
+  den Farbblock aus.  Sichtbare Änderung beim Standard: Petrol/Blau werden
+  Orange.  Live verifiziert (alle Widget-Routen 200 mit Farbblock,
+  Standard- und simulierte Palette); Handbuch SETTINGS ×4, Architektur
+  §23.43.
+
 - **Dashboard: Hand-Cursor über den Spaltenüberschriften (2026-09-29,
   Operator-Wunsch)** — Über den Kopfzellen der Library-, Podcasts- und
   Scheduled-Shows-Tabelle zeigte der Browser den Text-Cursor; sie sortieren

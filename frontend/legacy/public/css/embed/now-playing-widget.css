@@ -469,8 +469,10 @@ html, body {
         --np-accent variable so a future style override could
         switch it to a station-specific brand colour without
         rewriting the rules.  */
-    --np-accent: #459B8F;
-    --np-accent-hover: rgba(69, 155, 143, 0.4);
+    /* RASTATIME 2026-09-29: the UI primary colour (Settings -> General),
+       was LibreTime teal #459B8F */
+    --np-accent: var(--rt-accent, #ff5d1a);
+    --np-accent-hover: rgba(var(--rt-accent-rgb, 255, 93, 26), 0.4);
 
     /*  RASTATIME 2026-05-25 — operator-requested size bump from
         400 px to 670 px container width.  All other dimensions
@@ -613,7 +615,7 @@ html, body {
         kantig look.  Wins visually even when the active-tab
         underline is on a different day.  */
     background: var(--np-accent);
-    color: #fff;
+    color: var(--rt-accent-fg, #fff);
 }
 
 .np-widget.np-weekly-schedule .np-ws-tab.np-ws-tab-today:hover {
@@ -622,7 +624,7 @@ html, body {
         accent state — fading would feel like losing the
         highlight.  */
     background: var(--np-accent);
-    color: #fff;
+    color: var(--rt-accent-fg, #fff);
 }
 
 .np-widget.np-weekly-schedule .np-ws-content {
@@ -758,8 +760,10 @@ html, body {
  * ───────────────────────────────────────────────────────────── */
 
 .np-widget.np-multi-view-schedule {
-    --np-accent: #459B8F;
-    --np-accent-hover: rgba(69, 155, 143, 0.4);
+    /* RASTATIME 2026-09-29: the UI primary colour (Settings -> General),
+       was LibreTime teal #459B8F */
+    --np-accent: var(--rt-accent, #ff5d1a);
+    --np-accent-hover: rgba(var(--rt-accent-rgb, 255, 93, 26), 0.4);
 
     /*  Multi-view fills its iframe — no inherent max-width cap
         like the other widgets, because the calendar can stretch
@@ -857,7 +861,7 @@ html, body {
 
 .np-widget.np-multi-view-schedule .np-mv-view.np-mv-view-active {
     background: var(--np-accent);
-    color: #fff;
+    color: var(--rt-accent-fg, #fff);
 }
 
 /* ─── Calendar mount ─── */
@@ -881,7 +885,7 @@ html, body {
     --fc-page-bg-color: transparent;
     --fc-border-color: var(--np-fg-muted);
     --fc-now-indicator-color: var(--np-accent);
-    --fc-today-bg-color: rgba(69, 155, 143, 0.08);
+    --fc-today-bg-color: rgba(var(--rt-accent-rgb, 255, 93, 26), 0.08);
     --fc-neutral-bg-color: transparent;
     --fc-list-event-hover-bg-color: var(--np-accent-hover);
 }
@@ -1061,7 +1065,7 @@ html, body {
     display: inline-block;
     padding: 8px 14px;
     background: var(--np-accent);
-    color: #fff;
+    color: var(--rt-accent-fg, #fff);
     text-decoration: none;
     font-weight: 600;
 }
@@ -1086,8 +1090,10 @@ html, body {
  * ───────────────────────────────────────────────────────────── */
 
 .np-widget.np-track-history {
-    --np-accent: #459B8F;
-    --np-accent-hover: rgba(69, 155, 143, 0.4);
+    /* RASTATIME 2026-09-29: the UI primary colour (Settings -> General),
+       was LibreTime teal #459B8F */
+    --np-accent: var(--rt-accent, #ff5d1a);
+    --np-accent-hover: rgba(var(--rt-accent-rgb, 255, 93, 26), 0.4);
 
     max-width: 100%;
     line-height: 1.4;
@@ -1241,7 +1247,7 @@ html, body {
 
 .np-widget.np-track-history .np-th-loadmore:hover {
     background: var(--np-accent);
-    color: #fff;
+    color: var(--rt-accent-fg, #fff);
 }
 
 .np-widget.np-track-history .np-th-status {
@@ -1368,7 +1374,7 @@ html, body {
     display: inline-block;
     padding: 8px 14px;
     background: var(--np-accent);
-    color: #fff;
+    color: var(--rt-accent-fg, #fff);
     text-decoration: none;
     font-weight: 600;
 }

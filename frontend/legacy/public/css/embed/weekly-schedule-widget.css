@@ -24,10 +24,11 @@ body {
     list-style: none;
     padding-left: 0px;
     margin: 0px;
-    background: rgba(69, 155, 143, 0.8);
+    background: rgba(var(--rt-accent-rgb, 255, 93, 26), 0.8);
 }
 
 .schedule .tabs li {
+    color: var(--rt-accent-fg, #fff);
     width: 103px;
     height: 80px;
     display: inline-block;
@@ -43,15 +44,15 @@ body {
 }
 
 .schedule .tabs li.active {
-    background: #459B8F;
+    background: var(--rt-accent, #ff5d1a);
 }
 
 .schedule .tabs li.active:hover {
-    background: #459B8F;
+    background: var(--rt-accent, #ff5d1a);
 }
 
 .schedule .tabs li:hover {
-    background: rgba(69, 155, 143, 0.6)
+    background: rgba(var(--rt-accent-rgb, 255, 93, 26), 0.6)
 }
 
 .schedule_content {

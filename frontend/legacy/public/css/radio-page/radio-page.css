@@ -189,10 +189,10 @@ input[type="text"]:hover {
 
 input[type="submit"] {
     font-family: 'Roboto', sans-serif;
-    color: #fff;
+    color: var(--rt-accent-fg, #fff);
     font-size: 18px;
     font-weight: 300;
-    background: #459B8F;
+    background: var(--rt-accent, #ff5d1a);
     width: 100%;
     max-width: 380px;
     padding: 18px 20px;
@@ -203,7 +203,7 @@ input[type="submit"] {
 }
 
 input[type="submit"]:hover {
-    background-color: #409187;
+    background-color: var(--rt-accent-dark, #d14c15);
 }
 
 @media (max-width: 780px) {

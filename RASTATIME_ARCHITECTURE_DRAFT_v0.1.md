@@ -5596,8 +5596,12 @@ orange, the stream-status info box, the static-smart-block legend, the
 soundcard mismatch hint, the per-show calendar colours); multi-colour
 icons with orange parts (crossfade / fade / cue graphics, operator
 decision); the installer's `setup-config.css` (runs before the database
-exists); the widgets' own non-orange accents (Now Playing / Weekly
-Programme teal, Song Request blue).
+exists).  The widgets' own accents (Now Playing / Weekly Programme /
+Multi-View / Track History teal `#459B8F`, Song Request blue) follow the
+primary colour too (operator decision the same day): their `--np-accent`
+/ `--sr-accent` read `--rt-accent` (fallback: the default orange), the
+text on solid accent fills uses `--rt-accent-fg`, and all embed views
+print the style block.
 
 **Verification.**  Default palette renders the previous orange on the
 dashboard, library selection, pager, storage bar, scrollbars, Upload
