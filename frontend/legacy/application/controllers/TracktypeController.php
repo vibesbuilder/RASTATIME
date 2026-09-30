@@ -95,7 +95,11 @@ class TracktypeController extends Zend_Controller_Action
     public function getTracktypeDataAction()
     {
         $id = $this->_getParam('id');
-        $this->view->entries = Application_Model_Tracktype::GetTracktypeData($id);
+        // RASTATIME 2026-09-30 - send the JSON ourselves (like the table-info
+        // action): the AjaxContext only switches for X-Requested-With calls,
+        // every other call rendered get-tracktype-data.phtml, which echoed
+        // the array and died with "Array to string conversion" (HTTP 500).
+        $this->_helper->json->sendJson(['entries' => Application_Model_Tracktype::GetTracktypeData($id)]);
     }
 
     public function removeTracktypeAction()
