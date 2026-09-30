@@ -725,7 +725,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   selbst (wie die Tabellen-Action daneben), das View-Script ist weg.  Live
   verifiziert: `fetch` und `$.ajax` liefern 200 mit `entries`, das Formular
   füllt sich weiter.  Dasselbe Muster liegt noch in fünf anderen
-  View-Scripts (schedule, user, remove-tracktype) — dort nicht angefasst.
+  View-Scripts (schedule, user, remove-tracktype) — dort nicht angefasst — `1e526a8`.
 
 - **A relay or line-in after a jingle came in about one second early
   (2026-09-29, found while checking the logs after the crossfade per track
