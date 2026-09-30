@@ -682,10 +682,15 @@ El Track History no muestra carátulas.
 
 Qué esperar:
 
-* **Solo los temas que realmente tienen carátula muestran una.**  En
-  todo lo demás — temas sin carátula, webstreams, Line-Ins — la
-  imagen simplemente se omite y el texto ocupa su lugar.  No hay
-  imagen de reemplazo.
+* **Primero la carátula del tema, después la imagen del programa.**
+  Un tema con carátula muestra la suya.  En todo lo demás — webstream,
+  Line-In, tema sin carátula — el widget muestra desde 2026-09-30 la
+  **imagen del programa en curso** (Calendar → programa → *Show
+  image*): un relé en directo como la hora de la BBC lleva así la
+  imagen que dio a ese programa.  Sin imagen de programa, la imagen
+  simplemente se omite y el texto ocupa su lugar; no hay imagen de
+  reemplazo.  La imagen del programa se sirve tal como se subió (sin
+  miniatura) — manténgala ligera, unos cientos de KB como máximo.
 * **Las carátulas necesitan la API pública.**  Vienen del mismo
   endpoint que usa el widget Song Request, sujeto a Settings →
   Preferences → *Public API*.  Con el interruptor apagado los widgets

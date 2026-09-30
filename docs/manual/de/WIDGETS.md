@@ -723,10 +723,15 @@ Die Track History zeigt keine Cover.
 
 Was Sie erwarten können:
 
-* **Nur Titel, die wirklich ein Cover haben, zeigen eines.**  Bei
-  allem anderen — Titel ohne Artwork, Webstreams, Line-Ins — fällt
-  das Bild einfach weg und der Text rückt nach.  Ein Platzhalterbild
-  gibt es nicht.
+* **Zuerst das eigene Cover des Titels, dann das Sendungsbild.**  Ein
+  Titel mit Artwork zeigt sein Cover.  Bei allem anderen — Webstream,
+  Line-In, Titel ohne Artwork — zeigt das Widget seit 2026-09-30 das
+  **Bild der laufenden Sendung** (Calendar → Sendung → *Show image*);
+  ein Live-Relais wie die BBC-Stunde trägt so das Bild, das Sie dieser
+  Sendung gegeben haben.  Ohne Sendungsbild fällt das Bild einfach weg
+  und der Text rückt nach; ein Platzhalterbild gibt es nicht.  Das
+  Sendungsbild wird so ausgeliefert, wie es hochgeladen wurde (keine
+  Verkleinerung) — halten Sie es klein, höchstens einige hundert KB.
 * **Cover brauchen die öffentliche API.**  Sie kommen vom selben
   Endpunkt wie beim Song-Request-Widget, freigeschaltet über
   Settings → Preferences → *Public API*.  Ist der Schalter aus,

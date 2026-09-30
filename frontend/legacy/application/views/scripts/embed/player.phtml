@@ -315,10 +315,18 @@ $cfg = $this->playerConfigJson;   // pre-encoded JSON (controller)
 
     // W4.1 — show the cover only for a track that has one; never point
     // the <img> at a cover-less id (0-byte 200 = hanging image).
-    function paintCover(track) {
+    // RASTATIME 2026-09-30 — without a track cover the show's image is
+    // the cover (webstream, line-in, cover-less track); a show whose
+    // image file is gone answers with the station logo, never 0 bytes.
+    function paintCover(track, show) {
         if (!elCover || !elCoverImg || !CFG.art) { return; }
+        var url = null;
         if (track && track.hasArtwork && track.fileId) {
-            var url = CFG.artUrlPrefix + encodeURIComponent(track.fileId);
+            url = CFG.artUrlPrefix + encodeURIComponent(track.fileId);
+        } else if (show && show.hasImage && show.id && CFG.showLogoUrlPrefix) {
+            url = CFG.showLogoUrlPrefix + encodeURIComponent(show.id);
+        }
+        if (url) {
             if (elCoverImg.getAttribute("src") !== url) {
                 elCoverImg.setAttribute("src", url);
             }
@@ -357,7 +365,7 @@ $cfg = $this->playerConfigJson;   // pre-encoded JSON (controller)
                         elTrack.textContent = CFG.labels.offAir;
                     }
                 }
-                paintCover(track.current);
+                paintCover(track.current, show.current);
                 elShow.textContent = show.current ? show.current.name : "";
                 var next = (track.next && track.next.title)
                     || (show.next && show.next.name) || "";

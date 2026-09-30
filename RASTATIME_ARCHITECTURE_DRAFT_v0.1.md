@@ -1,10 +1,14 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.53
+Draft version: 0.54
 Date: 2026-09-30
 
 > **Revision history**
+> - **0.54 (2026-09-30)** — **Show image as the fallback cover**
+>   (§23.22 addendum): the Stream Player and Now Playing - Track show
+>   the running show's image when the on-air item has no artwork
+>   (webstream, line-in, cover-less track).
 > - **0.53 (2026-09-30)** — **"No Fade during Crossover" as a track type
 >   preset** (§23.44 addendum): cc_track_types.no_fade_crossfade
 >   (migration 0063), inherited by tracks set to "As the track type"; the
@@ -4008,6 +4012,23 @@ defaults to the embedding page's system font.
 * Welle 3: Track History widget with date-range search
 
 All tracked in `BACKLOG.md`.
+
+**Addendum 2026-09-30 - the show image as the fallback cover.**  The
+operator asked for a cover on webstreams and line-ins "shown in the
+stream".  The Icecast stream itself carries text metadata only, so a
+picture can appear only where RASTATIME renders: the player, the
+now-playing widgets, the radio page.  Rather than a new image per
+source (columns on cc_webstream and rastatime_linein, two upload forms,
+a serving endpoint), the widgets fall back to the image the running
+SHOW already has (`cc_show.image_path`, `/api/show-logo?id=`): the
+now-playing payload's `show.current` carries `id` and `hasImage`, and
+`paintCover()` in the player and in now-playing-widget.js takes the
+track's artwork first, else the show image, else nothing.  The
+show-logo endpoint answers a missing file with a redirect to the
+station logo, never with 0 bytes, so the <img> cannot hang (the trap
+the artwork endpoint has).  The image is served as uploaded - no
+thumbnail - which the manual says to keep modest.  A per-source cover
+stays an option on top of this (declined for now as not needed).
 
 ---
 

@@ -133,6 +133,9 @@
         // track
         var ct = payload.track && payload.track.current;
         var nt = payload.track && payload.track.next;
+        // RASTATIME 2026-09-30 - the current show's image is the fallback
+        // cover (webstream, line-in, cover-less track)
+        var cs = payload.show && payload.show.current;
         var labelFor = function (t) {
             if (!t) { return null; }
             var title  = (t.title  || '').trim();
@@ -148,7 +151,8 @@
         return {
             current: ct ? {
                 label: labelFor(ct), starts: ct.starts, ends: ct.ends,
-                fileId: ct.fileId, hasArtwork: ct.hasArtwork
+                fileId: ct.fileId, hasArtwork: ct.hasArtwork,
+                showId: cs ? cs.id : null, hasShowImage: !!(cs && cs.hasImage)
             } : null,
             next:    nt ? { label: labelFor(nt), starts: nt.starts, ends: nt.ends } : null
         };
@@ -162,6 +166,7 @@
     // image would hang forever (neither load nor error fires).
     var artEnabled = body.getAttribute('data-art') === '1';
     var artUrlPrefix = body.getAttribute('data-art-url') || '';
+    var showLogoUrlPrefix = body.getAttribute('data-show-logo-url') || '';
 
     function paintCover(entry) {
         if (!artEnabled) { return; }
@@ -169,8 +174,15 @@
         if (!cover) { return; }
         var img = cover.querySelector('img');
         if (!img) { return; }
+        var url = null;
         if (entry && entry.hasArtwork && entry.fileId) {
-            var url = artUrlPrefix + encodeURIComponent(entry.fileId);
+            url = artUrlPrefix + encodeURIComponent(entry.fileId);
+        } else if (entry && entry.hasShowImage && entry.showId && showLogoUrlPrefix) {
+            // the show's image (a show whose file is gone answers with the
+            // station logo, never 0 bytes)
+            url = showLogoUrlPrefix + encodeURIComponent(entry.showId);
+        }
+        if (url) {
             if (img.getAttribute('src') !== url) { img.setAttribute('src', url); }
             cover.classList.add('np-cover-on');
         } else {

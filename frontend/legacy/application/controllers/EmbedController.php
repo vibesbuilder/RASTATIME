@@ -100,6 +100,8 @@ class EmbedController extends Zend_Controller_Action
                 Application_Model_Preference::GetWidgetPlayerShowArt()
             ),
             'artUrlPrefix' => $this->_artworkUrlPrefix(128),
+            // RASTATIME 2026-09-30 - the show's image as the fallback cover
+            'showLogoUrlPrefix' => $this->_showLogoUrlPrefix(),
             'labels' => [
                 'next' => _('Next'),
                 'onAir' => _('On Air'),
@@ -290,6 +292,7 @@ class EmbedController extends Zend_Controller_Action
         // _resolveArtFlag).
         $this->view->artEnabled = $this->_resolveArtFlag($request, false);
         $this->view->artUrlPrefix = $this->_artworkUrlPrefix(64);
+        $this->view->showLogoUrlPrefix = $this->_showLogoUrlPrefix();
 
         $cacheTtl = $this->_resolveCacheTtl();
         $this->view->cacheTtl = $cacheTtl;
@@ -401,6 +404,19 @@ class EmbedController extends Zend_Controller_Action
         return Config::getBasePath() . 'api/track?return=artwork-' . (int) $size . '&id=';
     }
 
+    /**
+     * RASTATIME 2026-09-30 - the show image endpoint (Calendar -> show ->
+     * image), the fallback cover of the player and the Now Playing - Track
+     * widget when the on-air item has no artwork of its own: a webstream,
+     * a line-in, a track without a cover.  Same public-API gate as the
+     * artwork endpoint; a show whose image file is gone answers with the
+     * station logo (redirect), so the <img> never hangs.
+     */
+    private function _showLogoUrlPrefix()
+    {
+        return Config::getBasePath() . 'api/show-logo?id=';
+    }
+
     private function _buildNowPlayingPayload($timezone)
     {
         $range = Application_Model_Schedule::GetPlayOrderRange();
@@ -454,6 +470,10 @@ class EmbedController extends Zend_Controller_Action
             'name'   => $name,
             'starts' => $this->_formatTimestamp($show['starts'] ?? null, $timezone),
             'ends'   => $this->_formatTimestamp($show['ends'] ?? null, $timezone),
+            // RASTATIME 2026-09-30 - id + image presence so a consumer can
+            // fall back to the show's image when the track has no cover
+            'id'       => isset($show['id']) ? (int) $show['id'] : null,
+            'hasImage' => isset($show['id']) && trim((string) ($show['image_path'] ?? '')) !== '',
         ];
     }
 

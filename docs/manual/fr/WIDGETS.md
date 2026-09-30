@@ -689,10 +689,16 @@ La Track History n'affiche pas de pochettes.
 
 À quoi s'attendre :
 
-* **Seuls les titres qui ont réellement une pochette en affichent
-  une.**  Pour tout le reste — titres sans pochette, webstreams,
-  Line-Ins — l'image est simplement omise et le texte prend sa
-  place.  Il n'y a pas d'image de remplacement.
+* **D'abord la pochette du titre, puis l'image de l'émission.**  Un
+  titre avec pochette affiche la sienne.  Pour tout le reste —
+  webstream, Line-In, titre sans pochette — le widget affiche depuis
+  le 2026-09-30 l'**image de l'émission en cours** (Calendar →
+  émission → *Show image*) : un relais en direct comme l'heure BBC
+  porte ainsi l'image que vous avez donnée à cette émission.  Sans
+  image d'émission, l'image est simplement omise et le texte prend sa
+  place ; il n'y a pas d'image de remplacement.  L'image de l'émission
+  est servie telle qu'elle a été téléversée (pas de vignette) — gardez-la
+  légère, quelques centaines de Ko au plus.
 * **Les pochettes nécessitent l'API publique.**  Elles viennent du
   même endpoint que le widget Song Request, soumis à Settings →
   Preferences → *Public API*.  Interrupteur éteint : les widgets

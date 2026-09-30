@@ -9,6 +9,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Sendungsbild als Rückfall-Cover in Player und Now-Playing-Widget
+  (2026-09-30, Operator-Frage nach Covern für Webstreams/Line-Ins, Go
+  Option A)** — Der Icecast-Stream selbst trägt nur Text-Metadaten; ein
+  Bild kann nur dort erscheinen, wo RASTATIME rendert.  Statt eines
+  eigenen Bildes je Quelle (Spalten, Upload-Formulare, Endpoint) zeigen
+  Stream-Player und Now Playing – Track jetzt das **Bild der laufenden
+  Sendung** (`cc_show.image_path`, `/api/show-logo?id=`), wenn der
+  laufende Titel keines hat — Webstream, Line-In, Titel ohne Artwork.
+  Payload `show.current` trägt `id` + `hasImage`; `paintCover()` nimmt
+  zuerst das Titel-Artwork, sonst das Sendungsbild, sonst nichts.  Der
+  Show-Logo-Endpoint antwortet bei fehlender Datei mit dem Stationslogo
+  (Redirect), nie mit 0 Byte.  Bestand: nur „bbc-news-test" hat heute
+  ein echtes Sendungsbild, die 28 Auto-DJ-Sendungen tragen das
+  Auto-DJ-Logo — die Live-Sendungen (BBC, Partner Radio) brauchen ein Bild
+  (Calendar → Sendung → Show image).  Verifiziert: alle Widget-Routen
+  200, `_slimShow` per CLI (id/hasImage), Player und Widget mit
+  simuliertem Payload „Webstream in Sendung mit Bild" (Bild 48 px
+  geladen), Titel-Artwork behält Vorrang.  Handbuch WIDGETS ×4,
+  Architektur §23.22 Addendum (0.54).  Ein Cover je Webstream/Line-In
+  bleibt als Ergänzung möglich (jetzt nicht nötig).
+
 - **„No Fade during Crossover" als Track-Typ-Vorgabe (2026-09-30,
   Operator-Go)** — Die Operator-Frage nach einer Checkbox „Exclude from
   Crossover" am Track-Typ war ein No-Go: dieses Preset gibt es bereits als

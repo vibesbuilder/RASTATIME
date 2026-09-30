@@ -839,10 +839,15 @@ The Track History shows no covers.
 
 What to expect:
 
-* **Only tracks that actually have a cover show one.**  For anything
-  else — tracks without artwork, webstreams, Line-Ins — the picture
-  is simply left out and the text moves into its place.  There is no
-  placeholder image.
+* **A track's own cover first, then the show's image.**  A track
+  with artwork shows its cover.  For anything else — a webstream, a
+  Line-In, a track without artwork — the widget shows the **image of
+  the running show** (Calendar → show → *Show image*) since
+  2026-09-30, so a live relay such as the BBC hour carries the
+  picture you gave that show.  Without a show image the picture is
+  simply left out and the text moves into its place; there is no
+  placeholder image.  The show image is served as uploaded (no
+  thumbnail), so keep it modest — a few hundred KB at most.
 * **Covers need the public API.**  They are served by the same
   endpoint the Song-Request widget uses, gated by Settings →
   Preferences → *Public API*.  With that toggle off the widgets keep
