@@ -41,7 +41,31 @@ festgelegt.  Jeder Punkt bekommt vor Implementierung die
 
 ## 🎯 Aktive Backlog-Items (warten auf Operator-Go)
 
-### 🟢 Crossfade je Track-Typ und „Exclude from Crossover" — 5 s Stille vor dem BBC-Webstream (Operator-Go 2026-09-29, gebaut — Live-Abnahme offen)
+### 💡 Cue-Punkte prüfen: Cue-Out hinter dem Dateiende, stille Datei-Enden (neu 2026-09-30)
+
+**Befund (Testsendung 2026-09-30):** `cc_files.cueout` darf heute größer als die
+Dateilänge sein (ID 593: 6,90 s bei 5,97 s — vermutlich Datei ersetzt, Cue blieb),
+und der Analyzer setzt Cue-Out per `silencedetect` (−60 dB, ≥ 0,3 s) nur beim
+Import; Jingles mit stiller Nachlaufzeit (576: 1,08 s) bleiben lang.  Bei
+Überlapp 0 wird jede dieser Stellen als Pause hörbar.  **Ideen:** (a) Speichern im
+Titel-Editor und Ersetzen der Datei kappen Cue-Out auf die Länge; (b) Job „Cue-Punkte
+neu messen" für Bibliothek oder Track-Typ (wie „Measure missing files now"); (c)
+Bericht „Titel mit Cue-Out > Länge / stillem Ende > 0,5 s".  Vorbedingung: Evaluierung.
+
+### ✅ Crossfade je Track-Typ und „Exclude from Crossover" — 5 s Stille vor dem BBC-Webstream (Operator-Go 2026-09-29, DONE 2026-09-30 — Testsendung abgenommen)
+
+**Abnahme 2026-09-30 08:00 (Testsendung „BBC", Instanz 2001, Log + 24/7-Aufnahme):**
+Jingle-Folge Stoß an Stoß (`track/-/0.00`, Nachfolger startet am Ende des
+Vorgängers, Kette läuft konstant 0,30 s hinter den Zeilen), das Relais-Gate
+öffnete 08:01:07,02 nach der neuen Wartezeile „0.94 s of audio left" — die
+BBC setzt in der Aufnahme bei 67,08 s ein, exakt Zeilenende + Lag.  Die 5-s-Stille
+ist weg.  **Restliche Stille kommt aus den Dateien, nicht aus dem Playout:**
+„Intro BBC News" (ID 593) hat Cue-Out 6,90 s bei nur 5,97 s Dateilänge (0,93 s
+Leerlauf) und endet selbst mit 0,95 s Stille → 1,9 s Pause vor der BBC; „TOH-Jingle
+8 Uhr" (576) endet 1,08 s vor seinem Cue-Out still, „Showteaser" (518) beginnt 0,4 s
+leise.  Abhilfe: Cue-Punkte der Jingles nachziehen (siehe 💡 unten).  Dabei
+gefunden und behoben: Live-Item nach Datei kam 1 s zu früh (`8c8d1c5`, Timer auf
+ganzer Sekunde, Architektur §23.44 Nachtrag).
 
 **Stand 2026-09-29 abends:** gebaut (Option C, beide Wege; `b28bc98`, `f36de90`).  Operator-Entscheidungen: Paar-Regel = kleinerer Wert;
 Jingles 0 s; die 100 „No Fade"-Jingles auf „wie Track-Typ" zurückgesetzt (Sicherung
