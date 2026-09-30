@@ -85,6 +85,15 @@ class Application_Form_AddTracktype extends Zend_Form
         $crossfade->setDescription(_('How long two neighbouring tracks of this type overlap and fade. Empty = the Default Track Crossfade Duration from Settings - General. Between two tracks the smaller of the two values applies, so 0 makes every track of this type start exactly at the end of the previous one (jingles, exactly timed elements). A change re-lays the rows of all upcoming shows.'));
         $this->addElement($crossfade);
 
+        // RASTATIME 2026-09-30 - "No Fade during Crossover" as the type's
+        // preset (migration 0063).  Zend renders the unchecked value as a
+        // hidden input, so the serialized form always carries the key.
+        $noFade = new Zend_Form_Element_Checkbox('no_fade_crossfade');
+        $noFade->setLabel(_('No Fade during Crossover:'));
+        $noFade->setRequired(false);
+        $noFade->setDescription(_('Tracks of this type keep their full level while the neighbouring track fades in or out; the overlap itself stays as the Crossfade Duration says (jingles or IDs that should cut through the end of a song). Applies to tracks whose Crossover is "As the track type"; the track editor can still set a single track differently. Takes effect on the next schedule push, no re-layout.'));
+        $this->addElement($noFade);
+
         $saveBtn = new Zend_Form_Element_Button('save_tracktype');
         $saveBtn->setAttrib('class', 'btn right-floated');
         $saveBtn->setIgnore(true);

@@ -426,6 +426,35 @@ def test_generate_file_events_carries_instance_and_exclusion():
     assert ev.instance_id == 33 and ev.no_fade_crossfade is True
 
 
+def test_generate_file_events_inherits_the_types_no_fade_preset():
+    """RASTATIME 2026-09-30 - track_type_no_fade (migration 0063): a track
+    set to "As the track type" takes the preset; the track's own field
+    wins, an excluded track has no overlap to keep its level in."""
+    from libretime_playout.player.schedule import StreamPreferences, generate_file_events
+
+    schedule = {
+        "id": 7, "instance": 33, "starts_at": datetime(2026, 9, 30, 12, 0),
+        "ends_at": datetime(2026, 9, 30, 12, 3), "fade_in": "00:00:00.500000",
+        "fade_out": "00:00:00.500000", "cue_in": "00:00:00", "cue_out": "00:03:00",
+    }
+    prefs = StreamPreferences(input_fade_transition=0.0, message_format=0,
+                              message_offline="off", replay_gain_enabled=False,
+                              replay_gain_offset=0.0)
+    base = {"url": "x", "id": 5, "mime": "audio/mpeg", "replay_gain": 0.0, "size": 1}
+
+    def flag(**fields):
+        events = {}
+        generate_file_events(events, schedule, {**base, **fields}, {"name": "s"}, prefs)
+        (ev,) = events.values()
+        return ev.no_fade_crossfade
+
+    assert flag(track_type_no_fade=True) is True                        # as the track type
+    assert flag(track_type_no_fade=False) is False
+    assert flag() is False                                              # older API without the field
+    assert flag(no_fade_crossfade=True, track_type_no_fade=False) is True   # the track's field wins
+    assert flag(exclude_crossfade=True, track_type_no_fade=True) is False  # nothing to fade in
+
+
 def test_resolve_dj_fade_prefers_the_preference(monkeypatch):
     from libretime_playout import __main__ as main
 

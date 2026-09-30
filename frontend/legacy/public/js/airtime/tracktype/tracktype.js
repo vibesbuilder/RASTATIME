@@ -21,10 +21,12 @@ function populateForm(entries) {
       ? ""
       : entries.crossfade_duration,
   );
+  // RASTATIME 2026-09-30 - "No Fade during Crossover" preset
+  $("#no_fade_crossfade").prop("checked", !!entries.no_fade_crossfade);
   if ($.rtDescriptionTooltips) {
     $.rtDescriptionTooltips($("#tracktype_details"), {
       where: "field",
-      only: ["crossfade_duration"],
+      only: ["crossfade_duration", "no_fade_crossfade"],
     });
   }
 }

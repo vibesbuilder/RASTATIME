@@ -12,6 +12,12 @@ class FileSerializer(serializers.ModelSerializer):
         max_digits=5, decimal_places=2,
         read_only=True, allow_null=True, default=None,
     )
+    # RASTATIME 2026-09-30 - the type's "No Fade during Crossover" preset;
+    # the playout resolves the effective flag (file field wins).
+    track_type_no_fade = serializers.BooleanField(
+        source="library.no_fade_crossfade",
+        read_only=True, default=False,
+    )
 
     class Meta:
         model = File

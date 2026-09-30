@@ -302,7 +302,7 @@ class Application_Form_EditAudioMD extends Zend_Form
             'nofade' => _('No Fade during Crossover'),
             'exclude' => _('Exclude from Crossover'),
         ]);
-        $crossoverMode->setDescription(_('As the track type: the track overlaps and fades with its neighbours as its track type says (or the house value). No Fade during Crossover: the overlap stays, but this track keeps its full level while the other one fades. Exclude from Crossover: this track never overlaps a neighbour - it starts at the end of the previous track and the next one starts at its end.'));
+        $crossoverMode->setDescription(_('As the track type: the track overlaps and fades with its neighbours as its track type says (or the house value), including the type\'s "No Fade during Crossover" preset. No Fade during Crossover: the overlap stays, but this track keeps its full level while the other one fades. Exclude from Crossover: this track never overlaps a neighbour - it starts at the end of the previous track and the next one starts at its end.'));
         $this->addElement($crossoverMode);
 
         // Add the cancel button

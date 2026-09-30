@@ -243,7 +243,7 @@ def generate_file_events(
         filesize=file["size"],
         # RASTATIME 2026-09-27 - show boundary + "No Fade during Crossover"
         instance_id=schedule.get("instance"),
-        no_fade_crossfade=bool(file.get("no_fade_crossfade") or False),
+        no_fade_crossfade=_effective_no_fade(file),
         # RASTATIME 2026-09-29 - crossfade per track type / Exclude from Crossover
         crossfade_seconds=_float_or_none(file.get("track_type_crossfade")),
         exclude_crossfade=bool(file.get("exclude_crossfade") or False),
@@ -265,6 +265,21 @@ def _float_or_none(raw) -> Optional[float]:
         return float(raw) if raw is not None and raw != "" else None
     except (TypeError, ValueError):
         return None
+
+
+def _effective_no_fade(file: dict) -> bool:
+    """
+    RASTATIME 2026-09-30 - "No Fade during Crossover" of a track: the
+    track's own flag, else - for a track set to "As the track type" - its
+    type's preset (track_type_no_fade, legacy migration 0063).  A track
+    excluded from the crossover has no overlap to keep its level in, so
+    the preset does not apply to it.
+    """
+    if file.get("no_fade_crossfade"):
+        return True
+    if file.get("exclude_crossfade"):
+        return False
+    return bool(file.get("track_type_no_fade") or False)
 
 
 def file_gain_db(file: dict, stream_preferences) -> Optional[float]:

@@ -1,10 +1,15 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.52
-Date: 2026-09-29
+Draft version: 0.53
+Date: 2026-09-30
 
 > **Revision history**
+> - **0.53 (2026-09-30)** — **"No Fade during Crossover" as a track type
+>   preset** (§23.44 addendum): cc_track_types.no_fade_crossfade
+>   (migration 0063), inherited by tracks set to "As the track type"; the
+>   playout resolves the effective flag from file + serializer field, no
+>   row re-layout (the overlap is unchanged).
 > - **0.52 (2026-09-30)** — **Cue points** (§23.45): detection from the
 >   library (ffmpeg silencedetect in the legacy app), cue in / out kept
 >   inside the file, changes copied into the rows of the upcoming shows
@@ -5696,6 +5701,24 @@ a file track.  Both give up above `FILE_TAIL_HOLD_MAX_SECONDS` (4 s,
 overbook: cut now), while a DJ is on air, and for a cold start (which
 has its own start-up time); after the wait they check that no other
 item has taken the spotlight.
+
+**Addendum 2026-09-30 - "No Fade during Crossover" as a type preset
+(migration 0063).**  The operator asked for an "Exclude from Crossover"
+checkbox on the track type; that preset already exists as Crossfade
+Duration = 0 (both give a side value of 0 in `crossfadeOverlapBetween`
+and `_track_crossfade`), so it was declined.  What the type level did not
+have was the other exception: `cc_track_types.no_fade_crossfade`.  The
+effective flag of a track is resolved ONCE, in the playout
+(`schedule._effective_no_fade`): the track's own `no_fade_crossfade`
+wins; an excluded track never takes the preset (no overlap to keep its
+level in); a track set to "As the track type" takes
+`track_type_no_fade`, a read-only field of the file serializer next to
+`track_type_crossfade`.  The row layout is untouched - the preset
+changes the fade shape, not the overlap - so a change of the preset
+only pushes the schedule (`Tracktype::save()` reports which of the two
+presets changed; a changed duration still re-lays the upcoming rows).
+The track editor's three-way field keeps its options; "As the track
+type" now inherits both the duration and the preset.
 
 ### 23.45 Cue Points: Detection, Validation, Propagation (2026-09-30)
 

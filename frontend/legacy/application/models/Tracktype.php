@@ -128,16 +128,59 @@ class Application_Model_Tracktype
     private $_crossfadeDirty = false;
 
     /**
-     * @return bool true when the crossfade of an existing or new type changed
+     * RASTATIME 2026-09-30 - "No Fade during Crossover" as the type's
+     * preset (migration 0063): tracks set to "As the track type" keep
+     * their level while a neighbour fades.  Raw SQL, stored by save().
+     *
+     * @param mixed $value
+     */
+    public function setNoFadeCrossfade($value)
+    {
+        $this->_noFadeCrossfade = ($value === true || $value === 1 || $value === '1' || $value === 'true');
+        $this->_noFadeDirty = true;
+    }
+
+    /** @return bool */
+    public function getNoFadeCrossfade()
+    {
+        if ($this->_noFadeDirty) {
+            return $this->_noFadeCrossfade;
+        }
+        $id = $this->_tracktypeInstance->getDbId();
+        if (!$id) {
+            return false;
+        }
+        $value = Application_Common_Database::prepareAndExecute(
+            'SELECT no_fade_crossfade FROM cc_track_types WHERE id = :id',
+            [':id' => $id],
+            Application_Common_Database::COLUMN
+        );
+
+        return ($value === true || $value === 't' || $value === 1 || $value === '1');
+    }
+
+    private $_noFadeCrossfade = false;
+    private $_noFadeDirty = false;
+
+    /**
+     * @return array{crossfade: bool, no_fade: bool} which of the two crossover
+     *                                              presets of an existing or
+     *                                              new type changed
      */
     public function save()
     {
-        $changed = false;
+        $changed = ['crossfade' => false, 'no_fade' => false];
         if ($this->_crossfadeDirty) {
             $this->_crossfadeDirty = false;
             $before = $this->getCrossfadeDuration();
             $this->_crossfadeDirty = true;
-            $changed = ($before !== $this->_crossfadeDuration);
+            $changed['crossfade'] = ($before !== $this->_crossfadeDuration);
+        }
+        if ($this->_noFadeDirty) {
+            $this->_noFadeDirty = false;
+            $before = $this->getNoFadeCrossfade();
+            $this->_noFadeDirty = true;
+            $changed['no_fade'] = ($before !== $this->_noFadeCrossfade);
         }
         $this->_tracktypeInstance->save();
         if ($this->_crossfadeDirty) {
@@ -147,6 +190,14 @@ class Application_Model_Tracktype
                 Application_Common_Database::EXECUTE
             );
             $this->_crossfadeDirty = false;
+        }
+        if ($this->_noFadeDirty) {
+            Application_Common_Database::prepareAndExecute(
+                'UPDATE cc_track_types SET no_fade_crossfade = :f WHERE id = :id',
+                [':f' => $this->_noFadeCrossfade ? 'true' : 'false', ':id' => $this->_tracktypeInstance->getDbId()],
+                Application_Common_Database::EXECUTE
+            );
+            $this->_noFadeDirty = false;
         }
 
         return $changed;
@@ -235,7 +286,7 @@ class Application_Model_Tracktype
     public static function getTracktypeData($id)
     {
         $sql = <<<'SQL'
-SELECT code, type_name, description, visibility, id, analyze_cue_points, crossfade_duration
+SELECT code, type_name, description, visibility, id, analyze_cue_points, crossfade_duration, no_fade_crossfade
 FROM cc_track_types
 WHERE id = :id
 SQL;

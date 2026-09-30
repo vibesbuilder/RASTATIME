@@ -9,6 +9,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **„No Fade during Crossover" als Track-Typ-Vorgabe (2026-09-30,
+  Operator-Go)** — Die Operator-Frage nach einer Checkbox „Exclude from
+  Crossover" am Track-Typ war ein No-Go: dieses Preset gibt es bereits als
+  Crossfade Duration = 0 (Scheduler und Playout liefern für beides den
+  Seitenwert 0).  Die zweite Ausnahme fehlte auf Typ-Ebene: Settings →
+  Track Types → Checkbox „No Fade during Crossover" (Tooltip;
+  `cc_track_types.no_fade_crossfade`, Migration 0063 angewendet,
+  Schema 63).  Titel mit Crossover „As the track type" erben die Vorgabe:
+  sie behalten ihren vollen Pegel, während der Nachbar blendet, die
+  Überlappung bleibt wie die Crossfade-Dauer des Typs.  Das Titel-Feld
+  gewinnt („No Fade" erzwingt, „Exclude" hat keine Überlappung); aufgelöst
+  wird einmal im Playout (`schedule._effective_no_fade`) aus Datei plus dem
+  neuen Read-only-Feld `track_type_no_fade` des File-Serializers.  Kein
+  Neu-Layout — die Überlappung ändert sich nicht — nur ein Schedule-Push
+  (`Tracktype::save()` meldet, welche der beiden Vorgaben sich änderte).
+  Track-Editor-Tooltip nennt die Vererbung; Texte DE/FR/ES; Playout-Test
+  (Vererbung, Vorrang, Exclude, alte API ohne Feld), 32/32 grün, Django
+  check + Serializer geprüft; Formular live verifiziert (Checkbox,
+  Hidden-Fallback, Tooltip, Daten-Endpoint).  Handbuch SETTINGS + LIBRARY
+  ×4, Architektur §23.44 Addendum (0.53).  Inbetriebnahme: API- und
+  PLAYOUT-Neustart (Serializer-Feld, Auflösung), Apache-Neustart für die
+  Übersetzungen; danach die Vorgabe am gewünschten Typ setzen.
+
 - **Webstream default length follows into the upcoming shows (2026-09-30,
   follow-up to the cue-point package)** - the operator set the BBC relay from
   302 to 305 s so the hourly show is filled; the rows copy the length at

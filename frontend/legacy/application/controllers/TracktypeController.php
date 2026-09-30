@@ -54,8 +54,14 @@ class TracktypeController extends Zend_Controller_Action
                 // RASTATIME 2026-09-29 - crossfade per track type: a changed value
                 // re-lays the rows of all upcoming shows and tells the playout
                 $tracktype->setCrossfadeDuration($formData['crossfade_duration'] ?? '');
-                if ($tracktype->save()) {
+                // RASTATIME 2026-09-30 - "No Fade during Crossover" preset: the
+                // overlap stays, so only the playout needs the new schedule
+                $tracktype->setNoFadeCrossfade($formData['no_fade_crossfade'] ?? '0');
+                $changed = $tracktype->save();
+                if ($changed['crossfade']) {
                     Application_Model_Scheduler::relayoutFutureInstances();
+                }
+                if ($changed['crossfade'] || $changed['no_fade']) {
                     Application_Model_RabbitMq::PushSchedule();
                 }
 

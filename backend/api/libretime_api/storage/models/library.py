@@ -27,6 +27,10 @@ class Library(models.Model):
     crossfade_duration = models.DecimalField(
         max_digits=5, decimal_places=2, blank=True, null=True,
     )
+    # RASTATIME 2026-09-30 - "No Fade during Crossover" as the type's preset
+    # (legacy migration 0063): tracks set to "As the track type" keep their
+    # level while a neighbour fades.
+    no_fade_crossfade = models.BooleanField(default=False)
 
     class Meta:
         managed = False
