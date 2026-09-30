@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   <stream id> [--apply]` (dry run in a rolled-back transaction, reports rows
   past the show end and the gap to the show end) - applied for the already
   saved value: 238 instances, gap to the show end 3.9 s -> 0.9 s, no row past
-  the show end.  Manual WEBSTREAMS x4 - `<hash-ws-length>`.
+  the show end.  Manual WEBSTREAMS x4 - `e833192`.
 
 - **Cue points: re-detect from the library, follow into the upcoming shows,
   capped at the file length (2026-09-30, operator Go after the evaluation)** -
