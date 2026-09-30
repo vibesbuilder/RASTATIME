@@ -41,7 +41,16 @@ festgelegt.  Jeder Punkt bekommt vor Implementierung die
 
 ## 🎯 Aktive Backlog-Items (warten auf Operator-Go)
 
-### 💡 Cue-Punkte prüfen: Cue-Out hinter dem Dateiende, stille Datei-Enden (neu 2026-09-30)
+### ✅ Cue-Punkte prüfen: Cue-Out hinter dem Dateiende, stille Datei-Enden (neu 2026-09-30, Operator-Go 2026-09-30, DONE 2026-09-30)
+
+**Gebaut 2026-09-30 (Reihenfolge 3 → 2 → 1, Weg A, Library-Mehrfachauswahl):**
+`Application_Model_CuePoints` (detect / clamp / applyToFutureRows / relayoutInstances),
+Titel-Editor kappt und reicht durch, Toolbar-Knopf „Cue Points" (`library/redetect-cue-points`,
+> 15 min übersprungen).  Trockenlauf `C:/Temp/optd/cue_dryrun.php`: TOH 10 Uhr → 0–9,035 s,
+Intro → 0–4,981 s, Showteaser unverändert; Durchreichen für Datei 593 trifft genau die 26
+alten Zeilen der Dienstag-Serie.  Endpunkt live (200, JSON).  Architektur §23.45 / 0.52.
+**Offen:** Operator wendet „Cue Points" auf die Jingles an (Library → Filter Jingles →
+alle markieren → Cue Points), danach Kontrolle der Stunden-Folge in der Aufnahme.
 
 **Befund (Testsendung 2026-09-30):** `cc_files.cueout` darf heute größer als die
 Dateilänge sein (ID 593: 6,90 s bei 5,97 s — vermutlich Datei ersetzt, Cue blieb),

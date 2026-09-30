@@ -185,7 +185,7 @@ métadonnées** dans le menu d'action de la ligne.
 | **Année** | `cc_files.year` |
 | **BPM** | `cc_files.bpm` |
 | **Type de piste** | `cc_files.track_type` — utilisé par les filtres smart-block |
-| **Cue In / Out** | `cc_files.cuein` / `cueout` — couper le début / la fin sans re-encodage |
+| **Cue In / Out** | `cc_files.cuein` / `cueout` — couper le début / la fin sans re-encodage. Depuis le 30/09/2026, les valeurs restent à l'intérieur du fichier : un cue out au-delà de la longueur est ramené à la longueur, un cue in négatif devient zéro. Une modification est copiée dans les lignes des émissions à venir qui programment la piste (les lignes déjà commencées ne sont pas touchées), et ces émissions sont recalculées - pas besoin de les remplir à nouveau. |
 | **Fade In / Out** | `cc_files.fadein` / `fadeout` |
 | **Replay Gain** | `cc_files.replay_gain` — utilisé par le moteur de playout pour la normalisation de niveau |
 | **Crossover** | Comment ce titre rencontre ses voisins (depuis le 2026-09-29 un champ à trois choix ; les deux exceptions s'excluent mutuellement). **As the track type** (comme le type de piste, par défaut) : le titre se chevauche et s'enchaîne selon son type de piste - Settings → Track Types → *Crossfade Duration* - ou, sans valeur à cet endroit, selon la Default Track Crossfade Duration. **No Fade during Crossover** (pas de fondu pendant le crossover, `cc_files.no_fade_crossfade`) : le chevauchement reste, mais ce titre garde son niveau plein pendant que l'autre s'estompe ; à une limite d'émission dépassée, un titre sortant marqué est coupé au lieu d'être fondu. **Exclude from Crossover** (exclure du crossover, `cc_files.exclude_crossfade`) : ce titre ne chevauche jamais un voisin - il démarre à la fin du titre précédent et le suivant démarre à sa fin. Passer à *Exclude* ou en revenir recalcule les lignes des émissions à venir qui programment le titre. |
@@ -437,6 +437,7 @@ barre d'outils qui apparaît au bas du tableau :
 | **Supprimer** | Supprimer les lignes sélectionnées. Même sémantique de confirmation-si-planifié que la suppression d'une seule ligne. |
 | **Modifier les métadonnées** | Ouvrir un dialogue d'édition en lot. S'applique seulement aux pistes. |
 | **Transférer le propriétaire** | Réassigner la propriété (Admin / Super Admin seulement). Utilisé quand un DJ part et que ses fichiers doivent passer au compte de la station. |
+| **Cue Points** | Détecte les points de repère des pistes sélectionnées à partir de l'audio (la même détection de silence que l'analyseur exécute à l'import : moins de −60 dB pendant au moins 0,3 s au début ou à la fin) et les enregistre. Les émissions à venir qui programment ces pistes reprennent les nouvelles valeurs et sont recalculées. Les pistes de plus de 15 minutes sont ignorées - l'action est prévue pour les jingles et autres éléments courts. Depuis le 30/09/2026. |
 
 ---
 

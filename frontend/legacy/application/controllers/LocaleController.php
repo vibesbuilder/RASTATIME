@@ -74,6 +74,11 @@ final class LocaleController extends Zend_Controller_Action
             'Add after selected items' => _('Add after selected items'),
             'Delete' => _('Delete'),
             'Publish' => _('Publish'),
+            // RASTATIME 2026-09-30 - library toolbar "Cue Points"
+            'Cue Points' => _('Cue Points'),
+            'Re-detect the cue points of the selected files' => _('Re-detect the cue points of the selected files'),
+            'Re-detect the cue points of the selected file(s) from their audio? Upcoming shows that schedule them are laid out again.' => _('Re-detect the cue points of the selected file(s) from their audio? Upcoming shows that schedule them are laid out again.'),
+            'The cue points could not be re-detected.' => _('The cue points could not be re-detected.'),
             'Remove' => _('Remove'),
             'Edit Metadata' => _('Edit Metadata'),
             'Add to selected show' => _('Add to selected show'),

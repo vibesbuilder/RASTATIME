@@ -180,7 +180,7 @@ im Aktionsmenü der Zeile.
 | **Jahr** | `cc_files.year` |
 | **BPM** | `cc_files.bpm` |
 | **Track-Typ** | `cc_files.track_type` — von Smart-Block-Filtern verwendet |
-| **Cue In / Out** | `cc_files.cuein` / `cueout` — Anfang / Ende ohne Neu-Kodierung trimmen |
+| **Cue In / Out** | `cc_files.cuein` / `cueout` — Anfang / Ende ohne Neu-Kodierung trimmen. Seit dem 30.09.2026 bleiben die Werte innerhalb der Datei: ein Cue Out hinter der Dateilänge wird auf die Länge gekappt, ein Cue In unter null wird null. Eine Änderung wird in die Zeilen der kommenden Sendungen kopiert, die den Track enthalten (bereits gestartete Zeilen bleiben unberührt), und diese Sendungen werden neu ausgelegt - kein Neu-Befüllen nötig. |
 | **Fade In / Out** | `cc_files.fadein` / `fadeout` |
 | **Replay Gain** | `cc_files.replay_gain` — von der Playout-Engine zur Pegel-Normalisierung verwendet |
 | **Crossover** | Wie dieser Titel auf seine Nachbarn trifft (seit 2026-09-29 ein Dreiwege-Feld; die beiden Ausnahmen schließen einander aus). **As the track type** (Wie der Track-Typ, Vorgabe): Der Titel überlappt und überblendet so, wie sein Track-Typ es vorgibt - Settings → Track Types → *Crossfade Duration* - oder, ohne Wert dort, mit der Default Track Crossfade Duration. **No Fade during Crossover** (Kein Fade beim Crossover, `cc_files.no_fade_crossfade`): Die Überlappung bleibt, aber dieser Titel behält seinen vollen Pegel, während der andere blendet; an einer überzogenen Sendungsgrenze wird ein markierter abgehender Titel geschnitten statt ausgeblendet. **Exclude from Crossover** (Vom Crossover ausnehmen, `cc_files.exclude_crossfade`): Dieser Titel überlappt nie mit einem Nachbarn - er startet am Ende des vorherigen Titels, und der nächste startet an seinem Ende. Ein Wechsel zu oder von *Exclude* legt die Zeilen der kommenden Sendungen, die den Titel enthalten, neu aus. |
@@ -429,6 +429,7 @@ Tabelle erscheint:
 | **Löschen** | Die ausgewählten Zeilen löschen. Gleiche Confirm-on-Scheduled-Use-Semantik wie beim Einzelzeilen-Löschen. |
 | **Metadaten bearbeiten** | Einen Batch-Bearbeitungs-Dialog öffnen. Gilt nur für Tracks. |
 | **Besitz übertragen** | Besitz neu zuweisen (nur Admin / Super Admin). Verwendet, wenn ein DJ ausscheidet und seine Dateien an das Stations-Konto übergehen sollen. |
+| **Cue Points** | Erkennt die Cue-Punkte der ausgewählten Tracks aus dem Audio (dieselbe Stille-Erkennung, die der Analyzer beim Import ausführt: leiser als −60 dB für mindestens 0,3 s am Anfang oder Ende) und speichert sie. Kommende Sendungen, die die Tracks enthalten, übernehmen die neuen Werte und werden neu ausgelegt. Tracks über 15 Minuten werden übersprungen - die Aktion ist für Jingles und andere kurze Elemente gedacht. Seit dem 30.09.2026. |
 
 ---
 

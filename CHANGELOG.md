@@ -9,6 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Cue points: re-detect from the library, follow into the upcoming shows,
+  capped at the file length (2026-09-30, operator Go after the evaluation)** -
+  with jingles laid out without an overlap every silent tail is a pause; all
+  24 TOH jingles end 1.05-1.25 s before their cue out, and the track editor
+  accepted a cue out past the file length (6.90 s on a 5.97 s file - the 1.9 s
+  of silence before the BBC relay in the 2026-09-30 test show).  New
+  `Application_Model_CuePoints`: `detect()` runs ffmpeg silencedetect with the
+  analyzer's parameters (-60 dB, 0.3 s; FFMPEG_PATH, else C:/ffmpeg/bin),
+  `clamp()` keeps cue in / out inside the file, `applyToFutureRows()` copies a
+  file's cue points into the rows of the upcoming shows (not started, instance
+  not modified) and `relayoutInstances()` lays those instances out again
+  (calculateCrossfades reads clip_length) and pushes the schedule.  The track
+  editor clamps and propagates on every cue change
+  (`StoredFile::setDbColMetadata`), the library toolbar gets **Cue Points**
+  (selected tracks, files over 15 min skipped; `library/redetect-cue-points`,
+  JSON summary).  Translations DE/FR/ES, manual LIBRARY x4, dry run
+  `C:/Temp/optd/cue_dryrun.php` (unit checks, detection on sample files, apply
+  + relayout in a rolled-back transaction) - `<hash-cue-points>`.
+
 - **Crossfade je Track-Typ und „Exclude from Crossover" (2026-09-29,
   Operator-Go)** — Auslöser: die stündliche Jingle-Folge lief dem Kalender
   5 s voraus und ließ vor dem BBC-Relais Stille (Zeilen Stoß an Stoß, Track-

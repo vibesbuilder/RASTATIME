@@ -165,7 +165,7 @@ Click a track row → **Edit Metadata** in the row's action menu.
 | **Year** | `cc_files.year` |
 | **BPM** | `cc_files.bpm` |
 | **Track type** | `cc_files.track_type` — used by smart-block filters |
-| **Cue In / Out** | `cc_files.cuein` / `cuein` — trim the start / end without re-encoding |
+| **Cue In / Out** | `cc_files.cuein` / `cueout` — trim the start / end without re-encoding. Since 2026-09-30 the values are kept inside the file: a cue out past the file length is capped at the length, a cue in below zero becomes zero. A change is copied into the rows of the upcoming shows that schedule the track (rows that have already started are left alone), and those shows are laid out again - no refilling needed. |
 | **Fade In / Out** | `cc_files.fadein` / `fadeout` |
 | **Replay Gain** | `cc_files.replay_gain` — used by the playout engine for level normalisation |
 | **Crossover** | How this track meets its neighbours (since 2026-09-29 one three-way field; the two exceptions exclude each other). **As the track type** (default): the track overlaps and fades as its track type says - Settings → Track Types → *Crossfade Duration* - or, without a value there, as the Default Track Crossfade Duration. **No Fade during Crossover** (`cc_files.no_fade_crossfade`): the overlap stays, but this track keeps its full level while the other one fades; at an overbooked show boundary a flagged outgoing track is cut instead of faded. **Exclude from Crossover** (`cc_files.exclude_crossfade`): this track never overlaps a neighbour - it starts at the end of the previous track and the next one starts at its end. Changing to or from *Exclude* re-lays the rows of the upcoming shows that schedule the track. |
@@ -174,6 +174,11 @@ Click a track row → **Edit Metadata** in the row's action menu.
 > have a few seconds of silence at the head. The cue point is
 > a non-destructive trim — the file on disk is unchanged, but
 > playback starts at the cue.
+>
+> Since jingles are laid out without an overlap (Settings → Track
+> Types → *Crossfade Duration* = 0), a silent tail is heard as a
+> pause. Select the jingles in the library and use **Cue Points**
+> in the toolbar (section 6) to trim all of them at once.
 
 ### Deleting a track
 
@@ -392,6 +397,7 @@ toolbar that appears at the bottom of the table:
 | **Delete** | Delete the selected rows. Same confirm-on-scheduled-use semantics as single-row delete. |
 | **Edit Metadata** | Open a batch-edit dialog. Only applies to tracks. |
 | **Move to Owner** | Reassign ownership (Admin / Super Admin only). Used when a DJ leaves and their files should pass to the station account. |
+| **Cue Points** | Detect the cue points of the selected tracks from their audio (the same silence detection the analyzer runs at import: quieter than −60 dB for at least 0.3 s at the head or the tail) and store them. Upcoming shows that schedule the tracks follow the new values and are laid out again. Tracks longer than 15 minutes are skipped - the action is meant for jingles and other short elements. Since 2026-09-30. |
 
 ---
 

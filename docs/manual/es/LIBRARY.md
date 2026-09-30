@@ -134,7 +134,7 @@ el menú de acción de la fila.
 | **Año** | `cc_files.year` |
 | **BPM** | `cc_files.bpm` |
 | **Tipo de pista** | `cc_files.track_type` — usado por filtros smart-block |
-| **Cue In / Out** | `cc_files.cuein` / `cueout` — recortar el inicio / fin sin re-encodificar |
+| **Cue In / Out** | `cc_files.cuein` / `cueout` — recortar el inicio / fin sin re-encodificar. Desde el 30/09/2026 los valores se mantienen dentro del archivo: un cue out más allá de la duración se limita a la duración, un cue in negativo pasa a cero. Un cambio se copia en las filas de los programas futuros que programan la pista (las filas ya iniciadas no se tocan) y esos programas se recalculan - no hace falta volver a llenarlos. |
 | **Fade In / Out** | `cc_files.fadein` / `fadeout` |
 | **Replay Gain** | `cc_files.replay_gain` — usado por el motor de playout para normalización de nivel |
 | **Crossover** | Cómo se encuentra esta pista con sus vecinas (desde el 2026-09-29 un campo de tres opciones; las dos excepciones se excluyen entre sí). **As the track type** (como el tipo de pista, por defecto): la pista se solapa y funde según indique su tipo de pista - Settings → Track Types → *Crossfade Duration* - o, sin valor allí, según la Default Track Crossfade Duration. **No Fade during Crossover** (sin fundido durante el crossover, `cc_files.no_fade_crossfade`): el solapamiento se mantiene, pero esta pista conserva su nivel completo mientras la otra se funde; en un límite de programa sobrepasado, una pista saliente marcada se corta en vez de fundirse. **Exclude from Crossover** (excluir del crossover, `cc_files.exclude_crossfade`): esta pista nunca se solapa con una vecina - empieza al final de la pista anterior y la siguiente empieza a su final. Cambiar a *Exclude* o volver de él recalcula las filas de los programas futuros que programan la pista. |
@@ -323,6 +323,7 @@ la tabla:
 | **Eliminar** | Eliminar las filas seleccionadas. |
 | **Editar metadatos** | Abrir un diálogo de edición por lotes. Solo aplica a pistas. |
 | **Transferir propietario** | Reasignar propiedad (solo Admin / Super Admin). |
+| **Cue Points** | Detecta los puntos de cue de las pistas seleccionadas a partir del audio (la misma detección de silencio que el analizador ejecuta al importar: por debajo de −60 dB durante al menos 0,3 s al inicio o al final) y los guarda. Los programas futuros que programan esas pistas adoptan los nuevos valores y se recalculan. Las pistas de más de 15 minutos se omiten - la acción está pensada para jingles y otros elementos cortos. Desde el 30/09/2026. |
 
 ---
 

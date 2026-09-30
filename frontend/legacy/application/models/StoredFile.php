@@ -206,6 +206,38 @@ class Application_Model_StoredFile
                     }
                 }
             }
+            // RASTATIME 2026-09-30 - cue points are kept inside the file:
+            // cue in never below 0, cue out never past the length (the
+            // editor accepted 6.90 s on a 5.97 s file - a silent second
+            // before the next element once jingles no longer overlap).
+            // The values before the save decide whether the upcoming
+            // rows have to follow.
+            $cuesBefore = null;
+            if (array_key_exists('cuein', $p_md) || array_key_exists('cueout', $p_md)) {
+                $lengthSeconds = Application_Common_DateHelper::playlistTimeToSeconds(
+                    (string) $this->_file->getDbLength()
+                );
+                $cuesBefore = [
+                    Application_Common_DateHelper::playlistTimeToSeconds((string) $this->_file->getDbCuein()),
+                    Application_Common_DateHelper::playlistTimeToSeconds((string) $this->_file->getDbCueout()),
+                ];
+                $cueinSeconds = array_key_exists('cuein', $p_md) && $p_md['cuein'] !== '' && $p_md['cuein'] !== null
+                    ? Application_Common_DateHelper::playlistTimeToSeconds((string) $p_md['cuein'])
+                    : $cuesBefore[0];
+                $cueoutSeconds = array_key_exists('cueout', $p_md) && $p_md['cueout'] !== '' && $p_md['cueout'] !== null
+                    ? Application_Common_DateHelper::playlistTimeToSeconds((string) $p_md['cueout'])
+                    : $cuesBefore[1];
+                [$cueinSeconds, $cueoutSeconds] = Application_Model_CuePoints::clamp(
+                    $cueinSeconds,
+                    $cueoutSeconds,
+                    $lengthSeconds
+                );
+                $p_md['cuein'] = Application_Model_CuePoints::formatSeconds($cueinSeconds);
+                $p_md['cueout'] = Application_Model_CuePoints::formatSeconds($cueoutSeconds);
+                if (abs($cueinSeconds - $cuesBefore[0]) < 0.0005 && abs($cueoutSeconds - $cuesBefore[1]) < 0.0005) {
+                    $cuesBefore = null;   // unchanged: nothing to propagate
+                }
+            }
             foreach ($p_md as $dbColumn => $mdValue) {
                 // don't blank out name, defaults to original filename on first
                 // insertion to database.
@@ -242,6 +274,21 @@ class Application_Model_StoredFile
 
         $this->_file->setDbMtime(new DateTime('now', new DateTimeZone('UTC')));
         $this->_file->save($this->_con);
+
+        // RASTATIME 2026-09-30 - changed cue points follow into the rows of
+        // the upcoming shows (the schedule keeps its own copy from the
+        // moment a row was inserted); the instances are laid out again.
+        if ($cuesBefore !== null) {
+            try {
+                $instances = Application_Model_CuePoints::applyToFutureRows($this->_file->getDbId(), $this->_con);
+                Application_Model_CuePoints::relayoutInstances($instances);
+                Logging::info('cue points of file ' . $this->_file->getDbId() . ' changed ('
+                    . $p_md['cuein'] . ' - ' . $p_md['cueout'] . '): ' . count($instances)
+                    . ' upcoming instance(s) follow');
+            } catch (Exception $exc) {
+                Logging::warn('cue points: propagation failed: ' . $exc->getMessage());
+            }
+        }
 
         // RASTATIME 2026-05-16 - Track Expiry (expires_at).  Propel
         // classes are not regenerated for the new column, so we apply

@@ -24,6 +24,7 @@ class LibraryController extends Zend_Controller_Action
             ->addActionContext('set-num-entries', 'json')
             ->addActionContext('edit-file-md', 'json')
             ->addActionContext('publish-dialog', 'html')
+            ->addActionContext('redetect-cue-points', 'json')
             ->initContext();
     }
 
@@ -318,6 +319,109 @@ class LibraryController extends Zend_Controller_Action
         if (isset($message)) {
             $this->view->message = $message;
         }
+    }
+
+    /**
+     * RASTATIME 2026-09-30 - library toolbar "Cue Points": detect the cue
+     * points of the selected files from their audio (ffmpeg silencedetect,
+     * the analyzer's parameters), store them, and copy them into the rows
+     * of the upcoming shows, which are laid out again.  Files longer than
+     * Application_Model_CuePoints::DETECT_MAX_SECONDS are skipped (the
+     * action is meant for jingles; a full decode of an hour is slow).
+     */
+    public function redetectCuePointsAction()
+    {
+        $mediaItems = $this->_getParam('media', null);
+        $user = Application_Model_User::getCurrentUser();
+        $isAdminOrPM = $user->isUserType([UTYPE_SUPERADMIN, UTYPE_ADMIN, UTYPE_PROGRAM_MANAGER]);
+
+        $measured = 0;
+        $changed = 0;
+        $skipped = [];
+        $denied = 0;
+        $instances = [];
+        $con = Propel::getConnection(CcFilesPeer::DATABASE_NAME);
+        $update = $con->prepare('UPDATE cc_files SET cuein = :cuein, cueout = :cueout, mtime = :mtime WHERE id = :id');
+        $started = microtime(true);
+        foreach ((array) $mediaItems as $media) {
+            if (!isset($media['type']) || $media['type'] !== 'audioclip') {
+                continue;
+            }
+            $id = (int) $media['id'];
+            $file = Application_Model_StoredFile::RecallById($id);
+            if (!$file) {
+                continue;
+            }
+            if (!$isAdminOrPM && $file->getFileOwnerId() != $user->getId()) {
+                ++$denied;
+
+                continue;
+            }
+            $orm = $file->getPropelOrm();
+            $title = $orm->getDbTrackTitle() ?: ('#' . $id);
+            $length = Application_Common_DateHelper::playlistTimeToSeconds((string) $orm->getDbLength());
+            if ($length > Application_Model_CuePoints::DETECT_MAX_SECONDS) {
+                $skipped[] = $title;
+
+                continue;
+            }
+            $path = $orm->getAbsoluteFilePath();
+            if (!is_file($path)) {
+                $skipped[] = $title;
+
+                continue;
+            }
+            $cues = Application_Model_CuePoints::detect($path, $length);
+            if ($cues === null) {
+                $skipped[] = $title;
+
+                continue;
+            }
+            ++$measured;
+            $before = [
+                Application_Common_DateHelper::playlistTimeToSeconds((string) $orm->getDbCuein()),
+                Application_Common_DateHelper::playlistTimeToSeconds((string) $orm->getDbCueout()),
+            ];
+            if (abs($cues[0] - $before[0]) < 0.005 && abs($cues[1] - $before[1]) < 0.005) {
+                continue;
+            }
+            $update->bindValue(':cuein', Application_Model_CuePoints::formatSeconds($cues[0]));
+            $update->bindValue(':cueout', Application_Model_CuePoints::formatSeconds($cues[1]));
+            $update->bindValue(':mtime', gmdate('Y-m-d H:i:s'));
+            $update->bindValue(':id', $id, PDO::PARAM_INT);
+            $update->execute();
+            ++$changed;
+            Logging::info(sprintf(
+                'cue points re-detected for file %d (%s): %.3f-%.3f -> %.3f-%.3f',
+                $id, $title, $before[0], $before[1], $cues[0], $cues[1]
+            ));
+            foreach (Application_Model_CuePoints::applyToFutureRows($id, $con) as $instanceId) {
+                $instances[$instanceId] = $instanceId;
+            }
+        }
+        CcFilesPeer::clearInstancePool();
+        $relaid = Application_Model_CuePoints::relayoutInstances(array_values($instances));
+        Logging::info(sprintf(
+            'redetect-cue-points: %d measured, %d changed, %d skipped, %d instance(s) laid out again, %.1f s',
+            $measured, $changed, count($skipped), $relaid, microtime(true) - $started
+        ));
+
+        $parts = [sprintf(_('%1$s file(s) measured, %2$s changed.'), $measured, $changed)];
+        if ($relaid) {
+            $parts[] = sprintf(_('%s upcoming show(s) follow the new cue points.'), $relaid);
+        }
+        if ($skipped) {
+            $parts[] = sprintf(_('Skipped (longer than %1$s minutes or not readable): %2$s'),
+                (int) (Application_Model_CuePoints::DETECT_MAX_SECONDS / 60), implode(', ', array_slice($skipped, 0, 10))
+                . (count($skipped) > 10 ? ' …' : ''));
+        }
+        if ($denied) {
+            $parts[] = _("You don't have permission to change some of the selected files.");
+        }
+        $this->view->measured = $measured;
+        $this->view->changed = $changed;
+        $this->view->skipped = count($skipped);
+        $this->view->message = implode(' ', $parts);
     }
 
     // duplicate playlist

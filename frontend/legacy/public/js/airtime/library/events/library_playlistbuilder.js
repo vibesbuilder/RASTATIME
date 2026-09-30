@@ -203,6 +203,14 @@ var AIRTIME = (function (AIRTIME) {
         AIRTIME.library.fnDeleteSelectedItems();
       });
 
+    // RASTATIME 2026-09-30 - re-detect cue points of the selection.
+    $toolbar.find("#sb-cuepoints").click(function () {
+      if (AIRTIME.button.isDisabled("btn-group #sb-cuepoints") === true) {
+        return;
+      }
+      AIRTIME.library.fnRedetectCuePoints();
+    });
+
     mod.createToolbarDropDown();
   };
 

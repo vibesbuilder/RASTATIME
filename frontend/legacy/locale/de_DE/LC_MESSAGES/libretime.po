@@ -5044,3 +5044,38 @@ msgstr "Vom Crossover ausnehmen"
 #: RASTATIME 2026-09-29 crossfade per track type / crossover mode
 msgid "As the track type: the track overlaps and fades with its neighbours as its track type says (or the house value). No Fade during Crossover: the overlap stays, but this track keeps its full level while the other one fades. Exclude from Crossover: this track never overlaps a neighbour - it starts at the end of the previous track and the next one starts at its end."
 msgstr "Wie der Track-Typ: Der Titel überlappt und überblendet mit seinen Nachbarn so, wie sein Track-Typ es vorgibt (oder der Hauswert). Kein Fade beim Crossover: Die Überlappung bleibt, aber dieser Titel behält seinen vollen Pegel, während der andere blendet. Vom Crossover ausnehmen: Dieser Titel überlappt nie mit einem Nachbarn - er startet am Ende des vorherigen Titels, und der nächste startet an seinem Ende."
+
+#: RASTATIME 2026-09-30 cue points
+msgid "Cue Points"
+msgstr "Cue-Punkte"
+
+#: RASTATIME 2026-09-30 cue points
+msgid "Re-detect the cue points of the selected files"
+msgstr "Cue-Punkte der ausgewählten Dateien neu erkennen"
+
+#: RASTATIME 2026-09-30 cue points
+msgid "Re-detect the cue points of the selected file(s) from their audio? Upcoming shows that schedule them are laid out again."
+msgstr "Cue-Punkte der ausgewählten Datei(en) aus dem Audio neu erkennen? Kommende Sendungen, die sie enthalten, werden neu ausgelegt."
+
+#: RASTATIME 2026-09-30 cue points
+msgid "The cue points could not be re-detected."
+msgstr "Die Cue-Punkte konnten nicht neu erkannt werden."
+
+#: RASTATIME 2026-09-30 cue points
+#, php-format
+msgid "%1$s file(s) measured, %2$s changed."
+msgstr "%1$s Datei(en) gemessen, %2$s geändert."
+
+#: RASTATIME 2026-09-30 cue points
+#, php-format
+msgid "%s upcoming show(s) follow the new cue points."
+msgstr "%s kommende Sendung(en) folgen den neuen Cue-Punkten."
+
+#: RASTATIME 2026-09-30 cue points
+#, php-format
+msgid "Skipped (longer than %1$s minutes or not readable): %2$s"
+msgstr "Übersprungen (länger als %1$s Minuten oder nicht lesbar): %2$s"
+
+#: RASTATIME 2026-09-30 cue points
+msgid "You don't have permission to change some of the selected files."
+msgstr "Sie haben keine Berechtigung, einige der ausgewählten Dateien zu ändern."

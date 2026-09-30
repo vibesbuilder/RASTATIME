@@ -1,10 +1,14 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.51
+Draft version: 0.52
 Date: 2026-09-29
 
 > **Revision history**
+> - **0.52 (2026-09-30)** — **Cue points** (§23.45): detection from the
+>   library (ffmpeg silencedetect in the legacy app), cue in / out kept
+>   inside the file, changes copied into the rows of the upcoming shows
+>   and laid out again.
 > - **0.51 (2026-09-29)** — **Live item after a file track** (§23.44,
 >   addendum): events carry the rows' exact times; a pre-warmed
 >   webstream / line-in opens its gate when the file track's audio is
@@ -5692,3 +5696,54 @@ a file track.  Both give up above `FILE_TAIL_HOLD_MAX_SECONDS` (4 s,
 overbook: cut now), while a DJ is on air, and for a cold start (which
 has its own start-up time); after the wait they check that no other
 item has taken the spotlight.
+
+### 23.45 Cue Points: Detection, Validation, Propagation (2026-09-30)
+
+**Context.**  The analyzer detects cue points once, at import
+(`analyze_cuepoint`: ffmpeg `silencedetect`, quieter than -60 dB for at
+least 0.3 s at the head or the tail).  The schedule keeps its own copy of
+a file's cue points in every row (`cc_schedule.cue_in / cue_out /
+clip_length`, taken when the row is inserted), and the track editor
+accepted any cue out (6.90 s on a 5.97 s file).  Since the crossfade per
+track type (§23.44) lays jingles out without an overlap, every silent
+tail is heard: all 24 TOH jingles end about a second before their cue
+out.  Fixing that by hand meant editing 24 files and refilling every
+show that schedules them.
+
+**Model.**  `Application_Model_CuePoints` (legacy):
+- `detect(path, length)` runs ffmpeg with the analyzer's filter chain and
+  parses `silence_start` / `silence_end`; a silence that reaches the end
+  of the file has no end line and counts as open.  The analyzer's rule
+  applies: only a silence at the top moves the cue in, only one that
+  reaches the end moves the cue out.  The binary comes from
+  `FFMPEG_PATH`, else `C:/ffmpeg/bin/ffmpeg.exe`, else the PATH.
+- `clamp(cuein, cueout, length)`: cue in never below 0, cue out never past
+  the length, at least 50 ms between them (else the whole file).
+- `applyToFutureRows(fileId)`: one UPDATE ... FROM cc_files that copies
+  the file's cue points into its rows of upcoming instances (`starts >
+  now`, `modified_instance = false`) and returns the instance ids.
+  `ends` is not touched: `relayoutInstances(ids)` runs
+  `calculateCrossfades()` (§23.44, reads `clip_length`) per instance and
+  pushes the schedule once.  Started rows are never re-timed.
+
+**Entry points.**  (1) The track editor: `StoredFile::setDbColMetadata`
+clamps cue in / out against the length before the save and, when they
+changed, propagates and re-lays afterwards.  (2) The library toolbar
+button **Cue Points** (`LibraryController::redetectCuePointsAction`,
+`library/redetect-cue-points`, selected tracks as `media[]` like
+`delete`): detect, store with raw SQL (Propel classes unchanged), collect
+the instances of all changed files, one re-layout pass, JSON summary
+(measured / changed / skipped).  Files longer than
+`DETECT_MAX_SECONDS` (15 min) are skipped - a full decode of an hour
+takes about 10 s, and the action exists for jingles.  Detection of a
+10-s jingle takes ~0.1 s.
+
+**Decision (operator, 2026-09-30).**  Detection inside the legacy app
+("way A") rather than the analyzer with an API-to-legacy callback ("way
+B"): one place for measurement, propagation and layout, deterministic
+and immediately visible; the price is the detection logic existing twice
+(Python at import, PHP on demand) with the same parameters.
+
+**Tools.**  `C:/Temp/optd/cue_dryrun.php`: unit checks of the parser,
+the rule and the clamp; detection on library files by id (read-only);
+apply + re-layout of one file inside a transaction that is rolled back.

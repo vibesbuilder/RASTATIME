@@ -259,6 +259,21 @@ var AIRTIME = (function (AIRTIME) {
           "</div>",
       );
 
+    // RASTATIME 2026-09-30 - detect the cue points of the selected files
+    // from their audio (silent heads and tails); the upcoming shows follow.
+    $menu.append(
+      "<div class='btn-group' title='" +
+        $.i18n._("Re-detect the cue points of the selected files") +
+        "'>" +
+        "<button class='btn btn-small' id='sb-cuepoints'>" +
+        "<i class='icon-white icon-time'></i>" +
+        "<span>" +
+        $.i18n._("Cue Points") +
+        "</span>" +
+        "</button>" +
+        "</div>",
+    );
+
     if (onDashboard) {
       $menu.append(
         "<div class='btn-group' title=" +
@@ -351,12 +366,23 @@ var AIRTIME = (function (AIRTIME) {
     }
   };
 
+  mod.checkCuePointsButton = function () {
+    var selected = mod.getChosenItemsLength(),
+      mediaType = $(".media_type_selector.selected").data("selection-id");
+    if (mediaType == AIRTIME.library.MediaTypeIntegerEnum.FILE && selected > 0) {
+      AIRTIME.button.enableButton("btn-group #sb-cuepoints", false);
+    } else {
+      AIRTIME.button.disableButton("btn-group #sb-cuepoints", false);
+    }
+  };
+
   mod.checkToolBarIcons = function () {
     AIRTIME.library.checkAddButton();
     AIRTIME.library.checkDeleteButton();
     AIRTIME.library.checkEditButton();
     AIRTIME.library.checkNewButton();
     AIRTIME.library.checkPublishButton();
+    AIRTIME.library.checkCuePointsButton();
   };
 
   mod.getSelectedData = function () {
@@ -586,6 +612,47 @@ var AIRTIME = (function (AIRTIME) {
 
       AIRTIME.library.fnDeleteItems(aMedia);
     }
+  };
+
+  // RASTATIME 2026-09-30 - toolbar "Cue Points": re-detect the cue points
+  // of the selected files and let the upcoming shows follow.
+  mod.fnRedetectCuePoints = function () {
+    var aData = AIRTIME.library.getSelectedData(),
+      aMedia = [],
+      item;
+    for (item in aData) {
+      if (aData[item] !== null && aData[item].ftype === "audioclip") {
+        aMedia.push({ id: aData[item].id, type: "audioclip" });
+      }
+    }
+    if (aMedia.length === 0) {
+      return;
+    }
+    if (
+      !confirm(
+        $.i18n._(
+          "Re-detect the cue points of the selected file(s) from their audio? Upcoming shows that schedule them are laid out again.",
+        ),
+      )
+    ) {
+      return;
+    }
+    AIRTIME.button.disableButton("btn-group #sb-cuepoints", false);
+    $.post(
+      baseUrl + "library/redetect-cue-points",
+      { format: "json", media: aMedia },
+      function (json) {
+        if (json.message !== undefined) {
+          alert(json.message);
+        }
+        oTable.fnStandingRedraw();
+        AIRTIME.button.enableButton("btn-group #sb-cuepoints", false);
+      },
+    ).fail(function () {
+      alert($.i18n._("The cue points could not be re-detected."));
+      AIRTIME.button.enableButton("btn-group #sb-cuepoints", false);
+    });
+    mod.selectNone();
   };
 
   mod.handleAjaxError = function (r) {

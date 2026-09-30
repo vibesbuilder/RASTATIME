@@ -5205,3 +5205,38 @@ msgstr "Excluir del crossover"
 #: RASTATIME 2026-09-29 crossfade per track type / crossover mode
 msgid "As the track type: the track overlaps and fades with its neighbours as its track type says (or the house value). No Fade during Crossover: the overlap stays, but this track keeps its full level while the other one fades. Exclude from Crossover: this track never overlaps a neighbour - it starts at the end of the previous track and the next one starts at its end."
 msgstr "Como el tipo de pista: la pista se solapa y funde con sus vecinas según indique su tipo de pista (o el valor por defecto). Sin fundido durante el crossover: el solapamiento se mantiene, pero esta pista conserva su nivel completo mientras la otra se funde. Excluir del crossover: esta pista nunca se solapa con una vecina - empieza al final de la pista anterior y la siguiente empieza a su final."
+
+#: RASTATIME 2026-09-30 cue points
+msgid "Cue Points"
+msgstr "Puntos de cue"
+
+#: RASTATIME 2026-09-30 cue points
+msgid "Re-detect the cue points of the selected files"
+msgstr "Volver a detectar los puntos de cue de los archivos seleccionados"
+
+#: RASTATIME 2026-09-30 cue points
+msgid "Re-detect the cue points of the selected file(s) from their audio? Upcoming shows that schedule them are laid out again."
+msgstr "¿Volver a detectar los puntos de cue de los archivos seleccionados a partir del audio? Los programas futuros que los contienen se recalculan."
+
+#: RASTATIME 2026-09-30 cue points
+msgid "The cue points could not be re-detected."
+msgstr "No se pudieron volver a detectar los puntos de cue."
+
+#: RASTATIME 2026-09-30 cue points
+#, php-format
+msgid "%1$s file(s) measured, %2$s changed."
+msgstr "%1$s archivo(s) medido(s), %2$s cambiado(s)."
+
+#: RASTATIME 2026-09-30 cue points
+#, php-format
+msgid "%s upcoming show(s) follow the new cue points."
+msgstr "%s programa(s) futuro(s) siguen los nuevos puntos de cue."
+
+#: RASTATIME 2026-09-30 cue points
+#, php-format
+msgid "Skipped (longer than %1$s minutes or not readable): %2$s"
+msgstr "Omitidos (más de %1$s minutos o no legibles): %2$s"
+
+#: RASTATIME 2026-09-30 cue points
+msgid "You don't have permission to change some of the selected files."
+msgstr "No tiene permiso para cambiar algunos de los archivos seleccionados."
