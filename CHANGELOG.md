@@ -28,7 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   simuliertem Payload „Webstream in Sendung mit Bild" (Bild 48 px
   geladen), Titel-Artwork behält Vorrang.  Handbuch WIDGETS ×4,
   Architektur §23.22 Addendum (0.54).  Ein Cover je Webstream/Line-In
-  bleibt als Ergänzung möglich (jetzt nicht nötig).
+  bleibt als Ergänzung möglich (jetzt nicht nötig) — `0360463`.
 
 - **„No Fade during Crossover" als Track-Typ-Vorgabe (2026-09-30,
   Operator-Go)** — Die Operator-Frage nach einer Checkbox „Exclude from
