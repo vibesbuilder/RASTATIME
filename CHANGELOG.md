@@ -30,7 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Hidden-Fallback, Tooltip, Daten-Endpoint).  Handbuch SETTINGS + LIBRARY
   ×4, Architektur §23.44 Addendum (0.53).  Inbetriebnahme: API- und
   PLAYOUT-Neustart (Serializer-Feld, Auflösung), Apache-Neustart für die
-  Übersetzungen; danach die Vorgabe am gewünschten Typ setzen.
+  Übersetzungen; danach die Vorgabe am gewünschten Typ setzen — `1fe5a44`.
 
 - **Webstream default length follows into the upcoming shows (2026-09-30,
   follow-up to the cue-point package)** - the operator set the BBC relay from
