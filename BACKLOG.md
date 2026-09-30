@@ -49,8 +49,13 @@ Titel-Editor kappt und reicht durch, Toolbar-Knopf „Cue Points" (`library/rede
 > 15 min übersprungen).  Trockenlauf `C:/Temp/optd/cue_dryrun.php`: TOH 10 Uhr → 0–9,035 s,
 Intro → 0–4,981 s, Showteaser unverändert; Durchreichen für Datei 593 trifft genau die 26
 alten Zeilen der Dienstag-Serie.  Endpunkt live (200, JSON).  Architektur §23.45 / 0.52.
-**Offen:** Operator wendet „Cue Points" auf die Jingles an (Library → Filter Jingles →
-alle markieren → Cue Points), danach Kontrolle der Stunden-Folge in der Aufnahme.
+**Abnahme 2026-09-30 12:00:** Operator hat „Cue Points" auf alle 241 Jingles angewendet
+(43 geändert, 239 Instanzen neu ausgelegt, 19 s; danach 0 abweichende Zeilen, 0 Dateien
+mit Cue-Out > Länge, TOH-Jingles 9,01–9,12 s).  Aufnahme der 12:00-Folge: alle drei
+Jingle-Übergänge Stoß an Stoß (Rest ≤ 0,3 s unter −60 dB = Datei-Inhalt), BBC setzt bei
+Intro-Ende ein (max. 50 ms Senke), Kette 0,3 s hinter den Zeilen.  Verbleibende Stille:
+3,8 s am Sendungsende (BBC-Zeile 302 s fest, Sendung 3,9 s unterfüllt) → Operator kann
+die Webstream-Zeile verlängern.
 
 **Befund (Testsendung 2026-09-30):** `cc_files.cueout` darf heute größer als die
 Dateilänge sein (ID 593: 6,90 s bei 5,97 s — vermutlich Datei ersetzt, Cue blieb),
