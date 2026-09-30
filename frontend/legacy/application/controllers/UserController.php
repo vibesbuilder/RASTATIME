@@ -111,7 +111,10 @@ class UserController extends Zend_Controller_Action
     public function getUserDataAction()
     {
         $id = $this->_getParam('id');
-        $this->view->entries = Application_Model_User::GetUserData($id);
+        // RASTATIME 2026-09-30 - the JSON is sent here (the AjaxContext only
+        // switches for X-Requested-With calls; the view script that echoed the
+        // array for every other call is gone).
+        $this->_helper->json->sendJson(['entries' => Application_Model_User::GetUserData($id)]);
     }
 
     public function editUserAction()
@@ -205,7 +208,11 @@ class UserController extends Zend_Controller_Action
 
         // only delete when valid action is selected for the owned files
         if (!in_array($files_action, $valid_actions)) {
-            return;
+            // RASTATIME 2026-09-30 - the JSON is sent here (the AjaxContext only
+            // switches for X-Requested-With calls; the view script that echoed
+            // the array for every other call is gone).  sendJson() exits, so
+            // the three refusals keep their empty {} answer.
+            $this->_helper->json->sendJson([]);
         }
 
         $userInfo = Zend_Auth::getInstance()->getStorage()->read();
@@ -213,14 +220,14 @@ class UserController extends Zend_Controller_Action
 
         // Don't let users delete themselves
         if ($delId == $userId) {
-            return;
+            $this->_helper->json->sendJson([]);
         }
 
         $user = new Application_Model_User($delId);
 
         // Don't allow super admins to be deleted.
         if ($user->isSuperAdmin()) {
-            return;
+            $this->_helper->json->sendJson([]);
         }
 
         // Take care of the user's files by either assigning them to somebody
@@ -236,6 +243,6 @@ class UserController extends Zend_Controller_Action
             Logging::info("Reassign to user {$new_owner->getDbId()}");
         }
         // Finally delete the user
-        $this->view->entries = $user->delete();
+        $this->_helper->json->sendJson(['entries' => $user->delete()]);
     }
 }

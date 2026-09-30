@@ -299,13 +299,29 @@ class ScheduleController extends Zend_Controller_Action
      */
     public static function printCurrentPlaylistForEmbedding()
     {
-        $front = Zend_Controller_Front::getInstance();
-        $scheduleController = new ScheduleController($front->getRequest(), $front->getResponse());
-        $scheduleController->getCurrentPlaylistAction();
-        echo json_encode($scheduleController->view);
+        // RASTATIME 2026-09-30 - the data, not the action: the action sends
+        // its JSON and ends the request, which is fine for the dashboard's
+        // poll but not in the middle of a page.
+        echo json_encode(self::currentPlaylistData());
     }
 
     public function getCurrentPlaylistAction()
+    {
+        // RASTATIME 2026-09-30 - the JSON is sent here (the AjaxContext only
+        // switches for X-Requested-With calls; the view script that echoed the
+        // array for every other call is gone).
+        $this->_helper->json->sendJson(self::currentPlaylistData());
+    }
+
+    /**
+     * The master panel's data: the play order around now, the source and
+     * switch states, the current show's name.  Served by
+     * getCurrentPlaylistAction() (the dashboard poll) and embedded in every
+     * page by printCurrentPlaylistForEmbedding().
+     *
+     * @return array{entries: array, source_status: array, switch_status: array, show_name: string}
+     */
+    public static function currentPlaylistData()
     {
         $range = Application_Model_Schedule::GetPlayOrderRangeOld();
 
@@ -358,15 +374,17 @@ class ScheduleController extends Zend_Controller_Action
         // might not be the correct place to implement this but for now let's just do it here
         $source_status['live_dj_source'] = $live_dj;
         $source_status['master_dj_source'] = $master_dj;
-        $this->view->source_status = $source_status;
 
         $switch_status['live_dj_source'] = $live_dj_switch;
         $switch_status['master_dj_source'] = $master_dj_switch;
         $switch_status['scheduled_play'] = $scheduled_play_switch;
-        $this->view->switch_status = $switch_status;
 
-        $this->view->entries = $range;
-        $this->view->show_name = isset($show[0]) ? $show[0]['name'] : '';
+        return [
+            'entries' => $range,
+            'source_status' => $source_status,
+            'switch_status' => $switch_status,
+            'show_name' => isset($show[0]) ? $show[0]['name'] : '',
+        ];
     }
 
     public function showContentDialogAction()

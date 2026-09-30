@@ -724,8 +724,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   „Array to string conversion" starb.  Die Action sendet das JSON jetzt
   selbst (wie die Tabellen-Action daneben), das View-Script ist weg.  Live
   verifiziert: `fetch` und `$.ajax` liefern 200 mit `entries`, das Formular
-  füllt sich weiter.  Dasselbe Muster liegt noch in fünf anderen
-  View-Scripts (schedule, user, remove-tracktype) — dort nicht angefasst — `1e526a8`.
+  füllt sich weiter — `1e526a8`.  Nachzug gleicher Tag (Operator-Go): die
+  fünf Geschwister — Schedule `get-current-playlist`, User `get-user-data`
+  / `remove-user`, Tracktype `remove-tracktype`, plus das verwaiste
+  `schedule/get-show-data.phtml` ohne Action — senden ihr JSON ebenfalls
+  selbst, Antwortform unverändert (`entries`; die drei Abbruchpfade beim
+  Benutzer-Löschen weiterhin `{}`).  Stolperstein dabei: `layout.phtml`
+  bettet die Master-Panel-Daten in JEDE Seite ein, indem es die
+  Playlist-Action intern aufruft und deren View-Variablen serialisiert —
+  ein `sendJson` dort beendete den Seitenaufbau, alle Seiten kamen als
+  `application/json` (per Bisect gefunden, nie committet).  Die Daten
+  liegen jetzt in `ScheduleController::currentPlaylistData()`, Action und
+  Einbettung nutzen sie.  Live verifiziert: Seiten HTML, eingebettete Daten
+  mit denselben vier Schlüsseln, alle Endpoints JSON mit und ohne
+  XHR-Header.
 
 - **A relay or line-in after a jingle came in about one second early
   (2026-09-29, found while checking the logs after the crossfade per track

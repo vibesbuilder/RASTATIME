@@ -110,6 +110,9 @@ class TracktypeController extends Zend_Controller_Action
         $tracktype = new Application_Model_Tracktype($delId);
 
         // Delete the track type
-        $this->view->entries = $tracktype->delete();
+        // RASTATIME 2026-09-30 - the JSON is sent here (the AjaxContext only
+        // switches for X-Requested-With calls; the view script that echoed the
+        // array for every other call is gone).
+        $this->_helper->json->sendJson(['entries' => $tracktype->delete()]);
     }
 }
