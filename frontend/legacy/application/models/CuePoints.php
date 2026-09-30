@@ -191,6 +191,36 @@ class Application_Model_CuePoints
     }
 
     /**
+     * The same for a webstream's default length (2026-09-30, second half
+     * of the day): the rows copy it at insertion, so a longer relay that
+     * should fill a show did not reach the shows already built.  Rows
+     * that have not started take the new length; the callers lay the
+     * instances out again.
+     *
+     * @return int[] the ids of the instances that changed
+     */
+    public static function applyWebstreamLengthToFutureRows($streamId, $con = null)
+    {
+        $con = $con ?: Propel::getConnection(CcSchedulePeer::DATABASE_NAME);
+        $stmt = $con->prepare(
+            'UPDATE cc_schedule s SET clip_length = w.length, cue_out = w.length'
+            . ' FROM cc_webstream w, cc_show_instances i'
+            . ' WHERE w.id = s.stream_id AND i.id = s.instance_id AND s.stream_id = :sid'
+            . " AND s.starts > (now() at time zone 'utc') AND i.modified_instance = false"
+            . ' AND s.clip_length IS DISTINCT FROM w.length'
+            . ' RETURNING s.instance_id'
+        );
+        $stmt->bindValue(':sid', (int) $streamId, PDO::PARAM_INT);
+        $stmt->execute();
+        $instances = [];
+        foreach ($stmt->fetchAll(PDO::FETCH_COLUMN, 0) as $id) {
+            $instances[(int) $id] = (int) $id;
+        }
+
+        return array_values($instances);
+    }
+
+    /**
      * Lay the given instances out again and tell the playout.
      */
     public static function relayoutInstances(array $instanceIds)

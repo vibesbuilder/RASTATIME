@@ -473,6 +473,20 @@ class Application_Model_Webstream implements Application_Model_LibraryEditable
             $stmt->execute();
         }
 
+        // RASTATIME 2026-09-30 - a changed default length follows into the
+        // rows of the upcoming shows (they copy it at insertion), and those
+        // shows are laid out again - like the cue points of a file.
+        if ($id != -1) {
+            try {
+                $instances = Application_Model_CuePoints::applyWebstreamLengthToFutureRows($newId);
+                Application_Model_CuePoints::relayoutInstances($instances);
+                Logging::info('webstream ' . $newId . ' length ' . $dblength . ': ' . count($instances)
+                    . ' upcoming instance(s) follow');
+            } catch (Exception $exc) {
+                Logging::warn('webstream length: propagation failed: ' . $exc->getMessage());
+            }
+        }
+
         return $newId;
     }
 

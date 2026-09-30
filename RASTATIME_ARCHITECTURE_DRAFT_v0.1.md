@@ -5747,3 +5747,13 @@ and immediately visible; the price is the detection logic existing twice
 **Tools.**  `C:/Temp/optd/cue_dryrun.php`: unit checks of the parser,
 the rule and the clamp; detection on library files by id (read-only);
 apply + re-layout of one file inside a transaction that is rolled back.
+
+**Addendum (2026-09-30): webstream length.**  A webstream's Default
+Length is copied into the rows the same way, so
+`applyWebstreamLengthToFutureRows(streamId)` (same UPDATE ... FROM
+pattern on `cc_webstream.length` -> `clip_length`, `cue_out`) runs from
+`Application_Model_Webstream::save()` for an existing webstream, followed
+by `relayoutInstances()`.  A longer relay can push rows past the show
+end; the layout does not cut them (the API clips `ends_at` / `cue_out`
+for the playout as before), the tool `ws_length_apply.php` reports such
+rows before anything is saved.

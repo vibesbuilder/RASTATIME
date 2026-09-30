@@ -71,7 +71,7 @@ Library → **+ New** → **Webstream**.
 |---|---|
 | **Name** | Required. The visible label in the library and on the schedule. |
 | **Source URL** | Required. The HTTP(S) URL of the audio stream. Direct stream URL, not a player landing page. Examples: `http://stream.bbc.co.uk/...`, `http://icecast.example.com:8000/mountpoint`. |
-| **Default Length** | Required. `HHh MMm SSs` format. See §3 for the seconds-precision detail. |
+| **Default Length** | Required. `HHh MMm SSs` format. See §3 for the seconds-precision detail. Since 2026-09-30 a changed length follows into the rows of the upcoming shows that schedule the webstream (rows that have already started are left alone), and those shows are laid out again - a relay that should fill a show no longer needs the shows refilled. |
 | **Description** | Free-text, optional. Shown in the library row tooltip and on the public schedule export. |
 | **Mime Type** | Auto-detect by default; override only if the source mis-reports its MIME type. |
 

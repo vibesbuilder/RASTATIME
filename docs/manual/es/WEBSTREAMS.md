@@ -45,7 +45,7 @@ Biblioteca → **+ Nuevo** → **Webstream**.
 |---|---|
 | **Nombre** | Requerido. |
 | **URL fuente** | Requerida. La URL HTTP(S) del stream de audio. URL de stream directo, no una página de aterrizaje de reproductor. |
-| **Longitud por defecto** | Requerida. Formato `HHh MMm SSs`. Vea §3 para el detalle de precisión de segundos. |
+| **Longitud por defecto** | Requerida. Formato `HHh MMm SSs`. Vea §3 para el detalle de precisión de segundos. Desde el 30/09/2026 una longitud modificada se aplica a las filas de los programas futuros que programan el webstream (las filas ya iniciadas no se tocan) y esos programas se recalculan - un relé que debe llenar un programa ya no exige volver a llenarlo. |
 | **Descripción** | Texto libre, opcional. |
 | **Tipo MIME** | Detectar automáticamente por defecto. |
 

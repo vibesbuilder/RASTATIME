@@ -73,7 +73,7 @@ Bibliothek → **+ Neu** → **Webstream**.
 |---|---|
 | **Name** | Erforderlich. Das sichtbare Label in der Bibliothek und im Sendeplan. |
 | **Quell-URL** | Erforderlich. Die HTTP(S)-URL des Audio-Streams. Direkte Stream-URL, keine Player-Landing-Page. Beispiele: `http://stream.bbc.co.uk/...`, `http://icecast.example.com:8000/mountpoint`. |
-| **Standardlänge** | Erforderlich. `HHh MMm SSs`-Format. Siehe §3 für das Sekunden-Präzisions-Detail. |
+| **Standardlänge** | Erforderlich. `HHh MMm SSs`-Format. Siehe §3 für das Sekunden-Präzisions-Detail. Seit dem 30.09.2026 wird eine geänderte Länge in die Zeilen der kommenden Sendungen übernommen, die den Webstream enthalten (bereits gestartete Zeilen bleiben unberührt), und diese Sendungen werden neu ausgelegt - ein Relais, das eine Sendung füllen soll, braucht kein Neu-Befüllen mehr. |
 | **Beschreibung** | Freitext, optional. Wird im Bibliothekszeilen-Tooltip und im öffentlichen Programmplan-Export gezeigt. |
 | **MIME-Typ** | Standardmäßig automatisch erkennen; überschreiben Sie nur, wenn die Quelle ihren MIME-Typ falsch meldet. |
 

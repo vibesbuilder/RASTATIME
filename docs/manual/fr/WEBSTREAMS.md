@@ -48,7 +48,7 @@ Bibliothèque → **+ Nouveau** → **Webstream**.
 |---|---|
 | **Nom** | Requis. Le libellé visible dans la bibliothèque et sur le planning. |
 | **URL source** | Requise. L'URL HTTP(S) du stream audio. URL de stream direct, pas une page d'atterrissage de player. Exemples : `http://stream.bbc.co.uk/...`, `http://icecast.example.com:8000/mountpoint`. |
-| **Longueur par défaut** | Requise. Format `HHh MMm SSs`. Voir §3 pour le détail de précision aux secondes. |
+| **Longueur par défaut** | Requise. Format `HHh MMm SSs`. Voir §3 pour le détail de précision aux secondes. Depuis le 30/09/2026, une longueur modifiée est reprise dans les lignes des émissions à venir qui programment le webstream (les lignes déjà commencées ne sont pas touchées), et ces émissions sont recalculées - un relais censé remplir une émission ne demande plus de la remplir à nouveau. |
 | **Description** | Texte libre, optionnel. |
 | **Type MIME** | Détection automatique par défaut ; surchargez seulement si la source rapporte mal son type MIME. |
 

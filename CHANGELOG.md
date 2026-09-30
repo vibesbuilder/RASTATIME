@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Webstream default length follows into the upcoming shows (2026-09-30,
+  follow-up to the cue-point package)** - the operator set the BBC relay from
+  302 to 305 s so the hourly show is filled; the rows copy the length at
+  insertion, so 238 upcoming instances kept 302/303 s.
+  `Application_Model_CuePoints::applyWebstreamLengthToFutureRows()` copies the
+  length into the not-started rows (`clip_length`, `cue_out`) and the
+  instances are laid out again; `Application_Model_Webstream::save()` calls it
+  for an existing webstream.  One-off tool `C:/Temp/optd/ws_length_apply.php
+  <stream id> [--apply]` (dry run in a rolled-back transaction, reports rows
+  past the show end and the gap to the show end) - applied for the already
+  saved value: 238 instances, gap to the show end 3.9 s -> 0.9 s, no row past
+  the show end.  Manual WEBSTREAMS x4 - `<hash-ws-length>`.
+
 - **Cue points: re-detect from the library, follow into the upcoming shows,
   capped at the file length (2026-09-30, operator Go after the evaluation)** -
   with jingles laid out without an overlap every silent tail is a pause; all
