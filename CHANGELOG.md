@@ -26,7 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (selected tracks, files over 15 min skipped; `library/redetect-cue-points`,
   JSON summary).  Translations DE/FR/ES, manual LIBRARY x4, dry run
   `C:/Temp/optd/cue_dryrun.php` (unit checks, detection on sample files, apply
-  + relayout in a rolled-back transaction) - `<hash-cue-points>`.
+  + relayout in a rolled-back transaction) - `7d34b09`.
 
 - **Crossfade je Track-Typ und „Exclude from Crossover" (2026-09-29,
   Operator-Go)** — Auslöser: die stündliche Jingle-Folge lief dem Kalender
