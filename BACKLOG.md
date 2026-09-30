@@ -52,6 +52,36 @@ Titel-Editor und Ersetzen der Datei kappen Cue-Out auf die Länge; (b) Job „Cu
 neu messen" für Bibliothek oder Track-Typ (wie „Measure missing files now"); (c)
 Bericht „Titel mit Cue-Out > Länge / stillem Ende > 0,5 s".  Vorbedingung: Evaluierung.
 
+**Nachtrag 2026-09-30:** Neu-Einfügen durch den Operator kopierte die neuen
+Cue-Punkte in 213 von 239 Instanzen (verlinkte Serien); die Dienstag-17-Uhr-Serie
+(1056 … 1839, 26 Zeilen) blieb alt.  Alle 24 TOH-Jingles enden 1,05–1,25 s vor
+Cue-Out 9,90 still → jede volle Stunde ~1 s Pause.
+
+**Evaluierung 2026-09-30 (Operator-Anfrage):**
+1. *Machbarkeit:* ja.  Stille-Erkennung existiert im Analyzer (`analyze_cuepoint`,
+   ffmpeg `silencedetect` −60 dB ≥ 0,3 s), läuft nur beim Import; `relayoutFutureInstances()`
+   liest `clip_length` der Zeilen → Punkt 2 muss nur `cue_in/cue_out/clip_length` der
+   künftigen, nicht gestarteten Zeilen nachziehen und dann neu auslegen.
+2. *Eingriff:* Punkt 3 (Cue-Out ≤ Länge kappen) und Punkt 2 (Durchreichen) sind reines
+   Legacy (`StoredFile::setDbColMetadata`, `Scheduler`).  Punkt 1 hat zwei Wege:
+   **A** Legacy misst selbst (ffmpeg synchron je gewählter Titel, gleiche Parameter wie
+   der Analyzer, Messung + Durchreichen + Layout in einer Transaktion; Nachteil:
+   Erkennung doppelt implementiert, lange Dateien langsam → Schutz „> 15 min
+   überspringen").  **B** Analyzer mit `cue_only` (Muster `loudness_only`), PUT an die
+   API, dann Rückruf API → Legacy-v1-Endpunkt fürs Durchreichen (neue
+   Abhängigkeitsrichtung Django → PHP, asynchron, aber jede Dateigröße).
+3. *Aufwand:* Punkt 3 ~30 Zeilen; Punkt 2 ~80 Zeilen + Trockenlauf-Werkzeug; Punkt 1
+   A ~150 Zeilen (Library-Mehrfachauswahl „Re-detect Cue Points", Controller,
+   ffmpeg-Aufruf), B ~200 Zeilen über drei Komponenten.  Handbuch ×4, Tests.
+4. *Dauer:* Punkte 3+2 ~0,5 Tag; Punkt 1 A +0,5 Tag, B +1 Tag.
+5. *Sinn:* hoch — mit Überlapp 0 wird jede stille Nachlaufzeit hörbar (241 Jingles);
+   ohne Punkt 2 muss nach jeder Cue-Änderung neu befüllt werden.  Nebenwirkung: kürzere
+   Jingles verschieben die Stille ans Sendungsende (BBC-Zeile 302 s fest → ~3 s vor
+   der nächsten Sendung), Webstream-Zeile entsprechend verlängern.
+6. *Empfehlung:* Go in der Reihenfolge 3 → 2 → 1 (Weg A).  Offene Operator-Entscheidung:
+   Weg A oder B für Punkt 1; Auslöser als Library-Mehrfachauswahl (empfohlen) oder je
+   Track-Typ in den Settings.
+
 ### ✅ Crossfade je Track-Typ und „Exclude from Crossover" — 5 s Stille vor dem BBC-Webstream (Operator-Go 2026-09-29, DONE 2026-09-30 — Testsendung abgenommen)
 
 **Abnahme 2026-09-30 08:00 (Testsendung „BBC", Instanz 2001, Log + 24/7-Aufnahme):**
