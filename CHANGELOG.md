@@ -737,7 +737,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   liegen jetzt in `ScheduleController::currentPlaylistData()`, Action und
   Einbettung nutzen sie.  Live verifiziert: Seiten HTML, eingebettete Daten
   mit denselben vier Schlüsseln, alle Endpoints JSON mit und ohne
-  XHR-Header.
+  XHR-Header — `80cf2f8`.
 
 - **A relay or line-in after a jingle came in about one second early
   (2026-09-29, found while checking the logs after the crossfade per track
