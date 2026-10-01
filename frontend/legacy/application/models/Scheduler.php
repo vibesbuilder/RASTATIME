@@ -1568,6 +1568,11 @@ final class Application_Model_Scheduler
             $modified = array_keys($modifiedMap);
             // need to adjust shows we have moved items from.
             foreach ($modified as $instanceId) {
+                // RASTATIME 2026-10-01 - removeGaps() above squeezed the
+                // source show butt to butt through the Propel setters (whole
+                // seconds, no crossfade overlap); lay it out per pair again
+                // like removeItems() does.  Idempotent for the target show.
+                $this->calculateCrossfades($instanceId);
                 $instance = CcShowInstancesQuery::create()->findPK($instanceId, $this->con);
                 $instance->updateScheduleStatus($this->con);
             }

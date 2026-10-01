@@ -792,6 +792,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Sendung verschieben rundete die Zeilen auf ganze Sekunden (2026-10-01,
+  Befund der Autoloading-Live-Probe)** — nach dem Verschieben der
+  Test-Sendung (10:40 → 10:50 → 11:00) lagen alle Zeilen auf ganzen
+  Sekunden, der 0,0-s-Rest des Builds wuchs auf 1,0 s (Outro-Zeile
+  11:59:40–11:59:59).  Ursache: `SchedulerService::updateScheduleStartTime()`
+  — Bearbeiten-Dialog, Ziehen im Kalender und Show-Shift laufen dort durch —
+  verschob jede Zeile über die Propel-Setter, die auf `Y-m-d H:i:s` kürzen.
+  Fix: ein `UPDATE cc_schedule SET starts = starts + :diff * INTERVAL '1
+  second', …` je Verschiebung; die Timestamp-Arithmetik behält die
+  Mikrosekunden, die Zeilen bleiben exakt so zueinander, wie Build bzw.
+  `calculateCrossfades()` sie ausgelegt haben.  Dazu `Scheduler::moveItem()`:
+  die Quell-Sendung eines Titel-Umzugs wurde nur per `removeGaps()` Stoß an
+  Stoß gequetscht (Setter, ohne Crossfade-Überlappung); jetzt folgt wie in
+  `removeItems()` ein `calculateCrossfades()`.  Probe (temporäre
+  10-min-Instanz der Test-Sendung, ±600 s): 5/5 Zeilen mit Bruchteilen, 0
+  Abweichungen, Rückweg byte-gleich zum Build.  Wirkt sofort (PHP).
 - **A quietly ending track lost its last 3 s and the rest of the show ran
   early (2026-10-01, root cause of the cut intro at 12:01)** - the transition
   function treated a tail quieter than -50 dB like an empty one (`old.db_level

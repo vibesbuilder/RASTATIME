@@ -48,29 +48,33 @@ class Application_Service_SchedulerService
      */
     public static function updateScheduleStartTime($instanceIds, $diff)
     {
-        $con = Propel::getConnection();
-        if (count($instanceIds) > 0) {
-            $showIdList = implode(',', $instanceIds);
-
-            $ccSchedules = CcScheduleQuery::create()
-                ->filterByDbInstanceId($instanceIds, Criteria::IN)
-                ->find($con);
-
-            $interval = new DateInterval('PT' . abs($diff) . 'S');
-            if ($diff < 0) {
-                $interval->invert = 1;
-            }
-            foreach ($ccSchedules as $ccSchedule) {
-                $start = $ccSchedule->getDbStarts(null);
-                $newStart = $start->add($interval);
-                $end = $ccSchedule->getDbEnds(null);
-                $newEnd = $end->add($interval);
-                $ccSchedule
-                    ->setDbStarts($newStart)
-                    ->setDbEnds($newEnd)
-                    ->save($con);
-            }
+        $instanceIds = array_values(array_map('intval', (array) $instanceIds));
+        if (count($instanceIds) === 0 || (int) $diff === 0) {
+            return;
         }
+
+        // RASTATIME 2026-10-01 - shift the rows in SQL: timestamp arithmetic
+        // keeps the microseconds, so the rows stay laid out exactly as the
+        // build / calculateCrossfades() left them.  The Propel setters used
+        // here before stored whole seconds, and a moved show lost up to a
+        // second per row (the last row ended early, its fraction was gone).
+        $params = [':diff1' => (int) $diff, ':diff2' => (int) $diff];
+        $placeholders = [];
+        foreach ($instanceIds as $i => $id) {
+            $placeholders[] = ":iid{$i}";
+            $params[":iid{$i}"] = $id;
+        }
+        $sql = 'UPDATE cc_schedule
+            SET starts = starts + :diff1 * INTERVAL \'1 second\',
+                ends = ends + :diff2 * INTERVAL \'1 second\'
+            WHERE instance_id IN (' . implode(', ', $placeholders) . ')';
+        Application_Common_Database::prepareAndExecute(
+            $sql,
+            $params,
+            Application_Common_Database::EXECUTE,
+            PDO::FETCH_ASSOC,
+            Propel::getConnection()
+        );
     }
 
     /**
