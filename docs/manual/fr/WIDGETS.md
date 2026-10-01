@@ -695,10 +695,21 @@ La Track History n'affiche pas de pochettes.
   le 2026-09-30 l'**image de l'émission en cours** (Calendar →
   émission → *Show image*) : un relais en direct comme l'heure BBC
   porte ainsi l'image que vous avez donnée à cette émission.  Sans
-  image d'émission, l'image est simplement omise et le texte prend sa
-  place ; il n'y a pas d'image de remplacement.  L'image de l'émission
-  est servie telle qu'elle a été téléversée (pas de vignette) — gardez-la
-  légère, quelques centaines de Ko au plus.
+  image d'émission, c'est la **pochette par défaut** qui s'affiche
+  (Settings → Widgets → Player, depuis le 2026-10-01 ; réduite à
+  256 px au téléversement), et sans elle l'image est simplement omise
+  et le texte prend sa place.  L'image de l'émission est servie telle
+  qu'elle a été téléversée (pas de vignette) — gardez-la légère,
+  quelques centaines de Ko au plus.
+* **Le Stream Player suit le Stream Label.**  Avec *Artist - Title*
+  ou *Show - Artist - Title* (Settings → Streams), le lecteur
+  fonctionne comme ci-dessus.  Avec *Station name - Show name*,
+  l'auditeur n'apprend pas le titre ; le lecteur nomme donc (depuis
+  le 2026-10-01) l'émission en titre, le nom de la station dessous,
+  affiche l'image de l'émission ou la pochette par défaut — jamais une
+  pochette de titre — et sa ligne *Next* nomme l'émission suivante.
+  Le widget Now Playing — Track garde l'ordre « titre d'abord » : c'est
+  par définition un widget de titre.
 * **Les pochettes nécessitent l'API publique.**  Elles viennent du
   même endpoint que le widget Song Request, soumis à Settings →
   Preferences → *Public API*.  Interrupteur éteint : les widgets

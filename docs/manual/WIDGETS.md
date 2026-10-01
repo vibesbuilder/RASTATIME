@@ -844,10 +844,20 @@ What to expect:
   Line-In, a track without artwork — the widget shows the **image of
   the running show** (Calendar → show → *Show image*) since
   2026-09-30, so a live relay such as the BBC hour carries the
-  picture you gave that show.  Without a show image the picture is
-  simply left out and the text moves into its place; there is no
-  placeholder image.  The show image is served as uploaded (no
-  thumbnail), so keep it modest — a few hundred KB at most.
+  picture you gave that show.  Without a show image the **default
+  cover** is shown (Settings → Widgets → Player, since 2026-10-01;
+  scaled to 256 px on upload), and without one the picture is simply
+  left out and the text moves into its place.  The show image is
+  served as uploaded (no thumbnail), so keep it modest — a few
+  hundred KB at most.
+* **The Stream Player follows the Stream Label.**  With *Artist -
+  Title* or *Show - Artist - Title* (Settings → Streams) the player
+  works as above.  With *Station name - Show name* the listener is
+  not told the track, so the player (since 2026-10-01) names the show
+  in its headline with the station name underneath, shows the show's
+  image or the default cover — never a track cover — and its *Next*
+  line names the next show.  The Now Playing — Track widget keeps the
+  track-first order; it is a track widget by definition.
 * **Covers need the public API.**  They are served by the same
   endpoint the Song-Request widget uses, gated by Settings →
   Preferences → *Public API*.  With that toggle off the widgets keep

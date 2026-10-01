@@ -18,6 +18,22 @@ class Application_Form_WidgetPlayer extends Zend_Form
             ->setRequired(false);
         $this->addElement($art);
 
+        // RASTATIME 2026-10-01 - the default cover: shown when neither the
+        // track nor the show has a picture (scaled to 256 px on upload).
+        $cover = new Zend_Form_Element_File('widget_default_cover');
+        $cover->setLabel(_('Default cover:'))
+            ->setRequired(false)
+            ->addValidator('Count', false, 1)
+            ->addValidator('Extension', false, 'png,jpg,jpeg,gif,webp')
+            ->setMaxFileSize(4000000);
+        $cover->setAttrib('accept', 'image/png,image/jpeg,image/gif,image/webp');
+        $this->addElement($cover);
+
+        $remove = new Zend_Form_Element_Checkbox('widget_default_cover_remove');
+        $remove->setLabel(_('Remove the default cover'))
+            ->setRequired(false);
+        $this->addElement($remove);
+
         $submit = new Zend_Form_Element_Submit('submit');
         $submit->setLabel(_('Save'))
                ->setAttrib('class', 'btn');

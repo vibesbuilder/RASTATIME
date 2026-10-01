@@ -687,10 +687,21 @@ Qué esperar:
   Line-In, tema sin carátula — el widget muestra desde 2026-09-30 la
   **imagen del programa en curso** (Calendar → programa → *Show
   image*): un relé en directo como la hora de la BBC lleva así la
-  imagen que dio a ese programa.  Sin imagen de programa, la imagen
-  simplemente se omite y el texto ocupa su lugar; no hay imagen de
-  reemplazo.  La imagen del programa se sirve tal como se subió (sin
-  miniatura) — manténgala ligera, unos cientos de KB como máximo.
+  imagen que dio a ese programa.  Sin imagen de programa se muestra
+  la **carátula predeterminada** (Settings → Widgets → Player, desde
+  2026-10-01; reducida a 256 px al subirla), y sin ella la imagen
+  simplemente se omite y el texto ocupa su lugar.  La imagen del
+  programa se sirve tal como se subió (sin miniatura) — manténgala
+  ligera, unos cientos de KB como máximo.
+* **El Stream Player sigue el Stream Label.**  Con *Artist - Title* o
+  *Show - Artist - Title* (Settings → Streams) el reproductor funciona
+  como arriba.  Con *Station name - Show name* el oyente no conoce el
+  tema; por eso el reproductor (desde 2026-10-01) nombra el programa
+  en el titular con el nombre de la emisora debajo, muestra la imagen
+  del programa o la carátula predeterminada — nunca una carátula de
+  tema — y su línea *Next* nombra el siguiente programa.  El widget
+  Now Playing — Track mantiene el orden «tema primero»: es por
+  definición un widget de tema.
 * **Las carátulas necesitan la API pública.**  Vienen del mismo
   endpoint que usa el widget Song Request, sujeto a Settings →
   Preferences → *Public API*.  Con el interruptor apagado los widgets

@@ -9,6 +9,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Player folgt dem Stream Label; Standard-Cover (2026-10-01,
+  Operator-Go)** — Das Stream Label (Settings → Streams) legt fest, ob der
+  Hörer den Titel oder die Sendung sieht; Bild und Überschrift des
+  Stream-Players zeigen jetzt dieselbe Ebene.  Bei „Station name - Show
+  name" nennt der Player die Sendung in der Überschrift mit dem
+  Stationsnamen darunter, „Next" nennt die nächste Sendung, als Bild
+  kommt Sendungsbild → Standard-Cover — nie ein Titel-Cover, weil der
+  Titel bewusst nicht genannt wird.  Bei „Artist - Title" / „Show -
+  Artist - Title" bleibt es bei Titel-Cover → Sendungsbild →
+  Standard-Cover.  Das **Standard-Cover** (Operator-Entscheid statt
+  Stationslogo) wird unter Settings → Widgets → Player hochgeladen
+  (Entfernen-Checkbox, Vorschau), per GD auf max. 256 px verkleinert und
+  als PNG in `cc_pref.widget_default_cover` abgelegt (700-KB-Testbild →
+  83 KB), ausgeliefert vom öffentlichen `embed/default-cover` (Hash in der
+  URL, ein Tag Cache; ohne Bild 404).  Now Playing – Track nimmt das
+  Standard-Cover als letztes Glied, bleibt aber „Titel zuerst".
+  Verifiziert: Routen 200/404, Einstellungsseite (multipart, Upload,
+  Entfernen), GD-Pfad (JPEG, 700-KB-PNG, Müll abgelehnt), Player in
+  fünf simulierten Fällen (Format 0/2, mit/ohne Sendungsbild, mit/ohne
+  Standard-Cover); ein echter Upload steht noch aus.  Texte DE/FR/ES
+  (Formular), Handbuch WIDGETS ×4, Architektur §23.22 Addendum (0.55).
+  Inbetriebnahme: Apache-Neustart für die Übersetzungen, dann das
+  Standard-Cover hochladen.
+
 - **Sendungsbild als Rückfall-Cover in Player und Now-Playing-Widget
   (2026-09-30, Operator-Frage nach Covern für Webstreams/Line-Ins, Go
   Option A)** — Der Icecast-Stream selbst trägt nur Text-Metadaten; ein

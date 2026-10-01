@@ -22,14 +22,29 @@ class EmbeddableWidgetsController extends Zend_Controller_Action
             Application_Model_Preference::SetWidgetPlayerShowArt(
                 (bool) $form->getValue('widget_player_show_art')
             );
+            // RASTATIME 2026-10-01 - default cover: remove wins over a
+            // simultaneous upload; a file GD cannot read is reported.
+            if ($form->getValue('widget_default_cover_remove')) {
+                Application_Model_Preference::RemoveWidgetDefaultCover();
+            } else {
+                $coverElement = $form->getElement('widget_default_cover');
+                $coverElement->receive();
+                $coverPath = $coverElement->getFileName();
+                if (!empty($coverPath)
+                    && !Application_Model_Preference::SetWidgetDefaultCover($coverPath)) {
+                    $this->view->coverError = _('The default cover could not be read as an image.');
+                }
+            }
             $this->view->saved = true;
         } else {
             $form->populate([
                 'widget_player_show_art' => Application_Model_Preference::GetWidgetPlayerShowArt(),
             ]);
         }
+        $form->getElement('widget_default_cover_remove')->setValue(0);
 
         $this->view->form = $form;
+        $this->view->defaultCover = Application_Model_Preference::GetWidgetDefaultCover();
         $this->view->publicUrl = Config::getPublicUrl();
         $this->view->stationName = Application_Model_Preference::GetStationName();
     }

@@ -5244,3 +5244,15 @@ msgstr "No tiene permiso para cambiar algunos de los archivos seleccionados."
 #: RASTATIME 2026-09-30 no fade per track type
 msgid "Tracks of this type keep their full level while the neighbouring track fades in or out; the overlap itself stays as the Crossfade Duration says (jingles or IDs that should cut through the end of a song). Applies to tracks whose Crossover is \"As the track type\"; the track editor can still set a single track differently. Takes effect on the next schedule push, no re-layout."
 msgstr "Las pistas de este tipo conservan su nivel completo mientras la pista vecina se funde de entrada o de salida; el solapamiento se mantiene tal como indica la duración del crossfade (jingles o IDs que deben cortar sobre el final de una canción). Se aplica a las pistas cuyo crossover es «Como el tipo de pista»; el editor de pista puede seguir ajustando una pista de otra forma. Surte efecto con el siguiente envío de la programación, sin volver a maquetar."
+
+#: RASTATIME 2026-10-01 player default cover
+msgid "Default cover:"
+msgstr "Carátula predeterminada:"
+
+#: RASTATIME 2026-10-01 player default cover
+msgid "Remove the default cover"
+msgstr "Quitar la carátula predeterminada"
+
+#: RASTATIME 2026-10-01 player default cover
+msgid "The default cover could not be read as an image."
+msgstr "La carátula predeterminada no se pudo leer como imagen."

@@ -167,6 +167,7 @@
     var artEnabled = body.getAttribute('data-art') === '1';
     var artUrlPrefix = body.getAttribute('data-art-url') || '';
     var showLogoUrlPrefix = body.getAttribute('data-show-logo-url') || '';
+    var defaultCoverUrl = body.getAttribute('data-default-cover-url') || '';
 
     function paintCover(entry) {
         if (!artEnabled) { return; }
@@ -181,6 +182,9 @@
             // the show's image (a show whose file is gone answers with the
             // station logo, never 0 bytes)
             url = showLogoUrlPrefix + encodeURIComponent(entry.showId);
+        } else if (entry && defaultCoverUrl) {
+            // RASTATIME 2026-10-01 - the default cover closes the chain
+            url = defaultCoverUrl;
         }
         if (url) {
             if (img.getAttribute('src') !== url) { img.setAttribute('src', url); }

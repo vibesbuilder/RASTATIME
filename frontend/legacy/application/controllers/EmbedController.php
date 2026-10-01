@@ -102,6 +102,12 @@ class EmbedController extends Zend_Controller_Action
             'artUrlPrefix' => $this->_artworkUrlPrefix(128),
             // RASTATIME 2026-09-30 - the show's image as the fallback cover
             'showLogoUrlPrefix' => $this->_showLogoUrlPrefix(),
+            // RASTATIME 2026-10-01 - the picture and the headline follow the
+            // Stream Label (0 Artist - Title, 1 Show - Artist - Title,
+            // 2 Station - Show); the default cover closes the chain.
+            'streamLabelFormat' => (int) Application_Model_Preference::GetStreamLabelFormat(),
+            'stationName' => Application_Model_Preference::GetStationName(),
+            'defaultCoverUrl' => $this->_defaultCoverUrl(),
             'labels' => [
                 'next' => _('Next'),
                 'onAir' => _('On Air'),
@@ -293,6 +299,7 @@ class EmbedController extends Zend_Controller_Action
         $this->view->artEnabled = $this->_resolveArtFlag($request, false);
         $this->view->artUrlPrefix = $this->_artworkUrlPrefix(64);
         $this->view->showLogoUrlPrefix = $this->_showLogoUrlPrefix();
+        $this->view->defaultCoverUrl = $this->_defaultCoverUrl();
 
         $cacheTtl = $this->_resolveCacheTtl();
         $this->view->cacheTtl = $cacheTtl;
@@ -415,6 +422,46 @@ class EmbedController extends Zend_Controller_Action
     private function _showLogoUrlPrefix()
     {
         return Config::getBasePath() . 'api/show-logo?id=';
+    }
+
+    /**
+     * RASTATIME 2026-10-01 - the default cover (Settings -> Widgets ->
+     * Player), null when none is set.  The URL carries a hash of the
+     * picture so a new upload is not hidden by the browser cache.
+     *
+     * @return null|string
+     */
+    private function _defaultCoverUrl()
+    {
+        $b64 = Application_Model_Preference::GetWidgetDefaultCover();
+        if ($b64 === null) {
+            return null;
+        }
+
+        return Config::getBasePath() . 'embed/default-cover?v=' . substr(md5($b64), 0, 10);
+    }
+
+    /**
+     * The default cover as a PNG (see _defaultCoverUrl).  Public like the
+     * other embed routes; a day of caching, the URL changes with the
+     * picture.  Without a default cover: 404.
+     */
+    public function defaultCoverAction()
+    {
+        $this->view->layout()->disableLayout();
+        $this->_helper->viewRenderer->setNoRender(true);
+
+        $b64 = Application_Model_Preference::GetWidgetDefaultCover();
+        if ($b64 === null) {
+            $this->getResponse()->setHttpResponseCode(404);
+
+            return;
+        }
+        $png = base64_decode($b64);
+        header('Content-Type: image/png');
+        header('Content-Length: ' . strlen($png));
+        header('Cache-Control: public, max-age=86400');
+        echo $png;
     }
 
     private function _buildNowPlayingPayload($timezone)

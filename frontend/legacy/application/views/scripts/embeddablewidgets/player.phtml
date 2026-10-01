@@ -41,13 +41,28 @@ $embedBar  = $publicUrl . '/embed/player?layout=bar';
     <h3 style="margin-top: 1.5em;"><?php echo _("Cover artwork"); ?></h3>
     <fieldset class="padded">
         <p style="margin-bottom: 1em; color: #666;">
-            <?php echo _("Shows the cover of the running track next to the "
-                . "play button.  Tracks without a cover, webstreams and "
-                . "line-ins simply show no picture.  This setting applies "
-                . "to every embed of the player, including the one on the "
-                . "station homepage; an embed URL can still override it "
-                . "with <code>art=on</code> or <code>art=off</code>."); ?>
+            <?php echo _("Shows a picture next to the play button: the "
+                . "cover of the running track, else the image of the "
+                . "running show (Calendar &rarr; show &rarr; Show image), "
+                . "else the default cover below.  With the Stream Label "
+                . "\"Station name - Show name\" (Settings &rarr; Streams) "
+                . "the player names the show instead of the track and "
+                . "shows the show's image, never a track cover.  This "
+                . "setting applies to every embed of the player, including "
+                . "the one on the station homepage; an embed URL can still "
+                . "override it with <code>art=on</code> or "
+                . "<code>art=off</code>."); ?>
         </p>
+        <?php if (!empty($this->coverError)): ?>
+            <div class="errors" style="margin-bottom: 1em;"><?php echo htmlspecialchars($this->coverError, ENT_QUOTES, 'UTF-8'); ?></div>
+        <?php endif; ?>
+        <?php /* RASTATIME 2026-10-01 - the current default cover (scaled to 256 px on upload) */ ?>
+        <?php if (!empty($this->defaultCover)): ?>
+            <div style="margin-bottom: 1em;">
+                <img alt="" style="width: 96px; height: 96px; object-fit: cover; border-radius: 4px; border: 1px solid #444;"
+                     src="data:image/png;base64,<?php echo $this->defaultCover; ?>" />
+            </div>
+        <?php endif; ?>
         <?php echo $this->form; ?>
     </fieldset>
 

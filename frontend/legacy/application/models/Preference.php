@@ -657,6 +657,64 @@ class Application_Model_Preference
         self::setValue('widget_player_show_art', $v ? '1' : '0');
     }
 
+    /**
+     * RASTATIME 2026-10-01 - the player's default cover (Settings ->
+     * Widgets -> Player): the last link of the cover chain (track
+     * artwork, show image, default cover).  Stored like the favicon as
+     * base64 in cc_pref, but scaled to at most 256 px and re-encoded as
+     * PNG on upload (GD), so the blob stays small whatever the operator
+     * uploads.
+     *
+     * @param string $imagePath the uploaded file
+     *
+     * @return bool false when the file is not an image GD can read
+     */
+    public static function SetWidgetDefaultCover($imagePath)
+    {
+        $bytes = @file_get_contents($imagePath);
+        if ($bytes === false || $bytes === '') {
+            Logging::warn('SetWidgetDefaultCover: could not read ' . $imagePath);
+
+            return false;
+        }
+        $im = @imagecreatefromstring($bytes);
+        if (!$im) {
+            Logging::warn('SetWidgetDefaultCover: not an image GD can read');
+
+            return false;
+        }
+        $w = imagesx($im);
+        $h = imagesy($im);
+        if (max($w, $h) > 256) {
+            $scaled = imagescale($im, $w >= $h ? 256 : -1, $w >= $h ? -1 : 256);
+            if ($scaled) {
+                imagedestroy($im);
+                $im = $scaled;
+            }
+        }
+        imagesavealpha($im, true);
+        ob_start();
+        imagepng($im, null, 8);
+        $png = ob_get_clean();
+        imagedestroy($im);
+        self::setValue('widget_default_cover', base64_encode($png));
+
+        return true;
+    }
+
+    public static function RemoveWidgetDefaultCover()
+    {
+        self::setValue('widget_default_cover', '');
+    }
+
+    /** @return null|string the PNG, base64-encoded; null when none is set */
+    public static function GetWidgetDefaultCover()
+    {
+        $b64 = self::getValue('widget_default_cover');
+
+        return ($b64 === '' || $b64 === null) ? null : $b64;
+    }
+
     public static function GetWidgetTrackHistoryExcludeShort()
     {
         $v = self::getValue('widget_track_history_exclude_short');

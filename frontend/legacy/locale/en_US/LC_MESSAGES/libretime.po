@@ -4684,3 +4684,15 @@ msgstr ""
 #: RASTATIME 2026-09-30 no fade per track type
 msgid "Tracks of this type keep their full level while the neighbouring track fades in or out; the overlap itself stays as the Crossfade Duration says (jingles or IDs that should cut through the end of a song). Applies to tracks whose Crossover is \"As the track type\"; the track editor can still set a single track differently. Takes effect on the next schedule push, no re-layout."
 msgstr ""
+
+#: RASTATIME 2026-10-01 player default cover
+msgid "Default cover:"
+msgstr ""
+
+#: RASTATIME 2026-10-01 player default cover
+msgid "Remove the default cover"
+msgstr ""
+
+#: RASTATIME 2026-10-01 player default cover
+msgid "The default cover could not be read as an image."
+msgstr ""

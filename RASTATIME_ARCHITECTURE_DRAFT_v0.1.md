@@ -1,10 +1,14 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.54
-Date: 2026-09-30
+Draft version: 0.55
+Date: 2026-10-01
 
 > **Revision history**
+> - **0.55 (2026-10-01)** — **Player follows the Stream Label; default
+>   cover** (§23.22 addendum): with "Station - Show" the player names
+>   the show and shows its image, never a track cover; a default cover
+>   (Settings → Widgets → Player, 256 px PNG in cc_pref) closes the chain.
 > - **0.54 (2026-09-30)** — **Show image as the fallback cover**
 >   (§23.22 addendum): the Stream Player and Now Playing - Track show
 >   the running show's image when the on-air item has no artwork
@@ -4029,6 +4033,24 @@ station logo, never with 0 bytes, so the <img> cannot hang (the trap
 the artwork endpoint has).  The image is served as uploaded - no
 thumbnail - which the manual says to keep modest.  A per-source cover
 stays an option on top of this (declined for now as not needed).
+
+**Addendum 2026-10-01 - the player follows the Stream Label; the default
+cover.**  The Stream Label (Settings → Streams, `stream_label_format`:
+0 Artist - Title, 1 Show - Artist - Title, 2 Station name - Show name)
+is the operator's decision which level the listener sees; the player's
+picture and headline now show the same level.  With 2 the headline is
+the show, the station name sits underneath, the *Next* line names the
+next show, and the cover chain is show image → default cover - a track
+cover never, because the track is deliberately not named.  With 0 / 1
+the chain is track artwork → show image → default cover.  The default
+cover is the operator's choice over the station logo: an upload on
+Settings → Widgets → Player, scaled by GD to at most 256 px and
+re-encoded as PNG (base64 in `cc_pref.widget_default_cover`, ~80 KB
+for a 1024² photo), served by the public `embed/default-cover` with a
+day of caching and a content hash in the URL; without one the route
+answers 404 and the chain ends with no picture.  The Now Playing -
+Track widget takes the default cover as its last link too but keeps
+the track-first order (a track widget by definition).
 
 ---
 

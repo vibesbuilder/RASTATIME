@@ -728,10 +728,21 @@ Was Sie erwarten können:
   Line-In, Titel ohne Artwork — zeigt das Widget seit 2026-09-30 das
   **Bild der laufenden Sendung** (Calendar → Sendung → *Show image*);
   ein Live-Relais wie die BBC-Stunde trägt so das Bild, das Sie dieser
-  Sendung gegeben haben.  Ohne Sendungsbild fällt das Bild einfach weg
-  und der Text rückt nach; ein Platzhalterbild gibt es nicht.  Das
-  Sendungsbild wird so ausgeliefert, wie es hochgeladen wurde (keine
-  Verkleinerung) — halten Sie es klein, höchstens einige hundert KB.
+  Sendung gegeben haben.  Ohne Sendungsbild erscheint das
+  **Standard-Cover** (Settings → Widgets → Player, seit 2026-10-01;
+  beim Hochladen auf 256 px verkleinert), und ohne dieses fällt das
+  Bild einfach weg und der Text rückt nach.  Das Sendungsbild wird so
+  ausgeliefert, wie es hochgeladen wurde (keine Verkleinerung) —
+  halten Sie es klein, höchstens einige hundert KB.
+* **Der Stream Player folgt dem Stream Label.**  Bei *Artist - Title*
+  oder *Show - Artist - Title* (Settings → Streams) arbeitet der
+  Player wie oben.  Bei *Station name - Show name* erfährt der Hörer
+  den Titel nicht; der Player nennt daher (seit 2026-10-01) die
+  Sendung in der Überschrift mit dem Stationsnamen darunter, zeigt
+  das Sendungsbild oder das Standard-Cover — nie ein Titel-Cover —
+  und seine *Next*-Zeile nennt die nächste Sendung.  Das Widget Now
+  Playing — Track behält die Reihenfolge „Titel zuerst"; es ist per
+  Definition ein Titel-Widget.
 * **Cover brauchen die öffentliche API.**  Sie kommen vom selben
   Endpunkt wie beim Song-Request-Widget, freigeschaltet über
   Settings → Preferences → *Public API*.  Ist der Schalter aus,
