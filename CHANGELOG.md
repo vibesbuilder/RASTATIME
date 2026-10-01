@@ -792,6 +792,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **The other direction: a file after a live item, a live item after a live
+  item and the stop of a live item act at the row's exact time (2026-10-01,
+  operator Go)** - the 2026-10-01 10:00 measurement showed the Showteaser
+  after the BBC relay starting 0.6 s before its row and the relay's gate
+  closing 0.8 s early: those timers still fired on the whole second.
+  `_wait_for_exact_time()` waits for `start_exact` / `end_exact` (at most
+  `EXACT_TIME_HOLD_MAX_SECONDS` = 1.5 s, more is not the whole-second effect)
+  and gives up when another item took the spotlight meanwhile; it runs for a
+  fresh file push after a non-file predecessor (not for a catch-up, not behind
+  a playing file where the queue holds the push), for a pre-warmed live item
+  after a non-file predecessor (`_hold_live_start`, the renamed
+  `_hold_for_file_tail`) and in `_on_stop` for a live item.  Together with the
+  2026-09-29 fix every transition now sits on the rows' microseconds.  10
+  tests added (31 in `test_live_after_file_hold.py`).  Active after a restart
+  of RASTATIME-PLAYOUT - `<hash-exact-time>`.
+
 - **Track Types: Daten-Endpoint ohne XHR-Header antwortete 500 (2026-09-30,
   Upstream-Erbe)** — `Tracktype/get-tracktype-data` schaltete nur bei
   `X-Requested-With`-Aufrufen auf JSON; jeder andere Aufruf rendete das

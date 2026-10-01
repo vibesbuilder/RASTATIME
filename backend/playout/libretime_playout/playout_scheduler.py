@@ -120,6 +120,12 @@ SKIP_TOLERANCE_SECONDS = 1.5
 FILE_TAIL_HOLD_MAX_SECONDS = 4.0
 # How far the file chain runs behind the rows until a push has measured it.
 FILE_CHAIN_LAG_DEFAULT_SECONDS = 0.25
+# RASTATIME 2026-10-01 - the other direction: a file pushed after a live
+# item, a pre-warmed live item after a live item, and the stop of a live
+# item wait for the row's exact time instead of acting on the whole second
+# the timer fired at (up to ~1 s early).  More than this is not the
+# whole-second effect - act at once.
+EXACT_TIME_HOLD_MAX_SECONDS = 1.5
 
 # RASTATIME 2026-09-07 - the webstream watchdog lives inside Liquidsoap
 # (frame counter on the bus, rendered by liquidsoap_config).  The
@@ -1545,17 +1551,42 @@ class PlayoutScheduler:
             self._switcher and self._switcher.current_state != SourceState.SCHEDULED
         )
 
-    def _hold_for_file_tail(self, key: str, prev_event: object, event: object) -> bool:
+    def _wait_for_exact_time(self, key: str, when: Optional[datetime], what: str) -> bool:
         """
-        RASTATIME 2026-09-29 - a pre-warmed live item after a file track:
+        RASTATIME 2026-10-01 - timers fire on the whole second before the
+        row time; wait for the exact time (at most EXACT_TIME_HOLD_MAX_SECONDS
+        - more means the timer was late or the row is odd, act now).  False
+        when another item took the spotlight during the wait.
+        """
+        if when is None or self._dj_on_air():
+            return True
+        delay = (when - datetime.utcnow()).total_seconds()
+        if delay <= 0.02 or delay > EXACT_TIME_HOLD_MAX_SECONDS:
+            return True
+        logger.info("%s  %s: the row's exact time is in %.2f s - waiting.", what, key, delay)
+        time.sleep(delay)
+        if self._playing_key != key:
+            logger.info(
+                "%s  %s: superseded by %s during the wait - leaving the engine alone.",
+                what, key, self._playing_key,
+            )
+            return False
+        return True
+
+    def _hold_live_start(self, key: str, prev_event: object, event: object) -> bool:
+        """
+        RASTATIME 2026-09-29 - a pre-warmed live item: after a file track
         wait until the track's audio is over (minus the overlap of the
-        pair) before the gate opens.  False when another item took the
+        pair), after anything else (2026-10-01) until the row's exact
+        start, before the gate opens.  False when another item took the
         spotlight during the wait - the caller then leaves the engine alone.
         """
-        if not isinstance(prev_event, FileEvent) or self._dj_on_air():
+        if self._dj_on_air():
             return True
         if self._prepared is None or not self._same_scheduled_item(self._prepared[1], event):
             return True   # a cold start has its own start-up time
+        if not isinstance(prev_event, FileEvent):
+            return self._wait_for_exact_time(key, getattr(event, "start_exact", None), "PLAY")
         overlap = min(self._track_crossfade(prev_event), self._input_transition_seconds)
         left = (self._file_audio_end(prev_event) - datetime.utcnow()).total_seconds()
         hold = left - overlap
@@ -2172,6 +2203,14 @@ class PlayoutScheduler:
             self._queued_ahead = None
             self._queued_ahead_prev = None
 
+        # RASTATIME 2026-10-01 - after a live item (or silence) the push
+        # waits for the row's exact start: behind a file predecessor a
+        # push is free (the queue holds it), here it would start the
+        # track up to a second early and shift the rest of the show.
+        if seek <= 0 and not isinstance(prev_event, FileEvent):
+            if not self._wait_for_exact_time(key, event.start_exact, "PLAY"):
+                return
+
         # RASTATIME 2026-05-25 — Seamless-Bus-Mix Phase 1.  Let the
         # engine flush the previous track's last frames before the hard
         # stop (the Liquidsoap engine returns at once: its queue is
@@ -2270,7 +2309,7 @@ class PlayoutScheduler:
 
         # RASTATIME 2026-09-29 - after a file track the gate opens when
         # its audio is over, not on the whole second this timer fired at.
-        if not self._hold_for_file_tail(key, prev_event, event):
+        if not self._hold_live_start(key, prev_event, event):
             return
 
         # RASTATIME 2026-05-29 — Phase E: Liquidsoap webstream handling.
@@ -2494,7 +2533,7 @@ class PlayoutScheduler:
         # over (the wait only happens for the pre-warmed item).
         if (
             self._linein_capture.is_running
-            and not self._hold_for_file_tail(key, prev_event, event)
+            and not self._hold_live_start(key, prev_event, event)
         ):
             return
         if (
@@ -2861,6 +2900,12 @@ class PlayoutScheduler:
             logger.info(
                 "STOP  %s: %s took over while the track ran out.", key, self._playing_key,
             )
+            return
+        # RASTATIME 2026-10-01 - a live item ends at its row's exact time,
+        # not on the whole second (its gate closed up to a second early).
+        if not isinstance(self._current_event, FileEvent) and not self._wait_for_exact_time(
+            key, getattr(self._current_event, "end_exact", None), "STOP",
+        ):
             return
 
         # Race fix #3 (line-in device-switch) — snapshot the line-in

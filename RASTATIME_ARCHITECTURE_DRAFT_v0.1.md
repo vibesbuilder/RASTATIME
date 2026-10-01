@@ -1,10 +1,13 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.56
+Draft version: 0.57
 Date: 2026-10-01
 
 > **Revision history**
+> - **0.57 (2026-10-01)** — **Exact row times in both directions**
+>   (§23.44 addendum): a file after a live item, a live item after a
+>   live item and the stop of a live item wait for the row's exact time.
 > - **0.56 (2026-10-01)** — **Exact autoloading fill** (§23.19 addendum):
 >   intro → outro (real) → autoloading against the laid-out remaining
 >   time, strictly in order, never beyond the end; the trial insert,
@@ -5793,6 +5796,25 @@ a file track.  Both give up above `FILE_TAIL_HOLD_MAX_SECONDS` (4 s,
 overbook: cut now), while a DJ is on air, and for a cold start (which
 has its own start-up time); after the wait they check that no other
 item has taken the spotlight.
+
+**Addendum (2026-10-01): the other direction.**  The same whole-second
+effect shifted everything after a live item: the file pushed after the
+relay started up to a second before its row, the relay's gate closed up
+to a second early, and the rest of the show moved forward by that much.
+`_wait_for_exact_time(key, when, what)` waits for `start_exact` /
+`end_exact` (at most `EXACT_TIME_HOLD_MAX_SECONDS` = 1.5 s; a larger
+delay is a late timer or an odd row, acted on at once; nothing while a
+DJ is on air) and reports whether the key still owns the spotlight.  It
+runs (1) in `_on_file_start` for a fresh push after a non-file
+predecessor - not for a catch-up, and not behind a playing file, where
+the queue holds the push and an early push is free; (2) in
+`_hold_live_start` (the renamed `_hold_for_file_tail`) for a pre-warmed
+live item whose predecessor is not a file; (3) in `_on_stop` for a live
+item, after the file branch.  Cold live starts keep their start-up
+time.  The stop and the successor's start both wait for the same
+instant and race there as they did on the whole second.  Measured
+2026-10-01 10:00 before the fix: Showteaser 0.6 s before its row, gate
+closed 0.8 s early.
 
 **Addendum 2026-09-30 - "No Fade during Crossover" as a type preset
 (migration 0063).**  The operator asked for an "Exclude from Crossover"

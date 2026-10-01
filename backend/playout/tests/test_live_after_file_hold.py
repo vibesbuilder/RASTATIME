@@ -400,3 +400,134 @@ def test_stop_of_a_webstream_does_not_wait(sched):
     with patch(SLEEP) as sleep:
         s._on_stop("W")
     sleep.assert_not_called()
+
+
+# ---------------------------------------------------------------------------
+# 2026-10-01 - the other direction: exact row times after a live item
+# ---------------------------------------------------------------------------
+
+def _live_ws(start_exact, end_exact, row_id=888, uri="http://stream.example/bbc"):
+    return _webstream(start_exact, row_id=row_id).model_copy(
+        update={"uri": uri, "end": end_exact.replace(microsecond=0), "end_exact": end_exact},
+    )
+
+
+def test_file_after_a_live_item_waits_for_the_exact_row_start(sched):
+    s, engine, _ = sched
+    now = datetime.utcnow()
+    relay = _live_ws(now - timedelta(minutes=5), now + timedelta(seconds=0.9))
+    s._current_event, s._playing_key = relay, "W"
+    track = _file(now + timedelta(seconds=0.9), seconds=50.0, row_id=5, file_id=5)
+    order = []
+    engine.play.side_effect = lambda *_a, **_k: order.append("play")
+    with patch(SLEEP, side_effect=lambda d: order.append(("sleep", d))) as sleep:
+        s._on_file_start("F", track)
+    assert sleep.call_args.args[0] == pytest.approx(0.9, abs=0.1)
+    assert order[0][0] == "sleep" and order[-1] == "play"
+    assert s._file_chain_lag is not None
+
+
+def test_file_after_a_file_does_not_wait(sched):
+    s, engine, _ = sched
+    now = datetime.utcnow()
+    prev = _file(now - timedelta(seconds=5), seconds=8.0, row_id=1, file_id=1)
+    _on_air(s, prev, key="p")
+    with patch(SLEEP) as sleep:
+        s._on_file_start("n", _file(now + timedelta(seconds=0.9), seconds=9.9, row_id=2, file_id=2))
+    sleep.assert_not_called()
+    engine.play.assert_called_once()
+
+
+def test_catch_up_does_not_wait(sched):
+    s, engine, _ = sched
+    now = datetime.utcnow()
+    s._current_event, s._playing_key = _live_ws(now - timedelta(minutes=5), now), "W"
+    with patch(SLEEP) as sleep:
+        s._on_file_start("F", _file(now - timedelta(seconds=30), seconds=200.0), seek=30.0)
+    sleep.assert_not_called()
+    engine.play.assert_called_once()
+
+
+def test_file_start_on_the_whole_second_does_not_wait(sched):
+    s, engine, _ = sched
+    now = datetime.utcnow()
+    s._current_event, s._playing_key = _live_ws(now - timedelta(minutes=5), now), "W"
+    with patch(SLEEP) as sleep:
+        s._on_file_start("F", _file(now.replace(microsecond=0), seconds=50.0))
+    sleep.assert_not_called()
+
+
+def test_file_superseded_during_the_wait_is_not_pushed(sched):
+    s, engine, _ = sched
+    now = datetime.utcnow()
+    s._current_event, s._playing_key = _live_ws(now - timedelta(minutes=5), now + timedelta(seconds=0.8)), "W"
+
+    def taken_over(_seconds):
+        s._playing_key = "someone-else"
+
+    with patch(SLEEP, side_effect=taken_over):
+        s._on_file_start("F", _file(now + timedelta(seconds=0.8), seconds=50.0))
+    engine.play.assert_not_called()
+
+
+def test_live_stop_waits_for_the_exact_row_end(sched):
+    s, engine, _ = sched
+    now = datetime.utcnow()
+    relay = _live_ws(now - timedelta(minutes=5), now + timedelta(seconds=0.8))
+    s._current_event, s._playing_key = relay, "W"
+    order = []
+    engine.webstream_gate.side_effect = lambda *_a, **_k: order.append("gate")
+    with patch(SLEEP, side_effect=lambda d: order.append(("sleep", d))) as sleep:
+        s._on_stop("W")
+    assert sleep.call_args.args[0] == pytest.approx(0.8, abs=0.1)
+    assert order[0][0] == "sleep" and "gate" in order
+    assert s._playing_key is None
+
+
+def test_live_stop_yields_when_the_successor_took_over(sched):
+    s, engine, _ = sched
+    now = datetime.utcnow()
+    relay = _live_ws(now - timedelta(minutes=5), now + timedelta(seconds=0.8))
+    s._current_event, s._playing_key = relay, "W"
+
+    def successor(_seconds):
+        s._playing_key = "F"
+
+    with patch(SLEEP, side_effect=successor):
+        s._on_stop("W")
+    engine.webstream_gate.assert_not_called()
+    engine.webstream_stop.assert_not_called()
+    assert s._playing_key == "F"
+
+
+def test_live_stop_on_the_whole_second_does_not_wait(sched):
+    s, engine, _ = sched
+    now = datetime.utcnow()
+    relay = _live_ws(now - timedelta(minutes=5), now.replace(microsecond=0))
+    s._current_event, s._playing_key = relay, "W"
+    with patch(SLEEP) as sleep:
+        s._on_stop("W")
+    sleep.assert_not_called()
+
+
+def test_prewarmed_webstream_after_a_webstream_waits_for_the_exact_start(sched):
+    s, engine, _ = sched
+    now = datetime.utcnow()
+    s._current_event, s._playing_key = _live_ws(now - timedelta(minutes=5), now, uri="http://a"), "A"
+    nxt = _live_ws(now + timedelta(seconds=0.7), now + timedelta(minutes=5), row_id=2, uri="http://b")
+    s._prepared = ("B", nxt)
+    with patch(SLEEP) as sleep:
+        s._on_webstream_start("B", nxt)
+    assert sleep.call_args.args[0] == pytest.approx(0.7, abs=0.1)
+    engine.webstream_gate.assert_called_once_with(True)
+
+
+def test_a_late_timer_does_not_wait(sched):
+    """More than EXACT_TIME_HOLD_MAX_SECONDS is not the whole-second effect."""
+    s, engine, _ = sched
+    now = datetime.utcnow()
+    s._current_event, s._playing_key = _live_ws(now - timedelta(minutes=5), now), "W"
+    with patch(SLEEP) as sleep:
+        s._on_file_start("F", _file(now + timedelta(seconds=5), seconds=50.0))
+    sleep.assert_not_called()
+    engine.play.assert_called_once()
