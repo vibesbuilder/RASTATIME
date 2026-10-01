@@ -792,6 +792,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **A quietly ending track lost its last 3 s and the rest of the show ran
+  early (2026-10-01, root cause of the cut intro at 12:01)** - the transition
+  function treated a tail quieter than -50 dB like an empty one (`old.db_level
+  < -50.` -> 50 ms hand-over) and so dropped the WHOLE buffered tail (BUFFER =
+  3 s, not just the silence).  Sofa Rockers ends in a long fade: the StationID
+  after it started 3.0 s before its row (envelope correlation of the 11:00
+  recording: every other track +0.9 to +1.4 s behind its row, the StationID
+  -1.6 s), the BBC block inherited the jump and the 4.98-s intro was over 2.4
+  s before the relay's gate opened.  With the R128 gain on the queue
+  (2026-09-29) a fade-out crosses -50 dB often, which is why this surfaced
+  now.  The shortcut is gone; a quiet tail plays out and the rows own the
+  timeline (`mode == "instant" or rem < 0.15` remains).  Reproduced and
+  verified in the bench (a 30-s tone fading to -100 dB, successor at 28.1 s
+  before, 31.1 s after; `xbench/bench_quiet_tail*.liq`).  The 15:00 show
+  without a preceding chain was clean, as were the 20-s / 90-s / real-file
+  chain benches - the shortcut needs a quiet tail.  Active after a restart of
+  RASTATIME-PLAYOUT (re-rendered script, planned Liquidsoap restart) -
+  `ca1422e`.
+
 - **The other direction: a file after a live item, a live item after a live
   item and the stop of a live item act at the row's exact time (2026-10-01,
   operator Go)** - the 2026-10-01 10:00 measurement showed the Showteaser
