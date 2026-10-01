@@ -806,7 +806,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `_hold_for_file_tail`) and in `_on_stop` for a live item.  Together with the
   2026-09-29 fix every transition now sits on the rows' microseconds.  10
   tests added (31 in `test_live_after_file_hold.py`).  Active after a restart
-  of RASTATIME-PLAYOUT - `<hash-exact-time>`.
+  of RASTATIME-PLAYOUT - `a949a76`.
 
 - **Track Types: Daten-Endpoint ohne XHR-Header antwortete 500 (2026-09-30,
   Upstream-Erbe)** — `Tracktype/get-tracktype-data` schaltete nur bei
