@@ -809,7 +809,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Listener-Stats-Seiten, da alle dasselbe Plugin und CSS laden.  Live
   gemessen (Chrome): Datepicker z-index 1003, Treffer am unteren Rand liegt
   im Popup; Timepicker-Zellen rgb(86,86,86), Fläche rgb(58,58,58), aktive
-  Zelle in der Akzentfarbe — Show Builder und Playout History.
+  Zelle in der Akzentfarbe — Show Builder und Playout History — `ea1f1b8`.
 - **Sendung verschieben rundete die Zeilen auf ganze Sekunden (2026-10-01,
   Befund der Autoloading-Live-Probe)** — nach dem Verschieben der
   Test-Sendung (10:40 → 10:50 → 11:00) lagen alle Zeilen auf ganzen
