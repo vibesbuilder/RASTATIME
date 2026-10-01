@@ -5095,6 +5095,16 @@ div.dt-button-collection .dt-button > span {
     z-index: 1001;
 }
 
+/* RASTATIME 2026-10-01 - the datepicker popup sits ABOVE the sticky
+   column headers.  jQuery UI gives #ui-datepicker-div the z-index of the
+   input's nearest positioned ancestor + 1 - on the show builder that is
+   1, and the sticky thead th (dashboard.css, z-index 2) painted over the
+   calendar's first weeks (operator report 2026-10-01).  The timepicker
+   popup already carries z-index 1000 of its own. */
+#ui-datepicker-div {
+    z-index: 1003 !important;
+}
+
 /* Dark frame for the calendar's content dialogs (Schedule Tracks +
    Contents of Show — `classes` hook set in schedule.js).  The
    .ui-dialog wrapper and its buttonpane are .ui-widget-content =

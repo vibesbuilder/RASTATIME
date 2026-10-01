@@ -792,6 +792,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Show Builder: Datepicker-Popup unter den Spaltenköpfen, Timepicker noch
+  Redmond-blau (2026-10-01, Operator-Meldung)** — (1) jQuery UI gibt
+  `#ui-datepicker-div` inline den z-index des nächsten positionierten
+  Vorfahren + 1, im Show Builder also 1; die seit 29.09. klebenden
+  Spaltenköpfe (`thead th`, z-index 2) malten über die ersten Wochen des
+  Kalenders.  Fix: `#ui-datepicker-div { z-index: 1003 !important }` in
+  styles.css (über `.ui-front` 1001, der Timepicker hat eigene 1000).  (2)
+  Der Timepicker (jquery.ui.timepicker, FG) baut seine Tabelle aus denselben
+  Redmond-Klassen wie der Datepicker, bekam aber nicht dessen dunkle
+  Nachfärbung vom 17.09. — Stunden-/Minutenzellen und Done-Knopf blieben
+  Redmond-blau mit Glas-Verlauf.  Fix: `#ui-timepicker-div`-Block im
+  Redmond-Anhang mit der Datepicker-Palette (#3a3a3a Fläche, #565656
+  Zellen, Hover #6a6a6a, aktive Zelle in der Primärfarbe, Knöpfe grau);
+  wirkt in Show Builder, New/Edit Show, Playout History und beiden
+  Listener-Stats-Seiten, da alle dasselbe Plugin und CSS laden.  Live
+  gemessen (Chrome): Datepicker z-index 1003, Treffer am unteren Rand liegt
+  im Popup; Timepicker-Zellen rgb(86,86,86), Fläche rgb(58,58,58), aktive
+  Zelle in der Akzentfarbe — Show Builder und Playout History.
 - **Sendung verschieben rundete die Zeilen auf ganze Sekunden (2026-10-01,
   Befund der Autoloading-Live-Probe)** — nach dem Verschieben der
   Test-Sendung (10:40 → 10:50 → 11:00) lagen alle Zeilen auf ganzen
