@@ -1,0 +1,25 @@
+<div class="text-content manual-content">
+    <div class="manual-bar">
+        <?php if (!$this->manualIsIndex) { ?>
+            <a class="manual-index-link" href="<?php echo $this->escape($this->manualIndexUrl); ?>">&larr; <?php echo _('User Manual'); ?></a>
+        <?php } ?>
+        <?php if (count($this->manualLanguages) > 1) { ?>
+            <span class="manual-languages">
+                <?php $first = true; foreach ($this->manualLanguages as $code => $l) { ?>
+                    <?php if (!$first) { echo ' &middot; '; } $first = false; ?>
+                    <?php if ($l['current']) { ?>
+                        <strong lang="<?php echo $code; ?>"><?php echo $this->escape($l['label']); ?></strong>
+                    <?php } else { ?>
+                        <a lang="<?php echo $code; ?>" href="<?php echo $this->escape($l['url']); ?>"><?php echo $this->escape($l['label']); ?></a>
+                    <?php } ?>
+                <?php } ?>
+            </span>
+        <?php } ?>
+    </div>
+    <div class="manual-body" lang="<?php echo $this->escape($this->manualLang); ?>">
+        <?php echo $this->manualHtml; ?>
+    </div>
+    <div class="manual-foot">
+        <a href="<?php echo $this->escape($this->manualGithubUrl); ?>" target="_blank" rel="noopener">GitHub</a>
+    </div>
+</div>

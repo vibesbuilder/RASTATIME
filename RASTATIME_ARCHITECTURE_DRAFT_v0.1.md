@@ -1,10 +1,16 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.58
+Draft version: 0.59
 Date: 2026-10-01
 
 > **Revision history**
+> - **0.59 (2026-10-01)** — **In-app user manual, RASTATIME-only help
+>   menu** (§23.46): `ManualController` renders the repository's
+>   Markdown manuals (EN/DE/FR/ES) with Parsedown inside the layout,
+>   rewrites the relative links to `/manual/<lang>/<CHAPTER>`; the help
+>   menu drops the LibreTime forum and points contribute / what's new at
+>   the GitHub project.
 > - **0.58 (2026-10-01)** — **Quiet tails play out** (§23.44 addendum):
 >   the `old.db_level < -50.` shortcut of the transition function is gone;
 >   it dropped a quietly ending track's whole buffered tail and shifted
@@ -5915,3 +5921,51 @@ by `relayoutInstances()`.  A longer relay can push rows past the show
 end; the layout does not cut them (the API clips `ends_at` / `cue_out`
 for the playout as before), the tool `ws_length_apply.php` reports such
 rows before anything is saved.
+
+### 23.46 In-App User Manual and the RASTATIME-only Help Menu (2026-10-01)
+
+**Context.**  Help -> User Manual opened libretime.org, "Get Help Online"
+the LibreTime forum, "Contribute" and "What's New?" the LibreTime
+project - none of which describes this fork any more, while the real
+manual (EN/DE/FR/ES Markdown under `docs/manual/`, index `USER_MANUAL.md`
+at the repository root) was readable only in the repository.
+
+**Decision (operator, 2026-10-01).**  Serve the manuals in-app, rendered
+server-side with Parsedown 1.7.4 (`frontend/legacy/library/Parsedown.php`,
+one MIT file, frozen, no composer step - the first and only Markdown
+renderer in the legacy stack).  Alternatives weighed: an own minimal
+renderer (edge cases, maintenance), marked.js client-side (same
+dependency question, empty page without JS), static pre-rendering (a
+build step every doc change would have to remember).
+
+**Routes.**  `/manual` -> index in the user's UI locale; `/manual/<lang>`
+index; `/manual/<lang>/<CHAPTER>` -> `docs/manual[/<lang>]/<CHAPTER>.md`;
+`/manual/doc/<repo path>` for any other Markdown below `docs/` (operator
+runbooks) and the two root documents the manuals link to.  There is
+deliberately **no router route**: the navigation menu assembles every
+link with the route that matched the current request, so a custom route
+broke the whole menu ("Cannot assemble. Reversed route is not
+specified").  The default module route delivers `/manual/de/LIBRARY` as
+action `de`; `ManualController::__call()` catches every `*Action` and
+reads the path from `getPathInfo()` itself.  Unknown chapters redirect to
+the language index; the doc path is whitelisted (`docs/` or the two
+root files, `[A-Za-z0-9_./-]`, no `..`).
+
+**Rendering.**  Relative links are resolved against the file's
+directory and rewritten to the routes above (fragments kept); anything
+outside the whitelist goes to the GitHub blob on `main`.  Headings get
+GitHub-style ids (lower case, punctuation dropped, spaces to dashes,
+duplicates numbered) so the manuals' `#section` links work.  A language
+bar offers the same chapter in every language that has it.  Styles:
+`.manual-content` in styles.css (reading-sized type, dark tables, code,
+quotes); the layout's sub-menu stays (parent_page Help).  ACL resource
+`manual`, allowed for every role.
+
+**Help menu.**  Getting Started (text now "RASTATIME", links the in-app
+manual; `PRODUCT_NAME` stays "LibreTime" for API compatibility), User
+Manual (in-app), Contribute to RASTATIME (`RASTATIME_GITHUB_URL`),
+What's New? (`RASTATIME_RELEASES_URL`); "Get Help Online" removed.
+`USER_MANUAL_URL` is now `/manual` (its JS copy and the Streams help
+link follow).  Catalogues: "Contribute to RASTATIME" and the revived
+"For more detailed help, read the %suser manual%s." in all four
+locales (`po2mo.py --all`, Apache restart by the operator).

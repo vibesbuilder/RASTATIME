@@ -82,7 +82,7 @@ der Anwendung:
 | **Kalender** | Das Sendeplan-Raster. Sendungen erstellen / bearbeiten / löschen. Sendungen per Drag-and-Drop verschieben. Siehe [Kalender](./CALENDAR.md). |
 | **Bibliothek** | All Ihre Tracks, Smart Blocks, Playlists, Webstreams und Line-Ins. Suchen und filtern. Siehe [Bibliothek](./LIBRARY.md). |
 | **Einstellungen** | Streams, Lokale Maschine (Soundkarte + Import-Ordner), Auto DJ, Sendungs-Vorlagen, Allgemeine Einstellungen, Benutzer verwalten, Lokalisierung. Jeder Eintrag ist ein eigenes Unterdokument in diesem Handbuch. |
-| **Hilfe** | Links zu diesem Handbuch, dem Installations-Runbook und der originalen LibreTime-Dokumentation (zur Referenz beibehalten). |
+| **Hilfe** | **Kurzanleitung** (der Dreischritt-Schnellstart), **Benutzerhandbuch** (dieses Handbuch, im Browser lesbar auf Englisch, Deutsch, Französisch und Spanisch — seit 2026-10-01), **Bei RASTATIME mitmachen** (das GitHub-Projekt) und **Was ist neu?** (die GitHub-Release-Notizen). |
 | **Benutzer-Dropdown** (oben rechts) | Abmelden, Sprache wechseln, eigenes Profil ansehen, eigener API-Schlüssel (für Skripte). |
 
 > **Operator-Tipp.** Der Kalender ist das Schwerpunktzentrum.

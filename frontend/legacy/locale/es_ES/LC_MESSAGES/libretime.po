@@ -778,8 +778,8 @@ msgid "Get Help Online"
 msgstr "Conseguir ayuda en línea"
 
 #: application/configs/navigation.php:179
-msgid "Contribute to LibreTime"
-msgstr "Contribuir a LibreTime"
+msgid "Contribute to RASTATIME"
+msgstr "Contribuir a RASTATIME"
 
 #: application/configs/navigation.php:184
 msgid "What's New?"
@@ -4375,9 +4375,6 @@ msgstr "Retransmisiones por Internet"
 #~ " o la documentación %sApple's podcasting%s."
 
 #, php-format
-#~ msgid "For more detailed help, read the %suser manual%s."
-#~ msgstr "Para una ayuda más detallada, lee el manual%s del %susuario."
-
 #~ msgid "For more details, please read the %sAirtime Manual%s"
 #~ msgstr "Para más detalles, por favor lee el %sManual de Airtime%s"
 
@@ -5256,3 +5253,7 @@ msgstr "Quitar la carátula predeterminada"
 #: RASTATIME 2026-10-01 player default cover
 msgid "The default cover could not be read as an image."
 msgstr "La carátula predeterminada no se pudo leer como imagen."
+
+#: RASTATIME 2026-10-01 help page
+msgid "For more detailed help, read the %suser manual%s."
+msgstr "Para una ayuda más detallada, lea el %smanual de usuario%s."

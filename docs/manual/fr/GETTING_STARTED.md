@@ -83,7 +83,7 @@ autre zone de l'application :
 | **Calendrier** | La grille de planning. Créer / modifier / supprimer des émissions. Glisser-déposer les émissions. Voir [Calendrier](./CALENDAR.md). |
 | **Bibliothèque** | Toutes vos pistes, smart blocks, playlists, webstreams et line-ins. Rechercher et filtrer. Voir [Bibliothèque](./LIBRARY.md). |
 | **Paramètres** | Streams, Machine locale (carte son + dossier d'import), Auto DJ, Modèles d'émission, Préférences générales, Gérer les utilisateurs, Localisation. Chacun est un sous-document séparé dans ce manuel. |
-| **Aide** | Liens vers ce manuel, le runbook d'installation et la documentation LibreTime d'origine (conservée pour référence). |
+| **Aide** | **Mise en route** (le démarrage rapide en trois étapes), **Manuel Utilisateur** (ce manuel, lisible dans le navigateur en anglais, allemand, français et espagnol — depuis le 2026-10-01), **Contribuer à RASTATIME** (le projet GitHub) et **Qu'est-ce qui a changé ?** (les notes de version GitHub). |
 | **Menu utilisateur** (en haut à droite) | Déconnexion, changer de langue, voir son propre profil, sa propre clé API (pour les scripts). |
 
 > **Conseil opérateur.** Le Calendrier est le centre de

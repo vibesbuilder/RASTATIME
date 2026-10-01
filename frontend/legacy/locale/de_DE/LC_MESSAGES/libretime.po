@@ -777,8 +777,8 @@ msgid "Get Help Online"
 msgstr "Hilfe online erhalten"
 
 #: application/configs/navigation.php:179
-msgid "Contribute to LibreTime"
-msgstr "Bei LibreTime mitmachen"
+msgid "Contribute to RASTATIME"
+msgstr "Bei RASTATIME mitmachen"
 
 #: application/configs/navigation.php:184
 msgid "What's New?"
@@ -4439,9 +4439,6 @@ msgstr "Line-In-Quelle konnte nicht gelöscht werden."
 #~ msgstr "Vorname"
 
 #, php-format
-#~ msgid "For more detailed help, read the %suser manual%s."
-#~ msgstr "Für weitere ausführliche Hilfe, lesen sie bitte das %sBenutzerhandbuch%s."
-
 #~ msgid "For more details, please read the %sAirtime Manual%s"
 #~ msgstr "Für weitere Information lesen sie bitte das %sAirtime Benutzerhandbuch%s"
 
@@ -5095,3 +5092,7 @@ msgstr "Standard-Cover entfernen"
 #: RASTATIME 2026-10-01 player default cover
 msgid "The default cover could not be read as an image."
 msgstr "Das Standard-Cover konnte nicht als Bild gelesen werden."
+
+#: RASTATIME 2026-10-01 help page
+msgid "For more detailed help, read the %suser manual%s."
+msgstr "Für weitere ausführliche Hilfe lesen Sie bitte das %sBenutzerhandbuch%s."

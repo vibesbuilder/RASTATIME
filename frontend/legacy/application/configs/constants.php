@@ -55,7 +55,12 @@ define('HELP_URL', 'https://discourse.libretime.org/');
 define('WHOS_USING_URL', 'https://github.com/orgs/libretime/people');
 define('TERMS_AND_CONDITIONS_URL', 'https://github.com/libretime/libretime/blob/main/README.md');
 define('PRIVACY_POLICY_URL', 'https://github.com/libretime/organization/blob/main/CODE_OF_CONDUCT.md');
-define('USER_MANUAL_URL', 'https://libretime.org/docs');
+// RASTATIME 2026-10-01 - the manual is served in-app (ManualController),
+// the LibreTime docs no longer describe this fork.  Kept as a path so
+// the JS copy (PageLayoutInitPlugin) and the help page keep working.
+define('USER_MANUAL_URL', '/manual');
+define('RASTATIME_GITHUB_URL', 'https://github.com/RASTATIME/rastatime');
+define('RASTATIME_RELEASES_URL', 'https://github.com/RASTATIME/rastatime/releases');
 define('TROUBLESHOOTING_URL', 'https://libretime.org/docs/admin-manual/troubleshooting/');
 define('ABOUT_AIRTIME_URL', 'https://libretime.org');
 define('LIBRETIME_CONTRIBUTE_URL', 'https://libretime.org/contribute');

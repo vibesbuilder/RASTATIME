@@ -774,7 +774,7 @@ msgid "Get Help Online"
 msgstr ""
 
 #: application/configs/navigation.php:179
-msgid "Contribute to LibreTime"
+msgid "Contribute to RASTATIME"
 msgstr ""
 
 #: application/configs/navigation.php:184
@@ -4236,9 +4236,6 @@ msgstr ""
 #~ msgstr "First Name"
 
 #, php-format
-#~ msgid "For more detailed help, read the %suser manual%s."
-#~ msgstr "For more detailed help, read the %suser manual%s."
-
 #~ msgid "For more details, please read the %sAirtime Manual%s"
 #~ msgstr "For more details, please read the %sAirtime Manual%s"
 
@@ -4696,3 +4693,7 @@ msgstr ""
 #: RASTATIME 2026-10-01 player default cover
 msgid "The default cover could not be read as an image."
 msgstr ""
+
+#: RASTATIME 2026-10-01 help page
+msgid "For more detailed help, read the %suser manual%s."
+msgstr "For more detailed help, read the %suser manual%s."

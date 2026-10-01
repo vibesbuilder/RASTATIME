@@ -82,6 +82,11 @@ class Bootstrap extends Zend_Application_Bootstrap_Bootstrap
                 'action' => 'password-change',
             ])
         );
+        // RASTATIME 2026-10-01 - the in-app user manual (/manual/<lang>/
+        // <CHAPTER>) deliberately has NO route of its own: the navigation
+        // menu assembles every link with the route that matched the current
+        // request, and a custom route cannot assemble the other pages.
+        // ManualController reads the path itself (see its __call()).
     }
 
     public function _initPlugins()

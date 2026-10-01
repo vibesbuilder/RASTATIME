@@ -279,24 +279,24 @@ $pages[] = [
             'action' => 'help',
             'resource' => 'dashboard',
         ],
+        // RASTATIME 2026-10-01 - the help menu points at RASTATIME only
+        // (operator): the manual is served in-app, the LibreTime forum
+        // entry is gone, contribute / what's new go to the GitHub project.
         [
             'label' => 'User Manual',
-            'uri' => USER_MANUAL_URL,
-            'target' => '_blank',
+            'module' => 'default',
+            'controller' => 'manual',
+            'action' => 'index',
+            'resource' => 'manual',
         ],
         [
-            'label' => 'Get Help Online',
-            'uri' => LIBRETIME_DISCOURSE_URL,
-            'target' => '_blank',
-        ],
-        [
-            'label' => 'Contribute to LibreTime',
-            'uri' => LIBRETIME_CONTRIBUTE_URL,
+            'label' => 'Contribute to RASTATIME',
+            'uri' => RASTATIME_GITHUB_URL,
             'target' => '_blank',
         ],
         [
             'label' => 'What\'s New?',
-            'uri' => LIBRETIME_WHATS_NEW_URL,
+            'uri' => RASTATIME_RELEASES_URL,
             'target' => '_blank',
         ],
     ],

@@ -42,7 +42,8 @@ $ccAcl->add(new Zend_Acl_Resource('library'))
     ->add(new Zend_Acl_Resource('embeddablewidgets'))
     ->add(new Zend_Acl_Resource('setup'))
     ->add(new Zend_Acl_Resource('feeds'))
-    ->add(new Zend_Acl_Resource('linein'));  // T14.2 — Line-In source management
+    ->add(new Zend_Acl_Resource('linein'))  // T14.2 — Line-In source management
+    ->add(new Zend_Acl_Resource('manual'));  // RASTATIME 2026-10-01 — in-app user manual
 
 // Creating permissions
 $ccAcl->allow('G', 'index')
@@ -54,6 +55,7 @@ $ccAcl->allow('G', 'index')
     ->allow('G', 'api')
     ->allow('G', 'schedule')
     ->allow('G', 'dashboard')
+    ->allow('G', 'manual')
     ->allow('G', 'audiopreview')
     ->allow('G', 'webstream')
     ->allow('G', 'locale')

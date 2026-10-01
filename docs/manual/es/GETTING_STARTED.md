@@ -72,7 +72,7 @@ otra área de la aplicación:
 | **Calendario** | La cuadrícula de planificación. Crear / editar / eliminar programas. Arrastrar y soltar programas. Vea [Calendario](./CALENDAR.md). |
 | **Biblioteca** | Todas sus pistas, smart blocks, playlists, webstreams y line-ins. Buscar y filtrar. Vea [Biblioteca](./LIBRARY.md). |
 | **Configuración** | Streams, Máquina local (tarjeta de sonido + carpeta de importación), Auto DJ, Plantillas de programa, Preferencias generales, Gestionar usuarios, Localización. |
-| **Ayuda** | Enlaces a este manual, al runbook de instalación y a la documentación original de LibreTime. |
+| **Ayuda** | **Cómo iniciar** (el inicio rápido en tres pasos), **Manual para el usuario** (este manual, legible en el navegador en inglés, alemán, francés y español — desde 2026-10-01), **Contribuir a RASTATIME** (el proyecto GitHub) y **¿Qué hay de nuevo?** (las notas de versión en GitHub). |
 | **Menú de usuario** (arriba a la derecha) | Cerrar sesión, cambiar idioma, ver su propio perfil, su propia clave API (para scripts). |
 
 > **Consejo del operador.** El Calendario es el centro de

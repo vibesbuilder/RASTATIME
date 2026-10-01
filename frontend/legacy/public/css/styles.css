@@ -2280,6 +2280,141 @@ span.errors.sp-errors{
     display:list-item;
     color:#efefef;
 }
+/* RASTATIME 2026-10-01 - the in-app user manual (ManualController renders
+   the repository's Markdown with Parsedown).  Reading-sized type instead
+   of the help page's 1.6em paragraphs; dark tables, code and quotes. */
+.manual-content {
+    max-width: 960px;
+    color: #e4e4e4;
+    font-size: 14px;
+    line-height: 1.55;
+}
+.manual-content .manual-bar {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 6px 18px;
+    margin-bottom: 14px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #4a4a4a;
+    font-size: 13px;
+}
+.manual-content .manual-bar a,
+.manual-content .manual-foot a {
+    color: var(--rt-accent-light);
+}
+.manual-content .manual-foot {
+    margin-top: 24px;
+    padding-top: 8px;
+    border-top: 1px solid #4a4a4a;
+    font-size: 12px;
+}
+.manual-content h1 {
+    font-size: 2em;
+    color: #fff;
+    margin: 0 0 14px 0;
+}
+.manual-content h2 {
+    font-size: 1.5em;
+    color: #fff;
+    margin: 28px 0 10px 0;
+    padding-bottom: 4px;
+    border-bottom: 1px solid #4a4a4a;
+}
+.manual-content h3 {
+    font-size: 1.2em;
+    color: #f4f4f4;
+    margin: 22px 0 8px 0;
+}
+.manual-content h4 {
+    font-size: 1.05em;
+    color: #f4f4f4;
+    margin: 16px 0 6px 0;
+}
+.manual-content p {
+    font-size: 1em;
+    line-height: 1.55;
+    color: #e4e4e4;
+    margin: 0 0 1em 0;
+}
+.manual-content a {
+    color: var(--rt-accent-light);
+}
+.manual-content ul,
+.manual-content ol {
+    margin: 0 0 1em 26px;
+    padding: 0;
+    list-style-position: outside;
+}
+.manual-content ul {
+    list-style-type: disc;
+}
+.manual-content ul li,
+.manual-content ol li {
+    font-size: 1em;
+    color: #e4e4e4;
+    margin: 3px 0;
+    display: list-item;
+}
+.manual-content blockquote {
+    margin: 0 0 1em 0;
+    padding: 8px 14px;
+    border-left: 4px solid var(--rt-accent);
+    background: #3a3a3a;
+}
+.manual-content blockquote p:last-child {
+    margin-bottom: 0;
+}
+.manual-content code {
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 0.92em;
+    background: #2a2a2a;
+    border: 1px solid #444;
+    border-radius: 3px;
+    padding: 0 4px;
+    color: #f0f0f0;
+}
+.manual-content pre {
+    background: #2a2a2a;
+    border: 1px solid #444;
+    border-radius: 4px;
+    padding: 10px 12px;
+    overflow: auto;
+    margin: 0 0 1em 0;
+}
+.manual-content pre code {
+    border: 0;
+    padding: 0;
+    background: transparent;
+}
+.manual-content table {
+    border-collapse: collapse;
+    margin: 0 0 1.2em 0;
+    width: 100%;
+}
+.manual-content th,
+.manual-content td {
+    border: 1px solid #4a4a4a;
+    padding: 5px 9px;
+    text-align: left;
+    vertical-align: top;
+}
+.manual-content th {
+    background: #454545;
+    color: #fff;
+}
+.manual-content tr:nth-child(even) td {
+    background: #333;
+}
+.manual-content hr {
+    border: 0;
+    border-top: 1px solid #4a4a4a;
+    margin: 22px 0;
+}
+.manual-content img {
+    max-width: 100%;
+}
+
 .gray-logo {
     margin:5px 0 0 20px;
 }

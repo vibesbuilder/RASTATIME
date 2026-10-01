@@ -9,6 +9,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Benutzerhandbuch im Browser; Hilfe-Menü nur noch RASTATIME (2026-10-01,
+  Operator-Go A)** — Help → User Manual zeigte libretime.org, „Get Help
+  Online" das LibreTime-Forum, Contribute / What's New das LibreTime-
+  Projekt; das eigentliche Handbuch (EN/DE/FR/ES unter `docs/manual/`,
+  EN-Index `USER_MANUAL.md`) war nur im Repo lesbar.  Neu
+  `ManualController`: rendert die Markdown-Handbücher Server-seitig mit
+  **Parsedown 1.7.4** (`frontend/legacy/library/Parsedown.php`, eine
+  MIT-Datei, eingefroren) im App-Layout — `/manual` (Index in der
+  UI-Sprache), `/manual/<lang>`, `/manual/<lang>/<KAPITEL>`,
+  `/manual/doc/<Repo-Pfad>` für Operator-Runbooks und die beiden
+  Root-Dokumente; relative Links werden umgeschrieben (Anker bleiben),
+  Überschriften bekommen GitHub-Ids, Sprachleiste EN · DE · FR · ES je
+  Kapitel, unbekannte Kapitel → Sprach-Index, Doc-Pfad per Whitelist
+  (`docs/`, kein `..`).  Bewusst **ohne eigene Route**: das Navigationsmenü
+  baut alle Links mit der gematchten Route, eine Regex-Route brach das
+  ganze Menü („Cannot assemble") — der Controller liest den Pfad per
+  `__call()` selbst.  Hilfe-Menü: Getting Started spricht von RASTATIME
+  und verlinkt das Handbuch, User Manual in-app, „Get Help Online" weg,
+  „Contribute to RASTATIME" → GitHub-Projekt, „What's New?" → GitHub-
+  Releases; `USER_MANUAL_URL` = `/manual`.  Kataloge ×4 (neues Label,
+  Hilfe-Satz reaktiviert, ES-Platzhalter repariert), CSS
+  `.manual-content`, Handbuch GETTING_STARTED ×4 (Hilfe-Zeile),
+  Architektur §23.46 (0.59).  Live geprüft (Chrome): Index EN, Kalender DE
+  (8 Tabellen, Links in-app), INSTALL-Runbook, Hilfe-Seite, Untermenü;
+  Traversal-Versuche 404/Redirect.  .mo kompiliert — Apache-Neustart
+  durch den Operator.
 - **Autoloading: exakte Befüllung nach Operator-Spezifikation (2026-10-01,
   Operator-Go, Variante a)** — Intro an den Anfang, Outro **real** ans
   Ende, die Autoloading-Playlist dazwischen gegen die **tatsächlich

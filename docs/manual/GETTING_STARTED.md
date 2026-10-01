@@ -72,7 +72,7 @@ navigation bar holds every other area of the application:
 | **Calendar** | The schedule grid. Create / edit / delete shows. Drag-and-drop shows around. See [Calendar](./CALENDAR.md). |
 | **Library** | All your tracks, smart blocks, playlists, webstreams, and line-ins. Search and filter. See [Library](./LIBRARY.md). |
 | **Settings** | Streams, Local Machine (sound-card + import folder), Auto DJ, Show Templates, General Preferences, Manage Users, Localisation. Each is a separate sub-document in this manual. |
-| **Help** | Links to this manual, the install runbook, and the upstream LibreTime docs (kept for reference). |
+| **Help** | **Getting Started** (the three-step quick start), **User Manual** (this manual, readable in the browser in English, German, French and Spanish — since 2026-10-01), **Contribute to RASTATIME** (the GitHub project) and **What's New?** (the GitHub release notes). |
 | **User dropdown** (top-right) | Logout, switch language, view your own profile, your API key (for scripts). |
 
 > **Operator tip.** The Calendar is the centre of gravity. You

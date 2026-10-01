@@ -783,8 +783,8 @@ msgid "Get Help Online"
 msgstr "Obtenir de l'aide en ligne"
 
 #: application/configs/navigation.php:179
-msgid "Contribute to LibreTime"
-msgstr "Contribuer à LibreTime"
+msgid "Contribute to RASTATIME"
+msgstr "Contribuer à RASTATIME"
 
 #: application/configs/navigation.php:184
 msgid "What's New?"
@@ -4456,9 +4456,6 @@ msgstr "Flux web"
 #~ msgstr "Pour plus d' informations sur ce que ces champs de métadonnées signifient, s'il vous plaît voir le %s RSS spécification %s \\ n ou %s la documentation de podcasting Apple %s ."
 
 #, php-format
-#~ msgid "For more detailed help, read the %suser manual%s."
-#~ msgstr "Pour une aide plus détaillée, lisez le %smanuel utilisateur%s."
-
 #~ msgid "For more details, please read the %sAirtime Manual%s"
 #~ msgstr "Pour plus de détails, s'il vous plaît lire le %sManuel d'Airtime%s"
 
@@ -5424,3 +5421,7 @@ msgstr "Supprimer la pochette par défaut"
 #: RASTATIME 2026-10-01 player default cover
 msgid "The default cover could not be read as an image."
 msgstr "La pochette par défaut n'a pas pu être lue comme image."
+
+#: RASTATIME 2026-10-01 help page
+msgid "For more detailed help, read the %suser manual%s."
+msgstr "Pour une aide plus détaillée, lisez le %smanuel utilisateur%s."
