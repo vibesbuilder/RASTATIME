@@ -56,6 +56,12 @@ Jingle-Übergänge Stoß an Stoß (Rest ≤ 0,3 s unter −60 dB = Datei-Inhalt)
 Intro-Ende ein (max. 50 ms Senke), Kette 0,3 s hinter den Zeilen.  Verbleibende Stille:
 3,8 s am Sendungsende (BBC-Zeile 302 s fest, Sendung 3,9 s unterfüllt) → Operator kann
 die Webstream-Zeile verlängern.
+  **Nachtrag 2026-10-01 10:00 (Instanz 2163, BBC 305 s):** Jingles
+Stoß an Stoß, BBC am Intro-Ende (Gate-Wartezeit 1,11 s, Senke ≤ 0,1 s), Showteaser nach
+der BBC ohne Lücke.  Gegenrichtung Live → Datei läuft weiter auf der ganzen Sekunde:
+Showteaser startete 0,6 s vor seiner Zeile, Folge endet 1,6 s vor 10:07:00 (heute folgt
+nichts).  Symmetrischer Fix (Datei-Start nach Live-Item und Live-STOP auf exakte Zeit)
+wäre ~0,5 h — dem Operator angeboten, nicht gebaut.
 
 **Befund (Testsendung 2026-09-30):** `cc_files.cueout` darf heute größer als die
 Dateilänge sein (ID 593: 6,90 s bei 5,97 s — vermutlich Datei ersetzt, Cue blieb),
