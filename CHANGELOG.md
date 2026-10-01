@@ -809,7 +809,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   without a preceding chain was clean, as were the 20-s / 90-s / real-file
   chain benches - the shortcut needs a quiet tail.  Active after a restart of
   RASTATIME-PLAYOUT (re-rendered script, planned Liquidsoap restart) -
-  `ca1422e`.
+  `1bd7a73`.
 
 - **The other direction: a file after a live item, a live item after a live
   item and the stop of a live item act at the row's exact time (2026-10-01,
