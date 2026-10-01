@@ -4021,6 +4021,42 @@ heute: „Jetzt anwenden" in Local Machine) und Punkt 3 (Fade-In/Out).
 
 ---
 
+### 🟡 Sendung verschieben rundet die Zeilen auf ganze Sekunden (festgestellt 2026-10-01)
+
+**Status:** Defer — Operator 2026-10-01: eigenes Thema, kein Go.
+**Vorbedingung:** Operator-Go; Aufwand ~10 Zeilen in einer Datei.
+
+**Befund:** Bei der Live-Probe der exakten Autoloading-Befüllung
+(`cdc4689`, Instanz 2224 „testautoloading") war der Slot nach dem Build mit
+0,0 s Rest ausgelegt.  Nach dem Verschieben der Sendung (10:40 → 10:50 →
+11:00, Bearbeiten-Dialog) blieb die Kette intakt, der Rest wuchs aber auf
+1,0 s: die Zeilen lagen auf ganzen Sekunden (Outro-Zeile 11:59:40 bis
+11:59:59, PLAY 11:59:40,05 / STOP 11:59:59,06).  Hörbar war nichts — das
+Outro lief bis zur Sendungsgrenze durch, und `show/old` übergab um
+12:00:00,06 an die nächste Sendung.
+
+**Ursache:** `Application_Service_SchedulerService::updateScheduleStartTime()`
+(`services/SchedulerService.php:49`) verschiebt die Zeilen über die
+Propel-Setter `setDbStarts()/setDbEnds()`, die auf `Y-m-d H:i:s` kürzen.
+Beide Verschiebe-Pfade laufen dort durch: der Bearbeiten-Dialog
+(`ShowService` → `instanceIdsForScheduleUpdates`) und das Ziehen im
+Kalender (`CalendarService::moveShow()`).  `calculateCrossfades()` hat
+dasselbe Problem am 2026-09-27 für die Auslegung gelöst (Raw-SQL mit
+`DEFAULT_MICROTIME_FORMAT`, `models/Scheduler.php:790`), läuft nach dem
+Verschieben aber nicht.
+
+**Fix-Skizze:** Die `foreach`-Schleife durch ein einziges
+`UPDATE cc_schedule SET starts = starts + :diff::INTERVAL, ends = ends +
+:diff::INTERVAL WHERE instance_id IN (...)` ersetzen — Timestamp-Arithmetik
+in PostgreSQL behält die Mikrosekunden, und die Zeilen bleiben exakt so
+zueinander, wie der Build sie ausgelegt hat.  Danach prüfen, ob
+`removeGaps()` (`models/Scheduler.php:846`) noch über die Setter speichert.
+Probe: Test-Sendung bauen, verschieben, `ap_fill_test.php --plan` bzw. die
+`cc_schedule`-Zeilen vor/nach dem Verschieben vergleichen (Rest muss 0,0 s
+bleiben).
+
+---
+
 ### 💡 Speicherzuwachs der Liquidsoap-Hauptinstanz eingrenzen (≈ 8 MB/h im Leerlauf, festgestellt 2026-09-15)
 
 **Status:** Idee / Untersuchung, kein Handlungsdruck — der geplante Neustart
