@@ -53,7 +53,7 @@ expanda **Autoloading Playlist**.
 | **Playlist intro** | Añadida al principio. Opcional. Se reproduce exactamente una vez. |
 | **Playlist principal** | El contenido body. Requerido si el interruptor maestro está activado. Smart blocks en esta playlist se expanden al momento de build usando los segundos restantes del slot como límite si está configurado. |
 | **Playlist outro** | Añadida al final. Opcional. Se reproduce exactamente una vez. |
-| **Repetir hasta lleno** | Si activado, los items de la playlist principal se repiten (smart blocks re-evaluados en cada ciclo) hasta llenar el slot menos la reserva outro. |
+| **Repetir hasta lleno** | Si activado, los items de la playlist principal se repiten (smart blocks re-evaluados en cada ciclo) mientras eso añada filas (estrictamente en orden, parando en el primer tema que no cabe). |
 
 Guarde el programa.
 
@@ -80,64 +80,52 @@ construcción del estado **actual** de la playlist.
 
 ---
 
-## 4. La reserva de outro (Sección 23.19)
+## 4. Cómo se llena el slot (desde 2026-10-01)
 
-Esta es la parte operacionalmente más difícil del
-autoloading y merece ser entendida.
+El builder llena un programa en tres pasos, siempre contra el
+tiempo que **realmente** queda libre en el slot:
 
-### El problema
+1. La **playlist intro** va al principio, exactamente una vez.
+2. La **playlist outro** va al final, exactamente una vez — se
+   coloca de verdad, así que su duración se conoce con exactitud
+   (la inserción de prueba con medición de las versiones anteriores
+   desaparece, y con ella el margen de 5 segundos).
+3. La **playlist autoloading** llena el espacio entre ambas.
 
-Suponga que su **Playlist principal** usa un smart block
-con *Limitar a: Tiempo restante en el programa*, y tiene
-una **Playlist outro** con un ID de emisora de 60 s.
+Cada lista se toma **estrictamente en su orden** y se detiene en
+el primer tema que ya no cabe antes del final del programa
+(decisión del operador, «variante a»): nunca se coloca nada más
+allá del final, así que después no hay nada que recortar. Una
+intro u outro más larga que el slot se recorta igual (los temas
+que no caben se omiten; el registro indica cuántos).
 
-Sin reserva de outro, la expansión del smart block ve
-"tiempo restante = 60 minutos" (el programa entero),
-elige 60 minutos de pistas, y la inserción de outro
-posterior o:
+«Realmente libre» es el tiempo maquetado: desde 2026-09-29 las
+filas se solapan por su crossfade (valor de la casa 3 s, o el del
+tipo de pista), y la suma de las duraciones ya no dice dónde
+termina la última fila. El builder maqueta las filas con la misma
+regla de pares que el scheduler; un programa de 60 minutos con
+quince temas musicales ya **no** termina 42 segundos antes.
 
-- Falla porque el slot ahora está lleno, o
-- Empuja el outro pasado el final del slot, causando un
-  sobreexceso de 60 s.
+Un smart block con *Limitar a: tiempo restante del programa*
+recibe ese tiempo maquetado como presupuesto — aumentado con el
+solapamiento que generará su propia selección; el builder lo
+intenta varias veces y conserva el mejor ajuste. Tras el llenado,
+una pasada de relleno tira de los bloques «tiempo restante» de la
+playlist contra el hueco que queda, hasta que la última fila
+termine a menos de **4 segundos** del final del programa o ya no
+quepa nada. En los ensayos del 2026-10-01 el hueco fue de 0–3 s
+en la mayoría de los casos y de unos 6 s en el peor (el solucionador
+del bloque es aleatorio; el pool decide lo posible), nunca una
+sobrerreserva.
 
-### La solución
-
-Antes de expandir cualquier smart block en la playlist
-principal, el constructor:
-
-1. **Trial-inserta** el outro en el slot.
-2. Mide su longitud.
-3. Anula la inserción de prueba.
-4. Restaura cualquier efecto secundario
-   `cc_files.is_scheduled`.
-5. Le dice al scheduler que **reserve** ese número de
-   segundos del slot.
-
-Un smart block con "tiempo restante" ahora ve
-*(slot total) − (longitud outro) − (5 s margen)* y elige
-el número correcto de pistas.
-
-### El margen de 5 segundos
-
-La reserva está limitada en la longitud outro medida más
-un **margen de 5 s** (decisión del operador 2026-05-20,
-v8).
-
-> **Por qué 5 s y no más?** Los operadores prefirieron
-> alta utilización (más música, menos silencio) sobre una
-> reserva sobre-precavida.
-
-### Limpieza post-construcción
-
-Después de que el body se construye y el outro se
-inserta, un paso final recorta cualquier item cuyo tiempo
-de fin superaría el inicio del outro.
-
-> **Cómo funciona bajo el capó.** La reserva es
-> `Application_Model_Scheduler::setReservedSeconds()`. El
-> recorte es
-> `Application_Model_Scheduler::trimTailExcept($outroStart)`.
-> Vea commit ed57399.
+> **Bajo el capó.** `AutoPlaylistManager::fillInstance()` expande
+> las playlists por sí mismo (`expandPlaylist`), planifica con
+> `chainEnd()` — la regla de pares de `Scheduler::calculateCrossfades`
+> — e inserta solo las filas que caben mediante
+> `Scheduler::scheduleFilesAfter()`. La línea de registro
+> «show_instance_id=N filled - intro a, outro b, auto c (+d top-up)
+> rows, x s free at the end» resume cada build; `ap_fill_test.php`
+> (C:\Temp\optd) ensaya un llenado en una instancia temporal.
 
 ---
 
@@ -169,15 +157,18 @@ de fin superaría el inicio del outro.
 Cuando **Repetir hasta lleno** está marcado:
 
 - Los items de la playlist principal se insertan, smart
-  blocks expandidos, hasta que el slot esté lleno menos
-  la reserva outro.
+  blocks expandidos, y la playlist se repite mientras eso
+  añada filas — estrictamente en orden, parando en el primer
+  tema que no cabe.
 - El ciclo re-evalúa smart blocks en cada iteración.
 - Las playlists solo-pista también se repiten.
 
 Cuando no marcado:
 
 - La playlist principal se reproduce una vez.
-- Cualquier cola restante es silencio.
+- Una cola que deje el body la llenan sus smart blocks de
+  «tiempo restante» (la pasada de relleno corre igualmente);
+  sin tal bloque queda en silencio.
 
 > **Consejo del operador.** Siempre marque **Repetir
 > hasta lleno** para un body smart-block. Sin esto, un
@@ -231,8 +222,8 @@ del calendario debería ser > 0 %.
 
 ### "¿La playlist intro puede contener un smart block?"
 
-Sí, pero los smart blocks dentro de playlists intro /
-outro *no* obtienen el tratamiento de reserva de outro.
+Sí, pero la intro se coloca primero, contra todo el slot
+libre, y la outro justo después.
 
 ### "¿Por qué la auto-construcción elige a veces la misma pista dos veces?"
 

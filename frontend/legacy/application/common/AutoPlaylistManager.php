@@ -78,288 +78,32 @@ class AutoPlaylistManager
                 continue;
             }
 
-            // call the addPlaylist to show function and don't check for user permission to avoid call to non-existant user object
+            // RASTATIME 2026-10-01 - exact fill (operator specification):
+            // intro at the start, outro at the end, the autoloading playlist
+            // in between against the REAL layout time - never beyond the
+            // show's end, the last row at most FILL_TOLERANCE_SECS before it.
             $sid = $si->getShowId();
-            $playlistrepeat = new Application_Model_Show($sid);
-            if ($playlistrepeat->getHasOverrideIntroPlaylist()) {
-                $introplaylistid = $playlistrepeat->getIntroPlaylistId();
-            } else {
-                $introplaylistid = Application_Model_Preference::GetIntroPlaylist();
-            }
+            $show = new Application_Model_Show($sid);
+            $introplaylistid = $show->getHasOverrideIntroPlaylist()
+                ? $show->getIntroPlaylistId()
+                : Application_Model_Preference::GetIntroPlaylist();
+            $outroplaylistid = $show->getHasOverrideOutroPlaylist()
+                ? $show->getOutroPlaylistId()
+                : Application_Model_Preference::GetOutroPlaylist();
 
-            if ($playlistrepeat->getHasOverrideOutroPlaylist()) {
-                $outroplaylistid = $playlistrepeat->getOutroPlaylistId();
-            } else {
-                $outroplaylistid = Application_Model_Preference::GetOutroPlaylist();
-            }
-
-            // we want to check and see if we need to repeat this process until the show is 100% scheduled
-            // so we create a while loop and break it immediately if repeat until full isn't enabled
-            // otherwise we continue to go through adding playlists, including the intro and outro if enabled
-            $full = false;
-            $repeatuntilfull = $playlistrepeat->getAutoPlaylistRepeat();
-            $tempPercentScheduled = 0;
-            $si = new Application_Model_ShowInstance($autoplaylist->getDbId());
-
-            // the intro playlist should be added exactly once
-            if ($introplaylistid != null) {
-                // Logging::info('adding intro');
-                $si->addPlaylistToShowStart($introplaylistid, false);
-            }
-
-            // RASTATIME 2026-05-20 — Section 23.19 v5.  Measure the
-            // outro length by a trial-insert + roll-back, then
-            // restore `cc_files.is_scheduled` for the files that the
-            // trial transiently flipped to TRUE.
-            //
-            // v1 tried to read `cc_playlist.length` directly — broke
-            // for smart-block-bearing playlists (length stays 0).
-            // v2/v3 fixed the edge case + filter bugs but still hit
-            // the length=0 problem.
-            // v4 introduced the trial-insert measurement, which works
-            // for length — but left a side effect: the scheduler's
-            // INSERT pass calls `BasePeer::doUpdate(..., IS_SCHEDULED=TRUE)`
-            // on every cc_files row it adds to the schedule.  The
-            // subsequent DELETE on cc_schedule does NOT walk back
-            // that flag, so after the trial pass the outro's track
-            // pool was marked "already scheduled".  Smart blocks
-            // configured with "only_unplayed = true" or sort modes
-            // that exclude scheduled tracks then picked from a
-            // poisoned pool and the autoplaylist could not fill the
-            // slot — empirically observed as the same 2 tracks
-            // ("Dogs", "Roxanne") repeating across every test
-            // because those were the only tracks not yet flagged.
-            //
-            // v5 snapshots the set of cc_files.id with is_scheduled
-            // = TRUE *before* the trial insert (= AFTER the intro
-            // insert, so intro tracks are already in the snapshot
-            // and are not reset), runs the trial, identifies the
-            // newly-scheduled files (now TRUE but not in the
-            // snapshot), and resets them to FALSE *before* the
-            // DELETE on cc_schedule.  Order matters: reset the flag
-            // first because the DELETE removes the schedule rows
-            // that justify the TRUE flag in the first place; if we
-            // ran the DELETE first a concurrent reader could see
-            // is_scheduled=TRUE without a corresponding cc_schedule
-            // row.
-            //
-            // Trade-off: dynamic smart blocks may pick a different
-            // track set on the second (real) insert than on the
-            // trial pass, so the measured length is approximate.  We
-            // accept the approximation because (a) the variance is
-            // bounded by the smart block's own length limit and (b)
-            // any small overflow is intentionally kept (see edge
-            // case below — operator decision 2026-05-20 v3:
-            // "overfilled is better than underfilled").
-            $instanceId = $autoplaylist->getDbId();
-            $outroLenSecs = 0;
-            if ($outroplaylistid != null) {
-                try {
-                    // Snapshot cc_files.is_scheduled (TRUE rows) before
-                    // the trial insert.
-                    $beforeRows = Application_Common_Database::prepareAndExecute(
-                        'SELECT id FROM cc_files WHERE is_scheduled = TRUE',
-                        [],
-                        Application_Common_Database::ALL
-                    );
-                    $beforeIsScheduledIds = array_map(
-                        function ($r) { return (int) $r['id']; },
-                        is_array($beforeRows) ? $beforeRows : []
-                    );
-
-                    $row = Application_Common_Database::prepareAndExecute(
-                        'SELECT COALESCE(MAX(id), 0) AS max_id '
-                        . 'FROM cc_schedule WHERE instance_id = :id',
-                        [':id' => $instanceId],
-                        Application_Common_Database::SINGLE
-                    );
-                    $maxIdBefore = (int) ($row['max_id'] ?? 0);
-                    $beforeFilled = $si->getTimeScheduledSecs();
-
-                    // Trial insert
-                    $si->addPlaylistToShow($outroplaylistid, false);
-                    $afterFilled = $si->getTimeScheduledSecs();
-                    // RASTATIME 2026-05-20 v8 — safety margin on top
-                    // of the measured outro length so the
-                    // autoplaylist's reserve absorbs crossfade
-                    // shifts the Scheduler applies later when items
-                    // are actually scheduled.  v7 used 10 s but
-                    // operator policy capped it back at 5 s:
-                    //   * margin ≤ 5 s (any "silence" tail visible
-                    //     to listeners must stay small)
-                    //   * over-fill must be avoided
-                    //   * if measured-vs-real divergence pushes the
-                    //     show beyond the slot anyway, a post-outro
-                    //     cleanup pass (see below) trims the
-                    //     autoplaylist tail until the overbook is
-                    //     gone — sacrificing autoplaylist length is
-                    //     acceptable; overbook is not.
-                    $outroLenSecs = (int) max(0, ceil($afterFilled - $beforeFilled)) + 5;
-
-                    // Reset cc_files.is_scheduled for the files the
-                    // trial transiently flipped to TRUE.  IN-list is
-                    // built directly because every value was explicitly
-                    // cast to (int) when the snapshot was taken, so
-                    // no Injection vector exists and we avoid the PDO
-                    // /Postgres int-array parameter-binding awkwardness.
-                    // Sentinel "0" keeps the SQL legal when the
-                    // snapshot was empty (no previously-scheduled files).
-                    $idsCsv = empty($beforeIsScheduledIds)
-                        ? '0'
-                        : implode(',', $beforeIsScheduledIds);
-                    Application_Common_Database::prepareAndExecute(
-                        'UPDATE cc_files SET is_scheduled = FALSE '
-                        . 'WHERE is_scheduled = TRUE '
-                        . '  AND id NOT IN (' . $idsCsv . ')',
-                        [],
-                        Application_Common_Database::EXECUTE
-                    );
-
-                    // Roll back trial schedule rows
-                    Application_Common_Database::prepareAndExecute(
-                        'DELETE FROM cc_schedule '
-                        . 'WHERE instance_id = :id AND id > :max_id',
-                        [':id' => $instanceId, ':max_id' => $maxIdBefore],
-                        Application_Common_Database::EXECUTE
-                    );
-                    $si->refreshScheduleStatus();
-                } catch (Throwable $e) {
-                    Logging::warn(
-                        'AutoPlaylistManager: outro trial-measure failed for '
-                        . 'playlist_id=' . $outroplaylistid
-                        . ': ' . $e->getMessage()
-                        . ' — autoplaylist will not reserve outro slot'
-                    );
-                    $outroLenSecs = 0;
-                }
-            }
-
-            // Edge-case: outro length >= show slot.  Operator-confirmed
-            // 2026-05-20 v3 (revised after the v2 test pass showed
-            // the "skip outro" semantics created a 38 s gap):
-            // **Always insert the outro**, even if that overbooks.
-            // Operator policy: "Es ist besser, die Show ist
-            // überfüllt, als zu wenig befüllt".  When the outro
-            // alone would not fit, we still drop the reserve to
-            // zero so the auto-loop fills the entire slot (otherwise
-            // the loop would terminate immediately and leave the
-            // auto unfilled), and then insert the outro on top
-            // (overbooks).
-            //
-            // RASTATIME 2026-05-20 v8 — track the edge case in a
-            // flag so the post-outro cleanup pass below does NOT
-            // trim the autoplaylist tail when the operator
-            // intentionally overbooks with an oversized outro.
-            $showDurationSecs = $si->getDurationSecs();
-            $outroOverbookByDesign = false;
-            if ($outroLenSecs > 0 && $outroLenSecs >= $showDurationSecs) {
+            try {
+                self::fillInstance(
+                    (int) $autoplaylist->getDbId(),
+                    $introplaylistid ?: null,
+                    $outroplaylistid ?: null,
+                    $playlistid ?: null,
+                    (bool) $show->getAutoPlaylistRepeat()
+                );
+            } catch (Throwable $e) {
                 Logging::warn(
-                    'AutoPlaylistManager: outro length (' . $outroLenSecs . 's) >= '
-                    . 'show slot (' . $showDurationSecs . 's) for show_instance_id='
-                    . $instanceId
-                    . ' — autoplaylist will fill the slot, outro will overbook'
+                    'AutoPlaylistManager: fill failed for show_instance_id='
+                    . $autoplaylist->getDbId() . ': ' . $e->getMessage()
                 );
-                $outroLenSecs = 0;
-                $outroOverbookByDesign = true;
-            }
-            while (!$full) {
-                // we do not want to try to schedule an empty playlist
-                if ($playlistid != null) {
-                    // RASTATIME 2026-05-20 — pass outroLenSecs as the
-                    // scheduler-side reserve so any time-remaining
-                    // smart block inside the autoplaylist is sized
-                    // against (slot - outro) instead of the full slot.
-                    $si->addPlaylistToShow($playlistid, false, $outroLenSecs);
-                }
-                $ps = $si->getPercentScheduled();
-                $remainingSecs = $si->getSecondsRemaining();
-                // RASTATIME 2026-05-20 — Section 23.19.  Replace the
-                // upstream "ps > 100" termination with a check that
-                // also respects the reserved outro slot: stop as soon
-                // as the unscheduled tail is too small for one more
-                // autoplaylist pass to fit before the outro.  When
-                // outroLenSecs == 0 (no outro, or outro skipped per
-                // the edge-case branch above) this degrades to
-                // "stop when nothing more fits", which matches the
-                // pre-2026-05-20 termination semantics.
-                if ($remainingSecs <= $outroLenSecs) {
-                    $full = true;
-                } elseif (!$repeatuntilfull) {
-                    break;
-                }
-                // we want to avoid an infinite loop if all of the playlists are null
-                if ($playlistid == null) {
-                    break;
-                }
-                // another possible issue would be if the show isn't increasing in length each loop
-                // ie if all of the playlists being added are zero lengths this could cause an infinite loop
-                if ($tempPercentScheduled == $ps) {
-                    break;
-                }
-                // now reset it to the current percent scheduled
-                $tempPercentScheduled = $ps;
-            }
-            // RASTATIME 2026-05-20 — Section 23.19.  Pre-2026-05-20 the
-            // outro overbooked the show whenever Repeat-Until-Full was
-            // on (or whenever the autoplaylist length happened to fill
-            // the slot exactly).
-            //
-            // The in-Scheduler reserve passed into addPlaylistToShow
-            // above shrinks time-remaining smart blocks against the
-            // (slot − outro) limit, which is enough for the
-            // "fill remaining" smart-block case.  But two upstream
-            // expansion paths ignore that reserve:
-            //
-            //   - Static playlists are inserted at their full length
-            //     (Scheduler::retrieveMediaFiles foreach on cc_playlistcontents,
-            //     no trim).
-            //   - Fixed-duration smart blocks honour their own
-            //     cc_block.length limit, not the $showLimit parameter
-            //     passed to getListOfFilesUnderLimit().
-            //
-            // In both cases the auto-loop ends up with
-            // getSecondsRemaining() <= 0 (or, exactly enough room only
-            // for the outro to start *at* the show's end timestamp,
-            // which still puts the outro out-of-slot).
-            //
-            // ShowInstance::trimTailToReserve() handles those two
-            // upstream paths by deleting tail items until at least
-            // $outroLenSecs of unscheduled tail remains.  It is a
-            // no-op when outroLenSecs <= 0, so the path without an
-            // outro and the edge-case "outro > slot" path (which
-            // also zeroes the reserve, see above) are unaffected.
-            if ($outroplaylistid != null) {
-                $si->trimTailToReserve($outroLenSecs);
-
-                // RASTATIME 2026-05-20 v8 — snapshot max(id) before
-                // the real outro insert so the post-outro cleanup
-                // can identify "outro rows we just inserted" by
-                // `id > maxIdBeforeOutro`, and never trim them.
-                $row = Application_Common_Database::prepareAndExecute(
-                    'SELECT COALESCE(MAX(id), 0) AS max_id '
-                    . 'FROM cc_schedule WHERE instance_id = :id',
-                    [':id' => $instanceId],
-                    Application_Common_Database::SINGLE
-                );
-                $maxIdBeforeOutro = (int) ($row['max_id'] ?? 0);
-
-                $si->addPlaylistToShow($outroplaylistid, false);
-
-                // Post-outro cleanup: if the real outro insertion
-                // overshot the slot — because the smart block picked
-                // a different (longer) track on the real insert than
-                // on the trial — trim autoplaylist tail items
-                // (`id <= maxIdBeforeOutro`) until the show no
-                // longer overbooks.  The outro itself is protected
-                // by the id filter.
-                //
-                // Skipped in the "outro > slot" edge case (above)
-                // because there the operator EXPECTS overbook —
-                // the policy explicitly is "overfilled is better
-                // than underfilled" when the outro is oversized.
-                if (!$outroOverbookByDesign) {
-                    $si->trimTailExcept($maxIdBeforeOutro, 0);
-                }
             }
             $si->setAutoPlaylistBuilt(true);
 
@@ -380,6 +124,422 @@ class AutoPlaylistManager
         }
 
         Application_Model_Preference::setAutoPlaylistPollLock(microtime(true));
+    }
+
+    /**
+     * RASTATIME 2026-10-01 - the show's last row may end this many seconds
+     * before the show's end; closer is not attempted.
+     */
+    const FILL_TOLERANCE_SECS = 4;
+
+    /** Top-up rounds with the autoloading playlist's "time remaining" blocks. */
+    const FILL_TOPUP_ROUNDS = 4;
+
+    /**
+     * RASTATIME 2026-10-01 - fill one show instance (operator specification,
+     * replaces the 2026-05-20 trial-insert / reserve / trim-tail build):
+     *
+     *   1. the intro playlist at the start, once;
+     *   2. the outro playlist at the end, once - inserted for real, so its
+     *      length is known exactly (no trial insert, no safety margin);
+     *   3. the autoloading playlist between the two, against the time that
+     *      is really left in the LAYOUT (the rows overlap by their crossfade,
+     *      which the sum of the clip lengths does not show);
+     *   4. top-up rounds with the autoloading playlist's "time remaining"
+     *      smart blocks until the gap at the end is within
+     *      FILL_TOLERANCE_SECS, because only after the insert is it known
+     *      how many transitions - and so how much overlap - the fill made.
+     *
+     * Every list is taken strictly in order and stops at the first item
+     * that does not fit (operator decision, variant a); nothing is ever
+     * inserted beyond the show's end, so nothing has to be trimmed.
+     * "Repeat until full" repeats step 3 while it makes progress.
+     *
+     * @param int      $instanceId
+     * @param null|int $introId
+     * @param null|int $outroId
+     * @param null|int $autoId
+     * @param bool     $repeat
+     */
+    public static function fillInstance($instanceId, $introId, $outroId, $autoId, $repeat)
+    {
+        $si = new Application_Model_ShowInstance($instanceId);
+        $showStart = (float) $si->getShowInstanceStart(null)->format('U.u');
+        $showEnd = (float) $si->getShowInstanceEnd(null)->format('U.u');
+        $house = [
+            'track' => (float) Application_Model_Preference::GetDefaultCrossfadeDuration(),
+            'show' => (float) Application_Model_Preference::GetDefaultShowCrossfadeDuration(),
+        ];
+        $counts = ['intro' => 0, 'outro' => 0, 'auto' => 0, 'topup' => 0];
+
+        // 1. intro at the start
+        if ($introId !== null) {
+            $rows = self::instanceRows($instanceId);
+            $gap = $showEnd - self::chainEnd($rows, $showStart, $house);
+            $counts['intro'] = self::insertFitting(
+                $si, $rows, 0, self::expandPlaylist($introId, $gap, false, false, self::neighbourFile($rows, 0)), $showStart, $showEnd, $house, 'intro'
+            );
+        }
+
+        // 2. outro at the end
+        if ($outroId !== null) {
+            $rows = self::instanceRows($instanceId);
+            $gap = $showEnd - self::chainEnd($rows, $showStart, $house);
+            $counts['outro'] = self::insertFitting(
+                $si, $rows, count($rows), self::expandPlaylist($outroId, $gap, false, self::neighbourFile($rows, count($rows) - 1), false), $showStart, $showEnd, $house, 'outro'
+            );
+        }
+
+        // 3. the autoloading playlist between intro and outro, in order
+        if ($autoId !== null) {
+            $passes = 0;
+            do {
+                $rows = self::instanceRows($instanceId);
+                $gap = $showEnd - self::chainEnd($rows, $showStart, $house);
+                if ($gap <= self::FILL_TOLERANCE_SECS) {
+                    break;
+                }
+                $at = count($rows) - $counts['outro'];
+                $added = self::insertFitting(
+                    $si, $rows, $at,
+                    self::expandPlaylist($autoId, $gap, false, self::neighbourFile($rows, $at - 1), self::neighbourFile($rows, $at)),
+                    $showStart, $showEnd, $house, 'auto'
+                );
+                $counts['auto'] += $added;
+                ++$passes;
+            } while ($repeat && $added > 0 && $passes < 50);
+
+            // 4. top-up: the "time remaining" blocks against the gap the
+            //    overlaps left
+            for ($round = 0; $round < self::FILL_TOPUP_ROUNDS; ++$round) {
+                $rows = self::instanceRows($instanceId);
+                $gap = $showEnd - self::chainEnd($rows, $showStart, $house);
+                if ($gap <= self::FILL_TOLERANCE_SECS) {
+                    break;
+                }
+                $at = count($rows) - $counts['outro'];
+                $candidates = self::expandPlaylist($autoId, $gap, true, self::neighbourFile($rows, $at - 1), self::neighbourFile($rows, $at));
+                if (empty($candidates)) {
+                    break;
+                }
+                $added = self::insertFitting($si, $rows, $at, $candidates, $showStart, $showEnd, $house, 'top-up');
+                if ($added === 0) {
+                    break;
+                }
+                $counts['topup'] += $added;
+            }
+        }
+
+        $rows = self::instanceRows($instanceId);
+        $gap = $showEnd - self::chainEnd($rows, $showStart, $house);
+        Logging::info(sprintf(
+            'AutoPlaylistManager: show_instance_id=%d filled - intro %d, outro %d, auto %d (+%d top-up) rows, %.1f s free at the end',
+            $instanceId, $counts['intro'], $counts['outro'], $counts['auto'], $counts['topup'], $gap
+        ));
+    }
+
+    /**
+     * The file id of row $index for the planner's neighbour rule: null for
+     * a live row, false when there is no such row.
+     *
+     * @return false|null|int
+     */
+    private static function neighbourFile(array $rows, $index)
+    {
+        if ($index < 0 || $index >= count($rows)) {
+            return false;
+        }
+
+        return $rows[$index]['fileId'];
+    }
+
+    /**
+     * The instance's rows in play order, as the planner needs them.
+     *
+     * @return array<int, array{id: int, fileId: null|int, secs: float}>
+     */
+    private static function instanceRows($instanceId)
+    {
+        $rows = Application_Common_Database::prepareAndExecute(
+            'SELECT id, file_id, clip_length FROM cc_schedule WHERE instance_id = :id ORDER BY starts, position, id',
+            [':id' => (int) $instanceId],
+            Application_Common_Database::ALL
+        );
+        $out = [];
+        foreach (is_array($rows) ? $rows : [] as $r) {
+            $out[] = [
+                'id' => (int) $r['id'],
+                'fileId' => $r['file_id'] === null ? null : (int) $r['file_id'],
+                'secs' => (float) Application_Common_DateHelper::playlistTimeToSeconds($r['clip_length']),
+            ];
+        }
+
+        return $out;
+    }
+
+    /**
+     * Where a chain of rows ends when laid out from the show's start with
+     * the pair rule of Scheduler::calculateCrossfades (each row starts at
+     * the end of its predecessor minus their overlap).
+     *
+     * @param array<int, array{fileId: null|int, secs: float}> $rows
+     * @param float                                             $showStart epoch
+     * @param array{track: float, show: float}                  $house
+     * @param null|array<int, array{exclude: bool, d: null|float}> $info crossfade info, fetched when null
+     *
+     * @return float epoch
+     */
+    public static function chainEnd(array $rows, $showStart, array $house, $info = null)
+    {
+        if (empty($rows)) {
+            return (float) $showStart;
+        }
+        if ($info === null) {
+            $info = Application_Model_Scheduler::crossfadeInfoForFiles(array_column($rows, 'fileId'));
+        }
+        $total = 0.0;
+        $n = count($rows);
+        foreach ($rows as $i => $row) {
+            $total += (float) $row['secs'];
+            if ($i + 1 < $n) {
+                $total -= Application_Model_Scheduler::crossfadeOverlapBetween(
+                    $row['fileId'], $rows[$i + 1]['fileId'], $info, $house['track'], $house['show']
+                );
+            }
+        }
+
+        return (float) $showStart + $total;
+    }
+
+    /**
+     * Expand a playlist into the items it would schedule, in order: files
+     * and static blocks as they are, a dynamic smart block as the tracks it
+     * picks against the budget that is left (a "time remaining" block takes
+     * the budget, a fixed-length block its own length).  With
+     * $remainingBlocksOnly only the "time remaining" blocks are expanded
+     * (the top-up rounds).
+     *
+     * @param int            $playlistId
+     * @param float          $budgetSecs
+     * @param bool           $remainingBlocksOnly
+     * @param false|null|int $prevFileId         the row before the insertion point: a file id,
+     *                                           null for a live row, false for none
+     * @param false|null|int $nextFileId         the row after it, likewise
+     *
+     * @return array<int, array{type: int, id: int, secs: float, cliplength: string, cuein: string, cueout: string, fadein: string, fadeout: string}>
+     */
+    private static function expandPlaylist($playlistId, $budgetSecs, $remainingBlocksOnly = false, $prevFileId = false, $nextFileId = false)
+    {
+        $pl = new Application_Model_Playlist($playlistId);
+        $out = [];
+        $used = 0.0;
+        $fadeIn = Application_Model_Preference::GetDefaultFadeIn();
+        $fadeOut = Application_Model_Preference::GetDefaultFadeOut();
+        $secsOf = function ($len) {
+            return (float) Application_Common_DateHelper::playlistTimeToSeconds($len);
+        };
+
+        foreach ($pl->getContents() as $item) {
+            $type = (int) $item['type'];
+            if ($type === 2) {
+                $bl = new Application_Model_Block($item['item_id']);
+                if ($bl->isStatic()) {
+                    if ($remainingBlocksOnly) {
+                        continue;
+                    }
+                    foreach ($bl->getContents() as $track) {
+                        $secs = $secsOf($track['length']);
+                        $out[] = [
+                            'type' => 0, 'id' => (int) $track['item_id'], 'secs' => $secs,
+                            'cliplength' => $track['length'], 'cuein' => $track['cuein'], 'cueout' => $track['cueout'],
+                            'fadein' => $track['fadein'], 'fadeout' => $track['fadeout'],
+                        ];
+                        $used += $secs;
+                    }
+
+                    continue;
+                }
+                $crit = $bl->getCriteria();
+                $isRemaining = (($crit['limit']['modifier'] ?? '') === 'remaining');
+                if ($remainingBlocksOnly && !$isRemaining) {
+                    continue;
+                }
+                $budget = max(0.0, (float) $budgetSecs - $used);
+                $picked = $bl->getListOfFilesUnderLimit($budget);
+                if ($isRemaining && !empty($picked)) {
+                    // The block fills the budget by the SUM of its tracks, but
+                    // the rows overlap by their crossfade, so a selection that
+                    // meets the budget ends (tracks x overlap) early.  Pick a
+                    // few times with the budget raised by the overlap of the
+                    // previous pick and keep the pick whose LAID-OUT length
+                    // comes closest to the budget without exceeding it (the
+                    // block's solver is randomised, every pick differs);
+                    // insertFitting() still checks the real end.
+                    $house = (float) Application_Model_Preference::GetDefaultCrossfadeDuration();
+                    $showXf = (float) Application_Model_Preference::GetDefaultShowCrossfadeDuration();
+                    // Laid-out length the pick adds to the chain: its tracks minus
+                    // their overlaps, minus the joins to the neighbouring rows,
+                    // plus the overlap of the two neighbours that the pick splits
+                    // (the budget already subtracts that one).
+                    $ov = function ($a, $b, $info) use ($house, $showXf) {
+                        if ($a === false || $b === false) {
+                            return 0.0;
+                        }
+
+                        return Application_Model_Scheduler::crossfadeOverlapBetween($a, $b, $info, $house, $showXf);
+                    };
+                    $laidOut = function (array $pick) use ($ov, $prevFileId, $nextFileId) {
+                        $ids = array_map(function ($f) { return (int) $f['id']; }, $pick);
+                        $info = Application_Model_Scheduler::crossfadeInfoForFiles(array_merge(
+                            $ids, [$prevFileId ?: null, $nextFileId ?: null]
+                        ));
+                        $len = 0.0;
+                        foreach ($pick as $i => $f) {
+                            $len += (float) $f['length'];
+                            if ($i + 1 < count($ids)) {
+                                $len -= $ov($ids[$i], $ids[$i + 1], $info);
+                            }
+                        }
+                        $len -= $ov($prevFileId, $ids[0], $info) + $ov(end($ids), $nextFileId, $info);
+                        $len += $ov($prevFileId, $nextFileId, $info);
+
+                        return $len;
+                    };
+                    $best = null;
+                    $bestResidual = INF;
+                    $raised = $budget;
+                    for ($round = 0; $round < 8; ++$round) {
+                        $len = $laidOut($picked);
+                        $residual = $budget - $len;
+                        if ($residual >= 0 && $residual < $bestResidual) {
+                            $best = $picked;
+                            $bestResidual = $residual;
+                            if ($residual < 1.0) {
+                                break;
+                            }
+                        }
+                        $raised = $budget + max(0.0, array_sum(array_map(function ($f) { return (float) $f['length']; }, $picked)) - $len);
+                        $picked = $bl->getListOfFilesUnderLimit($raised);
+                        if (empty($picked)) {
+                            break;
+                        }
+                    }
+                    if ($best !== null) {
+                        $picked = $best;
+                    }
+                }
+                foreach ($picked as $f) {
+                    $file = CcFilesQuery::create()->findPk((int) $f['id']);
+                    if ($file === null || !$file->visible()) {
+                        continue;
+                    }
+                    $cuein = (float) Application_Common_DateHelper::calculateLengthInSeconds($file->getDbCuein());
+                    $cueout = (float) Application_Common_DateHelper::calculateLengthInSeconds($file->getDbCueout());
+                    $secs = max(0.0, $cueout - $cuein);
+                    $out[] = [
+                        'type' => 0, 'id' => (int) $file->getDbId(), 'secs' => $secs,
+                        'cliplength' => Application_Common_DateHelper::secondsToPlaylistTime($secs),
+                        'cuein' => $file->getDbCuein(), 'cueout' => $file->getDbCueout(),
+                        'fadein' => $fadeIn, 'fadeout' => $fadeOut,
+                    ];
+                    $used += $secs;
+                }
+
+                continue;
+            }
+            if ($remainingBlocksOnly) {
+                continue;
+            }
+            $secs = $secsOf($item['length']);
+            if ($type === 0) {
+                $out[] = [
+                    'type' => 0, 'id' => (int) $item['item_id'], 'secs' => $secs,
+                    'cliplength' => $item['length'], 'cuein' => $item['cuein'], 'cueout' => $item['cueout'],
+                    'fadein' => $item['fadein'], 'fadeout' => $item['fadeout'],
+                ];
+            } elseif ($type === 1) {
+                // webstream (schedule discriminator 1)
+                $out[] = [
+                    'type' => 1, 'id' => (int) $item['item_id'], 'secs' => $secs,
+                    'cliplength' => $item['length'], 'cuein' => $item['cuein'], 'cueout' => $item['cueout'],
+                    'fadein' => '00.500000', 'fadeout' => '00.500000',
+                ];
+            } elseif ($type === 3) {
+                // line-in (playlist type 3 = schedule discriminator 2, no fades)
+                $out[] = [
+                    'type' => 2, 'id' => (int) $item['item_id'], 'secs' => $secs,
+                    'cliplength' => $item['length'], 'cuein' => $item['cuein'] ?? '00:00:00',
+                    'cueout' => $item['cueout'] ?? $item['length'],
+                    'fadein' => '00:00:00.000000', 'fadeout' => '00:00:00.000000',
+                ];
+            } else {
+                continue;
+            }
+            $used += $secs;
+        }
+
+        return $out;
+    }
+
+    /**
+     * Insert the longest prefix of $candidates that fits before the show's
+     * end when placed after row index $at (0 = at the start), in one
+     * scheduler call.  Strictly in order: the first item that does not fit
+     * ends the list (variant a).
+     *
+     * @return int rows inserted
+     */
+    private static function insertFitting(
+        Application_Model_ShowInstance $si,
+        array $rows,
+        $at,
+        array $candidates,
+        $showStart,
+        $showEnd,
+        array $house,
+        $label
+    ) {
+        if (empty($candidates)) {
+            return 0;
+        }
+        $at = max(0, min((int) $at, count($rows)));
+        $ids = array_merge(array_column($rows, 'fileId'), array_map(function ($c) {
+            return $c['type'] === 0 ? $c['id'] : null;
+        }, $candidates));
+        $info = Application_Model_Scheduler::crossfadeInfoForFiles($ids);
+
+        $accepted = [];
+        foreach ($candidates as $c) {
+            $trial = array_merge(
+                array_slice($rows, 0, $at),
+                $accepted,
+                [['fileId' => $c['type'] === 0 ? $c['id'] : null, 'secs' => $c['secs']]],
+                array_slice($rows, $at)
+            );
+            if (self::chainEnd($trial, $showStart, $house, $info) > $showEnd + 0.0005) {
+                break;
+            }
+            $accepted[] = ['fileId' => $c['type'] === 0 ? $c['id'] : null, 'secs' => $c['secs'], 'file' => $c];
+        }
+        if (count($accepted) < count($candidates)) {
+            Logging::info(sprintf(
+                'AutoPlaylistManager: %s - %d of %d items fit, the rest is left out (show_instance_id=%d)',
+                $label, count($accepted), count($candidates), $si->getShowInstanceId()
+            ));
+        }
+        if (empty($accepted)) {
+            return 0;
+        }
+        $afterRowId = $at > 0 ? (int) $rows[$at - 1]['id'] : 0;
+        $files = array_map(function ($a) {
+            $f = $a['file'];
+            unset($f['secs']);
+
+            return $f;
+        }, $accepted);
+        $si->addFilesAfter($afterRowId, $files);
+
+        return count($accepted);
     }
 
     /**

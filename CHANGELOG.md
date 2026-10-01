@@ -9,6 +9,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Autoloading: exakte Befüllung nach Operator-Spezifikation (2026-10-01,
+  Operator-Go, Variante a)** — Intro an den Anfang, Outro **real** ans
+  Ende, die Autoloading-Playlist dazwischen gegen die **tatsächlich
+  ausgelegte** Restzeit; jede Liste streng in Reihenfolge, Stopp beim
+  ersten Titel, der nicht vor das Sendungsende passt — nie überbucht,
+  nichts wird nachträglich gekürzt.  Befund gegen den Build vom 20.05.:
+  (1) die Restzeit war die Summe der Titellängen; seit dem Paar-Layout vom
+  29.09. überlappen die Zeilen um ihren Crossfade, eine „zu 100 %
+  gefüllte" Sendung endete um Σ Überlappungen zu früh (15 Musiktitel ≈
+  42 s Stille vor dem Outro), dazu die 5-s-Marge; (2) der Aufräumschritt
+  nach dem Outro löschte Zeilen per SQL ohne Neu-Layout (Loch vor dem
+  Outro).  Neu `AutoPlaylistManager::fillInstance()`: `chainEnd()` legt
+  mit der Paar-Regel des Schedulers aus, `expandPlaylist()` expandiert die
+  Playlist (Dateien, statische Blöcke, dynamische Blöcke gegen das
+  ausgelegte Budget), `insertFitting()` nimmt das längste passende Präfix
+  und fügt es über das neue `Scheduler::scheduleFilesAfter()` ein
+  (vorbereitete Zeilen, Cue-Punkte der Playlist bleiben); bis zu vier
+  Nachfüll-Runden mit den „time remaining"-Blöcken gegen die Restlücke
+  (Ziel ≤ 4 s).  „time remaining"-Blöcke füllen nach der SUMME, darum
+  bekommt der Block ein um die Überlappung seiner eigenen Auswahl
+  erhöhtes Budget (bis zu acht Versuche, echte Nachbarzeilen, beste
+  Passung bleibt).  Probe-Einfügung, 5-s-Marge und Tail-Trims entfallen
+  (`trimTailToReserve` / `trimTailExcept` entfernt).  Proben an
+  temporären Instanzen (`C:/Temp/optd/ap_fill_test.php --live`, Sendungen
+  229–237, 8–60 min): 0,0–3,0 s Rest in den meisten Läufen, ~6 s im
+  schlechtesten, nie überbucht; der 65-min-Webstream des Test-Outros 49
+  bleibt als „passt nicht" weg.  Handbuch AUTOLOADING_PLAYLISTS ×4 (§4
+  neu), Architektur §23.19 Addendum (0.56).  Wirkt ab dem nächsten Build
+  (PHP, kein Neustart).
+
 - **Player folgt dem Stream Label; Standard-Cover (2026-10-01,
   Operator-Go)** — Das Stream Label (Settings → Streams) legt fest, ob der
   Hörer den Titel oder die Sendung sieht; Bild und Überschrift des

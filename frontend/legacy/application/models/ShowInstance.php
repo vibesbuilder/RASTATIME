@@ -281,6 +281,29 @@ SQL;
     }
 
     /**
+     * RASTATIME 2026-10-01 - insert prepared rows after a schedule row of
+     * this instance (0 = at the start); see Scheduler::scheduleFilesAfter.
+     * The instance's last_scheduled stamp is read fresh, so repeated calls
+     * during one build never trip the out-of-date check.
+     *
+     * @param int   $afterRowId
+     * @param array $files
+     */
+    public function addFilesAfter($afterRowId, array $files)
+    {
+        $fresh = CcShowInstancesQuery::create()->findPk($this->_instanceId);
+        $ts = $fresh ? (intval($fresh->getDbLastScheduled('U')) ?: 0) : 0;
+        $scheduler = new Application_Model_Scheduler(false);
+        $scheduler->scheduleFilesAfter(
+            [['id' => (int) $afterRowId, 'instance' => $this->_instanceId, 'timestamp' => $ts]],
+            $files
+        );
+        $con = Propel::getConnection(CcShowInstancesPeer::DATABASE_NAME);
+        $this->_showInstance->reload();
+        $this->_showInstance->updateScheduleStatus($con);
+    }
+
+    /**
      * Add a media file as the last item in the show.
      *
      * @param int   $file_id
@@ -938,125 +961,6 @@ SQL;
     {
         $con = Propel::getConnection(CcShowInstancesPeer::DATABASE_NAME);
         $this->_showInstance->updateScheduleStatus($con);
-    }
-
-    /**
-     * RASTATIME 2026-05-20 — Section 23.19 v8.
-     *
-     * Variant of {@see trimTailToReserve()} that only considers
-     * schedule rows whose primary key is ≤ ``$excludeAboveId``.  Used
-     * by AutoPlaylistManager to clean up an overbook caused by
-     * trial-measure-vs-real divergence on smart-block outros without
-     * touching the outro itself: snapshot ``MAX(id)`` *before* the
-     * real outro insert, run that snapshot through here as
-     * ``$excludeAboveId`` *after* the insert, and only the
-     * autoplaylist tail can be trimmed.
-     *
-     * @param int $excludeAboveId rows with id > this are never trimmed
-     * @param int $reservedSecs   keep at least this many seconds free
-     */
-    public function trimTailExcept($excludeAboveId, $reservedSecs = 0)
-    {
-        $excludeAboveId = (int) $excludeAboveId;
-        $reservedSecs   = (int) $reservedSecs;
-        $con = Propel::getConnection(CcShowInstancesPeer::DATABASE_NAME);
-        $safety = 1000;
-        while ($safety-- > 0 && $this->getSecondsRemaining() < $reservedSecs) {
-            $sql = 'SELECT id FROM cc_schedule '
-                . 'WHERE instance_id = :instance_id '
-                . '  AND id <= :exclude_above '
-                . "  AND starts > NOW() AT TIME ZONE 'UTC' "
-                . 'ORDER BY starts DESC, position DESC '
-                . 'LIMIT 1';
-            $row = Application_Common_Database::prepareAndExecute(
-                $sql,
-                [
-                    ':instance_id'   => $this->_instanceId,
-                    ':exclude_above' => $excludeAboveId,
-                ],
-                'single'
-            );
-            if (empty($row)) {
-                break;
-            }
-            Application_Common_Database::prepareAndExecute(
-                'DELETE FROM cc_schedule WHERE id = :id',
-                [':id' => (int) $row['id']],
-                'execute'
-            );
-            $this->_showInstance->updateScheduleStatus($con);
-        }
-    }
-
-    /**
-     * RASTATIME 2026-05-20 — Section 23.19 v3.
-     *
-     * Delete tracks from the *tail* of this show instance until at
-     * least ``$reservedSecs`` seconds of unscheduled slot remain.
-     * Used by {@see AutoPlaylistManager} to make room for an outro
-     * playlist *after* the autoplaylist loop has filled the slot,
-     * specifically for the cases where the in-Scheduler
-     * ``reservedSecs`` reserve cannot shrink the inserted content:
-     *   - static playlists (no trimming logic; all tracks are
-     *     inserted at full length)
-     *   - fixed-duration smart blocks (they honour their own
-     *     ``length`` limit instead of the ``$showLimit`` parameter)
-     * In both cases the autoplaylist ends up overbooking the slot;
-     * this method removes the offending tail items so the outro
-     * still fits inside the show.
-     *
-     * Safety:
-     *   - ``starts > NOW()`` filter avoids deleting items that are
-     *     already on-air or have already played.  This is safer than
-     *     filtering by ``playout_status``: that column is a routing
-     *     marker set by {@see CcShowInstances::updateScheduleStatus()}
-     *     (1 = in slot, 2 = boundary, 0 = overbooked) and an
-     *     unstarted in-slot track has status 1, not 0 — the original
-     *     ``playout_status = 0`` filter therefore matched zero rows
-     *     in every realistic AutoPlaylistManager scenario and silently
-     *     trimmed nothing.  Using ``starts > NOW()`` is also robust to
-     *     a build that happens unexpectedly late.
-     *   - 1000-iteration spin guard prevents an infinite loop if the
-     *     per-iteration delete somehow does not shrink the schedule.
-     *   - Empty-result-set break: when there is nothing more to
-     *     delete we just return (the caller's edge-case branch
-     *     should have caught the "outro > slot" case earlier).
-     *
-     * @param int $reservedSecs how many seconds to keep free at the
-     *                          tail end of the show instance
-     */
-    public function trimTailToReserve($reservedSecs)
-    {
-        $reservedSecs = (int) $reservedSecs;
-        if ($reservedSecs <= 0) {
-            return;
-        }
-        $con = Propel::getConnection(CcShowInstancesPeer::DATABASE_NAME);
-        $safety = 1000;
-        while ($safety-- > 0 && $this->getSecondsRemaining() < $reservedSecs) {
-            // Latest-starting future schedule item = the tail.
-            $sql = 'SELECT id FROM cc_schedule '
-                . 'WHERE instance_id = :instance_id '
-                . "  AND starts > NOW() AT TIME ZONE 'UTC' "
-                . 'ORDER BY starts DESC, position DESC '
-                . 'LIMIT 1';
-            $row = Application_Common_Database::prepareAndExecute(
-                $sql,
-                [':instance_id' => $this->_instanceId],
-                'single'
-            );
-            if (empty($row)) {
-                break;
-            }
-            Application_Common_Database::prepareAndExecute(
-                'DELETE FROM cc_schedule WHERE id = :id',
-                [':id' => (int) $row['id']],
-                'execute'
-            );
-            // Re-aggregate cc_show_instances.time_filled so the next
-            // getSecondsRemaining() call reflects the deletion.
-            $this->_showInstance->updateScheduleStatus($con);
-        }
     }
 
     public function trimOverbooked()

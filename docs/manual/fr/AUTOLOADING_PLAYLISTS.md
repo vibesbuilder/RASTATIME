@@ -78,7 +78,7 @@ l'émission** → développez **Autoloading Playlist**.
 | **Playlist intro** | Ajoutée au tout début de l'émission. Optionnelle. Joue exactement une fois. |
 | **Playlist principale** | Le contenu body. Requis si l'interrupteur principal est activé. Les smart blocks dans cette playlist s'étendent au moment du build en utilisant les secondes restantes du créneau comme limite si configurée. |
 | **Playlist outro** | Ajoutée à la toute fin de l'émission. Optionnelle. Joue exactement une fois. |
-| **Répéter jusqu'à plein** | Si activé, les items de la playlist principale se répètent (les smart blocks sont ré-évalués à chaque cycle) jusqu'à ce que le créneau soit rempli moins la réserve outro. Si désactivé, la playlist principale joue une fois et toute queue restante est du silence. |
+| **Répéter jusqu'à plein** | Si activé, les items de la playlist principale se répètent (les smart blocks sont ré-évalués à chaque cycle) tant que cela ajoute des lignes (strictement dans l'ordre, arrêt au premier titre qui ne tient pas). Si désactivé, la playlist principale joue une fois et toute queue restante est du silence. |
 
 Enregistrez l'émission. Le builder d'autoplaylist prend
 l'attachement à son prochain poll (par défaut toutes les
@@ -121,85 +121,55 @@ modifiée.
 
 ---
 
-## 4. La réserve d'outro (Section 23.19)
+## 4. Comment le créneau est rempli (depuis le 2026-10-01)
 
-C'est la partie opérationnellement la plus délicate de
-l'autoloading et mérite d'être comprise.
+Le builder remplit une émission en trois étapes, toujours contre
+le temps **réellement** libre dans le créneau :
 
-### Le problème
+1. La **playlist intro** va au début, exactement une fois.
+2. La **playlist outro** va à la fin, exactement une fois — elle
+   est placée pour de bon, sa longueur est donc connue exactement
+   (l'insertion d'essai avec mesure des builds précédents a
+   disparu, et avec elle la marge de 5 secondes).
+3. La **playlist autoloading** remplit l'espace entre les deux.
 
-Supposons que votre **Playlist principale** utilise un
-smart block avec *Limiter à : Temps restant dans
-l'émission*, et que vous avez une **Playlist outro** avec
-un ID de station de 60 s.
+Chaque liste est prise **strictement dans son ordre** et s'arrête
+au premier titre qui ne tient plus avant la fin de l'émission
+(décision de l'opérateur, « variante a ») : rien n'est jamais
+placé au-delà de la fin, donc rien n'a à être coupé ensuite. Une
+intro ou une outro plus longue que le créneau est tronquée de la
+même façon (les titres qui ne tiennent pas sont omis ; le journal
+en donne le nombre).
 
-Sans réserve d'outro, l'expansion du smart block voit
-"temps restant = 60 minutes" (l'émission entière),
-choisit 60 minutes de pistes, et l'insertion outro
-ultérieure soit :
+« Réellement libre » désigne le temps mis en page : depuis le
+2026-09-29 les lignes se chevauchent de leur crossfade (valeur
+maison 3 s, ou celle du type de piste), et la somme des durées ne
+dit plus où finit la dernière ligne. Le builder met les lignes en
+page avec la même règle de paire que le scheduler ; une émission
+de 60 minutes avec quinze titres musicaux ne finit donc **plus**
+42 secondes trop tôt.
 
-- Échoue parce que le créneau est maintenant plein, soit
-- Pousse l'outro au-delà de la fin du créneau, causant
-  un débordement de 60 s que le playout coupera durement.
+Un smart block avec *Limiter à : temps restant de l'émission*
+reçoit ce temps mis en page comme budget — majoré du chevauchement
+que sa propre sélection produira ; le builder essaie plusieurs fois
+et garde le meilleur ajustement. Après le remplissage, une passe
+de complément tire les blocs « temps restant » de la playlist
+contre l'écart restant, jusqu'à ce que la dernière ligne finisse à
+moins de **4 secondes** de la fin de l'émission ou que plus rien ne
+tienne. Lors des répétitions du 2026-10-01 l'écart était de 0–3 s
+dans la plupart des cas et d'environ 6 s au pire (le solveur du
+bloc est aléatoire ; le pool décide de ce qui est possible), jamais
+une surréservation.
 
-### La solution
-
-Avant d'étendre tout smart block dans la playlist
-principale, le builder :
-
-1. Fait un **trial-insert** de l'outro dans le créneau.
-2. Mesure sa longueur (c'est la seule façon fiable de
-   mesurer les playlists portant des smart blocks, dont
-   la colonne `length` reste à 0 parce que les blocks
-   s'étendent plus tard).
-3. Annule le trial-insert.
-4. Restaure tous les effets de bord
-   `cc_files.is_scheduled` que le trial-insert a
-   transitoirement basculés sur TRUE.
-5. Dit au scheduler de **réserver** ce nombre de secondes
-   du créneau avant d'étendre tout smart block.
-
-Un smart block avec "temps restant" voit maintenant
-*(total créneau) − (longueur outro) − (5 s marge)* et
-choisit le bon nombre de pistes. L'outro s'insère ensuite
-proprement à la fin.
-
-### La marge de 5 secondes
-
-La réserve est plafonnée à la longueur outro mesurée plus
-une **marge de 5 s** (décision opérateur 2026-05-20, v8).
-Sans la marge, l'arrondi de sélection de smart-block
-laisserait parfois un écart de sous-seconde avant l'outro
-que l'opérateur entendait comme une minuscule pause.
-Avec 5 s de jeu, l'auto-build garde l'utilisation du
-créneau près de 100 % sans jamais déborder.
-
-> **Pourquoi 5 s et pas plus ?** Les opérateurs ont
-> préféré une utilisation élevée (plus de musique, moins
-> de silence) à une réserve trop prudente. Une plus
-> grande réserve (ex. 30 s) signifierait qu'une émission
-> de 60 min joue seulement 59:30 de musique + 30 s d'air
-> mort avant l'outro — perceptible et mal aimé. Voir
-> ARCHITECTURE §23.19 pour l'évolution version par
-> version.
-
-### Nettoyage post-build
-
-Après que le body se construit et l'outro s'insère, un
-passage final coupe tout item dont l'heure de fin
-dépasserait le début de l'outro. Les items entièrement à
-l'intérieur du créneau outro sont laissés tranquilles
-(l'outro joue inchangé). Cela attrape le cas limite où
-l'arrondi de smart-block a mis le dernier item de body à
-mi-chemin au-delà de la limite de réserve.
-
-> **Comment ça marche sous le capot.** La réserve est
-> `Application_Model_Scheduler::setReservedSeconds()`. Le
-> trim est
-> `Application_Model_Scheduler::trimTailExcept($outroStart)`.
-> Les deux chevauchent dans
-> `AutoPlaylistManager.buildAutoPlaylist()`. Voir commit
-> ed57399.
+> **Sous le capot.** `AutoPlaylistManager::fillInstance()` étend
+> lui-même les playlists (`expandPlaylist`), planifie avec
+> `chainEnd()` — la règle de paire de `Scheduler::calculateCrossfades`
+> — et n'insère que les lignes qui tiennent via
+> `Scheduler::scheduleFilesAfter()`. La ligne de journal
+> « show_instance_id=N filled - intro a, outro b, auto c (+d top-up)
+> rows, x s free at the end » résume chaque build ;
+> `ap_fill_test.php` (C:\Temp\optd) répète un remplissage sur une
+> instance temporaire.
 
 ---
 
@@ -210,9 +180,9 @@ mi-chemin au-delà de la limite de réserve.
 - **Playlists smart-block-seulement** avec *Limiter à :
   Temps restant dans l'émission*. Le motif le plus
   courant : un smart block, un filtre ("genre = pop et
-  bpm > 100"), une limite. Combiné avec la réserve
-  d'outro, ceci remplit toute longueur de créneau
-  proprement.
+  bpm > 100"), une limite. Mis en page contre le
+  temps réellement restant, ceci remplit toute longueur de
+  créneau à quelques secondes près.
 
 - **Intro + smart block + outro** pour les émissions
   avec un intro d'ID de station et un outro d'ID de
@@ -255,8 +225,9 @@ mi-chemin au-delà de la limite de réserve.
 Quand **Répéter jusqu'à plein** est coché :
 
 - Les items de la playlist principale sont insérés, les
-  smart blocks étendus, jusqu'à ce que le créneau soit
-  plein moins la réserve outro.
+  smart blocks étendus, et la playlist est relancée tant que
+  cela ajoute des lignes — strictement dans l'ordre, arrêt au
+  premier titre qui ne tient pas.
 - Le cycle ré-évalue les smart blocks à chaque itération,
   donc un smart block *dynamique* choisit une sélection
   différente à chaque répétition — contenu varié dans un
@@ -344,10 +315,8 @@ l'instance comme fraîche.
 
 ### "La playlist intro peut-elle contenir un smart block ?"
 
-Oui, mais les smart blocks dans les playlists
-intro / outro n'obtiennent *pas* le traitement de réserve
-d'outro — ils s'étendent comme s'ils avaient le créneau
-entier. Si le smart block de l'intro a la limite "temps
+Oui, mais l'intro est placée en premier, contre tout le
+créneau libre, et l'outro juste après. Si le smart block de l'intro a la limite "temps
 restant", il avalera toute l'émission. Utilisez des
 smart blocks à durée fixe ("Limiter à 30 s") ou des
 pistes statiques pour intro / outro.

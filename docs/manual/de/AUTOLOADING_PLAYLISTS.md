@@ -75,7 +75,7 @@ nichts.
 | **Intro-Playlist** | Am ganz Anfang der Sendung hinzugefügt. Optional. Spielt genau einmal. |
 | **Haupt-Playlist** | Der Body-Inhalt. Erforderlich, wenn der Hauptschalter an ist. Smart Blocks in dieser Playlist expandieren zur Build-Zeit unter Verwendung der verbleibenden Sekunden des Slots als Limit, falls konfiguriert. |
 | **Outro-Playlist** | Am ganz Ende der Sendung hinzugefügt. Optional. Spielt genau einmal. |
-| **Wiederholen bis voll** | Wenn an, wiederholen sich die Items der Haupt-Playlist (Smart Blocks werden bei jedem Zyklus neu ausgewertet), bis der Slot abzüglich der Outro-Reserve gefüllt ist. Wenn aus, spielt die Haupt-Playlist einmal, und jeder verbleibende Schwanz ist Stille. |
+| **Wiederholen bis voll** | Wenn an, wiederholen sich die Items der Haupt-Playlist (Smart Blocks werden bei jedem Zyklus neu ausgewertet), solange das noch Zeilen bringt (streng in Reihenfolge, Stopp beim ersten Titel, der nicht passt). Wenn aus, spielt die Haupt-Playlist einmal; einen Rest füllen ihre „verbleibende Zeit"-Smart-Blocks, sonst bleibt er Stille. |
 
 Speichern Sie die Sendung. Der Autoplaylist-Builder nimmt
 die Anbringung beim nächsten Poll (standardmäßig alle 60 s)
@@ -117,85 +117,55 @@ bearbeitete Version.
 
 ---
 
-## 4. Die Outro-Reserve (Abschnitt 23.19)
+## 4. Wie der Slot befüllt wird (seit 2026-10-01)
 
-Dies ist der operativ kniffligste Teil des Autoloadings und
-verdient verstanden zu werden.
+Der Builder befüllt eine Sendung in drei Schritten, immer gegen
+die Zeit, die im Slot **wirklich** noch frei ist:
 
-### Das Problem
+1. Die **Intro-Playlist** kommt an den Anfang, genau einmal.
+2. Die **Outro-Playlist** kommt ans Ende, genau einmal — sie wird
+   real gesetzt, ihre Länge ist damit exakt bekannt (die
+   Probe-Einfügung mit Messung der früheren Builds entfällt, und
+   mit ihr die 5-Sekunden-Marge).
+3. Die **Autoloading-Playlist** füllt den Raum dazwischen.
 
-Angenommen, Ihre **Haupt-Playlist** verwendet einen Smart
-Block mit *Begrenzen auf: Verbleibende Zeit in der Sendung*,
-und Sie haben eine **Outro-Playlist** mit einer 60-s-Station-ID.
+Jede Liste wird **streng in ihrer Reihenfolge** genommen und
+endet beim ersten Titel, der nicht mehr vor das Sendungsende
+passt (Operator-Entscheid, „Variante a"): Nichts wird je über
+das Ende hinaus gesetzt, also muss hinterher nichts gekürzt
+werden. Ein Intro oder Outro, das länger ist als der Slot, wird
+genauso beschnitten (die nicht passenden Titel bleiben weg; das
+Log nennt die Zahl).
 
-Ohne Outro-Reserve sieht die Smart-Block-Expansion
-"verbleibende Zeit = 60 Minuten" (die volle Sendung), wählt
-60 Minuten Tracks, und das nachfolgende Outro-Einfügen tut
-entweder:
+„Wirklich frei" meint die ausgelegte Zeit: Seit 2026-09-29
+überlappen die Zeilen um ihren Crossfade (Hauswert 3 s oder der
+des Track-Typs), und die Summe der Titellängen sagt nicht mehr,
+wo die letzte Zeile endet. Der Builder legt die Zeilen mit
+derselben Paar-Regel aus wie der Scheduler; eine 60-Minuten-
+Sendung mit fünfzehn Musiktiteln endet darum **nicht** mehr
+42 Sekunden zu früh.
 
-- Schlägt fehl, weil der Slot jetzt voll ist, oder
-- Schiebt das Outro über das Slot-Ende hinaus, was zu einer
-  60-s-Überbuchung führt, die das Playout hart abschneiden
-  wird.
+Ein Smart Block mit *Begrenzen auf: verbleibende Sendezeit*
+bekommt diese ausgelegte Zeit als Budget — erhöht um die
+Überlappung, die seine eigene Auswahl erzeugt; der Builder
+versucht das mehrfach und behält die beste Passung. Nach dem
+Füllen zieht ein Nachfüll-Lauf die „verbleibende Zeit"-Blöcke
+der Playlist gegen die Restlücke, bis die letzte Zeile innerhalb
+von **4 Sekunden** vor dem Sendungsende endet oder nichts mehr
+passt. In den Proben vom 2026-10-01 lag die Lücke meist bei
+0–3 s, schlimmstenfalls bei etwa 6 s (der Löser des Blocks
+arbeitet mit Zufall; der Pool bestimmt, was möglich ist), nie
+eine Überbuchung.
 
-### Die Lösung
-
-Bevor irgendein Smart Block in der Haupt-Playlist
-expandiert wird, tut der Builder:
-
-1. **Trial-Insert** des Outros in den Slot.
-2. Misst dessen Länge (dies ist der einzige zuverlässige
-   Weg, Smart-Block-tragende Playlists zu messen, deren
-   `length`-Spalte bei 0 bleibt, weil die Blöcke später
-   expandieren).
-3. Rollt den Trial-Insert zurück.
-4. Stellt alle `cc_files.is_scheduled`-Seiteneffekte
-   wieder her, die der Trial-Insert vorübergehend auf
-   TRUE gesetzt hat.
-5. Sagt dem Scheduler, diese Anzahl von Sekunden vom Slot
-   zu **reservieren**, bevor irgendein Smart Block
-   expandiert wird.
-
-Ein Smart Block mit "verbleibender Zeit" sieht jetzt
-*(Slot total) − (Outro-Länge) − (5 s Marge)* und wählt die
-richtige Anzahl von Tracks. Das Outro wird dann sauber am
-Ende eingefügt.
-
-### Die 5-Sekunden-Marge
-
-Die Reserve wird bei der gemessenen Outro-Länge plus einer
-**5-s-Marge** begrenzt (Operator-Entscheidung 2026-05-20,
-v8). Ohne die Marge würde die Smart-Block-Auswahls-Rundung
-manchmal eine Subsekunden-Lücke vor dem Outro hinterlassen,
-die der Operator als winzige Pause hörte. Mit 5 s Spielraum
-hält der Auto-Build die Slot-Auslastung bei nahezu 100 %,
-ohne jemals zu überbuchen.
-
-> **Warum 5 s und nicht mehr?** Operatoren bevorzugten hohe
-> Auslastung (mehr Musik, weniger Stille) gegenüber einer
-> übervorsichtigen Reserve. Eine größere Reserve (z.B. 30 s)
-> würde bedeuten, dass eine 60-min-Sendung nur 59:30 Musik +
-> 30 s tote Luft vor dem Outro spielt — wahrnehmbar und
-> ungeliebt. Siehe ARCHITECTURE §23.19 für die
-> versionsweise Evolution.
-
-### Post-Build-Bereinigung
-
-Nachdem der Body gebaut und das Outro eingefügt ist, trimmt
-ein letzter Durchgang jedes Item, dessen Endzeit über den
-Start des Outros hinauslaufen würde. Items vollständig
-innerhalb des Outro-Slots bleiben unangetastet (das Outro
-spielt unverändert). Dies fängt den Grenzfall ab, in dem
-Smart-Block-Rundung das letzte Body-Item halbwegs über die
-Reserve-Grenze legte.
-
-> **Wie es unter der Haube funktioniert.** Die Reserve ist
-> `Application_Model_Scheduler::setReservedSeconds()`. Der
-> Trim ist
-> `Application_Model_Scheduler::trimTailExcept($outroStart)`.
-> Beide reiten innerhalb
-> `AutoPlaylistManager.buildAutoPlaylist()`. Siehe Commit
-> ed57399.
+> **So funktioniert es unter der Haube.** `AutoPlaylistManager::fillInstance()`
+> expandiert die Playlists selbst (`expandPlaylist`), plant mit
+> `chainEnd()` — der Paar-Regel von `Scheduler::calculateCrossfades`
+> — und fügt nur die passenden Zeilen über
+> `Scheduler::scheduleFilesAfter()` ein. Die Log-Zeile
+> „show_instance_id=N filled - intro a, outro b, auto c (+d top-up)
+> rows, x s free at the end" fasst jeden Build zusammen;
+> `ap_fill_test.php` (C:\Temp\optd) probt eine Befüllung an einer
+> temporären Instanz.
 
 ---
 
@@ -206,8 +176,9 @@ Reserve-Grenze legte.
 - **Nur-Smart-Block-Playlists** mit *Begrenzen auf:
   Verbleibende Zeit in der Sendung*. Das mit Abstand
   häufigste Muster: ein Smart Block, ein Filter ("Genre =
-  Pop und BPM > 100"), ein Limit. Kombiniert mit der
-  Outro-Reserve füllt dies jede Slot-Länge sauber.
+  Pop und BPM > 100"), ein Limit. Gegen die wirklich
+  verbleibende Zeit ausgelegt füllt dies jede Slot-Länge bis
+  auf wenige Sekunden.
 
 - **Intro + Smart Block + Outro** für Sendungen mit einem
   Station-ID-Intro und einem Station-ID-Outro. Das Intro
@@ -248,8 +219,9 @@ Reserve-Grenze legte.
 Wenn **Wiederholen bis voll** angekreuzt ist:
 
 - Die Items der Haupt-Playlist werden eingefügt, Smart
-  Blocks expandiert, bis der Slot abzüglich der
-  Outro-Reserve voll ist.
+  Blocks expandiert, und die Playlist läuft erneut, solange das
+  noch Zeilen bringt — streng in Reihenfolge, Stopp beim ersten
+  Titel, der nicht passt.
 - Der Zyklus wertet Smart Blocks bei jeder Iteration neu
   aus, sodass ein *dynamischer* Smart Block bei jeder
   Wiederholung eine andere Auswahl trifft — variierter
@@ -261,8 +233,9 @@ Wenn **Wiederholen bis voll** angekreuzt ist:
 Wenn nicht angekreuzt:
 
 - Die Haupt-Playlist spielt einmal durch.
-- Jeder verbleibende Schwanz nach dem Body, aber vor dem
-  Outro, ist Stille.
+- Einen Rest, den der Body lässt, füllen die „verbleibende
+  Zeit"-Smart-Blocks der Playlist (der Nachfüll-Lauf läuft in
+  jedem Fall); ohne solchen Block bleibt er Stille.
 
 > **Operator-Tipp.** Aktivieren Sie immer **Wiederholen
 > bis voll** für einen Smart-Block-Body. Ohne dies spielt
@@ -333,9 +306,8 @@ Instanz als frisch zu behandeln.
 
 ### "Kann die Intro-Playlist einen Smart Block enthalten?"
 
-Ja, aber Smart Blocks innerhalb Intro- / Outro-Playlists
-erhalten *nicht* die Outro-Reserve-Behandlung — sie
-expandieren so, als hätten sie den vollen Slot. Wenn der
+Ja, aber das Intro wird zuerst gesetzt, gegen den ganzen
+freien Slot, und das Outro direkt dahinter. Wenn der
 Smart Block des Intros das "verbleibende Zeit"-Limit hat,
 wird er die ganze Sendung verschlingen. Verwenden Sie
 Smart Blocks mit fester Dauer ("Begrenzen auf 30 s") oder

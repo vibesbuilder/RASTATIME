@@ -1,10 +1,16 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.55
+Draft version: 0.56
 Date: 2026-10-01
 
 > **Revision history**
+> - **0.56 (2026-10-01)** — **Exact autoloading fill** (§23.19 addendum):
+>   intro → outro (real) → autoloading against the laid-out remaining
+>   time, strictly in order, never beyond the end; the trial insert,
+>   the 5-s margin and the tail trims are gone; the overlap-aware
+>   budget for "time remaining" smart blocks closes the gap the
+>   crossfade layout opened since 2026-09-29.
 > - **0.55 (2026-10-01)** — **Player follows the Stream Label; default
 >   cover** (§23.22 addendum): with "Station - Show" the player names
 >   the show and shows its image, never a track cover; a default cover
@@ -3523,6 +3529,49 @@ radius small and lets `getSecondsRemaining()` keep its existing
 * Per-show override of the reserve granularity (e.g. "leave at
   least 30 s gap before outro for clean transitions") — would be
   one more `cc_show` column; not requested.
+
+**Addendum 2026-10-01 - the exact fill replaces the reserve (operator
+specification).**  The operator's rule: intro first, outro second, the
+autoloading playlist third, each against the remaining show time,
+never overbooked, the last row at most 4 s before the end.  Two findings
+against the v8 build above: (1) the remaining time was the sum of the
+clip lengths (`cc_show_instances.time_filled`) - since the pair-based
+layout of 2026-09-29 the rows overlap by their crossfade, so a show
+"100 % full" by sum ended Σ overlaps early (15 music tracks ≈ 42 s of
+silence before the outro); the 5-s margin came on top.  (2) The
+post-outro cleanup deleted rows by raw SQL without a re-layout, leaving
+a hole before the outro.
+
+`AutoPlaylistManager::fillInstance()` now plans with the scheduler's
+own pair rule: `chainEnd()` lays a row list out as
+`Scheduler::calculateCrossfades` would (`crossfadeOverlapBetween`),
+`expandPlaylist()` turns a playlist into the rows it would schedule
+(files, static blocks, dynamic blocks via `getListOfFilesUnderLimit`
+against the laid-out budget), `insertFitting()` takes the longest
+prefix that ends before the show's end - strictly in order, stopping
+at the first item that does not fit (variant a) - and inserts it
+through the new `Scheduler::scheduleFilesAfter()` (prepared rows,
+playlist cue points kept, one transaction).  Order: intro after row 0,
+outro after the last row, autoloading after the intro's last row (the
+outro shifts later as the scheduler re-lays), then up to four top-up
+rounds with the playlist's "time remaining" blocks against the gap
+that is left.  No trial insert (no `is_scheduled` poisoning, no
+measurement variance), no margin, no trim: `trimTailToReserve` /
+`trimTailExcept` are removed, `setReservedSeconds` stays as an unused
+scheduler option.  "Repeat until full" repeats the autoloading pass
+while it adds rows.
+
+A "time remaining" smart block fills by the SUM of its tracks, so a
+pick that meets the budget ends (tracks × overlap) early.
+`expandPlaylist` picks up to eight times, each with the budget raised
+by the overlap of the previous pick (computed with the real neighbour
+rows: the join to a jingle is 0, to music 3 s), and keeps the pick
+whose laid-out length comes closest to the budget without exceeding
+it; the solver (`SSPSolution`, 50 randomised trials) decides the rest.
+Rehearsals on temporary instances (`C:/Temp/optd/ap_fill_test.php
+--live`, show 231/232/237/229/230, 8-60 min): 0.0-3.0 s free at the
+end in most runs, about 6 s at worst, never an overbook; the 65-min
+webstream of test outro 49 is left out as "does not fit".
 
 ### 23.20 Auto DJ
 

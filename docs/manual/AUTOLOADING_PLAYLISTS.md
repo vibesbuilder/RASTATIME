@@ -71,7 +71,7 @@ Open the show on the calendar → **Edit Show** → expand
 | **Intro Playlist** | Added at the very start of the show. Optional. Plays exactly once. |
 | **Main Playlist** | The body content. Required if the master switch is on. Smart blocks inside this playlist expand at build time using the slot's remaining-seconds as the limit if configured. |
 | **Outro Playlist** | Added at the very end of the show. Optional. Plays exactly once. |
-| **Repeat until full** | If on, the main playlist's items repeat (re-evaluating smart blocks each cycle) until the slot is filled minus the outro reserve. If off, the main playlist plays once and any remaining tail is silence. |
+| **Repeat until full** | If on, the main playlist's items repeat (re-evaluating smart blocks each cycle) while that still adds rows (strictly in order, stopping at the first item that does not fit). If off, the main playlist plays once; a tail is filled by its "time remaining" smart blocks, otherwise it is silence. |
 
 Save the show. The autoplaylist builder picks up the
 attachment on its next poll (every 60 s by default) and
@@ -109,75 +109,51 @@ edited version.
 
 ---
 
-## 4. The outro reserve (Section 23.19)
+## 4. How the slot is filled (since 2026-10-01)
 
-This is the operationally trickiest part of autoloading and
-worth understanding.
+The builder fills a show in three steps, always against the
+time that is **really** left in the slot:
 
-### The problem
+1. The **Intro Playlist** goes to the start, exactly once.
+2. The **Outro Playlist** goes to the end, exactly once — it is
+   placed for real, so its length is known exactly (the
+   trial-insert-and-measure of the earlier builds is gone, and
+   with it the 5-second margin).
+3. The **Autoloading Playlist** fills the space between the two.
 
-Suppose your **Main Playlist** uses a smart block with
-*Limit to: Time remaining in show*, and you have an
-**Outro Playlist** with a 60 s station ID.
+Every list is taken **strictly in its order**, and it stops at
+the first item that does not fit before the show's end
+(operator decision, "variant a"): nothing is ever placed beyond
+the end, so nothing has to be trimmed afterwards. An intro or
+outro longer than the slot is cut the same way (the items that
+do not fit are left out; the log says how many).
 
-Without an outro reserve, the smart-block expansion sees
-"time remaining = 60 minutes" (the full show), picks 60
-minutes of tracks, and the subsequent outro insert either:
+"Really left" means the laid-out time: since 2026-09-29 the
+rows overlap by their crossfade (house value 3 s, or the track
+type's), and the sum of the clip lengths no longer tells where
+the last row ends. The builder lays the rows out with the same
+pair rule the scheduler uses, so a 60-minute show with fifteen
+music tracks does **not** end 42 seconds early any more.
 
-- Fails because the slot is now full, or
-- Pushes the outro past the slot end, causing a 60 s overbook
-  that the playout will hard-cut.
+A smart block with *Limit to: Time remaining in show* is given
+that laid-out time as its budget — raised by the overlap its own
+selection will make, which the builder tries several times and
+keeps the closest fit. After the fill, a top-up pass runs the
+playlist's "time remaining" blocks against whatever gap is
+left, until the last row ends within **4 seconds** of the
+show's end or nothing fits any more. In the rehearsals of
+2026-10-01 the gap was 0–3 s in most runs and about 6 s at
+worst (the block's solver is randomised; the pool decides what
+is possible), never an overbook.
 
-### The fix
-
-Before expanding any smart block in the main playlist, the
-builder:
-
-1. **Trial-inserts** the outro into the slot.
-2. Measures its length (this is the only reliable way to
-   measure smart-block-bearing playlists, whose `length`
-   column stays at 0 because the blocks expand later).
-3. Rolls back the trial-insert.
-4. Restores any `cc_files.is_scheduled` side effects the
-   trial transiently flipped to TRUE.
-5. Tells the scheduler to **reserve** that many seconds from
-   the slot before expanding any smart block.
-
-So a smart block with "time remaining" now sees
-*(slot total) − (outro length) − (5 s margin)* and picks
-the right number of tracks. The outro then inserts cleanly
-at the end.
-
-### The 5-second margin
-
-The reserve is capped at the measured outro length plus a
-**5 s margin** (operator decision 2026-05-20, v8). Without
-the margin, smart-block selection rounding would sometimes
-leave a sub-second gap before the outro that the operator
-heard as a tiny pause. With 5 s of slack, the auto-build
-keeps slot utilisation near 100 % while never overbooking.
-
-> **Why 5 s and not more?** Operators preferred high
-> utilisation (more music, less silence) over an over-cautious
-> reserve. A larger reserve (e.g. 30 s) would mean a 60-min
-> show only plays 59:30 of music + 30 s of dead air before the
-> outro — perceptible and unloved. See ARCHITECTURE §23.19
-> for the version-by-version evolution.
-
-### Post-build cleanup
-
-After the body builds and the outro inserts, a final pass
-trims any item whose end-time would run past the outro's
-start. Items entirely inside the outro slot are left alone
-(the outro plays unmodified). This catches the edge case
-where smart-block rounding put the last body item half-way
-past the reserve boundary.
-
-> **How it works under the hood.** The reserve is
-> `Application_Model_Scheduler::setReservedSeconds()`. The
-> trim is `Application_Model_Scheduler::trimTailExcept($outroStart)`.
-> Both ride inside `AutoPlaylistManager.buildAutoPlaylist()`.
-> See commit ed57399.
+> **How it works under the hood.** `AutoPlaylistManager::fillInstance()`
+> expands the playlists itself (`expandPlaylist`), plans with
+> `chainEnd()` — the pair rule of `Scheduler::calculateCrossfades`
+> — and inserts only the rows that fit through
+> `Scheduler::scheduleFilesAfter()`. The log line
+> "show_instance_id=N filled - intro a, outro b, auto c (+d top-up)
+> rows, x s free at the end" sums up every build; `ap_fill_test.php`
+> (C:\Temp\optd) rehearses a fill on a temporary instance.
 
 ---
 
@@ -188,8 +164,8 @@ past the reserve boundary.
 - **Smart-block-only playlists** with *Limit to: Time remaining
   in show*. The single most common pattern: one smart block,
   one filter ("genre = pop and bpm > 100"), one limit.
-  Combined with the outro reserve this fills any slot length
-  cleanly.
+  Laid out against the real remaining time this fills any slot
+  length to within a few seconds.
 
 - **Intro + smart block + outro** for shows with a station-ID
   intro and a station-ID outro. The intro plays exactly once,
@@ -227,7 +203,9 @@ past the reserve boundary.
 When **Repeat until full** is ticked:
 
 - The main playlist's items are inserted, smart blocks
-  expanded, until the slot is full minus the outro reserve.
+  expanded, and the playlist is run again while that still adds
+  rows — strictly in order, stopping at the first item that does
+  not fit.
 - The cycle re-evaluates smart blocks each iteration, so a
   *dynamic* smart block picks a different selection each
   repeat — varied content within one slot.
@@ -237,8 +215,9 @@ When **Repeat until full** is ticked:
 When unticked:
 
 - The main playlist plays through once.
-- Any remaining tail past the body but before the outro is
-  silence.
+- A tail that the body leaves is filled by the playlist's "time
+  remaining" smart blocks (the top-up pass runs either way);
+  without such a block it stays silence.
 
 > **Operator tip.** Always tick **Repeat until full** for a
 > smart-block body. Without it, a 60-min show with a smart
@@ -304,9 +283,8 @@ treat the instance as fresh.
 
 ### "Can the intro playlist contain a smart block?"
 
-Yes, but smart blocks inside intro / outro playlists do
-*not* get the outro-reserve treatment — they expand as if
-they had the full slot. If the intro's smart block has
+Yes, but the intro is placed first, against the whole free
+slot, and the outro right after it. If the intro's smart block has
 "time remaining" limit, it will gobble the whole show. Use
 fixed-duration smart blocks ("Limit to 30 s") or static
 tracks for intro / outro.

@@ -1462,6 +1462,34 @@ final class Application_Model_Scheduler
         }
     }
 
+    /**
+     * RASTATIME 2026-10-01 - schedule prepared rows (the shape insertAfter
+     * takes: id, cliplength, cuein, cueout, fadein, fadeout, type 0 file /
+     * 1 webstream / 2 line-in) after a schedule location, in one go.  The
+     * autoloading fill plans the rows itself (which items fit, with the
+     * playlist's cue points) and inserts only those.
+     *
+     * @param array $scheduleItems [['id' => row id or 0, 'instance' => id, 'timestamp' => last_scheduled]]
+     * @param array $files
+     */
+    public function scheduleFilesAfter($scheduleItems, array $files)
+    {
+        $this->con->beginTransaction();
+
+        try {
+            $this->con->exec('SET TRANSACTION ISOLATION LEVEL SERIALIZABLE');
+            $this->validateRequest($scheduleItems, true);
+            $this->insertAfter($scheduleItems, [], $files, true);
+            $this->con->commit();
+
+            Application_Model_RabbitMq::PushSchedule();
+        } catch (Exception $e) {
+            $this->con->rollback();
+
+            throw $e;
+        }
+    }
+
     /*
      * @param array $selectedItem
      * @param array $afterItem
