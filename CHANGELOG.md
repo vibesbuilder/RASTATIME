@@ -37,7 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   schlechtesten, nie überbucht; der 65-min-Webstream des Test-Outros 49
   bleibt als „passt nicht" weg.  Handbuch AUTOLOADING_PLAYLISTS ×4 (§4
   neu), Architektur §23.19 Addendum (0.56).  Wirkt ab dem nächsten Build
-  (PHP, kein Neustart).
+  (PHP, kein Neustart) — `cdc4689`.
 
 - **Player folgt dem Stream Label; Standard-Cover (2026-10-01,
   Operator-Go)** — Das Stream Label (Settings → Streams) legt fest, ob der
