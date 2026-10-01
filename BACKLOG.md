@@ -4028,10 +4028,14 @@ heute: „Jetzt anwenden" in Local Machine) und Punkt 3 (Fade-In/Out).
 
 ---
 
-### 🟡 Sendung verschieben rundet die Zeilen auf ganze Sekunden (festgestellt 2026-10-01)
+### ✅ Sendung verschieben rundet die Zeilen auf ganze Sekunden (festgestellt 2026-10-01, DONE gleichen Tags)
 
-**Status:** Defer — Operator 2026-10-01: eigenes Thema, kein Go.
-**Vorbedingung:** Operator-Go; Aufwand ~10 Zeilen in einer Datei.
+**Status:** Behoben 2026-10-01 (`c7b5192`, Operator-Go gleichen Tags):
+`updateScheduleStartTime()` verschiebt per SQL-Intervall (Mikrosekunden
+bleiben), `moveItem()` legt die Quell-Sendung nach `removeGaps()` per
+`calculateCrossfades()` neu aus.  Probe an einer temporären 10-min-Instanz
+(±600 s): 5/5 Zeilen mit Bruchteilen, 0 Abweichungen, Rückweg byte-gleich
+zum Build — Details CHANGELOG 01.10.
 
 **Befund:** Bei der Live-Probe der exakten Autoloading-Befüllung
 (`cdc4689`, Instanz 2224 „testautoloading") war der Slot nach dem Build mit

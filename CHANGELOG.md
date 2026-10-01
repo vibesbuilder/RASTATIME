@@ -807,7 +807,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Stoß gequetscht (Setter, ohne Crossfade-Überlappung); jetzt folgt wie in
   `removeItems()` ein `calculateCrossfades()`.  Probe (temporäre
   10-min-Instanz der Test-Sendung, ±600 s): 5/5 Zeilen mit Bruchteilen, 0
-  Abweichungen, Rückweg byte-gleich zum Build.  Wirkt sofort (PHP).
+  Abweichungen, Rückweg byte-gleich zum Build.  Wirkt sofort (PHP) —
+  `c7b5192`.
 - **A quietly ending track lost its last 3 s and the rest of the show ran
   early (2026-10-01, root cause of the cut intro at 12:01)** - the transition
   function treated a tail quieter than -50 dB like an empty one (`old.db_level
