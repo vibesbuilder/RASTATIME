@@ -34,7 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Architektur §23.46 (0.59).  Live geprüft (Chrome): Index EN, Kalender DE
   (8 Tabellen, Links in-app), INSTALL-Runbook, Hilfe-Seite, Untermenü;
   Traversal-Versuche 404/Redirect.  .mo kompiliert — Apache-Neustart
-  durch den Operator.
+  durch den Operator.  `b33c2ed`.
 - **Autoloading: exakte Befüllung nach Operator-Spezifikation (2026-10-01,
   Operator-Go, Variante a)** — Intro an den Anfang, Outro **real** ans
   Ende, die Autoloading-Playlist dazwischen gegen die **tatsächlich
