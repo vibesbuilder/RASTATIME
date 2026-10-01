@@ -1929,7 +1929,13 @@ def _render_crossfade_block(
         f"  t_delay = if old_nf then {never} else wait end\n"
         f"  s_delay = if old_nf then {never} else {f(max(0.0, buf - show))} end\n"
         "  ignore(t_in) ignore(t_out) ignore(s_out) ignore(t_cut) ignore(s_cut) ignore(t_delay) ignore(s_delay) ignore(wait)\n"
-        '  if mode == "instant" or rem < 0.15 or old.db_level < -50. then\n'
+        # 2026-10-01: no `old.db_level < -50.` shortcut any more.  It skipped
+        # the whole buffered tail of a track that ends quietly (BUFFER
+        # seconds, not just the silence): the successor started up to 3 s
+        # before its row and the rest of the show ran early - the 12:00
+        # relay's intro lost 2.4 s.  With the R128 gain on the queue a
+        # fade-out crosses -50 dB often; the rows own the timeline.
+        '  if mode == "instant" or rem < 0.15 then\n'
         "    rt_instant(old_s, new.source)\n"
         '  elsif mode == "show_skip" then\n'
         + show_skip

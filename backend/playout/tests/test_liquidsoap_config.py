@@ -719,8 +719,11 @@ def test_crossfade_block_track_and_show_shapes():
     assert "t_out = if old_nf then 0.001 else fd end" in block
     assert "t_delay = if old_nf then 999999.0 else wait end" in block
     assert '"cut"' not in block
-    # silent / empty partner or explicit instant: 50 ms hand-over
-    assert 'if mode == "instant" or rem < 0.15 or old.db_level < -50. then' in block
+    # empty partner or explicit instant: 50 ms hand-over.  2026-10-01: a
+    # QUIET tail is no reason - the shortcut dropped the whole buffered
+    # tail and the successor ran up to BUFFER seconds early.
+    assert 'if mode == "instant" or rem < 0.15 then' in block
+    assert "db_level" not in block
 
 
 def test_crossfade_block_new_track_metadata_wins():

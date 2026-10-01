@@ -1,10 +1,14 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.57
+Draft version: 0.58
 Date: 2026-10-01
 
 > **Revision history**
+> - **0.58 (2026-10-01)** — **Quiet tails play out** (§23.44 addendum):
+>   the `old.db_level < -50.` shortcut of the transition function is gone;
+>   it dropped a quietly ending track's whole buffered tail and shifted
+>   the rest of the show 3 s ahead of its rows.
 > - **0.57 (2026-10-01)** — **Exact row times in both directions**
 >   (§23.44 addendum): a file after a live item, a live item after a
 >   live item and the stop of a live item wait for the row's exact time.
@@ -5815,6 +5819,23 @@ time.  The stop and the successor's start both wait for the same
 instant and race there as they did on the whole second.  Measured
 2026-10-01 10:00 before the fix: Showteaser 0.6 s before its row, gate
 closed 0.8 s early.
+
+**Addendum (2026-10-01): quiet tails.**  The transition function had
+inherited a shortcut from the old crossfade: a tail quieter than -50 dB
+(`old.db_level`, cross's analysis of the buffered last BUFFER seconds)
+was handed over like an empty one - `rt_instant`, a 50-ms fade - which
+discards the whole buffered tail, not only its silent part.  A track
+ending in a long fade therefore handed over 3 s early, every later row
+ran 3 s ahead of the schedule and the playout's row-based model
+(`_file_audio_end`, the holds) was 3 s wrong: on 2026-10-01 the relay's
+gate opened 2.6 s after the intro was over.  With the R128 gain on the
+queue the condition fires on most fade-outs.  The shortcut is removed;
+only an explicit `instant` or a tail with less than 0.15 s left takes
+the 50-ms path.  A quiet tail is part of the row and plays out - the
+cue points (§23.45) are the place to trim it.  Found with an envelope
+correlation of the recording against the files (every track of the
+preceding show +0.9 to +1.4 s behind its row, the one after the fade
+-1.6 s) and reproduced in the bench (`xbench/bench_quiet_tail*.liq`).
 
 **Addendum 2026-09-30 - "No Fade during Crossover" as a type preset
 (migration 0063).**  The operator asked for an "Exclude from Crossover"

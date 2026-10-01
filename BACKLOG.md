@@ -62,9 +62,16 @@ der BBC ohne Lücke.  Gegenrichtung Live → Datei läuft weiter auf der ganzen 
 Showteaser startete 0,6 s vor seiner Zeile, Folge endet 1,6 s vor 10:07:00 (heute folgt
 nichts).  Symmetrischer Fix gebaut 2026-10-01 nach Operator-Go (`a949a76`): `_wait_for_exact_time`
 für Datei-Push nach Live-Item, vorgewärmtes Live-Item nach Live-Item und Live-STOP (max.
-1,5 s, nicht bei Catch-up / hinter laufender Datei / DJ); 748 Tests grün.  **Offen:**
-PLAYOUT-Neustart durch den Operator, danach Nachmessen der BBC-Folge (Showteaser-Start
-und Gate-Schluss auf ±0,1 s an der Zeile).
+1,5 s, nicht bei Catch-up / hinter laufender Datei / DJ); 748 Tests grün.  PLAYOUT-Neustart
+2026-10-01 10:47; 12:00-Folge: BBC → Dayteaser exakt (Warten 0,07/0,04 s), Sendungsende 0,95 s
+Lücke ✓ — aber Intro 2,4 s zu früh zu Ende (2,6 s Stille vor der BBC).
+**Ursache gefunden 2026-10-01 (15:00-Folge ohne Vorsendung sauber, Bench reproduziert):** die
+Übergangsfunktion behandelte einen Schwanz leiser als −50 dB wie einen leeren (`old.db_level`,
+50-ms-Übergabe) und verwarf damit die ganzen gepufferten 3 s — Sofa Rockers (langer Fade-out,
+R128-Gain) → StationID 3,0 s vor seiner Zeile (Hüllkurven-Korrelation: alle anderen Titel der
+Vorsendung +0,9…+1,4 s hinter der Zeile, der StationID −1,6 s), der BBC-Block erbte den Sprung.
+Shortcut entfernt; Bench Nachfolger 28,1 s → 31,1 s.  **Offen:** PLAYOUT-Neustart (Skript neu
+gerendert → geplanter Liquidsoap-Neustart), danach Nachmessen einer BBC-Folge mit Musik-Vorsendung.
 
 **Befund (Testsendung 2026-09-30):** `cc_files.cueout` darf heute größer als die
 Dateilänge sein (ID 593: 6,90 s bei 5,97 s — vermutlich Datei ersetzt, Cue blieb),
