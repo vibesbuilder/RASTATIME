@@ -60,8 +60,11 @@ die Webstream-Zeile verlängern.
 Stoß an Stoß, BBC am Intro-Ende (Gate-Wartezeit 1,11 s, Senke ≤ 0,1 s), Showteaser nach
 der BBC ohne Lücke.  Gegenrichtung Live → Datei läuft weiter auf der ganzen Sekunde:
 Showteaser startete 0,6 s vor seiner Zeile, Folge endet 1,6 s vor 10:07:00 (heute folgt
-nichts).  Symmetrischer Fix (Datei-Start nach Live-Item und Live-STOP auf exakte Zeit)
-wäre ~0,5 h — dem Operator angeboten, nicht gebaut.
+nichts).  Symmetrischer Fix gebaut 2026-10-01 nach Operator-Go (`a949a76`): `_wait_for_exact_time`
+für Datei-Push nach Live-Item, vorgewärmtes Live-Item nach Live-Item und Live-STOP (max.
+1,5 s, nicht bei Catch-up / hinter laufender Datei / DJ); 748 Tests grün.  **Offen:**
+PLAYOUT-Neustart durch den Operator, danach Nachmessen der BBC-Folge (Showteaser-Start
+und Gate-Schluss auf ±0,1 s an der Zeile).
 
 **Befund (Testsendung 2026-09-30):** `cc_files.cueout` darf heute größer als die
 Dateilänge sein (ID 593: 6,90 s bei 5,97 s — vermutlich Datei ersetzt, Cue blieb),
