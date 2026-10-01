@@ -31,7 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Standard-Cover); ein echter Upload steht noch aus.  Texte DE/FR/ES
   (Formular), Handbuch WIDGETS ×4, Architektur §23.22 Addendum (0.55).
   Inbetriebnahme: Apache-Neustart für die Übersetzungen, dann das
-  Standard-Cover hochladen.
+  Standard-Cover hochladen — `aa91f13`.
 
 - **Sendungsbild als Rückfall-Cover in Player und Now-Playing-Widget
   (2026-09-30, Operator-Frage nach Covern für Webstreams/Line-Ins, Go
