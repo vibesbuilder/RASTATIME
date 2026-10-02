@@ -306,10 +306,16 @@ output stream both receive the adjusted level.
 > level meter (e.g. VLC's audio meter), adjust gain, repeat.
 
 > **How it works under the hood.** Migration 0048 added
-> `cc_webstream.input_gain_db` (FLOAT). The playout engine
-> reads this when opening the source and applies an FFmpeg
-> `volume=<dB>dB` filter to the decode chain. See
-> ARCHITECTURE §10.4.
+> `cc_webstream.input_gain_db` (FLOAT).  The stream engine
+> wraps the webstream source in an `amplify`; the playout sets
+> its factor (`var.set webstream.gain`, converted from dB as
+> 10^(dB/20), e.g. `-6` dB → `0.50`) every time a webstream
+> starts — at the pre-warm 10 s before the slot, or at the slot
+> start — and after a DJ hands back.  A webstream without a
+> gain gets the factor `1.0` explicitly, so no stream inherits
+> the previous one's level.  Until the Liquidsoap engine took
+> over (2026-05-29) the playout applied an FFmpeg `volume`
+> filter instead.  See ARCHITECTURE §23.10.
 
 ---
 

@@ -266,10 +266,17 @@ Le gain est appliqué dans le moteur de playout avant que
 l'audio n'atteigne le mixeur de sortie.
 
 > **Comment ça marche sous le capot.** Migration 0048 a
-> ajouté `cc_webstream.input_gain_db` (FLOAT). Le moteur
-> de playout lit ceci en ouvrant la source et applique un
-> filtre FFmpeg `volume=<dB>dB` à la chaîne de décodage.
-> Voir ARCHITECTURE §10.4.
+> ajouté `cc_webstream.input_gain_db` (FLOAT).  Le moteur de
+> flux entoure la source webstream d'un `amplify` ; le playout
+> règle son facteur (`var.set webstream.gain`, converti depuis
+> les dB selon 10^(dB/20), p. ex. `-6` dB → `0.50`) chaque fois
+> qu'un webstream démarre — au préchauffage 10 s avant le
+> créneau, ou au début du créneau — et quand un DJ rend la
+> main.  Un webstream sans gain reçoit explicitement le facteur
+> `1.0`, afin qu'aucun flux n'hérite du niveau du précédent.
+> Jusqu'à la reprise par le moteur Liquidsoap (2026-05-29), le
+> playout appliquait à la place un filtre FFmpeg `volume`.
+> Voir ARCHITECTURE §23.10.
 
 ---
 

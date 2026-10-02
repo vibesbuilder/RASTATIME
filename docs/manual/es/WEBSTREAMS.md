@@ -216,9 +216,17 @@ Editar el webstream → **Ganancia de entrada (dB)**.
 | `-6.0` | Atenuación de 6 dB. |
 
 > **Cómo funciona bajo el capó.** Migración 0048 añadió
-> `cc_webstream.input_gain_db` (FLOAT). El motor de
-> playout lee esto al abrir la fuente y aplica un filtro
-> FFmpeg `volume=<dB>dB`. Vea ARCHITECTURE §10.4.
+> `cc_webstream.input_gain_db` (FLOAT).  El motor de stream
+> envuelve la fuente webstream en un `amplify`; el playout fija
+> su factor (`var.set webstream.gain`, convertido desde dB
+> según 10^(dB/20), p. ej. `-6` dB → `0.50`) cada vez que un
+> webstream arranca — en el precalentamiento 10 s antes del
+> slot, o al inicio del slot — y cuando un DJ devuelve el
+> control.  Un webstream sin ganancia recibe explícitamente el
+> factor `1.0`, para que ningún stream herede el nivel del
+> anterior.  Hasta que el motor Liquidsoap tomó el relevo
+> (2026-05-29), el playout aplicaba en su lugar un filtro FFmpeg
+> `volume`.  Vea ARCHITECTURE §23.10.
 
 ---
 

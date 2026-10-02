@@ -874,6 +874,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Webstream input gain: documentation follows the Liquidsoap mechanism
+  (2026-10-02)** - the manual (WEBSTREAMS §6 "How it works under the hood",
+  EN/DE/FR/ES) and the PHP comment in `webstream.phtml` still described the
+  gain as an FFmpeg `volume=<dB>dB` filter on the decode chain.  Since the
+  Liquidsoap engine (Phase E, 2026-05-29) the .liq wraps the webstream arm
+  in `amplify({webstream_gain()}, webstream_raw)` and PLAYOUT sends
+  `var.set webstream.gain = 10^(dB/20)` (unity when unset) at every
+  webstream start - pre-warm, slot start, DJ hand-back.  The notes now say
+  so (in the style of the new Line-In gain note) and point to ARCHITECTURE
+  §23.10 instead of the non-existent §10.4; §23.10 gets a dated addendum,
+  its history is left as written.  Documentation only, no behaviour change.
+
 - **Planned restart at a track boundary: the next track enters its audio by
   the time the restart took (2026-10-02, operator decision (a))** - the
   restart runs inside `_on_file_start` (stop, start, back after ~3.8 s) and

@@ -332,10 +332,17 @@ angepassten Pegel.
 > den Gain an, wiederholen.
 
 > **Wie es unter der Haube funktioniert.** Migration 0048
-> fügte `cc_webstream.input_gain_db` (FLOAT) hinzu. Die
-> Playout-Engine liest dies beim Öffnen der Quelle und
-> wendet einen FFmpeg-`volume=<dB>dB`-Filter auf die
-> Dekodier-Kette an. Siehe ARCHITECTURE §10.4.
+> fügte `cc_webstream.input_gain_db` (FLOAT) hinzu.  Die
+> Stream-Engine legt ein `amplify` um die Webstream-Quelle;
+> der Playout setzt dessen Faktor (`var.set webstream.gain`,
+> aus dB umgerechnet als 10^(dB/20), z.B. `-6` dB → `0.50`)
+> jedes Mal, wenn ein Webstream startet — beim Vorwärmen 10 s
+> vor dem Slot oder beim Slot-Start — und nachdem ein DJ
+> zurückgibt.  Ein Webstream ohne Gain bekommt ausdrücklich den
+> Faktor `1.0`, damit kein Stream den Pegel des vorigen erbt.
+> Bis zur Übernahme durch die Liquidsoap-Engine (2026-05-29)
+> wendete der Playout stattdessen einen FFmpeg-`volume`-Filter
+> an.  Siehe ARCHITECTURE §23.10.
 
 ---
 

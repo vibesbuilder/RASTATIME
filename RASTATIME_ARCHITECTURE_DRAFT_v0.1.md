@@ -1949,6 +1949,14 @@ later (deliberately not built yet because the line-in level is more
 naturally adjusted at the soundcard input-gain stage on Windows, but
 the plumbing would be identical if we change our minds).
 
+*Addendum 2026-10-02:* since the Liquidsoap engine (Phase E,
+2026-05-29) the gain is no longer an FFmpeg filter — the .liq wraps
+the webstream arm in `amplify({webstream_gain()}, webstream_raw)`
+(`interactive.float("webstream.gain", 1.0)`) and PLAYOUT sends
+`var.set webstream.gain = 10^(dB/20)` (unity when unset) at every
+webstream start (`LiquidsoapPlayoutEngine.webstream_start`); schema, API,
+event model and UI below are unchanged.
+
 **Schema.**
 * New column `cc_webstream.input_gain_db NUMERIC DEFAULT 0` (Django
   migration `0048_add_cc_webstream_input_gain_db`).  Range enforced
