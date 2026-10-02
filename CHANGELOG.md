@@ -863,7 +863,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   exact start as a catch-up seek (below 0.5 s - timer granularity - the
   push is left alone), so the show keeps its times; a live item or a gap
   re-synchronised the chain before, a pure file chain never did.
-  Commit: PENDING.
+  Commit: 56e6dc5.
 
 - **The file chain's lag follows an adopted track across a layout gap
   (2026-10-02, after the 08:00 measurement)** - the quiet-tail fix held (the
