@@ -3385,6 +3385,24 @@ Sortierung der bereits-gespielten + nächsten Tracks freezable.
 
 ## 🐞 Known Issues / Bug Backlog
 
+### 🟡 „Local Machine"-Strings in de_DE / fr_FR / es_ES unübersetzt (festgestellt 2026-10-02)
+
+**Status:** DEFER, klein; Vorbedingung Operator-Go (po2mo + Apache-Neustart
+sind Operator-Konvention).  Beim Triage der Unit-Tests (`b1f70c4`) gefunden:
+keine der drei Legacy-Locales kennt das Navigations-Label `Local Machine`
+(seit der Umbenennung von „Soundcard" am 2026-05-16) noch die vier
+Seiten-Strings `Local Machine settings saved.`, `Could not save Local
+Machine settings.`, `Restarting audio chain …`, `Could not restart the
+audio chain.` (Neustart-Knopf vom 2026-09-03).  Im deutschen Menü steht
+der Eintrag auf Englisch; die Seiten-Meldungen fallen auf den englischen
+Text zurück.
+**Wächter:** zwei `xfail(strict=True)`-Tests in
+`tests/unit/test_t20_3_menu_i18n.py` — sie schlagen an, sobald de_DE die
+Strings hat; dann die Marker entfernen.
+**Fix:** die fünf msgids in `frontend/legacy/locale/{de_DE,fr_FR,es_ES}/
+LC_MESSAGES/libretime.po` nachtragen, `scripts/po2mo.py --all`,
+Apache-Neustart.
+
 ### ✅ REST `PUT /rest/media/<id>` mit unbekannter ID: 500 statt 404 (Nebenbefund 2026-09-10, DONE gleichen Tags)
 
 **Status:** Behoben 2026-09-10 (`7993bfe`): Null-Guard im `catch`

@@ -646,6 +646,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Unit-test tree: Django configured once, 38 pre-existing failures
+  triaged (2026-10-02, operator Go for harness option 1)** - the root venv
+  carries Django and pytest-django but no `DJANGO_SETTINGS_MODULE`; three
+  `tests/unit/api` modules set the dev settings ad hoc inside a test, so
+  20 results depended on collection order (19 `ImproperlyConfigured`, plus
+  the leaked `soundcard/apps.py` device manager tripping the worker's "no
+  manager" test).  `tests/unit/conftest.py` now configures Django at
+  collection with the dev settings and skips the `django_db` tests
+  explicitly (no migrated SQLite, no test database on the live PostgreSQL
+  - they run from `backend/api`).  16 tests asserted old contracts and now
+  follow the current state: migration baseline (87 nodes, 62 legacy, 9
+  leaves), Settings nav "Local Machine" and the line-in editor in the
+  Library, Icecast part of the production stack, API on 8765 (8000 is
+  Icecast), `check.php` via `Get-Service`, `backend/worker` gone
+  (11ce0cc).  Two strict xfails record that de_DE lacks the Local Machine
+  strings (backlog).  Two `install-worker.ps1` comments still named port
+  8000.  `tests/unit`: 732 passed, 38 skipped, 2 xfailed (was 38 failed);
+  `backend/playout/tests` 776 passed - `b1f70c4`.
+
 - **Settings -> Streams: Stereo Tool explanations as help icons, label on one
   line (2026-10-02, operator request)** - The four Stereo Tool descriptions
   are no longer printed below their fields but shown as help-icon tooltips
@@ -873,6 +892,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   live geprüft.
 
 ### Fixed
+
+- **Scheduler: the playing item never "precedes" itself (2026-10-02,
+  operator Go for option A)** - the 2026-09-28 guard "never catch up a row
+  at or before the playing item" (5b34d71) compares start times only and,
+  in the line-in arm path, runs BEFORE the same-item rebind: the same
+  in-progress slot handed back under a new key (`<ts>_2` -> `<ts>`, same
+  start) counted as "preceding", catch-up was skipped (good) but the key
+  was never adopted, so the stop timer armed under the new key would have
+  died on `_on_stop`'s stale-key check.  `refresh()` rebinds by identity
+  first, which is why nothing was heard - the arm path is the second line
+  of defence.  `_precedes_playing` now excludes the playing item
+  (`_same_scheduled_item`) for file, web stream and line-in alike; the
+  line-in tests pin their starts (they passed by the microseconds between
+  two `utcnow()` calls).  Found by
+  `tests/unit/playout/test_linein_start_ordering.py`; effective after a
+  PLAYOUT restart - `caa8062`.
+
+- **API settings: `LOCALE_PATHS` re-exported (2026-10-02)** -
+  `_internal.py` defines it (`backend/api/locale`), but `prod.py` and
+  `dev.py` never imported it, so `settings.LOCALE_PATHS` was `[]` at
+  runtime and the German `django.mo` could never load.  Dormant (the API
+  calls no gettext yet); found by `test_german_scaffolding.py` once the
+  unit tree configured Django.  Active after an API restart - `c683e7a`.
 
 - **Planned restart at a track boundary: the next track enters its audio by
   the time the restart took (2026-10-02, operator decision (a))** - the
