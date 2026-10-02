@@ -57,6 +57,13 @@ Architektur §23.47 / 0.60, Handbuch STREAMS ×4, 9 Tests.  **Offen:** Operator 
 dann aktivieren, Preset nach Gehör, Nachmessung an der Aufnahme.  Option D (Compliance-Report) vom Operator
 abgelehnt 2026-10-02.  DLL liegt seit 2026-10-02 12:02 unter C:\Tools\stereotool\libStereoTool_64.dll (die .lib
 daneben ist nur die Import-Bibliothek fürs Kompilieren, nicht nötig).
+**Bench mit echter DLL 2026-10-02 12:07 (Sinus, 40 s, output.dummy):** lädt (Log: Stereotool initialized, Valid
+license: true auch ohne Schlüssel = freie Version, keine lizenzpflichtigen Features genutzt), Stereo Tool
+11.05 (API 256), Latenz 93 ms, CPU +1,0 s je 33 s (ca. +3 % eines Kerns), **Arbeitsspeicher 827 MB nach 33 s
+(ohne: 87 MB), später 432 MB** -> Speicher-Trigger des Nacht-Neustarts (1536 MB weich) prüfen.  Shutdown:
+erster Lauf hing nach "Shutdown started!" > 18 min als nicht beendbarer Zombie (1 Thread, Prozess 13596 lebt
+noch), zweiter Lauf (mit Telnet-Port 1235) beendete sich sauber und gab den Port frei -> vor der Aktivierung
+den echten Dienst-Neustart (nssm stop, kill nach 3 x 1,5 s) in einem ruhigen Moment beobachten.
 
 ### ✅ Cue-Punkte prüfen: Cue-Out hinter dem Dateiende, stille Datei-Enden (neu 2026-09-30, Operator-Go 2026-09-30, DONE 2026-09-30)
 
