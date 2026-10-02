@@ -27,7 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   preflight reports `stereotool_unavailable` whenever it is enabled but not on
   the bus (`STEREOTOOL_STATE`).  Translations DE/FR/ES, manual STREAMS x4,
   architecture 23.47; 9 tests.  Live check with the real library and the
-  licence next week - `<hash-stereotool>`.
+  licence next week - `676cd33`.
 
 - **Benutzerhandbuch im Browser; Hilfe-Menü nur noch RASTATIME (2026-10-01,
   Operator-Go A)** — Help → User Manual zeigte libretime.org, „Get Help
