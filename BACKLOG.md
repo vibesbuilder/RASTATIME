@@ -73,6 +73,25 @@ True Peak -12,1 dBTP (ohne Stereo Tool heute -23,4..-23,7 LUFS bei Ceiling -1 dB
 die Spitzen stark; Preset-Wahl folgt.  Arbeitsspeicher 853-854 MB in den ersten 3 min (flach), 91 Threads.
 Nacht-Neustart: weicher Speicher-Trigger 1536 MB (im Fenster) wird bei ~8,5 MB/h nach ~3,3 Tagen erreicht,
 harter 3072 MB nach ~11 Tagen -> RESTART_EVERY_DAYS=7 greift weiterhin zuerst oder gleichzeitig; beobachten.
+**Nachmessung Testshow 17:20-17:50 (6 Titel, Default-Preset):** jeder Titel -23,3..-23,5 LUFS (StationID -22,4),
+ganze Show -23,4 LUFS, LRA 4,8-6,6 LU, True Peak -10,2..-11,6 dBTP (Default-Preset limitiert ~10 dB unter dem
+R128-Ceiling -1 dBTP; Preset-Wahl offen).  Speicher: Private Bytes (Preflight-Metrik) 1001 -> 1006 MB in 0,5 h
+(+10 MB/h wie ohne Stereo Tool), Working Set nach dem Start von 1043 auf 300 MB getrimmt -> weicher Trigger
+1536 MB im Fenster nach ~2 Tagen, also faktisch Nacht-Neustart alle 2-3 Tage statt 7; Trigger ggf. anheben.
+Crossfades normal (Analyse-Zeilen, 3,0-s-Tails, leiser Schwanz Binder -58 dB blieb).
+**Befund (nicht Stereo Tool):** alle Titel der Show liefen +3,9 s hinter der Zeilenzeit (Jingle +3,4..3,9 s;
+heute frueh ohne Neustart +0,30 s): `_on_file_start` fuehrt den Grenz-Neustart synchron aus (3,8 s) und
+pusht den ersten Titel danach mit seek 0 statt mit der verstrichenen Zeit; die Kette traegt den Versatz bis
+zum naechsten Live-Element.  Siehe eigener Eintrag unten.
+
+### 🟡 Grenz-Neustart: erster Titel ohne Aufhol-Seek (Kette +3,8 s)
+Beobachtet 2026-10-02 17:20 (Stereo-Tool-Aktivierung an der Show-Grenze): `_on_file_start` blockiert fuer den
+geplanten Liquidsoap-Neustart (~3,8 s) und startet den Titel danach mit dem urspruenglichen seek 0; alle
+Folgetitel der Datei-Kette laufen +3,9 s hinter ihrer Zeilenzeit (Jingle +3,4..3,9 s), die Show endet 3,9 s
+spaeter.  Ein Live-Element (Webstream/Line-In/DJ) oder eine Luecke synchronisiert wieder (Hold max 4 s).
+Optionen: (a) nach dem Grenz-Neustart die verstrichene Zeit seit `start_exact` als Aufhol-Seek mitgeben
+(schneidet ~3,8 s vom Intro des ersten Titels, Show bleibt im Raster); (b) so lassen (Titel vollstaendig,
+Raster verschoben bis zum naechsten Live-Element).  Operator-Entscheidung offen; Status Defer.
 
 ### ✅ Cue-Punkte prüfen: Cue-Out hinter dem Dateiende, stille Datei-Enden (neu 2026-09-30, Operator-Go 2026-09-30, DONE 2026-09-30)
 
