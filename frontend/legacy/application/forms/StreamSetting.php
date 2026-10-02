@@ -105,7 +105,7 @@ class Application_Form_StreamSetting extends Zend_Form
         $st_library
             ->setLabel(_('Stereo Tool library (DLL)'))
             ->setValue($library)
-            ->setAttribs(['class' => 'input_text', 'style' => 'width: 420px', 'placeholder' => 'C:\\Tools\\stereotool\\libStereoTool_intel64.dll'])
+            ->setAttribs(['class' => 'input_text', 'style' => 'width: 420px', 'placeholder' => 'C:\\Tools\\stereotool\\libStereoTool_64.dll'])
             ->setDescription(_('Full path of the Stereo Tool library for Liquidsoap on this machine (the 64-bit DLL from the Stereo Tool download page). The setting is only used when the file exists.'))
             ->setDecorators(['ViewHelper']);
         $this->addElement($st_library);

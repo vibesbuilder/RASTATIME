@@ -1227,7 +1227,7 @@ def test_crossfade_block_overlap_zero_plays_the_tail_out():
 # ---------------------------------------------------------------------------
 
 def _st(tmp_path, **kw):
-    lib = tmp_path / "libStereoTool_intel64.dll"
+    lib = tmp_path / "libStereoTool_64.dll"
     lib.write_bytes(b"not a real dll")
     base = dict(enabled=True, library_file=str(lib), preset_file="", license_key="")
     base.update(kw)
@@ -1245,7 +1245,7 @@ def test_stereotool_block_sits_between_the_limiter_and_the_icy_rewrite(tmp_path)
     lc.STEREOTOOL_LOCKOUT.update(active=False, reason="")
     out = lc.render_rastatime_liq([_stream()], loudness_limiter_ceiling=-1.0, stereotool=_st(tmp_path, license_key="K-1", preset_file=""))
     line = [l for l in out.splitlines() if l.startswith("bus = stereotool(")][0]
-    assert 'library_file="' + str(tmp_path).replace("\\", "/") + '/libStereoTool_intel64.dll"' in line
+    assert 'library_file="' + str(tmp_path).replace("\\", "/") + '/libStereoTool_64.dll"' in line
     assert 'license_key="K-1"' in line and "preset=" not in line
     assert out.index('limit(id="loudness_limit"') < out.index("bus = stereotool(") < out.index('metadata.map(id="icy_rewrite"')
     assert lc.STEREOTOOL_STATE == {"enabled": True, "active": True, "problem": ""}
