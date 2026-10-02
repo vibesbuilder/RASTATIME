@@ -64,6 +64,15 @@ license: true auch ohne Schlüssel = freie Version, keine lizenzpflichtigen Feat
 erster Lauf hing nach "Shutdown started!" > 18 min als nicht beendbarer Zombie (1 Thread, Prozess 13596 lebt
 noch), zweiter Lauf (mit Telnet-Port 1235) beendete sich sauber und gab den Port frei -> vor der Aktivierung
 den echten Dienst-Neustart (nssm stop, kill nach 3 x 1,5 s) in einem ruhigen Moment beobachten.
+**Aktiviert 2026-10-02 17:13 (Settings -> Streams, DLL-Pfad, ohne Lizenz/Preset):** PLAYOUT-Neustart 17:13:31
+(Fingerprint, Neustart an die Show-Grenze gelegt), Liquidsoap-Neustart 17:20:00 an der Grenze zur Testshow:
+alte Instanz nach 'Shutdown started!' sauber beendet, frische Instanz nach 3 s zurueck (Stereotool initialized,
+Valid license true, Latenz 0,09 s, Mounts /rastatime, -aac, -ogg verbunden, Main Output nach 2 s), kein Lockout.
+Erste Messung Default-Preset (Aufnahme 17:21-17:22, Musik mit R128-Titel-Gain): -22,4 LUFS integriert, LRA 2,7 LU,
+True Peak -12,1 dBTP (ohne Stereo Tool heute -23,4..-23,7 LUFS bei Ceiling -1 dBTP) -> Default-Preset drueckt
+die Spitzen stark; Preset-Wahl folgt.  Arbeitsspeicher 853-854 MB in den ersten 3 min (flach), 91 Threads.
+Nacht-Neustart: weicher Speicher-Trigger 1536 MB (im Fenster) wird bei ~8,5 MB/h nach ~3,3 Tagen erreicht,
+harter 3072 MB nach ~11 Tagen -> RESTART_EVERY_DAYS=7 greift weiterhin zuerst oder gleichzeitig; beobachten.
 
 ### ✅ Cue-Punkte prüfen: Cue-Out hinter dem Dateiende, stille Datei-Enden (neu 2026-09-30, Operator-Go 2026-09-30, DONE 2026-09-30)
 
