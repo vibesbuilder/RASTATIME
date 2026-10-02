@@ -41,6 +41,21 @@ festgelegt.  Jeder Punkt bekommt vor Implementierung die
 
 ## 🎯 Aktive Backlog-Items (warten auf Operator-Go)
 
+### 🟢 Ausgangs-Processing mit Stereo Tool, optional (Operator-Entscheidung C 2026-10-02 — gebaut, Live-Prüfung mit Bibliothek + Lizenz offen)
+
+**Anlass:** Distributionspartner brauchen einen R128-konformen Stream unabhängig von der Quelle; Stufe 1
+normalisiert nur Dateien, DJ-Zuspielungen bleiben ungeregelt.  Optionen waren A Live-Regler (normalize lufs),
+B Regler am Bus, C Stereo Tool am Ausgang, D Compliance-Report aus den 24/7-Aufnahmen.  Operator: C, optional,
+standardmäßig aus (GitHub-Nutzer ohne Lizenz); Stufe 2 danach nur falls nötig.
+
+**Gebaut 2026-10-02:** Settings → Streams → Output Processing (Schalter, DLL-Pfad mit Existenzanzeige, Preset,
+Lizenzschlüssel write-only); Renderer `${STEREOTOOL_BLOCK}` (nach Limiter, vor ICY/Ausgängen); Fingerprint;
+Sicherheitsnetz: nur rendern wenn DLL existiert, `_settle_after_restart` rendert ohne Stereo Tool und startet
+neu wenn die frische Instanz stirbt (Lockout bis PLAYOUT-Neustart), Preflight `stereotool_unavailable`.
+Architektur §23.47 / 0.60, Handbuch STREAMS ×4, 9 Tests.  **Offen:** Operator lädt die 64-Bit-DLL
+(C:\Tools\stereotool\) und kauft nächste Woche die Lizenz; Bench mit echter DLL (Laden, CPU, Latenz),
+dann aktivieren, Preset nach Gehör, Nachmessung an der Aufnahme.  Danach ggf. D (Compliance-Report, ~0,5 Tag).
+
 ### ✅ Cue-Punkte prüfen: Cue-Out hinter dem Dateiende, stille Datei-Enden (neu 2026-09-30, Operator-Go 2026-09-30, DONE 2026-09-30)
 
 **Gebaut 2026-09-30 (Reihenfolge 3 → 2 → 1, Weg A, Library-Mehrfachauswahl):**

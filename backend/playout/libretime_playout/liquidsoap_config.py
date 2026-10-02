@@ -54,7 +54,7 @@ import logging
 import os
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Mapping, NamedTuple, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -1787,6 +1787,105 @@ def _render_loudness_block(ceiling_dbtp: Optional[float]) -> str:
     )
 
 
+# RASTATIME 2026-10-02 - output processing with Stereo Tool (optional, off
+# by default).  Liquidsoap's `stereotool()` operator loads the Stereo Tool
+# library (DLL) and runs the whole bus through it right before the
+# outputs: loudness control to the broadcast standard, multiband, final
+# limiter - the sound the distribution partners measure.  The settings
+# live in cc_pref (Settings -> Streams -> Output Processing); a station
+# without a licence simply leaves it off.
+#
+# Safety: `liquidsoap --check` does NOT notice a missing or broken library
+# (bench 2026-10-02: check rc 0, the start fails with "File not found") and
+# a Liquidsoap that dies at start is a crash loop under NSSM.  So the block
+# is rendered only when the library file exists, and the scheduler sets
+# STEREOTOOL_LOCKOUT when the fresh instance does not stay up after a start
+# with Stereo Tool - every later render in this process is without it and
+# the preflight warns (see STEREOTOOL_STATE).
+STEREOTOOL_LOCKOUT: Dict[str, object] = {"active": False, "reason": ""}
+#: what the last render did with Stereo Tool - read by the preflight scan
+STEREOTOOL_STATE: Dict[str, object] = {"enabled": False, "active": False, "problem": ""}
+
+
+class StereoToolSettings(NamedTuple):
+    enabled: bool = False
+    library_file: str = ""
+    preset_file: str = ""
+    license_key: str = ""
+
+
+def stereotool_settings_from_prefs(entries: Mapping[str, object]) -> StereoToolSettings:
+    """``cc_pref`` rows (key -> value) to settings; unknown / empty = off."""
+    raw = str(entries.get("stereotool_enabled") or "").strip().lower()
+    return StereoToolSettings(
+        enabled=raw in ("1", "true", "yes", "on"),
+        library_file=str(entries.get("stereotool_library") or "").strip(),
+        preset_file=str(entries.get("stereotool_preset") or "").strip(),
+        license_key=str(entries.get("stereotool_license_key") or "").strip(),
+    )
+
+
+def _liq_path(path: str) -> str:
+    """A Windows path as a Liquidsoap string literal (forward slashes)."""
+    return path.replace("\\", "/").replace('"', '\\"')
+
+
+def _render_stereotool_block(settings: Optional[StereoToolSettings]) -> Tuple[str, bool]:
+    """
+    The Stereo Tool block for the bus, and whether it is active.  Off,
+    locked out after a crash, or a missing library file render a comment
+    (the bus stays as it is) and are recorded in STEREOTOOL_STATE.
+    """
+    settings = settings or StereoToolSettings()
+    STEREOTOOL_STATE.update(enabled=settings.enabled, active=False, problem="")
+    if not settings.enabled:
+        return "# output processing (Stereo Tool): off\n", False
+    if STEREOTOOL_LOCKOUT.get("active"):
+        reason = str(STEREOTOOL_LOCKOUT.get("reason") or "a crash after a start with Stereo Tool")
+        STEREOTOOL_STATE["problem"] = f"locked out until the next PLAYOUT restart: {reason}"
+        logger.error("Stereo Tool is enabled but locked out (%s) - rendering without it.", reason)
+        return f"# output processing (Stereo Tool): LOCKED OUT - {reason}\n", False
+    if not settings.library_file or not os.path.isfile(settings.library_file):
+        STEREOTOOL_STATE["problem"] = (
+            f"library file not found: {settings.library_file or '(empty)'}"
+        )
+        logger.warning(
+            "Stereo Tool is enabled but the library file %r does not exist - "
+            "rendering without it (Settings -> Streams -> Output Processing).",
+            settings.library_file,
+        )
+        return (
+            f"# output processing (Stereo Tool): library file not found "
+            f"({_liq_path(settings.library_file or '(empty)')}) - OFF\n",
+            False,
+        )
+    if settings.preset_file and not os.path.isfile(settings.preset_file):
+        logger.warning(
+            "Stereo Tool preset file %r does not exist - starting with the "
+            "library's defaults.", settings.preset_file,
+        )
+    args = [f'library_file="{_liq_path(settings.library_file)}"']
+    if settings.license_key:
+        args.append(f'license_key="{_liq_path(settings.license_key)}"')
+    if settings.preset_file and os.path.isfile(settings.preset_file):
+        args.append(f'preset="{_liq_path(settings.preset_file)}"')
+    STEREOTOOL_STATE["active"] = True
+    return (
+        "# RASTATIME 2026-10-02 - output processing: Stereo Tool on the whole bus\n"
+        "# (after the per-track gain and the loudness limiter, before the ICY\n"
+        "# rewrite and every output: Icecast, 24/7 recording, Main Output).\n"
+        "# Settings -> Streams -> Output Processing; a change is applied by the\n"
+        "# planned restart.  Licence and preset come from the settings.\n"
+        f'bus = stereotool(id="stereotool", {", ".join(args)}, bus)\n',
+        True,
+    )
+
+
+def stereotool_render_active(settings: Optional[StereoToolSettings]) -> bool:
+    """Would a render with ``settings`` put Stereo Tool on the bus?"""
+    return _render_stereotool_block(settings)[1]
+
+
 def _render_crossfade_block(
     track_seconds: float = DEFAULT_CROSSFADE_DURATION,
     show_seconds: float = DEFAULT_SHOW_CROSSFADE_DURATION,
@@ -2199,6 +2298,7 @@ def render_rastatime_liq(
     icy_station_name: str = DEFAULT_STATION_NAME,
     live_text_url: Optional[str] = DEFAULT_LIVE_TEXT_URL,
     loudness_limiter_ceiling: Optional[float] = None,
+    stereotool: Optional[StereoToolSettings] = None,
     template_path: Optional[Path] = None,
 ) -> str:
     """
@@ -2316,6 +2416,7 @@ def render_rastatime_liq(
         .replace("${WEBSTREAM_WATCHDOG_BLOCK}", webstream_watchdog_block)
         .replace("${ICY_METADATA_BLOCK}", icy_block)
         .replace("${LOUDNESS_BLOCK}", _render_loudness_block(loudness_limiter_ceiling))
+        .replace("${STEREOTOOL_BLOCK}", _render_stereotool_block(stereotool)[0])
         .replace("${ICECAST_OUTPUTS}", icecast_blocks)
         .replace("${HOURLY_RECORDING_BLOCK}", hourly_block)
     )
@@ -2367,6 +2468,7 @@ def write_rastatime_liq(
     icy_station_name: str = DEFAULT_STATION_NAME,
     live_text_url: Optional[str] = DEFAULT_LIVE_TEXT_URL,
     loudness_limiter_ceiling: Optional[float] = None,
+    stereotool: Optional[StereoToolSettings] = None,
     template_path: Optional[Path] = None,
 ) -> bool:
     """
@@ -2427,6 +2529,7 @@ def write_rastatime_liq(
         icy_station_name=icy_station_name,
         live_text_url=live_text_url,
         loudness_limiter_ceiling=loudness_limiter_ceiling,
+        stereotool=stereotool,
         template_path=template_path,
     )
 

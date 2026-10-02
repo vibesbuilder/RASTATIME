@@ -133,6 +133,38 @@ Notes:
 - The measured values are stored per file (integrated loudness, true
   peak, loudness range) and survive re-imports of the settings.
 
+### Output Processing (Stereo Tool)
+
+Optional, off by default.  When enabled, the playout runs the whole
+output - every Icecast stream, the 24/7 recording and the Main Output -
+through [Stereo Tool](https://www.thimeo.com/stereo-tool/) by way of
+Liquidsoap's `stereotool()` operator: a broadcast processor with a
+BS.1770 loudness controller, multiband processing and a final limiter.
+This is the stage that makes the stream a distribution partner measures
+R128-compliant regardless of its source; the Loudness Normalization above
+only evens out the files.
+
+| Field | Meaning |
+|---|---|
+| **Output Processing (Stereo Tool)** | The switch.  Off by default; a station without Stereo Tool simply leaves it off. |
+| **Stereo Tool library (DLL)** | Full path of the 64-bit Stereo Tool library for Liquidsoap on the studio machine (from the Stereo Tool download page).  The page shows whether the file exists; the setting is used only when it does. |
+| **Stereo Tool preset (.sts)** | Optional.  A preset exported from the Stereo Tool application; without one the library starts with its defaults. |
+| **Stereo Tool licence key** | The key from your Stereo Tool account.  Stored on the server, never shown again; leave blank to keep the stored key, enter `CLEAR` to remove it.  Without a licence the library runs with the restrictions of the free version. |
+
+Notes:
+
+- A change is applied by the playout's planned Liquidsoap restart (quiet
+  moment or next track boundary), like every other setting that is baked
+  into the Liquidsoap script.
+- Safety net: a missing library file leaves the output untouched, and if
+  the fresh Liquidsoap instance does not stay up after a start with
+  Stereo Tool (incompatible library, refused licence), the playout
+  restarts it **without** Stereo Tool, keeps it off until the next
+  PLAYOUT restart and raises the preflight warning
+  `stereotool_unavailable`.  The broadcast never depends on the plugin.
+- Stereo Tool adds processing latency to everything downstream; the
+  schedule is not affected, every output shifts by the same amount.
+
 ### Stream status badge
 
 The badge to the right of each enabled stream's name:

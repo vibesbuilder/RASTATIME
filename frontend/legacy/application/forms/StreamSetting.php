@@ -21,6 +21,10 @@ class Application_Form_StreamSetting extends Zend_Form
         $this->loudnessTotal = (int) $total;
     }
 
+    // RASTATIME 2026-10-02 - Output Processing (Stereo Tool): status line
+    public $stereotoolLibraryFound = false;
+    public $stereotoolLicenseSet = false;
+
     public function startFrom()
     {
         $this->setDecorators([
@@ -80,6 +84,49 @@ class Application_Form_StreamSetting extends Zend_Form
             ->setDescription(_('The level no peak may exceed. A quiet track is boosted only as far as its measured true peak allows, and the peak limiter on the bus catches the rest. EBU R128 specifies -1 dBTP.'))
             ->setDecorators(['ViewHelper']);
         $this->addElement($loudness_true_peak);
+
+        // RASTATIME 2026-10-02 - Output Processing (Stereo Tool): optional,
+        // off by default.  The playout puts Liquidsoap's stereotool()
+        // operator on the whole output bus when enabled and the library
+        // file exists; a change is applied by its planned restart.
+        $library = Application_Model_Preference::getStereoToolLibrary();
+        $this->stereotoolLibraryFound = $library !== '' && is_file($library);
+        $this->stereotoolLicenseSet = Application_Model_Preference::hasStereoToolLicenseKey();
+
+        $st_enabled = new Zend_Form_Element_Checkbox('stereotoolEnabled');
+        $st_enabled
+            ->setLabel(_('Output Processing (Stereo Tool)'))
+            ->setValue(Application_Model_Preference::getStereoToolEnabled() ? 1 : 0)
+            ->setDescription(_('Runs the whole output - every stream, the 24/7 recording and the Main Output - through Stereo Tool (loudness control to the broadcast standard, multiband processing, final limiter). Off by default; needs the Stereo Tool library for Liquidsoap and a licence from the Stereo Tool website. The playout applies a change at its next planned restart; if the fresh instance does not start with Stereo Tool, it restarts without it and raises a preflight warning.'))
+            ->setDecorators(['ViewHelper']);
+        $this->addElement($st_enabled);
+
+        $st_library = new Zend_Form_Element_Text('stereotoolLibrary');
+        $st_library
+            ->setLabel(_('Stereo Tool library (DLL)'))
+            ->setValue($library)
+            ->setAttribs(['class' => 'input_text', 'style' => 'width: 420px', 'placeholder' => 'C:\\Tools\\stereotool\\libStereoTool_intel64.dll'])
+            ->setDescription(_('Full path of the Stereo Tool library for Liquidsoap on this machine (the 64-bit DLL from the Stereo Tool download page). The setting is only used when the file exists.'))
+            ->setDecorators(['ViewHelper']);
+        $this->addElement($st_library);
+
+        $st_preset = new Zend_Form_Element_Text('stereotoolPreset');
+        $st_preset
+            ->setLabel(_('Stereo Tool preset (.sts)'))
+            ->setValue(Application_Model_Preference::getStereoToolPreset())
+            ->setAttribs(['class' => 'input_text', 'style' => 'width: 420px', 'placeholder' => 'C:\\Tools\\stereotool\\rastatime.sts'])
+            ->setDescription(_('Optional: a preset exported from the Stereo Tool application. Without a preset the library starts with its defaults.'))
+            ->setDecorators(['ViewHelper']);
+        $this->addElement($st_preset);
+
+        $st_key = new Zend_Form_Element_Password('stereotoolLicenseKey');
+        $st_key
+            ->setLabel(_('Stereo Tool licence key'))
+            ->setAttribs(['class' => 'input_text', 'style' => 'width: 420px', 'autocomplete' => 'new-password',
+                'placeholder' => $this->stereotoolLicenseSet ? _('(a key is stored - leave blank to keep it)') : ''])
+            ->setDescription(_('The licence key from your Stereo Tool account. Stored on the server, never shown again; leave the field blank to keep the stored key, enter CLEAR to remove it.'))
+            ->setDecorators(['ViewHelper']);
+        $this->addElement($st_key);
 
         $replay_gain = new Zend_Form_Element_Hidden('replayGainModifier');
         $replay_gain

@@ -82,6 +82,9 @@ class PreflightChecker:
     #: RASTATIME 2026-09-16 - the media library root (Local Machine setting)
     #: is missing or not writable (drive gone, wrong path).
     WARNING_TYPE_STORAGE_ROOT = "storage_root_unavailable"
+    #: RASTATIME 2026-10-02 - Stereo Tool is enabled in Settings -> Streams
+    #: but not on the bus (library missing, or locked out after a crash).
+    WARNING_TYPE_STEREOTOOL = "stereotool_unavailable"
 
     # ------------------------------------------------------------------
     # Construction & lifecycle
@@ -198,6 +201,7 @@ class PreflightChecker:
         self._scan_linein_devices()
         self._scan_liquidsoap_health()
         self._scan_storage_root()
+        self._scan_stereotool()
 
     # ------------------------------------------------------------------
     # Liquidsoap process health (RASTATIME 2026-09-05)
@@ -307,6 +311,33 @@ class PreflightChecker:
         for pid in list(self._liquidsoap_memory_baseline):
             if pid not in seen:
                 del self._liquidsoap_memory_baseline[pid]
+
+    def _scan_stereotool(self) -> None:
+        """
+        RASTATIME 2026-10-02 - ``stereotool_unavailable``: the operator
+        enabled Stereo Tool but the last render left it off (library file
+        missing, or the lockout after an instance that died at start).
+        Reads the render's note in liquidsoap_config.STEREOTOOL_STATE - no
+        database, no telnet.
+        """
+        from .liquidsoap_config import STEREOTOOL_STATE  # noqa: PLC0415
+        warnings: list[dict] = []
+        if STEREOTOOL_STATE.get("enabled") and not STEREOTOOL_STATE.get("active"):
+            problem = str(STEREOTOOL_STATE.get("problem") or "not rendered")
+            warnings.append({
+                "severity": "error",
+                "show_id": None,
+                "show_instance_id": None,
+                "starts_at": None,
+                "detail": {
+                    "problem": problem,
+                    "message": (
+                        f"Stereo Tool is enabled but not running on the output: {problem}. "
+                        "Check Settings -> Streams -> Output Processing."
+                    ),
+                },
+            })
+        self._submit_warnings(self.WARNING_TYPE_STEREOTOOL, str(uuid.uuid4()), warnings)
 
     def _scan_storage_root(self) -> None:
         """

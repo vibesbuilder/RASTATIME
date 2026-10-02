@@ -139,6 +139,39 @@ Hinweise:
   Peak, Loudness Range) und bleiben bei Änderungen der Einstellungen
   erhalten.
 
+### Ausgangs-Processing (Stereo Tool)
+
+Optional, standardmäßig aus.  Wenn aktiviert, führt der Playout den
+gesamten Ausgang - jeden Icecast-Stream, die 24/7-Aufnahme und den Main
+Output - über Liquidsoaps `stereotool()`-Operator durch
+[Stereo Tool](https://www.thimeo.com/stereo-tool/): einen
+Sendeprozessor mit BS.1770-Lautheitsregler, Multiband-Processing und
+Final-Limiter.  Diese Stufe macht den Stream, den ein Distributionspartner
+misst, unabhängig von seiner Quelle R128-konform; die
+Lautheitsnormalisierung oben gleicht nur die Dateien aus.
+
+| Feld | Bedeutung |
+|---|---|
+| **Ausgangs-Processing (Stereo Tool)** | Der Schalter.  Standardmäßig aus; eine Station ohne Stereo Tool lässt ihn einfach aus. |
+| **Stereo-Tool-Bibliothek (DLL)** | Vollständiger Pfad der 64-Bit-Stereo-Tool-Bibliothek für Liquidsoap auf dem Studio-Rechner (von der Stereo-Tool-Downloadseite).  Die Seite zeigt, ob die Datei existiert; die Einstellung wird nur dann verwendet. |
+| **Stereo-Tool-Preset (.sts)** | Optional.  Ein aus der Stereo-Tool-Anwendung exportiertes Preset; ohne Preset startet die Bibliothek mit ihren Vorgaben. |
+| **Stereo-Tool-Lizenzschlüssel** | Der Schlüssel aus Ihrem Stereo-Tool-Konto.  Wird auf dem Server gespeichert und nie wieder angezeigt; leer lassen, um den gespeicherten Schlüssel zu behalten, `CLEAR` eingeben, um ihn zu entfernen.  Ohne Lizenz läuft die Bibliothek mit den Einschränkungen der freien Version. |
+
+Hinweise:
+
+- Eine Änderung wird beim geplanten Liquidsoap-Neustart des Playouts
+  übernommen (ruhiger Moment oder nächste Titelgrenze), wie jede andere
+  Einstellung, die in das Liquidsoap-Skript eingebaut ist.
+- Sicherheitsnetz: Eine fehlende Bibliotheksdatei lässt den Ausgang
+  unverändert, und bleibt die frische Liquidsoap-Instanz nach einem Start
+  mit Stereo Tool nicht oben (inkompatible Bibliothek, abgelehnte Lizenz),
+  startet der Playout sie **ohne** Stereo Tool neu, lässt es bis zum
+  nächsten PLAYOUT-Neustart aus und meldet die Preflight-Warnung
+  `stereotool_unavailable`.  Der Sendebetrieb hängt nie vom Plugin ab.
+- Stereo Tool fügt allem Nachfolgenden Verarbeitungslatenz hinzu; der
+  Kalender ist davon nicht betroffen, jeder Ausgang verschiebt sich um
+  denselben Betrag.
+
 ### Stream-Status-Badge
 
 Der Badge rechts neben dem Namen jedes aktivierten Streams:

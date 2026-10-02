@@ -112,6 +112,39 @@ Remarques :
 - Les valeurs mesurées sont stockées par fichier (sonie intégrée, crête
   vraie, plage de sonie) et survivent aux changements de réglages.
 
+### Traitement de sortie (Stereo Tool)
+
+Facultatif, désactivé par défaut.  Lorsqu'il est activé, le playout fait
+passer toute la sortie - chaque flux Icecast, l'enregistrement 24/7 et le
+Main Output - par [Stereo Tool](https://www.thimeo.com/stereo-tool/) via
+l'opérateur `stereotool()` de Liquidsoap : un processeur broadcast avec
+contrôleur de sonie BS.1770, traitement multibande et limiteur final.
+C'est cette étape qui rend le flux mesuré par un partenaire de diffusion
+conforme R128 quelle que soit la source ; la normalisation de la sonie
+ci-dessus n'égalise que les fichiers.
+
+| Champ | Signification |
+|---|---|
+| **Traitement de sortie (Stereo Tool)** | L'interrupteur.  Désactivé par défaut ; une station sans Stereo Tool le laisse simplement désactivé. |
+| **Bibliothèque Stereo Tool (DLL)** | Chemin complet de la bibliothèque Stereo Tool 64 bits pour Liquidsoap sur la machine du studio (page de téléchargement Stereo Tool).  La page indique si le fichier existe ; le réglage n'est utilisé que dans ce cas. |
+| **Préréglage Stereo Tool (.sts)** | Facultatif.  Un préréglage exporté depuis l'application Stereo Tool ; sans préréglage, la bibliothèque démarre avec ses valeurs par défaut. |
+| **Clé de licence Stereo Tool** | La clé de votre compte Stereo Tool.  Stockée sur le serveur, jamais réaffichée ; laisser vide pour conserver la clé enregistrée, saisir `CLEAR` pour la supprimer.  Sans licence, la bibliothèque fonctionne avec les restrictions de la version gratuite. |
+
+Remarques :
+
+- Un changement est appliqué par le redémarrage planifié de Liquidsoap
+  (moment calme ou prochaine limite de titre), comme tout réglage intégré
+  au script Liquidsoap.
+- Filet de sécurité : un fichier de bibliothèque manquant laisse la sortie
+  intacte, et si la nouvelle instance Liquidsoap ne reste pas en route
+  après un démarrage avec Stereo Tool (bibliothèque incompatible, licence
+  refusée), le playout la redémarre **sans** Stereo Tool, le laisse
+  désactivé jusqu'au prochain redémarrage de PLAYOUT et émet
+  l'avertissement preflight `stereotool_unavailable`.  La diffusion ne
+  dépend jamais du plugin.
+- Stereo Tool ajoute une latence de traitement à tout ce qui suit ; la
+  grille n'est pas concernée, chaque sortie se décale de la même valeur.
+
 ### Badge d'état du stream
 
 | Badge | Signification |

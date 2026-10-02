@@ -908,13 +908,57 @@ class PlayoutScheduler:
         self._settings_restart_attempted_at = None
         if settle_async:
             t = threading.Thread(
-                target=self._confirm_liquidsoap_stays_up, daemon=True,
+                target=self._settle_after_restart, args=(outcome,), daemon=True,
                 name="liquidsoap-settle-check",
             )
             t.start()
         else:
-            self._confirm_liquidsoap_stays_up()
+            self._settle_after_restart(outcome)
         return True
+
+    def _settle_after_restart(self, outcome: object = None) -> bool:
+        """
+        RASTATIME 2026-10-02 - the stays-up check, and the one automatic
+        way out it has: a render with Stereo Tool whose instance dies at
+        start (library incompatible, licence refused - `--check` does not
+        see it) is rendered again WITHOUT Stereo Tool and restarted, with
+        the lockout set for the rest of this PLAYOUT run.  Everything else
+        stays as loud as before (operator restarts by hand).
+        """
+        if self._confirm_liquidsoap_stays_up():
+            return True
+        if not getattr(outcome, "stereotool_active", False):
+            return False
+        return self._fall_back_without_stereotool()
+
+    def _fall_back_without_stereotool(self) -> bool:
+        from .liquidsoap_config import STEREOTOOL_LOCKOUT  # noqa: PLC0415
+        STEREOTOOL_LOCKOUT["active"] = True
+        STEREOTOOL_LOCKOUT["reason"] = (
+            "Liquidsoap did not stay up after a start with Stereo Tool at "
+            + datetime.now().strftime("%Y-%m-%d %H:%M")
+        )
+        logger.error(
+            "Stereo Tool: the fresh Liquidsoap instance died within seconds - "
+            "rendering WITHOUT Stereo Tool and restarting; it stays off until "
+            "the next PLAYOUT restart.  Check the library path, the licence "
+            "and the newest logs/liquidsoap-stdout*.log (Settings -> Streams "
+            "-> Output Processing)."
+        )
+        if self._render_liquidsoap is not None:
+            try:
+                self._render_liquidsoap()
+            except Exception as exc:  # pylint: disable=broad-exception-caught
+                logger.error("Stereo Tool fallback: re-render failed: %s", exc)
+                return False
+        if not restart_liquidsoap_service(
+            "fallback without Stereo Tool", verify=self._liquidsoap_restarted_recently,
+        ):
+            logger.error("Stereo Tool fallback: restart failed - restart LIQUIDSOAP by hand.")
+            return False
+        self._after_liquidsoap_restart()
+        self._rendered_fingerprint = self._current_settings_fingerprint() or self._rendered_fingerprint
+        return self._confirm_liquidsoap_stays_up()
 
     def _liquidsoap_restarted_recently(
         self, timeout: float = 30.0, fresh_seconds: float = 120.0,

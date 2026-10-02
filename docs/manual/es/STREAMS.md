@@ -102,6 +102,38 @@ Notas:
 - Los valores medidos se guardan por archivo (sonoridad integrada, pico
   real, rango de sonoridad) y se conservan al cambiar los ajustes.
 
+### Procesado de salida (Stereo Tool)
+
+Opcional, desactivado por defecto.  Cuando está activado, el playout pasa
+toda la salida - cada stream Icecast, la grabación 24/7 y el Main Output -
+por [Stereo Tool](https://www.thimeo.com/stereo-tool/) mediante el
+operador `stereotool()` de Liquidsoap: un procesador de radiodifusión con
+controlador de sonoridad BS.1770, procesado multibanda y limitador final.
+Esta etapa hace que el stream que mide un socio de distribución sea
+conforme a R128 sea cual sea la fuente; la normalización de sonoridad de
+arriba solo iguala los archivos.
+
+| Campo | Significado |
+|---|---|
+| **Procesado de salida (Stereo Tool)** | El interruptor.  Desactivado por defecto; una emisora sin Stereo Tool simplemente lo deja apagado. |
+| **Biblioteca Stereo Tool (DLL)** | Ruta completa de la biblioteca Stereo Tool de 64 bits para Liquidsoap en el equipo del estudio (página de descargas de Stereo Tool).  La página muestra si el archivo existe; el ajuste solo se usa en ese caso. |
+| **Preset de Stereo Tool (.sts)** | Opcional.  Un preset exportado desde la aplicación Stereo Tool; sin preset, la biblioteca arranca con sus valores por defecto. |
+| **Clave de licencia de Stereo Tool** | La clave de su cuenta de Stereo Tool.  Se guarda en el servidor y no se muestra de nuevo; dejar en blanco para conservar la clave guardada, escribir `CLEAR` para eliminarla.  Sin licencia, la biblioteca funciona con las restricciones de la versión gratuita. |
+
+Notas:
+
+- Un cambio se aplica con el reinicio planificado de Liquidsoap del
+  playout (momento tranquilo o siguiente límite de pista), como cualquier
+  otro ajuste integrado en el script de Liquidsoap.
+- Red de seguridad: un archivo de biblioteca ausente deja la salida
+  intacta, y si la nueva instancia de Liquidsoap no se mantiene en marcha
+  tras un arranque con Stereo Tool (biblioteca incompatible, licencia
+  rechazada), el playout la reinicia **sin** Stereo Tool, lo mantiene
+  apagado hasta el siguiente reinicio de PLAYOUT y emite el aviso de
+  preflight `stereotool_unavailable`.  La emisión nunca depende del plugin.
+- Stereo Tool añade latencia de procesado a todo lo que sigue; la parrilla
+  no se ve afectada, cada salida se desplaza en la misma cantidad.
+
 ### Insignia de estado del stream
 
 | Insignia | Significado |

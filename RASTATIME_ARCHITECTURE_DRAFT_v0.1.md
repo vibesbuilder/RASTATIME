@@ -1,10 +1,14 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.59
+Draft version: 0.60
 Date: 2026-10-01
 
 > **Revision history**
+> - **0.60 (2026-10-02)** — **Output processing with Stereo Tool** (§23.47):
+>   optional, off by default; `stereotool()` on the whole bus before the
+>   outputs, settings in cc_pref, lockout fallback when the fresh
+>   instance dies at start, preflight warning.
 > - **0.59 (2026-10-01)** — **In-app user manual, RASTATIME-only help
 >   menu** (§23.46): `ManualController` renders the repository's
 >   Markdown manuals (EN/DE/FR/ES) with Parsedown inside the layout,
@@ -5969,3 +5973,44 @@ What's New? (`RASTATIME_RELEASES_URL`); "Get Help Online" removed.
 link follow).  Catalogues: "Contribute to RASTATIME" and the revived
 "For more detailed help, read the %suser manual%s." in all four
 locales (`po2mo.py --all`, Apache restart by the operator).
+
+### 23.47 Output Processing with Stereo Tool (2026-10-02)
+
+**Context.**  EBU R128 stage 1 (§23.41) normalises *files*; live sources
+get a static input gain, the bus only a true-peak limiter.  The output is
+R128-compliant by construction as long as every source is normalised -
+a DJ show is not.  Distribution partners must receive a compliant stream
+regardless of source, and the operator wants a defined broadcast sound:
+Stereo Tool, as an optional plugin, off by default, because the project
+will be offered to stations without a licence.
+
+**Design.**  Liquidsoap 2.4.4 (this build) ships the `stereotool()`
+operator (`library_file`, `license_key`, `preset`, `load_type`).  The
+renderer puts it on the whole bus after the per-track gain and the
+loudness limiter and before the ICY rewrite, so every output - Icecast
+streams, the 24/7 recording, the Main Output - carries the processed
+signal: `${STEREOTOOL_BLOCK}` in the template, `_render_stereotool_block`
+in `liquidsoap_config`.  Settings in `cc_pref`
+(`stereotool_enabled|library|preset|license_key`), edited under Settings
+-> Streams -> Output Processing; the playout reads them through the ORM
+(`_resolve_stereotool`) - the licence key stays out of the HTTP API and
+the logs ("licence set / not set") and is written into `rastatime.liq`
+like the harbor passwords.  The settings fingerprint carries the key as a
+short hash, so a change is applied by the planned Liquidsoap restart.
+
+**Safety (reliability before modernity).**  `liquidsoap --check` does not
+load the library (bench 2026-10-02: rc 0 with a non-existent path, the
+start fails with "File not found"), and an instance that dies at start is
+an NSSM crash loop.  Three nets: (1) the block is rendered only when the
+library file exists; (2) `PlayoutScheduler._settle_after_restart` - the
+stays-up check after every planned restart - renders again *without*
+Stereo Tool and restarts once more when the outcome had it active and the
+instance is gone, setting `STEREOTOOL_LOCKOUT` for the rest of the PLAYOUT
+run; (3) the preflight scan `stereotool_unavailable` reports whenever the
+setting is on but the last render left it off (`STEREOTOOL_STATE`, written
+by the renderer).  The broadcast never depends on the plugin.
+
+**Open.**  The live check with the real library and the licence (the
+operator buys one next week): load, CPU, added latency, the preset the
+operator chooses by ear.  Stage 2 (live regulator, §23.41) only if still
+needed afterwards.

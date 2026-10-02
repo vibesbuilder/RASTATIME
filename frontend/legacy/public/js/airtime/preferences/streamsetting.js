@@ -330,7 +330,15 @@ function setLoudnessModeFields() {
   $(".loudness-r128-field").toggle(mode === "r128");
 }
 
+// RASTATIME 2026-10-02 - Output Processing (Stereo Tool): the path and
+// licence fields only when the checkbox is on.
+function setStereoToolFields() {
+  $(".stereotool-field").toggle($("#stereotoolEnabled").is(":checked"));
+}
+
 function setupLoudnessListeners() {
+  $("#stereotoolEnabled").off("change.stereotool").on("change.stereotool", setStereoToolFields);
+  setStereoToolFields();
   $("#loudnessMode").off("change.loudness").on("change.loudness", setLoudnessModeFields);
   $(document)
     .off("click.loudness", "#loudness_measure_btn, #loudness_remeasure_btn")

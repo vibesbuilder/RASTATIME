@@ -1766,6 +1766,50 @@ class Application_Model_Preference
         self::setValue('loudness_true_peak_dbtp', (string) $v, false);
     }
 
+    // RASTATIME 2026-10-02 - Output Processing (Stereo Tool), optional and
+    // off by default.  The playout reads these keys through the ORM and
+    // renders the stereotool() operator onto the bus; the licence key is
+    // never sent back to the browser (see the form: blank keeps it).
+    public static function getStereoToolEnabled()
+    {
+        return self::getValue('stereotool_enabled') === '1';
+    }
+
+    public static function setStereoToolEnabled($enabled)
+    {
+        self::setValue('stereotool_enabled', $enabled ? '1' : '0', false);
+    }
+
+    public static function getStereoToolLibrary()
+    {
+        return trim((string) self::getValue('stereotool_library'));
+    }
+
+    public static function setStereoToolLibrary($path)
+    {
+        self::setValue('stereotool_library', trim((string) $path), false);
+    }
+
+    public static function getStereoToolPreset()
+    {
+        return trim((string) self::getValue('stereotool_preset'));
+    }
+
+    public static function setStereoToolPreset($path)
+    {
+        self::setValue('stereotool_preset', trim((string) $path), false);
+    }
+
+    public static function hasStereoToolLicenseKey()
+    {
+        return trim((string) self::getValue('stereotool_license_key')) !== '';
+    }
+
+    public static function setStereoToolLicenseKey($key)
+    {
+        self::setValue('stereotool_license_key', trim((string) $key), false);
+    }
+
     public static function SetHistoryItemTemplate($value)
     {
         self::setValue('history_item_template', $value);

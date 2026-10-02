@@ -195,3 +195,37 @@ def test_startup_render_pending_without_fingerprint_still_restarts(monkeypatch):
     # by this path - the operator rule stays; nothing crashes
     assert s._maybe_settings_restart(NOW) is False
     restart.assert_not_called()
+
+
+# ---------------------------------------------------------------------------
+# RASTATIME 2026-10-02 - Stereo Tool: fallback when the fresh instance dies
+# ---------------------------------------------------------------------------
+
+def test_settle_falls_back_without_stereotool_when_the_instance_dies(sched, monkeypatch):
+    from libretime_playout import playout_scheduler as ps
+    from libretime_playout import liquidsoap_config as lc
+    from libretime_playout.__main__ import RenderOutcome
+    s = sched
+    lc.STEREOTOOL_LOCKOUT.update(active=False, reason="")
+    calls = {"render": 0, "restart": 0}
+    s._render_liquidsoap = lambda: calls.__setitem__("render", calls["render"] + 1)
+    monkeypatch.setattr(ps, "restart_liquidsoap_service", lambda *a, **k: calls.__setitem__("restart", calls["restart"] + 1) or True)
+    s._after_liquidsoap_restart = lambda *a, **k: None
+    s._current_settings_fingerprint = lambda: "fp"
+    stays = iter([False, True])
+    s._confirm_liquidsoap_stays_up = lambda *a, **k: next(stays)
+    try:
+        assert s._settle_after_restart(RenderOutcome(changed=True, main_output_mode="name", stereotool_active=True)) is True
+        assert lc.STEREOTOOL_LOCKOUT["active"] is True
+        assert calls == {"render": 1, "restart": 1}
+    finally:
+        lc.STEREOTOOL_LOCKOUT.update(active=False, reason="")
+
+
+def test_settle_without_stereotool_does_not_touch_the_lockout(sched):
+    from libretime_playout import liquidsoap_config as lc
+    from libretime_playout.__main__ import RenderOutcome
+    s = sched
+    s._confirm_liquidsoap_stays_up = lambda *a, **k: False
+    assert s._settle_after_restart(RenderOutcome(changed=True, main_output_mode="name")) is False
+    assert lc.STEREOTOOL_LOCKOUT["active"] is False

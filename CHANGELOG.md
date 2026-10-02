@@ -9,6 +9,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Output processing with Stereo Tool, optional and off by default
+  (2026-10-02, operator decision C: distribution partners must receive an
+  R128-compliant stream; the loudness normalization only evens out the
+  files)** - Settings -> Streams -> *Output Processing (Stereo Tool)*: switch,
+  library path (DLL), preset (.sts) and licence key (stored, never echoed;
+  blank keeps it, CLEAR removes it).  The playout reads the keys through the
+  ORM (`_resolve_stereotool`, the key never travels over HTTP), renders `bus =
+  stereotool(library_file=..., license_key=..., preset=..., bus)` after the
+  loudness limiter and before the ICY rewrite and every output, and includes
+  the settings in the restart fingerprint (planned Liquidsoap restart on
+  change).  Safety: `liquidsoap --check` does not notice a missing or broken
+  library (bench: check rc 0, the start fails), so the block is rendered only
+  when the file exists, and `_settle_after_restart` renders again WITHOUT
+  Stereo Tool and restarts when the fresh instance does not stay up after a
+  start with it (`STEREOTOOL_LOCKOUT` for the rest of the PLAYOUT run); the
+  preflight reports `stereotool_unavailable` whenever it is enabled but not on
+  the bus (`STEREOTOOL_STATE`).  Translations DE/FR/ES, manual STREAMS x4,
+  architecture 23.47; 9 tests.  Live check with the real library and the
+  licence next week - `<hash-stereotool>`.
+
 - **Benutzerhandbuch im Browser; Hilfe-Menü nur noch RASTATIME (2026-10-01,
   Operator-Go A)** — Help → User Manual zeigte libretime.org, „Get Help
   Online" das LibreTime-Forum, Contribute / What's New das LibreTime-

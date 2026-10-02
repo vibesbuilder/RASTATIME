@@ -220,6 +220,33 @@ def _resolve_loudness_limiter() -> Tuple[str, Optional[float]]:
     return mode, (ceiling if mode == "r128" else None)
 
 
+def _resolve_stereotool():
+    """
+    RASTATIME 2026-10-02 - Settings -> Streams -> Output Processing: the
+    Stereo Tool settings from cc_pref, read through the ORM (the licence
+    key never travels over the HTTP API).  Off when unreadable.
+    """
+    from libretime_playout.liquidsoap_config import (  # noqa: PLC0415
+        StereoToolSettings, stereotool_settings_from_prefs,
+    )
+    try:
+        from libretime_api.core.models import Preference  # type: ignore[import-untyped]
+        entries = dict(
+            Preference.site.filter(key__startswith="stereotool_").values_list("key", "value")
+        )
+    except Exception as exc:  # pylint: disable=broad-exception-caught
+        logger.warning("Could not read the Stereo Tool settings from DB: %s", exc)
+        return StereoToolSettings()
+    return stereotool_settings_from_prefs(entries)
+
+
+def _stereotool_fingerprint(settings) -> list:
+    """The settings as the fingerprint sees them - the key only as a hash."""
+    import hashlib  # noqa: PLC0415
+    key = hashlib.sha1(settings.license_key.encode("utf-8")).hexdigest()[:12] if settings.license_key else ""  # noqa: S324
+    return [settings.enabled, settings.library_file, settings.preset_file, key]
+
+
 def _read_pref_seconds(key: str) -> Optional[float]:
     try:
         from libretime_api.core.models import Preference  # type: ignore[import-untyped]
@@ -634,6 +661,10 @@ class RenderOutcome(NamedTuple):
 
     changed: bool
     main_output_mode: str
+    # RASTATIME 2026-10-02 - Stereo Tool on the bus in this render; a fresh
+    # instance that does not stay up afterwards is restarted without it
+    # (PlayoutScheduler._settle_after_restart).
+    stereotool_active: bool = False
 
 
 # Where the internal HTTP listener binds (source_switcher.start_listener)
@@ -718,6 +749,7 @@ def _render_settings_fingerprint() -> Optional[str]:
             "dj_fade": _resolve_dj_fade_seconds(),
             "streams": _read_stream_outputs(),
             "loudness": list(_resolve_loudness_limiter()),
+            "stereotool": _stereotool_fingerprint(_resolve_stereotool()),
         }
     except Exception as exc:  # pylint: disable=broad-exception-caught
         logger.debug("render settings fingerprint unavailable: %s", exc)
@@ -899,6 +931,20 @@ def _render_rastatime_liq_outcome(stream_outputs: List[Dict]) -> RenderOutcome:
         f", true-peak ceiling {loudness_ceiling:.1f} dBTP (bus limiter)"
         if loudness_ceiling is not None else "",
     )
+    # RASTATIME 2026-10-02 - output processing (Stereo Tool), optional
+    from libretime_playout.liquidsoap_config import stereotool_render_active  # noqa: PLC0415
+    stereotool = _resolve_stereotool()
+    stereotool_active = stereotool_render_active(stereotool)
+    if stereotool.enabled:
+        logger.info(
+            "Output processing: Stereo Tool %s (library %s, preset %s, licence %s) "
+            "(Settings -> Streams).",
+            "ACTIVE" if stereotool_active else "enabled but NOT active - see the warning above",
+            stereotool.library_file or "-", stereotool.preset_file or "-",
+            "set" if stereotool.license_key else "not set",
+        )
+    else:
+        logger.info("Output processing: Stereo Tool off (Settings -> Streams).")
     logger.info(
         "ICY metadata: Stream Label format %d, off-air text %r, station %r "
         "(Settings -> Streams / General).",
@@ -944,6 +990,8 @@ def _render_rastatime_liq_outcome(stream_outputs: List[Dict]) -> RenderOutcome:
             icy_station_name=icy.station_name,
             # RASTATIME 2026-09-28 - EBU R128 stage 1: limiter when the mode is R128
             loudness_limiter_ceiling=loudness_ceiling,
+            # RASTATIME 2026-10-02 - output processing (Stereo Tool), optional
+            stereotool=stereotool,
         )
     except Exception as exc:  # pylint: disable=broad-exception-caught
         logger.critical(
@@ -999,7 +1047,10 @@ def _render_rastatime_liq_outcome(stream_outputs: List[Dict]) -> RenderOutcome:
             "until then a planned restart disconnects their listeners.",
             icecast_xml, ", ".join(uncovered), uncovered[0],
         )
-    return RenderOutcome(changed=changed, main_output_mode=main_output_mode)
+    return RenderOutcome(
+        changed=changed, main_output_mode=main_output_mode,
+        stereotool_active=stereotool_active,
+    )
 
 
 def _render_rastatime_liq_at_startup(stream_outputs: List[Dict]) -> bool:

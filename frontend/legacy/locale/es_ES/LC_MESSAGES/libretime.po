@@ -5257,3 +5257,59 @@ msgstr "La carátula predeterminada no se pudo leer como imagen."
 #: RASTATIME 2026-10-01 help page
 msgid "For more detailed help, read the %suser manual%s."
 msgstr "Para una ayuda más detallada, lea el %smanual de usuario%s."
+
+#: RASTATIME 2026-10-02 output processing (Stereo Tool)
+msgid "Output Processing (Stereo Tool)"
+msgstr "Procesado de salida (Stereo Tool)"
+
+#: RASTATIME 2026-10-02 output processing (Stereo Tool)
+msgid "Runs the whole output - every stream, the 24/7 recording and the Main Output - through Stereo Tool (loudness control to the broadcast standard, multiband processing, final limiter). Off by default; needs the Stereo Tool library for Liquidsoap and a licence from the Stereo Tool website. The playout applies a change at its next planned restart; if the fresh instance does not start with Stereo Tool, it restarts without it and raises a preflight warning."
+msgstr "Pasa toda la salida - cada stream, la grabación 24/7 y el Main Output - por Stereo Tool (control de sonoridad según la norma de radiodifusión, procesado multibanda, limitador final). Desactivado por defecto; necesita la biblioteca Stereo Tool para Liquidsoap y una licencia del sitio web de Stereo Tool. El playout aplica un cambio en su siguiente reinicio planificado; si la nueva instancia no arranca con Stereo Tool, reinicia sin él y emite un aviso de preflight."
+
+#: RASTATIME 2026-10-02 output processing (Stereo Tool)
+msgid "Stereo Tool library (DLL)"
+msgstr "Biblioteca Stereo Tool (DLL)"
+
+#: RASTATIME 2026-10-02 output processing (Stereo Tool)
+msgid "Full path of the Stereo Tool library for Liquidsoap on this machine (the 64-bit DLL from the Stereo Tool download page). The setting is only used when the file exists."
+msgstr "Ruta completa de la biblioteca Stereo Tool para Liquidsoap en este equipo (la DLL de 64 bits de la página de descargas de Stereo Tool). El ajuste solo se usa si el archivo existe."
+
+#: RASTATIME 2026-10-02 output processing (Stereo Tool)
+msgid "Stereo Tool preset (.sts)"
+msgstr "Preset de Stereo Tool (.sts)"
+
+#: RASTATIME 2026-10-02 output processing (Stereo Tool)
+msgid "Optional: a preset exported from the Stereo Tool application. Without a preset the library starts with its defaults."
+msgstr "Opcional: un preset exportado desde la aplicación Stereo Tool. Sin preset, la biblioteca arranca con sus valores por defecto."
+
+#: RASTATIME 2026-10-02 output processing (Stereo Tool)
+msgid "Stereo Tool licence key"
+msgstr "Clave de licencia de Stereo Tool"
+
+#: RASTATIME 2026-10-02 output processing (Stereo Tool)
+msgid "(a key is stored - leave blank to keep it)"
+msgstr "(hay una clave guardada - dejar en blanco para conservarla)"
+
+#: RASTATIME 2026-10-02 output processing (Stereo Tool)
+msgid "The licence key from your Stereo Tool account. Stored on the server, never shown again; leave the field blank to keep the stored key, enter CLEAR to remove it."
+msgstr "La clave de licencia de su cuenta de Stereo Tool. Se guarda en el servidor y no se muestra de nuevo; deje el campo en blanco para conservar la clave guardada, escriba CLEAR para eliminarla."
+
+#: RASTATIME 2026-10-02 output processing (Stereo Tool)
+msgid "no file set"
+msgstr "ningún archivo indicado"
+
+#: RASTATIME 2026-10-02 output processing (Stereo Tool)
+msgid "file found"
+msgstr "archivo encontrado"
+
+#: RASTATIME 2026-10-02 output processing (Stereo Tool)
+msgid "file not found on the server"
+msgstr "archivo no encontrado en el servidor"
+
+#: RASTATIME 2026-10-02 output processing (Stereo Tool)
+msgid "a key is stored"
+msgstr "hay una clave guardada"
+
+#: RASTATIME 2026-10-02 output processing (Stereo Tool)
+msgid "no key stored"
+msgstr "ninguna clave guardada"

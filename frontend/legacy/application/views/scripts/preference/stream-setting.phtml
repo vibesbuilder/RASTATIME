@@ -86,6 +86,53 @@
                         <button type="button" id="loudness_remeasure_btn" class="btn btn-small" style="margin-left: 4px"><?php echo _('Re-measure all') ?></button>
                         <p class="description"><?php echo _('Files imported from now on are measured automatically. The buttons queue the existing library for the analyzer (a few seconds per file, in the background); an unmeasured track plays with its ReplayGain value shifted to the target until then.') ?></p>
                     </dd>
+                    <?php /* RASTATIME 2026-10-02 - Output Processing (Stereo Tool), optional */ ?>
+                    <dt id="stereotoolEnabled-label">
+                        <label>
+                            <?php echo $this->form->getElement('stereotoolEnabled')->getLabel() ?> :
+                        </label>
+                    </dt>
+                    <dd id="stereotoolEnabled-element">
+                        <?php echo $this->form->getElement('stereotoolEnabled') ?>
+                        <p class="description"><?php echo $this->form->getElement('stereotoolEnabled')->getDescription() ?></p>
+                    </dd>
+                    <dt id="stereotoolLibrary-label" class="stereotool-field">
+                        <label>
+                            <?php echo $this->form->getElement('stereotoolLibrary')->getLabel() ?> :
+                        </label>
+                    </dt>
+                    <dd id="stereotoolLibrary-element" class="stereotool-field">
+                        <?php echo $this->form->getElement('stereotoolLibrary') ?>
+                        <span id="stereotool_library_status" style="margin-left: 8px">
+                            <?php if ($this->form->getElement('stereotoolLibrary')->getValue() === '') : ?>
+                                <?php echo _('no file set') ?>
+                            <?php elseif ($this->form->stereotoolLibraryFound) : ?>
+                                <?php echo _('file found') ?>
+                            <?php else : ?>
+                                <span style="color: #c0392b"><?php echo _('file not found on the server') ?></span>
+                            <?php endif ?>
+                        </span>
+                        <p class="description"><?php echo $this->form->getElement('stereotoolLibrary')->getDescription() ?></p>
+                    </dd>
+                    <dt id="stereotoolPreset-label" class="stereotool-field">
+                        <label>
+                            <?php echo $this->form->getElement('stereotoolPreset')->getLabel() ?> :
+                        </label>
+                    </dt>
+                    <dd id="stereotoolPreset-element" class="stereotool-field">
+                        <?php echo $this->form->getElement('stereotoolPreset') ?>
+                        <p class="description"><?php echo $this->form->getElement('stereotoolPreset')->getDescription() ?></p>
+                    </dd>
+                    <dt id="stereotoolLicenseKey-label" class="stereotool-field">
+                        <label>
+                            <?php echo $this->form->getElement('stereotoolLicenseKey')->getLabel() ?> :
+                        </label>
+                    </dt>
+                    <dd id="stereotoolLicenseKey-element" class="stereotool-field">
+                        <?php echo $this->form->getElement('stereotoolLicenseKey') ?>
+                        <span style="margin-left: 8px"><?php echo $this->form->stereotoolLicenseSet ? _('a key is stored') : _('no key stored') ?></span>
+                        <p class="description"><?php echo $this->form->getElement('stereotoolLicenseKey')->getDescription() ?></p>
+                    </dd>
                     <dt id="replayGainModifier-label" class="block-display loudness-replaygain-field">
                         <label><?php echo $this->form->getElement('replayGainModifier')->getLabel() ?>:
                         </label>

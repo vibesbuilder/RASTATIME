@@ -1220,3 +1220,77 @@ def test_crossfade_block_overlap_zero_plays_the_tail_out():
     # never a zero-length fade, never more overlap than the buffer
     assert "fd = if d < 0.05 then 0.05 else d end" in block
     assert "d = if d1 > buf then buf else d1 end" in block
+
+
+# ---------------------------------------------------------------------------
+# RASTATIME 2026-10-02 - output processing with Stereo Tool (optional)
+# ---------------------------------------------------------------------------
+
+def _st(tmp_path, **kw):
+    lib = tmp_path / "libStereoTool_intel64.dll"
+    lib.write_bytes(b"not a real dll")
+    base = dict(enabled=True, library_file=str(lib), preset_file="", license_key="")
+    base.update(kw)
+    return lc.StereoToolSettings(**base)
+
+
+def test_stereotool_off_by_default_renders_a_comment_only():
+    out = lc.render_rastatime_liq([_stream()])
+    assert "output processing (Stereo Tool): off" in out
+    assert "stereotool(" not in out
+    assert lc.STEREOTOOL_STATE["enabled"] is False and lc.STEREOTOOL_STATE["active"] is False
+
+
+def test_stereotool_block_sits_between_the_limiter_and_the_icy_rewrite(tmp_path):
+    lc.STEREOTOOL_LOCKOUT.update(active=False, reason="")
+    out = lc.render_rastatime_liq([_stream()], loudness_limiter_ceiling=-1.0, stereotool=_st(tmp_path, license_key="K-1", preset_file=""))
+    line = [l for l in out.splitlines() if l.startswith("bus = stereotool(")][0]
+    assert 'library_file="' + str(tmp_path).replace("\\", "/") + '/libStereoTool_intel64.dll"' in line
+    assert 'license_key="K-1"' in line and "preset=" not in line
+    assert out.index('limit(id="loudness_limit"') < out.index("bus = stereotool(") < out.index('metadata.map(id="icy_rewrite"')
+    assert lc.STEREOTOOL_STATE == {"enabled": True, "active": True, "problem": ""}
+
+
+def test_stereotool_preset_only_when_the_file_exists(tmp_path):
+    preset = tmp_path / "rastatime.sts"
+    preset.write_text("x")
+    out = lc.render_rastatime_liq([_stream()], stereotool=_st(tmp_path, preset_file=str(preset)))
+    assert 'preset="' + str(preset).replace("\\", "/") + '"' in out
+    out = lc.render_rastatime_liq([_stream()], stereotool=_st(tmp_path, preset_file=str(tmp_path / "missing.sts")))
+    assert "preset=" not in out and "bus = stereotool(" in out
+
+
+def test_stereotool_missing_library_renders_off_and_notes_the_problem(tmp_path):
+    out = lc.render_rastatime_liq([_stream()], stereotool=lc.StereoToolSettings(enabled=True, library_file=str(tmp_path / "nope.dll")))
+    assert "stereotool(" not in out
+    assert "library file not found" in out
+    assert lc.STEREOTOOL_STATE["enabled"] is True and lc.STEREOTOOL_STATE["active"] is False
+    assert "library file not found" in lc.STEREOTOOL_STATE["problem"]
+
+
+def test_stereotool_lockout_renders_off(tmp_path):
+    lc.STEREOTOOL_LOCKOUT.update(active=True, reason="died at start 2026-10-02 12:00")
+    try:
+        out = lc.render_rastatime_liq([_stream()], stereotool=_st(tmp_path))
+        assert "stereotool(" not in out and "LOCKED OUT" in out
+        assert "locked out" in lc.STEREOTOOL_STATE["problem"]
+        assert lc.stereotool_render_active(_st(tmp_path)) is False
+    finally:
+        lc.STEREOTOOL_LOCKOUT.update(active=False, reason="")
+    assert lc.stereotool_render_active(_st(tmp_path)) is True
+
+
+def test_stereotool_settings_from_prefs():
+    s = lc.stereotool_settings_from_prefs({
+        "stereotool_enabled": "1", "stereotool_library": " C:\Tools\st\lib.dll ",
+        "stereotool_preset": "", "stereotool_license_key": "ABC",
+    })
+    assert s == lc.StereoToolSettings(True, "C:\Tools\st\lib.dll", "", "ABC")
+    assert lc.stereotool_settings_from_prefs({}) == lc.StereoToolSettings()
+    assert lc.stereotool_settings_from_prefs({"stereotool_enabled": "0"}).enabled is False
+
+
+def test_write_wrapper_forwards_stereotool(tmp_path):
+    target = tmp_path / "rastatime.liq"
+    lc.write_rastatime_liq(target, [_stream()], stereotool=_st(tmp_path))
+    assert "bus = stereotool(" in target.read_text(encoding="utf-8")

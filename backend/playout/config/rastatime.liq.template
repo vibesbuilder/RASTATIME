@@ -503,6 +503,8 @@ ${BUS_SOURCE_BLOCK}
 
 ${LOUDNESS_BLOCK}
 
+${STEREOTOOL_BLOCK}
+
 # RASTATIME 2026-09-13 - Stream Label / Off Air text: rewrite every packet
 # that carries title, artist, show_name or off_air so its title IS the
 # label (icy_rewrite, ICY block above); other packets pass untouched.

@@ -928,6 +928,21 @@ class PreferenceController extends Zend_Controller_Action
                     // Application_Model_RabbitMq::PushSchedule();
                 }
 
+                // RASTATIME 2026-10-02 - Output Processing (Stereo Tool).  The
+                // playout's settings fingerprint picks the change up and applies
+                // it with a planned Liquidsoap restart.  The licence key: blank
+                // keeps the stored key, CLEAR removes it; it is never logged.
+                $stEnabled = ($values['stereotoolEnabled'] ?? '0');
+                Application_Model_Preference::setStereoToolEnabled($stEnabled === '1' || $stEnabled === 'true');
+                Application_Model_Preference::setStereoToolLibrary($values['stereotoolLibrary'] ?? '');
+                Application_Model_Preference::setStereoToolPreset($values['stereotoolPreset'] ?? '');
+                $stKey = trim((string) ($values['stereotoolLicenseKey'] ?? ''));
+                if (strcasecmp($stKey, 'CLEAR') === 0) {
+                    Application_Model_Preference::setStereoToolLicenseKey('');
+                } elseif ($stKey !== '') {
+                    Application_Model_Preference::setStereoToolLicenseKey($stKey);
+                }
+
                 // store stream update timestamp
                 Application_Model_Preference::SetStreamUpdateTimestamp();
 
