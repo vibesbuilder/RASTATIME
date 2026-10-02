@@ -21,6 +21,7 @@ from ._internal import (
     DEFAULT_AUTO_FIELD,
     INSTALLED_APPS,
     LANGUAGE_CODE,
+    LOCALE_PATHS,  # RASTATIME 2026-10-02 - defined in _internal, was never re-exported
     MIDDLEWARE,
     REST_FRAMEWORK,
     ROOT_URLCONF,
