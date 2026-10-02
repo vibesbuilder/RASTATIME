@@ -634,7 +634,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   longer wraps in the 195 px label column - that one label row takes its
   natural width, checkbox and icon stay on the same line.  Checked in a
   harness with the served `styles.css` / `tooltip.js` (icon on the label
-  line, all four tooltips carry their text).  Manual STREAMS x4.
+  line, all four tooltips carry their text).  Manual STREAMS x4 - `9d27745`.
 
 - **Kalender: Füllstandsbalken der Sendungen bleibt fest Orange (2026-09-29,
   Operator-Entscheid)** — Der Balken in den Show-Slots des Kalenders folgt
