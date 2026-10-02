@@ -885,6 +885,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   so (in the style of the new Line-In gain note) and point to ARCHITECTURE
   §23.10 instead of the non-existent §10.4; §23.10 gets a dated addendum,
   its history is left as written.  Documentation only, no behaviour change.
+  Commit: 7e715c6.
 
 - **Planned restart at a track boundary: the next track enters its audio by
   the time the restart took (2026-10-02, operator decision (a))** - the
