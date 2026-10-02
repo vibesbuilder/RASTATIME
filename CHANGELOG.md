@@ -635,6 +635,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   natural width, checkbox and icon stay on the same line.  Checked in a
   harness with the served `styles.css` / `tooltip.js` (icon on the label
   line, all four tooltips carry their text).  Manual STREAMS x4 - `9d27745`.
+  Follow-up: the three path/licence label rows take their natural width as
+  well - in German, label plus icon needed 192-194 of the 195 px and the
+  icon wrapped below the library and licence-key labels on the studio
+  screen; checked in the harness for EN/DE/FR/ES at 800 and 1000 px.
 
 - **Kalender: Füllstandsbalken der Sendungen bleibt fest Orange (2026-09-29,
   Operator-Entscheid)** — Der Balken in den Show-Slots des Kalenders folgt

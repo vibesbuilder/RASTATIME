@@ -3438,8 +3438,11 @@ dd .stream-status {
     width: 195px;
 }
 /* RASTATIME 2026-10-02 - the Output Processing (Stereo Tool) label is wider
-   than the label column; keep it on one line with its checkbox */
-.stream-setting-global dt#stereotoolEnabled-label {
+   than the label column; keep it on one line with its checkbox.  The path
+   and licence labels carry their help icon (input below), which wraps in
+   the column with the longer translations (DE/FR/ES) */
+.stream-setting-global dt#stereotoolEnabled-label,
+.stream-setting-global dt.stereotool-field {
     width: auto;
     white-space: nowrap;
 }
