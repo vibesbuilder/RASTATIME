@@ -1558,9 +1558,20 @@ class PlayoutScheduler:
         successor by the crossfade, or the refresh straddled the
         boundary).  With nothing on air every in-progress row is a
         legitimate catch-up.
+
+        RASTATIME 2026-10-02 - the playing item itself never "precedes":
+        a refresh that hands it back under a new key (``<ts>_2`` ->
+        ``<ts>``, see _same_scheduled_item) has to reach the rebind
+        branch of its arm path, or the stop timer armed under the new
+        key dies on _on_stop's stale-key check and the slot never ends.
+        The file and web stream paths test identity before this guard;
+        the line-in path tests it after - so the exclusion lives here,
+        once, for all three.
         """
         cur = self._current_event
         if cur is None or self._playing_key is None:
+            return False
+        if self._same_scheduled_item(cur, event):
             return False
         return getattr(event, "start", None) is not None and event.start <= cur.start  # type: ignore[attr-defined]
 

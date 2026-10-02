@@ -39,8 +39,8 @@ def _make_scheduler():
     return scheduler, engine, capture
 
 
-def _linein_event():
-    now = datetime.utcnow()
+def _linein_event(start=None):
+    now = start if start is not None else datetime.utcnow()
     return LineinEvent(
         type=EventKind.LINEIN_START,
         start=now,
@@ -152,7 +152,18 @@ def test_legacy_row_without_device_name_still_falls_back_to_dshow():
 # refresh handed the same in-progress slot back under a different key
 # ("<ts>_2" -> "<ts>"), catch-up re-played it, and the http source was
 # torn down and rebuilt mid-show = an audible ~1 s dropout at 15:16.
+#
+# 2026-10-02: the 2026-09-28 "never catch up a row before the playing
+# item" guard (5b34d71) compares start times only, and in the line-in
+# path it sits BEFORE the same-item rebind - so the same slot under a
+# new key (identical start) counted as "precedes", the key was never
+# adopted, and the stop timer armed under the new key would have died
+# on _on_stop's stale-key check.  _precedes_playing now excludes the
+# playing item itself; the sibling tests pin their starts so they no
+# longer pass by the microseconds between two utcnow() calls.
 # ---------------------------------------------------------------------
+
+_T0 = datetime(2026, 9, 3, 13, 15, 0)   # the instant the keys below spell
 
 
 def _arm(scheduler, key, event, started_ago_s):
@@ -177,7 +188,7 @@ def _arm(scheduler, key, event, started_ago_s):
 def test_catch_up_skips_a_line_in_already_on_air_with_the_same_device():
     scheduler, _engine, capture = _make_scheduler()
     capture.is_running = True
-    event = _linein_event()
+    event = _linein_event(_T0)
     scheduler._current_event = event
     scheduler._playing_key = "2026-09-03-13-15-00_2"
 
@@ -191,12 +202,15 @@ def test_catch_up_skips_a_line_in_already_on_air_with_the_same_device():
 
 
 def test_catch_up_still_fires_for_a_different_device():
+    """A later row with another device is a legitimate catch-up (a row at
+    or before the playing one would be skipped by the 2026-09-28 guard,
+    so the playing item starts ten minutes earlier here)."""
     scheduler, _engine, capture = _make_scheduler()
     capture.is_running = True
-    scheduler._current_event = _linein_event()
+    scheduler._current_event = _linein_event(_T0 - timedelta(minutes=10))
     scheduler._playing_key = "other-key"
 
-    event = _linein_event()
+    event = _linein_event(_T0)
     event.device_id = "a-different-device"
     on_start = _arm(scheduler, "new-key", event, 71)
 
@@ -205,13 +219,15 @@ def test_catch_up_still_fires_for_a_different_device():
 
 def test_catch_up_still_fires_when_the_capture_died():
     """Same device, but nothing is actually streaming -- catch-up is
-    exactly what should rescue the remaining minutes of the slot."""
+    exactly what should rescue the remaining minutes of the slot.  Same
+    start on purpose: the playing item must not count as "preceding"
+    itself."""
     scheduler, _engine, capture = _make_scheduler()
     capture.is_running = False
-    scheduler._current_event = _linein_event()
+    scheduler._current_event = _linein_event(_T0)
     scheduler._playing_key = "old-key"
 
-    on_start = _arm(scheduler, "new-key", _linein_event(), 71)
+    on_start = _arm(scheduler, "new-key", _linein_event(_T0), 71)
 
     on_start.assert_called_once()
 
