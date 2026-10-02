@@ -13,7 +13,9 @@ Test inventory (10 tests, always run — no Django needed):
   3.  Startup order section is present.
   4.  Shutdown order section is present.
   5.  API health endpoint URL is documented.
-  6.  Port 8000 (API) and port 5432 (PostgreSQL) are referenced.
+  6.  Port 8765 (API; 8000 is Icecast's since the 2026-08 machine
+      migration - test updated 2026-10-02) and port 5432 (PostgreSQL)
+      are referenced.
   7.  Log file paths under C:\\rastatime\\logs are referenced.
   8.  Per-service recovery procedure is documented.
   9.  References to T22.1 install scripts are present.
@@ -34,7 +36,7 @@ _SERVICE_NAMES = [
     "RASTATIME-ICECAST",
 ]
 
-_HEALTH_URL = "http://127.0.0.1:8000/health"
+_HEALTH_URL = "http://127.0.0.1:8765/health"
 
 
 def _doc() -> str:
@@ -101,9 +103,9 @@ def test_api_health_url_documented():
 # ---------------------------------------------------------------------------
 
 def test_port_references_present():
-    """Ports 8000 (API) and 5432 (PostgreSQL) must be referenced."""
+    """Ports 8765 (API) and 5432 (PostgreSQL) must be referenced."""
     doc = _doc()
-    assert "8000" in doc, "RESTART_ORDER.md must reference port 8000 (API)"
+    assert "8765" in doc, "RESTART_ORDER.md must reference port 8765 (API)"
     assert "5432" in doc, "RESTART_ORDER.md must reference port 5432 (PostgreSQL)"
 
 

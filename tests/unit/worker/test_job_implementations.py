@@ -234,8 +234,18 @@ class _RaisingApiClient:
 # 1–4  DeviceStartupCheckJob
 # ---------------------------------------------------------------------------
 
-def test_device_startup_skips_when_no_manager():
-    """Job must return a successful JobResult when no device manager is available."""
+def test_device_startup_skips_when_no_manager(monkeypatch):
+    """Job must return a successful JobResult when no device manager is available.
+
+    RASTATIME 2026-10-02 - pin the process-wide registry to "no manager":
+    once Django is set up for the session (tests/unit/conftest.py),
+    soundcard/apps.py registers the real device manager, and the job
+    would go on to read the settings from the dev database instead of
+    skipping.
+    """
+    import audio.soundcard._registry as _reg  # noqa: PLC0415
+    monkeypatch.setattr(_reg, "default_manager", None)
+
     job    = DeviceStartupCheckJob()  # no deps injected
     result = job.run()
     assert isinstance(result, JobResult)

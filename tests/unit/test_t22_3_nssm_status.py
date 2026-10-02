@@ -10,9 +10,10 @@ notice for the Icecast service.
 Test inventory (10 tests, always run — no Django needed):
   1.  status.ps1 exists.
   2.  All four NSSM service names are declared in the script.
-  3.  The API health URL (http://127.0.0.1:8000/health) is present.
-  4.  Port 8000 is referenced (API bind port).
-  5.  Port 8001 is referenced (Icecast stream port).
+  3.  The API health URL (http://127.0.0.1:8765/health) is present.
+  4.  Port 8765 is referenced (API bind port; 8000 is Icecast's since
+      the 2026-08 machine migration - tests updated 2026-10-02).
+  5.  Port 8001 is referenced (Liquidsoap DJ harbor port).
   6.  The log directory is referenced for log-tail display.
   7.  A -LogLines parameter is exposed for configurable tail depth.
   8.  Service status is queried via Get-Service or 'nssm status'.
@@ -34,7 +35,7 @@ _SERVICE_NAMES = [
     "RASTATIME-ICECAST",
 ]
 
-_HEALTH_URL = "http://127.0.0.1:8000/health"
+_HEALTH_URL = "http://127.0.0.1:8765/health"
 
 
 def _read() -> str:
@@ -78,13 +79,13 @@ def test_api_health_url_present():
 
 
 # ---------------------------------------------------------------------------
-# 4  Port 8000 referenced
+# 4  Port 8765 referenced
 # ---------------------------------------------------------------------------
 
-def test_port_8000_referenced():
-    """status.ps1 must reference port 8000 (RASTATIME-API bind port)."""
-    assert "8000" in _read(), (
-        "status.ps1 must reference port 8000 (RASTATIME-API)"
+def test_port_8765_referenced():
+    """status.ps1 must reference port 8765 (RASTATIME-API bind port)."""
+    assert "8765" in _read(), (
+        "status.ps1 must reference port 8765 (RASTATIME-API)"
     )
 
 
@@ -93,9 +94,9 @@ def test_port_8000_referenced():
 # ---------------------------------------------------------------------------
 
 def test_port_8001_referenced():
-    """status.ps1 must reference port 8001 (RASTATIME-ICECAST stream port)."""
+    """status.ps1 must reference port 8001 (RASTATIME-LIQUIDSOAP DJ harbor)."""
     assert "8001" in _read(), (
-        "status.ps1 must reference port 8001 (RASTATIME-ICECAST streams)"
+        "status.ps1 must reference port 8001 (RASTATIME-LIQUIDSOAP DJ harbor)"
     )
 
 

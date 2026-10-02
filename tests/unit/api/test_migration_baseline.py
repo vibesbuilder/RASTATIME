@@ -12,7 +12,7 @@ Test inventory
 File-presence tests (3, always run — no Django needed):
   1.  ``legacy/migrations/sql/schema.sql`` exists on disk.
   2.  ``legacy/migrations/sql/data.sql`` exists on disk.
-  3.  ``linein`` has exactly 2 migration files (0001_initial, 0002_alter_*).
+  3.  ``linein`` has exactly 5 migration files (0001 … 0005).
 
 Content-assertion tests (2, always run — no Django needed):
   4.  ``soundcard`` migration references ``rastatime_soundcard_settings`` table.
@@ -20,16 +20,16 @@ Content-assertion tests (2, always run — no Django needed):
 
 Migration graph tests (6, Django-gated):
   6.  Migration graph loads without error (``MigrationLoader(None)``).
-  7.  Migration graph has exactly 63 nodes.
-  8.  Leaf-node set matches the expected 6 leaf migrations exactly.
-  9.  ``legacy`` app has exactly 45 migrations in the graph.
+  7.  Migration graph has exactly ``_EXPECTED_NODE_COUNT`` nodes.
+  8.  Leaf-node set matches ``_EXPECTED_LEAF_NODES`` exactly.
+  9.  ``legacy`` app has exactly ``_EXPECTED_LEGACY_COUNT`` migrations.
  10.  RASTATIME apps (``soundcard``, ``linein``) appear in the graph.
  11.  No node key appears more than once (no duplicate (app, name) pairs).
 
 Model-migration consistency (1, Django-gated):
  12.  ``makemigrations --check`` returns exit code 0 (no model drift).
 
-(12 tests total; 7 skipped in root venv where Django is absent)
+(12 tests total; Django is configured by tests/unit/conftest.py)
 """
 
 from __future__ import annotations
@@ -75,27 +75,31 @@ _skip_no_django = pytest.mark.skipif(
 
 #: Leaf (tip) migrations that must exist after all migrations are applied.
 #: Updated whenever a new leaf migration is added to any app.
+#: 2026-10-02 baseline: legacy tip 0063 (crossfade / loudness / song
+#: request / show-template work since 0047), linein tip 0005 (input
+#: gain), and the song_request app with its 0001_initial.
 _EXPECTED_LEAF_NODES: frozenset[tuple[str, str]] = frozenset(
     {
         ("auth", "0012_alter_user_first_name_max_length"),
         ("contenttypes", "0002_remove_content_type_name"),
-        ("legacy", "0047_add_cc_schedule_linein_id"),
-        ("linein", "0004_linein_device_name"),
+        ("legacy", "0063_add_no_fade_per_track_type"),
+        ("linein", "0005_linein_input_gain_db"),
         ("playback", "0001_initial"),
         ("preflight", "0001_initial"),
         ("sessions", "0001_initial"),
+        ("song_request", "0001_initial"),
         ("soundcard", "0002_add_output_device_names"),
     }
 )
 
-#: Total node count across the full migration graph.
-#: linein gained 0003_linein_length and 0004_linein_device_name; soundcard
-#: gained 0002_add_output_device_names; legacy added 0047 elsewhere; a
-#: separate preflight app exists with 0001_initial.
-_EXPECTED_NODE_COUNT = 69
+#: Total node count across the full migration graph (2026-10-02):
+#: 62 legacy + 5 linein + 2 soundcard + playback, preflight and
+#: song_request (1 each) + Django's own auth (12), contenttypes (2) and
+#: sessions (1).
+_EXPECTED_NODE_COUNT = 87
 
-#: Number of legacy migrations.
-_EXPECTED_LEGACY_COUNT = 46
+#: Number of legacy migrations (0001 … 0063 without 0002, see below).
+_EXPECTED_LEGACY_COUNT = 62
 
 
 # ---------------------------------------------------------------------------
@@ -190,14 +194,8 @@ def test_migration_graph_loads_without_error():
     This is the first gate: if Django cannot parse or import any migration
     file, this test fails and reveals which file is broken.
     """
-    import django  # noqa: PLC0415
-    import os  # noqa: PLC0415
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "libretime_api.settings.dev")
-    import sys  # noqa: PLC0415
-    if str(_BACKEND_API) not in sys.path:
-        sys.path.insert(0, str(_BACKEND_API))
-    django.setup()
-
+    # Django is configured once for the whole tree in tests/unit/conftest.py
+    # (dev settings); setting it up here made the result order-dependent.
     from django.db.migrations.loader import MigrationLoader  # noqa: PLC0415
     loader = MigrationLoader(None, ignore_no_migrations=True)
     assert loader.graph is not None

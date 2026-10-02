@@ -217,8 +217,6 @@ def test_parse_args_port_env_var(monkeypatch):
 @_skip_no_django
 def test_wsgi_application_is_callable():
     """The Django WSGI application must be a callable (PEP 3333)."""
-    import django  # noqa: PLC0415
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "libretime_api.settings.dev")
-    django.setup()
+    # Django is configured once for the whole tree in tests/unit/conftest.py.
     from libretime_api.wsgi import application  # noqa: PLC0415
     assert callable(application)

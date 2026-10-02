@@ -13,7 +13,8 @@ Test inventory (10 tests, always run — no Django needed):
   3.  install-playout.ps1 exists.
   4.  install-icecast.ps1 exists.
   5.  Each script declares the correct NSSM service name.
-  6.  API script assigns port 8000.
+  6.  API script assigns port 8765 (8000 belongs to Icecast since the
+      2026-08 machine migration; test updated 2026-10-02).
   7.  Worker and playout scripts contain the health-check gate URL.
   8.  Log paths under C:\\rastatime\\logs are configured in all scripts.
   9.  DJANGO_SETTINGS_MODULE is set in the API, worker, and playout scripts.
@@ -46,7 +47,8 @@ _SERVICE_NAMES = {
 _PYTHON_SCRIPTS = [_SCRIPT_API, _SCRIPT_WORKER, _SCRIPT_PLAYOUT]
 
 # The API health endpoint that worker and playout must poll on startup
-_HEALTH_URL = "http://127.0.0.1:8000/health"
+# (API port 8765; 8000 is Icecast - see SERVICE_TOPOLOGY.md §5)
+_HEALTH_URL = "http://127.0.0.1:8765/health"
 
 
 def _read(path: Path) -> str:
@@ -97,17 +99,17 @@ def test_all_scripts_declare_correct_service_names():
 
 
 # ---------------------------------------------------------------------------
-# 6  Port 8000 in API script
+# 6  Port 8765 in API script
 # ---------------------------------------------------------------------------
 
-def test_api_script_assigns_port_8000():
+def test_api_script_assigns_port_8765():
     """
-    install-api.ps1 must configure the API to bind on port 8000,
-    consistent with SERVICE_TOPOLOGY.md.
+    install-api.ps1 must configure the API to bind on port 8765,
+    consistent with SERVICE_TOPOLOGY.md §5 (8000 is Icecast's).
     """
     text = _read(_SCRIPT_API)
-    assert "8000" in text, (
-        "install-api.ps1 must reference port 8000 in its NSSM configuration"
+    assert "8765" in text, (
+        "install-api.ps1 must reference port 8765 in its NSSM configuration"
     )
 
 

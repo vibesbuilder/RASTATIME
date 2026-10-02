@@ -11,8 +11,10 @@ These tests use ``django.test.RequestFactory`` (view-function level) and
 implementation and the routing contract.
 
 All tests are skipped automatically when Django is not installed in the
-current environment.  They are expected to pass in the backend/api venv
-where pytest-django is configured with
+current environment.  From the repo root, tests/unit/conftest.py
+configures Django with the dev settings (no database): the 16 no-DB
+tests run there, the 6 ``django_db`` tests are skipped and run from
+backend/api, where pytest-django is configured with
 ``DJANGO_SETTINGS_MODULE = "libretime_api.settings.testing"``.
 
 Test inventory
@@ -53,7 +55,7 @@ URL routing smoke tests (2):
  21.  Client GET /health resolves and returns 200.
  22.  Client GET /api/v2/now-playing resolves and returns 200.
 
-(22 tests total; all skipped in root venv where Django is absent)
+(22 tests total; the 6 DB-backed ones are skipped from the repo root)
 """
 
 from __future__ import annotations

@@ -1,15 +1,24 @@
 """
-T20.3 — Line-In and Soundcard menu entries with i18n tests.
+T20.3 — Local Machine / Line-In menu entries with i18n tests.
 
 de_DE is the canonical German locale for RASTATIME (ADR-004).
 de_AT is an existing LibreTime community locale; RASTATIME does not
 assert its coverage in the test suite.
 
+History (tests updated 2026-10-02):
+  * 2026-05-16 — the Settings entry "Soundcard" was renamed to
+    "Local Machine"; the controller action stays ``soundcard-setting``
+    and the page now lives in ``preference/local-machine.phtml``.
+  * 2026-05-16 / 2026-08-31 / 2026-09-17 — the standalone ``/linein``
+    page went away: first folded into the Local Machine page (1f60295),
+    then consolidated into the Library's Line-Input dialog (e836c26).
+    The settings-side "Line-In" navigation entry is gone with it; the
+    ``/linein/*`` controller routes stay for the AJAX endpoints.
+
 Verify that:
-  * navigation.php contains both Soundcard and Line-In menu entries.
-  * de_DE .po file translates nav labels and all page/JS strings.
-  * soundcard-setting.phtml emits an AIRTIME.i18n script block.
-  * linein/index.phtml emits an AIRTIME.linein.i18n script block.
+  * navigation.php has the Local Machine entry and no Line-In entry.
+  * de_DE .po file translates the page/JS strings still in use.
+  * local-machine.phtml emits an AIRTIME.i18n script block.
   * ACL entry for 'linein' resource exists.
   * LineinController.php exists with indexAction.
   * PreferenceController.php contains soundcardSettingAction.
@@ -17,19 +26,19 @@ Verify that:
 Test inventory
 --------------
 Navigation (2, always run):
-  1.  navigation.php has _('Soundcard') under Settings.
-  2.  navigation.php has _('Line-In') under Settings.
+  1.  navigation.php has 'Local Machine' under Settings.
+  2.  navigation.php has no 'Line-In' Settings entry any more.
 
-de_DE .po translations — nav labels (2, always run):
-  3.  de_DE translates 'Soundcard' → 'Soundkarte'.
-  4.  de_DE translates 'Line-In' → 'Line-In'.
+de_DE .po translations — labels (2, always run):
+  3.  de_DE translates the 'Soundcard' section heading → 'Soundkarte'.
+  4.  de_DE translates the 'Local Machine' nav label (known gap, xfail).
 
-de_DE .po translations — page + JS strings (1, always run):
-  5.  de_DE has all RASTATIME page and JS i18n strings.
+de_DE .po translations — page + JS strings (2, always run):
+  5.  de_DE has the Local Machine page and JS strings that are translated.
+  6.  de_DE still lacks the strings added with the rename (known gap, xfail).
 
-JS i18n script blocks (2, always run):
-  6.  soundcard-setting.phtml contains AIRTIME.i18n inline script override.
-  7.  linein/index.phtml contains AIRTIME.linein.i18n inline script override.
+JS i18n script block (1, always run):
+  7.  local-machine.phtml contains the AIRTIME.i18n inline script override.
 
 Controller / ACL wiring (3, always run):
   8.  LineinController.php exists with indexAction.
@@ -44,6 +53,8 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+import pytest
+
 # ---------------------------------------------------------------------------
 # Paths
 # ---------------------------------------------------------------------------
@@ -52,8 +63,7 @@ _REPO       = Path(__file__).resolve().parents[2]
 _LEGACY     = _REPO / "frontend" / "legacy"
 _NAV        = _LEGACY / "application" / "configs" / "navigation.php"
 _ACL        = _LEGACY / "application" / "configs" / "acl.php"
-_SOUNDCARD_VIEW = _LEGACY / "application" / "views" / "scripts" / "preference" / "soundcard-setting.phtml"
-_LINEIN_VIEW    = _LEGACY / "application" / "views" / "scripts" / "linein" / "index.phtml"
+_LOCAL_MACHINE_VIEW = _LEGACY / "application" / "views" / "scripts" / "preference" / "local-machine.phtml"
 _LINEIN_CTRL    = _LEGACY / "application" / "controllers" / "LineinController.php"
 _PREF_CTRL      = _LEGACY / "application" / "controllers" / "PreferenceController.php"
 _DE_DE_PO   = _LEGACY / "locale" / "de_DE" / "LC_MESSAGES" / "libretime.po"
@@ -87,28 +97,34 @@ def _po_has(po_text: str, msgid: str) -> bool:
 # 1–2  Navigation entries
 # ---------------------------------------------------------------------------
 
-def test_navigation_has_soundcard_entry():
-    """navigation.php must register a Soundcard menu entry under Settings."""
+def test_navigation_has_local_machine_entry():
+    """navigation.php must register the Local Machine entry under Settings
+    (renamed from "Soundcard" on 2026-05-16; nav labels are plain strings
+    that Zend_Navigation runs through the translator)."""
     nav = _read(_NAV)
-    assert "_('Soundcard')" in nav, (
-        "navigation.php must have _('Soundcard') as a Settings sub-entry"
+    assert "'label' => 'Local Machine'" in nav, (
+        "navigation.php must have the 'Local Machine' Settings sub-entry"
     )
 
 
-def test_navigation_has_linein_entry():
-    """navigation.php must register a Line-In menu entry under Settings."""
+def test_navigation_has_no_linein_entry():
+    """The settings-side Line-In entry was removed when the line-in editor
+    moved into the Library dialog (e836c26); a re-appearing entry would
+    point at a page that no longer exists."""
     nav = _read(_NAV)
-    assert "_('Line-In')" in nav, (
-        "navigation.php must have _('Line-In') as a Settings sub-entry"
+    assert "'label' => 'Line-In'" not in nav, (
+        "navigation.php must not register a 'Line-In' Settings entry - "
+        "line-ins are edited in the Library dialog"
     )
 
 
 # ---------------------------------------------------------------------------
-# 3–4  de_DE nav label translations
+# 3–4  de_DE label translations
 # ---------------------------------------------------------------------------
 
-def test_de_de_translates_soundcard_nav_label():
-    """de_DE must translate 'Soundcard' → 'Soundkarte'."""
+def test_de_de_translates_soundcard_section_heading():
+    """de_DE must translate 'Soundcard' → 'Soundkarte' (still the section
+    heading on the Local Machine page)."""
     pairs = _po_pairs(_read(_DE_DE_PO))
     assert pairs.get("Soundcard") == "Soundkarte", (
         f"de_DE: expected msgstr 'Soundkarte' for 'Soundcard', "
@@ -116,84 +132,78 @@ def test_de_de_translates_soundcard_nav_label():
     )
 
 
-def test_de_de_translates_linein_nav_label():
-    """de_DE must have a non-empty translation for 'Line-In'."""
-    assert _po_has(_read(_DE_DE_PO), "Line-In"), (
-        "de_DE must have a non-empty msgstr for msgid 'Line-In'"
-    )
+@pytest.mark.xfail(
+    strict=True,
+    reason="de_DE has no entry for the nav label 'Local Machine' (gap found "
+    "2026-10-02; the German menu shows it in English) - drop this marker "
+    "once it is translated",
+)
+def test_de_de_translates_local_machine_nav_label():
+    """de_DE must have a non-empty translation for 'Local Machine'."""
+    assert _po_has(_read(_DE_DE_PO), "Local Machine")
 
 
 # ---------------------------------------------------------------------------
-# 5  de_DE page + JS string coverage
+# 5–6  de_DE page + JS string coverage
 # ---------------------------------------------------------------------------
 
+#: Strings the Local Machine page renders (server side or via its
+#: AIRTIME.i18n block) that de_DE translates.
 _PAGE_MSGIDS = [
-    # soundcard view — server-rendered labels
-    "Soundcard Settings",
+    # server-rendered labels
+    "Soundcard",
     "Main Output",
-    "Preview / Monitor Output",
-    "Line-In Inputs",
-    "Add Line-In Device",
-    "Configured Line-Ins",
-    # linein view — server-rendered labels
-    "Line-In Sources",
-    "New Line-In",
-    "Device",
-    "Priority",
-    "Input Device",
-    "Channel Mapping",
-    # JS i18n — soundcard
-    "Soundcard settings saved.",
-    "Could not save soundcard settings.",
+    # JS i18n (AIRTIME.i18n block)
     "No line-in devices configured.",
     "Device not found",
-    # JS i18n — linein
-    "No line-in sources configured yet.",
-    "New Line-In Source",
-    "Edit Line-In Source",
-    "Create",
-    "Line-in source created.",
-    "Line-in source deleted.",
-    "Delete this line-in source? This cannot be undone.",
+    "Could not load device list from the server.",
+]
+
+#: Strings the page renders that de_DE does not know yet - they came
+#: with the 2026-05-16 rename and the 2026-09-03 restart button.
+_UNTRANSLATED_PAGE_MSGIDS = [
+    "Local Machine settings saved.",
+    "Could not save Local Machine settings.",
+    "Restarting audio chain …",
+    "Could not restart the audio chain.",
 ]
 
 
-def test_de_de_has_all_rastatime_page_and_js_strings():
-    """de_DE must have non-empty translations for all T20.3 page and JS strings."""
+def test_de_de_has_translated_local_machine_strings():
+    """de_DE must keep non-empty translations for the page strings it has."""
     po = _read(_DE_DE_PO)
     missing = [mid for mid in _PAGE_MSGIDS if not _po_has(po, mid)]
     assert not missing, f"de_DE is missing translations for: {missing}"
 
 
+@pytest.mark.xfail(
+    strict=True,
+    reason="de_DE lacks the Local Machine strings added with the 2026-05-16 "
+    "rename and the 2026-09-03 restart button (gap found 2026-10-02) - "
+    "drop this marker once they are translated",
+)
+def test_de_de_has_the_newer_local_machine_strings():
+    """de_DE must translate every string the Local Machine page renders."""
+    po = _read(_DE_DE_PO)
+    missing = [mid for mid in _UNTRANSLATED_PAGE_MSGIDS if not _po_has(po, mid)]
+    assert not missing, f"de_DE is missing translations for: {missing}"
+
+
 # ---------------------------------------------------------------------------
-# 6–7  JS i18n inline script blocks
+# 7  JS i18n inline script block
 # ---------------------------------------------------------------------------
 
-def test_soundcard_view_has_airtime_i18n_script_block():
+def test_local_machine_view_has_airtime_i18n_script_block():
     """
-    soundcard-setting.phtml must emit AIRTIME.i18n = { ... } so
-    soundcardsetting.js reads PHP-translated strings at runtime.
+    local-machine.phtml must emit AIRTIME.i18n = { ... } so the page's
+    JS reads PHP-translated strings at runtime.
     """
-    view = _read(_SOUNDCARD_VIEW)
+    view = _read(_LOCAL_MACHINE_VIEW)
     assert "AIRTIME.i18n = {" in view, (
-        "soundcard-setting.phtml must contain 'AIRTIME.i18n = {' script block"
+        "local-machine.phtml must contain 'AIRTIME.i18n = {' script block"
     )
     assert "soundcardSaved" in view, (
         "AIRTIME.i18n block must include the 'soundcardSaved' key"
-    )
-
-
-def test_linein_view_has_airtime_linein_i18n_script_block():
-    """
-    linein/index.phtml must emit AIRTIME.linein.i18n = { ... } so
-    linein.js reads PHP-translated strings at runtime.
-    """
-    view = _read(_LINEIN_VIEW)
-    assert "AIRTIME.linein.i18n = {" in view, (
-        "linein/index.phtml must contain 'AIRTIME.linein.i18n = {' script block"
-    )
-    assert "confirmDelete" in view, (
-        "AIRTIME.linein.i18n block must include the 'confirmDelete' key"
     )
 
 

@@ -5,13 +5,18 @@ Verify that SERVICE_TOPOLOGY.md exists and contains all required content:
 the four candidate services, their NSSM names, port assignments, startup
 order, and required follow-up task references.
 
+Since the Liquidsoap cutover Icecast is part of the production stack
+(public streams + DJ input mounts) rather than an optional add-on, and
+the API moved to port 8765 so that Icecast keeps its conventional 8000
+(RASTATIME 2026-08 machine migration; tests updated 2026-10-02).
+
 Test inventory (10 tests, always run — no Django needed):
   1.  SERVICE_TOPOLOGY.md exists.
   2.  All four NSSM service names are declared.
-  3.  The two mandatory services are marked as mandatory.
-  4.  The two optional services are marked as optional/conditional.
-  5.  Port 8000 is assigned to RASTATIME-API.
-  6.  Port 8001 is assigned to RASTATIME-ICECAST (avoids API conflict).
+  3.  The three mandatory services are marked as mandatory.
+  4.  RASTATIME-ICECAST is documented as part of the production stack.
+  5.  Port 8765 is assigned to RASTATIME-API.
+  6.  Port 8000 is assigned to RASTATIME-ICECAST.
   7.  PostgreSQL dependency is documented.
   8.  Startup order section is present.
   9.  Log file paths under C:\\rastatime\\logs are documented.
@@ -20,6 +25,7 @@ Test inventory (10 tests, always run — no Django needed):
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 import pytest
@@ -35,7 +41,6 @@ _NSSM_SERVICES = [
 ]
 
 _MANDATORY_SERVICES = ["RASTATIME-API", "RASTATIME-WORKER", "RASTATIME-PLAYOUT"]
-_OPTIONAL_SERVICES  = ["RASTATIME-ICECAST"]
 
 _FOLLOW_UP_TASKS = ["T22.1", "T22.2", "T22.3", "T22.4"]
 
@@ -96,48 +101,50 @@ def test_mandatory_services_are_marked():
 
 
 # ---------------------------------------------------------------------------
-# 4  Optional services marked as optional/conditional
+# 4  Icecast is part of the production stack
 # ---------------------------------------------------------------------------
 
-def test_optional_services_are_marked():
+def test_icecast_is_part_of_the_production_stack():
     """
-    Each optional service section must contain 'optional' or 'conditional'
-    so operators know it is not required in all deployments.
-    """
-    doc = _doc()
-    missing = []
-    for svc in _OPTIONAL_SERVICES:
-        idx = doc.find(svc)
-        snippet = doc[idx:idx + 300].lower() if idx != -1 else ""
-        if "optional" not in snippet and "conditional" not in snippet:
-            missing.append(svc)
-    assert not missing, f"Services not marked as optional/conditional: {missing}"
-
-
-# ---------------------------------------------------------------------------
-# 5  Port 8000 → API
-# ---------------------------------------------------------------------------
-
-def test_port_8000_assigned_to_api():
-    """PORT 8000 must be assigned to RASTATIME-API."""
-    doc = _doc()
-    assert "8000" in doc, "Port 8000 must appear in SERVICE_TOPOLOGY.md"
-    # Both the string '8000' and 'RASTATIME-API' should co-occur in the port table
-    assert "RASTATIME-API" in doc and "8000" in doc
-
-
-# ---------------------------------------------------------------------------
-# 6  Port 8001 → Icecast (avoids conflict with API on 8000)
-# ---------------------------------------------------------------------------
-
-def test_port_8001_assigned_to_icecast():
-    """
-    Icecast must use port 8001 (not 8000) to avoid conflict with the API.
-    SERVICE_TOPOLOGY.md must document this assignment.
+    Icecast used to be the one optional service; since the Liquidsoap
+    cutover it carries the public streams and the DJ input mounts, so
+    the "Optional / Conditional Components" table must say so instead
+    of calling it optional - an operator must not skip installing it.
     """
     doc = _doc()
-    assert "8001" in doc, (
-        "Icecast must be assigned port 8001; SERVICE_TOPOLOGY.md must say so"
+    start = doc.find("## 4.")
+    assert start != -1, "SERVICE_TOPOLOGY.md must keep section 4 (components)"
+    end = doc.find("\n## ", start + 1)
+    section = doc[start:end if end != -1 else None]
+    assert "RASTATIME-ICECAST" in section, (
+        "Section 4 must list RASTATIME-ICECAST"
+    )
+    assert "production stack" in section.lower(), (
+        "Section 4 must document RASTATIME-ICECAST as part of the production stack"
+    )
+
+
+# ---------------------------------------------------------------------------
+# 5  Port 8765 → API
+# ---------------------------------------------------------------------------
+
+def test_port_8765_assigned_to_api():
+    """The port summary must assign 8765 to RASTATIME-API."""
+    doc = _doc()
+    assert re.search(r"RASTATIME-API\s*\|\s*8765\b", doc), (
+        "SERVICE_TOPOLOGY.md port summary must assign 8765 to RASTATIME-API"
+    )
+
+
+# ---------------------------------------------------------------------------
+# 6  Port 8000 → Icecast
+# ---------------------------------------------------------------------------
+
+def test_port_8000_assigned_to_icecast():
+    """The port summary must assign Icecast's conventional 8000 to RASTATIME-ICECAST."""
+    doc = _doc()
+    assert re.search(r"RASTATIME-ICECAST\s*\|\s*8000\b", doc), (
+        "SERVICE_TOPOLOGY.md port summary must assign 8000 to RASTATIME-ICECAST"
     )
 
 
