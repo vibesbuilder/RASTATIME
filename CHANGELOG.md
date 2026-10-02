@@ -829,7 +829,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `_carry_file_chain_lag()` recomputes the lag at every adoption: the
   predecessor's audio end minus the pair's overlap (none at a show boundary)
   against the new row's exact start; abutting rows keep the lag, a gap
-  shortens it.  3 tests - `<hash-carry-lag>`.
+  shortens it.  3 tests - `2816e5e`.
 
 - **Show Builder: Datepicker-Popup unter den Spaltenköpfen, Timepicker noch
   Redmond-blau (2026-10-01, Operator-Meldung)** — (1) jQuery UI gibt
