@@ -148,7 +148,9 @@ Output - über Liquidsoaps `stereotool()`-Operator durch
 Sendeprozessor mit BS.1770-Lautheitsregler, Multiband-Processing und
 Final-Limiter.  Diese Stufe macht den Stream, den ein Distributionspartner
 misst, unabhängig von seiner Quelle R128-konform; die
-Lautheitsnormalisierung oben gleicht nur die Dateien aus.
+Lautheitsnormalisierung oben gleicht nur die Dateien aus.  Jede
+Feldbeschreibung steht als Hilfesymbol bereit: neben dem Schalter, bei
+den drei Feldern darunter rechts neben der Beschriftung.
 
 | Feld | Bedeutung |
 |---|---|

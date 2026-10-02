@@ -400,9 +400,23 @@ $(document).ready(function () {
 
   // RASTATIME 2026-09-28 - Switch Transition Fade: explanation as a help
   // icon next to the field, like the Master Source username below it.
+  // 2026-10-02: the Output Processing (Stereo Tool) checkbox as well; its
+  // path and licence fields sit below their label, so their icon goes
+  // right of the label text instead.
   $.rtDescriptionTooltips($(".stream-setting-global"), {
     where: "field",
-    only: ["transition_fade", "loudnessMode", "loudnessTarget", "loudnessTruePeak", "loudnessMeasure"],
+    only: [
+      "transition_fade",
+      "loudnessMode",
+      "loudnessTarget",
+      "loudnessTruePeak",
+      "loudnessMeasure",
+      "stereotoolEnabled",
+    ],
+  });
+  $.rtDescriptionTooltips($(".stream-setting-global"), {
+    where: "label",
+    only: ["stereotoolLibrary", "stereotoolPreset", "stereotoolLicenseKey"],
   });
   setLoudnessModeFields();
   setupLoudnessListeners();

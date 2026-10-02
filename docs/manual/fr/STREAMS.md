@@ -121,7 +121,9 @@ l'opérateur `stereotool()` de Liquidsoap : un processeur broadcast avec
 contrôleur de sonie BS.1770, traitement multibande et limiteur final.
 C'est cette étape qui rend le flux mesuré par un partenaire de diffusion
 conforme R128 quelle que soit la source ; la normalisation de la sonie
-ci-dessus n'égalise que les fichiers.
+ci-dessus n'égalise que les fichiers.  La description de chaque champ est
+disponible sous forme d'icône d'aide : à côté de l'interrupteur, et à
+droite du libellé pour les trois champs en dessous.
 
 | Champ | Signification |
 |---|---|

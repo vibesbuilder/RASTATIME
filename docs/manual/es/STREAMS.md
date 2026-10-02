@@ -111,7 +111,9 @@ operador `stereotool()` de Liquidsoap: un procesador de radiodifusión con
 controlador de sonoridad BS.1770, procesado multibanda y limitador final.
 Esta etapa hace que el stream que mide un socio de distribución sea
 conforme a R128 sea cual sea la fuente; la normalización de sonoridad de
-arriba solo iguala los archivos.
+arriba solo iguala los archivos.  La descripción de cada campo está
+disponible como icono de ayuda: junto al interruptor y, en los tres
+campos de debajo, a la derecha de la etiqueta.
 
 | Campo | Significado |
 |---|---|

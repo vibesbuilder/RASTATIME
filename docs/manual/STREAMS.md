@@ -142,7 +142,9 @@ Liquidsoap's `stereotool()` operator: a broadcast processor with a
 BS.1770 loudness controller, multiband processing and a final limiter.
 This is the stage that makes the stream a distribution partner measures
 R128-compliant regardless of its source; the Loudness Normalization above
-only evens out the files.
+only evens out the files.  Every field's explanation is available as a
+help icon: next to the switch, and right of the label for the three
+fields below it.
 
 | Field | Meaning |
 |---|---|

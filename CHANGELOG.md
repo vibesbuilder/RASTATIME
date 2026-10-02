@@ -625,6 +625,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Settings -> Streams: Stereo Tool explanations as help icons, label on one
+  line (2026-10-02, operator request)** - The four Stereo Tool descriptions
+  are no longer printed below their fields but shown as help-icon tooltips
+  (`$.rtDescriptionTooltips`, the look of the rest of the page): next to the
+  checkbox, and right of the label for library, preset and licence key
+  (their input sits below the label).  *Output Processing (Stereo Tool)* no
+  longer wraps in the 195 px label column - that one label row takes its
+  natural width, checkbox and icon stay on the same line.  Checked in a
+  harness with the served `styles.css` / `tooltip.js` (icon on the label
+  line, all four tooltips carry their text).  Manual STREAMS x4.
+
 - **Kalender: Füllstandsbalken der Sendungen bleibt fest Orange (2026-09-29,
   Operator-Entscheid)** — Der Balken in den Show-Slots des Kalenders folgt
   nicht der Primärfarbe, sondern bleibt `#ff5d1a` wie bisher

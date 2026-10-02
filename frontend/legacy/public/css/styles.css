@@ -3437,6 +3437,15 @@ dd .stream-status {
 .stream-setting-global dt{
     width: 195px;
 }
+/* RASTATIME 2026-10-02 - the Output Processing (Stereo Tool) label is wider
+   than the label column; keep it on one line with its checkbox */
+.stream-setting-global dt#stereotoolEnabled-label {
+    width: auto;
+    white-space: nowrap;
+}
+.stream-setting-global dd#stereotoolEnabled-element {
+    white-space: nowrap;
+}
 
 .stream-setting-global dd{
     width: auto;
