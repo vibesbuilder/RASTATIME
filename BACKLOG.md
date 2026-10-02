@@ -193,7 +193,16 @@ das 6,9-s-Intro besteht fast nur aus Ein- und Ausblende.  Kern: 3 s
 Crossfade passt nicht zu kurzen Jingles → Option (b) oder ein Crossfade je
 Track-Typ (Jingle 0–0,5 s) ist der eigentliche Fix.
 
-### 🟢 Loudness nach EBU R128 im Processing (Stufe 1 in Betrieb seit 2026-09-29 — Pegel-Abnahme an der Aufnahme offen; Stufe 2 unentschieden)
+### ✅ Loudness nach EBU R128 im Processing (Stufe 1 in Betrieb seit 2026-09-29, Pegel-Abnahme 2026-10-02 — Stufe 2 nur bei Bedarf)
+
+**Pegel-Entscheidung 2026-10-02:** Webstreams werden von Stufe 1 nicht gemessen; ihr Input Gain
+(fester dB-Wert auf dem Webstream-Arm, wirkt in allen Modi) ist der Hebel.  Rohpegel gemessen
+(ffmpeg ebur128, 45 s): BBC −20,7 LUFS, Cloud/Event Calendar −19,1, Partner Radio −24,4 →
+Operator setzte Input Gain BBC +3 → −2 dB, Event Calendar 0 → −4 dB, Partner Radio 0 → +1 dB.
+**Abnahme 10:00-Folge** (24/7-Aufnahme): TOH −23,4, Dayteaser −23,5, Intro −23,4, BBC −23,7 (305 s;
+erste 60 s −24,8, Sprechpausen), Showteaser −23,5 LUFS — alle Quellen innerhalb ±1 LU um −23.
+Ziel bleibt −23 (kein Anheben).  **Stufe 2 (Live-Regler)** nur, wenn Quellen mit unbekanntem Pegel
+dazukommen (DJ via BUTT, wechselnde Relais) — 🟡 Defer.  Stufe 0 (Meter) vom Operator abgelehnt.
 
 **Ist-Stand (geprüft 2026-09-28):**
 - Einzige Lautheits-Verarbeitung heute: ReplayGain je Datei.  Der Analyzer
