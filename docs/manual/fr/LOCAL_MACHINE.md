@@ -183,7 +183,10 @@ avertissements du tableau de bord le surveillent (depuis le
   en cours, de sorte que la coupure d'environ deux secondes remplace
   un fondu enchaîné au lieu de couper un titre. Un webstream ou un
   line-in de part et d'autre de la frontière fait attendre la
-  suivante. Depuis le 2026-09-09, les sources DJ signalent
+  suivante. Depuis le 2026-10-02, le titre qui suit le redémarrage
+  entre dans son audio des quelques secondes qu'a pris le redémarrage,
+  afin que l'émission garde ses horaires au lieu de finir en retard
+  d'autant. Depuis le 2026-09-09, les sources DJ signalent
   elles-mêmes leurs connexions et déconnexions ; la diffusion
   n'interroge donc plus le moteur toutes les cinq secondes, et cette
   interrogation était la principale cause de la croissance. Si la

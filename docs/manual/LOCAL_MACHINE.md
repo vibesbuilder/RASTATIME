@@ -203,7 +203,10 @@ and the third warning since 2026-09-07):
   or, with a 24/7 programme, between two tracks of the running
   playlist, so the gap of about two seconds replaces a crossfade
   instead of cutting into a track. A webstream or line-in on either
-  side of the boundary makes it wait for the next one.
+  side of the boundary makes it wait for the next one. Since 2026-10-02
+  the track that follows the restart enters its audio by the few seconds
+  the restart took, so the show keeps its times instead of running that
+  much late to its end.
   Since 2026-09-09 the DJ sources report their connects and
   disconnects themselves, so the playout no longer polls the engine
   every five seconds; that poll was the main source of the growth.

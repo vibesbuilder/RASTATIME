@@ -154,7 +154,10 @@ def test_boundary_rules():
 
 def test_file_start_performs_the_armed_restart_before_playing(sched, monkeypatch):
     sched._boundary_restart_pending = "daily window"
-    sched._current_event = _file_event(IN_WINDOW - timedelta(minutes=4))
+    # 2026-10-02: row times are "now" - the restart happens at the row's own
+    # timer, and the track then enters its audio by the time it took.
+    row_start = datetime.utcnow()
+    sched._current_event = _file_event(row_start - timedelta(minutes=4))
     monkeypatch.setattr(sched, "_ensure_file_cached", lambda e: "C:/cache/a.mp3")
     for name in ("_cue_item_start", "_notify_media_started", "_close_predecessor_source",
                  "_arm_stop_timer"):
@@ -163,7 +166,7 @@ def test_file_start_performs_the_armed_restart_before_playing(sched, monkeypatch
     calls = []
     sched._test["restart"].side_effect = lambda *a, **k: calls.append("restart") or True
     sched._test["engine"].play.side_effect = lambda *a, **k: calls.append("play")
-    sched._on_file_start("2026-09-09-02-10-00", _file_event(IN_WINDOW))
+    sched._on_file_start("2026-09-09-02-10-00", _file_event(row_start))
     assert calls[:2] == ["restart", "play"]          # fresh instance first, then the track
     assert sched._boundary_restart_pending is None
     assert sched._test["restart"].call_args.kwargs["verify"] == sched._liquidsoap_restarted_recently

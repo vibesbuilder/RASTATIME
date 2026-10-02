@@ -126,6 +126,12 @@ FILE_CHAIN_LAG_DEFAULT_SECONDS = 0.25
 # the timer fired at (up to ~1 s early).  More than this is not the
 # whole-second effect - act at once.
 EXACT_TIME_HOLD_MAX_SECONDS = 1.5
+# RASTATIME 2026-10-02 - a planned restart at a track boundary blocks
+# _on_file_start for a few seconds (stop, start, back: ~3.8 s on 2026-10-02
+# 17:20); the track that follows enters its audio that far in so the show
+# stays on its rows.  Below this much the push is left alone (timers fire
+# on the whole second before the row time).
+BOUNDARY_RESTART_CATCHUP_MIN_SECONDS = 0.5
 
 # RASTATIME 2026-09-07 - the webstream watchdog lives inside Liquidsoap
 # (frame counter on the bus, rendered by liquidsoap_config).  The
@@ -1584,6 +1590,26 @@ class PlayoutScheduler:
             lag = FILE_CHAIN_LAG_DEFAULT_SECONDS
         return end + timedelta(seconds=lag)
 
+    def _catch_up_after_boundary_restart(
+        self, key: str, event: FileEvent, seek: float,
+    ) -> float:
+        """
+        RASTATIME 2026-10-02 - operator decision (a): after a planned restart
+        at the track boundary the track enters its audio by the time the
+        restart took, so the rows stay the truth; (b) - letting the chain
+        run late until the next live item - was declined.  Returns the seek
+        to use; a short delay (timer granularity) leaves it alone.
+        """
+        start = event.start_exact or event.start
+        elapsed = (datetime.utcnow() - start).total_seconds()
+        if elapsed - seek < BOUNDARY_RESTART_CATCHUP_MIN_SECONDS:
+            return seek
+        logger.info(
+            "PLAY  %s: the boundary restart took %.1f s - entering the track at "
+            "+%.1f s so the show stays on its rows.", key, elapsed - seek, elapsed,
+        )
+        return elapsed
+
     def _note_file_chain_lag(self, event: FileEvent, seek: float) -> None:
         """A push onto an idle queue starts a chain: audio position vs. rows."""
         start = event.start_exact or event.start
@@ -2129,6 +2155,11 @@ class PlayoutScheduler:
                 # _after_liquidsoap_restart, which clears the same state).
                 self._queued_ahead = None
                 self._queued_ahead_prev = None
+                # RASTATIME 2026-10-02 - the restart took its time; enter
+                # the track that far in instead of shifting the whole file
+                # chain (the 17:20 test show ran +3.9 s behind its rows to
+                # the end).
+                seek = self._catch_up_after_boundary_restart(key, event, seek)
 
         # Track which event is "current" regardless of whether a DJ is
         # overriding right now — this is what we resume to once the DJ

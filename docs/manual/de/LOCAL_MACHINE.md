@@ -220,7 +220,10 @@ Sicherung und die dritte Warnung seit dem 2026-09-07):
   sodass die Lücke von etwa zwei Sekunden einen Crossfade ersetzt,
   statt in einen Titel zu schneiden. Ein Webstream oder Line-In auf
   einer Seite der Titelgrenze lässt den Neustart auf die nächste
-  warten. Seit dem 2026-09-09 melden die DJ-Quellen ihr Verbinden
+  warten. Seit dem 2026-10-02 steigt der Titel nach dem Neustart um die
+  paar Sekunden, die der Neustart gedauert hat, in sein Audio ein, damit
+  die Sendung ihre Zeiten behält, statt bis zum Ende so viel zu spät zu
+  laufen. Seit dem 2026-09-09 melden die DJ-Quellen ihr Verbinden
   und Trennen selbst, das Playout fragt die Engine also nicht mehr
   alle fünf Sekunden ab; diese Abfrage war die Hauptursache des
   Wachstums. Bleibt der Speicher eine Woche lang flach, kann

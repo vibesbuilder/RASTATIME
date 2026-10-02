@@ -341,6 +341,56 @@ def test_boundary_restart_pushes_the_successor_afresh(sched):
     assert s._playing_key == "n" and s._current_event is nxt
 
 
+def _boundary_restart_taking(s, seconds):
+    """A planned restart that blocks for ``seconds`` (simulated by shifting the clock)."""
+    def restart(reason, settle_async=False):
+        with patch.object(s, "_retry_initial_liquidsoap_state", return_value=True),              patch.object(s, "_request_source_reconcile"):
+            s._after_liquidsoap_restart(attempts=1, delay=0.0)
+        return True
+    return restart
+
+
+def test_boundary_restart_enters_the_track_by_the_time_it_took(sched):
+    """2026-10-02 17:20: the restart took 3.8 s, the whole show ran +3.9 s late."""
+    s, engine = sched
+    now = datetime.utcnow()
+    prev = _file(now - timedelta(seconds=198), row_id=1, file_id=1, seconds=200.0)
+    # the row started 3.8 s ago: the timer fired on time, the restart blocked
+    nxt = _file(now - timedelta(seconds=3.8), row_id=2, file_id=2, cue_in=1.0)
+    s._current_event, s._playing_key = prev, "p"
+    s._queued_ahead = ("n", nxt)
+    s._boundary_restart_pending = "rastatime.liq changed"
+    with patch.object(s, "_boundary_allows_restart", return_value=True),          patch.object(s, "_perform_planned_restart", side_effect=_boundary_restart_taking(s, 3.8)):
+        s._on_file_start("n", nxt)
+    engine.play.assert_called_once()
+    assert engine.play.call_args.kwargs["cue_in"] == pytest.approx(1.0 + 3.8, abs=0.3)
+    assert s._current_clip_seconds == pytest.approx(200.0 - 1.0 - 3.8, abs=0.3)
+    assert s._file_chain_lag == pytest.approx(0.0, abs=0.3)
+
+
+def test_boundary_restart_within_timer_granularity_leaves_the_push_alone(sched):
+    s, engine = sched
+    now = datetime.utcnow()
+    prev = _file(now - timedelta(seconds=198), row_id=1, file_id=1, seconds=200.0)
+    nxt = _file(now - timedelta(seconds=0.3), row_id=2, file_id=2)
+    s._current_event, s._playing_key = prev, "p"
+    s._boundary_restart_pending = "rastatime.liq changed"
+    with patch.object(s, "_boundary_allows_restart", return_value=True),          patch.object(s, "_perform_planned_restart", side_effect=_boundary_restart_taking(s, 0.3)):
+        s._on_file_start("n", nxt)
+    assert engine.play.call_args.kwargs["cue_in"] == 0.0
+
+
+def test_no_boundary_restart_means_no_catch_up(sched):
+    """A plain late PLAY (no restart) keeps today's behaviour: no seek."""
+    s, engine = sched
+    now = datetime.utcnow()
+    prev = _file(now - timedelta(seconds=198), row_id=1, file_id=1, seconds=200.0)
+    nxt = _file(now - timedelta(seconds=3.8), row_id=2, file_id=2)
+    s._current_event, s._playing_key = prev, "p"
+    s._on_file_start("n", nxt)
+    assert engine.play.call_args.kwargs["cue_in"] == 0.0
+
+
 def test_crash_detected_restart_forgets_the_queued_successor(sched):
     s, engine = sched
     now = datetime.utcnow()

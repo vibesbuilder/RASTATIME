@@ -84,14 +84,16 @@ heute frueh ohne Neustart +0,30 s): `_on_file_start` fuehrt den Grenz-Neustart s
 pusht den ersten Titel danach mit seek 0 statt mit der verstrichenen Zeit; die Kette traegt den Versatz bis
 zum naechsten Live-Element.  Siehe eigener Eintrag unten.
 
-### 🟡 Grenz-Neustart: erster Titel ohne Aufhol-Seek (Kette +3,8 s)
+### ✅ Grenz-Neustart: erster Titel ohne Aufhol-Seek (Kette +3,8 s) - Weg (a) gebaut 2026-10-02
 Beobachtet 2026-10-02 17:20 (Stereo-Tool-Aktivierung an der Show-Grenze): `_on_file_start` blockiert fuer den
 geplanten Liquidsoap-Neustart (~3,8 s) und startet den Titel danach mit dem urspruenglichen seek 0; alle
 Folgetitel der Datei-Kette laufen +3,9 s hinter ihrer Zeilenzeit (Jingle +3,4..3,9 s), die Show endet 3,9 s
 spaeter.  Ein Live-Element (Webstream/Line-In/DJ) oder eine Luecke synchronisiert wieder (Hold max 4 s).
 Optionen: (a) nach dem Grenz-Neustart die verstrichene Zeit seit `start_exact` als Aufhol-Seek mitgeben
 (schneidet ~3,8 s vom Intro des ersten Titels, Show bleibt im Raster); (b) so lassen (Titel vollstaendig,
-Raster verschoben bis zum naechsten Live-Element).  Operator-Entscheidung offen; Status Defer.
+Raster verschoben bis zum naechsten Live-Element).  Operator: Go fuer (a) 2026-10-02 -> gebaut
+(`_catch_up_after_boundary_restart`, Schwelle 0,5 s, 3 Tests); wirksam nach PLAYOUT-Neustart, Nachmessung beim
+naechsten Grenz-Neustart (Nachtfenster oder Einstellungs-Aenderung).
 
 ### ✅ Cue-Punkte prüfen: Cue-Out hinter dem Dateiende, stille Datei-Enden (neu 2026-09-30, Operator-Go 2026-09-30, DONE 2026-09-30)
 

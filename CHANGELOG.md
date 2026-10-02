@@ -853,6 +853,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Planned restart at a track boundary: the next track enters its audio by
+  the time the restart took (2026-10-02, operator decision (a))** - the
+  restart runs inside `_on_file_start` (stop, start, back after ~3.8 s) and
+  the track was then pushed at its cue-in; every following track of the
+  file chain inherited the delay (the 17:20 test show ran +3.9 s behind its
+  rows to its end, measured against the 24/7 recording).  Now
+  `_catch_up_after_boundary_restart` adds the elapsed time since the row's
+  exact start as a catch-up seek (below 0.5 s - timer granularity - the
+  push is left alone), so the show keeps its times; a live item or a gap
+  re-synchronised the chain before, a pure file chain never did.
+  Commit: PENDING.
+
 - **The file chain's lag follows an adopted track across a layout gap
   (2026-10-02, after the 08:00 measurement)** - the quiet-tail fix held (the
   StationID after a -52 dB fade-out started +0.30 s behind its row like every

@@ -1,10 +1,15 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.60
-Date: 2026-10-01
+Draft version: 0.61
+Date: 2026-10-02
 
 > **Revision history**
+> - **0.61 (2026-10-02)** — **Catch-up after a planned restart at a track
+>   boundary** (§23.48): the track that follows enters its audio by the
+>   time the restart took, so a file chain no longer inherits the delay
+>   (17:20 test show: +3.9 s to its end).  §23.47 addendum: Stereo Tool
+>   live since 17:20 (free version, default preset).
 > - **0.60 (2026-10-02)** — **Output processing with Stereo Tool** (§23.47):
 >   optional, off by default; `stereotool()` on the whole bus before the
 >   outputs, settings in cc_pref, lockout fallback when the fresh
@@ -6010,7 +6015,49 @@ run; (3) the preflight scan `stereotool_unavailable` reports whenever the
 setting is on but the last render left it off (`STEREOTOOL_STATE`, written
 by the renderer).  The broadcast never depends on the plugin.
 
-**Open.**  The live check with the real library and the licence (the
-operator buys one next week): load, CPU, added latency, the preset the
-operator chooses by ear.  Stage 2 (live regulator, §23.41) only if still
-needed afterwards.
+**Addendum 2026-10-02 17:20 - live.**  Bench with the real library
+(`libStereoTool_64.dll`, 111 MB; the `.lib` beside it is the import library
+for compiling, not needed): loads, "Valid license: true" without a key
+(free version, no licensed features in use), Stereo Tool 11.05 / API 256,
+latency 0.09 s, about +3 % of a core.  `liquidsoap --check` still passes
+with a missing DLL.  The operator enabled it in Settings -> Streams; the
+fingerprint armed the restart, which ran at the 17:20 show boundary: the old
+instance shut down cleanly, the fresh one was back after 3 s with all mounts,
+no lockout.  Test show (six tracks, default preset, no licence): every track
+-23.3..-23.5 LUFS, whole show -23.4 LUFS, true peak -10.2..-11.6 dBTP (the
+default preset limits ~10 dB below the R128 ceiling - preset choice open).
+Memory: private bytes ~1000 MB (+10 MB/h as before; the preflight metric),
+working set trimmed to 300 MB after the start - the soft restart trigger
+(1536 MB in the window) is reached after ~2 days instead of ~6.
+
+**Open.**  The licence (the operator buys one next week), the preset by
+ear, the memory trend over a week.  Stage 2 (live regulator, §23.41) only
+if still needed afterwards.
+
+### 23.48 Catch-up after a Planned Restart at a Track Boundary (2026-10-02)
+
+**Observation.**  The 17:20 test show (the first one after the Stereo Tool
+activation) ran +3.9 s behind its rows from the first track to the
+StationID at its end (envelope correlation of every track head against
+the 24/7 recording; the 08:00 block without a restart: +0.30 s).  Stereo
+Tool adds 0.09 s, so it was not the cause.
+
+**Cause.**  `_on_file_start` performs an armed boundary restart
+synchronously (§23.27: stop, start, back after ~3.8 s) and then pushed the
+track at its cue-in, as if no time had passed.  Every later track of the
+file chain starts when its predecessor's audio ends (§23.44), so the chain
+inherited the delay; a live item or a layout gap would have re-synchronised
+it (§23.44 addenda), a pure file chain never does.
+
+**Decision.**  Operator: (a) catch up - the track enters its audio by the
+time the restart took, the show keeps its times; (b) leave the chain late
+until the next live item - declined.  `_catch_up_after_boundary_restart`
+returns the elapsed time since the row's exact start as the catch-up seek
+when it exceeds `BOUNDARY_RESTART_CATCHUP_MIN_SECONDS` (0.5 s, timer
+granularity); the existing seek path (§23.40) does the rest: cue-in offset,
+clip length, chain lag noted at 0.  Nothing changes for a late PLAY without
+a restart.  Tests: `test_catchup_offset.py` (restart of 3.8 s -> cue-in
++3.8 s, clip shortened, chain lag 0; 0.3 s -> untouched; no restart ->
+untouched).  The nightly restart (§23.27) and the settings restart
+(§23.34) use the same path, so a show after the 04:00 window keeps its
+times too.
