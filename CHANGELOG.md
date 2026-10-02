@@ -28,7 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   event), suites `backend/playout/tests` 776 passed, `tests/unit` no new
   failures (38 pre-existing).  Migration applied on the studio DB
   2026-10-02; active after restarting API, PLAYOUT and LIQUIDSOAP (new
-  script block), translations after APACHE.
+  script block), translations after APACHE - `0457473`.
 
 - **Output processing with Stereo Tool, optional and off by default
   (2026-10-02, operator decision C: distribution partners must receive an
