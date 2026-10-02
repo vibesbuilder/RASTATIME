@@ -21,6 +21,7 @@ channel_mapping : JSONField — list of 0-based int channel indices
 enabled       : BooleanField — whether this line-in is active
 description   : TextField — optional free-text description
 priority      : IntegerField — routing priority (higher = wins)
+input_gain_db : FloatField — static input gain in dB (-20..+20, default 0)
 created_at    : DateTimeField — auto-set on first save
 updated_at    : DateTimeField — auto-set on every save
 
@@ -110,6 +111,16 @@ class LineIn(models.Model):
             "NULL falls back to 30 minutes."
         ),
     )
+    # RASTATIME 2026-10-02 - per-line-in static input gain (dB), the
+    # counterpart of cc_webstream.input_gain_db.  The playout applies it
+    # on air as a linear amplify factor (var.set linein.gain).
+    input_gain_db = models.FloatField(
+        default=0.0,
+        help_text=(
+            "Static input gain in dB applied on air (-20 to +20, "
+            "0 = unchanged)."
+        ),
+    )
     created_at = models.DateTimeField(
         auto_now_add=True,
         help_text="Timestamp when this line-in was first saved.",
@@ -160,6 +171,7 @@ class LineIn(models.Model):
             description=self.description or "",
             priority=self.priority,
             length_seconds=length_seconds,
+            input_gain_db=float(self.input_gain_db or 0.0),
         )
 
     def update_from_domain(self, linein) -> None:
@@ -187,6 +199,7 @@ class LineIn(models.Model):
             timedelta(seconds=linein.length_seconds)
             if linein.length_seconds is not None else None
         )
+        self.input_gain_db  = linein.input_gain_db
 
     @classmethod
     def create_from_domain(cls, linein) -> "LineIn":

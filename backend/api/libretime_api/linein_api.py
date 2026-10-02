@@ -168,6 +168,7 @@ def linein_detail(request: HttpRequest, linein_id: str) -> HttpResponse:
         from datetime import timedelta
         ls = fields["length_seconds"]
         orm.length = timedelta(seconds=ls) if ls is not None else None
+    if "input_gain_db"   in fields: orm.input_gain_db   = fields["input_gain_db"]
 
     orm.save()
     return JsonResponse(serialize_linein(orm.to_domain()))

@@ -1,10 +1,15 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.61
+Draft version: 0.62
 Date: 2026-10-02
 
 > **Revision history**
+> - **0.62 (2026-10-02)** — **Per-line-in input gain** (§23.49):
+>   `rastatime_linein.input_gain_db` (−20…+20 dB), applied by an
+>   `amplify` around the line-in arm (`var.set linein.gain`), pushed on
+>   every path that puts a line-in on air.  Closes the deferred item of
+>   §23.10.
 > - **0.61 (2026-10-02)** — **Catch-up after a planned restart at a track
 >   boundary** (§23.48): the track that follows enters its audio by the
 >   time the restart took, so a file chain no longer inherits the delay
@@ -2027,6 +2032,8 @@ filter emission only.
 **Out of scope for this change** (deferred):
 * Per-line-in static gain — same one-line plumbing once the operator
   decides whether the soundcard-side input-gain stage covers it.
+  **Built 2026-10-02 (§23.49)**, in Liquidsoap like the webstream gain
+  of today, not through FFmpeg.
 * A live in-UI dB meter at the Add-Webstream stage (would require an
   async server-side FFmpeg sampling probe and a websocket back to the
   UI; not enough operator value to justify the complexity).
@@ -6061,3 +6068,61 @@ a restart.  Tests: `test_catchup_offset.py` (restart of 3.8 s -> cue-in
 untouched).  The nightly restart (§23.27) and the settings restart
 (§23.34) use the same path, so a show after the 04:00 window keeps its
 times too.
+
+### 23.49 Per-Line-In Input Gain (2026-10-02)
+
+**Request.**  Operator: the webstream input gain (§23.10) for line-ins as
+well.  At the R128 level acceptance (2026-10-02) the webstream gain was the
+lever that brought every source to −23 ± 1 LUFS; a studio feed could only
+be trimmed at the mixer or the interface.
+
+**Decision.**  Operator (option A): the gain lives in Liquidsoap, the same
+pattern as `webstream.gain`.  Declined (B): an FFmpeg `volume` filter in
+the MME feeder - it would cover the feeder path only (not the dshow
+fallback), act in the int16 path before the MP3 encode (a boost clips
+there), and change only with a feeder restart (no new value on a
+same-device transition, no later live trim).
+
+**Schema / API.**  `rastatime_linein.input_gain_db` FLOAT, default 0
+(migration `linein 0005`; a RunPython step keeps the DB default on
+PostgreSQL, because Django 4.2 drops it after AddField and an API process
+on the previous code would otherwise violate NOT NULL on create).  Domain
+`LineIn.input_gain_db`: finite number, −20…+20 dB, kept by every `with_*`
+builder, in `to_dict` / `from_dict` (missing key = 0).  REST create and
+PATCH accept it optionally (400 outside the range), GET returns it.
+Legacy: `Application_Model_Linein::getInputGainDb()`, the dialog field
+"Input Gain (dB)" (the webstream dialog's field and strings, translated
+DE/FR/ES now for both dialogs), `LineinController::saveAction` clamps like
+`WebstreamController`.
+
+**Playout.**  `LineinEvent.input_gain_db` (`None` from an API without the
+column = unity).  The .liq wraps the folded arm:
+`linein_gain = interactive.float("linein.gain", 1.0)`,
+`linein = amplify({linein_gain()}, fallback(…))` - before the bus switch,
+so the switch fades, the R128 limiter and Stereo Tool see the trimmed
+level.  `engine.linein_set_gain(dB)` converts to linear (unity for
+`None` / 0, so no value carries over) and sends `var.set linein.gain`; a
+.liq rendered before this answers "variable not found" -> one warning, the
+line-in plays at unity.  `PlayoutScheduler._apply_linein_gain` runs on
+every path that puts a line-in on air: `_on_linein_start` before its early
+returns (a same-device transition keeps the capture but takes the new
+value; a DJ-held or pre-warmed line-in opens later with the right one),
+the DJ resume (`_resume_scheduled_locked`) and
+`_apply_initial_liquidsoap_state` (a fresh Liquidsoap starts at unity).
+Not at the T−10 s pre-warm: the gate is closed then and the slot start
+sets the value before it opens.
+
+**Effect timing.**  The schedule refresh (120 s) cancels and re-arms every
+timer with fresh events, so a changed gain reaches every slot that starts
+after the next refresh; a line-in on air keeps its value until its slot
+ends (live trim: BACKLOG 💡).
+
+**Tests.**  `tests/unit/audio/test_linein_input_gain.py` (domain range and
+type, builders, dict round trip, API create/patch/serialise),
+`test_scheduler_linein.py` (start, unity reset, same-device transition,
+DJ-held start, resume, fresh Liquidsoap), `test_liquidsoap_engine.py`
+(dB -> linear, unity, old script, telnet error, wire form),
+`player/test_linein_events.py`, the render test, and the existing
+`liquidsoap --check` of the full script with every arm.  Round trip
+POST -> PATCH -> GET against a scratch database with the migration,
+reverse migration included.

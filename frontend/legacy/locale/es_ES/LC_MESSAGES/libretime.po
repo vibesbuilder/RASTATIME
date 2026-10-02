@@ -5313,3 +5313,11 @@ msgstr "hay una clave guardada"
 #: RASTATIME 2026-10-02 output processing (Stereo Tool)
 msgid "no key stored"
 msgstr "ninguna clave guardada"
+
+#: RASTATIME 2026-10-02 input gain (Line-In and Webstream dialogs)
+msgid "Input Gain (dB):"
+msgstr "Ganancia de entrada (dB):"
+
+#: RASTATIME 2026-10-02 input gain (Line-In and Webstream dialogs)
+msgid "Range: -20.0 to +20.0 dB.  0 = no change."
+msgstr "Rango: -20,0 a +20,0 dB.  0 = sin cambio."

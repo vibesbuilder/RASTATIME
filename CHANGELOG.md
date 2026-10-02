@@ -9,6 +9,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Line-In input gain (2026-10-02, operator Go for option A)** - Like
+  webstreams, every Line-In now has an *Input Gain (dB)* field in its
+  dialog (−20 to +20 dB, default 0), so a studio feed can be trimmed to the
+  station loudness without touching the mixer.  `rastatime_linein.
+  input_gain_db` (migration `linein 0005`, DB default kept on PostgreSQL so
+  an API on the previous code still creates rows), domain / REST
+  validation, legacy dialog + save (clamped like the webstream one).  The
+  playout applies it in Liquidsoap: `amplify` around the line-in arm,
+  `var.set linein.gain` on every path that puts a line-in on air (slot
+  start incl. same-device transitions, DJ resume, fresh Liquidsoap); unity
+  for 0 / missing.  A change reaches every slot that starts after the next
+  schedule read (120 s).  Option B (FFmpeg `volume` in the MME feeder)
+  declined: feeder path only, clips before the MP3 encode, no change
+  without a feeder restart.  The two dialog strings are now translated
+  (DE/FR/ES) - the webstream dialog profits too.  Manual LINE_IN x4,
+  architecture §23.49; tests: 31 new (domain/API, scheduler, engine,
+  event), suites `backend/playout/tests` 776 passed, `tests/unit` no new
+  failures (38 pre-existing).  Migration applied on the studio DB
+  2026-10-02; active after restarting API, PLAYOUT and LIQUIDSOAP (new
+  script block), translations after APACHE.
+
 - **Output processing with Stereo Tool, optional and off by default
   (2026-10-02, operator decision C: distribution partners must receive an
   R128-compliant stream; the loudness normalization only evens out the

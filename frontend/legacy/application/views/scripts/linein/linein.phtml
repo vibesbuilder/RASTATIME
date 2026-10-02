@@ -91,6 +91,21 @@
             <dd id="streamlength-element">
                 <input type="text" value="<?php echo $this->escape($this->obj->getDefaultLength()); ?>" />
             </dd>
+
+            <?php /* RASTATIME 2026-10-02 - per-line-in static input gain,
+                   same field as in the webstream dialog.  Saved into
+                   rastatime_linein.input_gain_db; the playout applies it
+                   on air (Liquidsoap var.set linein.gain).  0 = unchanged. */ ?>
+            <div id="inputgain-error" class="errors" style="display:none;"></div>
+            <dt id="inputgain-label"><label for="lineinInputGainDb"><?php echo _("Input Gain (dB):"); ?></label></dt>
+            <dd id="inputgain-element">
+                <input type="number" id="lineinInputGainDb"
+                       min="-20" max="20" step="0.1"
+                       value="<?php echo $this->escape((string) $this->obj->getInputGainDb()); ?>" />
+                <span class="help-block" style="font-size: 0.9em; color: #666;">
+                    <?php echo _("Range: -20.0 to +20.0 dB.  0 = no change."); ?>
+                </span>
+            </dd>
         </dl>
     </div>
 

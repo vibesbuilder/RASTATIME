@@ -1162,3 +1162,112 @@ def test_capture_restart_is_a_noop_for_direct_dshow_rows(liquidsoap_scheduler):
 
     engine.linein_start_http.assert_not_called()
     engine.play.assert_not_called()
+
+
+# =====================================================================
+# RASTATIME 2026-10-02 - per-line-in input gain: every path that puts a
+# line-in on air pushes rastatime_linein.input_gain_db to the .liq
+# (engine.linein_set_gain -> var.set linein.gain).
+# =====================================================================
+
+
+def _running_linein_event(**kw) -> LineinEvent:
+    """A line-in whose slot is running right now (resume needs end > now)."""
+    now = datetime.utcnow().replace(microsecond=0)
+    return _make_linein_event(**kw).model_copy(
+        update={"start": now - timedelta(seconds=60), "end": now + timedelta(seconds=600)},
+    )
+
+
+def test_linein_start_pushes_the_input_gain(liquidsoap_scheduler):
+    sched, engine, capture = liquidsoap_scheduler
+    capture.is_running = True
+    event = _make_linein_event().model_copy(update={"input_gain_db": 6.0})
+
+    sched._on_linein_start("key1", event)
+
+    engine.linein_set_gain.assert_called_once_with(6.0)
+    # set before the source is armed, so the first frames already carry it
+    names = [c[0] for c in engine.mock_calls]
+    assert names.index("linein_set_gain") < names.index("linein_start_http")
+
+
+def test_linein_start_without_gain_resets_to_unity(liquidsoap_scheduler):
+    """None reaches the engine, which sets unity - no carry-over."""
+    sched, engine, capture = liquidsoap_scheduler
+    capture.is_running = True
+
+    sched._on_linein_start("key1", _make_linein_event())
+
+    engine.linein_set_gain.assert_called_once_with(None)
+
+
+def test_same_device_transition_still_applies_the_new_gain(liquidsoap_scheduler):
+    """Two line-ins on one device and pair keep the capture, but the
+    second one's gain must replace the first one's."""
+    sched, engine, capture = liquidsoap_scheduler
+    sched._current_event = _make_linein_event(name="Studio A").model_copy(
+        update={"input_gain_db": 6.0},
+    )
+    capture.is_running = True
+    second = _make_linein_event(name="Studio A guest").model_copy(
+        update={"input_gain_db": -3.0},
+    )
+
+    sched._on_linein_start("key2", second)
+
+    engine.linein_set_gain.assert_called_once_with(-3.0)
+    capture.start.assert_not_called()          # shortcut taken
+    engine.linein_start_http.assert_not_called()
+
+
+def test_linein_start_while_a_dj_is_live_sets_the_gain_for_the_resume(
+    liquidsoap_scheduler,
+):
+    from libretime_playout.source_switcher import SourceState
+
+    sched, engine, _capture = liquidsoap_scheduler
+    switcher = MagicMock()
+    switcher.current_state = SourceState.SHOW
+    sched.set_source_switcher(switcher)
+
+    sched._on_linein_start(
+        "key1", _make_linein_event().model_copy(update={"input_gain_db": 4.5}),
+    )
+
+    engine.linein_set_gain.assert_called_once_with(4.5)
+    engine.linein_start_http.assert_not_called()
+
+
+def test_resume_after_dj_reapplies_the_linein_gain(liquidsoap_scheduler):
+    sched, engine, capture = liquidsoap_scheduler
+    event = _running_linein_event().model_copy(update={"input_gain_db": 2.5})
+    sched._current_event = event
+    sched._current_audio_path = capture.listen_url
+
+    sched._resume_scheduled_locked()
+
+    engine.linein_set_gain.assert_called_once_with(2.5)
+    engine.linein_start_http.assert_called_once_with()
+
+
+def test_fresh_liquidsoap_gets_the_gain_of_the_linein_on_air(liquidsoap_scheduler):
+    """A restarted Liquidsoap starts with linein.gain = 1.0."""
+    sched, engine, _capture = liquidsoap_scheduler
+    sched._current_event = _make_linein_event().model_copy(update={"input_gain_db": -6.0})
+    engine.reset_mock()
+
+    ok, _exc = sched._apply_initial_liquidsoap_state()
+
+    assert ok
+    engine.linein_set_gain.assert_called_once_with(-6.0)
+
+
+def test_fresh_liquidsoap_without_a_linein_leaves_the_gain_alone(liquidsoap_scheduler):
+    sched, engine, _capture = liquidsoap_scheduler
+    sched._current_event = None
+    engine.reset_mock()
+
+    sched._apply_initial_liquidsoap_state()
+
+    engine.linein_set_gain.assert_not_called()

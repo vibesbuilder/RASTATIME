@@ -1564,8 +1564,11 @@ def _render_linein_input_block(
     the switch tolerates self_sync=false sources.  Skipping the buffer
     keeps live-mic latency minimal.
 
-    No gain wrapper — :class:`LineinEvent` has no ``input_gain_db``
-    field (line-input level is set at the operator's mixer).
+    RASTATIME 2026-10-02 - an ``amplify`` around the arm applies the
+    per-line-in input gain (``rastatime_linein.input_gain_db``), same
+    pattern as the webstream arm: the scheduler pushes the linear
+    factor with ``var.set linein.gain`` whenever a line-in goes on air;
+    default 1.0 = unity.
 
     When ``enabled`` is False (legacy mpv/VLC paths), emits a comment
     stub.
@@ -1641,7 +1644,12 @@ def _render_linein_input_block(
         "# One switch arm serves both paths: Pypo only ever starts one\n"
         "# of the two sources per show, so a track-insensitive fallback\n"
         "# simply forwards whichever is up.\n"
-        "linein = fallback(track_sensitive=false, [linein_dshow, linein_http])\n"
+        "# RASTATIME 2026-10-02 - per-line-in input gain (rastatime_linein.\n"
+        "# input_gain_db): PLAYOUT sets the linear factor with\n"
+        "# var.set linein.gain whenever a line-in goes on air.\n"
+        'linein_gain = interactive.float("linein.gain", 1.0)\n'
+        "linein = amplify({linein_gain()},\n"
+        "  fallback(track_sensitive=false, [linein_dshow, linein_http]))\n"
     )
 
 

@@ -295,7 +295,7 @@ def test_with_priority_sets_field():
 
 _EXPECTED_KEYS = {"id", "name", "device_id", "channel_mapping",
                   "enabled", "description", "priority",
-                  "length_seconds", "device_name"}
+                  "length_seconds", "device_name", "input_gain_db"}
 
 
 def test_to_dict_has_correct_keys():

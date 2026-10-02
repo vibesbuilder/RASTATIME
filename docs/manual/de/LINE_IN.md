@@ -99,6 +99,7 @@ Line-In-Bibliothek → **+ Neu**.
    │   Gerät:          [Gerät auswählen... ▾]                     │
    │   Channels:       [Stereo 1/2 ▾]                             │
    │   Standardlänge:  [10m 00s   ]   (00s für unendlich)         │
+   │   Eingangsverstärkung (dB): [0.0 ]  -20,0 bis +20,0 dB       │
    ├──────────────────────────────────────────────────────────────┤
    │                                       [Abbrechen][Speichern] │
    └──────────────────────────────────────────────────────────────┘
@@ -109,6 +110,7 @@ Line-In-Bibliothek → **+ Neu**.
 | **Name** | Erforderlich. Eindeutig. Das sichtbare Label überall. |
 | **Gerät** | Erforderlich. Dropdown listet jedes Eingabegerät, das das OS gerade sieht. Wenn Ihr Gerät im Dropdown fehlt, siehe [Lokale Maschine](./LOCAL_MACHINE.md) → Geräte-Probing. |
 | **Standardlänge** | Erforderlich. Format `HHh MMm SSs` (derselbe Parser wie Webstreams). Für "spielt bis gestoppt" verwenden Sie `0h 0m 0s` (zeigt als `∞`). |
+| **Eingangsverstärkung (dB)** | Optional, Standard `0` (unverändert). Hebt oder senkt den Pegel dieses Line-Ins auf Sendung, `-20,0` bis `+20,0` dB — siehe *Eingangsverstärkung* unten. |
 
 > **Ein Editor seit dem 17.09.2026.** Dieser Dialog ist der
 > vollständige Line-In-Editor: Er wählt auch die **Channels** (eine
@@ -174,6 +176,50 @@ einer Sendung reserviert:
 Der Operator kann die Dauer pro Verwendung im Show-Builder
 immer überschreiben; die Standardlänge ist nur der
 Anfangswert.
+
+### Eingangsverstärkung: den Studiopegel angleichen
+
+Studios kommen selten mit demselben Pegel an: ein Mischpult
+fährt heiß, ein Gastmikrofon auf einem Mono-Kanal ist leise.
+Die **Eingangsverstärkung (dB)** gleicht einen Line-In an die
+Lautheit des Senders an, ohne das Mischpult anzufassen — dasselbe
+Feld, das Webstreams haben (siehe [Webstreams](./WEBSTREAMS.md)
+→ Stream-Gain).
+
+| Einstellung | Wirkung |
+|---|---|
+| `0.0` (Standard) | Keine Pegeländerung. |
+| `+3.0` | Um 3 dB anheben. |
+| `-6.0` | Um 6 dB absenken. |
+
+Die Verstärkung wirkt, solange dieser Line-In auf Sendung ist —
+jeder Stream, die 24/7-Aufnahme und der Main Output hören den
+angepassten Pegel.  Jeder Line-In hat seinen eigenen Wert: Zwei
+Line-Ins am selben Gerät (z.B. zwei Sendungen aus einem Studio)
+können unterschiedliche Werte haben, umgeschaltet wird an der
+Sendungsgrenze.  Eine Änderung gilt für jeden Slot, der nach dem
+nächsten Einlesen des Sendeplans durch den Playout beginnt (alle
+zwei Minuten); ein Line-In, der gerade auf Sendung ist, behält
+seinen Pegel bis zum Ende seines Slots.
+
+> **Operator-Tipp.** Gleichen Sie mit einem Lautheitsmesser am
+> Ausgangsstream an: Planen Sie den Line-In als 10-Minuten-Test
+> ein, sprechen und spielen Sie in normalem Sendepegel, passen
+> Sie die Verstärkung an, wiederholen Sie.  Heben Sie mit
+> Bedacht an: Mit der EBU-R128-Lautheitsnormalisierung fängt der
+> Ausgangs-Limiter (und Stereo Tool, wenn aktiviert) die Spitzen
+> ab, ohne sie kann eine große Anhebung am Ausgang clippen.  Eine
+> Quelle, die schon am Mischpult clippt, bleibt geclippt — das
+> beheben Sie am Mischpult.
+
+> **Wie es unter der Haube funktioniert.** Die Migration
+> `linein 0005` ergänzt `rastatime_linein.input_gain_db`.  Die
+> Stream-Engine legt ein `amplify` um die Line-In-Quelle; der
+> Playout setzt dessen Faktor (`var.set linein.gain`, aus dB
+> umgerechnet) jedes Mal, wenn ein Line-In auf Sendung geht,
+> nachdem ein DJ zurückgibt und nach einem Neustart der Engine.
+> Beim ersten Mal nach dem Update braucht das einen Neustart von
+> Playout und Stream-Engine (neuer Skript-Block).
 
 ---
 
@@ -313,7 +359,8 @@ Sendeplan zurück.
 ### Bearbeiten
 
 Line-In-Bibliothek → Zeile klicken → **Bearbeiten**. Ändern
-Sie Name, Gerät, Kanäle oder Standardlänge.
+Sie Name, Gerät, Kanäle, Standardlänge oder
+Eingangsverstärkung.
 Klicken Sie **Speichern**.
 
 Effekte:
@@ -328,6 +375,11 @@ Effekte:
 - **Standardlängen-Änderung** beeinflusst nur *neue*
   Verwendungen; bestehende Schedule-Items behalten ihre
   konfigurierte Dauer.
+- **Änderung der Eingangsverstärkung** gilt für jeden Slot, der
+  nach dem nächsten Einlesen des Sendeplans durch den Playout
+  beginnt (höchstens zwei Minuten), einschließlich
+  Schedule-Items, die bereits in kommenden Sendungen sind; ein
+  Line-In auf Sendung behält seinen Pegel bis zum Slot-Ende.
 
 ### Löschen
 

@@ -3164,6 +3164,22 @@ Sowohl Menü-Ebene als auch Einzelfeld-Ebene gewünscht.
 
 ## 💡 Future Feature Ideas (nicht evaluiert, nur notiert)
 
+### 💡 Line-In-Eingangsverstärkung live nachregeln (notiert 2026-10-02)
+
+**Status:** 💡 Idee, nicht evaluiert.  Entstanden mit der
+Line-In-Eingangsverstärkung (2026-10-02, Option A: `amplify` in Liquidsoap,
+`var.set linein.gain`; siehe CHANGELOG / Architektur).
+**Heute:** Eine Änderung im Line-In-Dialog wirkt ab dem nächsten Slot, der
+nach dem nächsten Sendeplan-Einlesen (120 s) beginnt; ein laufender Line-In
+behält seinen Wert bis zum Slot-Ende.
+**Skizze:** Regler bzw. +/−-Knöpfe (Dashboard oder Line-In-Dialog), die den
+Gain eines gerade laufenden Line-Ins sofort setzen — technisch nur ein
+`var.set linein.gain` über PLAYOUT; Option A erlaubt das ohne Umbau.
+Optional die Übernahme des Werts in `rastatime_linein.input_gain_db`.
+**Vorbedingungen:** Bedarf aus dem Betrieb; Weg UI → PLAYOUT festlegen
+(HTTP-Endpunkt wie `/source-event`, Liquidsoap-Telnet nie direkt aus dem
+UI); Berechtigung (nur Admin oder auch Program Manager?).
+
 ### ✅ Show-Grenzen mit eigener Crossfade-Dauer (Operator-Wunsch 2026-09-10) — GEBAUT 2026-09-27
 
 **Status:** ✅ Umgesetzt 2026-09-27 (Operator-Go; Antworten auf die vier

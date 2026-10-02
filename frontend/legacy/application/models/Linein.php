@@ -36,7 +36,8 @@ class Application_Model_Linein
      * @param array $data  Decoded JSON dict from the Django Line-In API.
      *                     Required keys (when editing): id, name, device_id.
      *                     Optional keys: description, length_seconds,
-     *                     channel_mapping, enabled, priority.
+     *                     channel_mapping, enabled, priority,
+     *                     input_gain_db.
      *                     Pass an empty array for a "new" stub.
      */
     public function __construct(array $data = [])
@@ -50,6 +51,7 @@ class Application_Model_Linein
             'enabled'         => true,
             'priority'        => 0,
             'channel_mapping' => [0, 1],
+            'input_gain_db'   => 0.0,
         ], $data);
     }
 
@@ -99,6 +101,16 @@ class Application_Model_Linein
     {
         $m = $this->data['channel_mapping'] ?? [0, 1];
         return is_array($m) ? $m : [0, 1];
+    }
+
+    /**
+     * RASTATIME 2026-10-02 - static input gain in dB (0 = unchanged),
+     * the counterpart of Application_Model_Webstream::getInputGainDbForId.
+     */
+    public function getInputGainDb(): float
+    {
+        $g = $this->data['input_gain_db'] ?? 0.0;
+        return is_numeric($g) ? (float) $g : 0.0;
     }
 
 }

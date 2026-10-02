@@ -44,6 +44,9 @@ description : str
 priority : int
     Higher integer = higher priority when multiple line-ins compete for
     the same playout slot.  Defaults to ``0``.
+input_gain_db : float
+    Static input gain in dB the playout applies to this line-in on air
+    (RASTATIME 2026-10-02).  ``-20.0`` to ``+20.0``, default ``0.0``.
 
 Validation
 ----------
@@ -61,9 +64,15 @@ constructing IDs manually.
 
 from __future__ import annotations
 
+import math
 import uuid as _uuid_mod
 from dataclasses import dataclass, field
 from typing import Optional
+
+# RASTATIME 2026-10-02 - accepted range of LineIn.input_gain_db, the same
+# as the webstream input gain (WebstreamController clamps to it).
+INPUT_GAIN_DB_MIN = -20.0
+INPUT_GAIN_DB_MAX = 20.0
 
 
 @dataclass(frozen=True)
@@ -133,6 +142,16 @@ class LineIn:
     that pass kwargs continue to work without changes.
     """
 
+    input_gain_db: float = 0.0
+    """
+    RASTATIME 2026-10-02 - static input gain in dB, the line-in
+    counterpart of ``cc_webstream.input_gain_db``.  The playout applies
+    it on air as a linear ``amplify`` factor in Liquidsoap (``var.set
+    linein.gain``), so the studio level can be trimmed to the station
+    loudness without touching the mixer.  ``-20.0`` to ``+20.0``;
+    ``0.0`` = unchanged.
+    """
+
     # ------------------------------------------------------------------
     # Validation
     # ------------------------------------------------------------------
@@ -173,6 +192,19 @@ class LineIn:
                 raise ValueError(
                     "LineIn.length_seconds must be None or a non-negative int"
                 )
+        if (
+            not isinstance(self.input_gain_db, (int, float))
+            or isinstance(self.input_gain_db, bool)
+        ):
+            raise TypeError("LineIn.input_gain_db must be a number")
+        if (
+            not math.isfinite(self.input_gain_db)
+            or not INPUT_GAIN_DB_MIN <= self.input_gain_db <= INPUT_GAIN_DB_MAX
+        ):
+            raise ValueError(
+                f"LineIn.input_gain_db must be between {INPUT_GAIN_DB_MIN:+.0f} "
+                f"and {INPUT_GAIN_DB_MAX:+.0f} dB, got {self.input_gain_db!r}"
+            )
 
     # ------------------------------------------------------------------
     # Factory
@@ -190,6 +222,7 @@ class LineIn:
         priority: int = 0,
         length_seconds: Optional[int] = None,
         device_name: str = "",
+        input_gain_db: float = 0.0,
     ) -> "LineIn":
         """
         Create a new :class:`LineIn` with an auto-generated UUID.
@@ -213,6 +246,8 @@ class LineIn:
         length_seconds:
             Default Library duration in seconds (default ``None`` →
             1800 s / 30 min fallback at consumption sites).
+        input_gain_db:
+            Static input gain in dB (default ``0.0``).
 
         Returns
         -------
@@ -229,6 +264,7 @@ class LineIn:
             priority=priority,
             length_seconds=length_seconds,
             device_name=device_name,
+            input_gain_db=input_gain_db,
         )
 
     # ------------------------------------------------------------------
@@ -243,6 +279,7 @@ class LineIn:
             description=self.description, priority=self.priority,
             length_seconds=self.length_seconds,
             device_name=self.device_name,
+            input_gain_db=self.input_gain_db,
         )
 
     def with_device_id(self, device_id: str) -> "LineIn":
@@ -253,6 +290,7 @@ class LineIn:
             description=self.description, priority=self.priority,
             length_seconds=self.length_seconds,
             device_name=self.device_name,
+            input_gain_db=self.input_gain_db,
         )
 
     def with_channel_mapping(
@@ -269,6 +307,7 @@ class LineIn:
             description=self.description, priority=self.priority,
             length_seconds=self.length_seconds,
             device_name=self.device_name,
+            input_gain_db=self.input_gain_db,
         )
 
     def with_enabled(self, enabled: bool) -> "LineIn":
@@ -279,6 +318,7 @@ class LineIn:
             description=self.description, priority=self.priority,
             length_seconds=self.length_seconds,
             device_name=self.device_name,
+            input_gain_db=self.input_gain_db,
         )
 
     def with_description(self, description: str) -> "LineIn":
@@ -289,6 +329,7 @@ class LineIn:
             description=description, priority=self.priority,
             length_seconds=self.length_seconds,
             device_name=self.device_name,
+            input_gain_db=self.input_gain_db,
         )
 
     def with_priority(self, priority: int) -> "LineIn":
@@ -299,6 +340,7 @@ class LineIn:
             description=self.description, priority=priority,
             length_seconds=self.length_seconds,
             device_name=self.device_name,
+            input_gain_db=self.input_gain_db,
         )
 
     def with_length_seconds(self, length_seconds: Optional[int]) -> "LineIn":
@@ -309,6 +351,7 @@ class LineIn:
             description=self.description, priority=self.priority,
             length_seconds=length_seconds,
             device_name=self.device_name,
+            input_gain_db=self.input_gain_db,
         )
 
     def with_device_name(self, device_name: str) -> "LineIn":
@@ -325,6 +368,18 @@ class LineIn:
             description=self.description, priority=self.priority,
             length_seconds=self.length_seconds,
             device_name=device_name,
+            input_gain_db=self.input_gain_db,
+        )
+
+    def with_input_gain_db(self, input_gain_db: float) -> "LineIn":
+        """Return a new instance with ``input_gain_db`` replaced."""
+        return LineIn(
+            id=self.id, name=self.name, device_id=self.device_id,
+            channel_mapping=self.channel_mapping, enabled=self.enabled,
+            description=self.description, priority=self.priority,
+            length_seconds=self.length_seconds,
+            device_name=self.device_name,
+            input_gain_db=input_gain_db,
         )
 
     # ------------------------------------------------------------------
@@ -351,6 +406,7 @@ class LineIn:
             "description":     self.description,
             "priority":        self.priority,
             "length_seconds":  self.length_seconds,
+            "input_gain_db":   self.input_gain_db,
         }
 
     @classmethod
@@ -380,4 +436,5 @@ class LineIn:
             priority=data.get("priority", 0),
             length_seconds=data.get("length_seconds"),
             device_name=data.get("device_name", ""),
+            input_gain_db=data.get("input_gain_db", 0.0),
         )

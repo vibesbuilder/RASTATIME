@@ -262,6 +262,11 @@ class LineinController extends Zend_Controller_Action
         // operator dropped the toggle (an existing line-in may always
         // be used); creates pin enabled=true, updates leave it alone.
         $chanStr = trim($request->getParam('channels', ''));
+        // RASTATIME 2026-10-02 - static input gain (dB), clamped like the
+        // webstream one (WebstreamController::saveAction); empty or
+        // non-numeric -> 0 = unchanged.
+        $rawGain = trim((string) $request->getParam('input_gain_db', ''));
+        $gainDb  = is_numeric($rawGain) ? max(-20.0, min(20.0, (float) $rawGain)) : 0.0;
         $mapping = [0, 1];
         if ($chanStr !== '' && preg_match('/^\d+(,\d+)*$/', $chanStr)) {
             $mapping = array_map('intval', explode(',', $chanStr));
@@ -288,6 +293,7 @@ class LineinController extends Zend_Controller_Action
             'description'     => $desc,
             'length_seconds'  => $lenSec,
             'channel_mapping' => $mapping,
+            'input_gain_db'   => $gainDb,
         ];
 
         if ($id === '') {

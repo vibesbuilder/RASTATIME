@@ -48,7 +48,7 @@ from audio.linein._api_helpers import list_lineins_response, serialize_linein
 
 _EXPECTED_KEYS = {"id", "name", "device_id", "channel_mapping",
                   "enabled", "description", "priority",
-                  "length_seconds", "device_name"}
+                  "length_seconds", "device_name", "input_gain_db"}
 
 
 def _domain(**kwargs) -> LineIn:

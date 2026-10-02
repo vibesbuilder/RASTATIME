@@ -119,14 +119,15 @@ def test_legacy_data_sql_exists():
     )
 
 
-def test_linein_has_four_migration_files():
-    """``linein`` must have exactly 4 numbered migration files.
+def test_linein_has_five_migration_files():
+    """``linein`` must have exactly 5 numbered migration files.
 
     History:
       * 0001 — initial
       * 0002 — alter linein priority
       * 0003 — add length (RASTATIME 2026-05-12, Library integration)
       * 0004 — add device_name (RASTATIME 2026-05-14, B.4 #4 USB-GUID fallback)
+      * 0005 — add input_gain_db (RASTATIME 2026-10-02, per-line-in input gain)
     """
     migration_files = [
         p for p in _LINEIN_MIGRATIONS.iterdir()
@@ -134,8 +135,8 @@ def test_linein_has_four_migration_files():
         and not p.name.startswith("_")
         and p.name != "__init__.py"
     ]
-    assert len(migration_files) == 4, (
-        f"Expected 4 linein migrations, found {len(migration_files)}: "
+    assert len(migration_files) == 5, (
+        f"Expected 5 linein migrations, found {len(migration_files)}: "
         f"{sorted(p.name for p in migration_files)}"
     )
 

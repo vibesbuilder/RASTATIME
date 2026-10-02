@@ -1042,6 +1042,9 @@ var AIRTIME = (function (AIRTIME) {
       // every save now (the Local-Machine editor is gone; the enabled
       // toggle was dropped — an existing line-in may always be used).
       var channels    = $pl.find("#linein-channels").val() || "0,1";
+      // RASTATIME 2026-10-02 - per-line-in input gain (dB), like the
+      // webstream dialog; the server clamps to [-20, +20], bad input -> 0.
+      var inputGainDb = $pl.find("#lineinInputGainDb").val();
 
       // Hide any previous errors.
       $(".side_playlist.active-tab .errors").empty().hide();
@@ -1057,6 +1060,7 @@ var AIRTIME = (function (AIRTIME) {
           device_name: deviceName,
           length:      length,
           channels:    channels,
+          input_gain_db: inputGainDb,
         },
         function (json) {
           var $status = $(".side_playlist.active-tab .status");

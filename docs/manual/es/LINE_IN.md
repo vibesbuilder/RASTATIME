@@ -77,6 +77,7 @@ Line-In Library → **+ Nuevo**.
 | **Nombre** | Requerido. Único. La etiqueta visible en todas partes. |
 | **Dispositivo** | Requerido. El menú desplegable lista cada dispositivo de entrada que el OS ve ahora. Si su dispositivo falta, vea [Máquina local](./LOCAL_MACHINE.md). |
 | **Longitud por defecto** | Requerida. Formato `HHh MMm SSs` (mismo parser que Webstreams). Para "se reproduce hasta que se le diga que pare" use `0h 0m 0s`. |
+| **Ganancia de entrada (dB)** | Opcional, por defecto `0` (sin cambio). Sube o baja el nivel de este Line-In en antena, de `-20,0` a `+20,0` dB — vea *Ganancia de entrada* más abajo. |
 
 > **Un solo editor desde el 17/09/2026.** Este diálogo es el editor
 > Line-In completo: elige también los **Channels** (una opción por
@@ -131,6 +132,49 @@ límite del programa.
   programa (ej. 60 min) o infinito.
 - Para un **reproductor CD** u otra fuente cronometrada,
   establézcala a la longitud típica de pista (3 min).
+
+### Ganancia de entrada: igualar el nivel del estudio
+
+Los estudios rara vez llegan con el mismo nivel: una mesa va
+fuerte, un micrófono invitado en un canal mono es débil.  La
+**Ganancia de entrada (dB)** ajusta un Line-In a la sonoridad de
+la emisora sin tocar la mesa — el mismo campo que tienen los
+Webstreams (vea [Webstreams](./WEBSTREAMS.md) → Ganancia de
+stream).
+
+| Ajuste | Efecto |
+|---|---|
+| `0.0` (por defecto) | Sin cambio de ganancia. |
+| `+3.0` | Sube 3 dB. |
+| `-6.0` | Baja 6 dB. |
+
+La ganancia se aplica mientras este Line-In está en antena —
+cada stream, la grabación 24/7 y el Main Output reciben el nivel
+ajustado.  Cada Line-In tiene su propio valor: dos Line-Ins en el
+mismo dispositivo (ej. dos programas desde un estudio) pueden
+tener ganancias distintas, el cambio ocurre en el límite del
+programa.  Un cambio vale para cada slot que empieza después de
+la próxima lectura de la programación por el playout (cada dos
+minutos); un Line-In que ya está en antena mantiene su nivel
+hasta el final de su slot.
+
+> **Consejo de operador.** Ajuste con un medidor de sonoridad en
+> el stream de salida: programe el Line-In como prueba de 10
+> minutos, hable y toque al nivel normal del programa, ajuste la
+> ganancia, repita.  Suba con cuidado: con la normalización de
+> sonoridad EBU R128 el limitador de salida (y Stereo Tool, si
+> está activado) recoge los picos, sin ella una subida grande
+> puede saturar en la salida.  Una fuente que ya satura en la
+> mesa sigue saturada — corríjalo en la mesa.
+
+> **Cómo funciona por dentro.** La migración `linein 0005`
+> añade `rastatime_linein.input_gain_db`.  El motor de stream
+> envuelve la fuente Line-In en un `amplify`; el playout fija su
+> factor (`var.set linein.gain`, convertido desde dB) cada vez que
+> un Line-In sale en antena, cuando un DJ devuelve el control y
+> tras un reinicio del motor.  La primera vez tras la
+> actualización hace falta reiniciar el playout y el motor de
+> stream (nuevo bloque de script).
 
 ---
 
@@ -257,8 +301,8 @@ planning.
 ### Editar
 
 Line-In Library → clic en la fila → **Editar**. Cambie
-nombre, dispositivo, longitud por defecto o estado
-habilitado. **Guardar**.
+nombre, dispositivo, canales, longitud por defecto o
+ganancia de entrada. **Guardar**.
 
 - **Cambio de nombre** se propaga a la lista Biblioteca y
   al widget En reproducción en la próxima actualización.
@@ -266,6 +310,11 @@ habilitado. **Guardar**.
   futuro.
 - **Cambio de longitud por defecto** afecta solo *nuevos*
   usos.
+- **Cambio de ganancia de entrada** vale para cada slot que
+  empieza después de la próxima lectura de la programación por
+  el playout (dos minutos como máximo), incluidos los elementos
+  ya programados; un Line-In en antena mantiene su nivel hasta
+  el final de su slot.
 
 ### Eliminar
 

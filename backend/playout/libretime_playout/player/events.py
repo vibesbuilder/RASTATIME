@@ -237,6 +237,15 @@ class LineinEvent(BaseEvent):
     studio per input pair.
     """
 
+    input_gain_db: Optional[float] = None
+    """
+    RASTATIME 2026-10-02 - static input gain in dB from
+    ``rastatime_linein.input_gain_db`` (the line-in counterpart of
+    :attr:`WebStreamEvent.input_gain_db`).  The scheduler pushes it as
+    the linear ``linein.gain`` factor whenever this line-in goes on air;
+    ``None`` / 0 = unity.
+    """
+
 
 class ActionEventKind(str, Enum):
     SWITCH_OFF = "switch_off"

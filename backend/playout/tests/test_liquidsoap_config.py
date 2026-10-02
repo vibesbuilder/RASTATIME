@@ -1088,8 +1088,12 @@ def test_full_render_default_includes_linein_input_block():
     assert 'id="linein_http"' in active
     assert '"http://127.0.0.1:8000/linein-capture",' in active
     assert "linein_http = audio_to_stereo(linein_http_raw)" in active
+    # RASTATIME 2026-10-02 - the folded arm runs through the per-line-in
+    # input gain (var.set linein.gain, unity by default).
+    assert 'linein_gain = interactive.float("linein.gain", 1.0)' in active
     assert (
-        "linein = fallback(track_sensitive=false, [linein_dshow, linein_http])"
+        "linein = amplify({linein_gain()},\n"
+        "  fallback(track_sensitive=false, [linein_dshow, linein_http]))"
         in active
     )
     # The dshow source itself must NOT have turned into input.http

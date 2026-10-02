@@ -786,6 +786,44 @@ def test_gates_survive_a_telnet_error():
     engine.webstream_gate(False)  # must not raise
 
 
+
+# RASTATIME 2026-10-02 - per-line-in input gain (var.set linein.gain)
+
+def test_linein_set_gain_converts_db_to_linear():
+    engine, telnet = _make_engine_with_mock()
+    telnet.linein_set_gain.return_value = "Variable linein.gain set."
+    engine.linein_set_gain(6.0)
+    args, _ = telnet.linein_set_gain.call_args
+    assert abs(args[0] - 1.9953) < 0.001
+
+
+def test_linein_set_gain_unity_for_none_and_zero():
+    engine, telnet = _make_engine_with_mock()
+    telnet.linein_set_gain.return_value = "Variable linein.gain set."
+    engine.linein_set_gain(None)
+    telnet.linein_set_gain.assert_called_with(1.0)
+    engine.linein_set_gain(0.0001)
+    telnet.linein_set_gain.assert_called_with(1.0)
+
+
+def test_linein_set_gain_tolerates_an_old_script_and_telnet_errors(caplog):
+    engine, telnet = _make_engine_with_mock()
+    telnet.linein_set_gain.return_value = "Syntax error or variable not found."
+    with caplog.at_level("WARNING"):
+        engine.linein_set_gain(3.0)          # must not raise
+    assert "no linein.gain" in caplog.text
+    telnet.linein_set_gain.side_effect = OSError("telnet down")
+    engine.linein_set_gain(3.0)              # must not raise
+
+
+def test_telnet_linein_set_gain_wire_form():
+    from libretime_playout.engine.liquidsoap_telnet import LiquidsoapTelnetClient
+    client = LiquidsoapTelnetClient(host="127.0.0.1", port=1)
+    client.send_command = MagicMock(return_value="Variable linein.gain set.")
+    client.linein_set_gain(0.5)
+    client.send_command.assert_called_once_with("var.set linein.gain = 0.5")
+
+
 # ---- dj_kick (RASTATIME 2026-09-10) -------------------------------------
 #
 # Replaces the Icecast admin killsource of the deleted mpv path: the DJs

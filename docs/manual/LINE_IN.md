@@ -94,6 +94,7 @@ Line-In Library → **+ New**.
    │   Device:         [Select a device... ▾]                     │
    │   Channels:       [Stereo 1/2 ▾]                             │
    │   Default Length: [10m 00s   ]    (use 00s for infinite)     │
+   │   Input Gain (dB):[0.0  ]   Range: -20.0 to +20.0 dB         │
    ├──────────────────────────────────────────────────────────────┤
    │                                       [Cancel ]  [ Save  ]   │
    └──────────────────────────────────────────────────────────────┘
@@ -104,6 +105,7 @@ Line-In Library → **+ New**.
 | **Name** | Required. Unique. The visible label everywhere. |
 | **Device** | Required. Dropdown lists every input device the OS sees right now. If your device is missing from the dropdown, see [Local Machine](./LOCAL_MACHINE.md) → device probing. |
 | **Default Length** | Required. Format `HHh MMm SSs` (the same parser as Webstreams). For "play until told to stop" use `0h 0m 0s` (displays as `∞`). |
+| **Input Gain (dB)** | Optional, default `0` (unchanged). Raises or lowers this Line-In's level on air, `-20.0` to `+20.0` dB — see *Input gain* below. |
 
 > **One editor since 2026-09-17.** This dialog is the complete
 > Line-In editor: it also picks the **Channels** (one option per
@@ -163,6 +165,46 @@ a show:
 
 The operator can always override the duration per use in the
 show-builder; the Default Length is just the starting value.
+
+### Input gain: trimming the studio level
+
+Studios rarely arrive at the same level: one mixer runs hot, a
+guest microphone on a mono channel is quiet.  **Input Gain (dB)**
+trims a Line-In to the station's loudness without touching the
+mixer — the same field Webstreams have (see
+[Webstreams](./WEBSTREAMS.md) → Stream gain).
+
+| Setting | Effect |
+|---|---|
+| `0.0` (default) | No gain change. |
+| `+3.0` | Boost by 3 dB. |
+| `-6.0` | Attenuate by 6 dB. |
+
+The gain applies whenever this Line-In is on air — every stream,
+the 24/7 recording and the Main Output hear the adjusted level.
+Each Line-In carries its own value: two Line-Ins on the same
+device (e.g. two shows from one studio) can use different gains,
+and the switch happens at the show boundary.  A change reaches
+every slot that starts after the playout's next schedule read
+(every two minutes); a Line-In that is on air right now keeps its
+level until its slot ends.
+
+> **Operator tip.** Trim with a loudness meter on the output
+> stream: schedule the Line-In as a 10-minute test, speak and
+> play at normal show level, adjust the gain, repeat.  Boost
+> with care: with EBU R128 loudness normalization the output
+> limiter (and Stereo Tool, when enabled) catches the peaks,
+> without it a large boost can clip at the output.  A source
+> that already clips at the mixer stays clipped — fix that at
+> the mixer.
+
+> **How it works under the hood.** Migration `linein 0005` adds
+> `rastatime_linein.input_gain_db`.  The stream engine wraps the
+> Line-In source in an `amplify`; the playout sets its factor
+> (`var.set linein.gain`, converted from dB) every time a
+> Line-In goes on air, after a DJ hands back and after an engine
+> restart.  The first time after the update this needs a restart
+> of the playout and the stream engine (new script block).
 
 ---
 
@@ -296,7 +338,7 @@ schedule.
 ### Edit
 
 Line-In Library → click the row → **Edit**. Change name,
-device, default length, or enabled state. Click **Save**.
+device, channels, default length or input gain. Click **Save**.
 
 Effects:
 
@@ -307,6 +349,10 @@ Effects:
   including schedule items already in upcoming shows.
 - **Default Length change** affects only *new* uses; existing
   schedule items keep their configured duration.
+- **Input Gain change** applies to every slot that starts after
+  the playout's next schedule read (at most two minutes),
+  including schedule items already in upcoming shows; a Line-In
+  on air keeps its level until its slot ends.
 
 ### Delete
 

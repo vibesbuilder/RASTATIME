@@ -82,6 +82,7 @@ Line-In Library → **+ Nouveau**.
 | **Nom** | Requis. Unique. Le libellé visible partout. |
 | **Périphérique** | Requis. Menu déroulant liste chaque périphérique d'entrée que l'OS voit. Si votre périphérique manque, voir [Machine locale](./LOCAL_MACHINE.md). |
 | **Longueur par défaut** | Requise. Format `HHh MMm SSs` (même parseur que Webstreams). Pour "joue jusqu'à être dit de s'arrêter" utilisez `0h 0m 0s` (affiche comme `∞`). |
+| **Gain d'entrée (dB)** | Facultatif, par défaut `0` (inchangé). Monte ou baisse le niveau de ce Line-In à l'antenne, de `-20,0` à `+20,0` dB — voir *Gain d'entrée* ci-dessous. |
 
 > **Un seul éditeur depuis le 17/09/2026.** Ce dialogue est
 > l'éditeur Line-In complet : il choisit aussi les **Channels**
@@ -142,6 +143,48 @@ la frontière d'émission.
 L'opérateur peut toujours surcharger la durée par
 utilisation dans le show-builder ; la Longueur par défaut
 n'est que la valeur de départ.
+
+### Gain d'entrée : ajuster le niveau du studio
+
+Les studios arrivent rarement au même niveau : une console
+pousse fort, un micro invité sur un canal mono est faible.  Le
+**Gain d'entrée (dB)** ajuste un Line-In à la sonie de la station
+sans toucher à la console — le même champ que pour les Webstreams
+(voir [Webstreams](./WEBSTREAMS.md) → Gain de stream).
+
+| Réglage | Effet |
+|---|---|
+| `0.0` (par défaut) | Aucun changement de gain. |
+| `+3.0` | Monte de 3 dB. |
+| `-6.0` | Baisse de 6 dB. |
+
+Le gain s'applique tant que ce Line-In est à l'antenne — chaque
+flux, l'enregistrement 24/7 et le Main Output reçoivent le niveau
+ajusté.  Chaque Line-In a sa propre valeur : deux Line-Ins sur le
+même périphérique (ex. deux émissions d'un même studio) peuvent
+avoir des gains différents, la bascule se fait à la frontière
+d'émission.  Un changement vaut pour chaque créneau qui commence
+après la prochaine lecture du planning par le playout (toutes les
+deux minutes) ; un Line-In déjà à l'antenne garde son niveau
+jusqu'à la fin de son créneau.
+
+> **Astuce opérateur.** Ajustez avec un sonomètre sur le flux de
+> sortie : planifiez le Line-In en test de 10 minutes, parlez et
+> jouez au niveau normal d'émission, ajustez le gain, recommencez.
+> Montez avec prudence : avec la normalisation de sonie EBU R128,
+> le limiteur de sortie (et Stereo Tool, s'il est activé) rattrape
+> les crêtes, sans elle une forte hausse peut saturer à la sortie.
+> Une source qui sature déjà à la console reste saturée — corrigez
+> cela à la console.
+
+> **Comment ça marche sous le capot.** La migration `linein 0005`
+> ajoute `rastatime_linein.input_gain_db`.  Le moteur de flux
+> entoure la source Line-In d'un `amplify` ; le playout règle son
+> facteur (`var.set linein.gain`, converti depuis les dB) chaque
+> fois qu'un Line-In passe à l'antenne, quand un DJ rend la main et
+> après un redémarrage du moteur.  La première fois après la mise à
+> jour, il faut redémarrer le playout et le moteur de flux (nouveau
+> bloc de script).
 
 ---
 
@@ -272,8 +315,8 @@ planning.
 ### Modifier
 
 Line-In Library → cliquez sur la ligne → **Modifier**.
-Changez nom, périphérique, longueur par défaut ou état
-activé. **Enregistrer**.
+Changez nom, périphérique, canaux, longueur par défaut ou
+gain d'entrée. **Enregistrer**.
 
 - **Changement de nom** se propage à la liste Bibliothèque
   et au widget En cours au prochain rafraîchissement.
@@ -281,6 +324,11 @@ activé. **Enregistrer**.
   utilisation future.
 - **Changement de Longueur par défaut** affecte seulement
   les *nouvelles* utilisations.
+- **Changement de Gain d'entrée** vaut pour chaque créneau qui
+  commence après la prochaine lecture du planning par le playout
+  (deux minutes au plus), y compris les éléments déjà planifiés ;
+  un Line-In à l'antenne garde son niveau jusqu'à la fin de son
+  créneau.
 
 ### Supprimer
 

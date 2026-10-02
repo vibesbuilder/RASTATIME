@@ -610,6 +610,15 @@ class LiquidsoapTelnetClient:
         """
         return self.send_command("linein_http.start")
 
+    def linein_set_gain(self, linear_factor: float) -> str:
+        """
+        RASTATIME 2026-10-02 - set the linear amplify factor of the
+        line-in arm (``interactive.float("linein.gain", 1.0)`` in the
+        .liq).  Same wire-form as :meth:`webstream_set_gain`:
+        ``var.set linein.gain = <factor>``.  1.0 = unity.
+        """
+        return self.send_command(f"var.set linein.gain = {linear_factor}")
+
     def linein_http_stop(self) -> str:
         """
         Stop the ``input.http`` companion source.  Idempotent — a stop

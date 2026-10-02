@@ -75,7 +75,7 @@ def test_create_body_returns_all_keys():
     result = parse_linein_create_body(_VALID_CREATE_BODY.copy())
     assert set(result.keys()) == {
         "name", "device_id", "channel_mapping", "enabled", "description",
-        "priority", "length_seconds", "device_name",
+        "priority", "length_seconds", "device_name", "input_gain_db",
     }
 
 

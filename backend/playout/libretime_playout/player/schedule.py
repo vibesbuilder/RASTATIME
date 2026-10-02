@@ -502,5 +502,11 @@ def generate_linein_events(
         # interfaces.  Falsy / missing (legacy rows) defaults to plain
         # stereo, which keeps the proven dshow capture path.
         channel_mapping=list(linein.get("channel_mapping") or [0, 1]),
+        # RASTATIME 2026-10-02 - static input gain (dB); missing on an API
+        # that predates the column -> None = unity.
+        input_gain_db=(
+            float(linein["input_gain_db"])
+            if linein.get("input_gain_db") is not None else None
+        ),
     )
     insert_event(events, linein_key, linein_start_event)

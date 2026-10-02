@@ -8,9 +8,10 @@ running application server.  It mirrors the design of
 
 from __future__ import annotations
 
+import math
 from typing import Iterable
 
-from .domain import LineIn
+from .domain import INPUT_GAIN_DB_MAX, INPUT_GAIN_DB_MIN, LineIn
 
 
 # ---------------------------------------------------------------------------
@@ -38,6 +39,7 @@ def serialize_linein(linein: LineIn) -> dict:
         "description":     linein.description,
         "priority":        int(linein.priority),
         "length_seconds":  linein.length_seconds,
+        "input_gain_db":   float(linein.input_gain_db),
     }
 
 
@@ -122,6 +124,9 @@ def parse_linein_create_body(body: dict) -> dict:
     if not isinstance(device_name, str):
         raise ValueError("'device_name' must be a string (may be empty)")
 
+    # RASTATIME 2026-10-02 - optional static input gain (default 0 dB).
+    input_gain_db = _validate_input_gain_db(body.get("input_gain_db", 0.0))
+
     return {
         "name":            name.strip(),
         "device_id":       device_id.strip(),
@@ -131,6 +136,7 @@ def parse_linein_create_body(body: dict) -> dict:
         "description":     description,
         "priority":        priority,
         "length_seconds":  length_seconds,
+        "input_gain_db":   input_gain_db,
     }
 
 
@@ -209,7 +215,25 @@ def parse_linein_patch_body(body: dict) -> dict:
                 )
         out["length_seconds"] = val
 
+    if "input_gain_db" in body:
+        out["input_gain_db"] = _validate_input_gain_db(body["input_gain_db"])
+
     return out
+
+
+def _validate_input_gain_db(val) -> float:
+    """
+    RASTATIME 2026-10-02 - a finite number within the domain range
+    (-20..+20 dB); returned as float.  Raises ValueError otherwise.
+    """
+    if not isinstance(val, (int, float)) or isinstance(val, bool) or not math.isfinite(val):
+        raise ValueError("'input_gain_db' must be a number")
+    if not INPUT_GAIN_DB_MIN <= val <= INPUT_GAIN_DB_MAX:
+        raise ValueError(
+            f"'input_gain_db' must be between {INPUT_GAIN_DB_MIN:+.0f} "
+            f"and {INPUT_GAIN_DB_MAX:+.0f} dB"
+        )
+    return float(val)
 
 
 def _validate_channel_mapping(mapping: list) -> None:

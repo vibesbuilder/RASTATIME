@@ -919,6 +919,39 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
                 "Liquidsoap linein_start_http failed: %s", exc,
             )
 
+    def linein_set_gain(self, gain_db: Optional[float]) -> None:
+        """
+        RASTATIME 2026-10-02 - per-line-in static input gain
+        (``rastatime_linein.input_gain_db``), applied by the ``amplify``
+        around the line-in arm of the .liq.  Converted to a linear factor
+        here like :meth:`webstream_start` does (``10 ** (dB / 20)``).
+
+        Always sets a value - unity for ``None`` / 0 - so the previous
+        line-in's gain never carries over.  A .liq rendered before the
+        variable existed answers "not found": logged, nothing else (the
+        line-in then plays at unity until LIQUIDSOAP runs the new
+        script).  Fail-soft like the other wrappers.
+        """
+        if gain_db is not None and abs(gain_db) > 0.001:
+            linear_factor = 10.0 ** (gain_db / 20.0)
+            gain_for_log = f"{gain_db:+.2f}dB"
+        else:
+            linear_factor = 1.0
+            gain_for_log = "unity"
+        try:
+            reply = self._telnet.linein_set_gain(linear_factor)
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            logger.warning("Liquidsoap linein_set_gain telnet error: %s", exc)
+            return
+        if "not found" in (reply or "").lower():
+            logger.warning(
+                "Liquidsoap linein_set_gain: the running script has no "
+                "linein.gain (rendered before 2026-10-02) - the line-in "
+                "plays at unity until LIQUIDSOAP restarts on the new .liq.",
+            )
+            return
+        logger.info("Liquidsoap linein_set_gain: %s", gain_for_log)
+
     def linein_gate(self, open_: bool) -> None:
         """
         RASTATIME 2026-09-04 - open/close the line-in arm of the bus

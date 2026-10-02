@@ -1085,6 +1085,11 @@ class PlayoutScheduler:
             return False, exc
         if reset_gates:
             self.reset_gates()
+        # A fresh instance starts with linein.gain at unity; a line-in on
+        # air keeps its trim across the restart (2026-10-02).
+        current = getattr(self, "_current_event", None)
+        if isinstance(current, LineinEvent):
+            self._apply_linein_gain(current)
         # Seed the restart detector with this instance's uptime so a
         # later drop is recognised as a fresh Liquidsoap (2026-09-07).
         if hasattr(self._engine, "liquidsoap_uptime_seconds"):
@@ -2075,6 +2080,20 @@ class PlayoutScheduler:
             self._engine.webstream_stop()
             self._engine.webstream_gate(True)
 
+    def _apply_linein_gain(self, event: object) -> None:
+        """
+        RASTATIME 2026-10-02 - push a line-in's static input gain
+        (``rastatime_linein.input_gain_db``) to the ``linein.gain``
+        amplify factor of the .liq.  Every path that puts a line-in on
+        air calls this, so the previous line-in's gain never carries
+        over (``None`` / 0 = unity).  No-op for other events and for an
+        engine without the setter.
+        """
+        setter = getattr(self._engine, "linein_set_gain", None)
+        if setter is None or not isinstance(event, LineinEvent):
+            return
+        setter(getattr(event, "input_gain_db", None))
+
     def reset_gates(self) -> None:
         """Open both bus gates (startup: a previous Pypo may have died
         mid-prepare with a gate closed)."""
@@ -2616,6 +2635,12 @@ class PlayoutScheduler:
         row_id = getattr(event, "row_id", None)
         if row_id is not None:
             self._notify_media_started(row_id)
+
+        # RASTATIME 2026-10-02 - this line-in's input gain, before any of
+        # the early returns below: a same-device transition keeps the
+        # capture but may carry a different gain, and a pre-warmed or
+        # held line-in opens its gate further down.
+        self._apply_linein_gain(event)
 
         if same_device_transition:
             logger.info(
@@ -3583,6 +3608,7 @@ class PlayoutScheduler:
             # RASTATIME 2026-08-31 — re-arm the linein sources themselves
             # (mirror of _on_linein_start).
             self._linein_generation += 1
+            self._apply_linein_gain(self._current_event)   # 2026-10-02
             if use_feeder:
                 self._engine.linein_start_http()
                 self._engine.linein_gate(True)
