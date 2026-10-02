@@ -531,3 +531,46 @@ def test_a_late_timer_does_not_wait(sched):
         s._on_file_start("F", _file(now + timedelta(seconds=5), seconds=50.0))
     sleep.assert_not_called()
     engine.play.assert_called_once()
+
+
+# ---------------------------------------------------------------------------
+# 2026-10-02 - the chain lag follows an adopted track across a layout gap
+# ---------------------------------------------------------------------------
+
+def _adopt(s, engine, prev, nxt, lag):
+    _on_air(s, prev, key="p", lag=lag)
+    s._queued_ahead = ("n", nxt)
+    engine.playing_remaining_seconds.return_value = 0.0
+    s._on_file_start("n", nxt)
+    engine.adopt_queued.assert_called_once()
+
+
+def test_adopted_track_keeps_the_lag_when_the_rows_abut(sched):
+    s, engine, _ = sched
+    now = datetime.utcnow()
+    prev = _file(now - timedelta(seconds=8.0), seconds=9.9, crossfade=0.0, row_id=1, file_id=1)
+    nxt = _file(now - timedelta(seconds=8.0) + timedelta(seconds=9.9), seconds=50.0, crossfade=0.0, row_id=2, file_id=2)
+    _adopt(s, engine, prev, nxt, lag=0.3)
+    assert s._file_chain_lag == pytest.approx(0.3, abs=0.01)
+
+
+def test_adopted_track_after_a_layout_gap_loses_the_gap(sched):
+    """StationID row ends at :59.7, the next show starts at :00.0 - the
+    0.3-s gap is swallowed on air, the chain lag drops from 0.3 to 0.0."""
+    s, engine, _ = sched
+    now = datetime.utcnow()
+    prev = _file(now - timedelta(seconds=17.0), seconds=17.7, crossfade=0.0, row_id=1, file_id=1)
+    nxt = _file(now - timedelta(seconds=17.0) + timedelta(seconds=18.0), seconds=9.0, crossfade=0.0, row_id=2, file_id=2)
+    nxt = nxt.model_copy(update={"instance_id": 99, "show_name": "next"})
+    prev = prev.model_copy(update={"instance_id": 98})
+    _adopt(s, engine, prev, nxt, lag=0.3)
+    assert s._file_chain_lag == pytest.approx(0.0, abs=0.01)
+
+
+def test_adopted_track_with_an_overlap_keeps_the_lag(sched):
+    s, engine, _ = sched
+    now = datetime.utcnow()
+    prev = _file(now - timedelta(seconds=190.0), seconds=200.0, crossfade=None, row_id=1, file_id=1)
+    nxt = _file(now - timedelta(seconds=190.0) + timedelta(seconds=197.0), seconds=200.0, crossfade=None, row_id=2, file_id=2)
+    _adopt(s, engine, prev, nxt, lag=1.0)
+    assert s._file_chain_lag == pytest.approx(1.0, abs=0.01)

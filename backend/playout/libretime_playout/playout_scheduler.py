@@ -1546,6 +1546,30 @@ class PlayoutScheduler:
         lag = (datetime.utcnow() - start).total_seconds() - seek
         self._file_chain_lag = max(-1.0, min(lag, 10.0))
 
+    def _carry_file_chain_lag(self, prev_event: object, event: FileEvent, mode: str) -> None:
+        """
+        RASTATIME 2026-10-02 - an adopted track starts when its
+        predecessor's audio ends, minus the overlap of the pair (none at a
+        show boundary, where the old tail plays out first).  Rows that
+        abut keep the chain's lag; a gap in the layout - the 0.3 s between
+        a StationID clipped at 59.7 and the next show at :00 - is swallowed
+        on air and shortens the lag by that much (the 08:00 block started
+        exactly on its rows while the model still said +0.3 s).
+        """
+        if not isinstance(prev_event, FileEvent):
+            return
+        overlap = 0.0 if mode.startswith("show") else self._pair_crossfade(prev_event, event)
+        audio_start = self._file_audio_end(prev_event) - timedelta(seconds=overlap)
+        lag = (audio_start - (event.start_exact or event.start)).total_seconds()
+        lag = max(-1.0, min(lag, 10.0))
+        if self._file_chain_lag is None or abs(lag - self._file_chain_lag) > 0.005:
+            logger.info(
+                "PLAY  %s: the file chain runs %.2f s behind the rows (was %s).",
+                event.track_title or event.id, lag,
+                "unknown" if self._file_chain_lag is None else f"{self._file_chain_lag:.2f} s",
+            )
+        self._file_chain_lag = lag
+
     def _dj_on_air(self) -> bool:
         return bool(
             self._switcher and self._switcher.current_state != SourceState.SCHEDULED
@@ -2188,6 +2212,8 @@ class PlayoutScheduler:
             if skip:
                 # 2026-09-29: the cut starts a new chain at this instant
                 self._note_file_chain_lag(event, 0.0)
+            else:
+                self._carry_file_chain_lag(prev_event, event, mode)
             logger.info(
                 "PLAY  %s takes over from %r: %s (predecessor has %.1f s left)",
                 key, getattr(prev_event, "track_title", None) or "-",

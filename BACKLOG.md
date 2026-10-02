@@ -70,8 +70,13 @@ Lücke ✓ — aber Intro 2,4 s zu früh zu Ende (2,6 s Stille vor der BBC).
 50-ms-Übergabe) und verwarf damit die ganzen gepufferten 3 s — Sofa Rockers (langer Fade-out,
 R128-Gain) → StationID 3,0 s vor seiner Zeile (Hüllkurven-Korrelation: alle anderen Titel der
 Vorsendung +0,9…+1,4 s hinter der Zeile, der StationID −1,6 s), der BBC-Block erbte den Sprung.
-Shortcut entfernt; Bench Nachfolger 28,1 s → 31,1 s.  **Offen:** PLAYOUT-Neustart (Skript neu
-gerendert → geplanter Liquidsoap-Neustart), danach Nachmessen einer BBC-Folge mit Musik-Vorsendung.
+Shortcut entfernt; Bench Nachfolger 28,1 s → 31,1 s.  **Abnahme 2026-10-02 08:00** (Testsendung mit
+sieben Musiktiteln und 3-s-Crossfades, StationID, dann BBC): StationID nach dem −52-dB-Ausklang von
+„Künstler" bei +0,30 s wie alle anderen Titel (vorher −1,6 s); TOH, Dayteaser, Showteaser auf
+±0,1 s; Intro spielt bis zum Ende; Sendungsende 1,0 s Lücke.  Rest: 0,35 s Stille vor der BBC, weil
+die 0,3-s-Layout-Lücke vor der Sendungsgrenze auf der Luft verschluckt wurde und das Lag-Modell
+noch +0,3 s annahm → `_carry_file_chain_lag` (Lag folgt dem übernommenen Titel über Lücken), wirksam
+nach dem nächsten PLAYOUT-Neustart.
 
 **Befund (Testsendung 2026-09-30):** `cc_files.cueout` darf heute größer als die
 Dateilänge sein (ID 593: 6,90 s bei 5,97 s — vermutlich Datei ersetzt, Cue blieb),

@@ -818,6 +818,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **The file chain's lag follows an adopted track across a layout gap
+  (2026-10-02, after the 08:00 measurement)** - the quiet-tail fix held (the
+  StationID after a -52 dB fade-out started +0.30 s behind its row like every
+  other track of the preceding show), but the BBC block then started exactly
+  on its rows: the 0.3-s gap between the StationID clipped at :59.7 and the
+  show start at :00 is swallowed on air (the next track follows the old tail
+  at once), while the scheduler's `_file_chain_lag` still said +0.3 s from the
+  last fresh push - the relay's gate opened 0.35 s after the intro.
+  `_carry_file_chain_lag()` recomputes the lag at every adoption: the
+  predecessor's audio end minus the pair's overlap (none at a show boundary)
+  against the new row's exact start; abutting rows keep the lag, a gap
+  shortens it.  3 tests - `<hash-carry-lag>`.
+
 - **Show Builder: Datepicker-Popup unter den Spaltenköpfen, Timepicker noch
   Redmond-blau (2026-10-01, Operator-Meldung)** — (1) jQuery UI gibt
   `#ui-datepicker-div` inline den z-index des nächsten positionierten
