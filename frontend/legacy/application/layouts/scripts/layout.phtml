@@ -195,23 +195,22 @@
     // TODO: If you're updating this, be sure to update defaultdata! (Suboptimal, is there a better way?)
     if (!Application_Model_Preference::getWhatsNewDialogViewed()) {
     ?>
+        <?php // RASTATIME 2026-10-03 - the one-time welcome dialog speaks of
+              // RASTATIME and points at the in-app manual; the LibreTime
+              // UI-revamp video and the LibreTime forum are gone. ?>
         <div id="whatsnew">
             <div>
-                <div id="whatsnew_video">
-                    <iframe width="560" height="315" src="<?php echo UI_REVAMP_EMBED_URL ?>" frameborder="0" allowfullscreen></iframe>
-                </div>
-                <h2><?php echo _("Welcome to LibreTime"); ?></h2>
-                <p><?php echo _("LibreTime is free software for radio stations built by a community.
-                You can find out more information at LibreTime.org. We are built as a fork of Airtime.
-                If you have any questions you can also go to https://discourse.libretime.org and ask them."); ?></p>
+                <h2><?php echo sprintf(_("Welcome to %s!"), PRODUCT_NAME); ?></h2>
+                <p><?php echo _("RASTATIME is free radio automation software for scheduling and station management, built as a Windows-first fork of LibreTime."); ?>
+                <?php echo sprintf(_("For more detailed help, read the %suser manual%s."), "<a href='" . $this->baseUrl('manual') . "'>", "</a>"); ?></p>
             </div>
-            <button id="whatsnew_close" class="btn btn-new">OK, got it!</button>
+            <button id="whatsnew_close" class="btn btn-new"><?php echo _("OK, got it!"); ?></button>
         </div>
         <script>
             $(document).ready(function() {
                 var whatsnew = $("#whatsnew");
                 whatsnew.dialog({
-                    title: $.i18n._("Welcome to the Libretime!"),
+                    title: <?php echo json_encode(sprintf(_("Welcome to %s!"), PRODUCT_NAME)); ?>,
                     width: "auto",
                     height: "auto",
                     modal: true,

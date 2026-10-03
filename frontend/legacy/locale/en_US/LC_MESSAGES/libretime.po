@@ -633,7 +633,7 @@ msgid "It looks like the next show is empty. %sAdd tracks to your show now%s."
 msgstr ""
 
 #: application/configs/config-check.php:167
-msgid "LibreTime media analyzer service"
+msgid "RASTATIME media analyzer service"
 msgstr ""
 
 #: application/configs/config-check.php:174
@@ -657,7 +657,7 @@ msgid "If not, try "
 msgstr ""
 
 #: application/configs/config-check.php:187
-msgid "LibreTime playout service"
+msgid "RASTATIME playout service"
 msgstr ""
 
 #: application/configs/config-check.php:193
@@ -665,7 +665,7 @@ msgid "Check that the libretime-playout service is installed correctly in "
 msgstr ""
 
 #: application/configs/config-check.php:205
-msgid "LibreTime liquidsoap service"
+msgid "RASTATIME liquidsoap service"
 msgstr ""
 
 #: application/configs/config-check.php:212
@@ -673,7 +673,7 @@ msgid "Check that the libretime-liquidsoap service is installed correctly in "
 msgstr ""
 
 #: application/configs/config-check.php:224
-msgid "LibreTime Celery Task service"
+msgid "RASTATIME Celery Task service"
 msgstr ""
 
 #: application/configs/config-check.php:231
@@ -681,7 +681,7 @@ msgid "Check that the libretime-worker service is installed correctly in "
 msgstr ""
 
 #: application/configs/config-check.php:243
-msgid "LibreTime API service"
+msgid "RASTATIME API service"
 msgstr ""
 
 #: application/configs/config-check.php:250
@@ -829,19 +829,19 @@ msgstr "You don't have permission to switch source."
 msgid ""
 "To configure and use the embeddable player you must:<br><br>\n"
 "            1. Enable at least one MP3, AAC, or OGG stream under Settings -> Streams<br>\n"
-"            2. Enable the Public LibreTime API under Settings -> Preferences"
+"            2. Enable the Public RASTATIME API under Settings -> Preferences"
 msgstr ""
 
 #: application/controllers/EmbeddablewidgetsController.php:35
 msgid ""
 "To use the embeddable weekly schedule widget you must:<br><br>\n"
-"            Enable the Public LibreTime API under Settings -> Preferences"
+"            Enable the Public RASTATIME API under Settings -> Preferences"
 msgstr ""
 
 #: application/controllers/EmbeddablewidgetsController.php:48
 msgid ""
 "To add the Radio Tab to your Facebook Page, you must first:<br><br>\n"
-"            Enable the Public LibreTime API under Settings -> Preferences"
+"            Enable the Public RASTATIME API under Settings -> Preferences"
 msgstr ""
 
 #: application/controllers/ErrorController.php:94
@@ -994,23 +994,23 @@ msgid "New version available: "
 msgstr "New version available: "
 
 #: application/controllers/LocaleController.php:39
-msgid "You have a pre-release version of LibreTime intalled."
+msgid "You have a pre-release version of RASTATIME intalled."
 msgstr ""
 
 #: application/controllers/LocaleController.php:40
-msgid "A patch update for your LibreTime installation is available."
+msgid "A patch update for your RASTATIME installation is available."
 msgstr ""
 
 #: application/controllers/LocaleController.php:41
-msgid "A feature update for your LibreTime installation is available."
+msgid "A feature update for your RASTATIME installation is available."
 msgstr ""
 
 #: application/controllers/LocaleController.php:42
-msgid "A major update for your LibreTime installation is available."
+msgid "A major update for your RASTATIME installation is available."
 msgstr ""
 
 #: application/controllers/LocaleController.php:43
-msgid "Multiple major updates for LibreTime installation are available. Please upgrade as soon as possible."
+msgid "Multiple major updates for RASTATIME installation are available. Please upgrade as soon as possible."
 msgstr ""
 
 #: application/controllers/LocaleController.php:45
@@ -3266,7 +3266,7 @@ msgid "Trim overbooked shows after autoloading?"
 msgstr ""
 
 #: application/forms/GeneralPreferences.php:170
-msgid "Public LibreTime API"
+msgid "Public RASTATIME API"
 msgstr ""
 
 #: application/forms/GeneralPreferences.php:171
@@ -3275,7 +3275,7 @@ msgstr ""
 
 #: application/forms/GeneralPreferences.php:177
 msgid ""
-"Enabling this feature will allow LibreTime to provide schedule data\n"
+"Enabling this feature will allow RASTATIME to provide schedule data\n"
 "                                            to external widgets that can be embedded in your website."
 msgstr ""
 
@@ -4697,3 +4697,15 @@ msgstr ""
 #: RASTATIME 2026-10-01 help page
 msgid "For more detailed help, read the %suser manual%s."
 msgstr "For more detailed help, read the %suser manual%s."
+
+#: RASTATIME 2026-10-03 brand stage A
+msgid "RASTATIME is free radio automation software for scheduling and station management, built as a Windows-first fork of LibreTime."
+msgstr ""
+
+#: RASTATIME 2026-10-03 brand stage A
+msgid "OK, got it!"
+msgstr ""
+
+#: RASTATIME 2026-10-03 brand stage A
+msgid "based on LibreTime %s"
+msgstr ""

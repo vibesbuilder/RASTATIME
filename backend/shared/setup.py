@@ -5,7 +5,7 @@ version = "4.5.0"  # x-release-please-version
 setup(
     name="libretime-shared",
     version=version,
-    description="LibreTime Shared",
+    description="RASTATIME Shared",
     url="https://github.com/libretime/libretime",
     author="LibreTime Contributors",
     license="AGPLv3",

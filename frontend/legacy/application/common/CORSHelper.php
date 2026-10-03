@@ -16,7 +16,7 @@ class CORSHelper
 
             throw new Zend_Controller_Action_Exception('Forbidden', 403);
         }
-        // Allow AJAX requests from configured websites. We use this to allow other pages to use LibreTimes API.
+        // Allow AJAX requests from configured websites. We use this to allow other pages to use the RASTATIME API.
         if ($origin) {
             $response = $response->setHeader('Access-Control-Allow-Origin', $origin);
         }

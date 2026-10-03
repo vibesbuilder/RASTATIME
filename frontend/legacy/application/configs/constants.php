@@ -31,25 +31,30 @@ define('LIBRETIME_CONF_DIR', LIBRETIME_CONFIG_DIR); // Deprecated
 define('LIBRETIME_CONFIG_FILEPATH', getenv('LIBRETIME_CONFIG_FILEPATH') ?: LIBRETIME_CONFIG_DIR . '/libretime.conf');
 
 // Legacy constants
-define('PRODUCT_NAME', 'LibreTime');
-define('PRODUCT_SITE_URL', 'https://libretime.org');
+// RASTATIME 2026-10-03 (brand stage A, operator): the product-facing name
+// is RASTATIME everywhere - login page, about page, "Powered by", e-mails,
+// JS PRODUCT_NAME.  Only VERSION keeps reporting the upstream LibreTime
+// release this fork is based on (upstream-sync tracking); the LIBRETIME_*
+// identifiers below are untouched (stage B, see BACKLOG).
+define('PRODUCT_NAME', 'RASTATIME');
+define('PRODUCT_SITE_URL', 'https://github.com/RASTATIME/rastatime');
 
 /**
- * RASTATIME 2026-05-16 - Fork version, kept separate from PRODUCT_NAME /
- * VERSION (which still report the upstream LibreTime release this fork
- * is based on for upstream-sync tracking and API-response compatibility).
- * Bump in lockstep with ARCHITECTURE.md version-history entries.
+ * RASTATIME 2026-05-16 - Fork version, kept separate from VERSION (which
+ * still reports the upstream LibreTime release this fork is based on for
+ * upstream-sync tracking).  Bump in lockstep with ARCHITECTURE.md
+ * version-history entries.
  */
 define('RASTATIME_VERSION', '0.5');
 
-define('SAAS_PRODUCT_BRANDING_NAME', 'LibreTime');
-define('SAAS_LOGIN_REFERRER', 'https://libretime.org');
+define('SAAS_PRODUCT_BRANDING_NAME', 'RASTATIME');
+define('SAAS_LOGIN_REFERRER', 'https://github.com/RASTATIME/rastatime');
 
-define('COMPANY_NAME', 'LibreTime Community');
+define('COMPANY_NAME', 'RASTATIME Project');  // about page: "© 2026 RASTATIME Project · RASTATIME is distributed under …" (upstream read "LibreTime Community LibreTime …")
 define('COMPANY_SUFFIX', '');
-define('COMPANY_SITE', 'libretime.org');
-define('COMPANY_SITE_URL', 'https://libretime.org');
-define('SUPPORT_ADDRESS', 'https://discourse.libretime.org/');
+define('COMPANY_SITE', 'github.com/RASTATIME/rastatime');
+define('COMPANY_SITE_URL', 'https://github.com/RASTATIME/rastatime');
+define('SUPPORT_ADDRESS', 'https://github.com/RASTATIME/rastatime/issues');
 
 define('HELP_URL', 'https://discourse.libretime.org/');
 define('WHOS_USING_URL', 'https://github.com/orgs/libretime/people');

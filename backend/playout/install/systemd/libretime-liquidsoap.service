@@ -1,5 +1,5 @@
 [Unit]
-Description=LibreTime Liquidsoap Service
+Description=RASTATIME Liquidsoap Service
 PartOf=libretime.target
 
 [Service]

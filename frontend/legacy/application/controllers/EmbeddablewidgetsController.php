@@ -415,7 +415,7 @@ class EmbeddableWidgetsController extends Zend_Controller_Action
 
         if (!$apiEnabled) {
             $this->view->facebook_error_msg = _('To add the Radio Tab to your Facebook Page, you must first:<br><br>
-            Enable the Public LibreTime API under Settings -> Preferences');
+            Enable the Public RASTATIME API under Settings -> Preferences');
         }
 
         $CC_CONFIG = Config::getConfig();

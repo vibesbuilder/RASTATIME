@@ -1,6 +1,6 @@
-# LibreTime Playout
+# RASTATIME Playout
 
-LibreTime Playout is a service that will ingest a schedule and stream it.
+RASTATIME Playout is a service that will ingest a schedule and stream it.
 
 ## Development
 

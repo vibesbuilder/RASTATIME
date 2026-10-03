@@ -637,8 +637,8 @@ msgid "It looks like the next show is empty. %sAdd tracks to your show now%s."
 msgstr "Parece que el próximo show está vacío. %sAñadir pistas a tu programa ahora%s."
 
 #: application/configs/config-check.php:167
-msgid "LibreTime media analyzer service"
-msgstr "Servicio de análisis multimedia LibreTime"
+msgid "RASTATIME media analyzer service"
+msgstr "Servicio de análisis multimedia RASTATIME"
 
 #: application/configs/config-check.php:174
 msgid "Check that the libretime-analyzer service is installed correctly in "
@@ -661,32 +661,32 @@ msgid "If not, try "
 msgstr "Si no, prueba "
 
 #: application/configs/config-check.php:187
-msgid "LibreTime playout service"
-msgstr "Servicio de emisión de LibreTime"
+msgid "RASTATIME playout service"
+msgstr "Servicio de emisión de RASTATIME"
 
 #: application/configs/config-check.php:193
 msgid "Check that the libretime-playout service is installed correctly in "
 msgstr "Compruebe que el servicio libretime-playout está instalado correctamente en "
 
 #: application/configs/config-check.php:205
-msgid "LibreTime liquidsoap service"
-msgstr "Servicio LibreTime liquidsoap"
+msgid "RASTATIME liquidsoap service"
+msgstr "Servicio RASTATIME liquidsoap"
 
 #: application/configs/config-check.php:212
 msgid "Check that the libretime-liquidsoap service is installed correctly in "
 msgstr "Comprueba que el servicio libretime-liquidsoap está instalado correctamente en "
 
 #: application/configs/config-check.php:224
-msgid "LibreTime Celery Task service"
-msgstr "Servicio de tareas LibreTime Celery"
+msgid "RASTATIME Celery Task service"
+msgstr "Servicio de tareas RASTATIME Celery"
 
 #: application/configs/config-check.php:231
 msgid "Check that the libretime-worker service is installed correctly in "
 msgstr "Compruebe que el servicio libretime-worker está instalado correctamente en "
 
 #: application/configs/config-check.php:243
-msgid "LibreTime API service"
-msgstr "Servicio API de LibreTime"
+msgid "RASTATIME API service"
+msgstr "Servicio API de RASTATIME"
 
 #: application/configs/config-check.php:250
 msgid "Check that the libretime-api service is installed correctly in "
@@ -833,27 +833,27 @@ msgstr "No tienes permiso para cambiar de fuente."
 msgid ""
 "To configure and use the embeddable player you must:<br><br>\n"
 "            1. Enable at least one MP3, AAC, or OGG stream under Settings -> Streams<br>\n"
-"            2. Enable the Public LibreTime API under Settings -> Preferences"
+"            2. Enable the Public RASTATIME API under Settings -> Preferences"
 msgstr ""
 "Para configurar y utilizar el reproductor integrado debe:<br><br>\n"
 "            1. Habilita al menos un flujo MP3, AAC u OGG en Ajustes -&gt; Streamer<br>\n"
-"            2. Active la API pública LibreTime en Configuración -&gt; Preferencias"
+"            2. Active la API pública RASTATIME en Configuración -&gt; Preferencias"
 
 #: application/controllers/EmbeddablewidgetsController.php:35
 msgid ""
 "To use the embeddable weekly schedule widget you must:<br><br>\n"
-"            Enable the Public LibreTime API under Settings -> Preferences"
+"            Enable the Public RASTATIME API under Settings -> Preferences"
 msgstr ""
 "Para utilizar el widget de horario semanal incrustado debe:<br><br>\n"
-"            Habilitar la API pública LibreTime en Configuración -&gt; Preferencias"
+"            Habilitar la API pública RASTATIME en Configuración -&gt; Preferencias"
 
 #: application/controllers/EmbeddablewidgetsController.php:48
 msgid ""
 "To add the Radio Tab to your Facebook Page, you must first:<br><br>\n"
-"            Enable the Public LibreTime API under Settings -> Preferences"
+"            Enable the Public RASTATIME API under Settings -> Preferences"
 msgstr ""
 "Para añadir la pestaña Radio a tu página de Facebook, primero debes:<br><br>\n"
-"            Habilitar la API pública LibreTime en Configuración -&gt; Preferencias"
+"            Habilitar la API pública RASTATIME en Configuración -&gt; Preferencias"
 
 #: application/controllers/ErrorController.php:94
 msgid "Page not found."
@@ -1005,24 +1005,24 @@ msgid "New version available: "
 msgstr "Nueva versión disponible: "
 
 #: application/controllers/LocaleController.php:39
-msgid "You have a pre-release version of LibreTime intalled."
-msgstr "Tienes una versión pre-lanzamiento de LibreTime instalada."
+msgid "You have a pre-release version of RASTATIME intalled."
+msgstr "Tienes una versión pre-lanzamiento de RASTATIME instalada."
 
 #: application/controllers/LocaleController.php:40
-msgid "A patch update for your LibreTime installation is available."
-msgstr "Hay disponible una actualización de parche para la instalación de LibreTime."
+msgid "A patch update for your RASTATIME installation is available."
+msgstr "Hay disponible una actualización de parche para la instalación de RASTATIME."
 
 #: application/controllers/LocaleController.php:41
-msgid "A feature update for your LibreTime installation is available."
-msgstr "Hay disponible una actualización de funcionalidad para su instalación de LibreTime."
+msgid "A feature update for your RASTATIME installation is available."
+msgstr "Hay disponible una actualización de funcionalidad para su instalación de RASTATIME."
 
 #: application/controllers/LocaleController.php:42
-msgid "A major update for your LibreTime installation is available."
-msgstr "Hay disponible una actualización importante para su instalación de LibreTime."
+msgid "A major update for your RASTATIME installation is available."
+msgstr "Hay disponible una actualización importante para su instalación de RASTATIME."
 
 #: application/controllers/LocaleController.php:43
-msgid "Multiple major updates for LibreTime installation are available. Please upgrade as soon as possible."
-msgstr "Existen varias actualizaciones importantes para la instalación de LibreTime. Actualiza lo antes posible."
+msgid "Multiple major updates for RASTATIME installation are available. Please upgrade as soon as possible."
+msgstr "Existen varias actualizaciones importantes para la instalación de RASTATIME. Actualiza lo antes posible."
 
 #: application/controllers/LocaleController.php:45
 msgid "Add to current playlist"
@@ -1464,7 +1464,7 @@ msgstr "Nunca recordarme"
 
 #: application/controllers/LocaleController.php:151
 msgid "Yes, help Airtime"
-msgstr "Sí, ayudar a Libretime"
+msgstr "Sí, ayudar a RASTATIME"
 
 #: application/controllers/LocaleController.php:152
 #: application/controllers/LocaleController.php:196
@@ -3279,8 +3279,8 @@ msgid "Trim overbooked shows after autoloading?"
 msgstr "¿Recortar programas con overbooking después de la carga automática?"
 
 #: application/forms/GeneralPreferences.php:170
-msgid "Public LibreTime API"
-msgstr "API Pública de Libretime"
+msgid "Public RASTATIME API"
+msgstr "API Pública de RASTATIME"
 
 #: application/forms/GeneralPreferences.php:171
 msgid "Required for embeddable schedule widget."
@@ -3288,10 +3288,10 @@ msgstr "Requerido para el widget de programación."
 
 #: application/forms/GeneralPreferences.php:177
 msgid ""
-"Enabling this feature will allow LibreTime to provide schedule data\n"
+"Enabling this feature will allow RASTATIME to provide schedule data\n"
 "                                            to external widgets that can be embedded in your website."
 msgstr ""
-"Habilitar esta función permite a Libretime proporcionar datos de programación\n"
+"Habilitar esta función permite a RASTATIME proporcionar datos de programación\n"
 "                                            a widgets externos que se pueden integrar en tu sitio web."
 
 #: application/forms/GeneralPreferences.php:189
@@ -5677,3 +5677,15 @@ msgstr "Carpeta donde se escriben las grabaciones por programa.  Cada programa m
 #: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
 msgid "Absolute path on this machine.  Example: C:\\rastatime\\recordings"
 msgstr "Ruta absoluta en esta máquina.  Ejemplo: C:\\rastatime\\recordings"
+
+#: RASTATIME 2026-10-03 brand stage A
+msgid "RASTATIME is free radio automation software for scheduling and station management, built as a Windows-first fork of LibreTime."
+msgstr "RASTATIME es software libre de automatización radiofónica para la programación y la gestión de la emisora, creado como fork Windows-first de LibreTime."
+
+#: RASTATIME 2026-10-03 brand stage A
+msgid "OK, got it!"
+msgstr "¡OK, entendido!"
+
+#: RASTATIME 2026-10-03 brand stage A
+msgid "based on LibreTime %s"
+msgstr "basado en LibreTime %s"

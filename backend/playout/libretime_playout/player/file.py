@@ -101,7 +101,7 @@ class PypoFile(Thread):
                 exception,
             )
 
-        # Make PUT request to LibreTime to update the file size and hash
+        # Make PUT request to RASTATIME to update the file size and hash
         error_msg = f"Could not update media file {file_id} with file size and md5 hash"
         try:
             self.api_client.update_file(

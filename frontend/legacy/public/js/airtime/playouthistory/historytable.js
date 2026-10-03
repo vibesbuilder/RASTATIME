@@ -704,7 +704,7 @@ var AIRTIME = (function (AIRTIME) {
         // Generate PDF template
         var dd = {
           content: [
-            { text: "Libretime", style: "subheader" },
+            { text: "RASTATIME", style: "subheader" },
             {
               text:
                 "Playout History from " +

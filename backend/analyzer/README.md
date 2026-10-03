@@ -1,6 +1,6 @@
-# LibreTime Analyzer
+# RASTATIME Analyzer
 
-LibreTime Analyzer is a service that analyze file as background jobs and move them into the storage.
+RASTATIME Analyzer is a service that analyze file as background jobs and move them into the storage.
 
 ## Development
 

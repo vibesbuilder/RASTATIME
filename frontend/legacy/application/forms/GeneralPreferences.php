@@ -234,14 +234,14 @@ class Application_Form_GeneralPreferences extends Zend_Form_SubForm
         // TODO add and insert Podcast Smartblock and Playlist autogenerate options
 
         $third_party_api = new Zend_Form_Element_Radio('thirdPartyApi');
-        $third_party_api->setLabel(_('Public LibreTime API'));
+        $third_party_api->setLabel(_('Public RASTATIME API'));
         $third_party_api->setDescription(_('Required for embeddable schedule widget.'));
         $third_party_api->setMultiOptions([
             _('Disabled'),
             _('Enabled'),
         ]);
         $third_party_api->setValue(Application_Model_Preference::GetAllow3rdPartyApi());
-        $third_party_api->setDescription(_('Enabling this feature will allow LibreTime to provide schedule data
+        $third_party_api->setDescription(_('Enabling this feature will allow RASTATIME to provide schedule data
                                             to external widgets that can be embedded in your website.'));
         $third_party_api->setSeparator(' '); // No <br> between radio buttons
         // $third_party_api->addDecorator(new Zend_Form_Decorator_Label(array('tag' => 'dd', 'class' => 'radio-inline-list')));

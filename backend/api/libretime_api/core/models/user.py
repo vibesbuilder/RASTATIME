@@ -115,7 +115,7 @@ class User(AbstractBaseUser):
         return False
 
     # The following methods have to be re-implemented here, as PermissionsMixin
-    # assumes that the User class has a 'group' attribute, which LibreTime does
+    # assumes that the User class has a 'group' attribute, which RASTATIME does
     # not currently provide. Once Django starts managing the Database
     # (managed = True), then this can be replaced with
     # django.contrib.auth.models.PermissionMixin.

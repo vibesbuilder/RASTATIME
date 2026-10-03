@@ -646,6 +646,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Marke, Stufe A: „LibreTime" verschwindet aus allem, was Operatoren sehen
+  (2026-10-03, Operator-Go nach Evaluierung)** — Befund: 483 Dateien / 4 962
+  Treffer „libretime" im Repo, davon ~70 % kosmetisch, ~25 % Bezeichner mit
+  Laufzeitbindung (Paketnamen, `LIBRETIME_*`-Variablen, `libretime.conf`,
+  gettext-Domäne), ~5 % tabu (Composer-Paket `libretime/propel1`, Upstream-
+  Kopien, Lizenz/Attribution, Upstream-URLs).  Stufe A ersetzt nur die
+  kosmetische Klasse: `PRODUCT_NAME`, `SAAS_PRODUCT_BRANDING_NAME`,
+  `COMPANY_NAME` („RASTATIME Project") und die Site-URLs (GitHub-Projekt)
+  — damit Login-Seite, About-Seite („RASTATIME 0.5 (based on LibreTime
+  4.5.0)"), „Powered by", Passwort-Mails, JS-`PRODUCT_NAME`; UI-Strings
+  „Public RASTATIME API" (+ Beschreibung, Widget-Hinweise), die fünf
+  Versions-Tooltips, Wartungsseite, PDF-Kopf der Playout-History,
+  getid3-Logmeldung; der einmalige Willkommens-Dialog ohne LibreTime-Video
+  und -Forum, mit Link ins Handbuch; Backend `verbose_name` der sechs
+  Django-Apps, API-Titel (`_internal.py`, `schema.yml`), `setup.py`-
+  Beschreibungen (Autor bleibt), README-Titel, systemd-Descriptions,
+  Standard-Stationsname, fünf Kommentare, die dieses Produkt meinen.
+  Kataloge ×4 per Skript (außerhalb Header und `#~`), drei neue msgids.
+  Unverändert: alle Bezeichner (Stufe B, 🟡 BACKLOG), alle Herkunfts-/
+  Upstream-Erwähnungen in Kommentaren, Handbuch, Architektur, CHANGELOG,
+  Tests.  Live geprüft: About, Settings → General, Hilfe-Seite ohne
+  „LibreTime" (About nennt die Basis einmal, gewollt); Unit-Tests grün.
 - **Unit-test tree: Django configured once, 38 pre-existing failures
   triaged (2026-10-02, operator Go for harness option 1)** - the root venv
   carries Django and pytest-django but no `DJANGO_SETTINGS_MODULE`; three

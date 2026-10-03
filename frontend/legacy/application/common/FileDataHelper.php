@@ -174,7 +174,7 @@ class FileDataHelper
             $getFileInfo = $getID3->analyze($analyzeFile);
         } else {
             $getFileInfo = [];
-            Logging::error('Failed to load getid3 library. Please upgrade Libretime.');
+            Logging::error('Failed to load getid3 library. Please upgrade RASTATIME.');
         }
 
         if (isset($getFileInfo['comments']['picture'][0])) {
@@ -241,7 +241,7 @@ class FileDataHelper
             $getFileInfo = $getID3->analyze($fullpath);
         } else {
             $getFileInfo = [];
-            Logging::error('Failed to load getid3 library. Please upgrade Libretime.');
+            Logging::error('Failed to load getid3 library. Please upgrade RASTATIME.');
         }
 
         if (isset($getFileInfo['comments']['picture'][0])) {

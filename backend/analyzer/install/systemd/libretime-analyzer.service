@@ -1,5 +1,5 @@
 [Unit]
-Description=LibreTime Media Analyzer Service
+Description=RASTATIME Media Analyzer Service
 PartOf=libretime.target
 
 [Service]

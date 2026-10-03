@@ -213,7 +213,7 @@ class DeviceStartupCheckJob(Job):
 
 class SchedulePollJob(Job):
     """
-    Poll the LibreTime API for upcoming show schedule entries.
+    Poll the RASTATIME API for upcoming show schedule entries.
 
     Calls :meth:`api_client.list_schedule()` and, if an
     ``on_schedule_data`` callback is provided, passes the decoded list to it
@@ -421,7 +421,7 @@ class PodcastFetchJob(Job):
     Trigger the legacy PHP task manager so it handles podcast episode fetching.
 
     Calls :meth:`api_client.trigger_task_manager()` which pings
-    ``GET /api/v1/version``; this causes the LibreTime PHP backend to run
+    ``GET /api/v1/version``; this causes the legacy PHP backend to run
     its internal task-manager loop (including podcast RSS polling).
 
     Trigger:  INTERVAL, every 3600 seconds (1 hour)

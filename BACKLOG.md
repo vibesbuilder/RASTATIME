@@ -110,6 +110,46 @@ Checkliste).
 
 ---
 
+### 🟡 Marke: „libretime" → „rastatime" in Bezeichnern (Stufe B) — DEFER (evaluiert 2026-10-03)
+
+**Befund 2026-10-03:** 483 Dateien / 4 962 Treffer im Repo (ohne Upstream-Kopien
+und `vendor/`: 388 / 2 214); 348 Pfade tragen den Namen (fünf Python-Pakete).
+Datenbank sauber (keine Tabelle, kein `cc_pref`-Schlüssel, Django-App-Labels kurz).
+Drei Klassen: **A kosmetisch** (~70 %) — ✅ **erledigt 2026-10-03** (Stufe A, siehe
+CHANGELOG: Produktname-Konstanten, UI-Strings, Kataloge, Willkommens-Dialog,
+Backend-`verbose_name`/Titel/Beschreibungen, produktbezogene Kommentare);
+**B Bezeichner mit Laufzeitbindung** (~25 %) — dieses Item; **C tabu** (~5 %) —
+🔴 nie: Composer-Paket `libretime/propel1` (Vendor-Pfad/Autoloader), Upstream-
+Referenzkopien `docs/upstream` + `infra/upstream`, Lizenz/Attribution (AGPL-Fork),
+Upstream-URLs, Herkunfts-Erwähnungen in Doku/History.
+
+**Stufe B umfasst:** Paketnamen `libretime_api`, `libretime_playout`,
+`libretime_analyzer`, `libretime_shared`, `libretime_api_client` (Import-Pfade,
+`setup.py`-Namen + Entry-Points `libretime-*.exe`, `INSTALLED_APPS`, `ROOT_URLCONF`,
+`DJANGO_SETTINGS_MODULE`), 15 Umgebungsvariablen `LIBRETIME_*`
+(`LIBRETIME_CONFIG_FILEPATH` 79×, Präfix in `libretime_shared/config/_base.py`),
+Konfigdatei `config/libretime.conf` (+ `.example`), gettext-Domäne `libretime`
+(+ `.po/.mo`-Dateinamen, `Makefile`, `Locale.php`), PHP-Klassen
+`LibreTime_Auth_Adaptor_*`, `LibreTime_Model_FreeIpa`, `LibreTimeFileNotFoundException`,
+Session-Namespace `libretime` (`Auth.php`), systemd-Units (Linux-Reste),
+CI-Workflows, Linux-User `libretime`.  Außerhalb des Repos: vier nssm-Dienste
+(`-m libretime_playout`, `DJANGO_SETTINGS_MODULE`, `LIBRETIME_CONFIG_FILEPATH`,
+`libretime-analyzer.exe`), Editable-Installationen im `.venv` (5 Finder, 4 EXEs),
+`rastatime.liq` / `standby.liq` (6 Treffer), Apache/Icecast nur Kommentare.
+Präzedenz: `rastatime_worker` (bereits umbenannt, `install-worker.ps1`).
+
+**Risiko:** ein vergessener Treffer in einem Dienstparameter = Dienst startet nicht
+= Sendeausfall.  Nutzen rein ästhetisch (saubere Fork-Identität für Entwickler);
+für Operatoren unsichtbar.
+
+**Vorbedingungen für ein Go:** Live-Readiness 17a + 17b erledigt; Wartungsfenster
+außerhalb des Programms (Stack-Stopp 15–30 min); frisches Backup; `git tag` +
+gesicherte nssm-Parameter als Rollback; danach Volltest aller Dienste und ein
+Tag Beobachtung.  Aufwand ≈ 1 Arbeitstag.  Alternativ bewusst **nie** — Operator-
+Entscheidung bei Fälligkeit.
+
+---
+
 ### 🟢 Ausgangs-Processing mit Stereo Tool, optional (Operator-Entscheidung C 2026-10-02 — gebaut, Live-Prüfung mit Bibliothek + Lizenz offen)
 
 **Anlass:** Distributionspartner brauchen einen R128-konformen Stream unabhängig von der Quelle; Stufe 1
