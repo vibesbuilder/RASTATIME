@@ -114,6 +114,28 @@ Vorschlag: in `_on_file_queue_ahead` eine bereits gequeute Zeile nur ersetzen, w
 (kein Start-Timer mehr in `_timers`); eine noch geplante, frueher startende Zeile bleibt, die spaetere startet ueber
 ihren normalen PLAY hinter dem laufenden Jingle.  Operator-Go 2026-10-03 -> gebaut (abbcba2, `_armed_events`-Identitaet,
 3 Tests, Suite 779); wirksam nach PLAYOUT-Neustart; Nachmessung bei der naechsten StationID-Folge.
+**Nachmessung Testshow 2026-10-03 12:15-13:15 (drei einzelne kurze StationIDs):** 'stays queued ahead' 3x im Log,
+kein Vertauschen mehr.  Kreisky (4,9 s) -> Plansch +0,21 s ohne Luecke.  Aber: (1) tief (2,7 s) -> Voodoo Asses
+0,6 s digitale Stille (der Musiktitel wird erst zur Zeilenzeit gepusht, cross hat keinen Partner); (2) Baeume (3,9 s)
+lief doppelt, Terror ~3,5 s spaet: der Schedule-Refresh fiel auf dieselbe Sekunde wie der Start-Timer
+(12:17:55) -> 'truncated to past' stoppte den Vorgaenger, Catch-up 'started 0s ago' pushte den Jingle ein zweites
+Mal.  Zwei Folge-Eintraege unten.
+
+### 🟡 Queue-Ahead: zurueckgestellte Zeile beim Start des kurzen Jingles sofort nachqueuen
+Seit abbcba2 bleibt der Jingle auf der Queue, der folgende Musiktitel startet ueber seinen eigenen PLAY zur
+Zeilenzeit - bei einem 2,7-s-Jingle bleiben dafuer 0,3 s, 2026-10-03 12:40:23 entstand eine 0,6-s-Luecke.
+Vorschlag: die zurueckgestellte Zeile merken und beim Adopt des Jingles (`_on_file_start`) sofort
+`_on_file_queue_ahead` dafuer aufrufen -> cross hat den Partner die ganze Jingle-Laenge lang.  Test: nach
+'stays queued' und Jingle-Adopt ist der Musiktitel gequeut.
+
+### 🟡 Refresh und Start-Timer in derselben Sekunde: Catch-up startet den Titel doppelt
+2026-10-03 12:17:55: Refresh-Tick (120 s) traf die Startsekunde des Jingles.  Der Refresh sah den Vorgaenger als
+'truncated to past' (Ende <= now um 0,08 s) und stoppte ihn (flush der Queue), dann den Jingle als 'in progress,
+started 0s ago' und pushte ihn per Catch-up, waehrend sein Timer-PLAY schon lief -> Jingle doppelt, Kette +3,5 s
+bis zum naechsten Skip.  Erstes Auftreten im Log (Timer auf ganzen Sekunden, Refresh-Phase zufaellig).
+Vorschlag: `_on_file_start` markiert den Schluessel als 'startet gerade' (try/finally); der Catch-up ueberspringt
+markierte oder gerade spielende Zeilen; der 'truncated to past'-Abbau unterbleibt, wenn der Nachfolger auf der
+Queue liegt und die Zeile erst in dieser Sekunde endete (STOP-Timer und Queue uebernehmen).  Tests fuer beide.
 
 ### ✅ Cue-Punkte prüfen: Cue-Out hinter dem Dateiende, stille Datei-Enden (neu 2026-09-30, Operator-Go 2026-09-30, DONE 2026-09-30)
 
