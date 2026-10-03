@@ -129,10 +129,14 @@ DJ-Rückfallpasswort (Settings → Streams), RabbitMQ-Benutzer.  Operator setzt 
 Werte, ich liefere die Stellen-Liste und prüfe anschließend Stream, DJ-Login und
 Backup-Lauf.
 
-**Danach (gemäß Reihenfolge):** DJ-Login-Live-Abnahme (Item „DJ-Logins"), Line-In-
-Feeder-Latenz / stabile Keys (Item „Line-In"), Internet-Erreichbarkeit (Punkt 16,
-Evaluierung offen), Testplan erstellen (Punkt 14 → wird die Live-Readiness-
-Checkliste).
+**Danach (gemäß Reihenfolge):** ✅ DJ-Login-Live-Abnahme (2026-10-03 19:44–19:50,
+Host-Login `djuser` per UI-Login an Testshow 2315: vor Sendebeginn abgelehnt,
+Login → `scheduled -> show` 17 ms, sauberes Trennen → Timeout 5 s → Resume +76,2 s,
+falsches Passwort abgelehnt, harter Abbruch → ECONNRESET → Resume +124,7 s; damit
+Master-, Custom- und Host-Login live abgenommen — Details im Item „DJ-Logins"),
+Line-In-Feeder-Latenz / stabile Keys (Item „Line-In"), Internet-Erreichbarkeit
+(Punkt 16, Evaluierung offen), Testplan erstellen (Punkt 14 → wird die
+Live-Readiness-Checkliste).
 
 ---
 
@@ -1345,7 +1349,14 @@ erreichbar ist (Benutzer `source`), also gerade im Notfall.  To do:
 beide Werte in libretime.conf durch echte Passwörter ersetzen, dann
 PLAYOUT (rendert) und LIQUIDSOAP neu starten; Werte nie ins Log/Chat.
 
-### ✅ DJ-Logins: die Oberfläche wird zur Wahrheit (Operator-Go Option 2, umgesetzt 2026-09-10)
+### ✅ DJ-Logins: die Oberfläche wird zur Wahrheit (Operator-Go Option 2, umgesetzt 2026-09-10, Host-Login live abgenommen 2026-10-03)
+
+**Nachtrag 2026-10-03 (Live-Readiness):** fünf Runden mit BUTT als registrierter
+Host `djuser` (UI-Login) an Testshow 2315, 19:44–19:50 — vor Sendebeginn abgelehnt,
+Login akzeptiert → Switcher 17 ms → Audio nach 5-s-Puffer, sauberes Trennen → Timeout
+5,00 s → Resume +76,2 s, falsches Passwort abgelehnt ohne Nebenwirkung, harter
+Abbruch → ECONNRESET → Resume +124,7 s.  Alle drei Login-Arten (Master, Custom, Host)
+sind damit live abgenommen.
 
 **Befund 2026-09-10:** BUTT-Login schlug fehl.  Die Harbors prüften nur
 `source` + statisches Passwort aus libretime.conf; Settings → Streams
