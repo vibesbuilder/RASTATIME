@@ -60,7 +60,14 @@ notiert, kein Feature.
 **Reihenfolge (Operator):** 17a → 17b → DJ-Login-Live-Abnahme, Line-In-Feeder-
 Latenz, Internet-Erreichbarkeit (Punkt 16), Testplan (Punkt 14) → 17c zuletzt.
 
-**17a · Windows-Härtung für 24/7** — Operator-Vorgaben 2026-10-03:
+**17a · Windows-Härtung für 24/7** — Operator-Vorgaben 2026-10-03.
+**Stand 2026-10-03:** Runbook `docs/operator/WINDOWS_24_7.md` geschrieben (Befund,
+Befehle für Update-Richtlinie / Autologon / Energie, BIOS-Hinweise, Verifikation,
+Test-Neustart, Rollback).  Befund: keine Update-Richtlinie, Autologon aus,
+„Windows Hello erforderlich" an (`DevicePasswordLessBuildVersion = 2`), Schnellstart
+aus, Standby/Ruhezustand nie, Display 15 min, USB-Selective-Suspend Standard.
+**Offen:** Ausführung durch den Operator (erhöhte Shell), danach Verifikation §6 und
+Test-Neustart §7 durch assistant.
 - Windows darf **nie selbständig neu starten**, Updates werden **nicht automatisch
   installiert** (Installation nur manuell im Wartungsfenster nach dem 03:30-Backup).
   Befund: keine Update-Richtlinie gesetzt (`HKLM\SOFTWARE\Policies\Microsoft\

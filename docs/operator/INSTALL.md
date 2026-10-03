@@ -745,6 +745,7 @@ Remove-Item -Recurse -Force C:\rastatime
 |---|---|
 | `docs\architecture\SERVICE_TOPOLOGY.md` | Service definitions, ports, log layout (T21.1) |
 | `docs\operator\RESTART_ORDER.md` | Startup / shutdown / recovery procedures (T22.4) |
+| `docs\operator\WINDOWS_24_7.md` | Windows hardening for unattended 24/7 operation: no automatic updates or reboots, automatic sign-in, power settings, test restart (2026-10-03) |
 | `infra\nssm\install-*.ps1` | Service install scripts (T22.1) |
 | `backend\playout\config\nssm-install-liquidsoap.ps1` | RASTATIME-LIQUIDSOAP service install script |
 | `infra\nssm\remove-*.ps1` | Service remove scripts (T22.2) |
