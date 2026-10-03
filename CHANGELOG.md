@@ -908,7 +908,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   through PHP's own gettext against the compiled catalogs (94 / 94 per
   locale).  `tests/unit/test_t20_3_menu_i18n.py` now walks every string
   of the view so a new section cannot ship untranslated again (the two
-  strict xfails are gone).  Live after an Apache restart.
+  strict xfails are gone).  Live after an Apache restart - `afb5590`.
 
 - **Scheduler: the playing item never "precedes" itself (2026-10-02,
   operator Go for option A)** - the 2026-09-28 guard "never catch up a row
