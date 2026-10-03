@@ -3385,23 +3385,24 @@ Sortierung der bereits-gespielten + nächsten Tracks freezable.
 
 ## 🐞 Known Issues / Bug Backlog
 
-### 🟡 „Local Machine"-Strings in de_DE / fr_FR / es_ES unübersetzt (festgestellt 2026-10-02)
+### ✅ „Local Machine"-Seite in de_DE / fr_FR / es_ES unübersetzt (festgestellt 2026-10-02, DONE 2026-10-03)
 
-**Status:** DEFER, klein; Vorbedingung Operator-Go (po2mo + Apache-Neustart
-sind Operator-Konvention).  Beim Triage der Unit-Tests (`b1f70c4`) gefunden:
-keine der drei Legacy-Locales kennt das Navigations-Label `Local Machine`
-(seit der Umbenennung von „Soundcard" am 2026-05-16) noch die vier
-Seiten-Strings `Local Machine settings saved.`, `Could not save Local
-Machine settings.`, `Restarting audio chain …`, `Could not restart the
-audio chain.` (Neustart-Knopf vom 2026-09-03).  Im deutschen Menü steht
-der Eintrag auf Englisch; die Seiten-Meldungen fallen auf den englischen
-Text zurück.
-**Wächter:** zwei `xfail(strict=True)`-Tests in
-`tests/unit/test_t20_3_menu_i18n.py` — sie schlagen an, sobald de_DE die
-Strings hat; dann die Marker entfernen.
-**Fix:** die fünf msgids in `frontend/legacy/locale/{de_DE,fr_FR,es_ES}/
-LC_MESSAGES/libretime.po` nachtragen, `scripts/po2mo.py --all`,
-Apache-Neustart.
+**Status:** Erledigt 2026-10-03 (Operator-Go für die ganze Seite).  Beim
+Nachtragen stellte sich heraus, dass nicht nur die fünf Strings fehlten,
+sondern die ganze Seite: von 94 `_()`-Strings kannte de_DE 13 (die
+Soundkarten-/Line-In-Meldungen vom Mai), fr_FR/es_ES nur 5 — Import-Ordner,
+FTP-Import, Bibliotheks-Speicherort, 24/7- und Sendungsaufnahme waren nie
+in die .po-Dateien aufgenommen worden.  81 / 89 / 89 Einträge ergänzt
+(Terminologie aus den Manuals), `.mo` per `frontend/legacy/scripts/po2mo.py
+--all` gebaut, alle 94 Strings je Locale über PHPs gettext gegen die
+kompilierten Kataloge verifiziert.  Der Test
+`tests/unit/test_t20_3_menu_i18n.py` läuft jetzt über alle Strings der
+View, damit ein neuer Abschnitt nicht wieder unübersetzt landet; die
+beiden `xfail`-Marker sind weg.  Details CHANGELOG 03.10.
+**Befund (Original):** keine der drei Legacy-Locales kannte das
+Navigations-Label `Local Machine` (seit der Umbenennung von „Soundcard" am
+2026-05-16) noch die vier Seiten-Strings der Speichern-/Neustart-Meldungen
+(Neustart-Knopf vom 2026-09-03).
 
 ### ✅ REST `PUT /rest/media/<id>` mit unbekannter ID: 500 statt 404 (Nebenbefund 2026-09-10, DONE gleichen Tags)
 

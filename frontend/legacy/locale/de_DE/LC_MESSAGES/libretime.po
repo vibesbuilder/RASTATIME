@@ -5160,3 +5160,327 @@ msgstr "Eingangsverstärkung (dB):"
 #: RASTATIME 2026-10-02 input gain (Line-In and Webstream dialogs)
 msgid "Range: -20.0 to +20.0 dB.  0 = no change."
 msgstr "Bereich: -20,0 bis +20,0 dB.  0 = keine Änderung."
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Local Machine"
+msgstr "Lokale Maschine"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Local Machine settings saved."
+msgstr "Einstellungen der lokalen Maschine gespeichert."
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Could not save Local Machine settings."
+msgstr "Einstellungen der lokalen Maschine konnten nicht gespeichert werden."
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "This restarts the audio chain and interrupts the stream for a few seconds. Continue?"
+msgstr "Das startet die Audiokette neu und unterbricht den Stream für einige Sekunden. Fortfahren?"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Restarting audio chain …"
+msgstr "Audiokette wird neu gestartet …"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Could not restart the audio chain."
+msgstr "Die Audiokette konnte nicht neu gestartet werden."
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Local Machine Settings"
+msgstr "Lokale Maschine – Einstellungen"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "system default output"
+msgstr "Standardausgang des Systems"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Currently active: %1$s — this does not match the saved device (%2$s). Either it has not been applied yet, or the device cannot be opened; see the playout log."
+msgstr "Derzeit aktiv: %1$s — das entspricht nicht dem gespeicherten Gerät (%2$s). Entweder wurde es noch nicht angewendet, oder das Gerät lässt sich nicht öffnen; siehe Playout-Log."
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Currently active: %s"
+msgstr "Derzeit aktiv: %s"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Saving stores the device. The playout applies it by itself in the next quiet moment (or at the next track boundary) - listeners stay connected via the standby mounts. Apply now forces it immediately."
+msgstr "Speichern merkt sich das Gerät. Das Playout übernimmt es von selbst im nächsten ruhigen Moment (oder an der nächsten Titelgrenze) – die Hörer bleiben über die Standby-Mounts verbunden. „Jetzt anwenden“ erzwingt es sofort."
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Apply now (restarts audio chain)"
+msgstr "Jetzt anwenden (startet Audiokette neu)"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Import Folder"
+msgstr "Import-Ordner"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Audio files dropped into this folder are imported into the Media Library every 5 minutes.  After each import attempt (success or failure) the source file is deleted from the folder.  Leave empty to disable the scan."
+msgstr "Audiodateien, die in diesen Ordner gelegt werden, werden alle 5 Minuten in die Medienbibliothek importiert.  Nach jedem Importversuch (Erfolg oder Fehler) wird die Quelldatei aus dem Ordner gelöscht.  Leer lassen, um den Scan zu deaktivieren."
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Folder path"
+msgstr "Ordnerpfad"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Absolute path on this machine.  Example: C:\\rastatime\\import"
+msgstr "Absoluter Pfad auf dieser Maschine.  Beispiel: C:\\rastatime\\import"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Save Folder"
+msgstr "Ordner speichern"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Scan Now"
+msgstr "Jetzt scannen"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Last scan:"
+msgstr "Letzter Scan:"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Last status:"
+msgstr "Letzter Status:"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Import from FTP Server"
+msgstr "Import von FTP-Server"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Fetches audio files from an FTP, FTPS or SFTP server every 5 minutes and imports them through the Import Folder above - the folder must be configured for this to work.  Remote files are deleted after a verified download (the account needs delete permission); a file still being uploaded is left for the next cycle.  Non-audio files stay on the server."
+msgstr "Holt alle 5 Minuten Audiodateien von einem FTP-, FTPS- oder SFTP-Server und importiert sie über den Import-Ordner oben – der Ordner muss dafür konfiguriert sein.  Entfernte Dateien werden nach einem geprüften Download gelöscht (das Konto braucht Löschrechte); eine Datei, die noch hochgeladen wird, bleibt für den nächsten Durchlauf liegen.  Nicht-Audio-Dateien bleiben auf dem Server."
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Enable FTP import"
+msgstr "FTP-Import aktivieren"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Protocol"
+msgstr "Protokoll"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Plain FTP sends the password unencrypted - prefer FTPS or SFTP when the server offers it."
+msgstr "Einfaches FTP überträgt das Passwort unverschlüsselt – bevorzugen Sie FTPS oder SFTP, wenn der Server es anbietet."
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Leave the port empty for the protocol default (FTP/FTPS: 21, SFTP: 22)."
+msgstr "Port leer lassen für den Protokoll-Standard (FTP/FTPS: 21, SFTP: 22)."
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "unchanged"
+msgstr "unverändert"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Stored in the settings database like the other service passwords, so the fetch can log in unattended.  Leave empty to keep the stored password."
+msgstr "Wird wie die anderen Dienst-Passwörter in der Einstellungsdatenbank gespeichert, damit der Abruf unbeaufsichtigt anmelden kann.  Leer lassen, um das gespeicherte Passwort zu behalten."
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Remote folder"
+msgstr "Entfernter Ordner"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Absolute path on the server, for example /upload.  Every audio file in it is fetched and then deleted there."
+msgstr "Absoluter Pfad auf dem Server, zum Beispiel /upload.  Jede Audiodatei darin wird abgeholt und dort anschließend gelöscht."
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Save FTP import"
+msgstr "FTP-Import speichern"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Fetch now"
+msgstr "Jetzt abrufen"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "The Import Folder above is not configured - the FTP import needs it as its landing area."
+msgstr "Der Import-Ordner oben ist nicht konfiguriert – der FTP-Import braucht ihn als Ablage."
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Last fetch:"
+msgstr "Letzter Abruf:"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Saved."
+msgstr "Gespeichert."
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Save failed."
+msgstr "Speichern fehlgeschlagen."
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Network error."
+msgstr "Netzwerkfehler."
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Fetching …"
+msgstr "Wird abgerufen …"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Fetch failed."
+msgstr "Abruf fehlgeschlagen."
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Media Library Location"
+msgstr "Speicherort der Medienbibliothek"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Where the media library (imported tracks, covers, show images) lives on this machine.  Moving it copies everything to the new folder, verifies the copy, then switches all services over - the stream keeps running, only imports pause meanwhile.  The previous copy stays on disk until you delete it yourself.  Local drives only."
+msgstr "Wo die Medienbibliothek (importierte Titel, Cover, Sendungsbilder) auf dieser Maschine liegt.  Beim Verschieben wird alles in den neuen Ordner kopiert, die Kopie geprüft und dann werden alle Dienste umgestellt – der Stream läuft weiter, nur Importe pausieren solange.  Die alte Kopie bleibt auf der Platte, bis Sie sie selbst löschen.  Nur lokale Laufwerke."
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Current location"
+msgstr "Aktueller Speicherort"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "New location"
+msgstr "Neuer Speicherort"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Absolute path on a local drive, for example D:\\stor.  The folder is created if needed.  Check first: the check confirms free space and write access."
+msgstr "Absoluter Pfad auf einem lokalen Laufwerk, zum Beispiel D:\\stor.  Der Ordner wird bei Bedarf angelegt.  Erst prüfen: die Prüfung bestätigt freien Platz und Schreibzugriff."
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Check"
+msgstr "Prüfen"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Move library"
+msgstr "Bibliothek verschieben"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Cancel move"
+msgstr "Verschieben abbrechen"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "from the Local Machine setting"
+msgstr "aus der Einstellung „Lokale Maschine“"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "from libretime.conf"
+msgstr "aus libretime.conf"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "files"
+msgstr "Dateien"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "FOLDER MISSING"
+msgstr "ORDNER FEHLT"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "NOT WRITABLE"
+msgstr "NICHT BESCHREIBBAR"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Copying"
+msgstr "Kopiere"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Verifying the copy …"
+msgstr "Kopie wird geprüft …"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "The library is now at"
+msgstr "Die Bibliothek liegt jetzt unter"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "The previous copy at"
+msgstr "Die alte Kopie unter"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "is still on disk - delete it yourself once everything works."
+msgstr "liegt noch auf der Platte – löschen Sie sie selbst, sobald alles funktioniert."
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Last move"
+msgstr "Letztes Verschieben"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Enter the same target and move again to resume."
+msgstr "Dasselbe Ziel eingeben und erneut verschieben, um fortzusetzen."
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "The RASTATIME API is not reachable."
+msgstr "Die RASTATIME-API ist nicht erreichbar."
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Checking …"
+msgstr "Wird geprüft …"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "OK"
+msgstr "OK"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "free"
+msgstr "frei"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "needed"
+msgstr "benötigt"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Move the media library to"
+msgstr "Medienbibliothek verschieben nach"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Imports pause while it copies; the stream keeps running. The previous copy stays on disk."
+msgstr "Importe pausieren während des Kopierens; der Stream läuft weiter. Die alte Kopie bleibt auf der Platte."
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Starting …"
+msgstr "Wird gestartet …"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Cancel the move? Files copied so far stay at the target."
+msgstr "Verschieben abbrechen? Bisher kopierte Dateien bleiben am Ziel."
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "24/7 Recording"
+msgstr "24/7-Aufnahme"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Continuous around-the-clock recording of the on-air output, one file per clock hour, independent of shows — it captures everything aired (filler, silence, unscheduled content, emergencies) for compliance, catch-up and emergency backup.  Files are written as <YYYY-MM-DD>/<YYYY-MM-DD HH>-00.<ext> under a per-day subfolder."
+msgstr "Durchgehende Aufnahme des Sendesignals rund um die Uhr, eine Datei pro Uhr-Stunde, unabhängig von Sendungen — sie erfasst alles Gesendete (Filler, Stille, Ungeplantes, Notfälle) für Nachweispflicht, Nachhören und Notfall-Backup.  Dateien werden als <YYYY-MM-DD>/<YYYY-MM-DD HH>-00.<ext> in einem Unterordner pro Tag geschrieben."
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Record 24/7"
+msgstr "24/7 aufnehmen"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "(a folder below is required)"
+msgstr "(ein Ordner unten ist erforderlich)"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Absolute path on this machine, separate from the Show Recording Folder.  Example: C:\\rastatime\\recordings-247"
+msgstr "Absoluter Pfad auf dieser Maschine, getrennt vom Sendungsaufnahme-Ordner.  Beispiel: C:\\rastatime\\recordings-247"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Format"
+msgstr "Format"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Bitrate (kbps)"
+msgstr "Bitrate (kbps)"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Higher = better quality, more disk."
+msgstr "Höher = bessere Qualität, mehr Platz."
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Delete after (days)"
+msgstr "Löschen nach (Tagen)"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "0 = keep forever.  Older recordings are pruned automatically."
+msgstr "0 = für immer behalten.  Ältere Aufnahmen werden automatisch gelöscht."
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Show Recording Folder"
+msgstr "Sendungsaufnahme-Ordner"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Folder where per-show recordings are written.  Each show flagged as \"Record this show\" produces a single .mp3 of the on-air output, named <YYYY-MM-DD HH-MM> - <show-name>.mp3 under a per-day subfolder.  Leave empty to disable recording."
+msgstr "Ordner, in den die Aufnahmen pro Sendung geschrieben werden.  Jede Sendung mit „Diese Sendung aufzeichnen“ erzeugt eine einzelne .mp3 des Sendesignals, benannt <YYYY-MM-DD HH-MM> - <show-name>.mp3 in einem Unterordner pro Tag.  Leer lassen, um die Aufnahme zu deaktivieren."
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Absolute path on this machine.  Example: C:\\rastatime\\recordings"
+msgstr "Absoluter Pfad auf dieser Maschine.  Beispiel: C:\\rastatime\\recordings"

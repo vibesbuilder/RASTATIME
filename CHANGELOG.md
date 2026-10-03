@@ -893,6 +893,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Local Machine page translated in DE / FR / ES (2026-10-03, operator Go
+  for the whole page)** - the page carried 94 `_()` strings of which de_DE
+  knew 13 (the May soundcard / line-in messages) and fr_FR / es_ES only 5:
+  the nav label "Local Machine", the save and restart messages, and every
+  section added since May (import folder, FTP import, media library
+  location, 24/7 and per-show recording) had shipped without entries, so
+  a localized UI showed them in English.  81 / 89 / 89 entries appended
+  to `frontend/legacy/locale/{de_DE,fr_FR,es_ES}/LC_MESSAGES/libretime.po`
+  with the manuals' terminology (Lokale Maschine / Machine locale /
+  Máquina local, Jetzt anwenden, Déplacer la médiathèque, Grabación 24/7
+  …), placeholders and paths checked by script, `.mo` rebuilt with
+  `frontend/legacy/scripts/po2mo.py --all`, and every string looked up
+  through PHP's own gettext against the compiled catalogs (94 / 94 per
+  locale).  `tests/unit/test_t20_3_menu_i18n.py` now walks every string
+  of the view so a new section cannot ship untranslated again (the two
+  strict xfails are gone).  Live after an Apache restart.
+
 - **Scheduler: the playing item never "precedes" itself (2026-10-02,
   operator Go for option A)** - the 2026-09-28 guard "never catch up a row
   at or before the playing item" (5b34d71) compares start times only and,
