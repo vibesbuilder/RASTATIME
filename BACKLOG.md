@@ -66,8 +66,16 @@ Befehle für Update-Richtlinie / Autologon / Energie, BIOS-Hinweise, Verifikatio
 Test-Neustart, Rollback).  Befund: keine Update-Richtlinie, Autologon aus,
 „Windows Hello erforderlich" an (`DevicePasswordLessBuildVersion = 2`), Schnellstart
 aus, Standby/Ruhezustand nie, Display 15 min, USB-Selective-Suspend Standard.
-**Offen:** Ausführung durch den Operator (erhöhte Shell), danach Verifikation §6 und
-Test-Neustart §7 durch assistant.
+**Gesetzt und verifiziert 2026-10-03 (Operator, erhöhte Shell; assistant lesend):**
+Update-Richtlinie `AUOptions 2 / NoAutoUpdate 0 / NoAutoRebootWithLoggedOnUsers 1 /
+AlwaysAutoRebootAtScheduledTime 0 / ExcludeWUDriversInQualityUpdate 1`, „neueste
+Updates sofort" aus; Autologon per Sysinternals Autologon64 (`AutoAdminLogon 1`,
+Benutzer `studio`, kein Klartext-Kennwort in der Registry), Hello-Pflicht aus
+(`DevicePasswordLessBuildVersion 0`); Ruhezustand weg (`hiberfil.sys` fehlt,
+`powercfg /a` ohne Ruhezustand), USB-Selective-Suspend und PCIe-Link-Power aus,
+Standby weiterhin nie.  Nicht gesetzt (optional): Sperre nach Anmeldung.
+**Offen:** BIOS „Power on after power loss" (Operator am Gerät) und der
+Test-Neustart §7 in einem ruhigen Fenster.
 - Windows darf **nie selbständig neu starten**, Updates werden **nicht automatisch
   installiert** (Installation nur manuell im Wartungsfenster nach dem 03:30-Backup).
   Befund: keine Update-Richtlinie gesetzt (`HKLM\SOFTWARE\Policies\Microsoft\
