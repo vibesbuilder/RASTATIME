@@ -893,6 +893,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Queue-ahead swapped and doubled consecutive jingles shorter than its lead
+  window (2026-10-03)** - the successor is put on the queue BUFFER + 5 s before
+  its start; with rows shorter than that (2026-10-02 23:36: StationIDs of
+  3.2 s and 4.9 s) the next row's queue-ahead found the earlier row queued,
+  took it for stale and flushed it, the row after that did the same, and the
+  rows' own timers then pushed the displaced jingles afresh: on air Kreisky,
+  tief, 0.2 s of dead air, Kreisky again, and the chain 2.9 s late to the
+  show end.  A queued row that is still armed and starts before the new one
+  now stays (`_armed_events` identity); the new row starts the normal way
+  behind it.  Rows that vanished or moved behind are still replaced.
+  Commit: QUEUEAHEAD_PENDING.
+
 - **Local Machine page translated in DE / FR / ES (2026-10-03, operator Go
   for the whole page)** - the page carried 94 `_()` strings of which de_DE
   knew 13 (the May soundcard / line-in messages) and fr_FR / es_ES only 5:
