@@ -104,7 +104,7 @@ live geprueft.  Raster der Datei-Ketten: test1 +0,35 s, nach dem PLAYOUT-Neustar
 -0,15 s; test2 +0,25 -> +0,50 s ueber 7 h (Drift ~0,03 s/h, vernachlaessigbar).  Musik-Ausreisser +1..+5,5 s in
 der Korrelation sind Loop-Mehrdeutigkeiten (Terror: Selbstaehnlichkeit 0,89 bei 4,5 s), nicht Sendeversatz.
 
-### 🟡 Queue-Ahead: aufeinanderfolgende Jingles kuerzer als das Vorlauffenster vertauschen und verdoppeln
+### ✅ Queue-Ahead: aufeinanderfolgende Jingles kuerzer als das Vorlauffenster vertauschen und verdoppeln - gebaut 2026-10-03
 Beobachtet 2026-10-02 23:36 (test1): Sweetlove -> StationID tief (3,2 s) -> StationID Kreisky (4,9 s) -> Butter.
 Das Vorlauffenster (BUFFER 3 s + 5 s) ist laenger als die Jingles: der Queue-Ahead von Kreisky fand tief auf der
 Queue und ersetzte ihn als 'stale' (flush), der von Butter ersetzte Kreisky.  Dann pushten die eigenen Timer tief
@@ -112,7 +112,8 @@ und Kreisky frisch -> auf Sendung: Kreisky, tief, 0,2 s Luecke, Kreisky noch ein
 zum Show-Ende, Intimzone +2,85 s gemessen).  Einzige zwei 'replaces the stale queued track'-Ereignisse im Log.
 Vorschlag: in `_on_file_queue_ahead` eine bereits gequeute Zeile nur ersetzen, wenn sie wirklich weg/umgeplant ist
 (kein Start-Timer mehr in `_timers`); eine noch geplante, frueher startende Zeile bleibt, die spaetere startet ueber
-ihren normalen PLAY hinter dem laufenden Jingle.  Regressionstest mit drei kurzen Zeilen.  Operator-Go offen.
+ihren normalen PLAY hinter dem laufenden Jingle.  Operator-Go 2026-10-03 -> gebaut (abbcba2, `_armed_events`-Identitaet,
+3 Tests, Suite 779); wirksam nach PLAYOUT-Neustart; Nachmessung bei der naechsten StationID-Folge.
 
 ### ✅ Cue-Punkte prüfen: Cue-Out hinter dem Dateiende, stille Datei-Enden (neu 2026-09-30, Operator-Go 2026-09-30, DONE 2026-09-30)
 

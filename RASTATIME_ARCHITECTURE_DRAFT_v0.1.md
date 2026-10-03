@@ -1,10 +1,13 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.62
-Date: 2026-10-02
+Draft version: 0.63
+Date: 2026-10-03
 
 > **Revision history**
+> - **0.63 (2026-10-03)** — **Queue-ahead keeps an armed earlier row**
+>   (§23.50): consecutive jingles shorter than the lead window were
+>   swapped and doubled on air (2026-10-02 23:36).
 > - **0.62 (2026-10-02)** — **Per-line-in input gain** (§23.49):
 >   `rastatime_linein.input_gain_db` (−20…+20 dB), applied by an
 >   `amplify` around the line-in arm (`var.set linein.gain`), pushed on
@@ -6126,3 +6129,29 @@ DJ-held start, resume, fresh Liquidsoap), `test_liquidsoap_engine.py`
 `liquidsoap --check` of the full script with every arm.  Round trip
 POST -> PATCH -> GET against a scratch database with the migration,
 reverse migration included.
+
+### 23.50 Queue-ahead and Rows Shorter than the Lead Window (2026-10-03)
+
+**Observation.**  The night measurement of 2026-10-02/03 (every file row of
+two test shows correlated against the hourly recordings) found the file
+chains on their rows to within 0.5 s over seven hours, with one exception:
+at 23:36 the layout Sweetlove -> StationID tief (3.2 s) -> StationID Kreisky
+(4.9 s) -> Butter aired as Kreisky, tief, 0.2 s of dead air, Kreisky again,
+Butter 2.9 s late (and the chain with it to the show end).
+
+**Cause.**  `_on_file_queue_ahead` (§23.44) runs BUFFER + 5 s before a
+row's start and, finding a different row on the queue, took it for stale
+(a removed or re-cued row) and flushed it.  With rows shorter than those
+8 s the queue-ahead of the second jingle fires while the first is queued
+and correct, the third's fires while the second is queued; each flush
+displaced the real successor, and the displaced rows' own start timers
+pushed them afresh behind whatever was playing.  The log shows exactly two
+such replacements since the queue-ahead exists, both that night.
+
+**Fix (abbcba2).**  A queued row that is still armed (`_armed_events`,
+compared by schedule identity, not key) and starts no later than the new
+row stays on the queue; the new row returns and starts the normal way at
+its own timer, behind the jingle then playing.  A queued row that vanished
+from the armed set, or that moved behind the new row, is still replaced
+(the 2026-09-28 re-cue case).  Tests: `test_crossfade_shapes.py` (armed
+earlier row stays; vanished row replaced; later row replaced).

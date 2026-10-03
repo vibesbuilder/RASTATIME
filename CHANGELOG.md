@@ -903,7 +903,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   show end.  A queued row that is still armed and starts before the new one
   now stays (`_armed_events` identity); the new row starts the normal way
   behind it.  Rows that vanished or moved behind are still replaced.
-  Commit: fa0378a.
+  Commit: abbcba2.
 
 - **Local Machine page translated in DE / FR / ES (2026-10-03, operator Go
   for the whole page)** - the page carried 94 `_()` strings of which de_DE
