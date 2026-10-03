@@ -84,8 +84,8 @@ alle zehn Dienste 88 s nach dem Boot *Running*, PLAYOUT löst den Tascam per Nam
 mit Off-Air-Text, Preflight ohne Warnung, kein weiterer Neustart ausstehend, Build
 26200.9457.  Nebenbefund: `logs/playout-stderr.log` wird von nssm nie rotiert und
 zeigt noch Tracebacks vom 10.09. (NameError, längst behoben `c8b4818`) — in den
-Janitor aufnehmen (💡).  **Offen:** BIOS „Power on after power loss" (Operator am
-Gerät).
+Janitor aufnehmen (💡).  BIOS „Power on after power loss" vom Operator gesetzt
+(2026-10-03).  **17a abgeschlossen.**
 - Windows darf **nie selbständig neu starten**, Updates werden **nicht automatisch
   installiert** (Installation nur manuell im Wartungsfenster nach dem 03:30-Backup).
   Befund: keine Update-Richtlinie gesetzt (`HKLM\SOFTWARE\Policies\Microsoft\
@@ -118,7 +118,8 @@ live.  Regeln ab sofort:
    Sendungen.
 4. Migrationen (API `manage.py migrate`) nur mit frischem Backup (03:30 oder
    manuell per UI) und außerhalb von Sendungsgrenzen.
-Diese Regeln kommen zusätzlich in ASSISTANT.local.md, damit jede Sitzung sie kennt.
+Diese Regeln stehen seit 2026-10-03 in ASSISTANT.local.md; erster Rückfallpunkt
+`live-2026-10-03` gesetzt (Operator-Go 2026-10-03).  **17b in Kraft.**
 Alternative für später: zweiter Rechner als Entwicklungsumgebung (Anschaffung).
 
 **17c · Produktions-Passwörter (zuletzt, direkt vor dem Live-Gang):** Admin-Konto,
