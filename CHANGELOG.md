@@ -667,7 +667,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Unverändert: alle Bezeichner (Stufe B, 🟡 BACKLOG), alle Herkunfts-/
   Upstream-Erwähnungen in Kommentaren, Handbuch, Architektur, CHANGELOG,
   Tests.  Live geprüft: About, Settings → General, Hilfe-Seite ohne
-  „LibreTime" (About nennt die Basis einmal, gewollt); Unit-Tests grün.
+  „LibreTime" (About nennt die Basis einmal, gewollt); Unit-Tests grün.  `ad12764`.
 - **Unit-test tree: Django configured once, 38 pre-existing failures
   triaged (2026-10-02, operator Go for harness option 1)** - the root venv
   carries Django and pytest-django but no `DJANGO_SETTINGS_MODULE`; three
