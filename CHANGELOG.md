@@ -22,7 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   direkt nach der Anmeldung; Energie (`powercfg /h off`, USB-Selective-
   Suspend und PCIe-Link-Power aus), BIOS „Power on after power loss";
   Verifikation (lesend), Test-Neustart im ruhigen Fenster, Rollback.
-  Verweis in INSTALL.md.  Ausführung durch den Operator steht aus.
+  Verweis in INSTALL.md.  Ausführung durch den Operator steht aus.  `879b8f9`.
 - **Line-In input gain (2026-10-02, operator Go for option A)** - Like
   webstreams, every Line-In now has an *Input Gain (dB)* field in its
   dialog (−20 to +20 dB, default 0), so a studio feed can be trimmed to the
