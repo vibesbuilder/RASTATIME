@@ -2771,10 +2771,36 @@ mit dezenter CPU).
 Haker-Symptomen. Akzeptabel für die nächsten Tage bis Hardware kommt.
 
 
-### 💡 Internet-Erreichbarkeit (Public Stream + optional Remote-UI)
+### 🟡 Internet-Erreichbarkeit via HTTPS (Public Stream + optional Remote-UI) — evaluiert 2026-10-03
 
-**Status:** Idea (Operator-Frage 2026-08-26, noch nicht evaluiert — Operator
-wollte zunächst nur eine Erklärung).
+**Status:** Evaluiert 2026-10-03 (6 Punkte, Live-Readiness Punkt 16); Operator-
+Entscheidung über Weg und Umfang offen.  **Befund:** alles nur im LAN — Apache
+2.4.68 nur :80 (mod_ssl/http2/remoteip vorhanden, nicht konfiguriert), Icecast
+2.4.4 :8000 (+8080/8443 ohne TLS; libssl-DLLs liegen bei), Harbor :8001 Klartext
+(Liquidsoap-Harbor kann kein TLS), API :8765 auf 0.0.0.0 (zusätzlich von Apache
+unter /api/v2 proxied), **PostgreSQL :5432 und RabbitMQ :5672 auf 0.0.0.0**
+(nur Firewall davor), Firewall an, Eingangsregeln 8001/443 aktiv.  `public_url`
+= http://192.168.1.164 wird vom PLAYOUT als Basis des Legacy-v1-API-Clients und
+der DJ-Auth-Prüfung benutzt (32 Dateien) → muss intern bleiben, wenn die
+öffentliche URL eine andere wird (`RASTATIME_DJ_AUTH_WEB_URL` existiert; v1-
+Client braucht eine eigene interne Basis).  Legacy setzt `session.cookie_secure`
+nur bei `$_SERVER['HTTPS']` → hinter einem TLS-Proxy `SetEnvIf X-Forwarded-Proto`;
+Django `ALLOWED_HOSTS = ["*"]`, kein `CSRF_TRUSTED_ORIGINS`.  Secrets sind
+Einrichtungswerte (17c).  **Wege:** A direkte Exponierung (Port-Forwards 80/443
+→ Studio-PC, mod_ssl + win-acme, Apache proxied Icecast, Harbor via stunnel/VPN)
+— ein Rechner, aber der Sende-PC steht im Internet und Hörerlast liegt auf dem
+Studio-Uplink; **B Edge-Server** (VPS, Caddy/nginx mit Auto-TLS, Icecast-Relay
+oder RASTATIME pusht `output.icecast` dorthin, Studio nur ausgehend bzw. per
+WireGuard) — Studio ohne Eingangsport, Hörerlast in der Cloud, ein kleiner
+Zusatzrechner; C Cloudflare Tunnel (+ Access) für die UI — kein Eingangsport,
+SSO-Tor, aber kein Dauer-Audio über den Tunnel.  **Empfehlung:** Stufenplan
+0 Secrets + DB/RabbitMQ auf 127.0.0.1 binden (Vorbedingung) → 1 Public Stream
+per Push auf einen Cloud-Icecast hinter TLS (B) → 2 Remote-UI per WireGuard
+(Admins) oder Cloudflare Tunnel + Access (DJs/Planer) → 3 DJ-Einwahl von außen
+nur per VPN.  Codeanteil in RASTATIME ~50 Zeilen (interne API-Basis getrennt
+von `public_url`, Forwarded-Proto, CSRF-Origins).  Offene Fragen an den
+Operator: ist `cloud.example.org` ein eigener Server (dann Edge = dort), und
+wer braucht UI / DJ-Einwahl von außen?  **Vorherige Idee (2026-08-26):**
 **Kern:** Router-Forwards minimal halten (nur Stream; UI/DJ besser via VPN),
 DynDNS/Domain + A-Record, `public_url` auf öffentliche URL (erfordert
 Hairpin-NAT oder Split-DNS für LAN-Zugriff), TLS via Reverse-Proxy (Mixed-
