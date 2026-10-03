@@ -121,21 +121,24 @@ lief doppelt, Terror ~3,5 s spaet: der Schedule-Refresh fiel auf dieselbe Sekund
 (12:17:55) -> 'truncated to past' stoppte den Vorgaenger, Catch-up 'started 0s ago' pushte den Jingle ein zweites
 Mal.  Zwei Folge-Eintraege unten.
 
-### 🟡 Queue-Ahead: zurueckgestellte Zeile beim Start des kurzen Jingles sofort nachqueuen
+### ✅ Queue-Ahead: zurueckgestellte Zeile beim Start des kurzen Jingles sofort nachqueuen - gebaut 2026-10-03
 Seit abbcba2 bleibt der Jingle auf der Queue, der folgende Musiktitel startet ueber seinen eigenen PLAY zur
 Zeilenzeit - bei einem 2,7-s-Jingle bleiben dafuer 0,3 s, 2026-10-03 12:40:23 entstand eine 0,6-s-Luecke.
 Vorschlag: die zurueckgestellte Zeile merken und beim Adopt des Jingles (`_on_file_start`) sofort
 `_on_file_queue_ahead` dafuer aufrufen -> cross hat den Partner die ganze Jingle-Laenge lang.  Test: nach
-'stays queued' und Jingle-Adopt ist der Musiktitel gequeut.
+'stays queued' und Jingle-Adopt ist der Musiktitel gequeut.  Operator-Go 2026-10-03 -> gebaut
+(`_deferred_queue_ahead` / `_queue_deferred_ahead`, 2 Tests); wirksam nach PLAYOUT-Neustart.
 
-### 🟡 Refresh und Start-Timer in derselben Sekunde: Catch-up startet den Titel doppelt
+### ✅ Refresh und Start-Timer in derselben Sekunde: Catch-up startet den Titel doppelt - gebaut 2026-10-03
 2026-10-03 12:17:55: Refresh-Tick (120 s) traf die Startsekunde des Jingles.  Der Refresh sah den Vorgaenger als
 'truncated to past' (Ende <= now um 0,08 s) und stoppte ihn (flush der Queue), dann den Jingle als 'in progress,
 started 0s ago' und pushte ihn per Catch-up, waehrend sein Timer-PLAY schon lief -> Jingle doppelt, Kette +3,5 s
 bis zum naechsten Skip.  Erstes Auftreten im Log (Timer auf ganzen Sekunden, Refresh-Phase zufaellig).
 Vorschlag: `_on_file_start` markiert den Schluessel als 'startet gerade' (try/finally); der Catch-up ueberspringt
 markierte oder gerade spielende Zeilen; der 'truncated to past'-Abbau unterbleibt, wenn der Nachfolger auf der
-Queue liegt und die Zeile erst in dieser Sekunde endete (STOP-Timer und Queue uebernehmen).  Tests fuer beide.
+Queue liegt und die Zeile erst in dieser Sekunde endete (STOP-Timer und Queue uebernehmen).  Operator-Go
+2026-10-03 -> gebaut (`_starting` im try/finally-Wrapper, 1,5-s-Schwelle, 4 Tests, Suite 785); wirksam nach
+PLAYOUT-Neustart; Nachmessung bei der naechsten StationID-Folge.
 
 ### ✅ Cue-Punkte prüfen: Cue-Out hinter dem Dateiende, stille Datei-Enden (neu 2026-09-30, Operator-Go 2026-09-30, DONE 2026-09-30)
 

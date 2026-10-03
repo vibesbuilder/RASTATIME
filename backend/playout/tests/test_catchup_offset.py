@@ -391,6 +391,94 @@ def test_no_boundary_restart_means_no_catch_up(sched):
     assert engine.play.call_args.kwargs["cue_in"] == 0.0
 
 
+# ---------------------------------------------------------------------------
+# E - 2026-10-03 12:17:55: refresh tick in the row's start second
+# ---------------------------------------------------------------------------
+
+def test_catch_up_skips_a_row_whose_timer_is_starting_right_now(sched):
+    s, engine = sched
+    now = datetime.utcnow()
+    jingle = _file(now - timedelta(milliseconds=50), row_id=5, file_id=5, seconds=4)
+    s._current_event, s._playing_key = _file(now - timedelta(seconds=170), row_id=1, file_id=1), "p"
+    s._starting = {"j": jingle}                       # its timer PLAY is executing
+    s._arm_file_event("j2", jingle, now)              # the refresh re-keys it
+    start_t, stop_t = s._timers["j2"]
+    assert start_t is None and stop_t is not None
+    engine.play.assert_not_called()
+
+
+def test_catch_up_still_enters_a_row_nobody_is_starting(sched):
+    s, _ = sched
+    now = datetime.utcnow()
+    row = _file(now - timedelta(seconds=40), row_id=5, file_id=5)
+    s._current_event, s._playing_key = None, None
+    with patch("libretime_playout.playout_scheduler.threading.Timer") as timer:
+        s._arm_file_event("k", row, now)
+    assert any(c.args[0] == 0 for c in timer.call_args_list)   # the catch-up Timer(0, ...)
+
+
+def test_refresh_leaves_the_hand_over_to_the_queue_when_the_row_ended_this_second(sched):
+    s, engine = sched
+    now = datetime.utcnow()
+    prev = _file(now - timedelta(seconds=200.1), row_id=1, file_id=1, seconds=200.0)   # ended 0.1 s ago
+    nxt = _file(now + timedelta(seconds=1), row_id=2, file_id=2)
+    s._current_event, s._playing_key = prev, "p"
+    s._queued_ahead, s._queued_ahead_prev = ("n", nxt), prev
+    _refresh(s, {"p": prev, "n": nxt})
+    engine.stop.assert_not_called()
+    assert s._queued_ahead == ("n", nxt)
+
+
+def test_refresh_still_tears_down_a_row_truncated_long_ago(sched):
+    s, engine = sched
+    now = datetime.utcnow()
+    prev = _file(now - timedelta(seconds=230), row_id=1, file_id=1, seconds=200.0)   # ended 30 s ago
+    nxt = _file(now + timedelta(seconds=1), row_id=2, file_id=2)
+    s._current_event, s._playing_key = prev, "p"
+    s._queued_ahead = ("n", nxt)
+    _refresh(s, {"p": prev, "n": nxt})
+    engine.stop.assert_called()
+    assert s._queued_ahead is None
+
+
+# ---------------------------------------------------------------------------
+# F - 2026-10-03 12:40:23: the held-back row is queued when the jingle starts
+# ---------------------------------------------------------------------------
+
+def test_jingle_start_queues_the_row_held_back_behind_it(sched):
+    s, engine = sched
+    now = datetime.utcnow()
+    prev = _file(now - timedelta(seconds=178), row_id=1, file_id=1, seconds=180.0)   # 2 s left
+    tief = _file(now, row_id=2, file_id=2, seconds=3)
+    music = _file(now + timedelta(seconds=3), row_id=3, file_id=3)
+    s._current_event, s._playing_key = prev, "p"
+    s._armed_events = {"tief": tief, "music": music}
+    s._queued_ahead, s._queued_ahead_prev = ("tief", tief), prev
+    s._on_file_queue_ahead("music", music)             # lead window opened early
+    engine.enqueue.assert_not_called()
+    assert s._deferred_queue_ahead == ("music", music)
+    s._on_file_start("tief", tief)                       # adopts the queued jingle
+    engine.adopt_queued.assert_called_once()
+    engine.enqueue.assert_called_once()
+    assert engine.enqueue.call_args.kwargs["cue_out"] == music.cue_out
+    assert s._queued_ahead == ("music", music) and s._deferred_queue_ahead is None
+
+
+def test_held_back_row_is_dropped_when_it_left_the_schedule(sched):
+    s, engine = sched
+    now = datetime.utcnow()
+    prev = _file(now - timedelta(seconds=178), row_id=1, file_id=1, seconds=180.0)
+    tief = _file(now, row_id=2, file_id=2, seconds=3)
+    music = _file(now + timedelta(seconds=3), row_id=3, file_id=3)
+    s._current_event, s._playing_key = prev, "p"
+    s._armed_events = {"tief": tief}                     # music vanished from the schedule
+    s._queued_ahead, s._queued_ahead_prev = ("tief", tief), prev
+    s._deferred_queue_ahead = ("music", music)
+    s._on_file_start("tief", tief)
+    engine.enqueue.assert_not_called()
+    assert s._deferred_queue_ahead is None
+
+
 def test_crash_detected_restart_forgets_the_queued_successor(sched):
     s, engine = sched
     now = datetime.utcnow()

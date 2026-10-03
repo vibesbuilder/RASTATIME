@@ -1,10 +1,14 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.63
+Draft version: 0.64
 Date: 2026-10-03
 
 > **Revision history**
+> - **0.64 (2026-10-03)** — **Short jingles, part two** (§23.51):
+>   the held-back row is queued when the jingle starts; a refresh in the
+>   row's start second no longer catches it up a second time nor tears
+>   the ending predecessor down.
 > - **0.63 (2026-10-03)** — **Queue-ahead keeps an armed earlier row**
 >   (§23.50): consecutive jingles shorter than the lead window were
 >   swapped and doubled on air (2026-10-02 23:36).
@@ -6155,3 +6159,34 @@ its own timer, behind the jingle then playing.  A queued row that vanished
 from the armed set, or that moved behind the new row, is still replaced
 (the 2026-09-28 re-cue case).  Tests: `test_crossfade_shapes.py` (armed
 earlier row stays; vanished row replaced; later row replaced).
+
+### 23.51 Short Jingles, Part Two: Deferred Queue-ahead and the Refresh Race (2026-10-03)
+
+**Observation (test show 12:15, three single StationIDs of 2.7-4.9 s between
+tracks).**  The 23.50 fix held: "stays queued ahead" three times, no swap.
+Two new defects: (1) behind the 2.7 s jingle 0.6 s of digital silence
+(12:40:23) - the music row's own PLAY at its row time left Liquidsoap
+0.3 s to resolve the request, cross had no partner; behind the 4.9 s jingle
+it worked (+0.21 s, no gap).  (2) At 12:17:55 the 120 s schedule refresh
+landed in the start second of a 3.9 s jingle: the refresh declared the
+predecessor (end 0.08 s ago) "truncated to past" and stopped it, flushing
+the queued jingle, then found the jingle "in progress, started 0 s ago" and
+caught it up while its timer PLAY was executing - the jingle aired twice and
+the chain ran 3.5 s late until a skip at 12:26.  First occurrence in the
+log; with timers on whole seconds and a drifting refresh phase it recurs.
+
+**Fix (1) - deferred queue-ahead.**  `_on_file_queue_ahead` remembers the
+row it holds back (`_deferred_queue_ahead`); `_on_file_start` runs
+`_queue_deferred_ahead` in its `finally`, which queues that row behind the
+now-playing jingle when it is still armed and not the current row.  The
+refresh clears the memo (`_cancel_all_timers`); the re-armed queue-ahead
+timers rebuild it.
+
+**Fix (2) - the refresh race.**  `_on_file_start` is a wrapper that marks
+the row in `_starting` for the duration of `_on_file_start_impl`; the
+catch-up branch of `_arm_file_event` skips a row that is starting right now
+(schedule identity).  The teardown of a playing row whose end lies less
+than 1.5 s in the past is skipped while its successor is queued ahead: the
+STOP timer and the queue hand over by themselves.  A row truncated longer
+ago (a cancelled show) is still torn down.  Tests: `test_catchup_offset.py`
+sections E and F (six tests).

@@ -893,6 +893,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Short jingles, part two: the held-back row is queued when the jingle
+  starts, and a refresh in the row's start second no longer doubles it
+  (2026-10-03, test show 12:15)** - (1) since abbcba2 the row behind a short
+  queued jingle waited for its own PLAY; behind a 2.7 s jingle that left
+  0.3 s and 0.6 s of dead air followed (12:40:23).  The row is now remembered
+  (`_deferred_queue_ahead`) and queued the moment the jingle starts, so cross
+  has its partner for the whole jingle.  (2) The 120 s schedule refresh hit
+  the start second of a 3.9 s jingle (12:17:55): it tore the predecessor down
+  as "truncated to past" (end 0.08 s ago, flushing the queued jingle) and
+  caught the jingle up as "started 0 s ago" while its timer PLAY was running
+  - the jingle aired twice, the chain ran 3.5 s late.  `_on_file_start` now
+  marks the row as starting (`_starting`, try/finally) and the catch-up skips
+  it; a row that ended less than 1.5 s ago with its successor queued is left
+  to the STOP timer and the queue.  Commit: RACEDEFERRED_PENDING.
+
 - **Queue-ahead swapped and doubled consecutive jingles shorter than its lead
   window (2026-10-03)** - the successor is put on the queue BUFFER + 5 s before
   its start; with rows shorter than that (2026-10-02 23:36: StationIDs of
