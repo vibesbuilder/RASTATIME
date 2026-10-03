@@ -134,9 +134,15 @@ Host-Login `djuser` per UI-Login an Testshow 2315: vor Sendebeginn abgelehnt,
 Login → `scheduled -> show` 17 ms, sauberes Trennen → Timeout 5 s → Resume +76,2 s,
 falsches Passwort abgelehnt, harter Abbruch → ECONNRESET → Resume +124,7 s; damit
 Master-, Custom- und Host-Login live abgenommen — Details im Item „DJ-Logins"),
-Line-In-Feeder-Latenz / stabile Keys (Item „Line-In"), Internet-Erreichbarkeit
-(Punkt 16, Evaluierung offen), Testplan erstellen (Punkt 14 → wird die
-Live-Readiness-Checkliste).
+✅ Line-In-Feeder-Latenz / stabile Keys — bei der Durchsicht 2026-10-03 als
+bereits erledigt erkannt (der Eintrag stammte aus einer veralteten Memory-Zeile):
+Startlücke 6 → 2 s bzw. 0,15 s vorgewärmt (Paket 2026-09-04, Item „Line-In-
+Startlücke"), Event-Keys mit Identität (Option B, 2026-09-10).  Übrig ist nur die
+systembedingte Durchlauf-Latenz der Kette (Feeder → ffmpeg → http → 2-s-Puffer →
+Bus → Encoder → Icecast, ~2–3 s bis zum Stream): kein Mangel, sondern der Grund,
+warum DJs über das Pult und nie über den Stream abhören.  Kein Handlungsbedarf.
+Internet-Erreichbarkeit (Punkt 16, Evaluierung offen), Testplan erstellen
+(Punkt 14 → wird die Live-Readiness-Checkliste).
 
 ---
 
