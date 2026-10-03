@@ -36,10 +36,79 @@ festgelegt.  Jeder Punkt bekommt vor Implementierung die
 | 14 | **Testplan erstellen** | neu 2026-09-02 — siehe unten |
 | 15 | ✅ Legacy-mpv-Code löschen | **DONE 2026-09-10** — Liquidsoap ist die einzige Engine, DJ-Kick per Harbor-Telnet (`2590cf2`) |
 | 16 | Internet-Erreichbarkeit | Ideen |
+| 17 | 🟢 **Live-Readiness** (Operator 2026-10-03) | siehe Item „Live-Readiness" unten — Reihenfolge: 17a Windows-Härtung → 17b Entwicklungsregeln → DJ-Login-Abnahme, Line-In-Feeder-Latenz, Internet-Erreichbarkeit (16), Testplan (14) → 17c Passwörter zuletzt |
 
 ---
 
 ## 🎯 Aktive Backlog-Items (warten auf Operator-Go)
+
+### 🟢 Live-Readiness: RASTATIME dauerhaft auf dieser Maschine (Operator-Entscheidung 2026-10-03)
+
+**Entscheidung:** Keine Neuinstallation.  Befund 2026-10-03: alle zehn Dienste
+laufen mit Starttyp Automatisch (kommen nach Stromausfall ohne Anmeldung hoch),
+23 Tage Laufzeit, Liquidsoap-Neustart alle 7 Tage aktiv, Backup nächtlich 03:30
+nach `D:\backups` (03.10. OK: DB-ZIP + Medienspiegel 2 523 Dateien / 7,9 GB),
+C: 868 GB / D: 1,68 TB frei, DB 23 MB, Arbeitsbaum sauber.  Eine Neuinstallation
+nach Runbook ergäbe denselben Stand ohne die gerätespezifischen Funde (Tascam per
+Name, MME-Feeder, Defender-Ausnahmen, Icecast-Fallback-Mounts, CA-Bundle).
+
+**Nicht gewollt (Operator):** Test-Sendungen jetzt per Skript räumen.  Stattdessen
+werden **kurz vor dem Live-Gang alle vergangenen Sendungen gelöscht** (Operator,
+über die UI / ein dann vorbereitetes Skript) — als Vorbereitungs-Schritt hier
+notiert, kein Feature.
+
+**Reihenfolge (Operator):** 17a → 17b → DJ-Login-Live-Abnahme, Line-In-Feeder-
+Latenz, Internet-Erreichbarkeit (Punkt 16), Testplan (Punkt 14) → 17c zuletzt.
+
+**17a · Windows-Härtung für 24/7** — Operator-Vorgaben 2026-10-03:
+- Windows darf **nie selbständig neu starten**, Updates werden **nicht automatisch
+  installiert** (Installation nur manuell im Wartungsfenster nach dem 03:30-Backup).
+  Befund: keine Update-Richtlinie gesetzt (`HKLM\SOFTWARE\Policies\Microsoft\
+  Windows\WindowsUpdate\AU` leer).  Weg: Richtlinie `NoAutoUpdate = 1` (oder
+  `AUOptions = 2` „nur benachrichtigen") + `NoAutoRebootWithLoggedOnUsers = 1`,
+  zusätzlich in Einstellungen → Windows Update → „Updates so schnell wie möglich
+  erhalten" aus und Nutzungszeit setzen.  Systemeinstellung → **Operator setzt sie
+  selbst** (erhöhte Shell nötig; assistant ändert keine Sicherheits-/Systemeinstellungen),
+  ich liefere die Befehle und prüfe danach die Registry.
+- **Automatische Anmeldung** eines Benutzers bei jedem Neustart (für Tascam/MME-
+  Audio-Endpunkte und die Desktop-Werkzeuge; die Dienste selbst brauchen keine
+  Anmeldung).  Weg: Sysinternals **Autologon** (speichert das Kennwort verschlüsselt
+  als LSA-Secret) statt Klartext-`DefaultPassword` in der Registry; vorher
+  `netplwiz` → „Benutzer müssen … eingeben" abwählen, falls Windows Hello das
+  blockiert.  Kennwort tippt der Operator — nie in einer Sitzung mit mir.
+- Dazu einmal prüfen: BIOS „Power on after power loss", Energieoptionen (kein
+  Ruhezustand, Display-Schlaf lässt den DELL-HD-Audio-Endpunkt verschwinden — siehe
+  Tascam-Lore), Bildschirmsperre vs. laufende Audio-Endpunkte.
+- Abnahme: Registry-Werte lesen, Testneustart in einem Sendefenster, Dienste und
+  Audio-Endpunkte nach dem Neustart ohne Eingriff da.
+
+**17b · Entwicklungsregeln auf der Produktionsmaschine** (Operator: „sehr gut"):
+Die App läuft direkt aus dem Git-Checkout `C:\RASTATIME`, jede Änderung ist sofort
+live.  Regeln ab sofort:
+1. Vor jedem Live-Eingriff ein `git tag` als Rückfallpunkt (`live-YYYY-MM-DD`),
+   Rollback = `git checkout <tag>` + betroffene Dienste neu starten.
+2. Kein unkommittierter Stand über Nacht; `git status` am Sitzungsende leer.
+3. Riskante Umbauten nur in ruhigen Sendefenstern, Proben an temporären Instanzen
+   (`ap_fill_test.php --live`, `move_probe.php`, Crossfade-Probe), nie an echten
+   Sendungen.
+4. Migrationen (API `manage.py migrate`) nur mit frischem Backup (03:30 oder
+   manuell per UI) und außerhalb von Sendungsgrenzen.
+Diese Regeln kommen zusätzlich in ASSISTANT.local.md, damit jede Sitzung sie kennt.
+Alternative für später: zweiter Rechner als Entwicklungsumgebung (Anschaffung).
+
+**17c · Produktions-Passwörter (zuletzt, direkt vor dem Live-Gang):** Admin-Konto,
+DB-Passwort (`config/libretime.conf` + Dienste neu starten), Icecast-Source-/Admin-
+Passwort (`C:\Tools\Icecast\icecast.xml` + Streams-Einstellungen), statisches
+DJ-Rückfallpasswort (Settings → Streams), RabbitMQ-Benutzer.  Operator setzt die
+Werte, ich liefere die Stellen-Liste und prüfe anschließend Stream, DJ-Login und
+Backup-Lauf.
+
+**Danach (gemäß Reihenfolge):** DJ-Login-Live-Abnahme (Item „DJ-Logins"), Line-In-
+Feeder-Latenz / stabile Keys (Item „Line-In"), Internet-Erreichbarkeit (Punkt 16,
+Evaluierung offen), Testplan erstellen (Punkt 14 → wird die Live-Readiness-
+Checkliste).
+
+---
 
 ### 🟢 Ausgangs-Processing mit Stereo Tool, optional (Operator-Entscheidung C 2026-10-02 — gebaut, Live-Prüfung mit Bibliothek + Lizenz offen)
 
