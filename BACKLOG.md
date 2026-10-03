@@ -79,6 +79,11 @@ R128-Ceiling -1 dBTP; Preset-Wahl offen).  Speicher: Private Bytes (Preflight-Me
 (+10 MB/h wie ohne Stereo Tool), Working Set nach dem Start von 1043 auf 300 MB getrimmt -> weicher Trigger
 1536 MB im Fenster nach ~2 Tagen, also faktisch Nacht-Neustart alle 2-3 Tage statt 7; Trigger ggf. anheben.
 Crossfades normal (Analyse-Zeilen, 3,0-s-Tails, leiser Schwanz Binder -58 dB blieb).
+**Nacht 2026-10-02/03 (Testshows 19:10-23:40 und 00:10-07:00, 12 Stunden Musik, Default-Preset):** jede Stunde
+-23,3..-23,5 LUFS, LRA 4,6-7,5 LU, True Peak -7,6..-10,2 dBTP; Private Bytes 1028 -> 1149 MB in 13,5 h (9,0 MB/h,
+wie ohne Stereo Tool); keine Fehler/Warnungen in PLAYOUT und Liquidsoap.  09:16 PLAYOUT sauber gestoppt/gestartet
+(Operator?), Skript 'content changed' -> Liquidsoap-Neustart im ruhigen Moment (nichts auf Sendung), neue Instanz
+PID 4092 mit 1003 MB.
 **Befund (nicht Stereo Tool):** alle Titel der Show liefen +3,9 s hinter der Zeilenzeit (Jingle +3,4..3,9 s;
 heute frueh ohne Neustart +0,30 s): `_on_file_start` fuehrt den Grenz-Neustart synchron aus (3,8 s) und
 pusht den ersten Titel danach mit seek 0 statt mit der verstrichenen Zeit; die Kette traegt den Versatz bis
@@ -94,6 +99,20 @@ Optionen: (a) nach dem Grenz-Neustart die verstrichene Zeit seit `start_exact` a
 Raster verschoben bis zum naechsten Live-Element).  Operator: Go fuer (a) 2026-10-02 -> gebaut
 (`_catch_up_after_boundary_restart`, Schwelle 0,5 s, 3 Tests); wirksam nach PLAYOUT-Neustart, Nachmessung beim
 naechsten Grenz-Neustart (Nachtfenster oder Einstellungs-Aenderung).
+Nacht 2026-10-02/03: kein Grenz-Neustart aufgetreten (Instanz zu jung, Speicher 1149 < 1536 MB) -> Fix noch nicht
+live geprueft.  Raster der Datei-Ketten: test1 +0,35 s, nach dem PLAYOUT-Neustart 19:40 (Resume-Seek) -0,25 ->
+-0,15 s; test2 +0,25 -> +0,50 s ueber 7 h (Drift ~0,03 s/h, vernachlaessigbar).  Musik-Ausreisser +1..+5,5 s in
+der Korrelation sind Loop-Mehrdeutigkeiten (Terror: Selbstaehnlichkeit 0,89 bei 4,5 s), nicht Sendeversatz.
+
+### 🟡 Queue-Ahead: aufeinanderfolgende Jingles kuerzer als das Vorlauffenster vertauschen und verdoppeln
+Beobachtet 2026-10-02 23:36 (test1): Sweetlove -> StationID tief (3,2 s) -> StationID Kreisky (4,9 s) -> Butter.
+Das Vorlauffenster (BUFFER 3 s + 5 s) ist laenger als die Jingles: der Queue-Ahead von Kreisky fand tief auf der
+Queue und ersetzte ihn als 'stale' (flush), der von Butter ersetzte Kreisky.  Dann pushten die eigenen Timer tief
+und Kreisky frisch -> auf Sendung: Kreisky, tief, 0,2 s Luecke, Kreisky noch einmal, Butter +2,9 s spaet (Kette bis
+zum Show-Ende, Intimzone +2,85 s gemessen).  Einzige zwei 'replaces the stale queued track'-Ereignisse im Log.
+Vorschlag: in `_on_file_queue_ahead` eine bereits gequeute Zeile nur ersetzen, wenn sie wirklich weg/umgeplant ist
+(kein Start-Timer mehr in `_timers`); eine noch geplante, frueher startende Zeile bleibt, die spaetere startet ueber
+ihren normalen PLAY hinter dem laufenden Jingle.  Regressionstest mit drei kurzen Zeilen.  Operator-Go offen.
 
 ### ✅ Cue-Punkte prüfen: Cue-Out hinter dem Dateiende, stille Datei-Enden (neu 2026-09-30, Operator-Go 2026-09-30, DONE 2026-09-30)
 
