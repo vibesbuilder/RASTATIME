@@ -906,7 +906,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - the jingle aired twice, the chain ran 3.5 s late.  `_on_file_start` now
   marks the row as starting (`_starting`, try/finally) and the catch-up skips
   it; a row that ended less than 1.5 s ago with its successor queued is left
-  to the STOP timer and the queue.  Commit: RACEDEFERRED_PENDING.
+  to the STOP timer and the queue.  Commit: 4d6f99e.
 
 - **Queue-ahead swapped and doubled consecutive jingles shorter than its lead
   window (2026-10-03)** - the successor is put on the queue BUFFER + 5 s before
