@@ -74,8 +74,18 @@ Benutzer `studio`, kein Klartext-Kennwort in der Registry), Hello-Pflicht aus
 (`DevicePasswordLessBuildVersion 0`); Ruhezustand weg (`hiberfil.sys` fehlt,
 `powercfg /a` ohne Ruhezustand), USB-Selective-Suspend und PCIe-Link-Power aus,
 Standby weiterhin nie.  Nicht gesetzt (optional): Sperre nach Anmeldung.
-**Offen:** BIOS „Power on after power loss" (Operator am Gerät) und der
-Test-Neustart §7 in einem ruhigen Fenster.
+**Test-Neustart 2026-10-03 19:05 — bestanden.** Der Operator startete über die
+Windows-Update-Benachrichtigung neu; dabei liefen die **vor** der Richtlinie bereits
+heruntergeladenen Updates durch (Intel-PMT-Treiber 19:05, KB5129195 fertig 19:09 nach
+einem zweiten, von TrustedInstaller ausgelösten Neustart 19:06:23 → Boot 19:07:00).
+Beide Boots ohne Eingriff: `studio` automatisch angemeldet (Konsolensitzung 19:07),
+alle zehn Dienste 88 s nach dem Boot *Running*, PLAYOUT löst den Tascam per Name
+(PortAudio 3 MME), Liquidsoap-Telnet 19:07:15, Stereo Tool lizenziert, Icecast-Mounts
+mit Off-Air-Text, Preflight ohne Warnung, kein weiterer Neustart ausstehend, Build
+26200.9457.  Nebenbefund: `logs/playout-stderr.log` wird von nssm nie rotiert und
+zeigt noch Tracebacks vom 10.09. (NameError, längst behoben `c8b4818`) — in den
+Janitor aufnehmen (💡).  **Offen:** BIOS „Power on after power loss" (Operator am
+Gerät).
 - Windows darf **nie selbständig neu starten**, Updates werden **nicht automatisch
   installiert** (Installation nur manuell im Wartungsfenster nach dem 03:30-Backup).
   Befund: keine Update-Richtlinie gesetzt (`HKLM\SOFTWARE\Policies\Microsoft\
