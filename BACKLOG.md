@@ -138,7 +138,16 @@ Vorschlag: `_on_file_start` markiert den Schluessel als 'startet gerade' (try/fi
 markierte oder gerade spielende Zeilen; der 'truncated to past'-Abbau unterbleibt, wenn der Nachfolger auf der
 Queue liegt und die Zeile erst in dieser Sekunde endete (STOP-Timer und Queue uebernehmen).  Operator-Go
 2026-10-03 -> gebaut (`_starting` im try/finally-Wrapper, 1,5-s-Schwelle, 4 Tests, Suite 785); wirksam nach
-PLAYOUT-Neustart; Nachmessung bei der naechsten StationID-Folge.
+PLAYOUT-Neustart (14:50).
+**Nachmessung Show 2026-10-03 14:55-15:25 (VIECH 4,2 s, tief 2,7 s, drei laengere Jingles als Kontrolle):**
+beide kurzen Jingles 'stays queued ahead' -> beim Jingle-Start 'was held back ... queuing it now' (Funaki 4,1 s,
+Poem 2,5 s vor dem Jingle-Ende gequeut), keine Luecke in der Aufnahme (tief: nur der 0,05-s-stille Dateikopf).
+Liquidsoap meldet beim 2,7-s-Jingle 'crossfade duration is longer than the track's duration' (cross kann keine
+3 s puffern) und sequenziert ohne rt_cross - hoerbar folgenlos.  Keine Refresh-Kollision (Ticks :17), keine
+Fehler.  Kette lief +1,1..1,25 s hinter den Zeilen: die erste Zeile (Sweetlove) endet im Layout 0,757 s vor
+ihrem Audio-Ende (ends-starts 165,000 s, clip 165,757 s - einzige solche Zeile im ganzen Plan, Show-Builder-
+Platzierung auf volle Sekunde); der Playout spielt das Audio aus, die Kette erbt den Rest.  Beide Fixes
+abgenommen.
 
 ### ✅ Cue-Punkte prüfen: Cue-Out hinter dem Dateiende, stille Datei-Enden (neu 2026-09-30, Operator-Go 2026-09-30, DONE 2026-09-30)
 
