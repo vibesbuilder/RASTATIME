@@ -1890,6 +1890,22 @@ class PlayoutScheduler:
             ):
                 self._queued_ahead = (key, event)  # key shifted across a refresh
                 return
+            # RASTATIME 2026-10-03 - rows shorter than the lead window
+            # (BUFFER + margin): the queued row is still armed and starts
+            # before this one, so it is the real successor, not stale.  It
+            # stays; this row starts the normal way behind it (2026-10-02
+            # 23:36: two StationIDs of 3.2 s and 4.9 s were swapped, one of
+            # them aired twice and the chain ran 2.9 s late to the show end).
+            if queued_evt.start <= event.start and any(
+                self._same_scheduled_item(armed, queued_evt)
+                for armed in list(self._armed_events.values())
+            ):
+                logger.info(
+                    "Queue-ahead: %s stays queued ahead of %s (rows shorter than "
+                    "the lead window) - %s starts the normal way behind it.",
+                    self._queued_ahead[0], key, key,
+                )
+                return
             # a different row, or the same row re-cued by a show-builder
             # edit (2026-09-28): the queued request carries the old cues
             logger.info(
