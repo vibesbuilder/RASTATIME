@@ -2835,7 +2835,7 @@ Hörer-URL `<public_url>/stream/<mount>`, `infra/apache/` (Stream-Proxy, ACME-Al
 443-vHost), Django ALLOWED_HOSTS/CSRF/Proxy-Header, CORS-Origin-Bug behoben; Suite
 739 passed, Apache-Syntax mit Includes OK, `/embed/player` liefert `/stream/`-URLs.
 **Offen (Operator, Stufe 1 aktivieren):** zwei `Include`-Zeilen in httpd.conf
-(stream-proxy, acme), `C:\RASTATIMEcme` anlegen, Apache/PLAYOUT/ANALYZER neu
+(stream-proxy, acme), `C:\RASTATIME\acme` anlegen, Apache/PLAYOUT/ANALYZER neu
 starten; Prüfung `http://192.168.1.164/stream/rastatime`.  Nebenbefund: `config/
 icecast.xml` ist versioniert und trägt seit Block 3 die echten Passwörter im
 Arbeitsbaum — nicht committen; Vorschlag: aus dem Index nehmen + `.example`.
