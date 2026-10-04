@@ -92,12 +92,23 @@ Off-air for ~30–60 s (Icecast and Liquidsoap restart) — quiet window.
    password, *Admin password* = new admin password; Save.
 4. `config/libretime.conf` → `stream.harbor.main_password` /
    `show_password`: new random values (these only count as fallback).
-5. Restart in this order (elevated):
+5. Restart in this order (elevated), **not while an item is on air** —
+   the playout defers the Liquidsoap restart to the next file-to-file
+   boundary while something plays, and until then the main instance
+   knocks at Icecast with the old password (`401`, public mounts empty):
    ```powershell
-   Restart-Service RASTATIME-ICECAST
-   Restart-Service RASTATIME-PLAYOUT      # re-renders rastatime.liq + standby.liq, restarts LIQUIDSOAP itself when the .liq changed
+   Restart-Service RASTATIME-ICECAST -Force          # STANDBY depends on it and restarts with it
+   & C:\Tools
+ssm
+ssm.exe restart RASTATIME-PLAYOUT   # re-renders rastatime.liq + standby.liq
+   & C:\Tools
+ssm
+ssm.exe restart RASTATIME-LIQUIDSOAP # apply now (nssm prints "Unexpected status SERVICE_START_PENDING" - harmless, the service is up)
    Restart-Service RASTATIME-STANDBY
    ```
+   Off-air from the Icecast restart until the main instance reconnects
+   (2026-10-04: 17:12:54 → 17:15:52, prolonged by a running webstream
+   slot; ~40 s when done in a quiet moment).
 6. Check: `logs/playout-stdout.log` → `Liquidsoap config ... changed`
    and a Liquidsoap restart; Icecast status page lists the three mounts
    with the standby fallbacks; `logs/liquidsoap-stdout.log` has no

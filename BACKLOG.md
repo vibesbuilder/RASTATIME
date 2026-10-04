@@ -2810,7 +2810,15 @@ im Runbook.  **Block 2 (RabbitMQ) erledigt 2026-10-04 16:58, verifiziert:** Benu
 Fehler, PHP erreicht localhost:5672 (IPv4).  Nebenbefund: pika löst `localhost`
 zuerst nach `::1` auf → 2 s Verzögerung + Fehlerzeilen je Verbindung; Abhilfe
 `listeners.tcp.local_v6 = ::1:5672` als zweite Zeile (optional).
-**Offen:** Blöcke 3–5 (Icecast/Harbor ≈ 30–60 s off-air; API-Bind + Firewall;
+**Block 3 (Icecast + Harbor) erledigt 2026-10-04 17:16, verifiziert:** icecast.xml
+source/relay/admin/master custom, Settings → Streams Ausgänge 1–3 Passwort + Admin-
+Passwort custom, `stream.harbor.*` custom; PLAYOUT renderte beide .liq 17:13:05,
+STANDBY auf den Fallback-Mounts seit 17:13:24, Hauptinstanz nach erzwungenem
+`nssm restart` 17:15:52 auf allen drei Mounts, Hörerstatistik (`/admin/stats.xml`)
+mit neuem Admin-Passwort 200.  Lehre: der Playout schiebt den Liquidsoap-Neustart
+auf, solange ein Item läuft (Webstream 17:07–17:15) → Stream war 17:12:54–17:15:52
+leer; im Runbook jetzt `nssm restart RASTATIME-LIQUIDSOAP` als fester Schritt und
+„nicht während eines laufenden Items".  **Offen:** Blöcke 4–5 (API-Bind + Firewall;
 UI-`admin`), danach Prüfung 0.7; dann Stufe 1 (Code).
 **Evaluierung 2026-10-03 (6 Punkte, Live-Readiness Punkt 16):**  **Befund:** alles nur im LAN — Apache
 2.4.68 nur :80 (mod_ssl/http2/remoteip vorhanden, nicht konfiguriert), Icecast
