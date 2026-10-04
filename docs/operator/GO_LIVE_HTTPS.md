@@ -98,12 +98,8 @@ Off-air for ~30–60 s (Icecast and Liquidsoap restart) — quiet window.
    knocks at Icecast with the old password (`401`, public mounts empty):
    ```powershell
    Restart-Service RASTATIME-ICECAST -Force          # STANDBY depends on it and restarts with it
-   & C:\Tools
-ssm
-ssm.exe restart RASTATIME-PLAYOUT   # re-renders rastatime.liq + standby.liq
-   & C:\Tools
-ssm
-ssm.exe restart RASTATIME-LIQUIDSOAP # apply now (nssm prints "Unexpected status SERVICE_START_PENDING" - harmless, the service is up)
+   & "C:\Tools\nssm\nssm.exe" restart RASTATIME-PLAYOUT      # re-renders rastatime.liq + standby.liq
+   & "C:\Tools\nssm\nssm.exe" restart RASTATIME-LIQUIDSOAP   # apply now (nssm prints "Unexpected status SERVICE_START_PENDING" - harmless, the service is up)
    Restart-Service RASTATIME-STANDBY
    ```
    Off-air from the Icecast restart until the main instance reconnects
