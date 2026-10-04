@@ -2798,9 +2798,14 @@ Source bereits custom.  Code: Line-In-Capture nimmt die Icecast-Zugangsdaten aus
 Settings → Streams (vorher fest `admin`).  Befund Netz: PostgreSQL (pg_hba nur
 localhost), RabbitMQ und API lauschen auf 0.0.0.0; Firewall-Regeln 80/443/8001
 + obsolet 8002, Programmregeln „any port" für Erlang/epmd/liquidsoap (eine auf
-`C:\temp\liq245`).  **Offen:** Ausführung 0.2–0.6 durch den Operator in ruhigen
-Fenstern (DB + Bindung; RabbitMQ; Icecast/Harbor ≈ 30–60 s off-air), danach
-Prüfung 0.7 durch assistant; dann Stufe 1 (Code).
+`C:\temp\liq245`).  **Block 1 (DB-Passwort + PostgreSQL auf localhost) erledigt 2026-10-04 16:40,
+verifiziert:** DB-Login mit dem Wert aus `libretime.conf` ok, 5432 nur 127.0.0.1/::1,
+UI 200, API 200, Playout armed=8, kein Auth-Fehler mehr seit 16:38.  Lehre: ein
+Passwort mit führendem `!` ohne Anführungszeichen macht die YAML-Datei ungültig —
+alle Dienste standen ~10 min, der YAML-Parser schrieb den Wert in zwei Logs
+(maskiert); seither „Passwörter in libretime.conf immer in Anführungszeichen"
+im Runbook.  **Offen:** Blöcke 2–5 (RabbitMQ; Icecast/Harbor ≈ 30–60 s off-air;
+API-Bind + Firewall; UI-`admin`), danach Prüfung 0.7; dann Stufe 1 (Code).
 **Evaluierung 2026-10-03 (6 Punkte, Live-Readiness Punkt 16):**  **Befund:** alles nur im LAN — Apache
 2.4.68 nur :80 (mod_ssl/http2/remoteip vorhanden, nicht konfiguriert), Icecast
 2.4.4 :8000 (+8080/8443 ohne TLS; libssl-DLLs liegen bei), Harbor :8001 Klartext

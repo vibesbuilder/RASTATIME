@@ -39,13 +39,23 @@ needs no code edit.  Active after the next PLAYOUT restart.
 
 Quiet window (the services lose the database for a few seconds).
 
-1. New password (long, random; no `'` or `\`).
+1. New password (long, random; letters and digits are enough — no `'`,
+   `\`, and nothing that YAML reads as syntax at the start: `!`, `&`, `*`,
+   `%`, `@`, `` ` ``, `#`, `{`, `[`).  **Always write the value in double
+   quotes in `libretime.conf`** (`password: "…"`); an unquoted `!…` broke
+   the whole file on 2026-10-04 (every service down, the value echoed into
+   two log files by the YAML parser).
 2. As PostgreSQL superuser (pgAdmin or `psql -U postgres`):
    ```sql
    ALTER USER rastatime WITH PASSWORD '<new>';
    ```
-3. `config/libretime.conf` → `database.password: <new>` (the legacy PHP
-   reads the file on every request — no Apache restart).
+   The role may change its own password — no superuser needed:
+   `psql -h localhost -U rastatime -d rastatime -c "ALTER USER rastatime WITH PASSWORD '<new>';"`
+   (prompts for the current one from `libretime.conf`).
+3. `config/libretime.conf` → `database.password: "<new>"` — quoted (the
+   legacy PHP reads the file on every request — no Apache restart).  If a
+   service ends up *Paused* after failed starts, use
+   `nssm restart <service>` instead of `Restart-Service`.
 4. In the same window, bind PostgreSQL to localhost — 0.5 — then restart
    `postgresql-x64-17`, afterwards `RASTATIME-API`, `RASTATIME-PLAYOUT`,
    `RASTATIME-WORKER`, `RASTATIME-ANALYZER` (elevated):
