@@ -2804,8 +2804,14 @@ UI 200, API 200, Playout armed=8, kein Auth-Fehler mehr seit 16:38.  Lehre: ein
 Passwort mit führendem `!` ohne Anführungszeichen macht die YAML-Datei ungültig —
 alle Dienste standen ~10 min, der YAML-Parser schrieb den Wert in zwei Logs
 (maskiert); seither „Passwörter in libretime.conf immer in Anführungszeichen"
-im Runbook.  **Offen:** Blöcke 2–5 (RabbitMQ; Icecast/Harbor ≈ 30–60 s off-air;
-API-Bind + Firewall; UI-`admin`), danach Prüfung 0.7; dann Stufe 1 (Code).
+im Runbook.  **Block 2 (RabbitMQ) erledigt 2026-10-04 16:58, verifiziert:** Benutzer nur noch
+`rastatime` (`guest` weg), Passwort custom, AMQP-Listener nur 127.0.0.1:5672
+(`rabbitmq.conf`), Analyzer „Listening for messages", Worker idle, Playout ohne
+Fehler, PHP erreicht localhost:5672 (IPv4).  Nebenbefund: pika löst `localhost`
+zuerst nach `::1` auf → 2 s Verzögerung + Fehlerzeilen je Verbindung; Abhilfe
+`listeners.tcp.local_v6 = ::1:5672` als zweite Zeile (optional).
+**Offen:** Blöcke 3–5 (Icecast/Harbor ≈ 30–60 s off-air; API-Bind + Firewall;
+UI-`admin`), danach Prüfung 0.7; dann Stufe 1 (Code).
 **Evaluierung 2026-10-03 (6 Punkte, Live-Readiness Punkt 16):**  **Befund:** alles nur im LAN — Apache
 2.4.68 nur :80 (mod_ssl/http2/remoteip vorhanden, nicht konfiguriert), Icecast
 2.4.4 :8000 (+8080/8443 ohne TLS; libssl-DLLs liegen bei), Harbor :8001 Klartext
