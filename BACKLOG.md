@@ -2829,7 +2829,17 @@ abgeschlossen:** alle Secrets „custom" (api_key, secret_key, DB, RabbitMQ,
 internal_listener, Harbor ×2, Icecast ×3, Streams-Ausgänge ×3), UI-Admins ohne
 Standardpasswort, RabbitMQ nur `rastatime`, Listener außerhalb Loopback nur 80, 8000,
 8001 (+8002 Liquidsoap, nicht weitergeleitet), alle Dienste laufen, UI 200, drei
-Mounts.  **Nächster Schritt: Stufe 1 (Code, assistant).**
+Mounts.  **Stufe 1 (Code) erledigt 2026-10-04 (`a0fc2f3`):** `general.internal_url` +
+`internal_base_url()` (Playout v1-Client, DJ-Auth, Analyzer-Callback, Notify),
+Hörer-URL `<public_url>/stream/<mount>`, `infra/apache/` (Stream-Proxy, ACME-Alias,
+443-vHost), Django ALLOWED_HOSTS/CSRF/Proxy-Header, CORS-Origin-Bug behoben; Suite
+739 passed, Apache-Syntax mit Includes OK, `/embed/player` liefert `/stream/`-URLs.
+**Offen (Operator, Stufe 1 aktivieren):** zwei `Include`-Zeilen in httpd.conf
+(stream-proxy, acme), `C:\RASTATIMEcme` anlegen, Apache/PLAYOUT/ANALYZER neu
+starten; Prüfung `http://192.168.1.164/stream/rastatime`.  Nebenbefund: `config/
+icecast.xml` ist versioniert und trägt seit Block 3 die echten Passwörter im
+Arbeitsbaum — nicht committen; Vorschlag: aus dem Index nehmen + `.example`.
+**Danach Stufe 2** (DNS, Router 80/443/8001, win-acme, TLS-Include, `public_url`).
 **Evaluierung 2026-10-03 (6 Punkte, Live-Readiness Punkt 16):**  **Befund:** alles nur im LAN — Apache
 2.4.68 nur :80 (mod_ssl/http2/remoteip vorhanden, nicht konfiguriert), Icecast
 2.4.4 :8000 (+8080/8443 ohne TLS; libssl-DLLs liegen bei), Harbor :8001 Klartext
