@@ -14,7 +14,7 @@ or a system setting is done by the operator, assistant verifies read-only.
 
 ---
 
-## Stage 0 — Prerequisites (secrets, binds, firewall)
+## Stage 0 — Prerequisites (secrets, binds, firewall) — DONE 2026-10-04 17:40
 
 ### 0.1 Inventory (2026-10-04, values never printed)
 

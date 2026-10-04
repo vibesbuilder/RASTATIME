@@ -2824,7 +2824,12 @@ den Plan weiter; Firewall-Eingang jetzt 80, 443, 8000 (Icecast, LAN), 8001 (Harb
 Apache- und Liquidsoap-Programmregel — 8002, Erlang, epmd und die `C:	emp`-Liquidsoap-
 Regel sind weg.  Nebenbefund: UltraVNC lauscht auf 5800/5900, Intel LMS auf 16993
 (nur LAN, keine Weiterleitung — bei Punkt 17c/Stufe 2 bewusst entscheiden).
-**Offen:** Block 5 (UI-`admin`), danach Prüfung 0.7; dann Stufe 1 (Code).
+**Block 5 (UI-`admin`) erledigt 2026-10-04 17:40.  Prüfung 0.7 bestanden — Stufe 0
+abgeschlossen:** alle Secrets „custom" (api_key, secret_key, DB, RabbitMQ,
+internal_listener, Harbor ×2, Icecast ×3, Streams-Ausgänge ×3), UI-Admins ohne
+Standardpasswort, RabbitMQ nur `rastatime`, Listener außerhalb Loopback nur 80, 8000,
+8001 (+8002 Liquidsoap, nicht weitergeleitet), alle Dienste laufen, UI 200, drei
+Mounts.  **Nächster Schritt: Stufe 1 (Code, assistant).**
 **Evaluierung 2026-10-03 (6 Punkte, Live-Readiness Punkt 16):**  **Befund:** alles nur im LAN — Apache
 2.4.68 nur :80 (mod_ssl/http2/remoteip vorhanden, nicht konfiguriert), Icecast
 2.4.4 :8000 (+8080/8443 ohne TLS; libssl-DLLs liegen bei), Harbor :8001 Klartext
