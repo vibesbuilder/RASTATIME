@@ -162,3 +162,6 @@ frontend/legacy/public/live/now-playing.txt*
 # RASTATIME go-live: TLS certificate files (win-acme) and ACME challenge dir
 /certs/
 /acme/
+
+# live Icecast config carries the real passwords (config/icecast.xml.example is tracked)
+/config/icecast.xml
