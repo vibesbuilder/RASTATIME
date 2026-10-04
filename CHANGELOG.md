@@ -671,7 +671,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`test_main_harbor_inputs.py`, 7 passed).  Wirkt nach PLAYOUT-Neustart.
   Dazu Runbook `docs/operator/GO_LIVE_HTTPS.md` (Weg A, Stufen 0–3; Stufe 0
   ausgearbeitet: Secrets-Inventar, Rotation DB/RabbitMQ/Icecast/Harbor,
-  Localhost-Bindung PostgreSQL/RabbitMQ/API, Firewall-Aufräumen, Prüfung).
+  Localhost-Bindung PostgreSQL/RabbitMQ/API, Firewall-Aufräumen, Prüfung).  `dc50fac`.
 - **Marke, Stufe A: „LibreTime" verschwindet aus allem, was Operatoren sehen
   (2026-10-03, Operator-Go nach Evaluierung)** — Befund: 483 Dateien / 4 962
   Treffer „libretime" im Repo, davon ~70 % kosmetisch, ~25 % Bezeichner mit
