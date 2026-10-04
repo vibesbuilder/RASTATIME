@@ -660,6 +660,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Line-In-Capture pusht mit den Icecast-Zugangsdaten aus Settings → Streams
+  (2026-10-04, Go-Live Stufe 0)** — `FfmpegLineinCapture` wurde ohne
+  Zugangsdaten gebaut und nutzte das fest verdrahtete `source`/`admin`; eine
+  Rotation des Icecast-Source-Passworts hätte die Line-In-Mounts stumm
+  gemacht.  Neu `_local_icecast_source_credentials()` in `__main__`: Benutzer
+  und Passwort des ersten aktiven lokalen Icecast-Ausgangs (bevorzugt Port
+  8000) werden dem Scheduler als `linein_icecast_credentials` übergeben;
+  ohne lokalen Ausgang bleibt der Modul-Standard.  Tests
+  (`test_main_harbor_inputs.py`, 7 passed).  Wirkt nach PLAYOUT-Neustart.
+  Dazu Runbook `docs/operator/GO_LIVE_HTTPS.md` (Weg A, Stufen 0–3; Stufe 0
+  ausgearbeitet: Secrets-Inventar, Rotation DB/RabbitMQ/Icecast/Harbor,
+  Localhost-Bindung PostgreSQL/RabbitMQ/API, Firewall-Aufräumen, Prüfung).
 - **Marke, Stufe A: „LibreTime" verschwindet aus allem, was Operatoren sehen
   (2026-10-03, Operator-Go nach Evaluierung)** — Befund: 483 Dateien / 4 962
   Treffer „libretime" im Repo, davon ~70 % kosmetisch, ~25 % Bezeichner mit

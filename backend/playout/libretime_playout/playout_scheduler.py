@@ -174,6 +174,7 @@ class PlayoutScheduler:
         render_restart_pending: bool = False,
         tunein: Optional[TuneInPusher] = None,
         live_text: Optional[LiveTextWriter] = None,
+        linein_icecast_credentials: Optional[Tuple[str, str]] = None,
     ) -> None:
         self._engine = engine
         self._api_client = api_client
@@ -350,7 +351,17 @@ class PlayoutScheduler:
         # surfaces at startup, not at scheduled-air-time.  ``stop()``
         # on an idle instance is a no-op, so it's safe to keep around.
         try:
-            self._linein_capture: Optional[FfmpegLineinCapture] = FfmpegLineinCapture()
+            # RASTATIME 2026-10-04 (go-live stage 0) - the capture pushes to
+            # the local Icecast with the SAME source credentials as the
+            # stream outputs (Settings -> Streams); the module default
+            # ("source"/"admin") only applies when no local output exists.
+            capture_kwargs = {}
+            if linein_icecast_credentials:
+                capture_kwargs = {
+                    "icecast_user": linein_icecast_credentials[0],
+                    "icecast_password": linein_icecast_credentials[1],
+                }
+            self._linein_capture: Optional[FfmpegLineinCapture] = FfmpegLineinCapture(**capture_kwargs)
             # Phase B.4 #1 — wire the auto-restart callback so the
             # capture's watchdog can re-arm Liquidsoap's input.http
             # companion on the listen URL after a successful restart

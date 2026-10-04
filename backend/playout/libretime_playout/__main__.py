@@ -486,6 +486,34 @@ def _read_config_yaml() -> dict:
         return yaml.safe_load(fh) or {}
 
 
+def _local_icecast_source_credentials(stream_outputs) -> Optional[Tuple[str, str]]:
+    """Source user/password of the local Icecast, taken from the first
+    enabled Icecast stream output that points at this machine (Settings ->
+    Streams).  The Line-In capture pushes its ``/linein-capture`` mount with
+    these credentials, so rotating the Icecast source password in the UI
+    and icecast.xml is enough (RASTATIME 2026-10-04, go-live stage 0).
+    None when no such output exists (the capture keeps its module default).
+    """
+    local_hosts = {"localhost", "127.0.0.1", "::1", ""}
+    candidates = []
+    for out in stream_outputs or []:
+        if str(out.get("output", "icecast")).lower() != "icecast":
+            continue
+        if str(out.get("enable", "true")).lower() not in ("true", "1", "yes"):
+            continue
+        if str(out.get("host", "")).strip().lower() not in local_hosts:
+            continue
+        password = str(out.get("pass", "") or "")
+        if not password:
+            continue
+        candidates.append((str(out.get("port", "")), str(out.get("user", "") or "source"), password))
+    if not candidates:
+        return None
+    # prefer the output on the capture's own port (8000), else any local one
+    candidates.sort(key=lambda c: 0 if c[0] == "8000" else 1)
+    return candidates[0][1], candidates[0][2]
+
+
 def _read_harbor_inputs(stream_outputs) -> Tuple[int, str, int, str]:
     """
     RASTATIME 2026-09-10 - the harbor ports and mounts come from
@@ -1324,6 +1352,12 @@ def main() -> None:
         tunein=(_build_tunein_pusher() if django_ok else None),
         # RASTATIME 2026-09-28 - Live Text Info (now-playing text file)
         live_text=live_text_writer,
+        # RASTATIME 2026-10-04 - the Line-In capture pushes with the local
+        # Icecast's source credentials from Settings -> Streams (no more
+        # hard-coded "admin"); go-live stage 0, secrets rotation.
+        linein_icecast_credentials=(
+            _local_icecast_source_credentials(_read_stream_outputs()) if django_ok else None
+        ),
     )
     logger.info("Webstream watchdog: inside Liquidsoap (frame counter, rendered into rastatime.liq).")
     # RASTATIME 2026-09-04 - a previous Pypo may have died mid-prepare

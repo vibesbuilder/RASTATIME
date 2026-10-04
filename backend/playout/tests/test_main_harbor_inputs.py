@@ -56,3 +56,24 @@ def test_env_overrides_the_web_url(monkeypatch, tmp_path):
     _conf(monkeypatch, tmp_path, "general:\n  public_url: http://192.168.1.164\n")
     monkeypatch.setenv(main.DJ_AUTH_WEB_URL_ENV, "http://127.0.0.1:8080")
     assert main._dj_auth_web_url() == "http://127.0.0.1:8080"
+
+
+# RASTATIME 2026-10-04 (go-live stage 0) - the Line-In capture takes the
+# local Icecast's source credentials from the stream outputs.
+def test_linein_credentials_prefer_local_output_on_8000():
+    outputs = [
+        {"output": "icecast", "enable": "true", "host": "stream.example.org", "port": "8000", "user": "src", "pass": "remote"},
+        {"output": "icecast", "enable": "true", "host": "127.0.0.1", "port": "8010", "user": "source", "pass": "other"},
+        {"output": "icecast", "enable": "true", "host": "localhost", "port": "8000", "user": "source", "pass": "s3cret"},
+    ]
+    assert main._local_icecast_source_credentials(outputs) == ("source", "s3cret")
+
+
+def test_linein_credentials_skip_disabled_and_empty():
+    outputs = [
+        {"output": "icecast", "enable": "false", "host": "127.0.0.1", "port": "8000", "user": "source", "pass": "off"},
+        {"output": "icecast", "enable": "true", "host": "127.0.0.1", "port": "8000", "user": "source", "pass": ""},
+        {"output": "shoutcast", "enable": "true", "host": "127.0.0.1", "port": "8000", "user": "source", "pass": "sc"},
+    ]
+    assert main._local_icecast_source_credentials(outputs) is None
+    assert main._local_icecast_source_credentials([]) is None
