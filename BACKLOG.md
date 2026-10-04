@@ -2798,7 +2798,7 @@ Source bereits custom.  Code: Line-In-Capture nimmt die Icecast-Zugangsdaten aus
 Settings → Streams (vorher fest `admin`).  Befund Netz: PostgreSQL (pg_hba nur
 localhost), RabbitMQ und API lauschen auf 0.0.0.0; Firewall-Regeln 80/443/8001
 + obsolet 8002, Programmregeln „any port" für Erlang/epmd/liquidsoap (eine auf
-`C:	emp\liq245`).  **Offen:** Ausführung 0.2–0.6 durch den Operator in ruhigen
+`C:\temp\liq245`).  **Offen:** Ausführung 0.2–0.6 durch den Operator in ruhigen
 Fenstern (DB + Bindung; RabbitMQ; Icecast/Harbor ≈ 30–60 s off-air), danach
 Prüfung 0.7 durch assistant; dann Stufe 1 (Code).
 **Evaluierung 2026-10-03 (6 Punkte, Live-Readiness Punkt 16):**  **Befund:** alles nur im LAN — Apache
