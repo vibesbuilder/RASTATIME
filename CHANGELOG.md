@@ -31,7 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Apache-Syntaxprüfung mit den Includes OK; `/embed/player` liefert die
   `/stream/`-URLs.  Handbuch STREAMS ×4 (Hörer-URL), Runbook §1, Architektur
   §23.52 (0.65).  Wirksam nach Apache-Include + Neustart von Apache,
-  PLAYOUT und ANALYZER.
+  PLAYOUT und ANALYZER.  `a0fc2f3`.
 - **Runbook WINDOWS_24_7: Windows-Härtung für den unbeaufsichtigten
   24/7-Betrieb (2026-10-03, Live-Readiness 17a)** — `docs/operator/
   WINDOWS_24_7.md`: Befund der Maschine (keine Update-Richtlinie, Autologon
@@ -967,7 +967,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **API-CORS-Origin um ein Zeichen zu kurz (2026-10-04, Nebenbefund Stufe 1)** —
   `prod.py` schnitt den Pfad von `public_url` per Slice ab; bei Pfad `/`
   wurde aus `http://192.168.1.164` ein `http://192.168.1.16`, der CORS-Origin
-  passte nie.  Jetzt `urlparse` (Schema + Netloc).
+  passte nie.  Jetzt `urlparse` (Schema + Netloc).  `a0fc2f3`.
 - **Short jingles, part two: the held-back row is queued when the jingle
   starts, and a refresh in the row's start second no longer doubles it
   (2026-10-03, test show 12:15)** - (1) since abbcba2 the row behind a short
