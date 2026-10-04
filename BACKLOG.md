@@ -2771,10 +2771,25 @@ mit dezenter CPU).
 Haker-Symptomen. Akzeptabel für die nächsten Tage bis Hardware kommt.
 
 
-### 🟡 Internet-Erreichbarkeit via HTTPS (Public Stream + optional Remote-UI) — evaluiert 2026-10-03
+### 🟢 Internet-Erreichbarkeit via HTTPS — Weg A (Operator-Entscheidung 2026-10-04)
 
-**Status:** Evaluiert 2026-10-03 (6 Punkte, Live-Readiness Punkt 16); Operator-
-Entscheidung über Weg und Umfang offen.  **Befund:** alles nur im LAN — Apache
+**Entscheidung 2026-10-04:** **Weg A** (Studio-PC direkt, feste öffentliche IP),
+öffentliche URL `https://rastatime.example.org` für Planer-UI und Hörer-Stream;
+die **DJ-Einwahl bleibt HTTP** (Harbor :8001 direkt weitergeleitet, kein TLS —
+Operator-Entscheidung; Empfehlung: für Remote-DJs Custom-Login der Sendung statt
+UI-Konten, weil die Zugangsdaten im Klartext reisen).  `cloud.example.org` ist
+ein eigener Server, aber nicht als Edge brauchbar.  Stufenplan:
+**0 Vorbedingungen** — 17c Secrets (vorgezogen), PostgreSQL + RabbitMQ auf
+127.0.0.1, Firewall-Eingang nur 80/443/8001.  **1 Code** (RASTATIME) — interne
+API-Basis vom `public_url` trennen, `public_url` = https://…, Django
+`ALLOWED_HOSTS`/`CSRF_TRUSTED_ORIGINS`, HTTP→HTTPS-Redirect + HSTS, Stream-Proxy
+`/stream/<mount>` → Icecast :8000 (ICY-Header, kein Puffern), Widgets/CORS gegen
+die neue URL.  **2 Infrastruktur** (Operator) — DNS-A-Record, Router-Forwards
+80/443/8001 → 192.168.1.164, win-acme (Let's Encrypt, Auto-Renewal), Apache-SSL-
+vHost (assistant liefert conf), Hairpin-NAT/Split-DNS fürs LAN.  **3 Abnahme** —
+von außen (Mobilfunk): UI-Login, Stream, BUTT-Einwahl, Widgets, HSTS, SSL-Labs-
+Note, aus dem LAN per öffentlichem Namen.
+**Evaluierung 2026-10-03 (6 Punkte, Live-Readiness Punkt 16):**  **Befund:** alles nur im LAN — Apache
 2.4.68 nur :80 (mod_ssl/http2/remoteip vorhanden, nicht konfiguriert), Icecast
 2.4.4 :8000 (+8080/8443 ohne TLS; libssl-DLLs liegen bei), Harbor :8001 Klartext
 (Liquidsoap-Harbor kann kein TLS), API :8765 auf 0.0.0.0 (zusätzlich von Apache
