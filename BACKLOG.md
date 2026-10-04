@@ -2818,8 +2818,13 @@ STANDBY auf den Fallback-Mounts seit 17:13:24, Hauptinstanz nach erzwungenem
 mit neuem Admin-Passwort 200.  Lehre: der Playout schiebt den Liquidsoap-Neustart
 auf, solange ein Item läuft (Webstream 17:07–17:15) → Stream war 17:12:54–17:15:52
 leer; im Runbook jetzt `nssm restart RASTATIME-LIQUIDSOAP` als fester Schritt und
-„nicht während eines laufenden Items".  **Offen:** Blöcke 4–5 (API-Bind + Firewall;
-UI-`admin`), danach Prüfung 0.7; dann Stufe 1 (Code).
+„nicht während eines laufenden Items".  **Block 4 (API-Bind + Firewall) erledigt 2026-10-04 17:35, verifiziert:** API nur
+127.0.0.1:8765 (LAN-Zugriff 000), Apache-Proxy `/api/v2/version` 200, Playout lädt
+den Plan weiter; Firewall-Eingang jetzt 80, 443, 8000 (Icecast, LAN), 8001 (Harbor),
+Apache- und Liquidsoap-Programmregel — 8002, Erlang, epmd und die `C:	emp`-Liquidsoap-
+Regel sind weg.  Nebenbefund: UltraVNC lauscht auf 5800/5900, Intel LMS auf 16993
+(nur LAN, keine Weiterleitung — bei Punkt 17c/Stufe 2 bewusst entscheiden).
+**Offen:** Block 5 (UI-`admin`), danach Prüfung 0.7; dann Stufe 1 (Code).
 **Evaluierung 2026-10-03 (6 Punkte, Live-Readiness Punkt 16):**  **Befund:** alles nur im LAN — Apache
 2.4.68 nur :80 (mod_ssl/http2/remoteip vorhanden, nicht konfiguriert), Icecast
 2.4.4 :8000 (+8080/8443 ohne TLS; libssl-DLLs liegen bei), Harbor :8001 Klartext
