@@ -167,19 +167,47 @@ no longer matches `md5('admin')`; one Line-In show mounts
 
 ---
 
-## Stage 1 — Code (RASTATIME)
+## Stage 1 — Code (RASTATIME) — DONE 2026-10-04
 
-- `general.public_url` → `https://rastatime.example.org`; playout,
-  analyzer and worker get an internal base (`http://127.0.0.1`) for the
-  legacy v1 API and the DJ-auth check (`RASTATIME_DJ_AUTH_WEB_URL`
-  exists; the v1 client needs the same split).
-- Django `ALLOWED_HOSTS` = hostname, `192.168.1.164`, `localhost`;
-  `CSRF_TRUSTED_ORIGINS` = the HTTPS origin.
-- Apache terminates TLS itself, so PHP sees `HTTPS` natively (secure
-  cookies); add HTTP→HTTPS redirect and HSTS.
-- Stream proxy `/stream/<mount>` → `http://127.0.0.1:8000/<mount>`
-  (no buffering, ICY headers through); widgets / embed codes / the
-  player use the HTTPS stream URL.
+Built and committed (see CHANGELOG "Go-Live Stufe 1"); nothing of it
+changes behaviour until stage 2 sets `public_url`, except the listener
+URL and the two Apache includes below.
+
+- **`general.internal_url`** (new, optional, all three config schemas):
+  the address the backend services use to call the legacy web app on
+  this machine.  Fallback chain `RASTATIME_INTERNAL_URL` (environment) >
+  `general.internal_url` > `http://127.0.0.1` + path of `public_url`.
+  Used by the playout (legacy v1 client = "On Air" light, DJ login
+  check), the analyzer (import callback) and the notify/legacy entry
+  points.  `public_url` is the outside face only.
+- **Listener URL** `<public_url>/stream/<mount>` for outputs on the local
+  Icecast (`StreamSetting`); player, widgets, embed codes follow.
+  Apache must hand `/stream/` to Icecast - include
+  `infra/apache/rastatime-stream-proxy.conf` **now** in `httpd.conf`
+  (after the existing ProxyPass lines) and restart Apache; until then the
+  in-UI player and the widgets point at a 404.
+- **ACME challenge directory** `infra/apache/rastatime-acme.conf`
+  (Alias `/.well-known/acme-challenge/` → `C:\RASTATIME\acme`, rewrite
+  off) - include it now as well, create `C:\RASTATIME\acme`; win-acme
+  (stage 2) validates through it.
+- **TLS virtual host** `infra/apache/rastatime-https.conf` (443, TLS 1.2/
+  1.3, HTTP/2, HSTS, `X-Forwarded-Proto`, the same proxies, http → https
+  redirect for the public name only, LAN by IP untouched).  Include it in
+  stage 2 once the certificate files exist (`C:\RASTATIME\certs\
+  rastatime.example.org-chain.pem` / `-key.pem`) and `mod_ssl`,
+  `mod_socache_shmcb`, `mod_http2` are loaded.
+- **Django**: `ALLOWED_HOSTS` = public host, internal host, localhost,
+  127.0.0.1, `[::1]` (+ `RASTATIME_API_EXTRA_HOSTS`); `CSRF_TRUSTED_ORIGINS`
+  = public origin (+ allowed CORS origins); `SECURE_PROXY_SSL_HEADER`,
+  `USE_X_FORWARDED_HOST`.  Fixed on the way: the upstream CORS origin was
+  cut one character short (`http://192.168.1.16`).
+- Legacy PHP: Apache terminates TLS natively, so `$_SERVER['HTTPS']` and
+  the secure session cookie just work; nothing to change.
+
+Operator actions for stage 1: add the two `Include` lines, create
+`C:\RASTATIME\acme`, restart `RASTATIME-APACHE`, restart
+`RASTATIME-PLAYOUT` and `RASTATIME-ANALYZER` (internal URL), then check
+`http://192.168.1.164/stream/rastatime` plays and the dashboard player works.
 
 ## Stage 2 — Infrastructure (operator)
 

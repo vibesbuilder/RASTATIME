@@ -1,10 +1,16 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.64
+Draft version: 0.65
 Date: 2026-10-03
 
 > **Revision history**
+> - **0.65 (2026-10-04)** — **Go-live stage 1: internal URL, listener
+>   stream through Apache, TLS host as repo files** (§23.52):
+>   `general.internal_url` splits the inside address from `public_url`,
+>   outputs on the local Icecast are published as `/stream/<mount>`,
+>   Apache includes under `infra/apache/`, Django host/CSRF/proxy
+>   settings.
 > - **0.64 (2026-10-03)** — **Short jingles, part two** (§23.51):
 >   the held-back row is queued when the jingle starts; a refresh in the
 >   row's start second no longer catches it up a second time nor tears
@@ -6190,3 +6196,60 @@ than 1.5 s in the past is skipped while its successor is queued ahead: the
 STOP timer and the queue hand over by themselves.  A row truncated longer
 ago (a cancelled show) is still torn down.  Tests: `test_catchup_offset.py`
 sections E and F (six tests).
+
+
+### 23.52 Go-Live Stage 1: Internal URL, Listener Streams via Apache, TLS Host (2026-10-04)
+
+**Context.**  Way A (BACKLOG "Internet-Erreichbarkeit via HTTPS"): the
+studio machine itself serves `https://rastatime.example.org` (fixed
+public IP), the DJ dial-in stays plain HTTP on :8001.  Stage 0 rotated
+every secret and bound PostgreSQL, RabbitMQ and the API to the loopback.
+Before stage 2 can point `general.public_url` at the https name, three
+things had to stop depending on it.
+
+**Internal URL.**  The backend services called the legacy web app
+through `general.public_url` (playout v1 client for the "On Air" light,
+DJ login check `check-live-stream-auth`, analyzer import callback
+`/rest/media/<id>`, notify).  With a public https name that call would
+leave the machine, need hairpin NAT and TLS, and fail when the uplink is
+down.  New optional `general.internal_url` in all three schemas (shared
+pydantic `GeneralConfig`, legacy Symfony `conf.php` - the `general` node
+rejects unknown keys -, `libretime.conf.example`) and
+`GeneralConfig.internal_base_url()`: `RASTATIME_INTERNAL_URL` >
+`internal_url` > `http://127.0.0.1` + the path of `public_url`.  The
+playout's `_dj_auth_web_url()` follows the same chain (its own YAML read,
+no pydantic at that point); `RASTATIME_DJ_AUTH_WEB_URL` still overrides.
+
+**Listener streams.**  `StreamSetting` built `http://host:port/mount`
+from the output's Icecast host - `127.0.0.1:8000` for the local one,
+useless for any listener.  An output on the local Icecast is now
+published as `<public_url>/stream/<mount>`; `infra/apache/
+rastatime-stream-proxy.conf` hands `/stream/` to `127.0.0.1:8000` (no
+retry blacklisting, 30-s timeout, status/admin/playlists denied), included
+by the :80 server and the TLS host (ProxyPass is not inherited).  One
+address in the LAN and on the internet, port 8000 never forwarded.
+Remote Icecast outputs keep their own URL.
+
+**TLS host as files in the repo.**  `rastatime-https.conf` (443, TLS 1.2/
+1.3 with the Mozilla intermediate suite, HTTP/2, HSTS, `X-Forwarded-Proto`,
+the API proxies, the stream proxy, http → https redirect only when the
+request carries the public host name - the LAN keeps `http://192.168.1.164`)
+and `rastatime-acme.conf` (Alias for the Let's Encrypt HTTP-01 challenge
+with the front-controller rewrite switched off).  Certificates come from
+win-acme's "pemfiles" store into `C:\RASTATIME\certs` (git-ignored).
+Apache's `httpd.conf` stays outside the repo; it gains three `Include`
+lines (stage 2 for the TLS host).
+
+**Django.**  `ALLOWED_HOSTS` is no longer `*`: public host, internal host,
+`localhost`, `127.0.0.1`, `[::1]` and `RASTATIME_API_EXTRA_HOSTS`;
+`CSRF_TRUSTED_ORIGINS` from the public origin; `SECURE_PROXY_SSL_HEADER`
+and `USE_X_FORWARDED_HOST` so the API behind the proxy knows the real
+scheme and host.  Found on the way: the upstream origin slice cut
+`http://192.168.1.164` to `http://192.168.1.16` (path `/`), so the CORS origin
+never matched; `urlparse` now.  The legacy PHP needs nothing - Apache
+terminates TLS natively, `$_SERVER['HTTPS']` is set and
+`session.cookie_secure` follows.
+
+**Next.**  Stage 2 (operator): DNS, router 80/443/8001, win-acme, the
+three includes, `public_url = https://...`, hairpin NAT or split DNS.
+Stage 3: acceptance from outside.

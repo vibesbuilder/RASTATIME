@@ -128,7 +128,10 @@ class MessageListener:
                 options,
             )
 
-            callback_url = f"{self.config.general.public_url}/rest/media/{file_id}"
+            # RASTATIME 2026-10-04 (go-live stage 1): the import callback
+            # goes to the legacy app on this machine, not to the public
+            # https address (GeneralConfig.internal_base_url()).
+            callback_url = f"{self.config.general.internal_base_url()}/rest/media/{file_id}"
             callback_api_key = self.config.general.api_key
 
             if metadata:  # a failed loudness-only measurement reports nothing

@@ -56,6 +56,7 @@ import sys
 import time
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, NamedTuple
+from urllib.parse import urlparse
 
 import requests
 
@@ -568,16 +569,28 @@ DJ_AUTH_WEB_URL_ENV = "RASTATIME_DJ_AUTH_WEB_URL"
 
 def _dj_auth_web_url() -> str:
     """Base URL of the legacy web application that answers
-    check-live-stream-auth: ``RASTATIME_DJ_AUTH_WEB_URL`` or
-    ``general.public_url`` from libretime.conf."""
+    check-live-stream-auth: ``RASTATIME_DJ_AUTH_WEB_URL``, else the
+    internal address (``RASTATIME_INTERNAL_URL`` / ``general.internal_url``
+    / ``http://127.0.0.1`` plus the path of ``general.public_url``) -
+    RASTATIME 2026-10-04, go-live stage 1: the check never leaves this
+    machine, whatever the public https address is."""
     override = os.environ.get(DJ_AUTH_WEB_URL_ENV, "").strip()
     if override:
         return override
+    internal = os.environ.get("RASTATIME_INTERNAL_URL", "").strip()
+    if internal:
+        return internal.rstrip("/")
     try:
-        return str((_read_config_yaml().get("general") or {}).get("public_url") or "").strip()
+        general = _read_config_yaml().get("general") or {}
+        configured = str(general.get("internal_url") or "").strip()
+        if configured:
+            return configured.rstrip("/")
+        public = str(general.get("public_url") or "").strip()
+        path = urlparse(public).path.rstrip("/") if public else ""
+        return "http://127.0.0.1" + path
     except Exception as exc:  # pylint: disable=broad-exception-caught
-        logger.warning("Could not read general.public_url from %s: %s", _CONFIG_FILE, exc)
-        return ""
+        logger.warning("Could not read general.* from %s: %s", _CONFIG_FILE, exc)
+        return "http://127.0.0.1"
 
 
 def _resolve_local_output_device() -> Tuple[Optional[int], str, str, Optional[str]]:
@@ -1258,15 +1271,17 @@ def main() -> None:
     # v1 API client — needed for the legacy notify-media-item-start-play
     # endpoint, which drives the dashboard "On Air" indicator.  This
     # endpoint lives in the PHP frontend (Zend_Controller_Action), NOT
-    # in Django on port 8765.  It must therefore point at the public
-    # frontend URL (config.general.public_url, e.g. http://192.168.1.192).
-    public_url = str(config.general.public_url).rstrip("/")
+    # in Django on port 8765.  RASTATIME 2026-10-04 (go-live stage 1): it
+    # talks to the legacy app on THIS machine (general.internal_url /
+    # RASTATIME_INTERNAL_URL / http://127.0.0.1), never through the public
+    # https address.
+    legacy_url = config.general.internal_base_url()
     from libretime_api_client.v1 import BaseApiClient as ApiClientV1  # noqa: PLC0415
     api_client_v1 = ApiClientV1(
-        base_url=public_url,
+        base_url=legacy_url,
         api_key=config.general.api_key,
     )
-    logger.info("Legacy v1 API client base URL: %s", public_url)
+    logger.info("Legacy v1 API client base URL: %s (public_url %s)", legacy_url, config.general.public_url)
 
     # 6b. Listener-stats collector (BACKLOG "Analytics: Listener Stats
     # sammeln keine Daten", fixed 2026-08-30).  Upstream started this

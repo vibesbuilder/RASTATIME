@@ -31,6 +31,7 @@ tarjetas de stream tiene el mismo conjunto de campos.
 | **Habilitado** | Interruptor maestro. |
 | **Tipo** | **Icecast** (recomendado), **Shoutcast**, **Custom**. |
 | **Servidor / Puerto** | `localhost:8000` para la instalación por defecto. |
+| **URL para oyentes** (solo lectura) | Desde 2026-10-04 una salida en el Icecast local se publica como `<URL pública>/stream/<mount>` (p. ej. `https://rastatime.example.org/stream/rastatime`): el servidor web pasa `/stream/` a Icecast, así el reproductor, los widgets y los códigos de inserción usan la misma dirección en la LAN y en Internet, y el puerto 8000 queda interno. Una salida a un Icecast remoto conserva su `http://host:puerto/mount`. |
 | **Mount** | El path URL del mountpoint, con `/` inicial. ej. `/rastatime`. |
 | **Usuario fuente / Contraseña** | Credenciales que Icecast espera de un cliente source. |
 | **Formato** | **MP3**, **AAC**, **OGG Vorbis**, **OPUS**, **FLAC**. |

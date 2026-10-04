@@ -40,6 +40,7 @@ champs ; seul **Stream 1** est activé par défaut.
 | **Activé** | Interrupteur principal pour ce stream. |
 | **Type** | **Icecast** (recommandé), **Shoutcast** (legacy), **Custom**. |
 | **Serveur / Port** | Où est le serveur Icecast. `localhost:8000` pour l'installation par défaut. |
+| **URL auditeur** (lecture seule) | Depuis le 2026-10-04, une sortie sur l'Icecast local est publiée sous `<URL publique>/stream/<mount>` (p. ex. `https://rastatime.example.org/stream/rastatime`) : le serveur web transmet `/stream/` à Icecast, le lecteur, les widgets et les codes d'intégration utilisent donc la même adresse en LAN et sur Internet, et le port 8000 reste interne. Une sortie vers un Icecast distant garde son `http://hôte:port/mount`. |
 | **Mount** | Le chemin URL du mountpoint, avec `/` au début. ex. `/rastatime`. |
 | **Utilisateur source / Mot de passe** | Credentials qu'Icecast attend d'un client source. Définis dans `config/icecast.xml`. |
 | **Format** | **MP3**, **AAC**, **OGG Vorbis**, **OPUS**, **FLAC**. |

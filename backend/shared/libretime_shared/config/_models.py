@@ -1,3 +1,4 @@
+import os
 import sys
 from enum import Enum
 from typing import List, Literal, Optional, Union
@@ -23,9 +24,30 @@ class GeneralConfig(BaseModel):
     api_key: str
     secret_key: str
 
+    # RASTATIME 2026-10-04 (go-live stage 1): the address the backend
+    # services use to call the legacy web application on THIS machine
+    # (analyzer import callback, playout v1 client, DJ login check).
+    # ``public_url`` is the outside face (https://...); it may not even
+    # resolve back to this host from inside the LAN.  Optional - see
+    # :meth:`internal_base_url` for the fallback chain.
+    internal_url: Optional[AnyHttpUrlStr] = None
+
     timezone: str = "UTC"
 
     allowed_cors_origins: List[AnyHttpUrlStr] = []
+
+    def internal_base_url(self) -> str:
+        """Base URL for calls to the legacy web app from this machine,
+        without a trailing slash: ``RASTATIME_INTERNAL_URL`` (environment)
+        > ``general.internal_url`` > ``http://127.0.0.1`` plus the path of
+        ``public_url`` (an installation under a sub-path keeps it)."""
+        override = os.environ.get("RASTATIME_INTERNAL_URL", "").strip()
+        if override:
+            return override.rstrip("/")
+        if self.internal_url:
+            return str(self.internal_url).rstrip("/")
+        path = (getattr(self.public_url, "path", "") or "").rstrip("/")
+        return "http://127.0.0.1" + path
 
     @field_validator("timezone")
     @classmethod

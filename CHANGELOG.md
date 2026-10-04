@@ -9,6 +9,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Go-Live Stufe 1 (HTTPS, Weg A): interne Adresse, Hörer-Stream über Apache,
+  Apache-Konfiguration im Repo (2026-10-04, Operator-Go)** — neuer optionaler
+  Schlüssel `general.internal_url` in allen drei Config-Schemata (Shared-
+  Pydantic, Legacy-Symfony, Beispieldatei) mit `GeneralConfig.internal_base_url()`
+  (Kette `RASTATIME_INTERNAL_URL` > `internal_url` > `http://127.0.0.1` + Pfad
+  von `public_url`): Playout (Legacy-v1-Client für das On-Air-Licht, DJ-Login-
+  Prüfung), Analyzer (Import-Callback) und Notify rufen die Web-App damit auf
+  der Maschine selbst auf — `public_url` ist nur noch die Außenadresse.
+  `StreamSetting` veröffentlicht Ausgänge auf dem lokalen Icecast als
+  `<public_url>/stream/<mount>` (Player, Widgets, Embed-Codes; entfernte
+  Icecasts behalten host:port).  Neu `infra/apache/`: `rastatime-stream-
+  proxy.conf` (`/stream/` → Icecast :8000, Status/Admin/Playlists gesperrt),
+  `rastatime-acme.conf` (Let's-Encrypt-Challenge-Alias, Rewrite aus),
+  `rastatime-https.conf` (443-vHost: TLS 1.2/1.3, HTTP/2, HSTS,
+  X-Forwarded-Proto, dieselben Proxies, http→https nur für den öffentlichen
+  Namen).  Django `prod.py`: `ALLOWED_HOSTS` aus public/internal/localhost
+  (+ `RASTATIME_API_EXTRA_HOSTS`), `CSRF_TRUSTED_ORIGINS`,
+  `SECURE_PROXY_SSL_HEADER`, `USE_X_FORWARDED_HOST`.  Tests: `tests/unit/
+  test_internal_url.py` (6), Harbor-Tests angepasst, Suite 739 passed;
+  Apache-Syntaxprüfung mit den Includes OK; `/embed/player` liefert die
+  `/stream/`-URLs.  Handbuch STREAMS ×4 (Hörer-URL), Runbook §1, Architektur
+  §23.52 (0.65).  Wirksam nach Apache-Include + Neustart von Apache,
+  PLAYOUT und ANALYZER.
 - **Runbook WINDOWS_24_7: Windows-Härtung für den unbeaufsichtigten
   24/7-Betrieb (2026-10-03, Live-Readiness 17a)** — `docs/operator/
   WINDOWS_24_7.md`: Befund der Maschine (keine Update-Richtlinie, Autologon
@@ -941,6 +964,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **API-CORS-Origin um ein Zeichen zu kurz (2026-10-04, Nebenbefund Stufe 1)** —
+  `prod.py` schnitt den Pfad von `public_url` per Slice ab; bei Pfad `/`
+  wurde aus `http://192.168.1.164` ein `http://192.168.1.16`, der CORS-Origin
+  passte nie.  Jetzt `urlparse` (Schema + Netloc).
 - **Short jingles, part two: the held-back row is queued when the jingle
   starts, and a refresh in the row's start second no longer doubles it
   (2026-10-03, test show 12:15)** - (1) since abbcba2 the row behind a short

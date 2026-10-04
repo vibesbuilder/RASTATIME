@@ -26,7 +26,8 @@ def test_inputs_from_config(monkeypatch, tmp_path):
         "    show:\n      mount: /show\n      port: 8001\n"
     ))
     assert main._read_harbor_inputs([{"port": 8000}]) == (8001, "main", 8001, "show")
-    assert main._dj_auth_web_url() == "http://192.168.1.164"
+    # RASTATIME 2026-10-04 (go-live stage 1): the check stays on this machine
+    assert main._dj_auth_web_url() == "http://127.0.0.1"
 
 
 def test_icecast_port_is_refused_with_a_warning(monkeypatch, tmp_path, caplog):
@@ -49,7 +50,7 @@ def test_missing_section_uses_defaults(monkeypatch, tmp_path):
 def test_unreadable_config_uses_defaults(monkeypatch, tmp_path):
     monkeypatch.setattr(main, "_CONFIG_FILE", str(tmp_path / "missing.conf"))
     assert main._read_harbor_inputs([]) == (8001, "main", 8001, "show")
-    assert main._dj_auth_web_url() == ""
+    assert main._dj_auth_web_url() == "http://127.0.0.1"
 
 
 def test_env_overrides_the_web_url(monkeypatch, tmp_path):

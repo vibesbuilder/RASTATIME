@@ -110,13 +110,16 @@ def cli(
     logger.info("Timezone: %s", time.tzname)
     logger.info("UTC time: %s", datetime.utcnow())
 
+    # RASTATIME 2026-10-04 (go-live stage 1): the legacy app is called on
+    # this machine (general.internal_url / RASTATIME_INTERNAL_URL /
+    # http://127.0.0.1), not through the public https address.
     api_client = ApiClient(
-        base_url=config.general.public_url,
+        base_url=config.general.internal_base_url(),
         api_key=config.general.api_key,
     )
 
     legacy_client = LegacyClient(
-        base_url=config.general.public_url,
+        base_url=config.general.internal_base_url(),
         api_key=config.general.api_key,
     )
     wait_for_legacy(legacy_client)

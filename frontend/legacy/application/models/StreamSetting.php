@@ -48,11 +48,21 @@ class Application_Model_StreamConfig
             $prefix . 'mobile'      => ($pref['mobile'] ?? 'false') === 'true' ? 'true' : 'false',
         ];
 
-        // Auto-generate stream public URL from host/port/mount
+        // Listener-facing stream URL.  RASTATIME 2026-10-04 (go-live stage
+        // 1): an output on the local Icecast is published as
+        // <public_url>/stream/<mount> - Apache proxies /stream/ to Icecast
+        // (infra/apache/rastatime-stream-proxy.conf), so the player, the
+        // widgets and the embed codes work in the LAN and on the internet
+        // with the same address and port 8000 stays internal.  An output
+        // on a remote Icecast keeps its own host:port.
         $host  = $result[$prefix . 'host'];
         $port  = $result[$prefix . 'port'];
         $mount = ltrim($result[$prefix . 'mount'], '/');
-        $result[$prefix . 'public_url'] = "http://{$host}:{$port}/{$mount}";
+        if (in_array(strtolower((string) $host), ['localhost', '127.0.0.1', '::1', ''], true)) {
+            $result[$prefix . 'public_url'] = rtrim(Config::getPublicUrl(), '/') . '/stream/' . $mount;
+        } else {
+            $result[$prefix . 'public_url'] = "http://{$host}:{$port}/{$mount}";
+        }
 
         return $result;
     }
