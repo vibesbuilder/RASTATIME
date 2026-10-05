@@ -10,20 +10,33 @@
     (SYSTEM), hence no elevation prompt.
 
     Registered by:
-      wacs.exe ... --installation script --script "powershell.exe"
-        --scriptparameters "-NoProfile -ExecutionPolicy Bypass -File C:\RASTATIME\infra\scripts\apache-cert-renewed.ps1"
+      wacs.exe ... --installation script --script "C:\RASTATIME\infra\scripts\apache-cert-renewed.ps1"
+    (win-acme runs .ps1 files through PowerShell itself.)
+
+    2026-10-05: the first version ran httpd -t with 2>&1 under
+    $ErrorActionPreference = 'Stop'; httpd prints "Syntax OK" on STDERR,
+    PowerShell turned that into a terminating error and logged
+    "restart FAILED: Syntax OK".  The config test now runs through cmd.exe
+    so only the exit code counts.
 #>
-$ErrorActionPreference = 'Stop'
 $log = 'C:\RASTATIME\logs\cert-renewal.log'
 $stamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
+$httpd = 'C:\Tools\Apache24\bin\httpd.exe'
+
+$ErrorActionPreference = 'Continue'
+$test = cmd.exe /c "`"$httpd`" -t 2>&1"
+$code = $LASTEXITCODE
+if ($code -ne 0) {
+    Add-Content $log "$stamp apache config test FAILED (exit $code), not restarting: $($test -join ' ')"
+    exit 1
+}
+
 try {
-    $test = & 'C:\Tools\Apache24\bin\httpd.exe' -t 2>&1
-    if ($LASTEXITCODE -ne 0) {
-        Add-Content $log "$stamp apache config test FAILED, not restarting: $test"
-        exit 1
-    }
+    $ErrorActionPreference = 'Stop'
     Restart-Service RASTATIME-APACHE
-    Add-Content $log "$stamp certificate renewed, Apache restarted"
+    $svc = Get-Service RASTATIME-APACHE
+    Add-Content $log "$stamp certificate renewed, Apache restarted (config test: $($test -join ' '); service $($svc.Status))"
+    exit 0
 } catch {
     Add-Content $log "$stamp restart FAILED: $($_.Exception.Message)"
     exit 1
