@@ -16,7 +16,7 @@
          listings. You MUST configure it properly for YP listings to work!
          This is NOT your homepage address, it's the hostname for THIS server.
     -->
-    <hostname>192.168.1.164</hostname>
+    <hostname>192.168.1.64</hostname>
 
     <limits>
         <!-- Global maximum number of clients.

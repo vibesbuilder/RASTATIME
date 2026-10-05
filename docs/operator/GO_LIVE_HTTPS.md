@@ -207,7 +207,7 @@ URL and the two Apache includes below.
 Operator actions for stage 1: add the two `Include` lines, create
 `C:\RASTATIME\acme`, restart `RASTATIME-APACHE`, restart
 `RASTATIME-PLAYOUT` and `RASTATIME-ANALYZER` (internal URL), then check
-`http://192.168.1.164/stream/rastatime` plays and the dashboard player works.
+`http://192.168.1.64/stream/rastatime` plays and the dashboard player works.
 
 ## Stage 2 — Infrastructure (operator)
 
@@ -220,14 +220,14 @@ included, verified).  Order matters: the certificate needs DNS and port
 1. A record `rastatime.example.org` → the studio's fixed public IP
    (TTL 300 while testing).  Check from outside: `nslookup
    rastatime.example.org 8.8.8.8`.
-2. Router port forwards (TCP) to 192.168.1.164: **80** (ACME + redirect),
+2. Router port forwards (TCP) to 192.168.1.64: **80** (ACME + redirect),
    **443** (UI + streams), **8001** (DJ dial-in, plain HTTP by decision).
    Nothing else - not 8000, not 8765, not 5900.
 3. **Hairpin NAT / split DNS test** (decides 2.4): from a LAN machine open
    `http://rastatime.example.org/` - if it shows the RASTATIME login,
    the router hairpins and the LAN can use the public name.  If not,
    add a local DNS override (Fritz!Box/pfSense "host override":
-   `rastatime.example.org` → 192.168.1.164) - after 2.4 every stream URL
+   `rastatime.example.org` → 192.168.1.64) - after 2.4 every stream URL
    carries the public name, also for in-house listeners and the UI
    player.
 

@@ -3,7 +3,7 @@
 **Status:** Accepted (operator decision 2026-10-03, BACKLOG item 17a)
 **Date:** 2026-10-03
 **Applies to:** the production machine (Windows 11 Pro 10.0.26200, static
-192.168.1.164), services installed per `INSTALL.md`
+192.168.1.64), services installed per `INSTALL.md`
 
 ---
 
@@ -160,7 +160,7 @@ Expected: `AUOptions 2`, `NoAutoUpdate 0`, `NoAutoRebootWithLoggedOnUsers
    - all ten services are *Running* (`Get-Service RASTATIME-*,
      postgresql-x64-17, RabbitMQ`),
    - the Tascam output and the Line-In feeders are back
-     (`http://192.168.1.164/systemstatus`, Settings → Local Machine),
+     (`http://192.168.1.64/systemstatus`, Settings → Local Machine),
    - the stream is audible on Icecast and the master panel shows the
      right show.
 4. assistant checks the playout log for the boot (`Playout started`, device

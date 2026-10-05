@@ -2845,8 +2845,11 @@ Alias liefert Testdatei als text/plain, Player/Widgets auf `/stream/`, Playout u
 Analyzer intern auf 127.0.0.1.  Nachbesserung `e7113e5`: Status/Admin/Playlist-Pfade
 unter `/stream/` waren noch erreichbar (Location-Reihenfolge) — wirksam beim nächsten
 Apache-Neustart (mit Stufe 2).  `icecast.xml` aus dem Index (`f89cf83`, `.example`).
-**Jetzt Stufe 2** (Runbook §2: DNS + Router 80/443/8001 + Hairpin-Test → Module →
-win-acme → TLS-Include → `public_url` zuletzt).
+**2026-10-05 10:15 LAN-Adresse → 192.168.1.64** (Operator, DHCP-Bereich; IP bleibt statisch,
+IPv6 bleibt an — nur Link-local, kein AAAA-Record geplant): `public_url` + Icecast-
+`<hostname>` nachgezogen, Repo/Werkzeuge/Memory bereinigt; Router-Forwards in Stufe 2
+auf 192.168.1.64.  **Jetzt Stufe 2** (Runbook §2: DNS + Router 80/443/8001 + Hairpin-Test
+→ Module → win-acme → TLS-Include → `public_url` zuletzt).
 **Evaluierung 2026-10-03 (6 Punkte, Live-Readiness Punkt 16):**  **Befund:** alles nur im LAN — Apache
 2.4.68 nur :80 (mod_ssl/http2/remoteip vorhanden, nicht konfiguriert), Icecast
 2.4.4 :8000 (+8080/8443 ohne TLS; libssl-DLLs liegen bei), Harbor :8001 Klartext

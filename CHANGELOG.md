@@ -683,6 +683,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **LAN-Adresse der Studio-Maschine 192.168.1.164 → 192.168.1.64 (2026-10-05, Operator:
+  DHCP-Bereich des Netzes)** — betrieblich nur `general.public_url` in
+  `libretime.conf` und `<hostname>` in `icecast.xml` (kosmetisch); Datenbank,
+  Dienstparameter, Liquidsoap- und Apache-Konfiguration enthielten die Adresse
+  nicht mehr (interne Aufrufe seit Stufe 1 über 127.0.0.1).  Kommentare,
+  Test-Fixtures, Beispieldateien, Runbooks, Werkzeuge unter `C:\Temp\optd`
+  nachgezogen; CHANGELOG/BACKLOG/Architektur behalten die historische Adresse.
+  API-Neustart nötig (`ALLOWED_HOSTS` aus `public_url`).
 - **Line-In-Capture pusht mit den Icecast-Zugangsdaten aus Settings → Streams
   (2026-10-04, Go-Live Stufe 0)** — `FfmpegLineinCapture` wurde ohne
   Zugangsdaten gebaut und nutzte das fest verdrahtete `source`/`admin`; eine

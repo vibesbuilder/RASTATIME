@@ -1159,7 +1159,7 @@ def test_normalize_localhost_case_and_whitespace():
 def test_normalize_leaves_other_hosts_alone():
     assert lc._normalize_loopback_host("127.0.0.1") == "127.0.0.1"
     assert lc._normalize_loopback_host("icecast.example.org") == "icecast.example.org"
-    assert lc._normalize_loopback_host("192.168.1.164") == "192.168.1.164"
+    assert lc._normalize_loopback_host("192.168.1.64") == "192.168.1.64"
 
 
 def test_render_block_normalizes_localhost_host():

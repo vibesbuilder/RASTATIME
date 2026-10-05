@@ -20,7 +20,7 @@ def _conf(monkeypatch, tmp_path, text):
 
 def test_inputs_from_config(monkeypatch, tmp_path):
     _conf(monkeypatch, tmp_path, (
-        "general:\n  public_url: http://192.168.1.164\n"
+        "general:\n  public_url: http://192.168.1.64\n"
         "stream:\n  inputs:\n"
         "    main:\n      mount: main\n      port: 8001\n"
         "    show:\n      mount: /show\n      port: 8001\n"
@@ -54,7 +54,7 @@ def test_unreadable_config_uses_defaults(monkeypatch, tmp_path):
 
 
 def test_env_overrides_the_web_url(monkeypatch, tmp_path):
-    _conf(monkeypatch, tmp_path, "general:\n  public_url: http://192.168.1.164\n")
+    _conf(monkeypatch, tmp_path, "general:\n  public_url: http://192.168.1.64\n")
     monkeypatch.setenv(main.DJ_AUTH_WEB_URL_ENV, "http://127.0.0.1:8080")
     assert main._dj_auth_web_url() == "http://127.0.0.1:8080"
 

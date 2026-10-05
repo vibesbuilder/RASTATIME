@@ -35,7 +35,8 @@ SECRET_KEY = CONFIG.general.secret_key
 # Create an 'origin' (scheme://host[:port]) from the public_url.
 # RASTATIME 2026-10-04: the upstream slice ``public_url[: -len(path)]``
 # dropped one character too many when the path was just "/"
-# ("http://192.168.1.164" -> "http://192.168.1.16") - the CORS origin never
+# ("http://192.168.1.164" -> "http://192.168.1.16" with the LAN address of the
+# time) - the CORS origin never
 # matched.  urlparse gives the origin without guessing.
 _public_parts = urlparse(str(CONFIG.general.public_url))
 public_url_origin = f"{_public_parts.scheme}://{_public_parts.netloc}"
