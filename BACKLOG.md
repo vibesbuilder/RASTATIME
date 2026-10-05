@@ -2848,8 +2848,20 @@ Apache-Neustart (mit Stufe 2).  `icecast.xml` aus dem Index (`f89cf83`, `.exampl
 **2026-10-05 10:15 LAN-Adresse → 192.168.1.64** (Operator, DHCP-Bereich; IP bleibt statisch,
 IPv6 bleibt an — nur Link-local, kein AAAA-Record geplant): `public_url` + Icecast-
 `<hostname>` nachgezogen, Repo/Werkzeuge/Memory bereinigt; Router-Forwards in Stufe 2
-auf 192.168.1.64.  **Jetzt Stufe 2** (Runbook §2: DNS + Router 80/443/8001 + Hairpin-Test
-→ Module → win-acme → TLS-Include → `public_url` zuletzt).
+auf 192.168.1.64.  **Stufe 2 bis Punkt 3 erledigt 2026-10-05 22:36:** Zielnetz (Profil Privat, NTP
+`*.pool.ntp.org`, Gateway/DNS 192.168.1.1), A-Record `radio.example.org →
+203.0.113.10` (kein AAAA, extern aufgelöst), Forwards 80/443/8001 → 192.168.1.64
+(Hairpin per IP funktioniert), Module ssl/socache_shmcb/http2, Zertifikat per win-acme
+(Let's Encrypt, gültig bis 2027-01-03, Aufgabe „win-acme renew" 09:00, Renewal-Skript
+nach Fix `ca1b991` getestet), TLS-Host aktiv: TLS 1.3, HSTS, Redirect nur für den
+öffentlichen Namen, LAN per IP ohne Redirect, Stream und ACME-Pfad über den Namen,
+Icecast-Status/Admin/Playlists 403; Handy-Test (Mobilfunk) vom Operator bestanden.
+Zweimal musste die httpd.conf-Bearbeitung wiederholt werden (Notepad++ ohne Admin
+speichert still nicht — immer mit `Select-String` gegenprüfen).  **Offen:** Router-
+DNS-Override `radio.example.org → 192.168.1.64` fürs Haus (Gateway cacht NXDOMAIN),
+dann Punkt 2.4 `public_url = https://radio.example.org` + Neustart API/PLAYOUT/
+ANALYZER (bis dahin antwortet die API über den öffentlichen Namen mit 400 —
+`ALLOWED_HOSTS` folgt `public_url`), danach Stufe 3.
 **Evaluierung 2026-10-03 (6 Punkte, Live-Readiness Punkt 16):**  **Befund:** alles nur im LAN — Apache
 2.4.68 nur :80 (mod_ssl/http2/remoteip vorhanden, nicht konfiguriert), Icecast
 2.4.4 :8000 (+8080/8443 ohne TLS; libssl-DLLs liegen bei), Harbor :8001 Klartext

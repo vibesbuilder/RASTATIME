@@ -209,7 +209,7 @@ Operator actions for stage 1: add the two `Include` lines, create
 `RASTATIME-PLAYOUT` and `RASTATIME-ANALYZER` (internal URL), then check
 `http://192.168.1.64/stream/rastatime` plays and the dashboard player works.
 
-## Stage 2 — Infrastructure (operator)
+## Stage 2 — Infrastructure (operator) — 2.1–2.3 DONE 2026-10-05, 2.4 pending
 
 Stage 1 is active since 2026-10-05 09:30 (`/stream/` proxy and ACME alias
 included, verified).  Order matters: the certificate needs DNS and port
@@ -253,6 +253,11 @@ included, verified).  Order matters: the certificate needs DNS and port
    player.
 
 ### 2.2 Apache modules (elevated editor on httpd.conf)
+
+> Editing `httpd.conf`: start Notepad++ **as administrator**; without
+> elevation it keeps a backup copy and the live file stays unchanged
+> (happened twice on 2026-10-05).  Always confirm with
+> `Select-String -Path C:\Tools\Apache24\conf\httpd.conf -Pattern rastatime-`.
 
 Uncomment / add in `C:\Tools\Apache24\conf\httpd.conf`:
 ```
