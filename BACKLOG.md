@@ -2839,7 +2839,14 @@ Hörer-URL `<public_url>/stream/<mount>`, `infra/apache/` (Stream-Proxy, ACME-Al
 starten; Prüfung `http://192.168.1.164/stream/rastatime`.  Nebenbefund: `config/
 icecast.xml` ist versioniert und trägt seit Block 3 die echten Passwörter im
 Arbeitsbaum — nicht committen; Vorschlag: aus dem Index nehmen + `.example`.
-**Danach Stufe 2** (DNS, Router 80/443/8001, win-acme, TLS-Include, `public_url`).
+**Stufe 1 aktiviert 2026-10-05 09:30 (Operator: Includes nach Notepad++-als-Admin,
+Apache neu):** `/stream/rastatime` über Apache 200/audio/mpeg mit ICY-Headern, ACME-
+Alias liefert Testdatei als text/plain, Player/Widgets auf `/stream/`, Playout und
+Analyzer intern auf 127.0.0.1.  Nachbesserung `e7113e5`: Status/Admin/Playlist-Pfade
+unter `/stream/` waren noch erreichbar (Location-Reihenfolge) — wirksam beim nächsten
+Apache-Neustart (mit Stufe 2).  `icecast.xml` aus dem Index (`f89cf83`, `.example`).
+**Jetzt Stufe 2** (Runbook §2: DNS + Router 80/443/8001 + Hairpin-Test → Module →
+win-acme → TLS-Include → `public_url` zuletzt).
 **Evaluierung 2026-10-03 (6 Punkte, Live-Readiness Punkt 16):**  **Befund:** alles nur im LAN — Apache
 2.4.68 nur :80 (mod_ssl/http2/remoteip vorhanden, nicht konfiguriert), Icecast
 2.4.4 :8000 (+8080/8443 ohne TLS; libssl-DLLs liegen bei), Harbor :8001 Klartext

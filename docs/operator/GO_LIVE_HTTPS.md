@@ -211,11 +211,80 @@ Operator actions for stage 1: add the two `Include` lines, create
 
 ## Stage 2 — Infrastructure (operator)
 
-DNS A record → fixed public IP; router forwards TCP 80, 443 → 192.168.1.164
-and TCP 8001 (DJ dial-in, plain); `win-acme` as a service (Let's Encrypt,
-HTTP-01 on port 80, auto-renewal); Apache `httpd-ssl.conf` (assistant
-provides it); hairpin NAT or split DNS so the public name also works in
-the LAN.
+Stage 1 is active since 2026-10-05 09:30 (`/stream/` proxy and ACME alias
+included, verified).  Order matters: the certificate needs DNS and port
+80 first, `public_url` is switched last.
+
+### 2.1 DNS and router
+
+1. A record `rastatime.example.org` → the studio's fixed public IP
+   (TTL 300 while testing).  Check from outside: `nslookup
+   rastatime.example.org 8.8.8.8`.
+2. Router port forwards (TCP) to 192.168.1.164: **80** (ACME + redirect),
+   **443** (UI + streams), **8001** (DJ dial-in, plain HTTP by decision).
+   Nothing else - not 8000, not 8765, not 5900.
+3. **Hairpin NAT / split DNS test** (decides 2.4): from a LAN machine open
+   `http://rastatime.example.org/` - if it shows the RASTATIME login,
+   the router hairpins and the LAN can use the public name.  If not,
+   add a local DNS override (Fritz!Box/pfSense "host override":
+   `rastatime.example.org` → 192.168.1.164) - after 2.4 every stream URL
+   carries the public name, also for in-house listeners and the UI
+   player.
+
+### 2.2 Apache modules (elevated editor on httpd.conf)
+
+Uncomment / add in `C:\Tools\Apache24\conf\httpd.conf`:
+```
+LoadModule ssl_module modules/mod_ssl.so
+LoadModule socache_shmcb_module modules/mod_socache_shmcb.so
+LoadModule http2_module modules/mod_http2.so
+```
+(`mod_headers`, `mod_rewrite`, `mod_proxy`, `mod_proxy_http` are already
+loaded.)  Do **not** include `rastatime-https.conf` yet - it references
+the certificate files.  `httpd.exe -t`, `Restart-Service RASTATIME-APACHE`.
+
+### 2.3 Certificate with win-acme
+
+1. Download the latest win-acme (x64, pluggable) from
+   <https://www.win-acme.com/> to `C:\Tools\win-acme\`.
+2. Create `C:\RASTATIME\certs`.
+3. Elevated PowerShell - one command, registers the renewal task as well:
+   ```powershell
+   cd C:\Tools\win-acme
+   .\wacs.exe --source manual --host rastatime.example.org `
+     --validation filesystem --webroot C:\RASTATIME\acme `
+     --store pemfiles --pemfilespath C:\RASTATIME\certs `
+     --installation script --script "powershell.exe" `
+     --scriptparameters "-NoProfile -ExecutionPolicy Bypass -File C:\RASTATIME\infra\scripts\apache-cert-renewed.ps1" `
+     --accepttos --emailaddress technik@example.org
+   ```
+   Result: `C:\RASTATIME\certs\rastatime.example.org-chain.pem` and
+   `-key.pem` (plus `-crt.pem`, `-chain-only.pem`), a scheduled task
+   "win-acme renew" that renews ~every 60 days and runs the restart
+   script (`logs\cert-renewal.log`).
+4. Only then add to httpd.conf, after the two existing includes:
+   ```
+   Include "C:/RASTATIME/infra/apache/rastatime-https.conf"
+   ```
+   `httpd.exe -t` → `Syntax OK`, `Restart-Service RASTATIME-APACHE`.
+5. Check from outside (mobile network): `https://rastatime.example.org/`
+   shows the login with a valid padlock; `http://` redirects to https;
+   `https://rastatime.example.org/stream/rastatime` plays.
+
+### 2.4 Switch the public URL (last)
+
+Only after 2.1 step 3 is settled (public name works from the LAN).
+`config/libretime.conf`:
+```yaml
+general:
+  public_url: https://rastatime.example.org
+```
+Then restart `RASTATIME-API` (ALLOWED_HOSTS / CSRF read the file at
+start), `RASTATIME-PLAYOUT` and `RASTATIME-ANALYZER` (their internal
+calls stay on 127.0.0.1, nothing else changes for them); the legacy PHP
+reads the file per request.  From now on the player, the widgets, the
+embed codes and the e-mails carry `https://rastatime.example.org/…`.
+Rollback = the old value + the same restarts.
 
 ## Stage 3 — Acceptance from outside
 
