@@ -3,7 +3,7 @@
 **Status:** In progress (operator decision 2026-10-04, BACKLOG "Internet-
 Erreichbarkeit via HTTPS — Weg A")
 **Date:** 2026-10-04
-**Goal:** `https://rastatime.example.org` serves the planner UI and the
+**Goal:** `https://radio.example.org` serves the planner UI and the
 listener stream from the studio machine itself (fixed public IP); the DJ
 dial-in stays plain HTTP on port 8001 (operator decision).
 
@@ -194,7 +194,7 @@ URL and the two Apache includes below.
   1.3, HTTP/2, HSTS, `X-Forwarded-Proto`, the same proxies, http → https
   redirect for the public name only, LAN by IP untouched).  Include it in
   stage 2 once the certificate files exist (`C:\RASTATIME\certs\
-  rastatime.example.org-chain.pem` / `-key.pem`) and `mod_ssl`,
+  radio.example.org-chain.pem` / `-key.pem`) and `mod_ssl`,
   `mod_socache_shmcb`, `mod_http2` are loaded.
 - **Django**: `ALLOWED_HOSTS` = public host, internal host, localhost,
   127.0.0.1, `[::1]` (+ `RASTATIME_API_EXTRA_HOSTS`); `CSRF_TRUSTED_ORIGINS`
@@ -215,19 +215,40 @@ Stage 1 is active since 2026-10-05 09:30 (`/stream/` proxy and ACME alias
 included, verified).  Order matters: the certificate needs DNS and port
 80 first, `public_url` is switched last.
 
+### 2.0 Decisions of 2026-10-05 (public IP shared with the NAS)
+
+- The studio's public IP already serves `cloud.example.org` (Synology
+  NAS: DSM on 443, the live-studio webstream on 3001, VNC forwards to
+  PCs).  Nobody needs the NAS from outside any more, the webstream
+  becomes a Line-In → the router forwards **80/443 to the NAS are
+  removed**; 80, 443 and 8001 go to RASTATIME (192.168.1.64).  The VNC
+  forwards stay as they are.
+- NAS certificate without ports 80/443: either none (DSM in the LAN
+  with its self-signed one) or Synology DDNS (`xyz.synology.me`, DSM
+  fetches the certificate without open ports); DNS-01 via `acme.sh`
+  (world4you module, portal scraping) only as a last resort.
+- Public name **`radio.example.org`** (A record, not a CNAME to
+  `cloud.…`, no AAAA).  The Synology-as-reverse-proxy variant was
+  evaluated and rejected by the operator (no dependency on another
+  device); the PC-as-proxy-for-the-NAS variant likewise.
+- Plan B if the machine ever has to sit behind another TLS proxy: the
+  proxy terminates TLS and forwards to `http://192.168.1.64:80`; Apache
+  then needs only `SetEnvIf X-Forwarded-Proto https HTTPS=on` +
+  `mod_remoteip`, `public_url` stays.
+
 ### 2.1 DNS and router
 
-1. A record `rastatime.example.org` → the studio's fixed public IP
+1. A record `radio.example.org` → the studio's fixed public IP
    (TTL 300 while testing).  Check from outside: `nslookup
-   rastatime.example.org 8.8.8.8`.
+   radio.example.org 8.8.8.8`.
 2. Router port forwards (TCP) to 192.168.1.64: **80** (ACME + redirect),
    **443** (UI + streams), **8001** (DJ dial-in, plain HTTP by decision).
    Nothing else - not 8000, not 8765, not 5900.
 3. **Hairpin NAT / split DNS test** (decides 2.4): from a LAN machine open
-   `http://rastatime.example.org/` - if it shows the RASTATIME login,
+   `http://radio.example.org/` - if it shows the RASTATIME login,
    the router hairpins and the LAN can use the public name.  If not,
    add a local DNS override (Fritz!Box/pfSense "host override":
-   `rastatime.example.org` → 192.168.1.64) - after 2.4 every stream URL
+   `radio.example.org` → 192.168.1.64) - after 2.4 every stream URL
    carries the public name, also for in-house listeners and the UI
    player.
 
@@ -251,14 +272,14 @@ the certificate files.  `httpd.exe -t`, `Restart-Service RASTATIME-APACHE`.
 3. Elevated PowerShell - one command, registers the renewal task as well:
    ```powershell
    cd C:\Tools\win-acme
-   .\wacs.exe --source manual --host rastatime.example.org `
+   .\wacs.exe --source manual --host radio.example.org `
      --validation filesystem --webroot C:\RASTATIME\acme `
      --store pemfiles --pemfilespath C:\RASTATIME\certs `
      --installation script --script "powershell.exe" `
      --scriptparameters "-NoProfile -ExecutionPolicy Bypass -File C:\RASTATIME\infra\scripts\apache-cert-renewed.ps1" `
      --accepttos --emailaddress technik@example.org
    ```
-   Result: `C:\RASTATIME\certs\rastatime.example.org-chain.pem` and
+   Result: `C:\RASTATIME\certs\radio.example.org-chain.pem` and
    `-key.pem` (plus `-crt.pem`, `-chain-only.pem`), a scheduled task
    "win-acme renew" that renews ~every 60 days and runs the restart
    script (`logs\cert-renewal.log`).
@@ -267,9 +288,9 @@ the certificate files.  `httpd.exe -t`, `Restart-Service RASTATIME-APACHE`.
    Include "C:/RASTATIME/infra/apache/rastatime-https.conf"
    ```
    `httpd.exe -t` → `Syntax OK`, `Restart-Service RASTATIME-APACHE`.
-5. Check from outside (mobile network): `https://rastatime.example.org/`
+5. Check from outside (mobile network): `https://radio.example.org/`
    shows the login with a valid padlock; `http://` redirects to https;
-   `https://rastatime.example.org/stream/rastatime` plays.
+   `https://radio.example.org/stream/rastatime` plays.
 
 ### 2.4 Switch the public URL (last)
 
@@ -277,18 +298,18 @@ Only after 2.1 step 3 is settled (public name works from the LAN).
 `config/libretime.conf`:
 ```yaml
 general:
-  public_url: https://rastatime.example.org
+  public_url: https://radio.example.org
 ```
 Then restart `RASTATIME-API` (ALLOWED_HOSTS / CSRF read the file at
 start), `RASTATIME-PLAYOUT` and `RASTATIME-ANALYZER` (their internal
 calls stay on 127.0.0.1, nothing else changes for them); the legacy PHP
 reads the file per request.  From now on the player, the widgets, the
-embed codes and the e-mails carry `https://rastatime.example.org/…`.
+embed codes and the e-mails carry `https://radio.example.org/…`.
 Rollback = the old value + the same restarts.
 
 ## Stage 3 — Acceptance from outside
 
 From a mobile network: UI login, the three stream mounts, BUTT dial-in on
-`rastatime.example.org:8001`, widgets on the station website, HTTP→HTTPS
+`radio.example.org:8001`, widgets on the station website, HTTP→HTTPS
 redirect, HSTS header, SSL Labs grade, and the public name from inside
 the LAN.

@@ -2774,7 +2774,7 @@ Haker-Symptomen. Akzeptabel für die nächsten Tage bis Hardware kommt.
 ### 🟢 Internet-Erreichbarkeit via HTTPS — Weg A (Operator-Entscheidung 2026-10-04)
 
 **Entscheidung 2026-10-04:** **Weg A** (Studio-PC direkt, feste öffentliche IP),
-öffentliche URL `https://rastatime.example.org` für Planer-UI und Hörer-Stream;
+öffentliche URL `https://radio.example.org` für Planer-UI und Hörer-Stream;
 die **DJ-Einwahl bleibt HTTP** (Harbor :8001 direkt weitergeleitet, kein TLS —
 Operator-Entscheidung; Empfehlung: für Remote-DJs Custom-Login der Sendung statt
 UI-Konten, weil die Zugangsdaten im Klartext reisen).  `cloud.example.org` ist
