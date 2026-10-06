@@ -1666,6 +1666,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+- **Brute-Force-Paket (c): Gründe, Sperrliste mit Entsperren, Firewall-Wächter
+  (2026-10-06, Operator-Go)** — (1) der Legacy-Check `check-live-stream-auth`
+  nennt den Ablehnungsgrund im Header `X-Rastatime-Auth-Reason` (`no-show`,
+  `not-host`, `bad-password`); der Playout zählt nur `bad-password` für die
+  Harbor-Sperre — ein DJ, der sich vor Sendungsbeginn einwählt, wird
+  abgewiesen, aber nie gesperrt (Stolperstein aus Paket (a)/(b)).  (2)
+  Playout-Endpoints `GET /dj-auth/blocks`, `POST /dj-auth/unblock` auf dem
+  Loopback-Listener (`RejectThrottle.snapshot()/unblock()`).  (3) System
+  Status → „Gesperrte Adressen": `Application_Model_BlockedAddresses` führt
+  Web-Login (Adresse/Benutzer, `LoginAttempts::listWindows()`), Harbor und
+  Firewall-Regeln `RASTATIME-Block <ip>` zusammen (`systemstatus/blocked-
+  addresses` JSON, `systemstatus/unblock-address` POST+CSRF, Apache läuft als
+  LocalSystem → PowerShell darf Regeln lesen/entfernen), JS
+  `status/blocked-addresses.js` (30-s-Refresh, Entsperren-Knopf), 17 Strings
+  ×4.  (4) `infra/scripts/rt-blocks.ps1` (Liste/Entsperren in der PowerShell)
+  und `infra/scripts/rt-firewall-watch.ps1` (Aufgabe alle 5 min: 50 × 4xx in
+  10 min, 3 Scanner-Pfade oder 5 falsche DJ-Passwörter → 24-h-Regel, LAN
+  nie, Ablauf räumt sich selbst, Log `firewall-watch.log`); Trockenlauf über
+  48 h fand 9 Scanner, den Operator-Testzugriff nicht.  Tests 55 passed
+  (Playout), CLI-Probe Liste/Entsperren.  Handbuch USERS_AND_ROLES §8 ×4,
+  Architektur §23.53 Addendum.  Wirksam: Legacy sofort; Playout-Endpoints
+  und Grund-Auswertung nach PLAYOUT-Neustart; Wächter nach Registrierung
+  der Aufgabe (Operator).
 - **Brute-Force-Schutz für den öffentlichen Login und die DJ-Einwahl
   (2026-10-06, Operator-Go, Schwellen 10/15/15 · 20/60/5 · 5/10/15)** —
   Befund nach dem Go-Live: Scanner trafen die Seite binnen Stunden, der

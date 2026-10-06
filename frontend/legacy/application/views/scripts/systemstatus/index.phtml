@@ -214,3 +214,37 @@ $csrfToken = $csrfNs->authtoken ?? '';
 </table>
 
 <div id="service-restart-status" style="margin-top: 1em; max-width: 60em;"></div>
+
+<?php // RASTATIME 2026-10-06 - brute-force brakes: who is blocked, and the way out ?>
+<table width="60%" cellpadding="0" cellspacing="0" border="0" class="statustable blocked-addresses-table" style="margin-top: 2em;">
+    <thead>
+        <tr class="ui-state-default strong">
+            <th colspan="5"><?php echo _("Blocked addresses"); ?></th>
+        </tr>
+        <tr class="ui-state-default strong">
+            <td><?php echo _("Layer"); ?></td>
+            <td><?php echo _("Address / user"); ?></td>
+            <td><?php echo _("Failures"); ?></td>
+            <td><?php echo _("Remaining"); ?></td>
+            <td><?php echo _("Action"); ?></td>
+        </tr>
+    </thead>
+    <tbody id="blocked-addresses-body">
+        <tr><td colspan="5" class="description"><?php echo _("Loading…"); ?></td></tr>
+    </tbody>
+</table>
+<p class="description" style="max-width: 60em; color: #888; font-size: 11px;">
+    <?php echo _("Web login: 10 failures in 15 minutes block an address for 15 minutes; a user name is braked after 20 failures in 60 minutes for 5 minutes. DJ dial-in: 5 wrong passwords in 10 minutes block the address for 15 minutes (too-early logins do not count). Firewall: rules set by the watcher for 24 hours."); ?>
+    <span id="blocked-addresses-i18n"
+          data-web="<?php echo _("Web login"); ?>"
+          data-web-user="<?php echo _("Web login (user)"); ?>"
+          data-harbor="<?php echo _("DJ dial-in"); ?>"
+          data-firewall="<?php echo _("Firewall"); ?>"
+          data-counting="<?php echo _("counting"); ?>"
+          data-blocked="<?php echo _("blocked, %s min left"); ?>"
+          data-none="<?php echo _("No addresses are blocked at the moment."); ?>"
+          data-unblock="<?php echo _("Unblock"); ?>"
+          data-done="<?php echo _("Unblocked %s."); ?>"
+          data-failed="<?php echo _("Unblocking failed."); ?>"></span>
+</p>
+<div id="blocked-addresses-status" style="margin-top: 0.5em; max-width: 60em;"></div>

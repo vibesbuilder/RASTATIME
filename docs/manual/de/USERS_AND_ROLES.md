@@ -515,6 +515,20 @@ Namens zurück.  Die Schwellen stehen in `constants.php`
 Versuche werden mit Adresse protokolliert (`logs/legacy.log`,
 `logs/playout-stdout.log`).
 
+**Sperren sehen und aufheben.**  Einstellungen → Systemstatus →
+*Gesperrte Adressen* zeigt alle Ebenen (Web-Login je Adresse und je
+Benutzer, DJ-Einwahl, Firewall-Wächter) mit Fehlversuchen und
+verbleibenden Minuten; **Entsperren** hebt den Eintrag auf allen Ebenen
+auf – für den DJ, der anruft, weil im Client ein falsches Passwort
+gespeichert war.  Dieselbe Liste gibt es in der PowerShell:
+`infra\scripts\rt-blocks.ps1` (`-Unblock <Adresse>` oder
+`-Unblock user:<Login>`).  Ein DJ, der sich **vor** Sendungsbeginn
+einwählt, wird abgewiesen, aber nie gezählt: nur ein falsches Passwort
+zählt.  Hartnäckige Internet-Scanner sperrt ein Wächter alle 5 Minuten
+für 24 Stunden in der Windows-Firewall (50 abgewiesene Anfragen in 10
+Minuten, 3 typische Scanner-Pfade oder 5 falsche DJ-Passwörter); sie
+erscheinen in derselben Liste.
+
 > **Wenn Sie sich selbst ausgesperrt haben:** die angezeigten Minuten
 > abwarten oder eine Kollegin an einer anderen Adresse bitten.  Im Notfall
 > liegen die Zähler in den Tabellen `cc_login_attempts` (je Adresse) und

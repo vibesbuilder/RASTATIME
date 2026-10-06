@@ -5500,3 +5500,71 @@ msgstr "basiert auf LibreTime %s"
 #: RASTATIME 2026-10-06 login brute-force brake
 msgid "Too many failed login attempts. Please try again in %d minute(s)."
 msgstr "Zu viele fehlgeschlagene Anmeldeversuche. Bitte versuchen Sie es in %d Minute(n) erneut."
+
+#: RASTATIME 2026-10-06 blocked addresses
+msgid "Blocked addresses"
+msgstr "Gesperrte Adressen"
+
+#: RASTATIME 2026-10-06 blocked addresses
+msgid "Layer"
+msgstr "Ebene"
+
+#: RASTATIME 2026-10-06 blocked addresses
+msgid "Address / user"
+msgstr "Adresse / Benutzer"
+
+#: RASTATIME 2026-10-06 blocked addresses
+msgid "Failures"
+msgstr "Fehlversuche"
+
+#: RASTATIME 2026-10-06 blocked addresses
+msgid "Remaining"
+msgstr "Verbleibend"
+
+#: RASTATIME 2026-10-06 blocked addresses
+msgid "Loading…"
+msgstr "Lade…"
+
+#: RASTATIME 2026-10-06 blocked addresses
+msgid "Web login: 10 failures in 15 minutes block an address for 15 minutes; a user name is braked after 20 failures in 60 minutes for 5 minutes. DJ dial-in: 5 wrong passwords in 10 minutes block the address for 15 minutes (too-early logins do not count). Firewall: rules set by the watcher for 24 hours."
+msgstr "Web-Login: 10 Fehlversuche in 15 Minuten sperren eine Adresse für 15 Minuten; ein Benutzername wird nach 20 Fehlversuchen in 60 Minuten für 5 Minuten gebremst. DJ-Einwahl: 5 falsche Passwörter in 10 Minuten sperren die Adresse für 15 Minuten (zu frühe Anmeldungen zählen nicht). Firewall: Regeln des Wächters für 24 Stunden."
+
+#: RASTATIME 2026-10-06 blocked addresses
+msgid "Web login"
+msgstr "Web-Login"
+
+#: RASTATIME 2026-10-06 blocked addresses
+msgid "Web login (user)"
+msgstr "Web-Login (Benutzer)"
+
+#: RASTATIME 2026-10-06 blocked addresses
+msgid "DJ dial-in"
+msgstr "DJ-Einwahl"
+
+#: RASTATIME 2026-10-06 blocked addresses
+msgid "Firewall"
+msgstr "Firewall"
+
+#: RASTATIME 2026-10-06 blocked addresses
+msgid "counting"
+msgstr "zählt"
+
+#: RASTATIME 2026-10-06 blocked addresses
+msgid "blocked, %s min left"
+msgstr "gesperrt, noch %s min"
+
+#: RASTATIME 2026-10-06 blocked addresses
+msgid "No addresses are blocked at the moment."
+msgstr "Derzeit ist keine Adresse gesperrt."
+
+#: RASTATIME 2026-10-06 blocked addresses
+msgid "Unblock"
+msgstr "Entsperren"
+
+#: RASTATIME 2026-10-06 blocked addresses
+msgid "Unblocked %s."
+msgstr "%s entsperrt."
+
+#: RASTATIME 2026-10-06 blocked addresses
+msgid "Unblocking failed."
+msgstr "Entsperren fehlgeschlagen."

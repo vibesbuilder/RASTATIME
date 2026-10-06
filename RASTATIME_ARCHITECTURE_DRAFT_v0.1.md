@@ -6296,6 +6296,20 @@ mirror the columns (`LoginAttempt.last_attempt`, `User.login_attempt_at`),
 the API does not use them.  `REMOTE_ADDR` is the real client address:
 Apache terminates TLS itself, no proxy in front.
 
-**Not done (yet).**  The firewall watcher (BACKLOG) that turns persistent
-scanners into temporary Windows Firewall rules; 2FA / allow-lists for
-administrator accounts.
+**Addendum (2026-10-06, package c).**  *Reasons:* the legacy check
+answers refusals with `X-Rastatime-Auth-Reason` (`no-show`, `not-host`,
+`bad-password`); `DjAuthenticator` counts only `bad-password`, so a DJ
+dialling in before the show can never be blocked (the header is seen by
+the playout only - the client gets accept/deny).  *Visibility:*
+`RejectThrottle.snapshot()/unblock()` behind `GET /dj-auth/blocks` and
+`POST /dj-auth/unblock` on the loopback listener; the legacy
+`Application_Model_BlockedAddresses` merges web (per address / user),
+harbor and the watcher's firewall rules for System Status ("Blocked
+addresses", unblock per entry, CSRF) and for `rt-blocks.ps1`.  Apache runs
+as LocalSystem, so PHP may `Get-/Remove-NetFirewallRule` through
+PowerShell (~0.7 s per call; the page refreshes every 30 s).  *Watcher:*
+`rt-firewall-watch.ps1` as a 5-minute task (SYSTEM) reads both Apache
+access logs and the playout log for the last 10 minutes and creates
+`RASTATIME-Block <ip>` rules (24 h, description `until=…; reason=…`),
+expiring them itself; private addresses are never blocked.  Still open:
+2FA / allow-lists for administrator accounts.

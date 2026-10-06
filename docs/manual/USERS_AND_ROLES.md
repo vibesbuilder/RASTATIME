@@ -479,6 +479,19 @@ thresholds live in `constants.php` (`RASTATIME_LOGIN_*`) and in the
 playout (`RejectThrottle`); blocked attempts are logged with the address
 (`logs/legacy.log`, `logs/playout-stdout.log`).
 
+**Seeing and lifting blocks.**  Settings → System Status → *Blocked
+addresses* lists every layer (web login per address and per user, DJ
+dial-in, firewall watcher) with the failure count and the remaining
+minutes, and an **Unblock** button clears the entry on all layers - for
+the DJ who calls because the wrong password was saved in their client.
+The same list is available in PowerShell: `infra\scripts\rt-blocks.ps1`
+(`-Unblock <address>` or `-Unblock user:<login>`).  A DJ who dials in
+**before** the show starts is refused but never counted: only a wrong
+password counts.  Persistent internet scanners are blocked for 24 hours
+in the Windows Firewall by a watcher task (every 5 minutes; 50 refused
+requests in 10 minutes, 3 typical scanner paths, or 5 wrong DJ passwords)
+and appear in the same list.
+
 > **If you are locked out yourself:** wait the minutes shown, or ask a
 > colleague on another address.  In an emergency the counters sit in the
 > tables `cc_login_attempts` (per address) and `cc_subjs.login_attempts`

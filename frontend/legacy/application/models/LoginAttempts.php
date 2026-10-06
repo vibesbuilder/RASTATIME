@@ -114,6 +114,58 @@ class Application_Model_LoginAttempts
     }
 
     /**
+     * Addresses and user names with failures inside their window, for the
+     * System Status page (Application_Model_BlockedAddresses): seconds_left
+     * > 0 means blocked, 0 means counting towards a block.
+     */
+    public static function listWindows()
+    {
+        $rows = [];
+        $ips = Application_Common_Database::prepareAndExecute(
+            'SELECT ip, attempts, last_attempt, EXTRACT(EPOCH FROM (now() - last_attempt)) AS age'
+            . ' FROM cc_login_attempts WHERE last_attempt IS NOT NULL'
+            . ' AND last_attempt > now() - make_interval(mins => :mins) ORDER BY last_attempt DESC',
+            [':mins' => max(RASTATIME_LOGIN_IP_WINDOW_MIN, RASTATIME_LOGIN_IP_BLOCK_MIN)],
+            Application_Common_Database::ALL
+        );
+        foreach ($ips ?: [] as $r) {
+            $left = (int) $r['attempts'] >= RASTATIME_LOGIN_IP_LIMIT
+                ? max(0, (int) ceil(RASTATIME_LOGIN_IP_BLOCK_MIN * 60 - (float) $r['age'])) : 0;
+            $rows[] = [
+                'layer' => 'web',
+                'key' => (string) $r['ip'],
+                'address' => (string) $r['ip'],
+                'user' => '',
+                'seconds_left' => $left,
+                'count' => (int) $r['attempts'],
+                'detail' => sprintf('%d/%d', (int) $r['attempts'], RASTATIME_LOGIN_IP_LIMIT),
+            ];
+        }
+        $users = Application_Common_Database::prepareAndExecute(
+            'SELECT login, login_attempts, EXTRACT(EPOCH FROM (now() - login_attempt_at)) AS age'
+            . ' FROM cc_subjs WHERE login_attempt_at IS NOT NULL AND COALESCE(login_attempts, 0) > 0'
+            . ' AND login_attempt_at > now() - make_interval(mins => :mins) ORDER BY login_attempt_at DESC',
+            [':mins' => max(RASTATIME_LOGIN_USER_WINDOW_MIN, RASTATIME_LOGIN_USER_BLOCK_MIN)],
+            Application_Common_Database::ALL
+        );
+        foreach ($users ?: [] as $r) {
+            $left = (int) $r['login_attempts'] >= RASTATIME_LOGIN_USER_LIMIT
+                ? max(0, (int) ceil(RASTATIME_LOGIN_USER_BLOCK_MIN * 60 - (float) $r['age'])) : 0;
+            $rows[] = [
+                'layer' => 'web-user',
+                'key' => 'user:' . $r['login'],
+                'address' => '',
+                'user' => (string) $r['login'],
+                'seconds_left' => $left,
+                'count' => (int) $r['login_attempts'],
+                'detail' => sprintf('%d/%d', (int) $r['login_attempts'], RASTATIME_LOGIN_USER_LIMIT),
+            ];
+        }
+
+        return $rows;
+    }
+
+    /**
      * Seconds left of a block: limit reached and the last failure younger
      * than the block length.  A failure older than the window never blocks
      * (the counter is stale and restarts on the next failure).

@@ -82,6 +82,38 @@ class RejectThrottle:
         self._rejections.pop(address or "", None)
         self._blocked_until.pop(address or "", None)
 
+    def unblock(self, address: str) -> bool:
+        """Operator action (System Status / rt-blocks.ps1): forget the
+        address entirely.  True when something was cleared."""
+        key = address or ""
+        had = key in self._blocked_until or bool(self._rejections.get(key))
+        self._rejections.pop(key, None)
+        self._blocked_until.pop(key, None)
+        return had
+
+    def snapshot(self) -> List[Dict[str, object]]:
+        """Blocked addresses and addresses with recent rejections, for the
+        operator's list: address, seconds left (0 = counting only),
+        rejections inside the window."""
+        now = self._clock()
+        rows: List[Dict[str, object]] = []
+        for key in sorted(set(self._blocked_until) | set(self._rejections)):
+            left = max(0.0, self._blocked_until.get(key, 0.0) - now) if key in self._blocked_until else 0.0
+            if key in self._blocked_until and left <= 0:
+                self._blocked_until.pop(key, None)
+            recent = [t for t in self._rejections.get(key, []) if now - t <= self.window]
+            if left <= 0 and not recent:
+                continue
+            rows.append({
+                "address": key,
+                "blocked_seconds_left": int(round(left)),
+                "rejections_in_window": len(recent),
+                "limit": self.limit,
+                "window_seconds": int(self.window),
+                "block_seconds": int(self.block),
+            })
+        return rows
+
 
 class DjAuthenticator:
     def __init__(
@@ -141,10 +173,23 @@ class DjAuthenticator:
                 "harbor password", resp.status_code, self.check_url, who,
             )
             return "error"
+        # RASTATIME 2026-10-06 - the legacy check names the reason; only a
+        # wrong password counts towards the brake.  "no-show" (nothing on
+        # air) and "not-host" (name is not a host of the running show) are
+        # refusals without a password check - a DJ dialling in too early
+        # must never end up blocked.  No header (older legacy) counts.
+        reason = (resp.headers.get("x-rastatime-auth-reason") or "bad-password").strip().lower()
+        if reason != "bad-password":
+            logger.info("dj-auth: %s rejected (%s, not counted)", who, reason)
+            return "denied"
         if self._throttle.rejected(address):
-            logger.warning("dj-auth: %s rejected - address blocked for %.0f min after "
-                           "%d rejections (brute-force brake)", who,
+            logger.warning("dj-auth: %s rejected (bad password) - address blocked for "
+                           "%.0f min after %d rejections (brute-force brake)", who,
                            self._throttle.block / 60, self._throttle.limit)
         else:
-            logger.info("dj-auth: %s rejected", who)
+            logger.info("dj-auth: %s rejected (bad password)", who)
         return "denied"
+
+    @property
+    def throttle(self) -> RejectThrottle:
+        return self._throttle

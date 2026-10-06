@@ -2921,9 +2921,11 @@ nach Konvention (6 Punkte).
 **Stand 2026-10-06:** (a) Web-Login je Adresse 10/15/15 hart, je Benutzer 20/60/5 weich
 (429 + Retry-After, Migration 0064) und (b) Harbor-Drossel 5/10/15 im Playout gebaut,
 live geprobt (Web) bzw. getestet (15 Tests); Details CHANGELOG 06.10., Handbuch
-USERS_AND_ROLES §8, Architektur §23.53.  **Offen:** PLAYOUT-Neustart (b), dann (c)
-Firewall-Wächter (PowerShell, Aufgabenplaner 5 min: 50 × 4xx in 10 min oder 3 Scanner-
-Pfade → 24 h `New-NetFirewallRule`, LAN nie) als eigenes Paket, später 2FA/Allowlist.
+USERS_AND_ROLES §8, Architektur §23.53.  **(c) gebaut 2026-10-06:** Grund-Header (zu frühe DJ-Einwahl zählt nicht), Playout-
+Endpoints, System Status „Gesperrte Adressen" mit Entsperren, `rt-blocks.ps1`,
+`rt-firewall-watch.ps1` (Trockenlauf 48 h: 9 Scanner).  **Offen (Operator):** PLAYOUT-
+Neustart, Apache-Neustart (.mo), Aufgabe „RASTATIME-FirewallWatch" registrieren, Seite
+einmal ansehen; später 2FA/Allowlist (💡).
 **Ursprüngliche Idee:**  Seit dem Go-Live treffen Scanner die Seite im Stundentakt; die
 Legacy-Login-Seite kennt weder Sperre noch Verzögerung nach Fehlversuchen, und auf
 Windows gibt es kein fail2ban.  Optionen: (a) Zähler in `cc_pref`/Session + wachsende

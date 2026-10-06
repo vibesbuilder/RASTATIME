@@ -326,8 +326,13 @@ the https address.
 **Operating notes since go-live.**  Internet scanners probe the site
 within hours (`/.git/config`, `/.htpasswd`, `/api/.env`): the front
 controller answers with the login redirect, nothing outside
-`frontend/legacy/public` is reachable.  There is no login rate limit yet
-(BACKLOG idea).  Certificate renewal: task "win-acme renew", log
+`frontend/legacy/public` is reachable.  Brute-force brakes since 2026-10-06: web
+login (10 / 15 min per address → 15 min, 429), DJ harbor (5 wrong
+passwords / 10 min → 15 min, too-early logins not counted), firewall
+watcher `infra\scripts\rt-firewall-watch.ps1` (task
+"RASTATIME-FirewallWatch", every 5 min, rules "RASTATIME-Block <ip>" for
+24 h, log `logs\firewall-watch.log`).  See and lift blocks: System Status
+→ Blocked addresses, or `infra\scripts\rt-blocks.ps1`.  Certificate renewal: task "win-acme renew", log
 `logs\cert-renewal.log`; check it after 2026-11-29.
 
 

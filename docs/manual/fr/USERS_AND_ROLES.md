@@ -349,6 +349,20 @@ nom.  Les seuils sont dans `constants.php` (`RASTATIME_LOGIN_*`) et dans
 le playout (`RejectThrottle`) ; les tentatives refusées sont journalisées
 avec l'adresse (`logs/legacy.log`, `logs/playout-stdout.log`).
 
+**Voir et lever les blocages.**  Paramètres → État du système →
+*Adresses bloquées* liste chaque niveau (connexion web par adresse et par
+utilisateur, connexion DJ, veilleur de pare-feu) avec le nombre d'échecs
+et les minutes restantes ; **Débloquer** efface l'entrée à tous les
+niveaux – pour le DJ qui appelle parce qu'un mauvais mot de passe était
+enregistré dans son client.  La même liste existe en PowerShell :
+`infra\scripts\rt-blocks.ps1` (`-Unblock <adresse>` ou
+`-Unblock user:<login>`).  Un DJ qui se connecte **avant** le début de
+l'émission est refusé mais jamais compté : seul un mauvais mot de passe
+compte.  Les scanners Internet persistants sont bloqués 24 heures dans le
+pare-feu Windows par une tâche de veille (toutes les 5 minutes ; 50
+requêtes refusées en 10 minutes, 3 chemins typiques de scanner ou 5
+mauvais mots de passe DJ) et apparaissent dans la même liste.
+
 > **Si vous êtes vous-même bloqué :** attendez les minutes indiquées ou
 > demandez à un collègue sur une autre adresse.  En cas d'urgence, les
 > compteurs se trouvent dans les tables `cc_login_attempts` (par adresse)

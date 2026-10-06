@@ -21,6 +21,7 @@ class SystemstatusController extends Zend_Controller_Action
     {
         $config = Config::getConfig();
         $this->view->headScript()->appendFile(Assets::url('js/airtime/status/status.js'), 'text/javascript');
+        $this->view->headScript()->appendFile(Assets::url('js/airtime/status/blocked-addresses.js'), 'text/javascript');
         $this->view->headScript()->appendFile(Assets::url('js/airtime/status/service-restart.js'), 'text/javascript');
         $this->version = $config['airtime_version'];
     }
@@ -142,6 +143,51 @@ class SystemstatusController extends Zend_Controller_Action
      * @return array                 ['ok' => bool, 'mode' => 'sync'|'detached',
      *                                'exit' => int|null, 'output' => string|null]
      */
+    /**
+     * RASTATIME 2026-10-06 - GET systemstatus/blocked-addresses: the
+     * brute-force brakes' current state (web login per address / user, DJ
+     * harbor, firewall watcher rules) for the "Blocked addresses" section.
+     */
+    public function blockedAddressesAction()
+    {
+        $this->view->layout()->disableLayout();
+        $this->_helper->viewRenderer->setNoRender(true);
+        $this->_helper->json->sendJson([
+            'ok' => true,
+            'rows' => Application_Model_BlockedAddresses::listAll(),
+            'generated_at' => gmdate('c'),
+        ]);
+    }
+
+    /**
+     * RASTATIME 2026-10-06 - POST systemstatus/unblock-address (key, csrf):
+     * clear one address (or "user:<login>") on every layer.
+     */
+    public function unblockAddressAction()
+    {
+        $this->view->layout()->disableLayout();
+        $this->_helper->viewRenderer->setNoRender(true);
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->getResponse()->setHttpResponseCode(405);
+            $this->_helper->json->sendJson(['ok' => false, 'error' => 'method-not-allowed']);
+            return;
+        }
+        if (!SecurityHelper::verifyCSRFToken($this->_getParam('csrf_token'))) {
+            Logging::error(__FILE__ . ': Invalid CSRF token on unblockAddressAction');
+            $this->_helper->json->sendJson(['ok' => false, 'error' => 'csrf']);
+            return;
+        }
+        $key = trim((string) $this->_getParam('key', ''));
+        if ($key === '' || (strpos($key, 'user:') !== 0 && !Application_Model_BlockedAddresses::looksLikeAddress($key))) {
+            $this->_helper->json->sendJson(['ok' => false, 'error' => 'bad-key']);
+            return;
+        }
+        $result = Application_Model_BlockedAddresses::unblock($key);
+        $result['ok'] = true;
+        $this->_helper->json->sendJson($result);
+    }
+
     private function _restartOneService($service, $forceDetached = false, $delaySeconds = 4)
     {
         // Apache hosts this PHP process; synchronous restart would kill our

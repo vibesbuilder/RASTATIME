@@ -341,6 +341,20 @@ de su nombre.  Los umbrales están en `constants.php` (`RASTATIME_LOGIN_*`)
 y en el playout (`RejectThrottle`); los intentos rechazados se registran
 con la dirección (`logs/legacy.log`, `logs/playout-stdout.log`).
 
+**Ver y levantar bloqueos.**  Configuración → Estado del sistema →
+*Direcciones bloqueadas* muestra todos los niveles (inicio de sesión web
+por dirección y por usuario, conexión de DJ, vigilante del cortafuegos)
+con los fallos y los minutos restantes; **Desbloquear** elimina la
+entrada en todos los niveles, para el DJ que llama porque su cliente
+tenía guardada una contraseña incorrecta.  La misma lista existe en
+PowerShell: `infra\scripts\rt-blocks.ps1` (`-Unblock <dirección>` o
+`-Unblock user:<login>`).  Un DJ que se conecta **antes** del inicio del
+programa es rechazado pero nunca contado: solo cuenta una contraseña
+incorrecta.  Los escáneres de Internet persistentes se bloquean 24 horas
+en el cortafuegos de Windows mediante una tarea vigilante (cada 5
+minutos; 50 peticiones rechazadas en 10 minutos, 3 rutas típicas de
+escáner o 5 contraseñas de DJ incorrectas) y aparecen en la misma lista.
+
 > **Si usted mismo queda bloqueado:** espere los minutos indicados o pida
 > a un colega en otra dirección.  En caso de emergencia, los contadores
 > están en las tablas `cc_login_attempts` (por dirección) y

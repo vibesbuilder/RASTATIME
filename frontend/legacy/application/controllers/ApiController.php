@@ -1329,6 +1329,12 @@ class ApiController extends Zend_Controller_Action
         $djtype = $request->getParam('djtype');
 
         $authorised = false;
+        // RASTATIME 2026-10-06 - why a login was refused, for the playout's
+        // brute-force brake: only 'bad-password' counts towards a block;
+        // 'no-show' / 'not-host' are refusals without a password check (a DJ
+        // dialling in too early must never end up blocked).  The header is
+        // seen by the playout only, never by the DJ client.
+        $reason = 'bad-password';
 
         if ($djtype == 'master') {
             // check against master
@@ -1347,6 +1353,7 @@ class ApiController extends Zend_Controller_Action
 
             // there is current playing show
             if (isset($showInfo[0]['id'])) {
+                $reason = 'not-host';
                 $current_show_id = $showInfo[0]['id'];
                 $CcShow = CcShowQuery::create()->findPK($current_show_id);
 
@@ -1362,6 +1369,9 @@ class ApiController extends Zend_Controller_Action
                 if ($CcShow->getDbLiveStreamUsingAirtimeAuth()) {
                     foreach ($hosts_ids as $host) {
                         $h = new Application_Model_User($host['subjs_id']);
+                        if ($username == $h->getLogin()) {
+                            $reason = 'bad-password';   // the name is a host, the password decides
+                        }
                         if ($username == $h->getLogin() && md5($password) == $h->getPassword()) {
                             $authorised = true;
                             $this->view->msg = true;
@@ -1378,6 +1388,7 @@ class ApiController extends Zend_Controller_Action
                 }
                 // check against custom auth
                 if ($CcShow->getDbLiveStreamUsingCustomAuth()) {
+                    $reason = 'bad-password';   // custom credentials: name + password together
                     if ($username == $custom_user && $password == $custom_pass) {
                         $authorised = true;
                         $this->view->msg = true;
@@ -1389,6 +1400,7 @@ class ApiController extends Zend_Controller_Action
                 }
             } else {
                 // no show is currently playing
+                $reason = 'no-show';
                 $this->view->msg = false;
             }
         }
@@ -1402,6 +1414,7 @@ class ApiController extends Zend_Controller_Action
             $this->getResponse()->setHeader('icecast-auth-user', '1');
         } else {
             $this->getResponse()->setHttpResponseCode(401);
+            $this->getResponse()->setHeader('X-Rastatime-Auth-Reason', $reason);
         }
     }
 

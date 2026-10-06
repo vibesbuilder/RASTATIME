@@ -286,6 +286,10 @@ class _EventHandler(BaseHTTPRequestHandler):
                 self._handle_set_audio_output(parsed)
             elif parsed.path == "/dj-auth":
                 self._handle_dj_auth(parsed)
+            elif parsed.path == "/dj-auth/blocks":
+                self._handle_dj_auth_blocks()
+            elif parsed.path == "/dj-auth/unblock":
+                self._handle_dj_auth_unblock(parsed)
             elif parsed.path == "/live-text":
                 self._handle_live_text()
             else:
@@ -370,6 +374,51 @@ class _EventHandler(BaseHTTPRequestHandler):
             verdict = "error"
         code = {"ok": 200, "denied": 403}.get(verdict, 503)
         self._send(code, verdict if verdict in ("ok", "denied") else "error")
+
+    def _send_json(self, status: int, payload) -> None:
+        body_bytes = json.dumps(payload).encode("utf-8")
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(body_bytes)))
+        self.end_headers()
+        try:
+            self.wfile.write(body_bytes)
+        except OSError:
+            pass
+
+    def _handle_dj_auth_blocks(self) -> None:
+        """
+        GET /dj-auth/blocks - the harbor brute-force brake's list (RASTATIME
+        2026-10-06): addresses that are blocked or have recent rejections.
+        Read by the legacy System Status page and rt-blocks.ps1.
+        """
+        checker = _EventHandler.dj_auth
+        throttle = getattr(checker, "throttle", None)
+        rows = throttle.snapshot() if throttle is not None else []
+        self._send_json(200, {"blocks": rows})
+
+    def _handle_dj_auth_unblock(self, parsed) -> None:
+        """
+        POST /dj-auth/unblock (form or query: address=...) - operator action:
+        forget the address in the harbor brake.  Loopback listener only.
+        """
+        params = parse_qs(parsed.query)
+        try:
+            length = int(self.headers.get("Content-Length") or 0)
+        except ValueError:
+            length = 0
+        if length > 0:
+            body = self.rfile.read(min(length, 4096)).decode("utf-8", "replace")
+            params.update(parse_qs(body, keep_blank_values=True))
+        address = (params.get("address", [""])[0] or "").strip()
+        if not address:
+            self._send_json(400, {"error": "address missing"})
+            return
+        checker = _EventHandler.dj_auth
+        throttle = getattr(checker, "throttle", None)
+        cleared = bool(throttle.unblock(address)) if throttle is not None else False
+        logger.info("dj-auth: operator unblocked %s (%s)", address, "cleared" if cleared else "was not blocked")
+        self._send_json(200, {"address": address, "cleared": cleared})
 
     def _handle_source_state(self) -> None:
         """

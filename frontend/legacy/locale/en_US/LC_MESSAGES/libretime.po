@@ -4713,3 +4713,71 @@ msgstr ""
 #: RASTATIME 2026-10-06 login brute-force brake
 msgid "Too many failed login attempts. Please try again in %d minute(s)."
 msgstr ""
+
+#: RASTATIME 2026-10-06 blocked addresses
+msgid "Blocked addresses"
+msgstr ""
+
+#: RASTATIME 2026-10-06 blocked addresses
+msgid "Layer"
+msgstr ""
+
+#: RASTATIME 2026-10-06 blocked addresses
+msgid "Address / user"
+msgstr ""
+
+#: RASTATIME 2026-10-06 blocked addresses
+msgid "Failures"
+msgstr ""
+
+#: RASTATIME 2026-10-06 blocked addresses
+msgid "Remaining"
+msgstr ""
+
+#: RASTATIME 2026-10-06 blocked addresses
+msgid "Loading…"
+msgstr ""
+
+#: RASTATIME 2026-10-06 blocked addresses
+msgid "Web login: 10 failures in 15 minutes block an address for 15 minutes; a user name is braked after 20 failures in 60 minutes for 5 minutes. DJ dial-in: 5 wrong passwords in 10 minutes block the address for 15 minutes (too-early logins do not count). Firewall: rules set by the watcher for 24 hours."
+msgstr ""
+
+#: RASTATIME 2026-10-06 blocked addresses
+msgid "Web login"
+msgstr ""
+
+#: RASTATIME 2026-10-06 blocked addresses
+msgid "Web login (user)"
+msgstr ""
+
+#: RASTATIME 2026-10-06 blocked addresses
+msgid "DJ dial-in"
+msgstr ""
+
+#: RASTATIME 2026-10-06 blocked addresses
+msgid "Firewall"
+msgstr ""
+
+#: RASTATIME 2026-10-06 blocked addresses
+msgid "counting"
+msgstr ""
+
+#: RASTATIME 2026-10-06 blocked addresses
+msgid "blocked, %s min left"
+msgstr ""
+
+#: RASTATIME 2026-10-06 blocked addresses
+msgid "No addresses are blocked at the moment."
+msgstr ""
+
+#: RASTATIME 2026-10-06 blocked addresses
+msgid "Unblock"
+msgstr ""
+
+#: RASTATIME 2026-10-06 blocked addresses
+msgid "Unblocked %s."
+msgstr ""
+
+#: RASTATIME 2026-10-06 blocked addresses
+msgid "Unblocking failed."
+msgstr ""
