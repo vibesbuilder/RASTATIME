@@ -295,6 +295,48 @@ Copy-Item C:\rastatime-backups\config\libretime.conf.2026-04-30 `
 nssm restart RASTATIME-API
 ```
 
+### 7.4 Restore drill (TEST_PLAN A6.2, quarterly)
+
+Proves that a UI/nightly backup ZIP (`D:\backups`, see the manual's
+Backup chapter) restores, **without touching the live database and
+without stopping a service**: the dump goes into a scratch database next
+to `rastatime`.  The `rastatime` role may create databases, so no
+superuser password is needed.  `psql`/`pg_restore` ask for the
+`rastatime` password in their own prompt (it is the `database:` password
+in `config\libretime.conf`); never put it on the command line.
+
+```powershell
+$pg  = "C:\Program Files\PostgreSQL\17\bin"
+$zip = Get-ChildItem D:\backups\rastatime-backup-*.zip | Sort-Object Name | Select-Object -Last 1
+$tmp = "D:\backups\restore-drill"
+
+# 1 - unpack the newest ZIP (it holds config files with passwords: delete $tmp at the end)
+Expand-Archive $zip.FullName -DestinationPath $tmp -Force
+Get-Content "$tmp\manifest.json"
+
+# 2 - scratch database
+& "$pg\psql.exe" -h 127.0.0.1 -U rastatime -d postgres -c "CREATE DATABASE rastatime_restore OWNER rastatime;"
+
+# 3 - restore into the scratch database (NOT into rastatime; no --clean)
+& "$pg\pg_restore.exe" -h 127.0.0.1 -U rastatime -d rastatime_restore --format=custom --no-owner "$tmp\db.dump"
+
+# 4 - check: schema version = live (System Status shows it), counts plausible, a show of today present
+& "$pg\psql.exe" -h 127.0.0.1 -U rastatime -d rastatime_restore -c "SELECT valstr AS schema_version FROM cc_pref WHERE keystr = 'schema_version';" `
+    -c "SELECT (SELECT count(*) FROM cc_show) shows, (SELECT count(*) FROM cc_show_instances) instances, (SELECT count(*) FROM cc_files) files, (SELECT count(*) FROM cc_schedule) rows;" `
+    -c "SELECT s.name, i.starts FROM cc_show_instances i JOIN cc_show s ON s.id = i.show_id WHERE i.starts::date = current_date ORDER BY i.starts LIMIT 3;"
+
+# 5 - clean up
+& "$pg\psql.exe" -h 127.0.0.1 -U rastatime -d postgres -c "DROP DATABASE rastatime_restore;"
+Remove-Item -Recurse -Force $tmp
+```
+
+Pass: `pg_restore` ends without errors, the schema version equals the
+live one, the counts are in the live order of magnitude (the ZIP is from
+03:30, so slightly lower), today's shows are listed.  Record the date in
+TEST_PLAN / the quarterly check.  A real restore then follows 7.2
+(services stopped, into `rastatime`), which is never rehearsed on the
+live system.
+
 ---
 
 ## 8. Backup Verification

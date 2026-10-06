@@ -83,7 +83,7 @@ only with a fresh backup (03:30 run) and outside show boundaries.
 | # | Check | How | Expected |
 |---|---|---|---|
 | A6.1 | Nightly backup | `D:\backups`, `logs\backup-auto.log` | today's ZIP + media mirror synced, exit 0 |
-| A6.2 | Restore drill (quarterly) | Settings → Backup → restore into a scratch database per BACKUP.md | restored schema version = current, a show opens |
+| A6.2 | Restore drill (quarterly) | newest ZIP from `D:\backups` into the scratch database `rastatime_restore` per `docs\operator\BACKUP.md` §7.4 (no service stopped, live database untouched) | `pg_restore` without errors, schema version = live, counts plausible, today's shows present; scratch database dropped |
 | A6.3 | Storage root | Settings → Local Machine | `D:/stor`, preflight `storage_root_unavailable` quiet |
 | A6.4 | Log growth | `log_growth.py` or `logs\` sizes | ≈ 1.5 MB/day, janitor task 03:50 rotating |
 
