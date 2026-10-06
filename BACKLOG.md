@@ -33,10 +33,10 @@ festgelegt.  Jeder Punkt bekommt vor Implementierung die
 | 11 | ✅ Pypo-NSSM-Resilience | **CLOSED 2026-09-16** — Beobachtungsfrist bis 15.09. sauber: seit 09.09. 20 PLAYOUT-Starts gegen 20 angeforderte Shutdowns, kein ungeplanter Neustart (Belege im Item) |
 | 12 | ✅ Widgets | **DONE 2026-09-18** — drei Wellen + Player v2 (letztes Upstream-Widget, Wellen-Stil); alle 15 Embed-Endpoints live verifiziert; Player-Hör-Abnahme durch Operator 2026-09-18 |
 | 13 | ✅ JavaScript-Stack-Modernisierung | **Kern DONE 2026-09-17** — Stufen 0-2 komplett, Migrate-Netz + FC1.5-Fork entfernt, UI-Politur; offen nur DataTables 2.0 (Entscheidung später, Operator 2026-09-17) + optionale Build-Pipeline — Details im Item |
-| 14 | **Testplan erstellen** | neu 2026-09-02 — siehe unten |
+| 14 | ✅ Testplan erstellen | **DONE 2026-10-06** — `docs/operator/TEST_PLAN.md`: Abnahme-Checkliste A1–A6 (Dienste/Boot, Sendeplan/Playout, DJ-Einwahl, Streams/HTTPS, Schutz, Datensicherheit), wiederkehrende Checks (täglich/wöchentlich/monatlich/quartalsweise), Probe-Werkzeuge mit Aufruf |
 | 15 | ✅ Legacy-mpv-Code löschen | **DONE 2026-09-10** — Liquidsoap ist die einzige Engine, DJ-Kick per Harbor-Telnet (`2590cf2`) |
 | 16 | ✅ Internet-Erreichbarkeit via HTTPS | **LIVE 2026-10-06** — Weg A, `https://radio.example.org` (Let's Encrypt, win-acme), Stream über `/stream/`, DJ-Einwahl :8001; Runbook GO_LIVE_HTTPS |
-| 17 | 🟢 **Live-Readiness** (Operator 2026-10-03) | siehe Item „Live-Readiness" unten — Reihenfolge: 17a Windows-Härtung → 17b Entwicklungsregeln → DJ-Login-Abnahme, Line-In-Feeder-Latenz, Internet-Erreichbarkeit (16), Testplan (14) → 17c Passwörter zuletzt |
+| 17 | ✅ **Live-Readiness** (Operator 2026-10-03, **komplett 2026-10-06**) | siehe Item „Live-Readiness" unten — Reihenfolge: 17a Windows-Härtung → 17b Entwicklungsregeln → DJ-Login-Abnahme, Line-In-Feeder-Latenz, Internet-Erreichbarkeit (16), Testplan (14) → 17c Passwörter zuletzt |
 
 ---
 
@@ -128,6 +128,11 @@ Passwort (`C:\Tools\Icecast\icecast.xml` + Streams-Einstellungen), statisches
 DJ-Rückfallpasswort (Settings → Streams), RabbitMQ-Benutzer.  Operator setzt die
 Werte, ich liefere die Stellen-Liste und prüfe anschließend Stream, DJ-Login und
 Backup-Lauf.
+
+**Live-Readiness abgeschlossen 2026-10-06:** 17a ✅, 17b ✅, DJ-Login ✅, Line-In ✅ (war
+erledigt), Internet via HTTPS ✅ (Punkt 16), Brute-Force-Schutz (a)(b)(c) ✅, Testplan ✅
+(Punkt 14), 17c Passwörter ✅ (vorgezogen in Stufe 0).  Offen nur noch das Löschen der
+vergangenen Sendungen kurz vor dem Live-Gang (Operator) und 💡 2FA/Allowlist.
 
 **Danach (gemäß Reihenfolge):** ✅ DJ-Login-Live-Abnahme (2026-10-03 19:44–19:50,
 Host-Login `djuser` per UI-Login an Testshow 2315: vor Sendebeginn abgelehnt,

@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Testplan (Live-Readiness Punkt 14) — `docs/operator/TEST_PLAN.md`
+  (2026-10-06, Operator-Go)** — A: Abnahme-Checkliste A1–A6 mit Prüfweg und
+  erwartetem Ergebnis (Dienste/Boot, Sendeplan/Playout inkl. Crossfade,
+  Autoloading, Verschieben, Webstream, Line-In, Cue-Punkte, Loudness,
+  geplanter Neustart; DJ-Einwahl inkl. „zu früh zählt nicht"; Streams/HTTPS/
+  Außenwelt; Schutz; Datensicherheit), B: wiederkehrende Checks (täglich bis
+  quartalsweise, Zertifikatstermin), C: Probe-Werkzeuge mit Aufruf
+  (`C:\Temp\optd`, `infra/scripts`, Tests mit `--basetemp`).  Verweis in
+  INSTALL.md.  Damit ist die Live-Readiness (BACKLOG Punkt 17) komplett.
 - **Internet-Erreichbarkeit via HTTPS live: `https://radio.example.org`
   (2026-10-05/06, Operator-Go Weg A)** — Stufe 2: Zielnetz (Profil Privat,
   NTP), A-Record, Router-Forwards TCP 80/443/8001 → 192.168.1.64 (80/443 weg
