@@ -1423,9 +1423,16 @@ SQL;
         }
     }
 
-    public function getListOfFilesUnderLimit($show = null)
+    /**
+     * @param null|float $show         seconds for a "time remaining" limit
+     * @param null|float $timeOverride RASTATIME 2026-10-06 - seconds that replace a
+     *                                 "duration in time" limit (the picker raises
+     *                                 the block's own limit by the crossfade overlap
+     *                                 so the block fills its duration ON AIR)
+     */
+    public function getListOfFilesUnderLimit($show = null, $timeOverride = null)
     {
-        $info = $this->getListofFilesMeetCriteria($show);
+        $info = $this->getListofFilesMeetCriteria($show, false, $timeOverride);
         $files = $info['files'];
         $limit = $info['limit'];
         $repeat = $info['repeat_tracks'] == 1;
@@ -1938,7 +1945,7 @@ SQL;
     // true, the "use requests" criterion is NOT applied.  The Requestable-
     // Pool sync passes true because the pool defines WHAT MAY BE REQUESTED
     // (the catalogue), not what has already been requested.
-    public function getListofFilesMeetCriteria($showLimit = null, $ignoreRequestFilter = false)
+    public function getListofFilesMeetCriteria($showLimit = null, $ignoreRequestFilter = false, $timeOverride = null)
     {
         $storedCrit = $this->getCriteria();
 
@@ -2132,6 +2139,10 @@ SQL;
                     intval(floatval($storedCrit['limit']['value']) * 60 * 60) :
                     intval($storedCrit['limit']['value'] * 60);
                 $limits['items'] = null;
+                if ($timeOverride !== null) {
+                    // RASTATIME 2026-10-06 - see getListOfFilesUnderLimit()
+                    $limits['time'] = max(0.0, (float) $timeOverride);
+                }
             }
         }
 

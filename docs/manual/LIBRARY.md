@@ -70,9 +70,11 @@ only pop tracks. Clear any chip with its **×**.
 > against that time, between its real neighbours, so the last row ends
 > within a second or so of the show's end (the block's solver is
 > randomised; the pool decides what is possible). A block limited by
-> *Duration in time* still counts the sum of its tracks: 12 minutes of
-> four music tracks air about 9 s shorter. A jingle placed between two
-> music tracks costs its own length plus the 3 s overlap it breaks.
+> *Duration in time* is picked the same way (operator decision
+> 2026-10-06): 12 minutes are 12 minutes **on air**, not the sum of the
+> tracks, so a station ID after three such blocks sits at 12:00, 24:xx
+> and 36:xx of the hour. A jingle placed between two music tracks costs
+> its own length plus the 3 s overlap it breaks.
 
 ### Free-text search
 

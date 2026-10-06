@@ -707,6 +707,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Smart Block „Dauer in Zeit" = Sendezeit (2026-10-06, Operator-Go)** —
+  nach der ausgelegten Restzeit (siehe Fixed) rutschten die StationIDs der
+  Standardstunde noch um 9/18/27 s nach vorn, weil ein 12-min-Block die
+  Summe seiner Titel zählte (drei 3-s-Überlappungen verloren).  Jetzt
+  wählt `Scheduler::pickDynamicBlock()` Minuten-/Stunden-Blöcke wie
+  „verbleibende Zeit"-Blöcke gegen die ausgelegte Länge, Budget = ihr Limit
+  (`pickRemainingBlock(…, $asDuration)`, `Block::getListOfFilesUnderLimit(
+  $show, $timeOverride)`); „Anzahl Titel"-Blöcke unverändert.  Probe der
+  Standardstunde: StationIDs bei 12:00,0 / 24:06,9 / 36:18,8 (jeder Block
+  720,0 s auf Sendung), Ende −0,02 s.  Manual LIBRARY ×4, Architektur
+  §23.54 Addendum, TEST_PLAN A2.11; BACKLOG-💡 damit erledigt.
 - **LAN-Adresse der Studio-Maschine 192.168.1.164 → 192.168.1.64 (2026-10-05, Operator:
   DHCP-Bereich des Netzes)** — betrieblich nur `general.public_url` in
   `libretime.conf` und `<hostname>` in `icecast.xml` (kosmetisch); Datenbank,

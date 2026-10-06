@@ -764,17 +764,24 @@ final class Application_Model_Scheduler
      * whose overlap it cannot make up) the one that overbooks least is
      * returned - the caller checks the real end.  Shared by the show builder
      * (retrieveMediaFiles) and the autoloading build (AutoPlaylistManager).
+     * With $asDuration the budget replaces the block's own "duration in
+     * time" limit instead of its "time remaining" one (operator decision
+     * 2026-10-06: a 12-minute block fills 12 minutes ON AIR).
      *
      * @param float          $budgetSecs
      * @param false|null|int $prevFileId
      * @param false|null|int $nextFileId
+     * @param bool           $asDuration
      *
      * @return array<int, array{id: int, length: float}> as Block::getListOfFilesUnderLimit
      */
-    public static function pickRemainingBlock(Application_Model_Block $bl, $budgetSecs, $prevFileId = false, $nextFileId = false)
+    public static function pickRemainingBlock(Application_Model_Block $bl, $budgetSecs, $prevFileId = false, $nextFileId = false, $asDuration = false)
     {
         $budget = max(0.0, (float) $budgetSecs);
-        $picked = $bl->getListOfFilesUnderLimit($budget);
+        $pick = function ($secs) use ($bl, $asDuration) {
+            return $asDuration ? $bl->getListOfFilesUnderLimit(null, $secs) : $bl->getListOfFilesUnderLimit($secs);
+        };
+        $picked = $pick($budget);
         if (empty($picked)) {
             return [];
         }
@@ -803,7 +810,7 @@ final class Application_Model_Scheduler
                 $leastOver = -$residual;
             }
             $sum = array_sum(array_map(function ($f) { return (float) $f['length']; }, $picked));
-            $picked = $bl->getListOfFilesUnderLimit($budget + max(0.0, $sum - $len));
+            $picked = $pick($budget + max(0.0, $sum - $len));
             if (empty($picked)) {
                 break;
             }
@@ -815,7 +822,10 @@ final class Application_Model_Scheduler
     /**
      * RASTATIME 2026-10-06 - the tracks a dynamic smart block schedules: a
      * "time remaining" block against the laid-out budget between its
-     * neighbours (pickRemainingBlock), any other block by its own limit.
+     * neighbours, a "duration in time" block against its own duration laid
+     * out the same way (both pickRemainingBlock; operator decision
+     * 2026-10-06: "12 minutes" is 12 minutes on air, not the sum of the
+     * tracks), a "number of tracks" block by its own limit.
      *
      * @param float          $budgetSecs
      * @param false|null|int $prevFileId
@@ -825,9 +835,14 @@ final class Application_Model_Scheduler
      */
     public static function pickDynamicBlock(Application_Model_Block $bl, $budgetSecs, $prevFileId = false, $nextFileId = false)
     {
-        [, $modifier] = $bl->getLimitValueAndModifier() ?: [null, null];
+        [$value, $modifier] = $bl->getLimitValueAndModifier() ?: [null, null];
         if ($modifier === 'remaining') {
             return self::pickRemainingBlock($bl, $budgetSecs, $prevFileId, $nextFileId);
+        }
+        if ($modifier === 'minutes' || $modifier === 'hours') {
+            $duration = (float) $value * ($modifier === 'hours' ? 3600 : 60);
+
+            return self::pickRemainingBlock($bl, $duration, $prevFileId, $nextFileId, true);
         }
 
         return $bl->getListOfFilesUnderLimit(max(0.0, (float) $budgetSecs));

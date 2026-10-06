@@ -9,7 +9,7 @@ Date: 2026-10-03
 >   `time_filled` = show start to the end of the last row; the show
 >   builder picks a "time remaining" smart block against the laid-out
 >   budget between its neighbours (picker shared with the autoloading
->   build).
+>   build); "duration in time" blocks fill their duration on air.
 > - **0.66 (2026-10-06)** — **Login brute-force brake** (§23.53): fixed
 >   windows per address and per user name in the legacy login (429 +
 >   Retry-After), reject throttle per address in the DJ harbor auth.
@@ -6358,3 +6358,17 @@ sum / 3573 s laid out / "full"; after, a 12-minute playlist and a bare
 "time remaining" block end 0.02 s before the show's end with
 `time_filled` 1799.98 s; the autoloading fill is unchanged (3.0 s free on
 a 10-minute slot).
+
+**Addendum (2026-10-06, evening).**  *"Duration in time" is on-air
+time.*  With the end of the show exact, the operator's station IDs still
+drifted 9/18/27 s early in the hour because a 12-minute block counted the
+sum of its tracks (three 3-s overlaps lost).  Operator decision: "12
+minutes" means 12 minutes on air.  `pickDynamicBlock()` now hands a
+"minutes"/"hours" block to `pickRemainingBlock()` with its own duration as
+the budget (`$asDuration`), and `Block::getListOfFilesUnderLimit($show,
+$timeOverride)` / `getListofFilesMeetCriteria(…, $timeOverride)` let the
+raised budget replace the stored duration limit; "number of tracks" blocks
+are untouched.  Rehearsal of the standard hour: station IDs at 12:00.0,
+24:06.9 and 36:18.8 (each block 720.0 s laid out), 0.02 s free at the
+end.  A block's length shown in a playlist (`getDynamicBlockLength`,
+the limit itself) now equals what it airs.

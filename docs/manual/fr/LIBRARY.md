@@ -75,10 +75,12 @@ pistes pop. Effacez toute puce avec son **×**.
 > temps, entre ses vrais voisins, de sorte que la dernière ligne se
 > termine à une seconde près de la fin de l'émission (le solveur du bloc
 > est aléatoire ; le pool décide de ce qui est possible). Un bloc limité
-> par *Durée en temps* compte toujours la somme de ses pistes : 12 minutes
-> de quatre pistes musicales durent environ 9 s de moins à l'antenne. Un
-> jingle placé entre deux pistes musicales coûte sa propre durée plus
-> les 3 s de chevauchement qu'il interrompt.
+> par *Durée en temps* est choisi de la même façon (décision opérateur
+> 2026-10-06) : 12 minutes sont 12 minutes **à l'antenne**, pas la somme
+> des pistes, si bien qu'un jingle de station après trois blocs de ce
+> type tombe à 12:00, 24:xx et 36:xx de l'heure. Un jingle placé entre
+> deux pistes musicales coûte sa propre durée plus les 3 s de
+> chevauchement qu'il interrompt.
 
 ### Recherche en texte libre
 

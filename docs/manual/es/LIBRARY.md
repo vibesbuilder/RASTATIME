@@ -111,9 +111,11 @@ escaneadas recursivamente. Vea
 > reales, de modo que la última fila termina a un segundo o así del
 > final del programa (el solucionador del bloque es aleatorio; el pool
 > decide lo que es posible). Un bloque limitado por *Duración en tiempo*
-> sigue contando la suma de sus pistas: 12 minutos de cuatro pistas
-> musicales suenan unos 9 s menos. Un jingle entre dos pistas musicales
-> cuesta su propia duración más los 3 s de solapamiento que interrumpe.
+> se elige igual (decisión del operador 2026-10-06): 12 minutos son 12
+> minutos **en antena**, no la suma de las pistas, así que una ID de la
+> emisora tras tres bloques así cae en 12:00, 24:xx y 36:xx de la hora.
+> Un jingle entre dos pistas musicales cuesta su propia duración más los
+> 3 s de solapamiento que interrumpe.
 
 #### 2.3 Suscripción podcast (recurrente)
 

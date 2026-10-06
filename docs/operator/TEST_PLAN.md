@@ -44,7 +44,7 @@ only with a fresh backup (03:30 run) and outside show boundaries.
 | A2.8 | Cue points | Library → Cue Points on a jingle; `cue_dryrun.php` | cue-out ≤ length, future rows follow the change |
 | A2.9 | Loudness | a quiet and a loud track back to back | both at −23 LUFS ± 1 on the stream (Stereo Tool meter or ears) |
 | A2.10 | Planned Liquidsoap restart | wait for the window or set `RASTATIME_LIQUIDSOAP_RESTART_EVERY_DAYS`; log | restart "in a quiet moment / at a track boundary", catch-up seek, listeners stay on the standby mounts |
-| A2.11 | Remaining time in the show builder | `remaining_probe.php --live 534 "<local start>" 60 music:12,jingle,music:12,jingle,music:12,jingle,remaining` | "free at the end" within ~1 s, `time_filled` = the laid-out length, `getSecondsRemaining()` = the footer's free time, never overbooked |
+| A2.11 | Remaining time in the show builder | `remaining_probe.php --live 534 "<local start>" 60 music:12,jingle,music:12,jingle,music:12,jingle,remaining` | "free at the end" within ~1 s, each 12-minute block 720 s on air (station IDs at 12:00 / 24:xx / 36:xx), `time_filled` = the laid-out length, `getSecondsRemaining()` = the footer's free time, never overbooked |
 
 ### A3 DJ dial-in (Master / Show source)
 

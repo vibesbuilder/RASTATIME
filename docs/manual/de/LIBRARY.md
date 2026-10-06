@@ -74,10 +74,12 @@ Löschen Sie jeden Chip mit seinem **×**.
 > der Sendung" wird gegen diese Zeit gewählt, zwischen seinen echten
 > Nachbarn, sodass die letzte Zeile bis auf etwa eine Sekunde am
 > Sendungsende endet (der Löser des Blocks ist zufällig; der Pool
-> entscheidet, was möglich ist). Ein Block mit *Dauer in Zeit* zählt
-> weiterhin die Summe seiner Titel: 12 Minuten aus vier Musiktiteln
-> laufen etwa 9 s kürzer. Ein Jingle zwischen zwei Musiktiteln kostet
-> seine eigene Länge plus die 3 s Überlappung, die er unterbricht.
+> entscheidet, was möglich ist). Ein Block mit *Dauer in Zeit* wird
+> genauso gewählt (Operator-Entscheidung 2026-10-06): 12 Minuten sind 12
+> Minuten **Sendezeit**, nicht Titelsumme – eine StationID nach drei
+> solchen Blöcken sitzt bei 12:00, 24:xx und 36:xx der Stunde. Ein Jingle
+> zwischen zwei Musiktiteln kostet seine eigene Länge plus die 3 s
+> Überlappung, die er unterbricht.
 
 ### Freitext-Suche
 
