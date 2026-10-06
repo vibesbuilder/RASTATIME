@@ -1688,7 +1688,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (Playout), CLI-Probe Liste/Entsperren.  Handbuch USERS_AND_ROLES §8 ×4,
   Architektur §23.53 Addendum.  Wirksam: Legacy sofort; Playout-Endpoints
   und Grund-Auswertung nach PLAYOUT-Neustart; Wächter nach Registrierung
-  der Aufgabe (Operator).
+  der Aufgabe (Operator).  `7bb67a7`.
 - **Brute-Force-Schutz für den öffentlichen Login und die DJ-Einwahl
   (2026-10-06, Operator-Go, Schwellen 10/15/15 · 20/60/5 · 5/10/15)** —
   Befund nach dem Go-Live: Scanner trafen die Seite binnen Stunden, der
