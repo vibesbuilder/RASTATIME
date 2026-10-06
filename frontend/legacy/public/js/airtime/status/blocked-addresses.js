@@ -87,6 +87,16 @@
         if (!$("#blocked-addresses-body").length) {
             return;
         }
+        // the thresholds as a tooltip on the section title (house style:
+        // .help_icon + rtTooltip, like Settings -> Streams)
+        var help = $("#blocked-addresses-help");
+        if (help.length && $.fn.rtTooltip) {
+            help.rtTooltip({
+                content: { text: $("<div/>").text(help.attr("data-tip") || "").html() },
+                placement: "right",
+                interactive: true
+            });
+        }
         $(document).on("click", ".blocked-unblock-btn", function () {
             unblock($(this).attr("data-key"));
         });
