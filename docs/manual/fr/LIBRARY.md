@@ -66,6 +66,20 @@ pistes pop. Effacez toute puce avec son **×**.
 > couleurs : bleu = piste, vert = line-in, jaune = block,
 > orange = stream, violet = playlist.
 
+> **Temps restant et crossfades (depuis le 2026-10-06).** Les lignes
+> musicales se chevauchent de leur crossfade (valeur maison 3 s, ou
+> celle du type de piste ; jingles 0), le temps restant d'une émission
+> est donc le temps *mis en page* : de la fin de la dernière ligne à la
+> fin de l'émission — le chiffre du pied de page du Show Builder. Un
+> smart block « Temps restant dans l'émission » est choisi contre ce
+> temps, entre ses vrais voisins, de sorte que la dernière ligne se
+> termine à une seconde près de la fin de l'émission (le solveur du bloc
+> est aléatoire ; le pool décide de ce qui est possible). Un bloc limité
+> par *Durée en temps* compte toujours la somme de ses pistes : 12 minutes
+> de quatre pistes musicales durent environ 9 s de moins à l'antenne. Un
+> jingle placé entre deux pistes musicales coûte sa propre durée plus
+> les 3 s de chevauchement qu'il interrompt.
+
 ### Recherche en texte libre
 
 La boîte **Recherche** fonctionne sur **titre, créateur,
@@ -265,7 +279,9 @@ vous obtenez 4. Le block ne s'arrête pas en erreur.
 > `SELECT … WHERE … LIMIT …` sur `cc_files`. Les limites
 > de temps restant se convertissent en plafond de durée
 > via la méthode `getSecondsRemaining()` de l'instance
-> d'émission. Voir ARCHITECTURE §23.19 pour
+> d'émission (depuis le 2026-10-06 le temps libre mis en page :
+> `time_filled` = début jusqu'à la fin de la dernière ligne ; le choix
+> revient à `Scheduler::pickRemainingBlock()`). Voir ARCHITECTURE §23.19 pour
 > l'interaction réserve d'outro avec les smart blocks
 > de temps restant.
 

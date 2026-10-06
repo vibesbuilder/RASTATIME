@@ -996,6 +996,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Restzeit im Show Builder: `time_filled` ausgelegt, Smart-Block-Budget
+  überlappungs-bewusst (2026-10-06, Operator-Go)** — Beobachtung des
+  Operators: ein Smart Block „verbleibende Zeit" (3 Musiktitel) ließ −6 s
+  frei, ein 6-s-Jingle in der Mitte machte +3 s, am Ende 0 s.  Die Fußzeile
+  rechnete richtig (Zeilen überlappen um den Crossfade, der Jingle bricht
+  eine 3-s-Überlappung); falsch war die Ausgangslage: `cc_show_instances.
+  time_filled` war `SUM(clip_length)`, damit kannten `getSecondsRemaining()`,
+  Kalender-Füllbalken, „voll"-Status, Auto-DJ-Schwelle und das Budget des
+  Smart Blocks im Show Builder die Überlappungen nicht — die Standardstunde
+  des Operators (3 × 12-min-Block, StationID dazwischen, „verbleibende Zeit"
+  zuletzt) ließ in der Probe 27 s frei bei `time_filled` = 3600 s.  Jetzt:
+  `time_filled` = Sendungsstart bis Ende der letzten Zeile
+  (`CcShowInstances::computeDbTimeFilled`, `ShowShiftService` gleich); der
+  Show Builder wählt „verbleibende Zeit"-Blöcke wie die Autoloading-
+  Befüllung (`Scheduler::pickRemainingBlock()` aus `AutoPlaylistManager`
+  herausgezogen und geteilt; `laidOutLength()` zwischen den echten Nachbarn
+  der Einfügestelle, Zähler über Playlist-Inhalte ausgelegt).  Blöcke mit
+  „Dauer in Zeit" bleiben Summen (💡 BACKLOG).  Probe `remaining_probe.php`
+  (C:\Temp\optd): Playlist 12 min + Block direkt −0,02 s frei; Autoloading
+  unverändert (3,0 s auf 10 min).  Manual LIBRARY/CALENDAR ×4, Architektur
+  §23.54, TEST_PLAN A2.11.
 - **API-CORS-Origin um ein Zeichen zu kurz (2026-10-04, Nebenbefund Stufe 1)** —
   `prod.py` schnitt den Pfad von `public_url` per Slice ab; bei Pfad `/`
   wurde aus `http://192.168.1.164` ein `http://192.168.1.16`, der CORS-Origin

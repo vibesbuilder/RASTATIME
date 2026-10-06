@@ -67,6 +67,10 @@ relleno**.
 > `full-calendar-functions.js`, protegida por
 > `$cal.is(":visible")`.
 
+> Desde 2026-10-06 `time_filled` es la longitud dispuesta (del inicio
+> del programa al final de la última fila, solapamientos de crossfade
+> incluidos): un programa que la barra muestra lleno lo está de verdad.
+
 ---
 
 ## 2. Crear un programa

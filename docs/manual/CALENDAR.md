@@ -94,6 +94,10 @@ duration is actually scheduled.
 > `$cal.is(":visible")` so the AJAX poll pauses when the
 > operator is on a different tab.
 
+> Since 2026-10-06 `time_filled` is the laid-out length (show start to
+> the end of the last row, crossfade overlaps included), so a show the
+> bar calls full really is full.
+
 ---
 
 ## 2. Creating a show

@@ -448,12 +448,15 @@ class Application_Service_ShowShiftService
                 Application_Common_Database::EXECUTE
             );
         }
+        // RASTATIME 2026-10-06 - the laid-out length, as
+        // CcShowInstances::computeDbTimeFilled (rows overlap by their crossfade)
         Application_Common_Database::prepareAndExecute(
-            "UPDATE cc_show_instances
+            "UPDATE cc_show_instances i
                 SET time_filled = COALESCE(
-                    (SELECT SUM(clip_length) FROM cc_schedule WHERE instance_id = :id),
+                    (SELECT GREATEST(EXTRACT(EPOCH FROM (MAX(s.ends) - i.starts)), 0) * INTERVAL '1 second'
+                       FROM cc_schedule s WHERE s.instance_id = i.id),
                     '00:00:00'::interval)
-              WHERE id = :id",
+              WHERE i.id = :id",
             [':id' => $instanceId],
             Application_Common_Database::EXECUTE
         );

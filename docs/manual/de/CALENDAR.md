@@ -104,6 +104,10 @@ viel Prozent der Sendungsdauer tatsächlich eingeplant ist.
 > `$cal.is(":visible")`, sodass die AJAX-Abfrage pausiert,
 > wenn der Operator auf einem anderen Tab ist.
 
+> Seit 2026-10-06 ist `time_filled` die ausgelegte Länge (Sendungsstart
+> bis Ende der letzten Zeile, Crossfade-Überlappungen eingerechnet) –
+> eine Sendung, die der Balken als voll zeigt, ist es auch.
+
 ---
 
 ## 2. Eine Sendung erstellen

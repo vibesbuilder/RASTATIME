@@ -66,6 +66,19 @@ Löschen Sie jeden Chip mit seinem **×**.
 > Track, grün = Line-In, gelb = Block, orange = Stream,
 > lila = Playlist.
 
+> **Restzeit und Crossfades (seit 2026-10-06).** Musik-Zeilen überlappen
+> sich um ihren Crossfade (Hauswert 3 s bzw. der Wert des Track-Typs;
+> Jingles 0), darum ist die Restzeit einer Sendung die *ausgelegte* Zeit:
+> vom Ende der letzten Zeile bis zum Sendungsende – die Zahl in der
+> Fußzeile des Show Builders. Ein Smart Block mit „Verbleibende Zeit in
+> der Sendung" wird gegen diese Zeit gewählt, zwischen seinen echten
+> Nachbarn, sodass die letzte Zeile bis auf etwa eine Sekunde am
+> Sendungsende endet (der Löser des Blocks ist zufällig; der Pool
+> entscheidet, was möglich ist). Ein Block mit *Dauer in Zeit* zählt
+> weiterhin die Summe seiner Titel: 12 Minuten aus vier Musiktiteln
+> laufen etwa 9 s kürzer. Ein Jingle zwischen zwei Musiktiteln kostet
+> seine eigene Länge plus die 3 s Überlappung, die er unterbricht.
+
 ### Freitext-Suche
 
 Die **Suche**-Box läuft über **Titel, Ersteller, Album,
@@ -257,7 +270,9 @@ Der Block scheitert nicht.
 > `BlockExpander.expand()` ein PostgreSQL-`SELECT … WHERE …
 > LIMIT …` über `cc_files` zusammen. Time-remaining-Limits
 > werden über die `getSecondsRemaining()`-Methode der
-> Sendungsinstanz in eine Dauer-Obergrenze umgerechnet.
+> Sendungsinstanz in eine Dauer-Obergrenze umgerechnet (seit
+> 2026-10-06 die ausgelegte freie Zeit: `time_filled` = Start bis Ende
+> der letzten Zeile; die Auswahl trifft `Scheduler::pickRemainingBlock()`).
 > Siehe ARCHITECTURE §23.19 für die Outro-Reserve-Interaktion
 > mit Time-remaining-Smart-Blocks.
 

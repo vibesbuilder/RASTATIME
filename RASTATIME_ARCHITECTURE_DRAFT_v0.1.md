@@ -1,10 +1,15 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.66
+Draft version: 0.67
 Date: 2026-10-03
 
 > **Revision history**
+> - **0.67 (2026-10-06)** — **Remaining time laid out** (§23.54):
+>   `time_filled` = show start to the end of the last row; the show
+>   builder picks a "time remaining" smart block against the laid-out
+>   budget between its neighbours (picker shared with the autoloading
+>   build).
 > - **0.66 (2026-10-06)** — **Login brute-force brake** (§23.53): fixed
 >   windows per address and per user name in the legacy login (429 +
 >   Retry-After), reject throttle per address in the DJ harbor auth.
@@ -6313,3 +6318,43 @@ access logs and the playout log for the last 10 minutes and creates
 `RASTATIME-Block <ip>` rules (24 h, description `until=…; reason=…`),
 expiring them itself; private addresses are never blocked.  Still open:
 2FA / allow-lists for administrator accounts.
+
+### 23.54 Remaining Time: Laid-Out `time_filled` and the Smart-Block Budget in the Show Builder (2026-10-06)
+
+**Context.**  The operator filled a show with a "time remaining" smart
+block (three music tracks) and saw −6 s free; a 6-s jingle in the middle
+made it +3 s over, at the end 0 s.  The footer was right: rows overlap by
+their crossfade (pair rule of 2026-09-29), and the jingle (crossfade 0)
+breaks one 3-s overlap.  Wrong was the starting point:
+`cc_show_instances.time_filled` was `SUM(clip_length)`, so
+`getSecondsRemaining()` - and with it the budget of a "time remaining"
+block in the show builder (`Scheduler::retrieveMediaFiles`), the
+calendar's fill bar, `getIsFull()` and the Auto DJ threshold - ignored
+the overlaps: a sum-exact fill ends (music pairs × 3 s) early.  The
+operator's standard hour (3 × 12-minute block, StationID between, "time
+remaining" last) rehearsed at 27 s free with `time_filled` = 3600 s
+("full").
+
+**Decision.**  (1) `time_filled` is the laid-out length: `MAX(ends) −
+starts` of the instance (`CcShowInstances::computeDbTimeFilled`;
+`ShowShiftService` writes the same expression), computed after
+`calculateCrossfades()` has laid the rows out, so the footer, the fill
+bar, "is full" and `getSecondsRemaining()` agree.  (2) The show builder
+picks a "time remaining" block the way the autoloading build does:
+`Scheduler::pickRemainingBlock()` (moved out of
+`AutoPlaylistManager::expandPlaylist`, now shared) raises the budget by
+the overlap of the previous pick, up to 8 rounds, and keeps the laid-out
+closest fit ≤ budget (the least overbook when nothing fits - the caller
+checks the real end).  `laidOutLength()` lays a candidate list out between
+the real neighbours of the insertion point (`neighboursOfInsertionPoint`,
+the cursor row handed down from `insertAfter`), and the tally over a
+playlist's items uses it instead of the clip sum.  Blocks limited by
+*Duration in time* keep the sum semantics (an operator's "12 minutes" is
+the sum of the tracks); the last block absorbs the difference.
+
+**Rehearsal.**  `remaining_probe.php` (C:\Temp\optd; temporary blocks and
+a temporary playlist on a temporary instance of show 534): before, 3600 s
+sum / 3573 s laid out / "full"; after, a 12-minute playlist and a bare
+"time remaining" block end 0.02 s before the show's end with
+`time_filled` 1799.98 s; the autoloading fill is unchanged (3.0 s free on
+a 10-minute slot).

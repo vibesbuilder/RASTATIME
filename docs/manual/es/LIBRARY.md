@@ -102,6 +102,19 @@ escaneadas recursivamente. Vea
 > local para cualquier lote de más de una docena de
 > archivos.
 
+> **Tiempo restante y crossfades (desde 2026-10-06).** Las filas de
+> música se solapan por su crossfade (valor de la casa 3 s, o el del
+> tipo de pista; jingles 0), así que el tiempo restante de un programa
+> es el tiempo *dispuesto*: del final de la última fila al final del
+> programa — la cifra del pie del Show Builder. Un smart block «Tiempo
+> restante en el programa» se elige contra ese tiempo, entre sus vecinos
+> reales, de modo que la última fila termina a un segundo o así del
+> final del programa (el solucionador del bloque es aleatorio; el pool
+> decide lo que es posible). Un bloque limitado por *Duración en tiempo*
+> sigue contando la suma de sus pistas: 12 minutos de cuatro pistas
+> musicales suenan unos 9 s menos. Un jingle entre dos pistas musicales
+> cuesta su propia duración más los 3 s de solapamiento que interrumpe.
+
 #### 2.3 Suscripción podcast (recurrente)
 
 Configuración → **Podcasts** → **Suscribirse**. Pegue una
@@ -185,7 +198,11 @@ Program Manager ve toda la biblioteca.
 > **Cómo funciona bajo el capó.** Los criterios están
 > almacenados en `cc_blockcriteria`. En momento de build,
 > `BlockExpander.expand()` ensambla un PostgreSQL `SELECT
-> … WHERE … LIMIT …` sobre `cc_files`.
+> … WHERE … LIMIT …` sobre `cc_files`. Los límites de tiempo restante
+> se convierten en un tope de duración vía `getSecondsRemaining()` de la
+> instancia (desde 2026-10-06 el tiempo libre dispuesto: `time_filled` =
+> inicio hasta el final de la última fila; la elección la hace
+> `Scheduler::pickRemainingBlock()`).
 
 ### Toggles de restricción de pool (Opciones avanzadas)
 

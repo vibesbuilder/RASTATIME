@@ -3533,6 +3533,20 @@ Sowohl Menü-Ebene als auch Einzelfeld-Ebene gewünscht.
 
 ## 💡 Future Feature Ideas (nicht evaluiert, nur notiert)
 
+### 💡 Smart Block „Dauer in Zeit" als Sendezeit statt Titelsumme (notiert 2026-10-06)
+
+**Status:** 💡 Idee, nicht evaluiert.  Seit 2026-10-06 (Architektur §23.54)
+ist die Restzeit ausgelegt und „verbleibende Zeit"-Blöcke füllen bis auf
+etwa eine Sekunde.  Ein Block mit *Dauer in Zeit* (z. B. 12 min) zählt
+weiterhin die Summe seiner Titel: vier Musiktitel laufen durch 3 × 3 s
+Überlappung etwa 9 s kürzer; in der Standardstunde (3 × 12 min + StationIDs)
+rutschen die StationIDs damit um 9/18/27 s nach vorn, das Sendungsende
+stimmt trotzdem (der letzte Block fängt es auf).  Falls die StationIDs auf
+die Minute sitzen sollen: Auswahl wie `Scheduler::pickRemainingBlock()`
+gegen die ausgelegte Länge (Budget = Limit), ~20 Zeilen in
+`pickDynamicBlock()`.  Vorbedingung: Operator-Wunsch — ändert das sichtbare
+Verhalten aller Dauer-Blöcke (und ihrer Längenanzeige in Playlists).
+
 ### 💡 Line-In-Eingangsverstärkung live nachregeln (notiert 2026-10-02)
 
 **Status:** 💡 Idee, nicht evaluiert.  Entstanden mit der

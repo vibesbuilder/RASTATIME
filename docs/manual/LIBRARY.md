@@ -62,6 +62,18 @@ only pop tracks. Clear any chip with its **×**.
 > column and just read the colours: blue = track, green = line-in,
 > yellow = block, orange = stream, purple = playlist.
 
+> **Remaining time and crossfades (since 2026-10-06).** Music rows
+> overlap by their crossfade (house value 3 s, or the track type's;
+> jingles 0), so a show's remaining time is the *laid-out* time: from
+> the end of the last row to the show's end — the number the show
+> builder's footer shows. A "time remaining" smart block is picked
+> against that time, between its real neighbours, so the last row ends
+> within a second or so of the show's end (the block's solver is
+> randomised; the pool decides what is possible). A block limited by
+> *Duration in time* still counts the sum of its tracks: 12 minutes of
+> four music tracks air about 9 s shorter. A jingle placed between two
+> music tracks costs its own length plus the 3 s overlap it breaks.
+
 ### Free-text search
 
 The **Search** box runs across **title, creator, album, genre,
@@ -239,7 +251,9 @@ error.
 > `cc_blockcriteria`. At build time, `BlockExpander.expand()`
 > assembles a PostgreSQL `SELECT … WHERE … LIMIT …` over
 > `cc_files`. Time-remaining limits convert to a duration cap
-> via the show instance's `getSecondsRemaining()`. See
+> via the show instance's `getSecondsRemaining()` — since
+> 2026-10-06 the laid-out free time (`time_filled` = start to the end
+> of the last row); the pick is `Scheduler::pickRemainingBlock()`. See
 > ARCHITECTURE §23.19 for the outro-reserve interaction with
 > time-remaining smart blocks.
 

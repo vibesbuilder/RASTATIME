@@ -104,6 +104,11 @@ est réellement planifié.
 > `$cal.is(":visible")` pour que le poll AJAX se mette en
 > pause quand l'opérateur est sur un autre onglet.
 
+> Depuis le 2026-10-06, `time_filled` est la longueur mise en page (du
+> début de l'émission à la fin de la dernière ligne, chevauchements de
+> crossfade compris) : une émission que la barre montre pleine l'est
+> vraiment.
+
 ---
 
 ## 2. Créer une émission

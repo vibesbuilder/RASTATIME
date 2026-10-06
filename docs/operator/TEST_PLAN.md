@@ -44,6 +44,7 @@ only with a fresh backup (03:30 run) and outside show boundaries.
 | A2.8 | Cue points | Library → Cue Points on a jingle; `cue_dryrun.php` | cue-out ≤ length, future rows follow the change |
 | A2.9 | Loudness | a quiet and a loud track back to back | both at −23 LUFS ± 1 on the stream (Stereo Tool meter or ears) |
 | A2.10 | Planned Liquidsoap restart | wait for the window or set `RASTATIME_LIQUIDSOAP_RESTART_EVERY_DAYS`; log | restart "in a quiet moment / at a track boundary", catch-up seek, listeners stay on the standby mounts |
+| A2.11 | Remaining time in the show builder | `remaining_probe.php --live 534 "<local start>" 60 music:12,jingle,music:12,jingle,music:12,jingle,remaining` | "free at the end" within ~1 s, `time_filled` = the laid-out length, `getSecondsRemaining()` = the footer's free time, never overbooked |
 
 ### A3 DJ dial-in (Master / Show source)
 
@@ -123,6 +124,7 @@ all green, see BACKLOG "Live-Readiness".
 | Tool | Call | What it proves |
 |---|---|---|
 | `ap_fill_test.php` | `php ap_fill_test.php --plan <instance> <intro\|0> <outro\|0> <auto\|0>` (read-only) / `--live <show_id> "<local start>" <minutes> [--keep]` | exact autoloading fill, free tail, never overbooked |
+| `remaining_probe.php` | `php remaining_probe.php --live <show_id> "<local start>" <minutes> <blocks> [--bare <block>] [--keep]` (`music:<min>`, `jingle`, `remaining` = temporary blocks, or block ids) | the show builder's remaining time with a playlist of smart blocks: laid-out fill, `time_filled`, a block dragged in after the last row |
 | `move_probe.php` | `php move_probe.php <show_id> "<local start>" <minutes> <secs>` | moving a show keeps microseconds and crossfade layout |
 | `crossfade_rehearsal.py` | `python crossfade_rehearsal.py` (see header for the show ids) | show-boundary crossfade shapes, queue-ahead, hand-over times |
 | `shift_rehearsal.py` | `python shift_rehearsal.py` | show shift + filler on an overbooked show |
