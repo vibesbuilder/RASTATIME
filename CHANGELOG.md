@@ -717,7 +717,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   $show, $timeOverride)`); „Anzahl Titel"-Blöcke unverändert.  Probe der
   Standardstunde: StationIDs bei 12:00,0 / 24:06,9 / 36:18,8 (jeder Block
   720,0 s auf Sendung), Ende −0,02 s.  Manual LIBRARY ×4, Architektur
-  §23.54 Addendum, TEST_PLAN A2.11; BACKLOG-💡 damit erledigt.
+  §23.54 Addendum, TEST_PLAN A2.11; BACKLOG-💡 damit erledigt.  `85d6b61`.
 - **LAN-Adresse der Studio-Maschine 192.168.1.164 → 192.168.1.64 (2026-10-05, Operator:
   DHCP-Bereich des Netzes)** — betrieblich nur `general.public_url` in
   `libretime.conf` und `<hostname>` in `icecast.xml` (kosmetisch); Datenbank,
