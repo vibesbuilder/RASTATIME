@@ -1016,7 +1016,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   „Dauer in Zeit" bleiben Summen (💡 BACKLOG).  Probe `remaining_probe.php`
   (C:\Temp\optd): Playlist 12 min + Block direkt −0,02 s frei; Autoloading
   unverändert (3,0 s auf 10 min).  Manual LIBRARY/CALENDAR ×4, Architektur
-  §23.54, TEST_PLAN A2.11.
+  §23.54, TEST_PLAN A2.11.  `eb1c742`.
 - **API-CORS-Origin um ein Zeichen zu kurz (2026-10-04, Nebenbefund Stufe 1)** —
   `prod.py` schnitt den Pfad von `public_url` per Slice ab; bei Pfad `/`
   wurde aus `http://192.168.1.164` ein `http://192.168.1.16`, der CORS-Origin
