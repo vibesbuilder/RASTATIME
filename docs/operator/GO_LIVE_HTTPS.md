@@ -209,7 +209,7 @@ Operator actions for stage 1: add the two `Include` lines, create
 `RASTATIME-PLAYOUT` and `RASTATIME-ANALYZER` (internal URL), then check
 `http://192.168.1.64/stream/rastatime` plays and the dashboard player works.
 
-## Stage 2 — Infrastructure (operator) — 2.1–2.3 DONE 2026-10-05, 2.4 pending
+## Stage 2 — Infrastructure (operator) — DONE 2026-10-06 (2.4 at 08:30)
 
 Stage 1 is active since 2026-10-05 09:30 (`/stream/` proxy and ACME alias
 included, verified).  Order matters: the certificate needs DNS and port

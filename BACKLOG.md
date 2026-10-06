@@ -2860,8 +2860,15 @@ Zweimal musste die httpd.conf-Bearbeitung wiederholt werden (Notepad++ ohne Admi
 speichert still nicht — immer mit `Select-String` gegenprüfen).  **Offen:** Router-
 DNS-Override `radio.example.org → 192.168.1.64` fürs Haus (Gateway cacht NXDOMAIN),
 dann Punkt 2.4 `public_url = https://radio.example.org` + Neustart API/PLAYOUT/
-ANALYZER (bis dahin antwortet die API über den öffentlichen Namen mit 400 —
-`ALLOWED_HOSTS` folgt `public_url`), danach Stufe 3.
+ANALYZER — **erledigt 2026-10-06 08:30** (Gateway löst den Namen inzwischen auf, Hairpin trägt das
+Haus; Override optional): API über den Namen 200, Settings `ALLOWED_HOSTS`/CSRF/CORS auf
+`radio.example.org`, Playout/Analyzer intern 127.0.0.1, Player/Widgets/Embed auf
+`https://…/stream/<mount>`, Stream + Widgets über 443 200.  Nachbesserung `0b2453e`:
+LAN-Adresse (automatisch ermittelt) und `allowed_cors_origins` bleiben in
+`ALLOWED_HOSTS`/`CSRF_TRUSTED_ORIGINS`, sonst war `http://192.168.1.64` für API-Seiten tot
+(API-Neustart nötig).  Daten-Fix: Station-Podcast-URL `http://localhost/feeds/station-
+rss` (Installationswert, als RSS-Link auf jeder Seite) → `https://radio.example.org/
+feeds/station-rss`.  **Jetzt Stufe 3** (Abnahme von außen).
 **Evaluierung 2026-10-03 (6 Punkte, Live-Readiness Punkt 16):**  **Befund:** alles nur im LAN — Apache
 2.4.68 nur :80 (mod_ssl/http2/remoteip vorhanden, nicht konfiguriert), Icecast
 2.4.4 :8000 (+8080/8443 ohne TLS; libssl-DLLs liegen bei), Harbor :8001 Klartext
