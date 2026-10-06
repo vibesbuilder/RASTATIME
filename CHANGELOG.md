@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Internet-Erreichbarkeit via HTTPS live: `https://radio.example.org`
+  (2026-10-05/06, Operator-Go Weg A)** — Stufe 2: Zielnetz (Profil Privat,
+  NTP), A-Record, Router-Forwards TCP 80/443/8001 → 192.168.1.64 (80/443 weg
+  von der NAS; NAS ohne öffentliche Ports), Apache-Module ssl/socache_shmcb/
+  http2, Let's-Encrypt-Zertifikat per win-acme (gültig bis 2027-01-03,
+  Erneuerung als Aufgabe, Neustart-Skript `infra/scripts/apache-cert-
+  renewed.ps1` nach Fix `ca1b991`), TLS-Host `infra/apache/rastatime-https.
+  conf` (TLS 1.3, HTTP/2, HSTS, Redirect nur für den öffentlichen Namen),
+  `public_url` auf den https-Namen; Nachbesserungen: LAN-Adresse und
+  `allowed_cors_origins` bleiben in `ALLOWED_HOSTS`/CSRF (`0b2453e`),
+  Station-Podcast-Feed-URL in der DB vom Installationswert `localhost`
+  korrigiert.  Stufe 3 von extern abgenommen (UI, drei Streams, Redirect,
+  DJ-Einwahl :8001); sensible Pfade landen im Login-Redirect.  Runbook
+  `docs/operator/GO_LIVE_HTTPS.md` vollständig, BACKLOG Punkt 16 erledigt,
+  Tag `live-2026-10-06`.
 - **Go-Live Stufe 1 (HTTPS, Weg A): interne Adresse, Hörer-Stream über Apache,
   Apache-Konfiguration im Repo (2026-10-04, Operator-Go)** — neuer optionaler
   Schlüssel `general.internal_url` in allen drei Config-Schemata (Shared-
