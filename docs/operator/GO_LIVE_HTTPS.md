@@ -312,7 +312,24 @@ reads the file per request.  From now on the player, the widgets, the
 embed codes and the e-mails carry `https://radio.example.org/…`.
 Rollback = the old value + the same restarts.
 
-## Stage 3 — Acceptance from outside
+## Stage 3 — Acceptance from outside — DONE 2026-10-06
+
+Accepted 2026-10-06 08:40–08:52 by the operator from an external PC
+(mobile network): UI login, calendar and dialogs, the three stream
+mounts, http→https, BUTT dial-in on `radio.example.org:8001` (host
+login accepted, switch, clean disconnect).  Checked from the machine:
+API over the name and the LAN address, sensitive paths redirect to the
+login, TLS 1.3 + HTTP/2, HSTS.  Widgets not tested (none in use yet) -
+when the first widget is embedded, copy the embed code afresh, it carries
+the https address.
+
+**Operating notes since go-live.**  Internet scanners probe the site
+within hours (`/.git/config`, `/.htpasswd`, `/api/.env`): the front
+controller answers with the login redirect, nothing outside
+`frontend/legacy/public` is reachable.  There is no login rate limit yet
+(BACKLOG idea).  Certificate renewal: task "win-acme renew", log
+`logs\cert-renewal.log`; check it after 2026-11-29.
+
 
 From a mobile network: UI login, the three stream mounts, BUTT dial-in on
 `radio.example.org:8001`, widgets on the station website, HTTP→HTTPS

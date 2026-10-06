@@ -35,7 +35,7 @@ festgelegt.  Jeder Punkt bekommt vor Implementierung die
 | 13 | ✅ JavaScript-Stack-Modernisierung | **Kern DONE 2026-09-17** — Stufen 0-2 komplett, Migrate-Netz + FC1.5-Fork entfernt, UI-Politur; offen nur DataTables 2.0 (Entscheidung später, Operator 2026-09-17) + optionale Build-Pipeline — Details im Item |
 | 14 | **Testplan erstellen** | neu 2026-09-02 — siehe unten |
 | 15 | ✅ Legacy-mpv-Code löschen | **DONE 2026-09-10** — Liquidsoap ist die einzige Engine, DJ-Kick per Harbor-Telnet (`2590cf2`) |
-| 16 | Internet-Erreichbarkeit | Ideen |
+| 16 | ✅ Internet-Erreichbarkeit via HTTPS | **LIVE 2026-10-06** — Weg A, `https://radio.example.org` (Let's Encrypt, win-acme), Stream über `/stream/`, DJ-Einwahl :8001; Runbook GO_LIVE_HTTPS |
 | 17 | 🟢 **Live-Readiness** (Operator 2026-10-03) | siehe Item „Live-Readiness" unten — Reihenfolge: 17a Windows-Härtung → 17b Entwicklungsregeln → DJ-Login-Abnahme, Line-In-Feeder-Latenz, Internet-Erreichbarkeit (16), Testplan (14) → 17c Passwörter zuletzt |
 
 ---
@@ -2771,7 +2771,17 @@ mit dezenter CPU).
 Haker-Symptomen. Akzeptabel für die nächsten Tage bis Hardware kommt.
 
 
-### 🟢 Internet-Erreichbarkeit via HTTPS — Weg A (Operator-Entscheidung 2026-10-04)
+### ✅ Internet-Erreichbarkeit via HTTPS — Weg A (Operator-Entscheidung 2026-10-04, LIVE 2026-10-06)
+
+**Stufe 3 bestanden 2026-10-06 08:40–08:52 (Operator von extern, 198.51.100.20):**
+UI-Login, Calendar inkl. Dialoge, Streams aac/ogg/mp3 über `/stream/`, HTTP→HTTPS, DJ-
+Einwahl über `radio.example.org:8001` als Host `djuser` (08:51:00 accepted →
+`scheduled -> show` → Trennen 08:51:22).  Von hier: API über Name und LAN-IP 200,
+sensible Pfade (`/.git/*`, `/.env`, `/config/*`, `/server-status`) → Login-Redirect,
+nichts außerhalb des Docroots erreichbar.  Widgets ungeprüft (noch nicht in Verwendung).
+Befund: Internet-Scanner treffen die Seite bereits (Dutzende IPs in den ersten Stunden,
+`/.git/config`, `/.htpasswd`, `/api/.env`) — alles abgewiesen; Login-Brute-Force-Schutz
+fehlt (💡 unten).  **Punkt 16 erledigt.**
 
 **Entscheidung 2026-10-04:** **Weg A** (Studio-PC direkt, feste öffentliche IP),
 öffentliche URL `https://radio.example.org` für Planer-UI und Hörer-Stream;
@@ -2905,6 +2915,17 @@ Content: HTTPS-Website blockt HTTP-Stream → auch Icecast hinter TLS).
 `cc_pref stream_output_*`), Harbor `changeme`, `internal_listener`-Default;
 PostgreSQL/RabbitMQ niemals forwarden. Bei Interesse formale Evaluierung
 nach Konvention (6 Punkte).
+
+### 💡 Login-Brute-Force-Schutz für die öffentliche UI (notiert 2026-10-06)
+
+**Status:** Idee.  Seit dem Go-Live treffen Scanner die Seite im Stundentakt; die
+Legacy-Login-Seite kennt weder Sperre noch Verzögerung nach Fehlversuchen, und auf
+Windows gibt es kein fail2ban.  Optionen: (a) Zähler in `cc_pref`/Session + wachsende
+Verzögerung je IP/Benutzer im `LoginController` (~60 Zeilen), (b) Apache `mod_security`
+(Windows-Build schwierig) oder `mod_evasive` (nicht verfügbar), (c) Skript, das
+`https-access.log` auswertet und IPs per `New-NetFirewallRule` zeitweise sperrt
+(Aufgabenplaner, 5-min-Takt).  Empfehlung: (a) zuerst, (c) als Ergänzung.  Dazu
+2FA/Allowlist für Admin-Konten erwägen.  Vorbedingung: Operator-Go, Testplan (14).
 
 ### 💡 Icecast 2.4.4 → 2.5.x Upgrade (Future)
 
