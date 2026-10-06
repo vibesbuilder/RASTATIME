@@ -333,6 +333,27 @@ l'émission.
 
 ---
 
+## 8. Protection de la connexion (depuis le 2026-10-06)
+
+La page de connexion freine les échecs répétés – indispensable depuis
+que l'interface web est accessible depuis Internet.
+
+| Portée | Règle | Effet |
+|---|---|---|
+| Par adresse source | 10 connexions échouées en 15 minutes | l'adresse attend 15 minutes ; chaque tentative pendant ce temps reçoit « Trop de tentatives de connexion échouées. Veuillez réessayer dans N minute(s). » (HTTP 429), aucun mot de passe n'est vérifié |
+| Par nom d'utilisateur | 20 connexions échouées en 60 minutes | le nom attend 5 minutes – volontairement court, pour que personne ne puisse bloquer durablement un administrateur en martelant son nom depuis de nombreuses adresses |
+| Connexion DJ (harbor) | 5 connexions refusées d'une adresse en 10 minutes | l'adresse est refusée pendant 15 minutes sans interroger l'application web |
+
+Une connexion réussie remet à zéro les compteurs de son adresse et de son
+nom.  Les seuils sont dans `constants.php` (`RASTATIME_LOGIN_*`) et dans
+le playout (`RejectThrottle`) ; les tentatives refusées sont journalisées
+avec l'adresse (`logs/legacy.log`, `logs/playout-stdout.log`).
+
+> **Si vous êtes vous-même bloqué :** attendez les minutes indiquées ou
+> demandez à un collègue sur une autre adresse.  En cas d'urgence, les
+> compteurs se trouvent dans les tables `cc_login_attempts` (par adresse)
+> et `cc_subjs.login_attempts` (par utilisateur).
+
 ## Où aller ensuite
 
 * [Paramètres](./SETTINGS.md) — tour de chaque

@@ -64,6 +64,19 @@ define('PRIVACY_POLICY_URL', 'https://github.com/libretime/organization/blob/mai
 // the LibreTime docs no longer describe this fork.  Kept as a path so
 // the JS copy (PageLayoutInitPlugin) and the help page keep working.
 define('USER_MANUAL_URL', '/manual');
+// RASTATIME 2026-10-06 - brute-force protection for the public login
+// (Application_Model_LoginAttempts, LoginController).  Per source address:
+// after IP_LIMIT failures inside IP_WINDOW_MIN minutes the address waits
+// IP_BLOCK_MIN minutes (HTTP 429).  Per user name only a soft brake with a
+// higher limit and a short block, so that hammering a name from many
+// addresses cannot lock its owner out for good.  Operator decision
+// 2026-10-06 (10 / 15 / 15 and 20 / 60 / 5).
+define('RASTATIME_LOGIN_IP_LIMIT', 10);
+define('RASTATIME_LOGIN_IP_WINDOW_MIN', 15);
+define('RASTATIME_LOGIN_IP_BLOCK_MIN', 15);
+define('RASTATIME_LOGIN_USER_LIMIT', 20);
+define('RASTATIME_LOGIN_USER_WINDOW_MIN', 60);
+define('RASTATIME_LOGIN_USER_BLOCK_MIN', 5);
 define('RASTATIME_GITHUB_URL', 'https://github.com/RASTATIME/rastatime');
 define('RASTATIME_RELEASES_URL', 'https://github.com/RASTATIME/rastatime/releases');
 define('TROUBLESHOOTING_URL', 'https://libretime.org/docs/admin-manual/troubleshooting/');

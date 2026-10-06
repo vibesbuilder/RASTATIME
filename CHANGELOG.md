@@ -1666,6 +1666,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+- **Brute-Force-Schutz für den öffentlichen Login und die DJ-Einwahl
+  (2026-10-06, Operator-Go, Schwellen 10/15/15 · 20/60/5 · 5/10/15)** —
+  Befund nach dem Go-Live: Scanner trafen die Seite binnen Stunden, der
+  Legacy-Login zählte Fehlversuche je IP (`cc_login_attempts`) und je
+  Benutzer (`cc_subjs.login_attempts`), wertete sie aber nie aus, und das
+  IP-INSERT schrieb den Platzhalter `':ip'` als Text (Tabelle seit Monaten
+  leer).  Neu: Legacy-Migration 0064 (`cc_login_attempts.last_attempt`,
+  `cc_subjs.login_attempt_at`), `Application_Model_LoginAttempts` mit
+  festem Fenster je Adresse (`blockedSecondsForIp/ForUser`, Zähler startet
+  außerhalb des Fensters neu), `Subjects::increaseLoginAttempts` mit
+  Zeitstempel; `LoginController` antwortet gesperrten Adressen/Namen vor
+  jeder Passwortprüfung mit **429 + Retry-After** und Hinweis („Too many
+  failed login attempts …", ×4 Kataloge), loggt mit Adresse.  Je Benutzer
+  nur eine weiche Bremse (20 in 60 min → 5 min), damit Dauerfeuer auf
+  einen Admin-Namen ihn nicht aussperrt.  Playout `dj_auth.RejectThrottle`:
+  5 Ablehnungen je Adresse in 10 min → 15 min Abweisung ohne Rückfrage an
+  die Web-App, Annahme löscht den Zähler (In-Memory).  Schwellen in
+  `constants.php` (`RASTATIME_LOGIN_*`) und `RejectThrottle`.  Live geprobt
+  (127.0.0.1, 12 Fehlversuche: 10 × 200, dann 429/Retry-After 900, Seite
+  rendert, Logzeile), Tests `test_dj_auth_throttle.py` (5) + bestehende
+  dj-auth-Tests (15 passed).  Handbuch USERS_AND_ROLES §8 ×4, Architektur
+  §23.53 (0.66).  Web-Teil sofort aktiv (PHP), Harbor-Teil nach PLAYOUT-
+  Neustart.  Firewall-Wächter (c) folgt als eigenes Paket.
 - **CSRF-Prüfung gehärtet, wirkungslose Token-Rotation entfernt (2026-09-10,
   Arbeitsreihenfolge Punkt 3, Operator-Go „kleine Form", `7f51156`)** — Befund beim
   Lesen: das ACL-Plugin würfelte bei jedem fehlgeschlagenen REST-CSRF-Check

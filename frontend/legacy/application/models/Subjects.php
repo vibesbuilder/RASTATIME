@@ -16,7 +16,13 @@ class Application_Model_Subjects
 
     public static function increaseLoginAttempts($login)
     {
-        $sql = 'UPDATE cc_subjs SET login_attempts = login_attempts+1'
+        // RASTATIME 2026-10-06 - counter restarts when the previous failure
+        // lies outside the user window (brute-force brake, constants.php)
+        $sql = 'UPDATE cc_subjs SET login_attempts = CASE'
+            . ' WHEN login_attempt_at IS NULL OR login_attempt_at < now() - make_interval(mins => '
+            . (int) RASTATIME_LOGIN_USER_WINDOW_MIN . ') THEN 1'
+            . ' ELSE COALESCE(login_attempts, 0) + 1 END,'
+            . ' login_attempt_at = now()'
             . ' WHERE login=:login';
 
         $map = [':login' => $login];
@@ -32,7 +38,7 @@ class Application_Model_Subjects
 
     public static function resetLoginAttempts($login)
     {
-        $sql = "UPDATE cc_subjs SET login_attempts = '0'"
+        $sql = "UPDATE cc_subjs SET login_attempts = '0', login_attempt_at = NULL"
             . ' WHERE login=:login';
         $map = [':login' => $login];
 

@@ -325,6 +325,27 @@ No. Las grabaciones heredan el propietario del programa.
 
 ---
 
+## 8. Protección del inicio de sesión (desde 2026-10-06)
+
+La página de inicio de sesión frena los fallos repetidos, imprescindible
+desde que la interfaz web es accesible desde Internet.
+
+| Ámbito | Regla | Efecto |
+|---|---|---|
+| Por dirección de origen | 10 inicios de sesión fallidos en 15 minutos | la dirección espera 15 minutos; cada intento en ese tiempo recibe «Demasiados intentos de inicio de sesión fallidos. Inténtelo de nuevo en N minuto(s).» (HTTP 429), no se comprueba ninguna contraseña |
+| Por nombre de usuario | 20 inicios de sesión fallidos en 60 minutos | el nombre espera 5 minutos, a propósito poco, para que nadie pueda bloquear de forma permanente a un administrador martilleando su nombre desde muchas direcciones |
+| Conexión de DJ (harbor) | 5 inicios rechazados de una dirección en 10 minutos | la dirección se rechaza durante 15 minutos sin consultar la aplicación web |
+
+Un inicio de sesión correcto pone a cero los contadores de su dirección y
+de su nombre.  Los umbrales están en `constants.php` (`RASTATIME_LOGIN_*`)
+y en el playout (`RejectThrottle`); los intentos rechazados se registran
+con la dirección (`logs/legacy.log`, `logs/playout-stdout.log`).
+
+> **Si usted mismo queda bloqueado:** espere los minutos indicados o pida
+> a un colega en otra dirección.  En caso de emergencia, los contadores
+> están en las tablas `cc_login_attempts` (por dirección) y
+> `cc_subjs.login_attempts` (por usuario).
+
 ## A dónde ir después
 
 * [Configuración](./SETTINGS.md) — recorrido de cada

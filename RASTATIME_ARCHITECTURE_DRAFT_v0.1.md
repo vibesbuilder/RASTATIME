@@ -1,10 +1,13 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.65
+Draft version: 0.66
 Date: 2026-10-03
 
 > **Revision history**
+> - **0.66 (2026-10-06)** — **Login brute-force brake** (§23.53): fixed
+>   windows per address and per user name in the legacy login (429 +
+>   Retry-After), reject throttle per address in the DJ harbor auth.
 > - **0.65 (2026-10-04)** — **Go-live stage 1: internal URL, listener
 >   stream through Apache, TLS host as repo files** (§23.52):
 >   `general.internal_url` splits the inside address from `public_url`,
@@ -6253,3 +6256,46 @@ terminates TLS natively, `$_SERVER['HTTPS']` is set and
 **Next.**  Stage 2 (operator): DNS, router 80/443/8001, win-acme, the
 three includes, `public_url = https://...`, hairpin NAT or split DNS.
 Stage 3: acceptance from outside.
+
+### 23.53 Login Brute-Force Brake (2026-10-06)
+
+**Context.**  With the UI public (go-live 2026-10-06) scanners arrived
+within hours.  LibreTime's login counted failures per address
+(`cc_login_attempts`) and per user (`cc_subjs.login_attempts`) and never
+read either; the per-address INSERT stored the literal `':ip'`.  Windows
+has no fail2ban.
+
+**Design.**  Two independent brakes, both without sleeping in the request
+(a `sleep()` would pin fcgid workers and be a denial-of-service lever):
+
+- *Per address* (hard): `RASTATIME_LOGIN_IP_LIMIT` = 10 failures inside
+  `RASTATIME_LOGIN_IP_WINDOW_MIN` = 15 minutes → `RASTATIME_LOGIN_IP_BLOCK_MIN`
+  = 15 minutes.  Fixed window: the counter restarts when the previous
+  failure lies outside the window; a block lasts from the last failure.
+  `Application_Model_LoginAttempts::blockedSecondsForIp()` and
+  `increaseAttempts()` (raw SQL, timestamps compared in the database
+  clock via `EXTRACT(EPOCH FROM now() - ts)`).
+- *Per user name* (soft): 20 failures inside 60 minutes → 5 minutes
+  (`Subjects::increaseLoginAttempts` keeps the window in
+  `login_attempt_at`).  Deliberately short so that distributed hammering
+  of an administrator's name cannot lock the administrator out.
+- `LoginController::indexAction` checks both before any password work on a
+  POST and answers **429** with `Retry-After` and a translated message;
+  the normal login flow is skipped, the page renders with a fresh CSRF
+  hash.  Success clears both counters.  Blocked attempts are logged with
+  the address for the planned firewall watcher.
+- *DJ harbor*: `dj_auth.RejectThrottle` (limit 5 / window 600 s / block
+  900 s, monotonic clock, in-memory per playout process): a blocked
+  address is refused before the web application is asked; an accepted
+  login clears the address.  A playout restart forgets the state, which a
+  brake can afford.
+
+**Schema.**  Legacy migration 0064: `cc_login_attempts.last_attempt`,
+`cc_subjs.login_attempt_at` (both TIMESTAMP, nullable); Django models
+mirror the columns (`LoginAttempt.last_attempt`, `User.login_attempt_at`),
+the API does not use them.  `REMOTE_ADDR` is the real client address:
+Apache terminates TLS itself, no proxy in front.
+
+**Not done (yet).**  The firewall watcher (BACKLOG) that turns persistent
+scanners into temporary Windows Firewall rules; 2FA / allow-lists for
+administrator accounts.

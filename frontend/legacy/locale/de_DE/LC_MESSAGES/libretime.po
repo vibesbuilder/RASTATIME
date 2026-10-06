@@ -5496,3 +5496,7 @@ msgstr "OK, verstanden!"
 #: RASTATIME 2026-10-03 brand stage A
 msgid "based on LibreTime %s"
 msgstr "basiert auf LibreTime %s"
+
+#: RASTATIME 2026-10-06 login brute-force brake
+msgid "Too many failed login attempts. Please try again in %d minute(s)."
+msgstr "Zu viele fehlgeschlagene Anmeldeversuche. Bitte versuchen Sie es in %d Minute(n) erneut."

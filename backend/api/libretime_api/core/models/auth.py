@@ -21,6 +21,9 @@ class UserToken(models.Model):
 class LoginAttempt(models.Model):
     ip = models.CharField(primary_key=True, max_length=32)
     attempts = models.IntegerField(blank=True, null=True)
+    # RASTATIME 2026-10-06 - window / block of the legacy brute-force brake
+    # (legacy migration 0064); written by the PHP login only
+    last_attempt = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False

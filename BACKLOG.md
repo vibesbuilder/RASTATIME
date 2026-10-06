@@ -2916,9 +2916,15 @@ Content: HTTPS-Website blockt HTTP-Stream → auch Icecast hinter TLS).
 PostgreSQL/RabbitMQ niemals forwarden. Bei Interesse formale Evaluierung
 nach Konvention (6 Punkte).
 
-### 💡 Login-Brute-Force-Schutz für die öffentliche UI (notiert 2026-10-06)
+### 🟢 Login-Brute-Force-Schutz für die öffentliche UI (notiert 2026-10-06, (a)+(b) gebaut 2026-10-06)
 
-**Status:** Idee.  Seit dem Go-Live treffen Scanner die Seite im Stundentakt; die
+**Stand 2026-10-06:** (a) Web-Login je Adresse 10/15/15 hart, je Benutzer 20/60/5 weich
+(429 + Retry-After, Migration 0064) und (b) Harbor-Drossel 5/10/15 im Playout gebaut,
+live geprobt (Web) bzw. getestet (15 Tests); Details CHANGELOG 06.10., Handbuch
+USERS_AND_ROLES §8, Architektur §23.53.  **Offen:** PLAYOUT-Neustart (b), dann (c)
+Firewall-Wächter (PowerShell, Aufgabenplaner 5 min: 50 × 4xx in 10 min oder 3 Scanner-
+Pfade → 24 h `New-NetFirewallRule`, LAN nie) als eigenes Paket, später 2FA/Allowlist.
+**Ursprüngliche Idee:**  Seit dem Go-Live treffen Scanner die Seite im Stundentakt; die
 Legacy-Login-Seite kennt weder Sperre noch Verzögerung nach Fehlversuchen, und auf
 Windows gibt es kein fail2ban.  Optionen: (a) Zähler in `cc_pref`/Session + wachsende
 Verzögerung je IP/Benutzer im `LoginController` (~60 Zeilen), (b) Apache `mod_security`

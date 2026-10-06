@@ -51,7 +51,35 @@ class LoginController extends Zend_Controller_Action
 
         $authAdapter = Application_Model_Auth::getAuthAdapter();
 
-        if ($authAdapter instanceof LibreTime_Auth_Adaptor_Header || ($request->isPost() && $form->isValid($request->getPost()))) {
+        // RASTATIME 2026-10-06 - brute-force brake: a blocked address or a
+        // braked user name gets 429 before any password is checked
+        // (Application_Model_LoginAttempts, thresholds in constants.php).
+        $remoteIp = isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '';
+        $loginBlocked = false;
+        if ($request->isPost()) {
+            $blocked = Application_Model_LoginAttempts::blockedSecondsForIp($remoteIp);
+            $postedUser = (string) $request->getPost('username', '');
+            if (!$blocked && $postedUser !== '') {
+                $blocked = Application_Model_LoginAttempts::blockedSecondsForUser($postedUser);
+            }
+            if ($blocked > 0) {
+                $loginBlocked = true;
+                $minutes = max(1, (int) ceil($blocked / 60));
+                $response->setHttpResponseCode(429);
+                $response->setHeader('Retry-After', (string) $blocked);
+                $this->view->message = sprintf(
+                    _('Too many failed login attempts. Please try again in %d minute(s).'),
+                    $minutes
+                );
+                $this->view->error = true;
+                Logging::warn("login: blocked attempt for user '{$postedUser}' from {$remoteIp} ({$blocked} s left)");
+            }
+        }
+
+        if ($loginBlocked) {
+            // fresh form (new CSRF hash), no password check - fall through to
+            // the common view setup below
+        } elseif ($authAdapter instanceof LibreTime_Auth_Adaptor_Header || ($request->isPost() && $form->isValid($request->getPost()))) {
             // get the username and password from the form
             $username = $form->getValue('username');
             $password = $form->getValue('password');

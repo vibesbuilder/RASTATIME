@@ -463,6 +463,27 @@ download them.
 
 ---
 
+## 8. Login protection (since 2026-10-06)
+
+The login page brakes repeated failures - a necessity since the web
+interface is reachable from the internet.
+
+| Scope | Rule | Effect |
+|---|---|---|
+| Per source address | 10 failed logins within 15 minutes | the address waits 15 minutes; every attempt in that time is answered with "Too many failed login attempts. Please try again in N minute(s)." (HTTP 429), no password is checked |
+| Per user name | 20 failed logins within 60 minutes | the name waits 5 minutes - deliberately short, so that somebody hammering an administrator's name from many addresses cannot lock the administrator out for good |
+| DJ dial-in (harbor) | 5 rejected logins from one address within 10 minutes | the address is refused for 15 minutes without asking the web application |
+
+A successful login clears the counters of its address and its name.  The
+thresholds live in `constants.php` (`RASTATIME_LOGIN_*`) and in the
+playout (`RejectThrottle`); blocked attempts are logged with the address
+(`logs/legacy.log`, `logs/playout-stdout.log`).
+
+> **If you are locked out yourself:** wait the minutes shown, or ask a
+> colleague on another address.  In an emergency the counters sit in the
+> tables `cc_login_attempts` (per address) and `cc_subjs.login_attempts`
+> (per user).
+
 ## Where to go next
 
 * [Settings](./SETTINGS.md) — tour of every Settings sub-

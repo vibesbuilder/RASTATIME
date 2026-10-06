@@ -54,6 +54,13 @@ class User(AbstractBaseUser):
         null=True,
         db_column="login_attempts",
     )
+    # RASTATIME 2026-10-06 - time of the last failed login (legacy
+    # migration 0064, brute-force brake in the PHP LoginController)
+    login_attempt_at = models.DateTimeField(
+        blank=True,
+        null=True,
+        db_column="login_attempt_at",
+    )
     last_login = models.DateTimeField(
         blank=True,
         null=True,

@@ -27,7 +27,8 @@ is down.
 from __future__ import annotations
 
 import logging
-from typing import Optional
+import time
+from typing import Dict, List, Optional
 
 import requests
 
@@ -37,6 +38,51 @@ CHECK_PATH = "/api/check-live-stream-auth/format/json"
 DJTYPE_BY_SOURCE = {"master": "master", "show": "dj"}
 
 
+class RejectThrottle:
+    """Per-address brake for the DJ harbor (RASTATIME 2026-10-06, brute-force
+    protection): after ``limit`` rejections inside ``window`` seconds the
+    address is refused for ``block`` seconds without asking the web
+    application.  In-memory, per playout process; a restart forgets it,
+    which is fine for a brake.  Operator thresholds: 5 / 10 min / 15 min."""
+
+    def __init__(self, limit: int = 5, window: float = 600.0, block: float = 900.0,
+                 clock=None) -> None:
+        self.limit = limit
+        self.window = window
+        self.block = block
+        self._clock = clock or time.monotonic
+        self._rejections: Dict[str, List[float]] = {}
+        self._blocked_until: Dict[str, float] = {}
+
+    def blocked_for(self, address: str) -> float:
+        """Seconds the address still has to wait, 0 when it may try."""
+        until = self._blocked_until.get(address or "")
+        if until is None:
+            return 0.0
+        left = until - self._clock()
+        if left <= 0:
+            self._blocked_until.pop(address or "", None)
+            return 0.0
+        return left
+
+    def rejected(self, address: str) -> bool:
+        """Records a rejection; True when this one triggered a block."""
+        key = address or ""
+        now = self._clock()
+        stamps = [t for t in self._rejections.get(key, []) if now - t <= self.window]
+        stamps.append(now)
+        self._rejections[key] = stamps
+        if len(stamps) >= self.limit:
+            self._blocked_until[key] = now + self.block
+            self._rejections[key] = []
+            return True
+        return False
+
+    def accepted(self, address: str) -> None:
+        self._rejections.pop(address or "", None)
+        self._blocked_until.pop(address or "", None)
+
+
 class DjAuthenticator:
     def __init__(
         self,
@@ -44,10 +90,12 @@ class DjAuthenticator:
         *,
         timeout: float = 2.5,
         session: Optional[requests.Session] = None,
+        throttle: Optional[RejectThrottle] = None,
     ) -> None:
         self._base = (base_url or "").rstrip("/")
         self._timeout = timeout
         self._session = session or requests.Session()
+        self._throttle = throttle or RejectThrottle()
 
     @property
     def check_url(self) -> str:
@@ -65,6 +113,11 @@ class DjAuthenticator:
         if not user or not password:
             logger.info("dj-auth: %s rejected (empty user or password)", who)
             return "denied"
+        left = self._throttle.blocked_for(address)
+        if left > 0:
+            logger.warning("dj-auth: %s refused - address blocked for another %.0f s "
+                           "(brute-force brake)", who, left)
+            return "denied"
         try:
             resp = self._session.post(
                 self.check_url,
@@ -80,6 +133,7 @@ class DjAuthenticator:
         accepted = resp.status_code == 200 and resp.headers.get("icecast-auth-user") == "1"
         if accepted:
             logger.info("dj-auth: %s accepted", who)
+            self._throttle.accepted(address)
             return "ok"
         if resp.status_code not in (200, 401):
             logger.warning(
@@ -87,5 +141,10 @@ class DjAuthenticator:
                 "harbor password", resp.status_code, self.check_url, who,
             )
             return "error"
-        logger.info("dj-auth: %s rejected", who)
+        if self._throttle.rejected(address):
+            logger.warning("dj-auth: %s rejected - address blocked for %.0f min after "
+                           "%d rejections (brute-force brake)", who,
+                           self._throttle.block / 60, self._throttle.limit)
+        else:
+            logger.info("dj-auth: %s rejected", who)
         return "denied"

@@ -498,6 +498,28 @@ Admins) können sie herunterladen.
 
 ---
 
+## 8. Anmeldeschutz (seit 2026-10-06)
+
+Die Anmeldeseite bremst wiederholte Fehlversuche – notwendig, seit die
+Weboberfläche aus dem Internet erreichbar ist.
+
+| Bereich | Regel | Wirkung |
+|---|---|---|
+| Je Absenderadresse | 10 fehlgeschlagene Anmeldungen in 15 Minuten | die Adresse wartet 15 Minuten; jeder Versuch in dieser Zeit erhält „Zu viele fehlgeschlagene Anmeldeversuche. Bitte versuchen Sie es in N Minute(n) erneut." (HTTP 429), kein Passwort wird geprüft |
+| Je Benutzername | 20 fehlgeschlagene Anmeldungen in 60 Minuten | der Name wartet 5 Minuten – bewusst kurz, damit niemand durch Dauerfeuer auf den Namen eines Administrators von vielen Adressen aus diesen dauerhaft aussperren kann |
+| DJ-Einwahl (Harbor) | 5 abgelehnte Anmeldungen einer Adresse in 10 Minuten | die Adresse wird 15 Minuten lang abgewiesen, ohne die Weboberfläche zu fragen |
+
+Eine erfolgreiche Anmeldung setzt die Zähler ihrer Adresse und ihres
+Namens zurück.  Die Schwellen stehen in `constants.php`
+(`RASTATIME_LOGIN_*`) und im Playout (`RejectThrottle`); abgewiesene
+Versuche werden mit Adresse protokolliert (`logs/legacy.log`,
+`logs/playout-stdout.log`).
+
+> **Wenn Sie sich selbst ausgesperrt haben:** die angezeigten Minuten
+> abwarten oder eine Kollegin an einer anderen Adresse bitten.  Im Notfall
+> liegen die Zähler in den Tabellen `cc_login_attempts` (je Adresse) und
+> `cc_subjs.login_attempts` (je Benutzer).
+
 ## Wohin als Nächstes
 
 * [Einstellungen](./SETTINGS.md) — Tour durch jede
