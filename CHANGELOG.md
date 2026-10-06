@@ -1688,7 +1688,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   rendert, Logzeile), Tests `test_dj_auth_throttle.py` (5) + bestehende
   dj-auth-Tests (15 passed).  Handbuch USERS_AND_ROLES §8 ×4, Architektur
   §23.53 (0.66).  Web-Teil sofort aktiv (PHP), Harbor-Teil nach PLAYOUT-
-  Neustart.  Firewall-Wächter (c) folgt als eigenes Paket.
+  Neustart.  Firewall-Wächter (c) folgt als eigenes Paket.  `01cf8a5`.
 - **CSRF-Prüfung gehärtet, wirkungslose Token-Rotation entfernt (2026-09-10,
   Arbeitsreihenfolge Punkt 3, Operator-Go „kleine Form", `7f51156`)** — Befund beim
   Lesen: das ACL-Plugin würfelte bei jedem fehlgeschlagenen REST-CSRF-Check
