@@ -562,9 +562,15 @@ SQL;
 
     public function getTimeScheduledSecs()
     {
-        $time_filled = $this->getTimeScheduled();
+        // RASTATIME 2026-10-06 - from the raw column, not the display value:
+        // getTimeScheduled() rounds the fraction to 2 digits and a .997
+        // became "1.00" with the second dropped (59.997 s read as 59.00 s).
+        $time_filled = $this->_showInstance->getDbTimeFilled();
+        if (empty($time_filled)) {
+            return 0.0;
+        }
 
-        return Application_Common_DateHelper::playlistTimeToSeconds($time_filled);
+        return (float) Application_Common_DateHelper::playlistTimeToSeconds($time_filled);
     }
 
     public function getDurationSecs()
