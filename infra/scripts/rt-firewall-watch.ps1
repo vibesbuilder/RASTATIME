@@ -5,7 +5,7 @@
 
 .DESCRIPTION
     RASTATIME 2026-10-06 (go-live follow-up (c)).  Runs every 5 minutes
-    from the Task Scheduler as SYSTEM.  Looks at the last 10 minutes of
+    from the Task Scheduler as SYSTEM.  Looks at the last 60 minutes (default) of
       * the HTTP logs  C:\Tools\Apache24\logs\access_log (port 80) and
                        C:\RASTATIME\logs\https-access.log (port 443),
       * the playout log C:\RASTATIME\logs\playout-stdout.log (DJ harbor),
@@ -26,7 +26,7 @@
 #>
 [CmdletBinding()]
 param(
-    [int] $WindowMinutes = 10,
+    [int] $WindowMinutes = 60,   # 2026-10-06: 10 caught nothing, scanners knock spread out
     [int] $BlockHours = 24,
     [int] $ErrorLimit = 50,
     [int] $ScannerLimit = 3,
