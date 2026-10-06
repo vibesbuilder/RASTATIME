@@ -129,6 +129,14 @@ DJ-Rückfallpasswort (Settings → Streams), RabbitMQ-Benutzer.  Operator setzt 
 Werte, ich liefere die Stellen-Liste und prüfe anschließend Stream, DJ-Login und
 Backup-Lauf.
 
+**Erster Durchlauf des assistant-Teils von TEST_PLAN A (2026-10-06 13:00–13:15): alles
+grün** — A1.1/1.3/1.4/1.5, A2.1 (Sendungsstarts +58…+169 ms), A2.3, A2.4 (0,05 s frei),
+A2.5 (0 Abweichungen), A2.6, A2.8 (ALL OK), A3.2 (no-show nicht gezählt), A3.3 (5 ×
+falsch → 15 min, Entsperren per rt-blocks.ps1), A4.1–A4.7, A5.1 (11. Versuch 429),
+A5.2, A5.3 (Trockenlauf 24 h: 10 Scanner; 10-min-Fenster im Echtlauf bisher 0 →
+Fenster evtl. auf 60 min), A5.4 (Secrets custom; Passwörter in libretime.conf nur
+teilweise in Anführungszeichen), A6.1/6.3/6.4.  Offen für den Operator: A1.2, A2.2,
+A2.7, A2.9, A3.1/3.4/3.5/3.6, A4.1 vom Mobilfunk, A6.2.
 **Live-Readiness abgeschlossen 2026-10-06:** 17a ✅, 17b ✅, DJ-Login ✅, Line-In ✅ (war
 erledigt), Internet via HTTPS ✅ (Punkt 16), Brute-Force-Schutz (a)(b)(c) ✅, Testplan ✅
 (Punkt 14), 17c Passwörter ✅ (vorgezogen in Stufe 0).  Offen nur noch das Löschen der

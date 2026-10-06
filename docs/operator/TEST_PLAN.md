@@ -114,6 +114,12 @@ All under `C:\Temp\optd\` unless noted; run from `C:\RASTATIME` with the
 project interpreter (`.venv\Scripts\python.exe`) or `C:\Tools\PHP\php.exe`.
 They never touch real shows - temporary instances are deleted again.
 
+PowerShell scripts from a plain shell need
+`powershell -NoProfile -ExecutionPolicy Bypass -File <script>` (the
+machine's execution policy is Restricted; the scheduled tasks already pass
+the flag).  First full run of the assistant part of A: 2026-10-06 13:00–13:15,
+all green, see BACKLOG "Live-Readiness".
+
 | Tool | Call | What it proves |
 |---|---|---|
 | `ap_fill_test.php` | `php ap_fill_test.php --plan <instance> <intro\|0> <outro\|0> <auto\|0>` (read-only) / `--live <show_id> "<local start>" <minutes> [--keep]` | exact autoloading fill, free tail, never overbooked |
