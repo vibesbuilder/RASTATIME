@@ -23,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   korrigiert.  Stufe 3 von extern abgenommen (UI, drei Streams, Redirect,
   DJ-Einwahl :8001); sensible Pfade landen im Login-Redirect.  Runbook
   `docs/operator/GO_LIVE_HTTPS.md` vollständig, BACKLOG Punkt 16 erledigt,
-  Tag `live-2026-10-06`.
+  Tag `live-2026-10-06` — `28a1cb7`.
 - **Go-Live Stufe 1 (HTTPS, Weg A): interne Adresse, Hörer-Stream über Apache,
   Apache-Konfiguration im Repo (2026-10-04, Operator-Go)** — neuer optionaler
   Schlüssel `general.internal_url` in allen drei Config-Schemata (Shared-
