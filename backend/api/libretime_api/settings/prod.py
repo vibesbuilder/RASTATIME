@@ -1,3 +1,4 @@
+import socket
 from os import getenv
 from urllib.parse import urlparse
 
@@ -48,20 +49,41 @@ public_url_origin = f"{_public_parts.scheme}://{_public_parts.netloc}"
 # adds more, e.g. a second LAN name.
 _public_host = urlparse(str(public_url_origin)).hostname or ""
 _internal_host = urlparse(CONFIG.general.internal_base_url()).hostname or ""
+
+
+def _local_ipv4_addresses() -> list:
+    """The machine's own IPv4 addresses: the UI keeps working over the LAN
+    address (http://192.168.1.64) after public_url moved to the https name
+    (RASTATIME 2026-10-06, go-live stage 2.4)."""
+    try:
+        return sorted({a[4][0] for a in socket.getaddrinfo(socket.gethostname(), None, socket.AF_INET)})
+    except OSError:
+        return []
+
+
+_lan_addresses = _local_ipv4_addresses()
+_cors_hosts = [urlparse(str(o)).hostname or "" for o in CONFIG.general.allowed_cors_origins]
 ALLOWED_HOSTS = sorted(
     {
         host
         for host in [_public_host, _internal_host, "localhost", "127.0.0.1", "[::1]"]
+        + _lan_addresses
+        + _cors_hosts
         + [h.strip() for h in getenv("RASTATIME_API_EXTRA_HOSTS", "").split(",")]
         if host
     }
 )
 
 # Django's CSRF check compares the Origin header against these; the API
-# answers to the public https origin through the proxy.  Apache sets
-# X-Forwarded-Proto on the TLS virtual host, so request.is_secure() and
-# the secure cookie flags follow the real scheme.
-CSRF_TRUSTED_ORIGINS = sorted({str(public_url_origin)} | set(CONFIG.general.allowed_cors_origins))
+# answers to the public https origin through the proxy and to the plain
+# LAN origins in the house.  Apache sets X-Forwarded-Proto on the TLS
+# virtual host, so request.is_secure() and the secure cookie flags follow
+# the real scheme.
+CSRF_TRUSTED_ORIGINS = sorted(
+    {str(public_url_origin)}
+    | {str(o) for o in CONFIG.general.allowed_cors_origins}
+    | {f"http://{ip}" for ip in _lan_addresses}
+)
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 USE_X_FORWARDED_HOST = True
 
