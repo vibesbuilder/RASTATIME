@@ -3533,9 +3533,9 @@ Sowohl Menü-Ebene als auch Einzelfeld-Ebene gewünscht.
 
 ## 💡 Future Feature Ideas (nicht evaluiert, nur notiert)
 
-### 💡 „Play Count" auch für Webstreams und Line-Ins (notiert 2026-10-07)
+### ❌ „Play Count" auch für Webstreams und Line-Ins (notiert 2026-10-07, verworfen)
 
-**Status:** 💡 Idee, Operator-Frage vom 2026-10-07.  Die Bibliotheksspalte
+**Status:** ❌ **Verworfen durch den Operator 2026-10-07** (Nutzen zu gering für eine Migration).  Ursprüngliche Notiz: Operator-Frage vom 2026-10-07.  Die Bibliotheksspalte
 „Play Count" zählt Dateien über `cc_playout_history.file_id`.  Webstream-
 und Line-In-Einsätze stehen ebenfalls im Protokoll (`file_id` NULL, erkennbar
 nur an `artist_name`/`track_title` in den Metadaten: Webstream-Name bzw.
