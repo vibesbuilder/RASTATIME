@@ -525,9 +525,12 @@ gespeichert war.  Dieselbe Liste gibt es in der PowerShell:
 `-Unblock user:<Login>`).  Ein DJ, der sich **vor** Sendungsbeginn
 einwählt, wird abgewiesen, aber nie gezählt: nur ein falsches Passwort
 zählt.  Hartnäckige Internet-Scanner sperrt ein Wächter alle 5 Minuten
-für 24 Stunden in der Windows-Firewall (50 abgewiesene Anfragen in 10
+für 24 Stunden in der Windows-Firewall (50 abgewiesene Anfragen in 60
 Minuten, 3 typische Scanner-Pfade oder 5 falsche DJ-Passwörter); sie
-erscheinen in derselben Liste.
+erscheinen in derselben Liste.  Eine „nicht angemeldet"-Antwort (401)
+zählt nie: Sie ist das, was ein Browser-Tab mit abgelaufener Sitzung für
+seine Hintergrund-Abfragen bekommt, und seit 2026-10-07 stellt ein
+solcher Tab die Abfragen bei der ersten ein.
 
 > **Wenn Sie sich selbst ausgesperrt haben:** die angezeigten Minuten
 > abwarten oder eine Kollegin an einer anderen Adresse bitten.  Im Notfall

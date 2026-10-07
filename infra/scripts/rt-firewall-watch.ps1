@@ -10,7 +10,10 @@
                        C:\RASTATIME\logs\https-access.log (port 443),
       * the playout log C:\RASTATIME\logs\playout-stdout.log (DJ harbor),
     and blocks a remote address for 24 hours when it
-      * answered 4xx 50 times or more, or
+      * answered 4xx 50 times or more (401 "not signed in" does not count:
+        a browser tab whose session expired polls the dashboard every
+        minute and collected 60 x 401 in an hour - operator locked out
+        2026-10-07), or
       * asked for 3 or more typical scanner paths (/.git, /.env, /wp-, ...), or
       * had 5 or more DJ logins rejected for a WRONG PASSWORD
         (too-early logins - "no-show" / "not-host" - never count).
@@ -83,7 +86,8 @@ foreach ($file in @('C:\Tools\Apache24\logs\access_log', 'C:\RASTATIME\logs\http
         if (Test-PrivateAddress $ip) { continue }
         $path = $Matches[8]
         $status = [int]$Matches[9]
-        if ($status -ge 400 -and $status -lt 500) { $errors[$ip] = 1 + [int]$errors[$ip] }
+        # 401 = the app's own "not signed in" answer to a stale tab's polls, never a scanner (2026-10-07)
+        if ($status -ge 400 -and $status -lt 500 -and $status -ne 401) { $errors[$ip] = 1 + [int]$errors[$ip] }
         if ($path -match $scannerPattern) { $scanner[$ip] = 1 + [int]$scanner[$ip] }
     }
 }

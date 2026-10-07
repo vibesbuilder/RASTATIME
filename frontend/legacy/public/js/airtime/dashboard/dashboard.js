@@ -587,7 +587,8 @@ var stream_window = null;
 
 function init() {
   //begin producer "thread"
-  setInterval(getScheduleFromServer, serverUpdateInterval);
+  // RASTATIME 2026-10-07 - stopped on the first 401 (common.js)
+  (window.rtPollTimers = window.rtPollTimers || []).push(setInterval(getScheduleFromServer, serverUpdateInterval));
 
   //begin consumer "thread"
   secondsTimer();

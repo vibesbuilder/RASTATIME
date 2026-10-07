@@ -489,8 +489,11 @@ The same list is available in PowerShell: `infra\scripts\rt-blocks.ps1`
 **before** the show starts is refused but never counted: only a wrong
 password counts.  Persistent internet scanners are blocked for 24 hours
 in the Windows Firewall by a watcher task (every 5 minutes; 50 refused
-requests in 10 minutes, 3 typical scanner paths, or 5 wrong DJ passwords)
-and appear in the same list.
+requests in 60 minutes, 3 typical scanner paths, or 5 wrong DJ passwords)
+and appear in the same list.  A "not signed in" answer (401) never
+counts: it is what a browser tab with an expired session gets for its
+background polls, and since 2026-10-07 such a tab stops polling on the
+first one.
 
 > **If you are locked out yourself:** wait the minutes shown, or ask a
 > colleague on another address.  In an emergency the counters sit in the

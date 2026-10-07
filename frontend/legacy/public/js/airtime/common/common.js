@@ -1,6 +1,24 @@
 var previewWidth = 482,
   previewHeight = 110;
 
+// RASTATIME 2026-10-07 - a tab whose session had expired kept polling the
+// dashboard every minute (now playing, preflight, calendar feed), collected
+// 60 x 401 in an hour and tripped the firewall watcher - the operator was
+// locked out of the studio machine.  Every poll registers its timer here;
+// the first 401 stops them all (the page stays as it is, a click or reload
+// goes to the login).
+window.rtPollTimers = window.rtPollTimers || [];
+window.rtSessionGone = false;
+$(document).ajaxError(function (event, xhr) {
+  if (xhr && xhr.status === 401 && !window.rtSessionGone) {
+    window.rtSessionGone = true;
+    $.each(window.rtPollTimers, function (_, t) {
+      clearInterval(t);
+    });
+    window.rtPollTimers = [];
+  }
+});
+
 $(document).ready(function () {
   /* Removed as this is now (hopefully) unnecessary */
   //$("#Panel").stickyPanel({
@@ -20,7 +38,7 @@ $(document).ready(function () {
   // loadPreflightWarnings() from save-flow hooks elsewhere.
   if (typeof loadPreflightWarnings === "function") {
     loadPreflightWarnings();
-    setInterval(loadPreflightWarnings, 60 * 1000);
+    window.rtPollTimers.push(setInterval(loadPreflightWarnings, 60 * 1000));
   }
 });
 
@@ -446,6 +464,9 @@ function getUsabilityHint() {
  * instead of waiting for the next 60-s tick.
  * -------------------------------------------------------------------- */
 function loadPreflightWarnings() {
+  if (window.rtSessionGone) {
+    return;
+  }
   $.getJSON(
     baseUrl + "api/get-preflight-warnings",
     function (json) {

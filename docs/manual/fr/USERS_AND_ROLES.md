@@ -360,8 +360,12 @@ enregistré dans son client.  La même liste existe en PowerShell :
 l'émission est refusé mais jamais compté : seul un mauvais mot de passe
 compte.  Les scanners Internet persistants sont bloqués 24 heures dans le
 pare-feu Windows par une tâche de veille (toutes les 5 minutes ; 50
-requêtes refusées en 10 minutes, 3 chemins typiques de scanner ou 5
-mauvais mots de passe DJ) et apparaissent dans la même liste.
+requêtes refusées en 60 minutes, 3 chemins typiques de scanner ou 5
+mauvais mots de passe DJ) et apparaissent dans la même liste.  Une
+réponse « non connecté » (401) ne compte jamais : c'est ce qu'un onglet
+de navigateur à la session expirée reçoit pour ses requêtes d'arrière-
+plan, et depuis le 2026-10-07 un tel onglet cesse d'interroger dès la
+première.
 
 > **Si vous êtes vous-même bloqué :** attendez les minutes indiquées ou
 > demandez à un collègue sur une autre adresse.  En cas d'urgence, les

@@ -352,8 +352,12 @@ PowerShell: `infra\scripts\rt-blocks.ps1` (`-Unblock <dirección>` o
 programa es rechazado pero nunca contado: solo cuenta una contraseña
 incorrecta.  Los escáneres de Internet persistentes se bloquean 24 horas
 en el cortafuegos de Windows mediante una tarea vigilante (cada 5
-minutos; 50 peticiones rechazadas en 10 minutos, 3 rutas típicas de
+minutos; 50 peticiones rechazadas en 60 minutos, 3 rutas típicas de
 escáner o 5 contraseñas de DJ incorrectas) y aparecen en la misma lista.
+Una respuesta «no identificado» (401) nunca cuenta: es lo que recibe una
+pestaña del navegador con la sesión caducada por sus consultas en
+segundo plano, y desde 2026-10-07 esa pestaña deja de consultar con la
+primera.
 
 > **Si usted mismo queda bloqueado:** espere los minutos indicados o pida
 > a un colega en otra dirección.  En caso de emergencia, los contadores

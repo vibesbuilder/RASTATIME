@@ -102,5 +102,6 @@
         });
         load();
         timer = window.setInterval(load, REFRESH_MS);
+        (window.rtPollTimers = window.rtPollTimers || []).push(timer); // stopped on the first 401 (common.js)
     });
 })(jQuery);

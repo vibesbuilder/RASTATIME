@@ -1007,6 +1007,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Firewall-Wächter sperrte den Operator aus (2026-10-07)** — ein
+  Browser-Tab mit abgelaufener Sitzung fragte weiter jede Minute „Now
+  Playing", Preflight-Warnungen und den Kalender-Feed ab, bekam 60 × 401 in
+  einer Stunde, und der Wächter zählte jede 4xx-Antwort → 24-h-Regel gegen
+  die Heimadresse (alle Ports, auch VNC).  Zwei Korrekturen: (1)
+  `rt-firewall-watch.ps1` zählt 401 nicht mehr (die „nicht angemeldet"-
+  Antwort der eigenen Endpunkte ist nie ein Scanner); (2) die UI-Abfragen
+  (common.js Preflight, dashboard.js Now Playing, Status-Seite „Blocked
+  addresses") registrieren ihre Timer in `window.rtPollTimers`, und ein
+  globaler `ajaxError`-Hook stoppt sie beim ersten 401.  Manual
+  USERS_AND_ROLES ×4 (Fenster 60 min war dort noch mit 10 min angegeben).
 - **Restzeit im Show Builder: `time_filled` ausgelegt, Smart-Block-Budget
   überlappungs-bewusst (2026-10-06, Operator-Go)** — Beobachtung des
   Operators: ein Smart Block „verbleibende Zeit" (3 Musiktitel) ließ −6 s
