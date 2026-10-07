@@ -119,7 +119,9 @@ PowerShell scripts from a plain shell need
 `powershell -NoProfile -ExecutionPolicy Bypass -File <script>` (the
 machine's execution policy is Restricted; the scheduled tasks already pass
 the flag).  First full run of the assistant part of A: 2026-10-06 13:00–13:15,
-all green, see BACKLOG "Live-Readiness".
+all green, see BACKLOG "Live-Readiness".  First restore drill (A6.2):
+2026-10-07, ZIP of 03:30 into `rastatime_restore` in 1 s, schema 64, all
+counts identical to live, scratch database dropped - passed.
 
 | Tool | Call | What it proves |
 |---|---|---|
