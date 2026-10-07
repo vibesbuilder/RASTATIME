@@ -4785,3 +4785,23 @@ msgstr ""
 #: RASTATIME 2026-10-06 blocked addresses
 msgid "Unblocking failed."
 msgstr ""
+
+#: application/views/scripts/index/index.phtml application/forms/GeneralPreferences.php
+msgid "Landing page background:"
+msgstr "Landing page background:"
+
+#: application/views/scripts/index/index.phtml application/forms/GeneralPreferences.php
+msgid "Recommended: 1920 px wide, 1 MB or less. JPG, PNG or WebP up to 5 MB."
+msgstr "Recommended: 1920 px wide, 1 MB or less. JPG, PNG or WebP up to 5 MB."
+
+#: application/views/scripts/index/index.phtml application/forms/GeneralPreferences.php
+msgid "Stream player"
+msgstr "Stream player"
+
+#: application/views/scripts/index/index.phtml application/forms/GeneralPreferences.php
+msgid "Schedule"
+msgstr "Schedule"
+
+#: application/views/scripts/index/index.phtml application/forms/GeneralPreferences.php
+msgid "Podcast"
+msgstr "Podcast"

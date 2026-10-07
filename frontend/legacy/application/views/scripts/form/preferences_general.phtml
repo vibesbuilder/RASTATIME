@@ -19,6 +19,21 @@
             <img onError="this.onerror = '';this.style.visibility='hidden';$('#logo-remove-btn').hide();$('[id^=stationLogoRemove]').each(function(i,v){v.style.width=v.style.height=v.style.margin=v.style.padding='0px';});" id="logo-img" onload='/*resizeImg(this, 450, 450);*/' src="<?php echo $src ?>" />
         </div>
 
+        <?php /* RASTATIME 2026-10-07 - landing page background upload block. */ ?>
+        <?php echo $this->element->getElement('landingBackground')->render() ?>
+
+        <?php echo $this->element->getElement('landingBackgroundRemove')->render() ?>
+
+        <div id="Landing-background-container">
+            <?php $bgSrc = $this->element->getView()->landingBackgroundUrl; ?>
+            <?php if (!empty($bgSrc)) : ?>
+                <img id="landing-background-img" src="<?php echo htmlspecialchars($bgSrc, ENT_QUOTES) ?>" style="max-width: 450px;" onError="this.style.visibility='hidden';$('#landing-background-remove-btn').hide();" />
+            <?php else: ?>
+                <img id="landing-background-img" src="" style="display: none; max-width: 450px;" />
+                <script>document.addEventListener('DOMContentLoaded',function(){var b=document.getElementById('landing-background-remove-btn');if(b){b.style.display='none';}});</script>
+            <?php endif; ?>
+        </div>
+
         <?php /* RASTATIME 2026-05-15 - Station Favicon upload block. */ ?>
         <?php echo $this->element->getElement('stationFavicon')->render() ?>
 

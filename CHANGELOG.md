@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Startseite: Hintergrundbild per Admin-UI, Fußleiste mit Sendeplan- und
+  Podcast-Knopf (2026-10-07, Operator-Go)** — Settings → General →
+  „Landing page background" (JPG/PNG/WebP bis 5 MB, Vorschau, Entfernen):
+  Datei unter `landing/` im Speicherort (Backup-Spiegel), Name in `cc_pref`,
+  ausgeliefert über `GET /index/background` mit ETag/Cache (eine Woche,
+  Cache-Buster = Dateizeit), die Seite überschreibt nur `background-image`.
+  Fußleiste nach dem Vorbild der alten LibreTime-„Premium"-Leiste
+  (Operator-Referenz examplehost.co): seitenfeste Leiste mit dem Player v2
+  (Bar-Layout) links und Icon-Knöpfen rechts (Sendeplan, Podcast nur bei
+  öffentlichem Stations-Podcast); die Knöpfe schalten die vorhandenen Tabs,
+  ohne in das Player-Iframe zu greifen — der Podcast-Tab war seit dem
+  Player v2 (18.09.) ohne Knopf unerreichbar.  Farben im Hausstil
+  (Leiste #23211f, Primärfarbe für den aktiven Knopf), kein „Über uns"
+  (Operator 2026-05-24).  Fünf UI-Strings in vier Katalogen, Manual
+  SETTINGS ×4.
 - **Bibliotheksspalte „Play Count" (2026-10-07, Operator-Go Variante A)** —
   wie oft ein Titel gesendet wurde: ein Zähler pro Zeile des Sendeprotokolls
   (`cc_playout_history`), dieselbe Zahl wie Sendeprotokoll → File Summary;

@@ -55,6 +55,25 @@ class Application_Form_GeneralPreferences extends Zend_Form_SubForm
         $stationLogoRemove->setAttrib('onclick', 'removeLogo();');
         $this->addElement($stationLogoRemove);
 
+        // RASTATIME 2026-10-07 - background image of the public landing page
+        // (a file in the storage root, see Preference::SetLandingBackground).
+        $landingBackground = new Zend_Form_Element_File('landingBackground');
+        $landingBackground->setLabel(_('Landing page background:'))
+            ->setDescription(_('Recommended: 1920 px wide, 1 MB or less. JPG, PNG or WebP up to 5 MB.'))
+            ->setRequired(false)
+            ->addValidator('Count', false, 1)
+            ->addValidator('Extension', false, 'jpg,jpeg,png,webp')
+            ->setMaxFileSize(5000000);
+        $landingBackground->setAttrib('accept', 'image/jpeg,image/png,image/webp');
+        $this->addElement($landingBackground);
+
+        $landingBackgroundRemove = new Zend_Form_Element_Button('landingBackgroundRemove');
+        $landingBackgroundRemove->setLabel(_('Remove'));
+        $landingBackgroundRemove->setAttrib('class', 'btn');
+        $landingBackgroundRemove->setAttrib('id', 'landing-background-remove-btn');
+        $landingBackgroundRemove->setAttrib('onclick', 'removeLandingBackground();');
+        $this->addElement($landingBackgroundRemove);
+
         // RASTATIME 2026-05-15 - Custom favicon upload.  Stored as base64
         // blob in cc_pref + a separate MIME column; rendered as a data: URI
         // in PageLayoutInitPlugin / LoginController so no file writes to

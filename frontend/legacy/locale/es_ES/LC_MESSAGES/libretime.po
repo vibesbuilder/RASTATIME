@@ -5765,3 +5765,23 @@ msgstr "%s desbloqueado."
 #: RASTATIME 2026-10-06 blocked addresses
 msgid "Unblocking failed."
 msgstr "El desbloqueo ha fallado."
+
+#: application/views/scripts/index/index.phtml application/forms/GeneralPreferences.php
+msgid "Landing page background:"
+msgstr "Imagen de fondo de la página de inicio:"
+
+#: application/views/scripts/index/index.phtml application/forms/GeneralPreferences.php
+msgid "Recommended: 1920 px wide, 1 MB or less. JPG, PNG or WebP up to 5 MB."
+msgstr "Recomendado: 1920 px de ancho, 1 MB o menos. JPG, PNG o WebP hasta 5 MB."
+
+#: application/views/scripts/index/index.phtml application/forms/GeneralPreferences.php
+msgid "Stream player"
+msgstr "Reproductor del stream"
+
+#: application/views/scripts/index/index.phtml application/forms/GeneralPreferences.php
+msgid "Schedule"
+msgstr "Programación"
+
+#: application/views/scripts/index/index.phtml application/forms/GeneralPreferences.php
+msgid "Podcast"
+msgstr "Podcast"

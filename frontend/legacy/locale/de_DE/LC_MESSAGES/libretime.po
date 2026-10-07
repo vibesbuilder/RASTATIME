@@ -5572,3 +5572,23 @@ msgstr "%s entsperrt."
 #: RASTATIME 2026-10-06 blocked addresses
 msgid "Unblocking failed."
 msgstr "Entsperren fehlgeschlagen."
+
+#: application/views/scripts/index/index.phtml application/forms/GeneralPreferences.php
+msgid "Landing page background:"
+msgstr "Hintergrundbild der Startseite:"
+
+#: application/views/scripts/index/index.phtml application/forms/GeneralPreferences.php
+msgid "Recommended: 1920 px wide, 1 MB or less. JPG, PNG or WebP up to 5 MB."
+msgstr "Empfohlen: 1920 px breit, höchstens 1 MB. JPG, PNG oder WebP bis 5 MB."
+
+#: application/views/scripts/index/index.phtml application/forms/GeneralPreferences.php
+msgid "Stream player"
+msgstr "Stream-Player"
+
+#: application/views/scripts/index/index.phtml application/forms/GeneralPreferences.php
+msgid "Schedule"
+msgstr "Sendeplan"
+
+#: application/views/scripts/index/index.phtml application/forms/GeneralPreferences.php
+msgid "Podcast"
+msgstr "Podcast"

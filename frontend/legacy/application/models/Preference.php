@@ -954,6 +954,83 @@ class Application_Model_Preference
     }
 
     /**
+     * RASTATIME 2026-10-07 - background image of the public landing page
+     * (Settings -> General).  Unlike the logo it is a FILE: it lives in the
+     * storage root under landing/ (so the nightly media mirror backs it up),
+     * cc_pref keeps only its name, IndexController::backgroundAction streams
+     * it with cache headers and the page cache-busts with the file's mtime.
+     * '' = the built-in image of radio-page.css.
+     */
+    const LANDING_BACKGROUND_DIR = 'landing';
+
+    public static function landingBackgroundPath($name)
+    {
+        return Application_Common_Storage::root() . self::LANDING_BACKGROUND_DIR . '/' . $name;
+    }
+
+    /** @return string the file name ('background.jpg' / '.png' / '.webp') or '' */
+    public static function GetLandingBackground()
+    {
+        $name = (string) self::getValue('landing_background');
+        if (!preg_match('/^background\.(jpg|png|webp)$/', $name)) {
+            return '';
+        }
+
+        return is_file(self::landingBackgroundPath($name)) ? $name : '';
+    }
+
+    /** @return string the URL the page uses (cache-busted), '' when built-in */
+    public static function GetLandingBackgroundUrl()
+    {
+        $name = self::GetLandingBackground();
+        if ($name === '') {
+            return '';
+        }
+
+        return Config::getBasePath() . 'index/background?v=' . (int) @filemtime(self::landingBackgroundPath($name));
+    }
+
+    /**
+     * @param string $uploadedPath the received upload (moved into landing/)
+     *
+     * @throws Exception when the file is not a JPEG, PNG or WebP image
+     */
+    public static function SetLandingBackground($uploadedPath)
+    {
+        $info = @getimagesize($uploadedPath);
+        $byMime = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
+        if ($info === false || !isset($byMime[$info['mime']])) {
+            @unlink($uploadedPath);
+
+            throw new Exception('The landing page background must be a JPEG, PNG or WebP image.');
+        }
+        self::RemoveLandingBackground();
+        $name = 'background.' . $byMime[$info['mime']];
+        $target = self::landingBackgroundPath($name);
+        $dir = dirname($target);
+        if (!is_dir($dir) && !@mkdir($dir, 0775, true)) {
+            throw new Exception('Cannot create ' . $dir);
+        }
+        if (!@copy($uploadedPath, $target)) {
+            throw new Exception('Cannot write ' . $target);
+        }
+        @unlink($uploadedPath);
+        self::setValue('landing_background', $name);
+        Logging::info('Landing page background set: ' . $target . ' (' . $info[0] . 'x' . $info[1] . ')');
+    }
+
+    public static function RemoveLandingBackground()
+    {
+        foreach (['jpg', 'png', 'webp'] as $ext) {
+            $path = self::landingBackgroundPath('background.' . $ext);
+            if (is_file($path)) {
+                @unlink($path);
+            }
+        }
+        self::setValue('landing_background', '');
+    }
+
+    /**
      * RASTATIME 2026-05-15 - Favicon stored as a base64-encoded blob plus its
      * MIME type, both in cc_pref.  Render path emits a data: URI link.  Empty
      * value falls back to the static public/favicon.ico (legacy behaviour).
