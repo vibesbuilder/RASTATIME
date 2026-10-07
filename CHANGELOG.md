@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Bibliotheksspalte „Play Count" (2026-10-07, Operator-Go Variante A)** —
+  wie oft ein Titel gesendet wurde: ein Zähler pro Zeile des Sendeprotokolls
+  (`cc_playout_history`), dieselbe Zahl wie Sendeprotokoll → File Summary;
+  gruppierter Join in der Bibliotheksabfrage (`StoredFile::searchLibraryFiles`,
+  kein Index, keine Migration), Spalte standardmäßig ausgeblendet, sortierbar,
+  Bereichssuche.  Benennung auf Operator-Wunsch in allen vier Sprachen „Play
+  Count".  Webstreams/Line-Ins stehen zwar im Protokoll, aber ohne Verweis auf
+  ihr Bibliotheks-Objekt (💡 BACKLOG).  Manual LIBRARY ×4.
 - **Testplan (Live-Readiness Punkt 14) — `docs/operator/TEST_PLAN.md`
   (2026-10-06, Operator-Go)** — A: Abnahme-Checkliste A1–A6 mit Prüfweg und
   erwartetem Ergebnis (Dienste/Boot, Sendeplan/Playout inkl. Crossfade,

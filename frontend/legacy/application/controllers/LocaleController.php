@@ -109,6 +109,7 @@ final class LocaleController extends Zend_Controller_Action
             'Mime' => _('Mime'),
             'Mood' => _('Mood'),
             'Owner' => _('Owner'),
+            'Play Count' => _('Play Count'),
             'Replay Gain' => _('Replay Gain'),
             'Sample Rate' => _('Sample Rate'),
             'Track Number' => _('Track Number'),

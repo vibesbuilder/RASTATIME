@@ -857,6 +857,8 @@ SQL;
             'cuein', 'cueout', 'description', 'artwork', 'track_type_id',
             // RASTATIME 2026-05-16 - Track Expiry feature columns.
             'expires_at', 'disabled',
+            // RASTATIME 2026-10-07 - times aired (rows of cc_playout_history)
+            'play_count',
         ];
     }
 
@@ -908,6 +910,16 @@ SQL;
                 $blSelect[] = 'NULL::TIMESTAMP AS ' . $key;
                 $fileSelect[] = $key;
                 $streamSelect[] = $key;
+            } elseif ($key === 'play_count') {
+                // RASTATIME 2026-10-07 - how often the file aired: one row of
+                // cc_playout_history per aired schedule row (the same number
+                // the Playout History "File Summary" shows), joined grouped
+                // in $fileTable below.  Streams and line-ins are logged
+                // there too, but without a reference to their library item.
+                $plSelect[] = 'NULL::int AS ' . $key;
+                $blSelect[] = 'NULL::int AS ' . $key;
+                $fileSelect[] = 'COALESCE(ph.play_count, 0)::int AS ' . $key;
+                $streamSelect[] = 'NULL::int AS ' . $key;
             } elseif ($key === 'is_scheduled' || $key === 'is_playlist') {
                 $plSelect[] = 'NULL::boolean AS ' . $key;
                 $blSelect[] = 'NULL::boolean AS ' . $key;
@@ -1064,6 +1076,9 @@ SQL;
                 case 'disabled':
                     $lineinSelect[] = "NULL::boolean AS {$key}";
                     break;
+                case 'play_count':
+                    $lineinSelect[] = "NULL::int AS {$key}";
+                    break;
                 default:
                     $lineinSelect[] = "NULL::text AS {$key}";
                     break;
@@ -1075,7 +1090,9 @@ SQL;
 
         $plTable = "({$plSelect} FROM cc_playlist AS PL LEFT JOIN cc_subjs AS sub ON (sub.id = PL.creator_id))";
         $blTable = "({$blSelect} FROM cc_block AS BL LEFT JOIN cc_subjs AS sub ON (sub.id = BL.creator_id))";
-        $fileTable = "({$fileSelect} FROM cc_files AS FILES LEFT JOIN cc_subjs AS sub ON (sub.id = FILES.owner_id) WHERE file_exists = 'TRUE' AND hidden='FALSE')";
+        // RASTATIME 2026-10-07 - play_count: one grouped pass over the playout history per query
+        $playCountJoin = 'LEFT JOIN (SELECT file_id, COUNT(*) AS play_count FROM cc_playout_history WHERE file_id IS NOT NULL GROUP BY file_id) AS ph ON (ph.file_id = FILES.id)';
+        $fileTable = "({$fileSelect} FROM cc_files AS FILES LEFT JOIN cc_subjs AS sub ON (sub.id = FILES.owner_id) {$playCountJoin} WHERE file_exists = 'TRUE' AND hidden='FALSE')";
         // $fileTable = "({$fileSelect} FROM cc_files AS FILES WHERE file_exists = 'TRUE')";
         $streamTable = "({$streamSelect} FROM cc_webstream AS ws LEFT JOIN cc_subjs AS sub ON (sub.id = ws.creator_id))";
         $lineinTable = "({$lineinSelect} FROM rastatime_linein AS li WHERE li.enabled = TRUE)";

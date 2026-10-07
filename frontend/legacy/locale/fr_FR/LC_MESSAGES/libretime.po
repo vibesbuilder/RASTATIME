@@ -1276,6 +1276,10 @@ msgstr "Dernier Modifié"
 msgid "Last Played"
 msgstr "Dernier Joué"
 
+#: application/controllers/LocaleController.php:112
+msgid "Play Count"
+msgstr "Play Count"
+
 #: application/controllers/LocaleController.php:103
 #: application/models/Criteria.php:165
 #: application/services/HistoryService.php:1054

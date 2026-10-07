@@ -3533,6 +3533,20 @@ Sowohl Menü-Ebene als auch Einzelfeld-Ebene gewünscht.
 
 ## 💡 Future Feature Ideas (nicht evaluiert, nur notiert)
 
+### 💡 „Play Count" auch für Webstreams und Line-Ins (notiert 2026-10-07)
+
+**Status:** 💡 Idee, Operator-Frage vom 2026-10-07.  Die Bibliotheksspalte
+„Play Count" zählt Dateien über `cc_playout_history.file_id`.  Webstream-
+und Line-In-Einsätze stehen ebenfalls im Protokoll (`file_id` NULL, erkennbar
+nur an `artist_name`/`track_title` in den Metadaten: Webstream-Name bzw.
+Quellen-Label) — ein Umbenennen des Webstreams oder zwei Line-Ins mit
+gleichem Gerätenamen machen eine Zählung per Name unzuverlässig.  Sauber:
+Migration 0065 mit `stream_id`/`linein_id` in `cc_playout_history`,
+`HistoryService::insertPlayedItem/insertWebstreamMetadata/insertLineInLog`
+setzen sie, einmaliges Nachfüllen alter Zeilen per Namensabgleich, dann
+derselbe gruppierte Join je Zweig der Bibliotheksabfrage.  ~1,5 h; Migration
+braucht frisches Backup + ruhiges Fenster.  Vorbedingung: Operator-Go.
+
 ### ✅ Smart Block „Dauer in Zeit" als Sendezeit statt Titelsumme (notiert 2026-10-06)
 
 **Status:** ✅ **DONE 2026-10-06** (Operator-Go gleichen Abends): Minuten-/
