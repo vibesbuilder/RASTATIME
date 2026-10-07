@@ -1017,7 +1017,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (common.js Preflight, dashboard.js Now Playing, Status-Seite „Blocked
   addresses") registrieren ihre Timer in `window.rtPollTimers`, und ein
   globaler `ajaxError`-Hook stoppt sie beim ersten 401.  Manual
-  USERS_AND_ROLES ×4 (Fenster 60 min war dort noch mit 10 min angegeben).
+  USERS_AND_ROLES ×4 (Fenster 60 min war dort noch mit 10 min angegeben).  `7c3ccfd`.
 - **Restzeit im Show Builder: `time_filled` ausgelegt, Smart-Block-Budget
   überlappungs-bewusst (2026-10-06, Operator-Go)** — Beobachtung des
   Operators: ein Smart Block „verbleibende Zeit" (3 Musiktitel) ließ −6 s
