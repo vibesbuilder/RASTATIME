@@ -269,7 +269,7 @@ input[type="submit"]:hover {
     left: 0;
     right: 0;
     bottom: 0;
-    height: 60px;
+    height: 80px; /* 2026-10-08: 60 -> 80 (operator) */
     display: flex;
     align-items: stretch;
     background: #23211f;
@@ -294,7 +294,7 @@ input[type="submit"]:hover {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 72px;
+    width: 84px;
     box-sizing: border-box;
     color: #a8a49f;
     border-left: 1px solid rgba(255, 255, 255, 0.08);
@@ -313,13 +313,17 @@ input[type="submit"]:hover {
 }
 
 .nav_btn svg {
-    width: 28px;
-    height: 28px;
+    width: 32px;
+    height: 32px;
 }
 
 @media (max-width: 780px) {
+    .bottom_nav {
+        height: 70px;
+    }
+
     .nav_btn {
-        width: 60px;
+        width: 64px;
     }
 
     .nav_btn svg {
