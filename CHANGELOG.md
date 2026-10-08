@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   address` im Log); `rt-blocks.ps1` zeigt die Liste.  Ablage in `cc_pref`
   (`allowed_addresses`, JSON), Spiegeldatei in `.gitignore`.  Elf UI-Strings
   in vier Katalogen, Manual USERS_AND_ROLES ×4, TEST_PLAN A5.5, Architektur
-  §23.53 Addendum.
+  §23.53 Addendum.  `dc35a9d`.
 - **Startseite: Hintergrundbild per Admin-UI, Fußleiste mit Sendeplan- und
   Podcast-Knopf (2026-10-07, Operator-Go)** — Settings → General →
   „Landing page background" (JPG/PNG/WebP bis 5 MB, Vorschau, Entfernen):
