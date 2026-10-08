@@ -22,7 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Fehlschläge, jede neue Feed-Folge geholt (Newsmag/Talkshow-Lücken = bewusstes
   Löschen des Operators am 08.10. 17:35).  Bereinigung: 34 Platzhalter ohne
   Datei aus der toten Feed-Phase vor dem 16.09. (Newsmag 32, Vinyl Hour 2)
-  gelöscht.
+  gelöscht.  `20e664f`.
 - **Massenbearbeitung der Metadaten (2026-10-08, Operator-Go nach
   Evaluierung)** — Bibliothek → „Edit" mit zwei oder mehr Titeln öffnet einen
   Dialog für alle (`library/bulk-edit-file-md`, Formular
