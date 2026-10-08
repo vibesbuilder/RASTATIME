@@ -215,6 +215,32 @@ $csrfToken = $csrfNs->authtoken ?? '';
 
 <div id="service-restart-status" style="margin-top: 1em; max-width: 60em;"></div>
 
+<?php // RASTATIME 2026-10-08 - the allow list: never braked, throttled or firewalled (operator: above the blocked list) ?>
+<table width="60%" cellpadding="0" cellspacing="0" border="0" class="statustable allowed-addresses-table" style="margin-top: 2em;">
+    <thead>
+        <tr class="ui-state-default strong">
+            <th colspan="2" style="text-align: left;">
+                <?php echo _("Allowed addresses"); ?>
+                <span class="help_icon" id="allowed-addresses-help"
+                      data-tip="<?php echo htmlspecialchars(_("An allowed address or network is never braked by the web login, never throttled by the DJ dial-in and never blocked by the firewall watcher. Addresses of the studio network are exempt anyway. Keep the list short: a home address usually changes with the provider, a network (CIDR) covers that."), ENT_QUOTES); ?>"></span>
+            </th>
+        </tr>
+        <tr class="ui-state-default strong">
+            <td><?php echo _("Address or network"); ?></td>
+            <td><?php echo _("Action"); ?></td>
+        </tr>
+    </thead>
+    <tbody id="allowed-addresses-body">
+        <tr><td colspan="2" class="description"><?php echo _("Loading…"); ?></td></tr>
+    </tbody>
+    <tfoot>
+        <tr>
+            <td><input type="text" id="allowed-addresses-entry" placeholder="<?php echo _("Address or network (CIDR)"); ?>" style="width: 95%;" autocomplete="off"></td>
+            <td><button type="button" class="btn" id="allowed-addresses-add"><?php echo _("Add"); ?></button></td>
+        </tr>
+    </tfoot>
+</table>
+
 <?php // RASTATIME 2026-10-06 - brute-force brakes: who is blocked, and the way out ?>
 <table width="60%" cellpadding="0" cellspacing="0" border="0" class="statustable blocked-addresses-table" style="margin-top: 2em;">
     <thead>
@@ -260,28 +286,3 @@ $csrfToken = $csrfNs->authtoken ?? '';
 </p>
 <div id="blocked-addresses-status" style="margin-top: 0.5em; max-width: 60em;"></div>
 
-<?php // RASTATIME 2026-10-08 - the allow list: never braked, throttled or firewalled ?>
-<table width="60%" cellpadding="0" cellspacing="0" border="0" class="statustable allowed-addresses-table" style="margin-top: 2em;">
-    <thead>
-        <tr class="ui-state-default strong">
-            <th colspan="2" style="text-align: left;">
-                <?php echo _("Allowed addresses"); ?>
-                <span class="help_icon" id="allowed-addresses-help"
-                      data-tip="<?php echo htmlspecialchars(_("An allowed address or network is never braked by the web login, never throttled by the DJ dial-in and never blocked by the firewall watcher. Addresses of the studio network are exempt anyway. Keep the list short: a home address usually changes with the provider, a network (CIDR) covers that."), ENT_QUOTES); ?>"></span>
-            </th>
-        </tr>
-        <tr class="ui-state-default strong">
-            <td><?php echo _("Address or network"); ?></td>
-            <td><?php echo _("Action"); ?></td>
-        </tr>
-    </thead>
-    <tbody id="allowed-addresses-body">
-        <tr><td colspan="2" class="description"><?php echo _("Loading…"); ?></td></tr>
-    </tbody>
-    <tfoot>
-        <tr>
-            <td><input type="text" id="allowed-addresses-entry" placeholder="<?php echo _("Address or network (CIDR)"); ?>" style="width: 95%;" autocomplete="off"></td>
-            <td><button type="button" class="btn" id="allowed-addresses-add"><?php echo _("Add"); ?></button></td>
-        </tr>
-    </tfoot>
-</table>
