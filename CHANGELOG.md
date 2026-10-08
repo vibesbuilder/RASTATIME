@@ -24,7 +24,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (Leiste #23211f, Primärfarbe für den aktiven Knopf), kein „Über uns"
   (Operator 2026-05-24).  Fünf UI-Strings in vier Katalogen, Manual
   SETTINGS ×4.  `9170ebc`.  2026-10-08: Leiste 60 → 80 px (Handy 70 px), der
-  Player füllt seinen Rahmen in voller Höhe und bleibt zentriert.
+  Player füllt seinen Rahmen in voller Höhe und bleibt zentriert.  Handy-Nachbesserung
+  (Operator, 360 px): der ausgeblendete Podcast-Tab war mit festen 420 px
+  breiter als das Display, Chrome weitete die Layout-Breite auf 480 px und
+  die Leisten-Knöpfe lagen rechts außerhalb → Player ab 590 px flexibel,
+  `html, body` ohne Querüberlauf; der graue Balken zwischen Foto und Leiste
+  war der nackte Seitengrund unter der Abdunkelung (Handys ignorieren
+  `background-attachment: fixed`) → das Foto liegt jetzt auf einer festen,
+  bildschirmgroßen Ebene (`body::before`), die Einstellung überschreibt dort
+  nur das Bild.
 - **Bibliotheksspalte „Play Count" (2026-10-07, Operator-Go Variante A)** —
   wie oft ein Titel gesendet wurde: ein Zähler pro Zeile des Sendeprotokolls
   (`cc_playout_history`), dieselbe Zahl wie Sendeprotokoll → File Summary;

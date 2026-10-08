@@ -15,9 +15,9 @@
 </script>
 
 <?php /* RASTATIME 2026-10-07 - background image from Settings -> General; the
-       rest of the rule (cover, fixed, centred) stays in radio-page.css */ ?>
+       rest of the rule (fixed layer, cover, centred) stays in radio-page.css */ ?>
 <?php if (!empty($this->landingBackgroundUrl)) : ?>
-<style>html { background-image: url('<?php echo htmlspecialchars($this->landingBackgroundUrl, ENT_QUOTES) ?>'); }</style>
+<style>body::before { background-image: url('<?php echo htmlspecialchars($this->landingBackgroundUrl, ENT_QUOTES) ?>'); }</style>
 <?php endif; ?>
 
 <div class="wrapper">

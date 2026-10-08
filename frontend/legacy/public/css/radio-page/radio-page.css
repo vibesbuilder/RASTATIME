@@ -1,10 +1,32 @@
 html {
-    background: url("img/background-testing-3.jpg") no-repeat center center fixed;
-    -webkit-background-size: cover;
-    -moz-background-size: cover;
-    -o-background-size: cover;
-    background-size: cover;
+    background: #111;
     overflow-y: auto;
+}
+
+/* RASTATIME 2026-10-08 - never wider than the phone: a page that overflows
+   sideways makes Chrome widen the layout viewport, and fixed elements
+   (the bottom bar) then reach past the screen. */
+html, body {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+/* RASTATIME 2026-10-08 - the photo sits on its own fixed, viewport-sized
+   layer (Settings -> General swaps the image; index.phtml overrides
+   background-image only).  Phones ignore background-attachment: fixed, so
+   the former html background covered only the html box and a page taller
+   than the screen showed the bare canvas - grey through .bck_cover - between
+   the photo and the bottom bar. */
+body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: -2;
+    background: url("img/background-testing-3.jpg") no-repeat center center;
+    background-size: cover;
 }
 
 

@@ -583,6 +583,14 @@ div.jp-jplayer {
 
 
 @media (max-width: 590px) {
+	/* RASTATIME 2026-10-08 - the fixed 420 px player made the (faded-out but
+	   laid-out) podcast tab wider than a phone; Chrome then widens the layout
+	   viewport to the overflow and the fixed bottom bar's buttons land
+	   off-screen to the right. */
+	div.jp-audio {
+		width: auto;
+		max-width: 100%;
+	}
 	.jp-time-block {
 		display:block !important;
 	}
