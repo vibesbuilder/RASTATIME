@@ -5680,3 +5680,11 @@ msgstr "Mindestens ein Feld ausfüllen; leere Felder bleiben unverändert."
 #: application/forms/BulkEditAudioMD.php application/views/scripts/library/bulk-edit-file-md.phtml
 msgid "The metadata could not be saved."
 msgstr "Die Metadaten konnten nicht gespeichert werden."
+
+#: application/forms/BulkEditAudioMD.php
+msgid "Expiry date must be in YYYY-MM-DD format, \"none\" to clear it, or empty."
+msgstr "Ablaufdatum im Format JJJJ-MM-TT, „none\" zum Löschen oder leer."
+
+#: application/forms/BulkEditAudioMD.php
+msgid "Format: YYYY-MM-DD. Enter \"none\" to clear the expiry of the selected tracks."
+msgstr "Format: JJJJ-MM-TT. „none\" eingeben, um das Ablaufdatum der ausgewählten Titel zu löschen."

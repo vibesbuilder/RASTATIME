@@ -389,6 +389,11 @@ class LibraryController extends Zend_Controller_Action
             return;
         }
         $changes = array_intersect_key($form->getValues(), $changes);
+        // expiry: "none" clears (the model clears on an empty string), a
+        // date sets; the model also re-enables a track whose date lies ahead
+        if (isset($changes['expires_at']) && $changes['expires_at'] === 'none') {
+            $changes['expires_at'] = '';
+        }
 
         $updated = 0;
         $denied = 0;
@@ -405,9 +410,9 @@ class LibraryController extends Zend_Controller_Action
 
                 continue;
             }
-            foreach ($changes as $name => $value) {
-                $file->setDbColMetadataValue($name, $value);
-            }
+            // one save per track through the single editor's path (it also
+            // handles expires_at, which is not a Propel column)
+            $file->setDbColMetadata($changes);
             ++$updated;
         }
         Logging::info(sprintf(

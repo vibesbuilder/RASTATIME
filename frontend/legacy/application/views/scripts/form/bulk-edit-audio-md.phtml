@@ -6,6 +6,7 @@
             <dt><label for="<?php echo $el->getId(); ?>"><?php echo $this->escape($el->getLabel()); ?></label></dt>
             <dd>
                 <?php echo $el->renderViewHelper(); ?>
+                <?php if ($el->getDescription()): ?><p class="description" style="margin: 2px 0 0 0;"><?php echo $this->escape($el->getDescription()); ?></p><?php endif; ?>
                 <?php if ($el->hasErrors()): ?>
                     <ul class="errors"><?php foreach ($el->getMessages() as $m): ?><li><?php echo $this->escape($m); ?></li><?php endforeach; ?></ul>
                 <?php endif; ?>

@@ -82,6 +82,23 @@ class Application_Form_BulkEditAudioMD extends Zend_Form
             ->setMultiOptions($options);
         $this->addElement($trackType);
 
+        // RASTATIME 2026-10-08 (operator): the expiry date as in the single
+        // editor; YYYY-MM-DD sets it, "none" clears it, empty leaves it
+        $expiresAt = new Zend_Form_Element_Text('expires_at');
+        $expiresAt->class = 'input_text';
+        $expiresAt->setLabel(_('Expiry Date:'))
+            ->setRequired(false)
+            ->setFilters(['StringTrim', 'StringToLower'])
+            ->setValidators([
+                Application_Form_Helper_ValidationTypes::overrideRegexValidator(
+                    '/^(\d{4}-\d{2}-\d{2}|none)?$/',
+                    _('Expiry date must be in YYYY-MM-DD format, "none" to clear it, or empty.')
+                ),
+            ])
+            ->setAttrib('placeholder', _('Leave unchanged'))
+            ->setDescription(_('Format: YYYY-MM-DD. Enter "none" to clear the expiry of the selected tracks.'));
+        $this->addElement($expiresAt);
+
         $description = new Zend_Form_Element_Textarea('description');
         $description->class = 'input_text';
         $description->setLabel(_('Description:'))
@@ -96,6 +113,6 @@ class Application_Form_BulkEditAudioMD extends Zend_Form
     /** The order the dialog shows the fields in. */
     public static function fieldOrder()
     {
-        return ['artist_name', 'album_title', 'genre', 'year', 'track_type_id', 'language', 'mood', 'label', 'composer', 'conductor', 'copyright', 'description'];
+        return ['artist_name', 'album_title', 'genre', 'year', 'track_type_id', 'language', 'mood', 'label', 'composer', 'conductor', 'copyright', 'expires_at', 'description'];
     }
 }

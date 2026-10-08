@@ -18,7 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   nur Datenbank.  Anlass: 51 Dateien ohne Track-Typ/Genre fielen aus allen
   Smart Blocks.  Cover-Suche im Netz bewusst nicht eingebaut (Mp3tag vor dem
   Import; 💡 BACKLOG „Tags und Cover aus Datei neu einlesen").  Acht
-  UI-Strings in vier Katalogen, Manual LIBRARY ×4.  `0c14f37`.
+  UI-Strings in vier Katalogen, Manual LIBRARY ×4.  `0c14f37`.  Nachbesserung nach
+  Operator-Test: Ablaufdatum als Feld (`none` löscht), Beschreibung und alle
+  Felder 300 px breit; Speichern je Titel über den Pfad des Einzel-Editors.
 - **Freigegebene Adressen für die Brute-Force-Bremsen (2026-10-08,
   Operator-Go)** — System Status → Blocked addresses: Knopf **Allow** je
   gesperrter Adresse (entsperrt auf allen Ebenen und trägt sie ein) und die
