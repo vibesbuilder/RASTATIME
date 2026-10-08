@@ -141,7 +141,17 @@ class Application_Service_PodcastEpisodeService extends Application_Service_Thir
         /** @var PodcastEpisodes $episode */
         foreach ($episodes as $episode) {
             $podcast = $episode->getPodcast();
-            $this->_download($episode->getDbId(), $episode->getDbDownloadUrl(), $podcast->getDbTitle(), $this->_getAlbumOverride($podcast), $episode->getDbEpisodeTitle());
+            $guid = (string) $episode->getDbEpisodeGuid();
+            $result = $this->_download($episode->getDbId(), $episode->getDbDownloadUrl(), $podcast->getDbTitle(), $this->_getAlbumOverride($podcast), $episode->getDbEpisodeTitle());
+            // RASTATIME 2026-10-08 - a failure becomes a preflight warning
+            // (dashboard banner + System Status); a later success clears it
+            if ($result['ok']) {
+                Application_Model_PodcastDownloadFailures::clear($guid);
+            } else {
+                Application_Model_PodcastDownloadFailures::record(
+                    $podcast->getDbId(), $podcast->getDbTitle(), $guid, $episode->getDbEpisodeTitle(), $result['error']
+                );
+            }
         }
     }
 
@@ -177,6 +187,8 @@ class Application_Service_PodcastEpisodeService extends Application_Service_Thir
      * @param string     $title          podcast title (used by the API via DB lookup)
      * @param bool       $album_override album-override flag (used by the API via DB lookup)
      * @param null|mixed $track_title    episode title (used by the API via DB lookup)
+     *
+     * @return array{ok: bool, error: string} RASTATIME 2026-10-08
      */
     private function _download($id, $url, $title, $album_override, $track_title = null)
     {
@@ -203,6 +215,10 @@ class Application_Service_PodcastEpisodeService extends Application_Service_Thir
                 "podcast_download: API call failed for episode {$id}. "
                 . "HTTP {$httpCode}. cURL: {$curlError}. Response: {$response}"
             );
+            $decoded = is_string($response) ? json_decode($response, true) : null;
+            $reason = $response === false
+                ? ('API unreachable: ' . $curlError)
+                : ('HTTP ' . $httpCode . (is_array($decoded) && isset($decoded['error']) ? ': ' . $decoded['error'] : ''));
 
             // RASTATIME 2026-05-17 — without this cleanup the
             // podcast_episodes placeholder row that addPlaceholder()
@@ -234,10 +250,12 @@ class Application_Service_PodcastEpisodeService extends Application_Service_Thir
                 );
             }
 
-            return;
+            return ['ok' => false, 'error' => $reason];
         }
 
         Logging::info("podcast_download: episode {$id} imported successfully (HTTP {$httpCode})");
+
+        return ['ok' => true, 'error' => ''];
     }
 
     /**

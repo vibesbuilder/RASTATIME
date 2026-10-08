@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Preflight-Warnung „Podcast download failed" (2026-10-08, Operator-Go)**
+  — ein fehlgeschlagener automatischer oder manueller Folgen-Download stand
+  bisher nur im Legacy-Log.  `Application_Model_PodcastDownloadFailures`
+  hält Fehlschläge je Folgen-GUID in `cc_pref` (Podcast, Folge, Versuche,
+  letzter Versuch, Grund) und veröffentlicht sie über den Replace-Endpunkt
+  der API als Warnungen vom Typ `podcast_download_failed` (Banner auf jeder
+  Seite + System Status); ein späterer Erfolg oder das Entfernen des
+  Podcasts räumt sie weg.  Banner-Text in common.js, drei Strings in vier
+  Katalogen, Manual SETTINGS ×4, TEST_PLAN wöchentlich.  Dazu die
+  Prüfung des Auto-Downloads: seit dem CA-Fix 16.09. 28 Importe, null
+  Fehlschläge, jede neue Feed-Folge geholt (Newsmag/Talkshow-Lücken = bewusstes
+  Löschen des Operators am 08.10. 17:35).  Bereinigung: 34 Platzhalter ohne
+  Datei aus der toten Feed-Phase vor dem 16.09. (Newsmag 32, Vinyl Hour 2)
+  gelöscht.
 - **Massenbearbeitung der Metadaten (2026-10-08, Operator-Go nach
   Evaluierung)** — Bibliothek → „Edit" mit zwei oder mehr Titeln öffnet einen
   Dialog für alle (`library/bulk-edit-file-md`, Formular

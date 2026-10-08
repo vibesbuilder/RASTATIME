@@ -270,6 +270,15 @@ Mitigationsempfehlung.
 > Fehler ein; die Seite listet sie auf, und der Operator
 > kann verwerfen / auflösen.
 
+> **Podcast-Download fehlgeschlagen (seit 2026-10-08).** Scheitert ein
+> automatischer oder manueller Download einer Folge, nennt eine
+> Warnung Podcast, Folge, Zahl der Versuche, letzten Versuch und
+> Grund (HTTP-Code oder „API nicht erreichbar"); sie erscheint im
+> Banner auf jeder Seite und hier. Sie verschwindet von selbst,
+> wenn der Download später gelingt oder der Podcast entfernt wird.
+> Feed und Download-Adresse der Folge unter Bibliothek → Podcasts
+> prüfen.
+
 ### Dienst-Controls (nur Admin+)
 
 Ein-Schaltflächen-Neustart für jeden Windows-Dienst.

@@ -4901,3 +4901,15 @@ msgstr "Expiry date must be in YYYY-MM-DD format, \"none\" to clear it, or empty
 #: application/forms/BulkEditAudioMD.php
 msgid "Format: YYYY-MM-DD. Enter \"none\" to clear the expiry of the selected tracks."
 msgstr "Format: YYYY-MM-DD. Enter \"none\" to clear the expiry of the selected tracks."
+
+#: application/controllers/LocaleController.php
+msgid "Podcast download failed:"
+msgstr "Podcast download failed:"
+
+#: application/controllers/LocaleController.php
+msgid "%s attempt(s), last %s"
+msgstr "%s attempt(s), last %s"
+
+#: application/controllers/LocaleController.php
+msgid "Check the feed and the episode's download address under Library → Podcasts."
+msgstr "Check the feed and the episode's download address under Library → Podcasts."

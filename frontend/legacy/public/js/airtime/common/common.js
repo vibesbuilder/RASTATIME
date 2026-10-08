@@ -600,6 +600,19 @@ function loadPreflightWarnings() {
               + $.i18n._("Check the drive, then Settings → Local Machine.")
             )
           );
+        } else if (w.warning_type === "podcast_download_failed") {
+          // RASTATIME 2026-10-08: an automatic or manual episode download
+          // failed (Application_Model_PodcastDownloadFailures); clears when
+          // the download succeeds or the podcast is removed.
+          var last = detail.last_attempt ? _formatPreflightWhen(detail.last_attempt) : "?";
+          $li.append(
+            document.createTextNode(
+              $.i18n._("Podcast download failed:") + " " + (detail.podcast || "?") + " – " + (detail.episode || "?")
+              + " (" + $.i18n._("%s attempt(s), last %s").replace("%s", detail.attempts || 1).replace("%s", last) + ")"
+              + (detail.error ? ": " + detail.error : "") + ". "
+              + $.i18n._("Check the feed and the episode's download address under Library → Podcasts.")
+            )
+          );
         } else {
           // Unknown warning type — render a generic fallback so future
           // backend additions surface even before the JS catches up.

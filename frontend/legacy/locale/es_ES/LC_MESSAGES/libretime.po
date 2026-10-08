@@ -5881,3 +5881,15 @@ msgstr "La fecha de caducidad debe tener el formato AAAA-MM-DD, «none» para bo
 #: application/forms/BulkEditAudioMD.php
 msgid "Format: YYYY-MM-DD. Enter \"none\" to clear the expiry of the selected tracks."
 msgstr "Formato: AAAA-MM-DD. Escriba «none» para borrar la caducidad de las pistas seleccionadas."
+
+#: application/controllers/LocaleController.php
+msgid "Podcast download failed:"
+msgstr "Descarga del podcast fallida:"
+
+#: application/controllers/LocaleController.php
+msgid "%s attempt(s), last %s"
+msgstr "%s intento(s), último %s"
+
+#: application/controllers/LocaleController.php
+msgid "Check the feed and the episode's download address under Library → Podcasts."
+msgstr "Revise el feed y la dirección de descarga del episodio en Biblioteca → Podcasts."

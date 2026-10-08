@@ -260,6 +260,14 @@ Each warning has a click-through with mitigation advice.
 > failure; the page lists them and the operator can
 > dismiss / resolve.
 
+> **Podcast download failed (since 2026-10-08).** When an automatic
+> or manual episode download fails, a warning names the podcast, the
+> episode, the number of attempts, the last attempt and the reason
+> (HTTP code or "API unreachable"); it shows in the banner on every
+> page and here. It clears by itself when the download succeeds
+> later or the podcast is removed. Check the feed and the episode's
+> download address under Library → Podcasts.
+
 ### Service controls (Admin+ only)
 
 One-button restart for each Windows service. Replaces the

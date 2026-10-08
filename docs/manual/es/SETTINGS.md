@@ -163,6 +163,14 @@ esperado ya en uso".
 > tabla `rastatime_preflight_warning`. El `preflight.py`
 > de inicio corre ~30 verificaciones.
 
+> **Descarga del podcast fallida (desde 2026-10-08).** Cuando falla
+> la descarga automática o manual de un episodio, un aviso indica el
+> podcast, el episodio, el número de intentos, el último intento y el
+> motivo (código HTTP o «API inalcanzable»); aparece en la franja de
+> cada página y aquí. Desaparece solo cuando la descarga tiene éxito
+> más tarde o se elimina el podcast. Revise el feed y la dirección de
+> descarga del episodio en Biblioteca → Podcasts.
+
 ### Controles de servicio (Admin+ solamente)
 
 Reinicio de un botón para cada servicio Windows.

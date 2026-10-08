@@ -100,6 +100,7 @@ only with a fresh backup (03:30 run) and outside show boundaries.
 | **Weekly** | Liquidsoap memory banner (`2048 MB` evening value is normal, restart every 7 days resets) | Liquidsoap log, Task Manager |
 | Weekly | firewall watcher log: blocks of the week, false positives | `logs\firewall-watch.log` |
 | Weekly | certificate days left (> 30) | browser padlock / `openssl s_client` |
+| Weekly | podcast imports: no `Podcast download failed` warning, newest feed episodes present | banner / System Status, Library → Podcasts |
 | Weekly | Windows Update: install pending updates by hand in the maintenance window after 03:30 | Settings → Windows Update, then WINDOWS_24_7 §3 |
 | **Monthly** | A1.2 boot test in a quiet window | WINDOWS_24_7 §7 |
 | Monthly | disk space C: and D: (> 100 GB free) | System Status → Disk Space |

@@ -953,6 +953,17 @@ class Application_Model_Preference
         return base64_encode($image);
     }
 
+    /** RASTATIME 2026-10-08 - failed podcast downloads (JSON by episode guid), see Application_Model_PodcastDownloadFailures */
+    public static function GetPodcastDownloadFailures()
+    {
+        return self::getValue('podcast_download_failures');
+    }
+
+    public static function SetPodcastDownloadFailures($json)
+    {
+        self::setValue('podcast_download_failures', (string) $json);
+    }
+
     /**
      * RASTATIME 2026-10-08 - addresses the brute-force brakes leave alone
      * (System Status -> Allowed addresses); JSON list of strings, see

@@ -164,6 +164,15 @@ de démarrage. Choses comme "FFmpeg pas dans PATH" ou
 > table `rastatime_preflight_warning`. Le `preflight.py`
 > de démarrage lance ~30 vérifications.
 
+> **Téléchargement du podcast échoué (depuis le 2026-10-08).** Quand
+> le téléchargement automatique ou manuel d'un épisode échoue, un
+> avertissement nomme le podcast, l'épisode, le nombre de tentatives,
+> la dernière tentative et la raison (code HTTP ou « API
+> injoignable ») ; il apparaît dans le bandeau de chaque page et ici.
+> Il disparaît de lui-même quand le téléchargement réussit plus tard
+> ou que le podcast est supprimé. Vérifiez le flux et l'adresse de
+> téléchargement de l'épisode sous Bibliothèque → Podcasts.
+
 ### Contrôles de service (Admin+ seulement)
 
 Redémarrage en un bouton pour chaque service Windows.

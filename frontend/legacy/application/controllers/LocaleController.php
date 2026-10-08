@@ -110,6 +110,10 @@ final class LocaleController extends Zend_Controller_Action
             'Mood' => _('Mood'),
             'Owner' => _('Owner'),
             'Play Count' => _('Play Count'),
+            // RASTATIME 2026-10-08 - preflight warning: failed podcast download
+            'Podcast download failed:' => _('Podcast download failed:'),
+            '%s attempt(s), last %s' => _('%s attempt(s), last %s'),
+            "Check the feed and the episode's download address under Library → Podcasts." => _("Check the feed and the episode's download address under Library → Podcasts."),
             // RASTATIME 2026-10-08 - bulk metadata editor
             'Edit metadata of the selected tracks' => _('Edit metadata of the selected tracks'),
             'Apply' => _('Apply'),
