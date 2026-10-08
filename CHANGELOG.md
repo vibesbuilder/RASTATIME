@@ -1059,7 +1059,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Fremdschlüssel, Name/Label werden beim Senden kopiert).  Migration läuft
   erst nach Freigabe des Operators (Backup, ruhiges Fenster).  Manual
   ANALYTICS ×4, Architektur §23.55 (0.68).  `3293832`; Migrations-Basistest auf
-  0065 nachgezogen (stand seit 0064 auf 0063).
+  0065 nachgezogen (stand seit 0064 auf 0063).  **Eingespielt 2026-10-08 11:33** nach
+  Operator-Backup 11:26: Schema 65, 8775 Metadaten nachgefüllt (Titel 2820,
+  Interpret 2788, Länge 2820, Komponist 347), Löschprobe in zurückgerollter
+  Transaktion: Zeile bleibt mit leerem Dateiverweis.
 - **Firewall-Wächter sperrte den Operator aus (2026-10-07)** — ein
   Browser-Tab mit abgelaufener Sitzung fragte weiter jede Minute „Now
   Playing", Preflight-Warnungen und den Kalender-Feed ab, bekam 60 × 401 in
