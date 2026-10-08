@@ -5841,3 +5841,35 @@ msgstr "No se pudieron cambiar las direcciones permitidas."
 #: application/views/scripts/systemstatus/index.phtml
 msgid "An allowed address or network is never braked by the web login, never throttled by the DJ dial-in and never blocked by the firewall watcher. Addresses of the studio network are exempt anyway. Keep the list short: a home address usually changes with the provider, a network (CIDR) covers that."
 msgstr "Una dirección o red permitida nunca es frenada por el inicio de sesión web, nunca limitada por la conexión de DJ y nunca bloqueada por el vigilante del cortafuegos. Las direcciones de la red del estudio están exentas de todos modos. Mantenga la lista corta: una dirección doméstica suele cambiar con el proveedor; una red (CIDR) lo cubre."
+
+#: application/forms/BulkEditAudioMD.php application/views/scripts/library/bulk-edit-file-md.phtml
+msgid "Leave unchanged"
+msgstr "Dejar sin cambios"
+
+#: application/forms/BulkEditAudioMD.php application/views/scripts/library/bulk-edit-file-md.phtml
+msgid "Editing the metadata of %s tracks. Empty fields stay unchanged; a filled field is written to every selected track."
+msgstr "Editando los metadatos de %s pistas. Los campos vacíos no cambian; un campo relleno se escribe en cada pista seleccionada."
+
+#: application/forms/BulkEditAudioMD.php application/views/scripts/library/bulk-edit-file-md.phtml
+msgid "Edit metadata of the selected tracks"
+msgstr "Editar metadatos de las pistas seleccionadas"
+
+#: application/forms/BulkEditAudioMD.php application/views/scripts/library/bulk-edit-file-md.phtml
+msgid "Apply"
+msgstr "Aplicar"
+
+#: application/forms/BulkEditAudioMD.php application/views/scripts/library/bulk-edit-file-md.phtml
+msgid "Updated %s track(s)."
+msgstr "%s pista(s) actualizada(s)."
+
+#: application/forms/BulkEditAudioMD.php application/views/scripts/library/bulk-edit-file-md.phtml
+msgid "No permission for %s track(s)."
+msgstr "Sin permiso para %s pista(s)."
+
+#: application/forms/BulkEditAudioMD.php application/views/scripts/library/bulk-edit-file-md.phtml
+msgid "Fill at least one field; empty fields stay unchanged."
+msgstr "Rellene al menos un campo; los campos vacíos no cambian."
+
+#: application/forms/BulkEditAudioMD.php application/views/scripts/library/bulk-edit-file-md.phtml
+msgid "The metadata could not be saved."
+msgstr "No se pudieron guardar los metadatos."

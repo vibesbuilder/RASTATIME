@@ -615,6 +615,74 @@ var AIRTIME = (function (AIRTIME) {
     }
   };
 
+  // RASTATIME 2026-10-08 - toolbar "Edit" with several tracks selected: one
+  // dialog for all of them; empty fields stay unchanged (bulk-edit-file-md).
+  mod.openBulkEditDialog = function (ids) {
+    if (!ids || ids.length < 2) {
+      return;
+    }
+    $.get(
+      baseUrl + "library/bulk-edit-file-md",
+      { count: ids.length },
+      function (html) {
+        var $dialog = $("<div id='bulk_md_dialog'></div>").html(html);
+        $("body").append($dialog);
+        $dialog.dialog({
+          title: $.i18n._("Edit metadata of the selected tracks"),
+          width: 520,
+          height: "auto",
+          modal: true,
+          resizable: false,
+          dialogClass: "bulk-md-dialog-wrapper",
+          buttons: [
+            {
+              text: $.i18n._("Apply"),
+              class: "btn",
+              click: function () {
+                var data = $dialog.find("form").serializeArray();
+                $dialog.dialog("option", "disabled", true);
+                $.post(
+                  baseUrl + "library/bulk-edit-file-md",
+                  { format: "json", ids: ids, data: data },
+                  function (json) {
+                    $dialog.dialog("option", "disabled", false);
+                    if (json && json.ok) {
+                      var msg = $.i18n._("Updated %s track(s).").replace("%s", json.updated);
+                      if (json.denied) {
+                        msg += " " + $.i18n._("No permission for %s track(s).").replace("%s", json.denied);
+                      }
+                      alert(msg);
+                      $dialog.dialog("close");
+                      oTable.fnStandingRedraw();
+                      mod.selectNone();
+                    } else if (json && json.error === "nothing-to-change") {
+                      alert($.i18n._("Fill at least one field; empty fields stay unchanged."));
+                    } else {
+                      alert($.i18n._("The metadata could not be saved."));
+                    }
+                  },
+                ).fail(function () {
+                  $dialog.dialog("option", "disabled", false);
+                  alert($.i18n._("The metadata could not be saved."));
+                });
+              },
+            },
+            {
+              text: $.i18n._("Cancel"),
+              class: "btn",
+              click: function () {
+                $dialog.dialog("close");
+              },
+            },
+          ],
+          close: function () {
+            $(this).dialog("destroy").remove();
+          },
+        });
+      },
+    );
+  };
+
   // RASTATIME 2026-09-30 - toolbar "Cue Points": re-detect the cue points
   // of the selected files and let the upcoming shows follow.
   mod.fnRedetectCuePoints = function () {

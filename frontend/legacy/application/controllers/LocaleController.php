@@ -110,6 +110,13 @@ final class LocaleController extends Zend_Controller_Action
             'Mood' => _('Mood'),
             'Owner' => _('Owner'),
             'Play Count' => _('Play Count'),
+            // RASTATIME 2026-10-08 - bulk metadata editor
+            'Edit metadata of the selected tracks' => _('Edit metadata of the selected tracks'),
+            'Apply' => _('Apply'),
+            'Updated %s track(s).' => _('Updated %s track(s).'),
+            'No permission for %s track(s).' => _('No permission for %s track(s).'),
+            'Fill at least one field; empty fields stay unchanged.' => _('Fill at least one field; empty fields stay unchanged.'),
+            'The metadata could not be saved.' => _('The metadata could not be saved.'),
             'Replay Gain' => _('Replay Gain'),
             'Sample Rate' => _('Sample Rate'),
             'Track Number' => _('Track Number'),

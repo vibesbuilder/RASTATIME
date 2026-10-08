@@ -341,7 +341,7 @@ la tabla:
 |---|---|
 | **Añadir a playlist** | Añadir las filas seleccionadas a una playlist existente de su elección. |
 | **Eliminar** | Eliminar las filas seleccionadas. |
-| **Editar metadatos** | Abrir un diálogo de edición por lotes. Solo aplica a pistas. |
+| **Editar** | Una pista seleccionada: su pestaña de edición, como antes. **Dos o más pistas seleccionadas (desde 2026-10-08): un solo diálogo para todas** - creador, álbum, género, año, tipo de pista, idioma, mood, sello, compositor, director, copyright, descripción. Los campos vacíos no cambian; un campo relleno se escribe en cada pista seleccionada; título, número de pista, BPM, puntos de cue y carátula siguen siendo por pista. Solo base de datos, como el editor individual (las etiquetas de los archivos se leen al importar y nunca se reescriben). Las pistas que no puede editar se omiten y se cuentan en el resultado. |
 | **Transferir propietario** | Reasignar propiedad (solo Admin / Super Admin). |
 | **Cue Points** | Detecta los puntos de cue de las pistas seleccionadas a partir del audio (la misma detección de silencio que el analizador ejecuta al importar: por debajo de −60 dB durante al menos 0,3 s al inicio o al final) y los guarda. Los programas futuros que programan esas pistas adoptan los nuevos valores y se recalculan. Las pistas de más de 15 minutos se omiten - la acción está pensada para jingles y otros elementos cortos. Desde el 30/09/2026. |
 

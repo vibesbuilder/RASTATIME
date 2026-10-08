@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Massenbearbeitung der Metadaten (2026-10-08, Operator-Go nach
+  Evaluierung)** — Bibliothek → „Edit" mit zwei oder mehr Titeln öffnet einen
+  Dialog für alle (`library/bulk-edit-file-md`, Formular
+  `BulkEditAudioMD`): Interpret, Album, Genre, Jahr, Track-Typ, Sprache, Mood,
+  Label, Komponist, Dirigent, Copyright, Beschreibung; leere Felder bleiben
+  unverändert, Rechte je Titel wie im Einzel-Editor (Besitzer oder Admin/PM),
+  nur Datenbank.  Anlass: 51 Dateien ohne Track-Typ/Genre fielen aus allen
+  Smart Blocks.  Cover-Suche im Netz bewusst nicht eingebaut (Mp3tag vor dem
+  Import; 💡 BACKLOG „Tags und Cover aus Datei neu einlesen").  Acht
+  UI-Strings in vier Katalogen, Manual LIBRARY ×4.
 - **Freigegebene Adressen für die Brute-Force-Bremsen (2026-10-08,
   Operator-Go)** — System Status → Blocked addresses: Knopf **Allow** je
   gesperrter Adresse (entsperrt auf allen Ebenen und trägt sie ein) und die

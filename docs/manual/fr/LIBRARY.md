@@ -454,7 +454,7 @@ barre d'outils qui apparaît au bas du tableau :
 |---|---|
 | **Ajouter à une playlist** | Ajouter les lignes sélectionnées à une playlist existante de votre choix. |
 | **Supprimer** | Supprimer les lignes sélectionnées. Même sémantique de confirmation-si-planifié que la suppression d'une seule ligne. |
-| **Modifier les métadonnées** | Ouvrir un dialogue d'édition en lot. S'applique seulement aux pistes. |
+| **Modifier** | Une piste sélectionnée : son onglet d'édition, comme avant. **Deux pistes ou plus sélectionnées (depuis le 2026-10-08) : un seul dialogue pour toutes** - créateur, album, genre, année, type de piste, langue, mood, label, compositeur, chef d'orchestre, copyright, description. Les champs vides restent inchangés, un champ rempli est écrit dans chaque piste sélectionnée ; titre, numéro de piste, BPM, points de repère et pochette restent par piste. Base de données seulement, comme l'éditeur simple (les tags dans les fichiers sont lus à l'import et jamais réécrits). Les pistes que vous ne pouvez pas modifier sont ignorées et comptées dans le résultat. |
 | **Transférer le propriétaire** | Réassigner la propriété (Admin / Super Admin seulement). Utilisé quand un DJ part et que ses fichiers doivent passer au compte de la station. |
 | **Cue Points** | Détecte les points de repère des pistes sélectionnées à partir de l'audio (la même détection de silence que l'analyseur exécute à l'import : moins de −60 dB pendant au moins 0,3 s au début ou à la fin) et les enregistre. Les émissions à venir qui programment ces pistes reprennent les nouvelles valeurs et sont recalculées. Les pistes de plus de 15 minutes sont ignorées - l'action est prévue pour les jingles et autres éléments courts. Depuis le 30/09/2026. |
 

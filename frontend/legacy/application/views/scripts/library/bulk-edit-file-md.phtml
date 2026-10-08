@@ -1,0 +1,7 @@
+<?php /* RASTATIME 2026-10-08 - dialog body for the bulk metadata editor (library toolbar "Edit" with several tracks selected) */ ?>
+<div class="bulk-md-dialog">
+    <p class="description" style="margin: 0 0 0.8em 0;">
+        <?php echo $this->escape(sprintf(_('Editing the metadata of %s tracks. Empty fields stay unchanged; a filled field is written to every selected track.'), (int) $this->count)); ?>
+    </p>
+    <?php echo $this->form; ?>
+</div>

@@ -3533,6 +3533,19 @@ Sowohl Menü-Ebene als auch Einzelfeld-Ebene gewünscht.
 
 ## 💡 Future Feature Ideas (nicht evaluiert, nur notiert)
 
+### 💡 Bibliotheks-Knopf „Tags und Cover aus Datei neu einlesen" (notiert 2026-10-08)
+
+**Status:** 💡 Idee aus der Evaluierung „Metadaten/Covers" 2026-10-08.
+Operator-Entscheidung: Massenbearbeitung der Metadaten in RASTATIME (gebaut),
+Cover-Suche im Netz **nicht** einbauen — dafür ein externes Werkzeug (Mp3tag:
+Cover aus Discogs/MusicBrainz mit Vorschau, Einbetten, Massen-Tagging) vor dem
+Import.  Für schon importierte Dateien fehlt ein Baustein: ein Knopf in der
+Werkzeugleiste, der für die Auswahl die Import-Analyse wiederholt (Tags und
+eingebettetes Cover neu aus der Datei lesen, `cc_files` nachziehen).  ~2 h über
+die bestehende Analyzer-Pipeline.  Vorsicht: Mp3tag schreibt die Datei neu,
+Titel auf Sendung nicht anfassen.  Bestand 2026-10-08: 47 von 60 Musiktiteln
+ohne Cover.  Vorbedingung: Operator-Go.
+
 ### ❌ „Play Count" auch für Webstreams und Line-Ins (notiert 2026-10-07, verworfen)
 
 **Status:** ❌ **Verworfen durch den Operator 2026-10-07** (Nutzen zu gering für eine Migration).  Ursprüngliche Notiz: Operator-Frage vom 2026-10-07.  Die Bibliotheksspalte
