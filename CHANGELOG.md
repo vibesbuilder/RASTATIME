@@ -745,7 +745,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Settings* starten jetzt ebenfalls eingeklappt (wie *Dangerous Options*).
   Ein Segment mit Prüffehler nach dem Speichern öffnet sich von selbst
   (bisher nur TuneIn).  Vier Segmentnamen in vier Katalogen, Manual
-  SETTINGS ×4.
+  SETTINGS ×4.  `66bf56e`.
 - **Smart Block „Dauer in Zeit" = Sendezeit (2026-10-06, Operator-Go)** —
   nach der ausgelegten Restzeit (siehe Fixed) rutschten die StationIDs der
   Standardstunde noch um 9/18/27 s nach vorn, weil ein 12-min-Block die
