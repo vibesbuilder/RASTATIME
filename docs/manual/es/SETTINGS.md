@@ -32,6 +32,18 @@ matriz completa de permisos.
 
 Configuración → **Preferencias generales**.
 
+Desde 2026-10-08 la página se divide en **segmentos plegados**: el nombre
+y la descripción de la emisora quedan arriba; debajo, *Emisora* (idioma,
+zona horaria, inicio de semana, API pública, página de radio),
+*Apariencia* (logo, imagen de fondo de la página de inicio, favicon,
+color principal), *Reproducción* (crossfades, tipo de pista por defecto,
+recorte de programas sobrepasados), *Automatización* (playlists de
+intro/outro, pool de peticiones, bloque de avisos de tráfico, relleno de
+show-shift, opciones de podcast), y después *Live Text Info*, *TuneIn
+Settings* y *Dangerous Options*. Un clic en el título abre el segmento;
+un segmento con un error de validación tras **Guardar** se abre solo.
+Las tablas de campos de abajo conservan su agrupación original.
+
 ### Emisora
 
 | Campo | Notas |

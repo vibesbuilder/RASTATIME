@@ -1,3 +1,7 @@
+<?php /* RASTATIME 2026-10-08 - the General page in segments (operator): the
+       station identity stays on top, everything else sits in collapsed
+       segments like Live Text / TuneIn / Dangerous Options.  A segment that
+       holds a validation error is opened by preferences.js. */ ?>
 <fieldset class="padded">
     <dl class="zend_form">
 
@@ -5,6 +9,36 @@
 
         <?php echo $this->element->getElement('stationDescription')->render() ?>
 
+    </dl>
+</fieldset>
+
+<?php /* RASTATIME 2026-10-08 - segment "Station", collapsed by default (operator) */ ?>
+<h3 class="collapsible-header closed" id="station-heading"><span class="arrow-icon"></span><?php echo _("Station") ?></h3>
+<div class="collapsible-content" id="station-settings" style="display:none;">
+    <fieldset class="padded">
+        <dl class="zend_form">
+        <?php echo $this->element->getElement('locale')->render() ?>
+
+        <?php echo $this->element->getElement('timezone')->render() ?>
+
+        <?php echo $this->element->getElement('weekStartDay')->render() ?>
+
+        <?php echo $this->element->getElement('thirdPartyApi')->render() ?>
+
+        <?php echo $this->element->getElement('radioPageLoginButton')->renderViewHelper() ?>
+        <?php echo $this->element->getElement('radioPageLoginButton')->renderLabel() ?>
+
+        <?php echo $this->element->getElement('radioPageDisabled')->renderViewHelper() ?>
+        <?php echo $this->element->getElement('radioPageDisabled')->renderLabel() ?>
+        </dl>
+    </fieldset>
+</div>
+
+<?php /* RASTATIME 2026-10-08 - segment "Styling", collapsed by default (operator) */ ?>
+<h3 class="collapsible-header closed" id="styling-heading"><span class="arrow-icon"></span><?php echo _("Styling") ?></h3>
+<div class="collapsible-content" id="styling-settings" style="display:none;">
+    <fieldset class="padded">
+        <dl class="zend_form">
         <?php echo $this->element->getElement('stationLogo')->render() ?>
 
         <?php echo $this->element->getElement('stationLogoRemove')->render() ?>
@@ -52,18 +86,32 @@
         <?php /* RASTATIME 2026-09-29 - UI primary colour (picker added by preferences.js). */ ?>
         <?php echo $this->element->getElement('uiAccentColor')->render() ?>
 
-        <?php echo $this->element->getElement('locale')->render() ?>
+        </dl>
+    </fieldset>
+</div>
 
-        <?php echo $this->element->getElement('timezone')->render() ?>
-
-        <?php echo $this->element->getElement('weekStartDay')->render() ?>
-
-        <?php echo $this->element->getElement('tracktypeDefault')->render() ?>
-
+<?php /* RASTATIME 2026-10-08 - segment "Playout", collapsed by default (operator) */ ?>
+<h3 class="collapsible-header closed" id="playout-heading"><span class="arrow-icon"></span><?php echo _("Playout") ?></h3>
+<div class="collapsible-content" id="playout-settings" style="display:none;">
+    <fieldset class="padded">
+        <dl class="zend_form">
         <?php echo $this->element->getElement('stationDefaultCrossfadeDuration')->render() ?>
 
         <?php echo $this->element->getElement('stationDefaultShowCrossfadeDuration')->render() ?>
 
+        <?php echo $this->element->getElement('tracktypeDefault')->render() ?>
+
+        <?php echo $this->element->getElement('scheduleTrimOverbooked')->renderViewHelper() ?>
+        <?php echo $this->element->getElement('scheduleTrimOverbooked')->renderLabel() ?>
+        </dl>
+    </fieldset>
+</div>
+
+<?php /* RASTATIME 2026-10-08 - segment "Automation", collapsed by default (operator) */ ?>
+<h3 class="collapsible-header closed" id="automation-heading"><span class="arrow-icon"></span><?php echo _("Automation") ?></h3>
+<div class="collapsible-content" id="automation-settings" style="display:none;">
+    <fieldset class="padded">
+        <dl class="zend_form">
         <?php echo $this->element->getElement('introPlaylistSelect')->render() ?>
 
         <?php echo $this->element->getElement('outroPlaylistSelect')->render() ?>
@@ -77,18 +125,6 @@
         <?php echo $this->element->getElement('podcastAlbumOverride')->render() ?>
 
         <?php echo $this->element->getElement('podcastAutoSmartblock')->render() ?>
-
-        <?php /* RASTATIME 2026-05-15 - featurePreviewMode removed (phantom). */ ?>
-
-        <?php echo $this->element->getElement('thirdPartyApi')->render() ?>
-
-        <?php echo $this->element->getElement('scheduleTrimOverbooked')->renderViewHelper() ?>
-        <?php echo $this->element->getElement('scheduleTrimOverbooked')->renderLabel() ?>
-        <br/>
-        <?php echo $this->element->getElement('radioPageLoginButton')->renderViewHelper() ?>
-        <?php echo $this->element->getElement('radioPageLoginButton')->renderLabel() ?>
-        <br />
-        <?php echo $this->element->getElement('radioPageDisabled')->renderViewHelper() ?>
-        <?php echo $this->element->getElement('radioPageDisabled')->renderLabel() ?>
-    </dl>
-</fieldset>
+        </dl>
+    </fieldset>
+</div>

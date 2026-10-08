@@ -5953,3 +5953,19 @@ msgstr "Grille des programmes"
 #: application/views/scripts/index/index.phtml application/forms/GeneralPreferences.php
 msgid "Podcast"
 msgstr "Podcast"
+
+#: application/views/scripts/form/preferences_general.phtml
+msgid "Station"
+msgstr "Station"
+
+#: application/views/scripts/form/preferences_general.phtml
+msgid "Styling"
+msgstr "Apparence"
+
+#: application/views/scripts/form/preferences_general.phtml
+msgid "Playout"
+msgstr "Diffusion"
+
+#: application/views/scripts/form/preferences_general.phtml
+msgid "Automation"
+msgstr "Automatisation"

@@ -32,6 +32,18 @@ sous-ensemble. Voir [Utilisateurs et rôles](./USERS_AND_ROLES.md)
 
 Paramètres → **Préférences générales**.
 
+Depuis le 2026-10-08 la page est divisée en **segments repliés** : le nom
+et la description de la station restent en haut, en dessous *Station*
+(langue, fuseau horaire, début de semaine, API publique, page radio),
+*Apparence* (logo, image de fond de la page d'accueil, favicon, couleur
+principale), *Diffusion* (crossfades, type de piste par défaut, découpe
+des émissions dépassées), *Automatisation* (playlists intro/outro, pool
+de demandes, bloc info-trafic, remplissage show-shift, options podcast),
+puis *Live Text Info*, *TuneIn Settings* et *Dangerous Options*. Un clic
+sur le titre ouvre le segment ; un segment contenant une erreur de
+validation après **Enregistrer** s'ouvre de lui-même. Les tableaux de
+champs ci-dessous gardent leur regroupement d'origine.
+
 ### Station
 
 | Champ | Notes |

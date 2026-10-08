@@ -5785,3 +5785,19 @@ msgstr "Programación"
 #: application/views/scripts/index/index.phtml application/forms/GeneralPreferences.php
 msgid "Podcast"
 msgstr "Podcast"
+
+#: application/views/scripts/form/preferences_general.phtml
+msgid "Station"
+msgstr "Emisora"
+
+#: application/views/scripts/form/preferences_general.phtml
+msgid "Styling"
+msgstr "Apariencia"
+
+#: application/views/scripts/form/preferences_general.phtml
+msgid "Playout"
+msgstr "Reproducción"
+
+#: application/views/scripts/form/preferences_general.phtml
+msgid "Automation"
+msgstr "Automatización"

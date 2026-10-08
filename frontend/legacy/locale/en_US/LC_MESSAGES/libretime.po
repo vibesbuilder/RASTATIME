@@ -4805,3 +4805,19 @@ msgstr "Schedule"
 #: application/views/scripts/index/index.phtml application/forms/GeneralPreferences.php
 msgid "Podcast"
 msgstr "Podcast"
+
+#: application/views/scripts/form/preferences_general.phtml
+msgid "Station"
+msgstr "Station"
+
+#: application/views/scripts/form/preferences_general.phtml
+msgid "Styling"
+msgstr "Styling"
+
+#: application/views/scripts/form/preferences_general.phtml
+msgid "Playout"
+msgstr "Playout"
+
+#: application/views/scripts/form/preferences_general.phtml
+msgid "Automation"
+msgstr "Automation"

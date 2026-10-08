@@ -250,9 +250,14 @@ $(document).ready(function () {
     return false;
   });
 
-  if ($("#tunein-settings").find(".errors").length > 0) {
-    $(".collapsible-content#tunein-settings").show();
-  }
+  // RASTATIME 2026-10-08 - every segment starts collapsed; the one that holds
+  // a validation error after a save opens, so the red hint is not hidden.
+  $(".collapsible-content").each(function () {
+    if ($(this).find(".errors").length > 0) {
+      $(this).show();
+      $(this).prev(".collapsible-header").removeClass("closed");
+    }
+  });
 
   /* No longer using AJAX for this form. Zend + our code makes it needlessly hard to deal with. -- Albert
     $('#pref_save').live('click', function() {

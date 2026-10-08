@@ -67,6 +67,18 @@ Top-Bar Einstellungen → öffnet das Untermenü:
 
 Einstellungen → **Allgemeine Einstellungen**.
 
+Seit 2026-10-08 ist die Seite in **eingeklappte Segmente** gegliedert:
+Stationsname und -beschreibung bleiben oben, darunter *Station*
+(Sprache, Zeitzone, Wochenbeginn, öffentliche API, Radio-Seite),
+*Gestaltung* (Logo, Hintergrundbild der Startseite, Favicon,
+Primärfarbe), *Playout* (Crossfades, Standard-Track-Typ, überzogene
+Sendungen zuschneiden), *Automatisierung* (Intro/Outro-Playlists,
+Request-Pool, Verkehrsmeldungs-Block, Show-Shift-Füller,
+Podcast-Optionen), dann *Live Text Info*, *TuneIn Settings* und
+*Dangerous Options*. Ein Klick auf die Überschrift öffnet das Segment;
+ein Segment mit einem Prüffehler nach **Speichern** öffnet sich von
+selbst. Die Feldtabellen unten behalten ihre bisherige Gliederung.
+
 ```
    ┌─────────────────────────────────────────────────────────────────┐
    │  Allgemeine Einstellungen                          [ Speichern ]│

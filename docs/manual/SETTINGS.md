@@ -65,6 +65,17 @@ Top-bar Settings → opens the sub-menu:
 
 Settings → **General Preferences**.
 
+Since 2026-10-08 the page is divided into **collapsed segments**: the
+station name and description stay on top, below them *Station*
+(language, time zone, week start, public API, radio page), *Styling*
+(logo, landing page background, favicon, primary colour), *Playout*
+(crossfades, default track type, trim overbooked shows), *Automation*
+(intro/outro playlists, request pool, traffic-alert block, show-shift
+filler, podcast options), then *Live Text Info*, *TuneIn Settings* and
+*Dangerous Options*. Click a heading to open it; a segment that holds a
+validation error after **Save** opens by itself. The field tables below
+keep their original grouping.
+
 ```
    ┌─────────────────────────────────────────────────────────────────┐
    │  General Preferences                                  [ Save ]  │
