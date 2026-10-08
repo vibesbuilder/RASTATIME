@@ -155,8 +155,72 @@ class SystemstatusController extends Zend_Controller_Action
         $this->_helper->json->sendJson([
             'ok' => true,
             'rows' => Application_Model_BlockedAddresses::listAll(),
+            // RASTATIME 2026-10-08 - the allow list for the second table
+            'allowed' => Application_Model_AllowedAddresses::all(),
             'generated_at' => gmdate('c'),
         ]);
+    }
+
+    /**
+     * RASTATIME 2026-10-08 - POST systemstatus/allow-address (entry, csrf):
+     * put an address or CIDR network on the allow list; a plain address is
+     * unblocked on every layer at the same time ("Allow" in the blocked
+     * list).
+     */
+    public function allowAddressAction()
+    {
+        $this->view->layout()->disableLayout();
+        $this->_helper->viewRenderer->setNoRender(true);
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->getResponse()->setHttpResponseCode(405);
+            $this->_helper->json->sendJson(['ok' => false, 'error' => 'method-not-allowed']);
+            return;
+        }
+        if (!SecurityHelper::verifyCSRFToken($this->_getParam('csrf_token'))) {
+            Logging::error(__FILE__ . ': Invalid CSRF token on allowAddressAction');
+            $this->_helper->json->sendJson(['ok' => false, 'error' => 'csrf']);
+            return;
+        }
+        $entry = trim((string) $this->_getParam('entry', ''));
+        if (!Application_Model_AllowedAddresses::isValidEntry($entry)) {
+            $this->_helper->json->sendJson(['ok' => false, 'error' => 'bad-entry']);
+            return;
+        }
+        Application_Model_AllowedAddresses::add($entry);
+        $unblocked = null;
+        if (Application_Model_BlockedAddresses::looksLikeAddress($entry)) {
+            $unblocked = Application_Model_BlockedAddresses::unblock($entry);
+        }
+        $this->_helper->json->sendJson([
+            'ok' => true,
+            'entry' => Application_Model_AllowedAddresses::normalise($entry),
+            'unblocked' => $unblocked,
+            'allowed' => Application_Model_AllowedAddresses::all(),
+        ]);
+    }
+
+    /** RASTATIME 2026-10-08 - POST systemstatus/disallow-address (entry, csrf). */
+    public function disallowAddressAction()
+    {
+        $this->view->layout()->disableLayout();
+        $this->_helper->viewRenderer->setNoRender(true);
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->getResponse()->setHttpResponseCode(405);
+            $this->_helper->json->sendJson(['ok' => false, 'error' => 'method-not-allowed']);
+            return;
+        }
+        if (!SecurityHelper::verifyCSRFToken($this->_getParam('csrf_token'))) {
+            Logging::error(__FILE__ . ': Invalid CSRF token on disallowAddressAction');
+            $this->_helper->json->sendJson(['ok' => false, 'error' => 'csrf']);
+            return;
+        }
+        $entry = trim((string) $this->_getParam('entry', ''));
+        if ($entry === '') {
+            $this->_helper->json->sendJson(['ok' => false, 'error' => 'bad-entry']);
+            return;
+        }
+        Application_Model_AllowedAddresses::remove($entry);
+        $this->_helper->json->sendJson(['ok' => true, 'allowed' => Application_Model_AllowedAddresses::all()]);
     }
 
     /**

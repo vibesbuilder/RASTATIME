@@ -954,6 +954,29 @@ class Application_Model_Preference
     }
 
     /**
+     * RASTATIME 2026-10-08 - addresses the brute-force brakes leave alone
+     * (System Status -> Allowed addresses); JSON list of strings, see
+     * Application_Model_AllowedAddresses.
+     *
+     * @return string[]
+     */
+    public static function GetAllowedAddresses()
+    {
+        $raw = (string) self::getValue('allowed_addresses');
+        $list = $raw === '' ? [] : json_decode($raw, true);
+        if (!is_array($list)) {
+            return [];
+        }
+
+        return array_values(array_filter(array_map('strval', $list), 'strlen'));
+    }
+
+    public static function SetAllowedAddresses(array $list)
+    {
+        self::setValue('allowed_addresses', json_encode(array_values($list)));
+    }
+
+    /**
      * RASTATIME 2026-10-07 - background image of the public landing page
      * (Settings -> General).  Unlike the logo it is a FILE: it lives in the
      * storage root under landing/ (so the nightly media mirror backs it up),

@@ -5801,3 +5801,43 @@ msgstr "Reproducción"
 #: application/views/scripts/form/preferences_general.phtml
 msgid "Automation"
 msgstr "Automatización"
+
+#: application/views/scripts/systemstatus/index.phtml
+msgid "Allow"
+msgstr "Permitir"
+
+#: application/views/scripts/systemstatus/index.phtml
+msgid "Allowed addresses"
+msgstr "Direcciones permitidas"
+
+#: application/views/scripts/systemstatus/index.phtml
+msgid "Address or network"
+msgstr "Dirección o red"
+
+#: application/views/scripts/systemstatus/index.phtml
+msgid "Address or network (CIDR)"
+msgstr "Dirección o red (CIDR)"
+
+#: application/views/scripts/systemstatus/index.phtml
+msgid "No addresses are allowed at the moment."
+msgstr "No hay direcciones permitidas por el momento."
+
+#: application/views/scripts/systemstatus/index.phtml
+msgid "Allowed %s."
+msgstr "%s permitida."
+
+#: application/views/scripts/systemstatus/index.phtml
+msgid "Removed %s from the allowed addresses."
+msgstr "%s eliminada de las direcciones permitidas."
+
+#: application/views/scripts/systemstatus/index.phtml
+msgid "Not an address or network (e.g. 203.0.113.5 or 203.0.113.0/24)."
+msgstr "No es una dirección ni una red (p. ej. 203.0.113.5 o 203.0.113.0/24)."
+
+#: application/views/scripts/systemstatus/index.phtml
+msgid "Changing the allowed addresses failed."
+msgstr "No se pudieron cambiar las direcciones permitidas."
+
+#: application/views/scripts/systemstatus/index.phtml
+msgid "An allowed address or network is never braked by the web login, never throttled by the DJ dial-in and never blocked by the firewall watcher. Addresses of the studio network are exempt anyway. Keep the list short: a home address usually changes with the provider, a network (CIDR) covers that."
+msgstr "Una dirección o red permitida nunca es frenada por el inicio de sesión web, nunca limitada por la conexión de DJ y nunca bloqueada por el vigilante del cortafuegos. Las direcciones de la red del estudio están exentas de todos modos. Mantenga la lista corta: una dirección doméstica suele cambiar con el proveedor; una red (CIDR) lo cubre."

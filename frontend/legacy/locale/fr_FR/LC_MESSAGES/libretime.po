@@ -5969,3 +5969,43 @@ msgstr "Diffusion"
 #: application/views/scripts/form/preferences_general.phtml
 msgid "Automation"
 msgstr "Automatisation"
+
+#: application/views/scripts/systemstatus/index.phtml
+msgid "Allow"
+msgstr "Autoriser"
+
+#: application/views/scripts/systemstatus/index.phtml
+msgid "Allowed addresses"
+msgstr "Adresses autorisées"
+
+#: application/views/scripts/systemstatus/index.phtml
+msgid "Address or network"
+msgstr "Adresse ou réseau"
+
+#: application/views/scripts/systemstatus/index.phtml
+msgid "Address or network (CIDR)"
+msgstr "Adresse ou réseau (CIDR)"
+
+#: application/views/scripts/systemstatus/index.phtml
+msgid "No addresses are allowed at the moment."
+msgstr "Aucune adresse n'est autorisée pour le moment."
+
+#: application/views/scripts/systemstatus/index.phtml
+msgid "Allowed %s."
+msgstr "%s autorisée."
+
+#: application/views/scripts/systemstatus/index.phtml
+msgid "Removed %s from the allowed addresses."
+msgstr "%s retirée des adresses autorisées."
+
+#: application/views/scripts/systemstatus/index.phtml
+msgid "Not an address or network (e.g. 203.0.113.5 or 203.0.113.0/24)."
+msgstr "Ni une adresse ni un réseau (ex. 203.0.113.5 ou 203.0.113.0/24)."
+
+#: application/views/scripts/systemstatus/index.phtml
+msgid "Changing the allowed addresses failed."
+msgstr "La modification des adresses autorisées a échoué."
+
+#: application/views/scripts/systemstatus/index.phtml
+msgid "An allowed address or network is never braked by the web login, never throttled by the DJ dial-in and never blocked by the firewall watcher. Addresses of the studio network are exempt anyway. Keep the list short: a home address usually changes with the provider, a network (CIDR) covers that."
+msgstr "Une adresse ou un réseau autorisé n'est jamais freiné par la connexion web, jamais limité par la connexion DJ et jamais bloqué par le veilleur de pare-feu. Les adresses du réseau du studio sont exemptées de toute façon. Gardez la liste courte : une adresse domestique change généralement avec le fournisseur, un réseau (CIDR) couvre cela."

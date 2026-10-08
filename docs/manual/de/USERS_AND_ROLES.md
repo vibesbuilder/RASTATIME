@@ -532,6 +532,19 @@ zählt nie: Sie ist das, was ein Browser-Tab mit abgelaufener Sitzung für
 seine Hintergrund-Abfragen bekommt, und seit 2026-10-07 stellt ein
 solcher Tab die Abfragen bei der ersten ein.
 
+**Freigegebene Adressen (seit 2026-10-08).**  Neben **Entsperren** hat
+jede gesperrte Adresse **Freigeben**: Sie wird auf allen Ebenen entsperrt
+und in die Liste *Freigegebene Adressen* darunter aufgenommen, in der Sie
+auch von Hand eine Adresse oder ein Netz in CIDR-Schreibweise
+(`203.0.113.0/24`) eintragen und Einträge entfernen können.  Eine
+freigegebene Adresse wird vom Web-Login nie gebremst, von der DJ-Einwahl
+nie gedrosselt und vom Firewall-Wächter nie gesperrt; Adressen des
+Studionetzes sind ohnehin ausgenommen.  Halten Sie die Liste kurz - sie
+schaltet für diese Adresse jede Bremse ab - und wählen Sie für einen
+Heimanschluss, dessen Adresse mit dem Provider wechselt, lieber ein Netz.
+Die Liste liegt in der Datenbank und wird für Playout und Wächter nach
+`config\allowlist.txt` gespiegelt.
+
 > **Wenn Sie sich selbst ausgesperrt haben:** die angezeigten Minuten
 > abwarten oder eine Kollegin an einer anderen Adresse bitten.  Im Notfall
 > liegen die Zähler in den Tabellen `cc_login_attempts` (je Adresse) und

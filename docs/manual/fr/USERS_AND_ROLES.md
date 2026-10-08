@@ -367,6 +367,19 @@ de navigateur à la session expirée reçoit pour ses requêtes d'arrière-
 plan, et depuis le 2026-10-07 un tel onglet cesse d'interroger dès la
 première.
 
+**Adresses autorisées (depuis le 2026-10-08).**  À côté de **Débloquer**,
+chaque adresse bloquée a **Autoriser** : elle est débloquée sur toutes les
+couches et placée dans la liste *Adresses autorisées* en dessous, où vous
+pouvez aussi ajouter à la main une adresse ou un réseau en notation CIDR
+(`203.0.113.0/24`) et retirer des entrées.  Une adresse autorisée n'est
+jamais freinée par la connexion web, jamais limitée par la connexion DJ et
+jamais bloquée par le veilleur de pare-feu ; les adresses du réseau du
+studio sont exemptées de toute façon.  Gardez la liste courte - elle
+désactive tous les freins pour cette adresse - et préférez un réseau pour
+une connexion domestique dont l'adresse change avec le fournisseur.  La
+liste est conservée en base et recopiée dans `config\allowlist.txt` pour
+le playout et le veilleur.
+
 > **Si vous êtes vous-même bloqué :** attendez les minutes indiquées ou
 > demandez à un collègue sur une autre adresse.  En cas d'urgence, les
 > compteurs se trouvent dans les tables `cc_login_attempts` (par adresse)

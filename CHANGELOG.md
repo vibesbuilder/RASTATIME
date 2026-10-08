@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Freigegebene Adressen für die Brute-Force-Bremsen (2026-10-08,
+  Operator-Go)** — System Status → Blocked addresses: Knopf **Allow** je
+  gesperrter Adresse (entsperrt auf allen Ebenen und trägt sie ein) und die
+  Tabelle **Allowed addresses** (Adresse oder CIDR-Netz von Hand, Remove).
+  Ein Eintrag wird vom Web-Login weder gezählt noch gebremst
+  (`LoginAttempts`), von der DJ-Einwahl nicht gedrosselt
+  (`dj_auth.AllowList`, liest den Spiegel `config/allowlist.txt` bei
+  jeder Änderung) und vom Firewall-Wächter übersprungen (`skipped … allowed
+  address` im Log); `rt-blocks.ps1` zeigt die Liste.  Ablage in `cc_pref`
+  (`allowed_addresses`, JSON), Spiegeldatei in `.gitignore`.  Elf UI-Strings
+  in vier Katalogen, Manual USERS_AND_ROLES ×4, TEST_PLAN A5.5, Architektur
+  §23.53 Addendum.
 - **Startseite: Hintergrundbild per Admin-UI, Fußleiste mit Sendeplan- und
   Podcast-Knopf (2026-10-07, Operator-Go)** — Settings → General →
   „Landing page background" (JPG/PNG/WebP bis 5 MB, Vorschau, Entfernen):

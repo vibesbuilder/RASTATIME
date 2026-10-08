@@ -8,7 +8,7 @@ from __future__ import annotations
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
-from libretime_playout.dj_auth import DjAuthenticator, RejectThrottle
+from libretime_playout.dj_auth import AllowList, DjAuthenticator, RejectThrottle
 
 
 class Clock:
@@ -132,3 +132,37 @@ def test_snapshot_and_unblock():
     assert t.unblock("9.9.9.9") is False
     clock.now += 601
     assert t.snapshot() == []                  # stale counters disappear
+
+
+def test_allowed_address_is_never_braked_and_reloads_the_file(tmp_path, caplog):
+    """RASTATIME 2026-10-08 - allowlist.txt next to the config file."""
+    path = tmp_path / "allowlist.txt"
+    path.write_text("# comment\n203.0.113.0/24\n2001:db8::7\n", encoding="utf-8")
+    allow = AllowList(path)
+    assert allow.allows("203.0.113.9") is True
+    assert allow.allows("2001:db8::7") is True
+    assert allow.allows("198.51.100.1") is False
+    assert allow.allows("") is False
+
+    clock = Clock()
+    throttle = RejectThrottle(limit=2, window=600, block=900, clock=clock)
+    auth = DjAuthenticator("http://web", session=_session(401, "0"), throttle=throttle, allow_list=allow)
+    for _ in range(5):
+        assert auth.check("show", "dj", "wrong", "203.0.113.9") == "denied"
+    assert throttle.blocked_for("203.0.113.9") == 0          # never counted
+    assert "allowed address, not counted" in caplog.text
+
+    # a blocked address becomes allowed when the UI rewrites the file
+    assert auth.check("show", "dj", "wrong", "198.51.100.1") == "denied"
+    assert auth.check("show", "dj", "wrong", "198.51.100.1") == "denied"
+    assert throttle.blocked_for("198.51.100.1") > 0
+    import os, time
+    path.write_text("198.51.100.0/24\n", encoding="utf-8")
+    os.utime(path, (time.time() + 5, time.time() + 5))      # a new mtime, even on coarse clocks
+    assert allow.allows("198.51.100.1") is True
+    auth.check("show", "dj", "wrong", "198.51.100.1")
+    assert "allowed address, not counted" in caplog.text
+
+    # missing file = empty list
+    path.unlink()
+    assert allow.allows("198.51.100.1") is False

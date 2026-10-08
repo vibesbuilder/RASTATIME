@@ -34,6 +34,7 @@ param(
     [int] $ErrorLimit = 50,
     [int] $ScannerLimit = 3,
     [int] $BadPasswordLimit = 5,
+    [string] $AllowListPath = 'C:\RASTATIME\config\allowlist.txt',   # 2026-10-08: written by System Status -> Allowed addresses
     [switch] $DryRun
 )
 $ErrorActionPreference = 'Continue'
@@ -45,6 +46,33 @@ $scannerPattern = '(/\.git|/\.env|/\.htpasswd|/\.aws|/wp-(admin|login|includes|c
 
 function Write-Log([string] $msg) {
     Add-Content -Path $log -Value ("{0:yyyy-MM-dd HH:mm:ss} {1}" -f (Get-Date), $msg)
+}
+
+# RASTATIME 2026-10-08 - the allow list (one address or CIDR network per
+# line, '#' comments) from System Status -> Allowed addresses.  IPv4 networks
+# are matched by prefix, IPv6 entries by exact address.
+$allowEntries = @()
+if (Test-Path $AllowListPath) {
+    $allowEntries = @(Get-Content $AllowListPath -ErrorAction SilentlyContinue | ForEach-Object { $_.Trim() } | Where-Object { $_ -and -not $_.StartsWith('#') })
+}
+function ConvertTo-IPv4Number([string] $dotted) {
+    $b = ([IPAddress] $dotted).GetAddressBytes()
+    return ([uint64] $b[0] * 16777216) + ([uint64] $b[1] * 65536) + ([uint64] $b[2] * 256) + [uint64] $b[3]
+}
+function Test-AllowedAddress([string] $ip) {
+    $isV4 = $ip -match '^\d+\.\d+\.\d+\.\d+$'
+    foreach ($entry in $allowEntries) {
+        if ($entry -eq $ip) { return $true }
+        if (-not $isV4) { continue }
+        $m = [regex]::Match($entry, '^(\d+\.\d+\.\d+\.\d+)/(\d+)$')
+        if (-not $m.Success) { continue }
+        $bits = [int] $m.Groups[2].Value
+        if ($bits -lt 0 -or $bits -gt 32) { continue }
+        try { $net = ConvertTo-IPv4Number $m.Groups[1].Value; $addr = ConvertTo-IPv4Number $ip } catch { continue }
+        $mask = if ($bits -eq 0) { [uint64] 0 } else { ([uint64] 4294967295 -shl (32 - $bits)) -band [uint64] 4294967295 }
+        if (($net -band $mask) -eq ($addr -band $mask)) { return $true }
+    }
+    return $false
 }
 
 function Test-PrivateAddress([string] $ip) {
@@ -113,6 +141,7 @@ $blocked = 0
 foreach ($ip in $candidates.Keys) {
     if ($active.ContainsKey($ip)) { continue }
     if (-not ($ip -as [ipaddress])) { continue }
+    if (Test-AllowedAddress $ip) { Write-Log "skipped $ip (allowed address; $($candidates[$ip]))"; continue }
     $until = $now.AddHours($BlockHours)
     $desc = "until=$($until.ToString('yyyy-MM-ddTHH:mm:ss')); reason=$($candidates[$ip])"
     if ($DryRun) {

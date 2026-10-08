@@ -120,3 +120,17 @@ if ($all.Count -eq 0) {
         $_ | Add-Member -NotePropertyName State -NotePropertyValue $(if ($_.Remaining -gt 0) { "blocked, $([Math]::Ceiling($_.Remaining / 60)) min left" } else { 'counting' }) -PassThru
     } | Format-Table Layer, Key, Failures, State -AutoSize
 }
+
+# RASTATIME 2026-10-08 - the allow list (System Status -> Allowed addresses;
+# mirror file written by the web UI, change it there)
+$allowFile = 'C:\RASTATIME\config\allowlist.txt'
+$allowed = @()
+if (Test-Path $allowFile) {
+    $allowed = @(Get-Content $allowFile -ErrorAction SilentlyContinue | ForEach-Object { $_.Trim() } | Where-Object { $_ -and -not $_.StartsWith('#') })
+}
+Write-Host ''
+if ($allowed.Count -eq 0) {
+    Write-Host 'Allowed addresses: none (System Status -> Allowed addresses).'
+} else {
+    Write-Host ('Allowed addresses (never braked, throttled or blocked): ' + ($allowed -join ', '))
+}

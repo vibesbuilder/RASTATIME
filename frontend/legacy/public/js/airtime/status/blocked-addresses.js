@@ -46,7 +46,28 @@
             tr.append('<td class="description"><strong>' + esc(who) + "</strong></td>");
             tr.append('<td class="description">' + esc(r.detail || r.count) + "</td>");
             tr.append('<td class="description"' + (r.seconds_left > 0 ? ' style="color:#c83f3f"' : "") + ">" + esc(state) + "</td>");
-            tr.append('<td><button type="button" class="btn blocked-unblock-btn" data-key="' + esc(r.key) + '">' + esc(i18n("unblock")) + "</button></td>");
+            var actions = '<button type="button" class="btn blocked-unblock-btn" data-key="' + esc(r.key) + '">' + esc(i18n("unblock")) + "</button>";
+            if (r.address && r.layer !== "web-user") {
+                // RASTATIME 2026-10-08 - one click: unblock everywhere and allow for good
+                actions += ' <button type="button" class="btn blocked-allow-btn" data-entry="' + esc(r.address) + '">' + esc(i18n("allow")) + "</button>";
+            }
+            tr.append("<td>" + actions + "</td>");
+            body.append(tr);
+        });
+    }
+
+    // RASTATIME 2026-10-08 - the allow list (address or CIDR network)
+    function renderAllowed(list) {
+        var body = $("#allowed-addresses-body");
+        body.empty();
+        if (!list || !list.length) {
+            body.append('<tr><td colspan="2" class="description">' + esc(i18n("allowed-none")) + "</td></tr>");
+            return;
+        }
+        $.each(list, function (_, entry) {
+            var tr = $("<tr/>");
+            tr.append('<td class="description"><strong>' + esc(entry) + "</strong></td>");
+            tr.append('<td><button type="button" class="btn allowed-remove-btn" data-entry="' + esc(entry) + '">' + esc(i18n("remove")) + "</button></td>");
             body.append(tr);
         });
     }
@@ -61,8 +82,44 @@
 
     function load() {
         $.ajax({ url: baseUrl + "systemstatus/blocked-addresses", type: "GET", dataType: "json", cache: false })
-            .done(function (data) { render(data && data.rows ? data.rows : []); })
+            .done(function (data) {
+                render(data && data.rows ? data.rows : []);
+                renderAllowed(data && data.allowed ? data.allowed : []);
+            })
             .fail(function () { render([]); });
+    }
+
+    function allow(entry) {
+        $.ajax({
+            url: baseUrl + "systemstatus/allow-address",
+            type: "POST",
+            dataType: "json",
+            data: { entry: entry, csrf_token: csrfToken() }
+        }).done(function (data) {
+            if (data && data.ok) {
+                showStatus(i18n("allowed-done").replace("%s", data.entry || entry), true);
+                $("#allowed-addresses-entry").val("");
+            } else {
+                showStatus(data && data.error === "bad-entry" ? i18n("allowed-invalid") : i18n("allowed-failed"), false);
+            }
+            load();
+        }).fail(function () {
+            showStatus(i18n("allowed-failed"), false);
+        });
+    }
+
+    function disallow(entry) {
+        $.ajax({
+            url: baseUrl + "systemstatus/disallow-address",
+            type: "POST",
+            dataType: "json",
+            data: { entry: entry, csrf_token: csrfToken() }
+        }).done(function (data) {
+            showStatus(data && data.ok ? i18n("allowed-removed").replace("%s", entry) : i18n("allowed-failed"), !!(data && data.ok));
+            load();
+        }).fail(function () {
+            showStatus(i18n("allowed-failed"), false);
+        });
     }
 
     function unblock(key) {
@@ -100,6 +157,32 @@
         $(document).on("click", ".blocked-unblock-btn", function () {
             unblock($(this).attr("data-key"));
         });
+        $(document).on("click", ".blocked-allow-btn", function () {
+            allow($(this).attr("data-entry"));
+        });
+        $(document).on("click", ".allowed-remove-btn", function () {
+            disallow($(this).attr("data-entry"));
+        });
+        $(document).on("click", "#allowed-addresses-add", function () {
+            var entry = $.trim($("#allowed-addresses-entry").val() || "");
+            if (entry) {
+                allow(entry);
+            }
+        });
+        $(document).on("keydown", "#allowed-addresses-entry", function (e) {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                $("#allowed-addresses-add").trigger("click");
+            }
+        });
+        var allowedHelp = $("#allowed-addresses-help");
+        if (allowedHelp.length && $.fn.rtTooltip) {
+            allowedHelp.rtTooltip({
+                content: { text: $("<div/>").text(allowedHelp.attr("data-tip") || "").html() },
+                placement: "right",
+                interactive: true
+            });
+        }
         load();
         timer = window.setInterval(load, REFRESH_MS);
         (window.rtPollTimers = window.rtPollTimers || []).push(timer); // stopped on the first 401 (common.js)

@@ -6322,6 +6322,18 @@ access logs and the playout log for the last 10 minutes and creates
 expiring them itself; private addresses are never blocked.  Still open:
 2FA / allow-lists for administrator accounts.
 
+**Addendum (2026-10-08, allow list).**  Operator request after a false
+positive locked their home address out: `Application_Model_AllowedAddresses`
+(cc_pref `allowed_addresses`, JSON; address or CIDR, IPv4/IPv6 matched by
+prefix) is honoured by all three layers - `LoginAttempts` neither counts
+nor brakes an allowed address, the playout's `dj_auth.AllowList` (reads the
+mirror `config/allowlist.txt` on every mtime change) skips the throttle,
+and `rt-firewall-watch.ps1` skips candidates on the list (`skipped … allowed
+address`).  System Status: **Allow** on a blocked row (unblock everywhere +
+add) and the table *Allowed addresses* (add by hand, Remove); `rt-blocks.ps1`
+prints the list.  LAN addresses stay exempt by the watcher's private-address
+rule regardless.
+
 ### 23.54 Remaining Time: Laid-Out `time_filled` and the Smart-Block Budget in the Show Builder (2026-10-06)
 
 **Context.**  The operator filled a show with a "time remaining" smart

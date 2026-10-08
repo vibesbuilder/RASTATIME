@@ -495,6 +495,18 @@ counts: it is what a browser tab with an expired session gets for its
 background polls, and since 2026-10-07 such a tab stops polling on the
 first one.
 
+**Allowed addresses (since 2026-10-08).**  Next to **Unblock** every
+blocked address has **Allow**: it is unblocked on every layer and put on
+the *Allowed addresses* list below, where you can also add an address or
+a network in CIDR notation by hand (`203.0.113.0/24`) and remove entries.
+An allowed address is never braked by the web login, never throttled by
+the DJ dial-in and never blocked by the firewall watcher; addresses of
+the studio network are exempt anyway.  Keep the list short - it switches
+every brake off for that address - and prefer a network for a home
+connection whose address changes with the provider.  The list is kept
+in the database and mirrored to `config\allowlist.txt` for the playout
+and the watcher.
+
 > **If you are locked out yourself:** wait the minutes shown, or ask a
 > colleague on another address.  In an emergency the counters sit in the
 > tables `cc_login_attempts` (per address) and `cc_subjs.login_attempts`

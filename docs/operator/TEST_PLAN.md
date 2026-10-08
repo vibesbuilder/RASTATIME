@@ -75,6 +75,7 @@ only with a fresh backup (03:30 run) and outside show boundaries.
 |---|---|---|---|
 | A5.1 | Web login brake | 11 wrong logins from one address (e.g. from the machine itself, then unblock) | 10 × "Wrong username or password", 11th: **429**, `Retry-After`, "Too many failed login attempts ..." |
 | A5.2 | Unblock | System Status → Blocked addresses → Unblock, or `rt-blocks.ps1 -Unblock <ip>` | entry gone on every layer |
+| A5.5 | Allow list | System Status → Blocked addresses → **Allow** on a blocked address; then 11 wrong logins and 5 wrong DJ passwords from it; `rt-firewall-watch.ps1 -DryRun` | unblocked everywhere and listed under Allowed addresses; never braked, throttled or a watcher candidate (`skipped … allowed address` in the log); **Remove** puts it back under the brakes |
 | A5.3 | Firewall watcher | `rt-firewall-watch.ps1 -DryRun -WindowMinutes 1440` | lists the scanners of the day; real runs in `logs\firewall-watch.log` every 5 min |
 | A5.4 | Secrets | `libretime.conf`, `icecast.xml`, Streams outputs, UI admins | no default values (classification script: all "custom"); passwords in `libretime.conf` quoted |
 
@@ -137,7 +138,7 @@ counts identical to live, scratch database dropped - passed.
 | `dj_client.py` | `python dj_client.py 8001 show <password> 20` | a scripted DJ source against the harbor (auth + switch) |
 | `log_growth.py` | `python log_growth.py` | log growth per day |
 | `cue_check.py` | `python cue_check.py <hour>` | 24/7 recording cue sidecars |
-| `infra\scripts\rt-blocks.ps1` (repo) | `.\rt-blocks.ps1` / `-Unblock <ip\|user:login>` | blocked addresses on every layer |
+| `infra\scripts\rt-blocks.ps1` (repo) | `.\rt-blocks.ps1` / `-Unblock <ip\|user:login>` | blocked addresses on every layer, plus the allow list |
 | `infra\scripts\rt-firewall-watch.ps1` (repo) | `.\rt-firewall-watch.ps1 -DryRun [-WindowMinutes N]` | what the watcher would block |
 | `infra\scripts\apache-cert-renewed.ps1` (repo) | run elevated | config test + Apache restart (the renewal step) |
 | `scripts\backup-auto.ps1` (repo) | registered task "RASTATIME-Backup" | nightly backup |

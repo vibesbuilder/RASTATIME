@@ -21,6 +21,10 @@ class Application_Model_LoginAttempts
      */
     public static function blockedSecondsForIp($ip)
     {
+        // RASTATIME 2026-10-08 - an allowed address is never braked
+        if (Application_Model_AllowedAddresses::isAllowed($ip)) {
+            return 0;
+        }
         $row = Application_Common_Database::prepareAndExecute(
             'SELECT attempts, last_attempt FROM cc_login_attempts WHERE ip = :ip',
             [':ip' => (string) $ip],
@@ -67,6 +71,10 @@ class Application_Model_LoginAttempts
     public static function increaseAttempts($ip)
     {
         $ip = (string) $ip;
+        // RASTATIME 2026-10-08 - an allowed address is not even counted
+        if (Application_Model_AllowedAddresses::isAllowed($ip)) {
+            return;
+        }
         $row = Application_Common_Database::prepareAndExecute(
             'SELECT attempts, last_attempt FROM cc_login_attempts WHERE ip = :ip',
             [':ip' => $ip],

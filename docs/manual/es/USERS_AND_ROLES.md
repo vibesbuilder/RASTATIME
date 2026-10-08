@@ -359,6 +359,19 @@ pestaña del navegador con la sesión caducada por sus consultas en
 segundo plano, y desde 2026-10-07 esa pestaña deja de consultar con la
 primera.
 
+**Direcciones permitidas (desde 2026-10-08).**  Junto a **Desbloquear**,
+cada dirección bloqueada tiene **Permitir**: se desbloquea en todas las
+capas y pasa a la lista *Direcciones permitidas* de abajo, donde también
+puede añadir a mano una dirección o una red en notación CIDR
+(`203.0.113.0/24`) y eliminar entradas.  Una dirección permitida nunca es
+frenada por el inicio de sesión web, nunca limitada por la conexión de DJ
+y nunca bloqueada por el vigilante del cortafuegos; las direcciones de la
+red del estudio están exentas de todos modos.  Mantenga la lista corta -
+desactiva todos los frenos para esa dirección - y prefiera una red para
+una conexión doméstica cuya dirección cambia con el proveedor.  La lista
+se guarda en la base de datos y se copia a `config\allowlist.txt` para el
+playout y el vigilante.
+
 > **Si usted mismo queda bloqueado:** espere los minutos indicados o pida
 > a un colega en otra dirección.  En caso de emergencia, los contadores
 > están en las tablas `cc_login_attempts` (por dirección) y
