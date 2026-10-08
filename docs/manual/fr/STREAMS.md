@@ -77,6 +77,14 @@ discret et un mix club puissant parviennent aux auditeurs à la même
 sonie.  Trois modes, choisis sur la page Streams ; chaque description
 est disponible sous forme d'icône d'aide à côté de son champ.
 
+Depuis le 2026-10-08, les réglages de sonie et le traitement de sortie
+(Stereo Tool) ci-dessous partagent le segment **Traitement audio**, sous
+Stream Label et Off Air Metadata.  Comme les segments de Settings →
+General, il est replié au départ : cliquez sur sa barre pour l'ouvrir.
+Après un enregistrement avec une valeur invalide, il s'ouvre de
+lui-même.  Le curseur *Replay Gain Modifier* (mode ReplayGain
+uniquement) se trouve directement sous le mode.
+
 | Mode | Ce qu'il fait |
 |---|---|
 | **Désactivé** | Chaque titre est diffusé à son propre niveau. |
@@ -237,6 +245,12 @@ niveau. 0 = bascule sèche. La chaîne audio applique la valeur quelques
 secondes après l'enregistrement (redémarrage planifié à un moment calme
 ou à une limite de titre). Avant le 2026-09-28 le champ n'avait aucun
 effet ; les deux sens étaient une bascule de 50 ms.
+
+Sur la page Streams, la section **Live Broadcasting** comporte trois
+blocs : **Passage de relais DJ** (le fondu ci-dessus), **Master Source** et
+**Show Source** (les données de connexion, voir *Se connecter comme
+Source Live* ci-dessous).  Depuis le 2026-10-08, l'explication d'une
+ligne de chaque bloc est une icône d'aide à droite de son titre.
 
 ### Se connecter comme Source Live
 

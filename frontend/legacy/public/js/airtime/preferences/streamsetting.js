@@ -9,6 +9,14 @@ function showErrorSections() {
       }
     }
   });
+  // RASTATIME 2026-10-08 - the Audio Processing segment starts collapsed; it
+  // opens when it holds a validation error, so the red hint is not hidden.
+  $(".collapsible-content").each(function () {
+    if ($(this).find(".errors").length > 0) {
+      $(this).show();
+      $(this).prev(".collapsible-header").removeClass("closed");
+    }
+  });
 }
 function restrictOggBitrate(ele, on) {
   var div = ele.closest("div");
@@ -306,6 +314,56 @@ function setupEventListeners() {
     placement: "right",
     interactive: true,
   });
+
+  setupHelpIcons();
+}
+
+// RASTATIME 2026-09-28 - Switch Transition Fade: explanation as a help
+// icon next to the field, like the Master Source username below it.
+// 2026-10-02: the Output Processing (Stereo Tool) checkbox as well; its
+// path and licence fields sit below their label, so their icon goes
+// right of the label text instead.
+// 2026-10-08: called from setupEventListeners, so the icons come back after a
+// save re-renders the form (they were plain paragraphs again before).
+function setupHelpIcons() {
+  $.rtDescriptionTooltips($(".stream-setting-global"), {
+    where: "field",
+    only: [
+      "transition_fade",
+      "loudnessMode",
+      "loudnessTarget",
+      "loudnessTruePeak",
+      "loudnessMeasure",
+      "stereotoolEnabled",
+    ],
+  });
+  $.rtDescriptionTooltips($(".stream-setting-global"), {
+    where: "label",
+    only: ["stereotoolLibrary", "stereotoolPreset", "stereotoolLicenseKey"],
+  });
+  setupLegendHelpIcons();
+}
+
+// RASTATIME 2026-10-08 - Live Broadcasting (operator): the intro line of each
+// block (DJ Hand-over, Master Source, Show Source) becomes a help icon right
+// of the block title.
+function setupLegendHelpIcons() {
+  $("p.legend-help").each(function () {
+    var p = $(this);
+    var legend = p.siblings("legend").first();
+    var text = $.trim(p.text());
+    if (!legend.length || !text) {
+      return;
+    }
+    p.remove();
+    var icon = $('<span class="help_icon"></span>');
+    legend.append(icon);
+    icon.rtTooltip({
+      content: { text: $("<div>").text(text).html() },
+      placement: "right",
+      interactive: true,
+    });
+  });
 }
 
 function setSliderForReplayGain() {
@@ -398,26 +456,6 @@ $(document).ready(function () {
   setSliderForReplayGain();
   getAdminPasswordStatus();
 
-  // RASTATIME 2026-09-28 - Switch Transition Fade: explanation as a help
-  // icon next to the field, like the Master Source username below it.
-  // 2026-10-02: the Output Processing (Stereo Tool) checkbox as well; its
-  // path and licence fields sit below their label, so their icon goes
-  // right of the label text instead.
-  $.rtDescriptionTooltips($(".stream-setting-global"), {
-    where: "field",
-    only: [
-      "transition_fade",
-      "loudnessMode",
-      "loudnessTarget",
-      "loudnessTruePeak",
-      "loudnessMeasure",
-      "stereotoolEnabled",
-    ],
-  });
-  $.rtDescriptionTooltips($(".stream-setting-global"), {
-    where: "label",
-    only: ["stereotoolLibrary", "stereotoolPreset", "stereotoolLicenseKey"],
-  });
   setLoudnessModeFields();
   setupLoudnessListeners();
   var s = $("[name^='customStreamSettings']:checked");

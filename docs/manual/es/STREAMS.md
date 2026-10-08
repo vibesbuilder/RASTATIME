@@ -68,6 +68,14 @@ suave y una mezcla de club potente lleguen a los oyentes con la misma
 sonoridad.  Tres modos, elegidos en la página Streams; cada descripción
 está disponible como icono de ayuda junto a su campo.
 
+Desde el 2026-10-08 los ajustes de sonoridad y el procesado de salida
+(Stereo Tool) de abajo comparten el segmento **Procesado de audio**, bajo
+Stream Label y Off Air Metadata.  Como los segmentos de Settings →
+General, empieza plegado: haga clic en su barra para abrirlo.  Tras
+guardar con un valor no válido se abre solo.  El control deslizante
+*Replay Gain Modifier* (solo en modo ReplayGain) está justo debajo del
+modo.
+
 | Modo | Qué hace |
 |---|---|
 | **Desactivado** | Cada pista se reproduce a su propio nivel. |
@@ -213,6 +221,12 @@ cambio seco. La cadena de audio aplica el valor unos segundos después de
 guardar (reinicio planificado en un momento tranquilo o en un límite de
 pista). Antes del 2026-09-28 el campo no tenía efecto; ambos sentidos
 eran un cambio de 50 ms.
+
+En la página Streams, la sección **Live Broadcasting** tiene tres
+bloques: **Relevo del DJ** (el fundido de arriba), **Master Source** y
+**Show Source** (los datos de conexión, vea *Conectarse como Fuente en
+vivo* más abajo).  Desde el 2026-10-08 la explicación de una línea de
+cada bloque es un icono de ayuda a la derecha de su título.
 
 ### Conectarse como Fuente en vivo
 

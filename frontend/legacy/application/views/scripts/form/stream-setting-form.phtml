@@ -68,7 +68,7 @@ $s_name = "s" . $this->stream_number;
             <dt id="outputServer-label">
                 <label for="<?php echo $s_name ?>_data-host">
                     <?php echo $this->element->getElement('host')->getLabel() ?>
-                    <span class="info-text-small"><?php echo _("(Required)") ?></span> :
+                    <span class="info-text-small"><?php echo _("(Required)") ?></span>:
                 </label>
             </dt>
             <dd id="outputServer-element">
@@ -86,7 +86,7 @@ $s_name = "s" . $this->stream_number;
             <dt id="outputPort-label">
                 <label for="<?php echo $s_name ?>_data-port">
                     <?php echo $this->element->getElement('port')->getLabel() ?>
-                    <span class="info-text-small"><?php echo _("(Required)") ?></span> :
+                    <span class="info-text-small"><?php echo _("(Required)") ?></span>:
                 </label>
             </dt>
             <dd id="outputPort-element">
@@ -103,7 +103,7 @@ $s_name = "s" . $this->stream_number;
             <!-- Mount point (Icecast only) -->
             <dt id="outputMountpoint-label">
                 <label for="<?php echo $s_name ?>_data-mount">
-                    <?php echo $this->element->getElement('mount')->getLabel() ?> :
+                    <?php echo $this->element->getElement('mount')->getLabel() ?>:
                 </label>
             </dt>
             <dd id="outputMountpoint-element">
@@ -113,7 +113,7 @@ $s_name = "s" . $this->stream_number;
             <!-- Source username -->
             <dt id="outputUser-label">
                 <label for="<?php echo $s_name ?>_data-user">
-                    <?php echo $this->element->getElement('user')->getLabel() ?> :
+                    <?php echo $this->element->getElement('user')->getLabel() ?>:
                     <span class="stream_username_help_icon"></span>
                 </label>
             </dt>
@@ -125,7 +125,7 @@ $s_name = "s" . $this->stream_number;
             <dt id="outputPass-label">
                 <label for="<?php echo $s_name ?>_data-pass">
                     <?php echo $this->element->getElement('pass')->getLabel() ?>
-                    <span class="info-text-small"><?php echo _("(Required)") ?></span> :
+                    <span class="info-text-small"><?php echo _("(Required)") ?></span>:
                 </label>
             </dt>
             <dd id="outputPass-element">
@@ -135,7 +135,7 @@ $s_name = "s" . $this->stream_number;
             <!-- Admin username -->
             <dt id="<?php echo $s_name ?>AdminUser-label">
                 <label for="<?php echo $s_name ?>_data-admin_user">
-                    <?php echo $this->element->getElement('admin_user')->getLabel() ?> :
+                    <?php echo $this->element->getElement('admin_user')->getLabel() ?>:
                     <span class="admin_username_help_icon"></span>
                 </label>
             </dt>
@@ -146,7 +146,7 @@ $s_name = "s" . $this->stream_number;
             <!-- Admin password -->
             <dt id="<?php echo $s_name ?>AdminPass-label">
                 <label for="<?php echo $s_name ?>_data-admin_pass">
-                    <?php echo $this->element->getElement('admin_pass')->getLabel() ?> :
+                    <?php echo $this->element->getElement('admin_pass')->getLabel() ?>:
                 </label>
             </dt>
             <dd id="<?php echo $s_name ?>AdminPass-element">
@@ -156,7 +156,7 @@ $s_name = "s" . $this->stream_number;
             <!-- Stream name -->
             <dt id="stationName-label">
                 <label for="<?php echo $s_name ?>_data-name">
-                    <?php echo $this->element->getElement('name')->getLabel() ?> :
+                    <?php echo $this->element->getElement('name')->getLabel() ?>:
                 </label>
             </dt>
             <dd id="stationName-element" class="clearfix">
@@ -166,7 +166,7 @@ $s_name = "s" . $this->stream_number;
             <!-- Genre -->
             <dt id="outputGenre-label">
                 <label for="<?php echo $s_name ?>_data-genre">
-                    <?php echo $this->element->getElement('genre')->getLabel() ?> :
+                    <?php echo $this->element->getElement('genre')->getLabel() ?>:
                 </label>
             </dt>
             <dd id="outputGenre-element">
@@ -176,7 +176,7 @@ $s_name = "s" . $this->stream_number;
             <!-- Website URL -->
             <dt id="stationURL-label">
                 <label for="<?php echo $s_name ?>_data-url">
-                    <?php echo $this->element->getElement('url')->getLabel() ?> :
+                    <?php echo $this->element->getElement('url')->getLabel() ?>:
                 </label>
             </dt>
             <dd id="stationURL-element" class="clearfix">
@@ -186,7 +186,7 @@ $s_name = "s" . $this->stream_number;
             <!-- Description -->
             <dt id="stationDescription-label">
                 <label for="<?php echo $s_name ?>_data-description">
-                    <?php echo $this->element->getElement('description')->getLabel() ?> :
+                    <?php echo $this->element->getElement('description')->getLabel() ?>:
                 </label>
             </dt>
             <dd id="stationDescription-element" class="clearfix">
@@ -205,7 +205,7 @@ $s_name = "s" . $this->stream_number;
 
             <!-- Public stream URL (read-only, auto-generated) -->
             <dt id="outputStreamURL-label">
-                <label><?php echo $this->element->getElement('public_url')->getLabel() ?> :</label>
+                <label><?php echo $this->element->getElement('public_url')->getLabel() ?>:</label>
             </dt>
             <dd id="outputStreamURL-element">
                 <?php $pub = $this->element->getElement('public_url')->getValue(); ?>

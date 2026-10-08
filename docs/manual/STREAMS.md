@@ -101,6 +101,13 @@ and a loud club mix reach listeners at the same loudness.  Three modes,
 selected on the Streams page; every description is available as a help
 icon next to its field.
 
+Since 2026-10-08 the loudness settings and the Output Processing (Stereo
+Tool) below share the segment **Audio Processing**, under Stream Label
+and Off Air Metadata.  Like the segments under Settings → General it
+starts collapsed: click its bar to open it.  After a save with an
+invalid value it opens by itself.  The *Replay Gain Modifier* slider
+(ReplayGain mode only) sits directly under the mode.
+
 | Mode | What it does |
 |---|---|
 | **Off** | Every track plays at its own level. |
@@ -272,6 +279,12 @@ and the programme returns at full level at once. 0 = a hard switch. The
 value is applied by the audio chain a few seconds after saving (planned
 restart at a quiet moment or track boundary). Before 2026-09-28 the
 field had no effect; both directions were a 50 ms switch.
+
+On the Streams page the **Live Broadcasting** section has three blocks:
+**DJ Hand-over** (the fade above), **Master Source** and **Show Source**
+(the connection data, see *Connecting as a Live Source* below).  Since
+2026-10-08 each block's one-line explanation is a help icon right of
+its title.
 
 ### Connecting as a Live Source
 

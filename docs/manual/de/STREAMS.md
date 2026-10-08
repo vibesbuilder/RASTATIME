@@ -104,6 +104,14 @@ und ein lauter Club-Mix die Hörer mit derselben Lautheit erreichen.
 Drei Modi, wählbar auf der Streams-Seite; jede Beschreibung steht als
 Hilfesymbol neben ihrem Feld bereit.
 
+Seit 2026-10-08 teilen sich die Lautheitseinstellungen und das
+Ausgangs-Processing (Stereo Tool) unten das Segment **Audioverarbeitung**
+unter Stream Label und Off Air Metadata.  Wie die Segmente unter
+Settings → General ist es anfangs zugeklappt: Klicken Sie auf seinen
+Balken, um es zu öffnen.  Nach dem Speichern mit einem ungültigen Wert
+öffnet es sich von selbst.  Der Regler *Replay Gain Modifier* (nur im
+ReplayGain-Modus) steht direkt unter dem Modus.
+
 | Modus | Was er tut |
 |---|---|
 | **Aus** | Jeder Titel spielt mit seinem eigenen Pegel. |
@@ -289,6 +297,12 @@ Wechsel. Die Audiokette übernimmt den Wert wenige Sekunden nach dem
 Speichern (geplanter Neustart in einem ruhigen Moment oder an einer
 Titelgrenze). Vor dem 2026-09-28 hatte das Feld keine Wirkung; beide
 Richtungen waren ein 50-ms-Wechsel.
+
+Auf der Streams-Seite hat der Abschnitt **Live Broadcasting** drei
+Blöcke: **DJ-Übergabe** (die Blende oben), **Master Source** und
+**Show Source** (die Verbindungsdaten, siehe *Verbindung als
+Live-Quelle* unten).  Seit 2026-10-08 steht die einzeilige Erklärung
+jedes Blocks als Hilfesymbol rechts neben seinem Titel.
 
 ### Verbindung als Live-Quelle
 

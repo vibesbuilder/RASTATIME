@@ -777,6 +777,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Settings → Streams: "Audio Processing" segment, help icons, no space
+  before colons (2026-10-08, operator)** - Loudness Normalization (with the
+  Replay Gain Modifier, now directly under the mode), Loudness measurement
+  and Output Processing (Stereo Tool) share one collapsed segment *Audio
+  Processing* (DE *Audioverarbeitung*, FR *Traitement audio*, ES *Procesado
+  de audio*), like the General segments; it opens by itself when it holds a
+  validation error.  The one-line explanations of the Live Broadcasting
+  blocks (DJ Hand-over, Master Source, Show Source) are help icons right of
+  the block titles.  The page's hand-written labels lost the space before
+  the colon ("Mount Point :", "Server (Required) :").  The Stereo Tool
+  library / preset / licence fields are 300 px instead of 420 px and give
+  way down to 140 px, so the status right of them ("file found", "a key is
+  stored") stays on their line - measured in all four languages at 800 to
+  1000 px page width in a harness with the served CSS/JS.  Side fix: the
+  field help icons are rebuilt after a save that re-renders the form (they
+  came back as plain paragraphs).  Segment name in four catalogues (+ .mo),
+  manual STREAMS x4.
 - **Settings → General in eingeklappten Segmenten (2026-10-08, Operator-Go)**
   — Stationsname/-beschreibung bleiben oben; darunter *Station*, *Styling*,
   *Playout*, *Automation* als neue Segmente, *Live Text Info* und *TuneIn

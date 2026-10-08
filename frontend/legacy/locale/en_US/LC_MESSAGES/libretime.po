@@ -4913,3 +4913,7 @@ msgstr "%s attempt(s), last %s"
 #: application/controllers/LocaleController.php
 msgid "Check the feed and the episode's download address under Library → Podcasts."
 msgstr "Check the feed and the episode's download address under Library → Podcasts."
+
+#: application/views/scripts/preference/stream-setting.phtml
+msgid "Audio Processing"
+msgstr "Audio Processing"

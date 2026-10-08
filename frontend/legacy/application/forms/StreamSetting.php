@@ -105,7 +105,7 @@ class Application_Form_StreamSetting extends Zend_Form
         $st_library
             ->setLabel(_('Stereo Tool library (DLL)'))
             ->setValue($library)
-            ->setAttribs(['class' => 'input_text', 'style' => 'width: 420px', 'placeholder' => 'C:\\Tools\\stereotool\\libStereoTool_64.dll'])
+            ->setAttribs(['class' => 'input_text', 'style' => 'width: 300px', 'placeholder' => 'C:\\Tools\\stereotool\\libStereoTool_64.dll'])
             ->setDescription(_('Full path of the Stereo Tool library for Liquidsoap on this machine (the 64-bit DLL from the Stereo Tool download page). The setting is only used when the file exists.'))
             ->setDecorators(['ViewHelper']);
         $this->addElement($st_library);
@@ -114,7 +114,7 @@ class Application_Form_StreamSetting extends Zend_Form
         $st_preset
             ->setLabel(_('Stereo Tool preset (.sts)'))
             ->setValue(Application_Model_Preference::getStereoToolPreset())
-            ->setAttribs(['class' => 'input_text', 'style' => 'width: 420px', 'placeholder' => 'C:\\Tools\\stereotool\\rastatime.sts'])
+            ->setAttribs(['class' => 'input_text', 'style' => 'width: 300px', 'placeholder' => 'C:\\Tools\\stereotool\\rastatime.sts'])
             ->setDescription(_('Optional: a preset exported from the Stereo Tool application. Without a preset the library starts with its defaults.'))
             ->setDecorators(['ViewHelper']);
         $this->addElement($st_preset);
@@ -122,7 +122,7 @@ class Application_Form_StreamSetting extends Zend_Form
         $st_key = new Zend_Form_Element_Password('stereotoolLicenseKey');
         $st_key
             ->setLabel(_('Stereo Tool licence key'))
-            ->setAttribs(['class' => 'input_text', 'style' => 'width: 420px', 'autocomplete' => 'new-password',
+            ->setAttribs(['class' => 'input_text', 'style' => 'width: 300px', 'autocomplete' => 'new-password',
                 'placeholder' => $this->stereotoolLicenseSet ? _('(a key is stored - leave blank to keep it)') : ''])
             ->setDescription(_('The licence key from your Stereo Tool account. Stored on the server, never shown again; leave the field blank to keep the stored key, enter CLEAR to remove it.'))
             ->setDecorators(['ViewHelper']);

@@ -2735,6 +2735,13 @@ dl.zend_form dt > .help_icon {
   vertical-align: middle;
   top: 0;
 }
+/* RASTATIME 2026-10-08 - help icon right of a block title on the streams page
+   (Live Broadcasting: DJ Hand-over, Master Source, Show Source) */
+.stream-setting-global legend > .help_icon {
+  margin-left: 6px;
+  vertical-align: middle;
+  top: -1px;
+}
 .edit-md-dialog #submitButtons-element {
     display: -webkit-box;
     display: -moz-box;
@@ -3447,6 +3454,29 @@ dd .stream-status {
     white-space: nowrap;
 }
 .stream-setting-global dd#stereotoolEnabled-element {
+    white-space: nowrap;
+}
+/* RASTATIME 2026-10-08 - the status text right of the Stereo Tool path and
+   licence fields stays on the field's line (operator): the fields are 300 px
+   (StreamSetting.php) and give way down to 140 px when a long translation
+   ("file not found on the server") needs the room.  The
+   fieldset must not grow to its min-content (the browser default), or the
+   field never gives way and the column scrolls sideways instead */
+#audio-processing-settings > fieldset {
+    min-width: 0;
+}
+.stream-setting-global dd.stereotool-field {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    box-sizing: border-box;
+}
+.stream-setting-global dd.stereotool-field > input {
+    flex: 0 1 auto;
+    min-width: 140px;
+}
+.stream-setting-global dd.stereotool-field > span {
+    flex: none;
     white-space: nowrap;
 }
 
