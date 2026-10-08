@@ -793,7 +793,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   1000 px page width in a harness with the served CSS/JS.  Side fix: the
   field help icons are rebuilt after a save that re-renders the form (they
   came back as plain paragraphs).  Segment name in four catalogues (+ .mo),
-  manual STREAMS x4  `f6e1b91`.
+  manual STREAMS x4.  `f6e1b91`.
 - **Settings → General in eingeklappten Segmenten (2026-10-08, Operator-Go)**
   — Stationsname/-beschreibung bleiben oben; darunter *Station*, *Styling*,
   *Playout*, *Automation* als neue Segmente, *Live Text Info* und *TuneIn
