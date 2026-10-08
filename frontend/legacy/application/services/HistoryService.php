@@ -859,6 +859,28 @@ class Application_Service_HistoryService
                 // Scheduled file play — original path.
                 $metadata = [];
                 $metadata['showname'] = $show->getDbName();
+                // RASTATIME 2026-10-08 - the file fields the default templates
+                // show are written into the row itself, so the row keeps its
+                // title, creator, length, composer and copyright after the
+                // track is deleted from the library (migration 0065 turned
+                // the cascade into SET NULL; the report then reads the row
+                // like a webstream row, from the metadata).
+                $playedFile = CcFilesQuery::create()->findPk($fileId, $this->con);
+                if ($playedFile) {
+                    $snapshot = [
+                        MDATA_KEY_TITLE => $playedFile->getDbTrackTitle(),
+                        MDATA_KEY_CREATOR => $playedFile->getDbArtistName(),
+                        MDATA_KEY_DURATION => $playedFile->getDbLength(),
+                        MDATA_KEY_COMPOSER => $playedFile->getDbComposer(),
+                        MDATA_KEY_COPYRIGHT => $playedFile->getDbCopyright(),
+                    ];
+                    foreach ($snapshot as $key => $value) {
+                        $value = trim((string) $value);
+                        if ($value !== '') {
+                            $metadata[$key] = mb_substr($value, 0, 128);
+                        }
+                    }
+                }
 
                 // first check if this is a duplicate
                 // (caused by restarting liquidsoap)

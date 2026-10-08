@@ -1,10 +1,13 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.67
+Draft version: 0.68
 Date: 2026-10-03
 
 > **Revision history**
+> - **0.68 (2026-10-08)** — **Playout history survives deleted tracks**
+>   (§23.55): `cc_playout_history.file_id` ON DELETE SET NULL (migration
+>   0065) and the file fields snapshotted into the row's metadata.
 > - **0.67 (2026-10-06)** — **Remaining time laid out** (§23.54):
 >   `time_filled` = show start to the end of the last row; the show
 >   builder picks a "time remaining" smart block against the laid-out
@@ -6372,3 +6375,32 @@ are untouched.  Rehearsal of the standard hour: station IDs at 12:00.0,
 24:06.9 and 36:18.8 (each block 720.0 s laid out), 0.02 s free at the
 end.  A block's length shown in a playlist (`getDynamicBlockLength`,
 the limit itself) now equals what it airs.
+
+### 23.55 Playout History Survives Deleted Tracks (2026-10-08)
+
+**Context.**  The operator noticed in LibreTime that deleting a track from
+the library removes its rows from the playout history, and ruled that
+deleting a track, a webstream or a line-in must never touch the history.
+RASTATIME inherited the cause: `cc_playout_history.file_id` was declared
+`ON DELETE CASCADE`, and a file row carried nothing but the show name -
+title, creator, length, composer and copyright were read live from
+`cc_files` by the report.  Webstream and line-in rows were already safe:
+no foreign key, name and label copied into the metadata when they air.
+
+**Decision.**  Two parts in one legacy migration (0065, schema 65): the
+foreign key becomes `ON DELETE SET NULL`, and the five file fields the two
+default templates show (Log Sheet: title, creator; File Summary: title,
+creator, played, length, composer, copyright) are copied into
+`cc_playout_history_metadata` for every existing file row that lacks
+them.  `HistoryService::insertPlayedItem` writes the same five keys for
+every new file row.  A deleted track's row thus falls into the report's
+"null file" branch and renders from the metadata, exactly like a webstream
+row; the *File Summary* keeps grouping by `file_id`, so it counts tracks
+that still exist.  The Django model keeps `on_delete=DO_NOTHING` (the
+database rule decides, as before); no Propel regeneration.  The library's
+*Play Count* column counts rows with a file reference, unchanged.
+
+**Operation.**  The migration runs on the operator's go, after a fresh
+backup and outside a show boundary (`manage.py migrate`, then API
+restart); the writer change is live immediately and harmless before the
+migration (extra metadata keys).

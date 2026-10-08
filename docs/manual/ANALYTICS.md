@@ -54,6 +54,14 @@ Three tabs below it (DJs see only the third):
 > `/playouthistory/{playout-history-feed,file-history-feed,show-history-feed}`,
 > all filtered by the picked range on the server side.
 
+> **Deleting a track keeps its history (since 2026-10-08).** Every
+> file row carries title, creator, length, composer and copyright of
+> the moment it aired. Deleting the track from the library clears the
+> file reference and the row stays, shown from those values - the
+> same way webstream and line-in rows are shown. The *File Summary*
+> tab counts tracks that still exist. Before, LibreTime deleted the
+> history rows together with the track.
+
 ---
 
 ## 2. History Templates

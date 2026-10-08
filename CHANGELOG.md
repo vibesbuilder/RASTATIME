@@ -1046,6 +1046,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Sendeprotokoll überlebt das Löschen eines Titels (2026-10-08,
+  Operator-Go)** — LibreTime-Erbe: `cc_playout_history.file_id` war ON DELETE
+  CASCADE, ein Datei-Löschen nahm alle Protokollzeilen des Titels mit, und die
+  Zeilen trugen nur den Sendungsnamen (Titel/Interpret kamen live aus
+  `cc_files`).  Migration 0065 (Schema 65): Fremdschlüssel → ON DELETE SET
+  NULL, Titel/Interpret/Länge/Komponist/Copyright in die Metadaten aller
+  bestehenden Datei-Zeilen nachgefüllt; `HistoryService::insertPlayedItem`
+  schreibt die fünf Felder bei jeder neuen Zeile mit.  Eine Zeile eines
+  gelöschten Titels wird dann wie eine Webstream-Zeile aus den Metadaten
+  dargestellt.  Webstreams und Line-Ins waren schon sicher (kein
+  Fremdschlüssel, Name/Label werden beim Senden kopiert).  Migration läuft
+  erst nach Freigabe des Operators (Backup, ruhiges Fenster).  Manual
+  ANALYTICS ×4, Architektur §23.55 (0.68).
 - **Firewall-Wächter sperrte den Operator aus (2026-10-07)** — ein
   Browser-Tab mit abgelaufener Sitzung fragte weiter jede Minute „Now
   Playing", Preflight-Warnungen und den Kalender-Feed ab, bekam 60 × 401 in
