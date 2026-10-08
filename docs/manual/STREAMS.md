@@ -64,6 +64,7 @@ Each of the four stream cards has the same field set; only
 | **Enabled** | Master switch for this stream. When off, the playout does not connect. |
 | **Type** | **Icecast** (recommended; modern, free, widely supported), **Shoutcast** (legacy; pre-2010 listeners), **Custom** (raw HTTP MP3 push to a non-standard target). |
 | **Server / Port** | Where the Icecast server is. `localhost:8000` for the default install. Use a remote IP / hostname if streaming to a cloud Icecast. |
+| **Listener URL** (read-only) | Since 2026-10-04 an output on the local Icecast is published as `<public URL>/stream/<mount>` (e.g. `https://rastatime.example.org/stream/rastatime`): the web server hands `/stream/` to Icecast, so the player, the widgets and the embed codes use the same address in the LAN and on the internet and port 8000 stays internal. An output on a remote Icecast keeps its own `http://host:port/mount`. |
 | **Mount** | The mountpoint URL path, with leading `/`. e.g. `/rastatime` becomes `http://<server>:<port>/rastatime`. Must be unique per Icecast server. |
 | **Source User / Password** | Credentials Icecast expects from a source client. Set in the Icecast config file (`config/icecast.xml`); the default install uses `source` / `hackme`. Change both for production. |
 | **Format** | **MP3** (universal compatibility), **AAC** (better quality at low bitrates), **OGG Vorbis** (free, less ubiquitous), **OPUS** (modern, very efficient), **FLAC** (lossless, very large). |

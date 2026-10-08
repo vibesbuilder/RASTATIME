@@ -67,6 +67,7 @@ Standard).
 | **Aktiviert** | Hauptschalter für diesen Stream. Wenn aus, verbindet sich das Playout nicht. |
 | **Typ** | **Icecast** (empfohlen; modern, kostenlos, weit unterstützt), **Shoutcast** (Legacy; pre-2010-Hörer), **Custom** (rohes HTTP-MP3-Push an ein Nicht-Standard-Ziel). |
 | **Server / Port** | Wo der Icecast-Server ist. `localhost:8000` für die Standardinstallation. Verwenden Sie eine Remote-IP / einen Hostnamen, wenn Sie an ein Cloud-Icecast streamen. |
+| **Hörer-URL** (nur Anzeige) | Seit 2026-10-04 wird ein Ausgang auf dem lokalen Icecast als `<öffentliche URL>/stream/<Mount>` veröffentlicht (z. B. `https://rastatime.example.org/stream/rastatime`): Der Webserver reicht `/stream/` an Icecast durch, sodass Player, Widgets und Embed-Codes im LAN und im Internet dieselbe Adresse verwenden und Port 8000 intern bleibt. Ein Ausgang auf einem entfernten Icecast behält sein `http://host:port/mount`. |
 | **Mount** | Der Mountpoint-URL-Pfad, mit führendem `/`. z.B. `/rastatime` wird zu `http://<server>:<port>/rastatime`. Muss pro Icecast-Server eindeutig sein. |
 | **Source-User / Passwort** | Anmeldedaten, die Icecast von einem Quell-Client erwartet. Gesetzt in der Icecast-Konfigurationsdatei (`config/icecast.xml`); die Standardinstallation verwendet `source` / `hackme`. Ändern Sie beides für die Produktion. |
 | **Format** | **MP3** (universelle Kompatibilität), **AAC** (bessere Qualität bei niedrigen Bitraten), **OGG Vorbis** (kostenlos, weniger allgegenwärtig), **OPUS** (modern, sehr effizient), **FLAC** (verlustfrei, sehr groß). |

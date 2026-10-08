@@ -333,6 +333,58 @@ l'émission.
 
 ---
 
+## 8. Protection de la connexion (depuis le 2026-10-06)
+
+La page de connexion freine les échecs répétés – indispensable depuis
+que l'interface web est accessible depuis Internet.
+
+| Portée | Règle | Effet |
+|---|---|---|
+| Par adresse source | 10 connexions échouées en 15 minutes | l'adresse attend 15 minutes ; chaque tentative pendant ce temps reçoit « Trop de tentatives de connexion échouées. Veuillez réessayer dans N minute(s). » (HTTP 429), aucun mot de passe n'est vérifié |
+| Par nom d'utilisateur | 20 connexions échouées en 60 minutes | le nom attend 5 minutes – volontairement court, pour que personne ne puisse bloquer durablement un administrateur en martelant son nom depuis de nombreuses adresses |
+| Connexion DJ (harbor) | 5 connexions refusées d'une adresse en 10 minutes | l'adresse est refusée pendant 15 minutes sans interroger l'application web |
+
+Une connexion réussie remet à zéro les compteurs de son adresse et de son
+nom.  Les seuils sont dans `constants.php` (`RASTATIME_LOGIN_*`) et dans
+le playout (`RejectThrottle`) ; les tentatives refusées sont journalisées
+avec l'adresse (`logs/legacy.log`, `logs/playout-stdout.log`).
+
+**Voir et lever les blocages.**  Paramètres → État du système →
+*Adresses bloquées* liste chaque niveau (connexion web par adresse et par
+utilisateur, connexion DJ, veilleur de pare-feu) avec le nombre d'échecs
+et les minutes restantes ; **Débloquer** efface l'entrée à tous les
+niveaux – pour le DJ qui appelle parce qu'un mauvais mot de passe était
+enregistré dans son client.  La même liste existe en PowerShell :
+`infra\scripts\rt-blocks.ps1` (`-Unblock <adresse>` ou
+`-Unblock user:<login>`).  Un DJ qui se connecte **avant** le début de
+l'émission est refusé mais jamais compté : seul un mauvais mot de passe
+compte.  Les scanners Internet persistants sont bloqués 24 heures dans le
+pare-feu Windows par une tâche de veille (toutes les 5 minutes ; 50
+requêtes refusées en 60 minutes, 3 chemins typiques de scanner ou 5
+mauvais mots de passe DJ) et apparaissent dans la même liste.  Une
+réponse « non connecté » (401) ne compte jamais : c'est ce qu'un onglet
+de navigateur à la session expirée reçoit pour ses requêtes d'arrière-
+plan, et depuis le 2026-10-07 un tel onglet cesse d'interroger dès la
+première.
+
+**Adresses autorisées (depuis le 2026-10-08).**  À côté de **Débloquer**,
+chaque adresse bloquée a **Autoriser** : elle est débloquée sur toutes les
+couches et placée dans la liste *Adresses autorisées* en dessous, où vous
+pouvez aussi ajouter à la main une adresse ou un réseau en notation CIDR
+(`203.0.113.0/24`) et retirer des entrées.  Une adresse autorisée n'est
+jamais freinée par la connexion web, jamais limitée par la connexion DJ et
+jamais bloquée par le veilleur de pare-feu ; les adresses du réseau du
+studio sont exemptées de toute façon.  Gardez la liste courte - elle
+désactive tous les freins pour cette adresse - et préférez un réseau pour
+une connexion domestique dont l'adresse change avec le fournisseur.  La
+liste est conservée en base et recopiée dans `config\allowlist.txt` pour
+le playout et le veilleur.
+
+> **Si vous êtes vous-même bloqué :** attendez les minutes indiquées ou
+> demandez à un collègue sur une autre adresse.  En cas d'urgence, les
+> compteurs se trouvent dans les tables `cc_login_attempts` (par adresse)
+> et `cc_subjs.login_attempts` (par utilisateur).
+
 ## Où aller ensuite
 
 * [Paramètres](./SETTINGS.md) — tour de chaque

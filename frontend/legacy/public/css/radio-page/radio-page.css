@@ -1,10 +1,32 @@
 html {
-    background: url("img/background-testing-3.jpg") no-repeat center center fixed;
-    -webkit-background-size: cover;
-    -moz-background-size: cover;
-    -o-background-size: cover;
-    background-size: cover;
+    background: #111;
     overflow-y: auto;
+}
+
+/* RASTATIME 2026-10-08 - never wider than the phone: a page that overflows
+   sideways makes Chrome widen the layout viewport, and fixed elements
+   (the bottom bar) then reach past the screen. */
+html, body {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+/* RASTATIME 2026-10-08 - the photo sits on its own fixed, viewport-sized
+   layer (Settings -> General swaps the image; index.phtml overrides
+   background-image only).  Phones ignore background-attachment: fixed, so
+   the former html background covered only the html box and a page taller
+   than the screen showed the bare canvas - grey through .bck_cover - between
+   the photo and the bottom bar. */
+body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: -2;
+    background: url("img/background-testing-3.jpg") no-repeat center center;
+    background-size: cover;
 }
 
 
@@ -85,6 +107,12 @@ span.login-img {
         transition-delay: 1s;*/
     transition: opacity 0.4s ease 0.4s;
     opacity: 0;
+}
+
+/* RASTATIME 2026-10-07 - a faded-out tab must not catch the clicks meant for
+   the visible one (both are positioned at the same place) */
+.tab_content:not(.current) {
+    pointer-events: none;
 }
 
 .current {
@@ -252,5 +280,76 @@ input[type="submit"]:hover {
 
     .about_us p {
         font-size: 18px;
+    }
+}
+
+/* RASTATIME 2026-10-07 - page-level bottom bar: the stream player (widget
+   v2, bar layout, 56 px) on the left, the tab buttons on the right.  Colours
+   follow the player bar (#23211f) and the primary colour. */
+.bottom_nav {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 80px; /* 2026-10-08: 60 -> 80 (operator) */
+    display: flex;
+    align-items: stretch;
+    background: #23211f;
+    box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.45);
+    z-index: 20;
+}
+
+.bottom_nav iframe {
+    flex: 1 1 auto;
+    min-width: 0;
+    height: 100%;
+    border: 0;
+    display: block;
+}
+
+.nav_btns {
+    display: flex;
+    flex: 0 0 auto;
+}
+
+.nav_btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 84px;
+    box-sizing: border-box;
+    color: #a8a49f;
+    border-left: 1px solid rgba(255, 255, 255, 0.08);
+    border-top: 3px solid transparent;
+    text-decoration: none;
+    transition: color 0.2s, border-color 0.2s;
+}
+
+.nav_btn:hover {
+    color: #f0f0f0;
+}
+
+.nav_btn.current {
+    color: var(--rt-accent, #ff5d1a);
+    border-top-color: var(--rt-accent, #ff5d1a);
+}
+
+.nav_btn svg {
+    width: 32px;
+    height: 32px;
+}
+
+@media (max-width: 780px) {
+    .bottom_nav {
+        height: 70px;
+    }
+
+    .nav_btn {
+        width: 64px;
+    }
+
+    .nav_btn svg {
+        width: 24px;
+        height: 24px;
     }
 }

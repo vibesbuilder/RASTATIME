@@ -60,6 +60,15 @@ Trois onglets en dessous (les DJ ne voient que le troisième) :
 > `/playouthistory/{playout-history-feed,file-history-feed,show-history-feed}`,
 > toutes filtrées côté serveur selon la plage choisie.
 
+> **Un titre supprimé garde son historique (depuis le 2026-10-08).**
+> Chaque ligne de fichier porte le titre, le créateur, la durée, le
+> compositeur et le copyright du moment de la diffusion. Supprimer le
+> titre de la bibliothèque vide seulement la référence au fichier ; la
+> ligne reste et s'affiche à partir de ces valeurs - comme les lignes
+> de webstream et de line-in. L'onglet *File Summary* compte les titres
+> qui existent encore. Avant, LibreTime supprimait les lignes avec le
+> titre.
+
 ---
 
 ## 2. History Templates

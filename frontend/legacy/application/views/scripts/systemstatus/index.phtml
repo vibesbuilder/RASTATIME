@@ -214,3 +214,75 @@ $csrfToken = $csrfNs->authtoken ?? '';
 </table>
 
 <div id="service-restart-status" style="margin-top: 1em; max-width: 60em;"></div>
+
+<?php // RASTATIME 2026-10-08 - the allow list: never braked, throttled or firewalled (operator: above the blocked list) ?>
+<table width="60%" cellpadding="0" cellspacing="0" border="0" class="statustable allowed-addresses-table" style="margin-top: 2em;">
+    <thead>
+        <tr class="ui-state-default strong">
+            <th colspan="2" style="text-align: left;">
+                <?php echo _("Allowed addresses"); ?>
+                <span class="help_icon" id="allowed-addresses-help"
+                      data-tip="<?php echo htmlspecialchars(_("An allowed address or network is never braked by the web login, never throttled by the DJ dial-in and never blocked by the firewall watcher. Addresses of the studio network are exempt anyway. Keep the list short: a home address usually changes with the provider, a network (CIDR) covers that."), ENT_QUOTES); ?>"></span>
+            </th>
+        </tr>
+        <tr class="ui-state-default strong">
+            <td><?php echo _("Address or network"); ?></td>
+            <td><?php echo _("Action"); ?></td>
+        </tr>
+    </thead>
+    <tbody id="allowed-addresses-body">
+        <tr><td colspan="2" class="description"><?php echo _("Loading…"); ?></td></tr>
+    </tbody>
+    <tfoot>
+        <tr>
+            <td><input type="text" id="allowed-addresses-entry" placeholder="<?php echo _("Address or network (CIDR)"); ?>" style="width: 95%;" autocomplete="off"></td>
+            <td><button type="button" class="btn" id="allowed-addresses-add"><?php echo _("Add"); ?></button></td>
+        </tr>
+    </tfoot>
+</table>
+
+<?php // RASTATIME 2026-10-06 - brute-force brakes: who is blocked, and the way out ?>
+<table width="60%" cellpadding="0" cellspacing="0" border="0" class="statustable blocked-addresses-table" style="margin-top: 2em;">
+    <thead>
+        <tr class="ui-state-default strong">
+            <th colspan="5" style="text-align: left;">
+                <?php echo _("Blocked addresses"); ?>
+                <?php // operator 2026-10-06: the thresholds as a tooltip (house style .help_icon + rtTooltip) ?>
+                <span class="help_icon" id="blocked-addresses-help"
+                      data-tip="<?php echo htmlspecialchars(_("Web login: 10 failures in 15 minutes block an address for 15 minutes; a user name is braked after 20 failures in 60 minutes for 5 minutes. DJ dial-in: 5 wrong passwords in 10 minutes block the address for 15 minutes (too-early logins do not count). Firewall: rules set by the watcher for 24 hours."), ENT_QUOTES); ?>"></span>
+            </th>
+        </tr>
+        <tr class="ui-state-default strong">
+            <td><?php echo _("Layer"); ?></td>
+            <td><?php echo _("Address / user"); ?></td>
+            <td><?php echo _("Failures"); ?></td>
+            <td><?php echo _("Remaining"); ?></td>
+            <td><?php echo _("Action"); ?></td>
+        </tr>
+    </thead>
+    <tbody id="blocked-addresses-body">
+        <tr><td colspan="5" class="description"><?php echo _("Loading…"); ?></td></tr>
+    </tbody>
+</table>
+<p class="description" style="display: none;">
+    <span id="blocked-addresses-i18n"
+          data-web="<?php echo _("Web login"); ?>"
+          data-web-user="<?php echo _("Web login (user)"); ?>"
+          data-harbor="<?php echo _("DJ dial-in"); ?>"
+          data-firewall="<?php echo _("Firewall"); ?>"
+          data-counting="<?php echo _("counting"); ?>"
+          data-blocked="<?php echo _("blocked, %s min left"); ?>"
+          data-none="<?php echo _("No addresses are blocked at the moment."); ?>"
+          data-unblock="<?php echo _("Unblock"); ?>"
+          data-done="<?php echo _("Unblocked %s."); ?>"
+          data-failed="<?php echo _("Unblocking failed."); ?>"
+          data-allow="<?php echo _("Allow"); ?>"
+          data-remove="<?php echo _("Remove"); ?>"
+          data-allowed-none="<?php echo _("No addresses are allowed at the moment."); ?>"
+          data-allowed-done="<?php echo _("Allowed %s."); ?>"
+          data-allowed-removed="<?php echo _("Removed %s from the allowed addresses."); ?>"
+          data-allowed-invalid="<?php echo _("Not an address or network (e.g. 203.0.113.5 or 203.0.113.0/24)."); ?>"
+          data-allowed-failed="<?php echo _("Changing the allowed addresses failed."); ?>"></span>
+</p>
+<div id="blocked-addresses-status" style="margin-top: 0.5em; max-width: 60em;"></div>
+

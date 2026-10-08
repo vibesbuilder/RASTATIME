@@ -32,6 +32,18 @@ matriz completa de permisos.
 
 Configuración → **Preferencias generales**.
 
+Desde 2026-10-08 la página se divide en **segmentos plegados**: el nombre
+y la descripción de la emisora quedan arriba; debajo, *Emisora* (idioma,
+zona horaria, inicio de semana, API pública, página de radio),
+*Apariencia* (logo, imagen de fondo de la página de inicio, favicon,
+color principal), *Reproducción* (crossfades, tipo de pista por defecto,
+recorte de programas sobrepasados), *Automatización* (playlists de
+intro/outro, pool de peticiones, bloque de avisos de tráfico, relleno de
+show-shift, opciones de podcast), y después *Live Text Info*, *TuneIn
+Settings* y *Dangerous Options*. Un clic en el título abre el segmento;
+un segmento con un error de validación tras **Guardar** se abre solo.
+Las tablas de campos de abajo conservan su agrupación original.
+
 ### Emisora
 
 | Campo | Notas |
@@ -39,6 +51,7 @@ Configuración → **Preferencias generales**.
 | **Nombre de emisora** | Visible en todas partes — título de página, metadatos ICY, nombre From de email. |
 | **Descripción de emisora** | Descripción de texto libre. |
 | **Logo de emisora** | Imagen arriba a la izquierda de cada página. Máx 200 KB. |
+| **Imagen de fondo de la página de inicio** | La foto detrás de la página de inicio pública (`/`). JPG, PNG o WebP hasta 5 MB; recomendado 1920 px de ancho y 1 MB o menos. Guardada como archivo bajo `landing/` en la ubicación de la mediateca (el espejo de copia nocturno la incluye); **Quitar** vuelve a la imagen integrada. Surte efecto en la siguiente carga de la página de inicio (el navegador guarda la imagen una semana, una nueva subida recibe una nueva dirección). Desde 2026-10-07. |
 | **Favicon de emisora** | Imagen en la pestaña del navegador. Máx 200 KB. Renderizado como URI data:. |
 | **Color principal** | El color de acento de toda la interfaz, la página de radio y los widgets — enlaces, resaltados, filas seleccionadas, la entrada de menú activa, barras de progreso y de almacenamiento, barras de desplazamiento, flechas de sección, el botón de reproducción y el volumen del reproductor, pestañas, botones y resaltados de los widgets. Introduzca `#rrggbb` o use el selector junto al campo; **Restablecer el valor predeterminado** recupera el naranja (`#ff5d1a`). Surte efecto en la siguiente carga de página. Elija un color que destaque sobre el fondo gris oscuro; el texto sobre él cambia solo entre blanco y negro. Los colores de señalización (errores, avisos, los colores de los programas en el calendario) y la barra de llenado de los programas en el calendario (siempre naranja) no cambian. |
 | **Zona horaria** | La zona horaria del operador. Almacenada por-programa en `cc_show_days.timezone`. |
@@ -149,6 +162,14 @@ esperado ya en uso".
 > endpoint `/api/v2/preflight/warnings` respaldado por la
 > tabla `rastatime_preflight_warning`. El `preflight.py`
 > de inicio corre ~30 verificaciones.
+
+> **Descarga del podcast fallida (desde 2026-10-08).** Cuando falla
+> la descarga automática o manual de un episodio, un aviso indica el
+> podcast, el episodio, el número de intentos, el último intento y el
+> motivo (código HTTP o «API inalcanzable»); aparece en la franja de
+> cada página y aquí. Desaparece solo cuando la descarga tiene éxito
+> más tarde o se elimina el podcast. Revise el feed y la dirección de
+> descarga del episodio en Biblioteca → Podcasts.
 
 ### Controles de servicio (Admin+ solamente)
 

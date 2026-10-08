@@ -62,6 +62,20 @@ only pop tracks. Clear any chip with its **×**.
 > column and just read the colours: blue = track, green = line-in,
 > yellow = block, orange = stream, purple = playlist.
 
+> **Remaining time and crossfades (since 2026-10-06).** Music rows
+> overlap by their crossfade (house value 3 s, or the track type's;
+> jingles 0), so a show's remaining time is the *laid-out* time: from
+> the end of the last row to the show's end — the number the show
+> builder's footer shows. A "time remaining" smart block is picked
+> against that time, between its real neighbours, so the last row ends
+> within a second or so of the show's end (the block's solver is
+> randomised; the pool decides what is possible). A block limited by
+> *Duration in time* is picked the same way (operator decision
+> 2026-10-06): 12 minutes are 12 minutes **on air**, not the sum of the
+> tracks, so a station ID after three such blocks sits at 12:00, 24:xx
+> and 36:xx of the hour. A jingle placed between two music tracks costs
+> its own length plus the 3 s overlap it breaks.
+
 ### Free-text search
 
 The **Search** box runs across **title, creator, album, genre,
@@ -168,6 +182,7 @@ Click a track row → **Edit Metadata** in the row's action menu.
 | **Cue In / Out** | `cc_files.cuein` / `cueout` — trim the start / end without re-encoding. Since 2026-09-30 the values are kept inside the file: a cue out past the file length is capped at the length, a cue in below zero becomes zero. A change is copied into the rows of the upcoming shows that schedule the track (rows that have already started are left alone), and those shows are laid out again - no refilling needed. |
 | **Fade In / Out** | `cc_files.fadein` / `fadeout` |
 | **Replay Gain** | `cc_files.replay_gain` — used by the playout engine for level normalisation |
+| **Play Count** | Library column (hidden by default, columns picker), read-only: how often the track aired - one count per row of the playout history, the same number as Playout History → File Summary. Sortable; the advanced search takes a range. Since 2026-10-07. |
 | **Crossover** | How this track meets its neighbours (since 2026-09-29 one three-way field; the two exceptions exclude each other). **As the track type** (default): the track overlaps and fades as its track type says - Settings → Track Types → *Crossfade Duration* - or, without a value there, as the Default Track Crossfade Duration; since 2026-09-30 it also inherits the type's *No Fade during Crossover* preset. **No Fade during Crossover** (`cc_files.no_fade_crossfade`): the overlap stays, but this track keeps its full level while the other one fades; at an overbooked show boundary a flagged outgoing track is cut instead of faded. **Exclude from Crossover** (`cc_files.exclude_crossfade`): this track never overlaps a neighbour - it starts at the end of the previous track and the next one starts at its end. Changing to or from *Exclude* re-lays the rows of the upcoming shows that schedule the track. |
 
 > **Operator tip.** Set **Cue In** on radio promos / stings that
@@ -239,7 +254,9 @@ error.
 > `cc_blockcriteria`. At build time, `BlockExpander.expand()`
 > assembles a PostgreSQL `SELECT … WHERE … LIMIT …` over
 > `cc_files`. Time-remaining limits convert to a duration cap
-> via the show instance's `getSecondsRemaining()`. See
+> via the show instance's `getSecondsRemaining()` — since
+> 2026-10-06 the laid-out free time (`time_filled` = start to the end
+> of the last row); the pick is `Scheduler::pickRemainingBlock()`. See
 > ARCHITECTURE §23.19 for the outro-reserve interaction with
 > time-remaining smart blocks.
 
@@ -395,7 +412,7 @@ toolbar that appears at the bottom of the table:
 |---|---|
 | **Add to Playlist** | Append the selected rows to an existing playlist of your choice. |
 | **Delete** | Delete the selected rows. Same confirm-on-scheduled-use semantics as single-row delete. |
-| **Edit Metadata** | Open a batch-edit dialog. Only applies to tracks. |
+| **Edit** | One track selected: its editor tab, as before. **Two or more tracks selected (since 2026-10-08): one dialog for all of them** - creator, album, genre, year, track type, language, mood, label, composer, conductor, copyright, expiry date (`none` clears it), description. Empty fields stay unchanged, a filled field is written to every selected track; title, track number, BPM, cue points and artwork stay per track. Database only, like the single editor (tags inside the files are read at import and never rewritten). Tracks you may not edit are skipped and counted in the result. |
 | **Move to Owner** | Reassign ownership (Admin / Super Admin only). Used when a DJ leaves and their files should pass to the station account. |
 | **Cue Points** | Detect the cue points of the selected tracks from their audio (the same silence detection the analyzer runs at import: quieter than −60 dB for at least 0.3 s at the head or the tail) and store them. Upcoming shows that schedule the tracks follow the new values and are laid out again. Tracks longer than 15 minutes are skipped - the action is meant for jingles and other short elements. Since 2026-09-30. |
 

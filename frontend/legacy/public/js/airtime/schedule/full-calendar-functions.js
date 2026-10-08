@@ -312,13 +312,14 @@ $(document).ready(function () {
   // manually reloaded the page.  refetchEvents() re-runs the
   // Schedule/event-feed AJAX call, which carries the up-to-date
   // percent from cc_show_instances.time_filled.
-  setInterval(function () {
+  // RASTATIME 2026-10-07 - registered so the first 401 stops it (common.js)
+  (window.rtPollTimers = window.rtPollTimers || []).push(setInterval(function () {
     var $cal = $("#schedule_calendar");
     if ($cal.length > 0 && $cal.is(":visible")) {
       // scheduleCalRefetch() picks FC1.5 vs FC6 (?fc6=1) automatically
       scheduleCalRefetch();
     }
-  }, 60 * 1000);
+  }, 60 * 1000));
 });
 
 var view_name;

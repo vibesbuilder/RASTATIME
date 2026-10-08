@@ -124,7 +124,7 @@ def _build_response(obj) -> dict:
     return base
 
 
-@csrf_exempt                             # CSRF managed by LibreTime's session auth layer
+@csrf_exempt                             # CSRF managed by RASTATIME's session auth layer
 @require_http_methods(["GET", "POST"])
 def soundcard_settings(request: HttpRequest) -> JsonResponse:
     """

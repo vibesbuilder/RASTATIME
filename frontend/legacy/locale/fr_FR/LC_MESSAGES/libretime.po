@@ -642,8 +642,8 @@ msgid "It looks like the next show is empty. %sAdd tracks to your show now%s."
 msgstr "La prochaine émission est vide. %sAjouter des pistes à cette émission%s."
 
 #: application/configs/config-check.php:167
-msgid "LibreTime media analyzer service"
-msgstr "Service d'analyseur de médias LibreTime"
+msgid "RASTATIME media analyzer service"
+msgstr "Service d'analyseur de médias RASTATIME"
 
 #: application/configs/config-check.php:174
 msgid "Check that the libretime-analyzer service is installed correctly in "
@@ -666,32 +666,32 @@ msgid "If not, try "
 msgstr "Sinon, essayez "
 
 #: application/configs/config-check.php:187
-msgid "LibreTime playout service"
-msgstr "Service de diffusion LibreTime"
+msgid "RASTATIME playout service"
+msgstr "Service de diffusion RASTATIME"
 
 #: application/configs/config-check.php:193
 msgid "Check that the libretime-playout service is installed correctly in "
 msgstr "Vérifiez que le service « libretime-playout » est installé correctement dans "
 
 #: application/configs/config-check.php:205
-msgid "LibreTime liquidsoap service"
-msgstr "Service liquidsoap de LibreTime"
+msgid "RASTATIME liquidsoap service"
+msgstr "Service liquidsoap de RASTATIME"
 
 #: application/configs/config-check.php:212
 msgid "Check that the libretime-liquidsoap service is installed correctly in "
 msgstr "Vérifiez que le service « libretime-liquidsoap » est installé correctement dans "
 
 #: application/configs/config-check.php:224
-msgid "LibreTime Celery Task service"
-msgstr "Service Celery Task de LibreTime"
+msgid "RASTATIME Celery Task service"
+msgstr "Service Celery Task de RASTATIME"
 
 #: application/configs/config-check.php:231
 msgid "Check that the libretime-worker service is installed correctly in "
 msgstr "Vérifiez que le service « libretime-worker » est installé correctement dans "
 
 #: application/configs/config-check.php:243
-msgid "LibreTime API service"
-msgstr "Service API LibreTime"
+msgid "RASTATIME API service"
+msgstr "Service API RASTATIME"
 
 #: application/configs/config-check.php:250
 msgid "Check that the libretime-api service is installed correctly in "
@@ -838,27 +838,27 @@ msgstr "Vous n'avez pas la permission de changer de source."
 msgid ""
 "To configure and use the embeddable player you must:<br><br>\n"
 "            1. Enable at least one MP3, AAC, or OGG stream under Settings -> Streams<br>\n"
-"            2. Enable the Public LibreTime API under Settings -> Preferences"
+"            2. Enable the Public RASTATIME API under Settings -> Preferences"
 msgstr ""
 "Pour configurer et utiliser le lecture intégré, vous devez :<br><br>\n"
 "            1. Activer au moins un flux MP3, AAC ou OGG dans Préférences -&gt; Flux<br>\n"
-"            2. Activer l'API publique de LibreTime depuis Préférences -&gt; Préférences"
+"            2. Activer l'API publique de RASTATIME depuis Préférences -&gt; Préférences"
 
 #: application/controllers/EmbeddablewidgetsController.php:35
 msgid ""
 "To use the embeddable weekly schedule widget you must:<br><br>\n"
-"            Enable the Public LibreTime API under Settings -> Preferences"
+"            Enable the Public RASTATIME API under Settings -> Preferences"
 msgstr ""
 "Pour utiliser le widget intégré de programmation hebdomadaire, vous devez :<br><br>\n"
-"            Activer l'API publique LibreTime dans Préférences -&gt; Préférences"
+"            Activer l'API publique RASTATIME dans Préférences -&gt; Préférences"
 
 #: application/controllers/EmbeddablewidgetsController.php:48
 msgid ""
 "To add the Radio Tab to your Facebook Page, you must first:<br><br>\n"
-"            Enable the Public LibreTime API under Settings -> Preferences"
+"            Enable the Public RASTATIME API under Settings -> Preferences"
 msgstr ""
 "Pour ajouter un onglet radius à votre page Facebook vous devez d'abord :<br><br>\n"
-"            Activer l'API publique LibreTime dans Préférences -&gt; Préférences"
+"            Activer l'API publique RASTATIME dans Préférences -&gt; Préférences"
 
 #: application/controllers/ErrorController.php:94
 msgid "Page not found."
@@ -1012,24 +1012,24 @@ msgid "New version available: "
 msgstr "Nouvelle version disponible : "
 
 #: application/controllers/LocaleController.php:39
-msgid "You have a pre-release version of LibreTime intalled."
-msgstr "Vous avez une version préliminaire de LibreTime intégrée."
+msgid "You have a pre-release version of RASTATIME intalled."
+msgstr "Vous avez une version préliminaire de RASTATIME intégrée."
 
 #: application/controllers/LocaleController.php:40
-msgid "A patch update for your LibreTime installation is available."
-msgstr "Une mise à jour du correctif pour votre installation LibreTime est disponible."
+msgid "A patch update for your RASTATIME installation is available."
+msgstr "Une mise à jour du correctif pour votre installation RASTATIME est disponible."
 
 #: application/controllers/LocaleController.php:41
-msgid "A feature update for your LibreTime installation is available."
-msgstr "Une mise à jour des fonctionnalités pour votre installation LibreTime est disponible."
+msgid "A feature update for your RASTATIME installation is available."
+msgstr "Une mise à jour des fonctionnalités pour votre installation RASTATIME est disponible."
 
 #: application/controllers/LocaleController.php:42
-msgid "A major update for your LibreTime installation is available."
-msgstr "Une mise à jour majeure de votre installation LibreTime est disponible."
+msgid "A major update for your RASTATIME installation is available."
+msgstr "Une mise à jour majeure de votre installation RASTATIME est disponible."
 
 #: application/controllers/LocaleController.php:43
-msgid "Multiple major updates for LibreTime installation are available. Please upgrade as soon as possible."
-msgstr "Plusieurs mises à jour majeures pour l'installation de LibreTime sont disponibles. S'il vous plaît mettre à jour dès que possible."
+msgid "Multiple major updates for RASTATIME installation are available. Please upgrade as soon as possible."
+msgstr "Plusieurs mises à jour majeures pour l'installation de RASTATIME sont disponibles. S'il vous plaît mettre à jour dès que possible."
 
 #: application/controllers/LocaleController.php:45
 msgid "Add to current playlist"
@@ -1276,6 +1276,10 @@ msgstr "Dernier Modifié"
 msgid "Last Played"
 msgstr "Dernier Joué"
 
+#: application/controllers/LocaleController.php:112
+msgid "Play Count"
+msgstr "Play Count"
+
 #: application/controllers/LocaleController.php:103
 #: application/models/Criteria.php:165
 #: application/services/HistoryService.php:1054
@@ -1474,7 +1478,7 @@ msgstr "Ne jamais me le rappeler"
 
 #: application/controllers/LocaleController.php:151
 msgid "Yes, help Airtime"
-msgstr "Oui, aider LibreTime"
+msgstr "Oui, aider RASTATIME"
 
 #: application/controllers/LocaleController.php:152
 #: application/controllers/LocaleController.php:196
@@ -1570,7 +1574,7 @@ msgid ""
 "This will remove the files from your Airtime library!"
 msgstr ""
 "Êtes-vous sûr que vous voulez changer le répertoire de stockage ? \n"
-"Cela supprimera les fichiers de votre médiathèque LibreTime !"
+"Cela supprimera les fichiers de votre médiathèque RASTATIME !"
 
 #: application/controllers/LocaleController.php:177
 msgid "Manage Media Folders"
@@ -3292,8 +3296,8 @@ msgid "Trim overbooked shows after autoloading?"
 msgstr "Supprimer les émissions surbookées après le chargement automatique ?"
 
 #: application/forms/GeneralPreferences.php:170
-msgid "Public LibreTime API"
-msgstr "API publique LibreTime"
+msgid "Public RASTATIME API"
+msgstr "API publique RASTATIME"
 
 #: application/forms/GeneralPreferences.php:171
 msgid "Required for embeddable schedule widget."
@@ -3301,10 +3305,10 @@ msgstr "Requis pour le widget de programmation."
 
 #: application/forms/GeneralPreferences.php:177
 msgid ""
-"Enabling this feature will allow LibreTime to provide schedule data\n"
+"Enabling this feature will allow RASTATIME to provide schedule data\n"
 "                                            to external widgets that can be embedded in your website."
 msgstr ""
-"L'activation de cette fonctionnalité permettra à LibreTime de fournir des données de planification\n"
+"L'activation de cette fonctionnalité permettra à RASTATIME de fournir des données de planification\n"
 "                                            à des widgets externes pouvant être intégrés à votre site Web."
 
 #: application/forms/GeneralPreferences.php:189
@@ -5489,3 +5493,571 @@ msgstr "Gain d'entrée (dB) :"
 #: RASTATIME 2026-10-02 input gain (Line-In and Webstream dialogs)
 msgid "Range: -20.0 to +20.0 dB.  0 = no change."
 msgstr "Plage : -20,0 à +20,0 dB.  0 = aucun changement."
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Local Machine"
+msgstr "Machine locale"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "No line-in devices configured."
+msgstr "Aucun périphérique line-in configuré."
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Could not load device list from the server."
+msgstr "Impossible de charger la liste des périphériques depuis le serveur."
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Device not found"
+msgstr "Périphérique introuvable"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "{n} configured device(s) are currently unavailable. Check connections or reconfigure."
+msgstr "{n} périphérique(s) configuré(s) actuellement indisponible(s). Vérifiez les connexions ou reconfigurez."
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Local Machine settings saved."
+msgstr "Paramètres de la machine locale enregistrés."
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Could not save Local Machine settings."
+msgstr "Impossible d'enregistrer les paramètres de la machine locale."
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "This restarts the audio chain and interrupts the stream for a few seconds. Continue?"
+msgstr "Cela redémarre la chaîne audio et interrompt le flux pendant quelques secondes. Continuer ?"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Restarting audio chain …"
+msgstr "Redémarrage de la chaîne audio …"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Could not restart the audio chain."
+msgstr "Impossible de redémarrer la chaîne audio."
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Local Machine Settings"
+msgstr "Paramètres de la machine locale"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Soundcard"
+msgstr "Carte son"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Main Output"
+msgstr "Sortie principale"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "— Loading devices …"
+msgstr "— Chargement des périphériques …"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "system default output"
+msgstr "sortie par défaut du système"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Currently active: %1$s — this does not match the saved device (%2$s). Either it has not been applied yet, or the device cannot be opened; see the playout log."
+msgstr "Actuellement actif : %1$s — ne correspond pas au périphérique enregistré (%2$s). Soit il n'a pas encore été appliqué, soit le périphérique ne peut pas être ouvert ; voir le journal du playout."
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Currently active: %s"
+msgstr "Actuellement actif : %s"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Saving stores the device. The playout applies it by itself in the next quiet moment (or at the next track boundary) - listeners stay connected via the standby mounts. Apply now forces it immediately."
+msgstr "Enregistrer mémorise le périphérique. Le playout l'applique de lui-même au prochain moment calme (ou à la prochaine limite de titre) – les auditeurs restent connectés via les montages standby. « Appliquer maintenant » le force immédiatement."
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Apply now (restarts audio chain)"
+msgstr "Appliquer maintenant (redémarre la chaîne audio)"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Import Folder"
+msgstr "Dossier d'import"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Audio files dropped into this folder are imported into the Media Library every 5 minutes.  After each import attempt (success or failure) the source file is deleted from the folder.  Leave empty to disable the scan."
+msgstr "Les fichiers audio déposés dans ce dossier sont importés dans la médiathèque toutes les 5 minutes.  Après chaque tentative d'import (réussie ou non), le fichier source est supprimé du dossier.  Laisser vide pour désactiver le scan."
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Folder path"
+msgstr "Chemin du dossier"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Absolute path on this machine.  Example: C:\\rastatime\\import"
+msgstr "Chemin absolu sur cette machine.  Exemple : C:\\rastatime\\import"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Save Folder"
+msgstr "Enregistrer le dossier"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Scan Now"
+msgstr "Scanner maintenant"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Last scan:"
+msgstr "Dernier scan :"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Last status:"
+msgstr "Dernier état :"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Import from FTP Server"
+msgstr "Import depuis un serveur FTP"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Fetches audio files from an FTP, FTPS or SFTP server every 5 minutes and imports them through the Import Folder above - the folder must be configured for this to work.  Remote files are deleted after a verified download (the account needs delete permission); a file still being uploaded is left for the next cycle.  Non-audio files stay on the server."
+msgstr "Récupère toutes les 5 minutes les fichiers audio d'un serveur FTP, FTPS ou SFTP et les importe via le dossier d'import ci-dessus – le dossier doit être configuré pour que cela fonctionne.  Les fichiers distants sont supprimés après un téléchargement vérifié (le compte a besoin du droit de suppression) ; un fichier encore en cours d'envoi est laissé pour le cycle suivant.  Les fichiers non audio restent sur le serveur."
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Enable FTP import"
+msgstr "Activer l'import FTP"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Protocol"
+msgstr "Protocole"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Plain FTP sends the password unencrypted - prefer FTPS or SFTP when the server offers it."
+msgstr "Le FTP simple envoie le mot de passe en clair – préférez FTPS ou SFTP si le serveur le propose."
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Leave the port empty for the protocol default (FTP/FTPS: 21, SFTP: 22)."
+msgstr "Laisser le port vide pour la valeur par défaut du protocole (FTP/FTPS : 21, SFTP : 22)."
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "unchanged"
+msgstr "inchangé"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Stored in the settings database like the other service passwords, so the fetch can log in unattended.  Leave empty to keep the stored password."
+msgstr "Stocké dans la base des paramètres comme les autres mots de passe de service, pour que la récupération puisse se connecter sans surveillance.  Laisser vide pour conserver le mot de passe enregistré."
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Remote folder"
+msgstr "Dossier distant"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Absolute path on the server, for example /upload.  Every audio file in it is fetched and then deleted there."
+msgstr "Chemin absolu sur le serveur, par exemple /upload.  Chaque fichier audio qu'il contient est récupéré puis supprimé sur place."
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Save FTP import"
+msgstr "Enregistrer l'import FTP"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Fetch now"
+msgstr "Récupérer maintenant"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "The Import Folder above is not configured - the FTP import needs it as its landing area."
+msgstr "Le dossier d'import ci-dessus n'est pas configuré – l'import FTP en a besoin comme zone de dépôt."
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Last fetch:"
+msgstr "Dernière récupération :"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Saved."
+msgstr "Enregistré."
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Save failed."
+msgstr "Échec de l'enregistrement."
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Network error."
+msgstr "Erreur réseau."
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Fetching …"
+msgstr "Récupération …"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Fetch failed."
+msgstr "Échec de la récupération."
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Media Library Location"
+msgstr "Emplacement de la médiathèque"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Where the media library (imported tracks, covers, show images) lives on this machine.  Moving it copies everything to the new folder, verifies the copy, then switches all services over - the stream keeps running, only imports pause meanwhile.  The previous copy stays on disk until you delete it yourself.  Local drives only."
+msgstr "Où se trouve la médiathèque (titres importés, pochettes, images d'émission) sur cette machine.  Le déplacement copie tout dans le nouveau dossier, vérifie la copie, puis bascule tous les services – le flux continue, seuls les imports sont en pause pendant ce temps.  L'ancienne copie reste sur le disque jusqu'à ce que vous la supprimiez vous-même.  Lecteurs locaux uniquement."
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Current location"
+msgstr "Emplacement actuel"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "New location"
+msgstr "Nouvel emplacement"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Absolute path on a local drive, for example D:\\stor.  The folder is created if needed.  Check first: the check confirms free space and write access."
+msgstr "Chemin absolu sur un lecteur local, par exemple D:\\stor.  Le dossier est créé si nécessaire.  Vérifiez d'abord : la vérification confirme l'espace libre et l'accès en écriture."
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Check"
+msgstr "Vérifier"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Move library"
+msgstr "Déplacer la médiathèque"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Cancel move"
+msgstr "Annuler le déplacement"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "from the Local Machine setting"
+msgstr "depuis le paramètre Machine locale"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "from libretime.conf"
+msgstr "depuis libretime.conf"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "files"
+msgstr "fichiers"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "FOLDER MISSING"
+msgstr "DOSSIER MANQUANT"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "NOT WRITABLE"
+msgstr "NON INSCRIPTIBLE"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Copying"
+msgstr "Copie en cours"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Verifying the copy …"
+msgstr "Vérification de la copie …"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "The library is now at"
+msgstr "La médiathèque se trouve maintenant dans"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "The previous copy at"
+msgstr "L'ancienne copie dans"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "is still on disk - delete it yourself once everything works."
+msgstr "est encore sur le disque – supprimez-la vous-même une fois que tout fonctionne."
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Last move"
+msgstr "Dernier déplacement"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Enter the same target and move again to resume."
+msgstr "Saisissez la même cible et déplacez à nouveau pour reprendre."
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "The RASTATIME API is not reachable."
+msgstr "L'API RASTATIME n'est pas joignable."
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Checking …"
+msgstr "Vérification …"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "OK"
+msgstr "OK"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "free"
+msgstr "libre"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "needed"
+msgstr "nécessaire"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Move the media library to"
+msgstr "Déplacer la médiathèque vers"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Imports pause while it copies; the stream keeps running. The previous copy stays on disk."
+msgstr "Les imports sont en pause pendant la copie ; le flux continue. L'ancienne copie reste sur le disque."
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Starting …"
+msgstr "Démarrage …"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Cancel the move? Files copied so far stay at the target."
+msgstr "Annuler le déplacement ? Les fichiers déjà copiés restent dans la cible."
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "24/7 Recording"
+msgstr "Enregistrement 24/7"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Continuous around-the-clock recording of the on-air output, one file per clock hour, independent of shows — it captures everything aired (filler, silence, unscheduled content, emergencies) for compliance, catch-up and emergency backup.  Files are written as <YYYY-MM-DD>/<YYYY-MM-DD HH>-00.<ext> under a per-day subfolder."
+msgstr "Enregistrement continu de la sortie antenne, jour et nuit, un fichier par heure d'horloge, indépendamment des émissions — il capture tout ce qui est diffusé (remplissage, silence, contenu non planifié, urgences) pour la conformité, la réécoute et la sauvegarde d'urgence.  Les fichiers sont écrits sous la forme <YYYY-MM-DD>/<YYYY-MM-DD HH>-00.<ext> dans un sous-dossier par jour."
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Enable"
+msgstr "Activer"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Record 24/7"
+msgstr "Enregistrer 24/7"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "(a folder below is required)"
+msgstr "(un dossier ci-dessous est requis)"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Absolute path on this machine, separate from the Show Recording Folder.  Example: C:\\rastatime\\recordings-247"
+msgstr "Chemin absolu sur cette machine, distinct du dossier d'enregistrement des émissions.  Exemple : C:\\rastatime\\recordings-247"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Format"
+msgstr "Format"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Bitrate (kbps)"
+msgstr "Débit (kbps)"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Higher = better quality, more disk."
+msgstr "Plus haut = meilleure qualité, plus d'espace disque."
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Delete after (days)"
+msgstr "Supprimer après (jours)"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "0 = keep forever.  Older recordings are pruned automatically."
+msgstr "0 = conserver indéfiniment.  Les enregistrements plus anciens sont supprimés automatiquement."
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Show Recording Folder"
+msgstr "Dossier d'enregistrement des émissions"
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Folder where per-show recordings are written.  Each show flagged as \"Record this show\" produces a single .mp3 of the on-air output, named <YYYY-MM-DD HH-MM> - <show-name>.mp3 under a per-day subfolder.  Leave empty to disable recording."
+msgstr "Dossier où sont écrits les enregistrements par émission.  Chaque émission marquée « Enregistrer cette émission » produit un seul .mp3 de la sortie antenne, nommé <YYYY-MM-DD HH-MM> - <show-name>.mp3 dans un sous-dossier par jour.  Laisser vide pour désactiver l'enregistrement."
+
+#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
+msgid "Absolute path on this machine.  Example: C:\\rastatime\\recordings"
+msgstr "Chemin absolu sur cette machine.  Exemple : C:\\rastatime\\recordings"
+
+#: RASTATIME 2026-10-03 brand stage A
+msgid "RASTATIME is free radio automation software for scheduling and station management, built as a Windows-first fork of LibreTime."
+msgstr "RASTATIME est un logiciel libre d'automatisation radio pour la planification et la gestion de station, conçu comme un fork Windows-first de LibreTime."
+
+#: RASTATIME 2026-10-03 brand stage A
+msgid "OK, got it!"
+msgstr "OK, compris !"
+
+#: RASTATIME 2026-10-03 brand stage A
+msgid "based on LibreTime %s"
+msgstr "basé sur LibreTime %s"
+
+#: RASTATIME 2026-10-06 login brute-force brake
+msgid "Too many failed login attempts. Please try again in %d minute(s)."
+msgstr "Trop de tentatives de connexion échouées. Veuillez réessayer dans %d minute(s)."
+
+#: RASTATIME 2026-10-06 blocked addresses
+msgid "Blocked addresses"
+msgstr "Adresses bloquées"
+
+#: RASTATIME 2026-10-06 blocked addresses
+msgid "Layer"
+msgstr "Niveau"
+
+#: RASTATIME 2026-10-06 blocked addresses
+msgid "Address / user"
+msgstr "Adresse / utilisateur"
+
+#: RASTATIME 2026-10-06 blocked addresses
+msgid "Failures"
+msgstr "Échecs"
+
+#: RASTATIME 2026-10-06 blocked addresses
+msgid "Remaining"
+msgstr "Restant"
+
+#: RASTATIME 2026-10-06 blocked addresses
+msgid "Loading…"
+msgstr "Chargement…"
+
+#: RASTATIME 2026-10-06 blocked addresses
+msgid "Web login: 10 failures in 15 minutes block an address for 15 minutes; a user name is braked after 20 failures in 60 minutes for 5 minutes. DJ dial-in: 5 wrong passwords in 10 minutes block the address for 15 minutes (too-early logins do not count). Firewall: rules set by the watcher for 24 hours."
+msgstr "Connexion web : 10 échecs en 15 minutes bloquent une adresse pendant 15 minutes ; un nom d'utilisateur est freiné après 20 échecs en 60 minutes pendant 5 minutes. Connexion DJ : 5 mots de passe erronés en 10 minutes bloquent l'adresse pendant 15 minutes (les connexions trop précoces ne comptent pas). Pare-feu : règles posées par le veilleur pour 24 heures."
+
+#: RASTATIME 2026-10-06 blocked addresses
+msgid "Web login"
+msgstr "Connexion web"
+
+#: RASTATIME 2026-10-06 blocked addresses
+msgid "Web login (user)"
+msgstr "Connexion web (utilisateur)"
+
+#: RASTATIME 2026-10-06 blocked addresses
+msgid "DJ dial-in"
+msgstr "Connexion DJ"
+
+#: RASTATIME 2026-10-06 blocked addresses
+msgid "Firewall"
+msgstr "Pare-feu"
+
+#: RASTATIME 2026-10-06 blocked addresses
+msgid "counting"
+msgstr "comptage"
+
+#: RASTATIME 2026-10-06 blocked addresses
+msgid "blocked, %s min left"
+msgstr "bloqué, encore %s min"
+
+#: RASTATIME 2026-10-06 blocked addresses
+msgid "No addresses are blocked at the moment."
+msgstr "Aucune adresse n'est bloquée pour le moment."
+
+#: RASTATIME 2026-10-06 blocked addresses
+msgid "Unblock"
+msgstr "Débloquer"
+
+#: RASTATIME 2026-10-06 blocked addresses
+msgid "Unblocked %s."
+msgstr "%s débloqué."
+
+#: RASTATIME 2026-10-06 blocked addresses
+msgid "Unblocking failed."
+msgstr "Le déblocage a échoué."
+
+#: application/views/scripts/index/index.phtml application/forms/GeneralPreferences.php
+msgid "Landing page background:"
+msgstr "Image de fond de la page d'accueil :"
+
+#: application/views/scripts/index/index.phtml application/forms/GeneralPreferences.php
+msgid "Recommended: 1920 px wide, 1 MB or less. JPG, PNG or WebP up to 5 MB."
+msgstr "Recommandé : 1920 px de large, 1 Mo ou moins. JPG, PNG ou WebP jusqu'à 5 Mo."
+
+#: application/views/scripts/index/index.phtml application/forms/GeneralPreferences.php
+msgid "Stream player"
+msgstr "Lecteur du flux"
+
+#: application/views/scripts/index/index.phtml application/forms/GeneralPreferences.php
+msgid "Schedule"
+msgstr "Grille des programmes"
+
+#: application/views/scripts/index/index.phtml application/forms/GeneralPreferences.php
+msgid "Podcast"
+msgstr "Podcast"
+
+#: application/views/scripts/form/preferences_general.phtml
+msgid "Station"
+msgstr "Station"
+
+#: application/views/scripts/form/preferences_general.phtml
+msgid "Styling"
+msgstr "Apparence"
+
+#: application/views/scripts/form/preferences_general.phtml
+msgid "Playout"
+msgstr "Diffusion"
+
+#: application/views/scripts/form/preferences_general.phtml
+msgid "Automation"
+msgstr "Automatisation"
+
+#: application/views/scripts/systemstatus/index.phtml
+msgid "Allow"
+msgstr "Autoriser"
+
+#: application/views/scripts/systemstatus/index.phtml
+msgid "Allowed addresses"
+msgstr "Adresses autorisées"
+
+#: application/views/scripts/systemstatus/index.phtml
+msgid "Address or network"
+msgstr "Adresse ou réseau"
+
+#: application/views/scripts/systemstatus/index.phtml
+msgid "Address or network (CIDR)"
+msgstr "Adresse ou réseau (CIDR)"
+
+#: application/views/scripts/systemstatus/index.phtml
+msgid "No addresses are allowed at the moment."
+msgstr "Aucune adresse n'est autorisée pour le moment."
+
+#: application/views/scripts/systemstatus/index.phtml
+msgid "Allowed %s."
+msgstr "%s autorisée."
+
+#: application/views/scripts/systemstatus/index.phtml
+msgid "Removed %s from the allowed addresses."
+msgstr "%s retirée des adresses autorisées."
+
+#: application/views/scripts/systemstatus/index.phtml
+msgid "Not an address or network (e.g. 203.0.113.5 or 203.0.113.0/24)."
+msgstr "Ni une adresse ni un réseau (ex. 203.0.113.5 ou 203.0.113.0/24)."
+
+#: application/views/scripts/systemstatus/index.phtml
+msgid "Changing the allowed addresses failed."
+msgstr "La modification des adresses autorisées a échoué."
+
+#: application/views/scripts/systemstatus/index.phtml
+msgid "An allowed address or network is never braked by the web login, never throttled by the DJ dial-in and never blocked by the firewall watcher. Addresses of the studio network are exempt anyway. Keep the list short: a home address usually changes with the provider, a network (CIDR) covers that."
+msgstr "Une adresse ou un réseau autorisé n'est jamais freiné par la connexion web, jamais limité par la connexion DJ et jamais bloqué par le veilleur de pare-feu. Les adresses du réseau du studio sont exemptées de toute façon. Gardez la liste courte : une adresse domestique change généralement avec le fournisseur, un réseau (CIDR) couvre cela."
+
+#: application/forms/BulkEditAudioMD.php application/views/scripts/library/bulk-edit-file-md.phtml
+msgid "Leave unchanged"
+msgstr "Laisser inchangé"
+
+#: application/forms/BulkEditAudioMD.php application/views/scripts/library/bulk-edit-file-md.phtml
+msgid "Editing the metadata of %s tracks. Empty fields stay unchanged; a filled field is written to every selected track."
+msgstr "Modification des métadonnées de %s pistes. Les champs vides restent inchangés ; un champ rempli est écrit dans chaque piste sélectionnée."
+
+#: application/forms/BulkEditAudioMD.php application/views/scripts/library/bulk-edit-file-md.phtml
+msgid "Edit metadata of the selected tracks"
+msgstr "Modifier les métadonnées des pistes sélectionnées"
+
+#: application/forms/BulkEditAudioMD.php application/views/scripts/library/bulk-edit-file-md.phtml
+msgid "Apply"
+msgstr "Appliquer"
+
+#: application/forms/BulkEditAudioMD.php application/views/scripts/library/bulk-edit-file-md.phtml
+msgid "Updated %s track(s)."
+msgstr "%s piste(s) mise(s) à jour."
+
+#: application/forms/BulkEditAudioMD.php application/views/scripts/library/bulk-edit-file-md.phtml
+msgid "No permission for %s track(s)."
+msgstr "Pas de droit pour %s piste(s)."
+
+#: application/forms/BulkEditAudioMD.php application/views/scripts/library/bulk-edit-file-md.phtml
+msgid "Fill at least one field; empty fields stay unchanged."
+msgstr "Remplissez au moins un champ ; les champs vides restent inchangés."
+
+#: application/forms/BulkEditAudioMD.php application/views/scripts/library/bulk-edit-file-md.phtml
+msgid "The metadata could not be saved."
+msgstr "Les métadonnées n'ont pas pu être enregistrées."
+
+#: application/forms/BulkEditAudioMD.php
+msgid "Expiry date must be in YYYY-MM-DD format, \"none\" to clear it, or empty."
+msgstr "Date d'expiration au format AAAA-MM-JJ, « none » pour l'effacer, ou vide."
+
+#: application/forms/BulkEditAudioMD.php
+msgid "Format: YYYY-MM-DD. Enter \"none\" to clear the expiry of the selected tracks."
+msgstr "Format : AAAA-MM-JJ. Saisissez « none » pour effacer l'expiration des pistes sélectionnées."
+
+#: application/controllers/LocaleController.php
+msgid "Podcast download failed:"
+msgstr "Téléchargement du podcast échoué :"
+
+#: application/controllers/LocaleController.php
+msgid "%s attempt(s), last %s"
+msgstr "%s tentative(s), dernière %s"
+
+#: application/controllers/LocaleController.php
+msgid "Check the feed and the episode's download address under Library → Podcasts."
+msgstr "Vérifiez le flux et l'adresse de téléchargement de l'épisode sous Bibliothèque → Podcasts."

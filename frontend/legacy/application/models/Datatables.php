@@ -149,7 +149,11 @@ class Application_Model_Datatables
         $orderby = [];
         for ($i = 0; $i < $data['iSortingCols']; ++$i) {
             $num = $data['iSortCol_' . $i];
-            $orderby[] = $data["mDataProp_{$num}"] . ' ' . $data['sSortDir_' . $i];
+            // RASTATIME 2026-10-07 - the direction is one of two words, and a
+            // descending sort puts the rows without a value last (play count /
+            // last played of playlists, blocks, streams; never-played files)
+            $dir = strtolower((string) $data['sSortDir_' . $i]) === 'desc' ? 'DESC NULLS LAST' : 'ASC';
+            $orderby[] = $data["mDataProp_{$num}"] . ' ' . $dir;
         }
         $orderby[] = 'id';
         $orderby = implode(',', $orderby);

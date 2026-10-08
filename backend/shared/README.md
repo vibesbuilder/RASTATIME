@@ -1,6 +1,6 @@
 # Shared
 
-The `libretime_shared` package contains reusable functions and classes for the LibreTime project.
+The `libretime_shared` package contains reusable functions and classes for the RASTATIME project.
 
 ## Usage
 

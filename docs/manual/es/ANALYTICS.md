@@ -61,6 +61,14 @@ Debajo, tres pestañas (los DJ solo ven la tercera):
 > `/playouthistory/{playout-history-feed,file-history-feed,show-history-feed}`,
 > todas filtradas en el servidor según el rango elegido.
 
+> **Una pista borrada conserva su historial (desde 2026-10-08).** Cada
+> fila de archivo lleva título, creador, duración, compositor y
+> copyright del momento de la emisión. Borrar la pista de la biblioteca
+> solo vacía la referencia al archivo; la fila se queda y se muestra a
+> partir de esos valores - igual que las filas de webstream y line-in.
+> La pestaña *File Summary* cuenta las pistas que aún existen. Antes,
+> LibreTime borraba las filas junto con la pista.
+
 ---
 
 ## 2. History Templates

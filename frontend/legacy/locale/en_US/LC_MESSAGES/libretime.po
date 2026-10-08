@@ -633,7 +633,7 @@ msgid "It looks like the next show is empty. %sAdd tracks to your show now%s."
 msgstr ""
 
 #: application/configs/config-check.php:167
-msgid "LibreTime media analyzer service"
+msgid "RASTATIME media analyzer service"
 msgstr ""
 
 #: application/configs/config-check.php:174
@@ -657,7 +657,7 @@ msgid "If not, try "
 msgstr ""
 
 #: application/configs/config-check.php:187
-msgid "LibreTime playout service"
+msgid "RASTATIME playout service"
 msgstr ""
 
 #: application/configs/config-check.php:193
@@ -665,7 +665,7 @@ msgid "Check that the libretime-playout service is installed correctly in "
 msgstr ""
 
 #: application/configs/config-check.php:205
-msgid "LibreTime liquidsoap service"
+msgid "RASTATIME liquidsoap service"
 msgstr ""
 
 #: application/configs/config-check.php:212
@@ -673,7 +673,7 @@ msgid "Check that the libretime-liquidsoap service is installed correctly in "
 msgstr ""
 
 #: application/configs/config-check.php:224
-msgid "LibreTime Celery Task service"
+msgid "RASTATIME Celery Task service"
 msgstr ""
 
 #: application/configs/config-check.php:231
@@ -681,7 +681,7 @@ msgid "Check that the libretime-worker service is installed correctly in "
 msgstr ""
 
 #: application/configs/config-check.php:243
-msgid "LibreTime API service"
+msgid "RASTATIME API service"
 msgstr ""
 
 #: application/configs/config-check.php:250
@@ -829,19 +829,19 @@ msgstr "You don't have permission to switch source."
 msgid ""
 "To configure and use the embeddable player you must:<br><br>\n"
 "            1. Enable at least one MP3, AAC, or OGG stream under Settings -> Streams<br>\n"
-"            2. Enable the Public LibreTime API under Settings -> Preferences"
+"            2. Enable the Public RASTATIME API under Settings -> Preferences"
 msgstr ""
 
 #: application/controllers/EmbeddablewidgetsController.php:35
 msgid ""
 "To use the embeddable weekly schedule widget you must:<br><br>\n"
-"            Enable the Public LibreTime API under Settings -> Preferences"
+"            Enable the Public RASTATIME API under Settings -> Preferences"
 msgstr ""
 
 #: application/controllers/EmbeddablewidgetsController.php:48
 msgid ""
 "To add the Radio Tab to your Facebook Page, you must first:<br><br>\n"
-"            Enable the Public LibreTime API under Settings -> Preferences"
+"            Enable the Public RASTATIME API under Settings -> Preferences"
 msgstr ""
 
 #: application/controllers/ErrorController.php:94
@@ -994,23 +994,23 @@ msgid "New version available: "
 msgstr "New version available: "
 
 #: application/controllers/LocaleController.php:39
-msgid "You have a pre-release version of LibreTime intalled."
+msgid "You have a pre-release version of RASTATIME intalled."
 msgstr ""
 
 #: application/controllers/LocaleController.php:40
-msgid "A patch update for your LibreTime installation is available."
+msgid "A patch update for your RASTATIME installation is available."
 msgstr ""
 
 #: application/controllers/LocaleController.php:41
-msgid "A feature update for your LibreTime installation is available."
+msgid "A feature update for your RASTATIME installation is available."
 msgstr ""
 
 #: application/controllers/LocaleController.php:42
-msgid "A major update for your LibreTime installation is available."
+msgid "A major update for your RASTATIME installation is available."
 msgstr ""
 
 #: application/controllers/LocaleController.php:43
-msgid "Multiple major updates for LibreTime installation are available. Please upgrade as soon as possible."
+msgid "Multiple major updates for RASTATIME installation are available. Please upgrade as soon as possible."
 msgstr ""
 
 #: application/controllers/LocaleController.php:45
@@ -1257,6 +1257,10 @@ msgstr "Last Modified"
 #: application/models/Criteria.php:159
 msgid "Last Played"
 msgstr "Last Played"
+
+#: application/controllers/LocaleController.php:112
+msgid "Play Count"
+msgstr "Play Count"
 
 #: application/controllers/LocaleController.php:103
 #: application/models/Criteria.php:165
@@ -3266,7 +3270,7 @@ msgid "Trim overbooked shows after autoloading?"
 msgstr ""
 
 #: application/forms/GeneralPreferences.php:170
-msgid "Public LibreTime API"
+msgid "Public RASTATIME API"
 msgstr ""
 
 #: application/forms/GeneralPreferences.php:171
@@ -3275,7 +3279,7 @@ msgstr ""
 
 #: application/forms/GeneralPreferences.php:177
 msgid ""
-"Enabling this feature will allow LibreTime to provide schedule data\n"
+"Enabling this feature will allow RASTATIME to provide schedule data\n"
 "                                            to external widgets that can be embedded in your website."
 msgstr ""
 
@@ -4697,3 +4701,215 @@ msgstr ""
 #: RASTATIME 2026-10-01 help page
 msgid "For more detailed help, read the %suser manual%s."
 msgstr "For more detailed help, read the %suser manual%s."
+
+#: RASTATIME 2026-10-03 brand stage A
+msgid "RASTATIME is free radio automation software for scheduling and station management, built as a Windows-first fork of LibreTime."
+msgstr ""
+
+#: RASTATIME 2026-10-03 brand stage A
+msgid "OK, got it!"
+msgstr ""
+
+#: RASTATIME 2026-10-03 brand stage A
+msgid "based on LibreTime %s"
+msgstr ""
+
+#: RASTATIME 2026-10-06 login brute-force brake
+msgid "Too many failed login attempts. Please try again in %d minute(s)."
+msgstr ""
+
+#: RASTATIME 2026-10-06 blocked addresses
+msgid "Blocked addresses"
+msgstr ""
+
+#: RASTATIME 2026-10-06 blocked addresses
+msgid "Layer"
+msgstr ""
+
+#: RASTATIME 2026-10-06 blocked addresses
+msgid "Address / user"
+msgstr ""
+
+#: RASTATIME 2026-10-06 blocked addresses
+msgid "Failures"
+msgstr ""
+
+#: RASTATIME 2026-10-06 blocked addresses
+msgid "Remaining"
+msgstr ""
+
+#: RASTATIME 2026-10-06 blocked addresses
+msgid "Loading…"
+msgstr ""
+
+#: RASTATIME 2026-10-06 blocked addresses
+msgid "Web login: 10 failures in 15 minutes block an address for 15 minutes; a user name is braked after 20 failures in 60 minutes for 5 minutes. DJ dial-in: 5 wrong passwords in 10 minutes block the address for 15 minutes (too-early logins do not count). Firewall: rules set by the watcher for 24 hours."
+msgstr ""
+
+#: RASTATIME 2026-10-06 blocked addresses
+msgid "Web login"
+msgstr ""
+
+#: RASTATIME 2026-10-06 blocked addresses
+msgid "Web login (user)"
+msgstr ""
+
+#: RASTATIME 2026-10-06 blocked addresses
+msgid "DJ dial-in"
+msgstr ""
+
+#: RASTATIME 2026-10-06 blocked addresses
+msgid "Firewall"
+msgstr ""
+
+#: RASTATIME 2026-10-06 blocked addresses
+msgid "counting"
+msgstr ""
+
+#: RASTATIME 2026-10-06 blocked addresses
+msgid "blocked, %s min left"
+msgstr ""
+
+#: RASTATIME 2026-10-06 blocked addresses
+msgid "No addresses are blocked at the moment."
+msgstr ""
+
+#: RASTATIME 2026-10-06 blocked addresses
+msgid "Unblock"
+msgstr ""
+
+#: RASTATIME 2026-10-06 blocked addresses
+msgid "Unblocked %s."
+msgstr ""
+
+#: RASTATIME 2026-10-06 blocked addresses
+msgid "Unblocking failed."
+msgstr ""
+
+#: application/views/scripts/index/index.phtml application/forms/GeneralPreferences.php
+msgid "Landing page background:"
+msgstr "Landing page background:"
+
+#: application/views/scripts/index/index.phtml application/forms/GeneralPreferences.php
+msgid "Recommended: 1920 px wide, 1 MB or less. JPG, PNG or WebP up to 5 MB."
+msgstr "Recommended: 1920 px wide, 1 MB or less. JPG, PNG or WebP up to 5 MB."
+
+#: application/views/scripts/index/index.phtml application/forms/GeneralPreferences.php
+msgid "Stream player"
+msgstr "Stream player"
+
+#: application/views/scripts/index/index.phtml application/forms/GeneralPreferences.php
+msgid "Schedule"
+msgstr "Schedule"
+
+#: application/views/scripts/index/index.phtml application/forms/GeneralPreferences.php
+msgid "Podcast"
+msgstr "Podcast"
+
+#: application/views/scripts/form/preferences_general.phtml
+msgid "Station"
+msgstr "Station"
+
+#: application/views/scripts/form/preferences_general.phtml
+msgid "Styling"
+msgstr "Styling"
+
+#: application/views/scripts/form/preferences_general.phtml
+msgid "Playout"
+msgstr "Playout"
+
+#: application/views/scripts/form/preferences_general.phtml
+msgid "Automation"
+msgstr "Automation"
+
+#: application/views/scripts/systemstatus/index.phtml
+msgid "Allow"
+msgstr "Allow"
+
+#: application/views/scripts/systemstatus/index.phtml
+msgid "Allowed addresses"
+msgstr "Allowed addresses"
+
+#: application/views/scripts/systemstatus/index.phtml
+msgid "Address or network"
+msgstr "Address or network"
+
+#: application/views/scripts/systemstatus/index.phtml
+msgid "Address or network (CIDR)"
+msgstr "Address or network (CIDR)"
+
+#: application/views/scripts/systemstatus/index.phtml
+msgid "No addresses are allowed at the moment."
+msgstr "No addresses are allowed at the moment."
+
+#: application/views/scripts/systemstatus/index.phtml
+msgid "Allowed %s."
+msgstr "Allowed %s."
+
+#: application/views/scripts/systemstatus/index.phtml
+msgid "Removed %s from the allowed addresses."
+msgstr "Removed %s from the allowed addresses."
+
+#: application/views/scripts/systemstatus/index.phtml
+msgid "Not an address or network (e.g. 203.0.113.5 or 203.0.113.0/24)."
+msgstr "Not an address or network (e.g. 203.0.113.5 or 203.0.113.0/24)."
+
+#: application/views/scripts/systemstatus/index.phtml
+msgid "Changing the allowed addresses failed."
+msgstr "Changing the allowed addresses failed."
+
+#: application/views/scripts/systemstatus/index.phtml
+msgid "An allowed address or network is never braked by the web login, never throttled by the DJ dial-in and never blocked by the firewall watcher. Addresses of the studio network are exempt anyway. Keep the list short: a home address usually changes with the provider, a network (CIDR) covers that."
+msgstr "An allowed address or network is never braked by the web login, never throttled by the DJ dial-in and never blocked by the firewall watcher. Addresses of the studio network are exempt anyway. Keep the list short: a home address usually changes with the provider, a network (CIDR) covers that."
+
+#: application/forms/BulkEditAudioMD.php application/views/scripts/library/bulk-edit-file-md.phtml
+msgid "Leave unchanged"
+msgstr "Leave unchanged"
+
+#: application/forms/BulkEditAudioMD.php application/views/scripts/library/bulk-edit-file-md.phtml
+msgid "Editing the metadata of %s tracks. Empty fields stay unchanged; a filled field is written to every selected track."
+msgstr "Editing the metadata of %s tracks. Empty fields stay unchanged; a filled field is written to every selected track."
+
+#: application/forms/BulkEditAudioMD.php application/views/scripts/library/bulk-edit-file-md.phtml
+msgid "Edit metadata of the selected tracks"
+msgstr "Edit metadata of the selected tracks"
+
+#: application/forms/BulkEditAudioMD.php application/views/scripts/library/bulk-edit-file-md.phtml
+msgid "Apply"
+msgstr "Apply"
+
+#: application/forms/BulkEditAudioMD.php application/views/scripts/library/bulk-edit-file-md.phtml
+msgid "Updated %s track(s)."
+msgstr "Updated %s track(s)."
+
+#: application/forms/BulkEditAudioMD.php application/views/scripts/library/bulk-edit-file-md.phtml
+msgid "No permission for %s track(s)."
+msgstr "No permission for %s track(s)."
+
+#: application/forms/BulkEditAudioMD.php application/views/scripts/library/bulk-edit-file-md.phtml
+msgid "Fill at least one field; empty fields stay unchanged."
+msgstr "Fill at least one field; empty fields stay unchanged."
+
+#: application/forms/BulkEditAudioMD.php application/views/scripts/library/bulk-edit-file-md.phtml
+msgid "The metadata could not be saved."
+msgstr "The metadata could not be saved."
+
+#: application/forms/BulkEditAudioMD.php
+msgid "Expiry date must be in YYYY-MM-DD format, \"none\" to clear it, or empty."
+msgstr "Expiry date must be in YYYY-MM-DD format, \"none\" to clear it, or empty."
+
+#: application/forms/BulkEditAudioMD.php
+msgid "Format: YYYY-MM-DD. Enter \"none\" to clear the expiry of the selected tracks."
+msgstr "Format: YYYY-MM-DD. Enter \"none\" to clear the expiry of the selected tracks."
+
+#: application/controllers/LocaleController.php
+msgid "Podcast download failed:"
+msgstr "Podcast download failed:"
+
+#: application/controllers/LocaleController.php
+msgid "%s attempt(s), last %s"
+msgstr "%s attempt(s), last %s"
+
+#: application/controllers/LocaleController.php
+msgid "Check the feed and the episode's download address under Library → Podcasts."
+msgstr "Check the feed and the episode's download address under Library → Podcasts."

@@ -102,6 +102,21 @@ escaneadas recursivamente. Vea
 > local para cualquier lote de más de una docena de
 > archivos.
 
+> **Tiempo restante y crossfades (desde 2026-10-06).** Las filas de
+> música se solapan por su crossfade (valor de la casa 3 s, o el del
+> tipo de pista; jingles 0), así que el tiempo restante de un programa
+> es el tiempo *dispuesto*: del final de la última fila al final del
+> programa — la cifra del pie del Show Builder. Un smart block «Tiempo
+> restante en el programa» se elige contra ese tiempo, entre sus vecinos
+> reales, de modo que la última fila termina a un segundo o así del
+> final del programa (el solucionador del bloque es aleatorio; el pool
+> decide lo que es posible). Un bloque limitado por *Duración en tiempo*
+> se elige igual (decisión del operador 2026-10-06): 12 minutos son 12
+> minutos **en antena**, no la suma de las pistas, así que una ID de la
+> emisora tras tres bloques así cae en 12:00, 24:xx y 36:xx de la hora.
+> Un jingle entre dos pistas musicales cuesta su propia duración más los
+> 3 s de solapamiento que interrumpe.
+
 #### 2.3 Suscripción podcast (recurrente)
 
 Configuración → **Podcasts** → **Suscribirse**. Pegue una
@@ -137,6 +152,7 @@ el menú de acción de la fila.
 | **Cue In / Out** | `cc_files.cuein` / `cueout` — recortar el inicio / fin sin re-encodificar. Desde el 30/09/2026 los valores se mantienen dentro del archivo: un cue out más allá de la duración se limita a la duración, un cue in negativo pasa a cero. Un cambio se copia en las filas de los programas futuros que programan la pista (las filas ya iniciadas no se tocan) y esos programas se recalculan - no hace falta volver a llenarlos. |
 | **Fade In / Out** | `cc_files.fadein` / `fadeout` |
 | **Replay Gain** | `cc_files.replay_gain` — usado por el motor de playout para normalización de nivel |
+| **Play Count** | Columna de la biblioteca (oculta por defecto, selector de columnas), solo lectura: cuántas veces se emitió la pista - un conteo por fila del historial de emisión, la misma cifra que Historial → File Summary. Ordenable; la búsqueda avanzada admite un rango. Desde 2026-10-07. |
 | **Crossover** | Cómo se encuentra esta pista con sus vecinas (desde el 2026-09-29 un campo de tres opciones; las dos excepciones se excluyen entre sí). **As the track type** (como el tipo de pista, por defecto): la pista se solapa y funde según indique su tipo de pista - Settings → Track Types → *Crossfade Duration* - o, sin valor allí, según la Default Track Crossfade Duration; desde 2026-09-30 hereda también el preajuste *No Fade during Crossover* del tipo. **No Fade during Crossover** (sin fundido durante el crossover, `cc_files.no_fade_crossfade`): el solapamiento se mantiene, pero esta pista conserva su nivel completo mientras la otra se funde; en un límite de programa sobrepasado, una pista saliente marcada se corta en vez de fundirse. **Exclude from Crossover** (excluir del crossover, `cc_files.exclude_crossfade`): esta pista nunca se solapa con una vecina - empieza al final de la pista anterior y la siguiente empieza a su final. Cambiar a *Exclude* o volver de él recalcula las filas de los programas futuros que programan la pista. |
 
 ### Eliminar una pista
@@ -185,7 +201,11 @@ Program Manager ve toda la biblioteca.
 > **Cómo funciona bajo el capó.** Los criterios están
 > almacenados en `cc_blockcriteria`. En momento de build,
 > `BlockExpander.expand()` ensambla un PostgreSQL `SELECT
-> … WHERE … LIMIT …` sobre `cc_files`.
+> … WHERE … LIMIT …` sobre `cc_files`. Los límites de tiempo restante
+> se convierten en un tope de duración vía `getSecondsRemaining()` de la
+> instancia (desde 2026-10-06 el tiempo libre dispuesto: `time_filled` =
+> inicio hasta el final de la última fila; la elección la hace
+> `Scheduler::pickRemainingBlock()`).
 
 ### Toggles de restricción de pool (Opciones avanzadas)
 
@@ -321,7 +341,7 @@ la tabla:
 |---|---|
 | **Añadir a playlist** | Añadir las filas seleccionadas a una playlist existente de su elección. |
 | **Eliminar** | Eliminar las filas seleccionadas. |
-| **Editar metadatos** | Abrir un diálogo de edición por lotes. Solo aplica a pistas. |
+| **Editar** | Una pista seleccionada: su pestaña de edición, como antes. **Dos o más pistas seleccionadas (desde 2026-10-08): un solo diálogo para todas** - creador, álbum, género, año, tipo de pista, idioma, mood, sello, compositor, director, copyright, fecha de caducidad (`none` la borra), descripción. Los campos vacíos no cambian; un campo relleno se escribe en cada pista seleccionada; título, número de pista, BPM, puntos de cue y carátula siguen siendo por pista. Solo base de datos, como el editor individual (las etiquetas de los archivos se leen al importar y nunca se reescriben). Las pistas que no puede editar se omiten y se cuentan en el resultado. |
 | **Transferir propietario** | Reasignar propiedad (solo Admin / Super Admin). |
 | **Cue Points** | Detecta los puntos de cue de las pistas seleccionadas a partir del audio (la misma detección de silencio que el analizador ejecuta al importar: por debajo de −60 dB durante al menos 0,3 s al inicio o al final) y los guarda. Los programas futuros que programan esas pistas adoptan los nuevos valores y se recalculan. Las pistas de más de 15 minutos se omiten - la acción está pensada para jingles y otros elementos cortos. Desde el 30/09/2026. |
 

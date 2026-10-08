@@ -174,6 +174,7 @@ class PlayoutScheduler:
         render_restart_pending: bool = False,
         tunein: Optional[TuneInPusher] = None,
         live_text: Optional[LiveTextWriter] = None,
+        linein_icecast_credentials: Optional[Tuple[str, str]] = None,
     ) -> None:
         self._engine = engine
         self._api_client = api_client
@@ -288,6 +289,14 @@ class PlayoutScheduler:
         # when rows are clipped at a show boundary, rehearsal 2026-09-27)
         self._queued_ahead: Optional[Tuple[str, FileEvent]] = None
         self._queued_ahead_prev: Optional[FileEvent] = None
+        # RASTATIME 2026-10-03 - a row whose queue-ahead was held back
+        # behind a shorter queued row (see _on_file_queue_ahead); queued as
+        # soon as that row starts, so cross has its partner in time.
+        self._deferred_queue_ahead: Optional[Tuple[str, FileEvent]] = None
+        # RASTATIME 2026-10-03 - rows whose _on_file_start is executing right
+        # now (key -> event): a refresh in the same second must not catch
+        # them up a second time (12:17:55 incident: a jingle aired twice).
+        self._starting: Dict[str, FileEvent] = {}
         # RASTATIME 2026-09-28 - when the current file track was pushed and
         # how much audio it had then: the upper bound for what the engine
         # may report as "left" (the queue's remaining belongs to the
@@ -342,7 +351,17 @@ class PlayoutScheduler:
         # surfaces at startup, not at scheduled-air-time.  ``stop()``
         # on an idle instance is a no-op, so it's safe to keep around.
         try:
-            self._linein_capture: Optional[FfmpegLineinCapture] = FfmpegLineinCapture()
+            # RASTATIME 2026-10-04 (go-live stage 0) - the capture pushes to
+            # the local Icecast with the SAME source credentials as the
+            # stream outputs (Settings -> Streams); the module default
+            # ("source"/"admin") only applies when no local output exists.
+            capture_kwargs = {}
+            if linein_icecast_credentials:
+                capture_kwargs = {
+                    "icecast_user": linein_icecast_credentials[0],
+                    "icecast_password": linein_icecast_credentials[1],
+                }
+            self._linein_capture: Optional[FfmpegLineinCapture] = FfmpegLineinCapture(**capture_kwargs)
             # Phase B.4 #1 — wire the auto-restart callback so the
             # capture's watchdog can re-arm Liquidsoap's input.http
             # companion on the listen URL after a successful restart
@@ -530,6 +549,22 @@ class PlayoutScheduler:
                     current_evt is None
                     or current_evt.end <= now
                 )
+                if (
+                    current_evt is not None
+                    and current_evt.end <= now
+                    and self._queued_ahead is not None
+                    and (now - current_evt.end).total_seconds() < 1.5
+                ):
+                    # RASTATIME 2026-10-03 - the row ended in this very
+                    # second and its successor is on the queue: the STOP
+                    # timer and the queue hand over by themselves.  Tearing
+                    # down here flushed the queued jingle (12:17:55).
+                    logger.info(
+                        "Playing event %s ended this second with %s queued ahead "
+                        "- leaving the hand-over to the queue.",
+                        self._playing_key, self._queued_ahead[0],
+                    )
+                    event_gone_or_truncated = False
                 if event_gone_or_truncated:
                     stale_key = self._playing_key
                     reason = (
@@ -1292,6 +1327,7 @@ class PlayoutScheduler:
         # snapshot of "what's armed right now" (rather than ghosts of
         # the previous refresh).
         self._armed_events.clear()
+        self._deferred_queue_ahead = None   # re-armed by the queue-ahead timers
 
     def _arm_file_event(
         self,
@@ -1325,6 +1361,18 @@ class PlayoutScheduler:
                 "(%s -> %s); rebinding.", event.track_title, self._playing_key, key,
             )
             self._playing_key = key
+
+        elif key != self._playing_key and any(
+            self._same_scheduled_item(starting, event)
+            for starting in list(self._starting.values())
+        ):
+            # RASTATIME 2026-10-03 - the refresh landed in the row's start
+            # second: its timer PLAY is running this very moment.  A
+            # catch-up here pushed the same jingle a second time (12:17:55).
+            logger.info(
+                "Catch-up skipped: %s (%r) is starting right now - its timer "
+                "fired this second.", key, event.track_title,
+            )
 
         elif key != self._playing_key and self._precedes_playing(event):
             # RASTATIME 2026-09-28 - a refresh that spans a track boundary
@@ -1558,9 +1606,20 @@ class PlayoutScheduler:
         successor by the crossfade, or the refresh straddled the
         boundary).  With nothing on air every in-progress row is a
         legitimate catch-up.
+
+        RASTATIME 2026-10-02 - the playing item itself never "precedes":
+        a refresh that hands it back under a new key (``<ts>_2`` ->
+        ``<ts>``, see _same_scheduled_item) has to reach the rebind
+        branch of its arm path, or the stop timer armed under the new
+        key dies on _on_stop's stale-key check and the slot never ends.
+        The file and web stream paths test identity before this guard;
+        the line-in path tests it after - so the exclusion lives here,
+        once, for all three.
         """
         cur = self._current_event
         if cur is None or self._playing_key is None:
+            return False
+        if self._same_scheduled_item(cur, event):
             return False
         return getattr(event, "start", None) is not None and event.start <= cur.start  # type: ignore[attr-defined]
 
@@ -1879,6 +1938,23 @@ class PlayoutScheduler:
             ):
                 self._queued_ahead = (key, event)  # key shifted across a refresh
                 return
+            # RASTATIME 2026-10-03 - rows shorter than the lead window
+            # (BUFFER + margin): the queued row is still armed and starts
+            # before this one, so it is the real successor, not stale.  It
+            # stays; this row starts the normal way behind it (2026-10-02
+            # 23:36: two StationIDs of 3.2 s and 4.9 s were swapped, one of
+            # them aired twice and the chain ran 2.9 s late to the show end).
+            if queued_evt.start <= event.start and any(
+                self._same_scheduled_item(armed, queued_evt)
+                for armed in list(self._armed_events.values())
+            ):
+                logger.info(
+                    "Queue-ahead: %s stays queued ahead of %s (rows shorter than "
+                    "the lead window) - %s is queued as soon as it starts.",
+                    self._queued_ahead[0], key, key,
+                )
+                self._deferred_queue_ahead = (key, event)
+                return
             # a different row, or the same row re-cued by a show-builder
             # edit (2026-09-28): the queued request carries the old cues
             logger.info(
@@ -2134,7 +2210,43 @@ class PlayoutScheduler:
             return
         self._engine.webstream_stop()
 
+    def _queue_deferred_ahead(self) -> None:
+        """
+        RASTATIME 2026-10-03 - the row held back by _on_file_queue_ahead
+        (its lead window opened while a shorter row was queued) goes on the
+        queue now that the shorter row plays: a 2.7 s jingle left its
+        successor's own PLAY 0.3 s, and 0.6 s of dead air followed
+        (12:40:23).  Nothing to do when the row is gone or is the current one.
+        """
+        deferred = self._deferred_queue_ahead
+        if deferred is None:
+            return
+        self._deferred_queue_ahead = None
+        key, event = deferred
+        cur = self._current_event
+        if not isinstance(cur, FileEvent) or self._same_scheduled_item(cur, event):
+            return
+        if event.start < cur.start or not any(
+            self._same_scheduled_item(armed, event)
+            for armed in list(self._armed_events.values())
+        ):
+            return
+        logger.info(
+            "Queue-ahead: %s was held back behind %r - queuing it now.",
+            key, cur.track_title or cur.id,
+        )
+        self._on_file_queue_ahead(key, event)
+
     def _on_file_start(self, key: str, event: FileEvent, seek: float = 0.0) -> None:
+        """Start ``event`` now (see _on_file_start_impl); marks the row as starting."""
+        self._starting[key] = event
+        try:
+            self._on_file_start_impl(key, event, seek)
+        finally:
+            self._starting.pop(key, None)
+            self._queue_deferred_ahead()
+
+    def _on_file_start_impl(self, key: str, event: FileEvent, seek: float = 0.0) -> None:
         """
         Start ``event`` now.  ``seek`` (seconds, catch-up only) is how far
         into the track the schedule already is: a service restart or a

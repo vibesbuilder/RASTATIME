@@ -7,11 +7,9 @@ class Application_Form_AddShowLiveStream extends Zend_Form_SubForm
     public function init()
     {
         // RASTATIME 2026-05-19 — hard-coded "RASTATIME" instead of
-        // sprintf(..., PRODUCT_NAME).  PRODUCT_NAME is deliberately
-        // pinned to "LibreTime" upstream-wide (see constants.php
-        // RASTATIME 2026-05-16 note) for upstream-sync tracking and
-        // API-response compatibility; we only override the brand in
-        // a handful of operator-visible labels.  Element id stays
+        // sprintf(..., PRODUCT_NAME); at the time PRODUCT_NAME was still
+        // pinned to "LibreTime" (since 2026-10-03, brand stage A, it is
+        // RASTATIME too - the label stays as it is).  Element id stays
         // cb_airtime_auth so existing form-data, JS selectors and
         // template_data JSON keep working unchanged.
         $cb_airtime_auth = new Zend_Form_Element_Checkbox('cb_airtime_auth');

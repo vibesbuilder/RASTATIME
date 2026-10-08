@@ -6,10 +6,12 @@
         $productSiteAnchor = "<a href='" . PRODUCT_SITE_URL . "' target='_blank'>"
             . PRODUCT_NAME
             . "</a>";
+        // RASTATIME 2026-10-03 - the fork version first, the upstream
+        // LibreTime release it is based on in brackets (attribution).
         echo sprintf(
             _('%1$s %2$s, the open radio software for scheduling and remote station management.'),
             $productSiteAnchor,
-            $this->airtime_version
+            RASTATIME_VERSION . ' (' . sprintf(_('based on LibreTime %s'), $this->airtime_version) . ')'
         )
         ?>
         <br />

@@ -498,6 +498,58 @@ Admins) können sie herunterladen.
 
 ---
 
+## 8. Anmeldeschutz (seit 2026-10-06)
+
+Die Anmeldeseite bremst wiederholte Fehlversuche – notwendig, seit die
+Weboberfläche aus dem Internet erreichbar ist.
+
+| Bereich | Regel | Wirkung |
+|---|---|---|
+| Je Absenderadresse | 10 fehlgeschlagene Anmeldungen in 15 Minuten | die Adresse wartet 15 Minuten; jeder Versuch in dieser Zeit erhält „Zu viele fehlgeschlagene Anmeldeversuche. Bitte versuchen Sie es in N Minute(n) erneut." (HTTP 429), kein Passwort wird geprüft |
+| Je Benutzername | 20 fehlgeschlagene Anmeldungen in 60 Minuten | der Name wartet 5 Minuten – bewusst kurz, damit niemand durch Dauerfeuer auf den Namen eines Administrators von vielen Adressen aus diesen dauerhaft aussperren kann |
+| DJ-Einwahl (Harbor) | 5 abgelehnte Anmeldungen einer Adresse in 10 Minuten | die Adresse wird 15 Minuten lang abgewiesen, ohne die Weboberfläche zu fragen |
+
+Eine erfolgreiche Anmeldung setzt die Zähler ihrer Adresse und ihres
+Namens zurück.  Die Schwellen stehen in `constants.php`
+(`RASTATIME_LOGIN_*`) und im Playout (`RejectThrottle`); abgewiesene
+Versuche werden mit Adresse protokolliert (`logs/legacy.log`,
+`logs/playout-stdout.log`).
+
+**Sperren sehen und aufheben.**  Einstellungen → Systemstatus →
+*Gesperrte Adressen* zeigt alle Ebenen (Web-Login je Adresse und je
+Benutzer, DJ-Einwahl, Firewall-Wächter) mit Fehlversuchen und
+verbleibenden Minuten; **Entsperren** hebt den Eintrag auf allen Ebenen
+auf – für den DJ, der anruft, weil im Client ein falsches Passwort
+gespeichert war.  Dieselbe Liste gibt es in der PowerShell:
+`infra\scripts\rt-blocks.ps1` (`-Unblock <Adresse>` oder
+`-Unblock user:<Login>`).  Ein DJ, der sich **vor** Sendungsbeginn
+einwählt, wird abgewiesen, aber nie gezählt: nur ein falsches Passwort
+zählt.  Hartnäckige Internet-Scanner sperrt ein Wächter alle 5 Minuten
+für 24 Stunden in der Windows-Firewall (50 abgewiesene Anfragen in 60
+Minuten, 3 typische Scanner-Pfade oder 5 falsche DJ-Passwörter); sie
+erscheinen in derselben Liste.  Eine „nicht angemeldet"-Antwort (401)
+zählt nie: Sie ist das, was ein Browser-Tab mit abgelaufener Sitzung für
+seine Hintergrund-Abfragen bekommt, und seit 2026-10-07 stellt ein
+solcher Tab die Abfragen bei der ersten ein.
+
+**Freigegebene Adressen (seit 2026-10-08).**  Neben **Entsperren** hat
+jede gesperrte Adresse **Freigeben**: Sie wird auf allen Ebenen entsperrt
+und in die Liste *Freigegebene Adressen* darunter aufgenommen, in der Sie
+auch von Hand eine Adresse oder ein Netz in CIDR-Schreibweise
+(`203.0.113.0/24`) eintragen und Einträge entfernen können.  Eine
+freigegebene Adresse wird vom Web-Login nie gebremst, von der DJ-Einwahl
+nie gedrosselt und vom Firewall-Wächter nie gesperrt; Adressen des
+Studionetzes sind ohnehin ausgenommen.  Halten Sie die Liste kurz - sie
+schaltet für diese Adresse jede Bremse ab - und wählen Sie für einen
+Heimanschluss, dessen Adresse mit dem Provider wechselt, lieber ein Netz.
+Die Liste liegt in der Datenbank und wird für Playout und Wächter nach
+`config\allowlist.txt` gespiegelt.
+
+> **Wenn Sie sich selbst ausgesperrt haben:** die angezeigten Minuten
+> abwarten oder eine Kollegin an einer anderen Adresse bitten.  Im Notfall
+> liegen die Zähler in den Tabellen `cc_login_attempts` (je Adresse) und
+> `cc_subjs.login_attempts` (je Benutzer).
+
 ## Wohin als Nächstes
 
 * [Einstellungen](./SETTINGS.md) — Tour durch jede

@@ -463,6 +463,55 @@ download them.
 
 ---
 
+## 8. Login protection (since 2026-10-06)
+
+The login page brakes repeated failures - a necessity since the web
+interface is reachable from the internet.
+
+| Scope | Rule | Effect |
+|---|---|---|
+| Per source address | 10 failed logins within 15 minutes | the address waits 15 minutes; every attempt in that time is answered with "Too many failed login attempts. Please try again in N minute(s)." (HTTP 429), no password is checked |
+| Per user name | 20 failed logins within 60 minutes | the name waits 5 minutes - deliberately short, so that somebody hammering an administrator's name from many addresses cannot lock the administrator out for good |
+| DJ dial-in (harbor) | 5 rejected logins from one address within 10 minutes | the address is refused for 15 minutes without asking the web application |
+
+A successful login clears the counters of its address and its name.  The
+thresholds live in `constants.php` (`RASTATIME_LOGIN_*`) and in the
+playout (`RejectThrottle`); blocked attempts are logged with the address
+(`logs/legacy.log`, `logs/playout-stdout.log`).
+
+**Seeing and lifting blocks.**  Settings → System Status → *Blocked
+addresses* lists every layer (web login per address and per user, DJ
+dial-in, firewall watcher) with the failure count and the remaining
+minutes, and an **Unblock** button clears the entry on all layers - for
+the DJ who calls because the wrong password was saved in their client.
+The same list is available in PowerShell: `infra\scripts\rt-blocks.ps1`
+(`-Unblock <address>` or `-Unblock user:<login>`).  A DJ who dials in
+**before** the show starts is refused but never counted: only a wrong
+password counts.  Persistent internet scanners are blocked for 24 hours
+in the Windows Firewall by a watcher task (every 5 minutes; 50 refused
+requests in 60 minutes, 3 typical scanner paths, or 5 wrong DJ passwords)
+and appear in the same list.  A "not signed in" answer (401) never
+counts: it is what a browser tab with an expired session gets for its
+background polls, and since 2026-10-07 such a tab stops polling on the
+first one.
+
+**Allowed addresses (since 2026-10-08).**  Next to **Unblock** every
+blocked address has **Allow**: it is unblocked on every layer and put on
+the *Allowed addresses* list below, where you can also add an address or
+a network in CIDR notation by hand (`203.0.113.0/24`) and remove entries.
+An allowed address is never braked by the web login, never throttled by
+the DJ dial-in and never blocked by the firewall watcher; addresses of
+the studio network are exempt anyway.  Keep the list short - it switches
+every brake off for that address - and prefer a network for a home
+connection whose address changes with the provider.  The list is kept
+in the database and mirrored to `config\allowlist.txt` for the playout
+and the watcher.
+
+> **If you are locked out yourself:** wait the minutes shown, or ask a
+> colleague on another address.  In an emergency the counters sit in the
+> tables `cc_login_attempts` (per address) and `cc_subjs.login_attempts`
+> (per user).
+
 ## Where to go next
 
 * [Settings](./SETTINGS.md) — tour of every Settings sub-

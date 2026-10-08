@@ -1,5 +1,5 @@
 [Unit]
-Description=LibreTime API Socket
+Description=RASTATIME API Socket
 PartOf=libretime-api.service
 
 [Socket]

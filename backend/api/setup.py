@@ -5,7 +5,7 @@ version = "4.5.0"  # x-release-please-version
 setup(
     name="libretime-api",
     version=version,
-    description="LibreTime API",
+    description="RASTATIME API",
     author="LibreTime Contributors",
     url="https://github.com/libretime/libretime",
     project_urls={

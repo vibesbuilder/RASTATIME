@@ -134,6 +134,17 @@ function removeFavicon() {
   );
 }
 
+// RASTATIME 2026-10-07 - counterpart to removeLogo for the landing page background.
+function removeLandingBackground() {
+  $.post(
+    baseUrl + "preference/remove-landing-background",
+    { csrf_token: $("#csrf").val() },
+    function (json) {
+      location.href = location.href.replace(location.hash, "");
+    },
+  );
+}
+
 function deleteAllFiles() {
   var resp = confirm(
     $.i18n._("Are you sure you want to delete all the tracks in your library?"),
@@ -239,9 +250,14 @@ $(document).ready(function () {
     return false;
   });
 
-  if ($("#tunein-settings").find(".errors").length > 0) {
-    $(".collapsible-content#tunein-settings").show();
-  }
+  // RASTATIME 2026-10-08 - every segment starts collapsed; the one that holds
+  // a validation error after a save opens, so the red hint is not hidden.
+  $(".collapsible-content").each(function () {
+    if ($(this).find(".errors").length > 0) {
+      $(this).show();
+      $(this).prev(".collapsible-header").removeClass("closed");
+    }
+  });
 
   /* No longer using AJAX for this form. Zend + our code makes it needlessly hard to deal with. -- Albert
     $('#pref_save').live('click', function() {
@@ -281,6 +297,19 @@ $(document).ready(function () {
       }
     } else {
       preview.hide();
+    }
+  });
+
+  // RASTATIME 2026-10-07 - live preview for the landing page background.
+  var landingBg = $("#landingBackground"),
+    landingBgPreview = $("#landing-background-img");
+  landingBg.change(function () {
+    if (this.files && this.files[0]) {
+      var r = new FileReader();
+      r.onload = function (e) {
+        landingBgPreview.attr("src", e.target.result).css("visibility", "visible").show();
+      };
+      r.readAsDataURL(this.files[0]);
     }
   });
 

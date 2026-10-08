@@ -9,6 +9,137 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Preflight-Warnung „Podcast download failed" (2026-10-08, Operator-Go)**
+  — ein fehlgeschlagener automatischer oder manueller Folgen-Download stand
+  bisher nur im Legacy-Log.  `Application_Model_PodcastDownloadFailures`
+  hält Fehlschläge je Folgen-GUID in `cc_pref` (Podcast, Folge, Versuche,
+  letzter Versuch, Grund) und veröffentlicht sie über den Replace-Endpunkt
+  der API als Warnungen vom Typ `podcast_download_failed` (Banner auf jeder
+  Seite + System Status); ein späterer Erfolg oder das Entfernen des
+  Podcasts räumt sie weg.  Banner-Text in common.js, drei Strings in vier
+  Katalogen, Manual SETTINGS ×4, TEST_PLAN wöchentlich.  Dazu die
+  Prüfung des Auto-Downloads: seit dem CA-Fix 16.09. 28 Importe, null
+  Fehlschläge, jede neue Feed-Folge geholt (Newsmag/Talkshow-Lücken = bewusstes
+  Löschen des Operators am 08.10. 17:35).  Bereinigung: 34 Platzhalter ohne
+  Datei aus der toten Feed-Phase vor dem 16.09. (Newsmag 32, Vinyl Hour 2)
+  gelöscht.  `20e664f`.
+- **Massenbearbeitung der Metadaten (2026-10-08, Operator-Go nach
+  Evaluierung)** — Bibliothek → „Edit" mit zwei oder mehr Titeln öffnet einen
+  Dialog für alle (`library/bulk-edit-file-md`, Formular
+  `BulkEditAudioMD`): Interpret, Album, Genre, Jahr, Track-Typ, Sprache, Mood,
+  Label, Komponist, Dirigent, Copyright, Beschreibung; leere Felder bleiben
+  unverändert, Rechte je Titel wie im Einzel-Editor (Besitzer oder Admin/PM),
+  nur Datenbank.  Anlass: 51 Dateien ohne Track-Typ/Genre fielen aus allen
+  Smart Blocks.  Cover-Suche im Netz bewusst nicht eingebaut (Mp3tag vor dem
+  Import; 💡 BACKLOG „Tags und Cover aus Datei neu einlesen").  Acht
+  UI-Strings in vier Katalogen, Manual LIBRARY ×4.  `0c14f37`.  Nachbesserung nach
+  Operator-Test: Ablaufdatum als Feld (`none` löscht), Beschreibung und alle
+  Felder 300 px breit; Speichern je Titel über den Pfad des Einzel-Editors.  `12c89a1`.
+- **Freigegebene Adressen für die Brute-Force-Bremsen (2026-10-08,
+  Operator-Go)** — System Status → Blocked addresses: Knopf **Allow** je
+  gesperrter Adresse (entsperrt auf allen Ebenen und trägt sie ein) und die
+  Tabelle **Allowed addresses** (Adresse oder CIDR-Netz von Hand, Remove).
+  Ein Eintrag wird vom Web-Login weder gezählt noch gebremst
+  (`LoginAttempts`), von der DJ-Einwahl nicht gedrosselt
+  (`dj_auth.AllowList`, liest den Spiegel `config/allowlist.txt` bei
+  jeder Änderung) und vom Firewall-Wächter übersprungen (`skipped … allowed
+  address` im Log); `rt-blocks.ps1` zeigt die Liste.  Ablage in `cc_pref`
+  (`allowed_addresses`, JSON), Spiegeldatei in `.gitignore`.  Elf UI-Strings
+  in vier Katalogen, Manual USERS_AND_ROLES ×4, TEST_PLAN A5.5, Architektur
+  §23.53 Addendum.  `dc35a9d`.
+- **Startseite: Hintergrundbild per Admin-UI, Fußleiste mit Sendeplan- und
+  Podcast-Knopf (2026-10-07, Operator-Go)** — Settings → General →
+  „Landing page background" (JPG/PNG/WebP bis 5 MB, Vorschau, Entfernen):
+  Datei unter `landing/` im Speicherort (Backup-Spiegel), Name in `cc_pref`,
+  ausgeliefert über `GET /index/background` mit ETag/Cache (eine Woche,
+  Cache-Buster = Dateizeit), die Seite überschreibt nur `background-image`.
+  Fußleiste nach dem Vorbild der alten LibreTime-„Premium"-Leiste
+  (Operator-Referenz examplehost.co): seitenfeste Leiste mit dem Player v2
+  (Bar-Layout) links und Icon-Knöpfen rechts (Sendeplan, Podcast nur bei
+  öffentlichem Stations-Podcast); die Knöpfe schalten die vorhandenen Tabs,
+  ohne in das Player-Iframe zu greifen — der Podcast-Tab war seit dem
+  Player v2 (18.09.) ohne Knopf unerreichbar.  Farben im Hausstil
+  (Leiste #23211f, Primärfarbe für den aktiven Knopf), kein „Über uns"
+  (Operator 2026-05-24).  Fünf UI-Strings in vier Katalogen, Manual
+  SETTINGS ×4.  `9170ebc`.  2026-10-08: Leiste 60 → 80 px (Handy 70 px), der
+  Player füllt seinen Rahmen in voller Höhe und bleibt zentriert.  Handy-Nachbesserung
+  (Operator, 360 px): der ausgeblendete Podcast-Tab war mit festen 420 px
+  breiter als das Display, Chrome weitete die Layout-Breite auf 480 px und
+  die Leisten-Knöpfe lagen rechts außerhalb → Player ab 590 px flexibel,
+  `html, body` ohne Querüberlauf; der graue Balken zwischen Foto und Leiste
+  war der nackte Seitengrund unter der Abdunkelung (Handys ignorieren
+  `background-attachment: fixed`) → das Foto liegt jetzt auf einer festen,
+  bildschirmgroßen Ebene (`body::before`), die Einstellung überschreibt dort
+  nur das Bild.
+- **Bibliotheksspalte „Play Count" (2026-10-07, Operator-Go Variante A)** —
+  wie oft ein Titel gesendet wurde: ein Zähler pro Zeile des Sendeprotokolls
+  (`cc_playout_history`), dieselbe Zahl wie Sendeprotokoll → File Summary;
+  gruppierter Join in der Bibliotheksabfrage (`StoredFile::searchLibraryFiles`,
+  kein Index, keine Migration), Spalte standardmäßig ausgeblendet, sortierbar,
+  Bereichssuche.  Benennung auf Operator-Wunsch in allen vier Sprachen „Play
+  Count".  Webstreams/Line-Ins stehen zwar im Protokoll, aber ohne Verweis auf
+  ihr Bibliotheks-Objekt (💡 BACKLOG).  Manual LIBRARY ×4.  `fb1fe3e`.
+- **Testplan (Live-Readiness Punkt 14) — `docs/operator/TEST_PLAN.md`
+  (2026-10-06, Operator-Go)** — A: Abnahme-Checkliste A1–A6 mit Prüfweg und
+  erwartetem Ergebnis (Dienste/Boot, Sendeplan/Playout inkl. Crossfade,
+  Autoloading, Verschieben, Webstream, Line-In, Cue-Punkte, Loudness,
+  geplanter Neustart; DJ-Einwahl inkl. „zu früh zählt nicht"; Streams/HTTPS/
+  Außenwelt; Schutz; Datensicherheit), B: wiederkehrende Checks (täglich bis
+  quartalsweise, Zertifikatstermin), C: Probe-Werkzeuge mit Aufruf
+  (`C:\Temp\optd`, `infra/scripts`, Tests mit `--basetemp`).  Verweis in
+  INSTALL.md.  Damit ist die Live-Readiness (BACKLOG Punkt 17) komplett.  `0526d5d`.
+- **Internet-Erreichbarkeit via HTTPS live: `https://radio.example.org`
+  (2026-10-05/06, Operator-Go Weg A)** — Stufe 2: Zielnetz (Profil Privat,
+  NTP), A-Record, Router-Forwards TCP 80/443/8001 → 192.168.1.64 (80/443 weg
+  von der NAS; NAS ohne öffentliche Ports), Apache-Module ssl/socache_shmcb/
+  http2, Let's-Encrypt-Zertifikat per win-acme (gültig bis 2027-01-03,
+  Erneuerung als Aufgabe, Neustart-Skript `infra/scripts/apache-cert-
+  renewed.ps1` nach Fix `ca1b991`), TLS-Host `infra/apache/rastatime-https.
+  conf` (TLS 1.3, HTTP/2, HSTS, Redirect nur für den öffentlichen Namen),
+  `public_url` auf den https-Namen; Nachbesserungen: LAN-Adresse und
+  `allowed_cors_origins` bleiben in `ALLOWED_HOSTS`/CSRF (`0b2453e`),
+  Station-Podcast-Feed-URL in der DB vom Installationswert `localhost`
+  korrigiert.  Stufe 3 von extern abgenommen (UI, drei Streams, Redirect,
+  DJ-Einwahl :8001); sensible Pfade landen im Login-Redirect.  Runbook
+  `docs/operator/GO_LIVE_HTTPS.md` vollständig, BACKLOG Punkt 16 erledigt,
+  Tag `live-2026-10-06` — `28a1cb7`.
+- **Go-Live Stufe 1 (HTTPS, Weg A): interne Adresse, Hörer-Stream über Apache,
+  Apache-Konfiguration im Repo (2026-10-04, Operator-Go)** — neuer optionaler
+  Schlüssel `general.internal_url` in allen drei Config-Schemata (Shared-
+  Pydantic, Legacy-Symfony, Beispieldatei) mit `GeneralConfig.internal_base_url()`
+  (Kette `RASTATIME_INTERNAL_URL` > `internal_url` > `http://127.0.0.1` + Pfad
+  von `public_url`): Playout (Legacy-v1-Client für das On-Air-Licht, DJ-Login-
+  Prüfung), Analyzer (Import-Callback) und Notify rufen die Web-App damit auf
+  der Maschine selbst auf — `public_url` ist nur noch die Außenadresse.
+  `StreamSetting` veröffentlicht Ausgänge auf dem lokalen Icecast als
+  `<public_url>/stream/<mount>` (Player, Widgets, Embed-Codes; entfernte
+  Icecasts behalten host:port).  Neu `infra/apache/`: `rastatime-stream-
+  proxy.conf` (`/stream/` → Icecast :8000, Status/Admin/Playlists gesperrt),
+  `rastatime-acme.conf` (Let's-Encrypt-Challenge-Alias, Rewrite aus),
+  `rastatime-https.conf` (443-vHost: TLS 1.2/1.3, HTTP/2, HSTS,
+  X-Forwarded-Proto, dieselben Proxies, http→https nur für den öffentlichen
+  Namen).  Django `prod.py`: `ALLOWED_HOSTS` aus public/internal/localhost
+  (+ `RASTATIME_API_EXTRA_HOSTS`), `CSRF_TRUSTED_ORIGINS`,
+  `SECURE_PROXY_SSL_HEADER`, `USE_X_FORWARDED_HOST`.  Tests: `tests/unit/
+  test_internal_url.py` (6), Harbor-Tests angepasst, Suite 739 passed;
+  Apache-Syntaxprüfung mit den Includes OK; `/embed/player` liefert die
+  `/stream/`-URLs.  Handbuch STREAMS ×4 (Hörer-URL), Runbook §1, Architektur
+  §23.52 (0.65).  Wirksam nach Apache-Include + Neustart von Apache,
+  PLAYOUT und ANALYZER.  `a0fc2f3`.
+- **Runbook WINDOWS_24_7: Windows-Härtung für den unbeaufsichtigten
+  24/7-Betrieb (2026-10-03, Live-Readiness 17a)** — `docs/operator/
+  WINDOWS_24_7.md`: Befund der Maschine (keine Update-Richtlinie, Autologon
+  aus, „Windows Hello erforderlich" an, Standby/Ruhezustand bereits nie),
+  Befehle für den Operator in erhöhter Shell: Windows Update nur
+  benachrichtigen (`AUOptions = 2`), nie neu starten
+  (`NoAutoRebootWithLoggedOnUsers = 1`, `AlwaysAutoRebootAtScheduledTime = 0`),
+  keine Treiber über Windows Update (`ExcludeWUDriversInQualityUpdate = 1`);
+  automatische Anmeldung über Sysinternals Autologon (LSA-Secret statt
+  Klartext, vorher `DevicePasswordLessBuildVersion = 0`), optional Sperre
+  direkt nach der Anmeldung; Energie (`powercfg /h off`, USB-Selective-
+  Suspend und PCIe-Link-Power aus), BIOS „Power on after power loss";
+  Verifikation (lesend), Test-Neustart im ruhigen Fenster, Rollback.
+  Verweis in INSTALL.md.  Ausführung durch den Operator steht aus.  `879b8f9`.
 - **Line-In input gain (2026-10-02, operator Go for option A)** - Like
   webstreams, every Line-In now has an *Input Gain (dB)* field in its
   dialog (−20 to +20 dB, default 0), so a studio feed can be trimmed to the
@@ -646,6 +777,85 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Settings → General in eingeklappten Segmenten (2026-10-08, Operator-Go)**
+  — Stationsname/-beschreibung bleiben oben; darunter *Station*, *Styling*,
+  *Playout*, *Automation* als neue Segmente, *Live Text Info* und *TuneIn
+  Settings* starten jetzt ebenfalls eingeklappt (wie *Dangerous Options*).
+  Ein Segment mit Prüffehler nach dem Speichern öffnet sich von selbst
+  (bisher nur TuneIn).  Vier Segmentnamen in vier Katalogen, Manual
+  SETTINGS ×4.  `66bf56e`.
+- **Smart Block „Dauer in Zeit" = Sendezeit (2026-10-06, Operator-Go)** —
+  nach der ausgelegten Restzeit (siehe Fixed) rutschten die StationIDs der
+  Standardstunde noch um 9/18/27 s nach vorn, weil ein 12-min-Block die
+  Summe seiner Titel zählte (drei 3-s-Überlappungen verloren).  Jetzt
+  wählt `Scheduler::pickDynamicBlock()` Minuten-/Stunden-Blöcke wie
+  „verbleibende Zeit"-Blöcke gegen die ausgelegte Länge, Budget = ihr Limit
+  (`pickRemainingBlock(…, $asDuration)`, `Block::getListOfFilesUnderLimit(
+  $show, $timeOverride)`); „Anzahl Titel"-Blöcke unverändert.  Probe der
+  Standardstunde: StationIDs bei 12:00,0 / 24:06,9 / 36:18,8 (jeder Block
+  720,0 s auf Sendung), Ende −0,02 s.  Manual LIBRARY ×4, Architektur
+  §23.54 Addendum, TEST_PLAN A2.11; BACKLOG-💡 damit erledigt.  `85d6b61`.
+- **LAN-Adresse der Studio-Maschine 192.168.1.164 → 192.168.1.64 (2026-10-05, Operator:
+  DHCP-Bereich des Netzes)** — betrieblich nur `general.public_url` in
+  `libretime.conf` und `<hostname>` in `icecast.xml` (kosmetisch); Datenbank,
+  Dienstparameter, Liquidsoap- und Apache-Konfiguration enthielten die Adresse
+  nicht mehr (interne Aufrufe seit Stufe 1 über 127.0.0.1).  Kommentare,
+  Test-Fixtures, Beispieldateien, Runbooks, Werkzeuge unter `C:\Temp\optd`
+  nachgezogen; CHANGELOG/BACKLOG/Architektur behalten die historische Adresse.
+  API-Neustart nötig (`ALLOWED_HOSTS` aus `public_url`).
+- **Line-In-Capture pusht mit den Icecast-Zugangsdaten aus Settings → Streams
+  (2026-10-04, Go-Live Stufe 0)** — `FfmpegLineinCapture` wurde ohne
+  Zugangsdaten gebaut und nutzte das fest verdrahtete `source`/`admin`; eine
+  Rotation des Icecast-Source-Passworts hätte die Line-In-Mounts stumm
+  gemacht.  Neu `_local_icecast_source_credentials()` in `__main__`: Benutzer
+  und Passwort des ersten aktiven lokalen Icecast-Ausgangs (bevorzugt Port
+  8000) werden dem Scheduler als `linein_icecast_credentials` übergeben;
+  ohne lokalen Ausgang bleibt der Modul-Standard.  Tests
+  (`test_main_harbor_inputs.py`, 7 passed).  Wirkt nach PLAYOUT-Neustart.
+  Dazu Runbook `docs/operator/GO_LIVE_HTTPS.md` (Weg A, Stufen 0–3; Stufe 0
+  ausgearbeitet: Secrets-Inventar, Rotation DB/RabbitMQ/Icecast/Harbor,
+  Localhost-Bindung PostgreSQL/RabbitMQ/API, Firewall-Aufräumen, Prüfung).  `dc50fac`.
+- **Marke, Stufe A: „LibreTime" verschwindet aus allem, was Operatoren sehen
+  (2026-10-03, Operator-Go nach Evaluierung)** — Befund: 483 Dateien / 4 962
+  Treffer „libretime" im Repo, davon ~70 % kosmetisch, ~25 % Bezeichner mit
+  Laufzeitbindung (Paketnamen, `LIBRETIME_*`-Variablen, `libretime.conf`,
+  gettext-Domäne), ~5 % tabu (Composer-Paket `libretime/propel1`, Upstream-
+  Kopien, Lizenz/Attribution, Upstream-URLs).  Stufe A ersetzt nur die
+  kosmetische Klasse: `PRODUCT_NAME`, `SAAS_PRODUCT_BRANDING_NAME`,
+  `COMPANY_NAME` („RASTATIME Project") und die Site-URLs (GitHub-Projekt)
+  — damit Login-Seite, About-Seite („RASTATIME 0.5 (based on LibreTime
+  4.5.0)"), „Powered by", Passwort-Mails, JS-`PRODUCT_NAME`; UI-Strings
+  „Public RASTATIME API" (+ Beschreibung, Widget-Hinweise), die fünf
+  Versions-Tooltips, Wartungsseite, PDF-Kopf der Playout-History,
+  getid3-Logmeldung; der einmalige Willkommens-Dialog ohne LibreTime-Video
+  und -Forum, mit Link ins Handbuch; Backend `verbose_name` der sechs
+  Django-Apps, API-Titel (`_internal.py`, `schema.yml`), `setup.py`-
+  Beschreibungen (Autor bleibt), README-Titel, systemd-Descriptions,
+  Standard-Stationsname, fünf Kommentare, die dieses Produkt meinen.
+  Kataloge ×4 per Skript (außerhalb Header und `#~`), drei neue msgids.
+  Unverändert: alle Bezeichner (Stufe B, 🟡 BACKLOG), alle Herkunfts-/
+  Upstream-Erwähnungen in Kommentaren, Handbuch, Architektur, CHANGELOG,
+  Tests.  Live geprüft: About, Settings → General, Hilfe-Seite ohne
+  „LibreTime" (About nennt die Basis einmal, gewollt); Unit-Tests grün.  `ad12764`.
+- **Unit-test tree: Django configured once, 38 pre-existing failures
+  triaged (2026-10-02, operator Go for harness option 1)** - the root venv
+  carries Django and pytest-django but no `DJANGO_SETTINGS_MODULE`; three
+  `tests/unit/api` modules set the dev settings ad hoc inside a test, so
+  20 results depended on collection order (19 `ImproperlyConfigured`, plus
+  the leaked `soundcard/apps.py` device manager tripping the worker's "no
+  manager" test).  `tests/unit/conftest.py` now configures Django at
+  collection with the dev settings and skips the `django_db` tests
+  explicitly (no migrated SQLite, no test database on the live PostgreSQL
+  - they run from `backend/api`).  16 tests asserted old contracts and now
+  follow the current state: migration baseline (87 nodes, 62 legacy, 9
+  leaves), Settings nav "Local Machine" and the line-in editor in the
+  Library, Icecast part of the production stack, API on 8765 (8000 is
+  Icecast), `check.php` via `Get-Service`, `backend/worker` gone
+  (11ce0cc).  Two strict xfails record that de_DE lacks the Local Machine
+  strings (backlog).  Two `install-worker.ps1` comments still named port
+  8000.  `tests/unit`: 732 passed, 38 skipped, 2 xfailed (was 38 failed);
+  `backend/playout/tests` 776 passed - `b1f70c4`.
+
 - **Settings -> Streams: Stereo Tool explanations as help icons, label on one
   line (2026-10-02, operator request)** - The four Stereo Tool descriptions
   are no longer printed below their fields but shown as help-icon tooltips
@@ -873,6 +1083,131 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   live geprüft.
 
 ### Fixed
+
+- **Sendeprotokoll überlebt das Löschen eines Titels (2026-10-08,
+  Operator-Go)** — LibreTime-Erbe: `cc_playout_history.file_id` war ON DELETE
+  CASCADE, ein Datei-Löschen nahm alle Protokollzeilen des Titels mit, und die
+  Zeilen trugen nur den Sendungsnamen (Titel/Interpret kamen live aus
+  `cc_files`).  Migration 0065 (Schema 65): Fremdschlüssel → ON DELETE SET
+  NULL, Titel/Interpret/Länge/Komponist/Copyright in die Metadaten aller
+  bestehenden Datei-Zeilen nachgefüllt; `HistoryService::insertPlayedItem`
+  schreibt die fünf Felder bei jeder neuen Zeile mit.  Eine Zeile eines
+  gelöschten Titels wird dann wie eine Webstream-Zeile aus den Metadaten
+  dargestellt.  Webstreams und Line-Ins waren schon sicher (kein
+  Fremdschlüssel, Name/Label werden beim Senden kopiert).  Migration läuft
+  erst nach Freigabe des Operators (Backup, ruhiges Fenster).  Manual
+  ANALYTICS ×4, Architektur §23.55 (0.68).  `3293832`; Migrations-Basistest auf
+  0065 nachgezogen (stand seit 0064 auf 0063).  **Eingespielt 2026-10-08 11:33** nach
+  Operator-Backup 11:26: Schema 65, 8775 Metadaten nachgefüllt (Titel 2820,
+  Interpret 2788, Länge 2820, Komponist 347), Löschprobe in zurückgerollter
+  Transaktion: Zeile bleibt mit leerem Dateiverweis.
+- **Firewall-Wächter sperrte den Operator aus (2026-10-07)** — ein
+  Browser-Tab mit abgelaufener Sitzung fragte weiter jede Minute „Now
+  Playing", Preflight-Warnungen und den Kalender-Feed ab, bekam 60 × 401 in
+  einer Stunde, und der Wächter zählte jede 4xx-Antwort → 24-h-Regel gegen
+  die Heimadresse (alle Ports, auch VNC).  Zwei Korrekturen: (1)
+  `rt-firewall-watch.ps1` zählt 401 nicht mehr (die „nicht angemeldet"-
+  Antwort der eigenen Endpunkte ist nie ein Scanner); (2) die UI-Abfragen
+  (common.js Preflight, dashboard.js Now Playing, Status-Seite „Blocked
+  addresses") registrieren ihre Timer in `window.rtPollTimers`, und ein
+  globaler `ajaxError`-Hook stoppt sie beim ersten 401.  Manual
+  USERS_AND_ROLES ×4 (Fenster 60 min war dort noch mit 10 min angegeben).  `7c3ccfd`.
+- **Restzeit im Show Builder: `time_filled` ausgelegt, Smart-Block-Budget
+  überlappungs-bewusst (2026-10-06, Operator-Go)** — Beobachtung des
+  Operators: ein Smart Block „verbleibende Zeit" (3 Musiktitel) ließ −6 s
+  frei, ein 6-s-Jingle in der Mitte machte +3 s, am Ende 0 s.  Die Fußzeile
+  rechnete richtig (Zeilen überlappen um den Crossfade, der Jingle bricht
+  eine 3-s-Überlappung); falsch war die Ausgangslage: `cc_show_instances.
+  time_filled` war `SUM(clip_length)`, damit kannten `getSecondsRemaining()`,
+  Kalender-Füllbalken, „voll"-Status, Auto-DJ-Schwelle und das Budget des
+  Smart Blocks im Show Builder die Überlappungen nicht — die Standardstunde
+  des Operators (3 × 12-min-Block, StationID dazwischen, „verbleibende Zeit"
+  zuletzt) ließ in der Probe 27 s frei bei `time_filled` = 3600 s.  Jetzt:
+  `time_filled` = Sendungsstart bis Ende der letzten Zeile
+  (`CcShowInstances::computeDbTimeFilled`, `ShowShiftService` gleich); der
+  Show Builder wählt „verbleibende Zeit"-Blöcke wie die Autoloading-
+  Befüllung (`Scheduler::pickRemainingBlock()` aus `AutoPlaylistManager`
+  herausgezogen und geteilt; `laidOutLength()` zwischen den echten Nachbarn
+  der Einfügestelle, Zähler über Playlist-Inhalte ausgelegt).  Blöcke mit
+  „Dauer in Zeit" bleiben Summen (💡 BACKLOG).  Probe `remaining_probe.php`
+  (C:\Temp\optd): Playlist 12 min + Block direkt −0,02 s frei; Autoloading
+  unverändert (3,0 s auf 10 min).  Manual LIBRARY/CALENDAR ×4, Architektur
+  §23.54, TEST_PLAN A2.11.  `eb1c742`.  Operator-Probe der Standardstunde:
+  17 Zeilen, Summe 3630 s, ausgelegt 3600,00 s, Fußzeile −0,00 s.  Dabei:
+  `getTimeScheduledSecs()` las die Anzeige-Rundung (.997 → „1.00", Sekunde
+  verloren) — jetzt aus der Rohspalte (`e77e2f7`).
+  Bestand: die 986 künftigen Instanzen einmalig per SQL nachgerechnet
+  (230 abweichend, max. 0,7 s; Operator-Go 2026-10-06 abends).
+- **API-CORS-Origin um ein Zeichen zu kurz (2026-10-04, Nebenbefund Stufe 1)** —
+  `prod.py` schnitt den Pfad von `public_url` per Slice ab; bei Pfad `/`
+  wurde aus `http://192.168.1.164` ein `http://192.168.1.16`, der CORS-Origin
+  passte nie.  Jetzt `urlparse` (Schema + Netloc).  `a0fc2f3`.
+- **Short jingles, part two: the held-back row is queued when the jingle
+  starts, and a refresh in the row's start second no longer doubles it
+  (2026-10-03, test show 12:15)** - (1) since abbcba2 the row behind a short
+  queued jingle waited for its own PLAY; behind a 2.7 s jingle that left
+  0.3 s and 0.6 s of dead air followed (12:40:23).  The row is now remembered
+  (`_deferred_queue_ahead`) and queued the moment the jingle starts, so cross
+  has its partner for the whole jingle.  (2) The 120 s schedule refresh hit
+  the start second of a 3.9 s jingle (12:17:55): it tore the predecessor down
+  as "truncated to past" (end 0.08 s ago, flushing the queued jingle) and
+  caught the jingle up as "started 0 s ago" while its timer PLAY was running
+  - the jingle aired twice, the chain ran 3.5 s late.  `_on_file_start` now
+  marks the row as starting (`_starting`, try/finally) and the catch-up skips
+  it; a row that ended less than 1.5 s ago with its successor queued is left
+  to the STOP timer and the queue.  Commit: 4d6f99e.
+
+- **Queue-ahead swapped and doubled consecutive jingles shorter than its lead
+  window (2026-10-03)** - the successor is put on the queue BUFFER + 5 s before
+  its start; with rows shorter than that (2026-10-02 23:36: StationIDs of
+  3.2 s and 4.9 s) the next row's queue-ahead found the earlier row queued,
+  took it for stale and flushed it, the row after that did the same, and the
+  rows' own timers then pushed the displaced jingles afresh: on air Kreisky,
+  tief, 0.2 s of dead air, Kreisky again, and the chain 2.9 s late to the
+  show end.  A queued row that is still armed and starts before the new one
+  now stays (`_armed_events` identity); the new row starts the normal way
+  behind it.  Rows that vanished or moved behind are still replaced.
+  Commit: abbcba2.
+
+- **Local Machine page translated in DE / FR / ES (2026-10-03, operator Go
+  for the whole page)** - the page carried 94 `_()` strings of which de_DE
+  knew 13 (the May soundcard / line-in messages) and fr_FR / es_ES only 5:
+  the nav label "Local Machine", the save and restart messages, and every
+  section added since May (import folder, FTP import, media library
+  location, 24/7 and per-show recording) had shipped without entries, so
+  a localized UI showed them in English.  81 / 89 / 89 entries appended
+  to `frontend/legacy/locale/{de_DE,fr_FR,es_ES}/LC_MESSAGES/libretime.po`
+  with the manuals' terminology (Lokale Maschine / Machine locale /
+  Máquina local, Jetzt anwenden, Déplacer la médiathèque, Grabación 24/7
+  …), placeholders and paths checked by script, `.mo` rebuilt with
+  `frontend/legacy/scripts/po2mo.py --all`, and every string looked up
+  through PHP's own gettext against the compiled catalogs (94 / 94 per
+  locale).  `tests/unit/test_t20_3_menu_i18n.py` now walks every string
+  of the view so a new section cannot ship untranslated again (the two
+  strict xfails are gone).  Live after an Apache restart - `afb5590`.
+
+- **Scheduler: the playing item never "precedes" itself (2026-10-02,
+  operator Go for option A)** - the 2026-09-28 guard "never catch up a row
+  at or before the playing item" (5b34d71) compares start times only and,
+  in the line-in arm path, runs BEFORE the same-item rebind: the same
+  in-progress slot handed back under a new key (`<ts>_2` -> `<ts>`, same
+  start) counted as "preceding", catch-up was skipped (good) but the key
+  was never adopted, so the stop timer armed under the new key would have
+  died on `_on_stop`'s stale-key check.  `refresh()` rebinds by identity
+  first, which is why nothing was heard - the arm path is the second line
+  of defence.  `_precedes_playing` now excludes the playing item
+  (`_same_scheduled_item`) for file, web stream and line-in alike; the
+  line-in tests pin their starts (they passed by the microseconds between
+  two `utcnow()` calls).  Found by
+  `tests/unit/playout/test_linein_start_ordering.py`; effective after a
+  PLAYOUT restart - `caa8062`.
+
+- **API settings: `LOCALE_PATHS` re-exported (2026-10-02)** -
+  `_internal.py` defines it (`backend/api/locale`), but `prod.py` and
+  `dev.py` never imported it, so `settings.LOCALE_PATHS` was `[]` at
+  runtime and the German `django.mo` could never load.  Dormant (the API
+  calls no gettext yet); found by `test_german_scaffolding.py` once the
+  unit tree configured Django.  Active after an API restart - `c683e7a`.
 
 - **Webstream input gain: documentation follows the Liquidsoap mechanism
   (2026-10-02)** - the manual (WEBSTREAMS §6 "How it works under the hood",
@@ -1495,6 +1830,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+- **Brute-Force-Paket (c): Gründe, Sperrliste mit Entsperren, Firewall-Wächter
+  (2026-10-06, Operator-Go)** — (1) der Legacy-Check `check-live-stream-auth`
+  nennt den Ablehnungsgrund im Header `X-Rastatime-Auth-Reason` (`no-show`,
+  `not-host`, `bad-password`); der Playout zählt nur `bad-password` für die
+  Harbor-Sperre — ein DJ, der sich vor Sendungsbeginn einwählt, wird
+  abgewiesen, aber nie gesperrt (Stolperstein aus Paket (a)/(b)).  (2)
+  Playout-Endpoints `GET /dj-auth/blocks`, `POST /dj-auth/unblock` auf dem
+  Loopback-Listener (`RejectThrottle.snapshot()/unblock()`).  (3) System
+  Status → „Gesperrte Adressen": `Application_Model_BlockedAddresses` führt
+  Web-Login (Adresse/Benutzer, `LoginAttempts::listWindows()`), Harbor und
+  Firewall-Regeln `RASTATIME-Block <ip>` zusammen (`systemstatus/blocked-
+  addresses` JSON, `systemstatus/unblock-address` POST+CSRF, Apache läuft als
+  LocalSystem → PowerShell darf Regeln lesen/entfernen), JS
+  `status/blocked-addresses.js` (30-s-Refresh, Entsperren-Knopf), 17 Strings
+  ×4.  (4) `infra/scripts/rt-blocks.ps1` (Liste/Entsperren in der PowerShell)
+  und `infra/scripts/rt-firewall-watch.ps1` (Aufgabe alle 5 min: 50 × 4xx in
+  10 min, 3 Scanner-Pfade oder 5 falsche DJ-Passwörter → 24-h-Regel, LAN
+  nie, Ablauf räumt sich selbst, Log `firewall-watch.log`); Trockenlauf über
+  48 h fand 9 Scanner, den Operator-Testzugriff nicht.  Tests 55 passed
+  (Playout), CLI-Probe Liste/Entsperren.  Handbuch USERS_AND_ROLES §8 ×4,
+  Architektur §23.53 Addendum.  Wirksam: Legacy sofort; Playout-Endpoints
+  und Grund-Auswertung nach PLAYOUT-Neustart; Wächter nach Registrierung
+  der Aufgabe (Operator).  `7bb67a7`.  Nachtrag (Operator 2026-10-06): die Schwellen stehen als Tooltip
+  (`.help_icon` + rtTooltip) am Titel „Blocked addresses" statt als Absatz.
+- **Brute-Force-Schutz für den öffentlichen Login und die DJ-Einwahl
+  (2026-10-06, Operator-Go, Schwellen 10/15/15 · 20/60/5 · 5/10/15)** —
+  Befund nach dem Go-Live: Scanner trafen die Seite binnen Stunden, der
+  Legacy-Login zählte Fehlversuche je IP (`cc_login_attempts`) und je
+  Benutzer (`cc_subjs.login_attempts`), wertete sie aber nie aus, und das
+  IP-INSERT schrieb den Platzhalter `':ip'` als Text (Tabelle seit Monaten
+  leer).  Neu: Legacy-Migration 0064 (`cc_login_attempts.last_attempt`,
+  `cc_subjs.login_attempt_at`), `Application_Model_LoginAttempts` mit
+  festem Fenster je Adresse (`blockedSecondsForIp/ForUser`, Zähler startet
+  außerhalb des Fensters neu), `Subjects::increaseLoginAttempts` mit
+  Zeitstempel; `LoginController` antwortet gesperrten Adressen/Namen vor
+  jeder Passwortprüfung mit **429 + Retry-After** und Hinweis („Too many
+  failed login attempts …", ×4 Kataloge), loggt mit Adresse.  Je Benutzer
+  nur eine weiche Bremse (20 in 60 min → 5 min), damit Dauerfeuer auf
+  einen Admin-Namen ihn nicht aussperrt.  Playout `dj_auth.RejectThrottle`:
+  5 Ablehnungen je Adresse in 10 min → 15 min Abweisung ohne Rückfrage an
+  die Web-App, Annahme löscht den Zähler (In-Memory).  Schwellen in
+  `constants.php` (`RASTATIME_LOGIN_*`) und `RejectThrottle`.  Live geprobt
+  (127.0.0.1, 12 Fehlversuche: 10 × 200, dann 429/Retry-After 900, Seite
+  rendert, Logzeile), Tests `test_dj_auth_throttle.py` (5) + bestehende
+  dj-auth-Tests (15 passed).  Handbuch USERS_AND_ROLES §8 ×4, Architektur
+  §23.53 (0.66).  Web-Teil sofort aktiv (PHP), Harbor-Teil nach PLAYOUT-
+  Neustart.  Firewall-Wächter (c) folgt als eigenes Paket.  `01cf8a5`.
 - **CSRF-Prüfung gehärtet, wirkungslose Token-Rotation entfernt (2026-09-10,
   Arbeitsreihenfolge Punkt 3, Operator-Go „kleine Form", `7f51156`)** — Befund beim
   Lesen: das ACL-Plugin würfelte bei jedem fehlgeschlagenen REST-CSRF-Check

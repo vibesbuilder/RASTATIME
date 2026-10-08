@@ -6,6 +6,8 @@
 # Runtime configuration (contains passwords — never commit the real file)
 # -----------------------------------------------------------------------------
 config/libretime.conf
+# RASTATIME 2026-10-08 - allow list mirror written by the web UI (System Status)
+config/allowlist.txt
 
 # -----------------------------------------------------------------------------
 # Python
@@ -158,3 +160,10 @@ _migration/
 
 # Live Text Info: written by the playout at runtime
 frontend/legacy/public/live/now-playing.txt*
+
+# RASTATIME go-live: TLS certificate files (win-acme) and ACME challenge dir
+/certs/
+/acme/
+
+# live Icecast config carries the real passwords (config/icecast.xml.example is tracked)
+/config/icecast.xml

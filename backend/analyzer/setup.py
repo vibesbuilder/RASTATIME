@@ -5,7 +5,7 @@ version = "4.5.0"  # x-release-please-version
 setup(
     name="libretime-analyzer",
     version=version,
-    description="Libretime Analyzer",
+    description="RASTATIME Analyzer",
     author="LibreTime Contributors",
     url="https://github.com/libretime/libretime",
     project_urls={

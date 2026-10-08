@@ -32,6 +32,18 @@ sous-ensemble. Voir [Utilisateurs et rôles](./USERS_AND_ROLES.md)
 
 Paramètres → **Préférences générales**.
 
+Depuis le 2026-10-08 la page est divisée en **segments repliés** : le nom
+et la description de la station restent en haut, en dessous *Station*
+(langue, fuseau horaire, début de semaine, API publique, page radio),
+*Apparence* (logo, image de fond de la page d'accueil, favicon, couleur
+principale), *Diffusion* (crossfades, type de piste par défaut, découpe
+des émissions dépassées), *Automatisation* (playlists intro/outro, pool
+de demandes, bloc info-trafic, remplissage show-shift, options podcast),
+puis *Live Text Info*, *TuneIn Settings* et *Dangerous Options*. Un clic
+sur le titre ouvre le segment ; un segment contenant une erreur de
+validation après **Enregistrer** s'ouvre de lui-même. Les tableaux de
+champs ci-dessous gardent leur regroupement d'origine.
+
 ### Station
 
 | Champ | Notes |
@@ -39,6 +51,7 @@ Paramètres → **Préférences générales**.
 | **Nom de station** | Visible partout — titre de page, métadonnées ICY, nom From email. |
 | **Description de station** | Description en texte libre. |
 | **Logo de station** | Image en haut à gauche de chaque page. Max 200 KB, JPG / PNG / GIF. |
+| **Image de fond de la page d'accueil** | La photo derrière la page d'accueil publique (`/`). JPG, PNG ou WebP jusqu'à 5 Mo ; 1920 px de large et 1 Mo ou moins recommandés. Stockée comme fichier sous `landing/` dans l'emplacement de la médiathèque (le miroir de sauvegarde nocturne l'emporte) ; **Supprimer** rétablit l'image intégrée. Effective au prochain chargement de la page d'accueil (le navigateur garde l'image une semaine, un nouveau téléversement reçoit une nouvelle adresse). Depuis le 2026-10-07. |
 | **Favicon de station** | Image dans l'onglet du navigateur. Max 200 KB. Rendue comme URI data:. |
 | **Couleur principale** | La couleur d'accent de toute l'interface, de la page radio et des widgets — liens, surbrillances, lignes sélectionnées, entrée de menu active, barres de progression et de stockage, barres de défilement, flèches de section, bouton lecture et volume du lecteur, onglets, boutons et surbrillances des widgets. Saisissez `#rrggbb` ou utilisez le sélecteur à côté du champ ; **Rétablir la valeur par défaut** remet l'orange (`#ff5d1a`). Effectif au prochain chargement de page. Choisissez une couleur qui se détache du fond gris foncé ; le texte posé dessus passe de lui-même du blanc au noir. Les couleurs de signalisation (erreurs, avertissements, couleurs des émissions dans le calendrier) et la barre de remplissage des émissions dans le calendrier (toujours orange) ne changent pas. |
 | **Fuseau horaire** | Fuseau horaire opérateur pour tous affichages calendrier / planning. Stocké par-émission dans `cc_show_days.timezone`. |
@@ -150,6 +163,15 @@ de démarrage. Choses comme "FFmpeg pas dans PATH" ou
 > l'endpoint `/api/v2/preflight/warnings` adossé à la
 > table `rastatime_preflight_warning`. Le `preflight.py`
 > de démarrage lance ~30 vérifications.
+
+> **Téléchargement du podcast échoué (depuis le 2026-10-08).** Quand
+> le téléchargement automatique ou manuel d'un épisode échoue, un
+> avertissement nomme le podcast, l'épisode, le nombre de tentatives,
+> la dernière tentative et la raison (code HTTP ou « API
+> injoignable ») ; il apparaît dans le bandeau de chaque page et ici.
+> Il disparaît de lui-même quand le téléchargement réussit plus tard
+> ou que le podcast est supprimé. Vérifiez le flux et l'adresse de
+> téléchargement de l'épisode sous Bibliothèque → Podcasts.
 
 ### Contrôles de service (Admin+ seulement)
 

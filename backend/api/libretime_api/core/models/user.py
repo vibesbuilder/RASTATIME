@@ -54,6 +54,13 @@ class User(AbstractBaseUser):
         null=True,
         db_column="login_attempts",
     )
+    # RASTATIME 2026-10-06 - time of the last failed login (legacy
+    # migration 0064, brute-force brake in the PHP LoginController)
+    login_attempt_at = models.DateTimeField(
+        blank=True,
+        null=True,
+        db_column="login_attempt_at",
+    )
     last_login = models.DateTimeField(
         blank=True,
         null=True,
@@ -115,7 +122,7 @@ class User(AbstractBaseUser):
         return False
 
     # The following methods have to be re-implemented here, as PermissionsMixin
-    # assumes that the User class has a 'group' attribute, which LibreTime does
+    # assumes that the User class has a 'group' attribute, which RASTATIME does
     # not currently provide. Once Django starts managing the Database
     # (managed = True), then this can be replaced with
     # django.contrib.auth.models.PermissionMixin.

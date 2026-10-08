@@ -35,8 +35,10 @@ class App:
 
     def __init__(self, config: Config) -> None:
         self.config = config
+        # RASTATIME 2026-10-04 (go-live stage 1): internal address, see
+        # GeneralConfig.internal_base_url()
         self.api_client = LegacyClient(
-            base_url=config.general.public_url,
+            base_url=config.general.internal_base_url(),
             api_key=config.general.api_key,
         )
 

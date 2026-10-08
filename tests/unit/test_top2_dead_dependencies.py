@@ -10,15 +10,22 @@ not installable or not needed on Windows:
   celery    — Linux task queue; replaced by RastatimeWorker (T18.x)
   kombu     — Celery message transport; dead together with Celery
 
+The Celery-based ``backend/worker`` package (libretime_worker) was deleted
+outright in 11ce0cc; its replacement ``backend/rastatime_worker`` is a
+plain package without requirements.txt / setup.py of its own, so the
+worker checks assert that the dead package stays gone and that its
+successor imports neither celery nor kombu (tests updated 2026-10-02).
+
 Test inventory (10 tests, always run — no Django needed):
   1.  backend/api/requirements.txt does not contain gunicorn.
   2.  backend/api/requirements.txt does not contain uvicorn.
-  3.  backend/worker/requirements.txt does not contain celery.
-  4.  backend/worker/requirements.txt does not contain kombu.
+  3.  backend/worker (the dead Celery package) no longer exists.
+  4.  backend/rastatime_worker imports neither celery nor kombu.
   5.  backend/playout/requirements.txt does not contain kombu.
   6.  backend/api/setup.py does not contain gunicorn.
   7.  backend/api/setup.py does not contain uvicorn.
-  8.  backend/worker/setup.py does not contain celery or kombu.
+  8.  backend/rastatime_worker ships no setup.py / requirements.txt that
+      could reintroduce celery or kombu.
   9.  backend/playout/setup.py does not contain kombu.
  10.  No requirements.txt anywhere in backend/ contains any of the
       four dead packages.
@@ -32,11 +39,11 @@ _REPO = Path(__file__).resolve().parents[2]
 _BACKEND = _REPO / "backend"
 
 _API_REQ     = _BACKEND / "api"     / "requirements.txt"
-_WORKER_REQ  = _BACKEND / "worker"  / "requirements.txt"
 _PLAYOUT_REQ = _BACKEND / "playout" / "requirements.txt"
 _API_SETUP    = _BACKEND / "api"     / "setup.py"
-_WORKER_SETUP = _BACKEND / "worker"  / "setup.py"
 _PLAYOUT_SETUP= _BACKEND / "playout" / "setup.py"
+_DEAD_WORKER  = _BACKEND / "worker"             # Celery worker, deleted in 11ce0cc
+_WORKER_PKG   = _BACKEND / "rastatime_worker"   # its replacement
 
 _DEAD = ("gunicorn", "uvicorn", "celery", "kombu")
 
@@ -63,17 +70,23 @@ def test_api_requirements_no_uvicorn():
     )
 
 
-def test_worker_requirements_no_celery():
-    """backend/worker/requirements.txt must not list celery (replaced by RastatimeWorker)."""
-    assert "celery" not in _read(_WORKER_REQ), (
-        "backend/worker/requirements.txt still lists celery"
+def test_dead_celery_worker_package_is_gone():
+    """backend/worker (libretime_worker, Celery) was deleted in 11ce0cc and
+    must not come back - RastatimeWorker lives in backend/rastatime_worker."""
+    assert not _DEAD_WORKER.exists(), (
+        "backend/worker reappeared - the Celery worker was removed in 11ce0cc"
     )
 
 
-def test_worker_requirements_no_kombu():
-    """backend/worker/requirements.txt must not list kombu (Celery transport, dead)."""
-    assert "kombu" not in _read(_WORKER_REQ), (
-        "backend/worker/requirements.txt still lists kombu"
+def test_rastatime_worker_imports_neither_celery_nor_kombu():
+    """No module of backend/rastatime_worker may import celery or kombu."""
+    offenders = [
+        str(p.relative_to(_REPO))
+        for p in _WORKER_PKG.rglob("*.py")
+        if "celery" in _read(p) or "kombu" in _read(p)
+    ]
+    assert not offenders, (
+        "backend/rastatime_worker still references celery/kombu: " + ", ".join(offenders)
     )
 
 
@@ -102,11 +115,17 @@ def test_api_setup_no_uvicorn():
     )
 
 
-def test_worker_setup_no_celery_or_kombu():
-    """backend/worker/setup.py must not declare celery or kombu."""
-    text = _read(_WORKER_SETUP)
-    assert "celery" not in text, "backend/worker/setup.py still declares celery"
-    assert "kombu"  not in text, "backend/worker/setup.py still declares kombu"
+def test_rastatime_worker_declares_no_celery_or_kombu():
+    """backend/rastatime_worker has no packaging files of its own (it is
+    installed with the API); should any appear, they must not declare
+    celery or kombu."""
+    for name in ("setup.py", "requirements.txt", "pyproject.toml"):
+        path = _WORKER_PKG / name
+        if not path.exists():
+            continue
+        text = _read(path)
+        assert "celery" not in text, f"{path.name} declares celery"
+        assert "kombu" not in text, f"{path.name} declares kombu"
 
 
 def test_playout_setup_no_kombu():

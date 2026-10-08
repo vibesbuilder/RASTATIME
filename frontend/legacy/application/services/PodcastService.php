@@ -372,6 +372,8 @@ class Application_Service_PodcastService
         $podcast = PodcastQuery::create()->findPk($podcastId);
         if ($podcast) {
             $podcast->delete();
+            // RASTATIME 2026-10-08 - its failed downloads are no warning any more
+            Application_Model_PodcastDownloadFailures::clearPodcast($podcastId);
 
             // FIXME: I don't think we should be able to delete the station podcast...
             if ($podcastId == Application_Model_Preference::getStationPodcastId()) {

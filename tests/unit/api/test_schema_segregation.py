@@ -142,15 +142,8 @@ def test_legacy_proxy_app_models_are_all_unmanaged():
     in a legacy app would cause Django to try to create a table that is
     already managed by the ``legacy`` SQL migration chain.
     """
-    import os  # noqa: PLC0415
-    import sys  # noqa: PLC0415
-    backend_api_path = str(_REPO_ROOT / "backend" / "api")
-    if backend_api_path not in sys.path:
-        sys.path.insert(0, backend_api_path)
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "libretime_api.settings.dev")
-    import django  # noqa: PLC0415
-    django.setup()
-
+    # Django is configured once for the whole tree in tests/unit/conftest.py
+    # (dev settings); setting it up here made the result order-dependent.
     from django.apps import apps  # noqa: PLC0415
     violations = []
     for model in apps.get_models():

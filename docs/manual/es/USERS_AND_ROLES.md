@@ -325,6 +325,58 @@ No. Las grabaciones heredan el propietario del programa.
 
 ---
 
+## 8. Protección del inicio de sesión (desde 2026-10-06)
+
+La página de inicio de sesión frena los fallos repetidos, imprescindible
+desde que la interfaz web es accesible desde Internet.
+
+| Ámbito | Regla | Efecto |
+|---|---|---|
+| Por dirección de origen | 10 inicios de sesión fallidos en 15 minutos | la dirección espera 15 minutos; cada intento en ese tiempo recibe «Demasiados intentos de inicio de sesión fallidos. Inténtelo de nuevo en N minuto(s).» (HTTP 429), no se comprueba ninguna contraseña |
+| Por nombre de usuario | 20 inicios de sesión fallidos en 60 minutos | el nombre espera 5 minutos, a propósito poco, para que nadie pueda bloquear de forma permanente a un administrador martilleando su nombre desde muchas direcciones |
+| Conexión de DJ (harbor) | 5 inicios rechazados de una dirección en 10 minutos | la dirección se rechaza durante 15 minutos sin consultar la aplicación web |
+
+Un inicio de sesión correcto pone a cero los contadores de su dirección y
+de su nombre.  Los umbrales están en `constants.php` (`RASTATIME_LOGIN_*`)
+y en el playout (`RejectThrottle`); los intentos rechazados se registran
+con la dirección (`logs/legacy.log`, `logs/playout-stdout.log`).
+
+**Ver y levantar bloqueos.**  Configuración → Estado del sistema →
+*Direcciones bloqueadas* muestra todos los niveles (inicio de sesión web
+por dirección y por usuario, conexión de DJ, vigilante del cortafuegos)
+con los fallos y los minutos restantes; **Desbloquear** elimina la
+entrada en todos los niveles, para el DJ que llama porque su cliente
+tenía guardada una contraseña incorrecta.  La misma lista existe en
+PowerShell: `infra\scripts\rt-blocks.ps1` (`-Unblock <dirección>` o
+`-Unblock user:<login>`).  Un DJ que se conecta **antes** del inicio del
+programa es rechazado pero nunca contado: solo cuenta una contraseña
+incorrecta.  Los escáneres de Internet persistentes se bloquean 24 horas
+en el cortafuegos de Windows mediante una tarea vigilante (cada 5
+minutos; 50 peticiones rechazadas en 60 minutos, 3 rutas típicas de
+escáner o 5 contraseñas de DJ incorrectas) y aparecen en la misma lista.
+Una respuesta «no identificado» (401) nunca cuenta: es lo que recibe una
+pestaña del navegador con la sesión caducada por sus consultas en
+segundo plano, y desde 2026-10-07 esa pestaña deja de consultar con la
+primera.
+
+**Direcciones permitidas (desde 2026-10-08).**  Junto a **Desbloquear**,
+cada dirección bloqueada tiene **Permitir**: se desbloquea en todas las
+capas y pasa a la lista *Direcciones permitidas* de abajo, donde también
+puede añadir a mano una dirección o una red en notación CIDR
+(`203.0.113.0/24`) y eliminar entradas.  Una dirección permitida nunca es
+frenada por el inicio de sesión web, nunca limitada por la conexión de DJ
+y nunca bloqueada por el vigilante del cortafuegos; las direcciones de la
+red del estudio están exentas de todos modos.  Mantenga la lista corta -
+desactiva todos los frenos para esa dirección - y prefiera una red para
+una conexión doméstica cuya dirección cambia con el proveedor.  La lista
+se guarda en la base de datos y se copia a `config\allowlist.txt` para el
+playout y el vigilante.
+
+> **Si usted mismo queda bloqueado:** espere los minutos indicados o pida
+> a un colega en otra dirección.  En caso de emergencia, los contadores
+> están en las tablas `cc_login_attempts` (por dirección) y
+> `cc_subjs.login_attempts` (por usuario).
+
 ## A dónde ir después
 
 * [Configuración](./SETTINGS.md) — recorrido de cada

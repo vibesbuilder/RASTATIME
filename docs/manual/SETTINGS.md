@@ -65,6 +65,17 @@ Top-bar Settings → opens the sub-menu:
 
 Settings → **General Preferences**.
 
+Since 2026-10-08 the page is divided into **collapsed segments**: the
+station name and description stay on top, below them *Station*
+(language, time zone, week start, public API, radio page), *Styling*
+(logo, landing page background, favicon, primary colour), *Playout*
+(crossfades, default track type, trim overbooked shows), *Automation*
+(intro/outro playlists, request pool, traffic-alert block, show-shift
+filler, podcast options), then *Live Text Info*, *TuneIn Settings* and
+*Dangerous Options*. Click a heading to open it; a segment that holds a
+validation error after **Save** opens by itself. The field tables below
+keep their original grouping.
+
 ```
    ┌─────────────────────────────────────────────────────────────────┐
    │  General Preferences                                  [ Save ]  │
@@ -105,6 +116,7 @@ Settings → **General Preferences**.
 | **Station Name** | Visible everywhere — page title, ICY metadata, email From-name. |
 | **Station Description** | Free-text description. Used in podcast feeds and the ICY metadata. |
 | **Station Logo** | Image shown in the top-left of every page. Max 200 KB, JPG / PNG / GIF. |
+| **Landing page background** | The photo behind the public landing page (`/`). JPG, PNG or WebP up to 5 MB; 1920 px wide and 1 MB or less recommended. Stored as a file under `landing/` in the media library location (so the nightly backup mirror carries it); **Remove** returns to the built-in image. Takes effect on the next load of the landing page (the browser caches the image for a week, a new upload gets a new address). Since 2026-10-07. |
 | **Station Favicon** | Image shown in the browser tab. Max 200 KB, JPG / PNG / GIF / ICO. Rendered as a data: URI; no file writes to public/. |
 | **Primary Color** | The accent colour of the whole interface, the radio page and the widgets — links, highlights, selected rows, the active menu entry, progress and storage bars, scrollbars, section arrows, the stream player's play button and volume slider, the widgets' tabs, buttons and highlights. Enter `#rrggbb` or use the colour picker next to the field; **Reset to default** restores the orange (`#ff5d1a`). Takes effect on the next page load. Choose a colour that stands out against the dark grey background; text on the colour switches between white and black by itself. Signal colours (errors, warnings, the show colours in the calendar) and the fill bar of the show slots in the calendar (always orange) stay as they are. |
 | **Time Zone** | The operator timezone for all calendar / schedule display. Stored per-show in `cc_show_days.timezone` so changing this here does not retroactively affect existing shows. |
@@ -247,6 +259,14 @@ Each warning has a click-through with mitigation advice.
 > `preflight.py` runs ~30 checks and inserts a row per
 > failure; the page lists them and the operator can
 > dismiss / resolve.
+
+> **Podcast download failed (since 2026-10-08).** When an automatic
+> or manual episode download fails, a warning names the podcast, the
+> episode, the number of attempts, the last attempt and the reason
+> (HTTP code or "API unreachable"); it shows in the banner on every
+> page and here. It clears by itself when the download succeeds
+> later or the podcast is removed. Check the feed and the episode's
+> download address under Library → Podcasts.
 
 ### Service controls (Admin+ only)
 

@@ -444,6 +444,20 @@ var AIRTIME = (function (AIRTIME) {
 
         var selected = $(".lib-selected");
 
+        // RASTATIME 2026-10-08 - several tracks: one bulk dialog instead of
+        // one editor tab per track
+        var trackIds = [];
+        selected.each(function (i, el) {
+          var d = $(el).data("aData");
+          if (d && d.ftype === "audioclip") {
+            trackIds.push(d.id);
+          }
+        });
+        if (trackIds.length >= 2) {
+          AIRTIME.library.openBulkEditDialog(trackIds);
+          return;
+        }
+
         selected.each(function (i, el) {
           var data = $(el).data("aData");
 

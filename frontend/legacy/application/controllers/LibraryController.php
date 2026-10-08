@@ -329,6 +329,99 @@ class LibraryController extends Zend_Controller_Action
      * Application_Model_CuePoints::DETECT_MAX_SECONDS are skipped (the
      * action is meant for jingles; a full decode of an hour is slow).
      */
+    /**
+     * RASTATIME 2026-10-08 - bulk metadata editor (operator request).
+     * GET  library/bulk-edit-file-md?count=N  -> the dialog body
+     * POST library/bulk-edit-file-md {ids[], data[]} -> applies every
+     * filled field to every selected track the user may edit (owner, or
+     * admin / program manager), database only like the single editor.
+     */
+    public function bulkEditFileMdAction()
+    {
+        $request = $this->getRequest();
+        $user = Application_Model_User::getCurrentUser();
+        $isAdminOrPM = $user->isUserType([UTYPE_SUPERADMIN, UTYPE_ADMIN, UTYPE_PROGRAM_MANAGER]);
+        $form = new Application_Form_BulkEditAudioMD();
+        $form->startForm();
+
+        if (!$request->isPost()) {
+            $this->view->layout()->disableLayout();
+            $this->view->count = (int) $this->_getParam('count', 0);
+            $this->view->form = $form;
+            $this->_helper->viewRenderer->setScriptAction('bulk-edit-file-md');
+
+            return;
+        }
+
+        $this->view->layout()->disableLayout();
+        $this->_helper->viewRenderer->setNoRender(true);
+
+        $values = [];
+        foreach ((array) $this->_getParam('data', []) as $pair) {
+            if (isset($pair['name'])) {
+                $values[$pair['name']] = trim((string) ($pair['value'] ?? ''));
+            }
+        }
+        // only the filled fields travel on
+        $changes = [];
+        foreach (Application_Form_BulkEditAudioMD::fieldOrder() as $name) {
+            if (isset($values[$name]) && $values[$name] !== '') {
+                $changes[$name] = $values[$name];
+            }
+        }
+        if (empty($changes)) {
+            $this->_helper->json->sendJson(['ok' => false, 'error' => 'nothing-to-change']);
+
+            return;
+        }
+        // the sanitiser turns any year into an integer ("abc" -> 0): refuse
+        // what is not a year before it gets the chance
+        if (isset($changes['year']) && !preg_match('/^\d{4}(-\d{2}(-\d{2})?)?$/', $changes['year'])) {
+            $this->_helper->json->sendJson(['ok' => false, 'error' => 'invalid', 'messages' => ['year' => ['not a year']]]);
+
+            return;
+        }
+        FileDataHelper::sanitizeData($changes);
+        if (!$form->isValid($changes)) {
+            Logging::warn('bulkEditFileMdAction: form INVALID, NOT saving. messages=' . json_encode($form->getMessages()));
+            $this->_helper->json->sendJson(['ok' => false, 'error' => 'invalid', 'messages' => $form->getMessages()]);
+
+            return;
+        }
+        $changes = array_intersect_key($form->getValues(), $changes);
+        // expiry: "none" clears (the model clears on an empty string), a
+        // date sets; the model also re-enables a track whose date lies ahead
+        if (isset($changes['expires_at']) && $changes['expires_at'] === 'none') {
+            $changes['expires_at'] = '';
+        }
+
+        $updated = 0;
+        $denied = 0;
+        $missing = 0;
+        foreach ((array) $this->_getParam('ids', []) as $id) {
+            $file = Application_Model_StoredFile::RecallById((int) $id);
+            if (!$file) {
+                ++$missing;
+
+                continue;
+            }
+            if (!$isAdminOrPM && $file->getFileOwnerId() != $user->getId()) {
+                ++$denied;
+
+                continue;
+            }
+            // one save per track through the single editor's path (it also
+            // handles expires_at, which is not a Propel column)
+            $file->setDbColMetadata($changes);
+            ++$updated;
+        }
+        Logging::info(sprintf(
+            'bulk-edit: user %s set %s on %d track(s) (%d denied, %d missing)',
+            $user->getLogin(), implode(',', array_keys($changes)), $updated, $denied, $missing
+        ));
+        $this->_helper->json->sendJson(['ok' => true, 'updated' => $updated, 'denied' => $denied, 'missing' => $missing, 'fields' => array_keys($changes)]);
+    }
+
     public function redetectCuePointsAction()
     {
         $mediaItems = $this->_getParam('media', null);

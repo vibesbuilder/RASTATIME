@@ -35,6 +35,11 @@ class Schema implements ConfigurationInterface
             // General schema
             ->arrayNode('general')->addDefaultsIfNotSet()->children()
             /**/->scalarNode('public_url')->cannotBeEmpty()->end()
+            // RASTATIME 2026-10-04 (go-live stage 1) - optional address the
+            // backend services use to reach this web app on the machine
+            // itself (default http://127.0.0.1); read by the Python side,
+            // accepted here so the shared libretime.conf stays valid.
+            /**/->scalarNode('internal_url')->defaultNull()->end()
             /**/->scalarNode('api_key')->cannotBeEmpty()->end()
             /**/->scalarNode('secret_key')->cannotBeEmpty()->end()
             /**/->arrayNode('allowed_cors_origins')->scalarPrototype()->defaultValue([])->end()->end()

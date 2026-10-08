@@ -67,6 +67,18 @@ Top-Bar Einstellungen → öffnet das Untermenü:
 
 Einstellungen → **Allgemeine Einstellungen**.
 
+Seit 2026-10-08 ist die Seite in **eingeklappte Segmente** gegliedert:
+Stationsname und -beschreibung bleiben oben, darunter *Station*
+(Sprache, Zeitzone, Wochenbeginn, öffentliche API, Radio-Seite),
+*Gestaltung* (Logo, Hintergrundbild der Startseite, Favicon,
+Primärfarbe), *Playout* (Crossfades, Standard-Track-Typ, überzogene
+Sendungen zuschneiden), *Automatisierung* (Intro/Outro-Playlists,
+Request-Pool, Verkehrsmeldungs-Block, Show-Shift-Füller,
+Podcast-Optionen), dann *Live Text Info*, *TuneIn Settings* und
+*Dangerous Options*. Ein Klick auf die Überschrift öffnet das Segment;
+ein Segment mit einem Prüffehler nach **Speichern** öffnet sich von
+selbst. Die Feldtabellen unten behalten ihre bisherige Gliederung.
+
 ```
    ┌─────────────────────────────────────────────────────────────────┐
    │  Allgemeine Einstellungen                          [ Speichern ]│
@@ -107,6 +119,7 @@ Einstellungen → **Allgemeine Einstellungen**.
 | **Stationsname** | Überall sichtbar — Seitentitel, ICY-Metadaten, E-Mail-From-Name. |
 | **Stationsbeschreibung** | Freitext-Beschreibung. Verwendet in Podcast-Feeds und ICY-Metadaten. |
 | **Stationslogo** | Bild oben links auf jeder Seite. Max 200 KB, JPG / PNG / GIF. |
+| **Hintergrundbild der Startseite** | Das Foto hinter der öffentlichen Startseite (`/`). JPG, PNG oder WebP bis 5 MB; empfohlen 1920 px breit und höchstens 1 MB. Als Datei unter `landing/` im Speicherort der Mediathek abgelegt (damit der nächtliche Spiegel es mitnimmt); **Entfernen** stellt das eingebaute Bild wieder her. Wirkt beim nächsten Laden der Startseite (der Browser hält das Bild eine Woche, ein neuer Upload bekommt eine neue Adresse). Seit 2026-10-07. |
 | **Stations-Favicon** | Bild im Browser-Tab. Max 200 KB, JPG / PNG / GIF / ICO. Als data: URI gerendert; keine Datei-Schreibvorgänge nach public/. |
 | **Primärfarbe** | Die Akzentfarbe der gesamten Oberfläche, der Radio-Seite und der Widgets — Links, Hervorhebungen, ausgewählte Zeilen, der aktive Menüpunkt, Fortschritts- und Speicherbalken, Scrollbalken, Abschnittspfeile, Play-Knopf und Lautstärkeregler des Stream-Players, Tabs, Knöpfe und Hervorhebungen der Widgets. Geben Sie `#rrggbb` ein oder nutzen Sie den Farbwähler neben dem Feld; **Auf Standard zurücksetzen** stellt das Orange (`#ff5d1a`) wieder her. Wirkt beim nächsten Seitenaufruf. Wählen Sie eine Farbe, die sich vom dunkelgrauen Hintergrund abhebt; Text auf der Farbe wechselt von selbst zwischen Weiß und Schwarz. Signalfarben (Fehler, Warnungen, die Sendungsfarben im Kalender) und der Füllstandsbalken der Sendungen im Kalender (immer Orange) bleiben unverändert. |
 | **Zeitzone** | Die Operator-Zeitzone für alle Kalender- / Sendeplan-Anzeigen. Pro Sendung in `cc_show_days.timezone` gespeichert, sodass das Ändern hier bestehende Sendungen nicht rückwirkend beeinflusst. |
@@ -256,6 +269,15 @@ Mitigationsempfehlung.
 > `preflight.py` läuft ~30 Prüfungen und fügt eine Zeile pro
 > Fehler ein; die Seite listet sie auf, und der Operator
 > kann verwerfen / auflösen.
+
+> **Podcast-Download fehlgeschlagen (seit 2026-10-08).** Scheitert ein
+> automatischer oder manueller Download einer Folge, nennt eine
+> Warnung Podcast, Folge, Zahl der Versuche, letzten Versuch und
+> Grund (HTTP-Code oder „API nicht erreichbar"); sie erscheint im
+> Banner auf jeder Seite und hier. Sie verschwindet von selbst,
+> wenn der Download später gelingt oder der Podcast entfernt wird.
+> Feed und Download-Adresse der Folge unter Bibliothek → Podcasts
+> prüfen.
 
 ### Dienst-Controls (nur Admin+)
 

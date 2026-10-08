@@ -332,7 +332,21 @@ class AutoPlaylistManager
     {
         $pl = new Application_Model_Playlist($playlistId);
         $out = [];
-        $used = 0.0;
+        // the laid-out seconds the items gathered so far take from the budget
+        // (Scheduler::laidOutLength: overlaps, joins to the neighbours)
+        $rowsOf = function (array $list) {
+            return array_map(function ($c) {
+                return ['fileId' => $c['type'] === 0 ? $c['id'] : null, 'secs' => $c['secs']];
+            }, $list);
+        };
+        $lastOf = function (array $list) use ($prevFileId) {
+            if (empty($list)) {
+                return $prevFileId;
+            }
+            $c = end($list);
+
+            return $c['type'] === 0 ? $c['id'] : null;
+        };
         $fadeIn = Application_Model_Preference::GetDefaultFadeIn();
         $fadeOut = Application_Model_Preference::GetDefaultFadeOut();
         $secsOf = function ($len) {
@@ -354,80 +368,20 @@ class AutoPlaylistManager
                             'cliplength' => $track['length'], 'cuein' => $track['cuein'], 'cueout' => $track['cueout'],
                             'fadein' => $track['fadein'], 'fadeout' => $track['fadeout'],
                         ];
-                        $used += $secs;
                     }
 
                     continue;
                 }
-                $crit = $bl->getCriteria();
-                $isRemaining = (($crit['limit']['modifier'] ?? '') === 'remaining');
-                if ($remainingBlocksOnly && !$isRemaining) {
+                [, $limitModifier] = $bl->getLimitValueAndModifier() ?: [null, null];
+                if ($remainingBlocksOnly && $limitModifier !== 'remaining') {
                     continue;
                 }
-                $budget = max(0.0, (float) $budgetSecs - $used);
-                $picked = $bl->getListOfFilesUnderLimit($budget);
-                if ($isRemaining && !empty($picked)) {
-                    // The block fills the budget by the SUM of its tracks, but
-                    // the rows overlap by their crossfade, so a selection that
-                    // meets the budget ends (tracks x overlap) early.  Pick a
-                    // few times with the budget raised by the overlap of the
-                    // previous pick and keep the pick whose LAID-OUT length
-                    // comes closest to the budget without exceeding it (the
-                    // block's solver is randomised, every pick differs);
-                    // insertFitting() still checks the real end.
-                    $house = (float) Application_Model_Preference::GetDefaultCrossfadeDuration();
-                    $showXf = (float) Application_Model_Preference::GetDefaultShowCrossfadeDuration();
-                    // Laid-out length the pick adds to the chain: its tracks minus
-                    // their overlaps, minus the joins to the neighbouring rows,
-                    // plus the overlap of the two neighbours that the pick splits
-                    // (the budget already subtracts that one).
-                    $ov = function ($a, $b, $info) use ($house, $showXf) {
-                        if ($a === false || $b === false) {
-                            return 0.0;
-                        }
-
-                        return Application_Model_Scheduler::crossfadeOverlapBetween($a, $b, $info, $house, $showXf);
-                    };
-                    $laidOut = function (array $pick) use ($ov, $prevFileId, $nextFileId) {
-                        $ids = array_map(function ($f) { return (int) $f['id']; }, $pick);
-                        $info = Application_Model_Scheduler::crossfadeInfoForFiles(array_merge(
-                            $ids, [$prevFileId ?: null, $nextFileId ?: null]
-                        ));
-                        $len = 0.0;
-                        foreach ($pick as $i => $f) {
-                            $len += (float) $f['length'];
-                            if ($i + 1 < count($ids)) {
-                                $len -= $ov($ids[$i], $ids[$i + 1], $info);
-                            }
-                        }
-                        $len -= $ov($prevFileId, $ids[0], $info) + $ov(end($ids), $nextFileId, $info);
-                        $len += $ov($prevFileId, $nextFileId, $info);
-
-                        return $len;
-                    };
-                    $best = null;
-                    $bestResidual = INF;
-                    $raised = $budget;
-                    for ($round = 0; $round < 8; ++$round) {
-                        $len = $laidOut($picked);
-                        $residual = $budget - $len;
-                        if ($residual >= 0 && $residual < $bestResidual) {
-                            $best = $picked;
-                            $bestResidual = $residual;
-                            if ($residual < 1.0) {
-                                break;
-                            }
-                        }
-                        $raised = $budget + max(0.0, array_sum(array_map(function ($f) { return (float) $f['length']; }, $picked)) - $len);
-                        $picked = $bl->getListOfFilesUnderLimit($raised);
-                        if (empty($picked)) {
-                            break;
-                        }
-                    }
-                    if ($best !== null) {
-                        $picked = $best;
-                    }
-                }
+                // RASTATIME 2026-10-06 - the budget is what is laid out so far,
+                // and a "time remaining" block is picked against it between its
+                // real neighbours (Scheduler::pickRemainingBlock, shared with the
+                // show builder; insertFitting() still checks the real end).
+                $budget = max(0.0, (float) $budgetSecs - Application_Model_Scheduler::laidOutLength($rowsOf($out), $prevFileId, $nextFileId));
+                $picked = Application_Model_Scheduler::pickDynamicBlock($bl, $budget, $lastOf($out), $nextFileId);
                 foreach ($picked as $f) {
                     $file = CcFilesQuery::create()->findPk((int) $f['id']);
                     if ($file === null || !$file->visible()) {
@@ -442,7 +396,6 @@ class AutoPlaylistManager
                         'cuein' => $file->getDbCuein(), 'cueout' => $file->getDbCueout(),
                         'fadein' => $fadeIn, 'fadeout' => $fadeOut,
                     ];
-                    $used += $secs;
                 }
 
                 continue;
@@ -475,7 +428,6 @@ class AutoPlaylistManager
             } else {
                 continue;
             }
-            $used += $secs;
         }
 
         return $out;

@@ -4,13 +4,14 @@
     <?php echo $this->element->getSubform('preferences_general') ?>
 
     <?php /* RASTATIME 2026-09-28 - Live Text Info */ ?>
-    <h3 class="collapsible-header" id="livetext-pref-heading"><span class="arrow-icon"></span><?php echo _("Live Text Info"); ?></h3>
-    <div class="collapsible-content" id="livetext-settings">
+    <?php /* RASTATIME 2026-10-08 - every segment starts collapsed (operator) */ ?>
+    <h3 class="collapsible-header closed" id="livetext-pref-heading"><span class="arrow-icon"></span><?php echo _("Live Text Info"); ?></h3>
+    <div class="collapsible-content" id="livetext-settings" style="display:none;">
         <?php echo $this->element->getSubform('preferences_livetext') ?>
     </div>
 
-    <h3 class="collapsible-header" id="tunein-pref-heading"><span class="arrow-icon"></span><?php echo _("TuneIn Settings"); ?></h3>
-    <div class="collapsible-content" id="tunein-settings">
+    <h3 class="collapsible-header closed" id="tunein-pref-heading"><span class="arrow-icon"></span><?php echo _("TuneIn Settings"); ?></h3>
+    <div class="collapsible-content" id="tunein-settings" style="display:none;">
         <?php echo $this->element->getSubform('preferences_tunein') ?>
     </div>
 

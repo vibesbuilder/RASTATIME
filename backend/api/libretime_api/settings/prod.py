@@ -1,4 +1,6 @@
+import socket
 from os import getenv
+from urllib.parse import urlparse
 
 # pylint: disable=unused-import
 from ._internal import (
@@ -9,6 +11,7 @@ from ._internal import (
     DEFAULT_AUTO_FIELD,
     INSTALLED_APPS,
     LANGUAGE_CODE,
+    LOCALE_PATHS,  # RASTATIME 2026-10-02 - defined in _internal, was never re-exported
     MIDDLEWARE,
     REST_FRAMEWORK,
     ROOT_URLCONF,
@@ -30,19 +33,64 @@ CONFIG = Config(LIBRETIME_CONFIG_FILEPATH)  # type: ignore[arg-type, misc]
 
 SECRET_KEY = CONFIG.general.secret_key
 
-ALLOWED_HOSTS = ["*"]
+# Create an 'origin' (scheme://host[:port]) from the public_url.
+# RASTATIME 2026-10-04: the upstream slice ``public_url[: -len(path)]``
+# dropped one character too many when the path was just "/"
+# ("http://192.168.1.164" -> "http://192.168.1.16" with the LAN address of the
+# time) - the CORS origin never
+# matched.  urlparse gives the origin without guessing.
+_public_parts = urlparse(str(CONFIG.general.public_url))
+public_url_origin = f"{_public_parts.scheme}://{_public_parts.netloc}"
+
+# RASTATIME 2026-10-04 (go-live stage 1): the API is reached through the
+# Apache proxy (ProxyPreserveHost -> the public host name or the LAN
+# address) and directly on the loopback by the services.  Accept exactly
+# those hosts instead of "*"; RASTATIME_API_EXTRA_HOSTS (comma separated)
+# adds more, e.g. a second LAN name.
+_public_host = urlparse(str(public_url_origin)).hostname or ""
+_internal_host = urlparse(CONFIG.general.internal_base_url()).hostname or ""
+
+
+def _local_ipv4_addresses() -> list:
+    """The machine's own IPv4 addresses: the UI keeps working over the LAN
+    address (http://192.168.1.64) after public_url moved to the https name
+    (RASTATIME 2026-10-06, go-live stage 2.4)."""
+    try:
+        return sorted({a[4][0] for a in socket.getaddrinfo(socket.gethostname(), None, socket.AF_INET)})
+    except OSError:
+        return []
+
+
+_lan_addresses = _local_ipv4_addresses()
+_cors_hosts = [urlparse(str(o)).hostname or "" for o in CONFIG.general.allowed_cors_origins]
+ALLOWED_HOSTS = sorted(
+    {
+        host
+        for host in [_public_host, _internal_host, "localhost", "127.0.0.1", "[::1]"]
+        + _lan_addresses
+        + _cors_hosts
+        + [h.strip() for h in getenv("RASTATIME_API_EXTRA_HOSTS", "").split(",")]
+        if host
+    }
+)
+
+# Django's CSRF check compares the Origin header against these; the API
+# answers to the public https origin through the proxy and to the plain
+# LAN origins in the house.  Apache sets X-Forwarded-Proto on the TLS
+# virtual host, so request.is_secure() and the secure cookie flags follow
+# the real scheme.
+CSRF_TRUSTED_ORIGINS = sorted(
+    {str(public_url_origin)}
+    | {str(o) for o in CONFIG.general.allowed_cors_origins}
+    | {f"http://{ip}" for ip in _lan_addresses}
+)
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+USE_X_FORWARDED_HOST = True
 
 LOGGING = setup_logger(LIBRETIME_LOG_FILEPATH)
 
 # CORS
 # https://github.com/adamchainz/django-cors-headers
-
-# Create an 'origin' by removing the public_url path
-public_url_origin = (
-    CONFIG.general.public_url[: -len(CONFIG.general.public_url.path)]
-    if CONFIG.general.public_url.path
-    else CONFIG.general.public_url
-)
 
 CORS_ALLOWED_ORIGINS = [public_url_origin] + CONFIG.general.allowed_cors_origins
 

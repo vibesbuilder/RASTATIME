@@ -1,10 +1,34 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.62
-Date: 2026-10-02
+Draft version: 0.68
+Date: 2026-10-03
 
 > **Revision history**
+> - **0.68 (2026-10-08)** — **Playout history survives deleted tracks**
+>   (§23.55): `cc_playout_history.file_id` ON DELETE SET NULL (migration
+>   0065) and the file fields snapshotted into the row's metadata.
+> - **0.67 (2026-10-06)** — **Remaining time laid out** (§23.54):
+>   `time_filled` = show start to the end of the last row; the show
+>   builder picks a "time remaining" smart block against the laid-out
+>   budget between its neighbours (picker shared with the autoloading
+>   build); "duration in time" blocks fill their duration on air.
+> - **0.66 (2026-10-06)** — **Login brute-force brake** (§23.53): fixed
+>   windows per address and per user name in the legacy login (429 +
+>   Retry-After), reject throttle per address in the DJ harbor auth.
+> - **0.65 (2026-10-04)** — **Go-live stage 1: internal URL, listener
+>   stream through Apache, TLS host as repo files** (§23.52):
+>   `general.internal_url` splits the inside address from `public_url`,
+>   outputs on the local Icecast are published as `/stream/<mount>`,
+>   Apache includes under `infra/apache/`, Django host/CSRF/proxy
+>   settings.
+> - **0.64 (2026-10-03)** — **Short jingles, part two** (§23.51):
+>   the held-back row is queued when the jingle starts; a refresh in the
+>   row's start second no longer catches it up a second time nor tears
+>   the ending predecessor down.
+> - **0.63 (2026-10-03)** — **Queue-ahead keeps an armed earlier row**
+>   (§23.50): consecutive jingles shorter than the lead window were
+>   swapped and doubled on air (2026-10-02 23:36).
 > - **0.62 (2026-10-02)** — **Per-line-in input gain** (§23.49):
 >   `rastatime_linein.input_gain_db` (−20…+20 dB), applied by an
 >   `amplify` around the line-in arm (`var.set linein.gain`), pushed on
@@ -6134,3 +6158,269 @@ DJ-held start, resume, fresh Liquidsoap), `test_liquidsoap_engine.py`
 `liquidsoap --check` of the full script with every arm.  Round trip
 POST -> PATCH -> GET against a scratch database with the migration,
 reverse migration included.
+
+### 23.50 Queue-ahead and Rows Shorter than the Lead Window (2026-10-03)
+
+**Observation.**  The night measurement of 2026-10-02/03 (every file row of
+two test shows correlated against the hourly recordings) found the file
+chains on their rows to within 0.5 s over seven hours, with one exception:
+at 23:36 the layout Sweetlove -> StationID tief (3.2 s) -> StationID Kreisky
+(4.9 s) -> Butter aired as Kreisky, tief, 0.2 s of dead air, Kreisky again,
+Butter 2.9 s late (and the chain with it to the show end).
+
+**Cause.**  `_on_file_queue_ahead` (§23.44) runs BUFFER + 5 s before a
+row's start and, finding a different row on the queue, took it for stale
+(a removed or re-cued row) and flushed it.  With rows shorter than those
+8 s the queue-ahead of the second jingle fires while the first is queued
+and correct, the third's fires while the second is queued; each flush
+displaced the real successor, and the displaced rows' own start timers
+pushed them afresh behind whatever was playing.  The log shows exactly two
+such replacements since the queue-ahead exists, both that night.
+
+**Fix (abbcba2).**  A queued row that is still armed (`_armed_events`,
+compared by schedule identity, not key) and starts no later than the new
+row stays on the queue; the new row returns and starts the normal way at
+its own timer, behind the jingle then playing.  A queued row that vanished
+from the armed set, or that moved behind the new row, is still replaced
+(the 2026-09-28 re-cue case).  Tests: `test_crossfade_shapes.py` (armed
+earlier row stays; vanished row replaced; later row replaced).
+
+### 23.51 Short Jingles, Part Two: Deferred Queue-ahead and the Refresh Race (2026-10-03)
+
+**Observation (test show 12:15, three single StationIDs of 2.7-4.9 s between
+tracks).**  The 23.50 fix held: "stays queued ahead" three times, no swap.
+Two new defects: (1) behind the 2.7 s jingle 0.6 s of digital silence
+(12:40:23) - the music row's own PLAY at its row time left Liquidsoap
+0.3 s to resolve the request, cross had no partner; behind the 4.9 s jingle
+it worked (+0.21 s, no gap).  (2) At 12:17:55 the 120 s schedule refresh
+landed in the start second of a 3.9 s jingle: the refresh declared the
+predecessor (end 0.08 s ago) "truncated to past" and stopped it, flushing
+the queued jingle, then found the jingle "in progress, started 0 s ago" and
+caught it up while its timer PLAY was executing - the jingle aired twice and
+the chain ran 3.5 s late until a skip at 12:26.  First occurrence in the
+log; with timers on whole seconds and a drifting refresh phase it recurs.
+
+**Fix (1) - deferred queue-ahead.**  `_on_file_queue_ahead` remembers the
+row it holds back (`_deferred_queue_ahead`); `_on_file_start` runs
+`_queue_deferred_ahead` in its `finally`, which queues that row behind the
+now-playing jingle when it is still armed and not the current row.  The
+refresh clears the memo (`_cancel_all_timers`); the re-armed queue-ahead
+timers rebuild it.
+
+**Fix (2) - the refresh race.**  `_on_file_start` is a wrapper that marks
+the row in `_starting` for the duration of `_on_file_start_impl`; the
+catch-up branch of `_arm_file_event` skips a row that is starting right now
+(schedule identity).  The teardown of a playing row whose end lies less
+than 1.5 s in the past is skipped while its successor is queued ahead: the
+STOP timer and the queue hand over by themselves.  A row truncated longer
+ago (a cancelled show) is still torn down.  Tests: `test_catchup_offset.py`
+sections E and F (six tests).
+
+
+### 23.52 Go-Live Stage 1: Internal URL, Listener Streams via Apache, TLS Host (2026-10-04)
+
+**Context.**  Way A (BACKLOG "Internet-Erreichbarkeit via HTTPS"): the
+studio machine itself serves `https://rastatime.example.org` (fixed
+public IP), the DJ dial-in stays plain HTTP on :8001.  Stage 0 rotated
+every secret and bound PostgreSQL, RabbitMQ and the API to the loopback.
+Before stage 2 can point `general.public_url` at the https name, three
+things had to stop depending on it.
+
+**Internal URL.**  The backend services called the legacy web app
+through `general.public_url` (playout v1 client for the "On Air" light,
+DJ login check `check-live-stream-auth`, analyzer import callback
+`/rest/media/<id>`, notify).  With a public https name that call would
+leave the machine, need hairpin NAT and TLS, and fail when the uplink is
+down.  New optional `general.internal_url` in all three schemas (shared
+pydantic `GeneralConfig`, legacy Symfony `conf.php` - the `general` node
+rejects unknown keys -, `libretime.conf.example`) and
+`GeneralConfig.internal_base_url()`: `RASTATIME_INTERNAL_URL` >
+`internal_url` > `http://127.0.0.1` + the path of `public_url`.  The
+playout's `_dj_auth_web_url()` follows the same chain (its own YAML read,
+no pydantic at that point); `RASTATIME_DJ_AUTH_WEB_URL` still overrides.
+
+**Listener streams.**  `StreamSetting` built `http://host:port/mount`
+from the output's Icecast host - `127.0.0.1:8000` for the local one,
+useless for any listener.  An output on the local Icecast is now
+published as `<public_url>/stream/<mount>`; `infra/apache/
+rastatime-stream-proxy.conf` hands `/stream/` to `127.0.0.1:8000` (no
+retry blacklisting, 30-s timeout, status/admin/playlists denied), included
+by the :80 server and the TLS host (ProxyPass is not inherited).  One
+address in the LAN and on the internet, port 8000 never forwarded.
+Remote Icecast outputs keep their own URL.
+
+**TLS host as files in the repo.**  `rastatime-https.conf` (443, TLS 1.2/
+1.3 with the Mozilla intermediate suite, HTTP/2, HSTS, `X-Forwarded-Proto`,
+the API proxies, the stream proxy, http → https redirect only when the
+request carries the public host name - the LAN keeps `http://192.168.1.164`)
+and `rastatime-acme.conf` (Alias for the Let's Encrypt HTTP-01 challenge
+with the front-controller rewrite switched off).  Certificates come from
+win-acme's "pemfiles" store into `C:\RASTATIME\certs` (git-ignored).
+Apache's `httpd.conf` stays outside the repo; it gains three `Include`
+lines (stage 2 for the TLS host).
+
+**Django.**  `ALLOWED_HOSTS` is no longer `*`: public host, internal host,
+`localhost`, `127.0.0.1`, `[::1]` and `RASTATIME_API_EXTRA_HOSTS`;
+`CSRF_TRUSTED_ORIGINS` from the public origin; `SECURE_PROXY_SSL_HEADER`
+and `USE_X_FORWARDED_HOST` so the API behind the proxy knows the real
+scheme and host.  Found on the way: the upstream origin slice cut
+`http://192.168.1.164` to `http://192.168.1.16` (path `/`), so the CORS origin
+never matched; `urlparse` now.  The legacy PHP needs nothing - Apache
+terminates TLS natively, `$_SERVER['HTTPS']` is set and
+`session.cookie_secure` follows.
+
+**Next.**  Stage 2 (operator): DNS, router 80/443/8001, win-acme, the
+three includes, `public_url = https://...`, hairpin NAT or split DNS.
+Stage 3: acceptance from outside.
+
+### 23.53 Login Brute-Force Brake (2026-10-06)
+
+**Context.**  With the UI public (go-live 2026-10-06) scanners arrived
+within hours.  LibreTime's login counted failures per address
+(`cc_login_attempts`) and per user (`cc_subjs.login_attempts`) and never
+read either; the per-address INSERT stored the literal `':ip'`.  Windows
+has no fail2ban.
+
+**Design.**  Two independent brakes, both without sleeping in the request
+(a `sleep()` would pin fcgid workers and be a denial-of-service lever):
+
+- *Per address* (hard): `RASTATIME_LOGIN_IP_LIMIT` = 10 failures inside
+  `RASTATIME_LOGIN_IP_WINDOW_MIN` = 15 minutes → `RASTATIME_LOGIN_IP_BLOCK_MIN`
+  = 15 minutes.  Fixed window: the counter restarts when the previous
+  failure lies outside the window; a block lasts from the last failure.
+  `Application_Model_LoginAttempts::blockedSecondsForIp()` and
+  `increaseAttempts()` (raw SQL, timestamps compared in the database
+  clock via `EXTRACT(EPOCH FROM now() - ts)`).
+- *Per user name* (soft): 20 failures inside 60 minutes → 5 minutes
+  (`Subjects::increaseLoginAttempts` keeps the window in
+  `login_attempt_at`).  Deliberately short so that distributed hammering
+  of an administrator's name cannot lock the administrator out.
+- `LoginController::indexAction` checks both before any password work on a
+  POST and answers **429** with `Retry-After` and a translated message;
+  the normal login flow is skipped, the page renders with a fresh CSRF
+  hash.  Success clears both counters.  Blocked attempts are logged with
+  the address for the planned firewall watcher.
+- *DJ harbor*: `dj_auth.RejectThrottle` (limit 5 / window 600 s / block
+  900 s, monotonic clock, in-memory per playout process): a blocked
+  address is refused before the web application is asked; an accepted
+  login clears the address.  A playout restart forgets the state, which a
+  brake can afford.
+
+**Schema.**  Legacy migration 0064: `cc_login_attempts.last_attempt`,
+`cc_subjs.login_attempt_at` (both TIMESTAMP, nullable); Django models
+mirror the columns (`LoginAttempt.last_attempt`, `User.login_attempt_at`),
+the API does not use them.  `REMOTE_ADDR` is the real client address:
+Apache terminates TLS itself, no proxy in front.
+
+**Addendum (2026-10-06, package c).**  *Reasons:* the legacy check
+answers refusals with `X-Rastatime-Auth-Reason` (`no-show`, `not-host`,
+`bad-password`); `DjAuthenticator` counts only `bad-password`, so a DJ
+dialling in before the show can never be blocked (the header is seen by
+the playout only - the client gets accept/deny).  *Visibility:*
+`RejectThrottle.snapshot()/unblock()` behind `GET /dj-auth/blocks` and
+`POST /dj-auth/unblock` on the loopback listener; the legacy
+`Application_Model_BlockedAddresses` merges web (per address / user),
+harbor and the watcher's firewall rules for System Status ("Blocked
+addresses", unblock per entry, CSRF) and for `rt-blocks.ps1`.  Apache runs
+as LocalSystem, so PHP may `Get-/Remove-NetFirewallRule` through
+PowerShell (~0.7 s per call; the page refreshes every 30 s).  *Watcher:*
+`rt-firewall-watch.ps1` as a 5-minute task (SYSTEM) reads both Apache
+access logs and the playout log for the last 10 minutes and creates
+`RASTATIME-Block <ip>` rules (24 h, description `until=…; reason=…`),
+expiring them itself; private addresses are never blocked.  Still open:
+2FA / allow-lists for administrator accounts.
+
+**Addendum (2026-10-08, allow list).**  Operator request after a false
+positive locked their home address out: `Application_Model_AllowedAddresses`
+(cc_pref `allowed_addresses`, JSON; address or CIDR, IPv4/IPv6 matched by
+prefix) is honoured by all three layers - `LoginAttempts` neither counts
+nor brakes an allowed address, the playout's `dj_auth.AllowList` (reads the
+mirror `config/allowlist.txt` on every mtime change) skips the throttle,
+and `rt-firewall-watch.ps1` skips candidates on the list (`skipped … allowed
+address`).  System Status: **Allow** on a blocked row (unblock everywhere +
+add) and the table *Allowed addresses* (add by hand, Remove); `rt-blocks.ps1`
+prints the list.  LAN addresses stay exempt by the watcher's private-address
+rule regardless.
+
+### 23.54 Remaining Time: Laid-Out `time_filled` and the Smart-Block Budget in the Show Builder (2026-10-06)
+
+**Context.**  The operator filled a show with a "time remaining" smart
+block (three music tracks) and saw −6 s free; a 6-s jingle in the middle
+made it +3 s over, at the end 0 s.  The footer was right: rows overlap by
+their crossfade (pair rule of 2026-09-29), and the jingle (crossfade 0)
+breaks one 3-s overlap.  Wrong was the starting point:
+`cc_show_instances.time_filled` was `SUM(clip_length)`, so
+`getSecondsRemaining()` - and with it the budget of a "time remaining"
+block in the show builder (`Scheduler::retrieveMediaFiles`), the
+calendar's fill bar, `getIsFull()` and the Auto DJ threshold - ignored
+the overlaps: a sum-exact fill ends (music pairs × 3 s) early.  The
+operator's standard hour (3 × 12-minute block, StationID between, "time
+remaining" last) rehearsed at 27 s free with `time_filled` = 3600 s
+("full").
+
+**Decision.**  (1) `time_filled` is the laid-out length: `MAX(ends) −
+starts` of the instance (`CcShowInstances::computeDbTimeFilled`;
+`ShowShiftService` writes the same expression), computed after
+`calculateCrossfades()` has laid the rows out, so the footer, the fill
+bar, "is full" and `getSecondsRemaining()` agree.  (2) The show builder
+picks a "time remaining" block the way the autoloading build does:
+`Scheduler::pickRemainingBlock()` (moved out of
+`AutoPlaylistManager::expandPlaylist`, now shared) raises the budget by
+the overlap of the previous pick, up to 8 rounds, and keeps the laid-out
+closest fit ≤ budget (the least overbook when nothing fits - the caller
+checks the real end).  `laidOutLength()` lays a candidate list out between
+the real neighbours of the insertion point (`neighboursOfInsertionPoint`,
+the cursor row handed down from `insertAfter`), and the tally over a
+playlist's items uses it instead of the clip sum.  Blocks limited by
+*Duration in time* keep the sum semantics (an operator's "12 minutes" is
+the sum of the tracks); the last block absorbs the difference.
+
+**Rehearsal.**  `remaining_probe.php` (C:\Temp\optd; temporary blocks and
+a temporary playlist on a temporary instance of show 534): before, 3600 s
+sum / 3573 s laid out / "full"; after, a 12-minute playlist and a bare
+"time remaining" block end 0.02 s before the show's end with
+`time_filled` 1799.98 s; the autoloading fill is unchanged (3.0 s free on
+a 10-minute slot).
+
+**Addendum (2026-10-06, evening).**  *"Duration in time" is on-air
+time.*  With the end of the show exact, the operator's station IDs still
+drifted 9/18/27 s early in the hour because a 12-minute block counted the
+sum of its tracks (three 3-s overlaps lost).  Operator decision: "12
+minutes" means 12 minutes on air.  `pickDynamicBlock()` now hands a
+"minutes"/"hours" block to `pickRemainingBlock()` with its own duration as
+the budget (`$asDuration`), and `Block::getListOfFilesUnderLimit($show,
+$timeOverride)` / `getListofFilesMeetCriteria(…, $timeOverride)` let the
+raised budget replace the stored duration limit; "number of tracks" blocks
+are untouched.  Rehearsal of the standard hour: station IDs at 12:00.0,
+24:06.9 and 36:18.8 (each block 720.0 s laid out), 0.02 s free at the
+end.  A block's length shown in a playlist (`getDynamicBlockLength`,
+the limit itself) now equals what it airs.
+
+### 23.55 Playout History Survives Deleted Tracks (2026-10-08)
+
+**Context.**  The operator noticed in LibreTime that deleting a track from
+the library removes its rows from the playout history, and ruled that
+deleting a track, a webstream or a line-in must never touch the history.
+RASTATIME inherited the cause: `cc_playout_history.file_id` was declared
+`ON DELETE CASCADE`, and a file row carried nothing but the show name -
+title, creator, length, composer and copyright were read live from
+`cc_files` by the report.  Webstream and line-in rows were already safe:
+no foreign key, name and label copied into the metadata when they air.
+
+**Decision.**  Two parts in one legacy migration (0065, schema 65): the
+foreign key becomes `ON DELETE SET NULL`, and the five file fields the two
+default templates show (Log Sheet: title, creator; File Summary: title,
+creator, played, length, composer, copyright) are copied into
+`cc_playout_history_metadata` for every existing file row that lacks
+them.  `HistoryService::insertPlayedItem` writes the same five keys for
+every new file row.  A deleted track's row thus falls into the report's
+"null file" branch and renders from the metadata, exactly like a webstream
+row; the *File Summary* keeps grouping by `file_id`, so it counts tracks
+that still exist.  The Django model keeps `on_delete=DO_NOTHING` (the
+database rule decides, as before); no Propel regeneration.  The library's
+*Play Count* column counts rows with a file reference, unchanged.
+
+**Operation.**  The migration runs on the operator's go, after a fresh
+backup and outside a show boundary (`manage.py migrate`, then API
+restart); the writer change is live immediately and harmless before the
+migration (extra metadata keys).

@@ -29,11 +29,11 @@ def _session(status=200, header="1", exc=None):
 
 def test_accepted_master_login_posts_to_the_legacy_endpoint():
     session = _session()
-    auth = DjAuthenticator("http://192.168.1.164/", session=session)
+    auth = DjAuthenticator("http://192.168.1.64/", session=session)
     assert auth.check("master", "chef", "secret", "192.168.1.7") == "ok"
     session.post.assert_called_once()
     url = session.post.call_args.args[0]
-    assert url == "http://192.168.1.164" + CHECK_PATH
+    assert url == "http://192.168.1.64" + CHECK_PATH
     assert session.post.call_args.kwargs["data"] == {
         "djtype": "master", "username": "chef", "password": "secret",
     }

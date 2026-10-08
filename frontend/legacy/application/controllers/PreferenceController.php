@@ -112,6 +112,18 @@ class PreferenceController extends Zend_Controller_Action
                     Application_Model_Preference::SetStationFavicon($faviconPath);
                 }
 
+                // RASTATIME 2026-10-07 - landing page background (a file in the storage root)
+                $bgUploadElement = $form->getSubForm('preferences_general')->getElement('landingBackground');
+                $bgUploadElement->receive();
+                $bgPath = $bgUploadElement->getFileName();
+                if (!empty($bgPath) && $bgPath != '') {
+                    try {
+                        Application_Model_Preference::SetLandingBackground($bgPath);
+                    } catch (Exception $e) {
+                        Logging::warn('Landing page background rejected: ' . $e->getMessage());
+                    }
+                }
+
                 // RASTATIME 2026-09-28 - Live Text Info
                 Application_Model_Preference::setLiveTextEnabled(!empty($values['enable_live_text']));
                 Application_Model_Preference::setLiveTextFormat($values['live_text_format'] ?? 0);
@@ -145,6 +157,7 @@ class PreferenceController extends Zend_Controller_Action
             }
         }
         $this->view->logoImg = Application_Model_Preference::GetStationLogo();
+        $this->view->landingBackgroundUrl = Application_Model_Preference::GetLandingBackgroundUrl();
         $this->view->faviconImg = Application_Model_Preference::GetStationFaviconHref();
 
         $this->view->form = $form;
@@ -191,6 +204,24 @@ class PreferenceController extends Zend_Controller_Action
         }
 
         Application_Model_Preference::SetStationLogo('');
+    }
+
+    /** RASTATIME 2026-10-07 - counterpart to removeLogoAction for the landing page background. */
+    public function removeLandingBackgroundAction()
+    {
+        SessionHelper::reopenSessionForWriting();
+
+        $this->view->layout()->disableLayout();
+        $this->_helper->viewRenderer->setNoRender(true);
+
+        if (!SecurityHelper::verifyCSRFToken($this->_getParam('csrf_token'))) {
+            Logging::error(__FILE__ . ': Invalid CSRF token');
+            $this->_helper->json->sendJson(['jsonrpc' => '2.0', 'valid' => false, 'error' => 'CSRF token did not match.']);
+
+            return;
+        }
+
+        Application_Model_Preference::RemoveLandingBackground();
     }
 
     /**

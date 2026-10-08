@@ -66,6 +66,21 @@ Löschen Sie jeden Chip mit seinem **×**.
 > Track, grün = Line-In, gelb = Block, orange = Stream,
 > lila = Playlist.
 
+> **Restzeit und Crossfades (seit 2026-10-06).** Musik-Zeilen überlappen
+> sich um ihren Crossfade (Hauswert 3 s bzw. der Wert des Track-Typs;
+> Jingles 0), darum ist die Restzeit einer Sendung die *ausgelegte* Zeit:
+> vom Ende der letzten Zeile bis zum Sendungsende – die Zahl in der
+> Fußzeile des Show Builders. Ein Smart Block mit „Verbleibende Zeit in
+> der Sendung" wird gegen diese Zeit gewählt, zwischen seinen echten
+> Nachbarn, sodass die letzte Zeile bis auf etwa eine Sekunde am
+> Sendungsende endet (der Löser des Blocks ist zufällig; der Pool
+> entscheidet, was möglich ist). Ein Block mit *Dauer in Zeit* wird
+> genauso gewählt (Operator-Entscheidung 2026-10-06): 12 Minuten sind 12
+> Minuten **Sendezeit**, nicht Titelsumme – eine StationID nach drei
+> solchen Blöcken sitzt bei 12:00, 24:xx und 36:xx der Stunde. Ein Jingle
+> zwischen zwei Musiktiteln kostet seine eigene Länge plus die 3 s
+> Überlappung, die er unterbricht.
+
 ### Freitext-Suche
 
 Die **Suche**-Box läuft über **Titel, Ersteller, Album,
@@ -183,6 +198,7 @@ im Aktionsmenü der Zeile.
 | **Cue In / Out** | `cc_files.cuein` / `cueout` — Anfang / Ende ohne Neu-Kodierung trimmen. Seit dem 30.09.2026 bleiben die Werte innerhalb der Datei: ein Cue Out hinter der Dateilänge wird auf die Länge gekappt, ein Cue In unter null wird null. Eine Änderung wird in die Zeilen der kommenden Sendungen kopiert, die den Track enthalten (bereits gestartete Zeilen bleiben unberührt), und diese Sendungen werden neu ausgelegt - kein Neu-Befüllen nötig. |
 | **Fade In / Out** | `cc_files.fadein` / `fadeout` |
 | **Replay Gain** | `cc_files.replay_gain` — von der Playout-Engine zur Pegel-Normalisierung verwendet |
+| **Play Count** | Bibliotheksspalte (standardmäßig ausgeblendet, Spaltenwähler), nur lesend: wie oft der Titel gesendet wurde - ein Zähler pro Zeile des Sendeprotokolls, dieselbe Zahl wie Sendeprotokoll → File Summary. Sortierbar; die erweiterte Suche nimmt einen Bereich. Seit 2026-10-07. |
 | **Crossover** | Wie dieser Titel auf seine Nachbarn trifft (seit 2026-09-29 ein Dreiwege-Feld; die beiden Ausnahmen schließen einander aus). **As the track type** (Wie der Track-Typ, Vorgabe): Der Titel überlappt und überblendet so, wie sein Track-Typ es vorgibt - Settings → Track Types → *Crossfade Duration* - oder, ohne Wert dort, mit der Default Track Crossfade Duration; seit 2026-09-30 erbt er auch die Typ-Vorgabe *No Fade during Crossover*. **No Fade during Crossover** (Kein Fade beim Crossover, `cc_files.no_fade_crossfade`): Die Überlappung bleibt, aber dieser Titel behält seinen vollen Pegel, während der andere blendet; an einer überzogenen Sendungsgrenze wird ein markierter abgehender Titel geschnitten statt ausgeblendet. **Exclude from Crossover** (Vom Crossover ausnehmen, `cc_files.exclude_crossfade`): Dieser Titel überlappt nie mit einem Nachbarn - er startet am Ende des vorherigen Titels, und der nächste startet an seinem Ende. Ein Wechsel zu oder von *Exclude* legt die Zeilen der kommenden Sendungen, die den Titel enthalten, neu aus. |
 
 > **Operator-Tipp.** Setzen Sie **Cue In** auf
@@ -257,7 +273,9 @@ Der Block scheitert nicht.
 > `BlockExpander.expand()` ein PostgreSQL-`SELECT … WHERE …
 > LIMIT …` über `cc_files` zusammen. Time-remaining-Limits
 > werden über die `getSecondsRemaining()`-Methode der
-> Sendungsinstanz in eine Dauer-Obergrenze umgerechnet.
+> Sendungsinstanz in eine Dauer-Obergrenze umgerechnet (seit
+> 2026-10-06 die ausgelegte freie Zeit: `time_filled` = Start bis Ende
+> der letzten Zeile; die Auswahl trifft `Scheduler::pickRemainingBlock()`).
 > Siehe ARCHITECTURE §23.19 für die Outro-Reserve-Interaktion
 > mit Time-remaining-Smart-Blocks.
 
@@ -427,7 +445,7 @@ Tabelle erscheint:
 |---|---|
 | **Zu Playlist hinzufügen** | Die ausgewählten Zeilen an eine bestehende Playlist Ihrer Wahl anhängen. |
 | **Löschen** | Die ausgewählten Zeilen löschen. Gleiche Confirm-on-Scheduled-Use-Semantik wie beim Einzelzeilen-Löschen. |
-| **Metadaten bearbeiten** | Einen Batch-Bearbeitungs-Dialog öffnen. Gilt nur für Tracks. |
+| **Bearbeiten** | Ein Track ausgewählt: sein Editor-Tab wie bisher. **Zwei oder mehr Tracks ausgewählt (seit 2026-10-08): ein Dialog für alle** - Interpret, Album, Genre, Jahr, Track-Typ, Sprache, Mood, Label, Komponist, Dirigent, Copyright, Ablaufdatum (`none` löscht es), Beschreibung. Leere Felder bleiben unverändert, ein ausgefülltes Feld wird in jeden ausgewählten Track geschrieben; Titel, Track-Nummer, BPM, Cue-Punkte und Cover bleiben je Track. Nur Datenbank, wie der Einzel-Editor (Tags in den Dateien werden beim Import gelesen und nie zurückgeschrieben). Tracks ohne Bearbeitungsrecht werden übersprungen und im Ergebnis gezählt. |
 | **Besitz übertragen** | Besitz neu zuweisen (nur Admin / Super Admin). Verwendet, wenn ein DJ ausscheidet und seine Dateien an das Stations-Konto übergehen sollen. |
 | **Cue Points** | Erkennt die Cue-Punkte der ausgewählten Tracks aus dem Audio (dieselbe Stille-Erkennung, die der Analyzer beim Import ausführt: leiser als −60 dB für mindestens 0,3 s am Anfang oder Ende) und speichert sie. Kommende Sendungen, die die Tracks enthalten, übernehmen die neuen Werte und werden neu ausgelegt. Tracks über 15 Minuten werden übersprungen - die Aktion ist für Jingles und andere kurze Elemente gedacht. Seit dem 30.09.2026. |
 

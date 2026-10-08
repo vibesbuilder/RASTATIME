@@ -62,6 +62,14 @@ Darunter drei Tabs (DJs sehen nur den dritten):
 > `/playouthistory/{playout-history-feed,file-history-feed,show-history-feed}`,
 > alle serverseitig nach dem gewählten Bereich gefiltert.
 
+> **Ein gelöschter Titel behält sein Protokoll (seit 2026-10-08).** Jede
+> Datei-Zeile trägt Titel, Interpret, Länge, Komponist und Copyright zum
+> Zeitpunkt des Sendens. Wird der Titel aus der Bibliothek gelöscht,
+> wird nur der Dateiverweis geleert, die Zeile bleibt und wird aus
+> diesen Werten angezeigt - so wie Webstream- und Line-In-Zeilen. Der
+> Reiter *File Summary* zählt Titel, die es noch gibt. Vorher löschte
+> LibreTime die Protokollzeilen mit dem Titel.
+
 ---
 
 ## 2. History Templates

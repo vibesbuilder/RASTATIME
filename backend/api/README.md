@@ -1,6 +1,6 @@
-# LibreTime API
+# RASTATIME API
 
-This API provides access to LibreTime's database via a Django application.
+This API provides access to RASTATIME's database via a Django application.
 
 ## Deploying
 

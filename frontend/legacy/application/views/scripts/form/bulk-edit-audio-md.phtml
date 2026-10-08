@@ -1,0 +1,16 @@
+<?php /* RASTATIME 2026-10-08 - the bulk metadata editor's fields (see Application_Form_BulkEditAudioMD) */ ?>
+<form method="post" action="" class="bulk-md-form" onsubmit="return false;">
+    <dl class="zend_form">
+        <?php foreach (Application_Form_BulkEditAudioMD::fieldOrder() as $name): ?>
+            <?php $el = $this->element->getElement($name); if (!$el) { continue; } ?>
+            <dt><label for="<?php echo $el->getId(); ?>"><?php echo $this->escape($el->getLabel()); ?></label></dt>
+            <dd>
+                <?php echo $el->renderViewHelper(); ?>
+                <?php if ($el->getDescription()): ?><p class="description" style="margin: 2px 0 0 0;"><?php echo $this->escape($el->getDescription()); ?></p><?php endif; ?>
+                <?php if ($el->hasErrors()): ?>
+                    <ul class="errors"><?php foreach ($el->getMessages() as $m): ?><li><?php echo $this->escape($m); ?></li><?php endforeach; ?></ul>
+                <?php endif; ?>
+            </dd>
+        <?php endforeach; ?>
+    </dl>
+</form>

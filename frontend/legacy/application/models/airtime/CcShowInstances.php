@@ -170,11 +170,25 @@ class CcShowInstances extends BaseCcShowInstances
      */
     public function computeDbTimeFilled(PropelPDO $con)
     {
-        $stmt = $con->prepare('SELECT SUM(clip_length) FROM "cc_schedule" WHERE cc_schedule.INSTANCE_ID = :p1');
+        // RASTATIME 2026-10-06 - the LAID-OUT length: from the instance's
+        // start to the end of its last row.  Upstream summed the clip
+        // lengths, which ignores the crossfade overlaps (2026-09-29) and
+        // called a show "full" that still had (rows x overlap) seconds
+        // free - the show builder's remaining time, the calendar's fill
+        // bar, "is full", the Auto DJ threshold and the budget of a "time
+        // remaining" smart block all read this column.  Seconds x
+        // INTERVAL '1 second' keeps hours (no "1 day"); no rows = 0.
+        // ShowShiftService::finishShift() writes the same expression.
+        $stmt = $con->prepare(
+            'SELECT GREATEST(EXTRACT(EPOCH FROM (MAX(s.ends) - i.starts)), 0) * INTERVAL \'1 second\''
+            . ' FROM cc_show_instances i LEFT JOIN cc_schedule s ON s.instance_id = i.id'
+            . ' WHERE i.id = :p1 GROUP BY i.starts'
+        );
         $stmt->bindValue(':p1', $this->getDbId());
         $stmt->execute();
+        $filled = $stmt->fetchColumn();
 
-        return $stmt->fetchColumn();
+        return $filled === false ? null : $filled;
     }
 
     /**

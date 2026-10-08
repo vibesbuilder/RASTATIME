@@ -66,6 +66,22 @@ pistes pop. Effacez toute puce avec son **×**.
 > couleurs : bleu = piste, vert = line-in, jaune = block,
 > orange = stream, violet = playlist.
 
+> **Temps restant et crossfades (depuis le 2026-10-06).** Les lignes
+> musicales se chevauchent de leur crossfade (valeur maison 3 s, ou
+> celle du type de piste ; jingles 0), le temps restant d'une émission
+> est donc le temps *mis en page* : de la fin de la dernière ligne à la
+> fin de l'émission — le chiffre du pied de page du Show Builder. Un
+> smart block « Temps restant dans l'émission » est choisi contre ce
+> temps, entre ses vrais voisins, de sorte que la dernière ligne se
+> termine à une seconde près de la fin de l'émission (le solveur du bloc
+> est aléatoire ; le pool décide de ce qui est possible). Un bloc limité
+> par *Durée en temps* est choisi de la même façon (décision opérateur
+> 2026-10-06) : 12 minutes sont 12 minutes **à l'antenne**, pas la somme
+> des pistes, si bien qu'un jingle de station après trois blocs de ce
+> type tombe à 12:00, 24:xx et 36:xx de l'heure. Un jingle placé entre
+> deux pistes musicales coûte sa propre durée plus les 3 s de
+> chevauchement qu'il interrompt.
+
 ### Recherche en texte libre
 
 La boîte **Recherche** fonctionne sur **titre, créateur,
@@ -188,6 +204,7 @@ métadonnées** dans le menu d'action de la ligne.
 | **Cue In / Out** | `cc_files.cuein` / `cueout` — couper le début / la fin sans re-encodage. Depuis le 30/09/2026, les valeurs restent à l'intérieur du fichier : un cue out au-delà de la longueur est ramené à la longueur, un cue in négatif devient zéro. Une modification est copiée dans les lignes des émissions à venir qui programment la piste (les lignes déjà commencées ne sont pas touchées), et ces émissions sont recalculées - pas besoin de les remplir à nouveau. |
 | **Fade In / Out** | `cc_files.fadein` / `fadeout` |
 | **Replay Gain** | `cc_files.replay_gain` — utilisé par le moteur de playout pour la normalisation de niveau |
+| **Play Count** | Colonne de la bibliothèque (masquée par défaut, sélecteur de colonnes), en lecture seule : combien de fois le titre est passé à l'antenne - un comptage par ligne de l'historique de diffusion, le même chiffre que Historique → File Summary. Triable ; la recherche avancée accepte une plage. Depuis le 2026-10-07. |
 | **Crossover** | Comment ce titre rencontre ses voisins (depuis le 2026-09-29 un champ à trois choix ; les deux exceptions s'excluent mutuellement). **As the track type** (comme le type de piste, par défaut) : le titre se chevauche et s'enchaîne selon son type de piste - Settings → Track Types → *Crossfade Duration* - ou, sans valeur à cet endroit, selon la Default Track Crossfade Duration ; depuis le 2026-09-30 il hérite aussi du préréglage *No Fade during Crossover* du type. **No Fade during Crossover** (pas de fondu pendant le crossover, `cc_files.no_fade_crossfade`) : le chevauchement reste, mais ce titre garde son niveau plein pendant que l'autre s'estompe ; à une limite d'émission dépassée, un titre sortant marqué est coupé au lieu d'être fondu. **Exclude from Crossover** (exclure du crossover, `cc_files.exclude_crossfade`) : ce titre ne chevauche jamais un voisin - il démarre à la fin du titre précédent et le suivant démarre à sa fin. Passer à *Exclude* ou en revenir recalcule les lignes des émissions à venir qui programment le titre. |
 
 > **Conseil opérateur.** Définissez **Cue In** sur les
@@ -265,7 +282,9 @@ vous obtenez 4. Le block ne s'arrête pas en erreur.
 > `SELECT … WHERE … LIMIT …` sur `cc_files`. Les limites
 > de temps restant se convertissent en plafond de durée
 > via la méthode `getSecondsRemaining()` de l'instance
-> d'émission. Voir ARCHITECTURE §23.19 pour
+> d'émission (depuis le 2026-10-06 le temps libre mis en page :
+> `time_filled` = début jusqu'à la fin de la dernière ligne ; le choix
+> revient à `Scheduler::pickRemainingBlock()`). Voir ARCHITECTURE §23.19 pour
 > l'interaction réserve d'outro avec les smart blocks
 > de temps restant.
 
@@ -435,7 +454,7 @@ barre d'outils qui apparaît au bas du tableau :
 |---|---|
 | **Ajouter à une playlist** | Ajouter les lignes sélectionnées à une playlist existante de votre choix. |
 | **Supprimer** | Supprimer les lignes sélectionnées. Même sémantique de confirmation-si-planifié que la suppression d'une seule ligne. |
-| **Modifier les métadonnées** | Ouvrir un dialogue d'édition en lot. S'applique seulement aux pistes. |
+| **Modifier** | Une piste sélectionnée : son onglet d'édition, comme avant. **Deux pistes ou plus sélectionnées (depuis le 2026-10-08) : un seul dialogue pour toutes** - créateur, album, genre, année, type de piste, langue, mood, label, compositeur, chef d'orchestre, copyright, date d'expiration (`none` l'efface), description. Les champs vides restent inchangés, un champ rempli est écrit dans chaque piste sélectionnée ; titre, numéro de piste, BPM, points de repère et pochette restent par piste. Base de données seulement, comme l'éditeur simple (les tags dans les fichiers sont lus à l'import et jamais réécrits). Les pistes que vous ne pouvez pas modifier sont ignorées et comptées dans le résultat. |
 | **Transférer le propriétaire** | Réassigner la propriété (Admin / Super Admin seulement). Utilisé quand un DJ part et que ses fichiers doivent passer au compte de la station. |
 | **Cue Points** | Détecte les points de repère des pistes sélectionnées à partir de l'audio (la même détection de silence que l'analyseur exécute à l'import : moins de −60 dB pendant au moins 0,3 s au début ou à la fin) et les enregistre. Les émissions à venir qui programment ces pistes reprennent les nouvelles valeurs et sont recalculées. Les pistes de plus de 15 minutes sont ignorées - l'action est prévue pour les jingles et autres éléments courts. Depuis le 30/09/2026. |
 

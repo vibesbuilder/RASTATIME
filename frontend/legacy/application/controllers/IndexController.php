@@ -46,6 +46,8 @@ class IndexController extends Zend_Controller_Action
         }
 
         $this->view->stationLogo = Application_Model_Preference::GetStationLogo();
+        // RASTATIME 2026-10-07 - background image from Settings -> General ('' = built-in)
+        $this->view->landingBackgroundUrl = Application_Model_Preference::GetLandingBackgroundUrl();
 
         $stationName = Application_Model_Preference::GetStationName();
         $this->view->stationName = $stationName;
@@ -94,6 +96,41 @@ class IndexController extends Zend_Controller_Action
         $stationName = Application_Model_Preference::GetStationName();
         $this->view->podcastTitle = sprintf(_('%s Podcast'), !empty($stationName) ? $stationName : $CC_CONFIG['stationId']);
         $this->view->emptyPodcastMessage = _('No tracks have been published yet.');
+    }
+
+    /**
+     * RASTATIME 2026-10-07 - the landing page's background image (Settings ->
+     * General), streamed from the storage root with cache headers; 404 while
+     * the built-in image is in use.  Public like the page itself.
+     */
+    public function backgroundAction()
+    {
+        $this->view->layout()->disableLayout();
+        $this->_helper->viewRenderer->setNoRender(true);
+        $response = $this->getResponse();
+
+        $name = Application_Model_Preference::GetLandingBackground();
+        if ($name === '') {
+            $response->setHttpResponseCode(404);
+
+            return;
+        }
+        $path = Application_Model_Preference::landingBackgroundPath($name);
+        $mime = ['jpg' => 'image/jpeg', 'png' => 'image/png', 'webp' => 'image/webp'][pathinfo($name, PATHINFO_EXTENSION)];
+        $mtime = (int) filemtime($path);
+        $size = (int) filesize($path);
+        $etag = '"' . $mtime . '-' . $size . '"';
+        $response->setHeader('Cache-Control', 'public, max-age=604800', true)
+            ->setHeader('ETag', $etag, true)
+            ->setHeader('Last-Modified', gmdate('D, d M Y H:i:s', $mtime) . ' GMT', true);
+        if (trim((string) ($_SERVER['HTTP_IF_NONE_MATCH'] ?? '')) === $etag) {
+            $response->setHttpResponseCode(304);
+
+            return;
+        }
+        $response->setHeader('Content-Type', $mime, true)
+            ->setHeader('Content-Length', (string) $size, true)
+            ->setBody(file_get_contents($path));
     }
 
     public function mainAction()

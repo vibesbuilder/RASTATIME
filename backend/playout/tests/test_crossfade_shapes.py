@@ -228,6 +228,51 @@ def test_queue_ahead_replaces_a_stale_queued_track(sched):
     assert s._queued_ahead == ("new", new_next)
 
 
+def test_queue_ahead_keeps_an_armed_earlier_row_when_rows_are_shorter_than_the_lead(sched):
+    """2026-10-02 23:36: StationID tief (3.2 s) and Kreisky (4.9 s) behind a track."""
+    s, engine = sched
+    now = datetime.utcnow()
+    prev = _file(now - timedelta(seconds=174), 1, seconds=180)   # 6 s left
+    tief = _file(now + timedelta(seconds=6), 2, seconds=3)
+    kreisky = _file(now + timedelta(seconds=9), 3, seconds=5)
+    s._current_event, s._playing_key = prev, "p"
+    s._armed_events = {"tief": tief, "kreisky": kreisky}
+    s._queued_ahead = ("tief", tief)
+    s._on_file_queue_ahead("kreisky", kreisky)        # its lead window arrives early
+    engine.flush_queued.assert_not_called()
+    engine.enqueue.assert_not_called()
+    assert s._queued_ahead == ("tief", tief)
+
+
+def test_queue_ahead_still_replaces_a_row_that_is_no_longer_armed(sched):
+    s, engine = sched
+    now = datetime.utcnow()
+    prev = _file(now - timedelta(seconds=170), 1, seconds=180)
+    gone = _file(now + timedelta(seconds=8), 2)
+    new_next = _file(now + timedelta(seconds=8), 3)
+    s._current_event, s._playing_key = prev, "p"
+    s._armed_events = {"new": new_next}                 # the refresh dropped row 2
+    s._queued_ahead = ("gone", gone)
+    s._on_file_queue_ahead("new", new_next)
+    engine.flush_queued.assert_called_once()
+    assert s._queued_ahead == ("new", new_next)
+
+
+def test_queue_ahead_replaces_an_armed_row_that_starts_later(sched):
+    """A re-timed row that moved behind this one is stale for cross."""
+    s, engine = sched
+    now = datetime.utcnow()
+    prev = _file(now - timedelta(seconds=170), 1, seconds=180)
+    later = _file(now + timedelta(seconds=30), 2)
+    new_next = _file(now + timedelta(seconds=8), 3)
+    s._current_event, s._playing_key = prev, "p"
+    s._armed_events = {"later": later, "new": new_next}
+    s._queued_ahead = ("later", later)
+    s._on_file_queue_ahead("new", new_next)
+    engine.flush_queued.assert_called_once()
+    assert s._queued_ahead == ("new", new_next)
+
+
 def test_file_start_adopts_the_queued_track_without_skip_when_rows_overlap(sched):
     s, engine = sched
     now = datetime.utcnow()

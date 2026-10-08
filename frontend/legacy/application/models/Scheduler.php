@@ -243,7 +243,7 @@ final class Application_Model_Scheduler
      *
      * @return $files
      */
-    private function retrieveMediaFiles($id, $type, $show)
+    private function retrieveMediaFiles($id, $type, $show, $afterRowId = null)
     {
         // if there is a show we need to set a show limit to pass to smart blocks in case they use time remaining
         $showInstance = new Application_Model_ShowInstance($show);
@@ -256,6 +256,30 @@ final class Application_Model_Scheduler
         // over-reserved) never makes the limit go below zero.
         $showLimit = max(0, $showInstance->getSecondsRemaining() - $this->reservedSecs);
         $originalShowLimit = $showLimit;
+        // RASTATIME 2026-10-06 - time_filled is the laid-out length (the rows
+        // overlap by their crossfade), so the limit is the real free time at
+        // the end of the show.  The rows on either side of the insertion
+        // point make the laid-out length of the new rows exact, and a "time
+        // remaining" smart block is picked against that length instead of
+        // the sum of its tracks (pickRemainingBlock); the tally over a
+        // playlist's items is laid out the same way.
+        [$prevFileId, $nextFileId] = ($afterRowId === null) ? [false, false] : self::neighboursOfInsertionPoint($show, $afterRowId);
+        $rowsOf = function (array $list) {
+            return array_map(function ($f) {
+                return [
+                    'fileId' => ((int) ($f['type'] ?? 0) === 0) ? (int) $f['id'] : null,
+                    'secs' => (float) Application_Common_DateHelper::playlistTimeToSeconds((string) $f['cliplength']),
+                ];
+            }, $list);
+        };
+        $lastFileId = function (array $list) use ($prevFileId) {
+            if (empty($list)) {
+                return $prevFileId;
+            }
+            $f = end($list);
+
+            return ((int) ($f['type'] ?? 0) === 0) ? (int) $f['id'] : null;
+        };
 
         $files = [];
         // RASTATIME: Fall back to 'audioclip' when the analyzer hasn't set
@@ -362,7 +386,7 @@ final class Application_Model_Scheduler
                     } else {
                         $defaultFadeIn = Application_Model_Preference::GetDefaultFadeIn();
                         $defaultFadeOut = Application_Model_Preference::GetDefaultFadeOut();
-                        $dynamicFiles = $bl->getListOfFilesUnderLimit($showLimit);
+                        $dynamicFiles = self::pickDynamicBlock($bl, $showLimit, $lastFileId($files), $nextFileId);
                         foreach ($dynamicFiles as $f) {
                             $fileId = $f['id'];
                             $file = CcFilesQuery::create()->findPk($fileId);
@@ -387,7 +411,7 @@ final class Application_Model_Scheduler
                 }
                 // if this is a playlist it might contain multiple time remaining smart blocks
                 // since the schedule isn't updated until after this insert we need to keep tally
-                $showLimit = $originalShowLimit - $this->timeLengthOfFiles($files);
+                $showLimit = max(0, $originalShowLimit - self::laidOutLength($rowsOf($files), $prevFileId, $nextFileId));
             }
         } elseif ($type == 'stream') {
             // need to return
@@ -455,7 +479,7 @@ final class Application_Model_Scheduler
             } else {
                 $defaultFadeIn = Application_Model_Preference::GetDefaultFadeIn();
                 $defaultFadeOut = Application_Model_Preference::GetDefaultFadeOut();
-                $dynamicFiles = $bl->getListOfFilesUnderLimit($showLimit);
+                $dynamicFiles = self::pickDynamicBlock($bl, $showLimit, $prevFileId, $nextFileId);
                 foreach ($dynamicFiles as $f) {
                     $fileId = $f['id'];
                     $file = CcFilesQuery::create()->findPk($fileId);
@@ -675,6 +699,188 @@ final class Application_Model_Scheduler
         }
 
         return min($overlap, $cap);
+    }
+
+    /**
+     * RASTATIME 2026-10-06 - the laid-out length of a list of rows when they
+     * are inserted between $prevFileId and $nextFileId: the sum of their
+     * clip lengths minus the overlaps between them, minus the joins to the
+     * two neighbours, plus the overlap of the neighbour pair the rows split
+     * (that one is already part of the layout).  A neighbour is a file id,
+     * null for a live row (webstream, line-in) or false for "no row there".
+     *
+     * @param array<int, array{fileId: null|int, secs: float}>    $rows
+     * @param false|null|int                                       $prevFileId
+     * @param false|null|int                                       $nextFileId
+     * @param null|array<int, array{exclude: bool, d: null|float}> $info       crossfade info, fetched when null
+     *
+     * @return float seconds
+     */
+    public static function laidOutLength(array $rows, $prevFileId = false, $nextFileId = false, $info = null)
+    {
+        $rows = array_values($rows);
+        $n = count($rows);
+        if ($n === 0) {
+            return 0.0;
+        }
+        $track = (float) Application_Model_Preference::GetDefaultCrossfadeDuration();
+        $show = (float) Application_Model_Preference::GetDefaultShowCrossfadeDuration();
+        if ($info === null) {
+            $ids = array_column($rows, 'fileId');
+            $ids[] = $prevFileId ?: null;
+            $ids[] = $nextFileId ?: null;
+            $info = self::crossfadeInfoForFiles($ids);
+        }
+        $ov = function ($a, $b) use ($info, $track, $show) {
+            if ($a === false || $b === false) {
+                return 0.0;
+            }
+
+            return self::crossfadeOverlapBetween($a, $b, $info, $track, $show);
+        };
+        $len = 0.0;
+        foreach ($rows as $i => $row) {
+            $len += (float) $row['secs'];
+            if ($i + 1 < $n) {
+                $len -= $ov($row['fileId'], $rows[$i + 1]['fileId']);
+            }
+        }
+        $len -= $ov($prevFileId, $rows[0]['fileId']) + $ov($rows[$n - 1]['fileId'], $nextFileId);
+        $len += $ov($prevFileId, $nextFileId);
+
+        return $len;
+    }
+
+    /**
+     * RASTATIME 2026-10-06 - the tracks a "time remaining" smart block picks
+     * for a laid-out budget.  The block fills the budget by the SUM of its
+     * tracks, but the rows will overlap by their crossfade, so a selection
+     * that meets the budget ends (tracks x overlap) early.  Pick a few times
+     * with the budget raised by the overlap of the previous pick and keep
+     * the pick whose LAID-OUT length (between the given neighbours) comes
+     * closest to the budget without exceeding it; the block's solver is
+     * randomised, every pick differs.  When no pick fits (the budget is
+     * smaller than the block's shortest track, or the pick splits a pair
+     * whose overlap it cannot make up) the one that overbooks least is
+     * returned - the caller checks the real end.  Shared by the show builder
+     * (retrieveMediaFiles) and the autoloading build (AutoPlaylistManager).
+     * With $asDuration the budget replaces the block's own "duration in
+     * time" limit instead of its "time remaining" one (operator decision
+     * 2026-10-06: a 12-minute block fills 12 minutes ON AIR).
+     *
+     * @param float          $budgetSecs
+     * @param false|null|int $prevFileId
+     * @param false|null|int $nextFileId
+     * @param bool           $asDuration
+     *
+     * @return array<int, array{id: int, length: float}> as Block::getListOfFilesUnderLimit
+     */
+    public static function pickRemainingBlock(Application_Model_Block $bl, $budgetSecs, $prevFileId = false, $nextFileId = false, $asDuration = false)
+    {
+        $budget = max(0.0, (float) $budgetSecs);
+        $pick = function ($secs) use ($bl, $asDuration) {
+            return $asDuration ? $bl->getListOfFilesUnderLimit(null, $secs) : $bl->getListOfFilesUnderLimit($secs);
+        };
+        $picked = $pick($budget);
+        if (empty($picked)) {
+            return [];
+        }
+        $toRows = function (array $pick) {
+            return array_map(function ($f) {
+                return ['fileId' => (int) $f['id'], 'secs' => (float) $f['length']];
+            }, $pick);
+        };
+        $best = null;
+        $bestResidual = INF;
+        $least = $picked;
+        $leastOver = INF;
+        for ($round = 0; $round < 8; ++$round) {
+            $len = self::laidOutLength($toRows($picked), $prevFileId, $nextFileId);
+            $residual = $budget - $len;
+            if ($residual >= 0) {
+                if ($residual < $bestResidual) {
+                    $best = $picked;
+                    $bestResidual = $residual;
+                }
+                if ($residual < 1.0) {
+                    break;
+                }
+            } elseif (-$residual < $leastOver) {
+                $least = $picked;
+                $leastOver = -$residual;
+            }
+            $sum = array_sum(array_map(function ($f) { return (float) $f['length']; }, $picked));
+            $picked = $pick($budget + max(0.0, $sum - $len));
+            if (empty($picked)) {
+                break;
+            }
+        }
+
+        return $best ?? $least;
+    }
+
+    /**
+     * RASTATIME 2026-10-06 - the tracks a dynamic smart block schedules: a
+     * "time remaining" block against the laid-out budget between its
+     * neighbours, a "duration in time" block against its own duration laid
+     * out the same way (both pickRemainingBlock; operator decision
+     * 2026-10-06: "12 minutes" is 12 minutes on air, not the sum of the
+     * tracks), a "number of tracks" block by its own limit.
+     *
+     * @param float          $budgetSecs
+     * @param false|null|int $prevFileId
+     * @param false|null|int $nextFileId
+     *
+     * @return array<int, array{id: int, length: float}>
+     */
+    public static function pickDynamicBlock(Application_Model_Block $bl, $budgetSecs, $prevFileId = false, $nextFileId = false)
+    {
+        [$value, $modifier] = $bl->getLimitValueAndModifier() ?: [null, null];
+        if ($modifier === 'remaining') {
+            return self::pickRemainingBlock($bl, $budgetSecs, $prevFileId, $nextFileId);
+        }
+        if ($modifier === 'minutes' || $modifier === 'hours') {
+            $duration = (float) $value * ($modifier === 'hours' ? 3600 : 60);
+
+            return self::pickRemainingBlock($bl, $duration, $prevFileId, $nextFileId, true);
+        }
+
+        return $bl->getListOfFilesUnderLimit(max(0.0, (float) $budgetSecs));
+    }
+
+    /**
+     * RASTATIME 2026-10-06 - the rows on either side of an insertion point,
+     * for laidOutLength(): the file id of row $afterRowId (0 = the start of
+     * the show) and of the row that follows it in the instance; null for a
+     * live row, false when there is no row there.
+     *
+     * @param int $instanceId
+     * @param int $afterRowId
+     *
+     * @return array{0: false|null|int, 1: false|null|int}
+     */
+    public static function neighboursOfInsertionPoint($instanceId, $afterRowId)
+    {
+        $rows = Application_Common_Database::prepareAndExecute(
+            'SELECT id, file_id FROM cc_schedule WHERE instance_id = :iid ORDER BY starts, position, id',
+            [':iid' => (int) $instanceId],
+            Application_Common_Database::ALL
+        );
+        $rows = is_array($rows) ? array_values($rows) : [];
+        $fileOf = function ($row) {
+            return $row['file_id'] === null ? null : (int) $row['file_id'];
+        };
+        $afterRowId = (int) $afterRowId;
+        if ($afterRowId === 0) {
+            return [false, empty($rows) ? false : $fileOf($rows[0])];
+        }
+        foreach ($rows as $i => $row) {
+            if ((int) $row['id'] === $afterRowId) {
+                return [$fileOf($row), isset($rows[$i + 1]) ? $fileOf($rows[$i + 1]) : false];
+            }
+        }
+
+        return [false, false];
     }
 
     /**
@@ -1128,7 +1334,7 @@ final class Application_Model_Scheduler
                         foreach ($mediaItems as $media) {
                             $filesToInsert = array_merge(
                                 $filesToInsert,
-                                $this->retrieveMediaFiles($media['id'], $media['type'], $schedule['instance'])
+                                $this->retrieveMediaFiles($media['id'], $media['type'], $schedule['instance'], $id)
                             );
                         }
                     }

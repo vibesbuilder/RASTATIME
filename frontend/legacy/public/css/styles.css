@@ -5269,3 +5269,21 @@ div.dt-button-collection .dt-button > span {
 #show_time_info .time {
     color: #fff;
 }
+
+/* RASTATIME 2026-10-08 - bulk metadata editor (library toolbar "Edit" with
+   several tracks): one column of equally wide fields, the textarea no
+   wider than the inputs (operator) */
+.bulk-md-form input.input_text,
+.bulk-md-form select.input_text,
+.bulk-md-form textarea.input_text {
+    width: 300px;
+    box-sizing: border-box;
+}
+
+.bulk-md-form textarea.input_text {
+    resize: vertical;
+}
+
+.bulk-md-form dd {
+    margin-bottom: 6px;
+}

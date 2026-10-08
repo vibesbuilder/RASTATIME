@@ -79,7 +79,7 @@ class Preference(models.Model):
     def get_site_preferences(cls) -> SitePreferences:
         entries = dict(cls.site.values_list("key", "value"))
         return SitePreferences(
-            station_name=entries.get("station_name") or "LibreTime",
+            station_name=entries.get("station_name") or "RASTATIME",
         )
 
     @classmethod

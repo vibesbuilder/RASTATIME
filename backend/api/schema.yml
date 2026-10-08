@@ -1,6 +1,6 @@
 openapi: 3.0.3
 info:
-  title: LibreTime API
+  title: RASTATIME API
   version: 2.0.0
   description: Radio Broadcast & Automation Platform
 paths:

@@ -1,5 +1,5 @@
 [Unit]
-Description=LibreTime Playout Service
+Description=RASTATIME Playout Service
 PartOf=libretime.target
 Wants=libretime-liquidsoap.service
 After=libretime-liquidsoap.service

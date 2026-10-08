@@ -33,13 +33,171 @@ festgelegt.  Jeder Punkt bekommt vor Implementierung die
 | 11 | ✅ Pypo-NSSM-Resilience | **CLOSED 2026-09-16** — Beobachtungsfrist bis 15.09. sauber: seit 09.09. 20 PLAYOUT-Starts gegen 20 angeforderte Shutdowns, kein ungeplanter Neustart (Belege im Item) |
 | 12 | ✅ Widgets | **DONE 2026-09-18** — drei Wellen + Player v2 (letztes Upstream-Widget, Wellen-Stil); alle 15 Embed-Endpoints live verifiziert; Player-Hör-Abnahme durch Operator 2026-09-18 |
 | 13 | ✅ JavaScript-Stack-Modernisierung | **Kern DONE 2026-09-17** — Stufen 0-2 komplett, Migrate-Netz + FC1.5-Fork entfernt, UI-Politur; offen nur DataTables 2.0 (Entscheidung später, Operator 2026-09-17) + optionale Build-Pipeline — Details im Item |
-| 14 | **Testplan erstellen** | neu 2026-09-02 — siehe unten |
+| 14 | ✅ Testplan erstellen | **DONE 2026-10-06** — `docs/operator/TEST_PLAN.md`: Abnahme-Checkliste A1–A6 (Dienste/Boot, Sendeplan/Playout, DJ-Einwahl, Streams/HTTPS, Schutz, Datensicherheit), wiederkehrende Checks (täglich/wöchentlich/monatlich/quartalsweise), Probe-Werkzeuge mit Aufruf |
 | 15 | ✅ Legacy-mpv-Code löschen | **DONE 2026-09-10** — Liquidsoap ist die einzige Engine, DJ-Kick per Harbor-Telnet (`2590cf2`) |
-| 16 | Internet-Erreichbarkeit | Ideen |
+| 16 | ✅ Internet-Erreichbarkeit via HTTPS | **LIVE 2026-10-06** — Weg A, `https://radio.example.org` (Let's Encrypt, win-acme), Stream über `/stream/`, DJ-Einwahl :8001; Runbook GO_LIVE_HTTPS |
+| 17 | ✅ **Live-Readiness** (Operator 2026-10-03, **komplett 2026-10-06**) | siehe Item „Live-Readiness" unten — Reihenfolge: 17a Windows-Härtung → 17b Entwicklungsregeln → DJ-Login-Abnahme, Line-In-Feeder-Latenz, Internet-Erreichbarkeit (16), Testplan (14) → 17c Passwörter zuletzt |
 
 ---
 
 ## 🎯 Aktive Backlog-Items (warten auf Operator-Go)
+
+### 🟢 Live-Readiness: RASTATIME dauerhaft auf dieser Maschine (Operator-Entscheidung 2026-10-03)
+
+**Entscheidung:** Keine Neuinstallation.  Befund 2026-10-03: alle zehn Dienste
+laufen mit Starttyp Automatisch (kommen nach Stromausfall ohne Anmeldung hoch),
+23 Tage Laufzeit, Liquidsoap-Neustart alle 7 Tage aktiv, Backup nächtlich 03:30
+nach `D:\backups` (03.10. OK: DB-ZIP + Medienspiegel 2 523 Dateien / 7,9 GB),
+C: 868 GB / D: 1,68 TB frei, DB 23 MB, Arbeitsbaum sauber.  Eine Neuinstallation
+nach Runbook ergäbe denselben Stand ohne die gerätespezifischen Funde (Tascam per
+Name, MME-Feeder, Defender-Ausnahmen, Icecast-Fallback-Mounts, CA-Bundle).
+
+**Nicht gewollt (Operator):** Test-Sendungen jetzt per Skript räumen.  Stattdessen
+werden **kurz vor dem Live-Gang alle vergangenen Sendungen gelöscht** (Operator,
+über die UI / ein dann vorbereitetes Skript) — als Vorbereitungs-Schritt hier
+notiert, kein Feature.
+
+**Reihenfolge (Operator):** 17a → 17b → DJ-Login-Live-Abnahme, Line-In-Feeder-
+Latenz, Internet-Erreichbarkeit (Punkt 16), Testplan (Punkt 14) → 17c zuletzt.
+
+**17a · Windows-Härtung für 24/7** — Operator-Vorgaben 2026-10-03.
+**Stand 2026-10-03:** Runbook `docs/operator/WINDOWS_24_7.md` geschrieben (Befund,
+Befehle für Update-Richtlinie / Autologon / Energie, BIOS-Hinweise, Verifikation,
+Test-Neustart, Rollback).  Befund: keine Update-Richtlinie, Autologon aus,
+„Windows Hello erforderlich" an (`DevicePasswordLessBuildVersion = 2`), Schnellstart
+aus, Standby/Ruhezustand nie, Display 15 min, USB-Selective-Suspend Standard.
+**Gesetzt und verifiziert 2026-10-03 (Operator, erhöhte Shell; assistant lesend):**
+Update-Richtlinie `AUOptions 2 / NoAutoUpdate 0 / NoAutoRebootWithLoggedOnUsers 1 /
+AlwaysAutoRebootAtScheduledTime 0 / ExcludeWUDriversInQualityUpdate 1`, „neueste
+Updates sofort" aus; Autologon per Sysinternals Autologon64 (`AutoAdminLogon 1`,
+Benutzer `studio`, kein Klartext-Kennwort in der Registry), Hello-Pflicht aus
+(`DevicePasswordLessBuildVersion 0`); Ruhezustand weg (`hiberfil.sys` fehlt,
+`powercfg /a` ohne Ruhezustand), USB-Selective-Suspend und PCIe-Link-Power aus,
+Standby weiterhin nie.  Nicht gesetzt (optional): Sperre nach Anmeldung.
+**Test-Neustart 2026-10-03 19:05 — bestanden.** Der Operator startete über die
+Windows-Update-Benachrichtigung neu; dabei liefen die **vor** der Richtlinie bereits
+heruntergeladenen Updates durch (Intel-PMT-Treiber 19:05, KB5129195 fertig 19:09 nach
+einem zweiten, von TrustedInstaller ausgelösten Neustart 19:06:23 → Boot 19:07:00).
+Beide Boots ohne Eingriff: `studio` automatisch angemeldet (Konsolensitzung 19:07),
+alle zehn Dienste 88 s nach dem Boot *Running*, PLAYOUT löst den Tascam per Name
+(PortAudio 3 MME), Liquidsoap-Telnet 19:07:15, Stereo Tool lizenziert, Icecast-Mounts
+mit Off-Air-Text, Preflight ohne Warnung, kein weiterer Neustart ausstehend, Build
+26200.9457.  Nebenbefund: `logs/playout-stderr.log` wird von nssm nie rotiert und
+zeigt noch Tracebacks vom 10.09. (NameError, längst behoben `c8b4818`) — in den
+Janitor aufnehmen (💡).  BIOS „Power on after power loss" vom Operator gesetzt
+(2026-10-03).  **17a abgeschlossen.**
+- Windows darf **nie selbständig neu starten**, Updates werden **nicht automatisch
+  installiert** (Installation nur manuell im Wartungsfenster nach dem 03:30-Backup).
+  Befund: keine Update-Richtlinie gesetzt (`HKLM\SOFTWARE\Policies\Microsoft\
+  Windows\WindowsUpdate\AU` leer).  Weg: Richtlinie `NoAutoUpdate = 1` (oder
+  `AUOptions = 2` „nur benachrichtigen") + `NoAutoRebootWithLoggedOnUsers = 1`,
+  zusätzlich in Einstellungen → Windows Update → „Updates so schnell wie möglich
+  erhalten" aus und Nutzungszeit setzen.  Systemeinstellung → **Operator setzt sie
+  selbst** (erhöhte Shell nötig; assistant ändert keine Sicherheits-/Systemeinstellungen),
+  ich liefere die Befehle und prüfe danach die Registry.
+- **Automatische Anmeldung** eines Benutzers bei jedem Neustart (für Tascam/MME-
+  Audio-Endpunkte und die Desktop-Werkzeuge; die Dienste selbst brauchen keine
+  Anmeldung).  Weg: Sysinternals **Autologon** (speichert das Kennwort verschlüsselt
+  als LSA-Secret) statt Klartext-`DefaultPassword` in der Registry; vorher
+  `netplwiz` → „Benutzer müssen … eingeben" abwählen, falls Windows Hello das
+  blockiert.  Kennwort tippt der Operator — nie in einer Sitzung mit mir.
+- Dazu einmal prüfen: BIOS „Power on after power loss", Energieoptionen (kein
+  Ruhezustand, Display-Schlaf lässt den DELL-HD-Audio-Endpunkt verschwinden — siehe
+  Tascam-Lore), Bildschirmsperre vs. laufende Audio-Endpunkte.
+- Abnahme: Registry-Werte lesen, Testneustart in einem Sendefenster, Dienste und
+  Audio-Endpunkte nach dem Neustart ohne Eingriff da.
+
+**17b · Entwicklungsregeln auf der Produktionsmaschine** (Operator: „sehr gut"):
+Die App läuft direkt aus dem Git-Checkout `C:\RASTATIME`, jede Änderung ist sofort
+live.  Regeln ab sofort:
+1. Vor jedem Live-Eingriff ein `git tag` als Rückfallpunkt (`live-YYYY-MM-DD`),
+   Rollback = `git checkout <tag>` + betroffene Dienste neu starten.
+2. Kein unkommittierter Stand über Nacht; `git status` am Sitzungsende leer.
+3. Riskante Umbauten nur in ruhigen Sendefenstern, Proben an temporären Instanzen
+   (`ap_fill_test.php --live`, `move_probe.php`, Crossfade-Probe), nie an echten
+   Sendungen.
+4. Migrationen (API `manage.py migrate`) nur mit frischem Backup (03:30 oder
+   manuell per UI) und außerhalb von Sendungsgrenzen.
+Diese Regeln stehen seit 2026-10-03 in ASSISTANT.local.md; erster Rückfallpunkt
+`live-2026-10-03` gesetzt (Operator-Go 2026-10-03).  **17b in Kraft.**
+Alternative für später: zweiter Rechner als Entwicklungsumgebung (Anschaffung).
+
+**17c · Produktions-Passwörter (zuletzt, direkt vor dem Live-Gang):** Admin-Konto,
+DB-Passwort (`config/libretime.conf` + Dienste neu starten), Icecast-Source-/Admin-
+Passwort (`C:\Tools\Icecast\icecast.xml` + Streams-Einstellungen), statisches
+DJ-Rückfallpasswort (Settings → Streams), RabbitMQ-Benutzer.  Operator setzt die
+Werte, ich liefere die Stellen-Liste und prüfe anschließend Stream, DJ-Login und
+Backup-Lauf.
+
+**Erster Durchlauf des assistant-Teils von TEST_PLAN A (2026-10-06 13:00–13:15): alles
+grün** — A1.1/1.3/1.4/1.5, A2.1 (Sendungsstarts +58…+169 ms), A2.3, A2.4 (0,05 s frei),
+A2.5 (0 Abweichungen), A2.6, A2.8 (ALL OK), A3.2 (no-show nicht gezählt), A3.3 (5 ×
+falsch → 15 min, Entsperren per rt-blocks.ps1), A4.1–A4.7, A5.1 (11. Versuch 429),
+A5.2, A5.3 (Trockenlauf 24 h: 10 Scanner; 10-min-Fenster im Echtlauf bisher 0 →
+Fenster evtl. auf 60 min), A5.4 (Secrets custom; Passwörter in libretime.conf nur
+teilweise in Anführungszeichen), A6.1/6.3/6.4.  Offen für den Operator: A1.2, A2.2,
+A2.7, A2.9, A3.1/3.4/3.5/3.6, A4.1 vom Mobilfunk, A6.2.
+**Live-Readiness abgeschlossen 2026-10-06:** 17a ✅, 17b ✅, DJ-Login ✅, Line-In ✅ (war
+erledigt), Internet via HTTPS ✅ (Punkt 16), Brute-Force-Schutz (a)(b)(c) ✅, Testplan ✅
+(Punkt 14), 17c Passwörter ✅ (vorgezogen in Stufe 0).  Offen nur noch das Löschen der
+vergangenen Sendungen kurz vor dem Live-Gang (Operator) und 💡 2FA/Allowlist.
+
+**Danach (gemäß Reihenfolge):** ✅ DJ-Login-Live-Abnahme (2026-10-03 19:44–19:50,
+Host-Login `djuser` per UI-Login an Testshow 2315: vor Sendebeginn abgelehnt,
+Login → `scheduled -> show` 17 ms, sauberes Trennen → Timeout 5 s → Resume +76,2 s,
+falsches Passwort abgelehnt, harter Abbruch → ECONNRESET → Resume +124,7 s; damit
+Master-, Custom- und Host-Login live abgenommen — Details im Item „DJ-Logins"),
+✅ Line-In-Feeder-Latenz / stabile Keys — bei der Durchsicht 2026-10-03 als
+bereits erledigt erkannt (der Eintrag stammte aus einer veralteten Memory-Zeile):
+Startlücke 6 → 2 s bzw. 0,15 s vorgewärmt (Paket 2026-09-04, Item „Line-In-
+Startlücke"), Event-Keys mit Identität (Option B, 2026-09-10).  Übrig ist nur die
+systembedingte Durchlauf-Latenz der Kette (Feeder → ffmpeg → http → 2-s-Puffer →
+Bus → Encoder → Icecast, ~2–3 s bis zum Stream): kein Mangel, sondern der Grund,
+warum DJs über das Pult und nie über den Stream abhören.  Kein Handlungsbedarf.
+Internet-Erreichbarkeit (Punkt 16, Evaluierung offen), Testplan erstellen
+(Punkt 14 → wird die Live-Readiness-Checkliste).
+
+---
+
+### 🟡 Marke: „libretime" → „rastatime" in Bezeichnern (Stufe B) — DEFER (evaluiert 2026-10-03)
+
+**Befund 2026-10-03:** 483 Dateien / 4 962 Treffer im Repo (ohne Upstream-Kopien
+und `vendor/`: 388 / 2 214); 348 Pfade tragen den Namen (fünf Python-Pakete).
+Datenbank sauber (keine Tabelle, kein `cc_pref`-Schlüssel, Django-App-Labels kurz).
+Drei Klassen: **A kosmetisch** (~70 %) — ✅ **erledigt 2026-10-03** (Stufe A, siehe
+CHANGELOG: Produktname-Konstanten, UI-Strings, Kataloge, Willkommens-Dialog,
+Backend-`verbose_name`/Titel/Beschreibungen, produktbezogene Kommentare);
+**B Bezeichner mit Laufzeitbindung** (~25 %) — dieses Item; **C tabu** (~5 %) —
+🔴 nie: Composer-Paket `libretime/propel1` (Vendor-Pfad/Autoloader), Upstream-
+Referenzkopien `docs/upstream` + `infra/upstream`, Lizenz/Attribution (AGPL-Fork),
+Upstream-URLs, Herkunfts-Erwähnungen in Doku/History.
+
+**Stufe B umfasst:** Paketnamen `libretime_api`, `libretime_playout`,
+`libretime_analyzer`, `libretime_shared`, `libretime_api_client` (Import-Pfade,
+`setup.py`-Namen + Entry-Points `libretime-*.exe`, `INSTALLED_APPS`, `ROOT_URLCONF`,
+`DJANGO_SETTINGS_MODULE`), 15 Umgebungsvariablen `LIBRETIME_*`
+(`LIBRETIME_CONFIG_FILEPATH` 79×, Präfix in `libretime_shared/config/_base.py`),
+Konfigdatei `config/libretime.conf` (+ `.example`), gettext-Domäne `libretime`
+(+ `.po/.mo`-Dateinamen, `Makefile`, `Locale.php`), PHP-Klassen
+`LibreTime_Auth_Adaptor_*`, `LibreTime_Model_FreeIpa`, `LibreTimeFileNotFoundException`,
+Session-Namespace `libretime` (`Auth.php`), systemd-Units (Linux-Reste),
+CI-Workflows, Linux-User `libretime`.  Außerhalb des Repos: vier nssm-Dienste
+(`-m libretime_playout`, `DJANGO_SETTINGS_MODULE`, `LIBRETIME_CONFIG_FILEPATH`,
+`libretime-analyzer.exe`), Editable-Installationen im `.venv` (5 Finder, 4 EXEs),
+`rastatime.liq` / `standby.liq` (6 Treffer), Apache/Icecast nur Kommentare.
+Präzedenz: `rastatime_worker` (bereits umbenannt, `install-worker.ps1`).
+
+**Risiko:** ein vergessener Treffer in einem Dienstparameter = Dienst startet nicht
+= Sendeausfall.  Nutzen rein ästhetisch (saubere Fork-Identität für Entwickler);
+für Operatoren unsichtbar.
+
+**Vorbedingungen für ein Go:** Live-Readiness 17a + 17b erledigt; Wartungsfenster
+außerhalb des Programms (Stack-Stopp 15–30 min); frisches Backup; `git tag` +
+gesicherte nssm-Parameter als Rollback; danach Volltest aller Dienste und ein
+Tag Beobachtung.  Aufwand ≈ 1 Arbeitstag.  Alternativ bewusst **nie** — Operator-
+Entscheidung bei Fälligkeit.
+
+---
 
 ### 🟢 Ausgangs-Processing mit Stereo Tool, optional (Operator-Entscheidung C 2026-10-02 — gebaut, Live-Prüfung mit Bibliothek + Lizenz offen)
 
@@ -79,6 +237,11 @@ R128-Ceiling -1 dBTP; Preset-Wahl offen).  Speicher: Private Bytes (Preflight-Me
 (+10 MB/h wie ohne Stereo Tool), Working Set nach dem Start von 1043 auf 300 MB getrimmt -> weicher Trigger
 1536 MB im Fenster nach ~2 Tagen, also faktisch Nacht-Neustart alle 2-3 Tage statt 7; Trigger ggf. anheben.
 Crossfades normal (Analyse-Zeilen, 3,0-s-Tails, leiser Schwanz Binder -58 dB blieb).
+**Nacht 2026-10-02/03 (Testshows 19:10-23:40 und 00:10-07:00, 12 Stunden Musik, Default-Preset):** jede Stunde
+-23,3..-23,5 LUFS, LRA 4,6-7,5 LU, True Peak -7,6..-10,2 dBTP; Private Bytes 1028 -> 1149 MB in 13,5 h (9,0 MB/h,
+wie ohne Stereo Tool); keine Fehler/Warnungen in PLAYOUT und Liquidsoap.  09:16 PLAYOUT sauber gestoppt/gestartet
+(Operator?), Skript 'content changed' -> Liquidsoap-Neustart im ruhigen Moment (nichts auf Sendung), neue Instanz
+PID 4092 mit 1003 MB.
 **Befund (nicht Stereo Tool):** alle Titel der Show liefen +3,9 s hinter der Zeilenzeit (Jingle +3,4..3,9 s;
 heute frueh ohne Neustart +0,30 s): `_on_file_start` fuehrt den Grenz-Neustart synchron aus (3,8 s) und
 pusht den ersten Titel danach mit seek 0 statt mit der verstrichenen Zeit; die Kette traegt den Versatz bis
@@ -94,6 +257,55 @@ Optionen: (a) nach dem Grenz-Neustart die verstrichene Zeit seit `start_exact` a
 Raster verschoben bis zum naechsten Live-Element).  Operator: Go fuer (a) 2026-10-02 -> gebaut
 (`_catch_up_after_boundary_restart`, Schwelle 0,5 s, 3 Tests); wirksam nach PLAYOUT-Neustart, Nachmessung beim
 naechsten Grenz-Neustart (Nachtfenster oder Einstellungs-Aenderung).
+Nacht 2026-10-02/03: kein Grenz-Neustart aufgetreten (Instanz zu jung, Speicher 1149 < 1536 MB) -> Fix noch nicht
+live geprueft.  Raster der Datei-Ketten: test1 +0,35 s, nach dem PLAYOUT-Neustart 19:40 (Resume-Seek) -0,25 ->
+-0,15 s; test2 +0,25 -> +0,50 s ueber 7 h (Drift ~0,03 s/h, vernachlaessigbar).  Musik-Ausreisser +1..+5,5 s in
+der Korrelation sind Loop-Mehrdeutigkeiten (Terror: Selbstaehnlichkeit 0,89 bei 4,5 s), nicht Sendeversatz.
+
+### ✅ Queue-Ahead: aufeinanderfolgende Jingles kuerzer als das Vorlauffenster vertauschen und verdoppeln - gebaut 2026-10-03
+Beobachtet 2026-10-02 23:36 (test1): Sweetlove -> StationID tief (3,2 s) -> StationID Kreisky (4,9 s) -> Butter.
+Das Vorlauffenster (BUFFER 3 s + 5 s) ist laenger als die Jingles: der Queue-Ahead von Kreisky fand tief auf der
+Queue und ersetzte ihn als 'stale' (flush), der von Butter ersetzte Kreisky.  Dann pushten die eigenen Timer tief
+und Kreisky frisch -> auf Sendung: Kreisky, tief, 0,2 s Luecke, Kreisky noch einmal, Butter +2,9 s spaet (Kette bis
+zum Show-Ende, Intimzone +2,85 s gemessen).  Einzige zwei 'replaces the stale queued track'-Ereignisse im Log.
+Vorschlag: in `_on_file_queue_ahead` eine bereits gequeute Zeile nur ersetzen, wenn sie wirklich weg/umgeplant ist
+(kein Start-Timer mehr in `_timers`); eine noch geplante, frueher startende Zeile bleibt, die spaetere startet ueber
+ihren normalen PLAY hinter dem laufenden Jingle.  Operator-Go 2026-10-03 -> gebaut (abbcba2, `_armed_events`-Identitaet,
+3 Tests, Suite 779); wirksam nach PLAYOUT-Neustart; Nachmessung bei der naechsten StationID-Folge.
+**Nachmessung Testshow 2026-10-03 12:15-13:15 (drei einzelne kurze StationIDs):** 'stays queued ahead' 3x im Log,
+kein Vertauschen mehr.  Kreisky (4,9 s) -> Plansch +0,21 s ohne Luecke.  Aber: (1) tief (2,7 s) -> Voodoo Asses
+0,6 s digitale Stille (der Musiktitel wird erst zur Zeilenzeit gepusht, cross hat keinen Partner); (2) Baeume (3,9 s)
+lief doppelt, Terror ~3,5 s spaet: der Schedule-Refresh fiel auf dieselbe Sekunde wie der Start-Timer
+(12:17:55) -> 'truncated to past' stoppte den Vorgaenger, Catch-up 'started 0s ago' pushte den Jingle ein zweites
+Mal.  Zwei Folge-Eintraege unten.
+
+### ✅ Queue-Ahead: zurueckgestellte Zeile beim Start des kurzen Jingles sofort nachqueuen - gebaut 2026-10-03
+Seit abbcba2 bleibt der Jingle auf der Queue, der folgende Musiktitel startet ueber seinen eigenen PLAY zur
+Zeilenzeit - bei einem 2,7-s-Jingle bleiben dafuer 0,3 s, 2026-10-03 12:40:23 entstand eine 0,6-s-Luecke.
+Vorschlag: die zurueckgestellte Zeile merken und beim Adopt des Jingles (`_on_file_start`) sofort
+`_on_file_queue_ahead` dafuer aufrufen -> cross hat den Partner die ganze Jingle-Laenge lang.  Test: nach
+'stays queued' und Jingle-Adopt ist der Musiktitel gequeut.  Operator-Go 2026-10-03 -> gebaut
+(`_deferred_queue_ahead` / `_queue_deferred_ahead`, 2 Tests); wirksam nach PLAYOUT-Neustart.
+
+### ✅ Refresh und Start-Timer in derselben Sekunde: Catch-up startet den Titel doppelt - gebaut 2026-10-03
+2026-10-03 12:17:55: Refresh-Tick (120 s) traf die Startsekunde des Jingles.  Der Refresh sah den Vorgaenger als
+'truncated to past' (Ende <= now um 0,08 s) und stoppte ihn (flush der Queue), dann den Jingle als 'in progress,
+started 0s ago' und pushte ihn per Catch-up, waehrend sein Timer-PLAY schon lief -> Jingle doppelt, Kette +3,5 s
+bis zum naechsten Skip.  Erstes Auftreten im Log (Timer auf ganzen Sekunden, Refresh-Phase zufaellig).
+Vorschlag: `_on_file_start` markiert den Schluessel als 'startet gerade' (try/finally); der Catch-up ueberspringt
+markierte oder gerade spielende Zeilen; der 'truncated to past'-Abbau unterbleibt, wenn der Nachfolger auf der
+Queue liegt und die Zeile erst in dieser Sekunde endete (STOP-Timer und Queue uebernehmen).  Operator-Go
+2026-10-03 -> gebaut (`_starting` im try/finally-Wrapper, 1,5-s-Schwelle, 4 Tests, Suite 785); wirksam nach
+PLAYOUT-Neustart (14:50).
+**Nachmessung Show 2026-10-03 14:55-15:25 (VIECH 4,2 s, tief 2,7 s, drei laengere Jingles als Kontrolle):**
+beide kurzen Jingles 'stays queued ahead' -> beim Jingle-Start 'was held back ... queuing it now' (Funaki 4,1 s,
+Poem 2,5 s vor dem Jingle-Ende gequeut), keine Luecke in der Aufnahme (tief: nur der 0,05-s-stille Dateikopf).
+Liquidsoap meldet beim 2,7-s-Jingle 'crossfade duration is longer than the track's duration' (cross kann keine
+3 s puffern) und sequenziert ohne rt_cross - hoerbar folgenlos.  Keine Refresh-Kollision (Ticks :17), keine
+Fehler.  Kette lief +1,1..1,25 s hinter den Zeilen: die erste Zeile (Sweetlove) endet im Layout 0,757 s vor
+ihrem Audio-Ende (ends-starts 165,000 s, clip 165,757 s - einzige solche Zeile im ganzen Plan, Show-Builder-
+Platzierung auf volle Sekunde); der Playout spielt das Audio aus, die Kette erbt den Rest.  Beide Fixes
+abgenommen.
 
 ### ✅ Cue-Punkte prüfen: Cue-Out hinter dem Dateiende, stille Datei-Enden (neu 2026-09-30, Operator-Go 2026-09-30, DONE 2026-09-30)
 
@@ -1156,7 +1368,14 @@ erreichbar ist (Benutzer `source`), also gerade im Notfall.  To do:
 beide Werte in libretime.conf durch echte Passwörter ersetzen, dann
 PLAYOUT (rendert) und LIQUIDSOAP neu starten; Werte nie ins Log/Chat.
 
-### ✅ DJ-Logins: die Oberfläche wird zur Wahrheit (Operator-Go Option 2, umgesetzt 2026-09-10)
+### ✅ DJ-Logins: die Oberfläche wird zur Wahrheit (Operator-Go Option 2, umgesetzt 2026-09-10, Host-Login live abgenommen 2026-10-03)
+
+**Nachtrag 2026-10-03 (Live-Readiness):** fünf Runden mit BUTT als registrierter
+Host `djuser` (UI-Login) an Testshow 2315, 19:44–19:50 — vor Sendebeginn abgelehnt,
+Login akzeptiert → Switcher 17 ms → Audio nach 5-s-Puffer, sauberes Trennen → Timeout
+5,00 s → Resume +76,2 s, falsches Passwort abgelehnt ohne Nebenwirkung, harter
+Abbruch → ECONNRESET → Resume +124,7 s.  Alle drei Login-Arten (Master, Custom, Host)
+sind damit live abgenommen.
 
 **Befund 2026-09-10:** BUTT-Login schlug fehl.  Die Harbors prüften nur
 `source` + statisches Passwort aus libretime.conf; Settings → Streams
@@ -2565,10 +2784,141 @@ mit dezenter CPU).
 Haker-Symptomen. Akzeptabel für die nächsten Tage bis Hardware kommt.
 
 
-### 💡 Internet-Erreichbarkeit (Public Stream + optional Remote-UI)
+### ✅ Internet-Erreichbarkeit via HTTPS — Weg A (Operator-Entscheidung 2026-10-04, LIVE 2026-10-06)
 
-**Status:** Idea (Operator-Frage 2026-08-26, noch nicht evaluiert — Operator
-wollte zunächst nur eine Erklärung).
+**Stufe 3 bestanden 2026-10-06 08:40–08:52 (Operator von extern, 198.51.100.20):**
+UI-Login, Calendar inkl. Dialoge, Streams aac/ogg/mp3 über `/stream/`, HTTP→HTTPS, DJ-
+Einwahl über `radio.example.org:8001` als Host `djuser` (08:51:00 accepted →
+`scheduled -> show` → Trennen 08:51:22).  Von hier: API über Name und LAN-IP 200,
+sensible Pfade (`/.git/*`, `/.env`, `/config/*`, `/server-status`) → Login-Redirect,
+nichts außerhalb des Docroots erreichbar.  Widgets ungeprüft (noch nicht in Verwendung).
+Befund: Internet-Scanner treffen die Seite bereits (Dutzende IPs in den ersten Stunden,
+`/.git/config`, `/.htpasswd`, `/api/.env`) — alles abgewiesen; Login-Brute-Force-Schutz
+fehlt (💡 unten).  **Punkt 16 erledigt.**
+
+**Entscheidung 2026-10-04:** **Weg A** (Studio-PC direkt, feste öffentliche IP),
+öffentliche URL `https://radio.example.org` für Planer-UI und Hörer-Stream;
+die **DJ-Einwahl bleibt HTTP** (Harbor :8001 direkt weitergeleitet, kein TLS —
+Operator-Entscheidung; Empfehlung: für Remote-DJs Custom-Login der Sendung statt
+UI-Konten, weil die Zugangsdaten im Klartext reisen).  `cloud.example.org` ist
+ein eigener Server, aber nicht als Edge brauchbar.  Stufenplan:
+**0 Vorbedingungen** — 17c Secrets (vorgezogen), PostgreSQL + RabbitMQ auf
+127.0.0.1, Firewall-Eingang nur 80/443/8001.  **1 Code** (RASTATIME) — interne
+API-Basis vom `public_url` trennen, `public_url` = https://…, Django
+`ALLOWED_HOSTS`/`CSRF_TRUSTED_ORIGINS`, HTTP→HTTPS-Redirect + HSTS, Stream-Proxy
+`/stream/<mount>` → Icecast :8000 (ICY-Header, kein Puffern), Widgets/CORS gegen
+die neue URL.  **2 Infrastruktur** (Operator) — DNS-A-Record, Router-Forwards
+80/443/8001 → 192.168.1.164, win-acme (Let's Encrypt, Auto-Renewal), Apache-SSL-
+vHost (assistant liefert conf), Hairpin-NAT/Split-DNS fürs LAN.  **3 Abnahme** —
+von außen (Mobilfunk): UI-Login, Stream, BUTT-Einwahl, Widgets, HSTS, SSL-Labs-
+Note, aus dem LAN per öffentlichem Namen.
+**Stand 2026-10-04 — Stufe 0 vorbereitet (Operator-Go):** Runbook
+`docs/operator/GO_LIVE_HTTPS.md` §0 mit Secrets-Inventar (Werte nie ausgegeben):
+UI-`admin` noch Standardpasswort, DB- und RabbitMQ-Passwort = Beispielwerte,
+RabbitMQ-`guest` (administrator) existiert, Icecast source/relay/admin 5 Zeichen,
+Harbor-Rückfall 8 Zeichen; `api_key`/`secret_key`/`internal_listener`/Master-
+Source bereits custom.  Code: Line-In-Capture nimmt die Icecast-Zugangsdaten aus
+Settings → Streams (vorher fest `admin`).  Befund Netz: PostgreSQL (pg_hba nur
+localhost), RabbitMQ und API lauschen auf 0.0.0.0; Firewall-Regeln 80/443/8001
++ obsolet 8002, Programmregeln „any port" für Erlang/epmd/liquidsoap (eine auf
+`C:\temp\liq245`).  **Block 1 (DB-Passwort + PostgreSQL auf localhost) erledigt 2026-10-04 16:40,
+verifiziert:** DB-Login mit dem Wert aus `libretime.conf` ok, 5432 nur 127.0.0.1/::1,
+UI 200, API 200, Playout armed=8, kein Auth-Fehler mehr seit 16:38.  Lehre: ein
+Passwort mit führendem `!` ohne Anführungszeichen macht die YAML-Datei ungültig —
+alle Dienste standen ~10 min, der YAML-Parser schrieb den Wert in zwei Logs
+(maskiert); seither „Passwörter in libretime.conf immer in Anführungszeichen"
+im Runbook.  **Block 2 (RabbitMQ) erledigt 2026-10-04 16:58, verifiziert:** Benutzer nur noch
+`rastatime` (`guest` weg), Passwort custom, AMQP-Listener nur 127.0.0.1:5672
+(`rabbitmq.conf`), Analyzer „Listening for messages", Worker idle, Playout ohne
+Fehler, PHP erreicht localhost:5672 (IPv4).  Nebenbefund: pika löst `localhost`
+zuerst nach `::1` auf → 2 s Verzögerung + Fehlerzeilen je Verbindung; Abhilfe
+`listeners.tcp.local_v6 = ::1:5672` als zweite Zeile (optional).
+**Block 3 (Icecast + Harbor) erledigt 2026-10-04 17:16, verifiziert:** icecast.xml
+source/relay/admin/master custom, Settings → Streams Ausgänge 1–3 Passwort + Admin-
+Passwort custom, `stream.harbor.*` custom; PLAYOUT renderte beide .liq 17:13:05,
+STANDBY auf den Fallback-Mounts seit 17:13:24, Hauptinstanz nach erzwungenem
+`nssm restart` 17:15:52 auf allen drei Mounts, Hörerstatistik (`/admin/stats.xml`)
+mit neuem Admin-Passwort 200.  Lehre: der Playout schiebt den Liquidsoap-Neustart
+auf, solange ein Item läuft (Webstream 17:07–17:15) → Stream war 17:12:54–17:15:52
+leer; im Runbook jetzt `nssm restart RASTATIME-LIQUIDSOAP` als fester Schritt und
+„nicht während eines laufenden Items".  **Block 4 (API-Bind + Firewall) erledigt 2026-10-04 17:35, verifiziert:** API nur
+127.0.0.1:8765 (LAN-Zugriff 000), Apache-Proxy `/api/v2/version` 200, Playout lädt
+den Plan weiter; Firewall-Eingang jetzt 80, 443, 8000 (Icecast, LAN), 8001 (Harbor),
+Apache- und Liquidsoap-Programmregel — 8002, Erlang, epmd und die `C:	emp`-Liquidsoap-
+Regel sind weg.  Nebenbefund: UltraVNC lauscht auf 5800/5900, Intel LMS auf 16993
+(nur LAN, keine Weiterleitung — bei Punkt 17c/Stufe 2 bewusst entscheiden).
+**Block 5 (UI-`admin`) erledigt 2026-10-04 17:40.  Prüfung 0.7 bestanden — Stufe 0
+abgeschlossen:** alle Secrets „custom" (api_key, secret_key, DB, RabbitMQ,
+internal_listener, Harbor ×2, Icecast ×3, Streams-Ausgänge ×3), UI-Admins ohne
+Standardpasswort, RabbitMQ nur `rastatime`, Listener außerhalb Loopback nur 80, 8000,
+8001 (+8002 Liquidsoap, nicht weitergeleitet), alle Dienste laufen, UI 200, drei
+Mounts.  **Stufe 1 (Code) erledigt 2026-10-04 (`a0fc2f3`):** `general.internal_url` +
+`internal_base_url()` (Playout v1-Client, DJ-Auth, Analyzer-Callback, Notify),
+Hörer-URL `<public_url>/stream/<mount>`, `infra/apache/` (Stream-Proxy, ACME-Alias,
+443-vHost), Django ALLOWED_HOSTS/CSRF/Proxy-Header, CORS-Origin-Bug behoben; Suite
+739 passed, Apache-Syntax mit Includes OK, `/embed/player` liefert `/stream/`-URLs.
+**Offen (Operator, Stufe 1 aktivieren):** zwei `Include`-Zeilen in httpd.conf
+(stream-proxy, acme), `C:\RASTATIME\acme` anlegen, Apache/PLAYOUT/ANALYZER neu
+starten; Prüfung `http://192.168.1.164/stream/rastatime`.  Nebenbefund: `config/
+icecast.xml` ist versioniert und trägt seit Block 3 die echten Passwörter im
+Arbeitsbaum — nicht committen; Vorschlag: aus dem Index nehmen + `.example`.
+**Stufe 1 aktiviert 2026-10-05 09:30 (Operator: Includes nach Notepad++-als-Admin,
+Apache neu):** `/stream/rastatime` über Apache 200/audio/mpeg mit ICY-Headern, ACME-
+Alias liefert Testdatei als text/plain, Player/Widgets auf `/stream/`, Playout und
+Analyzer intern auf 127.0.0.1.  Nachbesserung `e7113e5`: Status/Admin/Playlist-Pfade
+unter `/stream/` waren noch erreichbar (Location-Reihenfolge) — wirksam beim nächsten
+Apache-Neustart (mit Stufe 2).  `icecast.xml` aus dem Index (`f89cf83`, `.example`).
+**2026-10-05 10:15 LAN-Adresse → 192.168.1.64** (Operator, DHCP-Bereich; IP bleibt statisch,
+IPv6 bleibt an — nur Link-local, kein AAAA-Record geplant): `public_url` + Icecast-
+`<hostname>` nachgezogen, Repo/Werkzeuge/Memory bereinigt; Router-Forwards in Stufe 2
+auf 192.168.1.64.  **Stufe 2 bis Punkt 3 erledigt 2026-10-05 22:36:** Zielnetz (Profil Privat, NTP
+`*.pool.ntp.org`, Gateway/DNS 192.168.1.1), A-Record `radio.example.org →
+203.0.113.10` (kein AAAA, extern aufgelöst), Forwards 80/443/8001 → 192.168.1.64
+(Hairpin per IP funktioniert), Module ssl/socache_shmcb/http2, Zertifikat per win-acme
+(Let's Encrypt, gültig bis 2027-01-03, Aufgabe „win-acme renew" 09:00, Renewal-Skript
+nach Fix `ca1b991` getestet), TLS-Host aktiv: TLS 1.3, HSTS, Redirect nur für den
+öffentlichen Namen, LAN per IP ohne Redirect, Stream und ACME-Pfad über den Namen,
+Icecast-Status/Admin/Playlists 403; Handy-Test (Mobilfunk) vom Operator bestanden.
+Zweimal musste die httpd.conf-Bearbeitung wiederholt werden (Notepad++ ohne Admin
+speichert still nicht — immer mit `Select-String` gegenprüfen).  **Offen:** Router-
+DNS-Override `radio.example.org → 192.168.1.64` fürs Haus (Gateway cacht NXDOMAIN),
+dann Punkt 2.4 `public_url = https://radio.example.org` + Neustart API/PLAYOUT/
+ANALYZER — **erledigt 2026-10-06 08:30** (Gateway löst den Namen inzwischen auf, Hairpin trägt das
+Haus; Override optional): API über den Namen 200, Settings `ALLOWED_HOSTS`/CSRF/CORS auf
+`radio.example.org`, Playout/Analyzer intern 127.0.0.1, Player/Widgets/Embed auf
+`https://…/stream/<mount>`, Stream + Widgets über 443 200.  Nachbesserung `0b2453e`:
+LAN-Adresse (automatisch ermittelt) und `allowed_cors_origins` bleiben in
+`ALLOWED_HOSTS`/`CSRF_TRUSTED_ORIGINS`, sonst war `http://192.168.1.64` für API-Seiten tot
+(API-Neustart nötig).  Daten-Fix: Station-Podcast-URL `http://localhost/feeds/station-
+rss` (Installationswert, als RSS-Link auf jeder Seite) → `https://radio.example.org/
+feeds/station-rss`.  **Jetzt Stufe 3** (Abnahme von außen).
+**Evaluierung 2026-10-03 (6 Punkte, Live-Readiness Punkt 16):**  **Befund:** alles nur im LAN — Apache
+2.4.68 nur :80 (mod_ssl/http2/remoteip vorhanden, nicht konfiguriert), Icecast
+2.4.4 :8000 (+8080/8443 ohne TLS; libssl-DLLs liegen bei), Harbor :8001 Klartext
+(Liquidsoap-Harbor kann kein TLS), API :8765 auf 0.0.0.0 (zusätzlich von Apache
+unter /api/v2 proxied), **PostgreSQL :5432 und RabbitMQ :5672 auf 0.0.0.0**
+(nur Firewall davor), Firewall an, Eingangsregeln 8001/443 aktiv.  `public_url`
+= http://192.168.1.164 wird vom PLAYOUT als Basis des Legacy-v1-API-Clients und
+der DJ-Auth-Prüfung benutzt (32 Dateien) → muss intern bleiben, wenn die
+öffentliche URL eine andere wird (`RASTATIME_DJ_AUTH_WEB_URL` existiert; v1-
+Client braucht eine eigene interne Basis).  Legacy setzt `session.cookie_secure`
+nur bei `$_SERVER['HTTPS']` → hinter einem TLS-Proxy `SetEnvIf X-Forwarded-Proto`;
+Django `ALLOWED_HOSTS = ["*"]`, kein `CSRF_TRUSTED_ORIGINS`.  Secrets sind
+Einrichtungswerte (17c).  **Wege:** A direkte Exponierung (Port-Forwards 80/443
+→ Studio-PC, mod_ssl + win-acme, Apache proxied Icecast, Harbor via stunnel/VPN)
+— ein Rechner, aber der Sende-PC steht im Internet und Hörerlast liegt auf dem
+Studio-Uplink; **B Edge-Server** (VPS, Caddy/nginx mit Auto-TLS, Icecast-Relay
+oder RASTATIME pusht `output.icecast` dorthin, Studio nur ausgehend bzw. per
+WireGuard) — Studio ohne Eingangsport, Hörerlast in der Cloud, ein kleiner
+Zusatzrechner; C Cloudflare Tunnel (+ Access) für die UI — kein Eingangsport,
+SSO-Tor, aber kein Dauer-Audio über den Tunnel.  **Empfehlung:** Stufenplan
+0 Secrets + DB/RabbitMQ auf 127.0.0.1 binden (Vorbedingung) → 1 Public Stream
+per Push auf einen Cloud-Icecast hinter TLS (B) → 2 Remote-UI per WireGuard
+(Admins) oder Cloudflare Tunnel + Access (DJs/Planer) → 3 DJ-Einwahl von außen
+nur per VPN.  Codeanteil in RASTATIME ~50 Zeilen (interne API-Basis getrennt
+von `public_url`, Forwarded-Proto, CSRF-Origins).  Offene Fragen an den
+Operator: ist `cloud.example.org` ein eigener Server (dann Edge = dort), und
+wer braucht UI / DJ-Einwahl von außen?  **Vorherige Idee (2026-08-26):**
 **Kern:** Router-Forwards minimal halten (nur Stream; UI/DJ besser via VPN),
 DynDNS/Domain + A-Record, `public_url` auf öffentliche URL (erfordert
 Hairpin-NAT oder Split-DNS für LAN-Zugriff), TLS via Reverse-Proxy (Mixed-
@@ -2578,6 +2928,25 @@ Content: HTTPS-Website blockt HTTP-Stream → auch Icecast hinter TLS).
 `cc_pref stream_output_*`), Harbor `changeme`, `internal_listener`-Default;
 PostgreSQL/RabbitMQ niemals forwarden. Bei Interesse formale Evaluierung
 nach Konvention (6 Punkte).
+
+### 🟢 Login-Brute-Force-Schutz für die öffentliche UI (notiert 2026-10-06, (a)+(b) gebaut 2026-10-06)
+
+**Stand 2026-10-06:** (a) Web-Login je Adresse 10/15/15 hart, je Benutzer 20/60/5 weich
+(429 + Retry-After, Migration 0064) und (b) Harbor-Drossel 5/10/15 im Playout gebaut,
+live geprobt (Web) bzw. getestet (15 Tests); Details CHANGELOG 06.10., Handbuch
+USERS_AND_ROLES §8, Architektur §23.53.  **(c) gebaut 2026-10-06:** Grund-Header (zu frühe DJ-Einwahl zählt nicht), Playout-
+Endpoints, System Status „Gesperrte Adressen" mit Entsperren, `rt-blocks.ps1`,
+`rt-firewall-watch.ps1` (Trockenlauf 48 h: 9 Scanner).  **Offen (Operator):** PLAYOUT-
+Neustart, Apache-Neustart (.mo), Aufgabe „RASTATIME-FirewallWatch" registrieren, Seite
+einmal ansehen; später 2FA/Allowlist (💡).
+**Ursprüngliche Idee:**  Seit dem Go-Live treffen Scanner die Seite im Stundentakt; die
+Legacy-Login-Seite kennt weder Sperre noch Verzögerung nach Fehlversuchen, und auf
+Windows gibt es kein fail2ban.  Optionen: (a) Zähler in `cc_pref`/Session + wachsende
+Verzögerung je IP/Benutzer im `LoginController` (~60 Zeilen), (b) Apache `mod_security`
+(Windows-Build schwierig) oder `mod_evasive` (nicht verfügbar), (c) Skript, das
+`https-access.log` auswertet und IPs per `New-NetFirewallRule` zeitweise sperrt
+(Aufgabenplaner, 5-min-Takt).  Empfehlung: (a) zuerst, (c) als Ergänzung.  Dazu
+2FA/Allowlist für Admin-Konten erwägen.  Vorbedingung: Operator-Go, Testplan (14).
 
 ### 💡 Icecast 2.4.4 → 2.5.x Upgrade (Future)
 
@@ -3164,6 +3533,50 @@ Sowohl Menü-Ebene als auch Einzelfeld-Ebene gewünscht.
 
 ## 💡 Future Feature Ideas (nicht evaluiert, nur notiert)
 
+### 💡 Bibliotheks-Knopf „Tags und Cover aus Datei neu einlesen" (notiert 2026-10-08)
+
+**Status:** 💡 Idee aus der Evaluierung „Metadaten/Covers" 2026-10-08.
+Operator-Entscheidung: Massenbearbeitung der Metadaten in RASTATIME (gebaut),
+Cover-Suche im Netz **nicht** einbauen — dafür ein externes Werkzeug (Mp3tag:
+Cover aus Discogs/MusicBrainz mit Vorschau, Einbetten, Massen-Tagging) vor dem
+Import.  Für schon importierte Dateien fehlt ein Baustein: ein Knopf in der
+Werkzeugleiste, der für die Auswahl die Import-Analyse wiederholt (Tags und
+eingebettetes Cover neu aus der Datei lesen, `cc_files` nachziehen).  ~2 h über
+die bestehende Analyzer-Pipeline.  Vorsicht: Mp3tag schreibt die Datei neu,
+Titel auf Sendung nicht anfassen.  Bestand 2026-10-08: 47 von 60 Musiktiteln
+ohne Cover.  Vorbedingung: Operator-Go.
+
+### ❌ „Play Count" auch für Webstreams und Line-Ins (notiert 2026-10-07, verworfen)
+
+**Status:** ❌ **Verworfen durch den Operator 2026-10-07** (Nutzen zu gering für eine Migration).  Ursprüngliche Notiz: Operator-Frage vom 2026-10-07.  Die Bibliotheksspalte
+„Play Count" zählt Dateien über `cc_playout_history.file_id`.  Webstream-
+und Line-In-Einsätze stehen ebenfalls im Protokoll (`file_id` NULL, erkennbar
+nur an `artist_name`/`track_title` in den Metadaten: Webstream-Name bzw.
+Quellen-Label) — ein Umbenennen des Webstreams oder zwei Line-Ins mit
+gleichem Gerätenamen machen eine Zählung per Name unzuverlässig.  Sauber:
+Migration 0065 mit `stream_id`/`linein_id` in `cc_playout_history`,
+`HistoryService::insertPlayedItem/insertWebstreamMetadata/insertLineInLog`
+setzen sie, einmaliges Nachfüllen alter Zeilen per Namensabgleich, dann
+derselbe gruppierte Join je Zweig der Bibliotheksabfrage.  ~1,5 h; Migration
+braucht frisches Backup + ruhiges Fenster.  Vorbedingung: Operator-Go.
+
+### ✅ Smart Block „Dauer in Zeit" als Sendezeit statt Titelsumme (notiert 2026-10-06)
+
+**Status:** ✅ **DONE 2026-10-06** (Operator-Go gleichen Abends): Minuten-/
+Stunden-Blöcke werden über `Scheduler::pickDynamicBlock()` gegen die
+ausgelegte Länge gewählt (Budget = Limit); Probe: StationIDs bei 12:00,0 /
+24:06,9 / 36:18,8, Ende −0,02 s.  Ursprünglicher Text: Seit 2026-10-06 (Architektur §23.54)
+ist die Restzeit ausgelegt und „verbleibende Zeit"-Blöcke füllen bis auf
+etwa eine Sekunde.  Ein Block mit *Dauer in Zeit* (z. B. 12 min) zählt
+weiterhin die Summe seiner Titel: vier Musiktitel laufen durch 3 × 3 s
+Überlappung etwa 9 s kürzer; in der Standardstunde (3 × 12 min + StationIDs)
+rutschen die StationIDs damit um 9/18/27 s nach vorn, das Sendungsende
+stimmt trotzdem (der letzte Block fängt es auf).  Falls die StationIDs auf
+die Minute sitzen sollen: Auswahl wie `Scheduler::pickRemainingBlock()`
+gegen die ausgelegte Länge (Budget = Limit), ~20 Zeilen in
+`pickDynamicBlock()`.  Vorbedingung: Operator-Wunsch — ändert das sichtbare
+Verhalten aller Dauer-Blöcke (und ihrer Längenanzeige in Playlists).
+
 ### 💡 Line-In-Eingangsverstärkung live nachregeln (notiert 2026-10-02)
 
 **Status:** 💡 Idee, nicht evaluiert.  Entstanden mit der
@@ -3384,6 +3797,25 @@ Sortierung der bereits-gespielten + nächsten Tracks freezable.
 ---
 
 ## 🐞 Known Issues / Bug Backlog
+
+### ✅ „Local Machine"-Seite in de_DE / fr_FR / es_ES unübersetzt (festgestellt 2026-10-02, DONE 2026-10-03)
+
+**Status:** Erledigt 2026-10-03 (Operator-Go für die ganze Seite).  Beim
+Nachtragen stellte sich heraus, dass nicht nur die fünf Strings fehlten,
+sondern die ganze Seite: von 94 `_()`-Strings kannte de_DE 13 (die
+Soundkarten-/Line-In-Meldungen vom Mai), fr_FR/es_ES nur 5 — Import-Ordner,
+FTP-Import, Bibliotheks-Speicherort, 24/7- und Sendungsaufnahme waren nie
+in die .po-Dateien aufgenommen worden.  81 / 89 / 89 Einträge ergänzt
+(Terminologie aus den Manuals), `.mo` per `frontend/legacy/scripts/po2mo.py
+--all` gebaut, alle 94 Strings je Locale über PHPs gettext gegen die
+kompilierten Kataloge verifiziert.  Der Test
+`tests/unit/test_t20_3_menu_i18n.py` läuft jetzt über alle Strings der
+View, damit ein neuer Abschnitt nicht wieder unübersetzt landet; die
+beiden `xfail`-Marker sind weg.  Details CHANGELOG 03.10.
+**Befund (Original):** keine der drei Legacy-Locales kannte das
+Navigations-Label `Local Machine` (seit der Umbenennung von „Soundcard" am
+2026-05-16) noch die vier Seiten-Strings der Speichern-/Neustart-Meldungen
+(Neustart-Knopf vom 2026-09-03).
 
 ### ✅ REST `PUT /rest/media/<id>` mit unbekannter ID: 500 statt 404 (Nebenbefund 2026-09-10, DONE gleichen Tags)
 
