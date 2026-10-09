@@ -1121,7 +1121,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `https-access-YYYYMMDD.log`, `infra/apache/rastatime-https.conf`), der
   Janitor archiviert fertige Scheiben nach 7 Tagen, der Firewall-Wächter liest
   die Scheiben von heute und gestern.  Wirksam nach Apache-Neustart; die alte
-  100-MB-Datei ist danach entsperrt und wird um 03:50 archiviert.
+  100-MB-Datei ist danach entsperrt und wird um 03:50 archiviert.  `b32295b`.
 - **Manual: „Default Import Owner" gestrichen (2026-10-09)** — die Einstellung
   gab es nie; Hintergrund-Importe aus dem Import-Ordner gehören dem ersten
   Administratorkonto, Scan-Now-Importe dem klickenden Operator.  SETTINGS ×4,
