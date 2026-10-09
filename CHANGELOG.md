@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Third-party component inventory and update check (2026-10-09, operator
+  decision: keep the stack current in a controlled way)** -
+  `docs/operator/COMPONENTS.md` lists every component RASTATIME runs on
+  (version, source, update path, rollback), sorts them into three classes
+  (A exposed: Apache, PHP, win-acme, Windows - security releases within two
+  weeks; B audio chain: Liquidsoap, Icecast, ffmpeg, Stereo Tool - on demand
+  only, after a bench; C code dependencies: pip, composer, PostgreSQL,
+  Python - monthly within the pinned lines) and defines the monthly
+  maintenance window.  `scripts/update_check.py` (read-only, stdlib) compares
+  the installed versions with endoflife.date, PyPI and GitHub release feeds
+  and prints a verdict per component.  First run: Django 4.2 LTS past
+  end-of-life since 2026-04-07; patch releases pending for Apache 2.4.69,
+  PHP 8.3.35, PostgreSQL 17.11, Python 3.13.16, Liquidsoap 2.4.6, ffmpeg
+  9.0.2 and four pip packages.  Commit: COMPONENTS_PENDING.
+
 - **Dashboard-Library: Filteranzeige (2026-10-09)** — solange Suchtext oder
   ein Feld der erweiterten Suche gesetzt ist, zeigt die Suchleiste rechts
   „X of N tracks", bekommt einen Rahmen in der Akzentfarbe und ein „×",

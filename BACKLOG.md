@@ -4935,3 +4935,35 @@ Wenn ein neues Feature evaluiert wird:
    Aufwand, Dauer, Sinn, Empfehlung) durchführen
 2. Eintrag hier hinzufügen mit Status-Marker
 3. Wenn Hold mit Vorbedingungen: diese explizit auflisten
+
+## Komponenten aktuell halten (Operator-Frage 2026-10-09)
+
+### ✅ Komponenten-Manifest, Klassen, Wartungsfenster, Pruefskript - gebaut 2026-10-09
+`docs/operator/COMPONENTS.md` (Inventar mit Version/Quelle/Update-Weg/Rueckfall, Klassen A exponiert / B Audio-Kette /
+C Code-Abhaengigkeiten, monatliches Fenster nach Patch Tuesday mit Tag + Backup + TEST_PLAN-Kurzlauf) und
+`scripts/update_check.py` (read-only: installierte Versionen gegen endoflife.date, PyPI, GitHub).  Erster Lauf:
+Django 4.2 EOL seit 2026-04-07; Patch-Releases offen fuer Apache 2.4.69, PHP 8.3.35, PostgreSQL 17.11, Python 3.13.16,
+Liquidsoap 2.4.6, ffmpeg 9.0.2, django-cors-headers 4.9, psycopg2 2.9.13, urllib3 2.8.  Stufe 2 (Preflight-Warnung
+components_outdated in der UI) 💡 spaeter.
+
+### 🟢 Django 4.2 LTS -> 5.2 LTS (Evaluation 2026-10-09, Go offen)
+4.2 ohne Security-Fixes seit 2026-04-07; 5.2 LTS bis 2028-04.  Trockenlauf in Scratch-venv (Django 5.2.18, DRF 3.16.1,
+django-filter 25.2, cors 4.9): `check` sauber, keine neuen Migrationen, API 116/118 (die 2 Fehler sind Branding-Tests,
+scheitern auch unter 4.2), Playout 795, Unit 738 (1 bestehender i18n-Fehler) - identisch zur 4.2-Basis; keine
+Django-Deprecations.  Code nutzt keine 5.x-Entfernungen (eigener md5-Hasher in core.User, kein pytz/index_together).
+Aufwand: Pins in backend/api/requirements.txt, pip install, API+PLAYOUT-Neustart; ~1 h inkl. Doku.  Nebeneffekt:
+db_default verfuegbar (Line-In-Gain-Lore).  Nach dem Go im Wartungsfenster.
+
+### 🟡 Liquidsoap 2.4.4 -> 2.4.6 (Evaluation 2026-10-09, Go offen)
+Offizieller win64-Build (49 MB).  Relevante Fixes fuer uns: `sequence` verliert den ersten Chunk+Metadaten eines
+Nachfolgers nicht mehr (unsere kurzen Jingles laufen ueber sequence/cross), `cross` behaelt Metadaten bei wiederholtem
+Titel + on_track bei jedem Crossing (ICY), `fade.out` mutet nach Skip nicht den ganzen Folgetitel, `output.file`
+reopen_on_error-Delay (24/7-Aufnahme), input.harbor Socket-Cleanup, output.icecast chunked reconnect,
+metadata.deduplicate nicht ueber Track-Marke, unbegrenztes Wachstum in Typ-Unifier/Buffern behoben (2.4.5: Leak in
+Strings.Mutable, cross-Crash bei source.skip von aussen).  NICHT behoben: Unix.select-Leak (OCaml 4.14 bleibt).
+Risiko: Windows-Build-Eigenheiten (Stereo Tool, portaudio, input.http-Haenger) - Bench Pflicht (--check, 40-s-Lauf mit
+Stereo Tool, Speicher, Shutdown), Tausch im ruhigen Moment, Rueckfall = Ordner zurueckbenennen.  Aufwand ~2 h.
+
+### 🟡 Composer auf der Maschine + `composer audit` fuer die 99 Legacy-Pakete (Go 2026-10-09, Download offen)
+composer.phar (getcomposer.org, ~3 MB) nach C:/Tools/composer; dann `composer audit` im Legacy-Verzeichnis, Ergebnis
+in COMPONENTS.md Abschnitt 1; Updates innerhalb der Pins in einem Worktree mit PHP-Lint + TEST_PLAN-UI-Checks.

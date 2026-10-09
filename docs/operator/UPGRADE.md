@@ -9,6 +9,12 @@
 
 ## 1. Overview
 
+> **Third-party components** (Apache, PHP, PostgreSQL, Python packages,
+> Liquidsoap, Icecast, ffmpeg ...) are not covered here: see
+> `docs\operator\COMPONENTS.md` for the inventory, the update classes and
+> the monthly maintenance window, and run `python scripts\update_check.py`
+> to compare the installed versions with upstream (2026-10-09).
+
 This document describes how to upgrade an existing RASTATIME installation
 to a newer version with minimal downtime.  The upgrade procedure covers:
 
