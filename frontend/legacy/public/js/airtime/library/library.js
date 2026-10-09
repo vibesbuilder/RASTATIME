@@ -1150,7 +1150,12 @@ var AIRTIME = (function (AIRTIME) {
       bProcessing: true,
       bServerSide: true,
       iDisplayLength: 25,
-      aLengthMenu: [25, 50, 100],
+      // RASTATIME 2026-10-09 - operator wish: 500, 1000 and "All" (-1 = no
+      // LIMIT server side, Datatables.php) in the page-length menu
+      aLengthMenu: [
+        [25, 50, 100, 500, 1000, -1],
+        [25, 50, 100, 500, 1000, $.i18n._("All")],
+      ],
       bStateSave: true,
       fnStateSaveParams: function (oSettings, oData) {
         // remove oData components we don't want to save: searches must NOT

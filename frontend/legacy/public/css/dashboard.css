@@ -317,7 +317,12 @@ thead th.ui-state-default:focus {
     top: 4px;
     right: 4px;
     left: 4px;
-    z-index: 1;
+    /* RASTATIME 2026-10-09 - above the sticky column headers (z-index 2,
+       see .dataTables_scrolling thead th): the header's own stacking
+       context held the advanced-search dropdown (z 1005 inside it), and
+       the Library's header row painted over the open dropdown (operator
+       report 2026-10-09). */
+    z-index: 3;
 
     -webkit-flex: 1 100%;
     -moz-flex: 1 100%;
