@@ -5162,11 +5162,31 @@ div.dt-button-collection .dt-button > span {
     padding: 2px 0 0 0;
 }
 /* RASTATIME 2026-10-09 - Recent Uploads (Upload page) got its footer back
-   (length menu + info + pager, see plupload.js); contain the floats so the
-   row has a height. */
+   (length menu + info + pager, see plupload.js).  The wrapper is laid out
+   absolutely (addmedia.css): the scroll container fills it down to 37 px
+   above the bottom, the strip below was the legacy .fg-toolbar footer.
+   The modern footer takes that strip - without this it rendered in normal
+   flow at the top of the wrapper, underneath the table. */
 #recent_uploads_table_wrapper > .dataTables_footer {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 37px;
+    box-sizing: border-box;
+    padding: 6px 6px 0 6px;
     overflow: hidden;
-    padding: 4px 0 0 0;
+    border-top: 1px solid #5b5b5b;
+}
+/* dashboard.css hides .dataTables_info under 1700 px for the crowded
+   Dashboard panes; the Upload page has the room, so show it here. */
+#recent_uploads_table_wrapper > .dataTables_footer .dataTables_info {
+    display: block;
+    line-height: 24px;
+    padding-left: 16px;
+}
+#recent_uploads_table_wrapper > .dataTables_footer .dataTables_length {
+    float: left;
 }
 
 /* ===================================================================

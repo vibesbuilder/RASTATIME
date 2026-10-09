@@ -1121,6 +1121,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Recent Uploads: Fuß war da, aber unsichtbar (2026-10-09, Nachtrag zu
+  75b55e9)** — die Upload-Seite legt die Tabelle absolut aus und hält unten
+  einen 37-px-Streifen für den alten `.fg-toolbar`-Fuß frei; der neue
+  `dataTables_footer` lag im normalen Fluss oben unter der Tabelle.  Jetzt
+  absolut in diesem Streifen; dazu die Info-Zeile („Showing 1 to 25 of …")
+  freigeschaltet, die dashboard.css unter 1700 px Breite für die engen
+  Dashboard-Panes versteckt.  Harness mit echter Seitenstruktur: Fuß
+  454–491 px im Wrapper bis 492, Info-Zeile trifft elementFromPoint.
 - **Upload → Recent Uploads ohne Blättern (2026-10-09)** — DataTables 1.13
   baut den reservierten `F`-Slot des alten sDom nicht, damit fehlten
   Längenmenü, Info-Zeile und Seitennavigation; die Liste zeigte stumm die
