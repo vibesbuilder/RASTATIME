@@ -1120,7 +1120,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Server sah kein Feld.  IDs jetzt als Komma-String, Felder als JSON-String
   (je eine Variable), Controller nimmt beide Formen.  Laufzeit gemessen:
   ~0,5 ms je Track-Update, 1.000 Tracks in wenigen Sekunden (FcgidIOTimeout
-  120 s, max_execution_time 300 s).
+  120 s, max_execution_time 300 s).  Commit f0e8bd3.
 - **Dashboard: Such-Dropdown unter den Spaltenköpfen (2026-10-09)** — die
   `.panel-header` (z-index 1) bildete den Stacking-Context des
   Advanced-Search-Dropdowns, die klebrigen Spaltenköpfe (z-index 2) malten
