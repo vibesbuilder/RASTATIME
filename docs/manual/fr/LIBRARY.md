@@ -90,6 +90,13 @@ pour les blocks / playlists / webstreams / line-ins. Elle
 utilise une correspondance de sous-chaîne — taper `bowie`
 correspond à "David Bowie", "BOWIE" et "bowie-heroes.mp3".
 
+**Indicateur de filtre actif (depuis le 2026-10-09).** Tant qu'un
+texte de recherche ou un champ de la recherche avancée est renseigné,
+la boîte de recherche prend une bordure de couleur accent et affiche,
+à droite, combien de pistes correspondent (« 13 sur 11 108 titres »).
+Le **×** à côté de ce nombre efface le texte et tous les champs de la
+recherche avancée d'un coup.
+
 > **Comment ça marche sous le capot.** La recherche est
 > côté serveur via `LibraryController::contentsFeedAction`.
 > Le widget DataTable envoie le terme de recherche + l'état

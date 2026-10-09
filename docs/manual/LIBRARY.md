@@ -83,6 +83,12 @@ filename** for tracks; **name** for blocks / playlists /
 webstreams / line-ins. It uses a substring match — typing
 `bowie` matches "David Bowie", "BOWIE", and "bowie-heroes.mp3".
 
+**Active-filter indicator (since 2026-10-09).** While search text or
+any field of the advanced search is set, the search box gets an
+accent-coloured border and shows, at its right end, how many tracks
+match ("13 of 11,108 tracks"). The **×** next to that count clears the
+search text and every advanced-search field in one go.
+
 > **How it works under the hood.** Search is server-side via
 > `LibraryController::contentsFeedAction`. The DataTable widget
 > sends the search term + the current chip state as URL

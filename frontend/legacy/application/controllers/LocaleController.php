@@ -120,6 +120,8 @@ final class LocaleController extends Zend_Controller_Action
             'Updated %s track(s).' => _('Updated %s track(s).'),
             'No permission for %s track(s).' => _('No permission for %s track(s).'),
             'Fill at least one field; empty fields stay unchanged.' => _('Fill at least one field; empty fields stay unchanged.'),
+            '%s of %s tracks' => _('%s of %s tracks'),
+            'Clear search' => _('Clear search'),
             'The metadata could not be saved.' => _('The metadata could not be saved.'),
             'Replay Gain' => _('Replay Gain'),
             'Sample Rate' => _('Sample Rate'),

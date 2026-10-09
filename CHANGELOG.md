@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Dashboard-Library: Filteranzeige (2026-10-09)** — solange Suchtext oder
+  ein Feld der erweiterten Suche gesetzt ist, zeigt die Suchleiste rechts
+  „X of N tracks", bekommt einen Rahmen in der Akzentfarbe und ein „×",
+  das Suchtext und erweiterte Felder in einem Zug leert.  Hintergrund: der
+  Upstream-Text „Filtering out …" suchte eine CSS-Klasse, das Dashboard-
+  Markup trägt nur die ID `lib-filter-message`, der Hinweis erschien nie.
+  Strings in vier Sprachen (po + mo, wirksam nach Apache-Neustart).
+  Harness-geprüft.  Manual LIBRARY ×4.
 - **Preflight-Warnung „Podcast download failed" (2026-10-08, Operator-Go)**
   — ein fehlgeschlagener automatischer oder manueller Folgen-Download stand
   bisher nur im Legacy-Log.  `Application_Model_PodcastDownloadFailures`

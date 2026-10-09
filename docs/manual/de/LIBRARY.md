@@ -89,6 +89,12 @@ Playlists / Webstreams / Line-Ins. Sie verwendet einen
 Substring-Match — eingeben von `bowie` matched "David
 Bowie", "BOWIE" und "bowie-heroes.mp3".
 
+**Anzeige für aktive Filter (seit 2026-10-09).** Solange Suchtext
+oder ein Feld der erweiterten Suche gesetzt ist, erhält die Suchbox
+einen Rahmen in der Akzentfarbe und zeigt rechts, wie viele Titel
+passen („13 von 11.108 Titeln"). Das **×** neben dieser Zahl leert den
+Suchtext und alle Felder der erweiterten Suche in einem Zug.
+
 > **Wie es unter der Haube funktioniert.** Die Suche läuft
 > serverseitig über `LibraryController::contentsFeedAction`.
 > Das DataTable-Widget sendet den Suchbegriff + den

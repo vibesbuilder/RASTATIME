@@ -5897,3 +5897,11 @@ msgstr "Revise el feed y la dirección de descarga del episodio en Biblioteca �
 #: application/views/scripts/preference/stream-setting.phtml
 msgid "Audio Processing"
 msgstr "Procesado de audio"
+
+#: application/controllers/LocaleController.php public/js/airtime/library/library.js
+msgid "%s of %s tracks"
+msgstr "%s de %s pistas"
+
+#: application/controllers/LocaleController.php application/views/scripts/showbuilder/index.phtml
+msgid "Clear search"
+msgstr "Borrar la búsqueda"

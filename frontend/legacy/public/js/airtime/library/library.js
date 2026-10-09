@@ -1239,14 +1239,34 @@ var AIRTIME = (function (AIRTIME) {
           success: fnCallback,
           error: mod.handleAjaxError,
         }).done(function (data) {
-          var filterMessage = $libContent.find(".filter-message");
-          if (data.iTotalRecords > data.iTotalDisplayRecords) {
+          // RASTATIME 2026-10-09 - filter indicator (operator wish): the
+          // dashboard carries #lib-filter-message (an id - upstream looked
+          // for a class and never found it, so the text never showed).
+          // While search text or an advanced field is set, the search bar
+          // says "X of N tracks", gets the accent border (.rt-filter-active)
+          // and offers the clear button.
+          var filterMessage = $libContent.find(
+            ".filter-message, #lib-filter-message",
+          );
+          var searchInput = $libContent.find(
+            '.dataTables_filter input[type="text"]',
+          );
+          var advancedSet =
+            $("#advanced_search")
+              .find('input[type="text"], select')
+              .filter(function () {
+                return $.trim($(this).val() || "") !== "";
+              }).length > 0;
+          var filterActive =
+            $.trim(searchInput.val() || "") !== "" ||
+            advancedSet ||
+            data.iTotalRecords > data.iTotalDisplayRecords;
+          if (filterActive) {
             filterMessage.text(
-              $.i18n._("Filtering out ") +
-                (data.iTotalRecords - data.iTotalDisplayRecords) +
-                $.i18n._(" of ") +
-                data.iTotalRecords +
-                $.i18n._(" records"),
+              $.i18n
+                ._("%s of %s tracks")
+                .replace("%s", Number(data.iTotalDisplayRecords).toLocaleString())
+                .replace("%s", Number(data.iTotalRecords).toLocaleString()),
             );
             $(".empty_placeholder").hide();
             $libTable.find("tr:has(td.dataTables_empty)").show();
@@ -1254,11 +1274,15 @@ var AIRTIME = (function (AIRTIME) {
             filterMessage.text("");
           }
           $libContent
-            .find('.dataTables_filter input[type="text"]')
-            .css(
-              "padding-right",
-              $("#advanced-options").find("button").outerWidth(),
-            );
+            .find(".dataTables_filter")
+            .toggleClass("rt-filter-active", filterActive);
+          var $clear = $("#lib-filter-clear").toggle(filterActive);
+          var buttonWidth = $("#advanced-options").find("button").outerWidth();
+          $clear.css("right", buttonWidth);
+          searchInput.css(
+            "padding-right",
+            buttonWidth + (filterActive ? $clear.outerWidth() : 0),
+          );
           if (!$('#advanced_search input[type="text"]').is(":focus")) {
             $libContent.find('.dataTables_filter input[type="text"]').focus();
           }
@@ -2632,6 +2656,21 @@ $(document).ready(function () {
 
   $("#advanced-options").on("click", function () {
     resizeAdvancedSearch();
+  });
+
+  // RASTATIME 2026-10-09 - "x" in the search bar: clear the search text and
+  // every advanced-search field in one draw
+  $(document).on("click", "#lib-filter-clear", function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    var $adv = $("#advanced_search");
+    $adv.find('input[type="text"]').val("");
+    $adv.find("select").prop("selectedIndex", 0);
+    $("#library_content")
+      .find('.dataTables_filter input[type="text"]')
+      .val("");
+    var api = $("#library_display").DataTable();
+    api.search("").columns().search("").draw();
   });
 
   $(window).resize(function () {

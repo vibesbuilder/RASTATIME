@@ -5704,3 +5704,11 @@ msgstr "Feed und Download-Adresse der Folge unter Bibliothek → Podcasts prüfe
 #: application/views/scripts/preference/stream-setting.phtml
 msgid "Audio Processing"
 msgstr "Audioverarbeitung"
+
+#: application/controllers/LocaleController.php public/js/airtime/library/library.js
+msgid "%s of %s tracks"
+msgstr "%s von %s Titeln"
+
+#: application/controllers/LocaleController.php application/views/scripts/showbuilder/index.phtml
+msgid "Clear search"
+msgstr "Suche leeren"

@@ -4917,3 +4917,11 @@ msgstr "Check the feed and the episode's download address under Library → Podc
 #: application/views/scripts/preference/stream-setting.phtml
 msgid "Audio Processing"
 msgstr "Audio Processing"
+
+#: application/controllers/LocaleController.php public/js/airtime/library/library.js
+msgid "%s of %s tracks"
+msgstr ""
+
+#: application/controllers/LocaleController.php application/views/scripts/showbuilder/index.phtml
+msgid "Clear search"
+msgstr ""

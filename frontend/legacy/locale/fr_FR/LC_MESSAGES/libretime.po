@@ -6065,3 +6065,11 @@ msgstr "Vérifiez le flux et l'adresse de téléchargement de l'épisode sous Bi
 #: application/views/scripts/preference/stream-setting.phtml
 msgid "Audio Processing"
 msgstr "Traitement audio"
+
+#: application/controllers/LocaleController.php public/js/airtime/library/library.js
+msgid "%s of %s tracks"
+msgstr "%s sur %s titres"
+
+#: application/controllers/LocaleController.php application/views/scripts/showbuilder/index.phtml
+msgid "Clear search"
+msgstr "Effacer la recherche"
