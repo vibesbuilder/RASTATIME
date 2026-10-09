@@ -784,7 +784,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Lauf höchstens 100 Dateien bzw. hält nach 200 s an (PHP-Limit 300 s; ein
   mitten im Verschieben gestorbener Lauf konnte eine halbe Datei in
   `organize/` lassen); die Statuszeile nennt wartende Dateien.  Probe mit
-  50 künstlichen 4-min-MP3s: Übergabe 50 Dateien in 2 s, Analyse 50 Dateien in 54 s (≈ 1,1 s je 4-min-MP3, Cue/ReplayGain/Loudness/Spielbarkeit), also ≈ 3.000 Titel/h; Hinweis: Track Type Upload Default stand auf Shows.  Manual LOCAL_MACHINE ×4.
+  50 künstlichen 4-min-MP3s: Übergabe 50 Dateien in 2 s, Analyse 50 Dateien in 54 s (≈ 1,1 s je 4-min-MP3, Cue/ReplayGain/Loudness/Spielbarkeit), also ≈ 3.000 Titel/h; Hinweis: Track Type Upload Default stand auf Shows.  Manual LOCAL_MACHINE ×4.  Live-Probe
+  Rekursion: 5 Dateien aus verschachtelten Unterordnern in einem Lauf, geleerte
+  Ordner entfernt, Textdatei blieb.  `b2b848f`.
 - **Settings → Streams: "Audio Processing" segment, help icons, no space
   before colons (2026-10-08, operator)** - Loudness Normalization (with the
   Replay Gain Modifier, now directly under the mode), Loudness measurement
