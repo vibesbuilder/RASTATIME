@@ -213,6 +213,17 @@ class CcFiles extends BaseCcFiles
         } catch (Exception $e) {
             $file->setDbImportStatus(self::IMPORT_STATUS_FAILED);
             $file->setDbHidden(true);
+            // RASTATIME 2026-10-09 - a hand-over that fails before the
+            // metadata is stored left a nameless row without a time stamp
+            // (21 blank "Import failed" entries after the first bulk batch):
+            // keep the file name and the time so Recent Uploads says what
+            // failed, and when.
+            if ((string) $file->getDbName() === '') {
+                $file->setDbName(basename((string) $originalFilename));
+            }
+            if ($file->getDbUtime() === null) {
+                $file->setDbUtime(new DateTime('now', new DateTimeZone('UTC')));
+            }
             $file->save();
 
             throw $e;
