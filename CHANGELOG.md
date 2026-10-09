@@ -1134,7 +1134,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   die 13 abgelehnten Justice/AIR-Titel und 26 verwaiste Dateien auf der
   Platte bereinigt (Zeilen entfernt, Originale aus D:\Tagesplaylist neu
   in den Importordner kopiert).  Werkzeuge: `path_audit.py`,
-  `orphan_cleanup.py`, `analyzer_failed_repair.py` (Scratchpad).
+  `orphan_cleanup.py`, `analyzer_failed_repair.py` (Scratchpad).  Commit
+  01002dd.
 - **Import-Ordner: vier Fehler aus der ersten Tranche (Electronic, 3.305
   Dateien, 2026-10-09)** — (1) 2.729 Dateien kamen als „Shows" an:
   `FileDataHelper::saveTrackType()` nahm das `tt_upload`-Cookie des
