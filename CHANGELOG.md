@@ -1136,7 +1136,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   des Operators).  Jetzt sitzen beide links IM Suchfeld hinter der Lupe,
   der Suchtext beginnt dahinter (padding-left); dunkle Schrift gegen die
   Regel `#library_content span`; aktiv nur bei gesetztem Suchtext oder
-  erweitertem Feld, nicht bei bloßer Zähldifferenz.  Harness-geprüft.
+  erweitertem Feld, nicht bei bloßer Zähldifferenz.  Harness-geprüft.  Commit 1ebf1fb.
 - **Filteranzeige: linksbündig und zentriert (2026-10-09, Nachtrag zu
   29fc098)** — „×" und „X of N tracks" saßen rechts im Pfeil-Knopf und
   nicht auf Höhe des Suchfelds; sie folgen jetzt direkt auf das Suchfeld,
