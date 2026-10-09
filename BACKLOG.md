@@ -4964,6 +4964,11 @@ Strings.Mutable, cross-Crash bei source.skip von aussen).  NICHT behoben: Unix.s
 Risiko: Windows-Build-Eigenheiten (Stereo Tool, portaudio, input.http-Haenger) - Bench Pflicht (--check, 40-s-Lauf mit
 Stereo Tool, Speicher, Shutdown), Tausch im ruhigen Moment, Rueckfall = Ordner zurueckbenennen.  Aufwand ~2 h.
 
+### 💡 Icecast 2.4.4 -> 2.5.0 (entdeckt 2026-10-09 durch update_check.py)
+Icecast 2.5.0 ist veroeffentlicht (Tag 2025-12-31, icecast_win64_2.5.0.exe).  Nicht dringend: der oeffentliche Stream
+laeuft ueber den Apache-Reverse-Proxy, 2.4.4 ist intern.  Vor einem Wechsel Changelog pruefen (Konfig-Aenderungen,
+Fallback-Mounts, Admin-API fuer kick_dj_source, status.xsl-Parsing in der Playout-Statistik).
+
 ### 🟡 Composer auf der Maschine + `composer audit` fuer die 99 Legacy-Pakete (Go 2026-10-09, Download offen)
 composer.phar (getcomposer.org, ~3 MB) nach C:/Tools/composer; dann `composer audit` im Legacy-Verzeichnis, Ergebnis
 in COMPONENTS.md Abschnitt 1; Updates innerhalb der Pins in einem Worktree mit PHP-Lint + TEST_PLAN-UI-Checks.

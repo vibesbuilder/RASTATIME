@@ -27,7 +27,7 @@ window.
 | Django | C | 4.2.30 | PyPI; feed: endoflife.date/django | pin in `backend\api\requirements.txt`, `pip install -r`, restart API + PLAYOUT (both import the ORM) | `pip install` the previous pin |
 | DRF, django-filter, django-cors-headers, waitress, psycopg2-binary, requests, urllib3, PyYAML, mutagen | C | see `update_check.py` | PyPI | same as Django, within the pinned lines; `pip-audit` monthly | same |
 | Legacy PHP packages (zf1s Zend 1, Propel 1, getID3, SimplePie, Symfony 5.4 yaml/config, phpseclib …) | C | `frontend\legacy\composer.lock` (99 packages) | Packagist; `composer audit` | `composer update <pkg>` in a worktree, PHP lint + TEST_PLAN UI checks, commit the lock file | `git checkout composer.lock` + `composer install` |
-| Icecast | B | 2.4.4 | icecast.org (last release 2022, project dormant); the public stream goes through the Apache reverse proxy | none expected; only on a published fix | keep the previous folder |
+| Icecast | B | 2.4.4 | icecast.org (2.5.0 released, tag 2025-12-31, win64 installer available); the public stream goes through the Apache reverse proxy | 2.5.0 is a major step (new config options): evaluate, then install beside, point the service at it in a quiet moment; the mounts and the harbor are not affected | keep the previous folder |
 | Liquidsoap | B | 2.4.4 | GitHub savonet/liquidsoap, asset `liquidsoap-<ver>-win64.zip` (official build, OCaml 4.14, stereotool/portaudio/ffmpeg inside) | bench on a second instance first (`liquidsoap --check`, 40 s run with Stereo Tool, memory, shutdown), then swap `C:\Tools\liquidsoap` in a quiet moment with the standby instance up | rename the previous folder back |
 | ffmpeg | B | 9.0.1 | gyan.dev essentials build; feed: endoflife.date/ffmpeg | unzip over `C:\ffmpeg` in the window (used by the analyzer, cue-point detection, line-in capture) | keep the previous folder |
 | Stereo Tool library | B | 11.05 | thimeo.com (licence pending) | only together with a preset/licence change; the lockout fallback restarts without it if the fresh instance dies | previous DLL |
@@ -47,8 +47,8 @@ TEST_PLAN checks.  Rollback is a rename.
 Only on demand: a published fix for a problem we have, or a feature we
 want.  Never on principle.  Liquidsoap only after a bench on a second
 instance (the Stereo Tool rehearsal of 2026-10-02 is the template), swapped
-in a quiet moment with the standby instance keeping the listeners.  Icecast
-is frozen; its exposure is covered by the reverse proxy.
+in a quiet moment with the standby instance keeping the listeners.  Icecast 2.4.4 stays until 2.5.0 has been
+evaluated; its exposure is covered by the reverse proxy.
 
 **Class C — code dependencies (pip, composer, PostgreSQL, Python).**
 Monthly: `update_check.py`, `pip-audit`, `composer audit`.  Patch releases
