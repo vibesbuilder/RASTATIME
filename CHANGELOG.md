@@ -1114,6 +1114,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Massenbearbeitung: „Fill at least one field" bei 1.000 Tracks
+  (2026-10-09)** — die IDs gingen als `ids[]` (1.000 Eingabevariablen) plus
+  die Feldpaare an PHP, dessen `max_input_vars = 1000` den Rest verwarf; der
+  Server sah kein Feld.  IDs jetzt als Komma-String, Felder als JSON-String
+  (je eine Variable), Controller nimmt beide Formen.  Laufzeit gemessen:
+  ~0,5 ms je Track-Update, 1.000 Tracks in wenigen Sekunden (FcgidIOTimeout
+  120 s, max_execution_time 300 s).
 - **Dashboard: Such-Dropdown unter den Spaltenköpfen (2026-10-09)** — die
   `.panel-header` (z-index 1) bildete den Stacking-Context des
   Advanced-Search-Dropdowns, die klebrigen Spaltenköpfe (z-index 2) malten

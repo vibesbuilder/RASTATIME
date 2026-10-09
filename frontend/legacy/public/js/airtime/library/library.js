@@ -641,9 +641,13 @@ var AIRTIME = (function (AIRTIME) {
               click: function () {
                 var data = $dialog.find("form").serializeArray();
                 $dialog.dialog("option", "disabled", true);
+                // RASTATIME 2026-10-09 - ids and fields travel as ONE string
+                // each: 1,000 selected tracks as ids[] plus the field pairs
+                // exceeded PHP's max_input_vars (1000) and the server saw no
+                // field at all ("Fill at least one field" on 1,000 tracks).
                 $.post(
                   baseUrl + "library/bulk-edit-file-md",
-                  { format: "json", ids: ids, data: data },
+                  { format: "json", ids: ids.join(","), data: JSON.stringify(data) },
                   function (json) {
                     $dialog.dialog("option", "disabled", false);
                     if (json && json.ok) {

@@ -356,8 +356,16 @@ class LibraryController extends Zend_Controller_Action
         $this->view->layout()->disableLayout();
         $this->_helper->viewRenderer->setNoRender(true);
 
+        // RASTATIME 2026-10-09 - `data` arrives as a JSON string and `ids` as
+        // a comma-separated string (one input variable each, see library.js:
+        // 1,000 ids as an array blew PHP's max_input_vars); the array forms
+        // are still accepted.
+        $dataParam = $this->_getParam('data', []);
+        if (is_string($dataParam)) {
+            $dataParam = json_decode($dataParam, true) ?: [];
+        }
         $values = [];
-        foreach ((array) $this->_getParam('data', []) as $pair) {
+        foreach ((array) $dataParam as $pair) {
             if (isset($pair['name'])) {
                 $values[$pair['name']] = trim((string) ($pair['value'] ?? ''));
             }
@@ -398,7 +406,11 @@ class LibraryController extends Zend_Controller_Action
         $updated = 0;
         $denied = 0;
         $missing = 0;
-        foreach ((array) $this->_getParam('ids', []) as $id) {
+        $idsParam = $this->_getParam('ids', []);
+        if (is_string($idsParam)) {
+            $idsParam = explode(',', $idsParam);
+        }
+        foreach ((array) $idsParam as $id) {
             $file = Application_Model_StoredFile::RecallById((int) $id);
             if (!$file) {
                 ++$missing;
