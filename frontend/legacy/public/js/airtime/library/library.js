@@ -1418,6 +1418,23 @@ var AIRTIME = (function (AIRTIME) {
       $libTable.wrap('<div class="dataTables_scrolling"></div>');
     }
 
+    // RASTATIME 2026-10-09 - a page change shows the top of the new page
+    // (operator wish): the scroll container kept its old offset, so page 2
+    // opened somewhere in the middle.  'page' fires before the server-side
+    // draw, so remember it and scroll once the new rows are in.  The 1.13
+    // triggers are namespaced ('page.dt'), and jQuery hands a namespaced
+    // trigger only to handlers bound with that namespace.
+    var libPageChanged = false;
+    $libTable.on("page.dt", function () {
+      libPageChanged = true;
+    });
+    $libTable.on("draw.dt", function () {
+      if (libPageChanged) {
+        libPageChanged = false;
+        $libTable.closest(".dataTables_scrolling").scrollTop(0);
+      }
+    });
+
     // RASTATIME 2026-06-03 (JS-modernization stage 2): construct the modern
     // Buttons (colvis) AFTER the table is built and drop its container into the
     // toolbar slot.  Using the 'B' sDom feature letter silently aborts the
