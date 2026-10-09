@@ -615,6 +615,32 @@ var AIRTIME = (function (AIRTIME) {
     }
   };
 
+  // RASTATIME 2026-10-09 - filter indicator: the "x" and the "X of N
+  // tracks" count sit directly after the search input, vertically centred
+  // on it (operator: left-aligned in the search line).  Absolute inside
+  // .dataTables_filter, measured from the input's box so the dashboard's
+  // negative-margin trick on the input does not matter.
+  mod.placeFilterIndicator = function () {
+    var $filter = $("#library_content").find(".dataTables_filter");
+    var $input = $filter.find('input[type="text"]');
+    var $clear = $("#lib-filter-clear");
+    var $count = $("#lib-filter-count");
+    if (!$filter.length || !$input.length || !$filter.hasClass("rt-filter-active")) {
+      return;
+    }
+    var fr = $filter[0].getBoundingClientRect();
+    var ir = $input[0].getBoundingClientRect();
+    var left = ir.right - fr.left + 6;
+    var mid = ir.top - fr.top + ir.height / 2;
+    $clear.css({
+      left: left,
+      top: mid - $clear.outerHeight() / 2,
+      right: "auto",
+    });
+    left += $clear.outerWidth() + 2;
+    $count.css({ left: left, top: mid - $count.outerHeight() / 2 });
+  };
+
   // RASTATIME 2026-10-08 - toolbar "Edit" with several tracks selected: one
   // dialog for all of them; empty fields stay unchanged (bulk-edit-file-md).
   mod.openBulkEditDialog = function (ids) {
@@ -1261,8 +1287,19 @@ var AIRTIME = (function (AIRTIME) {
             $.trim(searchInput.val() || "") !== "" ||
             advancedSet ||
             data.iTotalRecords > data.iTotalDisplayRecords;
+          // the caret button keeps no text; count and "x" live in the
+          // filter div, placed right after the input (mod.placeFilterIndicator)
+          filterMessage.text("");
+          var $filter = $libContent.find(".dataTables_filter");
+          var $count = $filter.find("#lib-filter-count");
+          if (!$count.length) {
+            $count = $("<span id='lib-filter-count'></span>").appendTo($filter);
+          }
+          if (!$("#lib-filter-clear").parent().is($filter)) {
+            $("#lib-filter-clear").appendTo($filter);
+          }
           if (filterActive) {
-            filterMessage.text(
+            $count.text(
               $.i18n
                 ._("%s of %s tracks")
                 .replace("%s", Number(data.iTotalDisplayRecords).toLocaleString())
@@ -1271,17 +1308,15 @@ var AIRTIME = (function (AIRTIME) {
             $(".empty_placeholder").hide();
             $libTable.find("tr:has(td.dataTables_empty)").show();
           } else {
-            filterMessage.text("");
+            $count.text("");
           }
-          $libContent
-            .find(".dataTables_filter")
-            .toggleClass("rt-filter-active", filterActive);
-          var $clear = $("#lib-filter-clear").toggle(filterActive);
-          var buttonWidth = $("#advanced-options").find("button").outerWidth();
-          $clear.css("right", buttonWidth);
+          $filter.toggleClass("rt-filter-active", filterActive);
+          $count.toggle(filterActive);
+          $("#lib-filter-clear").toggle(filterActive);
+          mod.placeFilterIndicator();
           searchInput.css(
             "padding-right",
-            buttonWidth + (filterActive ? $clear.outerWidth() : 0),
+            $("#advanced-options").find("button").outerWidth(),
           );
           if (!$('#advanced_search input[type="text"]').is(":focus")) {
             $libContent.find('.dataTables_filter input[type="text"]').focus();
@@ -2656,6 +2691,10 @@ $(document).ready(function () {
 
   $("#advanced-options").on("click", function () {
     resizeAdvancedSearch();
+  });
+
+  $(window).resize(function () {
+    AIRTIME.library.placeFilterIndicator();
   });
 
   // RASTATIME 2026-10-09 - "x" in the search bar: clear the search text and
