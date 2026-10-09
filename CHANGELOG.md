@@ -1121,6 +1121,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Recent Uploads: Fuß als Flex-Zeile (2026-10-09)** — Längenmenü links,
+  Pager rechtsbündig, beide vertikal zentriert (Operator: Pager rechts,
+  „Show 25 entries" saß zu tief).  Commits 38131aa, 44c788a.
 - **Recent Uploads: Info-Zeile weg, Pager neben dem Längenmenü (2026-10-09,
   Nachtrag zu 86ba100)** — „Showing 1 to 25 of …" war auf dem dunklen Fuß
   unlesbar und ist auf Operator-Wunsch entfernt (`bInfo: false`); die
