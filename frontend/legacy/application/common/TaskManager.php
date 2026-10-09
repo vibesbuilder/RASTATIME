@@ -582,15 +582,33 @@ class LocalImportScanTask implements AirtimeTask
             }
         }
 
-        $status = sprintf(
-            'imported %d, failed %d, skipped %d, settling %d',
-            $imported, $failed, $skipped, $settling
-        );
+        // RASTATIME 2026-10-09 - plain wording for the settings page
+        // (operator: the old "imported 0, failed 0, skipped 89, settling 0"
+        // read as a stale import report): say what is going on, leave out
+        // the zeros.
+        $parts = [];
+        if ($imported > 0) {
+            $parts[] = sprintf('%d handed over', $imported);
+        }
+        if ($failed > 0) {
+            $parts[] = sprintf('%d failed', $failed);
+        }
+        if ($settling > 0) {
+            $parts[] = sprintf('%d still being copied', $settling);
+        }
         if ($waiting > 0) {
-            $status .= sprintf(', %d waiting for the next run', $waiting);
+            $parts[] = sprintf('%d waiting for the next run', $waiting);
         }
         if ($pending > 0) {
-            $status .= sprintf(' (%d queued at the analyzer)', $pending);
+            $parts[] = sprintf('%d queued at the analyzer', $pending);
+        }
+        if (empty($parts)) {
+            $status = 'nothing to import';
+        } else {
+            $status = implode(', ', $parts);
+        }
+        if ($skipped > 0) {
+            $status .= sprintf(' (%d non-audio files left alone)', $skipped);
         }
         Application_Model_Preference::setLocalImportLastStatus($status);
         if ($imported > 0 || $failed > 0) {

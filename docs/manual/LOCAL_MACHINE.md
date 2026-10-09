@@ -346,11 +346,12 @@ For every file lying directly in the folder:
 
 1. **Non-audio files are skipped** and left in place — the scanner
    only owns audio files (`mp3`, `wav`, `m4a`, `flac`, `ogg`, `oga`,
-   `aac`, `opus`).  The status line counts them as "skipped".
+   `aac`, `opus`).  The status line reports them as "non-audio
+   files left alone".
 2. **Files still settling are left for later (since 2026-09-17).**
    A file modified within the last 60 seconds may still be being
-   written (slow copy, FTP upload); the status line counts it as
-   "settling" and a later scan picks it up.
+   written (slow copy, FTP upload); the status line reports it as
+   "still being copied" and a later scan picks it up.
 3. Every audio file at rest is handed to the **standard upload
    pipeline**: a library row is created, the file is **moved** (not
    copied) into the library's `organize` area, and the analyzer takes
@@ -542,8 +543,8 @@ Diagnostic order:
 2. The web frontend is running (`RASTATIME-APACHE`) — the scanner
    piggy-backs on web requests, so **Last scanned** only advances
    while the UI sees traffic.  **Scan Now** forces a run.
-3. A file modified within the last 60 seconds counts as
-   "settling" — wait a minute and scan again.
+3. A file modified within the last 60 seconds counts as "still
+   being copied" — wait a minute and scan again.
 4. "failed N" in the status line means the hand-over failed and
    the source was deleted (by design).  Check the file in another
    player and look into `logs\legacy.log` for the reason; the

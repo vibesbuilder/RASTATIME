@@ -785,6 +785,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Settings → Local Machine: Import-Status live und in Klartext
+  (2026-10-09)** — die Zeile „Last scan / Last status" war ein Abbild vom
+  Seitenaufruf und las sich als veralteter Importbericht („imported 0,
+  failed 0, skipped 89, settling 0").  Jetzt: Abfrage alle 30 s über
+  `preference/local-import-status` („vor N min"), Hinweis „läuft alle
+  5 Minuten", und der Scan formuliert seinen Status ohne Nullen: „nothing
+  to import" bzw. „268 handed over, 542 waiting for the next run, 32 queued
+  at the analyzer (89 non-audio files left alone)".  Manual LOCAL_MACHINE ×4
+  (Wortlaut der Statuszeile).
 - **Library: Seitenwechsel zeigt den Seitenanfang (2026-10-09)** — der
   Scroll-Container behielt beim Blättern seine Position; jetzt setzt ein
   `page.dt`-Ereignis eine Marke und der folgende `draw.dt` scrollt die

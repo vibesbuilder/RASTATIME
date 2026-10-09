@@ -676,6 +676,25 @@ class PreferenceController extends Zend_Controller_Action
      * configuration immediately.  Reuses LocalImportScanTask::scanOnce
      * so the two entry points cannot drift.
      */
+    /**
+     * RASTATIME 2026-10-09 - current import-folder scan state for the
+     * settings page, which polls it so "Last scan" never goes stale.
+     */
+    public function localImportStatusAction()
+    {
+        $this->view->layout()->disableLayout();
+        $this->_helper->viewRenderer->setNoRender(true);
+
+        $lastRun = (int) Application_Model_Preference::getLocalImportLastRun();
+        $this->_helper->json->sendJson([
+            'ok' => true,
+            'last_run' => $lastRun > 0 ? date('Y-m-d H:i:s', $lastRun) : '',
+            'age_seconds' => $lastRun > 0 ? max(0, time() - $lastRun) : null,
+            'status' => (string) Application_Model_Preference::getLocalImportLastStatus(),
+            'folder' => (string) Application_Model_Preference::getLocalImportFolder(),
+        ]);
+    }
+
     public function localImportScanNowAction()
     {
         $this->view->layout()->disableLayout();

@@ -373,12 +373,13 @@ jede Datei, die direkt im Ordner liegt:
 
 1. **Nicht-Audio-Dateien werden übersprungen** und bleiben liegen —
    der Scanner nimmt nur Audiodateien (`mp3`, `wav`, `m4a`, `flac`,
-   `ogg`, `oga`, `aac`, `opus`).  Die Statuszeile zählt sie als
-   „skipped".
+   `ogg`, `oga`, `aac`, `opus`).  Die Statuszeile meldet sie als
+   „non-audio files left alone".
 2. **Noch nicht zur Ruhe gekommene Dateien bleiben für später (seit
    17.09.2026).**  Eine in den letzten 60 Sekunden veränderte Datei
    wird womöglich noch geschrieben (langsame Kopie, FTP-Upload); die
-   Statuszeile zählt sie als „settling", ein späterer Durchlauf nimmt
+   Statuszeile meldet sie als „still being copied", ein späterer
+   Durchlauf nimmt
    sie mit.
 3. Jede ruhende Audiodatei geht an die **Standard-Upload-Pipeline**:
    ein Bibliothekseintrag wird angelegt, die Datei wird in den
@@ -588,7 +589,7 @@ Diagnose-Reihenfolge:
    nur vor, solange die Oberfläche Verkehr sieht.  **Scan Now**
    erzwingt einen Durchlauf.
 3. Eine in den letzten 60 Sekunden veränderte Datei zählt als
-   „settling" — eine Minute warten und erneut scannen.
+   „still being copied" — eine Minute warten und erneut scannen.
 4. „failed N" in der Statuszeile heißt: die Übergabe schlug fehl
    und die Quelle wurde gelöscht (Absicht).  Prüfen Sie die Datei
    in einem anderen Player und suchen Sie den Grund in

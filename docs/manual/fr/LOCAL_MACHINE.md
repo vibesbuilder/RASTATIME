@@ -323,11 +323,12 @@ Le scanner s'exécute toutes les 5 minutes (et immédiatement avec
 1. **Les fichiers non audio sont ignorés** et laissés en place — le
    scanner ne prend que les fichiers audio (`mp3`, `wav`, `m4a`,
    `flac`, `ogg`, `oga`, `aac`, `opus`).  La ligne d'état les compte
-   comme « skipped ».
+   comme « non-audio files left alone ».
 2. **Les fichiers pas encore au repos attendent (depuis le
    17/09/2026).**  Un fichier modifié dans les 60 dernières secondes
    est peut-être encore en cours d'écriture (copie lente, envoi FTP) ;
-   la ligne d'état le compte comme « settling » et un passage
+   la ligne d'état le signale comme « still being copied » et un
+   passage
    ultérieur le reprend.
 3. Chaque fichier audio au repos est confié au **circuit d'envoi
    standard** : une entrée de bibliothèque est créée, le fichier est
@@ -535,7 +536,7 @@ Ordre de diagnostic :
    n'avance donc que si l'interface voit du trafic.  **Scan Now**
    force un passage.
 3. Un fichier modifié dans les 60 dernières secondes compte comme
-   « settling » — attendez une minute et relancez.
+   « still being copied » — attendez une minute et relancez.
 4. « failed N » dans la ligne d'état signifie que la remise a
    échoué et que la source a été supprimée (voulu).  Testez le
    fichier dans un autre lecteur et cherchez la raison dans

@@ -237,19 +237,20 @@ $rtTip = function ($text) {
                 <span id="local_import_status_msg" style="margin-left: 1em;"></span>
             </dd>
 
-            <?php if ($localImportLastRun): ?>
+            <?php // RASTATIME 2026-10-09 - live block, refreshed every 30 s (see script below) ?>
             <dt></dt>
-            <dd style="padding-top: 0.5em; font-size: 0.9em; color: #555;">
+            <dd id="local_import_last" style="padding-top: 0.5em; font-size: 0.9em; color: #555;<?php echo $localImportLastRun ? '' : ' display: none;'; ?>">
                 <?php
                 $lastRunDt = (int) $localImportLastRun;
-                $lastRunStr = $lastRunDt > 0 ? date('Y-m-d H:i:s', $lastRunDt) : '—';
+                $lastRunStr = $lastRunDt > 0 ? date('Y-m-d H:i:s', $lastRunDt) : '';
                 ?>
-                <strong><?php echo _("Last scan:") ?></strong> <?php echo htmlspecialchars($lastRunStr); ?><br/>
-                <?php if ($localImportLastStatus): ?>
-                    <strong><?php echo _("Last status:") ?></strong> <?php echo htmlspecialchars((string) $localImportLastStatus); ?>
-                <?php endif; ?>
+                <strong><?php echo _("Last scan:") ?></strong>
+                <span id="local_import_last_run"><?php echo htmlspecialchars($lastRunStr); ?></span>
+                <span id="local_import_last_age"></span>
+                <span style="color: #888;">&middot; <?php echo _("runs every 5 minutes while a folder is set") ?></span><br/>
+                <strong><?php echo _("Status:") ?></strong>
+                <span id="local_import_last_status"><?php echo htmlspecialchars((string) $localImportLastStatus); ?></span>
             </dd>
-            <?php endif; ?>
         </dl>
     </fieldset>
 
@@ -685,6 +686,31 @@ $rtTip = function ($text) {
             });
         });
 
+        // RASTATIME 2026-10-09 - keep "Last scan" current: poll every 30 s
+        // (operator: the rendered line read as a stale import report).
+        var ageLabel = <?php echo json_encode(_("(%s min ago)")); ?>;
+        var ageNow = <?php echo json_encode(_("(just now)")); ?>;
+        function refreshLocalImportStatus() {
+            $.getJSON(baseUrl + "preference/local-import-status", function (resp) {
+                if (!resp || !resp.ok) {
+                    return;
+                }
+                var block = $("#local_import_last");
+                if (!resp.last_run) {
+                    block.hide();
+                    return;
+                }
+                $("#local_import_last_run").text(resp.last_run);
+                var age = resp.age_seconds === null ? "" :
+                    (resp.age_seconds < 60 ? ageNow : ageLabel.replace("%s", Math.floor(resp.age_seconds / 60)));
+                $("#local_import_last_age").text(age);
+                $("#local_import_last_status").text(resp.status);
+                block.show();
+            });
+        }
+        refreshLocalImportStatus();
+        setInterval(refreshLocalImportStatus, 30000);
+
         // Trigger an immediate scan (bypasses the 5-minute throttle).
         $("#local_import_scan_now").on("click", function () {
             var btn = $(this);
@@ -698,6 +724,7 @@ $rtTip = function ($text) {
                     if (resp && resp.ok) {
                         msg.text("✓ Imported " + resp.imported + ", failed " + resp.failed + ".")
                            .css("color", "#5cb85c");
+                        refreshLocalImportStatus();
                     } else {
                         msg.text("✗ " + (resp.error || "Scan failed."))
                            .css("color", "#d9534f");

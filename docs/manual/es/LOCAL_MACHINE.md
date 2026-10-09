@@ -315,11 +315,12 @@ Now**).  Para cada archivo situado directamente en la carpeta:
 1. **Los archivos no de audio se omiten** y se dejan en su sitio —
    el escáner solo toma archivos de audio (`mp3`, `wav`, `m4a`,
    `flac`, `ogg`, `oga`, `aac`, `opus`).  La línea de estado los
-   cuenta como «skipped».
+   cuenta como «non-audio files left alone».
 2. **Los archivos aún sin reposo esperan (desde el 17/09/2026).**
    Un archivo modificado en los últimos 60 segundos puede estar
    todavía escribiéndose (copia lenta, subida FTP); la línea de
-   estado lo cuenta como «settling» y una pasada posterior lo
+   estado lo marca como «still being copied» y una pasada posterior
+   lo
    recoge.
 3. Cada archivo de audio en reposo pasa al **circuito estándar de
    subida**: se crea una entrada de biblioteca, el archivo se
@@ -520,7 +521,7 @@ Orden de diagnóstico:
    solo avanza mientras la interfaz ve tráfico.  **Scan Now**
    fuerza una pasada.
 3. Un archivo modificado en los últimos 60 segundos cuenta como
-   «settling» — espere un minuto y escanee de nuevo.
+   «still being copied» — espere un minuto y escanee de nuevo.
 4. «failed N» en la línea de estado significa que la entrega
    falló y el origen fue borrado (a propósito).  Pruebe el
    archivo en otro reproductor y busque el motivo en
