@@ -46,12 +46,16 @@ $skipped  = 0
 
 # ---- collect candidates -----------------------------------------------------
 $cutoff = $now.AddDays(-$KeepRawDays)
+# RASTATIME 2026-10-09 - the HTTPS host logs in daily rotatelogs slices
+# (https-error-YYYYMMDD.log / https-access-YYYYMMDD.log): finished slices
+# are archived like the service slices.
 $slices = Get-ChildItem $LogsDir -File -ErrorAction SilentlyContinue | Where-Object {
-    ($_.Name -match '-(stdout|stderr)-\d{8}T' -or $_.Name -like 'ffmpeg-*.log') -and
+    ($_.Name -match '-(stdout|stderr)-\d{8}T' -or $_.Name -like 'ffmpeg-*.log' -or $_.Name -match '^https-(error|access)-\d{8}\.log$') -and
     $_.LastWriteTime -lt $cutoff
 }
 $singles = Get-ChildItem $LogsDir -File -Filter *.log -ErrorAction SilentlyContinue | Where-Object {
     $_.Name -notmatch '-(stdout|stderr)-\d{8}T' -and
+    $_.Name -notmatch '^https-(error|access)-\d{8}\.log$' -and
     $_.Name -notlike 'ffmpeg-*' -and
     $_.Name -ne 'log-janitor.log' -and
     $_.Length -gt ($SweepOverMB * 1MB)

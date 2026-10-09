@@ -12,7 +12,11 @@ ini_set('session.cookie_httponly', '1');
 
 // E_DEPRECATED excluded: Zend Framework 1 triggers many deprecation notices
 // on PHP 8.2+ (dynamic properties, etc.) that must not crash the application.
-error_reporting(E_ALL | E_STRICT & ~E_DEPRECATED & ~E_USER_DEPRECATED);
+// RASTATIME 2026-10-09 - the upstream line read `E_ALL | E_STRICT & ~E_DEPRECATED
+// & ~E_USER_DEPRECATED`: `&` binds tighter than `|`, so the mask was plain E_ALL
+// and every PHP 8 deprecation of the Zend 1 code went to Apache's error log
+// (~25 MB a day on the HTTPS host).  Parenthesised as intended.
+error_reporting((E_ALL | E_STRICT) & ~E_DEPRECATED & ~E_USER_DEPRECATED);
 
 function exception_error_handler($errno, $errstr, $errfile, $errline)
 {

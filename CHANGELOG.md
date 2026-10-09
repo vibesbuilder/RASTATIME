@@ -1111,6 +1111,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **PHP-Deprecation-Flut im HTTPS-Fehlerlog (2026-10-09)** — `airtime-boot.php`
+  setzte `E_ALL | E_STRICT & ~E_DEPRECATED & ~E_USER_DEPRECATED`; `&` bindet
+  stärker als `|`, die Maske war also E_ALL, und jede PHP-8-Deprecation des
+  Zend-1-Codes landete über mod_fcgid in `https-error.log` (100 MB in vier
+  Tagen, ~25 MB/Tag; der Log-Janitor konnte die von Apache gesperrte Datei nie
+  wegräumen).  Jetzt geklammert; 6 Testanfragen schrieben 0 Zeilen.  Dazu:
+  HTTPS-Logs in Tages-Scheiben über `rotatelogs` (`https-error-YYYYMMDD.log`,
+  `https-access-YYYYMMDD.log`, `infra/apache/rastatime-https.conf`), der
+  Janitor archiviert fertige Scheiben nach 7 Tagen, der Firewall-Wächter liest
+  die Scheiben von heute und gestern.  Wirksam nach Apache-Neustart; die alte
+  100-MB-Datei ist danach entsperrt und wird um 03:50 archiviert.
 - **Manual: „Default Import Owner" gestrichen (2026-10-09)** — die Einstellung
   gab es nie; Hintergrund-Importe aus dem Import-Ordner gehören dem ersten
   Administratorkonto, Scan-Now-Importe dem klickenden Operator.  SETTINGS ×4,

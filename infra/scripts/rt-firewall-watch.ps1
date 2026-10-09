@@ -7,7 +7,8 @@
     RASTATIME 2026-10-06 (go-live follow-up (c)).  Runs every 5 minutes
     from the Task Scheduler as SYSTEM.  Looks at the last 60 minutes (default) of
       * the HTTP logs  C:\Tools\Apache24\logs\access_log (port 80) and
-                       C:\RASTATIME\logs\https-access.log (port 443),
+                       C:\RASTATIME\logs\https-access-YYYYMMDD.log (port 443,
+                       daily rotatelogs slices since 2026-10-09),
       * the playout log C:\RASTATIME\logs\playout-stdout.log (DJ harbor),
     and blocks a remote address for 24 hours when it
       * answered 4xx 50 times or more (401 "not signed in" does not count:
@@ -105,7 +106,13 @@ foreach ($r in (Get-NetFirewallRule -DisplayName "$prefix*" -ErrorAction Silentl
 $errors = @{}
 $scanner = @{}
 $months = @{ Jan=1; Feb=2; Mar=3; Apr=4; May=5; Jun=6; Jul=7; Aug=8; Sep=9; Oct=10; Nov=11; Dec=12 }
-foreach ($file in @('C:\Tools\Apache24\logs\access_log', 'C:\RASTATIME\logs\https-access.log')) {
+# RASTATIME 2026-10-09 - the HTTPS access log is written in daily slices
+# (rotatelogs, https-access-YYYYMMDD.log): read the slices touched inside the
+# window (today, and yesterday around midnight), plus the old single file
+# while it still exists.
+$httpsSlices = @(Get-ChildItem 'C:\RASTATIME\logs\https-access-*.log' -ErrorAction SilentlyContinue |
+    Where-Object { $_.LastWriteTime -gt $since.AddDays(-1) } | Sort-Object LastWriteTime | Select-Object -ExpandProperty FullName)
+foreach ($file in @('C:\Tools\Apache24\logs\access_log', 'C:\RASTATIME\logs\https-access.log') + $httpsSlices) {
     foreach ($line in (Read-Tail $file)) {
         if ($line -notmatch '^(\S+) \S+ \S+ \[(\d{2})/(\w{3})/(\d{4}):(\d{2}):(\d{2}):(\d{2}) [^\]]+\] "(?:\S+) (\S+)[^"]*" (\d{3})') { continue }
         $ip = $Matches[1]
