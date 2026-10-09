@@ -471,6 +471,16 @@ class LocalImportScanTask implements AirtimeTask
 
         Application_Model_Preference::setLocalImportLastRun(time());
 
+        // RASTATIME 2026-10-09 - back-pressure: hand over only as many files
+        // as keep the analyzer's queue below MAX_PER_RUN.  The analyzer does
+        // ~1 file/s, and ImportCleanupTask marks everything that waits
+        // longer than an hour as a failed import; a 20,000-file batch handed
+        // over at full speed would spend most of that hour "failed".
+        $pending = CcFilesQuery::create()
+            ->filterByDbImportStatus(CcFiles::IMPORT_STATUS_PENDING)
+            ->count();
+        $budget = max(0, self::MAX_PER_RUN - $pending);
+
         if (!is_dir($folder)) {
             $msg = 'Folder missing or unreadable: ' . $folder;
             Logging::warn('LocalImportScanTask: ' . $msg);
@@ -526,7 +536,7 @@ class LocalImportScanTask implements AirtimeTask
 
             // RASTATIME 2026-10-08 - cap per run (count and time): the rest
             // waits for the next run
-            if (($imported + $failed) >= self::MAX_PER_RUN || (microtime(true) - $started) > self::MAX_SECONDS) {
+            if (($imported + $failed) >= $budget || (microtime(true) - $started) > self::MAX_SECONDS) {
                 $waiting++;
                 continue;
             }
@@ -578,6 +588,9 @@ class LocalImportScanTask implements AirtimeTask
         );
         if ($waiting > 0) {
             $status .= sprintf(', %d waiting for the next run', $waiting);
+        }
+        if ($pending > 0) {
+            $status .= sprintf(' (%d queued at the analyzer)', $pending);
         }
         Application_Model_Preference::setLocalImportLastStatus($status);
         if ($imported > 0 || $failed > 0) {

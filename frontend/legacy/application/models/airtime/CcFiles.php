@@ -415,7 +415,10 @@ class CcFiles extends BaseCcFiles
                 // $stringLengthValidator will be false if the StringLength validator doesn't exist on the current element
                 // in which case we don't have to truncate the extra characters
                 if ($stringLengthValidator) {
-                    $value = substr($value, 0, $stringLengthValidator->getMax());
+                    // RASTATIME 2026-10-09 - truncate on a character boundary: a byte-wise
+                    // substr cut multibyte characters in half and the StringLength
+                    // validator (iconv_strlen) then rejected the whole file with 400
+                    $value = mb_substr($value, 0, $stringLengthValidator->getMax(), 'UTF-8');
                 }
 
                 $value = self::stripInvalidUtf8Characters($value);

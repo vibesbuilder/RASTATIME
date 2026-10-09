@@ -373,6 +373,11 @@ subfolder the moves leave empty is removed.  The folder structure is
 not carried into the library (the library organises files by their
 metadata), so tag the files before you copy them.
 
+A scan also hands over nothing while **300 or more files** are still
+queued at the analyzer (it processes about one file per second); the
+status line shows that queue.  This keeps the library free of rows
+that wait so long that the hourly clean-up marks them as failed.
+
 One scan hands over at most **300 files** and stops after **20
 seconds**; the rest waits for the next run (every 5 minutes, or
 **Scan Now**), and the status line says how many are waiting.  This

@@ -1111,6 +1111,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Import-Ordner, zweite Runde (2026-10-09, nach dem ANALYZER-Neustart)** —
+  (5) Windows streicht Punkt/Leerzeichen am Ende eines Ordnernamens beim
+  Anlegen stillschweigend („M.I.A." → `M.I.A`, „DJ T." → `DJ T`), der
+  Analyzer meldete aber den beabsichtigten Pfad: 25 Zeilen zeigten auf
+  nicht existierende Dateien — per Audit auf den echten Pfad gesetzt
+  (`safe_component()` verhindert das künftig).  (6) Metadaten, deren
+  letztes Zeichen auf das Byte 0xA0 endet („†", „à"), wurden vom
+  Legacy-Rückruf mit 400 abgelehnt: `Locale::configureLocalization()` setzt
+  unter Windows `LC_ALL` auf „en-US"/„de-AT" (Codepage 1252), damit zählt
+  PCRE auch 0xA0 als Leerzeichen und `Zend_Filter_StringTrim` schnitt das
+  letzte Byte ab — `setlocale(LC_CTYPE, 'C')` direkt danach; betrifft auch
+  den Track-Editor.  Dazu `mb_substr` statt `substr` beim Kürzen auf die
+  Spaltenlänge.  (7) `ImportCleanupTask` markiert alles, was länger als
+  eine Stunde beim Analyzer wartet, als fehlgeschlagen (Upstream-Regel):
+  bei 3.305 Dateien in 15 Minuten traf das 314 Zeilen, die erst beim
+  Analysieren wieder auf OK sprangen — der Scan übergibt jetzt nur noch,
+  solange weniger als 300 Dateien beim Analyzer anstehen (Status zeigt die
+  Warteschlange), Manual LOCAL_MACHINE ×4.  (8) Eigenverschulden beim
+  Debuggen: ein defekter `MediaController.php` (Parse-Fehler, ca. 40 s)
+  ließ 26 Rückrufe mit 500 scheitern — per Git wiederhergestellt; diese 26,
+  die 13 abgelehnten Justice/AIR-Titel und 26 verwaiste Dateien auf der
+  Platte bereinigt (Zeilen entfernt, Originale aus D:\Tagesplaylist neu
+  in den Importordner kopiert).  Werkzeuge: `path_audit.py`,
+  `orphan_cleanup.py`, `analyzer_failed_repair.py` (Scratchpad).
 - **Import-Ordner: vier Fehler aus der ersten Tranche (Electronic, 3.305
   Dateien, 2026-10-09)** — (1) 2.729 Dateien kamen als „Shows" an:
   `FileDataHelper::saveTrackType()` nahm das `tt_upload`-Cookie des

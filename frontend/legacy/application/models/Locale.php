@@ -61,6 +61,16 @@ final class Application_Model_Locale
                 . ' (tried: ' . implode(', ', $variants) . ')');
         }
 
+        // RASTATIME 2026-10-09 - keep LC_CTYPE at "C".  Under a Windows
+        // code-page locale (German_Austria.1252) PCRE's \s also matches the
+        // byte 0xA0, so Zend_Filter_StringTrim cut the last byte off every
+        // UTF-8 value ending in a character like "†" or "à" (E2 80 A0,
+        // C3 A0); the StringLength validator then saw an incomplete
+        // multibyte character and the whole record was rejected with 400
+        // (13 analyzer callbacks of the first bulk import).  gettext is
+        // driven by the LANGUAGE variable above, not by LC_CTYPE.
+        setlocale(LC_CTYPE, 'C');
+
         // RASTATIME 2026-05-15 - Use an absolute path resolved from this
         // file's location instead of "../locale".  Apache/fcgid does not
         // guarantee a stable CWD, so the relative path made the lookup

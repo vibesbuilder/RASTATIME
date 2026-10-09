@@ -345,6 +345,12 @@ elimina.  La estructura de carpetas no pasa a la biblioteca (que
 organiza los archivos por sus metadatos): etiquete los archivos antes
 de copiarlos.
 
+Un escaneo tampoco entrega nada mientras **300 o más archivos** sigan
+en cola en el analizador (procesa alrededor de un archivo por segundo);
+la línea de estado muestra esa cola.  Así la biblioteca no acumula
+filas que esperan tanto que la limpieza horaria las marca como
+fallidas.
+
 Un escaneo entrega como máximo **300 archivos** y se detiene tras
 **20 segundos**; el resto espera a la siguiente pasada (cada 5
 minutos o **Scan Now**), y la línea de estado indica cuántos esperan.

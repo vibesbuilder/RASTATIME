@@ -404,6 +404,12 @@ zurücklassen, wird entfernt.  Die Ordnerstruktur wandert nicht in die
 Bibliothek (sie ordnet Dateien nach ihren Metadaten), taggen Sie die
 Dateien also vor dem Kopieren.
 
+Ein Scan übergibt außerdem nichts, solange noch **300 oder mehr
+Dateien** beim Analyzer anstehen (er verarbeitet etwa eine Datei pro
+Sekunde); die Statuszeile zeigt diese Warteschlange.  So bleiben der
+Bibliothek Zeilen erspart, die so lange warten, dass die stündliche
+Aufräumaufgabe sie als fehlgeschlagen markiert.
+
 Ein Scan übergibt höchstens **300 Dateien** und hält nach **20
 Sekunden** an; der Rest wartet auf den nächsten Lauf (alle 5 Minuten
 oder **Scan Now**), die Statuszeile nennt die Zahl der wartenden
