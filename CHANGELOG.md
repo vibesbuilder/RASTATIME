@@ -800,6 +800,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Django 4.2 LTS -> 5.2 LTS, DRF 3.15 -> 3.16, django-filter 24 -> 25,
+  django-cors-headers pin <5 (2026-10-10, operator Go after the evaluation of
+  2026-10-09)** - 4.2 left extended support on 2026-04-07.  Dry run in a
+  scratch venv: `check` clean, no new migrations, API 116/118 (the two
+  failures are the branding tests and fail under 4.2 too), playout 795,
+  unit 738 - identical to the 4.2 baseline, no Django deprecation warnings.
+  Pins in `backend/api/setup.py` and the generated `requirements.txt`;
+  installed into the production venv at 00:20 in a quiet window after
+  `git tag live-2026-10-10`; API and PLAYOUT restarted by the operator.
+  Commit: DJANGO52_PENDING.
+
 - **Settings → Local Machine: Import-Status live und in Klartext
   (2026-10-09)** — die Zeile „Last scan / Last status" war ein Abbild vom
   Seitenaufruf und las sich als veralteter Importbericht („imported 0,

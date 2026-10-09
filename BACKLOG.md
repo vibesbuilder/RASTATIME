@@ -4946,15 +4946,17 @@ Django 4.2 EOL seit 2026-04-07; Patch-Releases offen fuer Apache 2.4.69, PHP 8.3
 Liquidsoap 2.4.6, ffmpeg 9.0.2, django-cors-headers 4.9, psycopg2 2.9.13, urllib3 2.8.  Stufe 2 (Preflight-Warnung
 components_outdated in der UI) 💡 spaeter.
 
-### 🟢 Django 4.2 LTS -> 5.2 LTS (Evaluation 2026-10-09, Go offen)
+### ✅ Django 4.2 LTS -> 5.2 LTS (Evaluation 2026-10-09, Go 2026-10-10, installiert 00:20)
 4.2 ohne Security-Fixes seit 2026-04-07; 5.2 LTS bis 2028-04.  Trockenlauf in Scratch-venv (Django 5.2.18, DRF 3.16.1,
 django-filter 25.2, cors 4.9): `check` sauber, keine neuen Migrationen, API 116/118 (die 2 Fehler sind Branding-Tests,
 scheitern auch unter 4.2), Playout 795, Unit 738 (1 bestehender i18n-Fehler) - identisch zur 4.2-Basis; keine
 Django-Deprecations.  Code nutzt keine 5.x-Entfernungen (eigener md5-Hasher in core.User, kein pytz/index_together).
 Aufwand: Pins in backend/api/requirements.txt, pip install, API+PLAYOUT-Neustart; ~1 h inkl. Doku.  Nebeneffekt:
-db_default verfuegbar (Line-In-Gain-Lore).  Nach dem Go im Wartungsfenster.
+db_default verfuegbar (Line-In-Gain-Lore).  Installiert 2026-10-10 00:20 (Tag live-2026-10-10, Pins in setup.py +
+requirements.txt, pip check sauber, django check prod sauber); API-/PLAYOUT-Neustart durch Operator, danach
+Verifikation (Logs, /api/v2/version, UI, Suiten im Prod-venv).
 
-### 🟡 Liquidsoap 2.4.4 -> 2.4.6 (Evaluation 2026-10-09, Go offen)
+### 🟢 Liquidsoap 2.4.4 -> 2.4.6 (Evaluation 2026-10-09, Go 2026-10-10 - Bench laeuft)
 Offizieller win64-Build (49 MB).  Relevante Fixes fuer uns: `sequence` verliert den ersten Chunk+Metadaten eines
 Nachfolgers nicht mehr (unsere kurzen Jingles laufen ueber sequence/cross), `cross` behaelt Metadaten bei wiederholtem
 Titel + on_track bei jedem Crossing (ICY), `fade.out` mutet nach Skip nicht den ganzen Folgetitel, `output.file`
@@ -4969,6 +4971,6 @@ Icecast 2.5.0 ist veroeffentlicht (Tag 2025-12-31, icecast_win64_2.5.0.exe).  Ni
 laeuft ueber den Apache-Reverse-Proxy, 2.4.4 ist intern.  Vor einem Wechsel Changelog pruefen (Konfig-Aenderungen,
 Fallback-Mounts, Admin-API fuer kick_dj_source, status.xsl-Parsing in der Playout-Statistik).
 
-### 🟡 Composer auf der Maschine + `composer audit` fuer die 99 Legacy-Pakete (Go 2026-10-09, Download offen)
+### 🟢 Composer auf der Maschine + `composer audit` fuer die 99 Legacy-Pakete (Go 2026-10-10, Operator laedt composer.phar)
 composer.phar (getcomposer.org, ~3 MB) nach C:/Tools/composer; dann `composer audit` im Legacy-Verzeichnis, Ergebnis
 in COMPONENTS.md Abschnitt 1; Updates innerhalb der Pins in einem Worktree mit PHP-Lint + TEST_PLAN-UI-Checks.

@@ -24,8 +24,8 @@ window.
 | win-acme | A | 2.2.9 | GitHub win-acme/win-acme | unzip, re-run the renewal task once | keep the previous folder |
 | PostgreSQL | C | 17.7 | EDB installer; feed: endoflife.date/postgresql (17 until 2029-11) | minor releases via installer in the window, with a fresh backup; major upgrades (18) are a project (dump/restore, `MIGRATION.md`) | backup restore |
 | Python | C | 3.13.14 | python.org; feed: endoflife.date/python | patch releases: install over, `.venv` keeps working; minor (3.14) = rebuild the venv | previous installer |
-| Django | C | 4.2.30 | PyPI; feed: endoflife.date/django | pin in `backend\api\requirements.txt`, `pip install -r`, restart API + PLAYOUT (both import the ORM) | `pip install` the previous pin |
-| DRF, django-filter, django-cors-headers, waitress, psycopg2-binary, requests, urllib3, PyYAML, mutagen | C | see `update_check.py` | PyPI | same as Django, within the pinned lines; `pip-audit` monthly | same |
+| Django | C | 5.2.18 (since 2026-10-10) | PyPI; feed: endoflife.date/django (5.2 LTS until 2028-04) | pin in `backend\api\requirements.txt`, `pip install -r`, restart API + PLAYOUT (both import the ORM) | `pip install` the previous pin |
+| DRF 3.16, django-filter 25, django-cors-headers, waitress, psycopg2-binary, requests, urllib3, PyYAML, mutagen | C | see `update_check.py` | PyPI | same as Django, within the pinned lines; `pip-audit` monthly | same |
 | Legacy PHP packages (zf1s Zend 1, Propel 1, getID3, SimplePie, Symfony 5.4 yaml/config, phpseclib …) | C | `frontend\legacy\composer.lock` (99 packages) | Packagist; `composer audit` | `composer update <pkg>` in a worktree, PHP lint + TEST_PLAN UI checks, commit the lock file | `git checkout composer.lock` + `composer install` |
 | Icecast | B | 2.4.4 | icecast.org (2.5.0 released, tag 2025-12-31, win64 installer available); the public stream goes through the Apache reverse proxy | 2.5.0 is a major step (new config options): evaluate, then install beside, point the service at it in a quiet moment; the mounts and the harbor are not affected | keep the previous folder |
 | Liquidsoap | B | 2.4.4 | GitHub savonet/liquidsoap, asset `liquidsoap-<ver>-win64.zip` (official build, OCaml 4.14, stereotool/portaudio/ffmpeg inside) | bench on a second instance first (`liquidsoap --check`, 40 s run with Stereo Tool, memory, shutdown), then swap `C:\Tools\liquidsoap` in a quiet moment with the standby instance up | rename the previous folder back |
@@ -84,6 +84,8 @@ previous pin, restart, then investigate.
 - The Liquidsoap Windows build leaks ~5 KB per `Unix.select`
   (`docs\upstream\2026-09-05-...`); a new release does not fix this unless
   the OCaml runtime changes — check `--build-config` after an update.
-- Django 4.2 LTS left extended support on 2026-04-07; the 5.2 LTS dry run of
-  2026-10-09 (scratch venv, API/playout/unit suites) was clean — see
-  `BACKLOG.md`.
+- Django 4.2 LTS left extended support on 2026-04-07; upgraded to 5.2 LTS on
+  2026-10-10 after a clean dry run (scratch venv, API/playout/unit suites).
+  The pins live in `backend\api\setup.py`; `requirements.txt` is generated
+  from it (edit both, then `pip install --no-deps -e backend\api` so the
+  editable metadata follows).
