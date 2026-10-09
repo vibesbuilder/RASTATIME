@@ -139,9 +139,15 @@ $(document).ready(function () {
       bFilter: false,
       bSort: false,
       //"sDom": '<"H">frtip<"F"l>',
-      sDom: '<"dataTables_scrolling"frt><"F"lip>',
+      // RASTATIME 2026-10-09 - DataTables 1.13 does not build the reserved
+      // 'F' slot of the legacy sDom, so length menu, info line and pager
+      // silently vanished and Recent Uploads showed only its first 10 rows
+      // (operator report).  A plain <"dataTables_footer"> div holds them.
+      sDom: '<"dataTables_scrolling"frt><"dataTables_footer"lip>',
       bPaginate: true,
       sPaginationType: "full_numbers",
+      iDisplayLength: 25,
+      aLengthMenu: [10, 25, 50, 100, 500],
       oLanguage: getDatatablesStrings({
         sEmptyTable: $.i18n._("No files have been uploaded yet."),
         sInfoEmpty: $.i18n._("Showing 0 to 0 of 0 uploads"),

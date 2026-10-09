@@ -5161,6 +5161,13 @@ div.dt-button-collection .dt-button > span {
     overflow: hidden;
     padding: 2px 0 0 0;
 }
+/* RASTATIME 2026-10-09 - Recent Uploads (Upload page) got its footer back
+   (length menu + info + pager, see plupload.js); contain the floats so the
+   row has a height. */
+#recent_uploads_table_wrapper > .dataTables_footer {
+    overflow: hidden;
+    padding: 4px 0 0 0;
+}
 
 /* ===================================================================
    RASTATIME 2026-06-08 — "Song-Request Pool" field (Settings > General)
