@@ -1134,7 +1134,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   nicht auf Höhe des Suchfelds; sie folgen jetzt direkt auf das Suchfeld,
   vertikal auf dessen Mitte (`placeFilterIndicator`, misst die Box des
   Inputs, folgt bei Fenstergröße).  Harness: Input, × und Zähler alle auf
-  Mitte 20 px.
+  Mitte 20 px.  Commit d1e953d.
 - **Recent Uploads: Fuß als Flex-Zeile (2026-10-09)** — Längenmenü links,
   Pager rechtsbündig, beide vertikal zentriert (Operator: Pager rechts,
   „Show 25 entries" saß zu tief).  Commits 38131aa, 44c788a.
