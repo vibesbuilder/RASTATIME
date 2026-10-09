@@ -22,7 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and prints a verdict per component.  First run: Django 4.2 LTS past
   end-of-life since 2026-04-07; patch releases pending for Apache 2.4.69,
   PHP 8.3.35, PostgreSQL 17.11, Python 3.13.16, Liquidsoap 2.4.6, ffmpeg
-  9.0.2 and four pip packages.  Commit: COMPONENTS_PENDING.
+  9.0.2 and four pip packages.  Commit: 48addb6.
 
 - **Dashboard-Library: Filteranzeige (2026-10-09)** — solange Suchtext oder
   ein Feld der erweiterten Suche gesetzt ist, zeigt die Suchleiste rechts
