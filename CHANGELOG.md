@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Upstream-Text „Filtering out …" suchte eine CSS-Klasse, das Dashboard-
   Markup trägt nur die ID `lib-filter-message`, der Hinweis erschien nie.
   Strings in vier Sprachen (po + mo, wirksam nach Apache-Neustart).
-  Harness-geprüft.  Manual LIBRARY ×4.
+  Harness-geprüft.  Manual LIBRARY ×4.  Commit 29fc098.
 - **Preflight-Warnung „Podcast download failed" (2026-10-08, Operator-Go)**
   — ein fehlgeschlagener automatischer oder manueller Folgen-Download stand
   bisher nur im Legacy-Log.  `Application_Model_PodcastDownloadFailures`
