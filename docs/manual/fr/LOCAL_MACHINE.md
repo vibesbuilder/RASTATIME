@@ -354,7 +354,7 @@ supprimé.  La structure des dossiers n'est pas reprise dans la
 bibliothèque (elle classe les fichiers d'après leurs métadonnées) :
 taguez les fichiers avant de les copier.
 
-Un scan transmet au plus **2 000 fichiers** et s'arrête après **200
+Un scan transmet au plus **300 fichiers** et s'arrête après **20
 secondes** ; le reste attend le prochain passage (toutes les 5 minutes
 ou **Scan Now**), et la ligne d'état indique combien attendent.  Cela
 garde un scan dans la limite de temps de PHP - un scan mort en plein

@@ -134,7 +134,7 @@ class CcFiles extends BaseCcFiles
      */
     public static function createFromImportFolder($filePath, $originalFilename, $copyFile = false)
     {
-        return self::createAndImport([], $filePath, $originalFilename, $copyFile);
+        return self::createAndImport([], $filePath, $originalFilename, $copyFile, true);
     }
 
     /** Create a new CcFiles object/row and import a file for it.
@@ -150,7 +150,7 @@ class CcFiles extends BaseCcFiles
      * @throws Exception
      * @throws PropelException
      */
-    private static function createAndImport($fileArray, $filePath, $originalFilename, $copyFile = false)
+    private static function createAndImport($fileArray, $filePath, $originalFilename, $copyFile = false, $fromImportFolder = false)
     {
         $file = new CcFiles();
 
@@ -172,8 +172,15 @@ class CcFiles extends BaseCcFiles
             // RASTATIME 2026-09-16 - artwork lives in imported/artwork/ (no owner-id level)
             $importedStorageDir = rtrim(Application_Common_Storage::root(), '/\\') . '/imported/';
             $importedDbPath = 'imported/';
-            $artwork = FileDataHelper::saveArtworkData($filePath, $originalFilename, $importedStorageDir, $importedDbPath);
-            $trackTypeId = FileDataHelper::saveTrackType();
+            // RASTATIME 2026-10-09 - an unreadable embedded cover is no reason
+            // to refuse the track (the import folder deletes a refused file)
+            try {
+                $artwork = FileDataHelper::saveArtworkData($filePath, $originalFilename, $importedStorageDir, $importedDbPath);
+            } catch (Exception $artworkError) {
+                Logging::warn('createAndImport: artwork of ' . $originalFilename . ' skipped: ' . $artworkError->getMessage());
+                $artwork = '';
+            }
+            $trackTypeId = FileDataHelper::saveTrackType(!$fromImportFolder);
 
             $file->fromArray($fileArray);
             $file->setDbOwnerId(self::getOwnerId());

@@ -22,7 +22,12 @@ function exception_error_handler($errno, $errstr, $errfile, $errline)
 {
     // Check if the statement that threw this error wanted its errors to be
     // suppressed. If so then return without throwing exception.
-    if (0 === error_reporting()) {
+    // RASTATIME 2026-10-09 - PHP 8: the @ operator no longer sets
+    // error_reporting() to 0 but masks the suppressed levels out of it, so
+    // the old `0 === error_reporting()` test never matched and every
+    // @-suppressed warning became an exception (an unreadable embedded
+    // cover aborted a whole import and the source file was deleted).
+    if (!(error_reporting() & $errno)) {
         return false;
     }
 

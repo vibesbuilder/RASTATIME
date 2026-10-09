@@ -345,8 +345,8 @@ elimina.  La estructura de carpetas no pasa a la biblioteca (que
 organiza los archivos por sus metadatos): etiquete los archivos antes
 de copiarlos.
 
-Un escaneo entrega como máximo **2.000 archivos** y se detiene tras
-**200 segundos**; el resto espera a la siguiente pasada (cada 5
+Un escaneo entrega como máximo **300 archivos** y se detiene tras
+**20 segundos**; el resto espera a la siguiente pasada (cada 5
 minutos o **Scan Now**), y la línea de estado indica cuántos esperan.
 Así el escaneo se mantiene dentro del límite de tiempo de PHP - un
 escaneo interrumpido a mitad de un traslado dejaba antes medio

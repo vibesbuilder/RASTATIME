@@ -193,11 +193,19 @@ class FileDataHelper
             }
 
             $path_parts = pathinfo($filename);
-            $file = $importDir . 'artwork/' . $path_parts['filename'];
+            // RASTATIME 2026-10-09 - a Windows file name must not end with a
+            // dot or a space ("R.A.F..mp3" -> "R.A.F."), and the reserved
+            // characters are replaced; an empty remainder falls back to the
+            // md5 of the audio file.
+            $artworkName = rtrim(preg_replace('/[<>:"\/\\|?*\x00-\x1f]/', '_', (string) $path_parts['filename']), '. ');
+            if ($artworkName === '') {
+                $artworkName = md5_file($analyzeFile) ?: 'artwork';
+            }
+            $file = $importDir . 'artwork/' . $artworkName;
 
             // Save Data URI
             if (file_put_contents($file, $base64)) {
-                $get_img = $DbPath . 'artwork/' . $path_parts['filename'];
+                $get_img = $DbPath . 'artwork/' . $artworkName;
             } else {
                 Logging::error('Could not save Data URI');
             }
@@ -508,9 +516,14 @@ class FileDataHelper
      *
      * @return string Track type key value
      */
-    public static function saveTrackType()
+    public static function saveTrackType($useUploadCookie = true)
     {
-        if (isset($_COOKIE['tt_upload'])) {
+        // RASTATIME 2026-10-09 - the upload dialog remembers its track type in
+        // the tt_upload cookie.  The import-folder scan runs inside whatever
+        // request triggers the task manager - also the operator's browser -
+        // and must never inherit that cookie: 1,377 files of the first bulk
+        // import arrived as "Shows" that way.  Import paths pass false.
+        if ($useUploadCookie && isset($_COOKIE['tt_upload'])) {
             $tt = $_COOKIE['tt_upload'];
         } else {
             // Use default track type

@@ -1,4 +1,5 @@
 import logging
+import re
 import shutil
 from pathlib import Path
 from uuid import uuid4
@@ -7,6 +8,19 @@ logger = logging.getLogger(__name__)
 
 MAX_DIR_LEN = 48
 MAX_FILE_LEN = 48
+
+# RASTATIME 2026-10-09 - the artist / album folders are built from tag text,
+# and Windows refuses the characters < > : " / \ | ? * and control characters
+# in a path component as well as a trailing dot or space ("Why Not?!",
+# "The Getaway: Black Monday" failed 19 imports of the first bulk batch with
+# WinError 123 / 267).  Replace them so the track lands next to its album.
+_RESERVED = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
+
+
+def safe_component(name: str) -> str:
+    """Return *name* as a path component every file system accepts."""
+    cleaned = _RESERVED.sub("_", name).rstrip(". ")
+    return cleaned or "_"
 
 
 def organise_file(
@@ -29,12 +43,12 @@ def organise_file(
 
     # Building import path
     if "artist_name" in metadata:
-        dest_path /= metadata["artist_name"][0:MAX_DIR_LEN]
+        dest_path /= safe_component(metadata["artist_name"][0:MAX_DIR_LEN])
 
     if "album_title" in metadata:
-        dest_path /= metadata["album_title"][0:MAX_DIR_LEN]
+        dest_path /= safe_component(metadata["album_title"][0:MAX_DIR_LEN])
 
-    dest_path /= orig_filename.stem[0:MAX_FILE_LEN] + orig_filename.suffix
+    dest_path /= safe_component(orig_filename.stem[0:MAX_FILE_LEN]) + orig_filename.suffix
 
     # Handle when a file already exists
     if dest_path.is_file():

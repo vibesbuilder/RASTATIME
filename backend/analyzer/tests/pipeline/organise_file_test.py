@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from libretime_analyzer.pipeline.organise_file import organise_file
+from libretime_analyzer.pipeline.organise_file import organise_file, safe_component
 
 from ..conftest import AUDIO_FILENAME
 
@@ -54,3 +54,34 @@ def test_organise_file_bad_permissions_dest_dir(src_dir: Path):
                 Path("/sys/foobar"),
             )
         )
+
+
+# RASTATIME 2026-10-09 - tag text with characters a Windows path refuses
+def test_organise_file_reserved_characters(src_dir: Path, dest_dir: Path):
+    metadata = organise_file(
+        str(src_dir / AUDIO_FILENAME),
+        str(dest_dir),
+        AUDIO_FILENAME,
+        {"artist_name": "Amon Tobin", "album_title": "The Getaway: Black Monday?!"},
+    )
+    full_path = Path(metadata["full_path"])
+    assert full_path.exists()
+    assert full_path.name == AUDIO_FILENAME
+    assert full_path.parent.name == "The Getaway_ Black Monday_!"
+    assert full_path.parent.parent.name == "Amon Tobin"
+
+
+@pytest.mark.parametrize(
+    ("name", "expected"),
+    [
+        ("Why Not?!", "Why Not_!"),
+        ("What's Next?!", "What's Next_!"),
+        ("S.A.C.", "S.A.C"),
+        ("trailing space ", "trailing space"),
+        ("...", "_"),
+        ('a<b>c:d"e/f|g*h', "a_b_c_d_e_f_g_h"),
+        ("[2007] Robyn", "[2007] Robyn"),
+    ],
+)
+def test_safe_component(name: str, expected: str):
+    assert safe_component(name) == expected

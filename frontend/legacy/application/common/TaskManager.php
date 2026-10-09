@@ -413,8 +413,14 @@ class LocalImportScanTask implements AirtimeTask
     // the next run (every 5 minutes, or Scan Now); the status line says
     // how many.  Subfolders are walked since the same day; a subfolder
     // left empty by the moves is removed.
-    public const MAX_PER_RUN = 2000;
-    public const MAX_SECONDS = 200;
+    // 2026-10-09, after the first bulk batch: the scan runs inside whatever
+    // request triggers the task manager - the playout's API call or the
+    // operator's browser poll - and a long run stalls that request (the
+    // browser even aborts it, which killed a 1,371-file run before it could
+    // write its status).  At ~13 files/s a 20-s run hands over ~250 files;
+    // with the 5-minute cadence that is ~3,000 files/h, the analyzer's pace.
+    public const MAX_PER_RUN = 300;
+    public const MAX_SECONDS = 20;
 
     public function shouldBeRun()
     {
@@ -459,6 +465,9 @@ class LocalImportScanTask implements AirtimeTask
         $settling = 0;
         $waiting = 0;
         $started = microtime(true);
+        // RASTATIME 2026-10-09 - a browser that triggered the task manager
+        // and navigates away must not abort the scan half-way
+        @ignore_user_abort(true);
 
         Application_Model_Preference::setLocalImportLastRun(time());
 

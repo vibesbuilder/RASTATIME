@@ -404,7 +404,7 @@ zurücklassen, wird entfernt.  Die Ordnerstruktur wandert nicht in die
 Bibliothek (sie ordnet Dateien nach ihren Metadaten), taggen Sie die
 Dateien also vor dem Kopieren.
 
-Ein Scan übergibt höchstens **2.000 Dateien** und hält nach **200
+Ein Scan übergibt höchstens **300 Dateien** und hält nach **20
 Sekunden** an; der Rest wartet auf den nächsten Lauf (alle 5 Minuten
 oder **Scan Now**), die Statuszeile nennt die Zahl der wartenden
 Dateien.  So bleibt ein Scan innerhalb des PHP-Zeitlimits - ein

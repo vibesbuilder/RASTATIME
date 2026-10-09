@@ -373,7 +373,7 @@ subfolder the moves leave empty is removed.  The folder structure is
 not carried into the library (the library organises files by their
 metadata), so tag the files before you copy them.
 
-One scan hands over at most **2,000 files** and stops after **200
+One scan hands over at most **300 files** and stops after **20
 seconds**; the rest waits for the next run (every 5 minutes, or
 **Scan Now**), and the status line says how many are waiting.  This
 keeps a scan inside PHP's request limit - a scan that died mid-move
