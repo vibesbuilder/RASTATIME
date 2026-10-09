@@ -1111,6 +1111,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Manual: „Default Import Owner" gestrichen (2026-10-09)** — die Einstellung
+  gab es nie; Hintergrund-Importe aus dem Import-Ordner gehören dem ersten
+  Administratorkonto, Scan-Now-Importe dem klickenden Operator.  SETTINGS ×4,
+  LOCAL_MACHINE ×4.
 - **Sendeprotokoll überlebt das Löschen eines Titels (2026-10-08,
   Operator-Go)** — LibreTime-Erbe: `cc_playout_history.file_id` war ON DELETE
   CASCADE, ein Datei-Löschen nahm alle Protokollzeilen des Titels mit, und die

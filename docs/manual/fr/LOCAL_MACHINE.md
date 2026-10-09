@@ -364,8 +364,10 @@ quatre minutes prend environ 1.1 s (essai de 50 fichiers,
 2026-10-08) : comptez environ 3 000 titres par heure de bout en bout et
 environ sept heures pour 20 000 titres.  Placez le dossier d'import sur le
 même disque que la médiathèque (le déplacement est alors instantané et
-atomique), réglez d'abord *Track Type Upload Default* et *Default
-Import Owner*, et copiez par lots de quelques milliers.
+atomique), réglez d'abord *Track Type Upload Default* (le
+propriétaire n'a pas de réglage : les imports d'arrière-plan
+appartiennent au premier administrateur, ceux de Scan Now à vous), et
+copiez par lots de quelques milliers.
 
 ### Propriété
 

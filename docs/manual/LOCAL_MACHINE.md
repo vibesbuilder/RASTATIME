@@ -383,8 +383,9 @@ about 1.1 s (probe of 50 files, 2026-10-08), so expect roughly
 3,000 tracks per hour end to end and plan a 20,000-track import for
 about seven hours.  Put the import folder on the same drive as the media library
 (the move is then instant and atomic), set *Track Type Upload Default*
-and *Default Import Owner* first, and copy in batches of a few
-thousand.
+first (the owner needs no setting: background imports belong to the
+first administrator, Scan Now imports to you), and copy in batches of
+a few thousand.
 
 ### Ownership
 

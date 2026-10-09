@@ -356,7 +356,9 @@ con 50 archivos, 2026-10-08): cuente con unas 3.000 pistas por hora de
 principio a fin y con unas siete horas para 20.000 pistas.  Coloque la carpeta de
 importación en la misma unidad que la mediateca (el traslado es
 entonces instantáneo y atómico), ajuste antes *Track Type Upload
-Default* y *Default Import Owner*, y copie en lotes de unos miles.
+Default* (el propietario no tiene ajuste: las importaciones en segundo
+plano pertenecen al primer administrador, las de Scan Now a usted), y
+copie en lotes de unos miles.
 
 ### Propiedad
 

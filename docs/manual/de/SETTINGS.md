@@ -50,7 +50,7 @@ Top-Bar Einstellungen → öffnet das Untermenü:
 
 | Seite | Zweck | Handbuch-Kapitel |
 |---|---|---|
-| **Allgemeine Einstellungen** | Stationsname, Standardsprache, Standardfarben, Dashboard-Vorausschau, Standard-Import-Besitzer, Standard-Crossfade-Dauer, Favicon, Stationslogo. | Dieses Kapitel §2 |
+| **Allgemeine Einstellungen** | Stationsname, Standardsprache, Standardfarben, Dashboard-Vorausschau, Standard-Crossfade-Dauer, Favicon, Stationslogo. | Dieses Kapitel §2 |
 | **Lokale Maschine** | Soundkarten-Ausgabe-/Eingabegeräte, lokaler Import-Ordner, lokaler Aufnahme-Ordner. | [Lokale Maschine](./LOCAL_MACHINE.md) |
 | **Streams** | Bis zu vier Output-Streams, pro-Stream-Bitrate / Mountpoint / Codec, Quell-Authentifizierung. | [Streams](./STREAMS.md) |
 | **Line-In-Bibliothek** | Benannte Live-Audio-Eingänge von Soundkarten-Geräten. | [Line-In](./LINE_IN.md) |
@@ -135,7 +135,7 @@ selbst. Die Feldtabellen unten behalten ihre bisherige Gliederung.
 | **Kein Fade je Track-Typ** | Settings → Track Types → *No Fade during Crossover* (seit 2026-09-30) ist die Typ-Vorgabe für das Feld *Crossover* im Titel-Editor: Jeder Titel des Typs, der auf *As the track type* steht, behält seinen vollen Pegel, während der Nachbartitel ein- oder ausblendet - die Überlappung selbst bleibt, wie die Crossfade-Dauer des Typs es vorgibt. Gedacht für Jingles oder IDs, die über das Ende eines Songs schneiden sollen. Ein einzelner Titel kann im Titel-Editor weiterhin anders eingestellt werden; ein vom Crossover ausgenommener Titel hat keine Überlappung, in der er seinen Pegel halten könnte. Eine Änderung erreicht das Playout mit dem nächsten Schedule-Push; Zeilen werden nicht neu ausgelegt, weil sich die Überlappung nicht ändert. |
 | **Default Show Crossfade Duration** (Standard Show-Crossfade Dauer) | Der Übergang **an einer Sendungsgrenze** (seit 2026-09-27): die alte Sendung blendet über so viele Sekunden aus, während der erste Titel der neuen Sendung sofort in voller Lautstärke startet — eine Sendung, die mit Jingle oder ID beginnt, ist vom ersten Schlag an zu hören. Dieselbe Form und derselbe Wert gelten für jeden Wechsel zwischen **Eingängen** (Titel ↔ Webstream ↔ Line-In): die ankommende Quelle ist sofort voll da, die abgehende blendet darunter aus; 0 = harter Wechsel. Ein Webstream oder Line-In, der in beiden Sendungen eingeplant ist, läuft nahtlos weiter. Startwert 1 s. Beide Crossfade-Werte übernimmt die Audiokette wenige Sekunden nach dem Speichern (geplanter Neustart in einem ruhigen Moment oder an einer Titelgrenze); „Jetzt anwenden" in Settings → Local Machine erzwingt es. |
 | **Standard-Track-Typ** | Der Track-Typ, der neuen Uploads zugewiesen wird, wenn der Operator nicht explizit einen setzt. Beeinflusst Smart-Block-Filter. |
-| **Standard-Import-Besitzer** | Das Benutzerkonto, dem als Besitzer für Dateien, die über den lokalen Import-Ordner importiert werden, gutgeschrieben wird. Standardmäßig `admin`. |
+| *Import-Besitzer* | Es gibt keine Einstellung (die bisherige Zeile war bis 2026-10-09 falsch): Dateien, die der Hintergrund-Scan des lokalen Import-Ordners aufnimmt, gehören dem ersten Administratorkonto (`admin`), mit **Scan Now** importierte Dateien dem Operator, der geklickt hat. |
 | **Standard-Aufnahme** | Wenn angekreuzt, haben neue Sendungen **Diese Sendung aufzeichnen:** vor-angekreuzt. Siehe [Aufnahme pro Sendung](./RECORD_PER_SHOW.md). |
 
 ### Dashboard

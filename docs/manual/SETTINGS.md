@@ -94,7 +94,6 @@ keep their original grouping.
    │    Default Track Crossfade: [ 1.0 ] seconds                     │
    │    Default Show Crossfade:  [ 1.0 ] seconds                     │
    │    Default Track Type:  [ Music ▾ ]                             │
-   │    Default Import Owner:[ admin ▾ ]                             │
    │    Default Recording:   [ ☐ Record all new shows by default ]   │
    │                                                                 │
    │  Dashboard                                                      │
@@ -132,7 +131,7 @@ keep their original grouping.
 | **No Fade per track type** | Settings → Track Types → *No Fade during Crossover* (since 2026-09-30) is the type's preset for the track editor's *Crossover* field: every track of the type that is set to *As the track type* keeps its full level while the neighbouring track fades in or out - the overlap itself stays as the type's Crossfade Duration says. Meant for jingles or IDs that should cut through the end of a song. A single track can still be set differently in the track editor; a track excluded from the crossover has no overlap to keep its level in. A change reaches the playout with the next schedule push; no rows are re-laid because the overlap does not change. |
 | **Default Show Crossfade Duration** | The transition **at a show boundary** (since 2026-09-27): the old show fades out over this many seconds while the first track of the new show starts at full level at once — so a show that begins with a jingle or ID is heard from its first beat. The same shape and value apply to every switch between **inputs** (track ↔ webstream ↔ Line-In): the incoming source is at full level immediately, the outgoing one fades out underneath; 0 = a hard switch. A webstream or Line-In that is scheduled in both shows keeps playing seamlessly. Start value 1 s. Both crossfade values are applied by the audio chain a few seconds after saving (planned restart at a quiet moment or track boundary); "Apply now" in Settings → Local Machine forces it. |
 | **Default Track Type** | The track-type assigned to new uploads when the operator does not explicitly set one. Affects smart-block filters. |
-| **Default Import Owner** | The user account credited as owner for files imported via the Local Import Folder. Defaults to `admin`. |
+| *Import owner* | There is no setting (the row above was wrong until 2026-10-09): files picked up by the background scan of the Local Import Folder belong to the first administrator account (`admin`), files imported with **Scan Now** to the operator who clicked it. |
 | **Default Recording** | When ticked, new shows have **Record this show:** pre-ticked. See [Record-per-Show](./RECORD_PER_SHOW.md). |
 
 ### Dashboard

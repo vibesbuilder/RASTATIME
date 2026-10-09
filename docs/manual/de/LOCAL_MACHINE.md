@@ -415,8 +415,10 @@ ab; auf dieser Maschine braucht eine vierminütige MP3 etwa
 rund 3.000 Titeln pro Stunde von Anfang bis Ende und für 20.000 Titel
 mit etwa sieben Stunden.  Legen Sie den Import-Ordner auf dasselbe Laufwerk wie
 die Mediathek (das Verschieben ist dann sofort und atomar), setzen Sie
-vorher *Track Type Upload Default* und *Default Import Owner* und
-kopieren Sie in Tranchen von einigen tausend Dateien.
+vorher *Track Type Upload Default* (der Besitzer braucht keine
+Einstellung: Hintergrund-Importe gehören dem ersten Administrator,
+Scan-Now-Importe Ihnen) und kopieren Sie in Tranchen von einigen
+tausend Dateien.
 
 ### Besitz
 
