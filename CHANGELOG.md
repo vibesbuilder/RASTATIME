@@ -809,7 +809,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Pins in `backend/api/setup.py` and the generated `requirements.txt`;
   installed into the production venv at 00:20 in a quiet window after
   `git tag live-2026-10-10`; API and PLAYOUT restarted by the operator.
-  Commit: DJANGO52_PENDING.
+  Commit: bd48290.
 
 - **Settings → Local Machine: Import-Status live und in Klartext
   (2026-10-09)** — die Zeile „Last scan / Last status" war ein Abbild vom
