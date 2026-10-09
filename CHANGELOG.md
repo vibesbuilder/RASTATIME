@@ -779,7 +779,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Library: Seitenlänge 500 / 1000 / Alle (2026-10-09)** — das Menü unten
   links bietet neben 25/50/100 jetzt 500, 1000 und „All" (−1 = ohne LIMIT,
-  Datatables.php kannte den Fall bereits); `library.js`.
+  Datatables.php kannte den Fall bereits); `library.js`.  Commit 0c7d429.
 - **Import-Ordner: Unterordner und Mengenbegrenzung (2026-10-08,
   Operator-Go vor dem Import von 20.000 Musiktiteln)** —
   `LocalImportScanTask::scanOnce` durchläuft jetzt alle Unterordner
@@ -1118,7 +1118,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `.panel-header` (z-index 1) bildete den Stacking-Context des
   Advanced-Search-Dropdowns, die klebrigen Spaltenköpfe (z-index 2) malten
   darüber; `.panel-header` jetzt z-index 3 (`dashboard.css`), in der
-  Harness nachgemessen (elementFromPoint trifft das Dropdown).
+  Harness nachgemessen (elementFromPoint trifft das Dropdown).  Commit 0c7d429.
 - **Import-Ordner, zweite Runde (2026-10-09, nach dem ANALYZER-Neustart)** —
   (5) Windows streicht Punkt/Leerzeichen am Ende eines Ordnernamens beim
   Anlegen stillschweigend („M.I.A." → `M.I.A`, „DJ T." → `DJ T`), der
