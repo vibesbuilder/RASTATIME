@@ -306,31 +306,37 @@ thead th.ui-state-default:focus {
 #library_content .dataTables_filter {
     position: relative;
 }
-#library_content .dataTables_filter.rt-filter-active input[type="text"] {
+#library_content .dataTables_filter.rt-filter-active input[type="text"],
+#library_content .dataTables_filter.rt-filter-active input[type="search"] {
     border-color: var(--rt-accent);
     box-shadow: inset 0 0 0 1px var(--rt-accent);
 }
-#lib-filter-clear,
-#lib-filter-count {
+/* the id selectors carry #library_content so they beat
+   "#library_content span { color: #efefef }" */
+#library_content #lib-filter-clear,
+#library_content #lib-filter-count {
     position: absolute;
     display: none;
     white-space: nowrap;
-    color: #ddd;
+    color: #242424;
     text-decoration: none;
+    z-index: 1;
 }
 #lib-filter-clear {
-    padding: 0 6px;
+    padding: 0 4px;
     font-size: 20px;
     line-height: 22px;
     cursor: pointer;
 }
-#lib-filter-clear:hover {
+#library_content #lib-filter-clear:hover {
     color: var(--rt-accent);
     text-decoration: none;
 }
 #lib-filter-count {
+    padding-right: 6px;
     font-size: 13px;
     line-height: 18px;
+    border-right: 1px solid #9a9a9a;
 }
 
 #advanced-options > button > span {

@@ -616,29 +616,35 @@ var AIRTIME = (function (AIRTIME) {
   };
 
   // RASTATIME 2026-10-09 - filter indicator: the "x" and the "X of N
-  // tracks" count sit directly after the search input, vertically centred
-  // on it (operator: left-aligned in the search line).  Absolute inside
-  // .dataTables_filter, measured from the input's box so the dashboard's
-  // negative-margin trick on the input does not matter.
+  // tracks" count sit INSIDE the search box at its left end, right after
+  // the magnifier, vertically centred; the typed text starts after them
+  // (padding-left).  The box spans the whole line on the dashboard, so a
+  // placement after it would be off the panel.  Absolute inside
+  // .dataTables_filter, measured from the input's box.
   mod.placeFilterIndicator = function () {
     var $filter = $("#library_content").find(".dataTables_filter");
-    var $input = $filter.find('input[type="text"]');
+    var $input = $filter.find('input[type="text"], input[type="search"]');
     var $clear = $("#lib-filter-clear");
     var $count = $("#lib-filter-count");
-    if (!$filter.length || !$input.length || !$filter.hasClass("rt-filter-active")) {
+    if (!$filter.length || !$input.length) {
+      return;
+    }
+    if (!$filter.hasClass("rt-filter-active")) {
+      $input.css("padding-left", "");
       return;
     }
     var fr = $filter[0].getBoundingClientRect();
     var ir = $input[0].getBoundingClientRect();
-    var left = ir.right - fr.left + 6;
+    var left = ir.left - fr.left + 24; // after the magnifier icon
     var mid = ir.top - fr.top + ir.height / 2;
     $clear.css({
       left: left,
       top: mid - $clear.outerHeight() / 2,
       right: "auto",
     });
-    left += $clear.outerWidth() + 2;
+    left += $clear.outerWidth();
     $count.css({ left: left, top: mid - $count.outerHeight() / 2 });
+    $input.css("padding-left", left + $count.outerWidth() + 10 - (ir.left - fr.left));
   };
 
   // RASTATIME 2026-10-08 - toolbar "Edit" with several tracks selected: one
@@ -1274,8 +1280,9 @@ var AIRTIME = (function (AIRTIME) {
           var filterMessage = $libContent.find(
             ".filter-message, #lib-filter-message",
           );
+          // DataTables 1.13 renders the box as <input type="search">
           var searchInput = $libContent.find(
-            '.dataTables_filter input[type="text"]',
+            '.dataTables_filter input[type="text"], .dataTables_filter input[type="search"]',
           );
           var advancedSet =
             $("#advanced_search")
@@ -1283,10 +1290,11 @@ var AIRTIME = (function (AIRTIME) {
               .filter(function () {
                 return $.trim($(this).val() || "") !== "";
               }).length > 0;
+          // active = the operator set something (search text or an advanced
+          // field); a bare difference between total and shown rows is not a
+          // filter of theirs
           var filterActive =
-            $.trim(searchInput.val() || "") !== "" ||
-            advancedSet ||
-            data.iTotalRecords > data.iTotalDisplayRecords;
+            $.trim(searchInput.val() || "") !== "" || advancedSet;
           // the caret button keeps no text; count and "x" live in the
           // filter div, placed right after the input (mod.placeFilterIndicator)
           filterMessage.text("");
@@ -2705,9 +2713,7 @@ $(document).ready(function () {
     var $adv = $("#advanced_search");
     $adv.find('input[type="text"]').val("");
     $adv.find("select").prop("selectedIndex", 0);
-    $("#library_content")
-      .find('.dataTables_filter input[type="text"]')
-      .val("");
+    $("#library_content").find(".dataTables_filter input").val("");
     var api = $("#library_display").DataTable();
     api.search("").columns().search("").draw();
   });
