@@ -345,11 +345,27 @@ Le dossier se vide donc de ses fichiers audio après chaque passage —
 déplacés dans la bibliothèque en cas de succès, supprimés en cas
 d'échec.  Les fichiers non audio restent.
 
-### Sous-dossiers
+### Sous-dossiers et gros lots (depuis le 2026-10-08)
 
-Les sous-dossiers sont **ignorés** — le scanner ne regarde que les
-fichiers posés directement dans le dossier d'import.  Les fichiers
-dans les sous-dossiers restent exactement où ils sont.
+Les sous-dossiers sont **parcourus** : chaque fichier audio du dossier
+d'import et de tout sous-dossier est importé, dossier par dossier dans
+l'ordre des chemins ; un sous-dossier vidé par les déplacements est
+supprimé.  La structure des dossiers n'est pas reprise dans la
+bibliothèque (elle classe les fichiers d'après leurs métadonnées) :
+taguez les fichiers avant de les copier.
+
+Un scan transmet au plus **2 000 fichiers** et s'arrête après **200
+secondes** ; le reste attend le prochain passage (toutes les 5 minutes
+ou **Scan Now**), et la ligne d'état indique combien attendent.  Cela
+garde un scan dans la limite de temps de PHP - un scan mort en plein
+déplacement laissait autrefois un demi-fichier.  L'analyseur traite
+ensuite la file fichier par fichier ; sur cette machine un MP3 de
+quatre minutes prend environ 1.1 s (essai de 50 fichiers,
+2026-10-08) : comptez environ 3 000 titres par heure de bout en bout et
+environ sept heures pour 20 000 titres.  Placez le dossier d'import sur le
+même disque que la médiathèque (le déplacement est alors instantané et
+atomique), réglez d'abord *Track Type Upload Default* et *Default
+Import Owner*, et copiez par lots de quelques milliers.
 
 ### Propriété
 

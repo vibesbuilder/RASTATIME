@@ -395,11 +395,28 @@ Der Ordner leert sich also nach jedem Durchlauf von Audiodateien —
 bei Erfolg in die Bibliothek verschoben, bei Fehlschlag gelöscht.
 Nicht-Audio-Dateien bleiben.
 
-### Unterordner
+### Unterordner und große Mengen (seit 2026-10-08)
 
-Unterordner werden **ignoriert** — der Scanner betrachtet nur
-Dateien direkt im Import-Ordner.  Dateien in Unterordnern bleiben
-unangetastet, wo sie sind.
+Unterordner werden **durchlaufen**: Jede Audiodatei im Import-Ordner
+und in jedem Unterordner wird importiert, Ordner für Ordner in
+Pfadreihenfolge; ein Unterordner, den die Verschiebungen leer
+zurücklassen, wird entfernt.  Die Ordnerstruktur wandert nicht in die
+Bibliothek (sie ordnet Dateien nach ihren Metadaten), taggen Sie die
+Dateien also vor dem Kopieren.
+
+Ein Scan übergibt höchstens **2.000 Dateien** und hält nach **200
+Sekunden** an; der Rest wartet auf den nächsten Lauf (alle 5 Minuten
+oder **Scan Now**), die Statuszeile nennt die Zahl der wartenden
+Dateien.  So bleibt ein Scan innerhalb des PHP-Zeitlimits - ein
+mitten im Verschieben abgebrochener Scan hinterließ früher eine halbe
+Datei.  Der Analyzer arbeitet die Warteschlange danach Datei für Datei
+ab; auf dieser Maschine braucht eine vierminütige MP3 etwa
+1.1 s (Probe mit 50 Dateien, 2026-10-08), rechnen Sie also mit
+rund 3.000 Titeln pro Stunde von Anfang bis Ende und für 20.000 Titel
+mit etwa sieben Stunden.  Legen Sie den Import-Ordner auf dasselbe Laufwerk wie
+die Mediathek (das Verschieben ist dann sofort und atomar), setzen Sie
+vorher *Track Type Upload Default* und *Default Import Owner* und
+kopieren Sie in Tranchen von einigen tausend Dateien.
 
 ### Besitz
 

@@ -405,6 +405,16 @@ class LocalImportScanTask implements AirtimeTask
     // move would truncate it and a failed attempt DELETES the source.
     public const QUIET_SECONDS = 60;
     public const AUDIO_EXTENSIONS = ['mp3', 'wav', 'm4a', 'flac', 'ogg', 'oga', 'aac', 'opus'];
+    // RASTATIME 2026-10-08 - bulk imports (operator: 20,000 tracks): one
+    // scan hands over at most MAX_PER_RUN files (the hand-over itself takes ~25 files/s,
+    // the analyzer behind it ~3,000 files/h - measured 2026-10-08) and stops after
+    // MAX_SECONDS, well inside PHP's 300-s request limit - a scan that
+    // died mid-move left half a file in organize/.  The rest waits for
+    // the next run (every 5 minutes, or Scan Now); the status line says
+    // how many.  Subfolders are walked since the same day; a subfolder
+    // left empty by the moves is removed.
+    public const MAX_PER_RUN = 2000;
+    public const MAX_SECONDS = 200;
 
     public function shouldBeRun()
     {
@@ -439,7 +449,7 @@ class LocalImportScanTask implements AirtimeTask
      * importer logic.
      *
      * @param  string $folder absolute path on the RASTATIME host
-     * @return array  ['imported' => int, 'failed' => int, 'skipped' => int, 'settling' => int]
+     * @return array  ['imported' => int, 'failed' => int, 'skipped' => int, 'settling' => int, 'waiting' => int]
      */
     public static function scanOnce($folder)
     {
@@ -447,6 +457,8 @@ class LocalImportScanTask implements AirtimeTask
         $failed = 0;
         $skipped = 0;
         $settling = 0;
+        $waiting = 0;
+        $started = microtime(true);
 
         Application_Model_Preference::setLocalImportLastRun(time());
 
@@ -454,25 +466,36 @@ class LocalImportScanTask implements AirtimeTask
             $msg = 'Folder missing or unreadable: ' . $folder;
             Logging::warn('LocalImportScanTask: ' . $msg);
             Application_Model_Preference::setLocalImportLastStatus($msg);
-            return compact('imported', 'failed', 'skipped', 'settling');
+            return compact('imported', 'failed', 'skipped', 'settling', 'waiting');
         }
 
-        $entries = @scandir($folder);
-        if ($entries === false) {
-            $msg = 'scandir failed for: ' . $folder;
+        // RASTATIME 2026-10-08 - the folder and every subfolder, files only,
+        // in a stable order (path), so a bulk copy is worked off folder by
+        // folder and the operator sees where the scan is.
+        $files = [];
+        $dirs = [];
+        try {
+            $it = new RecursiveIteratorIterator(
+                new RecursiveDirectoryIterator($folder, FilesystemIterator::SKIP_DOTS),
+                RecursiveIteratorIterator::CHILD_FIRST
+            );
+            foreach ($it as $entry) {
+                if ($entry->isDir()) {
+                    $dirs[] = $entry->getPathname();
+                } elseif ($entry->isFile()) {
+                    $files[] = $entry->getPathname();
+                }
+            }
+        } catch (Exception $exc) {
+            $msg = 'scan failed for: ' . $folder . ' (' . $exc->getMessage() . ')';
             Logging::warn('LocalImportScanTask: ' . $msg);
             Application_Model_Preference::setLocalImportLastStatus($msg);
-            return compact('imported', 'failed', 'skipped', 'settling');
+            return compact('imported', 'failed', 'skipped', 'settling', 'waiting');
         }
+        sort($files, SORT_STRING);
 
-        foreach ($entries as $name) {
-            if ($name === '.' || $name === '..') {
-                continue;
-            }
-            $fullPath = $folder . DIRECTORY_SEPARATOR . $name;
-            if (!is_file($fullPath)) {
-                continue;  // ignore subdirs
-            }
+        foreach ($files as $fullPath) {
+            $name = basename($fullPath);
             $ext = strtolower(pathinfo($name, PATHINFO_EXTENSION));
             if (!in_array($ext, self::AUDIO_EXTENSIONS, true)) {
                 // Non-audio: leave it (operator may have placed
@@ -489,6 +512,13 @@ class LocalImportScanTask implements AirtimeTask
             $mtime = @filemtime($fullPath);
             if ($mtime === false || (time() - $mtime) < self::QUIET_SECONDS) {
                 $settling++;
+                continue;
+            }
+
+            // RASTATIME 2026-10-08 - cap per run (count and time): the rest
+            // waits for the next run
+            if (($imported + $failed) >= self::MAX_PER_RUN || (microtime(true) - $started) > self::MAX_SECONDS) {
+                $waiting++;
                 continue;
             }
 
@@ -509,17 +539,27 @@ class LocalImportScanTask implements AirtimeTask
             // For failures (bad extension, permission denied,
             // analyzer signal failure), we DO delete the source
             // explicitly so the broken file does not pile up.
+            $relative = ltrim(str_replace($folder, '', $fullPath), '/\\');
             try {
                 CcFiles::createFromImportFolder($fullPath, $name, false);
                 $imported++;
-                Logging::info('LocalImportScanTask: imported ' . $name);
+                Logging::info('LocalImportScanTask: imported ' . $relative);
             } catch (Exception $exc) {
                 $failed++;
                 Logging::warn(
-                    'LocalImportScanTask: import failed for ' . $name
+                    'LocalImportScanTask: import failed for ' . $relative
                     . ': ' . $exc->getMessage() . ' (deleting source)'
                 );
                 @unlink($fullPath);
+            }
+        }
+
+        // RASTATIME 2026-10-08 - subfolders the moves left empty go away
+        // (deepest first - the iterator above listed them child-first)
+        foreach ($dirs as $dir) {
+            $rest = @scandir($dir);
+            if (is_array($rest) && count($rest) <= 2) {
+                @rmdir($dir);
             }
         }
 
@@ -527,12 +567,15 @@ class LocalImportScanTask implements AirtimeTask
             'imported %d, failed %d, skipped %d, settling %d',
             $imported, $failed, $skipped, $settling
         );
+        if ($waiting > 0) {
+            $status .= sprintf(', %d waiting for the next run', $waiting);
+        }
         Application_Model_Preference::setLocalImportLastStatus($status);
         if ($imported > 0 || $failed > 0) {
-            Logging::info('LocalImportScanTask: ' . $status);
+            Logging::info('LocalImportScanTask: ' . $status . sprintf(' (%.0f s)', microtime(true) - $started));
         }
 
-        return compact('imported', 'failed', 'skipped', 'settling');
+        return compact('imported', 'failed', 'skipped', 'settling', 'waiting');
     }
 }
 

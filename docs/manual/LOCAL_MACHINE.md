@@ -365,11 +365,26 @@ The folder therefore empties itself of audio files after each scan —
 moved into the library on success, deleted on failure.  Non-audio
 files stay.
 
-### Subfolders
+### Subfolders and large batches (since 2026-10-08)
 
-Subfolders are **ignored** — the scanner only looks at files lying
-directly in the import folder.  Files inside subfolders are left
-exactly where they are.
+Subfolders are **walked**: every audio file in the import folder and
+in any subfolder is imported, folder by folder in path order, and a
+subfolder the moves leave empty is removed.  The folder structure is
+not carried into the library (the library organises files by their
+metadata), so tag the files before you copy them.
+
+One scan hands over at most **2,000 files** and stops after **200
+seconds**; the rest waits for the next run (every 5 minutes, or
+**Scan Now**), and the status line says how many are waiting.  This
+keeps a scan inside PHP's request limit - a scan that died mid-move
+used to leave half a file behind.  The analyzer then works through
+the queue one file at a time; on this machine a four-minute MP3 takes
+about 1.1 s (probe of 50 files, 2026-10-08), so expect roughly
+3,000 tracks per hour end to end and plan a 20,000-track import for
+about seven hours.  Put the import folder on the same drive as the media library
+(the move is then instant and atomic), set *Track Type Upload Default*
+and *Default Import Owner* first, and copy in batches of a few
+thousand.
 
 ### Ownership
 

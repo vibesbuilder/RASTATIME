@@ -336,11 +336,27 @@ La carpeta se vacía por tanto de archivos de audio tras cada pasada —
 movidos a la biblioteca si hay éxito, borrados si hay fallo.  Los
 archivos no de audio permanecen.
 
-### Subcarpetas
+### Subcarpetas y lotes grandes (desde 2026-10-08)
 
-Las subcarpetas se **ignoran** — el escáner solo mira los archivos
-situados directamente en la carpeta de importación.  Los archivos
-dentro de subcarpetas se quedan exactamente donde están.
+Las subcarpetas se **recorren**: cada archivo de audio de la carpeta de
+importación y de cualquier subcarpeta se importa, carpeta por carpeta
+en orden de ruta; una subcarpeta que los traslados dejan vacía se
+elimina.  La estructura de carpetas no pasa a la biblioteca (que
+organiza los archivos por sus metadatos): etiquete los archivos antes
+de copiarlos.
+
+Un escaneo entrega como máximo **2.000 archivos** y se detiene tras
+**200 segundos**; el resto espera a la siguiente pasada (cada 5
+minutos o **Scan Now**), y la línea de estado indica cuántos esperan.
+Así el escaneo se mantiene dentro del límite de tiempo de PHP - un
+escaneo interrumpido a mitad de un traslado dejaba antes medio
+archivo.  El analizador procesa después la cola archivo a archivo; en
+esta máquina un MP3 de cuatro minutos tarda unos 1.1 s (prueba
+con 50 archivos, 2026-10-08): cuente con unas 3.000 pistas por hora de
+principio a fin y con unas siete horas para 20.000 pistas.  Coloque la carpeta de
+importación en la misma unidad que la mediateca (el traslado es
+entonces instantáneo y atómico), ajuste antes *Track Type Upload
+Default* y *Default Import Owner*, y copie en lotes de unos miles.
 
 ### Propiedad
 
