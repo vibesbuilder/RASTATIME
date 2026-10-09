@@ -5174,20 +5174,25 @@ div.dt-button-collection .dt-button > span {
     bottom: 0;
     height: 37px;
     box-sizing: border-box;
-    padding: 6px 6px 0 6px;
+    padding: 6px 12px 0 6px;
     overflow: hidden;
     border-top: 1px solid #5b5b5b;
+    /* one flex row: length menu left, pager pushed to the right edge
+       (operator 2026-10-09: right-aligned); no floats, so nothing wraps */
+    display: flex;
+    align-items: flex-start;
 }
-/* The pager sits right next to the length menu (both floated left) instead
-   of at the far right edge of the wide pane, and carries its colours here
-   explicitly (operator 2026-10-09: pager not visible on the live page). */
 #recent_uploads_table_wrapper > .dataTables_footer .dataTables_length {
-    float: left;
+    float: none;
+    flex: 0 0 auto;
 }
 #recent_uploads_table_wrapper > .dataTables_footer .dataTables_paginate {
-    float: left;
-    padding: 0 0 0 24px;
+    float: none;
+    flex: 0 0 auto;
+    margin-left: auto;
+    padding: 0;
     line-height: 24px;
+    white-space: nowrap;
 }
 #recent_uploads_table_wrapper > .dataTables_footer .dataTables_paginate .paginate_button {
     display: inline-block;
