@@ -1127,7 +1127,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   dazu vier hängengebliebene Test-Uploads vom 2026-05-20.  Alle 25 Zeilen
   samt der vier `organize/`-Reste entfernt (die 21 Titel sind längst
   regulär importiert).  Künftig behält eine abgewiesene Zeile Dateinamen
-  und Zeit, damit Recent Uploads sagt, was wann scheiterte.
+  und Zeit, damit Recent Uploads sagt, was wann scheiterte.  Commit 55502ae.
 - **Massenbearbeitung: „Fill at least one field" bei 1.000 Tracks
   (2026-10-09)** — die IDs gingen als `ids[]` (1.000 Eingabevariablen) plus
   die Feldpaare an PHP, dessen `max_input_vars = 1000` den Rest verwarf; der
