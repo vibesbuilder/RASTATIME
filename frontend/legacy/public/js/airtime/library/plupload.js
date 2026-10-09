@@ -134,7 +134,9 @@ $(document).ready(function () {
       sAjaxSource: "/plupload/recent-uploads/format/json",
       sAjaxDataProp: "files",
       bSearchable: false,
-      bInfo: true,
+      // RASTATIME 2026-10-09 - no "Showing 1 to 25 of N uploads" line
+      // (operator: unreadable on the dark footer, and not needed)
+      bInfo: false,
       //"sScrollY": "200px",
       bFilter: false,
       bSort: false,
@@ -143,7 +145,7 @@ $(document).ready(function () {
       // 'F' slot of the legacy sDom, so length menu, info line and pager
       // silently vanished and Recent Uploads showed only its first 10 rows
       // (operator report).  A plain <"dataTables_footer"> div holds them.
-      sDom: '<"dataTables_scrolling"frt><"dataTables_footer"lip>',
+      sDom: '<"dataTables_scrolling"frt><"dataTables_footer"lp>',
       bPaginate: true,
       sPaginationType: "full_numbers",
       iDisplayLength: 25,

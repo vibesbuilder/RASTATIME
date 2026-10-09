@@ -5178,15 +5178,38 @@ div.dt-button-collection .dt-button > span {
     overflow: hidden;
     border-top: 1px solid #5b5b5b;
 }
-/* dashboard.css hides .dataTables_info under 1700 px for the crowded
-   Dashboard panes; the Upload page has the room, so show it here. */
-#recent_uploads_table_wrapper > .dataTables_footer .dataTables_info {
-    display: block;
-    line-height: 24px;
-    padding-left: 16px;
-}
+/* The pager sits right next to the length menu (both floated left) instead
+   of at the far right edge of the wide pane, and carries its colours here
+   explicitly (operator 2026-10-09: pager not visible on the live page). */
 #recent_uploads_table_wrapper > .dataTables_footer .dataTables_length {
     float: left;
+}
+#recent_uploads_table_wrapper > .dataTables_footer .dataTables_paginate {
+    float: left;
+    padding: 0 0 0 24px;
+    line-height: 24px;
+}
+#recent_uploads_table_wrapper > .dataTables_footer .dataTables_paginate .paginate_button {
+    display: inline-block;
+    box-sizing: border-box;
+    min-width: 24px;
+    padding: 2px 8px;
+    margin-left: 2px;
+    text-align: center;
+    color: #eee !important;
+    background: #565656;
+    border: 1px solid #6a6a6a;
+    font-size: 12px;
+    line-height: 16px;
+    cursor: pointer;
+}
+#recent_uploads_table_wrapper > .dataTables_footer .dataTables_paginate .paginate_button.current {
+    border-color: var(--rt-accent);
+    color: #fff !important;
+}
+#recent_uploads_table_wrapper > .dataTables_footer .dataTables_paginate .paginate_button.disabled {
+    color: #888 !important;
+    cursor: default;
 }
 
 /* ===================================================================

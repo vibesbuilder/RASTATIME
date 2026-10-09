@@ -1121,6 +1121,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Recent Uploads: Info-Zeile weg, Pager neben dem Längenmenü (2026-10-09,
+  Nachtrag zu 86ba100)** — „Showing 1 to 25 of …" war auf dem dunklen Fuß
+  unlesbar und ist auf Operator-Wunsch entfernt (`bInfo: false`); die
+  Seitennavigation stand am rechten Rand der breiten Fläche und war nicht
+  zu sehen, sie sitzt jetzt links direkt neben „Show N entries" mit
+  explizit gesetzten Farben.
 - **Recent Uploads: Fuß war da, aber unsichtbar (2026-10-09, Nachtrag zu
   75b55e9)** — die Upload-Seite legt die Tabelle absolut aus und hält unten
   einen 37-px-Streifen für den alten `.fg-toolbar`-Fuß frei; der neue
