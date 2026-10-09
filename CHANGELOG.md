@@ -1134,7 +1134,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (4) Der zweite Lauf (1.371 Dateien) starb ohne Statuszeile, weil der
   auslösende Browser-Request abgebrochen wurde: Läufe auf 300 Dateien /
   20 s gekürzt (≈ 3.000/h bei 5-min-Takt, das Tempo des Analyzers) plus
-  `ignore_user_abort`.  Manual LOCAL_MACHINE ×4.
+  `ignore_user_abort`.  Manual LOCAL_MACHINE ×4.  Commit 804d9c2.
 - **PHP-Deprecation-Flut im HTTPS-Fehlerlog (2026-10-09)** — `airtime-boot.php`
   setzte `E_ALL | E_STRICT & ~E_DEPRECATED & ~E_USER_DEPRECATED`; `&` bindet
   stärker als `|`, die Maske war also E_ALL, und jede PHP-8-Deprecation des
