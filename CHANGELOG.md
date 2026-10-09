@@ -1126,7 +1126,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Längenmenü, Info-Zeile und Seitennavigation; die Liste zeigte stumm die
   ersten 10 Zeilen.  Footer als `dataTables_footer`-Div (wie Playout
   History), 25 je Seite, Menü 10/25/50/100/500; `plupload.js`,
-  `styles.css`.  Harness-geprüft (Info-Zeile, 5 Optionen, Pager).
+  `styles.css`.  Harness-geprüft (Info-Zeile, 5 Optionen, Pager).  Commit 75b55e9.
 - **„Import failed" ohne Namen unter Recent Uploads (2026-10-09)** — die 21
   Dateien, die die Legacy-Übergabe am Vormittag abwies, hinterließen Zeilen
   ohne Namen und ohne Zeitstempel (`createAndImport` markiert nur FAILED);
