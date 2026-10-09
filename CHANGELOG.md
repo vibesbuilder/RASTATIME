@@ -783,7 +783,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Liste nach oben (ein Redraw ohne Blättern, etwa nach dem Bearbeiten,
   lässt die Position in Ruhe).  Lore: jQuery reicht namespaced Trigger
   (`page.dt`) nur an Handler mit demselben Namespace, ein Handler auf
-  `page` sieht nichts.  Harness-geprüft.
+  `page` sieht nichts.  Harness-geprüft.  Commit 0b34d6a.
 - **Library: Seitenlänge 500 / 1000 / Alle (2026-10-09)** — das Menü unten
   links bietet neben 25/50/100 jetzt 500, 1000 und „All" (−1 = ohne LIMIT,
   Datatables.php kannte den Fall bereits); `library.js`.  Commit 0c7d429.
