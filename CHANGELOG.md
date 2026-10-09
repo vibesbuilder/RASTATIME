@@ -793,7 +793,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   5 Minuten", und der Scan formuliert seinen Status ohne Nullen: „nothing
   to import" bzw. „268 handed over, 542 waiting for the next run, 32 queued
   at the analyzer (89 non-audio files left alone)".  Manual LOCAL_MACHINE ×4
-  (Wortlaut der Statuszeile).
+  (Wortlaut der Statuszeile).  Commit 655a529.
 - **Library: Seitenwechsel zeigt den Seitenanfang (2026-10-09)** — der
   Scroll-Container behielt beim Blättern seine Position; jetzt setzt ein
   `page.dt`-Ereignis eine Marke und der folgende `draw.dt` scrollt die
