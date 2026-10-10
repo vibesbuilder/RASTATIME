@@ -4985,4 +4985,7 @@ Private-Key-Recovery, SSRF via X.509 AIA; nur ueber php-amqplib eingebunden, Rab
 (3x low: YAML-Parser DoS).  Dry-run: phpseclib -> 3.0.57, symfony/yaml -> 5.4.53, beide innerhalb der Pins, keine
 weiteren Abhaengigkeiten.  vendor/ ist nicht im Git (nur composer.lock) -> `composer update` wirkt sofort live;
 Vorgehen: composer update der zwei Pakete, `php -l` ueber die geaenderten Dateien, UI-Kurzlauf, composer.lock
-committen.  Go offen.
+committen.  Go 2026-10-10 -> erledigt: phpseclib 3.0.57, symfony/yaml 5.4.53, Audit sauber.  Zwischenfall: beide
+vendor-Ordner waren git-Checkouts eines anderen Windows-Benutzers, composer brach den Batch ab ('git show-ref'),
+UI ca. 1 min HTTP 500, bis beide Ordner geloescht und per --prefer-dist neu installiert waren.  Regel in
+COMPONENTS.md: git-Checkouts im vendor erst entfernen, dann --prefer-dist.

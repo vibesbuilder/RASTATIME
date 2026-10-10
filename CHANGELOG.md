@@ -2045,6 +2045,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+- **Legacy PHP dependencies: phpseclib 3.0.52 -> 3.0.57, symfony/yaml 5.4.45
+  -> 5.4.53 (2026-10-10, first Composer audit on the machine)** - five
+  advisories in two packages (phpseclib X25519 private-key recovery and
+  X.509 SSRF, medium; three symfony/yaml parser DoS, low), both updated
+  within the pins, audit clean afterwards.  The vendor tree held git-sourced
+  checkouts owned by another Windows user; composer aborted the batch and
+  the UI answered 500 for about a minute until both folders were replaced by
+  dist installs (--prefer-dist).  Commit: COMPOSER_PENDING.
+
 - **Brute-Force-Paket (c): Gründe, Sperrliste mit Entsperren, Firewall-Wächter
   (2026-10-06, Operator-Go)** — (1) der Legacy-Check `check-live-stream-auth`
   nennt den Ablehnungsgrund im Header `X-Rastatime-Auth-Reason` (`no-show`,
