@@ -5021,3 +5021,10 @@ Befund: beide Fehler traten NUR am 2026-10-04 auf (500 = Symfony-YAML-ParseExcep
 '!' unquotiert - seither gequotet; 401 = Icecast-Admin-Zugang, 17:08-17:12, danach nie wieder) und heute 11:52-12:32
 (Composer-Zwischenfall).  Seit 12:34 keine Fehler, Pushes laufen.  Hinweis: das Apache error_log vom 04.10. enthaelt
 das damalige Passwort im Klartext (Parse-Fehlermeldung) -> Operator sollte es rotieren und das error_log bereinigen.
+
+### 🟡 Datenbank-Passwort rotieren (Klartext im Apache-error_log vom 2026-10-04) - Operator: spaeter
+Das aktive PostgreSQL-Passwort des Benutzers rastatime steht in 61 Zeilen von C:/Tools/Apache24/logs/error_log
+(Symfony-YAML-Parse-Fehler vom 04.10., unquotiertes '!').  Risiko begrenzt (PostgreSQL nur localhost, Log nur lokal).
+Ablauf im ruhigen Moment: neues Passwort ohne YAML-Sonderzeichen oder in Anfuehrungszeichen; psql ALTER ROLE rastatime
+WITH PASSWORD; libretime.conf database.password; Neustart API, PLAYOUT, ANALYZER, WORKER (Legacy-PHP liest die Datei je
+Request, Backup-Task je Lauf); Apache neu starten und error_log bereinigen; danach Logins/UI/Stats-Push pruefen.
