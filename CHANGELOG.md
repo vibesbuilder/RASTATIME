@@ -813,7 +813,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   tracks, `fade.out` after skip, `output.file` retry delay, harbor socket
   cleanup, buffer growth.  The `Unix.select` leak remains (OCaml 4.14).
   Rollback: the same two `nssm set` commands with the old path.  Commit:
-  LIQ246_PENDING.
+  91a43c1.
 
 - **Django 4.2 LTS -> 5.2 LTS, DRF 3.15 -> 3.16, django-filter 24 -> 25,
   django-cors-headers pin <5 (2026-10-10, operator Go after the evaluation of
