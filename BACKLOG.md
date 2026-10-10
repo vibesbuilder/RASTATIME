@@ -5002,6 +5002,11 @@ Go 2026-10-10 -> beides gebaut (Playout: Referenz vor der Arm-Schleife, Phasenze
 armed X s after the clock reference'; API: library_size Cache 900 s + Hintergrund-Recount, library_size_age_seconds im
 Payload, Move-Validierung zaehlt weiter exakt).  Wirksam nach API- und PLAYOUT-Neustart; Nachmessung: Phasenzeile
 (armed < 0,1 s) und Titelstart +0,3 s.
+Nachmessung 2026-10-10: Neustarts 13:20, Phasenzeilen 'root 0.02-0.13 s, timers armed 0.00 s'; Testshow 13:25-13:35:
+alle vier PLAY innerhalb von 7-14 ms nach der Zeilensekunde, auf Sendung +0,50 s (Korrelation 0,99) statt +1,90 s.
+Beobachtung: mit Liquidsoap 2.4.6 liegt der Datei-Start bei +0,5 s statt +0,3 s unter 2.4.4 (~0,2 s mehr
+Start-Latenz, konstant ueber die Kette; der Fix 'sequence behaelt den ersten Chunk' ist der Verdacht) - Sprung
+akzeptabel, im Memory notiert, bei der Standby-Umstellung erneut messen.
 
 ### 🟡 Statistik-Pushes scheitern seit 2026-10-04: push-stream-stats 500, Icecast admin/stats.xml 401
 Der Stats-Thread des PLAYOUT bekommt alle 2 min HTTP 500 vom Legacy-Endpunkt /api/push-stream-stats und 401 von
