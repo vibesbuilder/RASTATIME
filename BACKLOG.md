@@ -4972,7 +4972,11 @@ liquidsoap-lang=2.4.6, Stereo Tool aktiv (Lizenz gesetzt), alle Mounts, PLAYOUT 
 Nachmessung erste Sendungen (12:00 BBC), Speicher-Trend, nach ruhiger Woche RASTATIME-STANDBY umstellen und
 C:/Tools/liquidsoap (2.4.4) als Rueckfall behalten.
 
-### 💡 Icecast 2.4.4 -> 2.5.0 (entdeckt 2026-10-09 durch update_check.py)
+### 🔴 Icecast 2.4.4 -> 2.5.0 (Evaluation 2026-10-10: Defer, Operator: vorerst nicht)
+Vorbedingungen: Testinstanz mit dem win64-Installer neben 2.4.4 auf anderem Port, Konfig-Abgleich (icecast.xml ist
+schon im 2.5-Stil mit <role>/<event>, aber zwei <alias> -> <resource>), Pruefung von admin/stats.xml, admin/killsource
+und der Fallback-Kette mit Liquidsoap-Testausgang.  Nutzen: X-Forwarded-For hinter dem Proxy, gepflegte Linie; keine
+Sicherheitsfixes in 2.5.0.  Upstream-Doku luecken (ChangeLog/NEWS ohne 2015-2025, 2.5-Doku WIP).
 Icecast 2.5.0 ist veroeffentlicht (Tag 2025-12-31, icecast_win64_2.5.0.exe).  Nicht dringend: der oeffentliche Stream
 laeuft ueber den Apache-Reverse-Proxy, 2.4.4 ist intern.  Vor einem Wechsel Changelog pruefen (Konfig-Aenderungen,
 Fallback-Mounts, Admin-API fuer kick_dj_source, status.xsl-Parsing in der Playout-Statistik).
