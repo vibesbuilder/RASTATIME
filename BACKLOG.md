@@ -4956,7 +4956,7 @@ db_default verfuegbar (Line-In-Gain-Lore).  Installiert 2026-10-10 00:20 (Tag li
 requirements.txt, pip check sauber, django check prod sauber); API-/PLAYOUT-Neustart durch Operator, danach
 Verifikation (Logs, /api/v2/version, UI, Suiten im Prod-venv).
 
-### 🟢 Liquidsoap 2.4.4 -> 2.4.6 (Evaluation 2026-10-09, Go 2026-10-10 - Bench laeuft)
+### ✅ Liquidsoap 2.4.4 -> 2.4.6 auf dem Hauptdienst (Go 2026-10-10, live 10:55) - Standby folgt nach einer ruhigen Woche
 Offizieller win64-Build (49 MB).  Relevante Fixes fuer uns: `sequence` verliert den ersten Chunk+Metadaten eines
 Nachfolgers nicht mehr (unsere kurzen Jingles laufen ueber sequence/cross), `cross` behaelt Metadaten bei wiederholtem
 Titel + on_track bei jedem Crossing (ICY), `fade.out` mutet nach Skip nicht den ganzen Folgetitel, `output.file`
@@ -4965,12 +4965,24 @@ metadata.deduplicate nicht ueber Track-Marke, unbegrenztes Wachstum in Typ-Unifi
 Strings.Mutable, cross-Crash bei source.skip von aussen).  NICHT behoben: Unix.select-Leak (OCaml 4.14 bleibt).
 Risiko: Windows-Build-Eigenheiten (Stereo Tool, portaudio, input.http-Haenger) - Bench Pflicht (--check, 40-s-Lauf mit
 Stereo Tool, Speicher, Shutdown), Tausch im ruhigen Moment, Rueckfall = Ordner zurueckbenennen.  Aufwand ~2 h.
+Durchgefuehrt 2026-10-10: Bench 00:24 (check rc 0 fuer beide Skripte, Stereo Tool ok, 975 MB flach; Shutdown-Rest wie
+bei 2.4.4, Bench-Zombie PID 17140 haelt C:/Tools/liquidsoap-2.4.6 bis zum Reboot -> Build unter
+C:/Tools/liquidsoap-v2.4.6).  Hauptdienst per nssm set Application/AppDirectory umgestellt, Neustart 10:55:40:
+liquidsoap-lang=2.4.6, Stereo Tool aktiv (Lizenz gesetzt), alle Mounts, PLAYOUT hat Gates neu gesetzt.  OFFEN:
+Nachmessung erste Sendungen (12:00 BBC), Speicher-Trend, nach ruhiger Woche RASTATIME-STANDBY umstellen und
+C:/Tools/liquidsoap (2.4.4) als Rueckfall behalten.
 
 ### 💡 Icecast 2.4.4 -> 2.5.0 (entdeckt 2026-10-09 durch update_check.py)
 Icecast 2.5.0 ist veroeffentlicht (Tag 2025-12-31, icecast_win64_2.5.0.exe).  Nicht dringend: der oeffentliche Stream
 laeuft ueber den Apache-Reverse-Proxy, 2.4.4 ist intern.  Vor einem Wechsel Changelog pruefen (Konfig-Aenderungen,
 Fallback-Mounts, Admin-API fuer kick_dj_source, status.xsl-Parsing in der Playout-Statistik).
 
-### 🟢 Composer auf der Maschine + `composer audit` fuer die 99 Legacy-Pakete (Go 2026-10-10, Operator laedt composer.phar)
+### ✅ Composer auf der Maschine + `composer audit` fuer die 99 Legacy-Pakete (Go 2026-10-10, Audit gelaufen)
 composer.phar (getcomposer.org, ~3 MB) nach C:/Tools/composer; dann `composer audit` im Legacy-Verzeichnis, Ergebnis
 in COMPONENTS.md Abschnitt 1; Updates innerhalb der Pins in einem Worktree mit PHP-Lint + TEST_PLAN-UI-Checks.
+Audit 2026-10-10 (Composer 2.10.3): 5 Advisories in 2 Paketen - phpseclib/phpseclib 3.0.52 (2x medium: X25519
+Private-Key-Recovery, SSRF via X.509 AIA; nur ueber php-amqplib eingebunden, RabbitMQ-Pfad) und symfony/yaml 5.4.45
+(3x low: YAML-Parser DoS).  Dry-run: phpseclib -> 3.0.57, symfony/yaml -> 5.4.53, beide innerhalb der Pins, keine
+weiteren Abhaengigkeiten.  vendor/ ist nicht im Git (nur composer.lock) -> `composer update` wirkt sofort live;
+Vorgehen: composer update der zwei Pakete, `php -l` ueber die geaenderten Dateien, UI-Kurzlauf, composer.lock
+committen.  Go offen.
