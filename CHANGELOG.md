@@ -2063,8 +2063,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   X.509 SSRF, medium; three symfony/yaml parser DoS, low), both updated
   within the pins, audit clean afterwards.  The vendor tree held git-sourced
   checkouts owned by another Windows user; composer aborted the batch and
-  the UI answered 500 for about a minute until both folders were replaced by
-  dist installs (--prefer-dist).  Commit: 280904d.
+  the legacy PHP app answered 500 from 11:52 to 12:32 (Apache error_log:
+  PHP fatal on the phpseclib bootstrap on every request, including the
+  playout's stats push every two minutes and a bot scan at 12:17) until both
+  folders were replaced by dist installs (--prefer-dist); the playout and the
+  streams were not affected.  Commit: 280904d.
 
 - **Brute-Force-Paket (c): Gründe, Sperrliste mit Entsperren, Firewall-Wächter
   (2026-10-06, Operator-Go)** — (1) der Legacy-Check `check-live-stream-auth`

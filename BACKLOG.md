@@ -4986,9 +4986,11 @@ Private-Key-Recovery, SSRF via X.509 AIA; nur ueber php-amqplib eingebunden, Rab
 weiteren Abhaengigkeiten.  vendor/ ist nicht im Git (nur composer.lock) -> `composer update` wirkt sofort live;
 Vorgehen: composer update der zwei Pakete, `php -l` ueber die geaenderten Dateien, UI-Kurzlauf, composer.lock
 committen.  Go 2026-10-10 -> erledigt: phpseclib 3.0.57, symfony/yaml 5.4.53, Audit sauber.  Zwischenfall: beide
-vendor-Ordner waren git-Checkouts eines anderen Windows-Benutzers, composer brach den Batch ab ('git show-ref'),
-UI ca. 1 min HTTP 500, bis beide Ordner geloescht und per --prefer-dist neu installiert waren.  Regel in
-COMPONENTS.md: git-Checkouts im vendor erst entfernen, dann --prefer-dist.
+vendor-Ordner waren git-Checkouts eines anderen Windows-Benutzers, composer brach den Batch ab ('git show-ref');
+KORREKTUR nach Apache-error_log: Legacy-PHP antwortete von 11:52 bis 12:32 (~40 min) mit Fatal/500 - jeder Stats-Push
+(alle 2 min) und ein Bot-Scan um 12:17 (84 Treffer) liefen auf; Sendebetrieb nicht betroffen.  Die Composer-Laeufe
+selbst dauerten so lange, meine Zwischenpruefung per curl kam zu frueh.  Regeln in COMPONENTS.md: git-Checkouts im
+vendor erst entfernen, dann --prefer-dist; nach jeder vendor-Aenderung Apache error_log auf PHP Fatal pruefen.
 
 ### ✅ Titelstarts 1,7 s zu spaet: Speicherort-Abruf zaehlt bei jedem Refresh die Bibliothek (gefunden + behoben 2026-10-10)
 Phasenmessung (5ce7eec) nach dem PLAYOUT-Neustart 11:48: 'fetch 1.1-1.4 s, icy 0.0 s, root 1.9-2.1 s, lock 0.0,
@@ -5008,7 +5010,10 @@ Beobachtung: mit Liquidsoap 2.4.6 liegt der Datei-Start bei +0,5 s statt +0,3 s 
 Start-Latenz, konstant ueber die Kette; der Fix 'sequence behaelt den ersten Chunk' ist der Verdacht) - Sprung
 akzeptabel, im Memory notiert, bei der Standby-Umstellung erneut messen.
 
-### 🟡 Statistik-Pushes scheitern seit 2026-10-04: push-stream-stats 500, Icecast admin/stats.xml 401
+### ✅ Statistik-Pushes: push-stream-stats 500 / admin/stats.xml 401 - historisch, geklaert 2026-10-10
 Der Stats-Thread des PLAYOUT bekommt alle 2 min HTTP 500 vom Legacy-Endpunkt /api/push-stream-stats und 401 von
 http://127.0.0.1:8000/admin/stats.xml (Icecast-Admin-Passwort?).  Nur Hoererstatistik betroffen, kein Sendebetrieb.
-Ursache pruefen (Legacy-Log, Icecast-Admin-Zugang aus den Stream-Settings).
+Befund: beide Fehler traten NUR am 2026-10-04 auf (500 = Symfony-YAML-ParseException in libretime.conf, Passwort mit
+'!' unquotiert - seither gequotet; 401 = Icecast-Admin-Zugang, 17:08-17:12, danach nie wieder) und heute 11:52-12:32
+(Composer-Zwischenfall).  Seit 12:34 keine Fehler, Pushes laufen.  Hinweis: das Apache error_log vom 04.10. enthaelt
+das damalige Passwort im Klartext (Parse-Fehlermeldung) -> Operator sollte es rotieren und das error_log bereinigen.
