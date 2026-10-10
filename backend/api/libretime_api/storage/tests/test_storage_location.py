@@ -95,6 +95,31 @@ def test_library_size_counts_files_and_bytes(as_root):
     assert sr.library_size(as_root, refresh=True) == (3, 3000)
 
 
+def test_library_size_serves_the_stale_cache_and_recounts_in_the_background(as_root, monkeypatch, tmp_path):
+    """2026-10-10: the playout's refresh paid a 2 s walk every 120 s and armed its timers late."""
+    import threading, time
+    assert sr.library_size(as_root, refresh=True) == (3, 3000)
+    (tmp_path / "library" / "extra.bin").write_bytes(b"x" * 500) if (tmp_path / "library").is_dir() else None
+    monkeypatch.setattr(sr, "SIZE_CACHE_SECONDS", 0.0)      # the entry is stale at once
+    counted = threading.Event()
+    real_walk = sr.walk_size
+
+    def slow_walk(root):
+        counted.set()
+        return real_walk(root)
+
+    monkeypatch.setattr(sr, "walk_size", slow_walk)
+    t = time.perf_counter()
+    assert sr.library_size(as_root) == (3, 3000)              # stale value, returned at once
+    assert time.perf_counter() - t < 0.5
+    assert counted.wait(5.0)                                   # the background recount ran
+    for _ in range(50):
+        if as_root.lower() not in sr._size_refreshing:
+            break
+        time.sleep(0.05)
+    assert sr.library_size_age(as_root) is not None
+
+
 # ---- validation ----------------------------------------------------------------
 
 def test_validate_rejects_bad_targets(as_root, tmp_path):

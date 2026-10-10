@@ -4990,7 +4990,7 @@ vendor-Ordner waren git-Checkouts eines anderen Windows-Benutzers, composer brac
 UI ca. 1 min HTTP 500, bis beide Ordner geloescht und per --prefer-dist neu installiert waren.  Regel in
 COMPONENTS.md: git-Checkouts im vendor erst entfernen, dann --prefer-dist.
 
-### 🟢 Titelstarts 1,7 s zu spaet: Speicherort-Abruf zaehlt bei jedem Refresh die Bibliothek (gefunden 2026-10-10)
+### ✅ Titelstarts 1,7 s zu spaet: Speicherort-Abruf zaehlt bei jedem Refresh die Bibliothek (gefunden + behoben 2026-10-10)
 Phasenmessung (5ce7eec) nach dem PLAYOUT-Neustart 11:48: 'fetch 1.1-1.4 s, icy 0.0 s, root 1.9-2.1 s, lock 0.0,
 arm 0.0' -> die Start-Timer werden ~2 s nach der Uhrzeit-Referenz armiert.  Ursache: `_refresh_storage_root` ruft
 GET /api/v2/storage/location, dessen Payload `library_size()` per os.walk ueber D:/stor (198.481 Dateien seit dem
@@ -4998,6 +4998,10 @@ Massenimport 2026-10-09) berechnet; Cache 60 s < Refresh 120 s -> jeder Refresh 
 5.-8.10. 0,1 s, 9.10. 0,4 s, 10.10. 1,7 s (Sendung 11:15 lief +1,9 s).  Fix-Vorschlag (Go offen): (1) Playout nimmt die
 Uhrzeit-Referenz unmittelbar vor dem Armieren (Hausarbeit kann Timer nie mehr verschieben); (2) API liefert die
 Bibliotheksgroesse aus einem Cache (z.B. 15 min) und rechnet im Hintergrund nach, GET blockiert nie; UI zeigt Alter.
+Go 2026-10-10 -> beides gebaut (Playout: Referenz vor der Arm-Schleife, Phasenzeile mit 'bookkeeping' und 'timers
+armed X s after the clock reference'; API: library_size Cache 900 s + Hintergrund-Recount, library_size_age_seconds im
+Payload, Move-Validierung zaehlt weiter exakt).  Wirksam nach API- und PLAYOUT-Neustart; Nachmessung: Phasenzeile
+(armed < 0,1 s) und Titelstart +0,3 s.
 
 ### 🟡 Statistik-Pushes scheitern seit 2026-10-04: push-stream-stats 500, Icecast admin/stats.xml 401
 Der Stats-Thread des PLAYOUT bekommt alle 2 min HTTP 500 vom Legacy-Endpunkt /api/push-stream-stats und 401 von

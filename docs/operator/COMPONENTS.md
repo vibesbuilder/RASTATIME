@@ -78,6 +78,12 @@ previous pin, restart, then investigate.
 
 ## 4. Known lore
 
+- A growing library slows every API call that counts it: after the 2026-10-09
+  bulk import (198k files) `GET /api/v2/storage/location` took 2 s and the
+  playout armed its start timers 1.7 s late.  Since 2026-10-10 the size is
+  served from a 900 s cache and recounted in the background, and the playout
+  takes its timer clock reference right before arming.  The refresh log line
+  (`armed=... timers armed X s after the clock reference`) is the control.
 - `pytest backend\api` on this machine needs `PYTHONUTF8=1`: the test
   database setup fails with a `UnicodeDecodeError` otherwise (German
   PostgreSQL messages in the console code page).

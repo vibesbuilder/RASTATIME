@@ -479,6 +479,23 @@ def test_held_back_row_is_dropped_when_it_left_the_schedule(sched):
     assert s._deferred_queue_ahead is None
 
 
+# ---------------------------------------------------------------------------
+# G - 2026-10-10 11:15: slow housekeeping in refresh() armed the timers late
+# ---------------------------------------------------------------------------
+
+def test_refresh_takes_the_timer_clock_reference_after_the_housekeeping(sched):
+    import time as _time
+    s, _ = sched
+    now = datetime.utcnow()
+    row = _file(now + timedelta(seconds=30), row_id=9, file_id=9)
+    s._refresh_storage_root = lambda: _time.sleep(0.4)      # a 0.4 s storage-location call
+    timers = _refresh(s, {"r": row})
+    start_t = timers["r"][0]
+    expected = (row.start - datetime.utcnow()).total_seconds()
+    assert start_t is not None
+    assert abs(start_t.interval - expected) < 0.15         # not 0.4 s too long
+
+
 def test_crash_detected_restart_forgets_the_queued_successor(sched):
     s, engine = sched
     now = datetime.utcnow()

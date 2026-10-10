@@ -24,11 +24,17 @@ from django.conf import settings
 STORAGE_ROOT_KEY = "local_storage_folder"
 MOVE_STATE_KEY = "local_storage_move"
 ROOT_CACHE_SECONDS = 15.0
-SIZE_CACHE_SECONDS = 60.0
+# RASTATIME 2026-10-10 - the library size is served from the cache and
+# recounted in the background once it is older than this; a GET never
+# waits for the walk any more (198k files = 2 s, every playout refresh paid
+# it and armed its start timers 2 s late).  Only the very first count after
+# a start, and ``refresh=True`` (move validation), walk synchronously.
+SIZE_CACHE_SECONDS = 900.0
 
 _lock = threading.Lock()
 _root_cache: Tuple[float, Optional[str]] = (0.0, None)
 _size_cache: dict = {}
+_size_refreshing: set = set()
 
 
 def normalize(path: str) -> str:
@@ -107,17 +113,45 @@ def walk_size(root: str) -> Tuple[int, int]:
     return files, total
 
 
+def _recount(root: str) -> None:
+    """Background recount for library_size (one walker per root)."""
+    try:
+        size = walk_size(root)
+        with _lock:
+            _size_cache[root.lower()] = (time.monotonic(), size)
+    finally:
+        with _lock:
+            _size_refreshing.discard(root.lower())
+
+
 def library_size(root: Optional[str] = None, refresh: bool = False) -> Tuple[int, int]:
+    """
+    (files, bytes) below the root.  Served from the cache; a stale entry
+    (older than SIZE_CACHE_SECONDS) is returned at once and recounted in a
+    background thread.  ``refresh=True`` walks synchronously.
+    """
     root = normalize(root or get_storage_root())
+    key = root.lower()
     now = time.monotonic()
     with _lock:
-        entry = _size_cache.get(root.lower())
-        if entry and not refresh and now - entry[0] < SIZE_CACHE_SECONDS:
+        entry = _size_cache.get(key)
+        if entry and not refresh:
+            if now - entry[0] >= SIZE_CACHE_SECONDS and key not in _size_refreshing:
+                _size_refreshing.add(key)
+                threading.Thread(target=_recount, args=(root,), name="library-size", daemon=True).start()
             return entry[1]
     size = walk_size(root)
     with _lock:
-        _size_cache[root.lower()] = (now, size)
+        _size_cache[key] = (time.monotonic(), size)
     return size
+
+
+def library_size_age(root: Optional[str] = None) -> Optional[float]:
+    """Seconds since the cached library size was counted; None = not yet."""
+    root = normalize(root or get_storage_root())
+    with _lock:
+        entry = _size_cache.get(root.lower())
+    return None if entry is None else time.monotonic() - entry[0]
 
 
 def root_info() -> dict:

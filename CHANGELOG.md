@@ -1179,6 +1179,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Track starts 1.7 s late: the schedule refresh armed its timers after a
+  2 s library walk (2026-10-10)** - the 11:15 test show aired +1.9 s on
+  every track.  The new refresh phase log showed the cause: the storage-
+  location endpoint counts the library (198,481 files since the bulk
+  import) on each call, its 60 s cache was shorter than the 120 s refresh,
+  and the start timers were armed against a clock reference taken before
+  that call (0.1 s late until 10-08, 0.4 s on the import day, 1.7 s today).
+  Playout: the clock reference is taken right before the arming loop, so
+  housekeeping can never shift a start again.  API: `library_size()` serves
+  the cached value and recounts in the background after 900 s; the payload
+  carries `library_size_age_seconds`.  Commit: TIMERS_PENDING.
+
 - **Filteranzeige im Suchfeld (2026-10-09, Nachtrag zu d1e953d)** — auf
   dem Dashboard spannt das Suchfeld die ganze Zeile, und DataTables 1.13
   rendert es als `input[type=search]`: alle `[type=text]`-Selektoren der

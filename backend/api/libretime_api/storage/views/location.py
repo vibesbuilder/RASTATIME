@@ -25,7 +25,10 @@ from .. import root as storage_root
 def _location_payload() -> dict:
     info = storage_root.root_info()
     files, size = storage_root.library_size(info["root"]) if info["exists"] else (0, 0)
-    info.update(library_files=files, library_bytes=size, move=storage_move.JOB.status())
+    age = storage_root.library_size_age(info["root"]) if info["exists"] else None
+    info.update(library_files=files, library_bytes=size,
+                library_size_age_seconds=None if age is None else int(age),
+                move=storage_move.JOB.status())
     return info
 
 
@@ -38,7 +41,7 @@ class StorageMoveValidateView(APIView):
     def post(self, request):
         path = str((request.data or {}).get("path", ""))
         source = storage_root.get_storage_root(refresh=True)
-        _files, size = storage_root.library_size(source)
+        _files, size = storage_root.library_size(source, refresh=True)   # exact for the move check
         return Response(storage_move.validate_target(path, source, size))
 
 

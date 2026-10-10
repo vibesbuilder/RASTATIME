@@ -634,6 +634,16 @@ class PlayoutScheduler:
                     self._current_event = None
                     self._current_audio_path = None
 
+            # RASTATIME 2026-10-10 - the clock reference for the start timers
+            # is taken HERE, right before the arming loop.  Everything the
+            # refresh did since the fetch (ICY sync, storage-root call, the
+            # current-event bookkeeping above) can take seconds - the
+            # storage-location endpoint walked a 198k-file library for 2 s on
+            # every refresh - and with the reference taken earlier every track
+            # started that much late (11:15 show: PLAY 1.7 s after the row).
+            now = datetime.utcnow()
+            t_arm0 = time.monotonic()
+
             for key, event in events.items():
                 if isinstance(event, FileEvent):
                     end_diff = (event.end - now).total_seconds()
@@ -693,12 +703,12 @@ class PlayoutScheduler:
 
         t_end = time.monotonic()
         logger.info(
-            "PlayoutScheduler: armed=%d  past=%d  other=%d  (fetch %.2f s, then "
-            "icy %.2f s, root %.2f s, lock wait %.2f s, arm %.2f s = %.2f s after "
-            "the clock reference)",
+            "PlayoutScheduler: armed=%d  past=%d  other=%d  (fetch %.2f s, icy %.2f s, "
+            "root %.2f s, lock wait %.2f s, bookkeeping %.2f s; timers armed %.2f s "
+            "after the clock reference)",
             armed_count, skipped_past, skipped_type,
             t_now - t_fetch0, t_icy - t_now, t_root - t_icy, t_lock - t_root,
-            t_end - t_lock, t_end - t_now,
+            t_arm0 - t_lock, t_end - t_arm0,
         )
 
         # RASTATIME 2026-09-05 - after the timers are re-armed we know
