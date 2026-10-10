@@ -1189,7 +1189,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Playout: the clock reference is taken right before the arming loop, so
   housekeeping can never shift a start again.  API: `library_size()` serves
   the cached value and recounts in the background after 900 s; the payload
-  carries `library_size_age_seconds`.  Commit: TIMERS_PENDING.
+  carries `library_size_age_seconds`.  Commit: 2409d37.
 
 - **Filteranzeige im Suchfeld (2026-10-09, Nachtrag zu d1e953d)** — auf
   dem Dashboard spannt das Suchfeld die ganze Zeile, und DataTables 1.13
