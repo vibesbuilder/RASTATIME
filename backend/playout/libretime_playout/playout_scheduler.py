@@ -448,6 +448,11 @@ class PlayoutScheduler:
         self._maybe_reinit_after_liquidsoap_restart()
 
         logger.info("PlayoutScheduler: refreshing schedule from API …")
+        # RASTATIME 2026-10-10 - phase timing: the start timers are armed
+        # against ``now`` (taken after the fetch), so every second spent
+        # between ``now`` and the arming loop makes every track start late
+        # (2026-10-10 11:15: PLAY 1.7 s after the row second, air +1.9 s).
+        t_fetch0 = time.monotonic()
         try:
             events = get_schedule(self._api_client)
         except Exception as exc:  # pylint: disable=broad-exception-caught
@@ -455,16 +460,20 @@ class PlayoutScheduler:
             return
 
         now = datetime.utcnow()
+        t_now = time.monotonic()
         armed_count = 0
         skipped_past = 0
         skipped_type = 0
 
         # RASTATIME 2026-09-13 - ICY metadata settings + show on air.
         self._sync_icy_metadata(events, now)
+        t_icy = time.monotonic()
         # RASTATIME 2026-09-16 - the library root is a setting; follow it.
         self._refresh_storage_root()
+        t_root = time.monotonic()
 
         with self._lock:
+            t_lock = time.monotonic()
             self._cancel_all_timers()
 
             # RASTATIME 2026-09-04 - a pre-warmed source whose item is no
@@ -682,9 +691,14 @@ class PlayoutScheduler:
                 else:
                     skipped_type += 1
 
+        t_end = time.monotonic()
         logger.info(
-            "PlayoutScheduler: armed=%d  past=%d  other=%d",
+            "PlayoutScheduler: armed=%d  past=%d  other=%d  (fetch %.2f s, then "
+            "icy %.2f s, root %.2f s, lock wait %.2f s, arm %.2f s = %.2f s after "
+            "the clock reference)",
             armed_count, skipped_past, skipped_type,
+            t_now - t_fetch0, t_icy - t_now, t_root - t_icy, t_lock - t_root,
+            t_end - t_lock, t_end - t_now,
         )
 
         # RASTATIME 2026-09-05 - after the timers are re-armed we know
@@ -2239,6 +2253,16 @@ class PlayoutScheduler:
 
     def _on_file_start(self, key: str, event: FileEvent, seek: float = 0.0) -> None:
         """Start ``event`` now (see _on_file_start_impl); marks the row as starting."""
+        # RASTATIME 2026-10-10 - how late the start timer fired against the
+        # row second (timers are armed on whole seconds; more than ~0.5 s
+        # means the refresh armed them late or the thread was held up).
+        if seek <= 0 and event.start is not None:
+            late = (datetime.utcnow() - event.start).total_seconds()
+            if late > 0.5:
+                logger.info(
+                    "PLAY  %s: the start timer fired %.2f s after the row second.",
+                    key, late,
+                )
         self._starting[key] = event
         try:
             self._on_file_start_impl(key, event, seek)
