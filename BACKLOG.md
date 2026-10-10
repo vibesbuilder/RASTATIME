@@ -4989,3 +4989,17 @@ committen.  Go 2026-10-10 -> erledigt: phpseclib 3.0.57, symfony/yaml 5.4.53, Au
 vendor-Ordner waren git-Checkouts eines anderen Windows-Benutzers, composer brach den Batch ab ('git show-ref'),
 UI ca. 1 min HTTP 500, bis beide Ordner geloescht und per --prefer-dist neu installiert waren.  Regel in
 COMPONENTS.md: git-Checkouts im vendor erst entfernen, dann --prefer-dist.
+
+### 🟢 Titelstarts 1,7 s zu spaet: Speicherort-Abruf zaehlt bei jedem Refresh die Bibliothek (gefunden 2026-10-10)
+Phasenmessung (5ce7eec) nach dem PLAYOUT-Neustart 11:48: 'fetch 1.1-1.4 s, icy 0.0 s, root 1.9-2.1 s, lock 0.0,
+arm 0.0' -> die Start-Timer werden ~2 s nach der Uhrzeit-Referenz armiert.  Ursache: `_refresh_storage_root` ruft
+GET /api/v2/storage/location, dessen Payload `library_size()` per os.walk ueber D:/stor (198.481 Dateien seit dem
+Massenimport 2026-10-09) berechnet; Cache 60 s < Refresh 120 s -> jeder Refresh zahlt.  Verlauf der PLAY-Verspaetung:
+5.-8.10. 0,1 s, 9.10. 0,4 s, 10.10. 1,7 s (Sendung 11:15 lief +1,9 s).  Fix-Vorschlag (Go offen): (1) Playout nimmt die
+Uhrzeit-Referenz unmittelbar vor dem Armieren (Hausarbeit kann Timer nie mehr verschieben); (2) API liefert die
+Bibliotheksgroesse aus einem Cache (z.B. 15 min) und rechnet im Hintergrund nach, GET blockiert nie; UI zeigt Alter.
+
+### 🟡 Statistik-Pushes scheitern seit 2026-10-04: push-stream-stats 500, Icecast admin/stats.xml 401
+Der Stats-Thread des PLAYOUT bekommt alle 2 min HTTP 500 vom Legacy-Endpunkt /api/push-stream-stats und 401 von
+http://127.0.0.1:8000/admin/stats.xml (Icecast-Admin-Passwort?).  Nur Hoererstatistik betroffen, kein Sendebetrieb.
+Ursache pruefen (Legacy-Log, Icecast-Admin-Zugang aus den Stream-Settings).

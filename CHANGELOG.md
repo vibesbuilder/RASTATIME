@@ -2052,7 +2052,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   within the pins, audit clean afterwards.  The vendor tree held git-sourced
   checkouts owned by another Windows user; composer aborted the batch and
   the UI answered 500 for about a minute until both folders were replaced by
-  dist installs (--prefer-dist).  Commit: COMPOSER_PENDING.
+  dist installs (--prefer-dist).  Commit: 280904d.
 
 - **Brute-Force-Paket (c): Gründe, Sperrliste mit Entsperren, Firewall-Wächter
   (2026-10-06, Operator-Go)** — (1) der Legacy-Check `check-live-stream-auth`
