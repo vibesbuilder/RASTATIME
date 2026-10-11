@@ -5047,3 +5047,15 @@ legt sie per Application_Model_Scheduler::scheduleAfter in die bestehenden Insta
 spaetere Instanzen bleiben leer -> fuer Wiederholungen Stufe 1 empfohlen); Export serialisiert die naechste kuenftige
 Instanz.  Aufwand: Basis 1,5 Tage, Content Stufe 1 +0,5 h, Stufe 2 +1 Tag.  Operator 2026-10-11: noch kein Go
 (Fable-Guthaben).  Vorbedingungen: Go, Entscheidung custom_password, Content-Stufe.
+
+### 🟢 Import/Export auch fuer Playlisten, Smart Blocks, Webstreams, Podcast-Abos - evaluiert 2026-10-11, Go offen
+Alle vier machbar ueber bestehende Modelle: Playlist::addAudioClips (Inhalte file/block/stream/linein per Pfad/Name),
+Block::saveSmartBlockCriteria (229 Kriterienzeilen fuer 32 Bloecke: criteria/modifier/value/extra/criteriagroup ->
+JSON statt CSV), Webstream::save (name, url, description, length, mime, input_gain_db; analyzeFormData prueft die URL),
+PodcastService::createFromFeedUrl + imported_podcast (auto_ingest, auto_expiry, album_override, Track-Typ; Episoden
+werden nicht exportiert, der Feed liefert sie).  Gemeinsames Format: ein ZIP-Buendel mit shows.csv, playlists.csv,
+blocks.json, webstreams.csv, podcasts.csv, logos/; Import in Abhaengigkeitsreihenfolge Webstreams -> Smart Blocks ->
+Playlisten -> Podcasts -> Shows, Export in derselben Reihenfolge; Namen als Schluessel, Konflikt-Regel (ueberspringen /
+ersetzen) als Option.  Aufwand zusaetzlich: Webstreams 0,5 d, Playlisten 0,5 d, Smart Blocks 1 d (Kriterien-Mapping +
+Validierung), Podcasts 0,5 d (Feed-Abruf beim Import) -> gesamt mit Shows 4 Tage.  Empfehlung: Go in der Reihenfolge
+Shows+Webstreams, dann Playlisten, dann Bloecke/Podcasts; eine Seite, ein Buendel.
