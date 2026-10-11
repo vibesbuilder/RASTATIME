@@ -5028,3 +5028,22 @@ Das aktive PostgreSQL-Passwort des Benutzers rastatime steht in 61 Zeilen von C:
 Ablauf im ruhigen Moment: neues Passwort ohne YAML-Sonderzeichen oder in Anfuehrungszeichen; psql ALTER ROLE rastatime
 WITH PASSWORD; libretime.conf database.password; Neustart API, PLAYOUT, ANALYZER, WORKER (Legacy-PHP liest die Datei je
 Request, Backup-Task je Lauf); Apache neu starten und error_log bereinigen; danach Logins/UI/Stats-Push pruefen.
+
+## Kalender Import/Export (Operator-Wunsch 2026-10-11)
+
+### 🟢 Settings -> 'Import/Export': Shows per CSV (+ ZIP mit Logos) importieren und exportieren - evaluiert, Go offen (Budget)
+Evaluation 2026-10-11: Machbar ueber die bestehende Kette ShowFormService::validateShowForms (inkl.
+checkOverlappingShows je Wiederholung) -> ShowService::addUpdateShow mit dem Feld-Array des New-Show-Dialogs; alle 24
+gewuenschten Spalten haben ein Formularfeld (Playlisten/DJs per Name aufgeloest, Farben hex, Tage als Liste).
+Entscheidungen Operator: eigener Menuepunkt Settings -> Import/Export (Export gleich wichtig); Logos Variante a) = ZIP
+mit shows.csv + logos/<datei> (Ablage wie Rest_ShowImageController: <Bibliothek>/imported/show-images/<id>/).
+Vorschlag assistant: Vorschau-Schritt (Tabelle je Zeile ok/Ueberlappung/unbekannte Playlist/DJ, nur gruene Zeilen
+importieren); custom_password NICHT aus der CSV (Custom Auth nur einschalten + Benutzername, Passwort im Dialog oder
+Zufallswert einmalig anzeigen) - Entscheidung offen.
+Spalte 'Content' (Inhalte: Tracks, Line-In, Webstream): Stufe 1 = Playlist-Name -> Autoloading-Playlist der Show
+(cc_playlistcontents traegt file/block/stream/linein, fuellt jede kuenftige Instanz automatisch, kein neuer Code im
+Scheduler); Stufe 2 = explizite Liste 'file:<pfad>;webstream:<name>;linein:<name>;playlist:<name>' je Zeile, Import
+legt sie per Application_Model_Scheduler::scheduleAfter in die bestehenden Instanzen (nur bis shows_populated_until;
+spaetere Instanzen bleiben leer -> fuer Wiederholungen Stufe 1 empfohlen); Export serialisiert die naechste kuenftige
+Instanz.  Aufwand: Basis 1,5 Tage, Content Stufe 1 +0,5 h, Stufe 2 +1 Tag.  Operator 2026-10-11: noch kein Go
+(Fable-Guthaben).  Vorbedingungen: Go, Entscheidung custom_password, Content-Stufe.
