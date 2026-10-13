@@ -5050,8 +5050,8 @@ Go 2026-10-13 (Vorschau + Export, custom_password nie aus der Datei mit Hinweis,
 gebaut: ImportexportController + ImportExportService + 5 Typ-Handler, eigene ZIP-Klasse (kein ext-zip), Menuepunkt
 Settings -> Import/Export (Admin), 104 Strings DE/FR/ES, Manual IMPORT_EXPORT x4, Architektur-Abschnitt.  CLI-Probe
 (C:/Temp/optd/importexport_test.php + ie_cleanup.php): Export/Template/Rundreise/synthetisches Buendel mit allen
-Typen inkl. Logo, DJ, Autoloading, Ueberschneidung abgewiesen.  OFFEN: Live-Abnahme im Browser durch den Operator
-(Login noetig: Vorlage laden, Vorschau, Import), Apache-Neustart fuer die .mo-Dateien.
+Typen inkl. Logo, DJ, Autoloading, Ueberschneidung abgewiesen.  Browser-Abnahme Operator 2026-10-13: Apache
+neu gestartet (.mo), Vorlagen-Buendel geladen, Export-ZIP wieder hochgeladen, Vorschau wie erwartet -> abgenommen.
 
 ### 💡 Import/Export Stufe 2: explizite Inhaltsliste je Sendung, 'ersetzen' fuer Sendungen, Podcast-Episoden
 Content Stufe 2 (file:/webstream:/linein:/playlist: je Zeile per Scheduler in die bestehenden Instanzen), Konflikt-
