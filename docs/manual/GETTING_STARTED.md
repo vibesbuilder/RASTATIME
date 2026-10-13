@@ -246,6 +246,7 @@ find each common task in the rest of the manual:
 | Plan tomorrow's schedule | [Calendar](./CALENDAR.md) |
 | Make a recurring weekly show | [Calendar](./CALENDAR.md) → Recurring shows |
 | Use the same show config every week | [Show Templates](./SHOW_TEMPLATES.md) |
+| Build or move a whole programme schedule in a spreadsheet | [Import/Export](./IMPORT_EXPORT.md) |
 | Have a show fill itself | [Autoloading Playlists](./AUTOLOADING_PLAYLISTS.md) |
 | Fill calendar gaps automatically | [Auto DJ](./AUTO_DJ.md) |
 | Take the station live from a microphone | [Dashboard](./DASHBOARD.md) → Live Source |

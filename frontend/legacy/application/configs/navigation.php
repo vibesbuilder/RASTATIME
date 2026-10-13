@@ -171,6 +171,16 @@ $pages[] = [
             'resource' => 'preference',
         ],
         [
+            // RASTATIME 2026-10-13 — Import/Export of shows, playlists,
+            // smart blocks, webstreams and podcast subscriptions
+            // (Section 23.52): CSV/JSON bundle with a preview step.
+            'label' => 'Import/Export',
+            'module' => 'default',
+            'controller' => 'importexport',
+            'action' => 'index',
+            'resource' => 'importexport',
+        ],
+        [
             // RASTATIME 2026-05-21 — Auto-DJ settings page
             // (Section 23.20).  Master switch + filler-playlist
             // selection + default show name / logo for automatic

@@ -9,6 +9,13 @@
 
 ## 1. Overview
 
+> **Autoloading note (2026-10-13).** Legacy PHP classes under
+> `frontend\legacy\application\common\` are found through the Composer
+> classmap. After deploying code that adds or renames a class there, run
+> `php C:\Tools\composer\composer.phar dump-autoload` in `frontend\legacy`
+> (services, controllers, forms and models are autoloaded by Zend and need
+> nothing). Missing step = `Class "Application_Common_..." not found`.
+
 > **Third-party components** (Apache, PHP, PostgreSQL, Python packages,
 > Liquidsoap, Icecast, ffmpeg ...) are not covered here: see
 > `docs\operator\COMPONENTS.md` for the inventory, the update classes and

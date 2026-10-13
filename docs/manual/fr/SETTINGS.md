@@ -21,6 +21,7 @@ sous-ensemble. Voir [Utilisateurs et rôles](./USERS_AND_ROLES.md)
 | **Line-In Library** | Entrées audio live nommées. | [Line-In](./LINE_IN.md) |
 | **Auto DJ** | Remplisseur d'arrière-plan. | [Auto DJ](./AUTO_DJ.md) |
 | **Modèles d'émission** | Snapshots de formulaire d'émission réutilisables. | [Modèles d'émission](./SHOW_TEMPLATES.md) |
+| **Import/Export** | Émissions, playlists, smart blocks, webstreams et abonnements podcast en fichiers CSV/JSON, avec aperçu à l'import. | [Import/Export](./IMPORT_EXPORT.md) |
 | **Gérer les utilisateurs** | Créer / modifier / désactiver utilisateurs. | [Utilisateurs et rôles](./USERS_AND_ROLES.md) |
 | **Localisation** | Sélection de langue UI. | [Langues](./I18N.md) |
 | **Statut système** | Santé live des services, widget de redémarrage. | Ce chapitre §3 |

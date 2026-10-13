@@ -21,6 +21,7 @@ $ccAcl->add(new Zend_Acl_Resource('library'))
     ->add(new Zend_Acl_Resource('systemstatus'))
     ->add(new Zend_Acl_Resource('dashboard'))
     ->add(new Zend_Acl_Resource('preference'))
+    ->add(new Zend_Acl_Resource('importexport'))
     ->add(new Zend_Acl_Resource('showbuilder'))
     ->add(new Zend_Acl_Resource('playouthistory'))
     ->add(new Zend_Acl_Resource('playouthistorytemplate'))
@@ -86,6 +87,7 @@ $ccAcl->allow('G', 'index')
     ->allow('A', 'tracktype')
     ->allow('A', 'systemstatus')
     ->allow('A', 'preference')
+    ->allow('A', 'importexport')
     ->allow('A', 'linein');   // T14.2
 
 $aclPlugin = new Zend_Controller_Plugin_Acl($ccAcl);

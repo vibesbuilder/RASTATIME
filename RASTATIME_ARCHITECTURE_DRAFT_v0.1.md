@@ -1,10 +1,13 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.68
-Date: 2026-10-03
+Draft version: 0.69
+Date: 2026-10-13
 
 > **Revision history**
+> - **0.69 (2026-10-13)** — **Settings -> Import/Export** (§23.56): calendar
+>   objects as CSV/JSON bundle or single files, preview step, dependency
+>   order, shows through the New-Show forms, own ZIP reader/writer.
 > - **0.68 (2026-10-08)** — **Playout history survives deleted tracks**
 >   (§23.55): `cc_playout_history.file_id` ON DELETE SET NULL (migration
 >   0065) and the file fields snapshotted into the row's metadata.
@@ -6424,3 +6427,57 @@ database rule decides, as before); no Propel regeneration.  The library's
 backup and outside a show boundary (`manage.py migrate`, then API
 restart); the writer change is live immediately and harmless before the
 migration (extra metadata keys).
+
+### 23.56 Settings → Import/Export (2026-10-13)
+
+**Decision (operator 2026-10-11/13).**  Building the calendar through the
+New-Show dialog does not scale; the operator asked for a CSV import of
+shows with every dialog field, an export of equal rank, logos in a ZIP
+(variant a), a `content` column (stage 1: the autoloading playlist), the
+custom live password never in the file, and the same for playlists, smart
+blocks, webstreams and podcast subscriptions - importable together or one
+type at a time.  Menu: Settings → Import/Export (admin resource
+`importexport`).
+
+**Shape.**  `ImportexportController` (index, preview, import, export,
+template) → `Application_Service_ImportExportService` (bundle parsing,
+CSV with delimiter detection and BOM, token staging under the system temp
+folder, preview, import, export, template, README) → one
+`Application_Service_ImportExportType` per object type: `Webstreams`
+(`Webstream::analyzeFormData/save`), `Blocks` (JSON; criteria rebuilt as
+the editor's name/value list for `Block::saveSmartBlockCriteria`, read
+back via `getCriteria`), `Playlists` (`items` as `kind:ref` list,
+`Playlist::addAudioClips`), `Podcasts` (`PodcastService::createFromFeedUrl`
++ imported_podcast options), `Shows` (the dialog's field array →
+`ShowFormService::validateShowForms` incl. `checkOverlappingShows` →
+`ShowService::addUpdateShow`; logo copied like `Rest_ShowImageController`).
+Import order = dependency order webstreams → blocks → playlists →
+podcasts → shows; objects created earlier in the same run are resolvable
+by later rows ('pending' names in the preview, 'created' ids on import).
+Names are the keys; conflict mode skip|replace (never for shows).  Every
+row is validated twice: for the preview and right before it is written.
+
+**Why an own ZIP class.**  The station's PHP has no ext-zip and the
+feature must run on a plain install: `Application_Common_Zip` writes
+deflated entries and reads stored/deflated ones (no ZIP64, no
+encryption).  New classes under `application/common/` need `composer
+dump-autoload` (Composer classmap), unlike services/controllers/forms,
+which the Zend resource autoloader finds - noted in UPGRADE.md.
+
+**Export semantics.**  Shows with an upcoming instance, each row starting
+at its next instance (so an export is importable without touching the
+past); `repeat_end_date` is inclusive (cc_show_days.last_show is
+exclusive); the custom password is omitted.  Podcast episodes are not
+exported (the feed delivers them).  Static block contents are not
+exported, only their criteria.
+
+**Verified 2026-10-13.**  CLI probe (`C:/Temp/optd/importexport_test.php`,
+non-persistent auth + unit-test session): template (7 entries), full
+export (5/32/24/4/25 rows), round-trip preview (every existing name
+skipped, every existing show refused with the dialog's overlap message),
+synthetic bundle imported (webstream with gain, block with two OR groups,
+playlist file+stream+block+line-in, 2027 show with Mon/Wed days, 10
+instances, DJ, logo, autoloading playlist, random custom password) and the
+overlapping second row refused at import time; cleanup left nothing.
+Open: content stage 2 (explicit item list per instance), replace for
+shows, podcast episodes.

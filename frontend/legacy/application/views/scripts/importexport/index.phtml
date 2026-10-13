@@ -1,0 +1,119 @@
+<?php
+// RASTATIME 2026-10-13 — Settings → Import/Export (Section 23.52).
+// Export the calendar objects as CSV/JSON (single file or ZIP bundle),
+// import a bundle or a single file with a preview step; shows, playlists,
+// smart blocks, webstreams and podcast subscriptions.
+$h = static fn ($s) => htmlspecialchars((string) $s, ENT_QUOTES, 'UTF-8');
+$strings = [
+    'preview' => _('Preview'),
+    'uploading' => _('Uploading and checking …'),
+    'importing' => _('Importing …'),
+    'noFile' => _('Choose a file first.'),
+    'nothingSelected' => _('No rows selected.'),
+    'statusOk' => _('ready'),
+    'statusSkip' => _('skipped'),
+    'statusError' => _('error'),
+    'resultOk' => _('done'),
+    'line' => _('Line'),
+    'type' => _('Type'),
+    'name' => _('Name'),
+    'details' => _('Details'),
+    'status' => _('Status'),
+    'messages' => _('Notes'),
+    'summary' => _('%1 created or updated, %2 skipped, %3 failed.'),
+    'selectAll' => _('all importable rows'),
+    'requestFailed' => _('The request failed.'),
+];
+?>
+<style>
+  .rt-ie-section { margin-bottom: 1.6em; }
+  .rt-ie-section h3 { margin: 0 0 .5em 0; font-size: 1.05em; }
+  .rt-ie-types label { display: inline-block; margin: 0 1.4em .4em 0; white-space: nowrap; }
+  .rt-ie-types .rt-ie-count { color: #888; margin-left: .3em; }
+  .rt-ie-notice { background: #2a2a2a; border-left: 3px solid #f6931f; padding: .5em .8em; margin: .4em 0; border-radius: 3px; }
+  .rt-ie-form label { display: inline-block; margin-right: 1.2em; }
+  .rt-ie-form select, .rt-ie-form input[type=file] { vertical-align: middle; }
+  #rt_ie_preview table, #rt_ie_result table { width: 100%; border-collapse: collapse; margin-top: .6em; }
+  #rt_ie_preview th, #rt_ie_result th { text-align: left; padding: 5px 6px; border-bottom: 1px solid #555; }
+  #rt_ie_preview td, #rt_ie_result td { padding: 4px 6px; border-bottom: 1px solid #333; vertical-align: top; }
+  .rt-ie-st-ok { color: #5cb85c; font-weight: bold; }
+  .rt-ie-st-skip { color: #aaa; }
+  .rt-ie-st-error { color: #e26b6b; font-weight: bold; }
+  .rt-ie-msg { color: #bbb; font-size: .92em; }
+  .rt-ie-busy { color: #f6931f; }
+  .rt-ie-actions { margin-top: .8em; }
+</style>
+
+<div class="ui-widget prefpanel clearfix padded-strong">
+    <h2><?php echo _('Import/Export'); ?></h2>
+    <p style="margin-bottom: 1em; color: #888;">
+        <?php echo _('Export shows, playlists, smart blocks, webstreams and podcast subscriptions as CSV/JSON, edit them in a spreadsheet and import them again - as one ZIP bundle or one file at a time. An import shows a preview first; only the rows you tick are written, and rows that overlap an existing show are never imported.'); ?>
+    </p>
+    <input type="hidden" id="rt_ie_csrf" value="<?php echo $h($this->csrf); ?>" />
+
+    <div class="rt-ie-section">
+        <h3><?php echo _('Export'); ?></h3>
+        <div class="rt-ie-types" id="rt_ie_export_types">
+            <?php foreach ($this->types as $t): ?>
+                <label><input type="checkbox" value="<?php echo $h($t['type']); ?>" checked />
+                    <?php echo $h($t['label']); ?>
+                    <span class="rt-ie-count">(<?php echo $t['count'] === null ? '?' : (int) $t['count']; ?>, <?php echo $h($t['file']); ?>)</span></label>
+            <?php endforeach; ?>
+        </div>
+        <div class="rt-ie-actions">
+            <button type="button" class="btn btn-small" id="rt_ie_export_btn"><?php echo _('Export selected types'); ?></button>
+            <a class="btn btn-small" href="<?php echo $this->baseUrl('importexport/template'); ?>"><?php echo _('Download template bundle'); ?></a>
+        </div>
+        <p class="rt-ie-msg" style="margin-top:.5em;">
+            <?php echo _('One type gives a single CSV/JSON file; several types give a ZIP with all files, the show logos and a README. The show export contains the shows with upcoming broadcasts, each starting at its next broadcast.'); ?>
+        </p>
+    </div>
+
+    <div class="rt-ie-section">
+        <h3><?php echo _('Import'); ?></h3>
+        <?php foreach ($this->types as $t): ?>
+            <?php foreach ($t['notices'] as $n): ?>
+                <div class="rt-ie-notice"><strong><?php echo $h($t['label']); ?>:</strong> <?php echo $h($n); ?></div>
+            <?php endforeach; ?>
+        <?php endforeach; ?>
+        <div class="rt-ie-form" style="margin-top:.8em;">
+            <label><?php echo _('File'); ?> <input type="file" id="rt_ie_file" accept=".zip,.csv,.json,text/csv,application/json,application/zip" /></label>
+            <label><?php echo _('Type'); ?>
+                <select id="rt_ie_type">
+                    <option value="auto"><?php echo _('detect from file'); ?></option>
+                    <?php foreach ($this->types as $t): ?>
+                        <option value="<?php echo $h($t['type']); ?>"><?php echo $h($t['label']); ?> (<?php echo $h($t['file']); ?>)</option>
+                    <?php endforeach; ?>
+                </select></label>
+            <label><?php echo _('Existing names'); ?>
+                <select id="rt_ie_conflict">
+                    <option value="skip"><?php echo _('skip'); ?></option>
+                    <option value="replace"><?php echo _('replace (playlists, smart blocks, webstreams, podcast options)'); ?></option>
+                </select></label>
+            <button type="button" class="btn btn-small" id="rt_ie_preview_btn"><?php echo _('Preview'); ?></button>
+            <span id="rt_ie_status" class="rt-ie-msg"></span>
+        </div>
+        <p class="rt-ie-msg" style="margin-top:.5em;">
+            <?php echo sprintf(_('Accepted: a ZIP bundle (as exported or from the template) or a single shows.csv, playlists.csv, webstreams.csv, podcasts.csv or blocks.json. Upload limit: %s.'), $h($this->maxUpload)); ?>
+        </p>
+        <div id="rt_ie_preview" style="display:none;">
+            <div id="rt_ie_notices"></div>
+            <div class="rt-ie-actions">
+                <label><input type="checkbox" id="rt_ie_select_all" checked /> <?php echo _('all importable rows'); ?></label>
+                <button type="button" class="btn btn-small" id="rt_ie_import_btn"><?php echo _('Import selected rows'); ?></button>
+            </div>
+            <div id="rt_ie_preview_table"></div>
+        </div>
+        <div id="rt_ie_result" style="display:none;">
+            <h3><?php echo _('Result'); ?></h3>
+            <p id="rt_ie_result_summary"></p>
+            <div id="rt_ie_result_table"></div>
+        </div>
+    </div>
+</div>
+<script>
+  window.rtImportExport = {
+    baseUrl: "<?php echo $h($this->baseUrl('importexport')); ?>",
+    strings: <?php echo json_encode($strings, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>
+  };
+</script>

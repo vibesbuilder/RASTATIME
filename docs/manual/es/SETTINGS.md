@@ -21,6 +21,7 @@ matriz completa de permisos.
 | **Line-In Library** | Entradas de audio en vivo nombradas. | [Line-In](./LINE_IN.md) |
 | **Auto DJ** | Rellenador en segundo plano. | [Auto DJ](./AUTO_DJ.md) |
 | **Plantillas de programa** | Snapshots de formulario de programa reutilizables. | [Plantillas de programa](./SHOW_TEMPLATES.md) |
+| **Importar/Exportar** | Programas, listas, bloques inteligentes, webstreams y suscripciones a podcasts como archivos CSV/JSON, con vista previa al importar. | [Importar/Exportar](./IMPORT_EXPORT.md) |
 | **Gestionar usuarios** | Crear / editar / desactivar usuarios. | [Usuarios y roles](./USERS_AND_ROLES.md) |
 | **Localización** | Selección de idioma UI. | [Idiomas](./I18N.md) |
 | **Estado del sistema** | Salud en vivo de servicios, widget de reinicio. | Este capítulo §3 |

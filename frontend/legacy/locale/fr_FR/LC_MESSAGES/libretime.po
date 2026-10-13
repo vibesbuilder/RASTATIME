@@ -6073,3 +6073,383 @@ msgstr "%s sur %s titres"
 #: application/controllers/LocaleController.php application/views/scripts/showbuilder/index.phtml
 msgid "Clear search"
 msgstr "Effacer la recherche"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "%1 created or updated, %2 skipped, %3 failed."
+msgstr "%1 créés ou mis à jour, %2 ignorés, %3 en échec."
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "%d items"
+msgstr "%d éléments"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "%s \"%s\" not found"
+msgstr "%s « %s » introuvable"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "%s, %d rules"
+msgstr "%s, %d règles"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "A row whose time overlaps an existing show (or an earlier row of this import) is not imported."
+msgstr "Une ligne dont l'horaire chevauche une émission existante (ou une ligne précédente de cet import) n'est pas importée."
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "Accepted: a ZIP bundle (as exported or from the template) or a single shows.csv, playlists.csv, webstreams.csv, podcasts.csv or blocks.json. Upload limit: %s."
+msgstr "Accepté : une archive ZIP (telle qu'exportée ou issue du modèle) ou un seul fichier shows.csv, playlists.csv, webstreams.csv, podcasts.csv ou blocks.json. Limite d'envoi : %s."
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "Cannot tell what this file contains. Name it like the template (shows.csv, playlists.csv, webstreams.csv, podcasts.csv, blocks.json) or choose the type."
+msgstr "Impossible de déterminer le contenu de ce fichier. Nommez-le comme dans le modèle (shows.csv, playlists.csv, webstreams.csv, podcasts.csv, blocks.json) ou choisissez le type."
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "Choose a file first."
+msgstr "Choisissez d'abord un fichier."
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "Choose at least one type to export."
+msgstr "Choisissez au moins un type à exporter."
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "DJ \"%s\" not found"
+msgstr "DJ « %s » introuvable"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "Details"
+msgstr "Détails"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "Download template bundle"
+msgstr "Télécharger l'archive modèle"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "Existing names"
+msgstr "Noms existants"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "Export"
+msgstr "Export"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "Export selected types"
+msgstr "Exporter les types sélectionnés"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "Export shows, playlists, smart blocks, webstreams and podcast subscriptions as CSV/JSON, edit them in a spreadsheet and import them again - as one ZIP bundle or one file at a time. An import shows a preview first; only the rows you tick are written, and rows that overlap an existing show are never imported."
+msgstr "Exportez les émissions, playlists, smart blocks, webstreams et abonnements podcast en CSV/JSON, modifiez-les dans un tableur et réimportez-les - en une archive ZIP ou fichier par fichier. Un import affiche d'abord un aperçu ; seules les lignes cochées sont écrites, et les lignes qui chevauchent une émission existante ne sont jamais importées."
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "File"
+msgstr "Fichier"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "For security the custom live password is never part of the file: shows with custom authentication are imported without a password - set it in the Calendar afterwards. The export leaves the field out for the same reason."
+msgstr "Par sécurité, le mot de passe live personnalisé ne fait jamais partie du fichier : les émissions avec authentification personnalisée sont importées sans mot de passe - définissez-le ensuite dans le calendrier. L'export omet ce champ pour la même raison."
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "Ignored file in the archive: %s"
+msgstr "Fichier ignoré dans l'archive : %s"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "Import selected rows"
+msgstr "Importer les lignes sélectionnées"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "Import/Export"
+msgstr "Import/Export"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "Importing …"
+msgstr "Import en cours …"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "Line"
+msgstr "Ligne"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "No file received."
+msgstr "Aucun fichier reçu."
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "No rows selected."
+msgstr "Aucune ligne sélectionnée."
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "Notes"
+msgstr "Remarques"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "One type gives a single CSV/JSON file; several types give a ZIP with all files, the show logos and a README. The show export contains the shows with upcoming broadcasts, each starting at its next broadcast."
+msgstr "Un seul type donne un fichier CSV/JSON ; plusieurs types donnent un ZIP avec tous les fichiers, les logos d'émission et un README. L'export des émissions contient les émissions à venir, chacune à partir de sa prochaine diffusion."
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "Result"
+msgstr "Résultat"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "Session expired - reload the page."
+msgstr "Session expirée - rechargez la page."
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "Shows"
+msgstr "Émissions"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "The archive contains none of the known files (shows.csv, playlists.csv, webstreams.csv, podcasts.csv, blocks.json)."
+msgstr "L'archive ne contient aucun des fichiers connus (shows.csv, playlists.csv, webstreams.csv, podcasts.csv, blocks.json)."
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "The file is larger than the server accepts (%s)."
+msgstr "Le fichier dépasse la taille acceptée par le serveur (%s)."
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "The request failed."
+msgstr "La requête a échoué."
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "The uploaded file is no longer staged - please upload it again."
+msgstr "Le fichier envoyé n'est plus disponible - veuillez le renvoyer."
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "Uploading and checking …"
+msgstr "Envoi et vérification …"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "a playlist named \"%s\" exists already"
+msgstr "une playlist nommée « %s » existe déjà"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "a referenced object of this import was not created"
+msgstr "un objet référencé de cet import n'a pas été créé"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "a smart block named \"%s\" exists already"
+msgstr "un smart block nommé « %s » existe déjà"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "a webstream named \"%s\" exists already"
+msgstr "un webstream nommé « %s » existe déjà"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "all importable rows"
+msgstr "toutes les lignes importables"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "at most 10 groups of 10 rules are supported"
+msgstr "au plus 10 groupes de 10 règles sont pris en charge"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "auto_expiry_days must be at least 1 when auto_expiry_enabled is yes"
+msgstr "auto_expiry_days doit être au moins 1 quand auto_expiry_enabled vaut yes"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "blocks.json is not a JSON list"
+msgstr "blocks.json n'est pas une liste JSON"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "colours must be 6 hex digits, e.g. 1F7A8C"
+msgstr "les couleurs doivent comporter 6 chiffres hexadécimaux, p. ex. 1F7A8C"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "created"
+msgstr "créé"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "criterion \"%s\" has no modifier"
+msgstr "le critère « %s » n'a pas de modificateur"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "custom authentication: a random password was set - change it in the Calendar"
+msgstr "authentification personnalisée : un mot de passe aléatoire a été défini - modifiez-le dans le calendrier"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "custom authentication: a random password will be set - change it in the Calendar"
+msgstr "authentification personnalisée : un mot de passe aléatoire sera défini - modifiez-le dans le calendrier"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "detect from file"
+msgstr "détecter d'après le fichier"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "done"
+msgstr "fait"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "end_date must be YYYY-MM-DD"
+msgstr "end_date doit être au format AAAA-MM-JJ"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "end_time must be HH:MM"
+msgstr "end_time doit être au format HH:MM"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "entry is not an object"
+msgstr "l'entrée n'est pas un objet"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "error"
+msgstr "erreur"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "feed could not be subscribed"
+msgstr "le flux n'a pas pu être souscrit"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "feed could not be subscribed: %s"
+msgstr "le flux n'a pas pu être souscrit : %s"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "input_gain_db must be a number"
+msgstr "input_gain_db doit être un nombre"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "item \"%s\" must be file:<path>, block:<name>, webstream:<name> or linein:<name>"
+msgstr "l'élément « %s » doit être file:<chemin>, block:<nom>, webstream:<nom> ou linein:<nom>"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "length must be HH:MM:SS and greater than zero"
+msgstr "length doit être au format HH:MM:SS et supérieur à zéro"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "limit.modifier must be items, minutes, hours or remaining"
+msgstr "limit.modifier doit être items, minutes, hours ou remaining"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "logo \"%s\" is not in the bundle (folder logos/)"
+msgstr "le logo « %s » n'est pas dans l'archive (dossier logos/)"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "logo could not be stored"
+msgstr "le logo n'a pas pu être enregistré"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "logo stored"
+msgstr "logo enregistré"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "name is empty"
+msgstr "le nom est vide"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "not selected"
+msgstr "non sélectionné"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "options updated"
+msgstr "options mises à jour"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "playlist \"%s\" is created by this import"
+msgstr "la playlist « %s » est créée par cet import"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "playlist \"%s\" not found"
+msgstr "playlist « %s » introuvable"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "ready"
+msgstr "prêt"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "repeat_end_date must be YYYY-MM-DD"
+msgstr "repeat_end_date doit être au format AAAA-MM-JJ"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "replace (playlists, smart blocks, webstreams, podcast options)"
+msgstr "remplacer (playlists, smart blocks, webstreams, options podcast)"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "replaced"
+msgstr "remplacé"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "skip"
+msgstr "ignorer"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "skipped"
+msgstr "ignoré"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "start_date must be YYYY-MM-DD"
+msgstr "start_date doit être au format AAAA-MM-JJ"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "start_time must be HH:MM"
+msgstr "start_time doit être au format HH:MM"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "subscribed"
+msgstr "souscrit"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "the feed is fetched on import"
+msgstr "le flux est récupéré à l'import"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "the same name appears twice in the file"
+msgstr "le même nom apparaît deux fois dans le fichier"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "the same url appears twice in the file"
+msgstr "la même URL apparaît deux fois dans le fichier"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "the show dialog rejected the row"
+msgstr "la boîte de dialogue d'émission a rejeté la ligne"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "the show must be longer than 0 and at most 24 hours"
+msgstr "l'émission doit durer plus de 0 et au plus 24 heures"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "this feed is subscribed already"
+msgstr "ce flux est déjà souscrit"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "track type \"%s\" not found"
+msgstr "type de piste « %s » introuvable"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "type must be dynamic or static"
+msgstr "type doit être dynamic ou static"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "unknown criterion \"%s\""
+msgstr "critère inconnu « %s »"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "unknown day \"%s\""
+msgstr "jour inconnu « %s »"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "unknown repeat_type \"%s\""
+msgstr "repeat_type inconnu « %s »"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "unknown timezone \"%s\""
+msgstr "fuseau horaire inconnu « %s »"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "url must start with http:// or https://"
+msgstr "url doit commencer par http:// ou https://"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "user \"%s\" is not a DJ (user type DJ) and cannot be assigned"
+msgstr "l'utilisateur « %s » n'est pas un DJ (type d'utilisateur DJ) et ne peut pas être affecté"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "will replace the existing block and its criteria"
+msgstr "remplacera le bloc existant et ses critères"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "will replace the existing playlist and its contents"
+msgstr "remplacera la playlist existante et son contenu"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "will replace the existing webstream"
+msgstr "remplacera le webstream existant"
+
+#: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
+msgid "will update the options of the existing subscription"
+msgstr "mettra à jour les options de l'abonnement existant"

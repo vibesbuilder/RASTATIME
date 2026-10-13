@@ -5031,7 +5031,7 @@ Request, Backup-Task je Lauf); Apache neu starten und error_log bereinigen; dana
 
 ## Kalender Import/Export (Operator-Wunsch 2026-10-11)
 
-### 🟢 Settings -> 'Import/Export': Shows per CSV (+ ZIP mit Logos) importieren und exportieren - evaluiert, Go offen (Budget)
+### ✅ Settings -> 'Import/Export': Shows per CSV (+ ZIP mit Logos) importieren und exportieren - gebaut 2026-10-13
 Evaluation 2026-10-11: Machbar ueber die bestehende Kette ShowFormService::validateShowForms (inkl.
 checkOverlappingShows je Wiederholung) -> ShowService::addUpdateShow mit dem Feld-Array des New-Show-Dialogs; alle 24
 gewuenschten Spalten haben ein Formularfeld (Playlisten/DJs per Name aufgeloest, Farben hex, Tage als Liste).
@@ -5045,10 +5045,20 @@ Spalte 'Content' (Inhalte: Tracks, Line-In, Webstream): Stufe 1 = Playlist-Name 
 Scheduler); Stufe 2 = explizite Liste 'file:<pfad>;webstream:<name>;linein:<name>;playlist:<name>' je Zeile, Import
 legt sie per Application_Model_Scheduler::scheduleAfter in die bestehenden Instanzen (nur bis shows_populated_until;
 spaetere Instanzen bleiben leer -> fuer Wiederholungen Stufe 1 empfohlen); Export serialisiert die naechste kuenftige
-Instanz.  Aufwand: Basis 1,5 Tage, Content Stufe 1 +0,5 h, Stufe 2 +1 Tag.  Operator 2026-10-11: noch kein Go
-(Fable-Guthaben).  Vorbedingungen: Go, Entscheidung custom_password, Content-Stufe.
+Instanz.  Aufwand: Basis 1,5 Tage, Content Stufe 1 +0,5 h, Stufe 2 +1 Tag.
+Go 2026-10-13 (Vorschau + Export, custom_password nie aus der Datei mit Hinweis, Content Stufe 1, Stufe 2 spaeter) ->
+gebaut: ImportexportController + ImportExportService + 5 Typ-Handler, eigene ZIP-Klasse (kein ext-zip), Menuepunkt
+Settings -> Import/Export (Admin), 104 Strings DE/FR/ES, Manual IMPORT_EXPORT x4, Architektur-Abschnitt.  CLI-Probe
+(C:/Temp/optd/importexport_test.php + ie_cleanup.php): Export/Template/Rundreise/synthetisches Buendel mit allen
+Typen inkl. Logo, DJ, Autoloading, Ueberschneidung abgewiesen.  OFFEN: Live-Abnahme im Browser durch den Operator
+(Login noetig: Vorlage laden, Vorschau, Import), Apache-Neustart fuer die .mo-Dateien.
 
-### 🟢 Import/Export auch fuer Playlisten, Smart Blocks, Webstreams, Podcast-Abos - evaluiert 2026-10-11, Go offen
+### 💡 Import/Export Stufe 2: explizite Inhaltsliste je Sendung, 'ersetzen' fuer Sendungen, Podcast-Episoden
+Content Stufe 2 (file:/webstream:/linein:/playlist: je Zeile per Scheduler in die bestehenden Instanzen), Konflikt-
+modus 'ersetzen' auch fuer Sendungen (Instanzen/Inhalte erhalten), Export/Import heruntergeladener Episoden.
+Operator 2026-10-13: Stufe 2 eventuell spaeter.
+
+### ✅ Import/Export auch fuer Playlisten, Smart Blocks, Webstreams, Podcast-Abos - gebaut 2026-10-13 (Go 2026-10-13, einzeln und als Buendel)
 Alle vier machbar ueber bestehende Modelle: Playlist::addAudioClips (Inhalte file/block/stream/linein per Pfad/Name),
 Block::saveSmartBlockCriteria (229 Kriterienzeilen fuer 32 Bloecke: criteria/modifier/value/extra/criteriagroup ->
 JSON statt CSV), Webstream::save (name, url, description, length, mime, input_gain_db; analyzeFormData prueft die URL),

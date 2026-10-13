@@ -9,6 +9,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Settings -> Import/Export: shows, playlists, smart blocks, webstreams and
+  podcast subscriptions as CSV/JSON, bundle or single file, with a preview
+  step (2026-10-13, operator request of 2026-10-11, Go of 2026-10-13)** - a
+  new `ImportexportController` (admin only) with `ImportExportService` and
+  one handler per type.  Export writes `shows.csv`, `playlists.csv`,
+  `webstreams.csv`, `podcasts.csv`, `blocks.json` (criteria are a tree),
+  the show logos under `logos/` and a README; one type gives the single
+  file, several a ZIP; a template bundle carries headers and examples.
+  Import stages the upload under a token, validates every row without
+  writing (names resolved, playlists/DJs/logos checked, shows through the
+  New-Show forms incl. the overlap check), shows the table, and creates the
+  ticked rows in dependency order webstreams -> blocks -> playlists ->
+  podcasts -> shows, re-validating each right before writing; existing
+  names are skipped or (not for shows) replaced.  Shows go through
+  `ShowService::addUpdateShow` like the dialog; `content` = autoloading
+  playlist (stage 1); the custom live password is never read or written (a
+  random one is set, the preview says so); logos travel in the bundle.
+  No ext-zip on the station: `Application_Common_Zip` is a minimal
+  stored/deflate ZIP reader and writer.  CLI probe
+  `C:/Temp/optd/importexport_test.php` (template, export, preview, import)
+  and `ie_cleanup.php`; a synthetic bundle created a webstream, a block, a
+  playlist (file, stream, block, line-in) and a 2027 show with logo, DJ
+  and autoloading playlist, and refused the overlapping second show.
+  Manual chapter IMPORT_EXPORT in EN/DE/FR/ES.  Commit: IMPORTEXPORT_PENDING.
+
 - **Third-party component inventory and update check (2026-10-09, operator
   decision: keep the stack current in a controlled way)** -
   `docs/operator/COMPONENTS.md` lists every component RASTATIME runs on
