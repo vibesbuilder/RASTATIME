@@ -32,7 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and `ie_cleanup.php`; a synthetic bundle created a webstream, a block, a
   playlist (file, stream, block, line-in) and a 2027 show with logo, DJ
   and autoloading playlist, and refused the overlapping second show.
-  Manual chapter IMPORT_EXPORT in EN/DE/FR/ES.  Commit: IMPORTEXPORT_PENDING.
+  Manual chapter IMPORT_EXPORT in EN/DE/FR/ES.  Commit: 96266b2.
 
 - **Third-party component inventory and update check (2026-10-09, operator
   decision: keep the stack current in a controlled way)** -
