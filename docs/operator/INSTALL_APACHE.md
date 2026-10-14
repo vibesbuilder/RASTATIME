@@ -230,8 +230,19 @@ The script:
 * Captures NSSM-side stdout / stderr to
   `C:\rastatime\logs\apache-nssm-stdout.log` /
   `apache-nssm-stderr.log`.
-  Apache's own `access_log` and `error_log` continue to live under
-  `C:\Tools\Apache24\logs\` as configured by `httpd.conf`.
+  Apache's own port-80 logs are daily `rotatelogs` slices under
+  `C:\RASTATIME\logs\` since 2026-10-14 (`http-error-YYYYMMDD.log`,
+  `http-access-YYYYMMDD.log`, swept by the log janitor like the HTTPS
+  slices).  `httpd.conf`:
+
+  ```
+  ErrorLog  "|C:/Tools/Apache24/bin/rotatelogs.exe -l C:/RASTATIME/logs/http-error-%Y%m%d.log 86400"
+  CustomLog "|C:/Tools/Apache24/bin/rotatelogs.exe -l C:/RASTATIME/logs/http-access-%Y%m%d.log 86400" common
+  ```
+
+  Before that, `C:\Tools\Apache24\logs\error_log` grew to 890 MB
+  (PHP deprecation flood until 2026-10-09) and, because Apache keeps
+  it open, could never be rotated.
 
 ## 6. Verify
 

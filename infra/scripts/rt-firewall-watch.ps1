@@ -6,7 +6,9 @@
 .DESCRIPTION
     RASTATIME 2026-10-06 (go-live follow-up (c)).  Runs every 5 minutes
     from the Task Scheduler as SYSTEM.  Looks at the last 60 minutes (default) of
-      * the HTTP logs  C:\Tools\Apache24\logs\access_log (port 80) and
+      * the HTTP logs  C:\RASTATIME\logs\http-access-YYYYMMDD.log (port 80,
+                       daily rotatelogs slices since 2026-10-14; before that
+                       C:\Tools\Apache24\logs\access_log) and
                        C:\RASTATIME\logs\https-access-YYYYMMDD.log (port 443,
                        daily rotatelogs slices since 2026-10-09),
       * the playout log C:\RASTATIME\logs\playout-stdout.log (DJ harbor),
@@ -110,7 +112,8 @@ $months = @{ Jan=1; Feb=2; Mar=3; Apr=4; May=5; Jun=6; Jul=7; Aug=8; Sep=9; Oct=
 # (rotatelogs, https-access-YYYYMMDD.log): read the slices touched inside the
 # window (today, and yesterday around midnight), plus the old single file
 # while it still exists.
-$httpsSlices = @(Get-ChildItem 'C:\RASTATIME\logs\https-access-*.log' -ErrorAction SilentlyContinue |
+# 2026-10-14: the port-80 host writes http-access-YYYYMMDD.log slices as well.
+$httpsSlices = @(Get-ChildItem 'C:\RASTATIME\logs\https-access-*.log', 'C:\RASTATIME\logs\http-access-*.log' -ErrorAction SilentlyContinue |
     Where-Object { $_.LastWriteTime -gt $since.AddDays(-1) } | Sort-Object LastWriteTime | Select-Object -ExpandProperty FullName)
 foreach ($file in @('C:\Tools\Apache24\logs\access_log', 'C:\RASTATIME\logs\https-access.log') + $httpsSlices) {
     foreach ($line in (Read-Tail $file)) {
