@@ -96,7 +96,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   fields, checked against the live package), so an import in between is
   filed unconverted, not failed.  Manual LOCAL_MACHINE (new section 5 Import
   Format, `_failed`) and LIBRARY (file formats on import) in EN/DE/FR/ES;
-  architecture §23.57 (0.70).  Commit: FORMATNORM_PENDING.
+  architecture §23.57 (0.70).  Commit: 1e38ae8.
 
 - **Settings -> Import/Export: shows, playlists, smart blocks, webstreams and
   podcast subscriptions as CSV/JSON, bundle or single file, with a preview
@@ -1324,7 +1324,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`check_helpers.php`, scratch) plus 10/10 for the review fixes
   (`check_fixes.php`: a failed move keeps the import-folder file, encoder
   cut on a character boundary), `php -l` on the 10 changed files, layout
-  measured EN/DE/FR/ES at 700/900/1200 px.  Commit: FORMATNORM_PENDING.
+  measured EN/DE/FR/ES at 700/900/1200 px.  Commit: 1e38ae8.
 - **Import/Export: smart block rules - group semantics, relative and
   absolute dates, no half-written blocks (2026-10-14, operator Go
   2026-10-14: format A, no offset, doc corrections included)** -
