@@ -1,14 +1,66 @@
+import json
 import os
 import re
+import subprocess
 from math import inf
 from os import getenv
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from ._utils import run_
 
 FFPROBE = getenv("FFPROBE_PATH", "ffprobe")
 FFMPEG = getenv("FFMPEG_PATH", "ffmpeg")
+
+# RASTATIME 2026-10-14 - Liquidsoap and Stereo Tool run on the same machine:
+# the import-time ffprobe / ffmpeg runs (tag reading, format conversion) get
+# the Windows BELOW_NORMAL priority class so a long transcode never takes CPU
+# time from the playout.
+BELOW_NORMAL_PRIORITY_CLASS = 0x00004000
+
+
+def low_priority_creationflags() -> int:
+    """``creationflags`` for subprocess.run: below normal priority on Windows."""
+    return BELOW_NORMAL_PRIORITY_CLASS if os.name == "nt" else 0
+
+
+def ffprobe_json(filepath, timeout: float = 60.0) -> Dict[str, Any]:
+    """
+    RASTATIME 2026-10-14 - ``ffprobe -show_format -show_streams`` as a dict.
+
+    The output is decoded as UTF-8 explicitly (tag text is UTF-8 JSON; the
+    console code page would garble it).  Raises OSError (binary missing),
+    subprocess.TimeoutExpired, subprocess.CalledProcessError (unreadable
+    file) or ValueError (no JSON).
+    """
+    cmd = [
+        FFPROBE,
+        *("-v", "error"),
+        *("-print_format", "json"),
+        "-show_format",
+        "-show_streams",
+        str(filepath),
+    ]
+    completed = subprocess.run(
+        cmd,
+        check=False,
+        capture_output=True,
+        stdin=subprocess.DEVNULL,
+        timeout=timeout,
+        creationflags=low_priority_creationflags(),
+    )
+    if completed.returncode != 0:
+        raise subprocess.CalledProcessError(
+            completed.returncode,
+            cmd,
+            completed.stdout,
+            completed.stderr,
+        )
+    data = json.loads(completed.stdout.decode("utf-8", errors="replace") or "{}")
+    if not isinstance(data, dict):
+        raise ValueError("ffprobe returned no JSON object")
+    return data
+
 
 # OS-portable null device: 'nul' on Windows, '/dev/null' on Unix.
 # Hard-coding '/dev/null' caused ffmpeg to silently produce a CompletedProcess

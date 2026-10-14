@@ -1247,12 +1247,14 @@ SQL;
      * @param string $originalFilename
      * @param bool   $copyFile         copy the file instead of moving it
      * @param mixed  $fileId
+     * @param bool   $keepSourceOnFailure RASTATIME 2026-10-14 - never delete the source when the
+     *                                    move fails (import folder: the file is the operator's)
      *
      * @return Ambigous <unknown, string>
      *
      * @throws Exception
      */
-    public static function moveFileToStor($tempFilePath, $fileId, $originalFilename, $copyFile = false)
+    public static function moveFileToStor($tempFilePath, $fileId, $originalFilename, $copyFile = false, $keepSourceOnFailure = false)
     {
         $audio_file = $tempFilePath;
 
@@ -1297,7 +1299,12 @@ SQL;
                 // the audio_stor to move the file too warn the user that   .
                 // the file wasn't uploaded and they should check if there  .
                 // is enough disk space                                     .
-                unlink($audio_file); // remove the file after failed rename
+                // RASTATIME 2026-10-14 - only an upload's temporary copy is
+                // ours to remove; a file from the import folder stays, so
+                // LocalImportScanTask can move it to _failed.
+                if (!$keepSourceOnFailure) {
+                    unlink($audio_file); // remove the file after failed rename
+                }
 
                 throw new Exception('The file was not uploaded, this error can occur if the computer '
                     . 'hard drive does not have enough disk space or the stor '

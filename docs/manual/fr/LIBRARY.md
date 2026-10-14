@@ -12,7 +12,7 @@ types d'items :
 
 | Type | Ce que c'est | Où les lignes vivent |
 |---|---|---|
-| **Piste (Track)** | Un fichier audio unique (MP3, FLAC, OGG, WAV, AAC). | `cc_files` |
+| **Piste (Track)** | Un fichier audio unique (MP3, M4A, OGG, Opus, ... ; WAV et FLAC sont convertis en MP3 à l'import par défaut). | `cc_files` |
 | **Smart Block** | Une *requête* — "choisir N pistes où genre = pop et BPM > 100", évaluée au moment du build. | `cc_block` + `cc_blockcontents` (critères) |
 | **Playlist** | Une liste ordonnée d'items : pistes, smart blocks, webstreams ou line-ins. | `cc_playlist` + `cc_playlistcontents` |
 | **Webstream** | Une URL pointant vers une autre source Icecast / Shoutcast / HTTP audio. | `cc_webstream` |
@@ -147,7 +147,7 @@ la zone de téléversement ou cliquez pour choisir.
 
 | Champ | Notes |
 |---|---|
-| **Fichier** | L'un de : MP3, FLAC, OGG, WAV, AAC, M4A. |
+| **Fichier** | L'un de : MP3, M4A, MP4, AAC, OGG, OGA, Opus, FLAC, WAV, MP2, MP1, AU - depuis le 2026-10-14 la même liste que celle du dossier d'import local et de l'import FTP. Les fichiers sans perte sont convertis en MP3 à l'import par défaut (voir *Formats de fichier à l'import* ci-dessous). |
 | **Propriétaire** | Par défaut vous. Les Admins peuvent surcharger. |
 
 Le téléversement exécute l'analyzer (métadonnées +
@@ -193,6 +193,36 @@ comme pistes exactement comme un téléversement manuel.
 > `imported/<nom du podcast>/`.  Renommer un podcast ouvre un
 > nouveau dossier pour les épisodes futurs ; les fichiers
 > existants restent en place.
+
+### Formats de fichier à l'import (depuis le 2026-10-14)
+
+Quelle que soit la voie par laquelle une piste arrive - téléversement,
+dossier d'import local, import FTP ou import en masse -, l'analyzer
+examine l'audio contenu dans le fichier (et non son extension) avant
+de le classer :
+
+- **MP3, MP2, MP1, AAC en M4A / MP4, OGG Vorbis et Opus** sont
+  importés tels quels et jamais réencodés.
+- **L'AAC brut (`.aac`)** est toujours réempaqueté en `.m4a` sans
+  réencodage : un fichier AAC brut n'a pas d'index, sa durée ne peut
+  qu'être estimée, et il ne peut pas porter de tags.
+- **L'audio sans perte** - WAV, FLAC, AU, Apple Lossless en M4A - est
+  converti en **MP3 à 320 kbit/s** tant que Paramètres → **Machine
+  locale** → **Format d'import** est activé (par défaut).  L'original
+  sans perte n'est pas conservé ; les tags, la date Expiry et une
+  pochette intégrée sont repris.  Si une conversion échoue, l'original
+  est importé sans modification.  Détails :
+  [Machine locale](./LOCAL_MACHINE.md), section 5.
+- **Les tags sont lus dans tous les formats.**  Outre l'ID3 des
+  fichiers MP3, l'analyzer lit les tags des fichiers WAV (bloc ID3 et
+  RIFF INFO), les commentaires des fichiers FLAC, OGG et Opus et les
+  champs des fichiers M4A, y compris description / commentaire et la
+  date **Expiry** (`YYYY-MM-DD`).  Avant le 2026-10-14, les tags des
+  fichiers WAV n'étaient pas lus, et un `.aac` brut avec un tag ID3
+  échouait à l'import.
+
+Les épisodes de podcast n'en font pas partie : ils sont téléchargés
+directement dans la bibliothèque (section 2.3) et gardent leur format.
 
 ### Modifier les métadonnées de piste
 
@@ -486,6 +516,13 @@ Vérifiez le badge de statut de téléversement :
 - **Pas de badge mais pas de ligne** : le service
   analyzer ne tourne pas. Vérifiez
   `Get-Service RASTATIME-ANALYZER`.
+
+### "J'ai téléversé un fichier WAV et la bibliothèque affiche un MP3."
+
+C'est voulu : les fichiers sans perte sont convertis en MP3 320 kbit/s
+à l'import (section 2, *Formats de fichier à l'import*).  Pour garder
+un fichier sans perte, désactivez Paramètres → **Machine locale** →
+**Format d'import** avant de le téléverser.
 
 ### "Pourquoi mon smart block retourne-t-il les mêmes pistes à chaque fois ?"
 

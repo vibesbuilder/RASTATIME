@@ -51,7 +51,7 @@ Top-Bar Einstellungen → öffnet das Untermenü:
 | Seite | Zweck | Handbuch-Kapitel |
 |---|---|---|
 | **Allgemeine Einstellungen** | Stationsname, Standardsprache, Standardfarben, Dashboard-Vorausschau, Standard-Crossfade-Dauer, Favicon, Stationslogo. | Dieses Kapitel §2 |
-| **Lokale Maschine** | Soundkarten-Ausgabe-/Eingabegeräte, lokaler Import-Ordner, lokaler Aufnahme-Ordner. | [Lokale Maschine](./LOCAL_MACHINE.md) |
+| **Lokale Maschine** | Soundkarten-Ausgabe-/Eingabegeräte, Importformat, lokaler Import-Ordner, lokaler Aufnahme-Ordner. | [Lokale Maschine](./LOCAL_MACHINE.md) |
 | **Streams** | Bis zu vier Output-Streams, pro-Stream-Bitrate / Mountpoint / Codec, Quell-Authentifizierung. | [Streams](./STREAMS.md) |
 | **Line-In-Bibliothek** | Benannte Live-Audio-Eingänge von Soundkarten-Geräten. | [Line-In](./LINE_IN.md) |
 | **Auto DJ** | Hintergrund-Lückenfüller + Auffüllen unvollständiger Sendungen. | [Auto DJ](./AUTO_DJ.md) |

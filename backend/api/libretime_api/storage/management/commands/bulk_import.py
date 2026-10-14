@@ -5,16 +5,22 @@ from typing import List, Optional
 import requests
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandParser
+from django.db.models import Q
 from libretime_shared.files import compute_md5
 
 from ...models import File, Library
 
 logger = logging.getLogger(__name__)
 
+# RASTATIME 2026-10-14 - aligned with the extensions the import folder /
+# FTP scan and CcFiles::createAndImport accept (raw .aac is repacked to
+# .m4a by the analyzer, .oga is an Ogg container).
 DEFAULT_ALLOWED_EXTENSIONS = [
+    ".aac",
     ".flac",
     ".m4a",
     ".mp3",
+    ".oga",
     ".ogg",
     ".opus",
     ".wav",
@@ -83,7 +89,11 @@ class Importer:
     def _check_file_md5(self, filepath: Path) -> bool:
         file_md5 = compute_md5(filepath)
 
-        return File.objects.filter(md5=file_md5).exists()
+        # RASTATIME 2026-10-14 - a lossless original converted to MP3 on
+        # import is stored with the md5 of the MP3; its own md5 is kept in
+        # source_md5 (legacy migration 0066), so the same WAV / FLAC is
+        # still recognised as already imported.
+        return File.objects.filter(Q(md5=file_md5) | Q(source_md5=file_md5)).exists()
 
     def _upload_file(self, filepath: Path, library: Optional[str]) -> None:
         try:

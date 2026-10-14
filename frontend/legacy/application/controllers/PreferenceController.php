@@ -644,8 +644,9 @@ class PreferenceController extends Zend_Controller_Action
         $folder = trim((string) $this->_getParam('folder', ''));
 
         // Non-empty: validate that the path exists, is a directory, and
-        // is writable (we need to delete files after import).  Empty
-        // value is allowed and disables the scan.
+        // is writable (files are moved out of it after the import, a failed
+        // one into its _failed subfolder).  Empty value is allowed and
+        // disables the scan.
         if ($folder !== '') {
             if (!is_dir($folder)) {
                 $this->_helper->json->sendJson([
@@ -657,7 +658,7 @@ class PreferenceController extends Zend_Controller_Action
             if (!is_writable($folder)) {
                 $this->_helper->json->sendJson([
                     'ok' => false,
-                    'error' => 'Folder is not writable (needed to delete source files after import): ' . $folder,
+                    'error' => 'Folder is not writable (needed to move source files out of it after import): ' . $folder,
                 ]);
                 return;
             }
@@ -1039,6 +1040,40 @@ class PreferenceController extends Zend_Controller_Action
         // RASTATIME 2026-09-17 — the Line-In sources section (and its
         // linein.js) left this page; the Library dialog is the one
         // line-in editor now.
+
+        // RASTATIME 2026-10-14 — Import Format section (lossless -> MP3
+        // 320 kbps); saved through importFormatSaveAction.
+        $this->view->convertLosslessToMp3 = Application_Model_Preference::getConvertLosslessToMp3();
+    }
+
+    /**
+     * POST /preference/import-format-save - RASTATIME 2026-10-14.
+     *
+     * Settings -> Local Machine -> Import Format: "Convert lossless audio
+     * (WAV, FLAC, ...) to MP3 320 kbps on import" (cc_pref
+     * convert_lossless_to_mp3, default on).  Takes effect with the next
+     * import message (RabbitMq::SendMessageToAnalyzer) - no restart.
+     */
+    public function importFormatSaveAction(): void
+    {
+        $this->view->layout()->disableLayout();
+        $this->_helper->viewRenderer->setNoRender(true);
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->getResponse()->setHttpResponseCode(405);
+            $this->_helper->json->sendJson(['ok' => false, 'error' => 'method-not-allowed']);
+            return;
+        }
+        if (!SecurityHelper::verifyCSRFToken($this->_getParam('csrf_token'))) {
+            $this->_helper->json->sendJson(['ok' => false, 'error' => 'csrf']);
+            return;
+        }
+        $on = $this->_getParam('convert_lossless', '') === 'true';
+        Application_Model_Preference::setConvertLosslessToMp3($on);
+        Logging::info('Import format: lossless -> MP3 320 kbps conversion ' . ($on ? 'enabled' : 'disabled'));
+        $this->_helper->json->sendJson([
+            'ok' => true,
+            'convert_lossless' => Application_Model_Preference::getConvertLosslessToMp3(),
+        ]);
     }
 
     /**

@@ -4,7 +4,8 @@
 > la página Configuración → **Máquina local**, que posee
 > cada aspecto vinculado a la *máquina del operador
 > misma* — salida de tarjeta de sonido, dispositivos de
-> entrada line-in y carpeta de importación local. Para los
+> entrada line-in, formato de importación y carpeta de
+> importación local. Para los
 > streams salientes del lado de red, vea
 > [Streams](./STREAMS.md). Para el tipo de item de
 > biblioteca que *referencia* una entrada de tarjeta de
@@ -13,7 +14,8 @@
 La página **Máquina local** es donde informa a RASTATIME
 sobre los recursos físicos en la máquina del operador:
 qué salida de altavoz reproducir, qué dispositivos cuentan
-como candidatos line-in, y qué carpeta el analyzer debe
+como candidatos line-in, en qué formato entran los archivos
+sin pérdida en la biblioteca, y qué carpeta el analyzer debe
 vigilar para pistas importadas.
 
 La página reemplaza la página "Soundcard" del LibreTime
@@ -27,8 +29,10 @@ slug cambian.
 
 Configuración → **Máquina local**.
 
-Tres secciones independientes: Tarjeta de sonido (salida +
-entrada), Carpeta de importación local.
+Secciones independientes: Tarjeta de sonido (salida +
+entrada), Formato de importación, Carpeta de importación local,
+y después importación FTP, ubicación de la biblioteca de medios y
+carpetas de grabación.
 
 ---
 
@@ -289,7 +293,74 @@ salida re-expone el por defecto en forma de fila única.
 
 ---
 
-## 5. Carpeta de importación local
+## 5. Formato de importación
+
+*(Desde el 2026-10-14.)*  Una casilla: **Convertir el audio sin
+pérdida (WAV, FLAC, ...) a MP3 de 320 kbps al importar** —
+**activada** por defecto.  Se aplica a todas las vías por las que una
+pista entra en la biblioteca: subida del navegador, carpeta de
+importación local, importación FTP y el comando de importación masiva.
+Pulse el botón **Guardar** de la sección; la siguiente importación
+sigue el nuevo valor, no hace falta reiniciar nada.
+
+Lo que hace la importación con cada archivo:
+
+| Audio dentro del archivo | Qué ocurre |
+|---|---|
+| MP3, MP2, MP1, AAC en M4A / MP4, OGG Vorbis, Opus | Se importa tal cual — nunca se recodifica. |
+| AAC en bruto (`.aac`) | Siempre se reempaqueta en un `.m4a`, **sin** recodificar, esté la casilla activada o no. Un archivo AAC en bruto no tiene índice, así que su duración solo puede estimarse (unos 2 s de más en los archivos comprobados), y no puede llevar etiquetas. |
+| Sin pérdida: WAV, FLAC, AU, Apple Lossless (ALAC) en M4A | Casilla **activada**: se convierte a MP3 de 320 kbps antes de entrar en la biblioteca; el original sin pérdida **no se conserva**.  Casilla **desactivada**: se importa tal cual. |
+
+- **Cuenta el audio, no la extensión.**  Un `.m4a` con Apple Lossless
+  se convierte; un `.wav` con datos MP3 no.
+- **Etiquetas y carátula se conservan.**  Título, artista, álbum,
+  género, año, número de pista, compositor, copyright, sello, ISRC,
+  BPM, idioma, comentario y la fecha **Expiry** se escriben en el MP3,
+  y una carátula JPEG o PNG incrustada se mantiene.  El archivo
+  conserva su nombre con la nueva extensión (`Interview.wav` pasa a
+  ser `Interview.mp3`); un archivo sin etiqueta de título muestra ese
+  nuevo nombre como título, como cualquier subida sin etiquetas.
+- **Frecuencia de muestreo y canales.**  32, 44,1 y 48 kHz se quedan
+  como están; las demás frecuencias (por ejemplo 96 kHz) pasan a
+  44,1 kHz.  Más de dos canales se mezclan a estéreo.
+- **Medido tras la conversión.**  Duración, puntos de cue, ReplayGain
+  y sonoridad se toman del archivo que acaba en la biblioteca.
+- **Una conversión fallida nunca cuesta la importación**: entonces se
+  importa el archivo original sin cambios.
+- La conversión se ejecuta con prioridad baja, para que un lote grande
+  no quite potencia de cálculo al playout; una pista convertida
+  simplemente aparece un poco más tarde en la biblioteca.
+- **Los episodios de podcast no se convierten** — se descargan
+  directamente en la biblioteca sin pasar por el análisis de
+  importación.
+
+> **Por qué funciona así.**  Los streams tienen pérdida de todos
+> modos, y un FLAC o un WAV ocupa entre tres y cuatro veces y media el
+> espacio de un MP3 de 320 kbps.  El resto de la biblioteca es MP3, y
+> el MP3 lleva la fecha **Expiry** de forma fiable; en un M4A muchas
+> herramientas la pierden.  El audio con pérdida (MP3, AAC, Ogg
+> Vorbis, Opus) no se toca, porque recodificar un formato con pérdida en
+> otro solo cuesta calidad.  Vea ARCHITECTURE §23.57.
+
+> **Pistas importadas antes del 2026-10-14.**  Los archivos sin
+> pérdida que ya estaban en la biblioteca los convierte una vez un
+> técnico con el comando `convert_lossless` (primero una prueba en
+> seco; una pista en antena o programada en las próximas seis horas
+> se omite, y no se convierte nada mientras la biblioteca de medios se
+> traslada).  La pista conserva su id, su lugar en playlists y
+> programas y su Cue In; la sonoridad se mide de nuevo en el MP3.
+
+> **Bajo el capó.**  El ajuste es la clave `cc_pref`
+> `convert_lossless_to_mp3` (ausente = activada).  La aplicación web
+> la envía con cada mensaje de importación al analyzer
+> (`options.convert_lossless`); su paso `convert_format` se ejecuta
+> justo después de leer las etiquetas.  Una pista convertida guarda el
+> md5 de su original en `cc_files.source_md5`, para que la importación
+> masiva siga reconociendo el mismo WAV o FLAC como ya importado.
+
+---
+
+## 6. Carpeta de importación local
 
 La Carpeta de importación local es un directorio en la
 máquina del operador que el analyzer vigila para nuevos
@@ -314,8 +385,10 @@ Now**).  Para cada archivo situado directamente en la carpeta:
 
 1. **Los archivos no de audio se omiten** y se dejan en su sitio —
    el escáner solo toma archivos de audio (`mp3`, `wav`, `m4a`,
-   `flac`, `ogg`, `oga`, `aac`, `opus`).  La línea de estado los
-   cuenta como «non-audio files left alone».
+   `mp4`, `flac`, `ogg`, `oga`, `aac`, `opus`, `mp2`, `mp1`, `au`;
+   desde el 2026-10-14 exactamente la lista que acepta la subida del
+   navegador).  La línea de estado los cuenta como «non-audio files
+   left alone».
 2. **Los archivos aún sin reposo esperan (desde el 17/09/2026).**
    Un archivo modificado en los últimos 60 segundos puede estar
    todavía escribiéndose (copia lenta, subida FTP); la línea de
@@ -325,24 +398,33 @@ Now**).  Para cada archivo situado directamente en la carpeta:
 3. Cada archivo de audio en reposo pasa al **circuito estándar de
    subida**: se crea una entrada de biblioteca, el archivo se
    **mueve** (no se copia) a la zona `organize` de la biblioteca, y
-   el analizador continúa — lectura de metadatos, comprobación de
+   el analizador continúa — lectura de metadatos, conversión según el
+   **Formato de importación** (sección 5), comprobación de
    reproducibilidad, lugar definitivo en la biblioteca.  Desde
    entonces se comporta exactamente como un archivo subido por la
    interfaz web.
-4. **Si la entrega falla, el archivo de origen se borra** — en el
-   primer intento y a propósito: un archivo permanentemente roto no
-   debe acumularse en la carpeta y reintentarse en cada pasada.
+4. **Si la entrega falla, el archivo se mueve a la subcarpeta
+   `_failed`** de la carpeta de importación (desde el 2026-10-14;
+   antes se borraba).  Allí conserva su ruta relativa
+   (`Album/Song.wav` pasa a ser `_failed/Album/Song.wav`; si ese
+   nombre está ocupado, se añade un número: `Song (2).wav`).  El
+   escáner nunca mira dentro de `_failed`, así que un archivo roto no
+   se reintenta en cada pasada — y un archivo rechazado nunca se
+   borra.  Si incluso el traslado falla, el archivo se queda donde
+   está y la siguiente pasada lo intenta de nuevo.
 
 La carpeta se vacía por tanto de archivos de audio tras cada pasada —
-movidos a la biblioteca si hay éxito, borrados si hay fallo.  Los
-archivos no de audio permanecen.
+movidos a la biblioteca si hay éxito, a `_failed` si hay fallo.  Los
+archivos no de audio permanecen.  La línea de estado indica cuántos
+archivos fueron a `_failed` («2 failed (moved to _failed)»).
 
 ### Subcarpetas y lotes grandes (desde 2026-10-08)
 
 Las subcarpetas se **recorren**: cada archivo de audio de la carpeta de
 importación y de cualquier subcarpeta se importa, carpeta por carpeta
 en orden de ruta; una subcarpeta que los traslados dejan vacía se
-elimina.  La estructura de carpetas no pasa a la biblioteca (que
+elimina.  La subcarpeta `_failed` es la excepción: nunca se recorre ni
+se elimina.  La estructura de carpetas no pasa a la biblioteca (que
 organiza los archivos por sus metadatos): etiquete los archivos antes
 de copiarlos.
 
@@ -378,7 +460,8 @@ plano pertenecen a la primera cuenta de administrador.
 > peticiones web normales, como mucho cada 300 s, y actualiza las
 > claves `cc_pref` `local_import_last_run` y
 > `local_import_last_status` (la línea de estado de esta página).
-> Vea ARCHITECTURE §23.12.
+> Vea ARCHITECTURE §23.12 y, para la carpeta `_failed` y la lista de
+> extensiones común, §23.57.
 
 ### Importar desde un servidor FTP
 
@@ -400,7 +483,8 @@ pulse **Save FTP import**.
   comprobaciones, y el tamaño se verifica de nuevo tras la
   descarga.  Hasta entonces el estado lo cuenta como «settling».
 - **Los archivos no de audio permanecen en el servidor.**  Solo se
-  recogen las extensiones de audio de la carpeta de importación.
+  recogen las extensiones de audio de la carpeta de importación.  Una
+  entrada remota llamada `_failed` no se toca.
 - **Prefiera FTPS o SFTP** — el FTP en claro transmite la
   contraseña sin cifrar.  La contraseña se guarda en la base de
   datos de ajustes como las demás contraseñas de servicios, para
@@ -412,7 +496,7 @@ pulse **Save FTP import**.
 
 ---
 
-## 6. Ubicación de la biblioteca de medios
+## 7. Ubicación de la biblioteca de medios
 
 Desde el 16/09/2026 la carpeta que contiene la biblioteca de medios
 (pistas importadas, carátulas, imágenes de programas) es un ajuste de
@@ -465,7 +549,7 @@ disponible.
 
 ---
 
-## 7. Carpetas de grabación (relacionadas)
+## 8. Carpetas de grabación (relacionadas)
 
 Configuración → Máquina local tiene **dos** carpetas de salida
 de grabación:
@@ -501,7 +585,7 @@ descarga / archivo.
 
 ---
 
-## 8. Preguntas frecuentes
+## 9. Preguntas frecuentes
 
 ### "Mi micro USB aparece en Windows, pero no en RASTATIME."
 
@@ -522,11 +606,27 @@ Orden de diagnóstico:
    fuerza una pasada.
 3. Un archivo modificado en los últimos 60 segundos cuenta como
    «still being copied» — espere un minuto y escanee de nuevo.
-4. «failed N» en la línea de estado significa que la entrega
-   falló y el origen fue borrado (a propósito).  Pruebe el
-   archivo en otro reproductor y busque el motivo en
-   `logs\legacy.log`; el servicio `RASTATIME-ANALYZER` debe
-   correr para terminar la importación.
+4. «N failed (moved to _failed)» en la línea de estado significa
+   que la entrega falló y el archivo está ahora en la subcarpeta
+   `_failed` (vea la pregunta siguiente).  Pruebe el archivo en otro
+   reproductor y busque el motivo en `logs\legacy.log`; el servicio
+   `RASTATIME-ANALYZER` debe correr para terminar la importación.
+
+### "¿Qué hago con los archivos de `_failed`?"
+
+Cada archivo que hay allí no pudo entregarse a la biblioteca.  Busque
+su nombre en `logs\legacy.log` para ver el motivo, pruébelo en otro
+reproductor, repárelo o vuelva a exportarlo si hace falta y muévalo de
+nuevo a la carpeta de importación — a cualquier lugar fuera de
+`_failed`; la siguiente pasada lo importa.  Borre lo que ya no
+necesite: RASTATIME nunca vacía `_failed` por sí mismo.
+
+### "Importé un archivo WAV o FLAC y la biblioteca muestra un MP3."
+
+Es el ajuste **Formato de importación** (sección 5): los archivos sin
+pérdida se convierten a MP3 de 320 kbps al importar, y el original sin
+pérdida no se conserva.  Para importar archivos sin pérdida tal cual,
+desmarque la casilla y pulse **Guardar** *antes* de importarlos.
 
 ### "¿Por qué mover y no copiar en la Carpeta de importación local?"
 

@@ -49,7 +49,7 @@ Top-bar Settings → opens the sub-menu:
 | Page | Purpose | Manual chapter |
 |---|---|---|
 | **General Preferences** | Station name, default language, default colours, dashboard look-ahead, default import owner, track and show crossfade durations, favicon, station logo. | This chapter §2 |
-| **Local Machine** | Sound-card output / input devices, Local Import Folder, Local Recording Folder. | [Local Machine](./LOCAL_MACHINE.md) |
+| **Local Machine** | Sound-card output / input devices, Import Format, Local Import Folder, Local Recording Folder. | [Local Machine](./LOCAL_MACHINE.md) |
 | **Streams** | Up to four output streams, per-stream bitrate / mountpoint / codec, source authentication. | [Streams](./STREAMS.md) |
 | **Line-In Library** | Named live audio inputs from sound-card devices. | [Line-In](./LINE_IN.md) |
 | **Auto DJ** | Background gap-filler + incomplete-show top-up. | [Auto DJ](./AUTO_DJ.md) |

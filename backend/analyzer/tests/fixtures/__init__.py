@@ -96,6 +96,9 @@ tags = {
     "comment": "Test Comment",
 }
 
+# RASTATIME 2026-10-14 - every format now carries the comment in all three
+# keys (ffprobe reads the Vorbis DESCRIPTION / RIFF INFO / WAV ID3 chunk that
+# mutagen's easy mode misses), so all fixtures expect mp3Tags.
 mp3Tags = {
     **tags,
     "comments": tags["comment"],
@@ -137,7 +140,7 @@ FILES_TAGGED = [
         here / "s1-mono-tagged.flac",
         {
             **meta,
-            **tags,
+            **mp3Tags,
             "bit_rate": approx(452802, abs=1e2),
             "channels": 1,
             "mime": "audio/flac",
@@ -147,7 +150,7 @@ FILES_TAGGED = [
         here / "s1-stereo-tagged.flac",
         {
             **meta,
-            **tags,
+            **mp3Tags,
             "bit_rate": approx(938593, abs=1e3),
             "channels": 2,
             "mime": "audio/flac",
@@ -177,7 +180,7 @@ FILES_TAGGED = [
         here / "s1-mono-tagged.ogg",
         {
             **meta,
-            **tags,
+            **mp3Tags,
             "bit_rate": approx(80000, abs=1e2),
             "channels": 1,
             "mime": "audio/vorbis",
@@ -187,7 +190,7 @@ FILES_TAGGED = [
         here / "s1-stereo-tagged.ogg",
         {
             **meta,
-            **tags,
+            **mp3Tags,
             "bit_rate": approx(112000, abs=1e2),
             "channels": 2,
             "mime": "audio/vorbis",
@@ -197,7 +200,7 @@ FILES_TAGGED = [
         here / "s1-stereo-tagged",
         {
             **meta,
-            **tags,
+            **mp3Tags,
             "bit_rate": approx(112000, abs=1e2),
             "channels": 2,
             "mime": "audio/vorbis",
@@ -207,6 +210,7 @@ FILES_TAGGED = [
         here / "s1-mono-tagged.wav",
         {
             **meta,
+            **mp3Tags,
             "bit_rate": approx(768000, abs=1e2),
             "channels": 1,
             "mime": "audio/wav",
@@ -216,6 +220,7 @@ FILES_TAGGED = [
         here / "s1-stereo-tagged.wav",
         {
             **meta,
+            **mp3Tags,
             "bit_rate": approx(1536000, abs=1e2),
             "channels": 2,
             "mime": "audio/wav",
@@ -275,7 +280,7 @@ FILES_TAGGED += [
         here / "s1-mono-tagged-utf8.flac",
         {
             **meta,
-            **tags,
+            **mp3Tags,
             "bit_rate": approx(452802, abs=1e2),
             "channels": 1,
             "mime": "audio/flac",
@@ -285,7 +290,7 @@ FILES_TAGGED += [
         here / "s1-stereo-tagged-utf8.flac",
         {
             **meta,
-            **tags,
+            **mp3Tags,
             "bit_rate": approx(938593, abs=1e2),
             "channels": 2,
             "mime": "audio/flac",
@@ -315,7 +320,7 @@ FILES_TAGGED += [
         here / "s1-mono-tagged-utf8.ogg",
         {
             **meta,
-            **tags,
+            **mp3Tags,
             "bit_rate": approx(80000, abs=1e2),
             "channels": 1,
             "mime": "audio/vorbis",
@@ -325,7 +330,7 @@ FILES_TAGGED += [
         here / "s1-stereo-tagged-utf8.ogg",
         {
             **meta,
-            **tags,
+            **mp3Tags,
             "bit_rate": approx(112000, abs=1e2),
             "channels": 2,
             "mime": "audio/vorbis",
@@ -335,7 +340,7 @@ FILES_TAGGED += [
         here / "s1-stereo-tagged-utf8",
         {
             **meta,
-            **tags,
+            **mp3Tags,
             "bit_rate": approx(112000, abs=1e2),
             "channels": 2,
             "mime": "audio/vorbis",
@@ -345,6 +350,7 @@ FILES_TAGGED += [
         here / "s1-mono-tagged-utf8.wav",
         {
             **meta,
+            **mp3Tags,
             "bit_rate": approx(768000, abs=1e2),
             "channels": 1,
             "mime": "audio/wav",
@@ -354,6 +360,7 @@ FILES_TAGGED += [
         here / "s1-stereo-tagged-utf8.wav",
         {
             **meta,
+            **mp3Tags,
             "bit_rate": approx(1536000, abs=1e2),
             "channels": 2,
             "mime": "audio/wav",

@@ -165,7 +165,7 @@ qu'ils supposent tous.
 |---|---|
 | [Streams](./STREAMS.md) | Configurer jusqu'à quatre streams de sortie, surveiller les compteurs d'auditeurs, dépannage. |
 | [Analytics](./ANALYTICS.md) | Playout History (ce qui est réellement passé à l'antenne, journaux exportables), History Templates, Listener Stats (audience par flux et par émission au fil du temps). |
-| [Machine locale](./LOCAL_MACHINE.md) | Sortie carte son, entrée line-in, dossier d'import local. |
+| [Machine locale](./LOCAL_MACHINE.md) | Sortie carte son, entrée line-in, format d'import (sans perte vers MP3), dossier d'import local. |
 | [Sauvegarde](./BACKUP.md) | Sauvegardes de la base + configuration en un clic dans un dossier choisi ; téléchargement ; la procédure de restauration documentée. |
 | [Widgets publics intégrables](./WIDGETS.md) | Widgets prêts-à-l'emploi pour le site web public de votre station (Now Playing — Show / Track, Weekly Program, Player). |
 

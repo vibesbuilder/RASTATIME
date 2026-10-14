@@ -11,7 +11,7 @@ items:
 
 | Tipo | Qué es | Dónde viven las filas |
 |---|---|---|
-| **Pista (Track)** | Un archivo de audio único (MP3, FLAC, OGG, WAV, AAC). | `cc_files` |
+| **Pista (Track)** | Un archivo de audio único (MP3, M4A, OGG, Opus, ...; WAV y FLAC se convierten a MP3 al importar por defecto). | `cc_files` |
 | **Smart Block** | Una *consulta* — "elegir N pistas donde género = pop y BPM > 100", evaluada en momento de build. | `cc_block` + `cc_blockcontents` |
 | **Playlist** | Una lista ordenada de items: pistas, smart blocks, webstreams o line-ins. | `cc_playlist` + `cc_playlistcontents` |
 | **Webstream** | Una URL apuntando a otra fuente Icecast / Shoutcast / HTTP audio. | `cc_webstream` |
@@ -93,7 +93,7 @@ subida.
 
 | Campo | Notas |
 |---|---|
-| **Archivo** | Uno de: MP3, FLAC, OGG, WAV, AAC, M4A. |
+| **Archivo** | Uno de: MP3, M4A, MP4, AAC, OGG, OGA, Opus, FLAC, WAV, MP2, MP1, AU - desde el 2026-10-14 la misma lista que aceptan la carpeta de importación local y la importación FTP. Los archivos sin pérdida se convierten a MP3 al importar por defecto (vea *Formatos de archivo al importar* más abajo). |
 | **Propietario** | Por defecto usted. Los Admins pueden anular. |
 
 #### 2.2 Carpeta de importación local (lote)
@@ -141,6 +141,36 @@ defecto, una política de auto-expiración.
 > `imported/<nombre del podcast>/`.  Renombrar un podcast abre
 > una carpeta nueva para episodios futuros; los archivos
 > existentes se quedan donde están.
+
+### Formatos de archivo al importar (desde el 2026-10-14)
+
+Llegue una pista por la vía que llegue - subida, carpeta de
+importación local, importación FTP o importación masiva -, el
+analyzer examina el audio que contiene el archivo (no su extensión)
+antes de archivarlo:
+
+- **MP3, MP2, MP1, AAC en M4A / MP4, OGG Vorbis y Opus** se importan
+  tal cual y nunca se recodifican.
+- **El AAC en bruto (`.aac`)** siempre se reempaqueta en un `.m4a`
+  sin recodificar: un archivo AAC en bruto no tiene índice, su
+  duración solo puede estimarse, y no puede llevar etiquetas.
+- **El audio sin pérdida** - WAV, FLAC, AU, Apple Lossless en M4A -
+  se convierte a **MP3 de 320 kbps** mientras Configuración →
+  **Máquina local** → **Formato de importación** esté activado (por
+  defecto).  El original sin pérdida no se conserva; las etiquetas,
+  la fecha Expiry y una carátula incrustada se mantienen.  Si una
+  conversión falla, el original se importa sin cambios.  Detalles:
+  [Máquina local](./LOCAL_MACHINE.md), sección 5.
+- **Las etiquetas se leen en todos los formatos.**  Además del ID3 de
+  los archivos MP3, el analyzer lee las etiquetas de los archivos WAV
+  (bloque ID3 y RIFF INFO), los comentarios de los archivos FLAC, OGG
+  y Opus y los campos de los archivos M4A, incluidos descripción /
+  comentario y la fecha **Expiry** (`YYYY-MM-DD`).  Antes del
+  2026-10-14 las etiquetas de los archivos WAV no se leían, y un
+  `.aac` en bruto con etiqueta ID3 fallaba al importar.
+
+Los episodios de podcast no forman parte de esto: se descargan
+directamente en la biblioteca (sección 2.3) y conservan su formato.
 
 ### Editar metadatos de pista
 
@@ -364,6 +394,13 @@ Verifique la insignia de estado de subida:
 - **Roja (Fallo)**: el archivo es inreproducible.
 - **Sin insignia pero sin fila**: el servicio analyzer no
   está corriendo.
+
+### "Subí un archivo WAV y la biblioteca muestra un MP3."
+
+Es lo previsto: los archivos sin pérdida se convierten a MP3 de
+320 kbps al importar (sección 2, *Formatos de archivo al importar*).
+Para conservar un archivo sin pérdida, desactive Configuración →
+**Máquina local** → **Formato de importación** antes de subirlo.
 
 ### "¿Por qué mi smart block devuelve las mismas pistas cada vez?"
 

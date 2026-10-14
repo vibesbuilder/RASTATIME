@@ -11,7 +11,7 @@ RASTATIME can put on air. It has five item types:
 
 | Type | What it is | Where the rows live |
 |---|---|---|
-| **Track** | A single audio file (MP3, FLAC, OGG, WAV, AAC). | `cc_files` |
+| **Track** | A single audio file (MP3, M4A, OGG, Opus, ...; WAV and FLAC are converted to MP3 on import by default). | `cc_files` |
 | **Smart Block** | A *query* — "pick N tracks where genre = pop and BPM > 100", evaluated at build time. | `cc_block` + `cc_blockcontents` (criteria) |
 | **Playlist** | An ordered list of items: tracks, smart blocks, webstreams, or line-ins. | `cc_playlist` + `cc_playlistcontents` |
 | **Webstream** | A URL pointing at another Icecast / Shoutcast / plain HTTP audio source. | `cc_webstream` |
@@ -133,7 +133,7 @@ click to pick.
 
 | Field | Notes |
 |---|---|
-| **File** | Any of: MP3, FLAC, OGG, WAV, AAC, M4A. |
+| **File** | Any of: MP3, M4A, MP4, AAC, OGG, OGA, Opus, FLAC, WAV, MP2, MP1, AU - since 2026-10-14 the same list the Local Import Folder and the FTP import take. Lossless files are converted to MP3 on import by default (see *File formats on import* below). |
 | **Owner** | Defaults to you. Admins can override. |
 
 The upload runs the analyzer (metadata + playability check) and
@@ -171,6 +171,33 @@ exactly like a manual upload.
 > on Celery; on RASTATIME (Windows) the download runs
 > synchronously in the API (triggered from the web UI or the
 > feed check) and writes the file plus its library row directly.
+
+### File formats on import (since 2026-10-14)
+
+Whichever way a track arrives - upload, Local Import Folder, FTP
+import or bulk import - the analyzer looks at the audio inside the
+file (not at its extension) before it files it:
+
+- **MP3, MP2, MP1, AAC in M4A / MP4, OGG Vorbis and Opus** are
+  imported as they are and never re-encoded.
+- **Raw AAC (`.aac`)** is always repacked into an `.m4a` without
+  re-encoding: a raw AAC file has no index, so its length can only
+  be estimated, and it cannot carry tags.
+- **Lossless audio** - WAV, FLAC, AU, Apple Lossless in M4A - is
+  converted to **MP3 at 320 kbps** while Settings → **Local
+  Machine** → **Import Format** is on (the default).  The lossless
+  original is not kept; tags, the Expiry date and an embedded cover
+  are carried over.  If a conversion fails, the original is imported
+  unchanged.  Details: [Local Machine](./LOCAL_MACHINE.md), section 5.
+- **Tags are read from every format.**  Besides ID3 in MP3 files, the
+  analyzer reads the tags inside WAV files (ID3 chunk and RIFF INFO),
+  the comments of FLAC, OGG and Opus files and the fields of M4A
+  files, including a description / comment and the **Expiry** date
+  (`YYYY-MM-DD`).  Before 2026-10-14 the tags inside WAV files were
+  not read, and a raw `.aac` with an ID3 tag failed to import.
+
+Podcast episodes are not part of this: they are downloaded straight
+into the library (section 2.3) and keep their format.
 
 ### Editing track metadata
 
@@ -440,6 +467,13 @@ Check the upload status badge:
   shows them).
 - **No badge but no row** either: the analyzer service is not
   running. Check `Get-Service RASTATIME-ANALYZER`.
+
+### "I uploaded a WAV file and the library shows an MP3."
+
+That is intended: lossless files are converted to MP3 320 kbps on
+import (section 2, *File formats on import*).  To keep a file
+lossless, switch off Settings → **Local Machine** → **Import Format**
+before you upload it.
 
 ### "Why is my smart block returning the same tracks every time?"
 

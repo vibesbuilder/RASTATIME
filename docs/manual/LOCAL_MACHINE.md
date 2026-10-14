@@ -3,7 +3,8 @@
 > **Where you are in the manual.** This chapter covers the
 > Settings → **Local Machine** page, which owns every concern
 > tied to the *operator's machine itself* — sound-card
-> output, line-in input devices, and the Local Import Folder.
+> output, line-in input devices, the import format and the
+> Local Import Folder.
 > For the network-side outbound streams, see
 > [Streams](./STREAMS.md). For the Library item type that
 > *references* a sound-card input, see [Line-In](./LINE_IN.md).
@@ -11,8 +12,9 @@
 The **Local Machine** page is where you tell RASTATIME about
 the physical resources on the operator-machine: which speaker
 output to play through, which devices count as line-in
-candidates, and which folder the analyzer should watch for
-imported tracks.
+candidates, in which format lossless files enter the library,
+and which folder the analyzer should watch for imported
+tracks.
 
 The page replaces the upstream LibreTime "Soundcard" page and
 adds the Import Folder feature. The legacy URL still works;
@@ -38,6 +40,11 @@ Settings → **Local Machine**.
    │                                                                 │
    │  Default output for cue/monitor: [Speakers (Realtek) ▾]         │
    ├─────────────────────────────────────────────────────────────────┤
+   │  Import Format                                                  │
+   ├─────────────────────────────────────────────────────────────────┤
+   │  ☑ Convert lossless audio (WAV, FLAC, ...) to MP3 320 kbps (?)  │
+   │  [ Save ]                                                       │
+   ├─────────────────────────────────────────────────────────────────┤
    │  Local Import Folder                                            │
    ├─────────────────────────────────────────────────────────────────┤
    │  Folder path:    [C:\rastatime\import\                  ]        │
@@ -47,7 +54,9 @@ Settings → **Local Machine**.
    └─────────────────────────────────────────────────────────────────┘
 ```
 
-Three sections, each independent.
+The sections are independent of each other; the page holds
+more of them further down (FTP import, media library
+location, recording folders).
 
 ---
 
@@ -321,7 +330,72 @@ operators who scroll past the device list and look for a
 
 ---
 
-## 5. Local Import Folder
+## 5. Import Format
+
+*(Since 2026-10-14.)*  One checkbox: **Convert lossless audio
+(WAV, FLAC, ...) to MP3 320 kbps on import** — **on** by default.
+It applies to every way a track enters the library: the browser
+upload, the Local Import Folder, the FTP import and the bulk-import
+command.  Click the section's **Save** button; the next import
+follows the new value, no restart is needed.
+
+What the import does with each file:
+
+| Audio inside the file | What happens |
+|---|---|
+| MP3, MP2, MP1, AAC in M4A / MP4, OGG Vorbis, Opus | Imported as it is — never re-encoded. |
+| Raw AAC (`.aac`) | Always repacked into an `.m4a`, **without** re-encoding, whether the checkbox is on or off. A raw AAC file has no index, so its length can only be estimated (about 2 s too long on the files we checked), and it cannot carry tags. |
+| Lossless: WAV, FLAC, AU, Apple Lossless (ALAC) in M4A | Checkbox **on**: converted to MP3 at 320 kbps before it enters the library; the lossless original is **not kept**.  Checkbox **off**: imported as it is. |
+
+- **The audio counts, not the extension.**  An `.m4a` that holds
+  Apple Lossless is converted; a `.wav` that holds MP3 data is not.
+- **Tags and cover travel along.**  Title, artist, album, genre, year,
+  track number, composer, copyright, label, ISRC, BPM, language,
+  comment and the **Expiry** date are written into the MP3, and an
+  embedded JPEG or PNG cover is kept.  The file keeps its name with
+  the new extension (`Interview.wav` becomes `Interview.mp3`); a file
+  without a title tag shows that new name as its title, like any
+  untagged upload.
+- **Sample rate and channels.**  32, 44.1 and 48 kHz stay as they
+  are; other rates (for example 96 kHz) become 44.1 kHz.  More than
+  two channels are mixed down to stereo.
+- **Measured after the conversion.**  Length, cue points, ReplayGain
+  and loudness are taken from the file that ends up in the library.
+- **A failed conversion never costs the import**: the original file
+  is then imported unchanged.
+- The conversion runs at low priority, so a large batch does not take
+  processing power from the playout; a converted track simply appears
+  in the library a little later.
+- **Podcast episodes are not converted** — they are downloaded
+  straight into the library without passing the import analysis.
+
+> **Why it works this way.**  The streams are lossy anyway, and a
+> FLAC or WAV takes about three to four and a half times the space of
+> a 320 kbps MP3.  MP3 is what the rest of the library is made of, and
+> it carries the **Expiry** date reliably; in an M4A many tools lose
+> it.  Lossy audio (MP3, AAC, Ogg Vorbis, Opus) is left alone because
+> re-encoding one lossy format into another only costs quality.  See
+> ARCHITECTURE §23.57.
+
+> **Tracks imported before 2026-10-14.**  Lossless files that were
+> already in the library are converted once by a technician with the
+> `convert_lossless` command (a dry run first; a track that is on air
+> or scheduled within the next six hours is skipped, and nothing is
+> converted while the media library is being moved).  The track keeps
+> its id, its place in playlists and shows and its Cue In; its
+> loudness is measured again on the MP3.
+
+> **How it works under the hood.**  The setting is the `cc_pref` key
+> `convert_lossless_to_mp3` (absent = on).  The web application sends
+> it with every import message to the analyzer
+> (`options.convert_lossless`); the analyzer's `convert_format` step
+> runs right after the tags are read.  A converted track keeps the md5
+> of its original in `cc_files.source_md5`, so the bulk import still
+> recognises the same WAV or FLAC as already imported.
+
+---
+
+## 6. Local Import Folder
 
 The Local Import Folder is a directory on the operator-machine
 that the analyzer watches for new files. Anything dropped
@@ -345,9 +419,10 @@ The scanner runs every 5 minutes (and immediately on **Scan Now**).
 For every file lying directly in the folder:
 
 1. **Non-audio files are skipped** and left in place — the scanner
-   only owns audio files (`mp3`, `wav`, `m4a`, `flac`, `ogg`, `oga`,
-   `aac`, `opus`).  The status line reports them as "non-audio
-   files left alone".
+   only owns audio files (`mp3`, `wav`, `m4a`, `mp4`, `flac`, `ogg`,
+   `oga`, `aac`, `opus`, `mp2`, `mp1`, `au`; since 2026-10-14 exactly
+   the list the browser upload accepts).  The status line reports them
+   as "non-audio files left alone".
 2. **Files still settling are left for later (since 2026-09-17).**
    A file modified within the last 60 seconds may still be being
    written (slow copy, FTP upload); the status line reports it as
@@ -355,24 +430,32 @@ For every file lying directly in the folder:
 3. Every audio file at rest is handed to the **standard upload
    pipeline**: a library row is created, the file is **moved** (not
    copied) into the library's `organize` area, and the analyzer takes
-   it from there — metadata read, playability check, final place in
+   it from there — metadata read, conversion as set under
+   **Import Format** (section 5), playability check, final place in
    the library.  From then on it behaves exactly like a file uploaded
    through the web UI.
-4. **If the hand-over fails, the source file is deleted** on that
-   first attempt.  This is deliberate: a permanently broken file must
-   not pile up in the folder and be retried on every scan.
+4. **If the hand-over fails, the file is moved to the `_failed`
+   subfolder** of the import folder (since 2026-10-14; until then it
+   was deleted).  It keeps its relative path there
+   (`Album/Song.wav` becomes `_failed/Album/Song.wav`; if that name is
+   taken, a number is added: `Song (2).wav`).  The scanner never looks
+   into `_failed`, so a broken file is not retried on every scan — and
+   a refused file is never deleted.  Should even the move fail, the
+   file stays where it is and the next scan tries again.
 
 The folder therefore empties itself of audio files after each scan —
-moved into the library on success, deleted on failure.  Non-audio
-files stay.
+moved into the library on success, into `_failed` on failure.
+Non-audio files stay.  The status line says how many files went to
+`_failed` ("2 failed (moved to _failed)").
 
 ### Subfolders and large batches (since 2026-10-08)
 
 Subfolders are **walked**: every audio file in the import folder and
 in any subfolder is imported, folder by folder in path order, and a
-subfolder the moves leave empty is removed.  The folder structure is
-not carried into the library (the library organises files by their
-metadata), so tag the files before you copy them.
+subfolder the moves leave empty is removed.  The `_failed` subfolder
+is the exception: it is never walked and never removed.  The folder
+structure is not carried into the library (the library organises files
+by their metadata), so tag the files before you copy them.
 
 A scan also hands over nothing while **300 or more files** are still
 queued at the analyzer (it processes about one file per second); the
@@ -404,7 +487,8 @@ the first administrator account.
 > piggy-backs on normal web requests, runs at most every 300 s, and
 > updates the `cc_pref` keys `local_import_last_run` and
 > `local_import_last_status` (the status line on this page).  See
-> ARCHITECTURE §23.12.
+> ARCHITECTURE §23.12 and, for the `_failed` folder and the shared
+> extension list, §23.57.
 
 ### Import from FTP server
 
@@ -425,7 +509,8 @@ folder, then **Save FTP import**.
   and the size is verified again after the download.  Until then the
   status counts it as "settling".
 - **Non-audio files stay on the server.**  Only the audio extensions
-  of the Import Folder are fetched.
+  of the Import Folder are fetched.  A remote entry named `_failed` is
+  left alone.
 - **Prefer FTPS or SFTP** — plain FTP sends the password
   unencrypted.  The password is stored in the settings database like
   the other service passwords, so the fetch can log in unattended;
@@ -436,7 +521,7 @@ folder, then **Save FTP import**.
 
 ---
 
-## 6. Media Library Location
+## 7. Media Library Location
 
 Since 2026-09-16 the folder that holds the media library (imported
 tracks, covers, show images) is a setting on this page, not a line in
@@ -485,7 +570,7 @@ that is not mounted, a renamed folder - the dashboard banner shows
 
 ---
 
-## 7. Recording folders (related)
+## 8. Recording folders (related)
 
 Settings → Local Machine has **two** recording-output folders:
 
@@ -520,7 +605,7 @@ it into the Local Import Folder.
 
 ---
 
-## 8. Frequently-asked
+## 9. Frequently-asked
 
 ### "My USB mic shows up in Windows but not in RASTATIME."
 
@@ -545,11 +630,28 @@ Diagnostic order:
    while the UI sees traffic.  **Scan Now** forces a run.
 3. A file modified within the last 60 seconds counts as "still
    being copied" — wait a minute and scan again.
-4. "failed N" in the status line means the hand-over failed and
-   the source was deleted (by design).  Check the file in another
-   player and look into `logs\legacy.log` for the reason; the
+4. "N failed (moved to _failed)" in the status line means the
+   hand-over failed and the file now lies in the `_failed` subfolder
+   (see the next question).  Check the file in another player and
+   look into `logs\legacy.log` for the reason; the
    `RASTATIME-ANALYZER` service must be running for the import to
    finish.
+
+### "What do I do with the files in `_failed`?"
+
+Every file there could not be handed over to the library.  Search
+`logs\legacy.log` for its name to see why, check it in another
+player, repair or re-export it if needed, and move it back into the
+import folder — anywhere outside `_failed`; the next scan imports it.
+Delete what you no longer need: RASTATIME never empties `_failed`
+itself.
+
+### "I imported a WAV or FLAC file and the library shows an MP3."
+
+That is the **Import Format** setting (section 5): lossless files are
+converted to MP3 320 kbps on import, and the lossless original is not
+kept.  To import lossless files unchanged, untick the checkbox and
+click **Save** *before* you import them.
 
 ### "Why move and not copy in the Local Import Folder?"
 

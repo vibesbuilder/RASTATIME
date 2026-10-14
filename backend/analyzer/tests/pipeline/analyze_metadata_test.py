@@ -27,10 +27,10 @@ def test_analyze_metadata(filepath: Path, metadata: dict):
     del metadata["length"]
     del found["length"]
 
-    # ogg,flac files does not support comments yet
-    if not filepath.suffix == ".m4a" and not filepath.suffix == ".mp3":
-        if "comment" in metadata:
-            del metadata["comment"]
+    # RASTATIME 2026-10-14 - the fixtures are written by ffmpeg, whose
+    # version string ("Lavf63.1.101") ffprobe now reports as the encoder
+    encoder = found.pop("encoder", None)
+    assert encoder is None or encoder.startswith("Lav")
 
     assert found == metadata
 

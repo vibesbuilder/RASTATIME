@@ -10,7 +10,7 @@ from model_bakery import baker
 from requests_mock import Mocker
 
 from ....._fixtures import AUDIO_FILENAME, fixture_path
-from ....management.commands.bulk_import import Importer
+from ....management.commands.bulk_import import DEFAULT_ALLOWED_EXTENSIONS, Importer
 
 FAKE_URL = "https://somehost.com"
 
@@ -94,6 +94,49 @@ def test_importer_existing_file(
     importer._handle_file.assert_called_with(import_paths[1], library.code)
     importer._upload_file.assert_not_called()
     importer._delete_file.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_importer_existing_converted_original(
+    import_paths: Tuple[Path, Path],
+    importer: MockImporter,
+    library,
+):
+    # RASTATIME 2026-10-14 - the original of a file that was converted on
+    # import (WAV/FLAC -> MP3) only survives as source_md5.
+    baker.make(
+        "storage.File",
+        md5="0123456789abcdef0123456789abcdef",
+        source_md5="46305a7cf42ee53976c88d337e47e940",
+    )
+
+    importer.import_dir(import_paths[0], library.code, [".mp3"])
+
+    importer._handle_file.assert_called_with(import_paths[1], library.code)
+    importer._upload_file.assert_not_called()
+    importer._delete_file.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_importer_other_source_md5_is_uploaded(
+    import_paths: Tuple[Path, Path],
+    importer: MockImporter,
+    library,
+):
+    baker.make(
+        "storage.File",
+        md5="0123456789abcdef0123456789abcdef",
+        source_md5="fedcba9876543210fedcba9876543210",
+    )
+
+    importer.import_dir(import_paths[0], library.code, [".mp3"])
+
+    importer._upload_file.assert_called_with(import_paths[1], library.code)
+
+
+def test_default_extensions_match_the_import_scans():
+    # RASTATIME 2026-10-14 - same list as the import folder / FTP scan
+    assert {".aac", ".oga"} <= set(DEFAULT_ALLOWED_EXTENSIONS)
 
 
 @pytest.mark.django_db

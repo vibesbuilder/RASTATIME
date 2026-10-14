@@ -2,6 +2,7 @@ import json
 import logging
 import signal
 import time
+from pathlib import Path
 from queue import Queue
 
 import pika
@@ -16,6 +17,15 @@ EXCHANGE = "airtime-uploads"
 EXCHANGE_TYPE = "topic"
 ROUTING_KEY = ""
 QUEUE = "airtime-uploads"
+
+# RASTATIME 2026-10-14 - AMQP heartbeat timeout in seconds.  The pipeline
+# runs inside the pika callback, and a BlockingConnection neither sends nor
+# checks heartbeats while a callback runs: with the broker's default of
+# 60 s, an import that takes longer (an hour-long WAV converted to MP3 and
+# measured) lost the connection, the ack failed and the message was
+# delivered again.  30 min = RabbitMQ's default consumer_timeout, the limit
+# for an unacknowledged delivery anyway.  The broker runs on this machine.
+HEARTBEAT_SECONDS = 1800
 
 
 class MessageListener:
@@ -63,6 +73,7 @@ class MessageListener:
                     self.config.rabbitmq.user,
                     self.config.rabbitmq.password,
                 ),
+                heartbeat=HEARTBEAT_SECONDS,
             )
         )
         self._channel = self._connection.channel()
@@ -120,6 +131,24 @@ class MessageListener:
             original_filename = msg_dict["original_filename"]
             import_directory = msg_dict["import_directory"]
             options = msg_dict.get("options", {})
+
+            # RASTATIME 2026-10-14 - a redelivered import (the connection was
+            # lost before the ack) whose file is no longer in organize/ was
+            # filed by the first delivery: its result is reported already,
+            # and a failure report now would overwrite it.
+            if (
+                getattr(method_frame, "redelivered", False)
+                and not options.get("loudness_only")
+                and not Path(audio_file_path).exists()
+            ):
+                logger.warning(
+                    "redelivered import of file %s: %s is gone (filed by the "
+                    "first delivery) - acknowledged without a report",
+                    file_id,
+                    audio_file_path,
+                )
+                channel.basic_ack(delivery_tag=method_frame.delivery_tag)
+                return
 
             metadata = MessageListener.spawn_analyzer_process(
                 audio_file_path,

@@ -383,18 +383,21 @@ class TrackExpiryTask implements AirtimeTask
  * on-demand via Settings -> Local Machine -> "Scan Now") walks the
  * operator-configured Local Import Folder, hands each audio file to
  * the standard import pipeline (CcFiles::createAndImport -> organize
- * -> analyzer -> cc_files), and deletes the source after the attempt
- * - successful OR failed.  Spec call-out: a permanently-broken file
- * must NOT pile up forever in the drop-folder; it gets deleted on the
- * first attempt so the next scan does not re-try it.
+ * -> analyzer -> cc_files).  A successful hand-over moves the file out
+ * of the folder.  Spec call-out: a permanently-broken file must NOT
+ * pile up forever in the drop-folder and must not be re-tried on every
+ * scan.  RASTATIME 2026-10-14 (operator decision): such a file is MOVED
+ * to <folder>/_failed/<same relative path> instead of being deleted -
+ * a refusal that was our fault (the '.oga' extension mismatch) used to
+ * destroy the operator's file.  Every scan skips the _failed subtree.
  *
  * Single configured folder, not a list.  Non-audio files are left
  * untouched (operator may have placed them there accidentally; we
  * only own audio files).
  *
  * See ARCHITECTURE Section 23.12 for the design notes (single folder,
- * Option A "copy/move to storage", drop-folder delete-after-attempt,
- * future Option C as a possible extension).
+ * Option A "copy/move to storage", drop-folder semantics, future
+ * Option C as a possible extension).
  */
 class LocalImportScanTask implements AirtimeTask
 {
@@ -402,9 +405,12 @@ class LocalImportScanTask implements AirtimeTask
     // RASTATIME 2026-09-17 - quiet-period guard: only import files
     // untouched for this long.  A file still being written (slow
     // network copy, FTP upload) must not be grabbed mid-write - the
-    // move would truncate it and a failed attempt DELETES the source.
+    // move would truncate it and a failed attempt sends the half file
+    // to _failed.
     public const QUIET_SECONDS = 60;
-    public const AUDIO_EXTENSIONS = ['mp3', 'wav', 'm4a', 'flac', 'ogg', 'oga', 'aac', 'opus'];
+    // RASTATIME 2026-10-14 - quarantine subfolder of the import folder for
+    // files whose hand-over failed (see quarantine()).  Never scanned.
+    public const FAILED_DIR = '_failed';
     // RASTATIME 2026-10-08 - bulk imports (operator: 20,000 tracks): one
     // scan hands over at most MAX_PER_RUN files (the hand-over itself takes ~25 files/s,
     // the analyzer behind it ~3,000 files/h - measured 2026-10-08) and stops after
@@ -446,8 +452,149 @@ class LocalImportScanTask implements AirtimeTask
     }
 
     /**
-     * Walk the given folder once, import every audio file, delete the
-     * source after each attempt (success or failure), and persist the
+     * RASTATIME 2026-10-14 - the accepted extensions come from ONE list,
+     * FileDataHelper::getUploadAudioExtensions(), shared with
+     * CcFiles::createAndImport (the scan used to pick up '.oga', which the
+     * hand-over refused).  The FTP import filters with the same list.
+     *
+     * @return string[] lower case, without the dot
+     */
+    public static function audioExtensions()
+    {
+        return FileDataHelper::getUploadAudioExtensions();
+    }
+
+    /**
+     * RASTATIME 2026-10-14 - $path relative to $folder with forward
+     * slashes ('' for the folder itself), or null when $path does not lie
+     * inside $folder.  Case-insensitive on Windows.  Pure (no file access).
+     *
+     * @param string $folder
+     * @param string $path
+     *
+     * @return null|string
+     */
+    public static function relativeToFolder($folder, $path)
+    {
+        $base = rtrim(str_replace('\\', '/', (string) $folder), '/');
+        $full = rtrim(str_replace('\\', '/', (string) $path), '/');
+        // strtolower is ASCII-only since PHP 8.2, so byte offsets stay valid
+        $cmpBase = DIRECTORY_SEPARATOR === '\\' ? strtolower($base) : $base;
+        $cmpFull = DIRECTORY_SEPARATOR === '\\' ? strtolower($full) : $full;
+        if ($cmpFull === $cmpBase) {
+            return '';
+        }
+        if (strpos($cmpFull, $cmpBase . '/') !== 0) {
+            return null;
+        }
+
+        return substr($full, strlen($base) + 1);
+    }
+
+    /**
+     * RASTATIME 2026-10-14 - true when $path is <folder>/_failed or lies
+     * below it.  The scans and the empty-subfolder cleanup skip it.
+     *
+     * @param string $folder the import folder
+     * @param string $path
+     *
+     * @return bool
+     */
+    public static function isInFailedTree($folder, $path)
+    {
+        $rel = self::relativeToFolder($folder, $path);
+        if ($rel === null || $rel === '') {
+            return false;
+        }
+
+        return strcasecmp(explode('/', $rel, 2)[0], self::FAILED_DIR) === 0;
+    }
+
+    /**
+     * RASTATIME 2026-10-14 - quarantine target for a file at $relative
+     * (e.g. "Album/Song.wav") inside the import folder:
+     * <folder>/_failed/Album/Song.wav, or "Song (2).wav", "Song (3).wav",
+     * ... when that name is taken.  Pure apart from the $exists probe,
+     * which the CLI check replaces.
+     *
+     * @param string        $folder   the import folder
+     * @param string        $relative path relative to the import folder
+     * @param null|callable $exists   file_exists by default
+     *
+     * @return null|string null when no free name was found
+     */
+    public static function quarantineTarget($folder, $relative, $exists = null)
+    {
+        $exists = $exists ?: 'file_exists';
+        $parts = explode('/', trim(str_replace('\\', '/', (string) $relative), '/'));
+        $name = (string) array_pop($parts);
+        if ($name === '' || $name === '.' || $name === '..') {
+            return null;
+        }
+        $dir = rtrim((string) $folder, '/\\') . DIRECTORY_SEPARATOR . self::FAILED_DIR;
+        foreach ($parts as $part) {
+            if ($part !== '' && $part !== '.' && $part !== '..') {
+                $dir .= DIRECTORY_SEPARATOR . $part;
+            }
+        }
+        $dot = strrpos($name, '.');
+        $stem = ($dot === false || $dot === 0) ? $name : substr($name, 0, $dot);
+        $ext = ($dot === false || $dot === 0) ? '' : substr($name, $dot);
+
+        $target = $dir . DIRECTORY_SEPARATOR . $name;
+        for ($n = 2; call_user_func($exists, $target); ++$n) {
+            if ($n > 9999) {
+                return null;
+            }
+            $target = $dir . DIRECTORY_SEPARATOR . $stem . ' (' . $n . ')' . $ext;
+        }
+
+        return $target;
+    }
+
+    /**
+     * RASTATIME 2026-10-14 - move a file whose hand-over failed to
+     * <folder>/_failed/<same relative path>.  Never deletes; when the move
+     * is impossible the file stays where it is.
+     *
+     * @param string $folder   the import folder
+     * @param string $fullPath the file inside it
+     *
+     * @return array [string|null target, string reason when target is null]
+     */
+    public static function quarantine($folder, $fullPath)
+    {
+        try {
+            if (!is_file($fullPath)) {
+                // the hand-over already moved it to organize/ before it failed
+                return [null, 'no longer in the import folder'];
+            }
+            $relative = self::relativeToFolder($folder, $fullPath);
+            if ($relative === null || $relative === '') {
+                $relative = basename($fullPath);
+            }
+            $target = self::quarantineTarget($folder, $relative);
+            if ($target === null) {
+                return [null, 'no free file name in ' . self::FAILED_DIR];
+            }
+            $dir = dirname($target);
+            if (!is_dir($dir) && !@mkdir($dir, 0777, true) && !is_dir($dir)) {
+                return [null, 'cannot create ' . $dir];
+            }
+            if (!@rename($fullPath, $target)) {
+                return [null, 'cannot move it to ' . $target];
+            }
+
+            return [$target, ''];
+        } catch (Throwable $exc) {
+            return [null, $exc->getMessage()];
+        }
+    }
+
+    /**
+     * Walk the given folder once, import every audio file, move a file
+     * whose hand-over failed to _failed/ (RASTATIME 2026-10-14 - it was
+     * deleted before), and persist the
      * last-run timestamp + a short human-readable status string.
      *
      * Static so the "Scan Now" UI button (PreferenceController action)
@@ -461,6 +608,7 @@ class LocalImportScanTask implements AirtimeTask
     {
         $imported = 0;
         $failed = 0;
+        $quarantined = 0;   // RASTATIME 2026-10-14 - failed files moved to _failed/
         $skipped = 0;
         $settling = 0;
         $waiting = 0;
@@ -485,17 +633,25 @@ class LocalImportScanTask implements AirtimeTask
             $msg = 'Folder missing or unreadable: ' . $folder;
             Logging::warn('LocalImportScanTask: ' . $msg);
             Application_Model_Preference::setLocalImportLastStatus($msg);
-            return compact('imported', 'failed', 'skipped', 'settling', 'waiting');
+            return compact('imported', 'failed', 'quarantined', 'skipped', 'settling', 'waiting');
         }
 
         // RASTATIME 2026-10-08 - the folder and every subfolder, files only,
         // in a stable order (path), so a bulk copy is worked off folder by
         // folder and the operator sees where the scan is.
+        // RASTATIME 2026-10-14 - the _failed quarantine is neither entered
+        // nor listed: its files are never re-tried, and the empty-subfolder
+        // cleanup below never sees its folders.
         $files = [];
         $dirs = [];
         try {
             $it = new RecursiveIteratorIterator(
-                new RecursiveDirectoryIterator($folder, FilesystemIterator::SKIP_DOTS),
+                new RecursiveCallbackFilterIterator(
+                    new RecursiveDirectoryIterator($folder, FilesystemIterator::SKIP_DOTS),
+                    function ($entry) use ($folder) {
+                        return !self::isInFailedTree($folder, $entry->getPathname());
+                    }
+                ),
                 RecursiveIteratorIterator::CHILD_FIRST
             );
             foreach ($it as $entry) {
@@ -509,14 +665,15 @@ class LocalImportScanTask implements AirtimeTask
             $msg = 'scan failed for: ' . $folder . ' (' . $exc->getMessage() . ')';
             Logging::warn('LocalImportScanTask: ' . $msg);
             Application_Model_Preference::setLocalImportLastStatus($msg);
-            return compact('imported', 'failed', 'skipped', 'settling', 'waiting');
+            return compact('imported', 'failed', 'quarantined', 'skipped', 'settling', 'waiting');
         }
         sort($files, SORT_STRING);
 
+        $audioExtensions = self::audioExtensions();
         foreach ($files as $fullPath) {
             $name = basename($fullPath);
             $ext = strtolower(pathinfo($name, PATHINFO_EXTENSION));
-            if (!in_array($ext, self::AUDIO_EXTENSIONS, true)) {
+            if (!in_array($ext, $audioExtensions, true)) {
                 // Non-audio: leave it (operator may have placed
                 // intentionally; we don't own arbitrary files).
                 $skipped++;
@@ -556,20 +713,36 @@ class LocalImportScanTask implements AirtimeTask
             // need an explicit unlink() after a successful import.
             //
             // For failures (bad extension, permission denied,
-            // analyzer signal failure), we DO delete the source
-            // explicitly so the broken file does not pile up.
-            $relative = ltrim(str_replace($folder, '', $fullPath), '/\\');
+            // analyzer signal failure) the source used to be deleted.
+            // RASTATIME 2026-10-14 - it is MOVED to _failed/ (same
+            // relative path) instead, so a refusal never destroys the
+            // operator's file and the broken file still does not pile
+            // up in the scanned area.  When even the move fails the file
+            // stays where it is (and is re-tried on the next scan).
+            $relative = self::relativeToFolder($folder, $fullPath);
+            if ($relative === null) {
+                $relative = $name;
+            }
             try {
                 CcFiles::createFromImportFolder($fullPath, $name, false);
                 $imported++;
                 Logging::info('LocalImportScanTask: imported ' . $relative);
             } catch (Exception $exc) {
                 $failed++;
-                Logging::warn(
-                    'LocalImportScanTask: import failed for ' . $relative
-                    . ': ' . $exc->getMessage() . ' (deleting source)'
-                );
-                @unlink($fullPath);
+                [$target, $why] = self::quarantine($folder, $fullPath);
+                if ($target !== null) {
+                    $quarantined++;
+                    Logging::warn(
+                        'LocalImportScanTask: import failed for ' . $relative
+                        . ': ' . $exc->getMessage() . ' (moved to ' . $target . ')'
+                    );
+                } else {
+                    Logging::warn(
+                        'LocalImportScanTask: import failed for ' . $relative
+                        . ': ' . $exc->getMessage() . ' - could not move it to '
+                        . self::FAILED_DIR . ' (' . $why . '), left in place'
+                    );
+                }
             }
         }
 
@@ -591,7 +764,12 @@ class LocalImportScanTask implements AirtimeTask
             $parts[] = sprintf('%d handed over', $imported);
         }
         if ($failed > 0) {
-            $parts[] = sprintf('%d failed', $failed);
+            // RASTATIME 2026-10-14 - say where the failed files went
+            if ($quarantined === $failed) {
+                $parts[] = sprintf('%d failed (moved to %s)', $failed, self::FAILED_DIR);
+            } else {
+                $parts[] = sprintf('%d failed (%d moved to %s)', $failed, $quarantined, self::FAILED_DIR);
+            }
         }
         if ($settling > 0) {
             $parts[] = sprintf('%d still being copied', $settling);
@@ -615,7 +793,7 @@ class LocalImportScanTask implements AirtimeTask
             Logging::info('LocalImportScanTask: ' . $status . sprintf(' (%.0f s)', microtime(true) - $started));
         }
 
-        return compact('imported', 'failed', 'skipped', 'settling', 'waiting');
+        return compact('imported', 'failed', 'quarantined', 'skipped', 'settling', 'waiting');
     }
 }
 
@@ -639,6 +817,13 @@ class LocalImportScanTask implements AirtimeTask
  * with a clear status.  Remote deletes need delete permission on the
  * FTP account; a failed delete keeps the local copy and warns (the
  * next cycle would fetch a duplicate otherwise).
+ *
+ * RASTATIME 2026-10-14 - checked for the _failed quarantine: this task
+ * never imports and never deletes an imported file.  The only local
+ * deletes are its own .ftp-*.part temp files (failed / unstable /
+ * unplaceable downloads), and in each of those cases the remote original
+ * stays on the server for the next cycle.  A file that later fails the
+ * hand-over is quarantined by LocalImportScanTask like any other.
  *
  * Transfers run through PHP-curl (this build speaks ftp, ftps and
  * sftp).  "ftps" means explicit TLS on the ftp port (AUTH TLS), the
@@ -739,13 +924,21 @@ class FtpImportScanTask implements AirtimeTask
                 'log' => ['listing failed for ' . self::describe($cfg) . ': ' . $err],
             ];
         }
+        // RASTATIME 2026-10-14 - the same extension list as the local scan
+        // and CcFiles::createAndImport (FileDataHelper::getUploadAudioExtensions)
+        $audioExtensions = LocalImportScanTask::audioExtensions();
         foreach ($names as $name) {
             $name = basename(trim($name));
             if ($name === '' || $name === '.' || $name === '..') {
                 continue;
             }
+            // RASTATIME 2026-10-14 - never touch a remote "_failed" entry
+            // (the listing is flat; a folder of that name is not ours)
+            if (strcasecmp($name, LocalImportScanTask::FAILED_DIR) === 0) {
+                continue;
+            }
             $ext = strtolower(pathinfo($name, PATHINFO_EXTENSION));
-            if (!in_array($ext, LocalImportScanTask::AUDIO_EXTENSIONS, true)) {
+            if (!in_array($ext, $audioExtensions, true)) {
                 $nonAudio++;
                 continue;
             }

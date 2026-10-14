@@ -12,7 +12,7 @@ Item-Typen:
 
 | Typ | Was es ist | Wo die Zeilen leben |
 |---|---|---|
-| **Track** | Eine einzelne Audiodatei (MP3, FLAC, OGG, WAV, AAC). | `cc_files` |
+| **Track** | Eine einzelne Audiodatei (MP3, M4A, OGG, Opus, ...; WAV und FLAC werden beim Import standardmäßig in MP3 umgewandelt). | `cc_files` |
 | **Smart Block** | Eine *Abfrage* — "wähle N Tracks, wo Genre = Pop und BPM > 100", ausgewertet zur Build-Zeit. | `cc_block` + `cc_blockcontents` (Kriterien) |
 | **Playlist** | Eine geordnete Liste von Items: Tracks, Smart Blocks, Webstreams oder Line-Ins. | `cc_playlist` + `cc_playlistcontents` |
 | **Webstream** | Eine URL, die auf eine andere Icecast- / Shoutcast- / einfache HTTP-Audioquelle zeigt. | `cc_webstream` |
@@ -143,7 +143,7 @@ ziehen oder anklicken zum Auswählen.
 
 | Feld | Hinweise |
 |---|---|
-| **Datei** | Eine von: MP3, FLAC, OGG, WAV, AAC, M4A. |
+| **Datei** | Eine von: MP3, M4A, MP4, AAC, OGG, OGA, Opus, FLAC, WAV, MP2, MP1, AU - seit 2026-10-14 dieselbe Liste, die der lokale Import-Ordner und der FTP-Import annehmen. Verlustfreie Dateien werden beim Import standardmäßig in MP3 umgewandelt (siehe *Dateiformate beim Import* unten). |
 | **Besitzer** | Standardmäßig Sie. Admins können überschreiben. |
 
 Der Upload startet den Analyzer (Metadaten +
@@ -186,6 +186,36 @@ importiert.
 > pro Podcast innerhalb der Bibliothek: `imported/<Podcast-Name>/`.
 > Wird ein Podcast umbenannt, beginnt für künftige Episoden ein
 > neuer Ordner; vorhandene Dateien bleiben, wo sie sind.
+
+### Dateiformate beim Import (seit 2026-10-14)
+
+Ganz gleich, auf welchem Weg ein Track ankommt - Upload, lokaler
+Import-Ordner, FTP-Import oder Massenimport -, der Analyzer prüft das
+Audio in der Datei (nicht ihre Endung), bevor er sie ablegt:
+
+- **MP3, MP2, MP1, AAC in M4A / MP4, OGG Vorbis und Opus** werden
+  unverändert importiert und nie neu kodiert.
+- **Rohes AAC (`.aac`)** wird immer ohne Neukodierung in eine `.m4a`
+  umverpackt: Eine rohe AAC-Datei hat keinen Index, ihre Länge lässt
+  sich nur schätzen, und sie kann keine Tags tragen.
+- **Verlustfreies Audio** - WAV, FLAC, AU, Apple Lossless in M4A -
+  wird in **MP3 mit 320 kbit/s** umgewandelt, solange Einstellungen →
+  **Lokale Maschine** → **Importformat** eingeschaltet ist (der
+  Standard).  Das verlustfreie Original wird nicht aufbewahrt; Tags,
+  das Expiry-Datum und ein eingebettetes Cover werden übernommen.
+  Schlägt eine Umwandlung fehl, wird das Original unverändert
+  importiert.  Einzelheiten: [Lokale Maschine](./LOCAL_MACHINE.md),
+  Abschnitt 5.
+- **Tags werden aus jedem Format gelesen.**  Neben ID3 in MP3-Dateien
+  liest der Analyzer die Tags in WAV-Dateien (ID3-Block und RIFF
+  INFO), die Kommentare von FLAC-, OGG- und Opus-Dateien und die Felder
+  von M4A-Dateien, einschließlich Beschreibung / Kommentar und des
+  **Expiry**-Datums (`YYYY-MM-DD`).  Vor dem 2026-10-14 wurden die Tags
+  in WAV-Dateien nicht gelesen, und eine rohe `.aac` mit ID3-Tag
+  scheiterte beim Import.
+
+Podcast-Episoden gehören nicht dazu: Sie werden direkt in die
+Bibliothek heruntergeladen (Abschnitt 2.3) und behalten ihr Format.
 
 ### Track-Metadaten bearbeiten
 
@@ -475,6 +505,13 @@ Prüfen Sie den Upload-Status-Badge:
   zeigt sie).
 - **Kein Badge aber auch keine Zeile**: Der Analyzer-Dienst
   läuft nicht. Prüfen Sie `Get-Service RASTATIME-ANALYZER`.
+
+### "Ich habe eine WAV-Datei hochgeladen, und die Bibliothek zeigt eine MP3."
+
+Das ist gewollt: Verlustfreie Dateien werden beim Import in MP3 mit
+320 kbit/s umgewandelt (Abschnitt 2, *Dateiformate beim Import*).  Um
+eine Datei verlustfrei zu behalten, schalten Sie Einstellungen →
+**Lokale Maschine** → **Importformat** vor dem Hochladen aus.
 
 ### "Warum gibt mein Smart Block jedes Mal dieselben Tracks zurück?"
 

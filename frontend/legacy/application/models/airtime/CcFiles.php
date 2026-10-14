@@ -157,8 +157,9 @@ class CcFiles extends BaseCcFiles
         try {
             // Only accept files with a file extension that we support.
             // Let the analyzer do the heavy lifting in terms of mime verification and playability
+            // RASTATIME 2026-10-14 - the same list the import-folder / FTP scans use
             $fileExtension = pathinfo($originalFilename, PATHINFO_EXTENSION);
-            if (!in_array(strtolower($fileExtension), array_values(FileDataHelper::getUploadAudioMimeTypeArray()))) {
+            if (!in_array(strtolower($fileExtension), FileDataHelper::getUploadAudioExtensions(), true)) {
                 throw new Exception('Bad file extension.');
             }
 
@@ -206,7 +207,8 @@ class CcFiles extends BaseCcFiles
                 $file->getDbTrackTypeId(),
                 $originalFilename,
                 $filePath,
-                $copyFile
+                $copyFile,
+                $fromImportFolder   // RASTATIME 2026-10-14 - a failed move never deletes the source
             );
 
             return CcFiles::sanitizeResponse($file);
@@ -330,6 +332,31 @@ class CcFiles extends BaseCcFiles
                 $stmt->execute();
             }
 
+            // RASTATIME 2026-10-14 - lossless -> MP3 320 (migration 0066):
+            // when the analyzer converted the upload, md5 is the md5 of the
+            // new file and source_md5 the md5 of the ORIGINAL (the bulk
+            // import's duplicate check compares against both).  Propel does
+            // not know the column, so persist it via raw SQL - only a
+            // well-formed 32-hex value; anything else leaves the column
+            // untouched.  A failure costs only this column, never the import.
+            if (array_key_exists('source_md5', $fileArray)) {
+                $srcMd5 = strtolower(trim((string) $fileArray['source_md5']));
+                if (preg_match('/^[0-9a-f]{32}$/', $srcMd5)) {
+                    try {
+                        $con = Propel::getConnection();
+                        $stmt = $con->prepare('UPDATE cc_files SET source_md5 = :src WHERE id = :id');
+                        $stmt->bindValue(':src', $srcMd5, PDO::PARAM_STR);
+                        $stmt->bindValue(':id', (int) $fileId, PDO::PARAM_INT);
+                        $stmt->execute();
+                    } catch (Exception $exc) {
+                        Logging::warn(
+                            'CcFiles::updateFromArray: failed to persist source_md5 for file id='
+                            . (int) $fileId . ': ' . $exc->getMessage()
+                        );
+                    }
+                }
+            }
+
             // RASTATIME 2026-05-16 - Track Expiry: persist expires_at via
             // raw SQL.  Propel CcFiles class is not regenerated for this
             // column (see schema.xml note), so $file->fromArray() above
@@ -433,6 +460,19 @@ class CcFiles extends BaseCcFiles
                 }
 
                 $value = self::stripInvalidUtf8Characters($value);
+            }
+        }
+
+        // RASTATIME 2026-10-14 - columns that are no fields of the track
+        // editor are not cut by the loop above: cc_files.encoder is
+        // VARCHAR(64), and a longer TSSE / ENCODER tag (the analyzer reads
+        // it from every format since 2026-10-14) made PostgreSQL reject the
+        // whole callback - the track ended as a failed import.
+        foreach (['encoder' => 64, 'encoded_by' => 255] as $column => $maxLength) {
+            if (isset($fileArray[$column]) && is_string($fileArray[$column])) {
+                $fileArray[$column] = self::stripInvalidUtf8Characters(
+                    mb_substr($fileArray[$column], 0, $maxLength, 'UTF-8')
+                );
             }
         }
 

@@ -2288,10 +2288,11 @@ class Application_Model_Preference
     // RASTATIME 2026-05-16 - Local Import Folder.  Operator-configured
     // absolute path on the RASTATIME host (Settings -> Local Machine).
     // A LocalImportScanTask (TaskManager, 5-min interval) walks the
-    // folder, moves every audio file into the standard import pipeline
-    // (organize -> analyzer -> cc_files), and deletes the source after
-    // the move - successful OR failed - per design decision A modified
-    // 2026-05-16 ("drop-folder semantics, single folder").
+    // folder and moves every audio file into the standard import pipeline
+    // (organize -> analyzer -> cc_files) per design decision A modified
+    // 2026-05-16 ("drop-folder semantics, single folder").  Since
+    // 2026-10-14 a file whose hand-over fails is moved to <folder>/_failed/
+    // instead of being deleted.
     public static function getLocalImportFolder()
     {
         return self::getValue('local_import_folder');
@@ -2393,6 +2394,29 @@ class Application_Model_Preference
     public static function setFtpImportPending(array $pending)
     {
         self::setValue('local_ftp_import_pending', json_encode($pending));
+    }
+
+    // RASTATIME 2026-10-14 - Settings -> Local Machine -> Import Format:
+    // convert lossless audio (WAV, FLAC, ALAC, ...) to MP3 320 kbps on
+    // import (upload, import folder, FTP, bulk import).  Default ON while
+    // the key is absent (operator decision 2026-10-14).  Stored as
+    // 'true' / 'false'; RabbitMq::SendMessageToAnalyzer hands it to the
+    // analyzer as options.convert_lossless with every import message.
+    public static function getConvertLosslessToMp3()
+    {
+        $v = strtolower(trim((string) self::getValue('convert_lossless_to_mp3')));
+        if ($v === '') {
+            return true;   // default on
+        }
+
+        return in_array($v, ['true', '1', 'on', 'yes'], true);
+    }
+
+    public static function setConvertLosslessToMp3($value)
+    {
+        // (string) true === '1', (string) false === ''
+        $on = in_array(strtolower(trim((string) $value)), ['true', '1', 'on', 'yes'], true);
+        self::setValue('convert_lossless_to_mp3', $on ? 'true' : 'false');
     }
 
     // RASTATIME 2026-05-17 - Local Recording Folder (Section 23.13).

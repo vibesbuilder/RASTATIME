@@ -3,8 +3,8 @@
 > **Où vous êtes dans le manuel.** Ce chapitre couvre la
 > page Paramètres → **Machine locale**, qui possède chaque
 > aspect lié à la *machine de l'opérateur elle-même* —
-> sortie carte son, périphériques d'entrée line-in et
-> dossier d'import local. Pour les streams sortants côté
+> sortie carte son, périphériques d'entrée line-in, format
+> d'import et dossier d'import local. Pour les streams sortants côté
 > réseau, voir [Streams](./STREAMS.md). Pour le type
 > d'item de bibliothèque qui *référence* une entrée carte
 > son, voir [Line-In](./LINE_IN.md).
@@ -12,8 +12,9 @@
 La page **Machine locale** est où vous informez RASTATIME
 sur les ressources physiques de la machine de
 l'opérateur : quelle sortie haut-parleur jouer, quels
-périphériques comptent comme candidats line-in, et quel
-dossier l'analyzer doit surveiller pour les pistes
+périphériques comptent comme candidats line-in, dans quel
+format les fichiers sans perte entrent dans la bibliothèque,
+et quel dossier l'analyzer doit surveiller pour les pistes
 importées.
 
 La page remplace la page "Soundcard" de LibreTime d'origine
@@ -27,8 +28,9 @@ changent.
 
 Paramètres → **Machine locale**.
 
-Trois sections indépendantes : Carte son (sortie + entrée),
-Dossier d'import local.
+Sections indépendantes : Carte son (sortie + entrée), Format
+d'import, Dossier d'import local, puis import FTP, emplacement de
+la médiathèque et dossiers d'enregistrement.
 
 ---
 
@@ -297,7 +299,77 @@ sortie répète le défaut en forme à ligne unique.
 
 ---
 
-## 5. Dossier d'import local
+## 5. Format d'import
+
+*(Depuis le 2026-10-14.)*  Une case à cocher : **Convertir l'audio
+sans perte (WAV, FLAC, ...) en MP3 320 kbit/s à l'import** — **activée**
+par défaut.  Elle s'applique à toutes les voies par lesquelles une
+piste entre dans la bibliothèque : téléversement navigateur, dossier
+d'import local, import FTP et commande d'import en masse.  Cliquez sur
+le bouton **Sauvegarder** de la section ; l'import suivant applique la
+nouvelle valeur, aucun redémarrage n'est nécessaire.
+
+Ce que l'import fait de chaque fichier :
+
+| Audio dans le fichier | Ce qui se passe |
+|---|---|
+| MP3, MP2, MP1, AAC en M4A / MP4, OGG Vorbis, Opus | Importé tel quel — jamais réencodé. |
+| AAC brut (`.aac`) | Toujours réempaqueté en `.m4a`, **sans** réencodage, que la case soit cochée ou non. Un fichier AAC brut n'a pas d'index : sa durée ne peut qu'être estimée (environ 2 s de trop sur les fichiers vérifiés), et il ne peut pas porter de tags. |
+| Sans perte : WAV, FLAC, AU, Apple Lossless (ALAC) en M4A | Case **cochée** : converti en MP3 à 320 kbit/s avant d'entrer dans la bibliothèque ; l'original sans perte n'est **pas conservé**.  Case **décochée** : importé tel quel. |
+
+- **C'est l'audio qui compte, pas l'extension.**  Un `.m4a` contenant
+  de l'Apple Lossless est converti ; un `.wav` contenant des données
+  MP3 ne l'est pas.
+- **Tags et pochette suivent.**  Titre, artiste, album, genre, année,
+  numéro de piste, compositeur, copyright, label, ISRC, BPM, langue,
+  commentaire et la date **Expiry** sont écrits dans le MP3, et une
+  pochette JPEG ou PNG intégrée est conservée.  Le fichier garde son
+  nom avec la nouvelle extension (`Interview.wav` devient
+  `Interview.mp3`) ; un fichier sans tag de titre affiche ce nouveau
+  nom comme titre, comme tout téléversement sans tags.
+- **Fréquence d'échantillonnage et canaux.**  32, 44,1 et 48 kHz
+  restent tels quels ; les autres fréquences (par exemple 96 kHz)
+  deviennent 44,1 kHz.  Plus de deux canaux sont mixés en stéréo.
+- **Mesuré après la conversion.**  Durée, points de cue, ReplayGain et
+  loudness proviennent du fichier qui arrive dans la bibliothèque.
+- **Une conversion échouée ne coûte jamais l'import** : le fichier
+  d'origine est alors importé sans modification.
+- La conversion tourne en priorité basse, pour qu'un gros lot ne prenne
+  pas de puissance de calcul à la diffusion ; une piste convertie
+  apparaît simplement un peu plus tard dans la bibliothèque.
+- **Les épisodes de podcast ne sont pas convertis** — ils sont
+  téléchargés directement dans la bibliothèque sans passer par
+  l'analyse d'import.
+
+> **Pourquoi cela fonctionne ainsi.**  Les streams sont de toute façon
+> avec perte, et un FLAC ou un WAV occupe environ trois à quatre fois
+> et demie la place d'un MP3 à 320 kbit/s.  Le reste de la
+> bibliothèque est en MP3, et le MP3 porte la date **Expiry** de façon
+> fiable ; dans un M4A, de nombreux outils la perdent.  L'audio avec
+> perte (MP3, AAC, Ogg Vorbis, Opus) n'est pas touché, car réencoder un
+> format avec perte dans un autre ne fait que coûter de la qualité.
+> Voir ARCHITECTURE §23.57.
+
+> **Pistes importées avant le 2026-10-14.**  Les fichiers sans perte
+> déjà présents dans la bibliothèque sont convertis une fois par un
+> technicien avec la commande `convert_lossless` (d'abord un essai à
+> blanc ; une piste à l'antenne ou programmée dans les six prochaines
+> heures est ignorée, et rien n'est converti pendant le déplacement de
+> la médiathèque).  La piste garde son id, sa place dans les
+> playlists et les émissions et son Cue In ; le loudness est mesuré
+> à nouveau sur le MP3.
+
+> **Sous le capot.**  Le réglage est la clé `cc_pref`
+> `convert_lossless_to_mp3` (absente = activée).  L'application web
+> l'envoie avec chaque message d'import à l'analyzer
+> (`options.convert_lossless`) ; son étape `convert_format` s'exécute
+> juste après la lecture des tags.  Une piste convertie garde le md5
+> de son original dans `cc_files.source_md5`, pour que l'import en
+> masse reconnaisse toujours le même WAV ou FLAC comme déjà importé.
+
+---
+
+## 6. Dossier d'import local
 
 Le Dossier d'import local est un répertoire sur la machine
 de l'opérateur que l'analyzer surveille pour de nouveaux
@@ -322,8 +394,10 @@ Le scanner s'exécute toutes les 5 minutes (et immédiatement avec
 
 1. **Les fichiers non audio sont ignorés** et laissés en place — le
    scanner ne prend que les fichiers audio (`mp3`, `wav`, `m4a`,
-   `flac`, `ogg`, `oga`, `aac`, `opus`).  La ligne d'état les compte
-   comme « non-audio files left alone ».
+   `mp4`, `flac`, `ogg`, `oga`, `aac`, `opus`, `mp2`, `mp1`, `au` ;
+   depuis le 2026-10-14 exactement la liste qu'accepte le
+   téléversement navigateur).  La ligne d'état les compte comme
+   « non-audio files left alone ».
 2. **Les fichiers pas encore au repos attendent (depuis le
    17/09/2026).**  Un fichier modifié dans les 60 dernières secondes
    est peut-être encore en cours d'écriture (copie lente, envoi FTP) ;
@@ -334,26 +408,35 @@ Le scanner s'exécute toutes les 5 minutes (et immédiatement avec
    standard** : une entrée de bibliothèque est créée, le fichier est
    **déplacé** (pas copié) vers la zone `organize` de la
    bibliothèque, et l'analyseur prend le relais — lecture des
-   métadonnées, contrôle de lisibilité, place définitive dans la
-   bibliothèque.  Il se comporte ensuite exactement comme un fichier
-   téléversé par l'interface web.
-4. **Si la remise échoue, le fichier source est supprimé** — dès la
-   première tentative, et c'est voulu : un fichier durablement cassé
-   ne doit pas s'accumuler dans le dossier et être retenté à chaque
-   passage.
+   métadonnées, conversion selon le **Format d'import** (section 5),
+   contrôle de lisibilité, place définitive dans la bibliothèque.  Il
+   se comporte ensuite exactement comme un fichier téléversé par
+   l'interface web.
+4. **Si la remise échoue, le fichier est déplacé dans le
+   sous-dossier `_failed`** du dossier d'import (depuis le 2026-10-14 ;
+   auparavant il était supprimé).  Il y garde son chemin relatif
+   (`Album/Song.wav` devient `_failed/Album/Song.wav` ; si ce nom est
+   pris, un numéro est ajouté : `Song (2).wav`).  Le scanner ne regarde
+   jamais dans `_failed` : un fichier cassé n'est donc pas retenté à
+   chaque passage — et un fichier refusé n'est jamais supprimé.  Si
+   même le déplacement échoue, le fichier reste où il est et le
+   passage suivant réessaie.
 
 Le dossier se vide donc de ses fichiers audio après chaque passage —
-déplacés dans la bibliothèque en cas de succès, supprimés en cas
-d'échec.  Les fichiers non audio restent.
+déplacés dans la bibliothèque en cas de succès, dans `_failed` en cas
+d'échec.  Les fichiers non audio restent.  La ligne d'état indique
+combien de fichiers sont partis dans `_failed`
+(« 2 failed (moved to _failed) »).
 
 ### Sous-dossiers et gros lots (depuis le 2026-10-08)
 
 Les sous-dossiers sont **parcourus** : chaque fichier audio du dossier
 d'import et de tout sous-dossier est importé, dossier par dossier dans
 l'ordre des chemins ; un sous-dossier vidé par les déplacements est
-supprimé.  La structure des dossiers n'est pas reprise dans la
-bibliothèque (elle classe les fichiers d'après leurs métadonnées) :
-taguez les fichiers avant de les copier.
+supprimé.  Le sous-dossier `_failed` fait exception : il n'est jamais
+parcouru ni supprimé.  La structure des dossiers n'est pas reprise
+dans la bibliothèque (elle classe les fichiers d'après leurs
+métadonnées) : taguez les fichiers avant de les copier.
 
 Un scan ne transmet rien non plus tant que **300 fichiers ou plus**
 attendent encore l'analyseur (il traite environ un fichier par
@@ -387,7 +470,8 @@ plan appartiennent au premier compte administrateur.
 > l'occasion des requêtes web normales, au plus toutes les 300 s, et
 > met à jour les clés `cc_pref` `local_import_last_run` et
 > `local_import_last_status` (la ligne d'état de cette page).  Voir
-> ARCHITECTURE §23.12.
+> ARCHITECTURE §23.12 et, pour le dossier `_failed` et la liste
+> d'extensions commune, §23.57.
 
 ### Import depuis un serveur FTP
 
@@ -409,7 +493,8 @@ distant **absolu**, puis **Save FTP import**.
   minute entre deux contrôles, et la taille est revérifiée après le
   téléchargement.  D'ici là, l'état le compte comme « settling ».
 - **Les fichiers non audio restent sur le serveur.**  Seules les
-  extensions audio du dossier d'import sont récupérées.
+  extensions audio du dossier d'import sont récupérées.  Une entrée
+  distante nommée `_failed` n'est pas touchée.
 - **Préférez FTPS ou SFTP** — le FTP en clair transmet le mot de
   passe non chiffré.  Le mot de passe est stocké dans la base des
   réglages comme les autres mots de passe de services, pour que la
@@ -421,7 +506,7 @@ distant **absolu**, puis **Save FTP import**.
 
 ---
 
-## 6. Emplacement de la médiathèque
+## 7. Emplacement de la médiathèque
 
 Depuis le 16/09/2026, le dossier qui contient la médiathèque (titres
 importés, pochettes, images d'émission) est un réglage de cette page et
@@ -474,7 +559,7 @@ bord affiche *Media library location … is missing* jusqu'à son retour.
 
 ---
 
-## 7. Dossiers d'enregistrement (lié)
+## 8. Dossiers d'enregistrement (lié)
 
 Paramètres → Machine locale a **deux** dossiers de sortie
 d'enregistrement :
@@ -513,7 +598,7 @@ téléchargement / archive, non auto-importés.
 
 ---
 
-## 8. Foire aux questions
+## 9. Foire aux questions
 
 ### "Mon micro USB apparaît dans Windows, mais pas dans RASTATIME."
 
@@ -537,11 +622,30 @@ Ordre de diagnostic :
    force un passage.
 3. Un fichier modifié dans les 60 dernières secondes compte comme
    « still being copied » — attendez une minute et relancez.
-4. « failed N » dans la ligne d'état signifie que la remise a
-   échoué et que la source a été supprimée (voulu).  Testez le
+4. « N failed (moved to _failed) » dans la ligne d'état signifie
+   que la remise a échoué et que le fichier se trouve maintenant dans
+   le sous-dossier `_failed` (voir la question suivante).  Testez le
    fichier dans un autre lecteur et cherchez la raison dans
    `logs\legacy.log` ; le service `RASTATIME-ANALYZER` doit
    tourner pour finir l'import.
+
+### "Que faire des fichiers dans `_failed` ?"
+
+Chaque fichier qui s'y trouve n'a pas pu être remis à la
+bibliothèque.  Cherchez son nom dans `logs\legacy.log` pour connaître
+la raison, testez-le dans un autre lecteur, réparez-le ou
+réexportez-le si nécessaire, puis remettez-le dans le dossier
+d'import — n'importe où en dehors de `_failed` ; le passage suivant
+l'importe.  Supprimez ce dont vous n'avez plus besoin : RASTATIME ne
+vide jamais `_failed` lui-même.
+
+### "J'ai importé un fichier WAV ou FLAC et la bibliothèque affiche un MP3."
+
+C'est le réglage **Format d'import** (section 5) : les fichiers sans
+perte sont convertis en MP3 320 kbit/s à l'import, et l'original sans
+perte n'est pas conservé.  Pour importer des fichiers sans perte tels
+quels, décochez la case et cliquez sur **Sauvegarder** *avant* de les
+importer.
 
 ### "Pourquoi déplacer et pas copier dans le Dossier d'import local ?"
 

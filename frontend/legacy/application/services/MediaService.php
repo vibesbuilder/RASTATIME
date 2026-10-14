@@ -19,6 +19,8 @@ class Application_Service_MediaService
      * @param string $fileOriginalFilename The original filename, if you want it to be preserved after import
      * @param string $filePath             Path to the local file to import to the library
      * @param bool   $copyFile             True if you want to copy the file to the "organize" directory, false if you want to move it (default)
+     * @param bool   $keepSourceOnFailure  RASTATIME 2026-10-14 - true for the import folder: a failed move must
+     *                                     leave the operator's file in place (it is quarantined to _failed)
      *
      * @return Ambigous
      *
@@ -30,7 +32,8 @@ class Application_Service_MediaService
         $fileTrackTypeId,
         $fileOriginalFilename,
         $filePath,
-        $copyFile
+        $copyFile,
+        $keepSourceOnFailure = false
     ) {
         // RASTATIME 2026-09-16 - no imports while the library is being moved
         Application_Common_Storage::assertNotMoving();
@@ -43,7 +46,8 @@ class Application_Service_MediaService
             $filePath,
             $fileId,
             $fileOriginalFilename,
-            $copyFile
+            $copyFile,
+            $keepSourceOnFailure
         );
 
         // Dispatch a message to libretime-analyzer through RabbitMQ,

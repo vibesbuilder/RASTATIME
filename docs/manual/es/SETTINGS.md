@@ -16,7 +16,7 @@ matriz completa de permisos.
 | Página | Propósito | Capítulo |
 |---|---|---|
 | **Preferencias generales** | Nombre de emisora, idioma por defecto, colores por defecto, vista anticipada del panel, propietario de importación por defecto, duración crossfade por defecto, favicon, logo de emisora. | Este capítulo §2 |
-| **Máquina local** | Dispositivos de salida/entrada de tarjeta de sonido, carpeta de importación local, carpeta de grabación local. | [Máquina local](./LOCAL_MACHINE.md) |
+| **Máquina local** | Dispositivos de salida/entrada de tarjeta de sonido, formato de importación, carpeta de importación local, carpeta de grabación local. | [Máquina local](./LOCAL_MACHINE.md) |
 | **Streams** | Hasta cuatro streams de salida. | [Streams](./STREAMS.md) |
 | **Line-In Library** | Entradas de audio en vivo nombradas. | [Line-In](./LINE_IN.md) |
 | **Auto DJ** | Rellenador en segundo plano. | [Auto DJ](./AUTO_DJ.md) |

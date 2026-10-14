@@ -75,6 +75,20 @@ $rtTip = function ($text) {
 }
 .soundcard-config .rt-restart-msg.ok    { color: #8fce8f; }
 .soundcard-config .rt-restart-msg.error { color: #e58f8f; }
+/* RASTATIME 2026-10-14 — Import Format: the checkbox label is long (and
+   longer in DE/FR/ES).  It wraps inside the field column (195 px label
+   column + 15 px padding + a little air) instead of dropping below the
+   empty label column; flex keeps the wrapped lines indented after the
+   checkbox and the help icon right of the label (measured EN/DE/FR/ES at
+   700/900/1200 px panel width: DE and ES wrap to two lines at 700 px). */
+.soundcard-config dd.rt-import-format {
+    width: calc(100% - 215px);
+    display: flex;
+    align-items: flex-start;
+}
+.soundcard-config dd.rt-import-format > input { flex: none; margin: 0 0.4em 0 0; }
+.soundcard-config dd.rt-import-format > label { flex: 0 1 auto; }
+.soundcard-config dd.rt-import-format > .help_icon { flex: none; }
 </style>
 
 <div class="ui-widget prefpanel simple-formblock clearfix padded-strong soundcard-config">
@@ -201,18 +215,70 @@ $rtTip = function ($text) {
     ?>
 
     <?php
+    // RASTATIME 2026-10-14 - Import Format section.  Lossless files (WAV,
+    // FLAC, ALAC, ...) are converted to MP3 320 kbps by the analyzer before
+    // they are filed (cc_pref convert_lossless_to_mp3, default on; sent per
+    // import message as options.convert_lossless).  Applies to every import
+    // path because they all end in RabbitMq::SendMessageToAnalyzer.
+    $convertLossless = isset($this->convertLosslessToMp3)
+        ? (bool) $this->convertLosslessToMp3
+        : Application_Model_Preference::getConvertLosslessToMp3();
+    ?>
+
+    <h3><?php echo _("Import Format") ?></h3>
+
+    <fieldset class="padded stream-setting-global">
+        <dl class="zend_form">
+            <dt></dt>
+            <dd class="rt-import-format">
+                <input id="convert_lossless_to_mp3" type="checkbox"
+                       <?php echo $convertLossless ? 'checked' : ''; ?> />
+                <label for="convert_lossless_to_mp3" style="cursor: pointer;"><?php echo _("Convert lossless audio (WAV, FLAC, ...) to MP3 320 kbps on import") ?></label><span class="help_icon" data-rt-tip="<?php echo $rtTip(_("Applies to every import: upload, Import Folder, FTP import and bulk import.  WAV, FLAC and other lossless files are converted to MP3 at 320 kbps before they enter the library; the lossless original is not kept.  Lossy audio (MP3, AAC, Ogg Vorbis, Opus) is never re-encoded; Apple Lossless in an .m4a file counts as lossless and is converted.  Raw .aac files are always repacked losslessly into .m4a, whether this option is on or off.")); ?>"></span>
+            </dd>
+
+            <dt></dt>
+            <dd style="padding-top: 0.5em;">
+                <button id="import_format_save" type="button" class="btn"><?php echo _("Save") ?></button>
+                <span id="import_format_status_msg" style="margin-left: 1em;"></span>
+            </dd>
+        </dl>
+    </fieldset>
+
+    <script>
+    (function ($) {
+        $("#import_format_save").on("click", function () {
+            var msg = $("#import_format_status_msg");
+            $.post(baseUrl + "preference/import-format-save", {
+                csrf_token: $("#csrf").val(),
+                convert_lossless: $("#convert_lossless_to_mp3").is(":checked") ? "true" : "false"
+            }, function (resp) {
+                if (resp && resp.ok) {
+                    msg.text("✓ " + "<?php echo addslashes(_('Saved.')) ?>").css("color", "#5cb85c");
+                    $("#convert_lossless_to_mp3").prop("checked", !!resp.convert_lossless);
+                } else {
+                    msg.text("✗ " + ((resp && resp.error) || "<?php echo addslashes(_('Save failed.')) ?>")).css("color", "#d9534f");
+                }
+            }, "json").fail(function () {
+                msg.text("✗ <?php echo addslashes(_('Network error.')) ?>").css("color", "#d9534f");
+            });
+        });
+    })(jQuery);
+    </script>
+
+    <?php
     // RASTATIME 2026-05-16 - Local Import Folder section.
     // Drop-folder semantics: the LocalImportScanTask (TaskManager, 5-min
-    // interval) walks this folder, moves every audio file through the
+    // interval) walks this folder and moves every audio file through the
     // standard import pipeline (CcFiles::createAndImport -> organize ->
-    // analyzer -> cc_files), and deletes the source after the attempt
-    // succeeds OR fails.  Single folder, not a list.
+    // analyzer -> cc_files).  Single folder, not a list.
+    // RASTATIME 2026-10-14 - a file that cannot be handed over is moved to
+    // the _failed subfolder (never scanned) instead of being deleted.
     $localImportFolder = Application_Model_Preference::getLocalImportFolder();
     $localImportLastRun = Application_Model_Preference::getLocalImportLastRun();
     $localImportLastStatus = Application_Model_Preference::getLocalImportLastStatus();
     ?>
 
-    <h3><?php echo _("Import Folder") ?><span class="help_icon" data-rt-tip="<?php echo $rtTip(_("Audio files dropped into this folder are imported into the Media Library every 5 minutes.  After each import attempt (success or failure) the source file is deleted from the folder.  Leave empty to disable the scan.")); ?>"></span></h3>
+    <h3><?php echo _("Import Folder") ?><span class="help_icon" data-rt-tip="<?php echo $rtTip(_("Audio files dropped into this folder (subfolders included) are imported into the Media Library every 5 minutes.  An imported file leaves the folder; a file that cannot be imported is moved to the _failed subfolder, which is never scanned - nothing is deleted.  Leave empty to disable the scan.")); ?>"></span></h3>
 
     <fieldset class="padded stream-setting-global">
         <dl class="zend_form">
@@ -722,7 +788,9 @@ $rtTip = function ($text) {
                 function (resp) {
                     var msg = $("#local_import_status_msg");
                     if (resp && resp.ok) {
-                        msg.text("✓ Imported " + resp.imported + ", failed " + resp.failed + ".")
+                        // RASTATIME 2026-10-14 - failed files go to _failed/
+                        msg.text("✓ Imported " + resp.imported + ", failed " + resp.failed
+                                 + (resp.quarantined ? " (" + resp.quarantined + " moved to _failed)" : "") + ".")
                            .css("color", "#5cb85c");
                         refreshLocalImportStatus();
                     } else {

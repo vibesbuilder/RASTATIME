@@ -216,6 +216,14 @@ class Application_Model_RabbitMq
             $options->analyze_cue_points = $fileTrackType->getAnalyzeCuePoints();
         }
 
+        // RASTATIME 2026-10-14 - lossless -> MP3 320 kbps (Settings -> Local
+        // Machine, default on): the analyzer converts WAV / FLAC / ALAC / ...
+        // before it files the track (decided by codec); lossy MP3, AAC, Vorbis
+        // and Opus audio is never re-encoded.
+        // Only the import message carries it - a loudness-only measurement
+        // (SendLoudnessMeasurementToAnalyzer) never converts.
+        $options->convert_lossless = (bool) Application_Model_Preference::getConvertLosslessToMp3();
+
         $data['options'] = $options;
 
         self::publishAnalyzerMessage($data);

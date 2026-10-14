@@ -59,6 +59,24 @@ class FileDataHelper
     }
 
     /**
+     * RASTATIME 2026-10-14 - the ONE list of audio file extensions RASTATIME
+     * imports (lower case, without the dot).  The upload dialog,
+     * CcFiles::createAndImport and the import-folder / FTP scans all use it.
+     * The scans used to accept '.oga' while createAndImport refused it
+     * ("Bad file extension.") - and the scan then deleted the refused source.
+     *
+     * @return string[]
+     */
+    public static function getUploadAudioExtensions()
+    {
+        $extensions = array_values(self::getUploadAudioMimeTypeArray());
+        // Ogg audio under its own extension (audio/ogg maps to 'ogg' above)
+        $extensions[] = 'oga';
+
+        return array_values(array_unique($extensions));
+    }
+
+    /**
      * We want to throw out invalid data and process the upload successfully
      * at all costs, so check the data and sanitize it if necessary.
      *

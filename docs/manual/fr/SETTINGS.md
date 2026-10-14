@@ -16,7 +16,7 @@ sous-ensemble. Voir [Utilisateurs et rôles](./USERS_AND_ROLES.md)
 | Page | But | Chapitre |
 |---|---|---|
 | **Préférences générales** | Nom de station, langue par défaut, couleurs par défaut, vue d'avance tableau de bord, propriétaire d'import par défaut, durée crossfade par défaut, favicon, logo de station. | Ce chapitre §2 |
-| **Machine locale** | Périphériques sortie/entrée carte son, dossier d'import local, dossier d'enregistrement local. | [Machine locale](./LOCAL_MACHINE.md) |
+| **Machine locale** | Périphériques sortie/entrée carte son, format d'import, dossier d'import local, dossier d'enregistrement local. | [Machine locale](./LOCAL_MACHINE.md) |
 | **Streams** | Jusqu'à quatre streams de sortie. | [Streams](./STREAMS.md) |
 | **Line-In Library** | Entrées audio live nommées. | [Line-In](./LINE_IN.md) |
 | **Auto DJ** | Remplisseur d'arrière-plan. | [Auto DJ](./AUTO_DJ.md) |

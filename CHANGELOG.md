@@ -9,6 +9,95 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Import format normalization: lossless audio becomes MP3 320 kbps, raw
+  AAC becomes M4A, tags are read from every format (2026-10-14, operator
+  question about the FLAC / WAV files in the library, Go 2026-10-14)** -
+  a new analyzer step `convert_format`
+  (`libretime_analyzer/pipeline/convert_format.py`) runs right after
+  `analyze_metadata` and before `analyze_duration`, so length, cue points,
+  ReplayGain and loudness are measured on the file that is filed.  The
+  decision follows the codec ffprobe reports, not the extension.
+  **Raw ADTS AAC** (ffprobe format `aac`) is always stream-copied into an
+  `.m4a`, never re-encoded: ADTS has no index (its length is a bitrate
+  estimate, about 1.9 s too long on the files that showed it) and cannot
+  carry tags; the tags go in as MP4 atoms, Expiry, ISRC, LABEL and
+  LANGUAGE as `com.apple.iTunes` freeform atoms.  **Lossless audio** (PCM
+  in WAV / AU, FLAC, ALAC, WavPack, APE, TTA) is transcoded to **MP3 320
+  kbps CBR** with ID3v2.3 tags (Expiry as TXXX) when the new setting
+  Settings -> Local Machine -> **Import Format** -> "Convert lossless audio
+  (WAV, FLAC, ...) to MP3 320 kbps on import" is on - cc_pref
+  `convert_lossless_to_mp3`, **default on** while the key is absent, sent
+  with every import message as `options.convert_lossless` (the
+  loudness-only message never converts; a message without the option
+  behaves as before).  A JPEG / PNG cover is kept as the front
+  cover, 32 / 44.1 / 48 kHz stay, other rates are resampled to 44.1 kHz,
+  more than two channels are mixed down to stereo.  The output is written
+  to a temporary `.part-` file, checked (codec; for MP3 the length within
+  max(1 s, 1 %)), tagged and renamed (retried briefly while a virus
+  scanner holds the fresh file).  The **original is deleted** (operator
+  decision: not kept) only once the converted file is filed in the
+  library; when a later step fails, the converted file is removed and the
+  original stays in `organize/` as before, and an analyzer restart in
+  between leaves the original for the redelivered message.  A file
+  without a title tag gets the name it is filed under as its title
+  (`Interview.mp3`, not the hand-over's `Interview.wav`).  Lossy audio
+  (MP3, AAC, Ogg Vorbis, Opus) is never re-encoded; ALAC in an `.m4a`
+  counts as lossless.  Any conversion failure imports the original
+  unchanged.  The step's ffmpeg / ffprobe runs at BELOW_NORMAL priority
+  with a timeout of max(120 s, 1.5 x length).  **Tags from every
+  format:** a mutagen error no longer aborts the import, and ffprobe
+  fills every field mutagen left empty (the ID3 chunk of a WAV file, RIFF
+  INFO, Vorbis DESCRIPTION, MP4 freeform atoms, a raw ADTS file with an
+  ID3v2 header; Expiry from any of them; sample rate and bitrate of Opus
+  files).  `encoder` (TSSE / Vorbis ENCODER before TENC) is cut to the 64
+  characters of `cc_files.encoder` - in the analyzer and, as a second
+  guard, in `CcFiles::validateFileArray` (the track editor's length
+  limits never covered it, and a longer value made PostgreSQL reject the
+  whole import callback).  **Analyzer connection:** the RabbitMQ
+  heartbeat is 1800 s (the pipeline runs inside the pika callback, which
+  sends no heartbeats - a long import lost the connection at the broker's
+  60 s and the message was delivered again), and a redelivered import
+  whose file is no longer in `organize/` is acknowledged without a report
+  instead of overwriting the first delivery's success with a failure.  **Duplicate check:**
+  legacy migration 0066 adds `cc_files.source_md5` (VARCHAR(32), indexed)
+  = the md5 of the original a file was converted from; the analyzer
+  reports it, `CcFiles::updateFromArray` stores it via raw SQL (a failure
+  costs only this column), and `bulk_import` treats a file as imported
+  when its md5 matches `md5` or `source_md5` (its default extensions gain
+  `.aac` and `.oga`).  **Files already in the library:** new management
+  command `convert_lossless` (dry run by default; `--yes`, `--ids`,
+  `--root`, `--ffmpeg-dir`) converts imported rows whose file probes as
+  lossless (2026-10-14: id 603 FLAC, id 604 WAV), skips a file that is on
+  air or scheduled within the next 6 hours (checked before and inside the
+  transaction), refuses to run while the media library is being moved,
+  updates filepath, name, mime, md5, source_md5, filesize, bit_rate,
+  sample_rate, channels and mtime in one transaction (length only when
+  it differs by more than 0.1 s, a cue-out beyond it pulled back; id,
+  cue-in kept, the R128 loudness re-measured on the MP3 because its
+  true peak can sit higher; a title that is just the old file name
+  becomes the new one and is not written as a tag) and deletes the
+  original after the commit.  Migration 0066 sets `lock_timeout` 5 s, so
+  it gives up instead of queueing every `cc_files` read behind a long
+  transaction.  Podcast downloads do not pass the analyzer and are not
+  converted (BACKLOG).  Tests: analyzer +65 (47 `convert_format_test`, 9
+  `analyze_metadata_formats_test`, 4 pipeline, 5 `message_listener_test`),
+  API +26 (23 `test_convert_lossless`, 3 `test_bulk_import`), root
+  `test_migration_baseline` at legacy 0066; the pre-existing failures are
+  unchanged.  Three UI strings in DE/FR/ES (po + mo, active after an
+  Apache restart).  **Deploy order:** tag and back up; run migration 0066
+  first (from the branch, with the API service environment - the running
+  code never reads the new column), check `schema_version` 66 and the
+  column; then merge (PHP is live at once), restart RASTATIME-API (the
+  API selects `source_md5` as soon as it restarts; RASTATIME-WORKER too
+  runs Django on the File model, so 0066 must exist before either
+  restarts), restart RASTATIME-ANALYZER when the `airtime-uploads` queue
+  is empty and no import is pending, restart Apache.  An analyzer still
+  running the old code ignores the new option (pydantic drops unknown
+  fields, checked against the live package), so an import in between is
+  filed unconverted, not failed.  Manual LOCAL_MACHINE (new section 5 Import
+  Format, `_failed`) and LIBRARY (file formats on import) in EN/DE/FR/ES;
+  architecture §23.57 (0.70).  Commit: FORMATNORM_PENDING.
+
 - **Settings -> Import/Export: shows, playlists, smart blocks, webstreams and
   podcast subscriptions as CSV/JSON, bundle or single file, with a preview
   step (2026-10-13, operator request of 2026-10-11, Go of 2026-10-13)** - a
@@ -1203,6 +1292,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   live geprüft.
 
 ### Fixed
+
+- **Import folder destroyed `.oga` files - a failed hand-over now moves the
+  file to `_failed` instead of deleting it (2026-10-14, operator decision
+  2026-10-14)** - the import-folder and FTP scans accepted `.oga`, but
+  `CcFiles::createAndImport` refused it ("Bad file extension.") and the
+  scan then deleted the refused source: a refusal that was our fault cost
+  the operator's file.  Two changes.  (1) **One extension list**,
+  `FileDataHelper::getUploadAudioExtensions()` (`ogg, mp3, aac, m4a, mp4,
+  flac, wav, mp2, mp1, au, opus, oga`), used by the upload dialog,
+  `createAndImport`, the import-folder scan and the FTP scan
+  (`LocalImportScanTask::AUDIO_EXTENSIONS` removed).  The upload dialog now
+  accepts `.oga`; the scans now also pick up `.mp4`, `.mp2`, `.mp1` and
+  `.au`, which uploads already accepted.  (2) **Quarantine instead of
+  delete:** a file whose hand-over fails is moved to
+  `<import folder>/_failed/<same relative path>` (" (2)", " (3)" ... when
+  the name is taken); nothing is deleted, and when even the move fails the
+  file stays where it is and is tried again on the next scan.  The scan
+  never enters `_failed` (so the empty-subfolder clean-up never touches
+  it), the FTP fetch skips a remote `_failed` entry, the status line and
+  **Scan Now** say how many files were moved to `_failed`, the Import
+  Folder tooltip and the "not writable" message describe the move.  One
+  more delete path closed: when the move into `organize/` failed,
+  `StoredFile::moveFileToStor` deleted the source - for the import folder
+  that is the operator's file (`createAndImport` now passes
+  `$fromImportFolder` through, the file stays and is quarantined; an
+  upload's temporary copy is still removed).  Also
+  fixed: a raw `.aac` with an ID3v2 header failed the import (mutagen
+  "can't sync to MPEG frame"); it is now read via ffprobe and repacked to
+  `.m4a` (see Added, import format normalization).  Helper check 69/69
+  (`check_helpers.php`, scratch) plus 10/10 for the review fixes
+  (`check_fixes.php`: a failed move keeps the import-folder file, encoder
+  cut on a character boundary), `php -l` on the 10 changed files, layout
+  measured EN/DE/FR/ES at 700/900/1200 px.  Commit: FORMATNORM_PENDING.
 
 - **Track starts 1.7 s late: the schedule refresh armed its timers after a
   2 s library walk (2026-10-10)** - the 11:15 test show aired +1.9 s on

@@ -32,6 +32,10 @@ class File(models.Model):
     exists = models.BooleanField(blank=True, null=True, db_column="file_exists")
     mime = models.CharField(max_length=255)
     md5 = models.CharField(max_length=32, blank=True, null=True)
+    # RASTATIME 2026-10-14 - md5 of the original a lossless file was
+    # converted from (legacy migration 0066); NULL = the stored file is
+    # the original.  The duplicate check matches md5 OR source_md5.
+    source_md5 = models.CharField(max_length=32, blank=True, null=True)
 
     hidden = models.BooleanField(blank=True, null=True)
     # RASTATIME 2026-05-16 - Track Expiry feature.

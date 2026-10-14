@@ -5217,9 +5217,9 @@ msgstr "Jetzt anwenden (startet Audiokette neu)"
 msgid "Import Folder"
 msgstr "Import-Ordner"
 
-#: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
-msgid "Audio files dropped into this folder are imported into the Media Library every 5 minutes.  After each import attempt (success or failure) the source file is deleted from the folder.  Leave empty to disable the scan."
-msgstr "Audiodateien, die in diesen Ordner gelegt werden, werden alle 5 Minuten in die Medienbibliothek importiert.  Nach jedem Importversuch (Erfolg oder Fehler) wird die Quelldatei aus dem Ordner gelöscht.  Leer lassen, um den Scan zu deaktivieren."
+#: RASTATIME 2026-10-14 Local Machine page (preference/local-machine.phtml) - _failed quarantine
+msgid "Audio files dropped into this folder (subfolders included) are imported into the Media Library every 5 minutes.  An imported file leaves the folder; a file that cannot be imported is moved to the _failed subfolder, which is never scanned - nothing is deleted.  Leave empty to disable the scan."
+msgstr "Audiodateien, die in diesen Ordner (samt Unterordnern) gelegt werden, werden alle 5 Minuten in die Medienbibliothek importiert.  Eine importierte Datei verlässt den Ordner; eine Datei, die sich nicht importieren lässt, wird in den Unterordner _failed verschoben, der nie gescannt wird - gelöscht wird nichts.  Leer lassen, um den Scan zu deaktivieren."
 
 #: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
 msgid "Folder path"
@@ -6096,3 +6096,15 @@ msgstr "ersetzt den bestehenden Webstream"
 #: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
 msgid "will update the options of the existing subscription"
 msgstr "aktualisiert die Optionen des bestehenden Abos"
+
+#: RASTATIME 2026-10-14 Local Machine page (preference/local-machine.phtml) - Import Format
+msgid "Import Format"
+msgstr "Importformat"
+
+#: RASTATIME 2026-10-14 Local Machine page (preference/local-machine.phtml) - Import Format
+msgid "Convert lossless audio (WAV, FLAC, ...) to MP3 320 kbps on import"
+msgstr "Verlustfreies Audio (WAV, FLAC, ...) beim Import in MP3 mit 320 kbit/s umwandeln"
+
+#: RASTATIME 2026-10-14 Local Machine page (preference/local-machine.phtml) - Import Format
+msgid "Applies to every import: upload, Import Folder, FTP import and bulk import.  WAV, FLAC and other lossless files are converted to MP3 at 320 kbps before they enter the library; the lossless original is not kept.  Lossy audio (MP3, AAC, Ogg Vorbis, Opus) is never re-encoded; Apple Lossless in an .m4a file counts as lossless and is converted.  Raw .aac files are always repacked losslessly into .m4a, whether this option is on or off."
+msgstr "Gilt für jeden Import: Upload, Import-Ordner, FTP-Import und Massenimport.  WAV, FLAC und andere verlustfreie Dateien werden vor der Aufnahme in die Bibliothek in MP3 mit 320 kbit/s umgewandelt; das verlustfreie Original wird nicht aufbewahrt.  Verlustbehaftetes Audio (MP3, AAC, Ogg Vorbis, Opus) wird nie neu kodiert; Apple Lossless in einer .m4a-Datei gilt als verlustfrei und wird umgewandelt.  Rohe .aac-Dateien werden immer verlustfrei in .m4a umverpackt, ob diese Option an oder aus ist."

@@ -5029,6 +5029,85 @@ Ablauf im ruhigen Moment: neues Passwort ohne YAML-Sonderzeichen oder in Anfuehr
 WITH PASSWORD; libretime.conf database.password; Neustart API, PLAYOUT, ANALYZER, WORKER (Legacy-PHP liest die Datei je
 Request, Backup-Task je Lauf); Apache neu starten und error_log bereinigen; danach Logins/UI/Stats-Push pruefen.
 
+## Import-Formate normalisieren (Operator-Frage 2026-10-14)
+
+### 🟢 Import-Format-Normalisierung: verlustfrei -> MP3 320, rohes AAC -> M4A, Tags aus jedem Format, '_failed' statt Loeschen - gebaut 2026-10-14 (Go 2026-10-14), Live-Abnahme offen
+Anlass: Operator-Frage 2026-10-14 "Welche Dateien sind im FLAC- oder WAV-Format in der Bibliothek?" -> Probe nach
+Codec (ffprobe, nicht mime): id 603 FLAC, id 604 WAV.  Beim Pruefen des Importpfads gefunden: rohes ADTS-.aac wird
+ohne Index ~1,9 s zu lang geschaetzt und traegt keine Tags (mit ID3v2-Kopf scheiterte der Import ganz); WAV-Tags,
+RIFF INFO, Vorbis DESCRIPTION und MP4-Freeform-Felder wurden nicht gelesen; der Import-Ordner nahm .oga an,
+createAndImport lehnte ab ("Bad file extension.") und der Scan loeschte die Quelle (Datenverlust).
+Entscheidungen Operator 2026-10-14: verlustfreie Originale nicht aufbewahren; Standard an; Ziel MP3 320 CBR (M4A
+verliert den Expiry-Tag); verlustbehaftetes Audio (MP3/AAC/Vorbis/Opus) nie neu kodieren (ALAC in .m4a gilt als
+verlustfrei); Entscheidung nach Codec, nicht nach Endung; ffmpeg mit
+BELOW_NORMAL; Rueckfall = Original unveraendert importieren; Podcasts ausser Scope.
+Gebaut (Worktree feat/import-format-normalization): Analyzer-Schritt convert_format zwischen analyze_metadata und
+analyze_duration (ADTS immer per Stream-Copy -> .m4a; verlustfrei -> MP3 320 mit ID3v2.3, Cover, Expiry als TXXX,
+44,1 kHz ausser 32/44,1/48, Downmix > 2 Kanaele, Pruefung + Umbenennung, Original erst geloescht, wenn die
+Umwandlung abgelegt ist); ffprobe fuellt
+fehlende Tags in jedem Format; Einstellung Settings -> Local Machine -> Import Format (cc_pref
+convert_lossless_to_mp3, fehlt = an, je Import-Nachricht options.convert_lossless); cc_files.source_md5 (Migration
+0066) fuer die Duplikatpruefung von bulk_import; Befehl convert_lossless fuer Bestandsdateien (Trockenlauf Standard,
+6-h-Sendeplan-Schutz, eine Transaktion, id/Cue-In/Lautheit bleiben); eine Endungsliste fuer Upload, Import-Ordner,
+FTP und createAndImport; fehlgeschlagene Uebergabe -> <Import-Ordner>/_failed/<gleicher Pfad>, nie geloescht.
+Review-Fixes 2026-10-14 (zwei Reviews): encoder auf 64 Zeichen gekuerzt (Analyzer + validateFileArray; ein langer
+TSSE liess den Import scheitern), Original erst nach organise_file geloescht (spaeterer Fehler / Analyzer-Neustart
+behalten es), moveFileToStor loescht keine Import-Ordner-Datei mehr, Analyzer-Heartbeat 1800 s + Wiederzustellung
+ohne Datei wird still bestaetigt, Migration mit lock_timeout 5 s, convert_lossless setzt name/mtime und verweigert
+waehrend eines Bibliotheksumzugs, Titel ohne Tag = neuer Dateiname, Tooltip "verlustbehaftet" statt "M4A".
+Tests: Analyzer +65, API +26 (bestehende Fehlschlaege unveraendert), test_migration_baseline auf 0066,
+Legacy-Helper 69/69 + Review-Check 10/10, Layout EN/DE/FR/ES.
+Doku: CHANGELOG, Architektur §23.57 (0.70), Manual LOCAL_MACHINE + LIBRARY x4.
+**Offen - Live-Abnahme (Reihenfolge):** (0) vorher `D:\import` auf .mp4/.mp2/.mp1/.au pruefen - der Scan nimmt sie
+jetzt mit (ein Video-.mp4 wuerde als Audio importiert); (1) `git tag live-YYYY-MM-DD` + frisches Backup
+(API-Migration), ruhiges Fenster ausserhalb einer Sendungsgrenze und nicht um 03:30; (2) Migration 0066 ZUERST (vom
+Branch, API-Dienstumgebung; der laufende Code liest die Spalte nicht), schema_version 66 + Spalte pruefen, dann
+Merge, Neustart API (Serializer liest source_md5 sofort; WORKER nutzt das File-Modell ebenfalls), ANALYZER erst bei
+leerer airtime-uploads-Queue ohne wartende Importe, Apache (.mo); ein Analyzer mit altem Code ignoriert die neue Option
+(pydantic verwirft unbekannte Felder, geprueft) - ein Import dazwischen bleibt unkonvertiert, scheitert aber nicht;
+(3) Live-Verifikation: `curl -i` auf /preference/local-machine und POST /preference/import-format-save (Login),
+Probe-Uploads einer FLAC, einer WAV und eines rohen .aac (Testdateien, keine echten Sendungen), eine kaputte Datei
+im Import-Ordner -> landet in _failed; (4) Bestand: `convert_lossless --ffmpeg-dir C:\ffmpeg\bin` (Trockenlauf),
+dann `--ids 603 604 --yes`; der echte ADTS-Fall (~1,9 s) ist erst live pruefbar.
+Nebenbefunde (klein, ohne eigenes Item): nur die neuen ffmpeg/ffprobe-Aufrufe laufen mit BELOW_NORMAL (ReplayGain,
+R128, Stille, Abspielbarkeit, Dauer weiter normal); convert_lossless misst die Lautheit
+(R128) an der neuen MP3 nach, weil ihr True Peak einige Zehntel dB hoeher liegen kann; eine .au-Datei bekommt bei ausgeschalteter Option keinen
+mime-Typ (bei Uploads schon vorher so).
+
+### 💡 Podcast-Downloads umgehen den Analyzer: keine Format-Normalisierung, keine Tag-Fuellung (notiert 2026-10-14)
+Episoden laedt die API selbst und schreibt Datei + Bibliothekszeile direkt (LIBRARY 2.3); convert_format und die
+ffprobe-Tags greifen dort nicht.  Feeds liefern praktisch immer MP3 oder M4A - relevant nur fuer einen Feed mit rohem
+ADTS (Laenge ~2 s zu lang) oder WAV/FLAC.  Ansatz bei Bedarf: der Download-Pfad nutzt probe_audio /
+remux_adts_to_m4a / transcode_to_mp3 des Analyzer-Moduls (wie convert_lossless), oder Episoden laufen ueber die
+Analyzer-Queue.  Vorbedingung: ein Feed, der es braucht (vorher per Codec-Probe ueber imported/<Podcast>/ pruefen).
+
+### 💡 Expiry in M4A nur best effort (notiert 2026-10-14)
+Beim ADTS -> M4A-Umpacken schreibt convert_format Expiry, ISRC, LABEL und LANGUAGE als
+`----:com.apple.iTunes:<Name>`-Freeform-Atome; der Analyzer liest Expiry ueber ffprobe zurueck, andere Programme
+zeigen oder erhalten diese Atome nicht zuverlaessig (deshalb ist das Ziel fuer verlustfreie Dateien MP3, nicht M4A).
+Pruefen, bevor M4A-Dateien mit Expiry ausserhalb von RASTATIME bearbeitet werden: Rundreise mit Mp3tag (Feld
+sichtbar? nach dem Speichern noch da?); ggf. Hinweis im Manual LIBRARY.
+
+### 💡 bulk_import: --allowed-extensions kann die Standardliste nur erweitern (notiert 2026-10-14)
+`--allowed-extensions` ist `action="append"` mit `default=DEFAULT_ALLOWED_EXTENSIONS`: eigene Angaben haengen an die
+Standardliste an, eine Einschraenkung (z.B. nur .mp3) ist nicht moeglich.  Ausserdem fehlen in der Standardliste
+.mp4/.mp2/.mp1/.au, die Upload, Import-Ordner und FTP seit 2026-10-14 annehmen.  Ansatz: default=None und erst nach
+dem Parsen auf die Standardliste zurueckfallen (kleiner Fix + Test); betrifft nur den Kommandozeilen-Massenimport.
+
+### 💡 MP3-Stream-Ausgang laeuft mit 48 kHz, der Mix mit 44,1 kHz (notiert 2026-10-14)
+Bei der Abtastraten-Frage der Format-Normalisierung aufgefallen: der Mix (Tascam-Format, siehe Tascam-Item) laeuft
+mit 44,1 kHz, der MP3-Stream-Ausgang mit 48 kHz - fuer diesen Ausgang wird resampelt.  Kein Fehler, aber
+unnoetige Arbeit und ein zusaetzlicher Resampler im Signalweg.  Vorbedingungen fuer ein Go: eigene Evaluierung (woher
+die 48 kHz kommen - Stream-Einstellung oder Encoder-Default; Wirkung auf Hoerer-Clients und Icecast-Fallback-Mounts),
+Umstellung nur im ruhigen Fenster mit Hoer-Abnahme, weil ein Encoder-Neustart die Hoerer kurz trennen kann.
+
+### 💡 Backup-Medienspiegel liegt auf derselben Platte D: wie die Bibliothek (notiert 2026-10-14)
+Der Nachtlauf 03:30 spiegelt die Bibliothek (D:\stor) nach D:\backups - das schuetzt gegen Loeschen und Fehlbedienung,
+nicht gegen einen Ausfall der Platte D:.  Seit 2026-10-14 werden verlustfreie Originale beim Import nicht mehr
+aufbewahrt; fuer importierte Titel gibt es damit nur Bibliothek + Spiegel auf derselben Platte.  Vorschlag zur
+Evaluierung: zweites Ziel fuer den Spiegel (andere interne Platte, externe Platte oder NAS) oder wenigstens fuer die
+DB-ZIPs; Platzbedarf und Laufzeit des Spiegels nach dem Massenimport (~198.000 Dateien) vorher messen.
+
 ## Kalender Import/Export (Operator-Wunsch 2026-10-11)
 
 ### ✅ Settings -> 'Import/Export': Shows per CSV (+ ZIP mit Logos) importieren und exportieren - gebaut 2026-10-13

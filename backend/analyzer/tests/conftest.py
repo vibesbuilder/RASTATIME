@@ -31,6 +31,19 @@ if not os.environ.get("FFMPEG_PATH"):
             os.environ["FFMPEG_PATH"] = _cand
             break
 
+# RASTATIME 2026-10-14 - the same for ffprobe (tag reading and the format
+# conversion probe with it).
+if not os.environ.get("FFPROBE_PATH"):
+    _candidates = [
+        os.environ.get("RASTATIME_FFPROBE_PATH", ""),
+        r"C:\ffmpeg\bin\ffprobe.exe",
+        shutil.which("ffprobe") or "",
+    ]
+    for _cand in _candidates:
+        if _cand and Path(_cand).is_file():
+            os.environ["FFPROBE_PATH"] = _cand
+            break
+
 
 @pytest.fixture()
 def dest_dir(tmp_path: Path):
