@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Stream-Metadaten pro Datei und Track-Typ (2026-10-14)** — Track-Editor
+  „Stream Metadata" (Wie der Track-Typ / An den Stream weitergeben / Nicht
+  weitergeben, `cc_files.icy_forward` NULL/1/0) und Track-Typ-Häkchen
+  „Forward Metadata to the Stream" (`cc_track_types.icy_forward`, Standard
+  an); Migration 0068, Raw-SQL in StoredFile/Tracktype, Django-Felder +
+  Serializer `track_type_icy_forward`.  Playout: `FileEvent.icy_hidden`
+  (`_effective_icy_hidden`, Datei vor Typ), Metadaten-Paket ohne
+  Interpret/Titel mit `icy_hide=true`; Liquidsoap `label_for` zeigt dann
+  „Sendername - Sendungsname" in jedem Format (wie Live-Quelle ohne
+  Metadaten), Live Text folgt, Sendeprotokoll unberührt.  Tests
+  `test_icy_hidden.py`, Baseline 92 Knoten / 67 Legacy.  **Migration 0068
+  steht aus**, danach PLAYOUT- und LIQUIDSOAP-Neustart.  Manual LIBRARY ×4,
+  SETTINGS ×4.
 - **Kalender: Monatswahl bei monatlicher Wiederholung (2026-10-14)** —
   zwölf Häkchen „Select Months" neben „Repeat By", standardmäßig alle;
   Sommerpause oder Quartalssendung ohne eigene Wiederholungstypen.

@@ -247,6 +247,8 @@ def generate_file_events(
         # RASTATIME 2026-09-29 - crossfade per track type / Exclude from Crossover
         crossfade_seconds=_float_or_none(file.get("track_type_crossfade")),
         exclude_crossfade=bool(file.get("exclude_crossfade") or False),
+        # RASTATIME 2026-10-14 - stream metadata forwarded or hidden
+        icy_hidden=_effective_icy_hidden(file),
     )
 
     event.replay_gain = file_gain_db(file, stream_preferences)
@@ -280,6 +282,25 @@ def _effective_no_fade(file: dict) -> bool:
     if file.get("exclude_crossfade"):
         return False
     return bool(file.get("track_type_no_fade") or False)
+
+
+def _effective_icy_hidden(file: dict) -> bool:
+    """
+    RASTATIME 2026-10-14 - stream metadata of a track: the track's own
+    choice (icy_forward 1 = forward, 0 = hide), else - "As the track
+    type" (NULL) - the type's preset (track_type_icy_forward, legacy
+    migration 0068).  A feed without the fields (older API) forwards.
+    """
+    own = file.get("icy_forward")
+    if own is not None and str(own) != "":
+        try:
+            return int(own) == 0
+        except (TypeError, ValueError):
+            pass
+    preset = file.get("track_type_icy_forward")
+    if preset is None:
+        return False
+    return not bool(preset)
 
 
 def file_gain_db(file: dict, stream_preferences) -> Optional[float]:

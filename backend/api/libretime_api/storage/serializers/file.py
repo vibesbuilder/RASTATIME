@@ -18,6 +18,12 @@ class FileSerializer(serializers.ModelSerializer):
         source="library.no_fade_crossfade",
         read_only=True, default=False,
     )
+    # RASTATIME 2026-10-14 - the type's stream-metadata preset; the playout
+    # resolves the effective flag (the file's icy_forward wins).
+    track_type_icy_forward = serializers.BooleanField(
+        source="library.icy_forward",
+        read_only=True, default=True,
+    )
 
     class Meta:
         model = File

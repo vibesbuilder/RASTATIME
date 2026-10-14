@@ -46,6 +46,9 @@ class File(models.Model):
     # RASTATIME 2026-09-29 - "Exclude from Crossover" (legacy migration 0062):
     # the track never overlaps a neighbour, whatever its type says
     exclude_crossfade = models.BooleanField(default=False)
+    # RASTATIME 2026-10-14 - stream metadata (legacy migration 0068):
+    # NULL = as the track type, 1 = forward artist / title, 0 = do not
+    icy_forward = models.SmallIntegerField(blank=True, null=True)
     accessed = models.IntegerField(db_column="currentlyaccessing")
     scheduled = models.BooleanField(blank=True, null=True, db_column="is_scheduled")
     part_of_list = models.BooleanField(blank=True, null=True, db_column="is_playlist")

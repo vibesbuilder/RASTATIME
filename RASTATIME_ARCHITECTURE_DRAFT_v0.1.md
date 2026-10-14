@@ -1,10 +1,13 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.72
+Draft version: 0.73
 Date: 2026-10-14
 
 > **Revision history**
+> - **0.73 (2026-10-14)** — **Stream metadata per file and track type**
+>   (§23.61): `cc_files.icy_forward` / `cc_track_types.icy_forward`
+>   (migration 0068), `icy_hide` packet, label builder branch.
 > - **0.72 (2026-10-14)** — **Month selection for monthly repeats**
 >   (§23.59): `cc_show_days.month_mask` (migration 0067), generator and
 >   edit path honour it; **Dangerous Options → Clear Calendar** (§23.60):
@@ -6949,3 +6952,33 @@ would lose the show names.  `ShowService::clearCalendarFromNow($onlyShowIds
 (534: temporary future instance removed, the past one and the show
 stayed).  Endpoint `preference/clear-calendar` (POST, CSRF, admin), a
 confirm dialog and the result in the four languages.
+
+### 23.61 Stream Metadata per File and Track Type (2026-10-14)
+
+**Decision (operator Go 2026-10-14).**  Whether a track's artist and
+title reach the listeners' players (ICY) and the Live Text is a choice
+per track type (preset) and per file (override), the way the crossover
+mode is: the type carries a boolean "Forward Metadata to the Stream"
+(`cc_track_types.icy_forward`, default true), the file a three-way
+"Stream Metadata" (`cc_files.icy_forward`: NULL = as the track type,
+1 = forward, 0 = do not forward).  Two values per file, as first
+sketched, would have made the type preset meaningless.  Migration 0068,
+raw SQL in `Application_Model_StoredFile` (`icy_mode`, `icyModeOf`) and
+`Application_Model_Tracktype` (`setIcyForward` / `getIcyForward`, part
+of `save()`'s change report); both tolerate a database without the
+columns.  The Django models carry the fields and the file serializer
+adds `track_type_icy_forward` next to `track_type_no_fade`, so the
+playout gets the preset with the file.
+
+**Playout.**  `_effective_icy_hidden(file)` (schedule.py) resolves the
+flag - the file's own value wins, else the type's preset, a feed
+without the fields forwards - into `FileEvent.icy_hidden`.
+`_track_metadata` then sends the packet without `title` / `artist` but
+with `icy_hide=true` and the `show_name`.  **Liquidsoap.**  `label_for`
+treats `icy_hide` like a live source without metadata: "Station name -
+Show name" (or the station name alone) in every Stream Label format,
+before the format branches; `known` includes the flag so the packet is
+never ignored.  The Live Text line uses the same label; the Playout
+History is written from the schedule and does not change.  Effective
+after migration 0068 and a PLAYOUT + LIQUIDSOAP restart (the script is
+rendered at PLAYOUT start).

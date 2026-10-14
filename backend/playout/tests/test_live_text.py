@@ -105,7 +105,8 @@ def test_icy_block_renders_label_for_and_live_text_hook():
     assert "def label_for(fmt, m) =" in block
     assert "def icy_label(m) =\n  label_for(icy_format(), m)\nend" in block
     # no artist/title on a live source: station - show (2026-09-28, all formats)
-    assert block.count('if show != "" then "#{station_name()} - #{show}" else station_name() end') == 2
+    # RASTATIME 2026-10-14: a third "Station name - Show name" branch for icy_hide packets
+    assert block.count('if show != "" then "#{station_name()} - #{show}" else station_name() end') == 3
     assert 'livetext_enabled = interactive.bool("livetext_enabled", false)' in block
     assert 'livetext_format = interactive.int("livetext_format", 0)' in block
     assert 'http.post(timeout=2.0, data=label, "http://127.0.0.1:8770/live-text")' in block

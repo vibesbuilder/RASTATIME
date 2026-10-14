@@ -4949,3 +4949,27 @@ msgstr ""
 #: application/forms/AddShowRepeats.php
 msgid "Select Months:"
 msgstr ""
+
+#: application/forms/EditAudioMD.php application/forms/AddTracktype.php
+msgid "Stream Metadata:"
+msgstr ""
+
+#: application/forms/EditAudioMD.php application/forms/AddTracktype.php
+msgid "Forward to the stream"
+msgstr ""
+
+#: application/forms/EditAudioMD.php application/forms/AddTracktype.php
+msgid "Do not forward"
+msgstr ""
+
+#: application/forms/EditAudioMD.php application/forms/AddTracktype.php
+msgid "Whether artist and title of this track are shown in the listeners' players and in the Live Text. As the track type: the preset of Settings → Track Types. Do not forward: the stream shows \"Station name - Show name\" while this track plays (jingles, station IDs, promos)."
+msgstr ""
+
+#: application/forms/EditAudioMD.php application/forms/AddTracktype.php
+msgid "Forward Metadata to the Stream:"
+msgstr ""
+
+#: application/forms/EditAudioMD.php application/forms/AddTracktype.php
+msgid "Artist and title of tracks of this type are shown in the listeners' players and in the Live Text. Unticked: the stream shows \"Station name - Show name\" while such a track plays (jingles, station IDs, promos). A track can override this in its own editor."
+msgstr ""

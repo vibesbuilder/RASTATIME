@@ -140,6 +140,10 @@ class FileEvent(BaseEvent):
     # the per-track exception (never overlaps a neighbour).
     crossfade_seconds: Optional[float] = None
     exclude_crossfade: bool = False
+    # RASTATIME 2026-10-14 - stream metadata: True = the listeners' players
+    # get "Station name - Show name" instead of this track's artist / title
+    # (the track's icy_forward, else the type's preset).
+    icy_hidden: bool = False
 
     file_ready: bool = False
 

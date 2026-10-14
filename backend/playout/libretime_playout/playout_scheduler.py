@@ -2065,6 +2065,14 @@ class PlayoutScheduler:
 
     @staticmethod
     def _track_metadata(event: FileEvent) -> Dict[str, str]:
+        # RASTATIME 2026-10-14 - a track whose metadata stays off the stream
+        # sends no artist / title; icy_hide makes the label builder show
+        # "Station name - Show name" in every format (jingles, IDs, promos).
+        if getattr(event, "icy_hidden", False):
+            return {
+                "icy_hide":  "true",
+                "show_name": event.show_name or "",
+            }
         return {
             "title":     event.track_title or "",
             "artist":    event.artist_name or "",

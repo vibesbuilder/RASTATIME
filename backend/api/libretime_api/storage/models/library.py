@@ -31,6 +31,10 @@ class Library(models.Model):
     # (legacy migration 0063): tracks set to "As the track type" keep their
     # level while a neighbour fades.
     no_fade_crossfade = models.BooleanField(default=False)
+    # RASTATIME 2026-10-14 - stream metadata preset (legacy migration 0068):
+    # False = tracks of this type show "Station name - Show name" instead of
+    # artist / title in the listeners' players
+    icy_forward = models.BooleanField(default=True)
 
     class Meta:
         managed = False

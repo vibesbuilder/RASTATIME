@@ -305,6 +305,19 @@ class Application_Form_EditAudioMD extends Zend_Form
         $crossoverMode->setDescription(_('As the track type: the track overlaps and fades with its neighbours as its track type says (or the house value), including the type\'s "No Fade during Crossover" preset. No Fade during Crossover: the overlap stays, but this track keeps its full level while the other one fades. Exclude from Crossover: this track never overlaps a neighbour - it starts at the end of the previous track and the next one starts at its end.'));
         $this->addElement($crossoverMode);
 
+        // RASTATIME 2026-10-14 - "Stream Metadata" (cc_files.icy_forward,
+        // migration 0068, raw SQL in StoredFile): whether this track's
+        // artist / title reach the listeners' players and the Live Text.
+        $icyMode = new Zend_Form_Element_Select('icy_mode');
+        $icyMode->setLabel(_('Stream Metadata:'));
+        $icyMode->setMultiOptions([
+            'type' => _('As the track type'),
+            'forward' => _('Forward to the stream'),
+            'hide' => _('Do not forward'),
+        ]);
+        $icyMode->setDescription(_('Whether artist and title of this track are shown in the listeners\' players and in the Live Text. As the track type: the preset of Settings → Track Types. Do not forward: the stream shows "Station name - Show name" while this track plays (jingles, station IDs, promos).'));
+        $this->addElement($icyMode);
+
         // Add the cancel button
         $this->addElement('button', 'editmdcancel', [
             'ignore' => true,

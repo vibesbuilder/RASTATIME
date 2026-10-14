@@ -349,6 +349,23 @@ class Application_Model_StoredFile
         // field (type | nofade | exclude) sets both flags at once, so they
         // can never be on together.  A change re-lays the rows of the
         // upcoming shows that schedule this track.
+        // RASTATIME 2026-10-14 - "Stream Metadata": type (NULL) | forward (1) | hide (0)
+        if (is_array($p_md) && array_key_exists('icy_mode', $p_md)) {
+            $icy = in_array($p_md['icy_mode'], ['type', 'forward', 'hide'], true)
+                ? $p_md['icy_mode'] : 'type';
+            try {
+                $stmt = $this->_con->prepare('UPDATE cc_files SET icy_forward = :v WHERE id = :id');
+                if ($icy === 'type') {
+                    $stmt->bindValue(':v', null, PDO::PARAM_NULL);
+                } else {
+                    $stmt->bindValue(':v', $icy === 'forward' ? 1 : 0, PDO::PARAM_INT);
+                }
+                $stmt->bindValue(':id', $this->_file->getDbId(), PDO::PARAM_INT);
+                $stmt->execute();
+            } catch (Exception $exc) {
+                Logging::warn('icy_mode: ' . $exc->getMessage() . ' (migration 0068 pending?)');
+            }
+        }
         if (is_array($p_md) && array_key_exists('crossover_mode', $p_md)) {
             $mode = in_array($p_md['crossover_mode'], ['type', 'nofade', 'exclude'], true)
                 ? $p_md['crossover_mode'] : 'type';
@@ -369,6 +386,32 @@ class Application_Model_StoredFile
                     Logging::warn('crossover_mode: re-layout failed: ' . $exc->getMessage());
                 }
             }
+        }
+    }
+
+    /**
+     * RASTATIME 2026-10-14 - the stream-metadata choice of a file:
+     * type | forward | hide (cc_files.icy_forward NULL | 1 | 0, migration 0068).
+     *
+     * @param mixed $con
+     * @param mixed $fileId
+     */
+    public static function icyModeOf($con, $fileId)
+    {
+        try {
+            $stmt = $con->prepare('SELECT icy_forward FROM cc_files WHERE id = :id');
+            $stmt->bindValue(':id', (int) $fileId, PDO::PARAM_INT);
+            $stmt->execute();
+            $v = $stmt->fetchColumn();
+            if ($v === null || $v === false || $v === '') {
+                return 'type';
+            }
+
+            return ((int) $v) === 0 ? 'hide' : 'forward';
+        } catch (Exception $exc) {
+            Logging::warn('icyModeOf: ' . $exc->getMessage());
+
+            return 'type';
         }
     }
 
@@ -483,6 +526,8 @@ class Application_Model_StoredFile
         }
         // RASTATIME 2026-09-29 - the three-way "Crossover" field of the track editor
         $md['crossover_mode'] = self::crossoverModeOf($this->_con, $this->_file->getDbId());
+        // RASTATIME 2026-10-14 - the three-way "Stream Metadata" field
+        $md['icy_mode'] = self::icyModeOf($this->_con, $this->_file->getDbId());
 
         return $md;
     }

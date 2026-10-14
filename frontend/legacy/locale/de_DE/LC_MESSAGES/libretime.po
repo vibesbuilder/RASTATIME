@@ -6179,3 +6179,27 @@ msgstr "Der Kalender konnte nicht geleert werden."
 #: application/forms/AddShowRepeats.php
 msgid "Select Months:"
 msgstr "Monate wählen:"
+
+#: application/forms/EditAudioMD.php application/forms/AddTracktype.php
+msgid "Stream Metadata:"
+msgstr "Stream-Metadaten:"
+
+#: application/forms/EditAudioMD.php application/forms/AddTracktype.php
+msgid "Forward to the stream"
+msgstr "An den Stream weitergeben"
+
+#: application/forms/EditAudioMD.php application/forms/AddTracktype.php
+msgid "Do not forward"
+msgstr "Nicht weitergeben"
+
+#: application/forms/EditAudioMD.php application/forms/AddTracktype.php
+msgid "Whether artist and title of this track are shown in the listeners' players and in the Live Text. As the track type: the preset of Settings → Track Types. Do not forward: the stream shows \"Station name - Show name\" while this track plays (jingles, station IDs, promos)."
+msgstr "Ob Interpret und Titel dieses Tracks in den Playern der Hörer und im Live Text erscheinen. Wie der Track-Typ: die Voreinstellung aus Settings → Track Types. Nicht weitergeben: der Stream zeigt „Sendername - Sendungsname\", solange dieser Track läuft (Jingles, Station-IDs, Promos)."
+
+#: application/forms/EditAudioMD.php application/forms/AddTracktype.php
+msgid "Forward Metadata to the Stream:"
+msgstr "Metadaten an den Stream weitergeben:"
+
+#: application/forms/EditAudioMD.php application/forms/AddTracktype.php
+msgid "Artist and title of tracks of this type are shown in the listeners' players and in the Live Text. Unticked: the stream shows \"Station name - Show name\" while such a track plays (jingles, station IDs, promos). A track can override this in its own editor."
+msgstr "Interpret und Titel von Tracks dieses Typs erscheinen in den Playern der Hörer und im Live Text. Abgewählt: der Stream zeigt „Sendername - Sendungsname\", solange ein solcher Track läuft (Jingles, Station-IDs, Promos). Ein Track kann das in seinem eigenen Editor überstimmen."

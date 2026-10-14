@@ -23,10 +23,15 @@ function populateForm(entries) {
   );
   // RASTATIME 2026-09-30 - "No Fade during Crossover" preset
   $("#no_fade_crossfade").prop("checked", !!entries.no_fade_crossfade);
+  // RASTATIME 2026-10-14 - stream metadata preset (default: forward)
+  $("#icy_forward").prop(
+    "checked",
+    !(entries.icy_forward === false || entries.icy_forward === "f" || entries.icy_forward === 0 || entries.icy_forward === "0"),
+  );
   if ($.rtDescriptionTooltips) {
     $.rtDescriptionTooltips($("#tracktype_details"), {
       where: "field",
-      only: ["crossfade_duration", "no_fade_crossfade"],
+      only: ["crossfade_duration", "no_fade_crossfade", "icy_forward"],
     });
   }
 }

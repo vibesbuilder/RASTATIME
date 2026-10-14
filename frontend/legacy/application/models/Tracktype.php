@@ -163,13 +163,52 @@ class Application_Model_Tracktype
     private $_noFadeDirty = false;
 
     /**
+     * RASTATIME 2026-10-14 - stream metadata preset (migration 0068):
+     * false = tracks of this type set to "As the track type" show
+     * "Station name - Show name" instead of artist / title.  Raw SQL.
+     *
+     * @param mixed $value
+     */
+    public function setIcyForward($value)
+    {
+        $this->_icyForward = ($value === true || $value === 1 || $value === '1' || $value === 'true');
+        $this->_icyDirty = true;
+    }
+
+    /** @return bool */
+    public function getIcyForward()
+    {
+        if ($this->_icyDirty) {
+            return $this->_icyForward;
+        }
+        $id = $this->_tracktypeInstance->getDbId();
+        if (!$id) {
+            return true;
+        }
+        try {
+            $value = Application_Common_Database::prepareAndExecute(
+                'SELECT icy_forward FROM cc_track_types WHERE id = :id',
+                [':id' => $id],
+                Application_Common_Database::COLUMN
+            );
+        } catch (Exception $exc) {
+            return true; // column pending (migration 0068)
+        }
+
+        return !($value === false || $value === 'f' || $value === 0 || $value === '0');
+    }
+
+    private $_icyForward = true;
+    private $_icyDirty = false;
+
+    /**
      * @return array{crossfade: bool, no_fade: bool} which of the two crossover
      *                                              presets of an existing or
      *                                              new type changed
      */
     public function save()
     {
-        $changed = ['crossfade' => false, 'no_fade' => false];
+        $changed = ['crossfade' => false, 'no_fade' => false, 'icy' => false];
         if ($this->_crossfadeDirty) {
             $this->_crossfadeDirty = false;
             $before = $this->getCrossfadeDuration();
@@ -181,6 +220,12 @@ class Application_Model_Tracktype
             $before = $this->getNoFadeCrossfade();
             $this->_noFadeDirty = true;
             $changed['no_fade'] = ($before !== $this->_noFadeCrossfade);
+        }
+        if ($this->_icyDirty) {
+            $this->_icyDirty = false;
+            $before = $this->getIcyForward();
+            $this->_icyDirty = true;
+            $changed['icy'] = ($before !== $this->_icyForward);
         }
         $this->_tracktypeInstance->save();
         if ($this->_crossfadeDirty) {
@@ -198,6 +243,18 @@ class Application_Model_Tracktype
                 Application_Common_Database::EXECUTE
             );
             $this->_noFadeDirty = false;
+        }
+        if ($this->_icyDirty) {
+            try {
+                Application_Common_Database::prepareAndExecute(
+                    'UPDATE cc_track_types SET icy_forward = :f WHERE id = :id',
+                    [':f' => $this->_icyForward ? 'true' : 'false', ':id' => $this->_tracktypeInstance->getDbId()],
+                    Application_Common_Database::EXECUTE
+                );
+            } catch (Exception $exc) {
+                Logging::warn('Tracktype::save icy_forward: ' . $exc->getMessage() . ' (migration 0068 pending?)');
+            }
+            $this->_icyDirty = false;
         }
 
         return $changed;
@@ -286,7 +343,7 @@ class Application_Model_Tracktype
     public static function getTracktypeData($id)
     {
         $sql = <<<'SQL'
-SELECT code, type_name, description, visibility, id, analyze_cue_points, crossfade_duration, no_fade_crossfade
+SELECT code, type_name, description, visibility, id, analyze_cue_points, crossfade_duration, no_fade_crossfade, icy_forward
 FROM cc_track_types
 WHERE id = :id
 SQL;

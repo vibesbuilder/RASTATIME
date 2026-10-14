@@ -94,6 +94,14 @@ class Application_Form_AddTracktype extends Zend_Form
         $noFade->setDescription(_('Tracks of this type keep their full level while the neighbouring track fades in or out; the overlap itself stays as the Crossfade Duration says (jingles or IDs that should cut through the end of a song). Applies to tracks whose Crossover is "As the track type"; the track editor can still set a single track differently. Takes effect on the next schedule push, no re-layout.'));
         $this->addElement($noFade);
 
+        // RASTATIME 2026-10-14 - stream metadata preset (migration 0068)
+        $icy = new Zend_Form_Element_Checkbox('icy_forward');
+        $icy->setLabel(_('Forward Metadata to the Stream:'));
+        $icy->setRequired(false);
+        $icy->setChecked(true);
+        $icy->setDescription(_('Artist and title of tracks of this type are shown in the listeners\' players and in the Live Text. Unticked: the stream shows "Station name - Show name" while such a track plays (jingles, station IDs, promos). A track can override this in its own editor.'));
+        $this->addElement($icy);
+
         $saveBtn = new Zend_Form_Element_Button('save_tracktype');
         $saveBtn->setAttrib('class', 'btn right-floated');
         $saveBtn->setIgnore(true);
