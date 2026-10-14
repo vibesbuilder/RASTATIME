@@ -21,7 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Metadaten), Live Text folgt, Sendeprotokoll unberührt.  Tests
   `test_icy_hidden.py`, Baseline 92 Knoten / 67 Legacy.  **Migration 0068
   steht aus**, danach PLAYOUT- und LIQUIDSOAP-Neustart.  Manual LIBRARY ×4,
-  SETTINGS ×4.
+  SETTINGS ×4.  Commit c4daf1e.
 - **Kalender: Monatswahl bei monatlicher Wiederholung (2026-10-14)** —
   zwölf Häkchen „Select Months" neben „Repeat By", standardmäßig alle;
   Sommerpause oder Quartalssendung ohne eigene Wiederholungstypen.
