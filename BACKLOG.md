@@ -5190,5 +5190,6 @@ Erledigt 2026-10-14: Eine Transaktion allein reichte nicht - deleteAllFilesFromP
 commit() ohne beginTransaction und haette die aeussere Transaktion vorzeitig festgeschrieben (gemessen: Playlist
 danach leer).  Die Methode hat jetzt eine eigene, ausgeglichene Transaktion; Playlists und Smart Blocks laufen ueber
 ImportExportType::atomically() (Rollback bis zur Ausgangstiefe, auch nach PHP-Error, Propel-Instance-Pools geleert).
-Block::deleteAllFilesFromBlock hat dasselbe nackte commit(), laeuft aber nur beim "Generate" statischer Bloecke ohne
-umgebende Transaktion - bewusst unveraendert.
+Block::deleteAllFilesFromBlock hatte dasselbe nackte commit() (laeuft nur im Editor: "Leeren" und "Generate"
+statischer Bloecke, ohne umgebende Transaktion) - auf Operator-Wunsch am selben Tag ebenfalls ausgeglichen
+(gemessen: alt 0 von 5 Eintraegen nach dem Rollback des Aufrufers, neu alle 5; Editor-Verhalten unveraendert).

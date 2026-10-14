@@ -1063,26 +1063,38 @@ SQL;
      */
     public function deleteAllFilesFromBlock()
     {
-        // get only the files from the playlist
-        // we are about to clear out
-        $itemsToDelete = CcBlockcontentsQuery::create()
-            ->filterByDbBlockId($this->id)
-            ->filterByDbFileId(null, Criteria::NOT_EQUAL)
-            ->find();
+        // RASTATIME 2026-10-14 - balanced transaction, as in
+        // Playlist::deleteAllFilesFromPlaylist.  The method used to end with
+        // a bare commit(), which inside a caller's transaction committed
+        // that outer transaction early.
+        $this->con->beginTransaction();
 
-        CcBlockcontentsQuery::create()->findByDbBlockId($this->id)->delete();
+        try {
+            // get only the files from the playlist
+            // we are about to clear out
+            $itemsToDelete = CcBlockcontentsQuery::create()
+                ->filterByDbBlockId($this->id)
+                ->filterByDbFileId(null, Criteria::NOT_EQUAL)
+                ->find();
 
-        // update is_playlist flag in cc_files
-        Application_Model_StoredFile::setIsPlaylist(
-            $itemsToDelete,
-            'block',
-            false
-        );
+            CcBlockcontentsQuery::create()->findByDbBlockId($this->id)->delete();
 
-        // $this->block->reload();
-        $this->block->setDbMtime(new DateTime('now', new DateTimeZone('UTC')));
-        $this->block->save($this->con);
-        $this->con->commit();
+            // update is_playlist flag in cc_files
+            Application_Model_StoredFile::setIsPlaylist(
+                $itemsToDelete,
+                'block',
+                false
+            );
+
+            // $this->block->reload();
+            $this->block->setDbMtime(new DateTime('now', new DateTimeZone('UTC')));
+            $this->block->save($this->con);
+            $this->con->commit();
+        } catch (Exception $e) {
+            $this->con->rollback();
+
+            throw $e;
+        }
     }
 
     // smart block functions start

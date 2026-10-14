@@ -1300,6 +1300,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Smart blocks: `deleteAllFilesFromBlock` no longer commits a caller's
+  transaction (2026-10-14, operator request 2026-10-14)** - like its
+  playlist twin (20c7755) the method ended with a bare `commit()` without
+  `beginTransaction()`; it now opens its own balanced transaction.  Only
+  the editor calls it ("Empty", "Generate" of static blocks), outside any
+  transaction, so nothing changes there; inside a transaction it no
+  longer commits early (static block probe: old method 0 of 5 items after
+  the caller's rollback, new one 5 of 5).  Every method of `Block.php`
+  and `Playlist.php` now pairs `beginTransaction()` with `commit()`.
+
 - **Smart block query: a field used in several rows with "+" alternatives
   selected the wrong tracks; Import/Export replaces playlists all or
   nothing (2026-10-14, operator Go 2026-10-14)** -

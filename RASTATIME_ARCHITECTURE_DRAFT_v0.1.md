@@ -1,10 +1,12 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.71
+Draft version: 0.71.1
 Date: 2026-10-14
 
 > **Revision history**
+> - **0.71.1 (2026-10-14)** — `Block::deleteAllFilesFromBlock` gets a
+>   balanced transaction like its playlist twin (§23.58).
 > - **0.71 (2026-10-14)** — **Smart block query brackets per row, atomic
 >   import rows** (§23.58): one criterion chain per field (rows ANDed,
 >   "+" rows ORed inside), balanced transaction in
@@ -6880,9 +6882,15 @@ Exception) skipped a nested model method's own rollback - and clears the
 instance pools of the given peers, because Propel keeps the objects of
 the rolled-back row with the values that failed (a stale `CcPlaylist`
 looped `save()` until the memory limit in the probe).
-`Block::deleteAllFilesFromBlock` has the same bare commit; it only runs in
-the editor's "Generate" for static blocks, outside any transaction, and
-was left as is.
+`Block::deleteAllFilesFromBlock` had the same bare commit; it only runs in
+the editor ("Empty" and "Generate" of static blocks, outside any
+transaction) and was first left as is - balanced as well on the same day
+(0.71.1, operator 2026-10-14): measured with a static block inside a
+caller's transaction, the old method left depth 0 and the caller's
+rollback found 0 of 5 items, the new one keeps depth 1 and the rollback
+restores all 5; "Empty" and "Generate" behave as before.  Every method of
+`Block.php` and `Playlist.php` now pairs `beginTransaction()` with
+`commit()`.
 
 **Verified 2026-10-14** with probes loading the worktree classes:
 playlist new / replace / failure after the delete / Exception inside
