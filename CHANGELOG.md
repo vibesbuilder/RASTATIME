@@ -1320,7 +1320,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `ImportExportType::atomically()` that rolls back to its starting depth
   (also after a PHP Error) and clears the Propel instance pools of the
   rolled-back row.  Manual IMPORT_EXPORT (groups, playlist replace) in
-  EN/DE/FR/ES.
+  EN/DE/FR/ES.  Commit: 20c7755.
 
 - **Import folder destroyed `.oga` files - a failed hand-over now moves the
   file to `_failed` instead of deleting it (2026-10-14, operator decision
