@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Bearbeiten, Django-Modell `ShowDays.month_mask`, Baseline-Test 91 Knoten /
   66 Legacy.  Helfer gegen die noch fehlende Spalte abgesichert (bis zur
   Migration: alle Monate).  **Migration 0067 steht aus** (Backup + Freigabe
-  des Operators).  Manual CALENDAR ×4.
+  des Operators).  Manual CALENDAR ×4.  Commit 1791823.
 - **Settings → General → Dangerous Options → „Clear Calendar" (2026-10-14,
   Variante A)** — entfernt jede noch nicht begonnene Instanz samt Inhalt
   auf dem Weg von „Delete this instance and all following"
