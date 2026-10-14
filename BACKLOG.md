@@ -5031,7 +5031,7 @@ Request, Backup-Task je Lauf); Apache neu starten und error_log bereinigen; dana
 
 ## Import-Formate normalisieren (Operator-Frage 2026-10-14)
 
-### 🟢 Import-Format-Normalisierung: verlustfrei -> MP3 320, rohes AAC -> M4A, Tags aus jedem Format, '_failed' statt Loeschen - live 2026-10-14 (Go 2026-10-14), Browser-Abnahme der Einstellung offen
+### ✅ Import-Format-Normalisierung: verlustfrei -> MP3 320, rohes AAC -> M4A, Tags aus jedem Format, '_failed' statt Loeschen - live + abgenommen 2026-10-14 (Go 2026-10-14)
 Anlass: Operator-Frage 2026-10-14 "Welche Dateien sind im FLAC- oder WAV-Format in der Bibliothek?" -> Probe nach
 Codec (ffprobe, nicht mime): id 603 FLAC, id 604 WAV.  Beim Pruefen des Importpfads gefunden: rohes ADTS-.aac wird
 ohne Index ~1,9 s zu lang geschaetzt und traegt keine Tags (mit ID3v2-Kopf scheiterte der Import ganz); WAV-Tags,
@@ -5069,8 +5069,8 @@ unveraendert importiert; FLAC 96 kHz/24 bit -> MP3 44,1 kHz; source_md5 = MD5 de
 organize/ leer, kein _failed. Bestand 12:16 nach der Grenze 12:15: `convert_lossless --ids 603 604 --yes`
 (26,8 -> 9,5 MB, 64,2 -> 14,6 MB; Laenge + Cue unveraendert; True Peak 604 1,2 -> 1,8 dBTP neu gemessen);
 die Originale liegen bis zum naechsten Spiegellauf (03:30) noch in `D:\backups\media`.
-**Offen:** Browser-Abnahme Settings -> Local Machine -> Import Format durch den Operator (mein Chrome war nicht
-angemeldet); Probe-Tracks 22272-22276 in der Bibliothek loeschen (Operator); `_failed` live nicht provoziert -
+**Abgenommen 2026-10-14:** Operator prueft Settings -> Local Machine -> Import Format im Browser und loescht die
+Probe-Tracks 22272-22276 (leere Probe-Ordner in D:\stor entfernt). **Bleibt offen:** `_failed` live nicht provoziert -
 eine Uebergabe scheitert nur an Rechten/Speicher/DB/RabbitMQ, eine kaputte Audiodatei wird uebergeben und
 scheitert erst im Analyzer (bleibt wie bisher in organize/); abgedeckt durch die Helper-Checks 69/69 + 10/10;
 der echte ADTS-Laengenfehler (~1,9 s) trat bei der synthetischen Probe nicht auf.
