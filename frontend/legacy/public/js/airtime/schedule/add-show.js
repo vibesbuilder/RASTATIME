@@ -517,16 +517,17 @@ function setAddShowEvents(form) {
     }
   }
   function toggleMonthlyRepeatType() {
+    // RASTATIME 2026-10-14 - the month boxes follow the monthly radio
     if (form.find("#add_show_repeat_type").val() == 2) {
       form
         .find(
-          "#add_show_monthly_repeat_type-label, #add_show_monthly_repeat_type-element",
+          "#add_show_monthly_repeat_type-label, #add_show_monthly_repeat_type-element, #add_show_month_check-label, #add_show_month_check-element",
         )
         .show();
     } else {
       form
         .find(
-          "#add_show_monthly_repeat_type-label, #add_show_monthly_repeat_type-element",
+          "#add_show_monthly_repeat_type-label, #add_show_monthly_repeat_type-element, #add_show_month_check-label, #add_show_month_check-element",
         )
         .hide();
     }

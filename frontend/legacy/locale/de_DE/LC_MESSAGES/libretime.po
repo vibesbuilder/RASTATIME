@@ -6175,3 +6175,7 @@ msgstr "Kalender geleert: %s Instanzen entfernt, %s Sendungen gelöscht."
 #: application/forms/DangerousPreferences.php public/js/airtime/preferences/preferences.js
 msgid "The calendar could not be cleared."
 msgstr "Der Kalender konnte nicht geleert werden."
+
+#: application/forms/AddShowRepeats.php
+msgid "Select Months:"
+msgstr "Monate wählen:"

@@ -41,6 +41,32 @@ class Application_Form_AddShowRepeats extends Zend_Form_SubForm
             ]
         );
 
+        // RASTATIME 2026-10-14 - monthly repeats: which months (operator
+        // wish, like the weekday boxes); all twelve by default
+        $this->addElement(
+            'multiCheckbox',
+            'add_show_month_check',
+            [
+                'label' => _('Select Months:'),
+                'required' => false,
+                'multiOptions' => [
+                    '1' => _('Jan'),
+                    '2' => _('Feb'),
+                    '3' => _('Mar'),
+                    '4' => _('Apr'),
+                    '5' => _('May'),
+                    '6' => _('Jun'),
+                    '7' => _('Jul'),
+                    '8' => _('Aug'),
+                    '9' => _('Sep'),
+                    '10' => _('Oct'),
+                    '11' => _('Nov'),
+                    '12' => _('Dec'),
+                ],
+                'value' => ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'],
+            ]
+        );
+
         $repeatMonthlyType = new Zend_Form_Element_Radio('add_show_monthly_repeat_type');
         $repeatMonthlyType
             ->setLabel(_('Repeat By:'))

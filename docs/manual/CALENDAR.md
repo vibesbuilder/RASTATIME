@@ -215,6 +215,7 @@ In the **When** section, tick **Repeats**. Three sub-fields appear:
 | Field | Meaning |
 |---|---|
 | **Repeat Type** | Weekly / Bi-Weekly / Tri-Weekly / Monthly. |
+| **Select Months** (since 2026-10-14) | Monthly repeats only: tick the months in which the show takes place, all twelve by default. Untick July and August for a summer break, or keep every third month for a quarterly show. Combined with *Repeat By* (day of the month / day of the week). Deselecting a month on an existing show removes its future instances in that month. |
 | **Days** | Which days of the week (for Weekly / Bi-Weekly / Tri-Weekly). |
 | **End Date** | Optional — when the recurrence stops. Leave blank to recur indefinitely. |
 

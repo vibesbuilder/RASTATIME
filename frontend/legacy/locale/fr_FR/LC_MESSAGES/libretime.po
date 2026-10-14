@@ -6532,3 +6532,7 @@ msgstr "Calendrier vidé : %s instances supprimées, %s émissions effacées."
 #: application/forms/DangerousPreferences.php public/js/airtime/preferences/preferences.js
 msgid "The calendar could not be cleared."
 msgstr "Le calendrier n'a pas pu être vidé."
+
+#: application/forms/AddShowRepeats.php
+msgid "Select Months:"
+msgstr "Choisir les mois :"

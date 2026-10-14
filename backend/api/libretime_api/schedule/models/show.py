@@ -182,6 +182,12 @@ class ShowDays(models.Model):
         null=True,
         db_column="next_pop_date",
     )
+    # RASTATIME 2026-10-14 - monthly repeats only: bit (m - 1) set = the
+    # show repeats in month m; 4095 = every month (migration 0067).
+    month_mask = models.IntegerField(
+        default=4095,
+        db_column="month_mask",
+    )
 
     def get_owner(self):
         return self.show.get_owner()

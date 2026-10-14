@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Kalender: Monatswahl bei monatlicher Wiederholung (2026-10-14)** —
+  zwölf Häkchen „Select Months" neben „Repeat By", standardmäßig alle;
+  Sommerpause oder Quartalssendung ohne eigene Wiederholungstypen.
+  `cc_show_days.month_mask` (Bit m−1 = Monat m, 4095 = alle; Migration
+  0067, Propel nicht regeneriert, Raw-SQL in ShowService), Generator
+  überspringt abgewählte Monate, Bearbeiten löscht künftige Instanzen neu
+  abgewählter Monate (Ortszeit der Sendung), Formular-Vorbelegung beim
+  Bearbeiten, Django-Modell `ShowDays.month_mask`, Baseline-Test 91 Knoten /
+  66 Legacy.  Helfer gegen die noch fehlende Spalte abgesichert (bis zur
+  Migration: alle Monate).  **Migration 0067 steht aus** (Backup + Freigabe
+  des Operators).  Manual CALENDAR ×4.
 - **Settings → General → Dangerous Options → „Clear Calendar" (2026-10-14,
   Variante A)** — entfernt jede noch nicht begonnene Instanz samt Inhalt
   auf dem Weg von „Delete this instance and all following"

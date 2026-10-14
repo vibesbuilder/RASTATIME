@@ -238,6 +238,7 @@ Drei Unterfelder erscheinen:
 | Feld | Bedeutung |
 |---|---|
 | **Wiederholungstyp** | Wöchentlich / Zweiwöchentlich / Dreiwöchentlich / Monatlich. |
+| **Monate wählen** (seit 2026-10-14) | Nur bei monatlicher Wiederholung: Haken bei den Monaten, in denen die Sendung stattfindet, standardmäßig alle zwölf. Juli und August abwählen für eine Sommerpause, jeden dritten Monat behalten für eine Quartalssendung. Kombinierbar mit *Repeat By* (Tag des Monats / Wochentag). Wird bei einer bestehenden Sendung ein Monat abgewählt, verschwinden ihre künftigen Instanzen in diesem Monat. |
 | **Tage** | Welche Wochentage (für Wöchentlich / Zweiwöchentlich / Dreiwöchentlich). |
 | **Enddatum** | Optional — wann die Wiederholung stoppt. Leer lassen, um unbegrenzt zu wiederholen. |
 

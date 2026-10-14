@@ -6368,3 +6368,7 @@ msgstr "Calendario vaciado: %s instancias eliminadas, %s programas borrados."
 #: application/forms/DangerousPreferences.php public/js/airtime/preferences/preferences.js
 msgid "The calendar could not be cleared."
 msgstr "No se pudo vaciar el calendario."
+
+#: application/forms/AddShowRepeats.php
+msgid "Select Months:"
+msgstr "Seleccionar meses:"

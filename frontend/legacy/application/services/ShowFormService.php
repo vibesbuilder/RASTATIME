@@ -355,6 +355,10 @@ class Application_Service_ShowFormService
                 'add_show_end_date' => (!is_null($repeatEndDate)) ? $repeatEndDate->format('Y-m-d') : null,
                 'add_show_no_end' => is_null($repeatEndDate),
                 'add_show_monthly_repeat_type' => $monthlyRepeatType,
+                // RASTATIME 2026-10-14 - month selection of a monthly repeat
+                'add_show_month_check' => Application_Service_ShowService::monthsFromMask(
+                    Application_Service_ShowService::getMonthMask($ccShowDays[0]->getDbId())
+                ),
             ]
         );
 

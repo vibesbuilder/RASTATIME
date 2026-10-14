@@ -163,6 +163,7 @@ sub-campos aparecen:
 | Campo | Significado |
 |---|---|
 | **Tipo de repetición** | Semanal / Quincenal / Trisemanal / Mensual. |
+| **Seleccionar meses** (desde 2026-10-14) | Solo en repetición mensual: marque los meses en que se emite el programa, los doce por defecto. Desmarque julio y agosto para una pausa de verano, o conserve un mes de cada tres para un programa trimestral. Se combina con *Repeat By* (día del mes / día de la semana). Desmarcar un mes en un programa existente elimina sus instancias futuras de ese mes. |
 | **Días** | Qué días de la semana. |
 | **Fecha de fin** | Opcional. |
 

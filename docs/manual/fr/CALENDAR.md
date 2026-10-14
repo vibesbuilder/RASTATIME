@@ -239,6 +239,7 @@ sous-champs apparaissent :
 | Champ | Signification |
 |---|---|
 | **Type de répétition** | Hebdomadaire / Bihebdomadaire / Trihebdomadaire / Mensuelle. |
+| **Choisir les mois** (depuis le 2026-10-14) | Répétition mensuelle seulement : cochez les mois où l'émission a lieu, les douze par défaut. Décochez juillet et août pour une pause estivale, ou gardez un mois sur trois pour une émission trimestrielle. Se combine avec *Repeat By* (jour du mois / jour de la semaine). Décocher un mois sur une émission existante supprime ses instances à venir dans ce mois. |
 | **Jours** | Quels jours de la semaine (pour Hebdomadaire / Bihebdomadaire / Trihebdomadaire). |
 | **Date de fin** | Optionnelle — quand la récurrence s'arrête. Laisser vide pour répéter indéfiniment. |
 

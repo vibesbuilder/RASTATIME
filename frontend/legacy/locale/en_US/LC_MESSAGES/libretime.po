@@ -4945,3 +4945,7 @@ msgstr ""
 #: application/forms/DangerousPreferences.php public/js/airtime/preferences/preferences.js
 msgid "The calendar could not be cleared."
 msgstr ""
+
+#: application/forms/AddShowRepeats.php
+msgid "Select Months:"
+msgstr ""

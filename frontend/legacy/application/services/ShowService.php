@@ -1357,6 +1357,8 @@ SQL;
             );
 
         $this->repeatType = $showDay->getDbRepeatType();
+        // RASTATIME 2026-10-14 - month selection (cc_show_days.month_mask)
+        $monthMask = self::getMonthMask($showDay->getDbId());
 
         if ($last_show) {
             $utcLastShowDateTime = new DateTime($last_show, new DateTimeZone($timezone));
@@ -1373,11 +1375,13 @@ SQL;
             /*
              * Make sure start date is less than populate until date AND
              * last show date is null OR start date is less than last show date
+             * AND (RASTATIME) the month is selected
              */
             if (
                 $utcStartDateTime->getTimestamp() <= $populateUntil->getTimestamp()
                 && (is_null($utcLastShowDateTime)
                     || $utcStartDateTime->getTimestamp() < $utcLastShowDateTime->getTimestamp())
+                && self::monthSelected($monthMask, $start)
             ) {
                 $lastCreatedShow = clone $utcStartDateTime;
                 /* There may not always be an instance when editing a show
@@ -1828,6 +1832,14 @@ SQL;
             // so when editing, the date period iterator will start from the beginning
             $showDay->setDbNextPopDate($startDateTime->format('Y-m-d'));
             $showDay->save();
+            // RASTATIME 2026-10-14 - which months (raw SQL, Propel class not
+            // regenerated); an edit drops the future instances of months
+            // that are no longer selected
+            $monthMask = self::monthMaskFromForm($showData);
+            self::setMonthMask($showDay->getDbId(), $monthMask);
+            if ($this->isUpdate && $monthMask !== self::ALL_MONTHS_MASK) {
+                $this->deleteExcludedMonthInstances($showId, $monthMask, $showData['add_show_timezone']);
+            }
         } else {
             foreach ($showData['add_show_day_check'] as $day) {
                 $daysAdd = 0;
@@ -2037,6 +2049,105 @@ SQL;
 
         $repeatInfo->setDbNextPopDate($nextInfo[0])
             ->save();
+    }
+
+    /* ------------------------------------------------------------------
+     * RASTATIME 2026-10-14 - month selection for monthly repeats.
+     * cc_show_days.month_mask: bit (m - 1) set = repeats in month m
+     * (1 = January); 4095 = every month.  Raw SQL - the Propel class is
+     * not regenerated (migration 0067).
+     * ------------------------------------------------------------------ */
+    public const ALL_MONTHS_MASK = 4095;
+
+    public static function monthMaskFromForm($showData)
+    {
+        $months = $showData['add_show_month_check'] ?? null;
+        if (!is_array($months) || count($months) === 0) {
+            return self::ALL_MONTHS_MASK; // nothing ticked = every month
+        }
+        $mask = 0;
+        foreach ($months as $m) {
+            $m = (int) $m;
+            if ($m >= 1 && $m <= 12) {
+                $mask |= 1 << ($m - 1);
+            }
+        }
+
+        return $mask === 0 ? self::ALL_MONTHS_MASK : $mask;
+    }
+
+    public static function monthsFromMask($mask)
+    {
+        $months = [];
+        for ($m = 1; $m <= 12; ++$m) {
+            if (((int) $mask) & (1 << ($m - 1))) {
+                $months[] = (string) $m;
+            }
+        }
+
+        return $months;
+    }
+
+    public static function monthSelected($mask, DateTime $localStart)
+    {
+        return (bool) (((int) $mask) & (1 << ((int) $localStart->format('n') - 1)));
+    }
+
+    public static function getMonthMask($showDayId)
+    {
+        // until migration 0067 has run the column does not exist: every month
+        try {
+            $row = Application_Common_Database::prepareAndExecute(
+                'SELECT month_mask FROM cc_show_days WHERE id = :id',
+                [':id' => (int) $showDayId],
+                Application_Common_Database::SINGLE
+            );
+        } catch (Exception $e) {
+            return self::ALL_MONTHS_MASK;
+        }
+
+        return ($row && isset($row['month_mask'])) ? (int) $row['month_mask'] : self::ALL_MONTHS_MASK;
+    }
+
+    public static function setMonthMask($showDayId, $mask)
+    {
+        try {
+            Application_Common_Database::prepareAndExecute(
+                'UPDATE cc_show_days SET month_mask = :mask WHERE id = :id',
+                [':mask' => (int) $mask, ':id' => (int) $showDayId],
+                Application_Common_Database::EXECUTE
+            );
+        } catch (Exception $e) {
+            Logging::warn('setMonthMask: ' . $e->getMessage() . ' (migration 0067 pending?)');
+        }
+    }
+
+    /**
+     * An edit that deselects months: drop the future, untouched instances
+     * that fall into a deselected month (local time of the show), the way
+     * a removed weekday drops its instances.
+     */
+    private function deleteExcludedMonthInstances($showId, $mask, $timezone)
+    {
+        $excluded = [];
+        for ($m = 1; $m <= 12; ++$m) {
+            if (!(((int) $mask) & (1 << ($m - 1)))) {
+                $excluded[] = $m;
+            }
+        }
+        if (count($excluded) === 0) {
+            return;
+        }
+        $sql = 'DELETE FROM cc_show_instances'
+            . ' WHERE show_id = :showId'
+            . ' AND modified_instance = false'
+            . ' AND starts > :now::TIMESTAMP'
+            . " AND EXTRACT(MONTH FROM (starts AT TIME ZONE 'UTC') AT TIME ZONE :tz) IN (" . implode(',', $excluded) . ')';
+        Application_Common_Database::prepareAndExecute($sql, [
+            ':showId' => (int) $showId,
+            ':now' => gmdate(DEFAULT_TIMESTAMP_FORMAT),
+            ':tz' => $timezone,
+        ], Application_Common_Database::EXECUTE);
     }
 
     /**

@@ -1,10 +1,14 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.71.1
+Draft version: 0.72
 Date: 2026-10-14
 
 > **Revision history**
+> - **0.72 (2026-10-14)** — **Month selection for monthly repeats**
+>   (§23.59): `cc_show_days.month_mask` (migration 0067), generator and
+>   edit path honour it; **Dangerous Options → Clear Calendar** (§23.60):
+>   from now on, on the "this and all following" path.
 > - **0.71.1 (2026-10-14)** — `Block::deleteAllFilesFromBlock` gets a
 >   balanced transaction like its playlist twin (§23.58).
 > - **0.71 (2026-10-14)** — **Smart block query brackets per row, atomic
@@ -6900,3 +6904,48 @@ description intact after every failure, connection back at depth 0, no
 row left by a failed new playlist; the full service path (upload,
 preview, import, replace) for a playlist and the smart block round trip
 and rollback of §23.56 unchanged; cleanup left nothing.
+
+### 23.59 Month Selection for Monthly Repeats (2026-10-14)
+
+**Decision (operator Go 2026-10-14, chosen over "every 2 / 3 months").**
+A monthly repeat (repeat types 2 and 3) gets twelve month boxes next
+to *Repeat By*, all ticked by default.  The mask covers the 2- and
+3-monthly rhythms and also summer breaks or "January to June".
+
+**Storage.** `cc_show_days.month_mask INTEGER NOT NULL DEFAULT 4095`
+(bit m−1 = month m; 4095 = every month = the old behaviour).  Migration
+0067 (`legacy`), raw SQL; the Propel class is not regenerated.  Reads and
+writes live in `Application_Service_ShowService` (`getMonthMask`,
+`setMonthMask`, `monthMaskFromForm`, `monthsFromMask`, `monthSelected`);
+the Django `ShowDays` model carries the matching field.  Both helpers
+survive a database without the column (every month, a warning on write),
+so the live code was safe before the migration ran.
+
+**Generator.** `createMonthlyRepeatInstances` reads the mask once per
+rule and adds `monthSelected($mask, $start)` (local time of the show) to
+the condition that creates an instance; the loop still advances month by
+month, so a skipped month costs nothing.  **Edit.** `setCcShowDays`
+writes the mask after the rule's save and, on an update with a mask
+below 4095, deletes the future, untouched instances of the deselected
+months (`EXTRACT(MONTH FROM (starts AT TIME ZONE 'UTC') AT TIME ZONE
+tz)`), the way a removed weekday drops its instances.  **Form.**
+`Application_Form_AddShowRepeats` (`add_show_month_check`), shown with
+the monthly radio by `add-show.js`; `ShowFormService` pre-fills it from
+the mask when editing.  Nothing ticked means every month.
+
+### 23.60 Dangerous Options → Clear Calendar (2026-10-14)
+
+**Decision (operator: variant A).**  "Clear Calendar" empties the
+calendar *from now on*: for every show the earliest instance that has
+not started yet goes through `deleteShow(instance, false)` - the "this
+and all following" path, which marks the instances removed, deletes
+their schedule rows, sets `last_show` of the repeat rule and deletes the
+show when no instance is left - and a show without any instance left is
+deleted.  The instance on air and the past stay, so the Playout History
+(instance_id, SET NULL since 0065) keeps its show names.  Variant B
+(everything, including the past) was declined because the history
+would lose the show names.  `ShowService::clearCalendarFromNow($onlyShowIds
+= null)`; the optional restriction serves rehearsals on the test show
+(534: temporary future instance removed, the past one and the show
+stayed).  Endpoint `preference/clear-calendar` (POST, CSRF, admin), a
+confirm dialog and the result in the four languages.
