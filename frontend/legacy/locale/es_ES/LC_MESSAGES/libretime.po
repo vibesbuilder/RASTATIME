@@ -6301,3 +6301,50 @@ msgstr "Convertir el audio sin pérdida (WAV, FLAC, ...) a MP3 de 320 kbps al im
 #: RASTATIME 2026-10-14 Local Machine page (preference/local-machine.phtml) - Import Format
 msgid "Applies to every import: upload, Import Folder, FTP import and bulk import.  WAV, FLAC and other lossless files are converted to MP3 at 320 kbps before they enter the library; the lossless original is not kept.  Lossy audio (MP3, AAC, Ogg Vorbis, Opus) is never re-encoded; Apple Lossless in an .m4a file counts as lossless and is converted.  Raw .aac files are always repacked losslessly into .m4a, whether this option is on or off."
 msgstr "Se aplica a toda importación: subida, carpeta de importación, importación FTP e importación masiva.  Los archivos WAV, FLAC y otros formatos sin pérdida se convierten a MP3 de 320 kbps antes de entrar en la biblioteca; el original sin pérdida no se conserva.  El audio con pérdida (MP3, AAC, Ogg Vorbis, Opus) nunca se recodifica; el Apple Lossless dentro de un archivo .m4a cuenta como sin pérdida y se convierte.  Los archivos .aac sin contenedor siempre se reempaquetan sin pérdida en .m4a, esté esta opción activada o no."
+#: RASTATIME 2026-10-14 Settings -> Import/Export smart block rules (Section 23.56)
+msgid "criterion \"%s\": modifier \"%s\" does not fit this criterion"
+msgstr "criterio «%s»: el modificador «%s» no corresponde a este criterio"
+
+#: RASTATIME 2026-10-14 Settings -> Import/Export smart block rules (Section 23.56)
+msgid "criterion \"%s\" has an empty value"
+msgstr "el criterio «%s» tiene un valor vacío"
+
+#: RASTATIME 2026-10-14 Settings -> Import/Export smart block rules (Section 23.56)
+msgid "criterion \"%s\": modifier \"%s\" needs a second value in \"extra\""
+msgstr "criterio «%s»: el modificador «%s» necesita un segundo valor en «extra»"
+
+#: RASTATIME 2026-10-14 Settings -> Import/Export smart block rules (Section 23.56)
+msgid "criterion \"%s\": a relative date needs a whole number and a unit (minute, hour, day, week, month or year)"
+msgstr "criterio «%s»: una fecha relativa necesita un número entero y una unidad (minute, hour, day, week, month o year)"
+
+#: RASTATIME 2026-10-14 Settings -> Import/Export smart block rules (Section 23.56)
+msgid "criterion \"%s\": \"%s\" is not a date (YYYY-MM-DD or YYYY-MM-DD HH:MM:SS)"
+msgstr "criterio «%s»: «%s» no es una fecha (AAAA-MM-DD o AAAA-MM-DD HH:MM:SS)"
+
+#: RASTATIME 2026-10-14 Settings -> Import/Export smart block rules (Section 23.56)
+msgid "criterion \"%s\": \"%s\" is not a duration (HH:MM:SS)"
+msgstr "criterio «%s»: «%s» no es una duración (HH:MM:SS)"
+
+#: RASTATIME 2026-10-14 Settings -> Import/Export smart block rules (Section 23.56)
+msgid "criterion \"%s\": \"%s\" is not a number"
+msgstr "criterio «%s»: «%s» no es un número"
+
+#: RASTATIME 2026-10-14 Settings -> Import/Export smart block rules (Section 23.56)
+msgid "criterion \"%s\": the value is longer than %d characters"
+msgstr "criterio «%s»: el valor tiene más de %d caracteres"
+
+#: RASTATIME 2026-10-14 Settings -> Local Machine (import folder status line)
+msgid "runs every 5 minutes while a folder is set"
+msgstr "se ejecuta cada 5 minutos mientras haya una carpeta definida"
+
+#: RASTATIME 2026-10-14 Settings -> Local Machine (import folder status line)
+msgid "Status:"
+msgstr "Estado:"
+
+#: RASTATIME 2026-10-14 Settings -> Local Machine (import folder status line)
+msgid "(%s min ago)"
+msgstr "(hace %s min)"
+
+#: RASTATIME 2026-10-14 Settings -> Local Machine (import folder status line)
+msgid "(just now)"
+msgstr "(ahora mismo)"

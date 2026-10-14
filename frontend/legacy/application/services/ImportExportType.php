@@ -2,7 +2,7 @@
 
 /**
  * RASTATIME 2026-10-13 - one object type of the Import/Export bundle
- * (Section 23.52).  Each subclass knows its file in the bundle, how to
+ * (Section 23.56).  Each subclass knows its file in the bundle, how to
  * parse it into records, how to validate and create one record, and how
  * to export the current rows.
  *

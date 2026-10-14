@@ -1,9 +1,9 @@
 <?php
 
 /**
- * RASTATIME 2026-10-13 - blocks.json (Section 23.52).
+ * RASTATIME 2026-10-13 - blocks.json (Section 23.56).
  *
- * Smart block criteria are a small tree (OR groups of rules, limit, sort,
+ * Smart block criteria are a small tree (editor rows of rules, limit, sort,
  * switches), so this type travels as JSON, one object per block:
  *
  *   {"name": "...", "description": "...", "type": "dynamic"|"static",
@@ -13,16 +13,35 @@
  *    "only_with_expiry": false, "use_requests": false,
  *    "exclude_played_lately": false, "exclude_played_lately_hours": 0,
  *    "exclude_artists_played_lately": false, "exclude_artists_played_lately_hours": 0,
- *    "criteria": [{"group": 0, "field": "genre", "modifier": "is", "value": "Jazz", "extra": ""}, ...]}
+ *    "criteria": [{"group": 0, "field": "genre", "modifier": "is", "value": "Jazz", "extra": ""},
+ *                 {"group": 1, "field": "utime", "modifier": "after", "value": "30", "unit": "day", "extra": ""}, ...]}
+ *
+ * A group is one row of the smart block editor.  Block::getListofFilesMeetCriteria
+ * ORs rules of the same field within one group (the editor's "+" rows) and
+ * ANDs everything else - different groups, and different fields even within
+ * one group.
+ *
+ * Relative dates (utime/mtime/lptime with before/after/between) travel as a
+ * whole number plus "unit" / "extra_unit", the editor's number field and
+ * unit select; the database keeps "<n> <unit> ago".  Absolute dates travel in
+ * the user's timezone, as the editor shows them; the database keeps UTC.
  *
  * Import feeds Application_Model_Block::saveSmartBlockCriteria with the
- * same name/value list the smart block editor posts.
+ * same name/value list the smart block editor posts, inside one transaction
+ * per block (2026-10-14: storeCriteriaIntoDb deletes the old rules first, so
+ * a failure half way used to leave a block without rules).
  */
 class Application_Service_ImportExportBlocks extends Application_Service_ImportExportType
 {
     const SWITCHES = ['repeat_tracks', 'overflow_tracks', 'only_unplayed', 'only_with_expiry', 'use_requests',
         'exclude_played_lately', 'exclude_artists_played_lately', ];
     const HOURS = ['exclude_played_lately_hours', 'exclude_artists_played_lately_hours'];
+    const DATE_FIELDS = ['utime', 'mtime', 'lptime'];
+    const RELATIVE = ['before', 'after', 'between'];
+    const RANGE = ['between', 'is in the range'];
+    const UNITS = ['minute', 'hour', 'day', 'week', 'month', 'year'];
+    // "7", "7 day", "7 days", "7 day ago" (the stored form, and what exports before 2026-10-14 wrote)
+    const RELATIVE_RE = '/^(\d+)(?:\s*(minute|hour|day|week|month|year)s?)?(?:\s+ago)?$/i';
 
     public function type(): string
     {
@@ -52,7 +71,9 @@ class Application_Service_ImportExportBlocks extends Application_Service_ImportE
             'limit' => '{"value": n, "modifier": "items" | "minutes" | "hours" | "remaining"}',
             'sort' => 'random | newest | oldest | ... (as offered by the editor)',
             'switches' => implode(', ', self::SWITCHES) . ' (true/false); the two *_hours values are integers',
-            'criteria' => 'list of {"group": n, "field": "<criterion>", "modifier": "<modifier>", "value": "...", "extra": "..."}; rules in the same group are ANDed, groups are ORed',
+            'criteria' => 'list of {"group": n, "field": "<criterion>", "modifier": "<modifier>", "value": "...", "extra": "..."}; extra is the second value of "between" and "is in the range"',
+            'groups' => 'a group is one row of the smart block editor: rules with the same group AND the same field are alternatives (OR, the rows the editor\'s + button adds); everything else is combined with AND - different groups, and different fields even within one group. If one field appears in several groups, give alternatives only to its first group (otherwise the query nests as ((A or B) and C) or D)',
+            'dates' => 'utime, mtime, lptime with before / after / between: a whole number in value (and extra) plus "unit" (and "extra_unit"): minute, hour, day, week, month or year, counted back from now; with the other modifiers: an absolute date YYYY-MM-DD or YYYY-MM-DD HH:MM:SS in your user timezone',
         ];
     }
 
@@ -60,7 +81,7 @@ class Application_Service_ImportExportBlocks extends Application_Service_ImportE
     {
         return [[
             'name' => 'Morning Music',
-            'description' => 'Up-tempo tracks, newest first',
+            'description' => 'Pop or Electronic above 110 BPM, uploaded in the last 90 days',
             'type' => 'dynamic',
             'limit' => ['value' => 60, 'modifier' => 'minutes'],
             'sort' => 'random',
@@ -75,8 +96,9 @@ class Application_Service_ImportExportBlocks extends Application_Service_ImportE
             'exclude_artists_played_lately_hours' => 0,
             'criteria' => [
                 ['group' => 0, 'field' => 'genre', 'modifier' => 'is', 'value' => 'Pop', 'extra' => ''],
-                ['group' => 0, 'field' => 'bpm', 'modifier' => 'is greater than', 'value' => '110', 'extra' => ''],
-                ['group' => 1, 'field' => 'genre', 'modifier' => 'is', 'value' => 'Electronic', 'extra' => ''],
+                ['group' => 0, 'field' => 'genre', 'modifier' => 'is', 'value' => 'Electronic', 'extra' => ''],
+                ['group' => 1, 'field' => 'bpm', 'modifier' => 'is greater than', 'value' => '110', 'extra' => ''],
+                ['group' => 2, 'field' => 'utime', 'modifier' => 'after', 'value' => '90', 'unit' => 'day', 'extra' => ''],
             ],
         ]];
     }
@@ -95,7 +117,7 @@ class Application_Service_ImportExportBlocks extends Application_Service_ImportE
         if (isset($data['name'])) {
             $data = [$data];                            // a single object is fine too
         }
-        $known = array_keys(BlockCriteria::criteriaMap());
+        $map = BlockCriteria::criteriaMap();
         $records = [];
         foreach (array_values($data) as $i => $b) {
             $rec = ['line' => $i + 1, 'name' => trim((string) ($b['name'] ?? '')), 'description' => (string) ($b['description'] ?? ''),
@@ -127,21 +149,34 @@ class Application_Service_ImportExportBlocks extends Application_Service_ImportE
             }
             foreach (($b['criteria'] ?? []) as $c) {
                 $field = (string) ($c['field'] ?? '');
-                if (!in_array($field, $known, true)) {
+                if (!isset($map[$field])) {
                     $rec['_errors'][] = sprintf(_('unknown criterion "%s"'), $field);
                     continue;
                 }
-                if (trim((string) ($c['modifier'] ?? '')) === '') {
+                $modifier = strtolower(trim((string) ($c['modifier'] ?? '')));
+                if ($modifier === '') {
                     $rec['_errors'][] = sprintf(_('criterion "%s" has no modifier'), $field);
                     continue;
                 }
-                $rec['criteria'][] = [
+                if (!in_array($modifier, $map[$field]->getModifiers(), true)) {
+                    $rec['_errors'][] = sprintf(_('criterion "%s": modifier "%s" does not fit this criterion'), $field, $modifier);
+                    continue;
+                }
+                $rule = [
                     'group' => (int) ($c['group'] ?? 0),
                     'field' => $field,
-                    'modifier' => (string) $c['modifier'],
-                    'value' => (string) ($c['value'] ?? ''),
-                    'extra' => (string) ($c['extra'] ?? ''),
+                    'modifier' => $modifier,
+                    'value' => trim((string) ($c['value'] ?? '')),
+                    'extra' => in_array($modifier, self::RANGE, true) ? trim((string) ($c['extra'] ?? '')) : '',
+                    'unit' => '',
+                    'extra_unit' => '',
                 ];
+                $error = self::checkRule($rule, $c, $map[$field]);
+                if ($error !== null) {
+                    $rec['_errors'][] = $error;
+                    continue;
+                }
+                $rec['criteria'][] = $rule;
             }
             if (count($rec['criteria']) > 100) {
                 $rec['_errors'][] = _('at most 10 groups of 10 rules are supported');
@@ -151,6 +186,66 @@ class Application_Service_ImportExportBlocks extends Application_Service_ImportE
         }
 
         return $records;
+    }
+
+    /**
+     * The checks of the smart block editor (Application_Form_SmartBlockCriteria::isValid)
+     * that would otherwise fail only at import time or at playout.  Splits a
+     * relative date into number + unit.  Returns an error text or null.
+     */
+    private static function checkRule(array &$rule, array $c, BlockCriteria $criterion): ?string
+    {
+        $field = $rule['field'];
+        $modifier = $rule['modifier'];
+        $type = $criterion->type;
+        $column = CcFilesPeer::getTableMap()->getColumnByPhpName($criterion->peer);
+        $size = $column->getType() === PropelColumnTypes::VARCHAR ? (int) $column->getSize() : 0;
+        $maxLength = $size > 0 ? min(512, $size) : 512;     // cc_blockcriteria.value / extra are VARCHAR(512)
+        if ($rule['value'] === '') {
+            return sprintf(_('criterion "%s" has an empty value'), $field);
+        }
+        $keys = ['value' => 'unit'];
+        if (in_array($modifier, self::RANGE, true)) {
+            if ($rule['extra'] === '') {
+                return sprintf(_('criterion "%s": modifier "%s" needs a second value in "extra"'), $field, $modifier);
+            }
+            $keys['extra'] = 'extra_unit';
+        }
+        foreach ($keys as $vk => $uk) {
+            $v = $rule[$vk];
+            if (mb_strlen($v) > $maxLength) {
+                return sprintf(_('criterion "%s": the value is longer than %d characters'), $field, $maxLength);
+            }
+            if ($type === ModifierType::DATE && in_array($modifier, self::RELATIVE, true)) {
+                $unit = rtrim(strtolower(trim((string) ($c[$uk] ?? ''))), 's');
+                if (!preg_match(self::RELATIVE_RE, $v, $m)) {
+                    return sprintf(_('criterion "%s": a relative date needs a whole number and a unit (minute, hour, day, week, month or year)'), $field);
+                }
+                $inline = strtolower($m[2] ?? '');
+                if ($unit === '') {
+                    $unit = $inline;
+                }
+                if (!in_array($unit, self::UNITS, true) || ($inline !== '' && $inline !== $unit)) {
+                    return sprintf(_('criterion "%s": a relative date needs a whole number and a unit (minute, hour, day, week, month or year)'), $field);
+                }
+                $rule[$vk] = (string) (int) $m[1];
+                $rule[$uk] = $unit;
+            } elseif ($type === ModifierType::DATE) {
+                $p = date_parse($v);
+                if (!preg_match('/^\d{4}-\d{2}-\d{2}([ T]\d{2}:\d{2}(:\d{2})?)?$/', $v)
+                    || $p['error_count'] > 0 || !checkdate((int) $p['month'], (int) $p['day'], (int) $p['year'])) {
+                    return sprintf(_('criterion "%s": "%s" is not a date (YYYY-MM-DD or YYYY-MM-DD HH:MM:SS)'), $field, $v);
+                }
+            } elseif (in_array($field, ['length', 'cuein', 'cueout'], true)) {
+                if (!preg_match('/^\d{2}:\d{2}:\d{2}/', $v)) {
+                    return sprintf(_('criterion "%s": "%s" is not a duration (HH:MM:SS)'), $field, $v);
+                }
+            } elseif (in_array($type, [ModifierType::NUMBER, ModifierType::TRACK_TYPE], true) && !is_numeric($v)) {
+                return sprintf(_('criterion "%s": "%s" is not a number'), $field, $v);
+            }
+        }
+
+        return null;
     }
 
     /** The name/value list the smart block editor posts. */
@@ -169,8 +264,14 @@ class Application_Service_ImportExportBlocks extends Application_Service_ImportE
                 $post[] = ['name' => "sp_criteria_field_{$g}_{$i}", 'value' => $c['field']];
                 $post[] = ['name' => "sp_criteria_modifier_{$g}_{$i}", 'value' => $c['modifier']];
                 $post[] = ['name' => "sp_criteria_value_{$g}_{$i}", 'value' => $c['value']];
+                if ($c['unit'] !== '') {
+                    $post[] = ['name' => "sp_criteria_datetime_select_{$g}_{$i}", 'value' => $c['unit']];
+                }
                 if ($c['extra'] !== '') {
                     $post[] = ['name' => "sp_criteria_extra_{$g}_{$i}", 'value' => $c['extra']];
+                }
+                if ($c['extra_unit'] !== '') {
+                    $post[] = ['name' => "sp_criteria_extra_datetime_select_{$g}_{$i}", 'value' => $c['extra_unit']];
                 }
                 ++$i;
                 if ($i > 9) {
@@ -204,16 +305,28 @@ class Application_Service_ImportExportBlocks extends Application_Service_ImportE
 
     public function create(array $record, array &$ctx): array
     {
-        $existing = self::findBlockIdByName($record['name']);
-        if ($existing !== null) {
-            $bl = new Application_Model_Block($existing);
-        } else {
-            $bl = new Application_Model_Block();
-            $bl->setName($record['name']);
-            $bl->setCreator($ctx['userId']);
+        // all or nothing: storeCriteriaIntoDb deletes the old rules before it
+        // writes the new ones, and a new block row exists before its rules
+        $con = Propel::getConnection(CcBlockPeer::DATABASE_NAME);
+        $con->beginTransaction();
+
+        try {
+            $existing = self::findBlockIdByName($record['name']);
+            if ($existing !== null) {
+                $bl = new Application_Model_Block($existing);
+            } else {
+                $bl = new Application_Model_Block();
+                $bl->setName($record['name']);
+                $bl->setCreator($ctx['userId']);
+            }
+            $bl->setDescription($record['description']);
+            $bl->saveSmartBlockCriteria(self::criteriaPost($record));
+            $con->commit();
+        } catch (Throwable $e) {
+            $con->rollBack();
+
+            throw $e;
         }
-        $bl->setDescription($record['description']);
-        $bl->saveSmartBlockCriteria(self::criteriaPost($record));
 
         return ['status' => self::STATUS_OK, 'messages' => [$existing !== null ? _('replaced') : _('created')], 'id' => (int) $bl->getId()];
     }
@@ -240,13 +353,13 @@ class Application_Service_ImportExportBlocks extends Application_Service_ImportE
             $entry['criteria'] = [];
             foreach ($crit['crit'] ?? [] as $field => $rules) {
                 foreach ($rules as $r) {
-                    $entry['criteria'][] = [
+                    $entry['criteria'][] = self::exportRule([
                         'group' => (int) ($r['criteria_group'] ?? 0),
                         'field' => (string) ($r['criteria'] ?? $field),
                         'modifier' => (string) ($r['modifier'] ?? ''),
                         'value' => (string) ($r['value'] ?? ''),
                         'extra' => (string) ($r['extra'] ?? ''),
-                    ];
+                    ]);
                 }
             }
             usort($entry['criteria'], static fn ($a, $b) => $a['group'] <=> $b['group']);
@@ -254,5 +367,36 @@ class Application_Service_ImportExportBlocks extends Application_Service_ImportE
         }
 
         return json_encode($out, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    }
+
+    /** A stored date rule in the form the editor shows and the import reads. */
+    private static function exportRule(array $rule): array
+    {
+        if (!in_array($rule['field'], self::DATE_FIELDS, true)) {
+            return $rule;
+        }
+        if (!in_array($rule['modifier'], self::RELATIVE, true)) {
+            foreach (['value', 'extra'] as $vk) {
+                if ($rule[$vk] !== '') {
+                    try {
+                        $rule[$vk] = Application_Common_DateHelper::UTCStringToUserTimezoneString($rule[$vk]);
+                    } catch (Exception $e) {
+                        // left as stored; the preview of a re-import names it
+                    }
+                }
+            }
+
+            return $rule;
+        }
+        $out = ['group' => $rule['group'], 'field' => $rule['field'], 'modifier' => $rule['modifier']];
+        foreach (['value' => 'unit', 'extra' => 'extra_unit'] as $vk => $uk) {
+            $out[$vk] = $rule[$vk];
+            if (preg_match(self::RELATIVE_RE, $rule[$vk], $m) && ($m[2] ?? '') !== '') {
+                $out[$vk] = $m[1];
+                $out[$uk] = strtolower($m[2]);
+            }
+        }
+
+        return $out;
     }
 }

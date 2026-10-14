@@ -289,7 +289,7 @@ Bibliothèque → **+ Nouveau** → **Smart Block**.
 |---|---|
 | **Nom** | Visible dans la bibliothèque et sur le calendrier. |
 | **Type** | **Statique** — choisit une fois au moment de la création ; l'ensemble ne change jamais. **Dynamique** — re-choisit chaque fois que le block est planifié. |
-| **Critères** | Ajouter des lignes : *artiste contient "Bowie"*, *bpm entre 100 et 130*, *genre est pop*, etc. Chaque ligne se combine en ET avec les autres ; un groupe OU peut être créé en ajoutant un groupe imbriqué. |
+| **Critères** | Ajouter des lignes : *artiste contient "Bowie"*, *bpm est dans le champ 100 à 130*, *genre est pop*, etc. Les lignes se combinent en ET ; le **+** à côté d'une ligne ajoute une alternative pour le même champ (OU), ex. *genre est pop* **+** *genre est rock*. Détails sous [Import/Export → blocks.json](./IMPORT_EXPORT.md#blocksjson). |
 | **Limiter à** | L'un de : **Nombre de pistes** (ex. 10), **Durée en temps** (ex. 30:00), **Temps restant dans l'émission** (laisse le smart block remplir exactement jusqu'à la fin de l'émission). |
 | **Trier** | Aléatoire / plus récent en premier / par artiste / par nombre de lectures / etc. |
 

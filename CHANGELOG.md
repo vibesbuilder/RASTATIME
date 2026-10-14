@@ -1325,6 +1325,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`check_fixes.php`: a failed move keeps the import-folder file, encoder
   cut on a character boundary), `php -l` on the 10 changed files, layout
   measured EN/DE/FR/ES at 700/900/1200 px.  Commit: FORMATNORM_PENDING.
+- **Import/Export: smart block rules - group semantics, relative and
+  absolute dates, no half-written blocks (2026-10-14, operator Go
+  2026-10-14: format A, no offset, doc corrections included)** -
+  `blocks.json` described the rules inverted ("same group AND, groups
+  OR").  The query ORs rules of the same field within one group (the
+  editor's "+" rows) and ANDs everything else, so the README, the
+  template example (it selected nothing) and the manual now say so,
+  including the limit that a field used in several groups should carry
+  alternatives only in its first group (Propel nests the rest as
+  ((A or B) and C) or D - deferred, BACKLOG).  Relative dates
+  (before/after/between on Uploaded/Last Modified/Last Played) were
+  imported without their unit: the row failed with "Undefined variable
+  $datetimeunit" and left a block without rules (= the whole library);
+  with *replace* the existing block's rules were deleted.  They now
+  travel as `value` + `unit` (`extra_unit` for between), the stored and
+  previously exported "7 day ago" form is still read; absolute dates are
+  exported in the user timezone instead of UTC (a round trip shifted them
+  by the UTC offset); the preview runs the editor's rule checks (modifier
+  fits the criterion, empty value, second value, number + unit, dates,
+  durations, numbers, length); each block is written in one transaction.
+  No live block used date rules.  Manual IMPORT_EXPORT, LIBRARY (criteria
+  row) and AUTOLOADING_PLAYLISTS (FAQ: two selections = two smart blocks)
+  in EN/DE/FR/ES; 8 new messages in DE/FR/ES; stale "Section 23.52" in
+  the Import/Export sources corrected to 23.56.  Commit: f8373d5.
 
 - **Track starts 1.7 s late: the schedule refresh armed its timers after a
   2 s library walk (2026-10-10)** - the 11:15 test show aired +1.9 s on

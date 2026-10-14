@@ -119,9 +119,45 @@ items, minutes, hours, remaining), `sort`, the switches
 (`repeat_tracks`, `overflow_tracks`, `only_unplayed`,
 `only_with_expiry`, `use_requests`, `exclude_played_lately` with its
 hours, `exclude_artists_played_lately` with its hours) and `criteria`,
-a list of rules with `group`, `field`, `modifier`, `value` and `extra`.
-Rules in the same group are combined with AND, groups with OR — the
-same model as the smart block editor.
+a list of rules with `group`, `field`, `modifier`, `value` and `extra`
+(the second value of `between` and *is in the range*).
+
+**How rules combine.** A `group` is one row of the smart block editor.
+Rules with the same group **and** the same field are alternatives
+(OR) — the rows the **+** button next to a criterion adds. Everything
+else is combined with AND: different groups, and different fields even
+within one group. Example — *genre is Pop or Electronic, and above
+110 BPM*:
+
+```json
+"criteria": [
+  {"group": 0, "field": "genre", "modifier": "is", "value": "Pop"},
+  {"group": 0, "field": "genre", "modifier": "is", "value": "Electronic"},
+  {"group": 1, "field": "bpm", "modifier": "is greater than", "value": "110"}
+]
+```
+
+"Either A and B, or C" across different fields cannot be expressed in
+one block; put two smart blocks into a playlist instead. If the same
+field appears in several groups, give alternatives only to its first
+group — otherwise the selection nests as ((A or B) and C) or D. The
+editor behaves the same way.
+
+**Dates.** For *Uploaded* (`utime`), *Last Modified* (`mtime`) and
+*Last Played* (`lptime`):
+
+* `before`, `after` and `between` count back from now: a whole number
+  in `value` plus `unit` — `minute`, `hour`, `day`, `week`, `month` or
+  `year`; `between` also takes `extra` with `extra_unit`.
+  `{"field": "utime", "modifier": "after", "value": "30", "unit": "day"}` = uploaded in the last 30 days. Exports made before
+  2026-10-14 wrote `"7 day ago"` into `value`; that form is still
+  accepted.
+* The other modifiers take an absolute date `YYYY-MM-DD` or
+  `YYYY-MM-DD HH:MM:SS` in your user timezone, as the editor shows it.
+
+The preview checks every rule as the editor does — modifier fits the
+criterion, numbers, durations (`HH:MM:SS`), dates, length — and lists
+what is wrong. A block is written completely or not at all.
 
 ### webstreams.csv
 

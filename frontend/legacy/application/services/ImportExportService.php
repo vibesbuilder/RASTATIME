@@ -1,7 +1,7 @@
 <?php
 
 /**
- * RASTATIME 2026-10-13 - Settings -> Import/Export (Section 23.52).
+ * RASTATIME 2026-10-13 - Settings -> Import/Export (Section 23.56).
  *
  * One bundle, five object types, importable together or one at a time:
  *

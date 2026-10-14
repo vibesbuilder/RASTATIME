@@ -233,7 +233,13 @@ smart block **Dinámico** o "Ordenar: Aleatorio".
 
 ### "¿Puedo tener dos autoloading playlists en un programa?"
 
-No. El modelo es **intro + body + outro**.
+No. El modelo es **intro + body + outro**, y solo el body
+es la autoloading playlist "principal". Para obtener dos
+selecciones distintas en un programa, ponga dos bloques
+inteligentes (uno por selección) en la playlist del body. Un
+solo bloque inteligente solo puede ofrecer alternativas del
+mismo campo (p. ej. género Jazz o Blues); vea
+[Import/Export → blocks.json](./IMPORT_EXPORT.md#blocksjson).
 
 ---
 

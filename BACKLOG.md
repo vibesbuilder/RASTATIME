@@ -5148,3 +5148,31 @@ Playlisten -> Podcasts -> Shows, Export in derselben Reihenfolge; Namen als Schl
 ersetzen) als Option.  Aufwand zusaetzlich: Webstreams 0,5 d, Playlisten 0,5 d, Smart Blocks 1 d (Kriterien-Mapping +
 Validierung), Podcasts 0,5 d (Feed-Abruf beim Import) -> gesamt mit Shows 4 Tage.  Empfehlung: Go in der Reihenfolge
 Shows+Webstreams, dann Playlisten, dann Bloecke/Podcasts; eine Seite, ein Buendel.
+
+### ✅ Import/Export Smart Blocks: Gruppen-Semantik + Datumskriterien korrigiert - gebaut 2026-10-14 (Go 2026-10-14: Format A, ohne Offset, Doku-Korrekturen)
+Befund 2026-10-14: README/Manual beschrieben die Gruppen verkehrt ("Gruppe UND, Gruppen ODER"); die Abfrage ODERt
+Regeln desselben Feldes in einer Gruppe (die "+"-Zeilen des Editors) und UNDet alles andere.  Relative Datumsregeln
+(before/after/between) kamen ohne Einheit an -> Zeile scheiterte mit "Undefined variable $datetimeunit" und liess
+einen Block ohne Regeln zurueck (= ganze Bibliothek), bei 'ersetzen' waren die Regeln des bestehenden Blocks weg;
+absolute Daten wanderten als UTC hinaus und als Ortszeit zurueck.  Gebaut: value + unit/extra_unit (altes "7 day
+ago" wird weiter gelesen), absolute Daten in der Benutzer-Zeitzone, Editor-Pruefungen in der Vorschau, eine
+Transaktion je Block, Vorlagen-Beispiel korrigiert, Manual IMPORT_EXPORT/LIBRARY/AUTOLOADING_PLAYLISTS x4, 8 Strings
+DE/FR/ES.  Architektur §23.56 Nachtrag (0.69.1).
+
+### 🟡 Smart-Block-Abfrage: gleiches Feld in mehreren Gruppen mit Alternativen klammert falsch - DEFER (evaluiert 2026-10-14)
+Propel haengt addAnd/addOr an die bestehende Bedingung derselben Spalte; kommt ein Feld in mehreren Zeilen vor und
+hat eine spaetere Zeile "+"-Alternativen, entsteht ((A oder B) und C) oder D statt (A oder B) und (C oder D).
+Gemessen 2026-10-14: (Rock + Indie) / (Electronic + World) -> 2.923 Titel = nur World (erwartet 0).  Betrifft den
+Editor genauso; im Manual als Grenze dokumentiert ("Alternativen nur in der ersten Gruppe des Feldes").
+Vorbedingungen fuer ein Go: (a) eigene Evaluierung, weil die Korrektur das Ergebnis bestehender Editor-Bloecke
+aendern kann - Stand 2026-10-14 hat kein Live-Block das Muster (SQL-Pruefung), vor dem Umbau erneut pruefen;
+(b) Ansatz in Block::getListofFilesMeetCriteria: je Feld eine Criterion-Kette aus einem geklammerten Criterion je
+Gruppe bauen (getNewCriterion + addOr innerhalb der Gruppe, Criterion::addAnd zwischen den Gruppen) statt
+addAnd/addOr auf die Spalte, Sonderfall NOT ILIKE/<> "oder IS NULL" mitnehmen; (c) Vorher/Nachher-Zaehlung aller
+Live-Bloecke (identisch erwartet) + Probe-Muster oben (erwartet 0); (d) ruhiges Sendefenster, die Auswertung laeuft
+beim Planen und beim Autoloading.
+
+### 💡 Import/Export: Playlist-Ersetzen atomar machen (notiert 2026-10-14)
+ImportExportPlaylists::create loescht bei 'ersetzen' mit deleteAllFilesFromPlaylist vor addAudioClips (eigene
+Transaktion); scheitert addAudioClips, bleibt die Playlist leer.  Risiko klein (Eintraege werden vorher
+aufgeloest), Vorschlag: dieselbe Propel-Transaktion um create() wie bei den Smart Blocks seit 2026-10-14.

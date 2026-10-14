@@ -304,8 +304,10 @@ either:
 
 No. The model is **intro + body + outro**, and only the body
 is the "main" autoloading playlist. To get two distinct
-selections in one show, put a smart block in the body that
-unions two criteria sets via the smart-block OR group.
+selections in one show, put two smart blocks — one per
+selection — into the body playlist. A single smart block can
+only offer alternatives of the same field (e.g. genre Jazz or
+Blues); see [Import/Export → blocks.json](./IMPORT_EXPORT.md#blocksjson).
 
 ---
 

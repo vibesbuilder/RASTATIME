@@ -1,7 +1,7 @@
 <?php
 
 /**
- * RASTATIME 2026-10-13 - playlists.csv (Section 23.52).
+ * RASTATIME 2026-10-13 - playlists.csv (Section 23.56).
  *
  * Columns: name, description, items.  "items" lists the contents in
  * order, separated by "|": file:<library path>, block:<name>,

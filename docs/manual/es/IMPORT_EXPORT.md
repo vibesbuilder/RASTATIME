@@ -126,9 +126,47 @@ Una lista JSON, un objeto por bloque inteligente: `name`,
 (`repeat_tracks`, `overflow_tracks`, `only_unplayed`,
 `only_with_expiry`, `use_requests`, `exclude_played_lately` con sus
 horas, `exclude_artists_played_lately` con sus horas) y `criteria`, una
-lista de reglas con `group`, `field`, `modifier`, `value` y `extra`.
-Las reglas del mismo grupo se combinan con Y, los grupos con O: el
-mismo modelo que el editor de bloques inteligentes.
+lista de reglas con `group`, `field`, `modifier`, `value` y `extra` (el
+segundo valor de `between` y *está en el rango de*).
+
+**Cómo se combinan las reglas.** Un `group` es una fila del editor de
+bloques inteligentes. Las reglas con el mismo grupo **y** el mismo campo
+son alternativas (O): las filas que añade el botón **+** junto a un
+criterio. Todo lo demás se combina con Y: grupos distintos, y campos
+distintos incluso dentro de un mismo grupo. Ejemplo: *género Pop o
+Electronic, y más de 110 BPM*:
+
+```json
+"criteria": [
+  {"group": 0, "field": "genre", "modifier": "is", "value": "Pop"},
+  {"group": 0, "field": "genre", "modifier": "is", "value": "Electronic"},
+  {"group": 1, "field": "bpm", "modifier": "is greater than", "value": "110"}
+]
+```
+
+«O bien A y B, o bien C» con campos distintos no se puede expresar en un
+solo bloque; ponga en su lugar dos bloques inteligentes en una playlist.
+Si el mismo campo aparece en varios grupos, dé alternativas solo a su
+primer grupo; de lo contrario la selección se anida como ((A o B) y C) o
+D. El editor se comporta igual.
+
+**Fechas.** Para *Subido* (`utime`), *Ult.Modificado* (`mtime`) y
+*Ult.Reproducido* (`lptime`):
+
+* `before`, `after` y `between` cuentan hacia atrás desde ahora: un
+  número entero en `value` más `unit`: `minute`, `hour`, `day`, `week`,
+  `month` o `year`; `between` toma además `extra` con `extra_unit`.
+  `{"field": "utime", "modifier": "after", "value": "30", "unit": "day"}` = subido en los últimos 30 días. Las exportaciones anteriores
+  al 2026-10-14 escribían `"7 day ago"` en `value`; esa forma se sigue
+  aceptando.
+* Los demás modificadores toman una fecha fija `AAAA-MM-DD` o
+  `AAAA-MM-DD HH:MM:SS` en su zona horaria de usuario, tal como la
+  muestra el editor.
+
+La vista previa comprueba cada regla como el editor (el modificador
+corresponde al criterio, números, duraciones `HH:MM:SS`, fechas,
+longitud) y enumera lo que falla. Un bloque se escribe completo o no se
+escribe.
 
 ### webstreams.csv
 
