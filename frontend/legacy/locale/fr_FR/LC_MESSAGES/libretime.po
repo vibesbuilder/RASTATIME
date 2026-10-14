@@ -6453,3 +6453,35 @@ msgstr "remplacera le webstream existant"
 #: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
 msgid "will update the options of the existing subscription"
 msgstr "mettra à jour les options de l'abonnement existant"
+
+#: RASTATIME 2026-10-14 Settings -> Import/Export smart block rules (Section 23.56)
+msgid "criterion \"%s\": modifier \"%s\" does not fit this criterion"
+msgstr "critère « %s » : le modificateur « %s » ne convient pas à ce critère"
+
+#: RASTATIME 2026-10-14 Settings -> Import/Export smart block rules (Section 23.56)
+msgid "criterion \"%s\" has an empty value"
+msgstr "le critère « %s » a une valeur vide"
+
+#: RASTATIME 2026-10-14 Settings -> Import/Export smart block rules (Section 23.56)
+msgid "criterion \"%s\": modifier \"%s\" needs a second value in \"extra\""
+msgstr "critère « %s » : le modificateur « %s » demande une seconde valeur dans « extra »"
+
+#: RASTATIME 2026-10-14 Settings -> Import/Export smart block rules (Section 23.56)
+msgid "criterion \"%s\": a relative date needs a whole number and a unit (minute, hour, day, week, month or year)"
+msgstr "critère « %s » : une date relative demande un nombre entier et une unité (minute, hour, day, week, month ou year)"
+
+#: RASTATIME 2026-10-14 Settings -> Import/Export smart block rules (Section 23.56)
+msgid "criterion \"%s\": \"%s\" is not a date (YYYY-MM-DD or YYYY-MM-DD HH:MM:SS)"
+msgstr "critère « %s » : « %s » n'est pas une date (AAAA-MM-JJ ou AAAA-MM-JJ HH:MM:SS)"
+
+#: RASTATIME 2026-10-14 Settings -> Import/Export smart block rules (Section 23.56)
+msgid "criterion \"%s\": \"%s\" is not a duration (HH:MM:SS)"
+msgstr "critère « %s » : « %s » n'est pas une durée (HH:MM:SS)"
+
+#: RASTATIME 2026-10-14 Settings -> Import/Export smart block rules (Section 23.56)
+msgid "criterion \"%s\": \"%s\" is not a number"
+msgstr "critère « %s » : « %s » n'est pas un nombre"
+
+#: RASTATIME 2026-10-14 Settings -> Import/Export smart block rules (Section 23.56)
+msgid "criterion \"%s\": the value is longer than %d characters"
+msgstr "critère « %s » : la valeur dépasse %d caractères"

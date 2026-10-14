@@ -1,5 +1,5 @@
 /*
- * RASTATIME 2026-10-13 - Settings -> Import/Export (Section 23.52).
+ * RASTATIME 2026-10-13 - Settings -> Import/Export (Section 23.56).
  * Export: build the download URL from the ticked types.
  * Import: upload -> preview table (tick rows) -> import -> result table.
  */

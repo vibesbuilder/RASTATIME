@@ -234,7 +234,7 @@ Library → **+ New** → **Smart Block**.
 |---|---|
 | **Name** | Visible in the library and on the calendar. |
 | **Type** | **Static** — picks once at creation time; the set never changes. **Dynamic** — re-picks every time the block is scheduled. |
-| **Criteria** | Add rows: *artist contains "Bowie"*, *bpm between 100 and 130*, *genre is pop*, etc. Each row AND-combines with the others; an OR group can be created by adding a nested group. |
+| **Criteria** | Add rows: *artist contains "Bowie"*, *bpm is in the range 100 to 130*, *genre is pop*, etc. Rows combine with AND; the **+** next to a row adds an alternative for the same field (OR), e.g. *genre is pop* **+** *genre is rock*. Details under [Import/Export → blocks.json](./IMPORT_EXPORT.md#blocksjson). |
 | **Limit to** | One of: **Number of tracks** (e.g. 10), **Duration in time** (e.g. 30:00), **Time remaining in show** (let the smart block fill exactly to the show's end). |
 | **Sort** | Random / newest first / by artist / by play count / etc. |
 

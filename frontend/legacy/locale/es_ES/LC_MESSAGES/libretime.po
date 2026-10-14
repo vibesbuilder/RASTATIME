@@ -6289,3 +6289,35 @@ msgstr "reemplazará el webstream existente"
 #: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
 msgid "will update the options of the existing subscription"
 msgstr "actualizará las opciones de la suscripción existente"
+
+#: RASTATIME 2026-10-14 Settings -> Import/Export smart block rules (Section 23.56)
+msgid "criterion \"%s\": modifier \"%s\" does not fit this criterion"
+msgstr "criterio «%s»: el modificador «%s» no corresponde a este criterio"
+
+#: RASTATIME 2026-10-14 Settings -> Import/Export smart block rules (Section 23.56)
+msgid "criterion \"%s\" has an empty value"
+msgstr "el criterio «%s» tiene un valor vacío"
+
+#: RASTATIME 2026-10-14 Settings -> Import/Export smart block rules (Section 23.56)
+msgid "criterion \"%s\": modifier \"%s\" needs a second value in \"extra\""
+msgstr "criterio «%s»: el modificador «%s» necesita un segundo valor en «extra»"
+
+#: RASTATIME 2026-10-14 Settings -> Import/Export smart block rules (Section 23.56)
+msgid "criterion \"%s\": a relative date needs a whole number and a unit (minute, hour, day, week, month or year)"
+msgstr "criterio «%s»: una fecha relativa necesita un número entero y una unidad (minute, hour, day, week, month o year)"
+
+#: RASTATIME 2026-10-14 Settings -> Import/Export smart block rules (Section 23.56)
+msgid "criterion \"%s\": \"%s\" is not a date (YYYY-MM-DD or YYYY-MM-DD HH:MM:SS)"
+msgstr "criterio «%s»: «%s» no es una fecha (AAAA-MM-DD o AAAA-MM-DD HH:MM:SS)"
+
+#: RASTATIME 2026-10-14 Settings -> Import/Export smart block rules (Section 23.56)
+msgid "criterion \"%s\": \"%s\" is not a duration (HH:MM:SS)"
+msgstr "criterio «%s»: «%s» no es una duración (HH:MM:SS)"
+
+#: RASTATIME 2026-10-14 Settings -> Import/Export smart block rules (Section 23.56)
+msgid "criterion \"%s\": \"%s\" is not a number"
+msgstr "criterio «%s»: «%s» no es un número"
+
+#: RASTATIME 2026-10-14 Settings -> Import/Export smart block rules (Section 23.56)
+msgid "criterion \"%s\": the value is longer than %d characters"
+msgstr "criterio «%s»: el valor tiene más de %d caracteres"

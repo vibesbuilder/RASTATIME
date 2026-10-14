@@ -1,7 +1,7 @@
 <?php
 
 /**
- * RASTATIME 2026-10-13 - podcasts.csv (Section 23.52): subscribed feeds.
+ * RASTATIME 2026-10-13 - podcasts.csv (Section 23.56): subscribed feeds.
  *
  * Columns: url, title, auto_ingest, auto_expiry_enabled, auto_expiry_days,
  * album_override, default_track_type.  Episodes are not exported - the

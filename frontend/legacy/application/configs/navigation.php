@@ -173,7 +173,7 @@ $pages[] = [
         [
             // RASTATIME 2026-10-13 — Import/Export of shows, playlists,
             // smart blocks, webstreams and podcast subscriptions
-            // (Section 23.52): CSV/JSON bundle with a preview step.
+            // (Section 23.56): CSV/JSON bundle with a preview step.
             'label' => 'Import/Export',
             'module' => 'default',
             'controller' => 'importexport',

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * RASTATIME 2026-10-13 - minimal ZIP reader / writer (Section 23.52).
+ * RASTATIME 2026-10-13 - minimal ZIP reader / writer (Section 23.56).
  *
  * The PHP build on the station has no ext-zip, and the Import/Export
  * bundle must work on a plain install, so this class implements the

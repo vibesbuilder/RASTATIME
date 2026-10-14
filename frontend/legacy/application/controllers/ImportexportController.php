@@ -1,7 +1,7 @@
 <?php
 
 /**
- * RASTATIME 2026-10-13 - Settings -> Import/Export (Section 23.52).
+ * RASTATIME 2026-10-13 - Settings -> Import/Export (Section 23.56).
  *
  *   GET  /importexport                page
  *   POST /importexport/preview        upload (file, type?, conflict) -> staged token + validated rows (JSON)

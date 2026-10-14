@@ -1,7 +1,7 @@
 <?php
 
 /**
- * RASTATIME 2026-10-13 - shows.csv (Section 23.52).
+ * RASTATIME 2026-10-13 - shows.csv (Section 23.56).
  *
  * One row = one show as the Calendar's "New Show" dialog would create it.
  * The row is turned into the dialog's field array, validated by the same

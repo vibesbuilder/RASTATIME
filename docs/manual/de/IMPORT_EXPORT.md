@@ -129,8 +129,46 @@ items, minutes, hours, remaining), `sort`, die Schalter
 `only_with_expiry`, `use_requests`, `exclude_played_lately` mit
 Stunden, `exclude_artists_played_lately` mit Stunden) und `criteria`,
 eine Liste von Regeln mit `group`, `field`, `modifier`, `value` und
-`extra`. Regeln derselben Gruppe sind mit UND verknüpft, Gruppen mit
-ODER — dasselbe Modell wie im Smart-Block-Editor.
+`extra` (der zweite Wert von `between` und *ist im Bereich*).
+
+**Wie Regeln verknüpft werden.** Eine `group` ist eine Zeile im
+Smart-Block-Editor. Regeln mit derselben Gruppe **und** demselben Feld
+sind Alternativen (ODER) — die Zeilen, die der **+**-Knopf neben einem
+Kriterium anlegt. Alles andere ist mit UND verknüpft: verschiedene
+Gruppen, und verschiedene Felder auch innerhalb einer Gruppe. Beispiel
+— *Genre ist Pop oder Electronic, und über 110 BPM*:
+
+```json
+"criteria": [
+  {"group": 0, "field": "genre", "modifier": "is", "value": "Pop"},
+  {"group": 0, "field": "genre", "modifier": "is", "value": "Electronic"},
+  {"group": 1, "field": "bpm", "modifier": "is greater than", "value": "110"}
+]
+```
+
+„Entweder A und B, oder C“ über verschiedene Felder lässt sich in einem
+Block nicht ausdrücken; legen Sie dafür zwei Smart Blocks in eine
+Playlist. Kommt dasselbe Feld in mehreren Gruppen vor, geben Sie nur
+seiner ersten Gruppe Alternativen — sonst verschachtelt sich die
+Auswahl als ((A oder B) und C) oder D. Der Editor verhält sich genauso.
+
+**Datumsangaben.** Für *Hochgeladen* (`utime`), *geändert am*
+(`mtime`) und *Zuletzt gespielt* (`lptime`):
+
+* `before`, `after` und `between` zählen ab jetzt zurück: eine ganze
+  Zahl in `value` plus `unit` — `minute`, `hour`, `day`, `week`,
+  `month` oder `year`; `between` nimmt zusätzlich `extra` mit
+  `extra_unit`. `{"field": "utime", "modifier": "after", "value": "30", "unit": "day"}` = in den letzten 30 Tagen hochgeladen. Exporte
+  vor dem 2026-10-14 schrieben `"7 day ago"` in `value`; diese Form
+  wird weiter angenommen.
+* Die übrigen Modifikatoren nehmen ein festes Datum `JJJJ-MM-TT` oder
+  `JJJJ-MM-TT HH:MM:SS` in Ihrer Benutzer-Zeitzone, so wie der Editor
+  es zeigt.
+
+Die Vorschau prüft jede Regel wie der Editor — Modifikator passt zum
+Kriterium, Zahlen, Dauern (`HH:MM:SS`), Datumsangaben, Länge — und
+listet, was nicht stimmt. Ein Block wird ganz oder gar nicht
+geschrieben.
 
 ### webstreams.csv
 

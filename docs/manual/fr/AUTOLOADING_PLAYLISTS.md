@@ -338,8 +338,10 @@ une playlist statique, les mêmes pistes se répètent. Pour
 Non. Le modèle est **intro + body + outro**, et seul le
 body est la "principale" autoloading playlist. Pour
 obtenir deux sélections distinctes dans une émission,
-mettez un smart block dans le body qui union deux
-ensembles de critères via le groupe OU smart-block.
+placez deux smart blocks — un par sélection — dans la
+playlist du body. Un seul smart block ne peut proposer que
+des alternatives du même champ (ex. genre Jazz ou Blues) ;
+voir [Import/Export → blocks.json](./IMPORT_EXPORT.md#blocksjson).
 
 ---
 

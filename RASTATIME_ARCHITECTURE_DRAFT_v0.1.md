@@ -1,10 +1,15 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.69
-Date: 2026-10-13
+Draft version: 0.69.1
+Date: 2026-10-14
 
 > **Revision history**
+> - **0.69.1 (2026-10-14)** — **Import/Export smart block rules**
+>   (§23.56 addendum): group semantics as the query applies them (same
+>   field in one group = OR, the rest AND), relative dates as number +
+>   `unit`, absolute dates in the user timezone, the editor's rule checks
+>   in the preview, one transaction per block.
 > - **0.69 (2026-10-13)** — **Settings -> Import/Export** (§23.56): calendar
 >   objects as CSV/JSON bundle or single files, preview step, dependency
 >   order, shows through the New-Show forms, own ZIP reader/writer.
@@ -6481,3 +6486,48 @@ instances, DJ, logo, autoloading playlist, random custom password) and the
 overlapping second row refused at import time; cleanup left nothing.
 Open: content stage 2 (explicit item list per instance), replace for
 shows, podcast episodes.
+
+**Addendum 2026-10-14 - smart block rules (operator Go 2026-10-14).**
+Two findings in `blocks.json`, both reproduced with throwaway blocks.
+(1) The README and the manual said "same group AND, groups OR".
+`Block::getListofFilesMeetCriteria` keys the rules by field
+(`getCriteria`; the field+group key of `getCriteriaGrouped` only feeds
+the editor), sorts each field's rules by group and calls `addOr` while
+the group repeats, else `addAnd`: rules of the same field in one group
+are alternatives (the editor's "+" rows, which keep the row's field),
+everything else is ANDed.  Measured on editor-made blocks: Rock + Indie
+in one row 10,312 = 5,210 + 5,102, as two rows 0.  Propel attaches
+`addAnd`/`addOr` to the existing criterion of the same column, so a field
+in two groups that both carry alternatives nests to the left:
+(Rock + Indie) / (Electronic + World) gave 2,923 = World alone, i.e.
+((A or B) and C) or D.  That is an editor-level limitation; it is
+documented and the query fix deferred (BACKLOG, no live block has the
+pattern).  The template example (Pop and BPM in group 0, Electronic in
+group 1) selected nothing; it now reads (Pop or Electronic) and BPM > 110
+and uploaded in the last 90 days.
+(2) `storeCriteriaIntoDb` appends `' ' . $datetimeunit . ' ago'` for
+before/after/between, the unit coming from `sp_criteria_datetime_select`,
+which the import never posted.  The undefined variable became an
+ErrorException (global handler), and because the method deletes the old
+rules first and a new block row exists before its rules, the failed row
+left a block without rules (= the whole library, 21,651 files); with
+*replace* the existing block's rules were gone.  The export wrote the
+stored "7 day ago" (which would have stored "7 day ago  ago" = seven days
+in the future) and absolute dates in UTC, which the import read as user
+time (a round trip moved them by the UTC offset).
+Fix, all in `ImportExportBlocks`, `Block.php` untouched: relative dates
+travel as `value` + `unit` (+ `extra_unit` for between), the stored and
+earlier exported "<n> <unit> ago" is still read; absolute dates are
+exported in the user timezone, as the editor shows them; `parse()` runs
+the editor's rule checks (modifier fits the criterion's type, empty
+value, second value for between / is in the range, relative number +
+unit, dates, `HH:MM:SS` durations, numbers, length against the column)
+so the preview names them; `create()` runs in one Propel transaction.
+Verified with the CLI probe loading the worktree class: all 32 live
+blocks pass the checks (replace preview); a round trip of an editor-made
+block (after 7 days, between 30 and 7 days, mtime > 2026-01-01) stores
+exactly the original rows; the legacy forms ("7 day ago", "30 Days",
+"Before"/"Hours") normalise; 13 malformed rules are each named in the
+preview; a rule that fails at the INSERT (600 characters) rolls back -
+the replaced block keeps its 14 rows, a new block leaves nothing; one
+"uploaded in the last 7 days" rule selects 21,330 files, as SQL does.

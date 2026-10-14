@@ -127,8 +127,45 @@ items, minutes, hours, remaining), `sort`, les interrupteurs
 `only_with_expiry`, `use_requests`, `exclude_played_lately` avec ses
 heures, `exclude_artists_played_lately` avec ses heures) et `criteria`,
 une liste de règles avec `group`, `field`, `modifier`, `value` et
-`extra`. Les règles d'un même groupe sont combinées par ET, les groupes
-par OU — le même modèle que l'éditeur de smart blocks.
+`extra` (la seconde valeur de `between` et *est dans le champ*).
+
+**Comment les règles se combinent.** Un `group` est une ligne de
+l'éditeur de smart blocks. Les règles du même groupe **et** du même
+champ sont des alternatives (OU) — les lignes qu'ajoute le bouton **+**
+à côté d'un critère. Tout le reste est combiné par ET : des groupes
+différents, et des champs différents même au sein d'un groupe. Exemple
+— *genre Pop ou Electronic, et plus de 110 BPM* :
+
+```json
+"criteria": [
+  {"group": 0, "field": "genre", "modifier": "is", "value": "Pop"},
+  {"group": 0, "field": "genre", "modifier": "is", "value": "Electronic"},
+  {"group": 1, "field": "bpm", "modifier": "is greater than", "value": "110"}
+]
+```
+
+« Soit A et B, soit C » sur des champs différents ne peut pas
+s'exprimer dans un seul bloc ; placez plutôt deux smart blocks dans une
+playlist. Si le même champ apparaît dans plusieurs groupes, ne donnez
+des alternatives qu'à son premier groupe — sinon la sélection s'imbrique
+en ((A ou B) et C) ou D. L'éditeur se comporte de la même façon.
+
+**Dates.** Pour *Téléversé* (`utime`), *Dernier Modifié* (`mtime`) et
+*Dernier Joué* (`lptime`) :
+
+* `before`, `after` et `between` comptent à rebours depuis maintenant :
+  un nombre entier dans `value` plus `unit` — `minute`, `hour`, `day`,
+  `week`, `month` ou `year` ; `between` prend en plus `extra` avec
+  `extra_unit`. `{"field": "utime", "modifier": "after", "value": "30", "unit": "day"}` = téléversé dans les 30 derniers jours. Les
+  exports antérieurs au 2026-10-14 écrivaient `"7 day ago"` dans
+  `value` ; cette forme est toujours acceptée.
+* Les autres modificateurs prennent une date fixe `AAAA-MM-JJ` ou
+  `AAAA-MM-JJ HH:MM:SS` dans votre fuseau horaire d'utilisateur, telle
+  que l'éditeur l'affiche.
+
+L'aperçu vérifie chaque règle comme l'éditeur — modificateur adapté au
+critère, nombres, durées (`HH:MM:SS`), dates, longueur — et liste ce
+qui ne va pas. Un bloc est écrit entièrement ou pas du tout.
 
 ### webstreams.csv
 

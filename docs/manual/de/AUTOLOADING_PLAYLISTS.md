@@ -330,8 +330,10 @@ Tracks. Um dies zu vermeiden, entweder:
 Nein. Das Modell ist **Intro + Body + Outro**, und nur der
 Body ist die "Haupt"-autoloading Playlist. Um zwei
 unterschiedliche Auswahlen in einer Sendung zu erhalten,
-fügen Sie einen Smart Block in den Body ein, der zwei
-Kriteriensätze über die Smart-Block-ODER-Gruppe vereint.
+legen Sie zwei Smart Blocks — einen je Auswahl — in die
+Body-Playlist. Ein einzelner Smart Block kann nur
+Alternativen desselben Feldes anbieten (z.B. Genre Jazz oder
+Blues); siehe [Import/Export → blocks.json](./IMPORT_EXPORT.md#blocksjson).
 
 ---
 

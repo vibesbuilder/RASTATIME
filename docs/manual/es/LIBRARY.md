@@ -191,7 +191,7 @@ Biblioteca → **+ Nuevo** → **Smart Block**.
 |---|---|
 | **Nombre** | Visible en biblioteca y calendario. |
 | **Tipo** | **Estático** — elige una vez al crear; el conjunto nunca cambia. **Dinámico** — re-elige cada vez que el block se planifica. |
-| **Criterios** | Añadir filas: *artista contiene "Bowie"*, *bpm entre 100 y 130*, etc. |
+| **Criterios** | Añadir filas: *artista contiene "Bowie"*, *bpm está en el rango de 100 a 130*, etc. Las filas se combinan con Y; el **+** junto a una fila añade una alternativa para el mismo campo (O), p. ej. *género es pop* **+** *género es rock*. Detalles en [Import/Export → blocks.json](./IMPORT_EXPORT.md#blocksjson). |
 | **Limitar a** | **Número de pistas** (ej. 10), **Duración en tiempo** (ej. 30:00), **Tiempo restante en el programa**. |
 | **Ordenar** | Aleatorio / más reciente primero / por artista / por número de reproducciones / etc. |
 
