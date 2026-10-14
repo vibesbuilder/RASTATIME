@@ -5031,7 +5031,7 @@ Request, Backup-Task je Lauf); Apache neu starten und error_log bereinigen; dana
 
 ## Import-Formate normalisieren (Operator-Frage 2026-10-14)
 
-### 🟢 Import-Format-Normalisierung: verlustfrei -> MP3 320, rohes AAC -> M4A, Tags aus jedem Format, '_failed' statt Loeschen - gebaut 2026-10-14 (Go 2026-10-14), Live-Abnahme offen
+### 🟢 Import-Format-Normalisierung: verlustfrei -> MP3 320, rohes AAC -> M4A, Tags aus jedem Format, '_failed' statt Loeschen - live 2026-10-14 (Go 2026-10-14), Browser-Abnahme der Einstellung offen
 Anlass: Operator-Frage 2026-10-14 "Welche Dateien sind im FLAC- oder WAV-Format in der Bibliothek?" -> Probe nach
 Codec (ffprobe, nicht mime): id 603 FLAC, id 604 WAV.  Beim Pruefen des Importpfads gefunden: rohes ADTS-.aac wird
 ohne Index ~1,9 s zu lang geschaetzt und traegt keine Tags (mit ID3v2-Kopf scheiterte der Import ganz); WAV-Tags,
@@ -5048,7 +5048,7 @@ Umwandlung abgelegt ist); ffprobe fuellt
 fehlende Tags in jedem Format; Einstellung Settings -> Local Machine -> Import Format (cc_pref
 convert_lossless_to_mp3, fehlt = an, je Import-Nachricht options.convert_lossless); cc_files.source_md5 (Migration
 0066) fuer die Duplikatpruefung von bulk_import; Befehl convert_lossless fuer Bestandsdateien (Trockenlauf Standard,
-6-h-Sendeplan-Schutz, eine Transaktion, id/Cue-In/Lautheit bleiben); eine Endungsliste fuer Upload, Import-Ordner,
+6-h-Sendeplan-Schutz, eine Transaktion, id/Cue-In bleiben, R128 an der MP3 neu gemessen); eine Endungsliste fuer Upload, Import-Ordner,
 FTP und createAndImport; fehlgeschlagene Uebergabe -> <Import-Ordner>/_failed/<gleicher Pfad>, nie geloescht.
 Review-Fixes 2026-10-14 (zwei Reviews): encoder auf 64 Zeichen gekuerzt (Analyzer + validateFileArray; ein langer
 TSSE liess den Import scheitern), Original erst nach organise_file geloescht (spaeterer Fehler / Analyzer-Neustart
@@ -5058,17 +5058,24 @@ waehrend eines Bibliotheksumzugs, Titel ohne Tag = neuer Dateiname, Tooltip "ver
 Tests: Analyzer +65, API +26 (bestehende Fehlschlaege unveraendert), test_migration_baseline auf 0066,
 Legacy-Helper 69/69 + Review-Check 10/10, Layout EN/DE/FR/ES.
 Doku: CHANGELOG, Architektur §23.57 (0.70), Manual LOCAL_MACHINE + LIBRARY x4.
-**Offen - Live-Abnahme (Reihenfolge):** (0) vorher `D:\import` auf .mp4/.mp2/.mp1/.au pruefen - der Scan nimmt sie
-jetzt mit (ein Video-.mp4 wuerde als Audio importiert); (1) `git tag live-YYYY-MM-DD` + frisches Backup
-(API-Migration), ruhiges Fenster ausserhalb einer Sendungsgrenze und nicht um 03:30; (2) Migration 0066 ZUERST (vom
-Branch, API-Dienstumgebung; der laufende Code liest die Spalte nicht), schema_version 66 + Spalte pruefen, dann
-Merge, Neustart API (Serializer liest source_md5 sofort; WORKER nutzt das File-Modell ebenfalls), ANALYZER erst bei
-leerer airtime-uploads-Queue ohne wartende Importe, Apache (.mo); ein Analyzer mit altem Code ignoriert die neue Option
-(pydantic verwirft unbekannte Felder, geprueft) - ein Import dazwischen bleibt unkonvertiert, scheitert aber nicht;
-(3) Live-Verifikation: `curl -i` auf /preference/local-machine und POST /preference/import-format-save (Login),
-Probe-Uploads einer FLAC, einer WAV und eines rohen .aac (Testdateien, keine echten Sendungen), eine kaputte Datei
-im Import-Ordner -> landet in _failed; (4) Bestand: `convert_lossless --ffmpeg-dir C:\ffmpeg\bin` (Trockenlauf),
-dann `--ids 603 604 --yes`; der echte ADTS-Fall (~1,9 s) ist erst live pruefbar.
+**Eingespielt 2026-10-14:** `D:\import` vorher geprueft (nur 422 Nicht-Audio-Reste, keine .mp4/.mp2/.mp1/.au);
+Tag live-2026-10-14b (live-2026-10-14 bestand schon auf e6c6911), Backup 03:30; Migration 0066 11:31:20 aus dem
+Branch (einzige offene Migration, Spalte + Index geprueft), ff-Merge 11:31:57 (c0fc858), curl: /login 200,
+/preference/local-machine und POST /preference/import-format-save 302 zum Login, keine Fehler im legacy.log;
+Operator startete API, WORKER, ANALYZER, APACHE neu. Probe 11:53 (fuenf Testdateien "RASTATIME Formatprobe" im
+Import-Ordner, ids 22272-22276): FLAC mit Cover + DESCRIPTION + EXPIRY -> MP3 320 mit APIC, Kommentar, Expiry
+2026-12-31; WAV mit ID3-Chunk -> MP3 320 mit allen Tags; rohes ADTS mit ID3-Kopf -> M4A, 20,04 s, Tags; .oga
+unveraendert importiert; FLAC 96 kHz/24 bit -> MP3 44,1 kHz; source_md5 = MD5 des Originals, Originale weg,
+organize/ leer, kein _failed. Bestand 12:16 nach der Grenze 12:15: `convert_lossless --ids 603 604 --yes`
+(26,8 -> 9,5 MB, 64,2 -> 14,6 MB; Laenge + Cue unveraendert; True Peak 604 1,2 -> 1,8 dBTP neu gemessen);
+die Originale liegen bis zum naechsten Spiegellauf (03:30) noch in `D:\backups\media`.
+**Offen:** Browser-Abnahme Settings -> Local Machine -> Import Format durch den Operator (mein Chrome war nicht
+angemeldet); Probe-Tracks 22272-22276 in der Bibliothek loeschen (Operator); `_failed` live nicht provoziert -
+eine Uebergabe scheitert nur an Rechten/Speicher/DB/RabbitMQ, eine kaputte Audiodatei wird uebergeben und
+scheitert erst im Analyzer (bleibt wie bisher in organize/); abgedeckt durch die Helper-Checks 69/69 + 10/10;
+der echte ADTS-Laengenfehler (~1,9 s) trat bei der synthetischen Probe nicht auf.
+Nebenbefund: id 14509 ist eine Dublette von 603 (Bilderbuch - Plansch (EOAE Remix), gleiche Laenge, aus dem
+Massenimport, nie gespielt).
 Nebenbefunde (klein, ohne eigenes Item): nur die neuen ffmpeg/ffprobe-Aufrufe laufen mit BELOW_NORMAL (ReplayGain,
 R128, Stille, Abspielbarkeit, Dauer weiter normal); convert_lossless misst die Lautheit
 (R128) an der neuen MP3 nach, weil ihr True Peak einige Zehntel dB hoeher liegen kann; eine .au-Datei bekommt bei ausgeschalteter Option keinen

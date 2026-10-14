@@ -96,7 +96,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   fields, checked against the live package), so an import in between is
   filed unconverted, not failed.  Manual LOCAL_MACHINE (new section 5 Import
   Format, `_failed`) and LIBRARY (file formats on import) in EN/DE/FR/ES;
-  architecture §23.57 (0.70).  Commit: 1e38ae8.
+  architecture §23.57 (0.70).  Commit: 1e38ae8.  **Live 2026-10-14:**
+  migration 0066 applied 11:31:20 (tag live-2026-10-14b), master
+  fast-forwarded 11:31:57, services restarted by the operator; probe of
+  five files through the import folder 11:53 passed (FLAC with cover +
+  Expiry, WAV with ID3 chunk -> MP3 320 with all tags; raw ADTS with an
+  ID3 header -> M4A, 20.04 s; .oga imported; 96 kHz/24-bit FLAC -> 44.1
+  kHz MP3); `convert_lossless --ids 603 604 --yes` 12:16 (26.8 -> 9.5 MB,
+  64.2 -> 14.6 MB, true peak of 604 re-measured 1.2 -> 1.8 dBTP).
 
 - **Settings -> Import/Export: shows, playlists, smart blocks, webstreams and
   podcast subscriptions as CSV/JSON, bundle or single file, with a preview
