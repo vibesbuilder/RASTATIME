@@ -9,5 +9,11 @@
 
         <?php echo $this->element->getElement('clear_library')->render() ?>
 
+        <?php // RASTATIME 2026-10-14 - removes every show instance that has not started yet ?>
+        <div style="margin-top: 12px;">
+            <?php echo $this->element->getElement('clear_calendar')->render() ?>
+            <p class="description" style="margin: 4px 0 0 0;"><?php echo _("Removes every show that has not started yet, with its content, and ends all repeats. The show on air and the past stay; the playout history is kept.") ?></p>
+        </div>
+
     </dl>
 </fieldset>

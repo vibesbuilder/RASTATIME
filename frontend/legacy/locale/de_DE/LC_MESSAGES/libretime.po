@@ -6155,3 +6155,23 @@ msgstr "(vor %s Min.)"
 #: RASTATIME 2026-10-14 Settings -> Local Machine (import folder status line)
 msgid "(just now)"
 msgstr "(gerade eben)"
+
+#: application/forms/DangerousPreferences.php public/js/airtime/preferences/preferences.js
+msgid "Clear Calendar"
+msgstr "Kalender leeren"
+
+#: application/forms/DangerousPreferences.php public/js/airtime/preferences/preferences.js
+msgid "Removes every show that has not started yet, with its content, and ends all repeats. The show on air and the past stay; the playout history is kept."
+msgstr "Entfernt jede Sendung, die noch nicht begonnen hat, samt Inhalt und beendet alle Wiederholungen. Die laufende Sendung und die Vergangenheit bleiben; das Sendeprotokoll bleibt erhalten."
+
+#: application/forms/DangerousPreferences.php public/js/airtime/preferences/preferences.js
+msgid "Clear the calendar? Every show that has not started yet is removed with its content and all repeats end. The show on air and the past stay."
+msgstr "Kalender leeren? Jede Sendung, die noch nicht begonnen hat, wird samt Inhalt entfernt, alle Wiederholungen enden. Die laufende Sendung und die Vergangenheit bleiben."
+
+#: application/forms/DangerousPreferences.php public/js/airtime/preferences/preferences.js
+msgid "Calendar cleared: %s instances removed, %s shows deleted."
+msgstr "Kalender geleert: %s Instanzen entfernt, %s Sendungen gelöscht."
+
+#: application/forms/DangerousPreferences.php public/js/airtime/preferences/preferences.js
+msgid "The calendar could not be cleared."
+msgstr "Der Kalender konnte nicht geleert werden."

@@ -115,6 +115,16 @@ Un paramètre modifié est pris en compte au prochain envoi ; pas de
 redémarrage. Un DJ en direct (Master / Show Source) n'est pas annoncé ;
 la dernière piste reste affichée jusqu'au prochain élément programmé.
 
+### Dangerous Options
+
+Repliées par défaut ; les deux boutons demandent confirmation et sont
+réservés aux administrateurs.
+
+| Bouton | Effet |
+|---|---|
+| **Delete All Tracks in Library** | Supprime chaque piste de la bibliothèque et des grilles à venir (upstream). |
+| **Clear Calendar** (depuis le 2026-10-14) | Supprime chaque émission qui **n'a pas encore commencé**, avec son contenu, et met fin à toutes les répétitions. L'émission en cours et tout le passé restent, l'historique de diffusion garde ses noms d'émission. Une émission sans instance restante est effacée. La confirmation indique combien d'instances et d'émissions ont été retirées. |
+
 ### Email (réinitialisation mot de passe)
 
 | Champ | Notes |

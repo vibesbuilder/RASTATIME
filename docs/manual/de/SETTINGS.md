@@ -181,6 +181,16 @@ Eine geänderte Einstellung greift beim nächsten Push; kein Neustart. Ein
 Live-DJ (Master / Show Source) wird nicht gemeldet; der letzte Titel
 bleibt bis zum nächsten geplanten Element in der Anzeige.
 
+### Dangerous Options
+
+Standardmäßig eingeklappt; beide Knöpfe fragen nach und sind nur für
+Administratoren.
+
+| Knopf | Wirkung |
+|---|---|
+| **Delete All Tracks in Library** | Entfernt jeden Track aus der Bibliothek und aus künftigen Sendeplänen (Upstream). |
+| **Clear Calendar** (seit 2026-10-14) | Entfernt jede Sendung, die **noch nicht begonnen** hat, samt Inhalt und beendet alle Wiederholungen. Die laufende Sendung und alles Vergangene bleiben, das Sendeprotokoll behält seine Sendungsnamen. Eine Sendung ohne verbleibende Instanz wird gelöscht. Die Bestätigung nennt, wie viele Instanzen und Sendungen entfernt wurden. |
+
 ### E-Mail (Passwort-Zurücksetzung)
 
 Falls konfiguriert, sendet der Flow Benutzer verwalten →

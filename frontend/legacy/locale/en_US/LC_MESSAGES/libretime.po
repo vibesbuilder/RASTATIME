@@ -4925,3 +4925,23 @@ msgstr ""
 #: application/controllers/LocaleController.php application/views/scripts/showbuilder/index.phtml
 msgid "Clear search"
 msgstr ""
+
+#: application/forms/DangerousPreferences.php public/js/airtime/preferences/preferences.js
+msgid "Clear Calendar"
+msgstr ""
+
+#: application/forms/DangerousPreferences.php public/js/airtime/preferences/preferences.js
+msgid "Removes every show that has not started yet, with its content, and ends all repeats. The show on air and the past stay; the playout history is kept."
+msgstr ""
+
+#: application/forms/DangerousPreferences.php public/js/airtime/preferences/preferences.js
+msgid "Clear the calendar? Every show that has not started yet is removed with its content and all repeats end. The show on air and the past stay."
+msgstr ""
+
+#: application/forms/DangerousPreferences.php public/js/airtime/preferences/preferences.js
+msgid "Calendar cleared: %s instances removed, %s shows deleted."
+msgstr ""
+
+#: application/forms/DangerousPreferences.php public/js/airtime/preferences/preferences.js
+msgid "The calendar could not be cleared."
+msgstr ""

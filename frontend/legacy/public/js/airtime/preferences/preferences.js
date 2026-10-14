@@ -145,6 +145,39 @@ function removeLandingBackground() {
   );
 }
 
+// RASTATIME 2026-10-14 - Dangerous Options > Clear Calendar
+function clearCalendar() {
+  if (
+    !confirm(
+      $.i18n._(
+        "Clear the calendar? Every show that has not started yet is removed with its content and all repeats end. The show on air and the past stay.",
+      ),
+    )
+  ) {
+    return;
+  }
+  $.post(
+    baseUrl + "preference/clear-calendar",
+    { csrf_token: $("#csrf").val() },
+    function (json) {
+      if (json && json.ok) {
+        alert(
+          $.i18n
+            ._("Calendar cleared: %s instances removed, %s shows deleted.")
+            .replace("%s", json.instances)
+            .replace("%s", json.deleted),
+        );
+      } else {
+        alert($.i18n._("The calendar could not be cleared."));
+      }
+      location.reload();
+    },
+    "json",
+  ).fail(function () {
+    alert($.i18n._("The calendar could not be cleared."));
+  });
+}
+
 function deleteAllFiles() {
   var resp = confirm(
     $.i18n._("Are you sure you want to delete all the tracks in your library?"),

@@ -114,6 +114,16 @@ Un ajuste modificado se aplica en el siguiente envío; sin reinicio. Un DJ
 en directo (Master / Show Source) no se anuncia; la última pista permanece
 en la visualización hasta el siguiente elemento programado.
 
+### Dangerous Options
+
+Plegadas por defecto; ambos botones piden confirmación y son solo para
+administradores.
+
+| Botón | Efecto |
+|---|---|
+| **Delete All Tracks in Library** | Elimina cada pista de la biblioteca y de las parrillas futuras (upstream). |
+| **Clear Calendar** (desde 2026-10-14) | Elimina cada programa que **aún no ha empezado**, con su contenido, y termina todas las repeticiones. El programa en antena y todo el pasado se conservan, el historial de emisión mantiene sus nombres de programa. Un programa sin instancias restantes se borra. La confirmación indica cuántas instancias y programas se retiraron. |
+
 ### Email (restablecimiento de contraseña)
 
 | Campo | Notas |

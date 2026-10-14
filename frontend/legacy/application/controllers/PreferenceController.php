@@ -1358,6 +1358,45 @@ class PreferenceController extends Zend_Controller_Action
         $this->_helper->json->sendJson($out);
     }
 
+    /**
+     * RASTATIME 2026-10-14 - Dangerous Options > Clear Calendar: every
+     * instance that has not started yet goes, with its content; the past
+     * and the instance on air stay (ShowService::clearCalendarFromNow).
+     */
+    public function clearCalendarAction()
+    {
+        $this->view->layout()->disableLayout();
+        $this->_helper->viewRenderer->setNoRender(true);
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->getResponse()->setHttpResponseCode(405);
+            $this->_helper->json->sendJson(['ok' => false, 'error' => 'method-not-allowed']);
+            return;
+        }
+        if (!SecurityHelper::verifyCSRFToken($this->_getParam('csrf_token'))) {
+            Logging::error(__FILE__ . ': Invalid CSRF token');
+            $this->_helper->json->sendJson(['ok' => false, 'error' => 'csrf']);
+            return;
+        }
+        $user = Application_Model_User::getCurrentUser();
+        if (!$user->isUserType([UTYPE_SUPERADMIN, UTYPE_ADMIN])) {
+            $this->getResponse()->setHttpResponseCode(403);
+            $this->_helper->json->sendJson(['ok' => false, 'error' => 'forbidden']);
+            return;
+        }
+
+        Logging::info('clearCalendar: requested by ' . $user->getLogin());
+        try {
+            $service = new Application_Service_ShowService();
+            $result = $service->clearCalendarFromNow();
+        } catch (Exception $exc) {
+            Logging::error('clearCalendar: ' . $exc->getMessage());
+            $this->_helper->json->sendJson(['ok' => false, 'error' => $exc->getMessage()]);
+            return;
+        }
+        $this->_helper->json->sendJson(array_merge(['ok' => true], $result));
+    }
+
     public function deleteAllFilesAction()
     {
         $this->view->layout()->disableLayout();

@@ -2038,4 +2038,75 @@ SQL;
         $repeatInfo->setDbNextPopDate($nextInfo[0])
             ->save();
     }
+
+    /**
+     * RASTATIME 2026-10-14 - Settings > General > Dangerous Options >
+     * "Clear Calendar": empty the calendar FROM NOW ON.  Every instance
+     * that has not started yet is removed with its content (the way
+     * "Delete this instance and all following" does it: marked removed,
+     * schedule rows deleted, the repeat's last_show set), a show without
+     * any instance left is deleted.  The instance on air and everything
+     * in the past stay, so the playout history keeps its show names.
+     *
+     * @param array|null $onlyShowIds restrict to these shows (rehearsals on
+     *                                the test show); null = every show
+     *
+     * @return array ['shows' => touched, 'deleted' => shows removed,
+     *                'instances' => instances removed]
+     */
+    public function clearCalendarFromNow($onlyShowIds = null)
+    {
+        $service_user = new Application_Service_UserService();
+        $currentUser = $service_user->getCurrentUser();
+        if (!$currentUser->isAdminOrPM()) {
+            throw new Exception('Permission denied');
+        }
+
+        $now = gmdate(DEFAULT_TIMESTAMP_FORMAT);
+        $touched = 0;
+        $deleted = 0;
+        $instances = 0;
+
+        $showsQuery = CcShowQuery::create()->orderByDbId();
+        if (is_array($onlyShowIds)) {
+            $showsQuery->filterByDbId($onlyShowIds, Criteria::IN);
+        }
+        $shows = $showsQuery->find();
+        foreach ($shows as $show) {
+            $showId = $show->getDbId();
+            $future = CcShowInstancesQuery::create()
+                ->filterByDbShowId($showId)
+                ->filterByDbModifiedInstance(false)
+                ->filterByDbStarts($now, Criteria::GREATER_THAN)
+                ->orderByDbStarts()
+                ->find();
+            if (count($future) > 0) {
+                // deleteShow() handles "this and all following" for the
+                // earliest future instance: content, last_show, show removal
+                $first = $future->getFirst();
+                if ($this->deleteShow($first->getDbId(), false) === false) {
+                    throw new Exception('Could not clear show ' . $showId);
+                }
+                ++$touched;
+                $instances += count($future);
+            }
+            $left = CcShowInstancesQuery::create()
+                ->filterByDbShowId($showId)
+                ->filterByDbModifiedInstance(false)
+                ->count();
+            if ($left === 0 && CcShowQuery::create()->findPk($showId)) {
+                CcShowQuery::create()->filterByDbId($showId)->delete();
+                ++$deleted;
+            } elseif ($left === 0) {
+                ++$deleted;
+            }
+        }
+
+        Logging::info(sprintf(
+            'clearCalendarFromNow: %d shows touched, %d shows deleted, %d instances removed',
+            $touched, $deleted, $instances
+        ));
+
+        return ['shows' => $touched, 'deleted' => $deleted, 'instances' => $instances];
+    }
 }
