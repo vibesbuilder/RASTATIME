@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Vergangenheit bleiben, das Sendeprotokoll behält seine Sendungsnamen.
   POST `preference/clear-calendar` (CSRF, Admin), Rückfrage und Ergebnis
   in vier Sprachen, Probe am Testshow 534 (temporäre Instanz entfernt,
-  Vergangenes blieb).  Manual SETTINGS ×4.
+  Vergangenes blieb).  Manual SETTINGS ×4.  Commit 92825e5.
 - **Import format normalization: lossless audio becomes MP3 320 kbps, raw
   AAC becomes M4A, tags are read from every format (2026-10-14, operator
   question about the FLAC / WAV files in the library, Go 2026-10-14)** -
@@ -936,7 +936,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   sie 61-mal das DB-Passwort aus den YAML-Fehlern vom 04.10. → löschen, nicht
   archivieren.  httpd.conf (Operator, erhöht) auf `rotatelogs` nach
   `C:\RASTATIME\logs\http-{error,access}-YYYYMMDD.log`; Janitor und
-  Firewall-Wächter lesen die neuen Scheiben; INSTALL_APACHE §5.
+  Firewall-Wächter lesen die neuen Scheiben; INSTALL_APACHE §5.  Commit 0f3fdb2.
 - **Liquidsoap 2.4.4 -> 2.4.6 on the main service (2026-10-10 10:55, operator
   Go after the evaluation of 2026-10-09)** - official win64 build unpacked to
   `C:\Tools\liquidsoap-v2.4.6`; `--check` of `rastatime.liq` and
