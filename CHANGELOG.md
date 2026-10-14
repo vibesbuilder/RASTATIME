@@ -1227,7 +1227,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   No live block used date rules.  Manual IMPORT_EXPORT, LIBRARY (criteria
   row) and AUTOLOADING_PLAYLISTS (FAQ: two selections = two smart blocks)
   in EN/DE/FR/ES; 8 new messages in DE/FR/ES; stale "Section 23.52" in
-  the Import/Export sources corrected to 23.56.
+  the Import/Export sources corrected to 23.56.  Commit: f8373d5.
 
 - **Track starts 1.7 s late: the schedule refresh armed its timers after a
   2 s library walk (2026-10-10)** - the 11:15 test show aired +1.9 s on
