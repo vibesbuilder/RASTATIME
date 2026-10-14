@@ -1113,25 +1113,36 @@ SQL;
      */
     public function deleteAllFilesFromPlaylist()
     {
-        // get only the files from the playlist
-        // we are about to clear out
-        $itemsToDelete = CcPlaylistcontentsQuery::create()
-            ->filterByDbPlaylistId($this->id)
-            ->filterByDbFileId(null, Criteria::NOT_EQUAL)
-            ->find();
+        // RASTATIME 2026-10-14 - balanced transaction.  The method used to
+        // end with a bare commit(), which inside a caller's transaction
+        // (Import/Export "replace") committed that outer transaction early.
+        $this->con->beginTransaction();
 
-        CcPlaylistcontentsQuery::create()->findByDbPlaylistId($this->id)->delete();
+        try {
+            // get only the files from the playlist
+            // we are about to clear out
+            $itemsToDelete = CcPlaylistcontentsQuery::create()
+                ->filterByDbPlaylistId($this->id)
+                ->filterByDbFileId(null, Criteria::NOT_EQUAL)
+                ->find();
 
-        // update is_playlist flag in cc_files
-        Application_Model_StoredFile::setIsPlaylist(
-            $itemsToDelete,
-            'playlist',
-            false
-        );
+            CcPlaylistcontentsQuery::create()->findByDbPlaylistId($this->id)->delete();
 
-        $this->pl->setDbMtime(new DateTime('now', new DateTimeZone('UTC')));
-        $this->pl->save($this->con);
-        $this->con->commit();
+            // update is_playlist flag in cc_files
+            Application_Model_StoredFile::setIsPlaylist(
+                $itemsToDelete,
+                'playlist',
+                false
+            );
+
+            $this->pl->setDbMtime(new DateTime('now', new DateTimeZone('UTC')));
+            $this->pl->save($this->con);
+            $this->con->commit();
+        } catch (Exception $e) {
+            $this->con->rollback();
+
+            throw $e;
+        }
     }
 
     public function shuffle()

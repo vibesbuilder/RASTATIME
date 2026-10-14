@@ -118,7 +118,8 @@ file:imported/Example Radio/StationID/Intro.mp3|webstream:BBC World Service|bloc
 Dateien werden über ihren Pfad unterhalb der Bibliothekswurzel
 referenziert (so, wie der Export ihn schreibt), alles andere über den
 Namen. Cue-Punkte und Fades kommen aus der Datei und den Vorgaben, wie
-beim Ablegen eines Elements in einer Playlist.
+beim Ablegen eines Elements in einer Playlist. Mit *ersetzen* wird eine
+Playlist ganz oder gar nicht ersetzt.
 
 ### blocks.json
 
@@ -148,9 +149,9 @@ Gruppen, und verschiedene Felder auch innerhalb einer Gruppe. Beispiel
 
 „Entweder A und B, oder C“ über verschiedene Felder lässt sich in einem
 Block nicht ausdrücken; legen Sie dafür zwei Smart Blocks in eine
-Playlist. Kommt dasselbe Feld in mehreren Gruppen vor, geben Sie nur
-seiner ersten Gruppe Alternativen — sonst verschachtelt sich die
-Auswahl als ((A oder B) und C) oder D. Der Editor verhält sich genauso.
+Playlist. Ein Feld darf in
+mehreren Gruppen vorkommen, jede mit eigenen Alternativen: (A oder B)
+und (C oder D).
 
 **Datumsangaben.** Für *Hochgeladen* (`utime`), *geändert am*
 (`mtime`) und *Zuletzt gespielt* (`lptime`):

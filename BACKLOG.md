@@ -5166,7 +5166,10 @@ ago" wird weiter gelesen), absolute Daten in der Benutzer-Zeitzone, Editor-Pruef
 Transaktion je Block, Vorlagen-Beispiel korrigiert, Manual IMPORT_EXPORT/LIBRARY/AUTOLOADING_PLAYLISTS x4, 8 Strings
 DE/FR/ES.  Architektur §23.56 Nachtrag (0.69.1).
 
-### 🟡 Smart-Block-Abfrage: gleiches Feld in mehreren Gruppen mit Alternativen klammert falsch - DEFER (evaluiert 2026-10-14)
+### ✅ Smart-Block-Abfrage: gleiches Feld in mehreren Gruppen mit Alternativen klammert falsch - gebaut 2026-10-14 (Go 2026-10-14, Architektur §23.58)
+Erledigt 2026-10-14: Ansatz (b) umgesetzt; (a)/(c) Vorher/Nachher ueber alle 32 Bloecke der Station identisch
+(Anzahl + Hash der sortierten Datei-IDs), 7 Muster-Bloecke treffen jetzt den SQL-Sollwert (4 lagen vorher falsch);
+Manual-Grenzhinweis entfernt.  Urspruenglicher Eintrag (Defer, gleicher Tag):
 Propel haengt addAnd/addOr an die bestehende Bedingung derselben Spalte; kommt ein Feld in mehreren Zeilen vor und
 hat eine spaetere Zeile "+"-Alternativen, entsteht ((A oder B) und C) oder D statt (A oder B) und (C oder D).
 Gemessen 2026-10-14: (Rock + Indie) / (Electronic + World) -> 2.923 Titel = nur World (erwartet 0).  Betrifft den
@@ -5179,7 +5182,13 @@ addAnd/addOr auf die Spalte, Sonderfall NOT ILIKE/<> "oder IS NULL" mitnehmen; (
 Live-Bloecke (identisch erwartet) + Probe-Muster oben (erwartet 0); (d) ruhiges Sendefenster, die Auswertung laeuft
 beim Planen und beim Autoloading.
 
-### 💡 Import/Export: Playlist-Ersetzen atomar machen (notiert 2026-10-14)
+### ✅ Import/Export: Playlist-Ersetzen atomar machen - gebaut 2026-10-14 (Go 2026-10-14, Architektur §23.58)
 ImportExportPlaylists::create loescht bei 'ersetzen' mit deleteAllFilesFromPlaylist vor addAudioClips (eigene
 Transaktion); scheitert addAudioClips, bleibt die Playlist leer.  Risiko klein (Eintraege werden vorher
 aufgeloest), Vorschlag: dieselbe Propel-Transaktion um create() wie bei den Smart Blocks seit 2026-10-14.
+Erledigt 2026-10-14: Eine Transaktion allein reichte nicht - deleteAllFilesFromPlaylist endete mit einem nackten
+commit() ohne beginTransaction und haette die aeussere Transaktion vorzeitig festgeschrieben (gemessen: Playlist
+danach leer).  Die Methode hat jetzt eine eigene, ausgeglichene Transaktion; Playlists und Smart Blocks laufen ueber
+ImportExportType::atomically() (Rollback bis zur Ausgangstiefe, auch nach PHP-Error, Propel-Instance-Pools geleert).
+Block::deleteAllFilesFromBlock hat dasselbe nackte commit(), laeuft aber nur beim "Generate" statischer Bloecke ohne
+umgebende Transaktion - bewusst unveraendert.

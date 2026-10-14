@@ -109,7 +109,8 @@ file:imported/Example Radio/StationID/Intro.mp3|webstream:BBC World Service|bloc
 Files are referenced by their path below the library root (as the
 export writes it), everything else by name. Cue points and fades come
 from the file and the defaults, as when you drop an item into a
-playlist.
+playlist. With *replace*, a playlist is replaced completely or not at
+all.
 
 ### blocks.json
 
@@ -138,10 +139,9 @@ within one group. Example — *genre is Pop or Electronic, and above
 ```
 
 "Either A and B, or C" across different fields cannot be expressed in
-one block; put two smart blocks into a playlist instead. If the same
-field appears in several groups, give alternatives only to its first
-group — otherwise the selection nests as ((A or B) and C) or D. The
-editor behaves the same way.
+one block; put two smart blocks into a playlist instead. A field may
+appear in several groups, each with its own alternatives: (A or B)
+and (C or D).
 
 **Dates.** For *Uploaded* (`utime`), *Last Modified* (`mtime`) and
 *Last Played* (`lptime`):

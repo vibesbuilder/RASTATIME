@@ -1,10 +1,15 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.70
+Draft version: 0.71
 Date: 2026-10-14
 
 > **Revision history**
+> - **0.71 (2026-10-14)** — **Smart block query brackets per row, atomic
+>   import rows** (§23.58): one criterion chain per field (rows ANDed,
+>   "+" rows ORed inside), balanced transaction in
+>   `Playlist::deleteAllFilesFromPlaylist`, shared
+>   `ImportExportType::atomically()` for playlist and smart block rows.
 > - **0.70 (2026-10-14)** — **Import format normalization** (§23.57): new
 >   analyzer step `convert_format` - raw ADTS AAC always repacked to M4A,
 >   lossless audio transcoded to MP3 320 kbps CBR (setting, default on,
@@ -6829,3 +6834,61 @@ type (pre-existing for uploads).  Noticed on the way: the MP3 stream output runs
 48 kHz while the mix is 44.1 kHz; the nightly media mirror lives on D:
 like the library, so with no originals kept it does not protect against
 a disk failure (both BACKLOG).
+
+### 23.58 Smart Block Query: One Bracketed Chain per Field; Atomic Import Rows (2026-10-14)
+
+**Decision (operator Go 2026-10-14, from the BACKLOG defer of the same
+day).**  Fix the nesting of the smart block query in the core and make
+Import/Export *replace* of playlists all or nothing, as for smart blocks
+(§23.56 addendum).
+
+**Query.**  `Block::getListofFilesMeetCriteria` keys the rules by field
+and sorts them by group.  It used to hand each rule to
+`$qry->addAnd()` (new group) or `$qry->addOr()` (same group).  Propel's
+`addAnd/addOr` with `preferColumnCondition` attach to the criterion that
+already exists for the column, so all rules of a field formed one
+left-nested chain: (A or B) and C or D = ((A or B) and C) or D whenever a
+later group had alternatives.  Now the loop builds the chain itself with
+`getNewCriterion`: the first rule of a group starts a criterion that is
+ANDed to the field's chain, its "+" rules are ORed onto that group
+criterion, and the finished field criterion goes into the query once
+(`addAnd`, so fields stay ANDed).  Propel brackets every criterion that
+has clauses, giving ((A or B) and (C or D)).  The rest is unchanged:
+value conversion, the "or IS NULL" companion of the first NOT rule of a
+field, custom SQL for ranges and relative dates.  A field without that
+pattern produces the same SQL string as before, and the measurement
+showed it: all 32 blocks on the station return the same tracks (count +
+SHA-1 over the sorted file ids, old and new code in two runs); the seven
+pattern blocks match their expected SQL counts with the new code, four
+of them were wrong before (e.g. two genre rows with alternatives 2,923
+instead of 0, a BPM range row with alternatives 180 instead of 3).  The
+vendored Propel's debug mode (`useDebug`) fails on PHP 8
+(`incrementQueryCount()` returns nothing), hence the result comparison
+instead of an SQL diff.
+
+**Atomic import rows.**  `Playlist::deleteAllFilesFromPlaylist` ended with
+a bare `$this->con->commit()` and no `beginTransaction()`: harmless alone
+(PropelPDO ignores a commit at depth 0), but inside a caller's
+transaction it committed that transaction early, so wrapping the
+Import/Export replace (delete, then `addAudioClips`) did not protect
+anything - measured: a failure after the delete left the playlist empty
+with the old model.  The method now has its own balanced transaction
+(unchanged behaviour in the editor).  `ImportExportType::atomically($fn,
+$peers)` runs a playlist or smart block row in one transaction, rolls
+back to the depth it started at - also when a PHP Error (not an
+Exception) skipped a nested model method's own rollback - and clears the
+instance pools of the given peers, because Propel keeps the objects of
+the rolled-back row with the values that failed (a stale `CcPlaylist`
+looped `save()` until the memory limit in the probe).
+`Block::deleteAllFilesFromBlock` has the same bare commit; it only runs in
+the editor's "Generate" for static blocks, outside any transaction, and
+was left as is.
+
+**Verified 2026-10-14** with probes loading the worktree classes:
+playlist new / replace / failure after the delete / Exception inside
+`addAudioClips` / PHP Error with an open nested transaction / failing new
+playlist / editor delete outside a transaction - contents and
+description intact after every failure, connection back at depth 0, no
+row left by a failed new playlist; the full service path (upload,
+preview, import, replace) for a playlist and the smart block round trip
+and rollback of §23.56 unchanged; cleanup left nothing.

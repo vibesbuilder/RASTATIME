@@ -1300,6 +1300,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Smart block query: a field used in several rows with "+" alternatives
+  selected the wrong tracks; Import/Export replaces playlists all or
+  nothing (2026-10-14, operator Go 2026-10-14)** -
+  `Block::getListofFilesMeetCriteria` fed every rule straight into
+  `$qry->addAnd()/addOr()`, which Propel attaches to the field's existing
+  criterion, so a later row with alternatives nested to the left:
+  ((A or B) and C) or D instead of (A or B) and (C or D) - in the editor
+  as well as for imported blocks.  The query now builds one bracketed
+  chain per field (one criterion per row, its "+" rows ORed inside, the
+  rows ANDed).  Before/after over all 32 blocks on the station: identical
+  tracks (count and file-id hash), i.e. no block on air changes; seven
+  pattern blocks now match their SQL expectation (four were wrong before,
+  e.g. 180 instead of 3 tracks).  Import/Export *replace* of a playlist
+  emptied it before refilling it, and `Playlist::deleteAllFilesFromPlaylist`
+  ended with a bare `commit()` that would have committed any surrounding
+  transaction early: the method now opens its own (balanced) transaction,
+  and playlist and smart block rows run through a shared
+  `ImportExportType::atomically()` that rolls back to its starting depth
+  (also after a PHP Error) and clears the Propel instance pools of the
+  rolled-back row.  Manual IMPORT_EXPORT (groups, playlist replace) in
+  EN/DE/FR/ES.
+
 - **Import folder destroyed `.oga` files - a failed hand-over now moves the
   file to `_failed` instead of deleting it (2026-10-14, operator decision
   2026-10-14)** - the import-folder and FTP scans accepted `.oga`, but

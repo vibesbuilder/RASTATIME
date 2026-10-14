@@ -117,6 +117,8 @@ Les fichiers sont référencés par leur chemin sous la racine de la
 bibliothèque (tel que l'export l'écrit), tout le reste par son nom.
 Les points de repère et les fondus viennent du fichier et des valeurs
 par défaut, comme lorsque vous déposez un élément dans une playlist.
+Avec *remplacer*, une playlist est remplacée entièrement ou pas du
+tout.
 
 ### blocks.json
 
@@ -146,9 +148,9 @@ différents, et des champs différents même au sein d'un groupe. Exemple
 
 « Soit A et B, soit C » sur des champs différents ne peut pas
 s'exprimer dans un seul bloc ; placez plutôt deux smart blocks dans une
-playlist. Si le même champ apparaît dans plusieurs groupes, ne donnez
-des alternatives qu'à son premier groupe — sinon la sélection s'imbrique
-en ((A ou B) et C) ou D. L'éditeur se comporte de la même façon.
+playlist. Un champ peut
+apparaître dans plusieurs groupes, chacun avec ses propres
+alternatives : (A ou B) et (C ou D).
 
 **Dates.** Pour *Téléversé* (`utime`), *Dernier Modifié* (`mtime`) et
 *Dernier Joué* (`lptime`) :

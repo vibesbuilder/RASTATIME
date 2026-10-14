@@ -93,6 +93,40 @@ abstract class Application_Service_ImportExportType
         return ['status' => self::STATUS_ERROR, 'messages' => is_array($messages) ? $messages : [$messages]];
     }
 
+    /**
+     * Runs $fn in one Propel transaction, so a row that fails half way
+     * leaves nothing behind (2026-10-14: replacing deleted the old contents
+     * before writing the new ones).  On failure it rolls back to the depth
+     * it started at - also when a PHP Error skipped the own rollback of a
+     * nested model method (Playlist::addAudioClips catches Exception only) -
+     * and empties the instance pools of $peers: Propel keeps the objects of
+     * the rolled-back row there, still carrying the values that failed.
+     *
+     * @param string[] $peers Propel peer classes the row writes
+     */
+    protected static function atomically(callable $fn, array $peers)
+    {
+        $con = Propel::getConnection();
+        $depth = $con->getNestedTransactionCount();
+        $con->beginTransaction();
+
+        try {
+            $result = $fn();
+            $con->commit();
+
+            return $result;
+        } catch (Throwable $e) {
+            while ($con->getNestedTransactionCount() > $depth) {
+                $con->rollBack();
+            }
+            foreach ($peers as $peer) {
+                $peer::clearInstancePool();
+            }
+
+            throw $e;
+        }
+    }
+
     /** yes/no/1/0/true/false/ja/nein -> bool; empty -> default */
     protected static function toBool($value, bool $default = false): bool
     {

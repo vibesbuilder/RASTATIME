@@ -72,7 +72,7 @@ class Application_Service_ImportExportBlocks extends Application_Service_ImportE
             'sort' => 'random | newest | oldest | ... (as offered by the editor)',
             'switches' => implode(', ', self::SWITCHES) . ' (true/false); the two *_hours values are integers',
             'criteria' => 'list of {"group": n, "field": "<criterion>", "modifier": "<modifier>", "value": "...", "extra": "..."}; extra is the second value of "between" and "is in the range"',
-            'groups' => 'a group is one row of the smart block editor: rules with the same group AND the same field are alternatives (OR, the rows the editor\'s + button adds); everything else is combined with AND - different groups, and different fields even within one group. If one field appears in several groups, give alternatives only to its first group (otherwise the query nests as ((A or B) and C) or D)',
+            'groups' => 'a group is one row of the smart block editor: rules with the same group AND the same field are alternatives (OR, the rows the editor\'s + button adds); everything else is combined with AND - different groups, and different fields even within one group. A field may appear in several groups, each with its own alternatives: (A or B) and (C or D)',
             'dates' => 'utime, mtime, lptime with before / after / between: a whole number in value (and extra) plus "unit" (and "extra_unit"): minute, hour, day, week, month or year, counted back from now; with the other modifiers: an absolute date YYYY-MM-DD or YYYY-MM-DD HH:MM:SS in your user timezone',
         ];
     }
@@ -307,10 +307,7 @@ class Application_Service_ImportExportBlocks extends Application_Service_ImportE
     {
         // all or nothing: storeCriteriaIntoDb deletes the old rules before it
         // writes the new ones, and a new block row exists before its rules
-        $con = Propel::getConnection(CcBlockPeer::DATABASE_NAME);
-        $con->beginTransaction();
-
-        try {
+        return self::atomically(function () use ($record, $ctx) {
             $existing = self::findBlockIdByName($record['name']);
             if ($existing !== null) {
                 $bl = new Application_Model_Block($existing);
@@ -321,14 +318,9 @@ class Application_Service_ImportExportBlocks extends Application_Service_ImportE
             }
             $bl->setDescription($record['description']);
             $bl->saveSmartBlockCriteria(self::criteriaPost($record));
-            $con->commit();
-        } catch (Throwable $e) {
-            $con->rollBack();
 
-            throw $e;
-        }
-
-        return ['status' => self::STATUS_OK, 'messages' => [$existing !== null ? _('replaced') : _('created')], 'id' => (int) $bl->getId()];
+            return ['status' => self::STATUS_OK, 'messages' => [$existing !== null ? _('replaced') : _('created')], 'id' => (int) $bl->getId()];
+        }, ['CcBlockPeer', 'CcBlockcriteriaPeer', 'CcPlaylistPeer', 'CcPlaylistcontentsPeer']);
     }
 
     public function export(array &$files): string

@@ -1958,6 +1958,16 @@ SQL;
         // Logging::info($storedCrit);
         if (isset($storedCrit['crit'])) {
             foreach ($storedCrit['crit'] as $crit) {
+                // RASTATIME 2026-10-14 - one bracketed chain per field: the
+                // rules of a group (an editor row and its "+" rows) are ORed,
+                // the groups are ANDed, (A or B) and (C or D).  The rules used
+                // to go straight into $qry->addAnd()/addOr(), which Propel
+                // attaches to the field's existing criterion, so a later
+                // group with alternatives nested to the left:
+                // ((A or B) and C) or D.  Without that pattern the SQL is
+                // unchanged.
+                $fieldCriterion = null;
+                $groupCriterion = null;
                 $i = 0;
                 $prevgroup = null;
                 $group = null;
@@ -2051,15 +2061,21 @@ SQL;
                             $spCriteria = "reverse(split_part(reverse(filepath), '/', 1))";
                         }
 
-                        if ($i > 0 && $prevgroup == $group) {
-                            $qry->addOr($spCriteria, $spCriteriaValue, $spCriteriaModifier);
+                        $criterion = $qry->getNewCriterion($spCriteria, $spCriteriaValue, $spCriteriaModifier);
+                        if ($i > 0 && $prevgroup == $group && $groupCriterion !== null) {
+                            $groupCriterion->addOr($criterion);
                         } else {
-                            $qry->addAnd($spCriteria, $spCriteriaValue, $spCriteriaModifier);
+                            if ($fieldCriterion === null) {
+                                $fieldCriterion = $criterion;
+                            } else {
+                                $fieldCriterion->addAnd($criterion);
+                            }
+                            $groupCriterion = $criterion;
                         }
                         // only add this NOT LIKE null if you aren't also matching on another criteria
                         if ($i == 0) {
                             if ($spCriteriaModifier == Criteria::NOT_ILIKE || $spCriteriaModifier == Criteria::NOT_EQUAL) {
-                                $qry->addOr($spCriteria, null, Criteria::ISNULL);
+                                $groupCriterion->addOr($qry->getNewCriterion($spCriteria, null, Criteria::ISNULL));
                             }
                         }
                     } catch (Exception $e) {
@@ -2067,6 +2083,13 @@ SQL;
                     }
                     $prevgroup = $group;
                     ++$i;
+                }
+                if ($fieldCriterion !== null) {
+                    try {
+                        $qry->addAnd($fieldCriterion);
+                    } catch (Exception $e) {
+                        Logging::info($e);
+                    }
                 }
             }
         }

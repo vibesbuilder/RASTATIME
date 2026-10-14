@@ -116,7 +116,8 @@ file:imported/Example Radio/StationID/Intro.mp3|webstream:BBC World Service|bloc
 Los archivos se referencian por su ruta bajo la raíz de la biblioteca
 (tal como la escribe la exportación), todo lo demás por nombre. Los
 puntos de corte y los fundidos vienen del archivo y de los valores por
-defecto, como al soltar un elemento en una lista.
+defecto, como al soltar un elemento en una lista. Con *reemplazar*, una
+lista se reemplaza por completo o no se reemplaza.
 
 ### blocks.json
 
@@ -146,9 +147,8 @@ Electronic, y más de 110 BPM*:
 
 «O bien A y B, o bien C» con campos distintos no se puede expresar en un
 solo bloque; ponga en su lugar dos bloques inteligentes en una playlist.
-Si el mismo campo aparece en varios grupos, dé alternativas solo a su
-primer grupo; de lo contrario la selección se anida como ((A o B) y C) o
-D. El editor se comporta igual.
+Un campo puede aparecer en varios grupos, cada uno con sus propias
+alternativas: (A o B) y (C o D).
 
 **Fechas.** Para *Subido* (`utime`), *Ult.Modificado* (`mtime`) y
 *Ult.Reproducido* (`lptime`):

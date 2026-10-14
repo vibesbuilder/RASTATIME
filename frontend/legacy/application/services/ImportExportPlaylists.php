@@ -154,21 +154,25 @@ class Application_Service_ImportExportPlaylists extends Application_Service_Impo
                 return self::error(_('a referenced object of this import was not created'));
             }
         }
-        $existing = self::findPlaylistIdByName($record['name']);
-        if ($existing !== null) {
-            $pl = new Application_Model_Playlist($existing);
-            $pl->deleteAllFilesFromPlaylist();
-        } else {
-            $pl = new Application_Model_Playlist();
-            $pl->setName($record['name']);
-            $pl->setCreator($ctx['userId']);
-        }
-        $pl->setDescription($record['description']);
-        if ($items) {
-            $pl->addAudioClips($items);
-        }
+        // all or nothing (2026-10-14): replace empties the playlist before
+        // addAudioClips refills it, and a new playlist row exists before its items
+        return self::atomically(function () use ($record, $ctx, $items) {
+            $existing = self::findPlaylistIdByName($record['name']);
+            if ($existing !== null) {
+                $pl = new Application_Model_Playlist($existing);
+                $pl->deleteAllFilesFromPlaylist();
+            } else {
+                $pl = new Application_Model_Playlist();
+                $pl->setName($record['name']);
+                $pl->setCreator($ctx['userId']);
+            }
+            $pl->setDescription($record['description']);
+            if ($items) {
+                $pl->addAudioClips($items);
+            }
 
-        return ['status' => self::STATUS_OK, 'messages' => [$existing !== null ? _('replaced') : _('created')], 'id' => (int) $pl->getId()];
+            return ['status' => self::STATUS_OK, 'messages' => [$existing !== null ? _('replaced') : _('created')], 'id' => (int) $pl->getId()];
+        }, ['CcPlaylistPeer', 'CcPlaylistcontentsPeer', 'CcFilesPeer']);
     }
 
     public function export(array &$files): string
