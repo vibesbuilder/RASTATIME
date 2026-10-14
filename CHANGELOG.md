@@ -1309,6 +1309,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   longer commits early (static block probe: old method 0 of 5 items after
   the caller's rollback, new one 5 of 5).  Every method of `Block.php`
   and `Playlist.php` now pairs `beginTransaction()` with `commit()`.
+  Commit: 159bd7a.
 
 - **Smart block query: a field used in several rows with "+" alternatives
   selected the wrong tracks; Import/Export replaces playlists all or
