@@ -2068,14 +2068,14 @@ class PlayoutScheduler:
         # RASTATIME 2026-10-14 - a track whose metadata stays off the stream
         # sends no artist / title; icy_hide makes the label builder show
         # "Station name - Show name" in every format (jingles, IDs, promos).
-        # The bus rewrite (metadata.map update=true, insert_missing=false)
-        # only replaces keys the packet already carries: send title and
-        # artist as empty strings, or the listeners keep the previous title
-        # (observed 15:51:54 on the 2026-10-15 rehearsal).
+        # 2026-10-15 23:44 rehearsal: a packet with EMPTY title/artist keys
+        # did show "Station - Show" for the jingle, but afterwards NO packet
+        # reached the Icecast output any more (three tracks, stream title
+        # stuck) - reverted to the key-less packet (jingle keeps the previous
+        # title, every later track labels normally) until the replica shows
+        # why; see CHANGELOG 2026-10-15.
         if getattr(event, "icy_hidden", False):
             return {
-                "title":     "",
-                "artist":    "",
                 "icy_hide":  "true",
                 "show_name": event.show_name or "",
             }

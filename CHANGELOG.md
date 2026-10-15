@@ -1340,6 +1340,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Zurückgenommen: leere Titel-/Interpret-Schlüssel im versteckten
+  Metadaten-Paket (2026-10-15, 83f2f05)** — Probe 23:44:09: der Jingle
+  zeigte zwar „RASTATIME - Untitled Show", danach erreichte aber kein
+  Paket mehr den Icecast-Ausgang (Musik 23:44:14, Jingle 23:47:59, Musik
+  23:48:34; `output.icecast.metadata` blieb beim Jingle-Paket, Stream-Titel
+  hing).  Paket wieder ohne Schlüssel (Jingle behält den Vortitel, alle
+  weiteren Titel normal).  OFFEN: Ursache auf dem Replikat klären
+  (Verdacht: `metadata.map`/`cross` mit leeren Feldern), dann erneut.
 - **Stream-Metadaten „nicht weitergeben" ließ den Vortitel stehen
   (2026-10-15)** — das Paket ohne Titel/Interpret konnte vom Bus-Rewrite
   (`metadata.map update=true, insert_missing=false`) nicht umgeschrieben
