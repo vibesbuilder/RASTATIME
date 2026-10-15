@@ -5193,3 +5193,23 @@ ImportExportType::atomically() (Rollback bis zur Ausgangstiefe, auch nach PHP-Er
 Block::deleteAllFilesFromBlock hatte dasselbe nackte commit() (laeuft nur im Editor: "Leeren" und "Generate"
 statischer Bloecke, ohne umgebende Transaktion) - auf Operator-Wunsch am selben Tag ebenfalls ausgeglichen
 (gemessen: alt 0 von 5 Eintraegen nach dem Rollback des Aufrufers, neu alle 5; Editor-Verhalten unveraendert).
+
+### 🟡 Stream-Metadaten „nicht weitergeben": Jingle soll „Sendername - Sendungsname" zeigen - Defer 2026-10-15 (Operator: Stand reicht so)
+
+Stand: `cc_files.icy_forward` / `cc_track_types.icy_forward` (Migration 0068,
+Commit c4daf1e) sind live; ein verstecktes Paket (`icy_hide=true`,
+`show_name`) lässt den Vortitel im Stream stehen, alle weiteren Titel
+erscheinen normal. Der Versuch, Titel/Interpret als leere Schlüssel
+mitzuschicken (83f2f05), zeigte zwar den Jingle-Text, danach erreichte aber
+kein Paket mehr den Icecast-Ausgang (Probe 23:44-23:49) - revertiert
+(0fa56e0). Operator 2026-10-15: so belassen.
+
+Vorbedingungen für eine Wiederaufnahme:
+- Replikat-Probe: warum liefert der Bus nach einem Paket mit leeren Feldern
+  keine Pakete mehr (`metadata.map(id="icy_rewrite", update=true,
+  strip=false, insert_missing=false)` + `rt_cross`)?
+- Alternative prüfen: das Playout schickt den fertigen Text
+  „Sendername - Sendungsname" direkt als `title` (kein `icy_hide`-Zweig,
+  keine leeren Felder).
+- Abnahme mit `C:/Temp/optd/icy_watch.py HH:MM:SS` und
+  `liq_cmd.py "output.icecast.metadata"` um zwei aufeinanderfolgende Jingles.
