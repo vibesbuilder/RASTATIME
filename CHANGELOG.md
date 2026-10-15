@@ -1347,7 +1347,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   23:48:34; `output.icecast.metadata` blieb beim Jingle-Paket, Stream-Titel
   hing).  Paket wieder ohne Schlüssel (Jingle behält den Vortitel, alle
   weiteren Titel normal).  OFFEN: Ursache auf dem Replikat klären
-  (Verdacht: `metadata.map`/`cross` mit leeren Feldern), dann erneut.
+  (Verdacht: `metadata.map`/`cross` mit leeren Feldern), dann erneut.  Commit 0fa56e0.
 - **Stream-Metadaten „nicht weitergeben" ließ den Vortitel stehen
   (2026-10-15)** — das Paket ohne Titel/Interpret konnte vom Bus-Rewrite
   (`metadata.map update=true, insert_missing=false`) nicht umgeschrieben
