@@ -2068,8 +2068,14 @@ class PlayoutScheduler:
         # RASTATIME 2026-10-14 - a track whose metadata stays off the stream
         # sends no artist / title; icy_hide makes the label builder show
         # "Station name - Show name" in every format (jingles, IDs, promos).
+        # The bus rewrite (metadata.map update=true, insert_missing=false)
+        # only replaces keys the packet already carries: send title and
+        # artist as empty strings, or the listeners keep the previous title
+        # (observed 15:51:54 on the 2026-10-15 rehearsal).
         if getattr(event, "icy_hidden", False):
             return {
+                "title":     "",
+                "artist":    "",
                 "icy_hide":  "true",
                 "show_name": event.show_name or "",
             }
