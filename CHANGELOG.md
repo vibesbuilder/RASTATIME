@@ -1345,7 +1345,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`metadata.map update=true, insert_missing=false`) nicht umgeschrieben
   werden, weil der Schlüssel `title` fehlte; Probe 15:51:54 zeigte den
   Vortitel.  Das Playout schickt Titel und Interpret jetzt als leere
-  Schlüssel mit (`_track_metadata`).  Wirksam nach PLAYOUT-Neustart.
+  Schlüssel mit (`_track_metadata`).  Wirksam nach PLAYOUT-Neustart.  Commit 83f2f05.
 - **Überlappungsprüfung kannte die Monatswahl nicht (2026-10-15)** — die
   Prüfung beim Anlegen/Bearbeiten wanderte bei monatlicher Wiederholung
   durch jeden Monat und stieß in abgewählten Monaten auf fremde Sendungen
