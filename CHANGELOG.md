@@ -1340,6 +1340,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Überlappungsprüfung kannte die Monatswahl nicht (2026-10-15)** — die
+  Prüfung beim Anlegen/Bearbeiten wanderte bei monatlicher Wiederholung
+  durch jeden Monat und stieß in abgewählten Monaten auf fremde Sendungen
+  („Cannot schedule overlapping shows" für eine Sendung in den
+  Lückenmonaten).  `AddShowWhen` überspringt Termine in abgewählten
+  Monaten (Ortszeit der Sendung), auch den ersten.
 - **Monatswahl kam nicht an (2026-10-15)** — der Schedule-Controller baut
   die Formulardaten aus der flachen serializeArray-Liste nach und holt nur
   die Wochentage als eigenen Parameter; die Monats-Häkschen kollabierten

@@ -251,6 +251,19 @@ class Application_Form_AddShowWhen extends Zend_Form_SubForm
                         );
                 }
 
+                // RASTATIME 2026-10-15 - month selection of a monthly repeat: a
+                // deselected month gets no instance, so it cannot overlap
+                $monthMask = Application_Service_ShowService::monthMaskFromForm($formData);
+                $monthSelected = function (DateTime $utcStart) use ($formData, $monthMask, $showTimezone) {
+                    if ($formData['add_show_repeat_type'] != 2) {
+                        return true;
+                    }
+                    $local = clone $utcStart;
+                    $local->setTimezone($showTimezone);
+
+                    return Application_Service_ShowService::monthSelected($monthMask, $local);
+                };
+
                 /* Check first show
                  * Continue if the first show does not overlap
                  */
@@ -267,6 +280,10 @@ class Application_Form_AddShowWhen extends Zend_Form_SubForm
                         $showStartDateTime,
                         $showEndDateTime
                     );
+                }
+
+                if ($overlapping && !$monthSelected($showStartDateTime)) {
+                    $overlapping = false; // first date in a deselected month: no instance there
                 }
 
                 /* Check if repeats overlap with previously scheduled shows
@@ -305,7 +322,9 @@ class Application_Form_AddShowWhen extends Zend_Form_SubForm
                          * (i.e: every wednesday, then every thursday, etc.)
                          */
                         while ($repeatShowStart->getTimestamp() < $populateUntilDateTime->getTimestamp()) {
-                            if ($formData['add_show_id'] == -1) {
+                            if (!$monthSelected($repeatShowStart)) {
+                                $overlapping = false; // deselected month: no instance, nothing to overlap
+                            } elseif ($formData['add_show_id'] == -1) {
                                 // this is a new show
                                 $overlapping = Application_Model_Schedule::checkOverlappingShows(
                                     $repeatShowStart,
