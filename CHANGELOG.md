@@ -1349,7 +1349,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   füllen die Monate; Import/Export: neue Spalte `months`
   (Jan,Feb,… oder 1..12, leer = alle), Export schreibt sie bei
   monatlichen Typen; Häkchen in Vierer-Reihen (add-show.css).  Manual
-  IMPORT_EXPORT ×4.
+  IMPORT_EXPORT ×4.  Commit 53a4d74.
 - **Smart blocks: `deleteAllFilesFromBlock` no longer commits a caller's
   transaction (2026-10-14, operator request 2026-10-14)** - like its
   playlist twin (20c7755) the method ended with a bare `commit()` without
