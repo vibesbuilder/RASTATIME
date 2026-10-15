@@ -105,6 +105,19 @@ label.wrapp-label input[type="checkbox"] {
     margin-right: 10px;
 }
 
+/* RASTATIME 2026-10-15 - month boxes of a monthly repeat: four per row */
+#add_show_month_check-element.block-display {
+    margin-bottom: 15px;
+    margin-top: 7px;
+}
+#add_show_month_check-element.block-display label.wrapp-label {
+    font-size: 12px;
+    float: left;
+    width: 23%;
+    margin-right: 2%;
+    white-space: nowrap;
+}
+
 #add_show_name-element .input_text {
     /*width:99%;*/
 }

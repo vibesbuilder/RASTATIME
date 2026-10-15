@@ -89,6 +89,7 @@ sigue rechazándose.
 | `allow_delayed_start` | yes/no, véase [Inicio diferido](./DELAYED_START.md) |
 | `repeats`, `repeat_type` | `none`, `weekly`, `biweekly`, `every_3_weeks`, `every_4_weeks`, `monthly_date`, `monthly_weekday` |
 | `days` | para los tipos semanales: `Mon,Tue,Wed,Thu,Fri,Sat,Sun` (también valen las abreviaturas alemanas); vacío = día de la semana de `start_date` |
+| `months` | para los tipos mensuales (desde 2026-10-15): `Jan,Feb,...,Dec` o `1..12` (también valen las abreviaturas alemanas); vacío = todos los meses |
 | `repeat_end_date`, `no_end` | fecha de la última emisión, o `no_end = yes` |
 | `linked`, `record` | yes/no |
 | `content`, `content_repeat` | el nombre de una lista usada como **lista de carga automática** del programa, y si se repite hasta llenar el programa; véase [Listas de carga automática](./AUTOLOADING_PLAYLISTS.md). Una lista puede contener pistas, bloques inteligentes, webstreams y entradas de línea, así cada instancia del programa se llena automáticamente. |

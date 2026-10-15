@@ -54,6 +54,7 @@ class Application_Service_ShowTemplateService
         'add_show_repeat_type',
         'add_show_monthly_repeat_type',
         'add_show_day_check',         // array of weekdays for repeating
+        'add_show_month_check',       // RASTATIME 2026-10-15 - months of a monthly repeat
         'add_show_end_date',
         'add_show_no_end',
         // "Record"

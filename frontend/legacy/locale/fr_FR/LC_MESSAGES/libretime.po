@@ -6560,3 +6560,7 @@ msgstr "Transmettre les métadonnées au flux :"
 #: application/forms/EditAudioMD.php application/forms/AddTracktype.php
 msgid "Artist and title of tracks of this type are shown in the listeners' players and in the Live Text. Unticked: the stream shows \"Station name - Show name\" while such a track plays (jingles, station IDs, promos). A track can override this in its own editor."
 msgstr "L'artiste et le titre des pistes de ce type apparaissent dans les lecteurs des auditeurs et dans le Live Text. Décoché : le flux affiche « Nom de la station - Nom de l'émission » pendant une telle piste (jingles, identifiants, promos). Une piste peut passer outre dans son propre éditeur."
+
+#: application/services/ImportExportShows.php
+msgid "unknown month \"%s\""
+msgstr "mois inconnu « %s »"

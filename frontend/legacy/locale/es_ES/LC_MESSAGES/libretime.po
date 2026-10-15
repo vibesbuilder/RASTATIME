@@ -6396,3 +6396,7 @@ msgstr "Enviar metadatos al stream:"
 #: application/forms/EditAudioMD.php application/forms/AddTracktype.php
 msgid "Artist and title of tracks of this type are shown in the listeners' players and in the Live Text. Unticked: the stream shows \"Station name - Show name\" while such a track plays (jingles, station IDs, promos). A track can override this in its own editor."
 msgstr "El artista y el título de las pistas de este tipo aparecen en los reproductores de los oyentes y en el Live Text. Sin marcar: el stream muestra «Nombre de la emisora - Nombre del programa» mientras suena una pista así (jingles, identificaciones, promos). Una pista puede anularlo en su propio editor."
+
+#: application/services/ImportExportShows.php
+msgid "unknown month \"%s\""
+msgstr "mes desconocido «%s»"

@@ -23,6 +23,10 @@ class Application_Service_ImportExportShows extends Application_Service_ImportEx
     const DAYS = ['sun' => 0, 'so' => 0, 'mon' => 1, 'mo' => 1, 'tue' => 2, 'di' => 2, 'wed' => 3, 'mi' => 3, 'thu' => 4, 'do' => 4,
         'fri' => 5, 'fr' => 5, 'sat' => 6, 'sa' => 6, ];
     const DAY_OUT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    // RASTATIME 2026-10-15 - month selection of the monthly repeat types
+    const MONTHS = ['jan' => 1, 'jän' => 1, 'feb' => 2, 'mar' => 3, 'mär' => 3, 'apr' => 4, 'may' => 5, 'mai' => 5,
+        'jun' => 6, 'jul' => 7, 'aug' => 8, 'sep' => 9, 'oct' => 10, 'okt' => 10, 'nov' => 11, 'dec' => 12, 'dez' => 12, ];
+    const MONTH_OUT = [1 => 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
     public function type(): string
     {
@@ -42,7 +46,7 @@ class Application_Service_ImportExportShows extends Application_Service_ImportEx
     public function columns(): array
     {
         return ['name', 'url', 'genre', 'description', 'start_date', 'start_time', 'end_date', 'end_time', 'timezone',
-            'allow_delayed_start', 'repeats', 'repeat_type', 'days', 'repeat_end_date', 'no_end', 'linked', 'record',
+            'allow_delayed_start', 'repeats', 'repeat_type', 'days', 'months', 'repeat_end_date', 'no_end', 'linked', 'record',
             'content', 'content_repeat', 'intro_playlist', 'outro_playlist', 'rastatime_auth', 'custom_auth', 'custom_username',
             'djs', 'background_color', 'text_color', 'logo', ];
     }
@@ -58,6 +62,7 @@ class Application_Service_ImportExportShows extends Application_Service_ImportEx
             'allow_delayed_start' => 'yes/no',
             'repeats' => 'yes/no; repeat_type: none | weekly | biweekly | every_3_weeks | every_4_weeks | monthly_date | monthly_weekday',
             'days' => 'for weekly types: Mon,Tue,Wed,Thu,Fri,Sat,Sun (also Mo,Di,Mi,Do,Fr,Sa,So); empty = weekday of start_date',
+            'months' => 'for monthly types: Jan,Feb,...,Dec or 1..12 (German short names work too); empty = every month',
             'repeat_end_date, no_end' => 'last date of the repetition, or no_end = yes',
             'linked' => 'yes/no - all instances share one content',
             'record' => 'yes/no - record this show',
@@ -223,6 +228,20 @@ class Application_Service_ImportExportShows extends Application_Service_ImportEx
             if ($rec['repeats'] && in_array(self::REPEAT_IN[$repeatType] ?? -1, [0, 1, 4, 5], true) && !$rec['days'] && $rec['start_date']) {
                 $rec['days'] = [(int) date('w', strtotime($rec['start_date']))];
             }
+            // RASTATIME 2026-10-15 - month selection of the monthly types (empty = every month)
+            $rec['months'] = [];
+            foreach (self::splitList($g('months')) as $mo) {
+                $k = mb_strtolower(mb_substr($mo, 0, 3));
+                if (ctype_digit($mo) && (int) $mo >= 1 && (int) $mo <= 12) {
+                    $rec['months'][] = (int) $mo;
+                } elseif (isset(self::MONTHS[$k])) {
+                    $rec['months'][] = self::MONTHS[$k];
+                } else {
+                    $rec['_errors'][] = sprintf(_('unknown month "%s"'), $mo);
+                }
+            }
+            $rec['months'] = array_values(array_unique($rec['months']));
+            sort($rec['months']);
             $rec['repeat_end_date'] = $g('repeat_end_date') === '' ? null : self::parseDate($g('repeat_end_date'));
             if ($g('repeat_end_date') !== '' && $rec['repeat_end_date'] === null) {
                 $rec['_errors'][] = _('repeat_end_date must be YYYY-MM-DD');
@@ -355,6 +374,7 @@ class Application_Service_ImportExportShows extends Application_Service_ImportEx
             'add_show_repeat_type' => $record['repeats'] ? (string) (in_array($repeatCode, [2, 3], true) ? 2 : $repeatCode) : '0',
             'add_show_monthly_repeat_type' => (string) ($repeatCode === 3 ? 3 : 2),
             'add_show_day_check' => $record['repeats'] ? array_map('strval', $record['days']) : null,
+            'add_show_month_check' => ($record['repeats'] && !empty($record['months'])) ? array_map('strval', $record['months']) : [],
             'add_show_end_date' => $record['repeat_end_date'] ?? $record['start_date'],
             'add_show_no_end' => $record['no_end'] ? 1 : 0,
             'add_show_linked' => $record['linked'] ? 1 : 0,
@@ -507,7 +527,7 @@ SQL;
         foreach ($con->query('SELECT id, name FROM cc_playlist')->fetchAll(PDO::FETCH_ASSOC) as $p) {
             $playlistNames[(int) $p['id']] = $p['name'];
         }
-        $daysStmt = $con->prepare('SELECT first_show, last_show, start_time, timezone, duration, day, repeat_type, record FROM cc_show_days WHERE show_id = :id ORDER BY id');
+        $daysStmt = $con->prepare('SELECT first_show, last_show, start_time, timezone, duration, day, repeat_type, record, month_mask FROM cc_show_days WHERE show_id = :id ORDER BY id');
         $hostStmt = $con->prepare('SELECT u.login FROM cc_show_hosts h JOIN cc_subjs u ON u.id = h.subjs_id WHERE h.show_id = :id ORDER BY u.login');
         foreach ($con->query($sql)->fetchAll(PDO::FETCH_ASSOC) as $s) {
             $daysStmt->execute([':id' => $s['id']]);
@@ -536,6 +556,18 @@ SQL;
                     }
                 }
             }
+            // RASTATIME 2026-10-15 - months of a monthly repeat (empty = every month)
+            $monthNames = [];
+            if (in_array($repeat, [2, 3], true)) {
+                $mask = (int) ($first['month_mask'] ?? 4095);
+                if ($mask !== 4095) {
+                    for ($mo = 1; $mo <= 12; ++$mo) {
+                        if ($mask & (1 << ($mo - 1))) {
+                            $monthNames[] = self::MONTH_OUT[$mo];
+                        }
+                    }
+                }
+            }
             $hostStmt->execute([':id' => $s['id']]);
             $logos = '';
             if (!empty($s['image_path'])) {
@@ -561,6 +593,7 @@ SQL;
                 'repeats' => self::boolOut($repeat !== -1),
                 'repeat_type' => self::REPEAT_OUT[$repeat] ?? 'none',
                 'days' => implode(',', array_unique($dayNames)),
+                'months' => implode(',', $monthNames),
                 // cc_show_days.last_show is the day AFTER the last broadcast (exclusive) - the dialog's 'Date End' is inclusive
                 'repeat_end_date' => $repeat !== -1 && $first['last_show'] ? (new DateTime((string) $first['last_show']))->modify('-1 day')->format('Y-m-d') : '',
                 'no_end' => self::boolOut($repeat !== -1 && !$first['last_show']),

@@ -89,6 +89,7 @@ toujours refusée.
 | `allow_delayed_start` | yes/no, voir [Démarrage différé](./DELAYED_START.md) |
 | `repeats`, `repeat_type` | `none`, `weekly`, `biweekly`, `every_3_weeks`, `every_4_weeks`, `monthly_date`, `monthly_weekday` |
 | `days` | pour les types hebdomadaires : `Mon,Tue,Wed,Thu,Fri,Sat,Sun` (les abréviations allemandes fonctionnent aussi) ; vide = jour de semaine de `start_date` |
+| `months` | pour les types mensuels (depuis le 2026-10-15) : `Jan,Feb,...,Dec` ou `1..12` (les abréviations allemandes fonctionnent aussi) ; vide = chaque mois |
 | `repeat_end_date`, `no_end` | date de la dernière diffusion, ou `no_end = yes` |
 | `linked`, `record` | yes/no |
 | `content`, `content_repeat` | le nom d'une playlist utilisée comme **playlist de chargement automatique** de l'émission, et si elle se répète jusqu'à remplir l'émission — voir [Playlists de chargement automatique](./AUTOLOADING_PLAYLISTS.md). Une playlist peut contenir des pistes, des smart blocks, des webstreams et des entrées line-in : chaque occurrence de l'émission est ainsi remplie automatiquement. |

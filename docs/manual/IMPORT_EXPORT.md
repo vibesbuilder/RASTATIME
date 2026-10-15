@@ -82,6 +82,7 @@ refused.
 | `allow_delayed_start` | yes/no, see [Delayed Start](./DELAYED_START.md) |
 | `repeats`, `repeat_type` | `none`, `weekly`, `biweekly`, `every_3_weeks`, `every_4_weeks`, `monthly_date`, `monthly_weekday` |
 | `days` | for the weekly types: `Mon,Tue,Wed,Thu,Fri,Sat,Sun` (German short names work too); empty = the weekday of `start_date` |
+| `months` | for the monthly types (since 2026-10-15): `Jan,Feb,...,Dec` or `1..12` (German short names work too); empty = every month |
 | `repeat_end_date`, `no_end` | last broadcast date, or `no_end = yes` |
 | `linked`, `record` | yes/no |
 | `content`, `content_repeat` | the name of a playlist used as the show's **autoloading playlist**, and whether it repeats until the show is full — see [Autoloading Playlists](./AUTOLOADING_PLAYLISTS.md). A playlist can hold tracks, smart blocks, webstreams and line-in inputs, so this fills every instance of the show automatically. |

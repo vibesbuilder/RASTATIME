@@ -565,6 +565,8 @@ class ScheduleController extends Zend_Controller_Action
         // TODO: move this to js
         $data['add_show_hosts'] = $this->_getParam('hosts');
         $data['add_show_day_check'] = $this->_getParam('days');
+        // RASTATIME 2026-10-15 - month boxes of a monthly repeat (empty = every month)
+        $data['add_show_month_check'] = $this->_getParam('months', []);
 
         if ($data['add_show_day_check'] == '') {
             $data['add_show_day_check'] = null;
@@ -627,6 +629,8 @@ class ScheduleController extends Zend_Controller_Action
         // TODO: move this to js
         $data['add_show_hosts'] = $this->_getParam('hosts');
         $data['add_show_day_check'] = $this->_getParam('days');
+        // RASTATIME 2026-10-15 - month boxes of a monthly repeat (empty = every month)
+        $data['add_show_month_check'] = $this->_getParam('months', []);
 
         if ($data['add_show_day_check'] == '') {
             $data['add_show_day_check'] = null;
@@ -911,6 +915,7 @@ class ScheduleController extends Zend_Controller_Action
             }
             $data['add_show_hosts'] = $this->_getParam('hosts', []);
             $data['add_show_day_check'] = $this->_getParam('days', []);
+            $data['add_show_month_check'] = $this->_getParam('months', []);
             $overwrite = ((int) $this->_getParam('overwrite', 0)) === 1;
 
             $id = Application_Service_ShowTemplateService::saveFromShowData(

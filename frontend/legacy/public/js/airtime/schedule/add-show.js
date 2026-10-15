@@ -508,12 +508,12 @@ function setAddShowEvents(form) {
       form
         .find("#add_show_day_check-label, #add_show_day_check-element")
         .hide();
-      //form.find("#add_show_monthly_repeat_type-label, #add_show_monthly_repeat_type-element").show();
+      //form.find("#add_show_monthly_repeat_type-label, #add_show_monthly_repeat_type-element, #add_show_month_check-label, #add_show_month_check-element").show();
     } else {
       form
         .find("#add_show_day_check-label, #add_show_day_check-element")
         .show();
-      //form.find("#add_show_monthly_repeat_type-label, #add_show_monthly_repeat_type-element").hide();
+      //form.find("#add_show_monthly_repeat_type-label, #add_show_monthly_repeat_type-element, #add_show_month_check-label, #add_show_month_check-element").hide();
     }
   }
   function toggleMonthlyRepeatType() {
@@ -537,6 +537,11 @@ function setAddShowEvents(form) {
   form.find("#add_show_day_check-element").addClass("block-display clearfix");
   form.find("#add_show_day_check-element label").addClass("wrapp-label");
   form.find("#add_show_day_check-element br").remove();
+  // RASTATIME 2026-10-15 - the month boxes in rows of four (add-show.css)
+  form.find("#add_show_month_check-label").addClass("block-display");
+  form.find("#add_show_month_check-element").addClass("block-display clearfix");
+  form.find("#add_show_month_check-element label").addClass("wrapp-label");
+  form.find("#add_show_month_check-element br").remove();
 
   form.find(".show_timezone_help_icon").rtTooltip({
     content: {
@@ -825,6 +830,14 @@ function setAddShowEvents(form) {
         }
       })
       .get();
+    // RASTATIME 2026-10-15 - the month boxes travel like the day boxes: the
+    // controller rebuilds the form data from a flat name/value list, where
+    // a multi-checkbox collapses to its last value
+    var months = $("#add_show_month_check-element input")
+      .map(function () {
+        return $(this).prop("checked") ? $(this).val() : undefined;
+      })
+      .get();
 
     var start_date = $("#add_show_start_date").val(),
       end_date = $("#add_show_end_date").val(),
@@ -843,7 +856,7 @@ function setAddShowEvents(form) {
 
     $.ajax({
       url: action,
-      data: { format: "json", data: data, hosts: hosts, days: days },
+      data: { format: "json", data: data, hosts: hosts, days: days, months: months },
       success: function (json) {
         if (json.showId && image) {
           // Successfully added the show, and it contains an image to upload
@@ -1198,14 +1211,19 @@ function setupShowTemplateControls(form) {
           return $(this).prop("checked") ? $(this).val() : undefined;
         })
         .get();
-      doSaveTemplate(data, hosts, days, 0);
+      var months = $("#add_show_month_check-element input")
+        .map(function () {
+          return $(this).prop("checked") ? $(this).val() : undefined;
+        })
+        .get();
+      doSaveTemplate(data, hosts, days, months, 0);
       return false;
     });
 
-  function doSaveTemplate(data, hosts, days, overwrite) {
+  function doSaveTemplate(data, hosts, days, months, overwrite) {
     $.post(
       baseUrl + "Schedule/save-show-template/format/json",
-      { format: "json", data: data, hosts: hosts, days: days, overwrite: overwrite },
+      { format: "json", data: data, hosts: hosts, days: days, months: months, overwrite: overwrite },
       function (json) {
         if (json && json.conflict) {
           var ok = confirm(
@@ -1214,7 +1232,7 @@ function setupShowTemplateControls(form) {
             ),
           );
           if (ok) {
-            doSaveTemplate(data, hosts, days, 1);
+            doSaveTemplate(data, hosts, days, months, 1);
           } else {
             setStatus($.i18n._("Save cancelled."), true);
           }
@@ -1286,6 +1304,14 @@ function applyShowTemplate(form, td) {
     form.find("#add_show_day_check-element input").prop("checked", false);
     td.add_show_day_check.forEach(function (d) {
       form.find("#add_show_day_check-" + d).prop("checked", true);
+    });
+  }
+  // RASTATIME 2026-10-15 - months of a monthly repeat (empty = every month)
+  if (Array.isArray(td.add_show_month_check)) {
+    var all = td.add_show_month_check.length === 0;
+    form.find("#add_show_month_check-element input").prop("checked", all);
+    td.add_show_month_check.forEach(function (m) {
+      form.find("#add_show_month_check-" + m).prop("checked", true);
     });
   }
 
@@ -1376,13 +1402,13 @@ function syncDependentVisibility(form) {
   if (repeatType == 2) {
     form
       .find(
-        "#add_show_monthly_repeat_type-label, #add_show_monthly_repeat_type-element",
+        "#add_show_monthly_repeat_type-label, #add_show_monthly_repeat_type-element, #add_show_month_check-label, #add_show_month_check-element",
       )
       .show();
   } else {
     form
       .find(
-        "#add_show_monthly_repeat_type-label, #add_show_monthly_repeat_type-element",
+        "#add_show_monthly_repeat_type-label, #add_show_monthly_repeat_type-element, #add_show_month_check-label, #add_show_month_check-element",
       )
       .hide();
   }

@@ -1340,6 +1340,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Monatswahl kam nicht an (2026-10-15)** — der Schedule-Controller baut
+  die Formulardaten aus der flachen serializeArray-Liste nach und holt nur
+  die Wochentage als eigenen Parameter; die Monats-Häkschen kollabierten
+  zum letzten Wert, die Maske blieb 4095 (Operator: Testsendung in jedem
+  Monat).  JS schickt `months` wie `days`, Controller nimmt sie in
+  add-show, edit-show und save-show-template; Vorlagen speichern und
+  füllen die Monate; Import/Export: neue Spalte `months`
+  (Jan,Feb,… oder 1..12, leer = alle), Export schreibt sie bei
+  monatlichen Typen; Häkchen in Vierer-Reihen (add-show.css).  Manual
+  IMPORT_EXPORT ×4.
 - **Smart blocks: `deleteAllFilesFromBlock` no longer commits a caller's
   transaction (2026-10-14, operator request 2026-10-14)** - like its
   playlist twin (20c7755) the method ended with a bare `commit()` without

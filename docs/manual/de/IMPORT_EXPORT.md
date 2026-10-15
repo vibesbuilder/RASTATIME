@@ -91,6 +91,7 @@ ist, wird weiterhin abgewiesen.
 | `allow_delayed_start` | yes/no, siehe [Verzögerter Sendungsstart](./DELAYED_START.md) |
 | `repeats`, `repeat_type` | `none`, `weekly`, `biweekly`, `every_3_weeks`, `every_4_weeks`, `monthly_date`, `monthly_weekday` |
 | `days` | für die wöchentlichen Typen: `Mon,Tue,Wed,Thu,Fri,Sat,Sun` (deutsche Kurzformen gehen auch); leer = Wochentag von `start_date` |
+| `months` | für die monatlichen Typen (seit 2026-10-15): `Jan,Feb,...,Dec` oder `1..12` (deutsche Kurzformen gehen auch); leer = jeden Monat |
 | `repeat_end_date`, `no_end` | Datum der letzten Ausstrahlung oder `no_end = yes` |
 | `linked`, `record` | yes/no |
 | `content`, `content_repeat` | Name einer Playlist als **Autoloading-Playlist** der Sendung, und ob sie bis zur vollen Sendung wiederholt wird — siehe [Autoloading-Playlisten](./AUTOLOADING_PLAYLISTS.md). Eine Playlist kann Titel, Smart Blocks, Webstreams und Line-In-Eingänge enthalten, damit wird jede Instanz der Sendung automatisch befüllt. |
