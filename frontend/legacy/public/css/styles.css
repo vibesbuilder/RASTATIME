@@ -606,6 +606,15 @@ input[type="text"]:focus, input[type="password"]:focus, textarea:focus, .input_t
     padding: 2px 2px 2px 1px;
     vertical-align: top;
 }
+/* RASTATIME 2026-10-16 - a multiselect is a list, not a dropdown: the
+   26px above squeezed it into one row that could not "open" (track editor
+   "Teaser for shows", bulk editor).  Six rows, scrollable. */
+.input_select[multiple], select[multiple] {
+    height: auto;
+    min-height: 7.5em;
+    padding: 2px;
+    box-shadow: none;
+}
 
 .add_show_input_select{
     width: 150px;
