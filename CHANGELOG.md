@@ -41,7 +41,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   zeigten die Editoren keine Verknüpfungen und die Spalte blieb leer,
   obwohl gespeichert wurde (Commit dde697c).  Sendungsauswahl als
   Kontrollkästchen-Liste wie der Song-Request-Pool, rollbar, ausgegraut
-  ohne Typ (Operator-Wunsch).  Commit 9b71598.  Strings
+  ohne Typ (Operator-Wunsch).  Commit 9b71598.  Danach exakt das
+  Pool-Widget (`.rt-sbdd`: Knopf „Shows (n)" öffnet das dunkle Panel),
+  je Dialog gescopt (die Sperre ohne Typ griff im Bulk-Editor nicht, weil
+  das Skript den zuletzt geöffneten Einzel-Editor im DOM erwischte).
+  Commit 06491c9.  Strings
   DE/FR/ES, Manual TEASERS ×4 (neu), LIBRARY ×4, Architektur §23.63.
   Commit 8478269.
 - **Local Machine: Kontrollkästchen „Bulk Import: allow importing
