@@ -36,7 +36,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   auf): `select[multiple]` bekommt sechs Zeilen, Commit 3997c42.  Operator
   2026-10-16: Typ zuerst - Sendungsliste erst mit gewähltem Typ aktiv,
   Speichern mit Sendungen ohne Typ wird abgewiesen (Einzel- und
-  Mehrfach-Bearbeitung), kein stilles 'show' mehr.  Commit 781d200.  Strings
+  Mehrfach-Bearbeitung), kein stilles 'show' mehr.  Commit 781d200.
+  Bereitschaftsprüfung „1 AND 1" war kein PostgreSQL-Operator: seit 0070
+  zeigten die Editoren keine Verknüpfungen und die Spalte blieb leer,
+  obwohl gespeichert wurde (Commit dde697c).  Sendungsauswahl als
+  Kontrollkästchen-Liste wie der Song-Request-Pool, rollbar, ausgegraut
+  ohne Typ (Operator-Wunsch).  Commit 9b71598.  Strings
   DE/FR/ES, Manual TEASERS ×4 (neu), LIBRARY ×4, Architektur §23.63.
   Commit 8478269.
 - **Local Machine: Kontrollkästchen „Bulk Import: allow importing
