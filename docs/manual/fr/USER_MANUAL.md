@@ -153,6 +153,7 @@ qu'ils supposent tous.
 | Chapitre | Contenu |
 |---|---|
 | [Autoloading Playlists](./AUTOLOADING_PLAYLISTS.md) | Laisser une playlist se construire elle-même pour chaque instance d'une émission, y compris la gestion de la réserve d'outro. |
+| [Automatisation des teasers](./TEASERS.md) | Lier les jingles à l'émission qu'ils annoncent ; un critère de smart block passe les teasers « aujourd'hui » et « demain » le bon jour. |
 | [Auto DJ](./AUTO_DJ.md) | Le remplisseur d'arrière-plan qui crée des émissions dans les trous du calendrier et complète les émissions incomplètes. |
 | [Demandes de titres](./SONG_REQUESTS.md) | Laisser les auditeurs demander des titres depuis un widget public, qui passent automatiquement dans une request show. |
 | [Infos-trafic](./TRAFFIC_ALERTS.md) | Faire passer des MP3 de bulletins de circulation de dernière minute dans l'émission en cours via un smart block — en ~10 minutes au prochain créneau trafic, sans intervention sur le playout. |

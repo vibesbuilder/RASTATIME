@@ -256,6 +256,26 @@ final class Application_Model_Scheduler
         // over-reserved) never makes the limit go below zero.
         $showLimit = max(0, $showInstance->getSecondsRemaining() - $this->reservedSecs);
         $originalShowLimit = $showLimit;
+        // RASTATIME 2026-10-16 - fill context for the teaser criterion and the
+        // planned-rows exclusion: the slot is the end of the row we insert
+        // after, else the instance start (cleared before the return below)
+        try {
+            $slot = null;
+            if ($afterRowId !== null) {
+                $row = Application_Common_Database::prepareAndExecute(
+                    'SELECT ends FROM cc_schedule WHERE id = :id', [':id' => (int) $afterRowId], Application_Common_Database::SINGLE
+                );
+                if ($row && !empty($row['ends'])) {
+                    $slot = new DateTime($row['ends'], new DateTimeZone('UTC'));
+                }
+            }
+            if ($slot === null) {
+                $slot = new DateTime($showInstance->getShowInstanceStart(), new DateTimeZone('UTC'));
+            }
+            Application_Model_Block::setFillContext((int) $show, (int) $showInstance->getShowId(), $slot);
+        } catch (Exception $e) {
+            Logging::warn('retrieveMediaFiles: fill context not set: ' . $e->getMessage());
+        }
         // RASTATIME 2026-10-06 - time_filled is the laid-out length (the rows
         // overlap by their crossfade), so the limit is the real free time at
         // the end of the show.  The rows on either side of the insertion
@@ -502,6 +522,8 @@ final class Application_Model_Scheduler
                 }
             }
         }
+
+        Application_Model_Block::clearFillContext();
 
         return $files;
     }

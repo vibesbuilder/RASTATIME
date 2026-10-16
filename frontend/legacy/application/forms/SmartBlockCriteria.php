@@ -237,11 +237,13 @@ class Application_Form_SmartBlockCriteria extends Zend_Form_SubForm
                 if (isset($criteriaKeys[$i])) {
                     $modifierTest = (string) $storedCrit['crit'][$criteriaKeys[$i]][$j]['modifier'];
                     if (
-                        isset($criteriaType) && $criteriaType == ModifierType::TRACK_TYPE
+                        isset($criteriaType) && in_array($criteriaType, BlockCriteria::SELECT_TYPES, true)
                         && preg_match('/is|is not/', $modifierTest) == 1
                     ) {
+                        // RASTATIME 2026-10-16 - also the teaser criteria (select values)
                         $criteriaValue = new Zend_Form_Element_Select('sp_criteria_value_' . $i . '_' . $j);
                         $criteriaValue->setAttrib('class', 'input_select sp_input_select')->setDecorators(['viewHelper']);
+                        $criteriaValue->setRegisterInArrayValidator(false);
 
                         if (isset($criteriaKeys[$i])) {  // do if $relativeTT above
                             $criteriaValue->setAttrib('enabled', 'enabled');
@@ -292,6 +294,14 @@ class Application_Form_SmartBlockCriteria extends Zend_Form_SubForm
                             $criteriaValue->setMultiOptions($this->getTracktypeOptions());
                             $criteriaValue->setValue($tracktypeSelectValue);
                         }
+                        $criteriaValue->setAttrib('enabled', 'enabled');
+                    } elseif (
+                        isset($criteriaType) && in_array($criteriaType, BlockCriteria::SELECT_TYPES, true)
+                        && preg_match('/is|is not/', $modifierTest) == 1
+                    ) {
+                        // RASTATIME 2026-10-16 - teaser criteria: the stored value is a key of the select
+                        $criteriaValue->setMultiOptions(Application_Model_Block::teaserCriteriaOptions($bCriteria->key, true));
+                        $criteriaValue->setValue($storedCrit['crit'][$criteriaKeys[$i]][$j]['value']);
                         $criteriaValue->setAttrib('enabled', 'enabled');
                     } else {
                         $criteriaValue->setValue($storedCrit['crit'][$criteriaKeys[$i]][$j]['value']);
@@ -798,6 +808,13 @@ class Application_Form_SmartBlockCriteria extends Zend_Form_SubForm
                     if ($d['sp_criteria_field'] == '0' || $d['sp_criteria_modifier'] == '0') {
                         $element->addError(_('You must select Criteria and Modifier'));
                         $isValid = false;
+                    } elseif (in_array($d['sp_criteria_field'], BlockCriteria::TEASER_KEYS, true)) {
+                        // RASTATIME 2026-10-16 - teaser criteria: the value must be one of the select's keys
+                        $options = Application_Model_Block::teaserCriteriaOptions($d['sp_criteria_field'], false);
+                        if (!isset($options[(string) $d['sp_criteria_value']])) {
+                            $element->addError(_('Pick a value from the list'));
+                            $isValid = false;
+                        }
                     } else {
                         $column = CcFilesPeer::getTableMap()->getColumnByPhpName($allCriteria[$d['sp_criteria_field']]->peer);
                         // validation on type of column

@@ -148,6 +148,7 @@ sie alle voraussetzen.
 | Kapitel | Inhalt |
 |---|---|
 | [Autoloading Playlists](./AUTOLOADING_PLAYLISTS.md) | Eine Playlist sich selbst für jede Instanz einer Sendung aufbauen lassen, inklusive Outro-Reserve-Logik. |
+| [Teaser-Automatik](./TEASERS.md) | Jingles mit der Sendung verknüpfen, die sie ankündigen; ein Smart-Block-Kriterium spielt „heute"- und „morgen"-Teaser am richtigen Tag. |
 | [Auto DJ](./AUTO_DJ.md) | Der Hintergrund-Filler, der Sendungen in Kalenderlücken erstellt und unvollständige Sendungen auffüllt. |
 | [Song Requests](./SONG_REQUESTS.md) | Hörer Tracks über ein öffentliches Widget wünschen lassen, die automatisch in einer Request-Show laufen. |
 | [Verkehrsmeldungen](./TRAFFIC_ALERTS.md) | Kurzfristige Verkehrsmeldungs-MP3s über einen Smart Block in die laufende Sendung einspeisen — binnen ~10 Minuten am nächsten Traffic-Slot, ohne Eingriff ins Playout. |

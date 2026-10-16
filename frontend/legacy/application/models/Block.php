@@ -1442,6 +1442,166 @@ SQL;
      *                                 the block's own limit by the crossfade overlap
      *                                 so the block fills its duration ON AIR)
      */
+    /**
+     * RASTATIME 2026-10-16 - fill context.  A dynamic block is expanded for
+     * a place in the schedule: the show instance being filled, its show,
+     * and the moment the picked rows will play (the "slot").  The teaser
+     * criterion and the planned-rows part of "exclude tracks played lately"
+     * read it; without a context (e.g. "Generate" in the editor) the slot
+     * is now and no show is excluded.  Set by AutoPlaylistManager and
+     * Scheduler around the expansion, cleared afterwards.
+     *
+     * @var null|array{instance_id: ?int, show_id: ?int, slot: DateTime}
+     */
+    private static $fillContext;
+
+    /**
+     * @param null|int      $instanceId
+     * @param null|int      $showId
+     * @param null|DateTime $slotUtc    when the picked rows will play (UTC)
+     */
+    public static function setFillContext($instanceId, $showId, $slotUtc)
+    {
+        $slot = $slotUtc instanceof DateTime ? clone $slotUtc : new DateTime('now', new DateTimeZone('UTC'));
+        $slot->setTimezone(new DateTimeZone('UTC'));
+        self::$fillContext = [
+            'instance_id' => $instanceId ? (int) $instanceId : null,
+            'show_id' => $showId ? (int) $showId : null,
+            'slot' => $slot,
+        ];
+    }
+
+    public static function clearFillContext()
+    {
+        self::$fillContext = null;
+    }
+
+    /** @return array{instance_id: ?int, show_id: ?int, slot: DateTime} */
+    public static function fillContext()
+    {
+        if (self::$fillContext === null) {
+            return ['instance_id' => null, 'show_id' => null, 'slot' => new DateTime('now', new DateTimeZone('UTC'))];
+        }
+
+        return ['instance_id' => self::$fillContext['instance_id'], 'show_id' => self::$fillContext['show_id'], 'slot' => clone self::$fillContext['slot']];
+    }
+
+    /**
+     * RASTATIME 2026-10-16 - value => label of a teaser criterion's select.
+     *
+     * @param string $key         teaser_show | teaser_type | teaser_fits
+     * @param bool   $placeholder prepend the "Select ..." row
+     */
+    public static function teaserCriteriaOptions($key, $placeholder = true)
+    {
+        switch ($key) {
+            case 'teaser_show':
+                $opts = [];
+                foreach (Application_Model_StoredFile::teaserShows() as $id => $name) {
+                    $opts[(string) $id] = $name;
+                }
+                $head = ['0' => _('Select show')];
+
+                break;
+
+            case 'teaser_type':
+                $opts = Application_Model_StoredFile::teaserTypeLabels();
+                $head = ['0' => _('Select teaser type')];
+
+                break;
+
+            case 'teaser_fits':
+                $opts = ['yes' => _('the day of the show being filled')];
+                $head = ['0' => _('Select')];
+
+                break;
+
+            default:
+                return [];
+        }
+
+        return $placeholder ? $head + $opts : $opts;
+    }
+
+    /**
+     * RASTATIME 2026-10-16 - SQL of a teaser criterion (used as a
+     * Criteria::CUSTOM criterion, so it joins the row's AND / OR groups
+     * like any other rule).
+     *
+     * teaser_show  is / is not <show id>
+     * teaser_type  is / is not show|today|tomorrow
+     * teaser_fits  is yes: the jingle fits the slot of the fill context -
+     *   'today'    the teased show has an instance on the slot's day
+     *              (station timezone) that starts after the slot;
+     *   'tomorrow' the teased show has an instance on the following day;
+     *   'show'     any day, unless the show is over for today (it had an
+     *              instance today that ended before the slot and has no
+     *              later one today);
+     *   and never the show whose instance is being filled.
+     *
+     * @param string $key
+     * @param string $modifier is | is not
+     * @param string $value
+     */
+    public static function teaserCriterionSql($key, $modifier, $value)
+    {
+        if (!Application_Model_StoredFile::teaserColumnsReady()) {
+            Logging::warn('smart block: teaser criterion used before migration 0069 - empty pool');
+
+            return 'FALSE';
+        }
+        $not = trim((string) $modifier) === CriteriaModifier::IS_NOT;
+        if ($key === 'teaser_show') {
+            $id = (int) $value;
+            if ($id <= 0) {
+                return 'FALSE';
+            }
+
+            return $not
+                ? "(cc_files.teaser_show_id IS NULL OR cc_files.teaser_show_id <> {$id})"
+                : "cc_files.teaser_show_id = {$id}";
+        }
+        if ($key === 'teaser_type') {
+            $type = in_array($value, Application_Model_StoredFile::TEASER_TYPES, true) ? $value : null;
+            if ($type === null) {
+                return 'FALSE';
+            }
+
+            return $not
+                ? "(cc_files.teaser_type IS NULL OR cc_files.teaser_type <> '{$type}')"
+                : "cc_files.teaser_type = '{$type}'";
+        }
+        if ($key !== 'teaser_fits') {
+            return 'FALSE';
+        }
+        $ctx = self::fillContext();
+        $tz = Application_Model_Preference::GetDefaultTimezone() ?: 'UTC';
+        $tzSql = str_replace("'", "''", $tz);
+        $slotUtc = $ctx['slot']->format('Y-m-d H:i:s');
+        $local = clone $ctx['slot'];
+        $local->setTimezone(new DateTimeZone($tz));
+        $day = $local->format('Y-m-d');
+        $next = (clone $local)->modify('+1 day')->format('Y-m-d');
+        $inst = 'SELECT 1 FROM cc_show_instances i WHERE i.show_id = cc_files.teaser_show_id AND i.modified_instance = FALSE '
+            . "AND ((i.starts AT TIME ZONE 'UTC') AT TIME ZONE '{$tzSql}')::date = DATE '%s'";
+        $onDay = sprintf($inst, $day);
+        $onNext = sprintf($inst, $next);
+        $laterToday = "EXISTS ({$onDay} AND i.starts > TIMESTAMP '{$slotUtc}')";
+        $overToday = "EXISTS ({$onDay} AND i.ends <= TIMESTAMP '{$slotUtc}')";
+        $airsTomorrow = "EXISTS ({$onNext})";
+        $sql = '(cc_files.teaser_show_id IS NOT NULL';
+        if ($ctx['show_id']) {
+            $sql .= ' AND cc_files.teaser_show_id <> ' . (int) $ctx['show_id'];
+        }
+        $sql .= ' AND ('
+            . "(cc_files.teaser_type = 'today' AND {$laterToday})"
+            . " OR (cc_files.teaser_type = 'tomorrow' AND {$airsTomorrow})"
+            . " OR (cc_files.teaser_type = 'show' AND (NOT {$overToday} OR {$laterToday}))"
+            . '))';
+
+        return $not ? "NOT {$sql}" : $sql;
+    }
+
     public function getListOfFilesUnderLimit($show = null, $timeOverride = null)
     {
         $info = $this->getListofFilesMeetCriteria($show, false, $timeOverride);
@@ -1993,10 +2153,18 @@ SQL;
                     $spCriteria = $criteria['criteria'];
                     $spCriteriaModifier = $criteria['modifier'];
 
+                    // RASTATIME 2026-10-16 - teaser criteria are SQL of their own
+                    $virtualSql = in_array($spCriteria, BlockCriteria::TEASER_KEYS, true)
+                        ? self::teaserCriterionSql($spCriteria, $spCriteriaModifier, (string) $criteria['value'])
+                        : null;
+
                     $column = CcFilesPeer::getTableMap()->getColumnByPhpName($allCriteria[$spCriteria]->peer);
 
                     // data should already be in UTC, do we have to do anything special here anymore?
-                    if ($column->getType() == PropelColumnTypes::TIMESTAMP) {
+                    if ($virtualSql !== null) {
+                        $spCriteriaValue = $virtualSql;
+                        $spCriteriaExtra = null;
+                    } elseif ($column->getType() == PropelColumnTypes::TIMESTAMP) {
                         $spCriteriaValue = $criteria['value'];
 
                         if (isset($criteria['extra'])) {
@@ -2034,9 +2202,13 @@ SQL;
                         $spCriteriaExtra = $criteria['extra'];
                     }
 
-                    $spCriteriaValue = $this->resolveDate($spCriteriaValue, $timeZone);
+                    if ($virtualSql === null) {
+                        $spCriteriaValue = $this->resolveDate($spCriteriaValue, $timeZone);
+                    }
 
-                    if ($spCriteriaModifier == CriteriaModifier::STARTS_WITH) {
+                    if ($virtualSql !== null) {
+                        // nothing to shape: the SQL is complete
+                    } elseif ($spCriteriaModifier == CriteriaModifier::STARTS_WITH) {
                         $spCriteriaValue = "{$spCriteriaValue}%";
                     } elseif ($spCriteriaModifier == CriteriaModifier::ENDS_WITH) {
                         $spCriteriaValue = "%{$spCriteriaValue}";
@@ -2062,7 +2234,7 @@ SQL;
                         $spCriteriaValue = "COALESCE({$spCriteria}, DATE '-infinity') >= '{$fdt}' AND COALESCE({$spCriteria}, DATE '-infinity') <= '{$tdt}'";
                     }
 
-                    $spCriteriaModifier = self::$modifier2CriteriaMap[$spCriteriaModifier];
+                    $spCriteriaModifier = $virtualSql !== null ? Criteria::CUSTOM : self::$modifier2CriteriaMap[$spCriteriaModifier];
 
                     try {
                         if ($spCriteria == 'owner_id') {
@@ -2071,6 +2243,10 @@ SQL;
 
                         if ($spCriteria == 'filepath') {
                             $spCriteria = "reverse(split_part(reverse(filepath), '/', 1))";
+                        }
+
+                        if ($virtualSql !== null) {
+                            $spCriteria = 'cc_files.id';
                         }
 
                         $criterion = $qry->getNewCriterion($spCriteria, $spCriteriaValue, $spCriteriaModifier);
@@ -2257,14 +2433,25 @@ SQL;
         // saveSmartBlockCriteria + the form validator, so there is no
         // SQL-injection risk from the (int) cast below — Propel will
         // pass it through to PDO unchanged.
+        // RASTATIME 2026-10-16 - the window is measured from the slot the
+        // picked rows will play in (fill context; now when there is none),
+        // and PLANNED rows count as well: a track scheduled inside the
+        // window - in the hour before, in the same show by an earlier block
+        // of this fill, or in a show already laid out after it - is out,
+        // although it has not played yet (operator: teaser rotation with
+        // autoloading everywhere).
+        $refSlot = self::fillContext()['slot']->format('Y-m-d H:i:s');
         if (isset($storedCrit['exclude_played_lately'])
             && $storedCrit['exclude_played_lately']['value'] == 1
         ) {
             $excludeHours = (int) ($storedCrit['exclude_played_lately_hours']['value'] ?? 24);
             $excludeHours = max(1, min(8760, $excludeHours));
             $qry->where(
-                "(cc_files.lptime IS NULL OR cc_files.lptime < NOW() - INTERVAL '"
-                . $excludeHours . " hours')"
+                "((cc_files.lptime IS NULL OR cc_files.lptime < TIMESTAMP '{$refSlot}' - INTERVAL '"
+                . $excludeHours . " hours') AND NOT EXISTS ("
+                . 'SELECT 1 FROM cc_schedule s WHERE s.file_id = cc_files.id '
+                . "AND s.starts > TIMESTAMP '{$refSlot}' - INTERVAL '" . $excludeHours . " hours' "
+                . "AND s.starts < TIMESTAMP '{$refSlot}' + INTERVAL '" . $excludeHours . " hours'))"
             );
         }
 
@@ -2290,15 +2477,21 @@ SQL;
         ) {
             $excludeArtistsHours = (int) ($storedCrit['exclude_artists_played_lately_hours']['value'] ?? 24);
             $excludeArtistsHours = max(1, min(8760, $excludeArtistsHours));
+            // RASTATIME 2026-10-16 - planned rows count too (see above)
             $qry->where(
                 '(cc_files.artist_name IS NULL '
                 . "OR cc_files.artist_name = '' "
-                . 'OR NOT EXISTS ('
+                . 'OR (NOT EXISTS ('
                 .   'SELECT 1 FROM cc_playout_history ph '
                 .   'JOIN cc_files f ON f.id = ph.file_id '
                 .   'WHERE f.artist_name = cc_files.artist_name '
-                .   "AND ph.starts > NOW() - INTERVAL '"
-                . $excludeArtistsHours . " hours'))"
+                .   "AND ph.starts > TIMESTAMP '{$refSlot}' - INTERVAL '"
+                . $excludeArtistsHours . " hours') AND NOT EXISTS ("
+                .   'SELECT 1 FROM cc_schedule s '
+                .   'JOIN cc_files f2 ON f2.id = s.file_id '
+                .   'WHERE f2.artist_name = cc_files.artist_name '
+                .   "AND s.starts > TIMESTAMP '{$refSlot}' - INTERVAL '" . $excludeArtistsHours . " hours' "
+                .   "AND s.starts < TIMESTAMP '{$refSlot}' + INTERVAL '" . $excludeArtistsHours . " hours')))"
             );
         }
 

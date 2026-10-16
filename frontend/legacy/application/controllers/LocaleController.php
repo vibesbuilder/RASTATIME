@@ -112,6 +112,14 @@ final class LocaleController extends Zend_Controller_Action
             'Play Count' => _('Play Count'),
             // RASTATIME 2026-10-16 - library column: database id of a file
             'ID' => _('ID'),
+            // RASTATIME 2026-10-16 - teaser automation (library column, block editor selects)
+            'Teaser' => _('Teaser'),
+            'Select show' => _('Select show'),
+            'Select teaser type' => _('Select teaser type'),
+            'Show teaser (any day)' => _('Show teaser (any day)'),
+            'Day teaser: "today"' => _('Day teaser: "today"'),
+            'Day teaser: "tomorrow"' => _('Day teaser: "tomorrow"'),
+            'the day of the show being filled' => _('the day of the show being filled'),
             // RASTATIME 2026-10-08 - preflight warning: failed podcast download
             'Podcast download failed:' => _('Podcast download failed:'),
             '%s attempt(s), last %s' => _('%s attempt(s), last %s'),

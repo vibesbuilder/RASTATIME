@@ -419,11 +419,17 @@ function setSmartBlockEvents() {
       disableAndHideDateTimeDropdown($(this), index);
       disableAndHideExtraDateTimeDropdown($(this), index);
 
+      var critType = getCriteriaOptionType(this);
       if (
         $("#sp_criteria_field_" + index + " option:selected").val() ===
         "track_type_id"
       ) {
         populateTracktypeSelect(this, false);
+      } else if (isSelectCriteriaType(critType)) {
+        // RASTATIME 2026-10-16 - teaser criteria: is / is not (or just is)
+        // and a select for the value, shown right away
+        populateSelectCriteriaModifiers(this, critType);
+        enableAndShowSelectDropdown(index, critType);
       } else {
         disableAndHideTracktypeDropdown($(this), index);
         populateModifierSelect(this, true);
@@ -461,6 +467,15 @@ function setSmartBlockEvents() {
     if ($("#" + crit_field + " option:selected").val() === "track_type_id") {
       if ($(this).val() == "is" || $(this).val() == "is not") {
         enableAndShowTracktypeDropdown(criteria_value, index_num);
+      } else {
+        disableAndHideTracktypeDropdown(criteria_value, index_num);
+      }
+    }
+    // RASTATIME 2026-10-16 - teaser criteria keep their select
+    var selType = criteriaTypes[$("#" + crit_field + " option:selected").val()];
+    if (isSelectCriteriaType(selType)) {
+      if ($(this).val() == "is" || $(this).val() == "is not") {
+        enableAndShowSelectDropdown(index_num, selType);
       } else {
         disableAndHideTracktypeDropdown(criteria_value, index_num);
       }
@@ -773,6 +788,66 @@ function enableAndShowTracktypeDropdown(valEle, index) {
       '" class="input_select sp_input_select"></select>',
   );
   $.each(stringTracktypeOptions, function (key, value) {
+    $("#sp_criteria_value_" + index).append(
+      $("<option></option>").attr("value", key).text(value),
+    );
+  });
+}
+
+/* RASTATIME 2026-10-16 - teaser criteria: select-valued criteria beside
+ * the track type.  criteriaTypes: tsh = teased show, tty = teaser type,
+ * tft = "fits the schedule".  TEASER_SHOWS is injected by the layout
+ * plugin (id -> show name). */
+function isSelectCriteriaType(t) {
+  return t === "tsh" || t === "tty" || t === "tft";
+}
+
+function selectCriteriaOptions(t) {
+  if (t === "tsh") {
+    var shows = { 0: $.i18n._("Select show") };
+    for (var id in TEASER_SHOWS) {
+      if (TEASER_SHOWS.hasOwnProperty(id)) {
+        shows[id] = TEASER_SHOWS[id];
+      }
+    }
+    return shows;
+  }
+  if (t === "tty") {
+    return {
+      0: $.i18n._("Select teaser type"),
+      show: $.i18n._("Show teaser (any day)"),
+      today: $.i18n._('Day teaser: "today"'),
+      tomorrow: $.i18n._('Day teaser: "tomorrow"'),
+    };
+  }
+  return {
+    yes: $.i18n._("the day of the show being filled"),
+  };
+}
+
+function populateSelectCriteriaModifiers(e, t) {
+  var index = getRowIndex($(e).parent());
+  var divs = $(e)
+    .parents()
+    .find('select[id^="sp_criteria_modifier_' + index + '"]');
+  var options = t === "tft" ? { is: $.i18n._("is") } : stringIsNotOptions;
+  $.each(divs, function (i, div) {
+    $(div).children().remove();
+    $.each(options, function (key, value) {
+      $(div).append($("<option></option>").attr("value", key).text(value));
+    });
+  });
+}
+
+function enableAndShowSelectDropdown(index, t) {
+  $("#sp_criteria_value_" + index).replaceWith(
+    '<select name="sp_criteria_value_' +
+      index +
+      '" id="sp_criteria_value_' +
+      index +
+      '" class="input_select sp_input_select"></select>',
+  );
+  $.each(selectCriteriaOptions(t), function (key, value) {
     $("#sp_criteria_value_" + index).append(
       $("<option></option>").attr("value", key).text(value),
     );
@@ -1121,6 +1196,9 @@ var criteriaTypes = {
   year: "n",
   track_type_id: "tt",
   filepath: "s",
+  teaser_show: "tsh",
+  teaser_type: "tty",
+  teaser_fits: "tft",
 };
 
 var stringCriteriaOptions = {

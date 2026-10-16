@@ -245,6 +245,9 @@ mismo campo (p. ej. género Jazz o Blues); vea
 
 ## A dónde ir después
 
+* [Automatización de teasers](./TEASERS.md) — el criterio de
+  bloque inteligente que pone los jingles «hoy» / «mañana»
+  correctos en las listas de intro, outro y contenido.
 * [Auto DJ](./AUTO_DJ.md) — la automatización a nivel
   emisora que complementa el autoloading por-programa.
 * [Plantillas de programa](./SHOW_TEMPLATES.md) — capturar

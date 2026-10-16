@@ -2,6 +2,9 @@
 
 class Application_Form_EditAudioMD extends Zend_Form
 {
+    /** RASTATIME 2026-10-16 - the file's current teaser show, kept in the select even without upcoming instances */
+    public $teaserCurrentShowId;
+
     public function init() {}
 
     public function startForm($p_id)
@@ -317,6 +320,25 @@ class Application_Form_EditAudioMD extends Zend_Form
         ]);
         $icyMode->setDescription(_('Whether artist and title of this track are shown in the listeners\' players and in the Live Text. As the track type: the preset of Settings → Track Types. Do not forward: the stream shows "Station name - Show name" while this track plays (jingles, station IDs, promos).'));
         $this->addElement($icyMode);
+
+        // RASTATIME 2026-10-16 - teaser automation (cc_files.teaser_show_id /
+        // teaser_type, migration 0069, raw SQL in StoredFile): the show this
+        // jingle announces and how.  The show list holds the shows with an
+        // upcoming instance plus the file's current one; the in-array check
+        // is off because StoredFile verifies the show itself.
+        $teaserShow = new Zend_Form_Element_Select('teaser_show_id');
+        $teaserShow->class = 'input_text';
+        $teaserShow->setLabel(_('Teaser for show:'));
+        $teaserShow->setRegisterInArrayValidator(false);
+        $teaserShow->setMultiOptions(['' => _('None')] + Application_Model_StoredFile::teaserShows($this->teaserCurrentShowId));
+        $teaserShow->setDescription(_('The show this jingle announces. Smart blocks with the criterion "Teaser: fits the schedule" play it only when that show airs on the right day: a "today" teaser on the day of the show, a "tomorrow" teaser the day before, a show teaser any day - never for a show that is over for today, and never inside the show itself.'));
+        $this->addElement($teaserShow);
+
+        $teaserType = new Zend_Form_Element_Select('teaser_type');
+        $teaserType->class = 'input_text';
+        $teaserType->setLabel(_('Teaser type:'));
+        $teaserType->setMultiOptions(['' => _('None')] + Application_Model_StoredFile::teaserTypeLabels());
+        $this->addElement($teaserType);
 
         // Add the cancel button
         $this->addElement('button', 'editmdcancel', [

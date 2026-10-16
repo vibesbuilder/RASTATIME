@@ -313,6 +313,9 @@ Blues); see [Import/Export → blocks.json](./IMPORT_EXPORT.md#blocksjson).
 
 ## Where to go next
 
+* [Teaser Automation](./TEASERS.md) — the smart block
+  criterion that puts the right "today" / "tomorrow" jingles
+  into the intro, outro and content playlists.
 * [Auto DJ](./AUTO_DJ.md) — the station-wide automation
   that complements per-show autoloading.
 * [Show Templates](./SHOW_TEMPLATES.md) — capture the

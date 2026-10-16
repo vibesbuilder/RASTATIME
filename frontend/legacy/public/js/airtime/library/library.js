@@ -35,6 +35,7 @@ var AIRTIME = (function (AIRTIME) {
     lptime: "n",
     play_count: "n",
     id: "n",
+    teaser: "s",
     disc_number: "n",
     encoded_by: "s",
     genre: "s",
@@ -1142,6 +1143,15 @@ var AIRTIME = (function (AIRTIME) {
         bVisible: false,
         sClass: "library_year",
         sWidth: "60px",
+      },
+      /* Teaser - RASTATIME 2026-10-16: "Show name (today)" of a teaser
+         jingle (cc_files.teaser_show_id / teaser_type), hidden by default,
+         searchable as text. */ {
+        sTitle: $.i18n._("Teaser"),
+        mDataProp: "teaser",
+        bVisible: false,
+        sClass: "library_teaser",
+        sWidth: "150px",
       },
       /* ID - RASTATIME 2026-10-16 (operator wish): the database id of a
          file, visible by default, sortable, range-searchable.  Playlists,
@@ -2601,6 +2611,7 @@ var validationTypes = {
   lptime: "t",
   play_count: "i",
   id: "i",
+  teaser: "s",
   disc_number: "i",
   genre: "s",
   isrc_number: "s",

@@ -176,6 +176,21 @@ class Application_Service_ImportExportBlocks extends Application_Service_ImportE
                     $rec['_errors'][] = $error;
                     continue;
                 }
+                // RASTATIME 2026-10-16 - teaser criteria travel by name / keyword
+                if ($field === 'teaser_show') {
+                    $showId = self::findShowIdByName($rule['value']);
+                    if ($showId === null) {
+                        $rec['_errors'][] = sprintf(_('criterion "teaser_show": unknown show "%s"'), $rule['value']);
+                        continue;
+                    }
+                    $rule['value'] = (string) $showId;
+                } elseif ($field === 'teaser_type' && !in_array($rule['value'], Application_Model_StoredFile::TEASER_TYPES, true)) {
+                    $rec['_errors'][] = sprintf(_('criterion "teaser_type": "%s" is not show, today or tomorrow'), $rule['value']);
+                    continue;
+                } elseif ($field === 'teaser_fits' && $rule['value'] !== 'yes') {
+                    $rec['_errors'][] = _('criterion "teaser_fits": the value must be "yes"');
+                    continue;
+                }
                 $rec['criteria'][] = $rule;
             }
             if (count($rec['criteria']) > 100) {
@@ -361,9 +376,28 @@ class Application_Service_ImportExportBlocks extends Application_Service_ImportE
         return json_encode($out, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }
 
+    /** RASTATIME 2026-10-16 - show id of an exact show name (first match by id). */
+    private static function findShowIdByName(string $name): ?int
+    {
+        $row = Application_Common_Database::prepareAndExecute(
+            'SELECT id FROM cc_show WHERE name = :n ORDER BY id LIMIT 1', [':n' => $name], Application_Common_Database::SINGLE
+        );
+
+        return $row ? (int) $row['id'] : null;
+    }
+
     /** A stored date rule in the form the editor shows and the import reads. */
     private static function exportRule(array $rule): array
     {
+        // RASTATIME 2026-10-16 - teaser_show is exported as the show's name
+        if ($rule['field'] === 'teaser_show') {
+            $row = Application_Common_Database::prepareAndExecute(
+                'SELECT name FROM cc_show WHERE id = :id', [':id' => (int) $rule['value']], Application_Common_Database::SINGLE
+            );
+            $rule['value'] = $row ? (string) $row['name'] : $rule['value'];
+
+            return $rule;
+        }
         if (!in_array($rule['field'], self::DATE_FIELDS, true)) {
             return $rule;
         }

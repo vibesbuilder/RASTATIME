@@ -149,6 +149,10 @@ class PageLayoutInitPlugin extends Zend_Controller_Plugin_Abstract
         }
         $ttarr = json_encode($track_type_options, JSON_FORCE_OBJECT);
         $view->headScript()->appendScript('var TRACKTYPES = ' . $ttarr . ';');
+        // RASTATIME 2026-10-16 - shows a teaser can announce (smart block editor select)
+        $view->headScript()->appendScript(
+            'var TEASER_SHOWS = ' . json_encode(Application_Model_StoredFile::teaserShows(), JSON_FORCE_OBJECT) . ';'
+        );
     }
 
     protected function _initHeadLink()

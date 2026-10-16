@@ -366,6 +366,36 @@ class Application_Model_StoredFile
                 Logging::warn('icy_mode: ' . $exc->getMessage() . ' (migration 0068 pending?)');
             }
         }
+        // RASTATIME 2026-10-16 - teaser link (migration 0069).  The single
+        // editor posts both keys, the bulk editor only the filled one(s);
+        // a missing key keeps the stored value.  An empty / 'none' show
+        // clears the link; a show without a type becomes a show teaser.
+        if (is_array($p_md) && (array_key_exists('teaser_show_id', $p_md) || array_key_exists('teaser_type', $p_md))) {
+            [$curShow, $curType] = self::teaserOf($this->_con, $this->_file->getDbId());
+            $show = array_key_exists('teaser_show_id', $p_md) ? trim((string) $p_md['teaser_show_id']) : $curShow;
+            $type = array_key_exists('teaser_type', $p_md) ? trim((string) $p_md['teaser_type']) : $curType;
+            if ($show === '' || $show === 'none' || !ctype_digit($show) || $type === 'none'
+                || CcShowQuery::create()->findPk((int) $show) === null) {
+                $show = null;
+                $type = null;
+            } elseif (!in_array($type, self::TEASER_TYPES, true)) {
+                $type = 'show';
+            }
+            try {
+                $stmt = $this->_con->prepare('UPDATE cc_files SET teaser_show_id = :s, teaser_type = :t WHERE id = :id');
+                if ($show === null) {
+                    $stmt->bindValue(':s', null, PDO::PARAM_NULL);
+                    $stmt->bindValue(':t', null, PDO::PARAM_NULL);
+                } else {
+                    $stmt->bindValue(':s', (int) $show, PDO::PARAM_INT);
+                    $stmt->bindValue(':t', $type, PDO::PARAM_STR);
+                }
+                $stmt->bindValue(':id', $this->_file->getDbId(), PDO::PARAM_INT);
+                $stmt->execute();
+            } catch (Exception $exc) {
+                Logging::warn('teaser: ' . $exc->getMessage() . ' (migration 0069 pending?)');
+            }
+        }
         if (is_array($p_md) && array_key_exists('crossover_mode', $p_md)) {
             $mode = in_array($p_md['crossover_mode'], ['type', 'nofade', 'exclude'], true)
                 ? $p_md['crossover_mode'] : 'type';
@@ -528,8 +558,123 @@ class Application_Model_StoredFile
         $md['crossover_mode'] = self::crossoverModeOf($this->_con, $this->_file->getDbId());
         // RASTATIME 2026-10-14 - the three-way "Stream Metadata" field
         $md['icy_mode'] = self::icyModeOf($this->_con, $this->_file->getDbId());
+        // RASTATIME 2026-10-16 - teaser automation (migration 0069)
+        [$md['teaser_show_id'], $md['teaser_type']] = self::teaserOf($this->_con, $this->_file->getDbId());
 
         return $md;
+    }
+
+    /**
+     * RASTATIME 2026-10-16 - teaser automation.  A jingle may announce one
+     * show (cc_files.teaser_show_id) in one way (cc_files.teaser_type):
+     * 'show' = show teaser, usable any day; 'today' = "the show airs
+     * today"; 'tomorrow' = "the show airs tomorrow".  Smart blocks pick
+     * the fitting jingles (Block::teaserCriterionSql).
+     */
+    public const TEASER_TYPES = ['show', 'today', 'tomorrow'];
+
+    private static $teaserColumnsReady;
+
+    /**
+     * True once migration 0069 has added the teaser columns.  Cached per
+     * request so the library query does not probe the catalogue per row.
+     *
+     * @param mixed $con
+     */
+    public static function teaserColumnsReady($con = null)
+    {
+        if (self::$teaserColumnsReady === null) {
+            try {
+                $con = $con ?: Propel::getConnection(CcFilesPeer::DATABASE_NAME);
+                $stmt = $con->prepare(
+                    "SELECT 1 FROM information_schema.columns WHERE table_name = 'cc_files' AND column_name = 'teaser_show_id'"
+                );
+                $stmt->execute();
+                self::$teaserColumnsReady = $stmt->fetchColumn() !== false;
+            } catch (Exception $exc) {
+                self::$teaserColumnsReady = false;
+            }
+        }
+
+        return self::$teaserColumnsReady;
+    }
+
+    /**
+     * [show id as string or '', type or ''] of a file.
+     *
+     * @param mixed $con
+     * @param mixed $fileId
+     */
+    public static function teaserOf($con, $fileId)
+    {
+        if (!self::teaserColumnsReady($con)) {
+            return ['', ''];
+        }
+        try {
+            $stmt = $con->prepare('SELECT teaser_show_id, teaser_type FROM cc_files WHERE id = :id');
+            $stmt->bindValue(':id', (int) $fileId, PDO::PARAM_INT);
+            $stmt->execute();
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            if (!$row || $row['teaser_show_id'] === null) {
+                return ['', ''];
+            }
+
+            return [(string) (int) $row['teaser_show_id'], in_array($row['teaser_type'], self::TEASER_TYPES, true) ? $row['teaser_type'] : 'show'];
+        } catch (Exception $exc) {
+            Logging::warn('teaserOf: ' . $exc->getMessage());
+
+            return ['', ''];
+        }
+    }
+
+    /**
+     * Shows a teaser can announce: every show with an upcoming instance,
+     * by name.  id => name; $includeId adds the file's current show even
+     * when it has no upcoming instance any more.
+     *
+     * @param null|int $includeId
+     */
+    public static function teaserShows($includeId = null)
+    {
+        // next airing in the label: several shows may share a name (e.g. the
+        // hourly "bbc" slots), the time tells them apart
+        $sql = 'SELECT s.id, s.name, MIN(i.starts) AS next_start FROM cc_show s '
+            . 'JOIN cc_show_instances i ON i.show_id = s.id AND i.modified_instance = FALSE AND i.ends > NOW() '
+            . 'GROUP BY s.id, s.name';
+        $params = [];
+        if ($includeId) {
+            $sql .= ' UNION SELECT s.id, s.name, NULL FROM cc_show s WHERE s.id = :inc AND NOT EXISTS ('
+                . 'SELECT 1 FROM cc_show_instances i WHERE i.show_id = s.id AND i.modified_instance = FALSE AND i.ends > NOW())';
+            $params[':inc'] = (int) $includeId;
+        }
+        $sql .= ' ORDER BY LOWER(name), next_start NULLS LAST, id';
+        $out = [];
+        try {
+            $tz = new DateTimeZone(Application_Model_Preference::GetDefaultTimezone() ?: 'UTC');
+            foreach (Application_Common_Database::prepareAndExecute($sql, $params, 'all') as $r) {
+                $label = (string) $r['name'];
+                if (!empty($r['next_start'])) {
+                    $next = new DateTime($r['next_start'], new DateTimeZone('UTC'));
+                    $next->setTimezone($tz);
+                    $label .= ' (' . $next->format('D H:i') . ')';
+                }
+                $out[(int) $r['id']] = $label;
+            }
+        } catch (Exception $exc) {
+            Logging::warn('teaserShows: ' . $exc->getMessage());
+        }
+
+        return $out;
+    }
+
+    /** value => label of the three teaser types (translated). */
+    public static function teaserTypeLabels()
+    {
+        return [
+            'show' => _('Show teaser (any day)'),
+            'today' => _('Day teaser: "today"'),
+            'tomorrow' => _('Day teaser: "tomorrow"'),
+        ];
     }
 
     /**
@@ -904,6 +1049,8 @@ SQL;
             'expires_at', 'disabled',
             // RASTATIME 2026-10-07 - times aired (rows of cc_playout_history)
             'play_count',
+            // RASTATIME 2026-10-16 - "Show name (type)" of a teaser jingle
+            'teaser',
         ];
     }
 
@@ -965,6 +1112,15 @@ SQL;
                 $blSelect[] = 'NULL::int AS ' . $key;
                 $fileSelect[] = 'COALESCE(ph.play_count, 0)::int AS ' . $key;
                 $streamSelect[] = 'NULL::int AS ' . $key;
+            } elseif ($key === 'teaser') {
+                // RASTATIME 2026-10-16 - teaser link as searchable text:
+                // "Show name (today)"; NULL for everything that is no teaser
+                $plSelect[] = 'NULL::text AS ' . $key;
+                $blSelect[] = 'NULL::text AS ' . $key;
+                $fileSelect[] = self::teaserColumnsReady($con)
+                    ? "(CASE WHEN FILES.teaser_show_id IS NULL THEN NULL ELSE ts.name || ' (' || COALESCE(FILES.teaser_type, 'show') || ')' END)::text AS " . $key
+                    : 'NULL::text AS ' . $key;
+                $streamSelect[] = 'NULL::text AS ' . $key;
             } elseif ($key === 'is_scheduled' || $key === 'is_playlist') {
                 $plSelect[] = 'NULL::boolean AS ' . $key;
                 $blSelect[] = 'NULL::boolean AS ' . $key;
@@ -1137,7 +1293,9 @@ SQL;
         $blTable = "({$blSelect} FROM cc_block AS BL LEFT JOIN cc_subjs AS sub ON (sub.id = BL.creator_id))";
         // RASTATIME 2026-10-07 - play_count: one grouped pass over the playout history per query
         $playCountJoin = 'LEFT JOIN (SELECT file_id, COUNT(*) AS play_count FROM cc_playout_history WHERE file_id IS NOT NULL GROUP BY file_id) AS ph ON (ph.file_id = FILES.id)';
-        $fileTable = "({$fileSelect} FROM cc_files AS FILES LEFT JOIN cc_subjs AS sub ON (sub.id = FILES.owner_id) {$playCountJoin} WHERE file_exists = 'TRUE' AND hidden='FALSE')";
+        // RASTATIME 2026-10-16 - the teased show's name (migration 0069)
+        $teaserJoin = self::teaserColumnsReady($con) ? 'LEFT JOIN cc_show AS ts ON (ts.id = FILES.teaser_show_id)' : '';
+        $fileTable = "({$fileSelect} FROM cc_files AS FILES LEFT JOIN cc_subjs AS sub ON (sub.id = FILES.owner_id) {$playCountJoin} {$teaserJoin} WHERE file_exists = 'TRUE' AND hidden='FALSE')";
         // $fileTable = "({$fileSelect} FROM cc_files AS FILES WHERE file_exists = 'TRUE')";
         $streamTable = "({$streamSelect} FROM cc_webstream AS ws LEFT JOIN cc_subjs AS sub ON (sub.id = ws.creator_id))";
         $lineinTable = "({$lineinSelect} FROM rastatime_linein AS li WHERE li.enabled = TRUE)";

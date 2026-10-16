@@ -6,6 +6,10 @@ class ModifierType
     public const NUMBER = 'n';
     public const DATE = 'd';
     public const TRACK_TYPE = 'tt';
+    // RASTATIME 2026-10-16 - teaser automation: select-valued criteria
+    public const TEASER_SHOW = 'tsh';
+    public const TEASER_TYPE = 'tty';
+    public const TEASER_FITS = 'tft';
 }
 
 class CriteriaModifier
@@ -85,6 +89,10 @@ class CriteriaModifier
 
 class BlockCriteria
 {
+    /** RASTATIME 2026-10-16 - criteria resolved by Block::teaserCriterionSql */
+    public const TEASER_KEYS = ['teaser_show', 'teaser_type', 'teaser_fits'];
+    public const SELECT_TYPES = [ModifierType::TRACK_TYPE, ModifierType::TEASER_SHOW, ModifierType::TEASER_TYPE, ModifierType::TEASER_FITS];
+
     public string $key;
     public string $type;
     public string $peer;
@@ -119,7 +127,14 @@ class BlockCriteria
                 break;
 
             case ModifierType::TRACK_TYPE:
+            case ModifierType::TEASER_SHOW:
+            case ModifierType::TEASER_TYPE:
                 $modifiers = CriteriaModifier::FOR_TRACK_TYPE;
+
+                break;
+
+            case ModifierType::TEASER_FITS:
+                $modifiers = [CriteriaModifier::IS];
 
                 break;
         }
@@ -173,6 +188,13 @@ class BlockCriteria
                 new BlockCriteria('year', ModifierType::NUMBER, 'DbYear', _('Year')),
                 new BlockCriteria('track_type_id', ModifierType::TRACK_TYPE, 'DbTrackTypeId', _('Track Type')),
                 new BlockCriteria('filepath', ModifierType::STRING, 'DbFilepath', _('File Name')),
+                // RASTATIME 2026-10-16 - teaser automation.  Virtual criteria:
+                // not cc_files columns of their own (the peer only gives the
+                // validators a VARCHAR to size against); Block::teaserCriterionSql
+                // turns them into SQL.
+                new BlockCriteria('teaser_show', ModifierType::TEASER_SHOW, 'DbTrackTitle', _('Teaser: show')),
+                new BlockCriteria('teaser_type', ModifierType::TEASER_TYPE, 'DbTrackTitle', _('Teaser: type')),
+                new BlockCriteria('teaser_fits', ModifierType::TEASER_FITS, 'DbTrackTitle', _('Teaser: fits the schedule')),
             ];
         }
 

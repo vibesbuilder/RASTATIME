@@ -6576,3 +6576,71 @@ msgstr "Import en masse : autoriser l'import de doublons"
 #: application/views/scripts/preference/local-machine.phtml
 msgid "Applies to the command-line bulk import only (bulk_import).  Off: a file whose md5 - or the md5 of its lossless original - is already in the library is skipped.  On: it is imported as a second track, for example the same audio with different tags.  The upload page and this Import Folder never check for duplicates.  The command-line switch --allow-duplicates turns this on for one run."
 msgstr "Ne concerne que l'import en masse en ligne de commande (bulk_import).  Désactivé : un fichier dont le md5 - ou le md5 de son original sans perte - est déjà dans la bibliothèque est ignoré.  Activé : il est importé comme second titre, par exemple le même audio avec d'autres tags.  La page d'envoi et ce dossier d'import ne vérifient jamais les doublons.  L'option de ligne de commande --allow-duplicates l'active pour une seule exécution."
+
+#: RASTATIME 2026-10-16 teaser automation
+msgid "Show teaser (any day)"
+msgstr "Teaser d'émission (tout jour)"
+
+#: RASTATIME 2026-10-16 teaser automation
+msgid "Day teaser: \"today\""
+msgstr "Teaser du jour : \"aujourd'hui\""
+
+#: RASTATIME 2026-10-16 teaser automation
+msgid "Day teaser: \"tomorrow\""
+msgstr "Teaser du jour : \"demain\""
+
+#: RASTATIME 2026-10-16 teaser automation
+msgid "Teaser for show:"
+msgstr "Teaser pour l'émission :"
+
+#: RASTATIME 2026-10-16 teaser automation
+msgid "Teaser type:"
+msgstr "Type de teaser :"
+
+#: RASTATIME 2026-10-16 teaser automation
+msgid "The show this jingle announces. Smart blocks with the criterion \"Teaser: fits the schedule\" play it only when that show airs on the right day: a \"today\" teaser on the day of the show, a \"tomorrow\" teaser the day before, a show teaser any day - never for a show that is over for today, and never inside the show itself."
+msgstr "L'émission que ce jingle annonce. Les smart blocks avec le critère \"Teaser : correspond à la grille\" ne le passent que lorsque cette émission est diffusée le bon jour : un teaser \"aujourd'hui\" le jour de l'émission, un teaser \"demain\" la veille, un teaser d'émission n'importe quel jour - jamais pour une émission terminée pour aujourd'hui, et jamais dans l'émission elle-même."
+
+#: RASTATIME 2026-10-16 teaser automation
+msgid "Teaser: show"
+msgstr "Teaser : émission"
+
+#: RASTATIME 2026-10-16 teaser automation
+msgid "Teaser: type"
+msgstr "Teaser : type"
+
+#: RASTATIME 2026-10-16 teaser automation
+msgid "Teaser: fits the schedule"
+msgstr "Teaser : correspond à la grille"
+
+#: RASTATIME 2026-10-16 teaser automation
+msgid "Pick a value from the list"
+msgstr "Choisissez une valeur dans la liste"
+
+#: RASTATIME 2026-10-16 teaser automation
+msgid "Select show"
+msgstr "Choisir l'émission"
+
+#: RASTATIME 2026-10-16 teaser automation
+msgid "Select teaser type"
+msgstr "Choisir le type de teaser"
+
+#: RASTATIME 2026-10-16 teaser automation
+msgid "the day of the show being filled"
+msgstr "le jour de l'émission remplie"
+
+#: RASTATIME 2026-10-16 teaser automation
+msgid "Teaser"
+msgstr "Teaser"
+
+#: RASTATIME 2026-10-16 teaser automation
+msgid "criterion \"teaser_show\": unknown show \"%s\""
+msgstr "critère \"teaser_show\" : émission inconnue \"%s\""
+
+#: RASTATIME 2026-10-16 teaser automation
+msgid "criterion \"teaser_type\": \"%s\" is not show, today or tomorrow"
+msgstr "critère \"teaser_type\" : \"%s\" n'est ni show, ni today, ni tomorrow"
+
+#: RASTATIME 2026-10-16 teaser automation
+msgid "criterion \"teaser_fits\": the value must be \"yes\""
+msgstr "critère \"teaser_fits\" : la valeur doit être \"yes\""

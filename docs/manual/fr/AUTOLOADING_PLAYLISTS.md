@@ -347,6 +347,9 @@ voir [Import/Export → blocks.json](./IMPORT_EXPORT.md#blocksjson).
 
 ## Où aller ensuite
 
+* [Automatisation des teasers](./TEASERS.md) — le critère de
+  smart block qui met les bons jingles « aujourd'hui » / « demain »
+  dans les playlists d'intro, d'outro et de contenu.
 * [Auto DJ](./AUTO_DJ.md) — l'automatisation au niveau
   station qui complète l'autoloading par-émission.
 * [Modèles d'émission](./SHOW_TEMPLATES.md) — capturer

@@ -248,6 +248,7 @@ find each common task in the rest of the manual:
 | Use the same show config every week | [Show Templates](./SHOW_TEMPLATES.md) |
 | Build or move a whole programme schedule in a spreadsheet | [Import/Export](./IMPORT_EXPORT.md) |
 | Have a show fill itself | [Autoloading Playlists](./AUTOLOADING_PLAYLISTS.md) |
+| Play the right "today" / "tomorrow" jingles automatically | [Teaser Automation](./TEASERS.md) |
 | Fill calendar gaps automatically | [Auto DJ](./AUTO_DJ.md) |
 | Take the station live from a microphone | [Dashboard](./DASHBOARD.md) → Live Source |
 | Add a guest's external Icecast stream as a webstream | [Webstreams](./WEBSTREAMS.md) |

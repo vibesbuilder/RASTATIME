@@ -146,6 +146,7 @@ documento maestro arriba es lo único que todos asumen.
 | Capítulo | Contenido |
 |---|---|
 | [Autoloading Playlists](./AUTOLOADING_PLAYLISTS.md) | Dejar que una playlist se construya para cada instancia de un programa, incluyendo gestión de reserva de outro. |
+| [Automatización de teasers](./TEASERS.md) | Vincular jingles con el programa que anuncian; un criterio de bloque inteligente emite los teasers «hoy» y «mañana» el día correcto. |
 | [Auto DJ](./AUTO_DJ.md) | El rellenador en segundo plano que crea programas en huecos del calendario y completa programas incompletos. |
 | [Peticiones de canciones](./SONG_REQUESTS.md) | Dejar que los oyentes pidan pistas desde un widget público, que suenan automáticamente dentro de un request show. |
 | [Alertas de tráfico](./TRAFFIC_ALERTS.md) | Introducir MP3s de boletines de tráfico de último momento en el programa en curso mediante un smart block — en unos ~10 minutos, en el siguiente espacio de tráfico, sin intervenir en el playout. |

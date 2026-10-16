@@ -82,6 +82,24 @@ class Application_Form_BulkEditAudioMD extends Zend_Form
             ->setMultiOptions($options);
         $this->addElement($trackType);
 
+        // RASTATIME 2026-10-16 - teaser automation: set the teased show and
+        // the teaser type for many jingles at once.  '' leaves the field
+        // alone, 'none' clears the link (the controller maps it to '').
+        $teaserOptions = ['' => _('Leave unchanged'), 'none' => _('None')] + Application_Model_StoredFile::teaserShows();
+        $teaserShow = new Zend_Form_Element_Select('teaser_show_id');
+        $teaserShow->class = 'input_text';
+        $teaserShow->setLabel(_('Teaser for show:'))
+            ->setRequired(false)
+            ->setMultiOptions($teaserOptions);
+        $this->addElement($teaserShow);
+
+        $teaserType = new Zend_Form_Element_Select('teaser_type');
+        $teaserType->class = 'input_text';
+        $teaserType->setLabel(_('Teaser type:'))
+            ->setRequired(false)
+            ->setMultiOptions(['' => _('Leave unchanged')] + Application_Model_StoredFile::teaserTypeLabels());
+        $this->addElement($teaserType);
+
         // RASTATIME 2026-10-08 (operator): the expiry date as in the single
         // editor; YYYY-MM-DD sets it, "none" clears it, empty leaves it
         $expiresAt = new Zend_Form_Element_Text('expires_at');
@@ -113,6 +131,6 @@ class Application_Form_BulkEditAudioMD extends Zend_Form
     /** The order the dialog shows the fields in. */
     public static function fieldOrder()
     {
-        return ['artist_name', 'album_title', 'genre', 'year', 'track_type_id', 'language', 'mood', 'label', 'composer', 'conductor', 'copyright', 'expires_at', 'description'];
+        return ['artist_name', 'album_title', 'genre', 'year', 'track_type_id', 'teaser_show_id', 'teaser_type', 'language', 'mood', 'label', 'composer', 'conductor', 'copyright', 'expires_at', 'description'];
     }
 }

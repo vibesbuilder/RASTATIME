@@ -172,10 +172,21 @@ class AutoPlaylistManager
         ];
         $counts = ['intro' => 0, 'outro' => 0, 'auto' => 0, 'topup' => 0];
 
+        // RASTATIME 2026-10-16 - fill context (teaser criterion, planned-rows
+        // exclusion): the instance, its show and the slot the rows will play
+        // in - the show start for the intro, the show end for the outro, the
+        // current chain end for the content.  Cleared in the finally below.
+        $showId = (int) $si->getShowId();
+        $slotAt = function ($epoch) {
+            return new DateTime('@' . (int) floor((float) $epoch));
+        };
+
+        try {
         // 1. intro at the start
         if ($introId !== null) {
             $rows = self::instanceRows($instanceId);
             $gap = $showEnd - self::chainEnd($rows, $showStart, $house);
+            Application_Model_Block::setFillContext($instanceId, $showId, $slotAt($showStart));
             $counts['intro'] = self::insertFitting(
                 $si, $rows, 0, self::expandPlaylist($introId, $gap, false, false, self::neighbourFile($rows, 0)), $showStart, $showEnd, $house, 'intro'
             );
@@ -185,6 +196,7 @@ class AutoPlaylistManager
         if ($outroId !== null) {
             $rows = self::instanceRows($instanceId);
             $gap = $showEnd - self::chainEnd($rows, $showStart, $house);
+            Application_Model_Block::setFillContext($instanceId, $showId, $slotAt($showEnd));
             $counts['outro'] = self::insertFitting(
                 $si, $rows, count($rows), self::expandPlaylist($outroId, $gap, false, self::neighbourFile($rows, count($rows) - 1), false), $showStart, $showEnd, $house, 'outro'
             );
@@ -200,6 +212,7 @@ class AutoPlaylistManager
                     break;
                 }
                 $at = count($rows) - $counts['outro'];
+                Application_Model_Block::setFillContext($instanceId, $showId, $slotAt(self::chainEnd(array_slice($rows, 0, $at), $showStart, $house)));
                 $added = self::insertFitting(
                     $si, $rows, $at,
                     self::expandPlaylist($autoId, $gap, false, self::neighbourFile($rows, $at - 1), self::neighbourFile($rows, $at)),
@@ -218,6 +231,7 @@ class AutoPlaylistManager
                     break;
                 }
                 $at = count($rows) - $counts['outro'];
+                Application_Model_Block::setFillContext($instanceId, $showId, $slotAt(self::chainEnd(array_slice($rows, 0, $at), $showStart, $house)));
                 $candidates = self::expandPlaylist($autoId, $gap, true, self::neighbourFile($rows, $at - 1), self::neighbourFile($rows, $at));
                 if (empty($candidates)) {
                     break;
@@ -228,6 +242,9 @@ class AutoPlaylistManager
                 }
                 $counts['topup'] += $added;
             }
+        }
+        } finally {
+            Application_Model_Block::clearFillContext();
         }
 
         $rows = self::instanceRows($instanceId);

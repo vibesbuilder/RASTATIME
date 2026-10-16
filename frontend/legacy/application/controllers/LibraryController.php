@@ -402,6 +402,10 @@ class LibraryController extends Zend_Controller_Action
         if (isset($changes['expires_at']) && $changes['expires_at'] === 'none') {
             $changes['expires_at'] = '';
         }
+        // RASTATIME 2026-10-16 - 'none' clears the teaser link
+        if (isset($changes['teaser_show_id']) && $changes['teaser_show_id'] === 'none') {
+            $changes['teaser_show_id'] = '';
+        }
 
         $updated = 0;
         $denied = 0;
@@ -623,6 +627,8 @@ class LibraryController extends Zend_Controller_Action
         $file = Application_Model_StoredFile::RecallById($file_id);
 
         $form = new Application_Form_EditAudioMD();
+        // RASTATIME 2026-10-16 - keep the file's teased show selectable
+        $form->teaserCurrentShowId = (int) (Application_Model_StoredFile::teaserOf(Propel::getConnection(), $file_id)[0] ?: 0) ?: null;
         $form->startForm($file_id);
         $form->populate($file->getDbColMetadata());
 

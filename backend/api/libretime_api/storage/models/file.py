@@ -49,6 +49,11 @@ class File(models.Model):
     # RASTATIME 2026-10-14 - stream metadata (legacy migration 0068):
     # NULL = as the track type, 1 = forward artist / title, 0 = do not
     icy_forward = models.SmallIntegerField(blank=True, null=True)
+    # RASTATIME 2026-10-16 - teaser automation (legacy migration 0069): the
+    # show this jingle announces and how ('show' any day, 'today',
+    # 'tomorrow'); both NULL = not a teaser
+    teaser_show_id = models.IntegerField(blank=True, null=True)
+    teaser_type = models.CharField(max_length=16, blank=True, null=True)
     accessed = models.IntegerField(db_column="currentlyaccessing")
     scheduled = models.BooleanField(blank=True, null=True, db_column="is_scheduled")
     part_of_list = models.BooleanField(blank=True, null=True, db_column="is_playlist")
