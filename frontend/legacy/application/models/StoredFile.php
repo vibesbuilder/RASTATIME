@@ -1117,8 +1117,10 @@ SQL;
                 // "Show name (today)"; NULL for everything that is no teaser
                 $plSelect[] = 'NULL::text AS ' . $key;
                 $blSelect[] = 'NULL::text AS ' . $key;
+                // scalar subquery, not a JOIN: cc_show has genre / description
+                // columns too and the file branch selects those bare
                 $fileSelect[] = self::teaserColumnsReady($con)
-                    ? "(CASE WHEN FILES.teaser_show_id IS NULL THEN NULL ELSE ts.name || ' (' || COALESCE(FILES.teaser_type, 'show') || ')' END)::text AS " . $key
+                    ? "(CASE WHEN FILES.teaser_show_id IS NULL THEN NULL ELSE (SELECT ts.name FROM cc_show ts WHERE ts.id = FILES.teaser_show_id) || ' (' || COALESCE(FILES.teaser_type, 'show') || ')' END)::text AS " . $key
                     : 'NULL::text AS ' . $key;
                 $streamSelect[] = 'NULL::text AS ' . $key;
             } elseif ($key === 'is_scheduled' || $key === 'is_playlist') {
@@ -1293,9 +1295,7 @@ SQL;
         $blTable = "({$blSelect} FROM cc_block AS BL LEFT JOIN cc_subjs AS sub ON (sub.id = BL.creator_id))";
         // RASTATIME 2026-10-07 - play_count: one grouped pass over the playout history per query
         $playCountJoin = 'LEFT JOIN (SELECT file_id, COUNT(*) AS play_count FROM cc_playout_history WHERE file_id IS NOT NULL GROUP BY file_id) AS ph ON (ph.file_id = FILES.id)';
-        // RASTATIME 2026-10-16 - the teased show's name (migration 0069)
-        $teaserJoin = self::teaserColumnsReady($con) ? 'LEFT JOIN cc_show AS ts ON (ts.id = FILES.teaser_show_id)' : '';
-        $fileTable = "({$fileSelect} FROM cc_files AS FILES LEFT JOIN cc_subjs AS sub ON (sub.id = FILES.owner_id) {$playCountJoin} {$teaserJoin} WHERE file_exists = 'TRUE' AND hidden='FALSE')";
+        $fileTable = "({$fileSelect} FROM cc_files AS FILES LEFT JOIN cc_subjs AS sub ON (sub.id = FILES.owner_id) {$playCountJoin} WHERE file_exists = 'TRUE' AND hidden='FALSE')";
         // $fileTable = "({$fileSelect} FROM cc_files AS FILES WHERE file_exists = 'TRUE')";
         $streamTable = "({$streamSelect} FROM cc_webstream AS ws LEFT JOIN cc_subjs AS sub ON (sub.id = ws.creator_id))";
         $lineinTable = "({$lineinSelect} FROM rastatime_linein AS li WHERE li.enabled = TRUE)";
