@@ -601,9 +601,11 @@ class Application_Model_StoredFile
         if (self::$teaserColumnsReady === null) {
             try {
                 $con = $con ?: Propel::getConnection(CcFilesPeer::DATABASE_NAME);
+                // EXISTS, not "1 AND 1": integer AND integer is no PostgreSQL
+                // operator and the failed probe read as "not ready" (2026-10-16)
                 $stmt = $con->prepare(
-                    "SELECT (SELECT 1 FROM information_schema.columns WHERE table_name = 'cc_files' AND column_name = 'teaser_type') "
-                    . "AND (SELECT 1 FROM information_schema.tables WHERE table_name = 'cc_file_teaser')"
+                    "SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'cc_files' AND column_name = 'teaser_type') "
+                    . "AND EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'cc_file_teaser')"
                 );
                 $stmt->execute();
                 $v = $stmt->fetchColumn();
