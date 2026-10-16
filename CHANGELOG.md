@@ -30,7 +30,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (vorher Backup, außerhalb von Sendungsgrenzen); bis dahin leerer Pool
   mit Log-Hinweis.  Abnahme-Fix: Sendungsliste im Editor brach bei
   verknüpftem Track ab (ORDER BY-Ausdruck auf UNION), Bibliothek leer
-  nach 0069 (Join-Mehrdeutigkeit, Commit 74cd18c).  Strings
+  nach 0069 (Join-Mehrdeutigkeit, Commit 74cd18c).  Mehrere Sendungen je Jingle
+  Commit ebbfe12.  Strings
   DE/FR/ES, Manual TEASERS ×4 (neu), LIBRARY ×4, Architektur §23.63.
   Commit 8478269.
 - **Local Machine: Kontrollkästchen „Bulk Import: allow importing
