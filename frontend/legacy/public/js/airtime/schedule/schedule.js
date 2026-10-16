@@ -246,8 +246,20 @@ function buildScheduleDialog(json, instance_id) {
 // RASTATIME 2026-10-16 - teaser automation stage 2: the "Teasers" dialog of a
 // show (schedule/teaser-dialog); the view's inline script does the work.
 function buildTeaserDialog(json) {
-  if (json.show_error == true) {
+  if (typeof json === "string") {
+    try {
+      json = JSON.parse(json);
+    } catch (e) {
+      alert("Teasers: unexpected response - " + json.substring(0, 160));
+      return;
+    }
+  }
+  if (!json || json.show_error == true) {
     alertShowErrorAndReload();
+    return;
+  }
+  if (!json.dialog) {
+    alert("Teasers: the server sent no dialog - " + JSON.stringify(json).substring(0, 160));
     return;
   }
   var dialog = $(json.dialog),
