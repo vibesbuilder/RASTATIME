@@ -2016,15 +2016,78 @@ SQL;
             $startDateTime->add(new DateInterval("P{$offset['days']}D"));
         }
 
-        $endDateTime = clone $startDateTime;
-        $duration = explode(':', $duration);
-        [$hours, $mins] = array_slice($duration, 0, 2);
-        $endDateTime->add(new DateInterval("PT{$hours}H{$mins}M"));
+        // RASTATIME 2026-10-16 - wall-clock end (see wallClockEnd): a show
+        // that runs across a DST change ends at its local end time, not
+        // "duration" elapsed hours later.
+        $endDateTime = self::wallClockEnd($startDateTime, $duration);
 
         $startDateTime->setTimezone(new DateTimeZone('UTC'));
         $endDateTime->setTimezone(new DateTimeZone('UTC'));
 
         return [$startDateTime, $endDateTime];
+    }
+
+    /**
+     * RASTATIME 2026-10-16 - the end of a show instance in the show's
+     * timezone, read as WALL-CLOCK time.
+     *
+     * A show is defined as "22:00 for 8 hours" and the station expects it
+     * to end at 06:00 local time every day.  Adding the duration as a
+     * DateInterval counts elapsed hours (PHP >= 8.1), so on the night the
+     * clocks change the instance ended at 05:00 (autumn, one hour gap
+     * before the next show) or 07:00 (spring, one hour overlap with the
+     * next show).  This helper adds the duration on a fixed clock and
+     * re-reads the result in the show's timezone, so the instance ends at
+     * 06:00 local on both nights (9 or 7 real hours).
+     *
+     * Edge cases of the transition hour itself:
+     * - the wall-clock end does not exist (spring, 02:00-03:00) -> PHP
+     *   moves it forward by an hour, which is the moment that clock time
+     *   would have been reached;
+     * - start and end collapse to the same instant (e.g. 02:00-03:00 in
+     *   spring) -> fall back to the elapsed duration, never a zero-length
+     *   instance;
+     * - the wall-clock end is ambiguous (autumn, 02:00-03:00 occurs twice)
+     *   -> the first occurrence after the start wins, so "01:30 for one
+     *   hour" ends at the first 02:30.
+     *
+     * @param DateTime $localStart start in the show's timezone
+     * @param string   $duration   (h)h:(m)m(:ss)
+     *
+     * @return DateTime end in the show's timezone
+     */
+    public static function wallClockEnd(DateTime $localStart, $duration)
+    {
+        $parts = explode(':', (string) $duration);
+        $hours = (int) ($parts[0] ?? 0);
+        $mins = (int) ($parts[1] ?? 0);
+        $interval = new DateInterval("PT{$hours}H{$mins}M");
+        $timezone = $localStart->getTimezone();
+
+        // add on a clock without DST rules, then read the wall-clock result
+        // back in the show's timezone
+        $clock = new DateTime($localStart->format('Y-m-d H:i:s'), new DateTimeZone('UTC'));
+        $clock->add($interval);
+        $end = new DateTime($clock->format('Y-m-d H:i:s'), $timezone);
+
+        // ambiguous wall-clock end (autumn): prefer the first occurrence
+        // after the start
+        $earlier = clone $end;
+        $earlier->setTimestamp($end->getTimestamp() - 3600);
+        if (
+            $earlier->getTimestamp() > $localStart->getTimestamp()
+            && $earlier->format('Y-m-d H:i') === $end->format('Y-m-d H:i')
+        ) {
+            $end = $earlier;
+        }
+
+        if ($end->getTimestamp() <= $localStart->getTimestamp()) {
+            // the whole show lies in the skipped hour: elapsed duration
+            $end = clone $localStart;
+            $end->add($interval);
+        }
+
+        return $end;
     }
 
     /**

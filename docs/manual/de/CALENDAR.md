@@ -401,6 +401,22 @@ paar Stunden in mehrere Sendungen aufteilen — der
 Show-Builder ist für Sendungen typischer Dauer (15 min –
 4 h) ausgelegt.
 
+### "Was passiert in der Nacht der Zeitumstellung?"
+
+Sendungen sind in Ortszeit definiert und bleiben bei ihrer Ortszeit:
+Eine Sendung um 08:00 läuft vor und nach der Umstellung um 08:00.  Eine
+Sendung, die *über* die Umstellung läuft, endet zu ihrer lokalen
+Endzeit: „22:00 für 8 Stunden" endet in der Herbstnacht um 06:00 (neun
+reale Stunden, das Autoloading füllt die zusätzliche Stunde) und in der
+Frühlingsnacht um 06:00 (sieben reale Stunden).  Es entsteht weder eine
+Lücke noch eine Überlappung mit der folgenden Sendung.  Innerhalb der
+Umstellungsstunde selbst (02:00–03:00): Eine Sendung, deren Endzeit im
+Frühling nicht existiert, endet eine Stunde später; eine Sendung, die
+ganz in der übersprungenen Stunde liegt, behält ihre Dauer; eine
+Endzeit, die im Herbst zweimal vorkommt, gilt beim ersten Vorkommen.
+Seit 2026-10-16; davor endete eine Sendung über die Umstellung eine
+Stunde zu früh (Herbst) bzw. zu spät (Frühling).
+
 ### "Kann ich den Kalender als ICS importieren / exportieren?"
 
 Ja — Read-only-ICS-Export unter `/Calendar/ics/format/ics`.

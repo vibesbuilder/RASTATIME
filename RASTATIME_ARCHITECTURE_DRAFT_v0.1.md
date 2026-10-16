@@ -1,10 +1,13 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.73
-Date: 2026-10-14
+Draft version: 0.74
+Date: 2026-10-16
 
 > **Revision history**
+> - **0.74 (2026-10-16)** — **Wall-clock show ends across DST**
+>   (§23.62): `ShowService::wallClockEnd`, used by
+>   `createUTCStartEndDateTime` for repeats, single shows and rebroadcasts.
 > - **0.73 (2026-10-14)** — **Stream metadata per file and track type**
 >   (§23.61): `cc_files.icy_forward` / `cc_track_types.icy_forward`
 >   (migration 0068), `icy_hide` packet, label builder branch.
@@ -6982,3 +6985,45 @@ never ignored.  The Live Text line uses the same label; the Playout
 History is written from the schedule and does not change.  Effective
 after migration 0068 and a PLAYOUT + LIQUIDSOAP restart (the script is
 rendered at PLAYOUT start).
+
+### 23.62 Wall-Clock Show Ends Across DST (2026-10-16)
+
+**Problem.**  Show instances are stored in UTC and generated from a local
+definition (`cc_show_days`: first_show, start_time, duration, timezone).
+The start of every instance was already a wall-clock time (`DateTime` in
+the show's timezone, advanced by `P7D` etc.), but the end was computed as
+`start + DateInterval("PT{h}H{m}M")`, which PHP ≥ 8.1 treats as elapsed
+time.  A show "22:00 for 8 h" therefore ended at 05:00 local in the
+autumn night (one-hour gap before the 06:00 show, fallback source on air)
+and at 07:00 local in the spring night (one-hour overlap with the 06:00
+show, two instances active at once).  The New-Show form's overlap check
+already worked with wall-clock ends (it converts the form's end time), so
+validation and generation disagreed on those two nights.
+
+**Change.**  `Application_Service_ShowService::wallClockEnd(DateTime
+$localStart, $duration)` adds the duration on a DST-free clock (the local
+wall-clock string re-read as UTC), then re-reads the result in the show's
+timezone.  `createUTCStartEndDateTime` uses it for every instance it
+creates: weekly/biweekly/monthly repeats, single shows, edited shows and
+rebroadcasts.  The playout, the autoloading fill and the crossfade logic
+are untouched; they consume `cc_show_instances.starts/ends` in UTC as
+before.
+
+**Edge cases of the transition hour** (Europe/Berlin, probed with
+`C:/Temp/optd/dst_wallclock_probe.php`):
+
+| Definition | Result |
+|---|---|
+| 22:00 + 8 h, autumn night | ends 06:00 CET, 9 real hours |
+| 22:00 + 8 h, spring night | ends 06:00 CEST, 7 real hours |
+| 00:00 + 24 h | ends 00:00 next day, 25 / 23 real hours (no gap, no overlap with the next instance) |
+| 01:30 + 1 h, autumn | ends at the *first* 02:30 (CEST), 1 h: an ambiguous wall-clock end takes the first occurrence after the start |
+| 01:30 + 1 h, spring | ends 03:30 CEST, 1 h: a non-existent end is moved forward by PHP |
+| 02:00 + 1 h, spring | start and end collapse to 03:00 CEST → elapsed duration, 1 h; never a zero-length instance |
+
+**Not changed.**  Existing instances are not rewritten (none crossed a
+transition on 2026-10-16); the generator produces the new ends for every
+instance it creates or re-saves from now on.  `Application_Model_Show::
+updateDurationTime` (SQL `ends = starts + duration`) is dead code and was
+left alone.  The duration stored by the form for a show *created* on a
+transition day is still the wall-clock difference the form computes.

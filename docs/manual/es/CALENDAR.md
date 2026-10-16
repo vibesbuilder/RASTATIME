@@ -266,6 +266,22 @@ Técnicamente 24 horas. Operativamente debería dividir
 cualquier cosa de más de unas pocas horas en múltiples
 programas.
 
+### "¿Qué pasa la noche del cambio de hora?"
+
+Los programas se definen en hora local y se quedan en su hora local:
+un programa a las 08:00 se emite a las 08:00 antes y después del
+cambio.  Un programa que cruza el cambio termina a su hora local de
+fin: «22:00 durante 8 horas» termina a las 06:00 la noche de otoño
+(nueve horas reales, la carga automática rellena la hora extra) y a las
+06:00 la noche de primavera (siete horas reales).  No hay hueco ni
+solapamiento con el programa siguiente.  Dentro de la hora de
+transición (02:00–03:00): un programa cuya hora de fin no existe en
+primavera termina una hora más tarde; un programa que cae por completo
+en la hora saltada conserva su duración; una hora de fin que ocurre dos
+veces en otoño se toma en su primera aparición.  Desde 2026-10-16;
+antes, un programa que cruzaba el cambio terminaba una hora antes
+(otoño) o una hora después (primavera).
+
 ### "¿Puedo importar / exportar el calendario como ICS?"
 
 Sí — export ICS de solo lectura en

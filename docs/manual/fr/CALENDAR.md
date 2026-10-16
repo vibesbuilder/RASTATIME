@@ -404,6 +404,23 @@ diviser tout ce qui dépasse quelques heures en plusieurs
 émissions — le show-builder est conçu pour des émissions
 de durée typique (15 min – 4 h).
 
+### "Que se passe-t-il la nuit du changement d'heure ?"
+
+Les émissions sont définies en heure locale et y restent : une
+émission à 08:00 passe à 08:00 avant comme après le changement.  Une
+émission qui chevauche le changement se termine à son heure de fin
+locale : « 22:00 pendant 8 heures » se termine à 06:00 la nuit
+d'automne (neuf heures réelles, le chargement automatique remplit
+l'heure supplémentaire) et à 06:00 la nuit de printemps (sept heures
+réelles).  Ni trou ni chevauchement avec l'émission suivante.  Dans
+l'heure de transition elle-même (02:00–03:00) : une émission dont
+l'heure de fin n'existe pas au printemps se termine une heure plus
+tard ; une émission entièrement dans l'heure sautée garde sa durée ;
+une heure de fin qui existe deux fois en automne est prise à sa
+première occurrence.  Depuis le 2026-10-16 ; auparavant, une émission
+à cheval sur le changement finissait une heure trop tôt (automne) ou
+trop tard (printemps).
+
 ### "Puis-je importer / exporter le calendrier en ICS ?"
 
 Oui — export ICS en lecture seule à

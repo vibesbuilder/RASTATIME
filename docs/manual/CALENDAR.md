@@ -358,6 +358,21 @@ Technically 24 hours. Operationally you should split anything
 over a few hours into multiple shows — the show-builder is
 designed for shows of typical duration (15 min – 4 h).
 
+### "What happens on the night the clocks change?"
+
+Shows are defined in local time and stay at their local time: a show
+at 08:00 runs at 08:00 on both sides of the change.  A show that runs
+*across* the change ends at its local end time: "22:00 for 8 hours"
+ends at 06:00 on the autumn night (nine real hours, the autoloading
+fills the extra hour) and at 06:00 on the spring night (seven real
+hours).  There is no gap and no overlap with the following show.
+Inside the transition hour itself (02:00–03:00): a show that would end
+at a time that does not exist in spring ends an hour later; a show that
+lies entirely in the skipped hour keeps its duration; an end time that
+occurs twice in autumn is taken at its first occurrence.  Since
+2026-10-16; before, a show across the change ended an hour early
+(autumn) or an hour late (spring).
+
 ### "Can I import / export the calendar as ICS?"
 
 Yes — read-only ICS export at `/Calendar/ics/format/ics`.
