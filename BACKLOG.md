@@ -5271,8 +5271,9 @@ Typ zuerst (781d200), Pool-Dropdown-Widget (06491c9), Spaltenzusatz nur bei Tage
 
 ### ✅ Teaser-Automatik Stufe 2 - gebaut 2026-10-16 (Go 2026-10-16 nach der Abnahme von Stufe 1)
 Kalender-Kontextmenue "Teasers" je Sendung (Admin/PM): Jingles mit Typ, weiteren Sendungen, Loesen, Picker zum
-Verknuepfen mit Typwahl.  OFFEN: Browser-Abnahme durch den Operator.  Nicht gebaut (bei Bedarf): Anzeige in der
-Sendungs-Vorschau, Bibliotheksfilter "Teaser der Sendung X".
+Verknuepfen mit Typwahl.  Abnahme Operator 2026-10-16 19:40 bestanden (Fixes: isUserType statt isAdminOrPM, JSON-Kontext,
+Skript im Wurzelelement).  Nicht gebaut (bei Bedarf): Anzeige in der Sendungs-Vorschau, Bibliotheksfilter
+"Teaser der Sendung X".
 
 
 ### 🟡 Windows-Updates Oktober 2026 + Lenovo-Firmware im Wartungsfenster; Windows 11 26H2 - DEFER (evaluiert 2026-10-16)
