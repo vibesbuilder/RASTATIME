@@ -612,6 +612,15 @@ class LibraryController extends Zend_Controller_Action
     {
         $params = $this->getRequest()->getParams();
 
+        // RASTATIME 2026-10-16 - the page-length menu offers "All" (operator
+        // wish 2026-10-09).  With 21,700 tracks the row array, its escaped
+        // copy and the JSON need ~450 MB, more than php.ini's 256 MB: the
+        // feed died with "Allowed memory size exhausted" and the library
+        // spinner never stopped.  Only this action gets the headroom.
+        if ((int) ($params['iDisplayLength'] ?? 0) === -1 || (int) ($params['iDisplayLength'] ?? 0) > 500) {
+            ini_set('memory_limit', '1536M');
+        }
+
         // terrible name for the method below. it does not only search files.
         $r = Application_Model_StoredFile::searchLibraryFiles($params);
 
