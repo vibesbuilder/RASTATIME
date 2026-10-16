@@ -1413,7 +1413,10 @@ un_tests.ps1` (2026-10-16)** — startet API-, Playout- und
   Tabellen-Einstellung length −1).  Nur diese Action hebt das Limit auf
   1536 MB, wenn mehr als 500 Zeilen angefordert werden.  Nicht durch die
   Teaser-Änderung verursacht.  Probe `C:/Temp/optd/library_mem_probe.php`.
-  Commit 815bfd9.
+  Commit 815bfd9.  Der Browser rendert 21.700 Zeilen trotzdem nicht
+  (Icon dreht weiter): „Alle" aus dem Längenmenü entfernt, 2000 ist das
+  Maximum, gespeicherte −1 wird beim Laden zu 100 (cc_pref des Operators
+  zurückgesetzt).  Commit 1ca6205.
 - **Sendungen über die Zeitumstellung enden zur Wanduhrzeit (2026-10-16)**
   — `ShowService::createUTCStartEndDateTime` addierte die Dauer als
   verstrichene Stunden (PHP ≥ 8.1): eine Sendung 22:00–06:00 endete in der
