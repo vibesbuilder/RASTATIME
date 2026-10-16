@@ -17,6 +17,8 @@ class ScheduleController extends Zend_Controller_Action
             ->addActionContext('resize-show', 'json')
             ->addActionContext('delete-show-instance', 'json')
             ->addActionContext('show-content-dialog', 'json')
+            // RASTATIME 2026-10-16 - teaser automation stage 2
+            ->addActionContext('teaser-dialog', 'json')
             ->addActionContext('clear-show', 'json')
             ->addActionContext('get-current-playlist', 'json')
             ->addActionContext('remove-group', 'json')
@@ -459,7 +461,7 @@ class ScheduleController extends Zend_Controller_Action
         $this->view->csrf = $ns->authtoken;
         $this->view->showId = $showId;
         $this->view->showName = $show->getName();
-        $this->view->canEdit = Application_Model_User::getCurrentUser()->isAdminOrPM();
+        $this->view->canEdit = Application_Model_User::getCurrentUser()->isUserType([UTYPE_SUPERADMIN, UTYPE_ADMIN, UTYPE_PROGRAM_MANAGER]);
         $this->view->teasers = Application_Model_StoredFile::teasersOfShow($showId);
         $this->view->typeLabels = Application_Model_StoredFile::teaserTypeLabels();
         $this->view->ready = Application_Model_StoredFile::teaserColumnsReady();
@@ -479,7 +481,7 @@ class ScheduleController extends Zend_Controller_Action
 
             return false;
         }
-        if (!Application_Model_User::getCurrentUser()->isAdminOrPM()) {
+        if (!Application_Model_User::getCurrentUser()->isUserType([UTYPE_SUPERADMIN, UTYPE_ADMIN, UTYPE_PROGRAM_MANAGER])) {
             $this->getResponse()->setHttpResponseCode(403);
             $this->_helper->json->sendJson(['ok' => false, 'error' => 'forbidden']);
 
