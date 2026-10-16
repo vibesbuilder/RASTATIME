@@ -5234,3 +5234,15 @@ Korrekturlauf.  Vor der naechsten Umstellung (2026-10-25) Blick in den Kalender 
 ### Zaehler „X of N tracks" ueberlappt Suchbegriff (Schedule Tracks) - erledigt ohne Eingriff
 Operator 2026-10-16: tritt nicht mehr auf.  Nicht weiter verfolgt.
 
+### 🟡 Legacy-PHPUnit wiederbeleben (Defer, Operator 2026-10-16)
+`frontend/legacy/tests` stammt aus der PHPUnit-4-/PHP-5-Zeit (`PHPUnit_Framework_TestCase`, eigene Test-DB
+`tests/config`), vendor/bin hat kein phpunit.  Legacy-Logik wird mit Bootstrap-Probe-Skripten geprueft
+(C:/Temp/optd, Muster importexport_test.php; z. B. dst_wallclock_probe.php).  Wiederbeleben = PHPUnit 10 per
+Composer, Tests auf `PHPUnit\Framework\TestCase` + Attribute heben, Test-DB-Setup unter Windows; ca. 1-2 Tage.
+Vorbedingung: groesserer Legacy-Umbau steht an (sonst Nutzen zu klein, Legacy weicht langfristig).
+Zwischenstand: `scripts/run_tests.ps1` (2026-10-16) buendelt die drei Python-Suiten mit den noetigen Variablen.
+
+### ✅ Settings -> Local Machine -> Import Folder: Kontrollkaestchen fuer Massenimport-Duplikate - gebaut 2026-10-16
+cc_pref `bulk_import_allow_duplicates` (Standard aus), speichert beim Anklicken (POST preference/bulk-import-save),
+`bulk_import` liest es als Vorgabe, `--allow-duplicates` schaltet je Lauf ein.  Manual LOCAL_MACHINE ×4.
+

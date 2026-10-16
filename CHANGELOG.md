@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Local Machine: Kontrollkästchen „Bulk import: also import files whose
+  audio is already in the library" (2026-10-16)** — unter Import Folder,
+  speichert beim Anklicken (`POST preference/bulk-import-save`, cc_pref
+  `bulk_import_allow_duplicates`, Standard aus).  Das API-Kommando
+  `bulk_import` liest es als Vorgabe, wenn `--allow-duplicates` fehlt
+  (`allow_duplicates_from_preference`, Test).  Upload-Seite und
+  Import-Ordner unberührt (prüfen nie auf Duplikate).  Strings DE/FR/ES
+  (.mo kompiliert, Apache-Neustart), Manual LOCAL_MACHINE ×4 §6.  Commit 16062b6.
+- **`scripts
+un_tests.ps1` (2026-10-16)** — startet API-, Playout- und
+  Root-Unit-Tests mit den Variablen, die diese Maschine braucht
+  (`LIBRETIME_CONFIG_FILEPATH`, `PYTHONUTF8=1`, `PYTHONPATH`,
+  `--basetemp`); `-Suite`, `-Path`, weitere pytest-Argumente.
+  TEST_PLAN.md + COMPONENTS.md; Legacy-PHPUnit bleibt 🟡 im BACKLOG
+  (Probe-Skripte statt Suite).  Commit 8a974a7.
 - **Bibliothek: Spalte „ID" (2026-10-16)** — die Datenbank-ID einer Datei
   als Bibliotheksspalte vor „File Name", standardmäßig sichtbar,
   sortierbar, in der erweiterten Suche als Bereich; Playlisten, Smart
