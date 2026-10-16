@@ -120,6 +120,7 @@ final class LocaleController extends Zend_Controller_Action
             'Day teaser: "today"' => _('Day teaser: "today"'),
             'Day teaser: "tomorrow"' => _('Day teaser: "tomorrow"'),
             'the day of the show being filled' => _('the day of the show being filled'),
+            'Shows' => _('Shows'),
             // RASTATIME 2026-10-08 - preflight warning: failed podcast download
             'Podcast download failed:' => _('Podcast download failed:'),
             '%s attempt(s), last %s' => _('%s attempt(s), last %s'),

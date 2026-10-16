@@ -30,7 +30,7 @@ Doppelklick) und setzen Sie
 | Feld | Bedeutung |
 |---|---|
 | **Teaser-Typ** | **Showteaser (jederzeit)**, **Tagesteaser: „heute"** oder **Tagesteaser: „morgen"**.  Wählen Sie ihn zuerst: Die Sendungsliste darunter bleibt ausgegraut, bis ein Typ gesetzt ist, und ein Speichern mit Sendungen ohne Typ wird abgewiesen. |
-| **Teaser für Sendungen** | die Sendungen, die dieser Jingle ankündigt - eine oder mehrere anhaken, ein Kontrollkästchen je Sendung wie beim Song-Request-Pool.  Die Liste enthält jede Sendung mit bevorstehender Ausstrahlung, jeweils mit der nächsten Sendezeit (`bbc (Sat 12:00)`), damit gleichnamige Sendungen unterscheidbar sind; die stündlichen Nachrichten-Slots sind eigene Sendungen, und ein „BBC heute"-Jingle kann sie alle ankündigen.  Keine Auswahl = kein Teaser; wird der Typ wieder auf *None* gesetzt, leert sich die Liste. |
+| **Teaser für Sendungen** | die Sendungen, die dieser Jingle ankündigt - der Knopf **Sendungen** öffnet dasselbe Kästchen-Panel wie der Song-Request-Pool; eine oder mehrere anhaken, der Knopf zeigt die Anzahl.  Die Liste enthält jede Sendung mit bevorstehender Ausstrahlung, jeweils mit der nächsten Sendezeit (`bbc (Sat 12:00)`), damit gleichnamige Sendungen unterscheidbar sind; die stündlichen Nachrichten-Slots sind eigene Sendungen, und ein „BBC heute"-Jingle kann sie alle ankündigen.  Keine Auswahl = kein Teaser; wird der Typ wieder auf *None* gesetzt, leert sich die Liste. |
 
 Für viele Jingles auf einmal markieren Sie sie in der Bibliothek und
 nutzen **Edit** (Mehrfach-Bearbeitung): dieselben zwei Felder; keine

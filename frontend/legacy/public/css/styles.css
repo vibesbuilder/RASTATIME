@@ -615,26 +615,17 @@ input[type="text"]:focus, input[type="password"]:focus, textarea:focus, .input_t
     padding: 2px;
     box-shadow: none;
 }
-/* RASTATIME 2026-10-16 - "Teaser for shows": a checkbox per show like the
-   Song-Request Pool, in a scrolling box; greyed while no type is set */
-.rt-teaser-shows, dd:has(> .rt-teaser-shows-input) {
-    max-height: 13em;
-    overflow-y: auto;
-    border: 1px solid #5b5b5b;
-    background: #ddd;
-    padding: 4px 6px;
-    box-sizing: border-box;
+/* RASTATIME 2026-10-16 - "Teaser for shows" reuses the Song-Request-Pool
+   dropdown (.rt-sbdd) in the track editors: wider panel for show names
+   with their next airing, greyed while no teaser type is chosen */
+.rt-sbdd-panel.rt-sbdd-wide {
+    width: 320px;
 }
-.rt-teaser-shows label, dd:has(> .rt-teaser-shows-input) label {
-    display: block;
-    line-height: 1.6em;
-    cursor: pointer;
-}
-.rt-teaser-shows br, dd:has(> .rt-teaser-shows-input) br {
-    display: none;
-}
-.rt-teaser-shows-off {
+.rt-sbdd.rt-off {
     opacity: 0.55;
+}
+.rt-sbdd-button:disabled {
+    cursor: default;
 }
 
 .add_show_input_select{

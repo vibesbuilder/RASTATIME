@@ -359,7 +359,6 @@ class Application_Form_EditAudioMD extends Zend_Form
         $teaserShow->setRegisterInArrayValidator(false);
         $teaserShow->setMultiOptions(Application_Model_StoredFile::teaserShows($this->teaserCurrentShowIds));
         $teaserShow->setDescription(_('The shows this jingle announces (tick one or several, none ticked = no teaser). Smart blocks with the criterion "Teaser: fits the schedule" play it only when one of these shows airs on the right day: a "today" teaser on the day of the show, a "tomorrow" teaser the day before, a show teaser any day - never for a show that is over for today, and never inside the show itself.'));
-        $teaserShow->setDecorators(['ViewHelper', 'Errors', 'Description', ['HtmlTag', ['tag' => 'dd', 'class' => 'rt-teaser-shows']], ['Label', ['tag' => 'dt']]]);
         $this->addElement($teaserShow);
         $teaserSent = new Zend_Form_Element_Hidden('teaser_shows_sent');
         $teaserSent->setValue('1')->setDecorators(['ViewHelper']);

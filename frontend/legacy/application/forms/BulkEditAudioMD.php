@@ -101,7 +101,6 @@ class Application_Form_BulkEditAudioMD extends Zend_Form
             ->setRequired(false)
             ->setDescription(_('Nothing ticked leaves the links unchanged; "None" removes them.'))
             ->setMultiOptions($teaserOptions);
-        $teaserShow->setAttrib('class', 'rt-teaser-shows-input');
         $this->addElement($teaserShow);
 
 

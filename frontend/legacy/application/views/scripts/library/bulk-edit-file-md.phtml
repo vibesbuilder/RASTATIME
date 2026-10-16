@@ -6,21 +6,48 @@
     <?php echo $this->form; ?>
 <script>
 (function ($) {
-  // RASTATIME 2026-10-16 - the shows list opens once a teaser type is chosen;
-  // back on "None" / "Leave unchanged" it is emptied and disabled (a
-  // disabled multiselect is not posted - the save then clears the links
-  // in the track editor and leaves them alone in the bulk editor)
-  var $type = $("#teaser_type").last();
-  var $form = $type.closest("form");
-  var $shows = $form.find('input[name="teaser_show_id[]"]');
+  // RASTATIME 2026-10-16 - "Teaser for shows" as the Song-Request-Pool
+  // dropdown (preferences.js setupRequestablePoolDropdown, styles .rt-sbdd):
+  // a button that opens a dark panel of checkboxes.  The checkbox markup
+  // is only wrapped, the form posts teaser_show_id[] as before.  Scoped to
+  // THIS dialog: closed dialogs may still sit in the DOM.
+  var $form = $("#bulk_md_dialog form").last();
+  var $type = $form.find("#teaser_type");
+  var $boxes = $form.find('input[name="teaser_show_id[]"]');
+  if ($boxes.length === 0 || $form.find(".rt-sbdd").length > 0) {
+    return;
+  }
+  var $dd = $boxes.first().closest("dd");
+  var $panel = $('<div class="rt-sbdd-panel rt-sbdd-wide"></div>').append($dd.children("label, br"));
+  var $btn = $('<button type="button" class="rt-sbdd-button"></button>');
+  var $wrap = $('<div class="rt-sbdd"></div>').append($btn, $panel);
+  $dd.prepend($wrap);
+  var word = $.i18n._("Shows");
+  function label() {
+    var n = $boxes.filter(":checked").not('[value="none"]').length;
+    $btn.text(n ? word + " (" + n + ")" : word);
+  }
   function sync() {
     var on = $type.val() !== "" && $type.val() !== null;
-    $shows.prop("disabled", !on);
-    $shows.closest(".rt-teaser-shows, dd").toggleClass("rt-teaser-shows-off", !on);
+    $boxes.prop("disabled", !on);
+    $btn.prop("disabled", !on);
+    $wrap.toggleClass("rt-off", !on);
     if (!on) {
-      $shows.prop("checked", false);
+      $boxes.prop("checked", false);
+      $wrap.removeClass("open");
     }
+    label();
   }
+  $btn.on("click", function (e) {
+    e.stopPropagation();
+    $wrap.toggleClass("open");
+  });
+  $(document).on("click", function (e) {
+    if ($(e.target).closest(".rt-sbdd").length === 0) {
+      $wrap.removeClass("open");
+    }
+  });
+  $boxes.on("change", label);
   $type.on("change", sync);
   sync();
 })(jQuery);

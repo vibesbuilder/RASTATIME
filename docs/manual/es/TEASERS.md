@@ -32,7 +32,7 @@ establezca
 | Campo | Significado |
 |---|---|
 | **Tipo de teaser** | **Teaser de programa (cualquier día)**, **Teaser del día: «hoy»** o **Teaser del día: «mañana»**.  Elíjalo primero: la lista de programas permanece atenuada hasta que haya un tipo, y un guardado con programas sin tipo se rechaza. |
-| **Teaser para los programas** | los programas que anuncia este jingle; marque uno o varios, una casilla por programa como en el pool de peticiones.  La lista contiene cada programa con una emisión próxima, con su siguiente hora (`bbc (Sat 12:00)`) para distinguir programas homónimos; los huecos de noticias de cada hora son programas distintos y un solo jingle «BBC hoy» puede anunciarlos todos.  Nada seleccionado = no es teaser; volver a poner el tipo en *None* vacía la lista. |
+| **Teaser para los programas** | los programas que anuncia este jingle; el botón **Programas** abre el mismo panel de casillas que el pool de peticiones; marque uno o varios, el botón muestra el número.  La lista contiene cada programa con una emisión próxima, con su siguiente hora (`bbc (Sat 12:00)`) para distinguir programas homónimos; los huecos de noticias de cada hora son programas distintos y un solo jingle «BBC hoy» puede anunciarlos todos.  Nada seleccionado = no es teaser; volver a poner el tipo en *None* vacía la lista. |
 
 Para muchos jingles a la vez, selecciónelos en la biblioteca y use
 **Edit** (edición masiva): los mismos dos campos; nada seleccionado
