@@ -110,6 +110,8 @@ final class LocaleController extends Zend_Controller_Action
             'Mood' => _('Mood'),
             'Owner' => _('Owner'),
             'Play Count' => _('Play Count'),
+            // RASTATIME 2026-10-16 - library column: database id of a file
+            'ID' => _('ID'),
             // RASTATIME 2026-10-08 - preflight warning: failed podcast download
             'Podcast download failed:' => _('Podcast download failed:'),
             '%s attempt(s), last %s' => _('%s attempt(s), last %s'),

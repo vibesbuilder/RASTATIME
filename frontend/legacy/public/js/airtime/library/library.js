@@ -34,6 +34,7 @@ var AIRTIME = (function (AIRTIME) {
     mtime: "n",
     lptime: "n",
     play_count: "n",
+    id: "n",
     disc_number: "n",
     encoded_by: "s",
     genre: "s",
@@ -1140,6 +1141,18 @@ var AIRTIME = (function (AIRTIME) {
         mDataProp: "year",
         bVisible: false,
         sClass: "library_year",
+        sWidth: "60px",
+      },
+      /* ID - RASTATIME 2026-10-16 (operator wish): the database id of a
+         file, visible by default, sortable, range-searchable.  Playlists,
+         smart blocks, webstreams and line-ins have their own number
+         ranges, so their cells stay empty. */ {
+        sTitle: $.i18n._("ID"),
+        mDataProp: "id",
+        mRender: function (data, type, full) {
+          return full.ftype === "audioclip" ? data : "";
+        },
+        sClass: "library_id",
         sWidth: "60px",
       },
       /* File Name */ {
@@ -2587,6 +2600,7 @@ var validationTypes = {
   mtime: "t",
   lptime: "t",
   play_count: "i",
+  id: "i",
   disc_number: "i",
   genre: "s",
   isrc_number: "s",

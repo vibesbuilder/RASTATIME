@@ -1280,6 +1280,10 @@ msgstr "Dernier Joué"
 msgid "Play Count"
 msgstr "Play Count"
 
+#: application/controllers/LocaleController.php:114
+msgid "ID"
+msgstr "ID"
+
 #: application/controllers/LocaleController.php:103
 #: application/models/Criteria.php:165
 #: application/services/HistoryService.php:1054
