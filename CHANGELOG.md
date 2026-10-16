@@ -9,10 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Teaser-Automatik Stufe 1 (2026-10-16)** — Jingles werden mit der
-  Sendung verknüpft, die sie ankündigen (`cc_files.teaser_show_id`,
-  `teaser_type` show/today/tomorrow, Migration 0069; Track-Editor
-  „Teaser for show" / „Teaser type", Mehrfach-Bearbeitung,
+- **Teaser-Automatik Stufe 1 (2026-10-16)** — Jingles werden mit den
+  Sendungen verknüpft, die sie ankündigen (Verknüpfungstabelle
+  `cc_file_teaser`, Migration 0070 nach der Abnahme-Rückmeldung
+  „mehrere Sendungen je Jingle"; `cc_files.teaser_type`
+  show/today/tomorrow, Migration 0069; Track-Editor Mehrfachauswahl
+  „Teaser for shows" / „Teaser type", Mehrfach-Bearbeitung,
   Bibliotheksspalte „Teaser"), und drei Smart-Block-Kriterien wählen sie:
   „Teaser: show", „Teaser: type" und die Automatik „Teaser: fits the
   schedule" — heute-Teaser nur, wenn die Sendung am Tag des Slots noch
@@ -24,8 +26,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Vorgängerzeile); Export/Import der Blöcke mit Sendungsname;
   Sendungsliste mit nächster Sendezeit.  Trockenprobe in Transaktion
   (DDL + Regeln) bestanden, Probe `C:/Temp/optd/teaser_probe.php`.
-  **Migration 0069 steht aus** (vorher Backup, außerhalb von
-  Sendungsgrenzen); bis dahin leerer Pool mit Log-Hinweis.  Strings
+  Migration 0069 gelaufen 2026-10-16 13:50, **Migration 0070 steht aus**
+  (vorher Backup, außerhalb von Sendungsgrenzen); bis dahin leerer Pool
+  mit Log-Hinweis.  Abnahme-Fix: Sendungsliste im Editor brach bei
+  verknüpftem Track ab (ORDER BY-Ausdruck auf UNION), Bibliothek leer
+  nach 0069 (Join-Mehrdeutigkeit, Commit 74cd18c).  Strings
   DE/FR/ES, Manual TEASERS ×4 (neu), LIBRARY ×4, Architektur §23.63.
   Commit 8478269.
 - **Local Machine: Kontrollkästchen „Bulk Import: allow importing

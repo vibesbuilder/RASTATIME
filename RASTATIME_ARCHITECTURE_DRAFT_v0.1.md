@@ -7034,11 +7034,19 @@ transition day is still the wall-clock difference the form computes.
 
 ### 23.63 Teaser Automation Stage 1 (2026-10-16)
 
-**Model.**  A jingle announces exactly one show in one way:
-`cc_files.teaser_show_id` (FK `cc_show`, `ON DELETE SET NULL`) and
-`cc_files.teaser_type` (`show` | `today` | `tomorrow`), legacy migration
-0069 (`0069_file_teaser.py`, partial index on `teaser_show_id`, index
-`cc_schedule (file_id, starts)`).  Propel classes are not regenerated;
+**Model.**  A jingle announces one or more shows in one way: the link
+table `cc_file_teaser (file_id, show_id)` (both FKs `ON DELETE CASCADE`,
+migration 0070 - the operator's acceptance of 0069 asked for several
+shows per jingle, the hourly "bbc" slots being separate shows) and
+`cc_files.teaser_type` (`show` | `today` | `tomorrow`, migration 0069,
+which also adds the index `cc_schedule (file_id, starts)`; its
+single-show column was carried into the table and dropped by 0070).
+`StoredFile::teaserOf` returns the id list and the type, the editors use
+a multiselect (`teaser_show_id[]`, collected into a list by both
+controllers; a hidden `teaser_shows_sent` marks an empty selection), the
+library column aggregates the show names with `string_agg`, and the
+criteria test `EXISTS (SELECT 1 FROM cc_file_teaser ft WHERE ft.file_id =
+cc_files.id AND ...)` - one fitting linked show is enough.  Propel classes are not regenerated;
 `StoredFile::teaserOf / setDbColMetadata` read and write the columns by
 raw SQL and `StoredFile::teaserColumnsReady()` (information_schema, cached
 per request) keeps the library query and the criteria harmless until the

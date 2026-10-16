@@ -5263,7 +5263,9 @@ Bibliotheksspalte "Teaser"; Smart-Block-Kriterien teaser_show / teaser_type / te
 (Ende der Vorgaengerzeile).  Operator-Regeln: nie die befuellte Sendung, nie eine Sendung, die fuer heute vorbei
 ist (today/show), tomorrow nur bei Ausstrahlung am Folgetag.  Erweiterung: "Exclude tracks/artists played
 lately" zaehlt geplante Zeilen im Fenster (beide Richtungen).  Trockenprobe in Transaktion bestanden.
-OFFEN: Migration 0069 durch den Operator (Backup, ausserhalb von Sendungsgrenzen), Apache-Neustart (.mo),
+Abnahme-Rueckmeldung 2026-10-16: mehrere Sendungen je Jingle -> Verknuepfungstabelle cc_file_teaser (Migration 0070),
+Mehrfachauswahl in beiden Editoren; Fixes: Sendungsliste (UNION-ORDER BY), leere Bibliothek nach 0069 (74cd18c).
+OFFEN: Migration 0070 durch den Operator (Backup, ausserhalb von Sendungsgrenzen), Apache-Neustart (.mo),
 Browser-Abnahme (Track-Editor, Mehrfach-Bearbeitung, Block-Editor, Fuellung einer Testsendung).
 
 ### 🟢 Teaser-Automatik Stufe 2 - Go-Reihenfolge nach Stufe 1 (Operator 2026-10-16: "Danach Stufe 2")
