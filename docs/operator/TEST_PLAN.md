@@ -145,6 +145,7 @@ counts identical to live, scratch database dropped - passed.
 | `scripts\backup-auto.ps1` (repo) | registered task "RASTATIME-Backup" | nightly backup |
 | `frontend\legacy\scripts\po2mo.py` (repo) | `python po2mo.py --all` | compile the four catalogues after a string change (Apache restart to pick up) |
 | Unit tests | `.venv\Scripts\python.exe -m pytest tests/unit -q --basetemp=<scratch>` (PYTHONPATH `backend/api;backend/shared;.`) and `-m pytest backend/playout/tests -q` (add `backend/playout`) | 739 / 55+ passed; `--basetemp` is required on this machine |
+| `scripts\run_tests.ps1` (repo, since 2026-10-16) | `.\scripts\run_tests.ps1 -Suite api|playout|unit|all [-Path <tests>] [-- -k name]` | sets `LIBRETIME_CONFIG_FILEPATH`, `PYTHONUTF8=1`, `PYTHONPATH` and `--basetemp` for you; the API suite needs the real `libretime.conf` because Django builds the test database with its credentials |
 
 Secrets are never printed by any of these tools; the database password
 is read from `libretime.conf` into the environment for the call only.

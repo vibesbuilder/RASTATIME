@@ -86,7 +86,16 @@ previous pin, restart, then investigate.
   (`armed=... timers armed X s after the clock reference`) is the control.
 - `pytest backend\api` on this machine needs `PYTHONUTF8=1`: the test
   database setup fails with a `UnicodeDecodeError` otherwise (German
-  PostgreSQL messages in the console code page).
+  PostgreSQL messages in the console code page) - and
+  `LIBRETIME_CONFIG_FILEPATH=C:\RASTATIME\config\libretime.conf`, because
+  the testing settings otherwise fall back to the upstream default
+  credentials and every `django_db` test errors.  `scripts\run_tests.ps1`
+  sets both (plus `PYTHONPATH` and `--basetemp`) for all three suites.
+- The legacy PHP test suite (`frontend\legacy\tests`, PHPUnit 4 era,
+  `PHPUnit_Framework_TestCase`) is not runnable: PHPUnit is not installed
+  and the tests predate PHP 8.  Legacy logic is verified with bootstrapped
+  probe scripts (`C:\Temp\optd\*.php`, pattern `importexport_test.php`);
+  reviving PHPUnit is a BACKLOG item (🟡).
 - The Liquidsoap Windows build leaks ~5 KB per `Unix.select`
   (`docs\upstream\2026-09-05-...`); a new release does not fix this unless
   the OCaml runtime changes — check `--build-config` after an update.
