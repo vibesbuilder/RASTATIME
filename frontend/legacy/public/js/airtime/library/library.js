@@ -1209,11 +1209,13 @@ var AIRTIME = (function (AIRTIME) {
       bProcessing: true,
       bServerSide: true,
       iDisplayLength: 25,
-      // RASTATIME 2026-10-09 - operator wish: 500, 1000 and "All" (-1 = no
-      // LIMIT server side, Datatables.php) in the page-length menu
+      // RASTATIME 2026-10-09 - operator wish: 500 and 1000 in the page-length
+      // menu.  2026-10-16: "All" (-1) dropped - with 21,700 tracks the feed
+      // is 75 MB and the browser never finishes rendering the rows (library
+      // spinner for ever); 2000 is the new top.
       aLengthMenu: [
-        [25, 50, 100, 500, 1000, -1],
-        [25, 50, 100, 500, 1000, $.i18n._("All")],
+        [25, 50, 100, 500, 1000, 2000],
+        [25, 50, 100, 500, 1000, 2000],
       ],
       bStateSave: true,
       fnStateSaveParams: function (oSettings, oData) {
@@ -1239,6 +1241,14 @@ var AIRTIME = (function (AIRTIME) {
         delete oData.start;
       },
       fnStateLoadParams: function (oSettings, oData) {
+        // RASTATIME 2026-10-16 - a saved "All" (-1) or oversized page length
+        // comes back as 100 (see aLengthMenu)
+        if (oData && (oData.length === -1 || oData.length > 2000)) {
+          oData.length = 100;
+        }
+        if (oData && (oData.iLength === -1 || oData.iLength > 2000)) {
+          oData.iLength = 100;
+        }
         // RASTATIME 2026-06-04 (?jq3): never restore a persisted search (see
         // fnStateSaveParams).  Stripping on load as well neutralises any search
         // already left in an older saved state, so the very first page load
