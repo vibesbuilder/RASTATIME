@@ -33,7 +33,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   nach 0069 (Join-Mehrdeutigkeit, Commit 74cd18c).  Mehrere Sendungen je Jingle
   Commit ebbfe12.  Mehrfachauswahl war durch die globale Regel
   `select { height: 26px }` auf eine Zeile gedrückt (klappte nicht
-  auf): `select[multiple]` bekommt sechs Zeilen, Commit 3997c42.  Strings
+  auf): `select[multiple]` bekommt sechs Zeilen, Commit 3997c42.  Operator
+  2026-10-16: Typ zuerst - Sendungsliste erst mit gewähltem Typ aktiv,
+  Speichern mit Sendungen ohne Typ wird abgewiesen (Einzel- und
+  Mehrfach-Bearbeitung), kein stilles 'show' mehr.  Commit 781d200.  Strings
   DE/FR/ES, Manual TEASERS ×4 (neu), LIBRARY ×4, Architektur §23.63.
   Commit 8478269.
 - **Local Machine: Kontrollkästchen „Bulk Import: allow importing
