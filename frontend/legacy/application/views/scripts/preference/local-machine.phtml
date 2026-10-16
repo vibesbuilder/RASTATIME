@@ -298,7 +298,7 @@ $rtTip = function ($text) {
             <dd class="rt-import-format">
                 <input id="bulk_import_allow_duplicates" type="checkbox"
                        <?php echo $bulkAllowDuplicates ? 'checked' : ''; ?> />
-                <label for="bulk_import_allow_duplicates" style="cursor: pointer;"><?php echo _("Bulk import: also import files whose audio is already in the library") ?></label><span class="help_icon" data-rt-tip="<?php echo $rtTip(_("Applies to the command-line bulk import only (bulk_import).  Off: a file whose md5 - or the md5 of its lossless original - is already in the library is skipped.  On: it is imported as a second track, for example the same audio with different tags.  The upload page and this Import Folder never check for duplicates.  The command-line switch --allow-duplicates turns this on for one run.")); ?>"></span>
+                <label for="bulk_import_allow_duplicates" style="cursor: pointer;"><?php echo _("Bulk Import: allow importing duplicates") ?></label><span class="help_icon" data-rt-tip="<?php echo $rtTip(_("Applies to the command-line bulk import only (bulk_import).  Off: a file whose md5 - or the md5 of its lossless original - is already in the library is skipped.  On: it is imported as a second track, for example the same audio with different tags.  The upload page and this Import Folder never check for duplicates.  The command-line switch --allow-duplicates turns this on for one run.")); ?>"></span>
             </dd>
 
             <dt></dt>

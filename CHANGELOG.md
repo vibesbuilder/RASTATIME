@@ -9,8 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Local Machine: Kontrollkästchen „Bulk import: also import files whose
-  audio is already in the library" (2026-10-16)** — unter Import Folder,
+- **Local Machine: Kontrollkästchen „Bulk Import: allow importing
+  duplicates" (2026-10-16, Beschriftung gekürzt auf Operator-Wunsch)** — unter Import Folder,
   speichert beim Anklicken (`POST preference/bulk-import-save`, cc_pref
   `bulk_import_allow_duplicates`, Standard aus).  Das API-Kommando
   `bulk_import` liest es als Vorgabe, wenn `--allow-duplicates` fehlt
