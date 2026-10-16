@@ -5246,3 +5246,18 @@ Zwischenstand: `scripts/run_tests.ps1` (2026-10-16) buendelt die drei Python-Sui
 cc_pref `bulk_import_allow_duplicates` (Standard aus), speichert beim Anklicken (POST preference/bulk-import-save),
 `bulk_import` liest es als Vorgabe, `--allow-duplicates` schaltet je Lauf ein.  Manual LOCAL_MACHINE ×4.
 
+## Backup und Teaser (Operator 2026-10-16)
+
+### 💡 Backup: Recordings in den Medienspiegel aufnehmen (Operator 2026-10-16 -> Backlog)
+Befund: Medienspiegel (robocopy, backup.py) umfasst nur die Bibliothekswurzel D:/stor; die 24/7-Aufnahme
+(D:/recordings/24-7, ~12 GB, 10 Tage Aufbewahrung) und die Sendungsaufnahmen (C:/Users/studio/Music/Show
+Recordings) sind nicht gesichert.  Backup-Ziel stand am 16.10. noch auf D:/backups (gleiche Platte wie
+Bibliothek), E: wird gerade formatiert -> Operator stellt um.  Idee: Settings -> Backup Haekchen
+"Include recordings", robocopy der beiden Ordner nach <Backup>/recordings, Verifikation wie Medienspiegel;
+~2 h mit Doku.  Empfehlung: Recordings auf D: lassen, nie direkt auf die USB-Platte aufnehmen.
+
+### 🟡 Teaser-Automatik: Jingles einer Sendung zuordnen, Smart-Block-Kriterium "passt zum Sendetag" (evaluiert 2026-10-16, Go offen)
+Siehe Evaluation in der Sitzung vom 2026-10-16 (Design: cc_files.teaser_show_id + teaser_type, Kriterien
+teaser_show / teaser_type / teaser_fits mit Referenzdatum der befuellten Instanz, Stufe 1 ~2 Tage, Stufe 2
+Kalender-Dialog ~1 Tag).  Wird bei Go hier ausformuliert.
+
