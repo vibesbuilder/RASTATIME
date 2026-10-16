@@ -56,6 +56,13 @@ class Command(BaseCommand):
             help="Delete file if it already exists.",
             action="store_true",
         )
+        # RASTATIME 2026-10-16 - operator wish: a file whose md5 is already
+        # in the library is imported anyway (same audio, different tags).
+        parser.add_argument(
+            "--allow-duplicates",
+            help="Import a file even when its md5 is already in the library.",
+            action="store_true",
+        )
 
     def handle(self, *args, **options):
         url = settings.CONFIG.general.public_url
@@ -63,12 +70,19 @@ class Command(BaseCommand):
 
         delete_after_upload = options.get("delete_after_upload", False)
         delete_if_exists = options.get("delete_if_exists", False)
+        allow_duplicates = options.get("allow_duplicates", False)
 
         path = options.get("path")
         library = options.get("library", None)
         allowed_extensions = options.get("allowed_extensions")
 
-        importer = Importer(url, auth_key, delete_after_upload, delete_if_exists)
+        importer = Importer(
+            url,
+            auth_key,
+            delete_after_upload,
+            delete_if_exists,
+            allow_duplicates,
+        )
         importer.import_dir(Path(path).resolve(), library, allowed_extensions)
 
 
@@ -79,12 +93,14 @@ class Importer:
         auth_key: str,
         delete_after_upload: bool = False,
         delete_if_exists: bool = False,
+        allow_duplicates: bool = False,
     ) -> None:
         self.url = url
         self.auth_key = auth_key
 
         self.delete_after_upload = delete_after_upload
         self.delete_if_exists = delete_if_exists
+        self.allow_duplicates = allow_duplicates
 
     def _check_file_md5(self, filepath: Path) -> bool:
         file_md5 = compute_md5(filepath)
@@ -122,10 +138,13 @@ class Importer:
             raise ValueError(f"provided path {filepath} is not a file")
 
         if self._check_file_md5(filepath):
-            logger.info("found similar md5sum, ignoring %s", filepath)
-            if self.delete_if_exists:
-                self._delete_file(filepath)
-            return
+            if self.allow_duplicates:
+                logger.info("found similar md5sum, importing anyway %s", filepath)
+            else:
+                logger.info("found similar md5sum, ignoring %s", filepath)
+                if self.delete_if_exists:
+                    self._delete_file(filepath)
+                return
 
         self._upload_file(filepath, library)
 

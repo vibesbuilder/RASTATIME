@@ -391,7 +391,10 @@ What the import does with each file:
 > (`options.convert_lossless`); the analyzer's `convert_format` step
 > runs right after the tags are read.  A converted track keeps the md5
 > of its original in `cc_files.source_md5`, so the bulk import still
-> recognises the same WAV or FLAC as already imported.
+> recognises the same WAV or FLAC as already imported.  Only the bulk
+> import checks md5 at all; the upload page and the import folder never
+> did.  Since 2026-10-16 `bulk_import --allow-duplicates` imports such a
+> file anyway (same audio, different tags) instead of skipping it.
 
 ---
 

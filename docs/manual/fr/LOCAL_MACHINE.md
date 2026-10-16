@@ -366,6 +366,10 @@ Ce que l'import fait de chaque fichier :
 > juste après la lecture des tags.  Une piste convertie garde le md5
 > de son original dans `cc_files.source_md5`, pour que l'import en
 > masse reconnaisse toujours le même WAV ou FLAC comme déjà importé.
+> Seul l'import en masse vérifie le md5 ; la page d'envoi et le dossier
+> d'import ne l'ont jamais fait.  Depuis le 2026-10-16,
+> `bulk_import --allow-duplicates` importe quand même un tel fichier
+> (même audio, tags différents) au lieu de l'ignorer.
 
 ---
 

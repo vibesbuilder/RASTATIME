@@ -356,7 +356,11 @@ Lo que hace la importación con cada archivo:
 > (`options.convert_lossless`); su paso `convert_format` se ejecuta
 > justo después de leer las etiquetas.  Una pista convertida guarda el
 > md5 de su original en `cc_files.source_md5`, para que la importación
-> masiva siga reconociendo el mismo WAV o FLAC como ya importado.
+> masiva siga reconociendo el mismo WAV o FLAC como ya importado.  Solo
+> la importación masiva comprueba el md5; la página de subida y la
+> carpeta de importación nunca lo hicieron.  Desde 2026-10-16,
+> `bulk_import --allow-duplicates` importa ese archivo de todos modos
+> (mismo audio, etiquetas distintas) en lugar de omitirlo.
 
 ---
 

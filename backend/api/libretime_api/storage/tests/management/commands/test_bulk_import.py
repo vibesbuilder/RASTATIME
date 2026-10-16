@@ -97,6 +97,24 @@ def test_importer_existing_file(
 
 
 @pytest.mark.django_db
+def test_importer_existing_file_allow_duplicates(
+    import_paths: Tuple[Path, Path],
+    importer: MockImporter,
+    library,
+):
+    # RASTATIME 2026-10-16 - --allow-duplicates: the known md5 no longer
+    # stops the upload, and the file is never deleted as "existing"
+    baker.make("storage.File", md5="46305a7cf42ee53976c88d337e47e940")
+    importer.allow_duplicates = True
+    importer.delete_if_exists = True
+
+    importer.import_dir(import_paths[0], library.code, [".mp3"])
+
+    importer._upload_file.assert_called_with(import_paths[1], library.code)
+    importer._delete_file.assert_not_called()
+
+
+@pytest.mark.django_db
 def test_importer_existing_converted_original(
     import_paths: Tuple[Path, Path],
     importer: MockImporter,
