@@ -1077,6 +1077,36 @@ class PreferenceController extends Zend_Controller_Action
     }
 
     /**
+     * POST /preference/bulk-import-save - RASTATIME 2026-10-16.
+     *
+     * Settings -> Local Machine -> Import Folder: "Bulk import: also import
+     * files whose audio is already in the library" (cc_pref
+     * bulk_import_allow_duplicates, default off).  The API management
+     * command bulk_import reads it when --allow-duplicates is not given.
+     */
+    public function bulkImportSaveAction(): void
+    {
+        $this->view->layout()->disableLayout();
+        $this->_helper->viewRenderer->setNoRender(true);
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->getResponse()->setHttpResponseCode(405);
+            $this->_helper->json->sendJson(['ok' => false, 'error' => 'method-not-allowed']);
+            return;
+        }
+        if (!SecurityHelper::verifyCSRFToken($this->_getParam('csrf_token'))) {
+            $this->_helper->json->sendJson(['ok' => false, 'error' => 'csrf']);
+            return;
+        }
+        $on = $this->_getParam('allow_duplicates', '') === 'true';
+        Application_Model_Preference::setBulkImportAllowDuplicates($on);
+        Logging::info('Bulk import: duplicates (known md5) ' . ($on ? 'allowed' : 'skipped'));
+        $this->_helper->json->sendJson([
+            'ok' => true,
+            'allow_duplicates' => Application_Model_Preference::getBulkImportAllowDuplicates(),
+        ]);
+    }
+
+    /**
      * POST /preference/restart-audio-chain — apply a changed
      * "Main Output" selection by restarting the audio chain.
      *

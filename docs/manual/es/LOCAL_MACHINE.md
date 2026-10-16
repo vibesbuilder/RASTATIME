@@ -372,6 +372,17 @@ archivos. Todo lo que se suelta en la carpeta se importa
 automáticamente a la biblioteca en el próximo ciclo de
 poll del analyzer (por defecto cada 60 s).
 
+**Importación masiva: importar también archivos cuyo audio ya está en
+la biblioteca** (casilla bajo la ruta de la carpeta, desde 2026-10-16,
+se guarda al hacer clic).  Es el valor por defecto de la importación
+masiva por línea de comandos (`bulk_import`): desactivada, un archivo
+cuyo md5 - o el md5 de su original sin pérdida - ya está en la
+biblioteca se omite; activada, se importa como segunda pista, por
+ejemplo el mismo audio con otras etiquetas.  La página de subida y esta
+carpeta de importación nunca comprueban duplicados; la casilla no
+cambia nada para ellas.  El modificador `--allow-duplicates` lo activa
+para una sola ejecución.
+
 ### Configurar la carpeta
 
 | Campo | Notas |

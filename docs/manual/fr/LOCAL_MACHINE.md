@@ -381,6 +381,17 @@ fichiers. Tout ce qui est déposé dans le dossier est
 automatiquement importé dans la bibliothèque au prochain
 cycle de poll de l'analyzer (par défaut toutes les 60 s).
 
+**Import en masse : importer aussi les fichiers dont l'audio est déjà
+dans la bibliothèque** (case sous le chemin du dossier, depuis le
+2026-10-16, enregistrée dès le clic).  C'est la valeur par défaut de
+l'import en masse en ligne de commande (`bulk_import`) : désactivée, un
+fichier dont le md5 - ou le md5 de son original sans perte - est déjà
+dans la bibliothèque est ignoré ; activée, il est importé comme second
+titre, par exemple le même audio avec d'autres tags.  La page d'envoi
+et ce dossier d'import ne vérifient jamais les doublons ; la case ne
+change rien pour eux.  L'option `--allow-duplicates` l'active pour une
+seule exécution.
+
 ### Configurer le dossier
 
 | Champ | Notes |

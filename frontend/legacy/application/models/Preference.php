@@ -2419,6 +2419,24 @@ class Application_Model_Preference
         self::setValue('convert_lossless_to_mp3', $on ? 'true' : 'false');
     }
 
+    // RASTATIME 2026-10-16 - bulk import: import a file although its md5
+    // (or source_md5) is already in the library (same audio, different
+    // tags).  Default OFF while the key is absent.  Read by the API
+    // management command bulk_import when --allow-duplicates is not given
+    // (Settings -> Local Machine -> Import Folder).
+    public static function getBulkImportAllowDuplicates()
+    {
+        $v = strtolower(trim((string) self::getValue('bulk_import_allow_duplicates')));
+
+        return in_array($v, ['true', '1', 'on', 'yes'], true);
+    }
+
+    public static function setBulkImportAllowDuplicates($value)
+    {
+        $on = in_array(strtolower(trim((string) $value)), ['true', '1', 'on', 'yes'], true);
+        self::setValue('bulk_import_allow_duplicates', $on ? 'true' : 'false');
+    }
+
     // RASTATIME 2026-05-17 - Local Recording Folder (Section 23.13).
     // Operator-configured absolute path on the RASTATIME host (Settings ->
     // Local Machine).  The playout PlayoutScheduler reads this via the

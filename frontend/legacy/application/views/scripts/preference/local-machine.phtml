@@ -276,6 +276,8 @@ $rtTip = function ($text) {
     $localImportFolder = Application_Model_Preference::getLocalImportFolder();
     $localImportLastRun = Application_Model_Preference::getLocalImportLastRun();
     $localImportLastStatus = Application_Model_Preference::getLocalImportLastStatus();
+    // RASTATIME 2026-10-16 - default for the bulk_import command (operator wish)
+    $bulkAllowDuplicates = Application_Model_Preference::getBulkImportAllowDuplicates();
     ?>
 
     <h3><?php echo _("Import Folder") ?><span class="help_icon" data-rt-tip="<?php echo $rtTip(_("Audio files dropped into this folder (subfolders included) are imported into the Media Library every 5 minutes.  An imported file leaves the folder; a file that cannot be imported is moved to the _failed subfolder, which is never scanned - nothing is deleted.  Leave empty to disable the scan.")); ?>"></span></h3>
@@ -289,6 +291,14 @@ $rtTip = function ($text) {
                        style="width: 372px; max-width: 100%;"
                        value="<?php echo htmlspecialchars((string) $localImportFolder, ENT_QUOTES); ?>"
                        placeholder="C:\rastatime\import" /><span class="help_icon" data-rt-tip="<?php echo $rtTip(_("Absolute path on this machine.  Example: C:\\rastatime\\import")); ?>"></span>
+            </dd>
+
+            <?php // RASTATIME 2026-10-16 - bulk import: duplicates by md5 (saved on change) ?>
+            <dt></dt>
+            <dd class="rt-import-format">
+                <input id="bulk_import_allow_duplicates" type="checkbox"
+                       <?php echo $bulkAllowDuplicates ? 'checked' : ''; ?> />
+                <label for="bulk_import_allow_duplicates" style="cursor: pointer;"><?php echo _("Bulk import: also import files whose audio is already in the library") ?></label><span class="help_icon" data-rt-tip="<?php echo $rtTip(_("Applies to the command-line bulk import only (bulk_import).  Off: a file whose md5 - or the md5 of its lossless original - is already in the library is skipped.  On: it is imported as a second track, for example the same audio with different tags.  The upload page and this Import Folder never check for duplicates.  The command-line switch --allow-duplicates turns this on for one run.")); ?>"></span>
             </dd>
 
             <dt></dt>
@@ -749,6 +759,25 @@ $rtTip = function ($text) {
                 "json"
             ).fail(function () {
                 $("#local_import_status_msg").text("✗ Network error.").css("color", "#d9534f");
+            });
+        });
+
+        // RASTATIME 2026-10-16 - bulk import duplicates: saved on change
+        $("#bulk_import_allow_duplicates").on("change", function () {
+            var box = $(this);
+            var msg = $("#local_import_status_msg");
+            $.post(baseUrl + "preference/bulk-import-save", {
+                csrf_token: $("#csrf").val(),
+                allow_duplicates: box.is(":checked") ? "true" : "false"
+            }, function (resp) {
+                if (resp && resp.ok) {
+                    box.prop("checked", !!resp.allow_duplicates);
+                    msg.text("✓ " + "<?php echo addslashes(_('Saved.')) ?>").css("color", "#5cb85c");
+                } else {
+                    msg.text("✗ " + ((resp && resp.error) || "<?php echo addslashes(_('Save failed.')) ?>")).css("color", "#d9534f");
+                }
+            }, "json").fail(function () {
+                msg.text("✗ <?php echo addslashes(_('Network error.')) ?>").css("color", "#d9534f");
             });
         });
 

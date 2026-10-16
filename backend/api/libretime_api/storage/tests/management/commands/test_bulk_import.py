@@ -10,7 +10,12 @@ from model_bakery import baker
 from requests_mock import Mocker
 
 from ....._fixtures import AUDIO_FILENAME, fixture_path
-from ....management.commands.bulk_import import DEFAULT_ALLOWED_EXTENSIONS, Importer
+from ....management.commands.bulk_import import (
+    ALLOW_DUPLICATES_PREF_KEY,
+    DEFAULT_ALLOWED_EXTENSIONS,
+    Importer,
+    allow_duplicates_from_preference,
+)
 
 FAKE_URL = "https://somehost.com"
 
@@ -112,6 +117,18 @@ def test_importer_existing_file_allow_duplicates(
 
     importer._upload_file.assert_called_with(import_paths[1], library.code)
     importer._delete_file.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_allow_duplicates_from_preference():
+    # RASTATIME 2026-10-16 - the settings-page checkbox is the default of
+    # --allow-duplicates; absent or anything but a truthy word means off
+    assert allow_duplicates_from_preference() is False
+    pref = baker.make("core.Preference", key=ALLOW_DUPLICATES_PREF_KEY, value="false")
+    assert allow_duplicates_from_preference() is False
+    pref.value = "true"
+    pref.save()
+    assert allow_duplicates_from_preference() is True
 
 
 @pytest.mark.django_db

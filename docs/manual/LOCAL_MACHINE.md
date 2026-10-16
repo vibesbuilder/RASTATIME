@@ -405,6 +405,16 @@ that the analyzer watches for new files. Anything dropped
 into the folder is automatically imported into the Library on
 the next analyzer poll cycle (every 60 s by default).
 
+**Bulk import: also import files whose audio is already in the
+library** (checkbox below the folder path, since 2026-10-16, saved as
+soon as you click it).  It is the default of the command-line bulk
+import (`bulk_import`): off, a file whose md5 - or the md5 of its
+lossless original - is already in the library is skipped; on, it is
+imported as a second track, for example the same audio with different
+tags.  The upload page and this Import Folder never check for
+duplicates, so the checkbox changes nothing for them.  The switch
+`--allow-duplicates` turns it on for a single run.
+
 ### Configuring the folder
 
 | Field | Notes |

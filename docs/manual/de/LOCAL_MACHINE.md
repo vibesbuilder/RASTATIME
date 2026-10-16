@@ -436,6 +436,17 @@ Operator-Maschine, das der Analyzer auf neue Dateien
 beim nächsten Analyzer-Poll-Zyklus (standardmäßig alle
 60 s) automatisch in die Bibliothek importiert.
 
+**Massenimport: auch Dateien importieren, deren Audio bereits in der
+Bibliothek ist** (Kontrollkästchen unter dem Ordnerpfad, seit
+2026-10-16, wird beim Anklicken gespeichert).  Es ist die Vorgabe für
+den Massenimport über die Kommandozeile (`bulk_import`): aus, eine
+Datei, deren md5 - oder die md5 ihres verlustfreien Originals - bereits
+in der Bibliothek steht, wird übersprungen; an, sie wird als zweiter
+Titel importiert, zum Beispiel dieselben Audiodaten mit anderen Tags.
+Die Upload-Seite und dieser Import-Ordner prüfen nie auf Duplikate, für
+sie ändert das Kästchen nichts.  Der Schalter `--allow-duplicates`
+schaltet es für einen einzelnen Lauf ein.
+
 ### Den Ordner konfigurieren
 
 | Feld | Hinweise |

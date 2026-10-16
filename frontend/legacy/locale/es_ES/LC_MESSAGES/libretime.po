@@ -6404,3 +6404,11 @@ msgstr "El artista y el título de las pistas de este tipo aparecen en los repro
 #: application/services/ImportExportShows.php
 msgid "unknown month \"%s\""
 msgstr "mes desconocido «%s»"
+
+#: application/views/scripts/preference/local-machine.phtml
+msgid "Bulk import: also import files whose audio is already in the library"
+msgstr "Importación masiva: importar también archivos cuyo audio ya está en la biblioteca"
+
+#: application/views/scripts/preference/local-machine.phtml
+msgid "Applies to the command-line bulk import only (bulk_import).  Off: a file whose md5 - or the md5 of its lossless original - is already in the library is skipped.  On: it is imported as a second track, for example the same audio with different tags.  The upload page and this Import Folder never check for duplicates.  The command-line switch --allow-duplicates turns this on for one run."
+msgstr "Solo afecta a la importación masiva por línea de comandos (bulk_import).  Desactivado: un archivo cuyo md5 - o el md5 de su original sin pérdida - ya está en la biblioteca se omite.  Activado: se importa como segunda pista, por ejemplo el mismo audio con otras etiquetas.  La página de subida y esta carpeta de importación nunca comprueban duplicados.  El modificador de línea de comandos --allow-duplicates lo activa para una sola ejecución."

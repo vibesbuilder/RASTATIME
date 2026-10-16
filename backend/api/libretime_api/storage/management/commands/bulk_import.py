@@ -8,9 +8,24 @@ from django.core.management.base import BaseCommand, CommandParser
 from django.db.models import Q
 from libretime_shared.files import compute_md5
 
+from ....core.models import Preference
 from ...models import File, Library
 
 logger = logging.getLogger(__name__)
+
+# RASTATIME 2026-10-16 - Settings -> Local Machine -> Import Folder checkbox
+# "Bulk import: also import files whose audio is already in the library"
+ALLOW_DUPLICATES_PREF_KEY = "bulk_import_allow_duplicates"
+
+
+def allow_duplicates_from_preference() -> bool:
+    """True when the operator switched duplicates on in the settings page."""
+    value = (
+        Preference.site.filter(key=ALLOW_DUPLICATES_PREF_KEY)
+        .values_list("value", flat=True)
+        .first()
+    )
+    return str(value or "").strip().lower() in ("true", "1", "on", "yes")
 
 # RASTATIME 2026-10-14 - aligned with the extensions the import folder /
 # FTP scan and CcFiles::createAndImport accept (raw .aac is repacked to
@@ -60,7 +75,11 @@ class Command(BaseCommand):
         # in the library is imported anyway (same audio, different tags).
         parser.add_argument(
             "--allow-duplicates",
-            help="Import a file even when its md5 is already in the library.",
+            help=(
+                "Import a file even when its md5 is already in the library "
+                "(default: the checkbox under Settings -> Local Machine -> "
+                "Import Folder)."
+            ),
             action="store_true",
         )
 
@@ -71,6 +90,9 @@ class Command(BaseCommand):
         delete_after_upload = options.get("delete_after_upload", False)
         delete_if_exists = options.get("delete_if_exists", False)
         allow_duplicates = options.get("allow_duplicates", False)
+        if not allow_duplicates and allow_duplicates_from_preference():
+            allow_duplicates = True
+            logger.info("duplicates allowed by the settings page")
 
         path = options.get("path")
         library = options.get("library", None)

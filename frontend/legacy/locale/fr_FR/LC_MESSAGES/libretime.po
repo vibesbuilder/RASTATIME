@@ -6568,3 +6568,11 @@ msgstr "L'artiste et le titre des pistes de ce type apparaissent dans les lecteu
 #: application/services/ImportExportShows.php
 msgid "unknown month \"%s\""
 msgstr "mois inconnu « %s »"
+
+#: application/views/scripts/preference/local-machine.phtml
+msgid "Bulk import: also import files whose audio is already in the library"
+msgstr "Import en masse : importer aussi les fichiers dont l'audio est déjà dans la bibliothèque"
+
+#: application/views/scripts/preference/local-machine.phtml
+msgid "Applies to the command-line bulk import only (bulk_import).  Off: a file whose md5 - or the md5 of its lossless original - is already in the library is skipped.  On: it is imported as a second track, for example the same audio with different tags.  The upload page and this Import Folder never check for duplicates.  The command-line switch --allow-duplicates turns this on for one run."
+msgstr "Ne concerne que l'import en masse en ligne de commande (bulk_import).  Désactivé : un fichier dont le md5 - ou le md5 de son original sans perte - est déjà dans la bibliothèque est ignoré.  Activé : il est importé comme second titre, par exemple le même audio avec d'autres tags.  La page d'envoi et ce dossier d'import ne vérifient jamais les doublons.  L'option de ligne de commande --allow-duplicates l'active pour une seule exécution."
