@@ -20,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   teaserUnlink/teaserSearch`, View `schedule/teaser-dialog.phtml`,
   `buildTeaserDialog` in schedule.js, CalendarService-Eintrag.  Strings
   DE/FR/ES, Manual TEASERS ×4 §5, CALENDAR ×4 Kontextmenü.  Commit 4a2e8e0.
+  Abnahme-Fix: Dialog lief auf 500 (User::isAdminOrPM existiert nicht ->
+  isUserType; JSON-Action-Context fehlte).  Commit dfcd269.
 - **Teaser-Automatik Stufe 1 (2026-10-16)** — Jingles werden mit den
   Sendungen verknüpft, die sie ankündigen (Verknüpfungstabelle
   `cc_file_teaser`, Migration 0070 nach der Abnahme-Rückmeldung
