@@ -1,0 +1,147 @@
+<?php
+// RASTATIME 2026-10-16 - teaser automation stage 2: the "Teasers" dialog of a
+// show (calendar context menu).  The jingles linked to this show, each with
+// its type (the type belongs to the jingle, so it applies to all its shows)
+// and an unlink cross; below, a picker to link further jingles.
+$h = fn ($v) => htmlspecialchars((string) $v, ENT_QUOTES);
+$baseUrl = Config::getBasePath();
+?>
+<div id="teaser_dialog" class="rt-teaser-dialog" data-show-id="<?php echo (int) $this->showId; ?>" data-csrf="<?php echo $h($this->csrf); ?>">
+<?php if (!$this->ready): ?>
+    <p class="rt-teaser-note"><?php echo _("The teaser tables are missing - run the database migrations 0069 and 0070 first."); ?></p>
+<?php else: ?>
+    <p class="rt-teaser-note"><?php echo _("Jingles announcing this show. The type belongs to the jingle and applies to every show it announces; smart blocks with \"Teaser: fits the schedule\" play a \"today\" jingle on the day of the show, a \"tomorrow\" jingle the day before and a show teaser any day."); ?></p>
+    <table class="datatable rt-teaser-table" width="100%" cellspacing="0" cellpadding="0">
+        <thead>
+            <tr>
+                <th><?php echo _("Title"); ?></th>
+                <th><?php echo _("Creator"); ?></th>
+                <th><?php echo _("Teaser type"); ?></th>
+                <th><?php echo _("Also announces"); ?></th>
+                <?php if ($this->canEdit): ?><th></th><?php endif; ?>
+            </tr>
+        </thead>
+        <tbody id="teaser_rows">
+        <?php if (empty($this->teasers)): ?>
+            <tr class="rt-teaser-empty"><td colspan="5"><?php echo _("No jingle announces this show yet."); ?></td></tr>
+        <?php endif; ?>
+        <?php foreach ($this->teasers as $i => $t): ?>
+            <tr class="<?php echo $i & 1 ? 'even' : 'odd'; ?>" data-file-id="<?php echo (int) $t['id']; ?>">
+                <td><?php echo $h($t['track_title']); ?></td>
+                <td><?php echo $h($t['artist_name']); ?></td>
+                <td>
+                    <?php if ($this->canEdit): ?>
+                    <select class="input_select rt-teaser-type">
+                        <?php foreach ($this->typeLabels as $value => $label): ?>
+                            <option value="<?php echo $h($value); ?>"<?php echo $t['teaser_type'] === $value ? ' selected' : ''; ?>><?php echo $h($label); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                    <?php else: ?>
+                        <?php echo $h($this->typeLabels[$t['teaser_type']] ?? $t['teaser_type']); ?>
+                    <?php endif; ?>
+                </td>
+                <td class="rt-teaser-others"><?php echo $h($t['other_shows']); ?></td>
+                <?php if ($this->canEdit): ?>
+                <td><a href="#" class="rt-teaser-unlink" title="<?php echo _("Remove this jingle from the show"); ?>">&times;</a></td>
+                <?php endif; ?>
+            </tr>
+        <?php endforeach; ?>
+        </tbody>
+    </table>
+    <?php if ($this->canEdit): ?>
+    <div class="rt-teaser-add">
+        <strong><?php echo _("Add a jingle"); ?></strong>
+        <input type="text" id="teaser_search" class="input_text" placeholder="<?php echo _("Title or creator (2 characters at least)"); ?>" />
+        <select id="teaser_pick" class="input_select" size="6"></select>
+        <div class="rt-teaser-add-row">
+            <select id="teaser_add_type" class="input_select">
+                <option value=""><?php echo _("Keep the jingle's type"); ?></option>
+                <?php foreach ($this->typeLabels as $value => $label): ?>
+                    <option value="<?php echo $h($value); ?>"><?php echo $h($label); ?></option>
+                <?php endforeach; ?>
+            </select>
+            <button type="button" id="teaser_add" class="btn" disabled><?php echo _("Link to this show"); ?></button>
+            <span id="teaser_msg"></span>
+        </div>
+    </div>
+    <?php endif; ?>
+<?php endif; ?>
+</div>
+<script>
+(function ($) {
+  var $d = $("#teaser_dialog").last();
+  var showId = $d.data("show-id"), csrf = $d.data("csrf");
+  var base = "<?php echo $h($baseUrl); ?>";
+  var typeLabels = <?php echo json_encode($this->typeLabels ?: new stdClass(), JSON_UNESCAPED_UNICODE); ?>;
+  function msg(text, ok) {
+    $d.find("#teaser_msg").text(text).css("color", ok ? "#5cb85c" : "#d9534f");
+  }
+  function post(action, data, done) {
+    data.csrf_token = csrf;
+    data.show_id = showId;
+    $.post(base + "schedule/" + action, data, function (json) {
+      if (json && json.ok) { done(json); } else { msg($.i18n._("Could not save."), false); }
+    }, "json").fail(function () { msg($.i18n._("Could not save."), false); });
+  }
+  // unlink
+  $d.on("click", ".rt-teaser-unlink", function (e) {
+    e.preventDefault();
+    var $tr = $(this).closest("tr");
+    post("teaser-unlink", { file_id: $tr.data("file-id") }, function () {
+      $tr.remove();
+      if ($d.find("#teaser_rows tr").length === 0) {
+        $d.find("#teaser_rows").append('<tr class="rt-teaser-empty"><td colspan="5">' + $.i18n._("No jingle announces this show yet.") + "</td></tr>");
+      }
+      msg($.i18n._("Removed."), true);
+    });
+  });
+  // retype (the type belongs to the jingle)
+  $d.on("change", ".rt-teaser-type", function () {
+    var $tr = $(this).closest("tr");
+    post("teaser-link", { file_id: $tr.data("file-id"), type: $(this).val() }, function () { msg($.i18n._("Saved."), true); });
+  });
+  // picker
+  var timer = null;
+  $d.find("#teaser_search").on("input", function () {
+    var q = $.trim($(this).val());
+    clearTimeout(timer);
+    if (q.length < 2) { $d.find("#teaser_pick").empty(); $d.find("#teaser_add").prop("disabled", true); return; }
+    timer = setTimeout(function () {
+      $.getJSON(base + "schedule/teaser-search", { q: q, show_id: showId }, function (json) {
+        var $pick = $d.find("#teaser_pick").empty();
+        $.each((json && json.files) || [], function (i, f) {
+          var label = f.track_title + (f.artist_name ? " - " + f.artist_name : "")
+            + (f.teaser_type ? " [" + (typeLabels[f.teaser_type] || f.teaser_type) + (f.shows ? ": " + f.shows : "") + "]" : "");
+          $pick.append($("<option></option>").attr("value", f.id).text(label));
+        });
+        $d.find("#teaser_add").prop("disabled", $pick.children().length === 0);
+      });
+    }, 250);
+  });
+  $d.find("#teaser_pick").on("change", function () { $d.find("#teaser_add").prop("disabled", !$(this).val()); });
+  $d.find("#teaser_add").on("click", function () {
+    var fileId = $d.find("#teaser_pick").val();
+    if (!fileId) { return; }
+    var $opt = $d.find("#teaser_pick option:selected");
+    post("teaser-link", { file_id: fileId, type: $d.find("#teaser_add_type").val() }, function () {
+      $d.find("#teaser_rows .rt-teaser-empty").remove();
+      var text = $opt.text().replace(/ \[.*$/, "");
+      var parts = text.split(" - ");
+      var sel = '<select class="input_select rt-teaser-type">';
+      var chosen = $d.find("#teaser_add_type").val() || "show";
+      $.each(typeLabels, function (v, l) { sel += '<option value="' + v + '"' + (v === chosen ? " selected" : "") + ">" + l + "</option>"; });
+      sel += "</select>";
+      var $tr = $('<tr data-file-id="' + fileId + '"></tr>')
+        .append($("<td></td>").text(parts[0]))
+        .append($("<td></td>").text(parts.slice(1).join(" - ")))
+        .append($("<td></td>").html(sel))
+        .append('<td class="rt-teaser-others"></td>')
+        .append('<td><a href="#" class="rt-teaser-unlink">&times;</a></td>');
+      $d.find("#teaser_rows").append($tr);
+      $opt.remove();
+      $d.find("#teaser_add").prop("disabled", $d.find("#teaser_pick").children().length === 0);
+      msg($.i18n._("Linked."), true);
+    });
+  });
+})(jQuery);
+</script>

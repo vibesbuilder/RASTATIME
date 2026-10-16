@@ -6504,3 +6504,59 @@ msgstr "Los programas que anuncia este jingle (marque uno o varios, ninguno = no
 #: RASTATIME 2026-10-16 teaser checkboxes
 msgid "Nothing ticked leaves the links unchanged; \"None\" removes them."
 msgstr "Nada marcado deja los vínculos sin cambios; \"None\" los quita."
+
+#: RASTATIME 2026-10-16 teaser stage 2
+msgid "Teasers"
+msgstr "Teasers"
+
+#: RASTATIME 2026-10-16 teaser stage 2
+msgid "Teasers of show"
+msgstr "Teasers del programa"
+
+#: RASTATIME 2026-10-16 teaser stage 2
+msgid "Could not save."
+msgstr "No se pudo guardar."
+
+#: RASTATIME 2026-10-16 teaser stage 2
+msgid "Removed."
+msgstr "Quitado."
+
+#: RASTATIME 2026-10-16 teaser stage 2
+msgid "Linked."
+msgstr "Vinculado."
+
+#: RASTATIME 2026-10-16 teaser stage 2
+msgid "No jingle announces this show yet."
+msgstr "Ningún jingle anuncia todavía este programa."
+
+#: RASTATIME 2026-10-16 teaser stage 2
+msgid "The teaser tables are missing - run the database migrations 0069 and 0070 first."
+msgstr "Faltan las tablas de teasers: ejecute primero las migraciones 0069 y 0070."
+
+#: RASTATIME 2026-10-16 teaser stage 2
+msgid "Jingles announcing this show. The type belongs to the jingle and applies to every show it announces; smart blocks with \"Teaser: fits the schedule\" play a \"today\" jingle on the day of the show, a \"tomorrow\" jingle the day before and a show teaser any day."
+msgstr "Jingles que anuncian este programa. El tipo pertenece al jingle y vale para cada programa que anuncia; los bloques inteligentes con \"Teaser: encaja con la parrilla\" emiten un jingle \"hoy\" el día del programa, un jingle \"mañana\" el día anterior y un teaser de programa cualquier día."
+
+#: RASTATIME 2026-10-16 teaser stage 2
+msgid "Also announces"
+msgstr "También anuncia"
+
+#: RASTATIME 2026-10-16 teaser stage 2
+msgid "Remove this jingle from the show"
+msgstr "Quitar este jingle del programa"
+
+#: RASTATIME 2026-10-16 teaser stage 2
+msgid "Add a jingle"
+msgstr "Añadir un jingle"
+
+#: RASTATIME 2026-10-16 teaser stage 2
+msgid "Title or creator (2 characters at least)"
+msgstr "Título o intérprete (al menos 2 caracteres)"
+
+#: RASTATIME 2026-10-16 teaser stage 2
+msgid "Keep the jingle's type"
+msgstr "Mantener el tipo del jingle"
+
+#: RASTATIME 2026-10-16 teaser stage 2
+msgid "Link to this show"
+msgstr "Vincular a este programa"

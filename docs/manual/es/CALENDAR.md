@@ -126,6 +126,7 @@ acción.
 | **Aplicar plantilla** | Aplicar una [Plantilla de programa](./SHOW_TEMPLATES.md). | Programas futuros solamente |
 | **Guardar como plantilla** | Guardar la configuración actual como nueva plantilla. | Siempre |
 | **Ver** | Vista de solo lectura. | Siempre |
+| **Teasers** | Los jingles que anuncian este programa: cambiar tipos, desvincular, vincular más; véase [Automatización de teasers](./TEASERS.md). Desde 2026-10-16. | Admin / PM |
 | **Editar programa** | Editar la definición de programa. | Programas futuros o actuales |
 | **Editar instancia** | Editar solo esta ocurrencia de un programa recurrente. | Programas recurrentes solamente |
 | **Cancelar programa** | Terminar el programa *ahora*. | Programa actual solamente |

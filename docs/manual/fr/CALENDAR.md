@@ -193,6 +193,7 @@ action.
 | **Appliquer un modèle** | Tamponner un [Modèle d'émission](./SHOW_TEMPLATES.md) sur cette émission ; remplace les champs du formulaire. | Émissions futures seulement |
 | **Enregistrer comme modèle** | Enregistrer les paramètres actuels de l'émission comme nouveau modèle. | Toujours |
 | **Voir** | Vue en lecture seule des métadonnées + planning de l'émission. | Toujours |
+| **Teasers** | Les jingles qui annoncent cette émission - changer le type, retirer, en lier d'autres ; voir [Automatisation des teasers](./TEASERS.md). Depuis le 2026-10-16. | Admin / PM |
 | **Modifier l'émission** | Modifier la définition d'émission (nom, heure, répétitions, etc.). | Émissions futures ou actuelles |
 | **Modifier l'instance** | Modifier seulement cette occurrence d'une émission récurrente. | Émissions récurrentes seulement |
 | **Annuler l'émission** | Terminer l'émission *maintenant* — sensé seulement pour l'émission actuellement en cours. | Émission actuelle seulement |

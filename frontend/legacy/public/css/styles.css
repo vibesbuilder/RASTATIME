@@ -627,6 +627,48 @@ input[type="text"]:focus, input[type="password"]:focus, textarea:focus, .input_t
 .rt-sbdd-button:disabled {
     cursor: default;
 }
+/* RASTATIME 2026-10-16 - calendar "Teasers" dialog (stage 2) */
+.rt-teaser-dialog .rt-teaser-note {
+    margin: 0 0 10px 0;
+    color: #bbb;
+    font-size: 12px;
+}
+.rt-teaser-dialog .rt-teaser-table td,
+.rt-teaser-dialog .rt-teaser-table th {
+    padding: 4px 8px;
+    vertical-align: middle;
+}
+.rt-teaser-dialog .rt-teaser-unlink {
+    font-size: 18px;
+    line-height: 18px;
+    color: #d9534f;
+    text-decoration: none;
+    padding: 0 4px;
+}
+.rt-teaser-dialog .rt-teaser-add {
+    margin-top: 14px;
+    padding-top: 10px;
+    border-top: 1px solid #444;
+}
+.rt-teaser-dialog .rt-teaser-add strong {
+    display: block;
+    margin-bottom: 6px;
+}
+.rt-teaser-dialog #teaser_search {
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 6px;
+}
+.rt-teaser-dialog #teaser_pick {
+    width: 100%;
+    box-sizing: border-box;
+    height: auto;
+    margin-bottom: 6px;
+}
+.rt-teaser-dialog .rt-teaser-add-row > * {
+    vertical-align: middle;
+    margin-right: 8px;
+}
 
 .add_show_input_select{
     width: 150px;

@@ -191,6 +191,7 @@ Aktion.
 | **Vorlage anwenden** | Eine [Sendungs-Vorlage](./SHOW_TEMPLATES.md) auf diese Sendung stempeln; ersetzt die Formularfelder. | Nur zukünftige Sendungen |
 | **Als Vorlage speichern** | Die aktuellen Sendungseinstellungen als neue Vorlage speichern. | Immer |
 | **Ansehen** | Lese-Ansicht der Metadaten der Sendung + Sendeplan. | Immer |
+| **Teaser** | Die Jingles, die diese Sendung ankündigen - Typ ändern, lösen, weitere verknüpfen; siehe [Teaser-Automatik](./TEASERS.md). Seit 2026-10-16. | Admin / PM |
 | **Sendung bearbeiten** | Die Sendungsdefinition bearbeiten (Name, Zeit, Wiederholungen usw.). | Zukünftige oder aktuelle Sendungen |
 | **Instanz bearbeiten** | Nur dieses eine Vorkommen einer wiederkehrenden Sendung bearbeiten. | Nur wiederkehrende Sendungen |
 | **Sendung abbrechen** | Die Sendung *jetzt* beenden — nur für die aktuell laufende Sendung sinnvoll. | Nur aktuelle Sendung |

@@ -243,6 +243,38 @@ function buildScheduleDialog(json, instance_id) {
   buildTimerange(dialog);
 }
 
+// RASTATIME 2026-10-16 - teaser automation stage 2: the "Teasers" dialog of a
+// show (schedule/teaser-dialog); the view's inline script does the work.
+function buildTeaserDialog(json) {
+  if (json.show_error == true) {
+    alertShowErrorAndReload();
+    return;
+  }
+  var dialog = $(json.dialog),
+    viewport = findViewportDimensions(),
+    width = Math.min(820, (viewport.width * 4) / 5);
+
+  dialog.dialog({
+    autoOpen: false,
+    title: $.i18n._("Teasers of show") + " '" + json.showTitle + "'",
+    width: width,
+    height: "auto",
+    modal: true,
+    classes: { "ui-dialog": "schedule-tracks-dialog" },
+    close: closeDialogCalendar,
+    buttons: [
+      {
+        text: $.i18n._("Close"),
+        class: "btn",
+        click: function () {
+          dialog.remove();
+        },
+      },
+    ],
+  });
+  dialog.dialog("open");
+}
+
 function buildContentDialog(json) {
   var dialog = $(json.dialog),
     viewport = findViewportDimensions(),
@@ -437,6 +469,20 @@ $(document).ready(function () {
             );
           };
           oItems.content.callback = callback;
+        }
+
+        // RASTATIME 2026-10-16 - teaser automation stage 2: "Teasers" dialog
+        if (oItems.teasers !== undefined) {
+          callback = function () {
+            $.get(
+              oItems.teasers.url,
+              { format: "json", id: data.id },
+              function (json) {
+                buildTeaserDialog(json);
+              },
+            );
+          };
+          oItems.teasers.callback = callback;
         }
 
         //define a cancel recorded show callback.

@@ -96,7 +96,20 @@ type is Show teaser* for shows that have no day teasers yet.
 **One show only.**  *Teaser: show is Worldwide* together with *Teaser:
 fits the schedule* gives that show's jingles only when they fit.
 
-## 5. Import/Export
+## 5. Teasers from the calendar
+
+Right-click (or click) a show in the [Calendar](./CALENDAR.md) and pick
+**Teasers**: the dialog lists every jingle that announces this show
+with its type and the other shows it announces, lets you change the
+type in place, remove a jingle from the show with the cross, and link
+further jingles: type two characters of a title or creator, pick the
+jingle, choose a type (or keep the jingle's own) and click **Link to
+this show**.  The type belongs to the jingle, so changing it here
+changes it for all its shows.  Administrators and programme managers
+only; the entry exists for past shows as well, since the link is to
+the show, not to the broadcast.
+
+## 6. Import/Export
 
 [Import/Export](./IMPORT_EXPORT.md) carries the criteria in
 `blocks.json`: `teaser_show` by show name (the first show of that name
@@ -104,7 +117,7 @@ on import), `teaser_type` as `show`, `today` or `tomorrow`,
 `teaser_fits` with the value `yes`.  The jingles' own links are
 metadata of the files and are not part of the bundle.
 
-## 6. Frequently-asked
+## 7. Frequently-asked
 
 ### "Generate in the smart block editor shows other jingles than the show gets."
 

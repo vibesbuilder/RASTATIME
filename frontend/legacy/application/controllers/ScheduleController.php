@@ -433,6 +433,98 @@ class ScheduleController extends Zend_Controller_Action
         unset($this->view->showContent);
     }
 
+    /**
+     * RASTATIME 2026-10-16 - teaser automation stage 2: the calendar's
+     * "Teasers" dialog of a show (GET id = show instance).  Lists the
+     * jingles linked to the show with their type; the inline script of the
+     * view links / unlinks / retypes through the three JSON actions below.
+     */
+    public function teaserDialogAction()
+    {
+        $instanceId = (int) $this->_getParam('id');
+
+        try {
+            $instance = new Application_Model_ShowInstance($instanceId);
+            $showId = (int) $instance->getShowId();
+            $show = new Application_Model_Show($showId);
+        } catch (Exception $e) {
+            $this->view->show_error = true;
+
+            return;
+        }
+        $ns = new Zend_Session_Namespace('csrf_namespace');
+        if (empty($ns->authtoken)) {
+            $ns->authtoken = sha1(uniqid((string) mt_rand(), true));
+        }
+        $this->view->csrf = $ns->authtoken;
+        $this->view->showId = $showId;
+        $this->view->showName = $show->getName();
+        $this->view->canEdit = Application_Model_User::getCurrentUser()->isAdminOrPM();
+        $this->view->teasers = Application_Model_StoredFile::teasersOfShow($showId);
+        $this->view->typeLabels = Application_Model_StoredFile::teaserTypeLabels();
+        $this->view->ready = Application_Model_StoredFile::teaserColumnsReady();
+        $this->view->dialog = $this->view->render('schedule/teaser-dialog.phtml');
+        $this->view->showTitle = htmlspecialchars($show->getName() ?? '');
+        unset($this->view->teasers, $this->view->typeLabels);
+    }
+
+    /** RASTATIME 2026-10-16 - stage 2: admin / PM, POST, CSRF; JSON {ok, error}. */
+    private function teaserMutationAllowed()
+    {
+        $this->view->layout()->disableLayout();
+        $this->_helper->viewRenderer->setNoRender(true);
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->getResponse()->setHttpResponseCode(405);
+            $this->_helper->json->sendJson(['ok' => false, 'error' => 'method-not-allowed']);
+
+            return false;
+        }
+        if (!Application_Model_User::getCurrentUser()->isAdminOrPM()) {
+            $this->getResponse()->setHttpResponseCode(403);
+            $this->_helper->json->sendJson(['ok' => false, 'error' => 'forbidden']);
+
+            return false;
+        }
+        if (!SecurityHelper::verifyCSRFToken($this->_getParam('csrf_token'))) {
+            $this->_helper->json->sendJson(['ok' => false, 'error' => 'csrf']);
+
+            return false;
+        }
+
+        return true;
+    }
+
+    public function teaserLinkAction()
+    {
+        if (!$this->teaserMutationAllowed()) {
+            return;
+        }
+        $ok = Application_Model_StoredFile::teaserLink(
+            (int) $this->_getParam('file_id'),
+            (int) $this->_getParam('show_id'),
+            (string) $this->_getParam('type', '')
+        );
+        $this->_helper->json->sendJson(['ok' => $ok, 'error' => $ok ? null : 'not-found']);
+    }
+
+    public function teaserUnlinkAction()
+    {
+        if (!$this->teaserMutationAllowed()) {
+            return;
+        }
+        $ok = Application_Model_StoredFile::teaserUnlink((int) $this->_getParam('file_id'), (int) $this->_getParam('show_id'));
+        $this->_helper->json->sendJson(['ok' => $ok]);
+    }
+
+    /** GET q, show_id -> JSON list of files not yet linked to the show. */
+    public function teaserSearchAction()
+    {
+        $this->view->layout()->disableLayout();
+        $this->_helper->viewRenderer->setNoRender(true);
+        $rows = Application_Model_StoredFile::teaserSearch((string) $this->_getParam('q', ''), (int) $this->_getParam('show_id'));
+        $this->_helper->json->sendJson(['ok' => true, 'files' => SecurityHelper::htmlescape_recursive($rows)]);
+    }
+
     public function populateRepeatingShowInstanceFormAction()
     {
         $showId = $this->_getParam('showId');

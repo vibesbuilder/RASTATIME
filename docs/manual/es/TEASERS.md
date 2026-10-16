@@ -107,7 +107,20 @@ programas que aún no tienen teasers del día.
 *Teaser: encaja con la parrilla* da los jingles de ese programa solo
 cuando encajan.
 
-## 5. Importar/Exportar
+## 5. Teasers desde el calendario
+
+Haga clic en un programa en el [Calendario](./CALENDAR.md) y elija
+**Teasers**: el diálogo lista cada jingle que anuncia este programa con
+su tipo y los demás programas que anuncia; cambie el tipo en la propia
+fila, quite un jingle del programa con la cruz y vincule otros: escriba
+dos caracteres de un título o intérprete, elija el jingle, un tipo (o
+mantenga el del jingle) y pulse **Vincular a este programa**.  El tipo
+pertenece al jingle: cambiarlo aquí lo cambia para todos sus programas.
+Solo administradores y gestores de programación; la entrada existe
+también para programas pasados, pues el vínculo es con el programa, no
+con la emisión.
+
+## 6. Importar/Exportar
 
 [Importar/Exportar](./IMPORT_EXPORT.md) lleva los criterios en
 `blocks.json`: `teaser_show` por nombre de programa (el primer programa
@@ -116,7 +129,7 @@ con ese nombre al importar), `teaser_type` como `show`, `today` o
 propios jingles son metadatos de los archivos y no forman parte del
 paquete.
 
-## 6. Preguntas frecuentes
+## 7. Preguntas frecuentes
 
 ### «Generate en el editor de bloques inteligentes muestra otros jingles que los que recibe el programa.»
 

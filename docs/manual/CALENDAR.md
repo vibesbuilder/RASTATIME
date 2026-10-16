@@ -175,6 +175,7 @@ Click the show → context menu → choose an action.
 | **Apply Template** | Stamp a [Show Template](./SHOW_TEMPLATES.md) onto this show; replaces the form fields. | Future shows only |
 | **Save as Template** | Save the current show settings as a new template. | Always |
 | **View** | Read-only view of the show's metadata + schedule. | Always |
+| **Teasers** | The jingles that announce this show - change types, unlink, link more; see [Teaser Automation](./TEASERS.md). Since 2026-10-16. | Admin / PM |
 | **Edit Show** | Edit the show definition (name, time, repeats, etc.). | Future or current shows |
 | **Edit Instance** | Edit only this one occurrence of a recurring show. | Recurring shows only |
 | **Cancel Show** | End the show *now* — only meaningful for the currently-playing show. | Current show only |

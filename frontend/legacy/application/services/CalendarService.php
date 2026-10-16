@@ -57,6 +57,14 @@ class Application_Service_CalendarService
                 'icon' => 'overview',
                 'url' => $baseUrl . 'schedule/show-content-dialog',
             ];
+            if ($isAdminOrPM) {
+                // RASTATIME 2026-10-16 - teaser automation stage 2
+                $menu['teasers'] = [
+                    'name' => _('Teasers'),
+                    'icon' => 'overview',
+                    'url' => $baseUrl . 'schedule/teaser-dialog',
+                ];
+            }
         } else {
             // Show content can be modified from the calendar if:
             // the user is admin or hosting the show.
@@ -82,6 +90,15 @@ class Application_Service_CalendarService
                 'icon' => 'overview',
                 'url' => $baseUrl . 'schedule/show-content-dialog',
             ];
+            if ($isAdminOrPM) {
+                // RASTATIME 2026-10-16 - teaser automation stage 2: the jingles
+                // that announce this show, link / unlink / retype in place
+                $menu['teasers'] = [
+                    'name' => _('Teasers'),
+                    'icon' => 'overview',
+                    'url' => $baseUrl . 'schedule/teaser-dialog',
+                ];
+            }
 
             // user can remove all content if the show has not started
             if ($now < $start && ($isAdminOrPM || $isHostOfShow)) {

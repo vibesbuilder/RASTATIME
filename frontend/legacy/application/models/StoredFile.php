@@ -690,6 +690,129 @@ class Application_Model_StoredFile
         return $out;
     }
 
+    /**
+     * RASTATIME 2026-10-16 - stage 2: the jingles linked to one show, for the
+     * calendar dialog "Teasers".  id, title, artist, type, the show's other
+     * teased shows as a text.
+     *
+     * @param mixed $showId
+     */
+    public static function teasersOfShow($showId)
+    {
+        if (!self::teaserColumnsReady()) {
+            return [];
+        }
+        $sql = 'SELECT f.id, f.track_title, f.artist_name, COALESCE(f.teaser_type, \'show\') AS teaser_type, '
+            . '(SELECT string_agg(s2.name, \', \' ORDER BY s2.name) FROM cc_file_teaser t2 JOIN cc_show s2 ON s2.id = t2.show_id '
+            . ' WHERE t2.file_id = f.id AND t2.show_id <> t.show_id) AS other_shows '
+            . 'FROM cc_file_teaser t JOIN cc_files f ON f.id = t.file_id '
+            . 'WHERE t.show_id = :sid AND f.file_exists = TRUE AND f.hidden = FALSE '
+            . 'ORDER BY f.teaser_type, LOWER(f.track_title), f.id';
+
+        return Application_Common_Database::prepareAndExecute($sql, [':sid' => (int) $showId], 'all');
+    }
+
+    /**
+     * Link one jingle to one show; a given type is written to the jingle
+     * (it applies to all its shows).  Returns false when file or show do
+     * not exist.
+     *
+     * @param mixed       $fileId
+     * @param mixed       $showId
+     * @param null|string $type
+     */
+    public static function teaserLink($fileId, $showId, $type = null)
+    {
+        if (!self::teaserColumnsReady()) {
+            return false;
+        }
+        if (CcFilesQuery::create()->findPk((int) $fileId) === null || CcShowQuery::create()->findPk((int) $showId) === null) {
+            return false;
+        }
+        $con = Propel::getConnection(CcFilesPeer::DATABASE_NAME);
+        $con->beginTransaction();
+
+        try {
+            $stmt = $con->prepare('INSERT INTO cc_file_teaser (file_id, show_id) VALUES (:f, :s) ON CONFLICT DO NOTHING');
+            $stmt->bindValue(':f', (int) $fileId, PDO::PARAM_INT);
+            $stmt->bindValue(':s', (int) $showId, PDO::PARAM_INT);
+            $stmt->execute();
+            $t = in_array($type, self::TEASER_TYPES, true) ? $type : null;
+            // a jingle linked without a type keeps its own; a jingle without any becomes a show teaser
+            $stmt = $con->prepare('UPDATE cc_files SET teaser_type = COALESCE(:t, teaser_type, \'show\') WHERE id = :id');
+            $stmt->bindValue(':t', $t, $t === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
+            $stmt->bindValue(':id', (int) $fileId, PDO::PARAM_INT);
+            $stmt->execute();
+            $con->commit();
+        } catch (Exception $exc) {
+            $con->rollBack();
+            Logging::warn('teaserLink: ' . $exc->getMessage());
+
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Remove the link of one jingle to one show; a jingle without any
+     * show left loses its type.
+     *
+     * @param mixed $fileId
+     * @param mixed $showId
+     */
+    public static function teaserUnlink($fileId, $showId)
+    {
+        if (!self::teaserColumnsReady()) {
+            return false;
+        }
+        $con = Propel::getConnection(CcFilesPeer::DATABASE_NAME);
+        $con->beginTransaction();
+
+        try {
+            $stmt = $con->prepare('DELETE FROM cc_file_teaser WHERE file_id = :f AND show_id = :s');
+            $stmt->bindValue(':f', (int) $fileId, PDO::PARAM_INT);
+            $stmt->bindValue(':s', (int) $showId, PDO::PARAM_INT);
+            $stmt->execute();
+            $stmt = $con->prepare('UPDATE cc_files SET teaser_type = NULL WHERE id = :id AND NOT EXISTS (SELECT 1 FROM cc_file_teaser t WHERE t.file_id = :id2)');
+            $stmt->bindValue(':id', (int) $fileId, PDO::PARAM_INT);
+            $stmt->bindValue(':id2', (int) $fileId, PDO::PARAM_INT);
+            $stmt->execute();
+            $con->commit();
+        } catch (Exception $exc) {
+            $con->rollBack();
+            Logging::warn('teaserUnlink: ' . $exc->getMessage());
+
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Audio files whose title or artist contains $q and that are not yet
+     * linked to $showId (at most 20, by title), for the dialog's picker.
+     *
+     * @param string $q
+     * @param mixed  $showId
+     */
+    public static function teaserSearch($q, $showId)
+    {
+        $q = trim((string) $q);
+        if (!self::teaserColumnsReady() || mb_strlen($q) < 2) {
+            return [];
+        }
+        $like = '%' . str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $q) . '%';
+        $sql = 'SELECT f.id, f.track_title, f.artist_name, f.teaser_type, '
+            . '(SELECT string_agg(s2.name, \', \' ORDER BY s2.name) FROM cc_file_teaser t2 JOIN cc_show s2 ON s2.id = t2.show_id WHERE t2.file_id = f.id) AS shows '
+            . 'FROM cc_files f WHERE f.file_exists = TRUE AND f.hidden = FALSE AND COALESCE(f.ftype, \'audioclip\') IN (\'audioclip\', \'\') '
+            . 'AND (f.track_title ILIKE :q OR f.artist_name ILIKE :q2) '
+            . 'AND NOT EXISTS (SELECT 1 FROM cc_file_teaser t WHERE t.file_id = f.id AND t.show_id = :sid) '
+            . 'ORDER BY LOWER(f.track_title), f.id LIMIT 20';
+
+        return Application_Common_Database::prepareAndExecute($sql, [':q' => $like, ':q2' => $like, ':sid' => (int) $showId], 'all');
+    }
+
     /** value => label of the three teaser types (translated). */
     public static function teaserTypeLabels()
     {

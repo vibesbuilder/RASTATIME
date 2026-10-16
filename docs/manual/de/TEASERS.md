@@ -105,7 +105,21 @@ keine Tagesteaser haben.
 *Teaser: passt zum Sendeplan* liefert die Jingles dieser Sendung nur,
 wenn sie passen.
 
-## 5. Import/Export
+## 5. Teaser aus dem Kalender
+
+Klicken Sie im [Kalender](./CALENDAR.md) auf eine Sendung und wählen
+Sie **Teaser**: Der Dialog listet jeden Jingle, der diese Sendung
+ankündigt, mit seinem Typ und den weiteren Sendungen, die er ankündigt.
+Sie ändern den Typ direkt in der Zeile, lösen einen Jingle mit dem
+Kreuz von der Sendung und verknüpfen weitere: zwei Zeichen eines Titels
+oder Interpreten eingeben, den Jingle wählen, einen Typ wählen (oder
+den des Jingles behalten) und **Mit dieser Sendung verknüpfen**
+klicken.  Der Typ gehört zum Jingle; eine Änderung hier gilt für alle
+seine Sendungen.  Nur Administratoren und Programm-Manager; der Eintrag
+gibt es auch bei vergangenen Sendungen, denn die Verknüpfung gilt der
+Sendung, nicht der Ausstrahlung.
+
+## 6. Import/Export
 
 [Import/Export](./IMPORT_EXPORT.md) trägt die Kriterien in
 `blocks.json`: `teaser_show` mit dem Sendungsnamen (beim Import die
@@ -113,7 +127,7 @@ erste Sendung dieses Namens), `teaser_type` als `show`, `today` oder
 `tomorrow`, `teaser_fits` mit dem Wert `yes`.  Die Verknüpfungen der
 Jingles selbst sind Metadaten der Dateien und nicht Teil des Bündels.
 
-## 6. Häufig gestellte Fragen
+## 7. Häufig gestellte Fragen
 
 ### „Generate im Smart-Block-Editor zeigt andere Jingles, als die Sendung bekommt."
 
