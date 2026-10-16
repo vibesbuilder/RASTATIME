@@ -5261,3 +5261,23 @@ Siehe Evaluation in der Sitzung vom 2026-10-16 (Design: cc_files.teaser_show_id 
 teaser_show / teaser_type / teaser_fits mit Referenzdatum der befuellten Instanz, Stufe 1 ~2 Tage, Stufe 2
 Kalender-Dialog ~1 Tag).  Wird bei Go hier ausformuliert.
 
+
+### 🟡 Windows-Updates Oktober 2026 + Lenovo-Firmware im Wartungsfenster; Windows 11 26H2 - DEFER (evaluiert 2026-10-16)
+Stand 2026-10-16 (nur gelesen, nichts installiert): Windows 11 Pro 25H2 Build 26200.9457 (KB5129195 vom 15.09.),
+BIOS M5OKT3EA (1.62), BitLocker aus, Richtlinie "nur benachrichtigen, nie selbst neu starten" aktiv (WINDOWS_24_7.md).
+Empfehlung Go - der Operator installiert im Wartungsfenster nach dem 03:30-Backup (WINDOWS_24_7.md §3, danach
+RESTART_ORDER.md), drei getrennte Schritte mit je einem Neustart:
+(1) KB5127648 (2026-10 kumulativ, 26200.9711) + KB5127690 (.NET) + KB890830 (MSRT).  Die bekannten Probleme treffen
+    hier nicht: USB Audio Class 1.0 (Tascam US-16x08 laeuft ueber den TEAC-Treiber, nur dessen MIDI-Teil ueber
+    usbaudio; das Problem kam schon mit dem September-Update, das seit 15.09. ohne Stoerung laeuft), RDP aus,
+    kein 802.1X (dot3svc gestoppt).
+(2) Lenovo System Firmware 1.0.0.65 = BIOS M5OKT41A (1.65, 2026-08-25): bringt die Sicherheitskorrekturen von
+    M5OKT3FA (LEN-213045/-213178/-213835) und M5OKT40A (LEN-217092/-216819).  Danach BIOS-Einstellungen gegen
+    C:/Temp/optd/bios_settings_M5OKT3EA_2026-10-16.txt vergleichen (Lenovo: Einstellungen evtl. neu setzen;
+    wichtig AfterPowerLoss = Last State).
+(3) Lenovo TPM Firmware 15.25.19744 (2026-07-29), nach dem BIOS.
+Nicht installieren: Dell U2419HC Monitor-INF (2018, rein kosmetisch, Treiber bleiben per Richtlinie aussen vor).
+26H2 DEFER: Freischaltpaket auf derselben Codebasis wie 25H2 (gleiche Fehler, gleiche Korrekturen), kaum Neues;
+25H2 Pro wird bis 2027-10-12 versorgt.  Vorbedingungen fuer ein Go: (a) Schritt (1) installiert (Voraussetzung des
+Pakets: KB5124010 oder spaeter); (b) einige Wochen ohne neue 26H2-spezifische Known Issues oder Safeguard Holds
+(Windows Release Health pruefen); (c) Wartungsfenster wie oben, ein Neustart; spaetestens vor Oktober 2027.
