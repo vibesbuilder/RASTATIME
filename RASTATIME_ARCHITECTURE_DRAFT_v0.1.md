@@ -1,10 +1,13 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.75
+Draft version: 0.76
 Date: 2026-10-16
 
 > **Revision history**
+> - **0.76 (2026-10-16)** — **Teaser automation stage 2** (§23.63): calendar
+>   dialog "Teasers" (ScheduleController teaser-* actions, link table edits
+>   per show).
 > - **0.75 (2026-10-16)** — **Teaser automation stage 1** (§23.63):
 >   `cc_files.teaser_show_id` / `teaser_type` (migration 0069), virtual
 >   smart block criteria, `Block::setFillContext`, planned rows in the
@@ -7102,3 +7105,16 @@ psycopg transaction that applies the migration DDL, links three files to
 a show airing later that day and checks the matches (today / tomorrow /
 show, "over for today" → 0, self-teaser → 0), then rolls back.  Stage 2
 (calendar dialog "Teasers…", per-show listing) follows.
+
+**Stage 2 (2026-10-16).**  The calendar context menu gets **Teasers**
+(admin / PM, past shows too): `ScheduleController::teaserDialogAction`
+renders `schedule/teaser-dialog.phtml` into the usual `json.dialog`
+(`buildTeaserDialog` in schedule.js, like the View dialog); the view's
+inline script calls `teaser-link` (file, show, optional type - the type is
+written to the jingle, `COALESCE(:t, teaser_type, 'show')`), `teaser-unlink`
+(a jingle without any show left loses its type) and `teaser-search` (title
+/ artist ILIKE, files not yet linked to the show, 20 rows).  Mutations are
+POST + CSRF (session namespace token embedded in the dialog) + admin/PM;
+helpers `StoredFile::teasersOfShow / teaserLink / teaserUnlink /
+teaserSearch` work on `cc_file_teaser` directly and never touch the other
+shows of a jingle.

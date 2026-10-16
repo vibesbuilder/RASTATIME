@@ -5269,9 +5269,10 @@ Migration 0070 gelaufen, Abnahme 2026-10-16 18:15 bestanden (Spalte, Mehrfach-Be
 Intro "morgen"-Jingle, Outro Showteaser, Rotation).  Nachbesserungen aus der Abnahme: Bereitschaftspruefung (dde697c),
 Typ zuerst (781d200), Pool-Dropdown-Widget (06491c9), Spaltenzusatz nur bei Tagesteasern.
 
-### 🟢 Teaser-Automatik Stufe 2 - Go-Reihenfolge nach Stufe 1 (Operator 2026-10-16: "Danach Stufe 2")
-Kalender-Kontextmenue "Teaser..." je Sendung: verknuepfte Jingles mit Typ auflisten, direkt zuordnen/loesen,
-Anzeige in der Sendungs-Vorschau; evtl. Bibliotheksfilter "Teaser der Sendung X".  ~1 Tag.
+### ✅ Teaser-Automatik Stufe 2 - gebaut 2026-10-16 (Go 2026-10-16 nach der Abnahme von Stufe 1)
+Kalender-Kontextmenue "Teasers" je Sendung (Admin/PM): Jingles mit Typ, weiteren Sendungen, Loesen, Picker zum
+Verknuepfen mit Typwahl.  OFFEN: Browser-Abnahme durch den Operator.  Nicht gebaut (bei Bedarf): Anzeige in der
+Sendungs-Vorschau, Bibliotheksfilter "Teaser der Sendung X".
 
 
 ### 🟡 Windows-Updates Oktober 2026 + Lenovo-Firmware im Wartungsfenster; Windows 11 26H2 - DEFER (evaluiert 2026-10-16)

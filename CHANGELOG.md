@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Teaser-Automatik Stufe 2: Kalender-Dialog „Teasers" (2026-10-16)** —
+  Kontextmenü einer Sendung (Admin/PM, auch vergangene): Liste der
+  Jingles, die die Sendung ankündigen, mit Typ (Select, ändert den Typ
+  des Jingles für alle seine Sendungen), weiteren Sendungen und
+  Lösen-Kreuz; Picker (Titel/Interpret, ≥ 2 Zeichen, 20 Treffer, noch
+  nicht verknüpfte Dateien) mit Typwahl und „Link to this show".
+  `ScheduleController::teaserDialog/teaserLink/teaserUnlink/teaserSearch`
+  (POST + CSRF + Admin/PM), `StoredFile::teasersOfShow/teaserLink/
+  teaserUnlink/teaserSearch`, View `schedule/teaser-dialog.phtml`,
+  `buildTeaserDialog` in schedule.js, CalendarService-Eintrag.  Strings
+  DE/FR/ES, Manual TEASERS ×4 §5, CALENDAR ×4 Kontextmenü.  Commit 4a2e8e0.
 - **Teaser-Automatik Stufe 1 (2026-10-16)** — Jingles werden mit den
   Sendungen verknüpft, die sie ankündigen (Verknüpfungstabelle
   `cc_file_teaser`, Migration 0070 nach der Abnahme-Rückmeldung
