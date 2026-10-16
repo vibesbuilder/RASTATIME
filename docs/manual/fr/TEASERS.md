@@ -39,7 +39,7 @@ champs ; aucune sélection conserve un champ, *None* retire les liens,
 les émissions choisies remplacent la liste - et exigent un type dans le
 même enregistrement, car les pistes sélectionnées n'en ont pas forcément.  La
 colonne de bibliothèque **Teaser** (sélecteur de colonnes, masquée par
-défaut) affiche `Nom de l'émission (today)` et se recherche, de sorte
+défaut) affiche `Nom de l'émission · today` (`· tomorrow` ; les teasers d'émission n'ont pas de suffixe) et se recherche, de sorte
 que « Teaser contient Worldwide » liste tous les jingles de cette
 émission.
 

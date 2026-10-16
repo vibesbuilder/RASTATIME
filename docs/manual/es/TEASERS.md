@@ -40,7 +40,7 @@ conserva un campo, *None* quita los vínculos, los programas elegidos
 sustituyen la lista, y necesitan un tipo en el mismo guardado, porque las
 pistas seleccionadas aún pueden no tenerlo.  La columna de biblioteca
 **Teaser** (selector de columnas, oculta por defecto) muestra `Nombre
-del programa (today)` y se puede buscar, de modo que «Teaser contiene
+del programa · today` (`· tomorrow`; los teasers de programa no llevan sufijo) y se puede buscar, de modo que «Teaser contiene
 Worldwide» lista todos los jingles de ese programa.
 
 Un jingle tiene un tipo y anuncia uno o varios programas; encaja en

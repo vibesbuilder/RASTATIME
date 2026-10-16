@@ -38,7 +38,7 @@ Auswahl lässt ein Feld unberührt, *None* löst die Verknüpfungen,
 gewählte Sendungen ersetzen die Liste - und brauchen im selben Speichern
 einen Typ, weil die markierten Tracks noch keinen haben müssen.  Die
 Bibliotheksspalte **Teaser** (Spaltenwähler, standardmäßig
-ausgeblendet) zeigt `Sendungsname (today)` und ist durchsuchbar, sodass
+ausgeblendet) zeigt `Sendungsname · today` (`· tomorrow`; Showteaser ohne Zusatz) und ist durchsuchbar, sodass
 „Teaser enthält Worldwide" alle Jingles dieser Sendung listet.
 
 Ein Jingle hat einen Typ und kündigt eine oder mehrere Sendungen an;

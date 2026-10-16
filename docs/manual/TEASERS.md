@@ -35,7 +35,7 @@ For many jingles at once select them in the library and use **Edit**
 (bulk edit): the same two fields; nothing selected keeps a field,
 *None* clears the links, selected shows replace the list - and need a
 type in the same save, because the selected tracks need not have one yet.  The library column **Teaser** (columns picker,
-hidden by default) shows `Show name (today)` and is searchable, so
+hidden by default) shows `Show name · today` (`· tomorrow`; show teasers carry no suffix) and is searchable, so
 "Teaser contains Worldwide" lists every jingle of that show.
 
 A jingle has one type and announces one or more shows; it fits as soon

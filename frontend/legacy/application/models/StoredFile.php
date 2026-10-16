@@ -1144,7 +1144,7 @@ SQL;
                 // columns too and the file branch selects those bare
                 $fileSelect[] = self::teaserColumnsReady($con)
                     ? "((SELECT string_agg(ts.name, ', ' ORDER BY ts.name) FROM cc_file_teaser ft JOIN cc_show ts ON ts.id = ft.show_id WHERE ft.file_id = FILES.id)"
-                      . " || ' (' || COALESCE(FILES.teaser_type, 'show') || ')')::text AS " . $key
+                      . " || CASE WHEN FILES.teaser_type IN ('today', 'tomorrow') THEN ' Â· ' || FILES.teaser_type ELSE '' END)::text AS " . $key
                     : 'NULL::text AS ' . $key;
                 $streamSelect[] = 'NULL::text AS ' . $key;
             } elseif ($key === 'is_scheduled' || $key === 'is_playlist') {
