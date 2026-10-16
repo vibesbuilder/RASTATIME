@@ -5265,8 +5265,9 @@ ist (today/show), tomorrow nur bei Ausstrahlung am Folgetag.  Erweiterung: "Excl
 lately" zaehlt geplante Zeilen im Fenster (beide Richtungen).  Trockenprobe in Transaktion bestanden.
 Abnahme-Rueckmeldung 2026-10-16: mehrere Sendungen je Jingle -> Verknuepfungstabelle cc_file_teaser (Migration 0070),
 Mehrfachauswahl in beiden Editoren; Fixes: Sendungsliste (UNION-ORDER BY), leere Bibliothek nach 0069 (74cd18c).
-OFFEN: Migration 0070 durch den Operator (Backup, ausserhalb von Sendungsgrenzen), Apache-Neustart (.mo),
-Browser-Abnahme (Track-Editor, Mehrfach-Bearbeitung, Block-Editor, Fuellung einer Testsendung).
+Migration 0070 gelaufen, Abnahme 2026-10-16 18:15 bestanden (Spalte, Mehrfach-Bearbeitung, Block, Testsendung 18:15:
+Intro "morgen"-Jingle, Outro Showteaser, Rotation).  Nachbesserungen aus der Abnahme: Bereitschaftspruefung (dde697c),
+Typ zuerst (781d200), Pool-Dropdown-Widget (06491c9), Spaltenzusatz nur bei Tagesteasern.
 
 ### 🟢 Teaser-Automatik Stufe 2 - Go-Reihenfolge nach Stufe 1 (Operator 2026-10-16: "Danach Stufe 2")
 Kalender-Kontextmenue "Teaser..." je Sendung: verknuepfte Jingles mit Typ auflisten, direkt zuordnen/loesen,

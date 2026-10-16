@@ -45,7 +45,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Pool-Widget (`.rt-sbdd`: Knopf „Shows (n)" öffnet das dunkle Panel),
   je Dialog gescopt (die Sperre ohne Typ griff im Bulk-Editor nicht, weil
   das Skript den zuletzt geöffneten Einzel-Editor im DOM erwischte).
-  Commit 06491c9.  Strings
+  Commit 06491c9.  Spalte „Teaser" ohne „(show)": Zusatz „· today" / „· tomorrow"
+  nur bei Tagesteasern (Operator).  Commit f856ba7.  **Abnahme Stufe 1
+  durch den Operator 2026-10-16 18:15** (Testsendung: Intro „morgen"-Jingle,
+  Outro Showteaser, Rotation über das 3-h-Fenster).  Strings
   DE/FR/ES, Manual TEASERS ×4 (neu), LIBRARY ×4, Architektur §23.63.
   Commit 8478269.
 - **Local Machine: Kontrollkästchen „Bulk Import: allow importing
