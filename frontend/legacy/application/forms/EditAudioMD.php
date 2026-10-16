@@ -2,8 +2,8 @@
 
 class Application_Form_EditAudioMD extends Zend_Form
 {
-    /** RASTATIME 2026-10-16 - the file's current teaser show, kept in the select even without upcoming instances */
-    public $teaserCurrentShowId;
+    /** RASTATIME 2026-10-16 - the file's current teaser shows, kept in the select even without upcoming instances */
+    public $teaserCurrentShowIds = [];
 
     public function init() {}
 
@@ -326,13 +326,19 @@ class Application_Form_EditAudioMD extends Zend_Form
         // jingle announces and how.  The show list holds the shows with an
         // upcoming instance plus the file's current one; the in-array check
         // is off because StoredFile verifies the show itself.
-        $teaserShow = new Zend_Form_Element_Select('teaser_show_id');
+        // one jingle may announce several shows (migration 0070): a multiselect;
+        // the hidden marker tells the save that the (possibly empty) list was posted
+        $teaserShow = new Zend_Form_Element_Multiselect('teaser_show_id');
         $teaserShow->class = 'input_text';
-        $teaserShow->setLabel(_('Teaser for show:'));
+        $teaserShow->setAttrib('size', 6);
+        $teaserShow->setLabel(_('Teaser for shows:'));
         $teaserShow->setRegisterInArrayValidator(false);
-        $teaserShow->setMultiOptions(['' => _('None')] + Application_Model_StoredFile::teaserShows($this->teaserCurrentShowId));
-        $teaserShow->setDescription(_('The show this jingle announces. Smart blocks with the criterion "Teaser: fits the schedule" play it only when that show airs on the right day: a "today" teaser on the day of the show, a "tomorrow" teaser the day before, a show teaser any day - never for a show that is over for today, and never inside the show itself.'));
+        $teaserShow->setMultiOptions(Application_Model_StoredFile::teaserShows($this->teaserCurrentShowIds));
+        $teaserShow->setDescription(_('The shows this jingle announces (Ctrl-click for several, none selected = no teaser). Smart blocks with the criterion "Teaser: fits the schedule" play it only when one of these shows airs on the right day: a "today" teaser on the day of the show, a "tomorrow" teaser the day before, a show teaser any day - never for a show that is over for today, and never inside the show itself.'));
         $this->addElement($teaserShow);
+        $teaserSent = new Zend_Form_Element_Hidden('teaser_shows_sent');
+        $teaserSent->setValue('1')->setDecorators(['ViewHelper']);
+        $this->addElement($teaserSent);
 
         $teaserType = new Zend_Form_Element_Select('teaser_type');
         $teaserType->class = 'input_text';

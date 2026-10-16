@@ -366,55 +366,61 @@ class Application_Model_StoredFile
                 Logging::warn('icy_mode: ' . $exc->getMessage() . ' (migration 0068 pending?)');
             }
         }
-        // RASTATIME 2026-10-16 - teaser link (migration 0069).  The single
-        // editor posts both keys, the bulk editor only the filled one(s);
-        // a missing key keeps the stored value.  An empty / 'none' show
-        // clears the link; a show without a type becomes a show teaser.
-        if (is_array($p_md) && (array_key_exists('teaser_show_id', $p_md) || array_key_exists('teaser_type', $p_md))) {
-            [$curShow, $curType] = self::teaserOf($this->_con, $this->_file->getDbId());
-            $show = array_key_exists('teaser_show_id', $p_md) ? trim((string) $p_md['teaser_show_id']) : $curShow;
+        // RASTATIME 2026-10-16 - teaser links (migrations 0069/0070).  The
+        // single editor posts the multiselect (absent when nothing is
+        // selected, hence the hidden teaser_shows_sent marker) and the type;
+        // the bulk editor only the filled field(s); a missing key keeps the
+        // stored value.  'none' / an empty list clears the links; shows
+        // without a type become show teasers.
+        if (is_array($p_md) && (array_key_exists('teaser_show_id', $p_md) || array_key_exists('teaser_shows_sent', $p_md)
+            || array_key_exists('teaser_type', $p_md))) {
+            [$curShows, $curType] = self::teaserOf($this->_con, $this->_file->getDbId());
+            $showsGiven = array_key_exists('teaser_show_id', $p_md) || array_key_exists('teaser_shows_sent', $p_md);
+            $raw = $p_md['teaser_show_id'] ?? [];
+            if (is_string($raw)) {
+                $raw = $raw === '' ? [] : explode(',', $raw);
+            }
+            $shows = $showsGiven ? array_values(array_unique(array_filter(array_map('intval', (array) $raw), static fn ($v) => $v > 0))) : array_map('intval', $curShows);
+            if ($showsGiven && in_array('none', array_map('strval', (array) $raw), true)) {
+                $shows = [];
+            }
             $type = array_key_exists('teaser_type', $p_md) ? trim((string) $p_md['teaser_type']) : $curType;
-            if ($show === '' || $show === 'none' || !ctype_digit($show) || $type === 'none'
-                || CcShowQuery::create()->findPk((int) $show) === null) {
-                $show = null;
-                $type = null;
-            } elseif (!in_array($type, self::TEASER_TYPES, true)) {
+            if ($type === 'none') {
+                $shows = [];
+            }
+            if ($shows) {
+                $known = array_map('intval', CcShowQuery::create()->filterByDbId($shows)->select('DbId')->find()->getData());
+                $shows = array_values(array_intersect($shows, $known));
+            }
+            if (!in_array($type, self::TEASER_TYPES, true)) {
                 $type = 'show';
             }
             try {
-                $stmt = $this->_con->prepare('UPDATE cc_files SET teaser_show_id = :s, teaser_type = :t WHERE id = :id');
-                if ($show === null) {
-                    $stmt->bindValue(':s', null, PDO::PARAM_NULL);
-                    $stmt->bindValue(':t', null, PDO::PARAM_NULL);
-                } else {
-                    $stmt->bindValue(':s', (int) $show, PDO::PARAM_INT);
+                $this->_con->beginTransaction();
+                $stmt = $this->_con->prepare('DELETE FROM cc_file_teaser WHERE file_id = :id');
+                $stmt->bindValue(':id', $this->_file->getDbId(), PDO::PARAM_INT);
+                $stmt->execute();
+                $ins = $this->_con->prepare('INSERT INTO cc_file_teaser (file_id, show_id) VALUES (:f, :s)');
+                foreach ($shows as $sid) {
+                    $ins->bindValue(':f', $this->_file->getDbId(), PDO::PARAM_INT);
+                    $ins->bindValue(':s', (int) $sid, PDO::PARAM_INT);
+                    $ins->execute();
+                }
+                $stmt = $this->_con->prepare('UPDATE cc_files SET teaser_type = :t WHERE id = :id');
+                if ($shows) {
                     $stmt->bindValue(':t', $type, PDO::PARAM_STR);
+                } else {
+                    $stmt->bindValue(':t', null, PDO::PARAM_NULL);
                 }
                 $stmt->bindValue(':id', $this->_file->getDbId(), PDO::PARAM_INT);
                 $stmt->execute();
+                $this->_con->commit();
             } catch (Exception $exc) {
-                Logging::warn('teaser: ' . $exc->getMessage() . ' (migration 0069 pending?)');
-            }
-        }
-        if (is_array($p_md) && array_key_exists('crossover_mode', $p_md)) {
-            $mode = in_array($p_md['crossover_mode'], ['type', 'nofade', 'exclude'], true)
-                ? $p_md['crossover_mode'] : 'type';
-            $before = self::crossoverModeOf($this->_con, $this->_file->getDbId());
-            $stmt = $this->_con->prepare(
-                'UPDATE cc_files SET no_fade_crossfade = :nofade, exclude_crossfade = :exclude WHERE id = :id'
-            );
-            $stmt->bindValue(':nofade', $mode === 'nofade', PDO::PARAM_BOOL);
-            $stmt->bindValue(':exclude', $mode === 'exclude', PDO::PARAM_BOOL);
-            $stmt->bindValue(':id', $this->_file->getDbId(), PDO::PARAM_INT);
-            $stmt->execute();
-            if (($before === 'exclude') !== ($mode === 'exclude')) {
-                // only "exclude" changes the row layout; "no fade" keeps the overlap
                 try {
-                    Application_Model_Scheduler::relayoutFutureInstances($this->_file->getDbId());
-                    Application_Model_RabbitMq::PushSchedule();
-                } catch (Exception $exc) {
-                    Logging::warn('crossover_mode: re-layout failed: ' . $exc->getMessage());
+                    $this->_con->rollBack();
+                } catch (Exception $ignored) {
                 }
+                Logging::warn('teaser: ' . $exc->getMessage() . ' (migration 0070 pending?)');
             }
         }
     }
@@ -558,7 +564,8 @@ class Application_Model_StoredFile
         $md['crossover_mode'] = self::crossoverModeOf($this->_con, $this->_file->getDbId());
         // RASTATIME 2026-10-14 - the three-way "Stream Metadata" field
         $md['icy_mode'] = self::icyModeOf($this->_con, $this->_file->getDbId());
-        // RASTATIME 2026-10-16 - teaser automation (migration 0069)
+        // RASTATIME 2026-10-16 - teaser automation (migrations 0069/0070):
+        // the shows as a list of ids (multiselect), the type as a word
         [$md['teaser_show_id'], $md['teaser_type']] = self::teaserOf($this->_con, $this->_file->getDbId());
 
         return $md;
@@ -576,8 +583,9 @@ class Application_Model_StoredFile
     private static $teaserColumnsReady;
 
     /**
-     * True once migration 0069 has added the teaser columns.  Cached per
-     * request so the library query does not probe the catalogue per row.
+     * True once migrations 0069 + 0070 have added cc_files.teaser_type and
+     * the link table cc_file_teaser.  Cached per request so the library
+     * query does not probe the catalogue per row.
      *
      * @param mixed $con
      */
@@ -587,10 +595,12 @@ class Application_Model_StoredFile
             try {
                 $con = $con ?: Propel::getConnection(CcFilesPeer::DATABASE_NAME);
                 $stmt = $con->prepare(
-                    "SELECT 1 FROM information_schema.columns WHERE table_name = 'cc_files' AND column_name = 'teaser_show_id'"
+                    "SELECT (SELECT 1 FROM information_schema.columns WHERE table_name = 'cc_files' AND column_name = 'teaser_type') "
+                    . "AND (SELECT 1 FROM information_schema.tables WHERE table_name = 'cc_file_teaser')"
                 );
                 $stmt->execute();
-                self::$teaserColumnsReady = $stmt->fetchColumn() !== false;
+                $v = $stmt->fetchColumn();
+                self::$teaserColumnsReady = ($v === true || $v === 't' || $v === 1 || $v === '1');
             } catch (Exception $exc) {
                 self::$teaserColumnsReady = false;
             }
@@ -600,7 +610,8 @@ class Application_Model_StoredFile
     }
 
     /**
-     * [show id as string or '', type or ''] of a file.
+     * [list of show ids as strings, type or ''] of a file.  A file without
+     * linked shows is no teaser, whatever its type column says.
      *
      * @param mixed $con
      * @param mixed $fileId
@@ -608,50 +619,53 @@ class Application_Model_StoredFile
     public static function teaserOf($con, $fileId)
     {
         if (!self::teaserColumnsReady($con)) {
-            return ['', ''];
+            return [[], ''];
         }
         try {
-            $stmt = $con->prepare('SELECT teaser_show_id, teaser_type FROM cc_files WHERE id = :id');
+            $stmt = $con->prepare('SELECT show_id FROM cc_file_teaser WHERE file_id = :id ORDER BY show_id');
             $stmt->bindValue(':id', (int) $fileId, PDO::PARAM_INT);
             $stmt->execute();
-            $row = $stmt->fetch(PDO::FETCH_ASSOC);
-            if (!$row || $row['teaser_show_id'] === null) {
-                return ['', ''];
+            $ids = array_map(static fn ($v) => (string) (int) $v, $stmt->fetchAll(PDO::FETCH_COLUMN));
+            if (empty($ids)) {
+                return [[], ''];
             }
+            $stmt = $con->prepare('SELECT teaser_type FROM cc_files WHERE id = :id');
+            $stmt->bindValue(':id', (int) $fileId, PDO::PARAM_INT);
+            $stmt->execute();
+            $type = $stmt->fetchColumn();
 
-            return [(string) (int) $row['teaser_show_id'], in_array($row['teaser_type'], self::TEASER_TYPES, true) ? $row['teaser_type'] : 'show'];
+            return [$ids, in_array($type, self::TEASER_TYPES, true) ? $type : 'show'];
         } catch (Exception $exc) {
             Logging::warn('teaserOf: ' . $exc->getMessage());
 
-            return ['', ''];
+            return [[], ''];
         }
     }
 
     /**
      * Shows a teaser can announce: every show with an upcoming instance,
-     * by name.  id => name; $includeId adds the file's current show even
-     * when it has no upcoming instance any more.
+     * labelled with its next airing (several shows share a name, e.g. the
+     * hourly "bbc" slots); $includeIds adds a file's current shows even
+     * when they have no upcoming instance any more.  id => label.
      *
-     * @param null|int $includeId
+     * @param null|array $includeIds
      */
-    public static function teaserShows($includeId = null)
+    public static function teaserShows($includeIds = null)
     {
-        // next airing in the label: several shows may share a name (e.g. the
-        // hourly "bbc" slots), the time tells them apart
-        $sql = 'SELECT s.id, s.name, MIN(i.starts) AS next_start FROM cc_show s '
+        $ids = array_values(array_filter(array_map('intval', (array) ($includeIds ?: [])), static fn ($v) => $v > 0));
+        $inner = 'SELECT s.id, s.name, MIN(i.starts) AS next_start FROM cc_show s '
             . 'JOIN cc_show_instances i ON i.show_id = s.id AND i.modified_instance = FALSE AND i.ends > NOW() '
             . 'GROUP BY s.id, s.name';
-        $params = [];
-        if ($includeId) {
-            $sql .= ' UNION SELECT s.id, s.name, NULL FROM cc_show s WHERE s.id = :inc AND NOT EXISTS ('
+        if ($ids) {
+            $inner .= ' UNION SELECT s.id, s.name, NULL FROM cc_show s WHERE s.id IN (' . implode(',', $ids) . ') AND NOT EXISTS ('
                 . 'SELECT 1 FROM cc_show_instances i WHERE i.show_id = s.id AND i.modified_instance = FALSE AND i.ends > NOW())';
-            $params[':inc'] = (int) $includeId;
         }
-        $sql .= ' ORDER BY LOWER(name), next_start NULLS LAST, id';
+        // ORDER BY an expression is not allowed on a UNION: sort the wrapped result
+        $sql = "SELECT id, name, next_start FROM ({$inner}) AS shows ORDER BY LOWER(name), next_start NULLS LAST, id";
         $out = [];
         try {
             $tz = new DateTimeZone(Application_Model_Preference::GetDefaultTimezone() ?: 'UTC');
-            foreach (Application_Common_Database::prepareAndExecute($sql, $params, 'all') as $r) {
+            foreach (Application_Common_Database::prepareAndExecute($sql, [], 'all') as $r) {
                 $label = (string) $r['name'];
                 if (!empty($r['next_start'])) {
                     $next = new DateTime($r['next_start'], new DateTimeZone('UTC'));
@@ -1120,7 +1134,8 @@ SQL;
                 // scalar subquery, not a JOIN: cc_show has genre / description
                 // columns too and the file branch selects those bare
                 $fileSelect[] = self::teaserColumnsReady($con)
-                    ? "(CASE WHEN FILES.teaser_show_id IS NULL THEN NULL ELSE (SELECT ts.name FROM cc_show ts WHERE ts.id = FILES.teaser_show_id) || ' (' || COALESCE(FILES.teaser_type, 'show') || ')' END)::text AS " . $key
+                    ? "((SELECT string_agg(ts.name, ', ' ORDER BY ts.name) FROM cc_file_teaser ft JOIN cc_show ts ON ts.id = ft.show_id WHERE ft.file_id = FILES.id)"
+                      . " || ' (' || COALESCE(FILES.teaser_type, 'show') || ')')::text AS " . $key
                     : 'NULL::text AS ' . $key;
                 $streamSelect[] = 'NULL::text AS ' . $key;
             } elseif ($key === 'is_scheduled' || $key === 'is_playlist') {

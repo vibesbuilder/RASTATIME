@@ -1546,20 +1546,20 @@ SQL;
     public static function teaserCriterionSql($key, $modifier, $value)
     {
         if (!Application_Model_StoredFile::teaserColumnsReady()) {
-            Logging::warn('smart block: teaser criterion used before migration 0069 - empty pool');
+            Logging::warn('smart block: teaser criterion used before migrations 0069/0070 - empty pool');
 
             return 'FALSE';
         }
         $not = trim((string) $modifier) === CriteriaModifier::IS_NOT;
+        // a jingle may announce several shows (cc_file_teaser, migration 0070)
+        $linked = 'SELECT 1 FROM cc_file_teaser ft WHERE ft.file_id = cc_files.id';
         if ($key === 'teaser_show') {
             $id = (int) $value;
             if ($id <= 0) {
                 return 'FALSE';
             }
 
-            return $not
-                ? "(cc_files.teaser_show_id IS NULL OR cc_files.teaser_show_id <> {$id})"
-                : "cc_files.teaser_show_id = {$id}";
+            return ($not ? 'NOT ' : '') . "EXISTS ({$linked} AND ft.show_id = {$id})";
         }
         if ($key === 'teaser_type') {
             $type = in_array($value, Application_Model_StoredFile::TEASER_TYPES, true) ? $value : null;
@@ -1582,16 +1582,17 @@ SQL;
         $local->setTimezone(new DateTimeZone($tz));
         $day = $local->format('Y-m-d');
         $next = (clone $local)->modify('+1 day')->format('Y-m-d');
-        $inst = 'SELECT 1 FROM cc_show_instances i WHERE i.show_id = cc_files.teaser_show_id AND i.modified_instance = FALSE '
+        $inst = 'SELECT 1 FROM cc_show_instances i WHERE i.show_id = ft.show_id AND i.modified_instance = FALSE '
             . "AND ((i.starts AT TIME ZONE 'UTC') AT TIME ZONE '{$tzSql}')::date = DATE '%s'";
         $onDay = sprintf($inst, $day);
         $onNext = sprintf($inst, $next);
         $laterToday = "EXISTS ({$onDay} AND i.starts > TIMESTAMP '{$slotUtc}')";
         $overToday = "EXISTS ({$onDay} AND i.ends <= TIMESTAMP '{$slotUtc}')";
         $airsTomorrow = "EXISTS ({$onNext})";
-        $sql = '(cc_files.teaser_show_id IS NOT NULL';
+        // one fitting linked show is enough; the show being filled never counts
+        $sql = "EXISTS ({$linked}";
         if ($ctx['show_id']) {
-            $sql .= ' AND cc_files.teaser_show_id <> ' . (int) $ctx['show_id'];
+            $sql .= ' AND ft.show_id <> ' . (int) $ctx['show_id'];
         }
         $sql .= ' AND ('
             . "(cc_files.teaser_type = 'today' AND {$laterToday})"

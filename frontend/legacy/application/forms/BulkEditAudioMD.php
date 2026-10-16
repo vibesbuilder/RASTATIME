@@ -85,11 +85,15 @@ class Application_Form_BulkEditAudioMD extends Zend_Form
         // RASTATIME 2026-10-16 - teaser automation: set the teased show and
         // the teaser type for many jingles at once.  '' leaves the field
         // alone, 'none' clears the link (the controller maps it to '').
-        $teaserOptions = ['' => _('Leave unchanged'), 'none' => _('None')] + Application_Model_StoredFile::teaserShows();
-        $teaserShow = new Zend_Form_Element_Select('teaser_show_id');
+        // multiselect (migration 0070): nothing selected leaves the links alone,
+        // "None" clears them, selected shows replace the list
+        $teaserOptions = ['none' => _('None')] + Application_Model_StoredFile::teaserShows();
+        $teaserShow = new Zend_Form_Element_Multiselect('teaser_show_id');
         $teaserShow->class = 'input_text';
-        $teaserShow->setLabel(_('Teaser for show:'))
+        $teaserShow->setAttrib('size', 6);
+        $teaserShow->setLabel(_('Teaser for shows:'))
             ->setRequired(false)
+            ->setDescription(_('Nothing selected leaves the links unchanged; "None" removes them.'))
             ->setMultiOptions($teaserOptions);
         $this->addElement($teaserShow);
 

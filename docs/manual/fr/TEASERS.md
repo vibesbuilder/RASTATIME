@@ -30,25 +30,27 @@ double-clic) et renseignez
 
 | Champ | Signification |
 |---|---|
-| **Teaser pour l'émission** | l'émission que ce jingle annonce.  La liste contient chaque émission ayant une diffusion à venir, avec sa prochaine heure (`bbc (Sat 12:00)`) afin de distinguer les émissions homonymes.  *None* retire le lien. |
+| **Teaser pour les émissions** | les émissions que ce jingle annonce - une ou plusieurs (Ctrl-clic).  La liste contient chaque émission ayant une diffusion à venir, avec sa prochaine heure (`bbc (Sat 12:00)`) afin de distinguer les émissions homonymes ; les créneaux d'informations horaires sont des émissions distinctes et un seul jingle « BBC aujourd'hui » peut les annoncer toutes.  Aucune sélection = pas de teaser. |
 | **Type de teaser** | **Teaser d'émission (tout jour)**, **Teaser du jour : « aujourd'hui »** ou **Teaser du jour : « demain »**.  Une émission sans type est enregistrée comme teaser d'émission. |
 
 Pour de nombreux jingles à la fois, sélectionnez-les dans la
 bibliothèque et utilisez **Edit** (édition groupée) : les deux mêmes
-champs ; *Leave unchanged* conserve un champ, *None* retire le lien.  La
+champs ; aucune sélection conserve un champ, *None* retire les liens,
+les émissions choisies remplacent la liste.  La
 colonne de bibliothèque **Teaser** (sélecteur de colonnes, masquée par
 défaut) affiche `Nom de l'émission (today)` et se recherche, de sorte
 que « Teaser contient Worldwide » liste tous les jingles de cette
 émission.
 
-Un jingle annonce exactement une émission.  Deux jingles peuvent bien
-sûr annoncer la même émission avec des types différents.
+Un jingle a un type et annonce une ou plusieurs émissions ; il convient
+dès que l'une de ses émissions convient.  Deux jingles peuvent bien sûr
+annoncer la même émission avec des types différents.
 
 ## 2. Les critères de smart block
 
 | Critère | Modificateurs | Valeur | Correspond à |
 |---|---|---|---|
-| **Teaser : émission** | est / n'est pas | une émission | les jingles liés à cette émission |
+| **Teaser : émission** | est / n'est pas | une émission | les jingles qui annoncent cette émission (entre autres) |
 | **Teaser : type** | est / n'est pas | teaser d'émission, aujourd'hui, demain | les jingles de ce type |
 | **Teaser : correspond à la grille** | est | le jour de l'émission remplie | voir ci-dessous |
 
@@ -130,8 +132,8 @@ toujours, le critère ne trouve simplement aucun jour qui convienne.
 
 Vérifiez que les jingles portent une émission et un type, que
 l'émission a vraiment une diffusion ce jour-là et que les autres
-critères du bloc (type de piste, genre) ne les excluent pas.  Tant que la
-migration de base de données 0069 n'a pas été exécutée, le critère donne
+critères du bloc (type de piste, genre) ne les excluent pas.  Tant que les
+migrations de base de données 0069 et 0070 n'ont pas été exécutées, le critère donne
 un pool vide et le journal le dit.
 
 ## Voir aussi

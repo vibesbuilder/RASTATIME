@@ -31,24 +31,26 @@ establezca
 
 | Campo | Significado |
 |---|---|
-| **Teaser para el programa** | el programa que anuncia este jingle.  La lista contiene cada programa con una emisión próxima, con su siguiente hora (`bbc (Sat 12:00)`) para distinguir programas homónimos.  *None* quita el vínculo. |
+| **Teaser para los programas** | los programas que anuncia este jingle, uno o varios (Ctrl-clic).  La lista contiene cada programa con una emisión próxima, con su siguiente hora (`bbc (Sat 12:00)`) para distinguir programas homónimos; los huecos de noticias de cada hora son programas distintos y un solo jingle «BBC hoy» puede anunciarlos todos.  Nada seleccionado = no es teaser. |
 | **Tipo de teaser** | **Teaser de programa (cualquier día)**, **Teaser del día: «hoy»** o **Teaser del día: «mañana»**.  Un programa sin tipo se guarda como teaser de programa. |
 
 Para muchos jingles a la vez, selecciónelos en la biblioteca y use
-**Edit** (edición masiva): los mismos dos campos; *Leave unchanged*
-conserva un campo, *None* quita el vínculo.  La columna de biblioteca
+**Edit** (edición masiva): los mismos dos campos; nada seleccionado
+conserva un campo, *None* quita los vínculos, los programas elegidos
+sustituyen la lista.  La columna de biblioteca
 **Teaser** (selector de columnas, oculta por defecto) muestra `Nombre
 del programa (today)` y se puede buscar, de modo que «Teaser contiene
 Worldwide» lista todos los jingles de ese programa.
 
-Un jingle anuncia exactamente un programa.  Dos jingles pueden, por
-supuesto, anunciar el mismo programa con tipos distintos.
+Un jingle tiene un tipo y anuncia uno o varios programas; encaja en
+cuanto encaja uno de sus programas.  Dos jingles pueden, por supuesto,
+anunciar el mismo programa con tipos distintos.
 
 ## 2. Los criterios de bloque inteligente
 
 | Criterio | Modificadores | Valor | Coincide con |
 |---|---|---|---|
-| **Teaser: programa** | es / no es | un programa | los jingles vinculados a ese programa |
+| **Teaser: programa** | es / no es | un programa | los jingles que anuncian ese programa (entre otros) |
 | **Teaser: tipo** | es / no es | teaser de programa, hoy, mañana | los jingles de ese tipo |
 | **Teaser: encaja con la parrilla** | es | el día del programa que se rellena | véase abajo |
 
@@ -131,8 +133,8 @@ encaje.
 
 Compruebe que los jingles llevan programa y tipo, que el programa
 realmente tiene una emisión ese día y que los demás criterios del bloque
-(tipo de pista, género) no los excluyen.  Hasta que se haya ejecutado la
-migración de base de datos 0069, el criterio devuelve un conjunto vacío
+(tipo de pista, género) no los excluyen.  Hasta que se hayan ejecutado las
+migraciones de base de datos 0069 y 0070, el criterio devuelve un conjunto vacío
 y el registro lo dice.
 
 ## Véase también

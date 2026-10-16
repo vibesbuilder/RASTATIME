@@ -6644,3 +6644,15 @@ msgstr "critère \"teaser_type\" : \"%s\" n'est ni show, ni today, ni tomorrow"
 #: RASTATIME 2026-10-16 teaser automation
 msgid "criterion \"teaser_fits\": the value must be \"yes\""
 msgstr "critère \"teaser_fits\" : la valeur doit être \"yes\""
+
+#: RASTATIME 2026-10-16 teaser automation (several shows)
+msgid "Teaser for shows:"
+msgstr "Teaser pour les émissions :"
+
+#: RASTATIME 2026-10-16 teaser automation (several shows)
+msgid "The shows this jingle announces (Ctrl-click for several, none selected = no teaser). Smart blocks with the criterion \"Teaser: fits the schedule\" play it only when one of these shows airs on the right day: a \"today\" teaser on the day of the show, a \"tomorrow\" teaser the day before, a show teaser any day - never for a show that is over for today, and never inside the show itself."
+msgstr "Les émissions que ce jingle annonce (Ctrl-clic pour plusieurs, aucune sélection = pas de teaser). Les smart blocks avec le critère \"Teaser : correspond à la grille\" ne le passent que lorsque l'une de ces émissions est diffusée le bon jour : un teaser \"aujourd'hui\" le jour de l'émission, un teaser \"demain\" la veille, un teaser d'émission n'importe quel jour - jamais pour une émission terminée pour aujourd'hui, et jamais dans l'émission elle-même."
+
+#: RASTATIME 2026-10-16 teaser automation (several shows)
+msgid "Nothing selected leaves the links unchanged; \"None\" removes them."
+msgstr "Aucune sélection laisse les liens inchangés ; \"None\" les retire."

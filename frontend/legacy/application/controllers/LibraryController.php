@@ -367,7 +367,12 @@ class LibraryController extends Zend_Controller_Action
         $values = [];
         foreach ((array) $dataParam as $pair) {
             if (isset($pair['name'])) {
-                $values[$pair['name']] = trim((string) ($pair['value'] ?? ''));
+                // RASTATIME 2026-10-16 - "name[]" (multiselect) collects into a list
+                if (substr((string) $pair['name'], -2) === '[]') {
+                    $values[substr($pair['name'], 0, -2)][] = trim((string) ($pair['value'] ?? ''));
+                } else {
+                    $values[$pair['name']] = trim((string) ($pair['value'] ?? ''));
+                }
             }
         }
         // only the filled fields travel on
@@ -402,9 +407,10 @@ class LibraryController extends Zend_Controller_Action
         if (isset($changes['expires_at']) && $changes['expires_at'] === 'none') {
             $changes['expires_at'] = '';
         }
-        // RASTATIME 2026-10-16 - 'none' clears the teaser link
-        if (isset($changes['teaser_show_id']) && $changes['teaser_show_id'] === 'none') {
-            $changes['teaser_show_id'] = '';
+        // RASTATIME 2026-10-16 - "None" among the selected shows clears the links
+        if (isset($changes['teaser_show_id']) && in_array('none', (array) $changes['teaser_show_id'], true)) {
+            $changes['teaser_show_id'] = [];
+            $changes['teaser_shows_sent'] = '1';
         }
 
         $updated = 0;
@@ -627,8 +633,8 @@ class LibraryController extends Zend_Controller_Action
         $file = Application_Model_StoredFile::RecallById($file_id);
 
         $form = new Application_Form_EditAudioMD();
-        // RASTATIME 2026-10-16 - keep the file's teased show selectable
-        $form->teaserCurrentShowId = (int) (Application_Model_StoredFile::teaserOf(Propel::getConnection(), $file_id)[0] ?: 0) ?: null;
+        // RASTATIME 2026-10-16 - keep the file's teased shows selectable
+        $form->teaserCurrentShowIds = Application_Model_StoredFile::teaserOf(Propel::getConnection(), $file_id)[0];
         $form->startForm($file_id);
         $form->populate($file->getDbColMetadata());
 
@@ -668,7 +674,12 @@ class LibraryController extends Zend_Controller_Action
                         $serialized['artwork'] = FileDataHelper::removeArtwork($file_id);
                     }
                 } else {
-                    $serialized[$j['name']] = $j['value'];
+                    // RASTATIME 2026-10-16 - "name[]" (multiselect) collects into a list
+                    if (substr((string) $j['name'], -2) === '[]') {
+                        $serialized[substr($j['name'], 0, -2)][] = $j['value'];
+                    } else {
+                        $serialized[$j['name']] = $j['value'];
+                    }
                 }
             }
 

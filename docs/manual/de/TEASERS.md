@@ -29,24 +29,26 @@ Doppelklick) und setzen Sie
 
 | Feld | Bedeutung |
 |---|---|
-| **Teaser für Sendung** | die Sendung, die dieser Jingle ankündigt.  Die Liste enthält jede Sendung mit bevorstehender Ausstrahlung, jeweils mit der nächsten Sendezeit (`bbc (Sat 12:00)`), damit gleichnamige Sendungen unterscheidbar sind.  *None* löst die Verknüpfung. |
+| **Teaser für Sendungen** | die Sendungen, die dieser Jingle ankündigt - eine oder mehrere (Strg-Klick).  Die Liste enthält jede Sendung mit bevorstehender Ausstrahlung, jeweils mit der nächsten Sendezeit (`bbc (Sat 12:00)`), damit gleichnamige Sendungen unterscheidbar sind; die stündlichen Nachrichten-Slots sind eigene Sendungen, und ein „BBC heute"-Jingle kann sie alle ankündigen.  Keine Auswahl = kein Teaser. |
 | **Teaser-Typ** | **Showteaser (jederzeit)**, **Tagesteaser: „heute"** oder **Tagesteaser: „morgen"**.  Eine Sendung ohne Typ wird als Showteaser gespeichert. |
 
 Für viele Jingles auf einmal markieren Sie sie in der Bibliothek und
-nutzen **Edit** (Mehrfach-Bearbeitung): dieselben zwei Felder; *Leave
-unchanged* lässt ein Feld unberührt, *None* löst die Verknüpfung.  Die
+nutzen **Edit** (Mehrfach-Bearbeitung): dieselben zwei Felder; keine
+Auswahl lässt ein Feld unberührt, *None* löst die Verknüpfungen,
+gewählte Sendungen ersetzen die Liste.  Die
 Bibliotheksspalte **Teaser** (Spaltenwähler, standardmäßig
 ausgeblendet) zeigt `Sendungsname (today)` und ist durchsuchbar, sodass
 „Teaser enthält Worldwide" alle Jingles dieser Sendung listet.
 
-Ein Jingle kündigt genau eine Sendung an.  Zwei Jingles können
+Ein Jingle hat einen Typ und kündigt eine oder mehrere Sendungen an;
+er passt, sobald eine seiner Sendungen passt.  Zwei Jingles können
 natürlich dieselbe Sendung mit verschiedenen Typen ankündigen.
 
 ## 2. Die Smart-Block-Kriterien
 
 | Kriterium | Modifikatoren | Wert | Trifft |
 |---|---|---|---|
-| **Teaser: Sendung** | ist / ist nicht | eine Sendung | Jingles dieser Sendung |
+| **Teaser: Sendung** | ist / ist nicht | eine Sendung | Jingles, die diese Sendung (unter anderen) ankündigen |
 | **Teaser: Typ** | ist / ist nicht | Showteaser, heute, morgen | Jingles dieses Typs |
 | **Teaser: passt zum Sendeplan** | ist | dem Tag der befüllten Sendung | siehe unten |
 
@@ -130,7 +132,7 @@ passenden Tag.
 Prüfen Sie, dass die Jingles Sendung und Typ tragen, dass die Sendung an
 diesem Tag wirklich eine Ausstrahlung hat und dass die übrigen
 Kriterien des Blocks (Track-Typ, Genre) sie nicht ausschließen.  Bis die
-Datenbank-Migration 0069 gelaufen ist, liefert das Kriterium einen
+Datenbank-Migrationen 0069 und 0070 gelaufen sind, liefert das Kriterium einen
 leeren Pool, und das Log sagt es.
 
 ## Siehe auch

@@ -28,23 +28,24 @@ and set
 
 | Field | Meaning |
 |---|---|
-| **Teaser for show** | the show this jingle announces.  The list holds every show with an upcoming broadcast, each with its next airing (`bbc (Sat 12:00)`) so shows that share a name can be told apart.  *None* removes the link. |
+| **Teaser for shows** | the shows this jingle announces - one or several (Ctrl-click).  The list holds every show with an upcoming broadcast, each with its next airing (`bbc (Sat 12:00)`) so shows that share a name can be told apart; the hourly news slots are separate shows and one "BBC today" jingle can announce them all.  Nothing selected = no teaser. |
 | **Teaser type** | **Show teaser (any day)**, **Day teaser: "today"** or **Day teaser: "tomorrow"**.  A show without a type is stored as a show teaser. |
 
 For many jingles at once select them in the library and use **Edit**
-(bulk edit): the same two fields; *Leave unchanged* keeps a field,
-*None* clears the link.  The library column **Teaser** (columns picker,
+(bulk edit): the same two fields; nothing selected keeps a field,
+*None* clears the links, selected shows replace the list.  The library column **Teaser** (columns picker,
 hidden by default) shows `Show name (today)` and is searchable, so
 "Teaser contains Worldwide" lists every jingle of that show.
 
-A jingle announces exactly one show.  Two jingles may of course
-announce the same show with different types.
+A jingle has one type and announces one or more shows; it fits as soon
+as one of its shows fits.  Two jingles may of course announce the same
+show with different types.
 
 ## 2. The smart block criteria
 
 | Criterion | Modifiers | Value | Matches |
 |---|---|---|---|
-| **Teaser: show** | is / is not | a show | jingles linked to that show |
+| **Teaser: show** | is / is not | a show | jingles that announce that show (among others) |
 | **Teaser: type** | is / is not | show teaser, today, tomorrow | jingles of that type |
 | **Teaser: fits the schedule** | is | the day of the show being filled | see below |
 
@@ -119,8 +120,8 @@ criterion simply finds no fitting day.
 
 Check that the jingles carry a show and a type, that the show really
 has a broadcast on that day, and that the block's other criteria (track
-type, genre) do not exclude them.  Until the database migration 0069
-has run, the criterion yields an empty pool and the log says so.
+type, genre) do not exclude them.  Until the database migrations 0069 and
+0070 have run, the criterion yields an empty pool and the log says so.
 
 ## See also
 
