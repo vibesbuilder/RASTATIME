@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Bibliothek: Spalte „ID" (2026-10-16)** — die Datenbank-ID einer Datei
+  als Bibliotheksspalte vor „File Name", standardmäßig sichtbar,
+  sortierbar, in der erweiterten Suche als Bereich; Playlisten, Smart
+  Blocks, Webstreams und Line-Ins haben eigene Nummernkreise, ihre
+  Zellen bleiben leer (Operator-Wunsch).  `library.js` (Spalte +
+  Typ-Maps), LocaleController-String, Kataloge ×3 (.mo kompiliert,
+  Apache-Neustart), Manual LIBRARY ×4.  Gespeicherte Spalten-Layouts
+  werden wegen der neuen Spaltenzahl einmalig zurückgesetzt.  Commit fb577f8.
 - **Stream-Metadaten pro Datei und Track-Typ (2026-10-14)** — Track-Editor
   „Stream Metadata" (Wie der Track-Typ / An den Stream weitergeben / Nicht
   weitergeben, `cc_files.icy_forward` NULL/1/0) und Track-Typ-Häkchen
@@ -954,6 +962,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Massenimport: `--allow-duplicates` (2026-10-16)** — `bulk_import`
+  importiert eine Datei auch dann, wenn ihre md5 (oder `source_md5`)
+  schon in der Bibliothek steht (Operator: gleiche Audiodaten, andere
+  Tags); Logzeile „found similar md5sum, importing anyway", kein
+  Löschen als „vorhanden".  Ohne den Schalter unverändert.  Upload-Seite
+  und Import-Ordner haben nie nach md5 geprüft.  Test
+  `test_importer_existing_file_allow_duplicates`, Manual LOCAL_MACHINE ×4.
+  Commit 1b91eea.
 - **Apache Port-80-Logs als Tages-Scheiben (2026-10-14)** — `error_log`
   war auf 892 MB gewachsen (Deprecation-Flut bis 09.10., seither still),
   von Apache gesperrt und damit für den Janitor unerreichbar; dazu enthält
@@ -1340,6 +1356,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Sendungen über die Zeitumstellung enden zur Wanduhrzeit (2026-10-16)**
+  — `ShowService::createUTCStartEndDateTime` addierte die Dauer als
+  verstrichene Stunden (PHP ≥ 8.1): eine Sendung 22:00–06:00 endete in der
+  Herbstnacht um 05:00 Ortszeit (eine Stunde Lücke bis zur nächsten
+  Sendung) und in der Frühlingsnacht um 07:00 (eine Stunde Überlappung
+  mit der nächsten Sendung).  Neu `ShowService::wallClockEnd`: Dauer auf
+  einer Uhr ohne Sommerzeitregel addiert und in der Sendungs-Zeitzone
+  zurückgelesen → Ende 06:00 Ortszeit in beiden Nächten (9 bzw. 7 reale
+  Stunden); Sonderfälle der Umstellungsstunde (nicht existierende
+  Endzeit → +1 h, kollabierte Sendung → verstrichene Dauer, doppelte
+  Endzeit → erstes Vorkommen).  Betrifft Wiederholungen, Einzelsendungen
+  und Rebroadcasts beim Anlegen/Nachfüllen; bestehende Instanzen bleiben
+  (keine kreuzt derzeit eine Umstellung).  Probe
+  `C:/Temp/optd/dst_wallclock_probe.php` (10 Fälle), Manual CALENDAR ×4
+  FAQ, Architektur §23.62.  Commit 91268ab.
 - **Zurückgenommen: leere Titel-/Interpret-Schlüssel im versteckten
   Metadaten-Paket (2026-10-15, 83f2f05)** — Probe 23:44:09: der Jingle
   zeigte zwar „RASTATIME - Untitled Show", danach erreichte aber kein

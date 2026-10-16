@@ -5213,3 +5213,24 @@ Vorbedingungen für eine Wiederaufnahme:
   keine leeren Felder).
 - Abnahme mit `C:/Temp/optd/icy_watch.py HH:MM:SS` und
   `liq_cmd.py "output.icecast.metadata"` um zwei aufeinanderfolgende Jingles.
+
+## Operator-Punkte 2026-10-16 (Library-ID, Massenimport-Duplikate, Zeitumstellung)
+
+### ✅ Bibliothek: Spalte „ID" - gebaut 2026-10-16
+Operator: Datei-ID nirgends sichtbar.  Spalte vor „File Name", sichtbar, nur bei Dateien (Playlisten/Bloecke/
+Webstreams eigene Nummernkreise -> leer), sortierbar, Bereichssuche.  Gespeicherte Spalten-Layouts einmalig
+zurueckgesetzt (Spaltenzahl).  Apache-Neustart fuer den uebersetzten String.
+
+### ✅ Massenimport: `--allow-duplicates` - gebaut 2026-10-16
+Befund: nur `bulk_import` prueft md5/source_md5, Upload-Seite und Import-Ordner nie.  Schalter importiert
+trotzdem (gleiche Audiodaten, andere Tags); sonst unveraendert (Operator 2026-10-16).
+
+### ✅ Sendungen ueber die Zeitumstellung: Ende zur Wanduhrzeit - gebaut 2026-10-16
+Befund: Dauer wurde als verstrichene Stunden addiert -> Herbst 1 h Luecke, Fruehling 1 h Ueberlappung bei
+Sendungen ueber 02:00-03:00.  Fix `ShowService::wallClockEnd` (Architektur §23.62), Probe mit 10 Faellen.
+Operator-Go wegen 24/7-Betrieb.  Kalender 2026-10-16: keine Instanz kreuzt eine Umstellung, daher kein
+Korrekturlauf.  Vor der naechsten Umstellung (2026-10-25) Blick in den Kalender genuegt.
+
+### Zaehler „X of N tracks" ueberlappt Suchbegriff (Schedule Tracks) - erledigt ohne Eingriff
+Operator 2026-10-16: tritt nicht mehr auf.  Nicht weiter verfolgt.
+
