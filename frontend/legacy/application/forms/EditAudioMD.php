@@ -352,13 +352,14 @@ class Application_Form_EditAudioMD extends Zend_Form
         $this->addElement($teaserType);
         // one jingle may announce several shows (migration 0070): a multiselect;
         // the hidden marker tells the save that the (possibly empty) list was posted
-        $teaserShow = new Zend_Form_Element_Multiselect('teaser_show_id');
-        $teaserShow->class = 'input_text';
-        $teaserShow->setAttrib('size', 6);
+        // RASTATIME 2026-10-16 (operator): a checkbox per show, like the
+        // Song-Request Pool under Settings -> General; the dd scrolls
+        $teaserShow = new Zend_Form_Element_MultiCheckbox('teaser_show_id');
         $teaserShow->setLabel(_('Teaser for shows:'));
         $teaserShow->setRegisterInArrayValidator(false);
         $teaserShow->setMultiOptions(Application_Model_StoredFile::teaserShows($this->teaserCurrentShowIds));
-        $teaserShow->setDescription(_('The shows this jingle announces (Ctrl-click for several, none selected = no teaser). Smart blocks with the criterion "Teaser: fits the schedule" play it only when one of these shows airs on the right day: a "today" teaser on the day of the show, a "tomorrow" teaser the day before, a show teaser any day - never for a show that is over for today, and never inside the show itself.'));
+        $teaserShow->setDescription(_('The shows this jingle announces (tick one or several, none ticked = no teaser). Smart blocks with the criterion "Teaser: fits the schedule" play it only when one of these shows airs on the right day: a "today" teaser on the day of the show, a "tomorrow" teaser the day before, a show teaser any day - never for a show that is over for today, and never inside the show itself.'));
+        $teaserShow->setDecorators(['ViewHelper', 'Errors', 'Description', ['HtmlTag', ['tag' => 'dd', 'class' => 'rt-teaser-shows']], ['Label', ['tag' => 'dt']]]);
         $this->addElement($teaserShow);
         $teaserSent = new Zend_Form_Element_Hidden('teaser_shows_sent');
         $teaserSent->setValue('1')->setDecorators(['ViewHelper']);

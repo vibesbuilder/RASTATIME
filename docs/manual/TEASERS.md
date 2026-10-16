@@ -29,7 +29,7 @@ and set
 | Field | Meaning |
 |---|---|
 | **Teaser type** | **Show teaser (any day)**, **Day teaser: "today"** or **Day teaser: "tomorrow"**.  Choose it first: the shows list below stays greyed out until a type is set, and a save with shows but no type is refused. |
-| **Teaser for shows** | the shows this jingle announces - one or several (Ctrl-click).  The list holds every show with an upcoming broadcast, each with its next airing (`bbc (Sat 12:00)`) so shows that share a name can be told apart; the hourly news slots are separate shows and one "BBC today" jingle can announce them all.  Nothing selected = no teaser; setting the type back to *None* empties the list. |
+| **Teaser for shows** | the shows this jingle announces - tick one or several, a checkbox per show as in the Song-Request Pool.  The list holds every show with an upcoming broadcast, each with its next airing (`bbc (Sat 12:00)`) so shows that share a name can be told apart; the hourly news slots are separate shows and one "BBC today" jingle can announce them all.  Nothing selected = no teaser; setting the type back to *None* empties the list. |
 
 For many jingles at once select them in the library and use **Edit**
 (bulk edit): the same two fields; nothing selected keeps a field,

@@ -31,7 +31,7 @@ double-clic) et renseignez
 | Champ | Signification |
 |---|---|
 | **Type de teaser** | **Teaser d'émission (tout jour)**, **Teaser du jour : « aujourd'hui »** ou **Teaser du jour : « demain »**.  Choisissez-le d'abord : la liste des émissions reste grisée tant qu'aucun type n'est défini, et un enregistrement avec des émissions sans type est refusé. |
-| **Teaser pour les émissions** | les émissions que ce jingle annonce - une ou plusieurs (Ctrl-clic).  La liste contient chaque émission ayant une diffusion à venir, avec sa prochaine heure (`bbc (Sat 12:00)`) afin de distinguer les émissions homonymes ; les créneaux d'informations horaires sont des émissions distinctes et un seul jingle « BBC aujourd'hui » peut les annoncer toutes.  Aucune sélection = pas de teaser ; remettre le type sur *None* vide la liste. |
+| **Teaser pour les émissions** | les émissions que ce jingle annonce - cochez-en une ou plusieurs, une case par émission comme pour le pool de demandes.  La liste contient chaque émission ayant une diffusion à venir, avec sa prochaine heure (`bbc (Sat 12:00)`) afin de distinguer les émissions homonymes ; les créneaux d'informations horaires sont des émissions distinctes et un seul jingle « BBC aujourd'hui » peut les annoncer toutes.  Aucune sélection = pas de teaser ; remettre le type sur *None* vide la liste. |
 
 Pour de nombreux jingles à la fois, sélectionnez-les dans la
 bibliothèque et utilisez **Edit** (édition groupée) : les deux mêmes

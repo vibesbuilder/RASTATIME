@@ -95,13 +95,13 @@ class Application_Form_BulkEditAudioMD extends Zend_Form
         // multiselect (migration 0070): nothing selected leaves the links alone,
         // "None" clears them, selected shows replace the list
         $teaserOptions = ['none' => _('None')] + Application_Model_StoredFile::teaserShows();
-        $teaserShow = new Zend_Form_Element_Multiselect('teaser_show_id');
-        $teaserShow->class = 'input_text';
-        $teaserShow->setAttrib('size', 6);
+        // a checkbox per show, like the Song-Request Pool (operator 2026-10-16)
+        $teaserShow = new Zend_Form_Element_MultiCheckbox('teaser_show_id');
         $teaserShow->setLabel(_('Teaser for shows:'))
             ->setRequired(false)
-            ->setDescription(_('Nothing selected leaves the links unchanged; "None" removes them.'))
+            ->setDescription(_('Nothing ticked leaves the links unchanged; "None" removes them.'))
             ->setMultiOptions($teaserOptions);
+        $teaserShow->setAttrib('class', 'rt-teaser-shows-input');
         $this->addElement($teaserShow);
 
 

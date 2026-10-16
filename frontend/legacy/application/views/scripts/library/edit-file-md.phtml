@@ -47,12 +47,14 @@ $baseUrl = Config::getBasePath();
   // disabled multiselect is not posted - the save then clears the links
   // in the track editor and leaves them alone in the bulk editor)
   var $type = $("#teaser_type").last();
-  var $shows = $("#teaser_show_id").last();
+  var $form = $type.closest("form");
+  var $shows = $form.find('input[name="teaser_show_id[]"]');
   function sync() {
     var on = $type.val() !== "" && $type.val() !== null;
     $shows.prop("disabled", !on);
+    $shows.closest(".rt-teaser-shows, dd").toggleClass("rt-teaser-shows-off", !on);
     if (!on) {
-      $shows.val([]);
+      $shows.prop("checked", false);
     }
   }
   $type.on("change", sync);
