@@ -30,13 +30,14 @@ double-clic) et renseignez
 
 | Champ | Signification |
 |---|---|
-| **Teaser pour les émissions** | les émissions que ce jingle annonce - une ou plusieurs (Ctrl-clic).  La liste contient chaque émission ayant une diffusion à venir, avec sa prochaine heure (`bbc (Sat 12:00)`) afin de distinguer les émissions homonymes ; les créneaux d'informations horaires sont des émissions distinctes et un seul jingle « BBC aujourd'hui » peut les annoncer toutes.  Aucune sélection = pas de teaser. |
-| **Type de teaser** | **Teaser d'émission (tout jour)**, **Teaser du jour : « aujourd'hui »** ou **Teaser du jour : « demain »**.  Une émission sans type est enregistrée comme teaser d'émission. |
+| **Type de teaser** | **Teaser d'émission (tout jour)**, **Teaser du jour : « aujourd'hui »** ou **Teaser du jour : « demain »**.  Choisissez-le d'abord : la liste des émissions reste grisée tant qu'aucun type n'est défini, et un enregistrement avec des émissions sans type est refusé. |
+| **Teaser pour les émissions** | les émissions que ce jingle annonce - une ou plusieurs (Ctrl-clic).  La liste contient chaque émission ayant une diffusion à venir, avec sa prochaine heure (`bbc (Sat 12:00)`) afin de distinguer les émissions homonymes ; les créneaux d'informations horaires sont des émissions distinctes et un seul jingle « BBC aujourd'hui » peut les annoncer toutes.  Aucune sélection = pas de teaser ; remettre le type sur *None* vide la liste. |
 
 Pour de nombreux jingles à la fois, sélectionnez-les dans la
 bibliothèque et utilisez **Edit** (édition groupée) : les deux mêmes
 champs ; aucune sélection conserve un champ, *None* retire les liens,
-les émissions choisies remplacent la liste.  La
+les émissions choisies remplacent la liste - et exigent un type dans le
+même enregistrement, car les pistes sélectionnées n'en ont pas forcément.  La
 colonne de bibliothèque **Teaser** (sélecteur de colonnes, masquée par
 défaut) affiche `Nom de l'émission (today)` et se recherche, de sorte
 que « Teaser contient Worldwide » liste tous les jingles de cette

@@ -5,6 +5,22 @@ class Application_Form_EditAudioMD extends Zend_Form
     /** RASTATIME 2026-10-16 - the file's current teaser shows, kept in the select even without upcoming instances */
     public $teaserCurrentShowIds = [];
 
+    /**
+     * RASTATIME 2026-10-16 - shows without a teaser type are incomplete
+     * (a "today" wording filed as a show teaser would play any day).
+     */
+    public function isValid($data)
+    {
+        $ok = parent::isValid($data);
+        $shows = array_filter((array) ($data['teaser_show_id'] ?? []), static fn ($v) => $v !== '' && $v !== 'none');
+        if ($shows && trim((string) ($data['teaser_type'] ?? '')) === '') {
+            $this->getElement('teaser_type')->addError(_('Choose a teaser type before you pick shows'));
+            $ok = false;
+        }
+
+        return $ok;
+    }
+
     public function init() {}
 
     public function startForm($p_id)
@@ -326,6 +342,14 @@ class Application_Form_EditAudioMD extends Zend_Form
         // jingle announces and how.  The show list holds the shows with an
         // upcoming instance plus the file's current one; the in-array check
         // is off because StoredFile verifies the show itself.
+        // RASTATIME 2026-10-16 (operator): the type comes first - the shows list
+        // is enabled only once a type is chosen (edit-file-md.phtml), and the
+        // validator refuses shows without a type
+        $teaserType = new Zend_Form_Element_Select('teaser_type');
+        $teaserType->class = 'input_text';
+        $teaserType->setLabel(_('Teaser type:'));
+        $teaserType->setMultiOptions(['' => _('None')] + Application_Model_StoredFile::teaserTypeLabels());
+        $this->addElement($teaserType);
         // one jingle may announce several shows (migration 0070): a multiselect;
         // the hidden marker tells the save that the (possibly empty) list was posted
         $teaserShow = new Zend_Form_Element_Multiselect('teaser_show_id');
@@ -340,11 +364,6 @@ class Application_Form_EditAudioMD extends Zend_Form
         $teaserSent->setValue('1')->setDecorators(['ViewHelper']);
         $this->addElement($teaserSent);
 
-        $teaserType = new Zend_Form_Element_Select('teaser_type');
-        $teaserType->class = 'input_text';
-        $teaserType->setLabel(_('Teaser type:'));
-        $teaserType->setMultiOptions(['' => _('None')] + Application_Model_StoredFile::teaserTypeLabels());
-        $this->addElement($teaserType);
 
         // Add the cancel button
         $this->addElement('button', 'editmdcancel', [

@@ -28,12 +28,13 @@ and set
 
 | Field | Meaning |
 |---|---|
-| **Teaser for shows** | the shows this jingle announces - one or several (Ctrl-click).  The list holds every show with an upcoming broadcast, each with its next airing (`bbc (Sat 12:00)`) so shows that share a name can be told apart; the hourly news slots are separate shows and one "BBC today" jingle can announce them all.  Nothing selected = no teaser. |
-| **Teaser type** | **Show teaser (any day)**, **Day teaser: "today"** or **Day teaser: "tomorrow"**.  A show without a type is stored as a show teaser. |
+| **Teaser type** | **Show teaser (any day)**, **Day teaser: "today"** or **Day teaser: "tomorrow"**.  Choose it first: the shows list below stays greyed out until a type is set, and a save with shows but no type is refused. |
+| **Teaser for shows** | the shows this jingle announces - one or several (Ctrl-click).  The list holds every show with an upcoming broadcast, each with its next airing (`bbc (Sat 12:00)`) so shows that share a name can be told apart; the hourly news slots are separate shows and one "BBC today" jingle can announce them all.  Nothing selected = no teaser; setting the type back to *None* empties the list. |
 
 For many jingles at once select them in the library and use **Edit**
 (bulk edit): the same two fields; nothing selected keeps a field,
-*None* clears the links, selected shows replace the list.  The library column **Teaser** (columns picker,
+*None* clears the links, selected shows replace the list - and need a
+type in the same save, because the selected tracks need not have one yet.  The library column **Teaser** (columns picker,
 hidden by default) shows `Show name (today)` and is searchable, so
 "Teaser contains Worldwide" lists every jingle of that show.
 

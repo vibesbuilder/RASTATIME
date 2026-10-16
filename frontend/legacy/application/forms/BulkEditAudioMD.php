@@ -85,6 +85,13 @@ class Application_Form_BulkEditAudioMD extends Zend_Form
         // RASTATIME 2026-10-16 - teaser automation: set the teased show and
         // the teaser type for many jingles at once.  '' leaves the field
         // alone, 'none' clears the link (the controller maps it to '').
+        // RASTATIME 2026-10-16 (operator): type first, shows only with a type
+        $teaserType = new Zend_Form_Element_Select('teaser_type');
+        $teaserType->class = 'input_text';
+        $teaserType->setLabel(_('Teaser type:'))
+            ->setRequired(false)
+            ->setMultiOptions(['' => _('Leave unchanged')] + Application_Model_StoredFile::teaserTypeLabels());
+        $this->addElement($teaserType);
         // multiselect (migration 0070): nothing selected leaves the links alone,
         // "None" clears them, selected shows replace the list
         $teaserOptions = ['none' => _('None')] + Application_Model_StoredFile::teaserShows();
@@ -97,12 +104,6 @@ class Application_Form_BulkEditAudioMD extends Zend_Form
             ->setMultiOptions($teaserOptions);
         $this->addElement($teaserShow);
 
-        $teaserType = new Zend_Form_Element_Select('teaser_type');
-        $teaserType->class = 'input_text';
-        $teaserType->setLabel(_('Teaser type:'))
-            ->setRequired(false)
-            ->setMultiOptions(['' => _('Leave unchanged')] + Application_Model_StoredFile::teaserTypeLabels());
-        $this->addElement($teaserType);
 
         // RASTATIME 2026-10-08 (operator): the expiry date as in the single
         // editor; YYYY-MM-DD sets it, "none" clears it, empty leaves it
@@ -133,8 +134,21 @@ class Application_Form_BulkEditAudioMD extends Zend_Form
     }
 
     /** The order the dialog shows the fields in. */
+    /** RASTATIME 2026-10-16 - shows need a type (also here: the selected tracks need not have one yet) */
+    public function isValid($data)
+    {
+        $ok = parent::isValid($data);
+        $shows = array_filter((array) ($data['teaser_show_id'] ?? []), static fn ($v) => $v !== '' && $v !== 'none');
+        if ($shows && trim((string) ($data['teaser_type'] ?? '')) === '') {
+            $this->getElement('teaser_type')->addError(_('Choose a teaser type before you pick shows'));
+            $ok = false;
+        }
+
+        return $ok;
+    }
+
     public static function fieldOrder()
     {
-        return ['artist_name', 'album_title', 'genre', 'year', 'track_type_id', 'teaser_show_id', 'teaser_type', 'language', 'mood', 'label', 'composer', 'conductor', 'copyright', 'expires_at', 'description'];
+        return ['artist_name', 'album_title', 'genre', 'year', 'track_type_id', 'teaser_type', 'teaser_show_id', 'language', 'mood', 'label', 'composer', 'conductor', 'copyright', 'expires_at', 'description'];
     }
 }

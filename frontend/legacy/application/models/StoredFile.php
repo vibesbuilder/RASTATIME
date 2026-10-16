@@ -392,8 +392,15 @@ class Application_Model_StoredFile
                 $known = array_map('intval', CcShowQuery::create()->filterByDbId($shows)->select('DbId')->find()->getData());
                 $shows = array_values(array_intersect($shows, $known));
             }
-            if (!in_array($type, self::TEASER_TYPES, true)) {
-                $type = 'show';
+            if ($shows && !in_array($type, self::TEASER_TYPES, true)) {
+                // the forms refuse this; a raw caller gets a log line, not a guess
+                Logging::warn('teaser: shows without a type for file ' . $this->_file->getDbId() . ' - not saved');
+                $shows = [];
+                $type = $curType ?: null;
+                if (!$curShows) {
+                    return;
+                }
+                $shows = array_map('intval', $curShows);
             }
             try {
                 $this->_con->beginTransaction();

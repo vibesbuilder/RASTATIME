@@ -6656,3 +6656,7 @@ msgstr "Les émissions que ce jingle annonce (Ctrl-clic pour plusieurs, aucune s
 #: RASTATIME 2026-10-16 teaser automation (several shows)
 msgid "Nothing selected leaves the links unchanged; \"None\" removes them."
 msgstr "Aucune sélection laisse les liens inchangés ; \"None\" les retire."
+
+#: RASTATIME 2026-10-16 teaser type first
+msgid "Choose a teaser type before you pick shows"
+msgstr "Choisissez d'abord un type de teaser, puis les émissions"

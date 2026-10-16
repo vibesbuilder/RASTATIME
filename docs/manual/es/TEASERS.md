@@ -31,13 +31,14 @@ establezca
 
 | Campo | Significado |
 |---|---|
-| **Teaser para los programas** | los programas que anuncia este jingle, uno o varios (Ctrl-clic).  La lista contiene cada programa con una emisión próxima, con su siguiente hora (`bbc (Sat 12:00)`) para distinguir programas homónimos; los huecos de noticias de cada hora son programas distintos y un solo jingle «BBC hoy» puede anunciarlos todos.  Nada seleccionado = no es teaser. |
-| **Tipo de teaser** | **Teaser de programa (cualquier día)**, **Teaser del día: «hoy»** o **Teaser del día: «mañana»**.  Un programa sin tipo se guarda como teaser de programa. |
+| **Tipo de teaser** | **Teaser de programa (cualquier día)**, **Teaser del día: «hoy»** o **Teaser del día: «mañana»**.  Elíjalo primero: la lista de programas permanece atenuada hasta que haya un tipo, y un guardado con programas sin tipo se rechaza. |
+| **Teaser para los programas** | los programas que anuncia este jingle, uno o varios (Ctrl-clic).  La lista contiene cada programa con una emisión próxima, con su siguiente hora (`bbc (Sat 12:00)`) para distinguir programas homónimos; los huecos de noticias de cada hora son programas distintos y un solo jingle «BBC hoy» puede anunciarlos todos.  Nada seleccionado = no es teaser; volver a poner el tipo en *None* vacía la lista. |
 
 Para muchos jingles a la vez, selecciónelos en la biblioteca y use
 **Edit** (edición masiva): los mismos dos campos; nada seleccionado
 conserva un campo, *None* quita los vínculos, los programas elegidos
-sustituyen la lista.  La columna de biblioteca
+sustituyen la lista, y necesitan un tipo en el mismo guardado, porque las
+pistas seleccionadas aún pueden no tenerlo.  La columna de biblioteca
 **Teaser** (selector de columnas, oculta por defecto) muestra `Nombre
 del programa (today)` y se puede buscar, de modo que «Teaser contiene
 Worldwide» lista todos los jingles de ese programa.
