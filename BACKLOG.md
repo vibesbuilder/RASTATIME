@@ -5256,10 +5256,19 @@ Bibliothek), E: wird gerade formatiert -> Operator stellt um.  Idee: Settings ->
 "Include recordings", robocopy der beiden Ordner nach <Backup>/recordings, Verifikation wie Medienspiegel;
 ~2 h mit Doku.  Empfehlung: Recordings auf D: lassen, nie direkt auf die USB-Platte aufnehmen.
 
-### 🟡 Teaser-Automatik: Jingles einer Sendung zuordnen, Smart-Block-Kriterium "passt zum Sendetag" (evaluiert 2026-10-16, Go offen)
-Siehe Evaluation in der Sitzung vom 2026-10-16 (Design: cc_files.teaser_show_id + teaser_type, Kriterien
-teaser_show / teaser_type / teaser_fits mit Referenzdatum der befuellten Instanz, Stufe 1 ~2 Tage, Stufe 2
-Kalender-Dialog ~1 Tag).  Wird bei Go hier ausformuliert.
+### ✅ Teaser-Automatik Stufe 1 - gebaut 2026-10-16 (Go 2026-10-16, Architektur §23.63)
+Jingle -> Sendung + Typ (show/today/tomorrow) an cc_files (Migration 0069), Track-Editor + Mehrfach-Bearbeitung,
+Bibliotheksspalte "Teaser"; Smart-Block-Kriterien teaser_show / teaser_type / teaser_fits; Fuellkontext
+(Instanz, Sendung, Slot) aus Autoloading (Intro=Start, Outro=Ende, Inhalt=Kettenende) und Scheduler
+(Ende der Vorgaengerzeile).  Operator-Regeln: nie die befuellte Sendung, nie eine Sendung, die fuer heute vorbei
+ist (today/show), tomorrow nur bei Ausstrahlung am Folgetag.  Erweiterung: "Exclude tracks/artists played
+lately" zaehlt geplante Zeilen im Fenster (beide Richtungen).  Trockenprobe in Transaktion bestanden.
+OFFEN: Migration 0069 durch den Operator (Backup, ausserhalb von Sendungsgrenzen), Apache-Neustart (.mo),
+Browser-Abnahme (Track-Editor, Mehrfach-Bearbeitung, Block-Editor, Fuellung einer Testsendung).
+
+### 🟢 Teaser-Automatik Stufe 2 - Go-Reihenfolge nach Stufe 1 (Operator 2026-10-16: "Danach Stufe 2")
+Kalender-Kontextmenue "Teaser..." je Sendung: verknuepfte Jingles mit Typ auflisten, direkt zuordnen/loesen,
+Anzeige in der Sendungs-Vorschau; evtl. Bibliotheksfilter "Teaser der Sendung X".  ~1 Tag.
 
 
 ### 🟡 Windows-Updates Oktober 2026 + Lenovo-Firmware im Wartungsfenster; Windows 11 26H2 - DEFER (evaluiert 2026-10-16)

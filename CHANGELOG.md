@@ -9,6 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Teaser-Automatik Stufe 1 (2026-10-16)** — Jingles werden mit der
+  Sendung verknüpft, die sie ankündigen (`cc_files.teaser_show_id`,
+  `teaser_type` show/today/tomorrow, Migration 0069; Track-Editor
+  „Teaser for show" / „Teaser type", Mehrfach-Bearbeitung,
+  Bibliotheksspalte „Teaser"), und drei Smart-Block-Kriterien wählen sie:
+  „Teaser: show", „Teaser: type" und die Automatik „Teaser: fits the
+  schedule" — heute-Teaser nur, wenn die Sendung am Tag des Slots noch
+  nach dem Slot läuft, morgen-Teaser nur bei Ausstrahlung am Folgetag,
+  Showteaser jederzeit außer „für heute vorbei", nie die befüllte
+  Sendung selbst.  Neuer Füllkontext `Block::setFillContext`
+  (Instanz, Sendung, Slot) aus AutoPlaylistManager (Intro = Start,
+  Outro = Ende, Inhalt = Kettenende) und Scheduler (Ende der
+  Vorgängerzeile); Export/Import der Blöcke mit Sendungsname;
+  Sendungsliste mit nächster Sendezeit.  Trockenprobe in Transaktion
+  (DDL + Regeln) bestanden, Probe `C:/Temp/optd/teaser_probe.php`.
+  **Migration 0069 steht aus** (vorher Backup, außerhalb von
+  Sendungsgrenzen); bis dahin leerer Pool mit Log-Hinweis.  Strings
+  DE/FR/ES, Manual TEASERS ×4 (neu), LIBRARY ×4, Architektur §23.63.
+  Commit 8478269.
 - **Local Machine: Kontrollkästchen „Bulk Import: allow importing
   duplicates" (2026-10-16, Beschriftung gekürzt auf Operator-Wunsch)** — unter Import Folder,
   speichert beim Anklicken (`POST preference/bulk-import-save`, cc_pref
@@ -977,6 +996,16 @@ un_tests.ps1` (2026-10-16)** — startet API-, Playout- und
 
 ### Changed
 
+- **„Exclude tracks played lately" zählt geplante Zeilen (2026-10-16)** —
+  das Fenster wird vom Slot der Befüllung aus gemessen (sonst jetzt) und
+  schließt neben Gespieltem (lptime, Sendeprotokoll) auch Zeilen aus,
+  die in `cc_schedule` innerhalb des Fensters vor oder nach dem Slot
+  geplant sind, inklusive der Zeilen, die ein früherer Block desselben
+  Fülldurchgangs in dieselbe Sendung gelegt hat; ebenso für „Exclude
+  artists played lately".  Operator: Teaser-Rotation bei Autoloading
+  überall; gilt für alle Blöcke mit dem Filter.  Index
+  `cc_schedule (file_id, starts)` mit Migration 0069.  Live geprüft an
+  Block 30 (14 Titel, 0,1 s).  Commit 8478269.
 - **Massenimport: `--allow-duplicates` (2026-10-16)** — `bulk_import`
   importiert eine Datei auch dann, wenn ihre md5 (oder `source_md5`)
   schon in der Bibliothek steht (Operator: gleiche Audiodaten, andere

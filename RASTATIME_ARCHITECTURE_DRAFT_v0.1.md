@@ -1,10 +1,14 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.74
+Draft version: 0.75
 Date: 2026-10-16
 
 > **Revision history**
+> - **0.75 (2026-10-16)** — **Teaser automation stage 1** (§23.63):
+>   `cc_files.teaser_show_id` / `teaser_type` (migration 0069), virtual
+>   smart block criteria, `Block::setFillContext`, planned rows in the
+>   exclude filters.
 > - **0.74 (2026-10-16)** — **Wall-clock show ends across DST**
 >   (§23.62): `ShowService::wallClockEnd`, used by
 >   `createUTCStartEndDateTime` for repeats, single shows and rebroadcasts.
@@ -7027,3 +7031,66 @@ instance it creates or re-saves from now on.  `Application_Model_Show::
 updateDurationTime` (SQL `ends = starts + duration`) is dead code and was
 left alone.  The duration stored by the form for a show *created* on a
 transition day is still the wall-clock difference the form computes.
+
+### 23.63 Teaser Automation Stage 1 (2026-10-16)
+
+**Model.**  A jingle announces exactly one show in one way:
+`cc_files.teaser_show_id` (FK `cc_show`, `ON DELETE SET NULL`) and
+`cc_files.teaser_type` (`show` | `today` | `tomorrow`), legacy migration
+0069 (`0069_file_teaser.py`, partial index on `teaser_show_id`, index
+`cc_schedule (file_id, starts)`).  Propel classes are not regenerated;
+`StoredFile::teaserOf / setDbColMetadata` read and write the columns by
+raw SQL and `StoredFile::teaserColumnsReady()` (information_schema, cached
+per request) keeps the library query and the criteria harmless until the
+migration has run.  The Django `File` model gets the two fields
+(`FileSerializer` uses `__all__`).
+
+**UI.**  Track editor (`EditAudioMD`): selects *Teaser for show* (shows
+with an upcoming instance plus the file's current one, labelled with the
+next airing because several shows share a name) and *Teaser type*; the
+same two fields in the bulk editor (`''` = unchanged, `none` = clear).
+Library column `teaser` (`"Show name (type)"`, LEFT JOIN `cc_show`,
+searchable text).  The layout plugin injects `TEASER_SHOWS` (id → label)
+next to `TRACKTYPES` for the block editor.
+
+**Criteria.**  Three virtual `BlockCriteria` (`teaser_show`,
+`teaser_type`, `teaser_fits`) with new `ModifierType`s; their `peer`
+points at a VARCHAR column only so the generic validators have a size.
+`Block::getListofFilesMeetCriteria` turns them into SQL
+(`Block::teaserCriterionSql`) and feeds it as a `Criteria::CUSTOM`
+criterion on `cc_files.id`, so it takes part in the per-field AND / OR
+grouping like any rule.  The editor (`SmartBlockCriteria`,
+`smart_blockbuilder.js`) renders a select for the value, as for the track
+type.  Import/Export maps `teaser_show` to and from the show name.
+
+**Fill context.**  `Block::setFillContext(instanceId, showId, slotUtc)` /
+`clearFillContext()` (static, request-scoped).  `AutoPlaylistManager::
+fillInstance` sets it around each expansion: show start for the intro,
+show end for the outro, the current chain end for the content and
+top-up passes (`try / finally`).  `Scheduler::retrieveMediaFiles` sets it
+to the end of the row the material is inserted after (else the instance
+start) and clears it before returning.  Without a context (editor
+"Generate") the slot is now and no show is excluded.
+
+**`teaser_fits` rule.**  With the slot's day *D* in the station timezone
+(`(i.starts AT TIME ZONE 'UTC') AT TIME ZONE tz)::date`) and the slot *T*:
+`today` ⇔ ∃ instance of the show on *D* with `starts > T`; `tomorrow` ⇔
+∃ instance on *D+1*; `show` ⇔ ¬(∃ instance on *D* with `ends <= T` ∧
+¬∃ later one on *D*); and `teaser_show_id <> <show being filled>`.
+`modified_instance = FALSE` throughout.
+
+**Exclude filters.**  "Exclude tracks played lately" now reads
+`((lptime IS NULL OR lptime < slot - H) AND NOT EXISTS (cc_schedule row
+of the file with starts in (slot - H, slot + H)))`; the artist variant
+adds the same NOT EXISTS over `cc_schedule JOIN cc_files` on
+`artist_name`.  Rows an earlier block of the same fill inserted are
+already in `cc_schedule` when the next block expands, which is what makes
+two teaser blocks in one show disjoint.  The within-block spread
+(`applyWithinBlockSpread`, 2026-05-25) is unchanged.
+
+**Verification.**  `C:/Temp/optd/teaser_probe.php` (readiness, live run
+of a block with the exclude filter, SQL of the three criteria) and a
+psycopg transaction that applies the migration DDL, links three files to
+a show airing later that day and checks the matches (today / tomorrow /
+show, "over for today" → 0, self-teaser → 0), then rolls back.  Stage 2
+(calendar dialog "Teasers…", per-show listing) follows.
