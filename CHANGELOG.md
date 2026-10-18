@@ -32,7 +32,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   die fehlenden Spalten bis zur Migration. Manual CALENDAR /
   AUTOLOADING_PLAYLISTS / SETTINGS / IMPORT_EXPORT ×4, ARCHITECTURE
   §23.65, BACKLOG Stufe 2 (aufgezeichnete Live-Sendungen) als Defer.
-  Migration 0071 live 2026-10-18 17:27 (Schema 71, Operator-Backup); Probe `C:/Temp/optd/repeat_e2e_probe.php` bestanden (Testsendung B aus „bbc“-Instanz 2005: 5 Zeilen identisch inkl. Cue/Fade, Löschsperre greift und löst sich nach der Kopie, idempotent, View-Show-Text). Commit `aeb99a9`.
+  Migration 0071 live 2026-10-18 17:27 (Schema 71, Operator-Backup); Probe `C:/Temp/optd/repeat_e2e_probe.php` bestanden (Testsendung B aus „bbc“-Instanz 2005: 5 Zeilen identisch inkl. Cue/Fade, Löschsperre greift und löst sich nach der Kopie, idempotent, View-Show-Text). Abnahme 2026-10-18 18:36 durch den Operator:
+  „testwhc“ (19:40) 65 min vor dem Start mit den 5 Zeilen von „testshowc“
+  (17:40) befüllt. Commit `aeb99a9`.
 
 - **Show-Recording: Format und Bitrate wählbar (2026-10-18)** —
   Settings → Local Machine → „Show Recording" bietet wie die

@@ -5305,8 +5305,11 @@ Sendung B wählt Sendung A als Quelle (Edit Show → Autoloading Playlist →
 beendeten A-Instanz kopiert, Track-Typen ohne „Copy into Repeats"
 bleiben draußen, das Autoloading füllt die Restzeit; Ketten erlaubt,
 Kreise verboten; Löschsperre für noch gebrauchte Titel.  Migration 0071
-live 2026-10-18 17:27, Probe bestanden (repeat_e2e_probe.php); Abnahme mit
-echt geplanter Wiederholung durch den Operator offen.
+live 2026-10-18 17:27, Probe bestanden (repeat_e2e_probe.php); Abnahme
+2026-10-18 18:36 durch den Operator: „testwhc“ (19:40) wurde 65 min vor dem
+Start mit den 5 Zeilen von „testshowc“ (17:40) befüllt, identische Reihenfolge.
+Nebenbefund dabei behoben: Quellenliste blendete Sendungen der nächsten zwei
+Stunden aus (NOW() ohne UTC, 737f347/0b8838b).
 
 ### 🟡 Wiederholung von Sendung, Stufe 2: aufgezeichnete Live-Sendungen - DEFER (Operator 2026-10-18: später nachziehen, wichtig)
 
