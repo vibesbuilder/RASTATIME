@@ -1479,6 +1479,15 @@ un_tests.ps1` (2026-10-16)** — startet API-, Playout- und
 
 ### Fixed
 
+- **„Repeat of show“: Quellsendung der nächsten zwei Stunden fehlte in der Liste (2026-10-18)** —
+  `StoredFile::teaserShows` verglich die UTC-Instanzzeiten mit einem
+  nackten NOW() (Sitzungszone Europe/Berlin) und blendete so jede in den
+  nächsten zwei Stunden endende Sendung aus, auch in der Teaser-Liste;
+  jetzt `NOW() AT TIME ZONE 'UTC'`. Die Quellenliste hat eine eigene
+  Abfrage: bevorstehend oder Instanz in den letzten 60 Tagen (eine Quelle
+  hat meist schon gesendet), Label mit nächstem bzw. letztem Start, ohne
+  die bearbeitete Sendung. Commits `737f347`, `0b8838b`.
+
 - **Dashboard-Suchzeile: zweites „×" entfernt (2026-10-18)** — der
   browsereigene Löschen-Knopf von `<input type="search">` erschien
   links neben dem Zähler als zweites „×"; per CSS ausgeblendet, unser
