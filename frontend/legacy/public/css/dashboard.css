@@ -311,6 +311,15 @@ thead th.ui-state-default:focus {
     border-color: var(--rt-accent);
     box-shadow: inset 0 0 0 1px var(--rt-accent);
 }
+/* RASTATIME 2026-10-18 - the browser's own clear button of <input
+   type="search"> showed up as a second "x" left of the count (operator);
+   our #lib-filter-clear is the only one */
+#library_content .dataTables_filter input[type="search"]::-webkit-search-cancel-button,
+#library_content .dataTables_filter input[type="search"]::-webkit-search-decoration {
+    -webkit-appearance: none;
+    appearance: none;
+    display: none;
+}
 /* the id selectors carry #library_content so they beat
    "#library_content span { color: #efefef }" */
 #library_content #lib-filter-clear,
