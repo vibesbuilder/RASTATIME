@@ -9,6 +9,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Wiederholungen automatisieren: „Wiederholung von Sendung" (2026-10-18, Go 2026-10-18)** —
+  Edit Show → Autoloading Playlist → „Repeat of show": Sendung B wählt
+  Sendung A als Quelle; kurz vor dem Start (65 min, eine Runde vor dem
+  Autoloading) kopiert `RepeatFillTask` →
+  `Application_Service_RepeatFillService::fillDue()` die Zeilen der
+  zuletzt beendeten A-Instanz (Dateien/Webstreams mit gesendeten
+  Cue-/Fade-Werten, über `ShowInstance::addFilesAfter`) in die leere
+  B-Instanz; Live-Eingänge und Track-Typen ohne „Copy into Repeats"
+  (neues Häkchen in Settings → Track Types, Standard an) bleiben
+  draußen, fehlende Dateien werden gezählt; das Autoloading von B füllt
+  danach die Restzeit. Keine beendete A-Instanz → nur Autoloading.
+  Formular-Validierung: nicht sich selbst, keine Kreise (Ketten
+  erlaubt), nicht mit „Link". Löschsperre: ein Titel/Webstream der
+  letzten A-Instanz ist nicht löschbar, solange eine unbefüllte
+  B-Instanz wartet (cc_schedule kaskadiert beim Löschen). View Show
+  zeigt „Repeat of show A from … at …" (+ ausgelassene Zeilen).
+  Vorlagen und Import/Export (Spalte `repeat_of`, Sendungsname)
+  tragen das Feld. Migration 0071 (`cc_show.repeat_of_show_id`,
+  `cc_track_types.repeat_copy`, `cc_show_instances.filled_from_instance_id`
+  + `repeat_skipped`), Propel nicht regeneriert, alle Leser tolerieren
+  die fehlenden Spalten bis zur Migration. Manual CALENDAR /
+  AUTOLOADING_PLAYLISTS / SETTINGS / IMPORT_EXPORT ×4, ARCHITECTURE
+  §23.65, BACKLOG Stufe 2 (aufgezeichnete Live-Sendungen) als Defer.
+  Migration und Live-Probe mit Testsendungen offen. Commit `aeb99a9`.
+
 - **Show-Recording: Format und Bitrate wählbar (2026-10-18)** —
   Settings → Local Machine → „Show Recording" bietet wie die
   24/7-Aufzeichnung MP3 / AAC / OGG Vorbis / Opus und 96–320 kbps
