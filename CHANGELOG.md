@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Ausschluss-Logik in `RepeatFillService::copyInstance`, Django-Feld und
   Spalte `cc_track_types.repeat_copy` (Migration 0072, DROP COLUMN) sind
   weg; Tooltip des Feldes „Repeat of show" und Manual (CALENDAR,
-  SETTINGS ×4) angepasst. Commit `TBD`.
+  SETTINGS ×4) angepasst. Migration 0072 live 18:58. Commit `a67f8cf`.
 
 ### Added
 
