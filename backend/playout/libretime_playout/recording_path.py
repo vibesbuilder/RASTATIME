@@ -42,6 +42,7 @@ def build_output_path(
     recording_folder: Path,
     show_starts_at: datetime,
     show_name: str,
+    extension: str = "mp3",
 ) -> Path:
     """
     Compose the output path:
@@ -74,5 +75,8 @@ def build_output_path(
     day_str = local_dt.strftime("%Y-%m-%d")
     time_str = local_dt.strftime("%H-%M")
     name = sanitize_show_name(show_name)
-    filename = f"{day_str} {time_str} - {name}.mp3"
+    # RASTATIME 2026-10-18 - extension follows the rendered encoder
+    # (Settings -> Local Machine -> Show Recording), mp3 when unknown
+    ext = "".join(ch for ch in str(extension or "").lower() if ch.isalnum()) or "mp3"
+    filename = f"{day_str} {time_str} - {name}.{ext}"
     return recording_folder / day_str / filename

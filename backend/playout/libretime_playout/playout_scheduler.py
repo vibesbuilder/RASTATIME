@@ -172,6 +172,7 @@ class PlayoutScheduler:
         nightly_restart: Optional[NightlyRestartPolicy] = None,
         render_settings_fingerprint: Optional[Callable[[], Optional[str]]] = None,
         render_restart_pending: bool = False,
+        recording_extension: Optional[Callable[[], str]] = None,
         tunein: Optional[TuneInPusher] = None,
         live_text: Optional[LiveTextWriter] = None,
         linein_icecast_credentials: Optional[Tuple[str, str]] = None,
@@ -221,6 +222,10 @@ class PlayoutScheduler:
         # outside the boot window: apply it like a settings change.
         self._render_restart_pending = render_restart_pending
         self._planned_restart_attempted_at: Optional[datetime] = None
+        # RASTATIME 2026-10-18 - file extension of the show recording: the
+        # format of the LAST render (not the setting of the moment), so the
+        # file name always matches the encoder Liquidsoap is running with.
+        self._recording_extension = recording_extension
         # RASTATIME 2026-09-06 - did the constructor's recording.stop +
         # gate reset reach Liquidsoap?  False means telnet was not up yet
         # and ensure_liquidsoap_initial_state() has to keep trying.
@@ -3056,6 +3061,7 @@ class PlayoutScheduler:
         try:
             output_path = build_output_path(
                 Path(folder), event.show_starts_at, event.show_name,
+                extension=self._recording_file_extension(),
             )
         except (TypeError, ValueError) as exc:
             logger.warning(
@@ -3121,6 +3127,17 @@ class PlayoutScheduler:
                 "(key=%s show_id=%s name=%r)",
                 exc, key, event.show_id, event.show_name,
             )
+
+    def _recording_file_extension(self) -> str:
+        """Extension of the rendered show-recording encoder (mp3 fallback)."""
+        if self._recording_extension is None:
+            return "mp3"
+        try:
+            ext = str(self._recording_extension() or "").strip().lower()
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            logger.warning("recording extension lookup failed: %s", exc)
+            return "mp3"
+        return ext or "mp3"
 
     def _fetch_recording_folder(self) -> Optional[str]:
         """

@@ -336,8 +336,8 @@ def test_full_render_has_recording_output_file_block():
     )
     assert 'output.file(' in active
     assert 'id="recording"' in active
-    # MP3@320kbps fixed per C5 decision 2026-05-27 (operator chose
-    # 320k archive-grade over the historical 192/256 defaults).
+    # MP3@320kbps is the default (operator decision 2026-05-27); since
+    # 2026-10-18 Settings -> Local Machine -> Show Recording can change it.
     assert 'codec="libmp3lame"' in active
     assert 'b="320k"' in active
     # Filename via interactive.string + ref-deref so Pypo's
@@ -1298,3 +1298,48 @@ def test_write_wrapper_forwards_stereotool(tmp_path):
     target = tmp_path / "rastatime.liq"
     lc.write_rastatime_liq(target, [_stream()], stereotool=_st(tmp_path))
     assert "bus = stereotool(" in target.read_text(encoding="utf-8")
+
+
+# ---- RASTATIME 2026-10-18 - show recording encoder from Settings -------
+
+
+def test_show_recording_encoder_defaults_to_mp3_320():
+    enc = lc._render_show_recording_encoder()
+    assert 'codec="libmp3lame"' in enc
+    assert 'b="320k"' in enc
+    assert "samplerate=44100" in enc
+
+
+def test_show_recording_encoder_opus_clamps_samplerate():
+    enc = lc._render_show_recording_encoder(fmt="opus", bitrate=128)
+    assert 'codec="libopus"' in enc
+    assert 'b="128k"' in enc
+    assert "samplerate=48000" in enc
+
+
+def test_show_recording_encoder_unknown_format_falls_back_to_mp3():
+    enc = lc._render_show_recording_encoder(fmt="wav", bitrate="abc")
+    assert 'codec="libmp3lame"' in enc
+    assert 'b="320k"' in enc
+
+
+def test_show_recording_extension_per_format():
+    assert lc.show_recording_extension("mp3") == "mp3"
+    assert lc.show_recording_extension("aac") == "aac"
+    assert lc.show_recording_extension("ogg") == "ogg"
+    assert lc.show_recording_extension("opus") == "opus"
+    assert lc.show_recording_extension("flac") == "mp3"
+
+
+def test_full_render_show_recording_uses_chosen_encoder():
+    out = lc.render_rastatime_liq(
+        [_stream()], show_recording_format="aac", show_recording_bitrate=192,
+    )
+    active = "\n".join(
+        ln for ln in out.splitlines() if not ln.lstrip().startswith("#")
+    )
+    rec_idx = active.index('id="recording"')
+    rec_block = active[rec_idx:rec_idx + 400]
+    assert 'codec="aac"' in rec_block
+    assert 'b="192k"' in rec_block
+    assert "${SHOW_RECORDING_ENCODER}" not in out

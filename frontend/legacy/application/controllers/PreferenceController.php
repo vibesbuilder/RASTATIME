@@ -766,9 +766,22 @@ class PreferenceController extends Zend_Controller_Action
         }
 
         $folder = trim((string) $this->_getParam('folder', ''));
+        // RASTATIME 2026-10-18 - encoder choice (format + bitrate)
+        $format = strtolower(trim((string) $this->_getParam('format', 'mp3')));
+        $bitrate = (int) $this->_getParam('bitrate', 320);
+        if (!in_array($format, ['mp3', 'aac', 'ogg', 'opus'], true)) {
+            $this->_helper->json->sendJson(['ok' => false, 'error' => 'Unsupported format: ' . $format]);
+
+            return;
+        }
+        if (!in_array($bitrate, [96, 128, 192, 256, 320], true)) {
+            $this->_helper->json->sendJson(['ok' => false, 'error' => 'Unsupported bitrate: ' . $bitrate]);
+
+            return;
+        }
 
         // Non-empty: validate existence + writability (the playout
-        // creates per-day subfolders and writes .mp3 files into them).
+        // creates per-day subfolders and writes the recordings into them).
         if ($folder !== '') {
             if (!is_dir($folder)) {
                 $this->_helper->json->sendJson([
@@ -787,8 +800,11 @@ class PreferenceController extends Zend_Controller_Action
         }
 
         Application_Model_Preference::setLocalRecordingFolder($folder);
-        Logging::info('Local Recording Folder set to: ' . ($folder === '' ? '(disabled)' : $folder));
-        $this->_helper->json->sendJson(['ok' => true, 'folder' => $folder]);
+        Application_Model_Preference::setLocalRecordingFormat($format);
+        Application_Model_Preference::setLocalRecordingBitrate($bitrate);
+        Logging::info('Local Recording Folder set to: ' . ($folder === '' ? '(disabled)' : $folder)
+            . ", format {$format} {$bitrate}k");
+        $this->_helper->json->sendJson(['ok' => true, 'folder' => $folder, 'format' => $format, 'bitrate' => $bitrate]);
     }
 
     /**

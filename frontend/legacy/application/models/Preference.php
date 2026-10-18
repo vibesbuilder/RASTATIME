@@ -2454,6 +2454,33 @@ class Application_Model_Preference
         self::setValue('local_recording_folder', trim((string) $value));
     }
 
+    // RASTATIME 2026-10-18 - show recording encoder (format + bitrate),
+    // read by the playout render (fingerprint -> planned restart).  MP3
+    // 320 kbps unless the operator chose otherwise.
+    public static function getLocalRecordingFormat()
+    {
+        $fmt = strtolower(trim((string) self::getValue('local_recording_format')));
+
+        return in_array($fmt, ['mp3', 'aac', 'ogg', 'opus'], true) ? $fmt : 'mp3';
+    }
+
+    public static function setLocalRecordingFormat($value)
+    {
+        self::setValue('local_recording_format', strtolower(trim((string) $value)));
+    }
+
+    public static function getLocalRecordingBitrate()
+    {
+        $b = (int) self::getValue('local_recording_bitrate');
+
+        return $b > 0 ? $b : 320;
+    }
+
+    public static function setLocalRecordingBitrate($value)
+    {
+        self::setValue('local_recording_bitrate', (string) (int) $value);
+    }
+
     // RASTATIME 2026-06-05 - 24/7 hourly archive recording (Record-per-Hour).
     // A continuous Liquidsoap output.file on the bus, rotating hourly,
     // independent of shows (Settings -> Local Machine -> "24/7 Recording").

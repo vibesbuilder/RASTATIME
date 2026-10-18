@@ -326,3 +326,45 @@ def test_liquidsoap_shutdown_tolerates_engine_recording_stop_failure(
     sched.shutdown()
 
     engine.recording_stop.assert_called_once_with()
+
+
+# ---- RASTATIME 2026-10-18 - recording extension follows the rendered encoder
+
+
+def test_show_record_start_uses_rendered_extension(tmp_path):
+    """The file name takes the extension of the encoder Liquidsoap runs with."""
+    from datetime import datetime
+
+    from libretime_playout.playout_scheduler import PlayoutScheduler
+
+    engine = MagicMock(spec=LiquidsoapPlayoutEngine)
+    api_client = MagicMock()
+    api_resp = MagicMock()
+    api_resp.status_code = 200
+    api_resp.json.return_value = {"folder": str(tmp_path), "format": "mp3"}
+    api_client.session.get.return_value = api_resp
+    sched = PlayoutScheduler(
+        engine=engine, api_client=api_client, recording_extension=lambda: "opus",
+    )
+    event = _make_show_record_event(
+        show_id=7,
+        show_name="Morning Show",
+        starts_at=datetime(2026, 10, 18, 10, 0),
+    )
+    sched._on_show_record_start("evt-key-opus", event)
+    engine.recording_start.assert_called_once()
+    called_path = engine.recording_start.call_args[0][0]
+    assert called_path.endswith(".opus")
+
+
+def test_recording_extension_lookup_failure_falls_back_to_mp3(tmp_path):
+    from libretime_playout.playout_scheduler import PlayoutScheduler
+
+    def boom():
+        raise RuntimeError("no render yet")
+
+    engine = MagicMock(spec=LiquidsoapPlayoutEngine)
+    sched = PlayoutScheduler(
+        engine=engine, api_client=MagicMock(), recording_extension=boom,
+    )
+    assert sched._recording_file_extension() == "mp3"

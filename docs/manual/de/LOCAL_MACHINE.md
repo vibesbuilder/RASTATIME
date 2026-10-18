@@ -633,13 +633,19 @@ wieder da ist.
 Einstellungen → Lokale Maschine hat **zwei** Aufnahme-Ausgabe-
 Ordner:
 
-### Show Recording Folder
+### Show Recording
 
 Wohin [Aufnahme pro Sendung](./RECORD_PER_SHOW.md) eine Datei je
 als „Aufnahme" markierter Sendung schreibt. *(Umbenannt von
 „Recording Folder", als die 24/7-Aufnahme dazukam — 2026-06-06.)*
 
 Standard: `C:\rastatime\recordings\`.
+
+**Format** und **Bitrate (kbps)** *(seit 2026-10-18)*: MP3
+(Standard) / AAC / OGG Vorbis / Opus, 96–320 kbps (Standard 320).
+Das Playout übernimmt eine Änderung im nächsten ruhigen Moment
+(oder an der nächsten Titelgrenze); bereits geschriebene Dateien
+behalten ihr Format, neue Dateien bekommen die passende Endung.
 
 ### 24/7 Recording Folder
 

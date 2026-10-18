@@ -277,7 +277,8 @@ Ce que Liquidsoap fournit :
 
 - **Enregistrement** capté sur le bus audio interne (post-switch,
   post-crossfade, post-amplify) — bit-identique à ce qu'entendent les
-  auditeurs.  Débit fixe 320 kbps MP3, qualité archive.
+  auditeurs.  Format et débit suivent Paramètres → Machine locale →
+  Show Recording (par défaut MP3 320 kbps).
 - **Expérience auditeur** : les points de montage Icecast restent
   ouverts à travers les changements de piste/émission — pas de
   reconnexion, pas de remise à zéro des compteurs.

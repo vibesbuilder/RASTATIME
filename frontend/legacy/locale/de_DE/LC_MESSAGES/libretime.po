@@ -6382,3 +6382,15 @@ msgstr "Typ des Jingles beibehalten"
 #: RASTATIME 2026-10-16 teaser stage 2
 msgid "Link to this show"
 msgstr "Mit dieser Sendung verknüpfen"
+
+msgid "Show Recording"
+msgstr "Sendungsaufnahme"
+
+msgid "Folder where per-show recordings are written.  Each show flagged as \"Record this show\" produces a single file of the on-air output, named <YYYY-MM-DD HH-MM> - <show-name> under a per-day subfolder, in the format and bitrate chosen below.  Leave the folder empty to disable recording."
+msgstr "Ordner, in den die Aufnahmen je Sendung geschrieben werden.  Jede als \"Diese Sendung aufnehmen\" markierte Sendung ergibt eine Datei des Sendesignals, benannt <YYYY-MM-DD HH-MM> - <Sendungsname> in einem Tagesunterordner, im unten gewählten Format und mit der gewählten Bitrate.  Ordner leer lassen, um die Aufnahme abzuschalten."
+
+msgid "Container and codec of the recording files.  MP3 plays everywhere; Opus and AAC are smaller at the same quality.  A change is applied by the playout in the next quiet moment; files already written keep their format."
+msgstr "Container und Codec der Aufnahmedateien.  MP3 läuft überall; Opus und AAC sind bei gleicher Qualität kleiner.  Eine Änderung übernimmt das Playout im nächsten ruhigen Moment; bereits geschriebene Dateien behalten ihr Format."
+
+msgid "320 kbps is archive grade (about 145 MB per hour as MP3); 192 kbps halves the disk use."
+msgstr "320 kbps ist Archivqualität (etwa 145 MB je Stunde als MP3); 192 kbps halbiert den Platzbedarf."

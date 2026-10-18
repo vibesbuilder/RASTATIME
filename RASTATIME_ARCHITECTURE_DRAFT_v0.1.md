@@ -1,10 +1,13 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.76
-Date: 2026-10-16
+Draft version: 0.77
+Date: 2026-10-18
 
 > **Revision history**
+> - **0.77 (2026-10-18)** — **Show recording format selectable** (§23.64):
+>   `${SHOW_RECORDING_ENCODER}` in the template, cc_pref
+>   `local_recording_format/bitrate`, extension of the last render.
 > - **0.76 (2026-10-16)** — **Teaser automation stage 2** (§23.63): calendar
 >   dialog "Teasers" (ScheduleController teaser-* actions, link table edits
 >   per show).
@@ -7118,3 +7121,33 @@ POST + CSRF (session namespace token embedded in the dialog) + admin/PM;
 helpers `StoredFile::teasersOfShow / teaserLink / teaserUnlink /
 teaserSearch` work on `cc_file_teaser` directly and never touch the other
 shows of a jingle.
+
+### 23.64 Show Recording Format Selectable (2026-10-18)
+
+**Before.**  `output.file(id="recording")` in `rastatime.liq.template`
+carried a fixed `%ffmpeg(format="mp3", ... b="320k")` (operator decision
+2026-05-27); only the 24/7 recorder had a format/bitrate choice.
+
+**Now.**  Settings → Local Machine → "Show Recording" stores
+`local_recording_format` (mp3 / aac / ogg / opus) and
+`local_recording_bitrate` (96–320) in `cc_pref` next to the folder
+(`PreferenceController::localRecordingSaveAction`, validated lists).
+The template placeholder `${SHOW_RECORDING_ENCODER}` is filled by
+`liquidsoap_config._render_show_recording_encoder` from the same
+`_ENCODER_FOR_TYPE` table as the stream outputs (Opus clamped to 48 kHz,
+unknown formats fall back to MP3 so a bad value never leaves the
+station without a recorder).  `read_show_recording_config_from_db`
+feeds both the render (`__main__._render_rastatime_liq_outcome`) and the
+settings fingerprint, so a change is applied by the planned restart in
+the next quiet moment like the other baked-in settings (§23.4x).
+
+**File extension.**  `recording_path.build_output_path(..., extension)`
+names the file after the encoder of the *last render*: `__main__` keeps
+`_RENDERED_SHOW_RECORDING_FORMAT`, the scheduler receives it as the
+`recording_extension` callback and asks at every `SHOW_RECORD_START`.
+Reading the setting of the moment instead would mislabel a recording
+between Save and the restart (AAC bytes in an `.mp3`).
+`/api/v2/recording-folder` returns `format` and `bitrate` for
+information only.  Tests: `test_liquidsoap_config.py` (encoder, render,
+extension map) and `test_scheduler_recording.py` (extension callback,
+fallback to mp3).

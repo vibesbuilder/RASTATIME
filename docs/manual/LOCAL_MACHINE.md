@@ -586,13 +586,19 @@ that is not mounted, a renamed folder - the dashboard banner shows
 
 Settings → Local Machine has **two** recording-output folders:
 
-### Show Recording Folder
+### Show Recording
 
 Where [Record-per-Show](./RECORD_PER_SHOW.md) writes one file
 per show flagged "Record this show". *(Renamed from "Recording
 Folder" when 24/7 Recording was added — 2026-06-06.)*
 
 Default: `C:\rastatime\recordings\`.
+
+**Format** and **Bitrate (kbps)** *(since 2026-10-18)*: MP3
+(default) / AAC / OGG Vorbis / Opus, 96–320 kbps (default 320).
+The playout applies a change in its next quiet moment (or at the
+next track boundary); files already written keep their format,
+new files get the matching extension.
 
 ### 24/7 Recording Folder
 

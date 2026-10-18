@@ -55,12 +55,15 @@ L'implémentation est un bloc Liquidsoap
 `output.file(id="recording")` dans le sous-processus
 Liquidsoap de longue durée. Il se branche sur le même bus
 audio interne qui alimente les sorties Icecast publiques
-et l'encode en MP3 à un débit fixe de 320 kbps :
+et l'encode dans le format et au débit choisis sous Paramètres →
+Machine locale → **Show Recording** (MP3 320 kbps par défaut ;
+depuis le 2026-10-18 aussi AAC, OGG Vorbis et Opus de 96 à 320
+kbps).  Avec la valeur par défaut, le bloc rendu est :
 
 ```liquidsoap
 output.file(
   id="recording",
-  %ffmpeg(format="mp3", %audio(codec="libmp3lame", b="320k")),
+  %ffmpeg(format="mp3", %audio(codec="libmp3lame", b="320k", samplerate=44100)),
   {recording_path()},
   fallible=true,
   bus,
@@ -79,15 +82,17 @@ recording.start
 | Propriété | Valeur |
 |---|---|
 | **Coût CPU** | ~3 % d'un cœur sur Intel i3-1315U (un encodeur libmp3lame) |
-| **Qualité** | MP3 fixe 320 kbps — qualité archive, identique au stream Icecast principal |
+| **Qualité** | MP3 320 kbps par défaut (Paramètres → Machine locale → Show Recording : MP3 / AAC / OGG Vorbis / Opus, 96–320 kbps) — même source que le stream Icecast principal |
 | **Changements de source** | Capturés automatiquement (l'enregistrement se branche sur le même bus interne que le stream live) |
 | **Isolation des défaillances** | `fallible=true` sur `output.file` empêche qu'une défaillance d'une seule sortie (disque plein, verrou de scan AV) ne se propage dans le graphe de sources |
 
-> **Le paramètre opérateur qui contrôlait auparavant le
-> bitrate d'enregistrement** (`PlayoutConfig.record_bitrate`,
-> par défaut 256 kbps) est maintenant ignoré. Tous les
-> enregistrements sont MP3 @ 320 kbps — qualité archive,
-> fixé par décision opérateur 2026-05-27.
+> **Format et débit** se règlent sous Paramètres → Machine locale →
+> Show Recording (depuis le 2026-10-18 ; par défaut MP3 320 kbps, la
+> valeur fixe du 2026-05-27).  Le playout applique un changement à
+> son prochain moment calme (ou à la prochaine limite de titre) ; les
+> fichiers déjà écrits gardent leur format, et l'extension suit le
+> format (`.mp3` / `.aac` / `.ogg` / `.opus`).  L'ancien
+> `PlayoutConfig.record_bitrate` est ignoré.
 
 > **L'enregistrement est écrit par Liquidsoap** (`output.file`
 > sur le bus interne). Phase-C5 partie 2d a supprimé le chemin
@@ -399,20 +404,13 @@ l'alignement des frontières de trames MP3.
 
 ### "Puis-je enregistrer avec un bitrate différent du stream ?"
 
-Pas via l'interface. Le bitrate d'enregistrement est fixé
-à MP3 @ 320 kbps (décision opérateur Phase-C5, 2026-05-27
-— qualité archive indépendamment de la configuration des
-streams Icecast publics). L'enregistrement est un bloc
-Liquidsoap `output.file` séparé avec son propre encodeur
-libmp3lame, donc le bitrate d'enregistrement est
-indépendant du bitrate du stream public.
-
-Pour le changer, éditez
-`backend/playout/config/rastatime.liq.template` et
-remplacez `b="320k"` dans le bloc d'enregistrement par
-votre bitrate souhaité ; puis redémarrez RASTATIME-PLAYOUT
-(re-rend la .liq) et RASTATIME-LIQUIDSOAP (charge le
-nouveau template).
+Oui — depuis le 2026-10-18 sous Paramètres → Machine locale →
+**Show Recording** : format MP3 / AAC / OGG Vorbis / Opus et débit
+96–320 kbps (par défaut MP3 320 kbps).  L'enregistrement est un bloc
+Liquidsoap `output.file` séparé avec son propre encodeur, donc
+indépendant des réglages des streams publics.  Le playout applique
+un changement à son prochain moment calme ; aucun redémarrage
+manuel.
 
 ---
 

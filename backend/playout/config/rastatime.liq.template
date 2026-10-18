@@ -605,9 +605,12 @@ recording_path = interactive.string(
 # LiquidsoapPlayoutEngine issues `recording_stop` right after
 # engine init to silence the initial sentinel-file write before
 # Pypo's first _on_show_record_start hook fires.
+# RASTATIME 2026-10-18 - encoder from Settings -> Local Machine -> Show
+# Recording (format + bitrate; was a fixed MP3 320k).  The playout picks
+# the file extension of the same render (recording_path.build_output_path).
 output.file(
   id="recording",
-  %ffmpeg(format="mp3", %audio(codec="libmp3lame", b="320k")),
+  ${SHOW_RECORDING_ENCODER},
   {recording_path()},
   fallible=true,
   bus,

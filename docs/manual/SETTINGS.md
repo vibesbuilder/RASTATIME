@@ -388,8 +388,8 @@ What Liquidsoap provides:
 
 - **Recording** is captured from the internal audio bus
   (post-switch, post-crossfade, post-amplify) — bit-identical
-  to what listeners hear.  Recording bitrate is a fixed 320 kbps MP3,
-  archive-grade.
+  to what listeners hear.  Format and bitrate follow Settings → Local
+  Machine → Show Recording (default MP3 320 kbps).
 - **Listener experience**: the Icecast mountpoints stay open
   through track/show changes — no reconnect, no counter reset.
 - **DJ-Source routing** uses Liquidsoap's `input.harbor` +

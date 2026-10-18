@@ -762,6 +762,19 @@ def _local_output_adaptive_enabled() -> bool:
     return raw not in ("false", "0", "no", "off")
 
 
+# RASTATIME 2026-10-18 - format of the show recording encoder in the LAST
+# rendered rastatime.liq; the scheduler names the recording files after it.
+_RENDERED_SHOW_RECORDING_FORMAT = "mp3"
+
+
+def _rendered_show_recording_extension() -> str:
+    from libretime_playout.liquidsoap_config import (  # noqa: PLC0415
+        show_recording_extension,
+    )
+
+    return show_recording_extension(_RENDERED_SHOW_RECORDING_FORMAT)
+
+
 def _render_settings_fingerprint() -> Optional[str]:
     """
     RASTATIME 2026-09-16 - a hash of the operator settings that are baked
@@ -780,10 +793,12 @@ def _render_settings_fingerprint() -> Optional[str]:
         from libretime_api.soundcard.models import SoundcardSettings  # noqa: PLC0415
         from libretime_playout.liquidsoap_config import (  # noqa: PLC0415
             read_hourly_recording_config_from_db,
+            read_show_recording_config_from_db,
         )
         row = SoundcardSettings.get_settings()
         payload = {
             "hourly": read_hourly_recording_config_from_db(),
+            "show_recording": read_show_recording_config_from_db(),
             "main_output": [row.main_output_id or "", row.main_output_name or ""],
             "crossfade": _resolve_crossfade_seconds(),
             "show_crossfade": _resolve_show_crossfade_seconds(),
@@ -822,6 +837,7 @@ def _render_rastatime_liq_outcome(stream_outputs: List[Dict]) -> RenderOutcome:
     from libretime_playout.liquidsoap_config import (  # noqa: PLC0415
         DEFAULT_LINEIN_HTTP_MAX_BUFFER_SECONDS,
         read_hourly_recording_config_from_db,
+        read_show_recording_config_from_db,
         icecast_mounts_without_fallback,
         write_rastatime_liq,
         write_standby_liq,
@@ -937,6 +953,12 @@ def _render_rastatime_liq_outcome(stream_outputs: List[Dict]) -> RenderOutcome:
             "24/7 hourly recording enabled: folder=%s format=%s %dk",
             hourly["folder"], hourly["format"], hourly["bitrate"],
         )
+    # RASTATIME 2026-10-18 - per-show recording encoder (Settings -> Local
+    # Machine -> Show Recording), MP3 320k unless the operator chose otherwise.
+    show_rec = read_show_recording_config_from_db()
+    logger.info(
+        "Show recording encoder: format=%s %dk", show_rec["format"], show_rec["bitrate"],
+    )
 
     # Main Output (Settings -> Local Machine) -> PortAudio device index.
     # Resolved here, at render time, because output.portaudio takes the
@@ -1015,6 +1037,8 @@ def _render_rastatime_liq_outcome(stream_outputs: List[Dict]) -> RenderOutcome:
             hourly_recording_folder=hourly["folder"],
             hourly_recording_format=hourly["format"],
             hourly_recording_bitrate=hourly["bitrate"],
+            show_recording_format=show_rec["format"],
+            show_recording_bitrate=show_rec["bitrate"],
             source_event_url=f"http://{_LISTENER_HOST}:{_LISTENER_PORT}/source-event",
             harbor_timeout_seconds=_harbor_timeout_seconds(),
             # RASTATIME 2026-09-10 - ports/mounts as shown in Settings -> Streams,
@@ -1056,6 +1080,9 @@ def _render_rastatime_liq_outcome(stream_outputs: List[Dict]) -> RenderOutcome:
     standby_path = Path(
         os.environ.get("RASTATIME_LIQUIDSOAP_STANDBY_PATH", _LIQUIDSOAP_DEFAULT_STANDBY_PATH)
     )
+    # the recorder's file extension follows what was just rendered
+    global _RENDERED_SHOW_RECORDING_FORMAT  # noqa: PLW0603
+    _RENDERED_SHOW_RECORDING_FORMAT = str(show_rec["format"])
     standby_audio = os.environ.get("RASTATIME_STANDBY_AUDIO", "").strip() or None
     try:
         standby_changed = write_standby_liq(
@@ -1354,6 +1381,8 @@ def main() -> None:
         # the playout itself (re-render + LIQUIDSOAP restart in a quiet moment).
         render_settings_fingerprint=(_render_settings_fingerprint if django_ok else None),
         render_restart_pending=render_restart_pending,
+        # RASTATIME 2026-10-18 - recording file extension of the rendered encoder
+        recording_extension=_rendered_show_recording_extension,
         nightly_restart=nightly_policy,
         # RASTATIME 2026-09-27 - input switches + show boundaries follow the
         # SHOW crossfade; the track crossfade shapes in-show transitions.

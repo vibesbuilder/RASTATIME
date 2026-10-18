@@ -460,6 +460,52 @@ _FILE_EXT_FOR_TYPE = {
 DEFAULT_HOURLY_RECORDING_FORMAT = "mp3"
 DEFAULT_HOURLY_RECORDING_BITRATE = 192
 
+# RASTATIME 2026-10-18 - per-show recording encoder (Settings -> Local
+# Machine -> Show Recording).  MP3 320k was fixed since 2026-05-27; the
+# operator asked for the same choice the 24/7 recorder offers.
+DEFAULT_SHOW_RECORDING_FORMAT = "mp3"
+DEFAULT_SHOW_RECORDING_BITRATE = 320
+
+
+def show_recording_extension(fmt: str) -> str:
+    """File extension of a per-show recording in format ``fmt`` (mp3 fallback)."""
+    return _FILE_EXT_FOR_TYPE.get(str(fmt or "").lower(), _FILE_EXT_FOR_TYPE["mp3"])
+
+
+def _render_show_recording_encoder(
+    fmt: str = DEFAULT_SHOW_RECORDING_FORMAT,
+    bitrate: int = DEFAULT_SHOW_RECORDING_BITRATE,
+    samplerate: int = DEFAULT_SAMPLERATE,
+) -> str:
+    """
+    The ``%ffmpeg(...)`` encoder of ``output.file(id="recording")``.
+    Unknown formats fall back to MP3 (a wrong cc_pref value must not
+    leave the station without a recorder); Opus is clamped to 48 kHz.
+    """
+    fmt = str(fmt or DEFAULT_SHOW_RECORDING_FORMAT).lower()
+    if fmt not in _ENCODER_FOR_TYPE:
+        logger.warning(
+            "Unsupported show recording format %r - rendering mp3 instead", fmt,
+        )
+        fmt = "mp3"
+    try:
+        bitrate = int(bitrate)
+    except (TypeError, ValueError):
+        bitrate = DEFAULT_SHOW_RECORDING_BITRATE
+    if bitrate <= 0:
+        bitrate = DEFAULT_SHOW_RECORDING_BITRATE
+    try:
+        samplerate = int(samplerate or DEFAULT_SAMPLERATE)
+    except (TypeError, ValueError):
+        samplerate = DEFAULT_SAMPLERATE
+    if fmt == "opus" and samplerate not in _OPUS_VALID_SAMPLERATES:
+        samplerate = 48000
+    return (
+        _ENCODER_FOR_TYPE[fmt]
+        .replace("${BITRATE}", str(bitrate))
+        .replace("${SAMPLERATE}", str(samplerate))
+    )
+
 
 # ---------------------------------------------------------------------
 # Rendering helpers
@@ -2306,6 +2352,9 @@ def render_rastatime_liq(
     hourly_recording_format: str = DEFAULT_HOURLY_RECORDING_FORMAT,
     hourly_recording_bitrate: int = DEFAULT_HOURLY_RECORDING_BITRATE,
     hourly_recording_samplerate: int = DEFAULT_SAMPLERATE,
+    show_recording_format: str = DEFAULT_SHOW_RECORDING_FORMAT,
+    show_recording_bitrate: int = DEFAULT_SHOW_RECORDING_BITRATE,
+    show_recording_samplerate: int = DEFAULT_SAMPLERATE,
     icy_label_format: int = DEFAULT_ICY_FORMAT,
     icy_offair_text: str = DEFAULT_OFFAIR_TEXT,
     icy_station_name: str = DEFAULT_STATION_NAME,
@@ -2401,6 +2450,11 @@ def render_rastatime_liq(
         bitrate=hourly_recording_bitrate,
         samplerate=hourly_recording_samplerate,
     )
+    show_encoder = _render_show_recording_encoder(
+        fmt=show_recording_format,
+        bitrate=show_recording_bitrate,
+        samplerate=show_recording_samplerate,
+    )
 
     rendered = (
         template
@@ -2432,6 +2486,7 @@ def render_rastatime_liq(
         .replace("${STEREOTOOL_BLOCK}", _render_stereotool_block(stereotool)[0])
         .replace("${ICECAST_OUTPUTS}", icecast_blocks)
         .replace("${HOURLY_RECORDING_BLOCK}", hourly_block)
+        .replace("${SHOW_RECORDING_ENCODER}", show_encoder)
     )
     return rendered
 
@@ -2476,6 +2531,9 @@ def write_rastatime_liq(
     hourly_recording_format: str = DEFAULT_HOURLY_RECORDING_FORMAT,
     hourly_recording_bitrate: int = DEFAULT_HOURLY_RECORDING_BITRATE,
     hourly_recording_samplerate: int = DEFAULT_SAMPLERATE,
+    show_recording_format: str = DEFAULT_SHOW_RECORDING_FORMAT,
+    show_recording_bitrate: int = DEFAULT_SHOW_RECORDING_BITRATE,
+    show_recording_samplerate: int = DEFAULT_SAMPLERATE,
     icy_label_format: int = DEFAULT_ICY_FORMAT,
     icy_offair_text: str = DEFAULT_OFFAIR_TEXT,
     icy_station_name: str = DEFAULT_STATION_NAME,
@@ -2537,6 +2595,9 @@ def write_rastatime_liq(
         hourly_recording_format=hourly_recording_format,
         hourly_recording_bitrate=hourly_recording_bitrate,
         hourly_recording_samplerate=hourly_recording_samplerate,
+        show_recording_format=show_recording_format,
+        show_recording_bitrate=show_recording_bitrate,
+        show_recording_samplerate=show_recording_samplerate,
         icy_label_format=icy_label_format,
         icy_offair_text=icy_offair_text,
         icy_station_name=icy_station_name,
@@ -2809,6 +2870,41 @@ def read_hourly_recording_config_from_db() -> Dict:
         "bitrate": bitrate,
         "retention_days": retention_days,
     }
+
+
+def read_show_recording_config_from_db() -> Dict[str, object]:
+    """
+    RASTATIME 2026-10-18 - per-show recording encoder from cc_pref
+    (``local_recording_format`` mp3/aac/ogg/opus, ``local_recording_bitrate``
+    kbps; Settings -> Local Machine -> Show Recording).  Defaults MP3 320k
+    when unset or unreadable.  Part of the settings fingerprint, so a change
+    re-renders and restarts LIQUIDSOAP in the next quiet moment.
+    """
+    defaults = {
+        "format": DEFAULT_SHOW_RECORDING_FORMAT,
+        "bitrate": DEFAULT_SHOW_RECORDING_BITRATE,
+    }
+    try:
+        from libretime_api.core.models import Preference  # type: ignore[import-untyped]
+
+        entries: Dict[str, str] = dict(
+            Preference.site.filter(
+                key__in=["local_recording_format", "local_recording_bitrate"]
+            ).values_list("key", "value")
+        )
+    except Exception as exc:  # pylint: disable=broad-exception-caught
+        logger.warning("Could not read the show recording config from DB: %s", exc)
+        return defaults
+    fmt = (entries.get("local_recording_format") or "").strip().lower()
+    if fmt not in _ENCODER_FOR_TYPE:
+        fmt = DEFAULT_SHOW_RECORDING_FORMAT
+    try:
+        bitrate = int(entries.get("local_recording_bitrate") or 0)
+    except (TypeError, ValueError):
+        bitrate = 0
+    if bitrate <= 0:
+        bitrate = DEFAULT_SHOW_RECORDING_BITRATE
+    return {"format": fmt, "bitrate": bitrate}
 
 
 def _setup_django_if_available() -> bool:

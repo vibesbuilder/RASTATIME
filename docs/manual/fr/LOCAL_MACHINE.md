@@ -578,7 +578,7 @@ bord affiche *Media library location … is missing* jusqu'à son retour.
 Paramètres → Machine locale a **deux** dossiers de sortie
 d'enregistrement :
 
-### Show Recording Folder
+### Show Recording
 
 Où [Enregistrement par émission](./RECORD_PER_SHOW.md) écrit un
 fichier par émission marquée « enregistrer ». *(Renommé depuis
@@ -586,6 +586,13 @@ fichier par émission marquée « enregistrer ». *(Renommé depuis
 2026-06-06.)*
 
 Par défaut : `C:\rastatime\recordings\`.
+
+**Format** et **Bitrate (kbps)** *(depuis le 2026-10-18)* : MP3
+(par défaut) / AAC / OGG Vorbis / Opus, 96–320 kbps (320 par
+défaut).  Le playout applique un changement à son prochain moment
+calme (ou à la prochaine limite de titre) ; les fichiers déjà écrits
+gardent leur format, les nouveaux reçoivent l'extension
+correspondante.
 
 ### 24/7 Recording Folder
 

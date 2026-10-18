@@ -568,13 +568,19 @@ disponible.
 Configuración → Máquina local tiene **dos** carpetas de salida
 de grabación:
 
-### Show Recording Folder
+### Show Recording
 
 Donde [Grabación por programa](./RECORD_PER_SHOW.md) escribe un
 archivo por programa marcado «grabar». *(Renombrada desde
 «Recording Folder» al añadir la grabación 24/7 — 2026-06-06.)*
 
 Por defecto: `C:\rastatime\recordings\`.
+
+**Formato** y **Bitrate (kbps)** *(desde 2026-10-18)*: MP3 (por
+defecto) / AAC / OGG Vorbis / Opus, 96–320 kbps (320 por defecto).
+El playout aplica un cambio en su próximo momento tranquilo (o en el
+siguiente límite de pista); los archivos ya escritos conservan su
+formato, los nuevos reciben la extensión correspondiente.
 
 ### 24/7 Recording Folder
 

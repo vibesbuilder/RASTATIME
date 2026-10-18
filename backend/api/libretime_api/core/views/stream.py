@@ -56,17 +56,34 @@ class LocalRecordingFolderView(views.APIView):
     ``local_recording_folder``).  Consumed by the playout's
     PlayoutScheduler when a SHOW_RECORD_START event fires.
 
-    Returns ``{"folder": "<path>"}`` — empty string if the operator
-    has not yet configured a folder (recording will be skipped at
-    show-start with a warning in the playout log).
+    Returns ``{"folder": "<path>", "format": "mp3", "bitrate": 320}`` —
+    an empty folder if the operator has not yet configured one (recording
+    will be skipped at show-start with a warning in the playout log).
+    Format and bitrate (RASTATIME 2026-10-18, Settings -> Local Machine ->
+    Show Recording) are informational here: the playout names the file
+    after the encoder it rendered, not after the setting of the moment.
     """
 
     permission_classes = [IsSystemTokenOrUser]
 
     def get(self, request):
+        entries = dict(
+            Preference.site.filter(
+                key__in=[
+                    "local_recording_folder",
+                    "local_recording_format",
+                    "local_recording_bitrate",
+                ]
+            ).values_list("key", "value")
+        )
+        folder = (entries.get("local_recording_folder") or "").strip()
+        fmt = (entries.get("local_recording_format") or "").strip().lower()
+        if fmt not in ("mp3", "aac", "ogg", "opus"):
+            fmt = "mp3"
         try:
-            pref = Preference.site.get(key="local_recording_folder")
-            folder = (pref.value or "").strip()
-        except Preference.DoesNotExist:
-            folder = ""
-        return Response({"folder": folder})
+            bitrate = int(entries.get("local_recording_bitrate") or 0)
+        except (TypeError, ValueError):
+            bitrate = 0
+        if bitrate <= 0:
+            bitrate = 320
+        return Response({"folder": folder, "format": fmt, "bitrate": bitrate})
