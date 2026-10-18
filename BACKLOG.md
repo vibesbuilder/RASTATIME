@@ -5305,7 +5305,8 @@ Sendung B wählt Sendung A als Quelle (Edit Show → Autoloading Playlist →
 beendeten A-Instanz kopiert, Track-Typen ohne „Copy into Repeats"
 bleiben draußen, das Autoloading füllt die Restzeit; Ketten erlaubt,
 Kreise verboten; Löschsperre für noch gebrauchte Titel.  Migration 0071
-und Live-Probe mit Testsendungen offen (Operator-Backup + Go).
+live 2026-10-18 17:27, Probe bestanden (repeat_e2e_probe.php); Abnahme mit
+echt geplanter Wiederholung durch den Operator offen.
 
 ### 🟡 Wiederholung von Sendung, Stufe 2: aufgezeichnete Live-Sendungen - DEFER (Operator 2026-10-18: später nachziehen, wichtig)
 
