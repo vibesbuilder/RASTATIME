@@ -168,13 +168,12 @@ class Application_Service_ShowFormService
                 'add_show_outro_playlist_id' => $this->ccShow->getDbOverrideOutroPlaylist() ? $this->ccShow->getDbOutroPlaylistId() : 0,
             ]
         );
-        // RASTATIME 2026-10-18 - "Repeat of show": keep a stored source whose
-        // show has no upcoming instance in the option list
-        $repeatOf = Application_Service_RepeatFillService::getRepeatOf($this->ccShow->getDbId());
+        // RASTATIME 2026-10-18 - "Repeat of show": the list without the show
+        // itself, the stored source selected
         $el = $form->getElement('add_show_repeat_of');
-        if ($repeatOf && $el) {
-            $el->setMultiOptions(Application_Service_RepeatFillService::sourceOptions($repeatOf));
-            $el->setValue($repeatOf);
+        if ($el) {
+            $el->setMultiOptions(Application_Service_RepeatFillService::sourceOptions($this->ccShow->getDbId()));
+            $el->setValue(Application_Service_RepeatFillService::getRepeatOf($this->ccShow->getDbId()) ?: 0);
         }
     }
 

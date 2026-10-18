@@ -663,11 +663,14 @@ class Application_Model_StoredFile
     {
         $ids = array_values(array_filter(array_map('intval', (array) ($includeIds ?: [])), static fn ($v) => $v > 0));
         $inner = 'SELECT s.id, s.name, MIN(i.starts) AS next_start FROM cc_show s '
-            . 'JOIN cc_show_instances i ON i.show_id = s.id AND i.modified_instance = FALSE AND i.ends > NOW() '
+            // RASTATIME 2026-10-18 - cc_show_instances holds naive UTC; NOW() alone is
+            // compared in the session's zone (Europe/Berlin) and hid the shows of
+            // the next two hours
+            . "JOIN cc_show_instances i ON i.show_id = s.id AND i.modified_instance = FALSE AND i.ends > NOW() AT TIME ZONE 'UTC' "
             . 'GROUP BY s.id, s.name';
         if ($ids) {
             $inner .= ' UNION SELECT s.id, s.name, NULL FROM cc_show s WHERE s.id IN (' . implode(',', $ids) . ') AND NOT EXISTS ('
-                . 'SELECT 1 FROM cc_show_instances i WHERE i.show_id = s.id AND i.modified_instance = FALSE AND i.ends > NOW())';
+                . "SELECT 1 FROM cc_show_instances i WHERE i.show_id = s.id AND i.modified_instance = FALSE AND i.ends > NOW() AT TIME ZONE 'UTC')";
         }
         // ORDER BY an expression is not allowed on a UNION: sort the wrapped result
         $sql = "SELECT id, name, next_start FROM ({$inner}) AS shows ORDER BY LOWER(name), next_start NULLS LAST, id";

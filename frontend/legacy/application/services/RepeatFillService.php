@@ -109,15 +109,42 @@ class Application_Service_RepeatFillService
     }
 
     /**
-     * Options of the "Repeat of show" select: 0 => None, then the shows with
-     * upcoming instances (label with the next start), plus $includeId even
-     * without one (an already stored source whose show has ended).
+     * Options of the "Repeat of show" select: 0 => None, then every show that
+     * has an upcoming instance or one within the last 180 days - a source has
+     * usually aired already, so recent past instances count too.  Label: name plus the next start, else the last
+     * one ("last ...").  $excludeId = the show being edited.
      */
-    public static function sourceOptions($includeId = null): array
+    public static function sourceOptions($excludeId = null): array
     {
         $opts = [0 => _('None')];
-        foreach (Application_Model_StoredFile::teaserShows($includeId ? [(int) $includeId] : null) as $id => $label) {
-            $opts[(int) $id] = $label;
+        $sql = "SELECT s.id, s.name,
+                       (SELECT MIN(i.starts) FROM cc_show_instances i
+                         WHERE i.show_id = s.id AND i.modified_instance = FALSE AND i.ends > NOW() AT TIME ZONE 'UTC') AS next_start,
+                       (SELECT MAX(i.starts) FROM cc_show_instances i
+                         WHERE i.show_id = s.id AND i.modified_instance = FALSE AND i.ends <= NOW() AT TIME ZONE 'UTC') AS last_start
+                  FROM cc_show s
+                 WHERE EXISTS (SELECT 1 FROM cc_show_instances i WHERE i.show_id = s.id AND i.modified_instance = FALSE
+                                  AND i.ends > (NOW() AT TIME ZONE 'UTC') - INTERVAL '180 days')
+                 ORDER BY LOWER(s.name), s.id";
+        try {
+            $tz = new DateTimeZone(Application_Model_Preference::GetDefaultTimezone() ?: 'UTC');
+            foreach (Application_Common_Database::prepareAndExecute($sql, [], 'all') as $r) {
+                if ($excludeId && (int) $r['id'] === (int) $excludeId) {
+                    continue;
+                }
+                $label = (string) $r['name'];
+                $when = $r['next_start'] ?: $r['last_start'];
+                if ($when) {
+                    $dt = new DateTime($when, new DateTimeZone('UTC'));
+                    $dt->setTimezone($tz);
+                    $label .= $r['next_start']
+                        ? ' (' . $dt->format('D H:i') . ')'
+                        : ' (' . sprintf(_('last %s'), $dt->format('D d.m. H:i')) . ')';
+                }
+                $opts[(int) $r['id']] = $label;
+            }
+        } catch (Exception $e) {
+            Logging::warn('RepeatFillService::sourceOptions: ' . $e->getMessage());
         }
 
         return $opts;
