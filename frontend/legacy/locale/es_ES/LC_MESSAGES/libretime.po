@@ -6626,3 +6626,6 @@ msgstr "(%d elementos del origen omitidos: falta el archivo)"
 
 msgid "source show \"%s\" (repeat_of) not found - imported without it"
 msgstr "programa origen \"%s\" (repeat_of) no encontrado - importado sin él"
+
+msgid "last %s"
+msgstr "último %s"

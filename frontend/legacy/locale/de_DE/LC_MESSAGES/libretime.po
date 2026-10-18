@@ -6433,3 +6433,6 @@ msgstr "(%d Einträge der Quelle ausgelassen: Datei fehlt)"
 
 msgid "source show \"%s\" (repeat_of) not found - imported without it"
 msgstr "Quellsendung \"%s\" (repeat_of) nicht gefunden - ohne sie importiert"
+
+msgid "last %s"
+msgstr "zuletzt %s"

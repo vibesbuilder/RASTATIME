@@ -110,7 +110,7 @@ class Application_Service_RepeatFillService
 
     /**
      * Options of the "Repeat of show" select: 0 => None, then every show that
-     * has an upcoming instance or one within the last 180 days - a source has
+     * has an upcoming instance or one within the last 60 days - a source has
      * usually aired already, so recent past instances count too.  Label: name plus the next start, else the last
      * one ("last ...").  $excludeId = the show being edited.
      */
@@ -124,7 +124,7 @@ class Application_Service_RepeatFillService
                          WHERE i.show_id = s.id AND i.modified_instance = FALSE AND i.ends <= NOW() AT TIME ZONE 'UTC') AS last_start
                   FROM cc_show s
                  WHERE EXISTS (SELECT 1 FROM cc_show_instances i WHERE i.show_id = s.id AND i.modified_instance = FALSE
-                                  AND i.ends > (NOW() AT TIME ZONE 'UTC') - INTERVAL '180 days')
+                                  AND i.ends > (NOW() AT TIME ZONE 'UTC') - INTERVAL '60 days')
                  ORDER BY LOWER(s.name), s.id";
         try {
             $tz = new DateTimeZone(Application_Model_Preference::GetDefaultTimezone() ?: 'UTC');

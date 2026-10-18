@@ -6790,3 +6790,6 @@ msgstr "(%d éléments de la source laissés de côté : fichier manquant)"
 
 msgid "source show \"%s\" (repeat_of) not found - imported without it"
 msgstr "émission source \"%s\" (repeat_of) introuvable - importée sans elle"
+
+msgid "last %s"
+msgstr "dernier %s"
