@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Show-Recording: Format und Bitrate wählbar (2026-10-18)** —
+  Settings → Local Machine → „Show Recording" bietet wie die
+  24/7-Aufzeichnung MP3 / AAC / OGG Vorbis / Opus und 96–320 kbps
+  (Standard MP3 320 kbps, der feste Wert vom 2026-05-27). Der Encoder
+  des `output.file(id="recording")` kommt aus der Vorlage
+  (`${SHOW_RECORDING_ENCODER}`), die Einstellung ist Teil des
+  Einstellungs-Fingerprints (Übernahme im nächsten ruhigen Moment).
+  Die Dateiendung folgt dem Encoder des LETZTEN Renders
+  (`recording_extension`-Callback des Schedulers), nicht der
+  Einstellung des Augenblicks, damit Name und Inhalt immer
+  zusammenpassen. `/api/v2/recording-folder` liefert Format und
+  Bitrate zusätzlich mit. Manual RECORD_PER_SHOW / LOCAL_MACHINE /
+  SETTINGS ×4, ARCHITECTURE §23.64. Wirksam nach PLAYOUT-Neustart.
+  Commit `02ddea1`.
+
 - **Teaser-Automatik Stufe 2: Kalender-Dialog „Teasers" (2026-10-16)** —
   Kontextmenü einer Sendung (Admin/PM, auch vergangene): Liste der
   Jingles, die die Sendung ankündigen, mit Typ (Select, ändert den Typ
@@ -1438,6 +1453,11 @@ un_tests.ps1` (2026-10-16)** — startet API-, Playout- und
   live geprüft.
 
 ### Fixed
+
+- **Dashboard-Suchzeile: zweites „×" entfernt (2026-10-18)** — der
+  browsereigene Löschen-Knopf von `<input type="search">` erschien
+  links neben dem Zähler als zweites „×"; per CSS ausgeblendet, unser
+  „×" rechts bleibt. Commit `00cc542`.
 
 - **Dashboard-Suchzeile: Zähler nennt die gewählte Art und steht rechts (2026-10-18)** —
   „0 of 32 tracks" stand auch bei Smart Blocks, Playlists, Webstreams,
