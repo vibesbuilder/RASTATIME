@@ -83,6 +83,13 @@ auf und baut zukünftige Instanzen entsprechend.
 
 ---
 
+> **Wiederholung von Sendung (seit 2026-10-18).**  Derselbe
+> Formularabschnitt trägt **Wiederholung von Sendung**: Original
+> wählen, und dessen zuletzt gesendeter Inhalt wird kurz vor dem Start
+> in diese Sendung übernommen; die Autoloading-Playlist füllt dann nur
+> die Restzeit.  Details in [Kalender](./CALENDAR.md) § 4
+> „Wiederholung einer anderen Sendung".
+
 ## 3. Die 60-Sekunden-Build-Kadenz
 
 Der Autoplaylist-Builder läuft alle 60 Sekunden. Für jede

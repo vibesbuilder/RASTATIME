@@ -274,6 +274,46 @@ sous-champs apparaissent :
 
 ---
 
+### Rediffusion d'une autre émission (depuis le 2026-10-18)
+
+Beaucoup d'émissions passent une fois et sont rediffusées une fois,
+un autre jour ou une autre semaine.  Ouvrez le formulaire **Edit
+Show** de la rediffusion, section **Autoloading Playlist**, et
+choisissez l'original sous **Rediffusion de l'émission**.  Dès lors
+chaque instance de la rediffusion est remplie automatiquement :
+
+- **Quand** : peu avant le début de la rediffusion (environ une
+  heure, la même avance que le chargement automatique), pas à la fin
+  de l'original - les corrections faites à l'original après sa
+  diffusion sont donc reprises.
+- **Quoi** : le contenu de la **dernière instance terminée** de
+  l'original - fichiers et flux web dans leur ordre avec les points de
+  repère et fondus diffusés.  Les entrées live restent dehors.  Les
+  pistes dont le type a **Copier dans les rediffusions** décoché
+  (Settings → Track Types ; typiquement jingles et teasers) restent
+  dehors aussi, pour que la rediffusion reçoive ses propres teasers
+  adaptés depuis sa playlist de chargement automatique, qui remplit
+  ensuite le temps restant.
+- **Si l'original n'a pas encore été diffusé** (première semaine,
+  instance annulée) : la rediffusion est laissée à sa playlist de
+  chargement automatique.
+- **Durée** : une rediffusion plus courte est coupée à sa fin comme
+  toute émission surbookée ; une plus longue est complétée par sa
+  playlist de chargement automatique.
+- **Chaînes** permises (C rediffuse B, B rediffuse A) ; une boucle
+  est refusée à l'enregistrement.  « Rediffusion de l'émission » ne
+  se combine pas avec **Link**.
+- **Supprimer une piste** diffusée par l'original est refusé tant
+  qu'une rediffusion l'attend (« encore nécessaire pour la
+  rediffusion ... du ... »).  Un fichier disparu du disque hors de
+  RASTATIME est sauté et compté.
+
+**View Show** sur une rediffusion remplie dit « Rediffusion de
+l'émission A du <date> à <heure> » et, si des lignes ont été sautées,
+combien.  Une instance qui a déjà du contenu (remplie à la main)
+n'est jamais écrasée.  Les émissions live enregistrées ne peuvent pas
+encore être rediffusées ainsi (étape 2, voir BACKLOG).
+
 ## 5. Glisser-déposer
 
 Deux types de glisser sont supportés sur le calendrier :

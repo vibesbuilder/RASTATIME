@@ -922,6 +922,13 @@ SQL;
         if (Application_Model_Schedule::IsFileScheduledInTheFuture($this->_file->getCcFileId())) {
             throw new DeleteScheduledFileException();
         }
+        // RASTATIME 2026-10-18 - "Repeat of show": the last aired content of a
+        // source show is still needed by an unfilled repeat (cc_schedule rows
+        // cascade on delete, the copy would lose the track)
+        $needed = Application_Service_RepeatFillService::neededByPendingRepeat($this->_file->getCcFileId());
+        if ($needed !== null) {
+            throw new DeleteScheduledFileException(Application_Service_RepeatFillService::neededMessage($needed));
+        }
 
         // if we get here from the REST API, there's no valid user. APIKEY is validated already.
         if ($userInfo = Zend_Auth::getInstance()->getStorage()->read()) {

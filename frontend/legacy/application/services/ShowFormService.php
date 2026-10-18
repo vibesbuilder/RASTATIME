@@ -168,6 +168,14 @@ class Application_Service_ShowFormService
                 'add_show_outro_playlist_id' => $this->ccShow->getDbOverrideOutroPlaylist() ? $this->ccShow->getDbOutroPlaylistId() : 0,
             ]
         );
+        // RASTATIME 2026-10-18 - "Repeat of show": keep a stored source whose
+        // show has no upcoming instance in the option list
+        $repeatOf = Application_Service_RepeatFillService::getRepeatOf($this->ccShow->getDbId());
+        $el = $form->getElement('add_show_repeat_of');
+        if ($repeatOf && $el) {
+            $el->setMultiOptions(Application_Service_RepeatFillService::sourceOptions($repeatOf));
+            $el->setValue($repeatOf);
+        }
     }
 
     private function populateFormWhen($form)
@@ -598,6 +606,26 @@ class Application_Service_ShowFormService
     ) {
         $what = $forms['what']->isValid($formData);
         $autoplaylist = $forms['autoplaylist']->isValid($formData);
+        // RASTATIME 2026-10-18 - "Repeat of show": no self, no loop, not with
+        // "Link" (linked instances would receive the copy several times)
+        $repeatOf = (int) ($formData['add_show_repeat_of'] ?? 0);
+        if ($repeatOf > 0) {
+            $showId = (int) ($formData['add_show_id'] ?? -1);
+            $err = null;
+            if (!Application_Service_RepeatFillService::showExists($repeatOf)) {
+                $err = _('The chosen source show does not exist any more.');
+            } elseif ($showId > 0 && $repeatOf === $showId) {
+                $err = _('A show cannot be the repeat of itself.');
+            } elseif ($showId > 0 && Application_Service_RepeatFillService::wouldLoop($showId, $repeatOf)) {
+                $err = _('Repeat chains must not loop: the chosen source already repeats this show.');
+            } elseif (!empty($formData['add_show_linked'])) {
+                $err = _('"Repeat of show" cannot be combined with "Link".');
+            }
+            if ($err !== null) {
+                $forms['autoplaylist']->getElement('add_show_repeat_of')->addError($err);
+                $autoplaylist = false;
+            }
+        }
         $live = $forms['live']->isValid($formData);
         $record = $forms['record']->isValid($formData);
         $who = $forms['who']->isValid($formData);

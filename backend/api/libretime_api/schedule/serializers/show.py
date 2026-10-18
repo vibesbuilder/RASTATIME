@@ -25,6 +25,7 @@ class ShowSerializer(serializers.ModelSerializer):
             "override_intro_playlist",
             "outro_playlist",
             "override_outro_playlist",
+            "repeat_of",
         ]
 
 

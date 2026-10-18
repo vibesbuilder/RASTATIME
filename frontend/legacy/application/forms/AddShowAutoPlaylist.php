@@ -55,6 +55,18 @@ class Application_Form_AddShowAutoPlaylist extends Zend_Form_SubForm
         $outroPlaylistSelect->setValue(null);
         $outroPlaylistSelect->setDecorators(['ViewHelper']);
         $this->addElement($outroPlaylistSelect);
+
+        // RASTATIME 2026-10-18 - "Repeat of show": the source whose last aired
+        // content is copied in shortly before this show starts (migration
+        // 0071).  The stored source may have no upcoming instance any more,
+        // so the value is checked by the service, not by the option list.
+        $repeatOf = new Zend_Form_Element_Select('add_show_repeat_of');
+        $repeatOf->setLabel(_('Repeat of show'));
+        $repeatOf->setMultiOptions(Application_Service_RepeatFillService::sourceOptions());
+        $repeatOf->setValue(0);
+        $repeatOf->setRegisterInArrayValidator(false);
+        $repeatOf->setDecorators(['ViewHelper']);
+        $this->addElement($repeatOf);
     }
 
     public function disable()

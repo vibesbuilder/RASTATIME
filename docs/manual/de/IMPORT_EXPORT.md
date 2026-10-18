@@ -95,6 +95,7 @@ ist, wird weiterhin abgewiesen.
 | `repeat_end_date`, `no_end` | Datum der letzten Ausstrahlung oder `no_end = yes` |
 | `linked`, `record` | yes/no |
 | `content`, `content_repeat` | Name einer Playlist als **Autoloading-Playlist** der Sendung, und ob sie bis zur vollen Sendung wiederholt wird — siehe [Autoloading-Playlisten](./AUTOLOADING_PLAYLISTS.md). Eine Playlist kann Titel, Smart Blocks, Webstreams und Line-In-Eingänge enthalten, damit wird jede Instanz der Sendung automatisch befüllt. |
+| `repeat_of` | Name einer vorhandenen Sendung, deren zuletzt gesendeter Inhalt diese Sendung kurz vor dem Start befüllt (**Wiederholung von Sendung**, seit 2026-10-18); leer = keine. Ein unbekannter Name wird als Hinweis gemeldet, die Sendung ohne ihn importiert. |
 | `intro_playlist`, `outro_playlist` | Playlist-Namen; leer = Stationsvorgaben |
 | `rastatime_auth`, `custom_auth`, `custom_username` | Live-DJ-Authentifizierung wie im Dialog |
 | `djs` | DJ-Logins, kommagetrennt; nur Benutzer vom Typ DJ lassen sich zuweisen |

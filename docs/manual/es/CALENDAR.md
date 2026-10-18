@@ -184,6 +184,45 @@ sub-campos aparecen:
 
 ---
 
+### Repetición de otro programa (desde 2026-10-18)
+
+Muchos programas se emiten una vez y se repiten una vez, otro día o
+en otra semana.  Abra el formulario **Edit Show** de la repetición,
+sección **Autoloading Playlist**, y elija el original en **Repetición
+del programa**.  Desde entonces cada instancia de la repetición se
+rellena automáticamente:
+
+- **Cuándo**: poco antes de que empiece la repetición (alrededor de
+  una hora, la misma antelación que la carga automática), no al final
+  del original; así se trasladan las correcciones hechas al original
+  tras su emisión.
+- **Qué**: el contenido de la **última instancia terminada** del
+  original: archivos y retransmisiones en su orden con los puntos de
+  cue y fundidos emitidos.  Las entradas en vivo quedan fuera.  Las
+  pistas cuyo tipo tiene **Copiar en repeticiones** desmarcado
+  (Settings → Track Types; típicamente jingles y teasers) también
+  quedan fuera, para que la repetición reciba sus propios teasers
+  adecuados desde su lista de carga automática, que después rellena
+  el tiempo restante.
+- **Si el original aún no se ha emitido** (primera semana, instancia
+  cancelada): la repetición se deja a su lista de carga automática.
+- **Duración**: una repetición más corta se corta al final como
+  cualquier programa sobrecargado; una más larga la completa su lista
+  de carga automática.
+- **Cadenas** permitidas (C repite B, B repite A); un bucle se
+  rechaza al guardar.  «Repetición del programa» no se puede combinar
+  con **Link**.
+- **Borrar una pista** que emitió el original se rechaza mientras una
+  repetición la espera («todavía se necesita para la repetición ...
+  del ...»).  Un archivo desaparecido del disco fuera de RASTATIME se
+  omite y se cuenta.
+
+**View Show** en una repetición rellenada dice «Repetición del
+programa A del <fecha> a las <hora>» y, si se omitieron filas,
+cuántas.  Una instancia que ya tiene contenido (rellenada a mano)
+nunca se sobrescribe.  Los programas en vivo grabados aún no se
+pueden repetir así (etapa 2, véase BACKLOG).
+
 ## 5. Arrastrar y soltar
 
 ### 5.1 Mover un programa

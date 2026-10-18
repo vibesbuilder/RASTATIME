@@ -65,6 +65,7 @@ class Application_Service_ShowTemplateService
         'add_show_autoplaylist_repeat',
         'add_show_intro_playlist_id',
         'add_show_outro_playlist_id',
+        'add_show_repeat_of',         // RASTATIME 2026-10-18 - "Repeat of show"
         // "Live Stream Input"
         'cb_airtime_auth',
         'cb_custom_auth',

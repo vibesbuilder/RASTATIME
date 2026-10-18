@@ -59,6 +59,8 @@ class TracktypeController extends Zend_Controller_Action
                 $tracktype->setNoFadeCrossfade($formData['no_fade_crossfade'] ?? '0');
                 // RASTATIME 2026-10-14 - stream metadata preset
                 $tracktype->setIcyForward($formData['icy_forward'] ?? '0');
+                // RASTATIME 2026-10-18 - "Copy into Repeats"
+                $tracktype->setRepeatCopy($formData['repeat_copy'] ?? '0');
                 $changed = $tracktype->save();
                 if ($changed['crossfade']) {
                     Application_Model_Scheduler::relayoutFutureInstances();

@@ -98,6 +98,13 @@ class Application_Model_Webstream implements Application_Model_LibraryEditable
     {
         $userInfo = Zend_Auth::getInstance()->getStorage()->read();
         $user = new Application_Model_User($userInfo->id);
+        // RASTATIME 2026-10-18 - "Repeat of show": still needed by an unfilled repeat
+        foreach ((array) $p_ids as $sid) {
+            $needed = Application_Service_RepeatFillService::neededByPendingRepeat(null, (int) $sid);
+            if ($needed !== null) {
+                throw new Exception(Application_Service_RepeatFillService::neededMessage($needed));
+            }
+        }
         $isAdminOrPM = $user->isUserType([UTYPE_ADMIN, UTYPE_PROGRAM_MANAGER]);
 
         if (!$isAdminOrPM) {

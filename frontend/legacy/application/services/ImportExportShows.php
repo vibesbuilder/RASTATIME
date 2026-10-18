@@ -47,7 +47,7 @@ class Application_Service_ImportExportShows extends Application_Service_ImportEx
     {
         return ['name', 'url', 'genre', 'description', 'start_date', 'start_time', 'end_date', 'end_time', 'timezone',
             'allow_delayed_start', 'repeats', 'repeat_type', 'days', 'months', 'repeat_end_date', 'no_end', 'linked', 'record',
-            'content', 'content_repeat', 'intro_playlist', 'outro_playlist', 'rastatime_auth', 'custom_auth', 'custom_username',
+            'content', 'content_repeat', 'intro_playlist', 'outro_playlist', 'repeat_of', 'rastatime_auth', 'custom_auth', 'custom_username',
             'djs', 'background_color', 'text_color', 'logo', ];
     }
 
@@ -68,6 +68,7 @@ class Application_Service_ImportExportShows extends Application_Service_ImportEx
             'record' => 'yes/no - record this show',
             'content' => 'name of a playlist used as autoloading playlist (fills every instance); content_repeat = yes repeats it until the show is full',
             'intro_playlist, outro_playlist' => 'playlist names, empty = station default',
+            'repeat_of' => 'name of an existing show whose last aired content fills this show shortly before it starts; empty = none',
             'rastatime_auth, custom_auth' => 'yes/no - live DJ authentication; custom_username goes with custom_auth',
             'djs' => 'DJ logins, comma separated',
             'background_color, text_color' => 'hex without #, e.g. 1F7A8C and FFFFFF',
@@ -92,7 +93,7 @@ class Application_Service_ImportExportShows extends Application_Service_ImportEx
             'start_date' => $monday, 'start_time' => '07:00', 'end_date' => '', 'end_time' => '09:00', 'timezone' => '',
             'allow_delayed_start' => 'no', 'repeats' => 'yes', 'repeat_type' => 'weekly', 'days' => 'Mon,Tue,Wed,Thu,Fri',
             'repeat_end_date' => '', 'no_end' => 'yes', 'linked' => 'no', 'record' => 'no',
-            'content' => 'Morning Show', 'content_repeat' => 'yes', 'intro_playlist' => '', 'outro_playlist' => '',
+            'content' => 'Morning Show', 'content_repeat' => 'yes', 'intro_playlist' => '', 'outro_playlist' => '', 'repeat_of' => '',
             'rastatime_auth' => 'yes', 'custom_auth' => 'no', 'custom_username' => '', 'djs' => 'dj1',
             'background_color' => '1F7A8C', 'text_color' => 'FFFFFF', 'logo' => 'morning-show.png',
         ]];
@@ -254,6 +255,7 @@ class Application_Service_ImportExportShows extends Application_Service_ImportEx
                 $rec['rastatime_auth'] = true;          // the dialog's default
             }
             $rec['djs'] = self::splitList($g('djs'));
+            $rec['repeat_of'] = trim((string) $g('repeat_of')); // RASTATIME 2026-10-18
             $rec['background_color'] = self::parseColor($g('background_color'));
             $rec['text_color'] = self::parseColor($g('text_color'));
             if ($rec['background_color'] === null || $rec['text_color'] === null) {
@@ -347,6 +349,14 @@ class Application_Service_ImportExportShows extends Application_Service_ImportEx
             }
         }
         $hosts = self::hostIds($record['djs'], $messages);
+        // RASTATIME 2026-10-18 - "Repeat of show" by name of an existing show
+        $repeatOfId = 0;
+        if (($record['repeat_of'] ?? '') !== '') {
+            $repeatOfId = (int) (Application_Service_RepeatFillService::findShowIdByName($record['repeat_of']) ?? 0);
+            if ($repeatOfId === 0) {
+                $notes[] = sprintf(_('source show "%s" (repeat_of) not found - imported without it'), $record['repeat_of']);
+            }
+        }
         if ($record['logo'] !== '' && !isset($ctx['logos'][$record['logo']])) {
             $messages[] = sprintf(_('logo "%s" is not in the bundle (folder logos/)'), $record['logo']);
         }
@@ -385,6 +395,7 @@ class Application_Service_ImportExportShows extends Application_Service_ImportEx
             'add_show_autoplaylist_repeat' => ($contentId && $record['content_repeat']) ? 1 : 0,
             'add_show_intro_playlist_id' => $introId ? (string) $introId : '',
             'add_show_outro_playlist_id' => $outroId ? (string) $outroId : '',
+            'add_show_repeat_of' => $repeatOfId,
             'cb_airtime_auth' => $record['rastatime_auth'] ? 1 : 0,
             'cb_custom_auth' => $record['custom_auth'] ? 1 : 0,
             'custom_username' => $record['custom_auth'] ? $record['custom_username'] : '',
@@ -527,6 +538,12 @@ SQL;
         foreach ($con->query('SELECT id, name FROM cc_playlist')->fetchAll(PDO::FETCH_ASSOC) as $p) {
             $playlistNames[(int) $p['id']] = $p['name'];
         }
+        // RASTATIME 2026-10-18 - "Repeat of show" (own query: tolerates migration 0071 pending)
+        $repeatOfAll = Application_Service_RepeatFillService::allRepeatOf();
+        $showNames = [];
+        foreach ($con->query('SELECT id, name FROM cc_show')->fetchAll(PDO::FETCH_ASSOC) as $p) {
+            $showNames[(int) $p['id']] = $p['name'];
+        }
         $daysStmt = $con->prepare('SELECT first_show, last_show, start_time, timezone, duration, day, repeat_type, record, month_mask FROM cc_show_days WHERE show_id = :id ORDER BY id');
         $hostStmt = $con->prepare('SELECT u.login FROM cc_show_hosts h JOIN cc_subjs u ON u.id = h.subjs_id WHERE h.show_id = :id ORDER BY u.login');
         foreach ($con->query($sql)->fetchAll(PDO::FETCH_ASSOC) as $s) {
@@ -603,6 +620,7 @@ SQL;
                 'content_repeat' => self::boolOut($pg($s['autoplaylist_repeat'])),
                 'intro_playlist' => $pg($s['override_intro_playlist']) && $s['intro_playlist_id'] ? ($playlistNames[(int) $s['intro_playlist_id']] ?? '') : '',
                 'outro_playlist' => $pg($s['override_outro_playlist']) && $s['outro_playlist_id'] ? ($playlistNames[(int) $s['outro_playlist_id']] ?? '') : '',
+                'repeat_of' => isset($repeatOfAll[(int) $s['id']]) ? ($showNames[$repeatOfAll[(int) $s['id']]] ?? '') : '',
                 'rastatime_auth' => self::boolOut($pg($s['live_stream_using_airtime_auth'])),
                 'custom_auth' => self::boolOut($pg($s['live_stream_using_custom_auth'])),
                 'custom_username' => (string) $s['live_stream_user'],

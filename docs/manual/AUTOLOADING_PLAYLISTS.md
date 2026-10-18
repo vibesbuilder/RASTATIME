@@ -79,6 +79,12 @@ builds future instances accordingly.
 
 ---
 
+> **Repeat of show (since 2026-10-18).**  The same form section
+> carries **Repeat of show**: pick the original, and the content it
+> aired last is copied into this show shortly before it starts; the
+> autoloading playlist then fills only the remaining time.  Details in
+> [Calendar](./CALENDAR.md) § 4 "Repeat of another show".
+
 ## 3. The 60-second build cadence
 
 The autoplaylist builder runs every 60 seconds. For each

@@ -267,7 +267,8 @@ class LibraryController extends Zend_Controller_Action
         } catch (WebstreamNoPermissionException $e) {
             $message = $noPermissionMsg;
         } catch (Exception $e) {
-            // TODO: warn user that not all streams could be deleted.
+            // RASTATIME 2026-10-18 - e.g. still needed by a repeat
+            $message = $e->getMessage() ?: _('Could not delete webstream(s).');
             Logging::info($e);
         }
 
@@ -279,7 +280,7 @@ class LibraryController extends Zend_Controller_Action
                 } catch (FileNoPermissionException $e) {
                     $message = $noPermissionMsg;
                 } catch (DeleteScheduledFileException $e) {
-                    $message = _('Could not delete file because it is scheduled in the future.');
+                    $message = $e->getMessage() ?: _('Could not delete file because it is scheduled in the future.');
                 } catch (Exception $e) {
                     // could throw a scheduled in future exception.
                     $message = _('Could not delete file(s).');

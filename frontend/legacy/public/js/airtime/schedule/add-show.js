@@ -1327,6 +1327,7 @@ function applyShowTemplate(form, td) {
   setCheck("add_show_autoplaylist_repeat", td.add_show_autoplaylist_repeat);
   setVal("add_show_intro_playlist_id", td.add_show_intro_playlist_id);
   setVal("add_show_outro_playlist_id", td.add_show_outro_playlist_id);
+  setVal("add_show_repeat_of", td.add_show_repeat_of); // RASTATIME 2026-10-18
 
   // Live Stream Input (password deliberately not in template)
   setCheck("cb_airtime_auth", td.cb_airtime_auth);

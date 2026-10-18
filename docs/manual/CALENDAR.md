@@ -245,6 +245,44 @@ In the **When** section, tick **Repeats**. Three sub-fields appear:
 
 ---
 
+### Repeat of another show (since 2026-10-18)
+
+Many shows air once and are repeated once, on a different weekday
+or in a different week.  Open the repeat's **Edit Show** form,
+section **Autoloading Playlist**, and pick the original under
+**Repeat of show**.  From then on every instance of the repeat is
+filled automatically:
+
+- **When**: shortly before the repeat starts (about an hour, the
+  same lead as the autoloading build), not at the end of the
+  original - so corrections made to the original after it aired are
+  carried over.
+- **What**: the content of the original's **last ended** instance -
+  files and webstreams in their order with the aired cue points and
+  fades.  Live inputs stay out.  Tracks whose track type has
+  **Copy into Repeats** unticked (Settings → Track Types; typically
+  jingles and teasers) stay out too, so the repeat gets its own,
+  fitting teasers from its autoloading playlist, which fills the
+  remaining time afterwards.
+- **If the original has not aired yet** (first week, cancelled
+  instance): the repeat is left to its autoloading playlist.
+- **Length**: a shorter repeat is cut at its end like any
+  overbooked show; a longer one is topped up by its autoloading
+  playlist.
+- **Chains** are allowed (C repeats B, B repeats A); a loop is
+  refused when you save.  "Repeat of show" cannot be combined with
+  **Link**.
+- **Deleting a track** that the original aired is refused while a
+  repeat still waits for it ("still needed for the repeat ... on
+  ...").  A file that disappeared from disk outside RASTATIME is
+  skipped and counted.
+
+**View Show** on a filled repeat says "Repeat of show A from
+<date> at <time>" and, if rows were skipped, how many.  An instance
+that already has content (filled by hand) is never overwritten.
+Live shows that were recorded cannot be repeated this way yet
+(stage 2, see BACKLOG).
+
 ## 5. Drag-and-drop
 
 Two kinds of drag are supported on the calendar:

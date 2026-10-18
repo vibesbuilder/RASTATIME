@@ -2186,6 +2186,17 @@ class Application_Model_Preference
         self::setValue('autoplaylist_poll_lock', $value);
     }
 
+    // RASTATIME 2026-10-18 - RepeatFillTask poll lock ("Repeat of show")
+    public static function getRepeatFillPollLock()
+    {
+        return self::getValue('repeat_fill_poll_lock');
+    }
+
+    public static function setRepeatFillPollLock($value)
+    {
+        self::setValue('repeat_fill_poll_lock', $value);
+    }
+
     public static function getPodcastPollLock()
     {
         return self::getValue('podcast_poll_lock');

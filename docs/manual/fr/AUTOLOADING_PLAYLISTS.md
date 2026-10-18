@@ -86,6 +86,13 @@ l'attachement à son prochain poll (par défaut toutes les
 
 ---
 
+> **Rediffusion de l'émission (depuis le 2026-10-18).**  La même
+> section du formulaire porte **Rediffusion de l'émission** : choisissez
+> l'original, et son dernier contenu diffusé est copié dans cette
+> émission peu avant son début ; la playlist de chargement automatique
+> ne remplit alors que le temps restant.  Détails dans
+> [Calendrier](./CALENDAR.md) § 4 « Rediffusion d'une autre émission ».
+
 ## 3. La cadence de build de 60 secondes
 
 Le builder d'autoplaylist tourne toutes les 60 secondes.

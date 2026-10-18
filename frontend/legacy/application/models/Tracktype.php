@@ -202,6 +202,45 @@ class Application_Model_Tracktype
     private $_icyDirty = false;
 
     /**
+     * RASTATIME 2026-10-18 - "Copy into Repeats" (migration 0071): FALSE =
+     * tracks of this type (jingles, teasers) stay out when a show is filled
+     * as the repeat of another show.  Raw SQL.
+     *
+     * @param mixed $value
+     */
+    public function setRepeatCopy($value)
+    {
+        $this->_repeatCopy = ($value === true || $value === 1 || $value === '1' || $value === 'true');
+        $this->_repeatDirty = true;
+    }
+
+    /** @return bool */
+    public function getRepeatCopy()
+    {
+        if ($this->_repeatDirty) {
+            return $this->_repeatCopy;
+        }
+        $id = $this->_tracktypeInstance->getDbId();
+        if (!$id) {
+            return true;
+        }
+        try {
+            $value = Application_Common_Database::prepareAndExecute(
+                'SELECT repeat_copy FROM cc_track_types WHERE id = :id',
+                [':id' => $id],
+                Application_Common_Database::COLUMN
+            );
+        } catch (Exception $exc) {
+            return true; // column pending (migration 0071)
+        }
+
+        return !($value === false || $value === 'f' || $value === 0 || $value === '0');
+    }
+
+    private $_repeatCopy = true;
+    private $_repeatDirty = false;
+
+    /**
      * @return array{crossfade: bool, no_fade: bool} which of the two crossover
      *                                              presets of an existing or
      *                                              new type changed
@@ -255,6 +294,18 @@ class Application_Model_Tracktype
                 Logging::warn('Tracktype::save icy_forward: ' . $exc->getMessage() . ' (migration 0068 pending?)');
             }
             $this->_icyDirty = false;
+        }
+        if ($this->_repeatDirty) {
+            try {
+                Application_Common_Database::prepareAndExecute(
+                    'UPDATE cc_track_types SET repeat_copy = :f WHERE id = :id',
+                    [':f' => $this->_repeatCopy ? 'true' : 'false', ':id' => $this->_tracktypeInstance->getDbId()],
+                    Application_Common_Database::EXECUTE
+                );
+            } catch (Exception $exc) {
+                Logging::warn('Tracktype::save repeat_copy: ' . $exc->getMessage() . ' (migration 0071 pending?)');
+            }
+            $this->_repeatDirty = false;
         }
 
         return $changed;
@@ -348,8 +399,24 @@ FROM cc_track_types
 WHERE id = :id
 SQL;
 
-        return Application_Common_Database::prepareAndExecute($sql, [
+        $row = Application_Common_Database::prepareAndExecute($sql, [
             ':id' => $id,
         ], 'single');
+        // RASTATIME 2026-10-18 - "Copy into Repeats" read on its own so the
+        // list keeps working until migration 0071 ran
+        if ($row) {
+            try {
+                $v = Application_Common_Database::prepareAndExecute(
+                    'SELECT repeat_copy FROM cc_track_types WHERE id = :id',
+                    [':id' => $id],
+                    Application_Common_Database::COLUMN
+                );
+                $row['repeat_copy'] = !($v === false || $v === 'f' || $v === 0 || $v === '0');
+            } catch (Exception $exc) {
+                $row['repeat_copy'] = true;
+            }
+        }
+
+        return $row;
     }
 }

@@ -6587,3 +6587,42 @@ msgstr "Contenedor y códec de los archivos de grabación.  MP3 se reproduce en 
 
 msgid "320 kbps is archive grade (about 145 MB per hour as MP3); 192 kbps halves the disk use."
 msgstr "320 kbps es calidad de archivo (unos 145 MB por hora en MP3); 192 kbps reduce el espacio a la mitad."
+
+msgid "Repeat of show"
+msgstr "Repetición del programa"
+
+msgid "Shortly before this show starts, the content its source show aired last is copied in: files and webstreams in their order, live inputs and track types with 'Copy into Repeats' off (jingles, teasers) left out. The autoloading playlist below then fills the remaining time. Chains are allowed, loops are not."
+msgstr "Poco antes de que empiece este programa se copia el último contenido emitido del programa origen: archivos y retransmisiones en su orden; las entradas en vivo y los tipos de pista sin 'Copiar en repeticiones' (jingles, teasers) quedan fuera. La lista de carga automática de abajo rellena después el tiempo restante. Se permiten cadenas, no bucles."
+
+msgid "The chosen source show does not exist any more."
+msgstr "El programa origen elegido ya no existe."
+
+msgid "A show cannot be the repeat of itself."
+msgstr "Un programa no puede ser su propia repetición."
+
+msgid "Repeat chains must not loop: the chosen source already repeats this show."
+msgstr "Las cadenas de repetición no deben formar bucles: el origen elegido ya repite este programa."
+
+msgid "\"Repeat of show\" cannot be combined with \"Link\"."
+msgstr "\"Repetición del programa\" no se puede combinar con \"Link\"."
+
+msgid "Copy into Repeats:"
+msgstr "Copiar en repeticiones:"
+
+msgid "Tracks of this type are carried over when a show is filled as the repeat of another show. Untick for jingles and teasers so the repeat gets its own, fitting ones from its autoloading playlist."
+msgstr "Las pistas de este tipo se trasladan cuando un programa se rellena como repetición de otro programa. Desmarque para jingles y teasers, así la repetición recibe los suyos, adecuados, desde su lista de carga automática."
+
+msgid "Cannot delete: still needed for the repeat \"%s\" on %s."
+msgstr "No se puede borrar: todavía se necesita para la repetición \"%s\" del %s."
+
+msgid "Could not delete webstream(s)."
+msgstr "No se pudieron borrar las retransmisiones."
+
+msgid "Repeat of show %s from %s at %s"
+msgstr "Repetición del programa %s del %s a las %s"
+
+msgid "(%d items of the source were left out: file missing)"
+msgstr "(%d elementos del origen omitidos: falta el archivo)"
+
+msgid "source show \"%s\" (repeat_of) not found - imported without it"
+msgstr "programa origen \"%s\" (repeat_of) no encontrado - importado sin él"

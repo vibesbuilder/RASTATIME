@@ -214,6 +214,37 @@ class CeleryTask implements AirtimeTask
 }
 
 /**
+ * Class RepeatFillTask.
+ *
+ * RASTATIME 2026-10-18 - "Repeat of show": copies the last aired content of
+ * the source show into repeat instances that start within
+ * RepeatFillService::LEAD_SECONDS.  Declared BEFORE AutoPlaylistTask so a
+ * pass copies first and the autoloading build then fills the rest.
+ */
+class RepeatFillTask implements AirtimeTask
+{
+    private const POLL_SECONDS = 60;
+
+    public function shouldBeRun()
+    {
+        $last = (float) Application_Model_Preference::getRepeatFillPollLock();
+
+        return $last <= 0 || microtime(true) > $last + self::POLL_SECONDS;
+    }
+
+    public function run()
+    {
+        Application_Model_Preference::setRepeatFillPollLock(microtime(true));
+
+        try {
+            Application_Service_RepeatFillService::fillDue();
+        } catch (Throwable $e) {
+            Logging::error('RepeatFillTask failed: ' . $e->getMessage());
+        }
+    }
+}
+
+/**
  * Class AutoPlaylistTask.
  *
  * Checks for shows with an autoplaylist that needs to be filled in

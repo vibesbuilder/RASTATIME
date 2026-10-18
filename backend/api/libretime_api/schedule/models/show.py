@@ -59,6 +59,18 @@ class Show(models.Model):
     linked = models.BooleanField()
     linkable = models.BooleanField(db_column="is_linkable")
 
+    # RASTATIME 2026-10-18 - "Repeat of show" (legacy migration 0071): the
+    # content of this show's last aired instance is copied into the
+    # repeating show shortly before it starts (legacy RepeatFillService).
+    repeat_of = models.ForeignKey(
+        "self",
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        db_column="repeat_of_show_id",
+        related_name="repeats",
+    )
+
     auto_playlist = models.ForeignKey(
         "schedule.Playlist",
         on_delete=models.DO_NOTHING,
@@ -223,6 +235,18 @@ class ShowInstance(models.Model):
     rebroadcast = models.SmallIntegerField(blank=True, null=True)
 
     auto_playlist_built = models.BooleanField(db_column="autoplaylist_built")
+    # RASTATIME 2026-10-18 - "Repeat of show" (legacy migration 0071): the
+    # source instance the content was copied from, and how many of its rows
+    # were left out because their file is missing.
+    filled_from = models.ForeignKey(
+        "self",
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        db_column="filled_from_instance_id",
+        related_name="repeat_fills",
+    )
+    repeat_skipped = models.SmallIntegerField(default=0)
 
     record_enabled = models.SmallIntegerField(
         choices=Record.choices,

@@ -5295,3 +5295,32 @@ Nicht installieren: Dell U2419HC Monitor-INF (2018, rein kosmetisch, Treiber ble
 25H2 Pro wird bis 2027-10-12 versorgt.  Vorbedingungen fuer ein Go: (a) Schritt (1) installiert (Voraussetzung des
 Pakets: KB5124010 oder spaeter); (b) einige Wochen ohne neue 26H2-spezifische Known Issues oder Safeguard Holds
 (Windows Release Health pruefen); (c) Wartungsfenster wie oben, ein Neustart; spaetestens vor Oktober 2027.
+
+## Wiederholungen automatisieren (Operator 2026-10-18)
+
+### ✅ Wiederholung von Sendung, Stufe 1 - gebaut 2026-10-18 (Go 2026-10-18, Architektur §23.65)
+
+Sendung B wählt Sendung A als Quelle (Edit Show → Autoloading Playlist →
+„Repeat of show"); kurz vor dem Start wird der Inhalt der zuletzt
+beendeten A-Instanz kopiert, Track-Typen ohne „Copy into Repeats"
+bleiben draußen, das Autoloading füllt die Restzeit; Ketten erlaubt,
+Kreise verboten; Löschsperre für noch gebrauchte Titel.  Migration 0071
+und Live-Probe mit Testsendungen offen (Operator-Backup + Go).
+
+### 🟡 Wiederholung von Sendung, Stufe 2: aufgezeichnete Live-Sendungen - DEFER (Operator 2026-10-18: später nachziehen, wichtig)
+
+Live-Sendungen (DJ, Line-In) haben keine kopierbaren Sendeplan-Zeilen;
+die Wiederholung muss die Show-Aufzeichnung (Record-per-Show, MP3/AAC/
+OGG/Opus nach Settings → Local Machine) abspielen.  Vorbedingungen:
+1. Stufe 1 eine Woche im Betrieb (Kopie, Löschsperre, Autoloading-Rest).
+2. Signal „Aufnahme fertig" vom Playout an Legacy (Pfad + Instanz-Id),
+   Import der Datei über den Import-Ordner/Analyzer in einen Track-Typ
+   „Recordings" (ohne „Copy into Repeats"-Bedarf), Verknüpfung
+   Datei ↔ A-Instanz (`cc_show_instances.file_id` existiert).
+3. `fillDue()` wartet bei einer Live-Quelle auf den Import und legt die
+   Aufnahme als einzige Zeile in B (Länge = Aufnahmedauer, Rest
+   Autoloading).
+4. Aufbewahrung: Recording-Retention darf die Datei nicht vor der
+   Wiederholung löschen.
+Aufwand grob 300-500 Zeilen Playout + Legacy, 1-2 Tage plus Beobachtung
+einer echten aufgezeichneten Sendung.

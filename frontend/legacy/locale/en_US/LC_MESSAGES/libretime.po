@@ -5004,3 +5004,42 @@ msgstr ""
 
 msgid "320 kbps is archive grade (about 145 MB per hour as MP3); 192 kbps halves the disk use."
 msgstr ""
+
+msgid "Repeat of show"
+msgstr ""
+
+msgid "Shortly before this show starts, the content its source show aired last is copied in: files and webstreams in their order, live inputs and track types with 'Copy into Repeats' off (jingles, teasers) left out. The autoloading playlist below then fills the remaining time. Chains are allowed, loops are not."
+msgstr ""
+
+msgid "The chosen source show does not exist any more."
+msgstr ""
+
+msgid "A show cannot be the repeat of itself."
+msgstr ""
+
+msgid "Repeat chains must not loop: the chosen source already repeats this show."
+msgstr ""
+
+msgid "\"Repeat of show\" cannot be combined with \"Link\"."
+msgstr ""
+
+msgid "Copy into Repeats:"
+msgstr ""
+
+msgid "Tracks of this type are carried over when a show is filled as the repeat of another show. Untick for jingles and teasers so the repeat gets its own, fitting ones from its autoloading playlist."
+msgstr ""
+
+msgid "Cannot delete: still needed for the repeat \"%s\" on %s."
+msgstr ""
+
+msgid "Could not delete webstream(s)."
+msgstr ""
+
+msgid "Repeat of show %s from %s at %s"
+msgstr ""
+
+msgid "(%d items of the source were left out: file missing)"
+msgstr ""
+
+msgid "source show \"%s\" (repeat_of) not found - imported without it"
+msgstr ""

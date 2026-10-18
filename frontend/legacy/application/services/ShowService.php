@@ -1774,6 +1774,12 @@ SQL;
             'execute'
         );
 
+        // RASTATIME 2026-10-18 - "Repeat of show" (raw SQL, migration 0071)
+        Application_Service_RepeatFillService::setRepeatOf(
+            $ccShow->getDbId(),
+            (int) ($showData['add_show_repeat_of'] ?? 0)
+        );
+
         $this->ccShow = $ccShow;
     }
 

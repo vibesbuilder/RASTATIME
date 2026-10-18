@@ -426,6 +426,23 @@ class ScheduleController extends Zend_Controller_Action
                     $originalDateTime->format('G:i')
                 );
         }
+        // RASTATIME 2026-10-18 - "Repeat of show": where the content came from
+        $filledFrom = Application_Service_RepeatFillService::filledFrom($showInstanceId);
+        if ($filledFrom !== null) {
+            $displayTimeZone = new DateTimeZone(Application_Model_Preference::GetTimezone());
+            $srcStart = clone $filledFrom['starts'];
+            $srcStart->setTimezone($displayTimeZone);
+            $info = sprintf(
+                _('Repeat of show %s from %s at %s'),
+                $filledFrom['name'],
+                $srcStart->format('l, F jS'),
+                $srcStart->format('G:i')
+            );
+            if ($filledFrom['skipped'] > 0) {
+                $info .= ' ' . sprintf(_('(%d items of the source were left out: file missing)'), $filledFrom['skipped']);
+            }
+            $this->view->additionalShowInfo = $info;
+        }
         $this->view->showLength = $show->getShowLength();
         $this->view->timeFilled = $show->getTimeScheduled();
         $this->view->percentFilled = $show->getPercentScheduled();

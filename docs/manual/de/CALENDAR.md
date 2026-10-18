@@ -273,6 +273,48 @@ Drei Unterfelder erscheinen:
 
 ---
 
+### Wiederholung einer anderen Sendung (seit 2026-10-18)
+
+Viele Sendungen laufen einmal und werden einmal wiederholt, an einem
+anderen Wochentag oder in einer anderen Woche.  Öffnen Sie das
+**Edit-Show**-Formular der Wiederholung, Abschnitt **Autoloading
+Playlist**, und wählen Sie unter **Wiederholung von Sendung** das
+Original.  Von da an wird jede Instanz der Wiederholung automatisch
+befüllt:
+
+- **Wann**: kurz vor dem Start der Wiederholung (etwa eine Stunde,
+  derselbe Vorlauf wie beim Autoloading), nicht am Ende des Originals
+  - Korrekturen am Original nach der Ausstrahlung werden so
+  mitgenommen.
+- **Was**: der Inhalt der **zuletzt beendeten** Instanz des Originals
+  - Dateien und Webstreams in ihrer Reihenfolge mit den gesendeten
+  Cue-Punkten und Blenden.  Live-Eingänge bleiben draußen.  Titel,
+  deren Track-Typ **In Wiederholungen übernehmen** abgewählt hat
+  (Settings → Track Types; typisch Jingles und Teaser), bleiben
+  ebenfalls draußen, damit die Wiederholung eigene, passende Teaser
+  aus ihrer Autoloading-Playlist bekommt, die danach die Restzeit
+  füllt.
+- **Wenn das Original noch nicht gelaufen ist** (erste Woche,
+  abgesagte Instanz): die Wiederholung bleibt ihrer
+  Autoloading-Playlist überlassen.
+- **Länge**: eine kürzere Wiederholung wird am Ende abgeschnitten wie
+  jede überbuchte Sendung; eine längere füllt ihre Autoloading-Playlist
+  auf.
+- **Ketten** sind erlaubt (C wiederholt B, B wiederholt A); ein Kreis
+  wird beim Speichern abgelehnt.  „Wiederholung von Sendung" lässt
+  sich nicht mit **Link** kombinieren.
+- **Löschen eines Titels**, den das Original gesendet hat, wird
+  abgelehnt, solange eine Wiederholung darauf wartet („wird noch für
+  die Wiederholung ... am ... gebraucht").  Eine außerhalb von
+  RASTATIME von der Platte verschwundene Datei wird übersprungen und
+  gezählt.
+
+**View Show** einer befüllten Wiederholung zeigt „Wiederholung von
+Sendung A vom <Datum> um <Zeit>" und, falls Zeilen übersprungen
+wurden, wie viele.  Eine Instanz, die bereits Inhalt hat (von Hand
+befüllt), wird nie überschrieben.  Aufgezeichnete Live-Sendungen
+lassen sich so noch nicht wiederholen (Stufe 2, siehe BACKLOG).
+
 ## 5. Drag-and-Drop
 
 Zwei Arten von Drag werden auf dem Kalender unterstützt:

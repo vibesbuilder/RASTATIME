@@ -1,10 +1,13 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.77
+Draft version: 0.78
 Date: 2026-10-18
 
 > **Revision history**
+> - **0.78 (2026-10-18)** — **Repeat of show** (§23.65): content copy of
+>   the source's last aired instance shortly before the repeat starts;
+>   migration 0071, track-type flag, delete guard.
 > - **0.77 (2026-10-18)** — **Show recording format selectable** (§23.64):
 >   `${SHOW_RECORDING_ENCODER}` in the template, cc_pref
 >   `local_recording_format/bitrate`, extension of the last render.
@@ -7151,3 +7154,61 @@ between Save and the restart (AAC bytes in an `.mp3`).
 information only.  Tests: `test_liquidsoap_config.py` (encoder, render,
 extension map) and `test_scheduler_recording.py` (extension callback,
 fallback to mp3).
+
+### 23.65 Repeat of Show (2026-10-18)
+
+**Model.**  `cc_show.repeat_of_show_id` (FK cc_show, ON DELETE SET NULL,
+migration 0071) names the source show A of a show B.  Per instance,
+`cc_show_instances.filled_from_instance_id` (FK, SET NULL) records the
+A instance the content came from and `repeat_skipped` how many rows were
+left out for a missing file.  `cc_track_types.repeat_copy` (default
+TRUE) keeps a type out of the copy (jingles, teasers).  Propel classes
+are not regenerated; `Application_Service_RepeatFillService` reads and
+writes the columns with raw SQL and every reader tolerates their absence
+(`columnsReady()` via information_schema, cached per request).
+
+**Fill.**  `RepeatFillTask` (TaskManager, 60-s poll lock
+`repeat_fill_poll_lock`, declared before `AutoPlaylistTask` so one pass
+copies first) calls `fillDue()`: B instances starting within
+`LEAD_SECONDS` (3900 s, one pass ahead of the 60-min autoloading build)
+that are unmodified, no rebroadcast, not yet filled and EMPTY (an
+instance filled by hand is never touched).  Source = the last ENDED
+instance of A (`ends <= now` and `<= B.starts`); none → the instance is
+left to its autoloading ("autoloading only", operator decision).
+`copyInstance()` reads A's rows in order, drops line-ins (live input)
+and files whose type has `repeat_copy = FALSE`, counts rows whose file
+is missing (`file_exists = FALSE` or import_status ≠ 0), and inserts the
+rest through `ShowInstance::addFilesAfter(0, …)` with the aired
+`clip_length / cue_in / cue_out / fade_in / fade_out` - the scheduler's
+own layout, crossfade and overlap logic apply, B's autoloading then
+fills the remaining time, overbooking is cut at B's end as usual.
+
+**Form.**  `AddShowAutoPlaylist` carries the select `add_show_repeat_of`
+(options `sourceOptions()` = shows with upcoming instances via
+`StoredFile::teaserShows`, InArray validator off; a stored source without
+upcoming instance is re-added when the form is populated).
+`ShowFormService::validateShowForms` refuses a missing show, self,
+loops (`wouldLoop()` walks the chain, 50 steps) and the combination with
+"Link" (linked instances would receive the copy per instance).
+`ShowService::setCcShow` stores the value; templates
+(`ShowTemplateService` whitelist, add-show.js apply) and
+Import/Export (column `repeat_of` = show name, resolved against existing
+shows, unknown name → note) carry it.
+
+**Delete guard.**  `cc_schedule.file_id / stream_id` cascade on delete,
+so a deleted track would silently vanish from the copy.
+`neededByPendingRepeat()` finds a future, empty, unfilled B instance
+whose source A aired the media in its last ended instance;
+`StoredFile::delete` and `Webstream::deleteStreams` refuse with
+"Cannot delete: still needed for the repeat "B" on <date>", the
+LibraryController shows that message.  (Migration 0065 only protects the
+playout HISTORY, not the schedule.)
+
+**Display.**  `ScheduleController::showContentDialogAction` sets
+`additionalShowInfo` "Repeat of show A from <date> at <time>" (+ "(N
+items of the source were left out: file missing)") from `filledFrom()`.
+
+**Stage 2 (BACKLOG, Defer).**  Recorded live shows: import the per-show
+recording after A's end and schedule it into B - needs a "recording
+finished" signal from the playout, a track type for recordings and the
+fill waiting for the import.
