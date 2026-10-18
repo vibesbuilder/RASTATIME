@@ -1439,6 +1439,16 @@ un_tests.ps1` (2026-10-16)** — startet API-, Playout- und
 
 ### Fixed
 
+- **Dashboard-Suchzeile: Zähler nennt die gewählte Art und steht rechts (2026-10-18)** —
+  „0 of 32 tracks" stand auch bei Smart Blocks, Playlists, Webstreams,
+  Line-Eingängen und Podcasts; jetzt „0 of 32 smart blocks" usw.
+  (je Medientyp ein übersetzbarer Text, EN/DE/FR/ES). Zähler und „×"
+  sitzen wieder rechts im Suchfeld, links neben dem Pfeil der
+  erweiterten Suche. Nebenbefund: Zähler und „×" wurden auch in die
+  Suchbox der Podcast-Tabelle kopiert (gleicher Container) — die
+  Podcast-Tabelle zeigt jetzt ihren eigenen Text „X of N podcasts".
+  Übersetzungen greifen nach Apache-Neustart. Commit `fe6eef4`.
+
 - **Bibliothek: Seitenlänge „Alle" sprengte den PHP-Speicher (2026-10-16)**
   — `contents-feed` baute mit 21.700 Titeln Zeilen, Escaped-Kopie und
   JSON (71 MB) auf 592 MB auf, php.ini erlaubt 256 MB: „Allowed memory
