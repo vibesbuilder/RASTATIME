@@ -6591,8 +6591,8 @@ msgstr "320 kbps es calidad de archivo (unos 145 MB por hora en MP3); 192 kbps r
 msgid "Repeat of show"
 msgstr "Repetición del programa"
 
-msgid "Shortly before this show starts, the content its source show aired last is copied in: files and webstreams in their order, live inputs and track types with 'Copy into Repeats' off (jingles, teasers) left out. The autoloading playlist below then fills the remaining time. Chains are allowed, loops are not."
-msgstr "Poco antes de que empiece este programa se copia el último contenido emitido del programa origen: archivos y retransmisiones en su orden; las entradas en vivo y los tipos de pista sin 'Copiar en repeticiones' (jingles, teasers) quedan fuera. La lista de carga automática de abajo rellena después el tiempo restante. Se permiten cadenas, no bucles."
+msgid "Shortly before this show starts, the content its source show aired last is copied in: files and webstreams in their order, live inputs left out. The autoloading playlist below then fills the remaining time. Chains are allowed, loops are not."
+msgstr "Poco antes de que empiece este programa se copia el último contenido emitido del programa origen: archivos y retransmisiones en su orden, las entradas en vivo quedan fuera. La lista de carga automática de abajo rellena después el tiempo restante. Se permiten cadenas, no bucles."
 
 msgid "The chosen source show does not exist any more."
 msgstr "El programa origen elegido ya no existe."
@@ -6605,12 +6605,6 @@ msgstr "Las cadenas de repetición no deben formar bucles: el origen elegido ya 
 
 msgid "\"Repeat of show\" cannot be combined with \"Link\"."
 msgstr "\"Repetición del programa\" no se puede combinar con \"Link\"."
-
-msgid "Copy into Repeats:"
-msgstr "Copiar en repeticiones:"
-
-msgid "Tracks of this type are carried over when a show is filled as the repeat of another show. Untick for jingles and teasers so the repeat gets its own, fitting ones from its autoloading playlist."
-msgstr "Las pistas de este tipo se trasladan cuando un programa se rellena como repetición de otro programa. Desmarque para jingles y teasers, así la repetición recibe los suyos, adecuados, desde su lista de carga automática."
 
 msgid "Cannot delete: still needed for the repeat \"%s\" on %s."
 msgstr "No se puede borrar: todavía se necesita para la repetición \"%s\" del %s."

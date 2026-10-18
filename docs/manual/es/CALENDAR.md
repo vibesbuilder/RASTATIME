@@ -198,12 +198,9 @@ rellena automáticamente:
   tras su emisión.
 - **Qué**: el contenido de la **última instancia terminada** del
   original: archivos y retransmisiones en su orden con los puntos de
-  cue y fundidos emitidos.  Las entradas en vivo quedan fuera.  Las
-  pistas cuyo tipo tiene **Copiar en repeticiones** desmarcado
-  (Settings → Track Types; típicamente jingles y teasers) también
-  quedan fuera, para que la repetición reciba sus propios teasers
-  adecuados desde su lista de carga automática, que después rellena
-  el tiempo restante.
+  cue y fundidos emitidos, jingles incluidos.  Las entradas en vivo
+  quedan fuera.  La lista de carga automática rellena después el
+  tiempo restante.
 - **Si el original aún no se ha emitido** (primera semana, instancia
   cancelada): la repetición se deja a su lista de carga automática.
 - **Duración**: una repetición más corta se corta al final como

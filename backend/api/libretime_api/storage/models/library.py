@@ -35,10 +35,6 @@ class Library(models.Model):
     # False = tracks of this type show "Station name - Show name" instead of
     # artist / title in the listeners' players
     icy_forward = models.BooleanField(default=True)
-    # RASTATIME 2026-10-18 - "Copy into Repeats" (legacy migration 0071):
-    # False = tracks of this type (jingles, teasers) stay out when a show is
-    # filled as the repeat of another show
-    repeat_copy = models.BooleanField(default=True)
 
     class Meta:
         managed = False

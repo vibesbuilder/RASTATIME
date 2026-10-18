@@ -6755,8 +6755,8 @@ msgstr "320 kbps est la qualité archive (environ 145 Mo par heure en MP3) ; 192
 msgid "Repeat of show"
 msgstr "Rediffusion de l'émission"
 
-msgid "Shortly before this show starts, the content its source show aired last is copied in: files and webstreams in their order, live inputs and track types with 'Copy into Repeats' off (jingles, teasers) left out. The autoloading playlist below then fills the remaining time. Chains are allowed, loops are not."
-msgstr "Peu avant le début de cette émission, le dernier contenu diffusé de l'émission source est copié : fichiers et flux web dans leur ordre ; les entrées live et les types de piste sans 'Copier dans les rediffusions' (jingles, teasers) restent dehors. La playlist de chargement automatique ci-dessous remplit ensuite le temps restant. Les chaînes sont permises, les boucles non."
+msgid "Shortly before this show starts, the content its source show aired last is copied in: files and webstreams in their order, live inputs left out. The autoloading playlist below then fills the remaining time. Chains are allowed, loops are not."
+msgstr "Peu avant le début de cette émission, le dernier contenu diffusé de l'émission source est copié : fichiers et flux web dans leur ordre, les entrées live restent dehors. La playlist de chargement automatique ci-dessous remplit ensuite le temps restant. Les chaînes sont permises, les boucles non."
 
 msgid "The chosen source show does not exist any more."
 msgstr "L'émission source choisie n'existe plus."
@@ -6769,12 +6769,6 @@ msgstr "Les chaînes de rediffusion ne doivent pas boucler : la source choisie r
 
 msgid "\"Repeat of show\" cannot be combined with \"Link\"."
 msgstr "\"Rediffusion de l'émission\" ne se combine pas avec \"Link\"."
-
-msgid "Copy into Repeats:"
-msgstr "Copier dans les rediffusions :"
-
-msgid "Tracks of this type are carried over when a show is filled as the repeat of another show. Untick for jingles and teasers so the repeat gets its own, fitting ones from its autoloading playlist."
-msgstr "Les pistes de ce type sont reprises quand une émission est remplie comme rediffusion d'une autre émission. Décochez pour les jingles et teasers afin que la rediffusion reçoive les siens, adaptés, depuis sa playlist de chargement automatique."
 
 msgid "Cannot delete: still needed for the repeat \"%s\" on %s."
 msgstr "Suppression impossible : encore nécessaire pour la rediffusion \"%s\" du %s."

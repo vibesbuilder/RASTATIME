@@ -102,14 +102,6 @@ class Application_Form_AddTracktype extends Zend_Form
         $icy->setDescription(_('Artist and title of tracks of this type are shown in the listeners\' players and in the Live Text. Unticked: the stream shows "Station name - Show name" while such a track plays (jingles, station IDs, promos). A track can override this in its own editor.'));
         $this->addElement($icy);
 
-        // RASTATIME 2026-10-18 - "Copy into Repeats" (migration 0071)
-        $repeat = new Zend_Form_Element_Checkbox('repeat_copy');
-        $repeat->setLabel(_('Copy into Repeats:'));
-        $repeat->setRequired(false);
-        $repeat->setChecked(true);
-        $repeat->setDescription(_('Tracks of this type are carried over when a show is filled as the repeat of another show. Untick for jingles and teasers so the repeat gets its own, fitting ones from its autoloading playlist.'));
-        $this->addElement($repeat);
-
         $saveBtn = new Zend_Form_Element_Button('save_tracktype');
         $saveBtn->setAttrib('class', 'btn right-floated');
         $saveBtn->setIgnore(true);

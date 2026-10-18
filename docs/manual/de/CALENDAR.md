@@ -288,12 +288,8 @@ befüllt:
   mitgenommen.
 - **Was**: der Inhalt der **zuletzt beendeten** Instanz des Originals
   - Dateien und Webstreams in ihrer Reihenfolge mit den gesendeten
-  Cue-Punkten und Blenden.  Live-Eingänge bleiben draußen.  Titel,
-  deren Track-Typ **In Wiederholungen übernehmen** abgewählt hat
-  (Settings → Track Types; typisch Jingles und Teaser), bleiben
-  ebenfalls draußen, damit die Wiederholung eigene, passende Teaser
-  aus ihrer Autoloading-Playlist bekommt, die danach die Restzeit
-  füllt.
+  Cue-Punkten und Blenden, Jingles eingeschlossen.  Live-Eingänge
+  bleiben draußen.  Die Autoloading-Playlist füllt danach die Restzeit.
 - **Wenn das Original noch nicht gelaufen ist** (erste Woche,
   abgesagte Instanz): die Wiederholung bleibt ihrer
   Autoloading-Playlist überlassen.

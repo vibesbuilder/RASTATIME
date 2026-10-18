@@ -7,7 +7,7 @@ Date: 2026-10-18
 > **Revision history**
 > - **0.78 (2026-10-18)** — **Repeat of show** (§23.65): content copy of
 >   the source's last aired instance shortly before the repeat starts;
->   migration 0071, track-type flag, delete guard.
+>   migration 0071, delete guard (track-type flag dropped again by 0072).
 > - **0.77 (2026-10-18)** — **Show recording format selectable** (§23.64):
 >   `${SHOW_RECORDING_ENCODER}` in the template, cc_pref
 >   `local_recording_format/bitrate`, extension of the last render.
@@ -7161,8 +7161,9 @@ fallback to mp3).
 migration 0071) names the source show A of a show B.  Per instance,
 `cc_show_instances.filled_from_instance_id` (FK, SET NULL) records the
 A instance the content came from and `repeat_skipped` how many rows were
-left out for a missing file.  `cc_track_types.repeat_copy` (default
-TRUE) keeps a type out of the copy (jingles, teasers).  Propel classes
+left out for a missing file.  (A per-type flag `cc_track_types.repeat_copy`
+was added by 0071 and dropped again by 0072 the same day - operator: not
+needed, jingles travel with the repeat.)  Propel classes
 are not regenerated; `Application_Service_RepeatFillService` reads and
 writes the columns with raw SQL and every reader tolerates their absence
 (`columnsReady()` via information_schema, cached per request).
@@ -7175,8 +7176,8 @@ that are unmodified, no rebroadcast, not yet filled and EMPTY (an
 instance filled by hand is never touched).  Source = the last ENDED
 instance of A (`ends <= now` and `<= B.starts`); none → the instance is
 left to its autoloading ("autoloading only", operator decision).
-`copyInstance()` reads A's rows in order, drops line-ins (live input)
-and files whose type has `repeat_copy = FALSE`, counts rows whose file
+`copyInstance()` reads A's rows in order, drops line-ins (live input),
+counts rows whose file
 is missing (`file_exists = FALSE` or import_status ≠ 0), and inserts the
 rest through `ShowInstance::addFilesAfter(0, …)` with the aired
 `clip_length / cue_in / cue_out / fade_in / fade_out` - the scheduler's

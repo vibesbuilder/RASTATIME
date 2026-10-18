@@ -28,15 +28,10 @@ function populateForm(entries) {
     "checked",
     !(entries.icy_forward === false || entries.icy_forward === "f" || entries.icy_forward === 0 || entries.icy_forward === "0"),
   );
-  // RASTATIME 2026-10-18 - "Copy into Repeats" (default: copy)
-  $("#repeat_copy").prop(
-    "checked",
-    !(entries.repeat_copy === false || entries.repeat_copy === "f" || entries.repeat_copy === 0 || entries.repeat_copy === "0"),
-  );
   if ($.rtDescriptionTooltips) {
     $.rtDescriptionTooltips($("#tracktype_details"), {
       where: "field",
-      only: ["crossfade_duration", "no_fade_crossfade", "icy_forward", "repeat_copy"],
+      only: ["crossfade_duration", "no_fade_crossfade", "icy_forward"],
     });
   }
 }

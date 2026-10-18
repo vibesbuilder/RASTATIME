@@ -9,7 +9,7 @@
             </dt>
             <dd>
                 <?php echo $this->element->getElement('add_show_repeat_of') ?>
-                <span class="help_icon" data-rt-tip="<?php echo htmlspecialchars(_("Shortly before this show starts, the content its source show aired last is copied in: files and webstreams in their order, live inputs and track types with 'Copy into Repeats' off (jingles, teasers) left out. The autoloading playlist below then fills the remaining time. Chains are allowed, loops are not."), ENT_QUOTES) ?>"></span>
+                <span class="help_icon" data-rt-tip="<?php echo htmlspecialchars(_("Shortly before this show starts, the content its source show aired last is copied in: files and webstreams in their order, live inputs left out. The autoloading playlist below then fills the remaining time. Chains are allowed, loops are not."), ENT_QUOTES) ?>"></span>
                 <?php $errs = $this->element->getElement('add_show_repeat_of')->getMessages(); if ($errs) { ?>
                     <ul class="errors"><?php foreach ($errs as $e) { echo '<li>' . htmlspecialchars($e, ENT_QUOTES) . '</li>'; } ?></ul>
                 <?php } ?>

@@ -288,11 +288,8 @@ chaque instance de la rediffusion est remplie automatiquement :
   diffusion sont donc reprises.
 - **Quoi** : le contenu de la **dernière instance terminée** de
   l'original - fichiers et flux web dans leur ordre avec les points de
-  repère et fondus diffusés.  Les entrées live restent dehors.  Les
-  pistes dont le type a **Copier dans les rediffusions** décoché
-  (Settings → Track Types ; typiquement jingles et teasers) restent
-  dehors aussi, pour que la rediffusion reçoive ses propres teasers
-  adaptés depuis sa playlist de chargement automatique, qui remplit
+  repère et fondus diffusés, jingles compris.  Les entrées live
+  restent dehors.  La playlist de chargement automatique remplit
   ensuite le temps restant.
 - **Si l'original n'a pas encore été diffusé** (première semaine,
   instance annulée) : la rediffusion est laissée à sa playlist de

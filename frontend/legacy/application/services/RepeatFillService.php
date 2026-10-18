@@ -6,8 +6,9 @@
  * before B starts (same lead as the autoloading build, which then fills the
  * remaining time).  Operator decisions 2026-10-18: fill shortly before the
  * start (not at A's end); the last ENDED instance of A, otherwise the
- * autoloading alone; tracks whose track type has "Copy into Repeats" off
- * (jingles, teasers) stay out; chains (C repeats B repeats A) are allowed,
+ * autoloading alone; jingles are carried over like everything else (the
+ * per-type "Copy into Repeats" flag was removed again the same day);
+ * chains (C repeats B repeats A) are allowed,
  * loops are refused; a track that B still needs cannot be deleted.
  *
  * The columns come with legacy migration 0071 and are read / written with
@@ -338,17 +339,15 @@ class Application_Service_RepeatFillService
     /**
      * Copy the rows of $srcInstanceId into the (empty) $dstInstanceId:
      * files and webstreams in their order with the aired cue / fade values,
-     * line-ins (live input) and files whose track type has "Copy into
-     * Repeats" off are left out, missing files are counted as skipped.
+     * line-ins (live input) are left out, missing files are counted as skipped.
      */
     public static function copyInstance(int $srcInstanceId, int $dstInstanceId, string $label = ''): bool
     {
         $rows = Application_Common_Database::prepareAndExecute(
             'SELECT sch.file_id, sch.stream_id, sch.linein_id, sch.clip_length, sch.cue_in, sch.cue_out, sch.fade_in, sch.fade_out,
-                    f.file_exists, f.import_status, COALESCE(tt.repeat_copy, TRUE) AS repeat_copy
+                    f.file_exists, f.import_status
                FROM cc_schedule sch
                LEFT JOIN cc_files f ON f.id = sch.file_id
-               LEFT JOIN cc_track_types tt ON tt.id = f.track_type_id
               WHERE sch.instance_id = :src
               ORDER BY sch.starts, sch.id',
             [':src' => $srcInstanceId],
@@ -356,7 +355,6 @@ class Application_Service_RepeatFillService
         );
         $files = [];
         $skipped = 0;
-        $excluded = 0;
         $live = 0;
         foreach ($rows as $r) {
             if ($r['linein_id']) {
@@ -365,11 +363,6 @@ class Application_Service_RepeatFillService
                 continue;
             }
             if ($r['file_id']) {
-                if (!self::pg($r['repeat_copy'])) {
-                    ++$excluded;
-
-                    continue;
-                }
                 if (!self::pg($r['file_exists']) || (int) $r['import_status'] !== 0) {
                     ++$skipped;
 
@@ -399,8 +392,8 @@ class Application_Service_RepeatFillService
             Application_Common_Database::EXECUTE
         );
         Logging::info(sprintf(
-            'RepeatFillService: "%s" instance %d filled from instance %d - %d rows copied, %d excluded by track type, %d missing, %d live inputs left out',
-            $label, $dstInstanceId, $srcInstanceId, count($files), $excluded, $skipped, $live
+            'RepeatFillService: "%s" instance %d filled from instance %d - %d rows copied, %d missing, %d live inputs left out',
+            $label, $dstInstanceId, $srcInstanceId, count($files), $skipped, $live
         ));
 
         return count($files) > 0;

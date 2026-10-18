@@ -5302,8 +5302,9 @@ Pakets: KB5124010 oder spaeter); (b) einige Wochen ohne neue 26H2-spezifische Kn
 
 Sendung B wählt Sendung A als Quelle (Edit Show → Autoloading Playlist →
 „Repeat of show"); kurz vor dem Start wird der Inhalt der zuletzt
-beendeten A-Instanz kopiert, Track-Typen ohne „Copy into Repeats"
-bleiben draußen, das Autoloading füllt die Restzeit; Ketten erlaubt,
+beendeten A-Instanz kopiert (Jingles eingeschlossen - das Track-Typ-Flag
+„Copy into Repeats" wurde am selben Tag wieder entfernt, Migration 0072),
+das Autoloading füllt die Restzeit; Ketten erlaubt,
 Kreise verboten; Löschsperre für noch gebrauchte Titel.  Migration 0071
 live 2026-10-18 17:27, Probe bestanden (repeat_e2e_probe.php); Abnahme
 2026-10-18 18:36 durch den Operator: „testwhc“ (19:40) wurde 65 min vor dem
@@ -5319,7 +5320,7 @@ OGG/Opus nach Settings → Local Machine) abspielen.  Vorbedingungen:
 1. Stufe 1 eine Woche im Betrieb (Kopie, Löschsperre, Autoloading-Rest).
 2. Signal „Aufnahme fertig" vom Playout an Legacy (Pfad + Instanz-Id),
    Import der Datei über den Import-Ordner/Analyzer in einen Track-Typ
-   „Recordings" (ohne „Copy into Repeats"-Bedarf), Verknüpfung
+   „Recordings", Verknüpfung
    Datei ↔ A-Instanz (`cc_show_instances.file_id` existiert).
 3. `fillDue()` wartet bei einer Live-Quelle auf den Import und legt die
    Aufnahme als einzige Zeile in B (Länge = Aufnahmedauer, Rest

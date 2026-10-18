@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- **„Copy into Repeats" je Track-Typ wieder entfernt (2026-10-18)** — Operator:
+  nicht nötig, eine Wiederholung nimmt die Jingles des Originals mit.
+  Häkchen in Settings → Track Types, `Tracktype::setRepeatCopy`, die
+  Ausschluss-Logik in `RepeatFillService::copyInstance`, Django-Feld und
+  Spalte `cc_track_types.repeat_copy` (Migration 0072, DROP COLUMN) sind
+  weg; Tooltip des Feldes „Repeat of show" und Manual (CALENDAR,
+  SETTINGS ×4) angepasst. Commit `TBD`.
+
 ### Added
 
 - **Wiederholungen automatisieren: „Wiederholung von Sendung" (2026-10-18, Go 2026-10-18)** —

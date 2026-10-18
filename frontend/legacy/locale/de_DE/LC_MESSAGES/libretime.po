@@ -6398,8 +6398,8 @@ msgstr "320 kbps ist Archivqualität (etwa 145 MB je Stunde als MP3); 192 kbps h
 msgid "Repeat of show"
 msgstr "Wiederholung von Sendung"
 
-msgid "Shortly before this show starts, the content its source show aired last is copied in: files and webstreams in their order, live inputs and track types with 'Copy into Repeats' off (jingles, teasers) left out. The autoloading playlist below then fills the remaining time. Chains are allowed, loops are not."
-msgstr "Kurz vor dem Start dieser Sendung wird der zuletzt gesendete Inhalt der Quellsendung übernommen: Dateien und Webstreams in ihrer Reihenfolge; Live-Eingänge und Track-Typen ohne 'In Wiederholungen übernehmen' (Jingles, Teaser) bleiben draußen. Die Autoloading-Playlist unten füllt danach die Restzeit. Ketten sind erlaubt, Kreise nicht."
+msgid "Shortly before this show starts, the content its source show aired last is copied in: files and webstreams in their order, live inputs left out. The autoloading playlist below then fills the remaining time. Chains are allowed, loops are not."
+msgstr "Kurz vor dem Start dieser Sendung wird der zuletzt gesendete Inhalt der Quellsendung übernommen: Dateien und Webstreams in ihrer Reihenfolge, Live-Eingänge bleiben draußen. Die Autoloading-Playlist unten füllt danach die Restzeit. Ketten sind erlaubt, Kreise nicht."
 
 msgid "The chosen source show does not exist any more."
 msgstr "Die gewählte Quellsendung existiert nicht mehr."
@@ -6412,12 +6412,6 @@ msgstr "Wiederholungsketten dürfen keinen Kreis bilden: die gewählte Quelle wi
 
 msgid "\"Repeat of show\" cannot be combined with \"Link\"."
 msgstr "\"Wiederholung von Sendung\" lässt sich nicht mit \"Link\" kombinieren."
-
-msgid "Copy into Repeats:"
-msgstr "In Wiederholungen übernehmen:"
-
-msgid "Tracks of this type are carried over when a show is filled as the repeat of another show. Untick for jingles and teasers so the repeat gets its own, fitting ones from its autoloading playlist."
-msgstr "Titel dieses Typs werden übernommen, wenn eine Sendung als Wiederholung einer anderen Sendung befüllt wird. Für Jingles und Teaser abwählen, damit die Wiederholung eigene, passende aus ihrer Autoloading-Playlist bekommt."
 
 msgid "Cannot delete: still needed for the repeat \"%s\" on %s."
 msgstr "Löschen nicht möglich: wird noch für die Wiederholung \"%s\" am %s gebraucht."

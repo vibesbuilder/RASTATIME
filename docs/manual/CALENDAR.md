@@ -259,11 +259,8 @@ filled automatically:
   carried over.
 - **What**: the content of the original's **last ended** instance -
   files and webstreams in their order with the aired cue points and
-  fades.  Live inputs stay out.  Tracks whose track type has
-  **Copy into Repeats** unticked (Settings → Track Types; typically
-  jingles and teasers) stay out too, so the repeat gets its own,
-  fitting teasers from its autoloading playlist, which fills the
-  remaining time afterwards.
+  fades, jingles included.  Live inputs stay out.  The autoloading
+  playlist fills the remaining time afterwards.
 - **If the original has not aired yet** (first week, cancelled
   instance): the repeat is left to its autoloading playlist.
 - **Length**: a shorter repeat is cut at its end like any

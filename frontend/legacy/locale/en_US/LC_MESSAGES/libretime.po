@@ -2,3 +2,48 @@
 
 msgid "last %s"
 msgstr ""
+
+msgid "Show Recording"
+msgstr ""
+
+msgid "%s of %s playlists"
+msgstr ""
+
+msgid "%s of %s smart blocks"
+msgstr ""
+
+msgid "%s of %s webstreams"
+msgstr ""
+
+msgid "%s of %s podcasts"
+msgstr ""
+
+msgid "%s of %s line inputs"
+msgstr ""
+
+msgid "Repeat of show"
+msgstr ""
+
+msgid "Shortly before this show starts, the content its source show aired last is copied in: files and webstreams in their order, live inputs left out. The autoloading playlist below then fills the remaining time. Chains are allowed, loops are not."
+msgstr ""
+
+msgid "The chosen source show does not exist any more."
+msgstr ""
+
+msgid "A show cannot be the repeat of itself."
+msgstr ""
+
+msgid "Repeat chains must not loop: the chosen source already repeats this show."
+msgstr ""
+
+msgid "Cannot delete: still needed for the repeat \"%s\" on %s."
+msgstr ""
+
+msgid "Could not delete webstream(s)."
+msgstr ""
+
+msgid "Repeat of show %s from %s at %s"
+msgstr ""
+
+msgid "(%d items of the source were left out: file missing)"
+msgstr ""
