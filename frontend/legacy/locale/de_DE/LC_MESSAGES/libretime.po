@@ -6430,3 +6430,15 @@ msgstr "Quellsendung \"%s\" (repeat_of) nicht gefunden - ohne sie importiert"
 
 msgid "last %s"
 msgstr "zuletzt %s"
+
+#: RASTATIME 2026-10-18 import/export batches
+msgid "checking …"
+msgstr "wird geprüft …"
+
+#: RASTATIME 2026-10-18 import/export batches
+msgid "Checking %1 of %2 …"
+msgstr "Prüfe %1 von %2 …"
+
+#: RASTATIME 2026-10-18 import/export batches
+msgid "Importing %1 of %2 …"
+msgstr "Importiere %1 von %2 …"

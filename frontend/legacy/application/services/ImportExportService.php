@@ -293,7 +293,11 @@ class Application_Service_ImportExportService
             'staged_at' => date('c'),
         ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
 
-        $preview = $this->preview($token);
+        // RASTATIME 2026-10-18 - the rows come back unchecked ('pending'): the
+        // page validates them in batches (validateRows) and imports in batches
+        // too.  A single request for 373 shows took > 120 s and mod_fcgid cut
+        // it off (FcgidIOTimeout) while PHP went on creating shows.
+        $preview = $this->pendingRows($bundleFor = ['records' => $records]);
         foreach ($all as $type => $h) {
             if (isset($records[$type])) {
                 foreach ($h->notices() as $n) {
@@ -337,6 +341,88 @@ class Application_Service_ImportExportService
     }
 
     /** Validate every staged record without writing. */
+    /**
+     * RASTATIME 2026-10-18 - every staged row with status 'pending' and no
+     * messages, in import order; the page validates them in batches.
+     */
+    private function pendingRows(array $bundle): array
+    {
+        $rows = [];
+        foreach (self::ORDER as $type) {
+            if (!isset($bundle['records'][$type])) {
+                continue;
+            }
+            $h = self::handler($type);
+            foreach ($bundle['records'][$type] as $i => $record) {
+                $rows[] = [
+                    'id' => $type . ':' . $i,
+                    'type' => $type,
+                    'label' => $h->label(),
+                    'line' => $record['line'] ?? ($i + 1),
+                    'name' => $record['name'] ?? '',
+                    'summary' => $record['summary'] ?? '',
+                    'status' => 'pending',
+                    'messages' => [],
+                ];
+            }
+        }
+
+        return $rows;
+    }
+
+    /**
+     * RASTATIME 2026-10-18 - validate a batch of staged rows (ids like
+     * "shows:12") in import order.  The names of the rows found ok so far
+     * are kept in state.json of the staging folder, so a later batch sees a
+     * playlist's block from an earlier batch as pending - as the one-shot
+     * preview did.  Nothing is written to the database.
+     */
+    public function validateRows(string $token, array $ids): array
+    {
+        $bundle = self::loadBundle($token);
+        $ctx = self::newContext($token, $bundle);
+        $stateFile = self::tokenDir($token) . DIRECTORY_SEPARATOR . 'state.json';
+        if (is_file($stateFile)) {
+            $state = json_decode((string) file_get_contents($stateFile), true);
+            if (is_array($state['pending'] ?? null)) {
+                $ctx['pending'] = array_merge($ctx['pending'], $state['pending']);
+            }
+        }
+        $wanted = array_fill_keys(array_map('strval', $ids), true);
+        $rows = [];
+        foreach (self::ORDER as $type) {
+            if (!isset($bundle['records'][$type])) {
+                continue;
+            }
+            $h = self::handler($type);
+            foreach ($bundle['records'][$type] as $i => $record) {
+                $id = $type . ':' . $i;
+                if (!isset($wanted[$id])) {
+                    continue;
+                }
+                $result = !empty($record['_errors'])
+                    ? ['status' => Application_Service_ImportExportType::STATUS_ERROR, 'messages' => $record['_errors']]
+                    : $h->validate($record, $ctx);
+                if ($result['status'] === Application_Service_ImportExportType::STATUS_OK) {
+                    $ctx['pending'][$type][] = $record['name'] ?? '';
+                }
+                $rows[] = [
+                    'id' => $id,
+                    'type' => $type,
+                    'label' => $h->label(),
+                    'line' => $record['line'] ?? ($i + 1),
+                    'name' => $record['name'] ?? '',
+                    'summary' => $record['summary'] ?? '',
+                    'status' => $result['status'],
+                    'messages' => $result['messages'],
+                ];
+            }
+        }
+        file_put_contents($stateFile, json_encode(['pending' => $ctx['pending']], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+
+        return $rows;
+    }
+
     public function preview(string $token): array
     {
         $bundle = self::loadBundle($token);
@@ -374,7 +460,13 @@ class Application_Service_ImportExportService
      * Create the selected rows (ids "type:index"), in dependency order,
      * re-validating each right before writing.
      */
-    public function import(string $token, array $selected): array
+    /**
+     * @param bool $finish       remove the staging folder afterwards (false for all
+     *                           but the last batch of a batched import)
+     * @param bool $onlySelected return only the selected rows (batched import),
+     *                           not every staged row with "not selected"
+     */
+    public function import(string $token, array $selected, bool $finish = true, bool $onlySelected = false): array
     {
         $bundle = self::loadBundle($token);
         $ctx = self::newContext($token, $bundle);
@@ -389,6 +481,9 @@ class Application_Service_ImportExportService
                 $id = $type . ':' . $i;
                 $row = ['id' => $id, 'type' => $type, 'label' => $h->label(), 'line' => $record['line'] ?? ($i + 1), 'name' => $record['name'] ?? ''];
                 if (!isset($wanted[$id])) {
+                    if ($onlySelected) {
+                        continue;
+                    }
                     $row['status'] = Application_Service_ImportExportType::STATUS_SKIP;
                     $row['messages'] = [_('not selected')];
                     $rows[] = $row;
@@ -420,7 +515,9 @@ class Application_Service_ImportExportService
                 $rows[] = $row;
             }
         }
-        self::rmdirRecursive(self::tokenDir($token));
+        if ($finish) {
+            self::rmdirRecursive(self::tokenDir($token));
+        }
 
         return $rows;
     }

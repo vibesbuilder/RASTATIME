@@ -58,7 +58,11 @@ akzeptiert. Schalter-Spalten nehmen `yes`/`no`.
    Playlisten, Smart Blocks, Webstreams und die Optionen eines
    Podcast-Abos. Sendungen werden nie ersetzt — eine Sendung, die sich
    überschneiden würde, scheitert einfach.
-3. Klicken Sie **Vorschau**. Die Tabelle zeigt jede Zeile mit Status:
+3. Klicken Sie **Vorschau**. Die Zeilen erscheinen sofort und werden
+   dann in Zehnergruppen geprüft - die Statuszeile zählt „Prüfe 40 von
+   373"; große Bündel (hunderte Sendungen) brauchen einige Minuten, die
+   Seite bleibt bedienbar, und der Import-Knopf wird frei, sobald die
+   Prüfung fertig ist. Die Tabelle zeigt jede Zeile mit Status:
    * **bereit** — gültig, wird beim Import angelegt;
    * **übersprungen** — existiert bereits (bei *überspringen*) oder
      nicht ausgewählt;
@@ -66,7 +70,8 @@ akzeptiert. Schalter-Spalten nehmen `yes`/`no`.
      Überschneidung, falsches Datum …). Korrigieren Sie die Datei und
      laden Sie sie erneut hoch, oder importieren Sie die übrigen Zeilen.
 4. Entfernen Sie den Haken bei allem, was Sie nicht wollen, und klicken
-   Sie **Gewählte Zeilen importieren**. Die Zeilen werden in
+   Sie **Gewählte Zeilen importieren**. Auch der Import läuft in
+   Zehnergruppen („Importiere 30 von 102"). Die Zeilen werden in
    Abhängigkeitsreihenfolge angelegt — Webstreams, Smart Blocks,
    Playlisten, Podcasts, Sendungen —, sodass eine Playlist einen Block
    aus demselben Bündel referenzieren kann und eine Sendung eine

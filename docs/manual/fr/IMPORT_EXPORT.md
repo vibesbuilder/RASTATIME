@@ -58,14 +58,20 @@ sont aussi acceptés. Les colonnes interrupteurs prennent `yes`/`no`.
    blocks, webstreams et les options d'un abonnement podcast. Les
    émissions ne sont jamais remplacées — une émission qui chevaucherait
    échoue simplement.
-3. Cliquez **Aperçu**. Le tableau liste chaque ligne avec son statut :
+3. Cliquez **Aperçu**. Les lignes apparaissent aussitôt puis sont
+   vérifiées par groupes de dix - la ligne d'état compte « Vérification
+   40 sur 373 » ; une grande archive (des centaines d'émissions) prend
+   quelques minutes, la page reste utilisable et le bouton d'import se
+   débloque à la fin de la vérification. Le tableau liste chaque ligne
+   avec son statut :
    * **prêt** — valide, sera créée à l'import ;
    * **ignoré** — existe déjà (avec *ignorer*), ou non sélectionnée ;
    * **erreur** — la remarque dit pourquoi (playlist inconnue,
      chevauchement, mauvaise date …). Corrigez le fichier et renvoyez-le,
      ou importez les autres lignes.
 4. Décochez ce que vous ne voulez pas et cliquez **Importer les lignes
-   sélectionnées**. Les lignes sont créées dans l'ordre des
+   sélectionnées**. L'import procède lui aussi par groupes de dix
+   (« Import 30 sur 102 »). Les lignes sont créées dans l'ordre des
    dépendances — webstreams, smart blocks, playlists, podcasts,
    émissions — si bien qu'une playlist peut référencer un bloc de la
    même archive, et une émission une playlist de la même archive.

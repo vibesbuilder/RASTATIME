@@ -92,6 +92,37 @@ class ImportexportController extends Zend_Controller_Action
         }
     }
 
+    /**
+     * RASTATIME 2026-10-18 - validate a batch of staged rows (POST token,
+     * ids[]); the page calls this repeatedly after the upload.
+     */
+    public function validateAction()
+    {
+        if (!$this->getRequest()->isPost()) {
+            $this->sendJson(['error' => 'POST only'], 405);
+
+            return;
+        }
+        if (!$this->verifyCsrf()) {
+            $this->sendJson(['error' => _('Session expired - reload the page.')], 403);
+
+            return;
+        }
+        $token = (string) $this->_getParam('token', '');
+        $ids = $this->_getParam('ids', []);
+        if (is_string($ids)) {
+            $ids = $ids === '' ? [] : explode(',', $ids);
+        }
+
+        try {
+            $service = new Application_Service_ImportExportService();
+            $this->sendJson(['rows' => $service->validateRows($token, is_array($ids) ? $ids : [])]);
+        } catch (Exception $e) {
+            Logging::warn('import/export validate: ' . $e->getMessage());
+            $this->sendJson(['error' => $e->getMessage()], 400);
+        }
+    }
+
     public function importAction()
     {
         if (!$this->getRequest()->isPost()) {
@@ -109,9 +140,14 @@ class ImportexportController extends Zend_Controller_Action
         if (is_string($selected)) {
             $selected = $selected === '' ? [] : explode(',', $selected);
         }
+        // RASTATIME 2026-10-18 - batched import: partial=1 returns only the
+        // selected rows, finish=0 keeps the staging folder for the next batch
+        $partial = (string) $this->_getParam('partial', '0') === '1';
+        $finish = (string) $this->_getParam('finish', '1') !== '0';
+
         try {
             $service = new Application_Service_ImportExportService();
-            $rows = $service->import($token, is_array($selected) ? $selected : []);
+            $rows = $service->import($token, is_array($selected) ? $selected : [], $finish, $partial);
             $summary = ['ok' => 0, 'skip' => 0, 'error' => 0];
             foreach ($rows as $r) {
                 if (isset($summary[$r['status']])) {

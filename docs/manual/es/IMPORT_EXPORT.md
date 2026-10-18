@@ -58,14 +58,20 @@ correctamente en Excel o LibreOffice; al importar también se aceptan
    inteligentes, webstreams y las opciones de una suscripción a
    podcast. Los programas nunca se reemplazan: un programa que se
    solaparía simplemente falla.
-3. Pulse **Vista previa**. La tabla lista cada fila con su estado:
+3. Pulse **Vista previa**. Las filas aparecen de inmediato y luego se
+   comprueban en grupos de diez; la línea de estado cuenta «Comprobando
+   40 de 373». Un paquete grande (cientos de programas) tarda unos
+   minutos, la página sigue respondiendo y el botón de importar se
+   desbloquea al terminar la comprobación. La tabla lista cada fila con
+   su estado:
    * **listo**: válida, se creará al importar;
    * **omitido**: ya existe (con *omitir*) o no está seleccionada;
    * **error**: la nota dice por qué (lista desconocida, solapamiento,
      fecha incorrecta…). Corrija el archivo y súbalo de nuevo, o
      importe las demás filas.
 4. Desmarque lo que no quiera y pulse **Importar las filas
-   seleccionadas**. Las filas se crean en orden de dependencia —
+   seleccionadas**. La importación también va en grupos de diez
+   («Importando 30 de 102»). Las filas se crean en orden de dependencia —
    webstreams, bloques inteligentes, listas, podcasts, programas—, de
    modo que una lista puede referenciar un bloque del mismo paquete y
    un programa una lista del mismo paquete.

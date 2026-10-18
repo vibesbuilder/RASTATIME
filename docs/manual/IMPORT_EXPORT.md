@@ -52,13 +52,18 @@ columns take `yes`/`no`.
    already exists untouched; *replace* overwrites playlists, smart
    blocks, webstreams and the options of a podcast subscription.
    Shows are never replaced — a show that would overlap simply fails.
-3. Click **Preview**. The table lists every row with its status:
+3. Click **Preview**. The rows appear at once and are then checked in
+   batches of ten - the status line counts "Checking 40 of 373"; large
+   bundles (hundreds of shows) take a few minutes, the page stays
+   responsive and the import button unlocks when the check is done.
+   The table lists every row with its status:
    * **ready** — valid, will be created when you import;
    * **skipped** — exists already (with *skip*), or not selected;
    * **error** — the note says why (unknown playlist, overlap, bad
      date …). Fix the file and upload it again, or import the other
      rows.
-4. Untick what you do not want and click **Import selected rows**.
+4. Untick what you do not want and click **Import selected rows**. The
+   import runs in batches of ten as well ("Importing 30 of 102").
    Rows are created in dependency order — webstreams, smart blocks,
    playlists, podcasts, shows — so a playlist may reference a block
    from the same bundle, and a show a playlist from the same bundle.
