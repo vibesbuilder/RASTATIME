@@ -1491,6 +1491,19 @@ un_tests.ps1` (2026-10-16)** — startet API-, Playout- und
 
 ### Fixed
 
+- **Import/Export: Sendungs-Import brach nach 120 s ab (2026-10-18)** —
+  Vorschau und Import liefen als je ein Request über alle Zeilen; bei 373
+  Sendungen (Überschneidungsprüfung je Instanz ≈ 0,5 s pro Zeile) schnitt
+  mod_fcgid den Request nach `FcgidIOTimeout` 120 s ab (HTTP 500,
+  „read timeout from pipe"), während PHP weiter Sendungen anlegte: 273
+  von 373 angelegt, der Rest ohne Rückmeldung.  Jetzt liefert der Upload
+  die Zeilen sofort als „wird geprüft", die Seite prüft sie in
+  Zehnergruppen (`validateRows`, Status der bereits geprüften Namen in
+  `state.json` des Staging-Ordners) und importiert in Zehnergruppen
+  (`import(..., finish, onlySelected)`, Staging-Ordner erst mit der letzten
+  Gruppe weg); Fortschritt in der Statuszeile, Import-Knopf erst nach der
+  Prüfung.  CLI-Probe (`importexport_test.php`) unverändert
+  (Einzel-Request).  Manual IMPORT_EXPORT ×4.  Commit 9d9125c.
 - **„Repeat of show“: Quellsendung der nächsten zwei Stunden fehlte in der Liste (2026-10-18)** —
   `StoredFile::teaserShows` verglich die UTC-Instanzzeiten mit einem
   nackten NOW() (Sitzungszone Europe/Berlin) und blendete so jede in den
