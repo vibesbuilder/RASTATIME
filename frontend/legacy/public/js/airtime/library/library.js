@@ -617,36 +617,62 @@ var AIRTIME = (function (AIRTIME) {
     }
   };
 
-  // RASTATIME 2026-10-09 - filter indicator: the "x" and the "X of N
-  // tracks" count sit INSIDE the search box at its left end, right after
-  // the magnifier, vertically centred; the typed text starts after them
-  // (padding-left).  The box spans the whole line on the dashboard, so a
-  // placement after it would be off the panel.  Absolute inside
+  // RASTATIME 2026-10-09 - filter indicator: the "X of N tracks" count and
+  // the "x" sit INSIDE the search box at its right end, left of the
+  // advanced-search caret, vertically centred (operator 2026-10-18: right,
+  // not left); the typed text stops before them (padding-right).  The box
+  // spans the whole line on the dashboard, so a placement after it would
+  // be off the panel.  Absolute inside the library table's
   // .dataTables_filter, measured from the input's box.
   mod.placeFilterIndicator = function () {
-    var $filter = $("#library_content").find(".dataTables_filter");
+    var $filter = $("#library_display")
+      .closest(".dataTables_wrapper")
+      .find(".dataTables_filter");
     var $input = $filter.find('input[type="text"], input[type="search"]');
     var $clear = $("#lib-filter-clear");
     var $count = $("#lib-filter-count");
+    var caretWidth = $("#advanced-options").find("button").outerWidth() || 0;
     if (!$filter.length || !$input.length) {
       return;
     }
+    $input.css("padding-left", "");
     if (!$filter.hasClass("rt-filter-active")) {
-      $input.css("padding-left", "");
+      $input.css("padding-right", caretWidth);
       return;
     }
     var fr = $filter[0].getBoundingClientRect();
     var ir = $input[0].getBoundingClientRect();
-    var left = ir.left - fr.left + 24; // after the magnifier icon
+    var right = fr.right - ir.right + caretWidth; // left of the caret
     var mid = ir.top - fr.top + ir.height / 2;
     $clear.css({
-      left: left,
+      right: right,
       top: mid - $clear.outerHeight() / 2,
-      right: "auto",
+      left: "auto",
     });
-    left += $clear.outerWidth();
-    $count.css({ left: left, top: mid - $count.outerHeight() / 2 });
-    $input.css("padding-left", left + $count.outerWidth() + 10 - (ir.left - fr.left));
+    right += $clear.outerWidth();
+    $count.css({
+      right: right,
+      top: mid - $count.outerHeight() / 2,
+      left: "auto",
+    });
+    $input.css(
+      "padding-right",
+      right + $count.outerWidth() + 10 - (fr.right - ir.right),
+    );
+  };
+
+  // RASTATIME 2026-10-18 - the count names the selected media type
+  // (operator: "0 of 32 tracks" was wrong for smart blocks and the rest).
+  mod.filterCountFormat = function (type) {
+    var e = mod.MediaTypeIntegerEnum;
+    var formats = {};
+    formats[e.FILE] = "%s of %s tracks";
+    formats[e.PLAYLIST] = "%s of %s playlists";
+    formats[e.BLOCK] = "%s of %s smart blocks";
+    formats[e.WEBSTREAM] = "%s of %s webstreams";
+    formats[e.PODCAST] = "%s of %s podcasts";
+    formats[e.LINEIN] = "%s of %s line inputs";
+    return formats[type] || formats[e.FILE];
   };
 
   // RASTATIME 2026-10-08 - toolbar "Edit" with several tracks selected: one
@@ -1308,11 +1334,16 @@ var AIRTIME = (function (AIRTIME) {
           // dashboard carries #lib-filter-message (an id - upstream looked
           // for a class and never found it, so the text never showed).
           // While search text or an advanced field is set, the search bar
-          // says "X of N tracks", gets the accent border (.rt-filter-active)
-          // and offers the clear button.
-          var filterMessage = $libContent.find(
-            ".filter-message, #lib-filter-message",
-          );
+          // says "X of N tracks" (noun per media type, 2026-10-18), gets
+          // the accent border (.rt-filter-active) and offers the clear
+          // button.  Everything is scoped to THIS table's wrapper: the
+          // podcast table under the same #library_content has a search
+          // box of its own (widgets/table.js) and used to inherit the
+          // count of the library table.
+          var $libWrapper = $libTable.closest(".dataTables_wrapper");
+          var filterMessage = $libWrapper
+            .find(".filter-message")
+            .add("#lib-filter-message");
           // DataTables 1.13 renders the box as <input type="search">
           var searchInput = $libContent.find(
             '.dataTables_filter input[type="text"], .dataTables_filter input[type="search"]',
@@ -1331,7 +1362,7 @@ var AIRTIME = (function (AIRTIME) {
           // the caret button keeps no text; count and "x" live in the
           // filter div, placed right after the input (mod.placeFilterIndicator)
           filterMessage.text("");
-          var $filter = $libContent.find(".dataTables_filter");
+          var $filter = $libWrapper.find(".dataTables_filter");
           var $count = $filter.find("#lib-filter-count");
           if (!$count.length) {
             $count = $("<span id='lib-filter-count'></span>").appendTo($filter);
@@ -1342,7 +1373,7 @@ var AIRTIME = (function (AIRTIME) {
           if (filterActive) {
             $count.text(
               $.i18n
-                ._("%s of %s tracks")
+                ._(mod.filterCountFormat(type))
                 .replace("%s", Number(data.iTotalDisplayRecords).toLocaleString())
                 .replace("%s", Number(data.iTotalRecords).toLocaleString()),
             );
@@ -1354,11 +1385,7 @@ var AIRTIME = (function (AIRTIME) {
           $filter.toggleClass("rt-filter-active", filterActive);
           $count.toggle(filterActive);
           $("#lib-filter-clear").toggle(filterActive);
-          mod.placeFilterIndicator();
-          searchInput.css(
-            "padding-right",
-            $("#advanced-options").find("button").outerWidth(),
-          );
+          mod.placeFilterIndicator(); // also sets the input's padding-right
           if (!$('#advanced_search input[type="text"]').is(":focus")) {
             $libContent.find('.dataTables_filter input[type="text"]').focus();
           }
@@ -2457,6 +2484,8 @@ var AIRTIME = (function (AIRTIME) {
         fnDrawCallback: function () {
           AIRTIME.library.drawEmptyPlaceholder(this);
         },
+        // RASTATIME 2026-10-18 - the search box says "X of N podcasts"
+        rtFilterCountFormat: "%s of %s podcasts",
       },
     );
 

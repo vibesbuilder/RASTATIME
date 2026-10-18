@@ -299,10 +299,10 @@ thead th.ui-state-default:focus {
 }
 
 /* RASTATIME 2026-10-09 - filter indicator: accent border on the search
-   field while a filter is active; the "x" (clears everything) and the
-   "X of N tracks" count follow directly after the input, vertically
-   centred on it - library.js (placeFilterIndicator) sets left/top from
-   the input's box. */
+   field while a filter is active; the "X of N tracks" count and the "x"
+   (clears everything) sit at the right end of the input, left of the
+   advanced-search caret, vertically centred on it - library.js
+   (placeFilterIndicator) sets right/top from the input's box. */
 #library_content .dataTables_filter {
     position: relative;
 }

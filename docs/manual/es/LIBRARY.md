@@ -51,9 +51,12 @@ correspondencia de subcadena.
 **Indicador de filtro activo (desde 2026-10-09).** Mientras haya
 texto de búsqueda o un campo de la búsqueda avanzada rellenado, la
 caja de búsqueda recibe un borde en el color de acento y muestra, a
-la derecha, cuántas pistas coinciden («13 de 11.108 pistas»). La **×**
-junto a ese número borra el texto y todos los campos de la búsqueda
-avanzada de una vez.
+la derecha, cuántos elementos del tipo elegido coinciden («13 de
+11.108 pistas», «0 de 32 bloques inteligentes»; desde 2026-10-18 el
+recuento nombra el tipo: pistas, listas, bloques inteligentes,
+retransmisiones, podcasts, entradas de línea). La **×** junto a ese
+número borra el texto y todos los campos de la búsqueda avanzada de
+una vez.
 
 > **Cómo funciona bajo el capó.** La búsqueda es del lado
 > del servidor vía `LibraryController::contentsFeedAction`.

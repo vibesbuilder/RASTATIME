@@ -4922,6 +4922,21 @@ msgstr "Audio Processing"
 msgid "%s of %s tracks"
 msgstr ""
 
+msgid "%s of %s playlists"
+msgstr ""
+
+msgid "%s of %s smart blocks"
+msgstr ""
+
+msgid "%s of %s webstreams"
+msgstr ""
+
+msgid "%s of %s podcasts"
+msgstr ""
+
+msgid "%s of %s line inputs"
+msgstr ""
+
 #: application/controllers/LocaleController.php application/views/scripts/showbuilder/index.phtml
 msgid "Clear search"
 msgstr ""

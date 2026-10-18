@@ -5906,6 +5906,21 @@ msgstr "Procesado de audio"
 msgid "%s of %s tracks"
 msgstr "%s de %s pistas"
 
+msgid "%s of %s playlists"
+msgstr "%s de %s listas"
+
+msgid "%s of %s smart blocks"
+msgstr "%s de %s bloques inteligentes"
+
+msgid "%s of %s webstreams"
+msgstr "%s de %s retransmisiones"
+
+msgid "%s of %s podcasts"
+msgstr "%s de %s podcasts"
+
+msgid "%s of %s line inputs"
+msgstr "%s de %s entradas de línea"
+
 #: application/controllers/LocaleController.php application/views/scripts/showbuilder/index.phtml
 msgid "Clear search"
 msgstr "Borrar la búsqueda"

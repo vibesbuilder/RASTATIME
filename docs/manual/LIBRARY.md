@@ -85,9 +85,12 @@ webstreams / line-ins. It uses a substring match — typing
 
 **Active-filter indicator (since 2026-10-09).** While search text or
 any field of the advanced search is set, the search box gets an
-accent-coloured border and shows, at its right end, how many tracks
-match ("13 of 11,108 tracks"). The **×** next to that count clears the
-search text and every advanced-search field in one go.
+accent-coloured border and shows, at its right end, how many items of
+the selected kind match ("13 of 11,108 tracks", "0 of 32 smart
+blocks"; since 2026-10-18 the count names the kind - tracks,
+playlists, smart blocks, webstreams, podcasts, line inputs). The **×**
+next to that count clears the search text and every advanced-search
+field in one go.
 
 > **How it works under the hood.** Search is server-side via
 > `LibraryController::contentsFeedAction`. The DataTable widget

@@ -5713,6 +5713,21 @@ msgstr "Audioverarbeitung"
 msgid "%s of %s tracks"
 msgstr "%s von %s Titeln"
 
+msgid "%s of %s playlists"
+msgstr "%s von %s Playlisten"
+
+msgid "%s of %s smart blocks"
+msgstr "%s von %s Smart Blöcken"
+
+msgid "%s of %s webstreams"
+msgstr "%s von %s Webstreams"
+
+msgid "%s of %s podcasts"
+msgstr "%s von %s Podcasts"
+
+msgid "%s of %s line inputs"
+msgstr "%s von %s Line-Eingängen"
+
 #: application/controllers/LocaleController.php application/views/scripts/showbuilder/index.phtml
 msgid "Clear search"
 msgstr "Suche leeren"

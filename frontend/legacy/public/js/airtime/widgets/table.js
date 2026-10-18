@@ -53,6 +53,10 @@ var AIRTIME = (function (AIRTIME) {
     self._$wrapperDOMNode = $(wrapperDOMNode);
     self._toolbarButtons = toolbarButtons;
     self._emptyPlaceholder = emptyPlaceholder;
+    // RASTATIME 2026-10-18 - optional "%s of %s <noun>" text for the
+    // search box (shown instead of "Filtering out N of M records")
+    self._filterCountFormat = dataTablesOptions.rtFilterCountFormat || null;
+    delete dataTablesOptions.rtFilterCountFormat;
 
     // Exclude the leftmost column if we're implementing item selection
     self._colVisExcludeColumns = bItemSelection ? [0] : [];
@@ -301,15 +305,20 @@ var AIRTIME = (function (AIRTIME) {
           .find(".filter-message");
       }
 
-      f.text(
-        totalRecords > totalDisplayRecords
-          ? $.i18n._("Filtering out ") +
-              (totalRecords - totalDisplayRecords) +
-              $.i18n._(" of ") +
-              totalRecords +
-              $.i18n._(" records")
-          : "",
-      );
+      var filterText = "";
+      if (totalRecords > totalDisplayRecords) {
+        filterText = self._filterCountFormat
+          ? $.i18n
+              ._(self._filterCountFormat)
+              .replace("%s", Number(totalDisplayRecords).toLocaleString())
+              .replace("%s", Number(totalRecords).toLocaleString())
+          : $.i18n._("Filtering out ") +
+            (totalRecords - totalDisplayRecords) +
+            $.i18n._(" of ") +
+            totalRecords +
+            $.i18n._(" records");
+      }
+      f.text(filterText);
 
       dt.closest(".dataTables_wrapper")
         .find('.dataTables_filter input[type="text"]')
