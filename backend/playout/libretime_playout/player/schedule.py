@@ -355,7 +355,7 @@ def generate_show_record_events(
       * SHOW_RECORD_START at show_instance.starts_at — the playout
         scheduler spawns an FfmpegRecorder that taps the first
         configured Icecast output mountpoint and writes
-        ``<recording-folder>/<YYYY-MM-DD>/<YYYY-MM-DD HH-MM> - <show-name>.mp3``.
+        ``<recording-folder>/<YYYY-MM-DD>/<YYYY-MM-DD HH-MM-SS> - <show-name>.<ext>``.
       * SHOW_RECORD_END at show_instance.ends_at — the scheduler
         stops the matching recorder (looked up by show_id).
 
