@@ -1532,7 +1532,7 @@ un_tests.ps1` (2026-10-16)** — startet API-, Playout- und
   (UTC-Konstruktion): 00:00–05:00 = 05h 00m, 22:00–06:00 = 08h 00m, auch im
   Frühjahr.  Probe `C:/Temp/optd/dur_probe.php`.  Bereits angelegte
   Sendungen über die Umstellungsnacht (z. B. „Electronic Evening"
-  Show 1239, Dauer 06:00) müssen neu angelegt werden.  Commit DURFIX.
+  Show 1239, Dauer 06:00) müssen neu angelegt werden.  Commit 476a6d0.
 - **Kalender: Wochentag-Vorauswahl und Breite nach „Edit Show" (2026-10-19,
   Operator-Meldung)** — (1) Beim Einschalten von „Repeats" war immer der
   heutige Wochentag angehakt statt des Tags der Sendung: das Skript las
