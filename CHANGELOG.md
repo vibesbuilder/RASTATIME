@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   statt Minutenauflösung (Operator-Wunsch: verschobene Sendungen starten
   abseits der vollen Minute, die Wiederholung aus der Aufzeichnung schneidet
   nach Zeit). `recording_path.build_output_path`, Tooltip, Manual
-  RECORD_PER_SHOW / RECORD_PER_HOUR ×4. Wirksam nach PLAYOUT-Neustart. Commit `TBD`.
+  RECORD_PER_SHOW / RECORD_PER_HOUR ×4. Wirksam nach PLAYOUT-Neustart. Commit `aa4cac3`.
 
 ### Removed
 
