@@ -5329,3 +5329,59 @@ OGG/Opus nach Settings → Local Machine) abspielen.  Vorbedingungen:
    Wiederholung löschen.
 Aufwand grob 300-500 Zeilen Playout + Legacy, 1-2 Tage plus Beobachtung
 einer echten aufgezeichneten Sendung.
+
+## Operator-Punkte 2026-10-19 (Kalender, Library-Ordner, Sekundaerfarbe, WebP)
+
+### ✅ Kalender: Wochentag-Vorauswahl bei „Repeats" + Breite nach „Edit Show" - gebaut 2026-10-19
+
+Beides Operator-Meldungen: der angehakte Tag war immer „heute" (`attr("value")`
+statt `.val()`), und der Kalender blieb nach dem Schließen des Formulars schmal
+(FC6 misst nur beim Fenster-Resize, jetzt `updateSize()` in `windowResize()`).
+Commit e3d9aa7.
+
+### 🟡 Zeitumstellung: Sendung 00:00-05:00 am 26.10. „im Kalender bis 6:00 sichtbar" - OFFEN (nicht reproduzierbar, 2026-10-19)
+
+Befund: DB (Instanzen der importierten Sendung 683 und der neu angelegten 1230:
+alle 00:00-05:00 Ortszeit, 5 h), Event-Feed (`getFullCalendarEvents`, Probe
+`C:/Temp/optd/calfeed_probe.php`) und FullCalendar 6 im Browser-Harness
+(Tag/Woche/Monat mit den Live-Optionen, Probe im eingebauten Browser) zeigen
+alle 00:00-05:00.  Die Zeitumstellung ist in der Nacht 24./25.10. (03:00 →
+02:00), nicht am 26.10.  Vorbedingung: Screenshot des Operators mit Ansicht
+(Tag/Woche/Monat), Browser und Uhrzeit der Beobachtung; ggf. Browser-Zeitzone
+pruefen.
+
+### 💡 Mehrere Library-Ordner (Operator-Wunsch 2026-10-19: Recordings-per-Show-Ordner als Library-Ordner)
+
+Evaluierung 2026-10-19: Eine echte zweite Wurzel ist ein Architektur-Umbau -
+alle 21.739 `cc_files.filepath` sind relativ zu EINER Wurzel
+(`Application_Common_Storage::root()`, API `storage/root.py`, PLAYOUT-Cache,
+Analyzer `import_directory`, Umzugs-Job, Backup-Spiegel); `cc_music_dirs` gibt
+es nicht mehr.  Empfehlung: nicht die Wurzel vervielfachen, sondern die
+Aufnahmen in die Bibliothek importieren (Kopie nach `D:/stor/imported/...`,
+Track-Typ „Recordings", Original bleibt in `D:ecordings\shows`).  Das ist
+zugleich Vorbedingung 2 von „Wiederholung von Sendung, Stufe 2".  Optionen:
+A) Playout meldet „Aufnahme fertig" → Legacy importiert die Datei sofort
+(Metadaten Sendung/Datum, Verknuepfung zur Instanz; ~1 Tag).  B) zweiter
+Import-Ordner im Kopiermodus fuer den Scanner (5-min-Takt, MD5-Dedup; ~0,5 Tag,
+ohne Instanz-Verknuepfung).  Wartet auf Operator-Entscheidung.
+
+### 🟡 Sekundaerfarbe der Oberflaeche einstellbar (Operator-Frage 2026-10-19) - Defer
+
+`#02cef9` kommt in der gesamten Oberflaeche genau einmal vor: Fortschrittsbalken
+der laufenden Sendung im Dashboard (`styles.css` `.progressbar .progress-show`
+samt PNG-Streifen).  Eine Einstellung wie „Primary Color" (`ui_accent_color`,
+`Application_Model_AccentColor`, 2026-09-29) waere technisch ~2 h (zweite
+Praeferenz, Palette `--rt-secondary*`, Manual ×4), braucht aber die Liste der
+Elemente, die der Operator als „Sekundaerfarbe" wahrnimmt.  Vorbedingung:
+Screenshot/Liste der gemeinten Stellen.
+
+### 💡 Show-Logos als WebP (Operator-Frage 2026-10-19) - Go empfohlen, wartet auf Go
+
+Heute abgelehnt an drei Stellen: `AddShowStyle` (Extension-Validator
+jpg,jpeg,png,gif), `Rest_ShowImageController` (MIME-Liste + Erweiterungs-Map),
+`common.js validateMimeType`.  GD hat WebP-Unterstuetzung (imagecreatefromwebp/
+imagewebp vorhanden), `ImageSize` arbeitet mit `imagecreatefromstring` und
+schreibt per `image<ext>`; Auslieferung `api/show-logo` nimmt den MIME-Typ
+per `mime_content_type`.  Landing-Hintergrund und Widget-Cover akzeptieren
+WebP bereits.  Aufwand ~1 h inkl. Stationslogo (`GeneralPreferences`) und
+Manual CALENDAR ×4.
