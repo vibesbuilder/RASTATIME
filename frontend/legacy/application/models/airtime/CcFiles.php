@@ -137,6 +137,17 @@ class CcFiles extends BaseCcFiles
         return self::createAndImport([], $filePath, $originalFilename, $copyFile, true);
     }
 
+    /**
+     * RASTATIME 2026-10-19 - a finished show recording (see
+     * Application_Service_ShowRecordingService): no upload cookie, the
+     * "Recordings" track type, copy or move as the caller decides (a tagged
+     * temp copy is moved, the original in the recording folder is copied).
+     */
+    public static function createFromRecording($filePath, $originalFilename, $trackTypeId, $copyFile)
+    {
+        return self::createAndImport([], $filePath, $originalFilename, $copyFile, true, (int) $trackTypeId);
+    }
+
     /** Create a new CcFiles object/row and import a file for it.
      *  You shouldn't call this directly. Either use createFromUpload() or createFromLocalFile().
      *
@@ -150,7 +161,7 @@ class CcFiles extends BaseCcFiles
      * @throws Exception
      * @throws PropelException
      */
-    private static function createAndImport($fileArray, $filePath, $originalFilename, $copyFile = false, $fromImportFolder = false)
+    private static function createAndImport($fileArray, $filePath, $originalFilename, $copyFile = false, $fromImportFolder = false, $trackTypeId = null)
     {
         $file = new CcFiles();
 
@@ -181,7 +192,9 @@ class CcFiles extends BaseCcFiles
                 Logging::warn('createAndImport: artwork of ' . $originalFilename . ' skipped: ' . $artworkError->getMessage());
                 $artwork = '';
             }
-            $trackTypeId = FileDataHelper::saveTrackType(!$fromImportFolder);
+            if (!$trackTypeId) {
+                $trackTypeId = FileDataHelper::saveTrackType(!$fromImportFolder);
+            }
 
             $file->fromArray($fileArray);
             $file->setDbOwnerId(self::getOwnerId());

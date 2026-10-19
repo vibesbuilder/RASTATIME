@@ -373,6 +373,7 @@ def generate_show_record_events(
     if isinstance(ends_at, str):
         ends_at = event_isoparse(ends_at)
 
+    instance_id = show_instance.get("id")
     start_event = ShowRecordEvent(
         type=EventKind.SHOW_RECORD_START,
         start=starts_at,
@@ -380,8 +381,8 @@ def generate_show_record_events(
         show_id=int(show["id"]),
         show_name=str(show.get("name") or ""),
         show_starts_at=starts_at,
+        instance_id=int(instance_id) if instance_id is not None else None,
     )
-    instance_id = show_instance.get("id")
     insert_event(events, make_event_key(starts_at, f"record-start-{instance_id}"), start_event)
 
     end_event = ShowRecordEvent(
@@ -391,6 +392,7 @@ def generate_show_record_events(
         show_id=int(show["id"]),
         show_name=str(show.get("name") or ""),
         show_starts_at=starts_at,
+        instance_id=int(instance_id) if instance_id is not None else None,
     )
     insert_event(events, make_event_key(ends_at, f"record-end-{instance_id}"), end_event)
 

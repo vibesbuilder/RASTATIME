@@ -647,6 +647,16 @@ Das Playout übernimmt eine Änderung im nächsten ruhigen Moment
 (oder an der nächsten Titelgrenze); bereits geschriebene Dateien
 behalten ihr Format, neue Dateien bekommen die passende Endung.
 
+**Sendungsaufnahmen in die Bibliothek kopieren** *(seit 2026-10-19)*:
+Ist das Kästchen gesetzt, wird von jeder fertigen Sendungsaufnahme
+eine getaggte Kopie in die Bibliothek importiert (Track-Typ
+„Recordings", Titel `<Sendung> <Datum Uhrzeit>`, verknüpft mit der
+Sendungsinstanz); die Datei im Aufnahmeordner bleibt unverändert.
+Details in [Record-per-Show, Abschnitt 3.6](./RECORD_PER_SHOW.md).
+Gespeichert wird mit dem **Save**-Knopf dieses Abschnitts; das
+Playout braucht nach dem Update einen Neustart, danach wirkt der
+Schalter sofort.
+
 ### 24/7 Recording Folder
 
 Wohin die durchgehende [24/7-Aufnahme](./RECORD_PER_HOUR.md) eine

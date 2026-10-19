@@ -799,12 +799,21 @@ class PreferenceController extends Zend_Controller_Action
             }
         }
 
+        // RASTATIME 2026-10-19 - copy finished recordings into the library
+        $copyToLibrary = in_array(strtolower(trim((string) $this->_getParam('copy_to_library', 'false'))), ['true', '1', 'on', 'yes'], true);
         Application_Model_Preference::setLocalRecordingFolder($folder);
         Application_Model_Preference::setLocalRecordingFormat($format);
         Application_Model_Preference::setLocalRecordingBitrate($bitrate);
+        Application_Model_Preference::setLocalRecordingCopyToLibrary($copyToLibrary);
         Logging::info('Local Recording Folder set to: ' . ($folder === '' ? '(disabled)' : $folder)
-            . ", format {$format} {$bitrate}k");
-        $this->_helper->json->sendJson(['ok' => true, 'folder' => $folder, 'format' => $format, 'bitrate' => $bitrate]);
+            . ", format {$format} {$bitrate}k, copy to library " . ($copyToLibrary ? 'on' : 'off'));
+        $this->_helper->json->sendJson([
+            'ok' => true,
+            'folder' => $folder,
+            'format' => $format,
+            'bitrate' => $bitrate,
+            'copy_to_library' => $copyToLibrary,
+        ]);
     }
 
     /**

@@ -27,6 +27,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Show-Recording: „Copy Show Recordings into Library" (2026-10-19, Go
+  2026-10-19 Option A mit Kontrollkästchen)** — Settings → Local Machine →
+  Show Recording.  Ist das Kästchen gesetzt, meldet das Playout jede
+  geschlossene Aufnahmedatei an `api/recording-finished` (Api-Key,
+  Instanz-Id + Pfad; `ShowRecordEvent.instance_id`, Melder wartet auf
+  stabile Dateigröße, drei Versuche); Legacy prüft den Pfad gegen den
+  Show-Recording-Ordner, taggt eine Kopie per ffmpeg (Titel
+  „<Sendung> <JJJJ-MM-TT HH:MM>", Interpret Sendung, Album „Show
+  Recordings"), importiert sie als Track-Typ „Recordings" (Code `recd`,
+  wird angelegt) und verknüpft sie mit der Instanz
+  (`cc_show_instances.file_id`).  Original bleibt im Aufnahmeordner;
+  Duplikate über `md5`/`source_md5`.  Hintergrund: Operator-Wunsch
+  „Recordings-Ordner als Library-Ordner" — eine zweite Speicherwurzel
+  wäre ein Umbau aller Pfad-Leser, der Import löst den Bedarf und ist
+  zugleich Vorbedingung 2 von „Wiederholung von Sendung, Stufe 2".
+  Neu `Application_Service_ShowRecordingService`,
+  `CcFiles::createFromRecording`, Präferenz
+  `local_recording_copy_to_library`, v1-Client
+  `notify_recording_finished`.  Probe
+  `C:/Temp/optd/recording_import_probe.php` (Gating, Ablehnungen, Import,
+  Duplikat), fünf Playout-Tests.  Manual RECORD_PER_SHOW §3.6 ×4,
+  LOCAL_MACHINE ×4, Architektur §23.66.  Wirksam nach PLAYOUT-Neustart.
+  Commit RECCOPY.
 - **Wiederholungen automatisieren: „Wiederholung von Sendung" (2026-10-18, Go 2026-10-18)** —
   Edit Show → Autoloading Playlist → „Repeat of show": Sendung B wählt
   Sendung A als Quelle; kurz vor dem Start (65 min, eine Runde vor dem

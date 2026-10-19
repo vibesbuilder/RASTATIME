@@ -63,6 +63,17 @@ class BaseApiClient(AbstractApiClient):
             **kwargs,
         )
 
+    def notify_recording_finished(self, instance_id, path, **kwargs) -> Response:
+        """RASTATIME 2026-10-19 - a per-show recording file is closed; the
+        legacy side decides (Settings -> Local Machine -> Show Recording
+        -> "Copy Show Recordings into Library") whether to import it."""
+        return self._request(
+            "POST",
+            "/api/recording-finished",
+            data={"instanceid": instance_id, "path": path},
+            **kwargs,
+        )
+
     def update_liquidsoap_status(self, msg, stream_id, boot_time, **kwargs) -> Response:
         return self._request(
             "POST",

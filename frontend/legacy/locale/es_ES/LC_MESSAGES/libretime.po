@@ -6635,3 +6635,11 @@ msgstr "Comprobando %1 de %2 …"
 #: RASTATIME 2026-10-18 import/export batches
 msgid "Importing %1 of %2 …"
 msgstr "Importando %1 de %2 …"
+
+#: RASTATIME 2026-10-19 copy show recordings into library
+msgid "Copy Show Recordings into Library"
+msgstr "Copiar las grabaciones de programas a la biblioteca"
+
+#: RASTATIME 2026-10-19 copy show recordings into library
+msgid "When a recorded show ends, a copy of its recording is imported into the media library as track type \"Recordings\" (title: show name and start time) and linked to the show instance, so it can be scheduled again or used in playlists.  The file in the recording folder stays where it is.  Needs ffmpeg for the tags; takes effect for shows that end after the playout was restarted once."
+msgstr "Cuando termina un programa grabado, se importa una copia de la grabación a la biblioteca de medios con el tipo de pista \"Recordings\" (título: nombre del programa y hora de inicio) y se vincula a la instancia del programa, para poder programarla de nuevo o usarla en listas de reproducción.  El archivo de la carpeta de grabaciones permanece donde está.  Necesita ffmpeg para las etiquetas; se aplica a los programas que terminan tras un único reinicio del playout."

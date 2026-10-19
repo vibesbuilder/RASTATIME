@@ -600,6 +600,15 @@ The playout applies a change in its next quiet moment (or at the
 next track boundary); files already written keep their format,
 new files get the matching extension.
 
+**Copy Show Recordings into Library** *(since 2026-10-19)*: when
+ticked, a tagged copy of every finished show recording is imported
+into the library (track type "Recordings", title `<show> <date
+time>`, linked to the show instance); the file in the recording
+folder stays untouched.  Details in
+[Record-per-Show, section 3.6](./RECORD_PER_SHOW.md).  Saved with
+the **Save** button of this section; the playout needs one restart
+after the update, afterwards the switch works immediately.
+
 ### 24/7 Recording Folder
 
 Where the always-on [24/7 Recording](./RECORD_PER_HOUR.md)

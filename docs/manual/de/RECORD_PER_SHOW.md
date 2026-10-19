@@ -230,6 +230,34 @@ die nächste Sendungs-Aufnahme läuft mit voller Qualität.
 
 ---
 
+## 3.6 Aufnahmen in die Bibliothek kopieren *(seit 2026-10-19)*
+
+Unter Einstellungen → Lokale Maschine → **Show Recording** gibt es das
+Kontrollkästchen **Sendungsaufnahmen in die Bibliothek kopieren**.
+Ist es gesetzt, wird jede aufgezeichnete Sendung in die
+Medienbibliothek importiert, sobald ihre Aufnahmedatei geschlossen
+ist:
+
+- Importiert wird eine **Kopie**; die Datei im Aufnahmeordner bleibt
+  unverändert liegen (Ihr Archiv wird nicht angetastet).
+- Die Kopie erhält den Track-Typ **Recordings** (wird beim ersten
+  Einsatz angelegt), den Titel `<Sendungsname> <JJJJ-MM-TT HH:MM>`,
+  den Sendungsnamen als Interpret und das Album `Show Recordings`,
+  damit sie in der Bibliothek leicht zu finden ist.
+- Der Bibliothekstitel wird **mit der Sendungsinstanz verknüpft**
+  (die „aufgezeichnete Datei" des Kalenders), sodass eine spätere
+  Wiederholung einer Live-Sendung darauf zugreifen kann.
+- Eine bereits importierte Aufnahme wird an ihrer Prüfsumme erkannt
+  und nicht ein zweites Mal importiert.
+
+So funktioniert es: Das Playout meldet die geschlossene Datei an die
+Web-Anwendung; diese prüft, dass der Pfad im eingestellten
+Show-Recording-Ordner liegt, versieht die Kopie per ffmpeg mit Tags
+und übergibt sie wie einen Upload an den Analyzer.  Das
+Kontrollkästchen wirkt für Sendungen, die nach einem einmaligen
+Neustart des Dienstes RASTATIME-PLAYOUT nach dem Update enden;
+danach lässt es sich jederzeit ohne Neustart ein- und ausschalten.
+
 ## 4. Eine Aufnahme finden und herunterladen
 
 ### Aus dem Kalender

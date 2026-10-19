@@ -1,10 +1,14 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.78
+Draft version: 0.79
 Date: 2026-10-18
 
 > **Revision history**
+> - **0.79 (2026-10-19)** — **Copy show recordings into the library**
+>   (§23.66): the playout reports a closed per-show recording, legacy
+>   imports a tagged copy as track type "Recordings" linked to the
+>   instance; opt-in checkbox under Local Machine.
 > - **0.78 (2026-10-18)** — **Repeat of show** (§23.65): content copy of
 >   the source's last aired instance shortly before the repeat starts;
 >   migration 0071, delete guard (track-type flag dropped again by 0072).
@@ -7213,3 +7217,50 @@ items of the source were left out: file missing)") from `filledFrom()`.
 recording after A's end and schedule it into B - needs a "recording
 finished" signal from the playout, a track type for recordings and the
 fill waiting for the import.
+
+### 23.66 Copy Show Recordings into the Library (2026-10-19)
+
+**Why.**  The operator wanted the per-show recording folder to act as a
+second library folder.  Every one of the 21,700 `cc_files.filepath`
+values is relative to the single storage root (`Application_Common_
+Storage::root()`, API `storage/root.py`, the playout cache, the
+analyzer's `import_directory`, the move job and the backup mirror), so
+a second root would touch every reader.  Instead the finished recording
+is imported as a copy - which is also precondition 2 of "Repeat of show,
+stage 2" (recorded live shows).
+
+**Signal.**  `ShowRecordEvent` now carries `instance_id`
+(`generate_show_record_events`).  `PlayoutScheduler._on_show_record_start`
+remembers `(instance_id, path)` as `_open_show_recording`;
+`_on_show_record_end` stops Liquidsoap's `output.file`, then
+`_report_recording_finished` (daemon thread) waits until the file size is
+stable (2 s polls, 30 s cap) and POSTs `api/recording-finished`
+(`instanceid`, `path`) through the legacy v1 client
+(`notify_recording_finished`, Api-Key), three attempts 20 s apart.  A
+PLAYOUT restarted mid-show knows no path and only logs.
+
+**Import.**  `ApiController::recordingFinishedAction` ->
+`Application_Service_ShowRecordingService::import`.  Gate: preference
+`local_recording_copy_to_library` (checkbox in Settings -> Local Machine
+-> Show Recording, saved by `localRecordingSaveAction`).  Checks: file
+exists and is non-empty, extension mp3/aac/ogg/opus, `realpath` inside
+the configured Show Recording folder (case-insensitive); an instance
+that already has a recorded file, or a library row whose `md5` or
+`source_md5` equals the source's md5, is only (re)linked.  The copy is
+tagged with ffmpeg (`-c copy -map_metadata -1`, title
+`<show> <YYYY-MM-DD HH:MM>` in station time, artist = show, album
+"Show Recordings") into the temp dir and handed to
+`CcFiles::createFromRecording` (-> `createAndImport` with a track-type
+override: "Recordings", code `recd`, created on demand) which moves it
+to `organize/` and messages the analyzer; without ffmpeg the original is
+copied and the analyzer's file-name title applies.  The pending row is
+labelled and its `source_md5` set; `ShowInstance::setRecordedFile`
+links `cc_show_instances.file_id` (and rebroadcasts).  The file in the
+recording folder is never modified.
+
+**Tests.**  `test_scheduler_recording.py` (+5: instance id on both
+events, report after settle, three retries, quiet without open
+recording/client, failed start leaves nothing open);
+`C:/Temp/optd/recording_import_probe.php` (gating, rejections, live
+import + duplicate, probe row deleted).  Live: endpoint 401 without
+key, 405 on GET, `{"ok":true,"skipped":"disabled"}` with the box off.

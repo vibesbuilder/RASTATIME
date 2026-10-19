@@ -594,6 +594,17 @@ calme (ou à la prochaine limite de titre) ; les fichiers déjà écrits
 gardent leur format, les nouveaux reçoivent l'extension
 correspondante.
 
+**Copier les enregistrements d'émission dans la bibliothèque** *(depuis
+le 2026-10-19)* : si la case est cochée, une copie taguée de chaque
+enregistrement d'émission terminé est importée dans la bibliothèque
+(type de piste « Recordings », titre `<émission> <date heure>`, liée à
+l'instance de l'émission) ; le fichier du dossier d'enregistrement
+reste intact.  Détails dans
+[Record-per-Show, section 3.6](./RECORD_PER_SHOW.md).  Enregistré
+avec le bouton **Save** de cette section ; le playout a besoin d'un
+redémarrage après la mise à jour, ensuite l'interrupteur agit
+immédiatement.
+
 ### 24/7 Recording Folder
 
 Où l'[enregistrement 24/7](./RECORD_PER_HOUR.md) permanent écrit

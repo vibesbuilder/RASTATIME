@@ -706,6 +706,8 @@ $rtTip = function ($text) {
     // RASTATIME 2026-10-18 - encoder choice like the 24/7 recorder
     $localRecordingFormat = Application_Model_Preference::getLocalRecordingFormat();
     $localRecordingBitrate = Application_Model_Preference::getLocalRecordingBitrate();
+    // RASTATIME 2026-10-19 - copy finished recordings into the library
+    $localRecordingCopy = Application_Model_Preference::getLocalRecordingCopyToLibrary();
     ?>
 
     <h3><?php echo _("Show Recording") ?><span class="help_icon" data-rt-tip="<?php echo $rtTip(_("Folder where per-show recordings are written.  Each show flagged as \"Record this show\" produces a single file of the on-air output, named <YYYY-MM-DD HH-MM-SS> - <show-name> under a per-day subfolder, in the format and bitrate chosen below.  Leave the folder empty to disable recording.")); ?>"></span></h3>
@@ -739,6 +741,10 @@ $rtTip = function ($text) {
                 </select><span class="help_icon" data-rt-tip="<?php echo $rtTip(_("320 kbps is archive grade (about 145 MB per hour as MP3); 192 kbps halves the disk use.")); ?>"></span>
             </dd>
 
+            <dt><label for="local_recording_copy_to_library"><?php echo _("Copy Show Recordings into Library") ?></label><span class="help_icon" data-rt-tip="<?php echo $rtTip(_("When a recorded show ends, a copy of its recording is imported into the media library as track type \"Recordings\" (title: show name and start time) and linked to the show instance, so it can be scheduled again or used in playlists.  The file in the recording folder stays where it is.  Needs ffmpeg for the tags; takes effect for shows that end after the playout was restarted once.")) ?>"></span></dt>
+            <dd>
+                <input id="local_recording_copy_to_library" name="local_recording_copy_to_library" type="checkbox" value="1"<?php echo $localRecordingCopy ? ' checked="checked"' : ''; ?> />
+            </dd>
             <dt></dt>
             <dd style="padding-top: 0.5em;">
                 <button id="local_recording_save" type="button" class="btn">
@@ -865,6 +871,7 @@ $rtTip = function ($text) {
                     folder: path,
                     format: $("#local_recording_format").val(),
                     bitrate: $("#local_recording_bitrate").val(),
+                    copy_to_library: $("#local_recording_copy_to_library").is(":checked") ? "true" : "false",
                     csrf_token: $("#csrf").val()
                 },
                 function (resp) {

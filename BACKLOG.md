@@ -5350,7 +5350,7 @@ alle 00:00-05:00.  Die Zeitumstellung ist in der Nacht 24./25.10. (03:00 →
 (Tag/Woche/Monat), Browser und Uhrzeit der Beobachtung; ggf. Browser-Zeitzone
 pruefen.
 
-### 💡 Mehrere Library-Ordner (Operator-Wunsch 2026-10-19: Recordings-per-Show-Ordner als Library-Ordner)
+### ✅ Mehrere Library-Ordner -> „Copy Show Recordings into Library" - gebaut 2026-10-19 (Go 2026-10-19: Option A mit Kontrollkaestchen, Architektur §23.66)
 
 Evaluierung 2026-10-19: Eine echte zweite Wurzel ist ein Architektur-Umbau -
 alle 21.739 `cc_files.filepath` sind relativ zu EINER Wurzel
@@ -5363,9 +5363,13 @@ zugleich Vorbedingung 2 von „Wiederholung von Sendung, Stufe 2".  Optionen:
 A) Playout meldet „Aufnahme fertig" → Legacy importiert die Datei sofort
 (Metadaten Sendung/Datum, Verknuepfung zur Instanz; ~1 Tag).  B) zweiter
 Import-Ordner im Kopiermodus fuer den Scanner (5-min-Takt, MD5-Dedup; ~0,5 Tag,
-ohne Instanz-Verknuepfung).  Wartet auf Operator-Entscheidung.
+ohne Instanz-Verknuepfung).  Operator 2026-10-19: Option A mit Kontrollkaestchen
+"Copy Show Recordings into Library" (Settings -> Local Machine -> Show Recording).  Gebaut 2026-10-19
+(Playout meldet api/recording-finished, Legacy importiert getaggte Kopie als Track-Typ "Recordings",
+Verknuepfung cc_show_instances.file_id, Duplikate ueber md5/source_md5).  OFFEN: PLAYOUT-Neustart durch den
+Operator, Abnahme mit einer aufgezeichneten Testsendung.
 
-### 🟡 Sekundaerfarbe der Oberflaeche einstellbar (Operator-Frage 2026-10-19) - Defer
+### 🟡 Sekundaerfarbe der Oberflaeche einstellbar (Operator-Frage 2026-10-19) - Defer (Operator 2026-10-19: spaeter)
 
 `#02cef9` kommt in der gesamten Oberflaeche genau einmal vor: Fortschrittsbalken
 der laufenden Sendung im Dashboard (`styles.css` `.progressbar .progress-show`
@@ -5375,7 +5379,7 @@ Praeferenz, Palette `--rt-secondary*`, Manual ×4), braucht aber die Liste der
 Elemente, die der Operator als „Sekundaerfarbe" wahrnimmt.  Vorbedingung:
 Screenshot/Liste der gemeinten Stellen.
 
-### 💡 Show-Logos als WebP (Operator-Frage 2026-10-19) - Go empfohlen, wartet auf Go
+### 🟡 Show-Logos als WebP (Operator-Frage 2026-10-19) - Defer (Operator 2026-10-19: spaeter; Go empfohlen, ~1 h)
 
 Heute abgelehnt an drei Stellen: `AddShowStyle` (Extension-Validator
 jpg,jpeg,png,gif), `Rest_ShowImageController` (MIME-Liste + Erweiterungs-Map),

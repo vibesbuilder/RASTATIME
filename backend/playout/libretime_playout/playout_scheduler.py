@@ -226,6 +226,12 @@ class PlayoutScheduler:
         # format of the LAST render (not the setting of the moment), so the
         # file name always matches the encoder Liquidsoap is running with.
         self._recording_extension = recording_extension
+        # RASTATIME 2026-10-19 - the recording Liquidsoap has open right now:
+        # (instance_id, path) from _on_show_record_start, consumed by
+        # _on_show_record_end, which reports the closed file to the legacy
+        # API (copy into the library).  None while nothing is recording or
+        # after a PLAYOUT restart mid-show (the path is then unknown).
+        self._open_show_recording: Optional[Tuple[Optional[int], Path]] = None
         # RASTATIME 2026-09-06 - did the constructor's recording.stop +
         # gate reset reach Liquidsoap?  False means telnet was not up yet
         # and ensure_liquidsoap_initial_state() has to keep trying.
@@ -3104,6 +3110,8 @@ class PlayoutScheduler:
                 "key=%s show_id=%s name=%r): %s",
                 key, event.show_id, event.show_name, exc,
             )
+            return
+        self._open_show_recording = (getattr(event, "instance_id", None), output_path)
 
     def _on_show_record_end(self, key: str, event: ShowRecordEvent) -> None:
         """
@@ -3127,6 +3135,86 @@ class PlayoutScheduler:
                 "(key=%s show_id=%s name=%r)",
                 exc, key, event.show_id, event.show_name,
             )
+            return
+        # RASTATIME 2026-10-19 - hand the closed file to the legacy API
+        open_rec, self._open_show_recording = self._open_show_recording, None
+        if open_rec is None:
+            logger.info(
+                "Show-record end: no open recording known for instance %s "
+                "(recording started before this PLAYOUT instance?) - nothing "
+                "reported to the library",
+                getattr(event, "instance_id", None),
+            )
+            return
+        instance_id = getattr(event, "instance_id", None) or open_rec[0]
+        self._report_recording_finished(instance_id, open_rec[1])
+
+    def _report_recording_finished(self, instance_id: Optional[int], path: Path) -> None:
+        """
+        RASTATIME 2026-10-19 - "Copy Show Recordings into Library": tell the
+        legacy API that ``path`` is complete.  Runs in a daemon thread: it
+        first waits for the file size to settle (Liquidsoap flushes the
+        encoder after ``recording.stop``), then POSTs ``recording-finished``
+        with three attempts twenty seconds apart.  The legacy side decides
+        whether the checkbox is on, validates the path against the
+        configured recording folder and imports a tagged copy; the file in
+        the recording folder is never touched here.
+        """
+        if self._api_client_v1 is None:
+            logger.info("Show-record end: no legacy API client - %s not reported", path)
+            return
+        if instance_id is None:
+            logger.info("Show-record end: no instance id - %s not reported", path)
+            return
+
+        def _send() -> None:
+            self._wait_for_stable_file(path)
+            last_exc: Optional[BaseException] = None
+            for attempt in range(1, 4):
+                try:
+                    resp = self._api_client_v1.notify_recording_finished(
+                        instance_id=instance_id, path=str(path), timeout=120,
+                    )
+                    logger.info(
+                        "recording-finished reported (instance %s, %s): HTTP %s %s",
+                        instance_id, path, getattr(resp, "status_code", "?"),
+                        (getattr(resp, "text", "") or "")[:200].replace("\n", " "),
+                    )
+                    return
+                except Exception as exc:  # pylint: disable=broad-exception-caught
+                    last_exc = exc
+                    logger.warning(
+                        "recording-finished attempt %d/3 failed (instance %s): %s",
+                        attempt, instance_id, exc,
+                    )
+                    time.sleep(self._recording_report_retry_seconds)
+            logger.error(
+                "recording-finished gave up (instance %s, %s): %s", instance_id, path, last_exc,
+            )
+
+        t = threading.Thread(target=_send, name=f"recording-finished-{instance_id}", daemon=True)
+        t.start()
+
+    # seconds between the three report attempts (tests shrink it)
+    _recording_report_retry_seconds: float = 20.0
+    # the file is "settled" when its size is unchanged over one poll
+    _recording_settle_poll_seconds: float = 2.0
+    _recording_settle_max_seconds: float = 30.0
+
+    def _wait_for_stable_file(self, path: Path) -> None:
+        """Block until ``path`` keeps its size over one poll (or the cap)."""
+        deadline = time.monotonic() + self._recording_settle_max_seconds
+        last = -1
+        while time.monotonic() < deadline:
+            try:
+                size = path.stat().st_size
+            except OSError:
+                size = -1
+            if size >= 0 and size == last:
+                return
+            last = size
+            time.sleep(self._recording_settle_poll_seconds)
+        logger.warning("recording file %s did not settle within %.0f s", path, self._recording_settle_max_seconds)
 
     def _recording_file_extension(self) -> str:
         """Extension of the rendered show-recording encoder (mp3 fallback)."""

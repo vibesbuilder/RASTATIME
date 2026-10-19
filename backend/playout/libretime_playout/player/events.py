@@ -294,6 +294,10 @@ class ShowRecordEvent(BaseEvent):
     show_id: int
     show_name: str
     show_starts_at: EventKeyDatetime
+    # RASTATIME 2026-10-19 - the show instance the recording belongs to, so
+    # the finished file can be linked to it (copy into the library).  None
+    # for events built by an older schedule feed.
+    instance_id: Optional[int] = None
 
 
 AnyEvent = Annotated[

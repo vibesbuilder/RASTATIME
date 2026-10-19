@@ -219,6 +219,33 @@ show recording will run at full quality.
 
 ---
 
+## 3.6 Copying recordings into the library *(since 2026-10-19)*
+
+Settings → Local Machine → **Show Recording** has a checkbox
+**Copy Show Recordings into Library**.  When it is ticked, every
+recorded show is imported into the media library as soon as its
+recording file is closed:
+
+- A **copy** is imported; the file in the recording folder stays
+  exactly where it is (your archive is untouched).
+- The copy gets the track type **Recordings** (created on first
+  use), the title `<show name> <YYYY-MM-DD HH:MM>`, the show name
+  as artist and the album `Show Recordings`, so it is easy to find
+  in the library.
+- The library track is **linked to the show instance** (the
+  calendar's "recorded file"), so a later repeat of a live show can
+  pick it up.
+- A recording that was already imported is recognised by its
+  checksum and not imported twice.
+
+How it works: the playout reports the closed file to the web
+application, which checks that the path lies inside the configured
+Show Recording folder, tags the copy with ffmpeg and hands it to the
+analyzer like any upload.  The checkbox takes effect for shows that
+end after the RASTATIME-PLAYOUT service has been restarted once
+after the update; afterwards it can be switched on and off at any
+time without a restart.
+
 ## 4. Finding and downloading a recording
 
 ### From the calendar

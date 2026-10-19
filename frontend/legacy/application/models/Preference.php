@@ -2492,6 +2492,22 @@ class Application_Model_Preference
         self::setValue('local_recording_bitrate', (string) (int) $value);
     }
 
+    // RASTATIME 2026-10-19 - "Copy Show Recordings into Library": a closed
+    // per-show recording is imported (as a tagged copy, track type
+    // "Recordings", linked to the show instance) when this is on.  Read by
+    // Application_Service_ShowRecordingService on api/recording-finished.
+    public static function getLocalRecordingCopyToLibrary()
+    {
+        $v = strtolower(trim((string) self::getValue('local_recording_copy_to_library')));
+
+        return in_array($v, ['true', '1', 'on', 'yes'], true);
+    }
+
+    public static function setLocalRecordingCopyToLibrary($value)
+    {
+        self::setValue('local_recording_copy_to_library', $value ? 'true' : 'false');
+    }
+
     // RASTATIME 2026-06-05 - 24/7 hourly archive recording (Record-per-Hour).
     // A continuous Liquidsoap output.file on the bus, rotating hourly,
     // independent of shows (Settings -> Local Machine -> "24/7 Recording").

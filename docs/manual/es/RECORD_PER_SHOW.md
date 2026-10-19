@@ -201,6 +201,33 @@ completa.
 
 ---
 
+## 3.6 Copiar las grabaciones a la biblioteca *(desde 2026-10-19)*
+
+Ajustes → Máquina local → **Show Recording** ofrece la casilla
+**Copiar las grabaciones de programas a la biblioteca**.  Si está
+marcada, cada programa grabado se importa a la biblioteca de medios
+en cuanto se cierra su archivo de grabación:
+
+- Se importa una **copia**; el archivo de la carpeta de grabaciones
+  permanece exactamente donde está (su archivo histórico no se toca).
+- La copia recibe el tipo de pista **Recordings** (se crea en el
+  primer uso), el título `<nombre del programa> <AAAA-MM-DD HH:MM>`,
+  el nombre del programa como artista y el álbum `Show Recordings`,
+  para encontrarla fácilmente en la biblioteca.
+- La pista queda **vinculada a la instancia del programa** (el
+  «archivo grabado» del calendario), de modo que una repetición
+  posterior de un programa en directo pueda usarla.
+- Una grabación ya importada se reconoce por su suma de comprobación
+  y no se importa dos veces.
+
+Cómo funciona: el playout informa del archivo cerrado a la aplicación
+web, que comprueba que la ruta está dentro de la carpeta Show
+Recording configurada, etiqueta la copia con ffmpeg y la entrega al
+analizador como cualquier subida.  La casilla surte efecto para los
+programas que terminan tras un único reinicio del servicio
+RASTATIME-PLAYOUT después de la actualización; después puede
+activarse o desactivarse en cualquier momento sin reiniciar.
+
 ## 4. Encontrar y descargar una grabación
 
 ### Desde el calendario

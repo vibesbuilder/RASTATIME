@@ -582,6 +582,16 @@ El playout aplica un cambio en su próximo momento tranquilo (o en el
 siguiente límite de pista); los archivos ya escritos conservan su
 formato, los nuevos reciben la extensión correspondiente.
 
+**Copiar las grabaciones de programas a la biblioteca** *(desde
+2026-10-19)*: si la casilla está marcada, se importa a la biblioteca
+una copia etiquetada de cada grabación de programa terminada (tipo de
+pista «Recordings», título `<programa> <fecha hora>`, vinculada a la
+instancia del programa); el archivo de la carpeta de grabaciones no se
+toca.  Detalles en
+[Record-per-Show, sección 3.6](./RECORD_PER_SHOW.md).  Se guarda con
+el botón **Save** de esta sección; el playout necesita un reinicio
+tras la actualización, después el interruptor actúa de inmediato.
+
 ### 24/7 Recording Folder
 
 Donde la [grabación 24/7](./RECORD_PER_HOUR.md) permanente

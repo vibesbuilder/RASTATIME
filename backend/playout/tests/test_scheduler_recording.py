@@ -383,3 +383,114 @@ def test_build_output_path_has_seconds(tmp_path):
     local = starts.astimezone()
     assert out.name == local.strftime("%Y-%m-%d %H-%M-%S") + " - A & B _ C.opus"
     assert out.parent.name == local.strftime("%Y-%m-%d")
+
+
+# ---- RASTATIME 2026-10-19: copy show recordings into the library ----------
+
+
+def _recording_scheduler(tmp_path, with_v1=True):
+    """Scheduler with a mocked engine, a recording folder at tmp_path and
+    (optionally) a legacy v1 client whose notify_recording_finished is a mock."""
+    from libretime_playout.playout_scheduler import PlayoutScheduler
+
+    engine = MagicMock(spec=LiquidsoapPlayoutEngine)
+    api_client = MagicMock()
+    api_resp = MagicMock()
+    api_resp.status_code = 200
+    api_resp.json.return_value = {"folder": str(tmp_path)}
+    api_client.session.get.return_value = api_resp
+    v1 = MagicMock() if with_v1 else None
+    sched = PlayoutScheduler(engine=engine, api_client=api_client, api_client_v1=v1)
+    sched._recording_settle_poll_seconds = 0.01
+    sched._recording_settle_max_seconds = 0.5
+    sched._recording_report_retry_seconds = 0.01
+    return sched, engine, v1
+
+
+def _join_report_threads():
+    import threading
+
+    for t in threading.enumerate():
+        if t.name.startswith("recording-finished-"):
+            t.join(timeout=5)
+
+
+def test_record_events_carry_the_instance_id():
+    """generate_show_record_events puts cc_show_instances.id on both events."""
+    from libretime_playout.player.schedule import generate_show_record_events
+
+    events = {}
+    generate_show_record_events(
+        events,
+        {"id": 4711, "starts_at": "2026-10-19T08:07:00", "ends_at": "2026-10-19T08:15:00"},
+        {"id": 212, "name": "Event Calendar"},
+    )
+    assert len(events) == 2
+    assert {e.instance_id for e in events.values()} == {4711}
+    assert {e.type for e in events.values()} == {EventKind.SHOW_RECORD_START, EventKind.SHOW_RECORD_END}
+
+
+def test_record_end_reports_the_closed_file_to_legacy(tmp_path):
+    """start remembers (instance, path); end stops, waits for a stable file
+    and POSTs recording-finished with the instance id and the path."""
+    sched, engine, v1 = _recording_scheduler(tmp_path)
+    start = _make_show_record_event(show_id=212, show_name="Event Calendar",
+                                    starts_at=datetime(2026, 10, 19, 8, 7))
+    start.instance_id = 4711
+    sched._on_show_record_start("k-start", start)
+    assert sched._open_show_recording is not None
+    inst, path = sched._open_show_recording
+    assert inst == 4711
+    assert path.name.endswith(" - Event Calendar.mp3")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(b"x" * 100)
+
+    end = _make_show_record_event(type_=EventKind.SHOW_RECORD_END, show_id=212,
+                                  show_name="Event Calendar",
+                                  starts_at=datetime(2026, 10, 19, 8, 7))
+    end.instance_id = 4711
+    sched._on_show_record_end("k-end", end)
+    _join_report_threads()
+
+    engine.recording_stop.assert_called()
+    v1.notify_recording_finished.assert_called_once()
+    kwargs = v1.notify_recording_finished.call_args.kwargs
+    assert kwargs["instance_id"] == 4711
+    assert kwargs["path"] == str(path)
+    assert sched._open_show_recording is None
+
+
+def test_record_end_retries_the_report_three_times(tmp_path):
+    sched, engine, v1 = _recording_scheduler(tmp_path)
+    v1.notify_recording_finished.side_effect = ConnectionError("legacy down")
+    sched._open_show_recording = (99, tmp_path / "r.mp3")
+    (tmp_path / "r.mp3").write_bytes(b"abc")
+    end = _make_show_record_event(type_=EventKind.SHOW_RECORD_END)
+    end.instance_id = 99
+    sched._on_show_record_end("k-end", end)
+    _join_report_threads()
+    assert v1.notify_recording_finished.call_count == 3
+
+
+def test_record_end_without_open_recording_or_client_is_quiet(tmp_path):
+    """A PLAYOUT restarted mid-show knows no path; no v1 client -> no report."""
+    sched, engine, v1 = _recording_scheduler(tmp_path)
+    end = _make_show_record_event(type_=EventKind.SHOW_RECORD_END)
+    end.instance_id = 5
+    sched._on_show_record_end("k-end", end)        # nothing open
+    _join_report_threads()
+    v1.notify_recording_finished.assert_not_called()
+
+    sched2, engine2, _ = _recording_scheduler(tmp_path, with_v1=False)
+    sched2._open_show_recording = (5, tmp_path / "x.mp3")
+    sched2._on_show_record_end("k-end", end)        # no client: no crash
+    assert sched2._open_show_recording is None
+
+
+def test_record_start_failure_leaves_no_open_recording(tmp_path):
+    sched, engine, v1 = _recording_scheduler(tmp_path)
+    engine.recording_start.side_effect = ConnectionError("telnet down")
+    start = _make_show_record_event()
+    start.instance_id = 1
+    sched._on_show_record_start("k", start)
+    assert sched._open_show_recording is None

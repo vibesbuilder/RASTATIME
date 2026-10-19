@@ -221,6 +221,34 @@ fonctionnera à pleine qualité.
 
 ---
 
+## 3.6 Copier les enregistrements dans la bibliothèque *(depuis le 2026-10-19)*
+
+Paramètres → Machine locale → **Show Recording** propose la case
+**Copier les enregistrements d'émission dans la bibliothèque**.
+Lorsqu'elle est cochée, chaque émission enregistrée est importée dans
+la médiathèque dès que son fichier d'enregistrement est fermé :
+
+- C'est une **copie** qui est importée ; le fichier du dossier
+  d'enregistrement reste exactement où il est (votre archive n'est
+  pas touchée).
+- La copie reçoit le type de piste **Recordings** (créé à la première
+  utilisation), le titre `<nom de l'émission> <AAAA-MM-JJ HH:MM>`, le
+  nom de l'émission comme artiste et l'album `Show Recordings`, pour
+  être facile à retrouver dans la bibliothèque.
+- La piste est **liée à l'instance de l'émission** (le « fichier
+  enregistré » du calendrier), de sorte qu'une rediffusion ultérieure
+  d'une émission en direct puisse la reprendre.
+- Un enregistrement déjà importé est reconnu par sa somme de contrôle
+  et n'est pas importé une seconde fois.
+
+Fonctionnement : le playout signale le fichier fermé à l'application
+web, qui vérifie que le chemin se trouve dans le dossier Show
+Recording configuré, tague la copie avec ffmpeg et la transmet à
+l'analyseur comme n'importe quel téléversement.  La case prend effet
+pour les émissions qui se terminent après un redémarrage unique du
+service RASTATIME-PLAYOUT suivant la mise à jour ; ensuite elle peut
+être activée ou désactivée à tout moment sans redémarrage.
+
 ## 4. Trouver et télécharger un enregistrement
 
 ### Depuis le calendrier

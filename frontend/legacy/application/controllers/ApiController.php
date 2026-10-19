@@ -89,6 +89,7 @@ class ApiController extends Zend_Controller_Action
             ->addActionContext('get-usability-hint', 'json')
             ->addActionContext('poll-celery', 'json')
             ->addActionContext('recalculate-schedule', 'json') // RKTN-260
+            ->addActionContext('recording-finished', 'json') // RASTATIME 2026-10-19
             ->initContext();
     }
 
@@ -874,6 +875,34 @@ class ApiController extends Zend_Controller_Action
         if (count($rows) > 0) {
             $this->view->is_recording = ($rows[0]['record'] == 1);
         }
+    }
+
+    /**
+     * RASTATIME 2026-10-19 - the playout reports a closed per-show recording
+     * (POST instanceid, path; Api-Key).  Imports a copy into the library
+     * when "Copy Show Recordings into Library" is on, see
+     * Application_Service_ShowRecordingService.
+     */
+    public function recordingFinishedAction()
+    {
+        $this->view->layout()->disableLayout();
+        $this->_helper->viewRenderer->setNoRender(true);
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->getResponse()->setHttpResponseCode(405);
+            $this->_helper->json->sendJson(['ok' => false, 'error' => 'method-not-allowed']);
+
+            return;
+        }
+        $instanceId = (int) $this->_getParam('instanceid', 0);
+        $path = (string) $this->_getParam('path', '');
+        try {
+            $result = Application_Service_ShowRecordingService::import($instanceId, $path);
+        } catch (Exception $e) {
+            Logging::error('recording-finished: ' . $e->getMessage());
+            $this->getResponse()->setHttpResponseCode(500);
+            $result = ['ok' => false, 'error' => $e->getMessage()];
+        }
+        $this->_helper->json->sendJson($result);
     }
 
     public function uploadRecordedAction()
