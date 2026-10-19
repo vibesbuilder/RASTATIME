@@ -49,7 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `C:/Temp/optd/recording_import_probe.php` (Gating, Ablehnungen, Import,
   Duplikat), fünf Playout-Tests.  Manual RECORD_PER_SHOW §3.6 ×4,
   LOCAL_MACHINE ×4, Architektur §23.66.  Wirksam nach PLAYOUT-Neustart.
-  Commit RECCOPY.
+  Commit 86e5015.
 - **Wiederholungen automatisieren: „Wiederholung von Sendung" (2026-10-18, Go 2026-10-18)** —
   Edit Show → Autoloading Playlist → „Repeat of show": Sendung B wählt
   Sendung A als Quelle; kurz vor dem Start (65 min, eine Runde vor dem
