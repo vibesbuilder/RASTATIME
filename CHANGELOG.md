@@ -1508,7 +1508,7 @@ un_tests.ps1` (2026-10-16)** — startet API-, Playout- und
   Formulars blieb der Kalender schmal: `windowResize()` setzte bei
   FullCalendar 6 nur die Höhe; FC6 misst die Breite sonst nur beim
   Fenster-Resize → zusätzlich `updateSize()` (full-calendar-functions.js).
-  Commit CALFIX.
+  Commit e3d9aa7.
 
 - **Import/Export: Sendungs-Import brach nach 120 s ab (2026-10-18)** —
   Vorschau und Import liefen als je ein Request über alle Zeilen; bei 373
