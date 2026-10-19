@@ -5358,7 +5358,7 @@ alle 21.739 `cc_files.filepath` sind relativ zu EINER Wurzel
 Analyzer `import_directory`, Umzugs-Job, Backup-Spiegel); `cc_music_dirs` gibt
 es nicht mehr.  Empfehlung: nicht die Wurzel vervielfachen, sondern die
 Aufnahmen in die Bibliothek importieren (Kopie nach `D:/stor/imported/...`,
-Track-Typ „Recordings", Original bleibt in `D:ecordings\shows`).  Das ist
+Track-Typ „Recordings", Original bleibt in `D:/recordings/shows`).  Das ist
 zugleich Vorbedingung 2 von „Wiederholung von Sendung, Stufe 2".  Optionen:
 A) Playout meldet „Aufnahme fertig" → Legacy importiert die Datei sofort
 (Metadaten Sendung/Datum, Verknuepfung zur Instanz; ~1 Tag).  B) zweiter
