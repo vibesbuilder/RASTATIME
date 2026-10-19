@@ -355,9 +355,11 @@ function setAddShowEvents(form) {
     });
 
     if (!checkBoxSelected) {
-      var d = getDateFromString(
-        form.find("#add_show_start_date").attr("value"),
-      );
+      // RASTATIME 2026-10-19 - .val(), not .attr("value"): the attribute
+      // keeps the server-rendered default (today), while a click on a
+      // calendar day or the date picker only changes the property - so the
+      // pre-ticked weekday was always today's.
+      var d = getDateFromString(form.find("#add_show_start_date").val());
       if (d != null)
         form.find("#add_show_day_check-" + d.getDay()).prop("checked", true);
     }

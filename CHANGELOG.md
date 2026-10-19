@@ -1499,6 +1499,17 @@ un_tests.ps1` (2026-10-16)** — startet API-, Playout- und
 
 ### Fixed
 
+- **Kalender: Wochentag-Vorauswahl und Breite nach „Edit Show" (2026-10-19,
+  Operator-Meldung)** — (1) Beim Einschalten von „Repeats" war immer der
+  heutige Wochentag angehakt statt des Tags der Sendung: das Skript las
+  `attr("value")` des Startdatums (das server-gerenderte Attribut bleibt auf
+  „heute"), der Klick auf einen Kalendertag oder der Datumswähler ändert nur
+  die Eigenschaft → jetzt `.val()` (add-show.js).  (2) Nach dem Schließen des
+  Formulars blieb der Kalender schmal: `windowResize()` setzte bei
+  FullCalendar 6 nur die Höhe; FC6 misst die Breite sonst nur beim
+  Fenster-Resize → zusätzlich `updateSize()` (full-calendar-functions.js).
+  Commit CALFIX.
+
 - **Import/Export: Sendungs-Import brach nach 120 s ab (2026-10-18)** —
   Vorschau und Import liefen als je ein Request über alle Zeilen; bei 373
   Sendungen (Überschneidungsprüfung je Instanz ≈ 0,5 s pro Zeile) schnitt

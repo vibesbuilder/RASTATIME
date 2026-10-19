@@ -189,6 +189,10 @@ function windowResize() {
   if (window.SCHEDULE_USE_FC6) {
     if (window.scheduleFc6) {
       window.scheduleFc6.setOption("contentHeight", mainHeight);
+      // RASTATIME 2026-10-19 - the add/edit show form shares the row with
+      // the calendar; FC6 only re-measures on window resize, so after the
+      // form is shown or hidden the calendar kept the old width.
+      window.scheduleFc6.updateSize();
     }
     return;
   }
