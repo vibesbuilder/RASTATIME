@@ -548,7 +548,7 @@ Date: 2026-10-18
 >   filename; faster dashboard polling).
 > - **0.9 (2026-05-17)** — Record-per-Show feature: shows flagged
 >   `cc_show.record = true` produce a single MP3 of the on-air output
->   to `<folder>/<YYYY-MM-DD>/<YYYY-MM-DD HH-MM> - <show-name>.mp3`.
+>   to `<folder>/<YYYY-MM-DD>/<YYYY-MM-DD HH-MM-SS> - <show-name>.mp3`.
 >   Implementation taps the first configured Icecast output mountpoint
 >   with FFmpeg `-c copy` (1–2 % CPU on i3-1315U, no re-encode), so
 >   recording quality matches what listeners actually hear AND source
@@ -2482,7 +2482,7 @@ ffmpeg -reconnect 1 -reconnect_streamed 1
        -loglevel warning
        -i http://localhost:8000/<first-mountpoint>
        -c copy -vn -y
-       <recording-folder>/<YYYY-MM-DD>/<YYYY-MM-DD HH-MM> - <show-name>.mp3
+       <recording-folder>/<YYYY-MM-DD>/<YYYY-MM-DD HH-MM-SS> - <show-name>.mp3
 ```
 
 Reconnect options ride out short Icecast hiccups without dying;
@@ -2513,7 +2513,7 @@ mountpoint name or port in Settings → Streams, the recorder follows
 on the next show-start without any restart.
 
 **Filename construction.**  `build_output_path()` composes
-`<folder>/<YYYY-MM-DD>/<YYYY-MM-DD HH-MM> - <show-name>.mp3` from
+`<folder>/<YYYY-MM-DD>/<YYYY-MM-DD HH-MM-SS> - <show-name>.mp3` from
 `show_starts_at` (UTC-naive, as carried in the event) plus a
 sanitized show name.  Sanitization strips Windows-illegal characters
 (`<>:"/\|?*` plus control chars) and replaces them with `_`; Umlauts,
@@ -2609,7 +2609,7 @@ in `test_c5_mechanism_b.py`):
 
 ```
 telnet> recording.stop
-telnet> var.set recording_path = C:/.../<YYYY-MM-DD HH-MM> - <show>.mp3
+telnet> var.set recording_path = C:/.../<YYYY-MM-DD HH-MM-SS> - <show>.mp3
 telnet> recording.start
 ```
 
@@ -2684,7 +2684,7 @@ post-roll Timer.
 **Filename construction unchanged.**  `build_output_path` was moved
 from `engine.ffmpeg_recorder` to the new `libretime_playout/
 recording_path.py` module; the format is still
-`<folder>/<YYYY-MM-DD>/<YYYY-MM-DD HH-MM> - <show-name>.mp3` with
+`<folder>/<YYYY-MM-DD>/<YYYY-MM-DD HH-MM-SS> - <show-name>.mp3` with
 the same Windows-illegal-character sanitization.
 
 

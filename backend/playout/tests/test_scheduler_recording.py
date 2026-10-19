@@ -368,3 +368,18 @@ def test_recording_extension_lookup_failure_falls_back_to_mp3(tmp_path):
         engine=engine, api_client=MagicMock(), recording_extension=boom,
     )
     assert sched._recording_file_extension() == "mp3"
+
+
+# ---- RASTATIME 2026-10-19 - file name carries seconds (operator wish)
+
+
+def test_build_output_path_has_seconds(tmp_path):
+    from datetime import datetime, timezone
+
+    from libretime_playout.recording_path import build_output_path
+
+    starts = datetime(2026, 10, 19, 10, 5, 7, tzinfo=timezone.utc)
+    out = build_output_path(tmp_path, starts, "A & B / C", extension="opus")
+    local = starts.astimezone()
+    assert out.name == local.strftime("%Y-%m-%d %H-%M-%S") + " - A & B _ C.opus"
+    assert out.parent.name == local.strftime("%Y-%m-%d")

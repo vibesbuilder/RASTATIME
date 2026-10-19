@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Show-Recording: Dateiname mit Sekunden (2026-10-19)** — `<YYYY-MM-DD HH-MM-SS> - <Sendung>.<ext>`
+  statt Minutenauflösung (Operator-Wunsch: verschobene Sendungen starten
+  abseits der vollen Minute, die Wiederholung aus der Aufzeichnung schneidet
+  nach Zeit). `recording_path.build_output_path`, Tooltip, Manual
+  RECORD_PER_SHOW / RECORD_PER_HOUR ×4. Wirksam nach PLAYOUT-Neustart. Commit `TBD`.
+
 ### Removed
 
 - **„Copy into Repeats" je Track-Typ wieder entfernt (2026-10-18)** — Operator:

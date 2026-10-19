@@ -31,7 +31,7 @@ time, into **separate folders**.
 | **Scope** | One file per show flagged "Record this show" | One file per clock hour, always on |
 | **Covers** | Only while a recorded show is on air | Everything aired, 24/7 (incl. gaps, filler, emergencies) |
 | **Configured** | Per show (Calendar) | Once (Settings → Local Machine) |
-| **Filename** | `<YYYY-MM-DD HH-MM> - <show>.mp3` | `<YYYY-MM-DD HH>-00.<ext>` |
+| **Filename** | `<YYYY-MM-DD HH-MM-SS> - <show>.mp3` | `<YYYY-MM-DD HH>-00.<ext>` |
 | **Quality** | Fixed 320 kbps MP3 | Operator-chosen format + bitrate (default 192 kbps MP3) |
 | **Cue sidecars** | No | Yes (`.cues.json` per hour) |
 

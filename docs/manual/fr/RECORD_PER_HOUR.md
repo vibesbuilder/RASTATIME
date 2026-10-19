@@ -33,7 +33,7 @@ même temps, dans des **dossiers séparés**.
 | **Portée** | Un fichier par émission marquée « enregistrer » | Un fichier par heure d'horloge, toujours actif |
 | **Capture** | Seulement pendant une émission enregistrée | Tout, 24/7 (y compris trous, remplissage, urgences) |
 | **Configuré** | Par émission (Calendrier) | Une fois (Paramètres → Machine locale) |
-| **Nom de fichier** | `<YYYY-MM-DD HH-MM> - <émission>.mp3` | `<YYYY-MM-DD HH>-00.<ext>` |
+| **Nom de fichier** | `<YYYY-MM-DD HH-MM-SS> - <émission>.mp3` | `<YYYY-MM-DD HH>-00.<ext>` |
 | **Qualité** | MP3 320 kbps fixe | Format + débit au choix (défaut 192 kbps MP3) |
 | **Fichiers de repères** | Non | Oui (`.cues.json` par heure) |
 

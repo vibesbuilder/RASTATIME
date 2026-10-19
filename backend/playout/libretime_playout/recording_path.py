@@ -8,7 +8,7 @@ same path-building rules.
 
 Format::
 
-    <recording-folder>/<YYYY-MM-DD>/<YYYY-MM-DD HH-MM> - <show-name>.mp3
+    <recording-folder>/<YYYY-MM-DD>/<YYYY-MM-DD HH-MM-SS> - <show-name>.mp3
 
 Dates + times are rendered in the system's local timezone so operator-
 visible filenames match wall-clock time on the studio computer.
@@ -47,7 +47,7 @@ def build_output_path(
     """
     Compose the output path:
 
-        <recording-folder>/<YYYY-MM-DD>/<YYYY-MM-DD HH-MM> - <show-name>.mp3
+        <recording-folder>/<YYYY-MM-DD>/<YYYY-MM-DD HH-MM-SS> - <show-name>.mp3
 
     Date and time are derived from ``show_starts_at`` and rendered in
     the **system's local timezone** so operator-visible filenames
@@ -55,7 +55,7 @@ def build_output_path(
     ``datetime.astimezone()`` consults the system TZ at call time, so
     DST switches (Europe/Berlin: CET <-> CEST) are handled
     transparently: a show scheduled at 13:00 local time produces
-    ``13-00`` in the filename in both summer (UTC+2) and winter
+    ``13-00-00`` in the filename in both summer (UTC+2) and winter
     (UTC+1).  The show-name is sanitized; spaces and Umlauts are kept.
 
     The scheduler hands us a naive UTC datetime (Pydantic strips
@@ -67,13 +67,15 @@ def build_output_path(
         recording_folder = C:/rastatime/recordings
         show_starts_at   = datetime(2026, 5, 17, 11, 0)  # naive UTC = 13:00 local
         show_name        = "Müllers Frühstück"
-        -> C:/rastatime/recordings/2026-05-17/2026-05-17 13-00 - Müllers Frühstück.mp3
+        -> C:/rastatime/recordings/2026-05-17/2026-05-17 13-00-00 - Müllers Frühstück.mp3
     """
     if show_starts_at.tzinfo is None:
         show_starts_at = show_starts_at.replace(tzinfo=timezone.utc)
     local_dt = show_starts_at.astimezone()  # system local tz
     day_str = local_dt.strftime("%Y-%m-%d")
-    time_str = local_dt.strftime("%H-%M")
+    # RASTATIME 2026-10-19 - seconds in the name (operator): shifted shows start
+    # off the minute, and the repeat feature cuts excerpts by time
+    time_str = local_dt.strftime("%H-%M-%S")
     name = sanitize_show_name(show_name)
     # RASTATIME 2026-10-18 - extension follows the rendered encoder
     # (Settings -> Local Machine -> Show Recording), mp3 when unknown

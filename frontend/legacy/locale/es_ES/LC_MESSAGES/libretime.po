@@ -5679,8 +5679,8 @@ msgid "Show Recording Folder"
 msgstr "Carpeta de grabación de programas"
 
 #: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
-msgid "Folder where per-show recordings are written.  Each show flagged as \"Record this show\" produces a single .mp3 of the on-air output, named <YYYY-MM-DD HH-MM> - <show-name>.mp3 under a per-day subfolder.  Leave empty to disable recording."
-msgstr "Carpeta donde se escriben las grabaciones por programa.  Cada programa marcado como «Grabar este programa» produce un único .mp3 de la salida en antena, llamado <YYYY-MM-DD HH-MM> - <show-name>.mp3 en una subcarpeta por día.  Dejar vacío para desactivar la grabación."
+msgid "Folder where per-show recordings are written.  Each show flagged as \"Record this show\" produces a single .mp3 of the on-air output, named <YYYY-MM-DD HH-MM-SS> - <show-name>.mp3 under a per-day subfolder.  Leave empty to disable recording."
+msgstr "Carpeta donde se escriben las grabaciones por programa.  Cada programa marcado como «Grabar este programa» produce un único .mp3 de la salida en antena, llamado <YYYY-MM-DD HH-MM-SS> - <show-name>.mp3 en una subcarpeta por día.  Dejar vacío para desactivar la grabación."
 
 #: RASTATIME 2026-10-03 Local Machine page (preference/local-machine.phtml)
 msgid "Absolute path on this machine.  Example: C:\\rastatime\\recordings"
@@ -6579,8 +6579,8 @@ msgstr "Vincular a este programa"
 msgid "Show Recording"
 msgstr "Grabación de programas"
 
-msgid "Folder where per-show recordings are written.  Each show flagged as \"Record this show\" produces a single file of the on-air output, named <YYYY-MM-DD HH-MM> - <show-name> under a per-day subfolder, in the format and bitrate chosen below.  Leave the folder empty to disable recording."
-msgstr "Carpeta donde se escriben las grabaciones por programa.  Cada programa marcado \"Grabar este programa\" produce un archivo de la señal emitida, llamado <YYYY-MM-DD HH-MM> - <nombre del programa> en una subcarpeta por día, en el formato y la tasa de bits elegidos abajo.  Deje la carpeta vacía para desactivar la grabación."
+msgid "Folder where per-show recordings are written.  Each show flagged as \"Record this show\" produces a single file of the on-air output, named <YYYY-MM-DD HH-MM-SS> - <show-name> under a per-day subfolder, in the format and bitrate chosen below.  Leave the folder empty to disable recording."
+msgstr "Carpeta donde se escriben las grabaciones por programa.  Cada programa marcado \"Grabar este programa\" produce un archivo de la señal emitida, llamado <YYYY-MM-DD HH-MM-SS> - <nombre del programa> en una subcarpeta por día, en el formato y la tasa de bits elegidos abajo.  Deje la carpeta vacía para desactivar la grabación."
 
 msgid "Container and codec of the recording files.  MP3 plays everywhere; Opus and AAC are smaller at the same quality.  A change is applied by the playout in the next quiet moment; files already written keep their format."
 msgstr "Contenedor y códec de los archivos de grabación.  MP3 se reproduce en todas partes; Opus y AAC son más pequeños a igual calidad.  El playout aplica un cambio en su próximo momento tranquilo; los archivos ya escritos conservan su formato."

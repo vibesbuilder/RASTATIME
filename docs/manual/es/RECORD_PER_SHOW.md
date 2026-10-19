@@ -71,7 +71,7 @@ ciclo de vida vía la interfaz telnet de Liquidsoap:
 
 ```
 recording.stop
-var.set recording_path = C:/.../<YYYY-MM-DD HH-MM> - <show>.mp3
+var.set recording_path = C:/.../<YYYY-MM-DD HH-MM-SS> - <show>.mp3
 recording.start
 ```
 

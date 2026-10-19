@@ -2453,7 +2453,7 @@ class Application_Model_Preference
     // Local Machine).  The playout PlayoutScheduler reads this via the
     // GET /api/v2/preferences/local-recording-folder endpoint when a
     // SHOW_RECORD_START event fires, then writes
-    //   <folder>/<YYYY-MM-DD>/<YYYY-MM-DD HH-MM> - <show-name>.mp3
+    //   <folder>/<YYYY-MM-DD>/<YYYY-MM-DD HH-MM-SS> - <show-name>.mp3
     // by tapping the first Icecast output mountpoint with `-c copy`.
     public static function getLocalRecordingFolder()
     {

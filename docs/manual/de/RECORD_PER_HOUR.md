@@ -31,7 +31,7 @@ laufen — in **getrennte Ordner**.
 | **Umfang** | Eine Datei je als „Aufnahme" markierter Sendung | Eine Datei pro Uhr-Stunde, immer an |
 | **Erfasst** | Nur während eine aufgenommene Sendung läuft | Alles, 24/7 (inkl. Lücken, Füller, Notfälle) |
 | **Konfiguriert** | Pro Sendung (Kalender) | Einmalig (Einstellungen → Lokale Maschine) |
-| **Dateiname** | `<YYYY-MM-DD HH-MM> - <Sendung>.mp3` | `<YYYY-MM-DD HH>-00.<ext>` |
+| **Dateiname** | `<YYYY-MM-DD HH-MM-SS> - <Sendung>.mp3` | `<YYYY-MM-DD HH>-00.<ext>` |
 | **Qualität** | Fix 320 kbps MP3 | Format + Bitrate wählbar (Default 192 kbps MP3) |
 | **Cue-Sidecars** | Nein | Ja (`.cues.json` pro Stunde) |
 

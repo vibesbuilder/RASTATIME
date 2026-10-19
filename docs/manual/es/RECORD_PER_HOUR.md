@@ -32,7 +32,7 @@ vez, en **carpetas separadas**.
 | **Alcance** | Un archivo por programa marcado «grabar» | Un archivo por hora de reloj, siempre activo |
 | **Captura** | Solo mientras un programa grabado está al aire | Todo, 24/7 (incl. huecos, relleno, emergencias) |
 | **Configurado** | Por programa (Calendario) | Una vez (Configuración → Máquina local) |
-| **Nombre de archivo** | `<YYYY-MM-DD HH-MM> - <programa>.mp3` | `<YYYY-MM-DD HH>-00.<ext>` |
+| **Nombre de archivo** | `<YYYY-MM-DD HH-MM-SS> - <programa>.mp3` | `<YYYY-MM-DD HH>-00.<ext>` |
 | **Calidad** | MP3 320 kbps fijo | Formato + tasa de bits a elección (predet. 192 kbps MP3) |
 | **Archivos de marcas** | No | Sí (`.cues.json` por hora) |
 
