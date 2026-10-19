@@ -1522,6 +1522,17 @@ un_tests.ps1` (2026-10-16)** — startet API-, Playout- und
 
 ### Fixed
 
+- **Zeitumstellung: Sendungsdauer im Formular als Wanduhr-Differenz (2026-10-19,
+  Operator-Meldung mit Screenshots)** — `ShowFormService::calculateDuration`
+  bildete die Differenz in der Sendungs-Zeitzone, also in echten Stunden:
+  eine Sendung 00:00–05:00 in der Nacht auf den 25.10. bekam „06h 00m", das
+  wurde als `cc_show_days.duration` gespeichert und jede spätere Instanz
+  endete per `wallClockEnd(start, 06:00)` um 06:00 (die erste sogar nach
+  7 echten Stunden).  Jetzt Differenz auf einer Uhr ohne Zeitumstellung
+  (UTC-Konstruktion): 00:00–05:00 = 05h 00m, 22:00–06:00 = 08h 00m, auch im
+  Frühjahr.  Probe `C:/Temp/optd/dur_probe.php`.  Bereits angelegte
+  Sendungen über die Umstellungsnacht (z. B. „Electronic Evening"
+  Show 1239, Dauer 06:00) müssen neu angelegt werden.  Commit DURFIX.
 - **Kalender: Wochentag-Vorauswahl und Breite nach „Edit Show" (2026-10-19,
   Operator-Meldung)** — (1) Beim Einschalten von „Repeats" war immer der
   heutige Wochentag angehakt statt des Tags der Sendung: das Skript las

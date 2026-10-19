@@ -729,9 +729,16 @@ class Application_Service_ShowFormService
     public function calculateDuration($start, $end, $timezone)
     {
         try {
-            $tz = new DateTimeZone($timezone);
-            $startDateTime = new DateTime($start, $tz);
-            $endDateTime = new DateTime($end, $tz);
+            // RASTATIME 2026-10-19 - WALL-CLOCK difference, on a clock without
+            // DST rules: a show 00:00-05:00 on the night the clocks go back
+            // is "5 h" for the station although 6 real hours pass; the
+            // elapsed difference (6 h) was stored as the show's duration and
+            // every later instance then ended at 06:00 (ShowService uses
+            // wallClockEnd(start, duration)).  The $timezone only matters for
+            // the real-time view, which nothing here needs.
+            $utc = new DateTimeZone('UTC');
+            $startDateTime = new DateTime($start, $utc);
+            $endDateTime = new DateTime($end, $utc);
 
             $duration = $startDateTime->diff($endDateTime);
 

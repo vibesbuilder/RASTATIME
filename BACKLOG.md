@@ -5339,7 +5339,7 @@ statt `.val()`), und der Kalender blieb nach dem Schließen des Formulars schmal
 (FC6 misst nur beim Fenster-Resize, jetzt `updateSize()` in `windowResize()`).
 Commit e3d9aa7.
 
-### 🟡 Zeitumstellung: Sendung 00:00-05:00 am 26.10. „im Kalender bis 6:00 sichtbar" - OFFEN (nicht reproduzierbar, 2026-10-19)
+### ✅ Zeitumstellung: Sendung 00:00-05:00 „im Kalender bis 6:00 sichtbar" - Ursache gefunden und behoben 2026-10-19
 
 Befund: DB (Instanzen der importierten Sendung 683 und der neu angelegten 1230:
 alle 00:00-05:00 Ortszeit, 5 h), Event-Feed (`getFullCalendarEvents`, Probe
@@ -5349,6 +5349,9 @@ alle 00:00-05:00.  Die Zeitumstellung ist in der Nacht 24./25.10. (03:00 →
 02:00), nicht am 26.10.  Vorbedingung: Screenshot des Operators mit Ansicht
 (Tag/Woche/Monat), Browser und Uhrzeit der Beobachtung; ggf. Browser-Zeitzone
 pruefen.
+Aufloesung (Screenshots des Operators, Sendung Sonntag 00:00-05:00 ueber die Umstellungsnacht 25.10.):
+`ShowFormService::calculateDuration` rechnete in echten Stunden (6 h) und speicherte „06:00" als
+Dauer; Fix = Wanduhr-Differenz.  Show 1239 „Electronic Evening" muss neu angelegt werden.
 
 ### ✅ Mehrere Library-Ordner -> „Copy Show Recordings into Library" - gebaut 2026-10-19 (Go 2026-10-19: Option A mit Kontrollkaestchen, Architektur §23.66)
 
