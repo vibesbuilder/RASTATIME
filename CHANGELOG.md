@@ -44,7 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (Planung) und `repeat2_e2e_probe.php` (Wegwerf-Sendung: Scheibe
   00:02:22–00:12:22 der Aufnahme 22358 zwischen den beiden Titeln,
   Löschsperre, Idempotenz).  Manual CALENDAR ×4, Architektur §23.67.
-  Commit REP2.
+  Commit 6e18002.
 - **Show-Recording: „Copy Show Recordings into Library" (2026-10-19, Go
   2026-10-19 Option A mit Kontrollkästchen)** — Settings → Local Machine →
   Show Recording.  Ist das Kästchen gesetzt, meldet das Playout jede
