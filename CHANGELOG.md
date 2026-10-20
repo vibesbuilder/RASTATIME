@@ -1529,7 +1529,7 @@ un_tests.ps1` (2026-10-16)** — startet API-, Playout- und
   alle Folgen dieselbe Vorlage.  Jetzt `wallClockEnd` wie bei den
   Instanzen → 05:00.  Die Instanzen selbst waren korrekt.  Dazu Hinweis in
   LOCAL_MACHINE §3 ×4: die Eingabegeräte-Liste liegt nicht mehr auf der
-  Seite, das Gerät wird im Line-In-Eintrag gewählt.  Commit FORMEND.
+  Seite, das Gerät wird im Line-In-Eintrag gewählt.  Commit f01203f.
 - **Zeitumstellung: Sendungsdauer im Formular als Wanduhr-Differenz (2026-10-19,
   Operator-Meldung mit Screenshots)** — `ShowFormService::calculateDuration`
   bildete die Differenz in der Sendungs-Zeitzone, also in echten Stunden:
