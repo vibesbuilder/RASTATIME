@@ -243,7 +243,7 @@ final class Application_Model_Scheduler
      *
      * @return $files
      */
-    private function retrieveMediaFiles($id, $type, $show, $afterRowId = null)
+    private function retrieveMediaFiles($id, $type, $show, $afterRowId = null, $item = null)
     {
         // if there is a show we need to set a show limit to pass to smart blocks in case they use time remaining
         $showInstance = new Application_Model_ShowInstance($show);
@@ -331,6 +331,14 @@ final class Application_Model_Scheduler
             if (empty($rawCueout)) {
                 $rawCueout = $file->getDbLength() ?: '00:00:00';
             }
+            // RASTATIME 2026-10-20 - an item that names its own cue points
+            // (a slice of a show recording standing in for a live input, see
+            // RepeatFillService) is scheduled with them, not with the file's
+            // defaults; fades likewise when given.
+            if (is_array($item) && !empty($item['cuein']) && !empty($item['cueout'])) {
+                $rawCuein = (string) $item['cuein'];
+                $rawCueout = (string) $item['cueout'];
+            }
             $cuein = Application_Common_DateHelper::playlistTimeToSeconds($rawCuein);
             $cueout = Application_Common_DateHelper::playlistTimeToSeconds($rawCueout);
             $row_length = Application_Common_DateHelper::secondsToPlaylistTime($cueout - $cuein);
@@ -343,6 +351,10 @@ final class Application_Model_Scheduler
             // fade is in format SS.uuuuuu
             $data['fadein'] = Application_Model_Preference::GetDefaultFadeIn();
             $data['fadeout'] = Application_Model_Preference::GetDefaultFadeOut();
+            if (is_array($item) && isset($item['fadein'], $item['fadeout']) && $item['fadein'] !== '' && $item['fadeout'] !== '') {
+                $data['fadein'] = (string) $item['fadein'];
+                $data['fadeout'] = (string) $item['fadeout'];
+            }
 
             $files[] = $data;
         } elseif ($type === 'playlist') {
@@ -1356,7 +1368,7 @@ final class Application_Model_Scheduler
                         foreach ($mediaItems as $media) {
                             $filesToInsert = array_merge(
                                 $filesToInsert,
-                                $this->retrieveMediaFiles($media['id'], $media['type'], $schedule['instance'], $id)
+                                $this->retrieveMediaFiles($media['id'], $media['type'], $schedule['instance'], $id, $media)
                             );
                         }
                     }

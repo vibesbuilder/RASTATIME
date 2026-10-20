@@ -19,6 +19,9 @@ class Application_Service_RepeatFillService
 {
     /** Seconds before the start within which a repeat instance is filled. */
     public const LEAD_SECONDS = 3900; // 65 min: one pass ahead of the 60-min autoloading build
+    // RASTATIME 2026-10-20 - stage 2: a source with live rows waits for its
+    // recording to be imported, but never closer than this to the repeat's start
+    public const RECORDING_WAIT_MARGIN_SECONDS = 300;
 
     /** Longest accepted chain when looking for a loop. */
     private const MAX_CHAIN = 50;
@@ -235,13 +238,15 @@ class Application_Service_RepeatFillService
         if (!self::columnsReady() || (!$fileId && !$streamId)) {
             return null;
         }
-        $col = $fileId ? 'sch.file_id' : 'sch.stream_id';
+        // RASTATIME 2026-10-20 - stage 2: a file is also needed as the recording of
+        // the source instance (a.file_id), which stands in for its live rows
+        $cond = $fileId ? '(sch.file_id = :id OR a.file_id = :id)' : 'sch.stream_id = :id';
         $sql = "SELECT b.name, MIN(bi.starts) AS starts
-                  FROM cc_schedule sch
-                  JOIN cc_show_instances a ON a.id = sch.instance_id
+                  FROM cc_show_instances a
+                  LEFT JOIN cc_schedule sch ON sch.instance_id = a.id
                   JOIN cc_show b ON b.repeat_of_show_id = a.show_id
                   JOIN cc_show_instances bi ON bi.show_id = b.id
-                 WHERE {$col} = :id
+                 WHERE {$cond}
                    AND a.modified_instance = FALSE
                    AND a.ends <= now() AT TIME ZONE 'UTC'
                    AND a.id = (SELECT l.id FROM cc_show_instances l
@@ -322,6 +327,17 @@ class Application_Service_RepeatFillService
 
                 continue;
             }
+            // RASTATIME 2026-10-20 - stage 2: live rows are replaced by the
+            // source's recording; wait for its import while there is time
+            $wait = self::recordingWait((int) $src['id'], (string) $d['starts']);
+            if ($wait !== null) {
+                Logging::info(sprintf(
+                    'RepeatFillService: show "%s" (instance %d) waits for the recording of instance %d (%s)',
+                    $d['name'], $d['instance_id'], $src['id'], $wait
+                ));
+
+                continue;
+            }
 
             try {
                 $filled += self::copyInstance((int) $src['id'], (int) $d['instance_id'], (string) $d['name']) ? 1 : 0;
@@ -337,15 +353,90 @@ class Application_Service_RepeatFillService
     }
 
     /**
-     * Copy the rows of $srcInstanceId into the (empty) $dstInstanceId:
-     * files and webstreams in their order with the aired cue / fade values,
-     * line-ins (live input) are left out, missing files are counted as skipped.
+     * RASTATIME 2026-10-20 - stage 2: the imported recording of a source
+     * instance (cc_show_instances.file_id, "Copy Show Recordings into
+     * Library"), ready for scheduling: [id, length] (seconds), or null when
+     * the instance was not recorded, the file is not imported yet or missing.
      */
-    public static function copyInstance(int $srcInstanceId, int $dstInstanceId, string $label = ''): bool
+    public static function recordingOf(int $srcInstanceId): ?array
     {
+        $row = Application_Common_Database::prepareAndExecute(
+            'SELECT a.record, a.file_id, f.import_status, f.file_exists, f.length
+               FROM cc_show_instances a
+               LEFT JOIN cc_files f ON f.id = a.file_id
+              WHERE a.id = :id',
+            [':id' => $srcInstanceId],
+            Application_Common_Database::SINGLE
+        );
+        if (!$row || !$row['file_id'] || (int) $row['import_status'] !== 0 || !self::pg($row['file_exists'])) {
+            return null;
+        }
+        $length = (float) Application_Common_DateHelper::playlistTimeToSeconds((string) $row['length']);
+        if ($length <= 0) {
+            return null;
+        }
+
+        return ['id' => (int) $row['file_id'], 'length' => $length];
+    }
+
+    /**
+     * Why the fill of a repeat starting at $dstStartsUtc should wait for the
+     * recording of $srcInstanceId (a reason), or null to go ahead: the source
+     * was recorded, has live rows (or no rows at all) that only the recording
+     * can replace, the recording is not imported yet, and the repeat starts
+     * more than RECORDING_WAIT_MARGIN_SECONDS from now.
+     */
+    public static function recordingWait(int $srcInstanceId, string $dstStartsUtc): ?string
+    {
+        $src = Application_Common_Database::prepareAndExecute(
+            'SELECT a.record, a.file_id,
+                    (SELECT COUNT(*) FROM cc_schedule s WHERE s.instance_id = a.id) AS rows_total,
+                    (SELECT COUNT(*) FROM cc_schedule s WHERE s.instance_id = a.id AND s.linein_id IS NOT NULL) AS rows_live
+               FROM cc_show_instances a WHERE a.id = :id',
+            [':id' => $srcInstanceId],
+            Application_Common_Database::SINGLE
+        );
+        if (!$src || (int) $src['record'] !== 1) {
+            return null;
+        }
+        if ((int) $src['rows_live'] === 0 && (int) $src['rows_total'] > 0) {
+            return null;                        // nothing a recording would replace
+        }
+        if (self::recordingOf($srcInstanceId) !== null) {
+            return null;                        // imported and usable
+        }
+        $starts = new DateTime($dstStartsUtc, new DateTimeZone('UTC'));
+        $left = $starts->getTimestamp() - time();
+        if ($left <= self::RECORDING_WAIT_MARGIN_SECONDS) {
+            return null;                        // out of time: fill without it
+        }
+
+        return $src['file_id']
+            ? sprintf('recording file %d not imported yet, %d s left', (int) $src['file_id'], $left)
+            : sprintf('no recording imported yet, %d s left', $left);
+    }
+
+    /**
+     * The rows to schedule into a repeat of $srcInstanceId: files and
+     * webstreams in their order; a line-in row becomes the matching slice of
+     * the source's recording (cue in/out = the row's offsets from the source
+     * start) when the recording is imported; a recorded source without any
+     * rows is repeated from the recording alone.
+     *
+     * @return array [files, missing, live_left_out, live_replaced]
+     */
+    public static function planRows(int $srcInstanceId): array
+    {
+        $src = Application_Common_Database::prepareAndExecute(
+            'SELECT starts FROM cc_show_instances WHERE id = :id',
+            [':id' => $srcInstanceId],
+            Application_Common_Database::SINGLE
+        );
+        $srcStart = $src ? new DateTime($src['starts'], new DateTimeZone('UTC')) : null;
+        $recording = self::recordingOf($srcInstanceId);
         $rows = Application_Common_Database::prepareAndExecute(
-            'SELECT sch.file_id, sch.stream_id, sch.linein_id, sch.clip_length, sch.cue_in, sch.cue_out, sch.fade_in, sch.fade_out,
-                    f.file_exists, f.import_status
+            'SELECT sch.file_id, sch.stream_id, sch.linein_id, sch.starts, sch.ends, sch.clip_length, sch.cue_in, sch.cue_out,
+                    sch.fade_in, sch.fade_out, f.file_exists, f.import_status
                FROM cc_schedule sch
                LEFT JOIN cc_files f ON f.id = sch.file_id
               WHERE sch.instance_id = :src
@@ -356,9 +447,31 @@ class Application_Service_RepeatFillService
         $files = [];
         $skipped = 0;
         $live = 0;
+        $replaced = 0;
+        if (!$rows && $recording !== null) {
+            // a live show without rows: the whole recording
+            $files[] = self::recordingSlice($recording, 0.0, $recording['length']);
+
+            return [$files, 0, 0, 1];
+        }
         foreach ($rows as $r) {
             if ($r['linein_id']) {
-                ++$live;
+                if ($recording === null || $srcStart === null) {
+                    ++$live;
+
+                    continue;
+                }
+                $from = self::secondsBetween($srcStart, (string) $r['starts']);
+                $to = self::secondsBetween($srcStart, (string) $r['ends']);
+                $from = max(0.0, min($from, $recording['length']));
+                $to = max($from, min($to, $recording['length']));
+                if ($to - $from < 1.0) {
+                    ++$live;                    // the recording does not cover this row
+
+                    continue;
+                }
+                $files[] = self::recordingSlice($recording, $from, $to);
+                ++$replaced;
 
                 continue;
             }
@@ -382,6 +495,38 @@ class Application_Service_RepeatFillService
             }
         }
 
+        return [$files, $skipped, $live, $replaced];
+    }
+
+    /** A file item for the recording between two offsets (seconds). */
+    private static function recordingSlice(array $recording, float $from, float $to): array
+    {
+        return [
+            'type' => 0, 'id' => $recording['id'],
+            'cliplength' => Application_Common_DateHelper::secondsToPlaylistTime($to - $from),
+            'cuein' => Application_Common_DateHelper::secondsToPlaylistTime($from),
+            'cueout' => Application_Common_DateHelper::secondsToPlaylistTime($to),
+            'fadein' => '00.000000', 'fadeout' => '00.000000',
+        ];
+    }
+
+    private static function secondsBetween(DateTime $from, string $toUtc): float
+    {
+        $to = new DateTime($toUtc, new DateTimeZone('UTC'));
+        $micro = (float) $to->format('u') / 1000000 - (float) $from->format('u') / 1000000;
+
+        return (float) ($to->getTimestamp() - $from->getTimestamp()) + $micro;
+    }
+
+    /**
+     * Copy the rows of $srcInstanceId into the (empty) $dstInstanceId (see
+     * planRows): files and webstreams in their order, live rows as slices of
+     * the source's recording when it is imported, else left out; missing
+     * files are counted as skipped.
+     */
+    public static function copyInstance(int $srcInstanceId, int $dstInstanceId, string $label = ''): bool
+    {
+        [$files, $skipped, $live, $replaced] = self::planRows($srcInstanceId);
         if ($files) {
             $si = new Application_Model_ShowInstance($dstInstanceId);
             $si->addFilesAfter(0, $files);
@@ -392,8 +537,8 @@ class Application_Service_RepeatFillService
             Application_Common_Database::EXECUTE
         );
         Logging::info(sprintf(
-            'RepeatFillService: "%s" instance %d filled from instance %d - %d rows copied, %d missing, %d live inputs left out',
-            $label, $dstInstanceId, $srcInstanceId, count($files), $skipped, $live
+            'RepeatFillService: "%s" instance %d filled from instance %d - %d rows, %d missing, %d live inputs replaced by the recording, %d left out',
+            $label, $dstInstanceId, $srcInstanceId, count($files), $skipped, $replaced, $live
         ));
 
         return count($files) > 0;

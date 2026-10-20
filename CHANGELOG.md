@@ -27,6 +27,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Wiederholung von Sendung, Stufe 2: Live-Zeilen aus der Aufnahme
+  (2026-10-20, Go 2026-10-20)** — `RepeatFillService::planRows`: jede
+  Line-In-Zeile des Originals wird durch die passende Scheibe seiner
+  importierten Aufnahme ersetzt (`cc_show_instances.file_id`, Cue-In/Out =
+  Zeilen-Offsets zum Sendungsstart, auf die Aufnahmelänge geklemmt); ein
+  Original ohne Zeilen wird komplett aus der Aufnahme wiederholt.
+  `recordingWait`: die Befüllung wartet auf den Import, aber nicht über
+  5 min vor dem Start der Wiederholung hinaus.  Löschsperre
+  `neededByPendingRepeat` deckt die Aufnahme des Originals mit ab.
+  `Scheduler::retrieveMediaFiles` übernimmt explizite Cue-/Fade-Werte
+  eines Datei-Items (bisher immer die Datei-Standardwerte; Stufe 1 hatte
+  die „gesendeten Cue-Werte" damit nie wirklich übernommen).  Auslöser:
+  Abnahme des Operators, Wiederholung „Listen Up WH" ließ die
+  10-min-Line-In-Zeile aus.  Proben `C:/Temp/optd/repeat2_probe.php`
+  (Planung) und `repeat2_e2e_probe.php` (Wegwerf-Sendung: Scheibe
+  00:02:22–00:12:22 der Aufnahme 22358 zwischen den beiden Titeln,
+  Löschsperre, Idempotenz).  Manual CALENDAR ×4, Architektur §23.67.
+  Commit REP2.
 - **Show-Recording: „Copy Show Recordings into Library" (2026-10-19, Go
   2026-10-19 Option A mit Kontrollkästchen)** — Settings → Local Machine →
   Show Recording.  Ist das Kästchen gesetzt, meldet das Playout jede

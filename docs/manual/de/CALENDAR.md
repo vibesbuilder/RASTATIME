@@ -288,8 +288,20 @@ befüllt:
   mitgenommen.
 - **Was**: der Inhalt der **zuletzt beendeten** Instanz des Originals
   - Dateien und Webstreams in ihrer Reihenfolge mit den gesendeten
-  Cue-Punkten und Blenden, Jingles eingeschlossen.  Live-Eingänge
-  bleiben draußen.  Die Autoloading-Playlist füllt danach die Restzeit.
+  Cue-Punkten und Blenden, Jingles eingeschlossen.  Die
+  Autoloading-Playlist füllt danach die Restzeit.
+- **Live-Eingänge** *(seit 2026-10-20)*: Wird das Original aufgezeichnet
+  und ist **Sendungsaufnahmen in die Bibliothek kopieren** aktiv
+  (Einstellungen → Lokale Maschine → Show Recording), ersetzt jede
+  Line-In-Zeile des Originals die passende Scheibe seiner Aufnahme -
+  Cue-In und Cue-Out sind die Zeitabstände der Zeile zum Sendungsstart,
+  die Wiederholung spielt also genau das, was zwischen den Titeln live
+  gesendet wurde.  Ein Original ohne Zeilen (reine Live-Sendung) wird
+  komplett aus der Aufnahme wiederholt.  Die Befüllung wartet auf den
+  Import der Aufnahme, aber nicht länger als bis fünf Minuten vor dem
+  Start der Wiederholung; ohne Aufnahme bleiben Live-Zeilen wie bisher
+  draußen.  Die Aufnahme ist vor dem Löschen geschützt, solange eine
+  anstehende Wiederholung sie braucht.
 - **Wenn das Original noch nicht gelaufen ist** (erste Woche,
   abgesagte Instanz): die Wiederholung bleibt ihrer
   Autoloading-Playlist überlassen.

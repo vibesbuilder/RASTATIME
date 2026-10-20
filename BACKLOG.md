@@ -5312,7 +5312,7 @@ Start mit den 5 Zeilen von „testshowc“ (17:40) befüllt, identische Reihenfo
 Nebenbefund dabei behoben: Quellenliste blendete Sendungen der nächsten zwei
 Stunden aus (NOW() ohne UTC, 737f347/0b8838b).
 
-### 🟡 Wiederholung von Sendung, Stufe 2: aufgezeichnete Live-Sendungen - DEFER (Operator 2026-10-18: später nachziehen, wichtig)
+### ✅ Wiederholung von Sendung, Stufe 2: aufgezeichnete Live-Sendungen - gebaut 2026-10-20 (Go 2026-10-20, Architektur §23.67)
 
 Live-Sendungen (DJ, Line-In) haben keine kopierbaren Sendeplan-Zeilen;
 die Wiederholung muss die Show-Aufzeichnung (Record-per-Show, MP3/AAC/
@@ -5329,6 +5329,10 @@ OGG/Opus nach Settings → Local Machine) abspielen.  Vorbedingungen:
    Wiederholung löschen.
 Aufwand grob 300-500 Zeilen Playout + Legacy, 1-2 Tage plus Beobachtung
 einer echten aufgezeichneten Sendung.
+Gebaut 2026-10-20: Vorbedingung 2 kam mit „Copy Show Recordings into Library" (§23.66); Line-In-Zeilen
+werden zu Cue-Scheiben der Aufnahme, Original ohne Zeilen = ganze Aufnahme, Warten bis 5 min vor Start,
+Löschsperre fuer die Aufnahme, Scheduler uebernimmt explizite Cue-Werte.  Proben repeat2_probe.php +
+repeat2_e2e_probe.php bestanden.  OFFEN: Abnahme des Operators mit „Listen Up Test" → „Listen Up WH".
 
 ## Operator-Punkte 2026-10-19 (Kalender, Library-Ordner, Sekundaerfarbe, WebP)
 

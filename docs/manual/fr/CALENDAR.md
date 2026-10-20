@@ -288,9 +288,22 @@ chaque instance de la rediffusion est remplie automatiquement :
   diffusion sont donc reprises.
 - **Quoi** : le contenu de la **dernière instance terminée** de
   l'original - fichiers et flux web dans leur ordre avec les points de
-  repère et fondus diffusés, jingles compris.  Les entrées live
-  restent dehors.  La playlist de chargement automatique remplit
-  ensuite le temps restant.
+  repère et fondus diffusés, jingles compris.  La playlist de
+  chargement automatique remplit ensuite le temps restant.
+- **Entrées live** *(depuis le 2026-10-20)* : si l'original est
+  enregistré et que **Copier les enregistrements d'émission dans la
+  bibliothèque** est actif (Paramètres → Machine locale → Show
+  Recording), chaque ligne line-in de l'original est remplacée par la
+  tranche correspondante de son enregistrement - les points de repère
+  d'entrée et de sortie sont les décalages de la ligne par rapport au
+  début de l'émission, la rediffusion joue donc exactement ce qui est
+  passé en direct entre les titres.  Un original sans aucune ligne
+  (émission purement live) est rediffusé à partir du seul
+  enregistrement.  Le remplissage attend l'import de l'enregistrement,
+  mais pas au-delà de cinq minutes avant le début de la rediffusion ;
+  sans enregistrement, les lignes live restent dehors comme avant.
+  L'enregistrement est protégé contre la suppression tant qu'une
+  rediffusion en attente en a besoin.
 - **Si l'original n'a pas encore été diffusé** (première semaine,
   instance annulée) : la rediffusion est laissée à sa playlist de
   chargement automatique.

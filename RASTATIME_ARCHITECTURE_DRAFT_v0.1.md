@@ -1,10 +1,13 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.79
+Draft version: 0.80
 Date: 2026-10-18
 
 > **Revision history**
+> - **0.80 (2026-10-20)** — **Repeat of show, stage 2** (§23.67): live
+>   rows of the original become slices of its imported recording;
+>   scheduler honours explicit cue values on an item.
 > - **0.79 (2026-10-19)** — **Copy show recordings into the library**
 >   (§23.66): the playout reports a closed per-show recording, legacy
 >   imports a tagged copy as track type "Recordings" linked to the
@@ -7213,10 +7216,8 @@ playout HISTORY, not the schedule.)
 `additionalShowInfo` "Repeat of show A from <date> at <time>" (+ "(N
 items of the source were left out: file missing)") from `filledFrom()`.
 
-**Stage 2 (BACKLOG, Defer).**  Recorded live shows: import the per-show
-recording after A's end and schedule it into B - needs a "recording
-finished" signal from the playout, a track type for recordings and the
-fill waiting for the import.
+**Stage 2** - built 2026-10-20, see §23.67 (the recording import of
+§23.66 was its precondition).
 
 ### 23.66 Copy Show Recordings into the Library (2026-10-19)
 
@@ -7264,3 +7265,44 @@ recording/client, failed start leaves nothing open);
 `C:/Temp/optd/recording_import_probe.php` (gating, rejections, live
 import + duplicate, probe row deleted).  Live: endpoint 401 without
 key, 405 on GET, `{"ok":true,"skipped":"disabled"}` with the box off.
+
+### 23.67 Repeat of Show, Stage 2: Live Rows from the Recording (2026-10-20)
+
+**Why.**  A live segment (line-in between two tracks, or a whole live
+show) has no rows a repeat could copy; stage 1 left it out and the
+repeat had a hole.  With §23.66 the original's recording is in the
+library and linked to its instance, so the repeat can play exactly the
+live minutes.
+
+**Planning.**  `RepeatFillService::planRows(src)` builds the item list
+of `copyInstance`: file and webstream rows as before; a line-in row
+becomes the recording (`recordingOf(src)`: `cc_show_instances.file_id`
+imported, existing, length > 0) with `cuein`/`cueout` = the row's
+`starts`/`ends` minus the instance start (microseconds kept, clamped to
+the recording length, rows the recording does not cover stay out); an
+instance with no rows at all becomes the whole recording.  The recorder
+opens its file at the show start, so the offsets line up within a
+second.
+
+**Waiting.**  `recordingWait(src, dstStarts)`: a recorded source with
+live rows (or none) whose recording is not imported yet makes `fillDue`
+skip the instance this pass and log why - until five minutes before the
+repeat starts (`RECORDING_WAIT_MARGIN_SECONDS`), then the fill goes
+ahead without it.  Sources with files only never wait.
+
+**Scheduling.**  `Scheduler::retrieveMediaFiles` now receives the item
+and, when it names `cuein`/`cueout` (and `fadein`/`fadeout`), schedules
+those instead of the file's defaults.  Stage 1's "aired cue values" were
+silently replaced by the file defaults before; copied rows are now
+exact, including the recording slice (the playout seeks by `cue_in`).
+
+**Delete guard.**  `neededByPendingRepeat` matches a file when it is a
+row of the source's last ended instance OR that instance's recording
+(`a.file_id`), left-joining the rows so a rowless live show is covered.
+
+**Verification.**  `C:/Temp/optd/repeat2_probe.php` (planning for
+yesterday's instances: 25455 -> track, slice 00:02:22-00:12:22 of
+file 22358, track; 13221 without import -> waits with 2 h left, not
+with 2 min), `repeat2_e2e_probe.php` (throwaway show B, delete guard on
+the recording, fill, rows == plan, guard released, idempotent, B
+deleted).

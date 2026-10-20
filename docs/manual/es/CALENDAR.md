@@ -198,9 +198,21 @@ rellena automáticamente:
   tras su emisión.
 - **Qué**: el contenido de la **última instancia terminada** del
   original: archivos y retransmisiones en su orden con los puntos de
-  cue y fundidos emitidos, jingles incluidos.  Las entradas en vivo
-  quedan fuera.  La lista de carga automática rellena después el
-  tiempo restante.
+  cue y fundidos emitidos, jingles incluidos.  La lista de carga
+  automática rellena después el tiempo restante.
+- **Entradas en vivo** *(desde 2026-10-20)*: si el original se graba y
+  **Copiar las grabaciones de programas a la biblioteca** está activo
+  (Ajustes → Máquina local → Show Recording), cada fila line-in del
+  original se sustituye por el fragmento correspondiente de su
+  grabación: los puntos cue de entrada y salida son los desplazamientos
+  de la fila respecto al inicio del programa, así que la repetición
+  reproduce exactamente lo que salió en directo entre las pistas.  Un
+  original sin filas (programa puramente en vivo) se repite solo desde
+  la grabación.  El relleno espera a que se importe la grabación, pero
+  no más allá de cinco minutos antes del inicio de la repetición; sin
+  grabación, las filas en vivo quedan fuera como antes.  La grabación
+  está protegida contra el borrado mientras una repetición pendiente la
+  necesite.
 - **Si el original aún no se ha emitido** (primera semana, instancia
   cancelada): la repetición se deja a su lista de carga automática.
 - **Duración**: una repetición más corta se corta al final como
