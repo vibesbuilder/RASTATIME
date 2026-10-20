@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `LOCALE` aus → „October 19 – 25, 2026", „Mon 10/19".  Die Titel von
   *Contents of Show* und *Teasers* zeigten `Mike&#039;s`: `showTitle` war
   `htmlspecialchars`-kodiert, jQuery UI 1.13 setzt den Titel aber als Text —
-  jetzt Klartext (weiter sicher, weil als Text gesetzt).
+  jetzt Klartext (weiter sicher, weil als Text gesetzt).  Commit `f30285c`.
 
 - **UI-Feinschliff: Settings-Menü, Kalender-Kopf, Kalender-Dialoge,
   Upload-Hinweis (2026-10-20, Operator-Meldung)** — (1) Settings →
