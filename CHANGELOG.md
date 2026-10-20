@@ -28,7 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Seiten-Plugins ausgenommen, der per AJAX nachgeladene Hinweis übersetzte
   in der Sprache, die der PHP-Prozess zuletzt bedient hatte;
   `getUsabilityHintAction` setzt jetzt die Benutzersprache (Sitzung ist nach
-  `checkAuth` offen).
+  `checkAuth` offen).  Commit `b1a114b`.
 
 - **Show-Recording: Dateiname mit Sekunden (2026-10-19)** — `<YYYY-MM-DD HH-MM-SS> - <Sendung>.<ext>`
   statt Minutenauflösung (Operator-Wunsch: verschobene Sendungen starten
