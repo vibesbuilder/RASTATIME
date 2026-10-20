@@ -306,6 +306,12 @@ Sicherung und die dritte Warnung seit dem 2026-09-07):
 
 ## 3. Soundkarte — Eingabegeräte
 
+> **Hinweis (2026-10-20):** Die Liste der Eingabegeräte liegt nicht mehr
+> auf dieser Seite. Das Aufnahmegerät eines Line-Ins wird im Line-In-Eintrag
+> selbst gewählt (Bibliothek → Line-In → anlegen oder bearbeiten, siehe
+> [LINE_IN.md](./LINE_IN.md)). Der Rest dieses Abschnitts beschreibt die
+> frühere Liste zur Orientierung.
+
 Die Liste zeigt jedes Audio-Eingabegerät, das die
 Operator-Maschine exponiert (eingebaute Mikrofone,
 USB-Mics, Mixer-Ausgänge, Line-In-Buchsen usw.). Das

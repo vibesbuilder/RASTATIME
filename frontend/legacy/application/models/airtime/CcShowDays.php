@@ -75,10 +75,15 @@ class CcShowDays extends BaseCcShowDays
      */
     public function getLocalEndDateAndTime()
     {
-        $startDateTime = $this->getLocalStartDateAndTime();
-        $duration = explode(':', $this->getDbDuration());
-
-        return $startDateTime->add(new DateInterval('PT' . $duration[0] . 'H' . $duration[1] . 'M'));
+        // RASTATIME 2026-10-20 - wall-clock end (ShowService::wallClockEnd,
+        // the same rule the instances are built with): the edit form of a
+        // show whose first day crosses the autumn change showed "00:00 -
+        // 04:00" for a 05:00 duration because the interval was added as
+        // elapsed time.
+        return Application_Service_ShowService::wallClockEnd(
+            $this->getLocalStartDateAndTime(),
+            $this->getDbDuration()
+        );
     }
 
     public function isShowStartInPast()

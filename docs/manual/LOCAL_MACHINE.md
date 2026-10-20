@@ -283,6 +283,11 @@ and the third warning since 2026-09-07):
 
 ## 3. Soundcard — Input Devices
 
+> **Note (2026-10-20):** the input-device list is no longer on this page.
+> The capture device of a Line-In is chosen in the Line-In entry itself
+> (Library → Line-In → create or edit, see [LINE_IN.md](./LINE_IN.md)).
+> The rest of this section describes the former list for reference.
+
 The list shows every audio input device the operator-machine
 exposes (built-in microphones, USB mics, mixer outputs, line-
 in jacks, etc.). The checkbox controls which of those are

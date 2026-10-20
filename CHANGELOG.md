@@ -1522,6 +1522,14 @@ un_tests.ps1` (2026-10-16)** — startet API-, Playout- und
 
 ### Fixed
 
+- **Zeitumstellung: „Edit Show" zeigte End Time 04:00 für eine 05:00-Dauer
+  (2026-10-20, Operator-Meldung)** — `CcShowDays::getLocalEndDateAndTime`
+  addierte die Dauer als verstrichene Zeit auf das erste Sendedatum (über
+  die Umstellungsnacht: 00:00 + 5 h = 04:00 MEZ) und das Formular zeigt für
+  alle Folgen dieselbe Vorlage.  Jetzt `wallClockEnd` wie bei den
+  Instanzen → 05:00.  Die Instanzen selbst waren korrekt.  Dazu Hinweis in
+  LOCAL_MACHINE §3 ×4: die Eingabegeräte-Liste liegt nicht mehr auf der
+  Seite, das Gerät wird im Line-In-Eintrag gewählt.  Commit FORMEND.
 - **Zeitumstellung: Sendungsdauer im Formular als Wanduhr-Differenz (2026-10-19,
   Operator-Meldung mit Screenshots)** — `ShowFormService::calculateDuration`
   bildete die Differenz in der Sendungs-Zeitzone, also in echten Stunden:

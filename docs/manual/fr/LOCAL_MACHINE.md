@@ -262,6 +262,12 @@ avertissements du tableau de bord le surveillent (depuis le
 
 ## 3. Carte son — Périphériques d'entrée
 
+> **Remarque (2026-10-20) :** la liste des périphériques d'entrée ne se
+> trouve plus sur cette page. Le périphérique de capture d'un Line-In se
+> choisit dans l'entrée Line-In elle-même (Bibliothèque → Line-In → créer ou
+> modifier, voir [LINE_IN.md](./LINE_IN.md)). Le reste de cette section
+> décrit l'ancienne liste à titre indicatif.
+
 La liste montre chaque périphérique d'entrée audio que la
 machine de l'opérateur expose. La case à cocher contrôle
 lesquels sont **candidats** pour utilisation comme

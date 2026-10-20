@@ -258,6 +258,12 @@ el tercer aviso desde el 2026-09-07):
 
 ## 3. Tarjeta de sonido — Dispositivos de entrada
 
+> **Nota (2026-10-20):** la lista de dispositivos de entrada ya no está en
+> esta página. El dispositivo de captura de un Line-In se elige en la propia
+> entrada Line-In (Biblioteca → Line-In → crear o editar, véase
+> [LINE_IN.md](./LINE_IN.md)). El resto de esta sección describe la antigua
+> lista a título orientativo.
+
 La lista muestra cada dispositivo de entrada de audio. La
 casilla de verificación controla cuáles son **candidatos**
 para uso como Line-Ins nombrados.
