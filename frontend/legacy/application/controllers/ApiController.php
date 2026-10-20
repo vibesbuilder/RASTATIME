@@ -1801,6 +1801,13 @@ class ApiController extends Zend_Controller_Action
     {
         $userPath = $this->_getParam('userPath');
 
+        // RASTATIME 2026-10-20 - the api controller is skipped by
+        // PageLayoutInitPlugin's locale setup, so this AJAX hint was
+        // translated in whatever language the PHP worker last served
+        // (German on the upload page for an English user).  checkAuth()
+        // has started the session, so the user's locale is known here.
+        Application_Model_Locale::configureLocalization();
+
         $hint = Application_Common_UsabilityHints::getUsabilityHint($userPath);
         $this->_helper->json->sendJson($hint);
     }

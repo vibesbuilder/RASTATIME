@@ -124,6 +124,18 @@
 /* ---- toolbar title ---- */
 #schedule_calendar .fc-toolbar-title {
   color: #ffffff;
+  /* RASTATIME 2026-10-20 - the global `h2 { padding-bottom: 10px }`
+     (styles.css) lifted the date 5 px above the buttons' centre line */
+  padding: 0;
+}
+
+/* RASTATIME 2026-10-20 - centre every toolbar item on one line.  The
+   "+ New Show" button sits in an inline .btn-group whose vertical-align
+   follows the text baseline, 3 px below the FC buttons next to it; as flex
+   items all of them centre (FC's own spacing margins stay as they were). */
+#schedule_calendar .fc-header-toolbar .fc-toolbar-chunk {
+  display: flex;
+  align-items: center;
 }
 
 /* ---- slot-interval dropdown (top-left axis corner) ---- */

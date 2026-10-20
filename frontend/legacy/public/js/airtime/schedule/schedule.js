@@ -20,6 +20,17 @@ function closeDialogCalendar(event, ui) {
   scheduleCalRefetch();
 }
 
+// RASTATIME 2026-10-20 - the calendar dialogs get LibreTime's stronger,
+// lighter backdrop (styles.css .schedule-tracks-overlay).  jQuery UI
+// creates the overlay outside the dialog before it fires "open", and its
+// `classes` option does not reach it, so the class is added here.
+function markScheduleDialogOverlay() {
+  var instance = $(this).dialog("instance");
+  if (instance && instance.overlay) {
+    instance.overlay.addClass("schedule-tracks-overlay");
+  }
+}
+
 function confirmCancelShow(show_instance_id) {
   if (confirm($.i18n._("Cancel Current Show?"))) {
     var url = baseUrl + "Schedule/cancel-current-show";
@@ -190,6 +201,7 @@ function buildScheduleDialog(json, instance_id) {
     // RASTATIME 2026-08-31: CSS hook for the dark dialog theme
     // (frame + buttonpane #2f2f2f — see styles.css).
     classes: { "ui-dialog": "schedule-tracks-dialog" },
+    open: markScheduleDialogOverlay,
     close: closeDialogCalendar,
     buttons: [
       {
@@ -273,6 +285,7 @@ function buildTeaserDialog(json) {
     height: "auto",
     modal: true,
     classes: { "ui-dialog": "schedule-tracks-dialog" },
+    open: markScheduleDialogOverlay,
     close: closeDialogCalendar,
     buttons: [
       {
@@ -310,6 +323,7 @@ function buildContentDialog(json) {
     // RASTATIME 2026-08-31: same dark-frame hook as the Schedule
     // Tracks dialog (they share the redmond near-white otherwise).
     classes: { "ui-dialog": "schedule-tracks-dialog" },
+    open: markScheduleDialogOverlay,
     close: closeDialogCalendar,
     buttons: [
       {

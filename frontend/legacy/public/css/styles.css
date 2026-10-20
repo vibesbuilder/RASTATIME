@@ -5420,6 +5420,35 @@ div.dt-button-collection .dt-button > span {
     border-color: #2f2f2f;
 }
 
+/* RASTATIME 2026-10-20 - the calendar dialogs stand out like in LibreTime
+   (operator: Schedule Tracks blended into the page).  Values measured on
+   the station's LibreTime instance: a 3 px #353535 frame with an inset
+   shadow, a square #4a4a4a title bar, a light line above the button
+   pane, and above all a stronger, lighter backdrop - redmond's #aaa at
+   30 % only lifted the dark page to about the dialog's own grey.  The
+   backdrop class is set in schedule.js (markScheduleDialogOverlay), so
+   the other modal dialogs keep redmond's overlay.  The frame selector
+   carries four classes to outrank `.rt-jq3 .ui-widget.ui-widget-content
+   { border: 0 }`. */
+.ui-dialog.ui-widget.ui-widget-content.schedule-tracks-dialog {
+    border: 3px solid #353535;
+    box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.65);
+}
+.ui-dialog.schedule-tracks-dialog .ui-dialog-titlebar {
+    background: #4a4a4a;
+    border: 1px solid #5b5b5b;
+    border-radius: 0;
+    color: #cccccc;
+    padding: 6px 8px;
+}
+.ui-dialog.schedule-tracks-dialog .ui-dialog-buttonpane {
+    border-top: 1px solid #9f9f9f;
+}
+.ui-widget-overlay.schedule-tracks-overlay {
+    background: #9d9d9d;
+    opacity: 0.5;
+}
+
 /* Contents-of-Show (View) dialog: the two duration read-outs under
    the content table (#show_time_filled = scheduled content length,
    #show_length = show duration) inherited the #222 base text colour —

@@ -9,6 +9,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **UI-Feinschliff: Settings-Menü, Kalender-Kopf, Kalender-Dialoge,
+  Upload-Hinweis (2026-10-20, Operator-Meldung)** — (1) Settings →
+  *Import/Export* steht direkt über *Backup* (`navigation.php`).  (2) Kalender:
+  die Datums-Überschrift saß 5 px über den Knöpfen (globale
+  `h2 { padding-bottom: 10px }`), „+ New Show" 3 px darunter (inline
+  `.btn-group` an der Grundlinie) — Titel ohne Innenabstand, Toolbar-Abschnitte
+  als Flex-Zeile; in Tag/Woche/Monat alle Elemente auf einer Mittellinie
+  gemessen.  (3) *Schedule Tracks*, *Contents of Show* und *Teasers* heben
+  sich wie in LibreTime vom Hintergrund ab: Schleier `#9d9d9d`/50 % statt
+  redmond `#aaa`/30 % (hob die dunkle Seite nur auf Dialog-Grau), 3-px-Rahmen
+  `#353535` mit Innenschatten, eckige Titelleiste `#4a4a4a`, Trennlinie über
+  den Knöpfen — Werte an der LibreTime-Instanz der Station gemessen; der
+  Schleier bekommt seine Klasse beim Öffnen (`markScheduleDialogOverlay`),
+  die übrigen Dialoge bleiben unverändert.  (4) Der Upload-Hinweis „next
+  show is empty" kam nach einem Upload auf Deutsch, obwohl der Benutzer
+  Englisch eingestellt hat: der `api`-Controller ist vom Locale-Setup des
+  Seiten-Plugins ausgenommen, der per AJAX nachgeladene Hinweis übersetzte
+  in der Sprache, die der PHP-Prozess zuletzt bedient hatte;
+  `getUsabilityHintAction` setzt jetzt die Benutzersprache (Sitzung ist nach
+  `checkAuth` offen).
+
 - **Show-Recording: Dateiname mit Sekunden (2026-10-19)** — `<YYYY-MM-DD HH-MM-SS> - <Sendung>.<ext>`
   statt Minutenauflösung (Operator-Wunsch: verschobene Sendungen starten
   abseits der vollen Minute, die Wiederholung aus der Aufzeichnung schneidet
