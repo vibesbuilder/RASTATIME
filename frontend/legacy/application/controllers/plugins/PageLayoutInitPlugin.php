@@ -85,6 +85,10 @@ class PageLayoutInitPlugin extends Zend_Controller_Plugin_Abstract
             $userType = '';
         }
         $view->headScript()->appendScript("var userType = '{$userType}';");
+        // RASTATIME 2026-10-20 - the user's UI language for client-side
+        // formatting (schedule-fc6.js fc6Locale reads window.LOCALE); without
+        // it the calendar formatted dates in the browser's language.
+        $view->headScript()->appendScript('var LOCALE = ' . json_encode(Application_Model_Preference::GetLocale()) . ';');
 
         // Dropzone also accept file extensions and doesn't correctly extract certain mimetypes (eg. FLAC - try it),
         // so we append the file extensions to the list of mimetypes and that makes it work.

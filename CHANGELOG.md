@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Kalender in der Benutzersprache, Apostroph im Dialogtitel (2026-10-20,
+  Operator-Go)** — Der Kalender formatierte Datum und Wochentage in der
+  Browsersprache („19. – 25. Oktober 2026" bei englischer Einstellung):
+  `fc6Locale` liest `window.LOCALE`, das keine Seite setzte.
+  `PageLayoutInitPlugin::_initGlobals` gibt jetzt die Benutzersprache als
+  `LOCALE` aus → „October 19 – 25, 2026", „Mon 10/19".  Die Titel von
+  *Contents of Show* und *Teasers* zeigten `Mike&#039;s`: `showTitle` war
+  `htmlspecialchars`-kodiert, jQuery UI 1.13 setzt den Titel aber als Text —
+  jetzt Klartext (weiter sicher, weil als Text gesetzt).
+
 - **UI-Feinschliff: Settings-Menü, Kalender-Kopf, Kalender-Dialoge,
   Upload-Hinweis (2026-10-20, Operator-Meldung)** — (1) Settings →
   *Import/Export* steht direkt über *Backup* (`navigation.php`).  (2) Kalender:

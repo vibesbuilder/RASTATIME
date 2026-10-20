@@ -448,7 +448,10 @@ class ScheduleController extends Zend_Controller_Action
         $this->view->percentFilled = $show->getPercentScheduled();
         $this->view->showContent = $show->getShowListContent();
         $this->view->dialog = $this->view->render('schedule/show-content-dialog.phtml');
-        $this->view->showTitle = htmlspecialchars($show->getName() ?? '');
+        // RASTATIME 2026-10-20 - plain text: only the dialog title uses it and
+        // jQuery UI 1.13 sets the title as text, so htmlspecialchars showed
+        // "Mike&#039;s" literally.
+        $this->view->showTitle = $show->getName() ?? '';
         unset($this->view->showContent);
     }
 
@@ -483,7 +486,7 @@ class ScheduleController extends Zend_Controller_Action
         $this->view->typeLabels = Application_Model_StoredFile::teaserTypeLabels();
         $this->view->ready = Application_Model_StoredFile::teaserColumnsReady();
         $this->view->dialog = $this->view->render('schedule/teaser-dialog.phtml');
-        $this->view->showTitle = htmlspecialchars($show->getName() ?? '');
+        $this->view->showTitle = $show->getName() ?? '';   // plain text, see showContentDialogAction
         unset($this->view->teasers, $this->view->typeLabels);
     }
 
