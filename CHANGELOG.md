@@ -2871,6 +2871,23 @@ un_tests.ps1` (2026-10-16)** — startet API-, Playout- und
 
 ### Security
 
+- **PHP 8.3.33 → 8.3.36: PHP2Shell (2026-10-21, Operator-Go)** — Zwei
+  kritische Lücken (CVE-2026-109618 OOM-Behandlung, CVE-2026-109619
+  Altlasten einer früheren Anfrage im selben Prozess; CVSS 9,2,
+  Codeausführung ohne Anmeldung, auch php-cgi betroffen) an einer öffentlich
+  erreichbaren Station.  Sofort-Notbehelf `session.upload_progress.enabled
+  = Off` (Operator), dann der Windows-Build 8.3.36 NTS x64 (SHA256 gegen die
+  offizielle Liste geprüft) neben dem alten entpackt, `php.ini` +
+  `cacert.pem` übernommen, CLI/CGI, Module, App-Bootstrap mit DB,
+  Show-Formular, gettext und HTTPS getestet, Ordner getauscht
+  (`C:\Tools\PHP-8.3.33` bleibt als Rückfall).  Live: alle php-cgi aus
+  8.3.36, Seiten/REST/Widgets/Feed wie erwartet, Konsole und Logs ohne
+  Fehler.  Vorher keine Einbruchsspuren (Webroot unverändert, keine
+  Kindprozesse von php-cgi, keine neuen Aufgaben).  Nebenbefund: 10
+  verwaiste php-cgi.exe früherer Apache-Läufe (seit 08.10.) beendet - sie
+  hielten die alte ini und Dateisperren.  Upgrade auf 8.5: BACKLOG,
+  2026-10-22.
+
 - **Line-In-Feeder-Log ohne Icecast-Quellpasswort (2026-10-21)** — ffmpeg
   schrieb seine Info-Zeile „Output #0 … to 'icecast://source:…@…'" samt
   Passwort nach `logs/ffmpeg-linein-capture.log`; jetzt `-hide_banner
