@@ -2662,6 +2662,12 @@ un_tests.ps1` (2026-10-16)** — startet API-, Playout- und
 
 ### Security
 
+- **Line-In-Feeder-Log ohne Icecast-Quellpasswort (2026-10-21)** — ffmpeg
+  schrieb seine Info-Zeile „Output #0 … to 'icecast://source:…@…'" samt
+  Passwort nach `logs/ffmpeg-linein-capture.log`; jetzt `-hide_banner
+  -loglevel error -stats` (Fortschrittszeile bleibt für den Wächter) und
+  die eigene `cmd:`-Kopfzeile maskiert das Passwort.  Wirksam nach
+  PLAYOUT-Neustart; das bestehende Log enthält den Wert noch.  Commit PWMASK.
 - **Legacy PHP dependencies: phpseclib 3.0.52 -> 3.0.57, symfony/yaml 5.4.45
   -> 5.4.53 (2026-10-10, first Composer audit on the machine)** - five
   advisories in two packages (phpseclib X25519 private-key recovery and

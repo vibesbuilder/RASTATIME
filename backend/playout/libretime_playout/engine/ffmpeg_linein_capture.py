@@ -535,6 +535,10 @@ class FfmpegLineinCapture:
 
         return [
             self._ffmpeg_path,
+            # RASTATIME 2026-10-21 - errors and the progress line only: the
+            # info banner printed the Icecast source URL with its password
+            # into logs/ffmpeg-linein-capture.log
+            "-hide_banner", "-loglevel", "error", "-stats",
             *input_args,
             "-vn",
             "-c:a", self._codec,
@@ -573,7 +577,7 @@ class FfmpegLineinCapture:
                 f"channels={self._channel_mapping} "
                 f"@ {time.strftime('%Y-%m-%d %H:%M:%S')} =====\n"
                 + (f"feeder: {' '.join(feeder_cmd)}\n" if feeder_cmd else "")
-                + f"cmd: {' '.join(cmd)}\n"
+                + f"cmd: {' '.join(cmd).replace(self._icecast_password, '****')}\n"
             ).encode()
             self._stderr_fh.write(header)
         except OSError as exc:
