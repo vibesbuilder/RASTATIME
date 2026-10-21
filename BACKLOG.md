@@ -86,6 +86,13 @@ bedienen nichts mehr, halten aber Speicher und Dateisperren auf
 `C:\Tools\PHP`.  Vermutlich der NSSM-Stopp-Timeout (siehe Legacy-i18n-Notiz).
 Beim Update mit beenden; dauerhafte Lösung (Stop-Methode / Aufräumen beim
 Dienststart) mitprüfen.
+**Mitnehmen (Operator 21.10.):** `SSLUseStapling off` in
+`infra/apache/rastatime-https.conf` (Zeile 45, dazu `SSLStaplingCache`).
+Seit der Zertifikatserneuerung am 18.10. meldet Apache bei jedem Start
+AH02218/AH02604 ("no OCSP URI in certificate") - Let's Encrypt schreibt
+keine OCSP-Adresse mehr ins Zertifikat, Stapling ist damit wirkungslos;
+HTTPS selbst funktioniert.  `httpd -t` vor dem Neustart, danach
+`https-error-*.log` ohne die Meldungen.
 
 ### 🟢 Live-Readiness: RASTATIME dauerhaft auf dieser Maschine (Operator-Entscheidung 2026-10-03)
 
