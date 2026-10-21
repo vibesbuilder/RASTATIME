@@ -287,6 +287,11 @@ filled automatically:
   ...").  A file that disappeared from disk outside RASTATIME is
   skipped and counted.
 
+In the calendar a repeat carries a **repeat icon** (two arrows,
+since 2026-10-21) instead of the red "empty" or "partially filled"
+mark, like the clock of an autoloading show - it is filled on its
+own; hover the icon for the original's name.
+
 **View Show** on a filled repeat says "Repeat of show A from
 <date> at <time>" and, if rows were skipped, how many.  An instance
 that already has content (filled by hand) is never overwritten.

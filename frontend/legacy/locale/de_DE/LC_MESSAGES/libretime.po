@@ -6454,3 +6454,8 @@ msgstr "Endet eine aufgezeichnete Sendung, wird eine Kopie der Aufnahme als Trac
 #: RASTATIME 2026-10-21 show form section "Repeat" (Repeat of show)
 msgid "Repeat"
 msgstr "Wiederholung"
+
+#: RASTATIME 2026-10-21 calendar repeat icon tooltip
+#, php-format
+msgid "Repeat of \"%s\" - filled automatically shortly before it starts"
+msgstr "Wiederholung von \"%s\" - wird kurz vor dem Start automatisch befüllt"

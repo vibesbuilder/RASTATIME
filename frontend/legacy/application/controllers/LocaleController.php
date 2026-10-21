@@ -253,6 +253,8 @@ final class LocaleController extends Zend_Controller_Action
             // "The show instance doesn't exist anymore!" => _("The show instance doesn't exist anymore!"),
             'Show' => _('Show'),
             'Show is empty' => _('Show is empty'),
+            // RASTATIME 2026-10-21 - repeat icon (schedule-fc6.js, full-calendar-functions.js)
+            'Repeat of "%s" - filled automatically shortly before it starts' => _('Repeat of "%s" - filled automatically shortly before it starts'),
             '1m' => _('1m'),
             '5m' => _('5m'),
             '10m' => _('10m'),

@@ -2592,6 +2592,12 @@ span.errors.sp-errors{
     border-radius: 2px;
     background-size: contain;
 }
+/* RASTATIME 2026-10-21 - "Repeat of show", same look as the autoloading clock */
+.small-icon.repeat-of {
+    background: url(images/icon-repeat.svg) black no-repeat center center;
+    border-radius: 2px;
+    background-size: contain;
+}
 
 .small-icon.recording {
     background:url(images/icon_record.png) no-repeat 0 0;

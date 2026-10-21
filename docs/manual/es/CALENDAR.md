@@ -229,6 +229,12 @@ rellena automáticamente:
   del ...»).  Un archivo desaparecido del disco fuera de RASTATIME se
   omite y se cuenta.
 
+En el calendario una repetición lleva un **icono de repetición**
+(dos flechas, desde 2026-10-21) en lugar de la marca roja «vacío» o
+«parcialmente lleno», como el reloj de un programa con carga
+automática: se rellena sola; al pasar el ratón sobre el icono aparece
+el nombre del original.
+
 **View Show** en una repetición rellenada dice «Repetición del
 programa A del <fecha> a las <hora>» y, si se omitieron filas,
 cuántas.  Una instancia que ya tiene contenido (rellenada a mano)

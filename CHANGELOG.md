@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Kalender: Wiederholungs-Symbol für „Repeat of show" (2026-10-21,
+  Operator)** — Eine Wiederholung zeigte vor dem Befüllen das rote
+  Rufzeichen „leer" bzw. „teilweise gefüllt".  Sie bekommt jetzt wie eine
+  Autoloading-Sendung ein eigenes Symbol (zwei Pfeile,
+  `images/icon-repeat.svg`, schwarz wie die Uhr) statt der Füllstands-Warnung,
+  mit beiden Symbolen bei zusätzlicher Autoloading-Playlist; der Tooltip
+  nennt das Original (Tag/Woche per rtTooltip, Monat als title).  Feed:
+  `show_repeat_of` = Name der Quellsendung
+  (`RepeatFillService::repeatSourceNames`, eine Abfrage).  Live: 12
+  Wiederholungen der Woche mit Symbol und ohne Warnung, die übrigen leeren
+  Sendungen unverändert.  Texte DE/FR/ES, Manual CALENDAR ×4.
+
 - **Show-Formular: Hilfe-Icon von „Repeat of show" neben der Beschriftung
   (2026-10-21, Operator)** — Das Icon steht rechts neben dem Text statt hinter
   dem Auswahlfeld (dort rutschte es bei knapper Breite unter das Feld); das

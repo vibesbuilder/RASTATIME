@@ -6647,3 +6647,8 @@ msgstr "Cuando termina un programa grabado, se importa una copia de la grabació
 #: RASTATIME 2026-10-21 show form section "Repeat" (Repeat of show)
 msgid "Repeat"
 msgstr "Repetición"
+
+#: RASTATIME 2026-10-21 calendar repeat icon tooltip
+#, php-format
+msgid "Repeat of \"%s\" - filled automatically shortly before it starts"
+msgstr "Repetición de \"%s\" - se rellena automáticamente poco antes de empezar"

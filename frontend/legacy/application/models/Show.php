@@ -1131,6 +1131,8 @@ SQL;
         );
         $isFull = Application_Model_ShowInstance::getIsFull($p_start, $p_end);
         $hasAutoPlaylist = Application_Model_ShowInstance::getShowHasAutoplaylist($p_start, $p_end);
+        // RASTATIME 2026-10-21 - "Repeat of show": source name per repeat show
+        $repeatSources = Application_Service_RepeatFillService::repeatSourceNames();
         $displayTimezone = new DateTimeZone(Application_Model_Preference::GetUserTimezone());
         $utcTimezone = new DateTimeZone('UTC');
         $now = new DateTime('now', $utcTimezone);
@@ -1186,6 +1188,9 @@ SQL;
             } else {
                 $options['show_has_auto_playlist'] = false;
             }
+            // RASTATIME 2026-10-21 - name of the source show of a repeat ('' =
+            // no repeat); schedule-fc6.js shows the repeat icon for it
+            $options['show_repeat_of'] = $repeatSources[(int) $show['show_id']] ?? '';
 
             $event = [];
 

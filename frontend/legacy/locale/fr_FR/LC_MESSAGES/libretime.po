@@ -6811,3 +6811,8 @@ msgstr "Quand une émission enregistrée se termine, une copie de l’enregistre
 #: RASTATIME 2026-10-21 show form section "Repeat" (Repeat of show)
 msgid "Repeat"
 msgstr "Rediffusion"
+
+#: RASTATIME 2026-10-21 calendar repeat icon tooltip
+#, php-format
+msgid "Repeat of \"%s\" - filled automatically shortly before it starts"
+msgstr "Rediffusion de \"%s\" - remplie automatiquement peu avant le début"

@@ -197,6 +197,27 @@ class Application_Service_RepeatFillService
     }
 
     /**
+     * RASTATIME 2026-10-21 - (show id => source show name) of every repeat,
+     * one query; the calendar feed marks repeats with their own icon.
+     */
+    public static function repeatSourceNames(): array
+    {
+        if (!self::columnsReady()) {
+            return [];
+        }
+        $out = [];
+        foreach (Application_Common_Database::prepareAndExecute(
+            'SELECT s.id, src.name FROM cc_show s JOIN cc_show src ON src.id = s.repeat_of_show_id',
+            [],
+            'all'
+        ) as $r) {
+            $out[(int) $r['id']] = (string) $r['name'];
+        }
+
+        return $out;
+    }
+
+    /**
      * The instance a repeat instance was filled from, with the source show
      * name, its local start and the number of left-out rows - the View Show
      * dialog.  Null when the instance is no filled repeat.

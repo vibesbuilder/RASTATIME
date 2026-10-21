@@ -321,6 +321,12 @@ chaque instance de la rediffusion est remplie automatiquement :
   rediffusion ... du ... »).  Un fichier disparu du disque hors de
   RASTATIME est sauté et compté.
 
+Dans le calendrier, une rediffusion porte une **icône de
+rediffusion** (deux flèches, depuis le 2026-10-21) au lieu de la
+marque rouge « vide » ou « partiellement remplie », comme l'horloge
+d'une émission à chargement automatique - elle se remplit toute
+seule ; le survol de l'icône indique le nom de l'original.
+
 **View Show** sur une rediffusion remplie dit « Rediffusion de
 l'émission A du <date> à <heure> » et, si des lignes ont été sautées,
 combien.  Une instance qui a déjà du contenu (remplie à la main)

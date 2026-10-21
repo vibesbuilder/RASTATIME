@@ -318,6 +318,12 @@ befüllt:
   RASTATIME von der Platte verschwundene Datei wird übersprungen und
   gezählt.
 
+Im Kalender trägt eine Wiederholung ein **Wiederholungs-Symbol**
+(zwei Pfeile, seit 2026-10-21) statt der roten Markierung „leer" oder
+„teilweise gefüllt" - wie die Uhr einer Autoloading-Sendung, denn sie
+wird von selbst befüllt; mit der Maus über dem Symbol erscheint der
+Name des Originals.
+
 **View Show** einer befüllten Wiederholung zeigt „Wiederholung von
 Sendung A vom <Datum> um <Zeit>" und, falls Zeilen übersprungen
 wurden, wie viele.  Eine Instanz, die bereits Inhalt hat (von Hand

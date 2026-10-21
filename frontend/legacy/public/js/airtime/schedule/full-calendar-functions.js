@@ -283,6 +283,23 @@ function addQtipsToIcons(ele, id) {
       placement: "right-start",
       extraClass: "file-md-long",
     });
+  } else if ($(ele).hasClass("repeat-of")) {
+    // RASTATIME 2026-10-21 - repeat icon: names the source show (escaped,
+    // rtTooltip renders HTML)
+    $(ele).rtTooltip({
+      content: {
+        text: $("<div>")
+          .text(
+            sprintf(
+              $.i18n._('Repeat of "%s" - filled automatically shortly before it starts'),
+              $(ele).attr("data-repeat-of") || "",
+            ),
+          )
+          .html(),
+      },
+      placement: "right-start",
+      extraClass: "file-md-long",
+    });
   } else if ($(ele).hasClass("show-overbooked")) {
     $(ele).rtTooltip({
       content: {

@@ -105,14 +105,36 @@ function fc6StatusIcons(event, withTitles) {
   } else {
     var linked = !!p.linked;
     var auto = p.show_has_auto_playlist === true;
+    // RASTATIME 2026-10-21 - a "Repeat of show" is filled automatically
+    // shortly before it starts, like an autoloading show: it gets its own
+    // repeat icon instead of the empty / partial / overbooked warning (both
+    // icons when it also has an autoloading playlist).
+    var repeatOf = p.show_repeat_of || "";
+    var automatic = auto || repeatOf !== "";
+    function automaticIcons() {
+      if (repeatOf !== "") {
+        var r = icon(
+          "repeat-of",
+          sprintf(
+            $.i18n._('Repeat of "%s" - filled automatically shortly before it starts'),
+            repeatOf,
+          ),
+        );
+        r.setAttribute("data-repeat-of", repeatOf);
+        nodes.push(r);
+      }
+      if (auto) {
+        nodes.push(
+          icon("autoplaylist", $.i18n._("Show has an automatic playlist")),
+        );
+      }
+    }
     if (p.show_empty === 1) {
       if (linked) {
         nodes.push(icon("linked"));
         nodes.push(icon("show-empty", $.i18n._("Show is empty")));
-      } else if (auto) {
-        nodes.push(
-          icon("autoplaylist", $.i18n._("Show has an automatic playlist")),
-        );
+      } else if (automatic) {
+        automaticIcons();
       } else {
         nodes.push(icon("show-empty", $.i18n._("Show is empty")));
       }
@@ -122,10 +144,8 @@ function fc6StatusIcons(event, withTitles) {
         nodes.push(
           icon("show-partial-filled", $.i18n._("Show is partially filled")),
         );
-      } else if (auto) {
-        nodes.push(
-          icon("autoplaylist", $.i18n._("Show has an automatic playlist")),
-        );
+      } else if (automatic) {
+        automaticIcons();
       } else {
         nodes.push(
           icon("show-partial-filled", $.i18n._("Show is partially filled")),
@@ -138,20 +158,16 @@ function fc6StatusIcons(event, withTitles) {
       if (linked) {
         nodes.push(icon("linked"));
         nodes.push(icon("show-overbooked", overTitle));
-      } else if (auto) {
-        nodes.push(
-          icon("autoplaylist", $.i18n._("Show has an automatic playlist")),
-        );
+      } else if (automatic) {
+        automaticIcons();
       } else {
         nodes.push(icon("show-overbooked", overTitle));
       }
     } else {
       if (linked) {
         nodes.push(icon("linked"));
-      } else if (auto) {
-        nodes.push(
-          icon("autoplaylist", $.i18n._("Show has an automatic playlist")),
-        );
+      } else if (automatic) {
+        automaticIcons();
       }
     }
   }
