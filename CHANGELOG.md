@@ -1698,7 +1698,7 @@ un_tests.ps1` (2026-10-16)** — startet API-, Playout- und
   prüft nur noch den aktiven Tab.  Der Klick fügte schon vorher in die
   Playlist ein, nur die Anzeige fehlte.  Live geprüft (nichts hinzugefügt):
   Menüs von Track/Block/Webstream/Line-In, Knopf mit und ohne Auswahl,
-  Wechsel und Schließen des Tabs.  Manual LIBRARY ×4.
+  Wechsel und Schließen des Tabs.  Manual LIBRARY ×4.  Commit `4fd1555`.
 
 - **Bibliothek: „Edit..." im Kontextmenü von Playlists, Smart Blocks und
   Webstreams (2026-10-21, Operator-Meldung)** — Das Menü bot es nur auf
