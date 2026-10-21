@@ -126,7 +126,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Massenimport.  Anlass: 36 WMA-Dateien im Import-Ordner (20 Lossless,
   16 v2 128 kbit/s), die der Scanner übersprang.  Analyzer-Tests (+2),
   Manual LOCAL_MACHINE §5 ×4, Architektur §23.57.  Wirksam nach
-  ANALYZER-Neustart.  Commit WMAIMP.
+  ANALYZER-Neustart.  Commit dea4ebe.
 - **Wiederholung 4 s kürzer als das Original (2026-10-21, Operator-Befund
   14:17)** — im Original überlappen Titel und Live-Zeile (Line-In,
   Webstream) 1 s (Sendungswechsel-Überblendung), in der Wiederholung ist die
