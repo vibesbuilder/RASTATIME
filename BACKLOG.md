@@ -42,6 +42,51 @@ festgelegt.  Jeder Punkt bekommt vor Implementierung die
 
 ## 🎯 Aktive Backlog-Items (warten auf Operator-Go)
 
+### 🟢 PHP 8.3 → 8.5 (Operator-Go 2026-10-21, Termin 2026-10-22 als erstes)
+
+**Anlass:** PHP2Shell (CVE-2026-109618/-109619, 2026-10-21).  Am 21.10. abends
+auf **8.3.36** aktualisiert (gleiche Linie, reine Sicherheitskorrekturen) - die
+Lücke ist damit zu.  Evaluierung 21.10.: 8.3 bekommt Sicherheitskorrekturen nur
+noch bis 31.12.2027 (aktive Pflege endete Ende 2025); 8.4 bis 31.12.2028,
+**8.5 bis 31.12.2029**.  8.4 lohnt als Zwischenschritt nicht (gleicher
+Testaufwand, 8.5 enthält dessen Änderungen, ein Jahr länger gepflegt, mit .12
+ausgereift).
+**Bekannte Punkte (aus den offiziellen Inkompatibilitätslisten + Code-Scan):**
+- Fehler-Handler (`airtime-boot.php`) schaltet Deprecations ab - die vielen
+  neuen Hinweise in ZF1/Propel sind harmlos.  **Neue Warnungen** werden dagegen
+  zu `ErrorException` und brechen ab: 8.5 warnt u. a. beim Zerlegen von
+  Nicht-Arrays (`[$a, $b] = $x`), bei Float→Int-Casts außerhalb des
+  Int-Bereichs und bei NAN-Casts, bei `|` in `$_SESSION`-Schlüsseln,
+  `SimpleXML::xpath` ohne Knotenmenge.  Code-Scan fand keine offensichtlichen
+  Stellen - finden lässt sich das nur im Betrieb.
+- php.ini: `session.sid_length` / `session.sid_bits_per_character` (ab 8.4
+  veraltet) und `disable_classes` (in 8.5 entfernt) entfernen; OPcache ist in
+  8.5 immer geladen → bewusst `opcache.enable=0` (wie bisher, Edits sofort live)
+  oder einschalten (schneller, Edits nach `revalidate_freq` live) - Entscheidung.
+- Windows-Build VS17: VC++-Laufzeit 14.44 vorhanden.  `mb_trim` & Co. kommen aus
+  dem Symfony-Polyfill mit `function_exists`-Schutz - kein Konflikt.
+- `E_STRICT` in `airtime-boot.php` / `AirtimeLog.php` ist ab 8.4 veraltet
+  (Deprecation, harmlos) - bei der Gelegenheit entfernen.
+- PDO_PGSQL: DSN-Zugangsdaten haben ab 8.4 Vorrang vor Konstruktor-Argumenten -
+  Propel-DSN prüfen.
+**Ablauf:** Zip + SHA256 nach `C:\Temp\php-update`, neben dem laufenden PHP
+nach `C:\Tools\PHP-8.5.x` entpacken, `php.ini` (bereinigt) + `cacert.pem`
+übernehmen, CLI-Proben (Bootstrap + DB, Show-Formular, gettext, HTTPS) mit
+umgelenktem `extension_dir`; dann Apache stoppen, verwaiste `php-cgi.exe`
+beenden (siehe unten), Ordner tauschen, Apache starten, Testdurchlauf:
+Kalender (Formular, Schedule Tracks, Drag), Bibliothek (Suche, Kontextmenüs,
+Playlist/Block-Editor), Upload/Import, Podcasts, Import/Export, Einstellungen
+speichern, Backup (manuell), REST/Widgets, Login; `legacy.log` auf neue
+`ErrorException` beobachten (einige Tage).  **Rückfall:** Ordner zurücktauschen
+(`C:\Tools\PHP-8.3.36` bleibt liegen) + Apache neu starten, ~2 min.
+Danach `docs/operator/COMPONENTS.md`, INSTALL_APACHE, CHANGELOG.
+**Nebenbefund 21.10.:** nach Apache-Neustarts bleiben `php-cgi.exe`-Prozesse
+als Waisen liegen (10 Stück, ältester vom 08.10., Elternprozess weg) - sie
+bedienen nichts mehr, halten aber Speicher und Dateisperren auf
+`C:\Tools\PHP`.  Vermutlich der NSSM-Stopp-Timeout (siehe Legacy-i18n-Notiz).
+Beim Update mit beenden; dauerhafte Lösung (Stop-Methode / Aufräumen beim
+Dienststart) mitprüfen.
+
 ### 🟢 Live-Readiness: RASTATIME dauerhaft auf dieser Maschine (Operator-Entscheidung 2026-10-03)
 
 **Entscheidung:** Keine Neuinstallation.  Befund 2026-10-03: alle zehn Dienste
