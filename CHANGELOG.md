@@ -27,7 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   zugeklappten *Audio Processing* (0 px, aufgeklappt 10 px) — jetzt 20 px
   wie zwischen den anderen Abschnitten.  Manual AUTOLOADING_PLAYLISTS +
   CALENDAR ×4.  Gerendert per Probe mit den echten Formularen und live
-  gemessen.
+  gemessen.  Commit `bf8291f`.
 
 - **Line-In: Vorwärmen 15 s vor dem Slot (2026-10-21, Operator-Go)** —
   die frische Capture-Quelle (§23.68) verband sich in beiden gemessenen
