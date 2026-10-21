@@ -136,7 +136,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Bestätigung.  Drei API-Tests, Strings DE/FR/ES, Manual LIBRARY ×4,
   Architektur §23.69.  Wirksam nach API-Neustart (Legacy sofort).  Aus der
   Evaluierung 2026-10-21 (Mood/Energy/Key/Timbre und Mood-Detector bleiben
-  im BACKLOG).  Commit RRTAGS.
+  im BACKLOG).  Commit 08a4b9f.
 - **Import von WMA-Dateien (2026-10-21, Go 2026-10-21)** — Windows Media
   Audio (v1/v2/Pro/Lossless) wird vom Analyzer immer nach MP3 320 kbit/s
   gewandelt (`convert_format`: `is_wma`, unabhängig vom Lossless-Kästchen,
