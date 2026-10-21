@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `show_repeat_of` = Name der Quellsendung
   (`RepeatFillService::repeatSourceNames`, eine Abfrage).  Live: 12
   Wiederholungen der Woche mit Symbol und ohne Warnung, die übrigen leeren
-  Sendungen unverändert.  Texte DE/FR/ES, Manual CALENDAR ×4.
+  Sendungen unverändert.  Texte DE/FR/ES, Manual CALENDAR ×4.  Commit `c509953`.
 
 - **Show-Formular: Hilfe-Icon von „Repeat of show" neben der Beschriftung
   (2026-10-21, Operator)** — Das Icon steht rechts neben dem Text statt hinter
