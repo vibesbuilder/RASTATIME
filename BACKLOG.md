@@ -3798,6 +3798,30 @@ Sortierung der bereits-gespielten + nächsten Tracks freezable.
 
 ## 🐞 Known Issues / Bug Backlog
 
+### 🟡 REST-Modul ohne Anmeldung: 500 statt 401 (Nebenbefund 2026-10-21)
+
+**Status:** 🟡 Defer — notiert auf Operator-Wunsch, nicht dringend: die
+Oberfläche greift immer angemeldet zu, der Playout mit API-Key.
+**Befund:** Jede Adresse unter `/rest/*` (`rest/podcast`, `rest/media`,
+`rest/podcast-episodes` …) antwortet ohne Sitzung und ohne API-Key mit
+einer HTML-500-Seite.  `Acl_plugin::preDispatch` setzt für das
+REST-Modul zwar Status 401 (`verifyAuth`) und wirft dann
+`Zend_Controller_Exception('Incorrect API key', 401)`; der
+`ErrorController` mappt aber jede Ausnahme außer „keine Route /
+Controller / Action" auf `error500Action` und ignoriert den Code.  Jeder
+solche Aufruf schreibt zwei ERR-Zeilen samt Stacktrace in
+`C:astatime\logs\legacy.log`.  Volumen 2026-10-06 bis 10-21: 14
+Ereignisse (davon 6 Testaufrufe am 21.10.) — kein Scanner-Rauschen, auch
+nicht seit HTTPS öffentlich ist.
+**Fix-Skizze (~10 Zeilen):** im `ErrorController::errorAction` eine
+Ausnahme mit Code 401 (bzw. 403) als 401 beantworten — kurzer
+JSON-/Text-Body wie `verifyAuth` („ERROR: Incorrect API key."), kein
+Stacktrace im Log (höchstens eine INFO-Zeile).  Alternative im Plugin:
+statt zu werfen die Antwort 401 senden und den Dispatch beenden.
+**Vorbedingungen:** keine; Live-Prüfung mit `curl -i` auf `rest/media`
+und `rest/podcast` ohne Sitzung (401), mit Sitzung unverändert 200;
+der Playout-Zugriff mit API-Key darf sich nicht ändern.
+
 ### ✅ „Local Machine"-Seite in de_DE / fr_FR / es_ES unübersetzt (festgestellt 2026-10-02, DONE 2026-10-03)
 
 **Status:** Erledigt 2026-10-03 (Operator-Go für die ganze Seite).  Beim
