@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **RASTATIME-STANDBY auf Liquidsoap 2.4.6 (2026-10-21, Operator)** — nach elf
+  Tagen Hauptdienst auf 2.4.6 ohne Auffälligkeiten (sieben planmäßige
+  Neustarts, kein Lockout) der Standby per `nssm set … Application/
+  AppDirectory` auf `C:\Tools\liquidsoap-v2.4.6` umgestellt und neu
+  gestartet (17:39:43); `standby.liq` besteht `--check` mit 2.4.6.  2.4.4
+  bleibt als Rückfall unter `C:\Tools\liquidsoap`.  COMPONENTS.md.
 - **Dashboard → Podcasts: Suchzeile (2026-10-21, Operator-Meldung)** — Die
   Podcast-Liste hatte kein Suchfeld: LibreTime blendete es per CSS aus
   (`#podcast_table_filter { display: none }`), weil `rest/podcast` den
