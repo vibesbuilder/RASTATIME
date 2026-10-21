@@ -5312,6 +5312,14 @@ Start mit den 5 Zeilen von „testshowc“ (17:40) befüllt, identische Reihenfo
 Nebenbefund dabei behoben: Quellenliste blendete Sendungen der nächsten zwei
 Stunden aus (NOW() ohne UTC, 737f347/0b8838b).
 
+### Dayteaser nach dem BBC-Webstream fehlte - Befund 2026-10-21, Operator-Entscheidung ohne Code
+
+Der zweite Dayteaser-Block (50,05 s, Typ Jingles mit 0 s Crossfade, also ohne Ueberlappung) passte nach dem
+304-s-Webstream um 0,1 s nicht in die 7-min-Sendung; die Befuellung liess ihn aus, der Auto DJ fuellte die
+49,9 s mit einem kurzen Musiktitel.  Operator 2026-10-21: Webstream auf 303 s kuerzen (kein Code).  Nicht gebaut:
+Toleranz von 0,5 s Ueberhang fuer das letzte Element in `AutoPlaylistManager::insertFitting` (waere die
+robuste Variante, falls das Muster bei anderen Laengen wiederkehrt).
+
 ### ✅ Wiederholung von Sendung, Stufe 2: aufgezeichnete Live-Sendungen - gebaut 2026-10-20 (Go 2026-10-20, Architektur §23.67)
 
 Live-Sendungen (DJ, Line-In) haben keine kopierbaren Sendeplan-Zeilen;
