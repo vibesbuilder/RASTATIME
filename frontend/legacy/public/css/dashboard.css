@@ -900,8 +900,39 @@ th.library_checkbox {
         Podcasts
     ~~~~~~~~~~~~~~~~ */
 
-#podcast_table_filter {
-    display: none;
+/* RASTATIME 2026-10-21 - the search box of the podcast table is shown:
+   rest/podcast filters title and creator now (LibreTime hid the box because
+   the endpoint ignored the search).  While text is set, "X of N podcasts"
+   and an "x" sit at the right end of the box, vertically centred, like the
+   library's indicator (widgets/table.js sets the input's padding-right). */
+#library_content #podcast_table_filter .filter-message,
+#library_content #podcast_table_filter .rt-table-filter-clear {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    float: none;
+    white-space: nowrap;
+    color: #242424;
+    text-decoration: none;
+    z-index: 1;
+}
+#library_content #podcast_table_filter .filter-message {
+    right: 26px;
+    padding: 0 6px 0 0;
+    font-size: 13px;
+    line-height: 18px;
+    border-right: 1px solid #9a9a9a;
+    pointer-events: none;
+}
+#library_content #podcast_table_filter .rt-table-filter-clear {
+    right: 4px;
+    padding: 0 4px;
+    font-size: 20px;
+    line-height: 22px;
+    cursor: pointer;
+}
+#library_content #podcast_table_filter .rt-table-filter-clear:hover {
+    color: var(--rt-accent);
 }
 
 /*  ~~~~~~~~~~~~~~~~

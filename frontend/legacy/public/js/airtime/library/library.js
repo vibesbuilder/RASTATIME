@@ -2352,6 +2352,14 @@ var AIRTIME = (function (AIRTIME) {
       $("#library_content").find(".dataTables_wrapper").hide();
       wrapper.show();
     });
+    // RASTATIME 2026-10-21 - the advanced-search caret belongs to the
+    // library table; over the podcast table's own search box it would open
+    // the track search
+    var isPodcast = table === mod.DataTableTypeEnum.PODCAST;
+    $("#advanced-options").toggle(!isPodcast);
+    if (isPodcast) {
+      $("#advanced_search").hide();
+    }
     oTable = dt;
   };
 

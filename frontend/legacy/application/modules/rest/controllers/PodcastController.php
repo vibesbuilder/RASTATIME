@@ -36,7 +36,21 @@ class Rest_PodcastController extends Zend_Rest_Controller
             ->filterByDbId($stationPodcastId, Criteria::NOT_EQUAL)
             ->leftJoinImportedPodcast()
             ->withColumn('auto_ingest_timestamp');
-        $total = $result->count();
+        // RASTATIME 2026-10-21 - the library's podcast table sends its search
+        // box as `search` (widgets/table.js _fetchData): filter title and
+        // creator, case-insensitive.  X-TOTAL-COUNT stays the count the table
+        // pages through (now the filtered one); X-TOTAL-UNFILTERED is the full
+        // count for the "X of N podcasts" message.  Without `search` nothing
+        // changes for other clients.
+        $unfiltered = $result->count();
+        $search = trim((string) $this->_getParam('search', ''));
+        if ($search !== '') {
+            $like = '%' . addcslashes($search, '\%_') . '%';
+            $result->condition('rtSearchTitle', 'Podcast.DbTitle ILIKE ?', $like)
+                ->condition('rtSearchCreator', 'Podcast.DbCreator ILIKE ?', $like)
+                ->where(['rtSearchTitle', 'rtSearchCreator'], Criteria::LOGICAL_OR);
+        }
+        $total = $search !== '' ? $result->count() : $unfiltered;
         if ($limit > 0) {
             $result->setLimit($limit);
         }
@@ -49,6 +63,7 @@ class Rest_PodcastController extends Zend_Rest_Controller
         $this->getResponse()
             ->setHttpResponseCode(200)
             ->setHeader('X-TOTAL-COUNT', $total)
+            ->setHeader('X-TOTAL-UNFILTERED', $unfiltered)
             ->appendBody(json_encode($podcastArray));
     }
 

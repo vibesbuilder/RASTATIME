@@ -92,6 +92,11 @@ playlists, smart blocks, webstreams, podcasts, line inputs). The **×**
 next to that count clears the search text and every advanced-search
 field in one go.
 
+**Podcasts (since 2026-10-21).** The podcast list has the same search
+box: it matches the podcast **title** and **creator**, case-insensitive,
+and shows "X of N podcasts" and the **×** the same way.  The
+advanced-search caret is hidden there - it belongs to the other kinds.
+
 > **How it works under the hood.** Search is server-side via
 > `LibraryController::contentsFeedAction`. The DataTable widget
 > sends the search term + the current chip state as URL

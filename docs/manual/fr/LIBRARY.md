@@ -100,6 +100,12 @@ intelligents, flux web, podcasts, entrées ligne). Le **×** à côté de
 ce nombre efface le texte et tous les champs de la recherche avancée
 d'un coup.
 
+**Podcasts (depuis le 2026-10-21).** La liste des podcasts a la même
+zone de recherche : elle porte sur le **titre** et le **créateur** du
+podcast, sans tenir compte de la casse, et affiche « X of N podcasts »
+et le **×** de la même façon.  La flèche de la recherche avancée y est
+masquée - elle concerne les autres types.
+
 > **Comment ça marche sous le capot.** La recherche est
 > côté serveur via `LibraryController::contentsFeedAction`.
 > Le widget DataTable envoie le terme de recherche + l'état

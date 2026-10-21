@@ -289,24 +289,40 @@ var AIRTIME = (function (AIRTIME) {
     }
 
     // On filter, display the number of total and filtered results in the search bar
-    $(self._datatable).on("filter", function () {
+    // RASTATIME 2026-10-21 - DataTables 1.13 never fires the 1.9 "filter"
+    // event, so the count never showed; "draw.dt" fires after every server
+    // response, when both counts are current.  While search text is set the
+    // box looks like the library's: accent border, "X of N" and an "x" at its
+    // right end (dashboard.css #podcast_table_filter).
+    $(self._datatable).on("draw.dt", function () {
       var dt = self._datatable,
-        f = dt.closest(".dataTables_wrapper").find(".filter-message"),
+        $filter = dt.closest(".dataTables_wrapper").find(".dataTables_filter"),
+        $input = $filter.find('input[type="text"], input[type="search"]'),
+        f = $filter.find(".filter-message"),
+        x = $filter.find(".rt-table-filter-clear"),
         totalRecords = dt.fnSettings().fnRecordsTotal(),
         totalDisplayRecords = dt.fnSettings().fnRecordsDisplay();
 
+      if (!$filter.length) {
+        return;
+      }
       if (f.length === 0) {
-        var el = document.createElement("span");
-        el.setAttribute("class", "filter-message");
-        f = dt
-          .closest(".dataTables_wrapper")
-          .find(".dataTables_filter")
-          .append(el)
-          .find(".filter-message");
+        f = $("<span class='filter-message'></span>").appendTo($filter);
+      }
+      if (x.length === 0) {
+        x = $("<a href='#' class='rt-table-filter-clear'>&times;</a>")
+          .attr("title", $.i18n._("Clear search"))
+          .appendTo($filter)
+          .on("click", function (e) {
+            e.preventDefault();
+            $input.val("");
+            dt.fnFilter("");
+          });
       }
 
+      var active = $.trim($input.val() || "") !== "";
       var filterText = "";
-      if (totalRecords > totalDisplayRecords) {
+      if (active) {
         filterText = self._filterCountFormat
           ? $.i18n
               ._(self._filterCountFormat)
@@ -318,11 +334,13 @@ var AIRTIME = (function (AIRTIME) {
             totalRecords +
             $.i18n._(" records");
       }
-      f.text(filterText);
-
-      dt.closest(".dataTables_wrapper")
-        .find('.dataTables_filter input[type="text"]')
-        .css("padding-right", f.outerWidth());
+      f.text(filterText).toggle(active);
+      x.toggle(active);
+      $filter.toggleClass("rt-filter-active", active);
+      $input.css(
+        "padding-right",
+        active ? f.outerWidth() + x.outerWidth() + 10 : "",
+      );
     });
 
     //Since this function is already called when the datatables initialization is complete, we know the DOM
@@ -611,8 +629,15 @@ var AIRTIME = (function (AIRTIME) {
         var rawResponseJSON = json;
         json = [];
         json.aaData = rawResponseJSON;
-        json.iTotalRecords = jqXHR.getResponseHeader("X-TOTAL-COUNT");
-        json.iTotalDisplayRecords = json.iTotalRecords;
+        // RASTATIME 2026-10-21 - X-TOTAL-COUNT is what the table pages
+        // through (filtered by the search box where the endpoint supports
+        // it); X-TOTAL-UNFILTERED, when sent (rest/podcast), is the full count
+        // so the search box can say "X of N".  Endpoints without it behave
+        // as before (both counts equal).
+        json.iTotalDisplayRecords = jqXHR.getResponseHeader("X-TOTAL-COUNT");
+        json.iTotalRecords =
+          jqXHR.getResponseHeader("X-TOTAL-UNFILTERED") ||
+          json.iTotalDisplayRecords;
         json.sEcho = echo;
 
         //Pass it along to datatables.

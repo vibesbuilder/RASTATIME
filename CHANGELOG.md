@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Dashboard → Podcasts: Suchzeile (2026-10-21, Operator-Meldung)** — Die
+  Podcast-Liste hatte kein Suchfeld: LibreTime blendete es per CSS aus
+  (`#podcast_table_filter { display: none }`), weil `rest/podcast` den
+  Suchbegriff, den das Tabellen-Widget schon mitschickt, ignorierte.  Jetzt
+  filtert `rest/podcast` Titel und Creator (ILIKE, `%`/`_` wörtlich);
+  `X-TOTAL-COUNT` ist die gefilterte Zahl, neu `X-TOTAL-UNFILTERED` die
+  gesamte — ohne `search` unverändert.  Das Widget (`widgets/table.js`, nur
+  die Podcast-Tabelle nutzt es) hörte auf das DataTables-1.9-Ereignis
+  „filter", das 1.13 nie auslöst — der Zähler hätte nie erschienen; jetzt
+  `draw.dt`, und das Suchfeld sieht aus wie das der Tracks: Akzent-Rand,
+  „X of N podcasts" und **×** rechts im Feld.  Der Pfeil der erweiterten
+  Track-Suche ist bei Podcasts ausgeblendet (er lag über dem Podcast-Feld
+  und hätte die Track-Suche geöffnet).  Live: „radio" → 16 von 73, Groß-/
+  Kleinschreibung egal, × leert, Wechsel Tracks ↔ Podcasts korrekt.  Manual
+  LIBRARY ×4.
+
 - **Kalender: Wiederholungs-Symbol für „Repeat of show" (2026-10-21,
   Operator)** — Eine Wiederholung zeigte vor dem Befüllen das rote
   Rufzeichen „leer" bzw. „teilweise gefüllt".  Sie bekommt jetzt wie eine

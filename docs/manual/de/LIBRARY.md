@@ -98,6 +98,12 @@ Smart Blöcke, Webstreams, Podcasts, Line-Eingänge). Das **×** neben
 dieser Zahl leert den Suchtext und alle Felder der erweiterten Suche
 in einem Zug.
 
+**Podcasts (seit 2026-10-21).** Die Podcast-Liste hat dasselbe
+Suchfeld: Es durchsucht **Titel** und **Creator** des Podcasts ohne
+Rücksicht auf Groß-/Kleinschreibung und zeigt „X of N podcasts" und das
+**×** genauso.  Der Pfeil der erweiterten Suche ist dort ausgeblendet -
+er gehört zu den anderen Arten.
+
 > **Wie es unter der Haube funktioniert.** Die Suche läuft
 > serverseitig über `LibraryController::contentsFeedAction`.
 > Das DataTable-Widget sendet den Suchbegriff + den

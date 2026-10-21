@@ -58,6 +58,12 @@ retransmisiones, podcasts, entradas de línea). La **×** junto a ese
 número borra el texto y todos los campos de la búsqueda avanzada de
 una vez.
 
+**Podcasts (desde 2026-10-21).** La lista de podcasts tiene la misma
+caja de búsqueda: busca en el **título** y el **creador** del podcast,
+sin distinguir mayúsculas, y muestra «X of N podcasts» y la **×** de la
+misma manera.  La flecha de la búsqueda avanzada está oculta allí:
+pertenece a los otros tipos.
+
 > **Cómo funciona bajo el capó.** La búsqueda es del lado
 > del servidor vía `LibraryController::contentsFeedAction`.
 > El widget DataTable envía el término de búsqueda + el
