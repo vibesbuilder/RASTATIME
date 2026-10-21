@@ -1,10 +1,13 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.80
+Draft version: 0.81
 Date: 2026-10-18
 
 > **Revision history**
+> - **0.81 (2026-10-21)** — **Line-in: fresh input.http per slot** (§23.68):
+>   the reused companion source did not reconnect on its second start;
+>   source.dynamic arm like the webstreams.
 > - **0.80 (2026-10-20)** — **Repeat of show, stage 2** (§23.67): live
 >   rows of the original become slices of its imported recording;
 >   scheduler honours explicit cue values on an item.
@@ -7306,3 +7309,34 @@ file 22358, track; 13221 without import -> waits with 2 h left, not
 with 2 min), `repeat2_e2e_probe.php` (throwaway show B, delete guard on
 the recording, fill, rows == plan, guard released, idempotent, B
 deleted).
+
+### 23.68 Line-In: a Fresh input.http per Slot (2026-10-21)
+
+**Symptom.**  Two recorded test shows with a line-in between two tracks
+(2026-10-20 21:12, 2026-10-21 08:42) went silent for the whole line-in
+slot: the FfmpegLineinCapture feeder opened the Tascam device and
+streamed ten minutes at 192 kbit/s to `/linein-capture`, but Liquidsoap
+logged `Switch to silence_fallback` at the gate opening and no decoder
+line for the mount until the slot ended.  The successful slots (2026-10-19
+14:32, 2026-10-21 08:15) were each the FIRST start of the companion
+source after a Liquidsoap restart; the failing ones were second starts
+after a stop.  The reused `input.http` reconnects through one Duppy async
+task whose wake-up is unreliable on this Windows build - the finding
+that led to Plan A for the webstreams (§23.4x, 2026-09-08).
+
+**Change.**  `_render_linein_input_block` now renders the companion as a
+`source.dynamic(id="linein_http")` arm over `linein_http_current`; every
+`linein_http.start` creates a fresh `input.http(id="linein_http_in_#{n}",
+start=true, format=mp3, max_buffer 1 s, poll_delay 0.5 s)` and sets it,
+`linein_http.stop` stops it, drops the arm back to `source.fail()` and
+parks a stop that did not take as a zombie (reaped on reconnect inside
+`webstream_wd_check`, like the webstream zombies).  `linein_http.status`
+is new.  No bridge buffer: the line-in keeps its low latency, the dshow
+fallback arm and `fallback(track_sensitive=false, [linein_dshow,
+linein_http])` are unchanged, PLAYOUT's engine sequence (`linein.stop`,
+`linein_http.stop`, `linein_http.start`, gate) is untouched.
+
+**Verification.**  `test_liquidsoap_config.py` (100 passed, assertions on
+the new block), the rendered script passes `liquidsoap --check` with the
+same single pre-existing warning as the live file.  Live acceptance: a
+recorded show with a line-in after the PLAYOUT restart, then its repeat.

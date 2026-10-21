@@ -1084,10 +1084,18 @@ def test_full_render_default_includes_linein_input_block():
     # RASTATIME 2026-08-31 — multichannel path: the fixed-URL
     # input.http companion source consuming /linein-capture, and the
     # fallback that folds both paths into the single `linein` arm.
-    assert 'linein_http_raw = input.http(' in active
-    assert 'id="linein_http"' in active
-    assert '"http://127.0.0.1:8000/linein-capture",' in active
+    # RASTATIME 2026-10-21 - a fresh input.http per slot behind a
+    # source.dynamic arm (the reused one did not reconnect on its second
+    # start); the telnet contract linein_http.start/stop is kept.
+    assert 'linein_http_raw = source.dynamic(id="linein_http", self_sync=false,' in active
+    assert 's = input.http(id="linein_http_in_#{n}", start=true, self_sync=false,' in active
+    assert '    "http://127.0.0.1:8000/linein-capture")' in active
     assert "linein_http = audio_to_stereo(linein_http_raw)" in active
+    assert 'server.register(namespace="linein_http", description="Open a fresh input for the /linein-capture mount",' in active
+    assert '"start", fun (_) -> linein_http_start())' in active
+    assert '"stop", fun (_) -> linein_http_stop())' in active
+    assert "  linein_http_reap()" in active
+    assert 'linein_http_raw = input.http(' not in active
     # RASTATIME 2026-10-02 - the folded arm runs through the per-line-in
     # input gain (var.set linein.gain, unity by default).
     assert 'linein_gain = interactive.float("linein.gain", 1.0)' in active

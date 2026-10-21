@@ -1571,6 +1571,22 @@ un_tests.ps1` (2026-10-16)** — startet API-, Playout- und
 
 ### Fixed
 
+- **Line-In stumm: frische `input.http`-Quelle je Slot (2026-10-21,
+  Abnahme-Befund des Operators)** — die wiederverwendete Quelle
+  `linein_http` verband sich nach einem Stopp beim zweiten Start nicht
+  mehr mit dem Mount `/linein-capture`; der Switch fiel für den ganzen
+  Slot auf `silence_fallback` (2026-10-20 21:12 und 2026-10-21 08:42, der
+  Feeder streamte dabei korrekt 10 min mit 192 kbit/s).  Dieselbe
+  Windows-Build-Schwäche wie bei den Webstreams (Plan A, 2026-09-08):
+  jetzt `source.dynamic`-Arm `linein_http` mit einem frischen
+  `input.http(id="linein_http_in_#{n}")` pro `linein_http.start`,
+  Zombie-Reaper im Webstream-Wächter-Takt, Telnet-Vertrag
+  `linein_http.start/.stop` unverändert (+ `.status`).  Rendering per
+  `liquidsoap --check` geprüft, 100 Konfigurationstests.  Wirksam nach
+  PLAYOUT-Neustart (rendert rastatime.liq neu, Liquidsoap folgt im
+  nächsten ruhigen Moment).  Die Aufnahmen der Testsendungen vom
+  20./21.10. bleiben in der Mitte stumm.  Architektur §23.68.
+  Commit LIFRESH.
 - **Zeitumstellung: „Edit Show" zeigte End Time 04:00 für eine 05:00-Dauer
   (2026-10-20, Operator-Meldung)** — `CcShowDays::getLocalEndDateAndTime`
   addierte die Dauer als verstrichene Zeit auf das erste Sendedatum (über

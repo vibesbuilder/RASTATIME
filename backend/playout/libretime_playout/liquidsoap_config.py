@@ -1538,6 +1538,7 @@ def _render_webstream_watchdog_block(
         "def webstream_wd_check() =\n"
         "  webstream_wd_checks.set(webstream_wd_checks() + 1)\n"
         "  webstream_reap()\n"
+        "  linein_http_reap()\n"
         "  if webstream_started() then\n"
         "    if source.is_ready(webstream) then\n"
         "      webstream_wd_seen_ready.set(true)\n"
@@ -1676,21 +1677,94 @@ def _render_linein_input_block(
         "# mp3 on the local /linein-capture mount) and Liquidsoap\n"
         "# consumes the mount through this second source.  The\n"
         "# direct-dshow source above is now only the fallback for legacy\n"
-        "# rows with no stored device name.  input.http auto-registers its\n"
-        "# telnet commands under the id (linein_http.start/stop), and\n"
-        "# poll_delay re-connects on its own after capture-watchdog\n"
-        "# restarts of the mount.  URL is fixed at render time.\n"
-        "linein_http_raw = input.http(\n"
-        '  id="linein_http",\n'
-        "  start=false,\n"
-        "  self_sync=false,\n"
-        "  # format forced: skips FFmpeg's ~5 s autodetect on the mount\n"
-        f'  format="{LINEIN_HTTP_FORMAT}",\n'
-        f"  max_buffer={_format_crossfade_duration(http_max_buffer_seconds)},\n"
-        f"  poll_delay={_format_crossfade_duration(http_poll_delay_seconds)},\n"
-        f'  "{http_url}",\n'
-        ")\n"
+        "# rows with no stored device name.  URL is fixed at render time.\n"
+        "# RASTATIME 2026-10-21 - a FRESH input.http per line-in slot, the\n"
+        "# webstream lesson of 2026-09-08: the reused source did not reconnect\n"
+        "# on its second start after a stop (the switch fell to\n"
+        "# silence_fallback for the whole slot on 2026-10-20 21:12 and\n"
+        "# 2026-10-21 08:42 although the feeder streamed).  PLAYOUT keeps its\n"
+        "# telnet contract: linein_http.start / .stop (+ .status).\n"
+        "linein_http_seq = ref(0)\n"
+        "linein_http_started = ref(false)\n"
+        "linein_http_current = ref(source.fail())\n"
+        "linein_http_stopper = ref(fun () -> ())\n"
+        'linein_http_status_fn = ref(fun () -> "stopped")\n'
+        'linein_http_current_name = ref("")\n'
+        "linein_http_reaper = ref(fun () -> ())\n"
+        "linein_http_zombies = ref([])\n"
+        'linein_http_raw = source.dynamic(id="linein_http", self_sync=false,\n'
+        "  track_sensitive=false, {linein_http_current()})\n"
         "linein_http = audio_to_stereo(linein_http_raw)\n"
+        "\n"
+        "def linein_http_stop() =\n"
+        "  if linein_http_started() then\n"
+        "    f = linein_http_stopper()\n"
+        "    f()\n"
+        "    status_fn = linein_http_status_fn()\n"
+        '    if status_fn() != "stopped" then\n'
+        "      # a stop lost while polling the (gone) mount: reaped once the\n"
+        "      # input reports connected again, like the webstream zombies\n"
+        "      linein_http_zombies.set(list.append(linein_http_zombies(),\n"
+        "        [(linein_http_current_name(), status_fn, linein_http_reaper())]))\n"
+        "    end\n"
+        "  end\n"
+        "  linein_http_started.set(false)\n"
+        "  linein_http_current.set(source.fail())\n"
+        "  linein_http_stopper.set(fun () -> ())\n"
+        '  linein_http_status_fn.set(fun () -> "stopped")\n'
+        '  "Done"\n'
+        "end\n"
+        "\n"
+        "def linein_http_reap() =\n"
+        "  if list.length(linein_http_zombies()) > 0 then\n"
+        "    linein_http_zombies.set(list.filter(fun (z) -> begin\n"
+        "      let (name, status_fn, reap_fn) = z\n"
+        "      st = status_fn()\n"
+        '      if st == "stopped" then\n'
+        "        false\n"
+        '      elsif string.contains(prefix="connected", st) then\n'
+        '        log(level=2, label="linein_http",\n'
+        '            "dropped input #{name} reconnected on its own - reaping (start+stop)")\n'
+        "        reap_fn()\n"
+        "        true\n"
+        "      else\n"
+        "        true\n"
+        "      end\n"
+        "    end, linein_http_zombies()))\n"
+        "  end\n"
+        "end\n"
+        "\n"
+        "def linein_http_start() =\n"
+        "  if linein_http_started() then ignore(linein_http_stop()) end\n"
+        "  linein_http_seq.set(linein_http_seq() + 1)\n"
+        "  n = linein_http_seq()\n"
+        '  s = input.http(id="linein_http_in_#{n}", start=true, self_sync=false,\n'
+        "    # format forced: skips FFmpeg's ~5 s autodetect on the mount\n"
+        f'    format="{LINEIN_HTTP_FORMAT}",\n'
+        f"    max_buffer={_format_crossfade_duration(http_max_buffer_seconds)},\n"
+        f"    poll_delay={_format_crossfade_duration(http_poll_delay_seconds)},\n"
+        f'    "{http_url}")\n'
+        "  linein_http_stopper.set(fun () -> s.stop())\n"
+        "  linein_http_status_fn.set(fun () -> s.status())\n"
+        '  linein_http_current_name.set("linein_http_in_#{n}")\n'
+        "  linein_http_reaper.set(fun () -> begin\n"
+        "    s.start()\n"
+        "    s.stop()\n"
+        "  end)\n"
+        "  linein_http_started.set(true)\n"
+        "  linein_http_current.set(s)\n"
+        '  "Done"\n'
+        "end\n"
+        "\n"
+        'server.register(namespace="linein_http", description="Open a fresh input for the /linein-capture mount",\n'
+        '  "start", fun (_) -> linein_http_start())\n'
+        'server.register(namespace="linein_http", description="Stop and drop the current input; the arm falls through",\n'
+        '  "stop", fun (_) -> linein_http_stop())\n'
+        'server.register(namespace="linein_http", description="Status of the current input (stopped / starting / polling / connected <url>)",\n'
+        '  "status", fun (_) -> begin\n'
+        "    f = linein_http_status_fn()\n"
+        "    f()\n"
+        "  end)\n"
         "\n"
         "# One switch arm serves both paths: Pypo only ever starts one\n"
         "# of the two sources per show, so a track-insensitive fallback\n"
