@@ -78,7 +78,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   des ersten Kandidaten, `[HD] R128 mode` ist ein Lautheits-Ceiling, nicht
   gewollt).  README daneben, Manual STREAMS ×4, Architektur §23.47.
   Einspielen: Pfad in Settings → Streams → Output Processing eintragen.
-  Commit STPRESET.
+  Commit 8565bfa.
 - **Wiederholung von Sendung, Stufe 2: Live-Zeilen aus der Aufnahme
   (2026-10-20, Go 2026-10-20)** — `RepeatFillService::planRows`: jede
   Line-In-Zeile des Originals wird durch die passende Scheibe seiner
