@@ -1692,8 +1692,12 @@ un_tests.ps1` (2026-10-16)** — startet API-, Playout- und
   anbietet.  `checkAddButton` sperrt ihn jetzt; beim Umschalten
   statisch/dynamisch rechnet der Editor ihn neu.  Live: „Test Smart Block"
   (dynamisch) offen, Track ausgewählt → grau, „Scheduled Shows" → aktiv;
-  Track-Menü ohne „Add to Smart Block".  Den positiven Fall (statischer
-  Block) gibt es in der Bibliothek nicht.  Commit `9a7e509`.
+  Track-Menü ohne „Add to Smart Block".  Positiver Fall mit Operator-Go
+  geprüft (die Bibliothek hat keinen statischen Block): Test-Block „RT-Test
+  statisch (löschen)" angelegt → Track-Menü „Add to Smart Block", Knopf mit
+  Auswahl aktiv, Webstream/Line-In/Block/Playlist ohne „Add"; „My Buddy"
+  über das Menü hinzugefügt (in der DB angekommen), Block danach gelöscht
+  (Inhalt, Kriterien weg; Track-Merkmal `is_playlist` stimmig).  Commit `9a7e509`.
 
 - **Bibliothek: Hinzufügen zur offenen Playlist über Menü und Knopf
   (2026-10-21, Operator-Go)** — Mit einem Playlist- oder Smart-Block-Tab
