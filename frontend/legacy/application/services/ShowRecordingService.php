@@ -205,6 +205,18 @@ class Application_Service_ShowRecordingService
             $tt->setDbDescription('Per-show recordings copied into the library');
             $tt->setDbVisibility(true);
             $tt->save();
+            // RASTATIME 2026-10-21 - a recording slice stands in for a live row:
+            // its neighbours overlap it by the show hand-over crossfade (1 s),
+            // not the 3 s track crossfade, so a repeat keeps the original's
+            // length (Scheduler::crossfadeOverlapBetween takes the smaller
+            // side).  Adjustable under Settings -> Track Types.
+            try {
+                $type = new Application_Model_Tracktype((int) $tt->getDbId());
+                $type->setCrossfadeDuration(Application_Model_Preference::GetDefaultShowCrossfadeDuration());
+                $type->save();
+            } catch (Exception $e) {
+                Logging::warn('ShowRecordingService: crossfade of the Recordings type not set: ' . $e->getMessage());
+            }
             Logging::info('Track type "' . self::TRACK_TYPE_NAME . '" created for show recordings');
         }
 

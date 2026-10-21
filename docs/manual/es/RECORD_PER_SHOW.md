@@ -219,6 +219,10 @@ en cuanto se cierra su archivo de grabación:
   posterior de un programa en directo pueda usarla.
 - Una grabación ya importada se reconoce por su suma de comprobación
   y no se importa dos veces.
+- El tipo de pista **Recordings** lleva el fundido del cambio de
+  programa (1 s por defecto) en lugar del fundido de 3 s entre pistas,
+  para que una repetición construida con fragmentos de grabación conserve
+  la duración del original.  Ajustable en Ajustes → Track Types.
 
 Cómo funciona: el playout informa del archivo cerrado a la aplicación
 web, que comprueba que la ruta está dentro de la carpeta Show

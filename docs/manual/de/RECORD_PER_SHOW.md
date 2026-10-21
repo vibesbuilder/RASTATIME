@@ -249,6 +249,10 @@ ist:
   Wiederholung einer Live-Sendung darauf zugreifen kann.
 - Eine bereits importierte Aufnahme wird an ihrer Prüfsumme erkannt
   und nicht ein zweites Mal importiert.
+- Der Track-Typ **Recordings** trägt die Überblendung des
+  Sendungswechsels (standardmäßig 1 s) statt der 3 s Titel-Überblendung,
+  damit eine aus Aufnahme-Scheiben gebaute Wiederholung die Länge des
+  Originals behält.  Einstellbar unter Einstellungen → Track Types.
 
 So funktioniert es: Das Playout meldet die geschlossene Datei an die
 Web-Anwendung; diese prüft, dass der Pfad im eingestellten

@@ -240,6 +240,10 @@ la médiathèque dès que son fichier d'enregistrement est fermé :
   d'une émission en direct puisse la reprendre.
 - Un enregistrement déjà importé est reconnu par sa somme de contrôle
   et n'est pas importé une seconde fois.
+- Le type de piste **Recordings** porte le fondu du changement
+  d'émission (1 s par défaut) au lieu du fondu de 3 s entre titres, pour
+  qu'une rediffusion construite à partir de tranches d'enregistrement
+  garde la durée de l'original.  Réglable sous Paramètres → Track Types.
 
 Fonctionnement : le playout signale le fichier fermé à l'application
 web, qui vérifie que le chemin se trouve dans le dossier Show

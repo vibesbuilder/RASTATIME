@@ -90,6 +90,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Wiederholung 4 s kürzer als das Original (2026-10-21, Operator-Befund
+  14:17)** — im Original überlappen Titel und Live-Zeile (Line-In,
+  Webstream) 1 s (Sendungswechsel-Überblendung), in der Wiederholung ist die
+  Aufnahme-Scheibe eine Datei und bekam die 3-s-Titel-Überblendung auf
+  beiden Seiten (`crossfadeOverlapBetween` = Minimum beider Typen).  Der
+  Track-Typ „Recordings" wird jetzt mit der Sendungswechsel-Überblendung
+  angelegt; die bestehende Type-Zeile stellt der Operator unter Settings →
+  Track Types auf 1 s.  Manual RECORD_PER_SHOW ×4.  Commit RECXF.
 - **Wiederholung von Sendung: auch Webstream-Zeilen aus der Aufnahme
   (2026-10-21, Go 2026-10-21)** — `RepeatFillService::planRows` behandelt
   Webstream-Zeilen wie Line-Ins: mit importierter Aufnahme des Originals
