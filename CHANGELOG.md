@@ -2667,7 +2667,7 @@ un_tests.ps1` (2026-10-16)** — startet API-, Playout- und
   Passwort nach `logs/ffmpeg-linein-capture.log`; jetzt `-hide_banner
   -loglevel error -stats` (Fortschrittszeile bleibt für den Wächter) und
   die eigene `cmd:`-Kopfzeile maskiert das Passwort.  Wirksam nach
-  PLAYOUT-Neustart; das bestehende Log enthält den Wert noch.  Commit PWMASK.
+  PLAYOUT-Neustart; das bestehende Log enthält den Wert noch.  Commit 1b99295.
 - **Legacy PHP dependencies: phpseclib 3.0.52 -> 3.0.57, symfony/yaml 5.4.45
   -> 5.4.53 (2026-10-10, first Composer audit on the machine)** - five
   advisories in two packages (phpseclib X25519 private-key recovery and
