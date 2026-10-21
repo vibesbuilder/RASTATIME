@@ -156,10 +156,16 @@ class LibraryController extends Zend_Controller_Action
                 }
             }
 
-            if ($obj_sess->id !== $id && $screen == 'playlist') {
-                if ($isAdminOrPM || $obj->getCreatorId() == $user->getId()) {
-                    $menu['edit'] = ['name' => _('Edit...'), 'icon' => 'edit'];
-                }
+            // RASTATIME 2026-10-21 - "Edit..." on every screen (operator: the
+            // dashboard's Playlists / Smart Blocks rows had none).  The
+            // screen == 'playlist' condition stems from LibreTime's separate
+            // playlist-builder page; the dashboard rows say 'timeline', and
+            // their toolbar "Edit" opens the same editor
+            // (library_showbuilder.js).  The old "not the open playlist"
+            // check compared the session's int with the request's string and
+            // never matched.
+            if ($isAdminOrPM || $obj->getCreatorId() == $user->getId()) {
+                $menu['edit'] = ['name' => _('Edit...'), 'icon' => 'edit'];
             }
 
             if ($isAdminOrPM || $obj->getCreatorId() == $user->getId()) {
@@ -179,9 +185,9 @@ class LibraryController extends Zend_Controller_Action
                 }
             }
             if ($isAdminOrPM || $obj->getCreatorId() == $user->getId()) {
-                if ($screen == 'playlist') {
-                    $menu['edit'] = ['name' => _('Edit...'), 'icon' => 'edit', 'url' => $baseUrl . "library/edit-file-md/id/{$id}"];
-                }
+                // RASTATIME 2026-10-21 - on every screen, like playlists above
+                // (the JS opens webstream/edit; the url is not used)
+                $menu['edit'] = ['name' => _('Edit...'), 'icon' => 'edit'];
                 $menu['del'] = ['name' => _('Delete'), 'icon' => 'delete', 'url' => $baseUrl . 'library/delete'];
             }
         } elseif ($type == 'linein') {

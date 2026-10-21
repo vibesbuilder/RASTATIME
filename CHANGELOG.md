@@ -1685,6 +1685,16 @@ un_tests.ps1` (2026-10-16)** — startet API-, Playout- und
 
 ### Fixed
 
+- **Bibliothek: „Edit..." im Kontextmenü von Playlists, Smart Blocks und
+  Webstreams (2026-10-21, Operator-Meldung)** — Das Menü bot es nur auf
+  LibreTimes alter Playlist-Builder-Seite (`screen == 'playlist'`); die
+  Dashboard-Zeilen melden `timeline`, also fehlte es dort, obwohl der
+  Edit-Knopf der Werkzeugleiste dasselbe öffnet.  `LibraryController::
+  contextMenuAction` bietet „Edit..." jetzt auf jeder Ansicht an (Rechte
+  wie bisher: Admin/PM oder Ersteller); die alte Ausnahme „nicht die offene
+  Playlist" verglich Zahl mit Text und griff nie.  Live: Menü von
+  Playlist / Smart Block / Webstream mit „Edit...", Klick öffnet den Editor.
+
 - **REST ohne Anmeldung: 401 statt 500 (2026-10-21, Operator-Go)** — Jede
   Adresse unter `/rest/*` antwortete ohne Sitzung und API-Key mit einer
   HTML-500-Seite und zwei ERR-Zeilen samt Stacktrace: das ACL-Plugin wirft
