@@ -1693,7 +1693,7 @@ un_tests.ps1` (2026-10-16)** — startet API-, Playout- und
   contextMenuAction` bietet „Edit..." jetzt auf jeder Ansicht an (Rechte
   wie bisher: Admin/PM oder Ersteller); die alte Ausnahme „nicht die offene
   Playlist" verglich Zahl mit Text und griff nie.  Live: Menü von
-  Playlist / Smart Block / Webstream mit „Edit...", Klick öffnet den Editor.
+  Playlist / Smart Block / Webstream mit „Edit...", Klick öffnet den Editor.  Commit `50b668b`.
 
 - **REST ohne Anmeldung: 401 statt 500 (2026-10-21, Operator-Go)** — Jede
   Adresse unter `/rest/*` antwortete ohne Sitzung und API-Key mit einer
