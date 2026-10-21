@@ -133,6 +133,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   16 v2 128 kbit/s), die der Scanner übersprang.  Analyzer-Tests (+2),
   Manual LOCAL_MACHINE §5 ×4, Architektur §23.57.  Wirksam nach
   ANALYZER-Neustart.  Commit dea4ebe.
+- **Schedule Tracks: Bibliothek sprang nach „Select all" auf Tracks zurück
+  (2026-10-21, Operator-Meldung)** — die Einträge „Select all"/„Select none"
+  der Show-Builder-Leiste sind `href="#"`-Links; der Klick leerte den
+  URL-Hash, und der `hashchange`-Hörer des Dialogs suchte `a[href$='']`,
+  was JEDEN Link traf: alle Reiter bekamen `.selected`, der erste (Tracks)
+  gewann die nächste Abfrage.  Jetzt reagiert der Hörer nur auf die
+  eigenen Reiter (#tracks, #playlists, …) und die beiden Klick-Handler
+  unterdrücken den Hash-Sprung (`schedule.js`, `builder.js`; Harness-Test
+  im eingebauten Browser).  Commit SELFIX.
+- **Playlist duplizieren: HTTP 500 bei Playlisten mit Line-In (2026-10-21,
+  Operator: „funktioniert manchmal nicht")** — `LibraryController::
+  duplicateAction` kannte die Zeilenart 3 (Line-In, §23.18) nicht,
+  `buildEntry()` brach mit „Undefined array key 1" ab (Log 20.10. 13:41,
+  dreimal).  Line-In-Zeilen werden jetzt mitkopiert.  Probe
+  `C:/Temp/optd/dup_probe.php` (Kopie von „Studio Live 105min" identisch,
+  wieder gelöscht).  Commit SELFIX.
 - **Bibliotheks-Wandler `convert_lossless` nimmt WMA mit (2026-10-21)** —
   die 36 WMA-Dateien wurden vom Import-Ordner-Scanner um 17:10 übergeben,
   bevor der Analyzer mit dem WMA-Zweig neu gestartet war, und lagen als

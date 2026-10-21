@@ -578,6 +578,11 @@ class LibraryController extends Zend_Controller_Action
                 $c[1] = 'block';
             } elseif ($c['type'] == '1') {
                 $c[1] = 'stream';
+            } elseif ($c['type'] == '3') {
+                // RASTATIME 2026-10-21 - a line-in row (Section 23.18) was not
+                // mapped: buildEntry() hit "Undefined array key 1" and the copy
+                // of every playlist with a line-in failed with HTTP 500
+                $c[1] = 'linein';
             }
             $c[0] = $c['item_id'];
         }

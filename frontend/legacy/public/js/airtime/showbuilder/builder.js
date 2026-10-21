@@ -1487,10 +1487,15 @@ var AIRTIME = (function (AIRTIME) {
       }
     }
 
-    $("#timeline-sa").click(function () {
+    // RASTATIME 2026-10-21 - the items are href="#" links: without
+    // preventDefault the click emptied location.hash and the Schedule
+    // Tracks dialog's hashchange listener reset the library to Tracks
+    $("#timeline-sa").click(function (e) {
+      e.preventDefault();
       mod.selectAll();
     });
-    $("#timeline-sn").click(function () {
+    $("#timeline-sn").click(function (e) {
+      e.preventDefault();
       mod.selectNone();
     });
 

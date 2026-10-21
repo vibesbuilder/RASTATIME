@@ -116,7 +116,18 @@ function highlightMediaTypeSelector(dialog) {
   });
 
   $(window).on("hashchange", function () {
-    var selected = dialog.find("a[href$='" + location.hash + "']");
+    // RASTATIME 2026-10-21 - only the dialog's own tabs (#tracks,
+    // #playlists, ...) switch the media type.  A toolbar link with
+    // href="#" (Select all / Select none) empties the hash, and
+    // a[href$=''] then matched EVERY anchor: all tabs got .selected and
+    // the first one, Tracks, won the next fetch - the library jumped
+    // back to Tracks after "Select all" (operator 2026-10-21).
+    var selected = location.hash
+      ? dialog.find(".media_type_selector a[href$='" + location.hash + "']")
+      : $();
+    if (selected.length !== 1) {
+      return;
+    }
     AIRTIME.library.selectNone();
     dialog.find(".media_type_selector").each(function () {
       $(this).removeClass("selected");
