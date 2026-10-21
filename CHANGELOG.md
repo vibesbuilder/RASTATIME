@@ -1694,7 +1694,7 @@ un_tests.ps1` (2026-10-16)** — startet API-, Playout- und
   403 als 403 (`CORSHelper` bei fremder Origin, vorher ebenfalls 500), mit
   einer INFO-Zeile „Access refused (…)" (Pfad ohne Query-String).  Mit
   API-Key (Playout) und mit Sitzung unverändert 200.  BACKLOG-Eintrag
-  erledigt.
+  erledigt.  Commit `31f4f4d`.
 
 - **Line-In stumm: frische `input.http`-Quelle je Slot (2026-10-21,
   Abnahme-Befund des Operators)** — die wiederverwendete Quelle
