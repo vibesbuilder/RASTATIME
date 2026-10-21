@@ -165,7 +165,7 @@ den drei Feldern darunter rechts neben der Beschriftung.
 |---|---|
 | **Ausgangs-Processing (Stereo Tool)** | Der Schalter.  Standardmäßig aus; eine Station ohne Stereo Tool lässt ihn einfach aus. |
 | **Stereo-Tool-Bibliothek (DLL)** | Vollständiger Pfad der 64-Bit-Stereo-Tool-Bibliothek für Liquidsoap auf dem Studio-Rechner (von der Stereo-Tool-Downloadseite).  Die Seite zeigt, ob die Datei existiert; die Einstellung wird nur dann verwendet. |
-| **Stereo-Tool-Preset (.sts)** | Optional.  Ein aus der Stereo-Tool-Anwendung exportiertes Preset; ohne Preset startet die Bibliothek mit ihren Vorgaben. |
+| **Stereo-Tool-Preset (.sts)** | Optional.  Ein aus der Stereo-Tool-Anwendung exportiertes Preset; ohne Preset startet die Bibliothek mit ihren Vorgaben, und die verarbeiten gar nichts.  RASTATIME liefert `config/stereotool/rastatime-r128-transparent.sts` mit *(seit 2026-10-21)*: keine Verarbeitung, nur ein True-Peak-Limiter bei −1 dBTP ohne Pegeländerung - die Spitzenseite von EBU R128, die Lautheitsseite kommt von den eingepegelten Quellen.  Messwerte in der README daneben. |
 | **Stereo-Tool-Lizenzschlüssel** | Der Schlüssel aus Ihrem Stereo-Tool-Konto.  Wird auf dem Server gespeichert und nie wieder angezeigt; leer lassen, um den gespeicherten Schlüssel zu behalten, `CLEAR` eingeben, um ihn zu entfernen.  Ohne Lizenz läuft die Bibliothek mit den Einschränkungen der freien Version. |
 
 Hinweise:

@@ -63,6 +63,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Stereo-Tool-Preset „R128 transparent" im Repo (2026-10-21, Operator:
+  R128-konformer Stream ohne AGC)** — `config/stereotool/
+  rastatime-r128-transparent.sts`: keine Verarbeitung, Final Limiter mit
+  +1,1 dB Pre-amp, 0-dBFS-Ceiling (oversampled) und −1,1 dB Post-Amp →
+  Programm unverändert (0,0 dB), Spitzen bei −1,0 dBTP.  Befund vorab: die
+  Bibliothek ohne Preset ist komplett transparent (Rechteck +2,1 dBTP
+  unverändert, Line-In −14,7 LUFS unverändert in der Aufnahme); die
+  2026-10-02 gemessenen −10 dBTP waren die Musik selbst.  Offline-Harness
+  `C:/Temp/optd/stpreset/st_run.liq` + `st_measure.sh` gegen die DLL
+  (Sinus −41 LUFS unverändert, Rechteck +2,1 → −1,0 dBTP, 40 s Aufnahme
+  −23,1 LUFS / −9,9 dBFS unverändert); Schlüssel aus `stereo_tool.ini` der
+  Standalone-Anwendung (`[Common] Pre amplifier=10` war der +17-dB-Fehler
+  des ersten Kandidaten, `[HD] R128 mode` ist ein Lautheits-Ceiling, nicht
+  gewollt).  README daneben, Manual STREAMS ×4, Architektur §23.47.
+  Einspielen: Pfad in Settings → Streams → Output Processing eintragen.
+  Commit STPRESET.
 - **Wiederholung von Sendung, Stufe 2: Live-Zeilen aus der Aufnahme
   (2026-10-20, Go 2026-10-20)** — `RepeatFillService::planRows`: jede
   Line-In-Zeile des Originals wird durch die passende Scheibe seiner

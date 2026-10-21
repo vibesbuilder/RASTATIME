@@ -1,10 +1,13 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.81
+Draft version: 0.82
 Date: 2026-10-18
 
 > **Revision history**
+> - **0.82 (2026-10-21)** — **Stereo Tool preset "R128 transparent"**
+>   (§23.47 addendum): shipped preset, true-peak limiter at −1 dBTP,
+>   unity gain; library without preset found fully transparent.
 > - **0.81 (2026-10-21)** — **Line-in: fresh input.http per slot** (§23.68):
 >   the reused companion source did not reconnect on its second start;
 >   source.dynamic arm like the webstreams.
@@ -6138,6 +6141,23 @@ working set trimmed to 300 MB after the start - the soft restart trigger
 **Open.**  The licence (the operator buys one next week), the preset by
 ear, the memory trend over a week.  Stage 2 (live regulator, §23.41) only
 if still needed afterwards.
+
+**Preset (2026-10-21).**  The library without a preset processes nothing
+(offline run: a +2.1 dBTP square passes untouched; live: a line-in at
+−14.7 LUFS reached the recording unchanged), so the 2026-10-02 figures
+were the programme's own peaks.  The operator wants an R128-conformant
+stream without an AGC: `config/stereotool/rastatime-r128-transparent.sts`
+enables only the Final Limiter (`Pre-amp` 1.135 = +1.1 dB) with
+`[Common] Hard limit output=1`, `Oversample limiters=1` and
+`Post amplifier` 0.881 (−1.1 dB): unity gain below the ceiling, true
+peaks at −1.0 dBTP.  A preset only sets the keys it names; the keys and
+sections are those of the standalone application's `stereo_tool.ini`
+(`Pre amplifier=10` there explains a +17 dB first attempt; `[HD] R128
+mode` is a loudness ceiling and was rejected).  Loudness conformity
+(−23 LUFS) stays with the sources: per-track gain for files, Input Gain
+for webstreams and line-ins.  Harness `C:/Temp/optd/stpreset/st_run.liq`
++ `st_measure.sh`; README next to the preset.  The Liquidsoap limiter
+ahead of Stereo Tool stays as the safety net of the fallback path.
 
 ### 23.48 Catch-up after a Planned Restart at a Track Boundary (2026-10-02)
 

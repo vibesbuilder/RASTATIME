@@ -128,7 +128,7 @@ campos de debajo, a la derecha de la etiqueta.
 |---|---|
 | **Procesado de salida (Stereo Tool)** | El interruptor.  Desactivado por defecto; una emisora sin Stereo Tool simplemente lo deja apagado. |
 | **Biblioteca Stereo Tool (DLL)** | Ruta completa de la biblioteca Stereo Tool de 64 bits para Liquidsoap en el equipo del estudio (página de descargas de Stereo Tool).  La página muestra si el archivo existe; el ajuste solo se usa en ese caso. |
-| **Preset de Stereo Tool (.sts)** | Opcional.  Un preset exportado desde la aplicación Stereo Tool; sin preset, la biblioteca arranca con sus valores por defecto. |
+| **Preset de Stereo Tool (.sts)** | Opcional.  Un preset exportado desde la aplicación Stereo Tool; sin preset, la biblioteca arranca con sus valores por defecto, que no procesan nada.  RASTATIME incluye `config/stereotool/rastatime-r128-transparent.sts` *(desde 2026-10-21)*: sin procesamiento, solo un limitador de pico real a −1 dBTP sin cambio de nivel: la parte de picos de EBU R128, mientras la parte de sonoridad viene de las fuentes ya niveladas.  Mediciones en el README adjunto. |
 | **Clave de licencia de Stereo Tool** | La clave de su cuenta de Stereo Tool.  Se guarda en el servidor y no se muestra de nuevo; dejar en blanco para conservar la clave guardada, escribir `CLEAR` para eliminarla.  Sin licencia, la biblioteca funciona con las restricciones de la versión gratuita. |
 
 Notas:

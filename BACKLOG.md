@@ -212,7 +212,7 @@ Sicherheitsnetz: nur rendern wenn DLL existiert, `_settle_after_restart` rendert
 neu wenn die frische Instanz stirbt (Lockout bis PLAYOUT-Neustart), Preflight `stereotool_unavailable`.
 Architektur §23.47 / 0.60, Handbuch STREAMS ×4, 9 Tests.  **Offen:** Operator lädt die 64-Bit-DLL
 (C:\Tools\stereotool\) und kauft nächste Woche die Lizenz; Bench mit echter DLL (Laden, CPU, Latenz),
-dann aktivieren, Preset nach Gehör, Nachmessung an der Aufnahme.  Option D (Compliance-Report) vom Operator
+dann aktivieren, Preset nach Gehör (2026-10-21: Preset "R128 transparent" im Repo, nur True-Peak-Limiter -1 dBTP, Operator will keine AGC), Nachmessung an der Aufnahme.  Option D (Compliance-Report) vom Operator
 abgelehnt 2026-10-02.  DLL liegt seit 2026-10-02 12:02 unter C:\Tools\stereotool\libStereoTool_64.dll (die .lib
 daneben ist nur die Import-Bibliothek fürs Kompilieren, nicht nötig).
 **Bench mit echter DLL 2026-10-02 12:07 (Sinus, 40 s, output.dummy):** lädt (Log: Stereotool initialized, Valid

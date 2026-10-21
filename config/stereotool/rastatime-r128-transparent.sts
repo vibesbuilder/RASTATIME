@@ -1,0 +1,16 @@
+[Preset info]
+Name=RASTATIME R128 transparent
+Description=No processing; true-peak limiter at -1 dBTP, unity gain. RASTATIME 2026-10-21.
+Author=RASTATIME
+[Final Limiter]
+Difference=0
+Enabled=1
+Pre-amp=1.135010
+Pre-limiter enabled=0
+Reduced CPU processing=0
+[Common]
+Hard limit output=1
+Oversample limiters=1
+Pre amplifier=1
+Post amplifier=0.881049
+Post amplifier - Limit at 0 dB=1
