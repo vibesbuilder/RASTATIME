@@ -23,6 +23,34 @@ class ErrorController extends Zend_Controller_Action
     {
         $errors = $this->_getParam('error_handler');
 
+        // RASTATIME 2026-10-21 - a refused access is no server error.  The
+        // ACL plugin throws code 401 for a REST request without session or API
+        // key, CORSHelper 403 for a foreign origin; both used to become a 500
+        // page with ERR + stack trace in legacy.log.  Answer with their own
+        // status and log one INFO line (BACKLOG "REST-Modul ohne Anmeldung").
+        $code = $errors ? (int) $errors->exception->getCode() : 0;
+        if (
+            $errors
+            && $errors->type === Zend_Controller_Plugin_ErrorHandler::EXCEPTION_OTHER
+            && in_array($code, [401, 403], true)
+        ) {
+            // path only: a query string can carry a download_key
+            Logging::info(sprintf(
+                'Access refused (%d): %s %s',
+                $code,
+                $errors->request->getMethod(),
+                strtok((string) $errors->request->getRequestUri(), '?')
+            ));
+            if ($code === 401) {
+                $this->error401Action($errors->exception->getMessage());
+            } else {
+                $this->error403Action();
+            }
+            $this->view->request = $errors->request;
+
+            return;
+        }
+
         if ($errors) {
             // log error message and stack trace
             Logging::error($errors->exception->getMessage());
@@ -102,6 +130,20 @@ class ErrorController extends Zend_Controller_Action
         $this->_helper->viewRenderer('error-400');
         $this->getResponse()->setHttpResponseCode(400);
         $this->view->message = _('The requested action is not supported.');
+    }
+
+    /**
+     * RASTATIME 2026-10-21 - 401 error - not authenticated (REST without
+     * session or API key).  Plain text for API clients, the same wording as
+     * Acl_plugin::verifyAuth; no HTML page.
+     */
+    public function error401Action($message = 'Incorrect API key')
+    {
+        $this->_helper->viewRenderer->setNoRender(true);
+        $this->getResponse()
+            ->setHttpResponseCode(401)
+            ->setHeader('Content-Type', 'text/plain; charset=utf-8', true)
+            ->setBody('ERROR: ' . rtrim((string) $message, '.') . '.');
     }
 
     /**

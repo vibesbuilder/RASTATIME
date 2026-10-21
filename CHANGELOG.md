@@ -1685,6 +1685,17 @@ un_tests.ps1` (2026-10-16)** — startet API-, Playout- und
 
 ### Fixed
 
+- **REST ohne Anmeldung: 401 statt 500 (2026-10-21, Operator-Go)** — Jede
+  Adresse unter `/rest/*` antwortete ohne Sitzung und API-Key mit einer
+  HTML-500-Seite und zwei ERR-Zeilen samt Stacktrace: das ACL-Plugin wirft
+  `Zend_Controller_Exception('Incorrect API key', 401)`, der
+  `ErrorController` machte aus jeder solchen Ausnahme einen 500.  Jetzt
+  wird Code 401 als 401 beantwortet (Text „ERROR: Incorrect API key.") und
+  403 als 403 (`CORSHelper` bei fremder Origin, vorher ebenfalls 500), mit
+  einer INFO-Zeile „Access refused (…)" (Pfad ohne Query-String).  Mit
+  API-Key (Playout) und mit Sitzung unverändert 200.  BACKLOG-Eintrag
+  erledigt.
+
 - **Line-In stumm: frische `input.http`-Quelle je Slot (2026-10-21,
   Abnahme-Befund des Operators)** — die wiederverwendete Quelle
   `linein_http` verband sich nach einem Stopp beim zweiten Start nicht

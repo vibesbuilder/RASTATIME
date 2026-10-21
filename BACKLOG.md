@@ -3798,9 +3798,18 @@ Sortierung der bereits-gespielten + nächsten Tracks freezable.
 
 ## 🐞 Known Issues / Bug Backlog
 
-### 🟡 REST-Modul ohne Anmeldung: 500 statt 401 (Nebenbefund 2026-10-21)
+### ✅ REST-Modul ohne Anmeldung: 500 statt 401 (Nebenbefund 2026-10-21, DONE gleichen Tags)
 
-**Status:** 🟡 Defer — notiert auf Operator-Wunsch, nicht dringend: die
+**Status:** Erledigt 2026-10-21 (Operator-Go direkt nach dem Eintrag).
+`ErrorController::errorAction` beantwortet eine Ausnahme mit Code 401
+als 401 (Text „ERROR: Incorrect API key.", neue `error401Action`) und
+403 als 403 (bestehende Seite, betrifft `CORSHelper`), mit einer
+INFO-Zeile „Access refused (401): GET /rest/..." (Pfad ohne
+Query-String) statt ERR + Stacktrace.  Live: `rest/media`,
+`rest/podcast`, `rest/podcast-episodes`, `rest/media/1/download` ohne
+Anmeldung 401; mit API-Key und mit Sitzung 200; `feeds/station-rss` mit
+fremder Origin 403 (vorher 500); Seiten ohne Sitzung weiter 302.
+**Ursprünglicher Status:** 🟡 Defer — notiert auf Operator-Wunsch, nicht dringend: die
 Oberfläche greift immer angemeldet zu, der Playout mit API-Key.
 **Befund:** Jede Adresse unter `/rest/*` (`rest/podcast`, `rest/media`,
 `rest/podcast-episodes` …) antwortet ohne Sitzung und ohne API-Key mit
