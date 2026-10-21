@@ -350,6 +350,7 @@ What the import does with each file:
 |---|---|
 | MP3, MP2, MP1, AAC in M4A / MP4, OGG Vorbis, Opus | Imported as it is — never re-encoded. |
 | Raw AAC (`.aac`) | Always repacked into an `.m4a`, **without** re-encoding, whether the checkbox is on or off. A raw AAC file has no index, so its length can only be estimated (about 2 s too long on the files we checked), and it cannot carry tags. |
+| Windows Media Audio (`.wma`, lossy or lossless) *(since 2026-10-21)* | Always converted to MP3 at 320 kbps, whether the checkbox is on or off; browsers cannot play WMA and it would be the one unnormalised format in the library.  The original is not kept. |
 | Lossless: WAV, FLAC, AU, Apple Lossless (ALAC) in M4A | Checkbox **on**: converted to MP3 at 320 kbps before it enters the library; the lossless original is **not kept**.  Checkbox **off**: imported as it is. |
 
 - **The audio counts, not the extension.**  An `.m4a` that holds

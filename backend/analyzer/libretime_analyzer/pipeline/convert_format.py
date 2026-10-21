@@ -46,6 +46,11 @@ logger = logging.getLogger(__name__)
 
 LOSSLESS_CODECS = frozenset({"flac", "alac", "wavpack", "ape", "tta"})
 
+# RASTATIME 2026-10-21 - Windows Media Audio (operator go): always
+# transcoded to MP3, lossy or lossless, like raw ADTS is always repacked -
+# browsers cannot preview WMA and it would be the one unnormalised format.
+WMA_CODECS = frozenset({"wmav1", "wmav2", "wmapro", "wmalossless", "wmavoice"})
+
 # Embedded covers ffmpeg can copy into an ID3 APIC frame as they are.
 COVER_CODECS = frozenset({"mjpeg", "png"})
 
@@ -142,6 +147,10 @@ def is_lossless(p: AudioProbe) -> bool:
 
 def is_raw_adts(p: AudioProbe) -> bool:
     return p.format_name == "aac"
+
+
+def is_wma(p: AudioProbe) -> bool:
+    return p.codec in WMA_CODECS
 
 
 def _timeout_for(src: Path, probe: AudioProbe) -> float:
@@ -498,8 +507,9 @@ def convert_format(
     convert_lossless: bool,
 ) -> Tuple[str, str, dict]:
     """
-    Pipeline step: repack raw ADTS to M4A (always) and transcode lossless
-    audio to MP3 320 kbps (when convert_lossless).  Returns
+    Pipeline step: repack raw ADTS to M4A (always), transcode Windows Media
+    Audio to MP3 320 kbps (always) and lossless audio to MP3 320 kbps (when
+    convert_lossless).  Returns
     (audio_file_path, original_filename, metadata) - for a converted file the
     new path next to the old one, the name with the new suffix, and the
     metadata with source_md5 (the md5 of the original) plus the file
@@ -519,6 +529,8 @@ def convert_format(
 
     if is_raw_adts(probe):
         suffix, what = ".m4a", "repacked raw ADTS AAC to M4A"
+    elif is_wma(probe):
+        suffix, what = ".mp3", f"transcoded {probe.codec} (Windows Media Audio) to MP3 {MP3_BITRATE}bit/s"
     elif convert_lossless and is_lossless(probe):
         suffix, what = ".mp3", f"transcoded {probe.codec} to MP3 {MP3_BITRATE}bit/s"
     else:

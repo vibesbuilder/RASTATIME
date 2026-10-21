@@ -315,6 +315,7 @@ Lo que hace la importación con cada archivo:
 |---|---|
 | MP3, MP2, MP1, AAC en M4A / MP4, OGG Vorbis, Opus | Se importa tal cual — nunca se recodifica. |
 | AAC en bruto (`.aac`) | Siempre se reempaqueta en un `.m4a`, **sin** recodificar, esté la casilla activada o no. Un archivo AAC en bruto no tiene índice, así que su duración solo puede estimarse (unos 2 s de más en los archivos comprobados), y no puede llevar etiquetas. |
+| Windows Media Audio (`.wma`, con o sin pérdida) *(desde 2026-10-21)* | Siempre se convierte a MP3 de 320 kbit/s, esté la casilla activada o no; los navegadores no reproducen WMA y sería el único formato sin normalizar de la biblioteca.  El original no se conserva. |
 | Sin pérdida: WAV, FLAC, AU, Apple Lossless (ALAC) en M4A | Casilla **activada**: se convierte a MP3 de 320 kbps antes de entrar en la biblioteca; el original sin pérdida **no se conserva**.  Casilla **desactivada**: se importa tal cual. |
 
 - **Cuenta el audio, no la extensión.**  Un `.m4a` con Apple Lossless

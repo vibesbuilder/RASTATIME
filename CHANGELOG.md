@@ -118,6 +118,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Import von WMA-Dateien (2026-10-21, Go 2026-10-21)** — Windows Media
+  Audio (v1/v2/Pro/Lossless) wird vom Analyzer immer nach MP3 320 kbit/s
+  gewandelt (`convert_format`: `is_wma`, unabhängig vom Lossless-Kästchen,
+  Tags und Cover wie bei FLAC, `source_md5`); `.wma` wieder in der
+  Erlaubt-Liste des Legacy (Upload, Import-Ordner, FTP) und im
+  Massenimport.  Anlass: 36 WMA-Dateien im Import-Ordner (20 Lossless,
+  16 v2 128 kbit/s), die der Scanner übersprang.  Analyzer-Tests (+2),
+  Manual LOCAL_MACHINE §5 ×4, Architektur §23.57.  Wirksam nach
+  ANALYZER-Neustart.  Commit WMAIMP.
 - **Wiederholung 4 s kürzer als das Original (2026-10-21, Operator-Befund
   14:17)** — im Original überlappen Titel und Live-Zeile (Line-In,
   Webstream) 1 s (Sendungswechsel-Überblendung), in der Wiederholung ist die

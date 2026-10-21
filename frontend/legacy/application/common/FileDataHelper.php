@@ -49,7 +49,8 @@ class FileDataHelper
     public static function getUploadAudioMimeTypeArray()
     {
         $mimes = self::getAudioMimeTypeArray();
-        unset($mimes['audio/x-ms-wma']);
+        // RASTATIME 2026-10-21 - .wma is accepted again (operator go): the
+        // analyzer transcodes Windows Media Audio to MP3 on import
 
         // audio/opus is not a real mime type, we only set it here to allow uploading
         // .opus files

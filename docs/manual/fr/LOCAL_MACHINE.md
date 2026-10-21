@@ -321,6 +321,7 @@ Ce que l'import fait de chaque fichier :
 |---|---|
 | MP3, MP2, MP1, AAC en M4A / MP4, OGG Vorbis, Opus | Importé tel quel — jamais réencodé. |
 | AAC brut (`.aac`) | Toujours réempaqueté en `.m4a`, **sans** réencodage, que la case soit cochée ou non. Un fichier AAC brut n'a pas d'index : sa durée ne peut qu'être estimée (environ 2 s de trop sur les fichiers vérifiés), et il ne peut pas porter de tags. |
+| Windows Media Audio (`.wma`, avec ou sans perte) *(depuis le 2026-10-21)* | Toujours converti en MP3 à 320 kbit/s, que la case soit cochée ou non ; les navigateurs ne lisent pas le WMA et ce serait le seul format non normalisé de la bibliothèque.  L'original n'est pas conservé. |
 | Sans perte : WAV, FLAC, AU, Apple Lossless (ALAC) en M4A | Case **cochée** : converti en MP3 à 320 kbit/s avant d'entrer dans la bibliothèque ; l'original sans perte n'est **pas conservé**.  Case **décochée** : importé tel quel. |
 
 - **C'est l'audio qui compte, pas l'extension.**  Un `.m4a` contenant

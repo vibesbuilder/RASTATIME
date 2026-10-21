@@ -17,6 +17,7 @@ from libretime_analyzer.pipeline.convert_format import (
     convert_format,
     is_lossless,
     is_raw_adts,
+    is_wma,
     probe_audio,
     remux_adts_to_m4a,
     transcode_to_mp3,
@@ -92,6 +93,36 @@ def test_is_lossless(codec, expected):
 def test_is_raw_adts():
     assert is_raw_adts(_probe(codec="aac", format_name="aac"))
     assert not is_raw_adts(_probe(codec="aac", format_name="mov,mp4,m4a,3gp,3g2,mj2"))
+
+
+@pytest.mark.parametrize(
+    "codec,expected",
+    [("wmav2", True), ("wmav1", True), ("wmapro", True), ("wmalossless", True), ("mp3", False), ("flac", False)],
+)
+def test_is_wma(codec, expected):
+    assert is_wma(_probe(codec=codec, format_name="asf")) is expected
+
+
+@requires_ffmpeg
+@pytest.mark.parametrize("convert_lossless", [True, False])
+def test_wma_is_always_transcoded_to_mp3(tmp_path: Path, convert_lossless: bool):
+    """RASTATIME 2026-10-21 - Windows Media Audio becomes MP3 320 whether the
+    lossless checkbox is on or off; the original stays for the caller."""
+    src = sine(tmp_path / "song.wma", "-c:a", "wmav2", "-b:a", "128k")
+    metadata = analyze_metadata(str(src), {})
+    metadata["md5"] = "0123456789abcdef0123456789abcdef"
+
+    new_path, new_name, result = convert_format(
+        str(src), "song.wma", metadata, convert_lossless=convert_lossless
+    )
+
+    assert new_name == "song.mp3"
+    assert Path(new_path).suffix == ".mp3" and Path(new_path).exists()
+    assert src.exists()  # the caller removes the original
+    stream = audio_stream(Path(new_path))
+    assert stream["codec_name"] == "mp3"
+    assert int(stream["bit_rate"]) >= 300000
+    assert result["source_md5"] == metadata["md5"]
 
 
 @pytest.mark.parametrize(

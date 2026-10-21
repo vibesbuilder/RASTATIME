@@ -377,6 +377,7 @@ Was der Import mit jeder Datei macht:
 |---|---|
 | MP3, MP2, MP1, AAC in M4A / MP4, OGG Vorbis, Opus | Wird unverändert importiert — nie neu kodiert. |
 | Rohes AAC (`.aac`) | Wird immer in eine `.m4a` umverpackt, **ohne** Neukodierung, ob die Checkbox an oder aus ist. Eine rohe AAC-Datei hat keinen Index, ihre Länge lässt sich nur schätzen (bei den geprüften Dateien etwa 2 s zu lang), und sie kann keine Tags tragen. |
+| Windows Media Audio (`.wma`, verlustbehaftet oder verlustfrei) *(seit 2026-10-21)* | Wird immer in MP3 mit 320 kbit/s umgewandelt, ob die Checkbox an oder aus ist; Browser können WMA nicht abspielen, und es wäre das einzige nicht normalisierte Format in der Bibliothek.  Das Original wird nicht behalten. |
 | Verlustfrei: WAV, FLAC, AU, Apple Lossless (ALAC) in M4A | Checkbox **an**: wird vor der Aufnahme in die Bibliothek in MP3 mit 320 kbit/s umgewandelt; das verlustfreie Original wird **nicht aufbewahrt**.  Checkbox **aus**: wird unverändert importiert. |
 
 - **Es zählt das Audio, nicht die Endung.**  Eine `.m4a` mit Apple

@@ -39,6 +39,7 @@ DEFAULT_ALLOWED_EXTENSIONS = [
     ".ogg",
     ".opus",
     ".wav",
+    ".wma",  # RASTATIME 2026-10-21 - transcoded to MP3 by the analyzer
 ]
 
 

@@ -1,10 +1,12 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.82
+Draft version: 0.83
 Date: 2026-10-18
 
 > **Revision history**
+> - **0.83 (2026-10-21)** — **WMA import** (§23.57 addendum): Windows
+>   Media Audio always transcoded to MP3 320; `.wma` accepted everywhere.
 > - **0.82 (2026-10-21)** — **Stereo Tool preset "R128 transparent"**
 >   (§23.47 addendum): shipped preset, true-peak limiter at −1 dBTP,
 >   unity gain; library without preset found fully transparent.
@@ -6889,6 +6891,15 @@ type (pre-existing for uploads).  Noticed on the way: the MP3 stream output runs
 48 kHz while the mix is 44.1 kHz; the nightly media mirror lives on D:
 like the library, so with no originals kept it does not protect against
 a disk failure (both BACKLOG).
+
+**WMA (2026-10-21, operator go).**  Windows Media Audio (`wmav1`,
+`wmav2`, `wmapro`, `wmalossless`, `wmavoice`) is transcoded to MP3 320
+unconditionally (`is_wma`, before the lossless branch), like raw ADTS is
+repacked unconditionally: browsers cannot preview WMA and it would be
+the one unnormalised format.  `.wma` is back in the legacy extension
+list (the upstream `unset` is gone) and in the bulk importer's default
+list.  Trigger: 36 WMA files in the import folder (20 lossless at
+1152 kbit/s, 16 v2 at 128 kbit/s) the scanner skipped.
 
 ### 23.58 Smart Block Query: One Bracketed Chain per Field; Atomic Import Rows (2026-10-14)
 
