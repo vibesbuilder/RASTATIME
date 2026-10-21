@@ -5459,5 +5459,14 @@ Bestandsdateien md5-Nachzug und nie bei geplanten Dateien.  2) Mood-Regeln inkl.
 der Stufe-1-Zahlen.  Aufwand ~2 Tage.  Vorbehalt des Operators: librosa zieht numpy, scipy, numba,
 soundfile nach sich - groesste neue Abhaengigkeit seit Django 5.2, auf Windows/Python 3.13 erst zu benchen.
 Vorbedingung fuer ein Go: Bench in einer separaten venv (Installierbarkeit, Laufzeit je Titel,
-Speicher), danach Entscheidung.  Alternative ohne librosa: Tempo/Key/Energy per ffmpeg-Filtern
+Speicher), danach Entscheidung.
+Bench 2026-10-21 (`C:/Temp/optd/librosa_bench/`, eigene venv, Produktivsystem unberuehrt): librosa 1.0.0
+mit numpy 2.5.4, scipy 1.18.1, numba 0.68.0, scikit-learn 1.9.1, soundfile 0.14.0 installiert sich in 58 s,
+414 MB; 35 Bibliothekstitel (30 s aus der Mitte, 22,05 kHz): erster Titel 7,6 s (JIT), danach 0,30 s je
+Titel (max 0,38 s), RSS-Spitze 301 MB -> Bestand 24.900 Titel ~2 h statt der geschaetzten 14 h.
+Qualitaet: Tempo gegen vorhandene TBPM-Tags bei 15 Titeln nur 5 exakt, 6 halb/doppelt (Oktavfehler),
+4 daneben -> Tempo nur mit Halb/Doppel-Korrektur und Abgleich gegen vorhandene bpm brauchbar; Energy und
+Brightness robust; Key plausibel, aber ohne Referenzdaten unverifiziert.  Entschaerfung des
+Abhaengigkeits-Vorbehalts: Analyse als eigener Worker-Prozess in einer getrennten venv (Aufruf per
+Subprozess aus dem Analyzer), die Produktiv-venv bleibt unveraendert.  Entscheidung des Operators OFFEN.  Alternative ohne librosa: Tempo/Key/Energy per ffmpeg-Filtern
 (ebur128/astats liefern Energie, kein Tempo/Key) - nur Teilabdeckung.
