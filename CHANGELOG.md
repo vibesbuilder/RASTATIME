@@ -23,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Track-Suche ist bei Podcasts ausgeblendet (er lag über dem Podcast-Feld
   und hätte die Track-Suche geöffnet).  Live: „radio" → 16 von 73, Groß-/
   Kleinschreibung egal, × leert, Wechsel Tracks ↔ Podcasts korrekt.  Manual
-  LIBRARY ×4.
+  LIBRARY ×4.  Commit `ba5d2e5`.
 
 - **Kalender: Wiederholungs-Symbol für „Repeat of show" (2026-10-21,
   Operator)** — Eine Wiederholung zeigte vor dem Befüllen das rote
