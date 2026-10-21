@@ -1685,6 +1685,16 @@ un_tests.ps1` (2026-10-16)** — startet API-, Playout- und
 
 ### Fixed
 
+- **Bibliothek: „Add to current smart block" bei dynamischem Block
+  ausgegraut (2026-10-21)** — Mit offenem dynamischem Smart Block war der
+  Knopf bei Auswahl aktiv, obwohl der Server das Hinzufügen ablehnt
+  (`BlockDynamicException`) und das Kontextmenü kein „Add to Smart Block"
+  anbietet.  `checkAddButton` sperrt ihn jetzt; beim Umschalten
+  statisch/dynamisch rechnet der Editor ihn neu.  Live: „Test Smart Block"
+  (dynamisch) offen, Track ausgewählt → grau, „Scheduled Shows" → aktiv;
+  Track-Menü ohne „Add to Smart Block".  Den positiven Fall (statischer
+  Block) gibt es in der Bibliothek nicht.
+
 - **Bibliothek: Hinzufügen zur offenen Playlist über Menü und Knopf
   (2026-10-21, Operator-Go)** — Mit einem Playlist- oder Smart-Block-Tab
   im Dashboard fehlte im Kontextmenü „Add to Playlist / Smart Block" (es

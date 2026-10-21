@@ -43,6 +43,14 @@ var AIRTIME = (function (AIRTIME) {
       var objType = $(".active-tab .obj_type").val();
       if (objType === "block") {
         btnText = $.i18n._("Add to current smart block");
+        // RASTATIME 2026-10-21 - a dynamic block takes no items (the server
+        // answers BlockDynamicException, the context menu offers no "Add to
+        // Smart Block"); smart_blockbuilder.js re-runs this on a type change
+        if (
+          $(".active-tab input:radio[name=sp_type]:checked").val() === "0"
+        ) {
+          check = false;
+        }
       } else {
         btnText = $.i18n._("Add to current playlist");
       }
