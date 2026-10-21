@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   dem Auswahlfeld (dort rutschte es bei knapper Breite unter das Feld); das
   Feld nutzt die volle Breite.  Live gemessen: Icon und Beschriftung auf
   einer Mittellinie, kein seitlicher Überstand im Panel, auch mit dem
-  längsten Sendungsnamen ausgewählt.
+  längsten Sendungsnamen ausgewählt.  Commit `4eb3a45`.
 
 - **Show-Formular: eigene Sektion „Repeat", Abstände; Streams-Abstand
   (2026-10-21, Operator-Meldung)** — (1) *Repeat of show* steht in einer
