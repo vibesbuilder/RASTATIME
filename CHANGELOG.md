@@ -72,7 +72,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   die 14-Uhr-Nachrichten).  Probe `C:/Temp/optd/repeat_ws_probe.php`
   (Transaktion mit Rollback: BBC-News-Instanz 19750 → Scheibe
   01:06–06:10 der Aufnahme 25490, Wartelogik).  Manual CALENDAR ×4,
-  Architektur §23.67.  Commit REPWS.
+  Architektur §23.67.  Commit fb36bd8.
 - **Stereo-Tool-Preset „R128 transparent" im Repo (2026-10-21, Operator:
   R128-konformer Stream ohne AGC)** — `config/stereotool/
   rastatime-r128-transparent.sts`: keine Verarbeitung, Final Limiter mit
