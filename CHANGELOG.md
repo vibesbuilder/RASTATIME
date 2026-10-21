@@ -1586,7 +1586,7 @@ un_tests.ps1` (2026-10-16)** — startet API-, Playout- und
   PLAYOUT-Neustart (rendert rastatime.liq neu, Liquidsoap folgt im
   nächsten ruhigen Moment).  Die Aufnahmen der Testsendungen vom
   20./21.10. bleiben in der Mitte stumm.  Architektur §23.68.
-  Commit LIFRESH.
+  Commit 685dc17.
 - **Zeitumstellung: „Edit Show" zeigte End Time 04:00 für eine 05:00-Dauer
   (2026-10-20, Operator-Meldung)** — `CcShowDays::getLocalEndDateAndTime`
   addierte die Dauer als verstrichene Zeit auf das erste Sendedatum (über
