@@ -85,7 +85,11 @@ LINEIN_FOLLOW_UP_WINDOW_SECONDS = 2.0
 # instead of the ~2 s the capture chain / the webstream pre-buffer
 # need).  10 s was the operator's figure; the slowest observed
 # webstream buffer-up was 9 s.
-PREPARE_LEAD_SECONDS = 10.0
+# RASTATIME 2026-10-21 - 15 s for line-ins: the fresh input.http of the
+# capture mount (23.68) connected 11-12 s after linein_http.start in
+# both measured slots (09:02, 11:02), so with 10 s the arm came up about
+# one second after the gate.  Webstreams keep their own 10 s below.
+PREPARE_LEAD_SECONDS = 15.0
 # RASTATIME 2026-09-06 - webstreams pre-warm 10 s early, same as
 # line-ins.  The 2026-09-05 bump to 20 s ("Option 1") went with the fat
 # bridge and is reverted along with it; the 5 s bridge fills well within
