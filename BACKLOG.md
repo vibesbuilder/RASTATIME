@@ -5437,3 +5437,26 @@ schreibt per `image<ext>`; Auslieferung `api/show-logo` nimmt den MIME-Typ
 per `mime_content_type`.  Landing-Hintergrund und Widget-Cover akzeptieren
 WebP bereits.  Aufwand ~1 h inkl. Stationslogo (`GeneralPreferences`) und
 Manual CALENDAR ×4.
+
+## Metadaten und Audio-Analyse (Evaluierung 2026-10-21)
+
+### ✅ Bibliothek: "Re-read Tags" - gebaut 2026-10-21 (Go 2026-10-21, Architektur §23.69)
+
+In Windows nachbearbeitete Dateien: RASTATIME liest nie von selbst nach (DB = Wahrheit).  Knopf neben
+"Cue Points": API `files/reread-tags` mit dem Tag-Leser des Analyzers, Whitelist der Tag-Felder,
+RASTATIME-Spalten bleiben, Bestaetigung im Dialog.  Kein automatischer Abgleich (wuerde Editor-Aenderungen
+stillschweigend ueberschreiben).  OFFEN: API-Neustart, Browser-Abnahme.
+
+### 🟡 Metadaten Energy, Tempo, Key, Timbre + Analyse beim Import (Mood-Detector-Fork) - DEFER (Operator 2026-10-21: unsicher)
+
+Evaluierung: moeglich (Mood-Detector, MIT, librosa-basiert, ~2 s je Titel, 30 s aus der Mitte; Tempo per
+Beat-Tracking, Energy RMS, Key per Chroma, Brightness; Mood per Regeltabelle, nur DJ/Electronic-Kategorien,
+Pop/Rock/Jazz fehlen).  Plan in zwei Stufen: 1) objektive Werte Tempo (nur wenn bpm leer), Key, Energy,
+Timbre als Spalten + Editor + Bibliothek + Smart-Block-Kriterien + Batch fuer den Bestand (24.900 Titel
+x 2 s = ~14 h, niedrige Prioritaet); Tags per mutagen (TBPM/TKEY/TMOO/TXXX) beim Import, bei
+Bestandsdateien md5-Nachzug und nie bei geplanten Dateien.  2) Mood-Regeln inkl. Pop/Rock nach Sichtung
+der Stufe-1-Zahlen.  Aufwand ~2 Tage.  Vorbehalt des Operators: librosa zieht numpy, scipy, numba,
+soundfile nach sich - groesste neue Abhaengigkeit seit Django 5.2, auf Windows/Python 3.13 erst zu benchen.
+Vorbedingung fuer ein Go: Bench in einer separaten venv (Installierbarkeit, Laufzeit je Titel,
+Speicher), danach Entscheidung.  Alternative ohne librosa: Tempo/Key/Energy per ffmpeg-Filtern
+(ebur128/astats liefern Energie, kein Tempo/Key) - nur Teilabdeckung.

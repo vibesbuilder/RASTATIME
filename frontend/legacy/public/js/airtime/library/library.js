@@ -277,6 +277,21 @@ var AIRTIME = (function (AIRTIME) {
         "</div>",
     );
 
+    // RASTATIME 2026-10-21 - re-read the tag columns of the selected files
+    // from the files on disk (edited in Windows after the import)
+    $menu.append(
+      "<div class='btn-group' title='" +
+        $.i18n._("Re-read the tags of the selected files from the files on disk") +
+        "'>" +
+        "<button class='btn btn-small' id='sb-reread-tags'>" +
+        "<i class='icon-white icon-refresh'></i>" +
+        "<span>" +
+        $.i18n._("Re-read Tags") +
+        "</span>" +
+        "</button>" +
+        "</div>",
+    );
+
     if (onDashboard) {
       $menu.append(
         "<div class='btn-group' title=" +
@@ -374,9 +389,51 @@ var AIRTIME = (function (AIRTIME) {
       mediaType = $(".media_type_selector.selected").data("selection-id");
     if (mediaType == AIRTIME.library.MediaTypeIntegerEnum.FILE && selected > 0) {
       AIRTIME.button.enableButton("btn-group #sb-cuepoints", false);
+      AIRTIME.button.enableButton("btn-group #sb-reread-tags", false);
     } else {
       AIRTIME.button.disableButton("btn-group #sb-cuepoints", false);
+      AIRTIME.button.disableButton("btn-group #sb-reread-tags", false);
     }
+  };
+
+  // RASTATIME 2026-10-21 - re-read the tags of the selected files from disk
+  mod.fnRereadTags = function () {
+    var aData = AIRTIME.library.getSelectedData(),
+      aMedia = [],
+      item;
+    for (item in aData) {
+      if (aData[item] !== null && aData[item].ftype === "audioclip") {
+        aMedia.push({ id: aData[item].id, type: "audioclip" });
+      }
+    }
+    if (aMedia.length === 0) {
+      return;
+    }
+    if (
+      !confirm(
+        $.i18n._(
+          "Re-read the tags of the selected file(s) from the files on disk? Title, artist, album, genre, year, track number, composer, copyright, label, ISRC, BPM, mood, language and comment are replaced by what the file carries; everything you set in RASTATIME only (track type, teaser, cue points, loudness, expiry) stays.",
+        ),
+      )
+    ) {
+      return;
+    }
+    AIRTIME.button.disableButton("btn-group #sb-reread-tags", false);
+    $.post(
+      baseUrl + "library/reread-tags",
+      { format: "json", media: aMedia },
+      function (json) {
+        if (json.message !== undefined) {
+          alert(json.message);
+        }
+        oTable.fnStandingRedraw();
+        AIRTIME.button.enableButton("btn-group #sb-reread-tags", false);
+      },
+    ).fail(function () {
+      alert($.i18n._("The tags could not be re-read."));
+      AIRTIME.button.enableButton("btn-group #sb-reread-tags", false);
+    });
+    mod.selectNone();
   };
 
   mod.checkToolBarIcons = function () {

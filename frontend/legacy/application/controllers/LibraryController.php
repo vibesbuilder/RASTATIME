@@ -25,6 +25,7 @@ class LibraryController extends Zend_Controller_Action
             ->addActionContext('edit-file-md', 'json')
             ->addActionContext('publish-dialog', 'html')
             ->addActionContext('redetect-cue-points', 'json')
+            ->addActionContext('reread-tags', 'json') // RASTATIME 2026-10-21
             ->initContext();
     }
 
@@ -463,6 +464,96 @@ class LibraryController extends Zend_Controller_Action
             $user->getLogin(), implode(',', array_keys($changes)), $updated, $denied, $missing
         ));
         $this->_helper->json->sendJson(['ok' => true, 'updated' => $updated, 'denied' => $denied, 'missing' => $missing, 'fields' => array_keys($changes)]);
+    }
+
+    /**
+     * RASTATIME 2026-10-21 - "Re-read Tags" (operator go): refresh the
+     * tag columns of the selected files from the files on disk.  The work
+     * is done by the API (api/v2/files/reread-tags, the analyzer's own tag
+     * reader); this action checks the ownership, proxies with the API key
+     * and words the report.  RASTATIME-owned columns are never touched.
+     */
+    public function rereadTagsAction()
+    {
+        $mediaItems = $this->_getParam('media', null);
+        $user = Application_Model_User::getCurrentUser();
+        $isAdminOrPM = $user->isUserType([UTYPE_SUPERADMIN, UTYPE_ADMIN, UTYPE_PROGRAM_MANAGER]);
+        $ids = [];
+        $denied = 0;
+        foreach ((array) $mediaItems as $media) {
+            if (!isset($media['type']) || $media['type'] !== 'audioclip') {
+                continue;
+            }
+            $file = Application_Model_StoredFile::RecallById((int) $media['id']);
+            if (!$file) {
+                continue;
+            }
+            if (!$isAdminOrPM && $file->getFileOwnerId() != $user->getId()) {
+                ++$denied;
+                continue;
+            }
+            $ids[] = (int) $media['id'];
+        }
+        $read = 0;
+        $changed = 0;
+        $skipped = [];
+        $changedTitles = [];
+        if ($ids) {
+            [$status, $data] = $this->rastatimeApi('POST', 'api/v2/files/reread-tags', ['ids' => $ids]);
+            if ($status !== 200) {
+                $this->view->message = _('The tags could not be re-read.') . ' ' . implode(' ', (array) ($data['errors'] ?? []));
+                $this->view->changed = 0;
+
+                return;
+            }
+            $read = (int) ($data['read'] ?? 0);
+            $changed = (int) ($data['changed'] ?? 0);
+            foreach ((array) ($data['files'] ?? []) as $f) {
+                if (isset($f['skipped'])) {
+                    $skipped[] = (string) ($f['title'] ?? $f['id']);
+                } elseif (!empty($f['changes'])) {
+                    $changedTitles[] = (string) ($f['title'] ?? $f['id']);
+                }
+            }
+            CcFilesPeer::clearInstancePool();
+        }
+        $parts = [sprintf(_('%1$s file(s) read, %2$s changed.'), $read, $changed)];
+        if ($changedTitles) {
+            $parts[] = sprintf(_('Changed: %s'), implode(', ', array_slice($changedTitles, 0, 10)) . (count($changedTitles) > 10 ? ' …' : ''));
+        }
+        if ($skipped) {
+            $parts[] = sprintf(_('Skipped (file missing or not readable): %s'), implode(', ', array_slice($skipped, 0, 10)) . (count($skipped) > 10 ? ' …' : ''));
+        }
+        if ($denied) {
+            $parts[] = _("You don't have permission to change some of the selected files.");
+        }
+        $this->view->read = $read;
+        $this->view->changed = $changed;
+        $this->view->message = implode(' ', $parts);
+    }
+
+    /** RASTATIME 2026-10-21 - the API on localhost with the API key (never the browser). */
+    private function rastatimeApi(string $method, string $path, ?array $body = null): array
+    {
+        $headers = ['Authorization: Api-Key ' . (string) Config::get('general.api_key'), 'Accept: application/json'];
+        $opts = [CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 120, CURLOPT_CONNECTTIMEOUT => 3, CURLOPT_CUSTOMREQUEST => $method];
+        if ($body !== null) {
+            $opts[CURLOPT_POSTFIELDS] = json_encode($body);
+            $headers[] = 'Content-Type: application/json';
+        }
+        $opts[CURLOPT_HTTPHEADER] = $headers;
+        $curl = curl_init('http://127.0.0.1:8765/' . $path);
+        curl_setopt_array($curl, $opts);
+        $resp = curl_exec($curl);
+        $status = (int) curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        curl_close($curl);
+        $data = is_string($resp) ? (json_decode($resp, true) ?: []) : [];
+        if ($status === 0) {
+            $status = 502;
+            $data = ['errors' => ['The RASTATIME API is not reachable.']];
+        }
+
+        return [$status, $data];
     }
 
     public function redetectCuePointsAction()

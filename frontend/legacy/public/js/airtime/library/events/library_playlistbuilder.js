@@ -211,6 +211,14 @@ var AIRTIME = (function (AIRTIME) {
       AIRTIME.library.fnRedetectCuePoints();
     });
 
+    // RASTATIME 2026-10-21 - re-read tags of the selection.
+    $toolbar.find("#sb-reread-tags").click(function () {
+      if (AIRTIME.button.isDisabled("btn-group #sb-reread-tags") === true) {
+        return;
+      }
+      AIRTIME.library.fnRereadTags();
+    });
+
     mod.createToolbarDropDown();
   };
 

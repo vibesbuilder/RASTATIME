@@ -6816,3 +6816,31 @@ msgstr "Rediffusion"
 #, php-format
 msgid "Repeat of \"%s\" - filled automatically shortly before it starts"
 msgstr "Rediffusion de \"%s\" - remplie automatiquement peu avant le début"
+
+#: RASTATIME 2026-10-21 re-read tags
+msgid "Re-read Tags"
+msgstr "Relire les tags"
+
+#: RASTATIME 2026-10-21 re-read tags
+msgid "Re-read the tags of the selected files from the files on disk"
+msgstr "Relire les tags des fichiers sélectionnés depuis les fichiers sur le disque"
+
+#: RASTATIME 2026-10-21 re-read tags
+msgid "Re-read the tags of the selected file(s) from the files on disk? Title, artist, album, genre, year, track number, composer, copyright, label, ISRC, BPM, mood, language and comment are replaced by what the file carries; everything you set in RASTATIME only (track type, teaser, cue points, loudness, expiry) stays."
+msgstr "Relire les tags du ou des fichiers sélectionnés depuis les fichiers sur le disque ? Titre, artiste, album, genre, année, numéro de piste, compositeur, copyright, label, ISRC, BPM, humeur, langue et commentaire sont remplacés par le contenu du fichier ; tout ce qui est défini uniquement dans RASTATIME (type de piste, teaser, points de repère, sonie, expiration) est conservé."
+
+#: RASTATIME 2026-10-21 re-read tags
+msgid "The tags could not be re-read."
+msgstr "Les tags n’ont pas pu être relus."
+
+#: RASTATIME 2026-10-21 re-read tags
+msgid "%1$s file(s) read, %2$s changed."
+msgstr "%1$s fichier(s) lu(s), %2$s modifié(s)."
+
+#: RASTATIME 2026-10-21 re-read tags
+msgid "Changed: %s"
+msgstr "Modifiés : %s"
+
+#: RASTATIME 2026-10-21 re-read tags
+msgid "Skipped (file missing or not readable): %s"
+msgstr "Ignorés (fichier manquant ou illisible) : %s"

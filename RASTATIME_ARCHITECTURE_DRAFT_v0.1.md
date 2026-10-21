@@ -1,10 +1,12 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.83
+Draft version: 0.84
 Date: 2026-10-18
 
 > **Revision history**
+> - **0.84 (2026-10-21)** — **Re-read Tags** (§23.69): tag columns refreshed
+>   from the files on disk on request; API endpoint + Library button.
 > - **0.83 (2026-10-21)** — **WMA import** (§23.57 addendum): Windows
 >   Media Audio always transcoded to MP3 320; `.wma` accepted everywhere.
 > - **0.82 (2026-10-21)** — **Stereo Tool preset "R128 transparent"**
@@ -7378,3 +7380,39 @@ linein_http])` are unchanged, PLAYOUT's engine sequence (`linein.stop`,
 the new block), the rendered script passes `liquidsoap --check` with the
 same single pre-existing warning as the live file.  Live acceptance: a
 recorded show with a line-in after the PLAYOUT restart, then its repeat.
+
+### 23.69 Re-read Tags (2026-10-21)
+
+**Why.**  RASTATIME never re-reads a file after the import; the database is
+the truth for the library and the playout.  A file edited in Windows
+afterwards kept its old row.  The operator asked for a counterpart of the
+"Cue Points" button; an automatic scan was rejected (it would silently
+overwrite edits made in the editor).
+
+**Endpoint.**  `POST /api/v2/files/reread-tags` `{"ids": [...]}` (Api-Key,
+`storage/views/reread_tags.py`).  Per file: the stored path under the
+storage root, `libretime_analyzer.pipeline.analyze_metadata` (the same
+reader and mapping every import uses, mutagen with the ffprobe fallback),
+then a comparison against `TAG_FIELDS` (title, artist, album, genre,
+year, track number, comment, composer, copyright, label, ISRC, BPM,
+language, mood) and `FILE_FIELDS` (md5, size, bit rate, sample rate,
+channels).  Changed columns are written in one update with `mtime`; a tag
+missing in the file clears its column (the file is the truth the operator
+asked for), file facts are never cleared.  RASTATIME-owned columns (track
+type, teaser, cue points, loudness, expiry, requests, flags, artwork) are
+not in the lists and never touched.  Missing or unreadable files are
+reported as skipped; at most 500 ids per call.  Nothing is written to the
+file, so a track on air is safe.
+
+**Legacy.**  `LibraryController::rereadTagsAction` (POST `media[]` like
+the cue-point action) keeps the ownership rule (admins / programme
+managers everything, others their own files), proxies to the API on
+localhost with the API key (`rastatimeApi`, the storage-location pattern)
+and words the report (`n read, m changed`, changed titles, skipped).  The
+button "Re-read Tags" sits next to "Cue Points" in the library toolbar of
+the Library and Show Builder pages, enabled for a file selection,
+guarded by a confirmation that lists the fields.
+
+**Tests.**  `storage/tests/views/test_reread_tags.py`: tagged copy of the
+fixture -> columns follow the tags, teaser/cue stay, md5/size follow;
+unchanged and missing files reported; bad input 400.

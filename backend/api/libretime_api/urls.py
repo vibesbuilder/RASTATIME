@@ -30,6 +30,7 @@ from .storage.views.backup import (
     BackupStatusView,
     BackupValidateView,
 )
+from .storage.views.reread_tags import RereadTagsView
 from .storage.views.location import (
     StorageLocationView,
     StorageMoveCancelView,
@@ -63,6 +64,8 @@ urlpatterns = [
     ),
     # RASTATIME 2026-09-16 - Media Library Location (Settings -> Local Machine)
     path("api/v2/storage/location", StorageLocationView.as_view(), name="storage-location"),
+    # RASTATIME 2026-10-21 - refresh tag columns from the files on disk (Library button)
+    path("api/v2/files/reread-tags", RereadTagsView.as_view(), name="files-reread-tags"),
     path("api/v2/storage/move/validate", StorageMoveValidateView.as_view(), name="storage-move-validate"),
     path("api/v2/storage/move/start", StorageMoveStartView.as_view(), name="storage-move-start"),
     path("api/v2/storage/move/cancel", StorageMoveCancelView.as_view(), name="storage-move-cancel"),

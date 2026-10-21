@@ -6459,3 +6459,31 @@ msgstr "Wiederholung"
 #, php-format
 msgid "Repeat of \"%s\" - filled automatically shortly before it starts"
 msgstr "Wiederholung von \"%s\" - wird kurz vor dem Start automatisch befüllt"
+
+#: RASTATIME 2026-10-21 re-read tags
+msgid "Re-read Tags"
+msgstr "Tags neu einlesen"
+
+#: RASTATIME 2026-10-21 re-read tags
+msgid "Re-read the tags of the selected files from the files on disk"
+msgstr "Tags der ausgewählten Dateien neu aus den Dateien einlesen"
+
+#: RASTATIME 2026-10-21 re-read tags
+msgid "Re-read the tags of the selected file(s) from the files on disk? Title, artist, album, genre, year, track number, composer, copyright, label, ISRC, BPM, mood, language and comment are replaced by what the file carries; everything you set in RASTATIME only (track type, teaser, cue points, loudness, expiry) stays."
+msgstr "Tags der ausgewählten Datei(en) neu aus den Dateien einlesen? Titel, Interpret, Album, Genre, Jahr, Tracknummer, Komponist, Copyright, Label, ISRC, BPM, Mood, Sprache und Kommentar werden durch den Inhalt der Datei ersetzt; alles, was nur in RASTATIME gesetzt wird (Track-Typ, Teaser, Cue-Punkte, Lautheit, Ablaufdatum), bleibt."
+
+#: RASTATIME 2026-10-21 re-read tags
+msgid "The tags could not be re-read."
+msgstr "Die Tags konnten nicht neu eingelesen werden."
+
+#: RASTATIME 2026-10-21 re-read tags
+msgid "%1$s file(s) read, %2$s changed."
+msgstr "%1$s Datei(en) gelesen, %2$s geändert."
+
+#: RASTATIME 2026-10-21 re-read tags
+msgid "Changed: %s"
+msgstr "Geändert: %s"
+
+#: RASTATIME 2026-10-21 re-read tags
+msgid "Skipped (file missing or not readable): %s"
+msgstr "Übersprungen (Datei fehlt oder nicht lesbar): %s"

@@ -124,6 +124,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Bibliothek: Knopf „Re-read Tags" (2026-10-21, Go 2026-10-21)** — liest die
+  Tag-Spalten markierter Dateien neu aus den Dateien auf der Platte, für
+  nachträglich in Windows bearbeitete Dateien.  Neuer API-Endpunkt
+  `POST api/v2/files/reread-tags` (Api-Key; nutzt `analyze_metadata` des
+  Analyzers, dieselbe Zuordnung wie der Import; Whitelist der Tag-Felder,
+  RASTATIME-eigene Spalten bleiben, md5/Größe/Bitrate folgen der Datei,
+  fehlender Tag leert die Spalte, je Datei Bericht alt → neu); Legacy
+  `LibraryController::rereadTagsAction` prüft Besitz und proxyt mit dem
+  API-Key, Knopf neben „Cue Points" in Bibliothek und Show Builder mit
+  Bestätigung.  Drei API-Tests, Strings DE/FR/ES, Manual LIBRARY ×4,
+  Architektur §23.69.  Wirksam nach API-Neustart (Legacy sofort).  Aus der
+  Evaluierung 2026-10-21 (Mood/Energy/Key/Timbre und Mood-Detector bleiben
+  im BACKLOG).  Commit RRTAGS.
 - **Import von WMA-Dateien (2026-10-21, Go 2026-10-21)** — Windows Media
   Audio (v1/v2/Pro/Lossless) wird vom Analyzer immer nach MP3 320 kbit/s
   gewandelt (`convert_format`: `is_wma`, unabhängig vom Lossless-Kästchen,

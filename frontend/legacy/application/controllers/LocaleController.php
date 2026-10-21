@@ -121,6 +121,10 @@ final class LocaleController extends Zend_Controller_Action
             'Day teaser: "tomorrow"' => _('Day teaser: "tomorrow"'),
             'the day of the show being filled' => _('the day of the show being filled'),
             'Shows' => _('Shows'),
+            'Re-read Tags' => _('Re-read Tags'),
+            'Re-read the tags of the selected files from the files on disk' => _('Re-read the tags of the selected files from the files on disk'),
+            'Re-read the tags of the selected file(s) from the files on disk? Title, artist, album, genre, year, track number, composer, copyright, label, ISRC, BPM, mood, language and comment are replaced by what the file carries; everything you set in RASTATIME only (track type, teaser, cue points, loudness, expiry) stays.' => _('Re-read the tags of the selected file(s) from the files on disk? Title, artist, album, genre, year, track number, composer, copyright, label, ISRC, BPM, mood, language and comment are replaced by what the file carries; everything you set in RASTATIME only (track type, teaser, cue points, loudness, expiry) stays.'),
+            'The tags could not be re-read.' => _('The tags could not be re-read.'),
             // RASTATIME 2026-10-16 - teaser automation stage 2 (calendar dialog)
             'Teasers of show' => _('Teasers of show'),
             'Could not save.' => _('Could not save.'),
