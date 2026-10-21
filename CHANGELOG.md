@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Show-Formular: Hilfe-Icon von „Repeat of show" neben der Beschriftung
+  (2026-10-21, Operator)** — Das Icon steht rechts neben dem Text statt hinter
+  dem Auswahlfeld (dort rutschte es bei knapper Breite unter das Feld); das
+  Feld nutzt die volle Breite.  Live gemessen: Icon und Beschriftung auf
+  einer Mittellinie, kein seitlicher Überstand im Panel, auch mit dem
+  längsten Sendungsnamen ausgewählt.
+
 - **Show-Formular: eigene Sektion „Repeat", Abstände; Streams-Abstand
   (2026-10-21, Operator-Meldung)** — (1) *Repeat of show* steht in einer
   eigenen Sektion **Repeat** direkt über *Autoloading Playlist* (DE

@@ -95,14 +95,15 @@
         <fieldset>
             <dl>
                 <div id="add_show_repeat_of_block">
+                    <?php /* help icon right of the label (operator 2026-10-21), the
+                           select below gets the full width */ ?>
                     <dt id="add_show_repeat_of_label">
                         <label for="add_show_repeat_of">
                             <?php echo $repeatOf->getLabel() ?>
-                        </label>
+                        </label><span class="help_icon" data-rt-tip="<?php echo htmlspecialchars(_("Shortly before this show starts, the content its source show aired last is copied in: files and webstreams in their order, live inputs left out. The autoloading playlist below then fills the remaining time. Chains are allowed, loops are not."), ENT_QUOTES) ?>"></span>
                     </dt>
                     <dd>
                         <?php echo $repeatOf ?>
-                        <span class="help_icon" data-rt-tip="<?php echo htmlspecialchars(_("Shortly before this show starts, the content its source show aired last is copied in: files and webstreams in their order, live inputs left out. The autoloading playlist below then fills the remaining time. Chains are allowed, loops are not."), ENT_QUOTES) ?>"></span>
                         <?php $errs = $repeatOf->getMessages(); if ($errs) { ?>
                             <ul class="errors"><?php foreach ($errs as $e) { echo '<li>' . htmlspecialchars($e, ENT_QUOTES) . '</li>'; } ?></ul>
                         <?php } ?>

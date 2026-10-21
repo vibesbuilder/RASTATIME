@@ -42,15 +42,11 @@
     box-sizing: border-box;
 }
 
-/* "Repeat of show" (own section since 2026-10-21): the select leaves room
-   for its help icon, both on one centre line */
-#schedule-add-show #add_show_repeat_of {
-    max-width: calc(100% - 24px);
-    vertical-align: middle;
-}
-#add_show_repeat_of_block .help_icon {
-    vertical-align: middle;
+/* "Repeat of show" (own section since 2026-10-21): help icon right of the
+   label text, centred on it */
+#add_show_repeat_of_label .help_icon {
     margin-left: 6px;
+    vertical-align: middle;
     top: 0;
 }
 
