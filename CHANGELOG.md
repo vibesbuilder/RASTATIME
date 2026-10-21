@@ -131,7 +131,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   die 36 WMA-Dateien wurden vom Import-Ordner-Scanner um 17:10 übergeben,
   bevor der Analyzer mit dem WMA-Zweig neu gestartet war, und lagen als
   `.wma` in der Bibliothek; `convert_lossless --ids … --yes` wandelte alle
-  36 nach MP3 320 (source_md5, Lautheit gemessen, keine Fehler).  Commit CLWMA.
+  36 nach MP3 320 (source_md5, Lautheit gemessen, keine Fehler).  Commit 5179636.
 - **Wiederholung 4 s kürzer als das Original (2026-10-21, Operator-Befund
   14:17)** — im Original überlappen Titel und Live-Zeile (Line-In,
   Webstream) 1 s (Sendungswechsel-Überblendung), in der Wiederholung ist die
