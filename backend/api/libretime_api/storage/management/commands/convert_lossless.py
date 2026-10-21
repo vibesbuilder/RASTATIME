@@ -9,7 +9,8 @@ handles the files that were imported before (2026-10-14: id 603 FLAC and
 
 A candidate is an imported (import_status 0) ``file_exists`` row whose
 stored file probes as lossless (``probe_audio`` + ``is_lossless`` of the
-analyzer's convert_format module) - whatever its mime column says.  Files
+analyzer's convert_format module) or as Windows Media Audio (``is_wma``,
+since 2026-10-21) - whatever its mime column says.  Files
 that begin with an MPEG audio frame (after an optional ID3v2 tag) cannot be
 lossless and are not probed, so a dry run over the whole library takes
 seconds instead of one ffprobe per MP3.
@@ -237,7 +238,9 @@ def find_candidates(root: Path, conv, ids: Optional[Sequence[int]] = None) -> Sc
         except Exception as exc:  # pylint: disable=broad-exception-caught
             scan.unreadable.append(f"{file_id}: {filepath} ({exc})")
             continue
-        if conv.is_lossless(probe):
+        # RASTATIME 2026-10-21 - Windows Media Audio too (the analyzer converts
+        # it on import since the same day; 36 files slipped in before its restart)
+        if conv.is_lossless(probe) or conv.is_wma(probe):
             scan.candidates.append(
                 Candidate(file_id, filepath, path, probe, path.stat().st_size)
             )
