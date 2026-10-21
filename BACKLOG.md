@@ -3810,7 +3810,7 @@ REST-Modul zwar Status 401 (`verifyAuth`) und wirft dann
 `ErrorController` mappt aber jede Ausnahme außer „keine Route /
 Controller / Action" auf `error500Action` und ignoriert den Code.  Jeder
 solche Aufruf schreibt zwei ERR-Zeilen samt Stacktrace in
-`C:astatime\logs\legacy.log`.  Volumen 2026-10-06 bis 10-21: 14
+`C:\rastatime\logs\legacy.log`.  Volumen 2026-10-06 bis 10-21: 14
 Ereignisse (davon 6 Testaufrufe am 21.10.) — kein Scanner-Rauschen, auch
 nicht seit HTTPS öffentlich ist.
 **Fix-Skizze (~10 Zeilen):** im `ErrorController::errorAction` eine
