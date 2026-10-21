@@ -207,6 +207,11 @@ var AIRTIME = (function (AIRTIME) {
     self.tab.addClass("active");
 
     mod.updateActiveTab();
+    // RASTATIME 2026-10-21 - the library's add button follows the active tab
+    // ("Add to current show" / "... playlist" / "... smart block")
+    if (AIRTIME.library && typeof AIRTIME.library.checkAddButton === "function") {
+      AIRTIME.library.checkAddButton();
+    }
 
     // In case we're adding a tab that wraps to the next row
     // It's better to call this here so we don't have to call it in multiple places

@@ -394,6 +394,12 @@ The playlist editor opens with the playlist on the left and the
 library on the right. Drag library items onto the playlist;
 re-order with drag-and-drop. Set crossfades and cue-points per
 item if needed.
+Instead of dragging you can also select items and click **Add to
+current playlist** in the library toolbar, or choose **Add to
+Playlist** in a row's context menu (tracks, smart blocks, webstreams,
+line inputs; since 2026-10-21).  Both refer to the editor tab that is
+active; with **Scheduled Shows** active the button adds to the show
+instead.
 
 | Item type behaviour |  |
 |---|---|

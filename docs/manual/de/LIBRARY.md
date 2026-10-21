@@ -423,6 +423,12 @@ Der Playlist-Editor öffnet sich mit der Playlist links und
 der Bibliothek rechts. Ziehen Sie Bibliotheks-Items auf die
 Playlist; ordnen Sie per Drag-and-Drop um. Setzen Sie
 Crossfades und Cue-Punkte pro Item, falls nötig.
+Statt zu ziehen können Sie Items auch auswählen und in der
+Bibliotheks-Werkzeugleiste **Add to current playlist** klicken oder im
+Kontextmenü einer Zeile **Add to Playlist** wählen (Titel, Smart
+Blocks, Webstreams, Line-Eingänge; seit 2026-10-21).  Beides bezieht
+sich auf den aktiven Editor-Tab; ist **Scheduled Shows** aktiv, fügt der
+Knopf stattdessen zur Sendung hinzu.
 
 | Item-Typ-Verhalten |  |
 |---|---|

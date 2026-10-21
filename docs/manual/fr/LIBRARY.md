@@ -434,6 +434,12 @@ et la bibliothèque à droite. Glissez les items de la
 bibliothèque sur la playlist ; réordonnez par
 glisser-déposer. Définissez crossfades et points de cue
 par item si nécessaire.
+Au lieu de glisser, vous pouvez aussi sélectionner des items et
+cliquer **Add to current playlist** dans la barre d'outils de la
+bibliothèque, ou choisir **Add to Playlist** dans le menu contextuel
+d'une ligne (titres, smart blocks, flux web, entrées ligne ; depuis le
+2026-10-21).  Les deux visent l'onglet d'édition actif ; si **Scheduled
+Shows** est actif, le bouton ajoute à l'émission à la place.
 
 | Comportement par type d'item |  |
 |---|---|

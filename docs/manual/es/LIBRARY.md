@@ -347,6 +347,12 @@ Biblioteca → **+ Nuevo** → **Playlist**.
 El editor de playlist se abre con la playlist a la
 izquierda y la biblioteca a la derecha. Arrastre items de
 biblioteca a la playlist; reordene por arrastrar y soltar.
+En lugar de arrastrar también puede seleccionar items y pulsar **Add to
+current playlist** en la barra de herramientas de la biblioteca, o
+elegir **Add to Playlist** en el menú contextual de una fila (pistas,
+bloques inteligentes, retransmisiones, entradas de línea; desde
+2026-10-21).  Ambos se refieren a la pestaña de edición activa; con
+**Scheduled Shows** activa el botón añade al programa en su lugar.
 
 ### Longitud por defecto
 

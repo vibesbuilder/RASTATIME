@@ -203,6 +203,20 @@ class LibraryController extends Zend_Controller_Action
             // that was installed at the top of this method.
             unset($menu['play']);
 
+            // RASTATIME 2026-10-21 - a line-in may sit in a playlist (manual
+            // LINE_IN 4.2); offered like webstreams while a playlist editor is
+            // the active tab
+            if (isset($obj_sess->id) && $screen == 'playlist' && $obj_sess->type === 'playlist') {
+                try {
+                    $targetPl = new Application_Model_Playlist($obj_sess->id);
+                    if ($isAdminOrPM || $targetPl->getCreatorId() == $user->getId()) {
+                        $menu['pl_add'] = ['name' => _('Add to Playlist'), 'icon' => 'copy'];
+                    }
+                } catch (Exception $e) {
+                    // the playlist of the session is gone - no entry
+                }
+            }
+
             if ($isAdminOrPM) {
                 $menu['edit'] = ['name' => _('Edit...'), 'icon' => 'edit'];
                 $menu['del']  = ['name' => _('Delete'), 'icon' => 'delete', 'url' => $baseUrl . 'library/delete'];

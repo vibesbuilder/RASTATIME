@@ -2145,6 +2145,14 @@ var AIRTIME = (function (AIRTIME) {
             $tr = $el;
             data = $tr.data("aData");
             screen = $tr.data("screen");
+            // RASTATIME 2026-10-21 - an active playlist / smart block editor
+            // tab counts as the playlist screen, so the server offers "Add to
+            // Playlist / Smart Block" (the dashboard rows say "timeline";
+            // tabs.js updateActiveTab keeps the server session on that tab)
+            var activeObjType = $(".active-tab .obj_type").val();
+            if (activeObjType === "playlist" || activeObjType === "block") {
+              screen = "playlist";
+            }
 
             function processMenuItems(oItems) {
               // define an add to playlist callback.
@@ -2303,7 +2311,11 @@ var AIRTIME = (function (AIRTIME) {
               }
               // remove 'Add to smart block' option if the current
               // block is dynamic
-              if ($("input:radio[name=sp_type]:checked").val() === "0") {
+              // RASTATIME 2026-10-21 - only the ACTIVE tab's block counts (a
+              // dynamic block open in another tab hid it for playlists too)
+              if (
+                $(".active-tab input:radio[name=sp_type]:checked").val() === "0"
+              ) {
                 delete oItems.pl_add;
               }
               items = oItems;

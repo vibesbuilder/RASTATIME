@@ -1685,6 +1685,21 @@ un_tests.ps1` (2026-10-16)** — startet API-, Playout- und
 
 ### Fixed
 
+- **Bibliothek: Hinzufügen zur offenen Playlist über Menü und Knopf
+  (2026-10-21, Operator-Go)** — Mit einem Playlist- oder Smart-Block-Tab
+  im Dashboard fehlte im Kontextmenü „Add to Playlist / Smart Block" (es
+  hing wie „Edit..." an `screen == 'playlist'`), und der Knopf hieß weiter
+  „Add to current show" (`checkAddButton` fragte, ob die Sendungstabelle
+  existiert statt sichtbar ist; beim Tab-Wechsel wurde er nicht neu
+  beschriftet).  Jetzt: ein aktiver Playlist-/Block-Tab zählt als
+  Playlist-Ansicht (`library.js`), der Knopf heißt „Add to current playlist
+  / smart block" und folgt jedem Tab-Wechsel (`tabs.js switchTo`); Line-Ins
+  bekommen „Add to Playlist" ebenfalls; die Ausnahme für dynamische Blöcke
+  prüft nur noch den aktiven Tab.  Der Klick fügte schon vorher in die
+  Playlist ein, nur die Anzeige fehlte.  Live geprüft (nichts hinzugefügt):
+  Menüs von Track/Block/Webstream/Line-In, Knopf mit und ohne Auswahl,
+  Wechsel und Schließen des Tabs.  Manual LIBRARY ×4.
+
 - **Bibliothek: „Edit..." im Kontextmenü von Playlists, Smart Blocks und
   Webstreams (2026-10-21, Operator-Meldung)** — Das Menü bot es nur auf
   LibreTimes alter Playlist-Builder-Seite (`screen == 'playlist'`); die

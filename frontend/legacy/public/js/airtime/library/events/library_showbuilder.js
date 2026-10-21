@@ -25,7 +25,11 @@ var AIRTIME = (function (AIRTIME) {
     }
 
     var sortable = $(".spl_sortable");
-    if ($("#show_builder_table").length > 0) {
+    // RASTATIME 2026-10-21 - visible, not just present: on the dashboard the
+    // scheduled-shows table always exists, so with a playlist tab active the
+    // button kept saying "Add to current show" (the click itself already
+    // added to the playlist)
+    if ($("#show_builder_table").is(":visible")) {
       if (shows.length === 0) {
         check = false;
       }
