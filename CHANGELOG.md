@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Line-In: Vorwärmen 15 s vor dem Slot (2026-10-21, Operator-Go)** —
+  die frische Capture-Quelle (§23.68) verband sich in beiden gemessenen
+  Slots 11–12 s nach `linein_http.start`, mit 10 s Vorlauf kam der Arm
+  etwa eine Sekunde nach dem Gate.  `PREPARE_LEAD_SECONDS` 10 → 15
+  (Webstreams behalten 10 s).  Wirksam nach PLAYOUT-Neustart.  Commit bb86f84.
 - **Kalender in der Benutzersprache, Apostroph im Dialogtitel (2026-10-20,
   Operator-Go)** — Der Kalender formatierte Datum und Wochentage in der
   Browsersprache („19. – 25. Oktober 2026" bei englischer Einstellung):
