@@ -150,7 +150,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   stabile Dateigröße, drei Versuche); Legacy prüft den Pfad gegen den
   Show-Recording-Ordner, taggt eine Kopie per ffmpeg (Titel
   „<Sendung> <JJJJ-MM-TT HH:MM>", Interpret Sendung, Album „Show
-  Recordings"), importiert sie als Track-Typ „Recordings" (Code `recd`,
+  Recordings"), importiert sie als Track-Typ „Recordings" (Code `recs`,
   wird angelegt) und verknüpft sie mit der Instanz
   (`cc_show_instances.file_id`).  Original bleibt im Aufnahmeordner;
   Duplikate über `md5`/`source_md5`.  Hintergrund: Operator-Wunsch

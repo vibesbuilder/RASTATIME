@@ -7275,7 +7275,7 @@ tagged with ffmpeg (`-c copy -map_metadata -1`, title
 `<show> <YYYY-MM-DD HH:MM>` in station time, artist = show, album
 "Show Recordings") into the temp dir and handed to
 `CcFiles::createFromRecording` (-> `createAndImport` with a track-type
-override: "Recordings", code `recd`, created on demand) which moves it
+override: "Recordings", found by name, created on demand with code `recs`) which moves it
 to `organize/` and messages the analyzer; without ffmpeg the original is
 copied and the analyzer's file-name title applies.  The pending row is
 labelled and its `source_md5` set; `ShowInstance::setRecordedFile`

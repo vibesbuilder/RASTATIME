@@ -19,7 +19,7 @@
  */
 class Application_Service_ShowRecordingService
 {
-    public const TRACK_TYPE_CODE = 'recd';
+    public const TRACK_TYPE_CODE = 'recs';
     public const TRACK_TYPE_NAME = 'Recordings';
     public const ALBUM = 'Show Recordings';
 
@@ -197,7 +197,10 @@ class Application_Service_ShowRecordingService
     /** The "Recordings" track type, created on first use. */
     public static function trackTypeId(): int
     {
-        $tt = CcTracktypesQuery::create()->filterByDbCode(self::TRACK_TYPE_CODE)->findOne();
+        // by name first (the operator may change the code under Settings ->
+        // Track Types; 2026-10-21 it became "recs"), then by code
+        $tt = CcTracktypesQuery::create()->filterByDbTypeName(self::TRACK_TYPE_NAME)->findOne()
+            ?? CcTracktypesQuery::create()->filterByDbCode(self::TRACK_TYPE_CODE)->findOne();
         if ($tt === null) {
             $tt = new CcTracktypes();
             $tt->setDbCode(self::TRACK_TYPE_CODE);
