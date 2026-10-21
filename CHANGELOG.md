@@ -141,14 +141,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   gewann die nächste Abfrage.  Jetzt reagiert der Hörer nur auf die
   eigenen Reiter (#tracks, #playlists, …) und die beiden Klick-Handler
   unterdrücken den Hash-Sprung (`schedule.js`, `builder.js`; Harness-Test
-  im eingebauten Browser).  Commit SELFIX.
+  im eingebauten Browser).  Commit 57e8b06.
 - **Playlist duplizieren: HTTP 500 bei Playlisten mit Line-In (2026-10-21,
   Operator: „funktioniert manchmal nicht")** — `LibraryController::
   duplicateAction` kannte die Zeilenart 3 (Line-In, §23.18) nicht,
   `buildEntry()` brach mit „Undefined array key 1" ab (Log 20.10. 13:41,
   dreimal).  Line-In-Zeilen werden jetzt mitkopiert.  Probe
   `C:/Temp/optd/dup_probe.php` (Kopie von „Studio Live 105min" identisch,
-  wieder gelöscht).  Commit SELFIX.
+  wieder gelöscht).  Commit 57e8b06.
 - **Bibliotheks-Wandler `convert_lossless` nimmt WMA mit (2026-10-21)** —
   die 36 WMA-Dateien wurden vom Import-Ordner-Scanner um 17:10 übergeben,
   bevor der Analyzer mit dem WMA-Zweig neu gestartet war, und lagen als
