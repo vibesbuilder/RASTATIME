@@ -5445,7 +5445,8 @@ Manual CALENDAR ×4.
 In Windows nachbearbeitete Dateien: RASTATIME liest nie von selbst nach (DB = Wahrheit).  Knopf neben
 "Cue Points": API `files/reread-tags` mit dem Tag-Leser des Analyzers, Whitelist der Tag-Felder,
 RASTATIME-Spalten bleiben, Bestaetigung im Dialog.  Kein automatischer Abgleich (wuerde Editor-Aenderungen
-stillschweigend ueberschreiben).  OFFEN: API-Neustart, Browser-Abnahme.
+stillschweigend ueberschreiben).  Abnahme 2026-10-21: Knopf im Browser bestaetigt (Operator), Live-Probe des
+Endpunkts mit zwei Dateien, deren Tags der DB entsprechen: 2 gelesen, 0 geaendert, Zeilen unveraendert.
 
 ### 🟡 Metadaten Energy, Tempo, Key, Timbre + Analyse beim Import (Mood-Detector-Fork) - DEFER (Operator 2026-10-21: unsicher)
 
