@@ -86,8 +86,9 @@ l'attachement à son prochain poll (par défaut toutes les
 
 ---
 
-> **Rediffusion de l'émission (depuis le 2026-10-18).**  La même
-> section du formulaire porte **Rediffusion de l'émission** : choisissez
+> **Rediffusion de l'émission (depuis le 2026-10-18).**  La section
+> juste au-dessus, **Rediffusion** (section à part depuis le
+> 2026-10-21), porte **Rediffusion de l'émission** : choisissez
 > l'original, et son dernier contenu diffusé est copié dans cette
 > émission peu avant son début ; la playlist de chargement automatique
 > ne remplit alors que le temps restant.  Détails dans

@@ -9,6 +9,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Show-Formular: eigene Sektion „Repeat", Abstände; Streams-Abstand
+  (2026-10-21, Operator-Meldung)** — (1) *Repeat of show* steht in einer
+  eigenen Sektion **Repeat** direkt über *Autoloading Playlist* (DE
+  „Wiederholung", FR „Rediffusion", ES „Repetición"), standardmäßig
+  zugeklappt wie die Nachbarn.  Das Element bleibt im Subform
+  `AddShowAutoPlaylist` (nur die Vorlage rendert es woanders), Speichern
+  und Validierung sind unverändert; Fehler in Repeat oder Autoloading
+  klappen ihre Sektion jetzt auf (`showErrorSections`), und das Hilfe-Icon
+  bekommt endlich seinen Tooltip (`data-rt-tip` wurde auf der Kalenderseite
+  nie eingerichtet).  (2) *Allow delayed start?* klebte an der Checkbox
+  (Beschriftung breiter als die 103-px-Mindestspalte) — 0,75 em Abstand wie
+  bei *Record*.  (3) Breite Auswahlfelder (Repeat of show 466 px,
+  Intro/Outro 746 px) ließen das 310-px-Panel seitlich scrollen: Fieldsets
+  mit `min-width: 0`, Auswahlfelder höchstens so breit wie das Panel.
+  (4) Settings → Streams: *Live Broadcasting* saß bündig unter dem
+  zugeklappten *Audio Processing* (0 px, aufgeklappt 10 px) — jetzt 20 px
+  wie zwischen den anderen Abschnitten.  Manual AUTOLOADING_PLAYLISTS +
+  CALENDAR ×4.  Gerendert per Probe mit den echten Formularen und live
+  gemessen.
+
 - **Line-In: Vorwärmen 15 s vor dem Slot (2026-10-21, Operator-Go)** —
   die frische Capture-Quelle (§23.68) verband sich in beiden gemessenen
   Slots 11–12 s nach `linein_http.start`, mit 10 s Vorlauf kam der Arm

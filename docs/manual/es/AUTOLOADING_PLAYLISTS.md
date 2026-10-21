@@ -59,8 +59,9 @@ Guarde el programa.
 
 ---
 
-> **Repetición del programa (desde 2026-10-18).**  La misma sección
-> del formulario lleva **Repetición del programa**: elija el original,
+> **Repetición del programa (desde 2026-10-18).**  La sección justo
+> encima, **Repetición** (sección propia desde 2026-10-21), lleva
+> **Repetición del programa**: elija el original,
 > y su último contenido emitido se copia en este programa poco antes de
 > empezar; la lista de carga automática rellena entonces solo el tiempo
 > restante.  Detalles en [Calendario](./CALENDAR.md) § 4 «Repetición de

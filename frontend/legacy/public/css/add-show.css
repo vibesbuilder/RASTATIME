@@ -30,6 +30,28 @@
 #schedule-add-show fieldset {
     padding: 8px;
     margin-bottom: 8px;
+    /* RASTATIME 2026-10-21 - a fieldset grows to its content's min-content
+       by default: the show / playlist selects size to their longest name
+       (Repeat of show 466 px, Intro/Outro 746 px) and the 310 px panel
+       scrolled sideways.  With min-width 0 the selects below give way. */
+    min-width: 0;
+}
+
+#schedule-add-show select {
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+/* "Repeat of show" (own section since 2026-10-21): the select leaves room
+   for its help icon, both on one centre line */
+#schedule-add-show #add_show_repeat_of {
+    max-width: calc(100% - 24px);
+    vertical-align: middle;
+}
+#add_show_repeat_of_block .help_icon {
+    vertical-align: middle;
+    margin-left: 6px;
+    top: 0;
 }
 
 #schedule-add-show dl {

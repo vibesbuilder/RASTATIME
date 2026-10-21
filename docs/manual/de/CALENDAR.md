@@ -277,8 +277,8 @@ Drei Unterfelder erscheinen:
 
 Viele Sendungen laufen einmal und werden einmal wiederholt, an einem
 anderen Wochentag oder in einer anderen Woche.  Öffnen Sie das
-**Edit-Show**-Formular der Wiederholung, Abschnitt **Autoloading
-Playlist**, und wählen Sie unter **Wiederholung von Sendung** das
+**Edit-Show**-Formular der Wiederholung, Abschnitt **Wiederholung**
+(direkt über Autoloading Playlist), und wählen Sie unter **Wiederholung von Sendung** das
 Original.  Von da an wird jede Instanz der Wiederholung automatisch
 befüllt:
 

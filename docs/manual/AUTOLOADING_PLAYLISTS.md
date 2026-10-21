@@ -79,8 +79,9 @@ builds future instances accordingly.
 
 ---
 
-> **Repeat of show (since 2026-10-18).**  The same form section
-> carries **Repeat of show**: pick the original, and the content it
+> **Repeat of show (since 2026-10-18).**  The form section right
+> above, **Repeat** (its own section since 2026-10-21), carries
+> **Repeat of show**: pick the original, and the content it
 > aired last is copied into this show shortly before it starts; the
 > autoloading playlist then fills only the remaining time.  Details in
 > [Calendar](./CALENDAR.md) § 4 "Repeat of another show".

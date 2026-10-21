@@ -87,7 +87,10 @@
             <?php echo $this->element->getElement('add_show_repeats') ?>
         </dd>
 
-        <dt id="add_show_allow_delayed_start-label">
+        <?php /* RASTATIME 2026-10-21 - the label is wider than the dt's
+               minimum width, so the checkbox sat flush against it; same gap
+               as the Record row (add-show-form.phtml) */ ?>
+        <dt id="add_show_allow_delayed_start-label" style="padding-right: 0.75em;">
             <label><?php echo $this->element->getElement('add_show_allow_delayed_start')->getLabel() ?></label>
         </dt>
         <dd id="add_show_allow_delayed_start-element">

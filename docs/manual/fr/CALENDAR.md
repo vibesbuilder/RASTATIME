@@ -278,7 +278,8 @@ sous-champs apparaissent :
 
 Beaucoup d'émissions passent une fois et sont rediffusées une fois,
 un autre jour ou une autre semaine.  Ouvrez le formulaire **Edit
-Show** de la rediffusion, section **Autoloading Playlist**, et
+Show** de la rediffusion, section **Rediffusion** (juste au-dessus
+d'Autoloading Playlist), et
 choisissez l'original sous **Rediffusion de l'émission**.  Dès lors
 chaque instance de la rediffusion est remplie automatiquement :
 

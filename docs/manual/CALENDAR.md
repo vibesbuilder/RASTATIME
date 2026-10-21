@@ -249,7 +249,8 @@ In the **When** section, tick **Repeats**. Three sub-fields appear:
 
 Many shows air once and are repeated once, on a different weekday
 or in a different week.  Open the repeat's **Edit Show** form,
-section **Autoloading Playlist**, and pick the original under
+section **Repeat** (right above Autoloading Playlist), and pick the
+original under
 **Repeat of show**.  From then on every instance of the repeat is
 filled automatically:
 

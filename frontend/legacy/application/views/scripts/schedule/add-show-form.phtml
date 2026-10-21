@@ -85,6 +85,32 @@
         </fieldset>
         <input type="hidden" name="add_show_rebroadcast" value="0" />
     </div>
+    <?php /* RASTATIME 2026-10-21 - "Repeat of show" in its own section above
+           Autoloading Playlist (operator).  The element belongs to the
+           AddShowAutoPlaylist subform ($this->autoplaylist); only its place
+           in the form moved, the POST field and validation are the same. */ ?>
+    <?php $repeatOf = $this->autoplaylist->getElement('add_show_repeat_of'); ?>
+    <h3 class="collapsible-header"><span class="arrow-icon"></span><?php echo _("Repeat") ?></h3>
+    <div id="schedule-show-repeat" class="collapsible-content">
+        <fieldset>
+            <dl>
+                <div id="add_show_repeat_of_block">
+                    <dt id="add_show_repeat_of_label">
+                        <label for="add_show_repeat_of">
+                            <?php echo $repeatOf->getLabel() ?>
+                        </label>
+                    </dt>
+                    <dd>
+                        <?php echo $repeatOf ?>
+                        <span class="help_icon" data-rt-tip="<?php echo htmlspecialchars(_("Shortly before this show starts, the content its source show aired last is copied in: files and webstreams in their order, live inputs left out. The autoloading playlist below then fills the remaining time. Chains are allowed, loops are not."), ENT_QUOTES) ?>"></span>
+                        <?php $errs = $repeatOf->getMessages(); if ($errs) { ?>
+                            <ul class="errors"><?php foreach ($errs as $e) { echo '<li>' . htmlspecialchars($e, ENT_QUOTES) . '</li>'; } ?></ul>
+                        <?php } ?>
+                    </dd>
+                </div>
+            </dl>
+        </fieldset>
+    </div>
     <h3 class="collapsible-header"><span class="arrow-icon"></span><?php echo _("Autoloading Playlist") ?></h3>
     <div id="schedule-show-auto" class="collapsible-content">
         <?php echo $this->autoplaylist; ?>

@@ -188,7 +188,8 @@ sub-campos aparecen:
 
 Muchos programas se emiten una vez y se repiten una vez, otro día o
 en otra semana.  Abra el formulario **Edit Show** de la repetición,
-sección **Autoloading Playlist**, y elija el original en **Repetición
+sección **Repetición** (justo encima de Autoloading Playlist), y
+elija el original en **Repetición
 del programa**.  Desde entonces cada instancia de la repetición se
 rellena automáticamente:
 

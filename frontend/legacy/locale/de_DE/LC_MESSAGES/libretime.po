@@ -6450,3 +6450,7 @@ msgstr "Sendungsaufnahmen in die Bibliothek kopieren"
 #: RASTATIME 2026-10-19 copy show recordings into library
 msgid "When a recorded show ends, a copy of its recording is imported into the media library as track type \"Recordings\" (title: show name and start time) and linked to the show instance, so it can be scheduled again or used in playlists.  The file in the recording folder stays where it is.  Needs ffmpeg for the tags; takes effect for shows that end after the playout was restarted once."
 msgstr "Endet eine aufgezeichnete Sendung, wird eine Kopie der Aufnahme als Track-Typ \"Recordings\" in die Medienbibliothek importiert (Titel: Sendungsname und Startzeit) und mit der Sendungsinstanz verknüpft, sodass sie erneut geplant oder in Playlisten verwendet werden kann.  Die Datei im Aufnahmeordner bleibt unverändert liegen.  Braucht ffmpeg für die Tags; gilt für Sendungen, die nach einem einmaligen Playout-Neustart enden."
+
+#: RASTATIME 2026-10-21 show form section "Repeat" (Repeat of show)
+msgid "Repeat"
+msgstr "Wiederholung"

@@ -31,6 +31,7 @@ function openAddShowForm(nowOrFuture) {
       // Templates should both come up collapsed by default, in line
       // with Autoloading Playlist / Live Stream Input / Who / Style.
       $("#schedule-show-templates").hide();
+      $("#schedule-show-repeat").hide(); // RASTATIME 2026-10-21
       $("#schedule-show-auto").hide();
       $("#live-stream-override").hide();
       $("#schedule-show-record").hide();
@@ -578,6 +579,18 @@ function setAddShowEvents(form) {
     },
     placement: "right",
     interactive: true,
+  });
+
+  // RASTATIME 2026-10-21 - server-rendered help icons (data-rt-tip, text
+  // already translated), e.g. "Repeat of show": nothing set them up on this
+  // page, so the icon showed no tooltip.  Escaped again because rtTooltip
+  // renders HTML.
+  form.find("[data-rt-tip]").each(function () {
+    $(this).rtTooltip({
+      content: { text: $("<div>").text($(this).attr("data-rt-tip")).html() },
+      placement: "right",
+      interactive: true,
+    });
   });
 
   form.find(".airtime_auth_help_icon").rtTooltip({
@@ -1475,6 +1488,14 @@ function showErrorSections() {
   }
   if ($("#live-stream-override .errors").length > 0) {
     $("#live-stream-override").show();
+  }
+  // RASTATIME 2026-10-21 - a "Repeat of show" error (e.g. a loop) or an
+  // autoloading one must not stay hidden in its collapsed section
+  if ($("#schedule-show-repeat .errors").length > 0) {
+    $("#schedule-show-repeat").show();
+  }
+  if ($("#schedule-show-auto .errors").length > 0) {
+    $("#schedule-show-auto").show();
   }
   if ($("#add_show_rebroadcast_relative .errors").length > 0) {
     $("#schedule-record-rebroadcast").show();

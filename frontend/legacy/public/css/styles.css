@@ -1870,6 +1870,13 @@ h2#scheduled_playlist_name span {
     border-top:1px solid #9d9d9d;
 }
 
+/* RASTATIME 2026-10-21 - "Live Broadcasting" keeps the 20 px gap the
+   collapsible "Audio Processing" header has above it (operator): it sat flush
+   under the collapsed header (0 px) and 10 px under the open section. */
+#audio-processing-settings + h3 {
+    margin-top: 20px;
+}
+
 .stream-setting-content dd.block-display {
     /*width: 60%;*/
 }
