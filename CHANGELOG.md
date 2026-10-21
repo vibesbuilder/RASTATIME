@@ -63,6 +63,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Wiederholung von Sendung: auch Webstream-Zeilen aus der Aufnahme
+  (2026-10-21, Go 2026-10-21)** — `RepeatFillService::planRows` behandelt
+  Webstream-Zeilen wie Line-Ins: mit importierter Aufnahme des Originals
+  die passende Cue-Scheibe, ohne Aufnahme wie bisher Kopie als Live-Zeile;
+  `recordingWait` zählt Webstream-Zeilen als Live-Zeilen.  Stufe 1 spielte
+  den Webstream in der Wiederholung erneut live (BBC News um 10 → um 14
+  die 14-Uhr-Nachrichten).  Probe `C:/Temp/optd/repeat_ws_probe.php`
+  (Transaktion mit Rollback: BBC-News-Instanz 19750 → Scheibe
+  01:06–06:10 der Aufnahme 25490, Wartelogik).  Manual CALENDAR ×4,
+  Architektur §23.67.  Commit REPWS.
 - **Stereo-Tool-Preset „R128 transparent" im Repo (2026-10-21, Operator:
   R128-konformer Stream ohne AGC)** — `config/stereotool/
   rastatime-r128-transparent.sts`: keine Verarbeitung, Final Limiter mit

@@ -261,16 +261,17 @@ filled automatically:
   files and webstreams in their order with the aired cue points and
   fades, jingles included.  The autoloading playlist fills the
   remaining time afterwards.
-- **Live inputs** *(since 2026-10-20)*: when the original is recorded
+- **Live inputs and webstreams** *(since 2026-10-20, webstreams since
+  2026-10-21)*: when the original is recorded
   and **Copy Show Recordings into Library** is on (Settings → Local
-  Machine → Show Recording), every line-in row of the original is
-  replaced by the matching slice of its recording - cue in and cue out
+  Machine → Show Recording), every line-in or webstream row of the
+  original is replaced by the matching slice of its recording - cue in and cue out
   are the row's offsets from the show start, so the repeat plays
   exactly what went out live between the tracks.  An original without
   any rows (a pure live show) is repeated from the recording alone.
   The fill waits for the recording to be imported, but not past five
-  minutes before the repeat starts; without a recording live rows are
-  left out as before.  The recording is protected from deletion while
+  minutes before the repeat starts; without a recording a webstream is
+  copied as a live row and a line-in is left out, as before.  The recording is protected from deletion while
   a pending repeat needs it.
 - **If the original has not aired yet** (first week, cancelled
   instance): the repeat is left to its autoloading playlist.

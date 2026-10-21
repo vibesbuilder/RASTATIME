@@ -7307,6 +7307,13 @@ instance with no rows at all becomes the whole recording.  The recorder
 opens its file at the show start, so the offsets line up within a
 second.
 
+**Webstreams (2026-10-21, operator go).**  A webstream row is treated
+like a line-in row when the source has a recording - the repeat plays
+what went out, not the stream again (stage 1 copied it as a live row,
+which replayed, say, BBC News of the repeat's hour).  Without a
+recording the webstream is still copied as a live row.  `recordingWait`
+counts webstream rows as live rows.
+
 **Waiting.**  `recordingWait(src, dstStarts)`: a recorded source with
 live rows (or none) whose recording is not imported yet makes `fillDue`
 skip the instance this pass and log why - until five minutes before the

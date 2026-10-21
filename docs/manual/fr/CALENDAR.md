@@ -290,10 +290,11 @@ chaque instance de la rediffusion est remplie automatiquement :
   l'original - fichiers et flux web dans leur ordre avec les points de
   repère et fondus diffusés, jingles compris.  La playlist de
   chargement automatique remplit ensuite le temps restant.
-- **Entrées live** *(depuis le 2026-10-20)* : si l'original est
+- **Entrées live et webstreams** *(depuis le 2026-10-20, webstreams
+  depuis le 2026-10-21)* : si l'original est
   enregistré et que **Copier les enregistrements d'émission dans la
   bibliothèque** est actif (Paramètres → Machine locale → Show
-  Recording), chaque ligne line-in de l'original est remplacée par la
+  Recording), chaque ligne line-in ou webstream de l'original est remplacée par la
   tranche correspondante de son enregistrement - les points de repère
   d'entrée et de sortie sont les décalages de la ligne par rapport au
   début de l'émission, la rediffusion joue donc exactement ce qui est
@@ -301,7 +302,8 @@ chaque instance de la rediffusion est remplie automatiquement :
   (émission purement live) est rediffusé à partir du seul
   enregistrement.  Le remplissage attend l'import de l'enregistrement,
   mais pas au-delà de cinq minutes avant le début de la rediffusion ;
-  sans enregistrement, les lignes live restent dehors comme avant.
+  sans enregistrement, un webstream est copié comme ligne live et un
+  line-in reste dehors, comme avant.
   L'enregistrement est protégé contre la suppression tant qu'une
   rediffusion en attente en a besoin.
 - **Si l'original n'a pas encore été diffusé** (première semaine,

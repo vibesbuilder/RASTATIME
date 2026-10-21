@@ -391,7 +391,7 @@ class Application_Service_RepeatFillService
         $src = Application_Common_Database::prepareAndExecute(
             'SELECT a.record, a.file_id,
                     (SELECT COUNT(*) FROM cc_schedule s WHERE s.instance_id = a.id) AS rows_total,
-                    (SELECT COUNT(*) FROM cc_schedule s WHERE s.instance_id = a.id AND s.linein_id IS NOT NULL) AS rows_live
+                    (SELECT COUNT(*) FROM cc_schedule s WHERE s.instance_id = a.id AND (s.linein_id IS NOT NULL OR s.stream_id IS NOT NULL)) AS rows_live
                FROM cc_show_instances a WHERE a.id = :id',
             [':id' => $srcInstanceId],
             Application_Common_Database::SINGLE
@@ -418,10 +418,11 @@ class Application_Service_RepeatFillService
 
     /**
      * The rows to schedule into a repeat of $srcInstanceId: files and
-     * webstreams in their order; a line-in row becomes the matching slice of
-     * the source's recording (cue in/out = the row's offsets from the source
-     * start) when the recording is imported; a recorded source without any
-     * rows is repeated from the recording alone.
+     * webstreams in their order; a line-in or webstream row becomes the
+     * matching slice of the source's recording (cue in/out = the row's
+     * offsets from the source start) when the recording is imported (a
+     * webstream without one is copied as a live row, a line-in left out); a
+     * recorded source without any rows is repeated from the recording alone.
      *
      * @return array [files, missing, live_left_out, live_replaced]
      */
@@ -455,7 +456,10 @@ class Application_Service_RepeatFillService
             return [$files, 0, 0, 1];
         }
         foreach ($rows as $r) {
-            if ($r['linein_id']) {
+            // RASTATIME 2026-10-21 - webstream rows too (operator go): a repeat
+            // plays what went out, not the stream again; without a recording a
+            // webstream is copied as a live row as before, a line-in left out
+            if ($r['linein_id'] || ($r['stream_id'] && $recording !== null && $srcStart !== null)) {
                 if ($recording === null || $srcStart === null) {
                     ++$live;
 
