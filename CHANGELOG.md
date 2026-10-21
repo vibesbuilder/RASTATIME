@@ -1693,7 +1693,7 @@ un_tests.ps1` (2026-10-16)** — startet API-, Playout- und
   statisch/dynamisch rechnet der Editor ihn neu.  Live: „Test Smart Block"
   (dynamisch) offen, Track ausgewählt → grau, „Scheduled Shows" → aktiv;
   Track-Menü ohne „Add to Smart Block".  Den positiven Fall (statischer
-  Block) gibt es in der Bibliothek nicht.
+  Block) gibt es in der Bibliothek nicht.  Commit `9a7e509`.
 
 - **Bibliothek: Hinzufügen zur offenen Playlist über Menü und Knopf
   (2026-10-21, Operator-Go)** — Mit einem Playlist- oder Smart-Block-Tab
