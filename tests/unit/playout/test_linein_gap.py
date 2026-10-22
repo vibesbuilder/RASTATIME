@@ -12,6 +12,13 @@ overridable) and its ``poll_delay`` (2.0 -> 0.5), so a source armed in
 parallel with the feeder connects the moment the mount appears.  These
 tests pin those rendered values and the env-facing thread so a refactor
 cannot silently restore the long gap.
+
+RASTATIME 2026-10-21 (architecture 23.68): the companion is no longer a
+single ``linein_http_raw = input.http(...)`` reused across slots but a
+``source.dynamic`` arm over a FRESH ``input.http(id="linein_http_in_#{n}")``
+opened inside ``linein_http_start()`` - the reused source did not
+reconnect on its second start.  The tuned values now live in that
+per-slot call; the anchors below follow it.
 """
 
 import re
@@ -29,8 +36,10 @@ _STREAMS = [
 
 
 def _http_block(liq: str) -> str:
-    start = liq.index("linein_http_raw = input.http(")
-    end = liq.index("linein_http = audio_to_stereo")
+    # the per-slot input.http inside linein_http_start() (23.68); the
+    # block ends where the stopper closure captures the new source
+    start = liq.index('s = input.http(id="linein_http_in_#{n}"')
+    end = liq.index("linein_http_stopper.set(fun () -> s.stop())", start)
     return liq[start:end]
 
 
