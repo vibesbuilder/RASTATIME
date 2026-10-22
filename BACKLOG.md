@@ -5680,3 +5680,25 @@ Brightness robust; Key plausibel, aber ohne Referenzdaten unverifiziert.  Entsch
 Abhaengigkeits-Vorbehalts: Analyse als eigener Worker-Prozess in einer getrennten venv (Aufruf per
 Subprozess aus dem Analyzer), die Produktiv-venv bleibt unveraendert.  Entscheidung des Operators OFFEN.  Alternative ohne librosa: Tempo/Key/Energy per ffmpeg-Filtern
 (ebur128/astats liefern Energie, kein Tempo/Key) - nur Teilabdeckung.
+
+## Test-Hygiene (2026-10-22)
+
+### ✅ Drei Suiten wieder gruen ueber `scripts/run_tests.ps1` - erledigt 2026-10-22
+Bei der Verifikation von 977f2df fielen vier vorbestehende Testprobleme auf, alle ohne Live-Wirkung:
+(1) `tests/unit/playout/test_linein_gap.py` ankerte noch auf dem alten `linein_http_raw = input.http(...)` -
+seit 685dc17 (§23.68) oeffnet `linein_http_start()` je Slot ein frisches `input.http`; Test angepasst, Werte unveraendert.
+(2) `backend/playout/tests/message_handler_test.py` brach die Sammlung ab (kein `kombu` in der venv) -
+`pytest.importorskip("kombu")`, siehe naechster Punkt.
+(3) `run_tests.ps1` lud mit `-p no:logging` das Logging-Plugin aus und damit auch `caplog` (27 Fehler) -
+jetzt `-o log_cli=false` (gleicher Zweck: das `log_cli = true` der pyproject-Dateien stumm schalten);
+dazu gewinnt ein vorgesetztes `LIBRETIME_CONFIG_FILEPATH` (Worktrees) und `backend\playout` steht im Unit-PYTHONPATH.
+(4) API-Suite: `FakeConverter.is_wma` fehlte seit 5179636, zwei Tests erwarteten noch den Stationsnamen
+„LibreTime" (seit ad12764 „RASTATIME").  Soll seit 2026-10-22: api 151, playout 819/3 uebersprungen, unit 739/38.
+
+### 🟡 Totes Upstream-Playout entfernen: `main.py` + `message_handler.py` (RabbitMQ/kombu) - Operator-Entscheidung offen
+`libretime_playout/main.py` (pypo-Einstieg, Console-Script `libretime-playout` in `setup.py`) und
+`message_handler.py` (kombu-Consumer der RabbitMQ-Exchange `playout`) werden in RASTATIME nicht mehr erreicht:
+der Dienst startet `python -m libretime_playout` (`__main__.py`), Sendeplan- und Quellen-Ereignisse kommen ueber
+den HTTP-Listener (:8770, §23.70 / Option d).  `kombu` ist weder installiert noch in `setup.py`; `main.py` wuerde
+beim Import sofort scheitern.  Vorschlag: beide Module, den Console-Script-Eintrag und `message_handler_test.py`
+entfernen (~1 h, kein Dienst betroffen, kein Neustart).  Vorbedingung: Operator-Go (Loeschen von Modulen).

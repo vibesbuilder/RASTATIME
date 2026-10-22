@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Testsuiten wieder grün über `scripts\run_tests.ps1` (2026-10-22)** —
+  Vier vorbestehende Testprobleme, alle ohne Live-Wirkung, bei der
+  Verifikation von `977f2df` gefunden.  (1) `tests/unit/playout/
+  test_linein_gap.py` ankerte noch auf dem alten `linein_http_raw =
+  input.http(...)`; seit `685dc17` (§23.68) öffnet `linein_http_start()` je
+  Slot ein frisches `input.http` — der Test folgt diesem Block, die
+  gerenderten Werte (max_buffer 1,0 / poll_delay 0,5 / mp3) sind unverändert
+  (`14720d1`).  (2) `message_handler_test.py` brach die Sammlung der
+  Playout-Suite ab (kein `kombu` in der venv); das Modul ist der
+  Upstream-RabbitMQ-Pfad von `main.py`, den RASTATIME-PLAYOUT (`python -m
+  libretime_playout`, HTTP-Listener) nicht erreicht — `pytest.importorskip`,
+  Entfernen der toten Module als BACKLOG-Frage an den Operator (`6ab3b8a`).
+  (3) `run_tests.ps1` lud mit `-p no:logging` das Logging-Plugin und damit
+  `caplog` aus (27 Fehler in der Playout-Suite); jetzt `-o log_cli=false`
+  gegen das `log_cli = true` der pyproject-Dateien, dazu gewinnt ein
+  vorgesetztes `LIBRETIME_CONFIG_FILEPATH` (Worktrees) und `backend\playout`
+  steht im Unit-PYTHONPATH, damit das geprüfte Checkout und nicht die
+  editable-Installation getestet wird (`0d9b430`).  (4) API-Suite:
+  `FakeConverter.is_wma` fehlte seit `5179636`, zwei Tests erwarteten noch
+  den Stationsnamen „LibreTime" statt „RASTATIME" (`ad12764`) (`0738d7d`).
+  Soll seit 2026-10-22: api 151, playout 819 / 3 übersprungen, unit 739 / 38
+  übersprungen; TEST_PLAN und BACKLOG aktualisiert.
+
 ### Changed
 
 - **Kalender-Änderungen ohne 2 s Wartezeit, Schedule-Abruf ~3× schneller
