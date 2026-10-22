@@ -148,6 +148,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Aufgabe RASTATIME-PhpCgiReaper: verwaiste php-cgi.exe abräumen
+  (2026-10-22, Operator-Go)** — Nach jedem Apache-Stopp blieben die
+  php-cgi-Worker zurück (Elternprozess weg; 21.10. zehn seit dem 08.10.):
+  Speicher, alte `php.ini`, Dateisperren auf `C:\Tools\PHP`, die den
+  Ordnertausch der PHP-Updates blockierten.  NSSM 2.24 erreicht sie mit
+  seinem Prozessbaum-Kill nicht mehr und kennt keine Hooks.  Neu:
+  `infra/scripts/rt-php-cgi-reaper.ps1` beendet php-cgi.exe aus
+  `C:\Tools\PHP` ohne lebenden httpd-Elternprozess (Worker eines laufenden
+  Apache bleiben unberührt, wartet vorher, bis der Dienst nicht mehr
+  *Pending ist), ausgelöst als SYSTEM-Aufgabe von den NSSM-Ereignissen 1040
+  (START/STOP) und 1008 (gestartet) von RASTATIME-APACHE; Registrierung
+  `infra/scripts/register-php-cgi-reaper.ps1`, Log
+  `logs/php-cgi-reaper.log`, INSTALL_APACHE §5.1.  Getestet mit einer
+  künstlichen Waise und drei markierten Test-Ereignissen („TRIGGERTEST",
+  09:32-09:33 im Anwendungsprotokoll), die die zwei Waisen des Stopps von
+  09:26 abräumten.  Lehre: mit `<ValueQueries>` im Ereignis-Auslöser
+  startet die Aufgabe nie.  Abnahme am nächsten echten Apache-Neustart.
 - **Bibliothek: Knopf „Re-read Tags" (2026-10-21, Go 2026-10-21)** — liest die
   Tag-Spalten markierter Dateien neu aus den Dateien auf der Platte, für
   nachträglich in Windows bearbeitete Dateien.  Neuer API-Endpunkt

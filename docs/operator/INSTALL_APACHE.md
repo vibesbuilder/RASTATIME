@@ -245,7 +245,9 @@ The script:
   native) and offers to clean up before reinstalling.
 * Configures bounded stop methods (`AppStopMethodConsole / Window /
   Threads = 5000 ms`, `AppKillProcessTree = 1`) so service restarts
-  finish in 2-3 s instead of 15+ s.
+  finish in 2-3 s instead of 15+ s.  (`AppKillProcessTree` needs an
+  NSSM 2.24-101 pre-release; NSSM 2.24 does not know it and always
+  kills the process tree - see 5.1 for what it misses.)
 * Captures NSSM-side stdout / stderr to
   `C:\rastatime\logs\apache-nssm-stdout.log` /
   `apache-nssm-stderr.log`.
@@ -262,6 +264,36 @@ The script:
   Before that, `C:\Tools\Apache24\logs\error_log` grew to 890 MB
   (PHP deprecation flood until 2026-10-09) and, because Apache keeps
   it open, could never be rotated.
+
+### 5.1 Orphaned php-cgi.exe after a stop (reaper task)
+
+NSSM 2.24 (the version on the studio machine) stops Apache with Ctrl+C
+and then kills the process tree it can still see.  The httpd child
+process has usually exited by then, and its mod_fcgid `php-cgi.exe`
+children are no longer reachable through their parent: they stay
+behind as orphans (2026-10-21: ten of them, the oldest 13 days).  They
+serve nothing but keep memory, the old `php.ini` and file locks on
+`C:\Tools\PHP` - a PHP update cannot swap the folder while they run.
+(`AppKillProcessTree` does not help: NSSM 2.24 does not know the
+setting, and event hooks only came with the 2.24-101 pre-releases.)
+
+Since 2026-10-22 the scheduled task **RASTATIME-PhpCgiReaper** cleans
+up.  It runs as SYSTEM whenever NSSM logs a START/STOP control (event
+1040) or a start of httpd (1008, also after a crash restart) for
+`RASTATIME-APACHE` in the Application log, waits until the service has
+left the *Pending state and stops every `php-cgi.exe` from
+`C:\Tools\PHP` without a live httpd parent.  The workers of a running
+Apache are never touched.  Register it once, elevated:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass `
+    -File C:\RASTATIME\infra\scripts\register-php-cgi-reaper.ps1
+```
+
+Each run logs one line to `C:\RASTATIME\logs\php-cgi-reaper.log`
+(`trigger=event-1040-STOP service=Stopped kept=0 orphans=3 stopped: …`).
+A manual run is harmless at any time:
+`infra\scripts\rt-php-cgi-reaper.ps1 [-DryRun]`.
 
 ## 6. Verify
 

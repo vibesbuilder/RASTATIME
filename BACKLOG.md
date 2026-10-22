@@ -122,7 +122,24 @@ keine OCSP-Adresse mehr ins Zertifikat, Stapling ist damit wirkungslos;
 HTTPS selbst funktioniert.  `httpd -t` vor dem Neustart, danach
 `https-error-*.log` ohne die Meldungen.
 
-### 💡 Verwaiste php-cgi.exe nach Apache-Stopp (neu 2026-10-22)
+### ✅ Verwaiste php-cgi.exe nach Apache-Stopp (neu 2026-10-22, Operator-Go (a), DONE 2026-10-22)
+
+**Ergebnis:** (a) wie geplant ging nicht - NSSM 2.24 (2014) kennt weder
+`AppEvents` noch `AppKillProcessTree` (kamen erst mit den 2.24-101-Vorabversionen).
+Operator-Entscheidung stattdessen: Aufgabe **RASTATIME-PhpCgiReaper** (SYSTEM),
+ausgelöst von den NSSM-Ereignissen 1040 (START/STOP-Control) und 1008 (httpd
+gestartet, auch nach Absturz-Neustart) von RASTATIME-APACHE im
+Anwendungsprotokoll; Skript `infra/scripts/rt-php-cgi-reaper.ps1` wartet, bis der
+Dienst nicht mehr *Pending ist, und beendet nur php-cgi.exe aus `C:\Tools\PHP`
+ohne lebenden httpd-Elternprozess (Log `logs/php-cgi-reaper.log`), Registrierung
+`infra/scripts/register-php-cgi-reaper.ps1`, INSTALL_APACHE §5.1.  Tests:
+künstliche Waise (php-cgi -b, Elternprozess beendet) abgeräumt, laufende Worker
+unberührt; der Stopp/Start 09:26-09:29 löste NICHT aus - Ursache `<ValueQueries>`
+(Data[2] an das Skript): mit ihnen feuert der Auslöser hier nie; ohne sie lösten
+drei markierte Test-Ereignisse (Quelle nssm, 1040 „TRIGGERTEST", 09:32-09:33 im
+Anwendungsprotokoll - keine echten Stopps) aus und räumten die zwei Waisen des
+Stopps um 09:26 ab.  **Offen:** Abnahme an einem echten Stopp/Start (STOP-Zweig
+mit Warten auf Stopped) - kommt mit dem Punkt „Apache-Stopp dauert 30 s".
 
 **Befund:** Nach jedem `nssm stop RASTATIME-APACHE` bleiben php-cgi.exe-Prozesse
 mit totem Elternprozess liegen (21.10.: 10 Stück seit 08.10.; 22.10.: 3).  Sie
@@ -138,6 +155,40 @@ den Operator); (b) nur `Start/Pre` (räumt beim nächsten Start auf, Waisen
 leben bis dahin); (c) Aufräumen im nächtlichen Log-Janitor 03:50 (keine
 NSSM-Änderung, Waisen bis zu 24 h); (d) so lassen und nur bei PHP-Updates
 manuell beenden (Stand heute).  Empfehlung (a).  Entscheidung Operator.
+
+### 🟢 Apache-Stopp dauert 30 s (neu 2026-10-22, Operator: gleich angehen)
+
+**Befund:** Jeder `nssm stop RASTATIME-APACHE` dauert rund 30 s (22.10.:
+08:49:40 → 08:50:11, 09:26:49 → 09:27:20).  NSSM schickt Ctrl+C, wartet die
+volle Zeit (`kill_console() has waited 20000 of 30000 milliseconds`) und
+beendet dann den httpd-Elternprozess hart; Apache selbst loggt keinen
+Shutdown (kein „Received shutdown signal" in `http-error-*.log`) - Ctrl+C
+kommt offenbar nicht als geordnetes Herunterfahren an.  In der Registry steht
+`AppStopMethodConsole = 30000` (Window/Threads 5000), `install-apache.ps1`
+setzt aber 5000 für alle drei - woher die 30000 kommen, ist offen (kein
+Commit im Repo, keine Doku).  Folgen: 30 s Weboberfläche weg
+je Neustart; ein `nssm start` in dieser Zeit scheitert mit „Es wird bereits
+eine Instanz des Dienstes ausgeführt" (22.10. 09:27, Apache blieb danach
+gestoppt, bis der Operator erneut startete).  **Zu prüfen:** warum httpd das
+Ctrl+C ignoriert (Konsole von NSSM, `AppNoConsole`, mpm_winnt-Handler), ob
+`httpd -k stop`/Shutdown-Ereignis sauberer wäre, Wert 5000 vs. 30000, Wirkung
+auf die php-cgi-Waisen.  Evaluierung vor Umbau.
+
+### 🟢 PHP → Playout-Benachrichtigung läuft in den 2-s-Timeout (neu 2026-10-22, Operator: gleich angehen)
+
+**Befund:** `NotifyPlayoutScheduleChanged` (`RabbitMq.php:48`, `file_get_contents`
+mit 2 s Timeout auf `http://127.0.0.1:8770/reload-schedule`) läuft seit dem
+19.10. fast immer in den Timeout: 19.10. 38, 20.10. 112 von 127, 21.10. 140 von
+145.  Playout empfängt den Aufruf, lädt den Sendeplan aber **vor** der Antwort
+neu (`fetch 2,7-5,0 s` vom API), PHP gibt nach 2 s auf.  Der Reload passiert
+trotzdem - Wirkung: jede Kalender-/Show-Änderung wartet ~2 s länger, je ein
+WARN + ERR („Failed to open stream: HTTP request failed!") im `legacy.log`.
+Unabhängig von PHP 8.5 (07:34 noch unter 8.3.36, Häufung seit 19.10.).
+**Zu prüfen:** Playout-Endpunkt sofort antworten lassen und den Reload im
+Hintergrund ausführen (Entprellen mehrerer Aufrufe), warum der Schedule-Abruf
+seit dem 19.10. 2,7-5 s braucht (Kalenderumfang? Wiederholungs-Kopien?),
+ob die ERR-Zeile aus dem `@`-unterdrückten Aufruf überhaupt ins Log gehört.
+Evaluierung vor Umbau.
 
 ### 🟢 Live-Readiness: RASTATIME dauerhaft auf dieser Maschine (Operator-Entscheidung 2026-10-03)
 
