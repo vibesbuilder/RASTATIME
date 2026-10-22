@@ -148,6 +148,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Apache-Neustart in ~18 s statt ~36 s, Neustart-Skript (2026-10-22,
+  Operator-Go A + D)** — Jeder Apache-Stopp dauerte ~31 s: NSSMs Ctrl+C
+  fährt httpd hier nicht geordnet herunter (danach verstummt das Access-Log,
+  der Prozess lebt aber weiter), NSSM wartete die eingestellten 30 000 ms
+  und beendete ihn dann hart.  Ein `nssm start` in dieser Zeit scheiterte
+  mit „Es wird bereits eine Instanz des Dienstes ausgeführt", Apache blieb
+  danach aus (09:27).  (A) `AppStopMethodConsole` auf 5000 ms, den Wert des
+  Installationsskripts (Herkunft der 30 000 unbekannt).  (D) neu
+  `infra/scripts/rt-apache-restart.ps1`: `httpd -t` vorab (kaputte
+  Konfiguration stoppt nichts), Stopp mit Warten auf Stopped, verwaiste
+  php-cgi melden und beenden, Start mit Warten auf Running, Login 200 über
+  127.0.0.1; `-StopOnly`/`-StartOnly` für PHP-Updates; Log
+  `logs/apache-restart.log`.  Abnahme (zwei Läufe 10:18/10:19): Stopp
+  12,8 s / 10,5 s, Neustart 19,5 s / 17,3 s, Login 200, keine Waisen;
+  dabei die Reaper-Aufgabe an echten Stopps abgenommen.  INSTALL_APACHE
+  §5.2/§6, COMPONENTS.  Geordneter Stopp: BACKLOG 🟡.
 - **Aufgabe RASTATIME-PhpCgiReaper: verwaiste php-cgi.exe abräumen
   (2026-10-22, Operator-Go)** — Nach jedem Apache-Stopp blieben die
   php-cgi-Worker zurück (Elternprozess weg; 21.10. zehn seit dem 08.10.):

@@ -245,7 +245,7 @@ The script:
   native) and offers to clean up before reinstalling.
 * Configures bounded stop methods (`AppStopMethodConsole / Window /
   Threads = 5000 ms`, `AppKillProcessTree = 1`) so service restarts
-  finish in 2-3 s instead of 15+ s.  (`AppKillProcessTree` needs an
+  finish in ~5 s instead of 15+ s (see 5.2).  (`AppKillProcessTree` needs an
   NSSM 2.24-101 pre-release; NSSM 2.24 does not know it and always
   kills the process tree - see 5.1 for what it misses.)
 * Captures NSSM-side stdout / stderr to
@@ -291,15 +291,44 @@ powershell -NoProfile -ExecutionPolicy Bypass `
 ```
 
 Each run logs one line to `C:\RASTATIME\logs\php-cgi-reaper.log`
-(`trigger=event-1040-STOP service=Stopped kept=0 orphans=3 stopped: …`).
+(`trigger=event service=Stopped kept=0 orphans=3 stopped: …`).
 A manual run is harmless at any time:
 `infra\scripts\rt-php-cgi-reaper.ps1 [-DryRun]`.
+
+### 5.2 Stop time and the restart script
+
+NSSM's Ctrl+C does not shut Apache down in an orderly way here: right
+after it the access log goes silent, httpd keeps running until the
+console timeout expires, and NSSM then terminates it.  Until 2026-10-22
+the studio machine had `AppStopMethodConsole = 30000` (origin unknown,
+the install script sets 5000), so every stop took ~30 s; it is 5000
+again since then.  Whether an orderly stop is possible at all (for
+example with `AppNoConsole = 0`) is a BACKLOG item for a probe instance.
+
+A `nssm start` issued while the service is still stopping fails with
+"Es wird bereits eine Instanz des Dienstes ausgeführt" / "An instance
+of the service is already running", and Apache then stays down.  Use
+the restart script instead, in an elevated PowerShell:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass `
+    -File C:\RASTATIME\infra\scripts\rt-apache-restart.ps1   # or -StopOnly / -StartOnly
+```
+
+It runs `httpd -t` first (a broken config stops nothing, exit 2), waits
+until the service is really Stopped, reports and stops orphaned
+php-cgi.exe, starts, waits for Running and checks that
+`https://<RT_PUBLIC_HOST>/login` answers 200 through 127.0.0.1.  One line
+per run goes to `C:\RASTATIME\logs\apache-restart.log`.  `-StopOnly`
+is the stop step of a PHP update (folder swap), `-StartOnly` the start
+step afterwards.
 
 ## 6. Verify
 
 ```powershell
 Get-Service RASTATIME-APACHE              # Status: Running
-Measure-Command { Restart-Service RASTATIME-APACHE }   # ~3-5 s typically
+powershell -NoProfile -ExecutionPolicy Bypass -File C:\RASTATIME\infra\scripts\rt-apache-restart.ps1
+# expected: "stopped after ~5 s", reaper line, "login: 200", "OK (restart)"
 ```
 
 Browse to `http://localhost/` — same login page as in step 4, served

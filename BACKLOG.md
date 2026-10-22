@@ -138,8 +138,10 @@ unberührt; der Stopp/Start 09:26-09:29 löste NICHT aus - Ursache `<ValueQuerie
 (Data[2] an das Skript): mit ihnen feuert der Auslöser hier nie; ohne sie lösten
 drei markierte Test-Ereignisse (Quelle nssm, 1040 „TRIGGERTEST", 09:32-09:33 im
 Anwendungsprotokoll - keine echten Stopps) aus und räumten die zwei Waisen des
-Stopps um 09:26 ab.  **Offen:** Abnahme an einem echten Stopp/Start (STOP-Zweig
-mit Warten auf Stopped) - kommt mit dem Punkt „Apache-Stopp dauert 30 s".
+Stopps um 09:26 ab.  **Abnahme an echten Stopps 10:18/10:19 bestanden:** je ein
+Lauf beim STOP (wartete bis Stopped, 10:19:04 / 10:19:32) und je zwei beim
+START/Started; Waisen gab es diesmal keine (mit 5 s Ctrl+C-Wartezeit lebt der
+httpd-Kindprozess beim harten Beenden noch, NSSM erwischt den ganzen Baum).
 
 **Befund:** Nach jedem `nssm stop RASTATIME-APACHE` bleiben php-cgi.exe-Prozesse
 mit totem Elternprozess liegen (21.10.: 10 Stück seit 08.10.; 22.10.: 3).  Sie
@@ -156,9 +158,24 @@ leben bis dahin); (c) Aufräumen im nächtlichen Log-Janitor 03:50 (keine
 NSSM-Änderung, Waisen bis zu 24 h); (d) so lassen und nur bei PHP-Updates
 manuell beenden (Stand heute).  Empfehlung (a).  Entscheidung Operator.
 
-### 🟢 Apache-Stopp dauert 30 s (neu 2026-10-22, Operator: gleich angehen)
+### ✅ Apache-Stopp dauert 30 s (neu 2026-10-22, Operator-Go A + D, DONE 2026-10-22)
 
-**Befund:** Jeder `nssm stop RASTATIME-APACHE` dauert rund 30 s (22.10.:
+**Ergebnis:** Evaluierung 22.10.: Ctrl+C von NSSM führt hier nicht zu einem
+geordneten Herunterfahren - direkt danach verstummt das Access-Log (das
+Dashboard fragt alle 2 s), httpd lebt aber bis zum Timeout weiter und wird dann
+hart beendet; die 30 s waren reine Wartezeit.  Umgesetzt: **(A)**
+`AppStopMethodConsole` 30000 → 5000 (`nssm set`, Wert des Installationsskripts;
+NSSM liest ihn beim Stopp, griff sofort); **(D)**
+`infra/scripts/rt-apache-restart.ps1` (`httpd -t` vorab - kaputte Konfig stoppt
+nichts, Exit 2; Stopp und Warten auf Stopped; Waisen melden/beenden; Start und
+Warten auf Running; Login 200 über 127.0.0.1; `-StopOnly`/`-StartOnly` für
+PHP-Updates; Log `logs/apache-restart.log`), INSTALL_APACHE §5.2/§6, COMPONENTS.
+Abnahme 10:18/10:19 (Operator, zwei Läufe): Stopp 12,8 s / 10,5 s statt ~31 s,
+Gesamtneustart 19,5 s / 17,3 s, Login 200, keine Waisen.  Die restlichen ~5 s
+über dem Ctrl+C-Timeout sind vermutlich NSSMs nächste Stoppmethode (WM_CLOSE,
+`AppStopMethodWindow` 5000) - siehe 🟡 „Geordneter Apache-Stopp".
+
+**Befund (vorher):** Jeder `nssm stop RASTATIME-APACHE` dauert rund 30 s (22.10.:
 08:49:40 → 08:50:11, 09:26:49 → 09:27:20).  NSSM schickt Ctrl+C, wartet die
 volle Zeit (`kill_console() has waited 20000 of 30000 milliseconds`) und
 beendet dann den httpd-Elternprozess hart; Apache selbst loggt keinen
@@ -173,6 +190,26 @@ gestoppt, bis der Operator erneut startete).  **Zu prüfen:** warum httpd das
 Ctrl+C ignoriert (Konsole von NSSM, `AppNoConsole`, mpm_winnt-Handler), ob
 `httpd -k stop`/Shutdown-Ereignis sauberer wäre, Wert 5000 vs. 30000, Wirkung
 auf die php-cgi-Waisen.  Evaluierung vor Umbau.
+
+### 🟡 Geordneter Apache-Stopp (Option B, neu 2026-10-22, Operator: Defer)
+
+**Ziel:** Apache beim Dienst-Stopp geordnet herunterfahren (laufende Anfragen
+beenden, Shutdown im Fehlerlog, php-cgi über mod_fcgid beendet) statt nach
+dem Ctrl+C-Timeout hart.  **Fakten 22.10.:** `AppNoConsole = 1` für alle
+NSSM-Dienste (Installationsskripte, SERVICE_TOPOLOGY); nach dem Ctrl+C keine
+Access-Log-Zeile mehr, kein Shutdown im Fehlerlog (rotatelogs bekommt das
+Ctrl+C vermutlich mit und stirbt), NSSM-stderr-Mitschrift leer (httpd lenkt
+stderr nach dem Start ins Fehlerlog); beim Stopp 10:19:22 meldete NSSM für den
+Prozessbaum den Exit-Code 0xC000013A (STATUS_CONTROL_C_EXIT), beim Stopp
+10:18:51 Exit-Code 0; Stopp mit 5000 ms dauert 10,5-12,8 s.
+**Vorbedingung:** temporäre Probe-Instanz in einem ruhigen Fenster (Live-Regel
+3) - Wegwerf-NSSM-Dienst `RASTATIME-APACHE-PROBE` auf 127.0.0.1:18080 mit
+Minimal-Konfiguration + php-cgi, Varianten wie live / `AppNoConsole = 0` /
+`AppStopMethodSkip = 1` (kein Ctrl+C) / `AppStopMethodSkip = 6` (kein
+WM_CLOSE/WM_QUIT - spart vermutlich die zweiten 5 s), je Stopp-Dauer, letzte
+bediente Anfrage, Shutdown-Zeilen, Waisen; danach Dienst entfernen.  Aufwand
+~1-1,5 h.  Nutzen klein (Apache-Neustarts selten und gewollt, Waisen räumt
+RASTATIME-PhpCgiReaper ab).
 
 ### 🟢 PHP → Playout-Benachrichtigung läuft in den 2-s-Timeout (neu 2026-10-22, Operator: gleich angehen)
 
