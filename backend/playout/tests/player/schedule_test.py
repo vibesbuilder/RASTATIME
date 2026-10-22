@@ -699,6 +699,17 @@ def test_get_schedule(schedule, requests_mock, api_client: ApiClient):
         ),
     }
 
+    # RASTATIME 2026-10-22 - each show instance and show is requested once
+    # per fetch, however many rows it has (instance 3 / show 3 has three
+    # rows and is a live show, whose instance times get rewritten per row).
+    def requests_to(path: str) -> int:
+        return sum(1 for r in requests_mock.request_history if r.path == path)
+
+    assert requests_to("/api/v2/show-instances/3") == 1
+    assert requests_to("/api/v2/shows/3") == 1
+    assert requests_to("/api/v2/show-instances/4") == 1
+    assert requests_to("/api/v2/shows/4") == 1
+
 
 # ---------------------------------------------------------------------------
 # RASTATIME 2026-09-28 - Loudness Normalization (EBU R128 stage 1)

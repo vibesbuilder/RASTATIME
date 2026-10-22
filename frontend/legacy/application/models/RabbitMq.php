@@ -48,6 +48,11 @@ class Application_Model_RabbitMq
         $body = @file_get_contents($url, false, $ctx);
 
         if ($body === false) {
+            // RASTATIME 2026-10-22 - the warning stays in error_get_last()
+            // despite the @, and Logging::loggingShutdownCallback() logged it
+            // again as ERR at the end of every such request; the WARN below
+            // is the one report.
+            error_clear_last();
             Logging::warn(
                 'NotifyPlayoutScheduleChanged: could not reach the playout '
                 . 'listener at ' . $url . ' — scheduled changes will still '
@@ -102,6 +107,7 @@ class Application_Model_RabbitMq
         $body = @file_get_contents($url, false, $ctx);
 
         if ($body === false) {
+            error_clear_last();  // see NotifyPlayoutScheduleChanged()
             Logging::warn(
                 'NotifyDisconnectSource: could not reach the playout '
                 . 'listener at ' . $url . ' — the show DJ may remain '

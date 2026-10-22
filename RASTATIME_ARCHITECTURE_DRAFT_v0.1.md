@@ -1,10 +1,13 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.84
-Date: 2026-10-18
+Draft version: 0.85
+Date: 2026-10-22
 
 > **Revision history**
+> - **0.85 (2026-10-22)** — **Schedule reload** (§23.70): `/reload-schedule`
+>   answers at once, refreshes coalesce in the background; one API request
+>   per show instance / show per fetch.
 > - **0.84 (2026-10-21)** — **Re-read Tags** (§23.69): tag columns refreshed
 >   from the files on disk on request; API endpoint + Library button.
 > - **0.83 (2026-10-21)** — **WMA import** (§23.57 addendum): Windows
@@ -7416,3 +7419,43 @@ guarded by a confirmation that lists the fields.
 **Tests.**  `storage/tests/views/test_reread_tags.py`: tagged copy of the
 fixture -> columns follow the tags, teaser/cue stay, md5/size follow;
 unchanged and missing files reported; bad input 400.
+
+### 23.70 Schedule Reload: Immediate Reply, Coalesced Refresh (2026-10-22)
+
+**Why.**  Every calendar or show edit calls the playout listener
+(`RabbitMq::NotifyPlayoutScheduleChanged`, `POST
+127.0.0.1:8770/reload-schedule`, 2-s timeout).  The listener ran
+`scheduler.refresh()` before answering.  Since the 24-h window grew on
+2026-10-19 a refresh took 2.7-5 s (median), up to 19 s: PHP gave up on
+almost every call (140 of 145 on 2026-10-21, WARN + ERR in `legacy.log`),
+every save waited 2 s, and a show move fired several reloads within
+seconds that ran in parallel with the 120-s poll and the pre-flight scans.
+The refresh itself happened anyway.
+
+**Listener.**  `/reload-schedule` answers `200 ok` at once and hands the
+work to `_CoalescingRunner` (`source_switcher.py`): one run at a time on a
+background thread; requests during a run collapse into exactly one more
+run afterwards, so the last edit is always followed by a complete
+refresh.  A run is `refresh()` and then a request to a second runner for
+the pre-flight rescan (B.4 #2), which coalesces the same way.  Failures
+are logged in the playout log only; the reply no longer reports them (PHP
+only ever logged it).  `500` stays for a listener without a scheduler.
+
+**Fetch.**  `player.schedule.get_schedule` asked the API for the show
+instance and the show of every row: 30 rows of 5 instances were 60 such
+requests (~40 ms each).  It now requests each instance and show once per
+fetch and gives each row a shallow copy (live shows rewrite the instance
+times per row): 35 instead of 91 requests, ~1.3 s instead of ~3.6 s
+against the live API.  The cost now grows with the number of shows in the
+window instead of the number of rows.
+
+**PHP.**  The `@`-suppressed warning of a failed notify stayed in
+`error_get_last()` and `Logging::loggingShutdownCallback()` logged it
+again as ERR; `error_clear_last()` after the WARN (also in
+`NotifyDisconnectSource`).
+
+**Tests.**  `tests/test_reload_schedule_listener.py` (immediate return,
+collapse into one more run, failure logged and later runs, handler 200
+before the refresh ends, real HTTP listener with three quick calls -> two
+refreshes); `tests/player/schedule_test.py` (one request per instance and
+show, including a live show with three rows).

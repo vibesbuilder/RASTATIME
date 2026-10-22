@@ -80,6 +80,13 @@ def get_schedule(api_client: ApiClient) -> Events:
     ).json()
 
     events: Dict[str, AnyEvent] = {}
+    # RASTATIME 2026-10-22 - one request per distinct show instance / show
+    # per fetch.  Every row asked for its instance and show again: 30 rows of
+    # 5 instances made 60 such requests (~40 ms each, ~2.3 s of a 3.6 s
+    # fetch).  Each row gets its own shallow copy because live shows rewrite
+    # starts_at / ends_at of the instance below.
+    show_instances: Dict[int, dict] = {}
+    shows: Dict[int, dict] = {}
     for item in sorted(schedule, key=itemgetter("starts_at")):
         # 2026-09-29: keep the exact row times next to the whole seconds
         item["starts_at_exact"] = event_isoparse_exact(item["starts_at"])
@@ -87,8 +94,12 @@ def get_schedule(api_client: ApiClient) -> Events:
         item["starts_at"] = event_isoparse(item["starts_at"])
         item["ends_at"] = event_isoparse(item["ends_at"])
 
-        show_instance = api_client.get_show_instance(item["instance"]).json()
-        show = api_client.get_show(show_instance["show"]).json()
+        if item["instance"] not in show_instances:
+            show_instances[item["instance"]] = api_client.get_show_instance(item["instance"]).json()
+        show_instance = dict(show_instances[item["instance"]])
+        if show_instance["show"] not in shows:
+            shows[show_instance["show"]] = api_client.get_show(show_instance["show"]).json()
+        show = dict(shows[show_instance["show"]])
 
         if show["live_enabled"]:
             show_instance["starts_at"] = event_isoparse(show_instance["starts_at"])

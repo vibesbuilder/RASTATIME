@@ -266,6 +266,9 @@ class _EventHandler(BaseHTTPRequestHandler):
     dj_auth: Optional[object] = None
     # RASTATIME 2026-09-28 - Live Text Info writer (live_text.py): /live-text
     live_text: Optional[object] = None
+    # RASTATIME 2026-10-22 - /reload-schedule answers at once and hands the
+    # refresh to this coalescing runner (set by start_listener).
+    reload_runner: Optional["_CoalescingRunner"] = None
 
     # Silence the default access log line on stderr; route via our logger.
     def log_message(self, format: str, *args) -> None:  # noqa: A002
@@ -577,34 +580,29 @@ class _EventHandler(BaseHTTPRequestHandler):
         API round-trips per linein item, so we deliberately don't run
         it in-line: the PHP frontend wants a fast 200 OK, and the
         operator is fine with the banner appearing ~1-2 s later.
+
+        RASTATIME 2026-10-22 - the refresh itself no longer runs in-line
+        either.  It took 2.7-5 s (up to 19 s) since the 24-h window grew
+        on 2026-10-19, PHP gave up after its 2-s timeout on almost every
+        call (WARN + ERR in legacy.log, every calendar save 2 s slower),
+        and a show move fires several calls within seconds.  The reply is
+        now "200 ok" at once and the refresh runs on a coalescing runner:
+        one refresh at a time, calls during it collapse into one more
+        refresh afterwards.  A failed refresh is only logged here - PHP
+        never acted on the reply beyond a log line.
         """
-        sched = _EventHandler.scheduler
-        if sched is None:
+        runner = _EventHandler.reload_runner
+        if runner is None:
             logger.error("reload-schedule: scheduler is None")
             self._send(500, "scheduler not initialised")
             return
 
-        try:
-            logger.info("reload-schedule: triggered by PHP frontend")
-            sched.refresh()
-            self._send(200, "ok")
-        except Exception as exc:  # pylint: disable=broad-exception-caught
-            logger.exception("reload-schedule failed: %s", exc)
-            self._send(500, "internal error")
-            return
-
-        # B.4 #2 — preflight side-effect.  Outside the try/except above so
-        # an /reload-schedule call still reports its primary result to PHP
-        # even if pre-flight has a temporary glitch.  Daemon thread so we
-        # don't keep the HTTP worker busy through the scan.
-        preflight = _EventHandler.preflight
-        if preflight is not None:
-            threading.Thread(
-                target=_safe_preflight_scan,
-                args=(preflight,),
-                name="preflight-rescan-on-reload",
-                daemon=True,
-            ).start()
+        started = runner.request()
+        logger.info(
+            "reload-schedule: triggered by PHP frontend%s",
+            "" if started else " (queued behind the running refresh)",
+        )
+        self._send(200, "ok")
 
     def _send(self, code: int, body: str) -> None:
         body_bytes = body.encode("utf-8")
@@ -633,6 +631,68 @@ def _safe_preflight_scan(preflight) -> None:
         logger.warning(
             "reload-schedule: preflight rescan failed: %s", exc,
         )
+
+
+class _CoalescingRunner:
+    """
+    Run ``fn`` on a background thread, one run at a time.
+
+    RASTATIME 2026-10-22.  :meth:`request` returns at once.  A request
+    while a run is in progress does not start a second one; all such
+    requests collapse into exactly one more run after the current one,
+    so the last request is always followed by a complete run.  ``fn``
+    exceptions are logged and never stop later runs.
+    """
+
+    def __init__(self, name: str, fn: Callable[[], None]) -> None:
+        self._name = name
+        self._fn = fn
+        self._lock = threading.Lock()
+        self._running = False
+        self._pending = False
+
+    def request(self) -> bool:
+        """Start a run, or queue one; True when a new run was started."""
+        with self._lock:
+            if self._running:
+                self._pending = True
+                return False
+            self._running = True
+        try:
+            threading.Thread(target=self._loop, name=self._name, daemon=True).start()
+        except Exception:
+            with self._lock:
+                self._running = False
+            raise
+        return True
+
+    def _loop(self) -> None:
+        finished = False
+        try:
+            while True:
+                try:
+                    self._fn()
+                except Exception as exc:  # pylint: disable=broad-exception-caught
+                    logger.exception("%s failed: %s", self._name, exc)
+                with self._lock:
+                    if not self._pending:
+                        self._running = False
+                        finished = True
+                        return
+                    self._pending = False
+        finally:
+            if not finished:
+                with self._lock:
+                    self._running = False
+
+
+def _reload_schedule_once(scheduler, preflight_runner: Optional[_CoalescingRunner]) -> None:
+    """One /reload-schedule run: refresh, then the pre-flight rescan (B.4 #2)."""
+    started = time.monotonic()
+    scheduler.refresh()
+    logger.info("reload-schedule: refresh done in %.2f s", time.monotonic() - started)
+    if preflight_runner is not None:
+        preflight_runner.request()
 
 
 def _reconcile_liquidsoap_once(client, switcher: SourceSwitcher) -> None:
@@ -818,7 +878,8 @@ def start_listener(
       /source-event       (harbor callbacks → SourceSwitcher)
       /source-state       (Dashboard / PHP frontend → JSON readout)
       /reload-schedule    (PHP frontend → scheduler.refresh()
-                                       + preflight.scan_once())
+                                       + preflight.scan_once(), both in
+                                       the background since 2026-10-22)
       /disconnect-source  (PHP frontend → SourceSwitcher kick)
       /set-audio-output   (PHP frontend → playout audio-device swap)
       /dj-auth            (Liquidsoap harbor auth → web application check)
@@ -838,6 +899,21 @@ def start_listener(
     _EventHandler.switcher = switcher
     _EventHandler.scheduler = scheduler
     _EventHandler.preflight = preflight
+    # RASTATIME 2026-10-22 - /reload-schedule: refresh and pre-flight rescan
+    # each on their own coalescing runner (see _handle_reload_schedule).
+    preflight_runner = (
+        _CoalescingRunner(
+            "preflight-rescan-on-reload", lambda: _safe_preflight_scan(preflight),
+        )
+        if preflight is not None else None
+    )
+    _EventHandler.reload_runner = (
+        _CoalescingRunner(
+            "reload-schedule",
+            lambda: _reload_schedule_once(scheduler, preflight_runner),
+        )
+        if scheduler is not None else None
+    )
     _EventHandler.dj_auth = dj_auth      # /dj-auth (RASTATIME 2026-09-10)
     _EventHandler.live_text = live_text  # /live-text (RASTATIME 2026-09-28)
     server = ThreadingHTTPServer((host, port), _EventHandler)

@@ -9,6 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Kalender-Änderungen ohne 2 s Wartezeit, Schedule-Abruf ~3× schneller
+  (2026-10-22, Operator-Go 1 + 2 + 3, §23.70)** — Jede Kalender- oder
+  Show-Änderung meldet sich bei Playout (`/reload-schedule`).  Playout lud
+  den Sendeplan neu, bevor es antwortete; seit dem 19.10. (mehr Zeilen im
+  24-h-Fenster) dauerte das 2,7-5 s, Spitzen 19 s, PHP gab nach 2 s auf
+  (21.10.: 140 von 145 Aufrufen, je WARN + ERR im `legacy.log`) und jede
+  Änderung wartete 2 s.  Ursache: `get_schedule` fragte für jede Zeile
+  Instanz und Sendung neu an (30 Zeilen aus 5 Instanzen = 91 Anfragen à
+  ~40 ms).  Jetzt: (1) `/reload-schedule` antwortet sofort, Refresh und
+  Preflight-Rescan laufen im Hintergrund und fassen Aufrufe während eines
+  laufenden Refresh zu genau einem weiteren zusammen; (2) je Abruf eine
+  Anfrage pro Instanz und Sendung - live 35 statt 91 Anfragen, ~1,3 s statt
+  ~3,6 s, wirkt auch auf den 120-s-Takt; (3) `RabbitMq.php` löscht die
+  unterdrückte Warnung nach dem WARN (`error_clear_last()`), damit sie nicht
+  zusätzlich als ERR im Shutdown-Log landet.  (3) ist sofort live, (1) und
+  (2) nach dem nächsten PLAYOUT-Neustart.  Tests: Paket-Suite 819 bestanden
+  (+7).
+
 - **PHP 8.3.36 → 8.5.12 (2026-10-22, Operator-Go 21.10.)** — 8.3 bekommt
   nur noch bis Ende 2027 Sicherheitskorrekturen, 8.5 bis Ende 2029 (8.4 als
   Zwischenschritt übersprungen).  Windows-Build NTS x64 (VS17, SHA256

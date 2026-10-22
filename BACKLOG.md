@@ -211,7 +211,22 @@ bediente Anfrage, Shutdown-Zeilen, Waisen; danach Dienst entfernen.  Aufwand
 ~1-1,5 h.  Nutzen klein (Apache-Neustarts selten und gewollt, Waisen räumt
 RASTATIME-PhpCgiReaper ab).
 
-### 🟢 PHP → Playout-Benachrichtigung läuft in den 2-s-Timeout (neu 2026-10-22, Operator: gleich angehen)
+### 🟢 PHP → Playout-Benachrichtigung läuft in den 2-s-Timeout (neu 2026-10-22, Operator-Go 1 + 2 + 3, gebaut 2026-10-22)
+
+**Ergebnis:** Ursache gemessen: `get_schedule` holte je Zeile Instanz und
+Sendung einzeln (30 Zeilen aus 5 Instanzen = 91 API-Anfragen, 3,6 s; seit dem
+19.10. mehr Zeilen im 24-h-Fenster → Median 3-5 s, Spitzen 19 s).  Gebaut
+(§23.70): **(1)** `/reload-schedule` antwortet sofort `200 ok`, Refresh und
+Preflight-Rescan laufen auf zusammenfassenden Hintergrund-Runnern
+(`_CoalescingRunner`); **(2)** `get_schedule` holt jede Instanz/Sendung einmal
+pro Abruf (Kopie je Zeile) - live gemessen 35 statt 91 Anfragen, ~1,3 s statt
+~3,6 s; **(3)** `error_clear_last()` nach dem unterdrückten Fehlschlag in
+`RabbitMq.php` (kein doppeltes ERR mehr) - **live sofort**.  Tests: Paket-Suite
+819 bestanden (vorher 812, +7 neu).  **Offen:** PLAYOUT-Neustart in einem
+ruhigen Fenster (aktiviert 1 + 2, dazu `bb86f84` Line-In-Vorlauf 15 s vom
+21.10.), dann Abnahme: Kalender-Änderung → kein WARN/ERR im `legacy.log`,
+Playout-Log „refresh done in ~1-2 s", bei mehreren Änderungen „queued behind
+the running refresh".
 
 **Befund:** `NotifyPlayoutScheduleChanged` (`RabbitMq.php:48`, `file_get_contents`
 mit 2 s Timeout auf `http://127.0.0.1:8770/reload-schedule`) läuft seit dem
