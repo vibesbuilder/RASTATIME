@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Show-Formular: kein Objekt-Dump mehr im `legacy.log` (2026-10-22,
+  Operator)** — `AddShowWhat::enableInstanceDesc()` schrieb bei jedem
+  Öffnen von „Edit This Instance" das ganze Formularfeld als
+  `Zend_Form_Element_Textarea Object` (~100 Zeilen) ins Log; der
+  Debug-Aufruf aus dem Upstream-Code ist entfernt.  Live geprüft:
+  `populate-repeating-show-instance-form` 200, Instanz-Beschreibung
+  weiter bearbeitbar, kein Dump.
 - **Testsuiten wieder grün über `scripts\run_tests.ps1` (2026-10-22)** —
   Vier vorbestehende Testprobleme, alle ohne Live-Wirkung, bei der
   Verifikation von `977f2df` gefunden.  (1) `tests/unit/playout/

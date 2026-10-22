@@ -87,7 +87,6 @@ class Application_Form_AddShowWhat extends Zend_Form_SubForm
     public function enableInstanceDesc()
     {
         $el = $this->getElement('add_show_instance_description');
-        Logging::info($el);
         $el->setAttrib('disabled', null);
         $el->setAttrib('readonly', null);
     }
