@@ -14,6 +14,9 @@
       * PYTHONPATH - the root unit tests and the playout tests import the
         packages from the checkout, not from the editable install.
       * --basetemp - pytest's default temp dir is not writable here.
+      * log_cli=false - the api and playout pyproject.toml switch live
+        DEBUG logging on; the runner turns it off per run (and keeps the
+        logging plugin, i.e. the caplog fixture, loaded).
     Nothing is printed from the configuration file.
 
 .PARAMETER Suite
@@ -44,7 +47,9 @@ $root = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
 $python = Join-Path $root '.venv\Scripts\python.exe'
 if (-not (Test-Path $python)) { throw "venv python not found: $python" }
 
-$config = Join-Path $root 'config\libretime.conf'
+# A pre-set LIBRETIME_CONFIG_FILEPATH wins (a git worktree has no config\
+# of its own); otherwise the checkout's libretime.conf.
+$config = if ($env:LIBRETIME_CONFIG_FILEPATH) { $env:LIBRETIME_CONFIG_FILEPATH } else { Join-Path $root 'config\libretime.conf' }
 if (-not (Test-Path $config)) { throw "libretime.conf not found: $config" }
 
 $baseTemp = Join-Path $env:TEMP ('rastatime-pytest-' + [IO.Path]::GetRandomFileName())
@@ -59,7 +64,12 @@ function Invoke-Suite($name, $workDir, $pythonPath, $target) {
     $env:PYTHONPATH = $pythonPath
     Push-Location (Join-Path $root $workDir)
     try {
-        $args = @('-m', 'pytest', $target, '-q', '-p', 'no:logging', "--basetemp=$baseTemp\$name") + $script:PytestArgs
+        # backend\api and backend\playout set log_cli = true (DEBUG) in their
+        # pyproject.toml, which floods the console with live log lines.
+        # Turn that option off instead of unloading pytest's logging plugin
+        # ('-p no:logging', 2026-10-16 .. 2026-10-22): the plugin also owns
+        # the caplog fixture, and without it every caplog-based test errors.
+        $args = @('-m', 'pytest', $target, '-q', '-o', 'log_cli=false', "--basetemp=$baseTemp\$name") + $script:PytestArgs
         & $python @args
         if ($LASTEXITCODE -ne 0) { $script:failed++ }
     } finally {
@@ -78,7 +88,10 @@ if ($Suite -in @('playout', 'all')) {
 }
 if ($Suite -in @('unit', 'all')) {
     $target = if ($Path) { $Path } else { 'tests\unit' }
-    Invoke-Suite 'unit' '.' ((Join-Path $root 'backend\api') + $sep + (Join-Path $root 'backend\shared') + $sep + $root) $target
+    # backend\playout as well: the root unit tests import libretime_playout,
+    # which must come from THIS checkout (a worktree), not from the editable
+    # install that points at C:\RASTATIME.
+    Invoke-Suite 'unit' '.' ((Join-Path $root 'backend\api') + $sep + (Join-Path $root 'backend\shared') + $sep + (Join-Path $root 'backend\playout') + $sep + $root) $target
 }
 
 Remove-Item -Recurse -Force $baseTemp -ErrorAction SilentlyContinue
