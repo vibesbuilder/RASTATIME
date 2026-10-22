@@ -905,6 +905,13 @@ th.library_checkbox {
    the endpoint ignored the search).  While text is set, "X of N podcasts"
    and an "x" sit at the right end of the box, vertically centred, like the
    library's indicator (widgets/table.js sets the input's padding-right). */
+/* RASTATIME 2026-10-22 - 5 px to the toolbar below, like the tracks search
+   (`.rt-jq3 #library_display_wrapper > .dataTables_filter`); the generic
+   `.rt-jq3 .dataTables_wrapper.rt-jq3-widget > .dataTables_filter` rule
+   loses against `#library_content .dataTables_filter { margin: 0 }` above. */
+#library_content #podcast_table_filter {
+    margin: 0 0 5px;
+}
 #library_content #podcast_table_filter .filter-message,
 #library_content #podcast_table_filter .rt-table-filter-clear {
     position: absolute;

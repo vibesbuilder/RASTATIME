@@ -15,7 +15,10 @@
         </dd>
 
         <div id="add_show_playlist_dropdown">
-            <p><?php echo _("Autoloading playlists' contents are added to shows one hour before the show airs. <a target='_blank' href='https://libretime.org/docs/user-manual/playlists/'>More information</a>"); ?></p>
+            <?php /* RASTATIME 2026-10-22 - the explanation ("Autoloading
+                   playlists' contents are added ... More information") is
+                   only in the tooltip of the help icon above (add-show.js);
+                   the paragraph here repeated it below the checkbox. */ ?>
             <dt id="add_show_autoplaylist_id">
                 <label for="add_show_autoplaylist_id" class="required">
                     <?php echo $this->element->getElement('add_show_autoplaylist_id')->getLabel() ?>

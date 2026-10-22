@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Podcasts-Suche mit Abstand, Autoloading-Hinweis nur im Tooltip
+  (2026-10-22, Operator-Meldung)** — (1) Dashboard → Podcasts: zwischen
+  Suchzeile und Knopfleiste lagen 0 px; die allgemeine 5-px-Regel der
+  Tabellen-Suche verlor gegen `#library_content .dataTables_filter
+  { margin: 0 }`.  Jetzt 5 px wie bei Tracks (`dashboard.css`), die
+  Anzeige „X of N podcasts" bleibt mittig.  (2) Kalender → New/Edit Show
+  → Autoloading Playlist: der Hinweis „Autoloading playlists' contents are
+  added … More information" stand im Tooltip und zusätzlich als Absatz
+  unter dem Kästchen (`add-show-autoplaylist.phtml`); der Absatz ist
+  entfernt.  Live im Browser gemessen bzw. geprüft.
 - **Show-Formular: kein Objekt-Dump mehr im `legacy.log` (2026-10-22,
   Operator)** — `AddShowWhat::enableInstanceDesc()` schrieb bei jedem
   Öffnen von „Edit This Instance" das ganze Formularfeld als
