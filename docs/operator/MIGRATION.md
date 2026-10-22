@@ -265,7 +265,7 @@ Follow [`INSTALL.md`](INSTALL.md) §4 step-by-step to install:
   `RABBITMQ_BASE` (e.g. `C:\ProgramData\RabbitMQ`) via
   `rabbitmq-service.bat remove` / `install`, otherwise the LocalSystem
   service can crash on start when the installer ran as a normal user.
-- Apache (Apache Lounge 2.4.x Win64 at `C:\Tools\Apache24`) + PHP 8.3
+- Apache (Apache Lounge 2.4.x Win64 at `C:\Tools\Apache24`) + PHP 8.5
   NTS x64 at `C:\Tools\PHP`
 - Icecast **2.4.4** at `C:\Tools\Icecast` (deliberate — the live
   `icecast.xml` relies on Icecast-2.4 auth semantics; 2.5 replaced them

@@ -42,7 +42,35 @@ festgelegt.  Jeder Punkt bekommt vor Implementierung die
 
 ## 🎯 Aktive Backlog-Items (warten auf Operator-Go)
 
-### 🟢 PHP 8.3 → 8.5 (Operator-Go 2026-10-21, Termin 2026-10-22 als erstes)
+### ✅ PHP 8.3 → 8.5 (Operator-Go 2026-10-21, DONE 2026-10-22)
+
+**Ergebnis 2026-10-22:** PHP **8.5.12** NTS x64 (VS17) live seit 08:52 (Tag
+`live-2026-10-22`).  SHA256 gegen die offizielle Liste geprüft; `php.ini`
+bereinigt (`session.sid_length`/`sid_bits_per_character`/`disable_classes`
+auskommentiert, `opcache.enable=0` - Entscheidung: aus wie bisher);
+Vorproben mit 8.5 bestanden (CLI/CGI ohne Warnung, alle 11 Erweiterungen,
+Lint von 677 Legacy-Dateien ohne Befund, Bootstrap + DB, Show-Formular,
+Smart-Block-Formular, gettext DE, HTTPS).  Tausch: 3 verwaiste php-cgi
+beendet, Ordner umbenannt, Apache-Start in derselben Pause wie
+`SSLUseStapling off`.  Abnahme live: alle php-cgi 8.5.12; Login/REST 401/
+live-info/week-info/Player/Feed wie erwartet; 24 Seiten der Navigation 200;
+event-feed (215 Sendungen), populate-show-form, show-content-dialog,
+builder-feed, Kontextmenü, Metadaten-Editor, Podcast-Suche 200; im Browser
+Dashboard, alle Bibliotheks-Tabs, Kalender, Kontextmenü + „Schedule Tracks",
+Settings/Streams („Connected"), Upload ohne Konsolenfehler; `legacy.log` und
+Apache-Fehlerlogs nach dem Start ohne Fehler, AH02218/AH02604 weg.
+`E_STRICT` aus `airtime-boot.php` / `AirtimeLog.php` entfernt; Propel-DSN
+trägt Benutzer/Passwort nur im DSN (8.4-Vorrangänderung ohne Wirkung).
+Nicht geprüft, weil zustandsändernd: Speichern von Einstellungen, Drag im
+Kalender, Upload einer Datei, manuelles Backup - beim nächsten regulären
+Gebrauch auf neue `ErrorException` achten.  `legacy.log` einige Tage
+beobachten.  Rückfall bleibt `C:\Tools\PHP-8.3.36` (Ordner tauschen +
+Apache neu, ~2 min).  Nebenbefund: `library/get-file-metadata` (kein
+UI-Aufrufer mehr) bricht mit „Undefined array key MDATA_KEY_ARTWORK_DATA"
+ab - unter 8.3 genauso, toter Endpunkt.
+Die verwaisten php-cgi sind als eigenes Item unten weitergeführt.
+
+**Ursprünglicher Plan:**
 
 **Anlass:** PHP2Shell (CVE-2026-109618/-109619, 2026-10-21).  Am 21.10. abends
 auf **8.3.36** aktualisiert (gleiche Linie, reine Sicherheitskorrekturen) - die
@@ -93,6 +121,23 @@ AH02218/AH02604 ("no OCSP URI in certificate") - Let's Encrypt schreibt
 keine OCSP-Adresse mehr ins Zertifikat, Stapling ist damit wirkungslos;
 HTTPS selbst funktioniert.  `httpd -t` vor dem Neustart, danach
 `https-error-*.log` ohne die Meldungen.
+
+### 💡 Verwaiste php-cgi.exe nach Apache-Stopp (neu 2026-10-22)
+
+**Befund:** Nach jedem `nssm stop RASTATIME-APACHE` bleiben php-cgi.exe-Prozesse
+mit totem Elternprozess liegen (21.10.: 10 Stück seit 08.10.; 22.10.: 3).  Sie
+bedienen nichts, halten aber Speicher und Dateisperren auf `C:\Tools\PHP`
+(Ordnertausch scheitert) und die alte `php.ini`.  Ursache: NSSM schickt
+Ctrl+C, der httpd-Kindprozess beendet sich sauber, seine php-cgi-Kinder nicht;
+NSSMs Prozessbaum-Kill (`AppKillProcessTree`, Standard an) läuft über die
+Eltern-PID und findet sie nicht mehr, weil der Elternprozess schon weg ist.
+**Optionen:** (a) NSSM-Hook `AppEvents Stop/Post` + `Start/Pre` mit einem
+kleinen Repo-Skript, das php-cgi.exe aus `C:\Tools\PHP` ohne lebenden
+Elternprozess beendet (deckt Stopp, Neustart und Absturz ab; `nssm set` durch
+den Operator); (b) nur `Start/Pre` (räumt beim nächsten Start auf, Waisen
+leben bis dahin); (c) Aufräumen im nächtlichen Log-Janitor 03:50 (keine
+NSSM-Änderung, Waisen bis zu 24 h); (d) so lassen und nur bei PHP-Updates
+manuell beenden (Stand heute).  Empfehlung (a).  Entscheidung Operator.
 
 ### 🟢 Live-Readiness: RASTATIME dauerhaft auf dieser Maschine (Operator-Entscheidung 2026-10-03)
 

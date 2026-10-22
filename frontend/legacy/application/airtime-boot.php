@@ -16,7 +16,10 @@ ini_set('session.cookie_httponly', '1');
 // & ~E_USER_DEPRECATED`: `&` binds tighter than `|`, so the mask was plain E_ALL
 // and every PHP 8 deprecation of the Zend 1 code went to Apache's error log
 // (~25 MB a day on the HTTPS host).  Parenthesised as intended.
-error_reporting((E_ALL | E_STRICT) & ~E_DEPRECATED & ~E_USER_DEPRECATED);
+// RASTATIME 2026-10-22 (PHP 8.5) - E_STRICT dropped: the constant is
+// deprecated since PHP 8.4 and PHP 8 never raises it (8.4 also took it out
+// of E_ALL), so the mask is unchanged in effect.
+error_reporting(E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED);
 
 function exception_error_handler($errno, $errstr, $errfile, $errline)
 {

@@ -9,6 +9,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **PHP 8.3.36 → 8.5.12 (2026-10-22, Operator-Go 21.10.)** — 8.3 bekommt
+  nur noch bis Ende 2027 Sicherheitskorrekturen, 8.5 bis Ende 2029 (8.4 als
+  Zwischenschritt übersprungen).  Windows-Build NTS x64 (VS17, SHA256
+  geprüft) neben dem alten entpackt, `php.ini` bereinigt
+  (`session.sid_length`/`sid_bits_per_character` ab 8.4 veraltet,
+  `disable_classes` in 8.5 entfernt) und OPcache, in 8.5 immer geladen,
+  bewusst mit `opcache.enable=0` aus gelassen (Legacy-Edits bleiben sofort
+  live).  Vorproben mit 8.5: CLI/CGI ohne Warnung, Lint aller 677
+  Legacy-Dateien, Bootstrap + DB, Show- und Smart-Block-Formular, gettext,
+  HTTPS.  Ordnertausch in einer Apache-Pause von zwei Minuten (3 verwaiste
+  php-cgi beendet), `C:\Tools\PHP-8.3.36` bleibt als Rückfall.  Live: alle
+  24 Navigationsseiten 200, Kalender-Feed, Show-Formular, Bibliothek,
+  Kontextmenüs, „Schedule Tracks", Podcasts, Upload, Streams ohne
+  Konsolenfehler; `legacy.log` und Apache-Logs ohne Fehler.  `E_STRICT`
+  (ab 8.4 veraltet, von PHP 8 nie ausgelöst) aus `airtime-boot.php` und
+  `AirtimeLog.php` entfernt.  INSTALL_APACHE §3.2, INSTALL, COMPONENTS,
+  MIGRATION, CRASH_RECOVERY, SERVICE_TOPOLOGY auf 8.5.
+- **HTTPS: OCSP-Stapling aus (2026-10-22, Operator 21.10.)** — Let's
+  Encrypt schreibt seit der Erneuerung am 18.10. keine OCSP-Adresse mehr
+  ins Zertifikat; Apache meldete bei jedem Start AH02218/AH02604 und
+  stapelte nichts.  `SSLUseStapling off`, `SSLStaplingCache` entfernt
+  (`infra/apache/rastatime-https.conf`); HTTPS unverändert, Meldungen seit
+  dem Start 08:52 weg.
+
 - **RASTATIME-STANDBY auf Liquidsoap 2.4.6 (2026-10-21, Operator)** — nach elf
   Tagen Hauptdienst auf 2.4.6 ohne Auffälligkeiten (sieben planmäßige
   Neustarts, kein Lockout) der Standby per `nssm set … Application/

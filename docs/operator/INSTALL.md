@@ -130,7 +130,7 @@ NSSM (ADR-005) wraps the Python processes as Windows services.
    # Expected: NSSM 2.24 (or later)
    ```
 
-### 2.6 Apache 2.4 + PHP 8.3 (frontend)
+### 2.6 Apache 2.4 + PHP 8.5 (frontend)
 
 The legacy PHP frontend runs on Apache 2.4 with `mod_fcgid` and PHP CGI.
 
@@ -141,11 +141,11 @@ The legacy PHP frontend runs on Apache 2.4 with `mod_fcgid` and PHP CGI.
 
 For the full host setup (binaries, `httpd.conf`, `php.ini`, NSSM wrap),
 see **[INSTALL_APACHE.md](INSTALL_APACHE.md)**.  Production layout:
-Apache Lounge 2.4.x Win64 at `C:\Tools\Apache24`, PHP 8.3 NTS x64 at
+Apache Lounge 2.4.x Win64 at `C:\Tools\Apache24`, PHP 8.5 NTS x64 at
 `C:\Tools\PHP`.
 
 > **Install the latest Visual C++ Redistributable (x64) FIRST.**  The
-> Apache Lounge VS18 build and PHP 8.3 both depend on it — without it
+> Apache Lounge VS18 build and PHP 8.5 both depend on it — without it
 > `httpd.exe` / `php-cgi.exe` exit silently with no error message.
 
 Beyond the base setup in INSTALL_APACHE.md, `httpd.conf` needs:

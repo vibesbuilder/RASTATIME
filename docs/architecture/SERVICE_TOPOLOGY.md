@@ -235,7 +235,7 @@ storage tree and flips `cc_files` from "Pending Import" to "Ready".
 | Depends on | RASTATIME-API (proxies `/api/v2/` + `/api-auth/` to `127.0.0.1:8765`) |
 | Restart on crash | Yes — 5 s delay; bounded stop methods |
 
-PHP 8.3 legacy frontend via mod_fcgid (see INSTALL_APACHE.md).
+PHP 8.5 legacy frontend via mod_fcgid (see INSTALL_APACHE.md).
 
 ### 2.7 RASTATIME-LIQUIDSOAP  *(mandatory — audio engine)*
 

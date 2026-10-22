@@ -18,7 +18,7 @@ Service registration is handled separately by `infra/nssm/install-apache.ps1`.
 
 1. Install the latest **Microsoft Visual C++ Redistributable (x64)**
    first.  The Apache Lounge builds (currently the VS18 build) and
-   PHP 8.3 NTS x64 are linked against it — without it `httpd.exe`
+   PHP 8.5 NTS x64 (VS17 build) are linked against it — without it `httpd.exe`
    and `php-cgi.exe` exit **silently**, with no error message and
    nothing in the logs.
 2. Download Apache 2.4 (Win64) — the [Apache Lounge
@@ -29,7 +29,7 @@ Service registration is handled separately by `infra/nssm/install-apache.ps1`.
 3. Extract to `C:\Tools\Apache24\` (the install scripts assume this
    path; pass `-ApacheRoot` to `install-apache.ps1` if you put it
    elsewhere).
-4. Install PHP 8.3 (Non-Thread-Safe / x64) to `C:\Tools\PHP\`.
+4. Install PHP 8.5 (Non-Thread-Safe / x64) to `C:\Tools\PHP\`.
 
 After extracting, the layout should be:
 
@@ -192,6 +192,25 @@ C:\Tools\PHP\php.exe -r "var_dump((bool) file_get_contents('https://cba.media/')
 
 must print `bool(true)`.  Refresh the bundle about once a year (curl.se
 and certifi publish new ones several times a year).
+
+### 3.2 PHP 8.5 settings
+
+PHP 8.5 (production since 2026-10-22) needs these `php.ini` changes on top
+of the stock `php.ini-production`:
+
+```ini
+; OPcache is always loaded in 8.5.  Keep it off: legacy PHP edits must be
+; live on the next request (no revalidate delay).
+opcache.enable = 0
+; PHP2Shell hardening (CVE-2026-109618/-109619), set 2026-10-21; the legacy
+; uploader does not use upload progress.
+session.upload_progress.enabled = Off
+```
+
+Leave these keys **unset** (comment them out if an older `php.ini` is
+carried over): `session.sid_length` and `session.sid_bits_per_character`
+are deprecated since 8.4 (a deprecation notice at every start), and
+`disable_classes` no longer exists in 8.5.
 
 ## 4. Verify Apache starts cleanly (without registering a service)
 
