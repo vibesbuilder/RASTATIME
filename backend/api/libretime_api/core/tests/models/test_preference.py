@@ -5,7 +5,8 @@ from libretime_api.core.models.preference import Preference
 def test_preference_get_site_preferences(db):
     result = Preference.get_site_preferences()
     assert result.model_dump() == {
-        "station_name": "LibreTime",
+        # RASTATIME 2026-10-03 (ad12764, brand stage A): default station name
+        "station_name": "RASTATIME",
     }
 
 

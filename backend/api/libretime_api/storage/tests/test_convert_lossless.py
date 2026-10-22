@@ -68,6 +68,12 @@ class FakeConverter:
     def is_lossless(probe: FakeProbe) -> bool:
         return probe.codec in ("flac", "alac", "wavpack", "ape", "tta") or probe.codec.startswith("pcm_")
 
+    @staticmethod
+    def is_wma(probe: FakeProbe) -> bool:
+        # RASTATIME 2026-10-21 (5179636): the command also converts Windows
+        # Media Audio; mirrors convert_format.is_wma (WMA_CODECS).
+        return probe.codec.startswith("wma")
+
     def transcode_to_mp3(self, src, dest, tags, *, probe=None):
         self.transcoded.append((Path(src), Path(dest), dict(tags), probe))
         if self.on_transcode is not None:
