@@ -18,7 +18,6 @@ setup(
     package_data={"": ["**/*.liq", "**/*.liq.j2", "*.types"]},
     entry_points={
         "console_scripts": [
-            "libretime-playout=libretime_playout.main:cli",
             "libretime-playout-notify=libretime_playout.notify.main:cli",
         ]
     },

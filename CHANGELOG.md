@@ -190,6 +190,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+- **Totes Upstream-Playout entfernt: `main.py`, `message_handler.py`
+  (2026-10-22, Operator-Go 22.10.)** — Der pypo-Einstieg `main.py` (Console-
+  Script `libretime-playout`) und sein RabbitMQ-Consumer `message_handler.py`
+  (kombu) wurden in RASTATIME nicht mehr erreicht: der Dienst startet
+  `python -m libretime_playout` (`__main__.py`), Sendeplan- und Quellen-
+  Ereignisse kommen über den HTTP-Listener (:8770).  `kombu` war weder
+  installiert noch in `setup.py`, die Module hätten beim Import sofort
+  versagt.  Beide Module, der Console-Script-Eintrag und
+  `message_handler_test.py` entfernt; `PypoFetch`/`PypoPush`
+  (Scheduler) und `StatsCollectorThread` (`__main__.py`) bleiben.
+  `libretime-playout-notify` bleibt.  BASELINE_MODULES / LINUX_INVENTORY
+  als „Removed" markiert.  Kein Dienst betroffen, kein Neustart; das
+  verwaiste `.venv\Scripts\libretime-playout.exe` verschwindet beim
+  nächsten `pip install -e backend/playout`.  Playout-Suite 819 bestanden /
+  2 übersprungen.
 - **„Copy into Repeats" je Track-Typ wieder entfernt (2026-10-18)** — Operator:
   nicht nötig, eine Wiederholung nimmt die Jingles des Originals mit.
   Häkchen in Settings → Track Types, `Tracktype::setRepeatCopy`, die

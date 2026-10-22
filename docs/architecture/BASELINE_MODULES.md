@@ -97,7 +97,7 @@ fully replaced by the libVLC adapter.
 | `history/` | Playout history recording | **Keep + Refactor** — rebind to libVLC events |
 | `notify/` | Notifications on track change | **Keep + Refactor** — rebind to libVLC callbacks |
 | `config.py` | Playout config (includes Liquidsoap paths) | **Replace** — new config for libVLC engine |
-| `message_handler.py` | RabbitMQ message handler | **Keep + Refactor** — broker remains optional |
+| `message_handler.py` | RabbitMQ message handler | **Removed 2026-10-22** — upstream pypo path (`main.py`, console script `libretime-playout`); RASTATIME-PLAYOUT runs `python -m libretime_playout` and takes schedule/source events over its HTTP listener (:8770) |
 
 **Summary:** The entire `liquidsoap/` subtree and `player/liquidsoap.py` are
 deleted and replaced by the libVLC adapter (Phase 4). The schedule fetch,

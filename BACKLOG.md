@@ -5695,10 +5695,13 @@ dazu gewinnt ein vorgesetztes `LIBRETIME_CONFIG_FILEPATH` (Worktrees) und `backe
 (4) API-Suite: `FakeConverter.is_wma` fehlte seit 5179636, zwei Tests erwarteten noch den Stationsnamen
 „LibreTime" (seit ad12764 „RASTATIME").  Soll seit 2026-10-22: api 151, playout 819/3 uebersprungen, unit 739/38.
 
-### 🟡 Totes Upstream-Playout entfernen: `main.py` + `message_handler.py` (RabbitMQ/kombu) - Operator-Entscheidung offen
+### ✅ Totes Upstream-Playout entfernt: `main.py` + `message_handler.py` (RabbitMQ/kombu) - erledigt 2026-10-22 (Go 2026-10-22)
 `libretime_playout/main.py` (pypo-Einstieg, Console-Script `libretime-playout` in `setup.py`) und
 `message_handler.py` (kombu-Consumer der RabbitMQ-Exchange `playout`) werden in RASTATIME nicht mehr erreicht:
 der Dienst startet `python -m libretime_playout` (`__main__.py`), Sendeplan- und Quellen-Ereignisse kommen ueber
 den HTTP-Listener (:8770, §23.70 / Option d).  `kombu` ist weder installiert noch in `setup.py`; `main.py` wuerde
 beim Import sofort scheitern.  Vorschlag: beide Module, den Console-Script-Eintrag und `message_handler_test.py`
 entfernen (~1 h, kein Dienst betroffen, kein Neustart).  Vorbedingung: Operator-Go (Loeschen von Modulen).
+Erledigt 2026-10-22: beide Module, Console-Script `libretime-playout` und `message_handler_test.py` entfernt,
+BASELINE_MODULES/LINUX_INVENTORY markiert.  `PypoFile` hat jetzt keinen Aufrufer mehr ausser seinem Test
+(bewusst stehen gelassen, eigener Punkt bei Bedarf).  Playout-Suite 819 / 2 uebersprungen.

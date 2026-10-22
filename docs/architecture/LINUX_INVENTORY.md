@@ -77,8 +77,8 @@ RASTATIME runs on Windows 11.
 | `backend/playout/libretime_playout/player/fetch.py` | domain | **Refactor** | API fetch logic is engine-agnostic; keep, strip Liquidsoap references |
 | `backend/playout/libretime_playout/player/push.py` | domain | **Refactor** | Now-playing push is engine-agnostic; rebind to libVLC callbacks |
 | `backend/playout/libretime_playout/config.py` | runtime-binding | **Replace** | Config references Liquidsoap paths and settings |
-| `backend/playout/libretime_playout/main.py` | runtime-binding | **Replace** | Entry point spawns Liquidsoap |
-| `backend/playout/libretime_playout/message_handler.py` | domain | **Refactor** | RabbitMQ handler logic is portable; strip Liquidsoap-specific dispatch |
+| `backend/playout/libretime_playout/main.py` | runtime-binding | **Removed 2026-10-22** | Upstream pypo entry point (console script `libretime-playout`); the service runs `python -m libretime_playout` (`__main__.py`) |
+| `backend/playout/libretime_playout/message_handler.py` | domain | **Removed 2026-10-22** | upstream pypo RabbitMQ consumer, unreachable since the HTTP listener; deleted together with `main.py` |
 | `backend/playout/libretime_playout/notify/main.py` | domain | **Refactor** | Notification logic portable; rebind to libVLC events |
 | `backend/playout/tests/liquidsoap/` | runtime-binding | **Replace** | All Liquidsoap-specific tests; replaced by libVLC adapter tests |
 | `backend/playout/tests/player/liquidsoap_test.py` | runtime-binding | **Replace** | Tests for Liquidsoap player bridge |
@@ -235,7 +235,7 @@ RASTATIME runs on Windows 11.
 | File / Path | Line | Signal | Category | Disposition | Notes |
 |---|---|---|---|---|---|
 | `backend/analyzer/libretime_analyzer/message_listener.py` | 34 | `signal.SIGTERM` | posix-signal | **Review** | `signal.SIGTERM` is available in Python on Windows. However, signal handlers must be installed from the main thread. Verify thread context at startup. Low risk. |
-| `backend/playout/libretime_playout/message_handler.py` | 99 | `signal.SIGTERM` | posix-signal | **Review** | Same situation. This file is part of the playout replacement (Phase 4) so it will be rewritten anyway. |
+| `backend/playout/libretime_playout/message_handler.py` | 99 | `signal.SIGTERM` | posix-signal | **Removed 2026-10-22** | File deleted (upstream pypo RabbitMQ path, see `main.py`). |
 
 **Note:** `signal.SIGHUP` does NOT exist on Windows. No `SIGHUP` usage found in application code — confirmed safe.
 
