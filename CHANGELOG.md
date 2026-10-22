@@ -25,7 +25,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   unterdrückte Warnung nach dem WARN (`error_clear_last()`), damit sie nicht
   zusätzlich als ERR im Shutdown-Log landet.  (3) ist sofort live, (1) und
   (2) nach dem nächsten PLAYOUT-Neustart.  Tests: Paket-Suite 819 bestanden
-  (+7).
+  (+7).  Live seit dem PLAYOUT-Neustart 11:16 (Operator): Antwort in 1,5 ms,
+  Abruf 1,9-3,0 s statt 5,1 s davor (Fenster inzwischen 36 Zeilen), Probe
+  „Climate Corner" verkürzt und verschoben ohne WARN/ERR.
 
 - **PHP 8.3.36 → 8.5.12 (2026-10-22, Operator-Go 21.10.)** — 8.3 bekommt
   nur noch bis Ende 2027 Sicherheitskorrekturen, 8.5 bis Ende 2029 (8.4 als

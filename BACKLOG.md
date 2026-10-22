@@ -211,7 +211,17 @@ bediente Anfrage, Shutdown-Zeilen, Waisen; danach Dienst entfernen.  Aufwand
 ~1-1,5 h.  Nutzen klein (Apache-Neustarts selten und gewollt, Waisen räumt
 RASTATIME-PhpCgiReaper ab).
 
-### 🟢 PHP → Playout-Benachrichtigung läuft in den 2-s-Timeout (neu 2026-10-22, Operator-Go 1 + 2 + 3, gebaut 2026-10-22)
+### ✅ PHP → Playout-Benachrichtigung läuft in den 2-s-Timeout (neu 2026-10-22, Operator-Go 1 + 2 + 3, DONE 2026-10-22)
+
+**Abnahme 2026-10-22:** PLAYOUT-Neustart 11:16:37 durch den Operator (aktivierte
+auch `bb86f84`; `rastatime.liq` hatte sich geändert → geplanter
+Liquidsoap-Neustart an der Titelgrenze, 4,9 s, Einstieg bei +112,8 s).
+`/reload-schedule` antwortet in 1,5 ms; drei schnelle Aufrufe → zwei Refreshes
+(„queued behind the running refresh").  Abruf im Playout 1,9-3,0 s statt
+5,1 s direkt vor dem Neustart (das Fenster wuchs bis Mittag auf 36 Zeilen /
+6 Instanzen: neuer Code ~2 s / 50 Anfragen, alter 4,6 s / 109).  Operator-Probe
+„Climate Corner" 15 min kürzer + 15 min verschoben (11:25:27, 11:26:02): zwei
+Reloads, „refresh done in 2,52 / 2,73 s", kein WARN/ERR im `legacy.log`.
 
 **Ergebnis:** Ursache gemessen: `get_schedule` holte je Zeile Instanz und
 Sendung einzeln (30 Zeilen aus 5 Instanzen = 91 API-Anfragen, 3,6 s; seit dem
