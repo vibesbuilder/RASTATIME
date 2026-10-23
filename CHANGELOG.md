@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Clip-Länge).  Das Feld `length` des Sendeplan-Feeds der Widgets
   (`ApiController`, gleiche Abfrage) folgt.  Live geprüft an BBC News
   15:00: „Intro BBC News" 5.9 statt 6.0.  Manual CALENDAR (View-Zeile)
-  in EN/DE/FR/ES.  Commit folgt.
+  in EN/DE/FR/ES.  Commit 27e9afe.
 - **Kalender: eigenes Icon für den Kontextmenü-Eintrag „Teasers" (2026-10-23,
   Operator)** — der Eintrag teilte sich das Auge von „View".  Neues
   16-px-Megafon als SVG (`css/images/icon_teaser_cm.svg`, #333 wie die
