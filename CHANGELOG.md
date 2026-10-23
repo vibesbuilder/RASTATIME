@@ -31,7 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Speichern schreibt Minuten-Zeilen); Block-Editor live geprüft (Block 121
   zeigt 60).  Hinweis: spät am Tag kann der „fits today"-Pool nur einen
   Teaser enthalten, dann bleibt der zweite Block leer statt zu
-  wiederholen.  Architektur §23.21 Addendum (0.86).  Commit folgt.
+  wiederholen.  Architektur §23.21 Addendum (0.86).  Commit 576b1fa.
 - **Kalender → View: „Length" je Zeile ist die Zeilenlänge (2026-10-23,
   Operator-Go)** — die Spalte zeigte die Rohlänge des Mediums (volle
   Dateilänge, Webstream-/Line-In-Länge), neben cue- und
