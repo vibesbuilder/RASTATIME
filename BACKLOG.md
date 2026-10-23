@@ -5640,6 +5640,27 @@ werden zu Cue-Scheiben der Aufnahme, Original ohne Zeilen = ganze Aufnahme, Wart
 Löschsperre fuer die Aufnahme, Scheduler uebernimmt explizite Cue-Werte.  Proben repeat2_probe.php +
 repeat2_e2e_probe.php bestanden.  OFFEN: Abnahme des Operators mit „Listen Up Test" → „Listen Up WH".
 
+### 🔴 Wiederholung von Sendung: DJ-per-Harbor-Anteile als Cue-Scheiben der Aufnahme - HOLD (Operator: kein Go 2026-10-23)
+
+Offener Rest von Stufe 2: Line-In- und Webstream-Zeilen werden seit 2026-10-20/21
+durch Cue-Scheiben der Aufnahme ersetzt, ein per Harbor verbundener DJ aber
+nicht.  Der Sendeplan weiss nicht, ob ein DJ verbunden war (Fallback-Playlist
+steht als normale Zeilen drin, der Quellen-Umschalter blendet den DJ darueber);
+cc_live_log wird seit der Liquidsoap-Umstellung (Mai 2026) nicht mehr
+geschrieben, Harbor-Ereignisse stehen nur im Playout-Log.  Folge heute: eine
+DJ-Sendung mit Fallback-Playlist wird als Zeilenkopie wiederholt (Playlist
+statt DJ); nur ein Original ganz ohne Zeilen bekommt die ganze Aufnahme.
+
+Vorschlag (2026-10-19, kein Go): Playout schreibt jedes Harbor-Ereignis
+(Master/Show, an/aus, Zeitstempel) in die DB (cc_live_log existiert, ~80
+Zeilen); beim Befuellen gelten Line-In-Zeilen, Webstream-Zeilen und DJ-
+Zeitraeume gleichermassen als Live-Bereiche -> Cue-Scheiben, von einem DJ ganz
+ueberdeckte Playlist-Zeilen fallen weg, angeschnittene werden gekuerzt; kam
+kein DJ, bleibt es die Zeilenkopie.  Nur die Verbindung zaehlt, nicht die
+Konfiguration "DJ erlaubt".  Aufwand ~100-150 Zeilen Playout + Legacy.
+Operator 2026-10-23: kein Go, in den Backlog.  Wiederaufnahme nur auf
+Operator-Wunsch; Vorbedingung dann: Harbor-Ereignisse persistent (Punkt 1 oben).
+
 ## Operator-Punkte 2026-10-19 (Kalender, Library-Ordner, Sekundaerfarbe, WebP)
 
 ### ✅ Kalender: Wochentag-Vorauswahl bei „Repeats" + Breite nach „Edit Show" - gebaut 2026-10-19
