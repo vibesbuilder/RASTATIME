@@ -61,7 +61,7 @@ class Application_Service_CalendarService
                 // RASTATIME 2026-10-16 - teaser automation stage 2
                 $menu['teasers'] = [
                     'name' => _('Teasers'),
-                    'icon' => 'overview',
+                    'icon' => 'teaser',
                     'url' => $baseUrl . 'schedule/teaser-dialog',
                 ];
             }
@@ -95,7 +95,7 @@ class Application_Service_CalendarService
                 // that announce this show, link / unlink / retype in place
                 $menu['teasers'] = [
                     'name' => _('Teasers'),
-                    'icon' => 'overview',
+                    'icon' => 'teaser',
                     'url' => $baseUrl . 'schedule/teaser-dialog',
                 ];
             }

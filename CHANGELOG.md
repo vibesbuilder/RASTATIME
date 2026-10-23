@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Kalender: eigenes Icon für den Kontextmenü-Eintrag „Teasers" (2026-10-23,
+  Operator)** — der Eintrag teilte sich das Auge von „View".  Neues
+  16-px-Megafon als SVG (`css/images/icon_teaser_cm.svg`, #333 wie die
+  übrigen Menü-Icons), Regel `.context-menu-item.icon-teaser` in
+  `jquery.contextMenu.css`, beide Menüzweige in `CalendarService` auf
+  `'icon' => 'teaser'`.  Im Kalender live geprüft (Chrome, Menü einer
+  vergangenen Sendung).
+
 ### Fixed
 
 - **Podcast-Editor: „wird geladen"-Symbol während des Episoden-Downloads

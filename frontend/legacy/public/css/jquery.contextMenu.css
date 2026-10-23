@@ -120,6 +120,8 @@
 .context-menu-item.icon-add-remove-content { background-image: url(images/icon_add_content_cm.png); }
 .context-menu-item.icon-remove-all-content { background-image: url(images/icon_remove_all_content_cm.png); }
 .context-menu-item.icon-error { background-image: url(images/icon_alert_cal_alt.png); }
+/* RASTATIME 2026-10-23 - calendar "Teasers" entry (operator wanted its own icon, not the "View" eye) */
+.context-menu-item.icon-teaser { background-image: url(images/icon_teaser_cm.svg); background-size: 16px 16px; }
 
 /* vertically align inside labels */
 .context-menu-input > label > * { vertical-align: top; }
