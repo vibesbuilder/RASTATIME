@@ -64,7 +64,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (Session bleibt Rückfall).  Live reproduziert und geprüft: Session auf
   Playlist 626, Aktion für Playlist 60 mit deren Stempel → vorher „older
   version of BBC News 19h", jetzt OK.  Nach dem Deploy Seite neu laden
-  (JS).  Commit folgt.
+  (JS).  Commit 96031b0.
 - **Cue-/Webstream-Längen-Nachführung ließ `time_filled` stehen (2026-10-23)**
   — `CuePoints::relayoutInstances` legt die Zeilen der künftigen Sendungen
   neu aus (`calculateCrossfades`), aktualisierte aber
