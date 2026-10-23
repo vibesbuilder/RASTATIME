@@ -8,6 +8,7 @@
 > - 🟡 **DEFER** — empfohlen aber zu späterem Zeitpunkt (oder mit Vorbedingungen)
 > - 🔴 **HOLD** — nicht empfohlen oder grundsätzliche Vorklärung nötig
 > - 💡 **IDEA** — Future-Idee, noch nicht evaluiert
+> - ✅ **DONE** — gebaut und abgenommen; bleibt als Beleg stehen (Datum + Commit in der Überschrift)
 
 ---
 
@@ -37,6 +38,44 @@ festgelegt.  Jeder Punkt bekommt vor Implementierung die
 | 15 | ✅ Legacy-mpv-Code löschen | **DONE 2026-09-10** — Liquidsoap ist die einzige Engine, DJ-Kick per Harbor-Telnet (`2590cf2`) |
 | 16 | ✅ Internet-Erreichbarkeit via HTTPS | **LIVE 2026-10-06** — Weg A, `https://radio.example.org` (Let's Encrypt, win-acme), Stream über `/stream/`, DJ-Einwahl :8001; Runbook GO_LIVE_HTTPS |
 | 17 | ✅ **Live-Readiness** (Operator 2026-10-03, **komplett 2026-10-06**) | siehe Item „Live-Readiness" unten — Reihenfolge: 17a Windows-Härtung → 17b Entwicklungsregeln → DJ-Login-Abnahme, Line-In-Feeder-Latenz, Internet-Erreichbarkeit (16), Testplan (14) → 17c Passwörter zuletzt |
+
+---
+
+## 🚦 Stand vor dem Live-Betrieb (Aufräum-Durchgang 2026-10-23, Operator-Go)
+
+Alles, was unten noch nicht ✅ ist, in einer Liste.  Reihenfolge der
+nächsten Schritte vom Operator am 2026-10-23 festgelegt: **3 → 4 → 5,
+dann 2 → 1, danach nach Bedarf**.
+
+| # | Punkt | Status | Sektion / Notiz |
+|---|-------|--------|-----------------|
+| 1 | Datenbank-Passwort rotieren (Klartext im Apache-error_log vom 04.10.) | 🟡 Defer, Wartungsfenster mit frischem Backup | „Datenbank-Passwort rotieren" |
+| 2 | Statisches Harbor-Rückfall-Passwort in libretime.conf ersetzen | 💡 seit 2026-09-10 | „Statisches Harbor-Rückfall-Passwort" |
+| 3 | Windows-Updates Oktober 2026 + Lenovo-Firmware im Wartungsfenster | 🟡 Defer, Empfehlung Go nach dem 03:30-Backup | „Windows-Updates Oktober 2026" |
+| 4 | Stereo Tool: Stream-Messung mit dem R128-Preset (−23 LUFS / −1 dBTP am fertigen Stream) | offen, ~15 min ffmpeg | „Ausgangs-Processing mit Stereo Tool" |
+| 5 | Line-In: Live-Abnahme des frischen `input.http` je Slot (685dc17, 2026-10-21) | offen, eine Line-In-Show nach PLAYOUT-Neustart | Memory linein_abnahme_stand |
+| – | Zeitumstellung Nacht 24./25.10.: Show 1242 Electronic Evening 00:00–05:00 beobachten | Checkliste bereit | Memory reminder_dst_night |
+
+**Defer mit Vorbedingungen (Operator-Entscheidung, nichts drängt):**
+Geordneter Apache-Stopp Option B · Marke „libretime" → „rastatime" Stufe B ·
+Liquidsoap-Upgrade gegen das `Unix.select`-Leck · Icecast 2.4.4 → 2.5.0 ·
+Benutzergruppen-Audit · Stream-Metadaten „nicht weitergeben" · Legacy-PHPUnit ·
+Sekundärfarbe · Show-Logos als WebP (~1 h) · Rückgängig nach Löschen ·
+Metadaten Energy/Tempo/Key/Timbre (Bench liegt vor) · JavaScript-Build-Pipeline ·
+Payware/Tier-System 🔴 Hold.
+
+**Ideen, nur notiert:** Spalten je Medientyp („klingt gut", Go offen, ~1 Tag) ·
+Import/Export Stufe 2 · Backup: Recordings in den Medienspiegel · Medienspiegel
+auf derselben Platte D: · Podcast-Downloads umgehen den Analyzer · MP3-Stream-
+Ausgang 48 kHz bei 44,1-kHz-Mix · Line-In-Gain live nachregeln · Kanalwahl im
+Schnell-Editor · Speicherzuwachs Liquidsoap · Traffic Alerts Deadline-Skip ·
+Expiry in M4A · bulk_import-Erweiterungsliste · die unbewerteten Ideen unter
+„Future Feature Ideas".
+
+**Aufräumposten außerhalb des Backlogs:** Zombie-Ordner
+`C:\Tools\liquidsoap-2.4.6` nach dem nächsten Reboot löschen · Composer-Audit
+(phpseclib / symfony-yaml) · Bench-Umgebung librosa unter `C:/Temp/optd` bleibt
+(Operator 2026-10-21).
 
 ---
 
@@ -252,7 +291,9 @@ seit dem 19.10. 2,7-5 s braucht (Kalenderumfang? Wiederholungs-Kopien?),
 ob die ERR-Zeile aus dem `@`-unterdrückten Aufruf überhaupt ins Log gehört.
 Evaluierung vor Umbau.
 
-### 🟢 Live-Readiness: RASTATIME dauerhaft auf dieser Maschine (Operator-Entscheidung 2026-10-03)
+### ✅ Live-Readiness: RASTATIME dauerhaft auf dieser Maschine (Operator-Entscheidung 2026-10-03, KOMPLETT 2026-10-06)
+
+**Stand 2026-10-23 (Aufräum-Durchgang):** 17a Windows-Härtung, 17b Live-Regeln, DJ-Login, HTTPS (Weg A, 2026-10-06), Brute-Force-Schutz (a)(b)(c) und Testplan sind abgenommen; siehe Arbeitsreihenfolge Punkt 17.  Offen nur noch die Punkte der Tabelle „Stand vor dem Live-Betrieb".
 
 **Entscheidung:** Keine Neuinstallation.  Befund 2026-10-03: alle zehn Dienste
 laufen mit Starttyp Automatisch (kommen nach Stromausfall ohne Anmeldung hoch),
@@ -409,7 +450,9 @@ Entscheidung bei Fälligkeit.
 
 ---
 
-### 🟢 Ausgangs-Processing mit Stereo Tool, optional (Operator-Entscheidung C 2026-10-02 — gebaut, Live-Prüfung mit Bibliothek + Lizenz offen)
+### ✅ Ausgangs-Processing mit Stereo Tool, optional (Operator-Entscheidung C 2026-10-02 — LIVE seit 2026-10-02 17:20, Preset `8565bfa` 2026-10-21)
+
+**Stand 2026-10-23 (Aufräum-Durchgang):** Lizenz eingetragen, Repo-Preset „R128 transparent" (`config/stereotool/rastatime-r128-transparent.sts`, nur True-Peak-Limiter −1 dBTP, kein AGC) gebaut und vom Operator eingetragen (2026-10-21).  **Offen:** Messung des fertigen Streams mit dem Preset (Punkt 4 der Live-Tabelle).
 
 **Anlass:** Distributionspartner brauchen einen R128-konformen Stream unabhängig von der Quelle; Stufe 1
 normalisiert nur Dateien, DJ-Zuspielungen bleiben ungeregelt.  Optionen waren A Live-Regler (normalize lufs),
@@ -1044,7 +1087,9 @@ gleicher Stream → gleicher Stream als Übergabe.  Zuvor: Sendeausfall
 19:26–19:35 durch Typfehler bei den DJ-Armen (`acdde5c`), Lehre
 „Prüf-Render in Produktionsform".
 
-### 🟢 Cloud-Stream-Aussetzer — Ursache gefunden, Webstream-Wächter gebaut 2026-09-06 (`405b200`), Live-Abnahme 2026-09-07 offen
+### ✅ Cloud-Stream-Aussetzer — Ursache gefunden, Webstream-Wächter gebaut 2026-09-06 (`405b200`), abgenommen 2026-09-08 mit Plan A (`1eb8713`)
+
+**Stand 2026-10-23 (Aufräum-Durchgang):** Wächter plus frische `input.http`-Quelle je Slot (Plan A) seit 2026-09-08 live bestätigt (12:07, Phase E, 17:07, Stall-Test 22:20); Zombie-Eingänge räumt der Reaper ab.  Plan B (Harbor-Relais) bleibt Reserve.
 
 **Beobachtung 2026-09-04 20:07:** Die einzige vorgewärmte Cloud-
 Verbindung des Abends (`cloud.example.org:3001`, Prepare 20:06:50,
@@ -1311,7 +1356,9 @@ Nicht monoton, kein Quellen-Leck.  Fix: `settings.clock.leak_warning := 200`
 im Template — umgesetzt 2026-09-05 (`462d684`).  **Das echte
 Speicherleck ist ein anderes** — siehe nächster Eintrag.
 
-### 🟢 Liquidsoap-Windows-Speicherleck: ~5 KB pro `Unix.select` — Milderung umgesetzt 2026-09-05 (`462d684`, `1dbeb71`), Upstream offen
+### ✅ Liquidsoap-Windows-Speicherleck: ~5 KB pro `Unix.select` — Milderung umgesetzt 2026-09-05 (`462d684`, `1dbeb71`), geschlossen 2026-09-15 (7-Tage-Neustart)
+
+**Stand 2026-10-23 (Aufräum-Durchgang):** Speicherwoche ausgewertet (≈ 8,5 MB/h Leerlauf), `RASTATIME_LIQUIDSOAP_RESTART_EVERY_DAYS=7` seit 2026-09-15; Liquidsoap 2.4.6 seit 2026-10-21 auf Haupt- und Standby-Dienst.  Die echte Heilung (Upstream-Fix) steht als 🟡 im nächsten Item.
 
 **Befund 2026-09-05:** Die Live-Instanz (Start 11:15:27) wuchs auf
 3,2 GB um 13:11 (Mittel 0,46 MB/s; 0,15 MB/s im Leerlauf, bis
@@ -1447,7 +1494,7 @@ Neustart alle ~7 Tage, Standby-Fallback).
 - Wartungsfenster mit Rückweg (alte `liquidsoap.exe` behalten; NSSM-
   Pfad umschalten).
 
-### 🟢 Liquidsoap-Leck: Kosten pro Telnet-Kommando — Poll-Design (neu 2026-09-07, abgeschlossen 2026-09-09)
+### ✅ Liquidsoap-Leck: Kosten pro Telnet-Kommando — Poll-Design (neu 2026-09-07, abgeschlossen 2026-09-09; Scheduler-Poll-Rückfall entfernt 2026-09-15)
 
 **Messung 2026-09-07 an der Produktionsinstanz (nichts auf Sendung):**
 jede Telnet-**Verbindung** +262 KB, jedes **Kommando** über eine offene
@@ -1526,7 +1573,9 @@ Instanz die weiche Grenze 1536 MB nach ~4 Tagen, bei ~8 MB/h nach
 ~8 Tagen → 7 Tage realistisch, 30 nicht (harte Grenze 3072 MB nach
 ~15 Tagen).
 
-### 🟢 24/7-Programm: geplanter Neustart an der Titelgrenze + Standby-Fallback (2026-09-09, Go a+b)
+### ✅ 24/7-Programm: geplanter Neustart an der Titelgrenze + Standby-Fallback (2026-09-09, Go a+b — in Betrieb seit 2026-09-15, Aufhol-Seek `56e6dc5` 2026-10-02)
+
+**Stand 2026-10-23 (Aufräum-Durchgang):** Intervall 7 Tage, Speicher-Auslöser 1536/3072 MB, Einstellungs-Neustart per Fingerprint (`6be216a`), RASTATIME-STANDBY mit Liquidsoap 2.4.6; Go-Live-Block 3 (`a8d87f1`) erledigt.
 
 **Befund:** Mit durchgehendem Programm (normal bei Example Radio, um 04:00
 läuft eine Playlist) fand der Nacht-Neustart nie einen ruhigen Moment
@@ -1689,7 +1738,7 @@ Kriterien „ruhig": keine Wächter-Reconnects außer echten Stalls,
 `reaped=0` außerhalb von Stall-Tests, alle Starts 1–4 s, Nacht-Neustart
 täglich sauber.  Operator wird ab dem 15.09. erinnert.
 
-### 🟢 Webstream-Eingang: frische Quelle pro Slot (Plan A, 2026-09-08)
+### ✅ Webstream-Eingang: frische Quelle pro Slot (Plan A, 2026-09-08, `1eb8713`, live bestätigt 2026-09-08)
 
 **Befund 2026-09-08:** Live-Stall-Test (DEVA zweimal stromlos) erholte
 sich wie gebaut (11 s bzw. Ausfalldauer + 5 s), aber Phase D danach:
@@ -1763,7 +1812,7 @@ neu kodieren oder in Liquidsoap `audio_to_stereo`/Decoder-Settings
 prüfen; danach Library auf weitere Dateien mit demselben Layout
 scannen (Preflight-Kandidat: „Datei nicht dekodierbar").
 
-### 🟢 PortAudio-Geräteindex instabil → `device_name` statt `device_id` — umgesetzt 2026-09-05 (`1dbeb71`)
+### ✅ PortAudio-Geräteindex instabil → `device_name` statt `device_id` — umgesetzt 2026-09-05 (`1dbeb71`), gehärtet 2026-09-07 (`e66e675`) und 2026-09-14 (`9b0aa3e`)
 
 **Befund:** Der Index desselben Tascam-WASAPI-Endpunkts war 11:15 = 14,
 12:10 = 18, 12:33 = 15 (sounddevice und Liquidsoaps PortAudio stimmen
@@ -1878,9 +1927,11 @@ enden entsprechend früher (Studio-Praxis, im Manual dokumentieren).
 Nicht empfohlen: „Drain" am Slot-Ende (Quelle L Sekunden länger halten)
 — verschiebt jedes Folgeelement um L, Jingles/Stundenwechsel unpünktlich.
 
-### 💡 Testplan erstellen (neu 2026-09-02, Reihenfolge-Punkt 14)
+### ✅ Testplan erstellen (neu 2026-09-02, Reihenfolge-Punkt 14, DONE 2026-10-06)
 
-**Status:** Idea — Operator-Wunsch 2026-09-02, Umfang noch zu klären.
+**Stand 2026-10-23 (Aufräum-Durchgang):** `docs/operator/TEST_PLAN.md` (Abnahme-Checkliste A1–A6, Restore-Probe A6.2 `facab94`), `scripts/run_tests.ps1` für die drei Suiten (`8a974a7`); Soll seit 2026-10-22: unit 739/38, playout 819/3, api 151.
+
+**Status (alt):** Idea — Operator-Wunsch 2026-09-02, Umfang noch zu klären.
 **Kontext:** Bisher wird punktuell getestet (pytest-Suiten für
 playout/audio/api, plus manuelle Live-Verifikation nach UI-Commits
 laut ASSISTANT.local.md).  Was fehlt, ist ein **zusammenhängender,
@@ -2366,7 +2417,7 @@ C (echter Restore) hoch — daher bewusst ausgeklammert.
 **Randnotiz:** Tote `cc_backup`-Tabelle (Airtime-Erbe) nicht wiederverwendbar;
 kann mit dem Storage-Cleanup mitentfernt werden.
 
-### 🟢 Show-Shift: nachfolgende Show schiebt sich bei Overbook
+### ✅ Show-Shift: nachfolgende Show schiebt sich bei Overbook (seit 2026-06-15 live, Filler-Erweiterung `b7d2890` 2026-09-27, zwei Live-Proben bestanden)
 
 **Statusberichtigung 2026-09-23 (Punkt-5-Aufnahme):** Die Funktion ist seit
 2026-06-15 KOMPLETT GEBAUT und LIVE — Stufe B: `ShowShiftService` (Kaskade
@@ -2605,7 +2656,7 @@ Cutover erst nach 1–2 Wochen A/B-Vergleich.
 - Tail-Flush-Wait (Commits cb20df6 + 952ec3b, obsolet weil
   Liquidsoap gapless macht)
 
-### 🟡 Storage-Struktur-Bereinigung (Root → D:\stor + owner-id weg)
+### ✅ Storage-Struktur-Bereinigung (Root → D:\stor + owner-id weg) — DONE 2026-09-16 (`6059dc4`, `c0b3c70`, Umzug abgenommen 09:43)
 
 **Status:** 🟢 **ENTBLOCKT 2026-09-02** — die zusätzliche Festplatte ist
 geliefert (Operator-Meldung 2026-09-02); als Reihenfolge-Punkt 7
@@ -3139,7 +3190,9 @@ Content: HTTPS-Website blockt HTTP-Stream → auch Icecast hinter TLS).
 PostgreSQL/RabbitMQ niemals forwarden. Bei Interesse formale Evaluierung
 nach Konvention (6 Punkte).
 
-### 🟢 Login-Brute-Force-Schutz für die öffentliche UI (notiert 2026-10-06, (a)+(b) gebaut 2026-10-06)
+### ✅ Login-Brute-Force-Schutz für die öffentliche UI (notiert 2026-10-06, (a)(b)(c) gebaut und abgenommen 2026-10-06, `7bb67a7`)
+
+**Stand 2026-10-23 (Aufräum-Durchgang):** Neustarts und Aufgabe „RASTATIME-FirewallWatch" sind erledigt (Live-Readiness komplett 2026-10-06).  Später 2FA/Allowlist bleibt 💡.
 
 **Stand 2026-10-06:** (a) Web-Login je Adresse 10/15/15 hart, je Benutzer 20/60/5 weich
 (429 + Retry-After, Migration 0064) und (b) Harbor-Drossel 5/10/15 im Playout gebaut,
@@ -3203,9 +3256,9 @@ Title-Updates.
 input.http hat `on_metadata` callback → könnte via Liquidsoap-Script
 in Bus-metadata gepumpt werden. Aufwand: ~50-100 LoC Template + Test.
 
-### 🟢 Widgets — drei Wellen
+### ✅ Widgets — drei Wellen (DONE 2026-09-18, alle 15 Embed-Endpoints live verifiziert)
 
-**Status:** Go in Wellen statt Big-Bang.  In Arbeit.
+**Status:** Go in Wellen statt Big-Bang — alle drei Wellen plus Player v2 geliefert (Arbeitsreihenfolge Punkt 12).
 **Evaluiert:** 2026-05-22.
 **Operator-Wert:** Hoch — Widgets sind die Public-Face der Station.
 **Risiko Live-Betrieb:** Niedrig (isoliert vom Stream).
@@ -3385,7 +3438,7 @@ keine Migration nötig — nur ein Konstanten-Bump.
 
 ## 🛠️ Technical Debt / Refactor-Backlog
 
-### 🟡 JavaScript-Stack-Modernisierung (Hybrid/Vanilla-First — Re-Eval 2026-05-31)
+### 🟡 JavaScript-Stack-Modernisierung (Hybrid/Vanilla-First — Re-Eval 2026-05-31; Kern ✅ 2026-09-17, Rest = optionale Build-Pipeline, Defer)
 
 **Status: Kern ABGESCHLOSSEN 2026-09-17** (Bewährungs-Signal des Operators
 für jq3 + FC6 nach drei ruhigen Monaten; Abschluss-Block: dataTransfer-Fix
@@ -3743,7 +3796,9 @@ Sowohl Menü-Ebene als auch Einzelfeld-Ebene gewünscht.
 
 ## 💡 Future Feature Ideas (nicht evaluiert, nur notiert)
 
-### 💡 Bibliotheks-Knopf „Tags und Cover aus Datei neu einlesen" (notiert 2026-10-08)
+### ✅ Bibliotheks-Knopf „Tags und Cover aus Datei neu einlesen" (notiert 2026-10-08) — als „Re-read Tags" gebaut 2026-10-21 (`08a4b9f`, §23.69)
+
+**Stand 2026-10-23 (Aufräum-Durchgang):** Knopf liest die Tag-Spalten und Dateiwerte (md5, Größe, Bitrate) neu; das eingebettete Cover wird dabei **nicht** neu gelesen (nicht gewünscht gewesen; bei Bedarf eigener Punkt).
 
 **Status:** 💡 Idee aus der Evaluierung „Metadaten/Covers" 2026-10-08.
 Operator-Entscheidung: Massenbearbeitung der Metadaten in RASTATIME (gebaut),
@@ -3848,7 +3903,7 @@ es innerhalb der Show beim heutigen Überlapp ohne Fades, und entfällt die
 bei Line-In/Webstream-Showwechseln; (4) Startwert des neuen Feldes (1,0 s
 = heutiger Standard).
 
-### 🟢 Mid-Show Song Requests (echtes Just-in-time) — GO 2026-06-16
+### ✅ Mid-Show Song Requests (echtes Just-in-time) — GO 2026-06-16, Kern geliefert 2026-06-16
 
 **Status:** 🟢 Go (Operator 2026-06-16).  Variante **(a) inkrementell entlang
 der Dramaturgie** gewählt.
@@ -3875,13 +3930,13 @@ Push zur Startzeit); `fillRequestShows` erfasst bereits laufende Instanzen.
 §5/FAQ "late requests" dreht sich um, 4 Sprachen).  ~1–2 Tage.
 **Risiko Live-Betrieb:** Niedrig (Frontend, kein Playout-Eingriff).
 
-### 🟢 Traffic Alerts (kurzfristige MP3, max. 10 min bis Ausstrahlung) — T1+T2 GELIEFERT 2026-06-16
+### ✅ Traffic Alerts (kurzfristige MP3, max. 10 min bis Ausstrahlung) — T1+T2 geliefert 2026-06-16, T4 Doku `b0a117c` 2026-06-16; Deadline-Skip bleibt 🟡
 
 **Status:** 🟢 Kern geliefert 2026-06-16 — T1 Settings-Picker (`96b5f30`) +
 T2 inkrementeller Fill (`e0c7873`).  **Design-Pivot** gegenüber der
 ursprünglichen Go-Entscheidung (siehe unten).  🟡 **Deadline-Skip deferred**
 (Operator wählte 2026-06-16 Dramaturgie-Dichte statt aktivem Skip).
-🟢 **T4 Doku** noch offen (Verifikation + Manual-Kapitel 4 Sprachen + i18n +
+✅ **T4 Doku** geliefert 2026-06-16 (`b0a117c`: Manual-Kapitel 4 Sprachen + i18n +
 CHANGELOG + ARCHITECTURE).
 **Operator-Wert:** Hoch — hartes Betriebs-Requirement mit klarer 10-min-SLA.
 
@@ -5154,13 +5209,13 @@ cdbX64.exe -z <dump> -y "srv*C:\Temp\symbols*https://msdl.microsoft.com/download
 
 ## 📊 Wartungs-Metrik
 
-| | Stand 2026-05-22 |
-|---|---|
-| Aktive Backlog-Items | 3 (Show-Shift, Record-per-Hour, Widgets — Welle 1 erste Hälfte fertig) |
-| Deferred Items | 1 (JS-Modernisierung) |
-| Hold Items | 1 (Payware) |
-| Future Ideas | 13 |
-| Known Bugs | 0 (RASTATIME-Code) + 1 Host-Hardware-Issue (Stand 2026-05-26, Mitigationen in Verifikation) |
+| | Stand 2026-05-22 | Stand 2026-10-23 (Aufräum-Durchgang) |
+|---|---|---|
+| Aktive Backlog-Items | 3 (Show-Shift, Record-per-Hour, Widgets — Welle 1 erste Hälfte fertig) | 0 mit Go; 5 offene Betriebspunkte in „Stand vor dem Live-Betrieb" |
+| Deferred Items | 1 (JS-Modernisierung) | 13 (alle mit Vorbedingungen) |
+| Hold Items | 1 (Payware) | 1 (Payware) |
+| Future Ideas | 13 | ~26 (12 bewertete 💡 + 14 unbewertete unter „Future Feature Ideas") |
+| Known Bugs | 0 (RASTATIME-Code) + 1 Host-Hardware-Issue (Stand 2026-05-26, Mitigationen in Verifikation) | 0 offen (alle Einträge der Bug-Sektion ✅) |
 
 ---
 
