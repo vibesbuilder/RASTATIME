@@ -234,6 +234,15 @@ class Application_Model_CuePoints
         foreach (array_unique($instanceIds) as $id) {
             try {
                 $scheduler->calculateCrossfades((int) $id);
+                // RASTATIME 2026-10-23 - calculateCrossfades moves the rows but
+                // leaves cc_show_instances.time_filled alone; after a cue or
+                // webstream-length change the fill bar, "is full", the Auto DJ
+                // threshold and the "View" total kept the old laid-out length
+                // (seen: BBC News 19:00 at 420.84 s with rows ending 419.84 s).
+                $instance = CcShowInstancesQuery::create()->findPk((int) $id);
+                if ($instance !== null) {
+                    $instance->updateDbTimeFilled(Propel::getConnection());
+                }
                 ++$done;
             } catch (Exception $e) {
                 Logging::warn('CuePoints::relayoutInstances: instance ' . $id . ': ' . $e->getMessage());

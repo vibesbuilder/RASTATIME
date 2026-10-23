@@ -29,6 +29,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Cue-/Webstream-Längen-Nachführung ließ `time_filled` stehen (2026-10-23)**
+  — `CuePoints::relayoutInstances` legt die Zeilen der künftigen Sendungen
+  neu aus (`calculateCrossfades`), aktualisierte aber
+  `cc_show_instances.time_filled` nicht; Füllbalken, „ist voll", Auto-DJ-
+  Schwelle und die View-Summe zeigten die alte ausgelegte Länge (BBC News
+  19:00: 420.84 s bei Zeilenende 419.84 s, nachdem der Webstream auf 304 s
+  gesetzt wurde).  Jetzt `updateDbTimeFilled` je neu ausgelegter Instanz.
+  Rollback-Probe `C:/Temp/optd/relayout_timefilled_probe.php` (vorher
+  420.84 → nachher 419.84).  Bereits veraltete Werte werden beim nächsten
+  Nachführen (z. B. erneutes Speichern des Webstreams) frisch.  Commit folgt.
 - **Podcast-Editor: „wird geladen"-Symbol während des Episoden-Downloads
   (2026-10-23, Operator)** — nach Doppelklick bzw. „Import" erschien in der
   Spalte „Imported?" nie der Lade-Spinner.  Ursache: der Episoden-POST
