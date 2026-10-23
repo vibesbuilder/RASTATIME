@@ -53,7 +53,7 @@ dann 2 → 1, danach nach Bedarf**.
 | 2 | Statisches Harbor-Rückfall-Passwort in libretime.conf ersetzen | 💡 seit 2026-09-10 | „Statisches Harbor-Rückfall-Passwort" |
 | 3 | Windows-Updates Oktober 2026 + Lenovo-Firmware | ✅ 2026-10-23 18:01 (Build 26200.9711, BIOS M5OKT41A); offen nur die TPM-Firmware 15.25 | „Windows-Updates Oktober 2026" |
 | 4 | Stereo Tool: Stream-Messung mit dem R128-Preset | ✅ 2026-10-23: Datei-Sendung −22,8 LUFS (5 min) / −24,1 LUFS (3 min), TP −11,5 dBTP; Limiter-Decke an lauter Quelle noch nicht gesehen (Webstream-Messung 19:00 läuft) | „Ausgangs-Processing mit Stereo Tool" |
-| 5 | Line-In: Live-Abnahme des frischen `input.http` je Slot (685dc17, 2026-10-21) | offen, eine Line-In-Show nach PLAYOUT-Neustart | Memory linein_abnahme_stand |
+| 5 | Line-In: Live-Abnahme des frischen `input.http` je Slot (685dc17, 2026-10-21) | ✅ 2026-10-23 aus Logs + 24/7-Aufnahme: Slot 1 (22.10. 19:07–22:00, `linein_http_in_1`) und Slot 2 (23.10. 08:15–09:45, `linein_http_in_2`) je binnen 1 s auf Sendung, Aufnahme 08:15–09:45 durchgehend −21…−25 LUFS, kein silence_fallback | Memory linein_abnahme_stand |
 | – | Zeitumstellung Nacht 24./25.10.: Show 1242 Electronic Evening 00:00–05:00 beobachten | Checkliste bereit | Memory reminder_dst_night |
 
 **Defer mit Vorbedingungen (Operator-Entscheidung, nichts drängt):**

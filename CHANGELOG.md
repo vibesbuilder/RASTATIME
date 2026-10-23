@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Line-In: frischer `input.http` je Slot (`685dc17`, §23.68) live abgenommen
+  (2026-10-23)** — seit dem PLAYOUT-Neustart vom 22.10. 11:16 liefen zwei
+  Line-In-Slots: 22.10. 19:07–22:00 (`linein_http_in_1`) und 23.10. 08:15–09:45
+  (`linein_http_in_2`, der kritische zweite Slot nach einem Stopp).  Beide
+  dekodierten den Capture-Mount binnen 1 s und schalteten auf Sendung; die
+  24/7-Aufnahme zeigt 08:15–09:45 durchgehend −21 bis −25 LUFS (Input Gain
+  −10 dB), kein `silence_fallback`.  Backlog-Punkt 5 der Live-Tabelle.
 - **Betrieb: Stereo-Tool-Kette am Stream gemessen (2026-10-23)** — ffmpeg
   `ebur128` am MP3-Mount nach dem Neustart mit gültiger Lizenz und Repo-Preset:
   5 min Datei-Sendung −22,8 LUFS (LRA 10,6, TP −11,5 dBTP), 3 min −24,1 LUFS;
