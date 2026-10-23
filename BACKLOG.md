@@ -52,7 +52,7 @@ dann 2 → 1, danach nach Bedarf**.
 | 1 | Datenbank-Passwort rotieren (Klartext im Apache-error_log vom 04.10.) | 🟡 Defer, Wartungsfenster mit frischem Backup | „Datenbank-Passwort rotieren" |
 | 2 | Statisches Harbor-Rückfall-Passwort in libretime.conf ersetzen | 💡 seit 2026-09-10 | „Statisches Harbor-Rückfall-Passwort" |
 | 3 | Windows-Updates Oktober 2026 + Lenovo-Firmware | ✅ 2026-10-23 18:01 (Build 26200.9711, BIOS M5OKT41A); offen nur die TPM-Firmware 15.25 | „Windows-Updates Oktober 2026" |
-| 4 | Stereo Tool: Stream-Messung mit dem R128-Preset | ✅ 2026-10-23: Datei-Sendung −22,8 LUFS (5 min) / −24,1 LUFS (3 min), TP −11,5 dBTP; Limiter-Decke an lauter Quelle noch nicht gesehen (Webstream-Messung 19:00 läuft) | „Ausgangs-Processing mit Stereo Tool" |
+| 4 | Stereo Tool: Stream-Messung mit dem R128-Preset | ✅ 2026-10-23: Datei-Sendung −22,8 LUFS (5 min) / −24,1 LUFS (3 min), TP −11,5 dBTP; BBC-Webstream 19:01–19:06 −22,9 LUFS / TP −7,5 dBTP; Limiter-Decke (−1 dBTP) bleibt Offline-Nachweis vom 21.10. | „Ausgangs-Processing mit Stereo Tool" |
 | 5 | Line-In: Live-Abnahme des frischen `input.http` je Slot (685dc17, 2026-10-21) | ✅ 2026-10-23 aus Logs + 24/7-Aufnahme: Slot 1 (22.10. 19:07–22:00, `linein_http_in_1`) und Slot 2 (23.10. 08:15–09:45, `linein_http_in_2`) je binnen 1 s auf Sendung, Aufnahme 08:15–09:45 durchgehend −21…−25 LUFS, kein silence_fallback | Memory linein_abnahme_stand |
 | – | Zeitumstellung Nacht 24./25.10.: Show 1242 Electronic Evening 00:00–05:00 beobachten | Checkliste bereit | Memory reminder_dst_night |
 
@@ -457,7 +457,9 @@ Entscheidung bei Fälligkeit.
 18:19–18:24 (5 min, „Like It or Not" + „When the Gun Draws", beide R128-normalisiert) **−22,8 LUFS** / LRA 10,6 /
 TP −11,5 dBTP.  Die Kette ist damit transparent bestätigt (Titel-Gain führt zu −23 ± 1 LUFS am Stream), der
 −1-dBTP-Limiter greift bei dieser Quelle nie (Spitzen liegen 10 dB darunter) und wurde nur im Offline-Harness
-(21.10.) nachgewiesen; Messung an einer lauten Quelle (BBC-Webstream 19:00) ergänzt das.  Logs
+(21.10.) nachgewiesen.  BBC-Webstream 19:01–19:06 (5 min, Input Gain −2 dB): −22,9 LUFS / LRA 4,9 / TP −7,5 dBTP
+- auch die lauteste Alltagsquelle bleibt 6 dB unter der Decke; alle drei Quellenarten (Datei, Line-In, Webstream)
+liegen damit am Stream bei −23 ± 1 LUFS.  Logs
 `C:/Temp/optd/st_stream_measure*_2026-10-23.log`.
 
 **Anlass:** Distributionspartner brauchen einen R128-konformen Stream unabhängig von der Quelle; Stufe 1
