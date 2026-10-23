@@ -38,7 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   gesetzt wurde).  Jetzt `updateDbTimeFilled` je neu ausgelegter Instanz.
   Rollback-Probe `C:/Temp/optd/relayout_timefilled_probe.php` (vorher
   420.84 → nachher 419.84).  Bereits veraltete Werte werden beim nächsten
-  Nachführen (z. B. erneutes Speichern des Webstreams) frisch.  Commit folgt.
+  Nachführen (z. B. erneutes Speichern des Webstreams) frisch.  Commit 1b9ffa4.
 - **Podcast-Editor: „wird geladen"-Symbol während des Episoden-Downloads
   (2026-10-23, Operator)** — nach Doppelklick bzw. „Import" erschien in der
   Spalte „Imported?" nie der Lade-Spinner.  Ursache: der Episoden-POST
