@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Podcast-Editor: „wird geladen"-Symbol während des Episoden-Downloads
+  (2026-10-23, Operator)** — nach Doppelklick bzw. „Import" erschien in der
+  Spalte „Imported?" nie der Lade-Spinner.  Ursache: der Episoden-POST
+  (`rest/podcast/<id>/episodes`) kehrt erst zurück, wenn die API die Datei
+  heruntergeladen und übergeben hat (synchron seit T-PODCAST-1, bis zu
+  fünf Minuten); der anschließende Tabellen-Reload kam damit immer zu
+  spät.  `importSelectedEpisodes` markiert die Zeile jetzt vor dem POST
+  als „pending" (`ingested = -1`, `fnUpdate`), der Doppelklick-Schutz und
+  der Import-Knopf behandeln sie währenddessen als „nicht erneut
+  importieren"; der 5-s-Import-Listener und der Reload nach dem POST
+  übernehmen danach.  Syntax im Browser-Harness geprüft, Live-Abnahme
+  durch den Operator offen.  Commit d1f9f18.
 - **Vier Oberflächen-Meldungen vom 2026-10-23 (Operator)** — (1) Suchzeile:
   der Zähler „X of N tracks" saß nach Nutzung der erweiterten Suche links
   über dem Suchtext; die Position wird aus dem Eingabefeld gemessen,
