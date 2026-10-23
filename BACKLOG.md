@@ -5678,7 +5678,8 @@ Qualitaet: Tempo gegen vorhandene TBPM-Tags bei 15 Titeln nur 5 exakt, 6 halb/do
 4 daneben -> Tempo nur mit Halb/Doppel-Korrektur und Abgleich gegen vorhandene bpm brauchbar; Energy und
 Brightness robust; Key plausibel, aber ohne Referenzdaten unverifiziert.  Entschaerfung des
 Abhaengigkeits-Vorbehalts: Analyse als eigener Worker-Prozess in einer getrennten venv (Aufruf per
-Subprozess aus dem Analyzer), die Produktiv-venv bleibt unveraendert.  Entscheidung des Operators OFFEN.  Alternative ohne librosa: Tempo/Key/Energy per ffmpeg-Filtern
+Subprozess aus dem Analyzer), die Produktiv-venv bleibt unveraendert.  Operator 2026-10-23: bleibt im
+Backlog (Defer), Bench-Umgebung C:/Temp/optd/librosa_bench bleibt fuer einen spaeteren Anlauf liegen.  Alternative ohne librosa: Tempo/Key/Energy per ffmpeg-Filtern
 (ebur128/astats liefern Energie, kein Tempo/Key) - nur Teilabdeckung.
 
 ## Test-Hygiene (2026-10-22)
