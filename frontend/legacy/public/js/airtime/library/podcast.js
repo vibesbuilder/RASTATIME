@@ -793,6 +793,7 @@ var AIRTIME = (function (AIRTIME) {
    * @param {PodcastEpisodeTable} dt  PodcastEpisode table containing the data
    */
   mod.importSelectedEpisodes = function (episodes, dt) {
+    var datatable = dt.getDatatable();
     $.each(episodes, function () {
       // remainingDiskSpace is defined in layout.phtml
       if (this.enclosure.length > remainingDiskSpace) {
@@ -800,6 +801,18 @@ var AIRTIME = (function (AIRTIME) {
         return false;
       }
       if (this.file && Object.keys(this.file).length > 0) return false;
+      // RASTATIME 2026-10-23 - the POST only returns once the API has
+      // downloaded and handed over the file (synchronous since T-PODCAST-1,
+      // up to five minutes), so the table was reloaded too late to ever show
+      // the "pending" spinner (operator).  Mark the row pending right away:
+      // the episode object is the table's own row data, fnUpdate re-renders
+      // the row (the checkbox delegate derives importIcon from ingested).
+      // The 5-s import listener and the reload after the POST take over.
+      this.ingested = -1;
+      var idx = $.inArray(this, datatable.fnGetData());
+      if (idx > -1) {
+        datatable.fnUpdate(this, idx, undefined, false);
+      }
       $.post(
         endpoint + this.podcast_id + "/episodes",
         JSON.stringify({

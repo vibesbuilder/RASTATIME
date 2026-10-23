@@ -5711,10 +5711,10 @@ BASELINE_MODULES/LINUX_INVENTORY markiert.  `PypoFile` hat jetzt keinen Aufrufer
 
 ### ✅ Suchzeilen-Zaehler, Podcast-Track-Type, New-Show-Abschnitte, Now/Future-Sperre - behoben 2026-10-23
 
-Vier Meldungen, siehe CHANGELOG.  OFFEN zum Nachfragen: Podcast-Episode per Doppelklick geladen, aber kein
-"wird geladen"-Symbol waehrend des Downloads - im Code wird die Spalte "Imported?" nach dem POST neu geladen
-(Platzhalterzeile ingested=-1 -> loading.gif); nicht reproduziert, Rueckfrage beim Operator (welche Tabelle,
-Dashboard oder Editor; erscheint das Symbol nach einem Moment).
+Vier Meldungen, siehe CHANGELOG.  Fuenfte Meldung (Podcast-Editor: kein "wird geladen"-Symbol waehrend des
+Downloads) ebenfalls behoben 2026-10-23: der Episoden-POST kehrt erst zurueck, wenn die API die Datei
+heruntergeladen hat (synchron seit T-PODCAST-1), die Tabelle wurde also zu spaet neu geladen; die Zeile wird
+jetzt vor dem POST als "pending" markiert (podcast.js importSelectedEpisodes).
 
 ### 💡 Bibliothek: Spalten je Medientyp (Line-In, Webstream, Playlist, Smart Block) - Evaluierung 2026-10-23
 
@@ -5723,9 +5723,10 @@ usersettings/get-library-datatable).  Machbar: Sichtbarkeitsprofil je Medientyp 
 Reiters anwenden (setCurrentTable), Spaltenwahl im Menue schreibt ins Profil des aktiven Typs; sinnvolle
 Vorgaben je Typ (Line-In: Name, Geraet, Laenge; Webstream: Name, URL, Laenge; Playlist/Block: Name, Laenge,
 Ersteller, Aenderung).  Aufwand ~1 Tag (JS + Einstellungs-Endpunkt + Manual LIBRARY x4), Risiko gering.
-Empfehlung: Go bei Bedarf, nach den laufenden Abnahmen.
+Empfehlung: Go bei Bedarf, nach den laufenden Abnahmen.  Operator 2026-10-23: "klingt gut" - explizites Go
+steht noch aus.
 
-### 💡 Kalender: "Rueckgaengig" fuer einige Sekunden nach Loeschen - Evaluierung 2026-10-23
+### 🟡 Kalender: "Rueckgaengig" fuer einige Sekunden nach Loeschen - Defer (Operator 2026-10-23)
 
 Loeschen einer Instanz entfernt heute sofort Sendeplanzeilen und markiert die Instanz; das Playout holt den
 Plan ca. alle 90 s.  Zwei Wege: a) echtes Verzoegern des Loeschens (Toast 10 s, danach ausfuehren) - riskant,
@@ -5733,4 +5734,5 @@ weil Kalender/Builder zwischendurch inkonsistent sind; b) Snapshot + Wiederherst
 puffern, Toast "Rueckgaengig" 10 s, Wiederherstellung legt alles neu an, Playout-Refresh danach) - sauber,
 aber nur fuer Instanz-Loeschung sinnvoll (Serien, Wiederholungs-Verknuepfungen, Aufnahmen machen es
 komplex).  Aufwand 1-2 Tage.  Empfehlung: Defer; die Bestaetigungsabfrage vor dem Loeschen bleibt der
-Schutz.
+Schutz.  Operator 2026-10-23: Defer.  Vorbedingung fuer ein Go: Bedarf aus dem Betrieb (versehentliches
+Loeschen trotz Bestaetigung) und ein ruhiges Fenster fuer Weg b).
