@@ -5407,7 +5407,7 @@ Umstellung nur im ruhigen Fenster mit Hoer-Abnahme, weil ein Encoder-Neustart di
 
 ### ❌ Backup-Medienspiegel liegt auf derselben Platte D: wie die Bibliothek (notiert 2026-10-14) - entfällt 2026-10-23
 **Operator 2026-10-23:** gestrichen.  Seit 2026-10-19 liegen die Backups auf `E:/backups` (1,6 TB frei), der
-Medienspiegel ist aus (`local_backup_include_media` = false); den alten Spiegel `D:ackups\media` (Stand 07.10.,
+Medienspiegel ist aus (`local_backup_include_media` = false); den alten Spiegel `D:\backups\media` (Stand 07.10.,
 178 GB) löscht der Operator selbst.
 Der Nachtlauf 03:30 spiegelt die Bibliothek (D:\stor) nach D:\backups - das schuetzt gegen Loeschen und Fehlbedienung,
 nicht gegen einen Ausfall der Platte D:.  Seit 2026-10-14 werden verlustfreie Originale beim Import nicht mehr
