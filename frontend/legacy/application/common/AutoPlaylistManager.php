@@ -398,6 +398,11 @@ class AutoPlaylistManager
                 // real neighbours (Scheduler::pickRemainingBlock, shared with the
                 // show builder; insertFitting() still checks the real end).
                 $budget = max(0.0, (float) $budgetSecs - Application_Model_Scheduler::laidOutLength($rowsOf($out), $prevFileId, $nextFileId));
+                // RASTATIME 2026-10-23 - the files gathered so far are out for
+                // the block's "played lately" filters (Block::setPickedInFill)
+                Application_Model_Block::setPickedInFill(array_map(function ($c) {
+                    return $c['type'] === 0 ? (int) $c['id'] : 0;
+                }, $out));
                 $picked = Application_Model_Scheduler::pickDynamicBlock($bl, $budget, $lastOf($out), $nextFileId);
                 foreach ($picked as $f) {
                     $file = CcFilesQuery::create()->findPk((int) $f['id']);

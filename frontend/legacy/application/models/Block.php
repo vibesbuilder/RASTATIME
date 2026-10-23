@@ -1314,17 +1314,17 @@ SQL;
         // late stage is a worse UX (the operator already left the
         // form).  The form-side validator catches the common case;
         // this is just a defence-in-depth fallback.
+        // RASTATIME 2026-10-23 - the window is in MINUTES (operator: "30
+        // minutes" must be possible); rows `exclude_played_lately_minutes`
+        // / `exclude_artists_lately_minutes`, range 1..525600 (a year),
+        // default 1440 (= the old 24 h).  Old `*_hours` rows are read as
+        // hours x 60 until the block is saved again (loadCriteria).
         $excludeOn = ((int) ($p_criteriaData['etc']['sp_exclude_played_lately'] ?? 0)) === 1;
-        $excludeHoursRaw = (int) ($p_criteriaData['etc']['sp_exclude_played_lately_hours'] ?? 0);
-        if ($excludeOn) {
-            $excludeHours = max(1, min(8760, $excludeHoursRaw ?: 24));
-        } else {
-            // Persist the operator's last typed value when toggling
-            // the master flag off so re-enabling later restores it.
-            // Clamped to the same range so a stale invalid value
-            // does not survive a save.
-            $excludeHours = max(1, min(8760, $excludeHoursRaw ?: 24));
-        }
+        $excludeMinutesRaw = (int) ($p_criteriaData['etc']['sp_exclude_played_lately_minutes'] ?? 0);
+        // Persist the operator's last typed value when toggling the master
+        // flag off so re-enabling later restores it.  Clamped to the same
+        // range so a stale invalid value does not survive a save.
+        $excludeMinutes = max(1, min(self::EXCLUDE_MAX_MINUTES, $excludeMinutesRaw ?: self::EXCLUDE_DEFAULT_MINUTES));
 
         $qry = new CcBlockcriteria();
         $qry->setDbCriteria('exclude_played_lately')
@@ -1334,9 +1334,9 @@ SQL;
             ->save();
 
         $qry = new CcBlockcriteria();
-        $qry->setDbCriteria('exclude_played_lately_hours')
+        $qry->setDbCriteria('exclude_played_lately_minutes')
             ->setDbModifier('N/A')
-            ->setDbValue($excludeHours)
+            ->setDbValue($excludeMinutes)
             ->setDbBlockId($this->id)
             ->save();
 
@@ -1359,8 +1359,8 @@ SQL;
         // rows the operator may have already gotten into the DB
         // before this hotfix.
         $excludeArtistsOn = ((int) ($p_criteriaData['etc']['sp_exclude_artists_played_lately'] ?? 0)) === 1;
-        $excludeArtistsHoursRaw = (int) ($p_criteriaData['etc']['sp_exclude_artists_played_lately_hours'] ?? 0);
-        $excludeArtistsHours = max(1, min(8760, $excludeArtistsHoursRaw ?: 24));
+        $excludeArtistsMinutesRaw = (int) ($p_criteriaData['etc']['sp_exclude_artists_played_lately_minutes'] ?? 0);
+        $excludeArtistsMinutes = max(1, min(self::EXCLUDE_MAX_MINUTES, $excludeArtistsMinutesRaw ?: self::EXCLUDE_DEFAULT_MINUTES));
 
         // Cleanup any leftover rows from the buggy v1 names so
         // the next save is back to a clean two-row state.  Cheap
@@ -1387,11 +1387,38 @@ SQL;
             ->save();
 
         $qry = new CcBlockcriteria();
-        $qry->setDbCriteria('exclude_artists_lately_hours')
+        $qry->setDbCriteria('exclude_artists_lately_minutes')
             ->setDbModifier('N/A')
-            ->setDbValue($excludeArtistsHours)
+            ->setDbValue($excludeArtistsMinutes)
             ->setDbBlockId($this->id)
             ->save();
+    }
+
+    /** RASTATIME 2026-10-23 - the "played lately" windows, in minutes. */
+    const EXCLUDE_MAX_MINUTES = 525600;
+    const EXCLUDE_DEFAULT_MINUTES = 1440;
+
+    /**
+     * RASTATIME 2026-10-23 - the window of a "played lately" filter in
+     * minutes from the loaded criteria: the `*_minutes` row, else the old
+     * `*_hours` row x 60, else the default.
+     *
+     * @param array  $storedCrit
+     * @param string $key        exclude_played_lately | exclude_artists_played_lately
+     *
+     * @return int minutes, clamped to 1..EXCLUDE_MAX_MINUTES
+     */
+    public static function excludeWindowMinutes(array $storedCrit, $key)
+    {
+        if (isset($storedCrit[$key . '_minutes']['value'])) {
+            $minutes = (int) $storedCrit[$key . '_minutes']['value'];
+        } elseif (isset($storedCrit[$key . '_hours']['value'])) {
+            $minutes = (int) $storedCrit[$key . '_hours']['value'] * 60;
+        } else {
+            $minutes = self::EXCLUDE_DEFAULT_MINUTES;
+        }
+
+        return max(1, min(self::EXCLUDE_MAX_MINUTES, $minutes));
     }
 
     /**
@@ -1456,6 +1483,15 @@ SQL;
     private static $fillContext;
 
     /**
+     * RASTATIME 2026-10-23 - the file ids the running expansion gathered so
+     * far (earlier blocks and fixed items of the same playlist); the
+     * "played lately" filters leave them out.  Reset with the context.
+     *
+     * @var int[]
+     */
+    private static $fillPicked = [];
+
+    /**
      * @param null|int      $instanceId
      * @param null|int      $showId
      * @param null|DateTime $slotUtc    when the picked rows will play (UTC)
@@ -1469,11 +1505,30 @@ SQL;
             'show_id' => $showId ? (int) $showId : null,
             'slot' => $slot,
         ];
+        self::$fillPicked = [];
     }
 
     public static function clearFillContext()
     {
         self::$fillContext = null;
+        self::$fillPicked = [];
+    }
+
+    /**
+     * RASTATIME 2026-10-23 - replace the list of file ids picked so far in
+     * the running expansion (see $fillPicked).
+     *
+     * @param array<int, int|string> $fileIds
+     */
+    public static function setPickedInFill(array $fileIds)
+    {
+        self::$fillPicked = array_values(array_unique(array_map('intval', array_filter($fileIds))));
+    }
+
+    /** @return int[] */
+    public static function pickedInFill()
+    {
+        return self::$fillPicked;
     }
 
     /** @return array{instance_id: ?int, show_id: ?int, slot: DateTime} */
@@ -1785,11 +1840,12 @@ SQL;
             return $insertList;
         }
 
+        // RASTATIME 2026-10-23 - minutes (excludeWindowMinutes reads old hours rows too)
         $excludeTracksSec = $excludeTracksOn
-            ? max(1, min(8760, (int) ($storedCrit['exclude_played_lately_hours']['value'] ?? 24))) * 3600
+            ? self::excludeWindowMinutes($storedCrit, 'exclude_played_lately') * 60
             : 0;
         $excludeArtistsSec = $excludeArtistsOn
-            ? max(1, min(8760, (int) ($storedCrit['exclude_artists_played_lately_hours']['value'] ?? 24))) * 3600
+            ? self::excludeWindowMinutes($storedCrit, 'exclude_artists_played_lately') * 60
             : 0;
 
         // Lookup artist_name for every file_id in the broader pool
@@ -1974,8 +2030,12 @@ SQL;
                 // existing per-row schema does not need to change.
                 $storedCrit['exclude_played_lately'] = ['value' => $value];
             } elseif ($criteria == 'exclude_played_lately_hours') {
-                // RASTATIME 2026-05-21 — hours-back window (1..8760).
+                // RASTATIME 2026-05-21 — hours-back window (1..8760);
+                // 2026-10-23 - kept readable, converted by excludeWindowMinutes
                 $storedCrit['exclude_played_lately_hours'] = ['value' => $value];
+            } elseif ($criteria == 'exclude_played_lately_minutes') {
+                // RASTATIME 2026-10-23 — window in minutes (1..525600)
+                $storedCrit['exclude_played_lately_minutes'] = ['value' => $value];
             } elseif ($criteria == 'exclude_artists_lately'
                    || $criteria == 'exclude_artists_played_lately'
             ) {
@@ -1993,7 +2053,11 @@ SQL;
             ) {
                 // RASTATIME 2026-05-23 — hours-back window (1..8760).
                 // Both v1 + v2 names accepted (see master comment).
+                // 2026-10-23 - kept readable, converted by excludeWindowMinutes
                 $storedCrit['exclude_artists_played_lately_hours'] = ['value' => $value];
+            } elseif ($criteria == 'exclude_artists_lately_minutes') {
+                // RASTATIME 2026-10-23 — window in minutes (1..525600)
+                $storedCrit['exclude_artists_played_lately_minutes'] = ['value' => $value];
             } elseif ($criteria == 'sort') {
                 $storedCrit['sort'] = ['value' => $value];
             } else {
@@ -2060,8 +2124,12 @@ SQL;
                 // existing per-row schema does not need to change.
                 $storedCrit['exclude_played_lately'] = ['value' => $value];
             } elseif ($criteria == 'exclude_played_lately_hours') {
-                // RASTATIME 2026-05-21 — hours-back window (1..8760).
+                // RASTATIME 2026-05-21 — hours-back window (1..8760);
+                // 2026-10-23 - kept readable, converted by excludeWindowMinutes
                 $storedCrit['exclude_played_lately_hours'] = ['value' => $value];
+            } elseif ($criteria == 'exclude_played_lately_minutes') {
+                // RASTATIME 2026-10-23 — window in minutes (1..525600)
+                $storedCrit['exclude_played_lately_minutes'] = ['value' => $value];
             } elseif ($criteria == 'exclude_artists_lately'
                    || $criteria == 'exclude_artists_played_lately'
             ) {
@@ -2079,7 +2147,11 @@ SQL;
             ) {
                 // RASTATIME 2026-05-23 — hours-back window (1..8760).
                 // Both v1 + v2 names accepted (see master comment).
+                // 2026-10-23 - kept readable, converted by excludeWindowMinutes
                 $storedCrit['exclude_artists_played_lately_hours'] = ['value' => $value];
+            } elseif ($criteria == 'exclude_artists_lately_minutes') {
+                // RASTATIME 2026-10-23 — window in minutes (1..525600)
+                $storedCrit['exclude_artists_played_lately_minutes'] = ['value' => $value];
             } elseif ($criteria == 'sort') {
                 $storedCrit['sort'] = ['value' => $value];
             } else {
@@ -2445,15 +2517,25 @@ SQL;
         if (isset($storedCrit['exclude_played_lately'])
             && $storedCrit['exclude_played_lately']['value'] == 1
         ) {
-            $excludeHours = (int) ($storedCrit['exclude_played_lately_hours']['value'] ?? 24);
-            $excludeHours = max(1, min(8760, $excludeHours));
+            // RASTATIME 2026-10-23 - window in minutes
+            $excludeMinutes = self::excludeWindowMinutes($storedCrit, 'exclude_played_lately');
             $qry->where(
                 "((cc_files.lptime IS NULL OR cc_files.lptime < TIMESTAMP '{$refSlot}' - INTERVAL '"
-                . $excludeHours . " hours') AND NOT EXISTS ("
+                . $excludeMinutes . " minutes') AND NOT EXISTS ("
                 . 'SELECT 1 FROM cc_schedule s WHERE s.file_id = cc_files.id '
-                . "AND s.starts > TIMESTAMP '{$refSlot}' - INTERVAL '" . $excludeHours . " hours' "
-                . "AND s.starts < TIMESTAMP '{$refSlot}' + INTERVAL '" . $excludeHours . " hours'))"
+                . "AND s.starts > TIMESTAMP '{$refSlot}' - INTERVAL '" . $excludeMinutes . " minutes' "
+                . "AND s.starts < TIMESTAMP '{$refSlot}' + INTERVAL '" . $excludeMinutes . " minutes'))"
             );
+            // RASTATIME 2026-10-23 - a playlist is expanded block by block in
+            // memory and inserted afterwards, so a track an earlier block of
+            // the SAME expansion picked is in no table yet: the two "Dayteaser"
+            // blocks of one playlist picked the same teaser (operator, BBC
+            // News 17:00).  The expansion registers what it gathered so far
+            // (setPickedInFill); those ids are out as well.
+            $picked = self::pickedInFill();
+            if (!empty($picked)) {
+                $qry->where('cc_files.id NOT IN (' . implode(',', $picked) . ')');
+            }
         }
 
         // RASTATIME 2026-05-23 — exclude_artists_played_lately:
@@ -2476,8 +2558,8 @@ SQL;
         if (isset($storedCrit['exclude_artists_played_lately'])
             && $storedCrit['exclude_artists_played_lately']['value'] == 1
         ) {
-            $excludeArtistsHours = (int) ($storedCrit['exclude_artists_played_lately_hours']['value'] ?? 24);
-            $excludeArtistsHours = max(1, min(8760, $excludeArtistsHours));
+            // RASTATIME 2026-10-23 - window in minutes
+            $excludeArtistsMinutes = self::excludeWindowMinutes($storedCrit, 'exclude_artists_played_lately');
             // RASTATIME 2026-10-16 - planned rows count too (see above)
             $qry->where(
                 '(cc_files.artist_name IS NULL '
@@ -2487,13 +2569,23 @@ SQL;
                 .   'JOIN cc_files f ON f.id = ph.file_id '
                 .   'WHERE f.artist_name = cc_files.artist_name '
                 .   "AND ph.starts > TIMESTAMP '{$refSlot}' - INTERVAL '"
-                . $excludeArtistsHours . " hours') AND NOT EXISTS ("
+                . $excludeArtistsMinutes . " minutes') AND NOT EXISTS ("
                 .   'SELECT 1 FROM cc_schedule s '
                 .   'JOIN cc_files f2 ON f2.id = s.file_id '
                 .   'WHERE f2.artist_name = cc_files.artist_name '
-                .   "AND s.starts > TIMESTAMP '{$refSlot}' - INTERVAL '" . $excludeArtistsHours . " hours' "
-                .   "AND s.starts < TIMESTAMP '{$refSlot}' + INTERVAL '" . $excludeArtistsHours . " hours')))"
+                .   "AND s.starts > TIMESTAMP '{$refSlot}' - INTERVAL '" . $excludeArtistsMinutes . " minutes' "
+                .   "AND s.starts < TIMESTAMP '{$refSlot}' + INTERVAL '" . $excludeArtistsMinutes . " minutes')))"
             );
+            // RASTATIME 2026-10-23 - artists of the tracks an earlier block of
+            // the same expansion picked (see the tracks filter above)
+            $picked = self::pickedInFill();
+            if (!empty($picked)) {
+                $qry->where(
+                    "(cc_files.artist_name IS NULL OR cc_files.artist_name = '' OR NOT EXISTS ("
+                    . 'SELECT 1 FROM cc_files fp WHERE fp.id IN (' . implode(',', $picked) . ') '
+                    . 'AND fp.artist_name = cc_files.artist_name))'
+                );
+            }
         }
 
         try {

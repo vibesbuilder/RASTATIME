@@ -1,10 +1,14 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.85
-Date: 2026-10-22
+Draft version: 0.86
+Date: 2026-10-23
 
 > **Revision history**
+> - **0.86 (2026-10-23)** - **Played-lately windows in minutes, picks of the
+>   same expansion excluded** (SS23.21 addendum): `*_minutes` criteria rows
+>   (old `*_hours` rows read x 60), and a playlist expanded block by block
+>   leaves out what earlier blocks of the same expansion gathered.
 > - **0.85 (2026-10-22)** — **Schedule reload** (§23.70): `/reload-schedule`
 >   answers at once, refreshes coalesce in the background; one API request
 >   per show instance / show per fetch.
@@ -4090,6 +4094,34 @@ RASTATIME today.
 * `CHANGELOG.md` + `docs/manual/{en,de,fr,es}/LIBRARY.md`
 
 ---
+
+**Addendum 2026-10-23 - minutes, and picks of the same expansion.**
+Operator request: a window of 30 minutes.  The window of both filters
+is now stored in **minutes**: criteria rows `exclude_played_lately_minutes`
+and `exclude_artists_lately_minutes` (both within VARCHAR(32)), range
+`1..525600` (`Block::EXCLUDE_MAX_MINUTES`), default `1440` (the old 24 h).
+Old `*_hours` rows stay readable: `Block::excludeWindowMinutes()` returns
+the minutes row, else hours x 60, else the default, and every consumer
+(the SQL `INTERVAL 'N minutes'`, the within-block spread, the form value,
+the export) goes through it; the next save writes minutes rows (the save
+deletes all criteria rows of the block first).  No migration.  Form
+elements / ids `sp_exclude_played_lately_minutes` and
+`sp_exclude_artists_played_lately_minutes`, inline label "... in the last
+N minutes" (`minutes` is an existing gettext string).  Import/Export
+writes `*_minutes` keys and still reads `*_hours` keys (x 60).
+
+Second part: a playlist is expanded **block by block in memory** and
+inserted afterwards (AutoPlaylistManager::expandPlaylist,
+Scheduler::retrieveMediaFiles), so the planned-rows part of the filter
+(2026-10-16) could not see what an earlier block of the same expansion
+picked - the two "Dayteaser" blocks of one BBC News playlist chose the
+same teaser.  The fill context now carries the file ids gathered so far
+(`Block::setPickedInFill()`, reset with `setFillContext()` /
+`clearFillContext()`); with the tracks filter on they are excluded
+(`cc_files.id NOT IN (...)`), with the artists filter on their artists
+are.  Both expansions register the ids before every dynamic pick.
+Side effect to know: late in the day the "fits today" teaser pool can be
+a single file, then the second block picks nothing instead of a repeat.
 
 ### 23.22 Public Now-Playing Embed Widgets
 

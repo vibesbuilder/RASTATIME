@@ -11,8 +11,10 @@
  *    "sort": "random"|"newest"|"oldest"|...,
  *    "repeat_tracks": false, "overflow_tracks": false, "only_unplayed": false,
  *    "only_with_expiry": false, "use_requests": false,
- *    "exclude_played_lately": false, "exclude_played_lately_hours": 0,
- *    "exclude_artists_played_lately": false, "exclude_artists_played_lately_hours": 0,
+ *    "exclude_played_lately": false, "exclude_played_lately_minutes": 0,
+ *    "exclude_artists_played_lately": false, "exclude_artists_played_lately_minutes": 0,
+ *    (RASTATIME 2026-10-23: minutes; an import still accepts the old
+ *    "*_hours" keys and converts them x 60)
  *    "criteria": [{"group": 0, "field": "genre", "modifier": "is", "value": "Jazz", "extra": ""},
  *                 {"group": 1, "field": "utime", "modifier": "after", "value": "30", "unit": "day", "extra": ""}, ...]}
  *
@@ -35,7 +37,7 @@ class Application_Service_ImportExportBlocks extends Application_Service_ImportE
 {
     const SWITCHES = ['repeat_tracks', 'overflow_tracks', 'only_unplayed', 'only_with_expiry', 'use_requests',
         'exclude_played_lately', 'exclude_artists_played_lately', ];
-    const HOURS = ['exclude_played_lately_hours', 'exclude_artists_played_lately_hours'];
+    const MINUTES = ['exclude_played_lately_minutes', 'exclude_artists_played_lately_minutes'];
     const DATE_FIELDS = ['utime', 'mtime', 'lptime'];
     const RELATIVE = ['before', 'after', 'between'];
     const RANGE = ['between', 'is in the range'];
@@ -70,7 +72,7 @@ class Application_Service_ImportExportBlocks extends Application_Service_ImportE
             'type' => 'dynamic (criteria evaluated at playout) or static (contents generated in the editor)',
             'limit' => '{"value": n, "modifier": "items" | "minutes" | "hours" | "remaining"}',
             'sort' => 'random | newest | oldest | ... (as offered by the editor)',
-            'switches' => implode(', ', self::SWITCHES) . ' (true/false); the two *_hours values are integers',
+            'switches' => implode(', ', self::SWITCHES) . ' (true/false); the two *_minutes values are integers (old *_hours keys are read as hours x 60)',
             'criteria' => 'list of {"group": n, "field": "<criterion>", "modifier": "<modifier>", "value": "...", "extra": "..."}; extra is the second value of "between" and "is in the range"',
             'groups' => 'a group is one row of the smart block editor: rules with the same group AND the same field are alternatives (OR, the rows the editor\'s + button adds); everything else is combined with AND - different groups, and different fields even within one group. A field may appear in several groups, each with its own alternatives: (A or B) and (C or D)',
             'dates' => 'utime, mtime, lptime with before / after / between: a whole number in value (and extra) plus "unit" (and "extra_unit"): minute, hour, day, week, month or year, counted back from now; with the other modifiers: an absolute date YYYY-MM-DD or YYYY-MM-DD HH:MM:SS in your user timezone',
@@ -91,9 +93,9 @@ class Application_Service_ImportExportBlocks extends Application_Service_ImportE
             'only_with_expiry' => false,
             'use_requests' => false,
             'exclude_played_lately' => true,
-            'exclude_played_lately_hours' => 24,
+            'exclude_played_lately_minutes' => 1440,
             'exclude_artists_played_lately' => false,
-            'exclude_artists_played_lately_hours' => 0,
+            'exclude_artists_played_lately_minutes' => 0,
             'criteria' => [
                 ['group' => 0, 'field' => 'genre', 'modifier' => 'is', 'value' => 'Pop', 'extra' => ''],
                 ['group' => 0, 'field' => 'genre', 'modifier' => 'is', 'value' => 'Electronic', 'extra' => ''],
@@ -144,8 +146,10 @@ class Application_Service_ImportExportBlocks extends Application_Service_ImportE
             foreach (self::SWITCHES as $sw) {
                 $rec['etc']['sp_' . $sw] = self::toBool($b[$sw] ?? false) ? '1' : '0';
             }
-            foreach (self::HOURS as $hk) {
-                $rec['etc']['sp_' . $hk] = (string) (int) ($b[$hk] ?? 0);
+            foreach (self::MINUTES as $mk) {
+                $hk = substr($mk, 0, -8) . '_hours';
+                $minutes = isset($b[$mk]) ? (int) $b[$mk] : (isset($b[$hk]) ? (int) $b[$hk] * 60 : 0);
+                $rec['etc']['sp_' . $mk] = (string) $minutes;
             }
             foreach (($b['criteria'] ?? []) as $c) {
                 $field = (string) ($c['field'] ?? '');
@@ -354,8 +358,8 @@ class Application_Service_ImportExportBlocks extends Application_Service_ImportE
             foreach (self::SWITCHES as $sw) {
                 $entry[$sw] = ((string) ($crit[$sw]['value'] ?? '0')) === '1';
             }
-            foreach (self::HOURS as $hk) {
-                $entry[$hk] = (int) ($crit[$hk]['value'] ?? 0);
+            foreach (self::MINUTES as $mk) {
+                $entry[$mk] = Application_Model_Block::excludeWindowMinutes($crit, substr($mk, 0, -8));
             }
             $entry['criteria'] = [];
             foreach ($crit['crit'] ?? [] as $field => $rules) {

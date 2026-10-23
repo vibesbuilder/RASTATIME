@@ -198,15 +198,15 @@
                screen readers read the full sentence.  2026-05-25:
                margin-left 10 px on the <dl> so the row is indented
                under the master checkbox above it. */ ?>
-        <dl id='sp_exclude_played_lately_hours_wrap' style="margin-left: 20px;<?php echo $excludeRowDisplay; ?>">
-            <dd id='sp_exclude_played_lately_hours-element'>
-                <label class='sp_text_font' for='sp_exclude_played_lately_hours'>
+        <dl id='sp_exclude_played_lately_minutes_wrap' style="margin-left: 20px;<?php echo $excludeRowDisplay; ?>">
+            <dd id='sp_exclude_played_lately_minutes-element'>
+                <label class='sp_text_font' for='sp_exclude_played_lately_minutes'>
                     <?php echo _('Exclude tracks played in the last'); ?>
-                    <?php echo $this->element->getElement('sp_exclude_played_lately_hours') ?>
-                    <?php echo _('hours'); ?>
+                    <?php echo $this->element->getElement('sp_exclude_played_lately_minutes') ?>
+                    <?php echo _('minutes'); ?>
                 </label>
-                <?php if ($this->element->getElement("sp_exclude_played_lately_hours")->hasErrors()) : ?>
-                    <?php foreach ($this->element->getElement("sp_exclude_played_lately_hours")->getMessages() as $error) : ?>
+                <?php if ($this->element->getElement("sp_exclude_played_lately_minutes")->hasErrors()) : ?>
+                    <?php foreach ($this->element->getElement("sp_exclude_played_lately_minutes")->getMessages() as $error) : ?>
                         <span class='errors sp-errors'>
                             <?php echo $error; ?>
                         </span>
@@ -242,15 +242,15 @@
         <?php /* RASTATIME 2026-05-23 — inline label layout, same
                shape as the tracks pair above (incl. 2026-05-25
                margin-left 10 px indent). */ ?>
-        <dl id='sp_exclude_artists_played_lately_hours_wrap' style="margin-left: 20px;<?php echo $excludeArtistsRowDisplay; ?>">
-            <dd id='sp_exclude_artists_played_lately_hours-element'>
-                <label class='sp_text_font' for='sp_exclude_artists_played_lately_hours'>
+        <dl id='sp_exclude_artists_played_lately_minutes_wrap' style="margin-left: 20px;<?php echo $excludeArtistsRowDisplay; ?>">
+            <dd id='sp_exclude_artists_played_lately_minutes-element'>
+                <label class='sp_text_font' for='sp_exclude_artists_played_lately_minutes'>
                     <?php echo _('Exclude artists played in the last'); ?>
-                    <?php echo $this->element->getElement('sp_exclude_artists_played_lately_hours') ?>
-                    <?php echo _('hours'); ?>
+                    <?php echo $this->element->getElement('sp_exclude_artists_played_lately_minutes') ?>
+                    <?php echo _('minutes'); ?>
                 </label>
-                <?php if ($this->element->getElement("sp_exclude_artists_played_lately_hours")->hasErrors()) : ?>
-                    <?php foreach ($this->element->getElement("sp_exclude_artists_played_lately_hours")->getMessages() as $error) : ?>
+                <?php if ($this->element->getElement("sp_exclude_artists_played_lately_minutes")->hasErrors()) : ?>
+                    <?php foreach ($this->element->getElement("sp_exclude_artists_played_lately_minutes")->getMessages() as $error) : ?>
                         <span class='errors sp-errors'>
                             <?php echo $error; ?>
                         </span>

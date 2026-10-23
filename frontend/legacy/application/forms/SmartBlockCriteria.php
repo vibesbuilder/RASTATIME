@@ -441,15 +441,17 @@ class Application_Form_SmartBlockCriteria extends Zend_Form_SubForm
         }
         $this->addElement($excludeLately);
 
-        $excludeLatelyHours = new Zend_Form_Element_Text('sp_exclude_played_lately_hours');
+        // RASTATIME 2026-10-23 - the window is in minutes (1..525600,
+        // default 1440 = 24 h); an old hours row is shown as minutes
+        $excludeLatelyHours = new Zend_Form_Element_Text('sp_exclude_played_lately_minutes');
         $excludeLatelyHours->setAttrib('class', 'input_text sp_input_text_limit')
-            ->setAttrib('maxlength', 4)
+            ->setAttrib('maxlength', 6)
             ->setDecorators(['viewHelper'])
             // Label kept for fallback / validator-message paths; the
             // primary rendering in smart-block-criteria.phtml puts the
             // input inline in a sentence ("Exclude tracks played in
             // the last N hours") per operator preference 2026-05-23.
-            ->setLabel(_('Exclude tracks played in the last hours'))
+            ->setLabel(_('Exclude tracks played in the last minutes'))
             // Allow-empty + required-false: the field is irrelevant
             // when the master checkbox is off, and we want a blank
             // submission in that case to pass validation cleanly.
@@ -459,18 +461,12 @@ class Application_Form_SmartBlockCriteria extends Zend_Form_SubForm
             ->setRequired(false)
             ->setAllowEmpty(true)
             ->addValidator('Int', false)
-            ->addValidator('Between', false, ['min' => 1, 'max' => 8760]);
-        if (isset($storedCrit['exclude_played_lately_hours'])) {
-            $excludeLatelyHours->setValue(
-                $storedCrit['exclude_played_lately_hours']['value']
-            );
-        } else {
-            // Operator-friendly default that the operator can overwrite
-            // immediately; surfaces as the placeholder value once the
-            // checkbox is toggled on so the field is never visually
-            // empty in the "active" state.
-            $excludeLatelyHours->setValue(24);
-        }
+            ->addValidator('Between', false, ['min' => 1, 'max' => Application_Model_Block::EXCLUDE_MAX_MINUTES]);
+        // Operator-friendly default that the operator can overwrite
+        // immediately; surfaces as the placeholder value once the checkbox
+        // is toggled on so the field is never visually empty in the
+        // "active" state.
+        $excludeLatelyHours->setValue(Application_Model_Block::excludeWindowMinutes($storedCrit, 'exclude_played_lately'));
         $this->addElement($excludeLatelyHours);
 
         // RASTATIME 2026-05-23 — exclude tracks whose ARTIST was
@@ -492,9 +488,9 @@ class Application_Form_SmartBlockCriteria extends Zend_Form_SubForm
         }
         $this->addElement($excludeArtists);
 
-        $excludeArtistsHours = new Zend_Form_Element_Text('sp_exclude_artists_played_lately_hours');
+        $excludeArtistsHours = new Zend_Form_Element_Text('sp_exclude_artists_played_lately_minutes');
         $excludeArtistsHours->setAttrib('class', 'input_text sp_input_text_limit')
-            ->setAttrib('maxlength', 4)
+            ->setAttrib('maxlength', 6)
             ->setDecorators(['viewHelper'])
             // Label kept for fallback / validator-message paths; the
             // primary rendering in smart-block-criteria.phtml puts the
@@ -503,7 +499,7 @@ class Application_Form_SmartBlockCriteria extends Zend_Form_SubForm
             // word here is "artists" (was a copy-paste bug from the
             // tracks pair until the inline-label rework also caught
             // and fixed it).
-            ->setLabel(_('Exclude artists played in the last hours'))
+            ->setLabel(_('Exclude artists played in the last minutes'))
             // Same validation policy as the per-track filter above
             // — allow empty + required-false so a master-off
             // submission passes cleanly; the "checkbox on +
@@ -512,14 +508,8 @@ class Application_Form_SmartBlockCriteria extends Zend_Form_SubForm
             ->setRequired(false)
             ->setAllowEmpty(true)
             ->addValidator('Int', false)
-            ->addValidator('Between', false, ['min' => 1, 'max' => 8760]);
-        if (isset($storedCrit['exclude_artists_played_lately_hours'])) {
-            $excludeArtistsHours->setValue(
-                $storedCrit['exclude_artists_played_lately_hours']['value']
-            );
-        } else {
-            $excludeArtistsHours->setValue(24);
-        }
+            ->addValidator('Between', false, ['min' => 1, 'max' => Application_Model_Block::EXCLUDE_MAX_MINUTES]);
+        $excludeArtistsHours->setValue(Application_Model_Block::excludeWindowMinutes($storedCrit, 'exclude_artists_played_lately'));
         $this->addElement($excludeArtistsHours);
 
         // RASTATIME 2026-05-18 — restrict Smart Block to tracks with

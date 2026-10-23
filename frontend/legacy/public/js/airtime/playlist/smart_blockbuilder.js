@@ -733,14 +733,14 @@ function setupUI() {
   // persisted checkbox value so this just keeps it in sync on
   // runtime toggles.
   var $excludeChk = $("#sp_exclude_played_lately");
-  var $excludeWrap = $("#sp_exclude_played_lately_hours_wrap");
-  var $excludeHours = $("#sp_exclude_played_lately_hours");
+  var $excludeWrap = $("#sp_exclude_played_lately_minutes_wrap");
+  var $excludeHours = $("#sp_exclude_played_lately_minutes");
 
   function syncExcludeLatelyVisibility() {
     if ($excludeChk.is(":checked")) {
       $excludeWrap.show();
       if (!$excludeHours.val()) {
-        $excludeHours.val(24);
+        $excludeHours.val(1440); // RASTATIME 2026-10-23 - minutes
       }
     } else {
       $excludeWrap.hide();
@@ -758,14 +758,14 @@ function setupUI() {
   // match in last N hours).  Same default-24 auto-fill on
   // master-on so the active state is never visually empty.
   var $excludeArtistsChk   = $("#sp_exclude_artists_played_lately");
-  var $excludeArtistsWrap  = $("#sp_exclude_artists_played_lately_hours_wrap");
-  var $excludeArtistsHours = $("#sp_exclude_artists_played_lately_hours");
+  var $excludeArtistsWrap  = $("#sp_exclude_artists_played_lately_minutes_wrap");
+  var $excludeArtistsHours = $("#sp_exclude_artists_played_lately_minutes");
 
   function syncExcludeArtistsLatelyVisibility() {
     if ($excludeArtistsChk.is(":checked")) {
       $excludeArtistsWrap.show();
       if (!$excludeArtistsHours.val()) {
-        $excludeArtistsHours.val(24);
+        $excludeArtistsHours.val(1440); // RASTATIME 2026-10-23 - minutes
       }
     } else {
       $excludeArtistsWrap.hide();

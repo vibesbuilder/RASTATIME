@@ -126,7 +126,9 @@ A JSON list, one object per smart block: `name`, `description`,
 items, minutes, hours, remaining), `sort`, the switches
 (`repeat_tracks`, `overflow_tracks`, `only_unplayed`,
 `only_with_expiry`, `use_requests`, `exclude_played_lately` with its
-hours, `exclude_artists_played_lately` with its hours) and `criteria`,
+minutes, `exclude_artists_played_lately` with its minutes; since
+2026-10-23 the keys are `*_minutes`, a bundle with the old `*_hours`
+keys is still read, hours x 60) and `criteria`,
 a list of rules with `group`, `field`, `modifier`, `value` and `extra`
 (the second value of `between` and *is in the range*).
 

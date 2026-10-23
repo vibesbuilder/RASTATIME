@@ -418,6 +418,11 @@ final class Application_Model_Scheduler
                     } else {
                         $defaultFadeIn = Application_Model_Preference::GetDefaultFadeIn();
                         $defaultFadeOut = Application_Model_Preference::GetDefaultFadeOut();
+                        // RASTATIME 2026-10-23 - the files gathered so far are
+                        // out for the block's "played lately" filters
+                        Application_Model_Block::setPickedInFill(array_map(function ($f) {
+                            return ((int) ($f['type'] ?? 0) === 0) ? (int) $f['id'] : 0;
+                        }, $files));
                         $dynamicFiles = self::pickDynamicBlock($bl, $showLimit, $lastFileId($files), $nextFileId);
                         foreach ($dynamicFiles as $f) {
                             $fileId = $f['id'];

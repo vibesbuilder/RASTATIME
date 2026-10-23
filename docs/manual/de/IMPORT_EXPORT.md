@@ -135,7 +135,9 @@ Eine JSON-Liste, ein Objekt je Smart Block: `name`, `description`,
 items, minutes, hours, remaining), `sort`, die Schalter
 (`repeat_tracks`, `overflow_tracks`, `only_unplayed`,
 `only_with_expiry`, `use_requests`, `exclude_played_lately` mit
-Stunden, `exclude_artists_played_lately` mit Stunden) und `criteria`,
+Minuten, `exclude_artists_played_lately` mit Minuten; seit 2026-10-23
+heißen die Schlüssel `*_minutes`, ein Bündel mit den alten `*_hours`-
+Schlüsseln wird weiterhin gelesen, Stunden x 60) und `criteria`,
 eine Liste von Regeln mit `group`, `field`, `modifier`, `value` und
 `extra` (der zweite Wert von `between` und *ist im Bereich*).
 

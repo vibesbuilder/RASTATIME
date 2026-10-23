@@ -266,8 +266,8 @@ el orden + límite:
 | Toggle | A qué restringe el pool |
 |---|---|
 | **Allow only tracks not played yet** (Permitir solo pistas no reproducidas todavía) | Pistas donde `cc_files.lptime` es `NULL` (el playout nunca las ha registrado). Útil para bloques de descubrimiento / rotación de contenido nuevo. |
-| **Exclude tracks played lately** (Excluir pistas reproducidas recientemente) | Pistas donde `lptime` es `NULL` *o* más antiguo que la ventana de horas-hacia-atrás configurada (1..8760 h, por defecto 24). Use esto cuando quiera evitar re-rotación reciente sin prohibir toda reproducción previa. El campo compañero "Exclude tracks played in the last hours" aparece cuando el toggle está activado.  Desde 2026-10-16 la ventana se mide desde el hueco para el que se expande el bloque y **las filas planificadas también cuentan**: una pista programada dentro de la ventana, antes o después del hueco, incluidas las filas que un bloque anterior del mismo relleno colocó en el mismo programa, queda excluida aunque todavía no haya sonado. |
-| **Exclude artists played lately** (Excluir artistas reproducidos recientemente) | Pistas cuyo `artist_name` es NULL / vacío *o* cuyo artista no ha sonado vía cualquier otra pista en la ventana de horas-hacia-atrás configurada (1..8760 h, por defecto 24). Use esto cuando quiera evitar que dos pistas del mismo artista se agrupen — independientemente de qué pista específica se reprodujo. El campo compañero "Exclude tracks played in the last hours" aparece cuando el toggle está activado. |
+| **Exclude tracks played lately** (Excluir pistas reproducidas recientemente) | Pistas donde `lptime` es `NULL` *o* más antiguo que la ventana de retrospección configurada, en **minutos** desde el 2026-10-23 (1..525600 min, por defecto 1440 = 24 h; una ventana guardada en horas se muestra en minutos). Use esto cuando quiera evitar re-rotación reciente sin prohibir toda reproducción previa. El campo compañero "Exclude tracks played in the last minutes" aparece cuando el toggle está activado.  Desde 2026-10-16 la ventana se mide desde el hueco para el que se expande el bloque y **las filas planificadas también cuentan**: una pista programada dentro de la ventana, antes o después del hueco, incluidas las filas que un bloque anterior del mismo relleno colocó en el mismo programa, queda excluida aunque todavía no haya sonado.  Desde el 2026-10-23 esto vale también **dentro de una playlist**: una playlist se expande bloque a bloque antes de insertar nada, y una pista (en el filtro de artistas: un artista) que un bloque anterior o un elemento fijo de la misma playlist ya reunió queda fuera para los bloques siguientes; dos bloques "Dayteaser" de una playlist ya no eligen el mismo teaser. |
+| **Exclude artists played lately** (Excluir artistas reproducidos recientemente) | Pistas cuyo `artist_name` es NULL / vacío *o* cuyo artista no ha sonado vía cualquier otra pista en la ventana de retrospección configurada, en **minutos** desde el 2026-10-23 (1..525600 min, por defecto 1440). Use esto cuando quiera evitar que dos pistas del mismo artista se agrupen — independientemente de qué pista específica se reprodujo. El campo compañero "Exclude artists played in the last minutes" aparece cuando el toggle está activado. |
 | **Allow only tracks with expiry date** (Permitir solo pistas con fecha de caducidad) | Pistas donde `cc_files.expires_at IS NOT NULL`. Útil para bloques que solo deben extraer de contenido perecedero (segmentos de noticias datados, trailers). |
 
 Los cuatro se componen de forma Y y se combinan con cada
@@ -292,20 +292,20 @@ criterio de la sección Criterios principal.
 
 > **Cómo funciona bajo el capó.** `Exclude played lately`
 > añade una sola cláusula `WHERE cc_files.lptime IS NULL OR
-> cc_files.lptime < NOW() - INTERVAL 'N hours'` a la
+> cc_files.lptime < NOW() - INTERVAL 'N minutes'` a la
 > consulta Propel. El valor en horas se persiste en
 > `cc_block_criteria` (criteria =
-> `exclude_played_lately_hours`) junto al master flag
+> `exclude_played_lately_minutes`) junto al master flag
 > (criteria = `exclude_played_lately`).  `Exclude artists
 > played lately` añade una cláusula `WHERE
 > cc_files.artist_name IS NULL OR cc_files.artist_name = ''
 > OR NOT EXISTS (SELECT 1 FROM cc_playout_history JOIN
 > cc_files ON ... WHERE artist_name matches AND starts >
-> NOW() - INTERVAL 'N hours')` — `NOT EXISTS` cortocircuita
+> NOW() - INTERVAL 'N minutes')` — `NOT EXISTS` cortocircuita
 > en la primera coincidencia así que el coste permanece
 > acotado incluso con una gran tabla de historial.
 > Persistido como segundo par de criterios
-> (`exclude_artists_played_lately` + `..._hours`).  Sin
+> (`exclude_artists_played_lately` + `..._minutes`).  Sin
 > cambio de esquema para ambos filtros — retrocompatible
 > con smart blocks creados antes de la función respectiva
 > (filas faltantes = deshabilitado). Vea ARCHITECTURE §23.21.

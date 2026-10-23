@@ -336,8 +336,8 @@ Kandidatenmenge *vor* dem Sort + Limit einschränken:
 | Toggle | Worauf der Pool eingeschränkt wird |
 |---|---|
 | **Allow only tracks not played yet** (Nur noch nicht gespielte Tracks) | Tracks, bei denen `cc_files.lptime` `NULL` ist (das Playout hat sie nie protokolliert). Nützlich für Discovery- / Neue-Inhalte-Rotations-Blöcke. |
-| **Exclude tracks played lately** (Kürzlich gespielte Tracks ausschließen) | Tracks, bei denen `lptime` `NULL` ist *oder* älter als das konfigurierte Stunden-Rückblick-Fenster (1..8760 h, Default 24). Verwenden Sie dies, wenn Sie kürzliche Wiederholungen vermeiden möchten, ohne jede frühere Wiedergabe zu verbieten. Das Begleitfeld "Exclude tracks played in the last hours" erscheint, wenn der Toggle an ist.  Seit 2026-10-16 wird das Fenster vom Slot aus gemessen, für den der Block expandiert wird, und **geplante Zeilen zählen mit**: Ein Titel, der im Fenster geplant ist - vor oder nach dem Slot, einschließlich der Zeilen, die ein früherer Block desselben Fülldurchgangs in dieselbe Sendung gelegt hat - wird ausgeschlossen, obwohl er noch nicht gelaufen ist. |
-| **Exclude artists played lately** (Kürzlich gespielte Artists ausschließen) | Tracks, deren `artist_name` NULL / leer ist *oder* deren Artist nicht über irgendeinen anderen Track im konfigurierten Stunden-Rückblick-Fenster gespielt wurde (1..8760 h, Default 24). Verwenden Sie dies, wenn Sie vermeiden möchten, dass zwei Tracks desselben Artists clustern — unabhängig davon, welcher konkrete Track gespielt wurde. Das Begleitfeld "Exclude tracks played in the last hours" erscheint, wenn der Toggle an ist. |
+| **Exclude tracks played lately** (Kürzlich gespielte Tracks ausschließen) | Tracks, bei denen `lptime` `NULL` ist *oder* älter als das konfigurierte Rückblick-Fenster, seit 2026-10-23 in **Minuten** (1..525600 min, Default 1440 = 24 h; ein in Stunden gespeichertes Fenster wird als Minuten angezeigt). Verwenden Sie dies, wenn Sie kürzliche Wiederholungen vermeiden möchten, ohne jede frühere Wiedergabe zu verbieten. Das Begleitfeld "Exclude tracks played in the last minutes" erscheint, wenn der Toggle an ist.  Seit 2026-10-16 wird das Fenster vom Slot aus gemessen, für den der Block expandiert wird, und **geplante Zeilen zählen mit**: Ein Titel, der im Fenster geplant ist - vor oder nach dem Slot, einschließlich der Zeilen, die ein früherer Block desselben Fülldurchgangs in dieselbe Sendung gelegt hat - wird ausgeschlossen, obwohl er noch nicht gelaufen ist.  Seit 2026-10-23 gilt das auch **innerhalb einer Playlist**: Eine Playlist wird Block für Block aufgelöst, bevor etwas eingefügt wird, und ein Titel (beim Artist-Filter: ein Artist), den ein früherer Block oder fester Eintrag derselben Playlist bereits gesammelt hat, bleibt für die späteren Blöcke außen vor - zwei "Dayteaser"-Blöcke in einer Playlist wählen nicht mehr denselben Teaser. |
+| **Exclude artists played lately** (Kürzlich gespielte Artists ausschließen) | Tracks, deren `artist_name` NULL / leer ist *oder* deren Artist nicht über irgendeinen anderen Track im konfigurierten Rückblick-Fenster gespielt wurde, seit 2026-10-23 in **Minuten** (1..525600 min, Default 1440). Verwenden Sie dies, wenn Sie vermeiden möchten, dass zwei Tracks desselben Artists clustern — unabhängig davon, welcher konkrete Track gespielt wurde. Das Begleitfeld "Exclude artists played in the last minutes" erscheint, wenn der Toggle an ist. |
 | **Allow only tracks with expiry date** (Nur Tracks mit Ablaufdatum) | Tracks, bei denen `cc_files.expires_at IS NOT NULL` ist. Nützlich für Blöcke, die nur aus kurzlebigen / vergänglichen Inhalten ziehen sollen (datierte News-Segmente, Trailer). |
 
 Alle vier kombinieren sich UND-weise und mit jedem Kriterium
@@ -361,10 +361,10 @@ in der Haupt-Kriterien-Section.
 
 > **Wie es unter der Haube funktioniert.** `Exclude played
 > lately` fügt eine einzige `WHERE cc_files.lptime IS NULL OR
-> cc_files.lptime < NOW() - INTERVAL 'N hours'`-Klausel zur
+> cc_files.lptime < NOW() - INTERVAL 'N minutes'`-Klausel zur
 > Propel-Abfrage hinzu. Der Stundenwert wird in
 > `cc_block_criteria` persistiert (criteria =
-> `exclude_played_lately_hours`) neben dem Master-Flag
+> `exclude_played_lately_minutes`) neben dem Master-Flag
 > (criteria = `exclude_played_lately`).  `Exclude artists
 > played lately` fügt eine `WHERE cc_files.artist_name IS
 > NULL OR cc_files.artist_name = '' OR NOT EXISTS (SELECT 1
@@ -374,7 +374,7 @@ in der Haupt-Kriterien-Section.
 > ersten Treffer, daher bleiben die Kosten auch bei großer
 > History-Tabelle begrenzt.  Persistiert als zweites
 > Kriterien-Paar (`exclude_artists_played_lately` +
-> `..._hours`).  Keine Schemaänderung für beide Filter —
+> `..._minutes`).  Keine Schemaänderung für beide Filter —
 > abwärtskompatibel mit Smart Blocks, die vor dem jeweiligen
 > Feature erstellt wurden (fehlende Zeilen = deaktiviert).
 > Siehe ARCHITECTURE §23.21.

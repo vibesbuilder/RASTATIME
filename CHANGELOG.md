@@ -9,6 +9,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Smart Blocks: „played lately"-Fenster in Minuten, keine Wiederholung
+  innerhalb einer Playlist (2026-10-23, Operator-Go)** — (1) „Exclude
+  tracks/artists played in the last N" wird in **Minuten** eingetragen
+  (1..525600, Vorgabe 1440 = 24 h); Kriterien-Zeilen
+  `exclude_played_lately_minutes` / `exclude_artists_lately_minutes`,
+  alte `*_hours`-Zeilen werden bis zum nächsten Speichern als Stunden × 60
+  gelesen (`Block::excludeWindowMinutes`), keine Migration.  Formular,
+  Ansicht, JS und Import/Export (schreibt `*_minutes`, liest `*_hours`
+  weiter) folgen; Manual LIBRARY + IMPORT_EXPORT in EN/DE/FR/ES.  (2) Eine
+  Playlist wird Block für Block im Speicher aufgelöst und erst danach
+  eingefügt, darum sah der „geplante Zeilen zählen"-Teil des Filters die
+  Wahl eines früheren Blocks derselben Playlist nicht: zwei
+  „Dayteaser"-Blöcke in „BBC News 17h" wählten denselben Teaser.  Der
+  Füllkontext führt jetzt die bisher gesammelten Datei-IDs
+  (`Block::setPickedInFill`, von `AutoPlaylistManager::expandPlaylist` und
+  `Scheduler::retrieveMediaFiles` vor jedem dynamischen Block gesetzt); bei
+  aktivem Titel-Filter sind sie ausgeschlossen, bei aktivem Artist-Filter
+  ihre Artists.  Rollback-Probe `C:/Temp/optd/fill_exclude_probe.php 121
+  29787` (Stundenzeile 1 → 60 min, zweite Wahl wiederholt die erste nicht,
+  Speichern schreibt Minuten-Zeilen); Block-Editor live geprüft (Block 121
+  zeigt 60).  Hinweis: spät am Tag kann der „fits today"-Pool nur einen
+  Teaser enthalten, dann bleibt der zweite Block leer statt zu
+  wiederholen.  Architektur §23.21 Addendum (0.86).  Commit folgt.
 - **Kalender → View: „Length" je Zeile ist die Zeilenlänge (2026-10-23,
   Operator-Go)** — die Spalte zeigte die Rohlänge des Mediums (volle
   Dateilänge, Webstream-/Line-In-Länge), neben cue- und

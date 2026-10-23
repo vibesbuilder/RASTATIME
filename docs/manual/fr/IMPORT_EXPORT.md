@@ -135,7 +135,9 @@ Une liste JSON, un objet par smart block : `name`, `description`,
 items, minutes, hours, remaining), `sort`, les interrupteurs
 (`repeat_tracks`, `overflow_tracks`, `only_unplayed`,
 `only_with_expiry`, `use_requests`, `exclude_played_lately` avec ses
-heures, `exclude_artists_played_lately` avec ses heures) et `criteria`,
+minutes, `exclude_artists_played_lately` avec ses minutes ; depuis le
+2026-10-23 les clés sont `*_minutes`, un lot avec les anciennes clés
+`*_hours` est toujours lu, heures x 60) et `criteria`,
 une liste de règles avec `group`, `field`, `modifier`, `value` et
 `extra` (la seconde valeur de `between` et *est dans le champ*).
 
