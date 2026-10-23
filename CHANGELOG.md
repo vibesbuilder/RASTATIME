@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Vier Oberflächen-Meldungen vom 2026-10-23 (Operator)** — (1) Suchzeile:
+  der Zähler „X of N tracks" saß nach Nutzung der erweiterten Suche links
+  über dem Suchtext; die Position wird aus dem Eingabefeld gemessen,
+  während das Layout noch in Bewegung war → zweite Messung im nächsten
+  Frame und nach dem Auf-/Zuklappen der erweiterten Suche
+  (`library.js placeFilterIndicator`).  (2) Podcasts: beim Anlegen bot
+  „Track Type" nur „None"; die Create-Antwort trug keine
+  `track_type_options` → `PodcastController::postAction` lädt den Podcast
+  wie der GET (`getPodcastById`).  (3) New Show: nach Schließen ohne
+  Speichern und erneutem Öffnen standen alle Abschnitte offen, weil das
+  asynchron nachgeladene Formular ungeklappt ankam →
+  `collapseAddShowSections()` auch nach dem Neuzeichnen.  (4) New Show:
+  „Now" → „In the future" ließ Startdatum/-zeit gesperrt, `removeProp
+  ("disabled")` hebt unter jQuery 3.7 nicht auf (im Harness bestätigt) →
+  `prop("disabled", false)`, Linked-Kästchen folgt, wenn „Now" es gesperrt
+  hatte.  Commit UI4.
 - **Podcasts-Suche mit Abstand, Autoloading-Hinweis nur im Tooltip
   (2026-10-22, Operator-Meldung)** — (1) Dashboard → Podcasts: zwischen
   Suchzeile und Knopfleiste lagen 0 px; die allgemeine 5-px-Regel der

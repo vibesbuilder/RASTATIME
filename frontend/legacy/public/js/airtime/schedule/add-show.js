@@ -8,6 +8,22 @@
 dayjs.extend(window.dayjs_plugin_utc);
 dayjs.extend(window.dayjs_plugin_timezone);
 
+// RASTATIME 2026-10-23 - collapse the advanced sections (the list the
+// open path used since 2026-05-19, Repeat since 2026-10-21).  A function
+// so the redraw after a close runs it too: closeAddShowForm fetches a fresh
+// form asynchronously, and opened again before it arrived the new markup
+// came up with every section expanded (operator).
+function collapseAddShowSections() {
+  $("#schedule-show-templates").hide();
+  $("#schedule-show-repeat").hide();
+  $("#schedule-show-auto").hide();
+  $("#live-stream-override").hide();
+  $("#schedule-show-record").hide();
+  $("#schedule-record-rebroadcast").hide();
+  $("#schedule-show-who").hide();
+  $("#schedule-show-style").hide();
+}
+
 function openAddShowForm(nowOrFuture) {
   if ($("#add-show-form").length == 1) {
     if ($("#add-show-form").css("display") == "none") {
@@ -30,14 +46,7 @@ function openAddShowForm(nowOrFuture) {
       // list as a no-op).  Operator request 2026-05-19: Record and
       // Templates should both come up collapsed by default, in line
       // with Autoloading Playlist / Live Stream Input / Who / Style.
-      $("#schedule-show-templates").hide();
-      $("#schedule-show-repeat").hide(); // RASTATIME 2026-10-21
-      $("#schedule-show-auto").hide();
-      $("#live-stream-override").hide();
-      $("#schedule-show-record").hide();
-      $("#schedule-record-rebroadcast").hide();
-      $("#schedule-show-who").hide();
-      $("#schedule-show-style").hide();
+      collapseAddShowSections();
     }
     $("#schedule-show-what").show(0, function () {
       $add_show_name = $("#add_show_name");
@@ -98,12 +107,19 @@ function setupStartTimeWidgets() {
 
     //Disabled linked show option since user won't be able to schedule
     //content
-    $("#add_show_linked").prop("disabled", "true");
+    $("#add_show_linked").prop("disabled", "true").data("rtNowDisabled", true);
   } else {
     //Do not enable start date and time option when a show has already started
+    // RASTATIME 2026-10-23 - prop("disabled", false), not removeProp():
+    // removeProp() leaves the native boolean property undefined and the
+    // browser kept the fields disabled after "Now" -> "In the future"
+    // (operator); the linked box follows when "Now" had disabled it
     if (!$("#add_show_start_now-now").prop("disabled")) {
-      $("#add_show_start_date").removeProp("disabled");
-      $("#add_show_start_time").removeProp("disabled");
+      $("#add_show_start_date").prop("disabled", false);
+      $("#add_show_start_time").prop("disabled", false);
+      if ($("#add_show_linked").data("rtNowDisabled")) {
+        $("#add_show_linked").prop("disabled", false).removeData("rtNowDisabled");
+      }
     }
   }
 }
@@ -131,6 +147,10 @@ function redrawAddShowForm($el, form) {
   $el.empty().append(form);
 
   setAddShowEvents($el);
+  // RASTATIME 2026-10-23 - a redrawn form starts with the advanced
+  // sections collapsed like a freshly opened one (a validation redraw
+  // reopens the sections with errors right after, showErrorSections)
+  collapseAddShowSections();
 }
 
 function closeAddShowForm(event) {

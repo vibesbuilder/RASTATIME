@@ -5706,3 +5706,31 @@ entfernen (~1 h, kein Dienst betroffen, kein Neustart).  Vorbedingung: Operator-
 Erledigt 2026-10-22: beide Module, Console-Script `libretime-playout` und `message_handler_test.py` entfernt,
 BASELINE_MODULES/LINUX_INVENTORY markiert.  `PypoFile` hat jetzt keinen Aufrufer mehr ausser seinem Test
 (bewusst stehen gelassen, eigener Punkt bei Bedarf).  Playout-Suite 819 / 2 uebersprungen.
+
+## Oberflächen-Punkte 2026-10-23 (Operator)
+
+### ✅ Suchzeilen-Zaehler, Podcast-Track-Type, New-Show-Abschnitte, Now/Future-Sperre - behoben 2026-10-23
+
+Vier Meldungen, siehe CHANGELOG.  OFFEN zum Nachfragen: Podcast-Episode per Doppelklick geladen, aber kein
+"wird geladen"-Symbol waehrend des Downloads - im Code wird die Spalte "Imported?" nach dem POST neu geladen
+(Platzhalterzeile ingested=-1 -> loading.gif); nicht reproduziert, Rueckfrage beim Operator (welche Tabelle,
+Dashboard oder Editor; erscheint das Symbol nach einem Moment).
+
+### 💡 Bibliothek: Spalten je Medientyp (Line-In, Webstream, Playlist, Smart Block) - Evaluierung 2026-10-23
+
+Heute eine Spaltenmenge fuer alle Typen (library.js, Sichtbarkeit je Benutzer in cc_pref ueber
+usersettings/get-library-datatable).  Machbar: Sichtbarkeitsprofil je Medientyp speichern und beim Wechsel des
+Reiters anwenden (setCurrentTable), Spaltenwahl im Menue schreibt ins Profil des aktiven Typs; sinnvolle
+Vorgaben je Typ (Line-In: Name, Geraet, Laenge; Webstream: Name, URL, Laenge; Playlist/Block: Name, Laenge,
+Ersteller, Aenderung).  Aufwand ~1 Tag (JS + Einstellungs-Endpunkt + Manual LIBRARY x4), Risiko gering.
+Empfehlung: Go bei Bedarf, nach den laufenden Abnahmen.
+
+### 💡 Kalender: "Rueckgaengig" fuer einige Sekunden nach Loeschen - Evaluierung 2026-10-23
+
+Loeschen einer Instanz entfernt heute sofort Sendeplanzeilen und markiert die Instanz; das Playout holt den
+Plan ca. alle 90 s.  Zwei Wege: a) echtes Verzoegern des Loeschens (Toast 10 s, danach ausfuehren) - riskant,
+weil Kalender/Builder zwischendurch inkonsistent sind; b) Snapshot + Wiederherstellen (Instanz + Zeilen
+puffern, Toast "Rueckgaengig" 10 s, Wiederherstellung legt alles neu an, Playout-Refresh danach) - sauber,
+aber nur fuer Instanz-Loeschung sinnvoll (Serien, Wiederholungs-Verknuepfungen, Aufnahmen machen es
+komplex).  Aufwand 1-2 Tage.  Empfehlung: Defer; die Bestaetigungsabfrage vor dem Loeschen bleibt der
+Schutz.

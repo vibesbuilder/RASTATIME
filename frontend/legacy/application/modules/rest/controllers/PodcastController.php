@@ -100,6 +100,13 @@ class Rest_PodcastController extends Zend_Rest_Controller
         try {
             $requestData = $this->getRequest()->getPost();
             $podcast = Application_Service_PodcastService::createFromFeedUrl($requestData['url']);
+            // RASTATIME 2026-10-23 - the editor opens from this response: load
+            // the podcast the way the GET does, with track_type_options and
+            // default_track_type_id (the "Track Type" select only offered
+            // "None" until the editor was closed and reopened - operator)
+            if (!empty($podcast['id'])) {
+                $podcast = Application_Service_PodcastService::getPodcastById($podcast['id']);
+            }
 
             $path = 'podcast/podcast.phtml';
 

@@ -716,6 +716,24 @@ var AIRTIME = (function (AIRTIME) {
       "padding-right",
       right + $count.outerWidth() + 10 - (fr.right - ir.right),
     );
+    // RASTATIME 2026-10-23 - the box is measured while the layout may
+    // still move (advanced-search panel opening, dialog settling, fonts):
+    // the count then sat at the input's LEFT edge over the typed text
+    // (operator).  Measure once more on the next frame and settle.
+    if (!mod._placeAgain) {
+      mod._placeAgain = true;
+      var again = function () {
+        mod._placeAgain = false;
+        mod.placeFilterIndicator();
+      };
+      if (window.requestAnimationFrame) {
+        window.requestAnimationFrame(function () {
+          window.requestAnimationFrame(again);
+        });
+      } else {
+        window.setTimeout(again, 50);
+      }
+    }
   };
 
   // RASTATIME 2026-10-18 - the count names the selected media type
@@ -2840,6 +2858,9 @@ $(document).ready(function () {
 
   $("#advanced-options").on("click", function () {
     resizeAdvancedSearch();
+    // RASTATIME 2026-10-23 - the panel changes the filter box's layout
+    window.setTimeout(AIRTIME.library.placeFilterIndicator, 0);
+    window.setTimeout(AIRTIME.library.placeFilterIndicator, 400);
   });
 
   $(window).resize(function () {
