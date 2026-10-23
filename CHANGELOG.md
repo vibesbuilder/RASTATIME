@@ -24,7 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   „Now" → „In the future" ließ Startdatum/-zeit gesperrt, `removeProp
   ("disabled")` hebt unter jQuery 3.7 nicht auf (im Harness bestätigt) →
   `prop("disabled", false)`, Linked-Kästchen folgt, wenn „Now" es gesperrt
-  hatte.  Commit UI4.
+  hatte.  Commit efc5b2d.
 - **Podcasts-Suche mit Abstand, Autoloading-Hinweis nur im Tooltip
   (2026-10-22, Operator-Meldung)** — (1) Dashboard → Podcasts: zwischen
   Suchzeile und Knopfleiste lagen 0 px; die allgemeine 5-px-Regel der
