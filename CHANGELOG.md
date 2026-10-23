@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Betrieb: Windows-Updates Oktober 2026 + BIOS M5OKT41A installiert (2026-10-23,
+  Operator)** — Build 26200.9711 (KB5127648/KB5127690/KB5127647), BIOS 1.65 per
+  Lenovo Commercial Vantage, Neustart 18:01 geprüft (Tascam per Name, Line-In,
+  Stereo Tool, Icecast, Aufhol-Start, Preflight sauber).  BIOS-Update stellte
+  SecureBoot auf Enabled, HardDiskPre-delay auf Disabled, OptionKeysDisplay auf
+  Disabled, PhysicalPresenceforClear auf Enabled; AfterPowerLoss = Last State
+  blieb.  Offen: TPM-Firmware 15.25.  26H2 bleibt Defer.  `COMPONENTS.md`,
+  BACKLOG.  Backups liegen seit 2026-10-19 auf E:, Medienspiegel aus (Operator).
 - **Smart Blocks: „played lately"-Fenster in Minuten, keine Wiederholung
   innerhalb einer Playlist (2026-10-23, Operator-Go)** — (1) „Exclude
   tracks/artists played in the last N" wird in **Minuten** eingetragen

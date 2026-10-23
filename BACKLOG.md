@@ -51,7 +51,7 @@ dann 2 → 1, danach nach Bedarf**.
 |---|-------|--------|-----------------|
 | 1 | Datenbank-Passwort rotieren (Klartext im Apache-error_log vom 04.10.) | 🟡 Defer, Wartungsfenster mit frischem Backup | „Datenbank-Passwort rotieren" |
 | 2 | Statisches Harbor-Rückfall-Passwort in libretime.conf ersetzen | 💡 seit 2026-09-10 | „Statisches Harbor-Rückfall-Passwort" |
-| 3 | Windows-Updates Oktober 2026 + Lenovo-Firmware im Wartungsfenster | 🟡 Defer, Empfehlung Go nach dem 03:30-Backup | „Windows-Updates Oktober 2026" |
+| 3 | Windows-Updates Oktober 2026 + Lenovo-Firmware | ✅ 2026-10-23 18:01 (Build 26200.9711, BIOS M5OKT41A); offen nur die TPM-Firmware 15.25 | „Windows-Updates Oktober 2026" |
 | 4 | Stereo Tool: Stream-Messung mit dem R128-Preset (−23 LUFS / −1 dBTP am fertigen Stream) | offen, ~15 min ffmpeg | „Ausgangs-Processing mit Stereo Tool" |
 | 5 | Line-In: Live-Abnahme des frischen `input.http` je Slot (685dc17, 2026-10-21) | offen, eine Line-In-Show nach PLAYOUT-Neustart | Memory linein_abnahme_stand |
 | – | Zeitumstellung Nacht 24./25.10.: Show 1242 Electronic Evening 00:00–05:00 beobachten | Checkliste bereit | Memory reminder_dst_night |
@@ -65,8 +65,7 @@ Metadaten Energy/Tempo/Key/Timbre (Bench liegt vor) · JavaScript-Build-Pipeline
 Payware/Tier-System 🔴 Hold.
 
 **Ideen, nur notiert:** Spalten je Medientyp („klingt gut", Go offen, ~1 Tag) ·
-Import/Export Stufe 2 · Backup: Recordings in den Medienspiegel · Medienspiegel
-auf derselben Platte D: · Podcast-Downloads umgehen den Analyzer · MP3-Stream-
+Import/Export Stufe 2 · Backup: Recordings in den Medienspiegel · Podcast-Downloads umgehen den Analyzer · MP3-Stream-
 Ausgang 48 kHz bei 44,1-kHz-Mix · Line-In-Gain live nachregeln · Kanalwahl im
 Schnell-Editor · Speicherzuwachs Liquidsoap · Traffic Alerts Deadline-Skip ·
 Expiry in M4A · bulk_import-Erweiterungsliste · die unbewerteten Ideen unter
@@ -5406,7 +5405,10 @@ unnoetige Arbeit und ein zusaetzlicher Resampler im Signalweg.  Vorbedingungen f
 die 48 kHz kommen - Stream-Einstellung oder Encoder-Default; Wirkung auf Hoerer-Clients und Icecast-Fallback-Mounts),
 Umstellung nur im ruhigen Fenster mit Hoer-Abnahme, weil ein Encoder-Neustart die Hoerer kurz trennen kann.
 
-### 💡 Backup-Medienspiegel liegt auf derselben Platte D: wie die Bibliothek (notiert 2026-10-14)
+### ❌ Backup-Medienspiegel liegt auf derselben Platte D: wie die Bibliothek (notiert 2026-10-14) - entfällt 2026-10-23
+**Operator 2026-10-23:** gestrichen.  Seit 2026-10-19 liegen die Backups auf `E:/backups` (1,6 TB frei), der
+Medienspiegel ist aus (`local_backup_include_media` = false); den alten Spiegel `D:ackups\media` (Stand 07.10.,
+178 GB) löscht der Operator selbst.
 Der Nachtlauf 03:30 spiegelt die Bibliothek (D:\stor) nach D:\backups - das schuetzt gegen Loeschen und Fehlbedienung,
 nicht gegen einen Ausfall der Platte D:.  Seit 2026-10-14 werden verlustfreie Originale beim Import nicht mehr
 aufbewahrt; fuer importierte Titel gibt es damit nur Bibliothek + Spiegel auf derselben Platte.  Vorschlag zur
@@ -5574,7 +5576,18 @@ Skript im Wurzelelement).  Nicht gebaut (bei Bedarf): Anzeige in der Sendungs-Vo
 "Teaser der Sendung X".
 
 
-### 🟡 Windows-Updates Oktober 2026 + Lenovo-Firmware im Wartungsfenster; Windows 11 26H2 - DEFER (evaluiert 2026-10-16)
+### ✅ Windows-Updates Oktober 2026 + Lenovo-Firmware - installiert 2026-10-23 (Operator); Windows 11 26H2 bleibt 🟡 DEFER
+**Stand 2026-10-23 (Aufräum-Durchgang, Operator hat installiert und um 18:01 neu gestartet):** Build 26200.9711
+(KB5127648 + KB5127690 + KB5127647), BIOS M5OKT41A (1.65) per Lenovo Commercial Vantage.  Neustart geprüft:
+Tascam per Name (PortAudio 11 WASAPI / 4 MME), Line-In-Capture bereit, Liquidsoap 18:01:19 mit gültiger
+Stereo-Tool-Lizenz und Icecast-Mounts, Aufhol-Start 'To Ramona' bei +165 s, Preflight ohne Warnungen, alle
+10 Dienste laufen.  BIOS-Vergleich gegen den Snapshot vom 16.10. (neuer Snapshot
+`C:/Temp/optd/bios_settings_M5OKT41A_2026-10-23.txt`): AfterPowerLoss = Last State unverändert; vom Update
+umgestellt: SecureBoot Disabled → Enabled, HardDiskPre-delay 12 s → Disabled, OptionKeysDisplay Enabled →
+Disabled (+ OptionKeysDisplayStyle entfallen), PhysicalPresenceforClear Disabled → Enabled - Operator
+entscheidet, ob etwas zurückgestellt wird (Boot lief mit den neuen Werten).  **Offen:** TPM-Firmware
+15.25.19744 (WMI meldet weiterhin 15.24.18954; Windows Update listet sie und das Lenovo-Paket 1.0.0.65 noch),
+Dell-Monitor-INF bleibt bewusst aus.
 Stand 2026-10-16 (nur gelesen, nichts installiert): Windows 11 Pro 25H2 Build 26200.9457 (KB5129195 vom 15.09.),
 BIOS M5OKT3EA (1.62), BitLocker aus, Richtlinie "nur benachrichtigen, nie selbst neu starten" aktiv (WINDOWS_24_7.md).
 Empfehlung Go - der Operator installiert im Wartungsfenster nach dem 03:30-Backup (WINDOWS_24_7.md §3, danach
