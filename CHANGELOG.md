@@ -52,6 +52,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Playlist-Editor: „You are viewing an older version of …" bei mehreren
+  offenen Playlists (2026-10-23, Operator)** — der Server hielt die
+  „aktuelle Playlist" in der Session; jeder Tab-Wechsel setzte sie per
+  asynchronem `change-playlist`-POST.  Eine schnelle Bearbeitung nach dem
+  Wechsel traf die Playlist des vorigen Tabs, scheiterte an deren
+  Änderungsstempel mit dem **fremden** Namen und zeichnete deren Inhalt in
+  den falschen Tab (danach nur noch Neuladen).  Jetzt nennt jede Aktion
+  ihre Playlist (`obj_id` in allen Builder-POSTs, `spl.js`), und
+  `PlaylistController::getPlaylist` nimmt die genannte vor der Session
+  (Session bleibt Rückfall).  Live reproduziert und geprüft: Session auf
+  Playlist 626, Aktion für Playlist 60 mit deren Stempel → vorher „older
+  version of BBC News 19h", jetzt OK.  Nach dem Deploy Seite neu laden
+  (JS).  Commit folgt.
 - **Cue-/Webstream-Längen-Nachführung ließ `time_filled` stehen (2026-10-23)**
   — `CuePoints::relayoutInstances` legt die Zeilen der künftigen Sendungen
   neu aus (`calculateCrossfades`), aktualisierte aber

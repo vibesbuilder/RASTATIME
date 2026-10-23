@@ -80,7 +80,7 @@ var AIRTIME = (function (AIRTIME) {
     }
     $.post(
       url,
-      { format: "json", cueIn: cueIn, id: id, modified: lastMod, type: type },
+      { format: "json", cueIn: cueIn, id: id, modified: lastMod, obj_id: mod.getId(), type: type },
       function (json) {
         if (json.error !== undefined) {
           playlistError(json);
@@ -119,7 +119,7 @@ var AIRTIME = (function (AIRTIME) {
 
     $.post(
       url,
-      { format: "json", cueOut: cueOut, id: id, modified: lastMod, type: type },
+      { format: "json", cueOut: cueOut, id: id, modified: lastMod, obj_id: mod.getId(), type: type },
       function (json) {
         if (json.error !== undefined) {
           playlistError(json);
@@ -176,6 +176,7 @@ var AIRTIME = (function (AIRTIME) {
         cueOut: cueOut,
         id: id,
         modified: lastMod,
+        obj_id: mod.getId(),
         type: type,
       },
       function (json) {
@@ -231,6 +232,7 @@ var AIRTIME = (function (AIRTIME) {
         id2: id2,
         offset: offset,
         modified: lastMod,
+        obj_id: mod.getId(),
         type: type,
       },
       function (json) {
@@ -275,7 +277,7 @@ var AIRTIME = (function (AIRTIME) {
 
     $.post(
       url,
-      { format: "json", fadeIn: fadeIn, id: id, modified: lastMod, type: type },
+      { format: "json", fadeIn: fadeIn, id: id, modified: lastMod, obj_id: mod.getId(), type: type },
       function (json) {
         if (json.error !== undefined) {
           playlistError(json);
@@ -324,6 +326,7 @@ var AIRTIME = (function (AIRTIME) {
         fadeOut: fadeOut,
         id: id,
         modified: lastMod,
+        obj_id: mod.getId(),
         type: type,
       },
       function (json) {
@@ -692,7 +695,7 @@ var AIRTIME = (function (AIRTIME) {
         var url = baseUrl + "playlist/get-playlist-fades";
         $.post(
           url,
-          { format: "json", modified: lastMod, type: type },
+          { format: "json", modified: lastMod, obj_id: mod.getId(), type: type },
           function (json) {
             if (json.error !== undefined) {
               playlistError(json);
@@ -746,7 +749,7 @@ var AIRTIME = (function (AIRTIME) {
       }
       $.post(
         url,
-        { format: "json", fadeIn: fadeIn, modified: lastMod, type: type },
+        { format: "json", fadeIn: fadeIn, modified: lastMod, obj_id: mod.getId(), type: type },
         function (json) {
           hideError(input);
           if (json.modified !== undefined) {
@@ -777,7 +780,7 @@ var AIRTIME = (function (AIRTIME) {
 
       $.post(
         url,
-        { format: "json", fadeOut: fadeOut, modified: lastMod, type: type },
+        { format: "json", fadeOut: fadeOut, modified: lastMod, obj_id: mod.getId(), type: type },
         function (json) {
           hideError(input);
           if (json.modified !== undefined) {
@@ -1579,6 +1582,12 @@ var AIRTIME = (function (AIRTIME) {
 
     oData["modified"] = lastMod;
     oData["obj_type"] = obj_type;
+    // RASTATIME 2026-10-23 - the request names its playlist: the server kept
+    // the "current" one in the session, set by an asynchronous POST on each
+    // tab switch, so a quick edit after switching tabs hit the previous tab's
+    // playlist ("You are viewing an older version of <other playlist>") and
+    // its content was painted into the wrong tab (operator).
+    oData["obj_id"] = mod.getId();
     oData["format"] = "json";
 
     $.post(sUrl, oData, mod.playlistResponse);

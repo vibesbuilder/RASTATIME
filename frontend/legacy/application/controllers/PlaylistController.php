@@ -42,8 +42,24 @@ class PlaylistController extends Zend_Controller_Action
 
         $obj_sess = new Zend_Session_Namespace(UI_PLAYLISTCONTROLLER_OBJ_SESSNAME);
 
-        if (isset($obj_sess->id)) {
-            $obj = new $objInfo['className']($obj_sess->id);
+        // RASTATIME 2026-10-23 - the request's own object id wins over the
+        // session's "current playlist": that one is set by an asynchronous
+        // change-playlist POST on every tab switch, so with several editor
+        // tabs open a quick edit hit the previous tab's playlist, failed
+        // the modified check with the OTHER playlist's name and painted its
+        // content into the wrong tab (operator).  The session stays the
+        // fallback for callers that do not send obj_id.
+        $objId = $this->_getParam('obj_id', null);
+        if ($objId !== null && $objId !== '' && is_numeric($objId)) {
+            $obj_id = (int) $objId;
+        } elseif (isset($obj_sess->id)) {
+            $obj_id = $obj_sess->id;
+        } else {
+            $obj_id = null;
+        }
+
+        if ($obj_id !== null) {
+            $obj = new $objInfo['className']($obj_id);
 
             $modified = $this->_getParam('modified', null);
             if ($obj->getLastModified('U') !== $modified) {
