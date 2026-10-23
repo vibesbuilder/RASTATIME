@@ -721,6 +721,12 @@ SQL;
     {
         $con = Propel::getConnection();
 
+        // RASTATIME 2026-10-23 - "length" is the ROW's length (cue-out minus
+        // cue-in of the schedule row, as the show builder shows it), not the
+        // medium's raw length: the "View" dialog listed a cued file with its
+        // full file length next to cue-aware start times (operator).  Live
+        // rows (webstream, line-in) carry cue_in 0 and cue_out = clip length.
+
         // RASTATIME 2026-05-13 — third UNION branch for Line-In items
         // (cc_schedule.linein_id → rastatime_linein).  Mirrors the
         // shape used by the file/stream branches: track_title carries
@@ -737,7 +743,7 @@ FROM (
                 f.track_title,
                 f.album_title  AS album,
                 f.genre        AS genre,
-                f.length       AS length,
+                (s.cue_out - s.cue_in) AS length,
                 f.artist_name  AS creator,
                 f.file_exists  AS EXISTS,
                 f.filepath     AS filepath,
@@ -755,7 +761,7 @@ FROM (
                 (ws.name || ': ' || ws.url) AS track_title,
                 null            AS album,
                 null            AS genre,
-                ws.length       AS length,
+                (s.cue_out - s.cue_in) AS length,
                 sub.login       AS creator,
                 't'::boolean    AS EXISTS,
                 ws.url          AS filepath,
@@ -773,7 +779,7 @@ FROM (
                 li.name         AS track_title,
                 li.description  AS album,
                 null            AS genre,
-                COALESCE(li.length, INTERVAL '30 minutes') AS length,
+                (s.cue_out - s.cue_in) AS length,
                 ''::varchar     AS creator,
                 't'::boolean    AS EXISTS,
                 null::varchar   AS filepath,

@@ -125,7 +125,7 @@ acción.
 | **Planificar pistas** | Abrir el show-builder. | Siempre |
 | **Aplicar plantilla** | Aplicar una [Plantilla de programa](./SHOW_TEMPLATES.md). | Programas futuros solamente |
 | **Guardar como plantilla** | Guardar la configuración actual como nueva plantilla. | Siempre |
-| **Ver** | Vista de solo lectura. | Siempre |
+| **Ver** | Vista de solo lectura de los metadatos + programación del programa. *Start* y *Length* de cada fila son la fila de programación tal como queda colocada (Length = cue-out menos cue-in, como en el show builder; desde el 2026-10-23); los totales de abajo son la longitud colocada del contenido (con puntos de cue y solapes de crossfade) frente a la duración del programa. | Siempre |
 | **Teasers** | Los jingles que anuncian este programa: cambiar tipos, desvincular, vincular más; véase [Automatización de teasers](./TEASERS.md). Desde 2026-10-16. | Admin / PM |
 | **Editar programa** | Editar la definición de programa. | Programas futuros o actuales |
 | **Editar instancia** | Editar solo esta ocurrencia de un programa recurrente. | Programas recurrentes solamente |

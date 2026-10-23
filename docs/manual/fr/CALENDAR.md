@@ -192,7 +192,7 @@ action.
 | **Planifier les pistes** | Ouvrir le show-builder pour ajouter / retirer / réordonner les items. | Toujours |
 | **Appliquer un modèle** | Tamponner un [Modèle d'émission](./SHOW_TEMPLATES.md) sur cette émission ; remplace les champs du formulaire. | Émissions futures seulement |
 | **Enregistrer comme modèle** | Enregistrer les paramètres actuels de l'émission comme nouveau modèle. | Toujours |
-| **Voir** | Vue en lecture seule des métadonnées + planning de l'émission. | Toujours |
+| **Voir** | Vue en lecture seule des métadonnées + planning de l'émission. *Start* et *Length* de chaque ligne sont la ligne de planning telle que posée (Length = cue-out moins cue-in, comme dans le show builder ; depuis le 2026-10-23) ; les totaux en bas sont la longueur posée du contenu (points de cue et chevauchements de crossfade compris) face à la durée de l'émission. | Toujours |
 | **Teasers** | Les jingles qui annoncent cette émission - changer le type, retirer, en lier d'autres ; voir [Automatisation des teasers](./TEASERS.md). Depuis le 2026-10-16. | Admin / PM |
 | **Modifier l'émission** | Modifier la définition d'émission (nom, heure, répétitions, etc.). | Émissions futures ou actuelles |
 | **Modifier l'instance** | Modifier seulement cette occurrence d'une émission récurrente. | Émissions récurrentes seulement |
