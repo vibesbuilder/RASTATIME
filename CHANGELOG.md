@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Betrieb: Stereo-Tool-Kette am Stream gemessen (2026-10-23)** — ffmpeg
+  `ebur128` am MP3-Mount nach dem Neustart mit gültiger Lizenz und Repo-Preset:
+  5 min Datei-Sendung −22,8 LUFS (LRA 10,6, TP −11,5 dBTP), 3 min −24,1 LUFS;
+  die Titel-Normalisierung kommt unverändert am Stream an.  Der −1-dBTP-Limiter
+  greift bei diesem Material nicht (Offline-Nachweis vom 21.10.).  Backlog-
+  Punkt 4 der Live-Tabelle.
 - **Betrieb: Windows-Updates Oktober 2026 + BIOS M5OKT41A installiert (2026-10-23,
   Operator)** — Build 26200.9711 (KB5127648/KB5127690/KB5127647), BIOS 1.65 per
   Lenovo Commercial Vantage, Neustart 18:01 geprüft (Tascam per Name, Line-In,

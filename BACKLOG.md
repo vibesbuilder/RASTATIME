@@ -52,7 +52,7 @@ dann 2 → 1, danach nach Bedarf**.
 | 1 | Datenbank-Passwort rotieren (Klartext im Apache-error_log vom 04.10.) | 🟡 Defer, Wartungsfenster mit frischem Backup | „Datenbank-Passwort rotieren" |
 | 2 | Statisches Harbor-Rückfall-Passwort in libretime.conf ersetzen | 💡 seit 2026-09-10 | „Statisches Harbor-Rückfall-Passwort" |
 | 3 | Windows-Updates Oktober 2026 + Lenovo-Firmware | ✅ 2026-10-23 18:01 (Build 26200.9711, BIOS M5OKT41A); offen nur die TPM-Firmware 15.25 | „Windows-Updates Oktober 2026" |
-| 4 | Stereo Tool: Stream-Messung mit dem R128-Preset (−23 LUFS / −1 dBTP am fertigen Stream) | offen, ~15 min ffmpeg | „Ausgangs-Processing mit Stereo Tool" |
+| 4 | Stereo Tool: Stream-Messung mit dem R128-Preset | ✅ 2026-10-23: Datei-Sendung −22,8 LUFS (5 min) / −24,1 LUFS (3 min), TP −11,5 dBTP; Limiter-Decke an lauter Quelle noch nicht gesehen (Webstream-Messung 19:00 läuft) | „Ausgangs-Processing mit Stereo Tool" |
 | 5 | Line-In: Live-Abnahme des frischen `input.http` je Slot (685dc17, 2026-10-21) | offen, eine Line-In-Show nach PLAYOUT-Neustart | Memory linein_abnahme_stand |
 | – | Zeitumstellung Nacht 24./25.10.: Show 1242 Electronic Evening 00:00–05:00 beobachten | Checkliste bereit | Memory reminder_dst_night |
 
@@ -451,7 +451,14 @@ Entscheidung bei Fälligkeit.
 
 ### ✅ Ausgangs-Processing mit Stereo Tool, optional (Operator-Entscheidung C 2026-10-02 — LIVE seit 2026-10-02 17:20, Preset `8565bfa` 2026-10-21)
 
-**Stand 2026-10-23 (Aufräum-Durchgang):** Lizenz eingetragen, Repo-Preset „R128 transparent" (`config/stereotool/rastatime-r128-transparent.sts`, nur True-Peak-Limiter −1 dBTP, kein AGC) gebaut und vom Operator eingetragen (2026-10-21).  **Offen:** Messung des fertigen Streams mit dem Preset (Punkt 4 der Live-Tabelle).
+**Stand 2026-10-23 (Aufräum-Durchgang):** Lizenz eingetragen, Repo-Preset „R128 transparent" (`config/stereotool/rastatime-r128-transparent.sts`, nur True-Peak-Limiter −1 dBTP, kein AGC) gebaut und vom Operator eingetragen (2026-10-21).
+**Stream-Messung 2026-10-23 (ffmpeg ebur128 am MP3-Mount, nach dem Neustart 18:01 mit gültiger Lizenz):**
+18:16–18:19 (3 min, „Channel Special", Titelwechsel im Fenster) −24,1 LUFS / LRA 8,0 / TP −11,2 dBTP;
+18:19–18:24 (5 min, „Like It or Not" + „When the Gun Draws", beide R128-normalisiert) **−22,8 LUFS** / LRA 10,6 /
+TP −11,5 dBTP.  Die Kette ist damit transparent bestätigt (Titel-Gain führt zu −23 ± 1 LUFS am Stream), der
+−1-dBTP-Limiter greift bei dieser Quelle nie (Spitzen liegen 10 dB darunter) und wurde nur im Offline-Harness
+(21.10.) nachgewiesen; Messung an einer lauten Quelle (BBC-Webstream 19:00) ergänzt das.  Logs
+`C:/Temp/optd/st_stream_measure*_2026-10-23.log`.
 
 **Anlass:** Distributionspartner brauchen einen R128-konformen Stream unabhängig von der Quelle; Stufe 1
 normalisiert nur Dateien, DJ-Zuspielungen bleiben ungeregelt.  Optionen waren A Live-Regler (normalize lufs),
