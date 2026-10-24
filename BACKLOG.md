@@ -5297,7 +5297,7 @@ listen-socket `<tls>` hat - wir haben keinen (Apache terminiert); der Build brin
 **Umschalten (ruhiges Fenster, ~10 min, ein Hörer-Reconnect):** vorbereitete Live-Konfiguration
 `C:/Temp/optd/icecast25/icecast-live-2.5.xml` (= Live + charset x6 + mime-types + webroot/adminroot auf 2.5.0, Port 8000,
 Passwörter unverändert); Ablauf: `config/icecast.xml` sichern und ersetzen, `nssm set RASTATIME-ICECAST Application
-C:\Tools\Icecast-2.5.0in\icecast.exe`, `nssm set RASTATIME-ICECAST AppDirectory C:\Tools\Icecast-2.5.0`,
+C:\Tools\Icecast-2.5.0\bin\icecast.exe`, `nssm set RASTATIME-ICECAST AppDirectory C:\Tools\Icecast-2.5.0`,
 `Restart-Service RASTATIME-ICECAST`, dann Mounts/Hörerstatistik/ICY-Titel/öffentlicher Stream prüfen.  Rückfall:
 beide nssm-Werte auf `C:\Tools\Icecast`, Sicherung zurück (die charset-Zeilen versteht 2.4 ebenfalls), Neustart.
 Danach COMPONENTS.md, RESTART_ORDER.md, CHANGELOG; 2.4.4-Ordner bleibt als Rückfall bis zur nächsten Wartung.
