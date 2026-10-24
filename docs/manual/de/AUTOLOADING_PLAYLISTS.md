@@ -341,7 +341,7 @@ unterschiedliche Auswahlen in einer Sendung zu erhalten,
 legen Sie zwei Smart Blocks — einen je Auswahl — in die
 Body-Playlist. Ein einzelner Smart Block kann nur
 Alternativen desselben Feldes anbieten (z.B. Genre Jazz oder
-Blues); siehe [Import/Export → blocks.json](./IMPORT_EXPORT.md#blocksjson).
+Blues); siehe [Import / Export → blocks.json](./IMPORT_EXPORT.md#blocksjson).
 
 ---
 

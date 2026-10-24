@@ -51,6 +51,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Kosmetik Show-Formular, Import / Export, Backup (2026-10-24,
+  Operator-Meldung)** — (1) New/Edit Show → Repeats: unter den Monats-
+  („Select Months") und den Tageskästchen lagen 0 px bis „Repeat By" bzw.
+  „Date End"; das `dd` umschloss seine gefloateten Kästchen nicht
+  (`dashboard.css` blendet jedes `.clearfix:after` mit `!important` aus),
+  die vorgesehenen 15 px liefen ins Leere.  Jetzt `display: flow-root`
+  für beide (`add-show.css`), gemessen 15 px.  (2) Settings → **Import /
+  Export** (Menü, Überschrift, DE/FR „Import / Export", ES „Importar /
+  Exportar", Handbuch in allen vier Sprachen); die Export-Kästchen stehen
+  untereinander.  (3) Settings → Backup: der Abschnitt „Restoring" steht
+  ganz oben (Handbuch-Hinweis ×4).
 - **Icecast 2.4.4 → 2.5.0 (2026-10-24 14:02, Operator)** — 2.4.4 fällt Ende 2026
   aus der Pflege.  Installer (win64, SHA-512 gegen xiph.org geprüft) nach
   `C:\Tools\Icecast-2.5.0`, Testinstanz auf Port 8010 mit Kopie der

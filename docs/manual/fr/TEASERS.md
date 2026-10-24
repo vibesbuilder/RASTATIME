@@ -121,9 +121,9 @@ type appartient au jingle : le changer ici le change pour toutes ses
 l'entrée existe aussi pour les émissions passées, le lien valant pour
 l'émission et non pour la diffusion.
 
-## 6. Import/Export
+## 6. Import / Export
 
-[Import/Export](./IMPORT_EXPORT.md) transporte les critères dans
+[Import / Export](./IMPORT_EXPORT.md) transporte les critères dans
 `blocks.json` : `teaser_show` par nom d'émission (la première émission
 de ce nom à l'import), `teaser_type` en `show`, `today` ou `tomorrow`,
 `teaser_fits` avec la valeur `yes`.  Les liens des jingles eux-mêmes

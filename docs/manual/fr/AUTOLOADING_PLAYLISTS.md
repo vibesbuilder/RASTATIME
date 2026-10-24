@@ -349,7 +349,7 @@ obtenir deux sélections distinctes dans une émission,
 placez deux smart blocks — un par sélection — dans la
 playlist du body. Un seul smart block ne peut proposer que
 des alternatives du même champ (ex. genre Jazz ou Blues) ;
-voir [Import/Export → blocks.json](./IMPORT_EXPORT.md#blocksjson).
+voir [Import / Export → blocks.json](./IMPORT_EXPORT.md#blocksjson).
 
 ---
 

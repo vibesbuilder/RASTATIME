@@ -103,7 +103,8 @@ Restoring replaces the running database and is therefore a deliberate,
 documented offline procedure — services stopped, database restored
 with `pg_restore`, services started.  Follow
 `docs/operator/BACKUP.md`, section 7.  The `db.dump` inside the ZIP is
-exactly what `pg_restore` expects.
+exactly what `pg_restore` expects.  On the Backup page this note is
+the first section, above Manual Backup.
 
 ## 7. Good practice
 

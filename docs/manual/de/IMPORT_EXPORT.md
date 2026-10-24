@@ -1,6 +1,6 @@
-# Import/Export
+# Import / Export
 
-> **Wo Sie sich im Handbuch befinden.** Einstellungen → **Import/Export**
+> **Wo Sie sich im Handbuch befinden.** Einstellungen → **Import / Export**
 > bringt Kalender-Objekte als Dateien in RASTATIME hinein und wieder
 > heraus: Sendungen, Playlisten, Smart Blocks, Webstreams und
 > Podcast-Abos. Lesen Sie zuerst [Kalender](./CALENDAR.md) und
@@ -212,4 +212,4 @@ Episoden werden nicht exportiert — der Feed liefert sie erneut.
 * [Autoloading-Playlisten](./AUTOLOADING_PLAYLISTS.md) — was die Spalte
   `content` einschaltet.
 * [Backup](./BACKUP.md) — die vollständige Datenbanksicherung;
-  Import/Export ist das lesbare, bearbeitbare Gegenstück.
+  Import / Export ist das lesbare, bearbeitbare Gegenstück.

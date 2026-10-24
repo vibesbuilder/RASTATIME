@@ -130,7 +130,7 @@ documento maestro arriba es lo único que todos asumen.
 | [Panel](./DASHBOARD.md) | Widget En reproducción, estado de fuente, anulación manual, poner la emisora en vivo desde un micrófono. |
 | [Calendario](./CALENDAR.md) | Crear programas, editar, arrastrar y soltar, programas recurrentes, repeticiones, presentadores. |
 | [Plantillas de programa](./SHOW_TEMPLATES.md) | Reutilizar configuración de programa sin reescribir cada semana. |
-| [Importar/Exportar](./IMPORT_EXPORT.md) | Exportar programas, listas, bloques inteligentes, webstreams y suscripciones a podcasts como CSV/JSON, mantenerlos en una hoja de cálculo y reimportarlos con vista previa. |
+| [Importar / Exportar](./IMPORT_EXPORT.md) | Exportar programas, listas, bloques inteligentes, webstreams y suscripciones a podcasts como CSV/JSON, mantenerlos en una hoja de cálculo y reimportarlos con vista previa. |
 | [Inicio diferido de programa](./DELAYED_START.md) | Dejar que un programa inscrito empiece tarde cuando el programa anterior se sobrepasó, en lugar de recortar ese programa. El retraso se propaga a través de programas inscritos consecutivos hasta la primera ancla a hora fija. |
 
 ### Contenido y biblioteca

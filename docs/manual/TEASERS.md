@@ -109,9 +109,9 @@ changes it for all its shows.  Administrators and programme managers
 only; the entry exists for past shows as well, since the link is to
 the show, not to the broadcast.
 
-## 6. Import/Export
+## 6. Import / Export
 
-[Import/Export](./IMPORT_EXPORT.md) carries the criteria in
+[Import / Export](./IMPORT_EXPORT.md) carries the criteria in
 `blocks.json`: `teaser_show` by show name (the first show of that name
 on import), `teaser_type` as `show`, `today` or `tomorrow`,
 `teaser_fits` with the value `yes`.  The jingles' own links are

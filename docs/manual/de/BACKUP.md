@@ -113,7 +113,8 @@ Das Wiederherstellen ersetzt die laufende Datenbank und ist deshalb
 ein bewusster, dokumentierter Offline-Vorgang — Dienste stoppen,
 Datenbank mit `pg_restore` wiederherstellen, Dienste starten.  Folgen
 Sie `docs/operator/BACKUP.md`, Abschnitt 7.  Die `db.dump` im ZIP ist
-genau das, was `pg_restore` erwartet.
+genau das, was `pg_restore` erwartet.  Auf der Backup-Seite steht dieser
+Hinweis als erster Abschnitt, über Manual Backup.
 
 ## 7. Bewährte Praxis
 

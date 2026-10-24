@@ -1,6 +1,6 @@
-# Importar/Exportar
+# Importar / Exportar
 
-> **Dónde está en el manual.** Configuración → **Importar/Exportar**
+> **Dónde está en el manual.** Configuración → **Importar / Exportar**
 > mueve los objetos del calendario hacia y desde RASTATIME como
 > archivos: programas, listas de reproducción, bloques inteligentes,
 > webstreams y suscripciones a podcasts. Lea primero
@@ -210,4 +210,4 @@ episodios no se exportan: el feed los entrega de nuevo.
 * [Listas de carga automática](./AUTOLOADING_PLAYLISTS.md): lo que
   activa la columna `content`.
 * [Copia de seguridad](./BACKUP.md): la copia completa de la base de
-  datos; Importar/Exportar es su complemento legible y editable.
+  datos; Importar / Exportar es su complemento legible y editable.

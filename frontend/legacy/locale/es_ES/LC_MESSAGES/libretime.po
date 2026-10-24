@@ -6006,8 +6006,8 @@ msgid "Import selected rows"
 msgstr "Importar las filas seleccionadas"
 
 #: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
-msgid "Import/Export"
-msgstr "Importar/Exportar"
+msgid "Import / Export"
+msgstr "Importar / Exportar"
 
 #: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
 msgid "Importing …"

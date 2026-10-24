@@ -31,7 +31,8 @@ $strings = [
 <style>
   .rt-ie-section { margin-bottom: 1.6em; }
   .rt-ie-section h3 { margin: 0 0 .5em 0; font-size: 1.05em; }
-  .rt-ie-types label { display: inline-block; margin: 0 1.4em .4em 0; white-space: nowrap; }
+  /* RASTATIME 2026-10-24 - one type per line (operator: easier to scan) */
+  .rt-ie-types label { display: block; margin: 0 0 .4em 0; white-space: nowrap; }
   .rt-ie-types .rt-ie-count { color: #888; margin-left: .3em; }
   .rt-ie-st-pending { color: #888; font-style: italic; }
   .rt-ie-notice { background: #2a2a2a; border-left: 3px solid #f6931f; padding: .5em .8em; margin: .4em 0; border-radius: 3px; }
@@ -49,7 +50,7 @@ $strings = [
 </style>
 
 <div class="ui-widget prefpanel clearfix padded-strong">
-    <h2><?php echo _('Import/Export'); ?></h2>
+    <h2><?php echo _('Import / Export'); ?></h2>
     <p style="margin-bottom: 1em; color: #888;">
         <?php echo _('Export shows, playlists, smart blocks, webstreams and podcast subscriptions as CSV/JSON, edit them in a spreadsheet and import them again - as one ZIP bundle or one file at a time. An import shows a preview first; only the rows you tick are written, and rows that overlap an existing show are never imported.'); ?>
     </p>

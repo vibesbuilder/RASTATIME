@@ -1,6 +1,6 @@
-# Import/Export
+# Import / Export
 
-> **Où vous êtes dans le manuel.** Paramètres → **Import/Export** fait
+> **Où vous êtes dans le manuel.** Paramètres → **Import / Export** fait
 > entrer et sortir les objets du calendrier sous forme de fichiers :
 > émissions, playlists, smart blocks, webstreams et abonnements
 > podcast. Lisez d'abord [Calendrier](./CALENDAR.md) et
@@ -212,4 +212,4 @@ Paramètres → Types de piste). Le flux est récupéré à l'import ; les
 * [Playlists de chargement automatique](./AUTOLOADING_PLAYLISTS.md) —
   ce que la colonne `content` active.
 * [Sauvegarde](./BACKUP.md) — la sauvegarde complète de la base ;
-  Import/Export en est le pendant lisible et modifiable.
+  Import / Export en est le pendant lisible et modifiable.

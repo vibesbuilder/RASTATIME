@@ -307,7 +307,7 @@ Bibliothek → **+ Neu** → **Smart Block**.
 |---|---|
 | **Name** | Sichtbar in der Bibliothek und im Kalender. |
 | **Typ** | **Statisch** — wählt einmalig zum Erstellungszeitpunkt; die Menge ändert sich nie. **Dynamisch** — wählt jedes Mal neu, wenn der Block eingeplant wird. |
-| **Kriterien** | Zeilen hinzufügen: *Künstler enthält "Bowie"*, *BPM ist im Bereich 100 bis 130*, *Genre ist Pop* usw. Zeilen werden UND-verknüpft; das **+** neben einer Zeile fügt eine Alternative für dasselbe Feld hinzu (ODER), z.B. *Genre ist Pop* **+** *Genre ist Rock*. Details unter [Import/Export → blocks.json](./IMPORT_EXPORT.md#blocksjson). |
+| **Kriterien** | Zeilen hinzufügen: *Künstler enthält "Bowie"*, *BPM ist im Bereich 100 bis 130*, *Genre ist Pop* usw. Zeilen werden UND-verknüpft; das **+** neben einer Zeile fügt eine Alternative für dasselbe Feld hinzu (ODER), z.B. *Genre ist Pop* **+** *Genre ist Rock*. Details unter [Import / Export → blocks.json](./IMPORT_EXPORT.md#blocksjson). |
 | **Begrenzen auf** | Eines von: **Anzahl Tracks** (z.B. 10), **Dauer in Zeit** (z.B. 30:00), **Verbleibende Zeit in der Sendung** (lässt den Smart Block exakt bis zum Ende der Sendung füllen). |
 | **Sortieren** | Zufällig / neueste zuerst / nach Künstler / nach Spielzahl / etc. |
 

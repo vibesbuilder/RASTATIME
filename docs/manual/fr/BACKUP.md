@@ -113,7 +113,8 @@ La restauration remplace la base en service et reste donc une
 procédure hors ligne délibérée et documentée — services arrêtés, base
 restaurée avec `pg_restore`, services relancés.  Suivez
 `docs/operator/BACKUP.md`, section 7.  Le `db.dump` du ZIP est
-exactement ce que `pg_restore` attend.
+exactement ce que `pg_restore` attend.  Sur la page Backup, cette note
+est la première section, au-dessus de Manual Backup.
 
 ## 7. Bonnes pratiques
 

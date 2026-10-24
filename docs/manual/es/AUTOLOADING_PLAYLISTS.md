@@ -247,7 +247,7 @@ selecciones distintas en un programa, ponga dos bloques
 inteligentes (uno por selección) en la playlist del body. Un
 solo bloque inteligente solo puede ofrecer alternativas del
 mismo campo (p. ej. género Jazz o Blues); vea
-[Import/Export → blocks.json](./IMPORT_EXPORT.md#blocksjson).
+[Import / Export → blocks.json](./IMPORT_EXPORT.md#blocksjson).
 
 ---
 

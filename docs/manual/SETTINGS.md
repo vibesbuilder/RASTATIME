@@ -54,7 +54,7 @@ Top-bar Settings → opens the sub-menu:
 | **Line-In Library** | Named live audio inputs from sound-card devices. | [Line-In](./LINE_IN.md) |
 | **Auto DJ** | Background gap-filler + incomplete-show top-up. | [Auto DJ](./AUTO_DJ.md) |
 | **Show Templates** | Reusable show form snapshots. | [Show Templates](./SHOW_TEMPLATES.md) |
-| **Import/Export** | Shows, playlists, smart blocks, webstreams and podcast subscriptions as CSV/JSON files, with a preview step on import. | [Import/Export](./IMPORT_EXPORT.md) |
+| **Import / Export** | Shows, playlists, smart blocks, webstreams and podcast subscriptions as CSV/JSON files, with a preview step on import. | [Import / Export](./IMPORT_EXPORT.md) |
 | **Manage Users** | Create / edit / deactivate users, reset passwords, manage API keys. | [Users and Roles](./USERS_AND_ROLES.md) |
 | **Localisation** | UI language selection, locale generation. | [Languages](./I18N.md) |
 | **System Status** | Live service health, preflight warnings, service restart widget. | This chapter §3 |

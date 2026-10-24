@@ -314,7 +314,7 @@ is the "main" autoloading playlist. To get two distinct
 selections in one show, put two smart blocks — one per
 selection — into the body playlist. A single smart block can
 only offer alternatives of the same field (e.g. genre Jazz or
-Blues); see [Import/Export → blocks.json](./IMPORT_EXPORT.md#blocksjson).
+Blues); see [Import / Export → blocks.json](./IMPORT_EXPORT.md#blocksjson).
 
 ---
 

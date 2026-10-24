@@ -117,6 +117,16 @@ label.wrapp-label input[type="checkbox"] {
     margin-top: 7px;
 }
 
+/* RASTATIME 2026-10-24 - flow-root: the dd must contain its floated
+   checkbox labels, or the 15 px below go nowhere (the next label sat
+   directly on the last row).  Its .clearfix class does nothing here:
+   dashboard.css hides every .clearfix:after with !important.  Scoped to
+   #schedule-add-show to beat `#schedule-add-show dd.block-display`. */
+#schedule-add-show #add_show_day_check-element.block-display,
+#schedule-add-show #add_show_month_check-element.block-display {
+    display: flow-root;
+}
+
 #add_show_day_check-element.block-display label.wrapp-label {
     font-size: 12px;
     float: left;

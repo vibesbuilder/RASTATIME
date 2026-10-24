@@ -120,9 +120,9 @@ Solo administradores y gestores de programación; la entrada existe
 también para programas pasados, pues el vínculo es con el programa, no
 con la emisión.
 
-## 6. Importar/Exportar
+## 6. Importar / Exportar
 
-[Importar/Exportar](./IMPORT_EXPORT.md) lleva los criterios en
+[Importar / Exportar](./IMPORT_EXPORT.md) lleva los criterios en
 `blocks.json`: `teaser_show` por nombre de programa (el primer programa
 con ese nombre al importar), `teaser_type` como `show`, `today` o
 `tomorrow`, `teaser_fits` con el valor `yes`.  Los vínculos de los

@@ -1,6 +1,6 @@
-# Import/Export
+# Import / Export
 
-> **Where you are in the manual.** Settings → **Import/Export** moves
+> **Where you are in the manual.** Settings → **Import / Export** moves
 > calendar objects in and out of RASTATIME as files: shows, playlists,
 > smart blocks, webstreams and podcast subscriptions. Read
 > [Calendar](./CALENDAR.md) and [Show Templates](./SHOW_TEMPLATES.md)
@@ -199,5 +199,5 @@ are not exported — the feed delivers them again.
   dialog.
 * [Autoloading Playlists](./AUTOLOADING_PLAYLISTS.md) — what the
   `content` column switches on.
-* [Backup](./BACKUP.md) — the full database backup; Import/Export is
+* [Backup](./BACKUP.md) — the full database backup; Import / Export is
   the readable, editable companion.

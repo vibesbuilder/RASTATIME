@@ -119,9 +119,9 @@ seine Sendungen.  Nur Administratoren und Programm-Manager; der Eintrag
 gibt es auch bei vergangenen Sendungen, denn die Verknüpfung gilt der
 Sendung, nicht der Ausstrahlung.
 
-## 6. Import/Export
+## 6. Import / Export
 
-[Import/Export](./IMPORT_EXPORT.md) trägt die Kriterien in
+[Import / Export](./IMPORT_EXPORT.md) trägt die Kriterien in
 `blocks.json`: `teaser_show` mit dem Sendungsnamen (beim Import die
 erste Sendung dieses Namens), `teaser_type` als `show`, `today` oder
 `tomorrow`, `teaser_fits` mit dem Wert `yes`.  Die Verknüpfungen der

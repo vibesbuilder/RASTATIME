@@ -110,7 +110,8 @@ Restaurar reemplaza la base de datos en servicio y por eso es un
 procedimiento deliberado y documentado fuera de línea — servicios
 parados, base restaurada con `pg_restore`, servicios arrancados.  Siga
 `docs/operator/BACKUP.md`, sección 7.  El `db.dump` del ZIP es
-exactamente lo que `pg_restore` espera.
+exactamente lo que `pg_restore` espera.  En la página Backup esta nota
+es la primera sección, encima de Manual Backup.
 
 ## 7. Buenas prácticas
 

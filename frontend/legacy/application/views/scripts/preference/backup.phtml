@@ -28,6 +28,19 @@ $rtTip = function ($text) {
     <h2 style="float:left"><?php echo _("Backup") ?></h2>
     <div style="clear:both"></div>
 
+    <?php
+    // RASTATIME 2026-09-17 - stage 3, deliberately slim restore section:
+    // restoring replaces the running database, so it stays a documented
+    // offline procedure instead of a button.  At the top of the page
+    // since 2026-10-24 (operator).
+    ?>
+    <h3><?php echo _("Restoring") ?></h3>
+    <fieldset class="padded stream-setting-global">
+        <p style="margin: 0.3em 0;">
+            <?php echo _("Restoring replaces the running database and is a deliberate offline procedure, not a button: stop the services, restore db.dump from the ZIP with pg_restore, start the services.  The exact steps are in the Backup chapter of the user manual and in docs/operator/BACKUP.md, section 7.  To restore media, copy the contents of the 'media' subfolder back into the library root.") ?>
+        </p>
+    </fieldset>
+
     <h3><?php echo _("Manual Backup") ?><span class="help_icon" data-rt-tip="<?php echo $rtTip(_("One click writes a self-contained ZIP with the full database (pg_dump custom format) and every configuration file into the backup folder.  The media library is not included in this stage - see the user manual.  Restoring is a documented offline procedure, deliberately not a button.")); ?>"></span></h3>
 
     <fieldset class="padded stream-setting-global">
@@ -137,17 +150,6 @@ $rtTip = function ($text) {
     </fieldset>
 
 
-    <?php
-    // RASTATIME 2026-09-17 - stage 3, deliberately slim restore section:
-    // restoring replaces the running database, so it stays a documented
-    // offline procedure instead of a button.
-    ?>
-    <h3><?php echo _("Restoring") ?></h3>
-    <fieldset class="padded stream-setting-global">
-        <p style="margin: 0.3em 0;">
-            <?php echo _("Restoring replaces the running database and is a deliberate offline procedure, not a button: stop the services, restore db.dump from the ZIP with pg_restore, start the services.  The exact steps are in the Backup chapter of the user manual and in docs/operator/BACKUP.md, section 7.  To restore media, copy the contents of the 'media' subfolder back into the library root.") ?>
-        </p>
-    </fieldset>
 
     <script>
     (function ($) {

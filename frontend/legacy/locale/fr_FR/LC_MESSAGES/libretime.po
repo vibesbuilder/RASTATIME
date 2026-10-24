@@ -6174,8 +6174,8 @@ msgid "Import selected rows"
 msgstr "Importer les lignes sélectionnées"
 
 #: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
-msgid "Import/Export"
-msgstr "Import/Export"
+msgid "Import / Export"
+msgstr "Import / Export"
 
 #: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
 msgid "Importing …"
