@@ -34,7 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   einer Transaktion nach, UUID-Suffix bei Namenskollision, Dateien mit
   Sendeplan-Zeile zwischen −2 h und +3 h werden übersprungen).
   Analyzer-Neustart nötig.  Manual LIBRARY „Importing tracks" + FAQ
-  EN/DE/FR/ES, Architektur §23.71 (0.89).
+  EN/DE/FR/ES, Architektur §23.71 (0.89).  Commit 47bfde8.
 - **Podcasts: heruntergeladene Episoden werden auf Lautheit gemessen
   (2026-10-24, Operator-Go zum Backlog-Punkt „Podcast-Downloads umgehen den
   Analyzer")** — Codec-Probe über alle 134 Episoden-Dateien: nur MP3 (132)
@@ -75,7 +75,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   löscht die Textdateien nur neben einem vorhandenen `-512.jpg`
   (Trockenlauf: 91.677 Dateien / 4,35 GB).  Live geprüft: Bibliothekszeilen
   (32 px), Editor (256 px), Now Playing, fünf API-Varianten je 200
-  image/jpeg.  Manual LIBRARY EN/DE/FR/ES, Architektur §23.71 (0.89).
+  image/jpeg.  Manual LIBRARY EN/DE/FR/ES, Architektur §23.71 (0.89).  Commit 47bfde8.
 - **Kosmetik Show-Formular, Import / Export, Backup (2026-10-24,
   Operator-Meldung)** — (1) New/Edit Show → Repeats: unter den Monats-
   („Select Months") und den Tageskästchen lagen 0 px bis „Repeat By" bzw.
