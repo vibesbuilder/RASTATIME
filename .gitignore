@@ -167,3 +167,5 @@ frontend/legacy/public/live/now-playing.txt*
 
 # live Icecast config carries the real passwords (config/icecast.xml.example is tracked)
 /config/icecast.xml
+# backups of it made at upgrades (2026-10-24: icecast.xml.2.4.4-backup)
+/config/icecast.xml.*-backup

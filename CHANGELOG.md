@@ -23,6 +23,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Icecast 2.4.4 → 2.5.0 (2026-10-24 14:02, Operator)** — 2.4.4 fällt Ende 2026
+  aus der Pflege.  Installer (win64, SHA-512 gegen xiph.org geprüft) nach
+  `C:\Tools\Icecast-2.5.0`, Testinstanz auf Port 8010 mit Kopie der
+  Live-Konfiguration (`C:/Temp/optd/icecast25/ice25_test.py`: Status,
+  status-json, stats.xml, Quellen, Hörer, Fallback-Kette, Metadaten,
+  killsource; drei Produktions-Encoder aus Liquidsoap).  Befund: der
+  Windows-Build sendet ohne `<charset>UTF-8</charset>` je Mount leere
+  ICY-Titel („No charset found for ISO8859-1"), mit der Zeile Titel inkl.
+  Umlaut; `<mime-types>` muss absolut stehen.  Umschalten per NSSM
+  Application/AppDirectory, Standby vorher stoppen (hängt am Dienst).  Live
+  geprüft: sechs Mounts, Liquidsoap 14:02:06 verbunden, Statistik ohne 401,
+  öffentlicher Stream „Server: Icecast 2.5.0", ICY-Titel ab dem nächsten
+  Titelstart 14:06.  Rückfall: 2.4.4-Ordner + `icecast.xml.2.4.4-backup`.
+  `COMPONENTS.md`, `RESTART_ORDER.md` §5.4, BACKLOG.
 - **Line-In: frischer `input.http` je Slot (`685dc17`, §23.68) live abgenommen
   (2026-10-23)** — seit dem PLAYOUT-Neustart vom 22.10. 11:16 liefen zwei
   Line-In-Slots: 22.10. 19:07–22:00 (`linein_http_in_1`) und 23.10. 08:15–09:45

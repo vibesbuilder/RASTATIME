@@ -295,8 +295,11 @@ Get-Content C:\rastatime\logs\icecast-nssm-stdout.log -Tail 30
 
 **Recovery steps:**
 ```powershell
-# a. Restart Icecast
-nssm restart RASTATIME-ICECAST
+# a. Restart Icecast (RASTATIME-STANDBY depends on it: stop that first,
+#    otherwise Restart-Service refuses; Liquidsoap reconnects by itself)
+Stop-Service RASTATIME-STANDBY
+Restart-Service RASTATIME-ICECAST
+Start-Service RASTATIME-STANDBY
 
 # b. Verify stream endpoint
 Invoke-WebRequest http://127.0.0.1:8000/ -UseBasicParsing
@@ -310,6 +313,12 @@ powershell -File infra\nssm\install-icecast.ps1 -StartService
 
 > **Note:** RASTATIME-ICECAST failure does not affect the API, worker, or
 > playout.  Studio audio continues through the local soundcard.
+>
+> Since 2026-10-24 the service runs Icecast 2.5.0 from `C:\Tools\Icecast-2.5.0`
+> (NSSM Application + AppDirectory); 2.4.4 stays in `C:\Tools\Icecast` as the
+> rollback together with `config/icecast.xml.2.4.4-backup`.  The live config
+> needs `<charset>UTF-8</charset>` on every output mount - without it the 2.5
+> Windows build sends empty ICY StreamTitle blocks.
 
 ### 5.5 Recovery: RabbitMQ boot loop `no_epmd_port` (seen 2026-10-24)
 
