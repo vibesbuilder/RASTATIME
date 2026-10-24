@@ -49,8 +49,8 @@ dann 2 → 1, danach nach Bedarf**.
 
 | # | Punkt | Status | Sektion / Notiz |
 |---|-------|--------|-----------------|
-| 1 | Datenbank-Passwort rotieren (Klartext im Apache-error_log vom 04.10.) | 🟡 Defer, Wartungsfenster mit frischem Backup | „Datenbank-Passwort rotieren" |
-| 2 | Statisches Harbor-Rückfall-Passwort in libretime.conf ersetzen | 💡 seit 2026-09-10 | „Statisches Harbor-Rückfall-Passwort" |
+| 1 | Datenbank-Passwort rotieren (Klartext im Apache-error_log vom 04.10.; Datei und Archiv-Einträge inzwischen weg, geprüft 24.10.) | 🟡 Checkliste liegt vor: `docs/operator/PASSWORD_ROTATION.md` Teil B | „Datenbank-Passwort rotieren" |
+| 2 | Statisches Harbor-Rückfall-Passwort in libretime.conf ersetzen, dazu Icecast-Quellpasswort | 🟡 Checkliste liegt vor: `docs/operator/PASSWORD_ROTATION.md` Teil A | „Statisches Harbor-Rückfall-Passwort" |
 | 3 | Windows-Updates Oktober 2026 + Lenovo-Firmware | ✅ 2026-10-23 18:01 (Build 26200.9711, BIOS M5OKT41A); offen nur die TPM-Firmware 15.25 | „Windows-Updates Oktober 2026" |
 | 4 | Stereo Tool: Stream-Messung mit dem R128-Preset | ✅ 2026-10-23: Datei-Sendung −22,8 LUFS (5 min) / −24,1 LUFS (3 min), TP −11,5 dBTP; BBC-Webstream 19:01–19:06 −22,9 LUFS / TP −7,5 dBTP; Limiter-Decke (−1 dBTP) bleibt Offline-Nachweis vom 21.10. | „Ausgangs-Processing mit Stereo Tool" |
 | 5 | Line-In: Live-Abnahme des frischen `input.http` je Slot (685dc17, 2026-10-21) | ✅ 2026-10-23 aus Logs + 24/7-Aufnahme: Slot 1 (22.10. 19:07–22:00, `linein_http_in_1`) und Slot 2 (23.10. 08:15–09:45, `linein_http_in_2`) je binnen 1 s auf Sendung, Aufnahme 08:15–09:45 durchgehend −21…−25 LUFS, kein silence_fallback | Memory linein_abnahme_stand |
