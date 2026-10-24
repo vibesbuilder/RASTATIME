@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- **Passwort-Rotation 2026-10-24 (Operator, Runbook
+  `docs/operator/PASSWORD_ROTATION.md`)** — Datenbank-Rolle `rastatime`,
+  `general.api_key`, `stream.internal_listener.password` (ungenutzt),
+  Harbor-Rückfall `main_password` / `show_password`, Icecast source /
+  relay / admin (`config/icecast.xml` + Settings → Streams).  Alle Dienste
+  neu gestartet, Mounts seit 12:23:04 verbunden, Sendeplan-Abruf mit neuem
+  Schlüssel, Analyzer am Broker.  Keine Werte im Repo.  Zwischenfälle:
+  Web-UI 11:47–11:53 ohne Datenbank (Datei vor der Rolle geändert), Stream
+  12:16–12:23 unten (Tippfehler in Settings → Streams, danach Icecast nach
+  erneuter Dateiänderung nicht neu gestartet) - Runbook entsprechend
+  ergänzt.
+
 ### Changed
 
 - **Line-In: frischer `input.http` je Slot (`685dc17`, §23.68) live abgenommen

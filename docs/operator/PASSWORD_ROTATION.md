@@ -141,6 +141,22 @@ There is no `pgpass.conf` and no second copy.
 5. [ ] Record in CHANGELOG ("Security"), BACKLOG point 1 -> done, memory
        reminder removed.
 
+## D. Lessons from the first run (2026-10-24)
+
+- Change the role **before** editing line 26, or do both within a minute:
+  the legacy PHP reads the file per request and the UI lost its database
+  for six minutes.
+- Copy and paste the Icecast values into Settings -> Streams, never type
+  them: a one-character slip at the same position in all three outputs
+  took the stream down for seven minutes (Liquidsoap and the standby loop
+  on 401 every four seconds, the listener-stats poll too).
+- Every edit of `config/icecast.xml` needs `Restart-Service
+  RASTATIME-ICECAST`; the file is read at start only.
+- Verification that costs nothing: `GET http://127.0.0.1:8000/admin/listmounts`
+  with the admin password from the file must list all six mounts (three
+  outputs + three standby), and `liquidsoap-stdout.log` must show
+  `Connection setup was successful` for all three outputs.
+
 ## C. Rollback
 
 - Part A: put the old values back in `libretime.conf` / `config\icecast.xml` /

@@ -49,8 +49,8 @@ dann 2 → 1, danach nach Bedarf**.
 
 | # | Punkt | Status | Sektion / Notiz |
 |---|-------|--------|-----------------|
-| 1 | Datenbank-Passwort rotieren (Klartext im Apache-error_log vom 04.10.; Datei und Archiv-Einträge inzwischen weg, geprüft 24.10.) | 🟡 Checkliste liegt vor: `docs/operator/PASSWORD_ROTATION.md` Teil B | „Datenbank-Passwort rotieren" |
-| 2 | Statisches Harbor-Rückfall-Passwort in libretime.conf ersetzen, dazu Icecast-Quellpasswort | 🟡 Checkliste liegt vor: `docs/operator/PASSWORD_ROTATION.md` Teil A | „Statisches Harbor-Rückfall-Passwort" |
+| 1 | Datenbank-Passwort rotieren (Klartext im Apache-error_log vom 04.10.; Datei und Archiv-Einträge inzwischen weg, geprüft 24.10.) | ✅ 2026-10-24 11:53 (Rolle + libretime.conf, Dienste 11:58–12:03 neu gestartet); mit rotiert: api_key, internal_listener | „Datenbank-Passwort rotieren" |
+| 2 | Statisches Harbor-Rückfall-Passwort in libretime.conf ersetzen, dazu Icecast-Quellpasswort | ✅ 2026-10-24: Harbor main/show (Liquidsoap 12:02 mit neuen Harbors), Icecast source/relay/admin in `config/icecast.xml` + Settings → Streams, Mounts 12:23:04 wieder verbunden | „Statisches Harbor-Rückfall-Passwort" |
 | 3 | Windows-Updates Oktober 2026 + Lenovo-Firmware | ✅ 2026-10-23 18:01 (Build 26200.9711, BIOS M5OKT41A); offen nur die TPM-Firmware 15.25 | „Windows-Updates Oktober 2026" |
 | 4 | Stereo Tool: Stream-Messung mit dem R128-Preset | ✅ 2026-10-23: Datei-Sendung −22,8 LUFS (5 min) / −24,1 LUFS (3 min), TP −11,5 dBTP; BBC-Webstream 19:01–19:06 −22,9 LUFS / TP −7,5 dBTP; Limiter-Decke (−1 dBTP) bleibt Offline-Nachweis vom 21.10. | „Ausgangs-Processing mit Stereo Tool" |
 | 5 | Line-In: Live-Abnahme des frischen `input.http` je Slot (685dc17, 2026-10-21) | ✅ 2026-10-23 aus Logs + 24/7-Aufnahme: Slot 1 (22.10. 19:07–22:00, `linein_http_in_1`) und Slot 2 (23.10. 08:15–09:45, `linein_http_in_2`) je binnen 1 s auf Sendung, Aufnahme 08:15–09:45 durchgehend −21…−25 LUFS, kein silence_fallback | Memory linein_abnahme_stand |
@@ -70,6 +70,8 @@ Ausgang 48 kHz bei 44,1-kHz-Mix · Line-In-Gain live nachregeln · Kanalwahl im
 Schnell-Editor · Speicherzuwachs Liquidsoap · Traffic Alerts Deadline-Skip ·
 Expiry in M4A · bulk_import-Erweiterungsliste · die unbewerteten Ideen unter
 „Future Feature Ideas".
+
+**Nachtrag 2026-10-24:** PLAYOUTs geplanter Liquidsoap-Neustart meldet `nssm restart RASTATIME-LIQUIDSOAP exited 1: STOP: Der Vorgang wurde erfolgreich beendet` als ERROR, obwohl der Neustart klappt (nssm-Exitcode bei deutscher Locale) - Log-Kosmetik, 💡 bei Gelegenheit abfangen.  Dazu: ungenutzte Installer-Kopie `C:\Tools\Icecast\icecast.xml` löschen (Operator).
 
 **Aufräumposten außerhalb des Backlogs:** Zombie-Ordner
 `C:\Tools\liquidsoap-2.4.6` nach dem nächsten Reboot löschen · Composer-Audit
@@ -1621,7 +1623,8 @@ Sendeplan zurück, nur Dashboard-Status und Scheduler-Reaktion hängen
 am `input.harbor` auf z. B. 10 s senken (Trade-off: ein DJ mit 10 s
 Netzstörung fliegt raus).  Operator-Entscheidung; kein Handlungsdruck.
 
-### 💡 Statisches Harbor-Rückfall-Passwort in libretime.conf ersetzen (Operator 2026-09-10)
+### ✅ Statisches Harbor-Rückfall-Passwort in libretime.conf ersetzen (Operator 2026-09-10) - DONE 2026-10-24
+**Stand 2026-10-24:** `stream.harbor.main_password` / `show_password` ersetzt (PLAYOUT rendert, Liquidsoap 12:02 mit neuen Harbors); Icecast source/relay/admin in `C:\RASTATIME\config\icecast.xml` (die Datei, mit der der Dienst läuft) und Settings → Streams (alle drei Ausgänge) neu gesetzt.  Lehren: die Kopie unter `C:\Tools\Icecast` ist tot; nach jeder Änderung der Datei Icecast neu starten; Settings-Werte per Kopieren einsetzen (ein Tippfehler an Position 7–9 kostete 12:16–12:23 den Stream).
 
 **Nachtrag 2026-09-13:** beim Rendern des Replikats fiel auf, dass auch das
 Icecast-Quellpasswort (Settings → Streams, Source Password) noch der
@@ -5328,7 +5331,8 @@ Befund: beide Fehler traten NUR am 2026-10-04 auf (500 = Symfony-YAML-ParseExcep
 (Composer-Zwischenfall).  Seit 12:34 keine Fehler, Pushes laufen.  Hinweis: das Apache error_log vom 04.10. enthaelt
 das damalige Passwort im Klartext (Parse-Fehlermeldung) -> Operator sollte es rotieren und das error_log bereinigen.
 
-### 🟡 Datenbank-Passwort rotieren (Klartext im Apache-error_log vom 2026-10-04) - Operator: spaeter
+### ✅ Datenbank-Passwort rotieren (Klartext im Apache-error_log vom 2026-10-04) - DONE 2026-10-24 (Runbook `docs/operator/PASSWORD_ROTATION.md`)
+**Stand 2026-10-24:** Rolle per `\password` in psql, libretime.conf Zeile 26, Dienste API/PLAYOUT/LIQUIDSOAP/STANDBY/WORKER/ANALYZER neu gestartet; mit rotiert api_key und internal_listener (ungenutzt).  Die Log-Datei vom 04.10. existierte nicht mehr, auch nicht im Janitor-Archiv.
 Das aktive PostgreSQL-Passwort des Benutzers rastatime steht in 61 Zeilen von C:/Tools/Apache24/logs/error_log
 (Symfony-YAML-Parse-Fehler vom 04.10., unquotiertes '!').  Risiko begrenzt (PostgreSQL nur localhost, Log nur lokal).
 Ablauf im ruhigen Moment: neues Passwort ohne YAML-Sonderzeichen oder in Anfuehrungszeichen; psql ALTER ROLE rastatime
