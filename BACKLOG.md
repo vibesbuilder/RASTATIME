@@ -5418,7 +5418,8 @@ ADTS (Laenge ~2 s zu lang) oder WAV/FLAC.  Ansatz bei Bedarf: der Download-Pfad 
 remux_adts_to_m4a / transcode_to_mp3 des Analyzer-Moduls (wie convert_lossless), oder Episoden laufen ueber die
 Analyzer-Queue.  Vorbedingung: ein Feed, der es braucht (vorher per Codec-Probe ueber imported/<Podcast>/ pruefen).
 
-### 💡 Sechs Bibliotheksdateien mit Decoder-Muell (True Peak +10 bis +84 dBTP) - Inhaltspruefung (notiert 2026-10-24)
+### ✅ Sechs Bibliotheksdateien mit Decoder-Muell (True Peak +10 bis +84 dBTP) - Inhaltspruefung (notiert 2026-10-24, erledigt 2026-10-24)
+**Erledigt 2026-10-24:** Operator hat fuenf Dateien geloescht; 22327 „Mit Tanz & Theater durchs Leben" (dancetalk, 83 min) bleibt - Analyse: keine Decoder-Fehler, sondern heiss ausgesteuertes Material (1315 von 4988 Sekunden ueber 0 dBFS, bis +4,8 dBFS; −9 LUFS), das Playout daempft es auf −23 LUFS, die Verzerrung steckt im Material.  Caribou-Titel nach dem Analyzer-Fix a34856f gemessen, keine Datei ohne Werte mehr.
 Beim Nachholen der Lautheitsmessung gefunden: 23842 „Long Hard Road" (Nitty Gritty Dirt Band, +10 LUFS / +84 dBTP),
 23639 „(Don't Take Her) She's All I Got" (+71 dBTP), 11103 „Babylon Dub" (+41), 1770 „Twins" (Caribou, +14), 10903
 „Schoen (Lied fuer David Bowie)" (+11), 22327 „Mit Tanz & Theater durchs Leben" (+10).  ffmpeg dekodiert hier echte
