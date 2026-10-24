@@ -235,6 +235,11 @@ Audio in der Datei (nicht ihre Endung), bevor er sie ablegt:
 
 Podcast-Episoden gehören nicht dazu: Sie werden direkt in die
 Bibliothek heruntergeladen (Abschnitt 2.3) und behalten ihr Format.
+Seit 2026-10-24 wird jede heruntergeladene Episode dennoch direkt
+nach dem Download auf **Lautheit gemessen** (EBU R128), damit das
+Playout ihre echte Titelverstärkung anwendet statt einer Näherung.
+Episoden von vor diesem Datum holen Sie mit **Settings → Streams →
+Measure loudness** nach; der Knopf misst nur Dateien ohne Werte.
 
 ### Track-Metadaten bearbeiten
 

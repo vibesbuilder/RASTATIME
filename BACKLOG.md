@@ -5410,7 +5410,8 @@ R128, Stille, Abspielbarkeit, Dauer weiter normal); convert_lossless misst die L
 (R128) an der neuen MP3 nach, weil ihr True Peak einige Zehntel dB hoeher liegen kann; eine .au-Datei bekommt bei ausgeschalteter Option keinen
 mime-Typ (bei Uploads schon vorher so).
 
-### 💡 Podcast-Downloads umgehen den Analyzer: keine Format-Normalisierung, keine Tag-Fuellung (notiert 2026-10-14)
+### ✅ Podcast-Downloads umgehen den Analyzer: keine Format-Normalisierung, keine Tag-Fuellung (notiert 2026-10-14) - Lautheitsmessung nachgeruestet 2026-10-24
+**Stand 2026-10-24 (Operator-Go):** Codec-Probe ueber alle 134 Episoden: 132 MP3, 2 OGG Vorbis - Normalisierung nicht noetig (Vorbedingung nicht erfuellt, Ansatz bleibt notiert).  Wirklich gefehlt hat die R128-Messung (109/134 ohne Werte): die API schickt jetzt nach dem Download die loudness_only-Nachricht an den Analyzer (podcasts/loudness_queue.py); Backfill ueber Settings -> Streams -> Measure loudness.
 Episoden laedt die API selbst und schreibt Datei + Bibliothekszeile direkt (LIBRARY 2.3); convert_format und die
 ffprobe-Tags greifen dort nicht.  Feeds liefern praktisch immer MP3 oder M4A - relevant nur fuer einen Feed mit rohem
 ADTS (Laenge ~2 s zu lang) oder WAV/FLAC.  Ansatz bei Bedarf: der Download-Pfad nutzt probe_audio /

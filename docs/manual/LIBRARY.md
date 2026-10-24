@@ -214,7 +214,13 @@ file (not at its extension) before it files it:
   not read, and a raw `.aac` with an ID3 tag failed to import.
 
 Podcast episodes are not part of this: they are downloaded straight
-into the library (section 2.3) and keep their format.
+into the library (section 2.3) and keep their format. Since
+2026-10-24 every downloaded episode is still **measured for
+loudness** (EBU R128) right after the download, so the playout
+applies its real per-track gain instead of an approximation.
+Episodes downloaded before that date are caught up with
+**Settings → Streams → Measure loudness**, which only measures
+files that have no values yet.
 
 ### Editing track metadata
 

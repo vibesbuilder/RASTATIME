@@ -9,6 +9,7 @@ descriptor), producing library files that non-elevated backups silently
 skip — see BACKLOG "Podcast-Downloads: ACL sperrt den studio-User aus".
 """
 
+import json
 import tempfile
 from pathlib import Path
 
@@ -17,6 +18,16 @@ from requests import RequestException
 
 from libretime_api.podcasts import download as download_mod
 from libretime_api.podcasts.download import download_episode
+
+
+# RASTATIME 2026-10-24 - no test may publish to the real broker: the
+# loudness queue is stubbed for every test here; the two tests below
+# that look at the hook replace the stub with their own recorder.
+@pytest.fixture(autouse=True)
+def _stub_loudness_queue(monkeypatch):
+    monkeypatch.setattr(
+        download_mod, "queue_loudness_measurement", lambda file_id, path: True
+    )
 
 AUDIO_BYTES = b"ID3" + b"\x00" * 64 + b"fake-mp3-payload" * 32
 
@@ -130,3 +141,110 @@ def test_podcast_folder_is_windows_safe():
     assert _podcast_folder("") == "Podcast"
     assert _podcast_folder("???") == "Podcast"
     assert len(_podcast_folder("x" * 300)) <= 80
+
+
+# RASTATIME 2026-10-24 - the download queues the analyzer's loudness-only
+# measurement for the new file; a broker failure never fails the download.
+def test_download_queues_loudness_measurement(db, monkeypatch, tmp_path):
+    monkeypatch.setattr(
+        download_mod.requests, "get", lambda *a, **kw: FakeResponse()
+    )
+    calls = []
+    monkeypatch.setattr(
+        download_mod,
+        "queue_loudness_measurement",
+        lambda file_id, path: calls.append((file_id, path)) or True,
+    )
+
+    result = download_episode(
+        episode_id=100,
+        episode_url="http://feed.example/episode.mp3",
+        episode_title="Measured Episode",
+        podcast_name="Test Podcast",
+        override_album=False,
+        storage_path=str(tmp_path),
+        owner_id=None,
+    )
+
+    assert result["status"] == 1, result.get("error")
+    assert result["loudness_queued"] is True
+    assert calls == [
+        (
+            result["fileid"],
+            str(tmp_path / "imported" / "Test Podcast" / "podcast_ep100_episode.mp3"),
+        )
+    ]
+
+
+def test_download_survives_queue_failure(db, monkeypatch, tmp_path):
+    monkeypatch.setattr(
+        download_mod.requests, "get", lambda *a, **kw: FakeResponse()
+    )
+    monkeypatch.setattr(
+        download_mod, "queue_loudness_measurement", lambda file_id, path: False
+    )
+
+    result = download_episode(
+        episode_id=101,
+        episode_url="http://feed.example/episode.mp3",
+        episode_title="Unqueued Episode",
+        podcast_name="Test Podcast",
+        override_album=False,
+        storage_path=str(tmp_path),
+        owner_id=None,
+    )
+
+    assert result["status"] == 1
+    assert result["loudness_queued"] is False
+
+
+def test_queue_loudness_measurement_publishes_the_analyzer_message(monkeypatch):
+    from libretime_api.podcasts import loudness_queue
+
+    published = {}
+
+    class FakeChannel:
+        def exchange_declare(self, **kwargs):
+            published["exchange"] = kwargs
+
+        def basic_publish(self, **kwargs):
+            published["publish"] = kwargs
+
+    class FakeConnection:
+        def __init__(self, params):
+            published["params"] = params
+
+        def channel(self):
+            return FakeChannel()
+
+        def close(self):
+            published["closed"] = True
+
+    import pika
+
+    monkeypatch.setattr(pika, "BlockingConnection", FakeConnection)
+
+    assert loudness_queue.queue_loudness_measurement(42, "D:/stor/imported/P/ep.mp3")
+    assert published["exchange"]["exchange"] == "airtime-uploads"
+    assert published["exchange"]["durable"] is True
+    body = json.loads(published["publish"]["body"])
+    assert body == {
+        "file_id": 42,
+        "tmp_file_path": "D:/stor/imported/P/ep.mp3",
+        "import_directory": "",
+        "original_filename": "ep.mp3",
+        "options": {"loudness_only": True},
+    }
+    assert published["publish"]["exchange"] == "airtime-uploads"
+    assert published["closed"] is True
+
+
+def test_queue_loudness_measurement_reports_broker_failure(monkeypatch):
+    from libretime_api.podcasts import loudness_queue
+    import pika
+
+    def boom(params):
+        raise ConnectionError("no broker")
+
+    monkeypatch.setattr(pika, "BlockingConnection", boom)
+    assert loudness_queue.queue_loudness_measurement(1, "x.mp3") is False

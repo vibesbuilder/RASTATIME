@@ -242,6 +242,12 @@ de le classer :
 
 Les épisodes de podcast n'en font pas partie : ils sont téléchargés
 directement dans la bibliothèque (section 2.3) et gardent leur format.
+Depuis le 2026-10-24, chaque épisode téléchargé est néanmoins
+**mesuré en sonie** (EBU R128) juste après le téléchargement, afin que
+la diffusion applique son vrai gain par piste au lieu d'une
+approximation. Les épisodes antérieurs à cette date se rattrapent
+avec **Settings → Streams → Measure loudness**, qui ne mesure que les
+fichiers sans valeurs.
 
 ### Modifier les métadonnées de piste
 

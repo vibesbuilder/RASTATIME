@@ -23,6 +23,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Podcasts: heruntergeladene Episoden werden auf Lautheit gemessen
+  (2026-10-24, Operator-Go zum Backlog-Punkt „Podcast-Downloads umgehen den
+  Analyzer")** — Codec-Probe über alle 134 Episoden-Dateien: nur MP3 (132)
+  und OGG Vorbis (2), eine Formatnormalisierung braucht dieser Weg nicht;
+  die Lücke war die fehlende EBU-R128-Messung (109 von 134 ohne Werte →
+  Playout-Rückfallverstärkung pauschal −5 dB).  Neu
+  `podcasts/loudness_queue.py`: nach dem Anlegen der Bibliothekszeile
+  schickt die API dieselbe `loudness_only`-Nachricht an den Analyzer wie der
+  Knopf Settings → Streams → „Measure loudness"; Antwort trägt
+  `loudness_queued`.  Vier Tests (Hook, Broker-Ausfall ohne Folgen für den
+  Download, Nachrichtenform, Fehlerpfad), Broker in allen Podcast-Tests
+  gestubbt.  Live geprüft: Datei 701 nach 10 s gemessen (−18,3 LUFS).
+  Bestehende Episoden holt der Knopf nach (nur Dateien ohne Werte).  API-
+  Neustart nötig.  Architektur §23.41 Addendum (0.88).  Commit folgt.
 - **Bibliothek: sichtbare Spalten je Medientyp (2026-10-24, Operator-Go)** —
   Tracks, Playlists, Smart Blocks, Webstreams und Line-Ins merken sich je
   einen eigenen Satz sichtbarer Spalten, pro Benutzer und je Tabelle

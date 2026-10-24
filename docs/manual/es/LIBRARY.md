@@ -190,6 +190,11 @@ antes de archivarlo:
 
 Los episodios de podcast no forman parte de esto: se descargan
 directamente en la biblioteca (sección 2.3) y conservan su formato.
+Desde el 2026-10-24 cada episodio descargado se **mide en sonoridad**
+(EBU R128) justo después de la descarga, para que la emisión aplique
+su ganancia real por pista en lugar de una aproximación. Los episodios
+anteriores a esa fecha se recuperan con **Settings → Streams → Measure
+loudness**, que solo mide archivos sin valores.
 
 ### Editar metadatos de pista
 

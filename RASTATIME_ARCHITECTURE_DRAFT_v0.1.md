@@ -1,10 +1,13 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.87
+Draft version: 0.88
 Date: 2026-10-24
 
 > **Revision history**
+> - **0.88 (2026-10-24)** - **Podcast downloads queue their loudness
+>   measurement** (SS23.41 addendum): the API publishes the analyzer's
+>   loudness-only job for every downloaded episode.
 > - **0.87 (2026-10-24)** - **Visible columns per media type** (SS23.42
 >   addendum): the library keeps a visibility profile per media type on top
 >   of the per-user table layout.
@@ -5775,6 +5778,23 @@ target, the bus limiter takes the peaks.
 air chain, makes the per-file measurement pointless); replacing
 ReplayGain with the R128 value (the two modes coexist so the operator
 can switch back).
+
+**Addendum 2026-10-24 - podcast downloads are measured too.**  The API
+downloads episodes itself (`podcasts/download.py`) and writes the
+`cc_files` row without the analyzer, so 109 of 134 episodes carried no
+loudness values and played with the fallback gain (ReplayGain shifted to
+the target, i.e. a flat -5 dB for a row without ReplayGain).  A codec probe
+over all 134 files found MP3 (132) and OGG Vorbis (2) only, so the format
+normalisation of the analyzer is not needed on this path; the gap was the
+measurement.  `podcasts/loudness_queue.py` now publishes the same
+`loudness_only` message the Settings button sends
+(`SendLoudnessMeasurementToAnalyzer`: exchange `airtime-uploads`, topic,
+durable, keys file_id / tmp_file_path / import_directory /
+original_filename / options) right after the row is saved; the analyzer
+measures and reports through `/rest/media/<id>` as for the button.  A
+broker failure is logged and returned as `loudness_queued: false`, the
+download succeeds regardless.  The existing episodes are backfilled with
+Settings -> Streams -> "Measure loudness" (files without values only).
 
 ### 23.42 Per-User Table Layouts for the Library and the Timeline (2026-09-29)
 

@@ -25,6 +25,8 @@ import requests
 from mutagen import MutagenError
 from requests import RequestException, Response
 
+from .loudness_queue import queue_loudness_measurement
+
 logger = logging.getLogger(__name__)
 
 
@@ -358,6 +360,12 @@ def download_episode(
 
         result["fileid"] = db_file.id
         result["status"] = 1
+        # RASTATIME 2026-10-24 - the analyzer never saw this file: queue its
+        # EBU R128 measurement so the playout's per-track gain is real, not
+        # the ReplayGain-shifted fallback (109 of 134 episodes had none).
+        result["loudness_queued"] = queue_loudness_measurement(
+            db_file.id, str(dest_path)
+        )
         logger.info(
             "podcast episode %d imported successfully: file_id=%d path=%s",
             episode_id,
