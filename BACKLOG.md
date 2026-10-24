@@ -5281,7 +5281,26 @@ liquidsoap-lang=2.4.6, Stereo Tool aktiv (Lizenz gesetzt), alle Mounts, PLAYOUT 
 Nachmessung erste Sendungen (12:00 BBC), Speicher-Trend, nach ruhiger Woche RASTATIME-STANDBY umstellen und
 C:/Tools/liquidsoap (2.4.4) als Rueckfall behalten.
 
-### 🔴 Icecast 2.4.4 -> 2.5.0 (Evaluation 2026-10-10: Defer, Operator: vorerst nicht)
+### 🟢 Icecast 2.4.4 -> 2.5.0 (Evaluation 2026-10-10: Defer; Operator-Go 2026-10-24, Testinstanz abgenommen, Umschalten offen)
+**Stand 2026-10-24:** 2.5.0 (win64, SHA-512 gegen xiph.org geprüft) nach `C:\Tools\Icecast-2.5.0` installiert (Operator).
+Testinstanz auf Port 8010 mit Kopie der Live-Konfiguration (`C:/Temp/optd/icecast25/icecast-test.xml`, Rückrufe auf
+127.0.0.1:9), Skript `C:/Temp/optd/icecast25/ice25_test.py`: Statusseite, status-json, admin/stats.xml (Struktur wie vom
+Playout-Kollektor gelesen), Quellen per PUT, Hörer, Fallback-Kette hin und zurück, Metadaten-Update, killsource - alles
+OK; unsere 2.4-Konfiguration lädt ohne Warnung zu unbekannten Elementen.  Liquidsoap mit den drei Produktions-Encodern
+(MP3 320, AAC 320, Opus/OGG 128): alle Mounts, ICY-Titel auf MP3 und AAC, OGG wie gehabt ohne ICY.
+**Befund + Lösung:** ohne `<charset>UTF-8</charset>` je Mount sendet der Windows-Build von 2.5 leere ICY-Titel
+(`StreamTitle=''`, Log `No charset found for "ISO8859-1"`), obwohl stats.xml den Titel zeigt; mit der Charset-Zeile
+kommen Titel inkl. Umlaut beim Hörer an.  Dazu `<mime-types>` absolut setzen (2.5 sucht relativ zum cwd).  2.5 antwortet
+HTTP/1.1, stats.xml ohne audio_info/channels/samplerate/server_url (nichts liest sie), Log-Rauschen „legacy stream
+type audio/mpeg" und „uses safe method GET on /admin" (Liquidsoap) ohne Funktionseinschränkung.  TLS: nur nötig, wenn ein
+listen-socket `<tls>` hat - wir haben keinen (Apache terminiert); der Build bringt OpenSSL 1.1.1 mit.
+**Umschalten (ruhiges Fenster, ~10 min, ein Hörer-Reconnect):** vorbereitete Live-Konfiguration
+`C:/Temp/optd/icecast25/icecast-live-2.5.xml` (= Live + charset x6 + mime-types + webroot/adminroot auf 2.5.0, Port 8000,
+Passwörter unverändert); Ablauf: `config/icecast.xml` sichern und ersetzen, `nssm set RASTATIME-ICECAST Application
+C:\Tools\Icecast-2.5.0in\icecast.exe`, `nssm set RASTATIME-ICECAST AppDirectory C:\Tools\Icecast-2.5.0`,
+`Restart-Service RASTATIME-ICECAST`, dann Mounts/Hörerstatistik/ICY-Titel/öffentlicher Stream prüfen.  Rückfall:
+beide nssm-Werte auf `C:\Tools\Icecast`, Sicherung zurück (die charset-Zeilen versteht 2.4 ebenfalls), Neustart.
+Danach COMPONENTS.md, RESTART_ORDER.md, CHANGELOG; 2.4.4-Ordner bleibt als Rückfall bis zur nächsten Wartung.
 Vorbedingungen: Testinstanz mit dem win64-Installer neben 2.4.4 auf anderem Port, Konfig-Abgleich (icecast.xml ist
 schon im 2.5-Stil mit <role>/<event>, aber zwei <alias> -> <resource>), Pruefung von admin/stats.xml, admin/killsource
 und der Fallback-Kette mit Liquidsoap-Testausgang.  Nutzen: X-Forwarded-For hinter dem Proxy, gepflegte Linie; keine
