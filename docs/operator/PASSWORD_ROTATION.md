@@ -82,7 +82,7 @@ Why: the active password of the PostgreSQL role `rastatime` was printed
 in the Apache error log on 2026-10-04 (Symfony YAML parse error, an
 unquoted `!`).  That file (`C:\Tools\Apache24\logs\error_log`) no longer
 exists, the daily `http-error-*.log` files only go back seven days, and
-the janitor's monthly archive `logsrchive\logs-2026-10.zip` holds no
+the janitor's monthly archive `logs\archive\logs-2026-10.zip` holds no
 error log of 2026-10-04 (checked 2026-10-24).  The exposure on disk is
 over - the rotation is hygiene, not an emergency.
 
