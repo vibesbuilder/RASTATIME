@@ -141,6 +141,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Analyzer: Lautheitsmessung bei MP3s mit defekten Frames (2026-10-24)** —
+  bei Dateien mit „Header missing"-Fehlern initialisiert ffmpeg den
+  Filtergraph je Aussetzer neu, `ebur128` druckt dann je Abschnitt eine
+  Zusammenfassung; der Analyzer las die **letzte** (ein nahezu stummer
+  Stummel mit Müll-Peak, z. B. −70 LUFS / +26 dBTP) und meldete „nicht
+  messbar" (vier Caribou-Titel blieben ohne Werte, Nachholen per Knopf
+  schlug in < 1 s fehl).  `-reinit_filter 0` ist kein Ausweg (ffmpeg bricht
+  dann ab); bei mehr als einer Zusammenfassung misst `compute_loudness` jetzt
+  ein zweites Mal aus einem auf Abtastrate und Kanalzahl der Datei
+  normalisierten 32-bit-Stream (Decoder → Pipe → ebur128): ein Graph, eine
+  Zusammenfassung über die ganze Datei.  Drei Tests; Caribou-Datei jetzt
+  −13,7 LUFS statt leer, normale Datei unverändert (−22,0).  Nebenbefund:
+  sechs Bibliotheksdateien liefern echten Decoder-Müll (True Peak +10 bis
+  +84 dBTP, eine mit +10 LUFS), das ist beschädigtes Material, siehe
+  BACKLOG.  ANALYZER-Neustart nötig.  Commit folgt.
 - **Kalender: zwei Meldungen vom 2026-10-24 (Operator)** — (1) Bearbeiten einer
   monatlichen Sendung „am Wochentag" mit abgewählten Monaten (Show 911
   „Electronic Evening", 19:07–00:00, ohne Jan/Apr/Jul/Okt) scheiterte mit

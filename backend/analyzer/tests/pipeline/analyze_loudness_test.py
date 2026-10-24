@@ -100,3 +100,34 @@ def test_run_loudness_reports_only_the_measurement():
     metadata = queue.get()
     assert set(metadata) == set(LOUDNESS_KEYS)
     assert "import_status" not in metadata
+
+
+# RASTATIME 2026-10-24 - damaged MP3 frames re-initialise ffmpeg's filter
+# graph: several Summary blocks, the first one real, the rest stubs.  Such a
+# file is measured again from a normalised stream (one summary).
+def test_multiple_summaries_measure_again_from_a_normalised_stream(monkeypatch):
+    stub = SUMMARY.replace("-14.2 LUFS", "-70.0 LUFS").replace("-0.4 dBFS", "26.4 dBFS")
+    monkeypatch.setattr(_ffmpeg, "_ffmpeg", _fake_ffmpeg("noise" + chr(10) + SUMMARY + chr(10) + stub + chr(10) + stub))
+    calls = []
+    monkeypatch.setattr(
+        _ffmpeg,
+        "_loudness_text_normalised",
+        lambda path, timeout=600.0: calls.append(path) or SUMMARY.replace("-14.2 LUFS", "-13.7 LUFS").replace("-0.4 dBFS", "6.4 dBFS"),
+    )
+    result = _ffmpeg.compute_loudness("x.mp3")
+    assert calls == ["x.mp3"]
+    assert result["loudness_lufs"] == -13.7
+    assert result["true_peak_dbtp"] == 6.4
+
+
+def test_single_summary_never_measures_twice(monkeypatch):
+    monkeypatch.setattr(_ffmpeg, "_ffmpeg", _fake_ffmpeg("noise" + chr(10) + SUMMARY))
+    monkeypatch.setattr(_ffmpeg, "_loudness_text_normalised", lambda *a, **k: pytest.fail("not expected"))
+    assert _ffmpeg.compute_loudness("x.mp3")["loudness_lufs"] == -14.2
+
+
+def test_failed_second_measurement_is_not_measurable(monkeypatch):
+    stub = SUMMARY.replace("-14.2 LUFS", "-70.0 LUFS")
+    monkeypatch.setattr(_ffmpeg, "_ffmpeg", _fake_ffmpeg(SUMMARY + chr(10) + stub))
+    monkeypatch.setattr(_ffmpeg, "_loudness_text_normalised", lambda *a, **k: "")
+    assert _ffmpeg.compute_loudness("x.mp3") is None

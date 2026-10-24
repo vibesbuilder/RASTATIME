@@ -153,6 +153,48 @@ def _loudness_value(match: Optional[re.Match]) -> Optional[float]:
     return float(raw)
 
 
+def _loudness_text_normalised(filepath: Path, timeout: float = 600.0) -> str:
+    """
+    RASTATIME 2026-10-24 - ffmpeg's ebur128 summary for ``filepath`` measured
+    from a decoded stream with constant parameters (the file's own sample
+    rate and channel count, 32-bit PCM), so that decoder hiccups cannot
+    split the measurement.  Returns the measuring process' stderr ("" when
+    anything fails - the caller then reports "not measurable").
+    """
+    try:
+        probe = ffprobe_json(filepath)
+        audio = next(s for s in probe.get("streams", []) if s.get("codec_type") == "audio")
+        rate = str(int(audio.get("sample_rate") or 48000))
+        channels = str(int(audio.get("channels") or 2))
+    except Exception:  # pylint: disable=broad-exception-caught
+        return ""
+    decode_cmd = [FFMPEG, "-hide_banner", "-nostats", "-loglevel", "error", "-i", str(filepath), "-vn", "-f", "s32le", "-ar", rate, "-ac", channels, "-"]
+    measure_cmd = [FFMPEG, "-hide_banner", "-nostats", "-f", "s32le", "-ar", rate, "-ac", channels, "-i", "pipe:0", "-filter", "ebur128=peak=true", "-f", "null", _NULL_DEVICE]
+    try:
+        with subprocess.Popen(
+            decode_cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            stdin=subprocess.DEVNULL,
+            creationflags=low_priority_creationflags(),
+        ) as decoder:
+            measured = subprocess.run(
+                measure_cmd,
+                stdin=decoder.stdout,
+                capture_output=True,
+                check=False,
+                timeout=timeout,
+                creationflags=low_priority_creationflags(),
+            )
+            decoder.stdout.close()
+            decoder.wait(timeout=timeout)
+    except Exception:  # pylint: disable=broad-exception-caught
+        return ""
+    if measured.returncode != 0:
+        return ""
+    return (measured.stderr or b"").decode("utf-8", errors="backslashreplace")
+
+
 def compute_loudness(filepath: Path) -> Optional[dict]:
     """
     EBU R128 measurement of a file: integrated loudness (LUFS), true peak
@@ -162,6 +204,17 @@ def compute_loudness(filepath: Path) -> Optional[dict]:
     """
     cmd = _ffmpeg("-i", filepath, "-vn", "-filter", "ebur128=peak=true", errors="backslashreplace")
     text = cmd.stderr or ""
+    # RASTATIME 2026-10-24 - an MP3 with damaged frames ("Header missing")
+    # makes ffmpeg re-initialise its filter graph at every decoder hiccup,
+    # and ebur128 then prints one Summary per segment: the first with the
+    # real numbers, the rest near-silent stubs with a garbage peak (four
+    # Caribou files: 8 summaries, the last one -70 LUFS / +26 dBTP, which
+    # the previous "last summary" rule turned into "not measurable").
+    # "-reinit_filter 0" is no cure (ffmpeg then aborts the run), so such a
+    # file is measured a second time from a stream normalised to its own
+    # sample rate and channel count: one graph, one summary, whole file.
+    if text.count("Summary:") > 1:
+        text = _loudness_text_normalised(filepath)
     summary_pos = text.rfind("Summary:")
     if summary_pos >= 0:
         text = text[summary_pos:]

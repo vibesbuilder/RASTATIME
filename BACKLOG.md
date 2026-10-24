@@ -5418,6 +5418,14 @@ ADTS (Laenge ~2 s zu lang) oder WAV/FLAC.  Ansatz bei Bedarf: der Download-Pfad 
 remux_adts_to_m4a / transcode_to_mp3 des Analyzer-Moduls (wie convert_lossless), oder Episoden laufen ueber die
 Analyzer-Queue.  Vorbedingung: ein Feed, der es braucht (vorher per Codec-Probe ueber imported/<Podcast>/ pruefen).
 
+### 💡 Sechs Bibliotheksdateien mit Decoder-Muell (True Peak +10 bis +84 dBTP) - Inhaltspruefung (notiert 2026-10-24)
+Beim Nachholen der Lautheitsmessung gefunden: 23842 „Long Hard Road" (Nitty Gritty Dirt Band, +10 LUFS / +84 dBTP),
+23639 „(Don't Take Her) She's All I Got" (+71 dBTP), 11103 „Babylon Dub" (+41), 1770 „Twins" (Caribou, +14), 10903
+„Schoen (Lied fuer David Bowie)" (+11), 22327 „Mit Tanz & Theater durchs Leben" (+10).  ffmpeg dekodiert hier echte
+Stoerbursts (auch mit -err_detect / -ec 0 unveraendert), die Dateien sind beschaedigt; das Playout daempft sie
+entsprechend ihrer gemessenen Lautheit (23842 um 33 dB).  To do (Operator): reinhoeren, ggf. neu beschaffen oder
+loeschen.  Dazu 193 Dateien mit True Peak > +3 dBTP (MP3-Ueberschwinger, meist harmlos).
+
 ### 💡 Expiry in M4A nur best effort (notiert 2026-10-14)
 Beim ADTS -> M4A-Umpacken schreibt convert_format Expiry, ISRC, LABEL und LANGUAGE als
 `----:com.apple.iTunes:<Name>`-Freeform-Atome; der Analyzer liest Expiry ueber ffprobe zurueck, andere Programme
