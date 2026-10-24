@@ -5282,7 +5282,7 @@ Nachmessung erste Sendungen (12:00 BBC), Speicher-Trend, nach ruhiger Woche RAST
 C:/Tools/liquidsoap (2.4.4) als Rueckfall behalten.
 
 ### ✅ Icecast 2.4.4 -> 2.5.0 (Evaluation 2026-10-10: Defer; Operator-Go 2026-10-24, Testinstanz abgenommen, LIVE seit 2026-10-24 14:02)
-**Umgeschaltet 2026-10-24 14:02** (Standby zuvor gestoppt, da abhängig): sechs Mounts, Liquidsoap 14:02:06, Statistik ohne 401, öffentlicher Stream meldet 2.5.0, ICY-Titel ab 14:06 bestätigt.  Rückfall bleibt bis zur nächsten Wartung liegen.
+**Umgeschaltet 2026-10-24 14:02** (Standby zuvor gestoppt, da abhängig): sechs Mounts, Liquidsoap 14:02:06, Statistik ohne 401, öffentlicher Stream meldet 2.5.0, ICY-Titel ab 14:06 bestätigt.  Operator 2026-10-24: Bewährung 5 Tage (Prüfung 2026-10-29) und 30 Tage (2026-11-23); danach ggf. Rückfall (2.4.4-Ordner + icecast.xml.2.4.4-backup) entfernen.  Ungenutzte Installer-Kopie C:/Tools/Icecast/icecast.xml vom Operator gelöscht.
 **Stand 2026-10-24:** 2.5.0 (win64, SHA-512 gegen xiph.org geprüft) nach `C:\Tools\Icecast-2.5.0` installiert (Operator).
 Testinstanz auf Port 8010 mit Kopie der Live-Konfiguration (`C:/Temp/optd/icecast25/icecast-test.xml`, Rückrufe auf
 127.0.0.1:9), Skript `C:/Temp/optd/icecast25/ice25_test.py`: Statusseite, status-json, admin/stats.xml (Struktur wie vom
