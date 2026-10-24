@@ -5838,7 +5838,7 @@ heruntergeladen hat (synchron seit T-PODCAST-1), die Tabelle wurde also zu spaet
 jetzt vor dem POST als "pending" markiert (podcast.js importSelectedEpisodes).
 
 ### ✅ Bibliothek: Spalten je Medientyp (Line-In, Webstream, Playlist, Smart Block) - Evaluierung 2026-10-23, gebaut 2026-10-24 (Operator-Go)
-**Stand 2026-10-24:** Profil je Medientyp und Tabelle in den Benutzereinstellungen, Vorgaben je Typ, Spalten-Knopf schreibt ins Profil des offenen Reiters; Chrome-Abnahme aller fünf Reiter, Persistenz-Test durch den Operator (Spalte umschalten, F5).
+**Stand 2026-10-24:** Profil je Medientyp und Tabelle in den Benutzereinstellungen, Vorgaben je Typ, Spalten-Knopf schreibt ins Profil des offenen Reiters; Chrome-Abnahme aller fünf Reiter, Persistenz-Test durch den Operator bestanden 2026-10-24 (Spalte umschalten, Reiterwechsel, F5).
 
 Heute eine Spaltenmenge fuer alle Typen (library.js, Sichtbarkeit je Benutzer in cc_pref ueber
 usersettings/get-library-datatable).  Machbar: Sichtbarkeitsprofil je Medientyp speichern und beim Wechsel des
