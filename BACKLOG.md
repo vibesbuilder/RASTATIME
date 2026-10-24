@@ -5427,6 +5427,25 @@ Stoerbursts (auch mit -err_detect / -ec 0 unveraendert), die Dateien sind bescha
 entsprechend ihrer gemessenen Lautheit (23842 um 33 dB).  To do (Operator): reinhoeren, ggf. neu beschaffen oder
 loeschen.  Dazu 193 Dateien mit True Peak > +3 dBTP (MP3-Ueberschwinger, meist harmlos).
 
+### 💡 Upload: Dateien ohne Artist-/Album-Tag landen direkt in imported/ (Operator-Frage 2026-10-24)
+Der Analyzer baut den Zielpfad imported/<Artist>/<Album>/<Datei>; fehlen beide Tags, bleibt nur imported/ (63 Dateien,
+z. B. „01 -  - Chill Zone 2.mp3", „INOK Sommerfest 20260718.mp3").  Idee: Rueckfall-Ordner imported/_ohne-Tags/ (oder
+„Unknown Artist") im organise_file-Schritt, bestehende 63 per Umzugslauf nachziehen (filepath in cc_files anpassen).
+~1 h, Analyzer-Neustart.  Vorbedingung: Operator-Go und Entscheidung ueber den Ordnernamen.
+
+### 💡 Upload: gleiche Datei zweimal hochladen wird nicht erkannt (Operator-Frage 2026-10-24)
+Heute: zweite Datei bekommt im Ziel ein UUID-Suffix (organise_file), eine zweite cc_files-Zeile mit identischem md5
+entsteht; nur bulk_import (CLI) prueft md5/source_md5.  Idee: beim Web-Upload (CcFiles::createAndImport) den md5 gegen
+cc_files pruefen und den Upload mit Hinweis auf den bestehenden Titel abweisen (oder optional zulassen).  ~2 h inkl.
+UI-Meldung + Manual x4.  Vorbedingung: Operator-Go (Memory: Duplikate sind bisher bewusst erlaubt).
+
+### 💡 Covers: zehn Dateien je Track im artwork-Ordner, 183.359 Dateien / 8,5 GB (Operator-Frage 2026-10-24)
+Je Track mit eingebettetem Cover schreibt FileDataHelper::saveArtworkData das Original als Data-URI (ohne Endung),
+fuenf JPG-Groessen (32/64/128/256/512) und vier Data-URI-Kopien davon (-32/-64/-128/-256).  Genutzt werden die
+Data-URI-32 im Dashboard, die JPGs in Library/Player/Widgets.  Idee: Data-URI-Kopien bei Bedarf aus dem JPG erzeugen
+(renderDataURI kann das), nur JPGs speichern -> etwa die Haelfte der Dateien und ~40 % des Platzes; Aufraeumlauf fuer den
+Bestand.  ~3 h.  Vorbedingung: Operator-Go, Backup des artwork-Ordners.
+
 ### 💡 Expiry in M4A nur best effort (notiert 2026-10-14)
 Beim ADTS -> M4A-Umpacken schreibt convert_format Expiry, ISRC, LABEL und LANGUAGE als
 `----:com.apple.iTunes:<Name>`-Freeform-Atome; der Analyzer liest Expiry ueber ffprobe zurueck, andere Programme
