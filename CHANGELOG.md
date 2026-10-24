@@ -102,6 +102,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Kalender: zwei Meldungen vom 2026-10-24 (Operator)** — (1) Bearbeiten einer
+  monatlichen Sendung „am Wochentag" mit abgewählten Monaten (Show 911
+  „Electronic Evening", 19:07–00:00, ohne Jan/Apr/Jul/Okt) scheiterte mit
+  „Cannot schedule overlapping shows": die Prüfschleife in
+  `AddShowWhen::checkReliantFields` nahm die von
+  `getNextMonthlyWeeklyRepeatDate` gelieferte **Ortszeit** als UTC und verglich
+  ein um den UTC-Versatz verschobenes Fenster mit `cc_show_instances`, das ab
+  der zweiten Monatsfolge in die Folgesendung ab Mitternacht ragte →
+  `setTimezone(UTC)` vor dem Vergleich (per DB-Simulation reproduziert: ohne
+  Fix Treffer ab 2026-12-05, mit Fix erst die echte Doppelbuchung mit Show 907
+  ab 2027-02-06, siehe BACKLOG).  (2) Rotes „leer"-Symbol statt des
+  Autoloading-Symbols bei sieben Sendungen, die genau um Montag 00:00 Ortszeit
+  enden oder beginnen: `ShowInstance::getShowHasAutoplaylist` nahm nur
+  Instanzen **strikt innerhalb** des Kalenderfensters; jetzt alle, die es
+  überlappen (wie `getIsFull`).  Live im Event-Feed geprüft: alle sieben
+  Instanzen tragen `show_has_auto_playlist`.  Commit folgt.
 - **RabbitMQ seit dem Neustart vom 23.10. 18:01 in der Boot-Schleife
   (`no_epmd_port`), behoben 2026-10-24 11:30 (Operator)** — 740 Startversuche,
   kein Listener auf 5672, Analyzer ohne Verbindung; Uploads und

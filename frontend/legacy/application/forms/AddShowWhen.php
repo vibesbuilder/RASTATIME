@@ -359,6 +359,14 @@ class Application_Form_AddShowWhen extends Zend_Form_SubForm
                                     $weekNumberOfMonth,
                                     $dayOfWeek
                                 );
+                                // RASTATIME 2026-10-24 - the helper returns the LOCAL wall time
+                                // of the show's timezone; the overlap check compares against
+                                // the UTC columns of cc_show_instances, so convert first.
+                                // Without this every monthly-by-weekday show whose window,
+                                // shifted by the UTC offset, touched the following show failed
+                                // its edit with "Cannot schedule overlapping shows" (operator:
+                                // "Electronic Evening" 19:07-00:00, excluded months).
+                                $repeatShowStart->setTimezone($utc);
                                 $repeatShowEnd = clone $repeatShowStart;
                                 $repeatShowEnd->add(new DateInterval('PT' . $hours . 'H' . $minutes . 'M'));
                             } else {

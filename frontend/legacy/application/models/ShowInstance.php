@@ -674,9 +674,16 @@ SQL;
 
         try {
             // query the show instances to find whether a show instance has an autoplaylist
+            // RASTATIME 2026-10-24 - every instance that OVERLAPS the window, like
+            // getIsFull (ends > start, starts < end).  Upstream took only
+            // instances strictly inside it, so a show ending exactly at the
+            // calendar's range end (Sunday 21:00-00:00 with the week ending
+            // Monday 00:00) or starting at its range start (Monday 00:00) lost
+            // the flag and showed the red "empty" icon instead of the
+            // autoplaylist one (operator, seven shows).
             $showInstances = CcShowInstancesQuery::create()
-                ->filterByDbEnds($p_end->format(DEFAULT_TIMESTAMP_FORMAT), Criteria::LESS_THAN)
-                ->filterByDbStarts($p_start->format(DEFAULT_TIMESTAMP_FORMAT), Criteria::GREATER_THAN)
+                ->filterByDbEnds($p_start->format(DEFAULT_TIMESTAMP_FORMAT), Criteria::GREATER_THAN)
+                ->filterByDbStarts($p_end->format(DEFAULT_TIMESTAMP_FORMAT), Criteria::LESS_THAN)
                 ->leftJoinCcShow()
                 ->where('CcShow.has_autoplaylist = ?', 'true')
                 ->find($con);
