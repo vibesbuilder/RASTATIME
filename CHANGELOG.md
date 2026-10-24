@@ -21,6 +21,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   erneuter Dateiänderung nicht neu gestartet) - Runbook entsprechend
   ergänzt.
 
+### Added
+
+- **Bibliothek: sichtbare Spalten je Medientyp (2026-10-24, Operator-Go)** —
+  Tracks, Playlists, Smart Blocks, Webstreams und Line-Ins merken sich je
+  einen eigenen Satz sichtbarer Spalten, pro Benutzer und je Tabelle
+  (Dashboard / Schedule Tracks); der Spalten-Knopf bearbeitet den Satz des
+  offenen Reiters, ein nie angepasster Reiter startet mit einer Vorgabe je
+  Typ.  `library.js` (`applyColumnProfile` in `setCurrentTable`,
+  `column-visibility.dt` → Profil speichern), `UsersettingsController`
+  `get/set-library-columns`, `Preference` Schlüssel
+  `library_columns_by_type` / `library_builder_columns_by_type`.  Live in
+  Chrome geprüft (alle fünf Reiter zeigen ihre Vorgabe).  Manual LIBRARY
+  „Table layout" EN/DE/FR/ES, Architektur §23.42 Addendum (0.87).  Commit folgt.
+
 ### Changed
 
 - **Icecast 2.4.4 → 2.5.0 (2026-10-24 14:02, Operator)** — 2.4.4 fällt Ende 2026

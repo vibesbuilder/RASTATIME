@@ -1676,6 +1676,11 @@ var AIRTIME = (function (AIRTIME) {
     }
 
     $datatables[mod.DataTableTypeEnum.LIBRARY] = mod.libraryDataTable;
+    // RASTATIME 2026-10-24 - column visibility per media type; the
+    // advanced-search builder below is closure-local, expose it for the
+    // profile switch
+    mod.setColumnFilter = setColumnFilter;
+    mod.initColumnProfiles($libTable, onDashboard ? "" : "builder");
 
     /*  ############################################
                           END DATATABLES
@@ -2425,6 +2430,133 @@ var AIRTIME = (function (AIRTIME) {
    * @param {string} table            the string name of the table to show
    * @param {boolean} [redraw=true]   whether or not to redraw the table
    */
+  // RASTATIME 2026-10-24 - column visibility per media type (operator wish
+  // 2026-10-23).  The DataTables state (order, sort, rows per page, and the
+  // visibility of whatever type was shown last) stays the base layout; on top
+  // of it every media type keeps its own set of visible columns, saved per
+  // user and per table (dashboard / Schedule Tracks dialog) as
+  // {type: {mDataProp: bool}} through usersettings/*-library-columns.  A
+  // type without a saved profile gets the defaults below.  The three leading
+  // columns and "Actions" are never part of a profile.
+  var COLUMN_PROFILE_DEFAULTS = {
+    1: ["artwork", "track_title", "artist_name", "track_type_id", "genre", "length", "utime", "id"],
+    2: ["track_title", "description", "length", "owner_id", "mtime", "id"],
+    3: ["track_title", "description", "length", "owner_id", "mtime", "id"],
+    4: ["track_title", "description", "info_url", "length", "owner_id", "mtime", "id"],
+    6: ["track_title", "description", "length", "mtime", "id"],
+  };
+  var COLUMN_PROFILE_FIXED = { ftype: true, checkbox: true, image: true, options: true };
+  var columnProfiles = null; // {type: {prop: bool}}, loaded once from the server
+  var columnProfileTable = null; // "" (dashboard) or "builder"
+  var applyingColumnProfile = false;
+  var columnProfileSaveTimer = null;
+
+  function columnProfileType() {
+    var type = parseInt($(".media_type_selector.selected").data("selection-id"), 10);
+    return isNaN(type) ? mod.MediaTypeIntegerEnum.DEFAULT : type;
+  }
+
+  function columnProfileParams() {
+    return columnProfileTable ? { table: columnProfileTable } : {};
+  }
+
+  function loadColumnProfiles() {
+    if (columnProfiles !== null) {
+      return;
+    }
+    columnProfiles = {};
+    $.ajax({
+      url: baseUrl + "usersettings/get-library-columns",
+      data: columnProfileParams(),
+      dataType: "json",
+      async: false,
+    }).done(function (data) {
+      if (data && typeof data === "object") {
+        columnProfiles = data;
+      }
+    });
+  }
+
+  function libraryApi() {
+    var dt = $datatables[mod.DataTableTypeEnum.LIBRARY];
+    return dt && $.fn.dataTable && dt.api ? dt.api() : null;
+  }
+
+  // the current visibility of every non-fixed column, by mDataProp
+  function currentColumnMap(api) {
+    var map = {};
+    api.columns().every(function () {
+      var prop = this.settings()[0].aoColumns[this.index()].mDataProp;
+      if (!COLUMN_PROFILE_FIXED[prop]) {
+        map[prop] = this.visible();
+      }
+    });
+    return map;
+  }
+
+  mod.applyColumnProfile = function () {
+    var api = libraryApi();
+    if (!api) {
+      return;
+    }
+    loadColumnProfiles();
+    var type = columnProfileType(),
+      saved = columnProfiles[String(type)],
+      defaults = COLUMN_PROFILE_DEFAULTS[type] || COLUMN_PROFILE_DEFAULTS[1],
+      changed = false;
+    applyingColumnProfile = true;
+    try {
+      api.columns().every(function () {
+        var prop = this.settings()[0].aoColumns[this.index()].mDataProp;
+        if (COLUMN_PROFILE_FIXED[prop]) {
+          return;
+        }
+        var want = saved && typeof saved[prop] === "boolean" ? saved[prop] : $.inArray(prop, defaults) > -1;
+        if (this.visible() !== want) {
+          this.visible(want, false);
+          changed = true;
+        }
+      });
+      if (changed) {
+        api.columns.adjust();
+      }
+    } finally {
+      applyingColumnProfile = false;
+    }
+    if (changed && typeof mod.setColumnFilter === "function") {
+      // the advanced-search fields follow the visible columns
+      mod.setColumnFilter($datatables[mod.DataTableTypeEnum.LIBRARY]);
+    }
+  };
+
+  function saveColumnProfile() {
+    var api = libraryApi();
+    if (!api || applyingColumnProfile) {
+      return;
+    }
+    loadColumnProfiles();
+    columnProfiles[String(columnProfileType())] = currentColumnMap(api);
+    if (columnProfileSaveTimer) {
+      clearTimeout(columnProfileSaveTimer);
+    }
+    columnProfileSaveTimer = setTimeout(function () {
+      columnProfileSaveTimer = null;
+      $.ajax({
+        url: baseUrl + "usersettings/set-library-columns",
+        type: "POST",
+        data: $.extend({ settings: JSON.stringify(columnProfiles), format: "json" }, columnProfileParams()),
+        dataType: "json",
+      });
+    }, 400);
+  }
+
+  mod.initColumnProfiles = function ($table, table) {
+    columnProfileTable = table || "";
+    $table.on("column-visibility.dt", function () {
+      saveColumnProfile();
+    });
+  };
+
   mod.setCurrentTable = function (table, redraw) {
     if (typeof redraw === "undefined") {
       redraw = true;
@@ -2433,6 +2565,10 @@ var AIRTIME = (function (AIRTIME) {
       wrapper = $(dt).closest(".dataTables_wrapper");
     if (dt && typeof dt.fnClearTable === "function") {
       dt.fnClearTable(false);
+    }
+    if (table === mod.DataTableTypeEnum.LIBRARY) {
+      // RASTATIME 2026-10-24 - the media type's own set of visible columns
+      mod.applyColumnProfile();
     }
     // Don't redraw if we're switching to another hash for the library table
     $.when(redraw ? dt.fnDraw() : function () {}).done(function () {

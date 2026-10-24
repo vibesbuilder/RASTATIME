@@ -1736,6 +1736,9 @@ class Application_Model_Preference
         'library' => 'library_datatable',
         'library_builder' => 'library_builder_datatable',
         'timeline' => 'timeline_datatable',
+        // RASTATIME 2026-10-24 - visible columns per media type (library.js)
+        'library_columns' => 'library_columns_by_type',
+        'library_builder_columns' => 'library_builder_columns_by_type',
     ];
 
     /**

@@ -128,7 +128,17 @@ der Tabelle blendet Spalten ein und aus, die Auswahl
 RASTATIME merkt sich dieses Layout — Spaltenreihenfolge,
 sichtbare Spalten, Zeilen pro Seite und Sortierung — **pro
 Benutzer auf dem Server**; es folgt Ihnen also in jeden Browser
-und auf jeden Rechner. Die Track-Tabelle des Dashboards und die
+und auf jeden Rechner. Seit 2026-10-24 werden die **sichtbaren
+Spalten je Medientyp** gemerkt: Tracks, Playlists, Smart Blocks,
+Webstreams und Line-Ins haben jeweils ihren eigenen Satz, und die
+Schaltfläche **Spalten** bearbeitet immer den Satz des gerade
+geöffneten Reiters. Ein noch nie angepasster Reiter beginnt mit
+einer sinnvollen Vorgabe (Tracks: Cover, Titel, Interpret, Typ,
+Genre, Länge, Hochgeladen; Playlists und Smart Blocks: Titel,
+Beschreibung, Länge, Ersteller, Zuletzt geändert; Webstreams:
+Titel, Beschreibung, Website, Länge, Ersteller, Zuletzt geändert;
+Line-Ins: Titel, Beschreibung, Länge, Zuletzt geändert). Die
+Track-Tabelle des Dashboards und die
 im Kalender-Dialog **Sendungsinhalte verwalten** haben je ein
 eigenes Layout (der Dialog hat keine Spalte *Actions*); die
 Tabelle *Scheduled Shows* daneben teilt ein Layout zwischen

@@ -117,7 +117,16 @@ Drag a column by its header to move it; the **Columns** button
 **Show** selector below it sets the rows per page. RASTATIME
 remembers this layout — column order, visible columns, rows per
 page and sort — **per user on the server**, so it follows you to
-any browser and computer. The track table on the dashboard and
+any browser and computer. Since 2026-10-24 the **visible columns
+are kept per media type**: Tracks, Playlists, Smart Blocks,
+Webstreams and Line-Ins each remember their own set, and the
+**Columns** button always edits the set of the tab you are on. A
+tab you have never adjusted starts with a sensible default
+(tracks: cover, title, creator, type, genre, length, uploaded;
+playlists and smart blocks: title, description, length, creator,
+last modified; webstreams: title, description, website, length,
+creator, last modified; line-ins: title, description, length,
+last modified). The track table on the dashboard and
 the one in the calendar's **Schedule Tracks** dialog each keep a
 layout of their own (the dialog has no *Actions* column); the
 *Scheduled Shows* table next to them shares one layout between

@@ -64,8 +64,7 @@ Sekundärfarbe · Show-Logos als WebP (~1 h) · Rückgängig nach Löschen ·
 Metadaten Energy/Tempo/Key/Timbre (Bench liegt vor) · JavaScript-Build-Pipeline ·
 Payware/Tier-System 🔴 Hold.
 
-**Ideen, nur notiert:** Spalten je Medientyp („klingt gut", Go offen, ~1 Tag) ·
-Import/Export Stufe 2 · Backup: Recordings in den Medienspiegel · Podcast-Downloads umgehen den Analyzer · MP3-Stream-
+**Ideen, nur notiert:** Import/Export Stufe 2 · Backup: Recordings in den Medienspiegel · Podcast-Downloads umgehen den Analyzer · MP3-Stream-
 Ausgang 48 kHz bei 44,1-kHz-Mix · Line-In-Gain live nachregeln · Kanalwahl im
 Schnell-Editor · Speicherzuwachs Liquidsoap · Traffic Alerts Deadline-Skip ·
 Expiry in M4A · bulk_import-Erweiterungsliste · die unbewerteten Ideen unter
@@ -5838,7 +5837,8 @@ Downloads) ebenfalls behoben 2026-10-23: der Episoden-POST kehrt erst zurueck, w
 heruntergeladen hat (synchron seit T-PODCAST-1), die Tabelle wurde also zu spaet neu geladen; die Zeile wird
 jetzt vor dem POST als "pending" markiert (podcast.js importSelectedEpisodes).
 
-### 💡 Bibliothek: Spalten je Medientyp (Line-In, Webstream, Playlist, Smart Block) - Evaluierung 2026-10-23
+### ✅ Bibliothek: Spalten je Medientyp (Line-In, Webstream, Playlist, Smart Block) - Evaluierung 2026-10-23, gebaut 2026-10-24 (Operator-Go)
+**Stand 2026-10-24:** Profil je Medientyp und Tabelle in den Benutzereinstellungen, Vorgaben je Typ, Spalten-Knopf schreibt ins Profil des offenen Reiters; Chrome-Abnahme aller fünf Reiter, Persistenz-Test durch den Operator (Spalte umschalten, F5).
 
 Heute eine Spaltenmenge fuer alle Typen (library.js, Sichtbarkeit je Benutzer in cc_pref ueber
 usersettings/get-library-datatable).  Machbar: Sichtbarkeitsprofil je Medientyp speichern und beim Wechsel des

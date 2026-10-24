@@ -10,6 +10,9 @@ class UsersettingsController extends Zend_Controller_Action
             ->addActionContext('set-now-playing-screen-settings', 'json')
             ->addActionContext('get-library-datatable', 'json')
             ->addActionContext('set-library-datatable', 'json')
+            // RASTATIME 2026-10-24 - visible columns per media type
+            ->addActionContext('get-library-columns', 'json')
+            ->addActionContext('set-library-columns', 'json')
             ->addActionContext('get-timeline-datatable', 'json')
             ->addActionContext('set-timeline-datatable', 'json')
             ->addActionContext('remindme', 'json')
@@ -53,6 +56,26 @@ class UsersettingsController extends Zend_Controller_Action
     public function getLibraryDatatableAction()
     {
         $this->_helper->json(Application_Model_Preference::getDatatableSetting($this->libraryDatatableKey()));
+    }
+
+    // RASTATIME 2026-10-24 - the library's visible columns per media type
+    // ({type: {mDataProp: bool}}, see library.js applyColumnProfile); one
+    // profile set for the dashboard, one for the Schedule Tracks dialog
+    private function libraryColumnsKey()
+    {
+        return $this->getRequest()->getParam('table') === 'builder' ? 'library_builder_columns' : 'library_columns';
+    }
+
+    public function setLibraryColumnsAction()
+    {
+        $settings = $this->getRequest()->getParam('settings');
+
+        $this->_helper->json(Application_Model_Preference::setDatatableSetting($this->libraryColumnsKey(), $settings));
+    }
+
+    public function getLibraryColumnsAction()
+    {
+        $this->_helper->json(Application_Model_Preference::getDatatableSetting($this->libraryColumnsKey()) ?? new stdClass());
     }
 
     public function setTimelineDatatableAction()

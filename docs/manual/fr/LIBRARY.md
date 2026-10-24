@@ -130,7 +130,17 @@ en dessous fixe le nombre de lignes par page. RASTATIME
 mémorise cette disposition — ordre des colonnes, colonnes
 visibles, lignes par page et tri — **par utilisateur sur le
 serveur** ; elle vous suit donc dans chaque navigateur et sur
-chaque poste. Le tableau des pistes du tableau de bord et
+chaque poste. Depuis le 2026-10-24, les **colonnes visibles sont
+mémorisées par type de média** : Pistes, Playlists, Blocs
+intelligents, Webstreams et Entrées ligne ont chacun leur propre
+jeu, et le bouton **Colonnes** modifie toujours le jeu de
+l'onglet ouvert. Un onglet jamais ajusté démarre avec une valeur
+par défaut raisonnable (pistes : pochette, titre, créateur, type,
+genre, durée, importé ; playlists et blocs intelligents : titre,
+description, durée, créateur, dernière modification ;
+webstreams : titre, description, site web, durée, créateur,
+dernière modification ; entrées ligne : titre, description,
+durée, dernière modification). Le tableau des pistes du tableau de bord et
 celui de la boîte de dialogue **Ajouter des pistes** du
 calendrier ont chacun leur propre disposition (la boîte de
 dialogue n'a pas de colonne *Actions*) ; le tableau

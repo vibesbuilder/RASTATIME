@@ -1,10 +1,13 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.86
-Date: 2026-10-23
+Draft version: 0.87
+Date: 2026-10-24
 
 > **Revision history**
+> - **0.87 (2026-10-24)** - **Visible columns per media type** (SS23.42
+>   addendum): the library keeps a visibility profile per media type on top
+>   of the per-user table layout.
 > - **0.86 (2026-10-23)** - **Played-lately windows in minutes, picks of the
 >   same expansion excluded** (SS23.21 addendum): `*_minutes` criteria rows
 >   (old `*_hours` rows read x 60), and a playlist expanded block by block
@@ -5830,6 +5833,27 @@ hidden-then-shown column and a reordered layout (saved and dragged)
 render decorated; toolbar, column headers and pager stay in place while
 the rows scroll; the advanced search finds the 241 jingles by track type
 in the default and in a reordered column order.
+
+**Addendum 2026-10-24 - visible columns per media type.**  Operator wish
+2026-10-23: Line-Ins, Webstreams, Playlists and Smart Blocks need other
+columns than Tracks.  The DataTables state above stays the base layout
+(column order, sort, rows per page, and the visibility of the type shown
+last).  On top of it `library.js` keeps a profile `{type: {mDataProp:
+bool}}` per user and per table, stored as `library_columns_by_type` /
+`library_builder_columns_by_type` through
+`usersettings/get-library-columns` and `set-library-columns` (same
+`setDatatableSetting` validation, `table=builder` for the Schedule Tracks
+dialog).  `applyColumnProfile()` runs inside `setCurrentTable()` for the
+library table - i.e. at page load and on every media-type switch - and sets
+each non-fixed column (`ftype`, `checkbox`, `image`, `options` never
+change) to the saved value or, without a profile, to the type's default
+(`COLUMN_PROFILE_DEFAULTS`: tracks cover/title/creator/type/genre/length/
+uploaded/id; playlists + blocks title/description/length/owner/mtime/id;
+webstreams the same plus website; line-ins title/description/length/mtime/
+id), then rebuilds the advanced-search fields.  A `column-visibility.dt`
+event outside the apply writes the current map into the active type's
+profile and posts it (debounced 400 ms); the DataTables state save still
+runs, so the base layout and the profile agree for the type on screen.
 
 ### 23.43 UI Primary Colour as a Setting (2026-09-29)
 

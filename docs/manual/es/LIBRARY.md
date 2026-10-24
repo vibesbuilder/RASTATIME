@@ -78,7 +78,17 @@ oculta columnas, y el selector **Mostrar** debajo fija las
 filas por página. RASTATIME recuerda esta disposición — orden
 de columnas, columnas visibles, filas por página y orden —
 **por usuario en el servidor**, así que le sigue a cualquier
-navegador y equipo. La tabla de pistas del panel y la del
+navegador y equipo. Desde el 2026-10-24 las **columnas visibles
+se recuerdan por tipo de medio**: Pistas, Listas, Bloques
+inteligentes, Webstreams y Entradas de línea tienen cada uno su
+propio conjunto, y el botón **Columnas** edita siempre el
+conjunto de la pestaña abierta. Una pestaña nunca ajustada
+empieza con un valor por defecto razonable (pistas: carátula,
+título, creador, tipo, género, duración, subido; listas y
+bloques inteligentes: título, descripción, duración, creador,
+última modificación; webstreams: título, descripción, sitio
+web, duración, creador, última modificación; entradas de línea:
+título, descripción, duración, última modificación). La tabla de pistas del panel y la del
 diálogo **Programar pistas** del calendario tienen cada una
 su propia disposición (el diálogo no tiene columna
 *Actions*); la tabla *Scheduled Shows* de al lado comparte
