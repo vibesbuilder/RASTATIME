@@ -24,7 +24,7 @@ show boundary.
 |---|------|---------|
 | P1 | Harbor main fallback | `stream.harbor.main_password` |
 | P2 | Harbor show fallback | `stream.harbor.show_password` |
-| P3 | Icecast source password | `icecast.xml` `<source-password>`, Settings -> Streams "Source Password" of every output |
+| P3 | Icecast source password | `C:\RASTATIME\config\icecast.xml` `<source-password>` (the file the service runs with: `-c C:\rastatime\config\icecast.xml`; the copy under `C:\Tools\Icecast` is an unused leftover of the installer), Settings -> Streams "Source Password" of every output |
 | P4 | Database role `rastatime` | PostgreSQL, `database.password` |
 
 (Optional P5: the Icecast admin password, if it is still the shipped
@@ -36,12 +36,17 @@ Password".  The playout reads listener statistics with it.)
 Why: `stream.harbor.main_password` / `show_password` are still the
 installation placeholders.  Since the UI logins (2026-09-10) they are only
 used when PLAYOUT's `/dj-auth` is unreachable - exactly in an emergency.
-The Icecast source password is still the shipped default as well.
+Finding 2026-10-24: the live `config/icecast.xml` already carries
+non-default 10-character source / admin / relay passwords that match
+Settings -> Streams; only the unused copy under `C:\Tools\Icecast` still had
+the shipped defaults.  Rotating the live Icecast passwords is therefore
+optional (it costs one Icecast + Liquidsoap restart); the harbor fallback
+values are the part that matters.
 
 1. [ ] `C:\RASTATIME\config\libretime.conf`, block `stream.harbor` (around
        line 80): set `main_password: "<P1>"` and `show_password: "<P2>"`.
-2. [ ] `C:\Tools\Icecast\icecast.xml`, `<authentication>` block (around
-       line 42): `<source-password><P3></source-password>` (and
+2. [ ] `C:\RASTATIME\config\icecast.xml` (git-ignored, the one the service
+       loads), `<authentication>` block: `<source-password><P3></source-password>` (and
        `<admin-password><P5></admin-password>` if you rotate it too).
        `<relay-password>` is unused, may stay.
 3. [ ] Browser, Settings -> Streams: for **every** output stream
@@ -138,7 +143,7 @@ There is no `pgpass.conf` and no second copy.
 
 ## C. Rollback
 
-- Part A: put the old values back in `libretime.conf` / `icecast.xml` /
+- Part A: put the old values back in `libretime.conf` / `config\icecast.xml` /
   Settings -> Streams and repeat step A4.
 - Part B: `\password rastatime` again with the old value, restore line 26,
   repeat step B3.  Nothing else holds the password.
