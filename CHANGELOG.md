@@ -33,7 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `get/set-library-columns`, `Preference` Schlüssel
   `library_columns_by_type` / `library_builder_columns_by_type`.  Live in
   Chrome geprüft (alle fünf Reiter zeigen ihre Vorgabe).  Manual LIBRARY
-  „Table layout" EN/DE/FR/ES, Architektur §23.42 Addendum (0.87).  Commit folgt.
+  „Table layout" EN/DE/FR/ES, Architektur §23.42 Addendum (0.87).  Commit cc60fc7.
 
 ### Changed
 
