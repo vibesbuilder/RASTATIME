@@ -36,7 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Download, Nachrichtenform, Fehlerpfad), Broker in allen Podcast-Tests
   gestubbt.  Live geprüft: Datei 701 nach 10 s gemessen (−18,3 LUFS).
   Bestehende Episoden holt der Knopf nach (nur Dateien ohne Werte).  API-
-  Neustart nötig.  Architektur §23.41 Addendum (0.88).  Commit folgt.
+  Neustart nötig.  Architektur §23.41 Addendum (0.88).  Commit 382e926.
 - **Bibliothek: sichtbare Spalten je Medientyp (2026-10-24, Operator-Go)** —
   Tracks, Playlists, Smart Blocks, Webstreams und Line-Ins merken sich je
   einen eigenen Satz sichtbarer Spalten, pro Benutzer und je Tabelle
