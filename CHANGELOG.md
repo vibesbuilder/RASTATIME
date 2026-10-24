@@ -117,7 +117,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   enden oder beginnen: `ShowInstance::getShowHasAutoplaylist` nahm nur
   Instanzen **strikt innerhalb** des Kalenderfensters; jetzt alle, die es
   überlappen (wie `getIsFull`).  Live im Event-Feed geprüft: alle sieben
-  Instanzen tragen `show_has_auto_playlist`.  Commit folgt.
+  Instanzen tragen `show_has_auto_playlist`.  Commit 3abbb5d.
 - **RabbitMQ seit dem Neustart vom 23.10. 18:01 in der Boot-Schleife
   (`no_epmd_port`), behoben 2026-10-24 11:30 (Operator)** — 740 Startversuche,
   kein Listener auf 5672, Analyzer ohne Verbindung; Uploads und
