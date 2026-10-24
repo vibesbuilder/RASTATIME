@@ -317,7 +317,7 @@ powershell -File infra\nssm\install-icecast.ps1 -StartService
 5672 (`Get-NetTCPConnection -State Listen | ? LocalPort -eq 5672` is
 empty), `erl.exe` restarts every two minutes, the analyzer log repeats
 `Connection to message queue failed ... Retrying in 5 seconds`, uploads
-and podcast downloads stay unanalysed.  `C:\ProgramData\RabbitMQ\logabbit@RASTATIME.log`
+and podcast downloads stay unanalysed.  `C:\ProgramData\RabbitMQ\log\rabbit@RASTATIME.log`
 ends every attempt with `epmd does not know us, re-registering rabbit`
 and `BOOT FAILED ... {error,no_epmd_port}`.  Playout and stream are not
 affected.
