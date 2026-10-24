@@ -155,7 +155,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   −13,7 LUFS statt leer, normale Datei unverändert (−22,0).  Nebenbefund:
   sechs Bibliotheksdateien liefern echten Decoder-Müll (True Peak +10 bis
   +84 dBTP, eine mit +10 LUFS), das ist beschädigtes Material, siehe
-  BACKLOG.  ANALYZER-Neustart nötig.  Commit folgt.
+  BACKLOG.  ANALYZER-Neustart nötig.  Commit a34856f.
 - **Kalender: zwei Meldungen vom 2026-10-24 (Operator)** — (1) Bearbeiten einer
   monatlichen Sendung „am Wochentag" mit abgewählten Monaten (Show 911
   „Electronic Evening", 19:07–00:00, ohne Jan/Apr/Jul/Okt) scheiterte mit
