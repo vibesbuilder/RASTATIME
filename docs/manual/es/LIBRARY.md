@@ -115,6 +115,22 @@ subida.
 | **Archivo** | Uno de: MP3, M4A, MP4, AAC, OGG, OGA, Opus, FLAC, WAV, MP2, MP1, AU - desde el 2026-10-14 la misma lista que aceptan la carpeta de importación local y la importación FTP. Los archivos sin pérdida se convierten a MP3 al importar por defecto (vea *Formatos de archivo al importar* más abajo). |
 | **Propietario** | Por defecto usted. Los Admins pueden anular. |
 
+> **Dónde queda el archivo (desde el 2026-10-24).**  El analyzer
+> archiva cada pista bajo `imported/<artista>/<álbum>/` dentro de la
+> biblioteca (artista y álbum tal como están etiquetados; sin tag de
+> álbum solo `imported/<artista>/`).  Un archivo **sin tag de
+> artista** va a `imported/tagless/` - antes del 2026-10-24 esos
+> archivos quedaban directamente en `imported/`.  La carpeta es solo
+> el lugar de almacenamiento; la biblioteca muestra la pista según
+> sus tags en todo caso.  Etiquete el archivo antes si quiere verlo
+> archivado bajo su artista.
+>
+> **Portadas.**  Una portada incrustada se guarda en cinco tamaños
+> JPG (32 a 512 px) bajo `imported/artwork/`; desde el 2026-10-24 no
+> se escribe nada más para ella.  Las miniaturas pequeñas de la
+> biblioteca y del editor se generan a partir de esos JPG cuando la
+> página las pide.
+
 #### 2.2 Carpeta de importación local (lote)
 
 Configure una vez Configuración → **Máquina local** →
@@ -444,7 +460,9 @@ Probablemente eligió **Estático** en lugar de **Dinámico**.
 
 La Carpeta de importación local preserva nombres de
 subcarpetas como campo **álbum** de las pistas importadas
-si no hay tag ID3 de álbum.
+si no hay tag ID3 de álbum.  En la biblioteca el archivo queda
+luego bajo `imported/<artista>/<álbum>/`; un archivo sin tag de
+artista va a `imported/tagless/` (desde el 2026-10-24).
 
 ### "¿Cuál es el tamaño máximo de archivo?"
 

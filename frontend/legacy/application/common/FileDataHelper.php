@@ -152,40 +152,50 @@ class FileDataHelper
      */
     public static function getArtworkData($file, $size, $filepath = false)
     {
+        // RASTATIME 2026-10-24 - the Data URI is built from the JPG of that
+        // size; the text copies (<base>-<size>, up to 2026-10-24) are only
+        // read when the JPG is missing (covers made before the change and
+        // not yet pruned).  Without either, the no-cover image.
         $baseUrl = Config::getPublicUrl();
         $default = $baseUrl . 'css/images/no-cover.jpg';
-
-        $sizedFile = $file . '-' . $size;
-
-        if ($filepath != false) {
-            $path = self::joinStoragePath($filepath, $sizedFile);
-            if (!file_exists($path)) {
-                $get_file_content = $default;
-            } else {
-                $get_file_content = file_get_contents($path);
+        $root = $filepath != false ? $filepath : Application_Common_Storage::root();
+        $jpg = self::joinStoragePath($root, $file . '-' . $size . '.jpg');
+        if (file_exists($jpg)) {
+            $bytes = @file_get_contents($jpg);
+            if ($bytes !== false && $bytes !== '') {
+                return 'data:image/jpeg;charset=utf-8;base64,' . base64_encode($bytes);
             }
-        } else {
-            $path = self::joinStoragePath(Application_Common_Storage::root(), $sizedFile);
-            if (!file_exists($path)) {
-                $get_file_content = $default;
-            } else {
-                $get_file_content = file_get_contents($path);
+        }
+        $legacy = self::joinStoragePath($root, $file . '-' . $size);
+        if (file_exists($legacy)) {
+            $text = @file_get_contents($legacy);
+            if ($text !== false && $text !== '') {
+                return $text;
             }
         }
 
-        return $get_file_content;
+        return $default;
     }
 
     /**
-     * Add artwork file.
-     *
-     * @param string $analyzeFile
-     * @param string $filename
-     * @param string $importDir
-     * @param string $DbPath
-     *
-     * @return string Path to artwork
+     * RASTATIME 2026-10-24 - the file extension of an embedded picture's MIME type.
      */
+    private static function artworkExtension($mime)
+    {
+        $mime = strtolower(trim((string) $mime));
+        if (strpos($mime, 'png') !== false) {
+            return 'png';
+        }
+        if (strpos($mime, 'gif') !== false) {
+            return 'gif';
+        }
+        if (strpos($mime, 'bmp') !== false) {
+            return 'bmp';
+        }
+
+        return 'jpg';
+    }
+
     public static function saveArtworkData($analyzeFile, $filename, $importDir = null, $DbPath = null)
     {
         if (class_exists('getID3')) {
@@ -196,54 +206,37 @@ class FileDataHelper
             Logging::error('Failed to load getid3 library. Please upgrade RASTATIME.');
         }
 
-        if (isset($getFileInfo['comments']['picture'][0])) {
-            $get_img = '';
-            $timestamp = time();
-            $mime = $getFileInfo['comments']['picture'][0]['image_mime'];
-            $Image = 'data:' . $mime . ';charset=utf-8;base64,' . base64_encode($getFileInfo['comments']['picture'][0]['data']);
-            $base64 = @$Image;
-
-            if (!file_exists($importDir . 'artwork/')) {
-                if (!mkdir($importDir . 'artwork/', 0777, true)) {
-                    Logging::error('Failed to create artwork directory.');
-
-                    throw new Exception('Failed to create artwork directory.');
-                }
-            }
-
-            $path_parts = pathinfo($filename);
-            // RASTATIME 2026-10-09 - a Windows file name must not end with a
-            // dot or a space ("R.A.F..mp3" -> "R.A.F."), and the reserved
-            // characters are replaced; an empty remainder falls back to the
-            // md5 of the audio file.
-            $artworkName = rtrim(preg_replace('/[<>:"\/\\|?*\x00-\x1f]/', '_', (string) $path_parts['filename']), '. ');
-            if ($artworkName === '') {
-                $artworkName = md5_file($analyzeFile) ?: 'artwork';
-            }
-            $file = $importDir . 'artwork/' . $artworkName;
-
-            // Save Data URI
-            if (file_put_contents($file, $base64)) {
-                $get_img = $DbPath . 'artwork/' . $artworkName;
-            } else {
-                Logging::error('Could not save Data URI');
-            }
-
-            if ($mime == 'image/png') {
-                $ext = 'png';
-            } elseif ($mime == 'image/gif') {
-                $ext = 'gif';
-            } elseif ($mime == 'image/bmp') {
-                $ext = 'bmp';
-            } else {
-                $ext = 'jpg';
-            }
-            self::resizeGroup($file, $ext);
-        } else {
-            $get_img = '';
+        if (!isset($getFileInfo['comments']['picture'][0])) {
+            return '';
         }
+        // RASTATIME 2026-10-24 - only the five JPG sizes are written; the
+        // original picture is scaled straight from memory (no Data-URI
+        // original, no Data-URI copies of the sizes - ten files per cover
+        // became five, 183,359 files / 8.5 GB on the live library).
+        $picture = $getFileInfo['comments']['picture'][0];
+        if (!file_exists($importDir . 'artwork/')) {
+            if (!mkdir($importDir . 'artwork/', 0777, true)) {
+                Logging::error('Failed to create artwork directory.');
 
-        return $get_img;
+                throw new Exception('Failed to create artwork directory.');
+            }
+        }
+        $path_parts = pathinfo($filename);
+        // RASTATIME 2026-10-09 - a Windows file name must not end with a
+        // dot or a space ("R.A.F..mp3" -> "R.A.F."), and the reserved
+        // characters are replaced; an empty remainder falls back to the
+        // md5 of the audio file.
+        $artworkName = rtrim(preg_replace('/[<>:"\/\\|?*\x00-\x1f]/', '_', (string) $path_parts['filename']), '. ');
+        if ($artworkName === '') {
+            $artworkName = md5_file($analyzeFile) ?: 'artwork';
+        }
+        $file = $importDir . 'artwork/' . $artworkName;
+        if (self::resizeGroupFromBlob($file, (string) $picture['data'])) {
+            return $DbPath . 'artwork/' . $artworkName;
+        }
+        Logging::error('Could not write the cover sizes for ' . $filename);
+
+        return '';
     }
 
     /**
@@ -257,9 +250,7 @@ class FileDataHelper
     {
         $file = Application_Model_StoredFile::RecallById($trackid);
         $md = $file->getMetadata();
-
         $fp = Application_Common_Storage::root();
-
         $dbAudioPath = $md['MDATA_KEY_FILEPATH'];
         $fullpath = self::joinStoragePath($fp, $dbAudioPath);
 
@@ -271,95 +262,58 @@ class FileDataHelper
             Logging::error('Failed to load getid3 library. Please upgrade RASTATIME.');
         }
 
-        if (isset($getFileInfo['comments']['picture'][0])) {
-            $get_img = '';
-            $mime = $getFileInfo['comments']['picture'][0]['image_mime'];
-            $Image = 'data:' . $getFileInfo['comments']['picture'][0]['image_mime'] . ';charset=utf-8;base64,' . base64_encode($getFileInfo['comments']['picture'][0]['data']);
-            $base64 = @$Image;
-
-            $audioPath = dirname($fullpath);
-            $dbPath = dirname($dbAudioPath);
-            $path_parts = pathinfo($fullpath);
-            $file = $path_parts['filename'];
-
-            // Save Data URI
-            if (file_put_contents($audioPath . '/' . $file, $base64)) {
-                $get_img = $dbPath . '/' . $file;
-            } else {
-                Logging::error('Could not save Data URI');
-            }
-
-            $rfile = $audioPath . '/' . $file;
-
-            if ($mime == 'image/png') {
-                $ext = 'png';
-            } elseif ($mime == 'image/gif') {
-                $ext = 'gif';
-            } elseif ($mime == 'image/bmp') {
-                $ext = 'bmp';
-            } else {
-                $ext = 'jpg';
-            }
-            self::resizeGroup($rfile, $ext);
-        } else {
-            $get_img = '';
+        if (!isset($getFileInfo['comments']['picture'][0])) {
+            return '';
         }
+        // RASTATIME 2026-10-24 - JPG sizes only (see saveArtworkData)
+        $path_parts = pathinfo($fullpath);
+        $base = dirname($fullpath) . '/' . $path_parts['filename'];
+        if (self::resizeGroupFromBlob($base, (string) $getFileInfo['comments']['picture'][0]['data'])) {
+            return dirname($dbAudioPath) . '/' . $path_parts['filename'];
+        }
+        Logging::error('Could not write the cover sizes for track ' . $trackid);
 
-        return $get_img;
+        return '';
     }
 
     /**
-     * Upload artwork.
+     * Set artwork.
      *
      * @param string $trackid
-     * @param string $data
+     * @param string $data    a Data URI ("data:image/...;base64,...") or "0" to remove
      *
-     * @return string Path to artwork
+     * @return string $get_img Path to artwork
      */
     public static function setArtwork($trackid, $data)
     {
         $file = Application_Model_StoredFile::RecallById($trackid);
         $md = $file->getMetadata();
-
         $fp = Application_Common_Storage::root();
-
         $dbAudioPath = $md['MDATA_KEY_FILEPATH'];
         $fullpath = self::joinStoragePath($fp, $dbAudioPath);
 
         if ($data == '0') {
-            $get_img = '';
             self::removeArtwork($trackid, $data);
-        } else {
-            $base64 = @$data;
-            $mime = explode(';', $base64)[0];
 
-            $audioPath = dirname($fullpath);
-            $dbPath = dirname($dbAudioPath);
-            $path_parts = pathinfo($fullpath);
-            $file = $path_parts['filename'];
-
-            // Save Data URI
-            if (file_put_contents($audioPath . '/' . $file, $base64)) {
-                $get_img = $dbPath . '/' . $file;
-            } else {
-                Logging::error('Could not save Data URI');
-            }
-
-            $rfile = $audioPath . '/' . $file;
-
-            if ($mime == 'data:image/png') {
-                $ext = 'png';
-            } elseif ($mime == 'data:image/gif') {
-                $ext = 'gif';
-            } elseif ($mime == 'data:image/bmp') {
-                $ext = 'bmp';
-            } else {
-                $ext = 'jpg';
-            }
-            self::resizeGroup($rfile, $ext);
+            return '';
         }
+        // RASTATIME 2026-10-24 - decode the Data URI once, write the JPG
+        // sizes only (see saveArtworkData)
+        $comma = strpos((string) $data, ',');
+        $blob = $comma === false ? '' : base64_decode(substr((string) $data, $comma + 1), true);
+        if ($blob === false || $blob === '') {
+            Logging::error('setArtwork: no picture data for track ' . $trackid);
 
-        return $get_img;
+            return '';
+        }
+        $path_parts = pathinfo($fullpath);
+        $base = dirname($fullpath) . '/' . $path_parts['filename'];
+        if (self::resizeGroupFromBlob($base, $blob)) {
+            return dirname($dbAudioPath) . '/' . $path_parts['filename'];
+        }
+        Logging::error('Could not write the cover sizes for track ' . $trackid);
+
+        return '';
     }
 
     /**
@@ -412,19 +366,51 @@ class FileDataHelper
      */
     public static function resizeGroup($file, $ext)
     {
-        if (file_exists($file)) {
-            self::resizeImage($file, $file . '-32.jpg', $ext, 32, 100);
-            self::resizeImage($file, $file . '-64.jpg', $ext, 64, 100);
-            self::resizeImage($file, $file . '-128.jpg', $ext, 128, 100);
-            self::resizeImage($file, $file . '-256.jpg', $ext, 256, 100);
-            self::resizeImage($file, $file . '-512.jpg', $ext, 512, 100);
-            self::imgToDataURI($file . '-32.jpg', $file . '-32');
-            self::imgToDataURI($file . '-64.jpg', $file . '-64');
-            self::imgToDataURI($file . '-128.jpg', $file . '-128');
-            self::imgToDataURI($file . '-256.jpg', $file . '-256');
-        } else {
-            Logging::error("The file {$file} does not exist");
+        // kept for callers that still hand over a file on disk (a Data-URI
+        // text file or a plain image); the sizes are written by the blob
+        // version
+        if (!file_exists($file)) {
+            return;
         }
+        $content = (string) file_get_contents($file);
+        if (strpos($content, 'data:') === 0) {
+            $comma = strpos($content, ',');
+            $content = $comma === false ? '' : (string) base64_decode(substr($content, $comma + 1), true);
+        }
+        self::resizeGroupFromBlob($file, $content);
+    }
+
+    /**
+     * RASTATIME 2026-10-24 - write the five JPG sizes (32/64/128/256/512)
+     * of a picture held in memory next to $base ("<base>-<size>.jpg").
+     * GD detects the picture format itself (JPEG, PNG, GIF, BMP, WebP).
+     *
+     * @param string $base the artwork base path (no extension)
+     * @param string $blob the picture bytes
+     *
+     * @return bool true when the 512 px file exists afterwards
+     */
+    public static function resizeGroupFromBlob($base, $blob)
+    {
+        $im = $blob === '' ? false : @imagecreatefromstring($blob);
+        if (!$im) {
+            // an unreadable picture gets the small error image, as before
+            $im = imagecreatetruecolor(150, 30);
+            $bgc = imagecolorallocate($im, 255, 255, 255);
+            $tc = imagecolorallocate($im, 0, 0, 0);
+            imagefilledrectangle($im, 0, 0, 150, 30, $bgc);
+            imagestring($im, 1, 5, 5, 'Error loading cover', $tc);
+        }
+        foreach ([32, 64, 128, 256, 512] as $size) {
+            $scaled = imagescale($im, $size);
+            if ($scaled) {
+                imagejpeg($scaled, $base . '-' . $size . '.jpg', 100);
+                imagedestroy($scaled);
+            }
+        }
+        imagedestroy($im);
+
+        return file_exists($base . '-512.jpg');
     }
 
     /**

@@ -158,6 +158,21 @@ adds the row to the library. Large files may take a few seconds
 to appear because the playability decode runs the full file end-
 to-end.
 
+> **Where the file ends up (since 2026-10-24).**  The analyzer files
+> every track under `imported/<artist>/<album>/` inside the media
+> library (artist and album as tagged; without an album tag just
+> `imported/<artist>/`).  A file **without an artist tag** goes to
+> `imported/tagless/` - before 2026-10-24 such files sat directly in
+> `imported/`.  The folder is only the storage place; the library
+> shows the track by its tags either way, so tag the file first if
+> you want it filed under its artist.
+>
+> **Covers.**  An embedded cover is stored as five JPG sizes
+> (32 to 512 px) under `imported/artwork/`; nothing else is written
+> for it since 2026-10-24.  The small cover thumbnails in the
+> library and the editor are built from those JPGs when the page
+> asks for them.
+
 #### 2.2 Local Import Folder (batch)
 
 Configure Settings → **Local Machine** → **Local Import Folder**
@@ -518,7 +533,9 @@ block and switch the type; the next build will re-query.
 The Local Import Folder preserves subfolder names as the
 imported tracks' **album** field if no ID3 album tag is set.
 This is the most common operator pattern for a long-tail music
-archive.
+archive.  Inside the media library the file is then filed under
+`imported/<artist>/<album>/`; a file without an artist tag goes
+to `imported/tagless/` (since 2026-10-24).
 
 ### "What's the maximum file size?"
 

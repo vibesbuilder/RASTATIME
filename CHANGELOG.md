@@ -23,6 +23,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Bibliothek: Ordner `imported/tagless/` für Uploads ohne Interpreten-Tag
+  (2026-10-24, Operator-Go zur Frage vom selben Tag)** — der Analyzer baute
+  `imported/<Interpret>/<Album>/`; ohne Interpreten-Tag blieb nur
+  `imported/`, 63 Dateien lagen dort neben den Interpreten-Ordnern.
+  `organise_file` legt solche Dateien jetzt unter `imported/tagless/` ab
+  (der Albumordner entsteht nur unter einem Interpreten; 6 Testfälle ohne
+  Audio-Fixtures).  Umzugslauf `manage.py move_tagless` (Trockenlauf
+  voreingestellt, `--yes` verschiebt und zieht `cc_files.filepath` in
+  einer Transaktion nach, UUID-Suffix bei Namenskollision, Dateien mit
+  Sendeplan-Zeile zwischen −2 h und +3 h werden übersprungen).
+  Analyzer-Neustart nötig.  Manual LIBRARY „Importing tracks" + FAQ
+  EN/DE/FR/ES, Architektur §23.71 (0.89).
 - **Podcasts: heruntergeladene Episoden werden auf Lautheit gemessen
   (2026-10-24, Operator-Go zum Backlog-Punkt „Podcast-Downloads umgehen den
   Analyzer")** — Codec-Probe über alle 134 Episoden-Dateien: nur MP3 (132)
@@ -51,6 +63,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Covers: nur noch JPGs, Data-URIs bei Bedarf (2026-10-24, Operator-Go)**
+  — `FileDataHelper::saveArtworkData` schrieb je Cover zehn Dateien: das
+  Original als Data-URI-Textdatei, fünf JPG-Größen und vier Data-URI-Kopien
+  davon (183.359 Dateien / 8,5 GB unter `imported/artwork/`).  Jetzt
+  schreiben `saveArtworkData`, `resetArtwork` und `setArtwork` nur die fünf
+  JPGs (`resizeGroupFromBlob`: GD aus dem Bild im Speicher, PNG/GIF/WebP
+  werden zu JPG), `getArtworkData` baut die Data-URI aus `<base>-<size>.jpg`
+  und fällt auf die alte Textdatei zurück; `/api/track?return=artwork-data`
+  / `-32` liefern das JPG.  Aufräumlauf `manage.py artwork_prune_datauri`
+  löscht die Textdateien nur neben einem vorhandenen `-512.jpg`
+  (Trockenlauf: 91.677 Dateien / 4,35 GB).  Live geprüft: Bibliothekszeilen
+  (32 px), Editor (256 px), Now Playing, fünf API-Varianten je 200
+  image/jpeg.  Manual LIBRARY EN/DE/FR/ES, Architektur §23.71 (0.89).
 - **Kosmetik Show-Formular, Import / Export, Backup (2026-10-24,
   Operator-Meldung)** — (1) New/Edit Show → Repeats: unter den Monats-
   („Select Months") und den Tageskästchen lagen 0 px bis „Repeat By" bzw.

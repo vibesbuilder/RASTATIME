@@ -5427,7 +5427,11 @@ Stoerbursts (auch mit -err_detect / -ec 0 unveraendert), die Dateien sind bescha
 entsprechend ihrer gemessenen Lautheit (23842 um 33 dB).  To do (Operator): reinhoeren, ggf. neu beschaffen oder
 loeschen.  Dazu 193 Dateien mit True Peak > +3 dBTP (MP3-Ueberschwinger, meist harmlos).
 
-### 💡 Upload: Dateien ohne Artist-/Album-Tag landen direkt in imported/ (Operator-Frage 2026-10-24)
+### ✅ Upload: Dateien ohne Artist-/Album-Tag landen direkt in imported/ (Operator-Frage 2026-10-24) — DONE 2026-10-24
+**Erledigt 2026-10-24 (Operator-Go, Ordnername „tagless", §23.71):** organise_file legt Dateien ohne Interpreten-Tag
+unter imported/tagless/ ab (6 Testfälle); Umzugslauf `manage.py move_tagless` (Trockenlauf 63 Dateien, `--yes` verschiebt
+und zieht cc_files.filepath nach, Dateien mit Sendeplan-Zeile ±2/3 h werden übersprungen).  Analyzer-Neustart nötig.
+
 Der Analyzer baut den Zielpfad imported/<Artist>/<Album>/<Datei>; fehlen beide Tags, bleibt nur imported/ (63 Dateien,
 z. B. „01 -  - Chill Zone 2.mp3", „INOK Sommerfest 20260718.mp3").  Idee: Rueckfall-Ordner imported/_ohne-Tags/ (oder
 „Unknown Artist") im organise_file-Schritt, bestehende 63 per Umzugslauf nachziehen (filepath in cc_files anpassen).
@@ -5439,7 +5443,12 @@ entsteht; nur bulk_import (CLI) prueft md5/source_md5.  Idee: beim Web-Upload (C
 cc_files pruefen und den Upload mit Hinweis auf den bestehenden Titel abweisen (oder optional zulassen).  ~2 h inkl.
 UI-Meldung + Manual x4.  Vorbedingung: Operator-Go (Memory: Duplikate sind bisher bewusst erlaubt).
 
-### 💡 Covers: zehn Dateien je Track im artwork-Ordner, 183.359 Dateien / 8,5 GB (Operator-Frage 2026-10-24)
+### ✅ Covers: zehn Dateien je Track im artwork-Ordner, 183.359 Dateien / 8,5 GB (Operator-Frage 2026-10-24) — DONE 2026-10-24
+**Erledigt 2026-10-24 (Operator-Go, §23.71):** FileDataHelper schreibt nur noch die fünf JPGs; getArtworkData baut die
+Data-URI aus `<base>-<size>.jpg` (Rückfall: alte Textdatei).  Aufräumlauf `manage.py artwork_prune_datauri` (Trockenlauf:
+91.677 Textdateien / 4,35 GB mit JPG-Satz; `--yes` löscht).  Live geprüft: Bibliothekszeilen, Editor 256 px, Now Playing,
+`/api/track?return=artwork-*`.
+
 Je Track mit eingebettetem Cover schreibt FileDataHelper::saveArtworkData das Original als Data-URI (ohne Endung),
 fuenf JPG-Groessen (32/64/128/256/512) und vier Data-URI-Kopien davon (-32/-64/-128/-256).  Genutzt werden die
 Data-URI-32 im Dashboard, die JPGs in Library/Player/Widgets.  Idee: Data-URI-Kopien bei Bedarf aus dem JPG erzeugen

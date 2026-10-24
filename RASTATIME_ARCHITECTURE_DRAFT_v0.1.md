@@ -1,10 +1,13 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.88
+Draft version: 0.89
 Date: 2026-10-24
 
 > **Revision history**
+> - **0.89 (2026-10-24)** - **Tagless folder, JPG-only artwork** (SS23.71):
+>   uploads without an artist tag are filed under `imported/tagless/`, and a
+>   cover is stored as its five JPG sizes only, Data URIs built on demand.
 > - **0.88 (2026-10-24)** - **Podcast downloads queue their loudness
 >   measurement** (SS23.41 addendum): the API publishes the analyzer's
 >   loudness-only job for every downloaded episode.
@@ -7535,3 +7538,69 @@ collapse into one more run, failure logged and later runs, handler 200
 before the refresh ends, real HTTP listener with three quick calls -> two
 refreshes); `tests/player/schedule_test.py` (one request per instance and
 show, including a live show with three rows).
+
+### 23.71 Tagless Folder and JPG-only Artwork (2026-10-24)
+
+**Context.**  Two operator questions of 2026-10-24 about the media
+library on disk.  (1) The analyzer's `organise_file` builds the target
+path `imported/<artist>/<album>/<file>` from the tags; a file without an
+artist tag (and therefore without the album step either, the album is
+nested under the artist) landed directly in `imported/`, next to the
+artist folders - 63 files, mostly podcast episodes and untagged
+recordings.  (2) `FileDataHelper::saveArtworkData` wrote ten files per
+embedded cover into `imported/artwork/`: the original picture as a
+Data-URI text file (`<name>`, no extension), five JPG sizes
+(`<name>-32.jpg` ... `<name>-512.jpg`) and four Data-URI text copies of
+those (`<name>-32` ... `<name>-256`).  183,359 files / 8.5 GB, of which
+the text copies made up about half the files and 4.35 GB.  The Data-URI
+text files were read by exactly one consumer, `getArtworkData` (library
+rows 32 px, editor and Now Playing 256 px); the JPGs by the API endpoints
+and the widgets.
+
+**Decision.**  (1) Fallback folder `imported/tagless/` (operator's name).
+`organise_file` tests the raw artist tag before `safe_component` - the
+sanitiser turns an empty component into `_`, so the test has to come
+first - and appends `tagless` instead of the artist/album steps.  A file
+with an artist but no album tag still goes to `imported/<artist>/`.  (2)
+Only the five JPGs are written.  `resizeGroupFromBlob($base, $blob)`
+decodes the picture held in memory with GD (`imagecreatefromstring`, so
+PNG/GIF/BMP/WebP covers become JPGs as before), scales it to
+32/64/128/256/512 px and returns whether the 512 px file exists; an
+unreadable picture yields the small "Error loading cover" image as the
+legacy did.  `saveArtworkData` (analyzer import), `resetArtwork`
+(re-read from the file) and `setArtwork` (upload in the editor, a Data
+URI decoded once after the comma) all use it.  `getArtworkData($base,
+$size)` builds `data:image/jpeg;charset=utf-8;base64,...` from
+`<base>-<size>.jpg`, falls back to the old text file for covers that
+still have one, and returns the no-cover URL otherwise.  The API
+variants `artwork-data` / `artwork-data-32` now render the 512 / 32 px
+JPG instead of the text file.  `resizeGroup($file, $ext)` stays for
+callers that hand over a file on disk and delegates to the blob version.
+
+**Migration.**  Two Django management commands in
+`storage/management/commands/`, both dry run by default.
+`move_tagless` lists the `cc_files` rows whose `filepath` is
+`imported/<name>` with nothing in between, and with `--yes` moves each
+file to `imported/tagless/` and updates `filepath` inside a transaction
+(the file is moved back if the update fails; UUID suffix on a name
+collision).  A track with a schedule row from two hours ago to three
+hours ahead is skipped, because the playout may hold or queue its path;
+the command is rerun later for those.  `artwork_prune_datauri` deletes
+the Data-URI text files (`<base>`, `<base>-32/64/128/256`) only where a
+`<base>-512.jpg` exists next to them; a cover without its JPG set is
+left alone so `getArtworkData`'s fallback still finds it.  Dry runs of
+2026-10-24: 63 files to move, none skipped or missing; 91,677 text files
+/ 4,353 MB to delete, 91,682 files kept.
+
+**Verification.**  Analyzer: `tests/pipeline/organise_tagless_test.py`
+(6 cases on `tmp_path`, no audio fixtures: no tags, empty or
+whitespace-only artist, album without artist, artist + album, artist
+only).  Legacy: PHP probe
+against a real cover (32 and 256 px Data URIs built from the JPGs,
+missing cover -> no-cover URL, blob resize of JPG/PNG/garbage into a
+temp folder), then in the logged-in UI: library rows carry a JPEG Data
+URI of 3,649 characters or the no-cover URL, the editor renders the
+256 px cover, Now Playing carries its cover, and
+`/api/track?id=N&return=artwork-64|artwork-data|artwork-data-32|
+artwork-128|artwork-512` answer 200 image/jpeg.  The analyzer change
+takes effect after a RASTATIME-ANALYZER restart.

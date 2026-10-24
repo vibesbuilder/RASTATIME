@@ -657,13 +657,15 @@ class ApiController extends Zend_Controller_Action
             if ($return === 'artwork-data') {
                 foreach ($md as $key => $value) {
                     if ($key == 'MDATA_KEY_ARTWORK' && !is_null($value)) {
-                        FileDataHelper::renderDataURI($fp . $md['MDATA_KEY_ARTWORK']);
+                        // RASTATIME 2026-10-24 - no Data-URI original any more: the 512 px JPG
+                        FileDataHelper::renderImage($fp . $md['MDATA_KEY_ARTWORK'] . '-512.jpg');
                     }
                 }
             } elseif ($return === 'artwork-data-32') {
                 foreach ($md as $key => $value) {
                     if ($key == 'MDATA_KEY_ARTWORK' && !is_null($value)) {
-                        FileDataHelper::renderDataURI($fp . $md['MDATA_KEY_ARTWORK'] . '-32');
+                        // RASTATIME 2026-10-24 - the 32 px JPG (the text copy is gone)
+                        FileDataHelper::renderImage($fp . $md['MDATA_KEY_ARTWORK'] . '-32.jpg');
                     }
                 }
             } elseif ($return === 'artwork') {

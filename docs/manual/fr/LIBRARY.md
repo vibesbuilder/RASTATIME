@@ -175,6 +175,22 @@ bibliothèque. Les gros fichiers peuvent prendre quelques
 secondes à apparaître parce que le décodage de jouabilité
 exécute tout le fichier de bout en bout.
 
+> **Où le fichier est rangé (depuis le 2026-10-24).**  L'analyzer
+> classe chaque piste sous `imported/<artiste>/<album>/` dans la
+> bibliothèque (artiste et album tels que tagués ; sans tag album
+> seulement `imported/<artiste>/`).  Un fichier **sans tag artiste**
+> va dans `imported/tagless/` - avant le 2026-10-24 ces fichiers
+> restaient directement dans `imported/`.  Le dossier n'est que
+> l'emplacement de stockage ; la bibliothèque affiche la piste selon
+> ses tags dans tous les cas.  Taguez donc le fichier d'abord si
+> vous voulez le voir classé sous son artiste.
+>
+> **Pochettes.**  Une pochette intégrée est stockée en cinq tailles
+> JPG (32 à 512 px) sous `imported/artwork/` ; rien d'autre n'est
+> écrit pour elle depuis le 2026-10-24.  Les petites vignettes de la
+> bibliothèque et de l'éditeur sont construites à partir de ces JPG
+> quand la page les demande.
+
 #### 2.2 Dossier d'import local (lot)
 
 Configurez une fois Paramètres → **Machine locale** →
@@ -571,7 +587,9 @@ Le Dossier d'import local préserve les noms de
 sous-dossiers comme champ **album** des pistes importées
 si aucun tag ID3 album n'est défini. C'est le motif
 opérateur le plus courant pour une archive musicale de
-longue traîne.
+longue traîne.  Dans la bibliothèque le fichier est ensuite
+rangé sous `imported/<artiste>/<album>/` ; un fichier sans tag
+artiste va dans `imported/tagless/` (depuis le 2026-10-24).
 
 ### "Quelle est la taille de fichier maximale ?"
 

@@ -171,6 +171,22 @@ hinzu. Große Dateien können einige Sekunden dauern, bis sie
 erscheinen, weil die Abspielbarkeits-Dekodierung die gesamte
 Datei von Anfang bis Ende prüft.
 
+> **Wo die Datei landet (seit 2026-10-24).**  Der Analyzer legt jeden
+> Track unter `imported/<Interpret>/<Album>/` in der Bibliothek ab
+> (Interpret und Album wie getaggt; ohne Album-Tag nur
+> `imported/<Interpret>/`).  Eine Datei **ohne Interpreten-Tag**
+> kommt nach `imported/tagless/` - vor dem 2026-10-24 lagen solche
+> Dateien direkt in `imported/`.  Der Ordner ist nur der Ablageort;
+> die Bibliothek zeigt den Track in jedem Fall nach seinen Tags.
+> Taggen Sie die Datei also vorher, wenn sie unter ihrem Interpreten
+> abgelegt werden soll.
+>
+> **Cover.**  Ein eingebettetes Cover wird als fünf JPG-Größen
+> (32 bis 512 px) unter `imported/artwork/` gespeichert; mehr wird
+> seit dem 2026-10-24 dafür nicht geschrieben.  Die kleinen
+> Cover-Vorschauen in Bibliothek und Editor entstehen aus diesen JPGs,
+> wenn die Seite sie anfordert.
+
 #### 2.2 Lokaler Import-Ordner (Batch)
 
 Konfigurieren Sie einmalig Einstellungen → **Lokale Maschine**
@@ -558,7 +574,10 @@ der nächste Build wird neu abfragen.
 Der lokale Import-Ordner behält Unterordnernamen als
 **Album**-Feld der importierten Tracks bei, wenn kein
 ID3-Album-Tag gesetzt ist. Das ist das häufigste
-Operator-Muster für ein Long-Tail-Musikarchiv.
+Operator-Muster für ein Long-Tail-Musikarchiv.  In der
+Bibliothek liegt die Datei danach unter
+`imported/<Interpret>/<Album>/`; eine Datei ohne Interpreten-Tag
+kommt nach `imported/tagless/` (seit 2026-10-24).
 
 ### "Was ist die maximale Dateigröße?"
 

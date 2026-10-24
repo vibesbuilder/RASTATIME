@@ -17,6 +17,10 @@ MAX_FILE_LEN = 48
 _RESERVED = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
 
 
+# RASTATIME 2026-10-24 - folder for tracks without an artist tag
+TAGLESS_DIR = "tagless"
+
+
 def safe_component(name: str) -> str:
     """Return *name* as a path component every file system accepts."""
     cleaned = _RESERVED.sub("_", name).rstrip(". ")
@@ -42,11 +46,18 @@ def organise_file(
     dest_path = Path(storage_url)
 
     # Building import path
-    if "artist_name" in metadata:
-        dest_path /= safe_component(metadata["artist_name"][0:MAX_DIR_LEN])
-
-    if "album_title" in metadata:
-        dest_path /= safe_component(metadata["album_title"][0:MAX_DIR_LEN])
+    # RASTATIME 2026-10-24 - a track without an artist tag goes to
+    # imported/tagless/ instead of directly into imported/ (operator: 63
+    # untagged uploads sat next to the artist folders).  Album folders are
+    # kept only under an artist.
+    artist = str(metadata.get("artist_name") or "").strip()
+    if artist:
+        dest_path /= safe_component(artist[0:MAX_DIR_LEN])
+        album = str(metadata.get("album_title") or "").strip()
+        if album:
+            dest_path /= safe_component(album[0:MAX_DIR_LEN])
+    else:
+        dest_path /= TAGLESS_DIR
 
     dest_path /= safe_component(orig_filename.stem[0:MAX_FILE_LEN]) + orig_filename.suffix
 
