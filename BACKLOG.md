@@ -5598,6 +5598,33 @@ Bibliothek), E: wird gerade formatiert -> Operator stellt um.  Idee: Settings ->
 "Include recordings", robocopy der beiden Ordner nach <Backup>/recordings, Verifikation wie Medienspiegel;
 ~2 h mit Doku.  Empfehlung: Recordings auf D: lassen, nie direkt auf die USB-Platte aufnehmen.
 
+### 🟡 Backup: Wiederherstellen per Knopf / Skript (evaluiert 2026-10-24, Operator: kein Go, alle drei Optionen ins Backlog)
+**Heute:** Settings → Backup nennt das Wiederherstellen (seit 24.10. als erster Abschnitt) einen bewussten
+Offline-Vorgang: Dienste stoppen (Apache, Playout, Analyzer, Worker, API), `db.dump` aus dem ZIP mit
+`pg_restore` zurück, Dienste starten (`docs/operator/BACKUP.md` §7, Handbuch Backup §6).  DB ~23 MB → Restore in
+Sekunden; Restore-Probe A6.2 am 07.10. in eine Wegwerf-DB bestanden; die Rolle `rastatime` darf Datenbanken
+anlegen (kein Superuser nötig).  **Kern-Hürde eines Knopfs:** er lebt in der Weboberfläche, die dafür gestoppt
+werden muss → die Arbeit braucht einen eigenständigen Ablauf außerhalb von Apache/API; die UI löst nur aus und
+zeigt das Ergebnis nach dem Neustart.
+**Optionen:**
+- **A - Knopf in der UI:** „Restore…" je Zeile unter „Existing backups", Bestätigung durch Eintippen des
+  Sicherungsnamens, nur Admin; ausgeführt von einer einmal registrierten Aufgabe „RASTATIME-Restore" (SYSTEM):
+  (1) Sicherheitskopie des aktuellen Stands, (2) Dump in eine **Neben-DB** zurückspielen und prüfen - die
+  laufende DB bleibt unberührt, (3) erst dann Dienste stoppen und **umbenennen** (`rastatime` →
+  `rastatime_before_<Zeit>`, neu → `rastatime`, Sekunden), (4) Migrationen, Dienste starten, Status schreiben.
+  Liquidsoap und Icecast laufen weiter (Standby/Fallback hält die Hörer); Rückfall = zurück umbenennen.
+  Aufwand ~1,5-2 Tage (API-Endpunkt, Auslöser, Statusdatei, UI, Tests, Handbuch ×4).
+- **B - halbautomatisch:** Knopf „Restore vorbereiten" macht (1)+(2) und meldet „bereit"; den Tausch stößt der
+  Operator per Skript an.
+- **C - nur Skript:** `rt-restore.ps1` mit demselben sicheren Ablauf (Neben-DB, Umbenennen, Rückfall), aus
+  einer Admin-Shell.  Kern von A und B; ~½ Tag mit Probe an einer Wegwerf-DB.
+**Abwägung:** Restore ist der seltene Notfall - dann zählt ein sicherer, schneller Weg mit Rückfall (bringt
+schon C).  A spart im Notfall die Admin-Shell, legt aber eine DB-ersetzende Aktion in die Weboberfläche, die
+von jedem Admin-Login erreichbar ist (öffentlich erreichbare Station).  Empfehlung bei der Evaluierung: C
+zuerst, A erst wenn C sich bewährt hat (Knopf = nur Auslöser für dasselbe Skript), B unnötig.
+**Vorbedingungen (alle Optionen):** Operator-Go; Probe des Umbenennens in einem ruhigen Sendefenster (~1-2 min
+Weboberfläche weg); Restore-Drill A6.2 bleibt die regelmäßige Prüfung der Dumps.
+
 ### ✅ Teaser-Automatik Stufe 1 - gebaut 2026-10-16 (Go 2026-10-16, Architektur §23.63)
 Jingle -> Sendung + Typ (show/today/tomorrow) an cc_files (Migration 0069), Track-Editor + Mehrfach-Bearbeitung,
 Bibliotheksspalte "Teaser"; Smart-Block-Kriterien teaser_show / teaser_type / teaser_fits; Fuellkontext
