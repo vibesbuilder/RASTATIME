@@ -311,6 +311,32 @@ powershell -File infra\nssm\install-icecast.ps1 -StartService
 > **Note:** RASTATIME-ICECAST failure does not affect the API, worker, or
 > playout.  Studio audio continues through the local soundcard.
 
+### 5.5 Recovery: RabbitMQ boot loop `no_epmd_port` (seen 2026-10-24)
+
+**Symptoms:** Service `RabbitMQ` shows *Running*, but nothing listens on
+5672 (`Get-NetTCPConnection -State Listen | ? LocalPort -eq 5672` is
+empty), `erl.exe` restarts every two minutes, the analyzer log repeats
+`Connection to message queue failed ... Retrying in 5 seconds`, uploads
+and podcast downloads stay unanalysed.  `C:\ProgramData\RabbitMQ\logabbit@RASTATIME.log`
+ends every attempt with `epmd does not know us, re-registering rabbit`
+and `BOOT FAILED ... {error,no_epmd_port}`.  Playout and stream are not
+affected.
+
+**Cause:** the node is named `rabbit@RASTATIME` (ErlSrv env
+`RABBITMQ_NODENAME`), but the computer was renamed to `STUDIO`; the
+rename only bites at the next reboot, when the node can no longer resolve
+its own host name for the epmd lookup.
+
+**Recovery (elevated):**
+```powershell
+Add-Content -Path C:\Windows\System32\drivers\etc\hosts -Value "127.0.0.1 RASTATIME","::1 RASTATIME"
+Restart-Service RabbitMQ
+# expect in the broker log: "started TCP listener on 127.0.0.1:5672"
+# the analyzer reconnects by itself ("Listening for messages...")
+```
+Renaming the node instead would mean a fresh data directory with vhost,
+user and permissions - not worth it.
+
 ---
 
 ## 6. Full Stack Reinstall

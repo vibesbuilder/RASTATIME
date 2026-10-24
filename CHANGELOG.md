@@ -74,6 +74,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **RabbitMQ seit dem Neustart vom 23.10. 18:01 in der Boot-Schleife
+  (`no_epmd_port`), behoben 2026-10-24 11:30 (Operator)** — 740 Startversuche,
+  kein Listener auf 5672, Analyzer ohne Verbindung; Uploads und
+  Podcast-Downloads wären hängen geblieben (seit 16:35 am 23.10. gab es
+  keine).  Ursache: Knoten `rabbit@RASTATIME`, Rechner inzwischen STUDIO,
+  der alte Name löste sich nach dem ersten Neustart seit dem 05.10. nicht
+  mehr auf.  Fix: hosts-Einträge `127.0.0.1 RASTATIME` / `::1 RASTATIME`,
+  `Restart-Service RabbitMQ`; Listener 11:30:56, Analyzer verbunden
+  11:30:57, Probe-Upload 11:33 analysiert.  `RESTART_ORDER.md` §5.5,
+  `COMPONENTS.md` (RabbitMQ-Zeile).  Nicht das Windows-Update.
 - **Playlist-Editor: „You are viewing an older version of …" bei mehreren
   offenen Playlists (2026-10-23, Operator)** — der Server hielt die
   „aktuelle Playlist" in der Session; jeder Tab-Wechsel setzte sie per
