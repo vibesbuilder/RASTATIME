@@ -6041,3 +6041,48 @@ Scratchpad `autoplaylist_null_summary.php` (nur lesend).
 löschen (`unlink(): Is a directory`, als ErrorException geloggt, abgefangen; die Zeile wird trotzdem
 gelöscht).  24./25.10. drei Fälle (u. a. „background-sound.mp3", „Weather Forecast").  Idee: leeren Pfad
 vor `unlink` erkennen und nur loggen; prüfen, wie Zeilen ohne Pfad entstehen.
+
+## Veröffentlichung auf GitHub, Releases, Update-Weg (Evaluierung 2026-10-25)
+
+Operator-Frage: RASTATIME auf GitHub veröffentlichen, in unregelmäßigen Abständen Releases anbieten,
+Update aus GitHub heraus (eventuell per Knopf in der UI).
+
+**Befund (Ist-Stand 2026-10-25):** AGPL-3.0 (LICENSE, Pflicht als LibreTime-Fork), README mit Fork-Tabelle,
+CONTRIBUTING, FORK_NOTES, docs/operator INSTALL (756 Zeilen) + UPGRADE (306 Zeilen, stop → deploy → pip →
+migrate → restart) + COMPONENTS, drei GitHub-Workflows (`python.yml` ruff + pytest, `php.yml`, `release.yml`:
+Tag `v*.*.*` → Wheels je Backend-Paket + Frontend-Zip + Release aus dem CHANGELOG-Abschnitt).  Kein Remote,
+kein `v`-Tag, GitHub-Org „RASTATIME" aus den README-Badges existiert nicht (404).  1.082 Commits seit 2026-04-24.
+
+**Blocker vor dem ersten Push:**
+1. Historie 1,07 GiB: Audiodateien `scheduler/*.mp3|wav|flac` (bis 137 MB je Datei) in alten Commits -> GitHub
+   lehnt Dateien > 100 MB ab.  Historie mit `git filter-repo` bereinigen (oder frischer Start mit einem Commit).
+2. Geheimnisse in der Historie: `config/icecast.xml` 4x committed (3 Passwortzeilen; Werte seit 2026-10-24 rotiert,
+   also tot, trotzdem entfernen), LibreTime-Baseline-Beispielschlüssel.  Gleicher filter-repo-Lauf.
+3. Frischer Klon läuft nicht: `frontend/legacy/vendor` (211 MB) ist ignoriert, composer.json/lock vorhanden, aber
+   kein INSTALL-Schritt „composer install"; INSTALL nennt Liquidsoap 2.4.4 / Icecast 2.4.4 (live 2.4.6 / 2.5.0).
+   Niemand hat seit der Baseline eine Neuinstallation nach INSTALL.md gemacht -> Install-Probe auf frischer
+   Windows-VM ist der eigentliche Brocken.
+4. Standortspezifisches im Code: `exampleradio` 4 Dateien, `D:/stor` 5, `192.168.1.64` 8, `studio` 11 (meist Tests,
+   Beispiele, Kommentare) - durchgehen, keine Blocker erwartet.  Root-Aufräumen: BLOCKERS_T0.1, IMPLEMENTATION_PLAN,
+   POST_IMPLEMENTATION, CLEANUP_INVENTORY, `_assistant-state`, `_migration` nach docs/dev oder raus; BACKLOG bleibt.
+5. Stereo Tool ist proprietär (nicht im Repo, Lizenz je Betreiber) -> als optional dokumentieren.  SECURITY.md,
+   Issue-Vorlagen, Hinweis „Windows 11 only" (CONTRIBUTING hat ihn).
+
+**Stufen:**
+- 🟢 **Stufe 0 - Veröffentlichung:** filter-repo (Audio + icecast.xml), Root aufräumen, composer-Schritt + Versionen
+  in INSTALL, SECURITY.md, Org/Repo anlegen (Operator), Push, CI grün bekommen.  ~2 Tage + Install-Probe auf
+  frischer VM 1-2 Tage (VM stellt der Operator).
+- 🟢 **Stufe 1 - Releases:** SemVer ab `v1.0.0`, Versionsnummer ins Produkt (Settings/About + `/api/version`),
+  CHANGELOG-Abschnitt je Version (release.yml liest ihn), Tag pushen -> Release.  ~½ Tag.
+- 🟢 **Stufe 2 - Update-Skript `rt-update.ps1`:** UPGRADE.md automatisiert: Backup (Aufgabe RASTATIME-Backup),
+  Dienste stoppen, `git fetch` + Checkout des Release-Tags (oder Release-Zip), `composer install`, `pip install -e`,
+  Migrationen, Dienste in Reihenfolge starten, Smoke-Test (health, Mounts), Rollback auf den vorigen Tag + DB.
+  Erhöhte Rechte nötig (Dienste).  ~1 Tag + Probe.
+- 🟡 **Stufe 3 - Knopf in der UI (Defer):** Settings → „Updates": Versionsprüfung gegen die GitHub-Releases-API
+  (wie `scripts/update_check.py`), Changelog anzeigen, „Install" startet `rt-update.ps1` als geplante Aufgabe
+  mit erhöhten Rechten (Apache/PHP läuft ohne Admin, der Updater stoppt Apache selbst), Wartungsseite + Fortschritt
+  aus einer Statusdatei, Abschluss im ruhigen Moment (Standby übernimmt die Hörer wie beim geplanten Neustart).
+  ~2-3 Tage.  Vorbedingung: zwei echte Releases sind über Stufe 2 gelaufen.
+
+**Empfehlung:** Go für Stufen 0-2 in dieser Reihenfolge, Stufe 3 Defer.  Ohne die Install-Probe auf einer
+frischen VM nicht veröffentlichen - sonst scheitert der erste fremde Nutzer an Schritt 1.
