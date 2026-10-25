@@ -5431,6 +5431,8 @@ loeschen.  Dazu 193 Dateien mit True Peak > +3 dBTP (MP3-Ueberschwinger, meist h
 **Erledigt 2026-10-24 (Operator-Go, Ordnername „tagless", §23.71):** organise_file legt Dateien ohne Interpreten-Tag
 unter imported/tagless/ ab (6 Testfälle); Umzugslauf `manage.py move_tagless` (Trockenlauf 63 Dateien, `--yes` verschiebt
 und zieht cc_files.filepath nach, Dateien mit Sendeplan-Zeile ±2/3 h werden übersprungen).  Analyzer-Neustart nötig.
+**Abgenommen 2026-10-25:** Analyzer neu gestartet, getaggter Upload → imported/Example Radio/Weather/, ungetaggter →
+imported/tagless/; Umzugslauf mit Go: 63 verschoben, 0 übersprungen, imported/ ohne lose Dateien, 64 tagless-Zeilen alle auf Platte.
 
 Der Analyzer baut den Zielpfad imported/<Artist>/<Album>/<Datei>; fehlen beide Tags, bleibt nur imported/ (63 Dateien,
 z. B. „01 -  - Chill Zone 2.mp3", „INOK Sommerfest 20260718.mp3").  Idee: Rueckfall-Ordner imported/_ohne-Tags/ (oder
@@ -5448,6 +5450,9 @@ UI-Meldung + Manual x4.  Vorbedingung: Operator-Go (Memory: Duplikate sind bishe
 Data-URI aus `<base>-<size>.jpg` (Rückfall: alte Textdatei).  Aufräumlauf `manage.py artwork_prune_datauri` (Trockenlauf:
 91.677 Textdateien / 4,35 GB mit JPG-Satz; `--yes` löscht).  Live geprüft: Bibliothekszeilen, Editor 256 px, Now Playing,
 `/api/track?return=artwork-*`.
+**Aufräumlauf mit Go 2026-10-25:** 91.677 gelöscht, 0 Fehler, 10 s; artwork-Ordner 91.682 Dateien / 4,34 GB (vorher 8,5 GB);
+Stichprobe 200 zufällige Cover × 2 Größen = 400 Data-URIs aus JPGs, 0 Rückfälle.  2 verwaiste Textdateien bleiben (Namen ohne
+das „ ..."-Suffix ihrer JPGs, keine cc_files-Zeile zeigt darauf, 150 KB).
 
 Je Track mit eingebettetem Cover schreibt FileDataHelper::saveArtworkData das Original als Data-URI (ohne Endung),
 fuenf JPG-Groessen (32/64/128/256/512) und vier Data-URI-Kopien davon (-32/-64/-128/-256).  Genutzt werden die

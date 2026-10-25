@@ -33,7 +33,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   voreingestellt, `--yes` verschiebt und zieht `cc_files.filepath` in
   einer Transaktion nach, UUID-Suffix bei Namenskollision, Dateien mit
   Sendeplan-Zeile zwischen −2 h und +3 h werden übersprungen).
-  Analyzer-Neustart nötig.  Manual LIBRARY „Importing tracks" + FAQ
+  Analyzer-Neustart nötig.  Abgenommen 2026-10-25 (zwei Test-Uploads,
+  Umzug 63/63).  Manual LIBRARY „Importing tracks" + FAQ
   EN/DE/FR/ES, Architektur §23.71 (0.89).  Commit 47bfde8.
 - **Podcasts: heruntergeladene Episoden werden auf Lautheit gemessen
   (2026-10-24, Operator-Go zum Backlog-Punkt „Podcast-Downloads umgehen den
@@ -73,7 +74,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   und fällt auf die alte Textdatei zurück; `/api/track?return=artwork-data`
   / `-32` liefern das JPG.  Aufräumlauf `manage.py artwork_prune_datauri`
   löscht die Textdateien nur neben einem vorhandenen `-512.jpg`
-  (Trockenlauf: 91.677 Dateien / 4,35 GB).  Live geprüft: Bibliothekszeilen
+  (Trockenlauf: 91.677 Dateien / 4,35 GB; ausgeführt 2026-10-25: 91.677
+  gelöscht, 0 Fehler, Ordner 8,5 → 4,34 GB).  Live geprüft: Bibliothekszeilen
   (32 px), Editor (256 px), Now Playing, fünf API-Varianten je 200
   image/jpeg.  Manual LIBRARY EN/DE/FR/ES, Architektur §23.71 (0.89).  Commit 47bfde8.
 - **Kosmetik Show-Formular, Import / Export, Backup (2026-10-24,
