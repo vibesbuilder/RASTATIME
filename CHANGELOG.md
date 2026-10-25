@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+- **Rollen-Audit Paket 4: Icecast-Eingänge `/main` und `/show` entfernt
+  (2026-10-25, Operator-Go)** — die beiden versteckten DJ-Mounts mit
+  URL-Auth stammten aus der Zeit vor dem Liquidsoap-Harbor (DJs senden
+  seit 2026-09-10 an 8001) und hatten seit Wochen keinen Zugriff; ihr
+  Auth-Skript trug das alte DB-Passwort fest eingebaut, früher auch
+  Ersatz-Logins.  Entfernt aus `config/icecast.xml` (Sicherung
+  `icecast.xml.pre-pkg4-backup`, vorher von einer Wegwerf-Icecast-2.5.0
+  auf Port 18000 angenommen) und `icecast.xml.example`; gelöscht
+  `public/icecast-source-auth.php`, `public/icecast-auth.php` und
+  `api/icecast-listener-allow` samt fest eingebautem `admin/admin`-Bypass.
+  Icecast-Access-Log seit 29.09.: alle Clients 127.0.0.1 (Apache, Playout)
+  bis auf zwei LAN-Testabrufe - Port 8000 braucht von außen niemand.
+  Wirksam nach dem Icecast-Neustart (Operator, ruhiges Fenster); die
+  eingehenden Firewall-Regeln „RASTATIME Icecast“ (8000, beliebige
+  Gegenstelle) und „icecast“ (2x Programmregel) schaltet der Operator ab.
 - **Rollen-Audit Paket 3, Phase 1: CSRF für die Legacy-Oberfläche
   (2026-10-25, Operator-Go)** — R12: Schreibzugriffe außerhalb von REST
   (Kalender, Show-Builder, Bibliothek, Playlists, Sendeprotokoll, Benutzer,

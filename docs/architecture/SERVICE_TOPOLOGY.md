@@ -185,7 +185,7 @@ requirements demand it.
 | Executable | `C:\Tools\Icecast\bin\icecast.exe` (Icecast **2.4.4** — deliberate; the live `icecast.xml` uses 2.4 auth semantics) |
 | Arguments | `-c C:\rastatime\config\icecast.xml` |
 | Working directory | `C:\Tools\Icecast` |
-| External port | `8000` (HTTP streams + admin UI) — configurable in `icecast.xml` |
+| Port | `8000` (HTTP streams + admin UI) — local use only since 2026-10-25: listeners reach the mounts through Apache (`https://…/stream/`), the inbound firewall rules for 8000 / icecast.exe are disabled (role audit package 4) |
 | Log | `C:\rastatime\logs\` (via `icecast.xml` `<logdir>`) |
 | Depends on | Nothing from RASTATIME stack (standalone audio server) |
 | Restart on crash | Yes — NSSM automatic restart, 15 s delay |
@@ -193,10 +193,11 @@ requirements demand it.
 **Responsibility:**  
 Stream server (ADR-003).  Serves the public listener mounts
 (`/rastatime`, `/rastatime-aac`, `/rastatime-ogg`) pushed by
-RASTATIME-LIQUIDSOAP as a source client, plus the hidden input mounts
-`/main` and `/show` with `stream_auth`-based DJ authentication, and the
-hidden `/linein-capture` mount (raw line-in fan-out; source-password
-only, no `stream_auth`).
+RASTATIME-LIQUIDSOAP as a source client, and the hidden
+`/linein-capture` mount (raw line-in fan-out; source-password only).  The
+former input mounts `/main` and `/show` (URL auth against
+`public/icecast-source-auth.php`) were removed on 2026-10-25 (role audit
+package 4): DJs connect to the Liquidsoap harbor on 8001.
 
 **Port rationale:**  
 The API listens on 8765, so Icecast keeps its default **8000**.  Port

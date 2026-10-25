@@ -143,4 +143,13 @@ agreed state; guests have no history page.)
 4. **Icecast**: remove the unused `/main` and `/show` mounts (or their
    URL auth) from `config/icecast.xml` (Icecast restart, quiet window);
    firewall rule 8000 limited to what really needs it.
+   **Done 2026-10-25:** mounts removed from `config/icecast.xml` (backup
+   `icecast.xml.pre-pkg4-backup`; config accepted by a throwaway Icecast
+   2.5.0 on port 18000) and `.example`; `public/icecast-source-auth.php`,
+   `public/icecast-auth.php` and `api/icecast-listener-allow` (with a
+   hard-coded admin/admin bypass) deleted.  Icecast's access log since
+   2026-09-29: every client is 127.0.0.1 (Apache, playout) except two LAN
+   test requests, so nothing outside needs 8000.  Operator steps: Icecast
+   restart in a quiet window; disable the inbound rules "RASTATIME
+   Icecast" (port 8000, any remote) and "icecast" (2x, program rule).
 5. **Manual** USERS_AND_ROLES ×4 after 2.

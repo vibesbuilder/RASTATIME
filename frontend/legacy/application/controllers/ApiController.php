@@ -32,12 +32,11 @@ class ApiController extends Zend_Controller_Action
             // RASTATIME: callbacks without an api_key.  Originally Icecast
             // URL-auth called them; since 2026-09-10 the DJ login runs
             // Harbor -> PLAYOUT /dj-auth -> check-live-stream-auth on
-            // 127.0.0.1; the URL auth of config/icecast.xml (/main, /show)
-            // calls public/icecast-source-auth.php instead.  All three
-            // answer local callers only (see below).
+            // 127.0.0.1.  Both answer local callers only (see below); the
+            // Icecast listener callback went with the /main and /show mounts
+            // (2026-10-25, role audit package 4).
             'check-live-stream-auth',
             'update-source-status',
-            'icecast-listener-allow',
         ];
 
         if (Zend_Session::isStarted()) {
@@ -54,7 +53,7 @@ class ApiController extends Zend_Controller_Action
         // ever reaches the web app on another address (general.internal_url
         // must stay 127.0.0.1), personal DJ logins fail and fall back to the
         // static harbor password.
-        $localOnly = ['check-live-stream-auth', 'update-source-status', 'icecast-listener-allow'];
+        $localOnly = ['check-live-stream-auth', 'update-source-status'];
         if (in_array($params['action'], $localOnly, true) && !self::isLoopbackRequest()) {
             Logging::warn(sprintf(
                 'api/%s refused for %s: local callers only (PLAYOUT must call the web app on 127.0.0.1, general.internal_url)',
@@ -1218,127 +1217,6 @@ class ApiController extends Zend_Controller_Action
         $boot_time = $request->getParam('boot_time');
 
         Application_Model_Preference::setLiquidsoapError($stream_id, $msg, $boot_time);
-    }
-
-    /**
-     * Listener-auth callback for Icecast.
-     *
-     * The /main and /show source mounts are configured with
-     * <authentication type="url"> in icecast.xml.  That auth block
-     * also gates listener (GET/HEAD) access — Icecast hits this
-     * endpoint via the `client_add` option for every listener
-     * request and forwards the listener's Basic-Auth user/pass as
-     * POST fields.
-     *
-     * Only the RASTATIME-PLAYOUT (which reads /main and /show as a
-     * listener to relay them onwards to the public outputs) is meant
-     * to be able to connect.  We compare the supplied credentials to
-     * the dedicated internal-listener user/password stored in
-     * libretime.conf under stream.internal_listener — anything else
-     * gets 401, even if the attacker guessed the mount name.
-     *
-     * Matters once the Icecast port is exposed to the public internet
-     * so external DJs can stream from home: hidden+non-public mount
-     * settings only stop directory listings, not URL probing.
-     *
-     * RASTATIME admin-bypass
-     * ----------------------
-     * The same auth block also gates /admin/* operations on these
-     * mounts (an Icecast quirk of the legacy <authentication type="url">
-     * syntax — the newer <role> syntax with allow-admin="*" would
-     * sidestep this, but it caused a different regression on our
-     * Icecast version).  Without a bypass, "Cancel Show" -> POST
-     * /admin/killsource?mount=/show with admin:admin would be routed
-     * through here as a listener add, and rejected, leaving the show
-     * DJ connected.
-     *
-     * We accept the Icecast admin credentials (default admin/admin —
-     * see icecast.xml <admin-user>/<admin-password>) when the request
-     * arrives from 127.0.0.1.  Externally that path is closed because
-     * Icecast forwards the real client IP in the `ip` POST param, and
-     * 127.0.0.1 only appears for in-host admin operations issued by
-     * RASTATIME-PLAYOUT itself.
-     */
-    public function icecastListenerAllowAction()
-    {
-        $expectedUser = Config::get('stream.internal_listener.user') ?? '';
-        $expectedPass = Config::get('stream.internal_listener.password') ?? '';
-
-        $providedUser = $this->_getParam('user', '');
-        $providedPass = $this->_getParam('pass', '');
-        $clientIp = $this->_getParam('ip', '');
-
-        $configValid = ($expectedUser !== '' && $expectedPass !== '');
-
-        // Normal listener auth — RASTATIME-PLAYOUT relay.
-        if (
-            $configValid
-            && $providedUser === $expectedUser
-            && $providedPass === $expectedPass
-        ) {
-            $this->_emitIcecastAuthAllow();
-
-            return;
-        }
-
-        // Localhost admin bypass — see PHPDoc above.  Hardcoded to match
-        // icecast.xml <admin-user>/<admin-password>; when those are
-        // rotated for production, update this pair to match.
-        $icecastAdminUser = 'admin';
-        $icecastAdminPass = 'admin';
-        if (
-            $clientIp === '127.0.0.1'
-            && $providedUser === $icecastAdminUser
-            && $providedPass === $icecastAdminPass
-        ) {
-            Logging::info(
-                'icecast-listener-allow: admin bypass for in-host admin '
-                . 'operation (e.g. Cancel Show killsource)'
-            );
-            $this->_emitIcecastAuthAllow();
-
-            return;
-        }
-
-        Logging::warn(sprintf(
-            'icecast-listener-allow: rejecting listener (user=%s, ip=%s, configured=%s)',
-            $providedUser ?: '(empty)',
-            $clientIp ?: '(unknown)',
-            $configValid ? 'yes' : 'no'
-        ));
-        $this->getResponse()->setHttpResponseCode(401);
-    }
-
-    /**
-     * Emit the success response Icecast expects from a listener-auth URL.
-     *
-     * RASTATIME 2026-05-13 — Phase B.4 follow-up.
-     *
-     * For Icecast 2.4 the ``icecast-auth-user: 1`` HTTP header was the
-     * only required success indicator.  Icecast **2.5** changed the
-     * legacy-url-auth parser: if the response body does not also carry
-     * the same ``key: value`` pairs as ``icecast-auth-*`` lines (one
-     * per line), Icecast logs:
-     *
-     *   auth_url.c  client auth (...) failed with "", (curl: No error)
-     *
-     * and rejects the listener — even though the HTTP layer reports
-     * 200.  The response body is the canonical channel in 2.5; the
-     * header set is now redundant but kept for backwards compat.
-     *
-     * The empty-body symptom presented as ALL listener connects to
-     * /main and /show silently failing with HTTP 404 (Icecast hides
-     * mount existence on auth failure for hidden mounts).
-     */
-    private function _emitIcecastAuthAllow(): void
-    {
-        $resp = $this->getResponse();
-        $resp->setHeader('icecast-auth-user', '1');
-        $resp->setHttpResponseCode(200);
-        // The body MUST match the headers — Icecast 2.5 reads here:
-        $resp->setBody(
-            "icecast-auth-user: 1\nicecast-auth-message: OK\n"
-        );
     }
 
     /**

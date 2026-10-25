@@ -159,11 +159,11 @@ class Schema implements ConfigurationInterface
             /**/->end()->end()
             ->end()->end()
 
-            // RASTATIME: Internal listener credentials.  The playout
-            // service uses these to read /main and /show as a listener
-            // and relay the audio to the public outputs.  The
-            // icecast-listener-allow PHP endpoint compares incoming
-            // Basic-Auth credentials against these values.
+            // RASTATIME: Internal listener credentials, once checked by the
+            // icecast-listener-allow endpoint for the /main and /show
+            // mounts.  Both are gone since 2026-10-25 (role audit package
+            // 4); the node stays so existing libretime.conf files that
+            // still carry stream.internal_listener keep validating.
             ->arrayNode('internal_listener')->addDefaultsIfNotSet()->children()
             /**/->scalarNode('user')->defaultValue('')->end()
             /**/->scalarNode('password')->defaultValue('')->end()

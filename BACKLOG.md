@@ -912,7 +912,13 @@ Betrieb aller Rollen ruhig (oder verbleibende Sender ohne jQuery nachgezogen), d
 `LEGACY_CSRF_ENFORCE = true` mit Operator-Go.  Stand 2026-10-25 18:30: UI-Test (Gast/DJ/Admin, 185
 Schreibzugriffe) ohne Monitor-Zeile, Auto-DJ-Formular bekam sein Token-Feld; der Test bestand fast nur
 aus Lesen - echte Speichervorgänge aller Rollen (Playlist, Sendung, Benutzer, Einstellungen) im
-normalen Betrieb abwarten.  Pakete 4-5 folgen.
+normalen Betrieb abwarten.  **Operator-Go Phase 2 (2026-10-25)** nach dieser Empfehlung: Auswertung
+und Scharfschalten ab 2026-10-27.
+**Paket 4 umgesetzt 2026-10-25 ~19:00:** `/main` + `/show` aus `config/icecast.xml` (+ `.example`),
+Auth-Skripte und `api/icecast-listener-allow` gelöscht.  **Offen (Operator):** Icecast-Neustart im
+ruhigen Fenster (`nssm restart RASTATIME-ICECAST`), danach Firewall-Regeln „RASTATIME Icecast“ und
+„icecast“ deaktivieren.  Achtung Rückfall auf Icecast 2.4.4: `icecast.xml.2.4.4-backup` enthält die
+alten Mounts noch.  Paket 5 (Handbuch) folgt.
 **Offene Frage (Soll > Ist):** Gäste laden die Bibliothek auf dem Dashboard nicht (ACL ohne
 `library`/`usersettings`/Podcast-Liste, schon vor dem Audit; 403 im UI-Test), die Soll-Matrix sagt
 „Bibliothek ansehen: Gast ✓“.  Optionen: (a) Gästen nur die Lese-Aktionen freigeben (Feed,

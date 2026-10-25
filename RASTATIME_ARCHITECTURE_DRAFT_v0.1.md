@@ -1,10 +1,13 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.91
+Draft version: 0.92
 Date: 2026-10-25
 
 > **Revision history**
+> - **0.92 (2026-10-25)** - **Icecast without input mounts** (§23.72 addendum):
+>   `/main` and `/show` and their URL-auth endpoints removed; port 8000 is
+>   for local clients only (listeners via Apache `/stream/`).
 > - **0.91 (2026-10-25)** - **Role audit: role checks and the legacy CSRF
 >   check** (§23.72): shared PM+/owner helpers, REST session vs. API key,
 >   `@internal_only` Django views, the X-CSRF-Token convention for every
@@ -7679,6 +7682,18 @@ token (`CSRF monitor: ...` WARN in `legacy.log`, with controller/action
 and Origin), so senders that bypass jQuery (plain form posts, `fetch`)
 show up; **phase 2** sets `Acl_plugin::LEGACY_CSRF_ENFORCE` to true (403).
 New code that writes without jQuery sends the header itself.
+
+**Icecast (package 4, 0.92).**  Icecast carries only output mounts (the
+three public streams, their `-standby` fallbacks) and the local
+`/linein-capture`.  The input mounts `/main` and `/show` with URL auth
+(`public/icecast-source-auth.php`, `icecast-auth.php`,
+`api/icecast-listener-allow`) are gone - DJs connect to the Liquidsoap
+harbor (8001) and are checked by PLAYOUT `/dj-auth` ->
+`api/check-live-stream-auth` on loopback.  Port 8000 serves local clients
+only: Apache relays the listener streams (`/stream/`), Liquidsoap and
+the playout talk to `localhost`.  Icecast keeps listening on `::` (the
+services resolve `localhost`, possibly to `::1`); the inbound firewall
+rules for 8000 / icecast.exe are what closes it from outside.
 
 **Verification.**  Read-only CLI probes per role
 (`C:/Temp/optd/role_audit_p2_probe.php`, `role_audit_p2b_probe.php`:
