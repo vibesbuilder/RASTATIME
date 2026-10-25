@@ -6060,7 +6060,11 @@ Ordner, darum nur die Warnung `unlink(D:/stor/\imported): Is a directory` (24./2
 die Audiodatei ist gelöscht, das Artwork-Aufräumen bricht ab).  Behebung im Sofort-Paket des Rollen-Audits
 (Glob nur bei nicht-leerem Artwork-Pfad unterhalb der Bibliothek).
 
-## Veröffentlichung auf GitHub, Releases, Update-Weg (Evaluierung 2026-10-25)
+## 🟡 Veröffentlichung auf GitHub, Releases, Update-Weg (Evaluierung 2026-10-25) - Defer
+
+**Operator 2026-10-25:** „Wir behalten uns dieses Thema im Backlog für später." Kein Go; Vorbedingungen für
+einen späteren Start: frische Windows-VM für die Install-Probe, GitHub-Org/Repo durch den Operator, ruhige Woche
+für den filter-repo-Lauf (Historie wird neu geschrieben, alle Klone/Worktrees danach neu).
 
 Operator-Frage: RASTATIME auf GitHub veröffentlichen, in unregelmäßigen Abständen Releases anbieten,
 Update aus GitHub heraus (eventuell per Knopf in der UI).
@@ -6087,12 +6091,12 @@ kein `v`-Tag, GitHub-Org „RASTATIME" aus den README-Badges existiert nicht (40
    Issue-Vorlagen, Hinweis „Windows 11 only" (CONTRIBUTING hat ihn).
 
 **Stufen:**
-- 🟢 **Stufe 0 - Veröffentlichung:** filter-repo (Audio + icecast.xml), Root aufräumen, composer-Schritt + Versionen
+- 🟡 **Stufe 0 - Veröffentlichung:** filter-repo (Audio + icecast.xml), Root aufräumen, composer-Schritt + Versionen
   in INSTALL, SECURITY.md, Org/Repo anlegen (Operator), Push, CI grün bekommen.  ~2 Tage + Install-Probe auf
   frischer VM 1-2 Tage (VM stellt der Operator).
-- 🟢 **Stufe 1 - Releases:** SemVer ab `v1.0.0`, Versionsnummer ins Produkt (Settings/About + `/api/version`),
+- 🟡 **Stufe 1 - Releases:** SemVer ab `v1.0.0`, Versionsnummer ins Produkt (Settings/About + `/api/version`),
   CHANGELOG-Abschnitt je Version (release.yml liest ihn), Tag pushen -> Release.  ~½ Tag.
-- 🟢 **Stufe 2 - Update-Skript `rt-update.ps1`:** UPGRADE.md automatisiert: Backup (Aufgabe RASTATIME-Backup),
+- 🟡 **Stufe 2 - Update-Skript `rt-update.ps1`:** UPGRADE.md automatisiert: Backup (Aufgabe RASTATIME-Backup),
   Dienste stoppen, `git fetch` + Checkout des Release-Tags (oder Release-Zip), `composer install`, `pip install -e`,
   Migrationen, Dienste in Reihenfolge starten, Smoke-Test (health, Mounts), Rollback auf den vorigen Tag + DB.
   Erhöhte Rechte nötig (Dienste).  ~1 Tag + Probe.
@@ -6102,5 +6106,5 @@ kein `v`-Tag, GitHub-Org „RASTATIME" aus den README-Badges existiert nicht (40
   aus einer Statusdatei, Abschluss im ruhigen Moment (Standby übernimmt die Hörer wie beim geplanten Neustart).
   ~2-3 Tage.  Vorbedingung: zwei echte Releases sind über Stufe 2 gelaufen.
 
-**Empfehlung:** Go für Stufen 0-2 in dieser Reihenfolge, Stufe 3 Defer.  Ohne die Install-Probe auf einer
+**Empfehlung (bei Wiederaufnahme):** Stufen 0-2 in dieser Reihenfolge, Stufe 3 danach.  Ohne die Install-Probe auf einer
 frischen VM nicht veröffentlichen - sonst scheitert der erste fremde Nutzer an Schritt 1.
