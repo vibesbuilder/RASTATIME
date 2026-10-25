@@ -58,9 +58,11 @@ class LibreTime_Auth_Adaptor_Header implements Zend_Auth_Adapter_Interface
 
         $groups = array_map(fn ($group) => trim($group), explode($separator, $groups));
 
+        // RASTATIME 2026-10-25 - the Super Admin role is retired: that group
+        // signs in as an Admin.
         $superAdminGroup = Config::get('header_auth.group_map.superadmin');
         if (in_array($superAdminGroup, $groups)) {
-            return UTYPE_SUPERADMIN;
+            return UTYPE_ADMIN;
         }
 
         $adminGroup = Config::get('header_auth.group_map.admin');

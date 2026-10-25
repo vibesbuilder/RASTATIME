@@ -6,6 +6,8 @@ $ccAcl->addRole(new Zend_Acl_Role('G'))
     ->addRole(new Zend_Acl_Role('H'), 'G')
     ->addRole(new Zend_Acl_Role('P'), 'H')
     ->addRole(new Zend_Acl_Role('A'), 'P')
+    // 'S' (Super Admin) is retired since 2026-10-25 (migration 0073 turns
+    // such accounts into Admins); the role stays as a harmless alias of 'A'
     ->addRole(new Zend_Acl_Role('S'), 'A');
 
 $ccAcl->add(new Zend_Acl_Resource('library'))

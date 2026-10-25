@@ -92,7 +92,7 @@ toujours refusée.
 | Colonne | Signification |
 |---|---|
 | `login` | nom d'utilisateur ; la clé |
-| `type` | `admin`, `program_manager`, `dj` ou `guest` ; vide = `guest`. Les super admins ne sont jamais importés |
+| `type` | `admin`, `program_manager`, `dj` ou `guest` ; vide = `guest` |
 | `first_name`, `last_name`, `email`, `cell_phone`, `skype`, `jabber` | comme dans la fenêtre utilisateur ; `email` est obligatoire |
 | `password` | **nouveaux utilisateurs uniquement**, en clair, enregistré haché ; toujours vide dans un export |
 
@@ -103,7 +103,7 @@ aléatoire que personne ne connaît — définissez le vrai sous Paramètres
 → Utilisateurs avant la première connexion. Avec *remplacer*, un
 identifiant existant reçoit les nouveaux noms, e-mail, téléphone,
 Skype, Jabber et type, mais garde son mot de passe. L'import ne modifie
-jamais le super admin ni le type de votre propre compte, et ne retire
+jamais le type de votre propre compte, et ne retire
 jamais le type admin au dernier admin. Supprimez un fichier contenant
 des mots de passe après l'import.
 

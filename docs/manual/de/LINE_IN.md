@@ -80,7 +80,7 @@ Die Symbolleiste:
 > Aktionen sind dünne Pass-Throughs von
 > `application/controllers/LineinController.php` zur
 > Django-REST-API unter `/api/v2/audio/linein[/<id>]`. Der
-> Controller erzwingt nur ACL (Admin + Super Admin); die
+> Controller erzwingt nur ACL (Program Manager + Admin); die
 > Python-Seite unter `backend/api/libretime_api/linein/`
 > besitzt Validierung und Persistenz in
 > `rastatime_linein`. Siehe ARCHITECTURE §14.

@@ -6,7 +6,7 @@
 > against the interface on 2026-10-25.
 
 The Settings menu is the station's configuration surface.  Most pages
-belong to **Admins** (and the Super Admin); a **Program Manager** sees
+belong to **Admins**; a **Program Manager** sees
 *My Profile*, *Show Templates* and *Auto DJ*; Guests and DJs see *My
 Profile* only.  See [Users and Roles](./USERS_AND_ROLES.md) §2 for the
 full permission matrix.
@@ -221,8 +221,7 @@ control as it is.
 ### "Which settings can a Program Manager open?"
 
 *My Profile*, *Show Templates* and *Auto DJ*.  Everything else under
-Settings belongs to Admins; the Super Admin has the same rights as an
-Admin.  See [Users and Roles](./USERS_AND_ROLES.md) §1-§2.
+Settings belongs to Admins.  See [Users and Roles](./USERS_AND_ROLES.md) §1-§2.
 
 ---
 

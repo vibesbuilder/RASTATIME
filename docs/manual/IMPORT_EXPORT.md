@@ -85,7 +85,7 @@ refused.
 | Column | Meaning |
 |---|---|
 | `login` | user name; the key |
-| `type` | `admin`, `program_manager`, `dj` or `guest`; empty = `guest`. Super admins are never imported |
+| `type` | `admin`, `program_manager`, `dj` or `guest`; empty = `guest` |
 | `first_name`, `last_name`, `email`, `cell_phone`, `skype`, `jabber` | as in the user dialog; `email` is required |
 | `password` | **new users only**, plain text, stored hashed; always empty in an export |
 
@@ -95,7 +95,7 @@ without it the account gets a random password that nobody knows — set
 the real one under Settings → Users before the first login. With
 *replace*, an existing login gets the new names, e-mail, phone, Skype,
 Jabber and type but keeps its password. The import never changes the
-super admin or the type of your own account, and never takes the admin
+type of your own account, and never takes the admin
 type from the last admin. Delete a file with passwords after the
 import.
 

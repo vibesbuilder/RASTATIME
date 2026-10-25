@@ -91,7 +91,7 @@ sigue rechazándose.
 | Columna | Significado |
 |---|---|
 | `login` | nombre de usuario; la clave |
-| `type` | `admin`, `program_manager`, `dj` o `guest`; vacío = `guest`. Los superadministradores nunca se importan |
+| `type` | `admin`, `program_manager`, `dj` o `guest`; vacío = `guest` |
 | `first_name`, `last_name`, `email`, `cell_phone`, `skype`, `jabber` | como en el diálogo de usuario; `email` es obligatorio |
 | `password` | **solo usuarios nuevos**, texto plano, se guarda con hash; siempre vacío en una exportación |
 
@@ -101,7 +101,7 @@ usuario nuevo; sin ella, la cuenta recibe una contraseña aleatoria que
 nadie conoce: defina la real en Ajustes → Usuarios antes del primer
 inicio de sesión. Con *reemplazar*, un login existente recibe los
 nuevos nombres, correo, teléfono, Skype, Jabber y tipo, pero conserva
-su contraseña. La importación nunca cambia al superadministrador ni el
+su contraseña. La importación nunca cambia el
 tipo de su propia cuenta, y nunca quita el tipo admin al último
 administrador. Borre un archivo con contraseñas después de importarlo.
 

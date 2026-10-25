@@ -61,7 +61,7 @@ La barra de herramientas:
 > mutantes son finos pass-through desde
 > `application/controllers/LineinController.php` a la API
 > REST Django en `/api/v2/audio/linein[/<id>]`. El
-> controlador solo aplica ACL (Admin + Super Admin); el
+> controlador solo aplica ACL (Program Manager + Admin); el
 > lado Python en `backend/api/libretime_api/linein/` posee
 > validación y persistencia en `rastatime_linein`. Vea
 > ARCHITECTURE §14.
@@ -357,8 +357,8 @@ para el runbook de recuperación.
 
 ## 7. Permisos
 
-Solo los **Program Managers (P)**, los **Admins (A)** y el
-**Super Admin (S)** pueden crear, editar o eliminar Line-Ins
+Solo los **Program Managers (P)** y los **Admins (A)**
+pueden crear, editar o eliminar Line-Ins
 (desde el 25/10/2026; antes, solo los Admins).
 
 Los DJ (H) y los invitados (G) no ven los Line-Ins: los DJ

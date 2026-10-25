@@ -240,6 +240,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Rolle „Super Admin“ stillgelegt, Löschschutz für `admin` (2026-10-25,
+  Operator-Go Option B)** — Migration `0073_retire_super_admin` macht
+  S-Konten zu Admins (hier keine vorhanden) und markiert eine Station, die
+  schon Titel oder Sendungen hat, als eingerichtet.  Der Einrichtungsdialog
+  Sprache/Zeitzone gilt jetzt Admins (war nur für S und erschien deshalb
+  nie); eine Neuinstallation zeigt ihn beim ersten Admin-Login.
+  LDAP/FreeIPA- und Header-Anmeldungen aus der Super-Admin-Gruppe werden
+  Admins.  Entfernt: Sonderbehandlung im Benutzer-Dialog samt Hinweis von
+  heute Abend, Namens-Sonderfall in Mein Profil, ungenutzter Decorator
+  `SuperAdmin_Only`.  Neu: Das Installationskonto `admin` kann nicht
+  gelöscht werden - Benutzerseite (kein Löschen-Symbol, Server lehnt ab)
+  und API v2 (`DELETE /api/v2/users/<id>` -> 403; wirksam nach dem
+  API-Neustart).  Die Rolle `S` bleibt in ACL und Konstanten als
+  harmloser Alias von Admin.  Handbuch ×4: vier Rollen, Rollentabelle in
+  „Erste Schritte“ korrigiert, Inhaltsverzeichnisse.  API 180 Tests
+  (2 neu).  Architektur §23.72 (0.93).
 - **Rollen-Folgepunkte und Kapitel „Einstellungen“ geprüft (2026-10-25,
   Operator-Go)** — (1) Der Benutzer-Dialog zeigt für einen Super Admin
   jetzt „The Super Admin changes their own details under My Profile.“

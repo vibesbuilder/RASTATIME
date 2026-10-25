@@ -167,7 +167,7 @@ documento maestro arriba es lo único que todos asumen.
 
 | Capítulo | Contenido |
 |---|---|
-| [Usuarios y roles](./USERS_AND_ROLES.md) | Super Admin, Admin, Program Manager, DJ, Invitado — qué puede hacer cada rol. |
+| [Usuarios y roles](./USERS_AND_ROLES.md) | Admin, Program Manager, DJ, Invitado — qué puede hacer cada rol. |
 | [Configuración](./SETTINGS.md) | Recorrido de cada página bajo el menú Configuración. |
 | [Idiomas (i18n)](./I18N.md) | Cambiar el idioma de la interfaz; añadir una traducción. |
 

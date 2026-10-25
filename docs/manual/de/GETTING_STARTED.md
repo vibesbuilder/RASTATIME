@@ -32,7 +32,7 @@ einen Track auf Sendung zu bringen. Am Ende werden Sie:
 Browser (Chrome, Edge, Firefox; Internet Explorer wird
 *nicht* unterstützt).
 
-Die Standard-Super-Admin-Zugangsdaten einer frischen
+Die Standard-Admin-Zugangsdaten einer frischen
 Installation sind:
 
 | Feld | Wert |
@@ -102,11 +102,10 @@ was steuert, was die Oberfläche Sie tun lässt.
 
 | Rolle | Kann sehen / tun |
 |---|---|
-| **Gast (G)** | Nur Lese-Dashboard. Kein Kalender, keine Bibliothek, keine Einstellungen. Verwendet für Monitoring-Dashboards oder Infoschirme an der Rezeption. |
-| **DJ (H)** | Nur eigene Sendungen + eigene Dateien. Kann eigene Sendungen füllen, eigene Tracks hochladen. Kann keine Sendungen erstellen. Kann keine Dateien anderer DJs sehen. |
-| **Program Manager (P)** | Vollzugriff auf Kalender und Bibliothek. Kann Sendungen für jeden DJ erstellen und bearbeiten. Kann keine stationsweiten Einstellungen ändern. |
-| **Admin (A)** | Alles, was ein Program Manager tun kann, plus stationsweite Einstellungen (Streams, Lokale Maschine, Auto DJ, Sendungs-Vorlagen, Lokalisierung). |
-| **Super Admin (S)** | Alles. Plus die Fähigkeit, andere Admins zu erstellen und zu degradieren. Reserviert für den Stationsinhaber / technischen Admin. |
+| **Gast (G)** | Dashboard und Kalender, nur lesend. Keine Bibliothek, keine Einstellungen. Für Infoschirme am Empfang. |
+| **DJ (H)** | Arbeitet mit Tracks: Upload, eigene Playlisten und Smart Blocks, befüllt die eigenen Sendungen. Sieht alle Tracks, ändert nur die eigenen. Kann keine Sendungen anlegen; keine Webstreams oder Line-Ins. |
+| **Program Manager (P)** | Führt das Programm: alle Sendungen und Inhalte, Webstreams, Line-Ins, Podcasts, Auto DJ, Show-Vorlagen, Widgets. |
+| **Admin (A)** | Alles, was ein Program Manager kann, dazu die Stationseinstellungen (Streams, Lokale Maschine, Backup, …) und die Benutzerkonten. Das Installationskonto `admin` kann nicht gelöscht werden. |
 
 > **Warum es so funktioniert.** Rollenbasierte ACL wird
 > serverseitig in `configs/ACL.php` durchgesetzt.

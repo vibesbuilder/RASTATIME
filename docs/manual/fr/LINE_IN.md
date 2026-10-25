@@ -373,8 +373,8 @@ pour le runbook de récupération.
 
 ## 7. Permissions
 
-Seuls les **Program Managers (P)**, les **Admins (A)** et le
-**Super Admin (S)** peuvent créer, modifier ou supprimer des
+Seuls les **Program Managers (P)** et les **Admins (A)**
+peuvent créer, modifier ou supprimer des
 Line-Ins (depuis le 25/10/2026 ; avant, les Admins
 seulement).
 Raisons :

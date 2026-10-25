@@ -139,14 +139,6 @@ class UserController extends Zend_Controller_Action
                 && $form->validateLogin($formData['cu_login'], $formData['cu_user_id'])
             ) {
                 $user = new Application_Model_User($formData['cu_user_id']);
-                // Stupid hack because our schema enforces non-null first_name
-                // even though by default the admin user has no first name... (....)
-                if (Application_Model_User::getCurrentUser()->isSuperAdmin()) {
-                    if (empty($formData['cu_first_name'])) {
-                        $formData['cu_first_name'] = 'admin';
-                        $formData['cu_last_name'] = 'admin'; // ditto, avoid non-null DB constraint
-                    }
-                }
                 if (isset($formData['cu_first_name'])) {
                     $user->setFirstName($formData['cu_first_name']);
                 }
@@ -231,8 +223,10 @@ class UserController extends Zend_Controller_Action
 
         $user = new Application_Model_User($delId);
 
-        // Don't allow super admins to be deleted.
-        if ($user->isSuperAdmin()) {
+        // RASTATIME 2026-10-25 (operator go) - the installation account admin
+        // cannot be deleted; the retired Super Admin role had this protection.
+        if ($user->isSuperAdmin() || Application_Model_User::isProtectedLogin($user->getLogin())) {
+            Logging::warn(sprintf('user/remove-user: the account %s cannot be deleted', $user->getLogin()));
             $this->_helper->json->sendJson([]);
         }
 

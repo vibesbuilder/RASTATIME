@@ -6,7 +6,7 @@
 > interfaz el 25/10/2026.
 
 El menú Ajustes es la superficie de configuración de la emisora.  La
-mayoría de las páginas pertenecen a los **Admins** (y al Super Admin);
+mayoría de las páginas pertenecen a los **Admins**;
 un **Program Manager** ve *Mi Perfil*, *Show Templates* y *Auto DJ*; los
 invitados y los DJ solo ven *Mi Perfil*.  Vea
 [Usuarios y roles](./USERS_AND_ROLES.md) §2 para la matriz completa de
@@ -226,8 +226,7 @@ en un control de versiones.
 ### «¿Qué configuraciones puede abrir un Program Manager?»
 
 *Mi Perfil*, *Show Templates* y *Auto DJ*.  Todo lo demás en Ajustes
-pertenece a los Admins; el Super Admin tiene los mismos derechos que un
-Admin.  Vea [Usuarios y roles](./USERS_AND_ROLES.md) §1-§2.
+pertenece a los Admins.  Vea [Usuarios y roles](./USERS_AND_ROLES.md) §1-§2.
 
 ---
 

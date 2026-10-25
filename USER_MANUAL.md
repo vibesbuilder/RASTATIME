@@ -151,7 +151,7 @@ master document above is the only thing they all assume.
 
 | Chapter | What's in it |
 |---|---|
-| [Users and Roles](./docs/manual/USERS_AND_ROLES.md) | Super Admin, Admin, Program Manager, DJ, Guest — what each role can do. |
+| [Users and Roles](./docs/manual/USERS_AND_ROLES.md) | Admin, Program Manager, DJ, Guest — what each role can do. |
 | [Settings](./docs/manual/SETTINGS.md) | Tour of every page under the Settings menu. |
 | [Languages (i18n)](./docs/manual/I18N.md) | Switching the UI language; adding a translation. |
 

@@ -30,7 +30,7 @@ Ouvrez `http://<station-host>/` dans n'importe quel
 navigateur moderne (Chrome, Edge, Firefox ; Internet
 Explorer n'est *pas* supporté).
 
-Les identifiants super-admin par défaut d'une installation
+Les identifiants admin par défaut d'une installation
 fraîche sont :
 
 | Champ | Valeur |
@@ -103,11 +103,10 @@ chose qui contrôle ce que l'interface vous laisse faire.
 
 | Rôle | Peut voir / faire |
 |---|---|
-| **Invité (G)** | Tableau de bord en lecture seule. Pas de Calendrier, pas de Bibliothèque, pas de Paramètres. Utilisé pour les tableaux de bord de surveillance ou les écrans d'information à la réception. |
-| **DJ (H)** | Ses propres émissions + ses propres fichiers seulement. Peut remplir ses propres émissions, télécharger ses propres pistes. Ne peut pas créer d'émissions. Ne peut pas voir les fichiers d'autres DJ. |
-| **Program Manager (P)** | Accès complet au Calendrier et à la Bibliothèque. Peut créer et modifier des émissions pour n'importe quel DJ. Ne peut pas changer les paramètres au niveau station. |
-| **Admin (A)** | Tout ce qu'un Program Manager peut faire, plus les paramètres au niveau station (Streams, Machine locale, Auto DJ, Modèles d'émission, Localisation). |
-| **Super Admin (S)** | Tout. Plus la capacité de créer et de rétrograder d'autres Admins. Réservé au propriétaire de la station / admin technique. |
+| **Invité (G)** | Tableau de bord et calendrier, en lecture seule. Pas de bibliothèque, pas de paramètres. Pour les écrans d'information à l'accueil. |
+| **DJ (H)** | Travaille avec des pistes : upload, ses propres playlists et smart blocks, remplit les émissions qu'il anime. Voit toutes les pistes mais ne modifie que les siennes. Ne crée pas d'émissions ; pas de webstreams ni de Line-Ins. |
+| **Program Manager (P)** | Dirige le programme : toutes les émissions et tous les contenus, webstreams, Line-Ins, podcasts, Auto DJ, modèles d'émission, widgets. |
+| **Admin (A)** | Tout ce qu'un Program Manager peut faire, plus les paramètres de la station (Flux, Machine locale, Backup, …) et les comptes utilisateurs. Le compte d'installation `admin` ne peut pas être supprimé. |
 
 > **Pourquoi ça marche ainsi.** L'ACL basée sur les rôles
 > est appliquée côté serveur dans `configs/ACL.php`. Cacher

@@ -6744,7 +6744,3 @@ msgstr "contraseña aleatoria: defina una en Ajustes -> Usuarios"
 #: application/services/ImportExportUsers.php
 msgid "DJ \"%s\" is created by this import"
 msgstr "el DJ \"%s\" se crea con esta importación"
-
-#: application/views/scripts/user/add-user.phtml
-msgid "The Super Admin changes their own details under My Profile."
-msgstr "El Super Admin cambia sus propios datos en Mi Perfil."

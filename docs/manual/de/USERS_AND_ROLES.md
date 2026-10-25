@@ -6,12 +6,12 @@
 > das vollständige Bild.  Es beschreibt den Stand nach dem Rollen-Audit
 > vom 25.10.2026.
 
-RASTATIME kennt fünf Rollen.  Jedes Konto hat genau eine davon, und der
+RASTATIME kennt vier Rollen.  Jedes Konto hat genau eine davon, und der
 Server prüft sie bei jeder Anfrage - ein ausgeblendeter Knopf ist nur
 Komfort, die Aktion lehnt der Server ohnehin ab.  Dieses Kapitel
 behandelt:
 
-1. Die fünf Rollen.
+1. Die vier Rollen.
 2. Die Berechtigungsmatrix.
 3. Benutzer verwalten (Einstellungen → Benutzer).
 4. Ihr eigenes Profil (Mein Profil).
@@ -23,7 +23,7 @@ behandelt:
 
 ---
 
-## 1. Die fünf Rollen
+## 1. Die vier Rollen
 
 | Rolle | Typischer Benutzer | In einem Satz |
 |---|---|---|
@@ -31,22 +31,20 @@ behandelt:
 | **DJ** | Moderator | Arbeitet mit Tracks: Upload, eigene Playlisten und Smart Blocks, befüllt die eigenen Sendungen. |
 | **Program Manager** | Programmkoordination | Führt das Programm: alle Sendungen, alle Inhalte, Webstreams, Line-Ins, Podcasts, Auto DJ, Show-Vorlagen, Widgets. |
 | **Admin** | Stationstechnik | Alles, dazu die Stationseinstellungen und die Benutzerkonten. |
-| **Super Admin** | Aus Airtime übernommen; meist nicht vorhanden | Dieselben Rechte wie ein Admin; kann nicht gelöscht werden. |
 
 Jede Rolle umfasst alles, was die Rolle darüber in der Tabelle darf.
 
-**Der Super Admin** ist eine aus Airtime übernommene Rolle.  Eine
-RASTATIME-Installation legt ihr Hauptkonto `admin` als **Admin** an, und
-kein Konto lässt sich in der Oberfläche zum Super Admin machen (der
-Benutzer-Dialog bietet Gast, DJ, Program Manager und Admin) - einen Super
-Admin gibt es nur, wenn eine alte Airtime-Datenbank oder eine externe
-Anmeldung (LDAP / FreeIPA) ihn mitbringt.  Wo es ihn gibt, hat er genau
-die Rechte eines Admins, kann nicht gelöscht werden, und seine Angaben
-sind unter Einstellungen → Benutzer nicht bearbeitbar (er ändert sie
-selbst unter Mein Profil).  Admins können weitere Admins anlegen.
+**Das Installationskonto `admin`** ist ein Admin wie jeder andere, kann
+aber nicht gelöscht werden - weder unter Einstellungen → Benutzer noch
+über die API.  Admins können weitere Admins anlegen.
+
+**Die frühere Rolle Super Admin** (aus Airtime) wurde am 25.10.2026
+stillgelegt: Ein Konto dieses Typs wird zum Admin (Datenbank-Migration
+0073), und externe Anmeldungen (LDAP / FreeIPA, Header-Anmeldung) aus der
+Super-Admin-Gruppe melden sich als Admin an.
 
 > **Unter der Haube.** Die Rolle ist der eine Buchstabe in
-> `cc_subjs.type` (G, H, P, A, S).  Die groben Regeln stehen in
+> `cc_subjs.type` (G, H, P, A; S ist stillgelegt).  Die groben Regeln stehen in
 > `application/configs/ACL.php`; die feineren (Besitzer einer Datei,
 > Host einer Sendung, Program Manager oder höher) prüfen die Controller.
 > Das Audit und seine Befunde: `docs/operator/ROLE_AUDIT_2026-10.md`.
@@ -57,8 +55,7 @@ selbst unter Mein Profil).  Admins können weitere Admins anlegen.
 
 ✓ = erlaubt, – = nicht erlaubt.  „Eigene“ heißt: Der Benutzer ist
 Besitzer des Objekts (hat es hochgeladen oder angelegt); „als Host“
-heißt: Der Benutzer ist Host der Sendung.  Die Spalte Super Admin
-gleicht der Spalte Admin und ist weggelassen.
+heißt: Der Benutzer ist Host der Sendung.
 
 | Bereich | Gast | DJ | Program Manager | Admin |
 |---|:---:|:---:|:---:|:---:|
@@ -145,17 +142,14 @@ denselben Dialog für diesen Benutzer.
 | **Mobiltelefon**, **Skype**, **Jabber** | Freiwillige Kontaktfelder. |
 | **Benutzertyp** | Gast, DJ, Program Manager oder Admin. |
 
-Zum Super Admin lässt sich hier niemand machen.  Hat die Station einen
-Super Admin, öffnet sich seine Zeile ohne bearbeitbare Angaben und zeigt
-„Der Super Admin ändert seine Angaben selbst unter Mein Profil.“.
+Die Zeile des Kontos `admin` hat kein Löschen-Symbol.
 
 ### Benutzer löschen
 
 Das Löschen-Symbol in der Benutzerliste entfernt das Konto.  Tracks, die
-dem Benutzer gehörten, werden dem ersten Administrator **übergeben**
-(dem Super Admin bzw. dem ersten Admin, falls es keinen gibt) - sie
+dem Benutzer gehörten, werden dem ersten Admin **übergeben** - sie
 bleiben in der Bibliothek.  Das eigene Konto lässt sich nicht löschen,
-der Super Admin ebenfalls nicht.
+das Konto `admin` ebenfalls nicht.
 
 Einen Zustand „deaktiviert“ gibt es nicht: Um jemandem den Zugang zu
 nehmen, löschen Sie das Konto oder setzen ein neues Passwort; soll nur
@@ -330,8 +324,6 @@ Grund, zwei Admin-Konten zu führen.  Kann sich kein Admin mehr anmelden,
 muss das Passwort in der Datenbank zurückgesetzt werden (Tabelle
 `cc_subjs`, Spalte `pass`, MD5 des neuen Passworts) - siehe
 [`docs/operator/CRASH_RECOVERY.md`](../../operator/CRASH_RECOVERY.md).
-Ein Super Admin, wo es ihn gibt, ändert sein Passwort nur selbst (Mein
-Profil).
 
 ---
 

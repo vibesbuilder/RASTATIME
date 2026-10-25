@@ -6,7 +6,7 @@
 > rapport à l'interface le 25/10/2026.
 
 Le menu Paramètres est la surface de configuration de la station.  La
-plupart des pages appartiennent aux **Admins** (et au Super Admin) ; un
+plupart des pages appartiennent aux **Admins** ; un
 **Program Manager** voit *Mon profil*, *Show Templates* et *Auto DJ* ;
 les invités et les DJ ne voient que *Mon profil*.  Voir
 [Utilisateurs et rôles](./USERS_AND_ROLES.md) §2 pour la matrice
@@ -228,8 +228,7 @@ passe - ne le placez jamais tel quel dans un gestionnaire de versions.
 ### « Quels paramètres un Program Manager peut-il ouvrir ? »
 
 *Mon profil*, *Show Templates* et *Auto DJ*.  Tout le reste sous
-Paramètres appartient aux Admins ; le Super Admin a les mêmes droits
-qu'un Admin.  Voir [Utilisateurs et rôles](./USERS_AND_ROLES.md) §1-§2.
+Paramètres appartient aux Admins.  Voir [Utilisateurs et rôles](./USERS_AND_ROLES.md) §1-§2.
 
 ---
 

@@ -6,12 +6,12 @@
 > tableau complet.  Il décrit l'état après l'audit des rôles du
 > 25/10/2026.
 
-RASTATIME connaît cinq rôles.  Chaque compte en a exactement un, et le
+RASTATIME connaît quatre rôles.  Chaque compte en a exactement un, et le
 serveur le vérifie à chaque requête - masquer un bouton n'est qu'un
 confort, le serveur refuse l'action de toute façon.  Ce chapitre
 couvre :
 
-1. Les cinq rôles.
+1. Les quatre rôles.
 2. La matrice des permissions.
 3. Gérer les utilisateurs (Paramètres → Utilisateurs).
 4. Votre propre profil (Mon profil).
@@ -23,7 +23,7 @@ couvre :
 
 ---
 
-## 1. Les cinq rôles
+## 1. Les quatre rôles
 
 | Rôle | Utilisateur typique | En une phrase |
 |---|---|---|
@@ -31,24 +31,21 @@ couvre :
 | **DJ** | Un animateur | Travaille avec des pistes : upload, ses propres playlists et smart blocks, remplit les émissions qu'il anime. |
 | **Program Manager** | Coordination des programmes | Dirige le programme : toutes les émissions, tous les contenus, webstreams, Line-Ins, podcasts, Auto DJ, modèles d'émission, widgets. |
 | **Admin** | Technique de la station | Tout, plus les paramètres de la station et les comptes utilisateurs. |
-| **Super Admin** | Repris d'Airtime ; généralement absent | Mêmes droits qu'un Admin ; ne peut pas être supprimé. |
 
 Chaque rôle comprend tout ce que le rôle au-dessus de lui dans le
 tableau peut faire.
 
-**Le Super Admin** est un rôle repris d'Airtime.  Une installation de
-RASTATIME crée son compte principal `admin` comme **Admin**, et aucun
-compte ne peut devenir Super Admin dans l'interface (la boîte de
-dialogue des utilisateurs propose Invité, DJ, Program Manager et Admin) -
-un Super Admin n'existe que si une ancienne base Airtime ou une connexion
-externe (LDAP / FreeIPA) en apporte un.  Là où il existe, il a
-exactement les droits d'un Admin, il ne peut pas être supprimé, et ses
-données ne sont pas modifiables sous Paramètres → Utilisateurs (il les
-modifie lui-même sous Mon profil).  Les Admins peuvent créer d'autres
-Admins.
+**Le compte d'installation `admin`** est un Admin comme les autres,
+mais il ne peut pas être supprimé - ni sous Paramètres → Utilisateurs ni
+par l'API.  Les Admins peuvent créer d'autres Admins.
+
+**L'ancien rôle Super Admin** (d'Airtime) a été retiré le 25/10/2026 :
+un compte de ce type devient Admin (migration de base de données 0073),
+et les connexions externes (LDAP / FreeIPA, authentification par
+en-tête) du groupe super-admin se connectent comme Admins.
 
 > **Sous le capot.** Le rôle est la lettre unique de `cc_subjs.type`
-> (G, H, P, A, S).  Les règles générales se trouvent dans
+> (G, H, P, A ; S est retiré).  Les règles générales se trouvent dans
 > `application/configs/ACL.php` ; les règles plus fines (propriétaire
 > d'un fichier, animateur d'une émission, Program Manager ou plus) sont
 > vérifiées dans les contrôleurs.  L'audit et ses constats :
@@ -60,8 +57,7 @@ Admins.
 
 ✓ = autorisé, – = non autorisé.  « Propres » signifie que l'utilisateur
 est propriétaire de l'objet (il l'a téléversé ou créé) ; « animées »
-signifie que l'utilisateur est animateur (host) de l'émission.  La
-colonne Super Admin est identique à la colonne Admin et omise.
+signifie que l'utilisateur est animateur (host) de l'émission.
 
 | Domaine | Invité | DJ | Program Manager | Admin |
 |---|:---:|:---:|:---:|:---:|
@@ -151,18 +147,15 @@ ligne ouvre la même boîte pour cet utilisateur.
 | **Téléphone mobile**, **Skype**, **Jabber** | Champs de contact facultatifs. |
 | **Type d'utilisateur** | Invité, DJ, Program Manager ou Admin. |
 
-Personne ne peut devenir Super Admin ici.  Si la station a un Super
-Admin, sa ligne s'ouvre sans données modifiables et affiche « Le Super
-Admin modifie lui-même ses données sous Mon profil. ».
+La ligne du compte `admin` n'a pas d'icône de suppression.
 
 ### Supprimer un utilisateur
 
 L'icône de suppression dans la liste des utilisateurs supprime le
 compte.  Les pistes dont l'utilisateur était propriétaire sont
-**transmises** au premier administrateur (le Super Admin, ou le premier
-Admin s'il n'y en a pas) - elles restent dans la bibliothèque.  Vous ne
-pouvez pas supprimer votre propre compte, et le Super Admin ne peut pas
-être supprimé.
+**transmises** au premier Admin - elles restent dans la bibliothèque.
+Vous ne pouvez pas supprimer votre propre compte, et le compte `admin` ne
+peut pas être supprimé.
 
 Il n'existe pas d'état « désactivé » : pour retirer l'accès à
 quelqu'un, supprimez le compte ou définissez un nouveau mot de passe ;
@@ -341,8 +334,6 @@ une raison de garder deux comptes Admin.  Si plus aucun Admin ne peut se
 connecter, le mot de passe doit être réinitialisé dans la base de
 données (table `cc_subjs`, colonne `pass`, MD5 du nouveau mot de passe) -
 voir [`docs/operator/CRASH_RECOVERY.md`](../../operator/CRASH_RECOVERY.md).
-Un Super Admin, là où il existe, ne change son mot de passe que
-lui-même (Mon profil).
 
 ---
 

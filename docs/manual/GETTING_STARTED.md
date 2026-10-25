@@ -27,7 +27,7 @@ end you will have:
 Open `http://<station-host>/` in any modern browser
 (Chrome, Edge, Firefox; Internet Explorer is *not* supported).
 
-The default super-admin credentials shipped by a fresh install
+The default admin credentials shipped by a fresh install
 are:
 
 | Field | Value |
@@ -91,11 +91,10 @@ UI lets you do.
 
 | Role | Can see / do |
 |---|---|
-| **Guest (G)** | Read-only Dashboard. No Calendar, no Library, no Settings. Used for monitoring dashboards or info screens at reception. |
-| **DJ (H)** | Their own shows + own files only. Can fill their own shows, upload their own tracks. Cannot create shows. Cannot see other DJs' files. |
-| **Program Manager (P)** | Full Calendar and Library access. Can create and edit shows for any DJ. Cannot change station-wide settings. |
-| **Admin (A)** | Everything a Program Manager can do, plus station-wide settings (Streams, Local Machine, Auto DJ, Show Templates, Localisation). |
-| **Super Admin (S)** | Everything. Plus the ability to create and demote other Admins. Reserved for the station owner / technical admin. |
+| **Guest (G)** | Dashboard and calendar, read-only. No library, no settings. For info screens at reception. |
+| **DJ (H)** | Works with tracks: upload, own playlists and smart blocks, fills the shows they host. Sees all tracks but changes only their own. Cannot create shows; no webstreams or Line-Ins. |
+| **Program Manager (P)** | Runs the programme: all shows and content, webstreams, Line-Ins, podcasts, Auto DJ, show templates, widgets. |
+| **Admin (A)** | Everything a Program Manager can do, plus the station settings (Streams, Local Machine, Backup, …) and the user accounts. The installation account `admin` cannot be deleted. |
 
 > **Why it works this way.** Role-based ACL is enforced server-
 > side in `configs/ACL.php`. Hiding menu items in the UI is

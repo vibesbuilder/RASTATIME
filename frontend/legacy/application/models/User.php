@@ -56,6 +56,17 @@ class Application_Model_User
         return $this->isUserType(UTYPE_SUPERADMIN);
     }
 
+    /**
+     * RASTATIME 2026-10-25 (operator go) - the installation account cannot
+     * be deleted (the protection the retired Super Admin role used to give).
+     */
+    public const PROTECTED_LOGIN = 'admin';
+
+    public static function isProtectedLogin($login): bool
+    {
+        return strcasecmp((string) $login, self::PROTECTED_LOGIN) === 0;
+    }
+
     /** RASTATIME 2026-10-25 (role audit) - Program Manager, Admin or Super Admin. */
     public function isAdminOrPM(): bool
     {

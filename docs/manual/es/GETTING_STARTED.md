@@ -31,7 +31,7 @@ Abra `http://<station-host>/` en cualquier navegador
 moderno (Chrome, Edge, Firefox; Internet Explorer *no*
 está soportado).
 
-Las credenciales super-admin por defecto de una
+Las credenciales de admin por defecto de una
 instalación fresca son:
 
 | Campo | Valor |
@@ -90,11 +90,10 @@ que controla qué le deja hacer la interfaz.
 
 | Rol | Puede ver / hacer |
 |---|---|
-| **Invitado (G)** | Solo Panel de lectura. Sin Calendario, sin Biblioteca, sin Configuración. Usado para paneles de monitoreo o pantallas de información en recepción. |
-| **DJ (H)** | Sus propios programas + sus propios archivos solamente. Puede rellenar sus propios programas, subir sus propias pistas. No puede crear programas. No puede ver archivos de otros DJs. |
-| **Program Manager (P)** | Acceso completo al Calendario y Biblioteca. Puede crear y editar programas para cualquier DJ. No puede cambiar configuración a nivel emisora. |
-| **Admin (A)** | Todo lo que un Program Manager puede hacer, más configuración a nivel emisora (Streams, Máquina local, Auto DJ, Plantillas de programa, Localización). |
-| **Super Admin (S)** | Todo. Más la capacidad de crear y degradar otros Admins. Reservado para el propietario de la emisora / admin técnico. |
+| **Invitado (G)** | Panel y calendario, solo lectura. Sin biblioteca, sin ajustes. Para pantallas informativas en recepción. |
+| **DJ (H)** | Trabaja con pistas: subida, sus propias listas y bloques inteligentes, llena los programas que presenta. Ve todas las pistas pero solo cambia las suyas. No crea programas; sin webstreams ni Line-Ins. |
+| **Program Manager (P)** | Dirige la programación: todos los programas y contenidos, webstreams, Line-Ins, podcasts, Auto DJ, plantillas de programa, widgets. |
+| **Admin (A)** | Todo lo que puede hacer un Program Manager, más los ajustes de la emisora (Streams, Máquina local, Backup, …) y las cuentas de usuario. La cuenta de instalación `admin` no se puede eliminar. |
 
 > **Por qué funciona así.** ACL basado en roles se aplica
 > del lado del servidor en `configs/ACL.php`. Ocultar

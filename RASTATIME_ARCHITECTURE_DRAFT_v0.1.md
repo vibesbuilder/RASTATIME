@@ -1,10 +1,13 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.92
+Draft version: 0.93
 Date: 2026-10-25
 
 > **Revision history**
+> - **0.93 (2026-10-25)** - **Super Admin retired** (§23.72 addendum): four
+>   roles; migration 0073 turns S accounts into Admins; the installation
+>   account `admin` cannot be deleted (legacy and API v2).
 > - **0.92 (2026-10-25)** - **Icecast without input mounts** (§23.72 addendum):
 >   `/main` and `/show` and their URL-auth endpoints removed; port 8000 is
 >   for local clients only (listeners via Apache `/stream/`).
@@ -7694,6 +7697,18 @@ only: Apache relays the listener streams (`/stream/`), Liquidsoap and
 the playout talk to `localhost`.  Icecast keeps listening on `::` (the
 services resolve `localhost`, possibly to `::1`); the inbound firewall
 rules for 8000 / icecast.exe are what closes it from outside.
+
+**Four roles (0.93).**  The Airtime role Super Admin (`S`) is retired:
+migration `0073_retire_super_admin` turns such accounts into Admins (and
+marks a station already in use as set up, since the first-run language /
+time zone dialog now goes to Admins), external group mappings (LDAP /
+FreeIPA, header auth) sign the super-admin group in as Admins, and the
+legacy special cases are gone.  `S` stays in `ACL.php` and `constants.php`
+as a harmless alias of `A`; the API v2 never knew it.  What the role used
+to protect is now an explicit rule: the installation account `admin`
+cannot be deleted - `Application_Model_User::PROTECTED_LOGIN` /
+`isProtectedLogin()` in the user page, `PROTECTED_USERNAME` in the API's
+`UserViewSet.destroy` (403).
 
 **Verification.**  Read-only CLI probes per role
 (`C:/Temp/optd/role_audit_p2_probe.php`, `role_audit_p2b_probe.php`:

@@ -4,15 +4,10 @@ function populateForm(entries) {
   $(".errors").remove();
   $(".success").remove();
 
-  if (entries.type === "S") {
-    $("#user_details").hide();
-    $("#user_details_superadmin_message").show();
-    $("#type").attr("disabled", "1");
-  } else {
-    $("#user_details").show();
-    $("#user_details_superadmin_message").hide();
-    $("#type").removeAttr("disabled");
-  }
+  // RASTATIME 2026-10-25 - the Super Admin role is retired (no special
+  // read-only dialog any more)
+  $("#user_details").show();
+  $("#type").removeAttr("disabled");
 
   $("#user_id").val(entries.id);
   $("#login").val(entries.login);
@@ -89,9 +84,11 @@ function rowCallback(nRow, aData, iDisplayIndex) {
     $("td:eq(3)", nRow).html($.i18n._("Guest"));
   } else if (aData["type"] == "P") {
     $("td:eq(3)", nRow).html($.i18n._("Program Manager"));
-  } else if (aData["type"] == "S") {
-    $("td:eq(3)", nRow).html($.i18n._("Super Admin"));
-    $("td:eq(4)", nRow).html(""); //Disable deleting the super admin
+  }
+
+  // RASTATIME 2026-10-25 - the installation account admin cannot be deleted
+  if (String(aData["login"]).toLowerCase() === "admin") {
+    $("td:eq(4)", nRow).html("");
   }
 
   return nRow;

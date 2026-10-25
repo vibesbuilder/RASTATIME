@@ -5,11 +5,11 @@
 > "Program Managers and Admins only", the matrix in §2 is the full
 > picture.  It describes the state after the role audit of 2026-10-25.
 
-RASTATIME knows five roles.  Every account has exactly one of them, and
+RASTATIME knows four roles.  Every account has exactly one of them, and
 the server checks it on every request - hiding a button is only a
 convenience, the server refuses the action anyway.  This chapter covers:
 
-1. The five roles.
+1. The four roles.
 2. The permission matrix.
 3. Managing users (Settings → Users).
 4. Your own profile (My Profile).
@@ -21,7 +21,7 @@ convenience, the server refuses the action anyway.  This chapter covers:
 
 ---
 
-## 1. The five roles
+## 1. The four roles
 
 | Role | Typical user | In one sentence |
 |---|---|---|
@@ -29,22 +29,20 @@ convenience, the server refuses the action anyway.  This chapter covers:
 | **DJ** | A presenter | Works with tracks: uploads, own playlists and smart blocks, fills the shows they host. |
 | **Program Manager** | Programme co-ordination | Runs the programme: all shows, all content, webstreams, Line-Ins, podcasts, Auto DJ, show templates, widgets. |
 | **Admin** | Station technician | Everything, plus the station settings and the user accounts. |
-| **Super Admin** | Carried over from Airtime; usually absent | Same rights as an Admin; cannot be deleted. |
 
 Each role includes everything the role above it in the table may do.
 
-**The Super Admin** is a role carried over from Airtime.  A RASTATIME
-installation creates its main account `admin` as an **Admin**, and no
-account can be made Super Admin in the interface (the user dialog offers
-Guest, DJ, Program Manager and Admin) - a Super Admin exists only when an
-old Airtime database or an external login (LDAP / FreeIPA) brings one.
-Where one exists, it has exactly the rights of an Admin, it cannot be
-deleted, and its details are not editable under Settings → Users (it
-changes them itself under My Profile).  Admins can create further
-Admins.
+**The installation account `admin`** is an Admin like any other, but it
+cannot be deleted - not on Settings → Users and not through the API.
+Admins can create further Admins.
+
+**The former Super Admin role** (from Airtime) was retired on
+2026-10-25: an account of that type becomes an Admin (database migration
+0073), and external logins (LDAP / FreeIPA, header authentication) in the
+super-admin group sign in as Admins.
 
 > **How it works under the hood.** The role is the one-letter
-> `cc_subjs.type` (G, H, P, A, S).  The coarse rules sit in
+> `cc_subjs.type` (G, H, P, A; S is retired).  The coarse rules sit in
 > `application/configs/ACL.php`; the finer ones (owner of a file, host
 > of a show, Program Manager or higher) are checked in the controllers.
 > The audit and its findings: `docs/operator/ROLE_AUDIT_2026-10.md`.
@@ -55,8 +53,7 @@ Admins.
 
 ✓ = allowed, – = not allowed.  "Own" means the user is the owner of the
 object (they uploaded or created it); "hosted" means the user is a host
-of the show.  The Super Admin column is identical to Admin and left
-out.
+of the show.
 
 | Area | Guest | DJ | Program Manager | Admin |
 |---|:---:|:---:|:---:|:---:|
@@ -140,16 +137,14 @@ for that user.
 | **Mobile phone**, **Skype**, **Jabber** | Optional contact fields. |
 | **User type** | Guest, DJ, Program Manager or Admin. |
 
-Nobody can be made Super Admin here.  If the station has a Super Admin,
-its row opens without editable details and shows "The Super Admin
-changes their own details under My Profile.".
+The row of the account `admin` has no delete icon.
 
 ### Deleting a user
 
 The delete icon in the user list removes the account.  Tracks the user
-owned are **handed over** to the first administrator (the Super Admin,
-or the first Admin if there is none) - they stay in the library.  You
-cannot delete your own account, and the Super Admin cannot be deleted.
+owned are **handed over** to the first Admin - they stay in the
+library.  You cannot delete your own account, and the account `admin`
+cannot be deleted.
 
 There is no "deactivated" state: to take someone's access away, delete
 the account or set a new password; to leave read access only, change
@@ -313,9 +308,7 @@ Another Admin sets a new one under Settings → Users - one reason to keep
 two Admin accounts.  If no Admin can log in any more, the password has
 to be reset in the database (table `cc_subjs`, column `pass`, MD5 of the
 new password) - see
-[`docs/operator/CRASH_RECOVERY.md`](../operator/CRASH_RECOVERY.md).  A
-Super Admin, where one exists, changes its password only itself (My
-Profile).
+[`docs/operator/CRASH_RECOVERY.md`](../operator/CRASH_RECOVERY.md).
 
 ---
 

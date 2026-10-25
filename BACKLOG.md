@@ -6111,7 +6111,11 @@ legt `admin` als Admin an).  Ursprüngliche Notiz:
   Log-Viewer, Cache-Reset), Seite *Localisation* u. a. - beim Rollen-Kapitel nur die Rollen-Stellen
   korrigiert; eine Durchsicht des ganzen Kapitels gegen die Oberfläche steht aus.
 
-### 💡 Rolle „Super Admin“ entfernen? (Operator-Frage 2026-10-25, Evaluierung - wartet auf Entscheidung)
+### ✅ Rolle „Super Admin“ entfernen? - Option B umgesetzt 2026-10-25 (Operator-Go, mit Löschschutz für `admin`)
+
+Migration 0073 live eingespielt (21:30, Backup 02:30 OK, Tag live-2026-10-25): keine S-Konten, Merker
+„eingerichtet“ gesetzt, Schema 73.  Benutzerseite: `admin` ohne Löschen-Symbol, Server lehnt ab;
+API v2 `DELETE /api/v2/users/<admin>` -> 403 nach API-Neustart (Operator).  Ursprüngliche Bewertung:
 
 **Befund:** „S“ ist eine Airtime-Altrolle.  Die Installation legt `admin` als Admin an (`data.sql`), die
 Oberfläche kann niemanden zum S machen, LDAP/FreeIPA/Header-Anmeldung sind nicht aktiv (`general.auth`

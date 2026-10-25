@@ -174,7 +174,7 @@ qu'ils supposent tous.
 
 | Chapitre | Contenu |
 |---|---|
-| [Utilisateurs et rôles](./USERS_AND_ROLES.md) | Super Admin, Admin, Program Manager, DJ, Invité — ce que chaque rôle peut faire. |
+| [Utilisateurs et rôles](./USERS_AND_ROLES.md) | Admin, Program Manager, DJ, Invité — ce que chaque rôle peut faire. |
 | [Paramètres](./SETTINGS.md) | Tour de chaque page sous le menu Paramètres. |
 | [Langues (i18n)](./I18N.md) | Changer la langue de l'interface ; ajouter une traduction. |
 

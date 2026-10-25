@@ -26,13 +26,17 @@ class LibreTime_Model_FreeIpa
             UTYPE_HOST => $config['ldap_groupmap_host'],
             UTYPE_PROGRAM_MANAGER => $config['ldap_groupmap_program_manager'],
             UTYPE_ADMIN => $config['ldap_groupmap_admin'],
-            UTYPE_SUPERADMIN => $config['ldap_groupmap_superadmin'],
         ];
         $type = UTYPE_GUEST;
         foreach ($groupMap as $groupType => $group) {
             if (in_array($group, $ldapUser['memberof'])) {
                 $type = $groupType;
             }
+        }
+        // RASTATIME 2026-10-25 - the Super Admin role is retired: members of
+        // that group sign in as Admins.
+        if (in_array($config['ldap_groupmap_superadmin'], $ldapUser['memberof'])) {
+            $type = UTYPE_ADMIN;
         }
 
         // grab first value for multivalue field

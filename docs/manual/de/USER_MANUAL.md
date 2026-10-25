@@ -169,7 +169,7 @@ sie alle voraussetzen.
 
 | Kapitel | Inhalt |
 |---|---|
-| [Benutzer und Rollen](./USERS_AND_ROLES.md) | Super Admin, Admin, Program Manager, DJ, Gast — was jede Rolle darf. |
+| [Benutzer und Rollen](./USERS_AND_ROLES.md) | Admin, Program Manager, DJ, Gast — was jede Rolle darf. |
 | [Einstellungen](./SETTINGS.md) | Tour durch jede Seite im Einstellungs-Menü. |
 | [Sprachen (i18n)](./I18N.md) | Sprache der Oberfläche wechseln; Übersetzung hinzufügen. |
 

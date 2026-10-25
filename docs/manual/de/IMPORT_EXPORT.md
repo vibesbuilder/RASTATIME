@@ -92,7 +92,7 @@ ist, wird weiterhin abgewiesen.
 | Spalte | Bedeutung |
 |---|---|
 | `login` | Benutzername; der Schlüssel |
-| `type` | `admin`, `program_manager`, `dj` oder `guest`; leer = `guest`. Super-Admins werden nie importiert |
+| `type` | `admin`, `program_manager`, `dj` oder `guest`; leer = `guest` |
 | `first_name`, `last_name`, `email`, `cell_phone`, `skype`, `jabber` | wie im Benutzer-Dialog; `email` ist Pflicht |
 | `password` | **nur neue Benutzer**, Klartext, wird gehasht gespeichert; im Export immer leer |
 
@@ -102,7 +102,7 @@ Benutzers; ohne sie erhält das Konto ein Zufallspasswort, das niemand
 kennt — vergeben Sie das echte unter Einstellungen → Benutzer vor der
 ersten Anmeldung. Mit *ersetzen* bekommt ein bestehender Login die
 neuen Namen, E-Mail, Telefon, Skype, Jabber und Typ, behält aber sein
-Passwort. Der Import ändert nie den Super-Admin oder den Typ Ihres
+Passwort. Der Import ändert nie den Typ Ihres
 eigenen Kontos und nimmt dem letzten Admin nie den Admin-Typ. Löschen
 Sie eine Datei mit Passwörtern nach dem Import.
 

@@ -6,7 +6,7 @@
 > ihr eigenes Kapitel.  Gegen die Oberfläche geprüft am 25.10.2026.
 
 Das Einstellungs-Menü ist die Konfigurationsoberfläche der Station.  Die
-meisten Seiten gehören den **Admins** (und dem Super Admin); ein
+meisten Seiten gehören den **Admins**; ein
 **Program Manager** sieht *Mein Profil*, *Show Templates* und *Auto DJ*;
 Gäste und DJs sehen nur *Mein Profil*.  Siehe
 [Benutzer und Rollen](./USERS_AND_ROLES.md) §2 für die vollständige
@@ -227,8 +227,7 @@ legen Sie die Datei nie unverändert in eine Versionsverwaltung.
 ### „Welche Einstellungen kann ein Program Manager öffnen?“
 
 *Mein Profil*, *Show Templates* und *Auto DJ*.  Alles andere unter
-Einstellungen gehört den Admins; der Super Admin hat dieselben Rechte
-wie ein Admin.  Siehe [Benutzer und Rollen](./USERS_AND_ROLES.md) §1-§2.
+Einstellungen gehört den Admins.  Siehe [Benutzer und Rollen](./USERS_AND_ROLES.md) §1-§2.
 
 ---
 

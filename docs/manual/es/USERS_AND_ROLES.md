@@ -5,12 +5,12 @@
 > Program Managers y Admins», la matriz del §2 da el cuadro completo.
 > Describe el estado tras la auditoría de roles del 25/10/2026.
 
-RASTATIME conoce cinco roles.  Cada cuenta tiene exactamente uno, y el
+RASTATIME conoce cuatro roles.  Cada cuenta tiene exactamente uno, y el
 servidor lo comprueba en cada petición - ocultar un botón es solo una
 comodidad, el servidor rechaza la acción de todos modos.  Este capítulo
 trata:
 
-1. Los cinco roles.
+1. Los cuatro roles.
 2. La matriz de permisos.
 3. Gestionar usuarios (Ajustes → Usuarios).
 4. Su propio perfil (Mi Perfil).
@@ -22,7 +22,7 @@ trata:
 
 ---
 
-## 1. Los cinco roles
+## 1. Los cuatro roles
 
 | Rol | Usuario típico | En una frase |
 |---|---|---|
@@ -30,23 +30,21 @@ trata:
 | **DJ** | Un locutor | Trabaja con pistas: subida, sus propias listas y bloques inteligentes, llena los programas que presenta. |
 | **Program Manager** | Coordinación de la programación | Dirige la programación: todos los programas, todos los contenidos, webstreams, Line-Ins, podcasts, Auto DJ, plantillas de programa, widgets. |
 | **Admin** | Técnica de la emisora | Todo, más los ajustes de la emisora y las cuentas de usuario. |
-| **Super Admin** | Heredado de Airtime; normalmente no existe | Los mismos derechos que un Admin; no se puede eliminar. |
 
 Cada rol incluye todo lo que puede hacer el rol que está por encima de
 él en la tabla.
 
-**El Super Admin** es un rol heredado de Airtime.  Una instalación de
-RASTATIME crea su cuenta principal `admin` como **Admin**, y ninguna
-cuenta puede convertirse en Super Admin desde la interfaz (el diálogo de
-usuario ofrece Invitado, DJ, Program Manager y Admin) - solo existe un
-Super Admin si una base de datos antigua de Airtime o un inicio de
-sesión externo (LDAP / FreeIPA) lo aporta.  Donde existe, tiene
-exactamente los derechos de un Admin, no se puede eliminar, y sus datos
-no se pueden editar en Ajustes → Usuarios (los cambia él mismo en Mi
-Perfil).  Los Admins pueden crear otros Admins.
+**La cuenta de instalación `admin`** es un Admin como cualquier otro,
+pero no se puede eliminar - ni en Ajustes → Usuarios ni a través de la
+API.  Los Admins pueden crear otros Admins.
+
+**El antiguo rol Super Admin** (de Airtime) se retiró el 25/10/2026: una
+cuenta de ese tipo pasa a ser Admin (migración de base de datos 0073), y
+los inicios de sesión externos (LDAP / FreeIPA, autenticación por
+cabecera) del grupo super-admin entran como Admins.
 
 > **Bajo el capó.** El rol es la letra única de `cc_subjs.type`
-> (G, H, P, A, S).  Las reglas generales están en
+> (G, H, P, A; S está retirado).  Las reglas generales están en
 > `application/configs/ACL.php`; las más finas (propietario de un
 > archivo, presentador de un programa, Program Manager o superior) se
 > comprueban en los controladores.  La auditoría y sus hallazgos:
@@ -58,8 +56,7 @@ Perfil).  Los Admins pueden crear otros Admins.
 
 ✓ = permitido, – = no permitido.  «Propios» significa que el usuario es
 propietario del objeto (lo subió o lo creó); «presentados» significa que
-el usuario es presentador (host) del programa.  La columna Super Admin
-es idéntica a la de Admin y se omite.
+el usuario es presentador (host) del programa.
 
 | Área | Invitado | DJ | Program Manager | Admin |
 |---|:---:|:---:|:---:|:---:|
@@ -146,17 +143,14 @@ diálogo para ese usuario.
 | **Teléfono móvil**, **Skype**, **Jabber** | Campos de contacto opcionales. |
 | **Tipo de usuario** | Invitado, DJ, Program Manager o Admin. |
 
-Aquí nadie puede convertirse en Super Admin.  Si la emisora tiene un
-Super Admin, su fila se abre sin datos editables y muestra «El Super
-Admin cambia sus propios datos en Mi Perfil.».
+La fila de la cuenta `admin` no tiene icono de eliminar.
 
 ### Eliminar un usuario
 
 El icono de eliminar en la lista de usuarios borra la cuenta.  Las
 pistas de las que el usuario era propietario se **entregan** al primer
-administrador (el Super Admin, o el primer Admin si no lo hay) - siguen
-en la biblioteca.  No puede eliminar su propia cuenta, y el Super Admin
-no se puede eliminar.
+Admin - siguen en la biblioteca.  No puede eliminar su propia cuenta, y
+la cuenta `admin` no se puede eliminar.
 
 No existe un estado «desactivado»: para quitarle el acceso a alguien,
 elimine la cuenta o asigne una contraseña nueva; para dejar solo acceso
@@ -329,8 +323,6 @@ mantener dos cuentas Admin.  Si ningún Admin puede iniciar sesión, hay
 que restablecer la contraseña en la base de datos (tabla `cc_subjs`,
 columna `pass`, MD5 de la contraseña nueva) - vea
 [`docs/operator/CRASH_RECOVERY.md`](../../operator/CRASH_RECOVERY.md).
-Un Super Admin, donde existe, solo cambia su contraseña él mismo (Mi
-Perfil).
 
 ---
 

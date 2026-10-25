@@ -158,3 +158,7 @@ agreed state; guests have no history page.)
    rewritten in EN/DE/FR/ES from this audit (matrix in §2 of the
    chapter); role statements in SETTINGS, LINE_IN, CALENDAR, LIBRARY,
    SHOW_TEMPLATES and ANALYTICS corrected in all four languages.
+
+Follow-up (operator go, 2026-10-25): the Super Admin role is retired
+(migration 0073, S -> A; four roles), and the installation account
+`admin` cannot be deleted (user page and API v2).

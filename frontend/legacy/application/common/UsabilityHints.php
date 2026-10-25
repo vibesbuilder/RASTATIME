@@ -22,7 +22,6 @@ class Application_Common_UsabilityHints
         $userIsOnCalendarPage = false;
         $userIsOnAddMediaPage = false;
         $userIsOnShowbuilderPage = false;
-        $userIsSuperAdmin = Application_Model_User::getCurrentUser()->isSuperAdmin();
 
         // If $userPath is set the request came from AJAX so the user's
         // current location inside Airtime gets passed in to this function.
