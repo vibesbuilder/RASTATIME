@@ -40,6 +40,11 @@ class TestUserDeleteProtection(APITestCase):
         self.assertEqual(response.status_code, 403)
         self.assertTrue(User.objects.filter(pk=self.protected.pk).exists())
 
+    def test_anonymous_is_refused_not_500(self):
+        self.client.logout()
+        response = self.client.get("/api/v2/users")
+        self.assertIn(response.status_code, (401, 403))
+
     def test_other_account_is_deleted(self):
         response = self.client.delete(f"/api/v2/users/{self.dj.pk}")
         self.assertEqual(response.status_code, 204)

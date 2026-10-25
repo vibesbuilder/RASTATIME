@@ -101,13 +101,19 @@ class IsAdminOrOwnUser(BasePermission):
     https://www.django-rest-framework.org/api-guide/permissions/#custom-permissions
     """
 
+    # RASTATIME 2026-10-25 - an anonymous request carries Django's
+    # AnonymousUser, whose is_superuser is a plain bool: calling it raised a
+    # TypeError (HTTP 500 for /api/v2/users without a login) instead of a
+    # refusal.
+    @staticmethod
+    def _is_admin(user) -> bool:
+        return bool(user and user.is_authenticated and user.is_superuser())
+
     def has_permission(self, request, view):
-        if request.user.is_superuser():
-            return True
-        return False
+        return self._is_admin(request.user)
 
     def has_object_permission(self, request, view, obj):
-        if request.user.is_superuser():
+        if self._is_admin(request.user):
             return True
         return obj.username == request.user
 
