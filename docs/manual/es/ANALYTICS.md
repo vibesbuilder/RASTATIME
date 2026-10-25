@@ -36,7 +36,9 @@ Arriba, un **selector de rango de fecha/hora** con **Filter
 History** limita cada vista a una ventana — por defecto, el día
 actual.
 
-Debajo, tres pestañas (los DJ solo ven la tercera):
+Debajo, tres pestañas (los DJ solo ven la tercera, con los programas
+que presentan; allí añaden, editan y eliminan entradas - los Program
+Managers y los Admins editan todas las entradas):
 
 * **Log Sheet** — el registro bruto de emisión, una fila por
   elemento reproducido, con su hora de inicio / fin y las columnas

@@ -373,8 +373,10 @@ pour le runbook de récupération.
 
 ## 7. Permissions
 
-Seuls les rôles **Admin (A)** et **Super Admin (S)**
-peuvent créer, modifier ou supprimer des Line-Ins.
+Seuls les **Program Managers (P)**, les **Admins (A)** et le
+**Super Admin (S)** peuvent créer, modifier ou supprimer des
+Line-Ins (depuis le 25/10/2026 ; avant, les Admins
+seulement).
 Raisons :
 
 - Un Line-In référence un périphérique physique sur la
@@ -382,10 +384,12 @@ Raisons :
   le planning de chaque DJ.
 - La configuration carte son est au niveau station.
 
-Les DJ (H) et Program Managers (P) peuvent glisser les
-Line-Ins existants dans leurs propres
-playlists / émissions, mais ne peuvent pas créer ou
-modifier les définitions Line-In sous-jacentes.
+Les DJ (H) et les invités (G) ne voient pas du tout les
+Line-Ins : les DJ travaillent uniquement avec des pistes,
+l'onglet Line Inputs et l'entrée **Nouveau → Line Input**
+sont donc masqués, et l'ajout d'un Line-In à une playlist
+ou à une émission leur est refusé.  Un Program Manager
+place le Line-In dans l'émission.
 
 ---
 

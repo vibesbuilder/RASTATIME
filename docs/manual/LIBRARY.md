@@ -315,10 +315,9 @@ Library → **+ New** → **Smart Block**.
 
 ### Why a smart block can return fewer tracks than you asked for
 
-Smart blocks respect the operator's **library scope**:
-
-- The owning DJ sees only their own tracks.
-- A Program Manager sees the whole library.
+Smart blocks search the **whole library** for every role - a
+DJ's smart block also draws on other users' tracks.  To limit
+a block to your own tracks, add the **Owner** criterion.
 
 If you set "Limit to 10 tracks" but only 4 tracks in the
 library match the criteria, you get 4. The block does not

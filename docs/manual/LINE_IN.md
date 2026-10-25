@@ -402,16 +402,19 @@ for the recovery runbook.
 
 ## 7. Permissions
 
-Only **Admin (A)** and **Super Admin (S)** roles can create,
-edit, or delete Line-Ins. Reasons:
+Only **Program Managers (P)**, **Admins (A)** and the **Super
+Admin (S)** can create, edit, or delete Line-Ins (since
+2026-10-25; before, Admins only). Reasons:
 
 - A Line-In references a physical device on the operator's
   machine. Changes can break the schedule of every DJ.
 - Sound-card configuration is station-wide.
 
-DJs (H) and Program Managers (P) can drag existing Line-Ins
-into their own playlists / shows, but cannot create or
-modify the underlying Line-In definitions.
+DJs (H) and Guests (G) do not see Line-Ins at all: DJs work
+with tracks only, so the Line Inputs tab and the **New →
+Line Input** entry are hidden, and adding a Line-In to a
+playlist or show is refused for them.  A Program Manager
+places the Line-In into the show.
 
 > **How it works under the hood.** ACL enforced in
 > `application/configs/ACL.php` resource `linein-controller`.

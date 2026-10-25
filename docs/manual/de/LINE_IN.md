@@ -435,18 +435,21 @@ für das Wiederherstellungs-Runbook.
 
 ## 7. Berechtigungen
 
-Nur die Rollen **Admin (A)** und **Super Admin (S)** können
-Line-Ins erstellen, bearbeiten oder löschen. Gründe:
+Nur **Program Manager (P)**, **Admins (A)** und der **Super
+Admin (S)** können Line-Ins erstellen, bearbeiten oder
+löschen (seit 25.10.2026; vorher nur Admins). Gründe:
 
 - Ein Line-In referenziert ein physisches Gerät auf der
   Operator-Maschine. Änderungen können den Sendeplan jedes
   DJs brechen.
 - Soundkarten-Konfiguration ist stationsweit.
 
-DJs (H) und Program Manager (P) können bestehende Line-Ins
-in ihre eigenen Playlists / Sendungen ziehen, können aber
-die zugrunde liegenden Line-In-Definitionen nicht erstellen
-oder modifizieren.
+DJs (H) und Gäste (G) sehen Line-Ins gar nicht: DJs arbeiten
+nur mit Tracks, deshalb sind der Reiter Line Inputs und der
+Eintrag **Neu → Line Input** ausgeblendet, und das Einfügen
+eines Line-Ins in eine Playlist oder Sendung wird für sie
+abgelehnt.  Ein Program Manager setzt den Line-In in die
+Sendung.
 
 > **Wie es unter der Haube funktioniert.** ACL erzwungen in
 > `application/configs/ACL.php`, Ressource

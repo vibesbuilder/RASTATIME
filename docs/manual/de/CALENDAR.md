@@ -166,7 +166,7 @@ Häufige Gründe:
 | "Cannot schedule overlapping shows." | Eine andere Sendung belegt bereits eine oder mehrere Sekunden des Slots. RASTATIME erlaubt keine überlappenden Sendungen. |
 | "Start time must be in the future." | Einmalige Sendungen müssen mindestens 1 Minute ab jetzt starten. |
 | "End time must be after start time." | Selbsterklärend; prüfen Sie Dauer und Enddatum. |
-| "You are not allowed to schedule show *X*." | Sie haben einen anderen DJ als Host ausgewählt, aber Sie sind kein Admin. DJs können nur sich selbst als Host setzen. |
+| "You are not allowed to schedule show *X*." | Sie wollten Inhalte in eine Sendung einplanen, deren Host Sie nicht sind. DJs planen in die Sendungen ein, deren Host sie sind; Program Manager und Admins in jede Sendung. |
 
 Wenn das Formular mit einem generischen "Save failed"-Toast
 und ohne sichtbare Pro-Feld-Nachricht ablehnt, prüfen Sie
@@ -364,8 +364,8 @@ nach unten zum Verlängern, nach oben zum Verkürzen.
   geändert werden).
 - Die aktuell auf Sendung befindliche Sendung (verwenden
   Sie stattdessen **Sendung abbrechen**).
-- Sendungen, die Sie nicht besitzen (außer Sie sind
-  Program Manager oder Admin).
+- Jede Sendung, außer Sie sind Program Manager oder Admin
+  (DJs verschieben und verlängern keine Sendungen).
 
 ---
 

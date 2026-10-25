@@ -274,9 +274,10 @@ Biblioteca → **+ Nuevo** → **Smart Block**.
 
 ### Por qué un smart block puede devolver menos pistas de las pedidas
 
-Los smart blocks respetan el **alcance de biblioteca** del
-operador: el DJ propietario ve solo sus propias pistas; un
-Program Manager ve toda la biblioteca.
+Los smart blocks buscan en **toda la biblioteca** para todos
+los roles - el smart block de un DJ también toma pistas de
+otros usuarios.  Para limitar un bloque a sus propias
+pistas, añada el criterio **Owner**.
 
 > **Cómo funciona bajo el capó.** Los criterios están
 > almacenados en `cc_blockcriteria`. En momento de build,

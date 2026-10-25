@@ -32,7 +32,9 @@ show, Auto DJ, manual override, live DJ).
 At the top, a **date/time range picker** with **Filter History**
 narrows every view to a window — it defaults to the current day.
 
-Three tabs below it (DJs see only the third):
+Three tabs below it (DJs see only the third, with the shows they
+host; there they add, edit and delete entries - Program Managers and
+Admins edit every entry):
 
 * **Log Sheet** — the raw airing log, one row per played item, with
   its start / end time and the metadata columns your active template

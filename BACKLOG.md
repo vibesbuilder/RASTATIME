@@ -919,7 +919,10 @@ Auth-Skripte und `api/icecast-listener-allow` gelöscht; Icecast-Neustart 19:00:
 nach 3 s zurück, Streams 200, `/main` 404), Firewall-Regeln „RASTATIME Icecast“ + 2x „icecast“ vom
 Operator deaktiviert - **Paket 4 erledigt.**  Achtung Rückfall auf Icecast 2.4.4:
 `icecast.xml.2.4.4-backup` enthält die alten Mounts noch (`C:/Temp/optd/icecast_strip_input_mounts.py`).
-Paket 5 (Handbuch) folgt.
+**Paket 5 erledigt 2026-10-25:** Handbuch `USERS_AND_ROLES` ×4 neu, Rollen-Aussagen in SETTINGS,
+LINE_IN, CALENDAR, LIBRARY, SHOW_TEMPLATES, ANALYTICS ×4 korrigiert.  Offen aus dem Audit: Phase 2
+CSRF (ab 27.10.), PM/DJ-Abnahme; Ideen siehe unten (Super-Admin-Hinweis im Benutzer-Dialog, Show
+Templates/Widgets-Seite für PM, SETTINGS-Kapitel mit erfundenen Funktionen).
 **Offene Frage (Soll > Ist):** Gäste laden die Bibliothek auf dem Dashboard nicht (ACL ohne
 `library`/`usersettings`/Podcast-Liste, schon vor dem Audit; 403 im UI-Test), die Soll-Matrix sagt
 „Bibliothek ansehen: Gast ✓“.  Optionen: (a) Gästen nur die Lese-Aktionen freigeben (Feed,
@@ -6087,6 +6090,20 @@ Scratchpad `autoplaylist_null_summary.php` (nur lesend).
 Ordner, darum nur die Warnung `unlink(D:/stor/\imported): Is a directory` (24./25.10. drei Fälle, abgefangen;
 die Audiodatei ist gelöscht, das Artwork-Aufräumen bricht ab).  Behebung im Sofort-Paket des Rollen-Audits
 (Glob nur bei nicht-leerem Artwork-Pfad unterhalb der Bibliothek).
+
+### 💡 Rollen-Audit: kleine Folgepunkte (notiert 2026-10-25, Paket 5)
+
+- **Super-Admin-Zeile im Benutzer-Dialog leer:** `user.js` blendet die Details aus und will
+  `#user_details_superadmin_message` zeigen - das Element gibt es nicht, der Dialog bleibt leer.  Ein
+  Hinweis „Der Super Admin ändert seine Angaben unter Mein Profil" (neuer Text, ×4 übersetzen,
+  po2mo + Apache-Neustart).
+- **Program Manager und die Seiten Show Templates / Widgets:** PMs speichern Vorlagen im
+  Sendungsdialog, die Übersicht *Einstellungen → Show Templates* ist Admin-only; die Seite *Widgets*
+  öffnen alle (Speichern nur PM+).  Operator-Entscheidung: Show Templates für PM freigeben wie Auto DJ
+  (ACL-Privileg + Menü)?  Widgets-Seite für Gäste/DJs ausblenden?
+- **Kapitel SETTINGS (×4) beschreibt erfundene Funktionen:** Untermenü *Tools* (DB-Konsole,
+  Log-Viewer, Cache-Reset), Seite *Localisation* u. a. - beim Rollen-Kapitel nur die Rollen-Stellen
+  korrigiert; eine Durchsicht des ganzen Kapitels gegen die Oberfläche steht aus.
 
 ## 🟡 Veröffentlichung auf GitHub, Releases, Update-Weg (Evaluierung 2026-10-25) - Defer
 

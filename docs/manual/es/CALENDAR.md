@@ -109,7 +109,7 @@ El formulario se divide en secciones plegables. **Qué** y
 | "Cannot schedule overlapping shows." | Otro programa ya ocupa parte del slot. |
 | "Start time must be in the future." | Programas puntuales deben empezar al menos 1 minuto desde ahora. |
 | "End time must be after start time." | Auto-explicativo. |
-| "You are not allowed to schedule show *X*." | Eligió otro DJ como presentador pero usted no es Admin. |
+| "You are not allowed to schedule show *X*." | Intentó planificar contenido en un programa del que no es presentador. Los DJ planifican en los programas que presentan; los Program Managers y los Admins en todos. |
 
 ---
 
@@ -260,8 +260,8 @@ alargar, hacia arriba para acortar.
 - Programas pasados.
 - El programa actualmente al aire (use **Cancelar
   programa** en su lugar).
-- Programas que no posee (a menos que sea Program Manager
-  o Admin).
+- Cualquier programa, a menos que sea Program Manager o
+  Admin (los DJ no mueven ni redimensionan programas).
 
 ---
 

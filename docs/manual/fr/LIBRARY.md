@@ -347,11 +347,10 @@ Bibliothèque → **+ Nouveau** → **Smart Block**.
 
 ### Pourquoi un smart block peut retourner moins de pistes que demandé
 
-Les smart blocks respectent le **scope de bibliothèque**
-de l'opérateur :
-
-- Le DJ propriétaire voit seulement ses propres pistes.
-- Un Program Manager voit toute la bibliothèque.
+Les smart blocks cherchent dans **toute la bibliothèque**,
+pour tous les rôles - le smart block d'un DJ puise aussi dans
+les pistes des autres utilisateurs.  Pour limiter un bloc à
+vos propres pistes, ajoutez le critère **Owner**.
 
 Si vous définissez "Limiter à 10 pistes" mais seulement 4
 pistes dans la bibliothèque correspondent aux critères,

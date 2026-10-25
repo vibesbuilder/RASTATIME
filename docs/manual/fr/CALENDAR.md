@@ -168,7 +168,7 @@ Raisons courantes :
 | "Cannot schedule overlapping shows." | Une autre émission occupe déjà une ou plusieurs secondes du créneau. RASTATIME n'autorise pas les émissions qui se chevauchent. |
 | "Start time must be in the future." | Les émissions ponctuelles doivent commencer au moins 1 minute à partir de maintenant. |
 | "End time must be after start time." | Auto-explicatif ; vérifiez la durée et la date de fin. |
-| "You are not allowed to schedule show *X*." | Vous avez choisi un autre DJ comme animateur mais vous n'êtes pas Admin. Les DJ peuvent seulement se définir eux-mêmes comme animateur. |
+| "You are not allowed to schedule show *X*." | Vous avez voulu programmer du contenu dans une émission dont vous n'êtes pas animateur. Les DJ programment dans les émissions qu'ils animent ; les Program Managers et les Admins dans toutes. |
 
 Si le formulaire rejette avec un toast générique "Save
 failed" et aucun message par champ visible, vérifiez le
@@ -367,8 +367,8 @@ allonger, vers le haut pour raccourcir.
   rétroactivement).
 - L'émission actuellement à l'antenne (utilisez plutôt
   **Annuler l'émission**).
-- Émissions que vous ne possédez pas (sauf si vous êtes
-  Program Manager ou Admin).
+- Toute émission, sauf si vous êtes Program Manager ou Admin
+  (les DJ ne déplacent ni ne redimensionnent d'émissions).
 
 ---
 

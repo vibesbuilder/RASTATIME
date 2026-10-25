@@ -154,4 +154,7 @@ agreed state; guests have no history page.)
    back after 3 s, streams via `/stream/` 200, `/main` 404); the inbound
    rules "RASTATIME Icecast" (port 8000, any remote) and "icecast" (2x,
    program rule) disabled.
-5. **Manual** USERS_AND_ROLES ×4 after 2.
+5. **Manual** USERS_AND_ROLES ×4 after 2.  **Done 2026-10-25:** chapter
+   rewritten in EN/DE/FR/ES from this audit (matrix in §2 of the
+   chapter); role statements in SETTINGS, LINE_IN, CALENDAR, LIBRARY,
+   SHOW_TEMPLATES and ANALYTICS corrected in all four languages.

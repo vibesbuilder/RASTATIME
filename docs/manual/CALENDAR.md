@@ -152,7 +152,7 @@ Common reasons:
 | "Cannot schedule overlapping shows." | Another show already occupies one or more seconds of the slot. RASTATIME does not allow overlapping shows. |
 | "Start time must be in the future." | One-off shows must start at least 1 minute from now. |
 | "End time must be after start time." | Self-explanatory; check duration and end date. |
-| "You are not allowed to schedule show *X*." | You picked another DJ as host but you are not an Admin. DJs can only set themselves as host. |
+| "You are not allowed to schedule show *X*." | You tried to add content to a show you are not a host of. DJs schedule into the shows they host; Program Managers and Admins into every show. |
 
 If the form rejects with a generic "Save failed" toast and no
 visible per-field message, check the operator log
@@ -327,8 +327,8 @@ double-arrow. Drag down to lengthen, up to shorten.
 
 - Past shows (cannot retroactively change history).
 - The currently-on-air show (use **Cancel Show** instead).
-- Shows you do not own (unless you are a Program Manager or
-  Admin).
+- Any show, unless you are a Program Manager or Admin (DJs
+  do not move or resize shows).
 
 ---
 

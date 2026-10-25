@@ -1,387 +1,335 @@
 # Usuarios y roles
 
-> **Dónde está usted en el manual.** Este capítulo es la
-> referencia de permisos para cada función del resto del
-> manual.
+> **Dónde está usted en el manual.** Este capítulo es la referencia de
+> permisos para el resto del manual: cuando otro capítulo dice «solo
+> Program Managers y Admins», la matriz del §2 da el cuadro completo.
+> Describe el estado tras la auditoría de roles del 25/10/2026.
 
-RASTATIME tiene cinco roles de usuario y un único sistema
-de permisos. Cada acción — abrir una página, arrastrar
-una pista, guardar un programa, reiniciar un servicio —
-es verificada del lado del servidor contra el rol del
-usuario.
+RASTATIME conoce cinco roles.  Cada cuenta tiene exactamente uno, y el
+servidor lo comprueba en cada petición - ocultar un botón es solo una
+comodidad, el servidor rechaza la acción de todos modos.  Este capítulo
+trata:
 
-Este capítulo cubre:
-
-1. Los cinco roles + qué puede hacer cada uno.
-2. Gestionar usuarios.
-3. La matriz completa de permisos.
-4. Gestión de claves API.
-5. Asignación de rol best-practice.
+1. Los cinco roles.
+2. La matriz de permisos.
+3. Gestionar usuarios (Ajustes → Usuarios).
+4. Su propio perfil (Mi Perfil).
+5. Credenciales para conexiones en directo.
+6. Acceso a la API.
+7. Sesiones y protección contra abusos.
+8. Protección del inicio de sesión.
+9. Reparto típico de roles y preguntas frecuentes.
 
 ---
 
 ## 1. Los cinco roles
 
-| Rol | Símbolo | Usuario típico | Resumen de una línea |
-|---|---|---|---|
-| **Invitado** | G | Pantalla de recepción / lobby | Panel de solo lectura. |
-| **DJ** | H | Cada presentador individual | Sus propios programas + sus propios archivos solamente. |
-| **Program Manager** | P | Coordinador de programa | Todo calendario + biblioteca, sin configuración de emisora. |
-| **Admin** | A | Admin técnico de emisora | Todo excepto crear otros Admins. |
-| **Super Admin** | S | Propietario de la emisora | Todo incluyendo crear Admins. |
+| Rol | Usuario típico | En una frase |
+|---|---|---|
+| **Invitado** | Pantalla de recepción, visitante | Ve el panel y el calendario, no cambia nada. |
+| **DJ** | Un locutor | Trabaja con pistas: subida, sus propias listas y bloques inteligentes, llena los programas que presenta. |
+| **Program Manager** | Coordinación de la programación | Dirige la programación: todos los programas, todos los contenidos, webstreams, Line-Ins, podcasts, Auto DJ. |
+| **Admin** | Técnica de la emisora | Todo, más los ajustes de la emisora y las cuentas de usuario. |
+| **Super Admin** | La cuenta de instalación | Los mismos derechos que un Admin; no se puede eliminar. |
 
-Un usuario tiene exactamente **un** rol.
+Cada rol incluye todo lo que puede hacer el rol que está por encima de
+él en la tabla.
 
-### Por qué basado en roles y no en capacidades?
+**El Super Admin** es la cuenta creada durante la instalación.  Tiene
+los derechos de un Admin, pero no se puede eliminar, y ninguna cuenta
+puede convertirse en Super Admin desde la interfaz (el diálogo de
+usuario ofrece Invitado, DJ, Program Manager y Admin).  Los Admins
+pueden crear otros Admins.
 
-Basado en roles es el modelo más simple que cubre el 99 %
-de las necesidades de las emisoras. Basado en capacidades
-(toggles granulares por función) es flexible pero crea
-exponencialmente más configuraciones a probar.
-
-> **Cómo funciona bajo el capó.** Los roles viven en
-> `cc_subjs.type` como un solo carácter (G / H / P / A /
-> S). Las verificaciones de permisos suceden en
-> `application/configs/ACL.php` vía Zend_Acl. Vea
-> ARCHITECTURE §11.
+> **Bajo el capó.** El rol es la letra única de `cc_subjs.type`
+> (G, H, P, A, S).  Las reglas generales están en
+> `application/configs/ACL.php`; las más finas (propietario de un
+> archivo, presentador de un programa, Program Manager o superior) se
+> comprueban en los controladores.  La auditoría y sus hallazgos:
+> `docs/operator/ROLE_AUDIT_2026-10.md`.
 
 ---
 
-## 2. Capacidades por rol
+## 2. La matriz de permisos
 
-### Invitado (G)
+✓ = permitido, – = no permitido.  «Propios» significa que el usuario es
+propietario del objeto (lo subió o lo creó); «presentados» significa que
+el usuario es presentador (host) del programa.  La columna Super Admin
+es idéntica a la de Admin y se omite.
 
-El rol más pequeño. Usado para pantallas de solo lectura
-en áreas públicas.
+| Área | Invitado | DJ | Program Manager | Admin |
+|---|:---:|:---:|:---:|:---:|
+| **Cuenta** | | | | |
+| Editar el propio perfil (nombre, correo, contraseña, idioma, zona horaria) | ✓ | ✓ | ✓ | ✓ |
+| Gestionar otros usuarios (Ajustes → Usuarios) | – | – | – | ✓ |
+| **Panel y fuentes en directo** | | | | |
+| Ver Now Playing y los programas planificados | ✓ | ✓ | ✓ | ✓ |
+| Ver el estado de Auto DJ en la cabecera | ✓ | ✓ | ✓ | ✓ |
+| Activar o desconectar una fuente en directo (Master / Show) | – | durante un programa presentado | ✓ | ✓ |
+| Cancelar el programa en curso | – | – | ✓ | ✓ |
+| **Calendario** | | | | |
+| Ver el calendario | ✓ | ✓ | ✓ | ✓ |
+| Crear, editar, mover, redimensionar, eliminar, cancelar programas | – | – | ✓ | ✓ |
+| Vaciar el contenido de un programa, teasers, plantillas en el diálogo del programa | – | – | ✓ | ✓ |
+| Planificar contenido en un programa | – | programas presentados | ✓ | ✓ |
+| **Biblioteca** | | | | |
+| Ver la biblioteca (pistas, listas, bloques inteligentes, lista de podcasts) | – | ✓ | ✓ | ✓ |
+| Subir pistas | – | ✓ | ✓ | ✓ |
+| Editar metadatos y puntos de cue, eliminar pistas | – | propios | ✓ | ✓ |
+| Cambiar el propietario de una pista | – | – | – | ✓ |
+| Crear listas y bloques inteligentes | – | ✓ | ✓ | ✓ |
+| Editar, mezclar, eliminar listas y bloques inteligentes | – | propios | ✓ | ✓ |
+| Ver, usar y editar webstreams y Line-Ins | – | – | ✓ | ✓ |
+| Suscribirse a podcasts, editarlos, eliminarlos; episodios | – | – | ✓ | ✓ |
+| Publicar en el podcast de la emisora (Mi Podcast) | – | – | ✓ | ✓ |
+| **Estadísticas** | | | | |
+| Estadísticas de oyentes | – | ✓ | ✓ | ✓ |
+| Historial de reproducción: ver | – | programas presentados | ✓ | ✓ |
+| Historial de reproducción: añadir, editar, eliminar entradas | – | programas presentados | ✓ | ✓ |
+| Plantillas de historial | – | – | – | ✓ |
+| **Widgets** | | | | |
+| Cambiar y guardar los ajustes de los widgets | – | – | ✓ | ✓ |
+| **Ajustes** | | | | |
+| Auto DJ | – | – | ✓ | ✓ |
+| Idioma predeterminado de la emisora (diálogo del primer inicio) | – | – | ✓ | ✓ |
+| General, Usuarios, Tipos de pista, página Show Templates, Streams, Máquina local, Importar / Exportar, Backup, Estado | – | – | – | ✓ |
 
-Puede: iniciar sesión, ver Panel En reproducción + Viene
-después, ver el calendario público (solo lectura).
+Lo que cada rol ve de forma distinta:
 
-No puede: acceder a Biblioteca, Configuración o cualquier
-menú administrativo.
+- **Los invitados** reciben el panel y el calendario.  La biblioteca
+  muestra «No tienes permiso para ver la biblioteca.»; el menú
+  **Nuevo** y **Upload** no se ofrecen.
+- **Los DJ** ven todas las pistas, listas y bloques inteligentes de la
+  emisora, pero solo cambian los suyos.  Planifican en los programas que
+  presentan - cualquier pista, lista o bloque inteligente, también los
+  de otros.  Los webstreams y los Line-Ins están ocultos para ellos
+  (pestañas de la biblioteca, menú **Nuevo**); un DJ no puede añadirlos
+  a listas ni a programas.  En el historial de reproducción, un DJ
+  obtiene el *Show Summary* de sus propios programas y puede añadir,
+  editar y eliminar entradas allí.  La lista de podcasts es de solo
+  lectura para ellos.
+- **Los Program Managers** dirigen la programación, pero solo abren una
+  página de ajustes: **Ajustes → Auto DJ** (además de Mi Perfil).  Las
+  plantillas de programa se guardan y aplican en el diálogo del
+  programa; la página de resumen *Ajustes → Show Templates* pertenece a
+  los Admins.
+- **Los Admins** gestionan además la emisora: ajustes, streams, tarjeta
+  de sonido, usuarios, tipos de pista, copia de seguridad, importar /
+  exportar, estado del sistema.
 
-### DJ (H)
-
-Cuenta por-presentador. El rol que la mayoría de los
-usuarios tienen.
-
-Puede: todo lo que Invitado puede, más subir pistas
-(propias), crear smart blocks y playlists, planificar sus
-*propios* items en sus *propios* programas, editar
-programas donde es presentador.
-
-No puede: crear programas (los Program Managers deben
-crear; el DJ rellena), ver / usar pistas / blocks /
-playlists de otros DJs, cambiar configuración a nivel
-emisora, reiniciar servicios.
-
-### Program Manager (P)
-
-El propietario del planning.
-
-Puede: todo lo que DJ puede, más crear / editar /
-eliminar *cualquier* programa, ver / usar pistas /
-blocks / playlists de *cualquier* DJ, usar Plantillas de
-programa, usar Auto DJ, gestionar entradas de biblioteca
-Webstreams, alternar Master DJ al aire / fuera del aire.
-
-No puede: gestionar Line-Ins (Admin solamente), gestionar
-Streams, gestionar Usuarios, reiniciar servicios.
-
-### Admin (A)
-
-Acceso completo a nivel emisora excepto crear otros
-Admins.
-
-Puede: todo lo que Program Manager puede, más gestionar
-Line-Ins, gestionar Streams, gestionar Usuarios (crear /
-editar / desactivar DJs y Program Managers), configurar
-Preferencias generales, configurar Máquina local,
-configurar valores por defecto Auto DJ, restablecer
-contraseñas, leer página Estado del sistema, reiniciar
-servicios.
-
-No puede: promover usuario a Admin (Super Admin
-solamente), degradar otro Admin.
-
-### Super Admin (S)
-
-Rol máximo. Reservado para el propietario de la emisora /
-admin técnico.
-
-Puede: todo lo que Admin puede, más crear nuevos Admins,
-degradar Admins a roles inferiores, ver clave API de
-cualquier usuario.
-
-Por diseño, hay **exactamente un** Super Admin por
-emisora.
+El diálogo de idioma y zona horaria del primer inicio fija para cada uno
+**su propio** idioma y zona horaria; el idioma predeterminado de toda la
+emisora solo cambia si lo confirma un Program Manager o un Admin.
 
 ---
 
 ## 3. Gestionar usuarios
 
-Configuración → **Gestionar usuarios** (solo Admin / Super
-Admin).
+Ajustes → **Usuarios** (Admins).
 
-### Crear un nuevo usuario
+### Crear y editar un usuario
 
-Gestionar usuarios → **+ Nuevo**.
+**Nuevo** abre el diálogo de usuario; un clic en una fila abre el mismo
+diálogo para ese usuario.
 
 | Campo | Notas |
 |---|---|
-| **Nombre de usuario** | Minúsculas, sin espacios, 3-32 caracteres. No se puede cambiar una vez establecido. |
-| **Nombre / Apellido** | Nombre de visualización. |
-| **Email** | Usado para restablecimiento de contraseña. |
-| **Contraseña** | Mín 8 caracteres. |
-| **Rol** | Uno de los cinco roles. Por defecto DJ. |
-| **Móvil** | Opcional. |
-| **Skype** | Opcional. Campo legacy. |
-| **Activo** | Por defecto activado. |
+| **Nombre de usuario** | El nombre de inicio de sesión. |
+| **Contraseña** / **Verificar contraseña** | Obligatoria para un usuario nuevo.  Al editar, deje el texto de relleno para conservar la contraseña. |
+| **Nombre**, **Apellido** | Se muestran en las listas de usuarios y como presentador del programa. |
+| **Correo electrónico** | Dirección de contacto. |
+| **Teléfono móvil**, **Skype**, **Jabber** | Campos de contacto opcionales. |
+| **Tipo de usuario** | Invitado, DJ, Program Manager o Admin. |
 
-### Editar un usuario
+Aquí nadie puede convertirse en Super Admin.  La fila del Super Admin se
+abre sin datos editables - el Super Admin cambia su nombre, su correo y
+su contraseña él mismo en **Mi Perfil**.
 
-Fila → **Editar**. Todos los campos excepto nombre de
-usuario son editables.
+### Eliminar un usuario
 
-Para cambiar el rol de un usuario:
-- Bajar un rol (Admin → PM, PM → DJ) está permitido para
-  Admin y superior.
-- Promoción a Admin es **Super Admin solamente**.
-- Degradar un Super Admin: solo el Super Admin mismo
-  puede hacerlo.
+El icono de eliminar en la lista de usuarios borra la cuenta.  Las
+pistas de las que el usuario era propietario se **entregan** al primer
+administrador (el Super Admin, o el primer Admin si no lo hay) - siguen
+en la biblioteca.  No puede eliminar su propia cuenta, y el Super Admin
+no se puede eliminar.
 
-### Restablecer una contraseña
+No existe un estado «desactivado»: para quitarle el acceso a alguien,
+elimine la cuenta o asigne una contraseña nueva; para dejar solo acceso
+de lectura, cambie el tipo a Invitado.
 
-Fila → **Restablecer contraseña**.
+### Usuarios en Importar / Exportar
 
-| Opción | Efecto |
+Ajustes → Importar / Exportar incluye los usuarios como `users.csv` -
+sin contraseñas; al importar, solo se asigna una contraseña a las
+cuentas nuevas.  Vea [Importar / Exportar](./IMPORT_EXPORT.md).
+
+---
+
+## 4. Su propio perfil
+
+Ajustes → **Mi Perfil** - para todos los roles, invitados incluidos.
+
+Allí cambia su nombre y apellido, su correo, su contraseña, los campos
+de contacto, su **idioma de la interfaz** y su **zona horaria**.  El
+nombre de usuario es fijo.  La página guarda siempre la cuenta con la
+que ha iniciado sesión; las demás cuentas las edita un Admin en
+Ajustes → Usuarios.
+
+---
+
+## 5. Credenciales para conexiones en directo
+
+Un DJ que emite en directo (BUTT, Mixxx, …) se conecta a la entrada en
+directo de la emisora y se identifica con una de estas credenciales:
+
+| Credencial | Se acepta cuando |
 |---|---|
-| **Enviar email** | Si SMTP está configurado, enviar un enlace de un solo uso válido por 24 horas. |
-| **Establecer contraseña** | Establecer una contraseña temporal. |
+| El nombre de usuario y la contraseña RASTATIME del propio DJ | El DJ presenta el programa en antena, y el programa usa la *RASTATIME Authentication* (diálogo del programa → *Live Stream Input*). |
+| La credencial propia del programa (*Usar la autenticación personalizada* en la misma sección) | Ese programa está en antena. |
+| La credencial de la fuente Master (Ajustes → Streams) | Siempre; tiene prioridad sobre el programa en curso. |
 
-### Desactivar un usuario
-
-Fila → **Desactivar**. El usuario ya no puede iniciar
-sesión pero su actividad histórica se preserva.
-
-Para eliminar un usuario permanentemente, **Eliminar**.
-Su contenido se reasigna al **propietario fallback por
-defecto** configurado.
-
-> **Consejo del operador.** Prefiera **Desactivar** sobre
-> **Eliminar**.
+La contraseña personalizada de un programa solo se muestra en el
+diálogo del programa a Program Managers y Admins.  Los puertos y los
+puntos de montaje figuran en el capítulo [Streams](./STREAMS.md).
 
 ---
 
-## 4. Claves API
+## 6. Acceso a la API
 
-Cada usuario puede generar una clave API para acceso por
-script a la API REST.
+**No hay claves API personales**.
 
-### Generar su propia clave API
-
-Menú de usuario (arriba a la derecha) → **Mi perfil** →
-sección **Clave API**.
-
-Las claves API tienen los mismos permisos que el usuario.
-
-### Generar clave API de otro usuario
-
-Gestionar usuarios → fila de usuario → **Clave API** →
-Generar. Admin / Super Admin solamente.
-
-> **Cómo funciona bajo el capó.** Las claves API son
-> strings aleatorias de 32 bytes almacenadas en
-> `cc_subjs.api_key` (hasheadas). Autenticación vía el
-> header `Authorization: Api-Key <key>`. Vea
-> ARCHITECTURE §11.
-
-> **Consejo del operador.** Trate las claves API como
-> contraseñas.
+- **Los servicios** (playout, analyzer, scripts en la máquina de la
+  emisora) usan la clave API de la emisora de `config/libretime.conf`
+  (`Authorization: Api-Key …`).  Trátela como una contraseña.
+- **Las personas** pueden usar la API REST v2 (`/api/v2/`) con su propio
+  nombre de usuario y contraseña; obtienen los permisos de su rol.
+- Algunos puntos de acceso internos (dispositivos Line-In, tarjeta de
+  sonido, avisos preflight, estado de los streams, la comprobación de
+  credenciales de DJ) solo responden a la propia máquina de la emisora o
+  a quien llama con la clave API.
 
 ---
 
-## 5. La matriz de permisos
+## 7. Sesiones y protección contra abusos
 
-| Acción | G | H | P | A | S |
-|---|:---:|:---:|:---:|:---:|:---:|
-| **Panel** | | | | | |
-| Ver En reproducción | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Ver contadores de oyentes | | ✓ | ✓ | ✓ | ✓ |
-| Alternar Master DJ al aire / fuera | | | ✓ | ✓ | ✓ |
-| Cancelar programa actual | | ✓¹ | ✓ | ✓ | ✓ |
-| Escuchar el monitor | | ✓ | ✓ | ✓ | ✓ |
-| **Calendario** | | | | | |
-| Ver calendario | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Crear programa | | | ✓ | ✓ | ✓ |
-| Editar su propio programa | | ✓ | ✓ | ✓ | ✓ |
-| Editar cualquier programa | | | ✓ | ✓ | ✓ |
-| Eliminar su propio programa | | ✓ | ✓ | ✓ | ✓ |
-| Eliminar cualquier programa | | | ✓ | ✓ | ✓ |
-| Aplicar / guardar Plantilla | | | ✓ | ✓ | ✓ |
-| **Biblioteca** | | | | | |
-| Ver sus propios archivos | | ✓ | ✓ | ✓ | ✓ |
-| Ver todos los archivos | | | ✓ | ✓ | ✓ |
-| Subir pista | | ✓ | ✓ | ✓ | ✓ |
-| Crear / editar sus propias playlists, blocks | | ✓ | ✓ | ✓ | ✓ |
-| Crear / editar cualquier playlist, block | | | ✓ | ✓ | ✓ |
-| Crear / editar webstream | | ✓² | ✓ | ✓ | ✓ |
-| Crear / editar Line-In | | | | ✓ | ✓ |
-| Eliminar sus propios archivos | | ✓ | ✓ | ✓ | ✓ |
-| Eliminar cualquier archivo | | | ✓ | ✓ | ✓ |
-| **Streams** | | | | | |
-| Ver estado stream | | ✓ | ✓ | ✓ | ✓ |
-| Editar config stream | | | | ✓ | ✓ |
-| **Máquina local** | | | | | |
-| Ver config tarjeta de sonido | | | | ✓ | ✓ |
-| Editar config tarjeta de sonido | | | | ✓ | ✓ |
-| Establecer Carpeta de importación local | | | | ✓ | ✓ |
-| **Auto DJ** | | | | | |
-| Habilitar / deshabilitar | | | ✓ | ✓ | ✓ |
-| Editar valores por defecto | | | | ✓ | ✓ |
-| **Configuración** | | | | | |
-| Preferencias generales | | | | ✓ | ✓ |
-| Localización | | | | ✓ | ✓ |
-| Página Plantillas de programa | | | ✓ | ✓ | ✓ |
-| Gestión de usuarios | | | | ✓ | ✓ |
-| Crear Admin | | | | | ✓ |
-| **Sistema** | | | | | |
-| Ver Estado del sistema | | | | ✓ | ✓ |
-| Reiniciar servicio | | | | ✓ | ✓ |
-| Acceder Consola DB | | | | | ✓ |
-| **API** | | | | | |
-| Generar su propia clave API | | ✓ | ✓ | ✓ | ✓ |
-| Ver / generar clave API de cualquier usuario | | | | ✓ | ✓³ |
-
-Notas:
-- ¹ — Solo su programa actualmente al aire.
-- ² — Por DJ; no puede editar webstreams de otros DJs.
-- ³ — Incluyendo los de otros Admins.
+- **Sesión.** Un inicio de sesión dura hasta que se cierra el navegador
+  o hasta que la sesión lleva un rato sin ver ninguna petición (PHP
+  `session.gc_maxlifetime`, 24 minutos en la máquina del estudio).  Una
+  pestaña de RASTATIME abierta mantiene viva su sesión con sus
+  actualizaciones en segundo plano.  Es posible iniciar sesión desde
+  varios navegadores a la vez.
+- **Cookie.** La cookie de sesión es `Secure`, `HttpOnly` y
+  `SameSite=Lax`: otros sitios web no pueden usar su sesión para
+  peticiones en segundo plano, y los scripts de la página no pueden
+  leerla.
+- **Token de petición.** Cada cambio hecho desde la interfaz lleva un
+  token ligado a su sesión.  El servidor lo compara; una petición sin el
+  token se registra (`CSRF monitor` en `logs/legacy.log`) y, cuando la
+  comprobación pase a ser estricta, se rechaza.  Una pestaña que lleve
+  abierta más de una semana puede necesitar recargarse (F5) antes de
+  guardar.
 
 ---
 
-## 6. Asignación de rol recomendada
+## 8. Protección del inicio de sesión (desde el 06/10/2026)
 
-### Emisora operador solo (1 persona)
-
-- `admin` — Super Admin.
-- (Opcional) `recepcion` — Invitado.
-
-### Pequeña emisora comunitaria (3-10 contribuyentes)
-
-- `admin` — Super Admin.
-- `pm1` — Program Manager.
-- `anna`, `ben`, `carla`, … — DJ (uno por presentador).
-- (Opcional) `ingeniero` — Admin.
-- (Opcional) `recepcion` — Invitado.
-
-### Emisora mediana / comercial (10-50 contribuyentes)
-
-- `owner` — Super Admin.
-- `engineer1` — Admin.
-- `pm1`, `pm2` — Program Manager.
-- Cuentas DJ por presentador.
-- `script` — DJ (cuenta de servicio para scripts).
-- `recepcion` — Invitado.
-
-Para todos los tamaños: **un Super Admin por emisora** es
-el sweet spot.
-
----
-
-## 7. Preguntas frecuentes
-
-### "Estoy bloqueado como Super Admin. ¿Cómo recuperar?"
-
-Acceso directo a la base de datos es la única
-recuperación. Vea
-[`docs/operator/CRASH_RECOVERY.md`](../../operator/CRASH_RECOVERY.md)
-§5.
-
-### "¿Puede un usuario tener dos roles?"
-
-No. Un rol por usuario.
-
-### "¿Pueden dos usuarios compartir una cuenta?"
-
-Técnicamente sí, pero fuertemente desaconsejado.
-
-### "¿Cuánto dura una sesión?"
-
-Por defecto 8 horas.
-
-### "¿Puedo iniciar sesión desde dos navegadores
-simultáneamente?"
-
-Sí.
-
-### "¿La API soporta OAuth / SSO?"
-
-No actualmente.
-
-### "¿Puede un DJ ver las grabaciones de otro DJ?"
-
-No. Las grabaciones heredan el propietario del programa.
-
----
-
-## 8. Protección del inicio de sesión (desde 2026-10-06)
-
-La página de inicio de sesión frena los fallos repetidos, imprescindible
-desde que la interfaz web es accesible desde Internet.
+La página de inicio de sesión frena los fallos repetidos - una
+necesidad, ya que la interfaz web es accesible desde Internet.
 
 | Ámbito | Regla | Efecto |
 |---|---|---|
-| Por dirección de origen | 10 inicios de sesión fallidos en 15 minutos | la dirección espera 15 minutos; cada intento en ese tiempo recibe «Demasiados intentos de inicio de sesión fallidos. Inténtelo de nuevo en N minuto(s).» (HTTP 429), no se comprueba ninguna contraseña |
-| Por nombre de usuario | 20 inicios de sesión fallidos en 60 minutos | el nombre espera 5 minutos, a propósito poco, para que nadie pueda bloquear de forma permanente a un administrador martilleando su nombre desde muchas direcciones |
-| Conexión de DJ (harbor) | 5 inicios rechazados de una dirección en 10 minutos | la dirección se rechaza durante 15 minutos sin consultar la aplicación web |
+| Por dirección de origen | 10 inicios fallidos en 15 minutos | la dirección espera 15 minutos; cada intento en ese tiempo recibe «Too many failed login attempts. Please try again in N minute(s).» (HTTP 429), no se comprueba ninguna contraseña |
+| Por nombre de usuario | 20 inicios fallidos en 60 minutos | el nombre espera 5 minutos - corto a propósito, para que quien ataque el nombre de un administrador desde muchas direcciones no pueda bloquearlo para siempre |
+| Conexión de DJ (harbor) | 5 inicios rechazados desde una dirección en 10 minutos | la dirección se rechaza 15 minutos sin consultar a la aplicación web |
 
-Un inicio de sesión correcto pone a cero los contadores de su dirección y
-de su nombre.  Los umbrales están en `constants.php` (`RASTATIME_LOGIN_*`)
-y en el playout (`RejectThrottle`); los intentos rechazados se registran
-con la dirección (`logs/legacy.log`, `logs/playout-stdout.log`).
+Un inicio de sesión correcto pone a cero los contadores de su dirección
+y de su nombre.  Los umbrales están en `constants.php`
+(`RASTATIME_LOGIN_*`) y en el playout (`RejectThrottle`); los intentos
+bloqueados se registran con la dirección (`logs/legacy.log`,
+`logs/playout-stdout.log`).
 
-**Ver y levantar bloqueos.**  Configuración → Estado del sistema →
-*Direcciones bloqueadas* muestra todos los niveles (inicio de sesión web
-por dirección y por usuario, conexión de DJ, vigilante del cortafuegos)
-con los fallos y los minutos restantes; **Desbloquear** elimina la
-entrada en todos los niveles, para el DJ que llama porque su cliente
-tenía guardada una contraseña incorrecta.  La misma lista existe en
+**Ver y levantar bloqueos.**  Ajustes → Estado → *Blocked addresses*
+lista cada nivel (inicio de sesión web por dirección y por usuario,
+conexión de DJ, vigilante del cortafuegos) con el número de fallos y los
+minutos restantes; un botón **Unblock** borra la entrada en todos los
+niveles - para el DJ que llama porque tenía guardada una contraseña
+equivocada en su programa.  La misma lista está disponible en
 PowerShell: `infra\scripts\rt-blocks.ps1` (`-Unblock <dirección>` o
-`-Unblock user:<login>`).  Un DJ que se conecta **antes** del inicio del
-programa es rechazado pero nunca contado: solo cuenta una contraseña
-incorrecta.  Los escáneres de Internet persistentes se bloquean 24 horas
-en el cortafuegos de Windows mediante una tarea vigilante (cada 5
-minutos; 50 peticiones rechazadas en 60 minutos, 3 rutas típicas de
-escáner o 5 contraseñas de DJ incorrectas) y aparecen en la misma lista.
-Una respuesta «no identificado» (401) nunca cuenta: es lo que recibe una
-pestaña del navegador con la sesión caducada por sus consultas en
-segundo plano, y desde 2026-10-07 esa pestaña deja de consultar con la
-primera.
+`-Unblock user:<login>`).  Un DJ que se conecta **antes** de que empiece
+el programa se rechaza pero nunca se cuenta: solo cuenta una contraseña
+equivocada.  Los escáneres de Internet persistentes se bloquean 24 horas
+en el cortafuegos de Windows mediante una tarea vigilante (cada
+5 minutos; 50 peticiones rechazadas en 60 minutos, 3 rutas típicas de
+escáner o 5 contraseñas de DJ equivocadas) y aparecen en la misma lista.
+Una respuesta «sin sesión» (401) nunca cuenta: es lo que recibe una
+pestaña con la sesión caducada en sus consultas de fondo, y desde el
+07/10/2026 una pestaña así deja de consultar a la primera.
 
-**Direcciones permitidas (desde 2026-10-08).**  Junto a **Desbloquear**,
-cada dirección bloqueada tiene **Permitir**: se desbloquea en todas las
-capas y pasa a la lista *Direcciones permitidas* de abajo, donde también
-puede añadir a mano una dirección o una red en notación CIDR
-(`203.0.113.0/24`) y eliminar entradas.  Una dirección permitida nunca es
-frenada por el inicio de sesión web, nunca limitada por la conexión de DJ
-y nunca bloqueada por el vigilante del cortafuegos; las direcciones de la
-red del estudio están exentas de todos modos.  Mantenga la lista corta -
+**Direcciones permitidas (desde el 08/10/2026).**  Junto a **Unblock**,
+cada dirección bloqueada tiene **Allow**: se desbloquea en todos los
+niveles y se añade a la lista *Allowed addresses* de debajo, donde
+también puede introducir a mano una dirección o una red en notación CIDR
+(`203.0.113.0/24`) y eliminar entradas.  Una dirección permitida nunca
+la frena el inicio de sesión web, nunca la limita la conexión de DJ y
+nunca la bloquea el vigilante del cortafuegos; las direcciones de la red
+del estudio están exentas de todos modos.  Mantenga la lista corta -
 desactiva todos los frenos para esa dirección - y prefiera una red para
 una conexión doméstica cuya dirección cambia con el proveedor.  La lista
-se guarda en la base de datos y se copia a `config\allowlist.txt` para el
-playout y el vigilante.
+se guarda en la base de datos y se copia en `config\allowlist.txt` para
+el playout y el vigilante.
 
-> **Si usted mismo queda bloqueado:** espere los minutos indicados o pida
-> a un colega en otra dirección.  En caso de emergencia, los contadores
-> están en las tablas `cc_login_attempts` (por dirección) y
-> `cc_subjs.login_attempts` (por usuario).
+> **Si usted mismo queda bloqueado:** espere los minutos indicados, o
+> pida ayuda a un compañero desde otra dirección.  En caso de urgencia,
+> los contadores están en las tablas `cc_login_attempts` (por dirección)
+> y `cc_subjs.login_attempts` (por usuario).
 
-## A dónde ir después
+---
 
-* [Configuración](./SETTINGS.md) — recorrido de cada
-  sub-página de Configuración.
-* [Panel](./DASHBOARD.md) — la página más usada del
-  operador.
-* [`docs/operator/CRASH_RECOVERY.md`](../../operator/CRASH_RECOVERY.md)
-  — recuperación de bloqueo Super Admin.
+## 9. Reparto típico de roles y preguntas frecuentes
+
+### Reparto típico
+
+| Emisora | Cuentas |
+|---|---|
+| Una persona | el Super Admin; opcionalmente un Invitado para una pantalla en el vestíbulo |
+| Radio comunitaria | el Super Admin (responsable técnico), un Program Manager por área de programación, una cuenta de DJ por locutor, opcionalmente un Invitado |
+| Emisora más grande | además uno o dos Admins para la operación técnica |
+
+Una cuenta por persona real: las cuentas compartidas impiden saber quién
+cambió qué.
+
+### «Un DJ no encuentra ningún webstream ni ningún Line-In.»
+
+Es intencionado: los DJ solo trabajan con pistas.  Un Program Manager
+añade el webstream o el Line-In al programa o a una lista.
+
+### «Un DJ no puede cambiar el horario ni la descripción de su programa.»
+
+Los programas los crean y editan los Program Managers y los Admins.  Los
+DJ llenan los programas que presentan y pueden activar y desconectar su
+fuente en directo mientras dura su programa.
+
+### «Alguien necesita los derechos de DJ y de Program Manager.»
+
+Asígnele el rol Program Manager - incluye todo lo que puede hacer un DJ.
+
+### «¿Puede un usuario tener dos roles?»
+
+No, exactamente uno por cuenta.
+
+### «Se ha perdido la contraseña del Super Admin.»
+
+Solo el Super Admin puede cambiarla (Mi Perfil); la página de usuarios
+no se la ofrece a los Admins.  Si se ha perdido, hay que restablecer la
+contraseña en la base de datos (tabla `cc_subjs`, columna `pass`, MD5 de
+la contraseña nueva) - vea
+[`docs/operator/CRASH_RECOVERY.md`](../../operator/CRASH_RECOVERY.md).
+
+---
+
+## Adónde ir después
+
+* [Ajustes](./SETTINGS.md) - cada página de ajustes.
+* [Panel](./DASHBOARD.md) - fuentes en directo y el programa en curso.
+* [Importar / Exportar](./IMPORT_EXPORT.md) - los usuarios como `users.csv`.
+* [Streams](./STREAMS.md) - puertos para conexiones en directo y la credencial Master.

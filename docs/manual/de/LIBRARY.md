@@ -337,11 +337,10 @@ Bibliothek → **+ Neu** → **Smart Block**.
 
 ### Warum ein Smart Block weniger Tracks zurückgeben kann als gefragt
 
-Smart Blocks respektieren den **Bibliotheks-Scope** des
-Operators:
-
-- Der besitzende DJ sieht nur seine eigenen Tracks.
-- Ein Program Manager sieht die gesamte Bibliothek.
+Smart Blocks durchsuchen für jede Rolle die **gesamte
+Bibliothek** - auch der Smart Block eines DJ greift auf Tracks
+anderer Benutzer zu.  Um einen Block auf Ihre eigenen Tracks
+zu beschränken, fügen Sie das Kriterium **Owner** hinzu.
 
 Wenn Sie "Begrenzen auf 10 Tracks" setzen, aber nur 4 Tracks
 in der Bibliothek die Kriterien erfüllen, erhalten Sie 4.

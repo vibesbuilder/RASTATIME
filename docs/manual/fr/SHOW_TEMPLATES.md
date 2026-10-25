@@ -306,10 +306,12 @@ valeurs par défaut du formulaire.
 
 ### "Un DJ peut-il enregistrer / appliquer des modèles ?"
 
-Les DJ (rôle H) peuvent appliquer mais ne peuvent pas
-enregistrer / renommer / supprimer des modèles. Les
-modèles sont des paramètres au niveau station ; seuls les
-Admins et Program Managers peuvent les gérer.
+Non. Les modèles se trouvent dans la boîte de dialogue de
+l'émission, et seuls les Program Managers et les Admins
+créent et modifient des émissions ; ce sont aussi eux qui
+enregistrent, renomment et suppriment les modèles.  La page
+d'aperçu Paramètres → Show Templates est réservée aux
+Admins.
 
 ### "J'ai changé la liste d'animateurs sur le modèle — pourquoi les émissions existantes sont-elles inchangées ?"
 

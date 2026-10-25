@@ -8,9 +8,10 @@
 > ist).
 
 Das Einstellungs-Menü ist die per-station Konfigurations-
-Oberfläche. Vollständig sichtbar nur für **Admin** und
-**Super Admin**; **Program Manager** sieht eine Teilmenge.
-Siehe [Benutzer und Rollen](./USERS_AND_ROLES.md) §5 für
+Oberfläche. Seine Seiten gehören **Admin** und **Super
+Admin**; ein **Program Manager** sieht *My Profile* und
+*Auto DJ*, Gäste und DJs nur *My Profile*.
+Siehe [Benutzer und Rollen](./USERS_AND_ROLES.md) §2 für
 die vollständige Berechtigungsmatrix.
 
 Dieses Kapitel:
@@ -57,7 +58,7 @@ Top-Bar Einstellungen → öffnet das Untermenü:
 | **Auto DJ** | Hintergrund-Lückenfüller + Auffüllen unvollständiger Sendungen. | [Auto DJ](./AUTO_DJ.md) |
 | **Sendungs-Vorlagen** | Wiederverwendbare Snapshots des Sendungsformulars. | [Sendungs-Vorlagen](./SHOW_TEMPLATES.md) |
 | **Import / Export** | Benutzer, Sendungen, Playlisten, Smart Blocks, Webstreams und Podcast-Abos als CSV/JSON-Dateien, mit Vorschau beim Import. | [Import / Export](./IMPORT_EXPORT.md) |
-| **Benutzer verwalten** | Benutzer erstellen / bearbeiten / deaktivieren, Passwörter zurücksetzen, API-Schlüssel verwalten. | [Benutzer und Rollen](./USERS_AND_ROLES.md) |
+| **Benutzer verwalten** | Benutzer anlegen, bearbeiten und löschen, Benutzertyp festlegen. | [Benutzer und Rollen](./USERS_AND_ROLES.md) |
 | **Lokalisierung** | UI-Sprachauswahl, Locale-Generierung. | [Sprachen](./I18N.md) |
 | **Systemstatus** | Live-Dienst-Gesundheit, Preflight-Warnungen, Dienst-Neustart-Widget. | Dieses Kapitel §3 |
 | **Tools** | Untermenü: DB-Konsole, Log-Viewer, Cache-Reset. | Dieses Kapitel §4 |
@@ -380,13 +381,12 @@ Wiederherstellung der `cc_pref`-Tabelle aus dem Backup.
 Für `config/libretime.conf`-Einstellungen: kopieren Sie
 die Datei.
 
-### "Warum sind einige Einstellungen nur für Super Admin sichtbar?"
+### "Welche Einstellungen kann ein Program Manager öffnen?"
 
-Die DB-Konsole, die Fähigkeit, andere Admins zu erstellen,
-und das Recht, API-Schlüssel anderer Benutzer zu sehen,
-sind dem Super Admin vorbehalten, weil sie Zugriffs-
-Eskalation gewähren. Siehe
-[Benutzer und Rollen](./USERS_AND_ROLES.md) §1.
+*Auto DJ* und *My Profile*.  Alles andere unter Settings
+gehört den Admins; der Super Admin hat dieselben Rechte
+wie ein Admin.  Siehe
+[Benutzer und Rollen](./USERS_AND_ROLES.md) §1-§2.
 
 ---
 

@@ -20,10 +20,10 @@ eine Sendung als Vorlage speichern, wird jedes Feld im
 Formular erfasst (mit einigen bewussten Ausnahmen).
 
 Vorlagen sind **stationsweit**: jeder Admin oder Program
-Manager kann jede Vorlage anwenden oder bearbeiten. Ein
-wöchentlicher Sendungs-Host kann seine bevorzugten
-Einstellungen einmal speichern, und ein Kollege kann
-dieselbe Vorlage auf eine andere Sendung stempeln.
+Manager kann jede Vorlage anwenden oder bearbeiten. Die
+Einstellungen einer Wochensendung werden einmal
+gespeichert, und ein Kollege kann dieselbe Vorlage auf eine
+andere Sendung stempeln.
 
 ---
 
@@ -314,10 +314,11 @@ alles andere bleibt bei Formular-Standards.
 
 ### "Kann ein DJ Vorlagen speichern / anwenden?"
 
-DJs (Rolle H) können Vorlagen anwenden, aber nicht
-speichern / umbenennen / löschen. Vorlagen sind stationsweite
-Einstellungen; nur Admins und Program Manager können sie
-verwalten.
+Nein. Vorlagen stecken im Sendungsdialog, und Sendungen
+legen nur Program Manager und Admins an und bearbeiten sie;
+diese speichern, benennen und löschen auch die Vorlagen.
+Die Übersichtsseite Einstellungen → Show Templates gehört
+den Admins.
 
 ### "Ich habe die Hostliste in der Vorlage geändert — warum sind bestehende Sendungen unverändert?"
 

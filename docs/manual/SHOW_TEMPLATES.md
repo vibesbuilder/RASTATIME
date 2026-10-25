@@ -16,9 +16,9 @@ as a template, every field on the form is captured (with a few
 deliberate exceptions).
 
 Templates are **station-wide**: any Admin or Program Manager
-can apply or edit any template. A weekly show host can save
-their preferred settings once and a colleague can stamp the
-same template onto a different show.
+can apply or edit any template. The settings of a weekly show
+are saved once, and a colleague can stamp the same template
+onto a different show.
 
 ---
 
@@ -279,9 +279,10 @@ overridden; everything else stays at form defaults.
 
 ### "Can a DJ save / apply templates?"
 
-DJs (role H) can apply but not save / rename / delete
-templates. Templates are station-wide settings; only Admins
-and Program Managers can manage them.
+No. Templates live in the show dialog, and shows are
+created and edited by Program Managers and Admins only; they
+also save, rename and delete templates.  The overview page
+Settings → Show Templates is for Admins.
 
 ### "I changed the host list on the template — why are existing shows unchanged?"
 

@@ -357,13 +357,15 @@ para el runbook de recuperación.
 
 ## 7. Permisos
 
-Solo los roles **Admin (A)** y **Super Admin (S)** pueden
-crear, editar o eliminar Line-Ins.
+Solo los **Program Managers (P)**, los **Admins (A)** y el
+**Super Admin (S)** pueden crear, editar o eliminar Line-Ins
+(desde el 25/10/2026; antes, solo los Admins).
 
-DJs (H) y Program Managers (P) pueden arrastrar Line-Ins
-existentes a sus propias playlists / programas, pero no
-pueden crear o modificar las definiciones de Line-In
-subyacentes.
+Los DJ (H) y los invitados (G) no ven los Line-Ins: los DJ
+trabajan solo con pistas, por eso la pestaña Line Inputs y
+la entrada **Nuevo → Line Input** están ocultas, y se les
+rechaza añadir un Line-In a una lista o a un programa.  Un
+Program Manager coloca el Line-In en el programa.
 
 ---
 

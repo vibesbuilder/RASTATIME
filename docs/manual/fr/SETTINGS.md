@@ -5,9 +5,10 @@
 
 Le menu Paramètres est la surface de configuration
 par-station. Visible entièrement seulement pour **Admin**
-et **Super Admin** ; **Program Manager** voit un
-sous-ensemble. Voir [Utilisateurs et rôles](./USERS_AND_ROLES.md)
-§5 pour la matrice complète des permissions.
+et **Super Admin** ; un **Program Manager** voit *My Profile*
+et *Auto DJ*, les invités et les DJ seulement *My Profile*.
+Voir [Utilisateurs et rôles](./USERS_AND_ROLES.md)
+§2 pour la matrice complète des permissions.
 
 ---
 
@@ -22,7 +23,7 @@ sous-ensemble. Voir [Utilisateurs et rôles](./USERS_AND_ROLES.md)
 | **Auto DJ** | Remplisseur d'arrière-plan. | [Auto DJ](./AUTO_DJ.md) |
 | **Modèles d'émission** | Snapshots de formulaire d'émission réutilisables. | [Modèles d'émission](./SHOW_TEMPLATES.md) |
 | **Import / Export** | Utilisateurs, émissions, playlists, smart blocks, webstreams et abonnements podcast en fichiers CSV/JSON, avec aperçu à l'import. | [Import / Export](./IMPORT_EXPORT.md) |
-| **Gérer les utilisateurs** | Créer / modifier / désactiver utilisateurs. | [Utilisateurs et rôles](./USERS_AND_ROLES.md) |
+| **Gérer les utilisateurs** | Créer, modifier et supprimer des utilisateurs, définir leur type. | [Utilisateurs et rôles](./USERS_AND_ROLES.md) |
 | **Localisation** | Sélection de langue UI. | [Langues](./I18N.md) |
 | **Statut système** | Santé live des services, widget de redémarrage. | Ce chapitre §3 |
 | **Tools** | Sous-menu : Console DB, Visualiseur de logs, Réinitialisation cache. | Ce chapitre §4 |
@@ -250,12 +251,12 @@ Indirectement : `config/libretime.conf` est un fichier
 texte. Les lignes `cc_pref` ne sont pas versionnées.
 Pour sauvegarder, utilisez `pg_dump --table=cc_pref`.
 
-### "Pourquoi certains paramètres sont visibles seulement pour Super Admin ?"
+### "Quels paramètres un Program Manager peut-il ouvrir ?"
 
-La Console DB, la capacité de créer d'autres Admins, et
-le droit de voir les clés API d'autres utilisateurs sont
-réservés à Super Admin parce qu'ils accordent une
-escalade d'accès.
+*Auto DJ* et *My Profile*.  Tout le reste sous Paramètres
+appartient aux Admins ; le Super Admin a les mêmes droits
+qu'un Admin.  Voir
+[Utilisateurs et rôles](./USERS_AND_ROLES.md) §1-§2.
 
 ---
 

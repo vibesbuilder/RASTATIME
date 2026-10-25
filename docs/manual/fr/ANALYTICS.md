@@ -36,7 +36,10 @@ En haut, un **sélecteur de plage date/heure** avec **Filter
 History** restreint chaque vue à une fenêtre — par défaut, le jour
 courant.
 
-Trois onglets en dessous (les DJ ne voient que le troisième) :
+Trois onglets en dessous (les DJ ne voient que le troisième, avec les
+émissions qu'ils animent ; ils y ajoutent, modifient et suppriment des
+entrées - les Program Managers et les Admins modifient toutes les
+entrées) :
 
 * **Log Sheet** — le journal brut de diffusion, une ligne par
   élément joué, avec ses heures de début / fin et les colonnes de

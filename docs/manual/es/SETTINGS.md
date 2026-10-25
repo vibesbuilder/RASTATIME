@@ -5,8 +5,9 @@
 
 El menú Configuración es la superficie de configuración
 por-emisora. Visible completamente solo para **Admin** y
-**Super Admin**; **Program Manager** ve un subconjunto.
-Vea [Usuarios y roles](./USERS_AND_ROLES.md) §5 para la
+**Super Admin**; un **Program Manager** ve *My Profile* y
+*Auto DJ*, los invitados y los DJ solo *My Profile*.
+Vea [Usuarios y roles](./USERS_AND_ROLES.md) §2 para la
 matriz completa de permisos.
 
 ---
@@ -22,7 +23,7 @@ matriz completa de permisos.
 | **Auto DJ** | Rellenador en segundo plano. | [Auto DJ](./AUTO_DJ.md) |
 | **Plantillas de programa** | Snapshots de formulario de programa reutilizables. | [Plantillas de programa](./SHOW_TEMPLATES.md) |
 | **Importar / Exportar** | Usuarios, programas, listas, bloques inteligentes, webstreams y suscripciones a podcasts como archivos CSV/JSON, con vista previa al importar. | [Importar / Exportar](./IMPORT_EXPORT.md) |
-| **Gestionar usuarios** | Crear / editar / desactivar usuarios. | [Usuarios y roles](./USERS_AND_ROLES.md) |
+| **Gestionar usuarios** | Crear, editar y eliminar usuarios y definir su tipo. | [Usuarios y roles](./USERS_AND_ROLES.md) |
 | **Localización** | Selección de idioma UI. | [Idiomas](./I18N.md) |
 | **Estado del sistema** | Salud en vivo de servicios, widget de reinicio. | Este capítulo §3 |
 | **Tools** | Submenú: Consola DB, Visor de logs, Reinicio de caché. | Este capítulo §4 |
@@ -247,13 +248,12 @@ Indirectamente: `config/libretime.conf` es un archivo de
 texto. Las filas `cc_pref` no están versionadas. Para
 copia de seguridad, use `pg_dump --table=cc_pref`.
 
-### "¿Por qué algunas configuraciones son visibles solo
-para Super Admin?"
+### "¿Qué configuraciones puede abrir un Program Manager?"
 
-La Consola DB, la capacidad de crear otros Admins, y el
-derecho de ver claves API de otros usuarios están
-reservados para Super Admin porque otorgan escalada de
-acceso.
+*Auto DJ* y *My Profile*.  Todo lo demás en Configuración
+pertenece a los Admins; el Super Admin tiene los mismos
+derechos que un Admin.  Vea
+[Usuarios y roles](./USERS_AND_ROLES.md) §1-§2.
 
 ---
 

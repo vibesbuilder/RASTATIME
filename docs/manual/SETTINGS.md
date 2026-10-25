@@ -7,9 +7,10 @@
 > its own chapter).
 
 The Settings menu is the per-station configuration surface.
-Visible only to **Admin** and **Super Admin** in full;
-**Program Manager** sees a subset. See
-[Users and Roles](./USERS_AND_ROLES.md) §5 for the full
+Its pages are for **Admin** and **Super Admin**; a **Program
+Manager** sees *My Profile* and *Auto DJ*, Guests and DJs
+*My Profile* only. See
+[Users and Roles](./USERS_AND_ROLES.md) §2 for the full
 permission matrix.
 
 This chapter:
@@ -55,7 +56,7 @@ Top-bar Settings → opens the sub-menu:
 | **Auto DJ** | Background gap-filler + incomplete-show top-up. | [Auto DJ](./AUTO_DJ.md) |
 | **Show Templates** | Reusable show form snapshots. | [Show Templates](./SHOW_TEMPLATES.md) |
 | **Import / Export** | Users, shows, playlists, smart blocks, webstreams and podcast subscriptions as CSV/JSON files, with a preview step on import. | [Import / Export](./IMPORT_EXPORT.md) |
-| **Manage Users** | Create / edit / deactivate users, reset passwords, manage API keys. | [Users and Roles](./USERS_AND_ROLES.md) |
+| **Manage Users** | Create, edit and delete users and set their user type. | [Users and Roles](./USERS_AND_ROLES.md) |
 | **Localisation** | UI language selection, locale generation. | [Languages](./I18N.md) |
 | **System Status** | Live service health, preflight warnings, service restart widget. | This chapter §3 |
 | **Tools** | Sub-menu: DB Console, Log Viewer, Cache Reset. | This chapter §4 |
@@ -362,12 +363,11 @@ For `cc_pref`-stored settings: only by restoring the
 `cc_pref` table from the backup. For
 `config/libretime.conf` settings: copy the file.
 
-### "Why are some settings only visible to Super Admin?"
+### "Which settings can a Program Manager open?"
 
-The DB Console, the ability to create other Admins, and the
-right to view other users' API keys are reserved for Super
-Admin because they grant access escalation. See
-[Users and Roles](./USERS_AND_ROLES.md) §1.
+*Auto DJ* and *My Profile*.  Everything else under Settings
+belongs to Admins; the Super Admin has the same rights as an
+Admin.  See [Users and Roles](./USERS_AND_ROLES.md) §1-§2.
 
 ---
 

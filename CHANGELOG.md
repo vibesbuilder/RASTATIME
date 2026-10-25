@@ -240,6 +240,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Handbuch: Benutzer und Rollen neu, Rollen-Aussagen der Kapitel
+  korrigiert (2026-10-25, Rollen-Audit Paket 5)** — `USERS_AND_ROLES` in
+  EN/DE/FR/ES neu geschrieben nach dem auditierten Stand: Rollen,
+  Berechtigungsmatrix (Gast/DJ/Program Manager/Admin), Benutzer verwalten,
+  Mein Profil, Logins für Live-Einwahlen, API-Zugriff, Sitzung/Cookie/
+  Anfrage-Token, Login-Schutz (übernommen), typische Verteilung und FAQ.
+  Das alte Kapitel beschrieb Funktionen, die es nicht gibt (Benutzer
+  deaktivieren, Passwort-Reset-Dialog, persönliche API-Schlüssel,
+  Letzter-Login-Spalte, DB-Konsole, „nur Super Admin ernennt Admins“,
+  DJs bearbeiten eigene Sendungen und sehen nur eigene Tracks, 8-h-Sitzung).
+  In allen vier Sprachen zudem korrigiert: `SETTINGS` (Program Manager
+  sehen Auto DJ und Mein Profil; Benutzer-Zeile; Super-Admin-FAQ),
+  `LINE_IN` (Line-Ins verwalten PM+, DJs sehen keine), `CALENDAR`
+  (Meldung „not allowed to schedule show“ = nicht Host; DJs verschieben
+  keine Sendungen), `LIBRARY` (Smart Blocks durchsuchen für jede Rolle
+  die ganze Bibliothek), `SHOW_TEMPLATES` (Vorlagen nur PM+),
+  `ANALYTICS` (DJs bearbeiten das Protokoll ihrer Sendungen).
 - **Rollen und Oberfläche nach dem UI-Test des Operators (2026-10-25)** —
   **Gäste**: die Bibliothek zeigt statt einer leeren Tabelle „You don't have
   permission to view the library.“ (der vorhandene 403-Hinweis fand im

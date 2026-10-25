@@ -36,7 +36,9 @@ Oben grenzt eine **Datum/Uhrzeit-Bereichsauswahl** mit **Filter
 History** jede Ansicht auf ein Zeitfenster ein — Standard ist der
 aktuelle Tag.
 
-Darunter drei Tabs (DJs sehen nur den dritten):
+Darunter drei Tabs (DJs sehen nur den dritten, mit den Sendungen,
+deren Host sie sind; dort legen sie Einträge an, bearbeiten und
+löschen sie - Program Manager und Admins bearbeiten jeden Eintrag):
 
 * **Log Sheet** — das rohe Sendeprotokoll, eine Zeile pro
   gespieltem Element, mit Start-/Endzeit und den
