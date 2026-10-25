@@ -6094,7 +6094,7 @@ die Audiodatei ist gelöscht, das Artwork-Aufräumen bricht ab).  Behebung im So
 ### ✅ Rollen-Audit: kleine Folgepunkte (notiert 2026-10-25, Paket 5) - umgesetzt 2026-10-25 (Operator-Go)
 
 Alle drei umgesetzt (Super-Admin-Hinweis, Show Templates für PM + Widgets nur PM+, Kapitel SETTINGS ×4
-neu).  Der Hinweis erscheint übersetzt erst nach einem Apache-Neustart (.mo).  Nebenbefund: die API v2
+neu).  Apache-Neustart durch den Operator 2026-10-25 21:16 - die übersetzten Hinweise sind aktiv.  Nebenbefund: die API v2
 (Django) kennt die Rolle „S“ nicht (`GROUPS["S"]` fehlt, `is_superuser` nur für „A“) - ein Super Admin
 bekäme dort einen Fehler; folgenlos, solange es keinen gibt (auf dieser Station keiner, die Installation
 legt `admin` als Admin an).  Ursprüngliche Notiz:
