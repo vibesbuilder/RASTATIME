@@ -54,7 +54,7 @@ dann 2 → 1, danach nach Bedarf**.
 | 3 | Windows-Updates Oktober 2026 + Lenovo-Firmware | ✅ 2026-10-23 18:01 (Build 26200.9711, BIOS M5OKT41A); offen nur die TPM-Firmware 15.25 | „Windows-Updates Oktober 2026" |
 | 4 | Stereo Tool: Stream-Messung mit dem R128-Preset | ✅ 2026-10-23: Datei-Sendung −22,8 LUFS (5 min) / −24,1 LUFS (3 min), TP −11,5 dBTP; BBC-Webstream 19:01–19:06 −22,9 LUFS / TP −7,5 dBTP; Limiter-Decke (−1 dBTP) bleibt Offline-Nachweis vom 21.10. | „Ausgangs-Processing mit Stereo Tool" |
 | 5 | Line-In: Live-Abnahme des frischen `input.http` je Slot (685dc17, 2026-10-21) | ✅ 2026-10-23 aus Logs + 24/7-Aufnahme: Slot 1 (22.10. 19:07–22:00, `linein_http_in_1`) und Slot 2 (23.10. 08:15–09:45, `linein_http_in_2`) je binnen 1 s auf Sendung, Aufnahme 08:15–09:45 durchgehend −21…−25 LUFS, kein silence_fallback | Memory linein_abnahme_stand |
-| – | Zeitumstellung Nacht 24./25.10.: Show 1242 Electronic Evening 00:00–05:00 beobachten | Checkliste bereit | Memory reminder_dst_night |
+| – | Zeitumstellung Nacht 24./25.10.: Show 1242 Electronic Evening 00:00–05:00 beobachten | ✅ 2026-10-25: 6 echte Stunden (22:00–04:00 UTC), 104/104 Zeilen gespielt, keine Lücke in der doppelten Stunde, 05:00-Folge pünktlich (siehe Abschnitt „Zeitumstellungsnacht 24./25.10.2026") | – |
 
 **Defer mit Vorbedingungen (Operator-Entscheidung, nichts drängt):**
 Geordneter Apache-Stopp Option B · Marke „libretime" → „rastatime" Stufe B ·
@@ -5605,6 +5605,23 @@ Befund: Dauer wurde als verstrichene Stunden addiert -> Herbst 1 h Luecke, Frueh
 Sendungen ueber 02:00-03:00.  Fix `ShowService::wallClockEnd` (Architektur §23.62), Probe mit 10 Faellen.
 Operator-Go wegen 24/7-Betrieb.  Kalender 2026-10-16: keine Instanz kreuzt eine Umstellung, daher kein
 Korrekturlauf.  Vor der naechsten Umstellung (2026-10-25) Blick in den Kalender genuegt.
+
+### ✅ Zeitumstellungsnacht 24./25.10.2026 (03:00 → 02:00) - geprüft 2026-10-25
+Erster Live-Fall von wallClockEnd.  Befund aus DB, Playout-/Liquidsoap-Log und 24/7-Aufnahmen:
+- Instanz 25391 „Electronic Evening" 24.10. 22:00 – 25.10. 04:00 UTC = 6 echte Stunden (00:00–05:00 Wanduhr),
+  Autoloading füllte 5:59:56,995 (Budget = echte Dauer), 104 Zeilen, alle 104 gespielt, letzte endet 03:59:56 UTC.
+- Playout lief durch beide 02:xx-Stunden (Log in Ortszeit: 711 Zeilen in „02" = zwei Stunden), armed-Zähler stetig,
+  past=0, kein Fehler, kein Sprung; Liquidsoap ohne Neustart (nur ID3-Hinweise, ein Harbor-ECONNRESET 03:21).
+- Folgesendung „BBC Newsday (Live)" 04:00 UTC = 05:00 CET: TOH-Jingle PLAY um 05:00:00,006, 5/5 Zeilen gespielt.
+- 24/7-Aufnahmen: Stundenfiles in Ortszeit; die doppelte Stunde liegt als `2026-10-25 02-00.mp3` (CEST) und
+  `2026-10-25 02-00.2.mp3` (CET) vor, beide volle 57,6 MB; 03-00 und 04:00-Rotation normal.
+
+### 🟡 Cue-Datei der doppelten Stunde vermischt beide Durchgänge (notiert 2026-10-25)
+`2026-10-25 02-00.cues.json` führt unter `parts` beide MP3s (beide mit start 02:00:00 / offset 0) und unter `marks`
+die 39 Marken beider Stunden gemeinsam, `t` relativ zur selben Wanduhr-Stunde (Marken 16741–16760 CEST, 16779–16783 CET,
+nicht nach `t` sortiert).  Für Stufe 2 der Sendungswiederholung (Live-Zeilen als Cue-Scheiben, §23.67) wäre die
+Zuordnung Marke → Teil nötig (z. B. `part`-Index je Marke oder eigene `02-00.2.cues.json`).  Betrifft nur die
+Herbst-Umstellung (nächste 2027-10-31); ~1 h in `recording_hourly`/Cue-Schreiber.  Vorbedingung: Operator-Go.
 
 ### Zaehler „X of N tracks" ueberlappt Suchbegriff (Schedule Tracks) - erledigt ohne Eingriff
 Operator 2026-10-16: tritt nicht mehr auf.  Nicht weiter verfolgt.
