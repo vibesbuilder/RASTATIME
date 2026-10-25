@@ -5991,7 +5991,8 @@ DJ-Logins vom 24.10. aus dem Internet - Harbor → PLAYOUT → PHP), PLAYOUT nut
 Umgebungs-Überschreibung), die aktive `icecast.xml` (2.5.0) hat keine URL-Auth; kein `mod_remoteip` vor
 Apache.  Probe: lokal (HTTPS und `http://127.0.0.1`) weiter 401 bei falschen Daten, über die LAN-Adresse
 192.168.1.64 alle drei 403, `live-info` 200.  Doku: GO_LIVE_HTTPS (`general.internal_url` muss lokal bleiben).
-Abnahme mit einem echten DJ-Login (BUTT von außen) steht aus.
+Abnahme 2026-10-25 15:08 bestanden: Master-Login „source" per BUTT von außen (198.51.100.30) - PLAYOUT
+„accepted", PHP-Aufruf von 127.0.0.1 mit 200, Umschalten auf Master und zurück, keine WARN „refused".
 
 **Befund (vorher):**
 
