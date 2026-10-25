@@ -213,6 +213,15 @@ div.btn > span {
     color: var(--rt-accent-dark);
 }
 
+/* RASTATIME 2026-10-25 - "no permission" note of a table that answered 403
+   (a guest's library; the DataTables 1.13 layout has no .empty_placeholder) */
+.rt-access-denied {
+    padding: 3em 1em;
+    text-align: center;
+    font-size: 16px;
+    color: #efefef;
+}
+
 thead th.ui-state-default {
     border: solid #666;
     border-width: 0 0 1px 1px;

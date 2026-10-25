@@ -1,0 +1,31 @@
+<?php
+/*
+ * RASTATIME 2026-10-25 - error page graphic (operator: "update the
+ * graphic").  Replaces css/images/maintenance.png, whose orange was baked
+ * in: the signal and the warning badge follow the configured primary
+ * colour (Settings -> General, --rt-accent), the tower stays neutral grey
+ * on the dark page.  Inline SVG, sharp at any size.
+ */
+?>
+<svg class="rt-error-graphic" viewBox="0 0 360 350" width="360" height="350" aria-hidden="true" focusable="false"
+     xmlns="http://www.w3.org/2000/svg" style="color: var(--rt-accent, #ff5d1a)">
+    <g fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round">
+        <path d="M156.4 59 A26 26 0 0 1 169 46.4 M191 46.4 A26 26 0 0 1 203.6 59" />
+        <path d="M136.5 49.7 A48 48 0 0 1 159.7 26.5 M200.3 26.5 A48 48 0 0 1 223.5 49.7" opacity=".7" />
+        <path d="M116.6 40.4 A70 70 0 0 1 150.4 6.6 M209.6 6.6 A70 70 0 0 1 243.4 40.4" opacity=".4" />
+    </g>
+    <circle cx="180" cy="70" r="9" fill="currentColor" />
+    <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M180 79 V100" stroke="#9b9b9b" stroke-width="5" />
+        <path d="M166 100 H194 M156.3 136 H203.7 M144.9 178 H215.1 M131.4 228 H228.6 M115.2 288 H244.8"
+              stroke="#8a8a8a" stroke-width="4" />
+        <path d="M166 100 L203.7 136 M194 100 L156.3 136 M156.3 136 L215.1 178 M203.7 136 L144.9 178
+                 M144.9 178 L228.6 228 M215.1 178 L131.4 228 M131.4 228 L244.8 288 M228.6 228 L115.2 288"
+              stroke="#6f6f6f" stroke-width="3" />
+        <path d="M166 100 L112 300 L102 312 M194 100 L248 300 L258 312" stroke="#a5a5a5" stroke-width="7" />
+    </g>
+    <path d="M180 168 L214 226 H146 Z" fill="#111" stroke="#111" stroke-width="24" stroke-linejoin="round" />
+    <path d="M180 168 L214 226 H146 Z" fill="currentColor" stroke="currentColor" stroke-width="10" stroke-linejoin="round" />
+    <rect x="176.5" y="183" width="7" height="25" rx="3.5" fill="#fff" />
+    <circle cx="180" cy="217" r="4" fill="#fff" />
+</svg>

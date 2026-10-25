@@ -90,6 +90,8 @@ $ccAcl->allow('G', 'index')
     ->allow('P', 'podcast')
     ->allow('P', 'webstream')
     ->allow('P', 'linein')
+    // RASTATIME 2026-10-25 (operator) - Program Managers run the Auto DJ
+    ->allow('P', 'preference', ['auto-dj', 'auto-dj-upload-logo', 'auto-dj-remove-logo'])
     ->allow('A', 'playouthistorytemplate')
     ->allow('A', 'user')
     ->allow('A', 'tracktype')

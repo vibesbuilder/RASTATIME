@@ -180,6 +180,8 @@ $pages[] = [
             'controller' => 'preference',
             'action' => 'auto-dj',
             'resource' => 'preference',
+            // RASTATIME 2026-10-25 - also Program Managers (ACL privilege)
+            'privilege' => 'auto-dj',
         ],
         [
             'label' => 'Streams',

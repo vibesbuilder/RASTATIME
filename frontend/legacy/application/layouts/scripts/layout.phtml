@@ -54,6 +54,10 @@
 
     <div id="media_type_nav">
         <!-- class="content-pane" -->
+        <?php // RASTATIME 2026-10-25 (role audit) - guests create and upload nothing:
+        // no New menu, no Upload button (plupload answered them with the error page)
+        $rtCurrentUser = Application_Model_User::getCurrentUser();
+        if ($rtCurrentUser !== null && !$rtCurrentUser->isGuest()) : ?>
         <div class="btn-group">
             <ul class="dropdown-menu">
                 <li id="new-playlist">
@@ -63,8 +67,7 @@
                     <a href="#"><?php echo _("Smart Block") ?></a>
                 </li>
                 <?php // RASTATIME 2026-10-25 (role audit) - webstreams and Line-Ins: Program Managers and Admins
-                $rtCurrentUser = Application_Model_User::getCurrentUser();
-                if ($rtCurrentUser !== null && $rtCurrentUser->isAdminOrPM()) : ?>
+                if ($rtCurrentUser->isAdminOrPM()) : ?>
                 <li id="new-webstream">
                     <a href="#"><?php echo _("Webstream") ?></a>
                 </li>
@@ -80,6 +83,7 @@
                 </button>
             </a>
         </div>
+        <?php endif; ?>
 
         <div class="media_type_selector top-link" data-selection-id="<?php echo MediaType::getDefault(); ?>">
             <a href="<?php echo Config::getBasePath() . 'showbuilder#' ?>">

@@ -3243,11 +3243,22 @@ dt.block-display.info-block {
 
 .error-content {
     position: relative;
-    background: url(images/maintenance.png) no-repeat 0 0;
     width: 360px;
     height: 350px;
     margin: auto;
     top: 25px;
+}
+/* RASTATIME 2026-10-25 - inline SVG in place of images/maintenance.png
+   (follows the primary colour; partialviews/error-graphic.phtml) */
+.error-content .rt-error-graphic {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 360px;
+    height: 350px;
+}
+.error-content h2 {
+    position: relative;
 }
 .error-content h2 {
     margin:0;

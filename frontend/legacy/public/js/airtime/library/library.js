@@ -866,12 +866,17 @@ var AIRTIME = (function (AIRTIME) {
   mod.handleAjaxError = function (r) {
     // If the request was denied due to permissioning
     if (r.status === 403) {
+      var wrapper = $("#library_display_wrapper"),
+        text = $.i18n._("You don't have permission to view the library.");
+      // RASTATIME 2026-10-25 - the DataTables 1.13 layout has no
+      // .empty_placeholder: the shared helper shows a note instead (guests)
+      if (AIRTIME.widgets && AIRTIME.widgets.Table) {
+        AIRTIME.widgets.Table.showAccessDenied(wrapper, text);
+        return;
+      }
       // Hide the processing div
-      var wrapper = $("#library_display_wrapper");
       wrapper.find(".dt-process-rel").hide();
-      wrapper
-        .find(".empty_placeholder_text")
-        .text($.i18n._("You don't have permission to view the library."));
+      wrapper.find(".empty_placeholder_text").text(text);
       wrapper.find(".empty_placeholder").show();
     }
   };
@@ -2727,6 +2732,10 @@ var AIRTIME = (function (AIRTIME) {
         },
         // RASTATIME 2026-10-18 - the search box says "X of N podcasts"
         rtFilterCountFormat: "%s of %s podcasts",
+        // RASTATIME 2026-10-25 - guests: the podcast list is part of the library
+        rtAccessDeniedText: $.i18n._(
+          "You don't have permission to view the library.",
+        ),
       },
     );
 

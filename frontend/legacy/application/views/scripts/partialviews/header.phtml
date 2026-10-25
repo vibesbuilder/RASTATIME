@@ -66,7 +66,15 @@
                Indicator stays above the button (DOM order: div,
                then <a>). */ ?>
         <div class="auto-dj-indicator"></div>
+        <?php /* RASTATIME 2026-10-25 (role audit) - Program Managers and
+               Admins open the settings; DJs and guests see the status only
+               (the page answered them with the error page). */
+        $rtAutoDjUser = Application_Model_User::getCurrentUser();
+        if ($rtAutoDjUser !== null && $rtAutoDjUser->isAdminOrPM()) : ?>
         <a href="<?php echo $this->baseUrl('preference/auto-dj'); ?>" class="auto-dj-button" title="<?php echo _('Auto DJ settings'); ?>"><span>&#x2699;&nbsp;<?php echo _('AUTO DJ'); ?></span></a>
+        <?php else : ?>
+        <span class="auto-dj-button auto-dj-readonly"><span><?php echo _('AUTO DJ'); ?></span></span>
+        <?php endif; ?>
       </li>
     </ul>
   </div>

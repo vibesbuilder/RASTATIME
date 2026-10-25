@@ -5,10 +5,12 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <title><?php echo _("An error has occurred.") ?></title>
     <?php echo $this->headLink(); ?>
+    <?php /* RASTATIME 2026-10-25 - primary colour for the graphic */ echo Application_Model_AccentColor::styleTag() ?>
 </head>
 
 <body>
     <div class="error-content" id="error-500">
+        <?php echo $this->render('partialviews/error-graphic.phtml'); ?>
         <h2><?php echo _("Oops!") ?></h2>
         <p><?php echo _("Something went wrong!") ?></p>
         <div class="button-bar">

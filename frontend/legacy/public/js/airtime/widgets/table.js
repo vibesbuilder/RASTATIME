@@ -57,6 +57,9 @@ var AIRTIME = (function (AIRTIME) {
     // search box (shown instead of "Filtering out N of M records")
     self._filterCountFormat = dataTablesOptions.rtFilterCountFormat || null;
     delete dataTablesOptions.rtFilterCountFormat;
+    // RASTATIME 2026-10-25 - the text shown when the server answers 403
+    self._accessDeniedText = dataTablesOptions.rtAccessDeniedText || null;
+    delete dataTablesOptions.rtAccessDeniedText;
 
     // Exclude the leftmost column if we're implementing item selection
     self._colVisExcludeColumns = bItemSelection ? [0] : [];
@@ -580,12 +583,38 @@ var AIRTIME = (function (AIRTIME) {
   Table.prototype._handleAjaxError = function (r) {
     // If the request was denied due to permissioning
     if (r.status === 403) {
-      $(".dt-process-rel").hide();
-      $(".empty_placeholder_text").text(
-        $.i18n._("You don't have permission to view this resource."),
+      Table.showAccessDenied(
+        this._$wrapperDOMNode.closest(".dataTables_wrapper"),
+        this._accessDeniedText ||
+          $.i18n._("You don't have permission to view this resource."),
       );
-      $(".empty_placeholder").show();
     }
+  };
+
+  /**
+   * RASTATIME 2026-10-25 - show a "no permission" note in a table's
+   * .dataTables_wrapper.  The DataTables 1.13 layout (jq3) has no
+   * .empty_placeholder slot, so a 403 left a silently empty table (a
+   * guest's library); the legacy layout keeps its placeholder.
+   */
+  Table.showAccessDenied = function ($wrapper, text) {
+    $wrapper.find(".dt-process-rel").hide();
+    var $placeholder = $wrapper.find(".empty_placeholder");
+    if ($placeholder.length > 0) {
+      $wrapper.find(".empty_placeholder_text").text(text);
+      $placeholder.show();
+      return;
+    }
+    var $note = $wrapper.find(".rt-access-denied");
+    if ($note.length === 0) {
+      var $table = $wrapper.find("table").first();
+      var $scroll = $table.closest(".dataTables_scrolling");
+      $note = $("<div class='rt-access-denied'></div>").insertBefore(
+        $scroll.length > 0 ? $scroll : $table,
+      );
+    }
+    $note.text(text).show();
+    $wrapper.find("table").hide();
   };
 
   /** Grab data from a REST API and format so that DataTables can display it.
@@ -643,7 +672,7 @@ var AIRTIME = (function (AIRTIME) {
         //Pass it along to datatables.
         fnCallback(json);
       },
-      error: self._handleAjaxError,
+      error: self._handleAjaxError.bind(self),
     });
   };
 

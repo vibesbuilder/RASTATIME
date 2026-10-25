@@ -97,10 +97,19 @@
   border-color: #2a2a2a;
   opacity: 0.65;
 }
-#schedule_calendar .fc-button-primary:not(:disabled).fc-button-active,
 #schedule_calendar .fc-button-primary:not(:disabled):active {
   background: #2c2c2c;
   border-color: #2a2a2a;
+}
+/* RASTATIME 2026-10-25 (operator: the chosen view was hardly visible - the
+   active Day/Week/Month button was only a shade darker) - the active view
+   carries the primary colour. */
+#schedule_calendar .fc-button-primary:not(:disabled).fc-button-active,
+#schedule_calendar .fc-button-primary:not(:disabled).fc-button-active:hover {
+  background: var(--rt-accent);
+  border-color: var(--rt-accent-dark);
+  color: var(--rt-accent-fg);
+  font-weight: bold;
 }
 
 /* ---- day-of-week header row (the "Mon 6/1" grey bar) ---- */

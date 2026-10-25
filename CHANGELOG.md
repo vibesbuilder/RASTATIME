@@ -222,6 +222,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Rollen und Oberfläche nach dem UI-Test des Operators (2026-10-25)** —
+  **Gäste**: die Bibliothek zeigt statt einer leeren Tabelle „You don't have
+  permission to view the library.“ (der vorhandene 403-Hinweis fand im
+  DataTables-1.13-Layout keinen Platzhalter mehr; gemeinsamer Helfer
+  `AIRTIME.widgets.Table.showAccessDenied`, gilt auch für den
+  Podcast-Reiter); „Neu“-Menü und „Upload“ sind für Gäste ausgeblendet
+  (Upload endete auf der Fehlerseite).  **Programm-Manager** bedienen den
+  Auto DJ: ACL `preference` nur für `auto-dj` und den Logo-Upload,
+  Menüpunkt Settings → Auto DJ; die übrigen Einstellungsseiten bleiben
+  Admin.  DJs und Gäste sehen den AUTO-DJ-Status im Kopfbereich ohne Link
+  (vorher Fehlerseite).  **Fehlerseiten**: neue Grafik als Inline-SVG
+  (`partialviews/error-graphic.phtml`) statt `images/maintenance.png` -
+  Signal und Warnzeichen folgen der eingestellten Primärfarbe (das PNG
+  trug noch das alte Orange).  **Kalender**: die gewählte Ansicht
+  (Day/Week/Month) trägt die Primärfarbe; vorher war der aktive Knopf nur
+  eine Spur dunkler.
 - **MP3-Stream wieder mit 44,1 kHz statt 48 kHz (2026-10-25, Operator-Go
   zum Backlog-Punkt „Resampler im Signalweg")** — der Wert stand in
   Settings → Streams → Stream 1 → Sample Rate; der Mix läuft mit 44,1 kHz,

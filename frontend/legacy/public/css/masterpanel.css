@@ -276,7 +276,22 @@
 	text-shadow: #555555 0 -1px;
 	display: block;
 }
-.status-info-block li.auto-dj-item .auto-dj-button:hover {
+/* RASTATIME 2026-10-25 (role audit) - DJs and guests: status only, no link */
+.status-info-block li.auto-dj-item .auto-dj-button.auto-dj-readonly {
+	cursor: default;
+}
+.status-info-block li.auto-dj-item .auto-dj-button.auto-dj-readonly:hover {
+	border: 1px solid #242424;
+}
+.status-info-block li.auto-dj-item .auto-dj-button.auto-dj-readonly:hover span {
+	background: linear-gradient(to bottom, #868686 0, #6e6e6e 100%);
+	border: 1px solid #a1a1a1;
+	border-width: 1px 0;
+	border-bottom-color: #646464;
+	color: #dcdcdc;
+	text-shadow: #555555 0 -1px;
+}
+.status-info-block li.auto-dj-item .auto-dj-button:not(.auto-dj-readonly):hover {
 	/* Hover border = .listen-control-button:hover (styles.css L468). */
 	border: 1px solid #000;
 }
