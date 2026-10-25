@@ -377,6 +377,7 @@ function validateMimeType(mime) {
     "image/jpeg",
     "image/png",
     "image/gif",
+    "image/webp", // RASTATIME 2026-10-25
     // BMP?
   ];
   return $.inArray(mime, extensions);

@@ -111,7 +111,7 @@ Use a playlist that contains exactly **one smart block** with:
 | **Show Name** | Used as the auto-created show's name on the calendar. Default `Auto DJ`. |
 | **URL / Genre / Description** | Copied to every auto-created show's metadata. Visible in the public schedule export. |
 | **Background / Text Color** | Used to colour the auto-created shows on the calendar — helpful for distinguishing them from operator-scheduled shows at a glance. |
-| **Show Logo** | Default logo for the auto-created shows. Stored as a base64 blob in `cc_pref`. Upload limit 2 MB; JPG / PNG / GIF. |
+| **Show Logo** | Default logo for the auto-created shows. Stored as a base64 blob in `cc_pref`. Upload limit 2 MB; JPG / PNG / GIF / WebP. |
 | **Automatically fill any show** | If on, enables the second pass (fill-pass). |
 
 > **How it works under the hood.** Settings live in the

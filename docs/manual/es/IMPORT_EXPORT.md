@@ -104,7 +104,7 @@ sigue rechazándose.
 | `rastatime_auth`, `custom_auth`, `custom_username` | autenticación de DJ en directo como en el diálogo |
 | `djs` | logins de DJ, separados por comas; solo se pueden asignar usuarios de tipo DJ |
 | `background_color`, `text_color` | seis dígitos hexadecimales sin `#` |
-| `logo` | nombre de archivo dentro de la carpeta `logos/` del paquete (jpg, png, gif) |
+| `logo` | nombre de archivo dentro de la carpeta `logos/` del paquete (jpg, png, gif, webp) |
 
 **La contraseña personalizada de directo nunca forma parte del
 archivo.** La exportación la omite, y la importación da a un programa

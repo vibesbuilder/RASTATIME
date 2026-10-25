@@ -34,6 +34,10 @@ class Zend_Filter_ImageSize implements Zend_Filter_Interface
             $newWidth = round($origWidth / $ratio);
             $newHeight = round($origHeight / $ratio);
             $resized = imagecreatetruecolor($newWidth, $newHeight);
+            // RASTATIME 2026-10-25 - keep the alpha channel of PNG / WebP logos
+            // (a truecolor canvas starts black and opaque otherwise).
+            imagealphablending($resized, false);
+            imagesavealpha($resized, true);
             imagecopyresampled($resized, $image, 0, 0, 0, 0, $newWidth, $newHeight, $origWidth, $origHeight);
 
             // determine type and store to disk
@@ -42,6 +46,8 @@ class Zend_Filter_ImageSize implements Zend_Filter_Interface
             $writeFunc = 'image' . $type;
             if ($type == 'jpeg' || $type == 'jpg') {
                 imagejpeg($resized, $value, 100);
+            } elseif ($type == 'webp') {
+                imagewebp($resized, $value, 90);
             } else {
                 $writeFunc($resized, $value);
             }

@@ -1666,9 +1666,10 @@ class PreferenceController extends Zend_Controller_Action
                 'image/jpeg' => 'jpg',
                 'image/png'  => 'png',
                 'image/gif'  => 'gif',
+                'image/webp' => 'webp',   // RASTATIME 2026-10-25
             ];
             if (!isset($extensions[$mime])) {
-                throw new Exception('Bad file type — only JPG, PNG and GIF are accepted.');
+                throw new Exception('Bad file type — only JPG, PNG, GIF and WebP are accepted.');
             }
             $ext = $extensions[$mime];
 

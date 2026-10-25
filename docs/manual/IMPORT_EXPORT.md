@@ -96,7 +96,7 @@ refused.
 | `rastatime_auth`, `custom_auth`, `custom_username` | live DJ authentication as in the dialog |
 | `djs` | DJ logins, comma separated; only users of type DJ can be assigned |
 | `background_color`, `text_color` | six hex digits without `#` |
-| `logo` | file name inside the bundle's `logos/` folder (jpg, png, gif) |
+| `logo` | file name inside the bundle's `logos/` folder (jpg, png, gif, webp) |
 
 **The custom live password is never part of the file.** The export
 leaves it out, and the import gives a show with custom authentication

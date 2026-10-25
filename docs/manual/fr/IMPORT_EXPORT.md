@@ -104,7 +104,7 @@ toujours refusée.
 | `rastatime_auth`, `custom_auth`, `custom_username` | authentification DJ live comme dans la boîte de dialogue |
 | `djs` | identifiants des DJ, séparés par des virgules ; seuls les utilisateurs de type DJ peuvent être affectés |
 | `background_color`, `text_color` | six chiffres hexadécimaux sans `#` |
-| `logo` | nom de fichier dans le dossier `logos/` de l'archive (jpg, png, gif) |
+| `logo` | nom de fichier dans le dossier `logos/` de l'archive (jpg, png, gif, webp) |
 
 **Le mot de passe live personnalisé ne fait jamais partie du fichier.**
 L'export l'omet, et l'import donne à une émission avec authentification

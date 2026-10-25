@@ -36,6 +36,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Logos als WebP (2026-10-25, Operator-Go)** — Show-Logo, Stationslogo,
+  Auto-DJ-Logo und die Logos im Show-Import nehmen jetzt auch WebP an
+  (bisher JPG/PNG/GIF; Formular-Validatoren, REST-Upload, `common.js`,
+  `ImportExportShows`).  Beim Verkleinern auf 600 px schreibt `ImageSize`
+  WebP (Qualität 90) und erhält den Alphakanal von PNG/WebP (vorher wurde
+  Transparenz beim Verkleinern schwarz); ein unbekannter Bildtyp gibt
+  "Bad file extension" statt einer ErrorException.  Probe mit einem
+  transparenten 1200×800-WebP bestanden.  Handbuch AUTO_DJ, SETTINGS,
+  IMPORT_EXPORT.
 - **Bibliothek: Ordner `imported/tagless/` für Uploads ohne Interpreten-Tag
   (2026-10-24, Operator-Go zur Frage vom selben Tag)** — der Analyzer baute
   `imported/<Interpret>/<Album>/`; ohne Interpreten-Tag blieb nur

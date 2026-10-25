@@ -82,7 +82,7 @@ block** avec :
 | **Nom d'émission** | Utilisé comme nom de l'émission auto-créée dans le calendrier. Par défaut `Auto DJ`. |
 | **URL / Genre / Description** | Copié dans les métadonnées de chaque émission auto-créée. Visible dans l'export du planning public. |
 | **Couleur de fond / texte** | Utilisé pour colorer les émissions auto-créées dans le calendrier — utile pour les distinguer des émissions planifiées par l'opérateur en un coup d'œil. |
-| **Logo d'émission** | Logo par défaut pour les émissions auto-créées. Stocké comme blob base64 dans `cc_pref`. Limite d'upload 2 MB ; JPG / PNG / GIF. |
+| **Logo d'émission** | Logo par défaut pour les émissions auto-créées. Stocké comme blob base64 dans `cc_pref`. Limite d'upload 2 MB ; JPG / PNG / GIF / WebP. |
 | **Remplir automatiquement toute émission** | Si activé, active le second passage (fill-pass). |
 
 > **Comment ça marche sous le capot.** Les paramètres

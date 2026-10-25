@@ -160,7 +160,7 @@ class Rest_ShowImageController extends Zend_Rest_Controller
         // Only accept files with a file extension that we support.
         $fileExtension = $this->getFileExtension($tempFilePath);
 
-        if (!in_array(strtolower($fileExtension), explode(',', 'jpg,png,gif,jpeg'))) {
+        if (!in_array(strtolower($fileExtension), explode(',', 'jpg,png,gif,jpeg,webp'))) {
             @unlink($tempFilePath);
 
             throw new Exception('Bad file extension.');
@@ -209,9 +209,12 @@ class Rest_ShowImageController extends Zend_Rest_Controller
             'image/jpeg' => 'jpg',
             'image/png' => 'png',
             'image/gif' => 'gif',
+            'image/webp' => 'webp',   // RASTATIME 2026-10-25
         ];
 
-        return $extensions[$mime];
+        // RASTATIME 2026-10-25 - an unknown type ends as "Bad file extension"
+        // above instead of an undefined-key ErrorException.
+        return $extensions[$mime] ?? '';
     }
 
     /**

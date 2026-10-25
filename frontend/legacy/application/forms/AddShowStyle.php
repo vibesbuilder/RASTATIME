@@ -76,7 +76,8 @@ class Application_Form_AddShowStyle extends Zend_Form_SubForm
                 'placement' => false,
             ]]])
             ->addValidator('Count', false, 1)
-            ->addValidator('Extension', false, 'jpg,jpeg,png,gif')
+            // RASTATIME 2026-10-25 - WebP accepted too (operator)
+            ->addValidator('Extension', false, 'jpg,jpeg,png,gif,webp')
             ->addFilter('ImageSize');
 
         $this->addElement($upload);

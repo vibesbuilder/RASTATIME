@@ -5863,7 +5863,16 @@ Praeferenz, Palette `--rt-secondary*`, Manual ×4), braucht aber die Liste der
 Elemente, die der Operator als „Sekundaerfarbe" wahrnimmt.  Vorbedingung:
 Screenshot/Liste der gemeinten Stellen.
 
-### 🟡 Show-Logos als WebP (Operator-Frage 2026-10-19) - Defer (Operator 2026-10-19: spaeter; Go empfohlen, ~1 h)
+### ✅ Show-Logos als WebP (Operator-Frage 2026-10-19) - gebaut 2026-10-25 (Operator-Go 2026-10-25)
+
+**Ergebnis:** WebP an allen Logo-Stellen: Show-Logo (Formular-Validator, REST-Upload mit MIME-Liste,
+`common.js`), Stationslogo, Auto-DJ-Logo, Show-Import (Logos im Bündel).  `ImageSize` schreibt WebP
+(Qualität 90) und erhält jetzt den Alphakanal von PNG/WebP beim Verkleinern; ein unbekannter Typ endet als
+"Bad file extension" statt ErrorException.  Probe: 1200×800-WebP mit Transparenz → 600×400 WebP,
+transparente Hälfte bleibt transparent, finfo `image/webp`, Validator OK.  Handbuch AUTO_DJ / SETTINGS /
+IMPORT_EXPORT (wo vorhanden ×4).  Upload im Browser durch den Operator ausstehend.
+
+**Ursprünglicher Befund:**
 
 Heute abgelehnt an drei Stellen: `AddShowStyle` (Extension-Validator
 jpg,jpeg,png,gif), `Rest_ShowImageController` (MIME-Liste + Erweiterungs-Map),

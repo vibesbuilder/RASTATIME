@@ -105,7 +105,7 @@ ist, wird weiterhin abgewiesen.
 | `rastatime_auth`, `custom_auth`, `custom_username` | Live-DJ-Authentifizierung wie im Dialog |
 | `djs` | DJ-Logins, kommagetrennt; nur Benutzer vom Typ DJ lassen sich zuweisen |
 | `background_color`, `text_color` | sechs Hex-Ziffern ohne `#` |
-| `logo` | Dateiname im Ordner `logos/` des Bündels (jpg, png, gif) |
+| `logo` | Dateiname im Ordner `logos/` des Bündels (jpg, png, gif, webp) |
 
 **Das eigene Live-Passwort ist nie Teil der Datei.** Der Export lässt
 es weg, und der Import gibt einer Sendung mit eigener

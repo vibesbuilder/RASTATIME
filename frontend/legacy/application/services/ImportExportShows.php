@@ -72,7 +72,7 @@ class Application_Service_ImportExportShows extends Application_Service_ImportEx
             'rastatime_auth, custom_auth' => 'yes/no - live DJ authentication; custom_username goes with custom_auth',
             'djs' => 'DJ logins, comma separated',
             'background_color, text_color' => 'hex without #, e.g. 1F7A8C and FFFFFF',
-            'logo' => 'file name inside the bundle folder logos/ (jpg, png, gif)',
+            'logo' => 'file name inside the bundle folder logos/ (jpg, png, gif, webp)',
         ];
     }
 
@@ -459,7 +459,8 @@ class Application_Service_ImportExportShows extends Application_Service_ImportEx
     private static function storeLogo(int $showId, string $sourcePath): ?string
     {
         $ext = strtolower(pathinfo($sourcePath, PATHINFO_EXTENSION));
-        if (!in_array($ext, ['jpg', 'jpeg', 'png', 'gif'], true)) {
+        // RASTATIME 2026-10-25 - WebP like the logo upload (an export can carry it)
+        if (!in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp'], true)) {
             return null;
         }
         $dir = rtrim(Application_Common_Storage::root(), '/\\') . '/imported/show-images/' . $showId;

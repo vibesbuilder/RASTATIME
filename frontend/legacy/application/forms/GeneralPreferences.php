@@ -42,7 +42,7 @@ class Application_Form_GeneralPreferences extends Zend_Form_SubForm
             ->setDescription(_('Note: Anything larger than 600x600 will be resized.'))
             ->setRequired(false)
             ->addValidator('Count', false, 1)
-            ->addValidator('Extension', false, 'jpg,jpeg,png,gif')
+            ->addValidator('Extension', false, 'jpg,jpeg,png,gif,webp')   // WebP since 2026-10-25
             ->setMaxFileSize(1000000)
             ->addFilter('ImageSize');
         $stationLogoUpload->setAttrib('accept', 'image/*');

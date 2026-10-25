@@ -119,7 +119,7 @@ enthält mit:
 | **Sendungsname** | Verwendet als Name der auto-erstellten Sendung im Kalender. Standard `Auto DJ`. |
 | **URL / Genre / Beschreibung** | Kopiert in die Metadaten jeder auto-erstellten Sendung. Sichtbar im öffentlichen Programmplan-Export. |
 | **Hintergrund- / Textfarbe** | Verwendet, um die auto-erstellten Sendungen im Kalender zu färben — hilfreich, um sie auf einen Blick von operator-geplanten Sendungen zu unterscheiden. |
-| **Sendungs-Logo** | Standard-Logo für die auto-erstellten Sendungen. Als base64-Blob in `cc_pref` gespeichert. Upload-Limit 2 MB; JPG / PNG / GIF. |
+| **Sendungs-Logo** | Standard-Logo für die auto-erstellten Sendungen. Als base64-Blob in `cc_pref` gespeichert. Upload-Limit 2 MB; JPG / PNG / GIF / WebP. |
 | **Jede Sendung automatisch auffüllen** | Wenn an, aktiviert den zweiten Durchgang (Fill-Pass). |
 
 > **Wie es unter der Haube funktioniert.** Einstellungen
