@@ -547,7 +547,11 @@ html, body {
 }
 
 .np-widget.np-weekly-schedule .np-ws-range {
-    /*  Centred date-range label, e.g. "21 May – 27 May 2026".  */
+    /*  Centred date-range label, e.g. "21 May – 27 May 2026".
+        RASTATIME 2026-10-25 (operator: a little smaller) - 19.2 px
+        -> ~16.3 px; the year-boundary label "29. Dez. 2026 –
+        4. Jan. 2027" stays on one line at 350 px.  */
+    font-size: 0.85em;
     flex: 1 1 auto;
     text-align: center;
     font-variant-numeric: tabular-nums;
