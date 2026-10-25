@@ -120,6 +120,12 @@ class PageLayoutInitPlugin extends Zend_Controller_Plugin_Abstract
             $csrf_namespace->setExpirationSeconds(168 * 60 * 60);
         }
 
+        // RASTATIME 2026-10-25 (role audit package 3, R12) - every page knows
+        // the token; airtime_bootstrap.js sends it as X-CSRF-Token with each
+        // jQuery write, the ACL plugin compares it centrally.
+        $this->_bootstrap->getResource('view')->headScript()
+            ->appendScript('var CSRF_TOKEN = ' . json_encode((string) $csrf_namespace->authtoken) . ';');
+
         // Here we are closing the session for writing because otherwise no requests
         // in this session will be handled in parallel. This gives a major boost to the perceived performance
         // of the application (page load times are more consistent, no lock contention).

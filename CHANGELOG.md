@@ -9,6 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+- **Rollen-Audit Paket 3, Phase 1: CSRF für die Legacy-Oberfläche
+  (2026-10-25, Operator-Go)** — R12: Schreibzugriffe außerhalb von REST
+  (Kalender, Show-Builder, Bibliothek, Playlists, Sendeprotokoll, Benutzer,
+  Einstellungen …) wurden nie gegen das Sitzungs-Token geprüft.  Das
+  Sitzungs-Cookie ist jetzt `SameSite=Lax; HttpOnly` (gilt für neue
+  Cookies, also ab der nächsten Anmeldung).  Jede Seite kennt das Token
+  (`CSRF_TOKEN`), jeder jQuery-Schreibaufruf schickt es als
+  `X-CSRF-Token` mit (`airtime_bootstrap.js`), und `Acl_plugin` prüft es
+  zentral für jeden Legacy-Schreibzugriff einer angemeldeten Sitzung (auch
+  REST nimmt den Header an).  **Phase 1 blockiert nichts**: ein
+  Schreibzugriff ohne gültiges Token wird nur als `CSRF monitor: …` (WARN,
+  mit Controller/Aktion und Origin) ins `legacy.log` geschrieben, damit
+  Sender ohne jQuery (reine Formular-Posts, `fetch`) sichtbar werden;
+  Phase 2 schaltet `Acl_plugin::LEGACY_CSRF_ENFORCE` scharf (403).  Live
+  geprüft: neues Cookie mit `HttpOnly; SameSite=Lax`, jQuery-POST ohne
+  Monitor-Zeile, `fetch`-POST ohne Header genau eine Zeile.  Architektur
+  §23.72 (0.91).
 - **Rollen-Audit Paket 2: Rollen-Lücken R1-R11, R13 geschlossen
   (2026-10-25, Operator-Go, `16daab1`)** — nach der mit dem Operator festgelegten
   Soll-Matrix (`docs/operator/ROLE_AUDIT_2026-10.md` §4).  Neue Helfer

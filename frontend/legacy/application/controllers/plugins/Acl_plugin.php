@@ -164,7 +164,11 @@ class Zend_Controller_Plugin_Acl extends Zend_Controller_Plugin_Abstract
             // If we have an identity and we're making a RESTful request,
             // we need to check the CSRF token
             if ($_SERVER['REQUEST_METHOD'] != 'GET' && $request->getModuleName() == 'rest') {
-                $token = $request->getParam('csrf_token');
+                // RASTATIME 2026-10-25 - the header every jQuery write now carries
+                $token = $request->getHeader('X-CSRF-Token');
+                if (empty($token)) {
+                    $token = $request->getParam('csrf_token');
+                }
                 if (empty($token)) {
                     // RASTATIME 2026-06-05: some upload widgets (the dashboard
                     // Dropzone) submit the Zend CSRF *form element*, whose field name
@@ -219,6 +223,14 @@ class Zend_Controller_Plugin_Acl extends Zend_Controller_Plugin_Abstract
 
                     exit;
                 }
+            }
+
+            // RASTATIME 2026-10-25 (role audit package 3, R12) - the non-REST
+            // legacy writes (schedule, showbuilder, library, playlist, history,
+            // user, preferences, ...) were never compared.
+            if ($request->getModuleName() != 'rest'
+                && !in_array($_SERVER['REQUEST_METHOD'], ['GET', 'HEAD', 'OPTIONS'], true)) {
+                $this->checkLegacyCsrf($request, $controller);
             }
 
             $userInfo = Zend_Auth::getInstance()->getStorage()->read();
@@ -292,6 +304,50 @@ class Zend_Controller_Plugin_Acl extends Zend_Controller_Plugin_Abstract
     private function verifyCSRFToken($token)
     {
         return SecurityHelper::verifyCSRFToken($token);
+    }
+
+    /**
+     * RASTATIME 2026-10-25 (role audit package 3, R12) - phase 1 only logs a
+     * legacy write without a valid token ("CSRF monitor"), so senders that do
+     * not use jQuery (fetch, plain form posts) show up in legacy.log before
+     * the check is enforced.  Phase 2: set to true (403 + "CSRF refused").
+     */
+    private const LEGACY_CSRF_ENFORCE = false;
+
+    private function checkLegacyCsrf(Zend_Controller_Request_Abstract $request, string $controller): void
+    {
+        // X-CSRF-Token from jQuery (airtime_bootstrap.js); csrf_token / csrf
+        // from forms and hand-built requests
+        $token = $request->getHeader('X-CSRF-Token');
+        if (empty($token)) {
+            $token = $request->getParam('csrf_token');
+        }
+        if (empty($token)) {
+            $token = $request->getParam('csrf');
+        }
+        if ($this->verifyCSRFToken($token)) {
+            return;
+        }
+
+        Logging::warn(sprintf(
+            'CSRF %s: %s %s (%s/%s, origin=%s, token %s)',
+            self::LEGACY_CSRF_ENFORCE ? 'refused' : 'monitor',
+            $_SERVER['REQUEST_METHOD'],
+            strtok((string) $request->getRequestUri(), '?'),
+            $controller,
+            $request->getActionName(),
+            $request->getHeader('Origin') ?: '-',
+            empty($token) ? 'missing' : 'present but wrong'
+        ));
+
+        if (self::LEGACY_CSRF_ENFORCE) {
+            $this->getResponse()
+                ->setHttpResponseCode(403)
+                ->appendBody('ERROR: CSRF token mismatch.')
+                ->sendResponse();
+
+            exit;
+        }
     }
 
     private function verifyAPIKey()

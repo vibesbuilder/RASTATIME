@@ -1,10 +1,14 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.90
+Draft version: 0.91
 Date: 2026-10-25
 
 > **Revision history**
+> - **0.91 (2026-10-25)** - **Role audit: role checks and the legacy CSRF
+>   check** (§23.72): shared PM+/owner helpers, REST session vs. API key,
+>   `@internal_only` Django views, the X-CSRF-Token convention for every
+>   legacy write (phase 1 logs only).
 > - **0.90 (2026-10-25)** - **Users in Import / Export** (§23.56 addendum):
 >   users.csv first in the bundle, no passwords in the export, password
 >   for new users only, guards for super admin / own account / last admin.
@@ -7628,3 +7632,59 @@ URI of 3,649 characters or the no-cover URL, the editor renders the
 `/api/track?id=N&return=artwork-64|artwork-data|artwork-data-32|
 artwork-128|artwork-512` answer 200 image/jpeg.  The analyzer change
 takes effect after a RASTATIME-ANALYZER restart.
+
+### 23.72 Role Audit: Role Checks and the Legacy CSRF Check (2026-10-25)
+
+**Context.**  The role audit "who may do what"
+(`docs/operator/ROLE_AUDIT_2026-10.md`) found seven immediate holes
+(S1-S7) and thirteen role gaps (R1-R13); the operator agreed a target
+matrix and five packages.  This section records the conventions the fixes
+introduced, so new code follows them.
+
+**Legacy role checks.**  `Application_Model_User::isAdminOrPM()` (Program
+Manager, Admin, Super Admin) and `requireAdminOrPM()` (throws a 403
+`Zend_Controller_Action_Exception`, logged by the ErrorController) are the
+shared check; a controller-wide rule goes into `preDispatch()` (widgets
+POST, playout-history edits), an ownership rule next to the object load
+(`PlaylistController::requireOwnerOrPM`, the metadata editor).  The ACL
+(`configs/ACL.php`) stays the coarse layer: show logos, podcasts,
+webstreams and Line-Ins moved from Guest/DJ to Program Manager.  DJs and
+guests work with tracks only - the library feed (`searchLibraryFiles`)
+returns no webstream/Line-In rows for them and `playlist/add-items` /
+`showbuilder/schedule-add` refuse those types.  DJs edit the playout
+history of the shows they host (the entry's and the target instance's
+show, checked in `PlayouthistoryController::preDispatch`).
+
+**REST and API callers.**  In the REST module a call with the API key has
+no Zend_Auth identity (`Application_Model_User::getCurrentUser() ===
+null`); role and ownership checks apply to session callers only, and
+storage fields (`full_path`, `artwork`) stay with the API key.  In
+`ApiController` a session is accepted only for the actions listed in
+`SESSION_ACTIONS`; everything else needs the key.  Django function views
+without DRF permissions are wrapped in `@internal_only` (Api-Key, or a
+loopback caller without `X-Forwarded-For`); Waitress trusts the local
+Apache for that header only (`waitress_serve.PROXY_OPTIONS`), so
+`REMOTE_ADDR` is the real client.
+
+**Legacy CSRF (package 3).**  The session cookie is `SameSite=Lax;
+HttpOnly` (`Zend_Session::setOptions` in `Bootstrap.php`; new cookies, i.e.
+from the next login).  Every page defines `CSRF_TOKEN` (the session's
+`csrf_namespace` token, `PageLayoutInitPlugin::_initCsrfNamespace`), and
+`airtime_bootstrap.js` adds it as `X-CSRF-Token` to every same-origin
+jQuery request that is not GET/HEAD/OPTIONS (`$.ajaxPrefilter`).
+`Acl_plugin` compares the header (else `csrf_token`, else the form field
+`csrf`) for every non-REST write of a logged-in user; the REST check
+accepts the header too.  **Phase 1** only logs a write without a valid
+token (`CSRF monitor: ...` WARN in `legacy.log`, with controller/action
+and Origin), so senders that bypass jQuery (plain form posts, `fetch`)
+show up; **phase 2** sets `Acl_plugin::LEGACY_CSRF_ENFORCE` to true (403).
+New code that writes without jQuery sends the header itself.
+
+**Verification.**  Read-only CLI probes per role
+(`C:/Temp/optd/role_audit_p2_probe.php`, `role_audit_p2b_probe.php`:
+ACL matrix G/H/P/A/S, helpers, ownership, history host rules, library
+feed per role), API tests for `@internal_only` and the Waitress proxy
+options, and live checks: refused paths 401/403 from outside, the admin
+UI unchanged; the new cookie carries `HttpOnly; SameSite=Lax`; a jQuery
+POST passes the monitor silently, a `fetch` POST without the header
+yields one `CSRF monitor` line.

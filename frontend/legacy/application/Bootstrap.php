@@ -18,6 +18,12 @@ if (APPLICATION_ENV != 'testing') {
     Zend_Session::setOptions([
         'strict' => true,
         'serialize_handler' => 'php_serialize',
+        // RASTATIME 2026-10-25 (role audit package 3, R12) - the browser
+        // sends the session cookie on cross-site requests only for top-level
+        // GET navigation (no cross-site POST/iframe/fetch), and page scripts
+        // cannot read it.  New cookies only: takes effect at the next login.
+        'cookie_samesite' => 'Lax',
+        'cookie_httponly' => true,
     ]);
 
     $db = Zend_Db::factory('PDO_' . $CC_CONFIG['dsn']['phptype'], [

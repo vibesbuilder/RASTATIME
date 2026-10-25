@@ -905,7 +905,11 @@ PM+; Playlists/Blöcke/Metadaten nur Besitzer oder PM+; herabgestufter Host plan
 offen (selbstkorrigierend).  Nachtrag Operator (gleicher Tag): DJs/Gäste nur Tracks (Webstreams und
 Line-Ins unsichtbar, nicht in Playlists/Sendungen einfügbar), DJs bearbeiten das Sendeprotokoll ihrer
 eigenen Sendungen, Podcast-Knöpfe für DJs ausgeblendet.  Abnahme mit PM- und DJ-Konto: Operator.
-Pakete 3-5 folgen (Go für Paket 3 erteilt).
+**Paket 3 Phase 1 LIVE 2026-10-25 ~18:10:** Cookie SameSite=Lax + HttpOnly (ab nächster Anmeldung),
+X-CSRF-Token an jedem jQuery-Schreibaufruf, zentrale Prüfung in `Acl_plugin` nur protokollierend
+(`CSRF monitor` im legacy.log).  **Vorbedingung Phase 2 (scharf, 403):** Monitor-Log nach normalem
+Betrieb aller Rollen ruhig (oder verbleibende Sender ohne jQuery nachgezogen), dann
+`LEGACY_CSRF_ENFORCE = true` mit Operator-Go.  Pakete 4-5 folgen.
 
 **Ursprüngliche Aufgabe:**
 
