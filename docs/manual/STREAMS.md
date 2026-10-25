@@ -70,7 +70,7 @@ Each of the four stream cards has the same field set; only
 | **Format** | **MP3** (universal compatibility), **AAC** (better quality at low bitrates), **OGG Vorbis** (free, less ubiquitous), **OPUS** (modern, very efficient), **FLAC** (lossless, very large). |
 | **Bitrate** | Kbps. Picking the right value is the most consequential per-stream decision; see §2. |
 | **Channels** | **Stereo** (default), **Mono** (saves ~30 % bandwidth for talk-only). |
-| **Sample Rate** | 22.05 / 32 / 44.1 / 48 kHz. 44.1 kHz is the universal default. |
+| **Sample Rate** | 44.1 or 48 kHz. Keep **44.1 kHz** for MP3 / AAC / OGG: it is the rate the playout mixes at, so no resampler sits in the signal path (a 48 kHz stream is resampled by FFmpeg before the encoder; harmless but needless work). **Opus needs 48 kHz** and is clamped to it. Changing the rate restarts the encoder at the next file-to-file boundary; restart the standby service afterwards so the fallback mount matches (since 2026-10-25). |
 | **Stream Name / URL / Genre / Description** | ICY metadata advertised to listeners. Appears in their player as the station's name + click-through. Since 2026-09-13 all four are rendered; an empty Name or Description falls back to the station name (Icecast used to show "Unspecified name"). |
 
 ### Stream Label and Off Air Metadata

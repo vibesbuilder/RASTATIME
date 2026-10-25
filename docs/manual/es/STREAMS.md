@@ -37,7 +37,7 @@ tarjetas de stream tiene el mismo conjunto de campos.
 | **Formato** | **MP3**, **AAC**, **OGG Vorbis**, **OPUS**, **FLAC**. |
 | **Bitrate** | Kbps. La decisión más consecuente por stream; vea §2. |
 | **Canales** | **Estéreo** (por defecto), **Mono**. |
-| **Frecuencia de muestreo** | 22,05 / 32 / 44,1 / 48 kHz. |
+| **Frecuencia de muestreo** | 44,1 o 48 kHz. Mantenga **44,1 kHz** para MP3 / AAC / OGG: es la frecuencia con la que mezcla el playout, así no hay remuestreador en la cadena (un flujo a 48 kHz lo remuestrea FFmpeg antes del codificador; inofensivo pero innecesario). **Opus necesita 48 kHz** y se fija en ese valor. Un cambio reinicia el codificador en la siguiente transición archivo-archivo; reinicie después el servicio de reserva para que el punto de montaje de respaldo coincida (desde el 2026-10-25). |
 | **Nombre de stream / URL / Género / Descripción** | Metadatos ICY anunciados a los oyentes. Desde el 2026-09-13 se renderizan los cuatro; un Nombre o una Descripción vacíos recurren al nombre de la emisora (Icecast mostraba "Unspecified name"). |
 
 ### Stream Label y Off Air Metadata

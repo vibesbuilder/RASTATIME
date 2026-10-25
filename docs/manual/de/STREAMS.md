@@ -73,7 +73,7 @@ Standard).
 | **Format** | **MP3** (universelle Kompatibilität), **AAC** (bessere Qualität bei niedrigen Bitraten), **OGG Vorbis** (kostenlos, weniger allgegenwärtig), **OPUS** (modern, sehr effizient), **FLAC** (verlustfrei, sehr groß). |
 | **Bitrate** | Kbps. Die Wahl des richtigen Werts ist die folgenreichste Pro-Stream-Entscheidung; siehe §2. |
 | **Kanäle** | **Stereo** (Standard), **Mono** (spart ~30 % Bandbreite für reines Sprechen). |
-| **Samplerate** | 22,05 / 32 / 44,1 / 48 kHz. 44,1 kHz ist der universelle Standard. |
+| **Samplerate** | 44,1 oder 48 kHz. Für MP3 / AAC / OGG bei **44,1 kHz** bleiben: Mit dieser Rate mischt das Playout, es sitzt dann kein Resampler im Signalweg (ein 48-kHz-Stream wird vor dem Encoder von FFmpeg umgerechnet; harmlos, aber unnötige Arbeit). **Opus braucht 48 kHz** und wird darauf festgelegt. Eine Änderung startet den Encoder am nächsten Datei-zu-Datei-Übergang neu; danach den Standby-Dienst neu starten, damit der Fallback-Mount übereinstimmt (seit 2026-10-25). |
 | **Stream-Name / URL / Genre / Beschreibung** | ICY-Metadaten, die an Hörer annonciert werden. Erscheinen in ihrem Player als Stationsname + Click-Through. Seit 2026-09-13 werden alle vier gerendert; leerer Name oder leere Beschreibung fallen auf den Sendernamen zurück (Icecast zeigte vorher „Unspecified name"). |
 
 ### Stream Label und Off Air Metadata

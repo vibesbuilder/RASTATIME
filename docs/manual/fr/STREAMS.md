@@ -46,7 +46,7 @@ champs ; seul **Stream 1** est activé par défaut.
 | **Format** | **MP3**, **AAC**, **OGG Vorbis**, **OPUS**, **FLAC**. |
 | **Bitrate** | Kbps. La décision la plus conséquente par stream ; voir §2. |
 | **Canaux** | **Stéréo** (par défaut), **Mono** (économise ~30 % de bande passante pour parole). |
-| **Fréquence d'échantillonnage** | 22,05 / 32 / 44,1 / 48 kHz. 44,1 kHz est le standard universel. |
+| **Fréquence d'échantillonnage** | 44,1 ou 48 kHz. Gardez **44,1 kHz** pour MP3 / AAC / OGG : c'est la fréquence de mixage du playout, aucun rééchantillonneur ne se trouve alors dans la chaîne (un flux 48 kHz est rééchantillonné par FFmpeg avant l'encodeur ; sans danger mais inutile). **Opus exige 48 kHz** et y est forcé. Un changement redémarre l'encodeur à la prochaine transition fichier-fichier ; redémarrez ensuite le service de secours pour que le point de montage de repli corresponde (depuis le 2026-10-25). |
 | **Nom de stream / URL / Genre / Description** | Métadonnées ICY annoncées aux auditeurs. Depuis le 2026-09-13 les quatre champs sont rendus ; un Nom ou une Description vide retombe sur le nom de la station (Icecast affichait « Unspecified name »). |
 
 ### Stream Label et Off Air Metadata

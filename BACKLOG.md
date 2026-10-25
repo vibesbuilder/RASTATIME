@@ -64,8 +64,7 @@ Sekundärfarbe · Show-Logos als WebP (~1 h) · Rückgängig nach Löschen ·
 Metadaten Energy/Tempo/Key/Timbre (Bench liegt vor) · JavaScript-Build-Pipeline ·
 Payware/Tier-System 🔴 Hold.
 
-**Ideen, nur notiert:** Import/Export Stufe 2 · Backup: Recordings in den Medienspiegel · Podcast-Downloads umgehen den Analyzer · MP3-Stream-
-Ausgang 48 kHz bei 44,1-kHz-Mix · Line-In-Gain live nachregeln · Kanalwahl im
+**Ideen, nur notiert:** Import/Export Stufe 2 · Backup: Recordings in den Medienspiegel · Podcast-Downloads umgehen den Analyzer · Line-In-Gain live nachregeln · Kanalwahl im
 Schnell-Editor · Speicherzuwachs Liquidsoap · Traffic Alerts Deadline-Skip ·
 Expiry in M4A · bulk_import-Erweiterungsliste · die unbewerteten Ideen unter
 „Future Feature Ideas".
@@ -5473,7 +5472,15 @@ Standardliste an, eine Einschraenkung (z.B. nur .mp3) ist nicht moeglich.  Ausse
 .mp4/.mp2/.mp1/.au, die Upload, Import-Ordner und FTP seit 2026-10-14 annehmen.  Ansatz: default=None und erst nach
 dem Parsen auf die Standardliste zurueckfallen (kleiner Fix + Test); betrifft nur den Kommandozeilen-Massenimport.
 
-### 💡 MP3-Stream-Ausgang laeuft mit 48 kHz, der Mix mit 44,1 kHz (notiert 2026-10-14)
+### ✅ MP3-Stream-Ausgang laeuft mit 48 kHz, der Mix mit 44,1 kHz (notiert 2026-10-14) — erledigt 2026-10-25
+**Befund 2026-10-25:** Die 48 kHz kamen aus Settings → Streams → Stream 1 → „Sample Rate" (cc_pref stream_output_1,
+Feld-Standard 44,1); der Generator übernimmt den Wert je Mount in `%ffmpeg(... samplerate=N)`, Haupt- und Standby-Skript.
+AAC stand schon auf 44,1, Opus braucht 48 (Klemme).  **Operator-Go, Umstellung ohne Code:** Wert auf 44,1 kHz gesetzt,
+Playout erkannte den Fingerabdruck 12:07:21 (Webstream auf Sendung → gewartet), geplanter Neustart an der Grenze 12:15:00,
+5,0 s, Aufhol-Einstieg +5,0 s; Mount `/rastatime` seit 12:15:17 mit 44.100 Hz.  `nssm restart` meldet wie bei jedem
+geplanten Neustart Exit 1 (bekannt seit 2026-09-07, Dienst kommt zurück).  Standby-Skript 12:15 neu gerendert →
+RASTATIME-STANDBY danach erneut neu starten (der Operator-Neustart 12:06 kam vor dem Rendern).  Manual STREAMS
+„Sample Rate" EN/DE/FR/ES berichtigt (Dialog bietet 44,1/48, nicht 22,05/32).
 Bei der Abtastraten-Frage der Format-Normalisierung aufgefallen: der Mix (Tascam-Format, siehe Tascam-Item) laeuft
 mit 44,1 kHz, der MP3-Stream-Ausgang mit 48 kHz - fuer diesen Ausgang wird resampelt.  Kein Fehler, aber
 unnoetige Arbeit und ein zusaetzlicher Resampler im Signalweg.  Vorbedingungen fuer ein Go: eigene Evaluierung (woher
