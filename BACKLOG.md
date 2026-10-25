@@ -899,7 +899,7 @@ Podcasts/Widgets/Stationssprache/Line-In-Geräte für Programm-Manager und Admin
 Line-In/Soundkarte/Geräte/Preflight/Stream-Status von außen 403 (auch mit gefälschtem X-Forwarded-For),
 Playout über Apache mit Key 200, PHP direkt 200, Soundkarten-Seite und Line-In-Editor über die Proxys.
 Erster Neustart griff nicht: Waitress 3 verwarf X-Forwarded-For (jetzt PROXY_OPTIONS).
-**Paket 2 (R1-R11, R13) LIVE 2026-10-25 ~17:10** (PHP, sofort wirksam): Show-Inhalt leeren/Vorlagen,
+**Paket 2 (R1-R11, R13) LIVE 2026-10-25 ~17:10** (`16daab1`, PHP, sofort wirksam): Show-Inhalt leeren/Vorlagen,
 Stationssprache, Widgets, Show-Logos, Podcasts, Sendeprotokoll-Bearbeitung, Line-In-Verwaltung nur
 PM+; Playlists/Blöcke/Metadaten nur Besitzer oder PM+; herabgestufter Host plant nicht mehr.  R4 bewusst
 offen (selbstkorrigierend).  Abnahme mit einem DJ-Konto steht aus (Operator).  Pakete 3-5 folgen.

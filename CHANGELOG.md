@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 
 - **Rollen-Audit Paket 2: Rollen-Lücken R1-R11, R13 geschlossen
-  (2026-10-25, Operator-Go)** — nach der mit dem Operator festgelegten
+  (2026-10-25, Operator-Go, `16daab1`)** — nach der mit dem Operator festgelegten
   Soll-Matrix (`docs/operator/ROLE_AUDIT_2026-10.md` §4).  Neue Helfer
   `Application_Model_User::isAdminOrPM()` / `requireAdminOrPM()` (403,
   im Error-Controller als „Access refused“ geloggt).
