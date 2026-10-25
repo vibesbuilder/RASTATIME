@@ -425,6 +425,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **API v2: anonymer Aufruf von `/api/v2/users` ergab 500 (2026-10-25, `e83fc00`)** —
+  `IsAdminOrOwnUser` rief `is_superuser()` auch beim anonymen Benutzer auf,
+  bei dem es ein Wert statt einer Methode ist (`TypeError`).  Jetzt
+  Ablehnung (401/403); keine Daten waren betroffen.  Test ergänzt, API 181
+  Tests; wirksam beim nächsten API-Neustart.  Gefunden bei der Kontrolle
+  nach dem API-Neustart für den Löschschutz von `admin` (Neustart 21:54,
+  Datenbankzugriff in Ordnung).
 - **Analyzer: Lautheitsmessung bei MP3s mit defekten Frames (2026-10-24)** —
   bei Dateien mit „Header missing"-Fehlern initialisiert ffmpeg den
   Filtergraph je Aussetzer neu, `ebur128` druckt dann je Abschnitt eine
