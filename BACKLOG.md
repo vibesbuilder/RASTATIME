@@ -919,7 +919,7 @@ Auth-Skripte und `api/icecast-listener-allow` gelöscht; Icecast-Neustart 19:00:
 nach 3 s zurück, Streams 200, `/main` 404), Firewall-Regeln „RASTATIME Icecast“ + 2x „icecast“ vom
 Operator deaktiviert - **Paket 4 erledigt.**  Achtung Rückfall auf Icecast 2.4.4:
 `icecast.xml.2.4.4-backup` enthält die alten Mounts noch (`C:/Temp/optd/icecast_strip_input_mounts.py`).
-**Paket 5 erledigt 2026-10-25:** Handbuch `USERS_AND_ROLES` ×4 neu, Rollen-Aussagen in SETTINGS,
+**Abnahme mit PM- und DJ-Konto: Operator 2026-10-25 durchgeführt.**  **Paket 5 erledigt 2026-10-25:** Handbuch `USERS_AND_ROLES` ×4 neu, Rollen-Aussagen in SETTINGS,
 LINE_IN, CALENDAR, LIBRARY, SHOW_TEMPLATES, ANALYTICS ×4 korrigiert.  Offen aus dem Audit: Phase 2
 CSRF (ab 27.10.), PM/DJ-Abnahme; Ideen siehe unten (Super-Admin-Hinweis im Benutzer-Dialog, Show
 Templates/Widgets-Seite für PM, SETTINGS-Kapitel mit erfundenen Funktionen).
@@ -6110,6 +6110,23 @@ legt `admin` als Admin an).  Ursprüngliche Notiz:
 - **Kapitel SETTINGS (×4) beschreibt erfundene Funktionen:** Untermenü *Tools* (DB-Konsole,
   Log-Viewer, Cache-Reset), Seite *Localisation* u. a. - beim Rollen-Kapitel nur die Rollen-Stellen
   korrigiert; eine Durchsicht des ganzen Kapitels gegen die Oberfläche steht aus.
+
+### 💡 Rolle „Super Admin“ entfernen? (Operator-Frage 2026-10-25, Evaluierung - wartet auf Entscheidung)
+
+**Befund:** „S“ ist eine Airtime-Altrolle.  Die Installation legt `admin` als Admin an (`data.sql`), die
+Oberfläche kann niemanden zum S machen, LDAP/FreeIPA/Header-Anmeldung sind nicht aktiv (`general.auth`
+= local); auf der Station gibt es kein S-Konto.  Die API v2 kennt S gar nicht.  21 Legacy-Dateien nennen S,
+die meisten nur in Listen „S, A, P“ (harmlos).  Echte Sonderfälle: Löschschutz, Angaben im Benutzer-Dialog
+gesperrt (+ Hinweis), Namens-Hack in Mein Profil, Einrichtungsdialog Sprache/Zeitzone **nur für S** (zeigt
+sich deshalb hier nie), Import/Export-Sonderregeln, getFirstAdmin bevorzugt S, LDAP/Header-Gruppen-Mapping,
+ungenutzter Decorator `SuperAdmin_Only`, ungenutzte Variable in UsabilityHints.
+**Optionen:** (A) so lassen; (B) **stilllegen**: Daten-Migration S→A (für alte Airtime-Datenbanken),
+externe Gruppen auf Admin mappen, Sonderfälle entfernen, Einrichtungsdialog für Admins, Handbuch ×4,
+Konstante/Listen als harmlose Altlast belassen (~2-3 h, kein Dienst-Neustart); (C) komplett entfernen
+inkl. Konstante, ACL-Rolle, aller Listen und LDAP-Konfigschlüssel (~4-5 h, mehr Streuung, kaum Mehrwert).
+Verlust in B/C: das einzige S-Merkmal, ein unlöschbares Besitzerkonto - optional als Schutz für `admin`
+nachbilden.  **Empfehlung:** B (Go), Priorität niedrig - kein Live-Nutzen, aber weniger Sonderfälle und
+Legacy/API konsistent.
 
 ## 🟡 Veröffentlichung auf GitHub, Releases, Update-Weg (Evaluierung 2026-10-25) - Defer
 
