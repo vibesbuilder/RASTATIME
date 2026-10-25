@@ -316,9 +316,9 @@ alles andere bleibt bei Formular-Standards.
 
 Nein. Vorlagen stecken im Sendungsdialog, und Sendungen
 legen nur Program Manager und Admins an und bearbeiten sie;
-diese speichern, benennen und löschen auch die Vorlagen.
-Die Übersichtsseite Einstellungen → Show Templates gehört
-den Admins.
+diese speichern, benennen und löschen auch die Vorlagen,
+im Dialog und auf der Übersichtsseite Einstellungen →
+Show Templates.
 
 ### "Ich habe die Hostliste in der Vorlage geändert — warum sind bestehende Sendungen unverändert?"
 

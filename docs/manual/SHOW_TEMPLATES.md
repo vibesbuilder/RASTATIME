@@ -281,8 +281,8 @@ overridden; everything else stays at form defaults.
 
 No. Templates live in the show dialog, and shows are
 created and edited by Program Managers and Admins only; they
-also save, rename and delete templates.  The overview page
-Settings → Show Templates is for Admins.
+also save, rename and delete templates, in the dialog and on
+the overview page Settings → Show Templates.
 
 ### "I changed the host list on the template — why are existing shows unchanged?"
 

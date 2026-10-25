@@ -6,7 +6,10 @@
 > Info-Bildschirm) per einfachem `<iframe>` einbetten
 > kann. Die Widgets ziehen RASTATIMEs Live-Daten und
 > benötigen keine Anmeldung — sie sind für die
-> Öffentlichkeit sichtbar.
+> Öffentlichkeit sichtbar.  Die **Widgets**-Seiten in
+> RASTATIME (Embed-Codes, Widget-Einstellungen) sind für
+> Program Manager und Admins; Gäste und DJs sehen das Menü
+> nicht (seit 25.10.2026).
 
 RASTATIME liefert eine kleine Familie von HTML-Widgets,
 die externe Seiten einbetten können, um anzuzeigen, was

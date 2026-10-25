@@ -29,17 +29,21 @@ behandelt:
 |---|---|---|
 | **Gast** | Empfangsbildschirm, Besucher | Sieht Dashboard und Kalender, ändert nichts. |
 | **DJ** | Moderator | Arbeitet mit Tracks: Upload, eigene Playlisten und Smart Blocks, befüllt die eigenen Sendungen. |
-| **Program Manager** | Programmkoordination | Führt das Programm: alle Sendungen, alle Inhalte, Webstreams, Line-Ins, Podcasts, Auto DJ. |
+| **Program Manager** | Programmkoordination | Führt das Programm: alle Sendungen, alle Inhalte, Webstreams, Line-Ins, Podcasts, Auto DJ, Show-Vorlagen, Widgets. |
 | **Admin** | Stationstechnik | Alles, dazu die Stationseinstellungen und die Benutzerkonten. |
-| **Super Admin** | Das Installationskonto | Dieselben Rechte wie ein Admin; kann nicht gelöscht werden. |
+| **Super Admin** | Aus Airtime übernommen; meist nicht vorhanden | Dieselben Rechte wie ein Admin; kann nicht gelöscht werden. |
 
 Jede Rolle umfasst alles, was die Rolle darüber in der Tabelle darf.
 
-**Der Super Admin** ist das Konto, das bei der Installation entsteht.
-Er hat die Rechte eines Admins, kann aber nicht gelöscht werden, und
+**Der Super Admin** ist eine aus Airtime übernommene Rolle.  Eine
+RASTATIME-Installation legt ihr Hauptkonto `admin` als **Admin** an, und
 kein Konto lässt sich in der Oberfläche zum Super Admin machen (der
-Benutzer-Dialog bietet Gast, DJ, Program Manager und Admin).  Admins
-können weitere Admins anlegen.
+Benutzer-Dialog bietet Gast, DJ, Program Manager und Admin) - einen Super
+Admin gibt es nur, wenn eine alte Airtime-Datenbank oder eine externe
+Anmeldung (LDAP / FreeIPA) ihn mitbringt.  Wo es ihn gibt, hat er genau
+die Rechte eines Admins, kann nicht gelöscht werden, und seine Angaben
+sind unter Einstellungen → Benutzer nicht bearbeitbar (er ändert sie
+selbst unter Mein Profil).  Admins können weitere Admins anlegen.
 
 > **Unter der Haube.** Die Rolle ist der eine Buchstabe in
 > `cc_subjs.type` (G, H, P, A, S).  Die groben Regeln stehen in
@@ -87,17 +91,18 @@ gleicht der Spalte Admin und ist weggelassen.
 | Sendeprotokoll: Einträge anlegen, bearbeiten, löschen | – | als Host | ✓ | ✓ |
 | Verlaufsvorlagen | – | – | – | ✓ |
 | **Widgets** | | | | |
-| Widget-Einstellungen ändern und speichern | – | – | ✓ | ✓ |
+| Widgets-Seiten (Embed-Codes, Widget-Einstellungen) | – | – | ✓ | ✓ |
 | **Einstellungen** | | | | |
 | Auto DJ | – | – | ✓ | ✓ |
+| Seite Show Templates | – | – | ✓ | ✓ |
 | Standardsprache der Station (Dialog beim ersten Start) | – | – | ✓ | ✓ |
-| Allgemein, Benutzer, Track-Typen, Seite Show-Vorlagen, Streams, Lokale Maschine, Import / Export, Backup, Status | – | – | – | ✓ |
+| Allgemein, Benutzer, Track-Typen, Streams, Lokale Maschine, Import / Export, Backup, Status | – | – | – | ✓ |
 
 Was die Rollen unterschiedlich sehen:
 
 - **Gäste** bekommen Dashboard und Kalender.  Die Bibliothek zeigt
   „Sie haben keine Berechtigung, die Bibliothek anzusehen.“; das Menü
-  **Neu** und **Upload** werden nicht angeboten.
+  **Neu**, **Upload** und das Menü **Widgets** werden nicht angeboten.
 - **DJs** sehen alle Tracks, Playlisten und Smart Blocks der Station,
   ändern aber nur ihre eigenen.  Sie planen in die Sendungen ein, deren
   Host sie sind - jeden Track, jede Playlist und jeden Smart Block, auch
@@ -105,11 +110,13 @@ Was die Rollen unterschiedlich sehen:
   (Bibliotheks-Reiter, Menü **Neu**); ein DJ kann sie nicht in Playlisten
   oder Sendungen einfügen.  Im Sendeprotokoll bekommt ein DJ die *Show
   Summary* seiner eigenen Sendungen und kann dort Einträge anlegen,
-  bearbeiten und löschen.  Die Podcast-Liste ist für DJs nur lesbar.
-- **Program Manager** führen das Programm, öffnen aber nur eine
-  Einstellungsseite: **Einstellungen → Auto DJ** (dazu Mein Profil).
-  Show-Vorlagen werden im Sendungsdialog gespeichert und angewendet; die
-  Übersichtsseite *Einstellungen → Show Templates* gehört den Admins.
+  bearbeiten und löschen.  Die Podcast-Liste ist für DJs nur lesbar,
+  das Menü **Widgets** wird ihnen nicht angeboten.
+- **Program Manager** führen das Programm, nutzen die
+  **Widgets**-Seiten und öffnen drei Einstellungsseiten: **Auto DJ**,
+  **Show Templates** und Mein Profil.  Show-Vorlagen werden im
+  Sendungsdialog gespeichert und angewendet und unter Einstellungen →
+  Show Templates umbenannt oder gelöscht.
 - **Admins** verwalten zusätzlich die Station: Einstellungen, Streams,
   Soundkarte, Benutzer, Track-Typen, Backup, Import / Export,
   Systemstatus.
@@ -138,9 +145,9 @@ denselben Dialog für diesen Benutzer.
 | **Mobiltelefon**, **Skype**, **Jabber** | Freiwillige Kontaktfelder. |
 | **Benutzertyp** | Gast, DJ, Program Manager oder Admin. |
 
-Zum Super Admin lässt sich hier niemand machen.  Die Zeile des Super
-Admin öffnet sich ohne bearbeitbare Angaben - der Super Admin ändert
-Name, E-Mail und Passwort selbst unter **Mein Profil**.
+Zum Super Admin lässt sich hier niemand machen.  Hat die Station einen
+Super Admin, öffnet sich seine Zeile ohne bearbeitbare Angaben und zeigt
+„Der Super Admin ändert seine Angaben selbst unter Mein Profil.“.
 
 ### Benutzer löschen
 
@@ -289,8 +296,8 @@ gespiegelt.
 
 | Station | Konten |
 |---|---|
-| Eine Person | der Super Admin; bei Bedarf ein Gast für einen Bildschirm im Foyer |
-| Freies Radio | der Super Admin (technische Leitung), ein Program Manager je Programmbereich, ein DJ-Konto je Moderator, bei Bedarf ein Gast |
+| Eine Person | das Konto `admin` (Admin); bei Bedarf ein Gast für einen Bildschirm im Foyer |
+| Freies Radio | `admin` und ein persönliches Admin-Konto für die technische Leitung, ein Program Manager je Programmbereich, ein DJ-Konto je Moderator, bei Bedarf ein Gast |
 | Größere Station | zusätzlich ein oder zwei Admins für den technischen Betrieb |
 
 Ein Konto je echter Person: Geteilte Konten machen unkenntlich, wer was
@@ -316,13 +323,15 @@ darf.
 
 Nein, genau eine je Konto.
 
-### „Das Passwort des Super Admin ist verloren.“
+### „Das Passwort eines Admins ist verloren.“
 
-Nur der Super Admin selbst kann es ändern (Mein Profil); die
-Benutzer-Seite bietet es Admins nicht an.  Ist es verloren, muss das
-Passwort in der Datenbank zurückgesetzt werden (Tabelle `cc_subjs`,
-Spalte `pass`, MD5 des neuen Passworts) - siehe
+Ein anderer Admin setzt unter Einstellungen → Benutzer ein neues - ein
+Grund, zwei Admin-Konten zu führen.  Kann sich kein Admin mehr anmelden,
+muss das Passwort in der Datenbank zurückgesetzt werden (Tabelle
+`cc_subjs`, Spalte `pass`, MD5 des neuen Passworts) - siehe
 [`docs/operator/CRASH_RECOVERY.md`](../../operator/CRASH_RECOVERY.md).
+Ein Super Admin, wo es ihn gibt, ändert sein Passwort nur selbst (Mein
+Profil).
 
 ---
 

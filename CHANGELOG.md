@@ -240,6 +240,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Rollen-Folgepunkte und Kapitel „Einstellungen“ geprüft (2026-10-25,
+  Operator-Go)** — (1) Der Benutzer-Dialog zeigt für einen Super Admin
+  jetzt „The Super Admin changes their own details under My Profile.“
+  (DE/FR/ES übersetzt; das Element fehlte, der Dialog blieb leer).
+  (2) Program Manager öffnen Einstellungen → Show Templates (ACL-Privileg
+  + Menü); die Widgets-Seiten sind nur noch für Program Manager und
+  Admins (ACL `embeddablewidgets` von Gast auf PM, Menü für Gäste/DJs
+  ausgeblendet; die öffentlichen Einbettungen laufen weiter über `embed`).
+  (3) Kapitel `SETTINGS` ×4 gegen die Oberfläche geprüft und neu
+  gegliedert: echtes Menü (11 Seiten mit Rolle), Seite Allgemein mit
+  ihren tatsächlichen Abschnitten und Feldern (u. a. Logo bis 1 MB,
+  Stations-Zeitzone nur Anzeige aus `libretime.conf`), Seite Status mit
+  Komponenten, Speicherplatz, Neustart-Knöpfen und Adresslisten.
+  Entfernt, weil es sie nicht gibt: Tools-Menü (DB-Konsole, Log-Viewer,
+  Cache-Reset), E-Mail/SMTP, Dashboard-Vorausschau und -Intervall,
+  Standard-Aufnahme, Localisation-Seite.  Rollen-Kapitel ×4: Der Super
+  Admin ist eine Airtime-Altrolle - die Installation legt `admin` als
+  Admin an (`data.sql`), auf dieser Station gibt es keinen Super Admin.
 - **Handbuch: Benutzer und Rollen neu, Rollen-Aussagen der Kapitel
   korrigiert (2026-10-25, Rollen-Audit Paket 5)** — `USERS_AND_ROLES` in
   EN/DE/FR/ES neu geschrieben nach dem auditierten Stand: Rollen,

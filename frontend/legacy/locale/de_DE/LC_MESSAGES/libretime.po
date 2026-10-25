@@ -6551,3 +6551,7 @@ msgstr "Zufallspasswort - vergeben Sie eines unter Einstellungen -> Benutzer"
 #: application/services/ImportExportUsers.php
 msgid "DJ \"%s\" is created by this import"
 msgstr "DJ \"%s\" wird durch diesen Import angelegt"
+
+#: application/views/scripts/user/add-user.phtml
+msgid "The Super Admin changes their own details under My Profile."
+msgstr "Der Super Admin ändert seine Angaben selbst unter Mein Profil."

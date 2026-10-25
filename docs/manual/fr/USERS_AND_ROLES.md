@@ -29,18 +29,23 @@ couvre :
 |---|---|---|
 | **Invité** | Écran d'accueil, visiteur | Voit le tableau de bord et le calendrier, ne modifie rien. |
 | **DJ** | Un animateur | Travaille avec des pistes : upload, ses propres playlists et smart blocks, remplit les émissions qu'il anime. |
-| **Program Manager** | Coordination des programmes | Dirige le programme : toutes les émissions, tous les contenus, webstreams, Line-Ins, podcasts, Auto DJ. |
+| **Program Manager** | Coordination des programmes | Dirige le programme : toutes les émissions, tous les contenus, webstreams, Line-Ins, podcasts, Auto DJ, modèles d'émission, widgets. |
 | **Admin** | Technique de la station | Tout, plus les paramètres de la station et les comptes utilisateurs. |
-| **Super Admin** | Le compte d'installation | Mêmes droits qu'un Admin ; ne peut pas être supprimé. |
+| **Super Admin** | Repris d'Airtime ; généralement absent | Mêmes droits qu'un Admin ; ne peut pas être supprimé. |
 
 Chaque rôle comprend tout ce que le rôle au-dessus de lui dans le
 tableau peut faire.
 
-**Le Super Admin** est le compte créé à l'installation.  Il a les
-droits d'un Admin, mais il ne peut pas être supprimé, et aucun compte ne
-peut devenir Super Admin dans l'interface (la boîte de dialogue des
-utilisateurs propose Invité, DJ, Program Manager et Admin).  Les Admins
-peuvent créer d'autres Admins.
+**Le Super Admin** est un rôle repris d'Airtime.  Une installation de
+RASTATIME crée son compte principal `admin` comme **Admin**, et aucun
+compte ne peut devenir Super Admin dans l'interface (la boîte de
+dialogue des utilisateurs propose Invité, DJ, Program Manager et Admin) -
+un Super Admin n'existe que si une ancienne base Airtime ou une connexion
+externe (LDAP / FreeIPA) en apporte un.  Là où il existe, il a
+exactement les droits d'un Admin, il ne peut pas être supprimé, et ses
+données ne sont pas modifiables sous Paramètres → Utilisateurs (il les
+modifie lui-même sous Mon profil).  Les Admins peuvent créer d'autres
+Admins.
 
 > **Sous le capot.** Le rôle est la lettre unique de `cc_subjs.type`
 > (G, H, P, A, S).  Les règles générales se trouvent dans
@@ -89,18 +94,19 @@ colonne Super Admin est identique à la colonne Admin et omise.
 | Historique de diffusion : ajouter, modifier, supprimer des entrées | – | émissions animées | ✓ | ✓ |
 | Modèles d'historique | – | – | – | ✓ |
 | **Widgets** | | | | |
-| Modifier et enregistrer les paramètres des widgets | – | – | ✓ | ✓ |
+| Pages Widgets (codes d'intégration, paramètres des widgets) | – | – | ✓ | ✓ |
 | **Paramètres** | | | | |
 | Auto DJ | – | – | ✓ | ✓ |
+| Page Show Templates | – | – | ✓ | ✓ |
 | Langue par défaut de la station (dialogue du premier démarrage) | – | – | ✓ | ✓ |
-| Général, Utilisateurs, Types de piste, page Show Templates, Flux, Machine locale, Import / Export, Backup, Statut | – | – | – | ✓ |
+| Général, Utilisateurs, Types de piste, Flux, Machine locale, Import / Export, Backup, Statut | – | – | – | ✓ |
 
 Ce que les rôles voient différemment :
 
 - **Les invités** ont le tableau de bord et le calendrier.  La
   bibliothèque affiche « Vous n'avez pas l'autorisation de voir la
-  bibliothèque. » ; le menu **Nouveau** et **Upload** ne sont pas
-  proposés.
+  bibliothèque. » ; le menu **Nouveau**, **Upload** et le menu
+  **Widgets** ne sont pas proposés.
 - **Les DJ** voient toutes les pistes, playlists et smart blocks de la
   station, mais ne modifient que les leurs.  Ils programment dans les
   émissions qu'ils animent - n'importe quelle piste, playlist ou smart
@@ -109,12 +115,13 @@ Ce que les rôles voient différemment :
   peut pas les ajouter à des playlists ni à des émissions.  Dans
   l'historique de diffusion, un DJ obtient le *Show Summary* de ses
   propres émissions et peut y ajouter, modifier et supprimer des
-  entrées.  La liste des podcasts est en lecture seule pour eux.
-- **Les Program Managers** dirigent le programme mais n'ouvrent qu'une
-  page de paramètres : **Paramètres → Auto DJ** (plus Mon profil).  Les
-  modèles d'émission s'enregistrent et s'appliquent dans la boîte de
-  dialogue de l'émission ; la page d'aperçu *Paramètres → Show
-  Templates* appartient aux Admins.
+  entrées.  La liste des podcasts est en lecture seule pour eux, et le
+  menu **Widgets** ne leur est pas proposé.
+- **Les Program Managers** dirigent le programme, utilisent les pages
+  **Widgets** et ouvrent trois pages de paramètres : **Auto DJ**, **Show
+  Templates** et Mon profil.  Les modèles d'émission s'enregistrent et
+  s'appliquent dans la boîte de dialogue de l'émission et se renomment
+  ou se suppriment sous Paramètres → Show Templates.
 - **Les Admins** gèrent en plus la station : paramètres, flux, carte
   son, utilisateurs, types de piste, sauvegarde, import / export, statut
   du système.
@@ -144,9 +151,9 @@ ligne ouvre la même boîte pour cet utilisateur.
 | **Téléphone mobile**, **Skype**, **Jabber** | Champs de contact facultatifs. |
 | **Type d'utilisateur** | Invité, DJ, Program Manager ou Admin. |
 
-Personne ne peut devenir Super Admin ici.  La ligne du Super Admin
-s'ouvre sans données modifiables - le Super Admin change lui-même son
-nom, son e-mail et son mot de passe sous **Mon profil**.
+Personne ne peut devenir Super Admin ici.  Si la station a un Super
+Admin, sa ligne s'ouvre sans données modifiables et affiche « Le Super
+Admin modifie lui-même ses données sous Mon profil. ».
 
 ### Supprimer un utilisateur
 
@@ -299,8 +306,8 @@ recopiée dans `config\allowlist.txt` pour le playout et la surveillance.
 
 | Station | Comptes |
 |---|---|
-| Une personne | le Super Admin ; éventuellement un Invité pour un écran dans le hall |
-| Radio associative | le Super Admin (responsable technique), un Program Manager par domaine de programme, un compte DJ par animateur, éventuellement un Invité |
+| Une personne | le compte `admin` (Admin) ; éventuellement un Invité pour un écran dans le hall |
+| Radio associative | `admin` et un compte Admin personnel pour le responsable technique, un Program Manager par domaine de programme, un compte DJ par animateur, éventuellement un Invité |
 | Station plus grande | en plus un ou deux Admins pour l'exploitation technique |
 
 Un compte par personne réelle : les comptes partagés empêchent de savoir
@@ -327,13 +334,15 @@ faire.
 
 Non, exactement un par compte.
 
-### « Le mot de passe du Super Admin est perdu. »
+### « Le mot de passe d'un Admin est perdu. »
 
-Seul le Super Admin peut le changer (Mon profil) ; la page des
-utilisateurs ne le propose pas aux Admins.  S'il est perdu, le mot de
-passe doit être réinitialisé dans la base de données (table `cc_subjs`,
-colonne `pass`, MD5 du nouveau mot de passe) - voir
-[`docs/operator/CRASH_RECOVERY.md`](../../operator/CRASH_RECOVERY.md).
+Un autre Admin en définit un nouveau sous Paramètres → Utilisateurs -
+une raison de garder deux comptes Admin.  Si plus aucun Admin ne peut se
+connecter, le mot de passe doit être réinitialisé dans la base de
+données (table `cc_subjs`, colonne `pass`, MD5 du nouveau mot de passe) -
+voir [`docs/operator/CRASH_RECOVERY.md`](../../operator/CRASH_RECOVERY.md).
+Un Super Admin, là où il existe, ne change son mot de passe que
+lui-même (Mon profil).
 
 ---
 

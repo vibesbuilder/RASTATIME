@@ -28,18 +28,22 @@ trata:
 |---|---|---|
 | **Invitado** | Pantalla de recepción, visitante | Ve el panel y el calendario, no cambia nada. |
 | **DJ** | Un locutor | Trabaja con pistas: subida, sus propias listas y bloques inteligentes, llena los programas que presenta. |
-| **Program Manager** | Coordinación de la programación | Dirige la programación: todos los programas, todos los contenidos, webstreams, Line-Ins, podcasts, Auto DJ. |
+| **Program Manager** | Coordinación de la programación | Dirige la programación: todos los programas, todos los contenidos, webstreams, Line-Ins, podcasts, Auto DJ, plantillas de programa, widgets. |
 | **Admin** | Técnica de la emisora | Todo, más los ajustes de la emisora y las cuentas de usuario. |
-| **Super Admin** | La cuenta de instalación | Los mismos derechos que un Admin; no se puede eliminar. |
+| **Super Admin** | Heredado de Airtime; normalmente no existe | Los mismos derechos que un Admin; no se puede eliminar. |
 
 Cada rol incluye todo lo que puede hacer el rol que está por encima de
 él en la tabla.
 
-**El Super Admin** es la cuenta creada durante la instalación.  Tiene
-los derechos de un Admin, pero no se puede eliminar, y ninguna cuenta
-puede convertirse en Super Admin desde la interfaz (el diálogo de
-usuario ofrece Invitado, DJ, Program Manager y Admin).  Los Admins
-pueden crear otros Admins.
+**El Super Admin** es un rol heredado de Airtime.  Una instalación de
+RASTATIME crea su cuenta principal `admin` como **Admin**, y ninguna
+cuenta puede convertirse en Super Admin desde la interfaz (el diálogo de
+usuario ofrece Invitado, DJ, Program Manager y Admin) - solo existe un
+Super Admin si una base de datos antigua de Airtime o un inicio de
+sesión externo (LDAP / FreeIPA) lo aporta.  Donde existe, tiene
+exactamente los derechos de un Admin, no se puede eliminar, y sus datos
+no se pueden editar en Ajustes → Usuarios (los cambia él mismo en Mi
+Perfil).  Los Admins pueden crear otros Admins.
 
 > **Bajo el capó.** El rol es la letra única de `cc_subjs.type`
 > (G, H, P, A, S).  Las reglas generales están en
@@ -88,17 +92,18 @@ es idéntica a la de Admin y se omite.
 | Historial de reproducción: añadir, editar, eliminar entradas | – | programas presentados | ✓ | ✓ |
 | Plantillas de historial | – | – | – | ✓ |
 | **Widgets** | | | | |
-| Cambiar y guardar los ajustes de los widgets | – | – | ✓ | ✓ |
+| Páginas Widgets (códigos de integración, ajustes de los widgets) | – | – | ✓ | ✓ |
 | **Ajustes** | | | | |
 | Auto DJ | – | – | ✓ | ✓ |
+| Página Show Templates | – | – | ✓ | ✓ |
 | Idioma predeterminado de la emisora (diálogo del primer inicio) | – | – | ✓ | ✓ |
-| General, Usuarios, Tipos de pista, página Show Templates, Streams, Máquina local, Importar / Exportar, Backup, Estado | – | – | – | ✓ |
+| General, Usuarios, Tipos de pista, Streams, Máquina local, Importar / Exportar, Backup, Estado | – | – | – | ✓ |
 
 Lo que cada rol ve de forma distinta:
 
 - **Los invitados** reciben el panel y el calendario.  La biblioteca
   muestra «No tienes permiso para ver la biblioteca.»; el menú
-  **Nuevo** y **Upload** no se ofrecen.
+  **Nuevo**, **Upload** y el menú **Widgets** no se ofrecen.
 - **Los DJ** ven todas las pistas, listas y bloques inteligentes de la
   emisora, pero solo cambian los suyos.  Planifican en los programas que
   presentan - cualquier pista, lista o bloque inteligente, también los
@@ -107,12 +112,12 @@ Lo que cada rol ve de forma distinta:
   a listas ni a programas.  En el historial de reproducción, un DJ
   obtiene el *Show Summary* de sus propios programas y puede añadir,
   editar y eliminar entradas allí.  La lista de podcasts es de solo
-  lectura para ellos.
-- **Los Program Managers** dirigen la programación, pero solo abren una
-  página de ajustes: **Ajustes → Auto DJ** (además de Mi Perfil).  Las
-  plantillas de programa se guardan y aplican en el diálogo del
-  programa; la página de resumen *Ajustes → Show Templates* pertenece a
-  los Admins.
+  lectura para ellos, y el menú **Widgets** no se les ofrece.
+- **Los Program Managers** dirigen la programación, usan las páginas
+  **Widgets** y abren tres páginas de ajustes: **Auto DJ**, **Show
+  Templates** y Mi Perfil.  Las plantillas de programa se guardan y
+  aplican en el diálogo del programa y se renombran o eliminan en
+  Ajustes → Show Templates.
 - **Los Admins** gestionan además la emisora: ajustes, streams, tarjeta
   de sonido, usuarios, tipos de pista, copia de seguridad, importar /
   exportar, estado del sistema.
@@ -141,9 +146,9 @@ diálogo para ese usuario.
 | **Teléfono móvil**, **Skype**, **Jabber** | Campos de contacto opcionales. |
 | **Tipo de usuario** | Invitado, DJ, Program Manager o Admin. |
 
-Aquí nadie puede convertirse en Super Admin.  La fila del Super Admin se
-abre sin datos editables - el Super Admin cambia su nombre, su correo y
-su contraseña él mismo en **Mi Perfil**.
+Aquí nadie puede convertirse en Super Admin.  Si la emisora tiene un
+Super Admin, su fila se abre sin datos editables y muestra «El Super
+Admin cambia sus propios datos en Mi Perfil.».
 
 ### Eliminar un usuario
 
@@ -291,8 +296,8 @@ el playout y el vigilante.
 
 | Emisora | Cuentas |
 |---|---|
-| Una persona | el Super Admin; opcionalmente un Invitado para una pantalla en el vestíbulo |
-| Radio comunitaria | el Super Admin (responsable técnico), un Program Manager por área de programación, una cuenta de DJ por locutor, opcionalmente un Invitado |
+| Una persona | la cuenta `admin` (Admin); opcionalmente un Invitado para una pantalla en el vestíbulo |
+| Radio comunitaria | `admin` y una cuenta Admin personal para el responsable técnico, un Program Manager por área de programación, una cuenta de DJ por locutor, opcionalmente un Invitado |
 | Emisora más grande | además uno o dos Admins para la operación técnica |
 
 Una cuenta por persona real: las cuentas compartidas impiden saber quién
@@ -317,13 +322,15 @@ Asígnele el rol Program Manager - incluye todo lo que puede hacer un DJ.
 
 No, exactamente uno por cuenta.
 
-### «Se ha perdido la contraseña del Super Admin.»
+### «Se ha perdido la contraseña de un Admin.»
 
-Solo el Super Admin puede cambiarla (Mi Perfil); la página de usuarios
-no se la ofrece a los Admins.  Si se ha perdido, hay que restablecer la
-contraseña en la base de datos (tabla `cc_subjs`, columna `pass`, MD5 de
-la contraseña nueva) - vea
+Otro Admin asigna una nueva en Ajustes → Usuarios - un motivo para
+mantener dos cuentas Admin.  Si ningún Admin puede iniciar sesión, hay
+que restablecer la contraseña en la base de datos (tabla `cc_subjs`,
+columna `pass`, MD5 de la contraseña nueva) - vea
 [`docs/operator/CRASH_RECOVERY.md`](../../operator/CRASH_RECOVERY.md).
+Un Super Admin, donde existe, solo cambia su contraseña él mismo (Mi
+Perfil).
 
 ---
 

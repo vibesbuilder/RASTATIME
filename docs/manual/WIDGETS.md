@@ -5,7 +5,10 @@
 > public homepage, a partner site, an info screen) can
 > embed via a plain `<iframe>`. The widgets pull from
 > RASTATIME's live data and require no login — they are
-> designed to be visible to the public.
+> designed to be visible to the public.  The **Widgets**
+> pages in RASTATIME (embed codes, widget settings) are for
+> Program Managers and Admins; Guests and DJs do not see the
+> menu (since 2026-10-25).
 
 RASTATIME ships a small family of HTML widgets that
 external sites can embed to show what is currently on

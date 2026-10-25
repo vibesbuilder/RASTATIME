@@ -219,8 +219,8 @@ con un nombre como `Color: Azul oscuro`.
 No. Las plantillas están en el diálogo del programa, y solo
 los Program Managers y los Admins crean y editan programas;
 también son ellos quienes guardan, renombran y eliminan las
-plantillas.  La página de resumen Ajustes → Show Templates
-es para los Admins.
+plantillas, en el diálogo y en la página de resumen
+Ajustes → Show Templates.
 
 ### "Cambié la lista de presentadores en la plantilla — ¿por qué los programas existentes no han cambiado?"
 

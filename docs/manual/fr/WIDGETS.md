@@ -6,7 +6,11 @@
 > écran d'information) peut intégrer via un simple
 > `<iframe>`. Les widgets puisent dans les données live
 > de RASTATIME et ne nécessitent aucune connexion — ils
-> sont conçus pour être visibles publiquement.
+> sont conçus pour être visibles publiquement.  Les pages
+> **Widgets** de RASTATIME (codes d'intégration, paramètres
+> des widgets) sont réservées aux Program Managers et aux
+> Admins ; les invités et les DJ ne voient pas le menu
+> (depuis le 25/10/2026).
 
 RASTATIME livre une petite famille de widgets HTML que
 les sites externes peuvent intégrer pour afficher ce qui

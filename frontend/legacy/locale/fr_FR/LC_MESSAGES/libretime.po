@@ -6908,3 +6908,7 @@ msgstr "mot de passe aléatoire - définissez-en un sous Paramètres -> Utilisat
 #: application/services/ImportExportUsers.php
 msgid "DJ \"%s\" is created by this import"
 msgstr "le DJ \"%s\" est créé par cet import"
+
+#: application/views/scripts/user/add-user.phtml
+msgid "The Super Admin changes their own details under My Profile."
+msgstr "Le Super Admin modifie lui-même ses données sous Mon profil."

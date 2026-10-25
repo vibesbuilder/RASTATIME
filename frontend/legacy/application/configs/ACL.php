@@ -66,7 +66,6 @@ $ccAcl->allow('G', 'index')
     ->allow('G', 'rest:podcast', 'get')
     ->allow('G', 'rest:podcast-episodes', 'get')
     ->allow('G', 'setup')
-    ->allow('G', 'embeddablewidgets')
     ->allow('G', 'feeds')
     // RASTATIME 2026-10-25 (role audit R7/R8) - DJs change no show logos
     // and manage no podcasts (operator); they keep reading the podcast list.
@@ -90,8 +89,11 @@ $ccAcl->allow('G', 'index')
     ->allow('P', 'podcast')
     ->allow('P', 'webstream')
     ->allow('P', 'linein')
-    // RASTATIME 2026-10-25 (operator) - Program Managers run the Auto DJ
-    ->allow('P', 'preference', ['auto-dj', 'auto-dj-upload-logo', 'auto-dj-remove-logo'])
+    // RASTATIME 2026-10-25 (operator) - Program Managers run the Auto DJ and
+    // the Show Templates page, and own the Widgets pages (hidden from Guests
+    // and DJs; the public embeds live in the separate 'embed' controller)
+    ->allow('P', 'preference', ['auto-dj', 'auto-dj-upload-logo', 'auto-dj-remove-logo', 'show-templates'])
+    ->allow('P', 'embeddablewidgets')
     ->allow('A', 'playouthistorytemplate')
     ->allow('A', 'user')
     ->allow('A', 'tracktype')

@@ -1,154 +1,106 @@
 # Einstellungen
 
-> **Wo Sie sich im Handbuch befinden.** Dieses Kapitel ist
-> der Hub-und-Speiche-Index für das Einstellungs-Menü.
-> Jeder Abschnitt unten verweist auf ein dediziertes
-> Kapitel (wo eines existiert) oder dokumentiert die Seite
-> inline (wo die Seite zu klein für ein eigenes Kapitel
-> ist).
+> **Wo Sie sich im Handbuch befinden.** Dieses Kapitel ist das
+> Verzeichnis des Einstellungs-Menüs.  Es beschreibt die Seiten
+> *Allgemein* und *Status* direkt und verweist für jede andere Seite auf
+> ihr eigenes Kapitel.  Gegen die Oberfläche geprüft am 25.10.2026.
 
-Das Einstellungs-Menü ist die per-station Konfigurations-
-Oberfläche. Seine Seiten gehören **Admin** und **Super
-Admin**; ein **Program Manager** sieht *My Profile* und
-*Auto DJ*, Gäste und DJs nur *My Profile*.
-Siehe [Benutzer und Rollen](./USERS_AND_ROLES.md) §2 für
-die vollständige Berechtigungsmatrix.
-
-Dieses Kapitel:
-
-1. Listet jede Einstellungs-Unterseite mit einem
-   Einzeilen-Zweck auf.
-2. Dokumentiert inline die kleineren Seiten (Allgemeine
-   Einstellungen, Systemstatus, Tools).
-3. Verweist auf das dedizierte Handbuch-Kapitel für die
-   größeren (Streams, Lokale Maschine, Auto DJ,
-   Sendungs-Vorlagen, Benutzer verwalten, Lokalisierung).
+Das Einstellungs-Menü ist die Konfigurationsoberfläche der Station.  Die
+meisten Seiten gehören den **Admins** (und dem Super Admin); ein
+**Program Manager** sieht *Mein Profil*, *Show Templates* und *Auto DJ*;
+Gäste und DJs sehen nur *Mein Profil*.  Siehe
+[Benutzer und Rollen](./USERS_AND_ROLES.md) §2 für die vollständige
+Berechtigungsmatrix.
 
 ---
 
 ## 1. Das Einstellungs-Menü
 
-Top-Bar Einstellungen → öffnet das Untermenü:
+Linke Navigation → **Einstellungen** öffnet das Untermenü:
 
-```
-   ┌──────────────────────────┐
-   │  Einstellungen           │
-   ├──────────────────────────┤
-   │  Allgemeine Einst.       │
-   │  Lokale Maschine         │
-   │  Streams                 │
-   │  Line-In-Bibliothek      │
-   │  Auto DJ                 │
-   │  Sendungs-Vorlagen       │
-   │  Benutzer verwalten      │
-   │  Lokalisierung           │
-   │  Systemstatus            │
-   │  Tools  ▾                │
-   └──────────────────────────┘
-```
+| Seite | Zweck | Wer | Kapitel |
+|---|---|---|---|
+| **Allgemein** | Stationsname und -beschreibung, Sprache, Wochenbeginn, öffentliche API, Radio-Seite, Logo, Hintergrund der Startseite, Favicon, Primärfarbe, Crossfades, Track-Typ für Uploads, Automations-Playlisten, Live Text Info, TuneIn, Dangerous Options. | Admin | Dieses Kapitel §2 |
+| **Mein Profil** | Eigener Name, E-Mail, Passwort, Oberflächensprache und Zeitzone. | alle | [Benutzer und Rollen](./USERS_AND_ROLES.md) §4 |
+| **Benutzer** | Benutzer anlegen, bearbeiten und löschen, Benutzertyp festlegen. | Admin | [Benutzer und Rollen](./USERS_AND_ROLES.md) §3 |
+| **Track-Typen** | Track-Typen mit ihren Vorgaben für Crossfade, Crossover und Stream-Metadaten. | Admin | [Bibliothek](./LIBRARY.md) |
+| **Show Templates** | Übersicht der gespeicherten Show-Vorlagen: umbenennen, löschen. | Program Manager, Admin | [Sendungs-Vorlagen](./SHOW_TEMPLATES.md) |
+| **Auto DJ** | Lückenfüller und Auffüllen unvollständiger Sendungen. | Program Manager, Admin | [Auto DJ](./AUTO_DJ.md) |
+| **Streams** | Ausgabe-Streams (Bitrate, Mount, Codec), Eingänge für Live-Einwahlen, Master-Login. | Admin | [Streams](./STREAMS.md) |
+| **Lokale Maschine** | Soundkarte, Import-Ordner und -Format, Aufnahme-Ordner und -Format, Speicherort der Bibliothek. | Admin | [Lokale Maschine](./LOCAL_MACHINE.md) |
+| **Import / Export** | Benutzer, Sendungen, Playlisten, Smart Blocks, Webstreams und Podcast-Abos als CSV/JSON-Dateien, mit Vorschau beim Import. | Admin | [Import / Export](./IMPORT_EXPORT.md) |
+| **Backup** | Sicherungen von Datenbank und Konfiguration, der Medienspiegel, automatische Backups, Wiederherstellung. | Admin | [Backup](./BACKUP.md) |
+| **Status** | Zustand der Dienste, Speicherplatz, Dienst-Neustarts, erlaubte und gesperrte Adressen. | Admin | Dieses Kapitel §3 |
 
-### Seite-für-Seite
-
-| Seite | Zweck | Handbuch-Kapitel |
-|---|---|---|
-| **Allgemeine Einstellungen** | Stationsname, Standardsprache, Standardfarben, Dashboard-Vorausschau, Standard-Crossfade-Dauer, Favicon, Stationslogo. | Dieses Kapitel §2 |
-| **Lokale Maschine** | Soundkarten-Ausgabe-/Eingabegeräte, Importformat, lokaler Import-Ordner, lokaler Aufnahme-Ordner. | [Lokale Maschine](./LOCAL_MACHINE.md) |
-| **Streams** | Bis zu vier Output-Streams, pro-Stream-Bitrate / Mountpoint / Codec, Quell-Authentifizierung. | [Streams](./STREAMS.md) |
-| **Line-In-Bibliothek** | Benannte Live-Audio-Eingänge von Soundkarten-Geräten. | [Line-In](./LINE_IN.md) |
-| **Auto DJ** | Hintergrund-Lückenfüller + Auffüllen unvollständiger Sendungen. | [Auto DJ](./AUTO_DJ.md) |
-| **Sendungs-Vorlagen** | Wiederverwendbare Snapshots des Sendungsformulars. | [Sendungs-Vorlagen](./SHOW_TEMPLATES.md) |
-| **Import / Export** | Benutzer, Sendungen, Playlisten, Smart Blocks, Webstreams und Podcast-Abos als CSV/JSON-Dateien, mit Vorschau beim Import. | [Import / Export](./IMPORT_EXPORT.md) |
-| **Benutzer verwalten** | Benutzer anlegen, bearbeiten und löschen, Benutzertyp festlegen. | [Benutzer und Rollen](./USERS_AND_ROLES.md) |
-| **Lokalisierung** | UI-Sprachauswahl, Locale-Generierung. | [Sprachen](./I18N.md) |
-| **Systemstatus** | Live-Dienst-Gesundheit, Preflight-Warnungen, Dienst-Neustart-Widget. | Dieses Kapitel §3 |
-| **Tools** | Untermenü: DB-Konsole, Log-Viewer, Cache-Reset. | Dieses Kapitel §4 |
+Line-In-Quellen werden unter **Dashboard → Line Inputs** verwaltet (siehe
+[Line-In](./LINE_IN.md)); die Oberflächensprachen behandelt
+[Sprachen](./I18N.md).
 
 ---
 
-## 2. Allgemeine Einstellungen
+## 2. Allgemein
 
-Einstellungen → **Allgemeine Einstellungen**.
+Einstellungen → **Allgemein**.
 
-Seit 2026-10-08 ist die Seite in **eingeklappte Segmente** gegliedert:
-Stationsname und -beschreibung bleiben oben, darunter *Station*
-(Sprache, Zeitzone, Wochenbeginn, öffentliche API, Radio-Seite),
-*Gestaltung* (Logo, Hintergrundbild der Startseite, Favicon,
-Primärfarbe), *Playout* (Crossfades, Standard-Track-Typ, überzogene
-Sendungen zuschneiden), *Automatisierung* (Intro/Outro-Playlists,
-Request-Pool, Verkehrsmeldungs-Block, Show-Shift-Füller,
-Podcast-Optionen), dann *Live Text Info*, *TuneIn Settings* und
-*Dangerous Options*. Ein Klick auf die Überschrift öffnet das Segment;
-ein Segment mit einem Prüffehler nach **Speichern** öffnet sich von
-selbst. Die Feldtabellen unten behalten ihre bisherige Gliederung.
+Die Seite ist in **eingeklappte Abschnitte** gegliedert (seit
+08.10.2026): Stationsname und -beschreibung stehen oben, darunter
+*Station*, *Styling*, *Playout* und *Automation*, dann *Live Text Info*,
+*TuneIn Settings* und *Dangerous Options*.  Ein Klick auf eine Überschrift
+öffnet den Abschnitt; ein Abschnitt mit einem Prüffehler nach
+**Speichern** öffnet sich von selbst.
 
-```
-   ┌─────────────────────────────────────────────────────────────────┐
-   │  Allgemeine Einstellungen                          [ Speichern ]│
-   ├─────────────────────────────────────────────────────────────────┤
-   │  Station                                                        │
-   │    Stationsname:        [ Mein Community-Radio                ] │
-   │    Stationsbeschreibung:[ Ein Community-Radio für ...         ]│
-   │    Stationslogo:        [ Datei wählen ▾ ] (derzeit gesetzt)    │
-   │    Stations-Favicon:    [ Datei wählen ▾ ] (derzeit gesetzt)    │
-   │    Primärfarbe:         [ #ff5d1a ] [■] [ Zurücksetzen ]        │
-   │    Zeitzone:            [ Europe/Berlin ▾ ]                     │
-   │    Woche beginnt am:    [ Montag ▾ ]                            │
-   │                                                                 │
-   │  Standards                                                      │
-   │    Standardsprache:     [ Deutsch (de_DE) ▾ ]                   │
-   │    Standard Track-Crossfade: [ 1.0 ] Sekunden                   │
-   │    Standard Show-Crossfade:  [ 1.0 ] Sekunden                   │
-   │    Standard-Track-Typ:  [ Musik ▾ ]                             │
-   │    Standard-Import-Bes.:[ admin ▾ ]                             │
-   │    Standard-Aufnahme:   [ ☐ Alle neuen Sendungen aufzeichnen ]  │
-   │                                                                 │
-   │  Dashboard                                                      │
-   │    Vorausschau:         [ 5 ] kommende Items                    │
-   │    Aktualisierung:      [ 5 ▾ ] Sekunden                        │
-   │                                                                 │
-   │  E-Mail (für Passwort-Zurücksetzung)                            │
-   │    SMTP-Server:         [                                     ] │
-   │    SMTP-Port:           [ 587 ]   TLS verwenden: [ ☑ ]          │
-   │    SMTP-User / Pass:    [          ] [          ]               │
-   │    Von-Adresse:         [ noreply@my-station.example.com      ] │
-   └─────────────────────────────────────────────────────────────────┘
-```
+### Oben auf der Seite
+
+| Feld | Hinweise |
+|---|---|
+| **Stationsname** | Überall sichtbar - Seitentitel, Stream-Metadaten, Radio-Seite. |
+| **Stationsbeschreibung** | Freitext, verwendet in Podcast-Feeds und auf der Radio-Seite. |
 
 ### Station
 
 | Feld | Hinweise |
 |---|---|
-| **Stationsname** | Überall sichtbar — Seitentitel, ICY-Metadaten, E-Mail-From-Name. |
-| **Stationsbeschreibung** | Freitext-Beschreibung. Verwendet in Podcast-Feeds und ICY-Metadaten. |
-| **Stationslogo** | Bild oben links auf jeder Seite. Max 200 KB, JPG / PNG / GIF / WebP. |
+| **Standardsprache** | Oberflächensprache für neue Benutzer und den Anmeldebildschirm. Jeder Benutzer behält seine eigene Sprache aus Mein Profil. |
+| **Stations-Zeitzone** | Nur zur Information angezeigt.  Die Zeitzone der Station steht in `config/libretime.conf` (`general.timezone`); jeder Benutzer kann in Mein Profil eine Anzeige-Zeitzone wählen. |
+| **Woche beginnt am** | Erster Wochentag im Kalender. |
+| **Public RASTATIME API** | *Enabled* erlaubt Widgets, die in andere Websites eingebettet sind, die Sendeplan-Daten zu lesen. Nötig für die einbettbaren Sendeplan-Widgets. |
+| **Login-Knopf auf der Radio-Seite anzeigen?** | Zeigt einen Anmelde-Knopf auf der öffentlichen Radio-Seite. |
+| **Öffentliche Radio-Seite abschalten und zur Anmeldung umleiten?** | Besucher der Stationsadresse landen direkt bei der Anmeldung. |
+
+### Styling
+
+| Feld | Hinweise |
+|---|---|
+| **Stationslogo** | Bild oben links auf jeder Seite. Bis 1 MB, JPG / PNG / GIF / WebP; **Entfernen** löscht es. |
 | **Hintergrundbild der Startseite** | Das Foto hinter der öffentlichen Startseite (`/`). JPG, PNG oder WebP bis 5 MB; empfohlen 1920 px breit und höchstens 1 MB. Als Datei unter `landing/` im Speicherort der Mediathek abgelegt (damit der nächtliche Spiegel es mitnimmt); **Entfernen** stellt das eingebaute Bild wieder her. Wirkt beim nächsten Laden der Startseite (der Browser hält das Bild eine Woche, ein neuer Upload bekommt eine neue Adresse). Seit 2026-10-07. |
-| **Stations-Favicon** | Bild im Browser-Tab. Max 200 KB, JPG / PNG / GIF / ICO. Als data: URI gerendert; keine Datei-Schreibvorgänge nach public/. |
-| **Primärfarbe** | Die Akzentfarbe der gesamten Oberfläche, der Radio-Seite und der Widgets — Links, Hervorhebungen, ausgewählte Zeilen, der aktive Menüpunkt, Fortschritts- und Speicherbalken, Scrollbalken, Abschnittspfeile, Play-Knopf und Lautstärkeregler des Stream-Players, Tabs, Knöpfe und Hervorhebungen der Widgets. Geben Sie `#rrggbb` ein oder nutzen Sie den Farbwähler neben dem Feld; **Auf Standard zurücksetzen** stellt das Orange (`#ff5d1a`) wieder her. Wirkt beim nächsten Seitenaufruf. Wählen Sie eine Farbe, die sich vom dunkelgrauen Hintergrund abhebt; Text auf der Farbe wechselt von selbst zwischen Weiß und Schwarz. Signalfarben (Fehler, Warnungen, die Sendungsfarben im Kalender) und der Füllstandsbalken der Sendungen im Kalender (immer Orange) bleiben unverändert. |
-| **Zeitzone** | Die Operator-Zeitzone für alle Kalender- / Sendeplan-Anzeigen. Pro Sendung in `cc_show_days.timezone` gespeichert, sodass das Ändern hier bestehende Sendungen nicht rückwirkend beeinflusst. |
-| **Woche beginnt am** | Montag / Sonntag. Beeinflusst das Wochenansichts-Layout des Kalenders. |
+| **Stations-Favicon** | Bild im Browser-Tab. Bis 200 KB, PNG / JPG / GIF / ICO. Als data: URI gerendert; keine Datei-Schreibvorgänge nach public/. |
+| **Primärfarbe** | Die Akzentfarbe der gesamten Oberfläche, der Radio-Seite und der Widgets — Links, Hervorhebungen, ausgewählte Zeilen, der aktive Menüpunkt, Fortschritts- und Speicherbalken, Scrollbalken, Abschnittspfeile, Play-Knopf und Lautstärkeregler des Stream-Players, Tabs, Knöpfe und Hervorhebungen der Widgets, die Grafik der Fehlerseite. Geben Sie `#rrggbb` ein oder nutzen Sie den Farbwähler neben dem Feld; **Auf Standard zurücksetzen** stellt das Orange (`#ff5d1a`) wieder her. Wirkt beim nächsten Seitenaufruf. Wählen Sie eine Farbe, die sich vom dunkelgrauen Hintergrund abhebt; Text auf der Farbe wechselt von selbst zwischen Weiß und Schwarz. Signalfarben (Fehler, Warnungen, die Sendungsfarben im Kalender) und der Füllstandsbalken der Sendungen im Kalender (immer Orange) bleiben unverändert. |
 
-### Standards
+### Playout
 
 | Feld | Hinweise |
 |---|---|
-| **Standardsprache** | UI-Sprache für neue Benutzer + den Anmeldebildschirm. Bestehende Benutzer behalten ihre per-user Spracheinstellung (über das Benutzer-Dropdown gesetzt). |
-| **Default Track Crossfade Duration** (Standard Track-Crossfade Dauer) | Der Crossfade zwischen zwei aufeinanderfolgenden Titeln **derselben Sendung**: der abgehende Titel blendet aus, während der ankommende über so viele Sekunden einblendet (1 Sekunde ist typisch; 0 = die Titel folgen ohne Überlappung; bis zu 10 Sekunden für weiche Übergänge). Der Kalender legt aufeinanderfolgende Zeilen mit genau dieser Überlappung an. |
-| **Crossfade je Track-Typ** | Settings → Track Types → *Crossfade Duration (s)* (seit 2026-09-29) überschreibt den Hauswert für alle Titel dieses Typs; leer = Hauswert. Zwischen zwei Titeln gilt der **kleinere** der beiden Werte, ein Typ mit 0 stößt also immer hart an - der mitgelieferte Typ *Jingles* beginnt mit 0, weil kurze, sekundengenau gebaute Elemente nicht durch einen musiklangen Crossfade verkürzt werden dürfen. An einem Wechsel zwischen einem Titel und einem Webstream oder Line-In gilt der kleinere Wert aus dem Titel-Wert und der Default Show Crossfade Duration. Eine Änderung der Hauswerte oder eines Track-Typs legt die Zeilen aller kommenden Sendungen automatisch neu aus; bereits gestartete Zeilen werden nie angefasst. |
-| **Kein Fade je Track-Typ** | Settings → Track Types → *No Fade during Crossover* (seit 2026-09-30) ist die Typ-Vorgabe für das Feld *Crossover* im Titel-Editor: Jeder Titel des Typs, der auf *As the track type* steht, behält seinen vollen Pegel, während der Nachbartitel ein- oder ausblendet - die Überlappung selbst bleibt, wie die Crossfade-Dauer des Typs es vorgibt. Gedacht für Jingles oder IDs, die über das Ende eines Songs schneiden sollen. Ein einzelner Titel kann im Titel-Editor weiterhin anders eingestellt werden; ein vom Crossover ausgenommener Titel hat keine Überlappung, in der er seinen Pegel halten könnte. Eine Änderung erreicht das Playout mit dem nächsten Schedule-Push; Zeilen werden nicht neu ausgelegt, weil sich die Überlappung nicht ändert. |
-| **Metadaten weitergeben je Track-Typ** | Settings → Track Types → *Forward Metadata to the Stream* (seit 2026-10-14) ist die Voreinstellung des Typs für das Feld *Stream-Metadaten* im Track-Editor: abgewählt läuft jeder Titel des Typs mit *Wie der Track-Typ* ohne Interpret / Titel auf dem Stream, die Player zeigen stattdessen „Sendername - Sendungsname" (Jingles, Station-IDs, Promos). Ein Titel kann das in seinem Editor überstimmen. |
-| **Default Show Crossfade Duration** (Standard Show-Crossfade Dauer) | Der Übergang **an einer Sendungsgrenze** (seit 2026-09-27): die alte Sendung blendet über so viele Sekunden aus, während der erste Titel der neuen Sendung sofort in voller Lautstärke startet — eine Sendung, die mit Jingle oder ID beginnt, ist vom ersten Schlag an zu hören. Dieselbe Form und derselbe Wert gelten für jeden Wechsel zwischen **Eingängen** (Titel ↔ Webstream ↔ Line-In): die ankommende Quelle ist sofort voll da, die abgehende blendet darunter aus; 0 = harter Wechsel. Ein Webstream oder Line-In, der in beiden Sendungen eingeplant ist, läuft nahtlos weiter. Startwert 1 s. Beide Crossfade-Werte übernimmt die Audiokette wenige Sekunden nach dem Speichern (geplanter Neustart in einem ruhigen Moment oder an einer Titelgrenze); „Jetzt anwenden" in Settings → Local Machine erzwingt es. |
-| **Standard-Track-Typ** | Der Track-Typ, der neuen Uploads zugewiesen wird, wenn der Operator nicht explizit einen setzt. Beeinflusst Smart-Block-Filter. |
-| *Import-Besitzer* | Es gibt keine Einstellung (die bisherige Zeile war bis 2026-10-09 falsch): Dateien, die der Hintergrund-Scan des lokalen Import-Ordners aufnimmt, gehören dem ersten Administratorkonto (`admin`), mit **Scan Now** importierte Dateien dem Operator, der geklickt hat. |
-| **Standard-Aufnahme** | Wenn angekreuzt, haben neue Sendungen **Diese Sendung aufzeichnen:** vor-angekreuzt. Siehe [Aufnahme pro Sendung](./RECORD_PER_SHOW.md). |
+| **Default Track Crossfade Duration (s)** | Der Crossfade zwischen zwei aufeinanderfolgenden Titeln **derselben Sendung**: der abgehende Titel blendet aus, während der ankommende über so viele Sekunden einblendet (1 Sekunde ist typisch; 0 = die Titel folgen ohne Überlappung; bis zu 10 Sekunden für weiche Übergänge). Der Kalender legt aufeinanderfolgende Zeilen mit genau dieser Überlappung an. |
+| **Default Show Crossfade Duration (s)** | Der Übergang **an einer Sendungsgrenze** (seit 2026-09-27): die alte Sendung blendet über so viele Sekunden aus, während der erste Titel der neuen Sendung sofort in voller Lautstärke startet — eine Sendung, die mit Jingle oder ID beginnt, ist vom ersten Schlag an zu hören. Dieselbe Form und derselbe Wert gelten für jeden Wechsel zwischen **Eingängen** (Titel ↔ Webstream ↔ Line-In): die ankommende Quelle ist sofort voll da, die abgehende blendet darunter aus; 0 = harter Wechsel. Ein Webstream oder Line-In, der in beiden Sendungen eingeplant ist, läuft nahtlos weiter. Startwert 1 s. Beide Crossfade-Werte übernimmt die Audiokette wenige Sekunden nach dem Speichern (geplanter Neustart in einem ruhigen Moment oder an einer Titelgrenze); „Jetzt anwenden" in Einstellungen → Lokale Maschine erzwingt es. |
+| *Crossfade je Track-Typ* | Einstellungen → Track-Typen → *Crossfade Duration (s)* (seit 2026-09-29) überschreibt den Hauswert für alle Titel dieses Typs; leer = Hauswert. Zwischen zwei Titeln gilt der **kleinere** der beiden Werte, ein Typ mit 0 stößt also immer hart an - der mitgelieferte Typ *Jingles* beginnt mit 0, weil kurze, sekundengenau gebaute Elemente nicht durch einen musiklangen Crossfade verkürzt werden dürfen. An einem Wechsel zwischen einem Titel und einem Webstream oder Line-In gilt der kleinere Wert aus dem Titel-Wert und der Default Show Crossfade Duration. Eine Änderung der Hauswerte oder eines Track-Typs legt die Zeilen aller kommenden Sendungen automatisch neu aus; bereits gestartete Zeilen werden nie angefasst. |
+| *Kein Fade je Track-Typ* | Einstellungen → Track-Typen → *No Fade during Crossover* (seit 2026-09-30) ist die Typ-Vorgabe für das Feld *Crossover* im Titel-Editor: Jeder Titel des Typs, der auf *As the track type* steht, behält seinen vollen Pegel, während der Nachbartitel ein- oder ausblendet - die Überlappung selbst bleibt, wie die Crossfade-Dauer des Typs es vorgibt. Gedacht für Jingles oder IDs, die über das Ende eines Songs schneiden sollen. Ein einzelner Titel kann im Titel-Editor weiterhin anders eingestellt werden; ein vom Crossover ausgenommener Titel hat keine Überlappung, in der er seinen Pegel halten könnte. Eine Änderung erreicht das Playout mit dem nächsten Schedule-Push; Zeilen werden nicht neu ausgelegt, weil sich die Überlappung nicht ändert. |
+| *Metadaten weitergeben je Track-Typ* | Einstellungen → Track-Typen → *Forward Metadata to the Stream* (seit 2026-10-14) ist die Voreinstellung des Typs für das Feld *Stream-Metadaten* im Track-Editor: abgewählt läuft jeder Titel des Typs mit *Wie der Track-Typ* ohne Interpret / Titel auf dem Stream, die Player zeigen stattdessen „Sendername - Sendungsname" (Jingles, Station-IDs, Promos). Ein Titel kann das in seinem Editor überstimmen. |
+| **Track Type Upload Default** | Der Track-Typ für neue Uploads, die keinen eigenen setzen. Beeinflusst Smart-Block-Filter. |
+| **Trim overbooked shows after autoloading?** | Kürzt den Inhalt einer per Autoloading befüllten Sendung, der länger ist als die Sendung. |
+| *Import-Besitzer* | Es gibt keine Einstellung: Dateien, die der Hintergrund-Scan des lokalen Import-Ordners aufnimmt, gehören dem ersten Administratorkonto (`admin`), mit **Scan Now** importierte Dateien dem Operator, der geklickt hat. |
 
-### Dashboard
+### Automation
 
-| Feld | Hinweise |
-|---|---|
-| **Vorausschau** | Wie viele kommende Sendungen das "Kommt als Nächstes"-Panel des Dashboards anzeigt. 3-5 ist typisch. |
-| **Aktualisierungsintervall** | Wie oft das Dashboard nach aktualisiertem Zustand pollt. 5 s ist der Standard. 1 s ist reaktionsschnell, aber teuer auf langsamen Netzwerken. 30 s ist leicht, aber verzögert. |
+| Feld | Hinweise | Kapitel |
+|---|---|---|
+| **Intro / Outro Autoloading Playlist** | Läuft zu Beginn / am Ende jeder Sendung mit Autoloading. | [Autoloading-Playlisten](./AUTOLOADING_PLAYLISTS.md) |
+| **Song-Request Pool (smart blocks)** | Die Smart Blocks, deren Titel Hörer wünschen dürfen. | [Musikwünsche](./SONG_REQUESTS.md) |
+| **Traffic-Alert Smart Block** | Der Block für Verkehrsmeldungen. | [Verkehrsmeldungen](./TRAFFIC_ALERTS.md) |
+| **Show-Shift Filler Playlist** | Füllt die Lücke, wenn eine Sendung verschoben wird. | [Verzögerter Sendungsstart](./DELAYED_START.md) |
+| **Overwrite Podcast Episode Metatags** | Setzt Interpret, Titel und Album heruntergeladener Episoden aus dem Podcast-Feed. | [Bibliothek](./LIBRARY.md) |
+| **Generate a smartblock and a playlist upon creation of a new podcast** | Legt für jedes neue Podcast-Abo einen passenden Smart Block und eine Playlist an. | [Bibliothek](./LIBRARY.md) |
 
-### Live-Text-Info
+### Live Text Info
 
 Aufklappbarer Bereich unter den Allgemeinen Einstellungen (seit
 2026-09-28). Die „Now playing"-Zeile als Textdatei für andere Systeme
@@ -167,7 +119,7 @@ Die Zeile bildet die Audio-Engine aus den Metadaten, die sie tatsächlich
 in den Stream sendet, DJ-Titel und Webstream-Titel eingeschlossen. Eine
 geänderte Einstellung greift beim nächsten Wechsel, kein Neustart.
 
-### TuneIn-Einstellungen
+### TuneIn Settings
 
 Aufklappbarer Bereich unter den Allgemeinen Einstellungen. Seit
 2026-09-28 sendet der Playout die „Now playing"-Information selbst an
@@ -193,204 +145,94 @@ Administratoren.
 | **Delete All Tracks in Library** | Entfernt jeden Track aus der Bibliothek und aus künftigen Sendeplänen (Upstream). |
 | **Clear Calendar** (seit 2026-10-14) | Entfernt jede Sendung, die **noch nicht begonnen** hat, samt Inhalt und beendet alle Wiederholungen. Die laufende Sendung und alles Vergangene bleiben, das Sendeprotokoll behält seine Sendungsnamen. Eine Sendung ohne verbleibende Instanz wird gelöscht. Die Bestätigung nennt, wie viele Instanzen und Sendungen entfernt wurden. |
 
-### E-Mail (Passwort-Zurücksetzung)
-
-Falls konfiguriert, sendet der Flow Benutzer verwalten →
-Passwort zurücksetzen → E-Mail senden einmalige Link-
-E-Mails. Falls leer gelassen, ist der einzige
-Zurücksetzungs-Pfad "temporäres Passwort setzen".
-
-| Feld | Hinweise |
-|---|---|
-| **SMTP-Server / -Port** | Der ausgehende Mailserver Ihrer Station. |
-| **TLS** | Empfohlen an; moderne SMTP-Server lehnen unverschlüsselte Verbindungen ab. |
-| **Von-Adresse** | Verwendet als From-Header der E-Mail. Oft erforderlich, dass sie zum SMTP-Konto passt. |
-
-> **Wie es unter der Haube funktioniert.** Einstellungen
-> werden in die Tabelle `cc_pref` als Schlüssel/Wert-Zeilen
-> geschrieben. Die meisten Einstellungen werden sofort neu
-> geladen; die SMTP-Einstellungen erfordern einen Neustart
-> des Worker-Dienstes, um aufgenommen zu werden. Siehe
-> ARCHITECTURE §11.
+> **Unter der Haube.** Die Werte sind Zeilen der Tabelle `cc_pref`
+> (Schlüssel / Wert).  Werte je Benutzer (Sprache, Zeitzone,
+> Tabellen-Layouts) sind `cc_pref`-Zeilen, die an den Benutzer gebunden
+> sind.  Dienst-Konfiguration, die nicht in der Datenbank liegen kann
+> (Datenbank-Zugang, Pfade, Zeitzone der Station, API-Schlüssel), steht
+> in `config/libretime.conf`.
 
 ---
 
-## 3. Systemstatus
+## 3. Status
 
-Einstellungen → **Systemstatus**.
+Einstellungen → **Status**.  Von oben nach unten:
 
-Gesundheitsübersicht jeder Komponente, von der RASTATIME
-abhängt.
-
-```
-   ┌─────────────────────────────────────────────────────────────────┐
-   │  Systemstatus                           [ Aktualisieren ]       │
-   ├─────────────────────────────────────────────────────────────────┤
-   │  Dienste                                                        │
-   │   ● RASTATIME-API        Läuft (PID 4321, Uptime 4T 12h)        │
-   │   ● RASTATIME-WORKER     Läuft (PID 4322, Uptime 4T 12h)        │
-   │   ● RASTATIME-PLAYOUT    Läuft (PID 4323, Uptime 4T 12h)        │
-   │   ● RASTATIME-ANALYZER   Läuft (PID 4324, Uptime 4T 12h)        │
-   │   ● Icecast2             Läuft (PID 4325, Uptime 4T 12h)        │
-   │   ● Apache               Läuft (PID 4326, Uptime 4T 12h)        │
-   │                                                                 │
-   │  Konnektivität                                                  │
-   │   ✓ Datenbank (PostgreSQL)     Verbunden, 2 ms Antwort          │
-   │   ✓ Icecast-Quell-Verbindung   Verbunden, /rastatime aktiv      │
-   │   ⚠ Lokaler Import-Ordner      3 fehlgeschlagene Imports        │
-   │                                                                 │
-   │  Preflight-Warnungen                                            │
-   │   ⚠ FFmpeg nicht in PATH (Analyzer fiel auf bundled zurück)     │
-   │   ⚠ Postgres-Host 'db1.example.com' unerreichbar — lokal nutzen │
-   │                                                                 │
-   │  Dienst-Controls                                                │
-   │   [ API neu starten ] [ Worker neu starten ] [ Playout neu st.] │
-   └─────────────────────────────────────────────────────────────────┘
-```
-
-### Dienste
-
-Live-PID + Uptime für jeden NSSM-verwalteten Windows-
-Dienst. Ein roter Badge hier ist das Signal, den Dienst
-über `Get-Service RASTATIME-*` in PowerShell oder das
-[`CRASH_RECOVERY`](../../operator/CRASH_RECOVERY.md)-
-Runbook zu prüfen.
-
-### Konnektivität
-
-Live-Prüfung jeder externen Abhängigkeit:
-
-- **Datenbank (PostgreSQL)** — Antwortzeit (Round-Trip zu
-  `SELECT 1`).
-- **Icecast-Quell-Verbindung** — playout-engine-seitiger
-  Quell-Verbindungszustand (spiegelt die Streams-Seite).
-- **Lokaler Import-Ordner** — letztes Scan-Ergebnis; ein
-  gelber Badge bedeutet, dass Dateien an
-  Abspielbarkeits-Prüfungen scheiterten; prüfen Sie das
-  `.failed/`-Verzeichnis.
-
-### Preflight-Warnungen
-
-Persistierte Warnungen vom Start-Preflight-Check. Dinge
-wie "FFmpeg nicht in PATH" oder "erwarteter Port bereits
-in Verwendung". Jede Warnung hat einen Click-Through mit
-Mitigationsempfehlung.
-
-> **Wie es unter der Haube funktioniert.** Angetrieben vom
-> Endpunkt `/api/v2/preflight/warnings`, gestützt auf die
-> Tabelle `rastatime_preflight_warning`. Das Start-
-> `preflight.py` läuft ~30 Prüfungen und fügt eine Zeile pro
-> Fehler ein; die Seite listet sie auf, und der Operator
-> kann verwerfen / auflösen.
-
-> **Podcast-Download fehlgeschlagen (seit 2026-10-08).** Scheitert ein
-> automatischer oder manueller Download einer Folge, nennt eine
-> Warnung Podcast, Folge, Zahl der Versuche, letzten Versuch und
-> Grund (HTTP-Code oder „API nicht erreichbar"); sie erscheint im
-> Banner auf jeder Seite und hier. Sie verschwindet von selbst,
-> wenn der Download später gelingt oder der Podcast entfernt wird.
-> Feed und Download-Adresse der Folge unter Bibliothek → Podcasts
-> prüfen.
-
-### Dienst-Controls (nur Admin+)
-
-Ein-Schaltflächen-Neustart für jeden Windows-Dienst.
-Ersetzt die Notwendigkeit, RDP zu verwenden und
-`Restart-Service RASTATIME-PLAYOUT` auszuführen.
-
-Effekte variieren pro Dienst:
-
-| Dienst | Neustart-Effekt |
+| Abschnitt | Inhalt |
 |---|---|
-| **API** | ~2 s Ausfall der REST-API. UI-Aufrufe können mitten in der Aktion scheitern. |
-| **Worker** | Hintergrund-Jobs pausieren (~10 s). Kein benutzer-sichtbarer Effekt. |
-| **Playout** | **Der Stream wird ~10 s still.** Sparsam während der Sendezeit verwenden. |
-| **Analyzer** | Lokaler Import-Ordner pausiert (~5 s). |
-| **Icecast** | Alle Hörer trennen sich; verbinden sich ~30 s später wieder. |
-| **Apache** | Die Web-Oberfläche ist ~5 s unerreichbar. Operatoren werden auf die Anmeldeseite zurückgeworfen. |
+| **RASTATIME Version** | Die installierte Version. |
+| **Komponenten** | PDO- und PostgreSQL-Bibliotheken, Datenbank- und RabbitMQ-Konfiguration und die Windows-Dienste RASTATIME-PLAYOUT, -WORKER, -API, -ANALYZER, -ICECAST und -APACHE mit ihrem Zustand. Ein als gestoppt angezeigter Dienst ist das Signal, nachzusehen (`Get-Service RASTATIME-*` in PowerShell oder das Runbook [`CRASH_RECOVERY`](../../operator/CRASH_RECOVERY.md)). |
+| **Speicherplatz** | Freier und belegter Platz des Speichers. |
+| **Dienst-Neustarts** | Je Dienst (Analyzer, API, Apache, Icecast, Playout, Worker) ein Knopf **Restart** mit Beschreibung, was der Dienst tut und wann ein Neustart hilft, dazu **Restart All Services** (die Oberfläche ist etwa 10 Sekunden nicht erreichbar). |
+| **Erlaubte Adressen** | Adressen und Netze, die keine Login-Bremse je sperrt. |
+| **Gesperrte Adressen** | Jede aktuell gesperrte Adresse oder jeder Benutzer je Ebene (Web-Login, DJ-Einwahl, Firewall) mit **Unblock** und **Allow**. |
 
-> **Operator-Tipp.** Starten Sie nur den Dienst neu, der
-> sich tatsächlich falsch verhält. Alle sechs in Folge
-> neu starten funktioniert (es ist die Standard-
-> [`RESTART_ORDER`](../../operator/RESTART_ORDER.md)), ist
-> aber Overkill für ein Einzelkomponenten-Problem.
+Die beiden Adresslisten beschreibt
+[Benutzer und Rollen](./USERS_AND_ROLES.md) §8.
+
+Was ein Neustart kostet:
+
+| Dienst | Wirkung eines Neustarts |
+|---|---|
+| **Playout** | Der Sendeplan-Treiber startet neu; nicht während einer Live-Sendung.  Die Audio-Engine (Liquidsoap) ist ein eigener Dienst (RASTATIME-LIQUIDSOAP) und spielt weiter, was sie in der Warteschlange hat. |
+| **Icecast** | Alle Hörer und alle Quellen werden getrennt; die Ausgänge verbinden sich in Sekunden neu, Hörer müssen neu verbinden. Nur in einem ruhigen Fenster. |
+| **Apache** | Die Weboberfläche ist einige Sekunden nicht erreichbar. |
+| **API**, **Worker**, **Analyzer** | Hintergrundarbeit pausiert kurz; keine Wirkung auf den Stream. |
+
+> **Operator-Tipp.** Starten Sie nur den Dienst neu, der sich
+> fehlverhält.  Die vollständige Reihenfolge steht in
+> [`RESTART_ORDER`](../../operator/RESTART_ORDER.md).
+
+**Preflight-Warnungen** sind kein Abschnitt dieser Seite: Sie erscheinen
+als Banner auf jeder Seite.  Ein Beispiel: **Podcast-Download
+fehlgeschlagen** (seit 08.10.2026) - schlägt ein automatischer oder
+manueller Episoden-Download fehl, nennt eine Warnung den Podcast, die
+Episode, die Zahl der Versuche, den letzten Versuch und den Grund
+(HTTP-Code oder „API unreachable").  Sie verschwindet von selbst, wenn
+der Download später gelingt oder der Podcast entfernt wird.  Prüfen Sie
+den Feed und die Download-Adresse der Episode unter Bibliothek →
+Podcasts.
 
 ---
 
-## 4. Tools
+## 4. Häufige Fragen
 
-Einstellungen → **Tools** → Untermenü.
+### „Ich habe eine Einstellung geändert, aber nichts passiert.“
 
-| Tool | Zweck |
+Die meisten Einstellungen wirken sofort oder beim nächsten
+Seitenaufruf.  Ausnahmen:
+
+| Einstellung | Wirkt |
 |---|---|
-| **DB-Konsole** | Read-only PostgreSQL-Abfrage-Oberfläche. Nur Super Admin. Standardmäßig versteckt; in `config/libretime.conf` mit `[tools] db_console = true` aktivieren. |
-| **Log-Viewer** | Die letzten 200 Zeilen von `C:\rastatime\logs\error.log`, `api-stderr.log`, `playout-stderr.log` tailen. Automatische Aktualisierung alle 5 s. |
-| **Cache-Reset** | Serverseitige Caches leeren (der Locale-String-Cache, der Bibliothek-DataTable-Cache). Verwenden Sie nach dem Bearbeiten von Übersetzungsdateien oder nach einem Massen-Import. |
-| **Bibliothek-Abspielbarkeit neu scannen** | Die Analyzer-Abspielbarkeits-Prüfung über jeden bestehenden Track ausführen. Langsam (Minuten auf einer großen Bibliothek); verwenden Sie nach dem Upgrade von FFmpeg. Gestützt auf das Skript `infra/scripts/maintenance/rescan-playability.py`. |
+| Crossfades, Streams, Soundkarte | Wenn die Audiokette neu startet - automatisch in einem ruhigen Moment geplant; **Jetzt anwenden** in Einstellungen → Lokale Maschine erzwingt es. |
+| Primärfarbe, Logo, Favicon | Beim nächsten Seitenaufruf (F5). |
+| Ihre eigene Sprache | Beim nächsten Seitenaufruf; der Anmeldebildschirm nutzt die Standardsprache. |
+| Live Text Info, TuneIn | Beim nächsten Wechsel von Titel oder Quelle. |
 
-Diese sind *keine* täglichen Tools. Die meisten Stationen
-öffnen das Tools-Untermenü nie.
+### „Gibt es ein Tools-Menü, einen Log-Viewer oder eine DB-Konsole?“
 
-> **Warum DB-Konsole standardmäßig versteckt ist.** Eine
-> read-only DB-Konsole kann Anmeldedaten in
-> WHERE-Klauseln lecken, persönliche Daten via SELECT
-> dumpen und zu einem Standbein werden, wenn die
-> Anmeldedaten des Super Admins kompromittiert sind.
-> Aktivieren Sie nur beim aktiven Debuggen einer
-> Datenfrage.
+Nein.  Wartungsskripte liegen auf dem Stationsrechner unter
+`infra\scripts` (zum Beispiel
+`infra\scripts\maintenance\rescan-playability.py`) und sind in der
+Operator-Dokumentation beschrieben.  Die Logs liegen in
+`C:\RASTATIME\logs`.
+
+### „Wie sichere oder restauriere ich die Einstellungen?“
+
+Einstellungen → **Backup** sichert die Datenbank (mit jeder
+`cc_pref`-Zeile) und die Konfiguration; zur Wiederherstellung siehe
+[Backup](./BACKUP.md).  `config/libretime.conf` enthält Passwörter -
+legen Sie die Datei nie unverändert in eine Versionsverwaltung.
+
+### „Welche Einstellungen kann ein Program Manager öffnen?“
+
+*Mein Profil*, *Show Templates* und *Auto DJ*.  Alles andere unter
+Einstellungen gehört den Admins; der Super Admin hat dieselben Rechte
+wie ein Admin.  Siehe [Benutzer und Rollen](./USERS_AND_ROLES.md) §1-§2.
 
 ---
 
-## 5. Häufig gestellte Fragen
-
-### "Ich habe eine Einstellung geändert, aber nichts passiert."
-
-Die meisten Einstellungen treten sofort in Kraft.
-Ausnahmen:
-
-| Einstellung | Erfordert |
-|---|---|
-| SMTP | Worker-Dienst-Neustart |
-| Stream-Anmeldedaten | Playout-Dienst-Neustart |
-| Soundkarten-Gerät | Playout-Dienst-Neustart |
-| Zeitzone | Hard-Refresh des Browsers (die Zeitzone wird client-seitig gecached) |
-| Standardsprache | Abmelden / Anmelden (die Sprache wird pro Session beim Anmelden gesetzt) |
-
-### "Wo speichert Einstellungen seine Werte?"
-
-Hauptsächlich in `cc_pref` (Schlüssel / Wert-Tabelle).
-Per-user Einstellungen (Sprache, API-Schlüssel) leben in
-`cc_subjs`. Dienst-Konfiguration, die nicht in der DB
-leben kann (PostgreSQL-Anmeldedaten, Dateisystem-Pfade),
-lebt in `config/libretime.conf`.
-
-### "Kann ich meine Einstellungen versionieren?"
-
-Indirekt:
-
-- `config/libretime.conf` ist eine Textdatei — committen
-  Sie sie (nach Redaktion der Anmeldedaten).
-- `cc_pref`-Zeilen werden nicht versioniert. Zum
-  Sichern verwenden Sie `pg_dump --table=cc_pref`. Siehe
-  [`docs/operator/BACKUP.md`](../../operator/BACKUP.md).
-
-### "Kann ich Einstellungen aus einem Backup wiederherstellen, ohne die Datenbank zu berühren?"
-
-Für in `cc_pref` gespeicherte Einstellungen: nur durch
-Wiederherstellung der `cc_pref`-Tabelle aus dem Backup.
-Für `config/libretime.conf`-Einstellungen: kopieren Sie
-die Datei.
-
-### "Welche Einstellungen kann ein Program Manager öffnen?"
-
-*Auto DJ* und *My Profile*.  Alles andere unter Settings
-gehört den Admins; der Super Admin hat dieselben Rechte
-wie ein Admin.  Siehe
-[Benutzer und Rollen](./USERS_AND_ROLES.md) §1-§2.
-
----
-
-## 6. Playout-Engine (Liquidsoap)
+## 5. Playout-Engine (Liquidsoap)
 
 > **Einstellung auf Service-Ebene**, keine UI-Einstellung.  Der
 > NSSM-Dienst RASTATIME-PLAYOUT kann `RASTATIME_PLAYOUT_ENGINE=liquidsoap`
@@ -408,7 +250,7 @@ Was Liquidsoap leistet:
 
 - **Aufnahme** wird vom internen Audio-Bus erfasst (post-switch,
   post-crossfade, post-amplify) — bit-identisch mit dem, was die Hörer
-  hören.  Format und Bitrate folgen Einstellungen → Lokaler Rechner →
+  hören.  Format und Bitrate folgen Einstellungen → Lokale Maschine →
   Show Recording (Standard MP3 320 kbps).
 - **Hörer-Erfahrung**: die Icecast-Mountpoints bleiben über Track-/
   Sendungswechsel offen — kein Reconnect, kein Zähler-Reset.
@@ -437,12 +279,11 @@ INFO __main__: Playout engine: Liquidsoap (telnet target 127.0.0.1:1234).
 
 ---
 
-## Wohin als Nächstes
+## Wie es weitergeht
 
-* Folgen Sie dem Pro-Seite-Link in der Tabelle oben zu dem
-  dedizierten Kapitel für jede große Einstellungsseite.
-* [Benutzer und Rollen](./USERS_AND_ROLES.md) —
-  Berechtigungsmatrix, die jede Einstellungsseite gatet.
-* [`docs/operator/INSTALL.md`](../../operator/INSTALL.md)
-  — die initialen Einstellungen, die zur Installationszeit
-  konfiguriert werden.
+* Folgen Sie dem Link in der Tabelle von §1 zum eigenen Kapitel einer
+  Einstellungsseite.
+* [Benutzer und Rollen](./USERS_AND_ROLES.md) — wer welche Seite öffnen
+  darf.
+* [`docs/operator/INSTALL.md`](../../operator/INSTALL.md) — die bei der
+  Installation vorgenommenen Einstellungen.

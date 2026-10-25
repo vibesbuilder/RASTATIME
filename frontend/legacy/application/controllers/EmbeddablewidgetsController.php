@@ -7,8 +7,9 @@ class EmbeddableWidgetsController extends Zend_Controller_Action
     /**
      * RASTATIME 2026-10-25 (role audit R3) - every POST here writes a
      * station-wide widget setting (or the default cover): Program Managers
-     * and Admins only (operator).  Viewing the pages and embed codes stays
-     * open to all roles.
+     * and Admins only (operator).  Since the same evening the ACL keeps the
+     * whole Widgets section from Guests and DJs; this check stays as a
+     * second line for the writes.
      */
     public function preDispatch()
     {

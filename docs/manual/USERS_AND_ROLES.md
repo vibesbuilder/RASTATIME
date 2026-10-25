@@ -27,16 +27,21 @@ convenience, the server refuses the action anyway.  This chapter covers:
 |---|---|---|
 | **Guest** | Reception screen, visitor | Sees the dashboard and the calendar, changes nothing. |
 | **DJ** | A presenter | Works with tracks: uploads, own playlists and smart blocks, fills the shows they host. |
-| **Program Manager** | Programme co-ordination | Runs the programme: all shows, all content, webstreams, Line-Ins, podcasts, Auto DJ. |
+| **Program Manager** | Programme co-ordination | Runs the programme: all shows, all content, webstreams, Line-Ins, podcasts, Auto DJ, show templates, widgets. |
 | **Admin** | Station technician | Everything, plus the station settings and the user accounts. |
-| **Super Admin** | The installation account | Same rights as an Admin; cannot be deleted. |
+| **Super Admin** | Carried over from Airtime; usually absent | Same rights as an Admin; cannot be deleted. |
 
 Each role includes everything the role above it in the table may do.
 
-**The Super Admin** is the account created at installation.  It has
-the rights of an Admin, but it cannot be deleted, and no account can be
-made Super Admin in the interface (the user dialog offers Guest, DJ,
-Program Manager and Admin).  Admins can create further Admins.
+**The Super Admin** is a role carried over from Airtime.  A RASTATIME
+installation creates its main account `admin` as an **Admin**, and no
+account can be made Super Admin in the interface (the user dialog offers
+Guest, DJ, Program Manager and Admin) - a Super Admin exists only when an
+old Airtime database or an external login (LDAP / FreeIPA) brings one.
+Where one exists, it has exactly the rights of an Admin, it cannot be
+deleted, and its details are not editable under Settings → Users (it
+changes them itself under My Profile).  Admins can create further
+Admins.
 
 > **How it works under the hood.** The role is the one-letter
 > `cc_subjs.type` (G, H, P, A, S).  The coarse rules sit in
@@ -84,28 +89,30 @@ out.
 | Playout history: add, edit, delete entries | – | hosted shows | ✓ | ✓ |
 | History templates | – | – | – | ✓ |
 | **Widgets** | | | | |
-| Change and save the widget settings | – | – | ✓ | ✓ |
+| Widgets pages (embed codes, widget settings) | – | – | ✓ | ✓ |
 | **Settings** | | | | |
 | Auto DJ | – | – | ✓ | ✓ |
+| Show Templates page | – | – | ✓ | ✓ |
 | Station default language (first-run dialog) | – | – | ✓ | ✓ |
-| General, Users, Track Types, Show Templates page, Streams, Local Machine, Import / Export, Backup, Status | – | – | – | ✓ |
+| General, Users, Track Types, Streams, Local Machine, Import / Export, Backup, Status | – | – | – | ✓ |
 
 What the roles see differently:
 
 - **Guests** get the dashboard and the calendar.  Opening the library
   shows "You don't have permission to view the library."; the **New**
-  menu and **Upload** are not offered.
+  menu, **Upload** and the **Widgets** menu are not offered.
 - **DJs** see every track, playlist and smart block of the station, but
   change only their own.  They schedule into the shows they host - any
   track, playlist or smart block, also those of others.  Webstreams and
   Line-Ins are hidden from them (library tabs, **New** menu); they cannot
   be added to playlists or shows by a DJ.  In the playout history a DJ
   gets the *Show Summary* of their own shows and can add, edit and
-  delete entries there.  The podcast list is read-only for them.
-- **Program Managers** run the programme but open only one settings
-  page: **Settings → Auto DJ** (plus My Profile).  Show templates are
-  saved and applied in the show dialog; the overview page
-  *Settings → Show Templates* belongs to Admins.
+  delete entries there.  The podcast list is read-only for them, and
+  the **Widgets** menu is not offered.
+- **Program Managers** run the programme, use the **Widgets** pages and
+  open three settings pages: **Auto DJ**, **Show Templates** and My
+  Profile.  Show templates are saved and applied in the show dialog and
+  renamed or deleted on Settings → Show Templates.
 - **Admins** additionally manage the station: settings, streams, sound
   card, users, track types, backup, import / export, system status.
 
@@ -133,9 +140,9 @@ for that user.
 | **Mobile phone**, **Skype**, **Jabber** | Optional contact fields. |
 | **User type** | Guest, DJ, Program Manager or Admin. |
 
-Nobody can be made Super Admin here.  The Super Admin's row opens
-without editable details - the Super Admin changes their own name,
-e-mail and password under **My Profile**.
+Nobody can be made Super Admin here.  If the station has a Super Admin,
+its row opens without editable details and shows "The Super Admin
+changes their own details under My Profile.".
 
 ### Deleting a user
 
@@ -274,8 +281,8 @@ and the watcher.
 
 | Station | Accounts |
 |---|---|
-| One person | the Super Admin; optionally a Guest for a lobby screen |
-| Community station | the Super Admin (technical lead), one Program Manager per programme area, one DJ account per presenter, optionally a Guest |
+| One person | the `admin` account (Admin); optionally a Guest for a lobby screen |
+| Community station | `admin` plus a personal Admin account for the technical lead, one Program Manager per programme area, one DJ account per presenter, optionally a Guest |
 | Larger station | additionally one or two Admins for technical operations |
 
 One account per real person: shared accounts make it impossible to tell
@@ -300,12 +307,15 @@ Give them the Program Manager role - it includes everything a DJ may do.
 
 No, exactly one per account.
 
-### "The Super Admin password is lost."
+### "The password of an Admin is lost."
 
-Only the Super Admin can change it (My Profile); the Users page does not
-offer it to Admins.  If it is lost, the password has to be reset in the
-database (table `cc_subjs`, column `pass`, MD5 of the new password) - see
-[`docs/operator/CRASH_RECOVERY.md`](../operator/CRASH_RECOVERY.md).
+Another Admin sets a new one under Settings → Users - one reason to keep
+two Admin accounts.  If no Admin can log in any more, the password has
+to be reset in the database (table `cc_subjs`, column `pass`, MD5 of the
+new password) - see
+[`docs/operator/CRASH_RECOVERY.md`](../operator/CRASH_RECOVERY.md).  A
+Super Admin, where one exists, changes its password only itself (My
+Profile).
 
 ---
 

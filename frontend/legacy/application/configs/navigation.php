@@ -169,6 +169,8 @@ $pages[] = [
             'controller' => 'preference',
             'action' => 'show-templates',
             'resource' => 'preference',
+            // RASTATIME 2026-10-25 - also Program Managers (ACL privilege)
+            'privilege' => 'show-templates',
         ],
         [
             // RASTATIME 2026-05-21 — Auto-DJ settings page
