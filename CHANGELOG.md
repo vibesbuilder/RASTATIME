@@ -240,6 +240,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Widgets in der Stationssprache (2026-10-25, Operator)** — Datum,
+  Monats- und Wochentagsnamen samt Abkürzungen folgten bisher der
+  Browsersprache der Besucher (ein deutscher Browser zeigte „25. Okt.“
+  auch bei englischer Station).  Jetzt gilt überall die Stationssprache
+  (Settings → General → Default Language): `EmbedController` setzt sie
+  als `<html lang>` (BCP 47, z. B. `de-DE`) in allen zehn Widget-Seiten,
+  *Weekly Schedule*, *Next/Latest Shows* und *Multi-View Schedule*
+  (Datumsbereich, Uhrzeiten im Show-Dialog) formatieren damit;
+  FullCalendar hatte die Sprache schon.  Der Tag in „On Air <Datum>“
+  (*On Air Today* mit `?day`) kommt über `IntlDateFormatter` in der
+  Reihenfolge der Sprache (en_US „Sat, Oct 31, 2026“, de_DE „Sa., 31.
+  Okt. 2026“; vorher immer englisch).  Fehlende Übersetzungen de/fr/es
+  ergänzt: „2 Days“, „Previous/Next week“, „On Air Today“, „On Air %s“,
+  „Open show page“, „Latest/Next Shows“, „Multi-View Schedule“ (`.mo`
+  neu gebaut, wirksam nach Apache-Neustart).  Nicht betroffen: Datums-
+  und Zeitauswahl von *Track History* (native Browser-Felder).  Live
+  geprüft: alle Routen 200 mit `lang="en-US"`; deutscher Browser zeigt
+  jetzt „Oct 19 – Oct 25 2026“ / „Mon 19“; simuliert de-DE „19. Okt. –
+  25. Okt. 2026“ / „Mo 19“ und Multi-View „Mo. 19.10.“, es-ES „sáb, 31
+  oct“.  Handbuch WIDGETS und SETTINGS ×4.
 - **Widgets: Wochenbeginn aus den Einstellungen, „Today“ links, Titel
   für „On Air Today“ (2026-10-25, Operator)** — *Weekly Schedule* zeigt
   die Woche ab dem Tag aus Einstellungen → Allgemein → Week Starts On

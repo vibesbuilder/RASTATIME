@@ -22,6 +22,9 @@
     'use strict';
 
     var body = document.body;
+    // RASTATIME 2026-10-25 - dates and times in the station language
+    // (<html lang>, set by the server), not the visitor's browser
+    var lang = document.documentElement.lang || undefined;
     if (!body || !body.classList.contains('np-multi-view-schedule')) {
         return;
     }
@@ -195,8 +198,8 @@
         // 'auto' — fall back to locale default
         try {
             var opts = { hour: 'numeric', minute: '2-digit' };
-            return start.toLocaleTimeString(undefined, opts)
-                + ' – ' + end.toLocaleTimeString(undefined, opts);
+            return start.toLocaleTimeString(lang, opts)
+                + ' – ' + end.toLocaleTimeString(lang, opts);
         } catch (e) {
             return fmt24(start) + ' – ' + fmt24(end);
         }
@@ -219,16 +222,16 @@
             var dowMon = { weekday: 'short', day: 'numeric', month: 'short' };
             var dowMonYr = { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' };
             if (start.toDateString() === endIncl.toDateString()) {
-                return start.toLocaleDateString(undefined, dowMonYr);
+                return start.toLocaleDateString(lang, dowMonYr);
             }
             if (start.getFullYear() === endIncl.getFullYear()) {
-                return start.toLocaleDateString(undefined, dowMon)
+                return start.toLocaleDateString(lang, dowMon)
                     + ' – '
-                    + endIncl.toLocaleDateString(undefined, dowMonYr);
+                    + endIncl.toLocaleDateString(lang, dowMonYr);
             }
-            return start.toLocaleDateString(undefined, dowMonYr)
+            return start.toLocaleDateString(lang, dowMonYr)
                 + ' – '
-                + endIncl.toLocaleDateString(undefined, dowMonYr);
+                + endIncl.toLocaleDateString(lang, dowMonYr);
         } catch (e) {
             return fmtLocalDate(start) + ' – ' + fmtLocalDate(endIncl);
         }

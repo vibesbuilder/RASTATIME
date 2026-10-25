@@ -38,6 +38,16 @@ them on an external site.
 
 More widgets are planned (see [BACKLOG.md](../../BACKLOG.md)).
 
+**Language.**  Since 2026-10-25 all widgets use the **station
+language** (Settings → General → Default Language), not the
+language of the visitor's browser: dates, month and weekday
+names and their abbreviations, the date order, and the buttons
+(Today, Day / 2 Days / Week).  Only the date and time pickers of
+the Track History widget are drawn by the browser itself and
+keep the visitor's format.  A changed station language shows
+with the next load of the widget (after the `cache` time at the
+latest).
+
 ---
 
 ## 2. Now Playing — Show widget
@@ -314,7 +324,7 @@ MON  TUE  WED  THU  FRI  SAT  SUN                   ← day tabs
   button updates the iframe URL's `week_offset` parameter in
   place via `history.pushState` and reloads — browser cache
   deduplicates back-and-forth navigation.
-- **Day tabs**: 7 tabs (Mon … Sun in the visitor's locale).
+- **Day tabs**: 7 tabs (Mon … Sun in the station language).
   Today's tab is decorated with a subtle pill ring on the
   day-of-month number.  Clicking a tab swaps the visible
   panel — no network round-trip.

@@ -35,6 +35,9 @@
     'use strict';
 
     var body = document.body;
+    // RASTATIME 2026-10-25 - month and weekday names in the station
+    // language (<html lang>, set by the server), not the visitor's browser
+    var lang = document.documentElement.lang || undefined;
     if (!body || !body.classList.contains('np-weekly-schedule')) {
         return;
     }
@@ -82,7 +85,7 @@
      */
     function fmtDayMonth(d) {
         try {
-            return d.toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+            return d.toLocaleDateString(lang, { day: 'numeric', month: 'short' });
         } catch (e) {
             var MONTHS = ['Jan','Feb','Mar','Apr','May','Jun',
                           'Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -96,7 +99,7 @@
      */
     function fmtWeekdayShort(d) {
         try {
-            return d.toLocaleDateString(undefined, { weekday: 'short' });
+            return d.toLocaleDateString(lang, { weekday: 'short' });
         } catch (e) {
             var WEEKDAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
             return WEEKDAYS[d.getDay()];

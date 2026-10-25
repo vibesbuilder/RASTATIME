@@ -6551,3 +6551,39 @@ msgstr "Zufallspasswort - vergeben Sie eines unter Einstellungen -> Benutzer"
 #: application/services/ImportExportUsers.php
 msgid "DJ \"%s\" is created by this import"
 msgstr "DJ \"%s\" wird durch diesen Import angelegt"
+
+#: application/views/scripts/embed (RASTATIME widgets)
+msgid "2 Days"
+msgstr "2 Tage"
+
+#: application/views/scripts/embed (RASTATIME widgets)
+msgid "Previous week"
+msgstr "Vorherige Woche"
+
+#: application/views/scripts/embed (RASTATIME widgets)
+msgid "Next week"
+msgstr "Nächste Woche"
+
+#: application/views/scripts/embed (RASTATIME widgets)
+msgid "On Air Today"
+msgstr "Heute auf Sendung"
+
+#: application/views/scripts/embed (RASTATIME widgets)
+msgid "On Air %s"
+msgstr "Auf Sendung am %s"
+
+#: application/views/scripts/embed (RASTATIME widgets)
+msgid "Open show page"
+msgstr "Sendungsseite öffnen"
+
+#: application/views/scripts/embed (RASTATIME widgets)
+msgid "Latest Shows"
+msgstr "Letzte Sendungen"
+
+#: application/views/scripts/embed (RASTATIME widgets)
+msgid "Next Shows"
+msgstr "Nächste Sendungen"
+
+#: application/views/scripts/embed (RASTATIME widgets)
+msgid "Multi-View Schedule"
+msgstr "Programm-Mehrfachansicht"

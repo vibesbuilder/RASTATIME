@@ -40,6 +40,16 @@ un sitio externo.
 
 Más widgets están planificados (vea [BACKLOG.md](../../../BACKLOG.md)).
 
+**Idioma.**  Desde el 25/10/2026 todos los widgets usan el
+**idioma de la emisora** (Ajustes → General → Idioma por defecto),
+no el del navegador del visitante: fechas, nombres de los meses y
+de los días de la semana y sus abreviaturas, el orden de la fecha y
+los botones (Today, Day / 2 Days / Week).  Solo los selectores de
+fecha y hora del widget Track History los dibuja el propio
+navegador y mantienen el formato del visitante.  Un idioma de
+emisora cambiado aparece en la siguiente carga del widget (como
+muy tarde tras el tiempo `cache`).
+
 ---
 
 ## 2. Widget Now Playing — Show
@@ -324,8 +334,8 @@ MON  TUE  WED  THU  FRI  SAT  SUN                   ← pestañas
   ▶ botón → semana siguiente.  Hacer clic actualiza el
   parámetro `week_offset` de la URL iframe en su sitio vía
   `history.pushState` y recarga.
-- **Pestañas día**: 7 pestañas (Lun … Dom en la locale del
-  visitante).  La pestaña de hoy está decorada con un anillo
+- **Pestañas día**: 7 pestañas (Lun … Dom en el idioma de la
+  emisora).  La pestaña de hoy está decorada con un anillo
   pill sutil alrededor del número del día.
 - **Lista de filas**: por pestaña, una fila por programa.
   Hora a la izquierda, nombre a la derecha.  Los nombres

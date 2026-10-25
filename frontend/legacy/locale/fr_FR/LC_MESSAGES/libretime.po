@@ -6908,3 +6908,39 @@ msgstr "mot de passe aléatoire - définissez-en un sous Paramètres -> Utilisat
 #: application/services/ImportExportUsers.php
 msgid "DJ \"%s\" is created by this import"
 msgstr "le DJ \"%s\" est créé par cet import"
+
+#: application/views/scripts/embed (RASTATIME widgets)
+msgid "2 Days"
+msgstr "2 jours"
+
+#: application/views/scripts/embed (RASTATIME widgets)
+msgid "Previous week"
+msgstr "Semaine précédente"
+
+#: application/views/scripts/embed (RASTATIME widgets)
+msgid "Next week"
+msgstr "Semaine suivante"
+
+#: application/views/scripts/embed (RASTATIME widgets)
+msgid "On Air Today"
+msgstr "Aujourd'hui à l'antenne"
+
+#: application/views/scripts/embed (RASTATIME widgets)
+msgid "On Air %s"
+msgstr "À l'antenne le %s"
+
+#: application/views/scripts/embed (RASTATIME widgets)
+msgid "Open show page"
+msgstr "Ouvrir la page de l'émission"
+
+#: application/views/scripts/embed (RASTATIME widgets)
+msgid "Latest Shows"
+msgstr "Dernières émissions"
+
+#: application/views/scripts/embed (RASTATIME widgets)
+msgid "Next Shows"
+msgstr "Prochaines émissions"
+
+#: application/views/scripts/embed (RASTATIME widgets)
+msgid "Multi-View Schedule"
+msgstr "Grille multi-vues"

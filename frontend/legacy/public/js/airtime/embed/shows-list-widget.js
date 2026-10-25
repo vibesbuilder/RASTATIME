@@ -40,6 +40,8 @@
     'use strict';
 
     var body = document.body;
+    // RASTATIME 2026-10-25 - dates in the station language (<html lang>)
+    var lang = document.documentElement.lang || undefined;
     if (!body || !body.classList.contains('np-shows-list')) {
         return;
     }
@@ -81,7 +83,7 @@
         var d = new Date(iso);
         if (isNaN(d.getTime())) { return iso; }
         try {
-            return d.toLocaleDateString(undefined, {
+            return d.toLocaleDateString(lang, {
                 weekday: 'short',
                 day:     'numeric',
                 month:   'short'

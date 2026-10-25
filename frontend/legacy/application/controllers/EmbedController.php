@@ -18,6 +18,11 @@ class EmbedController extends Zend_Controller_Action
         if ($locale) {
             Application_Model_Locale::configureLocalization($locale);
         }
+        // RASTATIME 2026-10-25 (operator) - date texts in the widgets (month
+        // and weekday names, "today", date order) follow the station
+        // language as well, not the visitor's browser: <html lang> carries
+        // it (BCP 47, e.g. "de-DE") to the widget scripts.
+        $this->view->widgetLang = str_replace('_', '-', (string) ($locale ?: 'en_US'));
     }
 
     /**
@@ -1017,6 +1022,33 @@ class EmbedController extends Zend_Controller_Action
     /**
      * Shared view-population for the On-Air-Today action.
      */
+    /**
+     * RASTATIME 2026-10-25 - "Sat, 25 Oct 2026" in the station language
+     * (weekday, day, month, year in the locale's own order), e.g.
+     * "Sa., 25. Okt. 2026" for de_DE; English format without intl.
+     */
+    private static function stationDateLabel(DateTime $day): string
+    {
+        $locale = Application_Model_Preference::GetDefaultLocale() ?: 'en_US';
+        if (class_exists('IntlDateFormatter')) {
+            $pattern = 'EEE, d MMM y';
+            if (class_exists('IntlDatePatternGenerator')) {
+                $best = (new IntlDatePatternGenerator($locale))->getBestPattern('EEEdMMMy');
+                if (is_string($best) && $best !== '') {
+                    $pattern = $best;
+                }
+            }
+            $fmt = new IntlDateFormatter($locale, IntlDateFormatter::NONE, IntlDateFormatter::NONE,
+                $day->getTimezone()->getName(), null, $pattern);
+            $label = $fmt->format($day);
+            if (is_string($label) && $label !== '') {
+                return $label;
+            }
+        }
+
+        return $day->format('D, j M Y');
+    }
+
     private function _prepareOnAirTodayView()
     {
         $this->view->layout()->disableLayout();
@@ -1155,7 +1187,7 @@ class EmbedController extends Zend_Controller_Action
             'end_utc'   => $endUtc->format('Y-m-d H:i:s'),
             'is_today'  => $isToday,
             'day_local' => $dayStart->format('Y-m-d'),
-            'day_label' => $isToday ? null : $dayStart->format('D, j M Y'),
+            'day_label' => $isToday ? null : self::stationDateLabel($dayStart),
         ];
     }
 

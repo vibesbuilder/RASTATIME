@@ -60,7 +60,7 @@ se abre sola.
 
 | Campo | Notas |
 |---|---|
-| **Idioma por defecto** | Idioma de la interfaz para usuarios nuevos y la pantalla de inicio de sesión. Cada usuario conserva su propio idioma de Mi Perfil. |
+| **Idioma por defecto** | Idioma de la interfaz para usuarios nuevos y la pantalla de inicio de sesión, e idioma de todos los widgets (fechas, días de la semana, botones; desde el 25/10/2026). Cada usuario conserva su propio idioma de Mi Perfil. |
 | **Zona horaria de la emisora** | Solo se muestra como información.  La zona horaria de la emisora se fija en `config/libretime.conf` (`general.timezone`); cada usuario puede elegir una zona horaria de visualización en Mi Perfil. |
 | **La semana comienza el** | Primer día de la semana en el calendario y en los widgets (Weekly Schedule, Multi-View Schedule). |
 | **Public RASTATIME API** | *Enabled* permite que widgets integrados en otros sitios web lean los datos de la parrilla. Necesario para los widgets de parrilla integrables. |

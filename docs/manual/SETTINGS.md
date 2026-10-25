@@ -58,7 +58,7 @@ segment that holds a validation error after **Save** opens by itself.
 
 | Field | Notes |
 |---|---|
-| **Default Language** | Interface language for new users and the login screen. Every user keeps their own language from My Profile. |
+| **Default Language** | Interface language for new users and the login screen, and the language of all widgets (dates, weekdays, buttons; since 2026-10-25). Every user keeps their own language from My Profile. |
 | **Station Timezone** | Shown for information only.  The station time zone is set in `config/libretime.conf` (`general.timezone`); each user can choose a display time zone in My Profile. |
 | **Week Starts On** | First day of the week in the calendar and in the widgets (Weekly Schedule, Multi-View Schedule). |
 | **Public RASTATIME API** | *Enabled* lets external widgets embedded in other websites read the schedule data. Required for the embeddable schedule widgets. |

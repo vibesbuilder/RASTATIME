@@ -39,6 +39,16 @@ Sie sie auf einer externen Seite einbetten.
 
 Weitere Widgets sind geplant (siehe [BACKLOG.md](../../../BACKLOG.md)).
 
+**Sprache.**  Seit 25.10.2026 verwenden alle Widgets die
+**Stationssprache** (Einstellungen → Allgemein → Standardsprache),
+nicht die Sprache des Browsers der Besucher: Datum, Monats- und
+Wochentagsnamen samt Abkürzungen, die Reihenfolge im Datum und die
+Knöpfe (Today, Day / 2 Days / Week).  Nur die Datums- und
+Zeitauswahl des Track-History-Widgets zeichnet der Browser selbst;
+sie behält das Format der Besucher.  Eine geänderte Stationssprache
+erscheint beim nächsten Laden des Widgets (spätestens nach der
+`cache`-Zeit).
+
 ---
 
 ## 2. Now Playing — Show Widget
@@ -327,7 +337,7 @@ MON  TUE  WED  THU  FRI  SAT  SUN                   ← Tagestabs
   nächste Woche.  Klick auf einen Button aktualisiert den
   `week_offset`-Parameter der iframe-URL in-place via
   `history.pushState` und lädt neu.
-- **Tagestabs**: 7 Tabs (Mo … So in der Visitor-Locale).
+- **Tagestabs**: 7 Tabs (Mo … So in der Stationssprache).
   Heutiger Tab ist mit einem subtilen Pill-Ring um die
   Tagesnummer dekoriert.  Klick auf einen Tab tauscht das
   sichtbare Panel — kein Netzwerk-Round-Trip.

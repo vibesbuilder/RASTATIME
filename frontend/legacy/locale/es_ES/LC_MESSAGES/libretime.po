@@ -6744,3 +6744,39 @@ msgstr "contraseña aleatoria: defina una en Ajustes -> Usuarios"
 #: application/services/ImportExportUsers.php
 msgid "DJ \"%s\" is created by this import"
 msgstr "el DJ \"%s\" se crea con esta importación"
+
+#: application/views/scripts/embed (RASTATIME widgets)
+msgid "2 Days"
+msgstr "2 días"
+
+#: application/views/scripts/embed (RASTATIME widgets)
+msgid "Previous week"
+msgstr "Semana anterior"
+
+#: application/views/scripts/embed (RASTATIME widgets)
+msgid "Next week"
+msgstr "Semana siguiente"
+
+#: application/views/scripts/embed (RASTATIME widgets)
+msgid "On Air Today"
+msgstr "Hoy en antena"
+
+#: application/views/scripts/embed (RASTATIME widgets)
+msgid "On Air %s"
+msgstr "En antena el %s"
+
+#: application/views/scripts/embed (RASTATIME widgets)
+msgid "Open show page"
+msgstr "Abrir la página del programa"
+
+#: application/views/scripts/embed (RASTATIME widgets)
+msgid "Latest Shows"
+msgstr "Últimos programas"
+
+#: application/views/scripts/embed (RASTATIME widgets)
+msgid "Next Shows"
+msgstr "Próximos programas"
+
+#: application/views/scripts/embed (RASTATIME widgets)
+msgid "Multi-View Schedule"
+msgstr "Programación multivista"

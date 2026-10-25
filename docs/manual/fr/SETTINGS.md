@@ -60,7 +60,7 @@ section ; une section qui contient une erreur de validation après
 
 | Champ | Notes |
 |---|---|
-| **Langue par défaut** | Langue d'interface des nouveaux utilisateurs et de l'écran de connexion. Chaque utilisateur garde sa propre langue de Mon profil. |
+| **Langue par défaut** | Langue d'interface des nouveaux utilisateurs et de l'écran de connexion, et langue de tous les widgets (dates, jours de la semaine, boutons ; depuis le 25/10/2026). Chaque utilisateur garde sa propre langue de Mon profil. |
 | **Fuseau horaire de la station** | Affiché pour information seulement.  Le fuseau horaire de la station se règle dans `config/libretime.conf` (`general.timezone`) ; chaque utilisateur peut choisir un fuseau d'affichage dans Mon profil. |
 | **La semaine commence le** | Premier jour de la semaine dans le calendrier et dans les widgets (Weekly Schedule, Multi-View Schedule). |
 | **Public RASTATIME API** | *Enabled* permet aux widgets intégrés dans d'autres sites web de lire les données de programmation. Nécessaire pour les widgets de programme intégrables. |

@@ -60,7 +60,7 @@ Die Seite ist in **eingeklappte Abschnitte** gegliedert (seit
 
 | Feld | Hinweise |
 |---|---|
-| **Standardsprache** | Oberflächensprache für neue Benutzer und den Anmeldebildschirm. Jeder Benutzer behält seine eigene Sprache aus Mein Profil. |
+| **Standardsprache** | Oberflächensprache für neue Benutzer und den Anmeldebildschirm sowie Sprache aller Widgets (Datum, Wochentage, Knöpfe; seit 25.10.2026). Jeder Benutzer behält seine eigene Sprache aus Mein Profil. |
 | **Stations-Zeitzone** | Nur zur Information angezeigt.  Die Zeitzone der Station steht in `config/libretime.conf` (`general.timezone`); jeder Benutzer kann in Mein Profil eine Anzeige-Zeitzone wählen. |
 | **Woche beginnt am** | Erster Wochentag im Kalender und in den Widgets (Weekly Schedule, Multi-View Schedule). |
 | **Public RASTATIME API** | *Enabled* erlaubt Widgets, die in andere Websites eingebettet sind, die Sendeplan-Daten zu lesen. Nötig für die einbettbaren Sendeplan-Widgets. |

@@ -41,6 +41,16 @@ les intégrer sur un site externe.
 
 D'autres widgets sont prévus (voir [BACKLOG.md](../../../BACKLOG.md)).
 
+**Langue.**  Depuis le 25/10/2026, tous les widgets utilisent la
+**langue de la station** (Paramètres → Général → Langue par
+défaut), et non celle du navigateur du visiteur : dates, noms des
+mois et des jours de la semaine et leurs abréviations, ordre de la
+date et boutons (Today, Day / 2 Days / Week).  Seuls les sélecteurs
+de date et d'heure du widget Track History sont dessinés par le
+navigateur lui-même et gardent le format du visiteur.  Une langue
+de station modifiée apparaît au prochain chargement du widget (au
+plus tard après la durée `cache`).
+
 ---
 
 ## 2. Widget Now Playing — Show
@@ -327,8 +337,8 @@ MON  TUE  WED  THU  FRI  SAT  SUN                   ← onglets
   "21 May – 27 May 2026"), ▶ bouton → semaine suivante.
   Cliquer met à jour le paramètre `week_offset` de l'URL
   iframe en place via `history.pushState` et recharge.
-- **Onglets jour** : 7 onglets (Lun … Dim dans la locale du
-  visiteur).  L'onglet d'aujourd'hui est décoré d'un anneau
+- **Onglets jour** : 7 onglets (Lun … Dim dans la langue de la
+  station).  L'onglet d'aujourd'hui est décoré d'un anneau
   pill subtil autour du numéro du jour.
 - **Liste de lignes** : par onglet, une ligne par émission.
   Heure à gauche, nom à droite.  Les noms liés à une
