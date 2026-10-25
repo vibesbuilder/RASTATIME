@@ -1,8 +1,8 @@
 # Importar / Exportar
 
 > **Dónde está en el manual.** Configuración → **Importar / Exportar**
-> mueve los objetos del calendario hacia y desde RASTATIME como
-> archivos: programas, listas de reproducción, bloques inteligentes,
+> mueve los usuarios y los objetos del calendario hacia y desde
+> RASTATIME como archivos: usuarios, programas, listas de reproducción, bloques inteligentes,
 > webstreams y suscripciones a podcasts. Lea primero
 > [Calendario](./CALENDAR.md) y [Plantillas de programa](./SHOW_TEMPLATES.md)
 > si el diálogo «Nuevo programa» le resulta nuevo: la importación crea
@@ -30,7 +30,7 @@ Solo los administradores ven la página.
    filas contendrá la exportación; el nombre de archivo es el que la
    importación espera de vuelta.
 2. Pulse **Exportar los tipos seleccionados**.
-   * Un tipo produce un único archivo (`shows.csv`, `playlists.csv`,
+   * Un tipo produce un único archivo (`users.csv`, `shows.csv`, `playlists.csv`,
      `webstreams.csv`, `podcasts.csv` o `blocks.json`).
    * Varios tipos producen un ZIP con todos los archivos, una carpeta
      `logos/` con los logotipos de programa y un `README.txt` que
@@ -56,7 +56,8 @@ correctamente en Excel o LibreOffice; al importar también se aceptan
 2. **Nombres existentes**: *omitir* (por defecto) deja intacto un objeto
    cuyo nombre ya existe; *reemplazar* sobrescribe listas, bloques
    inteligentes, webstreams y las opciones de una suscripción a
-   podcast. Los programas nunca se reemplazan: un programa que se
+   podcast; en los usuarios actualiza nombres, correo, teléfono, Skype,
+   Jabber y tipo, nunca la contraseña. Los programas nunca se reemplazan: un programa que se
    solaparía simplemente falla.
 3. Pulse **Vista previa**. Las filas aparecen de inmediato y luego se
    comprueban en grupos de diez; la línea de estado cuenta «Comprobando
@@ -72,9 +73,9 @@ correctamente en Excel o LibreOffice; al importar también se aceptan
 4. Desmarque lo que no quiera y pulse **Importar las filas
    seleccionadas**. La importación también va en grupos de diez
    («Importando 30 de 102»). Las filas se crean en orden de dependencia —
-   webstreams, bloques inteligentes, listas, podcasts, programas—, de
+   usuarios, webstreams, bloques inteligentes, listas, podcasts, programas—, de
    modo que una lista puede referenciar un bloque del mismo paquete y
-   un programa una lista del mismo paquete.
+   un programa una lista o un DJ del mismo paquete.
 5. La tabla de resultado muestra qué se creó, se omitió o falló. El
    calendario y la emisión recogen los nuevos programas en su siguiente
    actualización (unos dos minutos).
@@ -84,6 +85,25 @@ programa que pasó a solaparse mientras usted miraba la vista previa
 sigue rechazándose.
 
 ## 3. Los archivos
+
+### users.csv
+
+| Columna | Significado |
+|---|---|
+| `login` | nombre de usuario; la clave |
+| `type` | `admin`, `program_manager`, `dj` o `guest`; vacío = `guest`. Los superadministradores nunca se importan |
+| `first_name`, `last_name`, `email`, `cell_phone`, `skype`, `jabber` | como en el diálogo de usuario; `email` es obligatorio |
+| `password` | **solo usuarios nuevos**, texto plano, se guarda con hash; siempre vacío en una exportación |
+
+**Las contraseñas nunca salen de la emisora.** La exportación deja
+vacía la columna `password`. Al importar, define la contraseña de un
+usuario nuevo; sin ella, la cuenta recibe una contraseña aleatoria que
+nadie conoce: defina la real en Ajustes → Usuarios antes del primer
+inicio de sesión. Con *reemplazar*, un login existente recibe los
+nuevos nombres, correo, teléfono, Skype, Jabber y tipo, pero conserva
+su contraseña. La importación nunca cambia al superadministrador ni el
+tipo de su propia cuenta, y nunca quita el tipo admin al último
+administrador. Borre un archivo con contraseñas después de importarlo.
 
 ### shows.csv
 
@@ -209,5 +229,7 @@ episodios no se exportan: el feed los entrega de nuevo.
   dentro del diálogo.
 * [Listas de carga automática](./AUTOLOADING_PLAYLISTS.md): lo que
   activa la columna `content`.
+* [Usuarios y roles](./USERS_AND_ROLES.md): los tipos de usuario que
+  define la columna `type` de `users.csv`.
 * [Copia de seguridad](./BACKUP.md): la copia completa de la base de
   datos; Importar / Exportar es su complemento legible y editable.

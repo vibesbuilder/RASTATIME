@@ -56,7 +56,7 @@ Top-Bar Einstellungen → öffnet das Untermenü:
 | **Line-In-Bibliothek** | Benannte Live-Audio-Eingänge von Soundkarten-Geräten. | [Line-In](./LINE_IN.md) |
 | **Auto DJ** | Hintergrund-Lückenfüller + Auffüllen unvollständiger Sendungen. | [Auto DJ](./AUTO_DJ.md) |
 | **Sendungs-Vorlagen** | Wiederverwendbare Snapshots des Sendungsformulars. | [Sendungs-Vorlagen](./SHOW_TEMPLATES.md) |
-| **Import / Export** | Sendungen, Playlisten, Smart Blocks, Webstreams und Podcast-Abos als CSV/JSON-Dateien, mit Vorschau beim Import. | [Import / Export](./IMPORT_EXPORT.md) |
+| **Import / Export** | Benutzer, Sendungen, Playlisten, Smart Blocks, Webstreams und Podcast-Abos als CSV/JSON-Dateien, mit Vorschau beim Import. | [Import / Export](./IMPORT_EXPORT.md) |
 | **Benutzer verwalten** | Benutzer erstellen / bearbeiten / deaktivieren, Passwörter zurücksetzen, API-Schlüssel verwalten. | [Benutzer und Rollen](./USERS_AND_ROLES.md) |
 | **Lokalisierung** | UI-Sprachauswahl, Locale-Generierung. | [Sprachen](./I18N.md) |
 | **Systemstatus** | Live-Dienst-Gesundheit, Preflight-Warnungen, Dienst-Neustart-Widget. | Dieses Kapitel §3 |

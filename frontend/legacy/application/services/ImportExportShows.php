@@ -294,13 +294,20 @@ class Application_Service_ImportExportShows extends Application_Service_ImportEx
         return [null, sprintf(_('playlist "%s" not found'), $name)];
     }
 
-    /** DJ logins -> user ids; only users of type DJ/host can be assigned (the dialog's list). */
-    private static function hostIds(array $logins, array &$messages): array
+    /**
+     * DJ logins -> user ids; only users of type DJ/host can be assigned (the
+     * dialog's list).  RASTATIME 2026-10-25 - a login that users.csv of the
+     * same bundle creates is a note in the preview, not an error; on import
+     * the user exists and is checked like any other.
+     */
+    private static function hostIds(array $logins, array $ctx, array &$messages, array &$notes): array
     {
         $ids = [];
         foreach ($logins as $login) {
             $u = CcSubjsQuery::create()->filterByDbLogin($login)->findOne();
-            if ($u === null) {
+            if ($u === null && in_array($login, $ctx['pending']['users'] ?? [], true)) {
+                $notes[] = sprintf(_('DJ "%s" is created by this import'), $login);
+            } elseif ($u === null) {
                 $messages[] = sprintf(_('DJ "%s" not found'), $login);
             } elseif ($u->getDbType() !== 'H') {
                 $messages[] = sprintf(_('user "%s" is not a DJ (user type DJ) and cannot be assigned'), $login);
@@ -348,7 +355,7 @@ class Application_Service_ImportExportShows extends Application_Service_ImportEx
                 $notes[] = sprintf(_('playlist "%s" is created by this import'), $name);
             }
         }
-        $hosts = self::hostIds($record['djs'], $messages);
+        $hosts = self::hostIds($record['djs'], $ctx, $messages, $notes);
         // RASTATIME 2026-10-18 - "Repeat of show" by name of an existing show
         $repeatOfId = 0;
         if (($record['repeat_of'] ?? '') !== '') {

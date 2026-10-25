@@ -20,7 +20,8 @@
 class Application_Service_ImportExportService
 {
     /** Import order = dependency order. */
-    const ORDER = ['webstreams', 'blocks', 'playlists', 'podcasts', 'shows'];
+    // RASTATIME 2026-10-25 - users first: shows.csv names its DJs by login
+    const ORDER = ['users', 'webstreams', 'blocks', 'playlists', 'podcasts', 'shows'];
     const LOGO_PREFIX = 'logos/';
     const TOKEN_TTL_SECONDS = 6 * 3600;
 
@@ -32,6 +33,7 @@ class Application_Service_ImportExportService
     {
         if (self::$handlers === null) {
             $list = [
+                new Application_Service_ImportExportUsers(),
                 new Application_Service_ImportExportWebstreams(),
                 new Application_Service_ImportExportBlocks(),
                 new Application_Service_ImportExportPlaylists(),
@@ -242,7 +244,7 @@ class Application_Service_ImportExportService
             $type = self::detectType($originalName, $forcedType, (string) $content);
             if ($type === null) {
                 self::rmdirRecursive($dir);
-                throw new RuntimeException(_('Cannot tell what this file contains. Name it like the template (shows.csv, playlists.csv, webstreams.csv, podcasts.csv, blocks.json) or choose the type.'));
+                throw new RuntimeException(_('Cannot tell what this file contains. Name it like the template (users.csv, shows.csv, playlists.csv, webstreams.csv, podcasts.csv, blocks.json) or choose the type.'));
             }
             $entries[self::handler($type)->fileName()] = (string) $content;
         }
@@ -256,7 +258,7 @@ class Application_Service_ImportExportService
             $base = strtolower(basename($name));
             if (strpos(strtolower($name), self::LOGO_PREFIX) === 0 || preg_match('#(^|/)logos/#i', $name)) {
                 $logoName = basename($name);
-                if (!preg_match('/\.(jpe?g|png|gif)$/i', $logoName)) {
+                if (!preg_match('/\.(jpe?g|png|gif|webp)$/i', $logoName)) {   // WebP since 2026-10-25
                     continue;                           // README.txt and the like
                 }
                 $logoDir = $dir . DIRECTORY_SEPARATOR . 'logos';
@@ -282,7 +284,7 @@ class Application_Service_ImportExportService
         }
         if (!$records) {
             self::rmdirRecursive($dir);
-            throw new RuntimeException(_('The archive contains none of the known files (shows.csv, playlists.csv, webstreams.csv, podcasts.csv, blocks.json).'));
+            throw new RuntimeException(_('The archive contains none of the known files (users.csv, shows.csv, playlists.csv, webstreams.csv, podcasts.csv, blocks.json).'));
         }
         $conflict = $conflict === 'replace' ? 'replace' : 'skip';
         file_put_contents($dir . DIRECTORY_SEPARATOR . 'bundle.json', json_encode([
@@ -335,8 +337,8 @@ class Application_Service_ImportExportService
             'conflict' => $bundle['conflict'] ?? 'skip',
             'userId' => (int) (Zend_Auth::getInstance()->getStorage()->read()->id ?? 0),
             'logos' => $logos,
-            'pending' => ['webstreams' => [], 'blocks' => [], 'playlists' => [], 'podcasts' => [], 'shows' => []],
-            'created' => ['webstreams' => [], 'blocks' => [], 'playlists' => [], 'podcasts' => [], 'shows' => []],
+            'pending' => ['users' => [], 'webstreams' => [], 'blocks' => [], 'playlists' => [], 'podcasts' => [], 'shows' => []],
+            'created' => ['users' => [], 'webstreams' => [], 'blocks' => [], 'playlists' => [], 'podcasts' => [], 'shows' => []],
         ];
     }
 
@@ -590,7 +592,7 @@ class Application_Service_ImportExportService
         $out[] = 'RASTATIME Import/Export bundle' . ($isExport ? ' (export of ' . date('Y-m-d H:i') . ')' : ' (template)');
         $out[] = '';
         $out[] = 'Upload this ZIP, or any single file of it, under Settings -> Import/Export.';
-        $out[] = 'Files are imported in this order: webstreams.csv, blocks.json, playlists.csv, podcasts.csv, shows.csv.';
+        $out[] = 'Files are imported in this order: users.csv, webstreams.csv, blocks.json, playlists.csv, podcasts.csv, shows.csv.';
         $out[] = 'CSV: UTF-8, first line = column names, delimiter ";" (also "," or TAB), yes/no for switches.';
         $out[] = 'Names are the keys: an object whose name already exists is skipped (or replaced, if you choose so).';
         $out[] = '';

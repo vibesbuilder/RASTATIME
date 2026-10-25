@@ -36,6 +36,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Import / Export: Benutzer (users.csv) (2026-10-25, Operator-Go)** —
+  Neuer Typ `users.csv` (`login, type, first_name, last_name, email,
+  cell_phone, skype, jabber, password`), im Bündel als erster importiert,
+  weil `shows.csv` die DJs per Login nennt; eine Sendung, deren DJ dasselbe
+  Bündel anlegt, bekommt in der Vorschau einen Hinweis statt „DJ not found“.
+  **Passwörter verlassen die Station nie:** der Export lässt die Spalte
+  leer; beim Import setzt sie nur das Passwort neuer Benutzer, ohne sie
+  gibt es ein Zufallspasswort (im Users-Dialog vergeben).  *replace*
+  aktualisiert Namen, E-Mail, Telefon, Skype, Jabber und Typ, nie das
+  Passwort, und verweigert Super-Admin, den Typwechsel des eigenen Kontos
+  und das Herabstufen des letzten Admins.  Typen `admin`,
+  `program_manager`, `dj`, `guest` (leer = guest).  Probe über den echten
+  Service in einer zurückgerollten Transaktion (Export ohne Passwörter,
+  Anlage mit/ohne Passwort, doppelter Login, falsche E-Mail, Super-Admin,
+  skip/replace mit unverändertem Hash, eigenes Konto, letzter Admin);
+  live: Typ-Liste und Export 200.  Dazu: WebP-Logos aus einem ZIP-Bündel
+  werden jetzt auch übernommen.  Übersetzungen DE/FR/ES, Handbuch
+  IMPORT_EXPORT ×4 (neuer Abschnitt), SETTINGS/Inhaltsverzeichnis ×4 (das
+  englische Inhaltsverzeichnis hatte das Kapitel noch gar nicht),
+  Architektur 0.90 (§23.56-Nachtrag).
 - **Logos als WebP (2026-10-25, Operator-Go)** — Show-Logo, Stationslogo,
   Auto-DJ-Logo und die Logos im Show-Import nehmen jetzt auch WebP an
   (bisher JPG/PNG/GIF; Formular-Validatoren, REST-Upload, `common.js`,

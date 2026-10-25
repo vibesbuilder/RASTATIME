@@ -1,7 +1,8 @@
 # Import / Export
 
 > **Where you are in the manual.** Settings → **Import / Export** moves
-> calendar objects in and out of RASTATIME as files: shows, playlists,
+> users and calendar objects in and out of RASTATIME as files: users,
+> shows, playlists,
 > smart blocks, webstreams and podcast subscriptions. Read
 > [Calendar](./CALENDAR.md) and [Show Templates](./SHOW_TEMPLATES.md)
 > first if the New-Show dialog is new to you — the import creates
@@ -28,7 +29,7 @@ Only Administrators see the page.
    the export will contain; the file name is the one the import
    expects back.
 2. Click **Export selected types**.
-   * One type gives a single file (`shows.csv`, `playlists.csv`,
+   * One type gives a single file (`users.csv`, `shows.csv`, `playlists.csv`,
      `webstreams.csv`, `podcasts.csv` or `blocks.json`).
    * Several types give a ZIP with all files, a `logos/` folder with
      the show logos and a `README.txt` that explains every column.
@@ -50,7 +51,9 @@ columns take `yes`/`no`.
    **Type** on *detect from file* unless your file has an unusual name.
 2. **Existing names**: *skip* (default) leaves an object whose name
    already exists untouched; *replace* overwrites playlists, smart
-   blocks, webstreams and the options of a podcast subscription.
+   blocks, webstreams and the options of a podcast subscription;
+   for users it updates names, e-mail, phone, Skype, Jabber and type,
+   never the password.
    Shows are never replaced — a show that would overlap simply fails.
 3. Click **Preview**. The rows appear at once and are then checked in
    batches of ten - the status line counts "Checking 40 of 373"; large
@@ -64,9 +67,9 @@ columns take `yes`/`no`.
      rows.
 4. Untick what you do not want and click **Import selected rows**. The
    import runs in batches of ten as well ("Importing 30 of 102").
-   Rows are created in dependency order — webstreams, smart blocks,
+   Rows are created in dependency order — users, webstreams, smart blocks,
    playlists, podcasts, shows — so a playlist may reference a block
-   from the same bundle, and a show a playlist from the same bundle.
+   from the same bundle, and a show a playlist or a DJ from the same bundle.
 5. The result table shows what was created, skipped or failed. The
    calendar and the playout pick the new shows up on their next
    refresh (about two minutes).
@@ -76,6 +79,25 @@ show that became overlapping while you looked at the preview is still
 refused.
 
 ## 3. The files
+
+### users.csv
+
+| Column | Meaning |
+|---|---|
+| `login` | user name; the key |
+| `type` | `admin`, `program_manager`, `dj` or `guest`; empty = `guest`. Super admins are never imported |
+| `first_name`, `last_name`, `email`, `cell_phone`, `skype`, `jabber` | as in the user dialog; `email` is required |
+| `password` | **new users only**, plain text, stored hashed; always empty in an export |
+
+**Passwords never leave the station.** The export writes the
+`password` column empty. On import it sets the password of a new user;
+without it the account gets a random password that nobody knows — set
+the real one under Settings → Users before the first login. With
+*replace*, an existing login gets the new names, e-mail, phone, Skype,
+Jabber and type but keeps its password. The import never changes the
+super admin or the type of your own account, and never takes the admin
+type from the last admin. Delete a file with passwords after the
+import.
 
 ### shows.csv
 
@@ -199,5 +221,7 @@ are not exported — the feed delivers them again.
   dialog.
 * [Autoloading Playlists](./AUTOLOADING_PLAYLISTS.md) — what the
   `content` column switches on.
+* [Users and Roles](./USERS_AND_ROLES.md) — the user types the `type`
+  column of `users.csv` sets.
 * [Backup](./BACKUP.md) — the full database backup; Import / Export is
   the readable, editable companion.

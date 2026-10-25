@@ -1,10 +1,13 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.89
-Date: 2026-10-24
+Draft version: 0.90
+Date: 2026-10-25
 
 > **Revision history**
+> - **0.90 (2026-10-25)** - **Users in Import / Export** (§23.56 addendum):
+>   users.csv first in the bundle, no passwords in the export, password
+>   for new users only, guards for super admin / own account / last admin.
 > - **0.89 (2026-10-24)** - **Tagless folder, JPG-only artwork** (SS23.71):
 >   uploads without an artist tag are filed under `imported/tagless/`, and a
 >   cover is stored as its five JPG sizes only, Data URIs built on demand.
@@ -6695,6 +6698,27 @@ exactly the original rows; the legacy forms ("7 day ago", "30 Days",
 preview; a rule that fails at the INSERT (600 characters) rolls back -
 the replaced block keeps its 14 rows, a new block leaves nothing; one
 "uploaded in the last 7 days" rule selects 21,330 files, as SQL does.
+
+**Addendum 2026-10-25 - users.csv.**  `Application_Service_ImportExportUsers`
+(columns `login, type, first_name, last_name, email, cell_phone, skype,
+jabber, password`; the login is the key) is the first type in `ORDER`,
+because `shows.csv` names its DJs by login; a show row whose DJ the same
+bundle creates gets a note in the preview instead of "DJ not found".  The
+export never contains passwords (the column stays empty; the stored values
+are unsalted MD5, see BACKLOG).  On import the column sets the password of
+new users only, hashed through `Application_Model_User::setPassword`;
+without it the account gets a random one.  *replace* updates names,
+e-mail, phone, Skype, Jabber and type of an existing login, never its
+password; it refuses the super admin, a type change of the importing
+admin's own account and taking the admin type from the last admin (checked
+again right before each write, so a bundle that demotes both admins stops
+at the second).  Type values `admin`, `program_manager`, `dj`, `guest`
+(empty = guest); `superadmin` is unknown.  The page stays admin-only (ACL
+`importexport`).  Verified with the service in one rolled-back
+transaction: export without passwords, create with and without password,
+duplicate login, bad e-mail, super admin, skip vs. replace (password hash
+unchanged), own account, last admin.  Same day: logos `.webp` are staged
+from a bundle and accepted by the show import (WebP logos, 2026-10-25).
 
 ### 23.57 Import Format Normalization (2026-10-14)
 

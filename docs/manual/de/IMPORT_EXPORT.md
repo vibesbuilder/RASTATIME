@@ -1,8 +1,8 @@
 # Import / Export
 
 > **Wo Sie sich im Handbuch befinden.** Einstellungen → **Import / Export**
-> bringt Kalender-Objekte als Dateien in RASTATIME hinein und wieder
-> heraus: Sendungen, Playlisten, Smart Blocks, Webstreams und
+> bringt Benutzer und Kalender-Objekte als Dateien in RASTATIME hinein
+> und wieder heraus: Benutzer, Sendungen, Playlisten, Smart Blocks, Webstreams und
 > Podcast-Abos. Lesen Sie zuerst [Kalender](./CALENDAR.md) und
 > [Sendungs-Vorlagen](./SHOW_TEMPLATES.md), falls der Dialog „Neue
 > Sendung" neu für Sie ist — der Import legt Sendungen genau so an, wie
@@ -30,7 +30,7 @@ Die Seite sehen nur Administratoren.
    Anzahl der Zeilen im Export; der Dateiname ist der, den der Import
    wieder erwartet.
 2. Klicken Sie **Gewählte Typen exportieren**.
-   * Ein Typ ergibt eine einzelne Datei (`shows.csv`, `playlists.csv`,
+   * Ein Typ ergibt eine einzelne Datei (`users.csv`, `shows.csv`, `playlists.csv`,
      `webstreams.csv`, `podcasts.csv` oder `blocks.json`).
    * Mehrere Typen ergeben ein ZIP mit allen Dateien, einem Ordner
      `logos/` mit den Sendungslogos und einer `README.txt`, die jede
@@ -56,7 +56,8 @@ akzeptiert. Schalter-Spalten nehmen `yes`/`no`.
 2. **Vorhandene Namen**: *überspringen* (Standard) lässt ein Objekt,
    dessen Name bereits existiert, unberührt; *ersetzen* überschreibt
    Playlisten, Smart Blocks, Webstreams und die Optionen eines
-   Podcast-Abos. Sendungen werden nie ersetzt — eine Sendung, die sich
+   Podcast-Abos; bei Benutzern aktualisiert es Namen, E-Mail, Telefon,
+   Skype, Jabber und Typ, nie das Passwort. Sendungen werden nie ersetzt — eine Sendung, die sich
    überschneiden würde, scheitert einfach.
 3. Klicken Sie **Vorschau**. Die Zeilen erscheinen sofort und werden
    dann in Zehnergruppen geprüft - die Statuszeile zählt „Prüfe 40 von
@@ -72,10 +73,10 @@ akzeptiert. Schalter-Spalten nehmen `yes`/`no`.
 4. Entfernen Sie den Haken bei allem, was Sie nicht wollen, und klicken
    Sie **Gewählte Zeilen importieren**. Auch der Import läuft in
    Zehnergruppen („Importiere 30 von 102"). Die Zeilen werden in
-   Abhängigkeitsreihenfolge angelegt — Webstreams, Smart Blocks,
+   Abhängigkeitsreihenfolge angelegt — Benutzer, Webstreams, Smart Blocks,
    Playlisten, Podcasts, Sendungen —, sodass eine Playlist einen Block
    aus demselben Bündel referenzieren kann und eine Sendung eine
-   Playlist aus demselben Bündel.
+   Playlist oder einen DJ aus demselben Bündel.
 5. Die Ergebnistabelle zeigt, was angelegt, übersprungen oder
    fehlgeschlagen ist. Kalender und Playout übernehmen die neuen
    Sendungen beim nächsten Refresh (etwa zwei Minuten).
@@ -85,6 +86,25 @@ eine Sendung, die sich während Ihrer Vorschau überschneidend geworden
 ist, wird weiterhin abgewiesen.
 
 ## 3. Die Dateien
+
+### users.csv
+
+| Spalte | Bedeutung |
+|---|---|
+| `login` | Benutzername; der Schlüssel |
+| `type` | `admin`, `program_manager`, `dj` oder `guest`; leer = `guest`. Super-Admins werden nie importiert |
+| `first_name`, `last_name`, `email`, `cell_phone`, `skype`, `jabber` | wie im Benutzer-Dialog; `email` ist Pflicht |
+| `password` | **nur neue Benutzer**, Klartext, wird gehasht gespeichert; im Export immer leer |
+
+**Passwörter verlassen die Station nie.** Der Export lässt die Spalte
+`password` leer. Beim Import setzt sie das Passwort eines neuen
+Benutzers; ohne sie erhält das Konto ein Zufallspasswort, das niemand
+kennt — vergeben Sie das echte unter Einstellungen → Benutzer vor der
+ersten Anmeldung. Mit *ersetzen* bekommt ein bestehender Login die
+neuen Namen, E-Mail, Telefon, Skype, Jabber und Typ, behält aber sein
+Passwort. Der Import ändert nie den Super-Admin oder den Typ Ihres
+eigenen Kontos und nimmt dem letzten Admin nie den Admin-Typ. Löschen
+Sie eine Datei mit Passwörtern nach dem Import.
 
 ### shows.csv
 
@@ -211,5 +231,7 @@ Episoden werden nicht exportiert — der Feed liefert sie erneut.
   Dialogs wiederverwenden.
 * [Autoloading-Playlisten](./AUTOLOADING_PLAYLISTS.md) — was die Spalte
   `content` einschaltet.
+* [Benutzer und Rollen](./USERS_AND_ROLES.md) — die Benutzertypen, die
+  die Spalte `type` von `users.csv` setzt.
 * [Backup](./BACKUP.md) — die vollständige Datenbanksicherung;
   Import / Export ist das lesbare, bearbeitbare Gegenstück.

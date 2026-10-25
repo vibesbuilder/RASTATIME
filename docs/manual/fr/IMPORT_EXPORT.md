@@ -1,8 +1,8 @@
 # Import / Export
 
 > **Où vous êtes dans le manuel.** Paramètres → **Import / Export** fait
-> entrer et sortir les objets du calendrier sous forme de fichiers :
-> émissions, playlists, smart blocks, webstreams et abonnements
+> entrer et sortir les utilisateurs et les objets du calendrier sous
+> forme de fichiers : utilisateurs, émissions, playlists, smart blocks, webstreams et abonnements
 > podcast. Lisez d'abord [Calendrier](./CALENDAR.md) et
 > [Modèles d'émission](./SHOW_TEMPLATES.md) si la boîte de dialogue
 > « Nouvelle émission » vous est nouvelle — l'import crée les émissions
@@ -30,7 +30,7 @@ Seuls les administrateurs voient la page.
    de lignes de l'export ; le nom de fichier est celui que l'import
    attend en retour.
 2. Cliquez **Exporter les types sélectionnés**.
-   * Un seul type donne un fichier (`shows.csv`, `playlists.csv`,
+   * Un seul type donne un fichier (`users.csv`, `shows.csv`, `playlists.csv`,
      `webstreams.csv`, `podcasts.csv` ou `blocks.json`).
    * Plusieurs types donnent un ZIP avec tous les fichiers, un dossier
      `logos/` avec les logos d'émission et un `README.txt` qui explique
@@ -55,7 +55,9 @@ sont aussi acceptés. Les colonnes interrupteurs prennent `yes`/`no`.
    fichier porte un nom inhabituel.
 2. **Noms existants** : *ignorer* (par défaut) laisse intact un objet
    dont le nom existe déjà ; *remplacer* écrase playlists, smart
-   blocks, webstreams et les options d'un abonnement podcast. Les
+   blocks, webstreams et les options d'un abonnement podcast ;
+   pour les utilisateurs, il met à jour noms, e-mail, téléphone, Skype,
+   Jabber et type, jamais le mot de passe. Les
    émissions ne sont jamais remplacées — une émission qui chevaucherait
    échoue simplement.
 3. Cliquez **Aperçu**. Les lignes apparaissent aussitôt puis sont
@@ -72,9 +74,9 @@ sont aussi acceptés. Les colonnes interrupteurs prennent `yes`/`no`.
 4. Décochez ce que vous ne voulez pas et cliquez **Importer les lignes
    sélectionnées**. L'import procède lui aussi par groupes de dix
    (« Import 30 sur 102 »). Les lignes sont créées dans l'ordre des
-   dépendances — webstreams, smart blocks, playlists, podcasts,
+   dépendances — utilisateurs, webstreams, smart blocks, playlists, podcasts,
    émissions — si bien qu'une playlist peut référencer un bloc de la
-   même archive, et une émission une playlist de la même archive.
+   même archive, et une émission une playlist ou un DJ de la même archive.
 5. Le tableau de résultat montre ce qui a été créé, ignoré ou a
    échoué. Le calendrier et la diffusion reprennent les nouvelles
    émissions à leur prochain rafraîchissement (environ deux minutes).
@@ -84,6 +86,26 @@ Chaque ligne est vérifiée une seconde fois juste avant l'écriture : une
 toujours refusée.
 
 ## 3. Les fichiers
+
+### users.csv
+
+| Colonne | Signification |
+|---|---|
+| `login` | nom d'utilisateur ; la clé |
+| `type` | `admin`, `program_manager`, `dj` ou `guest` ; vide = `guest`. Les super admins ne sont jamais importés |
+| `first_name`, `last_name`, `email`, `cell_phone`, `skype`, `jabber` | comme dans la fenêtre utilisateur ; `email` est obligatoire |
+| `password` | **nouveaux utilisateurs uniquement**, en clair, enregistré haché ; toujours vide dans un export |
+
+**Les mots de passe ne quittent jamais la station.** L'export laisse
+la colonne `password` vide. À l'import, elle définit le mot de passe
+d'un nouvel utilisateur ; sans elle, le compte reçoit un mot de passe
+aléatoire que personne ne connaît — définissez le vrai sous Paramètres
+→ Utilisateurs avant la première connexion. Avec *remplacer*, un
+identifiant existant reçoit les nouveaux noms, e-mail, téléphone,
+Skype, Jabber et type, mais garde son mot de passe. L'import ne modifie
+jamais le super admin ni le type de votre propre compte, et ne retire
+jamais le type admin au dernier admin. Supprimez un fichier contenant
+des mots de passe après l'import.
 
 ### shows.csv
 
@@ -211,5 +233,7 @@ Paramètres → Types de piste). Le flux est récupéré à l'import ; les
   dans la boîte de dialogue.
 * [Playlists de chargement automatique](./AUTOLOADING_PLAYLISTS.md) —
   ce que la colonne `content` active.
+* [Utilisateurs et rôles](./USERS_AND_ROLES.md) — les types
+  d'utilisateur que définit la colonne `type` de `users.csv`.
 * [Sauvegarde](./BACKUP.md) — la sauvegarde complète de la base ;
   Import / Export en est le pendant lisible et modifiable.

@@ -52,7 +52,7 @@ $strings = [
 <div class="ui-widget prefpanel clearfix padded-strong">
     <h2><?php echo _('Import / Export'); ?></h2>
     <p style="margin-bottom: 1em; color: #888;">
-        <?php echo _('Export shows, playlists, smart blocks, webstreams and podcast subscriptions as CSV/JSON, edit them in a spreadsheet and import them again - as one ZIP bundle or one file at a time. An import shows a preview first; only the rows you tick are written, and rows that overlap an existing show are never imported.'); ?>
+        <?php echo _('Export users, shows, playlists, smart blocks, webstreams and podcast subscriptions as CSV/JSON, edit them in a spreadsheet and import them again - as one ZIP bundle or one file at a time. An import shows a preview first; only the rows you tick are written, and rows that overlap an existing show are never imported.'); ?>
     </p>
     <input type="hidden" id="rt_ie_csrf" value="<?php echo $h($this->csrf); ?>" />
 
@@ -99,7 +99,7 @@ $strings = [
             <span id="rt_ie_status" class="rt-ie-msg"></span>
         </div>
         <p class="rt-ie-msg" style="margin-top:.5em;">
-            <?php echo sprintf(_('Accepted: a ZIP bundle (as exported or from the template) or a single shows.csv, playlists.csv, webstreams.csv, podcasts.csv or blocks.json. Upload limit: %s.'), $h($this->maxUpload)); ?>
+            <?php echo sprintf(_('Accepted: a ZIP bundle (as exported or from the template) or a single users.csv, shows.csv, playlists.csv, webstreams.csv, podcasts.csv or blocks.json. Upload limit: %s.'), $h($this->maxUpload)); ?>
         </p>
         <div id="rt_ie_preview" style="display:none;">
             <div id="rt_ie_notices"></div>

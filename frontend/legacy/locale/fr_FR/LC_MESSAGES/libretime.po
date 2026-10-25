@@ -6114,12 +6114,12 @@ msgid "A row whose time overlaps an existing show (or an earlier row of this imp
 msgstr "Une ligne dont l'horaire chevauche une émission existante (ou une ligne précédente de cet import) n'est pas importée."
 
 #: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
-msgid "Accepted: a ZIP bundle (as exported or from the template) or a single shows.csv, playlists.csv, webstreams.csv, podcasts.csv or blocks.json. Upload limit: %s."
-msgstr "Accepté : une archive ZIP (telle qu'exportée ou issue du modèle) ou un seul fichier shows.csv, playlists.csv, webstreams.csv, podcasts.csv ou blocks.json. Limite d'envoi : %s."
+msgid "Accepted: a ZIP bundle (as exported or from the template) or a single users.csv, shows.csv, playlists.csv, webstreams.csv, podcasts.csv or blocks.json. Upload limit: %s."
+msgstr "Accepté : une archive ZIP (telle qu'exportée ou issue du modèle) ou un seul fichier users.csv, shows.csv, playlists.csv, webstreams.csv, podcasts.csv ou blocks.json. Limite d'envoi : %s."
 
 #: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
-msgid "Cannot tell what this file contains. Name it like the template (shows.csv, playlists.csv, webstreams.csv, podcasts.csv, blocks.json) or choose the type."
-msgstr "Impossible de déterminer le contenu de ce fichier. Nommez-le comme dans le modèle (shows.csv, playlists.csv, webstreams.csv, podcasts.csv, blocks.json) ou choisissez le type."
+msgid "Cannot tell what this file contains. Name it like the template (users.csv, shows.csv, playlists.csv, webstreams.csv, podcasts.csv, blocks.json) or choose the type."
+msgstr "Impossible de déterminer le contenu de ce fichier. Nommez-le comme dans le modèle (users.csv, shows.csv, playlists.csv, webstreams.csv, podcasts.csv, blocks.json) ou choisissez le type."
 
 #: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
 msgid "Choose a file first."
@@ -6154,8 +6154,8 @@ msgid "Export selected types"
 msgstr "Exporter les types sélectionnés"
 
 #: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
-msgid "Export shows, playlists, smart blocks, webstreams and podcast subscriptions as CSV/JSON, edit them in a spreadsheet and import them again - as one ZIP bundle or one file at a time. An import shows a preview first; only the rows you tick are written, and rows that overlap an existing show are never imported."
-msgstr "Exportez les émissions, playlists, smart blocks, webstreams et abonnements podcast en CSV/JSON, modifiez-les dans un tableur et réimportez-les - en une archive ZIP ou fichier par fichier. Un import affiche d'abord un aperçu ; seules les lignes cochées sont écrites, et les lignes qui chevauchent une émission existante ne sont jamais importées."
+msgid "Export users, shows, playlists, smart blocks, webstreams and podcast subscriptions as CSV/JSON, edit them in a spreadsheet and import them again - as one ZIP bundle or one file at a time. An import shows a preview first; only the rows you tick are written, and rows that overlap an existing show are never imported."
+msgstr "Exportez les utilisateurs, les émissions, playlists, smart blocks, webstreams et abonnements podcast en CSV/JSON, modifiez-les dans un tableur et réimportez-les - en une archive ZIP ou fichier par fichier. Un import affiche d'abord un aperçu ; seules les lignes cochées sont écrites, et les lignes qui chevauchent une émission existante ne sont jamais importées."
 
 #: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
 msgid "File"
@@ -6214,8 +6214,8 @@ msgid "Shows"
 msgstr "Émissions"
 
 #: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
-msgid "The archive contains none of the known files (shows.csv, playlists.csv, webstreams.csv, podcasts.csv, blocks.json)."
-msgstr "L'archive ne contient aucun des fichiers connus (shows.csv, playlists.csv, webstreams.csv, podcasts.csv, blocks.json)."
+msgid "The archive contains none of the known files (users.csv, shows.csv, playlists.csv, webstreams.csv, podcasts.csv, blocks.json)."
+msgstr "L'archive ne contient aucun des fichiers connus (users.csv, shows.csv, playlists.csv, webstreams.csv, podcasts.csv, blocks.json)."
 
 #: RASTATIME 2026-10-13 Settings -> Import/Export (Section 23.56)
 msgid "The file is larger than the server accepts (%s)."
@@ -6844,3 +6844,67 @@ msgstr "Modifiés : %s"
 #: RASTATIME 2026-10-21 re-read tags
 msgid "Skipped (file missing or not readable): %s"
 msgstr "Ignorés (fichier manquant ou illisible) : %s"
+
+#: application/services/ImportExportUsers.php
+msgid "Passwords are never exported. The password column sets the password of new users only; without it the account gets a random password - set one under Settings -> Users. Existing logins keep their password."
+msgstr "Les mots de passe ne sont jamais exportés. La colonne password définit uniquement le mot de passe des nouveaux utilisateurs ; sans elle, le compte reçoit un mot de passe aléatoire - définissez-en un sous Paramètres -> Utilisateurs. Les identifiants existants gardent leur mot de passe."
+
+#: application/services/ImportExportUsers.php
+msgid "login is empty"
+msgstr "login est vide"
+
+#: application/services/ImportExportUsers.php
+msgid "type \"%s\" is unknown (admin, program_manager, dj, guest)"
+msgstr "type \"%s\" inconnu (admin, program_manager, dj, guest)"
+
+#: application/services/ImportExportUsers.php
+msgid "email is empty or not a valid address"
+msgstr "email est vide ou n'est pas une adresse valide"
+
+#: application/services/ImportExportUsers.php
+msgid "jabber must be an address like name@server"
+msgstr "jabber doit être une adresse comme nom@serveur"
+
+#: application/services/ImportExportUsers.php
+msgid "the same login appears twice in the file"
+msgstr "le même identifiant apparaît deux fois dans le fichier"
+
+#: application/services/ImportExportUsers.php
+msgid "no password in the file - the account gets a random one; set it under Settings -> Users"
+msgstr "pas de mot de passe dans le fichier - le compte en reçoit un aléatoire ; définissez-le sous Paramètres -> Utilisateurs"
+
+#: application/services/ImportExportUsers.php
+msgid "a user with the login \"%s\" exists already"
+msgstr "un utilisateur avec l'identifiant \"%s\" existe déjà"
+
+#: application/services/ImportExportUsers.php
+msgid "the super admin is never changed by an import"
+msgstr "le super admin n'est jamais modifié par un import"
+
+#: application/services/ImportExportUsers.php
+msgid "your own account keeps its type - change it in the user dialog"
+msgstr "votre propre compte garde son type - modifiez-le dans la fenêtre utilisateur"
+
+#: application/services/ImportExportUsers.php
+msgid "the last admin cannot lose the admin type"
+msgstr "le dernier admin ne peut pas perdre le type admin"
+
+#: application/services/ImportExportUsers.php
+msgid "will update names, e-mail, phone, Skype, Jabber and type; the password stays"
+msgstr "met à jour noms, e-mail, téléphone, Skype, Jabber et type ; le mot de passe reste"
+
+#: application/services/ImportExportUsers.php
+msgid "the password column is ignored for existing users"
+msgstr "la colonne password est ignorée pour les utilisateurs existants"
+
+#: application/services/ImportExportUsers.php
+msgid "updated"
+msgstr "mis à jour"
+
+#: application/services/ImportExportUsers.php
+msgid "random password - set one under Settings -> Users"
+msgstr "mot de passe aléatoire - définissez-en un sous Paramètres -> Utilisateurs"
+
+#: application/services/ImportExportUsers.php
+msgid "DJ \"%s\" is created by this import"
+msgstr "le DJ \"%s\" est créé par cet import"
