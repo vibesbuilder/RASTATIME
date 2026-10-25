@@ -105,7 +105,8 @@ class Application_Model_Webstream implements Application_Model_LibraryEditable
                 throw new Exception(Application_Service_RepeatFillService::neededMessage($needed));
             }
         }
-        $isAdminOrPM = $user->isUserType([UTYPE_ADMIN, UTYPE_PROGRAM_MANAGER]);
+        // RASTATIME 2026-10-25 (role audit R13) - the Super Admin counts too
+        $isAdminOrPM = $user->isAdminOrPM();
 
         if (!$isAdminOrPM) {
             // Make sure the user has ownership of ALL the selected webstreams before

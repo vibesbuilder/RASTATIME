@@ -164,6 +164,29 @@ class Rest_MediaController extends Zend_Rest_Controller
 
         try {
             $requestData = json_decode($this->getRequest()->getRawBody(), true);
+
+            // RASTATIME 2026-10-25 (role audit R6) - the analyzer and the
+            // services call with the API key (no session user).  With a
+            // session only the owner, Program Managers and Admins change a
+            // file; the storage fields (full_path, artwork) stay with the API
+            // key - a forged path was unlinked on delete - and the owner
+            // with Admins.
+            $user = Application_Model_User::getCurrentUser();
+            if ($user !== null) {
+                $ccFile = CcFilesQuery::create()->findPk($id);
+                if ($ccFile && !$user->isAdminOrPM() && (int) $ccFile->getDbOwnerId() !== (int) $user->getId()) {
+                    $this->forbiddenResponse('media PUT', $id, $user);
+
+                    return;
+                }
+                if (is_array($requestData)) {
+                    unset($requestData['full_path'], $requestData['artwork']);
+                    if (!$user->isUserType([UTYPE_SUPERADMIN, UTYPE_ADMIN])) {
+                        unset($requestData['owner_id']);
+                    }
+                }
+            }
+
             $sanitizedFile = CcFiles::updateFromArray($id, $requestData);
 
             $this->getResponse()
@@ -208,6 +231,15 @@ class Rest_MediaController extends Zend_Rest_Controller
     {
         $id = $this->getId();
 
+        // RASTATIME 2026-10-25 (role audit R8) - publishing into the station
+        // podcast is for Program Managers and Admins.
+        $user = Application_Model_User::getCurrentUser();
+        if ($user !== null && !$user->isAdminOrPM()) {
+            $this->forbiddenResponse('media publish', $id, $user);
+
+            return;
+        }
+
         try {
             // Is there a better way to do this?
             $data = json_decode($this->getRequest()->getRawBody(), true)['sources'];
@@ -240,6 +272,15 @@ class Rest_MediaController extends Zend_Rest_Controller
         }
 
         return $id;
+    }
+
+    /** RASTATIME 2026-10-25 (role audit) - logged 403 for a session user. */
+    private function forbiddenResponse($what, $id, $user)
+    {
+        Logging::warn(sprintf('rest/%s: user %d refused on file %s', $what, $user->getId(), (string) $id));
+        $resp = $this->getResponse();
+        $resp->setHttpResponseCode(403);
+        $resp->appendBody('ERROR: Permission denied.');
     }
 
     private function fileNotFoundResponse()

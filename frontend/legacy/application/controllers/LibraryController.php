@@ -255,6 +255,11 @@ class LibraryController extends Zend_Controller_Action
         $message = null;
         $noPermissionMsg = _("You don't have permission to delete selected items.");
 
+        // RASTATIME 2026-10-25 (role audit R10) - Line-In sources are
+        // managed by Program Managers and Admins (the Line-In editor's ACL);
+        // the library delete reached the Django API for every DJ.
+        $mayManageLineins = $user !== null && $user->isAdminOrPM();
+
         foreach ($mediaItems as $media) {
             if ($media['type'] === 'audioclip') {
                 $files[] = intval($media['id']);
@@ -265,7 +270,11 @@ class LibraryController extends Zend_Controller_Action
             } elseif ($media['type'] === 'stream') {
                 $streams[] = intval($media['id']);
             } elseif ($media['type'] === 'linein') {
-                $lineins[] = intval($media['id']);
+                if ($mayManageLineins) {
+                    $lineins[] = intval($media['id']);
+                } else {
+                    $message = $noPermissionMsg;
+                }
             }
         }
 
@@ -776,6 +785,21 @@ class LibraryController extends Zend_Controller_Action
         }
 
         if ($request->isPost()) {
+            // RASTATIME 2026-10-25 (role audit R6) - the read-only form was
+            // cosmetic only: a POST still saved (artwork first, owner_id
+            // included).  Owner, Program Managers and Admins change a file;
+            // the owner field stays with Admins.
+            if ($this->view->permissionDenied) {
+                Logging::warn(sprintf(
+                    'library/edit-file-md: user %d refused on file %d (owner %d)',
+                    $user->getId(),
+                    $file_id,
+                    $file->getFileOwnerId()
+                ));
+
+                throw new Zend_Controller_Action_Exception('only the owner, Program Managers and Admins may change this file', 403);
+            }
+
             $js = $this->_getParam('data');
             $serialized = [];
             // need to convert from serialized jQuery array.
@@ -807,6 +831,10 @@ class LibraryController extends Zend_Controller_Action
                         $serialized[$j['name']] = $j['value'];
                     }
                 }
+            }
+
+            if (!$isAdmin) {
+                unset($serialized['owner_id']);   // role audit R6
             }
 
             // Sanitize any wildly incorrect metadata before it goes to be validated.

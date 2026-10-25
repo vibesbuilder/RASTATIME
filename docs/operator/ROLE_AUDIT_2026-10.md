@@ -59,6 +59,11 @@ live after the API restart.
 
 ## 3. Role gaps (actual > intended)
 
+**Status:** R1-R3, R5-R11 and R13 closed 2026-10-25 (package 2) along the
+target matrix in §4; R4 left on purpose (`setIsScheduled` only clears the
+flag when the file has no future row - self-correcting); R12 is package 3.
+Probe `C:/Temp/optd/role_audit_p2_probe.php` (read-only, 203 checks).
+
 | # | Gap | Who can | Status |
 |---|---|---|---|
 | R1 | Clear the content of any show (`schedule/clear-show`, linked shows: all future instances) | G | ✔ |

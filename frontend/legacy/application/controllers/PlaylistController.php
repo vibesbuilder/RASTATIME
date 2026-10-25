@@ -35,6 +35,31 @@ class PlaylistController extends Zend_Controller_Action
         SessionHelper::reopenSessionForWriting();
     }
 
+    /**
+     * RASTATIME 2026-10-25 (role audit R5) - DJs change their own playlists
+     * and smart blocks only; Program Managers and Admins change all.  Before,
+     * the object id and its "modified" stamp were enough to edit anyone's
+     * (the editor only hid the form).  The actions' generic catch turns the
+     * refusal into "Something went wrong"; nothing is written either way.
+     */
+    private static function requireOwnerOrPM($obj): void
+    {
+        $user = Application_Model_User::getCurrentUser();
+        if ($user !== null && ($user->isAdminOrPM() || (int) $obj->getCreatorId() === (int) $user->getId())) {
+            return;
+        }
+
+        Logging::warn(sprintf(
+            'playlist editor: user %s refused on %s %d (owner %s)',
+            $user !== null ? $user->getId() : '-',
+            $obj instanceof Application_Model_Block ? 'block' : 'playlist',
+            $obj->getId(),
+            $obj->getCreatorId()
+        ));
+
+        throw new Zend_Controller_Action_Exception('only the owner, Program Managers and Admins may change this', 403);
+    }
+
     private function getPlaylist($p_type)
     {
         $obj = null;
@@ -60,6 +85,7 @@ class PlaylistController extends Zend_Controller_Action
 
         if ($obj_id !== null) {
             $obj = new $objInfo['className']($obj_id);
+            self::requireOwnerOrPM($obj);   // RASTATIME 2026-10-25 role audit R5
 
             $modified = $this->_getParam('modified', null);
             if ($obj->getLastModified('U') !== $modified) {
@@ -568,6 +594,7 @@ class PlaylistController extends Zend_Controller_Action
         if ($params['type'] == 'block') {
             try {
                 $bl = new Application_Model_Block($params['obj_id']);
+                self::requireOwnerOrPM($bl);   // role audit R5
             } catch (BlockNotFoundException $e) {
                 $this->playlistNotFound('block', true);
             }
@@ -610,6 +637,7 @@ class PlaylistController extends Zend_Controller_Action
         // make sure block exists
         try {
             $bl = new Application_Model_Block($params['obj_id']);
+            self::requireOwnerOrPM($bl);   // role audit R5
 
             $form = new Application_Form_SmartBlockCriteria();
             $form->startForm($params['obj_id']);
@@ -639,6 +667,7 @@ class PlaylistController extends Zend_Controller_Action
 
         try {
             $bl = new Application_Model_Block($params['obj_id']);
+            self::requireOwnerOrPM($bl);   // role audit R5
             $result = $bl->shuffleSmartBlock();
 
             $this->view->result = $result['result'];
@@ -668,6 +697,7 @@ class PlaylistController extends Zend_Controller_Action
 
         try {
             $pl = new Application_Model_Playlist($params['obj_id']);
+            self::requireOwnerOrPM($pl);   // role audit R5
             $result = $pl->shuffle();
 
             $this->view->result = $result['result'];

@@ -69,11 +69,11 @@ $ccAcl->allow('G', 'index')
     ->allow('G', 'setup')
     ->allow('G', 'embeddablewidgets')
     ->allow('G', 'feeds')
-    ->allow('H', 'rest:show-image')
+    // RASTATIME 2026-10-25 (role audit R7/R8) - DJs change no show logos
+    // and manage no podcasts (operator); they keep reading the podcast list.
     ->allow('H', 'rest:media')
-    ->allow('H', 'rest:podcast')
-    ->allow('H', 'rest:podcast-episodes')
-    ->allow('H', 'podcast')
+    ->allow('H', 'rest:podcast', ['index', 'get'])
+    ->allow('H', 'rest:podcast-episodes', ['index', 'get'])
     ->allow('H', 'preference', 'is-import-in-progress')
     ->allow('H', 'usersettings')
     ->allow('H', 'plupload')
@@ -82,13 +82,19 @@ $ccAcl->allow('G', 'index')
     ->allow('H', 'playouthistory')
     ->allow('H', 'listenerstat')
     ->allow('H', 'showlistenerstat')
+    // RASTATIME 2026-10-25 (role audit R7/R8/R10) - show logos, podcasts
+    // and Line-In sources: Program Managers and Admins (operator).
+    ->allow('P', 'rest:show-image')
+    ->allow('P', 'rest:podcast')
+    ->allow('P', 'rest:podcast-episodes')
+    ->allow('P', 'podcast')
+    ->allow('P', 'linein')
     ->allow('A', 'playouthistorytemplate')
     ->allow('A', 'user')
     ->allow('A', 'tracktype')
     ->allow('A', 'systemstatus')
     ->allow('A', 'preference')
-    ->allow('A', 'importexport')
-    ->allow('A', 'linein');   // T14.2
+    ->allow('A', 'importexport');
 
 $aclPlugin = new Zend_Controller_Plugin_Acl($ccAcl);
 

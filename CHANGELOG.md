@@ -9,6 +9,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+- **Rollen-Audit Paket 2: Rollen-Lücken R1-R11, R13 geschlossen
+  (2026-10-25, Operator-Go)** — nach der mit dem Operator festgelegten
+  Soll-Matrix (`docs/operator/ROLE_AUDIT_2026-10.md` §4).  Neue Helfer
+  `Application_Model_User::isAdminOrPM()` / `requireAdminOrPM()` (403,
+  im Error-Controller als „Access refused“ geloggt).
+  **R1/R2** Sendungsinhalt leeren (`schedule/clear-show`) und
+  Show-Vorlagen speichern/umbenennen/löschen nur noch PM+ (vorher jeder
+  Gast).  **R3** Stations-Standardsprache und „Einrichtung erledigt“ nur
+  noch PM+ (jeder behält die eigene Sprache/Zeitzone), Widget-Einstellungen
+  (POST) nur noch PM+.  **R5** Playlist-/Smart-Block-Editor: ändern nur
+  Besitzer und PM+ (vorher reichten Objekt-ID und Änderungsstempel, um
+  fremde Playlists zu ändern; das Formular war nur ausgeblendet).
+  **R6** Metadaten-Editor: POST nur Besitzer und PM+ (der Nur-Lesen-Modus
+  war kosmetisch, Artwork wurde sogar vor jeder Prüfung gesetzt), das
+  Besitzer-Feld nur Admins; REST `media` PUT mit Sitzung: nur Besitzer und
+  PM+, `full_path`/`artwork` bleiben beim API-Key (Analyzer), `owner_id`
+  bei Admins.  **R7** Show-Logos (REST `show-image` schreibend) nur PM+.
+  **R8** Podcasts und Episoden verwalten nur PM+ (DJs lesen die Liste
+  weiter), Veröffentlichen in den Stations-Podcast nur PM+; „My Podcast“
+  steht jetzt auch Programm-Managern im Menü.  **R9** Sendeprotokoll:
+  Einträge anlegen/ändern/löschen nur PM+, DJs sehen die
+  Bearbeiten-Werkzeuge nicht mehr.  **R10** Line-In-Quellen verwalten
+  (Editor und Löschen über die Bibliothek) PM+ statt Admin bzw. jeder DJ.
+  **R11** Ein zum Gast herabgestufter Sendungs-Host plant nicht mehr ein.
+  **R13** Super-Admin zählt beim Webstream-Löschen als Admin.  R4
+  (`update-future-is-scheduled`) bleibt bewusst offen: korrigiert sich
+  selbst.  R12 (CSRF) = Paket 3.  Probe `C:/Temp/optd/role_audit_p2_probe.php`
+  (ACL-Matrix G/H/P/A/S, Helfer, R5-Besitz, R11, preDispatch-Wächter je
+  Rolle: 203/203), live als Admin unverändert 200.
 - **Rollen-Audit Paket 1: sieben Sofort-Befunde geschlossen (2026-10-25,
   Operator-Go)** — siehe `docs/operator/ROLE_AUDIT_2026-10.md`.
   **S1** „Eigenes Profil“ (`user/edit-user`) speichert nur noch das

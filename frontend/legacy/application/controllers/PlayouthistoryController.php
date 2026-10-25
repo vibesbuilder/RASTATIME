@@ -19,6 +19,23 @@ class PlayouthistoryController extends Zend_Controller_Action
             ->initContext();
     }
 
+    /**
+     * RASTATIME 2026-10-25 (role audit R9) - DJs view the playout history;
+     * creating, editing and deleting entries is for Program Managers and
+     * Admins (HistoryService's own check was commented out upstream).
+     */
+    private const EDIT_ACTIONS = [
+        'edit-file-item', 'create-list-item', 'edit-list-item', 'delete-list-item',
+        'delete-list-items', 'update-list-item', 'update-file-item',
+    ];
+
+    public function preDispatch()
+    {
+        if (in_array($this->getRequest()->getActionName(), self::EDIT_ACTIONS, true)) {
+            Application_Model_User::requireAdminOrPM();
+        }
+    }
+
     public function indexAction()
     {
         $CC_CONFIG = Config::getConfig();
@@ -69,10 +86,12 @@ class PlayouthistoryController extends Zend_Controller_Action
 
         $columns = json_encode($historyService->getDatatablesFileSummaryColumns());
         $script .= "localStorage.setItem( 'datatables-historyfile-aoColumns', JSON.stringify({$columns}) );";
-        $this->view->headScript()->appendScript($script);
 
         $user = Application_Model_User::getCurrentUser();
         $this->view->userType = $user->getType();
+        // role audit R9 - hide the edit tools from those who may only view
+        $script .= ' var rtHistoryCanEdit = ' . ($user->isAdminOrPM() ? 'true' : 'false') . ';';
+        $this->view->headScript()->appendScript($script);
     }
 
     public function fileHistoryFeedAction()

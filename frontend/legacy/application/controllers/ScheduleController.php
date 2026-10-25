@@ -278,6 +278,9 @@ class ScheduleController extends Zend_Controller_Action
 
     public function clearShowAction()
     {
+        // RASTATIME 2026-10-25 (role audit R1) - only the UI menu limited
+        // this; any role (even a guest) could empty any show.
+        Application_Model_User::requireAdminOrPM();
         $instanceId = $this->_getParam('id');
 
         $log_vars = [];
@@ -1021,6 +1024,9 @@ class ScheduleController extends Zend_Controller_Action
      */
     public function saveShowTemplateAction()
     {
+        // RASTATIME 2026-10-25 (role audit R2) - templates are show
+        // planning: Program Managers and Admins (before: any role).
+        Application_Model_User::requireAdminOrPM();
         try {
             $js = $this->_getParam('data');
             $data = [];
@@ -1060,6 +1066,7 @@ class ScheduleController extends Zend_Controller_Action
      */
     public function renameShowTemplateAction()
     {
+        Application_Model_User::requireAdminOrPM();   // role audit R2
         try {
             $id = (int) $this->_getParam('id', 0);
             $newName = (string) $this->_getParam('name', '');
@@ -1076,6 +1083,7 @@ class ScheduleController extends Zend_Controller_Action
      */
     public function deleteShowTemplateAction()
     {
+        Application_Model_User::requireAdminOrPM();   // role audit R2
         try {
             $id = (int) $this->_getParam('id', 0);
             Application_Service_ShowTemplateService::deleteTemplate($id);

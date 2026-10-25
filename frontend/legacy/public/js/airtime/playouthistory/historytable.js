@@ -8,6 +8,10 @@ var AIRTIME = (function (AIRTIME) {
 
   var $historyContentDiv;
 
+  // RASTATIME 2026-10-25 (role audit R9) - DJs view the history only; the
+  // server refuses their edits, so the edit tools are not offered.
+  var canEdit = typeof rtHistoryCanEdit === "undefined" || rtHistoryCanEdit;
+
   var lengthMenu = [
     [10, 25, 50, 100, 500, -1],
     [10, 25, 50, 100, 500, $.i18n._("All")],
@@ -268,14 +272,16 @@ var AIRTIME = (function (AIRTIME) {
   function createToolbarButtons($el) {
     var $menu = $("<div class='btn-toolbar' />");
 
-    $menu.append(
-      "<div class='btn-group'>" +
-        "<button class='btn btn-small btn-new' id='his_create'>" +
-        "<i class='icon-white icon-plus'></i>" +
-        $.i18n._("New Log Entry") +
-        "</button>" +
-        "</div>",
-    );
+    if (canEdit) {
+      $menu.append(
+        "<div class='btn-group'>" +
+          "<button class='btn btn-small btn-new' id='his_create'>" +
+          "<i class='icon-white icon-plus'></i>" +
+          $.i18n._("New Log Entry") +
+          "</button>" +
+          "</div>",
+      );
+    }
 
     $menu.append(
       "<div class='btn-group'>" +
@@ -314,13 +320,15 @@ var AIRTIME = (function (AIRTIME) {
         "</div>",
     );
 
-    $menu.append(
-      "<div class='btn-group'>" +
-        "<button class='btn btn-small' id='his_trash'>" +
-        "<i class='icon-white icon-trash'></i>" +
-        "</button>" +
-        "</div>",
-    );
+    if (canEdit) {
+      $menu.append(
+        "<div class='btn-group'>" +
+          "<button class='btn btn-small' id='his_trash'>" +
+          "<i class='icon-white icon-trash'></i>" +
+          "</button>" +
+          "</div>",
+      );
+    }
 
     $el.append($menu);
   }
@@ -336,7 +344,9 @@ var AIRTIME = (function (AIRTIME) {
           baseUrl + "playouthistory/edit-file-item/id/" + aData.file_id,
         $nRow = $(nRow);
 
-      $nRow.data("url-edit", editUrl);
+      if (canEdit) {
+        $nRow.data("url-edit", editUrl);
+      }
     };
 
     columns = JSON.parse(
@@ -421,8 +431,10 @@ var AIRTIME = (function (AIRTIME) {
         .html("<input type='checkbox' name='cb_" + aData.history_id + "'>");
 
       $nRow.data("his-id", aData.history_id);
-      $nRow.data("url-edit", editUrl);
-      $nRow.data("url-delete", deleteUrl);
+      if (canEdit) {
+        $nRow.data("url-edit", editUrl);
+        $nRow.data("url-delete", deleteUrl);
+      }
 
       for (b in booleans) {
         text = aData[b] ? checkedCheckBox : emptyCheckBox;

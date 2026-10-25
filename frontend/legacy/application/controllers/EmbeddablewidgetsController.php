@@ -5,6 +5,19 @@ class EmbeddableWidgetsController extends Zend_Controller_Action
     public function init() {}
 
     /**
+     * RASTATIME 2026-10-25 (role audit R3) - every POST here writes a
+     * station-wide widget setting (or the default cover): Program Managers
+     * and Admins only (operator).  Viewing the pages and embed codes stays
+     * open to all roles.
+     */
+    public function preDispatch()
+    {
+        if ($this->getRequest()->isPost()) {
+            Application_Model_User::requireAdminOrPM();
+        }
+    }
+
+    /**
      * RASTATIME 2026-09-18 — Settings page for the Stream Player
      * Widget v2 (work-order point 12).  Wave style: preview + embed
      * code, no form.  The old page gated on the public LibreTime API

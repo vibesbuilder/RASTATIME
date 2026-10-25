@@ -56,16 +56,37 @@ class Application_Model_User
         return $this->isUserType(UTYPE_SUPERADMIN);
     }
 
+    /** RASTATIME 2026-10-25 (role audit) - Program Manager, Admin or Super Admin. */
+    public function isAdminOrPM(): bool
+    {
+        return $this->isUserType([UTYPE_SUPERADMIN, UTYPE_ADMIN, UTYPE_PROGRAM_MANAGER]);
+    }
+
+    /**
+     * RASTATIME 2026-10-25 (role audit package 2) - stop the request with 403
+     * unless the logged-in user is a Program Manager or Admin.  The
+     * ErrorController's 403 branch logs "Access refused (403)".
+     */
+    public static function requireAdminOrPM(): void
+    {
+        $user = self::getCurrentUser();
+        if ($user === null || !$user->isAdminOrPM()) {
+            throw new Zend_Controller_Action_Exception('Program Managers and Admins only', 403);
+        }
+    }
+
     public function canSchedule($p_showId)
     {
         $type = $this->getType();
         $result = false;
 
+        // RASTATIME 2026-10-25 (role audit R11) - a show host demoted to
+        // Guest keeps the host row but no longer schedules.
         if (
             $this->isAdmin()
             || $this->isSuperAdmin()
             || $this->isPM()
-            || self::isHostOfShow($p_showId)
+            || (!$this->isGuest() && self::isHostOfShow($p_showId))
         ) {
             $result = true;
         }

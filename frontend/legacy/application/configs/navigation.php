@@ -37,13 +37,13 @@ $pages[] = [
 ];
 $pages[] = [
     // RASTATIME 2026-06-01 — station podcast page in the main menu, above
-    // Calendar (operator placement).  Admin-visible (resource 'preference');
-    // the page itself also allows DJ/Program-Manager via the 'podcast' ACL.
+    // Calendar (operator placement).  2026-10-25 (role audit R8): visible
+    // with the page's own 'podcast' ACL - Program Managers and Admins.
     'label' => 'My Podcast',
     'module' => 'default',
     'controller' => 'podcast',
     'action' => 'station',
-    'resource' => 'preference',
+    'resource' => 'podcast',
     'class' => '<i class="icon-bullhorn icon-white"></i>',
 ];
 $pages[] = [
