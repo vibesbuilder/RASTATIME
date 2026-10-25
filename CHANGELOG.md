@@ -259,7 +259,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   geprüft: alle Routen 200 mit `lang="en-US"`; deutscher Browser zeigt
   jetzt „Oct 19 – Oct 25 2026“ / „Mon 19“; simuliert de-DE „19. Okt. –
   25. Okt. 2026“ / „Mo 19“ und Multi-View „Mo. 19.10.“, es-ES „sáb, 31
-  oct“.  Handbuch WIDGETS und SETTINGS ×4.
+  oct“.  Handbuch WIDGETS und SETTINGS ×4.  Commit 523e7ce.
 - **Widgets: Wochenbeginn aus den Einstellungen, „Today“ links, Titel
   für „On Air Today“ (2026-10-25, Operator)** — *Weekly Schedule* zeigt
   die Woche ab dem Tag aus Einstellungen → Allgemein → Week Starts On
