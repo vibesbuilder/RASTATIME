@@ -207,6 +207,11 @@ REST_FRAMEWORK = {
         "song_request_search": "60/min",
         "song_request_submit": "5/hour",
     },
+    # RASTATIME 2026-10-25 - throttle by REMOTE_ADDR: waitress sets it to the
+    # client the local Apache saw (waitress_serve.PROXY_OPTIONS).  Without
+    # this, DRF keyed on the whole X-Forwarded-For chain, whose first entries
+    # the client can forge.
+    "NUM_PROXIES": 0,
 }
 
 # Auth

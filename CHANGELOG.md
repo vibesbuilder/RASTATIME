@@ -40,6 +40,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Wegwerf-Dateien und Wächter-Datei, S6 je Rolle, S2/S4 live im Browser
   (gesperrt 401/403, Oberfläche 200), Icecast-Skripte von außen 403, API
   172 Tests (17 neu).  Django-Teil wirksam nach dem API-Neustart.
+  Nachtrag: Der erste API-Neustart zeigte, dass die Sperre nicht griff -
+  Waitress 3 entfernt `X-Forwarded-For` von nicht vertrauten Gegenstellen,
+  jede Anfrage über Apache sah aus wie ein lokaler Aufruf.  Jetzt vertraut
+  Waitress dem lokalen Apache für genau diesen Header
+  (`waitress_serve.PROXY_OPTIONS`, letzter Eintrag zählt, `REMOTE_ADDR` =
+  echter Client); Song-Requests und ihre Drosselung zählen nach
+  `REMOTE_ADDR` (`NUM_PROXIES = 0`) statt nach dem fälschbaren ersten
+  Header-Eintrag - vorher teilten sich alle Hörer eine Adresse.  Test mit
+  der echten Waitress-Middleware; API 178 Tests.
 - **DJ-Passwortprüfung nur noch lokal erreichbar (2026-10-25,
   Operator-Go)** — `api/check-live-stream-auth` (ohne API-Key, weil früher
   Icecast es aufrief) war über `https://radio.example.org` aus dem

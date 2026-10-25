@@ -65,11 +65,13 @@ def is_internal_request(request) -> bool:
     outside the DRF permission system (line-in, sound card, preflight,
     stream status): a valid Api-Key, or a direct call from this machine.
 
-    "Direct" = loopback peer and no X-Forwarded-For.  Waitress binds to
-    127.0.0.1 and trusts no proxy headers, so everything Apache proxies
-    from /api/v2/ arrives from 127.0.0.1 too - but Apache's mod_proxy
-    always adds X-Forwarded-For, which a direct caller (the legacy PHP
-    on 127.0.0.1:8765) does not send.
+    "Direct" = loopback peer and no X-Forwarded-For.  Waitress trusts the
+    local Apache for that header (waitress_serve.PROXY_OPTIONS): it keeps
+    it and sets REMOTE_ADDR to the real client.  So everything Apache
+    proxies from /api/v2/ needs the Api-Key - a browser in the LAN or on
+    the internet is refused, the playout (which calls through Apache from
+    this machine) sends its key - while the legacy PHP calling
+    127.0.0.1:8765 directly needs none.
     """
     if check_authorization_header(request):
         return True

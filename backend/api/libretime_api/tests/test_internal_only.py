@@ -50,6 +50,58 @@ def test_internal_only_decorator():
     assert b"internal callers only" in refused.content
 
 
+@pytest.mark.parametrize(
+    "forwarded,expected_peer,internal",
+    [
+        (None, "127.0.0.1", True),                         # legacy PHP direct on :8765
+        ("127.0.0.1", "127.0.0.1", False),                 # through Apache from this machine: needs the key
+        ("192.168.1.20", "192.168.1.20", False),                 # browser in the LAN
+        ("203.0.113.7", "203.0.113.7", False),             # internet
+        ("127.0.0.1, 203.0.113.7", "203.0.113.7", False),  # spoofed first hop, Apache appended the real one
+    ],
+)
+def test_waitress_proxy_options_give_the_real_client(forwarded, expected_peer, internal):
+    """The service's waitress options, applied by waitress's own middleware."""
+    from waitress.proxy_headers import proxy_headers_middleware
+
+    from ..waitress_serve import PROXY_OPTIONS
+
+    seen = {}
+
+    def app(environ, start_response):
+        seen.update(environ)
+        start_response("200 OK", [])
+        return [b""]
+
+    wrapped = proxy_headers_middleware(
+        app,
+        trusted_proxy=PROXY_OPTIONS["trusted_proxy"],
+        trusted_proxy_count=PROXY_OPTIONS["trusted_proxy_count"],
+        trusted_proxy_headers=PROXY_OPTIONS["trusted_proxy_headers"],
+        clear_untrusted=PROXY_OPTIONS["clear_untrusted_proxy_headers"],
+    )
+    environ = {"REMOTE_ADDR": "127.0.0.1", "REQUEST_METHOD": "GET", "PATH_INFO": "/api/v2/audio/linein",
+               "wsgi.url_scheme": "http", "SERVER_NAME": "127.0.0.1", "SERVER_PORT": "8765"}
+    if forwarded is not None:
+        environ["HTTP_X_FORWARDED_FOR"] = forwarded
+    wrapped(environ, lambda *a, **k: None)
+    assert seen["REMOTE_ADDR"] == expected_peer
+    request = RequestFactory().get("/api/v2/audio/linein", REMOTE_ADDR=seen["REMOTE_ADDR"])
+    if "HTTP_X_FORWARDED_FOR" in seen:
+        request.META["HTTP_X_FORWARDED_FOR"] = seen["HTTP_X_FORWARDED_FOR"]
+    assert is_internal_request(request) is internal
+
+
+def test_song_request_ip_hash_ignores_forged_forwarded_for():
+    from ..song_request_api import _hash_ip
+
+    plain = RequestFactory().get("/", REMOTE_ADDR="203.0.113.7")
+    forged = RequestFactory().get("/", REMOTE_ADDR="203.0.113.7", HTTP_X_FORWARDED_FOR="198.51.100.1, 203.0.113.7")
+    other = RequestFactory().get("/", REMOTE_ADDR="203.0.113.8")
+    assert _hash_ip(plain) == _hash_ip(forged)
+    assert _hash_ip(plain) != _hash_ip(other)
+
+
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     "path,method",

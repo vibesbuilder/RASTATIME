@@ -182,7 +182,24 @@ def serve(
     import waitress                           # noqa: PLC0415
     from libretime_api.wsgi import application  # noqa: PLC0415
 
-    waitress.serve(application, host=host, port=port, threads=threads)
+    waitress.serve(application, host=host, port=port, threads=threads, **PROXY_OPTIONS)
+
+
+# RASTATIME 2026-10-25 (role audit S3/S4) - the local Apache is the one
+# trusted proxy.  Waitress 2+ drops X-Forwarded-For from untrusted peers
+# (clear_untrusted_proxy_headers), so every request Apache proxied from
+# /api/v2/ looked like a direct call from 127.0.0.1 - internal_only could
+# not tell a browser on the internet from the legacy PHP, and the song
+# requests saw one IP for every listener.  Trusting 127.0.0.1 for
+# X-Forwarded-For only (last hop = the address Apache saw) makes
+# REMOTE_ADDR the real client; X-Forwarded-Proto stays untrusted so the
+# URLs in API responses do not change.
+PROXY_OPTIONS = {
+    "trusted_proxy": "127.0.0.1",
+    "trusted_proxy_count": 1,
+    "trusted_proxy_headers": {"x-forwarded-for"},
+    "clear_untrusted_proxy_headers": True,
+}
 
 
 # ---------------------------------------------------------------------------

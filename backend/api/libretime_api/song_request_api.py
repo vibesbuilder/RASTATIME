@@ -74,12 +74,13 @@ def _hash_ip(request) -> str:
     """
     Return a salted SHA-256 hash of the requester's IP, or "" if unknown.
 
-    The raw IP is never stored or logged (privacy).  X-Forwarded-For wins
-    over REMOTE_ADDR because the app runs behind Apache/Nginx; the first
-    hop in the XFF list is the originating client.
+    The raw IP is never stored or logged (privacy).  RASTATIME 2026-10-25:
+    REMOTE_ADDR, which waitress sets to the client the local Apache saw
+    (waitress_serve.PROXY_OPTIONS).  The first X-Forwarded-For hop used
+    before is whatever the client sends - a forged one would have dodged
+    the per-listener limits once waitress kept the header.
     """
-    xff = request.META.get("HTTP_X_FORWARDED_FOR", "")
-    ip = xff.split(",")[0].strip() if xff else request.META.get("REMOTE_ADDR", "")
+    ip = request.META.get("REMOTE_ADDR", "")
     if not ip:
         return ""
     salt = getattr(settings, "SECRET_KEY", "")
