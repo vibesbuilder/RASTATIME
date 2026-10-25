@@ -895,7 +895,10 @@ Antworten zu den Settings-Fragen unten: Backup, FTP-Import, Speicherort, Streams
 (Controller-ACL `preference`); Line-In-Seite Admin-only, aber Löschen über die Bibliothek für DJs (R10).
 **Operator 2026-10-25:** alle fünf Pakete; Soll-Matrix: DJs keine Show-Logos und keine Podcasts,
 Podcasts/Widgets/Stationssprache/Line-In-Geräte für Programm-Manager und Admins.
-**Paket 1 (S1-S7) gebaut 2026-10-25** - Django-Teil (S3/S4) wirksam nach API-Neustart; Pakete 2-5 folgen.
+**Paket 1 (S1-S7) LIVE 2026-10-25 16:50** (`2d3794f`, `20e9543`): nach dem zweiten API-Neustart liefern
+Line-In/Soundkarte/Geräte/Preflight/Stream-Status von außen 403 (auch mit gefälschtem X-Forwarded-For),
+Playout über Apache mit Key 200, PHP direkt 200, Soundkarten-Seite und Line-In-Editor über die Proxys.
+Erster Neustart griff nicht: Waitress 3 verwarf X-Forwarded-For (jetzt PROXY_OPTIONS).  Pakete 2-5 folgen.
 
 **Ursprüngliche Aufgabe:**
 
