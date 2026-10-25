@@ -1370,8 +1370,8 @@ class ApiController extends Zend_Controller_Action
         if ($djtype == 'master') {
             // check against master
             if (
-                $username == Application_Model_Preference::GetLiveStreamMasterUsername()
-                && $password == Application_Model_Preference::GetLiveStreamMasterPassword()
+                self::credentialEquals(Application_Model_Preference::GetLiveStreamMasterUsername(), $username)
+                && self::credentialEquals(Application_Model_Preference::GetLiveStreamMasterPassword(), $password)
             ) {
                 $authorised = true;
                 $this->view->msg = true;
@@ -1400,10 +1400,13 @@ class ApiController extends Zend_Controller_Action
                 if ($CcShow->getDbLiveStreamUsingAirtimeAuth()) {
                     foreach ($hosts_ids as $host) {
                         $h = new Application_Model_User($host['subjs_id']);
-                        if ($username == $h->getLogin()) {
+                        if (self::credentialEquals($h->getLogin(), $username)) {
                             $reason = 'bad-password';   // the name is a host, the password decides
                         }
-                        if ($username == $h->getLogin() && md5($password) == $h->getPassword()) {
+                        if (
+                            self::credentialEquals($h->getLogin(), $username)
+                            && self::credentialEquals($h->getPassword(), md5((string) $password))
+                        ) {
                             $authorised = true;
                             $this->view->msg = true;
                             // Set Icecast's expected auth header right here —
@@ -1420,7 +1423,7 @@ class ApiController extends Zend_Controller_Action
                 // check against custom auth
                 if ($CcShow->getDbLiveStreamUsingCustomAuth()) {
                     $reason = 'bad-password';   // custom credentials: name + password together
-                    if ($username == $custom_user && $password == $custom_pass) {
+                    if (self::credentialEquals($custom_user, $username) && self::credentialEquals($custom_pass, $password)) {
                         $authorised = true;
                         $this->view->msg = true;
                     } else {
@@ -1447,6 +1450,20 @@ class ApiController extends Zend_Controller_Action
             $this->getResponse()->setHttpResponseCode(401);
             $this->getResponse()->setHeader('X-Rastatime-Auth-Reason', $reason);
         }
+    }
+
+    /**
+     * RASTATIME 2026-10-25 - type-strict, timing-safe comparison for the DJ
+     * login above.  `==` compared numeric-looking strings as numbers (two
+     * MD5 hex values "0e<digits>" were equal - the classic "magic hash")
+     * and let null equal '' (an unset master or custom login matched an
+     * empty request).  An empty expected value never matches.
+     */
+    private static function credentialEquals($expected, $given): bool
+    {
+        $expected = (string) $expected;
+
+        return $expected !== '' && hash_equals($expected, (string) $given);
     }
 
     /* This action is for use by our dev scripts, that make

@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+- **DJ-Login: typstrenger, timing-sicherer Vergleich (2026-10-25,
+  Operator: „hash_equals-Fix sofort")** — `check-live-stream-auth`
+  (Harbor-Login über PLAYOUT) verglich Login, Passwort-MD5, Master- und
+  Show-Zugangsdaten mit `==`: zwei MD5-Werte der Form „0e<Ziffern>“ galten
+  als gleich („Magic Hash" - ein falsches Passwort konnte passen), ebenso
+  „1e3" und „1000", und `null` war gleich „" (ein ungesetzter Master-/
+  Show-Zugang hätte eine leere Anfrage angenommen; PLAYOUT lehnt leere
+  Logins zwar vorher ab, der Endpunkt ist aber direkt erreichbar).  Jetzt
+  `ApiController::credentialEquals()` = `hash_equals` auf Strings, ein
+  leerer Sollwert passt nie.  Probe: alle acht Fälle wie erwartet (die drei
+  `==`-Treffer abgelehnt); falsche Zugangsdaten live weiter 401.  Offen
+  (BACKLOG): Endpunkt ohne API-Key öffentlich erreichbar, Passwörter als
+  ungesalzenes MD5.
 - **Passwort-Rotation 2026-10-24 (Operator, Runbook
   `docs/operator/PASSWORD_ROTATION.md`)** — Datenbank-Rolle `rastatime`,
   `general.api_key`, `stream.internal_listener.password` (ungenutzt),
