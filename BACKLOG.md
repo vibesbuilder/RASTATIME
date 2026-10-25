@@ -915,10 +915,11 @@ aus Lesen - echte Speichervorgänge aller Rollen (Playlist, Sendung, Benutzer, E
 normalen Betrieb abwarten.  **Operator-Go Phase 2 (2026-10-25)** nach dieser Empfehlung: Auswertung
 und Scharfschalten ab 2026-10-27.
 **Paket 4 umgesetzt 2026-10-25 ~19:00:** `/main` + `/show` aus `config/icecast.xml` (+ `.example`),
-Auth-Skripte und `api/icecast-listener-allow` gelöscht.  **Offen (Operator):** Icecast-Neustart im
-ruhigen Fenster (`nssm restart RASTATIME-ICECAST`), danach Firewall-Regeln „RASTATIME Icecast“ und
-„icecast“ deaktivieren.  Achtung Rückfall auf Icecast 2.4.4: `icecast.xml.2.4.4-backup` enthält die
-alten Mounts noch.  Paket 5 (Handbuch) folgt.
+Auth-Skripte und `api/icecast-listener-allow` gelöscht; Icecast-Neustart 19:00:48 sauber (Quellen
+nach 3 s zurück, Streams 200, `/main` 404), Firewall-Regeln „RASTATIME Icecast“ + 2x „icecast“ vom
+Operator deaktiviert - **Paket 4 erledigt.**  Achtung Rückfall auf Icecast 2.4.4:
+`icecast.xml.2.4.4-backup` enthält die alten Mounts noch (`C:/Temp/optd/icecast_strip_input_mounts.py`).
+Paket 5 (Handbuch) folgt.
 **Offene Frage (Soll > Ist):** Gäste laden die Bibliothek auf dem Dashboard nicht (ACL ohne
 `library`/`usersettings`/Podcast-Liste, schon vor dem Audit; 403 im UI-Test), die Soll-Matrix sagt
 „Bibliothek ansehen: Gast ✓“.  Optionen: (a) Gästen nur die Lese-Aktionen freigeben (Feed,

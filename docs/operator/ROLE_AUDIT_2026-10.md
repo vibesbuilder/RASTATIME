@@ -149,7 +149,9 @@ agreed state; guests have no history page.)
    `public/icecast-auth.php` and `api/icecast-listener-allow` (with a
    hard-coded admin/admin bypass) deleted.  Icecast's access log since
    2026-09-29: every client is 127.0.0.1 (Apache, playout) except two LAN
-   test requests, so nothing outside needs 8000.  Operator steps: Icecast
-   restart in a quiet window; disable the inbound rules "RASTATIME
-   Icecast" (port 8000, any remote) and "icecast" (2x, program rule).
+   test requests, so nothing outside needs 8000.  Operator steps done the
+   same evening: Icecast restarted 19:00:48 (all six Liquidsoap sources
+   back after 3 s, streams via `/stream/` 200, `/main` 404); the inbound
+   rules "RASTATIME Icecast" (port 8000, any remote) and "icecast" (2x,
+   program rule) disabled.
 5. **Manual** USERS_AND_ROLES ×4 after 2.

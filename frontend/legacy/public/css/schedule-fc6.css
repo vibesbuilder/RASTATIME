@@ -97,19 +97,10 @@
   border-color: #2a2a2a;
   opacity: 0.65;
 }
+#schedule_calendar .fc-button-primary:not(:disabled).fc-button-active,
 #schedule_calendar .fc-button-primary:not(:disabled):active {
   background: #2c2c2c;
   border-color: #2a2a2a;
-}
-/* RASTATIME 2026-10-25 (operator: the chosen view was hardly visible - the
-   active Day/Week/Month button was only a shade darker) - the active view
-   carries the primary colour. */
-#schedule_calendar .fc-button-primary:not(:disabled).fc-button-active,
-#schedule_calendar .fc-button-primary:not(:disabled).fc-button-active:hover {
-  background: var(--rt-accent);
-  border-color: var(--rt-accent-dark);
-  color: var(--rt-accent-fg);
-  font-weight: bold;
 }
 
 /* ---- day-of-week header row (the "Mon 6/1" grey bar) ---- */
@@ -147,11 +138,30 @@
   align-items: center;
 }
 
-/* ---- slot-interval dropdown (top-left axis corner) ---- */
+/* ---- slot-interval dropdown (top-left axis corner) ----
+   RASTATIME 2026-10-25 (operator: the chosen interval was cut off) - the
+   39 px axis corner left ~14 px of text next to the native arrow ("5m"
+   needs 17 px, "60m" 23 px).  A slim drawn arrow replaces the native one,
+   and the time axis gets 48 px: FC6 sizes the axis column from the widest
+   slot label, so the minimum sits on the label cushion (a min-width on the
+   label FRAME breaks FC6's width matching - the axis collapses). */
 #schedule_calendar .schedule_change_slots {
-  background: #484848;
+  -webkit-appearance: none;
+  appearance: none;
+  padding: 1px 13px 1px 4px;
   color: #ffffff;
   border: 1px solid #2a2a2a;
+  background-color: #484848;
+  background-image: linear-gradient(45deg, transparent 50%, #dcdcdc 50%),
+    linear-gradient(135deg, #dcdcdc 50%, transparent 50%);
+  background-position: right 8px center, right 4px center;
+  background-size: 4px 4px, 4px 4px;
+  background-repeat: no-repeat;
+  cursor: pointer;
+}
+#schedule_calendar .fc-timegrid-slot-label-cushion {
+  display: inline-block;
+  min-width: 48px;
 }
 
 /* ---- events ---------------------------------------------------------------

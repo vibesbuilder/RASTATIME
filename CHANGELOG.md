@@ -21,9 +21,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `api/icecast-listener-allow` samt fest eingebautem `admin/admin`-Bypass.
   Icecast-Access-Log seit 29.09.: alle Clients 127.0.0.1 (Apache, Playout)
   bis auf zwei LAN-Testabrufe - Port 8000 braucht von außen niemand.
-  Wirksam nach dem Icecast-Neustart (Operator, ruhiges Fenster); die
-  eingehenden Firewall-Regeln „RASTATIME Icecast“ (8000, beliebige
-  Gegenstelle) und „icecast“ (2x Programmregel) schaltet der Operator ab.
+  Icecast-Neustart durch den Operator 2026-10-25 19:00:48: alle sechs
+  Liquidsoap-Quellen nach 3 s wieder angemeldet, die drei Streams über
+  `/stream/` liefern, `/main` antwortet 404.  Die eingehenden
+  Firewall-Regeln „RASTATIME Icecast“ (8000, beliebige Gegenstelle) und
+  „icecast“ (2x Programmregel) hat der Operator deaktiviert (nicht
+  gelöscht; `Enable-NetFirewallRule` stellt sie wieder her).
 - **Rollen-Audit Paket 3, Phase 1: CSRF für die Legacy-Oberfläche
   (2026-10-25, Operator-Go)** — R12: Schreibzugriffe außerhalb von REST
   (Kalender, Show-Builder, Bibliothek, Playlists, Sendeprotokoll, Benutzer,
@@ -250,9 +253,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (vorher Fehlerseite).  **Fehlerseiten**: neue Grafik als Inline-SVG
   (`partialviews/error-graphic.phtml`) statt `images/maintenance.png` -
   Signal und Warnzeichen folgen der eingestellten Primärfarbe (das PNG
-  trug noch das alte Orange).  **Kalender**: die gewählte Ansicht
-  (Day/Week/Month) trägt die Primärfarbe; vorher war der aktive Knopf nur
-  eine Spur dunkler.
+  trug noch das alte Orange).  **Kalender**: das Intervall-Dropdown oben
+  links in Tages-/Wochenansicht (1m … 60m) zeigte den gewählten Eintrag nur
+  abgeschnitten - die 39 px breite Zeitachse ließ neben dem nativen Pfeil
+  ~14 px Text; jetzt schlanker gezeichneter Pfeil und 48 px Zeitachse
+  (Mindestbreite am Label, nicht am Rahmen - dort kollabiert FC6s
+  Breitenabgleich).  (Eine zwischenzeitliche Hervorhebung der
+  Day/Week/Month-Knöpfe war ein Missverständnis und ist zurückgenommen.)
 - **MP3-Stream wieder mit 44,1 kHz statt 48 kHz (2026-10-25, Operator-Go
   zum Backlog-Punkt „Resampler im Signalweg")** — der Wert stand in
   Settings → Streams → Stream 1 → Sample Rate; der Mix läuft mit 44,1 kHz,
