@@ -6117,8 +6117,8 @@ Migration 0073 live eingespielt (21:30, Backup 02:30 OK, Tag live-2026-10-25): k
 „eingerichtet“ gesetzt, Schema 73.  Benutzerseite: `admin` ohne Löschen-Symbol, Server lehnt ab;
 API v2 `DELETE /api/v2/users/<admin>` -> 403 nach API-Neustart (Operator, 21:54 erledigt).
 Nebenbefunde der Kontrolle: (1) anonymes `/api/v2/users` gab 500 (`TypeError` in `IsAdminOrOwnUser`) -
-behoben (`e83fc00`), wirksam beim nächsten API-Neustart; (2) 💡 dem Dienst RASTATIME-API fehlt
-`PYTHONUTF8=1`: Fehlermeldungen mit Umlauten (z. B. PostgreSQL „Passwort-Authentifizierung …“) scheitern
+behoben (`e83fc00`), live seit dem API-Neustart 22:06 (anonym jetzt 403); (2) ✅ dem Dienst
+RASTATIME-API fehlte `PYTHONUTF8=1` - vom Operator am 25.10. gesetzt, aktiv seit 22:06: Fehlermeldungen mit Umlauten (z. B. PostgreSQL „Passwort-Authentifizierung …“) scheitern
 beim Protokollieren (`UnicodeEncodeError`) und landen nur zeitstempellos in `api-stderr.log` - die
 Datenbank-Fehler dort stammen so aus der Passwort-Rotation am 24.10.  Vorschlag (Operator, mit
 API-Neustart): `PYTHONUTF8=1` in die NSSM-Umgebung von RASTATIME-API aufnehmen.  Ursprüngliche Bewertung:
