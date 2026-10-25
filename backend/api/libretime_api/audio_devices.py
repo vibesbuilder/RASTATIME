@@ -52,9 +52,11 @@ shared transport (Redis / DB).
 
 from django.http import HttpRequest, JsonResponse
 from django.views.decorators.http import require_GET
+from libretime_api.permissions import internal_only  # RASTATIME 2026-10-25 role audit S3/S4
 
 
 @require_GET
+@internal_only
 def audio_devices(request: HttpRequest) -> JsonResponse:
     """
     Return the list of available audio output and input devices.

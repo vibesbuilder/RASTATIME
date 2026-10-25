@@ -127,6 +127,12 @@ class UserController extends Zend_Controller_Action
         $form = new Application_Form_EditUser();
         if ($request->isPost()) {
             $formData = $request->getPost();
+            // RASTATIME 2026-10-25 (role audit S1) - "My profile" edits the
+            // logged-in account only.  The posted cu_user_id used to decide
+            // whose password and e-mail were saved, so any account - even a
+            // guest - could take over any other one.  Admins edit other users
+            // under Settings -> Users (user/add-user).
+            $formData['cu_user_id'] = (string) Application_Model_User::getCurrentUser()->getId();
 
             if (
                 $form->isValid($formData)

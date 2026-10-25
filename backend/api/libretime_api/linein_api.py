@@ -57,6 +57,7 @@ import json
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
+from libretime_api.permissions import internal_only  # RASTATIME 2026-10-25 role audit S3/S4
 
 
 # ---------------------------------------------------------------------------
@@ -65,6 +66,7 @@ from django.views.decorators.http import require_http_methods
 
 @csrf_exempt
 @require_http_methods(["GET", "POST"])
+@internal_only
 def linein_list_or_create(request: HttpRequest) -> JsonResponse:
     """
     GET  — list all line-in sources.
@@ -107,6 +109,7 @@ def linein_list_or_create(request: HttpRequest) -> JsonResponse:
 
 @csrf_exempt
 @require_http_methods(["GET", "PATCH", "DELETE"])
+@internal_only
 def linein_detail(request: HttpRequest, linein_id: str) -> HttpResponse:
     """
     GET    — return the single line-in identified by its domain UUID.

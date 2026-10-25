@@ -42,9 +42,11 @@ playout engine).  A future task will add a shared transport (Redis / DB).
 
 from django.http import HttpRequest, JsonResponse
 from django.views.decorators.http import require_GET
+from libretime_api.permissions import internal_only  # RASTATIME 2026-10-25 role audit S3/S4
 
 
 @require_GET
+@internal_only
 def stream_outputs(request: HttpRequest) -> JsonResponse:
     """
     Return live status for all registered stream outputs.
@@ -62,6 +64,7 @@ def stream_outputs(request: HttpRequest) -> JsonResponse:
 
 
 @require_GET
+@internal_only
 def stream_output_detail(request: HttpRequest, output_id: str) -> JsonResponse:
     """
     Return live status for one stream output identified by *output_id*.

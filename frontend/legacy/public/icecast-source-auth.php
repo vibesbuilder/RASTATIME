@@ -32,13 +32,11 @@
  * /main (Master Source):
  *   * cc_pref.live_stream_master_username + live_stream_master_password
  *     (plain comparison; cc_pref stores these in clear text).
- *   * Operator-override fallback: user "source" + password
- *     "master-secret" — for DB-down or initial-setup scenarios.
+ *   * (The built-in fallback logins source/master-secret and
+ *     source/show-secret were removed 2026-10-25, role audit S5.)
  *
  * /show (Show DJ Source) — STRICT mode, Variant A:
- *   * Operator-override fallback: user "source" + password
- *     "show-secret".
- *   * Else an unmodified show instance MUST be running right now.
+ *   * An unmodified show instance MUST be running right now.
  *     Within that:
  *     - cc_show.live_stream_using_custom_auth = true → user+pass must
  *       match cc_show.live_stream_user / live_stream_pass exactly.
@@ -49,6 +47,20 @@
  */
 
 declare(strict_types=1);
+
+// RASTATIME 2026-10-25 (role audit S5) - only Icecast on this machine calls
+// this file; it sits in the public web root, so any other caller could try
+// DJ passwords here.  Others get 403.
+$rtPeer = (string) ($_SERVER['REMOTE_ADDR'] ?? '');
+if (stripos($rtPeer, '::ffff:') === 0) {
+    $rtPeer = substr($rtPeer, 7);
+}
+if ($rtPeer !== '::1' && strpos($rtPeer, '127.') !== 0) {
+    http_response_code(403);
+    header('Content-Type: text/plain');
+    echo "local callers only\n";
+    exit;
+}
 
 // ---------------------------------------------------------------------
 // Action dispatch
@@ -90,21 +102,17 @@ function rt_check_main_auth(string $user, string $pass): void
         rt_allow('master via cc_pref');
     }
 
-    // (2) Operator-override fallback (DB-down / initial setup).
-    if ($user === 'source' && $pass === 'master-secret') {
-        rt_allow('master via static fallback');
-    }
+    // RASTATIME 2026-10-25 (role audit S5) - the built-in fallback login
+    // source/master-secret is gone: it was valid next to every rotated
+    // password.  The Harbor has its own configured fallback password.
 
     rt_deny('master credentials rejected');
 }
 
 function rt_check_show_auth(string $user, string $pass): void
 {
-    // (0) Operator-override fallback first, so it works even with no
-    //     show currently scheduled (the point of an override).
-    if ($user === 'source' && $pass === 'show-secret') {
-        rt_allow('show via static fallback');
-    }
+    // RASTATIME 2026-10-25 (role audit S5) - built-in fallback login
+    // source/show-secret removed (see rt_check_main_auth).
 
     $pdo = rt_db();
 

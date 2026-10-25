@@ -9,6 +9,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+- **Rollen-Audit Paket 1: sieben Sofort-Befunde geschlossen (2026-10-25,
+  Operator-Go)** — siehe `docs/operator/ROLE_AUDIT_2026-10.md`.
+  **S1** „Eigenes Profil“ (`user/edit-user`) speichert nur noch das
+  angemeldete Konto; die mitgeschickte `cu_user_id` ließ jedes Konto, auch
+  einen Gast, Passwort und E-Mail jedes anderen (auch Admin) setzen.
+  **S2** `ApiController::checkAuth()` akzeptiert eine Browser-Sitzung nur
+  noch für die Aktionen, die die Oberfläche selbst aufruft
+  (`SESSION_ACTIONS`, `status` nur Admin); alles andere braucht den
+  API-Key - vorher konnte jede Sitzung z. B. die Icecast-Passwörter
+  (`get-stream-setting`) lesen; Ablehnungen als WARN im `legacy.log`.
+  **S3/S4** Die Django-Views ohne eigenes Rechtesystem (Line-In,
+  Soundkarte, Geräteliste, Preflight-Warnungen, Stream-Status) antworten
+  nur noch internen Aufrufern (`@internal_only`: Api-Key oder direkt von
+  127.0.0.1 ohne `X-Forwarded-For`) - vorher waren Line-Ins und die
+  Soundkarten-Einstellung **ohne Anmeldung aus dem Internet** anleg-,
+  änder- und löschbar.  Soundkarten-Sektion und Line-In-Editor laufen
+  dafür über PHP-Proxys (`preference/audio-devices`,
+  `preference/soundcard-settings` mit CSRF, `linein/audio-devices`).
+  **S5** `public/icecast-source-auth.php` / `icecast-auth.php` nur noch
+  lokal (sonst 403), die eingebauten Ersatz-Logins `source/master-secret`
+  und `source/show-secret` entfernt (Mounts und Firewall: Paket 4; das
+  Skript scheitert seit der DB-Passwort-Rotation am 24.10. ohnehin am fest
+  eingebauten alten Passwort).  **S6** Das Custom-Live-Passwort einer
+  Sendung kommt nur noch für Admins/Programm-Manager ins Show-Formular.
+  **S7** `CcFiles::deletePhysicalFile` löscht Artwork nur noch bei einem
+  echten Artwork-Pfad (vorher globbte ein leeres Artwork - 6.332 Titel -
+  über `D:/stor\*` und hätte jede Datei im Bibliotheks-Hauptordner
+  gelöscht) und nie mehr den Ordner bei leerem Dateipfad.  Proben: S7 mit
+  Wegwerf-Dateien und Wächter-Datei, S6 je Rolle, S2/S4 live im Browser
+  (gesperrt 401/403, Oberfläche 200), Icecast-Skripte von außen 403, API
+  172 Tests (17 neu).  Django-Teil wirksam nach dem API-Neustart.
 - **DJ-Passwortprüfung nur noch lokal erreichbar (2026-10-25,
   Operator-Go)** — `api/check-live-stream-auth` (ohne API-Key, weil früher
   Icecast es aufrief) war über `https://radio.example.org` aus dem

@@ -44,6 +44,31 @@ class LineinController extends Zend_Controller_Action
                     ->initContext();
     }
 
+    /**
+     * RASTATIME 2026-10-25 (role audit S4) - the device list for the Line-In
+     * edit dialog (spl.js), proxied from the API on localhost; the browser
+     * no longer reaches /api/v2/audio/devices (internal callers only).
+     */
+    public function audioDevicesAction(): void
+    {
+        $this->view->layout()->disableLayout();
+        $this->_helper->viewRenderer->setNoRender(true);
+        $curl = curl_init(self::API_BASE . 'api/v2/audio/devices');
+        curl_setopt_array($curl, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => 20,
+            CURLOPT_CONNECTTIMEOUT => 3,
+            CURLOPT_HTTPHEADER => ['Accept: application/json'],
+        ]);
+        $resp = curl_exec($curl);
+        $status = (int) curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        curl_close($curl);
+        $this->getResponse()
+            ->setHttpResponseCode($status ?: 502)
+            ->setHeader('Content-Type', 'application/json', true)
+            ->setBody(is_string($resp) && $resp !== '' ? $resp : '{"error":"The RASTATIME API is not reachable."}');
+    }
+
     // -------------------------------------------------------------------------
     // List view (T14.2)
     // -------------------------------------------------------------------------

@@ -47,6 +47,7 @@ import urllib.request
 from django.http import HttpRequest, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
+from libretime_api.permissions import internal_only  # RASTATIME 2026-10-25 role audit S3/S4
 
 logger = logging.getLogger(__name__)
 
@@ -126,6 +127,7 @@ def _build_response(obj) -> dict:
 
 @csrf_exempt                             # CSRF managed by RASTATIME's session auth layer
 @require_http_methods(["GET", "POST"])
+@internal_only
 def soundcard_settings(request: HttpRequest) -> JsonResponse:
     """
     GET  — return persisted soundcard settings (creates defaults if absent).

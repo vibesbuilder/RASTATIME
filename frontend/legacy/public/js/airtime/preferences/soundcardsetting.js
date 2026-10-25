@@ -169,8 +169,10 @@
   }
 
   function init() {
+    // RASTATIME 2026-10-25 (role audit S4) - through the PHP proxies
+    // (Admin, CSRF on save); /api/v2/audio/* answers internal callers only.
     $.ajax({
-      url: "/api/v2/audio/devices",
+      url: baseUrl + "preference/audio-devices",
       type: "GET",
       dataType: "json",
       success: function (data) {
@@ -182,7 +184,7 @@
 
         /* Load saved settings */
         $.ajax({
-          url: "/api/v2/audio/soundcard-settings",
+          url: baseUrl + "preference/soundcard-settings",
           type: "GET",
           dataType: "json",
           success: function (cfg) {
@@ -224,7 +226,7 @@
       };
 
       $.ajax({
-        url: "/api/v2/audio/soundcard-settings",
+        url: baseUrl + "preference/soundcard-settings",
         // RASTATIME 2026-05-12: must be ``type``, NOT ``method``.
         // Legacy LibreTime ships jQuery 1.8.3 globally (loaded by
         // PageLayoutInitPlugin.php on every page), and the ``method``
@@ -233,11 +235,11 @@
         // defaults to GET — with the JSON body URL-encoded onto the
         // querystring, returning 200 OK but never persisting anything.
         type: "POST",
-        contentType: "application/json",
-        data: JSON.stringify(payload),
-        // ``processData: false`` keeps jQuery from re-serialising the
-        // already-JSON-stringified payload as a form query string.
-        processData: false,
+        // RASTATIME 2026-10-25 - form fields for the PHP proxy, which
+        // checks the CSRF token and forwards JSON to the API.
+        data: $.extend({ csrf_token: $("#csrf").val() }, payload, {
+          main_output_id: payload.main_output_id || "",
+        }),
         success: function (cfg) {
           /* Re-apply with updated missing_device_ids from POST response.
            * (Line-in list rendering removed in Phase A.4 — line-ins

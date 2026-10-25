@@ -68,6 +68,7 @@ from typing import Any
 from django.http import HttpRequest, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
+from libretime_api.permissions import internal_only  # RASTATIME 2026-10-25 role audit S3/S4
 
 
 # ---------------------------------------------------------------------------
@@ -121,6 +122,7 @@ def _parse_starts_at(value: Any):
 
 @csrf_exempt
 @require_http_methods(["GET"])
+@internal_only
 def preflight_warnings_list(request: HttpRequest) -> JsonResponse:
     """
     Return all current pre-flight warnings as a flat list.
@@ -145,6 +147,7 @@ def preflight_warnings_list(request: HttpRequest) -> JsonResponse:
 
 @csrf_exempt
 @require_http_methods(["POST"])
+@internal_only
 def preflight_warnings_replace(request: HttpRequest) -> JsonResponse:
     """
     Atomically replace all warnings of one ``warning_type`` with a new

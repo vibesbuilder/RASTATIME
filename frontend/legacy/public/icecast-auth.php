@@ -39,6 +39,20 @@
 
 declare(strict_types=1);
 
+// RASTATIME 2026-10-25 (role audit S5) - only Icecast on this machine may
+// call this file (public web root; the ip parameter below is trusted only
+// because Icecast sets it).  The active config/icecast.xml does not use it.
+$rtPeer = (string) ($_SERVER['REMOTE_ADDR'] ?? '');
+if (stripos($rtPeer, '::ffff:') === 0) {
+    $rtPeer = substr($rtPeer, 7);
+}
+if ($rtPeer !== '::1' && strpos($rtPeer, '127.') !== 0) {
+    http_response_code(403);
+    header('Content-Type: text/plain');
+    echo "local callers only\n";
+    exit;
+}
+
 // Read params: Icecast 2.4 sends a POST body; tests sometimes use GET.
 $user = $_POST['user'] ?? $_GET['user'] ?? '';
 $pass = $_POST['pass'] ?? $_GET['pass'] ?? '';

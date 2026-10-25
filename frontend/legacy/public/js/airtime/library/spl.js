@@ -927,7 +927,9 @@ var AIRTIME = (function (AIRTIME) {
       // Selected device-id baked into the rendered HTML.  Empty for "new".
       var preselectId = $pl.find(".obj_device_id").val() || "";
       $.ajax({
-        url: "/api/v2/audio/devices",
+        // RASTATIME 2026-10-25 (role audit S4) - PHP proxy; /api/v2/audio/*
+        // answers internal callers only.
+        url: baseUrl + "linein/audio-devices",
         type: "GET",
         dataType: "json",
         success: function (data) {

@@ -1,6 +1,8 @@
+import functools
 from secrets import compare_digest
 
 from django.conf import settings
+from django.http import JsonResponse
 from rest_framework.permissions import BasePermission
 from rest_framework.request import Request
 
@@ -55,6 +57,39 @@ def check_authorization_header(request: Request):
         token = auth_header.split()[1]
         return compare_digest(token, settings.CONFIG.general.api_key)
     return False
+
+
+def is_internal_request(request) -> bool:
+    """
+    RASTATIME 2026-10-25 (role audit S3/S4) - for the plain Django views
+    outside the DRF permission system (line-in, sound card, preflight,
+    stream status): a valid Api-Key, or a direct call from this machine.
+
+    "Direct" = loopback peer and no X-Forwarded-For.  Waitress binds to
+    127.0.0.1 and trusts no proxy headers, so everything Apache proxies
+    from /api/v2/ arrives from 127.0.0.1 too - but Apache's mod_proxy
+    always adds X-Forwarded-For, which a direct caller (the legacy PHP
+    on 127.0.0.1:8765) does not send.
+    """
+    if check_authorization_header(request):
+        return True
+    peer = str(request.META.get("REMOTE_ADDR", ""))
+    if peer.lower().startswith("::ffff:"):
+        peer = peer[7:]
+    proxied = "HTTP_X_FORWARDED_FOR" in request.META
+    return not proxied and (peer == "::1" or peer.startswith("127."))
+
+
+def internal_only(view):
+    """Decorator for the plain Django views: 403 unless is_internal_request()."""
+
+    @functools.wraps(view)
+    def wrapper(request, *args, **kwargs):
+        if not is_internal_request(request):
+            return JsonResponse({"error": "internal callers only"}, status=403)
+        return view(request, *args, **kwargs)
+
+    return wrapper
 
 
 class IsAdminOrOwnUser(BasePermission):

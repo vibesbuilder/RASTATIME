@@ -696,17 +696,28 @@ class CcFiles extends BaseCcFiles
      */
     public function deletePhysicalFile()
     {
+        // RASTATIME 2026-10-25 (role audit S7) - is_file, not file_exists: an
+        // empty filepath resolves to the storage root (a directory).
         $filepath = $this->getAbsoluteFilePath();
+        if (trim((string) $this->getDbFilepath(), '/\\') === '' || !is_file($filepath)) {
+            throw new Exception('Could not locate file ' . $filepath);
+        }
+        unlink($filepath);
+
+        // Also delete the related images (dataURI and jpeg files) - only for a
+        // real artwork path below the storage root.  An empty artwork used to
+        // glob "<root>\*" and unlink every file directly in the library root
+        // (6,332 tracks had artwork = ''), a NULL one "<root>*" (siblings of
+        // the root folder).
+        $artwork = trim((string) $this->getDbArtwork(), '/\\');
+        if ($artwork === '' || strpos($artwork, '..') !== false) {
+            return;
+        }
         $artworkpath = $this->getAbsoluteArtworkPath();
-        if (file_exists($filepath)) {
-            unlink($filepath);
-            // also delete related images (dataURI and jpeg files)
-            foreach (glob("{$artworkpath}*", GLOB_NOSORT) as $filename) {
+        foreach (glob("{$artworkpath}*", GLOB_NOSORT) ?: [] as $filename) {
+            if (is_file($filename)) {
                 unlink($filename);
             }
-            unlink($artworkpath);
-        } else {
-            throw new Exception('Could not locate file ' . $filepath);
         }
     }
 

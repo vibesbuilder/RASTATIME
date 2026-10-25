@@ -893,7 +893,9 @@ Soundkarten-API ohne Anmeldung öffentlich, Icecast-`/main`/`/show` mit eingebau
 Custom-Live-Passwörter für Gäste lesbar, Glob über `D:/stor` beim Löschen) und Rollen-Lücken R1-R13.
 Antworten zu den Settings-Fragen unten: Backup, FTP-Import, Speicherort, Streams sind Admin-only
 (Controller-ACL `preference`); Line-In-Seite Admin-only, aber Löschen über die Bibliothek für DJs (R10).
-**Wartet auf:** Operator-Entscheidung zur Soll-Matrix (offene Fragen) und Go für die Pakete 1-5.
+**Operator 2026-10-25:** alle fünf Pakete; Soll-Matrix: DJs keine Show-Logos und keine Podcasts,
+Podcasts/Widgets/Stationssprache/Line-In-Geräte für Programm-Manager und Admins.
+**Paket 1 (S1-S7) gebaut 2026-10-25** - Django-Teil (S3/S4) wirksam nach API-Neustart; Pakete 2-5 folgen.
 
 **Ursprüngliche Aufgabe:**
 

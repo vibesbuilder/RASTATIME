@@ -108,6 +108,30 @@ class ApiController extends Zend_Controller_Action
             ->initContext();
     }
 
+    /**
+     * RASTATIME 2026-10-25 (role audit S2) - api/* actions a logged-in
+     * browser session may call without the API key: the public read-only
+     * info (when "allow 3rd-party API" is off) and what the UI fetches
+     * (common.js, library, audio preview, podcasts, history, status page).
+     * 'any' = every logged-in role, 'admin' = Admin / Super Admin.
+     */
+    const SESSION_ACTIONS = [
+        'live-info' => 'any',
+        'live-info-v2' => 'any',
+        'week-info' => 'any',
+        'station-metadata' => 'any',
+        'station-logo' => 'any',
+        'show-logo' => 'any',
+        'track' => 'any',
+        'track-types' => 'any',
+        'item-history-feed' => 'any',
+        'get-preflight-warnings' => 'any',
+        'get-usability-hint' => 'any',
+        'get-media' => 'any',
+        'poll-celery' => 'any',
+        'status' => 'admin',
+    ];
+
     public function checkAuth()
     {
         $CC_CONFIG = Config::getConfig();
@@ -134,7 +158,19 @@ class ApiController extends Zend_Controller_Action
         Application_Model_Auth::pinSessionToClient($authAdapter);
 
         if (Zend_Auth::getInstance()->hasIdentity()) {
-            return true;
+            // RASTATIME 2026-10-25 (role audit S2) - a browser session counts
+            // only for the actions the UI itself calls; every other api/*
+            // action (Icecast passwords in get-stream-setting, metadata and
+            // path changes, schedule pushes, file lists ...) needs the API
+            // key.  Before, any logged-in account - a guest too - could call
+            // all of them.
+            $action = (string) $this->getRequest()->getActionName();
+            $type = (string) (Zend_Auth::getInstance()->getStorage()->read()->type ?? '');
+            $need = self::SESSION_ACTIONS[$action] ?? null;
+            if ($need !== null && ($need === 'any' || in_array($type, [UTYPE_ADMIN, UTYPE_SUPERADMIN], true))) {
+                return true;
+            }
+            Logging::warn(sprintf('api/%s refused for a session of type %s: API key required', $action, $type ?: '?'));
         }
 
         header('HTTP/1.0 401 Unauthorized');

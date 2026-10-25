@@ -447,12 +447,21 @@ class Application_Service_ShowFormService
 
     private function populateFormLive($form)
     {
+        // RASTATIME 2026-10-25 (role audit S6) - the password element renders
+        // its value (renderPassword), and the show form is served to every
+        // role (read-only below Program Manager): only those who may edit
+        // the show get the custom live password.
+        try {
+            $mayEdit = (new Application_Service_UserService())->getCurrentUser()->isAdminOrPM();
+        } catch (Exception $e) {
+            $mayEdit = false;                           // no logged-in user (CLI)
+        }
         $form->populate(
             [
                 'cb_airtime_auth' => $this->ccShow->getDbLiveStreamUsingAirtimeAuth(),
                 'cb_custom_auth' => $this->ccShow->getDbLiveStreamUsingCustomAuth(),
                 'custom_username' => $this->ccShow->getDbLiveStreamUser(),
-                'custom_password' => $this->ccShow->getDbLiveStreamPass(),
+                'custom_password' => $mayEdit ? $this->ccShow->getDbLiveStreamPass() : '',
             ]
         );
     }

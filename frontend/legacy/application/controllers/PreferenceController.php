@@ -440,6 +440,38 @@ class PreferenceController extends Zend_Controller_Action
         $this->_helper->json->sendJson($data);
     }
 
+    /**
+     * RASTATIME 2026-10-25 (role audit S4) - Settings -> Local Machine,
+     * sound-card section: the device list and the sound-card setting go
+     * through these actions (Admin, CSRF on save) instead of the browser
+     * calling /api/v2/audio/... directly; those Django views answer
+     * internal callers only now.
+     */
+    public function audioDevicesAction(): void
+    {
+        [$status, $data] = $this->storageApi('GET', 'api/v2/audio/devices');
+        $this->storageReply($status, $data);
+    }
+
+    public function soundcardSettingsAction(): void
+    {
+        if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+            [$status, $data] = $this->storageApi('GET', 'api/v2/audio/soundcard-settings');
+            $this->storageReply($status, $data);
+
+            return;
+        }
+        if (!$this->storageGuardPost()) {
+            return;
+        }
+        $id = (string) $this->_getParam('main_output_id', '');
+        [$status, $data] = $this->storageApi('POST', 'api/v2/audio/soundcard-settings', [
+            'main_output_id' => $id === '' ? null : $id,
+            'main_output_name' => (string) $this->_getParam('main_output_name', ''),
+        ]);
+        $this->storageReply($status, $data);
+    }
+
     private function storageGuardPost(): bool
     {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {

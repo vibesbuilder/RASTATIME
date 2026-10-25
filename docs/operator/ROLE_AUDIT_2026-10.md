@@ -44,6 +44,9 @@ Accounts on 2026-10-25: 2 Admin, 1 Program Manager, 4 DJ, 2 Guest.
 
 ## 2. Immediate security findings (independent of the target matrix)
 
+**Status:** S1-S7 fixed 2026-10-25 (package 1); the Django part of S3/S4 is
+live after the API restart.
+
 | # | Finding | Who | Status |
 |---|---|---|---|
 | S1 | **Account takeover**: `user/edit-user` saves the user whose id is POSTed (`cu_user_id`), not the logged-in one - any account, even a Guest, can set the password and e-mail of any other account incl. Admin (`UserController.php:135`) | G | ✔ |
@@ -98,7 +101,9 @@ only; backup/storage API routes refuse anonymous calls (403).
 | Widgets, station language | – | – | – ? | ✓ |
 | Settings, Backup, Streams, Users, Track Types, System Status, Import / Export | – | – | – | ✓ |
 
-Open questions marked "?" - see the chat of 2026-10-25.
+Operator answers 2026-10-25: DJs change no show logos (own shows
+included) and manage no podcasts; podcasts, widgets, station language and
+Line-In devices are for Program Managers and Admins.
 
 ## 5. Remediation packages (proposal)
 
