@@ -25,7 +25,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Phase 2 schaltet `Acl_plugin::LEGACY_CSRF_ENFORCE` scharf (403).  Live
   geprüft: neues Cookie mit `HttpOnly; SameSite=Lax`, jQuery-POST ohne
   Monitor-Zeile, `fetch`-POST ohne Header genau eine Zeile.  Architektur
-  §23.72 (0.91).
+  §23.72 (0.91).  Auswertung nach dem UI-Test des Operators (Gast, DJ,
+  Admin, 18:05-18:13): 185 Schreibzugriffe, keine Monitor-Zeile.  Statische
+  Durchsicht der Formular-Posts ohne jQuery: einzig die Auto-DJ-Einstellungen
+  (`multipart`-Formular) schickten kein Token - jetzt als Feld `csrf`.
 - **Rollen-Audit Paket 2: Rollen-Lücken R1-R11, R13 geschlossen
   (2026-10-25, Operator-Go, `16daab1`)** — nach der mit dem Operator festgelegten
   Soll-Matrix (`docs/operator/ROLE_AUDIT_2026-10.md` §4).  Neue Helfer

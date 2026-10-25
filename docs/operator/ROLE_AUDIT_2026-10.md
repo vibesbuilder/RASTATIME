@@ -65,6 +65,10 @@ flag when the file has no future row - self-correcting); R12 is package 3:
 phase 1 live 2026-10-25 (SameSite=Lax + HttpOnly cookie, `X-CSRF-Token`
 on every jQuery write, central compare in `Acl_plugin` that only logs
 "CSRF monitor" lines); phase 2 (enforce, 403) after the log stays quiet.
+Found during the operator's UI test (actual < target, open question):
+guests cannot load the dashboard library - `library`, `usersettings` and
+the podcast list were never in their ACL (403), while the target matrix
+says "Library: view - Guest ✓".
 Probe `C:/Temp/optd/role_audit_p2_probe.php` (read-only, 203 checks).
 
 | # | Gap | Who can | Status |

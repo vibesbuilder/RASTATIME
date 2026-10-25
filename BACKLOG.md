@@ -909,7 +909,14 @@ eigenen Sendungen, Podcast-Knöpfe für DJs ausgeblendet.  Abnahme mit PM- und D
 X-CSRF-Token an jedem jQuery-Schreibaufruf, zentrale Prüfung in `Acl_plugin` nur protokollierend
 (`CSRF monitor` im legacy.log).  **Vorbedingung Phase 2 (scharf, 403):** Monitor-Log nach normalem
 Betrieb aller Rollen ruhig (oder verbleibende Sender ohne jQuery nachgezogen), dann
-`LEGACY_CSRF_ENFORCE = true` mit Operator-Go.  Pakete 4-5 folgen.
+`LEGACY_CSRF_ENFORCE = true` mit Operator-Go.  Stand 2026-10-25 18:30: UI-Test (Gast/DJ/Admin, 185
+Schreibzugriffe) ohne Monitor-Zeile, Auto-DJ-Formular bekam sein Token-Feld; der Test bestand fast nur
+aus Lesen - echte Speichervorgänge aller Rollen (Playlist, Sendung, Benutzer, Einstellungen) im
+normalen Betrieb abwarten.  Pakete 4-5 folgen.
+**Offene Frage (Soll > Ist):** Gäste laden die Bibliothek auf dem Dashboard nicht (ACL ohne
+`library`/`usersettings`/Podcast-Liste, schon vor dem Audit; 403 im UI-Test), die Soll-Matrix sagt
+„Bibliothek ansehen: Gast ✓“.  Optionen: (a) Gästen nur die Lese-Aktionen freigeben (Feed,
+Metadaten, Tabellen-Einstellungen), (b) Bibliotheksbereich für Gäste ausblenden, (c) so lassen.
 
 **Ursprüngliche Aufgabe:**
 
