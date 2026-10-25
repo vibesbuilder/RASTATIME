@@ -64,6 +64,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **MP3-Stream wieder mit 44,1 kHz statt 48 kHz (2026-10-25, Operator-Go
+  zum Backlog-Punkt „Resampler im Signalweg")** — der Wert stand in
+  Settings → Streams → Stream 1 → Sample Rate; der Mix läuft mit 44,1 kHz,
+  FFmpeg rechnete den MP3-Ausgang daher vor dem Encoder um.  Umstellung im
+  Dialog, kein Code: Fingerabdruck 12:07:21 erkannt, geplanter Neustart an
+  der Titelgrenze 12:15:00 (5,0 s, Aufhol-Einstieg), Mount `/rastatime`
+  seit 12:15:17 mit 44.100 Hz; AAC war 44,1, Opus bleibt 48 (Pflicht).
+  Manual STREAMS „Sample Rate" EN/DE/FR/ES: Dialog bietet 44,1 / 48 kHz
+  (nicht 22,05 / 32), 44,1 = Mix-Rate, Standby nach Änderung neu starten.
+  Commit 794a74f.
 - **Covers: nur noch JPGs, Data-URIs bei Bedarf (2026-10-24, Operator-Go)**
   — `FileDataHelper::saveArtworkData` schrieb je Cover zehn Dateien: das
   Original als Data-URI-Textdatei, fünf JPG-Größen und vier Data-URI-Kopien
