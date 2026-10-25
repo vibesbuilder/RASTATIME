@@ -5622,6 +5622,17 @@ die 39 Marken beider Stunden gemeinsam, `t` relativ zur selben Wanduhr-Stunde (M
 nicht nach `t` sortiert).  Für Stufe 2 der Sendungswiederholung (Live-Zeilen als Cue-Scheiben, §23.67) wäre die
 Zuordnung Marke → Teil nötig (z. B. `part`-Index je Marke oder eigene `02-00.2.cues.json`).  Betrifft nur die
 Herbst-Umstellung (nächste 2027-10-31); ~1 h in `recording_hourly`/Cue-Schreiber.  Vorbedingung: Operator-Go.
+Betroffen ist nur die 24/7-Stundenaufnahme der doppelten Stunde 02:00–03:00, unabhängig davon, welche Sendung dann läuft.
+
+### 👁 Beobachtung Frühlings-Zeitumstellung Nacht 27./28.03.2027 (02:00 → 03:00) - Operator-Wunsch 2026-10-25
+Die Stunde 02:00–03:00 fehlt.  Erwartung (wallClockEnd, §23.62): eine Sendung über die Umstellung endet zur Wanduhrzeit
+und ist eine echte Stunde kürzer; Autoloading füllt gegen die echte Dauer; eine Endzeit in der fehlenden Stunde rückt
+auf +1 h (PHP).  Checkliste für den 28.03.2027 beim ersten Kontakt (Memory reminder_dst_spring_2027):
+1. Kalender/DB: Instanzen über 01:00–03:00 UTC am 28.03. - Dauer = Wanduhr minus 1 h, keine Lücke, keine Überlappung.
+2. Autoloading: Befüllung = echte Dauer (nicht Wanduhr-Dauer, sonst 1 h Überhang).
+3. Playout-/Liquidsoap-Log 01:30–03:30 Ortszeit: kein Sprung, kein Abbruch; Stunde „02" fehlt im Ortszeit-Log.
+4. 24/7-Aufnahmen: keine Datei `02-00`, Datei `03-00` beginnt direkt nach `01-00`; Cue-Dateien plausibel.
+5. Folgesendung nach der Umstellung startet pünktlich; Ergebnis in BACKLOG/Memory festhalten.
 
 ### Zaehler „X of N tracks" ueberlappt Suchbegriff (Schedule Tracks) - erledigt ohne Eingriff
 Operator 2026-10-16: tritt nicht mehr auf.  Nicht weiter verfolgt.
