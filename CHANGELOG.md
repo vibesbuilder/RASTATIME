@@ -20,7 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   WARN-Zeile mit der Adresse im `legacy.log`.  Für DJs, Weboberfläche und
   Hörer ändert sich nichts: der DJ-Login läuft Harbor → PLAYOUT → PHP auf
   127.0.0.1 (alle Aufrufe der letzten 16 Tage, auch echte DJ-Logins von
-  außen, kamen von dort); Icecast 2.5.0 nutzt keine URL-Auth.  Probe: lokal
+  außen, kamen von dort); die URL-Auth der aktiven `config/icecast.xml` (nur
+  `/main`, `/show`) ruft `public/icecast-source-auth.php`, nicht diese
+  Aktionen (Korrektur 25.10.: zuerst die ungenutzte Installer-Kopie
+  gelesen).  Probe: lokal
   401 wie bisher, über die LAN-Adresse 403, `live-info` 200.
   `general.internal_url` muss lokal bleiben (GO_LIVE_HTTPS).
 - **DJ-Login: typstrenger, timing-sicherer Vergleich (2026-10-25,

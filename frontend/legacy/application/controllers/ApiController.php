@@ -32,8 +32,9 @@ class ApiController extends Zend_Controller_Action
             // RASTATIME: callbacks without an api_key.  Originally Icecast
             // URL-auth called them; since 2026-09-10 the DJ login runs
             // Harbor -> PLAYOUT /dj-auth -> check-live-stream-auth on
-            // 127.0.0.1, and the active icecast.xml (2.5.0) has no URL
-            // auth.  All three answer local callers only (see below).
+            // 127.0.0.1; the URL auth of config/icecast.xml (/main, /show)
+            // calls public/icecast-source-auth.php instead.  All three
+            // answer local callers only (see below).
             'check-live-stream-auth',
             'update-source-status',
             'icecast-listener-allow',

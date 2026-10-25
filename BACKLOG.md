@@ -884,7 +884,18 @@ Key-Instabilität eingeführt wurde (Row-IDs sind serial, werden nie
 wiederverwendet).  **Vorbedingung:** Operator-Go; PLAYOUT-Neustart nach
 dem Commit.
 
-### 🟡 Benutzergruppen-Audit: Wer darf was? (Operator 2026-09-17)
+### 🟡 Benutzergruppen-Audit: Wer darf was? (Operator 2026-09-17) - Ist-Matrix erhoben 2026-10-25
+
+**Stand 2026-10-25 (Operator: angehen):** Ist-Matrix, geprüfte Befunde, Vorschlag Soll-Matrix und
+Maßnahmenpakete in `docs/operator/ROLE_AUDIT_2026-10.md`.  Sieben Sofort-Befunde S1-S7 (u. a.
+Konto-Übernahme über `user/edit-user`, API-Key durch jede Sitzung umgangen, Line-In- und
+Soundkarten-API ohne Anmeldung öffentlich, Icecast-`/main`/`/show` mit eingebauten Ersatz-Logins,
+Custom-Live-Passwörter für Gäste lesbar, Glob über `D:/stor` beim Löschen) und Rollen-Lücken R1-R13.
+Antworten zu den Settings-Fragen unten: Backup, FTP-Import, Speicherort, Streams sind Admin-only
+(Controller-ACL `preference`); Line-In-Seite Admin-only, aber Löschen über die Bibliothek für DJs (R10).
+**Wartet auf:** Operator-Entscheidung zur Soll-Matrix (offene Fragen) und Go für die Pakete 1-5.
+
+**Ursprüngliche Aufgabe:**
 
 **Anlass:** Die Rechte-Prüfung steht aus — vor allem für die neuen
 Features.  Zu klären, je Rolle (Admin / Programm-Manager / DJ / Gast):
@@ -5988,7 +5999,9 @@ leerer Sollwert passt nie); Probe acht Fälle OK, falsche Zugangsdaten live 401.
 403-Zweig des ErrorControllers und eine WARN-Zeile „api/<aktion> refused for <ip>: local callers only" im
 `legacy.log`.  Vorab geprüft: alle Aufrufe der letzten 16 Tage kamen von 127.0.0.1 (auch die echten
 DJ-Logins vom 24.10. aus dem Internet - Harbor → PLAYOUT → PHP), PLAYOUT nutzt `http://127.0.0.1` (keine
-Umgebungs-Überschreibung), die aktive `icecast.xml` (2.5.0) hat keine URL-Auth; kein `mod_remoteip` vor
+Umgebungs-Überschreibung), die URL-Auth der aktiven `config/icecast.xml` (`/main`, `/show`) ruft
+`public/icecast-source-auth.php`, nicht diese Aktionen (Korrektur: zuerst die ungenutzte Installer-Kopie
+`C:\Tools\Icecast\icecast.xml` gelesen; siehe Rollen-Audit S5); kein `mod_remoteip` vor
 Apache.  Probe: lokal (HTTPS und `http://127.0.0.1`) weiter 401 bei falschen Daten, über die LAN-Adresse
 192.168.1.64 alle drei 403, `live-info` 200.  Doku: GO_LIVE_HTTPS (`general.internal_url` muss lokal bleiben).
 Abnahme 2026-10-25 15:08 bestanden: Master-Login „source" per BUTT von außen (198.51.100.30) - PLAYOUT
@@ -6035,12 +6048,15 @@ Sendungen auflisten, die sie als Autoloading/Intro/Outro nutzen; (b) Preflight-W
 „Sendung X: Autoloading an, keine Playlist" für Folgen in den nächsten 7 Tagen; (c) beides.  Prüf-Skript:
 Scratchpad `autoplaylist_null_summary.php` (nur lesend).
 
-### 💡 Löschen einer Datei ohne Pfad warnt im Log (Befund 2026-10-25)
+### 🟡 Löschen eines Titels ohne Artwork: Glob über den Bibliotheks-Hauptordner (Befund 2026-10-25, korrigiert)
 
-`CcFiles::deletePhysicalFile` versucht bei Zeilen mit leerem `filepath` den Ordner `D:/stor/imported` zu
-löschen (`unlink(): Is a directory`, als ErrorException geloggt, abgefangen; die Zeile wird trotzdem
-gelöscht).  24./25.10. drei Fälle (u. a. „background-sound.mp3", „Weather Forecast").  Idee: leeren Pfad
-vor `unlink` erkennen und nur loggen; prüfen, wie Zeilen ohne Pfad entstehen.
+**Korrigierte Ursache (Rollen-Audit S7):** nicht ein leerer `filepath`, sondern ein leeres `artwork`:
+`CcFiles::deletePhysicalFile` löscht nach der Audiodatei alles, was `glob("<root>/<artwork>*")` trifft - bei
+`artwork = ''` ist das `D:/stor\*`, also **jede Datei direkt im Bibliotheks-Hauptordner**; bei `NULL`
+`D:/stor*` (Geschwister wie `D:/stor.zip`).  6.332 Titel haben `artwork = ''`.  Heute liegen in `D:/stor` nur
+Ordner, darum nur die Warnung `unlink(D:/stor/\imported): Is a directory` (24./25.10. drei Fälle, abgefangen;
+die Audiodatei ist gelöscht, das Artwork-Aufräumen bricht ab).  Behebung im Sofort-Paket des Rollen-Audits
+(Glob nur bei nicht-leerem Artwork-Pfad unterhalb der Bibliothek).
 
 ## Veröffentlichung auf GitHub, Releases, Update-Weg (Evaluierung 2026-10-25)
 
