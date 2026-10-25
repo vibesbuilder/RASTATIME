@@ -5853,7 +5853,7 @@ ohne Instanz-Verknuepfung).  Operator 2026-10-19: Option A mit Kontrollkaestchen
 Verknuepfung cc_show_instances.file_id, Duplikate ueber md5/source_md5).  OFFEN: PLAYOUT-Neustart durch den
 Operator, Abnahme mit einer aufgezeichneten Testsendung.
 
-### 🟡 Sekundaerfarbe der Oberflaeche einstellbar (Operator-Frage 2026-10-19) - Defer (Operator 2026-10-19: spaeter)
+### 🟡 Sekundaerfarbe der Oberflaeche einstellbar (Operator-Frage 2026-10-19) - Defer (Operator 2026-10-19: spaeter); Operator 2026-10-25: weiter spaeter
 
 `#02cef9` kommt in der gesamten Oberflaeche genau einmal vor: Fortschrittsbalken
 der laufenden Sendung im Dashboard (`styles.css` `.progressbar .progress-show`
@@ -5963,3 +5963,59 @@ aber nur fuer Instanz-Loeschung sinnvoll (Serien, Wiederholungs-Verknuepfungen, 
 komplex).  Aufwand 1-2 Tage.  Empfehlung: Defer; die Bestaetigungsabfrage vor dem Loeschen bleibt der
 Schutz.  Operator 2026-10-23: Defer.  Vorbedingung fuer ein Go: Bedarf aus dem Betrieb (versehentliches
 Loeschen trotz Bestaetigung) und ein ruhiges Fenster fuer Weg b).
+
+## Sicherheit und Datenpflege (Operator-Punkte 2026-10-25)
+
+### ✅ DJ-Login: loser Vergleich `==` - behoben 2026-10-25 (Operator: „sofort", `7b6ea96`)
+
+`check-live-stream-auth` verglich Login, Passwort-MD5, Master- und Show-Zugang mit `==` (Magic Hash
+„0e…" = „0e…", „1e3" = „1000", `null` = „").  Jetzt `ApiController::credentialEquals()` (`hash_equals`,
+leerer Sollwert passt nie); Probe acht Fälle OK, falsche Zugangsdaten live 401.
+
+### 🟡 DJ-Passwortprüfung ohne API-Key öffentlich erreichbar (Befund 2026-10-25) - wartet auf Go, Empfehlung: zeitnah
+
+**Befund:** `/api/check-live-stream-auth` steht in der Liste der Aktionen ohne API-Key (`ApiController`
+init, Kommentar: Icecast-URL-Auth kann keinen Key mitsenden) und ist über `https://radio.example.org`
+aus dem Internet aufrufbar.  Wer die Adresse kennt, kann DJ-, Show- und Master-Zugangsdaten direkt
+durchprobieren - **an der Brute-Force-Bremse von PLAYOUT (`dj_auth.py`, nur für Harbor-Logins) vorbei**,
+und `rt-firewall-watch.ps1` zählt 401 bewusst nicht (Sitzungs-Abläufe).  Die Antwort verrät zudem den
+Grund (`X-Rastatime-Auth-Reason`: no-show / not-host / bad-password), also ob ein Login ein Host der
+laufenden Sendung ist.  Aufrufer heute: PLAYOUT über `general.internal_url` (127.0.0.1) und Icecast lokal.
+`update-source-status` (No-op) und `icecast-listener-allow` (strikter Vergleich, Admin-Bypass nur mit
+von Icecast gesetzter Client-IP 127.0.0.1) stehen in derselben Liste - unkritisch, aber ebenfalls nur lokal
+gebraucht.
+**Optionen:** (a) in PHP nur Loopback (`REMOTE_ADDR` 127.0.0.1 / ::1) zulassen, sonst 403 - eine
+Prüfung am Anfang der drei Aktionen, wirkt sofort; (b) dasselbe in Apache (`<Location /api/check-live-
+stream-auth>` `Require local`) - Apache-Neustart nötig; (c) zusätzlich ein gemeinsames Geheimnis
+PLAYOUT → PHP (Header).  **Empfehlung:** (a), ~30 min inkl. Probe (lokal 401/200 wie heute, von außen
+403) und Doku; vorher prüfen, dass Icecast 2.5.0 (seit 24.10.) die URL-Auth nicht mehr selbst aufruft
+bzw. nur lokal.
+
+### 🟡 Passwörter als ungesalzenes MD5 (Befund 2026-10-25) - Evaluierung ausstehend
+
+**Befund:** `cc_subjs.pass` enthält `md5(passwort)` ohne Salz (`Application_Model_User::setPassword`,
+Web-Login `Auth.php` mit `setCredentialTreatment('MD5(?)')`, DJ-Login `md5($password)`, Django-API mit
+eigenem md5-Hasher in `core.User`).  Ein Datenbank- oder Backup-Leck gibt die Passwörter damit praktisch
+im Klartext preis (Rainbow-Tables); Backup-ZIPs enthalten die DB.  9 Konten (2 Admin, 1 PM, 4 DJ, 2 Gast).
+**Idee:** `password_hash()` (bcrypt/argon2) mit transparentem Neu-Hashen beim nächsten erfolgreichen
+Login (alter MD5-Wert erkannt an Länge 32/Hex), Web-Login ohne SQL-`MD5(?)` (Prüfung in PHP), DJ-Login
+`password_verify`, Django-Hasher passend (`django.contrib.auth`-kompatibel oder Legacy-Prüfung), Users-
+Import hasht Klartext mit dem neuen Verfahren.  Berührt Login, API, DJ-Harbor - Evaluierung (6 Punkte)
+und Go nötig; Vorbedingung: Probe aller drei Login-Wege an einem Test-Konto.
+
+### 💡 Autoloading: gelöschte Playlist lässt Sendungen leer (Befund 2026-10-25)
+
+Beim Löschen einer Playlist setzt der Fremdschlüssel `cc_show.autoplaylist_id` auf NULL (`ON DELETE SET
+NULL`, ebenso intro/outro); „Add Autoloading Playlist" bleibt angehakt, das Autoloading füllt dann nichts.
+25.10.: 34 Sendungen so, 20 mit kommenden Folgen (leer), Ursache Löschungen in der Bibliothek seit 23.10.;
+der Operator hat die dringenden zugeordnet.  Ideen: (a) beim Löschen einer Playlist warnen und die
+Sendungen auflisten, die sie als Autoloading/Intro/Outro nutzen; (b) Preflight-Warnung im Dashboard
+„Sendung X: Autoloading an, keine Playlist" für Folgen in den nächsten 7 Tagen; (c) beides.  Prüf-Skript:
+Scratchpad `autoplaylist_null_summary.php` (nur lesend).
+
+### 💡 Löschen einer Datei ohne Pfad warnt im Log (Befund 2026-10-25)
+
+`CcFiles::deletePhysicalFile` versucht bei Zeilen mit leerem `filepath` den Ordner `D:/stor/imported` zu
+löschen (`unlink(): Is a directory`, als ErrorException geloggt, abgefangen; die Zeile wird trotzdem
+gelöscht).  24./25.10. drei Fälle (u. a. „background-sound.mp3", „Weather Forecast").  Idee: leeren Pfad
+vor `unlink` erkennen und nur loggen; prüfen, wie Zeilen ohne Pfad entstehen.
