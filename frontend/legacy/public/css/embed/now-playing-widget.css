@@ -355,6 +355,9 @@ html, body {
     padding: 12px 0;
     border-top: 1px dotted var(--np-fg-muted);
     overflow: hidden;
+    /*  RASTATIME 2026-10-25 (operator: time and show name a little
+        smaller) - 17.6 px -> ~15.8 px; the header keeps its size.  */
+    font-size: 0.9em;
 }
 
 .np-widget.np-on-air-today .np-on-air-row:first-child {
@@ -688,6 +691,12 @@ html, body {
     border-top: 1px dotted var(--np-fg-muted);
     border-left: 4px solid transparent;
     overflow: hidden;
+    /*  RASTATIME 2026-10-25 (operator: time and show name clearly
+        smaller, the widget has to fit a 350 px phone screen) -
+        19.2 px -> ~13.8 px; gap and the time column (6.5em) scale
+        along.  Measured at 350 px: 1-5 long names per day still
+        end in an ellipsis instead of 12 of 26.  */
+    font-size: 0.72em;
 }
 
 .np-widget.np-weekly-schedule .np-ws-row:first-child {

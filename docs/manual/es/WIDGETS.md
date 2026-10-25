@@ -371,6 +371,13 @@ MON  TUE  WED  THU  FRI  SAT  SUN                   ← pestañas
 > embebido recomendado es `width="670" height="670"`).  Ajuste
 > el iframe a estos valores en el HTML de embebido para un
 > encaje preciso.
+>
+> **Smartphones.** Por debajo de 670 px el widget sigue el ancho del
+> iframe; cabe en una pantalla de smartphone de 350 px (iframe
+> `width="100%"`).  Desde el 25/10/2026 la hora y el nombre del
+> programa usan una letra más pequeña (unos 14 px en vez de 19 px),
+> así que la mayoría de los nombres caben en una línea; un nombre muy
+> largo termina en «…».
 
 ### Instancias modificadas / canceladas
 

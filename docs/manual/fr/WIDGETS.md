@@ -375,6 +375,13 @@ MON  TUE  WED  THU  FRI  SAT  SUN                   ← onglets
 > snippet d'intégration recommandé est `width="670" height="670"`).
 > Réglez l'iframe sur ces valeurs dans le HTML d'intégration pour
 > un ajustement précis.
+>
+> **Smartphones.** En dessous de 670 px, le widget suit la largeur de
+> l'iframe ; il tient sur un écran de smartphone de 350 px (iframe
+> `width="100%"`).  Depuis le 25/10/2026, l'heure et le nom de
+> l'émission ont une police plus petite (environ 14 px au lieu de
+> 19 px), si bien que la plupart des noms tiennent sur une ligne ; un
+> nom très long se termine par « … ».
 
 ### Instances modifiées / annulées
 

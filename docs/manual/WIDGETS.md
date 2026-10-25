@@ -359,6 +359,12 @@ MON  TUE  WED  THU  FRI  SAT  SUN                   ← day tabs
 > proportionally; the iframe in the recommended embed snippet
 > is `width="670" height="670"`).  Set the iframe to these
 > values in the embedding HTML for a flush fit.
+>
+> **Phones.** Below 670 px the widget follows the iframe width; it
+> fits a 350 px phone screen (iframe `width="100%"`).  Since
+> 2026-10-25 time and show name use a smaller type (about 14 px
+> instead of 19 px), so most names fit on one line; a very long name
+> ends in an ellipsis.
 
 ### Modified / cancelled instances
 

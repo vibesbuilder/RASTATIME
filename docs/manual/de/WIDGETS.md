@@ -372,6 +372,12 @@ MON  TUE  WED  THU  FRI  SAT  SUN                   ← Tagestabs
 > mitskaliert; das iframe im empfohlenen Embed-Snippet ist
 > `width="670" height="670"`).  Setzen Sie die iframe-Werte im
 > einbettenden HTML auf diese Werte für bündige Darstellung.
+>
+> **Smartphones.** Unter 670 px folgt das Widget der iframe-Breite;
+> es passt auf einen 350 px breiten Smartphone-Bildschirm (iframe
+> `width="100%"`).  Seit 25.10.2026 haben Uhrzeit und Showname eine
+> kleinere Schrift (etwa 14 px statt 19 px), sodass die meisten Namen
+> in eine Zeile passen; ein sehr langer Name endet mit „…“.
 
 ### Geänderte / abgesagte Instanzen
 

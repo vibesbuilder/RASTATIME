@@ -240,6 +240,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Widgets: kleinere Schrift für Uhrzeit und Showname (2026-10-25,
+  Operator)** — *Weekly Schedule*: Zeilen 19,2 px -> ~13,8 px (`0.72em`,
+  Abstand und Uhrzeitspalte skalieren mit); bei 350 px Breite passt das
+  Modul ohne waagrechtes Scrollen, je Tag enden nur noch 1-5 sehr lange
+  Namen mit „…“ (vorher am Sonntag 12 von 26).  *On Air Today*: Zeilen
+  17,6 px -> ~15,8 px (`0.9em`), die Überschrift bleibt.  Live gemessen
+  bei 350 px; das Stylesheet trägt eine Prüfsumme, eingebettete Seiten
+  laden es beim nächsten Aufruf neu.  Handbuch WIDGETS ×4: Hinweis für
+  Smartphones.
 - **Rolle „Super Admin“ stillgelegt, Löschschutz für `admin` (2026-10-25,
   Operator-Go Option B)** — Migration `0073_retire_super_admin` macht
   S-Konten zu Admins (hier keine vorhanden) und markiert eine Station, die
