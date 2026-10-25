@@ -230,8 +230,9 @@ On Air Today                       ← Header-Band
 19:00 - 19:30    L'Info chez vous (FR)
 ```
 
-- **Header**: "On Air Today" (oder "On Air *<Datum>*", wenn
-  ein bestimmter Tag via `?day` gepinnt ist)
+- **Header**: der Titel von der Widgets-Seite (Default „On Air
+  Today“), oder "On Air *<Datum>*", wenn ein bestimmter Tag via
+  `?day` gepinnt ist
 - **Zeilen**: `HH:MM - HH:MM` links, Sendungsname rechts.
   Die aktuell laufende Zeile wird **fett** gerendert, damit
   Operator (und Hörer) auf einen Blick sieht, welche Zeile
@@ -279,9 +280,10 @@ verschobene / abgesagte Instanz keinen Phantom-Eintrag im
 
 **Einstellungen → Widgets → On Air Today** enthält:
 
-- Ein einziges konfigurierbares Empty-State-Label (Default
-  `No shows on air today`, fällt auf englischen Default
-  zurück bei leerem Feld).
+- **Title** (seit 25.10.2026): der Text der Überschrift; leer =
+  „On Air Today“ in der Stationssprache.
+- Das Empty-State-Label (Default `No shows on air today`, fällt
+  auf englischen Default zurück bei leerem Feld).
 - Eine Live-Vorschau-iframe auf dunklem Backdrop.
 - Den vorgefertigten `<iframe>`-Embed-Code mit absoluter
   Stations-URL.
@@ -338,7 +340,7 @@ MON  TUE  WED  THU  FRI  SAT  SUN                   ← Tagestabs
 
 | Parameter | Werte | Standard | Effekt |
 |---|---|---|---|
-| `week_offset` | Ganzzahl -2..4 | `0` | Pinnt das gerenderte Fenster auf ±N Wochen vom heutigen rollenden 7-Tage-Block.  Default 0 = heute + 6 kommende Tage.  Enger Cap (-2 / +4) weil Public-Homepage-Use-Cases selten eine weitere Range brauchen; die ◀ / ▶ Buttons deaktivieren sich am Limit. |
+| `week_offset` | Ganzzahl -2..4 | `0` | Pinnt das Fenster auf ±N Wochen von der aktuellen Woche.  Default 0 = die aktuelle Woche, die mit dem Tag aus Einstellungen → Allgemein → Woche beginnt am anfängt (seit 25.10.2026; vorher begann das Fenster mit heute).  Enger Cap (-2 / +4) weil Public-Homepage-Use-Cases selten eine weitere Range brauchen; die ◀ / ▶ Buttons deaktivieren sich am Limit. |
 | `theme` | `auto`, `dark`, `light` | `auto` | Wie die anderen Widgets — siehe §2. |
 | `cache` | Ganzzahl Sekunden 10..3600 | `60` | Wie die anderen Widgets — siehe §8. |
 | `overflow` | `ellipsis`, `marquee` | `ellipsis` | Verhalten bei Sendungsnamen breiter als 400 px. |
@@ -415,10 +417,12 @@ bequem reinpasst):
 
 ### Was es anzeigt
 
-- **Header-Band**: ◀ / ▶ Navigation, zentriertes Datums-
-  Range-Label, **Today**-Button (springt zurück zu jetzt
-  und triggert erneut den Auto-Scroll), View-Switcher
-  (DAY / 2-DAY / WEEK).
+- **Header-Band**: **Today**-Button ganz links (springt
+  zurück zu jetzt und triggert erneut den Auto-Scroll),
+  ◀ / ▶ Navigation, zentriertes Datums-Range-Label,
+  View-Switcher (DAY / 2-DAY / WEEK).  Die WEEK-Ansicht
+  beginnt mit dem Tag aus Einstellungen → Allgemein → Woche
+  beginnt am.
 - **Time-Grid**: 24h, 15min Slots, 60min Stundenlabels.
   Now-Indicator-Linie in der Akzentfarbe.
 - **Show-Slots**: aus `cc_show_instances` JOIN `cc_show`.

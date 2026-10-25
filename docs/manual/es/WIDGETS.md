@@ -229,8 +229,9 @@ On Air Today                       ← banda de cabecera
 19:00 - 19:30    L'Info chez vous (FR)
 ```
 
-- **Cabecera**: "On Air Today" (o "On Air *<fecha>*" cuando
-  un día específico está fijado vía `?day`)
+- **Cabecera**: el título fijado en la página Widgets (por
+  defecto «On Air Today»), o "On Air *<fecha>*" cuando un día
+  específico está fijado vía `?day`
 - **Líneas**: `HH:MM - HH:MM` a la izquierda, nombre del
   programa a la derecha.  La línea actualmente al aire se
   renderiza en **negrita** para que el operador (y el
@@ -277,9 +278,10 @@ deje una línea fantasma en el widget público.
 
 **Configuración → Widgets → On Air Today** aloja:
 
-- Una sola etiqueta de estado vacío configurable (por
-  defecto `No shows on air today`, fallback al inglés por
-  defecto cuando está vacío).
+- **Title** (desde el 25/10/2026): el texto de la cabecera;
+  vacío = «On Air Today» en el idioma de la emisora.
+- La etiqueta de estado vacío (por defecto `No shows on air
+  today`, fallback al inglés por defecto cuando está vacío).
 - Una vista previa iframe en vivo sobre fondo oscuro.
 - El código `<iframe>` de integración listo-para-usar con
   la URL absoluta de la emisora pre-rellenada.
@@ -334,7 +336,7 @@ MON  TUE  WED  THU  FRI  SAT  SUN                   ← pestañas
 
 | Parámetro | Valores | Por defecto | Efecto |
 |---|---|---|---|
-| `week_offset` | entero -2..4 | `0` | Fija la ventana a ±N semanas del bloque rodante de 7 días de hoy.  Cap ajustado (-2 / +4) porque los casos de uso homepage pública rara vez necesitan un rango más amplio; los botones ◀ / ▶ se desactivan en el límite. |
+| `week_offset` | entero -2..4 | `0` | Fija la ventana a ±N semanas de la semana actual, que empieza el día fijado en Ajustes → General → La semana comienza el (desde el 25/10/2026; antes, la ventana empezaba hoy).  Cap ajustado (-2 / +4) porque los casos de uso homepage pública rara vez necesitan un rango más amplio; los botones ◀ / ▶ se desactivan en el límite. |
 | `theme` | `auto`, `dark`, `light` | `auto` | Igual que los otros widgets — vea §2. |
 | `cache` | entero segundos 10..3600 | `60` | Igual que los otros widgets — vea §8. |
 | `overflow` | `ellipsis`, `marquee` | `ellipsis` | Comportamiento de nombres de programa más anchos que 400 px. |
@@ -414,10 +416,12 @@ iframe listo para usar:
 
 ### Lo que muestra
 
-- **Banda de cabecera**: ◀ / ▶ navegación, etiqueta de rango
-  de fechas centrada, botón **Today** (vuelve a ahora y
-  re-dispara el auto-scroll), conmutador de vista
-  (DAY / 2-DAY / WEEK).
+- **Banda de cabecera**: botón **Today** a la izquierda del
+  todo (vuelve a ahora y re-dispara el auto-scroll), ◀ / ▶
+  navegación, etiqueta de rango de fechas centrada,
+  conmutador de vista (DAY / 2-DAY / WEEK).  La vista WEEK
+  empieza el día fijado en Ajustes → General → La semana
+  comienza el.
 - **Time-grid**: 24h, slots 15 min, etiquetas horarias
   60 min.  Línea now-indicator en color de acento.
 - **Slots de programa**: desde `cc_show_instances` JOIN

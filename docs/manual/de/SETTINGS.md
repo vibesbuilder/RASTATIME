@@ -62,7 +62,7 @@ Die Seite ist in **eingeklappte Abschnitte** gegliedert (seit
 |---|---|
 | **Standardsprache** | Oberflächensprache für neue Benutzer und den Anmeldebildschirm. Jeder Benutzer behält seine eigene Sprache aus Mein Profil. |
 | **Stations-Zeitzone** | Nur zur Information angezeigt.  Die Zeitzone der Station steht in `config/libretime.conf` (`general.timezone`); jeder Benutzer kann in Mein Profil eine Anzeige-Zeitzone wählen. |
-| **Woche beginnt am** | Erster Wochentag im Kalender. |
+| **Woche beginnt am** | Erster Wochentag im Kalender und in den Widgets (Weekly Schedule, Multi-View Schedule). |
 | **Public RASTATIME API** | *Enabled* erlaubt Widgets, die in andere Websites eingebettet sind, die Sendeplan-Daten zu lesen. Nötig für die einbettbaren Sendeplan-Widgets. |
 | **Login-Knopf auf der Radio-Seite anzeigen?** | Zeigt einen Anmelde-Knopf auf der öffentlichen Radio-Seite. |
 | **Öffentliche Radio-Seite abschalten und zur Anmeldung umleiten?** | Besucher der Stationsadresse landen direkt bei der Anmeldung. |

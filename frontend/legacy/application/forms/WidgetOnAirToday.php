@@ -17,6 +17,17 @@ class Application_Form_WidgetOnAirToday extends Zend_Form
         $this->setMethod('post');
         $this->setAttrib('id', 'widget_on_air_today_form');
 
+        // RASTATIME 2026-10-25 (operator) - the widget title; empty = "On Air Today"
+        $title = new Zend_Form_Element_Text('widget_on_air_today_title');
+        $title->setLabel(_('Title:'))
+              ->setAttrib('class', 'input_text widget-label-input')
+              ->setAttrib('maxlength', 60)
+              ->setAttrib('placeholder', 'On Air Today')
+              ->setAttrib('style', 'width: 18em;')
+              ->setRequired(false)
+              ->setAllowEmpty(true);
+        $this->addElement($title);
+
         $el = new Zend_Form_Element_Text('widget_no_on_air_today');
         $el->setLabel(_('No shows on air today:'))
            ->setAttrib('class', 'input_text widget-label-input')

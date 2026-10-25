@@ -60,7 +60,7 @@ segment that holds a validation error after **Save** opens by itself.
 |---|---|
 | **Default Language** | Interface language for new users and the login screen. Every user keeps their own language from My Profile. |
 | **Station Timezone** | Shown for information only.  The station time zone is set in `config/libretime.conf` (`general.timezone`); each user can choose a display time zone in My Profile. |
-| **Week Starts On** | First day of the week in the calendar. |
+| **Week Starts On** | First day of the week in the calendar and in the widgets (Weekly Schedule, Multi-View Schedule). |
 | **Public RASTATIME API** | *Enabled* lets external widgets embedded in other websites read the schedule data. Required for the embeddable schedule widgets. |
 | **Display login button on your Radio Page?** | Shows a login button on the public radio page. |
 | **Disable the public radio page and redirect to the login page?** | Visitors of the station address go straight to the login. |

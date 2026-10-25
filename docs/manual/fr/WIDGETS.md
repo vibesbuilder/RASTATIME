@@ -230,8 +230,9 @@ On Air Today                       ← bande d'en-tête
 19:00 - 19:30    L'Info chez vous (FR)
 ```
 
-- **En-tête** : "On Air Today" (ou "On Air *<date>*" quand
-  un jour spécifique est épinglé via `?day`)
+- **En-tête** : le titre réglé sur la page Widgets (défaut « On
+  Air Today »), ou "On Air *<date>*" quand un jour spécifique est
+  épinglé via `?day`
 - **Lignes** : `HH:MM - HH:MM` à gauche, nom de l'émission
   à droite.  La ligne actuellement en ondes est rendue en
   **gras** pour que l'opérateur (et l'auditeur) voie d'un
@@ -279,9 +280,10 @@ laisse pas de ligne fantôme dans le widget public.
 
 **Paramètres → Widgets → On Air Today** héberge :
 
-- Un seul libellé d'état vide configurable (défaut `No
-  shows on air today`, fallback à l'anglais par défaut
-  quand vide).
+- **Title** (depuis le 25/10/2026) : le texte de l'en-tête ; vide
+  = « On Air Today » dans la langue de la station.
+- Le libellé d'état vide (défaut `No shows on air today`,
+  fallback à l'anglais par défaut quand vide).
 - Une prévisualisation iframe en direct sur fond sombre.
 - Le code `<iframe>` d'intégration prêt à l'emploi avec
   l'URL absolue de la station pré-remplie.
@@ -337,7 +339,7 @@ MON  TUE  WED  THU  FRI  SAT  SUN                   ← onglets
 
 | Paramètre | Valeurs | Défaut | Effet |
 |---|---|---|---|
-| `week_offset` | entier -2..4 | `0` | Épingle la fenêtre à ±N semaines du bloc roulant de 7 jours d'aujourd'hui.  Cap serré (-2 / +4) car les cas d'usage homepage publique ont rarement besoin d'une plage plus large ; les boutons ◀ / ▶ se désactivent à la limite. |
+| `week_offset` | entier -2..4 | `0` | Épingle la fenêtre à ±N semaines de la semaine en cours, qui commence le jour réglé sous Paramètres → Général → La semaine commence le (depuis le 25/10/2026 ; avant, la fenêtre commençait aujourd'hui).  Cap serré (-2 / +4) car les cas d'usage homepage publique ont rarement besoin d'une plage plus large ; les boutons ◀ / ▶ se désactivent à la limite. |
 | `theme` | `auto`, `dark`, `light` | `auto` | Identique aux autres widgets — voir §2. |
 | `cache` | entier secondes 10..3600 | `60` | Identique aux autres widgets — voir §8. |
 | `overflow` | `ellipsis`, `marquee` | `ellipsis` | Comportement des noms d'émission plus larges que 400 px. |
@@ -418,10 +420,12 @@ iframe prêt à l'emploi :
 
 ### Ce qu'il affiche
 
-- **Bande d'en-tête** : ◀ / ▶ navigation, libellé de plage
-  de dates centré, bouton **Today** (revient à maintenant
-  et re-déclenche l'auto-scroll), commutateur de vue
-  (DAY / 2-DAY / WEEK).
+- **Bande d'en-tête** : bouton **Today** tout à gauche
+  (revient à maintenant et re-déclenche l'auto-scroll),
+  ◀ / ▶ navigation, libellé de plage de dates centré,
+  commutateur de vue (DAY / 2-DAY / WEEK).  La vue WEEK
+  commence le jour réglé sous Paramètres → Général → La
+  semaine commence le.
 - **Time-grid** : 24h, créneaux 15 min, libellés horaires
   60 min.  Ligne now-indicator en couleur d'accent.
 - **Créneaux d'émission** : depuis `cc_show_instances`

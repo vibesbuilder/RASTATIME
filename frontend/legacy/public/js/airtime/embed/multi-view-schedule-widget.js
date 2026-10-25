@@ -44,6 +44,11 @@
     var locale      = body.getAttribute('data-locale') || 'en';
     var clockMode   = body.getAttribute('data-clock')  || '24';   // '12' | '24' | 'auto'
     var emptyLabel  = body.getAttribute('data-label-empty') || 'No shows scheduled';
+    // RASTATIME 2026-10-25 - Settings -> General -> Week Starts On (0 = Sunday)
+    var firstDay    = parseInt(body.getAttribute('data-first-day'), 10);
+    if (isNaN(firstDay) || firstDay < 0 || firstDay > 6) {
+        firstDay = 1;
+    }
 
     /*
      * Build a FullCalendar time-format OBJECT that the
@@ -396,7 +401,7 @@
         expandRows: true,
         height: '100%',
         stickyHeaderDates: true,
-        firstDay: 1,                             // Monday — matches station convention
+        firstDay: firstDay,                      // Settings -> General -> Week Starts On
         views: {
             timeGridTwoDay: {
                 type: 'timeGrid',

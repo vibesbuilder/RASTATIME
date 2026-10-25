@@ -240,6 +240,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Widgets: Wochenbeginn aus den Einstellungen, „Today“ links, Titel
+  für „On Air Today“ (2026-10-25, Operator)** — *Weekly Schedule* zeigt
+  die Woche ab dem Tag aus Einstellungen → Allgemein → Week Starts On
+  (vorher ab heute, die Einstellung wurde nicht beachtet; heute ist
+  weiter vorausgewählt, ◀/▶ blättern wochenweise).  *Multi-View
+  Schedule*: Wochenansicht ebenfalls ab diesem Tag (vorher fest Montag),
+  der Knopf „Today“ steht ganz links.  *On Air Today*: Überschrift etwas
+  kleiner (~21 -> ~18,5 px) und als **Title** auf Settings → Widgets →
+  On Air Today einstellbar (leer = „On Air Today“ in der
+  Stationssprache; ein über `?day` gepinnter Tag behält „On Air
+  <Datum>“).  Live geprüft (Woche Mo 19. – So 25., nächste ab Mo 26.;
+  Multi-View-Spalten Mo–So).  Handbuch WIDGETS und SETTINGS ×4.
 - **Widgets: kleinere Schrift für Uhrzeit und Showname (2026-10-25,
   Operator)** — *Weekly Schedule*: Zeilen 19,2 px -> ~13,8 px (`0.72em`,
   Abstand und Uhrzeitspalte skalieren mit); bei 350 px Breite passt das

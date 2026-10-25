@@ -1074,6 +1074,8 @@ class EmbedController extends Zend_Controller_Action
         // label.  Defaults to English "No shows on air today" via
         // the GetWidgetNoOnAirToday English-fallback.
         $this->view->emptyLabel = Application_Model_Preference::GetWidgetNoOnAirToday();
+        // RASTATIME 2026-10-25 - operator-defined title ('' = default)
+        $this->view->titleLabel = Application_Model_Preference::GetWidgetOnAirTodayTitle();
 
         $this->view->widgetCss = Assets::url('css/embed/now-playing-widget.css');
         $this->view->widgetJs  = Assets::url('js/airtime/embed/on-air-today-widget.js');

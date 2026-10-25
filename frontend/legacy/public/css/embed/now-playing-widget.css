@@ -324,7 +324,9 @@ html, body {
         operator-requested "all bold, all bigger" treatment.  */
     color: var(--np-fg);
     font-weight: 700;
-    font-size: 1.2em;
+    /*  RASTATIME 2026-10-25 (operator: a little smaller) - 1.2em
+        (~21 px) -> 1.05em (~18.5 px).  */
+    font-size: 1.05em;
     padding-bottom: 6px;
     margin-bottom: 8px;
     border-bottom: 1px solid var(--np-fg-muted);

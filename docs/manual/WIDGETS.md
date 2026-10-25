@@ -220,8 +220,9 @@ On Air Today                       ← header band
 19:00 - 19:30    L'Info chez vous (FR)
 ```
 
-- **Header**: "On Air Today" (or "On Air *<date>*" when a
-  specific day is pinned via the `?day` parameter)
+- **Header**: the title set on the Widgets page (default "On Air
+  Today"), or "On Air *<date>*" when a specific day is pinned via
+  the `?day` parameter
 - **Rows**: `HH:MM - HH:MM` on the left, show name on the
   right.  The currently-airing row is rendered in **bold**
   so the operator (and listener) sees at a glance which row
@@ -266,8 +267,10 @@ not leave a phantom row in the public widget.
 
 **Settings → Widgets → On Air Today** hosts:
 
-- A single configurable empty-state label (default `No shows
-  on air today`, falls back to the English default when blank).
+- **Title** (since 2026-10-25): the header text; blank = "On Air
+  Today" in the station language.
+- The empty-state label (default `No shows on air today`, falls
+  back to the English default when blank).
 - A live preview iframe on a dark backdrop.
 - The ready-made `<iframe>` embed code with the station's
   absolute URL pre-filled.
@@ -324,7 +327,7 @@ MON  TUE  WED  THU  FRI  SAT  SUN                   ← day tabs
 
 | Param | Values | Default | Effect |
 |---|---|---|---|
-| `week_offset` | integer -2..4 | `0` | Pin the rendered window to ±N weeks from today's rolling 7-day block.  Default 0 = today + 6 upcoming days.  Tight clamp (-2 / +4) because public-homepage use-cases rarely need a wider range; the ◀ / ▶ buttons disable at the boundary so the operator sees they've hit the limit. |
+| `week_offset` | integer -2..4 | `0` | Pin the rendered window to ±N weeks from the current week.  Default 0 = the current week, which starts on the day set under Settings → General → Week Starts On (since 2026-10-25; before, the window began with today).  Tight clamp (-2 / +4) because public-homepage use-cases rarely need a wider range; the ◀ / ▶ buttons disable at the boundary so the operator sees they've hit the limit. |
 | `theme` | `auto`, `dark`, `light` | `auto` | Same as the other widgets — see §2. |
 | `cache` | integer seconds 10..3600 | `60` | Same as the other widgets — see §8. |
 | `overflow` | `ellipsis`, `marquee` | `ellipsis` | Behaviour of show names wider than the 400 px widget body. |
@@ -405,7 +408,7 @@ comfortably):
 ### What it shows
 
 ```
-◀  Fri 22 May 2026             ▶   Today  [DAY 2DAY WEEK]   ← header
+Today  ◀  Fri 22 May 2026             ▶   [DAY 2DAY WEEK]   ← header
 ─────────────────────────────────────────────────────────
 06:00  ┌──────────────────────────────┐
        │ Morning Show                 │  ← coloured slot
@@ -418,10 +421,11 @@ comfortably):
 ...
 ```
 
-- **Header band**: ◀ / ▶ navigation, centred date-range
-  label, **Today** button (snaps the view back to now and
-  re-runs the auto-scroll), and the view switcher
-  (DAY / 2-DAY / WEEK).
+- **Header band**: **Today** button at the far left (snaps
+  the view back to now and re-runs the auto-scroll), ◀ / ▶
+  navigation, centred date-range label, and the view switcher
+  (DAY / 2-DAY / WEEK).  The WEEK view starts on the day set
+  under Settings → General → Week Starts On.
 - **Time grid**: 24-hour, 15-min slots, 60-min hour labels.
   Now-indicator line in the accent colour.
 - **Show slots**: rendered from `cc_show_instances` JOIN

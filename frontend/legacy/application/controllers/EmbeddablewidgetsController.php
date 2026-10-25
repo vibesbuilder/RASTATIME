@@ -332,9 +332,13 @@ class EmbeddableWidgetsController extends Zend_Controller_Action
             Application_Model_Preference::SetWidgetNoOnAirToday(
                 $form->getValue('widget_no_on_air_today')
             );
+            Application_Model_Preference::SetWidgetOnAirTodayTitle(
+                $form->getValue('widget_on_air_today_title')
+            );
             $this->view->saved = true;
         } else {
             $form->populate([
+                'widget_on_air_today_title' => Application_Model_Preference::GetWidgetOnAirTodayTitle(),
                 'widget_no_on_air_today' => Application_Model_Preference::GetWidgetNoOnAirToday(),
             ]);
         }

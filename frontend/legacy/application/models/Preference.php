@@ -603,6 +603,15 @@ class Application_Model_Preference
     }
     public static function SetWidgetNoOnAirToday($v)      { self::setValue('widget_no_on_air_today', (string) $v); }
 
+    // RASTATIME 2026-10-25 (operator) - On-Air-Today widget title.  Empty
+    // = the translated default "On Air Today" (chosen by the widget, so it
+    // follows the station language).
+    public static function GetWidgetOnAirTodayTitle()
+    {
+        return (string) self::getValue('widget_on_air_today_title');
+    }
+    public static function SetWidgetOnAirTodayTitle($v)   { self::setValue('widget_on_air_today_title', trim((string) $v)); }
+
     // RASTATIME 2026-05-22 — Weekly-Schedule widget empty-state
     // label.  Shown per-day-tab when the displayed week has no
     // shows scheduled for that particular day.

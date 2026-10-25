@@ -31,7 +31,12 @@ $shows      = $this->shows;
 $isToday    = $this->isToday;
 $dayLabel   = $this->dayLabel;
 $emptyLabel = $this->emptyLabel;
-$headerText = $isToday ? _('On Air Today') : sprintf(_('On Air %s'), $dayLabel);
+// RASTATIME 2026-10-25 - the title from the Widgets page (empty = default);
+// a widget pinned to another day (?day=) keeps "On Air <date>"
+$titleLabel = (string) $this->titleLabel;
+$headerText = $isToday
+    ? ($titleLabel !== '' ? $titleLabel : _('On Air Today'))
+    : sprintf(_('On Air %s'), $dayLabel);
 ?>
 <!DOCTYPE html>
 <html lang="en">

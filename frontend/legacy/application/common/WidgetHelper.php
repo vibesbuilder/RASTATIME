@@ -91,6 +91,16 @@ class WidgetHelper
     {
         $weekStartDateTime = new DateTime('now', new DateTimeZone(Application_Model_Preference::GetTimezone()));
 
+        // RASTATIME 2026-10-25 (operator) - the week starts on the day set
+        // under Settings -> General -> Week Starts On (0 = Sunday ... 6 =
+        // Saturday), like the calendar; before, the window simply began
+        // with today.  Today's tab is found by its date wherever it sits.
+        $weekStartDay = (int) Application_Model_Preference::GetWeekStartDay();
+        $daysBack = ((int) $weekStartDateTime->format('w') - $weekStartDay + 7) % 7;
+        if ($daysBack > 0) {
+            $weekStartDateTime->modify('-' . $daysBack . ' days');
+        }
+
         // Apply the week offset BEFORE we set up the date range so
         // the rest of the function works identically for week 0,
         // ±1, ±2, etc.  Operator-typical range is ±4 weeks; we
