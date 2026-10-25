@@ -29,15 +29,11 @@ class ApiController extends Zend_Controller_Action
             'track',
             'track-types',
             'stream-m3u',
-            // RASTATIME: Icecast 2.5 URL-auth and event-bindings invoke
-            // these endpoints when DJ clients connect/disconnect to the
-            // /main or /show source mounts.  Icecast cannot supply an
-            // api_key, but check-live-stream-auth has its own
-            // username/password check, update-source-status is only
-            // ever called from the local Icecast instance, and
-            // icecast-listener-allow always replies "allowed" — the
-            // mounts are hidden+non-public, so listener access is
-            // gated by mount-name knowledge, not by credentials.
+            // RASTATIME: callbacks without an api_key.  Originally Icecast
+            // URL-auth called them; since 2026-09-10 the DJ login runs
+            // Harbor -> PLAYOUT /dj-auth -> check-live-stream-auth on
+            // 127.0.0.1, and the active icecast.xml (2.5.0) has no URL
+            // auth.  All three answer local callers only (see below).
             'check-live-stream-auth',
             'update-source-status',
             'icecast-listener-allow',
@@ -49,6 +45,24 @@ class ApiController extends Zend_Controller_Action
         }
 
         $params = $this->getRequest()->getParams();
+        // RASTATIME 2026-10-25 (operator go) - local callers only.  Reached
+        // from the internet, check-live-stream-auth let anyone try DJ, show
+        // and master passwords past the playout's brute-force brake (which
+        // only sees Harbor logins), and its reason header told whether a
+        // login hosts the running show.  Every refusal is a WARN: if PLAYOUT
+        // ever reaches the web app on another address (general.internal_url
+        // must stay 127.0.0.1), personal DJ logins fail and fall back to the
+        // static harbor password.
+        $localOnly = ['check-live-stream-auth', 'update-source-status', 'icecast-listener-allow'];
+        if (in_array($params['action'], $localOnly, true) && !self::isLoopbackRequest()) {
+            Logging::warn(sprintf(
+                'api/%s refused for %s: local callers only (PLAYOUT must call the web app on 127.0.0.1, general.internal_url)',
+                $params['action'],
+                $_SERVER['REMOTE_ADDR'] ?? '?'
+            ));
+
+            throw new Zend_Controller_Action_Exception('local callers only', 403);
+        }
         if (!in_array($params['action'], $ignoreAuth)) {
             $this->checkAuth();
         }
@@ -1464,6 +1478,17 @@ class ApiController extends Zend_Controller_Action
         $expected = (string) $expected;
 
         return $expected !== '' && hash_equals($expected, (string) $given);
+    }
+
+    /** RASTATIME 2026-10-25 - the TCP peer is this machine (no proxy, no mod_remoteip in front). */
+    private static function isLoopbackRequest(): bool
+    {
+        $ip = (string) ($_SERVER['REMOTE_ADDR'] ?? '');
+        if (stripos($ip, '::ffff:') === 0) {
+            $ip = substr($ip, 7);                       // IPv4-mapped IPv6
+        }
+
+        return $ip === '::1' || strpos($ip, '127.') === 0;
     }
 
     /* This action is for use by our dev scripts, that make

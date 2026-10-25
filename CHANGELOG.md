@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+- **DJ-Passwortprüfung nur noch lokal erreichbar (2026-10-25,
+  Operator-Go)** — `api/check-live-stream-auth` (ohne API-Key, weil früher
+  Icecast es aufrief) war über `https://radio.example.org` aus dem
+  Internet aufrufbar: DJ-, Show- und Master-Passwörter ließen sich an der
+  Brute-Force-Bremse von PLAYOUT vorbei durchprobieren (die Firewall-Wache
+  zählt 401 nicht), und der Grund-Header verriet, ob ein Login die laufende
+  Sendung moderiert.  Jetzt nehmen diese Aktion, `update-source-status`
+  und `icecast-listener-allow` nur Loopback-Aufrufer an, sonst 403 und eine
+  WARN-Zeile mit der Adresse im `legacy.log`.  Für DJs, Weboberfläche und
+  Hörer ändert sich nichts: der DJ-Login läuft Harbor → PLAYOUT → PHP auf
+  127.0.0.1 (alle Aufrufe der letzten 16 Tage, auch echte DJ-Logins von
+  außen, kamen von dort); Icecast 2.5.0 nutzt keine URL-Auth.  Probe: lokal
+  401 wie bisher, über die LAN-Adresse 403, `live-info` 200.
+  `general.internal_url` muss lokal bleiben (GO_LIVE_HTTPS).
 - **DJ-Login: typstrenger, timing-sicherer Vergleich (2026-10-25,
   Operator: „hash_equals-Fix sofort")** — `check-live-stream-auth`
   (Harbor-Login über PLAYOUT) verglich Login, Passwort-MD5, Master- und

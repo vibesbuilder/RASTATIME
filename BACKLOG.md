@@ -5981,7 +5981,19 @@ Loeschen trotz Bestaetigung) und ein ruhiges Fenster fuer Weg b).
 „0e…" = „0e…", „1e3" = „1000", `null` = „").  Jetzt `ApiController::credentialEquals()` (`hash_equals`,
 leerer Sollwert passt nie); Probe acht Fälle OK, falsche Zugangsdaten live 401.
 
-### 🟡 DJ-Passwortprüfung ohne API-Key öffentlich erreichbar (Befund 2026-10-25) - wartet auf Go, Empfehlung: zeitnah
+### ✅ DJ-Passwortprüfung ohne API-Key öffentlich erreichbar (Befund 2026-10-25) - behoben 2026-10-25 (Operator-Go, Option a)
+
+**Ergebnis:** `ApiController::init()` nimmt `check-live-stream-auth`, `update-source-status` und
+`icecast-listener-allow` nur noch von Loopback an (127.0.0.0/8, `::1`, `::ffff:127.x`); sonst 403 über den
+403-Zweig des ErrorControllers und eine WARN-Zeile „api/<aktion> refused for <ip>: local callers only" im
+`legacy.log`.  Vorab geprüft: alle Aufrufe der letzten 16 Tage kamen von 127.0.0.1 (auch die echten
+DJ-Logins vom 24.10. aus dem Internet - Harbor → PLAYOUT → PHP), PLAYOUT nutzt `http://127.0.0.1` (keine
+Umgebungs-Überschreibung), die aktive `icecast.xml` (2.5.0) hat keine URL-Auth; kein `mod_remoteip` vor
+Apache.  Probe: lokal (HTTPS und `http://127.0.0.1`) weiter 401 bei falschen Daten, über die LAN-Adresse
+192.168.1.64 alle drei 403, `live-info` 200.  Doku: GO_LIVE_HTTPS (`general.internal_url` muss lokal bleiben).
+Abnahme mit einem echten DJ-Login (BUTT von außen) steht aus.
+
+**Befund (vorher):**
 
 **Befund:** `/api/check-live-stream-auth` steht in der Liste der Aktionen ohne API-Key (`ApiController`
 init, Kommentar: Icecast-URL-Auth kann keinen Key mitsenden) und ist über `https://radio.example.org`

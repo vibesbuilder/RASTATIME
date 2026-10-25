@@ -180,6 +180,13 @@ URL and the two Apache includes below.
   Used by the playout (legacy v1 client = "On Air" light, DJ login
   check), the analyzer (import callback) and the notify/legacy entry
   points.  `public_url` is the outside face only.
+  **Since 2026-10-25 it must stay a loopback address** (127.0.0.1 /
+  `localhost` / `::1`): `api/check-live-stream-auth`,
+  `update-source-status` and `icecast-listener-allow` carry no API key
+  and answer local callers only - any other address gets 403 and a WARN
+  "refused for <ip>: local callers only" in `legacy.log`.  Pointed at the
+  public host name (router hairpin), personal DJ logins would fail and
+  fall back to the static harbor password.
 - **Listener URL** `<public_url>/stream/<mount>` for outputs on the local
   Icecast (`StreamSetting`); player, widgets, embed codes follow.
   Apache must hand `/stream/` to Icecast - include
