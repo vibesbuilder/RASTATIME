@@ -1454,8 +1454,13 @@ SQL;
         $playCountJoin = 'LEFT JOIN (SELECT file_id, COUNT(*) AS play_count FROM cc_playout_history WHERE file_id IS NOT NULL GROUP BY file_id) AS ph ON (ph.file_id = FILES.id)';
         $fileTable = "({$fileSelect} FROM cc_files AS FILES LEFT JOIN cc_subjs AS sub ON (sub.id = FILES.owner_id) {$playCountJoin} WHERE file_exists = 'TRUE' AND hidden='FALSE')";
         // $fileTable = "({$fileSelect} FROM cc_files AS FILES WHERE file_exists = 'TRUE')";
-        $streamTable = "({$streamSelect} FROM cc_webstream AS ws LEFT JOIN cc_subjs AS sub ON (sub.id = ws.creator_id))";
-        $lineinTable = "({$lineinSelect} FROM rastatime_linein AS li WHERE li.enabled = TRUE)";
+        // RASTATIME 2026-10-25 (role audit, operator) - DJs and guests work
+        // with tracks only: webstreams and Line-Ins are not listed for them.
+        $sessionUser = Application_Model_User::getCurrentUser();
+        $tracksOnly = $sessionUser !== null && !$sessionUser->isAdminOrPM();
+        $noRows = $tracksOnly ? ' WHERE FALSE' : '';
+        $streamTable = "({$streamSelect} FROM cc_webstream AS ws LEFT JOIN cc_subjs AS sub ON (sub.id = ws.creator_id){$noRows})";
+        $lineinTable = "({$lineinSelect} FROM rastatime_linein AS li WHERE li.enabled = TRUE" . ($tracksOnly ? ' AND FALSE' : '') . ')';
         $unionTable = "({$plTable} UNION {$blTable} UNION {$fileTable} UNION {$streamTable} UNION {$lineinTable}) AS RESULTS";
 
         // choose which table we need to select data from.

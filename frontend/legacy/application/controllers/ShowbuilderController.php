@@ -245,6 +245,25 @@ class ShowbuilderController extends Zend_Controller_Action
             json_encode($scheduledItems)
         ));
 
+        // RASTATIME 2026-10-25 (role audit, operator) - DJs schedule tracks,
+        // playlists and smart blocks; webstreams and Line-Ins are for
+        // Program Managers and Admins.
+        $user = Application_Model_User::getCurrentUser();
+        if ($user === null || !$user->isAdminOrPM()) {
+            foreach ((array) $mediaItems as $media) {
+                if (is_array($media) && in_array($media['type'] ?? null, ['stream', 'linein'], true)) {
+                    Logging::warn(sprintf(
+                        'showbuilder/schedule-add: user %s refused for %s %s',
+                        $user !== null ? $user->getId() : '-',
+                        $media['type'],
+                        (string) ($media['id'] ?? '')
+                    ));
+
+                    throw new Zend_Controller_Action_Exception('webstreams and Line-Ins: Program Managers and Admins only', 403);
+                }
+            }
+        }
+
         try {
             $scheduler = new Application_Model_Scheduler();
             $scheduler->scheduleAfter($scheduledItems, $mediaItems);

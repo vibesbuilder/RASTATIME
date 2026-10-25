@@ -902,7 +902,10 @@ Erster Neustart griff nicht: Waitress 3 verwarf X-Forwarded-For (jetzt PROXY_OPT
 **Paket 2 (R1-R11, R13) LIVE 2026-10-25 ~17:10** (`16daab1`, PHP, sofort wirksam): Show-Inhalt leeren/Vorlagen,
 Stationssprache, Widgets, Show-Logos, Podcasts, Sendeprotokoll-Bearbeitung, Line-In-Verwaltung nur
 PM+; Playlists/Blöcke/Metadaten nur Besitzer oder PM+; herabgestufter Host plant nicht mehr.  R4 bewusst
-offen (selbstkorrigierend).  Abnahme mit einem DJ-Konto steht aus (Operator).  Pakete 3-5 folgen.
+offen (selbstkorrigierend).  Nachtrag Operator (gleicher Tag): DJs/Gäste nur Tracks (Webstreams und
+Line-Ins unsichtbar, nicht in Playlists/Sendungen einfügbar), DJs bearbeiten das Sendeprotokoll ihrer
+eigenen Sendungen, Podcast-Knöpfe für DJs ausgeblendet.  Abnahme mit PM- und DJ-Konto: Operator.
+Pakete 3-5 folgen (Go für Paket 3 erteilt).
 
 **Ursprüngliche Aufgabe:**
 

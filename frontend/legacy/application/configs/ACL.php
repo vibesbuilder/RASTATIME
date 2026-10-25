@@ -58,7 +58,6 @@ $ccAcl->allow('G', 'index')
     ->allow('G', 'dashboard')
     ->allow('G', 'manual')
     ->allow('G', 'audiopreview')
-    ->allow('G', 'webstream')
     ->allow('G', 'locale')
     ->allow('G', 'upgrade')
     ->allow('G', 'downgrade')
@@ -82,12 +81,14 @@ $ccAcl->allow('G', 'index')
     ->allow('H', 'playouthistory')
     ->allow('H', 'listenerstat')
     ->allow('H', 'showlistenerstat')
-    // RASTATIME 2026-10-25 (role audit R7/R8/R10) - show logos, podcasts
-    // and Line-In sources: Program Managers and Admins (operator).
+    // RASTATIME 2026-10-25 (role audit R7/R8/R10) - show logos, podcasts,
+    // webstreams and Line-In sources: Program Managers and Admins (operator;
+    // DJs and guests work with tracks only).
     ->allow('P', 'rest:show-image')
     ->allow('P', 'rest:podcast')
     ->allow('P', 'rest:podcast-episodes')
     ->allow('P', 'podcast')
+    ->allow('P', 'webstream')
     ->allow('P', 'linein')
     ->allow('A', 'playouthistorytemplate')
     ->allow('A', 'user')

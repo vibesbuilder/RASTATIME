@@ -2700,6 +2700,16 @@ var AIRTIME = (function (AIRTIME) {
       },
     );
 
+    // RASTATIME 2026-10-25 (role audit R8) - podcasts are managed by Program
+    // Managers and Admins; DJs and guests read the list without the tools
+    // (the server refuses their changes anyway).
+    var mayManagePodcasts =
+      typeof userType !== "undefined" &&
+      (userType === "S" || userType === "A" || userType === "P");
+    if (!mayManagePodcasts) {
+      podcastToolbarButtons = {};
+    }
+
     //Set up the div with id "podcast_table" as a datatable.
     mod.podcastTableWidget = new AIRTIME.widgets.Table(
       $("#podcast_table"), //DOM node to create the table inside.
@@ -2721,9 +2731,11 @@ var AIRTIME = (function (AIRTIME) {
     );
 
     // Edit podcast in right-side pane upon double click
-    mod.podcastTableWidget.assignDblClickHandler(function () {
-      AIRTIME.podcast.editSelectedPodcasts();
-    });
+    if (mayManagePodcasts) {
+      mod.podcastTableWidget.assignDblClickHandler(function () {
+        AIRTIME.podcast.editSelectedPodcasts();
+      });
+    }
 
     mod.podcastDataTable = mod.podcastTableWidget.getDatatable();
     $datatables[mod.DataTableTypeEnum.PODCAST] = mod.podcastDataTable;

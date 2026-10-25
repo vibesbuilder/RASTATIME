@@ -336,6 +336,25 @@ class PlaylistController extends Zend_Controller_Action
         $obj_type = $this->_getParam('obj_type');
 
         try {
+            // RASTATIME 2026-10-25 (role audit, operator) - DJs add tracks
+            // and smart blocks; webstreams and Line-Ins are for Program
+            // Managers and Admins (the library does not list them for DJs).
+            $user = Application_Model_User::getCurrentUser();
+            if ($user === null || !$user->isAdminOrPM()) {
+                foreach ($ids as $id) {
+                    if (is_array($id) && in_array($id[1] ?? null, ['stream', 'linein'], true)) {
+                        Logging::warn(sprintf(
+                            'playlist/add-items: user %s refused for %s %s',
+                            $user !== null ? $user->getId() : '-',
+                            $id[1],
+                            (string) ($id[0] ?? '')
+                        ));
+
+                        throw new Zend_Controller_Action_Exception('webstreams and Line-Ins: Program Managers and Admins only', 403);
+                    }
+                }
+            }
+
             $obj = $this->getPlaylist($obj_type);
             if ($obj_type == 'playlist') {
                 foreach ($ids as $id) {

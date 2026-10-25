@@ -13,6 +13,11 @@
         <span class="selector-name"><i class='icon-time icon-white'></i><?php echo _('Smart Blocks'); ?></span>
     </a>
 </div>
+<?php
+// RASTATIME 2026-10-25 (role audit, operator) - DJs and guests work with
+// tracks only; the webstream and Line-In tabs are for Program Managers and Admins.
+$rtSubNavUser = Application_Model_User::getCurrentUser();
+if ($rtSubNavUser !== null && $rtSubNavUser->isAdminOrPM()) : ?>
 <div class="media_type_selector dashboard_sub_nav" data-selection-id="<?php echo MediaType::WEBSTREAM; ?>">
     <a href="<?php echo $subnavPrefix; ?>#webstreams">
         <span class="selector-name"><i class='icon-random icon-white'></i><?php echo _('Webstreams'); ?></span>
@@ -25,3 +30,4 @@
         <span class="selector-name"><i class='icon-volume-up icon-white'></i><?php echo _('Line Inputs'); ?></span>
     </a>
 </div>
+<?php endif; ?>

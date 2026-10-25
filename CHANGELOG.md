@@ -27,17 +27,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   PM+, `full_path`/`artwork` bleiben beim API-Key (Analyzer), `owner_id`
   bei Admins.  **R7** Show-Logos (REST `show-image` schreibend) nur PM+.
   **R8** Podcasts und Episoden verwalten nur PM+ (DJs lesen die Liste
-  weiter), Veröffentlichen in den Stations-Podcast nur PM+; „My Podcast“
-  steht jetzt auch Programm-Managern im Menü.  **R9** Sendeprotokoll:
-  Einträge anlegen/ändern/löschen nur PM+, DJs sehen die
-  Bearbeiten-Werkzeuge nicht mehr.  **R10** Line-In-Quellen verwalten
+  weiter, ohne Hinzufügen/Bearbeiten/Löschen-Knöpfe), Veröffentlichen in
+  den Stations-Podcast nur PM+; „My Podcast“ steht jetzt auch
+  Programm-Managern im Menü.  **R9** Sendeprotokoll: PM+ bearbeiten alle
+  Einträge, DJs legen Einträge in den Sendungen an, deren Host sie sind,
+  und ändern/löschen nur diese (Nachtrag Operator); die Datei-Übersicht
+  über alle Sendungen bleibt PM+.  **R10** Line-In-Quellen verwalten
   (Editor und Löschen über die Bibliothek) PM+ statt Admin bzw. jeder DJ.
+  **DJs und Gäste nur mit Tracks** (Nachtrag Operator): Webstreams und
+  Line-Ins erscheinen für sie weder in der Bibliothek (Reiter, „Neu“-Menü,
+  Feed) noch lassen sie sich in Playlists oder Sendungen einfügen
+  (`playlist/add-items`, `showbuilder/schedule-add`: 403); der
+  Webstream-Editor ist PM+.  Bestand: alle 24 Webstreams gehören Admins,
+  keine DJ-Sendung und keine DJ-Playlist enthält Webstreams/Line-Ins.
   **R11** Ein zum Gast herabgestufter Sendungs-Host plant nicht mehr ein.
   **R13** Super-Admin zählt beim Webstream-Löschen als Admin.  R4
   (`update-future-is-scheduled`) bleibt bewusst offen: korrigiert sich
   selbst.  R12 (CSRF) = Paket 3.  Probe `C:/Temp/optd/role_audit_p2_probe.php`
   (ACL-Matrix G/H/P/A/S, Helfer, R5-Besitz, R11, preDispatch-Wächter je
-  Rolle: 203/203), live als Admin unverändert 200.
+  Rolle: 203/203) und `role_audit_p2b_probe.php` (Webstream-ACL,
+  Bibliotheks-Feed je Rolle, Sendeprotokoll Host/Fremd-DJ/PM/Gast: alle
+  ok), live als Admin unverändert 200.
 - **Rollen-Audit Paket 1: sieben Sofort-Befunde geschlossen (2026-10-25,
   Operator-Go)** — siehe `docs/operator/ROLE_AUDIT_2026-10.md`.
   **S1** „Eigenes Profil“ (`user/edit-user`) speichert nur noch das

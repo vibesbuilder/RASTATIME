@@ -97,18 +97,23 @@ only; backup/storage API routes refuse anonymous calls (403).
 | Schedule content into a show | – | own shows | all | all |
 | Switch / disconnect live sources | – | own running show | ✓ | ✓ |
 | Library: view, preview | ✓ | ✓ | ✓ | ✓ |
-| Upload; edit/delete files, playlists, blocks, webstreams | – | own | all | all |
+| Upload; edit/delete files, playlists, blocks | – | own | all | all |
+| Webstreams, Line-Ins: see, add to playlists/shows, edit | – | – | ✓ | ✓ |
 | Show logos | – | own shows? | ✓ | ✓ |
 | Podcasts (subscriptions, episodes) | – | own? | all | all |
 | Station podcast / publish | – | – | ✓ | ✓ |
-| Playout history: view / edit | view | view | edit | edit |
-| Line-In: use in shows / manage devices | – | use | use | manage |
+| Playout history: view / edit | – | edit in shows they host | edit | edit |
+| Line-In: use in shows / manage devices | – | – | ✓ | ✓ |
 | Widgets, station language | – | – | – ? | ✓ |
 | Settings, Backup, Streams, Users, Track Types, System Status, Import / Export | – | – | – | ✓ |
 
 Operator answers 2026-10-25: DJs change no show logos (own shows
 included) and manage no podcasts; podcasts, widgets, station language and
-Line-In devices are for Program Managers and Admins.
+Line-In devices are for Program Managers and Admins.  Follow-up the same
+day: DJs work with tracks only - webstreams and Line-Ins are neither shown
+to them nor addable to playlists or shows; DJs create, edit and delete
+playout-history entries in the shows they host.  (The rows above show the
+agreed state; guests have no history page.)
 
 ## 5. Remediation packages (proposal)
 

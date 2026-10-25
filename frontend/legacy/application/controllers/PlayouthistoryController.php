@@ -20,9 +20,11 @@ class PlayouthistoryController extends Zend_Controller_Action
     }
 
     /**
-     * RASTATIME 2026-10-25 (role audit R9) - DJs view the playout history;
-     * creating, editing and deleting entries is for Program Managers and
-     * Admins (HistoryService's own check was commented out upstream).
+     * RASTATIME 2026-10-25 (role audit R9) - Program Managers and Admins
+     * edit every history entry; DJs create, edit and delete the entries of
+     * the shows they host (operator), the per-file summary across all
+     * shows stays with Program Managers and Admins.  HistoryService's own
+     * check was commented out upstream - before, every DJ changed anything.
      */
     private const EDIT_ACTIONS = [
         'edit-file-item', 'create-list-item', 'edit-list-item', 'delete-list-item',
@@ -31,9 +33,72 @@ class PlayouthistoryController extends Zend_Controller_Action
 
     public function preDispatch()
     {
-        if (in_array($this->getRequest()->getActionName(), self::EDIT_ACTIONS, true)) {
-            Application_Model_User::requireAdminOrPM();
+        $action = $this->getRequest()->getActionName();
+        if (!in_array($action, self::EDIT_ACTIONS, true)) {
+            return;
         }
+        $user = Application_Model_User::getCurrentUser();
+        if ($user !== null && ($user->isAdminOrPM() || ($user->isHost() && $this->hostsTarget($user, $action)))) {
+            return;
+        }
+
+        Logging::warn(sprintf('playouthistory/%s: user %s refused', $action, $user !== null ? $user->getId() : '-'));
+
+        throw new Zend_Controller_Action_Exception('only the show\'s hosts, Program Managers and Admins may change this entry', 403);
+    }
+
+    /** Does the DJ host the show(s) the request touches? */
+    private function hostsTarget(Application_Model_User $user, string $action): bool
+    {
+        $request = $this->getRequest();
+
+        switch ($action) {
+            case 'edit-list-item':     // the dialog; without an id it is a new entry
+                $id = $request->getParam('id');
+
+                return $id === null || $id === '' || self::hostsHistoryItems($user, [$id]);
+
+            case 'create-list-item':
+                return self::hostsInstance($user, $request->getParam('instance_id'));
+
+            case 'update-list-item':   // the entry and its (possibly new) show
+                return self::hostsHistoryItems($user, [$request->getParam('his_item_id')])
+                    && self::hostsInstance($user, $request->getParam('instance_id'));
+
+            case 'delete-list-item':
+                return self::hostsHistoryItems($user, [$request->getParam('id')]);
+
+            case 'delete-list-items':
+                return self::hostsHistoryItems($user, (array) $request->getParam('ids', []));
+        }
+
+        return false;   // the file summary spans all shows
+    }
+
+    private static function hostsInstance(Application_Model_User $user, $instanceId): bool
+    {
+        $instance = (int) $instanceId > 0 ? CcShowInstancesQuery::create()->findPk((int) $instanceId) : null;
+
+        return $instance !== null && $user->isHostOfShow($instance->getDbShowId());
+    }
+
+    private static function hostsHistoryItems(Application_Model_User $user, array $ids): bool
+    {
+        $ids = array_unique(array_filter(array_map('intval', $ids)));
+        if ($ids === []) {
+            return false;
+        }
+        $records = CcPlayoutHistoryQuery::create()->findPks($ids);
+        if (count($records) !== count($ids)) {
+            return false;
+        }
+        foreach ($records as $record) {
+            if (!self::hostsInstance($user, $record->getDbInstanceId())) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     public function indexAction()
@@ -89,8 +154,9 @@ class PlayouthistoryController extends Zend_Controller_Action
 
         $user = Application_Model_User::getCurrentUser();
         $this->view->userType = $user->getType();
-        // role audit R9 - hide the edit tools from those who may only view
-        $script .= ' var rtHistoryCanEdit = ' . ($user->isAdminOrPM() ? 'true' : 'false') . ';';
+        // role audit R9 - edit tools for Program Managers, Admins and DJs
+        // (a DJ's Show Summary lists only the shows they host)
+        $script .= ' var rtHistoryCanEdit = ' . ($user->isAdminOrPM() || $user->isHost() ? 'true' : 'false') . ';';
         $this->view->headScript()->appendScript($script);
     }
 
