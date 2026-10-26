@@ -527,7 +527,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   +0,2 s; Rock Hour 7 vor verschiebbarer Sendung +447 s, ohne Folgesendung
   weggelassen), Wiederholung der Proben 1208/242/873 unverändert, keine
   Testinstanz übrig.  Handbuch AUTOLOADING_PLAYLISTS, DELAYED_START und
-  LIBRARY ×4, Architektur §17-Nachtrag (0.96).
+  LIBRARY ×4, Architektur §17-Nachtrag (0.96).  Commit 1d82346.
 
 - **Autoloading: Auto DJ kam der Befüllung zuvor, Füll-Outros verdrängten
   den Inhalt (2026-10-26, Operator-Go)** — „Vinyl Hour“ (16:00) sollte
