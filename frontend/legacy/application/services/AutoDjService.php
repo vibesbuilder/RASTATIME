@@ -124,16 +124,37 @@ class Application_Service_AutoDjService
         // Upcoming instances that have more than FILL_THRESHOLD seconds
         // of unscheduled tail.  We compare in seconds to avoid
         // interval-arithmetic pitfalls on the Propel side.
+        //
+        // RASTATIME 2026-10-26 - never before the show's own filling: an
+        // autoloading show is skipped until its build is done (the build
+        // and this pass both look 1 h ahead, but this pass runs later in
+        // the same cycle - on 2026-10-26 the 1-h mark fell between the two
+        // and Auto DJ filled "Vinyl Hour" 90 s before its autoloading;
+        // request and traffic-alert shows, filled incrementally, are never
+        // marked built and stay Auto DJ's no-go), and a repeat is skipped
+        // until it holds its copy while the repeat fill may still come
+        // (it waits for the source's recording up to 5 min before start).
+        $repeatClause = Application_Service_RepeatFillService::columnsReady()
+            ? "  AND NOT (s.repeat_of_show_id IS NOT NULL AND si.filled_from_instance_id IS NULL "
+                . "AND si.starts > (NOW() AT TIME ZONE 'UTC' + make_interval(secs => :margin))) "
+            : '';
         $sql = "SELECT si.id FROM cc_show_instances si "
+            . "JOIN cc_show s ON s.id = si.show_id "
             . "WHERE si.starts > (NOW() AT TIME ZONE 'UTC') "
             . "  AND si.starts < (NOW() AT TIME ZONE 'UTC' + INTERVAL '"
             . self::LOOKAHEAD_SECS . " seconds') "
             . "  AND si.modified_instance = FALSE "
-            . "  AND EXTRACT(EPOCH FROM (si.ends - si.starts) - COALESCE(si.time_filled, INTERVAL '0')) > :threshold";
+            . "  AND EXTRACT(EPOCH FROM (si.ends - si.starts) - COALESCE(si.time_filled, INTERVAL '0')) > :threshold "
+            . "  AND NOT (COALESCE(s.has_autoplaylist, FALSE) AND NOT COALESCE(si.autoplaylist_built, FALSE)) "
+            . $repeatClause;
+        $params = [':threshold' => self::FILL_THRESHOLD_SECS];
+        if ($repeatClause !== '') {
+            $params[':margin'] = Application_Service_RepeatFillService::RECORDING_WAIT_MARGIN_SECONDS;
+        }
         try {
             $rows = Application_Common_Database::prepareAndExecute(
                 $sql,
-                [':threshold' => self::FILL_THRESHOLD_SECS],
+                $params,
                 Application_Common_Database::ALL
             );
         } catch (Throwable $e) {

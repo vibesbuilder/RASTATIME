@@ -210,6 +210,16 @@ Common reasons a show ends up short:
   a fixed number of items.
 - The operator forgot to attach an autoplaylist at all.
 
+**Never before the show's own fill (since 2026-10-26).**  A show
+with an autoloading playlist is skipped until its build has run,
+and a repeat ("Repeat of show") until it holds its copy - as long
+as the copy may still come (up to 5 minutes before the start).
+Song-request and traffic-alert shows, which are filled step by step
+just in time, are never topped up.  Before, the fill-pass could
+reach a show a moment before its autoloading did and fill it with
+the Auto-DJ playlist (2026-10-26, "Vinyl Hour": filled at 15:00:00,
+its autoloading found it full at 15:01:30).
+
 ### Why 5 seconds and not a stricter threshold?
 
 The outro reserve (see [Autoloading

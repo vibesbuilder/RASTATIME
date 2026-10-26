@@ -5,6 +5,10 @@ Draft version: 0.94
 Date: 2026-10-26
 
 > **Revision history**
+> - **0.95 (2026-10-26)** - **Filler outro after the content; Auto DJ waits
+>   for the show's own fill** (exact-fill and §23.20 addenda): an outro with a
+>   "time remaining" block follows the content against the rest; the
+>   fill-pass skips unbuilt autoloading shows and pending repeat copies.
 > - **0.94 (2026-10-26)** - **UI secondary colour as a setting** (§23.43
 >   addendum): `--rt-secondary` palette next to the primary one, same style
 >   block; buttons darkened only to WCAG AA contrast for white text.
@@ -3739,6 +3743,17 @@ Rehearsals on temporary instances (`C:/Temp/optd/ap_fill_test.php
 end in most runs, about 6 s at worst, never an overbook; the 65-min
 webstream of test outro 49 is left out as "does not fit".
 
+**Addendum 2026-10-26 - a filler outro follows the content.**  An outro
+playlist that contains a "time remaining" smart block (the station's
+"Tagesplaylist ... Outro" fillers, alone or behind an outro jingle) is
+no fixed end: placed first (step 2) it filled the whole slot and the
+autoloading content found no room (23 shows; "Vinyl Hour 247", 59:53
+in 60 min, and four shows since 2026-10-23 without any content).
+`fillInstance()` now inserts such an outro as step 5, after the content
+and the top-up rounds, in its own order against what is left - the
+LibreTime order (content, outro jingle, music to the end).
+`playlistContainsRemainingBlock()` decides; fixed outros keep step 2.
+
 ### 23.20 Auto DJ
 
 **Status:** Shipped (2026-05-21, frontend `legacy/` only — no
@@ -3999,6 +4014,19 @@ sibling AJAX endpoints for the logo:
 
 ---
 
+
+**Addendum 2026-10-26 - the fill-pass waits for the show's own fill.**
+The autoloading build and the fill-pass both select instances starting
+within the next hour, but the fill-pass queries later in the same
+cycle: when the 1-h mark falls between the two queries, the fill-pass
+sees an empty instance the build has not seen yet and fills it with
+the Auto-DJ playlist; the build then finds it full (2026-10-26
+15:00:00 / 15:01:30, "Vinyl Hour").  The fill-pass query now skips
+instances of autoloading shows whose `autoplaylist_built` is still false
+- which also keeps it away from request and traffic-alert shows, which
+the build deliberately never marks built - and repeat instances without
+`filled_from_instance_id` while `RepeatFillService` may still copy into
+them (start more than `RECORDING_WAIT_MARGIN_SECONDS` away).
 ### 23.21 Smart Block: Exclude-Played-Lately Filter
 
 **Context.**  Even with the existing `only_unplayed` toggle

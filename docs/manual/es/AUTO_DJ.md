@@ -142,6 +142,17 @@ recorre cada programa próximo cuya cola terminó más de 5
 segundos corta de su slot. Para cada uno, agrega la
 playlist Auto-DJ al final.
 
+**Nunca antes del llenado propio del programa (desde el
+26/10/2026).**  Un programa con playlist de autoloading se omite
+hasta que su construcción se haya ejecutado, y una repetición
+(«Repeat of show») hasta que tenga su copia - mientras la copia aún
+pueda llegar (hasta 5 minutos antes del inicio).  Los programas de
+song requests y traffic alerts, que se llenan paso a paso justo a
+tiempo, nunca se completan.  Antes, el fill-pass podía alcanzar un
+programa un momento antes que su autoloading y llenarlo con la
+playlist de Auto DJ (26/10/2026, «Vinyl Hour»: llenado a las
+15:00:00, el autoloading lo encontró lleno a las 15:01:30).
+
 ### Por qué 5 segundos y no un umbral más estricto?
 
 La reserva de outro deja intencionalmente hasta 5 s de

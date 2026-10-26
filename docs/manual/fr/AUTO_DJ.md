@@ -178,6 +178,18 @@ courte :
 - L'opérateur a oublié d'attacher une autoplaylist tout
   court.
 
+**Jamais avant le remplissage propre de l'émission (depuis le
+26/10/2026).**  Une émission avec une playlist d'autoloading est
+ignorée jusqu'à ce que sa construction ait eu lieu, et une
+rediffusion (« Repeat of show ») jusqu'à ce qu'elle ait sa copie -
+tant que la copie peut encore venir (jusqu'à 5 minutes avant le
+début).  Les émissions song-request et traffic-alert, remplies pas
+à pas juste à temps, ne sont jamais complétées.  Auparavant, le
+fill-pass pouvait atteindre une émission un instant avant son
+autoloading et la remplir avec la playlist Auto DJ (26/10/2026,
+« Vinyl Hour » : remplie à 15:00:00, l'autoloading l'a trouvée
+pleine à 15:01:30).
+
 ### Pourquoi 5 secondes et pas un seuil plus strict ?
 
 La réserve d'outro (voir

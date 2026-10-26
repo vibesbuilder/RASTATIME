@@ -505,6 +505,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Autoloading: Auto DJ kam der Befüllung zuvor, Füll-Outros verdrängten
+  den Inhalt (2026-10-26, Operator-Go)** — „Vinyl Hour“ (16:00) sollte
+  über den Smart-Block „Vinyl Hour“ (Album, neuester, 1 Titel)
+  „Vinyl Hour 247“ (59:53) bekommen und lief mit Auto-DJ-Musik.  (1)
+  Autoloading und der Auto-DJ-Fill-Pass schauen beide 1 h voraus, der
+  Fill-Pass läuft im selben Durchlauf aber später: um 15:00:00 fiel die
+  1-h-Grenze zwischen die beiden Abfragen, Auto DJ füllte die leere
+  Sendung, das Autoloading fand sie um 15:01:30 voll vor (0 Zeilen).
+  `AutoDjService::runFillPass` lässt jetzt Sendungen mit noch nicht
+  gebautem Autoloading aus (damit auch Song-Request- und
+  Traffic-Alert-Sendungen, die nie als gebaut markiert werden) und
+  Wiederholungen ohne Kopie, solange die Kopie noch kommen kann (bis 5 min
+  vor Beginn, Warten auf die Aufnahme).  (2) Das Outro der Sendung,
+  „Tagesplaylist World Outro“, ist ein „time remaining“-Füller; die
+  exakte Befüllung (01.10.) setzt das Outro zuerst, es belegte die ganze
+  Stunde - auch ohne (1) wäre 247 nicht hineingekommen.  23 Sendungen
+  haben solche Outros, seit 23.10. verdrängten sie viermal den ganzen
+  Inhalt (z. B. 25.10. 18:07 „Talk Is Gold“).  Ein Outro mit
+  „time remaining“-Block kommt jetzt nach dem Inhalt, in seiner
+  Reihenfolge, gegen die Restzeit (Inhalt → Outro-Jingle → Musik bis zum
+  Ende, wie in LibreTime); feste Outros (StationID, Dayteaser) bleiben das
+  exakte Ende.  Proben an temporären Instanzen (`ap_fill_test.php
+  --live`, Februar 2027, wieder gelöscht): Vinyl Hour → 247 + 6,4 s
+  frei, Auto-DJ-Block füllt sie nicht (overflow 0); Testsendung 242
+  StationID-Outro unverändert; „Arguments Corner“
+  (keine Folge in der Bibliothek) → Intro, Outro-Jingle, Pop-Füller.
+  Fill-Pass-Abfrage lesend über 48 h geprüft
+  (`C:/Temp/optd/autodj_fillpass_probe.php`).  Handbuch
+  AUTOLOADING_PLAYLISTS und AUTO_DJ ×4, Architektur §23.20/§17 Nachtrag
+  (0.95).
+
 - **Listener Stats: Erfassungsstatus bleibt nicht mehr hängen, nennt die
   echte Ursache (2026-10-26, Operator-Go)** — „Stream Data Collection
   Status“ zeigte für alle drei Streams „Please make sure admin

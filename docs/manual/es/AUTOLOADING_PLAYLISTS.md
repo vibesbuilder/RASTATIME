@@ -135,6 +135,18 @@ sobrerreserva.
 > rows, x s free at the end» resume cada build; `ap_fill_test.php`
 > (C:\Temp\optd) ensaya un llenado en una instancia temporal.
 
+**Un outro de relleno sigue al contenido (desde el 26/10/2026).**
+Una Outro Playlist que contiene un smart block *Limit to: Time
+remaining in show* - las playlists «Tagesplaylist ... Outro», solas
+o detrás de un jingle de outro de la emisora - es un relleno, no un
+final fijo.  Se coloca **después** del contenido, en su propio
+orden, y llena solo lo que queda: contenido → jingle de outro →
+música hasta el final, como en LibreTime.  Antes se colocaba
+primero como cualquier outro, ocupaba todo el slot y no dejaba
+sitio al contenido (un episodio de 59:53 en un programa de 60
+minutos quedaba fuera).  Un outro sin un bloque así (StationID,
+Dayteaser) sigue siendo el final fijo del paso 2.
+
 ---
 
 ## 5. Elegir la playlist correcta para autoloading

@@ -228,6 +228,17 @@ Häufige Gründe, warum eine Sendung kurz endet:
 - Der Operator vergaß überhaupt, eine Autoplaylist
   anzuhängen.
 
+**Nie vor der eigenen Befüllung der Sendung (seit 26.10.2026).**
+Eine Sendung mit Autoloading-Playlist wird ausgelassen, bis ihre
+Befüllung gelaufen ist, und eine Wiederholung („Repeat of show“),
+bis sie ihre Kopie hat - solange die Kopie noch kommen kann (bis 5
+Minuten vor Beginn).  Song-Request- und Traffic-Alert-Sendungen, die
+schrittweise kurz vor dem Abspielen befüllt werden, werden nie
+aufgefüllt.  Vorher konnte der Fill-Pass eine Sendung einen Moment
+vor ihrem Autoloading erreichen und mit der Auto-DJ-Playlist füllen
+(26.10.2026, „Vinyl Hour“: um 15:00:00 gefüllt, das Autoloading
+fand sie um 15:01:30 voll vor).
+
 ### Warum 5 Sekunden und nicht ein strengerer Schwellenwert?
 
 Die Outro-Reserve (siehe

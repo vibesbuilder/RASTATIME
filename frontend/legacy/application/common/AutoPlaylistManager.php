@@ -155,6 +155,14 @@ class AutoPlaylistManager
      * inserted beyond the show's end, so nothing has to be trimmed.
      * "Repeat until full" repeats step 3 while it makes progress.
      *
+     * RASTATIME 2026-10-26 - an outro with a "time remaining" smart block
+     * (the "Tagesplaylist ... Outro" fillers, optionally behind a station
+     * jingle) is a filler, not a fixed end: inserted first it took the
+     * whole show and crowded out the autoloading content ("Vinyl Hour
+     * 247", "Talk Is Gold" 2026-10-25).  Such an outro now follows the
+     * content in its own order against what is left (5.), as in LibreTime;
+     * an outro without one stays the fixed end of step 2.
+     *
      * @param int      $instanceId
      * @param null|int $introId
      * @param null|int $outroId
@@ -192,8 +200,9 @@ class AutoPlaylistManager
             );
         }
 
-        // 2. outro at the end
-        if ($outroId !== null) {
+        // 2. outro at the end (a filler outro waits for step 5)
+        $outroFills = $outroId !== null && self::playlistContainsRemainingBlock($outroId);
+        if ($outroId !== null && !$outroFills) {
             $rows = self::instanceRows($instanceId);
             $gap = $showEnd - self::chainEnd($rows, $showStart, $house);
             Application_Model_Block::setFillContext($instanceId, $showId, $slotAt($showEnd));
@@ -242,6 +251,17 @@ class AutoPlaylistManager
                 }
                 $counts['topup'] += $added;
             }
+        }
+
+        // 5. a filler outro after the content, in its own order, against
+        //    the time that is left
+        if ($outroFills) {
+            $rows = self::instanceRows($instanceId);
+            $gap = $showEnd - self::chainEnd($rows, $showStart, $house);
+            Application_Model_Block::setFillContext($instanceId, $showId, $slotAt(self::chainEnd($rows, $showStart, $house)));
+            $counts['outro'] = self::insertFitting(
+                $si, $rows, count($rows), self::expandPlaylist($outroId, $gap, false, self::neighbourFile($rows, count($rows) - 1), false), $showStart, $showEnd, $house, 'outro'
+            );
         }
         } finally {
             Application_Model_Block::clearFillContext();
@@ -514,6 +534,31 @@ class AutoPlaylistManager
         $si->addFilesAfter($afterRowId, $files);
 
         return count($accepted);
+    }
+
+    /**
+     * RASTATIME 2026-10-26 - true if playlist $playlistId contains a smart
+     * block limited to the "time remaining" of the show: as an outro it is a
+     * filler that follows the content (see fillInstance).
+     */
+    public static function playlistContainsRemainingBlock($playlistId)
+    {
+        if (empty($playlistId)) {
+            return false;
+        }
+        $row = Application_Common_Database::prepareAndExecute(
+            "SELECT 1
+               FROM cc_playlistcontents pc
+               JOIN cc_blockcriteria bc ON bc.block_id = pc.block_id
+              WHERE pc.playlist_id = :pid
+                AND bc.criteria = 'limit'
+                AND bc.modifier = 'remaining'
+              LIMIT 1",
+            [':pid' => (int) $playlistId],
+            'column'
+        );
+
+        return !empty($row);
     }
 
     /**

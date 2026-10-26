@@ -175,6 +175,18 @@ eine Überbuchung.
 > `ap_fill_test.php` (C:\Temp\optd) probt eine Befüllung an einer
 > temporären Instanz.
 
+**Ein Füll-Outro folgt dem Inhalt (seit 26.10.2026).**  Eine
+Outro-Playlist mit einem Smart-Block *Limit to: Time remaining in
+show* - die Playlists „Tagesplaylist ... Outro“, allein oder hinter
+einem Sender-Outro-Jingle - ist ein Füller, kein festes Ende.  Sie
+kommt **nach** dem Inhalt, in ihrer eigenen Reihenfolge, und füllt
+nur, was übrig ist: Inhalt → Outro-Jingle → Musik bis zum Ende, wie
+in LibreTime.  Vorher wurde sie wie jedes Outro zuerst gesetzt,
+belegte den ganzen Slot und ließ keinen Platz für den Inhalt (eine
+Folge von 59:53 in einer 60-Minuten-Sendung fiel weg).  Ein Outro
+ohne einen solchen Block (StationID, Dayteaser) bleibt das feste
+Ende aus Schritt 2.
+
 ---
 
 ## 5. Die richtige Playlist für Autoloading auswählen

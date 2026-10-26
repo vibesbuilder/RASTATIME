@@ -179,6 +179,19 @@ une surréservation.
 > `ap_fill_test.php` (C:\Temp\optd) répète un remplissage sur une
 > instance temporaire.
 
+**Un outro de remplissage suit le contenu (depuis le 26/10/2026).**
+Une Outro Playlist qui contient un smart block *Limit to: Time
+remaining in show* - les playlists « Tagesplaylist ... Outro »,
+seules ou derrière un jingle d'outro de station - est un
+remplissage, pas une fin fixe.  Elle est placée **après** le
+contenu, dans son propre ordre, et ne remplit que ce qui reste :
+contenu → jingle d'outro → musique jusqu'à la fin, comme dans
+LibreTime.  Auparavant, elle était placée en premier comme tout
+outro, occupait tout le créneau et ne laissait pas de place au
+contenu (un épisode de 59:53 dans une émission de 60 minutes était
+laissé de côté).  Un outro sans un tel bloc (StationID, Dayteaser)
+reste la fin fixe de l'étape 2.
+
 ---
 
 ## 5. Choisir la bonne playlist pour autoloading

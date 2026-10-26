@@ -162,6 +162,18 @@ is possible), never an overbook.
 > rows, x s free at the end" sums up every build; `ap_fill_test.php`
 > (C:\Temp\optd) rehearses a fill on a temporary instance.
 
+**A filler outro follows the content (since 2026-10-26).**  An
+Outro Playlist that contains a smart block with *Limit to: Time
+remaining in show* - the "Tagesplaylist ... Outro" playlists,
+alone or behind a station outro jingle - is a filler, not a fixed
+end.  It is placed **after** the content, in its own order, and
+fills only what is left: content → outro jingle → music up to the
+end, as in LibreTime.  Before, it was placed first like any outro,
+took the whole slot and left no room for the content (an
+episode of 59:53 in a 60-minute show was left out).  An outro
+without such a block (StationID, Dayteaser) stays the fixed end of
+step 2.
+
 ---
 
 ## 5. Picking the right playlist for autoloading
