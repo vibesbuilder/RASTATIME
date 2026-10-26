@@ -275,7 +275,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Gefunden bei der Suche nach übrigen Blautönen (22 Seiten in Brave
   gescannt; sonst nur die Datenfarben im Listener-Stats-Diagramm, die
   bleiben).  Live geprüft (aktiv, inaktiv, Hover, Reiterwechsel).
-  Handbuch SETTINGS ×4: Primärfarbe nennt den aktiven Reiter.
+  Handbuch SETTINGS ×4: Primärfarbe nennt den aktiven Reiter.  Commit cb18def.
 
 - **Widgets in der Stationssprache (2026-10-25, Operator)** — Datum,
   Monats- und Wochentagsnamen samt Abkürzungen folgten bisher der
