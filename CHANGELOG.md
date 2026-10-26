@@ -263,6 +263,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Reiter in Playout History und Kopfzeile der Status-Tabelle im dunklen
+  Design (2026-10-26, Operator)** — beide kamen noch im hellen
+  jQuery-UI-Theme „Redmond“: Reiter Log Sheet / File Summary / Show
+  Summary hellblau mit blauer Schrift, der aktive weiß mit oranger Schrift;
+  die Spaltenköpfe Service / Description / Status unter Settings → Status
+  hellblau mit blauer Schrift.  Jetzt Reiter `#4a4a4a` / Schrift `#ccc`,
+  Hover und Tastaturfokus `#505050` / weiß, der aktive Reiter geht in den
+  `#3a3a3a`-Rahmen über und trägt oben eine Linie in der Primärfarbe; die
+  Status-Kopfzeile wie die übrigen Tabellenköpfe `#575757` / `#ccc`.
+  Gefunden bei der Suche nach übrigen Blautönen (22 Seiten in Brave
+  gescannt; sonst nur die Datenfarben im Listener-Stats-Diagramm, die
+  bleiben).  Live geprüft (aktiv, inaktiv, Hover, Reiterwechsel).
+  Handbuch SETTINGS ×4: Primärfarbe nennt den aktiven Reiter.
+
 - **Widgets in der Stationssprache (2026-10-25, Operator)** — Datum,
   Monats- und Wochentagsnamen samt Abkürzungen folgten bisher der
   Browsersprache der Besucher (ein deutscher Browser zeigte „25. Okt.“

@@ -3388,6 +3388,16 @@ tfoot tr th    {
     text-align:left;
     border-left-width: 0 !important;
 }
+/* RASTATIME 2026-10-26 - the column header row (Service / Description /
+   Status) like the data tables' headers (#575757 / #ccc) instead of
+   redmond's light blue with blue text (operator) */
+.statustable tr.ui-state-default {
+    background: #575757;
+    border-color: #575757;
+}
+.statustable tr.ui-state-default td {
+    color: #ccc;
+}
 .checked-icon    {
     width:100%;
     margin:0;
@@ -5408,6 +5418,36 @@ div.dt-button-collection .dt-button > span {
 #his-tabs.ui-widget-content {
     background: #3a3a3a;
     border-color: #3a3a3a;
+}
+
+/* RASTATIME 2026-10-26 - the tabs themselves in the dark look (operator):
+   redmond painted them light blue with blue text and the active one white
+   with orange text.  Inactive #4a4a4a / #ccc, hover and keyboard focus
+   #505050 / #fff, the active tab merges into the #3a3a3a frame below and
+   carries a line in the primary colour on top. */
+#his-tabs .ui-tabs-nav li.ui-state-default {
+    background: #4a4a4a;
+    border-color: #3a3a3a;
+}
+#his-tabs .ui-tabs-nav li.ui-state-default a {
+    color: #ccc;
+}
+#his-tabs .ui-tabs-nav li.ui-state-hover,
+#his-tabs .ui-tabs-nav li.ui-state-focus {
+    background: #505050;
+    border-color: #3a3a3a;
+}
+#his-tabs .ui-tabs-nav li.ui-state-hover a,
+#his-tabs .ui-tabs-nav li.ui-state-focus a {
+    color: #fff;
+}
+#his-tabs .ui-tabs-nav li.ui-state-active {
+    background: #3a3a3a;
+    border-color: #3a3a3a;
+    box-shadow: inset 0 2px 0 var(--rt-accent);
+}
+#his-tabs .ui-tabs-nav li.ui-state-active a {
+    color: #fff;
 }
 
 /* Same redmond near-white on the "+ New Show" panel (operator report
