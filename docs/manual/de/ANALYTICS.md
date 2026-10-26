@@ -119,6 +119,18 @@ Aggregator erscheinen als **eine** Verbindung.
 > früheren Builds blieb dieses Diagramm leer, weil kein Collector
 > lief.)*
 
+**Stream Data Collection Status** (der Kasten rechts, seit
+26.10.2026): eine Zeile je aktivem Stream mit seinem Mount.  **OK**
+heißt, die letzte Abfrage hat geklappt.  Sonst nennt die Zeile Ursache
+und Zeitpunkt: Icecast lehnt Admin-Benutzer/Passwort ab (prüfen Sie sie
+unter **Settings → Streams**), ist nicht erreichbar, antwortet nicht
+rechtzeitig, liefert eine unlesbare Statistikseite oder antwortet mit
+einem anderen Fehler.  Mit der ersten erfolgreichen Abfrage nach dem
+Problem springt die Zeile von selbst auf OK zurück - vor dem 26.10.2026
+blieb ein Fehler dauerhaft stehen und lautete immer „admin
+user/password prüfen“.  Ein Stream ohne Admin Password meldet, dass für
+ihn keine Statistik erfasst wird.
+
 **Leeres Diagramm?** In absteigender Wahrscheinlichkeit:
 
 1. Der Dienst **RASTATIME-PLAYOUT** läuft nicht (er beherbergt

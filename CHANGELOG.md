@@ -505,6 +505,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Listener Stats: Erfassungsstatus bleibt nicht mehr hängen, nennt die
+  echte Ursache (2026-10-26, Operator-Go)** — „Stream Data Collection
+  Status“ zeigte für alle drei Streams „Please make sure admin
+  user/password is correct“, obwohl die Erfassung seit dem 24.10. 12:24
+  lief (715 Messpunkte je Stream in 24 h).  Ursache: 21 Abfragen mit 401
+  am 24.10. 12:20–12:22 während des Passwortwechsels, und der Sammler
+  (`history/stats.py`, LibreTime-4-Umbau) meldete nur Fehler, nie „OK“ —
+  ein Fehler blieb für immer stehen; die Seite machte zudem aus jedem
+  Fehler den Passwort-Hinweis.  Jetzt meldet der Sammler jede
+  Zustandsänderung einmal (Erholung als „OK“, Fehler als
+  `art|UTC-Zeit|Detail` mit auth / unreachable / timeout / invalid /
+  http; keine Schreibzugriffe dazwischen, ein fehlgeschlagener Bericht
+  wird beim nächsten Durchlauf wiederholt) und unter der echten
+  Stream-Nummer (`stream_id` aus `stream_output_N`, vorher die Position
+  in der Liste der aktiven Streams).  Die Seite zeigt nur aktive Streams
+  in Reihenfolge mit Mount, die Ursache mit Zeitpunkt in der Zeitzone
+  des Benutzers, einen Stream ohne Admin-Passwort als „wird nicht
+  erfasst“, alles escaped.  Tests: Playout-Suite 828 grün (9 neue),
+  Text-Probe `C:/Temp/optd/listenerstat_status_probe.php` (EN/DE).
+  Wirksam für den Sammler nach PLAYOUT-Neustart, die neuen
+  Übersetzungen nach Apache-Neustart.  Handbuch ANALYTICS ×4.
+
 - **API v2: anonymer Aufruf von `/api/v2/users` ergab 500 (2026-10-25, `e83fc00`)** —
   `IsAdminOrOwnUser` rief `is_superuser()` auch beim anonymen Benutzer auf,
   bei dem es ein Wert statt einer Methode ist (`TypeError`).  Jetzt

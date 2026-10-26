@@ -122,6 +122,18 @@ derrière un relais, un CDN ou un agrégateur apparaissent comme
 > versions antérieures, ce graphique restait vide car aucun
 > collecteur ne tournait.)*
 
+**Stream Data Collection Status** (l'encadré à droite, depuis le
+26/10/2026) : une ligne par flux actif avec son point de montage.
+**OK** signifie que la dernière requête a réussi.  Sinon, la ligne
+indique la cause et depuis quand : Icecast refuse l'utilisateur/mot de
+passe admin (vérifiez-les dans **Settings → Streams**), est
+injoignable, ne répond pas à temps, envoie une page de statistiques
+illisible ou répond par une autre erreur.  À la première requête
+réussie après le problème, la ligne revient d'elle-même à OK - avant
+le 26/10/2026, une erreur restait affichée pour de bon et disait
+toujours « vérifier utilisateur/mot de passe admin ».  Un flux sans
+Admin Password indique qu'aucune statistique n'est collectée pour lui.
+
 **Graphique vide ?** Par ordre de probabilité :
 
 1. Le service **RASTATIME-PLAYOUT** ne tourne pas (c'est lui qui

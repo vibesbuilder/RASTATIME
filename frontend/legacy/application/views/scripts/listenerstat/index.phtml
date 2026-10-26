@@ -9,9 +9,10 @@
     <div id="errorStatus" style="float:right; width: 400px">
         <h3><?php echo _("Stream Data Collection Status") ?></h3>
         <fieldset class="padded stream-setting-global">
-            <?php foreach ($this->errorStatus as $k => $v) { ?>
-                <div class='stream-status <?php echo ($v == 'OK') ? 'status-good' : 'status-error' ?>'>
-                    <p><?php echo $k ?>: <?php echo $v ?></p>
+            <?php /* RASTATIME 2026-10-26 - per enabled stream, real cause, escaped */ ?>
+            <?php foreach ($this->errorStatus as $s) { ?>
+                <div class='stream-status <?php echo $s['ok'] ? 'status-good' : 'status-error' ?>'>
+                    <p><?php echo $this->escape($s['label']) ?>: <?php echo $this->escape($s['text']) ?></p>
                 </div>
             <?php } ?>
         </fieldset>

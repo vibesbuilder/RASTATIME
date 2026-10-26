@@ -119,6 +119,18 @@ relay, CDN o agregador aparecen como **una sola** conexión.
 > anteriores este gráfico quedaba vacío porque no corría ningún
 > colector.)*
 
+**Stream Data Collection Status** (el recuadro a la derecha, desde el
+26/10/2026): una línea por flujo activo con su punto de montaje.
+**OK** significa que la última consulta funcionó.  Si no, la línea
+indica la causa y desde cuándo: Icecast rechaza el usuario/contraseña
+de admin (compruébelos en **Settings → Streams**), no está accesible,
+no responde a tiempo, envía una página de estadísticas ilegible o
+responde con otro error.  Con la primera consulta correcta tras el
+problema la línea vuelve sola a OK - antes del 26/10/2026 un error se
+quedaba para siempre y decía siempre «comprobar usuario/contraseña de
+admin».  Un flujo sin Admin Password indica que no se recogen
+estadísticas para él.
+
 **¿Gráfico vacío?** En orden de probabilidad:
 
 1. El servicio **RASTATIME-PLAYOUT** no está en ejecución (él

@@ -106,6 +106,17 @@ as **one** connection.
 > *(Restored on Windows in RASTATIME 2026-08-30 — on earlier builds
 > this chart stayed empty because no collector was running.)*
 
+**Stream Data Collection Status** (the box on the right, since
+2026-10-26): one line per enabled stream with its mount.  **OK** means
+the last query worked.  Otherwise the line names the cause and since
+when: Icecast rejects the admin user/password (check them in
+**Settings → Streams**), is not reachable, does not answer in time,
+sends an unreadable statistics page, or answers with another error.
+With the first successful query after the problem the line returns to
+OK by itself - before 2026-10-26 an error stayed on the page for good
+and always read "check admin user/password".  A stream without an
+Admin Password says that no statistics are collected for it.
+
 **Empty chart?** In order of likelihood:
 
 1. The **RASTATIME-PLAYOUT** service is not running (it hosts the

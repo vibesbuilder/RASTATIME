@@ -375,12 +375,15 @@ def _resolve_show_crossfade_seconds() -> float:
     return fallback
 
 
-def _read_stream_outputs() -> List[Dict]:
+def _read_stream_outputs(numbered: bool = False) -> List[Dict]:
     """
     Return a list of enabled stream output dicts from ``cc_pref``.
 
     Each dict contains: host, port, mount, pass, user, type, bitrate,
     channels, enable ("true").  Disabled streams are excluded.
+    ``numbered`` adds ``stream_id`` (the N of ``stream_output_N``) for
+    the listener-stats collector; the other callers keep the plain dicts
+    (the settings fingerprint hashes them).
     """
     try:
         from libretime_api.core.models import Preference  # type: ignore[import-untyped]
@@ -396,6 +399,8 @@ def _read_stream_outputs() -> List[Dict]:
             try:
                 data = json.loads(raw)
                 if str(data.get("enable", "")).lower() == "true":
+                    if numbered:
+                        data["stream_id"] = n
                     outputs.append(data)
                     logger.debug("Found enabled stream output %d: %s", n, data)
             except (json.JSONDecodeError, AttributeError) as exc:
@@ -1329,7 +1334,7 @@ def main() -> None:
             config=config,
             legacy_client=api_client_v1,
             outputs_provider=lambda: outputs_from_stream_settings(
-                _read_stream_outputs()
+                _read_stream_outputs(numbered=True)
             ),
         )
         stats_thread.start()

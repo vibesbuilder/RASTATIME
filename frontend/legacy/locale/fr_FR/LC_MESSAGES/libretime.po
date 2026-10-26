@@ -6956,3 +6956,46 @@ msgstr "Veuillez saisir une couleur au format #rrggbb (p. ex. #1adeff)."
 #: application/forms/GeneralPreferences.php (RASTATIME secondary color)
 msgid "The second color of the interface: the show progress bar in the header, the marker of the active entry in the dashboard menu and in the sub-menus, the current track in Scheduled Shows, and the buttons New, Add and Upload (darkened as far as their white text needs). Empty resets to the default light blue."
 msgstr "La deuxième couleur de l'interface : la barre de progression de l'émission dans l'en-tête, le repère de l'entrée active du menu du tableau de bord et des sous-menus, la piste en cours dans Scheduled Shows, et les boutons New, Add et Upload (assombris autant que leur texte blanc l'exige). Vide rétablit le bleu clair par défaut."
+
+#: application/controllers/ListenerstatController.php (RASTATIME)
+#, c-format
+msgid "Stream %d"
+msgstr "Flux %d"
+
+#: application/controllers/ListenerstatController.php (RASTATIME)
+msgid "No admin password on Settings -> Streams: listener statistics are not collected."
+msgstr "Aucun mot de passe admin dans Settings -> Streams : les statistiques d'auditeurs ne sont pas collectées."
+
+#: application/controllers/ListenerstatController.php (RASTATIME)
+msgid "Waiting for the first query."
+msgstr "En attente de la première requête."
+
+#: application/controllers/ListenerstatController.php (RASTATIME)
+#, c-format
+msgid "Collection failed: %s"
+msgstr "Échec de la collecte : %s"
+
+#: application/controllers/ListenerstatController.php (RASTATIME)
+#, c-format
+msgid "Icecast has rejected the admin user/password since %s. Please check them on Settings -> Streams."
+msgstr "Icecast refuse l'utilisateur/mot de passe admin depuis %s. Veuillez les vérifier dans Settings -> Streams."
+
+#: application/controllers/ListenerstatController.php (RASTATIME)
+#, c-format
+msgid "Icecast has not been reachable since %s."
+msgstr "Icecast est injoignable depuis %s."
+
+#: application/controllers/ListenerstatController.php (RASTATIME)
+#, c-format
+msgid "Icecast has not answered in time since %s."
+msgstr "Icecast ne répond plus à temps depuis %s."
+
+#: application/controllers/ListenerstatController.php (RASTATIME)
+#, c-format
+msgid "Icecast has sent an unreadable statistics page since %s."
+msgstr "Icecast envoie une page de statistiques illisible depuis %s."
+
+#: application/controllers/ListenerstatController.php (RASTATIME)
+#, c-format
+msgid "Icecast has answered with an error since %s: %s"
+msgstr "Icecast répond par une erreur depuis %s : %s"

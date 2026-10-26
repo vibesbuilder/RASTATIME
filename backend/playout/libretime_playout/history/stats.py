@@ -47,6 +47,9 @@ class MountedOutput:
     admin_password: Optional[str] = None
     enabled: bool = True
     kind: str = "icecast"
+    # RASTATIME 2026-10-26 - the N of stream_output_N, so the collection
+    # status lands on the right stream even when an earlier one is off
+    stream_id: Optional[int] = None
 
 
 def outputs_from_stream_settings(settings: List[Dict]) -> List[MountedOutput]:
@@ -75,6 +78,10 @@ def outputs_from_stream_settings(settings: List[Dict]) -> List[MountedOutput]:
             port = int(entry.get("port", 8000))
         except (TypeError, ValueError):
             port = 8000
+        try:
+            stream_id: Optional[int] = int(entry["stream_id"])
+        except (KeyError, TypeError, ValueError):
+            stream_id = None
         outputs.append(
             MountedOutput(
                 mount=mount,
@@ -82,9 +89,35 @@ def outputs_from_stream_settings(settings: List[Dict]) -> List[MountedOutput]:
                 port=port,
                 admin_user=str(entry.get("admin_user", "admin") or "admin"),
                 admin_password=admin_password,
+                stream_id=stream_id,
             )
         )
     return outputs
+
+
+def status_from_exception(exception: Exception, when: datetime) -> str:
+    """
+    RASTATIME 2026-10-26 - the collection status of a failed poll as
+    ``kind|YYYY-MM-DD HH:MM:SS (UTC)|detail`` for Analytics -> Listener
+    Stats, which turns the kind into its own message: ``auth`` (401/403),
+    ``unreachable``, ``timeout``, ``invalid`` (no stats XML), ``http``
+    (any other HTTP error), ``error``.
+    """
+    if isinstance(exception, requests.exceptions.HTTPError):
+        response = exception.response
+        code = response.status_code if response is not None else None
+        kind = "auth" if code in (401, 403) else "http"
+    # ConnectTimeout is a ConnectionError too: it counts as a timeout
+    elif isinstance(exception, requests.exceptions.Timeout):
+        kind = "timeout"
+    elif isinstance(exception, requests.exceptions.ConnectionError):
+        kind = "unreachable"
+    elif isinstance(exception, etree.XMLSyntaxError):
+        kind = "invalid"
+    else:
+        kind = "error"
+    detail = " ".join(str(exception).split())[:300]
+    return f"{kind}|{when:%Y-%m-%d %H:%M:%S}|{detail}"
 
 
 # pylint: disable=too-few-public-methods
@@ -99,6 +132,24 @@ class StatsCollector:
         self._session = Session()
         self._timeout = 30
         self._legacy_client = legacy_client
+        # RASTATIME 2026-10-26 - the status kind last reported per stream.
+        # Upstream reported failures only and never "OK", so an error stayed
+        # on Listener Stats for good once Icecast had recovered (operator
+        # report: three 401s from the password change of 2026-10-24).  Now
+        # every change is reported once, nothing in between.
+        self._reported: Dict[int, str] = {}
+
+    def _report_status(self, stream_id: int, status: str) -> None:
+        kind = status.split("|", 1)[0]
+        if self._reported.get(stream_id) == kind:
+            return
+        response = self._legacy_client.update_stream_setting_table(
+            {stream_id: status}
+        )
+        # the v1 wrapper returns None when the request failed: try again
+        # on the next poll
+        if response is not None:
+            self._reported[stream_id] = kind
 
     def get_output_url(self, output: AnyOutput) -> str:
         if output.kind == "icecast":
@@ -170,6 +221,7 @@ class StatsCollector:
             ):
                 continue
 
+            stream_id = getattr(output, "stream_id", None) or output_id
             output_url = self.get_output_url(output)
             if output_url not in cache:
                 try:
@@ -181,11 +233,12 @@ class StatsCollector:
                     requests.exceptions.Timeout,
                 ) as exception:
                     logger.exception(exception)
-                    self._legacy_client.update_stream_setting_table(
-                        {output_id: str(exception)}
+                    self._report_status(
+                        stream_id, status_from_exception(exception, _timestamp)
                     )
                     continue
 
+            self._report_status(stream_id, "OK")
             output_stats = cache[output_url]
 
             mount = "shoutcast" if output.kind == "shoutcast" else output.mount
