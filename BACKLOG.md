@@ -60,7 +60,7 @@ dann 2 → 1, danach nach Bedarf**.
 Geordneter Apache-Stopp Option B · Marke „libretime" → „rastatime" Stufe B ·
 Liquidsoap-Upgrade gegen das `Unix.select`-Leck · Icecast 2.4.4 → 2.5.0 ·
 Benutzergruppen-Audit · Stream-Metadaten „nicht weitergeben" · Legacy-PHPUnit ·
-Sekundärfarbe · Show-Logos als WebP (~1 h) · Rückgängig nach Löschen ·
+Show-Logos als WebP (~1 h) · Rückgängig nach Löschen ·
 Metadaten Energy/Tempo/Key/Timbre (Bench liegt vor) · JavaScript-Build-Pipeline ·
 Payware/Tier-System 🔴 Hold.
 
@@ -5897,7 +5897,15 @@ ohne Instanz-Verknuepfung).  Operator 2026-10-19: Option A mit Kontrollkaestchen
 Verknuepfung cc_show_instances.file_id, Duplikate ueber md5/source_md5).  OFFEN: PLAYOUT-Neustart durch den
 Operator, Abnahme mit einer aufgezeichneten Testsendung.
 
-### 🟡 Sekundaerfarbe der Oberflaeche einstellbar (Operator-Frage 2026-10-19) - Defer (Operator 2026-10-19: spaeter); Operator 2026-10-25: weiter spaeter
+### ✅ Sekundaerfarbe der Oberflaeche einstellbar (Operator-Frage 2026-10-19) - gebaut 2026-10-26 (Operator-Liste 2026-10-26)
+
+**Ergebnis:** Settings → General → Secondary Color (`ui_secondary_color`, Standard `#1adeff`) faerbt
+Fortschrittsbalken der Sendung, Markierung des aktiven Eintrags im Dashboard-Menue und in den Untermenues,
+den aktuellen Titel in Scheduled Shows und die `.btn-new`-Knoepfe (fuer weisse Schrift nur bis Kontrast 4,5:1
+abgedunkelt).  Details CHANGELOG 2026-10-26, Architektur §23.43 Nachtrag.
+
+**Urspruenglicher Befund:**
+
 
 `#02cef9` kommt in der gesamten Oberflaeche genau einmal vor: Fortschrittsbalken
 der laufenden Sendung im Dashboard (`styles.css` `.progressbar .progress-show`

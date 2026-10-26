@@ -1,10 +1,13 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.93
-Date: 2026-10-25
+Draft version: 0.94
+Date: 2026-10-26
 
 > **Revision history**
+> - **0.94 (2026-10-26)** - **UI secondary colour as a setting** (§23.43
+>   addendum): `--rt-secondary` palette next to the primary one, same style
+>   block; buttons darkened only to WCAG AA contrast for white text.
 > - **0.93 (2026-10-25)** - **Super Admin retired** (§23.72 addendum): four
 >   roles; migration 0073 turns S accounts into Admins; the installation
 >   account `admin` cannot be deleted (legacy and API v2).
@@ -5942,6 +5945,24 @@ print the style block.
 dashboard, library selection, pager, storage bar, scrollbars, Upload
 heading, New Show form (focus border, arrows), radio page player; a
 substituted palette (blue) in the browser switched all of them.
+
+**Addendum 2026-10-26 - secondary colour.**  The operator listed the
+blue elements as the "secondary colour": the show progress bar in the
+header (`#02cef9` + PNG strip), the active-entry marker of the dashboard
+menu and the sub-menus (`#1adeff`), the current track in Scheduled Shows
+(`#1adeff`) and the `.btn-new` buttons (`#246b86` / hover `#185b6e`).
+Settings → General → Secondary Color (`cc_pref.ui_secondary_color`,
+empty = `#1adeff`) works like the primary colour; the same class derives
+`--rt-secondary`, `--rt-secondary-fg` (black, white only below luminance
+0.18) and, for the buttons' white text, `--rt-secondary-button`: the
+colour mixed with black in 5 % steps until white reaches WCAG AA 4.5:1
+(a dark colour stays as it is; the default gives `#0e7a8c`), plus a
+15 % darker hover.  `styleTag()` prints both palettes in the one
+existing block, so no layout changed; `styles.css` repeats the default
+secondary palette in `:root`.  The progress strip PNG became the same
+white sheen over the colour as the song bar.  Other blues (Bootstrap,
+category / signal colours, the bandwidth bar, the widgets' own accents)
+are out of scope.
 
 ### 23.44 Crossfade per Track Type and "Exclude from Crossover" (2026-09-29)
 

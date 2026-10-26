@@ -170,6 +170,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Sekundärfarbe der Oberfläche als Einstellung (2026-10-26, Operator,
+  Backlog-Punkt „Sekundärfarbe")** — die blauen Elemente hatten feste
+  Farben: Fortschrittsbalken der Sendung in der Kopfzeile (`#02cef9` +
+  PNG-Streifen), Markierung des aktiven Eintrags im Dashboard-Menü und in
+  den Untermenüs von Settings/Analytics/Help/Widgets (`#1adeff`), aktueller
+  Titel in Scheduled Shows (`#1adeff`) und die Knöpfe `.btn-new` (Upload,
+  New Show, New Log Entry, New Log Sheet / File Summary Template, Add,
+  New; `#246b86`, Hover `#185b6e`).  Settings → General → **Secondary
+  Color** (Hex-Feld, Farbwähler, „Reset to default", Hilfe-Icon) wie die
+  Primärfarbe; `Application_Model_AccentColor::secondaryPalette()` leitet
+  `--rt-secondary`, `--rt-secondary-fg` (Schwarz, Weiß nur auf dunkler
+  Farbe) und für die Knöpfe mit weißer Schrift `--rt-secondary-button`
+  (nur so weit abgedunkelt, bis Kontrast 4,5:1 erreicht ist) samt Hover
+  ab und druckt sie im selben Style-Block (`cc_pref.ui_secondary_color`,
+  leer = `#1adeff`; keine Migration).  Standard sieht fast aus wie vorher;
+  einzige sichtbare Verschiebung: Knöpfe `#0e7a8c` statt `#246b86`, der
+  Fortschrittsbalken `#1adeff` statt `#02cef9`.  Live geprüft in Brave:
+  Feld unter „Primary Color" im Abschnitt Styling, alle vier Stellen mit
+  den Standardwerten, eine im Tab eingesetzte Lila-Palette färbte alle
+  um (Speichern nicht ausgelöst).  DE/FR/ES-Texte (wirksam nach
+  Apache-Neustart).  Handbuch SETTINGS ×4, Architektur §23.43 Nachtrag
+  (0.94).
+
 - **Import / Export: Benutzer (users.csv) (2026-10-25, Operator-Go)** —
   Neuer Typ `users.csv` (`login, type, first_name, last_name, email,
   cell_phone, skype, jabber, password`), im Bündel als erster importiert,

@@ -14,11 +14,17 @@
     --rt-accent-darker: #a63c11;
     --rt-accent-fg: #fff;
     --rt-accent-fg-dark: #000;
+    /* RASTATIME 2026-10-26 - the secondary colour (Settings -> General),
+       default palette of Application_Model_AccentColor::secondaryPalette */
+    --rt-secondary: #1adeff;
+    --rt-secondary-fg: #000;
+    --rt-secondary-button: #0e7a8c;
+    --rt-secondary-button-hover: #0c6877;
 }
 
-/* Settings -> General "Primary Color": hex field + picker + reset
-   (preferences.js setupAccentColorPicker) */
-#uiAccentColor {
+/* Settings -> General "Primary Color" / "Secondary Color": hex field +
+   picker + reset (preferences.js setupAccentColorPicker) */
+#uiAccentColor, #uiSecondaryColor {
     width: 90px;
     font-family: monospace;
 }
@@ -420,7 +426,8 @@ img.artwork
     background: var(--rt-accent) linear-gradient(to bottom, rgba(255, 255, 255, .3), rgba(255, 255, 255, 0));
 }
 .progressbar .progress-show {
-    background:#02cef9 url(images/progressbar_show.png) repeat-x 0 0;
+    /* RASTATIME 2026-10-26: secondary colour with the same sheen (was a cyan PNG strip) */
+    background: var(--rt-secondary) linear-gradient(to bottom, rgba(255, 255, 255, .3), rgba(255, 255, 255, 0));
 }
 .progressbar .progress-show-error {
     background:#d40000 url(images/progressbar_show_error.png) repeat-x 0 0;
@@ -1025,7 +1032,7 @@ dl.inline-list dd {
     color: var(--rt-accent-fg-dark);
 }
 .datatable tr.sb-now-playing td {
-    color: #000;
+    color: var(--rt-secondary-fg);
 }
 
 
@@ -3692,12 +3699,14 @@ dd .stream-status {
     border-top-color:#333333
 }
 
+/* RASTATIME 2026-10-26: secondary colour, darkened for the white text
+   (was #246B86 / #185b6e) */
 .btn-new {
-    background: #246B86;
+    background: var(--rt-secondary-button);
 }
 .btn-new:active, .btn-new:hover,
 .btn-new[disabled], .btn-new[disabled]:active {
-    background-color: #185b6e;
+    background-color: var(--rt-secondary-button-hover);
 }
 
 .dark_class
@@ -3991,7 +4000,7 @@ button.btn-icon-text > i.icon-white {
 .media_type_selector.selected, .media_type_selector.selected a {
     color: #fff;
     background-color: #444;
-    border-right: 1px solid #1ADEFF;
+    border-right: 1px solid var(--rt-secondary); /* RASTATIME 2026-10-26, was #1ADEFF */
     -webkit-transition: color 0.1s linear;
     -moz-transition: color 0.1s linear;
     -o-transition: color 0.1s linear;
@@ -4193,7 +4202,7 @@ button.btn-icon-text > i.icon-white {
 #sub-menu .navigation li.active {
     color: #fff;
     background-color: #333;
-    border-right: 1px solid #1ADEFF;
+    border-right: 1px solid var(--rt-secondary); /* RASTATIME 2026-10-26, was #1ADEFF */
     margin-right: -1px;
 }
 

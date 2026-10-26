@@ -110,6 +110,20 @@ class Application_Form_GeneralPreferences extends Zend_Form_SubForm
             'value' => Application_Model_AccentColor::current(),
         ]);
 
+        // RASTATIME 2026-10-26 - the UI's secondary colour (was a set of
+        // fixed blues), same field + picker + reset.  Empty = light blue.
+        $this->addElement('text', 'uiSecondaryColor', [
+            'class' => 'input_text',
+            'label' => _('Secondary Color:'),
+            'description' => _('The second color of the interface: the show progress bar in the header, the marker of the active entry in the dashboard menu and in the sub-menus, the current track in Scheduled Shows, and the buttons New, Add and Upload (darkened as far as their white text needs). Empty resets to the default light blue.'),
+            'required' => false,
+            'filters' => ['StringTrim'],
+            'validators' => [
+                ['regex', false, ['/^#[0-9a-fA-F]{6}$/', 'messages' => _('Please enter a color as #rrggbb (e.g. #1adeff).')]],
+            ],
+            'value' => Application_Model_AccentColor::currentSecondary(),
+        ]);
+
         // Default track crossfade duration (between two tracks of one show).
         // RASTATIME 2026-09-27 - renamed from "Default Crossfade Duration";
         // a real crossfade since then (old fades out while new fades in).

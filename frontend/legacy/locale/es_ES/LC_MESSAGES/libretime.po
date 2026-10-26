@@ -6780,3 +6780,15 @@ msgstr "Próximos programas"
 #: application/views/scripts/embed (RASTATIME widgets)
 msgid "Multi-View Schedule"
 msgstr "Programación multivista"
+
+#: application/forms/GeneralPreferences.php (RASTATIME secondary color)
+msgid "Secondary Color:"
+msgstr "Color secundario:"
+
+#: application/forms/GeneralPreferences.php (RASTATIME secondary color)
+msgid "Please enter a color as #rrggbb (e.g. #1adeff)."
+msgstr "Introduzca un color con el formato #rrggbb (p. ej. #1adeff)."
+
+#: application/forms/GeneralPreferences.php (RASTATIME secondary color)
+msgid "The second color of the interface: the show progress bar in the header, the marker of the active entry in the dashboard menu and in the sub-menus, the current track in Scheduled Shows, and the buttons New, Add and Upload (darkened as far as their white text needs). Empty resets to the default light blue."
+msgstr "El segundo color de la interfaz: la barra de progreso del programa en la cabecera, la marca de la entrada activa del menú del panel y de los submenús, la pista actual en Scheduled Shows, y los botones New, Add y Upload (oscurecidos lo necesario para su texto blanco). Vacío restablece el azul claro predeterminado."

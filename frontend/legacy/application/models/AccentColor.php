@@ -11,12 +11,21 @@
  * the accent, and prints them as a style block in every page head.  The
  * default palette is repeated in styles.css (:root) as the fallback for a
  * page without the block; keep the two in step.
+ *
+ * RASTATIME 2026-10-26 - plus the secondary colour (operator wish, the
+ * blue/cyan elements: show progress bar, the active-entry marker of the
+ * dashboard menu and the sub-menus, the current track in Scheduled Shows,
+ * the New / Add / Upload buttons), printed in the same style block.
  */
 class Application_Model_AccentColor
 {
     public const DEFAULT_COLOR = '#ff5d1a';
 
+    public const SECONDARY_DEFAULT_COLOR = '#1adeff';
+
     private static $current;
+
+    private static $currentSecondary;
 
     /**
      * @param mixed $hex
@@ -43,6 +52,46 @@ class Application_Model_AccentColor
         }
 
         return self::$current;
+    }
+
+    /**
+     * @return string the configured secondary colour, or its default
+     */
+    public static function currentSecondary()
+    {
+        if (self::$currentSecondary === null) {
+            self::$currentSecondary = self::normalize(Application_Model_Preference::GetUiSecondaryColor())
+                ?? self::SECONDARY_DEFAULT_COLOR;
+        }
+
+        return self::$currentSecondary;
+    }
+
+    /**
+     * @param string $hex
+     *
+     * @return array CSS custom property => value
+     */
+    public static function secondaryPalette($hex)
+    {
+        $rgb = sscanf(self::normalize($hex) ?? self::SECONDARY_DEFAULT_COLOR, '#%02x%02x%02x');
+
+        // The buttons carry white text: darken the colour only as far as
+        // that needs (WCAG AA, contrast 4.5:1); a dark colour stays as it
+        // is.  The default light blue gives #0e7a8c (was a fixed #246b86).
+        $button = $rgb;
+        for ($amount = 0.05; self::contrastToWhite($button) < 4.5 && $amount < 0.95; $amount += 0.05) {
+            $button = self::mix($rgb, [0, 0, 0], $amount);
+        }
+
+        return [
+            '--rt-secondary' => self::toHex($rgb),
+            // text on the colour (the current track's row): black, white
+            // only when the colour is too dark for it
+            '--rt-secondary-fg' => self::luminance($rgb) < 0.18 ? '#fff' : '#000',
+            '--rt-secondary-button' => self::toHex($button),
+            '--rt-secondary-button-hover' => self::toHex(self::mix($button, [0, 0, 0], 0.15)),
+        ];
     }
 
     /**
@@ -77,12 +126,15 @@ class Application_Model_AccentColor
     /**
      * @param null|string $hex the colour to print, default: the configured one
      *
-     * @return string a <style> element defining the palette on :root
+     * @return string a <style> element defining the palette (and the
+     *                configured secondary palette) on :root
      */
     public static function styleTag($hex = null)
     {
         $css = '';
-        foreach (self::palette($hex ?? self::current()) as $name => $value) {
+        $palette = self::palette($hex ?? self::current())
+            + self::secondaryPalette(self::currentSecondary());
+        foreach ($palette as $name => $value) {
             $css .= $name . ':' . $value . ';';
         }
 
@@ -116,5 +168,11 @@ class Application_Model_AccentColor
         }
 
         return 0.2126 * $lin[0] + 0.7152 * $lin[1] + 0.0722 * $lin[2];
+    }
+
+    // WCAG contrast ratio of white text on the colour
+    private static function contrastToWhite(array $rgb)
+    {
+        return 1.05 / (self::luminance($rgb) + 0.05);
     }
 }

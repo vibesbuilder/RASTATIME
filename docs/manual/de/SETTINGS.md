@@ -75,6 +75,7 @@ Die Seite ist in **eingeklappte Abschnitte** gegliedert (seit
 | **Hintergrundbild der Startseite** | Das Foto hinter der öffentlichen Startseite (`/`). JPG, PNG oder WebP bis 5 MB; empfohlen 1920 px breit und höchstens 1 MB. Als Datei unter `landing/` im Speicherort der Mediathek abgelegt (damit der nächtliche Spiegel es mitnimmt); **Entfernen** stellt das eingebaute Bild wieder her. Wirkt beim nächsten Laden der Startseite (der Browser hält das Bild eine Woche, ein neuer Upload bekommt eine neue Adresse). Seit 2026-10-07. |
 | **Stations-Favicon** | Bild im Browser-Tab. Bis 200 KB, PNG / JPG / GIF / ICO. Als data: URI gerendert; keine Datei-Schreibvorgänge nach public/. |
 | **Primärfarbe** | Die Akzentfarbe der gesamten Oberfläche, der Radio-Seite und der Widgets — Links, Hervorhebungen, ausgewählte Zeilen, der aktive Menüpunkt, Fortschritts- und Speicherbalken, Scrollbalken, Abschnittspfeile, Play-Knopf und Lautstärkeregler des Stream-Players, Tabs, Knöpfe und Hervorhebungen der Widgets, die Grafik der Fehlerseite. Geben Sie `#rrggbb` ein oder nutzen Sie den Farbwähler neben dem Feld; **Auf Standard zurücksetzen** stellt das Orange (`#ff5d1a`) wieder her. Wirkt beim nächsten Seitenaufruf. Wählen Sie eine Farbe, die sich vom dunkelgrauen Hintergrund abhebt; Text auf der Farbe wechselt von selbst zwischen Weiß und Schwarz. Signalfarben (Fehler, Warnungen, die Sendungsfarben im Kalender) und der Füllstandsbalken der Sendungen im Kalender (immer Orange) bleiben unverändert. |
+| **Sekundärfarbe** | Die zweite Farbe der Oberfläche (seit 26.10.2026): der Fortschrittsbalken der Sendung in der Kopfzeile, die Markierung am rechten Rand des aktiven Eintrags im Dashboard-Menü (Tracks, Playlists, Smart Blocks, …) und in den Untermenüs von Settings, Analytics, Help und Widgets, der aktuelle Titel in den Scheduled Shows des Dashboards sowie die Knöpfe Upload, New Show, New Log Entry, Add, New und ähnliche. Geben Sie `#rrggbb` ein oder nutzen Sie den Farbwähler neben dem Feld; **Auf Standard zurücksetzen** stellt das Hellblau (`#1adeff`) wieder her. Die Knöpfe tragen weiße Schrift: für sie wird die Farbe nur so weit abgedunkelt, wie die Lesbarkeit es braucht (Standard: `#0e7a8c`, vorher `#246b86`); Text auf der Zeile des aktuellen Titels wechselt von selbst zwischen Schwarz und Weiß. Wirkt beim nächsten Seitenaufruf. |
 
 ### Playout
 
@@ -205,7 +206,7 @@ Seitenaufruf.  Ausnahmen:
 | Einstellung | Wirkt |
 |---|---|
 | Crossfades, Streams, Soundkarte | Wenn die Audiokette neu startet - automatisch in einem ruhigen Moment geplant; **Jetzt anwenden** in Einstellungen → Lokale Maschine erzwingt es. |
-| Primärfarbe, Logo, Favicon | Beim nächsten Seitenaufruf (F5). |
+| Primär- und Sekundärfarbe, Logo, Favicon | Beim nächsten Seitenaufruf (F5). |
 | Ihre eigene Sprache | Beim nächsten Seitenaufruf; der Anmeldebildschirm nutzt die Standardsprache. |
 | Live Text Info, TuneIn | Beim nächsten Wechsel von Titel oder Quelle. |
 

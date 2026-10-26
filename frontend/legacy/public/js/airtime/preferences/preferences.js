@@ -222,9 +222,9 @@ function setupRequestablePoolDropdown() {
 // RASTATIME 2026-09-29 - UI primary colour: the form field is a plain hex
 // text input (Zend renders no type="color"); a native colour picker and a
 // reset button sit next to it, both kept in step with the text.
-function setupAccentColorPicker() {
-  var DEFAULT_ACCENT = "#ff5d1a";
-  var $text = $("#uiAccentColor");
+// RASTATIME 2026-10-26 - the same for the secondary colour.
+function setupAccentColorPicker(fieldId, DEFAULT_ACCENT) {
+  var $text = $("#" + fieldId);
   if ($text.length === 0) {
     return;
   }
@@ -254,7 +254,8 @@ function setupAccentColorPicker() {
 
 $(document).ready(function () {
   setupRequestablePoolDropdown();
-  setupAccentColorPicker();
+  setupAccentColorPicker("uiAccentColor", "#ff5d1a");
+  setupAccentColorPicker("uiSecondaryColor", "#1adeff");
 
   // RASTATIME 2026-09-28 - the long explanations under these General
   // fields become help-icon tooltips right of the label (operator wish);
@@ -263,6 +264,7 @@ $(document).ready(function () {
     where: "label",
     only: [
       "uiAccentColor",
+      "uiSecondaryColor",
       "stationDefaultCrossfadeDuration",
       "stationDefaultShowCrossfadeDuration",
       "trafficAlertBlockSelect",

@@ -2161,6 +2161,18 @@ class Application_Model_Preference
         self::setValue('ui_accent_color', Application_Model_AccentColor::normalize($hex) ?? '');
     }
 
+    // RASTATIME 2026-10-26 - the UI's secondary colour, '#rrggbb' or '' for
+    // the default (see Application_Model_AccentColor::secondaryPalette).
+    public static function GetUiSecondaryColor()
+    {
+        return self::getValue('ui_secondary_color');
+    }
+
+    public static function SetUiSecondaryColor($hex)
+    {
+        self::setValue('ui_secondary_color', Application_Model_AccentColor::normalize($hex) ?? '');
+    }
+
     public static function getLangTimezoneSetupComplete()
     {
         return self::getValue('lang_tz_setup_complete');

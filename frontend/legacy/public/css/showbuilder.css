@@ -301,8 +301,9 @@ table.datatable tr.sb-header.odd:hover td, table.datatable tr.sb-header.even:hov
 }
 
 .sb-now-playing, tr.sb-now-playing > td {
-    background-color: #1adeff;/* #1aff60; */ /* #5b1aff; */
-    color: #000;
+    /* RASTATIME 2026-10-26: the secondary colour (was #1adeff) */
+    background-color: var(--rt-secondary);
+    color: var(--rt-secondary-fg);
 }
 
 tr.ui-state-error > td {

@@ -75,6 +75,7 @@ se abre sola.
 | **Imagen de fondo de la página de inicio** | La foto detrás de la página de inicio pública (`/`). JPG, PNG o WebP hasta 5 MB; recomendado 1920 px de ancho y 1 MB o menos. Guardada como archivo bajo `landing/` en la ubicación de la mediateca (el espejo de copia nocturno la incluye); **Quitar** vuelve a la imagen integrada. Surte efecto en la siguiente carga de la página de inicio (el navegador guarda la imagen una semana, una nueva subida recibe una nueva dirección). Desde 2026-10-07. |
 | **Favicon de emisora** | Imagen en la pestaña del navegador. Hasta 200 KB, PNG / JPG / GIF / ICO. Renderizado como URI data:. |
 | **Color principal** | El color de acento de toda la interfaz, la página de radio y los widgets — enlaces, resaltados, filas seleccionadas, la entrada de menú activa, barras de progreso y de almacenamiento, barras de desplazamiento, flechas de sección, el botón de reproducción y el volumen del reproductor, pestañas, botones y resaltados de los widgets, el gráfico de la página de error. Introduzca `#rrggbb` o use el selector junto al campo; **Restablecer el valor predeterminado** recupera el naranja (`#ff5d1a`). Surte efecto en la siguiente carga de página. Elija un color que destaque sobre el fondo gris oscuro; el texto sobre él cambia solo entre blanco y negro. Los colores de señalización (errores, avisos, los colores de los programas en el calendario) y la barra de llenado de los programas en el calendario (siempre naranja) no cambian. |
+| **Color secundario** | El segundo color de la interfaz (desde el 26/10/2026): la barra de progreso del programa en la cabecera, la marca en el borde derecho de la entrada activa del menú del panel (Tracks, Playlists, Smart Blocks, …) y de los submenús de Settings, Analytics, Help y Widgets, la pista actual en los Scheduled Shows del panel, y los botones Upload, New Show, New Log Entry, Add, New y similares. Introduzca `#rrggbb` o use el selector junto al campo; **Restablecer el valor predeterminado** recupera el azul claro (`#1adeff`). Los botones llevan texto blanco: para ellos el color solo se oscurece lo que la legibilidad necesita (predeterminado: `#0e7a8c`, antes `#246b86`); el texto en la fila de la pista actual cambia solo entre negro y blanco. Surte efecto con la siguiente carga de página. |
 
 ### Playout
 
@@ -204,7 +205,7 @@ carga de página.  Excepciones:
 | Ajuste | Surte efecto |
 |---|---|
 | Crossfades, streams, tarjeta de sonido | Cuando la cadena de audio se reinicia - planificado automáticamente en un momento tranquilo; **Aplicar ahora** en Ajustes → Máquina local lo fuerza. |
-| Color principal, logo, favicon | Con la siguiente carga de página (F5). |
+| Colores principal y secundario, logo, favicon | Con la siguiente carga de página (F5). |
 | Su propio idioma | Con la siguiente carga de página; la pantalla de inicio de sesión usa el idioma por defecto. |
 | Live Text Info, TuneIn | En el siguiente cambio de pista o de fuente. |
 
