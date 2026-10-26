@@ -372,6 +372,19 @@ cada item es una pista, un smart block, un webstream o un
 line-in. Las playlists son los bloques de construcción
 del contenido del programa.
 
+### «Allow last track to exceed time limit» (Opciones avanzadas)
+
+Con un límite de tiempo (minutos, horas, tiempo restante) el bloque
+añade pistas hasta alcanzar el límite, y con esta casilla la última
+puede sobrepasarlo.  Para el **llenado por autoloading** (desde el
+26/10/2026) la casilla significa además: la última pista del bloque
+puede sobrepasar el **final del programa** - entera si el programa
+siguiente tiene «Allow delayed start», si no cortada al final si
+suena al menos la mitad.  Para un bloque de episodios («limit: 1
+item») la casilla solo hace falta delante de un programa que debe
+empezar puntual; vea [Autoloading
+Playlists](./AUTOLOADING_PLAYLISTS.md) §4.
+
 ### Crear una playlist
 
 Biblioteca → **+ Nuevo** → **Playlist**.

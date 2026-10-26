@@ -347,6 +347,13 @@ La tarea es **idempotente y solo hacia adelante**:
 - **Un hueco absorbe un sobrepaso gratis.** Si hay tiempo vacío tras el
   programa sobrepasado, su contenido simplemente suena dentro del
   hueco; ningún programa siguiente necesita moverse, y nada cambia.
+- **El autoloading puede crear el exceso (desde el 26/10/2026).**  Un
+  episodio más largo que su slot se coloca entero si el programa
+  siguiente tiene la casilla marcada - la casilla basta para que esos
+  episodios suenen completos.  Delante de un programa sin la casilla se
+  corta al final (hasta 5 s siempre, más solo con «Allow last track to
+  exceed time limit» en su smart block); vea
+  [Autoloading Playlists](./AUTOLOADING_PLAYLISTS.md) §4.
 
 ---
 

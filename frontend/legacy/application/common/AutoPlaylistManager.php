@@ -179,6 +179,8 @@ class AutoPlaylistManager
             'show' => (float) Application_Model_Preference::GetDefaultShowCrossfadeDuration(),
         ];
         $counts = ['intro' => 0, 'outro' => 0, 'auto' => 0, 'topup' => 0];
+        // RASTATIME 2026-10-26 - may an overrun slide the next show (delayed start)?
+        $nextMaySlide = self::nextShowMaySlide($instanceId);
 
         // RASTATIME 2026-10-16 - fill context (teaser criterion, planned-rows
         // exclusion): the instance, its show and the slot the rows will play
@@ -196,7 +198,7 @@ class AutoPlaylistManager
             $gap = $showEnd - self::chainEnd($rows, $showStart, $house);
             Application_Model_Block::setFillContext($instanceId, $showId, $slotAt($showStart));
             $counts['intro'] = self::insertFitting(
-                $si, $rows, 0, self::expandPlaylist($introId, $gap, false, false, self::neighbourFile($rows, 0)), $showStart, $showEnd, $house, 'intro'
+                $si, $rows, 0, self::expandPlaylist($introId, $gap, false, false, self::neighbourFile($rows, 0)), $showStart, $showEnd, $house, 'intro', $nextMaySlide
             );
         }
 
@@ -207,7 +209,7 @@ class AutoPlaylistManager
             $gap = $showEnd - self::chainEnd($rows, $showStart, $house);
             Application_Model_Block::setFillContext($instanceId, $showId, $slotAt($showEnd));
             $counts['outro'] = self::insertFitting(
-                $si, $rows, count($rows), self::expandPlaylist($outroId, $gap, false, self::neighbourFile($rows, count($rows) - 1), false), $showStart, $showEnd, $house, 'outro'
+                $si, $rows, count($rows), self::expandPlaylist($outroId, $gap, false, self::neighbourFile($rows, count($rows) - 1), false), $showStart, $showEnd, $house, 'outro', $nextMaySlide
             );
         }
 
@@ -225,7 +227,7 @@ class AutoPlaylistManager
                 $added = self::insertFitting(
                     $si, $rows, $at,
                     self::expandPlaylist($autoId, $gap, false, self::neighbourFile($rows, $at - 1), self::neighbourFile($rows, $at)),
-                    $showStart, $showEnd, $house, 'auto'
+                    $showStart, $showEnd, $house, 'auto', $nextMaySlide
                 );
                 $counts['auto'] += $added;
                 ++$passes;
@@ -245,7 +247,7 @@ class AutoPlaylistManager
                 if (empty($candidates)) {
                     break;
                 }
-                $added = self::insertFitting($si, $rows, $at, $candidates, $showStart, $showEnd, $house, 'top-up');
+                $added = self::insertFitting($si, $rows, $at, $candidates, $showStart, $showEnd, $house, 'top-up', $nextMaySlide);
                 if ($added === 0) {
                     break;
                 }
@@ -260,7 +262,7 @@ class AutoPlaylistManager
             $gap = $showEnd - self::chainEnd($rows, $showStart, $house);
             Application_Model_Block::setFillContext($instanceId, $showId, $slotAt(self::chainEnd($rows, $showStart, $house)));
             $counts['outro'] = self::insertFitting(
-                $si, $rows, count($rows), self::expandPlaylist($outroId, $gap, false, self::neighbourFile($rows, count($rows) - 1), false), $showStart, $showEnd, $house, 'outro'
+                $si, $rows, count($rows), self::expandPlaylist($outroId, $gap, false, self::neighbourFile($rows, count($rows) - 1), false), $showStart, $showEnd, $house, 'outro', $nextMaySlide
             );
         }
         } finally {
@@ -413,6 +415,14 @@ class AutoPlaylistManager
                 if ($remainingBlocksOnly && $limitModifier !== 'remaining') {
                     continue;
                 }
+                // RASTATIME 2026-10-26 - what may run past the show's end
+                // (insertFitting): a block limited by a number of items gives
+                // single items (the episode blocks), a time-limited block is
+                // a music filler; "Allow last track to exceed time limit"
+                $timed = $limitModifier !== null && $limitModifier !== 'items';
+                $overflowCrit = CcBlockcriteriaQuery::create()->filterByDbBlockId((int) $item['item_id'])
+                    ->filterByDbCriteria('overflow_tracks')->findOne();
+                $overflow = $overflowCrit !== null && (string) $overflowCrit->getDbValue() === '1';
                 // RASTATIME 2026-10-06 - the budget is what is laid out so far,
                 // and a "time remaining" block is picked against it between its
                 // real neighbours (Scheduler::pickRemainingBlock, shared with the
@@ -437,6 +447,7 @@ class AutoPlaylistManager
                         'cliplength' => Application_Common_DateHelper::secondsToPlaylistTime($secs),
                         'cuein' => $file->getDbCuein(), 'cueout' => $file->getDbCueout(),
                         'fadein' => $fadeIn, 'fadeout' => $fadeOut,
+                        'timed' => $timed, 'overflow' => $overflow,
                     ];
                 }
 
@@ -476,10 +487,36 @@ class AutoPlaylistManager
     }
 
     /**
+     * RASTATIME 2026-10-26 - an item that does not fit may still run past
+     * the show's end by up to this many seconds (an episode's encoder tail:
+     * 60:00.2 in a 60-minute slot was left out and Auto DJ filled the show).
+     */
+    const OVERRUN_TOLERANCE_SECS = 5;
+
+    /**
      * Insert the longest prefix of $candidates that fits before the show's
      * end when placed after row index $at (0 = at the start), in one
      * scheduler call.  Strictly in order: the first item that does not fit
      * ends the list (variant a).
+     *
+     * RASTATIME 2026-10-26 (operator) - that first item is still placed,
+     * as the last row and running past the show's end (an overbooking, as
+     * LibreTime did), when
+     *   - it is a single item (straight from the playlist, a static block,
+     *     or a block limited by a number of items - the episode blocks) and
+     *     the next show has "Allow delayed start": the delayed start then
+     *     lets it play in full and slides the next show; or it runs past
+     *     the end by at most OVERRUN_TOLERANCE_SECS;
+     *   - or its smart block has "Allow last track to exceed time limit"
+     *     and the next show may start later, or at least half of the item
+     *     plays before the end (no snippets).
+     * Before a show without delayed start the overrun is cut at the end,
+     * as for any overbooked show.  Before rows that stay at the end (a
+     * fixed outro) only a next show that may start later allows it, so
+     * the outro is never the part that gets cut.  Time-limited music
+     * blocks without the box stay exact.
+     *
+     * @param bool $nextMaySlide the next show follows directly and has "Allow delayed start"
      *
      * @return int rows inserted
      */
@@ -491,7 +528,8 @@ class AutoPlaylistManager
         $showStart,
         $showEnd,
         array $house,
-        $label
+        $label,
+        $nextMaySlide = false
     ) {
         if (empty($candidates)) {
             return 0;
@@ -510,7 +548,17 @@ class AutoPlaylistManager
                 [['fileId' => $c['type'] === 0 ? $c['id'] : null, 'secs' => $c['secs']]],
                 array_slice($rows, $at)
             );
-            if (self::chainEnd($trial, $showStart, $house, $info) > $showEnd + 0.0005) {
+            $end = self::chainEnd($trial, $showStart, $house, $info);
+            if ($end > $showEnd + 0.0005) {
+                $why = self::overrunReason($c, $end - $showEnd, $at < count($rows), $nextMaySlide);
+                if ($why !== null) {
+                    $accepted[] = ['fileId' => $c['type'] === 0 ? $c['id'] : null, 'secs' => $c['secs'], 'file' => $c];
+                    Logging::info(sprintf(
+                        'AutoPlaylistManager: %s - item %d runs %.1f s past the show end (%s) (show_instance_id=%d)',
+                        $label, $c['id'], $end - $showEnd, $why, $si->getShowInstanceId()
+                    ));
+                }
+
                 break;
             }
             $accepted[] = ['fileId' => $c['type'] === 0 ? $c['id'] : null, 'secs' => $c['secs'], 'file' => $c];
@@ -527,13 +575,65 @@ class AutoPlaylistManager
         $afterRowId = $at > 0 ? (int) $rows[$at - 1]['id'] : 0;
         $files = array_map(function ($a) {
             $f = $a['file'];
-            unset($f['secs']);
+            unset($f['secs'], $f['timed'], $f['overflow']);
 
             return $f;
         }, $accepted);
         $si->addFilesAfter($afterRowId, $files);
 
         return count($accepted);
+    }
+
+    /**
+     * RASTATIME 2026-10-26 - why candidate $c may run $overrun seconds past
+     * the show's end, or null (see insertFitting).
+     *
+     * @param array $c            an expandPlaylist() candidate
+     * @param float $overrun      seconds past the show's end
+     * @param bool  $beforeRows   rows stay after it (a fixed outro)
+     * @param bool  $nextMaySlide the next show has "Allow delayed start"
+     *
+     * @return null|string
+     */
+    private static function overrunReason(array $c, $overrun, $beforeRows, $nextMaySlide)
+    {
+        $timed = !empty($c['timed']);
+        $overflow = !empty($c['overflow']);
+        if ($beforeRows) {
+            return ($nextMaySlide && (!$timed || $overflow)) ? 'the next show starts later' : null;
+        }
+        if ($nextMaySlide && (!$timed || $overflow)) {
+            return 'the next show starts later';
+        }
+        if (!$timed && $overrun <= self::OVERRUN_TOLERANCE_SECS) {
+            return 'within ' . self::OVERRUN_TOLERANCE_SECS . ' s, cut at the end';
+        }
+        if ($overflow && $overrun <= (float) $c['secs'] / 2) {
+            return 'smart block allows the last track to exceed, cut at the end';
+        }
+
+        return null;
+    }
+
+    /**
+     * RASTATIME 2026-10-26 - true if the show that follows instance
+     * $instanceId directly (starting at its end, as the delayed start sees
+     * it) has "Allow delayed start".
+     */
+    public static function nextShowMaySlide($instanceId)
+    {
+        $row = Application_Common_Database::prepareAndExecute(
+            'SELECT s.allow_delayed_start::int AS flagged, EXTRACT(EPOCH FROM (n.starts - a.ends)) AS gap
+               FROM cc_show_instances a
+               JOIN cc_show_instances n ON n.starts > a.starts AND n.id <> a.id AND n.modified_instance = FALSE
+               JOIN cc_show s ON s.id = n.show_id
+              WHERE a.id = :id
+              ORDER BY n.starts ASC LIMIT 1',
+            [':id' => (int) $instanceId],
+            Application_Common_Database::SINGLE
+        );
+
+        return !empty($row) && (int) $row['flagged'] === 1 && (float) $row['gap'] < 1.0;
     }
 
     /**

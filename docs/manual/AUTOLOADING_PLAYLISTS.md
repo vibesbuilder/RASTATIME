@@ -162,6 +162,32 @@ is possible), never an overbook.
 > rows, x s free at the end" sums up every build; `ap_fill_test.php`
 > (C:\Temp\optd) rehearses a fill on a temporary instance.
 
+**An episode longer than the slot (since 2026-10-26).**  The
+first item that does not fit used to be left out, and Auto DJ
+filled the empty show - also for an episode of 60:00.2 in a
+60-minute slot.  Now such an item is still placed, as the last
+row, running past the show's end, when
+
+- it is a **single item** (straight from the playlist, or from a
+  smart block limited to a number of items, like "Album is ...,
+  newest, 1 item") and the **next show has "Allow delayed
+  start"**: the episode plays in full and the next show starts
+  later (see [Delayed Show Start](./DELAYED_START.md)); or it is
+  at most **5 seconds** too long (an encoder tail) - cut at the
+  end;
+- or its smart block has **"Allow last track to exceed time
+  limit"** and the next show may start later, or at least **half**
+  of the item plays before the end - cut at the end (no
+  snippets).
+
+Before a show without "Allow delayed start" the overrun is cut at
+the end, as for any overbooked show; the calendar shows the red
+tip.  In front of a fixed outro only a next show that may start
+later allows it, so the outro is never the part that is cut.
+Time-limited music blocks without the box stay exact.  Otherwise
+the item is left out as before.  The log says "item N runs x s
+past the show end (reason)".
+
 **A filler outro follows the content (since 2026-10-26).**  An
 Outro Playlist that contains a smart block with *Limit to: Time
 remaining in show* - the "Tagesplaylist ... Outro" playlists,

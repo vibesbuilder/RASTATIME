@@ -175,6 +175,33 @@ eine Überbuchung.
 > `ap_fill_test.php` (C:\Temp\optd) probt eine Befüllung an einer
 > temporären Instanz.
 
+**Eine Folge, die länger ist als der Sendeplatz (seit 26.10.2026).**
+Das erste Element, das nicht passte, wurde bisher weggelassen, und
+Auto DJ füllte die leere Sendung - auch bei einer Folge von
+60:00,2 in einem 60-Minuten-Platz.  Jetzt wird ein solches Element
+trotzdem eingeplant, als letzte Zeile über das Sendungsende hinaus,
+wenn
+
+- es ein **einzelnes Element** ist (direkt aus der Playlist oder aus
+  einem Smart Block mit Limit nach Anzahl, etwa „Album is ...,
+  newest, 1 item“) und die **nächste Sendung „Allow delayed start“**
+  hat: Die Folge läuft komplett, die nächste Sendung beginnt später
+  (siehe [Verzögerter Sendungsbeginn](./DELAYED_START.md)); oder es
+  ist höchstens **5 Sekunden** zu lang (Kodier-Überhang) - am Ende
+  gekappt;
+- oder sein Smart Block **„Allow last track to exceed time limit“**
+  hat und die nächste Sendung später beginnen darf oder mindestens
+  die **Hälfte** des Elements vor dem Ende läuft - am Ende gekappt
+  (keine Schnipsel).
+
+Vor einer Sendung ohne „Allow delayed start“ wird der Überhang am
+Ende gekappt, wie bei jeder überbuchten Sendung; der Kalender zeigt
+die rote Spitze.  Vor einem festen Outro erlaubt es nur eine
+nächste Sendung, die später beginnen darf - so wird nie das Outro
+gekappt.  Musikblöcke mit Zeitlimit ohne das Häkchen bleiben exakt.
+Sonst wird das Element wie bisher weggelassen.  Das Log meldet
+„item N runs x s past the show end (Grund)“.
+
 **Ein Füll-Outro folgt dem Inhalt (seit 26.10.2026).**  Eine
 Outro-Playlist mit einem Smart-Block *Limit to: Time remaining in
 show* - die Playlists „Tagesplaylist ... Outro“, allein oder hinter

@@ -401,6 +401,18 @@ in the main Criteria section.
 > so the operator can see when the pool was too narrow for
 > the configured spread.
 
+### "Allow last track to exceed time limit" (Advanced options)
+
+With a time limit (minutes, hours, time remaining) the block keeps
+adding tracks until the limit is reached, and with this box the
+last one may run past it.  For the **autoloading fill** (since
+2026-10-26) the box also means: the block's last track may run
+past the **show's end** - in full when the next show has "Allow
+delayed start", otherwise cut at the end when at least half of it
+plays.  For an episode block ("limit: 1 item") the box is only
+needed in front of a show that must start on time; see
+[Autoloading Playlists](./AUTOLOADING_PLAYLISTS.md) §4.
+
 ### Editing a smart block
 
 Click the block → **Edit**. Changing criteria does *not*

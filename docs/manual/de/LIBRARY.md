@@ -430,6 +430,19 @@ in der Haupt-Kriterien-Section.
 > geschrieben, damit der Operator sieht wenn der Pool zu
 > klein war für den konfigurierten Spread.
 
+### „Allow last track to exceed time limit“ (Erweiterte Optionen)
+
+Bei einem Zeitlimit (Minuten, Stunden, Restzeit) nimmt der Block so
+lange Titel auf, bis das Limit erreicht ist, und mit diesem Häkchen
+darf der letzte darüber hinausgehen.  Für die **Autoloading-
+Befüllung** (seit 26.10.2026) heißt das Häkchen außerdem: Der letzte
+Titel des Blocks darf über das **Sendungsende** hinausragen -
+komplett, wenn die nächste Sendung „Allow delayed start“ hat, sonst
+am Ende gekappt, wenn mindestens die Hälfte läuft.  Bei einem
+Folgen-Block („limit: 1 item“) braucht es das Häkchen nur vor einer
+Sendung, die pünktlich beginnen muss; siehe [Autoloading
+Playlists](./AUTOLOADING_PLAYLISTS.md) §4.
+
 ### Einen Smart Block bearbeiten
 
 Klicken Sie den Block → **Bearbeiten**. Das Ändern von

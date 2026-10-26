@@ -505,6 +505,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Autoloading: überlange Folgen werden nicht mehr weggelassen
+  (2026-10-26, Operator-Go „einfachere Variante“)** — die exakte Befüllung
+  (01.10.) ließ das erste nicht passende Element weg; bei Folgen-Sendungen
+  blieb die Sendung leer und Auto DJ füllte sie.  Seit 23.10. sieben echte
+  Sendungen, drei davon um 0,2–1 s zu lang (Nature Radio 60:00,19,
+  Talk Is Gold 1:53:00,2, Poetry Corner 45:00,99), dazu Society Hour +12,9 s, Host Show +1:27, Museum +4:12, Rock Hour 7 +7:27.
+  „Allow delayed start“ griff nie, weil die Befüllung nie überbucht.  Jetzt
+  wird das erste nicht passende Element doch als letzte Zeile eingeplant
+  (Überbuchung), wenn es ein einzelnes Element ist (Playlist, statischer
+  Block, Block mit Limit nach Anzahl) und die direkt folgende Sendung
+  „Allow delayed start“ hat (der Show-Shift-Task verlängert A und
+  verschiebt B) oder es höchstens 5 s zu lang ist; oder wenn sein Smart
+  Block „Allow last track to exceed time limit“ hat und B verschiebbar ist
+  oder mindestens die Hälfte vor dem Ende läuft.  Vor einem Anker kappt
+  das Playout am Ende wie bei jeder Überbuchung; vor einem festen Outro nur
+  bei verschiebbarem B; Musikblöcke mit Zeitlimit ohne Häkchen bleiben
+  exakt.  Probe `C:/Temp/optd/overrun_probe.php`: Entscheidungsmatrix 14/14,
+  temporäre Paare Februar 2027 (Gemeinsam vor verschiebbarer Sendung
+  +12,9 s eingeplant, vor Anker weggelassen; Nature Radio vor Anker
+  +0,2 s; Rock Hour 7 vor verschiebbarer Sendung +447 s, ohne Folgesendung
+  weggelassen), Wiederholung der Proben 1208/242/873 unverändert, keine
+  Testinstanz übrig.  Handbuch AUTOLOADING_PLAYLISTS, DELAYED_START und
+  LIBRARY ×4, Architektur §17-Nachtrag (0.96).
+
 - **Autoloading: Auto DJ kam der Befüllung zuvor, Füll-Outros verdrängten
   den Inhalt (2026-10-26, Operator-Go)** — „Vinyl Hour“ (16:00) sollte
   über den Smart-Block „Vinyl Hour“ (Album, neuester, 1 Titel)

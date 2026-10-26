@@ -179,6 +179,34 @@ une surréservation.
 > `ap_fill_test.php` (C:\Temp\optd) répète un remplissage sur une
 > instance temporaire.
 
+**Un épisode plus long que le créneau (depuis le 26/10/2026).**  Le
+premier élément qui ne tenait pas était laissé de côté, et Auto DJ
+remplissait l'émission vide - même pour un épisode de 60:00,2 dans
+un créneau de 60 minutes.  Désormais, un tel élément est tout de
+même placé, comme dernière ligne, au-delà de la fin de l'émission,
+si
+
+- c'est un **élément unique** (directement de la playlist, ou d'un
+  smart block limité en nombre d'éléments, comme « Album is ...,
+  newest, 1 item ») et l'**émission suivante a « Allow delayed
+  start »** : l'épisode passe en entier et l'émission suivante
+  commence plus tard (voir [Début d'émission retardé](./DELAYED_START.md)) ;
+  ou il dépasse d'au plus **5 secondes** (traîne d'encodage) -
+  coupé à la fin ;
+- ou son smart block a **« Allow last track to exceed time
+  limit »** et l'émission suivante peut commencer plus tard, ou au
+  moins la **moitié** de l'élément passe avant la fin - coupé à la
+  fin (pas de bribes).
+
+Avant une émission sans « Allow delayed start », le dépassement
+est coupé à la fin, comme pour toute émission surréservée ; le
+calendrier montre la pointe rouge.  Devant un outro fixe, seule
+une émission suivante pouvant commencer plus tard le permet - ce
+n'est donc jamais l'outro qui est coupé.  Les blocs musicaux
+limités en temps sans la case restent exacts.  Sinon, l'élément
+est laissé de côté comme avant.  Le journal indique « item N runs
+x s past the show end (raison) ».
+
 **Un outro de remplissage suit le contenu (depuis le 26/10/2026).**
 Une Outro Playlist qui contient un smart block *Limit to: Time
 remaining in show* - les playlists « Tagesplaylist ... Outro »,

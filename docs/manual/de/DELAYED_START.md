@@ -351,6 +351,13 @@ Der Task ist **idempotent und arbeitet nur vorwärts**:
 - **Eine Lücke fängt eine Überziehung kostenlos auf.** Wenn nach der
   überbuchten Sendung leere Zeit liegt, läuft ihr Inhalt einfach in die
   Lücke; keine Folgesendung muss sich bewegen, und nichts wird geändert.
+- **Autoloading kann die Überbuchung erzeugen (seit 26.10.2026).**  Eine
+  Folge, die länger ist als ihr Sendeplatz, wird komplett eingeplant, wenn
+  die nächste Sendung das Häkchen hat - das Häkchen genügt also, damit
+  solche Folgen vollständig laufen.  Vor einer Sendung ohne Häkchen wird
+  sie am Ende gekappt (bis 5 s immer, mehr nur mit „Allow last track to
+  exceed time limit“ in ihrem Smart Block); siehe
+  [Autoloading Playlists](./AUTOLOADING_PLAYLISTS.md) §4.
 
 ---
 

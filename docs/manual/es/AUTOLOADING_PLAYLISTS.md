@@ -135,6 +135,32 @@ sobrerreserva.
 > rows, x s free at the end» resume cada build; `ap_fill_test.php`
 > (C:\Temp\optd) ensaya un llenado en una instancia temporal.
 
+**Un episodio más largo que el slot (desde el 26/10/2026).**  El
+primer elemento que no cabía se omitía, y Auto DJ llenaba el
+programa vacío - incluso con un episodio de 60:00,2 en un slot de
+60 minutos.  Ahora ese elemento se coloca igualmente, como última
+fila, más allá del final del programa, si
+
+- es un **elemento único** (directamente de la playlist, o de un
+  smart block limitado por número de elementos, como «Album is ...,
+  newest, 1 item») y el **programa siguiente tiene «Allow delayed
+  start»**: el episodio suena entero y el programa siguiente empieza
+  más tarde (vea [Inicio retrasado](./DELAYED_START.md)); o sobra
+  como mucho **5 segundos** (cola de codificación) - cortado al
+  final;
+- o su smart block tiene **«Allow last track to exceed time
+  limit»** y el programa siguiente puede empezar más tarde, o al
+  menos la **mitad** del elemento suena antes del final - cortado al
+  final (sin fragmentos).
+
+Antes de un programa sin «Allow delayed start» el exceso se corta
+al final, como en cualquier programa sobrerreservado; el calendario
+muestra la punta roja.  Delante de un outro fijo solo lo permite un
+programa siguiente que pueda empezar más tarde, así nunca se corta
+el outro.  Los bloques musicales con límite de tiempo sin la casilla
+siguen exactos.  Si no, el elemento se omite como antes.  El
+registro indica «item N runs x s past the show end (motivo)».
+
 **Un outro de relleno sigue al contenido (desde el 26/10/2026).**
 Una Outro Playlist que contiene un smart block *Limit to: Time
 remaining in show* - las playlists «Tagesplaylist ... Outro», solas

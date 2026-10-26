@@ -365,6 +365,13 @@ La tâche est **idempotente et à sens unique** :
   temps vide après l'émission surbookée, son contenu se diffuse
   simplement dans le trou ; aucune émission suivante n'a besoin de
   bouger, et rien n'est modifié.
+- **L'autoloading peut créer le dépassement (depuis le 26/10/2026).**
+  Un épisode plus long que son créneau est placé en entier si
+  l'émission suivante a la case cochée - la case suffit donc pour que
+  ces épisodes passent en entier.  Devant une émission sans la case, il
+  est coupé à la fin (jusqu'à 5 s toujours, davantage seulement avec
+  « Allow last track to exceed time limit » dans son smart block) ;
+  voir [Autoloading Playlists](./AUTOLOADING_PLAYLISTS.md) §4.
 
 ---
 

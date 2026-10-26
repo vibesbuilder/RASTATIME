@@ -441,6 +441,19 @@ critère de la section Critères principale.
 > `legacy.log` pour que l'opérateur voie quand le pool était
 > trop étroit pour le spread configuré.
 
+### « Allow last track to exceed time limit » (Options avancées)
+
+Avec une limite de temps (minutes, heures, temps restant), le bloc
+ajoute des pistes jusqu'à atteindre la limite, et avec cette case
+la dernière peut la dépasser.  Pour le **remplissage par
+autoloading** (depuis le 26/10/2026), la case signifie aussi : la
+dernière piste du bloc peut dépasser la **fin de l'émission** - en
+entier si l'émission suivante a « Allow delayed start », sinon
+coupée à la fin si au moins la moitié passe.  Pour un bloc
+d'épisodes (« limit: 1 item »), la case n'est nécessaire que devant
+une émission qui doit commencer à l'heure ; voir [Autoloading
+Playlists](./AUTOLOADING_PLAYLISTS.md) §4.
+
 ### Modifier un smart block
 
 Cliquez sur le block → **Modifier**. Changer les critères

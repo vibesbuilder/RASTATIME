@@ -1,10 +1,14 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.94
+Draft version: 0.96
 Date: 2026-10-26
 
 > **Revision history**
+> - **0.96 (2026-10-26)** - **Overrun rule of the autoloading fill** (exact-fill
+>   addendum): the first item that does not fit may run past the show's end
+>   when the next show has "Allow delayed start", within 5 s, or with the
+>   block's "Allow last track to exceed time limit".
 > - **0.95 (2026-10-26)** - **Filler outro after the content; Auto DJ waits
 >   for the show's own fill** (exact-fill and §23.20 addenda): an outro with a
 >   "time remaining" block follows the content against the rest; the
@@ -3753,6 +3757,24 @@ in 60 min, and four shows since 2026-10-23 without any content).
 and the top-up rounds, in its own order against what is left - the
 LibreTime order (content, outro jingle, music to the end).
 `playlistContainsRemainingBlock()` decides; fixed outros keep step 2.
+
+**Addendum 2026-10-26 (2) - the overrun rule.**  Variant a left the first
+item that did not fit out; for an episode show that emptied the show and
+Auto DJ filled it (seven shows since 2026-10-23, three of them 0.2-1 s too
+long).  The delayed start could not help: it reacts to an overbooking
+(`ShowShiftService`, content end past the slot end, next show ticked) and
+the exact fill never overbooked.  `insertFitting()` now still accepts that
+item as the last row (an overbooking) when `overrunReason()` allows it: a
+single item (playlist file / webstream / line-in, static block, block
+limited by items) before a directly following show with
+`allow_delayed_start` (`nextShowMaySlide()`, gap < 1 s) or within
+`OVERRUN_TOLERANCE_SECS` (5); an item of a block with `overflow_tracks`
+before such a show or when at least half of it plays before the end.  In
+front of rows that stay at the end (a fixed outro) only the sliding next
+show allows it.  `expandPlaylist()` tags dynamic-block candidates with
+`timed` (time-limited block) and `overflow`.  The overrun is then either
+absorbed by the delayed start (A extended, B slid) or cut at A's end like
+any overbooking.
 
 ### 23.20 Auto DJ
 

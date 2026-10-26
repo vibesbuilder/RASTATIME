@@ -320,6 +320,13 @@ The task is **idempotent and forward-only**:
   itself is ticked is irrelevant to whether A's overrun pushes B —
   what matters is B's box. (A's box matters only when the show
   *before* A overruns into A.)
+- **Autoloading can create the overrun (since 2026-10-26).**  An
+  episode longer than its slot is placed in full when the next
+  show has the box ticked - so the box is all it takes for such
+  episodes to air completely.  Before a show without the box it is
+  cut at the end (up to 5 s always, more only with "Allow last
+  track to exceed time limit" in its smart block); see
+  [Autoloading Playlists](./AUTOLOADING_PLAYLISTS.md) §4.
 - **A gap absorbs an overrun for free.** If there is empty time after
   the overbooked show, its content simply plays into the gap; no
   following show needs to move, and nothing is changed.
