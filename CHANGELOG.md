@@ -525,7 +525,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   erfasst“, alles escaped.  Tests: Playout-Suite 828 grün (9 neue),
   Text-Probe `C:/Temp/optd/listenerstat_status_probe.php` (EN/DE).
   Wirksam für den Sammler nach PLAYOUT-Neustart, die neuen
-  Übersetzungen nach Apache-Neustart.  Handbuch ANALYTICS ×4.
+  Übersetzungen nach Apache-Neustart.  Handbuch ANALYTICS ×4.  Commit 5e9853a.
 
 - **API v2: anonymer Aufruf von `/api/v2/users` ergab 500 (2026-10-25, `e83fc00`)** —
   `IsAdminOrOwnUser` rief `is_superuser()` auch beim anonymen Benutzer auf,
