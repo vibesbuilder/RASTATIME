@@ -191,7 +191,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   den Standardwerten, eine im Tab eingesetzte Lila-Palette färbte alle
   um (Speichern nicht ausgelöst).  DE/FR/ES-Texte (wirksam nach
   Apache-Neustart).  Handbuch SETTINGS ×4, Architektur §23.43 Nachtrag
-  (0.94).
+  (0.94).  Commit 7c7e655.
 
 - **Import / Export: Benutzer (users.csv) (2026-10-25, Operator-Go)** —
   Neuer Typ `users.csv` (`login, type, first_name, last_name, email,
