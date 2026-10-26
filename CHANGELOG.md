@@ -534,7 +534,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Fill-Pass-Abfrage lesend über 48 h geprüft
   (`C:/Temp/optd/autodj_fillpass_probe.php`).  Handbuch
   AUTOLOADING_PLAYLISTS und AUTO_DJ ×4, Architektur §23.20/§17 Nachtrag
-  (0.95).
+  (0.95).  Commit ca52811.
 
 - **Listener Stats: Erfassungsstatus bleibt nicht mehr hängen, nennt die
   echte Ursache (2026-10-26, Operator-Go)** — „Stream Data Collection
