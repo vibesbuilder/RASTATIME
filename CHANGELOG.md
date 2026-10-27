@@ -315,7 +315,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (7) **Show-Dialog, Abschnitt Repeat:** 6 px zwischen „Repeat of show“
   und dem Auswahlfeld (vorher 0).
   Alle Punkte live gemessen (nur lesend; Dialoge geöffnet und ohne
-  Speichern geschlossen).
+  Speichern geschlossen).  Commit 8859ae6.
 - **Reiter in Playout History und Kopfzeile der Status-Tabelle im dunklen
   Design (2026-10-26, Operator)** — beide kamen noch im hellen
   jQuery-UI-Theme „Redmond“: Reiter Log Sheet / File Summary / Show
@@ -567,7 +567,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   so hoch wie ihre Tabelle).  Farben: Köpfe #4a4a4a / #ccc, offene Sendung
   #575757 mit Akzent-Kante links, Inhalt #3a3a3a, Pfeile aus dem weißen
   Sprite statt Redmond-Blau/-Orange.  Live geprüft am 26.10.: BBC News
-  2, Event Calendar 1, Rock Hour 7 14 Titel (vorher leer).
+  2, Event Calendar 1, Rock Hour 7 14 Titel (vorher leer).  Commit
+  74a9c30.
 - **Bibliothek: Spalten-Layout überlebt den nächsten Seitenaufruf
   (2026-10-27, Operator-Go)** — beim Aufbau der Tabelle schickte der
   Browser bis zu ~30 Layouts gleichzeitig an den Server (ein Speichern
