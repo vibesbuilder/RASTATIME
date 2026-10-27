@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   geprüft 08:42: jQuery-POST 200, `fetch`-POST ohne Header 403 mit genau
   einer `CSRF refused`-Zeile.  Rückfall-Tag `live-2026-10-27b`.  Handbuch
   USERS_AND_ROLES ×4, Architektur §23.72 (0.97), Audit-Dokument §3.
+  Commit ca815ff.
 - **Rollen-Audit Paket 3: Widget-Einstellungen schicken das CSRF-Token
   (2026-10-27)** — Auswertung des Monitor-Logs vor Phase 2: vier Zeilen
   am 25.10. (22:26-22:56) von `embeddablewidgets/track-history` und
