@@ -311,7 +311,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   keine Änderung → „No changes to save.“ ohne Anfrage; vier geänderte
   Abschnitte → genau deren vier Endpunkte in Seitenreihenfolge mit
   CSRF-Token; Fehler in einem → nur dieser beim zweiten Klick.  Handbuch
-  LOCAL_MACHINE + BACKUP ×4.
+  LOCAL_MACHINE + BACKUP ×4.  Commit 98a8329.
 - **„Repeat of show“ bietet nur noch wiederholbare Quellen an
   (2026-10-27, Operator)** — bisher jede Sendung mit bevorstehender
   Instanz oder einer der letzten 60 Tage, auch vergangene
@@ -326,7 +326,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Quelle, die nicht (mehr) in der Liste stand (z. B. älter als 60
   Tage), erschien als „None“ und ging beim nächsten Speichern still
   verloren - sie wird jetzt immer mit angeboten.  Handbuch CALENDAR ×4.
-  Probe `C:/Temp/optd/repeat_options_probe.php` (nur lesen).
+  Probe `C:/Temp/optd/repeat_options_probe.php` (nur lesen).  Commit a28960e.
 - **Settings-Feinschliff: fünf Punkte (2026-10-27, Operator)** —
   (1) **Users / Track Types:** das Plus von „New User“ / „New Track Type“
   und die Lösch-Kreuze der Listen in der Sekundärfarbe (weißes
