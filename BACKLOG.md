@@ -3295,7 +3295,7 @@ Verzögerung je IP/Benutzer im `LoginController` (~60 Zeilen), (b) Apache `mod_s
 (Aufgabenplaner, 5-min-Takt).  Empfehlung: (a) zuerst, (c) als Ergänzung.  Dazu
 2FA/Allowlist für Admin-Konten erwägen.  Vorbedingung: Operator-Go, Testplan (14).
 
-### 💡 Icecast 2.4.4 → 2.5.x Upgrade (Future)
+### ✅ Icecast 2.4.4 → 2.5.x Upgrade (Future) - erledigt 2026-10-24 (2.5.0 live, Bewährung bis 2026-11-23, Rückfall 2.4.4 bleibt bis dahin)
 
 **Status:** Idea — bewusst NICHT in der Hardware-Migration 2026-08 gemacht
 (Operator-Entscheid: 2.4.4 wie alte Maschine, kein Versionssprung im Umzug).
@@ -6120,7 +6120,7 @@ Sendungen auflisten, die sie als Autoloading/Intro/Outro nutzen; (b) Preflight-W
 „Sendung X: Autoloading an, keine Playlist" für Folgen in den nächsten 7 Tagen; (c) beides.  Prüf-Skript:
 Scratchpad `autoplaylist_null_summary.php` (nur lesend).
 
-### 🟡 Löschen eines Titels ohne Artwork: Glob über den Bibliotheks-Hauptordner (Befund 2026-10-25, korrigiert)
+### ✅ Löschen eines Titels ohne Artwork: Glob über den Bibliotheks-Hauptordner (Befund 2026-10-25) - behoben 2026-10-25 im Rollen-Audit-Sofortpaket (S7, CcFiles::deletePhysicalFile: Glob nur bei nicht-leerem Artwork-Pfad)
 
 **Korrigierte Ursache (Rollen-Audit S7):** nicht ein leerer `filepath`, sondern ein leeres `artwork`:
 `CcFiles::deletePhysicalFile` löscht nach der Audiodatei alles, was `glob("<root>/<artwork>*")` trifft - bei
