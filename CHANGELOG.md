@@ -334,7 +334,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   alten grauen Regeln griffen nicht mehr (Panel ist `.ui-widget`, nicht
   `.ui-widget-content`).  Nachtrag (Operator, gleicher Tag): die
   Lösch-Kreuze stattdessen in der Primärfarbe, beim Überfahren in der
-  Sekundärfarbe; das Plus bleibt Sekundärfarbe.
+  Sekundärfarbe.  Zweiter Nachtrag: „New User“ / „New Track Type“ sind
+  jetzt derselbe Knopf wie „New Show“ im Kalender (`btn btn-small
+  btn-new`, weißes Plus auf der Sekundärfarbe, 12 px; jQuery UIs
+  `.ui-widget button` setzte 11 px), statt jQuery-UI-Knopf mit
+  eingefärbtem Plus.
   (2) **Show Templates:** Rename und Delete (beim Umbenennen Save /
   Cancel / Delete) untereinander, bündig und gleich breit
   (`.rt-button-stack`, 73 px).

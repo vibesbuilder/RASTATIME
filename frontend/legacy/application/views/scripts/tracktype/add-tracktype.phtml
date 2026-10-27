@@ -5,10 +5,8 @@
         <div id="tracktypes_wrapper" class="dataTables_wrapper">
 
             <div class="button-holder">
-                <button type="button" id="add_tracktype_button" name="search_add_group" class="ui-button ui-widget  ui-button-text-icon-primary btn">
-                    <span class="ui-icon ui-icon-plusthick"></span>
-                    <span class="ui-button-text"><?php echo _("New Track Type") ?></span>
-                </button>
+                <?php /* RASTATIME 2026-10-27 - the look of the calendar's "New Show" button (operator) */ ?>
+                <button type="button" id="add_tracktype_button" name="search_add_group" class="add-button btn btn-small btn-new"><i class="icon-white icon-plus"></i><span><?php echo _("New Track Type") ?></span></button>
             </div>
 
             <table cellspacing="0" cellpadding="0" style="" id="tracktypes_datatable" class="datatable">

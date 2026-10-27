@@ -2065,12 +2065,11 @@ button, input {
     mask: url(redmond/images/ui-icons_ffffff_256x240.png) no-repeat -96px -128px;
 }
 
-/* RASTATIME 2026-10-27 - "New User" / "New Track Type" plus in the
-   secondary colour, the delete crosses of the lists in the primary one
-   with the secondary on hover (operator); they came in redmond-1.13's
-   blue sprites.  The two rules above no longer match: the panel is
-   .ui-widget, not .ui-widget-content.  The white sprite is the mask, so
-   the colours follow Settings -> General. */
+/* RASTATIME 2026-10-27 - the delete crosses of the lists in the primary
+   colour with the secondary on hover (operator); they came in
+   redmond-1.13's blue sprite.  The two rules above no longer match: the
+   panel is .ui-widget, not .ui-widget-content.  The white sprite is the
+   mask, so the colours follow Settings -> General. */
 .user-list-wrapper .ui-icon.ui-icon-closethick,
 .tracktype-list-wrapper .ui-icon.ui-icon-closethick {
     background-image: none;
@@ -2085,12 +2084,13 @@ button, input {
 .tracktype-list-wrapper .ui-icon.ui-icon-closethick:hover {
     background-color: var(--rt-secondary);
 }
-#add_user_button .ui-icon.ui-icon-plusthick,
-#add_tracktype_button .ui-icon.ui-icon-plusthick {
-    background-image: none;
-    background-color: var(--rt-secondary);
-    -webkit-mask: url(redmond/images/ui-icons_ffffff_256x240.png) no-repeat -32px -128px;
-    mask: url(redmond/images/ui-icons_ffffff_256x240.png) no-repeat -32px -128px;
+/* "New User" / "New Track Type" wear the calendar's "New Show" button
+   since 2026-10-27 (btn btn-small btn-new, operator); jquery-ui's
+   `.ui-widget button { font-size: 1em }` shrank the label to the panel's
+   11 px and moved the plus 1 px down */
+.user-list-wrapper .button-holder .btn-new,
+.tracktype-list-wrapper .button-holder .btn-new {
+    font-size: 12px;
 }
 
 /* RASTATIME 2026-10-27 - buttons stacked, each on a line of its own and
