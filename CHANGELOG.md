@@ -306,7 +306,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   „Primary Color“ entfernt (leere Bezeichnungszeilen der Remove-Knöpfe,
   wie beim Logo ausgeblendet; die Remove-Zeile klappt zusammen, solange
   kein Bild gesetzt ist) - je 34 px weniger.
-  Alle Punkte live gemessen (nur lesend).
+  Alle Punkte live gemessen (nur lesend).  Commit 81ed301.
 - **Feinschliff-Nachtrag: Mehrfach-Bearbeiten und Show-Dialog
   (2026-10-27, Operator)** —
   (1) **Bibliothek „Edit“ mit mehreren Titeln:** jedes Feld steht in der
