@@ -2065,6 +2065,48 @@ button, input {
     mask: url(redmond/images/ui-icons_ffffff_256x240.png) no-repeat -96px -128px;
 }
 
+/* RASTATIME 2026-10-27 - "New User" / "New Track Type" plus and the
+   delete crosses of the lists in the secondary colour (operator); they
+   came in redmond-1.13's blue sprites.  The two rules above no longer
+   match: the panel is .ui-widget, not .ui-widget-content.  The white
+   sprite is the mask, so the colour follows Settings -> General. */
+.user-list-wrapper .ui-icon.ui-icon-closethick,
+.tracktype-list-wrapper .ui-icon.ui-icon-closethick {
+    background-image: none;
+    background-color: var(--rt-secondary);
+    -webkit-mask: url(redmond/images/ui-icons_ffffff_256x240.png) no-repeat -96px -128px;
+    mask: url(redmond/images/ui-icons_ffffff_256x240.png) no-repeat -96px -128px;
+    cursor: pointer;
+    float: right;
+    margin-right: 5px;
+}
+.user-list-wrapper .ui-icon.ui-icon-closethick:hover,
+.tracktype-list-wrapper .ui-icon.ui-icon-closethick:hover {
+    background-color: var(--rt-accent);
+}
+#add_user_button .ui-icon.ui-icon-plusthick,
+#add_tracktype_button .ui-icon.ui-icon-plusthick {
+    background-image: none;
+    background-color: var(--rt-secondary);
+    -webkit-mask: url(redmond/images/ui-icons_ffffff_256x240.png) no-repeat -32px -128px;
+    mask: url(redmond/images/ui-icons_ffffff_256x240.png) no-repeat -32px -128px;
+}
+
+/* RASTATIME 2026-10-27 - buttons stacked, each on a line of its own and
+   as wide as the widest of them (operator): Settings -> Show Templates
+   (Rename / Delete, Save / Cancel while renaming) and Streams ->
+   Loudness measurement */
+.rt-button-stack {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+    vertical-align: middle;
+}
+.rt-button-stack .btn {
+    margin: 0;
+}
+
 .button-bar-top {
     text-align:right;
     height:38px;
@@ -2748,6 +2790,20 @@ dd.radio-inline-list, .preferences dd.radio-inline-list, .stream-config dd.radio
 }
 
 .preferences #stationLogoRemove-label {
+    display: none;
+}
+
+/* RASTATIME 2026-10-27 - Styling without the empty rows above Station
+   Favicon and Primary Color (operator): the Remove buttons' empty
+   labels go like the logo's, and a Remove row collapses while its
+   button is hidden (no image set; the page hides it inline then, and
+   preferences.js shows it again for a new favicon) */
+.preferences #landingBackgroundRemove-label,
+.preferences #stationFaviconRemove-label {
+    display: none;
+}
+.preferences dd:has(#landing-background-remove-btn[style*="none"]),
+.preferences dd:has(#favicon-remove-btn[style*="none"]) {
     display: none;
 }
 

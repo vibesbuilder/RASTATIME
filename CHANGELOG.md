@@ -289,6 +289,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Settings-Feinschliff: fünf Punkte (2026-10-27, Operator)** —
+  (1) **Users / Track Types:** das Plus von „New User“ / „New Track Type“
+  und die Lösch-Kreuze der Listen in der Sekundärfarbe (weißes
+  Sprite als Maske, folgt Settings → General); vorher Redmond-Blau, die
+  alten grauen Regeln griffen nicht mehr (Panel ist `.ui-widget`, nicht
+  `.ui-widget-content`).  Beim Überfahren wird das Kreuz Primärfarbe.
+  (2) **Show Templates:** Rename und Delete (beim Umbenennen Save /
+  Cancel / Delete) untereinander, bündig und gleich breit
+  (`.rt-button-stack`, 73 px).
+  (3) **Auto DJ:** alle Eingabe- und Auswahlfelder 210 px breit wie die
+  Logo-Vorschau (vorher 388 / 300 / 276 / 156 px).
+  (4) **Streams → Loudness measurement:** der Zählstand und beide Knöpfe
+  je in einer eigenen Zeile, die Knöpfe gleich breit.
+  (5) **General → Styling:** die leeren Zeilen über „Station Favicon“ und
+  „Primary Color“ entfernt (leere Bezeichnungszeilen der Remove-Knöpfe,
+  wie beim Logo ausgeblendet; die Remove-Zeile klappt zusammen, solange
+  kein Bild gesetzt ist) - je 34 px weniger.
+  Alle Punkte live gemessen (nur lesend).
 - **Feinschliff-Nachtrag: Mehrfach-Bearbeiten und Show-Dialog
   (2026-10-27, Operator)** —
   (1) **Bibliothek „Edit“ mit mehreren Titeln:** jedes Feld steht in der

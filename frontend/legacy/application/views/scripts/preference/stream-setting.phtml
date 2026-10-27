@@ -110,11 +110,14 @@
                             <label><?php echo _('Loudness measurement') ?>:</label>
                         </dt>
                         <dd id="loudnessMeasure-element" class="loudness-r128-field">
-                            <span id="loudness_measured_status">
+                            <?php /* RASTATIME 2026-10-27 - the count and each button on a line of their own (operator) */ ?>
+                            <span id="loudness_measured_status" style="display: block; margin-bottom: 4px;">
                                 <?php echo sprintf(_('Measured: %1$s of %2$s files'), $this->form->loudnessMeasured, $this->form->loudnessTotal) ?>
                             </span>
-                            <button type="button" id="loudness_measure_btn" class="btn btn-small" style="margin-left: 8px"><?php echo _('Measure missing files now') ?></button>
-                            <button type="button" id="loudness_remeasure_btn" class="btn btn-small" style="margin-left: 4px"><?php echo _('Re-measure all') ?></button>
+                            <div class="rt-button-stack">
+                                <button type="button" id="loudness_measure_btn" class="btn btn-small"><?php echo _('Measure missing files now') ?></button>
+                                <button type="button" id="loudness_remeasure_btn" class="btn btn-small"><?php echo _('Re-measure all') ?></button>
+                            </div>
                             <p class="description"><?php echo _('Files imported from now on are measured automatically. The buttons queue the existing library for the analyzer (a few seconds per file, in the background); an unmeasured track plays with its ReplayGain value shifted to the target until then.') ?></p>
                         </dd>
                         <?php /* RASTATIME 2026-10-02 - Output Processing (Stereo Tool), optional */ ?>
