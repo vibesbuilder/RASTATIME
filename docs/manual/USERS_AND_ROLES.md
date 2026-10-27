@@ -213,9 +213,9 @@ There are **no personal API keys**.
   the background, and scripts on the page cannot read it.
 - **Request token.** Every change made through the interface carries a
   token bound to your session.  The server compares it; a request
-  without the token is logged (`CSRF monitor` in `logs/legacy.log`) and,
-  once the check is switched to enforcing, refused.  A tab left open for
-  more than a week may need a reload (F5) before saving.
+  without the token is refused and logged (`CSRF refused` in
+  `logs/legacy.log`).  A tab left open for more than a week may need a
+  reload (F5) before saving.
 
 ---
 

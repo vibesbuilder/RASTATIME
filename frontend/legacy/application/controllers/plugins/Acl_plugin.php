@@ -311,8 +311,10 @@ class Zend_Controller_Plugin_Acl extends Zend_Controller_Plugin_Abstract
      * legacy write without a valid token ("CSRF monitor"), so senders that do
      * not use jQuery (fetch, plain form posts) show up in legacy.log before
      * the check is enforced.  Phase 2: set to true (403 + "CSRF refused").
+     * Phase 2 since 2026-10-27, after the monitor log stayed quiet once the
+     * widget settings forms carried the token.
      */
-    private const LEGACY_CSRF_ENFORCE = false;
+    private const LEGACY_CSRF_ENFORCE = true;
 
     private function checkLegacyCsrf(Zend_Controller_Request_Abstract $request, string $controller): void
     {

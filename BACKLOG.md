@@ -941,15 +941,19 @@ Schreibzugriffe) ohne Monitor-Zeile, Auto-DJ-Formular bekam sein Token-Feld; der
 aus Lesen - echte Speichervorgänge aller Rollen (Playlist, Sendung, Benutzer, Einstellungen) im
 normalen Betrieb abwarten.  **Operator-Go Phase 2 (2026-10-25)** nach dieser Empfehlung: Auswertung
 und Scharfschalten ab 2026-10-27.
+**Paket 3 Phase 2 LIVE 2026-10-27 08:42:** Monitor-Log 25.-27.10. ausgewertet - einziger Rest die
+sieben Widget-Einstellungsseiten (reine Formular-Posts, 4 Zeilen am 25.10.) → Feld `csrf` (`a1ac692`),
+Probe-Speicherung „Weekly Schedule" durch den Operator ohne Monitor-Zeile; `LEGACY_CSRF_ENFORCE = true`,
+live geprüft (jQuery-POST 200, `fetch` ohne Header 403 + `CSRF refused`).  **Paket 3 erledigt.**
 **Paket 4 umgesetzt 2026-10-25 ~19:00:** `/main` + `/show` aus `config/icecast.xml` (+ `.example`),
 Auth-Skripte und `api/icecast-listener-allow` gelöscht; Icecast-Neustart 19:00:48 sauber (Quellen
 nach 3 s zurück, Streams 200, `/main` 404), Firewall-Regeln „RASTATIME Icecast“ + 2x „icecast“ vom
 Operator deaktiviert - **Paket 4 erledigt.**  Achtung Rückfall auf Icecast 2.4.4:
 `icecast.xml.2.4.4-backup` enthält die alten Mounts noch (`C:/Temp/optd/icecast_strip_input_mounts.py`).
 **Abnahme mit PM- und DJ-Konto: Operator 2026-10-25 durchgeführt.**  **Paket 5 erledigt 2026-10-25:** Handbuch `USERS_AND_ROLES` ×4 neu, Rollen-Aussagen in SETTINGS,
-LINE_IN, CALENDAR, LIBRARY, SHOW_TEMPLATES, ANALYTICS ×4 korrigiert.  Offen aus dem Audit: Phase 2
-CSRF (ab 27.10.), PM/DJ-Abnahme; Ideen siehe unten (Super-Admin-Hinweis im Benutzer-Dialog, Show
-Templates/Widgets-Seite für PM, SETTINGS-Kapitel mit erfundenen Funktionen).
+LINE_IN, CALENDAR, LIBRARY, SHOW_TEMPLATES, ANALYTICS ×4 korrigiert.  Offen aus dem Audit (Phase 2
+CSRF erledigt 2026-10-27, PM/DJ-Abnahme 2026-10-25): Ideen siehe unten (Super-Admin-Hinweis im
+Benutzer-Dialog, Show Templates/Widgets-Seite für PM, SETTINGS-Kapitel mit erfundenen Funktionen).
 **Offene Frage (Soll > Ist):** Gäste laden die Bibliothek auf dem Dashboard nicht (ACL ohne
 `library`/`usersettings`/Podcast-Liste, schon vor dem Audit; 403 im UI-Test), die Soll-Matrix sagt
 „Bibliothek ansehen: Gast ✓“.  Optionen: (a) Gästen nur die Lese-Aktionen freigeben (Feed,

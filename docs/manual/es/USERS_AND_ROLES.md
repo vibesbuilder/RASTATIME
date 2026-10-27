@@ -223,10 +223,9 @@ puntos de montaje figuran en el capítulo [Streams](./STREAMS.md).
   leerla.
 - **Token de petición.** Cada cambio hecho desde la interfaz lleva un
   token ligado a su sesión.  El servidor lo compara; una petición sin el
-  token se registra (`CSRF monitor` en `logs/legacy.log`) y, cuando la
-  comprobación pase a ser estricta, se rechaza.  Una pestaña que lleve
-  abierta más de una semana puede necesitar recargarse (F5) antes de
-  guardar.
+  token se rechaza y se registra (`CSRF refused` en `logs/legacy.log`).
+  Una pestaña que lleve abierta más de una semana puede necesitar
+  recargarse (F5) antes de guardar.
 
 ---
 

@@ -222,10 +222,9 @@ Es gibt **keine persönlichen API-Schlüssel**.
   nicht lesen.
 - **Anfrage-Token.** Jede Änderung über die Oberfläche trägt ein an Ihre
   Sitzung gebundenes Token.  Der Server vergleicht es; eine Anfrage ohne
-  Token wird protokolliert (`CSRF monitor` in `logs/legacy.log`) und,
-  sobald die Prüfung scharf geschaltet ist, abgelehnt.  Ein Tab, der
-  länger als eine Woche offen war, braucht vor dem Speichern eventuell
-  ein Neuladen (F5).
+  Token wird abgelehnt und protokolliert (`CSRF refused` in
+  `logs/legacy.log`).  Ein Tab, der länger als eine Woche offen war,
+  braucht vor dem Speichern eventuell ein Neuladen (F5).
 
 ---
 

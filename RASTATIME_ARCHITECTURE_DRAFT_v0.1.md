@@ -1,10 +1,13 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.96
-Date: 2026-10-26
+Draft version: 0.97
+Date: 2026-10-27
 
 > **Revision history**
+> - **0.97 (2026-10-27)** - **Legacy CSRF check enforced** (§23.72 addendum):
+>   phase 2 - a legacy write without a valid token is refused (403); plain
+>   form posts carry the token as the hidden field `csrf`.
 > - **0.96 (2026-10-26)** - **Overrun rule of the autoloading fill** (exact-fill
 >   addendum): the first item that does not fit may run past the show's end
 >   when the next show has "Allow delayed start", within 5 s, or with the
@@ -7756,6 +7759,17 @@ token (`CSRF monitor: ...` WARN in `legacy.log`, with controller/action
 and Origin), so senders that bypass jQuery (plain form posts, `fetch`)
 show up; **phase 2** sets `Acl_plugin::LEGACY_CSRF_ENFORCE` to true (403).
 New code that writes without jQuery sends the header itself.
+
+**Phase 2 (0.97, 2026-10-27).**  `LEGACY_CSRF_ENFORCE` is true: a legacy
+write of a logged-in user without a valid token gets 403 (`ERROR: CSRF
+token mismatch.`) and a `CSRF refused: ...` WARN in `legacy.log`.  The
+monitor log of 2026-10-25 to 27 showed one remaining sender: the seven
+widget settings pages (`EmbeddablewidgetsController`), plain Zend form
+posts.  Their forms carry a `Zend_Form_Element_Hidden('csrf')` with the
+`csrf_namespace` token (decorator `ViewHelper` only, so it renders inside
+the form), the pattern for every plain form post.  Live: a jQuery POST
+passes, a `fetch` POST without the header gets 403 and one `CSRF refused`
+line.
 
 **Icecast (package 4, 0.92).**  Icecast carries only output mounts (the
 three public streams, their `-standby` fallbacks) and the local

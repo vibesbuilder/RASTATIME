@@ -231,10 +231,9 @@ Il n'existe **pas de clés API personnelles**.
   ne peuvent pas le lire.
 - **Jeton de requête.** Chaque modification faite via l'interface porte
   un jeton lié à votre session.  Le serveur le compare ; une requête
-  sans jeton est journalisée (`CSRF monitor` dans `logs/legacy.log`) et,
-  une fois la vérification activée, refusée.  Un onglet resté ouvert
-  plus d'une semaine peut nécessiter un rechargement (F5) avant
-  d'enregistrer.
+  sans jeton est refusée et journalisée (`CSRF refused` dans
+  `logs/legacy.log`).  Un onglet resté ouvert plus d'une semaine peut
+  nécessiter un rechargement (F5) avant d'enregistrer.
 
 ---
 

@@ -64,7 +64,9 @@ target matrix in §4; R4 left on purpose (`setIsScheduled` only clears the
 flag when the file has no future row - self-correcting); R12 is package 3:
 phase 1 live 2026-10-25 (SameSite=Lax + HttpOnly cookie, `X-CSRF-Token`
 on every jQuery write, central compare in `Acl_plugin` that only logs
-"CSRF monitor" lines); phase 2 (enforce, 403) after the log stays quiet.
+"CSRF monitor" lines); phase 2 (enforce, 403, "CSRF refused") live
+2026-10-27 - the monitor log showed one remaining sender, the seven widget
+settings forms (plain form posts), which carry the `csrf` field since.
 Found during the operator's UI test (actual < target, open question):
 guests cannot load the dashboard library - `library`, `usersettings` and
 the podcast list were never in their ACL (403), while the target matrix
