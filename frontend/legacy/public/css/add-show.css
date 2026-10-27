@@ -52,8 +52,15 @@
 
 /* RASTATIME 2026-10-27 - a little air between the label and the select
    below it (operator; they touched).  Outranks `#schedule-add-show dt
-   { margin: 0 }` below. */
-#schedule-add-show dt#add_show_repeat_of_label {
+   { margin: 0 }` below.  The same for the playlist selects of
+   Autoloading Playlist and the colour fields of Style (operator, same
+   day; the dt ids of the playlists repeat their select ids). */
+#schedule-add-show dt#add_show_repeat_of_label,
+#schedule-add-show dt#add_show_autoplaylist_id,
+#schedule-add-show dt#add_show_intro_playlist_id,
+#schedule-add-show dt#add_show_outro_playlist_id,
+#schedule-add-show dt#add_show_background_color-label,
+#schedule-add-show dt#add_show_color-label {
     margin-bottom: 6px;
 }
 

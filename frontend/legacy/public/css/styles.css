@@ -5556,6 +5556,27 @@ div.dt-button-collection .dt-button > span {
     margin-bottom: 6px;
 }
 
+/* RASTATIME 2026-10-27 - every field on the same line as its label
+   (operator): labels in a column as wide as the longest one of the
+   language (FR / ES 158 px), the 300 px fields beside them; hints stay
+   under their field.  Top-aligned with 5 px above the label, which
+   centres it on the 26 px fields (baseline alignment put it 7 px high
+   next to the selects and at the bottom of the textarea). */
+.bulk-md-form dl.zend_form {
+    display: grid;
+    grid-template-columns: max-content 300px;
+    column-gap: 12px;
+    align-items: start;
+}
+.bulk-md-form dl.zend_form > dt,
+.bulk-md-form dl.zend_form > dd {
+    margin: 0 0 6px 0;
+    padding: 0;
+}
+.bulk-md-form dl.zend_form > dt {
+    padding-top: 5px;
+}
+
 /* RASTATIME 2026-10-27 - texts on the dark frame (see the calendar
    dialogs above): labels and the intro like the title bar, hints dimmer */
 .ui-dialog.bulk-md-dialog-wrapper .ui-dialog-content,

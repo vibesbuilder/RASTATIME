@@ -289,6 +289,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Feinschliff-Nachtrag: Mehrfach-Bearbeiten und Show-Dialog
+  (2026-10-27, Operator)** —
+  (1) **Bibliothek „Edit“ mit mehreren Titeln:** jedes Feld steht in der
+  Zeile seiner Bezeichnung (CSS-Grid: Bezeichnungsspalte so breit wie die
+  längste Bezeichnung der Sprache, FR / ES 158 px, daneben die 300-px-
+  Felder; Hinweise bleiben unter ihrem Feld; Bezeichnungen auf die
+  26-px-Felder zentriert, ±0,5 px).  Der Dialog wird dadurch 708 statt
+  903 px hoch.
+  (2) **Show-Dialog:** die 6 px unter „Repeat of show“ gelten jetzt auch
+  für Select Playlist, Select Intro Playlist und Select Outro Playlist
+  (Autoloading Playlist) sowie Background Colour und Text Colour (Style);
+  vorher 0 px.  Live gemessen (nur lesend; Dialoge ohne Speichern
+  geschlossen).
 - **Oberflächen-Feinschliff: sieben Punkte (2026-10-27, Operator)** —
   (1) **Bibliothek „Edit“ mit mehreren Titeln:** der Dialog trägt den
   dunklen Rahmen der Kalender-Dialoge (#2f2f2f, Titelleiste #4a4a4a,
