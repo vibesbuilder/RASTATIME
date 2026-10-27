@@ -992,23 +992,26 @@ var AIRTIME = (function (AIRTIME) {
       },
       /* Type */ {
         // RASTATIME 2026-09-28 - labelled (operator wish): the column holds
-        // the preview button (speaker / playlist / block icon)
-        sTitle: $.i18n._("Preview"),
+        // the preview button (speaker / playlist / block icon).
+        // 2026-10-27 - no heading any more, for Cover neither (operator:
+        // the icons speak for themselves, the width goes to the text
+        // columns); the Columns menu still names Cover (columnText below)
+        sTitle: "",
         mDataProp: "image",
         mRender: renderPreview,
         bSortable: false,
         bSearchable: false,
-        sWidth: "60px",
+        sWidth: "24px",
         sClass: "library_type",
         iDataSort: 0,
       },
       /* Artwork */ {
-        sTitle: $.i18n._("Cover"),
+        sTitle: "",
         mDataProp: "artwork",
         mRender: renderArtwork,
         bSortable: false,
         bSearchable: false,
-        sWidth: "50px",
+        sWidth: "32px",
         sClass: "library_artwork",
         iDataSort: 0,
       },
@@ -1318,10 +1321,10 @@ var AIRTIME = (function (AIRTIME) {
       // RASTATIME 2026-10-09 - operator wish: 500 and 1000 in the page-length
       // menu.  2026-10-16: "All" (-1) dropped - with 21,700 tracks the feed
       // is 75 MB and the browser never finishes rendering the rows (library
-      // spinner for ever); 2000 is the new top.
+      // spinner for ever); 2000 is the new top.  2026-10-27: 200 added.
       aLengthMenu: [
-        [25, 50, 100, 500, 1000, 2000],
-        [25, 50, 100, 500, 1000, 2000],
+        [25, 50, 100, 200, 500, 1000, 2000],
+        [25, 50, 100, 200, 500, 1000, 2000],
       ],
       bStateSave: true,
       fnStateSaveParams: function (oSettings, oData) {
@@ -1659,6 +1662,11 @@ var AIRTIME = (function (AIRTIME) {
               text: '<i class="icon-white icon-th-list"></i>',
               titleAttr: $.i18n._("Columns"),
               columns: ":gt(2)", // first 3 columns are fixed, never toggled
+              // the Cover column has no heading (2026-10-27); name it here
+              columnText: function (dt, idx, title) {
+                var prop = dt.settings()[0].aoColumns[idx].mDataProp;
+                return prop === "artwork" ? $.i18n._("Cover") : title;
+              },
               // Buttons inserts the collection inline next to the button, where
               // the panel's overflow:hidden clips it to a thin strip.  'fixed'
               // renders it as a position:fixed panel that escapes the clip;

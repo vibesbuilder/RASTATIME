@@ -310,8 +310,9 @@ Two kinds of drag are supported on the calendar:
 
 Click and drag any future show block to a different time / day.
 
-- Snap is 15 minutes by default (configurable under General
-  Preferences).
+- The show snaps to the grid interval chosen in the dropdown at
+  the top left of the time grid (1, 5, 10, 15, 30 or 60 minutes;
+  10 minutes unless you picked another, saved per user).
 - The drag respects the no-overlap rule: dropping onto an
   occupied slot is rejected with a red flash.
 - For a recurring show, only *this instance* is moved — the
@@ -322,7 +323,7 @@ Click and drag any future show block to a different time / day.
 Hover the bottom edge of a show; the cursor turns into a
 double-arrow. Drag down to lengthen, up to shorten.
 
-- Snap is 15 minutes by default.
+- It snaps to the same grid interval as a move.
 - A resize cannot push the show past a neighbouring show
   (would overlap) or below 5 minutes (the minimum show
   duration).

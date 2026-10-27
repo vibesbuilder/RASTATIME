@@ -57,7 +57,7 @@
                 <label for="linein-device"><?php echo _("Device:"); ?></label>
             </dt>
             <dd id="lineindevice-element">
-                <select id="linein-device" name="device_id" style="width:100%">
+                <select id="linein-device" name="device_id">
                     <option value=""><?php echo _("— Loading devices …") ?></option>
                 </select>
             </dd>
@@ -78,8 +78,8 @@
                 <label for="linein-channels"><?php echo _("Channels:"); ?></label>
             </dt>
             <dd id="lineinchannels-element">
-                <select id="linein-channels" style="width:100%"></select>
-                <p style="margin:0.4em 0 0 0; font-size:0.9em; color:#888;">
+                <select id="linein-channels"></select>
+                <p style="margin:0.4em 0 0 0; max-width:200px; font-size:0.9em; color:#888;">
                     <?php echo _("A stereo pair or a mono channel of the picked device — a multichannel interface can serve one studio per pair."); ?>
                 </p>
             </dd>

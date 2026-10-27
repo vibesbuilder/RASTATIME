@@ -717,6 +717,20 @@ function setupUI() {
     .on("click", function () {
       $(this).toggleClass("visible");
       $(".smart-block-advanced").toggle();
+      // RASTATIME 2026-10-27 - size the label column to the longest label
+      // of this language (CSS: max(40 %, --rt-sb-label-w)); measurable only
+      // once the section is shown
+      $(".smart-block-advanced:visible").each(function () {
+        var widest = 0;
+        $(this)
+          .find("dt label")
+          .each(function () {
+            widest = Math.max(widest, this.getBoundingClientRect().width);
+          });
+        if (widest > 0) {
+          this.style.setProperty("--rt-sb-label-w", Math.ceil(widest) + 12 + "px");
+        }
+      });
     });
 
   // RASTATIME 2026-05-22 — Exclude-played-lately toggle wiring.

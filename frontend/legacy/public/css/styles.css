@@ -5486,9 +5486,14 @@ div.dt-button-collection .dt-button > span {
 /* Dark frame for the calendar's content dialogs (Schedule Tracks +
    Contents of Show — `classes` hook set in schedule.js).  The
    .ui-dialog wrapper and its buttonpane are .ui-widget-content =
-   redmond near-white; spec #2f2f2f (operator 2026-08-31). */
+   redmond near-white; spec #2f2f2f (operator 2026-08-31).
+   RASTATIME 2026-10-27 - the library's bulk metadata editor wears the
+   same frame (operator: the near-white dialog did not fit the grey
+   design); its texts are set further below. */
 .ui-dialog.schedule-tracks-dialog,
-.ui-dialog.schedule-tracks-dialog .ui-dialog-buttonpane {
+.ui-dialog.schedule-tracks-dialog .ui-dialog-buttonpane,
+.ui-dialog.bulk-md-dialog-wrapper,
+.ui-dialog.bulk-md-dialog-wrapper .ui-dialog-buttonpane {
     background: #2f2f2f;
     border-color: #2f2f2f;
 }
@@ -5503,18 +5508,21 @@ div.dt-button-collection .dt-button > span {
    the other modal dialogs keep redmond's overlay.  The frame selector
    carries four classes to outrank `.rt-jq3 .ui-widget.ui-widget-content
    { border: 0 }`. */
-.ui-dialog.ui-widget.ui-widget-content.schedule-tracks-dialog {
+.ui-dialog.ui-widget.ui-widget-content.schedule-tracks-dialog,
+.ui-dialog.ui-widget.ui-widget-content.bulk-md-dialog-wrapper {
     border: 3px solid #353535;
     box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.65);
 }
-.ui-dialog.schedule-tracks-dialog .ui-dialog-titlebar {
+.ui-dialog.schedule-tracks-dialog .ui-dialog-titlebar,
+.ui-dialog.bulk-md-dialog-wrapper .ui-dialog-titlebar {
     background: #4a4a4a;
     border: 1px solid #5b5b5b;
     border-radius: 0;
     color: #cccccc;
     padding: 6px 8px;
 }
-.ui-dialog.schedule-tracks-dialog .ui-dialog-buttonpane {
+.ui-dialog.schedule-tracks-dialog .ui-dialog-buttonpane,
+.ui-dialog.bulk-md-dialog-wrapper .ui-dialog-buttonpane {
     border-top: 1px solid #9f9f9f;
 }
 .ui-widget-overlay.schedule-tracks-overlay {
@@ -5546,4 +5554,14 @@ div.dt-button-collection .dt-button > span {
 
 .bulk-md-form dd {
     margin-bottom: 6px;
+}
+
+/* RASTATIME 2026-10-27 - texts on the dark frame (see the calendar
+   dialogs above): labels and the intro like the title bar, hints dimmer */
+.ui-dialog.bulk-md-dialog-wrapper .ui-dialog-content,
+.bulk-md-form label {
+    color: #cccccc;
+}
+.bulk-md-form p.description {
+    color: #999999;
 }

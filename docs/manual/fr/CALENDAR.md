@@ -347,8 +347,10 @@ Deux types de glisser sont supportés sur le calendrier :
 Cliquez et glissez n'importe quel bloc d'émission future
 vers une heure / un jour différent.
 
-- L'accrochage est de 15 minutes par défaut (configurable
-  sous Préférences générales).
+- L'émission s'accroche à l'intervalle de grille choisi dans la
+  liste en haut à gauche de la grille horaire (1, 5, 10, 15, 30
+  ou 60 minutes ; 10 minutes tant que vous n'en avez pas choisi
+  un autre, enregistré par utilisateur).
 - Le glissement respecte la règle de non-chevauchement :
   déposer sur un créneau occupé est rejeté avec un flash
   rouge.
@@ -361,7 +363,8 @@ Survolez le bord inférieur d'une émission ; le curseur
 devient une double flèche. Glissez vers le bas pour
 allonger, vers le haut pour raccourcir.
 
-- L'accrochage est de 15 minutes par défaut.
+- Elle s'accroche au même intervalle de grille qu'un
+  déplacement.
 - Un redimensionnement ne peut pas pousser l'émission
   au-delà d'une émission voisine (chevaucherait) ou en
   dessous de 5 minutes (la durée minimale d'émission).

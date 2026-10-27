@@ -22,7 +22,7 @@
 var scheduleFc6 = null;
 // current slot granularity in minutes (1/5/10/15/30/60) — drives the interval
 // dropdown's selected value across re-injections; seeded from the saved pref.
-var fc6SlotMin = 30;
+var fc6SlotMin = 10;
 
 // View-name mapping: the stored preference + FC1.5 use agendaDay/agendaWeek/
 // month; FC6 uses timeGridDay/timeGridWeek/dayGridMonth.
@@ -203,7 +203,7 @@ function fc6InjectIntervalDropdown() {
   });
   $select.val(String(fc6SlotMin));
   $select.on("change", function () {
-    var v = parseInt($(this).val(), 10) || 30;
+    var v = parseInt($(this).val(), 10) || 10;
     fc6SlotMin = v;
     scheduleFc6.setOption("slotDuration", "00:" + pad(v, 2) + ":00");
     $.post(baseUrl + "Schedule/set-time-interval/format/json", {
@@ -286,7 +286,7 @@ function buildScheduleFc6(data) {
   var legacyView = getTimeScalePreference(data); // agendaDay/agendaWeek/month
   var slotMin = getTimeIntervalPreference(data); // minutes
   var offset = parseInt(data.calendarInit.timezoneOffset, 10);
-  fc6SlotMin = slotMin > 0 ? slotMin : 30; // guard a missing/NaN preference
+  fc6SlotMin = slotMin > 0 ? slotMin : 10; // guard a missing/NaN preference
 
   if (scheduleFc6) {
     scheduleFc6.destroy();

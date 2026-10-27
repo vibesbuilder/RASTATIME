@@ -251,8 +251,10 @@ pueden repetir así (etapa 2, véase BACKLOG).
 ### 5.1 Mover un programa
 
 Haga clic y arrastre cualquier bloque de programa futuro a
-una hora / día diferente. El snap es de 15 minutos por
-defecto.
+una hora / día diferente. El programa se ajusta al intervalo de
+cuadrícula elegido en el desplegable arriba a la izquierda de la
+cuadrícula horaria (1, 5, 10, 15, 30 o 60 minutos; 10 minutos
+mientras no elija otro, guardado por usuario).
 
 ### 5.2 Redimensionar un programa
 

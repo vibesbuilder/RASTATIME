@@ -344,8 +344,10 @@ Zwei Arten von Drag werden auf dem Kalender unterstützt:
 Klicken und ziehen Sie eine beliebige zukünftige
 Sendungs-Block auf eine andere Zeit / einen anderen Tag.
 
-- Snap ist standardmäßig 15 Minuten (konfigurierbar unter
-  Allgemeine Einstellungen).
+- Die Sendung rastet im Raster-Intervall ein, das Sie im
+  Auswahlfeld oben links im Zeitraster wählen (1, 5, 10, 15, 30
+  oder 60 Minuten; 10 Minuten, solange Sie nichts anderes gewählt
+  haben, pro Benutzer gespeichert).
 - Das Ziehen respektiert die Nicht-Überlappungs-Regel: das
   Ablegen auf einem belegten Slot wird mit einem roten
   Flash abgelehnt.
@@ -358,7 +360,7 @@ Bewegen Sie den Mauszeiger über die untere Kante einer
 Sendung; der Cursor wird zu einem Doppelpfeil. Ziehen Sie
 nach unten zum Verlängern, nach oben zum Verkürzen.
 
-- Snap ist standardmäßig 15 Minuten.
+- Sie rastet im selben Raster-Intervall ein wie beim Verschieben.
 - Eine Skalierung kann die Sendung nicht über eine
   Nachbarsendung hinausschieben (würde überlappen) oder
   unter 5 Minuten (die minimale Sendungsdauer).

@@ -50,6 +50,13 @@
     top: 0;
 }
 
+/* RASTATIME 2026-10-27 - a little air between the label and the select
+   below it (operator; they touched).  Outranks `#schedule-add-show dt
+   { margin: 0 }` below. */
+#schedule-add-show dt#add_show_repeat_of_label {
+    margin-bottom: 6px;
+}
+
 #schedule-add-show dl {
     margin: 0;
     padding: 0;

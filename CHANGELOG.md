@@ -289,6 +289,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Oberflächen-Feinschliff: sieben Punkte (2026-10-27, Operator)** —
+  (1) **Bibliothek „Edit“ mit mehreren Titeln:** der Dialog trägt den
+  dunklen Rahmen der Kalender-Dialoge (#2f2f2f, Titelleiste #4a4a4a,
+  Beschriftungen #ccc, Hinweise #999) statt Redmond-Weiß.
+  (2) **Bibliothek „Show“:** 200 Zeilen pro Seite als neue Stufe.
+  (3) **Bibliothek:** die Spalten Preview und Cover ohne Überschrift und
+  schmaler (34 / 42 px statt ~60 / ~50 px); im Columns-Menü heißt Cover
+  weiter „Cover“ (`columnText`).
+  (4) **Line-In-Editor:** Device und Channels stehen neben ihrer
+  Bezeichnung und sind 200 px breit wie die übrigen Felder (vorher
+  `width:100%` eines inhaltsbreiten `dd`; der lange Kanal-Hinweis schob
+  Channels unter die Bezeichnung); der Hinweis bricht auf 200 px um.
+  (5) **Smart Block, Advanced Options:** die Bezeichnungsspalte ist so
+  breit wie die längste Bezeichnung der aktuellen Sprache (gemessen beim
+  Aufklappen, mindestens die bisherigen 40 %), also kein Umbruch mehr bei
+  „Allow last track to exceed time limit:“ in schmalen Editoren (480 px:
+  249 px, alle neun Bezeichnungen einzeilig).
+  (6) **Kalender:** das Raster-Intervall-Auswahlfeld füllt die ganze
+  Ecke oben links (über die Zelle gelegt, ohne Rand und 4-px-Abstand);
+  Standard-Intervall 10 statt 30 Minuten für alle ohne eigene Wahl
+  (gespeichert hatten nur opuser 10 und testuser 15).  Handbuch CALENDAR
+  ×4: das Einrasten beim Ziehen folgt diesem Intervall (die Angabe
+  „15 Minuten, unter Allgemeine Einstellungen“ war falsch).
+  (7) **Show-Dialog, Abschnitt Repeat:** 6 px zwischen „Repeat of show“
+  und dem Auswahlfeld (vorher 0).
+  Alle Punkte live gemessen (nur lesend; Dialoge geöffnet und ohne
+  Speichern geschlossen).
 - **Reiter in Playout History und Kopfzeile der Status-Tabelle im dunklen
   Design (2026-10-26, Operator)** — beide kamen noch im hellen
   jQuery-UI-Theme „Redmond“: Reiter Log Sheet / File Summary / Show

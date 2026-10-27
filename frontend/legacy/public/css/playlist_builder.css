@@ -50,6 +50,16 @@
     -moz-box-sizing: border-box;
     box-sizing: border-box;}
 
+/* RASTATIME 2026-10-27 - the line-in Device / Channels dropdowns sit next
+   to their labels, as wide as the other fields (operator); at 100 % of an
+   auto-sized dd they followed their content, and the long channel hint
+   pushed Channels below its label */
+.playlist_editor #linein-device,
+.playlist_editor #linein-channels {
+    width: 200px;
+    box-sizing: border-box;
+}
+
 .side_playlist textarea {
     /*height: 70px;*/
 }
@@ -672,12 +682,21 @@ li.spl_empty {
 .smart-block-advanced, .visual-waveform-editor {
     display: none;
 }
+/* RASTATIME 2026-10-27 - the label column is as wide as the longest label
+   of the current language (--rt-sb-label-w, measured in
+   smart_blockbuilder.js when the section opens), at least the former 40 %,
+   so no label wraps (operator: "Allow last track to exceed time limit:"
+   broke in two in a narrower editor) */
 .smart-block-form .smart-block-advanced dt {
-    flex: 0 0 40%;
+    flex: 0 0 max(40%, var(--rt-sb-label-w, 0px));
     margin: 0;
 }
+.smart-block-form .smart-block-advanced dt label {
+    white-space: nowrap;
+}
 .smart-block-form .smart-block-advanced dd {
-    flex: 0 0 60%;
+    flex: 1 1 0;
+    min-width: 0;
     margin: 0;
 }
 .smart-block-form input[type='radio'], .smart-block-form input[type='checkbox'] {

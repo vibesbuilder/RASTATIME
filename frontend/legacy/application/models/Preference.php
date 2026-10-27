@@ -1506,13 +1506,14 @@ class Application_Model_Preference
 
     /**
      * Retrieves the time interval preference for the current user.
-     * Defaults to 30 min if no entry exists.
+     * Defaults to 10 min if no entry exists (RASTATIME 2026-10-27,
+     * operator; was 30).
      */
     public static function GetCalendarTimeInterval()
     {
         $val = self::getValue('calendar_time_interval', true /* user specific */);
 
-        return (strlen($val) == 0) ? '30' : $val;
+        return (strlen($val) == 0) ? '10' : $val;
     }
 
     public static function SetDiskQuota($value)
