@@ -27,5 +27,12 @@ class Application_Form_WidgetMultiViewSchedule extends Zend_Form
         $submit->setLabel(_('Save'))
                ->setAttrib('class', 'btn');
         $this->addElement($submit);
+
+        // RASTATIME 2026-10-27 (role audit R12, CSRF phase 2) - a plain
+        // form post, so the session token travels as the hidden field 'csrf'
+        $csrf = new Zend_Form_Element_Hidden('csrf');
+        $csrf->setValue((new Zend_Session_Namespace('csrf_namespace'))->authtoken)
+             ->setDecorators(['ViewHelper']);
+        $this->addElement($csrf);
     }
 }

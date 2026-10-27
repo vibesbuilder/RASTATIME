@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+- **Rollen-Audit Paket 3: Widget-Einstellungen schicken das CSRF-Token
+  (2026-10-27)** — Auswertung des Monitor-Logs vor Phase 2: vier Zeilen
+  am 25.10. (22:26-22:56) von `embeddablewidgets/track-history` und
+  `embeddablewidgets/next-latest-shows`.  Die sieben
+  Widget-Einstellungsseiten (Player, Weekly Schedule, Current Show/Track,
+  Next/Latest Shows, On Air Today, Multi-View Schedule, Track History)
+  posten als reines Zend-Formular ohne jQuery; die statische Durchsicht vom
+  25.10. hatte sie übersehen.  Jedes dieser Formulare trägt jetzt das
+  versteckte Feld `csrf` mit dem Sitzungs-Token.  Erneute Durchsicht aller
+  Formular-Posts, `fetch`- und XHR-Aufrufe: kein weiterer Sender ohne Token
+  (Song-Request-Widget geht an `/api/v2`, öffentliche Controller sind
+  ausgenommen, Bibliothek/Stream/Auto DJ/Benutzer schicken es bereits).
+  Geprüft mit der Render-Probe `widget_csrf_probe.php` (7/7) und live auf
+  allen sieben Seiten (HTTP 200, Feld = `CSRF_TOKEN`).  Phase 2 folgt.
 - **Rollen-Audit Paket 4: Icecast-Eingänge `/main` und `/show` entfernt
   (2026-10-25, Operator-Go)** — die beiden versteckten DJ-Mounts mit
   URL-Auth stammten aus der Zeit vor dem Liquidsoap-Harbor (DJs senden
