@@ -80,6 +80,33 @@ Expiry in M4A · bulk_import-Erweiterungsliste · die unbewerteten Ideen unter
 
 ## 🎯 Aktive Backlog-Items (warten auf Operator-Go)
 
+### 🟡 Auto DJ füllt auch die laufende Sendung (neu 2026-10-26, Operator: Defer 2026-10-27)
+
+**Anlass 26.10.:** Operator-Testsendung „rock hour" (Instanz 30685, 22:15–23:08)
+blieb leer und lief in `silence_fallback` (ab 22:14:57).  Der
+Autoloading-Bau um 21:16:34 ließ die 60:27-Folge aus („0 of 1 items fit"),
+weil „Allow last track to exceed time limit" erst um 22:03 gesetzt wurde.
+Auto DJ war um 21:16 vermutlich aus; nach dem Einschalten während der
+Sendung kam keine Befüllung mehr.
+**Ursache:** `AutoDjService::runFillPass()` wählt nur Instanzen mit
+`starts > NOW()` und `starts < NOW() + 1 h`, und zwar nur mit „Fill any show"
+(`auto_dj_fill_any_show`).  Eine bereits laufende Sendung ist nie Kandidat,
+und der Pre-Pass legt nur Sendungen in Kalenderlücken an.  Damit bleibt eine
+laufende Sendung, die leer ist oder vorzeitig ausläuft, still bis zur
+nächsten Sendung.
+**Skizze (Option A aus der Besprechung):** Der Fill-Pass nimmt zusätzlich die
+laufende, unmodifizierte Instanz, wenn ab „jetzt" nichts mehr eingeplant ist
+und mehr als `FILL_THRESHOLD_SECS` frei bleiben.  Die Auto-DJ-Playlist wird
+dann ab „jetzt + Vorlauf" (~30 s, damit der Playout-Abgleich sie rechtzeitig
+übernimmt) bis zum Sendungsende angehängt.  Die heutigen Ausschlüsse bleiben:
+ungebautes Autoloading, Wiederholung ohne Kopie.  Aufwand ~1 h + Probe an
+einer temporären Instanz (Live-Regel 3).
+**Vorbedingungen:**
+- Bedarf aus dem Betrieb (Operator 2026-10-27: Fall sehr selten).
+- Klären, ob absichtlich leere Sendungen (DJ-Login / Line-In ohne Zeilen)
+  ausgenommen werden müssen.
+- Vorlauf gegen Queue-Ahead und den 2-min-Abgleich festlegen.
+
 ### ✅ PHP 8.3 → 8.5 (Operator-Go 2026-10-21, DONE 2026-10-22)
 
 **Ergebnis 2026-10-22:** PHP **8.5.12** NTS x64 (VS17) live seit 08:52 (Tag
