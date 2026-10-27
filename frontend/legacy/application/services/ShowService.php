@@ -56,7 +56,7 @@ class Application_Service_ShowService
         $currentUser = $service_user->getCurrentUser();
 
         $showData['add_show_duration'] = $this->formatShowDuration(
-            $showData['add_show_duration']
+            self::durationFromStartEnd($showData)
         );
 
         $con = Propel::getConnection();
@@ -212,7 +212,7 @@ class Application_Service_ShowService
         $currentUser = $service_user->getCurrentUser();
 
         $showData['add_show_duration'] = $this->formatShowDuration(
-            $showData['add_show_duration']
+            self::durationFromStartEnd($showData)
         );
 
         $con = Propel::getConnection();
@@ -486,6 +486,56 @@ class Application_Service_ShowService
         $c->addOr(CcShowDaysPeer::LAST_SHOW, null, Criteria::ISNULL);
 
         return CcShowDaysPeer::doSelect($c);
+    }
+
+    /**
+     * RASTATIME 2026-10-27 - the duration the form VALIDATED, not the one it
+     * carried.  The overlap check (AddShowWhen::checkReliantFields) works on
+     * start + end time of the form, the save used the hidden
+     * add_show_duration field, which the browser fills asynchronously
+     * (Schedule/calculate-duration) after a start or end change.  Saving
+     * before that reply came back stored the OLD duration: "Indie Lane" 2026-10-27, start moved 00:00 -> 00:08, end still 05:00, the
+     * field still "05h 00m" -> the instance ran until 05:08 into "BBC
+     * Newsday" although the check had passed for 05:00.  The wall-clock
+     * difference of the start/end fields is what the check approved, so it
+     * is what gets stored; callers without end fields (templates) keep
+     * their explicit duration.
+     *
+     * @param array $showData the form data
+     *
+     * @return string duration as the form writes it ("05h 00m")
+     */
+    public static function durationFromStartEnd(array $showData)
+    {
+        $given = (string) ($showData['add_show_duration'] ?? '');
+        foreach (['add_show_start_date', 'add_show_start_time', 'add_show_end_date_no_repeat', 'add_show_end_time'] as $key) {
+            if (!isset($showData[$key]) || trim((string) $showData[$key]) === '') {
+                return $given;
+            }
+        }
+        $service_showForm = new Application_Service_ShowFormService();
+        $derived = $service_showForm->calculateDuration(
+            $showData['add_show_start_date'] . ' ' . $showData['add_show_start_time'],
+            $showData['add_show_end_date_no_repeat'] . ' ' . $showData['add_show_end_time'],
+            $showData['add_show_timezone'] ?? 'UTC'
+        );
+        if (!preg_match('/^\d{2,}h \d{2}m$/', $derived)) {
+            // negative or unparsable: the form validation refuses those, keep the field
+            return $given;
+        }
+        if (self::formatShowDuration($derived) !== self::formatShowDuration($given)) {
+            Logging::warn(sprintf(
+                'Show duration field "%s" disagrees with start/end %s %s - %s %s; storing the start/end difference %s',
+                $given,
+                $showData['add_show_start_date'],
+                $showData['add_show_start_time'],
+                $showData['add_show_end_date_no_repeat'],
+                $showData['add_show_end_time'],
+                $derived
+            ));
+        }
+
+        return $derived;
     }
 
     public static function formatShowDuration($duration)

@@ -633,6 +633,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Kalender: Instanz-Änderung konnte in die Folgesendung hineinlaufen
+  (2026-10-27, Operator-Befund „Indie Lane" 00:08–05:08 über „BBC
+  Newsday" 05:00)** — die Überlappungsprüfung (`AddShowWhen::
+  checkReliantFields`) rechnet mit Start- und Endzeit des Formulars, die
+  Speicherung nahm das versteckte Feld `add_show_duration`, das der
+  Browser erst nach der Antwort von `Schedule/calculate-duration`
+  nachzieht.  Speichern vor dieser Antwort (Start 00:00 → 00:08, Ende
+  05:00, Feld noch „05h 00m") legte die Instanz bis 05:08 an, obwohl die
+  Prüfung für 05:00 bestanden hatte.  Jetzt leitet `ShowService::
+  durationFromStartEnd` die Dauer beim Speichern aus den geprüften Start-/
+  Endfeldern ab (Wanduhr-Differenz wie `calculateDuration`, Warnung im
+  Log bei Abweichung); Aufrufer ohne Endfelder (Show Templates) behalten
+  ihre Dauer.  Probe mit sechs Fällen (Operator-Fall → 04h 52m, DST-Nacht
+  → 05h 00m, über Mitternacht, Template, negativ).
 - **Playout History → Show Summary: jede Sendung zeigt ihre Titel; graues
   Design (2026-10-27, Operator)** — das Akkordeon hing den Aufbau der
   Tabelle an das Ereignis `change` (`ui.newContent`), das jQuery UI seit
