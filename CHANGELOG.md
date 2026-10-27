@@ -646,7 +646,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Endfeldern ab (Wanduhr-Differenz wie `calculateDuration`, Warnung im
   Log bei Abweichung); Aufrufer ohne Endfelder (Show Templates) behalten
   ihre Dauer.  Probe mit sechs Fällen (Operator-Fall → 04h 52m, DST-Nacht
-  → 05h 00m, über Mitternacht, Template, negativ).
+  → 05h 00m, über Mitternacht, Template, negativ).  Commit 08ddb8ed.
 - **Playout History → Show Summary: jede Sendung zeigt ihre Titel; graues
   Design (2026-10-27, Operator)** — das Akkordeon hing den Aufbau der
   Tabelle an das Ereignis `change` (`ui.newContent`), das jQuery UI seit
