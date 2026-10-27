@@ -53,6 +53,10 @@ The arrow buttons step by the visible range (one day / one week
 / one month at a time). The **Today** button jumps back to the
 current period.
 
+A show that runs past midnight appears in two pieces in the day
+and week views, one on each day. Both pieces show the show's full
+time (e.g. *23:08 - 0:08*), not the part that falls on that day.
+
 ### What the colours mean
 
 Each show carries its own background colour and text colour

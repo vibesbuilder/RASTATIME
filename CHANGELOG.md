@@ -549,6 +549,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Speicherungen beim Aufbau (28 mit Standard-Reihenfolge), jetzt keine;
   Umsortieren danach genau eine mit der neuen Reihenfolge; Seitenaufruf
   ohne Änderung ohne POST.  Aus-/Einblenden speicherte schon korrekt.
+- **Kalender: Sendung über Mitternacht zeigt in beiden Teilen die ganze
+  Sendezeit (2026-10-27, Operator-Go)** — FullCalendar 6 beschriftet in
+  Tages- und Wochenansicht jedes Tagesstück mit dessen eigenen Zeiten
+  (23:08 - 0:00 und 0:00 - 0:08); jetzt steht in beiden „23:08 - 0:08"
+  wie im Multi-View-Widget (`eventContent` in `schedule-fc6.js`, als HTML,
+  damit Füllbalken und Status-Symbole beim Blättern erhalten bleiben; die
+  Monatsansicht bleibt Standard).  Live geprüft: „Society Hour" 26./27.10.
+  beide Teile „23:08 - 0:08" mit Füllbalken, 200/200 Balken und 196
+  Symbole auch nach dem Blättern, Titel mit `&` korrekt.  Handbuch
+  CALENDAR ×4.
 - **Autoloading: überlange Folgen werden nicht mehr weggelassen
   (2026-10-26, Operator-Go „einfachere Variante“)** — die exakte Befüllung
   (01.10.) ließ das erste nicht passende Element weg; bei Folgen-Sendungen

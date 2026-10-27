@@ -29,6 +29,11 @@ Calendario → abre la vista semanal por defecto.
 Los botones de flecha avanzan por el rango visible. El
 botón **Hoy** vuelve al período actual.
 
+Un programa que pasa de la medianoche aparece en dos partes en las
+vistas de día y de semana, una en cada día. Ambas partes muestran
+el horario completo del programa (p. ej. *23:08 - 0:08*), no la
+porción que cae en ese día.
+
 ### Qué significan los colores
 
 Cada programa lleva su propio color de fondo y color de

@@ -58,6 +58,11 @@ Die Pfeil-Schaltflächen springen um den sichtbaren Bereich
 (ein Tag / eine Woche / ein Monat). Die **Heute**-Schaltfläche
 springt zurück zur aktuellen Periode.
 
+Eine Sendung über Mitternacht erscheint in der Tages- und
+Wochenansicht in zwei Teilen, einer an jedem Tag. Beide Teile
+zeigen die ganze Sendezeit (z. B. *23:08 - 0:08*), nicht den Anteil
+des jeweiligen Tages.
+
 ### Was die Farben bedeuten
 
 Jede Sendung hat ihre eigene Hintergrundfarbe und Textfarbe

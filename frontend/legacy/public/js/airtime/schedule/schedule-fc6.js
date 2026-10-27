@@ -403,6 +403,42 @@ function buildScheduleFc6(data) {
       );
     },
 
+    // RASTATIME 2026-10-27 - a show across midnight is two pieces in the day
+    // and week views, and FC6 labels each with the piece's own times
+    // ("23:08 - 0:00", "0:00 - 0:08"); both now carry the show's times, as in
+    // the Multi-View widget.  Same markup as FC6's default chip (eventDidMount
+    // anchors on .fc-event-time / .fc-event-title); month view keeps FC6's.
+    // Returned as html, not domNodes: FC6 re-renders without remounting (e.g.
+    // paging within the week) and would swap fresh nodes in, dropping the
+    // fill bar and icons eventDidMount added; an unchanged html string is
+    // left alone.
+    eventContent: function (arg) {
+      if (arg.view.type !== "timeGridDay" && arg.view.type !== "timeGridWeek") {
+        return true;
+      }
+      function clock(d) {
+        return d.getHours() + ":" + pad(d.getMinutes(), 2);
+      }
+      function esc(text) {
+        return $("<div/>").text(text).html();
+      }
+      var ev = arg.event;
+      var time = arg.timeText
+        ? '<div class="fc-event-time">' +
+          clock(ev.start) +
+          (ev.end ? " - " + clock(ev.end) : "") +
+          "</div>"
+        : "";
+      return {
+        html:
+          '<div class="fc-event-main-frame">' +
+          time +
+          '<div class="fc-event-title-container"><div class="fc-event-title fc-sticky">' +
+          (ev.title ? esc(ev.title) : "&nbsp;") +
+          "</div></div></div>",
+      };
+    },
+
     // post-render enhancement (FC6 renders the default time/title chip):
     // status icons + jQuery-UI fill bar + hover tooltips + data attributes.
     // Faithful port of the FC1.5 eventRender()/eventAfterRender()

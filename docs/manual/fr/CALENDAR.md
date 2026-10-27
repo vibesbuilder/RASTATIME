@@ -57,6 +57,11 @@ Les boutons fléchés avancent par la plage visible (un jour
 / une semaine / un mois à la fois). Le bouton
 **Aujourd'hui** revient à la période actuelle.
 
+Une émission qui dépasse minuit apparaît en deux parties dans les
+vues jour et semaine, une sur chaque jour. Les deux parties
+affichent l'horaire complet de l'émission (p. ex. *23:08 - 0:08*),
+et non la portion qui tombe sur ce jour.
+
 ### Ce que les couleurs signifient
 
 Chaque émission porte sa propre couleur de fond et couleur
