@@ -150,14 +150,58 @@ function getDatatablesStrings(overrideDict) {
  * right after $(...).dataTable() expects it built - the library's scroll
  * wrapper then enclosed the whole table with its header and footer (they
  * scrolled away) and the column pickers found no toolbar to sit in.
+ *
+ * RASTATIME 2026-10-27 - saves wait until the table is built, a burst of
+ * saves is posted once (its last layout), and one post runs at a time.
+ * While the library was still being built it posted up to ~30 layouts at
+ * once: ColReorder restores the saved column order only on the first draw,
+ * so all but the last carried the default order, and whichever the server
+ * handled last won - a column order never survived the next page load.
  */
 function rtDatatableServerState(getUrl, setUrl, params) {
   var lastSaved = null;
+  var pendingState = null; // the newest layout not yet posted
+  var saveTimer = null;
+  var posting = false;
 
   // The layout without its timestamp, to recognise an unchanged save.
   function layoutOf(state) {
     return JSON.stringify($.extend({}, state, { time: 0 }));
   }
+
+  function saveData(state) {
+    return $.extend({ settings: JSON.stringify(state), format: "json" }, params);
+  }
+
+  function postPending() {
+    saveTimer = null;
+    if (posting || pendingState === null) {
+      return;
+    }
+    var state = pendingState;
+    pendingState = null;
+    posting = true;
+    $.ajax({ url: setUrl, type: "POST", data: saveData(state), dataType: "json" }).always(
+      function () {
+        posting = false;
+        postPending();
+      },
+    );
+  }
+
+  // a layout changed right before leaving the page still reaches the server
+  // (a beacon carries no header, so the CSRF token travels in the body)
+  $(window).on("pagehide", function () {
+    if (pendingState === null || !navigator.sendBeacon) {
+      return;
+    }
+    var body = new URLSearchParams(saveData(pendingState));
+    if (typeof CSRF_TOKEN === "string") {
+      body.append("csrf_token", CSRF_TOKEN);
+    }
+    navigator.sendBeacon(setUrl, body);
+    pendingState = null;
+  });
 
   return {
     iStateDuration: 0, // never expire (the DataTables default is 2 hours)
@@ -173,17 +217,19 @@ function rtDatatableServerState(getUrl, setUrl, params) {
       return loaded;
     },
     fnStateSaveCallback: function (settings, state) {
+      if (!settings._bInitComplete) {
+        return;
+      }
       var layout = layoutOf(state);
       if (layout === lastSaved) {
         return;
       }
       lastSaved = layout;
-      $.ajax({
-        url: setUrl,
-        type: "POST",
-        data: $.extend({ settings: JSON.stringify(state), format: "json" }, params),
-        dataType: "json",
-      });
+      pendingState = state;
+      if (saveTimer) {
+        clearTimeout(saveTimer);
+      }
+      saveTimer = setTimeout(postPending, 300);
     },
   };
 }

@@ -531,6 +531,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Bibliothek: Spalten-Layout überlebt den nächsten Seitenaufruf
+  (2026-10-27, Operator-Go)** — beim Aufbau der Tabelle schickte der
+  Browser bis zu ~30 Layouts gleichzeitig an den Server (ein Speichern
+  je Spalte, die das Spalten-Profil des Medientyps ein- oder ausblendet);
+  ColReorder stellt die gespeicherte Spaltenreihenfolge aber erst beim
+  ersten Zeichnen wieder her, also trugen alle bis auf das letzte die
+  Standard-Reihenfolge, und welches der Server zuletzt verarbeitete,
+  gewann - eine umsortierte Spalte war beim nächsten Aufruf wieder weg.
+  Auch jeder Wechsel des Medientyps schickte 8-10 POSTs in derselben
+  Sekunde.  `rtDatatableServerState()` (`common.js`, gilt für alle
+  serverseitig gespeicherten Tabellen-Layouts) speichert jetzt erst nach
+  dem Aufbau, fasst schnelle Änderungen (0,3 s) zu einem POST mit dem
+  letzten Stand zusammen, schickt nie zwei gleichzeitig und sendet einen
+  noch ausstehenden Stand beim Verlassen der Seite per Beacon (Token im
+  Body).  Live nachgestellt mit abgefangenen Schreibzugriffen: vorher 29
+  Speicherungen beim Aufbau (28 mit Standard-Reihenfolge), jetzt keine;
+  Umsortieren danach genau eine mit der neuen Reihenfolge; Seitenaufruf
+  ohne Änderung ohne POST.  Aus-/Einblenden speicherte schon korrekt.
 - **Autoloading: überlange Folgen werden nicht mehr weggelassen
   (2026-10-26, Operator-Go „einfachere Variante“)** — die exakte Befüllung
   (01.10.) ließ das erste nicht passende Element weg; bei Folgen-Sendungen
