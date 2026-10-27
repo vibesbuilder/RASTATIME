@@ -332,7 +332,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   und die Lösch-Kreuze der Listen in der Sekundärfarbe (weißes
   Sprite als Maske, folgt Settings → General); vorher Redmond-Blau, die
   alten grauen Regeln griffen nicht mehr (Panel ist `.ui-widget`, nicht
-  `.ui-widget-content`).  Beim Überfahren wird das Kreuz Primärfarbe.
+  `.ui-widget-content`).  Nachtrag (Operator, gleicher Tag): die
+  Lösch-Kreuze stattdessen in der Primärfarbe, beim Überfahren in der
+  Sekundärfarbe; das Plus bleibt Sekundärfarbe.
   (2) **Show Templates:** Rename und Delete (beim Umbenennen Save /
   Cancel / Delete) untereinander, bündig und gleich breit
   (`.rt-button-stack`, 73 px).

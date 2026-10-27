@@ -2065,15 +2065,16 @@ button, input {
     mask: url(redmond/images/ui-icons_ffffff_256x240.png) no-repeat -96px -128px;
 }
 
-/* RASTATIME 2026-10-27 - "New User" / "New Track Type" plus and the
-   delete crosses of the lists in the secondary colour (operator); they
-   came in redmond-1.13's blue sprites.  The two rules above no longer
-   match: the panel is .ui-widget, not .ui-widget-content.  The white
-   sprite is the mask, so the colour follows Settings -> General. */
+/* RASTATIME 2026-10-27 - "New User" / "New Track Type" plus in the
+   secondary colour, the delete crosses of the lists in the primary one
+   with the secondary on hover (operator); they came in redmond-1.13's
+   blue sprites.  The two rules above no longer match: the panel is
+   .ui-widget, not .ui-widget-content.  The white sprite is the mask, so
+   the colours follow Settings -> General. */
 .user-list-wrapper .ui-icon.ui-icon-closethick,
 .tracktype-list-wrapper .ui-icon.ui-icon-closethick {
     background-image: none;
-    background-color: var(--rt-secondary);
+    background-color: var(--rt-accent);
     -webkit-mask: url(redmond/images/ui-icons_ffffff_256x240.png) no-repeat -96px -128px;
     mask: url(redmond/images/ui-icons_ffffff_256x240.png) no-repeat -96px -128px;
     cursor: pointer;
@@ -2082,7 +2083,7 @@ button, input {
 }
 .user-list-wrapper .ui-icon.ui-icon-closethick:hover,
 .tracktype-list-wrapper .ui-icon.ui-icon-closethick:hover {
-    background-color: var(--rt-accent);
+    background-color: var(--rt-secondary);
 }
 #add_user_button .ui-icon.ui-icon-plusthick,
 #add_tracktype_button .ui-icon.ui-icon-plusthick {
