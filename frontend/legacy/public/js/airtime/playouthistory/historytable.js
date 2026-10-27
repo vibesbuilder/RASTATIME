@@ -251,21 +251,28 @@ var AIRTIME = (function (AIRTIME) {
       $showList.append($accordSection);
     }
 
+    // RASTATIME 2026-10-27 - jQuery UI 1.9+ names: the 'change' event is
+    // 'activate' with ui.newPanel / ui.oldPanel, 'animated' is 'animate'.
+    // On 1.13 'change' never fired, so only the first show (built in
+    // 'create') ever got its table - every other show opened empty
+    // (operator: most shows of a day showed no content).  Each panel is as
+    // tall as its own table ('auto' sized them all before any was built).
     $showList.accordion({
-      animated: false,
-      create: function (event, ui) {
+      animate: false,
+      heightStyle: "content",
+      create: function () {
         var $div = $showList.find(".ui-accordion-content-active");
-        console.log(event);
-        //$div.css()
-        createShowTable($div);
+        if ($div.length) {
+          createShowTable($div);
+        }
       },
-      change: function (event, ui) {
-        var $div = $(ui.newContent);
-        $(ui.oldContent).empty();
-        createShowTable($div);
+      activate: function (event, ui) {
+        $(ui.oldPanel).empty();
+        if (ui.newPanel.length) {
+          createShowTable($(ui.newPanel));
+        }
         selectedLogItems = {};
       },
-      //changestart: function( event, ui ) {}
     });
   }
 

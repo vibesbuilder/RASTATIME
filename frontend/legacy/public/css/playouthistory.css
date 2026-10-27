@@ -65,3 +65,45 @@ table.dataTable tbody tr {
     float:right;
     margin-right:5px;
 }
+
+/* RASTATIME 2026-10-27 - Show Summary accordion in the grey design
+   (operator): redmond's light-blue headers and near-white panels give way
+   to the page's greys - headers like the other dark title bars, the open
+   show a step lighter with the accent on its left edge, the panels on the
+   #3a3a3a surface the tables sit on */
+#history_show_summary .ui-accordion-header {
+    background: #4a4a4a;
+    border: 1px solid #3a3a3a;
+    border-radius: 0;
+    color: #cccccc;
+    margin-top: 2px;
+}
+#history_show_summary .ui-accordion-header a {
+    color: inherit;
+}
+#history_show_summary .ui-accordion-header:hover,
+#history_show_summary .ui-accordion-header.ui-state-hover {
+    background: #505050;
+    color: #ffffff;
+}
+#history_show_summary .ui-accordion-header.ui-state-active {
+    background: #575757;
+    color: #ffffff;
+    box-shadow: inset 3px 0 0 var(--rt-accent);
+}
+/* the arrows from the white sprite instead of redmond's blue / orange */
+#history_show_summary .ui-accordion-header .ui-icon {
+    background-image: url(redmond/images/ui-icons_ffffff_256x240.png);
+    opacity: 0.8;
+}
+#history_show_summary .ui-accordion-header.ui-state-active .ui-icon,
+#history_show_summary .ui-accordion-header:hover .ui-icon {
+    opacity: 1;
+}
+#history_show_summary .ui-accordion-content {
+    background: #3a3a3a;
+    border: 1px solid #4a4a4a;
+    border-top: 0;
+    border-radius: 0;
+    color: #cccccc;
+}
