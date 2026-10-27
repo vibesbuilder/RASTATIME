@@ -301,7 +301,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   für Select Playlist, Select Intro Playlist und Select Outro Playlist
   (Autoloading Playlist) sowie Background Colour und Text Colour (Style);
   vorher 0 px.  Live gemessen (nur lesend; Dialoge ohne Speichern
-  geschlossen).
+  geschlossen).  Commit c2541f8.
 - **Oberflächen-Feinschliff: sieben Punkte (2026-10-27, Operator)** —
   (1) **Bibliothek „Edit“ mit mehreren Titeln:** der Dialog trägt den
   dunklen Rahmen der Kalender-Dialoge (#2f2f2f, Titelleiste #4a4a4a,
