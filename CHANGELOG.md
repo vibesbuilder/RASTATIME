@@ -22,7 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (Song-Request-Widget geht an `/api/v2`, öffentliche Controller sind
   ausgenommen, Bibliothek/Stream/Auto DJ/Benutzer schicken es bereits).
   Geprüft mit der Render-Probe `widget_csrf_probe.php` (7/7) und live auf
-  allen sieben Seiten (HTTP 200, Feld = `CSRF_TOKEN`).  Phase 2 folgt.
+  allen sieben Seiten (HTTP 200, Feld = `CSRF_TOKEN`).  Phase 2 folgt.  Commit a1ac692.
 - **Rollen-Audit Paket 4: Icecast-Eingänge `/main` und `/show` entfernt
   (2026-10-25, Operator-Go)** — die beiden versteckten DJ-Mounts mit
   URL-Auth stammten aus der Zeit vor dem Liquidsoap-Harbor (DJs senden
