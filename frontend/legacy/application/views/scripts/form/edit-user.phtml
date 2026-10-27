@@ -1,4 +1,7 @@
-<h2><?php echo _("My Profile") ?></h2>
+<h2 style="float:left"><?php echo _("My Profile") ?></h2>
+<?php /* RASTATIME 2026-10-27 - Save top right as on every Settings page (operator); the bottom one stays */ ?>
+<button type="submit" form="current-user-form" id="cu_save_user_top" class="btn right-floated"><?php echo _("Save") ?></button>
+<div style="clear:both"></div>
 <div id="current-user-container">
 
     <form id="current-user-form" class="edit-user-global" method="post" enctype="application/x-www-form-urlencoded">

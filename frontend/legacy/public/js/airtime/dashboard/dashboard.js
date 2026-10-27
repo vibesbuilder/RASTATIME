@@ -636,7 +636,7 @@ $(document).ready(function () {
     });
   });
 
-  $("body").on("click", "#cu_save_user", function () {
+  $("body").on("click", "#cu_save_user, #cu_save_user_top", function () {
     Cookies.set("airtime_locale", $("#cu_locale").val(), { path: "/" });
   });
 

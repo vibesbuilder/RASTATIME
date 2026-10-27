@@ -94,8 +94,21 @@ $rtTip = function ($text) {
 <div class="ui-widget prefpanel simple-formblock clearfix padded-strong soundcard-config">
     <h2 style="float:left"><?php echo _("Local Machine Settings") ?></h2>
 
-    <button id="soundcard_save" type="button" class="btn right-floated"><?php echo _("Save") ?></button>
+    <?php /* RASTATIME 2026-10-27 - one Save for the whole page (operator):
+           it posts every section whose fields changed (pagesave.js); the
+           sections' own Save buttons are gone, their actions (Scan Now,
+           Fetch now, Check, Move library, Apply now) stay. */ ?>
+    <button type="button" class="btn right-floated rt-page-save"><?php echo _("Save") ?></button>
+    <span class="rt-page-save-msg right-floated" style="margin: 6px 1em 0 0;"></span>
     <div style="clear:both"></div>
+    <script>
+    RtPageSave.setTexts({
+        saving: "<?php echo addslashes(_('Saving …')) ?>",
+        saved: "<?php echo addslashes(_('Saved.')) ?>",
+        nothing: "<?php echo addslashes(_('No changes to save.')) ?>",
+        failed: "<?php echo addslashes(_('Some sections could not be saved - see the messages there.')) ?>"
+    });
+    </script>
 
     <div id="soundcard-status-msg"></div>
 
@@ -237,16 +250,17 @@ $rtTip = function ($text) {
             </dd>
 
             <dt></dt>
-            <dd style="padding-top: 0.5em;">
-                <button id="import_format_save" type="button" class="btn"><?php echo _("Save") ?></button>
-                <span id="import_format_status_msg" style="margin-left: 1em;"></span>
+            <dd>
+                <span id="import_format_status_msg"></span>
             </dd>
         </dl>
     </fieldset>
 
     <script>
     (function ($) {
-        $("#import_format_save").on("click", function () {
+        // RASTATIME 2026-10-27 - saved by the page's Save (pagesave.js)
+        var section = RtPageSave.register("import_format", "#convert_lossless_to_mp3", function () {
+            var done = $.Deferred();
             var msg = $("#import_format_status_msg");
             $.post(baseUrl + "preference/import-format-save", {
                 csrf_token: $("#csrf").val(),
@@ -255,13 +269,18 @@ $rtTip = function ($text) {
                 if (resp && resp.ok) {
                     msg.text("✓ " + "<?php echo addslashes(_('Saved.')) ?>").css("color", "#5cb85c");
                     $("#convert_lossless_to_mp3").prop("checked", !!resp.convert_lossless);
+                    done.resolve();
                 } else {
                     msg.text("✗ " + ((resp && resp.error) || "<?php echo addslashes(_('Save failed.')) ?>")).css("color", "#d9534f");
+                    done.reject();
                 }
             }, "json").fail(function () {
                 msg.text("✗ <?php echo addslashes(_('Network error.')) ?>").css("color", "#d9534f");
+                done.reject();
             });
+            return done.promise();
         });
+        RtPageSave.markSaved(section);
     })(jQuery);
     </script>
 
@@ -293,7 +312,7 @@ $rtTip = function ($text) {
                        placeholder="C:\rastatime\import" /><span class="help_icon" data-rt-tip="<?php echo $rtTip(_("Absolute path on this machine.  Example: C:\\rastatime\\import")); ?>"></span>
             </dd>
 
-            <?php // RASTATIME 2026-10-16 - bulk import: duplicates by md5 (saved on change) ?>
+            <?php // RASTATIME 2026-10-16 - bulk import: duplicates by md5 (saved by the page's Save since 2026-10-27, before on change) ?>
             <dt></dt>
             <dd class="rt-import-format">
                 <input id="bulk_import_allow_duplicates" type="checkbox"
@@ -303,9 +322,6 @@ $rtTip = function ($text) {
 
             <dt></dt>
             <dd style="padding-top: 0.5em;">
-                <button id="local_import_save" type="button" class="btn">
-                    <?php echo _("Save Folder") ?>
-                </button>
                 <button id="local_import_scan_now" type="button" class="btn"
                         <?php echo empty($localImportFolder) ? 'disabled' : ''; ?>>
                     <?php echo _("Scan Now") ?>
@@ -397,7 +413,6 @@ $rtTip = function ($text) {
 
             <dt></dt>
             <dd style="padding-top: 0.5em;">
-                <button id="ftp_import_save" type="button" class="btn"><?php echo _("Save FTP import") ?></button>
                 <button id="ftp_import_fetch_now" type="button" class="btn"
                         <?php echo empty($ftpCfg['enabled']) ? 'disabled' : ''; ?>><?php echo _("Fetch now") ?></button>
                 <span id="ftp_import_status_msg" style="margin-left: 1em;"></span>
@@ -428,7 +443,12 @@ $rtTip = function ($text) {
             $("#ftp_import_status_msg").text(text).css("color", ok ? "#5cb85c" : "#d9534f");
         }
 
-        $("#ftp_import_save").on("click", function () {
+        // RASTATIME 2026-10-27 - saved by the page's Save (pagesave.js);
+        // a typed password counts as a change, the empty field does not
+        var ftpSection = RtPageSave.register("ftp_import",
+            "#ftp_import_enabled, #ftp_import_protocol, #ftp_import_host, #ftp_import_port, " +
+            "#ftp_import_username, #ftp_import_password, #ftp_import_path", function () {
+            var done = $.Deferred();
             $.post(baseUrl + "preference/ftp-import-save", {
                 csrf_token: $("#csrf").val(),
                 enabled: $("#ftp_import_enabled").is(":checked") ? "true" : "false",
@@ -446,11 +466,18 @@ $rtTip = function ($text) {
                         $("#ftp_import_password").attr("placeholder", "\u2022\u2022\u2022\u2022\u2022 (<?php echo addslashes(_('unchanged')) ?>)");
                     }
                     $("#ftp_import_fetch_now").prop("disabled", !(resp.config && resp.config.enabled));
+                    done.resolve();
                 } else {
                     ftpMsg("\u2717 " + ((resp && resp.error) || "<?php echo addslashes(_('Save failed.')) ?>"), false);
+                    done.reject();
                 }
-            }, "json").fail(function () { ftpMsg("\u2717 <?php echo addslashes(_('Network error.')) ?>", false); });
+            }, "json").fail(function () {
+                ftpMsg("\u2717 <?php echo addslashes(_('Network error.')) ?>", false);
+                done.reject();
+            });
+            return done.promise();
         });
+        RtPageSave.markSaved(ftpSection);
 
         $("#ftp_import_fetch_now").on("click", function () {
             var btn = $(this);
@@ -687,11 +714,8 @@ $rtTip = function ($text) {
             </dd>
 
             <dt></dt>
-            <dd style="padding-top: 0.5em;">
-                <button id="rec247_save" type="button" class="btn">
-                    <?php echo _("Save") ?>
-                </button>
-                <span id="rec247_status_msg" style="margin-left: 1em;"></span>
+            <dd>
+                <span id="rec247_status_msg"></span>
             </dd>
         </dl>
     </fieldset>
@@ -746,24 +770,24 @@ $rtTip = function ($text) {
                 <input id="local_recording_copy_to_library" name="local_recording_copy_to_library" type="checkbox" value="1"<?php echo $localRecordingCopy ? ' checked="checked"' : ''; ?> />
             </dd>
             <dt></dt>
-            <dd style="padding-top: 0.5em;">
-                <button id="local_recording_save" type="button" class="btn">
-                    <?php echo _("Save") ?>
-                </button>
-                <span id="local_recording_status_msg" style="margin-left: 1em;"></span>
+            <dd>
+                <span id="local_recording_status_msg"></span>
             </dd>
         </dl>
     </fieldset>
 
     <div style="margin-top: 1em;">
-        <button id="soundcard_save_bottom" type="button" class="btn"><?php echo _("Save") ?></button>
+        <button type="button" class="btn right-floated rt-page-save"><?php echo _("Save") ?></button>
+        <span class="rt-page-save-msg right-floated" style="margin: 6px 1em 0 0;"></span>
         <div style="clear:both"></div>
     </div>
 
     <script>
     (function ($) {
         // Save the configured folder path.
-        $("#local_import_save").on("click", function () {
+        // RASTATIME 2026-10-27 - sections of the page's Save (pagesave.js)
+        var importSection = RtPageSave.register("import_folder", "#local_import_folder", function () {
+            var done = $.Deferred();
             var path = $("#local_import_folder").val();
             $.post(
                 baseUrl + "preference/local-import-save",
@@ -778,20 +802,27 @@ $rtTip = function ($text) {
                            .css("color", "#5cb85c");
                         // Enable/disable the Scan Now button based on the saved state.
                         $("#local_import_scan_now").prop("disabled", !path);
+                        done.resolve();
                     } else {
                         msg.text("✗ " + (resp.error || "Save failed."))
                            .css("color", "#d9534f");
+                        done.reject();
                     }
                 },
                 "json"
             ).fail(function () {
                 $("#local_import_status_msg").text("✗ Network error.").css("color", "#d9534f");
+                done.reject();
             });
+            return done.promise();
         });
+        RtPageSave.markSaved(importSection);
 
-        // RASTATIME 2026-10-16 - bulk import duplicates: saved on change
-        $("#bulk_import_allow_duplicates").on("change", function () {
-            var box = $(this);
+        // RASTATIME 2026-10-16 - bulk import duplicates (saved on change
+        // until 2026-10-27, now with the page's Save)
+        var duplicatesSection = RtPageSave.register("bulk_duplicates", "#bulk_import_allow_duplicates", function () {
+            var done = $.Deferred();
+            var box = $("#bulk_import_allow_duplicates");
             var msg = $("#local_import_status_msg");
             $.post(baseUrl + "preference/bulk-import-save", {
                 csrf_token: $("#csrf").val(),
@@ -800,13 +831,18 @@ $rtTip = function ($text) {
                 if (resp && resp.ok) {
                     box.prop("checked", !!resp.allow_duplicates);
                     msg.text("✓ " + "<?php echo addslashes(_('Saved.')) ?>").css("color", "#5cb85c");
+                    done.resolve();
                 } else {
                     msg.text("✗ " + ((resp && resp.error) || "<?php echo addslashes(_('Save failed.')) ?>")).css("color", "#d9534f");
+                    done.reject();
                 }
             }, "json").fail(function () {
                 msg.text("✗ <?php echo addslashes(_('Network error.')) ?>").css("color", "#d9534f");
+                done.reject();
             });
+            return done.promise();
         });
+        RtPageSave.markSaved(duplicatesSection);
 
         // RASTATIME 2026-10-09 - keep "Last scan" current: poll every 30 s
         // (operator: the rendered line read as a stale import report).
@@ -862,8 +898,11 @@ $rtTip = function ($text) {
             });
         });
 
-        // RASTATIME 2026-05-17 - Recording Folder save handler.
-        $("#local_recording_save").on("click", function () {
+        // RASTATIME 2026-05-17 - Recording Folder save handler (a section
+        // of the page's Save since 2026-10-27).
+        var recordingSection = RtPageSave.register("show_recording",
+            "#local_recording_folder, #local_recording_format, #local_recording_bitrate, #local_recording_copy_to_library", function () {
+            var done = $.Deferred();
             var path = $("#local_recording_folder").val();
             $.post(
                 baseUrl + "preference/local-recording-save",
@@ -879,19 +918,27 @@ $rtTip = function ($text) {
                     if (resp && resp.ok) {
                         msg.text("✓ " + (path ? "Saved.  A changed format or bitrate is applied by the playout in the next quiet moment (or at the next track boundary)." : "Disabled (empty path)."))
                            .css("color", "#5cb85c");
+                        done.resolve();
                     } else {
                         msg.text("✗ " + (resp.error || "Save failed."))
                            .css("color", "#d9534f");
+                        done.reject();
                     }
                 },
                 "json"
             ).fail(function () {
                 $("#local_recording_status_msg").text("✗ Network error.").css("color", "#d9534f");
+                done.reject();
             });
+            return done.promise();
         });
+        RtPageSave.markSaved(recordingSection);
 
-        // RASTATIME 2026-06-05 - 24/7 Recording save handler.
-        $("#rec247_save").on("click", function () {
+        // RASTATIME 2026-06-05 - 24/7 Recording save handler (a section of
+        // the page's Save since 2026-10-27).
+        var rec247Section = RtPageSave.register("recording_247",
+            "#rec247_enabled, #rec247_folder, #rec247_format, #rec247_bitrate, #rec247_retention", function () {
+            var done = $.Deferred();
             var msg = $("#rec247_status_msg");
             msg.text("…").css("color", "#666");
             $.post(
@@ -908,22 +955,21 @@ $rtTip = function ($text) {
                     if (resp && resp.ok) {
                         msg.text("✓ Saved.  The playout applies it in the next quiet moment (or at the next track boundary).")
                            .css("color", "#5cb85c");
+                        done.resolve();
                     } else {
                         msg.text("✗ " + (resp.error || "Save failed."))
                            .css("color", "#d9534f");
+                        done.reject();
                     }
                 },
                 "json"
             ).fail(function () {
                 msg.text("✗ Network error.").css("color", "#d9534f");
+                done.reject();
             });
+            return done.promise();
         });
-
-        // RASTATIME 2026-06-06 — bottom Save mirrors the top "Local Machine
-        // Settings" (soundcard) Save so the operator needn't scroll up.
-        $("#soundcard_save_bottom").on("click", function () {
-            $("#soundcard_save").trigger("click");
-        });
+        RtPageSave.markSaved(rec247Section);
 
         // RASTATIME 2026-09-03 — "Apply now" for Main Output.  The device is
         // compiled into rastatime.liq at RASTATIME-PLAYOUT startup, so it only

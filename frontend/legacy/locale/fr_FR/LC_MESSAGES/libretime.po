@@ -6999,3 +6999,15 @@ msgstr "Icecast envoie une page de statistiques illisible depuis %s."
 #, c-format
 msgid "Icecast has answered with an error since %s: %s"
 msgstr "Icecast répond par une erreur depuis %s : %s"
+
+#: application/views/scripts/preference/local-machine.phtml, backup.phtml (RASTATIME 2026-10-27)
+msgid "Saving …"
+msgstr "Enregistrement …"
+
+#: application/views/scripts/preference/local-machine.phtml, backup.phtml (RASTATIME 2026-10-27)
+msgid "No changes to save."
+msgstr "Aucune modification à enregistrer."
+
+#: application/views/scripts/preference/local-machine.phtml, backup.phtml (RASTATIME 2026-10-27)
+msgid "Some sections could not be saved - see the messages there."
+msgstr "Certaines sections n'ont pas pu être enregistrées - voir les messages correspondants."

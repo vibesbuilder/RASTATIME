@@ -26,6 +26,16 @@ only the page title and the slug change.
 
 Settings → **Local Machine**.
 
+**One Save for the page** *(since 2026-10-27)*: the **Save** button
+at the top right and the same one at the bottom save every section
+you changed - Soundcard, Import Format, Import Folder (with the
+bulk-import checkbox), FTP import, 24/7 Recording and Show
+Recording - one after the other; untouched sections are not saved
+again.  Each section reports its result on its own line, a summary
+appears next to the button.  The buttons that act at once - Apply
+now, Scan Now, Fetch now, Check, Move library - stay in their
+sections.
+
 ```
    ┌─────────────────────────────────────────────────────────────────┐
    │  Local Machine Settings                              [   Save   ]│
@@ -43,7 +53,6 @@ Settings → **Local Machine**.
    │  Import Format                                                  │
    ├─────────────────────────────────────────────────────────────────┤
    │  ☑ Convert lossless audio (WAV, FLAC, ...) to MP3 320 kbps (?)  │
-   │  [ Save ]                                                       │
    ├─────────────────────────────────────────────────────────────────┤
    │  Local Import Folder                                            │
    ├─────────────────────────────────────────────────────────────────┤
@@ -341,7 +350,7 @@ operators who scroll past the device list and look for a
 (WAV, FLAC, ...) to MP3 320 kbps on import** — **on** by default.
 It applies to every way a track enters the library: the browser
 upload, the Local Import Folder, the FTP import and the bulk-import
-command.  Click the section's **Save** button; the next import
+command.  Click **Save** (top right or at the bottom); the next import
 follows the new value, no restart is needed.
 
 What the import does with each file:
@@ -411,8 +420,8 @@ that the analyzer watches for new files. Anything dropped
 into the folder is automatically imported into the Library on
 the next analyzer poll cycle (every 60 s by default).
 
-**Bulk Import: allow importing duplicates** (checkbox below the folder path, since 2026-10-16, saved as
-soon as you click it).  It is the default of the command-line bulk
+**Bulk Import: allow importing duplicates** (checkbox below the folder path, since 2026-10-16, saved with
+the page's **Save** since 2026-10-27).  It is the default of the command-line bulk
 import (`bulk_import`): off, a file whose md5 - or the md5 of its
 lossless original - is already in the library is skipped; on, it is
 imported as a second track, for example the same audio with different
@@ -516,7 +525,7 @@ server every 5 minutes (or immediately with **Fetch now**) and feeds
 them through the Import Folder above — which must therefore be
 configured.  Enable it with the checkbox, fill in server, port
 (empty = protocol default), account and the **absolute** remote
-folder, then **Save FTP import**.
+folder, then **Save**.
 
 - **Mailbox semantics.**  After a verified download the remote file
   is deleted — the account needs delete permission.  If the delete
@@ -612,7 +621,7 @@ into the library (track type "Recordings", title `<show> <date
 time>`, linked to the show instance); the file in the recording
 folder stays untouched.  Details in
 [Record-per-Show, section 3.6](./RECORD_PER_SHOW.md).  Saved with
-the **Save** button of this section; the playout needs one restart
+the page's **Save**; the playout needs one restart
 after the update, afterwards the switch works immediately.
 
 ### 24/7 Recording Folder

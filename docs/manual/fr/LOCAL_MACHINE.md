@@ -28,6 +28,17 @@ changent.
 
 Paramètres → **Machine locale**.
 
+**Un seul enregistrement pour la page** *(depuis le 2026-10-27)* :
+le bouton **Save** en haut à droite et le même en bas enregistrent
+chaque section que vous avez modifiée - carte son, format
+d'import, dossier d'import (avec la case de l'import en masse),
+import FTP, enregistrement 24/7 et enregistrement des émissions -
+l'une après l'autre ; les sections inchangées ne sont pas
+réenregistrées.  Chaque section affiche son résultat sur sa propre
+ligne, un résumé apparaît à côté du bouton.  Les boutons qui
+agissent tout de suite - Apply now, Scan Now, Fetch now, Check,
+Move library - restent dans leurs sections.
+
 Sections indépendantes : Carte son (sortie + entrée), Format
 d'import, Dossier d'import local, puis import FTP, emplacement de
 la médiathèque et dossiers d'enregistrement.
@@ -312,7 +323,7 @@ sans perte (WAV, FLAC, ...) en MP3 320 kbit/s à l'import** — **activée**
 par défaut.  Elle s'applique à toutes les voies par lesquelles une
 piste entre dans la bibliothèque : téléversement navigateur, dossier
 d'import local, import FTP et commande d'import en masse.  Cliquez sur
-le bouton **Sauvegarder** de la section ; l'import suivant applique la
+**Save** (en haut à droite ou en bas) ; l'import suivant applique la
 nouvelle valeur, aucun redémarrage n'est nécessaire.
 
 Ce que l'import fait de chaque fichier :
@@ -389,7 +400,7 @@ automatiquement importé dans la bibliothèque au prochain
 cycle de poll de l'analyzer (par défaut toutes les 60 s).
 
 **Import en masse : autoriser l'import de doublons** (case sous le chemin du dossier, depuis le
-2026-10-16, enregistrée dès le clic).  C'est la valeur par défaut de
+2026-10-16, enregistrée avec le **Save** de la page depuis le 2026-10-27).  C'est la valeur par défaut de
 l'import en masse en ligne de commande (`bulk_import`) : désactivée, un
 fichier dont le md5 - ou le md5 de son original sans perte - est déjà
 dans la bibliothèque est ignoré ; activée, il est importé comme second
@@ -502,7 +513,7 @@ Sous le dossier d'import se trouve une seconde source d'import
 FTP, FTPS ou SFTP et les fait passer par le dossier d'import
 ci-dessus — qui doit donc être configuré.  Activez la case, saisissez
 serveur, port (vide = défaut du protocole), compte et le dossier
-distant **absolu**, puis **Save FTP import**.
+distant **absolu**, puis **Save**.
 
 - **Sémantique de boîte aux lettres.**  Après un téléchargement
   vérifié, le fichier distant est supprimé — le compte a besoin du
@@ -608,7 +619,7 @@ enregistrement d'émission terminé est importée dans la bibliothèque
 l'instance de l'émission) ; le fichier du dossier d'enregistrement
 reste intact.  Détails dans
 [Record-per-Show, section 3.6](./RECORD_PER_SHOW.md).  Enregistré
-avec le bouton **Save** de cette section ; le playout a besoin d'un
+avec le **Save** de la page ; le playout a besoin d'un
 redémarrage après la mise à jour, ensuite l'interrupteur agit
 immédiatement.
 

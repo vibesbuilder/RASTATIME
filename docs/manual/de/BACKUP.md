@@ -21,8 +21,8 @@ siehe Abschnitt 3.
 ## 1. Der Backup-Ordner
 
 Geben Sie einen absoluten Pfad auf einem lokalen Laufwerk ein, zum
-Beispiel `D:\rastatime-backups`, und klicken Sie **Check** und **Save
-settings**.
+Beispiel `D:\rastatime-backups`, und klicken Sie **Check** und **Save** (oben rechts; seit 2026-10-27
+speichert ein **Save** oben und unten beide Abschnitte der Seite).
 
 - Der Ordner wird angelegt, falls er nicht existiert.
 - Er darf nicht innerhalb der Medienbibliothek liegen.
@@ -53,7 +53,7 @@ sie einfach erneut.
 ## 3. Die Medienbibliothek einbeziehen
 
 Setzen Sie das Häkchen **Include media library** und klicken Sie
-**Save settings**.  Von da an synchronisiert jeder Lauf zusätzlich die
+**Save**.  Von da an synchronisiert jeder Lauf zusätzlich die
 Bibliothek in den Unterordner `media` neben den ZIPs:
 
 - **Inkrementell.**  Nur neue und geänderte Dateien werden kopiert;
@@ -85,7 +85,7 @@ nicht mehr brauchen.
 
 Setzen Sie **Enable automatic backups**, wählen Sie die Häufigkeit
 (**Run every** N Tage) und die Aufbewahrung (**Keep backups for** N
-Tage, 0 = alles behalten), dann **Save automatic backups**.
+Tage, 0 = alles behalten), dann **Save**.
 
 Das Uhrwerk ist eine Windows-Aufgabe, die ein Administrator **einmal**
 registriert (erhöhte PowerShell):

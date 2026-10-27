@@ -154,6 +154,8 @@
 
     /* Apply main output */
     fillSelect("soundcard-main-output", outputs, true, cfg.main_output_id || "");
+    // RASTATIME 2026-10-27 - the select now shows the stored device
+    if (pageSection) { RtPageSave.markSaved(pageSection); }
     /* RASTATIME: preview output dropdown removed earlier; line-in list
      * moved to the Media Library (Phase A.4).  Server-side persistence
      * of both fields stays intact so they can be reinstated later. */
@@ -193,6 +195,7 @@
           error: function () {
             /* Settings not saved yet — fill dropdowns with no selection */
             fillSelect("soundcard-main-output", outputs, true, "");
+            if (pageSection) { RtPageSave.markSaved(pageSection); }
           },
         });
       },
@@ -200,64 +203,73 @@
         showStatus(AIRTIME.i18n.deviceLoadError, true);
       },
     });
-
-    /* ---------------------------------------------------------------- */
-    /* Save button                                                      */
-    /* ---------------------------------------------------------------- */
-    $("#soundcard_save").on("click", function () {
-      clearStatus();
-
-      // ``preview_output_id`` and ``line_in_device_ids`` intentionally
-      // omitted — both UI sections were removed (Phase A.4 line-in
-      // moved to Media Library; preview dropdown removed earlier).
-      // The POST API ignores absent keys, so any previously stored
-      // values stay intact in case the panels get reinstated later.
-      //
-      // RASTATIME 2026-05-14 — also persist ``main_output_name`` from
-      // the selected option's data-name attribute (fillSelect set it).
-      // Used by the playout startup resolver as a friendly-name
-      // fallback when the saved main_output_id stops resolving after
-      // a USB-reshuffle reboot.  Empty string is fine — fallback then
-      // just degrades to "no name to match against".
-      var $selOpt = $("#soundcard-main-output option:selected");
-      var payload = {
-        main_output_id:   $("#soundcard-main-output").val() || null,
-        main_output_name: $selOpt.attr("data-name") || "",
-      };
-
-      $.ajax({
-        url: baseUrl + "preference/soundcard-settings",
-        // RASTATIME 2026-05-12: must be ``type``, NOT ``method``.
-        // Legacy LibreTime ships jQuery 1.8.3 globally (loaded by
-        // PageLayoutInitPlugin.php on every page), and the ``method``
-        // alias for ``type`` only exists since jQuery 1.9.  In 1.8
-        // ``method: "POST"`` is silently ignored and the request
-        // defaults to GET — with the JSON body URL-encoded onto the
-        // querystring, returning 200 OK but never persisting anything.
-        type: "POST",
-        // RASTATIME 2026-10-25 - form fields for the PHP proxy, which
-        // checks the CSRF token and forwards JSON to the API.
-        data: $.extend({ csrf_token: $("#csrf").val() }, payload, {
-          main_output_id: payload.main_output_id || "",
-        }),
-        success: function (cfg) {
-          /* Re-apply with updated missing_device_ids from POST response.
-           * (Line-in list rendering removed in Phase A.4 — line-ins
-           * are managed in the Media Library now.) */
-          missingDeviceIds = cfg.missing_device_ids || [];
-          showStatus(AIRTIME.i18n.soundcardSaved, false);
-        },
-        error: function (xhr) {
-          var msg = AIRTIME.i18n.soundcardSaveError;
-          try {
-            var body = JSON.parse(xhr.responseText);
-            if (body.error) { msg = body.error; }
-          } catch (e) { /* ignore */ }
-          showStatus(msg, true);
-        },
-      });
-    });
   }
+
+  /* ------------------------------------------------------------------ */
+  /* Save - RASTATIME 2026-10-27: a section of the page's single Save    */
+  /* (pagesave.js), posted only when the main output changed            */
+  /* ------------------------------------------------------------------ */
+  function saveSoundcard() {
+    var done = $.Deferred();
+    clearStatus();
+
+    // ``preview_output_id`` and ``line_in_device_ids`` intentionally
+    // omitted — both UI sections were removed (Phase A.4 line-in
+    // moved to Media Library; preview dropdown removed earlier).
+    // The POST API ignores absent keys, so any previously stored
+    // values stay intact in case the panels get reinstated later.
+    //
+    // RASTATIME 2026-05-14 — also persist ``main_output_name`` from
+    // the selected option's data-name attribute (fillSelect set it).
+    // Used by the playout startup resolver as a friendly-name
+    // fallback when the saved main_output_id stops resolving after
+    // a USB-reshuffle reboot.  Empty string is fine — fallback then
+    // just degrades to "no name to match against".
+    var $selOpt = $("#soundcard-main-output option:selected");
+    var payload = {
+      main_output_id:   $("#soundcard-main-output").val() || null,
+      main_output_name: $selOpt.attr("data-name") || "",
+    };
+
+    $.ajax({
+      url: baseUrl + "preference/soundcard-settings",
+      // RASTATIME 2026-05-12: must be ``type``, NOT ``method``.
+      // Legacy LibreTime ships jQuery 1.8.3 globally (loaded by
+      // PageLayoutInitPlugin.php on every page), and the ``method``
+      // alias for ``type`` only exists since jQuery 1.9.  In 1.8
+      // ``method: "POST"`` is silently ignored and the request
+      // defaults to GET — with the JSON body URL-encoded onto the
+      // querystring, returning 200 OK but never persisting anything.
+      type: "POST",
+      // RASTATIME 2026-10-25 - form fields for the PHP proxy, which
+      // checks the CSRF token and forwards JSON to the API.
+      data: $.extend({ csrf_token: $("#csrf").val() }, payload, {
+        main_output_id: payload.main_output_id || "",
+      }),
+      success: function (cfg) {
+        /* Re-apply with updated missing_device_ids from POST response.
+         * (Line-in list rendering removed in Phase A.4 — line-ins
+         * are managed in the Media Library now.) */
+        missingDeviceIds = cfg.missing_device_ids || [];
+        showStatus(AIRTIME.i18n.soundcardSaved, false);
+        done.resolve();
+      },
+      error: function (xhr) {
+        var msg = AIRTIME.i18n.soundcardSaveError;
+        try {
+          var body = JSON.parse(xhr.responseText);
+          if (body.error) { msg = body.error; }
+        } catch (e) { /* ignore */ }
+        showStatus(msg, true);
+        done.reject();
+      },
+    });
+    return done.promise();
+  }
+
+  var pageSection = window.RtPageSave
+    ? RtPageSave.register("soundcard", "#soundcard-main-output", saveSoundcard)
+    : null;
 
   /* ------------------------------------------------------------------ */
   /* Localisation shims (filled by PHP or i18n pipeline)                */

@@ -19,7 +19,8 @@ is mirrored server-side next to the ZIPs; see section 3.
 ## 1. The backup folder
 
 Enter an absolute path on a local drive, for example
-`D:\rastatime-backups`, then click **Check** and **Save settings**.
+`D:\rastatime-backups`, then click **Check** and **Save** (top right; since 2026-10-27 one
+**Save** at the top and at the bottom saves both sections of the page).
 
 - The folder is created if it does not exist.
 - It must not lie inside the media library.
@@ -47,7 +48,7 @@ interrupted — simply run it again.
 
 ## 3. Including the media library
 
-Tick **Include media library** and click **Save settings**.  From then
+Tick **Include media library** and click **Save**.  From then
 on every run also synchronises the library into the subfolder `media`
 next to the ZIPs:
 
@@ -76,7 +77,7 @@ untouched; delete old ones by hand when you no longer need them.
 
 Tick **Enable automatic backups**, choose how often (**Run every** N
 days) and how long to keep old ZIPs (**Keep backups for** N days,
-0 = keep everything), then **Save automatic backups**.
+0 = keep everything), then **Save**.
 
 The clockwork is a Windows scheduled task that an administrator
 registers **once** (elevated PowerShell):

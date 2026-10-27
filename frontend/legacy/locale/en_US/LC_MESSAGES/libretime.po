@@ -47,3 +47,15 @@ msgstr ""
 
 msgid "(%d items of the source were left out: file missing)"
 msgstr ""
+
+#: application/views/scripts/preference/local-machine.phtml, backup.phtml (RASTATIME 2026-10-27)
+msgid "Saving …"
+msgstr ""
+
+#: application/views/scripts/preference/local-machine.phtml, backup.phtml (RASTATIME 2026-10-27)
+msgid "No changes to save."
+msgstr ""
+
+#: application/views/scripts/preference/local-machine.phtml, backup.phtml (RASTATIME 2026-10-27)
+msgid "Some sections could not be saved - see the messages there."
+msgstr ""

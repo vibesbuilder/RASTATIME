@@ -29,6 +29,16 @@ der Slug ändern sich.
 
 Einstellungen → **Lokale Maschine**.
 
+**Ein Speichern für die Seite** *(seit 2026-10-27)*: Der Knopf
+**Save** oben rechts und derselbe unten speichern jeden Abschnitt,
+den Sie geändert haben - Soundkarte, Importformat, Import-Ordner
+(mit dem Massenimport-Kästchen), FTP-Import, 24/7-Aufnahme und
+Sendungsaufnahme - nacheinander; unveränderte Abschnitte werden
+nicht erneut gespeichert.  Jeder Abschnitt meldet sein Ergebnis in
+einer eigenen Zeile, eine Zusammenfassung erscheint neben dem
+Knopf.  Die Knöpfe, die sofort etwas tun - Apply now, Scan Now,
+Fetch now, Check, Move library - bleiben in ihren Abschnitten.
+
 ```
    ┌─────────────────────────────────────────────────────────────────┐
    │  Lokale-Maschine-Einstellungen                       [Speichern]│
@@ -47,7 +57,6 @@ Einstellungen → **Lokale Maschine**.
    ├─────────────────────────────────────────────────────────────────┤
    │  ☑ Verlustfreies Audio (WAV, FLAC, ...) beim Import in MP3      │
    │    mit 320 kbit/s umwandeln (?)                                 │
-   │  [ Speichern ]                                                  │
    ├─────────────────────────────────────────────────────────────────┤
    │  Lokaler Import-Ordner                                          │
    ├─────────────────────────────────────────────────────────────────┤
@@ -368,7 +377,7 @@ und nach einer "Standard setzen"-Steuerung suchen.)
 ...) beim Import in MP3 mit 320 kbit/s umwandeln** — standardmäßig
 **an**.  Sie gilt für jeden Weg, auf dem ein Track in die Bibliothek
 kommt: Browser-Upload, lokaler Import-Ordner, FTP-Import und der
-Massenimport-Befehl.  Klicken Sie auf **Speichern** dieses Abschnitts;
+Massenimport-Befehl.  Klicken Sie auf **Save** (oben rechts oder unten);
 der nächste Import folgt dem neuen Wert, ein Neustart ist nicht nötig.
 
 Was der Import mit jeder Datei macht:
@@ -444,7 +453,7 @@ beim nächsten Analyzer-Poll-Zyklus (standardmäßig alle
 60 s) automatisch in die Bibliothek importiert.
 
 **Massenimport: Duplikate importieren erlauben** (Kontrollkästchen unter dem Ordnerpfad, seit
-2026-10-16, wird beim Anklicken gespeichert).  Es ist die Vorgabe für
+2026-10-16, gespeichert mit dem **Save** der Seite seit 2026-10-27).  Es ist die Vorgabe für
 den Massenimport über die Kommandozeile (`bulk_import`): aus, eine
 Datei, deren md5 - oder die md5 ihres verlustfreien Originals - bereits
 in der Bibliothek steht, wird übersprungen; an, sie wird als zweiter
@@ -557,7 +566,7 @@ now**) Audiodateien von einem FTP-, FTPS- oder SFTP-Server und führt
 sie durch den Import-Ordner oben — der dafür konfiguriert sein muss.
 Aktivieren Sie die Checkbox, tragen Sie Server, Port (leer =
 Protokoll-Standard), Konto und den **absoluten** entfernten Ordner
-ein, dann **Save FTP import**.
+ein, dann **Save**.
 
 - **Briefkasten-Semantik.**  Nach einem verifizierten Download wird
   die entfernte Datei gelöscht — das Konto braucht Löschrecht.
@@ -660,7 +669,7 @@ eine getaggte Kopie in die Bibliothek importiert (Track-Typ
 „Recordings", Titel `<Sendung> <Datum Uhrzeit>`, verknüpft mit der
 Sendungsinstanz); die Datei im Aufnahmeordner bleibt unverändert.
 Details in [Record-per-Show, Abschnitt 3.6](./RECORD_PER_SHOW.md).
-Gespeichert wird mit dem **Save**-Knopf dieses Abschnitts; das
+Gespeichert wird mit dem **Save** der Seite; das
 Playout braucht nach dem Update einen Neustart, danach wirkt der
 Schalter sofort.
 

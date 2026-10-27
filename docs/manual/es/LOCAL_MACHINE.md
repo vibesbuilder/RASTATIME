@@ -29,6 +29,17 @@ slug cambian.
 
 Configuración → **Máquina local**.
 
+**Un solo guardado para la página** *(desde 2026-10-27)*: el botón
+**Save** arriba a la derecha y el mismo abajo guardan cada sección
+que haya cambiado - tarjeta de sonido, formato de importación,
+carpeta de importación (con la casilla de la importación masiva),
+importación FTP, grabación 24/7 y grabación de programas - una tras
+otra; las secciones sin cambios no se vuelven a guardar.  Cada
+sección muestra su resultado en su propia línea, un resumen aparece
+junto al botón.  Los botones que actúan al instante - Apply now,
+Scan Now, Fetch now, Check, Move library - siguen en sus
+secciones.
+
 Secciones independientes: Tarjeta de sonido (salida +
 entrada), Formato de importación, Carpeta de importación local,
 y después importación FTP, ubicación de la biblioteca de medios y
@@ -306,7 +317,7 @@ pérdida (WAV, FLAC, ...) a MP3 de 320 kbps al importar** —
 **activada** por defecto.  Se aplica a todas las vías por las que una
 pista entra en la biblioteca: subida del navegador, carpeta de
 importación local, importación FTP y el comando de importación masiva.
-Pulse el botón **Guardar** de la sección; la siguiente importación
+Pulse **Save** (arriba a la derecha o abajo); la siguiente importación
 sigue el nuevo valor, no hace falta reiniciar nada.
 
 Lo que hace la importación con cada archivo:
@@ -380,7 +391,7 @@ automáticamente a la biblioteca en el próximo ciclo de
 poll del analyzer (por defecto cada 60 s).
 
 **Importación masiva: permitir importar duplicados** (casilla bajo la ruta de la carpeta, desde 2026-10-16,
-se guarda al hacer clic).  Es el valor por defecto de la importación
+se guarda con el **Save** de la página desde 2026-10-27).  Es el valor por defecto de la importación
 masiva por línea de comandos (`bulk_import`): desactivada, un archivo
 cuyo md5 - o el md5 de su original sin pérdida - ya está en la
 biblioteca se omite; activada, se importa como segunda pista, por
@@ -493,7 +504,7 @@ servidor FTP, FTPS o SFTP y los hace pasar por la carpeta de
 importación de arriba — que por tanto debe estar configurada.
 Active la casilla, rellene servidor, puerto (vacío = valor por
 defecto del protocolo), cuenta y la carpeta remota **absoluta**, y
-pulse **Save FTP import**.
+pulse **Save**.
 
 - **Semántica de buzón.**  Tras una descarga verificada, el archivo
   remoto se borra — la cuenta necesita permiso de borrado.  Si el
@@ -596,7 +607,7 @@ pista «Recordings», título `<programa> <fecha hora>`, vinculada a la
 instancia del programa); el archivo de la carpeta de grabaciones no se
 toca.  Detalles en
 [Record-per-Show, sección 3.6](./RECORD_PER_SHOW.md).  Se guarda con
-el botón **Save** de esta sección; el playout necesita un reinicio
+el **Save** de la página; el playout necesita un reinicio
 tras la actualización, después el interruptor actúa de inmediato.
 
 ### 24/7 Recording Folder

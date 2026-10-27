@@ -539,6 +539,8 @@ class PreferenceController extends Zend_Controller_Action
     public function backupAction(): void
     {
         Zend_Layout::getMvcInstance()->assign('parent_page', 'Settings');
+        // RASTATIME 2026-10-27 - one Save for both sections
+        $this->view->headScript()->appendFile(Assets::url('js/airtime/preferences/pagesave.js'), 'text/javascript');
     }
 
     /** GET /preference/backup-status */
@@ -1092,6 +1094,9 @@ class PreferenceController extends Zend_Controller_Action
     {
         Zend_Layout::getMvcInstance()->assign('parent_page', 'Settings');
 
+        // RASTATIME 2026-10-27 - one Save for every section; loaded first,
+        // soundcardsetting.js registers the Soundcard section with it
+        $this->view->headScript()->appendFile(Assets::url('js/airtime/preferences/pagesave.js'), 'text/javascript');
         $this->view->headScript()->appendFile(
             Assets::url('js/airtime/preferences/soundcardsetting.js'),
             'text/javascript'

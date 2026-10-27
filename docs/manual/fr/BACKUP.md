@@ -22,7 +22,9 @@ des ZIP ; voir la section 3.
 ## 1. Le dossier de sauvegarde
 
 Saisissez un chemin absolu sur un disque local, par exemple
-`D:\rastatime-backups`, puis cliquez sur **Check** et **Save settings**.
+`D:\rastatime-backups`, puis cliquez sur **Check** et **Save** (en haut à droite ; depuis le
+2026-10-27 un seul **Save** en haut et en bas enregistre les deux
+sections de la page).
 
 - Le dossier est créé s'il n'existe pas.
 - Il ne doit pas se trouver dans la bibliothèque média.
@@ -52,7 +54,7 @@ simplement.
 
 ## 3. Inclure la bibliothèque média
 
-Cochez **Include media library** puis cliquez sur **Save settings**.
+Cochez **Include media library** puis cliquez sur **Save**.
 Dès lors, chaque exécution synchronise aussi la bibliothèque dans le
 sous-dossier `media` à côté des ZIP :
 
@@ -84,7 +86,7 @@ main quand vous n'en avez plus besoin.
 
 Cochez **Enable automatic backups**, choisissez la fréquence (**Run
 every** N jours) et la durée de conservation (**Keep backups for** N
-jours, 0 = tout garder), puis **Save automatic backups**.
+jours, 0 = tout garder), puis **Save**.
 
 Le mécanisme d'horlogerie est une tâche planifiée Windows qu'un
 administrateur enregistre **une seule fois** (PowerShell élevé) :

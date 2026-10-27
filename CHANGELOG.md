@@ -289,6 +289,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Settings: ein Save pro Seite (2026-10-27, Operator)** — bisher hatte
+  General / Streams Save oben + unten, Auto DJ nur oben, My Profile nur
+  unten; Local Machine oben ein Save, das nur die Soundkarte speicherte,
+  plus fünf Abschnitts-Saves („Save“, „Save Folder“, „Save FTP import“,
+  das Massenimport-Kästchen speicherte beim Anklicken); Backup zwei
+  („Save settings“, „Save automatic backups“).  Jetzt: jede Seite mit
+  Einstellungen hat ein **Save oben rechts und dasselbe unten**.  Auf
+  Local Machine und Backup speichert es nacheinander (in
+  Seitenreihenfolge) nur die Abschnitte, deren Felder sich seit dem
+  Laden / letzten Speichern geändert haben - unveränderte werden nicht
+  erneut gesendet (Soundkarte und 24/7-Aufnahme lösen im Playout eine
+  Neukonfiguration aus); ein fehlgeschlagener Abschnitt bleibt offen und
+  wird beim nächsten Save wiederholt.  Neues `js/airtime/preferences/
+  pagesave.js` (`RtPageSave.register / markSaved`), Abschnittsmeldungen
+  bleiben, Zusammenfassung neben dem Knopf.  Aktionsknöpfe (Apply now,
+  Scan Now, Fetch now, Check, Move library, Back up now, Cancel) bleiben.
+  Auto DJ hat wieder ein Save unten (2026-05-25 entfernt), My Profile
+  eins oben.  Drei neue Texte DE/FR/ES (`.mo` neu gebaut, wirksam nach
+  dem nächsten Apache-Neustart).  Live geprüft mit abgefangenen POSTs:
+  keine Änderung → „No changes to save.“ ohne Anfrage; vier geänderte
+  Abschnitte → genau deren vier Endpunkte in Seitenreihenfolge mit
+  CSRF-Token; Fehler in einem → nur dieser beim zweiten Klick.  Handbuch
+  LOCAL_MACHINE + BACKUP ×4.
 - **„Repeat of show“ bietet nur noch wiederholbare Quellen an
   (2026-10-27, Operator)** — bisher jede Sendung mit bevorstehender
   Instanz oder einer der letzten 60 Tage, auch vergangene

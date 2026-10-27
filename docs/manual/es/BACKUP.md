@@ -21,7 +21,8 @@ ZIP; vea la sección 3.
 ## 1. La carpeta de copias
 
 Introduzca una ruta absoluta en un disco local, por ejemplo
-`D:\rastatime-backups`, y pulse **Check** y **Save settings**.
+`D:\rastatime-backups`, y pulse **Check** y **Save** (arriba a la derecha; desde 2026-10-27 un
+solo **Save** arriba y abajo guarda las dos secciones de la página).
 
 - La carpeta se crea si no existe.
 - No debe estar dentro de la biblioteca de medios.
@@ -50,7 +51,7 @@ muestra como interrumpida — simplemente ejecútela de nuevo.
 
 ## 3. Incluir la biblioteca de medios
 
-Marque **Include media library** y pulse **Save settings**.  Desde
+Marque **Include media library** y pulse **Save**.  Desde
 entonces cada ejecución sincroniza además la biblioteca en la
 subcarpeta `media` junto a los ZIP:
 
@@ -82,7 +83,7 @@ no las necesite.
 
 Marque **Enable automatic backups**, elija la frecuencia (**Run
 every** N días) y la conservación (**Keep backups for** N días,
-0 = conservar todo), y pulse **Save automatic backups**.
+0 = conservar todo), y pulse **Save**.
 
 El mecanismo de relojería es una tarea programada de Windows que un
 administrador registra **una sola vez** (PowerShell elevado):

@@ -26,7 +26,20 @@ $rtTip = function ($text) {
 
 <div class="ui-widget prefpanel simple-formblock clearfix padded-strong backup-config">
     <h2 style="float:left"><?php echo _("Backup") ?></h2>
+    <?php /* RASTATIME 2026-10-27 - one Save for the page (operator): it
+           posts the backup folder and the automatic backups when they
+           changed (pagesave.js); Check / Back up now / Cancel stay. */ ?>
+    <button type="button" class="btn right-floated rt-page-save"><?php echo _("Save") ?></button>
+    <span class="rt-page-save-msg right-floated" style="margin: 6px 1em 0 0;"></span>
     <div style="clear:both"></div>
+    <script>
+    RtPageSave.setTexts({
+        saving: "<?php echo addslashes(_('Saving …')) ?>",
+        saved: "<?php echo addslashes(_('Saved.')) ?>",
+        nothing: "<?php echo addslashes(_('No changes to save.')) ?>",
+        failed: "<?php echo addslashes(_('Some sections could not be saved - see the messages there.')) ?>"
+    });
+    </script>
 
     <?php
     // RASTATIME 2026-09-17 - stage 3, deliberately slim restore section:
@@ -67,7 +80,6 @@ $rtTip = function ($text) {
             <dt></dt>
             <dd style="padding-top: 0.5em;">
                 <button id="backup_check" type="button" class="btn"><?php echo _("Check") ?></button>
-                <button id="backup_save" type="button" class="btn"><?php echo _("Save settings") ?></button>
                 <button id="backup_run" type="button" class="btn" disabled><?php echo _("Back up now") ?></button>
                 <button id="backup_cancel" type="button" class="btn" style="display: none;"><?php echo _("Cancel") ?></button>
                 <span id="backup_status_msg" style="margin-left: 1em;"></span>
@@ -119,9 +131,8 @@ $rtTip = function ($text) {
             </dd>
 
             <dt></dt>
-            <dd style="padding-top: 0.5em;">
-                <button id="backup_auto_save" type="button" class="btn"><?php echo _("Save automatic backups") ?></button>
-                <span id="backup_auto_msg" style="margin-left: 1em;"></span>
+            <dd>
+                <span id="backup_auto_msg"></span>
             </dd>
 
             <dt></dt>
@@ -148,6 +159,12 @@ $rtTip = function ($text) {
             </tbody>
         </table>
     </fieldset>
+
+    <div style="margin-top: 1em;">
+        <button type="button" class="btn right-floated rt-page-save"><?php echo _("Save") ?></button>
+        <span class="rt-page-save-msg right-floated" style="margin: 6px 1em 0 0;"></span>
+        <div style="clear:both"></div>
+    </div>
 
 
 
@@ -258,8 +275,49 @@ $rtTip = function ($text) {
             renderList(d.backups);
         }
 
+        // RASTATIME 2026-10-27 - the two sections of the page's Save
+        // (pagesave.js), marked saved once the first status filled them
+        var folderSection = RtPageSave.register("backup_folder", "#backup_folder, #backup_include_media", function () {
+            var done = $.Deferred();
+            post("backup-folder", {
+                folder: $("#backup_folder").val(),
+                include_media: $("#backup_include_media").is(":checked") ? "true" : "false"
+            }, function (d) {
+                msg(TXT.saved, true);
+                mediaTouched = false;
+                renderStatus(d);
+                done.resolve();
+            }, function (err) { msg(err, false); done.reject(); });
+            return done.promise();
+        });
+        var autoSection = RtPageSave.register("backup_auto", "#backup_auto_enabled, #backup_auto_every, #backup_auto_retention", function () {
+            var done = $.Deferred();
+            $.post(baseUrl + "preference/backup-auto", {
+                csrf_token: $("#csrf").val(),
+                enabled: $("#backup_auto_enabled").is(":checked") ? "true" : "false",
+                every_days: $("#backup_auto_every").val(),
+                retention_days: $("#backup_auto_retention").val()
+            }, function (d) {
+                $("#backup_auto_msg").text("<?php echo addslashes(_('Saved.')) ?>").css("color", "#5cb85c");
+                autoTouched = false;
+                renderStatus(d);
+                done.resolve();
+            }, "json").fail(function (xhr) {
+                var errs = (xhr.responseJSON && xhr.responseJSON.errors) || ["<?php echo addslashes(_('Save failed.')) ?>"];
+                $("#backup_auto_msg").text(errs.join(" ")).css("color", "#d9534f");
+                done.reject();
+            });
+            return done.promise();
+        });
+
         function refresh() {
-            $.getJSON(baseUrl + "preference/backup-status", renderStatus);
+            $.getJSON(baseUrl + "preference/backup-status", function (d) {
+                renderStatus(d);
+                if (folderSection.saved === null) {
+                    RtPageSave.markSaved(folderSection);
+                    RtPageSave.markSaved(autoSection);
+                }
+            });
         }
 
         function startPolling() {
@@ -284,33 +342,6 @@ $rtTip = function ($text) {
         $("#backup_include_media").on("change", function () { mediaTouched = true; });
         $("#backup_auto_enabled, #backup_auto_every, #backup_auto_retention")
             .on("change input", function () { autoTouched = true; });
-
-        $("#backup_auto_save").on("click", function () {
-            $.post(baseUrl + "preference/backup-auto", {
-                csrf_token: $("#csrf").val(),
-                enabled: $("#backup_auto_enabled").is(":checked") ? "true" : "false",
-                every_days: $("#backup_auto_every").val(),
-                retention_days: $("#backup_auto_retention").val()
-            }, function (d) {
-                $("#backup_auto_msg").text("<?php echo addslashes(_('Saved.')) ?>").css("color", "#5cb85c");
-                autoTouched = false;
-                renderStatus(d);
-            }, "json").fail(function (xhr) {
-                var errs = (xhr.responseJSON && xhr.responseJSON.errors) || ["<?php echo addslashes(_('Save failed.')) ?>"];
-                $("#backup_auto_msg").text(errs.join(" ")).css("color", "#d9534f");
-            });
-        });
-
-        $("#backup_save").on("click", function () {
-            post("backup-folder", {
-                folder: $("#backup_folder").val(),
-                include_media: $("#backup_include_media").is(":checked") ? "true" : "false"
-            }, function (d) {
-                msg(TXT.saved, true);
-                mediaTouched = false;
-                renderStatus(d);
-            }, function (err) { msg(err, false); });
-        });
 
         $("#backup_run").on("click", function () {
             msg("", true);
