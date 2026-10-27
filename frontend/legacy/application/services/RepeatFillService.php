@@ -114,25 +114,42 @@ class Application_Service_RepeatFillService
 
     /**
      * Options of the "Repeat of show" select: 0 => None, then every show that
-     * has an upcoming instance or one within the last 60 days - a source has
-     * usually aired already, so recent past instances count too.  Label: name plus the next start, else the last
-     * one ("last ...").  $excludeId = the show being edited.
+     * has an instance still to come (or running), plus a show that has aired
+     * within the last 60 days only if its last ended instance - the one
+     * fillDue() would copy - repeats completely: tracks only, or its
+     * recording is imported.  RASTATIME 2026-10-27 (operator): a past live
+     * show without a recording is no longer offered; a source should be
+     * chosen before it airs.  $keepId (the stored source of the show being
+     * edited) is always listed, or saving the form would silently drop it.
+     * Label: name plus the next start, else the last one ("last ...").
+     * $excludeId = the show being edited.
      */
-    public static function sourceOptions($excludeId = null): array
+    public static function sourceOptions($excludeId = null, $keepId = null): array
     {
         $opts = [0 => _('None')];
-        $sql = "SELECT s.id, s.name,
-                       (SELECT MIN(i.starts) FROM cc_show_instances i
-                         WHERE i.show_id = s.id AND i.modified_instance = FALSE AND i.ends > NOW() AT TIME ZONE 'UTC') AS next_start,
-                       (SELECT MAX(i.starts) FROM cc_show_instances i
-                         WHERE i.show_id = s.id AND i.modified_instance = FALSE AND i.ends <= NOW() AT TIME ZONE 'UTC') AS last_start
+        $sql = "SELECT s.id, s.name, n.next_start, l.starts AS last_start
                   FROM cc_show s
-                 WHERE EXISTS (SELECT 1 FROM cc_show_instances i WHERE i.show_id = s.id AND i.modified_instance = FALSE
-                                  AND i.ends > (NOW() AT TIME ZONE 'UTC') - INTERVAL '60 days')
+                  LEFT JOIN LATERAL (
+                       SELECT MIN(i.starts) AS next_start FROM cc_show_instances i
+                        WHERE i.show_id = s.id AND i.modified_instance = FALSE
+                          AND i.ends > NOW() AT TIME ZONE 'UTC') n ON TRUE
+                  LEFT JOIN LATERAL (
+                       SELECT i.id, i.starts, i.ends, i.file_id FROM cc_show_instances i
+                        WHERE i.show_id = s.id AND i.modified_instance = FALSE AND i.rebroadcast = 0
+                          AND i.ends <= NOW() AT TIME ZONE 'UTC'
+                        ORDER BY i.ends DESC LIMIT 1) l ON TRUE
+                 WHERE n.next_start IS NOT NULL
+                    OR s.id = :keep
+                    OR (l.ends > (NOW() AT TIME ZONE 'UTC') - INTERVAL '60 days'
+                        AND ((EXISTS (SELECT 1 FROM cc_schedule c WHERE c.instance_id = l.id)
+                              AND NOT EXISTS (SELECT 1 FROM cc_schedule c WHERE c.instance_id = l.id
+                                                 AND (c.linein_id IS NOT NULL OR c.stream_id IS NOT NULL)))
+                             OR EXISTS (SELECT 1 FROM cc_files f WHERE f.id = l.file_id AND f.import_status = 0
+                                           AND f.file_exists AND f.length > INTERVAL '0')))
                  ORDER BY LOWER(s.name), s.id";
         try {
             $tz = new DateTimeZone(Application_Model_Preference::GetDefaultTimezone() ?: 'UTC');
-            foreach (Application_Common_Database::prepareAndExecute($sql, [], 'all') as $r) {
+            foreach (Application_Common_Database::prepareAndExecute($sql, [':keep' => (int) $keepId], 'all') as $r) {
                 if ($excludeId && (int) $r['id'] === (int) $excludeId) {
                     continue;
                 }

@@ -169,11 +169,13 @@ class Application_Service_ShowFormService
             ]
         );
         // RASTATIME 2026-10-18 - "Repeat of show": the list without the show
-        // itself, the stored source selected
+        // itself, the stored source selected (and listed even if it would
+        // no longer be offered, 2026-10-27)
         $el = $form->getElement('add_show_repeat_of');
         if ($el) {
-            $el->setMultiOptions(Application_Service_RepeatFillService::sourceOptions($this->ccShow->getDbId()));
-            $el->setValue(Application_Service_RepeatFillService::getRepeatOf($this->ccShow->getDbId()) ?: 0);
+            $stored = Application_Service_RepeatFillService::getRepeatOf($this->ccShow->getDbId()) ?: 0;
+            $el->setMultiOptions(Application_Service_RepeatFillService::sourceOptions($this->ccShow->getDbId(), $stored));
+            $el->setValue($stored);
         }
     }
 

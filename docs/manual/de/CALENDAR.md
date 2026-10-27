@@ -287,6 +287,13 @@ anderen Wochentag oder in einer anderen Woche.  Öffnen Sie das
 Original.  Von da an wird jede Instanz der Wiederholung automatisch
 befüllt:
 
+- **Welche Sendungen die Liste anbietet** *(seit 2026-10-27)*: jede
+  Sendung, die noch kommt oder gerade läuft, und eine bereits
+  gelaufene Sendung (innerhalb der letzten 60 Tage) nur, wenn ihre
+  letzte Instanz vollständig wiederholbar ist - nur Tracks, oder ihre
+  Aufnahme ist importiert.  Eine vergangene Live-Sendung ohne Aufnahme
+  wird nicht angeboten: Wählen Sie das Original, bevor es läuft.  Eine
+  bereits gespeicherte Quelle bleibt wählbar.
 - **Wann**: kurz vor dem Start der Wiederholung (etwa eine Stunde,
   derselbe Vorlauf wie beim Autoloading), nicht am Ende des Originals
   - Korrekturen am Original nach der Ausstrahlung werden so

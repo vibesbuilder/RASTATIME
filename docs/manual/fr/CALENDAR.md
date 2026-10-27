@@ -288,6 +288,13 @@ d'Autoloading Playlist), et
 choisissez l'original sous **Rediffusion de l'émission**.  Dès lors
 chaque instance de la rediffusion est remplie automatiquement :
 
+- **Émissions proposées par la liste** *(depuis le 2026-10-27)* :
+  toute émission à venir ou en cours, et une émission déjà diffusée
+  (dans les 60 derniers jours) seulement si sa dernière instance peut
+  être rediffusée entièrement - uniquement des pistes, ou son
+  enregistrement est importé.  Une émission en direct passée sans
+  enregistrement n'est pas proposée : choisissez l'original avant sa
+  diffusion.  Une source déjà enregistrée reste sélectionnable.
 - **Quand** : peu avant le début de la rediffusion (environ une
   heure, la même avance que le chargement automatique), pas à la fin
   de l'original - les corrections faites à l'original après sa

@@ -289,6 +289,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **„Repeat of show“ bietet nur noch wiederholbare Quellen an
+  (2026-10-27, Operator)** — bisher jede Sendung mit bevorstehender
+  Instanz oder einer der letzten 60 Tage, auch vergangene
+  Live-Sendungen, von denen man nicht wusste, ob sie aufgenommen waren.
+  Jetzt: jede Sendung, die noch kommt oder gerade läuft, und eine
+  vergangene (60 Tage) nur, wenn ihre letzte beendete Instanz - die,
+  die die Befüllung kopieren würde - vollständig wiederholbar ist: nur
+  Tracks, oder die Aufnahme ist importiert (Bedingungen wie
+  `recordingOf`).  Live 409 → 321 Einträge; weggefallen sind 88
+  vergangene Live-Sendungen ohne Aufnahme, die aufgenommenen
+  „Listen Up“-Proben bleiben.  Nebenbei behoben: eine gespeicherte
+  Quelle, die nicht (mehr) in der Liste stand (z. B. älter als 60
+  Tage), erschien als „None“ und ging beim nächsten Speichern still
+  verloren - sie wird jetzt immer mit angeboten.  Handbuch CALENDAR ×4.
+  Probe `C:/Temp/optd/repeat_options_probe.php` (nur lesen).
 - **Settings-Feinschliff: fünf Punkte (2026-10-27, Operator)** —
   (1) **Users / Track Types:** das Plus von „New User“ / „New Track Type“
   und die Lösch-Kreuze der Listen in der Sekundärfarbe (weißes

@@ -198,6 +198,13 @@ elija el original en **Repetición
 del programa**.  Desde entonces cada instancia de la repetición se
 rellena automáticamente:
 
+- **Qué programas ofrece la lista** *(desde 2026-10-27)*: todo
+  programa que aún está por venir o en antena, y un programa ya
+  emitido (en los últimos 60 días) solo si su última instancia se
+  puede repetir completa: solo pistas, o su grabación está importada.
+  Un programa en directo pasado sin grabación no se ofrece: elija el
+  original antes de que se emita.  Una fuente ya guardada sigue
+  seleccionable.
 - **Cuándo**: poco antes de que empiece la repetición (alrededor de
   una hora, la misma antelación que la carga automática), no al final
   del original; así se trasladan las correcciones hechas al original

@@ -258,6 +258,13 @@ original under
 **Repeat of show**.  From then on every instance of the repeat is
 filled automatically:
 
+- **Which shows the list offers** *(since 2026-10-27)*: every show
+  that is still to come or on air now, and a show that has already
+  aired (within the last 60 days) only if its last instance can be
+  repeated completely - tracks only, or its recording is imported.
+  A past live show without a recording is not offered: pick the
+  original before it airs.  A source that is already stored stays
+  selectable.
 - **When**: shortly before the repeat starts (about an hour, the
   same lead as the autoloading build), not at the end of the
   original - so corrections made to the original after it aired are
