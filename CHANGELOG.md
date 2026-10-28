@@ -365,7 +365,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   ungemessen) — Details BACKLOG.  Commit 2bacf05f.  Nachtrag: Banner-
   Schwelle `RASTATIME_LIQUIDSOAP_MEMORY_WARN_MB=2816` gesetzt (Vorgabe 2048
   läge unter der weichen Grenze), wirksam nach dem nächsten PLAYOUT-
-  Neustart; Manual ×4 ergänzt.
+  Neustart; Manual ×4 ergänzt.  Commit 91441fed.
 - **Kalender: „Add this show" / „Update show" sehen aus wie „New Show"
   (2026-10-28, Operator-Meldung)** — die beiden Absende-Knöpfe des
   Sendungsdialogs waren graue jQuery-UI-Knöpfe mit dem hellblauen Plus des
