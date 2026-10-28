@@ -682,7 +682,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   normalen Stunde fügt wie bisher einen Teil im selben Sidecar an.  Sieben
   neue Tests, Playout-Suite grün.  PLAYOUT-Neustart nötig; erster
   Live-Fall 2027-10-31.  Manual RECORD_PER_HOUR §4.1 EN/DE/FR/ES,
-  Architektur §23.34 Addendum (0.100).
+  Architektur §23.34 Addendum (0.100).  Commit 5bbeaaad.
 - **Backup: „Backup Now" mit Medienspiegel meldete „The RASTATIME API is
   not reachable." (2026-10-28, Operator-Meldung)** — der Start des Jobs
   vermaß Bibliothek (116.886 Dateien) und Spiegel auf der USB-Platte
