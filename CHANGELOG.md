@@ -231,7 +231,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   weitergegeben; `source_md5` = Original, das Original bleibt bis zum
   Einsortieren.  Tests: Analyzer 9 neu + 1 angepasst, API 3, Playout 5,
   JS-Syntax.  Neustarts ANALYZER, API, PLAYOUT, Apache nötig.  Manual
-  LIBRARY FAQ EN/DE/FR/ES, Architektur §23.75 (0.101).
+  LIBRARY FAQ EN/DE/FR/ES, Architektur §23.75 (0.101).  Commit 74e51657.
 - **Autoloading: Löschen einer verwendeten Playlist warnt, räumt auf und
   wird im Dashboard gemeldet (2026-10-28, Operator-Go zu Backlog-Punkt 2,
   Variante (c))** — beim Löschen einer Playlist setzte der Fremdschlüssel
