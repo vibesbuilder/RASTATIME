@@ -10,7 +10,7 @@ dial-in stays plain HTTP on port 8001 (operator decision).
 The stages build on each other.  **Nothing is forwarded on the router
 before stage 0 is complete.**  Commands marked *elevated* run in a
 PowerShell started "as administrator"; everything that changes a secret
-or a system setting is done by the operator, assistant verifies read-only.
+or a system setting is done by the operator; the verification afterwards is read-only.
 
 ---
 
@@ -157,7 +157,7 @@ Keep: 80, 443, 8001, the Apache program rule, the `C:\tools\liquidsoap`
 rule (harbor).  Icecast 8000 has no inbound rule — in-house listeners
 get the stream through Apache from stage 1 on.
 
-### 0.7 Verification (assistant, read-only)
+### 0.7 Verification (read-only)
 
 `netstat -an` listeners: 5432, 5672, 8765 on 127.0.0.1 only; secrets
 re-classified as custom (same script as the inventory, values hidden);

@@ -371,6 +371,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Repository-Aufräumen für die Veröffentlichung, Phase 0 (2026-10-28,
+  Operator-Go GitHub-Thema)** — die vier Planungsdateien vom Projektstart
+  (BLOCKERS_T0.1, IMPLEMENTATION_PLAN, POST_IMPLEMENTATION, CLEANUP_INVENTORY)
+  und die seit Mai nicht mehr gepflegte `readme.txt` (0.25.1) liegen jetzt
+  unter `docs/dev/history/`; Verweise in FORK_NOTES, RATIONALE, UPGRADE und
+  AGENTS zeigen dorthin bzw. auf das CHANGELOG, das die `readme.txt`-Pflicht
+  ersetzt.  Operator-Runbooks und BACKLOG nennen keine zweite Rolle mehr
+  (Verifikationsschritte sind als lesend beschrieben, Regelverweise zeigen
+  auf die Projektregeln).  Lokale Werkzeug- und Zustandspfade werden nicht
+  mehr in der `.gitignore` aufgezählt, sondern lokal in `.git/info/exclude`
+  bzw. über das Muster `_*/` ignoriert.  Vier verwaiste Worktree-Branches
+  (alle vollständig in master) entfernt; Commit-Identität auf das
+  GitHub-Konto des Betreibers gesetzt.
 - **Liquidsoap: weiche Speichergrenze des geplanten Neustarts auf 2560 MB
   (2026-10-28, Operator-Go)** — Auswertung der Playout-Logs 16.–28.10.:
   mit Stereo Tool startet die Hauptinstanz bei ≈ 1000 MB, ein voller

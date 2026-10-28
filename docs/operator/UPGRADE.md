@@ -47,7 +47,7 @@ Complete every item before touching the running system.
       changes, migration warnings, or manual steps
 - [ ] Back up the PostgreSQL database (see `docs\operator\BACKUP.md` §3)
 - [ ] Back up `C:\rastatime\config\libretime.conf`
-- [ ] Note the current version: check `readme.txt` or `git describe`
+- [ ] Note the current version: check `CHANGELOG.md` or `git describe`
 - [ ] Confirm a maintenance window with on-air staff (upgrade stops audio)
 - [ ] Verify you have an elevated (Administrator) PowerShell prompt ready
 - [ ] Confirm you can reach the server console if a remote session drops

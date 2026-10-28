@@ -2,8 +2,8 @@
 
 Runbook for backlog points 1 and 2 of "Stand vor dem Live-Betrieb"
 (2026-10-24).  Two parts, meant for one maintenance window of about
-twenty minutes.  The operator types every secret; assistant never sees,
-echoes or logs a value.  Rules from `ASSISTANT.local.md` apply: `git tag`
+twenty minutes.  The operator types every secret; no value is ever
+echoed or logged.  The live-operation rules apply: `git tag`
 before a live change is not needed here (no code changes), but the
 nightly 03:30 backup must have run, and nothing of this happens inside a
 show boundary.
@@ -69,7 +69,7 @@ values are the part that matters.
    Restart-Service RASTATIME-STANDBY
    ```
 
-5. [ ] Verification (assistant does this from the logs, read-only):
+5. [ ] Verification (from the logs, read-only):
    - `liquidsoap-stdout.log`: `Connection setup was successful` for
      `/rastatime`, `/rastatime-aac` and the standby mounts; no
      `401`/`Unauthorized` lines.
@@ -131,7 +131,7 @@ There is no `pgpass.conf` and no second copy.
 4. [ ] Verification:
    - Browser: log out, log in, open the calendar and Dashboard -> Tracks
      (legacy PHP with the new password).
-   - assistant: `playout-stdout.log` shows `refreshing schedule from API`
+   - Logs: `playout-stdout.log` shows `refreshing schedule from API`
      with `armed=N` after the restart; `api` service log without
      `password authentication failed`; analyzer log idle without errors.
    - Settings -> Backup -> "Backup now" (manual ZIP, a few seconds) ->

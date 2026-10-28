@@ -112,15 +112,6 @@ yarn-error.log*
 .LSOverride
 
 # -----------------------------------------------------------------------------
-# Local the coding assistant / IDE assistant state (operator-specific permission
-# allow-lists, scheduled-task locks, private notes).  Never source.
-# ASSISTANT.local.md is the user's PRIVATE instructions to the coding assistant —
-# only ASSISTANT.md (the shared, checked-in project guide) is tracked.
-# -----------------------------------------------------------------------------
-.assistant/
-ASSISTANT.local.md
-
-# -----------------------------------------------------------------------------
 # Analyzer runtime state.  retry_queue is a pickle of in-flight
 # upload-pipeline jobs; rebuilt at process start.
 # -----------------------------------------------------------------------------
@@ -149,14 +140,10 @@ backend/playout/libretime_playout/cache/
 recordings/
 
 # -----------------------------------------------------------------------------
-# RASTATIME 2026-08-31: local working state, never repository content.
-# _assistant-state/ holds the coding assistant session artefacts; _migration/ holds the
-# one-off machine-migration snapshot (incl. a full DB dump - secrets!).
-# They sat untracked since the 2026-08 migration and inflated every
-# "uncommitted changes" view.
+# Local working state next to the checkout (one-off migration snapshots,
+# private notes).  Never repository content.
 # -----------------------------------------------------------------------------
-_assistant-state/
-_migration/
+_*/
 
 # Live Text Info: written by the playout at runtime
 frontend/legacy/public/live/now-playing.txt*

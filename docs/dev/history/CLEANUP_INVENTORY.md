@@ -11,7 +11,7 @@ Repo, danach manuelle Verifikation der risikoreichsten Behauptungen
 schließen `**/build/**`, `**/*.egg-info/**`, `**/__pycache__/**`, `.venv/`
 aus (generiert).
 
-**Grundsatz (ASSISTANT.local.md):** Zuverlässigkeit vor Modernität. Der
+**Grundsatz (Projektregeln):** Zuverlässigkeit vor Modernität. Der
 Live-Betrieb darf durch das Aufräumen nicht gefährdet werden. **mpv wurde
 am 2026-09-10 gelöscht** (BACKLOG „Legacy-mpv-Code-Delete",
 Arbeitsreihenfolge Punkt 15); zum Zeitpunkt dieser Inventur war es noch

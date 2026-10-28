@@ -16,7 +16,7 @@
 
 Verbindliche Abarbeitungsreihenfolge, vom Operator am 2026-09-02
 festgelegt.  Jeder Punkt bekommt vor Implementierung die
-6-Punkte-Evaluierung + explizites Go (siehe ASSISTANT.local.md).
+6-Punkte-Evaluierung + explizites Go (siehe Projektregeln).
 
 | # | Punkt | Sektion |
 |---|-------|---------|
@@ -346,7 +346,7 @@ Befehle für Update-Richtlinie / Autologon / Energie, BIOS-Hinweise, Verifikatio
 Test-Neustart, Rollback).  Befund: keine Update-Richtlinie, Autologon aus,
 „Windows Hello erforderlich" an (`DevicePasswordLessBuildVersion = 2`), Schnellstart
 aus, Standby/Ruhezustand nie, Display 15 min, USB-Selective-Suspend Standard.
-**Gesetzt und verifiziert 2026-10-03 (Operator, erhöhte Shell; assistant lesend):**
+**Gesetzt und verifiziert 2026-10-03 (Operator, erhöhte Shell; Verifikation lesend):**
 Update-Richtlinie `AUOptions 2 / NoAutoUpdate 0 / NoAutoRebootWithLoggedOnUsers 1 /
 AlwaysAutoRebootAtScheduledTime 0 / ExcludeWUDriversInQualityUpdate 1`, „neueste
 Updates sofort" aus; Autologon per Sysinternals Autologon64 (`AutoAdminLogon 1`,
@@ -373,7 +373,7 @@ Janitor aufnehmen (💡).  BIOS „Power on after power loss" vom Operator geset
   `AUOptions = 2` „nur benachrichtigen") + `NoAutoRebootWithLoggedOnUsers = 1`,
   zusätzlich in Einstellungen → Windows Update → „Updates so schnell wie möglich
   erhalten" aus und Nutzungszeit setzen.  Systemeinstellung → **Operator setzt sie
-  selbst** (erhöhte Shell nötig; assistant ändert keine Sicherheits-/Systemeinstellungen),
+  selbst** (erhöhte Shell nötig; Sicherheits-/Systemeinstellungen ändert nur der Operator),
   ich liefere die Befehle und prüfe danach die Registry.
 - **Automatische Anmeldung** eines Benutzers bei jedem Neustart (für Tascam/MME-
   Audio-Endpunkte und die Desktop-Werkzeuge; die Dienste selbst brauchen keine
@@ -398,7 +398,7 @@ live.  Regeln ab sofort:
    Sendungen.
 4. Migrationen (API `manage.py migrate`) nur mit frischem Backup (03:30 oder
    manuell per UI) und außerhalb von Sendungsgrenzen.
-Diese Regeln stehen seit 2026-10-03 in ASSISTANT.local.md; erster Rückfallpunkt
+Diese Regeln stehen seit 2026-10-03 in den Projektregeln; erster Rückfallpunkt
 `live-2026-10-03` gesetzt (Operator-Go 2026-10-03).  **17b in Kraft.**
 Alternative für später: zweiter Rechner als Entwicklungsumgebung (Anschaffung).
 
@@ -409,7 +409,7 @@ DJ-Rückfallpasswort (Settings → Streams), RabbitMQ-Benutzer.  Operator setzt 
 Werte, ich liefere die Stellen-Liste und prüfe anschließend Stream, DJ-Login und
 Backup-Lauf.
 
-**Erster Durchlauf des assistant-Teils von TEST_PLAN A (2026-10-06 13:00–13:15): alles
+**Erster Durchlauf des lesenden Teils von TEST_PLAN A (2026-10-06 13:00–13:15): alles
 grün** — A1.1/1.3/1.4/1.5, A2.1 (Sendungsstarts +58…+169 ms), A2.3, A2.4 (0,05 s frei),
 A2.5 (0 Abweichungen), A2.6, A2.8 (ALL OK), A3.2 (no-show nicht gezählt), A3.3 (5 ×
 falsch → 15 min, Entsperren per rt-blocks.ps1), A4.1–A4.7, A5.1 (11. Versuch 429),
@@ -2051,7 +2051,7 @@ Nicht empfohlen: „Drain" am Slot-Ende (Quelle L Sekunden länger halten)
 **Status (alt):** Idea — Operator-Wunsch 2026-09-02, Umfang noch zu klären.
 **Kontext:** Bisher wird punktuell getestet (pytest-Suiten für
 playout/audio/api, plus manuelle Live-Verifikation nach UI-Commits
-laut ASSISTANT.local.md).  Was fehlt, ist ein **zusammenhängender,
+laut Projektregeln).  Was fehlt, ist ein **zusammenhängender,
 dokumentierter Testplan** — insbesondere für die Dinge, die nur
 live prüfbar sind (Sendekette, Line-In, Recording, Show-Übergänge).
 **Vor der Evaluierung mit dem Operator zu klären:**
@@ -2059,7 +2059,7 @@ live prüfbar sind (Sendekette, Line-In, Recording, Show-Übergänge).
 - Umfang: reine Abnahme-Checkliste (manuell) vs. automatisierte
   Regressionsschicht vs. beides?
 - Auslöser: vor jedem Release / nach Maschinenwechsel / periodisch?
-- Soll die Live-Verifikations-Konvention aus ASSISTANT.local.md darin
+- Soll die Live-Verifikations-Konvention aus den Projektregeln darin
   aufgehen?
 **Erfahrungswert aus der Line-In-Abnahme (2026-09-01/02):** die
 teuersten Fehler waren NICHT im Code (Voice-Clarity-APO, Erdschleife,
@@ -3187,7 +3187,7 @@ API-Basis vom `public_url` trennen, `public_url` = https://…, Django
 `/stream/<mount>` → Icecast :8000 (ICY-Header, kein Puffern), Widgets/CORS gegen
 die neue URL.  **2 Infrastruktur** (Operator) — DNS-A-Record, Router-Forwards
 80/443/8001 → 192.168.1.164, win-acme (Let's Encrypt, Auto-Renewal), Apache-SSL-
-vHost (assistant liefert conf), Hairpin-NAT/Split-DNS fürs LAN.  **3 Abnahme** —
+vHost (conf aus dem Repo), Hairpin-NAT/Split-DNS fürs LAN.  **3 Abnahme** —
 von außen (Mobilfunk): UI-Login, Stream, BUTT-Einwahl, Widgets, HSTS, SSL-Labs-
 Note, aus dem LAN per öffentlichem Namen.
 **Stand 2026-10-04 — Stufe 0 vorbereitet (Operator-Go):** Runbook
@@ -5678,7 +5678,7 @@ checkOverlappingShows je Wiederholung) -> ShowService::addUpdateShow mit dem Fel
 gewuenschten Spalten haben ein Formularfeld (Playlisten/DJs per Name aufgeloest, Farben hex, Tage als Liste).
 Entscheidungen Operator: eigener Menuepunkt Settings -> Import/Export (Export gleich wichtig); Logos Variante a) = ZIP
 mit shows.csv + logos/<datei> (Ablage wie Rest_ShowImageController: <Bibliothek>/imported/show-images/<id>/).
-Vorschlag assistant: Vorschau-Schritt (Tabelle je Zeile ok/Ueberlappung/unbekannte Playlist/DJ, nur gruene Zeilen
+Vorschlag: Vorschau-Schritt (Tabelle je Zeile ok/Ueberlappung/unbekannte Playlist/DJ, nur gruene Zeilen
 importieren); custom_password NICHT aus der CSV (Custom Auth nur einschalten + Benutzername, Passwort im Dialog oder
 Zufallswert einmalig anzeigen) - Entscheidung offen.
 Spalte 'Content' (Inhalte: Tracks, Line-In, Webstream): Stufe 1 = Playlist-Name -> Autoloading-Playlist der Show
@@ -6344,7 +6344,7 @@ kein `v`-Tag, GitHub-Org „RASTATIME" aus den README-Badges existiert nicht (40
    Windows-VM ist der eigentliche Brocken.
 4. Standortspezifisches im Code: `exampleradio` 4 Dateien, `D:/stor` 5, `192.168.1.64` 8, `studio` 11 (meist Tests,
    Beispiele, Kommentare) - durchgehen, keine Blocker erwartet.  Root-Aufräumen: BLOCKERS_T0.1, IMPLEMENTATION_PLAN,
-   POST_IMPLEMENTATION, CLEANUP_INVENTORY, `_assistant-state`, `_migration` nach docs/dev oder raus; BACKLOG bleibt.
+   POST_IMPLEMENTATION, CLEANUP_INVENTORY nach docs/dev/history, lokale Zustandsordner nur lokal ignorieren; BACKLOG bleibt.
 5. Stereo Tool ist proprietär (nicht im Repo, Lizenz je Betreiber) -> als optional dokumentieren.  SECURITY.md,
    Issue-Vorlagen, Hinweis „Windows 11 only" (CONTRIBUTING hat ihn).
 

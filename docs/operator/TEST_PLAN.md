@@ -7,11 +7,11 @@
 Three parts: **A** the acceptance checklist to run after any larger change
 (and once before the first "real" broadcast day), **B** the recurring
 checks that keep the station honest, **C** the rehearsal tools with their
-calls.  Every row names the expected result and where to look; "assistant"
-means the check can be done read-only from the machine, "operator" means
-ears, hands or an external device are needed.
+calls.  Every row names the expected result and where to look; a check that
+only reads logs or status pages can be done from the machine, "operator"
+means ears, hands or an external device are needed.
 
-Rules while testing (ASSISTANT.local.md, 17b): rehearse on **temporary
+Rules while testing (live-operation rules, BACKLOG 17b): rehearse on **temporary
 instances** of a test show (e.g. show 534 "testautoloading"), never on a
 real one; tag before a live change (`git tag live-YYYY-MM-DD`); migrations
 only with a fresh backup (03:30 run) and outside show boundaries.
@@ -120,7 +120,7 @@ They never touch real shows - temporary instances are deleted again.
 PowerShell scripts from a plain shell need
 `powershell -NoProfile -ExecutionPolicy Bypass -File <script>` (the
 machine's execution policy is Restricted; the scheduled tasks already pass
-the flag).  First full run of the assistant part of A: 2026-10-06 13:00–13:15,
+the flag).  First full run of the read-only part of A: 2026-10-06 13:00–13:15,
 all green, see BACKLOG "Live-Readiness".  First restore drill (A6.2):
 2026-10-07, ZIP of 03:30 into `rastatime_restore` in 1 s, schema 64, all
 counts identical to live, scratch database dropped - passed.

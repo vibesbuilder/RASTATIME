@@ -9,7 +9,7 @@
 > Voll-Migration verwerfen und zurück zur Variante B (inkrementell,
 > mpv bleibt, Liquidsoap nur als Output-Mixer).
 >
-> **Wenn dieser Test klappt:** Bericht an assistant, dann starten wir
+> **Wenn dieser Test klappt:** Ergebnis festhalten, dann starten wir
 > Phase A (POC mit echtem Input).
 
 ---
@@ -127,7 +127,7 @@ Liquidsoap laufen lassen, gelegentlich (alle ~30 min) prüfen:
 - Memory-Verbrauch stabil oder wächst es kontinuierlich?
 - Test-Mount `/phase0-test` weiterhin abspielbar?
 
-## Schritt 6 — Bericht zurück an assistant
+## Schritt 6 — Ergebnis festhalten
 
 Schreib in einem kurzen Satz:
 

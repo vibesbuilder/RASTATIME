@@ -22,8 +22,7 @@ RASTATIME runs permanently on this machine.  Windows must therefore
 
 Every step below changes a system or security setting and is therefore
 done **by the operator in an elevated PowerShell** ("Run as
-administrator").  Section 6 is the read-only verification assistant can run
-afterwards.
+administrator").  Section 6 is the read-only verification that follows.
 
 ## 2. State before (2026-10-03, read-only check)
 
@@ -135,7 +134,7 @@ Power Loss* = **Power On**; *Wake on LAN* as wished; boot order = the
 Windows disk first; no USB boot ahead of it (a forgotten stick must not
 block a boot).
 
-## 6. Verification (read-only, assistant can run it)
+## 6. Verification (read-only)
 
 ```powershell
 Get-ItemProperty 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU' | Select-Object AUOptions, NoAutoUpdate, NoAutoRebootWithLoggedOnUsers, AlwaysAutoRebootAtScheduledTime
@@ -163,7 +162,7 @@ Expected: `AUOptions 2`, `NoAutoUpdate 0`, `NoAutoRebootWithLoggedOnUsers
      (`http://192.168.1.64/systemstatus`, Settings → Local Machine),
    - the stream is audible on Icecast and the master panel shows the
      right show.
-4. assistant checks the playout log for the boot (`Playout started`, device
+4. Check the playout log for the boot (`Playout started`, device
    re-enumeration, first PLAY) and the Icecast access log for the
    reconnect.
 

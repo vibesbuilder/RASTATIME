@@ -186,7 +186,7 @@ Always:
 1. summarize what changed
 2. list validation steps performed or still needed
 3. note open issues
-4. update `readme.txt` with version, changes, and changelog when code or architecture is changed
+4. update `CHANGELOG.md` when code or architecture is changed
 
 ---
 
@@ -198,15 +198,12 @@ Important project docs should remain in Markdown.
 Prefer these files:
 - `README.md`
 - `AGENTS.md`
-- `IMPLEMENTATION_PLAN.md`
+- `CHANGELOG.md`
 - `ARCHITECTURE.md` or versioned architecture docs
-- `readme.txt` for concise change tracking required by the project workflow
+- `BACKLOG.md` for evaluated but not yet implemented topics
 
-### readme.txt requirement
-Whenever code or architecture changes are made, update or create `readme.txt` with:
-- version
-- summary of changes
-- changelog
+### CHANGELOG requirement
+Whenever code or architecture changes are made, add an entry to `CHANGELOG.md` (Added / Changed / Fixed / Removed / Security, with date and reason).
 
 Do not skip this.
 
@@ -304,7 +301,7 @@ When asked to implement something:
 - then propose or follow a small implementation slice
 - then implement
 - then validate
-- then update documentation and `readme.txt`
+- then update documentation and `CHANGELOG.md`
 
 If a requested change conflicts with the architecture draft:
 - flag the conflict explicitly

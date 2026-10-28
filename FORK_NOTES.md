@@ -88,4 +88,4 @@ The following LibreTime subsystems will be replaced in RASTATIME:
 - systemd/systemctl → NSSM + Windows service scripts
 - ALSA/PortAudio → Windows audio via Liquidsoap / FFmpeg
 
-See `IMPLEMENTATION_PLAN.md` for the full phase and task breakdown.
+See `docs/dev/history/IMPLEMENTATION_PLAN.md` for the original (2026-04) phase and task breakdown.

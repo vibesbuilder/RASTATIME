@@ -74,7 +74,7 @@ Running Celery on Windows is possible but is explicitly marked as
 "not recommended for production" in Celery's own documentation.
 
 **Decision:** Replace Celery with a Windows-native background runner.
-See IMPLEMENTATION_PLAN.md Phase 8 (T16.1–T16.3).
+See docs/dev/history/IMPLEMENTATION_PLAN.md Phase 8 (T16.1–T16.3).
 
 ### 4. The Web Serving Layer Has Unix Assumptions
 

@@ -3,7 +3,7 @@
 **Status:** Accepted (operator decision 2026-10-09)
 **Date:** 2026-10-09
 **Applies to:** the production machine (RASTATIME runs from the Git checkout
-`C:\RASTATIME`, see `ASSISTANT.local.md` / `WINDOWS_24_7.md`)
+`C:\RASTATIME`, see `WINDOWS_24_7.md`)
 
 `UPGRADE.md` covers RASTATIME releases themselves.  This document covers
 everything RASTATIME runs on: which version is installed, where it comes
@@ -65,7 +65,7 @@ Monthly, in the morning after the nightly restart and the 03:30 backup
 (e.g. the first working day after Patch Tuesday), when nothing is on air
 or only files play:
 
-1. `git status` clean, `git tag live-YYYY-MM-DD` (assistant.local rule 1).
+1. `git status` clean, `git tag live-YYYY-MM-DD` (live-operation rule 1).
 2. `python scripts\update_check.py` → decide per component.
 3. Fresh database backup (Settings → Backup, or wait for the 03:30 run).
 4. Updates in the order Class A, Class C, Class B (B only if planned).

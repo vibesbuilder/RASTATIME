@@ -73,7 +73,7 @@ backend/api/requirements.txt       Zeile 8:   gunicorn>=22.0.0,<23.1
 backend/worker/requirements.txt    Zeile 3:   celery==4.4.7
 ```
 
-**Was zu tun ist (the coding assistant):**
+**Was zu tun ist:**
 1. `gunicorn`-Zeile aus `backend/api/requirements.txt` entfernen
 2. `celery`-Zeile aus `backend/worker/requirements.txt` entfernen
 3. Sicherstellen, dass kein anderes `requirements.txt` diese Pakete listet
@@ -120,7 +120,7 @@ läuft ohne ImportError durch.
 Lege `C:\rastatime\config\libretime.conf` an. Das ist die zentrale
 YAML-Konfigurationsdatei, die alle Dienste beim Start lesen.
 
-**Was zu tun ist (the coding assistant):**
+**Was zu tun ist:**
 1. Prüfe, ob schon ein Template (`libretime.example.conf` o. Ä.) im Repo
    vorhanden ist
 2. Wenn ja: kopieren und die Pflichtfelder eintragen
@@ -267,7 +267,7 @@ Der gesamte Ordner `backend/playout/libretime_playout/liquidsoap/` ist
 toter Code — die Liquidsoap-Engine wurde in Phase 3–4 durch VLC ersetzt.
 Er muss gelöscht und alle noch vorhandenen Imports bereinigt werden.
 
-**Was zu tun ist (the coding assistant):**
+**Was zu tun ist:**
 1. `grep -r "liquidsoap" backend/playout/libretime_playout/` ausführen —
    alle Importpfade auflisten
 2. Alle gefundenen Imports in den *neuen* Playout-Modulen entfernen oder
@@ -288,7 +288,7 @@ backend/` liefert keine Treffer. Suite weiterhin grün.
 Worker (tasks.py, main.py, config.py). Der neue RASTATIME-Worker ersetzt ihn
 vollständig.
 
-**Was zu tun ist (the coding assistant):**
+**Was zu tun ist:**
 1. Prüfen, ob `libretime_worker/` noch von irgendwo importiert wird
 2. Alle verbleibenden Celery-Imports in anderen Dateien entfernen
 3. Den Inhalt von `backend/worker/libretime_worker/` löschen (oder Ordner
@@ -308,7 +308,7 @@ liefert keine Treffer. Suite weiterhin grün.
 Dienste per `systemctl is-active`. Das schlägt auf Windows fehl und zeigt
 Benutzern falsche Statusinformationen.
 
-**Was zu tun ist (the coding assistant):**
+**Was zu tun ist:**
 1. Die `systemctl is-active libretime-*`-Aufrufe in beiden Dateien lesen
 2. Durch einen `sc.exe query <ServiceName>` oder `Get-Service`-basierten
    Check ersetzen, der die RASTATIME-NSSM-Dienstnamen verwendet
@@ -330,7 +330,7 @@ liefert keine Treffer. Suite weiterhin grün.
 `PortAudioSystemOutput`. Diese Linux-Audio-Backends existieren auf Windows
 nicht. Sie sollen durch den Windows-Audio-Eintrag (`WASAPI`) ersetzt werden.
 
-**Was zu tun ist (the coding assistant):**
+**Was zu tun ist:**
 1. Die vier betroffenen Klassen/Enum-Werte lesen (Zeilen ~220–260)
 2. `ALSA`- und `PORTAUDIO`-Enum-Werte löschen; `WASAPI` hinzufügen
 3. `ALSASystemOutput` und `PortAudioSystemOutput` löschen;
@@ -352,7 +352,7 @@ keine Treffer. Suite weiterhin grün.
 Das bestehende `readme.txt` ist ein Changelog. GitHub braucht ein
 `README.md` das als Projekt-Landing-Page dient.
 
-**Was zu tun ist (the coding assistant):**
+**Was zu tun ist:**
 Schreibe `README.md` im Repo-Root mit folgenden Abschnitten:
 1. Projektname + einzeiliger Zweck
 2. Was ist RASTATIME? (Windows-Port von LibreTime; AGPL-3.0)
@@ -373,9 +373,9 @@ enthält alle 8 Abschnitte. Kein Test nötig (dokumentarisch).
 
 **Was zu tun ist:**  
 Drei kurze Dateien, die für jedes öffentliche GitHub-Projekt Pflicht sind.
-Können in einem einzigen assistant-Code-Schritt erledigt werden.
+Können in einem einzigen Schritt erledigt werden.
 
-**Was zu tun ist (the coding assistant):**
+**Was zu tun ist:**
 
 1. `.gitignore` erweitern (bestehende Datei hat Grundgerüst):
    - `config/libretime.conf` (Produktionskonfiguration nie einchecken)
@@ -404,7 +404,7 @@ den AGPL-3.0-Text. `.gitignore` enthält `config/libretime.conf`.
 Lege `.github/workflows/test.yml` an, der bei jedem Push und Pull Request
 die Testsuite auf einem Windows-Runner ausführt.
 
-**Was zu tun ist (the coding assistant):**
+**Was zu tun ist:**
 Schreibe `.github/workflows/test.yml` mit:
 ```yaml
 name: Tests
@@ -436,13 +436,13 @@ durch (Proxy-Test).
 Erzeuge ein `CHANGELOG.md` im Keep-a-Changelog-Format aus dem bestehenden
 `readme.txt`-Changelog und tagge den aktuellen Stand als `v0.25.1`.
 
-**Was zu tun ist (the coding assistant):**
+**Was zu tun ist:**
 1. `CHANGELOG.md` schreiben: die wichtigsten Meilenstein-Einträge aus
    `readme.txt` in das Keep-a-Changelog-Format überführen
    (Abschnitte: Added, Changed, Removed — gruppiert nach Version)
 2. Sicherstellen, dass `README.md` auf `CHANGELOG.md` verlinkt
 
-**Danach manuell (nicht the coding assistant):**
+**Danach manuell:**
 ```bash
 git add -A
 git commit -m "chore: prepare v0.25.1 release"
