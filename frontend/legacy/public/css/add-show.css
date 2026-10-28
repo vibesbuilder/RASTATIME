@@ -297,3 +297,28 @@ label.wrapp-label input[type="checkbox"] {
 #cb_custom_auth-label {
     width: 80%;
 }
+
+/* RASTATIME 2026-10-28 - "Add this show" / "Update show" in the show form
+   look like the calendar's "New Show" button (btn-new: secondary colour,
+   white plus glyph) instead of a grey jQuery-UI button with the theme's
+   blue plus icon (operator 2026-10-28).  styles.css paints
+   .add-show-submit.btn:hover dark grey - the secondary hover colour wins. */
+#schedule-add-show .button-bar .add-show-submit.btn-new {
+    /* jquery-ui's ".ui-widget-content .ui-button" (grey) outranks .btn-new */
+    background: var(--rt-secondary-button) !important;
+    border-color: rgba(0, 0, 0, .35) !important;
+    color: #fff !important;
+}
+#schedule-add-show .button-bar .add-show-submit.btn-new:hover,
+#schedule-add-show .button-bar .add-show-submit.btn-new:active,
+#schedule-add-show .button-bar .add-show-submit.btn-new.ui-state-hover {
+    background: var(--rt-secondary-button-hover) !important;
+    border-color: var(--rt-secondary-button-hover) !important;
+}
+#schedule-add-show .button-bar .add-show-submit.btn-new .ui-button-text {
+    padding: 0;
+}
+#schedule-add-show .button-bar .add-show-submit.btn-new .icon-plus {
+    margin-right: 3px;
+}
+

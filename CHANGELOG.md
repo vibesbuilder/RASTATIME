@@ -350,6 +350,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Kalender: „Add this show" / „Update show" sehen aus wie „New Show"
+  (2026-10-28, Operator-Meldung)** — die beiden Absende-Knöpfe des
+  Sendungsdialogs waren graue jQuery-UI-Knöpfe mit dem hellblauen Plus des
+  Themes (`ui-icon-plusthick`).  Jetzt `btn-new` (Sekundärfarbe, weißes
+  Plus-Glyph wie der Kalenderknopf); eine Regel in `add-show.css`
+  übersteuert den grauen `.ui-widget-content .ui-button`-Hintergrund und
+  den dunkelgrauen Hover aus `styles.css`.  Gemessen in Chrome: beide
+  Knöpfe #5a4080, 26 px hoch, Rand wie „New Show".
 - **Settings: ein Save pro Seite (2026-10-27, Operator)** — bisher hatte
   General / Streams Save oben + unten, Auto DJ nur oben, My Profile nur
   unten; Local Machine oben ein Save, das nur die Soundkarte speicherte,
