@@ -5518,6 +5518,16 @@ z. B. „01 -  - Chill Zone 2.mp3", „INOK Sommerfest 20260718.mp3").  Idee: Ru
 „Unknown Artist") im organise_file-Schritt, bestehende 63 per Umzugslauf nachziehen (filepath in cc_files anpassen).
 ~1 h, Analyzer-Neustart.  Vorbedingung: Operator-Go und Entscheidung ueber den Ordnernamen.
 
+### 💡 Upload: gescheiterte Uploads sichtbar machen und aufräumen (Operator 2026-10-28)
+Befund: ein Upload vom 20.10. (WAV mit MP3-Inhalt und vorangestelltem ID3-Block, von ffprobe abgelehnt) blieb als
+Original in `D:/stor/organize/` liegen, der Bibliothekseintrag 24975 stand versteckt auf `import_status = 2`; in der
+Oberfläche war davon nichts zu sehen, der Operator fand die Datei beim Blick in den Ordner.  Idee: (a) Upload-Dialog /
+„Recent Uploads" zeigt gescheiterte Uploads mit Grund (Analyzer-Fehlertext) und bietet „Datei herunterladen" und
+„Verwerfen" (löscht Original in organize/ und den versteckten Eintrag); (b) Preflight- oder Dashboard-Hinweis, wenn
+organize/ Dateien älter als ein Tag enthält; (c) optional Reparaturversuch für RIFF-mit-ID3-Mischlinge (RIFF-Kopf
+suchen, Datenstrom auslesen - so wurde 24975 am 28.10. von Hand gerettet).  ~½ Tag für (a)+(b), Manual x4.
+Vorbedingung: Operator-Go.
+
 ### 🟡 Upload: gleiche Datei zweimal hochladen wird nicht erkannt (Operator-Frage 2026-10-24) - Defer (Operator 2026-10-28)
 **Operator 2026-10-28:** bleibt im Backlog. Begründung: Benutzer können nicht wissen, ob ein anderer Benutzer dieselbe Datei
 schon hochgeladen hat; eine Abweisung würde sie nur verwirren. Duplikate bleiben bewusst erlaubt (siehe Memory).
