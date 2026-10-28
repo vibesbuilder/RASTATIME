@@ -6318,9 +6318,25 @@ Verlust in B/C: das einzige S-Merkmal, ein unlöschbares Besitzerkonto - optiona
 nachbilden.  **Empfehlung:** B (Go), Priorität niedrig - kein Live-Nutzen, aber weniger Sonderfälle und
 Legacy/API konsistent.
 
-## 🟡 Veröffentlichung auf GitHub, Releases, Update-Weg (Evaluierung 2026-10-25) - Defer
+## 🟢 Veröffentlichung auf GitHub, Releases, Update-Weg (Evaluierung 2026-10-25) - GO 2026-10-28, in Arbeit
 
-**Operator 2026-10-25:** „Wir behalten uns dieses Thema im Backlog für später." Kein Go; Vorbedingungen für
+**Operator-Go 2026-10-28** mit diesen Entscheidungen: (1) Historie per `git filter-repo` (alle Commits bleiben, Audio +
+icecast.xml raus); (2) Repo zuerst **privat**, öffentlich erst ganz zum Schluss; (3) keine Org, Repo `vibesbuilder/RASTATIME`;
+(4) Push mit den Stufe-B-Brücken; (5) Install-Probe auf einer frischen Windows-11-VM auf einer anderen Maschine durch den
+Operator; (6) Worktrees geprüft und entfernt.  **Vorgabe:** der Betreiber ist der einzige Contributor; kein Werkzeugname
+erscheint im Projekt (Commit-Identität `vibesbuilder <4569147+vibesbuilder@users.noreply.github.com>`, Historie wird
+in Phase 3 per Mailmap vereinheitlicht und von Trailer-Zeilen befreit).
+
+**Phasenplan:** 0 Aufräumen (Worktrees, Root, Standort-Reste) · 1 Marke Stufe B mit Brücken (+ ruhige Woche) ·
+2 Brücken raus, INSTALL/UPGRADE/COMPONENTS aktualisieren, SECURITY.md, Issue-Vorlagen · 3 Historie im Klon unter
+C:\Temp bereinigen, Live-Checkout per Tag umhängen · 4 Repo anlegen (Operator), Push, CI grün · 5 Install-Probe (Operator)
+· 6 Release v1.0.0.
+- ✅ **Phase 0 erledigt 2026-10-28** (`c098c414`): vier verwaiste Worktree-Branches entfernt (alle in master), Planungsdateien
+  + `readme.txt` nach `docs/dev/history/`, Runbooks/BACKLOG ohne zweite Rolle, lokale Werkzeugpfade aus der `.gitignore`
+  in `.git/info/exclude`, Commit-Identität gesetzt.  Standort-Reste gesichtet: Testwerte (192.168.1.64, D:/stor) und
+  Go-Live-Runbooks sind bewusst standortbezogen und bleiben; offen nur die Betreiber-E-Mail in GO_LIVE_HTTPS.
+
+**Vormerkung aus der Evaluierung 2026-10-25:** „Wir behalten uns dieses Thema im Backlog für später." Vorbedingungen für
 einen späteren Start: frische Windows-VM für die Install-Probe, GitHub-Org/Repo durch den Operator, ruhige Woche
 für den filter-repo-Lauf (Historie wird neu geschrieben, alle Klone/Worktrees danach neu).
 
