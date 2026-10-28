@@ -228,6 +228,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   ausgelieferten Skripten: Ausblenden/Undo/Countdown/Beacon-Body geprüft.
   Texte EN + DE/FR/ES (`po2mo.py --all`, Apache-Neustart für die .mo).
   Manual CALENDAR ×4, Architektur §23.76 (0.102).  Commit e5a3ac98.
+  Nachtrag (Operator-Abnahme): Toast vom unteren Bildrand an den oberen
+  Rand des Kalenders verlegt, direkt unter der Werkzeugleiste und über der
+  Kalendermitte zentriert (gemessen: Oberkante 160 px, Leiste endet bei
+  153 px, Mitte 1036 zu 1035 px).
 - **Upload: gescheiterte Importe sichtbar, erklärt, aufräumbar und ein Fall
   reparierbar (2026-10-28, Operator-Go (a)–(d) zum Befund der liegen
   gebliebenen Datei in `organize/`)** — (a) der Analyzer meldet den echten

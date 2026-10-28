@@ -228,9 +228,12 @@
     display: none !important;
 }
 #rt-undo-toasts {
+    /* top of the calendar, just below its toolbar (operator 2026-10-28:
+     * "eher im oberen Bereich des Kalenders"); centred over the content
+     * area, i.e. the viewport minus the 152 px navigation column */
     position: fixed;
-    left: 50%;
-    bottom: 24px;
+    left: calc(50% + 76px);
+    top: 160px;
     transform: translateX(-50%);
     z-index: 1000; /* above the calendar chips and the context menu */
     display: flex;
