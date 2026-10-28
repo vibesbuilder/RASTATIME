@@ -5793,6 +5793,12 @@ Operator 2026-10-16: tritt nicht mehr auf.  Nicht weiter verfolgt.
 Composer, Tests auf `PHPUnit\Framework\TestCase` + Attribute heben, Test-DB-Setup unter Windows; ca. 1-2 Tage.
 Vorbedingung: groesserer Legacy-Umbau steht an (sonst Nutzen zu klein, Legacy weicht langfristig).
 Zwischenstand: `scripts/run_tests.ps1` (2026-10-16) buendelt die drei Python-Suiten mit den noetigen Variablen.
+**Stand 2026-10-28 (Operator: Defer bestaetigt):** Bestand = 6 Dateien / 32 Tests (26 davon ShowService), ~2.300 Zeilen;
+4 Dateien erben von `Zend_Test_PHPUnit_DatabaseTestCase` (DbUnit, seit PHPUnit 9 tot), `AirtimeInstall` legt je Test eine
+frische DB an (Linux-gepraegt).  Heute 75 Probe-Skripte in C:/Temp/optd.  Empfehlung fuer den Fall des Vorziehens: nicht
+portieren, sondern klein neu — PHPUnit 10/11 als Dev-Abhaengigkeit, eigener Basisfall mit Transaktion/Rollback gegen eine
+Test-DB (Installer nur mit Test-Praefix im DB-Namen), Probe-Skripte nach und nach als Tests ins Repo; ~0,5 Tag Geruest +
+~1 h je Probe.  Risiko fuer den Sendebetrieb keins, solange die Test-DB einen eigenen Namen traegt.
 
 ### ✅ Settings -> Local Machine -> Import Folder: Kontrollkaestchen fuer Massenimport-Duplikate - gebaut 2026-10-16
 cc_pref `bulk_import_allow_duplicates` (Standard aus), speichert beim Anklicken (POST preference/bulk-import-save),
