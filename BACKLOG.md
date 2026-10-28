@@ -3926,7 +3926,9 @@ gegen die ausgelegte Länge (Budget = Limit), ~20 Zeilen in
 `pickDynamicBlock()`.  Vorbedingung: Operator-Wunsch — ändert das sichtbare
 Verhalten aller Dauer-Blöcke (und ihrer Längenanzeige in Playlists).
 
-### 💡 Line-In-Eingangsverstärkung live nachregeln (notiert 2026-10-02)
+### 🟡 Line-In-Eingangsverstärkung live nachregeln (notiert 2026-10-02) - Defer (Operator 2026-10-28)
+**Operator 2026-10-28:** bleibt im Backlog, kein Go.
+
 
 **Status:** 💡 Idee, nicht evaluiert.  Entstanden mit der
 Line-In-Eingangsverstärkung (2026-10-02, Option A: `amplify` in Liquidsoap,
@@ -5513,7 +5515,10 @@ z. B. „01 -  - Chill Zone 2.mp3", „INOK Sommerfest 20260718.mp3").  Idee: Ru
 „Unknown Artist") im organise_file-Schritt, bestehende 63 per Umzugslauf nachziehen (filepath in cc_files anpassen).
 ~1 h, Analyzer-Neustart.  Vorbedingung: Operator-Go und Entscheidung ueber den Ordnernamen.
 
-### 💡 Upload: gleiche Datei zweimal hochladen wird nicht erkannt (Operator-Frage 2026-10-24)
+### 🟡 Upload: gleiche Datei zweimal hochladen wird nicht erkannt (Operator-Frage 2026-10-24) - Defer (Operator 2026-10-28)
+**Operator 2026-10-28:** bleibt im Backlog. Begründung: Benutzer können nicht wissen, ob ein anderer Benutzer dieselbe Datei
+schon hochgeladen hat; eine Abweisung würde sie nur verwirren. Duplikate bleiben bewusst erlaubt (siehe Memory).
+
 Heute: zweite Datei bekommt im Ziel ein UUID-Suffix (organise_file), eine zweite cc_files-Zeile mit identischem md5
 entsteht; nur bulk_import (CLI) prueft md5/source_md5.  Idee: beim Web-Upload (CcFiles::createAndImport) den md5 gegen
 cc_files pruefen und den Upload mit Hinweis auf den bestehenden Titel abweisen (oder optional zulassen).  ~2 h inkl.
@@ -6047,7 +6052,10 @@ Ersteller, Aenderung).  Aufwand ~1 Tag (JS + Einstellungs-Endpunkt + Manual LIBR
 Empfehlung: Go bei Bedarf, nach den laufenden Abnahmen.  Operator 2026-10-23: "klingt gut" - explizites Go
 steht noch aus.
 
-### 🟡 Kalender: "Rueckgaengig" fuer einige Sekunden nach Loeschen - Defer (Operator 2026-10-23)
+### 🟡 Kalender: "Rueckgaengig" fuer einige Sekunden nach Loeschen - Defer (Operator 2026-10-23, bestätigt 2026-10-28)
+**Operator 2026-10-28:** bleibt vorerst im Backlog; Aufwand (Snapshot + Wiederherstellen, ~1 Tag) erscheint dem Nutzen nicht
+angemessen. Wiederaufnahme nur auf Operator-Wunsch.
+
 
 Loeschen einer Instanz entfernt heute sofort Sendeplanzeilen und markiert die Instanz; das Playout holt den
 Plan ca. alle 90 s.  Zwei Wege: a) echtes Verzoegern des Loeschens (Toast 10 s, danach ausfuehren) - riskant,
