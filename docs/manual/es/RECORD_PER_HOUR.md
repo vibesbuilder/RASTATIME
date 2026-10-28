@@ -156,6 +156,16 @@ reinicio - cada día tras el reinicio de las 04:00 - empieza más
 tarde, y un reproductor se sitúa entonces en
 `t - audio_start_offset` dentro de ese archivo.
 
+> **La hora repetida del cambio al horario de invierno (desde el 28/10/2026).**
+> Cuando los relojes se atrasan, la hora de pared muestra 02:xx dos
+> veces.  La grabadora escribe la segunda pasada en `<hora>-00.2.<ext>`,
+> y el archivo de marcas hace lo mismo: la segunda hora real recibe
+> `<hora>-00.2.cues.json`.  Cada archivo lleva `hour_start_utc` y
+> `utc_offset`, sus `parts` solo enumeran los archivos de audio de su
+> propia hora, y `t` cuenta desde el inicio de esa hora.  Un reinicio
+> dentro de una hora normal sigue añadiendo una segunda parte de audio al
+> mismo archivo.
+
 ---
 
 ## 5. Aplicar los cambios

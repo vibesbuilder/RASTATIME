@@ -668,6 +668,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **24/7-Aufnahme: Cue-Sidecar der doppelten Stunde (2026-10-28,
+  Operator-Go zum Befund der Zeitumstellungsnacht 25.10.)** — die
+  Wanduhr zeigt beim Zurückstellen 02:xx zweimal; der Rekorder schrieb den
+  zweiten Durchgang nach `02-00.2.mp3`, das Sidecar aber beide Durchgänge
+  in eine Datei (39 Marken, `t` ab derselben Wanduhr-Stunde, `parts`
+  beide mit Offset 0).  Jetzt trägt jedes Sidecar `hour_start_utc` und
+  `utc_offset`; gehört das Sidecar der Wanduhr-Stunde zu einer anderen
+  UTC-Stunde, gehen die Marken nach `<Stunde>-00.2.cues.json`
+  (`sidecar_part`, `recording` = die eigene Audiodatei), und `parts` je
+  Sidecar nennt nur die in der eigenen Stunde entstandenen Dateien.  Alte
+  Sidecars ohne UTC-Felder werden fortgeführt, ein Neustart in einer
+  normalen Stunde fügt wie bisher einen Teil im selben Sidecar an.  Sieben
+  neue Tests, Playout-Suite grün.  PLAYOUT-Neustart nötig; erster
+  Live-Fall 2027-10-31.  Manual RECORD_PER_HOUR §4.1 EN/DE/FR/ES,
+  Architektur §23.34 Addendum (0.100).
 - **Backup: „Backup Now" mit Medienspiegel meldete „The RASTATIME API is
   not reachable." (2026-10-28, Operator-Meldung)** — der Start des Jobs
   vermaß Bibliothek (116.886 Dateien) und Spiegel auf der USB-Platte

@@ -159,6 +159,16 @@ redémarrage - chaque jour après le redémarrage de 04:00 - commence
 plus tard, et un lecteur se positionne alors à
 `t - audio_start_offset` dans ce fichier.
 
+> **L'heure répétée du passage à l'heure d'hiver (depuis le 28/10/2026).**
+> Quand les horloges reculent, l'heure murale affiche 02:xx deux fois.
+> L'enregistreur écrit le second passage dans `<heure>-00.2.<ext>`, et le
+> fichier de repères fait de même : la seconde heure réelle reçoit
+> `<heure>-00.2.cues.json`.  Chaque fichier porte `hour_start_utc` et
+> `utc_offset`, ses `parts` ne listent que les fichiers audio de sa propre
+> heure, et `t` compte depuis le début de cette heure.  Un redémarrage
+> dans une heure normale ajoute toujours une seconde partie audio au même
+> fichier.
+
 ---
 
 ## 5. Appliquer les modifications

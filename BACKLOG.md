@@ -5703,7 +5703,15 @@ Erster Live-Fall von wallClockEnd.  Befund aus DB, Playout-/Liquidsoap-Log und 2
 - 24/7-Aufnahmen: Stundenfiles in Ortszeit; die doppelte Stunde liegt als `2026-10-25 02-00.mp3` (CEST) und
   `2026-10-25 02-00.2.mp3` (CET) vor, beide volle 57,6 MB; 03-00 und 04:00-Rotation normal.
 
-### 🟡 Cue-Datei der doppelten Stunde vermischt beide Durchgänge (notiert 2026-10-25)
+### ✅ Cue-Datei der doppelten Stunde vermischt beide Durchgänge (notiert 2026-10-25) - gebaut 2026-10-28 (Operator-Go, §23.34 Addendum)
+**Erledigt 2026-10-28:** `cue_writer` schreibt `hour_start_utc` + `utc_offset` in jedes Sidecar; gehört das Sidecar der
+Wanduhr-Stunde zu einer anderen UTC-Stunde, gehen die Marken nach `<Stunde>-00.2.cues.json` (`sidecar_part`, `recording`
+= `.2.mp3`), `parts` je Sidecar nur die Dateien der eigenen Stunde (Schonfrist 60 s); alte Sidecars ohne UTC-Felder
+werden fortgeführt; Neustart in normaler Stunde unverändert.  7 neue Tests (Doppelstunde, Teile-Aufteilung, Neustart,
+altes Sidecar, naive Uhr, Offset-Text).  Wirksam nach PLAYOUT-Neustart; erster Live-Fall 2027-10-31 (Memory-Erinnerung).
+Die Datei vom 25.10. bleibt unverändert (Aufbewahrung 10 Tage).
+
+**Ursprünglicher Befund:**
 `2026-10-25 02-00.cues.json` führt unter `parts` beide MP3s (beide mit start 02:00:00 / offset 0) und unter `marks`
 die 39 Marken beider Stunden gemeinsam, `t` relativ zur selben Wanduhr-Stunde (Marken 16741–16760 CEST, 16779–16783 CET,
 nicht nach `t` sortiert).  Für Stufe 2 der Sendungswiederholung (Live-Zeilen als Cue-Scheiben, §23.67) wäre die

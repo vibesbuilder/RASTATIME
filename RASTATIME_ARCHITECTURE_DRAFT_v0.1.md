@@ -1,10 +1,13 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.99
+Draft version: 0.100
 Date: 2026-10-28
 
 > **Revision history**
+> - **0.100 (2026-10-28)** - **Cue sidecars of the repeated hour** (§23.34
+>   addendum): one sidecar per real hour when the autumn clock change
+>   repeats a wall-clock hour.
 > - **0.99 (2026-10-28)** - **Deleted autoloading playlists** (§23.74): the
 >   library delete names the shows and clears their flag, the preflight
 >   scan warns about shows with the flag and no playlist.
@@ -5443,7 +5446,27 @@ hour file on reopen.  `append=true` does not help: the %ffmpeg muxer
 truncates regardless (measured), and the build has no native `%mp3`.  The
 recorder therefore never opens an existing hour file - it continues in
 `<hour>-00.2.<ext>` - and the cue sidecar lists the `parts` with their
-creation times.  A script changed
+creation times.
+
+**Addendum 2026-10-28 - the repeated hour of the autumn clock change.**
+The sidecar is keyed by the wall-clock hour the recorder names files by;
+on 2026-10-25 both passes of 02:xx (CEST, then CET) landed in
+`2026-10-25 02-00.cues.json` - 39 marks with `t` from the same nominal
+hour and two `parts` at offset 0, nothing a reader could attribute.
+`CueWriter` now works with the instant as well as the wall clock: `now_fn`
+may return an aware datetime (its offset is used) or a naive local one
+(`astimezone()` honours `fold`, so `datetime.now()` is right in the second
+pass too).  Every sidecar gets `hour_start_utc` and `utc_offset`.  When the
+primary sidecar of the wall-clock hour carries a different `hour_start_utc`,
+the marks go to `<hour>-00.N.cues.json` (`sidecar_part: N`, `recording` =
+its own audio part), mirroring the recorder's `.N.<ext>` files; `parts`
+of the `.N` sidecar lists only files created from its hour on (60 s
+grace), the primary one stops before its sibling.  A sidecar without the
+UTC fields (written before this change) is continued as the same hour, a
+restart inside a normal hour still adds a part to the one sidecar, and
+the spring change needs nothing (the hour is skipped).  Tests:
+`tests/test_cue_writer_fold.py` (both passes, part split, normal restart,
+old sidecar, naive clock, offset text).  First live case 2027-10-31.  A script changed
 by the startup render outside the boot window is applied through the
 same path (`render_restart_pending` → reason "rastatime.liq changed at
 the playout start"), which closes the last manual restart case: a

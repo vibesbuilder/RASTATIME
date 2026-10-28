@@ -155,6 +155,16 @@ Stunde hat den Offset 0; die angebrochene erste Stunde nach einem
 Neustart - täglich nach dem Neustart um 04:00 - beginnt später, und
 ein Player springt dann in dieser Datei zu `t - audio_start_offset`.
 
+> **Die doppelte Stunde der Herbst-Zeitumstellung (seit 28.10.2026).**
+> Beim Zurückstellen zeigt die Wanduhr 02:xx zweimal.  Der Rekorder
+> schreibt den zweiten Durchgang in `<Stunde>-00.2.<ext>`, das
+> Cue-Sidecar ebenso: Die zweite echte Stunde bekommt
+> `<Stunde>-00.2.cues.json`.  Jedes Sidecar trägt `hour_start_utc` und
+> `utc_offset`, seine `parts` nennen nur die Audiodateien der eigenen
+> Stunde, und `t` zählt ab dem Beginn dieser Stunde.  Ein Neustart in
+> einer normalen Stunde fügt weiterhin einen zweiten Audioteil im selben
+> Sidecar an.
+
 ---
 
 ## 5. Änderungen anwenden

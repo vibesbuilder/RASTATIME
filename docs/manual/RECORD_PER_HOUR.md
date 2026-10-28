@@ -149,6 +149,15 @@ has offset 0; the partial first hour after a restart - every day
 after the 04:00 restart - starts later, and a player then seeks to
 `t - audio_start_offset` inside that file.
 
+> **The repeated hour of the autumn clock change (since 2026-10-28).**
+> When the clocks go back, the wall clock shows 02:xx twice.  The recorder
+> writes the second pass into `<hour>-00.2.<ext>`, and the cue sidecar
+> does the same: the second real hour gets `<hour>-00.2.cues.json`.
+> Every sidecar carries `hour_start_utc` and `utc_offset`, its `parts`
+> list only the audio files of its own hour, and `t` counts from the start
+> of that hour.  A restart inside a normal hour still adds a second audio
+> part to the same sidecar.
+
 ---
 
 ## 5. Applying changes
