@@ -178,9 +178,21 @@ class Application_Service_CalendarService
                 // Menu separator
                 $menu['sep3'] = '-----------';
 
-                // show is repeating so give user the option to delete all
-                // repeating instances or just the one
-                if ($isRepeating) {
+                // RASTATIME 2026-10-28 - an edited instance of a repeating
+                // show stands on its own (the edit branch above offers only
+                // "Edit Instance"), so it gets only "Delete Instance".
+                // Upstream tested $isRepeating first, which made this branch
+                // unreachable ($populateInstance implies $isRepeating) and
+                // offered "Delete Instance and All Following" on it.
+                if ($populateInstance) {
+                    $menu['del'] = [
+                        'name' => _('Delete Instance'),
+                        'icon' => 'delete',
+                        'url' => $baseUrl . 'schedule/delete-show-instance',
+                    ];
+                } elseif ($isRepeating) {
+                    // show is repeating so give user the option to delete all
+                    // repeating instances or just the one
                     $menu['del'] = [
                         'name' => _('Delete'),
                         'icon' => 'delete',
@@ -199,12 +211,6 @@ class Application_Service_CalendarService
                         'name' => _('Delete Instance and All Following'),
                         'icon' => 'delete',
                         'url' => $baseUrl . 'schedule/delete-show',
-                    ];
-                } elseif ($populateInstance) {
-                    $menu['del'] = [
-                        'name' => _('Delete'),
-                        'icon' => 'delete',
-                        'url' => $baseUrl . 'schedule/delete-show-instance',
                     ];
                 } else {
                     $menu['del'] = [

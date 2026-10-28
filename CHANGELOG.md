@@ -739,6 +739,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Kalender: bearbeitete Instanz einer wiederkehrenden Sendung bot im
+  Kontextmenü „Delete Instance and All Following" an (2026-10-28, Befund des
+  Operators)** — der Lösch-Zweig in `CalendarService::makeContextMenu` prüfte
+  zuerst „wiederkehrend", der Zweig für die bearbeitete Instanz dahinter war
+  unerreichbar (bearbeitet setzt wiederkehrend voraus).  Jetzt zuerst die
+  bearbeitete Instanz: nur „Delete Instance", passend zu „Edit Instance" im
+  Bearbeiten-Zweig.  Unbearbeitete Instanzen behalten beide Einträge.
 - **24/7-Aufnahme: Cue-Sidecar der doppelten Stunde (2026-10-28,
   Operator-Go zum Befund der Zeitumstellungsnacht 25.10.)** — die
   Wanduhr zeigt beim Zurückstellen 02:xx zweimal; der Rekorder schrieb den
