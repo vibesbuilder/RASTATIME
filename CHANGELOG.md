@@ -362,7 +362,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Nacht.  Manual LOCAL_MACHINE EN/DE/FR/ES: Hinweis zur Basis mit Stereo
   Tool.  Upgrade auf Liquidsoap 2.5.0-rc1 (erster win64-Build auf OCaml
   5.5.0) erneut evaluiert: Defer (RC, Mehrkern-Rückrufe, Fade-Bruch, Leck
-  ungemessen) — Details BACKLOG.
+  ungemessen) — Details BACKLOG.  Commit 2bacf05f.
 - **Kalender: „Add this show" / „Update show" sehen aus wie „New Show"
   (2026-10-28, Operator-Meldung)** — die beiden Absende-Knöpfe des
   Sendungsdialogs waren graue jQuery-UI-Knöpfe mit dem hellblauen Plus des
