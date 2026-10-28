@@ -104,6 +104,7 @@ def test_failing_pipeline_puts_the_reason_in_the_queue(tmp_path):
         Pipeline.run_analysis(queue, str(bad), str(tmp_path / "imported"), "bad.mp3", PipelineOptions())
     record = queue.get_nowait()
     assert record["import_status"] == 2
-    assert record["comments"].startswith("ffprobe could not read the file")
-    assert "KeyError" not in record["comments"]
+    assert record["comments"].startswith("ffprobe could not read the file (exit ")
+    assert "damaged container" in record["comments"]
+    assert "KeyError" not in record["comments"] and "Command" not in record["comments"]
     assert bad.is_file()  # the original stays in organize/

@@ -47,9 +47,17 @@ def analyze_duration(filepath: str, metadata: Dict[str, Any]) -> Dict[str, Any]:
                 if isinstance(err, bytes):
                     err = err.decode("utf-8", "replace")
                 tail = " ".join(str(err or "").strip().splitlines()[-2:])
-            raise UnreadableFileError(
-                "ffprobe could not read the file: " + (tail or str(exception))
-            ) from exception
+            if tail:
+                text = "ffprobe could not read the file: " + tail
+            elif isinstance(exception, CalledProcessError):
+                # probe_duration runs with -v quiet, so there is no stderr to quote
+                text = (
+                    f"ffprobe could not read the file (exit {exception.returncode}) - "
+                    "not an audio file, or a damaged container"
+                )
+            else:
+                text = "ffprobe could not read the file: " + str(exception)
+            raise UnreadableFileError(text) from exception
 
     return metadata
 
