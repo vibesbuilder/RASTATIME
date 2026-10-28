@@ -237,6 +237,19 @@ Il n'existe **pas de clés API personnelles**.
 
 ---
 
+### Comment les mots de passe sont stockés (depuis le 27/10/2026)
+
+RASTATIME stocke les mots de passe sous forme de **hachages bcrypt**
+(salés, facteur de coût 12), jamais en clair et plus en MD5 non salé
+comme LibreTime.  Une base de données ou une sauvegarde dérobée ne
+révèle donc pas les mots de passe.  Les comptes antérieurs au 27/10/2026
+continuent de fonctionner : leur ancien hachage est accepté une dernière
+fois et remplacé par bcrypt à la prochaine connexion réussie, que ce soit
+par l'interface web, un accès DJ ou l'API.  Pour faire disparaître les
+anciens hachages aussi des sauvegardes plus anciennes, il suffit de
+définir un nouveau mot de passe pour le compte.  La commande
+`manage.py password_hashes` indique quels comptes sont déjà migrés.
+
 ## 8. Protection de la connexion (depuis le 06/10/2026)
 
 La page de connexion freine les échecs répétés - une nécessité, puisque

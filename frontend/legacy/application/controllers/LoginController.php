@@ -216,7 +216,7 @@ class LoginController extends Zend_Controller_Action
         }
 
         if ($request->isPost() && $form->isValid($request->getPost())) {
-            $user->setDbPass(md5($form->password->getValue()));
+            $user->setDbPass(Application_Model_Password::hash((string) $form->password->getValue()));
             $user->save();
 
             $auth->invalidateTokens($user, 'password.restore');

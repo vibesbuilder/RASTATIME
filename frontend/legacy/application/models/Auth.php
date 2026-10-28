@@ -79,23 +79,10 @@ class Application_Model_Auth
             return self::getCustomAuthAdapter($CC_CONFIG['auth']);
         }
 
-        // Database config
-        $db = Zend_Db::factory('PDO_' . $CC_CONFIG['dsn']['phptype'], [
-            'host' => $CC_CONFIG['dsn']['host'],
-            'port' => $CC_CONFIG['dsn']['port'],
-            'username' => $CC_CONFIG['dsn']['username'],
-            'password' => $CC_CONFIG['dsn']['password'],
-            'dbname' => $CC_CONFIG['dsn']['database'],
-        ]);
-        Zend_Db_Table_Abstract::setDefaultAdapter($db);
-        $authAdapter = new Zend_Auth_Adapter_DbTable($db);
-
-        $authAdapter->setTableName('cc_subjs')
-            ->setIdentityColumn('login')
-            ->setCredentialColumn('pass')
-            ->setCredentialTreatment('MD5(?)');
-
-        return $authAdapter;
+        // RASTATIME 2026-10-27 - the password is checked in PHP (bcrypt,
+        // legacy md5 accepted and re-hashed), no longer by "MD5(?)" in SQL;
+        // see LibreTime_Auth_Adaptor_Password / Application_Model_Password.
+        return new LibreTime_Auth_Adaptor_Password();
     }
 
     /**

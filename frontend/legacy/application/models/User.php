@@ -136,7 +136,34 @@ class Application_Model_User
     public function setPassword($password)
     {
         $user = $this->_userInstance;
-        $user->setDbPass(md5($password));
+        // RASTATIME 2026-10-27 - bcrypt instead of unsalted md5 (Application_Model_Password)
+        $user->setDbPass(Application_Model_Password::hash((string) $password));
+    }
+
+    /**
+     * RASTATIME 2026-10-27 - check a plain password against the stored hash
+     * (bcrypt, or the legacy md5 of accounts that have not logged in since
+     * the change).  A match against a legacy or weaker hash stores the
+     * password again as bcrypt right away.
+     */
+    public function verifyPassword($password): bool
+    {
+        $user = $this->_userInstance;
+        $stored = (string) $user->getDbPass();
+        if (!Application_Model_Password::verify((string) $password, $stored)) {
+            return false;
+        }
+        if (Application_Model_Password::needsRehash($stored)) {
+            try {
+                $user->setDbPass(Application_Model_Password::hash((string) $password));
+                $user->save();
+                Logging::info('Password of user ' . $user->getDbLogin() . ' re-hashed');
+            } catch (Exception $e) {
+                Logging::warn('Password re-hash for ' . $user->getDbLogin() . ' failed: ' . $e->getMessage());
+            }
+        }
+
+        return true;
     }
 
     public function setFirstName($firstName)

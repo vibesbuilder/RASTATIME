@@ -1,10 +1,13 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.97
-Date: 2026-10-27
+Draft version: 0.98
+Date: 2026-10-28
 
 > **Revision history**
+> - **0.98 (2026-10-28)** - **bcrypt password hashes** (§23.73): the legacy
+>   login adapter, the DJ check and the Django hasher share one algorithm,
+>   legacy md5 values migrate on the next login.
 > - **0.97 (2026-10-27)** - **Legacy CSRF check enforced** (§23.72 addendum):
 >   phase 2 - a legacy write without a valid token is refused (403); plain
 >   form posts carry the token as the hidden field `csrf`.
@@ -7803,3 +7806,64 @@ options, and live checks: refused paths 401/403 from outside, the admin
 UI unchanged; the new cookie carries `HttpOnly; SameSite=Lax`; a jQuery
 POST passes the monitor silently, a `fetch` POST without the header
 yields one `CSRF monitor` line.
+
+### 23.73 Password Hashes: bcrypt on Both Sides, md5 Migrates on Login (2026-10-27)
+
+**Context.**  Upstream LibreTime stored `cc_subjs.pass` as `md5(password)`
+without a salt, and four code paths agreed on it: the web login
+(`Zend_Auth_Adapter_DbTable` with `setCredentialTreatment('MD5(?)')`, the
+comparison ran inside SQL), the DJ dial-in check in
+`ApiController::checkLiveStreamAuth` (`md5($password)` against the stored
+value), the Django API (`core.User.set_password` / `check_password` with
+`hashlib.md5`, used by DRF's Basic and Session authentication) and every
+place that sets a password (users dialog, own profile, password reset by
+mail, users import, `create_user`).  Ten accounts, all md5.  A leaked
+database or backup ZIP (the nightly backup contains the dump) would have
+handed every password over through rainbow tables.
+
+**Decision.**  bcrypt with cost 12 on both sides, one verification rule,
+transparent migration.
+
+* PHP: `Application_Model_Password` - `hash()` (`password_hash`,
+  `PASSWORD_BCRYPT`, cost 12, prefix `$2y$`), `verify()` (bcrypt via
+  `password_verify`, a 32-character hex value via `hash_equals` against
+  `md5()`, an empty value never), `isLegacyMd5()`, `isBcrypt()` (prefixes
+  `$2a$`/`$2b$`/`$2y$`), `needsRehash()` (anything that is not bcrypt at
+  the current cost).
+* Web login: `LibreTime_Auth_Adaptor_Password` replaces the DbTable
+  adapter.  It fetches the row by login, verifies in PHP, re-hashes and
+  saves when `needsRehash()` says so, and offers `getResultRowObject()`
+  like the DbTable adapter (the row's columns as a stdClass without the
+  password; the session identity needs `id` and `login`).  The
+  `Zend_Db::factory` connection the old adapter opened per login is gone;
+  the header-auth and FreeIPA adapters are untouched.
+* DJ dial-in: `Application_Model_User::verifyPassword()` with the same
+  rule and re-hash; `setPassword()` writes bcrypt; the password reset in
+  `LoginController` likewise.
+* Django: `core.models.user` gains `hash_password` / `verify_password` /
+  `is_bcrypt_hash` / `is_legacy_md5_hash` on the `bcrypt` package
+  (`$2b$`); `check_password` accepts the legacy md5 once and stores bcrypt
+  through an `update()` on the row; `has_usable_password` counts bcrypt and
+  legacy md5, nothing else.  PHP verifies `$2b$`, python verifies `$2y$`
+  (checked on both sides before the change).
+* `manage.py password_hashes` lists every account's hash kind, so the
+  operator sees who has not logged in since the change.
+
+**Consequences.**  Login costs one bcrypt verification (~0.25 s at cost
+12), which the brute-force brake (§23.53) makes irrelevant for abuse.
+Accounts migrate only on a successful login; md5 values survive in backups
+taken before the change, so a new password for the admin accounts is the
+operator's recommended follow-up.  The composer classmap had to be
+regenerated for the two new PHP classes (`composer dump-autoload -o`,
+the usual rule for new legacy classes).
+
+**Verification.**  PHP probe on a throw-away account (14 checks: adapter
+refuses a wrong password and an unknown login, accepts legacy md5 and
+re-hashes to `$2y$12$`, accepts bcrypt and a python `$2b$` hash, result
+row without the password, `verifyPassword` on all three hash kinds,
+`setPassword` writes bcrypt, empty stored value never matches); Django
+tests (`core/tests/models/test_user.py`: bcrypt stored, `$2y$` verified,
+legacy md5 accepted and upgraded, empty unusable; API suite 185 green);
+HTTPS login with a throw-away md5 account: POST `/login` → 302 to the
+dashboard, the row then carries a `$2y$12$` hash.  Live after an API
+service restart; the legacy side was live at once.

@@ -1334,7 +1334,7 @@ class ApiController extends Zend_Controller_Action
                         }
                         if (
                             self::credentialEquals($h->getLogin(), $username)
-                            && self::credentialEquals($h->getPassword(), md5((string) $password))
+                            && $h->verifyPassword((string) $password)
                         ) {
                             $authorised = true;
                             $this->view->msg = true;

@@ -219,6 +219,18 @@ There are **no personal API keys**.
 
 ---
 
+### How passwords are stored (since 2026-10-27)
+
+RASTATIME stores passwords as **bcrypt hashes** (salted, cost 12), never
+in clear text and no longer as the unsalted MD5 that LibreTime used.  A
+leaked database or backup therefore does not give the passwords away.
+Accounts that existed before 2026-10-27 keep working: their old hash is
+accepted once more and replaced by bcrypt at the next successful login,
+whether through the web interface, a DJ dial-in or the API.  Operators
+who want the old hashes gone from older backups as well simply set a
+new password for the account.  The command
+`manage.py password_hashes` lists which accounts have migrated.
+
 ## 8. Login protection (since 2026-10-06)
 
 The login page brakes repeated failures - a necessity since the web

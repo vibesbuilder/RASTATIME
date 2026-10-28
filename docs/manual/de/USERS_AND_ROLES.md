@@ -228,6 +228,19 @@ Es gibt **keine persönlichen API-Schlüssel**.
 
 ---
 
+### Wie Passwörter gespeichert werden (seit 27.10.2026)
+
+RASTATIME speichert Passwörter als **bcrypt-Hashes** (gesalzen, Kostenfaktor
+12), nie im Klartext und nicht mehr als ungesalzenes MD5 wie LibreTime.
+Eine entwendete Datenbank oder Sicherung gibt die Passwörter damit nicht
+preis.  Konten von vor dem 27.10.2026 funktionieren weiter: Ihr alter Hash
+wird ein letztes Mal akzeptiert und bei der nächsten erfolgreichen
+Anmeldung durch bcrypt ersetzt, egal ob über die Weboberfläche, einen
+DJ-Zugang oder die API.  Wer die alten Hashes auch aus älteren
+Sicherungen loswerden will, vergibt für das Konto einfach ein neues
+Passwort.  Der Befehl `manage.py password_hashes` zeigt, welche Konten
+bereits umgestellt sind.
+
 ## 8. Login-Schutz (seit 06.10.2026)
 
 Die Login-Seite bremst wiederholte Fehlversuche - notwendig, weil die

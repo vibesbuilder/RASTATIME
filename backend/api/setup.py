@@ -26,6 +26,7 @@ setup(
         ]
     },
     install_requires=[
+        "bcrypt>=4.0,<6",
         "django-cors-headers>=4.4.0,<5",
         "django-filter>=25.1,<26",
         "django>=5.2,<5.3",

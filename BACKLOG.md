@@ -6098,7 +6098,15 @@ PLAYOUT → PHP (Header).  **Empfehlung:** (a), ~30 min inkl. Probe (lokal 401/2
 403) und Doku; vorher prüfen, dass Icecast 2.5.0 (seit 24.10.) die URL-Auth nicht mehr selbst aufruft
 bzw. nur lokal.
 
-### 🟡 Passwörter als ungesalzenes MD5 (Befund 2026-10-25) - Evaluierung ausstehend
+### ✅ Passwörter als ungesalzenes MD5 (Befund 2026-10-25) - bcrypt seit 2026-10-27 (Operator-Go, §23.73)
+**Erledigt 2026-10-27/28:** bcrypt (Kosten 12) auf beiden Seiten - PHP `Application_Model_Password` + Login-Adapter
+`LibreTime_Auth_Adaptor_Password` (ersetzt `MD5(?)` in SQL), `User::setPassword/verifyPassword` (DJ-Harbor), Passwort-Reset,
+Django `core.User` mit Paket `bcrypt`; alter MD5-Hash wird einmal akzeptiert und beim Login ersetzt; Befehl
+`manage.py password_hashes`.  PHP-Probe 14/14 (Adapter, DJ-Pfad, $2b$/$2y$, Rehash), Django-Tests 185 grün, HTTPS-Login
+mit MD5-Wegwerfkonto → 302 + Hash $2y$12$.  Offen: API-Neustart (Operator), Login aller Konten → Umstellung, neue Passwörter
+für Admin-Konten wegen alter Backups (Empfehlung).
+
+**Ursprünglicher Befund:**
 
 **Befund:** `cc_subjs.pass` enthält `md5(passwort)` ohne Salz (`Application_Model_User::setPassword`,
 Web-Login `Auth.php` mit `setCredentialTreatment('MD5(?)')`, DJ-Login `md5($password)`, Django-API mit

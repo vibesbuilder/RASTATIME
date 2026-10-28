@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+- **Passwörter als bcrypt statt ungesalzenem MD5 (2026-10-27, Operator-Go
+  zum Backlog-Punkt vom 25.10.)** — `cc_subjs.pass` trug `md5(passwort)`
+  (Web-Login per `MD5(?)` in SQL, DJ-Harbor-Prüfung, Django-Hasher, alle
+  Setz-Pfade); ein Datenbank- oder Backup-Leck hätte alle Konten
+  preisgegeben.  Jetzt bcrypt mit Kosten 12 auf beiden Seiten: PHP
+  `Application_Model_Password` (hash / verify / needsRehash) und der neue
+  Login-Adapter `LibreTime_Auth_Adaptor_Password` statt
+  `Zend_Auth_Adapter_DbTable`, `User::setPassword` / `verifyPassword`
+  (DJ-Login), Passwort-Reset; Django `core.User` mit dem Paket `bcrypt`
+  (python „$2b$" und PHP „$2y$" prüfen einander).  Alte MD5-Werte werden
+  einmal akzeptiert und beim nächsten erfolgreichen Login ersetzt (Web,
+  DJ, API); `manage.py password_hashes` zählt den Stand.  Probe: 14 Fälle
+  PHP (Adapter, DJ-Pfad, Rehash, leerer Wert), 185 API-Tests grün,
+  HTTPS-Login mit MD5-Wegwerfkonto → 302 und `$2y$12$`-Hash.  API-Neustart
+  nötig.  Manual USERS_AND_ROLES „How passwords are stored" EN/DE/FR/ES,
+  COMPONENTS (bcrypt), Architektur §23.73 (0.98).
 - **Rollen-Audit Paket 3, Phase 2: CSRF-Prüfung der Legacy-Oberfläche
   scharf (2026-10-27, Operator-Go 2026-10-25)** — `Acl_plugin::
   LEGACY_CSRF_ENFORCE = true`: ein Legacy-Schreibzugriff einer

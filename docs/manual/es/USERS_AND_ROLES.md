@@ -229,6 +229,19 @@ puntos de montaje figuran en el capítulo [Streams](./STREAMS.md).
 
 ---
 
+### Cómo se guardan las contraseñas (desde el 27/10/2026)
+
+RASTATIME guarda las contraseñas como **hashes bcrypt** (con sal, factor
+de coste 12), nunca en texto claro y ya no como MD5 sin sal como hacía
+LibreTime.  Una base de datos o copia de seguridad sustraída no revela
+por tanto las contraseñas.  Las cuentas anteriores al 27/10/2026 siguen
+funcionando: su hash antiguo se acepta una última vez y se sustituye por
+bcrypt en el siguiente inicio de sesión correcto, sea por la interfaz
+web, un acceso de DJ o la API.  Quien quiera eliminar los hashes
+antiguos también de copias anteriores solo tiene que fijar una nueva
+contraseña para la cuenta.  El comando `manage.py password_hashes`
+muestra qué cuentas ya están migradas.
+
 ## 8. Protección del inicio de sesión (desde el 06/10/2026)
 
 La página de inicio de sesión frena los fallos repetidos - una

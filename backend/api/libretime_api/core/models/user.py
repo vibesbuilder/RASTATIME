@@ -1,10 +1,47 @@
 import hashlib
+import re
 
+import bcrypt
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, Permission
 from django.db import models
 
 from ...permission_constants import GROUPS
 from .role import Role
+
+
+# RASTATIME 2026-10-27 - bcrypt instead of unsalted md5.  The legacy PHP
+# side writes "$2y$" (password_hash), this side "$2b$" (python bcrypt); both
+# verify both.  A 32-character hex value is the pre-2026-10-27 md5, still
+# accepted by check_password and replaced by bcrypt on the first match.
+BCRYPT_ROUNDS = 12
+_BCRYPT_RE = re.compile(r"^\$2[aby]\$\d{2}\$[./0-9A-Za-z]{53}$")
+_MD5_RE = re.compile(r"^[0-9a-fA-F]{32}$")
+
+
+def is_bcrypt_hash(stored: str) -> bool:
+    return bool(stored) and _BCRYPT_RE.match(stored) is not None
+
+
+def is_legacy_md5_hash(stored: str) -> bool:
+    return bool(stored) and _MD5_RE.match(stored) is not None
+
+
+def hash_password(raw_password: str) -> str:
+    return bcrypt.hashpw(raw_password.encode("utf-8"), bcrypt.gensalt(BCRYPT_ROUNDS)).decode("ascii")
+
+
+def verify_password(raw_password: str, stored: str) -> bool:
+    """bcrypt or legacy md5; an empty / unusable value never matches."""
+    if not stored:
+        return False
+    if is_bcrypt_hash(stored):
+        try:
+            return bcrypt.checkpw(raw_password.encode("utf-8"), stored.encode("ascii"))
+        except ValueError:
+            return False
+    if is_legacy_md5_hash(stored):
+        return hashlib.md5(raw_password.encode("utf-8")).hexdigest() == stored.lower()
+    return False
 
 
 class UserManager(BaseUserManager):
@@ -110,16 +147,29 @@ class User(AbstractBaseUser):
         if not raw_password:
             self.set_unusable_password()
         else:
-            self.password = hashlib.md5(raw_password.encode()).hexdigest()
+            self.password = hash_password(raw_password)
 
     def is_staff(self):
         return self.role == Role.ADMIN
 
     def check_password(self, raw_password):
-        if self.has_usable_password():
-            test_password = hashlib.md5(raw_password.encode()).hexdigest()
-            return test_password == self.password
-        return False
+        if not self.has_usable_password():
+            return False
+        stored = self.password or ""
+        if not verify_password(raw_password, stored):
+            return False
+        if not is_bcrypt_hash(stored):
+            # legacy md5 matched: store bcrypt now, the account is migrated
+            self.password = hash_password(raw_password)
+            if self.pk is not None:
+                User.objects.filter(pk=self.pk).update(password=self.password)
+        return True
+
+    def has_usable_password(self):
+        # bcrypt or legacy md5 count as usable; Django's own "!" marker and
+        # the empty placeholder of header-auth accounts do not
+        stored = self.password or ""
+        return is_bcrypt_hash(stored) or is_legacy_md5_hash(stored)
 
     # The following methods have to be re-implemented here, as PermissionsMixin
     # assumes that the User class has a 'group' attribute, which RASTATIME does
