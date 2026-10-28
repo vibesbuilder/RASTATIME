@@ -65,7 +65,7 @@ Metadaten Energy/Tempo/Key/Timbre (Bench liegt vor) · JavaScript-Build-Pipeline
 Payware/Tier-System 🔴 Hold.
 
 **Ideen, nur notiert:** Import/Export Stufe 2 · Backup: Recordings in den Medienspiegel · Podcast-Downloads umgehen den Analyzer · Line-In-Gain live nachregeln · Kanalwahl im
-Schnell-Editor · Speicherzuwachs Liquidsoap · Traffic Alerts Deadline-Skip ·
+Schnell-Editor · Speicherzuwachs Liquidsoap Ursachensuche (b) (weiche Grenze 2560 MB seit 2026-10-28) · Traffic Alerts Deadline-Skip ·
 Expiry in M4A · bulk_import-Erweiterungsliste · die unbewerteten Ideen unter
 „Future Feature Ideas".
 
@@ -1535,7 +1535,22 @@ Verifikation per `uptime`, Bleibt-oben-Prüfung, Preflight
 2026-09-07.  Aktiv nach PLAYOUT-Neustart; erste scharfe Nacht danach
 im Log prüfen (`grep "Nightly" logs/playout-stdout.log`).
 
-### 🟡 Liquidsoap-Upgrade als echte Heilung des `Unix.select`-Lecks (Operator 2026-09-09, evaluiert 2026-09-09: Defer)
+### 🟡 Liquidsoap-Upgrade als echte Heilung des `Unix.select`-Lecks (Operator 2026-09-09, evaluiert 2026-09-09: Defer; erneut evaluiert 2026-10-28: Defer)
+
+**Stand 2026-10-28 (Operator: Defer):** Die Vorbedingung „Windows-Build auf OCaml 5" ist seit
+2026-10-09 erstmals erfüllt, aber nur als Release Candidate: **2.5.0-rc1** liefert ein win64-Zip auf
+**OCaml 5.5.0** mit allen benötigten Bibliotheken (portaudio, stereotool, ffmpeg-av 2.0.0, srt, ssl,
+samplerate, winsvc); ebenso der Rolling-Build `45249fd-2.5.0` (2026-10-05).  Unser 2.4.6 bleibt auf
+OCaml 4.14.1.  Gegen ein Upgrade jetzt: savonet rät selbst von Produktion ab; 2.5 lässt Rückrufe
+parallel auf mehreren Kernen laufen (unsere Skripte teilen Referenzen zwischen Rückrufen — Frame-
+Zähler, Quellen-Umschalter, Gains; Rückfall `settings.scheduler.legacy`); Bruch bei Fade-
+Übersteuerungen aus den Metadaten (trifft `rt_cross`); Daemon-Modus entfernt; ffmpeg-Bindung 2.0,
+Encoder nun mehrfädig (`threads=1` für altes Verhalten).  Ob das Leck weg ist, ist **offen**: OCamls
+`select_win32.c` hat in 5.x dieselbe Bauart (SELECTDATA je Aufruf + Arbeitsthreads), savonet #1122
+seit 2020 unverändert offen.  **Nächster Schritt, wenn gewünscht:** reine Replikat-Messung mit dem
+rc1-Build (Operator lädt das Zip nach `C:\Temp`; `leak_compare.py` / `wd_cost_probe` mit eigenen
+Ports, kein Live-Kontakt, 2–3 h) — das Ergebnis entscheidet, ob sich das Upgrade nach 2.5.0 final
+überhaupt lohnt.  Upgrade selbst frühestens mit 2.5.0 final + Windows-Build + Replikat-Bench.
 
 **Evaluierung 2026-09-09 (Go, Reihenfolge-Punkt 4):** Stand savonet:
 2.4.5 (15.06.2026, win64-Zip 47 MB) ist die neueste Version mit
@@ -4971,9 +4986,23 @@ bleiben).
 
 ---
 
-### 💡 Speicherzuwachs der Liquidsoap-Hauptinstanz eingrenzen (≈ 8 MB/h im Leerlauf, festgestellt 2026-09-15)
+### ✅ Speicherzuwachs der Liquidsoap-Hauptinstanz eingrenzen (≈ 8 MB/h im Leerlauf, festgestellt 2026-09-15) — (a) weiche Grenze 2560 MB gesetzt 2026-10-28, (b) Ursachensuche 🟡 Defer
 
-**Status:** Idee / Untersuchung, kein Handlungsdruck — der geplante Neustart
+**Stand 2026-10-28 (Auswertung der Playout-Logs 16.–28.10., Operator-Go (a) mit 2560 MB):**
+Der Zuwachs hängt am Programm, nicht an der Laufzeit: ruhige Tage mit wenigen Titeln 8–10 MB/h,
+volle Musiktage (350–410 abgespielte Titel) 16–19 MB/h, Spitzen in den musiklastigen Stunden.
+Startwert nach Neustart ≈ 1000 MB (davon ≈ 900 MB Stereo Tool, seit 2026-10-02).  Die weiche Grenze
+1536 MB war damit nach ≈ 30 h erreicht → Speicher-Neustart faktisch jede zweite Nacht um 04:00
+(21.10., 27.10.); `RESTART_EVERY_DAYS=7` kam nie zum Zug.  Real belegt: 483 MB Working Set bei
+1509 MB Private Bytes, 16 GB RAM (6,6 GB frei).  **(a) umgesetzt:** `RASTATIME_LIQUIDSOAP_RESTART_AT_MB=2560`
+per `nssm set AppEnvironmentExtra` am PLAYOUT-Dienst (alle bestehenden Einträge wiederholt), harte
+Grenze 3072 unverändert; wirksam nach PLAYOUT-Neustart durch den Operator → Neustart etwa jede vierte
+Nacht.  Manual LOCAL_MACHINE ×4 ergänzt.  **(b) Defer:** Ursache je Titel (Decoder, Cross-Puffer,
+R128-Gain, ICY-Block, Telnet-Kommandos je Titel à 17 Selects) nur im Replikat eingrenzbar (4–6 h,
+Ergebnis offen); Vorbedingung: die Replikat-Messung aus dem Upgrade-Item zeigt, dass das Leck auch
+mit OCaml 5 bleibt — sonst erledigt sich (b) mit dem Upgrade.
+
+**Status (bis 2026-10-28):** Idee / Untersuchung, kein Handlungsdruck — der geplante Neustart
 greift bei 1536 MB im 04:00-Fenster, beim heutigen Zuwachs etwa alle 6 Tage.
 **Vorbedingung:** Operator-Go; sinnvoll erst, wenn das Neustart-Intervall über
 etwa 6 Tage steigen soll.

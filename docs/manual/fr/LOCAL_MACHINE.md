@@ -205,6 +205,15 @@ avertissements du tableau de bord le surveillent (depuis le
   interrogation était la principale cause de la croissance. Si la
   mémoire reste stable pendant une semaine,
   `RASTATIME_LIQUIDSOAP_RESTART_EVERY_DAYS` peut être augmenté (7 à 30).
+  Surveillez aussi la limite mémoire souple : avec Stereo Tool actif,
+  le moteur démarre déjà vers 1000 Mo, et une journée musicale complète
+  ajoute 16 à 19 Mo par heure (environ un demi-mégaoctet par titre
+  diffusé). La valeur par défaut de 1536 Mo est donc atteinte après
+  une trentaine d'heures et le déclencheur mémoire redémarre le moteur
+  une nuit sur deux, quel que soit l'intervalle. Relevez
+  `RASTATIME_LIQUIDSOAP_RESTART_AT_MB` pour garder de la marge au-dessus
+  de cette base (2560 Mo sur une machine avec 16 Go de RAM) ; la limite
+  dure de 3072 Mo continue de protéger la machine.
 - **Repli standby pour les auditeurs.** Un second Liquidsoap
   minuscule (service RASTATIME-STANDBY, script `standby.liq` rendu par
   la diffusion avec les mêmes encodeurs) diffuse du silence sur une

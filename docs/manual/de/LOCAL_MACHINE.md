@@ -247,6 +247,15 @@ Sicherung und die dritte Warnung seit dem 2026-09-07):
   alle fünf Sekunden ab; diese Abfrage war die Hauptursache des
   Wachstums. Bleibt der Speicher eine Woche lang flach, kann
   `RASTATIME_LIQUIDSOAP_RESTART_EVERY_DAYS` erhöht werden (7 bis 30).
+  Beachten Sie dabei auch die weiche Speichergrenze: mit aktivem
+  Stereo Tool startet die Engine bereits bei etwa 1000 MB, und ein
+  voller Musiktag legt 16 bis 19 MB pro Stunde zu (etwa ein halbes
+  Megabyte je gespielten Titel). Die Vorgabe von 1536 MB ist so nach
+  rund 30 Stunden erreicht, und der Speicher-Auslöser startet die
+  Engine jede zweite Nacht neu, egal was das Intervall sagt. Heben Sie
+  `RASTATIME_LIQUIDSOAP_RESTART_AT_MB` an, damit über dieser Basis
+  Luft bleibt (2560 MB auf einer Maschine mit 16 GB RAM); die harte
+  Grenze von 3072 MB schützt die Maschine weiterhin.
 - **Standby-Fallback für Hörer.** Ein zweites, kleines Liquidsoap
   (Dienst RASTATIME-STANDBY, Skript `standby.liq`, vom Playout mit
   denselben Encodern gerendert) streamt Stille auf eine `-standby`-

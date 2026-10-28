@@ -230,6 +230,14 @@ and the third warning since 2026-09-07):
   every five seconds; that poll was the main source of the growth.
   Once a week of memory readings stays flat,
   `RASTATIME_LIQUIDSOAP_RESTART_EVERY_DAYS` can be raised (7 to 30).
+  Mind the soft memory limit as well: with Stereo Tool enabled the
+  engine already starts at about 1000 MB, and a full music day adds
+  16 to 19 MB per hour (about half a megabyte per played track), so
+  the default 1536 MB is reached after roughly 30 hours and the memory
+  trigger restarts the engine every second night no matter what the
+  interval says. Raise `RASTATIME_LIQUIDSOAP_RESTART_AT_MB` to leave
+  room above that baseline (2560 MB on a machine with 16 GB of RAM);
+  the hard limit of 3072 MB keeps protecting the machine.
 - **Standby fallback for listeners.** A second, tiny Liquidsoap
   (service RASTATIME-STANDBY, script `standby.liq` rendered by the
   playout with the same encoders) streams silence to a `-standby`

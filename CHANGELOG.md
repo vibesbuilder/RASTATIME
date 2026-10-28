@@ -350,6 +350,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Liquidsoap: weiche Speichergrenze des geplanten Neustarts auf 2560 MB
+  (2026-10-28, Operator-Go)** — Auswertung der Playout-Logs 16.–28.10.:
+  mit Stereo Tool startet die Hauptinstanz bei ≈ 1000 MB, ein voller
+  Musiktag (350–410 Titel) legt 16–19 MB/h zu, ruhige Tage 8–10 MB/h; die
+  Vorgabe 1536 MB war nach ≈ 30 h erreicht, der Speicher-Auslöser startete
+  die Engine faktisch jede zweite Nacht (21.10., 27.10.) und das 7-Tage-
+  Intervall kam nie zum Zug.  `RASTATIME_LIQUIDSOAP_RESTART_AT_MB=2560`
+  am PLAYOUT-Dienst gesetzt (nssm, harte Grenze 3072 unverändert, 16 GB RAM,
+  Working Set nur 483 MB), wirksam nach PLAYOUT-Neustart → etwa jede vierte
+  Nacht.  Manual LOCAL_MACHINE EN/DE/FR/ES: Hinweis zur Basis mit Stereo
+  Tool.  Upgrade auf Liquidsoap 2.5.0-rc1 (erster win64-Build auf OCaml
+  5.5.0) erneut evaluiert: Defer (RC, Mehrkern-Rückrufe, Fade-Bruch, Leck
+  ungemessen) — Details BACKLOG.
 - **Kalender: „Add this show" / „Update show" sehen aus wie „New Show"
   (2026-10-28, Operator-Meldung)** — die beiden Absende-Knöpfe des
   Sendungsdialogs waren graue jQuery-UI-Knöpfe mit dem hellblauen Plus des
