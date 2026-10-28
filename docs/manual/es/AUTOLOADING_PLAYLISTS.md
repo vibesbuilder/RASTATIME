@@ -233,6 +233,16 @@ Las instancias futuras ya no se auto-construirán. Las
 instancias ya construidas mantienen su contenido
 construido.
 
+
+> **Playlist eliminada (desde el 28/10/2026).**  Eliminar la playlist de
+> la biblioteca pregunta primero y enumera los programas que la usan;
+> tras confirmar, también se desactiva la casilla *Add Autoloading
+> Playlist* de esos programas.  Si un programa conserva la casilla sin
+> playlist (importación, base antigua), el aviso del panel «El
+> autoloading está activado, pero el programa no tiene lista» aparece
+> para cada emisión de las próximas 48 horas - edite el programa y elija
+> una lista.
+
 ---
 
 ## 8. Autoloading Playlists vs Auto DJ

@@ -458,6 +458,20 @@ containing smart blocks / webstreams / line-ins, the default
 length is what *would* play if every variable item ran for its
 configured duration.
 
+### Deleting a playlist that shows still use (since 2026-10-28)
+
+When you delete a playlist from the library, RASTATIME first looks up
+which shows use it as their **autoloading**, **intro** or **outro**
+playlist, or whether it is the station default intro / outro from
+Settings → General.  The delete question then lists those shows.  If
+you confirm, the shows lose the playlist **and** their *Add Autoloading
+Playlist* tick is switched off, so the calendar shows the real state
+instead of a show that looks filled and runs silent.  Pick another
+playlist in the show dialog afterwards.  Before 2026-10-28 the tick
+stayed on and the show stayed empty; the dashboard now also warns about
+such shows up to 48 hours ahead (see
+[Autoloading Playlists](./AUTOLOADING_PLAYLISTS.md), section 7).
+
 ### Using a playlist in a show
 
 Two paths:

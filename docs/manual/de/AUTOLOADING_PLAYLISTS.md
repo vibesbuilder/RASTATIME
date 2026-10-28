@@ -302,6 +302,16 @@ Bereits gebaute Instanzen behalten ihren gebauten Inhalt
 Instanz zu leeren, öffnen Sie die Sendung im Kalender →
 **Sendeplan leeren**.
 
+
+> **Gelöschte Playlist (seit 28.10.2026).**  Beim Löschen der Playlist
+> aus der Bibliothek fragt RASTATIME zuerst und zählt die Sendungen auf,
+> die sie verwenden; nach Bestätigung wird auch das Häkchen *Add
+> Autoloading Playlist* dieser Sendungen abgeschaltet.  Trägt eine
+> Sendung trotzdem das Häkchen ohne Playlist (Import, alte Datenbank),
+> warnt das Dashboard-Banner „Autoloading ist an, aber die Sendung hat
+> keine Playlist" für jede Folge der nächsten 48 Stunden - Sendung
+> bearbeiten und eine Playlist wählen.
+
 ---
 
 ## 8. Autoloading Playlists vs Auto DJ

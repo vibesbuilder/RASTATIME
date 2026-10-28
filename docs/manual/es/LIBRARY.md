@@ -405,6 +405,21 @@ Cada playlist tiene una **Longitud por defecto** que
 aparece como la duración nominal de la playlist en la
 biblioteca.
 
+### Eliminar una playlist que aún usan programas (desde el 28/10/2026)
+
+Al eliminar una playlist de la biblioteca, RASTATIME comprueba primero
+qué programas la usan como playlist de **autoloading**, **intro** u
+**outro**, y si es la intro / outro predeterminada de la emisora
+(Settings → General).  La pregunta de eliminación enumera esos
+programas.  Si confirma, los programas pierden la playlist **y** su
+casilla *Add Autoloading Playlist* se desactiva, de modo que el
+calendario muestra el estado real en vez de un programa que parece
+lleno y queda en silencio.  Elija después otra playlist en el diálogo
+del programa.  Antes del 28/10/2026 la casilla seguía marcada y el
+programa vacío; el panel ahora también avisa de esos programas hasta
+48 horas antes (vea [Autoloading Playlists](./AUTOLOADING_PLAYLISTS.md),
+sección 7).
+
 ### Usar una playlist en un programa
 
 Dos caminos:

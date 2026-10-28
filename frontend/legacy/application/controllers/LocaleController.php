@@ -26,6 +26,16 @@ final class LocaleController extends Zend_Controller_Action
             // common/common.js
             'Audio Player' => _('Audio Player'),
             'Something went wrong!' => _('Something went wrong!'),
+            // library/library.js - delete dialog (RASTATIME 2026-10-28)
+            'The following shows use the selected playlist(s):' => _('The following shows use the selected playlist(s):'),
+            'Deleting switches autoloading off for these shows and removes the intro / outro; the shows would run silent until you pick another playlist.' => _('Deleting switches autoloading off for these shows and removes the intro / outro; the shows would run silent until you pick another playlist.'),
+            'station default' => _('station default'),
+            'autoloading' => _('autoloading'),
+            'intro' => _('intro'),
+            'outro' => _('outro'),
+            // common/common.js - preflight banner (RASTATIME 2026-10-28)
+            'Autoloading is on, but the show has no playlist' => _('Autoloading is on, but the show has no playlist'),
+            'the show would run silent. Edit the show and pick a playlist.' => _('the show would run silent. Edit the show and pick a playlist.'),
             // dashboard/dashboard.js
             'Recording:' => _('Recording:'),
             'Master Stream' => _('Master Stream'),

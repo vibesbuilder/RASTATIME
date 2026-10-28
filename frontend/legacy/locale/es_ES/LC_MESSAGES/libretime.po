@@ -6847,3 +6847,35 @@ msgstr "No hay cambios que guardar."
 #: application/views/scripts/preference/local-machine.phtml, backup.phtml (RASTATIME 2026-10-27)
 msgid "Some sections could not be saved - see the messages there."
 msgstr "Algunas secciones no se pudieron guardar: vea los mensajes en ellas."
+
+#: RASTATIME 2026-10-28 library delete dialog / preflight banner
+msgid "The following shows use the selected playlist(s):"
+msgstr "Los siguientes programas usan la(s) lista(s) seleccionada(s):"
+
+#: RASTATIME 2026-10-28 library delete dialog / preflight banner
+msgid "Deleting switches autoloading off for these shows and removes the intro / outro; the shows would run silent until you pick another playlist."
+msgstr "Eliminar desactiva el autoloading de estos programas y quita la intro / outro; los programas quedarían en silencio hasta que elija otra lista."
+
+#: RASTATIME 2026-10-28 library delete dialog / preflight banner
+msgid "station default"
+msgstr "predeterminada de la emisora"
+
+#: RASTATIME 2026-10-28 library delete dialog / preflight banner
+msgid "autoloading"
+msgstr "autoloading"
+
+#: RASTATIME 2026-10-28 library delete dialog / preflight banner
+msgid "intro"
+msgstr "intro"
+
+#: RASTATIME 2026-10-28 library delete dialog / preflight banner
+msgid "outro"
+msgstr "outro"
+
+#: RASTATIME 2026-10-28 library delete dialog / preflight banner
+msgid "Autoloading is on, but the show has no playlist"
+msgstr "El autoloading está activado, pero el programa no tiene lista"
+
+#: RASTATIME 2026-10-28 library delete dialog / preflight banner
+msgid "the show would run silent. Edit the show and pick a playlist."
+msgstr "el programa quedaría en silencio. Edite el programa y elija una lista."

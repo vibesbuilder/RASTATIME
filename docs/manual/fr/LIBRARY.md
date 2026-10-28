@@ -502,6 +502,21 @@ playlist contenant des smart blocks / webstreams /
 line-ins, la longueur par défaut est ce qui *jouerait* si
 chaque item variable tournait pour sa durée configurée.
 
+### Supprimer une playlist encore utilisée par des émissions (depuis le 28/10/2026)
+
+Quand vous supprimez une playlist de la bibliothèque, RASTATIME vérifie
+d'abord quelles émissions l'utilisent comme playlist **autoloading**,
+**intro** ou **outro**, et si elle est l'intro / l'outro par défaut de la
+station (Settings → General).  La question de suppression liste ces
+émissions.  Si vous confirmez, les émissions perdent la playlist **et**
+leur case *Add Autoloading Playlist* est décochée, pour que le
+calendrier montre l'état réel plutôt qu'une émission qui paraît remplie
+et reste silencieuse.  Choisissez ensuite une autre playlist dans le
+dialogue de l'émission.  Avant le 28/10/2026 la case restait cochée et
+l'émission vide ; le tableau de bord avertit désormais aussi de telles
+émissions jusqu'à 48 heures à l'avance (voir
+[Autoloading Playlists](./AUTOLOADING_PLAYLISTS.md), section 7).
+
 ### Utiliser une playlist dans une émission
 
 Deux chemins :

@@ -212,6 +212,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Autoloading: Löschen einer verwendeten Playlist warnt, räumt auf und
+  wird im Dashboard gemeldet (2026-10-28, Operator-Go zu Backlog-Punkt 2,
+  Variante (c))** — beim Löschen einer Playlist setzte der Fremdschlüssel
+  `cc_show.autoplaylist_id` auf NULL, das Häkchen „Add Autoloading
+  Playlist" blieb, die Sendung lief still (34 Sendungen nach dem
+  Bibliotheks-Aufräumen vom 23.10.).  (a) Der Löschdialog der Bibliothek
+  fragt `library/playlist-usage` ab (`Playlist::usageByShows`) und nennt
+  die Sendungen mit Rolle Autoloading / Intro / Outro sowie den
+  Senderstandard; schlägt die Abfrage fehl, kommt die alte Frage.  Nach
+  Bestätigung schaltet `Playlist::detachFromShows` das Häkchen der
+  betroffenen Sendungen ab und setzt den Senderstandard zurück, mit
+  Warnzeile im Log.  (b) Neue Preflight-Warnart `autoplaylist_missing`:
+  der Playout-Scan holt die Folgen der nächsten 48 h über den neuen Filter
+  von `/api/v2/show-instances` (`starts_after` / `starts_before` /
+  `modified`) und meldet Sendungen mit Häkchen ohne Playlist als Fehler im
+  Dashboard-Banner.  Acht neue Oberflächentexte DE/FR/ES.  Proben: PHP
+  5/5, Playout-Tests 5, API-Filtertest 2, JS-Syntax.  PLAYOUT-Neustart
+  nötig.  Manual LIBRARY „Deleting a playlist that shows still use" +
+  AUTOLOADING §7 EN/DE/FR/ES, Architektur §23.74 (0.99).
 - **Sekundärfarbe der Oberfläche als Einstellung (2026-10-26, Operator,
   Backlog-Punkt „Sekundärfarbe")** — die blauen Elemente hatten feste
   Farben: Fortschrittsbalken der Sendung in der Kopfzeile (`#02cef9` +

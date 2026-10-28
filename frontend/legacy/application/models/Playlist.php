@@ -1073,12 +1073,14 @@ SQL;
         if (!$isAdminOrPM) {
             $leftOver = self::playlistsNotOwnedByUser($p_ids, $p_userId);
             if (count($leftOver) == 0) {
+                self::detachFromShows($p_ids);
                 CcPlaylistQuery::create()->findPKs($p_ids)->delete();
                 $updateIsPlaylistFlag = true;
             } else {
                 throw new PlaylistNoPermissionException();
             }
         } else {
+            self::detachFromShows($p_ids);
             CcPlaylistQuery::create()->findPKs($p_ids)->delete();
             $updateIsPlaylistFlag = true;
         }
@@ -1090,6 +1092,99 @@ SQL;
                 'playlist',
                 false
             );
+        }
+    }
+
+    /**
+     * RASTATIME 2026-10-28 - which shows use the given playlists as their
+     * autoloading, intro or outro playlist, and whether one of them is the
+     * station default intro / outro (Settings -> General).  The library's
+     * delete dialog shows this before the operator confirms.
+     *
+     * @param int[] $p_ids
+     *
+     * @return array playlist id => ['name' => ..., 'shows' => [['id', 'name', 'roles' => [...]]], 'defaults' => [...]]
+     */
+    public static function usageByShows(array $p_ids): array
+    {
+        $ids = array_values(array_unique(array_map('intval', $p_ids)));
+        $usage = [];
+        if (!$ids) {
+            return $usage;
+        }
+        foreach (CcPlaylistQuery::create()->findPKs($ids) as $pl) {
+            $usage[$pl->getDbId()] = ['name' => $pl->getDbName(), 'shows' => [], 'defaults' => []];
+        }
+        $sql = <<<'SQL'
+SELECT id, name, autoplaylist_id, intro_playlist_id, outro_playlist_id, has_autoplaylist
+FROM cc_show
+WHERE autoplaylist_id = ANY(:ids) OR intro_playlist_id = ANY(:ids) OR outro_playlist_id = ANY(:ids)
+ORDER BY name, id
+SQL;
+        $rows = Application_Common_Database::prepareAndExecute($sql, [':ids' => '{' . implode(',', $ids) . '}'], 'all');
+        foreach ($rows as $row) {
+            $roles = [
+                'autoloading' => (int) $row['autoplaylist_id'],
+                'intro' => (int) $row['intro_playlist_id'],
+                'outro' => (int) $row['outro_playlist_id'],
+            ];
+            foreach ($roles as $role => $plId) {
+                if ($plId && isset($usage[$plId])) {
+                    $usage[$plId]['shows'][] = ['id' => (int) $row['id'], 'name' => $row['name'], 'role' => $role];
+                }
+            }
+        }
+        $defaultIntro = (int) Application_Model_Preference::GetIntroPlaylist();
+        $defaultOutro = (int) Application_Model_Preference::GetOutroPlaylist();
+        if ($defaultIntro && isset($usage[$defaultIntro])) {
+            $usage[$defaultIntro]['defaults'][] = 'intro';
+        }
+        if ($defaultOutro && isset($usage[$defaultOutro])) {
+            $usage[$defaultOutro]['defaults'][] = 'outro';
+        }
+
+        return $usage;
+    }
+
+    /**
+     * RASTATIME 2026-10-28 - called right before playlists are deleted.  The
+     * foreign keys set cc_show.autoplaylist_id / intro / outro to NULL on
+     * delete, but has_autoplaylist stayed TRUE: the show looked filled in
+     * the calendar and ran silent (34 shows after the library clean-up of
+     * 2026-10-23).  Here the flag is cleared for the affected shows and the
+     * station default intro / outro is reset when it pointed at one of the
+     * playlists, so the stored state tells the truth.
+     *
+     * @param int[] $p_ids
+     */
+    public static function detachFromShows(array $p_ids): void
+    {
+        $ids = array_values(array_unique(array_map('intval', $p_ids)));
+        if (!$ids) {
+            return;
+        }
+        $list = '{' . implode(',', $ids) . '}';
+        $affected = Application_Common_Database::prepareAndExecute(
+            'SELECT id, name FROM cc_show WHERE has_autoplaylist = TRUE AND autoplaylist_id = ANY(:ids) ORDER BY id',
+            [':ids' => $list],
+            'all'
+        );
+        if ($affected) {
+            Application_Common_Database::prepareAndExecute(
+                'UPDATE cc_show SET has_autoplaylist = FALSE WHERE autoplaylist_id = ANY(:ids)',
+                [':ids' => $list],
+                'execute'
+            );
+            $names = array_map(fn ($r) => $r['name'] . ' (#' . $r['id'] . ')', $affected);
+            Logging::warn('Playlist delete: autoloading switched off for ' . count($affected) . ' show(s): ' . implode(', ', $names));
+        }
+        if (in_array((int) Application_Model_Preference::GetIntroPlaylist(), $ids, true)) {
+            Application_Model_Preference::SetIntroPlaylist('');
+            Logging::warn('Playlist delete: the station default intro playlist was removed');
+        }
+        if (in_array((int) Application_Model_Preference::GetOutroPlaylist(), $ids, true)) {
+            Application_Model_Preference::SetOutroPlaylist('');
+            Logging::warn('Playlist delete: the station default outro playlist was removed');
         }
     }
 

@@ -311,6 +311,16 @@ instances déjà construites gardent leur contenu construit
 déjà construite, ouvrez l'émission dans le calendrier →
 **Vider le planning**.
 
+
+> **Playlist supprimée (depuis le 28/10/2026).**  Supprimer la playlist
+> de la bibliothèque pose d'abord la question et liste les émissions qui
+> l'utilisent ; après confirmation, la case *Add Autoloading Playlist*
+> de ces émissions est aussi décochée.  Si une émission porte malgré
+> tout la case sans playlist (import, ancienne base), la bannière du
+> tableau de bord avertit « L'autoloading est actif, mais l'émission n'a
+> pas de playlist » pour chaque occurrence des 48 prochaines heures -
+> modifiez l'émission et choisissez une playlist.
+
 ---
 
 ## 8. Autoloading Playlists vs Auto DJ

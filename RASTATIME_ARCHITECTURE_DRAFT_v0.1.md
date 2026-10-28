@@ -1,10 +1,13 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.98
+Draft version: 0.99
 Date: 2026-10-28
 
 > **Revision history**
+> - **0.99 (2026-10-28)** - **Deleted autoloading playlists** (§23.74): the
+>   library delete names the shows and clears their flag, the preflight
+>   scan warns about shows with the flag and no playlist.
 > - **0.98 (2026-10-28)** - **bcrypt password hashes** (§23.73): the legacy
 >   login adapter, the DJ check and the Django hasher share one algorithm,
 >   legacy md5 values migrate on the next login.
@@ -7867,3 +7870,59 @@ legacy md5 accepted and upgraded, empty unusable; API suite 185 green);
 HTTPS login with a throw-away md5 account: POST `/login` → 302 to the
 dashboard, the row then carries a `$2y$12$` hash.  Live after an API
 service restart; the legacy side was live at once.
+
+### 23.74 Deleted Autoloading Playlists: Warn, Detach, Preflight (2026-10-28)
+
+**Context.**  `cc_show.autoplaylist_id`, `intro_playlist_id` and
+`outro_playlist_id` reference `cc_playlist` with `ON DELETE SET NULL`.
+Deleting a playlist therefore left `has_autoplaylist = TRUE` with no
+playlist: the calendar drew the show as autoloading, the builder had
+nothing to build, the slot ran silent.  After the library clean-up of
+2026-10-23 this hit 34 shows, 20 with upcoming instances (the operator
+re-assigned the urgent ones by hand).  The schedule-based Line-In scan
+of the preflight never saw them: an empty slot has no schedule rows.
+
+**Decision (operator: both halves).**
+
+* **Warn and detach on delete.**  `Application_Model_Playlist::
+  usageByShows(ids)` returns, per playlist, the shows that use it and in
+  which role (one SQL over the three FK columns) plus whether it is the
+  station default intro / outro (`cc_pref` `intro_playlist` /
+  `outro_playlist`).  `LibraryController::playlistUsageAction`
+  (`library/playlist-usage`, JSON) serves it; `library.js`
+  `confirmDeleteWithUsage` asks it for the selected playlists before the
+  delete question and lists the shows ("show (autoloading)", "station
+  default outro").  The lookup fails open: an error or an 8 s timeout
+  falls back to the plain question, the library is never blocked.
+  `deletePlaylists` calls `detachFromShows(ids)` right before the row
+  delete: `has_autoplaylist` goes FALSE for the shows whose autoloading
+  playlist is being deleted (the FK still nulls the id), the station
+  default is reset when it pointed at one of the playlists, both with a
+  WARN line in the legacy log.  The editor's own delete (`spl.js
+  fnDelete`) only removes untitled empty playlists on tab close and keeps
+  no dialog.
+* **Preflight warning `autoplaylist_missing`.**  `PreflightChecker.
+  _scan_autoplaylist_missing` runs with the other scans every 15 min:
+  `GET /api/v2/show-instances?starts_after=now&starts_before=now+48h&
+  modified=false` (new `ShowInstanceFilter` on the viewset: `starts`,
+  `ends` ranges and `modified`; the plain list was every instance ever
+  scheduled), then `auto_playlist_enabled and auto_playlist is None` on
+  the cached show.  One warning per instance, severity error, detail
+  `show_name` + message.  A 404 (old API) or an unreachable API submits
+  nothing, so the type keeps its last state like the storage-root scan.
+  `common.js` renders the type ("Autoloading is on, but the show has no
+  playlist: *show* - the show would run silent ...").
+
+**Strings.**  Eight new `$.i18n._()` strings registered in
+`LocaleController::generalTranslationTableAction` and translated in the
+DE/FR/ES `.po` files (`po2mo.py --all`, Apache restart for pick-up).
+
+**Verification.**  PHP probe (throw-away playlist attached to the test
+show "tests" and set as default outro: usage lists both, delete clears
+the flag and the default, unknown id → empty); playout tests
+(`tests/test_preflight_autoplaylist.py`: flagged / healthy / 404 / down /
+wired into `scan_once`); API test (`schedule/tests/views/
+test_show_instance.py`: range + modified filter, unfiltered list); JS
+syntax of `library.js` and `common.js` via `new Function`.  The dialog
+itself is accepted by the operator on the throw-away playlist
+"pwprobe-autoload"; the scan runs after a PLAYOUT restart.

@@ -1,3 +1,4 @@
+from django_filters import rest_framework as filters
 from rest_framework import viewsets
 
 from ..models import Show, ShowDays, ShowHost, ShowInstance, ShowRebroadcast
@@ -28,9 +29,23 @@ class ShowHostViewSet(viewsets.ModelViewSet):
     model_permission_name = "showhost"
 
 
+class ShowInstanceFilter(filters.FilterSet):
+    # RASTATIME 2026-10-28 - the playout's preflight scan lists the instances
+    # of the next 48 h (autoplaylist_missing); a plain list was every
+    # instance ever scheduled.
+    starts = filters.DateTimeFromToRangeFilter(field_name="starts_at")
+    ends = filters.DateTimeFromToRangeFilter(field_name="ends_at")
+    modified = filters.BooleanFilter(field_name="modified")
+
+    class Meta:
+        model = ShowInstance
+        fields = ["show", "modified"]
+
+
 class ShowInstanceViewSet(viewsets.ModelViewSet):
     queryset = ShowInstance.objects.all()
     serializer_class = ShowInstanceSerializer
+    filterset_class = ShowInstanceFilter
     model_permission_name = "showinstance"
 
 

@@ -85,6 +85,10 @@ class PreflightChecker:
     #: RASTATIME 2026-10-02 - Stereo Tool is enabled in Settings -> Streams
     #: but not on the bus (library missing, or locked out after a crash).
     WARNING_TYPE_STEREOTOOL = "stereotool_unavailable"
+    #: RASTATIME 2026-10-28 - a show in the look-ahead window has "Add
+    #: Autoloading Playlist" ticked but no playlist (deleted from the
+    #: library): the slot would stay empty.
+    WARNING_TYPE_AUTOPLAYLIST_MISSING = "autoplaylist_missing"
 
     # ------------------------------------------------------------------
     # Construction & lifecycle
@@ -202,6 +206,7 @@ class PreflightChecker:
         self._scan_liquidsoap_health()
         self._scan_storage_root()
         self._scan_stereotool()
+        self._scan_autoplaylist_missing()
 
     # ------------------------------------------------------------------
     # Liquidsoap process health (RASTATIME 2026-09-05)
@@ -489,6 +494,74 @@ class PreflightChecker:
         except Exception as exc:  # pylint: disable=broad-exception-caught
             logger.debug("preflight: Main Output setting unavailable: %s", exc)
             return ""
+
+    # ------------------------------------------------------------------
+    # Autoloading playlist missing (RASTATIME 2026-10-28)
+    # ------------------------------------------------------------------
+
+    def _scan_autoplaylist_missing(self) -> None:
+        """
+        ``autoplaylist_missing``: every show instance that starts within
+        ``LOOKAHEAD_HOURS`` whose show has ``auto_playlist_enabled`` but no
+        ``auto_playlist`` (the playlist was deleted; the FK went NULL).
+        Such a slot has no schedule rows, so the Line-In scan over the
+        schedule never sees it.  An old API without the instance filter, or
+        an unreachable one, submits nothing (the type keeps its last state).
+        """
+        try:
+            instances = self._fetch_lookahead_instances()
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            logger.debug("preflight: show instances unavailable: %s", exc)
+            return
+        if instances is None:
+            return
+        warnings: list[dict] = []
+        seen: Set[int] = set()
+        for inst in instances:
+            show_id = inst.get("show")
+            instance_id = inst.get("id")
+            if show_id is None or instance_id in seen:
+                continue
+            show = self._fetch_show(show_id)
+            if not show or not show.get("auto_playlist_enabled") or show.get("auto_playlist") is not None:
+                continue
+            seen.add(instance_id)
+            name = show.get("name") or "?"
+            warnings.append({
+                "severity":         "error",
+                "show_id":          show_id,
+                "show_instance_id": instance_id,
+                "starts_at":        inst.get("starts_at"),
+                "detail": {
+                    "show_name": name,
+                    "message": (
+                        f"Autoloading is on for '{name}', but the show has no playlist "
+                        "(deleted from the library?) - the slot would run silent."
+                    ),
+                },
+            })
+        self._submit_warnings(self.WARNING_TYPE_AUTOPLAYLIST_MISSING, str(uuid.uuid4()), warnings)
+
+    def _fetch_lookahead_instances(self) -> Optional[list]:
+        """
+        GET /api/v2/show-instances filtered to starts within the look-ahead
+        window (unmodified instances).  None when the API has no such filter
+        (404) or answers anything but 200.
+        """
+        now = datetime.utcnow()
+        end = now + timedelta(hours=self.LOOKAHEAD_HOURS)
+        params = {
+            "starts_after":  f"{now.isoformat(timespec='seconds')}Z",
+            "starts_before": f"{end.isoformat(timespec='seconds')}Z",
+            "modified": "false",
+        }
+        resp = self._api_client.session.get("/api/v2/show-instances", params=params, timeout=10)
+        if resp.status_code != 200:
+            return None
+        data = resp.json()
+        if not isinstance(data, list):
+            return None
+        return data
 
     # ------------------------------------------------------------------
     # Line-In device availability

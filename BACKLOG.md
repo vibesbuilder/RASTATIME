@@ -6121,7 +6121,15 @@ Login (alter MD5-Wert erkannt an Länge 32/Hex), Web-Login ohne SQL-`MD5(?)` (Pr
 Import hasht Klartext mit dem neuen Verfahren.  Berührt Login, API, DJ-Harbor - Evaluierung (6 Punkte)
 und Go nötig; Vorbedingung: Probe aller drei Login-Wege an einem Test-Konto.
 
-### 💡 Autoloading: gelöschte Playlist lässt Sendungen leer (Befund 2026-10-25)
+### ✅ Autoloading: gelöschte Playlist lässt Sendungen leer (Befund 2026-10-25) - Variante (c) gebaut 2026-10-28 (Operator-Go, §23.74)
+**Erledigt 2026-10-28:** (a) Löschdialog der Bibliothek fragt `library/playlist-usage` ab und nennt Sendungen (Autoloading /
+Intro / Outro) und Senderstandard; `Playlist::detachFromShows` schaltet beim Löschen `has_autoplaylist` der betroffenen
+Sendungen ab und setzt den Senderstandard zurück (Warnzeile im Log).  (b) Preflight-Warnart `autoplaylist_missing`
+(Playout-Scan über `/api/v2/show-instances?starts_after/before&modified=false`, neuer Filter) mit Banner-Text.
+Proben: PHP 5/5 (Nutzung, Löschen, Häkchen, Standard-Outro), Playout-Tests 5, API-Filtertest 2, JS-Syntax.  Offen:
+PLAYOUT-Neustart (Operator), Dialog-Abnahme mit Wegwerf-Playlist „pwprobe-autoload" an Testsendung „tests".
+
+**Ursprünglicher Befund:**
 
 Beim Löschen einer Playlist setzt der Fremdschlüssel `cc_show.autoplaylist_id` auf NULL (`ON DELETE SET
 NULL`, ebenso intro/outro); „Add Autoloading Playlist" bleibt angehakt, das Autoloading füllt dann nichts.

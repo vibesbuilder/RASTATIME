@@ -637,6 +637,21 @@ function loadPreflightWarnings() {
               $.i18n._("Check liquidsoap.log (Main Output device?), then restart PLAYOUT, then LIQUIDSOAP.")
             )
           );
+        } else if (w.warning_type === "autoplaylist_missing") {
+          // RASTATIME 2026-10-28: "Add Autoloading Playlist" is ticked but
+          // the playlist is gone (deleted from the library) - the show
+          // would run silent.
+          $li.append(
+            document.createTextNode(
+              " " + $.i18n._("Autoloading is on, but the show has no playlist") + ": "
+            )
+          );
+          $li.append($("<em></em>").text(detail.show_name || $.i18n._("(untitled show)")));
+          $li.append(
+            document.createTextNode(
+              " - " + $.i18n._("the show would run silent. Edit the show and pick a playlist.")
+            )
+          );
         } else if (w.warning_type === "storage_root_unavailable") {
           // RASTATIME 2026-09-16: the media library root (Settings -> Local
           // Machine -> Media Library Location) is missing or read-only.

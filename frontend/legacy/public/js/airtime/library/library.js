@@ -642,11 +642,73 @@ var AIRTIME = (function (AIRTIME) {
     mod.selectNone();
   };
 
+  // RASTATIME 2026-10-28 - a playlist that shows use as their autoloading,
+  // intro or outro playlist (or the station default) is named before the
+  // delete question, with the shows.  The lookup is one GET; when it fails
+  // the plain question is asked, the library is never blocked.
+  mod.confirmDeleteWithUsage = function (aData, proceed) {
+    var plain = $.i18n._("Are you sure you want to delete the selected item(s)?");
+    var playlistIds = [];
+    $.each(aData, function (_, row) {
+      if (row && row.ftype === "playlist" && row.id) {
+        playlistIds.push(parseInt(row.id, 10));
+      }
+    });
+    if (!playlistIds.length) {
+      if (confirm(plain)) {
+        proceed();
+      }
+      return;
+    }
+    $.ajax({
+      url: baseUrl + "library/playlist-usage",
+      data: { format: "json", ids: playlistIds },
+      dataType: "json",
+      timeout: 8000,
+    })
+      .done(function (json) {
+        var usage = (json && json.usage) || {};
+        var lines = [];
+        $.each(usage, function (_, pl) {
+          var items = [];
+          $.each(pl.shows || [], function (_, s) {
+            items.push(s.name + " (" + $.i18n._(s.role) + ")");
+          });
+          $.each(pl.defaults || [], function (_, d) {
+            items.push($.i18n._("station default") + " " + $.i18n._(d));
+          });
+          if (items.length) {
+            lines.push(pl.name + ": " + items.join(", "));
+          }
+        });
+        var text = plain;
+        if (lines.length) {
+          text =
+            $.i18n._("The following shows use the selected playlist(s):") +
+            "\n\n" +
+            lines.join("\n") +
+            "\n\n" +
+            $.i18n._(
+              "Deleting switches autoloading off for these shows and removes the intro / outro; the shows would run silent until you pick another playlist."
+            ) +
+            "\n\n" +
+            plain;
+        }
+        if (confirm(text)) {
+          proceed();
+        }
+      })
+      .fail(function () {
+        if (confirm(plain)) {
+          proceed();
+        }
+      });
+  };
+
   mod.fnDeleteSelectedItems = function () {
-    if (
-      confirm($.i18n._("Are you sure you want to delete the selected item(s)?"))
-    ) {
-      var aData = AIRTIME.library.getSelectedData(),
+    var selected = AIRTIME.library.getSelectedData();
+    mod.confirmDeleteWithUsage(selected, function () {
+      var aData = selected,
         item,
         temp,
         aMedia = [],
@@ -671,7 +733,7 @@ var AIRTIME = (function (AIRTIME) {
       }
 
       AIRTIME.library.fnDeleteItems(aMedia);
-    }
+    });
   };
 
   // RASTATIME 2026-10-09 - filter indicator: the "X of N tracks" count and

@@ -490,6 +490,21 @@ Webstreams / Line-Ins enthält, ist die Standardlänge das,
 was *abspielen würde*, wenn jedes variable Item für seine
 konfigurierte Dauer laufen würde.
 
+### Eine Playlist löschen, die Sendungen noch verwenden (seit 28.10.2026)
+
+Beim Löschen einer Playlist aus der Bibliothek prüft RASTATIME zuerst,
+welche Sendungen sie als **Autoloading-**, **Intro-** oder
+**Outro-Playlist** verwenden und ob sie der Senderstandard für Intro /
+Outro aus Settings → General ist.  Die Löschfrage zählt diese Sendungen
+auf.  Bestätigen Sie, verlieren die Sendungen die Playlist **und** ihr
+Häkchen *Add Autoloading Playlist* wird abgeschaltet, damit der
+Kalender den echten Zustand zeigt statt einer scheinbar befüllten
+Sendung, die still läuft.  Wählen Sie danach im Sendungsdialog eine
+andere Playlist.  Vor dem 28.10.2026 blieb das Häkchen gesetzt und die
+Sendung leer; das Dashboard warnt jetzt außerdem bis 48 Stunden im
+Voraus vor solchen Sendungen (siehe
+[Autoloading-Playlists](./AUTOLOADING_PLAYLISTS.md), Abschnitt 7).
+
 ### Eine Playlist in einer Sendung verwenden
 
 Zwei Pfade:

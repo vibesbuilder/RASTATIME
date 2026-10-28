@@ -281,6 +281,14 @@ instances keep their built content (no retroactive change).
 To clear an already-built instance, open the show on the
 calendar → **Clear Schedule**.
 
+> **Deleted playlist (since 2026-10-28).**  Deleting the playlist from
+> the library asks first and lists the shows that use it; on
+> confirmation the shows' *Add Autoloading Playlist* tick is switched
+> off as well.  Should a show nevertheless carry the tick without a
+> playlist (an import, an old database), the dashboard banner warns
+> "Autoloading is on, but the show has no playlist" for every instance
+> of the next 48 hours - edit the show and pick a playlist.
+
 ---
 
 ## 8. Autoloading playlists vs Auto DJ

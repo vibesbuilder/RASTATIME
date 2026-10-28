@@ -16,6 +16,7 @@ class LibraryController extends Zend_Controller_Action
         $ajaxContext = $this->_helper->getHelper('AjaxContext');
         $ajaxContext->addActionContext('contents-feed', 'json')
             ->addActionContext('delete', 'json')
+            ->addActionContext('playlist-usage', 'json')
             ->addActionContext('duplicate', 'json')
             ->addActionContext('duplicate-block', 'json')
             ->addActionContext('delete-group', 'json')
@@ -229,6 +230,19 @@ class LibraryController extends Zend_Controller_Action
         }
 
         $this->view->items = $menu;
+    }
+
+    /**
+     * RASTATIME 2026-10-28 - GET/POST library/playlist-usage?ids[]=..  Which
+     * shows use the playlists as autoloading / intro / outro playlist (and
+     * whether one is the station default); the delete dialog asks before
+     * the operator confirms.
+     */
+    public function playlistUsageAction()
+    {
+        $ids = $this->_getParam('ids', []);
+        $ids = is_array($ids) ? $ids : [$ids];
+        $this->view->usage = Application_Model_Playlist::usageByShows($ids);
     }
 
     public function deleteAction()
