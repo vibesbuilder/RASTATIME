@@ -227,7 +227,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   laufende Sendung bleibt sofort.  Harness im eingebauten Browser mit den
   ausgelieferten Skripten: Ausblenden/Undo/Countdown/Beacon-Body geprüft.
   Texte EN + DE/FR/ES (`po2mo.py --all`, Apache-Neustart für die .mo).
-  Manual CALENDAR ×4, Architektur §23.76 (0.102).
+  Manual CALENDAR ×4, Architektur §23.76 (0.102).  Commit e5a3ac98.
 - **Upload: gescheiterte Importe sichtbar, erklärt, aufräumbar und ein Fall
   reparierbar (2026-10-28, Operator-Go (a)–(d) zum Befund der liegen
   gebliebenen Datei in `organize/`)** — (a) der Analyzer meldet den echten
