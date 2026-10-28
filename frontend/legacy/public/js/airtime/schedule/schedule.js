@@ -554,6 +554,10 @@ $(document).ready(function () {
         }
 
         //define a delete callback.
+        // RASTATIME 2026-10-28 - the delete no longer goes out at once:
+        // rtUndoDelete (undo-delete.js) hides the show, shows a toast with
+        // a countdown and an Undo link and posts the same URL when the
+        // countdown ends.  Server side unchanged.
         if (oItems.del !== undefined) {
           //repeating show multiple delete options
           if (oItems.del.items !== undefined) {
@@ -561,38 +565,20 @@ $(document).ready(function () {
 
             //delete a single instance
             callback = function () {
-              $.post(
-                del.single.url,
-                { format: "json", id: data.id },
-                function (json) {
-                  scheduleRefetchEvents(json);
-                },
-              );
+              rtUndoDelete.defer(del.single.url, data, "single");
             };
             del.single.callback = callback;
 
             //delete this instance and all following instances.
             callback = function () {
-              $.post(
-                del.following.url,
-                { format: "json", id: data.id },
-                function (json) {
-                  scheduleRefetchEvents(json);
-                },
-              );
+              rtUndoDelete.defer(del.following.url, data, "following");
             };
             del.following.callback = callback;
           }
           //single show
           else {
             callback = function () {
-              $.post(
-                oItems.del.url,
-                { format: "json", id: data.id },
-                function (json) {
-                  scheduleRefetchEvents(json);
-                },
-              );
+              rtUndoDelete.defer(oItems.del.url, data, "show");
             };
             oItems.del.callback = callback;
           }

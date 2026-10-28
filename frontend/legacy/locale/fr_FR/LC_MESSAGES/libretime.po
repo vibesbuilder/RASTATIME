@@ -7059,3 +7059,20 @@ msgstr "Ouvrir la page d'envoi"
 #: RASTATIME 2026-10-28 failed uploads
 msgid "(filter Failed: Download or Clear)."
 msgstr "(filtre « Failed » : Télécharger ou Effacer)."
+
+# RASTATIME 2026-10-28 - schedule/undo-delete.js
+msgid "Deleting \"%s\" in %s s"
+msgstr "Suppression de « %s » dans %s s"
+
+msgid "Deleting \"%s\" and all following instances in %s s"
+msgstr "Suppression de « %s » et de toutes les instances suivantes dans %s s"
+
+msgid "Deleting the show \"%s\" in %s s"
+msgstr "Suppression de l'émission « %s » dans %s s"
+
+msgid "this show"
+msgstr "cette émission"
+
+msgid "Undo"
+msgstr "Annuler"
+

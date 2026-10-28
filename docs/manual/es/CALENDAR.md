@@ -181,6 +181,15 @@ sub-campos aparecen:
   por-ocurrencia.
 - **Eliminar esta instancia** retira solo esa ocurrencia.
 - **Eliminar programa** retira toda la serie.
+- **Deshacer tras eliminar** (desde 2026-10-28): una eliminación
+  desde el menú del calendario no llega al servidor de inmediato.
+  El programa desaparece del calendario y un aviso al pie de la
+  página cuenta diez segundos hacia atrás con el enlace
+  **Deshacer**. Un clic lo devuelve intacto; si la cuenta llega a
+  cero, la eliminación se ejecuta como antes. Cerrar la página
+  dentro de esos diez segundos envía la eliminación de todos
+  modos. *Cancelar programa* para el programa en antena no se
+  retrasa y actúa al instante, como siempre.
 
 > **Cómo funciona bajo el capó.** Programas recurrentes
 > escriben una fila `cc_show` + una fila `cc_show_days`

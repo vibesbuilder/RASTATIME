@@ -6895,3 +6895,20 @@ msgstr "Abrir la página de subida"
 #: RASTATIME 2026-10-28 failed uploads
 msgid "(filter Failed: Download or Clear)."
 msgstr "(filtro «Failed»: Descargar o Borrar)."
+
+# RASTATIME 2026-10-28 - schedule/undo-delete.js
+msgid "Deleting \"%s\" in %s s"
+msgstr "Eliminando «%s» en %s s"
+
+msgid "Deleting \"%s\" and all following instances in %s s"
+msgstr "Eliminando «%s» y todas las instancias siguientes en %s s"
+
+msgid "Deleting the show \"%s\" in %s s"
+msgstr "Eliminando el programa «%s» en %s s"
+
+msgid "this show"
+msgstr "este programa"
+
+msgid "Undo"
+msgstr "Deshacer"
+

@@ -60,7 +60,7 @@ dann 2 → 1, danach nach Bedarf**.
 Geordneter Apache-Stopp Option B · Marke „libretime" → „rastatime" Stufe B ·
 Liquidsoap-Upgrade gegen das `Unix.select`-Leck · Icecast 2.4.4 → 2.5.0 ·
 Benutzergruppen-Audit · Stream-Metadaten „nicht weitergeben" · Legacy-PHPUnit ·
-Show-Logos als WebP (~1 h) · Rückgängig nach Löschen ·
+Show-Logos als WebP (~1 h) ·
 Metadaten Energy/Tempo/Key/Timbre (Bench liegt vor) · JavaScript-Build-Pipeline ·
 Payware/Tier-System 🔴 Hold.
 
@@ -6120,9 +6120,14 @@ Ersteller, Aenderung).  Aufwand ~1 Tag (JS + Einstellungs-Endpunkt + Manual LIBR
 Empfehlung: Go bei Bedarf, nach den laufenden Abnahmen.  Operator 2026-10-23: "klingt gut" - explizites Go
 steht noch aus.
 
-### 🟡 Kalender: "Rueckgaengig" fuer einige Sekunden nach Loeschen - Defer (Operator 2026-10-23, bestätigt 2026-10-28)
-**Operator 2026-10-28:** bleibt vorerst im Backlog; Aufwand (Snapshot + Wiederherstellen, ~1 Tag) erscheint dem Nutzen nicht
-angemessen. Wiederaufnahme nur auf Operator-Wunsch.
+### ✅ Kalender: "Rueckgaengig" fuer einige Sekunden nach Loeschen - gebaut 2026-10-28 (Variante A, Operator-Go)
+**Umgesetzt 2026-10-28 (§23.76):** verzoegertes Loeschen im Browser — `undo-delete.js` blendet die Sendung(en) aus, Toast
+mit 10-s-Countdown und „Undo", der unveraenderte Loeschaufruf geht erst danach; Rueckgaengig verwirft ihn; Verlassen der
+Seite schickt offene Loeschungen als Beacon (CSRF im Body); Fehlschlag des spaeten Aufrufs blendet wieder ein.  Server
+unveraendert, „Cancel Show" bleibt sofort.  Neubewertung gegenueber dem 23.10.: Weg a) ist der sichere (Fehlrichtung =
+nicht geloescht), Weg b) der riskante; die Behauptung „Bestaetigungsabfrage bleibt der Schutz" war falsch — das
+Kalendermenue loeschte ohne Rueckfrage.  Harness-Abnahme im eingebauten Browser, Operator-Abnahme im Kalender offen.
+**Operator 2026-10-28 (vormittags):** zunaechst Defer; nach genauerer Risiko-Erklaerung Go fuer Variante A.
 
 
 Loeschen einer Instanz entfernt heute sofort Sendeplanzeilen und markiert die Instanz; das Playout holt den

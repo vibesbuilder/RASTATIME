@@ -267,6 +267,15 @@ sous-champs apparaissent :
   occurrence.
 - **Supprimer l'émission** retire toute la série y compris
   toutes les instances futures.
+- **Annuler après suppression** (depuis le 2026-10-28) : une
+  suppression depuis le menu du calendrier n'atteint pas le
+  serveur tout de suite. L'émission disparaît du calendrier et un
+  message en bas de page décompte dix secondes avec le lien
+  **Annuler**. Un clic dessus ramène l'émission intacte ; si le
+  compte arrive à zéro, la suppression s'exécute comme avant.
+  Fermer la page pendant ces dix secondes envoie quand même la
+  suppression. *Annuler l'émission* pour l'émission à l'antenne
+  n'est pas différé et agit aussitôt, comme toujours.
 
 > **Comment ça marche sous le capot.** Les émissions
 > récurrentes écrivent une ligne `cc_show` + une ligne

@@ -460,7 +460,13 @@ function buildScheduleFc6(data) {
         id: arg.event.id,
         showId: p.showId,
         linked: p.linked,
+        title: arg.event.title,
       });
+      // RASTATIME 2026-10-28 - a chip whose delete is counting down stays
+      // hidden across FC6's own re-renders (undo-delete.js).
+      if (window.rtUndoDelete && window.rtUndoDelete.isPending(arg.event.id)) {
+        $el.addClass("rt-pending-delete");
+      }
 
       var isMonth = arg.view.type === "dayGridMonth";
       var isTimeGrid =

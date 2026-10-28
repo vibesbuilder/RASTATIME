@@ -238,6 +238,14 @@ In the **When** section, tick **Repeats**. Three sub-fields appear:
 - **Delete this instance** removes only that one occurrence.
 - **Delete Show** removes the entire series including all
   future instances.
+- **Undo after deleting** (since 2026-10-28): a delete from the
+  calendar's menu does not reach the server at once. The show
+  disappears from the calendar and a toast at the bottom of the
+  page counts down ten seconds with an **Undo** link. Click it and
+  the show comes back untouched; let the countdown run out and the
+  delete is carried out as before. Closing the page inside the ten
+  seconds still sends the delete. *Cancel Show* for the show on
+  air is not delayed, it acts at once as it always did.
 
 > **How it works under the hood.** Recurring shows write one
 > `cc_show` row + one `cc_show_days` row per repeat-day +

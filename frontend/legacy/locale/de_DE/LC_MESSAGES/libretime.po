@@ -6702,3 +6702,20 @@ msgstr "Upload-Seite öffnen"
 #: RASTATIME 2026-10-28 failed uploads
 msgid "(filter Failed: Download or Clear)."
 msgstr "(Filter „Failed": Herunterladen oder Verwerfen)."
+
+# RASTATIME 2026-10-28 - schedule/undo-delete.js
+msgid "Deleting \"%s\" in %s s"
+msgstr "Lösche „%s“ in %s s"
+
+msgid "Deleting \"%s\" and all following instances in %s s"
+msgstr "Lösche „%s“ und alle folgenden Instanzen in %s s"
+
+msgid "Deleting the show \"%s\" in %s s"
+msgstr "Lösche die Sendung „%s“ in %s s"
+
+msgid "this show"
+msgstr "diese Sendung"
+
+msgid "Undo"
+msgstr "Rückgängig"
+

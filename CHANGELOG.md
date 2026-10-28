@@ -212,6 +212,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Kalender: „Rückgängig" zehn Sekunden nach dem Löschen (2026-10-28,
+  Operator-Go Variante A)** — die drei Löscheinträge des Kalendermenüs
+  (Delete, Delete Instance, Delete Instance and All Following) schickten
+  den Löschaufruf sofort und ohne Rückfrage.  Jetzt blendet
+  `undo-delete.js` die betroffenen Sendungen aus (Klasse
+  `rt-pending-delete`, bei „following"/„show" alle Instanzen der Sendung
+  ab der angeklickten), zeigt unten einen Toast mit Countdown und Link
+  „Undo" und sendet denselben Aufruf erst nach zehn Sekunden; Rückgängig
+  verwirft ihn, nichts wurde verändert.  Verlassen der Seite schickt
+  offene Löschungen als Beacon mit CSRF-Token im Body (Muster der
+  Layout-Speicherung).  Schlägt der späte Aufruf fehl, erscheinen die
+  Sendungen wieder (fail-safe).  Server unverändert; „Cancel Show" für die
+  laufende Sendung bleibt sofort.  Harness im eingebauten Browser mit den
+  ausgelieferten Skripten: Ausblenden/Undo/Countdown/Beacon-Body geprüft.
+  Texte EN + DE/FR/ES (`po2mo.py --all`, Apache-Neustart für die .mo).
+  Manual CALENDAR ×4, Architektur §23.76 (0.102).
 - **Upload: gescheiterte Importe sichtbar, erklärt, aufräumbar und ein Fall
   reparierbar (2026-10-28, Operator-Go (a)–(d) zum Befund der liegen
   gebliebenen Datei in `organize/`)** — (a) der Analyzer meldet den echten

@@ -1,10 +1,13 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.101
+Draft version: 0.102
 Date: 2026-10-28
 
 > **Revision history**
+> - **0.102 (2026-10-28)** - **Undo after deleting a show** (§23.76): the
+>   calendar's delete waits ten seconds client-side with an Undo toast;
+>   server unchanged.
 > - **0.101 (2026-10-28)** - **Failed imports** (§23.75): reason on the Upload
 >   page, "Clear" takes the organize/ original along, "Download", preflight
 >   `imports_failed`, repair of ID3-before-RIFF containers.
@@ -8023,3 +8026,56 @@ JS syntax of `plupload.js` / `common.js`; live: `recent-uploads` carries
 the counts, `download-failed` answers 404 for unknown and imported rows.
 End-to-end (broken file and an ID3-before-RIFF file through the Import
 Folder) after the ANALYZER restart.
+
+### 23.76 Calendar: Undo for Ten Seconds after Deleting a Show (2026-10-28)
+
+**Context.**  The calendar's left-click menu offers *Delete*, *Delete
+Instance* and *Delete Instance and All Following*.  Each posted
+`schedule/delete-show-instance` or `schedule/delete-show` the moment it
+was clicked, with no confirmation.  The server side (ShowService::
+deleteShow) marks the instance `modified_instance`, hard-deletes its
+`cc_schedule` rows, deletes the `cc_show` row (cascading to days, hosts,
+teaser links) when no instance is left, removes the show logos from
+storage and pushes the schedule to the playout.  A wrong click was final
+within seconds.
+
+**Decision.**  Variant A, "delayed delete": nothing changes on the
+server; the browser waits.  Variant B (snapshot + restore after a real
+delete) was rejected: restoring hard-deleted rows, cascades, logo files
+and the series end date is a day or two of work with the failure mode
+pointing the wrong way (overlapping instances, half-restored plans, a
+running track re-entered).  Variant A fails safe: whatever breaks before
+the POST, the show is not deleted and reappears on the next refetch.
+
+**Mechanics (`public/js/airtime/schedule/undo-delete.js`).**
+`rtUndoDelete.defer(url, event, mode)` is what the three menu callbacks
+in `schedule.js` now call.  It collects the affected instance ids
+(`single`: the clicked one; `following`: every FC6 event of the same
+show starting at or after it; `show`: every event of the show), adds
+`rt-pending-delete` (display:none, `schedule-fc6.css`) to their chips,
+appends a toast to `#rt-undo-toasts` (fixed, bottom centre) with the
+show title, a one-second countdown from ten and an *Undo* link, and
+keeps the job in a pending map.  Countdown end: the original `$.post`
+with `{format: json, id}` and `scheduleRefetchEvents` on success; on
+failure the chips come back and the calendar refetches.  Undo: timer
+cleared, chips shown, nothing sent.  `pagehide`: every pending job goes
+out as `navigator.sendBeacon` with `csrf_token` in the body (Acl_plugin
+accepts the body token; same pattern as the page-layout save).  FC6
+re-renders chips on its own, so `eventDidMount` (`schedule-fc6.js`)
+re-applies the class for ids `isPending()`; it also puts the event
+title into the chip's `data("event")` for the toast.  *Cancel Show* for
+the show on air is untouched: immediate effect is the point there.
+
+**Strings.**  Five JS strings via `LocaleController` and the three .po
+files (`po2mo.py --all`); the toast substitutes `%s` by `.replace`, the
+convention of `common.js` / `library.js`.
+
+**Verification.**  Harness in the built-in browser with the served
+`undo-delete.js`, `schedule-fc6.css`, jQuery and jquery.i18n and a fake
+`scheduleFc6`: single hides one chip, undo restores without a POST;
+show hides all three chips of the show and none of another; following
+hides the clicked and the later instance, not the earlier one; after
+ten seconds exactly one POST (`/schedule/delete-show`, id 1) and one
+refetch; flushAll sends one beacon per pending job with
+`format=json&id=4&csrf_token=…` and removes the toast.  Live: the new
+script and stylesheet are served (200).

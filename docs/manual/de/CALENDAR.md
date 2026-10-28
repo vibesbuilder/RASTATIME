@@ -265,6 +265,15 @@ Drei Unterfelder erscheinen:
   Vorkommen.
 - **Sendung löschen** entfernt die gesamte Serie inklusive
   aller zukünftigen Instanzen.
+- **Rückgängig nach dem Löschen** (seit 2026-10-28): ein Löschen
+  über das Kalendermenü erreicht den Server nicht sofort. Die
+  Sendung verschwindet aus dem Kalender, und ein Hinweis am
+  unteren Seitenrand zählt zehn Sekunden herunter, mit dem Link
+  **Rückgängig**. Ein Klick darauf bringt die Sendung unverändert
+  zurück; läuft der Zähler ab, wird wie bisher gelöscht. Wird die
+  Seite innerhalb der zehn Sekunden geschlossen, geht das Löschen
+  trotzdem ab. *Sendung abbrechen* für die laufende Sendung ist
+  nicht verzögert und wirkt sofort wie immer.
 
 > **Wie es unter der Haube funktioniert.** Wiederkehrende
 > Sendungen schreiben eine `cc_show`-Zeile + eine

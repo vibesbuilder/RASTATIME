@@ -91,6 +91,8 @@ class ScheduleController extends Zend_Controller_Action
 
         $this->view->headScript()->appendFile(Assets::url('js/airtime/schedule/add-show.js'), 'text/javascript');
         $this->view->headScript()->offsetSetFile(100, Assets::url('js/airtime/schedule/schedule.js'), 'text/javascript');
+        // RASTATIME 2026-10-28 - "Undo" after deleting a show from the calendar
+        $this->view->headScript()->appendFile(Assets::url('js/airtime/schedule/undo-delete.js'), 'text/javascript');
         $this->view->headScript()->appendFile(Assets::url('js/blockui/jquery.blockUI.js'), 'text/javascript');
 
         $this->view->headLink()->appendStylesheet(Assets::url('css/jquery.ui.timepicker.css'));

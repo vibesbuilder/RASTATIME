@@ -342,6 +342,12 @@ final class LocaleController extends Zend_Controller_Action
             // already in schedule/add-show.js
             // "The show instance doesn"t exist anymore!" => _("The show instance doesn"t exist anymore!"),
             'Remove all content?' => _('Remove all content?'),
+            // schedule/undo-delete.js (RASTATIME 2026-10-28)
+            'Deleting "%s" in %s s' => _('Deleting "%s" in %s s'),
+            'Deleting "%s" and all following instances in %s s' => _('Deleting "%s" and all following instances in %s s'),
+            'Deleting the show "%s" in %s s' => _('Deleting the show "%s" in %s s'),
+            'this show' => _('this show'),
+            'Undo' => _('Undo'),
             // showbuilder/builder.js
             'Delete selected item(s)?' => _('Delete selected item(s)?'),
             'Start' => _('Start'),
