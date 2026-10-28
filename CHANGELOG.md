@@ -665,7 +665,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   ohne Wert war ein 500 (IndexError), jetzt eine Ablehnung.  Tests: Start
   mit Medien antwortet < 0,5 s trotz 0,6-s-Walk, Platzmangel → Job
   „failed" mit Meldung, drei kaputte Header; Backup-Modul 22, API-Suite
-  grün.  API-Neustart nötig.
+  grün.  API-Neustart nötig.  Commit 3caedc1f.
 - **Kalender: Instanz-Änderung konnte in die Folgesendung hineinlaufen
   (2026-10-27, Operator-Befund „Indie Lane" 00:08–05:08 über „BBC
   Newsday" 05:00)** — die Überlappungsprüfung (`AddShowWhen::
