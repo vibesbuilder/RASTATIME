@@ -24,7 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   PHP (Adapter, DJ-Pfad, Rehash, leerer Wert), 185 API-Tests grün,
   HTTPS-Login mit MD5-Wegwerfkonto → 302 und `$2y$12$`-Hash.  API-Neustart
   nötig.  Manual USERS_AND_ROLES „How passwords are stored" EN/DE/FR/ES,
-  COMPONENTS (bcrypt), Architektur §23.73 (0.98).
+  COMPONENTS (bcrypt), Architektur §23.73 (0.98).  Commit 3d1aa622.
 - **Rollen-Audit Paket 3, Phase 2: CSRF-Prüfung der Legacy-Oberfläche
   scharf (2026-10-27, Operator-Go 2026-10-25)** — `Acl_plugin::
   LEGACY_CSRF_ENFORCE = true`: ein Legacy-Schreibzugriff einer
