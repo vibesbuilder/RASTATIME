@@ -57,7 +57,7 @@ dann 2 → 1, danach nach Bedarf**.
 | – | Zeitumstellung Nacht 24./25.10.: Show 1242 Electronic Evening 00:00–05:00 beobachten | ✅ 2026-10-25: 6 echte Stunden (22:00–04:00 UTC), 104/104 Zeilen gespielt, keine Lücke in der doppelten Stunde, 05:00-Folge pünktlich (siehe Abschnitt „Zeitumstellungsnacht 24./25.10.2026") | – |
 
 **Defer mit Vorbedingungen (Operator-Entscheidung, nichts drängt):**
-Geordneter Apache-Stopp Option B · Marke „libretime" → „rastatime" Stufe B ·
+Geordneter Apache-Stopp Option B · Marke „libretime" → „rastatime" Stufe B (Vorbedingung GitHub) ·
 Liquidsoap-Upgrade gegen das `Unix.select`-Leck · Icecast 2.4.4 → 2.5.0 ·
 Benutzergruppen-Audit · Stream-Metadaten „nicht weitergeben" · Legacy-PHPUnit ·
 Show-Logos als WebP (~1 h) ·
@@ -439,7 +439,22 @@ Internet-Erreichbarkeit (Punkt 16, Evaluierung offen), Testplan erstellen
 
 ---
 
-### 🟡 Marke: „libretime" → „rastatime" in Bezeichnern (Stufe B) — DEFER (evaluiert 2026-10-03)
+### 🟡 Marke: „libretime" → „rastatime" in Bezeichnern (Stufe B) — DEFER (evaluiert 2026-10-03, gekoppelt an GitHub 2026-10-28)
+
+**Operator 2026-10-28:** Stufe B wird **Vorbedingung des GitHub-Themas** (Abschnitt „Veröffentlichung auf
+GitHub, Releases, Update-Weg", Stufe 0) und erst dort angegangen; bis dahin Defer, nicht erneut vorschlagen.
+Begründung: der Nutzen ist nach innen gerichtet und für den Operator unsichtbar; real wird er erst, wenn fremde
+Entwickler Paketnamen, Kommandos und Konfigdatei sehen (`libretime_api` neben dem Produktnamen RASTATIME wirkt wie
+eine halbe Umbenennung).  Zählung 2026-10-28 (ohne Vendor/Upstream): backend/api 354 Dateien / 971 Treffer,
+backend/playout 229 / 572, analyzer + shared 73 / 182, frontend/legacy 65 / 175, tests 56 / 181, infra + config +
+scripts 17 / 107, docs 81 / 494 - überwiegend Import-Pfade, Umgebungsvariablen und der Konfigdateiname.
+**Vorgehen bei Wiederaufnahme (ersetzt den Stack-Stopp):** Übergangsbrücken statt eines Schnitts - (1) Pakete
+umbenennen, unter den alten Namen schlanke Alias-Module, nssm-Parameter danach einzeln nachziehen; (2) Konfig-Loader
+nimmt `RASTATIME_` vor `LIBRETIME_` an, Dienste bekommen die neue Variable, die alte fällt eine Woche später;
+(3) Konfigdatei unter neuem Namen, alter Name als Verweis für die Übergangszeit; (4) gettext-Domäne und PHP-Klassen
+zuletzt (repo-intern, per Lint und Probe-Skript prüfbar); (5) Brücken nach einer ruhigen Woche entfernen.  Aufwand
+weiter ≈ 1 Arbeitstag + Beobachtungswoche; Fehlerbild sinkt von „Dienst startet nicht" auf „ein Dienst meldet beim
+Neustart einen Fehler, der alte Name trägt weiter".
 
 **Befund 2026-10-03:** 483 Dateien / 4 962 Treffer im Repo (ohne Upstream-Kopien
 und `vendor/`: 388 / 2 214); 348 Pfade tragen den Namen (fünf Python-Pakete).
@@ -6312,7 +6327,9 @@ kein `v`-Tag, GitHub-Org „RASTATIME" aus den README-Badges existiert nicht (40
 **Stufen:**
 - 🟡 **Stufe 0 - Veröffentlichung:** filter-repo (Audio + icecast.xml), Root aufräumen, composer-Schritt + Versionen
   in INSTALL, SECURITY.md, Org/Repo anlegen (Operator), Push, CI grün bekommen.  ~2 Tage + Install-Probe auf
-  frischer VM 1-2 Tage (VM stellt der Operator).
+  frischer VM 1-2 Tage (VM stellt der Operator).  **Vorbedingung seit 2026-10-28:** Marke „libretime" → „rastatime"
+  Stufe B (Paketnamen, `LIBRETIME_*`, Konfigdatei, gettext-Domäne, PHP-Klassen; eigener Abschnitt mit Brücken-
+  Vorgehen, ≈ 1 Tag + Beobachtungswoche) vor dem ersten Push, damit fremde Entwickler keine halbe Umbenennung sehen.
 - 🟡 **Stufe 1 - Releases:** SemVer ab `v1.0.0`, Versionsnummer ins Produkt (Settings/About + `/api/version`),
   CHANGELOG-Abschnitt je Version (release.yml liest ihn), Tag pushen -> Release.  ~½ Tag.
 - 🟡 **Stufe 2 - Update-Skript `rt-update.ps1`:** UPGRADE.md automatisiert: Backup (Aufgabe RASTATIME-Backup),
