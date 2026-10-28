@@ -6,7 +6,7 @@ from typing import Any, Dict, Protocol
 
 from pydantic import BaseModel
 
-from .analyze_cuepoint import analyze_cuepoint, analyze_duration
+from .analyze_cuepoint import UnreadableFileError, analyze_cuepoint, analyze_duration
 from .analyze_loudness import analyze_loudness
 from .analyze_metadata import analyze_metadata
 from .analyze_playability import UnplayableFileError, analyze_playability
@@ -165,6 +165,8 @@ class Pipeline:
     def describe(exception: BaseException) -> str:
         import subprocess  # noqa: PLC0415
 
+        if isinstance(exception, UnreadableFileError):
+            return str(exception)
         if isinstance(exception, subprocess.CalledProcessError):
             tool = os.path.basename(str(exception.cmd[0])) if exception.cmd else "tool"
             err = exception.stderr

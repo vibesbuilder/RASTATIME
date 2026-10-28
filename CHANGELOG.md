@@ -232,6 +232,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Einsortieren.  Tests: Analyzer 9 neu + 1 angepasst, API 3, Playout 5,
   JS-Syntax.  Neustarts ANALYZER, API, PLAYOUT, Apache nötig.  Manual
   LIBRARY FAQ EN/DE/FR/ES, Architektur §23.75 (0.101).  Commit 74e51657.
+  Nachtrag E2E 2026-10-28: der Grund einer von ffprobe abgelehnten Datei
+  lautete „KeyError: length_seconds" (zwei Schritte später); `analyze_duration`
+  wirft jetzt `UnreadableFileError` mit dem ffprobe-Text, der verbatim in
+  die Zeile geht.  E2E: kaputte Datei → Fehlschlag mit Grund, Download 200,
+  „Clear" löscht Zeile + Original in organize/; RIFF-mit-ID3-Datei (40 KB
+  Block) → repariert als audio/mp3 einsortiert, `source_md5` gesetzt.
 - **Autoloading: Löschen einer verwendeten Playlist warnt, räumt auf und
   wird im Dashboard gemeldet (2026-10-28, Operator-Go zu Backlog-Punkt 2,
   Variante (c))** — beim Löschen einer Playlist setzte der Fremdschlüssel

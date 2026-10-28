@@ -9,6 +9,15 @@ from ._ffmpeg import compute_silences, probe_duration
 logger = logging.getLogger(__name__)
 
 
+class UnreadableFileError(RuntimeError):
+    """
+    RASTATIME 2026-10-28 - ffprobe could not read the file at all and no
+    earlier step found a duration either: not audio, or a container ffmpeg
+    rejects.  Raised with the tool's last stderr lines so the Upload page
+    can show the cause (before: a KeyError 'length_seconds' two steps later).
+    """
+
+
 def analyze_duration(filepath: str, metadata: Dict[str, Any]) -> Dict[str, Any]:
     """
     Extracts the file duration using ffmpeg.
@@ -30,8 +39,17 @@ def analyze_duration(filepath: str, metadata: Dict[str, Any]) -> Dict[str, Any]:
         metadata["length"] = str(timedelta(seconds=duration))
         metadata["cuein"] = 0.0
         metadata["cueout"] = duration
-    except (CalledProcessError, OSError):
-        pass
+    except (CalledProcessError, OSError) as exception:
+        if "length_seconds" not in metadata:
+            tail = ""
+            if isinstance(exception, CalledProcessError):
+                err = exception.stderr
+                if isinstance(err, bytes):
+                    err = err.decode("utf-8", "replace")
+                tail = " ".join(str(err or "").strip().splitlines()[-2:])
+            raise UnreadableFileError(
+                "ffprobe could not read the file: " + (tail or str(exception))
+            ) from exception
 
     return metadata
 
