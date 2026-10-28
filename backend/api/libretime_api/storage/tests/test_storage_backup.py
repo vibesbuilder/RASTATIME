@@ -195,6 +195,49 @@ def test_media_mirror_is_copied_and_verified(target, fake_config, fake_pg_dump, 
     assert sb.list_backups(target)[0]["name"] == state["file"]
 
 
+# RASTATIME 2026-10-28 - "Backup Now" walked the library and the mirror
+# inside the request (minutes on a USB disk) and the UI gave up after 20 s.
+# The sizes are now measured by the job thread, so start() returns at once.
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.skipif(not WINDOWS, reason="real robocopy")
+def test_start_with_media_returns_before_the_sizes_are_known(target, fake_config, fake_pg_dump, library, monkeypatch):
+    slow = {"calls": 0}
+    real_walk = sr.walk_size
+
+    def slow_walk(root):
+        slow["calls"] += 1
+        time.sleep(0.6)
+        return real_walk(root)
+
+    monkeypatch.setattr(sr, "walk_size", slow_walk)
+    sb.set_backup_folder(target)
+    sb.set_include_media(True)
+    t0 = time.monotonic()
+    state = sb.JOB.start()
+    assert time.monotonic() - t0 < 0.5
+    assert state["state"] == "running"
+    assert state["media_total_bytes"] is None  # not measured yet
+    final = wait_state("done", "failed", timeout=60.0)
+    assert final["state"] == "done", final.get("error")
+    assert final["media_total_files"] == 3
+    assert slow["calls"] >= 1
+
+
+@pytest.mark.django_db(transaction=True)
+def test_media_without_free_space_fails_the_job_with_a_message(target, fake_config, fake_pg_dump, library, monkeypatch):
+    sb.set_backup_folder(target)
+    sb.set_include_media(True)
+    # a library far bigger than any disk: the folder itself passes the
+    # start-time check, the mirror sizing in the job refuses
+    monkeypatch.setattr(sr, "library_size", lambda root, refresh=False: (3, 10**18))
+    sb.JOB.start()
+    state = wait_state("done", "failed", timeout=60.0)
+    assert state["state"] == "failed"
+    assert "Not enough free space" in state["error"]
+    # the database ZIP exists all the same
+    assert sb.list_backups(target)[0]["name"] == state["file"]
+
+
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.skipif(not WINDOWS, reason="real robocopy")
 def test_second_run_mirrors_deletions(target, fake_config, fake_pg_dump, library):

@@ -425,11 +425,21 @@ class PreferenceController extends Zend_Controller_Action
         curl_setopt_array($curl, $opts);
         $resp   = curl_exec($curl);
         $status = (int) curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        $errno  = curl_errno($curl);
         curl_close($curl);
         $data = is_string($resp) ? (json_decode($resp, true) ?: []) : [];
         if ($status === 0) {
-            $status = 502;
-            $data = ['errors' => ['The RASTATIME API is not reachable.']];
+            // RASTATIME 2026-10-28 - a timeout is not "unreachable": the
+            // API may still be working on the request (the backup start
+            // used to walk a USB mirror for minutes), so say so and let the
+            // status poll show what happened.
+            if ($errno === CURLE_OPERATION_TIMEDOUT) {
+                $status = 504;
+                $data = ['errors' => ['The RASTATIME API did not answer within 20 seconds. It may still be working on the request - the status below refreshes in a moment.']];
+            } else {
+                $status = 502;
+                $data = ['errors' => ['The RASTATIME API is not reachable.']];
+            }
         }
         return [$status, $data];
     }

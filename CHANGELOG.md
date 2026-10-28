@@ -649,6 +649,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Backup: „Backup Now" mit Medienspiegel meldete „The RASTATIME API is
+  not reachable." (2026-10-28, Operator-Meldung)** — der Start des Jobs
+  vermaß Bibliothek (116.886 Dateien) und Spiegel auf der USB-Platte
+  (exFAT) synchron im Request; auf dem Laufwerk E: dauert ein solcher
+  Durchlauf Minuten, die Oberfläche wartet 20 s und deutete den Timeout
+  als „nicht erreichbar".  Jetzt misst der Job-Thread (`_size_media`,
+  Phase „sizing", Platzprüfung dort mit klarer Fehlermeldung, die
+  DB-ZIP bleibt), `start()` antwortet sofort; jeder lange Schritt der
+  Medienphase (Messen, robocopy, Prüfen) läuft unter einem
+  Herzschlag-Thread, damit der Status nicht nach 45 s „interrupted"
+  meldet; der Fortschritt wird in einem eigenen Thread gezählt.  Legacy
+  unterscheidet Timeout (504, „did not answer within 20 seconds") von
+  Nichterreichbarkeit (502).  Nebenbefund: ein `Authorization: Api-Key`
+  ohne Wert war ein 500 (IndexError), jetzt eine Ablehnung.  Tests: Start
+  mit Medien antwortet < 0,5 s trotz 0,6-s-Walk, Platzmangel → Job
+  „failed" mit Meldung, drei kaputte Header; Backup-Modul 22, API-Suite
+  grün.  API-Neustart nötig.
 - **Kalender: Instanz-Änderung konnte in die Folgesendung hineinlaufen
   (2026-10-27, Operator-Befund „Indie Lane" 00:08–05:08 über „BBC
   Newsday" 05:00)** — die Überlappungsprüfung (`AddShowWhen::

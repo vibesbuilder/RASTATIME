@@ -119,3 +119,15 @@ def test_song_request_ip_hash_ignores_forged_forwarded_for():
 def test_routes_refuse_proxied_calls_without_key(client, path, method):
     response = getattr(client, method)(path, HTTP_X_FORWARDED_FOR="203.0.113.7")
     assert response.status_code == 403
+
+
+# RASTATIME 2026-10-28 - "Api-Key" without a value used to raise IndexError (500)
+@pytest.mark.parametrize("header", ["Api-Key", "Api-Key ", "Api-Key a b"])
+def test_malformed_api_key_header_is_a_refusal_not_an_error(header):
+    from rest_framework.test import APIRequestFactory
+
+    from libretime_api.permissions import check_authorization_header
+
+    request = APIRequestFactory().get("/api/v2/", HTTP_AUTHORIZATION=header)
+    assert check_authorization_header(request) is False
+

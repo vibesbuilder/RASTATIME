@@ -54,8 +54,11 @@ def get_permission_for_view(request, view):
 def check_authorization_header(request: Request):
     auth_header = request.headers.get("authorization", "")
     if auth_header.startswith("Api-Key"):
-        token = auth_header.split()[1]
-        return compare_digest(token, settings.CONFIG.general.api_key)
+        parts = auth_header.split()
+        if len(parts) != 2:
+            # RASTATIME 2026-10-28 - "Api-Key" without a value was a 500
+            return False
+        return compare_digest(parts[1], settings.CONFIG.general.api_key)
     return False
 
 

@@ -353,22 +353,15 @@ class BackupJob:
                 "pid": os.getpid(), "heartbeat": _now(),
             }
             if include_media:
-                source = storage_root.get_storage_root(refresh=True)
-                files, total = storage_root.library_size(source, refresh=True)
-                mirror = media_mirror_dir(folder)
-                done_files, done_bytes = (
-                    storage_root.walk_size(mirror) if os.path.isdir(mirror) else (0, 0)
-                )
-                needed = max(int(total * 1.1) - done_bytes, 0) + FREE_BYTES_MIN
-                if check["free_bytes"] and check["free_bytes"] < needed:
-                    raise InvalidFolder([
-                        f"Not enough free space for the media mirror: "
-                        f"{check['free_bytes'] // 1048576} MB free, "
-                        f"{needed // 1048576} MB needed."
-                    ])
-                state.update(media_source=source, media_total_files=files,
-                             media_total_bytes=total, media_done_files=done_files,
-                             media_done_bytes=done_bytes)
+                # RASTATIME 2026-10-28 - sizes and the free-space check moved
+                # into the job thread (_size_media): walking the library and
+                # the mirror on a USB disk took minutes here, longer than the
+                # UI waits for the answer (20 s), and "Backup Now" reported
+                # "API not reachable" although the start was merely slow.
+                state.update(media_source=storage_root.get_storage_root(refresh=True),
+                             media_total_files=None, media_total_bytes=None,
+                             media_done_files=0, media_done_bytes=0,
+                             media_free_bytes=check.get("free_bytes"))
             save_state(state)
             self._cancel.clear()
             self._thread = threading.Thread(
@@ -432,6 +425,7 @@ class BackupJob:
             state.update(file=os.path.basename(target), bytes=os.path.getsize(target))
             save_state(state)
             if state.get("include_media"):
+                self._size_media(state, folder)
                 self._mirror_media(state, folder)
                 if self._cancel.is_set():
                     state.update(state="cancelled", finished_at=_now(),
@@ -459,6 +453,60 @@ class BackupJob:
         finally:
             connection.close()
 
+    # RASTATIME 2026-10-28 - every long step of the media phase (sizing,
+    # robocopy, verifying) runs under a heartbeat thread: the status view
+    # declares a job without a heartbeat for HEARTBEAT_STALE_SECONDS
+    # "interrupted", and a single os.walk over 100k+ files on a USB disk
+    # takes longer than that.
+    def _heartbeat(self, state: dict, stop: threading.Event) -> None:
+        while not stop.wait(PROGRESS_INTERVAL_SECONDS):
+            state["heartbeat"] = _now()
+            try:
+                save_state(state)
+            except Exception:  # pylint: disable=broad-exception-caught
+                pass
+
+    def _with_heartbeat(self, state: dict, work):
+        stop = threading.Event()
+        beat = threading.Thread(target=self._heartbeat, args=(state, stop), name="backup-heartbeat", daemon=True)
+        beat.start()
+        try:
+            return work()
+        finally:
+            stop.set()
+            beat.join(timeout=PROGRESS_INTERVAL_SECONDS * 2)
+
+    def _size_media(self, state: dict, folder: str) -> None:
+        """Library and mirror sizes plus the free-space check, in the job thread."""
+        source = state.get("media_source") or storage_root.get_storage_root(refresh=True)
+        mirror = media_mirror_dir(folder)
+        state.update(phase="sizing", heartbeat=_now())
+        save_state(state)
+
+        def work():
+            files, total = storage_root.library_size(source, refresh=True)
+            done_files, done_bytes = (
+                storage_root.walk_size(mirror) if os.path.isdir(mirror) else (0, 0)
+            )
+            return files, total, done_files, done_bytes
+
+        files, total, done_files, done_bytes = self._with_heartbeat(state, work)
+        try:
+            free = shutil.disk_usage(folder).free
+        except OSError:
+            free = state.get("media_free_bytes") or 0
+        needed = max(int(total * 1.1) - done_bytes, 0) + FREE_BYTES_MIN
+        state.update(media_total_files=files, media_total_bytes=total,
+                     media_done_files=done_files, media_done_bytes=done_bytes,
+                     media_free_bytes=free, heartbeat=_now())
+        save_state(state)
+        if free and free < needed:
+            raise RuntimeError(
+                f"Not enough free space for the media mirror: "
+                f"{free // 1048576} MB free, {needed // 1048576} MB needed. "
+                f"The database ZIP is complete."
+            )
+
     def _mirror_media(self, state: dict, folder: str) -> None:
         """robocopy /MIR the library into <folder>/media, then verify."""
         from . import move as storage_move  # noqa: PLC0415 (sibling, no cycle)
@@ -477,14 +525,27 @@ class BackupJob:
         self._proc = subprocess.Popen(  # noqa: S603
             cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, creationflags=flags,
         )
-        try:
-            while self._proc.poll() is None:
-                time.sleep(PROGRESS_INTERVAL_SECONDS)
+
+        def progress(proc):
+            # one walk after the other while robocopy runs; on a slow disk a
+            # walk takes minutes, so the figures are coarse but never block
+            # the heartbeat
+            while proc.poll() is None:
                 files, done = storage_root.walk_size(mirror)
-                state.update(media_done_files=files, media_done_bytes=done, heartbeat=_now())
-                save_state(state)
-            output = (self._proc.stdout.read() or b"").decode("utf-8", "replace") if self._proc.stdout else ""
-            rc = self._proc.returncode
+                state.update(media_done_files=files, media_done_bytes=done)
+                if proc.poll() is None:
+                    time.sleep(PROGRESS_INTERVAL_SECONDS)
+
+        def copy():
+            proc = self._proc
+            walker = threading.Thread(target=progress, args=(proc,), name="backup-progress", daemon=True)
+            walker.start()
+            out = proc.communicate()[0] if proc.stdout else b""
+            walker.join(timeout=PROGRESS_INTERVAL_SECONDS * 2)
+            return (out or b"").decode("utf-8", "replace"), proc.returncode
+
+        try:
+            output, rc = self._with_heartbeat(state, copy)
         finally:
             self._proc = None
         if self._cancel.is_set():
@@ -494,10 +555,10 @@ class BackupJob:
             raise RuntimeError(f"robocopy exit code {rc}: {' | '.join(tail)}")
         state.update(phase="verifying", heartbeat=_now())
         save_state(state)
-        problems = storage_move.verify_copy(source, mirror)
+        problems = self._with_heartbeat(state, lambda: storage_move.verify_copy(source, mirror))
         if problems:
             raise RuntimeError("media mirror incomplete: " + ", ".join(problems[:5]))
-        files, done = storage_root.walk_size(mirror)
+        files, done = self._with_heartbeat(state, lambda: storage_root.walk_size(mirror))
         state.update(media_done_files=files, media_done_bytes=done, heartbeat=_now())
         save_state(state)
 
