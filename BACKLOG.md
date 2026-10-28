@@ -256,7 +256,10 @@ Ctrl+C ignoriert (Konsole von NSSM, `AppNoConsole`, mpm_winnt-Handler), ob
 `httpd -k stop`/Shutdown-Ereignis sauberer wäre, Wert 5000 vs. 30000, Wirkung
 auf die php-cgi-Waisen.  Evaluierung vor Umbau.
 
-### 🟡 Geordneter Apache-Stopp (Option B, neu 2026-10-22, Operator: Defer)
+### 🔴 Geordneter Apache-Stopp (Option B, neu 2026-10-22) - Hold (Operator 2026-10-28: kein Go)
+**Operator 2026-10-28:** kein Go; die Dauer eines Apache-Neustarts ist nicht entscheidend. Waisen räumt der
+RASTATIME-PhpCgiReaper ab, das Neustart-Skript (Option D) wartet auf den echten Stopp. Nur auf Operator-Wunsch wieder aufnehmen.
+
 
 **Ziel:** Apache beim Dienst-Stopp geordnet herunterfahren (laufende Anfragen
 beenden, Shutdown im Fehlerlog, php-cgi über mod_fcgid beendet) statt nach
