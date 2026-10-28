@@ -6103,8 +6103,9 @@ bzw. nur lokal.
 `LibreTime_Auth_Adaptor_Password` (ersetzt `MD5(?)` in SQL), `User::setPassword/verifyPassword` (DJ-Harbor), Passwort-Reset,
 Django `core.User` mit Paket `bcrypt`; alter MD5-Hash wird einmal akzeptiert und beim Login ersetzt; Befehl
 `manage.py password_hashes`.  PHP-Probe 14/14 (Adapter, DJ-Pfad, $2b$/$2y$, Rehash), Django-Tests 185 grün, HTTPS-Login
-mit MD5-Wegwerfkonto → 302 + Hash $2y$12$.  Offen: API-Neustart (Operator), Login aller Konten → Umstellung, neue Passwörter
-für Admin-Konten wegen alter Backups (Empfehlung).
+mit MD5-Wegwerfkonto → 302 + Hash $2y$12$.  API-Neustart 2026-10-28 08:33 + Basic-Auth-Probe (bcrypt 200, falsch 403,
+MD5-Konto 200 → danach $2b$): Abnahme komplett.  Offen nur noch: Login aller zehn Konten → Umstellung (password_hashes zählt),
+neue Passwörter für die Admin-Konten wegen alter Backups (Empfehlung).
 
 **Ursprünglicher Befund:**
 
