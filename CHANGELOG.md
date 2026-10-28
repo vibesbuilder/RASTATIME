@@ -745,7 +745,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   zuerst „wiederkehrend", der Zweig für die bearbeitete Instanz dahinter war
   unerreichbar (bearbeitet setzt wiederkehrend voraus).  Jetzt zuerst die
   bearbeitete Instanz: nur „Delete Instance", passend zu „Edit Instance" im
-  Bearbeiten-Zweig.  Unbearbeitete Instanzen behalten beide Einträge.
+  Bearbeiten-Zweig.  Unbearbeitete Instanzen behalten beide Einträge.  Commit adf052e9.
 - **24/7-Aufnahme: Cue-Sidecar der doppelten Stunde (2026-10-28,
   Operator-Go zum Befund der Zeitumstellungsnacht 25.10.)** — die
   Wanduhr zeigt beim Zurückstellen 02:xx zweimal; der Rekorder schrieb den
