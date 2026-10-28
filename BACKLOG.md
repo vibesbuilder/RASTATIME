@@ -61,8 +61,8 @@ Geordneter Apache-Stopp Option B · Marke „libretime" → „rastatime" Stufe 
 Liquidsoap-Upgrade gegen das `Unix.select`-Leck · Icecast 2.4.4 → 2.5.0 ·
 Benutzergruppen-Audit · Stream-Metadaten „nicht weitergeben" · Legacy-PHPUnit ·
 Show-Logos als WebP (~1 h) ·
-Metadaten Energy/Tempo/Key/Timbre (Bench liegt vor) · JavaScript-Build-Pipeline ·
-Payware/Tier-System 🔴 Hold.
+Metadaten Energy/Tempo/Key/Timbre (Bench liegt vor) · JavaScript-Build-Pipeline 🔴 Hold (2026-10-28) ·
+Payware/Tier-System 🔴 Hold (bestätigt 2026-10-28).
 
 **Ideen, nur notiert:** Import/Export Stufe 2 · Backup: Recordings in den Medienspiegel · Podcast-Downloads umgehen den Analyzer · Line-In-Gain live nachregeln · Kanalwahl im
 Schnell-Editor · Speicherzuwachs Liquidsoap Ursachensuche (b) (weiche Grenze 2560 MB seit 2026-10-28) · Traffic Alerts Deadline-Skip ·
@@ -3555,7 +3555,19 @@ keine Migration nötig — nur ein Konstanten-Bump.
 
 ## 🛠️ Technical Debt / Refactor-Backlog
 
-### 🟡 JavaScript-Stack-Modernisierung (Hybrid/Vanilla-First — Re-Eval 2026-05-31; Kern ✅ 2026-09-17, Rest = optionale Build-Pipeline, Defer)
+### 🟡 JavaScript-Stack-Modernisierung (Hybrid/Vanilla-First — Re-Eval 2026-05-31; Kern ✅ 2026-09-17, Rest = Build-Pipeline 🔴 Hold 2026-10-28)
+
+**Operator 2026-10-28: Build-Pipeline 🔴 Hold** (nach genauerer Erklärung).  Ist-Stand: kein package.json, kein
+Node auf STUDIO, 58 App-Dateien / ~25.500 Zeilen unminifiziert einzeln über `headScript()` (~25 globale + 15-20
+seitenspezifische Skripte je Seite), Cache-Buster aus mtime+Größe (JS-Korrektur nach F5 live), 52 Dateien an jQuery,
+3 mit moderner Syntax, 11 mit fetch.  Eine Pipeline (Vite/esbuild, Bundles, optional TS/Linter) brächte eine neue
+Abhängigkeit auf die Produktionsmaschine oder eingecheckte Bundles, nähme den Live-Vorteil (Build je Änderung), und
+die eigentliche Arbeit wäre der Umbau der window-Globalen und Script-Reihenfolge in Module (2-4 Wochen) plus geforkte
+DataTables-Plugins als lokale Pakete - für null Operator- und Betriebsnutzen (LAN-intern).  Risiko gering (nur
+Frontend, Rückfall per Git).  Der Trigger der Strategie (stark reaktive Komponente) ist nie eingetreten.
+**Vorbedingungen für eine Wiederaufnahme:** GitHub-Veröffentlichung beschlossen (fremde Entwickler erwarten
+package.json + Linter) - dann zuerst nur Linter/Formatter als Entwicklungswerkzeug ohne Build-Schritt für die
+Produktion (~½ Tag), Bundling weiterhin nur per eigenem ADR.  Nicht erneut vorschlagen.
 
 **Status: Kern ABGESCHLOSSEN 2026-09-17** (Bewährungs-Signal des Operators
 für jq3 + FC6 nach drei ruhigen Monaten; Abschluss-Block: dataTransfer-Fix
@@ -3861,7 +3873,8 @@ MD5-Cache-Buster.
     uns trifft; (b) konkretes DT2-only-Bedürfnis (Barrierefreiheit,
     Extension); (c) Entscheidung „Legacy-Frontend bleibt auf Jahre".
     Bis dahin 1.13 vendored + gepinnt.
-- **(Optional) Build-Pipeline:** nur bei Trigger (s. Strategie), eigener ADR.
+- **(Optional) Build-Pipeline:** 🔴 Hold (Operator 2026-10-28, s. Kopf des Items); vorher: nur bei Trigger
+  (s. Strategie), eigener ADR.
 
 **Hauptrisiken (Stufe 2 absichern):**
 1. ✅ **FullCalendar-Zeitzonen-Patch — GELÖST (2026-06-01)** — war: Schedule-Grid
@@ -3889,7 +3902,18 @@ passt für Stufe 0/1.
 
 ### 🔴 Payware / Feature-Gating (Tier-System)
 
-**Status:** Hold — juristisch + strategisch vorklären.
+**Status:** Hold — juristisch + strategisch vorklären.  **Bestätigt Operator 2026-10-28** nach genauerer Erklärung.
+**Stand 2026-10-28:** AGPL-3.0 (LICENSE im Repo, Code überwiegend von LibreTime-Autoren) - Gates sind für jeden
+sichtbar und legal entfernbar, Relizenzierung des verwobenen Kerns nicht möglich; direkte Spannung mit dem
+GitHub-Thema (Payware nur als getrennte, nicht veröffentlichte Erweiterung neben dem offenen Kern denkbar); ein
+einziger Betreiber, keine zweite Installation - Tiers, Grandfathering, Konkurrenzanalyse setzen Kunden voraus, die
+es nicht gibt.  Technische Präzedenzen, falls je nötig: Rollen-System (vier Rollen, Zend ACL, Menü- + Aktions-Ebene)
+und der Stereo-Tool-Lizenzschlüssel (Settings-Feld steuert ein Feature); ein Tier wäre eine fünfte Dimension neben
+den Rollen (signierter Schlüssel in cc_pref, Prüfung im Acl_plugin, Feature-Katalog, Spiegelung in der API).  Risiko
+live: Gate-Fehler sperrt den Operator aus Sendefunktionen (Line-Inputs, Restart Services) aus.
+**Zusätzliche Vorbedingungen (vor den vier unten):** (0a) juristische Auskunft zur AGPL-Verträglichkeit, (0b)
+Entscheidung GitHub-Veröffentlichung ja/nein.  Realistische Alternative bleibt Donation / bezahlter Support statt
+bezahlter Funktionen.  Nicht erneut vorschlagen.
 **Evaluiert:** 2026-05-22.
 **Geschäftlicher Wert:** Hoch (Monetarisierung).
 **Technischer Aufwand:** ~3250 LoC, 6-10 Wochen.
@@ -5348,7 +5372,7 @@ cdbX64.exe -z <dump> -y "srv*C:\Temp\symbols*https://msdl.microsoft.com/download
 |---|---|---|
 | Aktive Backlog-Items | 3 (Show-Shift, Record-per-Hour, Widgets — Welle 1 erste Hälfte fertig) | 0 mit Go; 5 offene Betriebspunkte in „Stand vor dem Live-Betrieb" |
 | Deferred Items | 1 (JS-Modernisierung) | 13 (alle mit Vorbedingungen) |
-| Hold Items | 1 (Payware) | 1 (Payware) |
+| Hold Items | 1 (Payware) | 2 (Payware, JS-Build-Pipeline seit 2026-10-28) |
 | Future Ideas | 13 | ~26 (12 bewertete 💡 + 14 unbewertete unter „Future Feature Ideas") |
 | Known Bugs | 0 (RASTATIME-Code) + 1 Host-Hardware-Issue (Stand 2026-05-26, Mitigationen in Verifikation) | 0 offen (alle Einträge der Bug-Sektion ✅) |
 
