@@ -4998,8 +4998,8 @@ Startwert nach Neustart ≈ 1000 MB (davon ≈ 900 MB Stereo Tool, seit 2026-10-
 per `nssm set AppEnvironmentExtra` am PLAYOUT-Dienst (alle bestehenden Einträge wiederholt), harte
 Grenze 3072 unverändert; wirksam seit PLAYOUT-Neustart 17:57 (Umgebung des Prozesses geprüft) → Neustart etwa jede vierte
 Nacht.  Folge-Einstellung: Dashboard-Banner `RASTATIME_LIQUIDSOAP_MEMORY_WARN_MB=2816` (Vorgabe 2048 läge unter der neuen
-weichen Grenze und stünde den letzten Tag vor jedem Neustart), gesetzt 2026-10-28, wirksam nach dem nächsten PLAYOUT-
-Neustart — die laufende Instanz überschreitet 2048 MB voraussichtlich am 29.10. abends.  Manual LOCAL_MACHINE ×4 ergänzt.  **(b) Defer:** Ursache je Titel (Decoder, Cross-Puffer,
+weichen Grenze und stünde den letzten Tag vor jedem Neustart), gesetzt 2026-10-28, wirksam seit PLAYOUT-Neustart 18:02
+(Prozess-Umgebung geprüft); erster Grenz-Neustart mit der neuen Grenze voraussichtlich 31.10. 04:00.  Manual LOCAL_MACHINE ×4 ergänzt.  **(b) Defer:** Ursache je Titel (Decoder, Cross-Puffer,
 R128-Gain, ICY-Block, Telnet-Kommandos je Titel à 17 Selects) nur im Replikat eingrenzbar (4–6 h,
 Ergebnis offen); Vorbedingung: die Replikat-Messung aus dem Upgrade-Item zeigt, dass das Leck auch
 mit OCaml 5 bleibt — sonst erledigt sich (b) mit dem Upgrade.
