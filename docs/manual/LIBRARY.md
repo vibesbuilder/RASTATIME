@@ -541,6 +541,17 @@ Check the upload status badge:
 - **No badge but no row** either: the analyzer service is not
   running. Check `Get-Service RASTATIME-ANALYZER`.
 
+> **Failed uploads (since 2026-10-28).**  The filter on the Upload page
+> reads **Failed (N)** as soon as something failed, and the row says
+> *why* (the analyzer's reason, e.g. "ffprobe could not read the file").
+> **Download** gives you the original as it was uploaded, so you can look
+> at it or repair it; **Clear** removes the row together with the
+> original that the analyzer keeps in `organize/` for failed imports.
+> The dashboard warns when failed uploads older than an hour are waiting
+> or when files older than a day are left in `organize/`.  One kind of
+> damage is repaired automatically: a WAV file with an ID3 tag block in
+> front of its RIFF header is cut free and imported.
+
 ### "I uploaded a WAV file and the library shows an MP3."
 
 That is intended: lossless files are converted to MP3 320 kbps on

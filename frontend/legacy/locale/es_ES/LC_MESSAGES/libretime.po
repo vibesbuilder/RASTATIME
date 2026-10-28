@@ -6879,3 +6879,19 @@ msgstr "El autoloading está activado, pero el programa no tiene lista"
 #: RASTATIME 2026-10-28 library delete dialog / preflight banner
 msgid "the show would run silent. Edit the show and pick a playlist."
 msgstr "el programa quedaría en silencio. Edite el programa y elija una lista."
+
+#: RASTATIME 2026-10-28 failed uploads
+msgid "failed upload(s)"
+msgstr "subida(s) fallida(s)"
+
+#: RASTATIME 2026-10-28 failed uploads
+msgid "file(s) left in the organize folder"
+msgstr "archivo(s) pendiente(s) en la carpeta organize"
+
+#: RASTATIME 2026-10-28 failed uploads
+msgid "Open the Upload page"
+msgstr "Abrir la página de subida"
+
+#: RASTATIME 2026-10-28 failed uploads
+msgid "(filter Failed: Download or Clear)."
+msgstr "(filtro «Failed»: Descargar o Borrar)."

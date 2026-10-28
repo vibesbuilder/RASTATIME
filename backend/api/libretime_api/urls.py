@@ -30,6 +30,7 @@ from .storage.views.backup import (
     BackupStatusView,
     BackupValidateView,
 )
+from .storage.views.imports import FailedImportsView
 from .storage.views.reread_tags import RereadTagsView
 from .storage.views.location import (
     StorageLocationView,
@@ -78,6 +79,8 @@ urlpatterns = [
     path("api/v2/storage/backup/cancel", BackupCancelView.as_view(), name="storage-backup-cancel"),
     path("api/v2/storage/backup/auto", BackupAutoView.as_view(), name="storage-backup-auto"),
     path("api/v2/storage/backup/download", BackupDownloadView.as_view(), name="storage-backup-download"),
+    # RASTATIME 2026-10-28 - failed imports + organize/ leftovers (preflight, Upload page)
+    path("api/v2/storage/imports/failed", FailedImportsView.as_view(), name="storage-imports-failed"),
     path("api/v2/streams/outputs", stream_outputs, name="stream-outputs"),
     path(
         "api/v2/streams/outputs/<str:output_id>",

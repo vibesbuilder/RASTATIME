@@ -1,10 +1,13 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.100
+Draft version: 0.101
 Date: 2026-10-28
 
 > **Revision history**
+> - **0.101 (2026-10-28)** - **Failed imports** (§23.75): reason on the Upload
+>   page, "Clear" takes the organize/ original along, "Download", preflight
+>   `imports_failed`, repair of ID3-before-RIFF containers.
 > - **0.100 (2026-10-28)** - **Cue sidecars of the repeated hour** (§23.34
 >   addendum): one sidecar per real hour when the autumn clock change
 >   repeats a wall-clock hour.
@@ -7949,3 +7952,74 @@ test_show_instance.py`: range + modified filter, unfiltered list); JS
 syntax of `library.js` and `common.js` via `new Function`.  The dialog
 itself is accepted by the operator on the throw-away playlist
 "pwprobe-autoload"; the scan runs after a PLAYOUT restart.
+
+### 23.75 Failed Imports: Reason, Leftovers, Preflight, Container Repair (2026-10-28)
+
+**Context.**  An upload of 2026-10-20 failed in the analyzer (a RIFF/WAV
+file with MP3 payload and a 39 KB ID3v2 block glued in front of the RIFF
+header; ffprobe: "invalid start code ID3 in RIFF header").  The row went
+to `import_status = 2`, hidden; the original stayed in
+`<root>/organize/<id>-<name>` - by design, so a failure loses nothing - and
+nobody noticed for eight days.  The Upload page did have a "Failed"
+filter, but it carried no count, the newest 25 rows buried the failure,
+the row showed no reason (upstream's `StatusReporter.report_failure` wrote
+"An error occurred while importing this file" into a field `comment`,
+which does not exist - the column is `comments`), and "Clear" deleted the
+row only (`StoredFile::delete` removes the physical file for successful
+imports, a failed row has no `filepath`).
+
+**Decision (operator: (a)-(d)).**
+
+* **(a) Reason.**  `Pipeline.run_analysis` puts a failure record
+  `{import_status: 2, comments: <reason>}` into the result queue before it
+  re-raises (`Pipeline.failure` / `Pipeline.describe`: ffprobe/ffmpeg
+  stderr tail for `CalledProcessError`, the message of
+  `UnplayableFileError`, else `Type: text`, 300 characters);
+  `spawn_analyzer_process` takes it from the queue (fallback: the
+  exception text) and the usual success report carries it to
+  `PUT /rest/media/<id>`.  `report_failure` writes `comments` too.  The
+  Upload table renders the reason under "Import failed." (rows arrive
+  html-escaped).
+* **(b) Leftovers.**  `CcFiles::organizeLeftovers(id)` lists
+  `<root>/organize/<id>-*`; `deleteOrganizeLeftovers` removes them, called
+  by `StoredFile::delete` for rows with `IMPORT_STATUS_FAILED` ("Clear",
+  `DELETE /rest/media/<id>`).  `PluploadController::downloadFailedAction`
+  (`plupload/download-failed/id/<n>`) streams the first leftover of a
+  failed row to its owner, a Program Manager or an Admin; the Upload table
+  shows "Download | Clear" for failed rows.
+* **(c) Visibility.**  `recent-uploads` returns `numFailed` / `numPending`,
+  the filter labels read "Failed (N)" / "Pending (N)".  New
+  `GET /api/v2/storage/imports/failed` (`storage/views/imports.py`): the
+  failed rows (id, name, comment, utime, age) and every file in
+  `organize/` with size, age and the state of the row its `<id>-` prefix
+  names (failed / pending / imported / missing).  `PreflightChecker.
+  _scan_imports_failed` turns failures older than an hour and leftovers
+  older than a day whose row is not pending into one warning
+  `imports_failed` (counts, first names, message); `common.js` renders it
+  with a link to the Upload page.  A 404 (old API) submits nothing.
+* **(d) Repair.**  `pipeline/repair_container.py` runs first in the
+  pipeline: a file that starts with `ID3` and has a `RIFF....WAVE` header
+  within the first MB is copied without the leading block; an MP3 payload
+  is extracted with `ffmpeg -c:a copy` into `<stem>.repaired.mp3` (original
+  filename → `.mp3`), anything else continues as `<stem>.repaired.wav`
+  (→ `.wav`, handled by `convert_format` like any WAV).  The pipeline
+  treats the repaired file like a conversion: the broken original is
+  removed only after `organise_file` filed the copy (`remove_original`),
+  a later failure discards the copy and keeps the original; `source_md5`
+  is the original's md5 for the duplicate check.  The repair is applied
+  whenever the pattern is present, not only when ffprobe fails - small
+  blocks ffprobe tolerates, the 39 KB one it did not, and the cut is
+  harmless either way.
+
+**Verification.**  Analyzer tests (`repair_container_test.py`: offset
+detection, untouched file, MP3 payload copied without re-encode, PCM →
+WAV, pipeline files the repaired copy and removes the original, failure
+record and `describe`, failing pipeline leaves the record in the queue;
+`pipeline_test` adjusted to the record), API tests (`test_imports.py`:
+payload with failed row, leftovers of three kinds, key required, missing
+folder), playout tests (`test_preflight_imports_failed.py`: counts and
+age thresholds, clean state clears, 404, down, wired into `scan_once`),
+JS syntax of `plupload.js` / `common.js`; live: `recent-uploads` carries
+the counts, `download-failed` answers 404 for unknown and imported rows.
+End-to-end (broken file and an ID3-before-RIFF file through the Import
+Folder) after the ANALYZER restart.

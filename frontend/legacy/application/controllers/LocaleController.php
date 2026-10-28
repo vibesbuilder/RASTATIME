@@ -33,6 +33,15 @@ final class LocaleController extends Zend_Controller_Action
             'autoloading' => _('autoloading'),
             'intro' => _('intro'),
             'outro' => _('outro'),
+            // common/common.js - preflight banner, failed imports (RASTATIME 2026-10-28)
+            'failed upload(s)' => _('failed upload(s)'),
+            'file(s) left in the organize folder' => _('file(s) left in the organize folder'),
+            'Open the Upload page' => _('Open the Upload page'),
+            '(filter Failed: Download or Clear).' => _('(filter Failed: Download or Clear).'),
+            // library/plupload.js (RASTATIME 2026-10-28)
+            'Download' => _('Download'),
+            'Failed' => _('Failed'),
+            'Pending' => _('Pending'),
             // common/common.js - preflight banner (RASTATIME 2026-10-28)
             'Autoloading is on, but the show has no playlist' => _('Autoloading is on, but the show has no playlist'),
             'the show would run silent. Edit the show and pick a playlist.' => _('the show would run silent. Edit the show and pick a playlist.'),

@@ -7043,3 +7043,19 @@ msgstr "L'autoloading est actif, mais l'émission n'a pas de playlist"
 #: RASTATIME 2026-10-28 library delete dialog / preflight banner
 msgid "the show would run silent. Edit the show and pick a playlist."
 msgstr "l'émission resterait silencieuse. Modifiez l'émission et choisissez une playlist."
+
+#: RASTATIME 2026-10-28 failed uploads
+msgid "failed upload(s)"
+msgstr "téléversement(s) échoué(s)"
+
+#: RASTATIME 2026-10-28 failed uploads
+msgid "file(s) left in the organize folder"
+msgstr "fichier(s) resté(s) dans le dossier organize"
+
+#: RASTATIME 2026-10-28 failed uploads
+msgid "Open the Upload page"
+msgstr "Ouvrir la page d'envoi"
+
+#: RASTATIME 2026-10-28 failed uploads
+msgid "(filter Failed: Download or Clear)."
+msgstr "(filtre « Failed » : Télécharger ou Effacer)."

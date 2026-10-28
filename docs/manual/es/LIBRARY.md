@@ -474,6 +474,17 @@ Verifique la insignia de estado de subida:
 - **Sin insignia pero sin fila**: el servicio analyzer no
   está corriendo.
 
+> **Subidas fallidas (desde el 28/10/2026).**  El filtro de la página de
+> subida muestra **Failed (N)** en cuanto algo falla, y la fila dice *por
+> qué* (el motivo del analyzer, p. ej. «ffprobe could not read the file»).
+> **Download** entrega el original tal como se subió, para examinarlo o
+> repararlo; **Clear** elimina la fila junto con el original que el
+> analyzer conserva en `organize/` para las importaciones fallidas.  El
+> panel avisa cuando hay subidas fallidas de más de una hora esperando o
+> archivos de más de un día en `organize/`.  Un tipo de daño se repara
+> automáticamente: un archivo WAV con un bloque de etiquetas ID3 delante de
+> su cabecera RIFF se recorta y se importa.
+
 ### "Subí un archivo WAV y la biblioteca muestra un MP3."
 
 Es lo previsto: los archivos sin pérdida se convierten a MP3 de

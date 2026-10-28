@@ -187,7 +187,7 @@ class MessageListener:
                     callback_url,
                     callback_api_key,
                     import_status=2,
-                    reason="An error occurred while importing this file",
+                    reason=Pipeline.describe(exception)[:300],
                 )
 
         else:
@@ -222,7 +222,15 @@ class MessageListener:
         except Exception as exception:
             logger.exception("Analyzer pipeline exception: %s", exception)
             if not loudness_only:
-                metadata["import_status"] = PipelineStatus.FAILED
+                # RASTATIME 2026-10-28 - the pipeline leaves its failure
+                # record (import_status + the reason as "comment") in the
+                # queue before raising; fall back to the exception text.
+                try:
+                    metadata = queue.get_nowait()
+                except Exception:  # pylint: disable=broad-exception-caught
+                    metadata = {}
+                if metadata.get("import_status") != PipelineStatus.FAILED:
+                    metadata = Pipeline.failure(Pipeline.describe(exception))
 
         # Ensure our queue doesn't fill up and block due to unexpected behavior. Defensive code.
         while not queue.empty():

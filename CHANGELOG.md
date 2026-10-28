@@ -212,6 +212,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Upload: gescheiterte Importe sichtbar, erklärt, aufräumbar und ein Fall
+  reparierbar (2026-10-28, Operator-Go (a)–(d) zum Befund der liegen
+  gebliebenen Datei in `organize/`)** — (a) der Analyzer meldet den echten
+  Grund (ffprobe-/ffmpeg-Fehlertext, „nicht abspielbar", Ausnahme) in
+  `cc_files.comments`; upstream schrieb den Einheitssatz in das Feld
+  „comment", das es nicht gibt.  Die Upload-Tabelle zeigt den Grund unter
+  „Import failed.".  (b) „Clear" löscht neben der Zeile das Original, das
+  der Analyzer bei Fehlschlägen in `organize/<id>-<name>` aufbewahrt; neue
+  Aktion „Download" liefert es vorher zum Prüfen (Besitzer, PM, Admin).
+  (c) Filter „Failed (N)" / „Pending (N)" auf der Upload-Seite; neuer
+  Endpunkt `GET /api/v2/storage/imports/failed` (Fehlschläge + Reste in
+  `organize/` mit Zeilenstatus); Preflight-Warnart `imports_failed`
+  (Fehlschläge älter als 1 h, Reste älter als 1 Tag ohne laufenden Import)
+  mit Banner-Link zur Upload-Seite.  (d) `repair_container` vor
+  `analyze_metadata`: ein ID3-Block vor einem RIFF/WAVE-Kopf wird
+  abgeschnitten, MP3-Payload ohne Neukodierung ausgelesen, PCM als WAV
+  weitergegeben; `source_md5` = Original, das Original bleibt bis zum
+  Einsortieren.  Tests: Analyzer 9 neu + 1 angepasst, API 3, Playout 5,
+  JS-Syntax.  Neustarts ANALYZER, API, PLAYOUT, Apache nötig.  Manual
+  LIBRARY FAQ EN/DE/FR/ES, Architektur §23.75 (0.101).
 - **Autoloading: Löschen einer verwendeten Playlist warnt, räumt auf und
   wird im Dashboard gemeldet (2026-10-28, Operator-Go zu Backlog-Punkt 2,
   Variante (c))** — beim Löschen einer Playlist setzte der Fremdschlüssel

@@ -432,6 +432,46 @@ class CcFiles extends BaseCcFiles
      * @throws LibreTimeFileNotFoundException
      * @throws PropelException
      */
+    /**
+     * RASTATIME 2026-10-28 - the original of a FAILED import stays in
+     * <root>/organize/<id>-<name> (so nothing is lost); "Clear" on the Upload
+     * page used to delete the row only and the file lived on unnoticed.
+     *
+     * @return string[] the matching files (absolute paths)
+     */
+    public static function organizeLeftovers($id): array
+    {
+        $id = (int) $id;
+        if ($id <= 0) {
+            return [];
+        }
+        $dir = rtrim(Application_Common_Storage::root(), '/\\') . '/organize';
+        $hits = [];
+        foreach (glob($dir . '/' . $id . '-*', GLOB_NOSORT) ?: [] as $path) {
+            if (is_file($path) && strpos(basename($path), $id . '-') === 0) {
+                $hits[] = $path;
+            }
+        }
+
+        return $hits;
+    }
+
+    /** Delete the organize/ leftovers of a failed import; returns how many. */
+    public static function deleteOrganizeLeftovers($id): int
+    {
+        $n = 0;
+        foreach (self::organizeLeftovers($id) as $path) {
+            if (@unlink($path)) {
+                ++$n;
+                Logging::info('Removed organize leftover of failed import ' . (int) $id . ': ' . basename($path));
+            } else {
+                Logging::warn('Could not remove organize leftover ' . $path);
+            }
+        }
+
+        return $n;
+    }
+
     public static function deleteById($id)
     {
         $file = CcFilesQuery::create()->findPk($id);

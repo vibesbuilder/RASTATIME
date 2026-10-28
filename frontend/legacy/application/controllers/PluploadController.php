@@ -10,6 +10,43 @@ class PluploadController extends Zend_Controller_Action
             ->initContext();
     }
 
+    /**
+     * RASTATIME 2026-10-28 - GET plupload/download-failed/id/<n>: the
+     * original of a FAILED import as it sits in <root>/organize/<id>-<name>,
+     * so the operator can inspect or repair it before "Clear" throws it
+     * away.  Owner, Program Manager or Admin only.
+     */
+    public function downloadFailedAction()
+    {
+        $this->view->layout()->disableLayout();
+        $this->_helper->viewRenderer->setNoRender(true);
+        $id = (int) $this->_getParam('id');
+        $file = CcFilesQuery::create()->findPk($id);
+        $userInfo = Zend_Auth::getInstance()->getStorage()->read();
+        $user = $userInfo ? new Application_Model_User($userInfo->id) : null;
+        if (!$file || $file->getDbImportStatus() != CcFiles::IMPORT_STATUS_FAILED || !$user
+            || (!$user->isAdminOrPM() && (int) $file->getDbOwnerId() !== (int) $user->getId())) {
+            $this->getResponse()->setHttpResponseCode(404);
+
+            return;
+        }
+        $paths = CcFiles::organizeLeftovers($id);
+        if (!$paths) {
+            $this->getResponse()->setHttpResponseCode(404)->setBody(_('The original of this failed import is no longer in the organize folder.'));
+
+            return;
+        }
+        $path = $paths[0];
+        $name = preg_replace('/^' . $id . '-/', '', basename($path));
+        $this->getResponse()
+            ->setHeader('Content-Type', 'application/octet-stream')
+            ->setHeader('Content-Disposition', 'attachment; filename="' . addslashes(str_replace(["\r", "\n"], '', $name)) . '"')
+            ->setHeader('Content-Length', (string) filesize($path))
+            ->setHeader('X-Content-Type-Options', 'nosniff');
+        $this->getResponse()->sendHeaders();
+        readfile($path);
+    }
+
     public function indexAction()
     {
         $locale = Application_Model_Preference::GetLocale();
@@ -126,6 +163,10 @@ class PluploadController extends Zend_Controller_Action
         $this->view->iTotalDisplayRecords = $numTotalDisplayUploads;
         $this->view->iTotalRecords = $numTotalRecentUploads;
         $this->view->files = SecurityHelper::htmlescape_recursive($uploadsArray);
+        // RASTATIME 2026-10-28 - counts for the filter labels "Failed (N)" /
+        // "Pending (N)" so a buried failure is seen without clicking around
+        $this->view->numFailed = CcFilesQuery::create()->filterByDbFileExists(true)->filterByDbImportStatus(CcFiles::IMPORT_STATUS_FAILED)->count();
+        $this->view->numPending = CcFilesQuery::create()->filterByDbFileExists(true)->filterByDbImportStatus(CcFiles::IMPORT_STATUS_PENDING)->count();
     }
 
     /**

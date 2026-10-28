@@ -89,6 +89,11 @@ class PreflightChecker:
     #: Autoloading Playlist" ticked but no playlist (deleted from the
     #: library): the slot would stay empty.
     WARNING_TYPE_AUTOPLAYLIST_MISSING = "autoplaylist_missing"
+    #: RASTATIME 2026-10-28 - failed uploads waiting on the Upload page, or
+    #: files left in the analyzer's organize/ folder.
+    WARNING_TYPE_IMPORTS_FAILED = "imports_failed"
+    FAILED_IMPORT_MIN_AGE_SECS = 60 * 60          # a failure younger than this is still "being looked at"
+    ORGANIZE_LEFTOVER_MIN_AGE_SECS = 24 * 60 * 60  # a pending import may sit here for a while
 
     # ------------------------------------------------------------------
     # Construction & lifecycle
@@ -207,6 +212,7 @@ class PreflightChecker:
         self._scan_storage_root()
         self._scan_stereotool()
         self._scan_autoplaylist_missing()
+        self._scan_imports_failed()
 
     # ------------------------------------------------------------------
     # Liquidsoap process health (RASTATIME 2026-09-05)
@@ -494,6 +500,61 @@ class PreflightChecker:
         except Exception as exc:  # pylint: disable=broad-exception-caught
             logger.debug("preflight: Main Output setting unavailable: %s", exc)
             return ""
+
+    # ------------------------------------------------------------------
+    # Failed imports / organize leftovers (RASTATIME 2026-10-28)
+    # ------------------------------------------------------------------
+
+    def _scan_imports_failed(self) -> None:
+        """
+        ``imports_failed``: library rows with import_status 2 older than an
+        hour, and files in the analyzer's organize/ folder older than a day
+        whose row is not pending (GET /api/v2/storage/imports/failed).  One
+        warning carries both counts and the first names; an old API without
+        the endpoint submits nothing.
+        """
+        try:
+            resp = self._api_client.session.get("/api/v2/storage/imports/failed", timeout=10)
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            logger.debug("preflight: failed-imports endpoint unavailable: %s", exc)
+            return
+        if resp.status_code != 200:
+            return
+        try:
+            data = resp.json()
+        except Exception:  # pylint: disable=broad-exception-caught
+            return
+        if not isinstance(data, dict):
+            return
+        failed = [
+            f for f in data.get("failed", [])
+            if (f.get("age_seconds") or 0) >= self.FAILED_IMPORT_MIN_AGE_SECS
+        ]
+        leftovers = [
+            l for l in data.get("leftovers", [])
+            if (l.get("age_seconds") or 0) >= self.ORGANIZE_LEFTOVER_MIN_AGE_SECS and l.get("row") != "pending"
+        ]
+        warnings: list[dict] = []
+        if failed or leftovers:
+            names = [f.get("name") or "?" for f in failed[:5]] + [l.get("file") or "?" for l in leftovers[:5]]
+            parts = []
+            if failed:
+                parts.append(f"{len(failed)} failed upload(s) on the Upload page")
+            if leftovers:
+                parts.append(f"{len(leftovers)} file(s) left in {data.get('organize_dir') or 'organize/'}")
+            warnings.append({
+                "severity":         "warning",
+                "show_id":          None,
+                "show_instance_id": None,
+                "starts_at":        None,
+                "detail": {
+                    "failed_count":   len(failed),
+                    "leftover_count": len(leftovers),
+                    "names":          names[:8],
+                    "message":        "; ".join(parts) + " - Upload page, filter Failed: Download or Clear.",
+                },
+            })
+        self._submit_warnings(self.WARNING_TYPE_IMPORTS_FAILED, str(uuid.uuid4()), warnings)
 
     # ------------------------------------------------------------------
     # Autoloading playlist missing (RASTATIME 2026-10-28)

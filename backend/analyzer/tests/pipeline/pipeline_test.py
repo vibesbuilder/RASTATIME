@@ -125,6 +125,10 @@ def test_failed_import_after_conversion_keeps_the_original(
             PipelineOptions(convert_lossless=True),
         )
 
+    # RASTATIME 2026-10-28 - the failure record (reason for the Upload page)
+    # is the only thing in the queue
+    record = queue.get_nowait()
+    assert record["import_status"] == 2 and "disk full" in record["comments"]
     assert queue.empty()
     assert [p.name for p in src_dir.iterdir()] == [src.name]  # no MP3 left over
     assert src.read_bytes() == data

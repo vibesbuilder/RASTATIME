@@ -1,4 +1,5 @@
 import logging
+import os
 from enum import Enum
 from queue import Queue
 from typing import Any, Dict, Protocol
@@ -12,6 +13,7 @@ from .analyze_playability import UnplayableFileError, analyze_playability
 from .analyze_replaygain import analyze_replaygain
 from .convert_format import convert_format, discard_converted, remove_original
 from .organise_file import organise_file
+from .repair_container import repair_container
 
 logger = logging.getLogger(__name__)
 
@@ -89,12 +91,20 @@ class Pipeline:
             # Analyze the audio file we were told to analyze:
             # First, we extract the ID3 tags and other metadata:
             metadata = {}
+            # RASTATIME 2026-10-28 - a container ffprobe rejects (ID3 block in
+            # front of a RIFF header) is repaired into a sibling copy first;
+            # the broken original stays until the copy is filed, like a
+            # converted file's source.
+            source_path = audio_file_path
+            audio_file_path, original_filename, metadata = repair_container(
+                audio_file_path, original_filename, metadata,
+            )
+            repaired_path = audio_file_path if audio_file_path != source_path else None
             metadata = analyze_metadata(audio_file_path, metadata)
             # RASTATIME 2026-10-14 - format normalization: raw ADTS AAC is
             # repacked to M4A, lossless audio transcoded to MP3 320 kbps (when
             # convert_lossless).  It may hand back a new file and file name;
             # every later step measures the file that is filed in the library.
-            source_path = audio_file_path
             audio_file_path, original_filename, metadata = convert_format(
                 audio_file_path,
                 original_filename,
@@ -122,11 +132,15 @@ class Pipeline:
                 # organize/ exactly as without it.
                 if converted:
                     discard_converted(audio_file_path)
+                if repaired_path and repaired_path != audio_file_path:
+                    discard_converted(repaired_path)
                 raise
             if converted:
                 # Operator decision 2026-10-14: the lossless original is not
                 # kept - deleted only now that its conversion is filed.
                 remove_original(source_path)
+                if repaired_path and repaired_path != audio_file_path:
+                    discard_converted(repaired_path)  # the intermediate of a repaired + converted file
 
             metadata["import_status"] = PipelineStatus.SUCCEED
 
@@ -134,12 +148,37 @@ class Pipeline:
             queue.put(metadata)
         except UnplayableFileError as exception:
             logger.exception(exception)
-            metadata["import_status"] = PipelineStatus.FAILED
-            metadata["reason"] = "The file could not be played."
+            queue.put(Pipeline.failure("The file could not be played: " + str(exception)))
             raise exception
         except Exception as exception:
             logger.exception(exception)
+            queue.put(Pipeline.failure(Pipeline.describe(exception)))
             raise exception
+
+    # RASTATIME 2026-10-28 - the reason of a failed import travels to the
+    # library row (cc_files.comment) and from there to the Upload page's
+    # "Failed" rows; before, every failure read "An error occurred while
+    # importing this file" and the real cause was in the analyzer log only.
+    REASON_MAX = 300
+
+    @staticmethod
+    def describe(exception: BaseException) -> str:
+        import subprocess  # noqa: PLC0415
+
+        if isinstance(exception, subprocess.CalledProcessError):
+            tool = os.path.basename(str(exception.cmd[0])) if exception.cmd else "tool"
+            err = exception.stderr
+            if isinstance(err, bytes):
+                err = err.decode("utf-8", "replace")
+            tail = " ".join(str(err or "").strip().splitlines()[-2:])
+            return f"{tool} could not read the file: {tail}".strip()
+        text = str(exception).strip() or exception.__class__.__name__
+        return f"{exception.__class__.__name__}: {text}" if not text.startswith(exception.__class__.__name__) else text
+
+    @staticmethod
+    def failure(reason: str) -> Dict[str, Any]:
+        reason = " ".join(str(reason).split())[: Pipeline.REASON_MAX]
+        return {"import_status": PipelineStatus.FAILED, "comments": reason}
 
     @staticmethod
     def run_loudness(queue: Queue, audio_file_path: str):

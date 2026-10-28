@@ -595,6 +595,18 @@ Vérifiez le badge de statut de téléversement :
   analyzer ne tourne pas. Vérifiez
   `Get-Service RASTATIME-ANALYZER`.
 
+> **Téléversements échoués (depuis le 28/10/2026).**  Le filtre de la page
+> d'envoi affiche **Failed (N)** dès qu'un envoi a échoué, et la ligne dit
+> *pourquoi* (la raison de l'analyzer, p. ex. « ffprobe could not read the
+> file »).  **Download** fournit l'original tel qu'il a été envoyé, pour
+> l'examiner ou le réparer ; **Clear** supprime la ligne avec l'original
+> que l'analyzer conserve dans `organize/` pour les imports échoués.  Le
+> tableau de bord avertit quand des envois échoués de plus d'une heure
+> attendent ou quand des fichiers de plus d'un jour restent dans
+> `organize/`.  Un type de dégât est réparé automatiquement : un fichier
+> WAV avec un bloc de tags ID3 devant son en-tête RIFF est dégagé et
+> importé.
+
 ### "J'ai téléversé un fichier WAV et la bibliothèque affiche un MP3."
 
 C'est voulu : les fichiers sans perte sont convertis en MP3 320 kbit/s

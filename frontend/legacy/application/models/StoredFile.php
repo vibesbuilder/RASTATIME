@@ -964,6 +964,10 @@ SQL;
                     Logging::error($e);
                 }
             }
+        } elseif ($this->_file->getDbImportStatus() == CcFiles::IMPORT_STATUS_FAILED) {
+            // RASTATIME 2026-10-28 - "Clear" takes the stranded original in
+            // organize/ along (it has no filepath of its own)
+            CcFiles::deleteOrganizeLeftovers($this->_file->getDbId());
         }
 
         // Update the user's disk usage

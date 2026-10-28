@@ -637,6 +637,20 @@ function loadPreflightWarnings() {
               $.i18n._("Check liquidsoap.log (Main Output device?), then restart PLAYOUT, then LIQUIDSOAP.")
             )
           );
+        } else if (w.warning_type === "imports_failed") {
+          // RASTATIME 2026-10-28: failed uploads waiting on the Upload page
+          // and/or files left in the analyzer's organize folder.
+          var bits = [];
+          if (detail.failed_count) {
+            bits.push(detail.failed_count + " " + $.i18n._("failed upload(s)"));
+          }
+          if (detail.leftover_count) {
+            bits.push(detail.leftover_count + " " + $.i18n._("file(s) left in the organize folder"));
+          }
+          $li.append(document.createTextNode(" " + bits.join(", ") + ". "));
+          var $link = $("<a></a>").attr("href", baseUrl + "plupload").text($.i18n._("Open the Upload page"));
+          $li.append($link);
+          $li.append(document.createTextNode(" " + $.i18n._("(filter Failed: Download or Clear).")));
         } else if (w.warning_type === "autoplaylist_missing") {
           // RASTATIME 2026-10-28: "Add Autoloading Playlist" is ticked but
           // the playlist is gone (deleted from the library) - the show

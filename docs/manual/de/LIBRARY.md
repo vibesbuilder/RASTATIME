@@ -583,6 +583,17 @@ Prüfen Sie den Upload-Status-Badge:
 - **Kein Badge aber auch keine Zeile**: Der Analyzer-Dienst
   läuft nicht. Prüfen Sie `Get-Service RASTATIME-ANALYZER`.
 
+> **Gescheiterte Uploads (seit 28.10.2026).**  Der Filter auf der
+> Upload-Seite heißt **Failed (N)**, sobald etwas gescheitert ist, und die
+> Zeile sagt *warum* (der Grund des Analyzers, z. B. „ffprobe could not
+> read the file").  **Download** liefert das Original, wie es hochgeladen
+> wurde, zum Prüfen oder Reparieren; **Clear** entfernt die Zeile samt dem
+> Original, das der Analyzer bei Fehlschlägen in `organize/` aufbewahrt.
+> Das Dashboard warnt, wenn gescheiterte Uploads älter als eine Stunde
+> warten oder Dateien älter als ein Tag in `organize/` liegen.  Eine Art
+> Beschädigung wird automatisch repariert: eine WAV-Datei mit einem
+> ID3-Tag-Block vor ihrem RIFF-Kopf wird freigeschnitten und importiert.
+
 ### "Ich habe eine WAV-Datei hochgeladen, und die Bibliothek zeigt eine MP3."
 
 Das ist gewollt: Verlustfreie Dateien werden beim Import in MP3 mit

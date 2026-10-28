@@ -81,6 +81,14 @@ $(document).ready(function () {
     if (self.IMPORT_STATUS_CODES[importStatusCode]) {
       statusStr = self.IMPORT_STATUS_CODES[importStatusCode].message;
     }
+    // RASTATIME 2026-10-28 - a failed import shows WHY (the analyzer's
+    // reason, stored in the row's comment); the rows arrive html-escaped.
+    if (importStatusCode === 2 && full && full.comments) {
+      statusStr +=
+        '<br><span class="upload-fail-reason" title="' + full.comments + '">' +
+        full.comments +
+        "</span>";
+    }
 
     return statusStr;
   };
@@ -96,8 +104,20 @@ $(document).ready(function () {
       //No actions for pending files
       return $.i18n._("N/A");
     } else {
-      //Failed downloads
-      return '<a class="deleteFileAction">' + $.i18n._("Clear") + "</a>";
+      //Failed downloads - RASTATIME 2026-10-28: the stranded original can be
+      //downloaded (inspect / repair) before "Clear" removes row and file
+      return (
+        '<a href="' +
+        baseUrl +
+        "plupload/download-failed/id/" +
+        full.id +
+        '" class="downloadFailedAction">' +
+        $.i18n._("Download") +
+        "</a> | " +
+        '<a class="deleteFileAction">' +
+        $.i18n._("Clear") +
+        "</a>"
+      );
     }
   };
 
@@ -176,6 +196,15 @@ $(document).ready(function () {
         aoData.push({ name: "uploadFilter", value: self.uploadFilter });
         $.getJSON(sSource, aoData, function (json) {
           fnCallback(json);
+          // RASTATIME 2026-10-28 - "Failed (N)" / "Pending (N)" on the filter
+          if (typeof json.numFailed === "number") {
+            $("label[for=upload_status_failed]").text(
+              $.i18n._("Failed") + (json.numFailed ? " (" + json.numFailed + ")" : "")
+            );
+            $("label[for=upload_status_pending]").text(
+              $.i18n._("Pending") + (json.numPending ? " (" + json.numPending + ")" : "")
+            );
+          }
           if (json.files) {
             var areAnyFileImportsPending = false;
             for (var i = 0; i < json.files.length; i++) {

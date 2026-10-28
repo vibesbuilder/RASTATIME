@@ -213,7 +213,8 @@ class StatusReporter:
         logger.debug("Reporting import failure to Airtime REST API...")
         audio_metadata = {}
         audio_metadata["import_status"] = import_status
-        audio_metadata["comment"] = reason  # hack attack
+        # RASTATIME 2026-10-28 - the column is "comments"; "comment" never landed anywhere
+        audio_metadata["comments"] = reason
         put_payload = json.dumps(audio_metadata)
         # logger.debug("sending http put with payload: %s", put_payload)
 
