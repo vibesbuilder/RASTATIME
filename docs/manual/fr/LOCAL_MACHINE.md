@@ -213,7 +213,10 @@ avertissements du tableau de bord le surveillent (depuis le
   une nuit sur deux, quel que soit l'intervalle. Relevez
   `RASTATIME_LIQUIDSOAP_RESTART_AT_MB` pour garder de la marge au-dessus
   de cette base (2560 Mo sur une machine avec 16 Go de RAM) ; la limite
-  dure de 3072 Mo continue de protéger la machine.
+  dure de 3072 Mo continue de protéger la machine. Relevez aussi
+  l'avertissement du tableau de bord `RASTATIME_LIQUIDSOAP_MEMORY_WARN_MB`
+  (2816 Mo, entre les deux limites), sinon la bannière s'affiche le
+  dernier jour avant chaque redémarrage planifié.
 - **Repli standby pour les auditeurs.** Un second Liquidsoap
   minuscule (service RASTATIME-STANDBY, script `standby.liq` rendu par
   la diffusion avec les mêmes encodeurs) diffuse du silence sur une

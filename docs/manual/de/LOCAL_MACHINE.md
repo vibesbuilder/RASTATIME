@@ -255,7 +255,10 @@ Sicherung und die dritte Warnung seit dem 2026-09-07):
   Engine jede zweite Nacht neu, egal was das Intervall sagt. Heben Sie
   `RASTATIME_LIQUIDSOAP_RESTART_AT_MB` an, damit über dieser Basis
   Luft bleibt (2560 MB auf einer Maschine mit 16 GB RAM); die harte
-  Grenze von 3072 MB schützt die Maschine weiterhin.
+  Grenze von 3072 MB schützt die Maschine weiterhin. Heben Sie die
+  Dashboard-Warnung `RASTATIME_LIQUIDSOAP_MEMORY_WARN_MB` mit an
+  (2816 MB, zwischen beiden Grenzen), sonst steht das Banner jeweils den
+  letzten Tag vor jedem geplanten Neustart.
 - **Standby-Fallback für Hörer.** Ein zweites, kleines Liquidsoap
   (Dienst RASTATIME-STANDBY, Skript `standby.liq`, vom Playout mit
   denselben Encodern gerendert) streamt Stille auf eine `-standby`-

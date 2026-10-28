@@ -211,7 +211,10 @@ el tercer aviso desde el 2026-09-07):
   dos noches, diga lo que diga el intervalo. Suba
   `RASTATIME_LIQUIDSOAP_RESTART_AT_MB` para dejar margen por encima de
   esa base (2560 MB en una máquina con 16 GB de RAM); el límite duro de
-  3072 MB sigue protegiendo la máquina.
+  3072 MB sigue protegiendo la máquina. Suba también el aviso del panel
+  `RASTATIME_LIQUIDSOAP_MEMORY_WARN_MB` (2816 MB, entre ambos límites);
+  si no, el banner aparece el último día antes de cada reinicio
+  planificado.
 - **Respaldo standby para los oyentes.** Un segundo Liquidsoap
   diminuto (servicio RASTATIME-STANDBY, script `standby.liq` generado
   por la emisión con los mismos codificadores) emite silencio en una

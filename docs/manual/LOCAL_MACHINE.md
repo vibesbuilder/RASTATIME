@@ -237,7 +237,10 @@ and the third warning since 2026-09-07):
   trigger restarts the engine every second night no matter what the
   interval says. Raise `RASTATIME_LIQUIDSOAP_RESTART_AT_MB` to leave
   room above that baseline (2560 MB on a machine with 16 GB of RAM);
-  the hard limit of 3072 MB keeps protecting the machine.
+  the hard limit of 3072 MB keeps protecting the machine. Move the
+  dashboard warning `RASTATIME_LIQUIDSOAP_MEMORY_WARN_MB` up with it
+  (2816 MB, between the two limits), or the banner shows for the last
+  day before every planned restart.
 - **Standby fallback for listeners.** A second, tiny Liquidsoap
   (service RASTATIME-STANDBY, script `standby.liq` rendered by the
   playout with the same encoders) streams silence to a `-standby`
