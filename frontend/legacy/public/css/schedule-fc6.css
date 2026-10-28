@@ -222,7 +222,7 @@
 /* RASTATIME 2026-10-28 - "Undo" after deleting a show (undo-delete.js).
  * The chips of a pending delete disappear at once; the toast sits at the
  * bottom centre, one row per pending delete, dark like the calendar frame,
- * the Undo link in the secondary colour. */
+ * the Undo link in the primary colour. */
 #schedule_calendar .fc-event.rt-pending-delete,
 #schedule_calendar .rt-pending-delete {
     display: none !important;
@@ -256,7 +256,7 @@
     white-space: nowrap;
 }
 .rt-undo-toast .rt-undo-link {
-    color: var(--rt-secondary);
+    color: var(--rt-accent); /* primary colour (operator 2026-10-28) */
     font-weight: bold;
     text-decoration: none;
     text-transform: uppercase;

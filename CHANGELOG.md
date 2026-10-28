@@ -232,6 +232,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Rand des Kalenders verlegt, direkt unter der Werkzeugleiste und über der
   Kalendermitte zentriert (gemessen: Oberkante 160 px, Leiste endet bei
   153 px, Mitte 1036 zu 1035 px).
+  Link „Undo“ in der Primärfarbe statt der Sekundärfarbe.
 - **Upload: gescheiterte Importe sichtbar, erklärt, aufräumbar und ein Fall
   reparierbar (2026-10-28, Operator-Go (a)–(d) zum Befund der liegen
   gebliebenen Datei in `organize/`)** — (a) der Analyzer meldet den echten
