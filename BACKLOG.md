@@ -6126,7 +6126,9 @@ mit 10-s-Countdown und „Undo", der unveraenderte Loeschaufruf geht erst danach
 Seite schickt offene Loeschungen als Beacon (CSRF im Body); Fehlschlag des spaeten Aufrufs blendet wieder ein.  Server
 unveraendert, „Cancel Show" bleibt sofort.  Neubewertung gegenueber dem 23.10.: Weg a) ist der sichere (Fehlrichtung =
 nicht geloescht), Weg b) der riskante; die Behauptung „Bestaetigungsabfrage bleibt der Schutz" war falsch — das
-Kalendermenue loeschte ohne Rueckfrage.  Harness-Abnahme im eingebauten Browser, Operator-Abnahme im Kalender offen.
+Kalendermenue loeschte ohne Rueckfrage.  Harness-Abnahme im eingebauten Browser; Operator-Abnahme 2026-10-28 abends bestanden (Toast auf Wunsch oben unter der
+Werkzeugleiste `ae1ab6a9`, Undo-Link in Primärfarbe `466c5058`).  Nebenbefund dabei behoben: bearbeitete Instanz einer
+wiederkehrenden Sendung bot „Delete Instance and All Following“ an (Upstream-Reihenfolgefehler, `adf052e9`, abgenommen).
 **Operator 2026-10-28 (vormittags):** zunaechst Defer; nach genauerer Risiko-Erklaerung Go fuer Variante A.
 
 
