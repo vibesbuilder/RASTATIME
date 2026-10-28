@@ -5733,7 +5733,9 @@ cc_pref `bulk_import_allow_duplicates` (Standard aus), speichert beim Anklicken 
 
 ## Backup und Teaser (Operator 2026-10-16)
 
-### 💡 Backup: Recordings in den Medienspiegel aufnehmen (Operator 2026-10-16 -> Backlog)
+### ❌ Backup: Recordings in den Medienspiegel aufnehmen (Operator 2026-10-16 -> Backlog) - Operator erledigt es manuell 2026-10-28
+**Operator 2026-10-28:** kein Umbau; stattdessen ein neues Backup inklusive Medien von Hand, alte Backups werden gelöscht
+(sie sind überflüssig).  Kein Code.  Ursprüngliche Notiz:
 Befund: Medienspiegel (robocopy, backup.py) umfasst nur die Bibliothekswurzel D:/stor; die 24/7-Aufnahme
 (D:/recordings/24-7, ~12 GB, 10 Tage Aufbewahrung) und die Sendungsaufnahmen (C:/Users/studio/Music/Show
 Recordings) sind nicht gesichert.  Backup-Ziel stand am 16.10. noch auf D:/backups (gleiche Platte wie
@@ -6105,7 +6107,7 @@ Django `core.User` mit Paket `bcrypt`; alter MD5-Hash wird einmal akzeptiert und
 `manage.py password_hashes`.  PHP-Probe 14/14 (Adapter, DJ-Pfad, $2b$/$2y$, Rehash), Django-Tests 185 grün, HTTPS-Login
 mit MD5-Wegwerfkonto → 302 + Hash $2y$12$.  API-Neustart 2026-10-28 08:33 + Basic-Auth-Probe (bcrypt 200, falsch 403,
 MD5-Konto 200 → danach $2b$): Abnahme komplett.  Offen nur noch: Login aller zehn Konten → Umstellung (password_hashes zählt),
-neue Passwörter für die Admin-Konten wegen alter Backups (Empfehlung).
+alte Backups mit MD5-Werten: Operator löscht sie 2026-10-28 statt die Admin-Passwörter neu zu setzen.
 
 **Ursprünglicher Befund:**
 
