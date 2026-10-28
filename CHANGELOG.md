@@ -230,7 +230,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Dashboard-Banner.  Acht neue Oberflächentexte DE/FR/ES.  Proben: PHP
   5/5, Playout-Tests 5, API-Filtertest 2, JS-Syntax.  PLAYOUT-Neustart
   nötig.  Manual LIBRARY „Deleting a playlist that shows still use" +
-  AUTOLOADING §7 EN/DE/FR/ES, Architektur §23.74 (0.99).
+  AUTOLOADING §7 EN/DE/FR/ES, Architektur §23.74 (0.99).  Commit 53872155.
 - **Sekundärfarbe der Oberfläche als Einstellung (2026-10-26, Operator,
   Backlog-Punkt „Sekundärfarbe")** — die blauen Elemente hatten feste
   Farben: Fortschrittsbalken der Sendung in der Kopfzeile (`#02cef9` +
