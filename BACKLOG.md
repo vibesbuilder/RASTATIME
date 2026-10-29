@@ -4228,6 +4228,25 @@ Sortierung der bereits-gespielten + nächsten Tracks freezable.
 
 ## 🐞 Known Issues / Bug Backlog
 
+### ✅ Upload über die UI ab 128 MiB: Apache 500 vor PHP (Befund Operator 2026-10-29) - behoben 2026-10-29 (`1b4be74e`)
+
+**Status:** Erledigt 2026-10-29 16:46 (Operator-Go, Apache-Neustart durch den
+Operator).  Drei `POST /rest/media` einer Datei knapp über 128 MiB (134.225.063
+Bytes) bekamen 500; `https-error-*.log`: `mod_fcgid: HTTP request length ...
+exceeds MaxRequestLen (134217728)`.  Apache begrenzte den Body also auf 128 MiB,
+während PHP (`post_max_size` = `upload_max_filesize` = 512M) und damit die
+Upload-Seite (`RASTATIME_PLUPLOAD_MAX_FILE_SIZE` aus `post_max_size`) 512 MB
+versprachen; Plupload sendet ohne Chunking, die ganze Datei ist ein Request.
+Stufe B war nicht beteiligt (Fehler vor PHP).
+**Fix:** `FcgidMaxRequestLen 536870912` (512 MiB) in `C:\Tools\Apache24\conf\httpd.conf`
+Zeile 551 und `docs/operator/INSTALL_APACHE.md`; Sicherung
+`C:\Temp\optd\httpd.conf.before-maxrequestlen-*`.  **Abnahme:** nach dem Neustart
+16:46:35 zwei Uploads 201 (144 MB und 273 MB), Analyzer importierte beide,
+`organize/` leer, keine Quarantäne, keine MaxRequestLen-Warnung mehr.
+**Lehre:** Upload-Grenzen stehen an drei Stellen (Apache fcgid, php.ini, UI-Anzeige
+aus php.ini); bei einer Änderung alle drei abgleichen.  Installer/Doku pinnen
+jetzt denselben Wert.
+
 ### ✅ REST-Modul ohne Anmeldung: 500 statt 401 (Nebenbefund 2026-10-21, DONE gleichen Tags)
 
 **Status:** Erledigt 2026-10-21 (Operator-Go direkt nach dem Eintrag).
