@@ -57,7 +57,7 @@ dann 2 → 1, danach nach Bedarf**.
 | – | Zeitumstellung Nacht 24./25.10.: Show 1242 Electronic Evening 00:00–05:00 beobachten | ✅ 2026-10-25: 6 echte Stunden (22:00–04:00 UTC), 104/104 Zeilen gespielt, keine Lücke in der doppelten Stunde, 05:00-Folge pünktlich (siehe Abschnitt „Zeitumstellungsnacht 24./25.10.2026") | – |
 
 **Defer mit Vorbedingungen (Operator-Entscheidung, nichts drängt):**
-Geordneter Apache-Stopp Option B · Marke „libretime" → „rastatime" Stufe B ✅ LIVE 2026-10-29 (Brücke bis 2026-11-03) ·
+Geordneter Apache-Stopp Option B · Marke „libretime" → „rastatime" Stufe B ✅ LIVE 2026-10-29 (Brücke bis 2026-11-01/02) ·
 Liquidsoap-Upgrade gegen das `Unix.select`-Leck · Icecast 2.4.4 → 2.5.0 ·
 Benutzergruppen-Audit · Stream-Metadaten „nicht weitergeben" · Legacy-PHPUnit ·
 Show-Logos als WebP (~1 h) ·
@@ -439,21 +439,29 @@ Internet-Erreichbarkeit (Punkt 16, Evaluierung offen), Testplan erstellen
 
 ---
 
-### ✅ Marke: „libretime" → „rastatime" in Bezeichnern (Stufe B) — LIVE 2026-10-29 14:16, Brücke bis 2026-11-03 (evaluiert 2026-10-03, gekoppelt an GitHub 2026-10-28)
+### ✅ Marke: „libretime" → „rastatime" in Bezeichnern (Stufe B) — LIVE 2026-10-29 14:16, Brücke bis 2026-11-01/02 (evaluiert 2026-10-03, gekoppelt an GitHub 2026-10-28)
 
 **Stand 2026-10-29 (Operator-Go, GitHub-Phase 1):** Repo-Teil gebaut - fünf Pakete `rastatime_*` (git mv +
 Sweep über 328 Dateien), Distributionen/Kommandos `rastatime-*`, Präfix `RASTATIME_`, `config/rastatime.conf`,
 gettext-Domäne `rastatime`, PHP-Klassen `Rastatime_*`, Session-Namespace `rastatime`, `wavesurfer/rastatime.js`.
-**Brücke (Operator: fünf Tage, bis 2026-11-03):** Stub-Pakete `backend/shared/libretime_*` + Meta-Path-Finder
+**Brücke (Operator: fünf Tage, bis 2026-11-03; am 2026-10-29 auf 2026-11-01/02 vorgezogen):** Stub-Pakete `backend/shared/libretime_*` + Meta-Path-Finder
 `rastatime_shared.compat.legacy_names` (gleiche Modulobjekte, `-m libretime_*` und `DJANGO_SETTINGS_MODULE` alt
 laufen), Konfig-Loader/Click/PHP lesen `LIBRETIME_*` nach `RASTATIME_*`, `libretime.conf` gilt neben fehlender
 `rastatime.conf`, alte Konsolen-Kommandos als zweite Entry-Points.  Suiten grün (api 195, playout 845, unit 739,
 shared inkl. Brücken-Tests).  **Außerhalb des Repos (Umschalt-Skript `C:\Temp\optd\stufe_b_switch.ps1`, Operator,
 ruhiges Fenster):** Dienste stoppen, `rastatime-analyzer` neu installieren (EXE war gesperrt), vier Pfad-Junctions
 entfernen (überbrücken bis dahin die laufenden Prozesse), nssm-Parameter API/PLAYOUT/ANALYZER/WORKER,
-`libretime.conf` löschen (Kopie `rastatime.conf` liegt), Dienste starten.  **Phase 2 ab 2026-11-03:** Stubs,
+`libretime.conf` löschen (Kopie `rastatime.conf` liegt), Dienste starten.  **Phase 2 ab 2026-11-01/02:** Stubs,
 Finder, Legacy-Präfix, zweite Entry-Points, PHP-Fallbacks, `.gitignore`-Zeile `config/libretime.conf` entfernen.
 **Umgeschaltet 2026-10-29 14:12–14:16:** die vier Python-Dienste laufen mit `rastatime_*`-Modulen, `rastatime-analyzer.exe` und `RASTATIME_CONFIG_FILEPATH=…astatime.conf`; Junctions entfernt, `libretime.conf` gelöscht (hash-gleich).  Liquidsoap startete planmäßig am Titelende neu (gerendertes Skript änderte nur Kommentarzeilen, Aufhol-Seek +119,9 s); `standby.liq` ebenso nur Kommentare, STANDBY-Neustart nicht nötig.  Das Skript brach zweimal ab (TimeSpan-Literal `00:00:60`; natives stderr unter `2>&1` wird in PowerShell 5.1 zum Abbruchfehler), Schritte 2a–4 von Hand; Skript als Protokoll korrigiert.
+**Inventur + Instrumentierung 2026-10-29 nachmittags (Operator-Go):** kein geplanter Task, keine
+Umgebungsvariable, keine Apache-Direktive, kein weiterer Dienst zeigt auf alte Namen; Analyzer-Retry-Queue
+leer; 25 Probe-Werkzeuge in `C:\Temp\optd` auf neue Namen gezogen (Sicherung `_pre_stage_b_sweep/`).
+Die Brücke meldet jetzt jede Nutzung: Python-Finder `legacy name used (stage B bridge)` mit Aufrufer
+(stderr/Dienstlog), Konfig-Loader `legacy environment used` (Variablennamen), PHP `stage B bridge` im
+Apache-Fehlerlog `logs/http-error-*.log`.  **Go für Phase 2 = null Treffer** nach einer Nacht (Backup 03:30,
+Janitor 03:50, 04:00-Fenster) und dem Wochenende: `grep -l "stage B bridge" logs/*.log` leer.  Phase 2 am
+**2026-11-01 oder 2026-11-02** (Operator 2026-10-29); Rückfall danach nur `git revert` + Neustart.
 
 **Operator 2026-10-28:** Stufe B wird **Vorbedingung des GitHub-Themas** (Abschnitt „Veröffentlichung auf
 GitHub, Releases, Update-Weg", Stufe 0) und erst dort angegangen; bis dahin Defer, nicht erneut vorschlagen.
@@ -6354,8 +6362,8 @@ C:\Temp bereinigen, Live-Checkout per Tag umhängen · 4 Repo anlegen (Operator)
   Betreiber-E-Mail im HTTPS-Runbook durch die GitHub-noreply-Adresse ersetzt; Phase 3 bereinigt zusätzlich
   Dateiinhalte alter Versionen (`--replace-text`).
 - ✅ **Phase 1 gebaut 2026-10-29** (Marke Stufe B, eigener Abschnitt oben): Repo-Teil committet (`d07b4890`, `20364f4f`), Suiten grün;
-  Live-Umschaltung der vier Python-Dienste per `C:\Temp\optd\stufe_b_switch.ps1` durch den Operator; Brücke bis
-  **2026-11-03**, dann Phase 2.
+  Live-Umschaltung der vier Python-Dienste 2026-10-29 14:16 (Skript brach zweimal ab, Schritte 2a–4 von Hand);
+  Brücke instrumentiert, Phase 2 am **2026-11-01/02** (vorgezogen, Operator 2026-10-29).
 
 **Vormerkung aus der Evaluierung 2026-10-25:** „Wir behalten uns dieses Thema im Backlog für später." Vorbedingungen für
 einen späteren Start: frische Windows-VM für die Install-Probe, GitHub-Org/Repo durch den Operator, ruhige Woche

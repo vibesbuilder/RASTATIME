@@ -23,9 +23,21 @@ defined('APPLICATION_ENV') || define('APPLICATION_ENV', getenv('APPLICATION_ENV'
 defined('VERBOSE_STACK_TRACE') || define('VERBOSE_STACK_TRACE', getenv('VERBOSE_STACK_TRACE') ?? true);
 
 // Project constants
-// Brand stage B bridge (until 2026-11-03): the former LIBRETIME_* variable
+// Brand stage B bridge (until 2026-11-01/02): the former LIBRETIME_* variable
 // names and the former file name libretime.conf are still honoured when the
-// current ones are absent.
+// current ones are absent.  Every use is written to the PHP error log
+// ('stage B bridge') so the logs prove whether the bridge is still needed.
+function rastatime_bridge_used($what)
+{
+    error_log('RASTATIME legacy ' . $what . ' used (stage B bridge) by '
+        . ($_SERVER['SCRIPT_NAME'] ?? ($_SERVER['argv'][0] ?? 'cli')));
+}
+foreach (['LIBRETIME_LOG_DIR', 'LIBRETIME_LOG_FILEPATH', 'LIBRETIME_CONFIG_DIR', 'LIBRETIME_CONFIG_FILEPATH'] as $rastatimeLegacyVar) {
+    if (getenv($rastatimeLegacyVar) !== false || isset($_SERVER[$rastatimeLegacyVar])) {
+        rastatime_bridge_used('variable ' . $rastatimeLegacyVar);
+    }
+}
+unset($rastatimeLegacyVar);
 define('RASTATIME_LOG_DIR', getenv('RASTATIME_LOG_DIR') ?: (getenv('LIBRETIME_LOG_DIR') ?: 'C:/rastatime/logs'));
 define('RASTATIME_LOG_FILEPATH', getenv('RASTATIME_LOG_FILEPATH') ?: (getenv('LIBRETIME_LOG_FILEPATH') ?: RASTATIME_LOG_DIR . '/legacy.log'));
 
@@ -36,6 +48,7 @@ if (!$rastatimeConfigFilepath) {
     $rastatimeConfigFilepath = RASTATIME_CONFIG_DIR . '/rastatime.conf';
     if (!file_exists($rastatimeConfigFilepath) && file_exists(RASTATIME_CONFIG_DIR . '/libretime.conf')) {
         $rastatimeConfigFilepath = RASTATIME_CONFIG_DIR . '/libretime.conf';
+        rastatime_bridge_used('file libretime.conf');
     }
 }
 define('RASTATIME_CONFIG_FILEPATH', $rastatimeConfigFilepath);

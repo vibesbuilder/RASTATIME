@@ -36,7 +36,7 @@
 >    (renamed PHP classes); every browser session is logged out once (new
 >    session namespace).
 >
-> Until **2026-11-03** a bridge keeps the former names working: the
+> Until **2026-11-01/02** (moved forward from 11-03 on 2026-10-29) a bridge keeps the former names working: the
 > `libretime_*` import names, `-m libretime_*`, `libretime-analyzer.exe`,
 > `LIBRETIME_*` variables (the `RASTATIME_*` variable wins when both are
 > set) and a `libretime.conf` next to a missing `rastatime.conf`.  After

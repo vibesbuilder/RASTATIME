@@ -13,7 +13,7 @@ from ._env import EnvLoader
 logger = logging.getLogger(__name__)
 
 DEFAULT_ENV_PREFIX = "RASTATIME"
-# Brand stage B bridge (2026-10-29 .. 2026-11-03): variables with the former
+# Brand stage B bridge (2026-10-29 .. 2026-11-01/02): variables with the former
 # prefix are still read; a variable with the current prefix wins.
 LEGACY_ENV_PREFIX = "LIBRETIME"
 # Use a Windows-appropriate default when running on Windows; keep the
@@ -25,6 +25,26 @@ DEFAULT_CONFIG_FILEPATH = (
 )
 
 
+_LEGACY_ENV_REPORTED = False
+
+
+def report_legacy_env() -> List[str]:
+    """
+    Stage B bridge: log once per process which former ``LIBRETIME_*`` variables
+    are present in the environment (names only, never values).
+    """
+    global _LEGACY_ENV_REPORTED  # pylint: disable=global-statement
+    names = sorted(k for k in os.environ if k.startswith(LEGACY_ENV_PREFIX + "_"))
+    if names and not _LEGACY_ENV_REPORTED:
+        _LEGACY_ENV_REPORTED = True
+        logger.warning(
+            "legacy environment used (stage B bridge): %s present; argv=%r",
+            ", ".join(names),
+            sys.argv[:3],
+        )
+    return names
+
+
 def config_filepath_from_env(default: Optional[str] = None) -> Optional[str]:
     """
     The configuration file path from the environment.
@@ -32,6 +52,7 @@ def config_filepath_from_env(default: Optional[str] = None) -> Optional[str]:
     ``RASTATIME_CONFIG_FILEPATH`` wins; the former ``LIBRETIME_CONFIG_FILEPATH``
     is honoured during the stage B bridge.
     """
+    report_legacy_env()
     for prefix in (DEFAULT_ENV_PREFIX, LEGACY_ENV_PREFIX):
         value = os.environ.get(f"{prefix}_CONFIG_FILEPATH")
         if value:
@@ -66,6 +87,7 @@ class BaseConfig(BaseModel):
         env_values = EnvLoader(schema, _env_prefix, _env_delimiter).load()
         if _env_prefix == DEFAULT_ENV_PREFIX:
             # Stage B bridge: former prefix underneath, current prefix on top.
+            report_legacy_env()
             legacy_values = EnvLoader(schema, LEGACY_ENV_PREFIX, _env_delimiter).load()
             env_values = deep_merge_dict(legacy_values, env_values)
 

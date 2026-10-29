@@ -46,3 +46,33 @@ def test_run_module_under_legacy_name() -> None:
     """``python -m libretime_x.y`` keeps working (service parameters)."""
     assert _python("-m", "libretime_shared.compat._probe") == "libretime_shared.compat._probe"
     assert _python("-m", "rastatime_shared.compat._probe") == "rastatime_shared.compat._probe"
+
+
+def test_legacy_use_is_reported_once_with_the_caller() -> None:
+    """Every former name logs one WARNING per process naming the requesting file."""
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            "import libretime_shared.cli, libretime_shared.config; print('done')",
+        ],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    assert result.stdout.strip() == "done"
+    lines = [l for l in result.stderr.splitlines() if "legacy name used" in l]
+    assert len(lines) == 1, result.stderr
+    assert "'libretime_shared'" in lines[0]
+    assert "<string>:1" in lines[0]
+    assert "__init__.py" not in lines[0]
+
+
+def test_current_names_are_silent() -> None:
+    result = subprocess.run(
+        [sys.executable, "-c", "import rastatime_shared.cli, rastatime_shared.config"],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    assert "stage B bridge" not in result.stderr

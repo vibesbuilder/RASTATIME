@@ -1,14 +1,17 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.103
+Draft version: 0.104
 Date: 2026-10-29
 
 > **Revision history**
+> - **0.104 (2026-10-29)** - **Bridge instrumentation** (§23.77): every
+>   use of a former name or variable is logged; phase 2 moved forward
+>   to 2026-11-01/02 (operator).
 > - **0.103 (2026-10-29)** - **Brand stage B** (§23.77): the Python
 >   packages, commands, environment variables, config file, gettext
 >   domain and PHP classes carry the product name; a five-day bridge
->   keeps the former names working until 2026-11-03.
+>   keeps the former names working (end moved to 2026-11-01/02 in 0.104).
 > - **0.102 (2026-10-28)** - **Undo after deleting a show** (§23.76): the
 >   calendar's delete waits ten seconds client-side with an Undo toast;
 >   server unchanged.
@@ -8090,7 +8093,8 @@ script and stylesheet are served (200).
 renames the identifiers with a runtime binding, because the GitHub
 publication (§ BACKLOG) makes them visible to other developers.  The
 operator chose a bridge over a cut: the former names keep working for five
-days (until 2026-11-03), then the bridge is removed (publication phase 2).
+days (planned until 2026-11-03, moved forward to 2026-11-01/02 on
+2026-10-29 after the live switch), then the bridge is removed (publication phase 2).
 
 **Renamed.**  Python packages `rastatime_api`, `rastatime_playout`,
 `rastatime_analyzer`, `rastatime_shared`, `rastatime_api_client`
@@ -8112,7 +8116,7 @@ untouched.  Not renamed: the upstream reference copies (`docs/upstream`,
 `libretime/propel1`, history (CHANGELOG, `docs/dev/history`) and the
 product name LibreTime in attribution prose.
 
-**Bridge (until 2026-11-03).**
+**Bridge (until 2026-11-01/02).**
 - *Import names.*  Five stub packages `backend/shared/libretime_*`
   (shipped by `rastatime-shared`) call
   `rastatime_shared.compat.legacy_names.alias_package()`, which installs one
@@ -8149,7 +8153,30 @@ and `RASTATIME_CONFIG_FILEPATH=C:\rastatime\config\rastatime.conf`, drop
 Rollback = the old parameters from the backup file (the bridge keeps them
 valid).
 
-**Phase 2 (from 2026-11-03).**  Remove the stubs, the finder module, the
+**Live switch (2026-10-29 14:12-14:16).**  The four Python services run
+with `-m rastatime_*`, `rastatime-analyzer.exe`,
+`DJANGO_SETTINGS_MODULE=rastatime_api.settings.prod` and
+`RASTATIME_CONFIG_FILEPATH=...\rastatime.conf`; the local path junctions
+are gone and `libretime.conf` was deleted (hash-identical copy).  The
+rendered `rastatime.liq`/`standby.liq` changed in comment lines only, so
+Liquidsoap took its planned boundary restart and the standby needs none.
+Inventory afterwards: no scheduled task, environment variable, Apache
+directive or other service refers to a former name; the analyzer retry
+queue is empty; the operator's probe tools in `C:\Temp\optd` were swept.
+
+**Instrumentation (2026-10-29, second half).**  Because nothing in
+production needs the bridge any more, its remaining job is to prove that:
+`legacy_names.report()` logs one WARNING per process and former top-level
+name (`legacy name used (stage B bridge)`) with the requesting file and
+line, skipping importlib and the stub packages; `config._base.
+report_legacy_env()` logs once which `LIBRETIME_*` variables are present
+(names only, never values) from `config_filepath_from_env()` and
+`BaseConfig.__init__`; `constants.php` writes `stage B bridge` lines to
+the PHP error log (Apache `http-error-*.log`) when a former variable or
+`libretime.conf` is used.  Current names stay silent (tested).  Zero hits
+across the nightly cycle and a weekend are the go for phase 2.
+
+**Phase 2 (from 2026-11-01/02, operator 2026-10-29).**  Remove the stubs, the finder module, the
 legacy prefix and the fallbacks in Python and PHP, the second entry points,
 the `find_packages` exclusion and the `.gitignore` line for
 `config/libretime.conf`; the UPGRADE note then describes the hard cut.

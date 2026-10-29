@@ -370,6 +370,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   „Table layout" EN/DE/FR/ES, Architektur §23.42 Addendum (0.87).  Commit cc60fc7.
 
 ### Changed
+- **Marke Stufe B: Brücke protokolliert jede Nutzung, Live-Umschaltung, Phase 2 vorgezogen** (2026-10-29,
+  nachmittags).  Die vier Python-Dienste laufen seit 14:16 unter den neuen Namen
+  (`-m rastatime_*`, `rastatime-analyzer.exe`, `RASTATIME_CONFIG_FILEPATH`), `libretime.conf` ist gelöscht.
+  Damit die Logs beweisen, ob die Brücke noch jemand braucht: der Finder meldet je Prozess und altem
+  Paketnamen einmal `legacy name used (stage B bridge)` mit Aufrufer-Datei und -Zeile, der Konfig-Loader
+  meldet vorhandene `LIBRETIME_*`-Variablen (nur Namen), `constants.php` schreibt `stage B bridge`-Zeilen
+  ins PHP-Fehlerlog.  Neue Namen bleiben still (vier neue Tests, shared 45).  Phase 2 (Brücken entfernen)
+  ab 2026-11-01/02 statt 2026-11-03.  Commit folgt.
 
 - **Marke Stufe B: `libretime_*` → `rastatime_*` in Bezeichnern (2026-10-29,
   Operator-Go, Vorbedingung der GitHub-Veröffentlichung)** — die fünf
@@ -383,7 +391,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `Rastatime_Model_FreeIpa`, `RastatimeFileNotFoundException`, der
   Session-Namespace `rastatime` (meldet alle Browser-Sitzungen einmal ab),
   das Wavesurfer-Skript `rastatime.js`; Skripte, nssm-Installer, CI,
-  Tests und Doku folgen.  **Brücke bis 2026-11-03** (Operator: fünf Tage):
+  Tests und Doku folgen.  **Brücke bis 2026-11-01/02** (Operator: fünf Tage, am 2026-10-29 vorgezogen):
   Stub-Pakete unter den alten Namen + Meta-Path-Finder
   (`rastatime_shared.compat.legacy_names`) liefern dieselben Modulobjekte,
   `-m libretime_*` und `DJANGO_SETTINGS_MODULE=libretime_api…` starten

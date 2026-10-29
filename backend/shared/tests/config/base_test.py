@@ -460,3 +460,31 @@ def test_base_config_legacy_env_prefix(tmp_path: Path):
         config = FixtureWithRequiredSubmodelConfig(None)
         assert config.required.api_key == "current"
         assert config.required.with_default == "legacy-default"
+
+
+def test_legacy_env_is_reported_once(monkeypatch, caplog) -> None:
+    """The former LIBRETIME_* variables are logged by name (never by value), once."""
+    from rastatime_shared.config import _base
+
+    monkeypatch.setattr(_base, "_LEGACY_ENV_REPORTED", False)
+    monkeypatch.setenv("LIBRETIME_CONFIG_FILEPATH", "C:/secret-location.conf")
+    with caplog.at_level("WARNING", logger="rastatime_shared.config._base"):
+        assert _base.report_legacy_env() == ["LIBRETIME_CONFIG_FILEPATH"]
+        assert _base.report_legacy_env() == ["LIBRETIME_CONFIG_FILEPATH"]
+    hits = [r for r in caplog.records if "legacy environment used" in r.getMessage()]
+    assert len(hits) == 1
+    assert "LIBRETIME_CONFIG_FILEPATH" in hits[0].getMessage()
+    assert "secret-location" not in hits[0].getMessage()
+
+
+def test_legacy_env_absent_is_silent(monkeypatch, caplog) -> None:
+    import os
+
+    from rastatime_shared.config import _base
+
+    monkeypatch.setattr(_base, "_LEGACY_ENV_REPORTED", False)
+    for key in [k for k in os.environ if k.startswith("LIBRETIME_")]:
+        monkeypatch.delenv(key)
+    with caplog.at_level("WARNING", logger="rastatime_shared.config._base"):
+        assert _base.report_legacy_env() == []
+    assert not [r for r in caplog.records if "stage B bridge" in r.getMessage()]

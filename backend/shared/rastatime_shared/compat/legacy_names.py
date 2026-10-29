@@ -13,16 +13,23 @@ real package, so
   still start (``get_code`` hands runpy the real code object),
 * pickles and ``DJANGO_SETTINGS_MODULE`` values with the former names load.
 
-Scheduled for removal on 2026-11-03 (five days of bridge, see BACKLOG).
+Every use of a former name is logged once per process and name (WARNING,
+``legacy name used``) with the requesting file, so the logs prove whether
+the bridge is still needed before it goes.
+
+Scheduled for removal on 2026-11-01/02 (bridge, see BACKLOG).
 """
 
 import importlib
 import importlib.abc
 import importlib.machinery
 import importlib.util
+import logging
 import sys
 from types import ModuleType
-from typing import Dict, Optional, Sequence
+from typing import Dict, Optional, Sequence, Set
+
+logger = logging.getLogger(__name__)
 
 LEGACY_TO_CURRENT: Dict[str, str] = {
     "libretime_api_client": "rastatime_api_client",
@@ -31,6 +38,45 @@ LEGACY_TO_CURRENT: Dict[str, str] = {
     "libretime_analyzer": "rastatime_analyzer",
     "libretime_shared": "rastatime_shared",
 }
+
+
+_REPORTED: Set[str] = set()
+
+
+def _is_stub(filename: str) -> bool:
+    """A frame inside one of the ``backend/shared/libretime_*`` stub packages."""
+    parent = filename.replace("/", "\\").rsplit("\\", 2)
+    return len(parent) == 3 and parent[1] in LEGACY_TO_CURRENT
+
+
+def _caller() -> str:
+    """First frame outside importlib and this module: 'file:line'."""
+    frame = sys._getframe(1)  # pylint: disable=protected-access
+    while frame is not None:
+        filename = frame.f_code.co_filename
+        if (
+            "importlib" not in filename
+            and not filename.endswith("legacy_names.py")
+            and not _is_stub(filename)
+        ):
+            return f"{filename}:{frame.f_lineno}"
+        frame = frame.f_back
+    return "<unknown>"
+
+
+def report(fullname: str) -> None:
+    """Log the first use of each former top-level name in this process."""
+    top = fullname.partition(".")[0]
+    if top in _REPORTED or top not in LEGACY_TO_CURRENT:
+        return
+    _REPORTED.add(top)
+    logger.warning(
+        "legacy name used (stage B bridge): %r requested as %r from %s; argv=%r",
+        top,
+        fullname,
+        _caller(),
+        sys.argv[:3],
+    )
 
 
 def translate(fullname: str) -> Optional[str]:
@@ -68,6 +114,7 @@ class LegacyNameFinder(importlib.abc.MetaPathFinder, importlib.abc.Loader):
         real = _real_spec(fullname)
         if real is None:
             return None
+        report(fullname)
         spec = importlib.machinery.ModuleSpec(
             fullname,
             self,
@@ -139,6 +186,7 @@ def alias_package(legacy_name: str) -> ModuleType:
     if current is None:
         raise ImportError(f"{legacy_name!r} has no current name")
     install()
+    report(legacy_name)
     module = importlib.import_module(current)
     sys.modules[legacy_name] = module
     return module
